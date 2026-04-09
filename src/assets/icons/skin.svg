@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="256" height="256">
+  
+  <path d="M 50,110 C 20,40 100,20 140,50 C 180,80 180,160 120,170 C 60,180 30,150 50,110 Z" 
+        fill="white" stroke="white" stroke-width="22" stroke-linejoin="round" />
+  
+  <path d="M 50,110 C 20,40 100,20 140,50 C 180,80 180,160 120,170 C 60,180 30,150 50,110 Z" 
+        fill="#FFF3E0" stroke="#6B7485" stroke-width="10" stroke-linejoin="round" />
+        
+  <path d="M 40,95 C 25,50 85,30 125,48" 
+        fill="none" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" />
+
+  <circle cx="135" cy="125" r="16" fill="#ffffff" stroke="#6B7485" stroke-width="8" />
+
+  <circle cx="65" cy="70" r="14" fill="#FFB6C1" stroke="#6B7485" stroke-width="6" />
+  <path d="M 60,62 A 8,8 0 0,1 70,70" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"/>
+  
+  <circle cx="110" cy="55" r="12" fill="#98E2C6" stroke="#6B7485" stroke-width="6" />
+  
+  <circle cx="145" cy="80" r="13" fill="#FFD700" stroke="#6B7485" stroke-width="6" />
+  
+  <circle cx="80" cy="115" r="15" fill="#B2EBF2" stroke="#6B7485" stroke-width="6" />
+
+
+  <g transform="translate(15, 10)">
+    <path d="M 15,15 Q 25,15 25,3 Q 25,15 35,15 Q 25,15 25,27 Q 25,15 15,15 Z" 
+          fill="white" stroke="white" stroke-width="14" stroke-linejoin="round" />
+    <path d="M 15,15 Q 25,15 25,3 Q 25,15 35,15 Q 25,15 25,27 Q 25,15 15,15 Z" 
+          fill="#FFF9C4" stroke="#6B7485" stroke-width="6" stroke-linejoin="round" />
+  </g>
+
+
+  <g transform="translate(155, 155)">
+    <g stroke="white" stroke-width="26" stroke-linejoin="round" fill="white">
+      <circle cx="0" cy="0" r="16" />
+      <path d="M-5,-22 L5,-22 L5,22 L-5,22 Z M-22,-5 L22,-5 L22,5 L-22,5 Z" />
+      <path d="M-5,-22 L5,-22 L5,22 L-5,22 Z M-22,-5 L22,-5 L22,5 L-22,5 Z" transform="rotate(45)" />
+    </g>
+    
+    <g stroke="#6B7485" stroke-width="16" stroke-linejoin="round" fill="#b2bfd4">
+      <circle cx="0" cy="0" r="16" />
+      <path d="M-5,-22 L5,-22 L5,22 L-5,22 Z M-22,-5 L22,-5 L22,5 L-22,5 Z" />
+      <path d="M-5,-22 L5,-22 L5,22 L-5,22 Z M-22,-5 L22,-5 L22,5 L-22,5 Z" transform="rotate(45)" />
+    </g>
+    
+    <g fill="#b2bfd4" stroke="none">
+      <circle cx="0" cy="0" r="16" />
+      <path d="M-5,-22 L5,-22 L5,22 L-5,22 Z M-22,-5 L22,-5 L22,5 L-22,5 Z" />
+      <path d="M-5,-22 L5,-22 L5,22 L-5,22 Z M-22,-5 L22,-5 L22,5 L-22,5 Z" transform="rotate(45)" />
+    </g>
+    
+    <circle cx="0" cy="0" r="6" fill="white" stroke="#6B7485" stroke-width="6" />
+  </g>
+  
+</svg>

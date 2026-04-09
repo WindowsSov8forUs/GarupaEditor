@@ -1,0 +1,12 @@
+HOST________\VSCode\chart-editor\src-tauri\target_check\debug\deps\wry-1f540024718b728f.d: HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wry-0.54.4\src\lib.rs HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wry-0.54.4\src\custom_protocol_workaround.rs HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wry-0.54.4\src\error.rs HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wry-0.54.4\src\proxy.rs HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wry-0.54.4\src\web_context.rs HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wry-0.54.4\src\webview2\mod.rs HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wry-0.54.4\src\webview2\drag_drop.rs HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wry-0.54.4\src\webview2\util.rs
+
+HOST________\VSCode\chart-editor\src-tauri\target_check\debug\deps\libwry-1f540024718b728f.rmeta: HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wry-0.54.4\src\lib.rs HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wry-0.54.4\src\custom_protocol_workaround.rs HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wry-0.54.4\src\error.rs HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wry-0.54.4\src\proxy.rs HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wry-0.54.4\src\web_context.rs HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wry-0.54.4\src\webview2\mod.rs HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wry-0.54.4\src\webview2\drag_drop.rs HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wry-0.54.4\src\webview2\util.rs
+
+HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wry-0.54.4\src\lib.rs:
+HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wry-0.54.4\src\custom_protocol_workaround.rs:
+HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wry-0.54.4\src\error.rs:
+HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wry-0.54.4\src\proxy.rs:
+HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wry-0.54.4\src\web_context.rs:
+HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wry-0.54.4\src\webview2\mod.rs:
+HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wry-0.54.4\src\webview2\drag_drop.rs:
+HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wry-0.54.4\src\webview2\util.rs:

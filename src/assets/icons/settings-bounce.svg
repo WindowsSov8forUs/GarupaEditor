@@ -1,0 +1,138 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 220" width="256" height="282" fill="none">
+  <defs>
+    <linearGradient id="gear-fill" x1="40" y1="36" x2="152" y2="164" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#c7cdd4" />
+      <stop offset="0.55" stop-color="#a8afb8" />
+      <stop offset="1" stop-color="#9098a2" />
+    </linearGradient>
+    <linearGradient id="gear-core" x1="54" y1="52" x2="133" y2="134" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#dfe4ea" />
+      <stop offset="1" stop-color="#b6bec8" />
+    </linearGradient>
+    <radialGradient id="ground-shadow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(100 188) rotate(90) scale(18 48)">
+      <stop offset="0" stop-color="#2c3138" stop-opacity="0.32" />
+      <stop offset="1" stop-color="#2c3138" stop-opacity="0" />
+    </radialGradient>
+    <path
+      id="gear-large"
+      d="M 65.6 42.74 L 70.3 27.5 L 85.7 27.5 L 90.4 42.74 L 93.39 43.71 L 106.15 34.15 L 118.61 43.2 L 113.46 58.3 L 115.31 60.84 L 131.25 60.6 L 136.01 75.25 L 122.97 84.43 L 122.97 87.57 L 136.01 96.75 L 131.25 111.4 L 115.31 111.16 L 113.46 113.7 L 118.61 128.8 L 106.15 137.85 L 93.39 128.29 L 90.4 129.26 L 85.7 144.5 L 70.3 144.5 L 65.6 129.26 L 62.61 128.29 L 49.85 137.85 L 37.39 128.8 L 42.54 113.7 L 40.69 111.16 L 24.75 111.4 L 19.99 96.75 L 33.03 87.57 L 33.03 84.43 L 19.99 75.25 L 24.75 60.6 L 40.69 60.84 L 42.54 58.3 L 37.39 43.2 L 49.85 34.15 L 62.61 43.71 Z"
+    />
+    <path
+      id="gear-small"
+      d="M 109.91 97.69 L 113.27 84.53 L 126.73 84.53 L 130.09 97.69 L 133.59 99.14 L 145.27 92.21 L 154.79 101.73 L 147.86 113.41 L 149.31 116.91 L 162.47 120.27 L 162.47 133.73 L 149.31 137.09 L 147.86 140.59 L 154.79 152.27 L 145.27 161.79 L 133.59 154.86 L 130.09 156.31 L 126.73 169.47 L 113.27 169.47 L 109.91 156.31 L 106.41 154.86 L 94.73 161.79 L 85.21 152.27 L 92.14 140.59 L 90.69 137.09 L 77.53 133.73 L 77.53 120.27 L 90.69 116.91 L 92.14 113.41 L 85.21 101.73 L 94.73 92.21 L 106.41 99.14 Z"
+    />
+    <clipPath id="gear-large-clip">
+      <use href="#gear-large" />
+    </clipPath>
+    <clipPath id="gear-small-clip">
+      <use href="#gear-small" />
+    </clipPath>
+    <filter id="icon-shadow" x="-18%" y="-18%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="5" stdDeviation="4.5" flood-color="#3b4047" flood-opacity="0.22" />
+    </filter>
+    <style>
+      .shadow {
+        transform-origin: 100px 188px;
+        animation: shadow-pulse 1600ms infinite cubic-bezier(0.25, 0.7, 0.25, 1);
+      }
+
+      .bounce {
+        transform-origin: 100px 176px;
+        animation: hop 1600ms infinite cubic-bezier(0.22, 0.7, 0.25, 1);
+      }
+
+      .squash {
+        transform-origin: 100px 164px;
+        animation: squash 1600ms infinite cubic-bezier(0.22, 0.7, 0.25, 1);
+      }
+
+      .large-gear {
+        transform-origin: 78px 86px;
+        animation: rotate-large 1600ms infinite ease-in-out;
+      }
+
+      .small-gear {
+        transform-origin: 120px 127px;
+        animation: rotate-small 1600ms infinite ease-in-out;
+      }
+
+      .glint {
+        animation: glint 1600ms infinite ease-in-out;
+      }
+
+      @keyframes hop {
+        0%, 100% { transform: translateY(0); }
+        10% { transform: translateY(0); }
+        28% { transform: translateY(-30px); }
+        42% { transform: translateY(0); }
+        52% { transform: translateY(-11px); }
+        64%, 100% { transform: translateY(0); }
+      }
+
+      @keyframes squash {
+        0%, 100% { transform: scaleX(1) scaleY(1); }
+        8% { transform: scaleX(1.03) scaleY(0.97); }
+        28% { transform: scaleX(0.97) scaleY(1.04); }
+        42% { transform: scaleX(1.1) scaleY(0.9); }
+        52% { transform: scaleX(0.985) scaleY(1.02); }
+        64% { transform: scaleX(1.04) scaleY(0.965); }
+        76%, 100% { transform: scaleX(1) scaleY(1); }
+      }
+
+      @keyframes shadow-pulse {
+        0%, 10%, 42%, 64%, 100% { transform: scaleX(1) scaleY(1); opacity: 0.24; }
+        28% { transform: scaleX(0.72) scaleY(0.78); opacity: 0.13; }
+        52% { transform: scaleX(0.88) scaleY(0.9); opacity: 0.18; }
+      }
+
+      @keyframes rotate-large {
+        0%, 10% { transform: rotate(0deg); }
+        28% { transform: rotate(11deg); }
+        42% { transform: rotate(18deg); }
+        52% { transform: rotate(14deg); }
+        64%, 100% { transform: rotate(18deg); }
+      }
+
+      @keyframes rotate-small {
+        0%, 10% { transform: rotate(0deg); }
+        28% { transform: rotate(-16deg); }
+        42% { transform: rotate(-24deg); }
+        52% { transform: rotate(-19deg); }
+        64%, 100% { transform: rotate(-24deg); }
+      }
+
+      @keyframes glint {
+        0%, 18%, 100% { opacity: 0.32; }
+        28% { opacity: 0.55; }
+        42% { opacity: 0.28; }
+        52% { opacity: 0.44; }
+        64% { opacity: 0.3; }
+      }
+    </style>
+  </defs>
+
+  <ellipse class="shadow" cx="100" cy="188" rx="48" ry="18" fill="url(#ground-shadow)" />
+  <path d="M 42 188 H 158" stroke="#d8dde4" stroke-width="3" stroke-linecap="round" opacity="0.65" />
+
+  <g class="bounce" filter="url(#icon-shadow)">
+    <g class="squash">
+      <g class="large-gear">
+        <use href="#gear-large" fill="url(#gear-fill)" stroke="#6d747d" stroke-width="6" stroke-linejoin="round" />
+        <circle cx="78" cy="86" r="34" fill="url(#gear-core)" />
+        <g class="glint" clip-path="url(#gear-large-clip)">
+          <rect x="61.5" y="67" width="31" height="8" rx="4" transform="rotate(-30 77 71)" fill="#ffffff" opacity="0.42" />
+        </g>
+        <circle cx="78" cy="86" r="15" fill="#f6f8fb" stroke="#6d747d" stroke-width="5" />
+      </g>
+
+      <g class="small-gear">
+        <use href="#gear-small" fill="url(#gear-fill)" stroke="#6d747d" stroke-width="6" stroke-linejoin="round" />
+        <circle cx="120" cy="127" r="24" fill="url(#gear-core)" />
+        <g class="glint" clip-path="url(#gear-small-clip)">
+          <rect x="109" y="112" width="21" height="6.5" rx="3.25" transform="rotate(-30 119.5 115.25)" fill="#ffffff" opacity="0.42" />
+        </g>
+        <circle cx="120" cy="127" r="10" fill="#f6f8fb" stroke="#6d747d" stroke-width="4.5" />
+      </g>
+    </g>
+  </g>
+</svg>

@@ -1,0 +1,116 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 220" width="256" height="282" fill="none">
+  <defs>
+    <linearGradient id="guitar-fill" x1="58" y1="56" x2="143" y2="149" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ff73b2" />
+      <stop offset="0.55" stop-color="#ff3c8d" />
+      <stop offset="1" stop-color="#ff1f76" />
+    </linearGradient>
+    <radialGradient id="guitar-highlight" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(86 83) rotate(42) scale(42 26)">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.55" />
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="ground-shadow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(100 188) rotate(90) scale(14 32)">
+      <stop offset="0" stop-color="#3a3f46" stop-opacity="0.34" />
+      <stop offset="1" stop-color="#3a3f46" stop-opacity="0" />
+    </radialGradient>
+    <path
+      id="guitar-shape"
+      d="M -41 18
+         C -48 -1 -42 -25 -20 -32
+         C -6 -36 7 -31 14 -20
+         C 18 -13 18 -5 14 4
+         L 14 8
+         L 57 -27
+         C 61 -30 66 -30 70 -26
+         L 78 -18
+         C 82 -14 82 -9 79 -5
+         L 74 0
+         C 71 3 71 8 74 11
+         L 78 15
+         C 82 19 81 24 77 28
+         L 72 33
+         C 68 37 63 37 59 33
+         L 52 26
+         C 49 23 45 23 41 26
+         L 15 47
+         C 8 53 -2 57 -14 56
+         C -34 53 -47 38 -41 18 Z"
+    />
+    <clipPath id="guitar-clip">
+      <use href="#guitar-shape" />
+    </clipPath>
+    <style>
+      .shadow {
+        transform-origin: 100px 188px;
+        animation: shadow-breathe 1000ms infinite cubic-bezier(0.24, 0.7, 0.2, 1);
+      }
+
+      .bounce {
+        transform-origin: 100px 180px;
+        animation: hop 1000ms infinite cubic-bezier(0.24, 0.7, 0.2, 1);
+      }
+
+      .squash {
+        transform-origin: 100px 166px;
+        animation: squash 1000ms infinite cubic-bezier(0.24, 0.7, 0.2, 1);
+      }
+
+      .glow {
+        animation: glint 1000ms infinite ease-in-out;
+      }
+
+      @keyframes hop {
+        0%, 100% { transform: translateY(0); }
+        16% { transform: translateY(0); }
+        34% { transform: translateY(-28px); }
+        50% { transform: translateY(0); }
+        60% { transform: translateY(-8px); }
+        72% { transform: translateY(0); }
+      }
+
+      @keyframes squash {
+        0%, 100% { transform: scaleX(1) scaleY(1); }
+        10% { transform: scaleX(1.02) scaleY(0.985); }
+        34% { transform: scaleX(0.975) scaleY(1.03); }
+        50% { transform: scaleX(1.11) scaleY(0.89); }
+        60% { transform: scaleX(0.99) scaleY(1.015); }
+        72% { transform: scaleX(1.035) scaleY(0.97); }
+        84%, 100% { transform: scaleX(1) scaleY(1); }
+      }
+
+      @keyframes shadow-breathe {
+        0%, 16%, 72%, 100% { transform: scaleX(1); opacity: 0.18; }
+        34% { transform: scaleX(0.82); opacity: 0.1; }
+        50% { transform: scaleX(1.18); opacity: 0.24; }
+        60% { transform: scaleX(0.93); opacity: 0.15; }
+      }
+
+      @keyframes glint {
+        0%, 22%, 100% { opacity: 0.32; }
+        34% { opacity: 0.48; }
+        50% { opacity: 0.24; }
+        60% { opacity: 0.38; }
+        72% { opacity: 0.28; }
+      }
+    </style>
+  </defs>
+
+  <ellipse class="shadow" cx="100" cy="188" rx="32" ry="14" fill="url(#ground-shadow)" />
+
+  <g class="bounce">
+    <g class="squash">
+      <g transform="translate(100 106) rotate(-34)">
+        <use href="#guitar-shape" fill="url(#guitar-fill)" stroke="#ffffff" stroke-width="10" stroke-linejoin="round" />
+        <g class="glow" clip-path="url(#guitar-clip)">
+          <ellipse cx="-10" cy="-8" rx="30" ry="20" fill="url(#guitar-highlight)" />
+          <rect x="16" y="-1.5" width="56" height="4" rx="2" fill="#ffffff" opacity="0.28" />
+        </g>
+        <g clip-path="url(#guitar-clip)" opacity="0.65">
+          <line x1="17" y1="-3" x2="68" y2="-19" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" />
+          <line x1="18.5" y1="0.5" x2="69.5" y2="-15.5" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" />
+        </g>
+        <circle cx="-8" cy="4" r="5.5" fill="#ffffff" opacity="0.2" />
+      </g>
+    </g>
+  </g>
+</svg>

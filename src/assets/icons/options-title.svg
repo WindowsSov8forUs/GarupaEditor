@@ -1,0 +1,27 @@
+<svg width="58.9148" height="93.1762" viewBox="3.0852 13.75 58.9148 93.1762" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path
+    d="M52 23 L28 62 L56 40 L32 79"
+    stroke="#F6B53B"
+    stroke-width="12"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M18 80
+       L21.5267 89.1459
+       L31.3148 89.6738
+       L23.7063 95.8532
+       L26.2289 105.3262
+       L18 100
+       L9.7711 105.3262
+       L12.2937 95.8532
+       L4.6852 89.6738
+       L14.4733 89.1459
+       Z"
+    fill="#F6B53B"
+    stroke="#F6B53B"
+    stroke-width="3.2"
+    stroke-linejoin="round"
+    stroke-linecap="round"
+  />
+</svg>

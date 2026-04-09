@@ -1,0 +1,10 @@
+HOST________\VSCode\chart-editor\src-tauri\target_check\debug\deps\writeable-7ea6ecbcbaccca4c.d: HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\writeable-0.6.2\src\lib.rs HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\writeable-0.6.2\src\cmp.rs HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\writeable-0.6.2\src\impls.rs HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\writeable-0.6.2\src\ops.rs HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\writeable-0.6.2\src\parts_write_adapter.rs HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\writeable-0.6.2\src\try_writeable.rs
+
+HOST________\VSCode\chart-editor\src-tauri\target_check\debug\deps\libwriteable-7ea6ecbcbaccca4c.rmeta: HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\writeable-0.6.2\src\lib.rs HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\writeable-0.6.2\src\cmp.rs HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\writeable-0.6.2\src\impls.rs HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\writeable-0.6.2\src\ops.rs HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\writeable-0.6.2\src\parts_write_adapter.rs HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\writeable-0.6.2\src\try_writeable.rs
+
+HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\writeable-0.6.2\src\lib.rs:
+HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\writeable-0.6.2\src\cmp.rs:
+HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\writeable-0.6.2\src\impls.rs:
+HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\writeable-0.6.2\src\ops.rs:
+HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\writeable-0.6.2\src\parts_write_adapter.rs:
+HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\writeable-0.6.2\src\try_writeable.rs:

@@ -1,0 +1,7 @@
+cargo:rerun-if-changed=permissions
+cargo:PERMISSION_FILES_PATH=HOST________\VSCode\chart-editor\src-tauri\target_check\debug\build\tauri-plugin-clipboard-manager-8ffd18a7d678a7be\out\tauri-plugin-clipboard-manager-permission-files
+cargo:rerun-if-env-changed=REMOVE_UNUSED_COMMANDS
+cargo:GLOBAL_API_SCRIPT_PATH=\\?\HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tauri-plugin-clipboard-manager-2.3.2\api-iife.js
+cargo:rustc-check-cfg=cfg(mobile)
+cargo:rustc-check-cfg=cfg(desktop)
+cargo:rustc-cfg=desktop

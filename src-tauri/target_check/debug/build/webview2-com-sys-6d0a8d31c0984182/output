@@ -1,0 +1,2 @@
+cargo:rustc-link-search=native=HOST________\VSCode\chart-editor\src-tauri\target_check\debug\build\webview2-com-sys-6d0a8d31c0984182\out\x64
+cargo:rustc-link-lib=advapi32
