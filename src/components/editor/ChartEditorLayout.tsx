@@ -100,10 +100,15 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     redoLastNote,
     canUndoLastOperation,
     canRedoLastOperation,
+    mirrorSelectedNotes,
+    canMirrorSelection,
     clearAllNotes,
     notes,
     noteById,
+    mirrorActionIcon,
     undoActionIcon,
+    copyActionIcon,
+    pasteActionIcon,
     clearActionIcon,
     applyActionIcon,
     showBeatSetting,
@@ -976,7 +981,6 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
           onSelectBpmTool={applyBpmToolFromPalette}
           onSelectCopyTool={applyCopyToolFromPalette}
           onSelectPasteTool={applyPasteToolFromPalette}
-          hasCopiedChartPayload={copiedChartPayload !== null}
           onTogglePlayTool={onTogglePlayTool}
           isPlayToolSelected={isPlayToolSelected}
           isPlaybackPlaying={isPlaybackPlaying}
@@ -1000,9 +1004,14 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
           redoLastNote={redoLastNote}
           canUndoLastOperation={canUndoLastOperation}
           canRedoLastOperation={canRedoLastOperation}
+          mirrorSelectedNotes={mirrorSelectedNotes}
+          canMirrorSelection={canMirrorSelection}
           clearAllNotes={clearAllNotes}
           notesLength={notes.length}
+          mirrorActionIcon={mirrorActionIcon}
           undoActionIcon={undoActionIcon}
+          copyActionIcon={copyActionIcon}
+          pasteActionIcon={pasteActionIcon}
           clearActionIcon={clearActionIcon}
           applyActionIcon={applyActionIcon}
           showBeatSetting={showBeatSetting}

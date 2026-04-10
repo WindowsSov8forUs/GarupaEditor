@@ -98,7 +98,8 @@ export function usePlayfieldRenderers(params: any) {
   const renderBpmLines = () => {
     const lines: ReactNode[] = [];
 
-    for (const node of bpmTimeline) {
+    for (let nodeIndex = 0; nodeIndex < bpmTimeline.length; nodeIndex += 1) {
+      const node = bpmTimeline[nodeIndex];
       if (node.beat < 0 || node.beat > totalBeats + 1e-6) {
         continue;
       }
@@ -174,7 +175,7 @@ export function usePlayfieldRenderers(params: any) {
         <div
           key={`bpm-line-${lineKey}`}
           className={`bpm-marker ${isSelected ? "selected" : ""} ${isCanvasBackend ? "canvas-hitbox" : ""}`}
-          style={{ top: lineY }}
+          style={{ top: lineY, zIndex: nodeIndex + 1 }}
         >
           <button
             type="button"

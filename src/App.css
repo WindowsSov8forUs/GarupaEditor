@@ -652,10 +652,6 @@ button.chart-info-edit-button:not(.note-token):not(.bpm-label-button):not(.bpm-l
   margin-top: 6px;
 }
 
-.copy-paste-tool-row {
-  margin-top: 6px;
-}
-
 .tool-icon-button {
   --btn-radius-local: var(--btn-radius);
   --btn-gap-local: var(--btn-gap);
@@ -730,24 +726,6 @@ button.tool-icon-button.active:not(.note-token):not(.bpm-label-button):not(.bpm-
 }
 
 .tool-icon-button.active .bpm-text {
-  color: #fff;
-  text-shadow: none;
-}
-
-.copy-paste-tool-button {
-  width: 88px;
-  min-width: 88px;
-}
-
-.tool-label-text {
-  font-size: 0.78rem;
-  font-weight: 500;
-  line-height: 1;
-  letter-spacing: 0.02em;
-  color: #4f5560;
-}
-
-.tool-icon-button.active .tool-label-text {
   color: #fff;
   text-shadow: none;
 }
@@ -969,6 +947,32 @@ button.tool-icon-button.active:not(.note-token):not(.bpm-label-button):not(.bpm-
   --btn-core-bottom-local: #e6eaf0;
   --btn-core-border-local: rgba(255, 255, 255, 0.95);
   --btn-text-color-local: #4b515a;
+}
+
+.mirror-action,
+.copy-action,
+.paste-action {
+  --btn-frame-top-local: #f5f6f8;
+  --btn-frame-bottom-local: #e7eaee;
+  --btn-frame-border-local: #b9bec6;
+  --btn-core-top-local: #e6eaf0;
+  --btn-core-bottom-local: #e6eaf0;
+  --btn-core-border-local: rgba(255, 255, 255, 0.95);
+  --btn-text-color-local: #4b515a;
+}
+
+.tool-action-icon.active {
+  --btn-frame-top-local: rgb(255, 59, 113);
+  --btn-frame-bottom-local: rgb(255, 59, 113);
+  --btn-frame-border-local: rgba(255, 59, 113, 0.95);
+  --btn-core-top-local: rgb(255, 59, 113);
+  --btn-core-bottom-local: rgb(255, 59, 113);
+  --btn-core-border-local: rgba(255, 255, 255, 0.12);
+  --btn-text-color-local: #fff;
+}
+
+.tool-action-icon.active .tool-action-glyph {
+  filter: brightness(0) invert(1);
 }
 
 .tool-icon-button .mini-note,

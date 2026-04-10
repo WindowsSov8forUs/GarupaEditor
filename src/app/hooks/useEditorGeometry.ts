@@ -33,6 +33,7 @@ export function useEditorGeometry(params: any) {
     quantizeBeat,
     beatToSeconds,
     secondsToBeat,
+    secondsToBeatCandidates,
     selectionMovePreview,
     selectedNoteIdSet,
     selectionDragRef,
@@ -79,9 +80,35 @@ export function useEditorGeometry(params: any) {
 
   const beatToY = useCallback((beat: number): number => timeToY(beatToSec(beat)), [beatToSec, timeToY]);
 
+  const timeToInteractionBeat = useCallback(
+    (timeSec: number): number => {
+      const rawCandidates =
+        typeof secondsToBeatCandidates === "function"
+          ? secondsToBeatCandidates(timeSec, bpmTimeline)
+          : [secondsToBeat(timeSec, bpmTimeline)];
+      let hasCandidate = false;
+      let maxBeat = 0;
+      for (const rawBeat of rawCandidates ?? []) {
+        const beat = Math.max(0, Number(rawBeat));
+        if (!Number.isFinite(beat)) {
+          continue;
+        }
+        if (!hasCandidate || beat > maxBeat) {
+          maxBeat = beat;
+          hasCandidate = true;
+        }
+      }
+      if (hasCandidate) {
+        return maxBeat;
+      }
+      return Math.max(0, secondsToBeat(timeSec, bpmTimeline));
+    },
+    [bpmTimeline, secondsToBeat, secondsToBeatCandidates],
+  );
+
   const yToBeat = useCallback(
-    (y: number): number => secondsToBeat(yToTime(y), bpmTimeline),
-    [bpmTimeline, secondsToBeat, yToTime],
+    (y: number): number => timeToInteractionBeat(yToTime(y)),
+    [timeToInteractionBeat, yToTime],
   );
 
   useEffect(() => {
@@ -460,7 +487,35 @@ export function useEditorGeometry(params: any) {
       }
 
       setSelectedBpmEventIds(hitBpmIds);
-      setSelectedBpmEventId(hitBpmIds[0] ?? null);
+      const bpmById = new Map<string, { beat: number }>();
+      for (const event of bpmEvents as any[]) {
+        if (!event || typeof event.id !== "string") {
+          continue;
+        }
+        const beat = Number(event.beat);
+        if (!Number.isFinite(beat)) {
+          continue;
+        }
+        bpmById.set(event.id, { beat });
+      }
+      const primaryBpmId = hitBpmIds.reduce((selectedId: string | null, id: string) => {
+        if (selectedId === null) {
+          return id;
+        }
+        const selectedEvent = bpmById.get(selectedId);
+        const currentEvent = bpmById.get(id);
+        if (!selectedEvent) {
+          return id;
+        }
+        if (!currentEvent) {
+          return selectedId;
+        }
+        if (currentEvent.beat > selectedEvent.beat) {
+          return id;
+        }
+        return selectedId;
+      }, null);
+      setSelectedBpmEventId(primaryBpmId);
 
       if (hitNotes.length > 0 && hitBpmIds.length > 0) {
         setStatusMessage(`框选选中 ${hitNotes.length} 个音符，${hitBpmIds.length} 条 BPM 线。`);

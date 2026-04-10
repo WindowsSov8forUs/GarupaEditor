@@ -3,6 +3,7 @@
   useCallback,
   useMemo,
   type CSSProperties,
+  type KeyboardEvent as ReactKeyboardEvent,
   type MouseEvent as ReactMouseEvent,
   type MutableRefObject,
   type ReactNode,
@@ -24,6 +25,27 @@ import { ChartInfoPanel } from "../ChartInfoPanel";
 import { StepperIcon } from "../StepperIcon";
 
 type SpriteLayers = { base?: string; overlay?: string; overlayMode: "none" | "flick" | "directional" };
+type ToolActionButtonConfig = {
+  key: string;
+  className: string;
+  title: string;
+  iconSrc: string;
+  disabled?: boolean;
+  clickAction?: () => void;
+  pointerAction?: () => void;
+};
+type StepperActionButtonConfig = {
+  icon: "left" | "right" | "minus" | "plus";
+  onClick: () => void;
+  disabled?: boolean;
+  title?: string;
+};
+type SettingBlockProps = {
+  title: string;
+  children: ReactNode;
+  className?: string;
+};
+
 const PALETTE_TOOL_TYPES = [
   "single",
   "flick",
@@ -32,6 +54,16 @@ const PALETTE_TOOL_TYPES = [
   "directional_flick_left",
   "directional_flick_right",
 ] as const;
+
+function SettingBlock({ title, children, className }: SettingBlockProps) {
+  const blockClassName = className ? `setting-block ${className}` : "setting-block";
+  return (
+    <div className={blockClassName}>
+      <span className="setting-title-strip">{title}</span>
+      {children}
+    </div>
+  );
+}
 
 type SidebarPanelProps = {
   metadata: ChartMetadata;
@@ -63,7 +95,6 @@ type SidebarPanelProps = {
   onSelectBpmTool: () => void;
   onSelectCopyTool: () => void;
   onSelectPasteTool: () => void;
-  hasCopiedChartPayload: boolean;
   onTogglePlayTool: () => void;
   isPlayToolSelected: boolean;
   isPlaybackPlaying: boolean;
@@ -85,11 +116,16 @@ type SidebarPanelProps = {
   stepPlaybackPosition: (delta: number) => void;
   undoLastNote: () => void;
   redoLastNote: () => void;
+  mirrorSelectedNotes: () => void;
+  canMirrorSelection: boolean;
   clearAllNotes: () => void;
   notesLength: number;
   canUndoLastOperation: boolean;
   canRedoLastOperation: boolean;
+  mirrorActionIcon: string;
   undoActionIcon: string;
+  copyActionIcon: string;
+  pasteActionIcon: string;
   clearActionIcon: string;
   applyActionIcon: string;
   showBeatSetting: boolean;
@@ -165,7 +201,6 @@ export const SidebarPanel = memo(function SidebarPanel({
   onSelectBpmTool,
   onSelectCopyTool,
   onSelectPasteTool,
-  hasCopiedChartPayload,
   onTogglePlayTool,
   isPlayToolSelected,
   isPlaybackPlaying,
@@ -187,11 +222,16 @@ export const SidebarPanel = memo(function SidebarPanel({
   stepPlaybackPosition,
   undoLastNote,
   redoLastNote,
+  mirrorSelectedNotes,
+  canMirrorSelection,
   clearAllNotes,
   notesLength,
   canUndoLastOperation,
   canRedoLastOperation,
+  mirrorActionIcon,
   undoActionIcon,
+  copyActionIcon,
+  pasteActionIcon,
   clearActionIcon,
   applyActionIcon,
   showBeatSetting,
@@ -295,110 +335,170 @@ export const SidebarPanel = memo(function SidebarPanel({
     },
     [applyToolFromPalette, isToolArmed, tool],
   );
-  const handlePaletteToolMouseDown = useCallback(
-    (event: ReactMouseEvent<HTMLButtonElement>, nextType: NoteType) => {
-      event.preventDefault();
-      selectPaletteTool(nextType);
+  const activateSpecialTool = useCallback(
+    (nextTool: "bpm" | "copy" | "paste", action: () => void) => {
+      if (isToolArmed && tool === nextTool) {
+        return;
+      }
+      action();
     },
-    [selectPaletteTool],
+    [isToolArmed, tool],
   );
-  const handlePaletteToolClick = useCallback(
-    (event: ReactMouseEvent<HTMLButtonElement>, nextType: NoteType) => {
+  const activateBpmTool = useCallback(
+    () => activateSpecialTool("bpm", onSelectBpmTool),
+    [activateSpecialTool, onSelectBpmTool],
+  );
+  const activateCopyTool = useCallback(
+    () => activateSpecialTool("copy", onSelectCopyTool),
+    [activateSpecialTool, onSelectCopyTool],
+  );
+  const activatePasteTool = useCallback(
+    () => activateSpecialTool("paste", onSelectPasteTool),
+    [activateSpecialTool, onSelectPasteTool],
+  );
+  const handleActionMouseDown = useCallback(
+    (event: ReactMouseEvent<HTMLButtonElement>, action: () => void) => {
+      event.preventDefault();
+      action();
+    },
+    [],
+  );
+  const handleActionClick = useCallback(
+    (event: ReactMouseEvent<HTMLButtonElement>, action: () => void) => {
       if (event.detail !== 0) {
         return;
       }
-      selectPaletteTool(nextType);
+      action();
     },
-    [selectPaletteTool],
+    [],
   );
-  const selectBpmTool = useCallback(() => {
-    if (isToolArmed && tool === "bpm") {
+  const buildMouseActionHandlers = useCallback(
+    (action: () => void) => ({
+      onMouseDown: (event: ReactMouseEvent<HTMLButtonElement>) => handleActionMouseDown(event, action),
+      onClick: (event: ReactMouseEvent<HTMLButtonElement>) => handleActionClick(event, action),
+    }),
+    [handleActionClick, handleActionMouseDown],
+  );
+  const handleEnterKeyBlur = useCallback((event: ReactKeyboardEvent<HTMLInputElement>) => {
+    if (event.key !== "Enter") {
       return;
     }
-    onSelectBpmTool();
-  }, [isToolArmed, onSelectBpmTool, tool]);
-  const handleBpmToolMouseDown = useCallback(
-    (event: ReactMouseEvent<HTMLButtonElement>) => {
-      event.preventDefault();
-      selectBpmTool();
+    event.preventDefault();
+    event.currentTarget.blur();
+  }, []);
+  const renderStepperControl = useCallback(
+    ({
+      className = "inline-stepper",
+      leadingActions,
+      trailingActions,
+      valueNode,
+    }: {
+      className?: string;
+      leadingActions: StepperActionButtonConfig[];
+      trailingActions: StepperActionButtonConfig[];
+      valueNode: ReactNode;
+    }) => {
+      const renderActionButton = (action: StepperActionButtonConfig, key: string) => (
+        <button
+          key={key}
+          type="button"
+          className="stepper-btn"
+          disabled={action.disabled}
+          onClick={action.onClick}
+          title={action.title}
+        >
+          <StepperIcon type={action.icon} />
+        </button>
+      );
+
+      return (
+        <div className={className}>
+          {leadingActions.map((action, index) =>
+            renderActionButton(action, `leading-${index}-${action.icon}`),
+          )}
+          {valueNode}
+          {trailingActions.map((action, index) =>
+            renderActionButton(action, `trailing-${index}-${action.icon}`),
+          )}
+        </div>
+      );
     },
-    [selectBpmTool],
+    [],
   );
-  const handleBpmToolClick = useCallback(
-    (event: ReactMouseEvent<HTMLButtonElement>) => {
-      if (event.detail !== 0) {
-        return;
-      }
-      selectBpmTool();
-    },
-    [selectBpmTool],
-  );
-  const selectCopyTool = useCallback(() => {
-    if (isToolArmed && tool === "copy") {
-      return;
-    }
-    onSelectCopyTool();
-  }, [isToolArmed, onSelectCopyTool, tool]);
-  const handleCopyToolMouseDown = useCallback(
-    (event: ReactMouseEvent<HTMLButtonElement>) => {
-      event.preventDefault();
-      selectCopyTool();
-    },
-    [selectCopyTool],
-  );
-  const handleCopyToolClick = useCallback(
-    (event: ReactMouseEvent<HTMLButtonElement>) => {
-      if (event.detail !== 0) {
-        return;
-      }
-      selectCopyTool();
-    },
-    [selectCopyTool],
-  );
-  const selectPasteTool = useCallback(() => {
-    if (isToolArmed && tool === "paste") {
-      return;
-    }
-    onSelectPasteTool();
-  }, [isToolArmed, onSelectPasteTool, tool]);
-  const handlePasteToolMouseDown = useCallback(
-    (event: ReactMouseEvent<HTMLButtonElement>) => {
-      event.preventDefault();
-      selectPasteTool();
-    },
-    [selectPasteTool],
-  );
-  const handlePasteToolClick = useCallback(
-    (event: ReactMouseEvent<HTMLButtonElement>) => {
-      if (event.detail !== 0) {
-        return;
-      }
-      selectPasteTool();
-    },
-    [selectPasteTool],
+  const actionButtons = useMemo<ToolActionButtonConfig[]>(
+    () => [
+      {
+        key: "mirror",
+        className: "tool-action-icon mirror-action",
+        title: "镜像翻转（轴：lane 3）",
+        iconSrc: mirrorActionIcon,
+        disabled: !canMirrorSelection,
+        clickAction: mirrorSelectedNotes,
+      },
+      {
+        key: "undo",
+        className: "tool-action-icon undo-action",
+        title: "撤销",
+        iconSrc: undoActionIcon,
+        disabled: !canUndoLastOperation,
+        clickAction: undoLastNote,
+      },
+      {
+        key: "redo",
+        className: "tool-action-icon redo-action",
+        title: "重做",
+        iconSrc: undoActionIcon,
+        disabled: !canRedoLastOperation,
+        clickAction: redoLastNote,
+      },
+      {
+        key: "copy",
+        className: `tool-action-icon copy-action ${isToolArmed && tool === "copy" ? "active" : ""}`,
+        title: "复制",
+        iconSrc: copyActionIcon,
+        pointerAction: activateCopyTool,
+      },
+      {
+        key: "paste",
+        className: `tool-action-icon paste-action ${isToolArmed && tool === "paste" ? "active" : ""}`,
+        title: "粘贴",
+        iconSrc: pasteActionIcon,
+        pointerAction: activatePasteTool,
+      },
+      {
+        key: "clear",
+        className: "tool-action-icon clear-action",
+        title: "清空",
+        iconSrc: clearActionIcon,
+        disabled: notesLength === 0,
+        clickAction: clearAllNotes,
+      },
+    ],
+    [
+      activateCopyTool,
+      activatePasteTool,
+      canMirrorSelection,
+      canRedoLastOperation,
+      canUndoLastOperation,
+      clearActionIcon,
+      clearAllNotes,
+      copyActionIcon,
+      isToolArmed,
+      mirrorActionIcon,
+      mirrorSelectedNotes,
+      notesLength,
+      pasteActionIcon,
+      redoLastNote,
+      tool,
+      undoActionIcon,
+      undoLastNote,
+    ],
   );
   const handleCoverImageError = useCallback(() => {
     if (!isCoverLoadFailed) {
       setIsCoverLoadFailed(true);
     }
   }, [isCoverLoadFailed, setIsCoverLoadFailed]);
-
-  const handlePlayToolMouseDown = useCallback(
-    (event: ReactMouseEvent<HTMLButtonElement>) => {
-      event.preventDefault();
-      onTogglePlayTool();
-    },
-    [onTogglePlayTool],
-  );
-  const handlePlayToolClick = useCallback(
-    (event: ReactMouseEvent<HTMLButtonElement>) => {
-      if (event.detail !== 0) {
-        return;
-      }
-      onTogglePlayTool();
-    },
-    [onTogglePlayTool],
-  );
 
   return (
     <aside className="sidebar">
@@ -422,8 +522,7 @@ export const SidebarPanel = memo(function SidebarPanel({
                       key={item.type}
                       type="button"
                       className={`tool-icon-button ${isToolArmed && tool === item.type ? "active" : ""}`}
-                      onMouseDown={(event) => handlePaletteToolMouseDown(event, item.type)}
-                      onClick={(event) => handlePaletteToolClick(event, item.type)}
+                      {...buildMouseActionHandlers(() => selectPaletteTool(item.type))}
                       title={item.label}
                     >
                       <span className="tool-icon-core">
@@ -443,8 +542,7 @@ export const SidebarPanel = memo(function SidebarPanel({
                 <button
                   type="button"
                   className={`tool-icon-button bpm-tool-button ${isToolArmed && tool === "bpm" ? "active" : ""}`}
-                  onMouseDown={handleBpmToolMouseDown}
-                  onClick={handleBpmToolClick}
+                  {...buildMouseActionHandlers(activateBpmTool)}
                   title="BPM"
                 >
                   <span className="tool-icon-core">
@@ -452,36 +550,11 @@ export const SidebarPanel = memo(function SidebarPanel({
                   </span>
                 </button>
               </div>
-              <div className="tool-grid copy-paste-tool-row">
-                <button
-                  type="button"
-                  className={`tool-icon-button copy-paste-tool-button ${isToolArmed && tool === "copy" ? "active" : ""}`}
-                  onMouseDown={handleCopyToolMouseDown}
-                  onClick={handleCopyToolClick}
-                  title="复制框选内容"
-                >
-                  <span className="tool-icon-core">
-                    <span className="tool-label-text">复制</span>
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  className={`tool-icon-button copy-paste-tool-button ${isToolArmed && tool === "paste" ? "active" : ""}`}
-                  onMouseDown={handlePasteToolMouseDown}
-                  onClick={handlePasteToolClick}
-                  title={hasCopiedChartPayload ? "粘贴复制内容" : "粘贴（暂无复制内容）"}
-                >
-                  <span className="tool-icon-core">
-                    <span className="tool-label-text">粘贴</span>
-                  </span>
-                </button>
-              </div>
               <div className="tool-grid play-tool-row">
                 <button
                   type="button"
                   className={`tool-icon-button play-tool-button ${isPlayToolSelected ? "active" : ""}`}
-                  onMouseDown={handlePlayToolMouseDown}
-                  onClick={handlePlayToolClick}
+                  {...buildMouseActionHandlers(onTogglePlayTool)}
                   title="播放工具"
                 >
                   <span className="tool-icon-core play-tool-core">
@@ -509,141 +582,118 @@ export const SidebarPanel = memo(function SidebarPanel({
           )}
 
           <div className="tool-action-rows">
-            <button
-              type="button"
-              className="tool-action-icon undo-action"
-              title="撤销"
-              onClick={undoLastNote}
-              disabled={!canUndoLastOperation}
-            >
-              <img src={undoActionIcon} alt="" className="tool-action-glyph" aria-hidden="true" />
-            </button>
-            <button
-              type="button"
-              className="tool-action-icon redo-action"
-              title="重做"
-              onClick={redoLastNote}
-              disabled={!canRedoLastOperation}
-            >
-              <img src={undoActionIcon} alt="" className="tool-action-glyph" aria-hidden="true" />
-            </button>
-            <button
-              type="button"
-              className="tool-action-icon clear-action"
-              title="清空"
-              onClick={clearAllNotes}
-              disabled={notesLength === 0}
-            >
-              <img src={clearActionIcon} alt="" className="tool-action-glyph" aria-hidden="true" />
-            </button>
+            {actionButtons.map((button) => {
+              const mouseHandlers = button.pointerAction
+                ? buildMouseActionHandlers(button.pointerAction)
+                : { onClick: button.clickAction };
+              return (
+                <button
+                  key={button.key}
+                  type="button"
+                  className={button.className}
+                  title={button.title}
+                  disabled={button.disabled}
+                  {...mouseHandlers}
+                >
+                  <img src={button.iconSrc} alt="" className="tool-action-glyph" aria-hidden="true" />
+                </button>
+              );
+            })}
           </div>
         </section>
 
         {isPlayToolSelected && (
           <section className="selected-note-panel playback-settings-panel">
             <div className="selected-note-grid playback-settings-grid">
-              <div className="setting-block playback-speed-block">
-                <span className="setting-title-strip">速度</span>
-                <div className="inline-stepper">
-                  <button
-                    type="button"
-                    className="stepper-btn"
-                    disabled={!canStepPlaybackSpeedDown}
-                    onClick={() => stepPlaybackSpeed(-1)}
-                  >
-                    <StepperIcon type="minus" />
-                  </button>
-                  <input type="text" className="stepper-input" value={playbackSpeedLabel} readOnly tabIndex={-1} />
-                  <button
-                    type="button"
-                    className="stepper-btn"
-                    disabled={!canStepPlaybackSpeedUp}
-                    onClick={() => stepPlaybackSpeed(1)}
-                  >
-                    <StepperIcon type="plus" />
-                  </button>
-                </div>
-              </div>
-              <div className="setting-block playback-volume-block">
-                <span className="setting-title-strip">音量</span>
-                <div className="inline-stepper inline-stepper-extended">
-                  <button
-                    type="button"
-                    className="stepper-btn"
-                    disabled={!canStepPlaybackVolumeDown}
-                    onClick={() => stepPlaybackVolume(-2)}
-                    title="步退 10%"
-                  >
-                    <StepperIcon type="left" />
-                  </button>
-                  <button
-                    type="button"
-                    className="stepper-btn"
-                    disabled={!canStepPlaybackVolumeDown}
-                    onClick={() => stepPlaybackVolume(-1)}
-                  >
-                    <StepperIcon type="minus" />
-                  </button>
-                  <input type="text" className="stepper-input" value={playbackVolumeLabel} readOnly tabIndex={-1} />
-                  <button
-                    type="button"
-                    className="stepper-btn"
-                    disabled={!canStepPlaybackVolumeUp}
-                    onClick={() => stepPlaybackVolume(1)}
-                  >
-                    <StepperIcon type="plus" />
-                  </button>
-                  <button
-                    type="button"
-                    className="stepper-btn"
-                    disabled={!canStepPlaybackVolumeUp}
-                    onClick={() => stepPlaybackVolume(2)}
-                    title="步进 10%"
-                  >
-                    <StepperIcon type="right" />
-                  </button>
-                </div>
-              </div>
-              <div className="setting-block playback-position-block">
-                <span className="setting-title-strip">位置</span>
+              <SettingBlock title="速度" className="playback-speed-block">
+                {renderStepperControl({
+                  leadingActions: [
+                    {
+                      icon: "minus",
+                      disabled: !canStepPlaybackSpeedDown,
+                      onClick: () => stepPlaybackSpeed(-1),
+                    },
+                  ],
+                  trailingActions: [
+                    {
+                      icon: "plus",
+                      disabled: !canStepPlaybackSpeedUp,
+                      onClick: () => stepPlaybackSpeed(1),
+                    },
+                  ],
+                  valueNode: (
+                    <input type="text" className="stepper-input" value={playbackSpeedLabel} readOnly tabIndex={-1} />
+                  ),
+                })}
+              </SettingBlock>
+              <SettingBlock title="音量" className="playback-volume-block">
+                {renderStepperControl({
+                  className: "inline-stepper inline-stepper-extended",
+                  leadingActions: [
+                    {
+                      icon: "left",
+                      disabled: !canStepPlaybackVolumeDown,
+                      onClick: () => stepPlaybackVolume(-2),
+                      title: "步退 10%",
+                    },
+                    {
+                      icon: "minus",
+                      disabled: !canStepPlaybackVolumeDown,
+                      onClick: () => stepPlaybackVolume(-1),
+                    },
+                  ],
+                  trailingActions: [
+                    {
+                      icon: "plus",
+                      disabled: !canStepPlaybackVolumeUp,
+                      onClick: () => stepPlaybackVolume(1),
+                    },
+                    {
+                      icon: "right",
+                      disabled: !canStepPlaybackVolumeUp,
+                      onClick: () => stepPlaybackVolume(2),
+                      title: "步进 10%",
+                    },
+                  ],
+                  valueNode: (
+                    <input type="text" className="stepper-input" value={playbackVolumeLabel} readOnly tabIndex={-1} />
+                  ),
+                })}
+              </SettingBlock>
+              <SettingBlock title="位置" className="playback-position-block">
                 <div className="playback-position-row">
-                  <div className="inline-stepper inline-stepper-extended">
-                    <button
-                      type="button"
-                      className="stepper-btn"
-                      disabled={!canStepPlaybackPositionDown}
-                      onClick={() => stepPlaybackPosition(-10)}
-                      title="步退 10%"
-                    >
-                      <StepperIcon type="left" />
-                    </button>
-                    <button
-                      type="button"
-                      className="stepper-btn"
-                      disabled={!canStepPlaybackPositionDown}
-                      onClick={() => stepPlaybackPosition(-1)}
-                    >
-                      <StepperIcon type="minus" />
-                    </button>
-                    <input type="text" className="stepper-input" value={playbackPositionLabel} readOnly tabIndex={-1} />
-                    <button
-                      type="button"
-                      className="stepper-btn"
-                      disabled={!canStepPlaybackPositionUp}
-                      onClick={() => stepPlaybackPosition(1)}
-                    >
-                      <StepperIcon type="plus" />
-                    </button>
-                    <button
-                      type="button"
-                      className="stepper-btn"
-                      disabled={!canStepPlaybackPositionUp}
-                      onClick={() => stepPlaybackPosition(10)}
-                      title="步进 10%"
-                    >
-                      <StepperIcon type="right" />
-                    </button>
-                  </div>
+                  {renderStepperControl({
+                    className: "inline-stepper inline-stepper-extended",
+                    leadingActions: [
+                      {
+                        icon: "left",
+                        disabled: !canStepPlaybackPositionDown,
+                        onClick: () => stepPlaybackPosition(-10),
+                        title: "步退 10%",
+                      },
+                      {
+                        icon: "minus",
+                        disabled: !canStepPlaybackPositionDown,
+                        onClick: () => stepPlaybackPosition(-1),
+                      },
+                    ],
+                    trailingActions: [
+                      {
+                        icon: "plus",
+                        disabled: !canStepPlaybackPositionUp,
+                        onClick: () => stepPlaybackPosition(1),
+                      },
+                      {
+                        icon: "right",
+                        disabled: !canStepPlaybackPositionUp,
+                        onClick: () => stepPlaybackPosition(10),
+                        title: "步进 10%",
+                      },
+                    ],
+                    valueNode: (
+                      <input type="text" className="stepper-input" value={playbackPositionLabel} readOnly tabIndex={-1} />
+                    ),
+                  })}
                   <label className="ui-checkbox">
                     <input
                       type="checkbox"
@@ -658,7 +708,7 @@ export const SidebarPanel = memo(function SidebarPanel({
                     <span className="ui-checkbox-text">跟随</span>
                   </label>
                 </div>
-              </div>
+              </SettingBlock>
             </div>
           </section>
         )}
@@ -666,8 +716,7 @@ export const SidebarPanel = memo(function SidebarPanel({
         {!hideSettingsPanel && hasSettingsContent && <section className="selected-note-panel">
           <div className="selected-note-grid">
             {showBeatSetting && (
-              <div className="setting-block">
-                <span className="setting-title-strip">Beat 值</span>
+              <SettingBlock title="Beat 值">
                 <input
                   type="text"
                   inputMode="decimal"
@@ -684,19 +733,13 @@ export const SidebarPanel = memo(function SidebarPanel({
                     beatInputEditingRef.current = false;
                     commitBeatInput();
                   }}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter") {
-                      event.preventDefault();
-                      event.currentTarget.blur();
-                    }
-                  }}
+                  onKeyDown={handleEnterKeyBlur}
                 />
-              </div>
+              </SettingBlock>
             )}
 
             {showBpmSetting && (
-              <div className="setting-block">
-                <span className="setting-title-strip">BPM 值</span>
+              <SettingBlock title="BPM 值">
                 <input
                   type="text"
                   inputMode="decimal"
@@ -712,110 +755,92 @@ export const SidebarPanel = memo(function SidebarPanel({
                     bpmInputEditingRef.current = false;
                     commitBpmInput();
                   }}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter") {
-                      event.preventDefault();
-                      event.currentTarget.blur();
-                    }
-                  }}
+                  onKeyDown={handleEnterKeyBlur}
                 />
-              </div>
+              </SettingBlock>
             )}
 
             {showLaneSetting && (
-              <div className="setting-block">
-                <span className="setting-title-strip">轨道</span>
-                <div className="inline-stepper">
-                  <button
-                    type="button"
-                    className="stepper-btn"
-                    disabled={isLaneSettingLocked}
-                    onClick={() => stepActiveLane(-1)}
-                  >
-                    <StepperIcon type="minus" />
-                  </button>
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    className={`stepper-input ${isLaneSettingLocked ? "is-disabled" : ""}`}
-                    value={isLaneSettingLocked ? "" : laneInputText}
-                    disabled={isLaneSettingLocked}
-                    onChange={(event) => {
-                      setLaneInputText(event.currentTarget.value);
-                    }}
-                    onFocus={() => {
-                      laneInputEditingRef.current = true;
-                    }}
-                    onBlur={() => {
-                      laneInputEditingRef.current = false;
-                      commitLaneInput();
-                    }}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter") {
-                        event.preventDefault();
-                        event.currentTarget.blur();
-                      }
-                    }}
-                  />
-                  <button
-                    type="button"
-                    className="stepper-btn"
-                    disabled={isLaneSettingLocked}
-                    onClick={() => stepActiveLane(1)}
-                  >
-                    <StepperIcon type="plus" />
-                  </button>
-                </div>
-              </div>
+              <SettingBlock title="轨道">
+                {renderStepperControl({
+                  leadingActions: [
+                    {
+                      icon: "minus",
+                      disabled: isLaneSettingLocked,
+                      onClick: () => stepActiveLane(-1),
+                    },
+                  ],
+                  trailingActions: [
+                    {
+                      icon: "plus",
+                      disabled: isLaneSettingLocked,
+                      onClick: () => stepActiveLane(1),
+                    },
+                  ],
+                  valueNode: (
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      className={`stepper-input ${isLaneSettingLocked ? "is-disabled" : ""}`}
+                      value={isLaneSettingLocked ? "" : laneInputText}
+                      disabled={isLaneSettingLocked}
+                      onChange={(event) => {
+                        setLaneInputText(event.currentTarget.value);
+                      }}
+                      onFocus={() => {
+                        laneInputEditingRef.current = true;
+                      }}
+                      onBlur={() => {
+                        laneInputEditingRef.current = false;
+                        commitLaneInput();
+                      }}
+                      onKeyDown={handleEnterKeyBlur}
+                    />
+                  ),
+                })}
+              </SettingBlock>
             )}
 
             {showWidthSetting && (
-              <div className="setting-block">
-                <span className="setting-title-strip">宽度</span>
-                <div className="inline-stepper">
-                  <button
-                    type="button"
-                    className="stepper-btn"
-                    onClick={() => stepActiveWidth(-1)}
-                  >
-                    <StepperIcon type="minus" />
-                  </button>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    className="stepper-input"
-                    value={widthInputText}
-                    onChange={(event) => {
-                      setWidthInputText(event.currentTarget.value);
-                    }}
-                    onFocus={() => {
-                      widthInputEditingRef.current = true;
-                    }}
-                    onBlur={() => {
-                      widthInputEditingRef.current = false;
-                      commitWidthInput();
-                    }}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter") {
-                        event.preventDefault();
-                        event.currentTarget.blur();
-                      }
-                    }}
-                  />
-                  <button
-                    type="button"
-                    className="stepper-btn"
-                    onClick={() => stepActiveWidth(1)}
-                  >
-                    <StepperIcon type="plus" />
-                  </button>
-                </div>
-              </div>
+              <SettingBlock title="宽度">
+                {renderStepperControl({
+                  leadingActions: [
+                    {
+                      icon: "minus",
+                      onClick: () => stepActiveWidth(-1),
+                    },
+                  ],
+                  trailingActions: [
+                    {
+                      icon: "plus",
+                      onClick: () => stepActiveWidth(1),
+                    },
+                  ],
+                  valueNode: (
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      className="stepper-input"
+                      value={widthInputText}
+                      onChange={(event) => {
+                        setWidthInputText(event.currentTarget.value);
+                      }}
+                      onFocus={() => {
+                        widthInputEditingRef.current = true;
+                      }}
+                      onBlur={() => {
+                        widthInputEditingRef.current = false;
+                        commitWidthInput();
+                      }}
+                      onKeyDown={handleEnterKeyBlur}
+                    />
+                  ),
+                })}
+              </SettingBlock>
             )}
 
             {showDirectionSetting && (
-              <div className="setting-block">
-                <span className="setting-title-strip">方向</span>
+              <SettingBlock title="方向">
                 <div className="binary-choice-group">
                   <button
                     type="button"
@@ -836,13 +861,12 @@ export const SidebarPanel = memo(function SidebarPanel({
                     <span className="btn-content">右</span>
                   </button>
                 </div>
-              </div>
+              </SettingBlock>
             )}
 
             {showSlideSegmentSetting && (
               <>
-                <div className="setting-block">
-                  <span className="setting-title-strip">形状</span>
+                <SettingBlock title="形状">
                   <select
                     className="value-input"
                     value={slideShape}
@@ -862,10 +886,9 @@ export const SidebarPanel = memo(function SidebarPanel({
                     <option value="elastic">弹性</option>
                     <option value="bounce">弹跳</option>
                   </select>
-                </div>
+                </SettingBlock>
 
-                <div className="setting-block">
-                  <span className="setting-title-strip">类型</span>
+                <SettingBlock title="类型">
                   {(() => {
                     const curveTypeValue = isSlideCurveTypeDisabled
                       ? ""
@@ -892,108 +915,100 @@ export const SidebarPanel = memo(function SidebarPanel({
                   </select>
                     );
                   })()}
-                </div>
+                </SettingBlock>
 
-                <div className="setting-block">
-                  <span className="setting-title-strip">精度</span>
-                  <div className="inline-stepper">
-                    <button
-                      type="button"
-                      className="stepper-btn"
-                      disabled={!canStepSlidePrecisionDown}
-                      onClick={() => stepSlidePrecision(-1)}
-                    >
-                      <StepperIcon type="minus" />
-                    </button>
-                    <input
-                      type="text"
-                      className="stepper-input"
-                      value={slidePrecision}
-                      readOnly
-                      tabIndex={-1}
-                    />
-                    <button
-                      type="button"
-                      className="stepper-btn"
-                      disabled={!canStepSlidePrecisionUp}
-                      onClick={() => stepSlidePrecision(1)}
-                    >
-                      <StepperIcon type="plus" />
-                    </button>
-                  </div>
-                </div>
+                <SettingBlock title="精度">
+                  {renderStepperControl({
+                    leadingActions: [
+                      {
+                        icon: "minus",
+                        disabled: !canStepSlidePrecisionDown,
+                        onClick: () => stepSlidePrecision(-1),
+                      },
+                    ],
+                    trailingActions: [
+                      {
+                        icon: "plus",
+                        disabled: !canStepSlidePrecisionUp,
+                        onClick: () => stepSlidePrecision(1),
+                      },
+                    ],
+                    valueNode: (
+                      <input
+                        type="text"
+                        className="stepper-input"
+                        value={slidePrecision}
+                        readOnly
+                        tabIndex={-1}
+                      />
+                    ),
+                  })}
+                </SettingBlock>
 
-                <div className="setting-block">
-                  <span className="setting-title-strip">分度</span>
-                  <div className="inline-stepper">
-                    <button
-                      type="button"
-                      className="stepper-btn"
-                      disabled={isSlideDivisionDisabled || !canStepSlideDivisionDown}
-                      onClick={() => stepSlideDivision(-1)}
-                    >
-                      <StepperIcon type="minus" />
-                    </button>
-                    <input
-                      type="text"
-                      className={`stepper-input ${isSlideDivisionDisabled ? "is-disabled" : ""}`}
-                      value={slideDivision}
-                      readOnly
-                      tabIndex={-1}
-                    />
-                    <button
-                      type="button"
-                      className="stepper-btn"
-                      disabled={isSlideDivisionDisabled || !canStepSlideDivisionUp}
-                      onClick={() => stepSlideDivision(1)}
-                    >
-                      <StepperIcon type="plus" />
-                    </button>
-                  </div>
-                </div>
+                <SettingBlock title="分度">
+                  {renderStepperControl({
+                    leadingActions: [
+                      {
+                        icon: "minus",
+                        disabled: isSlideDivisionDisabled || !canStepSlideDivisionDown,
+                        onClick: () => stepSlideDivision(-1),
+                      },
+                    ],
+                    trailingActions: [
+                      {
+                        icon: "plus",
+                        disabled: isSlideDivisionDisabled || !canStepSlideDivisionUp,
+                        onClick: () => stepSlideDivision(1),
+                      },
+                    ],
+                    valueNode: (
+                      <input
+                        type="text"
+                        className={`stepper-input ${isSlideDivisionDisabled ? "is-disabled" : ""}`}
+                        value={slideDivision}
+                        readOnly
+                        tabIndex={-1}
+                      />
+                    ),
+                  })}
+                </SettingBlock>
 
-                <div className="setting-block">
-                  <span className="setting-title-strip">震动</span>
-                  <div className="inline-stepper">
-                    <button
-                      type="button"
-                      className="stepper-btn"
-                      onClick={() => stepSlideVibration(-0.1)}
-                    >
-                      <StepperIcon type="minus" />
-                    </button>
-                    <input
-                      type="text"
-                      inputMode="decimal"
-                      className="stepper-input"
-                      value={slideVibrationInputText}
-                      title={`当前震动值: ${slideVibration}`}
-                      onChange={(event) => {
-                        setSlideVibrationInputText(event.currentTarget.value);
-                      }}
-                      onFocus={() => {
-                        slideVibrationInputEditingRef.current = true;
-                      }}
-                      onBlur={() => {
-                        slideVibrationInputEditingRef.current = false;
-                        commitSlideVibrationInput();
-                      }}
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter") {
-                          event.preventDefault();
-                          event.currentTarget.blur();
-                        }
-                      }}
-                    />
-                    <button
-                      type="button"
-                      className="stepper-btn"
-                      onClick={() => stepSlideVibration(0.1)}
-                    >
-                      <StepperIcon type="plus" />
-                    </button>
-                  </div>
-                </div>
+                <SettingBlock title="震动">
+                  {renderStepperControl({
+                    leadingActions: [
+                      {
+                        icon: "minus",
+                        onClick: () => stepSlideVibration(-0.1),
+                      },
+                    ],
+                    trailingActions: [
+                      {
+                        icon: "plus",
+                        onClick: () => stepSlideVibration(0.1),
+                      },
+                    ],
+                    valueNode: (
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        className="stepper-input"
+                        value={slideVibrationInputText}
+                        title={`当前震动值: ${slideVibration}`}
+                        onChange={(event) => {
+                          setSlideVibrationInputText(event.currentTarget.value);
+                        }}
+                        onFocus={() => {
+                          slideVibrationInputEditingRef.current = true;
+                        }}
+                        onBlur={() => {
+                          slideVibrationInputEditingRef.current = false;
+                          commitSlideVibrationInput();
+                        }}
+                        onKeyDown={handleEnterKeyBlur}
+                      />
+                    ),
+                  })}
+                </SettingBlock>
               </>
             )}
           </div>

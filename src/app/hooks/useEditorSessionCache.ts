@@ -140,6 +140,9 @@ export function useEditorSessionCache(params: any) {
     normalizeEditorOptionSettings,
     normalizeNote,
     normalizeBpmEvent,
+    normalizeBaseBpmForWrite,
+    normalizeEventBpmForWrite,
+    isLastBeatOrderedBpmNegative,
     sortNotes,
     sortBpmEvents,
     approxEq,
@@ -238,7 +241,9 @@ export function useEditorSessionCache(params: any) {
           })
           .filter((item: SlideChain | null): item is SlideChain => item !== null);
 
-        let resolvedBaseBpm = nextMetadataBase.bpm;
+        let resolvedBaseBpm = normalizeBaseBpmForWrite(nextMetadataBase.bpm, metadata.bpm) ?? metadata.bpm;
+        let ignoredBaseBpmCount = 0;
+        let ignoredEventZeroCount = 0;
         const rawBpmEvents = Array.isArray(snapshot.bpmEvents) ? snapshot.bpmEvents : [];
         const normalizedBpmEvents: ChartBpmEvent[] = [];
         for (const rawItem of rawBpmEvents) {
@@ -254,22 +259,39 @@ export function useEditorSessionCache(params: any) {
             continue;
           }
           if (approxEq(normalized.beat, 0)) {
-            resolvedBaseBpm = normalized.bpm;
+            const baseBpm = normalizeBaseBpmForWrite(normalized.bpm, resolvedBaseBpm);
+            if (baseBpm === null) {
+              ignoredBaseBpmCount += 1;
+              continue;
+            }
+            resolvedBaseBpm = baseBpm;
             continue;
           }
-          normalizedBpmEvents.push(normalized);
+          const eventBpm = normalizeEventBpmForWrite(normalized.bpm, resolvedBaseBpm);
+          if (eventBpm === null) {
+            ignoredEventZeroCount += 1;
+            continue;
+          }
+          normalizedBpmEvents.push({
+            ...normalized,
+            bpm: eventBpm,
+          });
         }
         const nextMetadata = normalizeMetadata({
           ...nextMetadataBase,
           bpm: resolvedBaseBpm,
         });
+        const sortedNormalizedBpmEvents = sortBpmEvents(normalizedBpmEvents);
+        if (isLastBeatOrderedBpmNegative(nextMetadata.bpm, sortedNormalizedBpmEvents)) {
+          throw new Error("会话缓存末尾 BPM 为负数，已阻止恢复。");
+        }
 
         setSettings(nextSettings);
         setAppOptionSettings(nextAppOptionSettings);
         setMetadata(nextMetadata);
         setNotes(nextNotes);
         setSlideChains(nextSlideChains);
-        setBpmEvents(sortBpmEvents(normalizedBpmEvents));
+        setBpmEvents(sortedNormalizedBpmEvents);
         setToolBpmValue(nextMetadata.bpm);
 
         const rawWindowPresetId = normalizeOptionalText(snapshot.windowPresetId);
@@ -356,7 +378,7 @@ export function useEditorSessionCache(params: any) {
           appOptionSettings: nextAppOptionSettings,
           notes: nextNotes,
           slideChains: nextSlideChains,
-          bpmEvents: sortBpmEvents(normalizedBpmEvents),
+          bpmEvents: sortedNormalizedBpmEvents,
           audioFileName: restoredAudioFileName,
           audioDurationSec:
             Number.isFinite(restoredAudioDuration) && restoredAudioDuration > 0
@@ -366,7 +388,15 @@ export function useEditorSessionCache(params: any) {
         } as Omit<SessionSnapshotV1, "savedAt">);
 
         clearAllSelections();
-        setStatusMessage("已恢复上次关闭前的编辑缓存。");
+        const ignoredMessages = [
+          ignoredBaseBpmCount > 0 ? `忽略 ${ignoredBaseBpmCount} 条非法基础 BPM（需 > 0）` : "",
+          ignoredEventZeroCount > 0 ? `忽略 ${ignoredEventZeroCount} 条 BPM=0 事件` : "",
+        ].filter((message) => message.length > 0);
+        if (ignoredMessages.length > 0) {
+          setStatusMessage(`已恢复上次关闭前的编辑缓存，并${ignoredMessages.join("，")}。`);
+        } else {
+          setStatusMessage("已恢复上次关闭前的编辑缓存。");
+        }
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         setStatusMessage(`会话缓存恢复失败：${message}`);
