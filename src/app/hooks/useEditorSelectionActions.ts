@@ -10,11 +10,15 @@ export function useEditorSelectionActions(params: any) {
     normalizeSettings,
     normalizeNote,
     normalizeBpmEvent,
+    isLastBeatOrderedBpmNegative,
     sortNotes,
     sortBpmEvents,
     selectedBpmEventId,
     BASE_BPM_LINE_ID,
+    bpmEvents,
     normalizeEditorBpm,
+    normalizeBaseBpmForWrite,
+    normalizeEventBpmForWrite,
     toFinite,
     approxEq,
     hasOffsetSelection,
@@ -97,7 +101,15 @@ export function useEditorSelectionActions(params: any) {
 
     if (selectedBpmEventId === BASE_BPM_LINE_ID) {
       if (typeof patch.bpm !== "undefined") {
-        const nextBpm = normalizeEditorBpm(patch.bpm, metadata.bpm);
+        const nextBpm = normalizeBaseBpmForWrite(patch.bpm, metadata.bpm);
+        if (nextBpm === null) {
+          setStatusMessage("基础 BPM 必须大于 0。");
+          return;
+        }
+        if (isLastBeatOrderedBpmNegative(nextBpm, bpmEvents)) {
+          setStatusMessage("已阻止：按 Beat 顺序最后一个 BPM 不能为负数。");
+          return;
+        }
         setMetadata((current: any) => ({ ...current, bpm: nextBpm }));
       }
       return;
@@ -113,10 +125,17 @@ export function useEditorSelectionActions(params: any) {
         typeof patch.beat === "undefined"
           ? current.beat
           : Math.max(0, Number(toFinite(patch.beat, current.beat).toFixed(6)));
-      const nextBpm =
-        typeof patch.bpm === "undefined"
-          ? current.bpm
-          : normalizeEditorBpm(patch.bpm, current.bpm);
+      if (typeof patch.beat !== "undefined" && approxEq(nextBeat, 0)) {
+        setStatusMessage("非基础 BPM 的 Beat 必须大于 0。");
+        return previous;
+      }
+      const nextBpmCandidate =
+        typeof patch.bpm === "undefined" ? current.bpm : normalizeEventBpmForWrite(patch.bpm, current.bpm);
+      if (typeof patch.bpm !== "undefined" && nextBpmCandidate === null) {
+        setStatusMessage("非基础 BPM 不能为 0。");
+        return previous;
+      }
+      const nextBpm = nextBpmCandidate ?? current.bpm;
 
       const normalized = {
         id: current.id,
@@ -127,7 +146,12 @@ export function useEditorSelectionActions(params: any) {
       const filtered = previous.filter(
         (event) => event.id === normalized.id || !approxEq(event.beat, normalized.beat),
       );
-      return sortBpmEvents(filtered.map((event) => (event.id === normalized.id ? normalized : event)));
+      const nextEvents = filtered.map((event) => (event.id === normalized.id ? normalized : event));
+      if (isLastBeatOrderedBpmNegative(metadata.bpm, nextEvents)) {
+        setStatusMessage("已阻止：按 Beat 顺序最后一个 BPM 不能为负数。");
+        return previous;
+      }
+      return sortBpmEvents(nextEvents);
     });
   };
 
@@ -162,10 +186,26 @@ export function useEditorSelectionActions(params: any) {
   const updateActiveBpm = (raw: unknown) => {
     const nextBpm = normalizeEditorBpm(raw, activeBpmValue);
     if (isEditingPlacedBpm && selectedBpmEvent) {
-      updateSelectedBpmEvent({ bpm: nextBpm });
-      return;
+      if (isBaseBpmSelected) {
+        const allowedBaseBpm = normalizeBaseBpmForWrite(nextBpm, selectedBpmEvent.bpm);
+        if (allowedBaseBpm === null) {
+          setStatusMessage("基础 BPM 必须大于 0。");
+          return false;
+        }
+        updateSelectedBpmEvent({ bpm: allowedBaseBpm });
+        return true;
+      }
+
+      const allowedEventBpm = normalizeEventBpmForWrite(nextBpm, selectedBpmEvent.bpm);
+      if (allowedEventBpm === null) {
+        setStatusMessage("非基础 BPM 不能为 0。");
+        return false;
+      }
+      updateSelectedBpmEvent({ bpm: allowedEventBpm });
+      return true;
     }
     setToolBpmValue(nextBpm);
+    return true;
   };
 
   const stepActiveLane = (delta: number) => {
@@ -287,9 +327,17 @@ export function useEditorSelectionActions(params: any) {
     }
 
     const nextBpm = normalizeEditorBpm(parsed, activeBpmValue);
-    updateActiveBpm(nextBpm);
-    setBpmInputText(formatEditorNumeric(nextBpm));
-  }, [activeBpmValue, bpmInputText, formatEditorNumeric, normalizeEditorBpm, parseNumericExpression, setBpmInputText]);
+    const applied = updateActiveBpm(nextBpm);
+    setBpmInputText(formatEditorNumeric(applied ? nextBpm : activeBpmValue));
+  }, [
+    activeBpmValue,
+    bpmInputText,
+    formatEditorNumeric,
+    normalizeEditorBpm,
+    parseNumericExpression,
+    setBpmInputText,
+    updateActiveBpm,
+  ]);
 
   const commitLaneInput = useCallback(() => {
     if (isLaneSettingLocked) {

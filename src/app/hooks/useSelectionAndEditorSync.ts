@@ -17,6 +17,7 @@ export function useSelectionAndEditorSync(params: any) {
     sortNotes,
     notes,
     bpmEvents,
+    metadata,
     slideChains,
     setSlideBuildState,
     slideBuildRef,
@@ -60,6 +61,7 @@ export function useSelectionAndEditorSync(params: any) {
     approxEq,
     setBpmEvents,
     sortBpmEvents,
+    isLastBeatOrderedBpmNegative,
     spRhythmNoteEnabled,
   } = params;
 
@@ -315,6 +317,41 @@ export function useSelectionAndEditorSync(params: any) {
         return;
       }
 
+      const shouldMoveSelectedBpmEvents = selectedBpmEventIds.length > 0 && !approxEq(beatDelta, 0);
+      const selectedBpmSet = shouldMoveSelectedBpmEvents ? new Set(selectedBpmEventIds) : null;
+      const minEventBeat = Number((1 / beatDivision).toFixed(6));
+      const buildShiftedBpmEvents = (source: ChartBpmEvent[]): ChartBpmEvent[] => {
+        if (!shouldMoveSelectedBpmEvents || !selectedBpmSet) {
+          return source;
+        }
+        const shiftedById = new Map<string, ChartBpmEvent>();
+        for (const event of source) {
+          if (!selectedBpmSet.has(event.id)) {
+            continue;
+          }
+          shiftedById.set(event.id, {
+            ...event,
+            beat: Math.max(minEventBeat, Number((event.beat + beatDelta).toFixed(6))),
+          });
+        }
+        const shiftedEvents = Array.from(shiftedById.values());
+        const occupiedBeats = new Set(shiftedEvents.map((event) => event.beat.toFixed(6)));
+        const remained = source.filter(
+          (event) =>
+            !selectedBpmSet.has(event.id) &&
+            !occupiedBeats.has(event.beat.toFixed(6)),
+        );
+        return sortBpmEvents([...remained, ...shiftedEvents]);
+      };
+
+      if (shouldMoveSelectedBpmEvents) {
+        const nextBpmEvents = buildShiftedBpmEvents(bpmEvents);
+        if (isLastBeatOrderedBpmNegative(metadata.bpm, nextBpmEvents)) {
+          setStatusMessage("已阻止：按 Beat 顺序最后一个 BPM 不能为负数。");
+          return;
+        }
+      }
+
       if (selectedNoteIds.length > 0) {
         const selectedSet = new Set<string>(selectedNoteIds as string[]);
         const epsilon = 1e-6;
@@ -374,35 +411,18 @@ export function useSelectionAndEditorSync(params: any) {
         });
       }
 
-      if (selectedBpmEventIds.length > 0 && !approxEq(beatDelta, 0)) {
-        const selectedBpmSet = new Set(selectedBpmEventIds);
-        setBpmEvents((previous: ChartBpmEvent[]) => {
-          const shiftedById = new Map<string, ChartBpmEvent>();
-          for (const event of previous) {
-            if (!selectedBpmSet.has(event.id)) {
-              continue;
-            }
-            shiftedById.set(event.id, {
-              ...event,
-              beat: Math.max(0, Number((event.beat + beatDelta).toFixed(6))),
-            });
-          }
-          const shiftedEvents = Array.from(shiftedById.values());
-          const occupiedBeats = new Set(shiftedEvents.map((event) => event.beat.toFixed(6)));
-          const remained = previous.filter(
-            (event) =>
-              !selectedBpmSet.has(event.id) &&
-              !occupiedBeats.has(event.beat.toFixed(6)),
-          );
-          return sortBpmEvents([...remained, ...shiftedEvents]);
-        });
+      if (shouldMoveSelectedBpmEvents) {
+        setBpmEvents((previous: ChartBpmEvent[]) => buildShiftedBpmEvents(previous));
       }
 
       setStatusMessage(reason);
     },
     [
       approxEq,
+      bpmEvents,
       beatDivision,
+      isLastBeatOrderedBpmNegative,
+      metadata.bpm,
       notePositionKey,
       normalizeNote,
       quantizeBeat,

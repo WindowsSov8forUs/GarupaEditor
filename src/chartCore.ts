@@ -316,10 +316,14 @@ function normalizeBpmValue(value: unknown, fallback: number): number {
 }
 
 function toTimingBpm(value: number, fallback: number): number {
-  const fallbackAbs = Math.max(0.001, Math.abs(toFinite(fallback, DEFAULT_METADATA.bpm)));
-  const numeric = Math.abs(toFinite(value, fallbackAbs));
-  if (numeric < 0.001) {
-    return fallbackAbs;
+  const fallbackNumeric = toFinite(fallback, DEFAULT_METADATA.bpm);
+  const fallbackNonZero =
+    Math.abs(fallbackNumeric) < 0.001
+      ? (fallbackNumeric < 0 ? -0.001 : 0.001)
+      : fallbackNumeric;
+  const numeric = toFinite(value, fallbackNonZero);
+  if (Math.abs(numeric) < 0.001) {
+    return fallbackNonZero;
   }
   return numeric;
 }
@@ -389,7 +393,9 @@ export function sortBpmEvents(events: ChartBpmEvent[]): ChartBpmEvent[] {
     if (!approxEq(a.beat, b.beat)) {
       return a.beat - b.beat;
     }
-    return a.id.localeCompare(b.id);
+    // Keep insertion order for same-beat events (stable sort) so import order
+    // can deterministically decide which BPM value is collapsed as the top layer.
+    return 0;
   });
 }
 
@@ -411,7 +417,8 @@ export function normalizeBpmEvent(
 }
 
 export function buildBpmTimeline(baseBpm: number, events: ChartBpmEvent[]): BpmTimelineNode[] {
-  const normalizedBase = normalizeBpmValue(baseBpm, DEFAULT_METADATA.bpm);
+  const rawBase = normalizeBpmValue(baseBpm, DEFAULT_METADATA.bpm);
+  const normalizedBase = rawBase > 0 ? rawBase : DEFAULT_METADATA.bpm;
   const sorted = sortBpmEvents(events);
   const collapsed: BpmTimelineNode[] = [];
 
@@ -449,21 +456,31 @@ export function buildBpmTimeline(baseBpm: number, events: ChartBpmEvent[]): BpmT
 }
 
 export function beatToSeconds(beat: number, timeline: BpmTimelineNode[]): number {
+  if (!Array.isArray(timeline) || timeline.length === 0) {
+    return Math.max(0, beat) * (60 / DEFAULT_METADATA.bpm);
+  }
   const normalizedBeat = Math.max(0, beat);
   let segment = timeline[0];
+  let segmentIndex = 0;
   for (let index = 1; index < timeline.length; index += 1) {
     if (timeline[index].beat > normalizedBeat) {
       break;
     }
     segment = timeline[index];
+    segmentIndex = index;
   }
-  return segment.timeSec + ((normalizedBeat - segment.beat) * 60) / toTimingBpm(segment.bpm, DEFAULT_METADATA.bpm);
+  const fallbackBpm = segmentIndex > 0 ? timeline[segmentIndex - 1].bpm : DEFAULT_METADATA.bpm;
+  return segment.timeSec + ((normalizedBeat - segment.beat) * 60) / toTimingBpm(segment.bpm, fallbackBpm);
 }
 
-export function secondsToBeat(seconds: number, timeline: BpmTimelineNode[]): number {
+function secondsToBeatProjected(seconds: number, timeline: BpmTimelineNode[]): number {
+  if (!Array.isArray(timeline) || timeline.length === 0) {
+    return 0;
+  }
   const normalizedSec = Math.max(0, seconds);
   let segment = timeline[0];
   let next: BpmTimelineNode | null = null;
+  let segmentIndex = 0;
 
   for (let index = 1; index < timeline.length; index += 1) {
     if (timeline[index].timeSec > normalizedSec) {
@@ -471,14 +488,90 @@ export function secondsToBeat(seconds: number, timeline: BpmTimelineNode[]): num
       break;
     }
     segment = timeline[index];
+    segmentIndex = index;
   }
 
-  const bpmForTiming = toTimingBpm(segment.bpm, DEFAULT_METADATA.bpm);
+  const fallbackBpm = segmentIndex > 0 ? timeline[segmentIndex - 1].bpm : DEFAULT_METADATA.bpm;
+  const bpmForTiming = toTimingBpm(segment.bpm, fallbackBpm);
   if (!next) {
     return segment.beat + (normalizedSec - segment.timeSec) * (bpmForTiming / 60);
   }
 
   return segment.beat + (normalizedSec - segment.timeSec) * (bpmForTiming / 60);
+}
+
+export function secondsToBeatCandidates(seconds: number, timeline: BpmTimelineNode[]): number[] {
+  const normalizedSec = Math.max(0, seconds);
+  if (!Array.isArray(timeline) || timeline.length === 0) {
+    return [0];
+  }
+
+  const candidates: number[] = [];
+  for (let index = 0; index < timeline.length; index += 1) {
+    const segment = timeline[index];
+    const fallbackBpm = index > 0 ? timeline[index - 1].bpm : DEFAULT_METADATA.bpm;
+    const bpmForTiming = toTimingBpm(segment.bpm, fallbackBpm);
+    const startBeat = Math.max(0, Number(segment.beat));
+    const startSec = Number(segment.timeSec);
+    const beatPerSecond = bpmForTiming / 60;
+
+    if (!Number.isFinite(startBeat) || !Number.isFinite(startSec) || !Number.isFinite(beatPerSecond) || beatPerSecond === 0) {
+      continue;
+    }
+
+    const next = index + 1 < timeline.length ? timeline[index + 1] : null;
+    if (next) {
+      const endBeat = Math.max(startBeat, Number(next.beat));
+      if (!Number.isFinite(endBeat) || endBeat < startBeat) {
+        continue;
+      }
+      const endSec = startSec + (endBeat - startBeat) * (60 / bpmForTiming);
+      const minSec = Math.min(startSec, endSec) - 1e-6;
+      const maxSec = Math.max(startSec, endSec) + 1e-6;
+      if (normalizedSec < minSec || normalizedSec > maxSec) {
+        continue;
+      }
+      const beat = startBeat + (normalizedSec - startSec) * beatPerSecond;
+      if (beat < startBeat - 1e-6 || beat > endBeat + 1e-6 || !Number.isFinite(beat)) {
+        continue;
+      }
+      const normalizedBeat = Math.max(0, Number(beat.toFixed(6)));
+      if (!candidates.some((item) => approxEq(item, normalizedBeat))) {
+        candidates.push(normalizedBeat);
+      }
+      continue;
+    }
+
+    if (beatPerSecond > 0 && normalizedSec < startSec - 1e-6) {
+      continue;
+    }
+    if (beatPerSecond < 0 && normalizedSec > startSec + 1e-6) {
+      continue;
+    }
+    const beat = startBeat + (normalizedSec - startSec) * beatPerSecond;
+    if (beat < startBeat - 1e-6 || !Number.isFinite(beat)) {
+      continue;
+    }
+    const normalizedBeat = Math.max(0, Number(beat.toFixed(6)));
+    if (!candidates.some((item) => approxEq(item, normalizedBeat))) {
+      candidates.push(normalizedBeat);
+    }
+  }
+
+  if (candidates.length === 0) {
+    const projected = Math.max(0, Number(secondsToBeatProjected(normalizedSec, timeline).toFixed(6)));
+    return [projected];
+  }
+
+  return candidates.sort((a, b) => a - b);
+}
+
+export function secondsToBeat(seconds: number, timeline: BpmTimelineNode[]): number {
+  const candidates = secondsToBeatCandidates(seconds, timeline);
+  if (candidates.length === 0) {
+    return 0;
+  }
+  return candidates.reduce((maxBeat, beat) => (beat > maxBeat ? beat : maxBeat), candidates[0]);
 }
 
 export function parseSkinSelectionFromDocument(

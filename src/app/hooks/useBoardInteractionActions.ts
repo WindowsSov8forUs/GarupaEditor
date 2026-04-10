@@ -1,5 +1,6 @@
 ﻿import { startTransition, useCallback, type MouseEvent } from "react";
 import type { ChartNote, EditorTool, NoteType } from "../../chartCore";
+import { isLastBeatOrderedBpmNegative } from "../editorHelpers";
 
 export function useBoardInteractionActions(params: any) {
   const {
@@ -50,11 +51,13 @@ export function useBoardInteractionActions(params: any) {
     removeNoteIdsFromSlideChains,
     setSlideChains,
     normalizeBpmEvent,
-    normalizeEditorBpm,
+    normalizeBaseBpmForWrite,
+    normalizeEventBpmForWrite,
     toolBpmValue,
     metadata,
     setMetadata,
     setBpmEvents,
+    bpmEvents,
     BASE_BPM_LINE_ID,
     setSelectedBpmEventIds,
     selectedNoteIds,
@@ -435,15 +438,37 @@ export function useBoardInteractionActions(params: any) {
 
   const placeBpmEvent = (beat: number) => {
     const quantizedBeat = quantizeBeat(beat, beatDivision);
-    const bpm = normalizeEditorBpm(toolBpmValue, metadata.bpm);
 
     if (approxEq(quantizedBeat, 0)) {
+      const bpm = normalizeBaseBpmForWrite(toolBpmValue, metadata.bpm);
+      if (bpm === null) {
+        setStatusMessage("基础 BPM 必须大于 0。");
+        return;
+      }
+      if (isLastBeatOrderedBpmNegative(bpm, bpmEvents)) {
+        setStatusMessage("已阻止：按 Beat 顺序最后一个 BPM 不能为负数。");
+        return;
+      }
       setMetadata((current: any) => ({ ...current, bpm }));
       setBpmEvents((previous: any[]) => previous.filter((event) => !approxEq(event.beat, 0)));
       setSelectedBpmEventId(BASE_BPM_LINE_ID);
       clearSelectedNotes();
       clearSelectedBpmEvents();
       setStatusMessage("状态已更新。");
+      return;
+    }
+
+    const bpm = normalizeEventBpmForWrite(toolBpmValue, metadata.bpm);
+    if (bpm === null) {
+      setStatusMessage("非基础 BPM 不能为 0。");
+      return;
+    }
+    const nextEvents = [
+      ...bpmEvents.filter((event: any) => !approxEq(event.beat, quantizedBeat)),
+      { beat: quantizedBeat, bpm },
+    ];
+    if (isLastBeatOrderedBpmNegative(metadata.bpm, nextEvents)) {
+      setStatusMessage("已阻止：按 Beat 顺序最后一个 BPM 不能为负数。");
       return;
     }
 

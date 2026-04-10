@@ -54,3 +54,58 @@ export function normalizeEditorBpm(value: unknown, fallback: number): number {
   const numeric = toFinite(value, fallback);
   return Number(numeric.toFixed(6));
 }
+
+const BPM_ZERO_EPSILON = 1e-9;
+
+export function normalizeBaseBpmForWrite(value: unknown, fallback: number): number | null {
+  const normalized = normalizeEditorBpm(value, fallback);
+  if (!(normalized > 0)) {
+    return null;
+  }
+  return normalized;
+}
+
+export function normalizeEventBpmForWrite(value: unknown, fallback: number): number | null {
+  const normalized = normalizeEditorBpm(value, fallback);
+  if (Math.abs(normalized) <= BPM_ZERO_EPSILON) {
+    return null;
+  }
+  return normalized;
+}
+
+const BPM_BEAT_EPSILON = 1e-6;
+
+export function isLastBeatOrderedBpmNegative(
+  baseBpm: number,
+  events: Array<{ beat: number; bpm: number }>,
+): boolean {
+  let tailBpm = normalizeEditorBpm(baseBpm, 120);
+  let hasTailEvent = false;
+  let tailBeat = 0;
+  const ordered = [...events].sort((left, right) => {
+    const leftBeat = Number(left?.beat ?? 0);
+    const rightBeat = Number(right?.beat ?? 0);
+    if (Math.abs(leftBeat - rightBeat) > BPM_BEAT_EPSILON) {
+      return leftBeat - rightBeat;
+    }
+    // Keep stable order for same beat and use last one as effective layer.
+    return 0;
+  });
+
+  for (const event of ordered) {
+    const beat = Number(event?.beat ?? 0);
+    const bpm = normalizeEditorBpm(event?.bpm ?? tailBpm, tailBpm);
+    if (!Number.isFinite(beat) || beat < 0) {
+      continue;
+    }
+    if (!hasTailEvent || Math.abs(beat - tailBeat) > BPM_BEAT_EPSILON) {
+      tailBeat = beat;
+      tailBpm = bpm;
+      hasTailEvent = true;
+      continue;
+    }
+    tailBpm = bpm;
+  }
+
+  return tailBpm < 0;
+}

@@ -42,6 +42,7 @@ type ParsedJsonNote = {
 type ShiftedBpmItem = {
   beat: number;
   value: number;
+  sourceIndex: number;
 };
 
 type AppliedChartJsonSummary = {
@@ -125,6 +126,9 @@ export function useEditorIoAndShortcuts(params: any) {
     clearSelectedBpmEvents,
     setSelectedBpmEventId,
     toFinite,
+    normalizeBaseBpmForWrite,
+    normalizeEventBpmForWrite,
+    isLastBeatOrderedBpmNegative,
     setPendingSkinSelection,
     applyBestdoriSkinSelectionRef,
     setAudioDurationSec,
@@ -916,7 +920,7 @@ export function useEditorIoAndShortcuts(params: any) {
       if (itemType === "BPM") {
         const beat = parseBeatNumber(rawItem.beat, `item[${itemIndex}].beat`);
         const value = Number(parseFiniteNumber(rawItem.value, `item[${itemIndex}].value`).toFixed(6));
-        rawBpmItems.push({ beat, value });
+        rawBpmItems.push({ beat, value, sourceIndex: itemIndex });
         return;
       }
 
@@ -984,9 +988,28 @@ export function useEditorIoAndShortcuts(params: any) {
     }
 
     const beatOffset = rawBpmItems[baseBpmIndex].beat;
+    const baseBpmSource = rawBpmItems[baseBpmIndex];
+    const baseBpm = normalizeBaseBpmForWrite(baseBpmSource.value, metadata.bpm);
+    if (baseBpm === null) {
+      throw new Error(
+        `item[${baseBpmSource.sourceIndex}].value must be > 0 when this BPM item is used as beat=0 base.`,
+      );
+    }
+
+    for (let index = 0; index < rawBpmItems.length; index += 1) {
+      if (index === baseBpmIndex) {
+        continue;
+      }
+      const item = rawBpmItems[index];
+      if (normalizeEventBpmForWrite(item.value, baseBpm) === null) {
+        throw new Error(`item[${item.sourceIndex}].value cannot be 0 for non-base BPM.`);
+      }
+    }
+
     const shiftedBpmItems = rawBpmItems.map((item) => ({
       beat: shiftAndClampBeat(item.beat, beatOffset),
       value: item.value,
+      sourceIndex: item.sourceIndex,
     }));
 
     for (const parsedNote of topLevelParsedNotes) {
@@ -996,7 +1019,6 @@ export function useEditorIoAndShortcuts(params: any) {
       parsedNote.note.beat = shiftAndClampBeat(parsedNote.note.beat, beatOffset);
     }
 
-    const baseBpm = toBpmValue(rawBpmItems[baseBpmIndex].value);
     const nextMetadata: ChartMetadata = {
       ...metadata,
       bpm: baseBpm,
@@ -1007,16 +1029,34 @@ export function useEditorIoAndShortcuts(params: any) {
       ...slideParsedNotes.map(({ note }) => note),
     ]);
 
+    const dedupedBpmByBeat = new Map<string, { beat: number; bpm: number }>();
+    for (let index = 0; index < shiftedBpmItems.length; index += 1) {
+      if (index === baseBpmIndex) {
+        continue;
+      }
+      const item = shiftedBpmItems[index];
+      if (approxEq(item.beat, 0)) {
+        continue;
+      }
+      const bpm = normalizeEventBpmForWrite(item.value, baseBpm);
+      if (bpm === null) {
+        continue;
+      }
+      dedupedBpmByBeat.set(item.beat.toFixed(6), {
+        beat: item.beat,
+        bpm,
+      });
+    }
     const nextBpmEvents = sortBpmEvents(
-      shiftedBpmItems
-        .filter((_, index) => index !== baseBpmIndex)
-        .filter((item) => !approxEq(item.beat, 0))
-        .map((item) => ({
-          id: createId(),
-          beat: item.beat,
-          bpm: item.value,
-        } as ChartBpmEvent)),
+      Array.from(dedupedBpmByBeat.values()).map((item) => ({
+        id: createId(),
+        beat: item.beat,
+        bpm: item.bpm,
+      } as ChartBpmEvent)),
     );
+    if (isLastBeatOrderedBpmNegative(baseBpm, nextBpmEvents)) {
+      throw new Error("按 Beat 顺序最后一个 BPM 不能为负数。");
+    }
 
     const shouldRegressSpRhythmOnImport = appOptionSettings.spRhythmNoteEnabled === false;
     const shouldRegressHabahiroOnImport = appOptionSettings.habahiro === false;

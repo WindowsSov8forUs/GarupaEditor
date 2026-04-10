@@ -87,7 +87,11 @@ export function useEditorRenderModel(params: any) {
       beat: Number(node.beat ?? 0),
       timeSec: Number(node.timeSec ?? 0),
       bpm: Number(node.bpm ?? 120),
-      timePerBeat: 60 / Math.max(0.001, Math.abs(Number(node.bpm ?? 120))),
+      timePerBeat: (() => {
+        const bpm = Number(node.bpm ?? 120);
+        const safeBpm = Math.abs(bpm) < 0.001 ? (bpm < 0 ? -0.001 : 0.001) : bpm;
+        return 60 / safeBpm;
+      })(),
     }));
   }, [bpmTimeline]);
 

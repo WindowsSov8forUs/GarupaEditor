@@ -14,11 +14,14 @@ import {
   BASE_BPM_LINE_ID,
   DEFAULT_SPRITE_ASPECT_RATIO,
   EDITOR_MIN_WIDTH,
+  isLastBeatOrderedBpmNegative,
   SIDEBAR_MAX_WIDTH,
   SIDEBAR_MIN_WIDTH,
   WORKSPACE_DIVIDER_WIDTH,
   formatEditorNumeric,
   normalizeEditorBpm,
+  normalizeBaseBpmForWrite,
+  normalizeEventBpmForWrite,
   parseNumericExpression,
   type SlideBuildState,
   type SlideChain,
@@ -43,6 +46,7 @@ import { useEditorSelectionActions } from "./hooks/useEditorSelectionActions";
 import { usePlayfieldRenderers } from "./hooks/usePlayfieldRenderers";
 import { useSelectionAndEditorSync } from "./hooks/useSelectionAndEditorSync";
 import { useSidebarResizeState } from "./hooks/useSidebarResizeState";
+import { buildSelectionMirrorOffsetMap } from "./slideHiddenMoveOffsets";
 import {
   useNotePaletteSpriteRendering,
   usePlayfieldSpriteRendering,
@@ -112,6 +116,7 @@ import {
   quantizeBeat,
   sanitizeFileName,
   secondsToBeat,
+  secondsToBeatCandidates,
   sortBpmEvents,
   sortNotes,
   toFinite,
@@ -127,6 +132,9 @@ import defaultCoverImage from "../assets/default-cover.png";
 import undoActionIcon from "../assets/icons/undo-action.svg";
 import clearActionIcon from "../assets/icons/clear-action.svg";
 import applyActionIcon from "../assets/icons/apply-action.svg";
+import copyActionIcon from "../assets/icons/copy-action.svg";
+import pasteActionIcon from "../assets/icons/paste-action.svg";
+import mirrorActionIcon from "../assets/icons/mirror-action.svg";
 import "../App.css";
 import { type OverlayDialogState } from "../components/OverlayDialogModal";
 
@@ -139,6 +147,7 @@ const PLAYBACK_SPEED_OPTIONS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 3, 4] as const
 const PLAYBACK_SE_POOL_SIZE = 8;
 const PLAYBACK_SE_TRIGGER_LEAD_SEC = 0.02;
 const PLAYBACK_VIEWPORT_EDGE_TOLERANCE_PX = 8;
+const MIRROR_AXIS_LANE = 3;
 
 function formatDurationPrecise(sec: number): string {
   if (!Number.isFinite(sec) || sec <= 0) {
@@ -749,10 +758,14 @@ function ChartEditorController() {
     return aligned + beatsPerMeasure;
   }, [audioBeatByAbsoluteTime, beatsPerMeasure, maxNoteBeat]);
 
-  const totalDurationSec = useMemo(
-    () => beatToSeconds(totalBeats, bpmTimeline),
-    [totalBeats, bpmTimeline],
-  );
+  const totalDurationSec = useMemo(() => {
+    const durationFromTailBeat = beatToSeconds(totalBeats, bpmTimeline);
+    const durationFromTimeline = bpmTimeline.reduce(
+      (maxValue, node) => Math.max(maxValue, Number.isFinite(node.timeSec) ? node.timeSec : 0),
+      0,
+    );
+    return Math.max(durationFromTailBeat, durationFromTimeline);
+  }, [totalBeats, bpmTimeline]);
 
   const totalSteps = Math.max(1, Math.ceil(totalBeats * beatDivision));
   const boardWidth = settings.laneCount * LANE_WIDTH;
@@ -1087,15 +1100,31 @@ function ChartEditorController() {
         bpmEventsRef.current.map((event) => event.beat.toFixed(6)),
       );
       const pastedBpmEvents = copiedChartPayload.bpmEvents
-        .map((event) => normalizeBpmEvent(
-          {
-            ...event,
-            id: createId(),
-            beat: Math.max(0, Number((event.beat + beatDelta).toFixed(6))),
-          },
-          beatDivision,
-          metadata.bpm,
-        ))
+        .map((event) => {
+          const normalized = normalizeBpmEvent(
+            {
+              ...event,
+              id: createId(),
+              beat: Math.max(0, Number((event.beat + beatDelta).toFixed(6))),
+            },
+            beatDivision,
+            metadata.bpm,
+          );
+          if (!normalized) {
+            return null;
+          }
+          if (approxEq(normalized.beat, 0)) {
+            return null;
+          }
+          const validatedBpm = normalizeEventBpmForWrite(normalized.bpm, metadata.bpm);
+          if (validatedBpm === null) {
+            return null;
+          }
+          return {
+            ...normalized,
+            bpm: validatedBpm,
+          };
+        })
         .filter((event): event is ChartBpmEvent => event !== null)
         .filter((event) => {
           const beatKey = event.beat.toFixed(6);
@@ -1105,6 +1134,14 @@ function ChartEditorController() {
           occupiedBpmBeatKeys.add(beatKey);
           return true;
         });
+
+      if (pastedBpmEvents.length > 0) {
+        const nextBpmEvents = [...bpmEventsRef.current, ...pastedBpmEvents];
+        if (isLastBeatOrderedBpmNegative(metadata.bpm, nextBpmEvents)) {
+          setStatusMessage("粘贴失败：按 Beat 顺序最后一个 BPM 不能为负数。");
+          return;
+        }
+      }
 
       if (pastedNotes.length === 0 && pastedSlideChains.length === 0 && pastedBpmEvents.length === 0) {
         setStatusMessage("粘贴失败：目标位置已被占用。");
@@ -1144,8 +1181,12 @@ function ChartEditorController() {
       beatDivision,
       copiedChartPayload,
       createId,
+      approxEq,
       metadata.bpm,
+      normalizeBaseBpmForWrite,
       normalizeBpmEvent,
+      normalizeEventBpmForWrite,
+      isLastBeatOrderedBpmNegative,
       normalizeNote,
       setBpmEvents,
       setNotes,
@@ -1669,6 +1710,131 @@ function ChartEditorController() {
     selectedBpmEventCount > 0 ||
     (selectedBpmEventId !== null && selectedBpmEventId !== BASE_BPM_LINE_ID) ||
     hasLongLineSelection;
+  const canMirrorSelection = selectedNoteCount > 0;
+  const mirrorSelectedNotes = useCallback(() => {
+    if (selectedNoteIds.length === 0) {
+      setStatusMessage("当前没有可镜像的选中音符。");
+      return;
+    }
+    if (!selectedNoteIds.some((id) => noteById.has(id))) {
+      setStatusMessage("选中的音符已失效，请重新框选后重试。");
+      return;
+    }
+
+    const selectedSet = new Set(selectedNoteIds);
+    const toFixed6 = (value: number): number => Number(value.toFixed(6));
+    const notePositionKey = (lane: number, beat: number): string => `${lane.toFixed(6)}|${beat.toFixed(6)}`;
+    const mirrorLaneByNote = (note: Pick<ChartNote, "type" | "width">, lane: number): number => {
+      const mirrored = toFixed6(2 * MIRROR_AXIS_LANE - lane);
+      if (appOptionSettings.habahiro && !isDirectionalNoteType(note.type)) {
+        const span = normalizeRhythmWidth(note.width);
+        return toFixed6(mirrored - (span - 1));
+      }
+      return mirrored;
+    };
+    const mirrorLaneDeltaByNote = (note: ChartNote): number => {
+      const mirroredLane = mirrorLaneByNote(note, note.lane);
+      return toFixed6(mirroredLane - note.lane);
+    };
+
+    setNotes((previous: ChartNote[]) => {
+      const selectedOffsetById = new Map<string, { lane: number; beat: number }>();
+      for (const note of previous) {
+        if (!selectedSet.has(note.id)) {
+          continue;
+        }
+        selectedOffsetById.set(note.id, {
+          lane: mirrorLaneDeltaByNote(note),
+          beat: 0,
+        });
+      }
+      if (selectedOffsetById.size === 0) {
+        return previous;
+      }
+
+      const offsetById = buildSelectionMirrorOffsetMap({
+        notes: previous,
+        slideChains: slideChains as Array<{ noteIds: string[] }>,
+        selectedNoteIds: selectedSet,
+        selectedOffsetById,
+        resolveMirrorLaneDelta: mirrorLaneDeltaByNote,
+      });
+      if (offsetById.size === 0) {
+        return previous;
+      }
+
+      const transformedById = new Map<string, ChartNote>();
+      for (const note of previous) {
+        const offset = offsetById.get(note.id);
+        if (!offset) {
+          continue;
+        }
+
+        if (selectedSet.has(note.id)) {
+          const mirroredType =
+            note.type === "directional_flick_left"
+              ? "directional_flick_right"
+              : note.type === "directional_flick_right"
+                ? "directional_flick_left"
+                : note.type;
+          const transformed = normalizeNote(
+            {
+              ...note,
+              type: mirroredType,
+              lane: mirrorLaneByNote(note, note.lane),
+              ...(typeof note.endLane === "number"
+                ? { endLane: mirrorLaneByNote(note, note.endLane) }
+                : { endLane: undefined }),
+            },
+            settings,
+          );
+          if (transformed) {
+            transformedById.set(transformed.id, transformed);
+          }
+          continue;
+        }
+
+        const transformed = normalizeNote(
+          {
+            ...note,
+            lane: toFixed6(note.lane + offset.lane),
+          },
+          settings,
+        );
+        if (transformed) {
+          transformedById.set(transformed.id, transformed);
+        }
+      }
+
+      if (transformedById.size === 0) {
+        return previous;
+      }
+
+      const transformedNotes = Array.from(transformedById.values());
+      const occupied = new Set(transformedNotes.map((note) => notePositionKey(note.lane, note.beat)));
+      const transformedIdSet = new Set(transformedById.keys());
+      const remained = previous.filter(
+        (note) =>
+          !transformedIdSet.has(note.id) &&
+          !occupied.has(notePositionKey(note.lane, note.beat)),
+      );
+      return sortNotes([...remained, ...transformedNotes]);
+    });
+
+    setStatusMessage("已按 lane 3 轴镜像翻转选中音符。");
+  }, [
+    appOptionSettings.habahiro,
+    isDirectionalNoteType,
+    normalizeNote,
+    normalizeRhythmWidth,
+    noteById,
+    selectedNoteIds,
+    setNotes,
+    setStatusMessage,
+    settings,
+    slideChains,
+    sortNotes,
+  ]);
   const {
     clearSelectedNotes,
     clearSelectedBpmEvents,
@@ -1692,6 +1858,7 @@ function ChartEditorController() {
     sortNotes,
     notes,
     bpmEvents,
+    metadata,
     slideChains,
     setSlideBuildState,
     slideBuildRef,
@@ -1735,6 +1902,7 @@ function ChartEditorController() {
     approxEq,
     setBpmEvents,
     sortBpmEvents,
+    isLastBeatOrderedBpmNegative,
     spRhythmNoteEnabled: appOptionSettings.spRhythmNoteEnabled,
   });
 
@@ -1771,11 +1939,15 @@ function ChartEditorController() {
     normalizeSettings,
     normalizeNote,
     normalizeBpmEvent,
+    isLastBeatOrderedBpmNegative,
     sortNotes,
     sortBpmEvents,
     selectedBpmEventId,
     BASE_BPM_LINE_ID,
+    bpmEvents,
     normalizeEditorBpm,
+    normalizeBaseBpmForWrite,
+    normalizeEventBpmForWrite,
     toFinite,
     approxEq,
     hasOffsetSelection,
@@ -1894,6 +2066,9 @@ function ChartEditorController() {
     clearSelectedBpmEvents,
     setSelectedBpmEventId,
     toFinite,
+    normalizeBaseBpmForWrite,
+    normalizeEventBpmForWrite,
+    isLastBeatOrderedBpmNegative,
     parseSkinSelectionFromDocument,
     setPendingSkinSelection,
     applyBestdoriSkinSelectionRef,
@@ -1956,6 +2131,9 @@ function ChartEditorController() {
     normalizeEditorOptionSettings,
     normalizeNote,
     normalizeBpmEvent,
+    normalizeBaseBpmForWrite,
+    normalizeEventBpmForWrite,
+    isLastBeatOrderedBpmNegative,
     sortNotes,
     sortBpmEvents,
     approxEq,
@@ -2019,6 +2197,7 @@ function ChartEditorController() {
     quantizeBeat,
     beatToSeconds,
     secondsToBeat,
+    secondsToBeatCandidates,
     selectionMovePreview,
     selectedNoteIdSet,
     selectionDragRef,
@@ -2108,11 +2287,13 @@ function ChartEditorController() {
     removeNoteIdsFromSlideChains,
     setSlideChains,
     normalizeBpmEvent,
-    normalizeEditorBpm,
+    normalizeBaseBpmForWrite,
+    normalizeEventBpmForWrite,
     toolBpmValue,
     metadata,
     setMetadata,
     setBpmEvents,
+    bpmEvents,
     BASE_BPM_LINE_ID,
     clearSelectedNotes,
     setSelectedBpmEventIds,
@@ -3840,10 +4021,15 @@ function ChartEditorController() {
         redoLastNote,
         canUndoLastOperation,
         canRedoLastOperation,
+        mirrorSelectedNotes,
+        canMirrorSelection,
         clearAllNotes,
         notes,
         noteById,
+        mirrorActionIcon,
         undoActionIcon,
+        copyActionIcon,
+        pasteActionIcon,
         clearActionIcon,
         applyActionIcon,
         showBeatSetting,
