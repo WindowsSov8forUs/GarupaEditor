@@ -13,8 +13,7 @@ dist-ssr
 *.local
 
 # Editor directories and files
-.vscode/*
-!.vscode/extensions.json
+.vscode/
 .idea
 .DS_Store
 *.suo
@@ -27,3 +26,11 @@ dist-ssr
 /test.json
 /test-*.json
 /tsc-trace*.txt
+/tests/
+/test-start*.bat
+/scripts/test-*.ps1
+/src-tauri/target_check/
+
+# Local environment files
+.env
+.env.*
