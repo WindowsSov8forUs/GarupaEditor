@@ -855,7 +855,7 @@ export function useEditorIoAndShortcuts(params: any) {
       if (typeof openOverlayDialog === "function") {
         openOverlayDialog({
           tone: "info",
-          message: "已导出 Bestdori V2 并写入剪贴板。",
+          message: "已导出谱面为 Bestdori 格式，可直接粘贴。",
         });
       } else {
         setStatusMessage("已导出 Bestdori V2 到剪贴板。");
@@ -865,7 +865,7 @@ export function useEditorIoAndShortcuts(params: any) {
       if (typeof openOverlayDialog === "function") {
         openOverlayDialog({
           tone: "error",
-          message: `导出 Bestdori V2 失败：${message}`,
+          message: `导出谱面为 Bestdori 格式代码失败：\n${message}`,
         });
       } else {
         setStatusMessage(`导出 Bestdori V2 失败：${message}`);

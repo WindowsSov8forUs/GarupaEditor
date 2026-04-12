@@ -26,6 +26,7 @@ dist-ssr
 /test.json
 /test-*.json
 /tsc-trace*.txt
+/status_messages*.csv
 /tests/
 /test-start*.bat
 /scripts/test-*.ps1

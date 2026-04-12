@@ -1,5 +1,6 @@
-import { Component, type ErrorInfo, type ReactNode, useState } from "react";
+import { Component, type ErrorInfo, type ReactNode, useEffect, useMemo, useState } from "react";
 import ChartEditorController from "./app/ChartEditorController";
+import StaticChartRenderWindow from "./app/StaticChartRenderWindow";
 
 type AppErrorBoundaryProps = {
   children: ReactNode;
@@ -53,6 +54,23 @@ class AppErrorBoundary extends Component<AppErrorBoundaryProps, AppErrorBoundary
 
 function App() {
   const [appVersion, setAppVersion] = useState(0);
+  const [hash, setHash] = useState(() =>
+    typeof window !== "undefined" ? window.location.hash ?? "" : "",
+  );
+
+  useEffect(() => {
+    const handleHashChange = () => {
+      setHash(window.location.hash ?? "");
+    };
+    window.addEventListener("hashchange", handleHashChange);
+    return () => window.removeEventListener("hashchange", handleHashChange);
+  }, []);
+
+  const isStaticRenderRoute = useMemo(() => hash.startsWith("#static-render"), [hash]);
+
+  if (isStaticRenderRoute) {
+    return <StaticChartRenderWindow />;
+  }
 
   return (
     <AppErrorBoundary key={appVersion} onRecover={() => setAppVersion((current) => current + 1)}>
