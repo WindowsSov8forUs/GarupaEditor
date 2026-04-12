@@ -32,6 +32,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     triggerJsonImport,
     openImportJsonModal,
     downloadJson,
+    openStaticRenderWindow,
     exportJson,
     isImportJsonModalOpen,
     importJsonModalLevel,
@@ -954,6 +955,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
       <CommandBar
         onImportJson={openImportJsonModal}
         onExportJson={downloadJson}
+        onOpenStaticRender={openStaticRenderWindow}
         onOpenSkinSettings={openSkinSettings}
         onOpenAppSettings={openAppSettings}
       />

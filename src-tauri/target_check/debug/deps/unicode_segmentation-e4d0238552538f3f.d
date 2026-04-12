@@ -1,9 +1,0 @@
-HOST________\VSCode\chart-editor\src-tauri\target_check\debug\deps\unicode_segmentation-e4d0238552538f3f.d: HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\unicode-segmentation-1.13.1\src\lib.rs HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\unicode-segmentation-1.13.1\src\grapheme.rs HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\unicode-segmentation-1.13.1\src\sentence.rs HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\unicode-segmentation-1.13.1\src\word.rs HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\unicode-segmentation-1.13.1\src\tables.rs
-
-HOST________\VSCode\chart-editor\src-tauri\target_check\debug\deps\libunicode_segmentation-e4d0238552538f3f.rmeta: HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\unicode-segmentation-1.13.1\src\lib.rs HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\unicode-segmentation-1.13.1\src\grapheme.rs HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\unicode-segmentation-1.13.1\src\sentence.rs HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\unicode-segmentation-1.13.1\src\word.rs HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\unicode-segmentation-1.13.1\src\tables.rs
-
-HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\unicode-segmentation-1.13.1\src\lib.rs:
-HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\unicode-segmentation-1.13.1\src\grapheme.rs:
-HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\unicode-segmentation-1.13.1\src\sentence.rs:
-HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\unicode-segmentation-1.13.1\src\word.rs:
-HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\unicode-segmentation-1.13.1\src\tables.rs:

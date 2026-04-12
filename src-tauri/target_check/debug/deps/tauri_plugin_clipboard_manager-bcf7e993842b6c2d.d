@@ -1,8 +1,0 @@
-HOST________\VSCode\chart-editor\src-tauri\target_check\debug\deps\tauri_plugin_clipboard_manager-bcf7e993842b6c2d.d: HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tauri-plugin-clipboard-manager-2.3.2\src\lib.rs HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tauri-plugin-clipboard-manager-2.3.2\src\desktop.rs HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tauri-plugin-clipboard-manager-2.3.2\src\commands.rs HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tauri-plugin-clipboard-manager-2.3.2\src\error.rs
-
-HOST________\VSCode\chart-editor\src-tauri\target_check\debug\deps\libtauri_plugin_clipboard_manager-bcf7e993842b6c2d.rmeta: HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tauri-plugin-clipboard-manager-2.3.2\src\lib.rs HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tauri-plugin-clipboard-manager-2.3.2\src\desktop.rs HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tauri-plugin-clipboard-manager-2.3.2\src\commands.rs HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tauri-plugin-clipboard-manager-2.3.2\src\error.rs
-
-HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tauri-plugin-clipboard-manager-2.3.2\src\lib.rs:
-HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tauri-plugin-clipboard-manager-2.3.2\src\desktop.rs:
-HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tauri-plugin-clipboard-manager-2.3.2\src\commands.rs:
-HOST____\winso\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tauri-plugin-clipboard-manager-2.3.2\src\error.rs:

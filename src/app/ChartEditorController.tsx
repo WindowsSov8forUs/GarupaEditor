@@ -8,6 +8,8 @@ import {
   type SetStateAction,
   type MouseEvent as ReactMouseEvent,
 } from "react";
+import { emitTo, listen, type UnlistenFn } from "@tauri-apps/api/event";
+import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
 import { LogicalSize, getCurrentWindow } from "@tauri-apps/api/window";
 import { ChartEditorLayout } from "../components/editor/ChartEditorLayout";
 import {
@@ -73,6 +75,7 @@ import {
   getRuntimeSeAssets,
   isHabahiroRhythmRipName,
   normalizeSkinSelection,
+  projectCanvasRenderResourceRuntimeAssets,
   readSkinSelectionFromStorage,
   resolveHabahiroRhythmRipNameFromType,
   resolveDirectionalSeRipNameFromType,
@@ -137,6 +140,7 @@ import pasteActionIcon from "../assets/icons/paste-action.svg";
 import mirrorActionIcon from "../assets/icons/mirror-action.svg";
 import "../App.css";
 import { type OverlayDialogState } from "../components/OverlayDialogModal";
+import type { StaticRenderPayload } from "./staticRenderTypes";
 
 const TIMELINE_REFERENCE_BPM = 120;
 const RENDER_BACKEND_MODE =
@@ -148,6 +152,8 @@ const PLAYBACK_SE_POOL_SIZE = 8;
 const PLAYBACK_SE_TRIGGER_LEAD_SEC = 0.02;
 const PLAYBACK_VIEWPORT_EDGE_TOLERANCE_PX = 8;
 const MIRROR_AXIS_LANE = 3;
+const STATIC_RENDER_WINDOW_READY_EVENT = "static-render:ready";
+const STATIC_RENDER_WINDOW_PAYLOAD_EVENT = "static-render:payload";
 
 function formatDurationPrecise(sec: number): string {
   if (!Number.isFinite(sec) || sec <= 0) {
@@ -222,6 +228,14 @@ type ResolvedPlaybackSeSources = {
   longLoop: string | null;
 };
 
+type LoadingProgressState = {
+  visible: boolean;
+  blocking: boolean;
+  percent: number;
+  message: string;
+  logs: string[];
+};
+
 type EditorUndoSnapshot = {
   notes: ChartNote[];
   slideChains: SlideChain[];
@@ -242,6 +256,207 @@ type CopiedChartPayload = {
 };
 
 const UNDO_STACK_LIMIT = 200;
+
+type StatusMessageRoute =
+  | { channel: "ignore" }
+  | { channel: "status"; message: string }
+  | { channel: "dialog"; tone: "info" | "warning" | "error"; message: string };
+
+const STATUS_MESSAGE_IGNORE_EXACT = new Set<string>([
+  "左键放置音符，右键删除音符。数字键 1-7 切换工具，8 为 BPM。",
+  "当前选择无可复制对象。",
+  "暂无可粘贴内容，请先复制。",
+  "粘贴失败：目标位置已被占用。",
+  "当前状态暂不可粘贴。",
+  "当前位置不可粘贴。",
+  "当前没有可镜像的选中音符。",
+  "选中的音符已失效，请重新框选后重试。",
+  "已按 lane 3 轴镜像翻转选中音符。",
+  "已选中播放工具。左键可开始/停止播放。",
+  "已取消播放工具。",
+  "已切换到粘贴工具。暂无可粘贴内容，请先复制。",
+  "已应用选项设置。",
+  "当前 longLine 不可应用样式，请重新选择后重试。",
+  "状态已更新。",
+  "基础 BPM 必须大于 0。",
+  "非基础 BPM 的 Beat 必须大于 0。",
+  "非基础 BPM 不能为 0。",
+  "已取消 Slide 创建。",
+  "已取消 Slide 创建并取消 Slide 工具。",
+  "已拖拽移动选中音符。",
+  "已更新选中对象 Beat。",
+  "已更新选中音符轨道。",
+  "已将选中 Slide 节点设为 Hidden。",
+  "已删除选中音符。",
+  "已删除 BPM 线。",
+  "Beat 0 的基础 BPM 线不可删除。",
+  "已批量移动选中音符。",
+  "框选未命中对象。",
+  "Slide 创建中：左键空白追加节点，左键音符进入拖动连接，右键完成。",
+  "已选中 Slide 连接段。",
+  "已删除全 Hidden 的 Slide 序列。",
+  "已分割 Slide 并删除中段 longLine。",
+  "已按选中 longLine 分割 Slide 序列。",
+  "已应用当前 longLine 样式。",
+  "仅可连接到其他 Slide 序列的头部。",
+  "已合并序列并切换到拖动连接，可继续从新序列尾部连接。",
+  "Slide 拖动连接中：移动经过音符即可追加，松开左键返回追加模式，右键完成。",
+  "已删除目标音符。",
+  "工具切换为 BPM。",
+  "已取消导出。",
+  "已将 Bestdori V2 转换为当前谱面 JSON，请在导入页点击“应用”。",
+  "封面已更新。",
+  "预览窗口已打开。",
+]);
+
+const STATUS_MESSAGE_IGNORE_PREFIXES = [
+  "已复制 ",
+  "已粘贴 ",
+  "已导出 ",
+  "无法定位鼠标当前位置，粘贴失败。",
+  "鼠标不在可视编辑区内，粘贴失败。",
+  "已选中 BPM 线：",
+  "已将 ",
+  "已更新选中 DirectionalFlick 宽度为 ",
+  "已设置 DirectionalFlick 默认宽度为 ",
+  "已更新选中音符宽度为 ",
+  "已设置默认宽度为 ",
+  "已更新选中 DirectionalFlick 方向为",
+  "已设置 DirectionalFlick 默认方向为",
+  "已删除 ",
+  "框选选中 ",
+  "工具切换为 ",
+  "窗口分辨率已设置为 ",
+  "正在加载皮肤：",
+  "皮肤已生效：",
+  "已恢复上次关闭前的编辑缓存",
+];
+
+function stripStatusPrefix(message: string, prefix: string): string {
+  if (!message.startsWith(prefix)) {
+    return message;
+  }
+  return message.slice(prefix.length).trim();
+}
+
+function routeStatusMessage(rawMessage: string): StatusMessageRoute {
+  const message = rawMessage.trim();
+  if (message.length <= 0) {
+    return { channel: "ignore" };
+  }
+
+  if (message === "已停止播放。") {
+    return { channel: "status", message: "播放中止。" };
+  }
+  if (message.startsWith("已开始播放：")) {
+    return { channel: "status", message: "播放开始。" };
+  }
+  if (message === "已清空全部音符。") {
+    return { channel: "status", message: "谱面已清空。" };
+  }
+
+  if (
+    message === "粘贴失败：按 Beat 顺序最后一个 BPM 不能为负数。"
+    || message === "按 Beat 顺序最后一个 BPM 为负数，已阻止预览。"
+    || message === "已阻止：按 Beat 顺序最后一个 BPM 不能为负数。"
+  ) {
+    return { channel: "dialog", tone: "error", message: "谱面不合法：\n末尾 BPM 不可为负数" };
+  }
+  if (message.startsWith("音频播放失败，已切换为无音频播放：")) {
+    const detail = stripStatusPrefix(message, "音频播放失败，已切换为无音频播放：");
+    return { channel: "dialog", tone: "error", message: `音频播放失败：\n${detail}` };
+  }
+  if (message === "皮肤资源尚未就绪，无法打开预览窗口。") {
+    return { channel: "dialog", tone: "info", message: "资源未加载，请稍后再试。" };
+  }
+  if (message === "预览数据尚未准备完成，请稍后重试。") {
+    return { channel: "dialog", tone: "info", message: "数据未完成，请稍后再试。" };
+  }
+  if (message.startsWith("预览窗口数据发送失败：")) {
+    const detail = stripStatusPrefix(message, "预览窗口数据发送失败：");
+    return { channel: "dialog", tone: "error", message: `预览数据发送失败：\n${detail}` };
+  }
+  if (message.startsWith("预览窗口创建失败：")) {
+    const detail = stripStatusPrefix(message, "预览窗口创建失败：");
+    return { channel: "dialog", tone: "error", message: `预览创建失败：\n${detail}` };
+  }
+  if (message === "预览窗口握手超时，请重试。") {
+    return { channel: "dialog", tone: "error", message };
+  }
+  if (message.startsWith("预览窗口启动失败：")) {
+    const detail = stripStatusPrefix(message, "预览窗口启动失败：");
+    return { channel: "dialog", tone: "error", message: `预览启动失败：\n${detail}` };
+  }
+  if (message.startsWith("导出失败：")) {
+    const detail = stripStatusPrefix(message, "导出失败：");
+    return { channel: "dialog", tone: "error", message: `导出谱面失败：\n${detail}` };
+  }
+  if (message.startsWith("已导出到 ")) {
+    return { channel: "dialog", tone: "info", message };
+  }
+  if (message === "已导出 Bestdori V2 到剪贴板。") {
+    return { channel: "dialog", tone: "info", message: "已导出谱面为 Bestdori 格式，可直接粘贴。" };
+  }
+  if (message.startsWith("导出 Bestdori V2 失败：")) {
+    const detail = stripStatusPrefix(message, "导出 Bestdori V2 失败：");
+    return { channel: "dialog", tone: "error", message: `导出谱面为 Bestdori 格式代码失败：\n${detail}` };
+  }
+  if (message.startsWith("应用 JSON 失败：")) {
+    const detail = stripStatusPrefix(message, "应用 JSON 失败：");
+    return { channel: "dialog", tone: "error", message: `导入谱面代码失败：\n${detail}` };
+  }
+  if (message.startsWith("Bestdori V2 转换失败：")) {
+    const detail = stripStatusPrefix(message, "Bestdori V2 转换失败：");
+    return { channel: "dialog", tone: "error", message: `转换 Bestdori 格式谱面代码失败：\n${detail}` };
+  }
+  if (message.startsWith("导入失败：")) {
+    const detail = stripStatusPrefix(message, "导入失败：");
+    return { channel: "dialog", tone: "error", message: `导入谱面失败：\n${detail}` };
+  }
+  if (message === "音频读取失败，请确认格式。") {
+    return { channel: "dialog", tone: "error", message };
+  }
+  if (message === "未找到可用分辨率预设。") {
+    return { channel: "dialog", tone: "info", message };
+  }
+  if (message === "当前窗口不可用，无法调整分辨率。") {
+    return { channel: "dialog", tone: "info", message };
+  }
+  if (message.startsWith("窗口分辨率设置失败：")) {
+    const detail = stripStatusPrefix(message, "窗口分辨率设置失败：");
+    return { channel: "dialog", tone: "error", message: `窗口分辨率设置失败：\n${detail}` };
+  }
+  if (message.startsWith("皮肤下载失败：")) {
+    const detail = stripStatusPrefix(message, "皮肤下载失败：");
+    return { channel: "dialog", tone: "error", message: `皮肤下载失败：\n${detail}` };
+  }
+  if (message.startsWith("会话缓存恢复失败：")) {
+    const detail = stripStatusPrefix(message, "会话缓存恢复失败：");
+    return { channel: "dialog", tone: "error", message: `会话缓存恢复失败：\n${detail}` };
+  }
+  if (message.startsWith("音频缓存处理失败：")) {
+    const detail = stripStatusPrefix(message, "音频缓存处理失败：");
+    return { channel: "dialog", tone: "error", message: `音频缓存处理失败：\n${detail}` };
+  }
+  if (message.startsWith("会话缓存保存失败：")) {
+    const detail = stripStatusPrefix(message, "会话缓存保存失败：");
+    return { channel: "dialog", tone: "error", message: `会话缓存保存失败：\n${detail}` };
+  }
+
+  if (STATUS_MESSAGE_IGNORE_EXACT.has(message)) {
+    return { channel: "ignore" };
+  }
+  if (message.includes("个可见音符")) {
+    return { channel: "ignore" };
+  }
+  for (const prefix of STATUS_MESSAGE_IGNORE_PREFIXES) {
+    if (message.startsWith(prefix)) {
+      return { channel: "ignore" };
+    }
+  }
+
+  return { channel: "status", message };
+}
 
 function resolvePlaybackSeSources(runtimeSe: SeRuntimeAssets): ResolvedPlaybackSeSources {
   const normalizeKey = (key: string) => key.trim().toLowerCase();
@@ -302,9 +517,15 @@ function ChartEditorController() {
     isDragging: boolean;
   } | null>(null);
 
-  const [statusMessage, setStatusMessage] = useState(
-    "左键放置音符，右键删除音符。数字键 1-7 切换工具，8 为 BPM。",
-  );
+  const [statusMessage, setStatusMessageState] = useState("");
+  const [previewLoadingProgress, setPreviewLoadingProgress] = useState<LoadingProgressState>({
+    visible: false,
+    blocking: false,
+    percent: 0,
+    message: "",
+    logs: [],
+  });
+  const previewLoadingHideTimerRef = useRef<number | null>(null);
 
   const [isMetadataEditorOpen, setIsMetadataEditorOpen] = useState(false);
   const [isAppSettingsOpen, setIsAppSettingsOpen] = useState(false);
@@ -342,6 +563,92 @@ function ChartEditorController() {
     closeOverlayDialog();
     onCancel?.();
   }, [closeOverlayDialog]);
+
+  const setStatusMessage = useCallback((nextMessage: string) => {
+    const routed = routeStatusMessage(nextMessage);
+    if (routed.channel === "ignore") {
+      return;
+    }
+    if (routed.channel === "dialog") {
+      openOverlayDialog({
+        tone: routed.tone,
+        message: routed.message,
+      });
+      return;
+    }
+    setStatusMessageState(routed.message);
+  }, [openOverlayDialog]);
+
+  const clearPreviewLoadingHideTimer = useCallback(() => {
+    if (previewLoadingHideTimerRef.current !== null) {
+      window.clearTimeout(previewLoadingHideTimerRef.current);
+      previewLoadingHideTimerRef.current = null;
+    }
+  }, []);
+
+  const hidePreviewLoadingProgress = useCallback((delayMs = 0) => {
+    clearPreviewLoadingHideTimer();
+    if (delayMs <= 0) {
+      setPreviewLoadingProgress({
+        visible: false,
+        blocking: false,
+        percent: 0,
+        message: "",
+        logs: [],
+      });
+      return;
+    }
+    previewLoadingHideTimerRef.current = window.setTimeout(() => {
+      setPreviewLoadingProgress({
+        visible: false,
+        blocking: false,
+        percent: 0,
+        message: "",
+        logs: [],
+      });
+      previewLoadingHideTimerRef.current = null;
+    }, delayMs);
+  }, [clearPreviewLoadingHideTimer]);
+
+  const startPreviewLoadingProgress = useCallback((message: string) => {
+    clearPreviewLoadingHideTimer();
+    setPreviewLoadingProgress({
+      visible: true,
+      blocking: true,
+      percent: 8,
+      message,
+      logs: [message],
+    });
+  }, [clearPreviewLoadingHideTimer]);
+
+  const updatePreviewLoadingProgress = useCallback((
+    percent: number,
+    message: string,
+    options?: { blocking?: boolean },
+  ) => {
+    setPreviewLoadingProgress((previous) => {
+      const nextLogs =
+        previous.logs.length > 0 && previous.logs[previous.logs.length - 1] === message
+          ? previous.logs
+          : [...previous.logs, message].slice(-2);
+      return {
+        visible: true,
+        blocking: options?.blocking ?? previous.blocking,
+        percent: Math.max(0, Math.min(100, Math.round(percent))),
+        message,
+        logs: nextLogs,
+      };
+    });
+  }, []);
+
+  const completePreviewLoadingProgress = useCallback((message: string, delayMs = 420) => {
+    updatePreviewLoadingProgress(100, message, { blocking: false });
+    hidePreviewLoadingProgress(delayMs);
+  }, [hidePreviewLoadingProgress, updatePreviewLoadingProgress]);
+
+  useEffect(() => () => {
+    clearPreviewLoadingHideTimer();
+  }, [clearPreviewLoadingHideTimer]);
 
   const notesRef = useRef(notes);
   const slideChainsRef = useRef(slideChains);
@@ -1038,7 +1345,6 @@ function ChartEditorController() {
   const applyCopiedPayloadAtPlacement = useCallback(
     (placement: { lane: number; beat: number }) => {
       if (!copiedChartPayload) {
-        setStatusMessage("暂无可粘贴内容，请先复制。");
         return;
       }
 
@@ -1048,9 +1354,12 @@ function ChartEditorController() {
         : 0;
       const notePositionKey = (lane: number, beat: number) => `${lane.toFixed(6)}|${beat.toFixed(6)}`;
       const sourceToPastedId = new Map<string, string>();
-      const occupiedNoteKeys = new Set(
-        notesRef.current.map((note) => notePositionKey(note.lane, note.beat)),
-      );
+      const existingNoteIdByPosition = new Map<string, string>();
+      for (const note of notesRef.current) {
+        existingNoteIdByPosition.set(notePositionKey(note.lane, note.beat), note.id);
+      }
+      const overlappedExistingNoteIds = new Set<string>();
+      const pastedPositionKeys = new Set<string>();
       const pastedNotes: ChartNote[] = [];
 
       for (const source of copiedChartPayload.notes) {
@@ -1073,10 +1382,14 @@ function ChartEditorController() {
           continue;
         }
         const positionKey = notePositionKey(normalized.lane, normalized.beat);
-        if (occupiedNoteKeys.has(positionKey)) {
+        if (pastedPositionKeys.has(positionKey)) {
           continue;
         }
-        occupiedNoteKeys.add(positionKey);
+        pastedPositionKeys.add(positionKey);
+        const overlappedExistingId = existingNoteIdByPosition.get(positionKey);
+        if (typeof overlappedExistingId === "string" && overlappedExistingId.length > 0) {
+          overlappedExistingNoteIds.add(overlappedExistingId);
+        }
         sourceToPastedId.set(source.id, normalized.id);
         pastedNotes.push(normalized);
       }
@@ -1144,12 +1457,27 @@ function ChartEditorController() {
       }
 
       if (pastedNotes.length === 0 && pastedSlideChains.length === 0 && pastedBpmEvents.length === 0) {
-        setStatusMessage("粘贴失败：目标位置已被占用。");
         return;
       }
 
-      if (pastedNotes.length > 0) {
-        setNotes((previous) => sortNotes([...previous, ...pastedNotes]));
+      if (pastedNotes.length > 0 || overlappedExistingNoteIds.size > 0) {
+        setNotes((previous) => {
+          const remainedNotes =
+            overlappedExistingNoteIds.size > 0
+              ? previous.filter((note) => !overlappedExistingNoteIds.has(note.id))
+              : previous;
+          return sortNotes([...remainedNotes, ...pastedNotes]);
+        });
+      }
+      if (overlappedExistingNoteIds.size > 0) {
+        setSlideChains((previous) =>
+          previous
+            .map((chain) => ({
+              ...chain,
+              noteIds: chain.noteIds.filter((id) => !overlappedExistingNoteIds.has(id)),
+            }))
+            .filter((chain) => chain.noteIds.length >= 2),
+        );
       }
       if (pastedSlideChains.length > 0) {
         setSlideChains((previous) => [...previous, ...pastedSlideChains]);
@@ -1169,12 +1497,8 @@ function ChartEditorController() {
       const visibleNoteCount = pastedNotes.reduce((count, note) => (note.type === "hidden" ? count : count + 1), 0);
       const hiddenNoteCount = pastedNotes.length - visibleNoteCount;
       const hiddenLabel = hiddenNoteCount > 0 ? ` + ${hiddenNoteCount} Hidden` : "";
-      const skippedCount =
-        copiedChartPayload.notes.length - pastedNotes.length
-        + copiedChartPayload.bpmEvents.length - pastedBpmEvents.length;
-      const skippedLabel = skippedCount > 0 ? "（部分位置已占用，已跳过）" : "";
       setStatusMessage(
-        `已粘贴 ${visibleNoteCount}${hiddenLabel} 个音符，${pastedBpmEvents.length} 条 BPM${skippedLabel}。`,
+        `已粘贴 ${visibleNoteCount}${hiddenLabel} 个音符，${pastedBpmEvents.length} 条 BPM。`,
       );
     },
     [
@@ -1188,8 +1512,8 @@ function ChartEditorController() {
       normalizeEventBpmForWrite,
       isLastBeatOrderedBpmNegative,
       normalizeNote,
-      setBpmEvents,
       setNotes,
+      setBpmEvents,
       setSelectedBpmEventId,
       setSelectedBpmEventIds,
       setSelectedLongLineSegmentId,
@@ -1229,13 +1553,12 @@ function ChartEditorController() {
   ]);
   const pasteAtMousePositionByShortcut = useCallback(() => {
     if (!copiedChartPayload) {
-      setStatusMessage("暂无可粘贴内容，请先复制。");
       return;
     }
     const board = playfieldBoardRef.current;
     const pointer = lastPointerClientRef.current;
     if (!board || !pointer) {
-      setStatusMessage("无法定位鼠标当前位置，粘贴失败。");
+      setIsToolArmed(false);
       return;
     }
     const rect = board.getBoundingClientRect();
@@ -1243,12 +1566,11 @@ function ChartEditorController() {
     const y = pointer.y - rect.top;
     const insideBoard = x >= 0 && x <= rect.width && y >= 0 && y <= rect.height;
     if (!insideBoard) {
-      setStatusMessage("鼠标不在可视编辑区内，粘贴失败。");
+      setIsToolArmed(false);
       return;
     }
     const resolver = resolveBoardPlacementRef.current;
     if (!resolver) {
-      setStatusMessage("当前状态暂不可粘贴。");
       return;
     }
     const placement = resolver(x, y, {
@@ -1256,11 +1578,10 @@ function ChartEditorController() {
       type: "single",
     });
     if (!placement) {
-      setStatusMessage("当前位置不可粘贴。");
       return;
     }
     applyCopiedPayloadAtPlacement(placement);
-  }, [applyCopiedPayloadAtPlacement, copiedChartPayload, setStatusMessage]);
+  }, [applyCopiedPayloadAtPlacement, copiedChartPayload, setIsToolArmed]);
   const selectedNote = useMemo(
     () => notes.find((note) => note.id === selectedNoteId) ?? null,
     [notes, selectedNoteId],
@@ -2113,7 +2434,6 @@ function ChartEditorController() {
     copyCurrentSelectionByShortcut,
     pasteAtMousePositionByShortcut,
   });
-
   useEditorSessionCache({
     metadata,
     settings,
@@ -3926,6 +4246,206 @@ function ChartEditorController() {
     resourcesVersion: canvasResourceVersion,
   });
 
+  const staticRenderRuntimeSkin = useMemo(
+    () => (skinAssets ? projectCanvasRenderResourceRuntimeAssets(skinAssets) : null),
+    [skinAssets],
+  );
+  const staticRenderPayload = useMemo<StaticRenderPayload | null>(() => {
+    if (!staticRenderRuntimeSkin) {
+      return null;
+    }
+    return {
+      schemaVersion: 1,
+      chartTitle: metadata.title,
+      boardWidth,
+      boardHeight,
+      laneValues: [...laneValues],
+      laneWidth: LANE_WIDTH,
+      noteVisualScale,
+      totalSteps,
+      beatDivision,
+      beatsPerMeasure,
+      totalDurationSec,
+      timelinePixelsPerSecond,
+      bpmTimeline: bpmTimeline.map((item: any) => ({
+        beat: Number(item.beat),
+        bpm: Number(item.bpm),
+        timeSec: Number(item.timeSec),
+      })),
+      bpmVisualLines: canvasBpmVisualLines.map((line: any) => ({
+        key: String(line.key),
+        beat: Number(line.beat),
+        bpm: Number(line.bpm),
+      })),
+      simultaneousSegments: visibleSimultaneousSegments.map((segment) => ({ ...segment })),
+      connectionSegments: renderModel.connectionSegments
+        .filter((segment) => !segment.isPreviewChain)
+        .map((segment) => ({ ...segment })),
+      noteVisuals: canvasNoteVisuals.map((note) => ({
+        id: note.id,
+        type: note.type,
+        x: note.x,
+        y: note.y,
+        spanLanes: note.spanLanes,
+        base: note.base,
+        overlay: note.overlay,
+        overlayMode: note.overlayMode,
+      })),
+      runtimeSkin: {
+        longLine: staticRenderRuntimeSkin.longLine ?? null,
+        longLineSpecial: staticRenderRuntimeSkin.longLineSpecial ?? null,
+        simultaneousLine: staticRenderRuntimeSkin.simultaneousLine ?? null,
+      },
+    };
+  }, [
+    LANE_WIDTH,
+    beatDivision,
+    beatsPerMeasure,
+    boardHeight,
+    boardWidth,
+    bpmTimeline,
+    canvasBpmVisualLines,
+    canvasNoteVisuals,
+    laneValues,
+    metadata.title,
+    noteVisualScale,
+    renderModel.connectionSegments,
+    staticRenderRuntimeSkin,
+    timelinePixelsPerSecond,
+    totalDurationSec,
+    totalSteps,
+    visibleSimultaneousSegments,
+  ]);
+
+  const openStaticRenderWindow = useCallback(async () => {
+    if (previewLoadingProgress.visible) {
+      hidePreviewLoadingProgress();
+    }
+    if (!isSkinReady || !isCanvasResourceReady) {
+      setStatusMessage("皮肤资源尚未就绪，无法打开预览窗口。");
+      return;
+    }
+    if (!staticRenderPayload) {
+      setStatusMessage("预览数据尚未准备完成，请稍后重试。");
+      return;
+    }
+    if (isLastBeatOrderedBpmNegative(metadata.bpm, bpmEvents)) {
+      setStatusMessage("按 Beat 顺序最后一个 BPM 为负数，已阻止预览。");
+      return;
+    }
+    startPreviewLoadingProgress("正在准备预览数据…");
+
+    const requestId = `static-render-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    const windowLabel = requestId;
+    let readyUnlisten: UnlistenFn | null = null;
+    let timeoutId: number | null = null;
+    const clearReadySubscription = () => {
+      if (readyUnlisten) {
+        void readyUnlisten();
+        readyUnlisten = null;
+      }
+      if (timeoutId !== null) {
+        window.clearTimeout(timeoutId);
+        timeoutId = null;
+      }
+    };
+
+    try {
+      readyUnlisten = await listen<{ requestId?: string; label?: string }>(
+        STATIC_RENDER_WINDOW_READY_EVENT,
+        async (event) => {
+          const readyPayload = event.payload ?? {};
+          if (readyPayload.requestId !== requestId || typeof readyPayload.label !== "string") {
+            return;
+          }
+          clearReadySubscription();
+          try {
+            updatePreviewLoadingProgress(82, "正在同步预览数据…");
+            await emitTo(
+              readyPayload.label,
+              STATIC_RENDER_WINDOW_PAYLOAD_EVENT,
+              {
+                requestId,
+                payload: staticRenderPayload,
+              },
+            );
+            completePreviewLoadingProgress("预览已就绪。");
+          } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            updatePreviewLoadingProgress(100, `预览数据发送失败：${message}`, { blocking: false });
+            hidePreviewLoadingProgress(900);
+            setStatusMessage(`预览窗口数据发送失败：${message}`);
+          }
+        },
+      );
+      updatePreviewLoadingProgress(24, "正在创建预览窗口…");
+
+      const locationHref = typeof window !== "undefined"
+        ? window.location.href
+        : "http://localhost/";
+      const targetUrl = new URL(locationHref);
+      targetUrl.hash = `static-render?request=${encodeURIComponent(requestId)}`;
+
+      const renderWindow = new WebviewWindow(windowLabel, {
+        title: `谱面预览 - ${metadata.title}`,
+        width: 1440,
+        height: 900,
+        minWidth: 980,
+        minHeight: 620,
+        center: true,
+        resizable: true,
+        url: targetUrl.toString(),
+      });
+
+      renderWindow.once("tauri://created", () => {
+        updatePreviewLoadingProgress(58, "预览窗口已创建，等待连接…");
+      });
+      renderWindow.once("tauri://error", (event) => {
+        clearReadySubscription();
+        const message = event?.payload
+          ? JSON.stringify(event.payload)
+          : "未知错误";
+        updatePreviewLoadingProgress(100, `预览窗口创建失败：${message}`, { blocking: false });
+        hidePreviewLoadingProgress(900);
+        setStatusMessage(`预览窗口创建失败：${message}`);
+      });
+      renderWindow.once("tauri://destroyed", () => {
+        clearReadySubscription();
+        hidePreviewLoadingProgress();
+      });
+
+      timeoutId = window.setTimeout(() => {
+        if (!readyUnlisten) {
+          return;
+        }
+        clearReadySubscription();
+        updatePreviewLoadingProgress(100, "预览窗口连接超时。", { blocking: false });
+        hidePreviewLoadingProgress(900);
+        setStatusMessage("预览窗口握手超时，请重试。");
+      }, 15000);
+      setStatusMessage("预览窗口已打开。");
+    } catch (error) {
+      clearReadySubscription();
+      const message = error instanceof Error ? error.message : String(error);
+      updatePreviewLoadingProgress(100, `预览启动失败：${message}`, { blocking: false });
+      hidePreviewLoadingProgress(900);
+      setStatusMessage(`预览窗口启动失败：${message}`);
+    }
+  }, [
+    bpmEvents,
+    completePreviewLoadingProgress,
+    hidePreviewLoadingProgress,
+    isCanvasResourceReady,
+    isSkinReady,
+    metadata.bpm,
+    metadata.title,
+    setStatusMessage,
+    startPreviewLoadingProgress,
+    staticRenderPayload,
+    previewLoadingProgress.visible,
+    updatePreviewLoadingProgress,
+  ]);
+
   const canApplyLongLineSettings = hasLongLineSelection && showSlideSegmentSetting;
   const applyCurrentLongLineSettings = () => {
     if (!selectedLongLineSegmentId) {
@@ -3951,6 +4471,7 @@ function ChartEditorController() {
         triggerJsonImport,
         openImportJsonModal,
         downloadJson,
+        openStaticRenderWindow,
         exportJson,
         isImportJsonModalOpen,
         importJsonModalLevel,

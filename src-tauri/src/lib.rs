@@ -597,6 +597,17 @@ fn ensure_json_extension(path: PathBuf) -> PathBuf {
     }
 }
 
+fn ensure_png_extension(path: PathBuf) -> PathBuf {
+    match path.extension().and_then(|value| value.to_str()) {
+        Some(ext) if ext.eq_ignore_ascii_case("png") => path,
+        _ => {
+            let mut with_extension = path;
+            with_extension.set_extension("png");
+            with_extension
+        }
+    }
+}
+
 fn write_text_with_backup(path: &Path, backup_path: &Path, temp_path: &Path, text: &str) -> Result<(), String> {
     ensure_parent_directory(path)?;
 
@@ -1036,6 +1047,34 @@ fn save_chart_json_via_dialog(default_file_name: String, json_text: String) -> R
     Ok(Some(final_path.to_string_lossy().to_string()))
 }
 
+#[tauri::command]
+fn save_chart_png_via_dialog(default_file_name: String, png_base64: String) -> Result<Option<String>, String> {
+    let suggested = if default_file_name.trim().is_empty() {
+        "chart.png".to_string()
+    } else {
+        default_file_name
+    };
+
+    let selected_path = rfd::FileDialog::new()
+        .add_filter("PNG", &["png"])
+        .set_file_name(&suggested)
+        .save_file();
+
+    let Some(path) = selected_path else {
+        return Ok(None);
+    };
+
+    let png_bytes = decode_base64(&png_base64)?;
+    if png_bytes.is_empty() {
+        return Err("png data is empty".to_string());
+    }
+
+    let final_path = ensure_png_extension(path);
+    ensure_parent_directory(&final_path)?;
+    fs::write(&final_path, png_bytes).map_err(|error| format!("save chart png failed: {error}"))?;
+    Ok(Some(final_path.to_string_lossy().to_string()))
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -1050,7 +1089,8 @@ pub fn run() {
             read_sound_binary_file,
             save_editor_session_cache,
             load_editor_session_cache,
-            save_chart_json_via_dialog
+            save_chart_json_via_dialog,
+            save_chart_png_via_dialog
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -1,0 +1,9 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "static-render-window",
+  "description": "Capability for static render windows",
+  "windows": ["static-render-*"],
+  "permissions": [
+    "core:default"
+  ]
+}
