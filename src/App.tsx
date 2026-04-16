@@ -1,6 +1,7 @@
 import { Component, type ErrorInfo, type ReactNode, useEffect, useMemo, useState } from "react";
 import ChartEditorController from "./app/ChartEditorController";
 import StaticChartRenderWindow from "./app/StaticChartRenderWindow";
+import BuiltInSimulatorWindow from "./app/BuiltInSimulatorWindow";
 
 type AppErrorBoundaryProps = {
   children: ReactNode;
@@ -67,9 +68,13 @@ function App() {
   }, []);
 
   const isStaticRenderRoute = useMemo(() => hash.startsWith("#static-render"), [hash]);
+  const isSimulatorRoute = useMemo(() => hash.startsWith("#simulator"), [hash]);
 
   if (isStaticRenderRoute) {
     return <StaticChartRenderWindow />;
+  }
+  if (isSimulatorRoute) {
+    return <BuiltInSimulatorWindow />;
   }
 
   return (
