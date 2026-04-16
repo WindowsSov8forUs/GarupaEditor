@@ -7,6 +7,7 @@ type CurrentSimpleNote = {
   beat: number;
   lane: number;
   width: number;
+  timingGroup?: number;
 };
 
 type CurrentDirectionalNote = {
@@ -15,6 +16,7 @@ type CurrentDirectionalNote = {
   lane: number;
   width: number;
   direction: ChartJsonDirection;
+  timingGroup?: number;
 };
 
 type CurrentSlideConnection = CurrentSimpleNote | CurrentDirectionalNote;
@@ -22,6 +24,7 @@ type CurrentSlideConnection = CurrentSimpleNote | CurrentDirectionalNote;
 type CurrentSlideItem = {
   type: "Slide";
   connections: CurrentSlideConnection[];
+  timingGroup?: number;
 };
 
 type CurrentBpmItem = {
@@ -30,9 +33,16 @@ type CurrentBpmItem = {
   value: number;
 };
 
+type CurrentSvItem = {
+  type: "SV";
+  beat: number;
+  value: number;
+  timingGroup?: number;
+};
+
 type CurrentTopLevelNote = Exclude<CurrentSimpleNote, { type: "Hidden" }> | CurrentDirectionalNote;
 
-type CurrentChartItem = CurrentBpmItem | CurrentTopLevelNote | CurrentSlideItem;
+type CurrentChartItem = CurrentBpmItem | CurrentSvItem | CurrentTopLevelNote | CurrentSlideItem;
 export type CurrentChartJson = CurrentChartItem[];
 
 type BestdoriV2BpmItem = {
@@ -115,6 +125,14 @@ function parsePositiveInteger(value: unknown, label: string): number {
     throw new Error(`${label} must be an integer >= 1`);
   }
   return numeric;
+}
+
+function parseTimingGroup(value: unknown, label: string): number {
+  if (value === undefined) {
+    return 0;
+  }
+  const numeric = parseFiniteNumber(value, label);
+  return Math.max(0, Math.round(numeric));
 }
 
 function shiftAndClampBeat(beat: number, offset: number): number {
@@ -214,6 +232,7 @@ function parseCurrentSimpleNote(
     beat: parseFiniteNumber(source.beat, `${label}.beat`),
     lane: parseFiniteNumber(source.lane, `${label}.lane`),
     width,
+    timingGroup: parseTimingGroup(source.timingGroup, `${label}.timingGroup`),
   };
 }
 
@@ -227,6 +246,7 @@ function parseCurrentDirectionalNote(
     lane: parseFiniteNumber(source.lane, `${label}.lane`),
     width: parsePositiveInteger(source.width, `${label}.width`),
     direction: parseDirection(source.direction, `${label}.direction`),
+    timingGroup: parseTimingGroup(source.timingGroup, `${label}.timingGroup`),
   };
 }
 
@@ -253,6 +273,16 @@ export function parseCurrentChartJson(input: unknown): CurrentChartJson {
         type: "BPM",
         beat: parseFiniteNumber(rawItem.beat, `${label}.beat`),
         value: parseFiniteNumber(rawItem.value, `${label}.value`),
+      });
+      return;
+    }
+
+    if (rawType === "SV") {
+      items.push({
+        type: "SV",
+        beat: parseFiniteNumber(rawItem.beat, `${label}.beat`),
+        value: parseFiniteNumber(rawItem.value, `${label}.value`),
+        timingGroup: parseTimingGroup(rawItem.timingGroup, `${label}.timingGroup`),
       });
       return;
     }
@@ -284,6 +314,7 @@ export function parseCurrentChartJson(input: unknown): CurrentChartJson {
       items.push({
         type: "Slide",
         connections,
+        timingGroup: parseTimingGroup(rawItem.timingGroup, `${label}.timingGroup`),
       });
       return;
     }
@@ -417,6 +448,7 @@ function convertBestdoriSlideConnectionToCurrent(connection: BestdoriV2SlideConn
       beat: connection.beat,
       lane: connection.lane,
       width: 1,
+      timingGroup: 0,
     };
   }
   if (connection.skill === true) {
@@ -425,6 +457,7 @@ function convertBestdoriSlideConnectionToCurrent(connection: BestdoriV2SlideConn
       beat: connection.beat,
       lane: connection.lane,
       width: 1,
+      timingGroup: 0,
     };
   }
   if (connection.flick === true) {
@@ -433,6 +466,7 @@ function convertBestdoriSlideConnectionToCurrent(connection: BestdoriV2SlideConn
       beat: connection.beat,
       lane: connection.lane,
       width: 1,
+      timingGroup: 0,
     };
   }
   return {
@@ -440,6 +474,7 @@ function convertBestdoriSlideConnectionToCurrent(connection: BestdoriV2SlideConn
     beat: connection.beat,
     lane: connection.lane,
     width: 1,
+    timingGroup: 0,
   };
 }
 
@@ -459,6 +494,7 @@ function convertBestdoriItemToCurrent(item: BestdoriV2ChartItem): CurrentChartIt
       lane: item.lane,
       width: item.width,
       direction: item.direction,
+      timingGroup: 0,
     };
   }
 
@@ -469,6 +505,7 @@ function convertBestdoriItemToCurrent(item: BestdoriV2ChartItem): CurrentChartIt
         beat: item.beat,
         lane: item.lane,
         width: 1,
+        timingGroup: 0,
       };
     }
     if (item.flick === true) {
@@ -477,6 +514,7 @@ function convertBestdoriItemToCurrent(item: BestdoriV2ChartItem): CurrentChartIt
         beat: item.beat,
         lane: item.lane,
         width: 1,
+        timingGroup: 0,
       };
     }
     return {
@@ -484,12 +522,14 @@ function convertBestdoriItemToCurrent(item: BestdoriV2ChartItem): CurrentChartIt
       beat: item.beat,
       lane: item.lane,
       width: 1,
+      timingGroup: 0,
     };
   }
 
   return {
     type: "Slide",
     connections: item.connections.map((connection) => convertBestdoriSlideConnectionToCurrent(connection)),
+    timingGroup: 0,
   };
 }
 
@@ -630,6 +670,9 @@ export function convertCurrentChartJsonToBestdoriV2(
         beat: item.beat,
         bpm: item.value,
       });
+      continue;
+    }
+    if (item.type === "SV") {
       continue;
     }
     if (item.type === "Slide") {

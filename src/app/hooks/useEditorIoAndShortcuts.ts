@@ -9,16 +9,19 @@ import {
   type ChartJsonDirection,
   type ChartJsonSlideConnection,
   type ChartJsonSlideItem,
+  type ChartJsonSvItem,
   type ChartJsonTopLevelNote,
   type ChartMetadata,
   type ChartNote,
+  type ChartSvEvent,
   type NoteType,
 } from "../../chartCore";
 import {
   combineSkinAssets,
   ensureCommonTapSkillSeAsset,
   setRuntimeSeAssets,
-  type SeSkinAssets,
+  type RhythmSeSkinAssets,
+  type DirectionalSeSkinAssets,
   type DirectionalSkinAssets,
   type AnyRhythmSkinAssets,
   type SkinSelection,
@@ -42,6 +45,13 @@ type ParsedJsonNote = {
 type ShiftedBpmItem = {
   beat: number;
   value: number;
+  sourceIndex: number;
+};
+
+type ShiftedSvItem = {
+  beat: number;
+  value: number;
+  timingGroup: number;
   sourceIndex: number;
 };
 
@@ -106,12 +116,15 @@ function isTauriEnvironment(): boolean {
 export function useEditorIoAndShortcuts(params: any) {
   const {
     metadata,
+    settings,
     appOptionSettings,
     skinSelection,
     bpmEvents,
+    svEvents,
     slideChains,
     notes,
     sortBpmEvents,
+    sortSvEvents,
     sortNotes,
     clearSelectedNotes,
     setStatusMessage,
@@ -121,6 +134,7 @@ export function useEditorIoAndShortcuts(params: any) {
     setMetadata,
     createId,
     setBpmEvents,
+    setSvEvents,
     setToolBpmValue,
     setSingleSelectedNote,
     clearSelectedBpmEvents,
@@ -128,6 +142,8 @@ export function useEditorIoAndShortcuts(params: any) {
     toFinite,
     normalizeBaseBpmForWrite,
     normalizeEventBpmForWrite,
+    normalizeTimingGroup,
+    normalizeSvEvent,
     isLastBeatOrderedBpmNegative,
     setPendingSkinSelection,
     applyBestdoriSkinSelectionRef,
@@ -175,13 +191,15 @@ export function useEditorIoAndShortcuts(params: any) {
 
   const rhythmSkinAssetsRef = useRef<AnyRhythmSkinAssets | null>(null);
   const directionalSkinAssetsRef = useRef<DirectionalSkinAssets | null>(null);
-  const rhythmSeSkinAssetsRef = useRef<SeSkinAssets | null>(null);
-  const directionalSeSkinAssetsRef = useRef<SeSkinAssets | null>(null);
+  const rhythmSeSkinAssetsRef = useRef<RhythmSeSkinAssets | null>(null);
+  const directionalSeSkinAssetsRef = useRef<DirectionalSeSkinAssets | null>(null);
   const commonTapSkillSeRef = useRef<string>("");
 
   const toBeatValue = (value: unknown): number => Number(toFinite(value, 0).toFixed(6));
   const toLaneValue = (value: unknown): number => Number(toFinite(value, 0).toFixed(6));
   const toBpmValue = (value: unknown): number => Number(toFinite(value, metadata.bpm).toFixed(6));
+  const toSvValue = (value: unknown): number => Number(toFinite(value, 1).toFixed(6));
+  const toTimingGroupValue = (value: unknown): number => normalizeTimingGroup(value, 0);
   const toRhythmWidthValue = (value: unknown): number => Math.max(1, Math.round(toFinite(value, 1)));
   const toDirectionalWidthValue = (value: unknown): number => Math.max(1, Math.round(toFinite(value, 1)));
 
@@ -217,6 +235,14 @@ export function useEditorIoAndShortcuts(params: any) {
     return Number(parseFiniteNumber(value, label).toFixed(6));
   };
 
+  const parseTimingGroupNumber = (value: unknown, label: string, fallback = 0): number => {
+    if (value === undefined) {
+      return fallback;
+    }
+    const numeric = parseFiniteNumber(value, label);
+    return normalizeTimingGroup(numeric, fallback);
+  };
+
   const shiftAndClampBeat = (beat: number, offset: number): number => {
     const shifted = Number((beat - offset).toFixed(6));
     return shifted < 0 ? 0 : shifted;
@@ -239,6 +265,7 @@ export function useEditorIoAndShortcuts(params: any) {
         beat: toBeatValue(note.beat),
         lane: toLaneValue(note.lane),
         width: toRhythmWidthValue(note.width),
+        timingGroup: toTimingGroupValue(note.timingGroup),
       };
     }
     if (note.type === "flick") {
@@ -247,6 +274,7 @@ export function useEditorIoAndShortcuts(params: any) {
         beat: toBeatValue(note.beat),
         lane: toLaneValue(note.lane),
         width: toRhythmWidthValue(note.width),
+        timingGroup: toTimingGroupValue(note.timingGroup),
       };
     }
     if (note.type === "skill") {
@@ -255,6 +283,7 @@ export function useEditorIoAndShortcuts(params: any) {
         beat: toBeatValue(note.beat),
         lane: toLaneValue(note.lane),
         width: toRhythmWidthValue(note.width),
+        timingGroup: toTimingGroupValue(note.timingGroup),
       };
     }
     const direction = mapDirectionFromInternalType(note.type);
@@ -265,6 +294,7 @@ export function useEditorIoAndShortcuts(params: any) {
         lane: toLaneValue(note.lane),
         width: toDirectionalWidthValue(note.width),
         direction,
+        timingGroup: toTimingGroupValue(note.timingGroup),
       };
     }
     return null;
@@ -277,6 +307,7 @@ export function useEditorIoAndShortcuts(params: any) {
         beat: toBeatValue(note.beat),
         lane: toLaneValue(note.lane),
         width: toRhythmWidthValue(note.width),
+        timingGroup: toTimingGroupValue(note.timingGroup),
       };
     }
     const topLevel = mapTopLevelNoteToJson(note);
@@ -286,10 +317,11 @@ export function useEditorIoAndShortcuts(params: any) {
   const buildExportItemKey = (
     item: ChartJsonSlideConnection | ChartJsonTopLevelNote,
   ): string => {
+    const timingGroup = toTimingGroupValue((item as { timingGroup?: number }).timingGroup);
     if (item.type === "Directional") {
-      return buildJsonNoteKey("Directional", item.beat, item.lane, item.width, item.direction);
+      return buildJsonNoteKey("Directional", item.beat, item.lane, item.width, item.direction, timingGroup);
     }
-    return buildJsonNoteKey(item.type, item.beat, item.lane, item.width);
+    return buildJsonNoteKey(item.type, item.beat, item.lane, item.width, undefined, timingGroup);
   };
 
   const buildJsonNoteKey = (
@@ -298,18 +330,20 @@ export function useEditorIoAndShortcuts(params: any) {
     lane: number,
     width?: number,
     direction?: ChartJsonDirection,
+    timingGroup = 0,
   ): string => {
     const normalizedBeat = Number(beat.toFixed(6));
     if (type === "Directional") {
-      return `${type}|${normalizedBeat}|${lane}|${width ?? 1}|${direction ?? "Left"}`;
+      return `${type}|${normalizedBeat}|${lane}|${width ?? 1}|${direction ?? "Left"}|${timingGroup}`;
     }
-    return `${type}|${normalizedBeat}|${lane}|${width ?? 1}`;
+    return `${type}|${normalizedBeat}|${lane}|${width ?? 1}|${timingGroup}`;
   };
 
   const parseJsonNoteRecord = (
     source: Record<string, unknown>,
     label: string,
     allowHidden: boolean,
+    fallbackTimingGroup = 0,
   ): ParsedJsonNote => {
     const rawType = source.type;
     if (typeof rawType !== "string") {
@@ -320,6 +354,7 @@ export function useEditorIoAndShortcuts(params: any) {
       const beat = parseBeatNumber(source.beat, `${label}.beat`);
       const lane = parseLaneNumber(source.lane, `${label}.lane`);
       const width = parsePositiveIntegerNumber(source.width, `${label}.width`);
+      const timingGroup = parseTimingGroupNumber(source.timingGroup, `${label}.timingGroup`, fallbackTimingGroup);
       const rawDirection = source.direction;
       if (rawDirection !== "Left" && rawDirection !== "Right") {
         throw new Error(`${label}.direction must be Left or Right`);
@@ -332,8 +367,9 @@ export function useEditorIoAndShortcuts(params: any) {
           beat,
           lane,
           width,
+          timingGroup,
         },
-        key: buildJsonNoteKey("Directional", beat, lane, width, rawDirection),
+        key: buildJsonNoteKey("Directional", beat, lane, width, rawDirection, timingGroup),
       };
     }
 
@@ -347,6 +383,7 @@ export function useEditorIoAndShortcuts(params: any) {
 
     const beat = parseBeatNumber(source.beat, `${label}.beat`);
     const lane = parseLaneNumber(source.lane, `${label}.lane`);
+    const timingGroup = parseTimingGroupNumber(source.timingGroup, `${label}.timingGroup`, fallbackTimingGroup);
     const width = source.width === undefined
       ? 1
       : parsePositiveIntegerNumber(source.width, `${label}.width`);
@@ -364,11 +401,12 @@ export function useEditorIoAndShortcuts(params: any) {
       note: {
         id: createId(),
         type: internalType,
-        beat,
-        lane,
-        width,
-      },
-      key: buildJsonNoteKey(rawType, beat, lane, width),
+          beat,
+          lane,
+          width,
+          timingGroup,
+        },
+      key: buildJsonNoteKey(rawType, beat, lane, width, undefined, timingGroup),
     };
   };
 
@@ -393,14 +431,34 @@ export function useEditorIoAndShortcuts(params: any) {
         })),
     ];
 
+    const svItems: ChartJsonSvItem[] = (sortSvEvents(svEvents as ChartSvEvent[]) as ChartSvEvent[]).map(
+      (event: ChartSvEvent) => ({
+        type: "SV",
+        beat: toBeatValue(event.beat),
+        value: toSvValue(event.value),
+        timingGroup: toTimingGroupValue(event.timingGroup),
+      }),
+    );
+
     const slideConnectionKeySet = new Set<string>();
     const slideItems: ChartJsonSlideItem[] = normalizedSlideChains
-      .map((chain: { noteIds: string[] }) => {
-        const connections = chain.noteIds
-          .map((id: string) => noteById.get(id))
-          .filter((note: ChartNote | undefined): note is ChartNote => note !== undefined)
-          .map((note: ChartNote) => mapSlideConnectionToJson(note))
-          .filter((item: ChartJsonSlideConnection | null): item is ChartJsonSlideConnection => item !== null);
+      .map((chain: { noteIds: string[]; timingGroup?: number }): ChartJsonSlideItem | null => {
+        const chainTimingGroup = toTimingGroupValue(chain.timingGroup);
+        const connections: ChartJsonSlideConnection[] = [];
+        for (const id of chain.noteIds) {
+          const note = noteById.get(id);
+          if (!note) {
+            continue;
+          }
+          const mapped = mapSlideConnectionToJson({ ...note, timingGroup: chainTimingGroup });
+          if (!mapped) {
+            continue;
+          }
+          connections.push({
+            ...mapped,
+            timingGroup: chainTimingGroup,
+          });
+        }
 
         for (const connection of connections) {
           if (connection.type === "Hidden") {
@@ -415,6 +473,7 @@ export function useEditorIoAndShortcuts(params: any) {
         return {
           type: "Slide" as const,
           connections,
+          timingGroup: chainTimingGroup,
         };
       })
       .filter((item: ChartJsonSlideItem | null): item is ChartJsonSlideItem => item !== null);
@@ -425,8 +484,8 @@ export function useEditorIoAndShortcuts(params: any) {
       .filter((item): item is ChartJsonTopLevelNote => item !== null)
       .filter((item) => !slideConnectionKeySet.has(buildExportItemKey(item)));
 
-    return [...bpmItems, ...topLevelItems, ...slideItems];
-  }, [approxEq, bpmEvents, metadata.bpm, notes, slideChains, sortBpmEvents, sortNotes]);
+    return [...bpmItems, ...svItems, ...topLevelItems, ...slideItems];
+  }, [approxEq, bpmEvents, metadata.bpm, notes, slideChains, sortBpmEvents, sortNotes, sortSvEvents, svEvents]);
 
   const exportJson = useMemo(() => JSON.stringify(chartJson), [chartJson]);
   const [isImportJsonModalOpen, setIsImportJsonModalOpen] = useState(false);
@@ -626,9 +685,10 @@ export function useEditorIoAndShortcuts(params: any) {
   const executeClearAllNotes = useCallback(() => {
     setNotes([]);
     setSlideChains([]);
+    setSvEvents([]);
     clearSelectedNotes();
     setStatusMessage("已清空全部音符。");
-  }, [clearSelectedNotes, setNotes, setSlideChains, setStatusMessage]);
+  }, [clearSelectedNotes, setNotes, setSlideChains, setStatusMessage, setSvEvents]);
 
   const confirmClearAllNotes = useCallback(() => {
     if (typeof openOverlayDialog === "function") {
@@ -840,8 +900,12 @@ export function useEditorIoAndShortcuts(params: any) {
   };
 
   const exportBestdoriV2ToClipboard = async () => {
-    try {
-      const bestdori = convertCurrentChartJsonToBestdoriV2(chartJson);
+    const hasSvItems = chartJson.some((item) => isRecord(item) && item.type === "SV");
+    const doExport = async (dropSvItems: boolean) => {
+      const sourceChart = dropSvItems
+        ? chartJson.filter((item) => item.type !== "SV")
+        : chartJson;
+      const bestdori = convertCurrentChartJsonToBestdoriV2(sourceChart);
       const bestdoriJsonText = JSON.stringify(bestdori);
 
       if (isTauriEnvironment()) {
@@ -860,6 +924,47 @@ export function useEditorIoAndShortcuts(params: any) {
       } else {
         setStatusMessage("已导出 Bestdori V2 到剪贴板。");
       }
+    };
+
+    if (hasSvItems) {
+      if (typeof openOverlayDialog === "function") {
+        openOverlayDialog(
+          {
+            tone: "warning",
+            message: "当前谱面包含 SV 事件。\n导出 Bestdori V2 将删除全部 SV 事件，仅对导出结果生效。\n是否继续？",
+          },
+          {
+            onConfirm: () => {
+              void doExport(true).catch((error) => {
+                const message = error instanceof Error ? error.message : String(error);
+                if (typeof openOverlayDialog === "function") {
+                  openOverlayDialog({
+                    tone: "error",
+                    message: `导出谱面为 Bestdori 格式代码失败：\n${message}`,
+                  });
+                } else {
+                  setStatusMessage(`导出 Bestdori V2 失败：${message}`);
+                }
+              });
+            },
+            onCancel: () => {
+              setStatusMessage("已取消导出。");
+            },
+          },
+        );
+        return;
+      }
+      if (typeof window !== "undefined") {
+        const confirmed = window.confirm("当前谱面包含 SV 事件。导出 Bestdori V2 将删除全部 SV 事件，是否继续？");
+        if (!confirmed) {
+          setStatusMessage("已取消导出。");
+          return;
+        }
+      }
+    }
+
+    try {
+      await doExport(hasSvItems);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       if (typeof openOverlayDialog === "function") {
@@ -904,8 +1009,9 @@ export function useEditorIoAndShortcuts(params: any) {
 
     const topLevelParsedNotes: ParsedJsonNote[] = [];
     const slideParsedNotes: ParsedJsonNote[] = [];
-    const nextSlideChains: Array<{ id: string; noteIds: string[] }> = [];
+    const nextSlideChains: Array<{ id: string; noteIds: string[]; timingGroup?: number }> = [];
     const rawBpmItems: ShiftedBpmItem[] = [];
+    const rawSvItems: ShiftedSvItem[] = [];
 
     parsed.forEach((rawItem, itemIndex) => {
       if (!isRecord(rawItem)) {
@@ -924,6 +1030,14 @@ export function useEditorIoAndShortcuts(params: any) {
         return;
       }
 
+      if (itemType === "SV") {
+        const beat = parseBeatNumber(rawItem.beat, `item[${itemIndex}].beat`);
+        const value = Number(parseFiniteNumber(rawItem.value, `item[${itemIndex}].value`).toFixed(6));
+        const timingGroup = parseTimingGroupNumber(rawItem.timingGroup, `item[${itemIndex}].timingGroup`, 0);
+        rawSvItems.push({ beat, value, timingGroup, sourceIndex: itemIndex });
+        return;
+      }
+
       if (itemType === "Slide") {
         const rawConnections = rawItem.connections;
         if (!Array.isArray(rawConnections)) {
@@ -933,6 +1047,7 @@ export function useEditorIoAndShortcuts(params: any) {
           throw new Error(`item[${itemIndex}].connections cannot be empty`);
         }
 
+        const chainTimingGroup = parseTimingGroupNumber(rawItem.timingGroup, `item[${itemIndex}].timingGroup`, 0);
         const noteIds: string[] = [];
         rawConnections.forEach((rawConnection, connectionIndex) => {
           if (!isRecord(rawConnection)) {
@@ -942,7 +1057,9 @@ export function useEditorIoAndShortcuts(params: any) {
             rawConnection,
             `item[${itemIndex}].connections[${connectionIndex}]`,
             true,
+            chainTimingGroup,
           );
+          parsedConnection.note.timingGroup = chainTimingGroup;
           slideParsedNotes.push(parsedConnection);
           noteIds.push(parsedConnection.note.id);
         });
@@ -950,6 +1067,7 @@ export function useEditorIoAndShortcuts(params: any) {
         nextSlideChains.push({
           id: `slide-${itemIndex}-${createId()}`,
           noteIds,
+          timingGroup: chainTimingGroup,
         });
         return;
       }
@@ -1011,6 +1129,12 @@ export function useEditorIoAndShortcuts(params: any) {
       value: item.value,
       sourceIndex: item.sourceIndex,
     }));
+    const shiftedSvItems = rawSvItems.map((item) => ({
+      beat: shiftAndClampBeat(item.beat, beatOffset),
+      value: item.value,
+      timingGroup: item.timingGroup,
+      sourceIndex: item.sourceIndex,
+    }));
 
     for (const parsedNote of topLevelParsedNotes) {
       parsedNote.note.beat = shiftAndClampBeat(parsedNote.note.beat, beatOffset);
@@ -1058,6 +1182,25 @@ export function useEditorIoAndShortcuts(params: any) {
       throw new Error("按 Beat 顺序最后一个 BPM 不能为负数。");
     }
 
+    const dedupedSvByGroupBeat = new Map<string, ChartSvEvent>();
+    for (const item of shiftedSvItems) {
+      const normalized = normalizeSvEvent(
+        {
+          beat: item.beat,
+          value: item.value,
+          timingGroup: item.timingGroup,
+        },
+        settings.timeSignatureDenominator,
+        1,
+      );
+      if (!normalized) {
+        continue;
+      }
+      const key = `${normalized.timingGroup}|${normalized.beat.toFixed(6)}`;
+      dedupedSvByGroupBeat.set(key, normalized);
+    }
+    const nextSvEvents = sortSvEvents(Array.from(dedupedSvByGroupBeat.values()));
+
     const shouldRegressSpRhythmOnImport = appOptionSettings.spRhythmNoteEnabled === false;
     const shouldRegressHabahiroOnImport = appOptionSettings.habahiro === false;
     const nextChartState = { notes: nextNotes, slideChains: nextSlideChains };
@@ -1079,6 +1222,7 @@ export function useEditorIoAndShortcuts(params: any) {
     setNotes(importedNotes);
     setSlideChains(importedSlideChains);
     setBpmEvents(nextBpmEvents);
+    setSvEvents(nextSvEvents);
     setToolBpmValue(baseBpm);
     setSingleSelectedNote(importedNotes.find((note: ChartNote) => note.type !== "hidden")?.id ?? null);
     clearSelectedBpmEvents();
@@ -1220,6 +1364,26 @@ export function useEditorIoAndShortcuts(params: any) {
     };
   };
 
+  const handleMvUpload = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.currentTarget.files?.[0];
+    event.currentTarget.value = "";
+    if (!file) {
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") {
+        setMetadata((current: ChartMetadata) => ({ ...current, mvDataUrl: reader.result as string }));
+        setStatusMessage(`MV资源已更新：${file.name}`);
+      }
+    };
+    reader.onerror = () => {
+      setStatusMessage("MV读取失败，请确认文件格式。");
+    };
+    reader.readAsDataURL(file);
+  };
+
   const applyWindowPresetById = async (
     presetId: string,
     options?: { silent?: boolean },
@@ -1351,9 +1515,9 @@ export function useEditorIoAndShortcuts(params: any) {
       directionalSeSkinAssetsRef.current = nextDirectionalSe;
       commonTapSkillSeRef.current = commonTapSkillSe;
       setRuntimeSeAssets({
-        rhythmSESkin: nextRhythmSe,
-        directionalSESkin: nextDirectionalSe,
-        SE_RHYTHM_TAP_SKILL: commonTapSkillSe,
+        rhythm: nextRhythmSe,
+        directional: nextDirectionalSe,
+        tapSkill: commonTapSkillSe,
       });
       setSkinAssets(combineSkinAssets(nextRhythm, nextDirectional));
       setSkinSelection(normalized);
@@ -1429,6 +1593,7 @@ export function useEditorIoAndShortcuts(params: any) {
     openSkinSettings,
     handleCoverUpload,
     handleAudioUpload,
+    handleMvUpload,
     applyWindowPreset,
     applyWindowPresetById,
     applyBestdoriSkinSelection,

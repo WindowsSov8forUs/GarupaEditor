@@ -1157,6 +1157,10 @@ label.ui-checkbox.is-disabled .ui-checkbox-box {
   grid-column: 1 / -1;
 }
 
+.app-settings-fps-block {
+  grid-column: 1 / -1;
+}
+
 .setting-title-strip {
   min-height: 20px;
   border-radius: 499.5px;
@@ -1235,6 +1239,39 @@ label.ui-checkbox.is-disabled .ui-checkbox-box {
 
 .inline-stepper-extended {
   grid-template-columns: auto auto minmax(0, 1fr) auto auto;
+}
+
+.inline-stepper-compact {
+  grid-template-columns: auto max-content auto;
+  justify-content: flex-start;
+}
+
+.inline-stepper-hepta {
+  grid-template-columns: repeat(7, auto);
+  justify-content: flex-start;
+}
+
+.app-settings-rhythm-speed-block {
+  grid-column: 1 / -1;
+}
+
+.app-settings-option-toggle-row {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.app-settings-mv-row {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.rhythm-note-speed-input {
+  width: 7ch;
+  min-width: 7ch;
 }
 
 .stepper-btn {
@@ -2410,7 +2447,9 @@ button.app-settings-apply-button:not(.note-token):not(.bpm-label-button):not(.bp
   .selected-note-grid,
   .metadata-editor-row-three,
   .metadata-editor-row-two,
-  .modal-grid {
+  .modal-grid,
+  .app-settings-option-toggle-row,
+  .app-settings-mv-row {
     grid-template-columns: 1fr;
   }
 

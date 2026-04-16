@@ -1,7 +1,7 @@
 import { memo } from "react";
 
 type StepperIconProps = {
-  type: "plus" | "minus" | "left" | "right";
+  type: "plus" | "minus" | "left" | "right" | "leftDouble" | "rightDouble";
 };
 
 export const StepperIcon = memo(function StepperIcon({ type }: StepperIconProps) {
@@ -11,8 +11,12 @@ export const StepperIcon = memo(function StepperIcon({ type }: StepperIconProps)
         return "M9 2H15V9H22V15H15V22H9V15H2V9H9Z";
       case "left":
         return "M16 2L5 12L16 22L20 18L13 12L20 6Z";
+      case "leftDouble":
+        return "M20 2L11 12L20 22L23 19L17 12L23 5ZM11 2L2 12L11 22L14 19L8 12L14 5Z";
       case "right":
         return "M8 2L19 12L8 22L4 18L11 12L4 6Z";
+      case "rightDouble":
+        return "M4 2L13 12L4 22L1 19L7 12L1 5ZM13 2L22 12L13 22L10 19L16 12L10 5Z";
       case "minus":
       default:
         return "M2 9H22V15H2Z";

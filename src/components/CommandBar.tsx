@@ -3,11 +3,13 @@ import importJsonIcon from "../assets/icons/json-import.svg";
 import exportJsonIcon from "../assets/icons/json-export.svg";
 import skinIcon from "../assets/icons/skin.svg";
 import previewIcon from "../assets/icons/preview.svg";
+import simulatorIcon from "../assets/icons/display.svg";
 
 type CommandBarProps = {
   onImportJson: () => void;
   onExportJson: () => void;
   onOpenStaticRender: () => void;
+  onOpenSimulator: () => void;
   onOpenSkinSettings: () => void;
   onOpenAppSettings: () => void;
 };
@@ -16,6 +18,7 @@ export const CommandBar = memo(function CommandBar({
   onImportJson,
   onExportJson,
   onOpenStaticRender,
+  onOpenSimulator,
   onOpenSkinSettings,
   onOpenAppSettings,
 }: CommandBarProps) {
@@ -49,6 +52,16 @@ export const CommandBar = memo(function CommandBar({
         >
           <img className="command-text-icon" src={previewIcon} alt="" aria-hidden="true" />
           <span className="sr-only">预览</span>
+        </button>
+        <button
+          type="button"
+          className="command-icon-button"
+          onClick={onOpenSimulator}
+          title="播放器"
+          aria-label="播放器"
+        >
+          <img className="command-text-icon" src={simulatorIcon} alt="" aria-hidden="true" />
+          <span className="sr-only">播放器</span>
         </button>
       </div>
       <div className="command-group command-group-right">

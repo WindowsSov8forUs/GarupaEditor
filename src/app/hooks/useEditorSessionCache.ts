@@ -4,6 +4,7 @@ import type {
   ChartBpmEvent,
   ChartMetadata,
   ChartNote,
+  ChartSvEvent,
   EditorOptionSettings,
   ChartSettings,
   WindowPreset,
@@ -37,9 +38,14 @@ type SessionSnapshotV1 = {
   notes: Array<Partial<ChartNote>>;
   slideChains: Array<Partial<SlideChain>>;
   bpmEvents: Array<Partial<ChartBpmEvent>>;
+  svEvents?: Array<Partial<ChartSvEvent>>;
   audioFileName?: string;
   audioDurationSec?: number;
   windowPresetId?: string;
+  playbackWindowPresetId?: string;
+  playbackFps?: number;
+  playbackMvMode?: boolean;
+  playbackMvAlphaPercent?: number;
 };
 
 type ParsedDataUrl = {
@@ -130,21 +136,29 @@ export function useEditorSessionCache(params: any) {
     notes,
     slideChains,
     bpmEvents,
+    svEvents,
     audioFileName,
     audioDurationSec,
     audioObjectUrl,
     windowPresetId,
+    playbackWindowPresetId,
+    playbackFps,
+    playbackMvMode,
+    playbackMvAlphaPercent,
     WINDOW_SIZE_PRESETS,
     normalizeMetadata,
     normalizeSettings,
     normalizeEditorOptionSettings,
     normalizeNote,
     normalizeBpmEvent,
+    normalizeSvEvent,
     normalizeBaseBpmForWrite,
     normalizeEventBpmForWrite,
+    normalizeTimingGroup,
     isLastBeatOrderedBpmNegative,
     sortNotes,
     sortBpmEvents,
+    sortSvEvents,
     approxEq,
     createId,
     setMetadata,
@@ -153,11 +167,16 @@ export function useEditorSessionCache(params: any) {
     setNotes,
     setSlideChains,
     setBpmEvents,
+    setSvEvents,
     setToolBpmValue,
     setAudioFileName,
     setAudioDurationSec,
     setAudioObjectUrl,
     setWindowPresetId,
+    setPlaybackWindowPresetId,
+    setPlaybackFps,
+    setPlaybackMvMode,
+    setPlaybackMvAlphaPercent,
     applyWindowPresetById,
     clearAllSelections,
     setStatusMessage,
@@ -237,6 +256,7 @@ export function useEditorSessionCache(params: any) {
             return {
               id: chainId,
               noteIds,
+              timingGroup: normalizeTimingGroup(item.timingGroup, 0),
             } as SlideChain;
           })
           .filter((item: SlideChain | null): item is SlideChain => item !== null);
@@ -286,12 +306,35 @@ export function useEditorSessionCache(params: any) {
           throw new Error("会话缓存末尾 BPM 为负数，已阻止恢复。");
         }
 
+        const rawSvEvents = Array.isArray(snapshot.svEvents) ? snapshot.svEvents : [];
+        const dedupedSvByGroupBeat = new Map<string, ChartSvEvent>();
+        for (const rawItem of rawSvEvents) {
+          if (!isRecord(rawItem)) {
+            continue;
+          }
+          const normalized = normalizeSvEvent(
+            {
+              ...(rawItem as Partial<ChartSvEvent>),
+              timingGroup: normalizeTimingGroup(rawItem.timingGroup, 0),
+            },
+            nextBeatDivision,
+            1,
+          );
+          if (!normalized) {
+            continue;
+          }
+          const key = `${normalized.timingGroup}|${normalized.beat.toFixed(6)}`;
+          dedupedSvByGroupBeat.set(key, normalized);
+        }
+        const sortedNormalizedSvEvents = sortSvEvents(Array.from(dedupedSvByGroupBeat.values()));
+
         setSettings(nextSettings);
         setAppOptionSettings(nextAppOptionSettings);
         setMetadata(nextMetadata);
         setNotes(nextNotes);
         setSlideChains(nextSlideChains);
         setBpmEvents(sortedNormalizedBpmEvents);
+        setSvEvents(sortedNormalizedSvEvents);
         setToolBpmValue(nextMetadata.bpm);
 
         const rawWindowPresetId = normalizeOptionalText(snapshot.windowPresetId);
@@ -315,6 +358,29 @@ export function useEditorSessionCache(params: any) {
             void applyWindowPresetById(resolvedWindowPresetId, { silent: true });
           }
         }
+
+        const rawPlaybackWindowPresetId = normalizeOptionalText(snapshot.playbackWindowPresetId);
+        const resolvedPlaybackWindowPresetId =
+          rawPlaybackWindowPresetId &&
+          Array.isArray(WINDOW_SIZE_PRESETS) &&
+          WINDOW_SIZE_PRESETS.some((item: WindowPreset) => item.id === rawPlaybackWindowPresetId)
+            ? rawPlaybackWindowPresetId
+            : null;
+        if (resolvedPlaybackWindowPresetId) {
+          setPlaybackWindowPresetId(resolvedPlaybackWindowPresetId);
+        }
+
+        const rawPlaybackFps = Number(snapshot.playbackFps);
+        const resolvedPlaybackFps = rawPlaybackFps === 120 ? 120 : 60;
+        setPlaybackFps(resolvedPlaybackFps);
+        const resolvedPlaybackMvMode = snapshot.playbackMvMode === true;
+        setPlaybackMvMode(resolvedPlaybackMvMode);
+        const rawPlaybackMvAlphaPercent = Number(snapshot.playbackMvAlphaPercent);
+        const resolvedPlaybackMvAlphaPercent =
+          Number.isFinite(rawPlaybackMvAlphaPercent)
+            ? Math.max(30, Math.min(100, Math.round(rawPlaybackMvAlphaPercent / 10) * 10))
+            : 100;
+        setPlaybackMvAlphaPercent(resolvedPlaybackMvAlphaPercent);
 
         const restoredAudioDuration = Number(snapshot.audioDurationSec);
         setAudioDurationSec(
@@ -379,12 +445,17 @@ export function useEditorSessionCache(params: any) {
           notes: nextNotes,
           slideChains: nextSlideChains,
           bpmEvents: sortedNormalizedBpmEvents,
+          svEvents: sortedNormalizedSvEvents,
           audioFileName: restoredAudioFileName,
           audioDurationSec:
             Number.isFinite(restoredAudioDuration) && restoredAudioDuration > 0
               ? Number(restoredAudioDuration.toFixed(6))
               : 0,
           windowPresetId: resolvedWindowPresetId,
+          playbackWindowPresetId: resolvedPlaybackWindowPresetId,
+          playbackFps: resolvedPlaybackFps,
+          playbackMvMode: resolvedPlaybackMvMode,
+          playbackMvAlphaPercent: resolvedPlaybackMvAlphaPercent,
         } as Omit<SessionSnapshotV1, "savedAt">);
 
         clearAllSelections();
@@ -493,9 +564,14 @@ export function useEditorSessionCache(params: any) {
             notes,
             slideChains,
             bpmEvents,
+            svEvents,
             audioFileName,
             audioDurationSec: safeAudioDuration,
             windowPresetId,
+            playbackWindowPresetId,
+            playbackFps,
+            playbackMvMode,
+            playbackMvAlphaPercent,
           };
 
           // Guard against clobbering an existing cache with pristine defaults
@@ -508,7 +584,11 @@ export function useEditorSessionCache(params: any) {
             const settingsIsDefault = JSON.stringify(settings) === JSON.stringify(defaultSettings);
             const appOptionSettingsIsDefault =
               JSON.stringify(appOptionSettings) === JSON.stringify(defaultAppOptionSettings);
-            const hasAnyChartData = notes.length > 0 || slideChains.length > 0 || bpmEvents.length > 0;
+            const hasAnyChartData =
+              notes.length > 0 ||
+              slideChains.length > 0 ||
+              bpmEvents.length > 0 ||
+              svEvents.length > 0;
             const hasAnyMediaData =
               (typeof audioObjectUrl === "string" && audioObjectUrl.length > 0)
               || (typeof audioFileName === "string" && audioFileName.trim().length > 0)
@@ -604,6 +684,7 @@ export function useEditorSessionCache(params: any) {
     audioFileName,
     audioObjectUrl,
     bpmEvents,
+    svEvents,
     didRestoreAttemptFinish,
     metadata,
     notes,
@@ -612,6 +693,10 @@ export function useEditorSessionCache(params: any) {
     appOptionSettings,
     slideChains,
     windowPresetId,
+    playbackWindowPresetId,
+    playbackFps,
+    playbackMvMode,
+    playbackMvAlphaPercent,
   ]);
 }
 

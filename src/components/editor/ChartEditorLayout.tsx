@@ -33,6 +33,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     openImportJsonModal,
     downloadJson,
     openStaticRenderWindow,
+    openSimulatorWindow,
     exportJson,
     isImportJsonModalOpen,
     importJsonModalLevel,
@@ -235,14 +236,23 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     setIsMetadataEditorOpen,
     handleCoverUpload,
     handleAudioUpload,
+    handleMvUpload,
     isAppSettingsOpen,
     setIsAppSettingsOpen,
     appOptionSettings,
     isSkinSettingsOpen,
     setIsSkinSettingsOpen,
     windowPresetId,
+    playbackWindowPresetId,
+    playbackFps,
+    playbackMvMode,
+    playbackMvAlphaPercent,
     WINDOW_SIZE_PRESETS,
     setWindowPresetId,
+    setPlaybackWindowPresetId,
+    setPlaybackFps,
+    setPlaybackMvMode,
+    setPlaybackMvAlphaPercent,
     pendingSkinSelection,
     setPendingSkinSelection,
     normalizeSkinSelection,
@@ -956,6 +966,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         onImportJson={openImportJsonModal}
         onExportJson={downloadJson}
         onOpenStaticRender={openStaticRenderWindow}
+        onOpenSimulator={openSimulatorWindow}
         onOpenSkinSettings={openSkinSettings}
         onOpenAppSettings={openAppSettings}
       />
@@ -1640,14 +1651,23 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         onClose={() => setIsMetadataEditorOpen(false)}
         onCoverUpload={handleCoverUpload}
         onAudioUpload={handleAudioUpload}
+        onMvUpload={handleMvUpload}
       />
 
       <AppSettingsModal
         open={isAppSettingsOpen}
         onClose={() => setIsAppSettingsOpen(false)}
         windowPresetId={windowPresetId}
+        playbackWindowPresetId={playbackWindowPresetId}
+        playbackFps={playbackFps}
+        playbackMvMode={playbackMvMode}
+        playbackMvAlphaPercent={playbackMvAlphaPercent}
         windowPresets={WINDOW_SIZE_PRESETS}
         onWindowPresetIdChange={setWindowPresetId}
+        onPlaybackWindowPresetIdChange={setPlaybackWindowPresetId}
+        onPlaybackFpsChange={setPlaybackFps}
+        onPlaybackMvModeChange={setPlaybackMvMode}
+        onPlaybackMvAlphaPercentChange={setPlaybackMvAlphaPercent}
         onApplyWindowPreset={() => void applyWindowPreset()}
         optionSettings={appOptionSettings}
         onApplyOptionSettings={applyAppOptionSettings}

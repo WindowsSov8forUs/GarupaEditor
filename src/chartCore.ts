@@ -41,6 +41,8 @@ export interface ChartMetadata {
   bpm: number;
   offsetMs: number;
   coverDataUrl: string | null;
+  mvDataUrl: string | null;
+  mvOffsetMs: number;
 }
 
 export interface ChartSettings {
@@ -51,9 +53,12 @@ export interface ChartSettings {
 
 export interface EditorOptionSettings {
   rhythmNoteSizePercent: number;
+  rhythmNoteSpeed: number;
   longLineBrightnessPercent: number;
+  clickEffectEnabled: boolean;
   simultaneousLineEnabled: boolean;
   colorAssistEnabled: boolean;
+  mirrorEnabled: boolean;
   noteSeVolumePercent: number;
   verticalScalePercent: number;
   habahiro: boolean;
@@ -65,6 +70,7 @@ export interface ChartNote {
   type: NoteType;
   lane: number;
   beat: number;
+  timingGroup?: number;
   width?: number;
   endBeat?: number;
   endLane?: number;
@@ -74,6 +80,13 @@ export interface ChartBpmEvent {
   id: string;
   beat: number;
   bpm: number;
+}
+
+export interface ChartSvEvent {
+  id: string;
+  beat: number;
+  value: number;
+  timingGroup: number;
 }
 
 interface ChartSkinInfo {
@@ -97,6 +110,7 @@ interface ChartJsonSimpleNote {
   beat: number;
   lane: number;
   width: number;
+  timingGroup?: number;
 }
 
 interface ChartJsonDirectionalNote {
@@ -105,6 +119,7 @@ interface ChartJsonDirectionalNote {
   lane: number;
   width: number;
   direction: ChartJsonDirection;
+  timingGroup?: number;
 }
 
 export type ChartJsonSlideConnection = ChartJsonSimpleNote | ChartJsonDirectionalNote;
@@ -112,6 +127,7 @@ export type ChartJsonSlideConnection = ChartJsonSimpleNote | ChartJsonDirectiona
 export interface ChartJsonSlideItem {
   type: "Slide";
   connections: ChartJsonSlideConnection[];
+  timingGroup?: number;
 }
 
 export interface ChartJsonBpmItem {
@@ -120,8 +136,15 @@ export interface ChartJsonBpmItem {
   value: number;
 }
 
+export interface ChartJsonSvItem {
+  type: "SV";
+  beat: number;
+  value: number;
+  timingGroup?: number;
+}
+
 export type ChartJsonTopLevelNote = Exclude<ChartJsonSimpleNote, { type: "Hidden" }> | ChartJsonDirectionalNote;
-type ChartJsonItem = ChartJsonTopLevelNote | ChartJsonSlideItem | ChartJsonBpmItem;
+type ChartJsonItem = ChartJsonTopLevelNote | ChartJsonSlideItem | ChartJsonBpmItem | ChartJsonSvItem;
 export type ChartJson = ChartJsonItem[];
 
 export interface WindowPreset {
@@ -235,6 +258,8 @@ export const DEFAULT_METADATA: ChartMetadata = {
   bpm: 120,
   offsetMs: 0,
   coverDataUrl: null,
+  mvDataUrl: null,
+  mvOffsetMs: 0,
 };
 
 export const DEFAULT_SETTINGS: ChartSettings = {
@@ -245,9 +270,12 @@ export const DEFAULT_SETTINGS: ChartSettings = {
 
 export const DEFAULT_EDITOR_OPTION_SETTINGS: EditorOptionSettings = {
   rhythmNoteSizePercent: 100,
+  rhythmNoteSpeed: 9.7,
   longLineBrightnessPercent: 100,
+  clickEffectEnabled: true,
   simultaneousLineEnabled: true,
   colorAssistEnabled: true,
+  mirrorEnabled: false,
   noteSeVolumePercent: 100,
   verticalScalePercent: 100,
   habahiro: false,
@@ -308,6 +336,11 @@ export function normalizeDifficultyLevel(value: unknown): string {
 export function normalizePositiveInt(value: unknown, fallback: number): number {
   const normalized = Math.round(toFinite(value, fallback));
   return Math.max(1, normalized);
+}
+
+export function normalizeTimingGroup(value: unknown, fallback = 0): number {
+  const normalized = Math.round(toFinite(value, fallback));
+  return Math.max(0, normalized);
 }
 
 function normalizeBpmValue(value: unknown, fallback: number): number {
@@ -399,6 +432,18 @@ export function sortBpmEvents(events: ChartBpmEvent[]): ChartBpmEvent[] {
   });
 }
 
+export function sortSvEvents(events: ChartSvEvent[]): ChartSvEvent[] {
+  return [...events].sort((a, b) => {
+    if (a.timingGroup !== b.timingGroup) {
+      return a.timingGroup - b.timingGroup;
+    }
+    if (!approxEq(a.beat, b.beat)) {
+      return a.beat - b.beat;
+    }
+    return 0;
+  });
+}
+
 export function normalizeBpmEvent(
   input: Partial<ChartBpmEvent> & { tick?: number },
   beatDivision: number,
@@ -413,6 +458,25 @@ export function normalizeBpmEvent(
     id: typeof input.id === "string" && input.id.length > 0 ? input.id : createId(),
     beat,
     bpm,
+  };
+}
+
+export function normalizeSvEvent(
+  input: Partial<ChartSvEvent> & { tick?: number },
+  beatDivision: number,
+  fallbackValue: number,
+): ChartSvEvent | null {
+  const fallbackBeat = toFinite(input.tick, 0) / beatDivision;
+  const rawBeat = toFinite(input.beat, fallbackBeat);
+  const beat = Math.max(0, Number(rawBeat.toFixed(6)));
+  const value = Number(toFinite(input.value, fallbackValue).toFixed(6));
+  const timingGroup = normalizeTimingGroup(input.timingGroup, 0);
+
+  return {
+    id: typeof input.id === "string" && input.id.length > 0 ? input.id : createId(),
+    beat,
+    value,
+    timingGroup,
   };
 }
 
@@ -703,6 +767,11 @@ export function normalizeMetadata(input: Partial<ChartMetadata>): ChartMetadata 
       typeof input.coverDataUrl === "string" && input.coverDataUrl.trim() !== ""
         ? input.coverDataUrl
         : null,
+    mvDataUrl:
+      typeof input.mvDataUrl === "string" && input.mvDataUrl.trim() !== ""
+        ? input.mvDataUrl
+        : null,
+    mvOffsetMs: Math.round(clamp(toFinite(input.mvOffsetMs, DEFAULT_METADATA.mvOffsetMs), -5000, 5000)),
   };
 }
 
@@ -741,6 +810,9 @@ export function normalizeEditorOptionSettings(
   const rhythmNoteSizePercent = Math.round(
     clamp(toFinite(input.rhythmNoteSizePercent, DEFAULT_EDITOR_OPTION_SETTINGS.rhythmNoteSizePercent), 10, 200),
   );
+  const rhythmNoteSpeed = Number(
+    clamp(toFinite(input.rhythmNoteSpeed, DEFAULT_EDITOR_OPTION_SETTINGS.rhythmNoteSpeed), 1, 12).toFixed(2),
+  );
   const longLineBrightnessPercent = Math.round(
     clamp(
       toFinite(input.longLineBrightnessPercent, DEFAULT_EDITOR_OPTION_SETTINGS.longLineBrightnessPercent),
@@ -757,7 +829,12 @@ export function normalizeEditorOptionSettings(
 
   return {
     rhythmNoteSizePercent,
+    rhythmNoteSpeed,
     longLineBrightnessPercent,
+    clickEffectEnabled:
+      typeof input.clickEffectEnabled === "boolean"
+        ? input.clickEffectEnabled
+        : DEFAULT_EDITOR_OPTION_SETTINGS.clickEffectEnabled,
     simultaneousLineEnabled:
       typeof input.simultaneousLineEnabled === "boolean"
         ? input.simultaneousLineEnabled
@@ -766,6 +843,10 @@ export function normalizeEditorOptionSettings(
       typeof input.colorAssistEnabled === "boolean"
         ? input.colorAssistEnabled
         : DEFAULT_EDITOR_OPTION_SETTINGS.colorAssistEnabled,
+    mirrorEnabled:
+      typeof input.mirrorEnabled === "boolean"
+        ? input.mirrorEnabled
+        : DEFAULT_EDITOR_OPTION_SETTINGS.mirrorEnabled,
     noteSeVolumePercent,
     verticalScalePercent,
     habahiro:
@@ -790,12 +871,14 @@ export function normalizeNote(
   const fallbackBeat = toFinite(input.tick, 0) / beatDivision;
   const beatCandidate = toFinite(input.beat, fallbackBeat);
   const beat = Math.max(0, Number(beatCandidate.toFixed(6)));
+  const timingGroup = normalizeTimingGroup(input.timingGroup, 0);
 
   const normalized: ChartNote = {
     id: typeof input.id === "string" && input.id.length > 0 ? input.id : createId(),
     type,
     lane,
     beat,
+    timingGroup,
   };
 
   if (isDirectionalNoteType(type)) {

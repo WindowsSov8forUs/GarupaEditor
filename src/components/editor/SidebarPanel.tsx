@@ -35,7 +35,7 @@ type ToolActionButtonConfig = {
   pointerAction?: () => void;
 };
 type StepperActionButtonConfig = {
-  icon: "left" | "right" | "minus" | "plus";
+  icon: "left" | "right" | "minus" | "plus" | "leftDouble" | "rightDouble";
   onClick: () => void;
   disabled?: boolean;
   title?: string;

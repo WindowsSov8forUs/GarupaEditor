@@ -10,6 +10,7 @@ export const WORKSPACE_DIVIDER_WIDTH = 12;
 export interface SlideChain {
   id: string;
   noteIds: string[];
+  timingGroup?: number;
 }
 
 export interface SlideBuildState {

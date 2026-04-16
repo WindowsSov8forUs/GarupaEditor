@@ -27,6 +27,7 @@ type MetadataEditorModalProps = {
   onClose: () => void;
   onCoverUpload: (event: ChangeEvent<HTMLInputElement>) => void;
   onAudioUpload: (event: ChangeEvent<HTMLInputElement>) => void;
+  onMvUpload: (event: ChangeEvent<HTMLInputElement>) => void;
 };
 
 function normalizeLevel(value: unknown, fallback: number): number {
@@ -41,13 +42,16 @@ export function MetadataEditorModal({
   onClose,
   onCoverUpload,
   onAudioUpload,
+  onMvUpload,
 }: MetadataEditorModalProps) {
   const { mounted, phase } = useModalTransition(open);
   const [levelInput, setLevelInput] = useState(metadata.difficultyLevel);
   const [coverFileLabel, setCoverFileLabel] = useState("");
   const [audioFileLabel, setAudioFileLabel] = useState("");
+  const [mvFileLabel, setMvFileLabel] = useState("");
   const coverInputRef = useRef<HTMLInputElement | null>(null);
   const audioInputRef = useRef<HTMLInputElement | null>(null);
+  const mvInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     setLevelInput(metadata.difficultyLevel);
@@ -84,6 +88,12 @@ export function MetadataEditorModal({
     const fileName = event.currentTarget.files?.[0]?.name ?? "";
     setAudioFileLabel(fileName);
     onAudioUpload(event);
+  };
+
+  const handleMvInputChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const fileName = event.currentTarget.files?.[0]?.name ?? "";
+    setMvFileLabel(fileName);
+    onMvUpload(event);
   };
 
   if (!mounted) {
@@ -291,7 +301,34 @@ export function MetadataEditorModal({
               </div>
 
               <div className="setting-block">
-                <span className="setting-title-strip">Offset (ms)</span>
+                <span className="setting-title-strip">MV</span>
+                <div className="metadata-file-row">
+                  <button
+                    type="button"
+                    className="metadata-file-trigger"
+                    onClick={() => {
+                      mvInputRef.current?.click();
+                    }}
+                  >
+                    <span className="btn-content">选择文件</span>
+                  </button>
+                  <div className="metadata-file-name" title={mvFileLabel || "未选择文件"}>
+                    {mvFileLabel || "未选择文件"}
+                  </div>
+                  <input
+                    ref={mvInputRef}
+                    type="file"
+                    accept="image/*,video/*"
+                    className="metadata-file-hidden"
+                    onChange={handleMvInputChange}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="metadata-editor-row metadata-editor-row-two">
+              <div className="setting-block">
+                <span className="setting-title-strip">谱面Offset (ms)</span>
                 <input
                   type="text"
                   inputMode="numeric"
@@ -302,6 +339,23 @@ export function MetadataEditorModal({
                     setMetadata((current) => ({
                       ...current,
                       offsetMs: Math.round(clamp(toFinite(value, current.offsetMs), -5000, 5000)),
+                    }));
+                  }}
+                />
+              </div>
+
+              <div className="setting-block">
+                <span className="setting-title-strip">MV Offset (ms)</span>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  className="value-input"
+                  value={metadata.mvOffsetMs}
+                  onChange={(event) => {
+                    const value = event.currentTarget.value;
+                    setMetadata((current) => ({
+                      ...current,
+                      mvOffsetMs: Math.round(clamp(toFinite(value, current.mvOffsetMs), -5000, 5000)),
                     }));
                   }}
                 />

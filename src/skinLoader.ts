@@ -208,15 +208,19 @@ interface NoteSkin<TAssets, TSampleAssets> {
   sample: NoteSkinSampleAssets<TSampleAssets>;
 }
 
-export interface SeSkinAssets {
-  ripName: string;
-  files: Record<string, string>;
+export interface RhythmSeSkinAssets {
+  perfect: string;
+  flick: string;
 }
 
-export interface SeRuntimeAssets {
-  rhythmSESkin: SeSkinAssets;
-  directionalSESkin: SeSkinAssets;
-  SE_RHYTHM_TAP_SKILL: string;
+export interface DirectionalSeSkinAssets {
+  directionalFL: Record<1 | 2 | 3, string>;
+}
+
+export interface SeSkinAssets {
+  rhythm: RhythmSeSkinAssets;
+  directional: DirectionalSeSkinAssets;
+  tapSkill: string;
 }
 
 export interface SkinSelection {
@@ -319,8 +323,7 @@ type DownloadProgressOptions = {
   operationId?: string;
 };
 
-export let SE_RHYTHM_TAP_SKILL = "";
-let runtimeSeAssets: SeRuntimeAssets | null = null;
+let runtimeSeAssets: SeSkinAssets | null = null;
 
 export function resolveRhythmRipNameFromType(
   typeValue: string,
@@ -548,6 +551,64 @@ function normalizeLowercaseFileMap(fileMap: Record<string, string>): Record<stri
   return normalized;
 }
 
+function resolveSeAssetFromFiles(
+  files: Record<string, string>,
+  candidates: readonly string[],
+): string | null {
+  for (const candidate of candidates) {
+    const normalized = candidate.trim().toLowerCase();
+    if (!normalized) {
+      continue;
+    }
+    const resolved = files[normalized];
+    if (typeof resolved === "string" && resolved.length > 0) {
+      return resolved;
+    }
+  }
+  return null;
+}
+
+function requireSeAssetFromFiles(
+  files: Record<string, string>,
+  candidates: readonly string[],
+  label: string,
+): string {
+  const resolved = resolveSeAssetFromFiles(files, candidates);
+  if (!resolved) {
+    throw new Error(`SE 资源缺失：${label}`);
+  }
+  return resolved;
+}
+
+function withRhythmSeAssets(files: Record<string, string>): RhythmSeSkinAssets {
+  return {
+    perfect: requireSeAssetFromFiles(files, ["perfect.mp3", "perfect.wav", "perfect.ogg"], "perfect"),
+    flick: requireSeAssetFromFiles(files, ["flick.mp3", "flick.wav", "flick.ogg"], "flick"),
+  };
+}
+
+function withDirectionalSeAssets(files: Record<string, string>): DirectionalSeSkinAssets {
+  return {
+    directionalFL: {
+      1: requireSeAssetFromFiles(
+        files,
+        ["directional_fl.mp3", "directional_fl.wav", "directional_fl.ogg"],
+        "directional_fl",
+      ),
+      2: requireSeAssetFromFiles(
+        files,
+        ["directional_fl_2.mp3", "directional_fl_2.wav", "directional_fl_2.ogg"],
+        "directional_fl_2",
+      ),
+      3: requireSeAssetFromFiles(
+        files,
+        ["directional_fl_3.mp3", "directional_fl_3.wav", "directional_fl_3.ogg"],
+        "directional_fl_3",
+      ),
+    },
+  };
+}
+
 function resolveMimeTypeByFileName(fileName: string): string | undefined {
   const normalized = fileName.trim().toLowerCase();
   if (normalized.endsWith(".png")) {
@@ -615,12 +676,11 @@ async function downloadWebTapseskinFiles(ripName: string): Promise<Record<string
   return Object.fromEntries(loaded);
 }
 
-export function setRuntimeSeAssets(value: SeRuntimeAssets | null): void {
+export function setRuntimeSeAssets(value: SeSkinAssets | null): void {
   runtimeSeAssets = value;
-  SE_RHYTHM_TAP_SKILL = value?.SE_RHYTHM_TAP_SKILL ?? "";
 }
 
-export function getRuntimeSeAssets(): SeRuntimeAssets | null {
+export function getRuntimeSeAssets(): SeSkinAssets | null {
   return runtimeSeAssets;
 }
 
@@ -1329,7 +1389,7 @@ export async function downloadBestdoriDirectionalSkinAssets(
 export async function downloadBestdoriRhythmSeSkinAssets(
   selection: SkinSelection,
   options?: DownloadProgressOptions,
-): Promise<SeSkinAssets> {
+): Promise<RhythmSeSkinAssets> {
   const normalized = normalizeSkinSelection(selection);
   const ripName = normalized.rhythmSeRipName;
   if (isTauriEnv()) {
@@ -1338,21 +1398,17 @@ export async function downloadBestdoriRhythmSeSkinAssets(
       taskId: options?.operationId ?? null,
     });
     const packageFiles = normalizeLowercaseFileMap(prepared.packageFiles);
-    return {
-      ripName,
-      files: await loadPreparedBinaryFilesAsDataUrlMap(packageFiles, "read_sound_binary_file"),
-    };
+    const files = await loadPreparedBinaryFilesAsDataUrlMap(packageFiles, "read_sound_binary_file");
+    return withRhythmSeAssets(files);
   }
-  return {
-    ripName,
-    files: await downloadWebTapseskinFiles(ripName),
-  };
+  const files = await downloadWebTapseskinFiles(ripName);
+  return withRhythmSeAssets(files);
 }
 
 export async function downloadBestdoriDirectionalSeSkinAssets(
   selection: SkinSelection,
   options?: DownloadProgressOptions,
-): Promise<SeSkinAssets> {
+): Promise<DirectionalSeSkinAssets> {
   const normalized = normalizeSkinSelection(selection);
   const ripName = normalized.directionalSeRipName;
   if (isTauriEnv()) {
@@ -1361,13 +1417,9 @@ export async function downloadBestdoriDirectionalSeSkinAssets(
       taskId: options?.operationId ?? null,
     });
     const packageFiles = normalizeLowercaseFileMap(prepared.packageFiles);
-    return {
-      ripName,
-      files: await loadPreparedBinaryFilesAsDataUrlMap(packageFiles, "read_sound_binary_file"),
-    };
+    const files = await loadPreparedBinaryFilesAsDataUrlMap(packageFiles, "read_sound_binary_file");
+    return withDirectionalSeAssets(files);
   }
-  return {
-    ripName,
-    files: await downloadWebTapseskinFiles(ripName),
-  };
+  const files = await downloadWebTapseskinFiles(ripName);
+  return withDirectionalSeAssets(files);
 }
