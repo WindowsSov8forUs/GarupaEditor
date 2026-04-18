@@ -74,7 +74,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     onTogglePlayTool,
     isPlayToolSelected,
     isPlaybackPlaying,
-    playbackNowLabel,
+    getPlaybackNowLabel,
     playbackTotalLabel,
     playbackSpeedLabel,
     playbackVolumeLabel,
@@ -997,7 +997,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
           onTogglePlayTool={onTogglePlayTool}
           isPlayToolSelected={isPlayToolSelected}
           isPlaybackPlaying={isPlaybackPlaying}
-          playbackNowLabel={playbackNowLabel}
+          getPlaybackNowLabel={getPlaybackNowLabel}
           playbackTotalLabel={playbackTotalLabel}
           playbackSpeedLabel={playbackSpeedLabel}
           playbackVolumeLabel={playbackVolumeLabel}

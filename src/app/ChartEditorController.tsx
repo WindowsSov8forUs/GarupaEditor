@@ -564,7 +564,6 @@ function ChartEditorController() {
   const [playbackVolumePercent, setPlaybackVolumePercent] = useState(100);
   const [playbackLinePositionPercent, setPlaybackLinePositionPercent] = useState(0);
   const [isPlaybackFollowEnabled, setIsPlaybackFollowEnabledState] = useState(true);
-  const [playbackNowSecState, setPlaybackNowSecState] = useState(0);
   const [selectionDrag, setSelectionDrag] = useState<{
     startX: number;
     startY: number;
@@ -957,7 +956,6 @@ function ChartEditorController() {
   const playbackHasAudioTrackRef = useRef(false);
   const playbackNowSecRef = useRef(0);
   const playbackIsPlayingRef = useRef(false);
-  const playbackUiSyncStampRef = useRef(0);
   const playbackEventCursorRef = useRef(0);
   const playbackSlideStartCursorRef = useRef(0);
   const playbackSlideEndCursorRef = useRef(0);
@@ -1162,12 +1160,15 @@ function ChartEditorController() {
   const playbackDurationSec = Math.max(0, Number(Math.max(audioDurationSec, totalDurationSec).toFixed(6)));
   const playbackCeilingSec = hasUploadedAudio ? playbackDurationSec : trackPlayableDurationSec;
   const currentPlaybackSpeed = PLAYBACK_SPEED_OPTIONS[Math.max(0, playbackSpeedIndex)] ?? 1;
-  const playbackNowLabel = formatDuration(playbackNowSecState);
   const playbackTotalLabel = hasUploadedAudio ? formatDuration(playbackDurationSec) : "?";
   const playbackSpeedLabel = `${Number(currentPlaybackSpeed.toFixed(2))}x`;
   const playbackVolumeLabel = `${Math.round(playbackVolumePercent)}`;
   const playbackPositionLabel = `${Math.round(playbackLinePositionPercent)}%`;
   const getPlaybackNowTimeSec = useCallback(() => playbackNowSecRef.current, []);
+  const getPlaybackNowLabel = useCallback(
+    () => formatDuration(playbackNowSecRef.current),
+    [formatDuration],
+  );
   useEffect(() => {
     playbackLineModeRef.current = playbackLineMode;
   }, [playbackLineMode]);
@@ -2943,8 +2944,6 @@ function ChartEditorController() {
     hidePlaybackGuide();
     hidePlaybackRuntimeLine();
     playbackNowSecRef.current = 0;
-    playbackUiSyncStampRef.current = 0;
-    setPlaybackNowSecState(0);
     if (message) {
       setStatusMessage(message);
     }
@@ -3421,15 +3420,6 @@ function ChartEditorController() {
     processPlaybackSoundFrame(prevTimeSec, nextTimeSec);
     syncPlaybackViewport(nextTimeSec);
     updatePlaybackRuntimeLine(nextTimeSec);
-    const now = performance.now();
-    if (
-      now - playbackUiSyncStampRef.current >= 80
-      || nextTimeSec <= 0
-      || nextTimeSec >= safeDuration - 1e-3
-    ) {
-      playbackUiSyncStampRef.current = now;
-      setPlaybackNowSecState(nextTimeSec);
-    }
     if (nextTimeSec >= safeDuration - 1e-3) {
       stopPlayback("播放结束。");
       return;
@@ -3470,8 +3460,6 @@ function ChartEditorController() {
     playbackNowSecRef.current = safeSeconds;
     stopAllPlaybackSoundEffects();
     resetPlaybackSoundStateAt(safeSeconds);
-    playbackUiSyncStampRef.current = performance.now();
-    setPlaybackNowSecState(safeSeconds);
     syncPlaybackViewport(safeSeconds);
     playbackHasAudioTrackRef.current = false;
     if (hasUploadedAudio && audio) {
@@ -4345,7 +4333,7 @@ function ChartEditorController() {
     () => (skinAssets ? projectCanvasRenderResourceRuntimeAssets(skinAssets) : null),
     [skinAssets],
   );
-  const staticRenderPayload = useMemo<StaticRenderPayload | null>(() => {
+  const buildStaticRenderPayload = useCallback((): StaticRenderPayload | null => {
     if (!staticRenderRuntimeSkin) {
       return null;
     }
@@ -4420,6 +4408,7 @@ function ChartEditorController() {
       setStatusMessage("皮肤资源尚未就绪，无法打开预览窗口。");
       return;
     }
+    const staticRenderPayload = buildStaticRenderPayload();
     if (!staticRenderPayload) {
       setStatusMessage("预览数据尚未准备完成，请稍后重试。");
       return;
@@ -4534,9 +4523,9 @@ function ChartEditorController() {
     isSkinReady,
     metadata.bpm,
     metadata.title,
+    buildStaticRenderPayload,
     setStatusMessage,
     startPreviewLoadingProgress,
-    staticRenderPayload,
     previewLoadingProgress.visible,
     updatePreviewLoadingProgress,
   ]);
@@ -4833,7 +4822,7 @@ function ChartEditorController() {
         onTogglePlayTool,
         isPlayToolSelected,
         isPlaybackPlaying,
-        playbackNowLabel,
+        getPlaybackNowLabel,
         playbackTotalLabel,
         playbackSpeedLabel,
         playbackVolumeLabel,

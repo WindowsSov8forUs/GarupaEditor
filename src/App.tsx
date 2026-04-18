@@ -1,7 +1,17 @@
-import { Component, type ErrorInfo, type ReactNode, useEffect, useMemo, useState } from "react";
+import {
+  Component,
+  Suspense,
+  lazy,
+  type ErrorInfo,
+  type ReactNode,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import ChartEditorController from "./app/ChartEditorController";
-import StaticChartRenderWindow from "./app/StaticChartRenderWindow";
-import BuiltInSimulatorWindow from "./app/BuiltInSimulatorWindow";
+
+const StaticChartRenderWindow = lazy(() => import("./app/StaticChartRenderWindow"));
+const BuiltInSimulatorWindow = lazy(() => import("./app/BuiltInSimulatorWindow"));
 
 type AppErrorBoundaryProps = {
   children: ReactNode;
@@ -70,11 +80,25 @@ function App() {
   const isStaticRenderRoute = useMemo(() => hash.startsWith("#static-render"), [hash]);
   const isSimulatorRoute = useMemo(() => hash.startsWith("#simulator"), [hash]);
 
+  const routeLoadingFallback = (
+    <main className="app-shell">
+      <section className="playfield-loading">加载中...</section>
+    </main>
+  );
+
   if (isStaticRenderRoute) {
-    return <StaticChartRenderWindow />;
+    return (
+      <Suspense fallback={routeLoadingFallback}>
+        <StaticChartRenderWindow />
+      </Suspense>
+    );
   }
   if (isSimulatorRoute) {
-    return <BuiltInSimulatorWindow />;
+    return (
+      <Suspense fallback={routeLoadingFallback}>
+        <BuiltInSimulatorWindow />
+      </Suspense>
+    );
   }
 
   return (
