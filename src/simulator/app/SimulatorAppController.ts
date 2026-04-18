@@ -46,7 +46,9 @@ export class SimulatorAppController {
   private readonly audio = new AudioEngine();
   private rafId = 0;
   private frameIntervalMs = 1000 / 60;
+  private frameIntervalEpsilonMs = 0.25;
   private lastLoopTickMs = 0;
+  private loopAccumulatorMs = 0;
   private fpsCounterTime = 0;
   private fpsCounterFrames = 0;
   private fpsText = "0";
@@ -179,7 +181,9 @@ export class SimulatorAppController {
     const settings = buildSettingsFromPayload(this.launchPayload.settings ?? null);
     this.settings = settings;
     this.frameIntervalMs = 1000 / Math.max(1, settings.fps);
+    this.frameIntervalEpsilonMs = Math.max(0.1, this.frameIntervalMs * 0.03);
     this.lastLoopTickMs = 0;
+    this.loopAccumulatorMs = 0;
     if (!this.launchPayload.chartData) {
       throw new Error("Launch payload requires chartData.");
     }
@@ -217,18 +221,21 @@ export class SimulatorAppController {
     await audioPromise;
 
     this.ui.status.textContent = "loading chart...";
-    const lut = precomputeLut(settings);
+    precomputeLut(settings);
     const chart: ParsedChart = parseEditorChart(this.launchPayload.chartData, settings);
+    this.renderer.setChartEvents(chart.events, chart.timingGroups);
 
     if (settings.mvmode) {
       this.chartMvResource = await loadMvResourceFromPayload(this.launchPayload.mv ?? null).catch(() => null);
     }
 
-    this.runtime = new LegacyRuntime(settings, lut, chart);
+    this.runtime = new LegacyRuntime(settings, chart);
     this.runtime.start(performance.now());
 
     this.fpsCounterFrames = 0;
     this.fpsCounterTime = performance.now();
+    this.lastLoopTickMs = 0;
+    this.loopAccumulatorMs = 0;
 
     this.ui.status.textContent = `running | notes=${chart.noteCount} | max=${Math.floor(chart.maxTimeMs)}ms`;
     this.ui.startButton.disabled = false;
@@ -241,14 +248,24 @@ export class SimulatorAppController {
     }
 
     const now = performance.now();
-    if (
-      this.lastLoopTickMs > 0
-      && now - this.lastLoopTickMs < this.frameIntervalMs
-    ) {
+    if (this.lastLoopTickMs <= 0) {
+      this.lastLoopTickMs = now;
+    }
+
+    const rawDelta = now - this.lastLoopTickMs;
+    this.lastLoopTickMs = now;
+    const deltaMs = Math.max(0, Math.min(250, rawDelta));
+    this.loopAccumulatorMs += deltaMs;
+
+    if (this.loopAccumulatorMs + this.frameIntervalEpsilonMs < this.frameIntervalMs) {
       this.rafId = requestAnimationFrame(this.loop);
       return;
     }
-    this.lastLoopTickMs = now;
+    if (this.loopAccumulatorMs > this.frameIntervalMs * 3) {
+      this.loopAccumulatorMs = this.frameIntervalMs;
+    } else {
+      this.loopAccumulatorMs = this.loopAccumulatorMs % this.frameIntervalMs;
+    }
 
     if (!this.runtime) {
       return;
@@ -392,6 +409,7 @@ export class SimulatorAppController {
       this.rafId = 0;
     }
     this.lastLoopTickMs = 0;
+    this.loopAccumulatorMs = 0;
     this.audio.stopBgm();
     if (this.chartMvResource?.kind === "video") {
       this.chartMvResource.video.pause();

@@ -1,6 +1,6 @@
-﻿import { LEGACY_TIMING_FPS, legacyOffsetToMs, xAt } from "./legacyMath";
-import { hitEffectKind, isFlickType, isHiddenNoSeType, isJudgedType } from "./score";
-import { ActiveNote, HitEffectEvent, ParsedChart, PrecomputedLut, RuntimeStats, SimulatorSettings } from "./types";
+import { LEGACY_TIMING_FPS, legacyOffsetToMs } from "./legacyMath";
+import { hitEffectKind, isHiddenNoSeType, isJudgedType } from "./score";
+import { ActiveNote, HitEffectEvent, ParsedChart, RuntimeStats, SimulatorSettings } from "./types";
 
 interface TimingGroupRuntime {
   speed: number;
@@ -20,7 +20,6 @@ function isGrayEligibleType(type: number): boolean {
 
 export class LegacyRuntime {
   private readonly settings: SimulatorSettings;
-  private readonly lut: PrecomputedLut;
   private readonly chart: ParsedChart;
 
   private readonly activeNotes: ActiveNote[] = [];
@@ -46,9 +45,8 @@ export class LegacyRuntime {
   private pendingHitEffects: HitEffectEvent[] = [];
   private pendingMusicStart = false;
 
-  constructor(settings: SimulatorSettings, lut: PrecomputedLut, chart: ParsedChart) {
+  constructor(settings: SimulatorSettings, chart: ParsedChart) {
     this.settings = settings;
-    this.lut = lut;
     this.chart = chart;
     this.notes = chart.noteCount;
     this.bpmText = chart.initialBpm;
@@ -189,18 +187,10 @@ export class LegacyRuntime {
           startMs: ev.startMs,
           tgId: ev.tgId,
           tgPos: ev.tgPos,
-          visible: true,
           started: false,
-          isFlick: isFlickType(ev.type),
           sePlayed: false,
           t: 0,
-          renderT: 0,
-          x: 0,
-          y: this.settings.topY,
-          percent: 0,
-          scale: 0.04,
           gray: this.isGrayNote(ev.beat, ev.type),
-          width: 1,
           parentEventIndex: ev.parentEventIndex,
           parentActiveId
         };
@@ -229,7 +219,6 @@ export class LegacyRuntime {
   }
 
   private updateNote(note: ActiveNote, elapsedMs: number): void {
-    const previousT = note.t;
     if (note.tgId >= 0) {
       const tRaw = (this.tgPosAt(note.tgId, elapsedMs) * LEGACY_TIMING_FPS) / 100
         + this.settings.noteSpeedFrames
@@ -248,17 +237,6 @@ export class LegacyRuntime {
       note.started = false;
       note.t = 0;
     }
-
-    note.renderT = note.started ? previousT : note.t;
-
-    const renderT = note.started ? note.renderT : note.t;
-    const t = Math.max(0, Math.min(this.lut.maxT - 1, renderT));
-    const laneRaw = this.settings.mirror ? 8 - note.lane : note.lane;
-    note.x = xAt(this.lut, laneRaw, t);
-    note.y = this.lut.y[t];
-    note.percent = this.lut.noteMovePercent[t];
-    note.scale = this.lut.realNoteSize[t];
-    note.width = this.lut.widthPercent[t];
   }
 
   private isGrayNote(beat: number, type: number): boolean {
@@ -316,3 +294,4 @@ export class LegacyRuntime {
     };
   }
 }
+

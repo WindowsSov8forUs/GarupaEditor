@@ -13,6 +13,8 @@ type DefaultRhythmAssets = {
   noteFlickTop: string;
   noteLong: LaneAssetMap;
   noteSlideAmong: string;
+  longNoteLine: string;
+  longNoteLine2: string;
 };
 
 type HabahiroRhythmAssets = {
@@ -23,6 +25,8 @@ type HabahiroRhythmAssets = {
   noteFlickTop: Record<string, string>;
   noteLong: Record<string, string>;
   noteSlideAmong: Record<string, string>;
+  longNoteLine: string;
+  longNoteLine2: string;
 };
 
 type DirectionalAssets = {
@@ -47,6 +51,10 @@ export interface NoteSkinTextureBundle {
     noteFlickR: Array<Texture | null>;
     noteFlickTopL: Texture | null;
     noteFlickTopR: Texture | null;
+  };
+  lines: {
+    longNoteLine: Texture | null;
+    longNoteLine2: Texture | null;
   };
   effects: {
     normal: Texture[];
@@ -190,6 +198,8 @@ export async function loadNoteSkinTextureBundle(
   );
   const noteFlickTopL = await loadCachedTexture(directionalAssets.noteFlickTopL);
   const noteFlickTopR = await loadCachedTexture(directionalAssets.noteFlickTopR);
+  const longNoteLine = await loadCachedTexture(rhythmAssets.longNoteLine);
+  const longNoteLine2 = await loadCachedTexture(rhythmAssets.longNoteLine2);
 
   const loadEffectFrames = async (frameUrls: readonly string[]): Promise<Texture[]> => {
     if (frameUrls.length === 0) {
@@ -225,6 +235,10 @@ export async function loadNoteSkinTextureBundle(
       noteFlickR: directionalRight,
       noteFlickTopL,
       noteFlickTopR,
+    },
+    lines: {
+      longNoteLine,
+      longNoteLine2,
     },
     effects: {
       normal: effectNormal,

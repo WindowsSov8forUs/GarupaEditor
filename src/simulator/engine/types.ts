@@ -11,7 +11,6 @@ export interface SimulatorSettings {
   noteSize: number;
   // Display.Notespeed uses GBP note-speed semantics in modern mode.
   noteSpeedRaw: number;
-  noteSpeed: number;
   noteSpeedFrames: number;
   noteSpeedSeconds: number;
   laneHeight: number;
@@ -43,9 +42,8 @@ export const DEFAULT_SETTINGS: SimulatorSettings = {
   bottomX: 197,
   bottomY: 589,
   bottomDistance: 147,
-  noteSize: 0.71,
+  noteSize: 1,
   noteSpeedRaw: 9.7,
-  noteSpeed: 0,
   noteSpeedFrames: 0,
   noteSpeedSeconds: 0,
   laneHeight: 569,
@@ -66,17 +64,6 @@ export const DEFAULT_SETTINGS: SimulatorSettings = {
   mvAlpha: 0.3,
   displayHiddenSlideAmong: false
 };
-
-export interface PrecomputedLut {
-  y: Float32Array;
-  noteMovePercent: Float32Array;
-  realNoteSize: Float32Array;
-  widthPercent: Float32Array;
-  x: Float32Array;
-  flickArrowMove: Float32Array;
-  flickFps: number;
-  maxT: number;
-}
 
 export interface TimingGroupChange {
   atMs: number;
@@ -142,18 +129,10 @@ export interface ActiveNote {
   startMs: number;
   tgId: number;
   tgPos: number;
-  visible: boolean;
   started: boolean;
-  isFlick: boolean;
   sePlayed: boolean;
   t: number;
-  renderT: number;
-  x: number;
-  y: number;
-  percent: number;
-  scale: number;
   gray: boolean;
-  width: number;
   parentEventIndex: number;
   parentActiveId: number;
 }

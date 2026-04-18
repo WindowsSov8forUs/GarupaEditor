@@ -484,7 +484,9 @@ export function parseEditorChart(
       : -1;
     const tgRuntimeEvents = groupedSv.get(normalizedTimingGroup);
     const tgPos = useTimingGroups ? timingGroupPosAt(tgRuntimeEvents, atMs) : 0;
-    const startMs = useTimingGroups ? (atMs + offsetMs) : (atMs + offsetMs - travelMs);
+    // Keep note activation lead-time consistent across TG and non-TG paths:
+    // runtime TG progression still determines the actual on-screen position.
+    const startMs = atMs + offsetMs - travelMs;
 
     internalEvents.push({
       event: {

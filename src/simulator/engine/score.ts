@@ -2,10 +2,6 @@ export function isJudgedType(type: number): boolean {
   return type !== 0 && type !== 20 && type !== 41 && type !== 42 && type !== 77 && type !== 100 && type !== 107 && type !== 110;
 }
 
-export function isFlickType(type: number): boolean {
-  return type === 2 || type === 12 || type === 13 || type === 26 || type === 74 || type === 102 || type === 106;
-}
-
 export function isHiddenNoSeType(type: number): boolean {
   return type === 41 || type === 42 || type === 77 || type === 107;
 }
