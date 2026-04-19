@@ -29,32 +29,6 @@ export function legacyMsToOffset(ms: number): number {
   return (ms * 10) / LEGACY_TIMING_FPS;
 }
 
-export function applyAdaptiveCoordSettings(settings: SimulatorSettings): void {
-  if (!Number.isFinite(settings.topX)) {
-    settings.topX = DEFAULT_SETTINGS.topX;
-  }
-  if (!Number.isFinite(settings.topY)) {
-    settings.topY = DEFAULT_SETTINGS.topY;
-  }
-  if (!Number.isFinite(settings.topDistance)) {
-    settings.topDistance = DEFAULT_SETTINGS.topDistance;
-  }
-  if (!Number.isFinite(settings.bottomX)) {
-    settings.bottomX = DEFAULT_SETTINGS.bottomX;
-  }
-  if (!Number.isFinite(settings.bottomY)) {
-    settings.bottomY = DEFAULT_SETTINGS.bottomY;
-  }
-  if (!Number.isFinite(settings.bottomDistance)) {
-    settings.bottomDistance = DEFAULT_SETTINGS.bottomDistance;
-  }
-
-  if (settings.bottomY <= settings.topY + 1) {
-    settings.bottomY = settings.topY + 1;
-  }
-  settings.laneHeight = settings.bottomY - settings.topY;
-}
-
 function createDefaultSettings(): SimulatorSettings {
   const settings: SimulatorSettings = { ...DEFAULT_SETTINGS };
   settings.noteSpeedRaw = clampGbpNoteSpeed(settings.noteSpeedRaw);
@@ -87,24 +61,6 @@ export function buildSettingsFromPayload(payloadSettings: SimulatorDisplayPayloa
     if (Number.isFinite(height) && height >= 180 && height <= 4320) {
       settings.windowY = height;
     }
-  }
-  if (source.topX !== undefined && Number.isFinite(Number(source.topX))) {
-    settings.topX = Number(source.topX);
-  }
-  if (source.topY !== undefined && Number.isFinite(Number(source.topY))) {
-    settings.topY = Number(source.topY);
-  }
-  if (source.topDistance !== undefined && Number.isFinite(Number(source.topDistance))) {
-    settings.topDistance = Number(source.topDistance);
-  }
-  if (source.bottomX !== undefined && Number.isFinite(Number(source.bottomX))) {
-    settings.bottomX = Number(source.bottomX);
-  }
-  if (source.bottomY !== undefined && Number.isFinite(Number(source.bottomY))) {
-    settings.bottomY = Number(source.bottomY);
-  }
-  if (source.bottomDistance !== undefined && Number.isFinite(Number(source.bottomDistance))) {
-    settings.bottomDistance = Number(source.bottomDistance);
   }
 
   const fps = Math.floor(Number(source.fps));
@@ -151,7 +107,6 @@ export function buildSettingsFromPayload(payloadSettings: SimulatorDisplayPayloa
     );
   }
 
-  applyAdaptiveCoordSettings(settings);
   return settings;
 }
 

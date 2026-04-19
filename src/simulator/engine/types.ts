@@ -2,18 +2,11 @@ export interface SimulatorSettings {
   windowX: number;
   windowY: number;
   fps: number;
-  topX: number;
-  topY: number;
-  topDistance: number;
-  bottomX: number;
-  bottomY: number;
-  bottomDistance: number;
   noteSize: number;
   // Display.Notespeed uses GBP note-speed semantics in modern mode.
   noteSpeedRaw: number;
   noteSpeedFrames: number;
   noteSpeedSeconds: number;
-  laneHeight: number;
   effectEnable: boolean;
   effectSize: number;
   effectNormalX: number;
@@ -36,17 +29,10 @@ export const DEFAULT_SETTINGS: SimulatorSettings = {
   windowX: 1280,
   windowY: 720,
   fps: 60,
-  topX: 622,
-  topY: 20,
-  topDistance: 6,
-  bottomX: 197,
-  bottomY: 589,
-  bottomDistance: 147,
   noteSize: 1,
   noteSpeedRaw: 9.7,
   noteSpeedFrames: 0,
   noteSpeedSeconds: 0,
-  laneHeight: 569,
   effectEnable: true,
   effectSize: 0.71,
   effectNormalX: 300,
@@ -84,7 +70,7 @@ export interface ChartEvent {
   tgId: number;
   tgPos: number;
   startMs: number;
-  samelineLane: number;
+  samelineLane: number | null;
   bpm: number;
   parentEventIndex: number;
 }
@@ -125,7 +111,7 @@ export interface ActiveNote {
   eventIndex: number;
   type: number;
   lane: number;
-  issameline: number;
+  issameline: number | null;
   startMs: number;
   tgId: number;
   tgPos: number;

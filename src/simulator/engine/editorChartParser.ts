@@ -45,6 +45,24 @@ interface SvRuntimeEvent {
 }
 
 const BEAT_EPSILON = 1e-6;
+const SAMELINE_EXCLUDED_TYPES = new Set<number>([
+  0,
+  4,
+  7,
+  14,
+  15,
+  16,
+  20,
+  41,
+  42,
+  72,
+  77,
+  78,
+  100,
+  104,
+  107,
+  110,
+]);
 
 function toFinite(value: unknown, fallback: number): number {
   const numeric = Number(value);
@@ -56,9 +74,7 @@ function normalizeBeat(value: unknown): number {
 }
 
 function normalizeLane(value: unknown): number {
-  // Legacy simulator coordinates are 1-based lanes (1..7 visible),
-  // while editor chart lanes are 0-based. Convert here to keep geometry parity.
-  return Number((toFinite(value, 0) + 1).toFixed(6));
+  return Number(toFinite(value, 0).toFixed(6));
 }
 
 function normalizeTimingGroup(value: unknown): number {
@@ -66,7 +82,7 @@ function normalizeTimingGroup(value: unknown): number {
 }
 
 function normalizeDirectionalWidth(value: unknown): number {
-  return Math.max(1, Math.min(9, Math.round(toFinite(value, 1))));
+  return Math.round(toFinite(value, 1));
 }
 
 function mapDirectionalType(note: SimulatorChartNote): number | null {
@@ -388,6 +404,36 @@ function timingGroupPosAt(
   return pos + atMs * speed;
 }
 
+function assignSamelineLanes(events: ChartEvent[], enabled: boolean): void {
+  for (let index = 0; index < events.length; index += 1) {
+    events[index].samelineLane = null;
+  }
+  if (!enabled) {
+    return;
+  }
+
+  let samelineBeat: number | null = null;
+  let samelineLane: number | null = null;
+
+  for (let index = 0; index < events.length; index += 1) {
+    const event = events[index];
+    if (SAMELINE_EXCLUDED_TYPES.has(event.type)) {
+      continue;
+    }
+    if (
+      samelineBeat !== null
+      && samelineLane !== null
+      && Math.abs(event.beat - samelineBeat) <= BEAT_EPSILON
+    ) {
+      event.samelineLane = samelineLane;
+      continue;
+    }
+    event.samelineLane = null;
+    samelineBeat = event.beat;
+    samelineLane = event.lane;
+  }
+}
+
 export function parseEditorChart(
   chartData: SimulatorChartPayload,
   settings: SimulatorSettings,
@@ -438,7 +484,7 @@ export function parseEditorChart(
       tgId: -1,
       tgPos: 0,
       startMs: musicStartMs,
-      samelineLane: -1,
+      samelineLane: null,
       bpm: bpmAtBeat(segments, 0),
       parentEventIndex: -1,
     },
@@ -465,7 +511,7 @@ export function parseEditorChart(
         tgId: -1,
         tgPos: 0,
         startMs: atMs + offsetMs - travelMs,
-        samelineLane: -1,
+        samelineLane: null,
         bpm,
         parentEventIndex: -1,
       },
@@ -497,7 +543,7 @@ export function parseEditorChart(
         tgId,
         tgPos,
         startMs,
-        samelineLane: -1,
+        samelineLane: null,
         bpm: bpmAtBeat(segments, descriptor.beat),
         parentEventIndex: -1,
       },
@@ -536,6 +582,7 @@ export function parseEditorChart(
       parentEventIndex,
     };
   });
+  assignSamelineLanes(events, settings.sameline);
 
   let noteCount = 0;
   let maxTimeMs = 10;

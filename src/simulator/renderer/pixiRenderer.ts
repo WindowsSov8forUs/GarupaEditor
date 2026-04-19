@@ -97,14 +97,21 @@ function browserPath(path: string): string {
 
 const SLIDE_LINE_MESH_VERTICES_X = 4;
 const SLIDE_LINE_MESH_VERTICES_Y = 32;
-const NOTE_SCALE_BASE = 0.71;
 const NOTE_SCALE_MIN = 0.028169014084507;
+const NOTE_BASE_TEXTURE_WIDTH = 308;
+const NOTE_WIDTH_TO_LANE_WIDTH_RATIO = 1.35;
+const FIELD_BG_TO_JUDGE_WIDTH_RATIO = 1.35 / 0.875;
+const BG_LANE_HEIGHT_FACTOR = 0.81;
+const SIMULTANEOUS_LINE_HEIGHT_TO_NOTE_WIDTH = 27 / 308;
 
 export class PixiRenderer {
   private app: Application | null = null;
   private root: Container | null = null;
+  private laneBgSprite: Sprite | null = null;
   private lanesG: Graphics | null = null;
+  private judgeLineSprite: Sprite | null = null;
   private linesG: Graphics | null = null;
+  private simultaneousLineLayer: Container | null = null;
   private fallbackNoteG: Graphics | null = null;
   private hudG: Graphics | null = null;
   private hudText: Text | null = null;
@@ -121,14 +128,16 @@ export class PixiRenderer {
   private slideLineMeshCursor = 0;
   private slideLineMeshPrevUsed = 0;
 
+  private simultaneousLineSpritePool: Sprite[] = [];
+  private simultaneousLineSpriteCursor = 0;
+  private simultaneousLineSpritePrevUsed = 0;
+
   private effectSpritePool: Sprite[] = [];
   private effectSpriteCursor = 0;
   private effectSpritePrevUsed = 0;
   private activeEffects: ActiveEffect[] = [];
   private slideConnections: SlideConnection[] = [];
   private timingGroups: readonly TimingGroupDef[] = [];
-  private laneTopX = new Float32Array(9);
-  private laneBottomX = new Float32Array(9);
   private lanesDirty = true;
   private flickFrame = 0;
   private frameTick = 0;
@@ -147,6 +156,7 @@ export class PixiRenderer {
 
   setAssets(bundle: NoteSkinTextureBundle | null): void {
     this.assets = bundle;
+    this.lanesDirty = true;
   }
 
   setChartEvents(events: readonly ChartEvent[], timingGroups: readonly TimingGroupDef[] = []): void {
@@ -253,13 +263,19 @@ export class PixiRenderer {
 
     this.root = new Container();
     this.app.stage.addChild(this.root);
-    this.rebuildLaneCache();
 
     this.mvSprite = new Sprite();
     this.mvSprite.visible = false;
 
+    this.laneBgSprite = new Sprite(Texture.WHITE);
+    this.laneBgSprite.visible = false;
+    this.laneBgSprite.anchor.set(0.5, 1);
     this.lanesG = new Graphics();
+    this.judgeLineSprite = new Sprite(Texture.WHITE);
+    this.judgeLineSprite.visible = false;
+    this.judgeLineSprite.anchor.set(0.5, 0.5);
     this.linesG = new Graphics();
+    this.simultaneousLineLayer = new Container();
     this.fallbackNoteG = new Graphics();
     this.slideLineLayer = new Container();
     this.noteSpriteLayer = new Container();
@@ -277,8 +293,11 @@ export class PixiRenderer {
 
     this.root.addChild(
       this.mvSprite,
+      this.laneBgSprite,
       this.lanesG,
+      this.judgeLineSprite,
       this.linesG,
+      this.simultaneousLineLayer,
       this.slideLineLayer,
       this.effectSpriteLayer,
       this.noteSpriteLayer,
@@ -303,6 +322,7 @@ export class PixiRenderer {
 
     this.noteSpriteCursor = 0;
     this.slideLineMeshCursor = 0;
+    this.simultaneousLineSpriteCursor = 0;
     this.effectSpriteCursor = 0;
     this.frameTick += 1;
     this.flickFrame = Math.floor((stats.elapsedMs * this.settings.fps) / 1000) % Math.max(1, Math.floor(this.settings.fps / 3));
@@ -316,6 +336,11 @@ export class PixiRenderer {
       this.slideLineMeshPool,
       this.slideLineMeshCursor,
       this.slideLineMeshPrevUsed,
+    );
+    this.simultaneousLineSpritePrevUsed = this.compactSpritePool(
+      this.simultaneousLineSpritePool,
+      this.simultaneousLineSpriteCursor,
+      this.simultaneousLineSpritePrevUsed,
     );
     this.effectSpritePrevUsed = this.compactSpritePool(this.effectSpritePool, this.effectSpriteCursor, this.effectSpritePrevUsed);
     this.drawHud(stats, progress);
@@ -335,10 +360,15 @@ export class PixiRenderer {
     this.slideConnections = [];
     this.noteSpritePool = [];
     this.slideLineMeshPool = [];
+    this.simultaneousLineSpritePool = [];
     this.effectSpritePool = [];
     this.noteSpritePrevUsed = 0;
     this.slideLineMeshPrevUsed = 0;
+    this.simultaneousLineSpritePrevUsed = 0;
     this.effectSpritePrevUsed = 0;
+    this.laneBgSprite = null;
+    this.judgeLineSprite = null;
+    this.simultaneousLineLayer = null;
     this.app?.destroy(true);
     this.app = null;
   }
@@ -400,6 +430,21 @@ export class PixiRenderer {
     return mesh;
   }
 
+  private allocSimultaneousLineSprite(): Sprite | null {
+    if (!this.simultaneousLineLayer) {
+      return null;
+    }
+    if (this.simultaneousLineSpritePool.length <= this.simultaneousLineSpriteCursor) {
+      const sprite = new Sprite(Texture.WHITE);
+      sprite.visible = false;
+      this.simultaneousLineLayer.addChild(sprite);
+      this.simultaneousLineSpritePool.push(sprite);
+    }
+    const sprite = this.simultaneousLineSpritePool[this.simultaneousLineSpriteCursor++];
+    sprite.visible = true;
+    return sprite;
+  }
+
   private applySprite(
     sprite: Sprite,
     texture: Texture,
@@ -417,6 +462,27 @@ export class PixiRenderer {
     sprite.alpha = alpha;
     const clampedScale = Number.isFinite(scale) && scale > 0 ? scale : 1;
     sprite.scale.set(clampedScale, clampedScale);
+  }
+
+  private applyStretchSprite(
+    sprite: Sprite,
+    texture: Texture,
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    alpha = 1,
+    anchorX = 0,
+    anchorY = 0.5,
+  ): void {
+    sprite.texture = texture;
+    sprite.anchor.set(anchorX, anchorY);
+    sprite.x = x;
+    sprite.y = y;
+    sprite.alpha = alpha;
+    sprite.rotation = 0;
+    sprite.width = Number.isFinite(width) && width > 0 ? width : 1;
+    sprite.height = Number.isFinite(height) && height > 0 ? height : 1;
   }
 
   private updateMvFrame(mvFrame: MvRenderFrame | null): void {
@@ -489,20 +555,59 @@ export class PixiRenderer {
     }
     g.clear();
 
-    const topY = this.settings.topY;
-    const bottomY = this.settings.bottomY;
+    const topY = this.stageLaneTopY();
+    const bottomY = this.stageJudgeY();
+    const laneBgTexture = this.assets?.field.bgLineRhythm ?? null;
+    const judgeLineTexture = this.assets?.field.gamePlayLine ?? null;
 
-    g.setStrokeStyle({ width: 1, color: 0x4762a8, alpha: 0.7 });
-    for (let lane = 1; lane <= 7; lane += 1) {
-      const tx = this.laneTopX[lane];
-      const bx = this.laneBottomX[lane];
-      g.moveTo(tx, topY);
-      g.lineTo(bx, bottomY);
+    if (this.laneBgSprite) {
+      if (laneBgTexture) {
+        const laneCenterX = this.stageWidth() * 0.5;
+        const drawWidth = this.stageFieldBgWidth();
+        const scale = drawWidth / Math.max(1, laneBgTexture.width);
+        this.laneBgSprite.texture = laneBgTexture;
+        this.laneBgSprite.alpha = 1;
+        this.laneBgSprite.visible = true;
+        this.laneBgSprite.x = laneCenterX;
+        this.laneBgSprite.y = bottomY;
+        this.laneBgSprite.scale.set(scale, scale);
+      } else {
+        this.laneBgSprite.visible = false;
+      }
     }
 
-    g.setStrokeStyle({ width: 3, color: 0xffffff, alpha: 0.9 });
-    g.moveTo(this.settings.bottomX, this.settings.bottomY);
-    g.lineTo(this.settings.bottomX + this.settings.bottomDistance * 6, this.settings.bottomY);
+    if (this.judgeLineSprite) {
+      if (judgeLineTexture) {
+        const drawWidth = this.laneBgSprite?.visible
+          ? Math.max(1, this.laneBgSprite.width * FIELD_BG_TO_JUDGE_WIDTH_RATIO)
+          : Math.max(1, this.stageWidth() * 1.35);
+        const scale = drawWidth / Math.max(1, judgeLineTexture.width);
+        this.judgeLineSprite.texture = judgeLineTexture;
+        this.judgeLineSprite.alpha = 1;
+        this.judgeLineSprite.visible = true;
+        this.judgeLineSprite.x = this.stageWidth() * 0.5;
+        this.judgeLineSprite.y = this.stageJudgeY();
+        this.judgeLineSprite.scale.set(scale, scale);
+      } else {
+        this.judgeLineSprite.visible = false;
+      }
+    }
+
+    if (!laneBgTexture) {
+      g.setStrokeStyle({ width: 1, color: 0x4762a8, alpha: 0.7 });
+      for (let lane = 0; lane <= 6; lane += 1) {
+        const tx = this.laneXAtPercent(lane, 0);
+        const bx = this.laneXAtPercent(lane, 1);
+        g.moveTo(tx, topY);
+        g.lineTo(bx, bottomY);
+      }
+    }
+
+    if (!judgeLineTexture) {
+      g.setStrokeStyle({ width: 3, color: 0xffffff, alpha: 0.9 });
+      g.moveTo(this.laneXAtPercent(0, 1), this.stageJudgeY());
+      g.lineTo(this.laneXAtPercent(6, 1), this.stageJudgeY());
+    }
     this.lanesDirty = false;
   }
 
@@ -527,14 +632,33 @@ export class PixiRenderer {
       const noteScale = visual.scale;
       const directional = isDirectionalType(n.type);
 
-      if (n.issameline > 0) {
+      if (n.issameline !== null && Number.isFinite(n.issameline)) {
         const x2 = this.laneXAtPercent(n.issameline, visual.percent);
-        lineG.setStrokeStyle({ width: 1 + visual.percent * 8, color: 0xffffff, alpha: 0.8 });
-        lineG.moveTo(visual.x, visual.y);
-        lineG.lineTo(x2, visual.y);
+        const fromX = Math.min(visual.x, x2);
+        const toX = Math.max(visual.x, x2);
+        const width = toX - fromX;
+        if (width > 1e-6) {
+          const simultaneousLineTexture = this.assets?.lines.simultaneousLine ?? null;
+          if (simultaneousLineTexture) {
+            const s = this.allocSimultaneousLineSprite();
+            if (s) {
+              const noteBaseWidth = this.assets?.rhythm.noteNormal[this.textureLaneIndex(n.lane)]?.width ?? 308;
+              const spriteScale = this.noteSpriteScale(noteScale);
+              const lineHeight = Math.max(
+                1,
+                spriteScale * noteBaseWidth * SIMULTANEOUS_LINE_HEIGHT_TO_NOTE_WIDTH,
+              );
+              this.applyStretchSprite(s, simultaneousLineTexture, fromX, visual.y, width, lineHeight, 1, 0, 0.5);
+            }
+          } else {
+            lineG.setStrokeStyle({ width: 1 + visual.percent * 8, color: 0xffffff, alpha: 0.8 });
+            lineG.moveTo(fromX, visual.y);
+            lineG.lineTo(toX, visual.y);
+          }
+        }
       }
 
-      const lane = Math.max(1, Math.min(7, Math.round(n.lane)));
+      const lane = this.textureLaneIndex(n.lane);
       const alpha = n.type === 77 || n.type === 107 ? 0.45 : 1;
       const tex = this.assets
         ? resolveRhythmNoteTexture(this.assets, n.type, lane, n.gray)
@@ -543,9 +667,9 @@ export class PixiRenderer {
       if (!directional) {
         if (tex && this.noteSpriteLayer) {
           const s = this.allocSprite(this.noteSpritePool, this.noteSpriteLayer);
-          this.applySprite(s, tex, visual.x, visual.y, noteScale * NOTE_SCALE_BASE, alpha);
+          this.applySprite(s, tex, visual.x, visual.y, this.noteSpriteScale(noteScale), alpha);
         } else {
-          const fallbackRadius = Math.max(5, noteScale * (56 * NOTE_SCALE_BASE));
+          const fallbackRadius = Math.max(5, noteScale * 39.76);
           const fallbackColor = n.gray ? 0xb3b7c2 : color;
           fallbackG.fill({ color: fallbackColor, alpha });
           fallbackG.circle(visual.x, visual.y, fallbackRadius);
@@ -558,14 +682,14 @@ export class PixiRenderer {
         const flickFps = Math.max(1, Math.floor(this.settings.fps / 3));
         const flickBaseTex = tex ?? flickTex;
         const flickNoteWidth = Math.max(1, flickBaseTex?.width ?? 96);
-        const flickTravel = noteScale * flickNoteWidth * (0.3 * NOTE_SCALE_BASE);
+        const flickTravel = noteScale * flickNoteWidth * 0.213;
         const flickY = visual.y - flickTravel - (this.flickFrame * flickTravel) / flickFps;
 
         if (flickTex && this.noteSpriteLayer) {
           const s = this.allocSprite(this.noteSpritePool, this.noteSpriteLayer);
-          this.applySprite(s, flickTex, visual.x, flickY, noteScale * NOTE_SCALE_BASE, 1);
+          this.applySprite(s, flickTex, visual.x, flickY, this.noteSpriteScale(noteScale), 1);
         } else {
-          const fs = Math.max(6, noteScale * (44 * NOTE_SCALE_BASE));
+          const fs = Math.max(6, noteScale * 31.24);
           lineG.setStrokeStyle({ width: 2, color: 0xffffff, alpha: 1 });
           lineG.moveTo(visual.x - fs * 0.45, flickY + fs * 0.2);
           lineG.lineTo(visual.x, flickY - fs * 0.35);
@@ -587,7 +711,7 @@ export class PixiRenderer {
     const percent = this.percentFromFrameRaw(frameRaw);
     return {
       x: this.laneXAtPercent(note.lane, percent),
-      y: this.settings.topY + this.settings.laneHeight * percent,
+      y: this.laneYAtPercent(percent),
       percent,
       scale: Math.max(NOTE_SCALE_MIN, percent * this.settings.noteSize),
     };
@@ -694,16 +818,16 @@ export class PixiRenderer {
         graphics,
         connection,
         this.laneXAtPercent(fromLane, fromPercent),
-        this.settings.topY + this.settings.laneHeight * fromPercent,
+        this.laneYAtPercent(fromPercent),
         this.connectorHalfWidthAtPercent(fromPercent),
         this.laneXAtPercent(toLane, toPercent),
-        this.settings.topY + this.settings.laneHeight * toPercent,
+        this.laneYAtPercent(toPercent),
         this.connectorHalfWidthAtPercent(toPercent),
         1,
       );
 
       if (fromPassed) {
-        slideBottomLanes.push(Math.max(1, Math.min(7, fromLane)));
+        slideBottomLanes.push(fromLane);
       }
     }
   }
@@ -770,18 +894,18 @@ export class PixiRenderer {
     }
 
     for (const laneValue of slideBottomLanes) {
-      const lane = Math.max(1, Math.min(7, Math.round(laneValue)));
+      const lane = this.textureLaneIndex(laneValue);
       const x = this.laneXAtPercent(laneValue, 1);
-      const y = this.settings.bottomY;
+      const y = this.stageJudgeY();
 
       const markerTex = this.assets
         ? resolveRhythmNoteTexture(this.assets, 3, lane, false)
         : null;
       if (markerTex && this.noteSpriteLayer) {
         const s = this.allocSprite(this.noteSpritePool, this.noteSpriteLayer);
-        this.applySprite(s, markerTex, x, y, this.settings.noteSize * NOTE_SCALE_BASE, 1);
+        this.applySprite(s, markerTex, x, y, this.noteSpriteScale(this.settings.noteSize), 1);
       } else {
-        const fallbackRadius = Math.max(5, this.settings.noteSize * (56 * NOTE_SCALE_BASE));
+        const fallbackRadius = Math.max(5, this.settings.noteSize * 39.76);
         fallbackG.fill({ color: 0x9be9b6, alpha: 1 });
         fallbackG.circle(x, y, fallbackRadius);
         fallbackG.fill();
@@ -805,26 +929,23 @@ export class PixiRenderer {
     const step = originalLeft ? -1 : 1;
     const textureFamilyLeft = this.settings.mirror ? !originalLeft : originalLeft;
 
-    let edgeLane = Math.max(0, Math.min(8, Math.round(n.lane)));
+    let edgeLane = Math.round(n.lane);
     for (let i = 0; i < width; i += 1) {
       const lane = Math.round(n.lane) + step * i;
-      if (lane < 0 || lane > 8) {
-        continue;
-      }
       edgeLane = lane;
 
       const x = this.laneXAtPercent(lane, percent);
       if (this.assets && this.noteSpriteLayer) {
-        const texLane = lane <= 0 ? 1 : lane >= 8 ? 7 : lane;
+        const texLane = this.textureLaneIndex(lane);
         const tex = resolveDirectionalLaneTexture(this.assets, textureFamilyLeft, texLane);
         if (tex) {
           const s = this.allocSprite(this.noteSpritePool, this.noteSpriteLayer);
-          this.applySprite(s, tex, x, y, noteScale * NOTE_SCALE_BASE, 1);
+          this.applySprite(s, tex, x, y, this.noteSpriteScale(noteScale), 1);
           continue;
         }
       }
 
-      const fs = Math.max(6, noteScale * (40 * NOTE_SCALE_BASE));
+      const fs = Math.max(6, noteScale * 28.4);
       lineG.setStrokeStyle({ width: 2, color: 0xffffff, alpha: 1 });
       lineG.moveTo(x - fs * 0.6, y);
       lineG.lineTo(x + fs * 0.6, y);
@@ -837,19 +958,19 @@ export class PixiRenderer {
     const edgeX = this.laneXAtPercent(edgeLane, percent);
     const flickFps = Math.max(1, Math.floor(this.settings.fps / 3));
     const flickProgress = this.flickFrame / flickFps;
-    const flickWidth = this.assets?.rhythm.noteFlick[Math.max(1, Math.min(7, Math.round(n.lane)))]?.width ?? 96;
-    const flickShift = flickProgress * (noteScale * flickWidth * (0.3 * NOTE_SCALE_BASE));
-    const arrowOffset = (165 * NOTE_SCALE_BASE) * noteScale;
+    const flickWidth = this.assets?.rhythm.noteFlick[this.textureLaneIndex(n.lane)]?.width ?? 96;
+    const flickShift = flickProgress * (noteScale * flickWidth * 0.213);
+    const arrowOffset = noteScale * 117.15;
     const arrowX = renderLeft
       ? edgeX - arrowOffset - flickShift
       : edgeX + arrowOffset + flickShift;
-    const arrowY = y + (5 * NOTE_SCALE_BASE) * noteScale;
+    const arrowY = y + noteScale * 3.55;
 
     if (arrowTex && this.noteSpriteLayer) {
       const s = this.allocSprite(this.noteSpritePool, this.noteSpriteLayer);
-      this.applySprite(s, arrowTex, arrowX, arrowY, noteScale * NOTE_SCALE_BASE, 1);
+      this.applySprite(s, arrowTex, arrowX, arrowY, this.noteSpriteScale(noteScale), 1);
     } else {
-      const headOffset = Math.max(8, noteScale * (28 * NOTE_SCALE_BASE));
+      const headOffset = Math.max(8, noteScale * 19.88);
       lineG.setStrokeStyle({ width: 2, color: 0xffffff, alpha: 1 });
       if (renderLeft) {
         lineG.moveTo(edgeX - headOffset * 1.1, arrowY);
@@ -869,9 +990,8 @@ export class PixiRenderer {
       const frames = e.kind === "normal"
         ? this.assets?.effects.normal
         : this.assets?.effects.flick;
-      const x = this.settings.bottomX + this.settings.bottomDistance * (e.lane - 1);
-      const drawX = this.settings.mirror ? 2 * (this.settings.bottomX + this.settings.bottomDistance * 3) - x : x;
-      const y = this.settings.bottomY;
+      const drawX = this.laneXAtPercent(e.lane, 1);
+      const y = this.stageJudgeY();
 
       if (frames && frames.length > 0) {
         if (e.frame >= frames.length) {
@@ -912,8 +1032,14 @@ export class PixiRenderer {
 
   private connectorHalfWidthAtPercent(percent: number): number {
     const p = Math.max(0, Math.min(1, percent));
-    const laneSpacing = this.settings.topDistance + (this.settings.bottomDistance - this.settings.topDistance) * p;
+    const laneSpacing = this.stageLaneWidth() * p;
     return Math.max(1, laneSpacing * this.settings.noteSize * 0.5);
+  }
+
+  private noteSpriteScale(noteScale: number): number {
+    const widthScale = (this.stageLaneWidth() * NOTE_WIDTH_TO_LANE_WIDTH_RATIO) / NOTE_BASE_TEXTURE_WIDTH;
+    const scale = noteScale * widthScale;
+    return Number.isFinite(scale) && scale > 0 ? scale : 1;
   }
 
   private effectAnchor(kind: "normal" | "flick" | "slide", texture: Texture): { anchorX: number; anchorY: number } {
@@ -962,22 +1088,60 @@ export class PixiRenderer {
   }
 
   private laneXAtPercent(lane: number, percent: number): number {
-    const logicalLane = this.settings.mirror ? 8 - lane : lane;
-    const clampedLane = Math.max(0, Math.min(8, logicalLane));
-    const laneLower = Math.floor(clampedLane);
-    const laneUpper = Math.min(8, laneLower + 1);
-    const laneMix = clampedLane - laneLower;
-    const tx = this.laneTopX[laneLower] + (this.laneTopX[laneUpper] - this.laneTopX[laneLower]) * laneMix;
-    const bx = this.laneBottomX[laneLower] + (this.laneBottomX[laneUpper] - this.laneBottomX[laneLower]) * laneMix;
-    return tx + (bx - tx) * percent;
+    const p = Math.max(0, Math.min(1, percent));
+    const logicalLane = this.settings.mirror ? 6 - lane : lane;
+    const centeredLane = logicalLane - 3;
+    return this.stageWidth() * 0.5 + centeredLane * this.stageLaneWidth() * p;
   }
 
-  private rebuildLaneCache(): void {
-    for (let lane = 0; lane <= 8; lane += 1) {
-      this.laneTopX[lane] = this.settings.topX + this.settings.topDistance * (lane - 1);
-      this.laneBottomX[lane] = this.settings.bottomX + this.settings.bottomDistance * (lane - 1);
+  private textureLaneIndex(lane: number): number {
+    return Math.max(1, Math.min(7, Math.round(lane) + 1));
+  }
+
+  private laneYAtPercent(percent: number): number {
+    const p = Math.max(0, Math.min(1, percent));
+    const topY = this.stageLaneTopY();
+    const bottomY = this.stageJudgeY();
+    return topY + (bottomY - topY) * p;
+  }
+
+  private stageWidth(): number {
+    return this.app?.screen.width ?? this.settings.windowX;
+  }
+
+  private stageHeight(): number {
+    return this.app?.screen.height ?? this.settings.windowY;
+  }
+
+  private stageLaneWidth(): number {
+    return (154 * this.stageWidth()) / 1334;
+  }
+
+  private stageFieldBgWidth(): number {
+    return this.stageWidth() * 0.875;
+  }
+
+  private stageFieldBgHeight(): number {
+    const laneBgTexture = this.assets?.field.bgLineRhythm ?? null;
+    if (!laneBgTexture) {
+      return this.stageLaneHeight();
     }
-    this.lanesDirty = true;
+    const drawWidth = this.stageFieldBgWidth();
+    const scale = drawWidth / Math.max(1, laneBgTexture.width);
+    return laneBgTexture.height * scale;
+  }
+
+  private stageLaneHeight(): number {
+    return this.stageHeight() * 0.82;
+  }
+
+  private stageJudgeY(): number {
+    return this.stageLaneHeight();
+  }
+
+  private stageLaneTopY(): number {
+    const bgHeight = this.stageFieldBgHeight();
+    return this.stageHeight() - (bgHeight  / BG_LANE_HEIGHT_FACTOR);
   }
 
   private pickConnectionTexture(connection: SlideConnection): Texture | null {
