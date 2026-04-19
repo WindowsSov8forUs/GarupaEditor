@@ -1,5 +1,5 @@
 import { Texture } from "pixi.js";
-import type { FieldSkinAssets, SkinAssets } from "../../skinLoader";
+import type { BGSkin, FieldSkinAssets, SkinAssets } from "../../skinLoader";
 import { EMBEDDED_EFFECT_FRAME_URLS } from "./embeddedEffects";
 
 type LaneKey = "0" | "1" | "2" | "3" | "4" | "5" | "6";
@@ -63,6 +63,9 @@ export interface NoteSkinTextureBundle {
     bgLineRhythm: Texture | null;
     gamePlayLine: Texture | null;
     gamePlayLineSkillAdjustEffect: Texture | null;
+  };
+  background: {
+    liveBG: Texture | null;
   };
   effects: {
     normal: Texture[];
@@ -153,6 +156,7 @@ async function loadTextureFromUrl(url: string): Promise<Texture | null> {
 export async function loadNoteSkinTextureBundle(
   noteSkin: SkinAssets,
   fieldSkin?: FieldSkinAssets | null,
+  bgSkin?: BGSkin | null,
 ): Promise<NoteSkinTextureBundle> {
   const trackedTextures: Texture[] = [];
   const textureCache = new Map<string, Texture | null>();
@@ -215,6 +219,7 @@ export async function loadNoteSkinTextureBundle(
   const fieldGamePlayLineSkillAdjustEffect = await loadCachedTexture(
     fieldSkin?.gamePlayLineSkillAdjustEffect ?? null,
   );
+  const liveBgTexture = await loadCachedTexture(bgSkin?.assets.liveBG ?? null);
 
   const loadEffectFrames = async (frameUrls: readonly string[]): Promise<Texture[]> => {
     if (frameUrls.length === 0) {
@@ -260,6 +265,9 @@ export async function loadNoteSkinTextureBundle(
       bgLineRhythm: fieldBgLineRhythm,
       gamePlayLine: fieldGamePlayLine,
       gamePlayLineSkillAdjustEffect: fieldGamePlayLineSkillAdjustEffect,
+    },
+    background: {
+      liveBG: liveBgTexture,
     },
     effects: {
       normal: effectNormal,

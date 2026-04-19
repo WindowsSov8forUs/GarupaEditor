@@ -107,6 +107,7 @@ const SIMULTANEOUS_LINE_HEIGHT_TO_NOTE_WIDTH = 27 / 308;
 export class PixiRenderer {
   private app: Application | null = null;
   private root: Container | null = null;
+  private liveBgSprite: Sprite | null = null;
   private laneBgSprite: Sprite | null = null;
   private lanesG: Graphics | null = null;
   private judgeLineSprite: Sprite | null = null;
@@ -264,6 +265,8 @@ export class PixiRenderer {
     this.root = new Container();
     this.app.stage.addChild(this.root);
 
+    this.liveBgSprite = new Sprite();
+    this.liveBgSprite.visible = false;
     this.mvSprite = new Sprite();
     this.mvSprite.visible = false;
 
@@ -292,6 +295,7 @@ export class PixiRenderer {
     });
 
     this.root.addChild(
+      this.liveBgSprite,
       this.mvSprite,
       this.laneBgSprite,
       this.lanesG,
@@ -316,7 +320,15 @@ export class PixiRenderer {
   }
 
   render(notes: readonly ActiveNote[], stats: RuntimeStats, progress: number, mvFrame: MvRenderFrame | null): void {
-    if (!this.lanesG || !this.linesG || !this.fallbackNoteG || !this.hudG || !this.hudText || !this.mvSprite) {
+    if (
+      !this.lanesG
+      || !this.linesG
+      || !this.fallbackNoteG
+      || !this.hudG
+      || !this.hudText
+      || !this.mvSprite
+      || !this.liveBgSprite
+    ) {
       return;
     }
 
@@ -327,6 +339,7 @@ export class PixiRenderer {
     this.frameTick += 1;
     this.flickFrame = Math.floor((stats.elapsedMs * this.settings.fps) / 1000) % Math.max(1, Math.floor(this.settings.fps / 3));
 
+    this.updateLiveBackgroundFrame();
     this.updateMvFrame(mvFrame);
     this.drawLanes();
     this.drawNotes(notes, stats.elapsedMs);
@@ -366,6 +379,7 @@ export class PixiRenderer {
     this.slideLineMeshPrevUsed = 0;
     this.simultaneousLineSpritePrevUsed = 0;
     this.effectSpritePrevUsed = 0;
+    this.liveBgSprite = null;
     this.laneBgSprite = null;
     this.judgeLineSprite = null;
     this.simultaneousLineLayer = null;
@@ -483,6 +497,36 @@ export class PixiRenderer {
     sprite.rotation = 0;
     sprite.width = Number.isFinite(width) && width > 0 ? width : 1;
     sprite.height = Number.isFinite(height) && height > 0 ? height : 1;
+  }
+
+  private updateLiveBackgroundFrame(): void {
+    if (!this.liveBgSprite) {
+      return;
+    }
+    if (this.settings.mvmode) {
+      this.liveBgSprite.visible = false;
+      return;
+    }
+
+    const texture = this.assets?.background.liveBG ?? null;
+    if (!texture) {
+      this.liveBgSprite.visible = false;
+      return;
+    }
+
+    const stageWidth = this.stageWidth();
+    const stageHeight = this.stageHeight();
+    const sourceWidth = Math.max(1, texture.width);
+    const sourceHeight = Math.max(1, texture.height);
+    const scale = Math.max(stageWidth / sourceWidth, stageHeight / sourceHeight);
+
+    this.liveBgSprite.texture = texture;
+    this.liveBgSprite.visible = true;
+    this.liveBgSprite.alpha = 1;
+    this.liveBgSprite.anchor.set(0.5, 0.5);
+    this.liveBgSprite.x = stageWidth * 0.5;
+    this.liveBgSprite.y = stageHeight * 0.5;
+    this.liveBgSprite.scale.set(scale, scale);
   }
 
   private updateMvFrame(mvFrame: MvRenderFrame | null): void {
