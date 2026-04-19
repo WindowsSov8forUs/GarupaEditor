@@ -60,6 +60,7 @@ import {
   regressChartWithoutSpRhythm,
 } from "./modeChartRegression";
 import {
+  BG_SKIN_TYPES,
   FIELD_SKIN_TYPES,
   DIRECTIONAL_SKIN_TYPES,
   DIRECTIONAL_SE_SKIN_TYPES,
@@ -68,12 +69,14 @@ import {
   HABAHIRO_RHYTHM_TYPE,
   RHYTHM_SKIN_TYPES,
   RHYTHM_SE_SKIN_TYPES,
+  downloadBestdoriBgSkinAssets,
   downloadBestdoriFieldSkinAssets,
   downloadBestdoriDirectionalSeSkinAssets,
   downloadBestdoriDirectionalSkinAssets,
   downloadBestdoriRhythmSeSkinAssets,
   downloadBestdoriRhythmSkinAssets,
   formatTypeLabel,
+  getRuntimeBgSkinAssets,
   getRuntimeFieldSkinAssets,
   getRuntimeSeAssets,
   isHabahiroRhythmRipName,
@@ -81,6 +84,7 @@ import {
   projectCanvasRenderResourceRuntimeAssets,
   readSkinSelectionFromStorage,
   resolveHabahiroRhythmRipNameFromType,
+  resolveBgSkinRipNameFromType,
   resolveDirectionalSeRipNameFromType,
   resolveDirectionalRipNameFromType,
   resolveFieldSkinRipNameFromType,
@@ -2500,6 +2504,7 @@ function ChartEditorController() {
     formatTypeLabel,
     downloadBestdoriRhythmSkinAssets,
     downloadBestdoriDirectionalSkinAssets,
+    downloadBestdoriBgSkinAssets,
     downloadBestdoriFieldSkinAssets,
     downloadBestdoriRhythmSeSkinAssets,
     downloadBestdoriDirectionalSeSkinAssets,
@@ -4592,6 +4597,7 @@ function ChartEditorController() {
       }
       const runtimeSe = getRuntimeSeAssets();
       const runtimeFieldSkin = getRuntimeFieldSkinAssets();
+      const runtimeBgSkin = getRuntimeBgSkinAssets();
       const audioPayload = (bgmDataUrl || runtimeSe)
         ? {
             bgmDataUrl: bgmDataUrl ?? null,
@@ -4642,6 +4648,7 @@ function ChartEditorController() {
         skin: {
           noteSkin: skinAssets,
           fieldSkin: runtimeFieldSkin ?? null,
+          bgSkin: runtimeBgSkin ?? null,
         },
         chartData: {
           baseBpm: metadata.bpm,
@@ -5005,12 +5012,14 @@ function ChartEditorController() {
         resolveDirectionalRipNameFromType,
         resolveRhythmSeRipNameFromType,
         resolveDirectionalSeRipNameFromType,
+        resolveBgSkinRipNameFromType,
         resolveFieldSkinRipNameFromType,
         HABAHIRO_RHYTHM_SKIN_TYPES,
         RHYTHM_SKIN_TYPES,
         DIRECTIONAL_SKIN_TYPES,
         RHYTHM_SE_SKIN_TYPES,
         DIRECTIONAL_SE_SKIN_TYPES,
+        BG_SKIN_TYPES,
         FIELD_SKIN_TYPES,
         formatTypeLabel,
         skinAssets,

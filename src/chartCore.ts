@@ -96,11 +96,13 @@ interface ChartSkinInfo {
   directionalType?: string;
   rhythmSeType?: string;
   directionalSeType?: string;
+  bgType?: string;
   fieldType?: string;
   rhythmRipName?: string;
   directionalRipName?: string;
   rhythmSeRipName?: string;
   directionalSeRipName?: string;
+  bgSkinRipName?: string;
   fieldSkinRipName?: string;
 }
 
@@ -651,6 +653,7 @@ export function parseSkinSelectionFromDocument(
   const hasDirectionalType = typeof skin.directionalType === "string";
   const hasRhythmSeType = typeof skin.rhythmSeType === "string";
   const hasDirectionalSeType = typeof skin.directionalSeType === "string";
+  const hasBgType = typeof skin.bgType === "string";
   const hasFieldType = typeof skin.fieldType === "string";
   const hasRhythmRipName = typeof skin.rhythmRipName === "string" && skin.rhythmRipName.trim().length > 0;
   const hasDirectionalRipName =
@@ -658,6 +661,8 @@ export function parseSkinSelectionFromDocument(
   const hasRhythmSeRipName = typeof skin.rhythmSeRipName === "string" && skin.rhythmSeRipName.trim().length > 0;
   const hasDirectionalSeRipName =
     typeof skin.directionalSeRipName === "string" && skin.directionalSeRipName.trim().length > 0;
+  const hasBgSkinRipName =
+    typeof skin.bgSkinRipName === "string" && skin.bgSkinRipName.trim().length > 0;
   const hasFieldSkinRipName =
     typeof skin.fieldSkinRipName === "string" && skin.fieldSkinRipName.trim().length > 0;
 
@@ -665,6 +670,7 @@ export function parseSkinSelectionFromDocument(
   let directionalType: string | undefined = hasDirectionalType ? skin.directionalType : undefined;
   let rhythmSeType: string | undefined = hasRhythmSeType ? skin.rhythmSeType : undefined;
   let directionalSeType: string | undefined = hasDirectionalSeType ? skin.directionalSeType : undefined;
+  let bgType: string | undefined = hasBgType ? skin.bgType : undefined;
   let fieldType: string | undefined = hasFieldType ? skin.fieldType : undefined;
   if (typeof skin.name === "string") {
     const rhythmMatch = /rhythm-type(\d+)/i.exec(skin.name);
@@ -692,11 +698,13 @@ export function parseSkinSelectionFromDocument(
     directionalType === undefined &&
     rhythmSeType === undefined &&
     directionalSeType === undefined &&
+    bgType === undefined &&
     fieldType === undefined &&
     !hasRhythmRipName &&
     !hasDirectionalRipName &&
     !hasRhythmSeRipName &&
     !hasDirectionalSeRipName &&
+    !hasBgSkinRipName &&
     !hasFieldSkinRipName
   ) {
     return null;
@@ -707,11 +715,13 @@ export function parseSkinSelectionFromDocument(
     directionalType: directionalType ?? DEFAULT_SKIN_SELECTION.directionalType,
     rhythmSeType: rhythmSeType ?? DEFAULT_SKIN_SELECTION.rhythmSeType,
     directionalSeType: directionalSeType ?? DEFAULT_SKIN_SELECTION.directionalSeType,
+    bgType: bgType ?? DEFAULT_SKIN_SELECTION.bgType,
     fieldType: fieldType ?? DEFAULT_SKIN_SELECTION.fieldType,
     rhythmRipName: skin.rhythmRipName,
     directionalRipName: skin.directionalRipName,
     rhythmSeRipName: skin.rhythmSeRipName,
     directionalSeRipName: skin.directionalSeRipName,
+    bgSkinRipName: skin.bgSkinRipName,
     fieldSkinRipName: skin.fieldSkinRipName,
   });
 }

@@ -19,8 +19,10 @@ import {
 import {
   combineSkinAssets,
   ensureCommonTapSkillSeAsset,
+  setRuntimeBgSkinAssets,
   setRuntimeFieldSkinAssets,
   setRuntimeSeAssets,
+  type BGSkin,
   type FieldSkinAssets,
   type RhythmSeSkinAssets,
   type DirectionalSeSkinAssets,
@@ -169,6 +171,7 @@ export function useEditorIoAndShortcuts(params: any) {
     formatTypeLabel,
     downloadBestdoriRhythmSkinAssets,
     downloadBestdoriDirectionalSkinAssets,
+    downloadBestdoriBgSkinAssets,
     downloadBestdoriFieldSkinAssets,
     downloadBestdoriRhythmSeSkinAssets,
     downloadBestdoriDirectionalSeSkinAssets,
@@ -196,6 +199,7 @@ export function useEditorIoAndShortcuts(params: any) {
   const directionalSkinAssetsRef = useRef<DirectionalSkinAssets | null>(null);
   const rhythmSeSkinAssetsRef = useRef<RhythmSeSkinAssets | null>(null);
   const directionalSeSkinAssetsRef = useRef<DirectionalSeSkinAssets | null>(null);
+  const bgSkinAssetsRef = useRef<BGSkin | null>(null);
   const fieldSkinAssetsRef = useRef<FieldSkinAssets | null>(null);
   const commonTapSkillSeRef = useRef<string>("");
 
@@ -1482,15 +1486,18 @@ export function useEditorIoAndShortcuts(params: any) {
     const shouldReloadDirectionalSe =
       directionalSeSkinAssetsRef.current === null ||
       normalized.directionalSeRipName !== skinSelection.directionalSeRipName;
+    const shouldReloadBgSkin =
+      bgSkinAssetsRef.current === null ||
+      normalized.bgSkinRipName !== skinSelection.bgSkinRipName;
     const shouldReloadFieldSkin =
       fieldSkinAssetsRef.current === null ||
       normalized.fieldSkinRipName !== skinSelection.fieldSkinRipName;
     setStatusMessage(
-      `正在加载皮肤：节奏图示 ${formatTypeLabel(normalized.rhythmType)}，方向滑键 ${formatTypeLabel(normalized.directionalType)}，节奏图示SE ${formatTypeLabel(normalized.rhythmSeType)}，方向滑键SE ${formatTypeLabel(normalized.directionalSeType)}，轨道样式 ${formatTypeLabel(normalized.fieldType)}。`,
+      `正在加载皮肤：节奏图示 ${formatTypeLabel(normalized.rhythmType)}，方向滑键 ${formatTypeLabel(normalized.directionalType)}，节奏图示SE ${formatTypeLabel(normalized.rhythmSeType)}，方向滑键SE ${formatTypeLabel(normalized.directionalSeType)}，背景 ${formatTypeLabel(normalized.bgType)}，轨道样式 ${formatTypeLabel(normalized.fieldType)}。`,
     );
 
     try {
-      const [nextRhythm, nextDirectional, nextRhythmSe, nextDirectionalSe, nextFieldSkin, commonTapSkillSe] = await Promise.all([
+      const [nextRhythm, nextDirectional, nextRhythmSe, nextDirectionalSe, nextBgSkin, nextFieldSkin, commonTapSkillSe] = await Promise.all([
         shouldReloadRhythm
           ? downloadBestdoriRhythmSkinAssets(normalized, { operationId: downloadOperationId })
           : Promise.resolve(rhythmSkinAssetsRef.current),
@@ -1503,6 +1510,9 @@ export function useEditorIoAndShortcuts(params: any) {
         shouldReloadDirectionalSe
           ? downloadBestdoriDirectionalSeSkinAssets(normalized, { operationId: downloadOperationId })
           : Promise.resolve(directionalSeSkinAssetsRef.current),
+        shouldReloadBgSkin
+          ? downloadBestdoriBgSkinAssets(normalized.bgSkinRipName, { operationId: downloadOperationId })
+          : Promise.resolve(bgSkinAssetsRef.current),
         shouldReloadFieldSkin
           ? downloadBestdoriFieldSkinAssets(normalized.fieldSkinRipName, { operationId: downloadOperationId })
           : Promise.resolve(fieldSkinAssetsRef.current),
@@ -1514,7 +1524,7 @@ export function useEditorIoAndShortcuts(params: any) {
         return;
       }
 
-      if (!nextRhythm || !nextDirectional || !nextRhythmSe || !nextDirectionalSe || !nextFieldSkin || !commonTapSkillSe) {
+      if (!nextRhythm || !nextDirectional || !nextRhythmSe || !nextDirectionalSe || !nextBgSkin || !nextFieldSkin || !commonTapSkillSe) {
         throw new Error("Skin assets incomplete after split loading.");
       }
 
@@ -1522,8 +1532,10 @@ export function useEditorIoAndShortcuts(params: any) {
       directionalSkinAssetsRef.current = nextDirectional;
       rhythmSeSkinAssetsRef.current = nextRhythmSe;
       directionalSeSkinAssetsRef.current = nextDirectionalSe;
+      bgSkinAssetsRef.current = nextBgSkin;
       fieldSkinAssetsRef.current = nextFieldSkin;
       commonTapSkillSeRef.current = commonTapSkillSe;
+      setRuntimeBgSkinAssets(nextBgSkin);
       setRuntimeFieldSkinAssets(nextFieldSkin);
       setRuntimeSeAssets({
         rhythm: nextRhythmSe,
@@ -1542,7 +1554,7 @@ export function useEditorIoAndShortcuts(params: any) {
 
       if (announceSuccess) {
         setStatusMessage(
-          `皮肤已生效：节奏图示 ${formatTypeLabel(normalized.rhythmType)}，方向滑键 ${formatTypeLabel(normalized.directionalType)}，节奏图示SE ${formatTypeLabel(normalized.rhythmSeType)}，方向滑键SE ${formatTypeLabel(normalized.directionalSeType)}，轨道样式 ${formatTypeLabel(normalized.fieldType)}。`,
+          `皮肤已生效：节奏图示 ${formatTypeLabel(normalized.rhythmType)}，方向滑键 ${formatTypeLabel(normalized.directionalType)}，节奏图示SE ${formatTypeLabel(normalized.rhythmSeType)}，方向滑键SE ${formatTypeLabel(normalized.directionalSeType)}，背景 ${formatTypeLabel(normalized.bgType)}，轨道样式 ${formatTypeLabel(normalized.fieldType)}。`,
         );
       }
     } catch (error) {

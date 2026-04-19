@@ -12,11 +12,13 @@ type SkinSettingsModalProps = {
   onDirectionalTypeChange: (value: string) => void;
   onRhythmSeTypeChange: (value: string) => void;
   onDirectionalSeTypeChange: (value: string) => void;
+  onBgTypeChange: (value: string) => void;
   onFieldTypeChange: (value: string) => void;
   rhythmSkinTypes: readonly string[];
   directionalSkinTypes: readonly string[];
   rhythmSeSkinTypes: readonly string[];
   directionalSeSkinTypes: readonly string[];
+  bgSkinTypes: readonly string[];
   fieldSkinTypes: readonly string[];
   formatTypeLabel: (type: string) => string;
   isSkinApplying: boolean;
@@ -45,11 +47,13 @@ export function SkinSettingsModal({
   onDirectionalTypeChange,
   onRhythmSeTypeChange,
   onDirectionalSeTypeChange,
+  onBgTypeChange,
   onFieldTypeChange,
   rhythmSkinTypes,
   directionalSkinTypes,
   rhythmSeSkinTypes,
   directionalSeSkinTypes,
+  bgSkinTypes,
   fieldSkinTypes,
   formatTypeLabel,
   isSkinApplying,
@@ -65,12 +69,14 @@ export function SkinSettingsModal({
   const directionalIndex = resolveTypeIndex(pendingSkinSelection.directionalType, directionalSkinTypes);
   const rhythmSeIndex = resolveTypeIndex(pendingSkinSelection.rhythmSeType, rhythmSeSkinTypes);
   const directionalSeIndex = resolveTypeIndex(pendingSkinSelection.directionalSeType, directionalSeSkinTypes);
+  const bgIndex = resolveTypeIndex(pendingSkinSelection.bgType, bgSkinTypes);
   const fieldIndex = resolveTypeIndex(pendingSkinSelection.fieldType, fieldSkinTypes);
 
   const rhythmValue = rhythmSkinTypes[rhythmIndex] ?? pendingSkinSelection.rhythmType;
   const directionalValue = directionalSkinTypes[directionalIndex] ?? pendingSkinSelection.directionalType;
   const rhythmSeValue = rhythmSeSkinTypes[rhythmSeIndex] ?? pendingSkinSelection.rhythmSeType;
   const directionalSeValue = directionalSeSkinTypes[directionalSeIndex] ?? pendingSkinSelection.directionalSeType;
+  const bgValue = bgSkinTypes[bgIndex] ?? pendingSkinSelection.bgType;
   const fieldValue = fieldSkinTypes[fieldIndex] ?? pendingSkinSelection.fieldType;
   const transitionClassName = phase === "enter" ? "is-enter" : "is-exit";
 
@@ -282,6 +288,45 @@ export function SkinSettingsModal({
                     const nextType = fieldSkinTypes[fieldIndex + 1];
                     if (nextType) {
                       onFieldTypeChange(nextType);
+                    }
+                  }}
+                >
+                  <StepperIcon type="right" />
+                </button>
+              </div>
+            </div>
+
+            <div className="setting-block">
+              <span className="setting-title-strip">背景</span>
+              <div className="inline-stepper">
+                <button
+                  type="button"
+                  className="stepper-btn"
+                  disabled={bgIndex <= 0}
+                  onClick={() => {
+                    const nextType = bgSkinTypes[bgIndex - 1];
+                    if (nextType) {
+                      onBgTypeChange(nextType);
+                    }
+                  }}
+                >
+                  <StepperIcon type="left" />
+                </button>
+                <input
+                  type="text"
+                  className="stepper-input"
+                  value={formatTypeLabel(bgValue)}
+                  readOnly
+                  tabIndex={-1}
+                />
+                <button
+                  type="button"
+                  className="stepper-btn"
+                  disabled={bgIndex >= bgSkinTypes.length - 1}
+                  onClick={() => {
+                    const nextType = bgSkinTypes[bgIndex + 1];
+                    if (nextType) {
+                      onBgTypeChange(nextType);
                     }
                   }}
                 >

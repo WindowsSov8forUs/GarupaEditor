@@ -1,6 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import directionalTypeRipMapJson from "./data/directional-type-rip-map.json";
 import directionalSeTypeRipMapJson from "./data/directional-se-type-rip-map.json";
+import bgTypeRipMapJson from "./data/bg-type-rip-map.json";
 import fieldTypeRipMapJson from "./data/field-type-rip-map.json";
 import habahiroTypeRipMapJson from "./data/habahiro-type-rip-map.json";
 import rhythmTypeRipMapJson from "./data/rhythm-type-rip-map.json";
@@ -19,6 +20,8 @@ const BESTDORI_TAPSE_EXPLORER_ROOT = "https://bestdori.com/api/explorer/jp/asset
 const BESTDORI_COMMON_SOUND_ROOT = "https://bestdori.com/assets/jp/sound/common_rip";
 const BESTDORI_FIELD_SKIN_ASSET_ROOT = "https://bestdori.com/assets/jp/ingameskin/fieldskin";
 const BESTDORI_FIELD_SKIN_EXPLORER_ROOT = "https://bestdori.com/api/explorer/jp/assets/ingameskin/fieldskin";
+const BESTDORI_BG_SKIN_ASSET_ROOT = "https://bestdori.com/assets/jp/ingameskin/bgskin";
+const BESTDORI_BG_SKIN_EXPLORER_ROOT = "https://bestdori.com/api/explorer/jp/assets/ingameskin/bgskin";
 const RIP_NAME_PATTERN = /^[A-Za-z0-9_-]+$/;
 
 type TypeRipMapEntry = {
@@ -31,6 +34,7 @@ const DIRECTIONAL_TYPE_RIP_ENTRIES = directionalTypeRipMapJson as TypeRipMapEntr
 const RHYTHM_SE_TYPE_RIP_ENTRIES = rhythmSeTypeRipMapJson as TypeRipMapEntry[];
 const DIRECTIONAL_SE_TYPE_RIP_ENTRIES = directionalSeTypeRipMapJson as TypeRipMapEntry[];
 const HABAHIRO_TYPE_RIP_ENTRIES = habahiroTypeRipMapJson as TypeRipMapEntry[];
+const BG_TYPE_RIP_ENTRIES = bgTypeRipMapJson as TypeRipMapEntry[];
 const FIELD_TYPE_RIP_ENTRIES = fieldTypeRipMapJson as TypeRipMapEntry[];
 
 const DEFAULT_HABAHIRO_TYPE = HABAHIRO_TYPE_RIP_ENTRIES[0]?.type ?? "2026\u611A\u4EBA\u8282";
@@ -50,6 +54,9 @@ export const RHYTHM_SE_SKIN_TYPES: readonly string[] = Object.freeze(
 export const DIRECTIONAL_SE_SKIN_TYPES: readonly string[] = Object.freeze(
   DIRECTIONAL_SE_TYPE_RIP_ENTRIES.map((entry) => entry.type),
 );
+export const BG_SKIN_TYPES: readonly string[] = Object.freeze(
+  BG_TYPE_RIP_ENTRIES.map((entry) => entry.type),
+);
 export const FIELD_SKIN_TYPES: readonly string[] = Object.freeze(
   FIELD_TYPE_RIP_ENTRIES.map((entry) => entry.type),
 );
@@ -63,6 +70,7 @@ const DEFAULT_RHYTHM_TYPE = RHYTHM_SKIN_TYPES[0] ?? "TYPE1";
 const DEFAULT_DIRECTIONAL_TYPE = DIRECTIONAL_SKIN_TYPES[0] ?? "TYPE1";
 const DEFAULT_RHYTHM_SE_TYPE = RHYTHM_SE_SKIN_TYPES[0] ?? "TYPE1";
 const DEFAULT_DIRECTIONAL_SE_TYPE = DIRECTIONAL_SE_SKIN_TYPES[0] ?? "TYPE1";
+const DEFAULT_BG_TYPE = BG_SKIN_TYPES[0] ?? "TYPE1";
 const DEFAULT_FIELD_TYPE = FIELD_SKIN_TYPES[0] ?? "TYPE1";
 
 const RHYTHM_TYPE_TO_RIP_NAME: Readonly<Record<string, string>> = Object.freeze(
@@ -86,6 +94,12 @@ const RHYTHM_SE_TYPE_TO_RIP_NAME: Readonly<Record<string, string>> = Object.free
 const DIRECTIONAL_SE_TYPE_TO_RIP_NAME: Readonly<Record<string, string>> = Object.freeze(
   Object.fromEntries(
     DIRECTIONAL_SE_TYPE_RIP_ENTRIES.map((entry) => [entry.type, entry.ripName]),
+  ),
+);
+
+const BG_TYPE_TO_RIP_NAME: Readonly<Record<string, string>> = Object.freeze(
+  Object.fromEntries(
+    BG_TYPE_RIP_ENTRIES.map((entry) => [entry.type, entry.ripName]),
   ),
 );
 
@@ -242,16 +256,32 @@ export interface FieldSkinAssets {
   gamePlayLineSkillAdjustEffect: string;
 }
 
+export interface BGSkinAssets {
+  liveBG: string;
+  liveBGFever?: string;
+}
+
+export interface BGSkinPreview {
+  previewBG: string;
+}
+
+export interface BGSkin {
+  assets: BGSkinAssets;
+  preview?: BGSkinPreview;
+}
+
 export interface SkinSelection {
   rhythmType: string;
   directionalType: string;
   rhythmSeType: string;
   directionalSeType: string;
+  bgType: string;
   fieldType: string;
   rhythmRipName: string;
   directionalRipName: string;
   rhythmSeRipName: string;
   directionalSeRipName: string;
+  bgSkinRipName: string;
   fieldSkinRipName: string;
 }
 
@@ -344,12 +374,18 @@ interface PreparedBestdoriFieldSkinAssets {
   packageFiles: Record<string, string>;
 }
 
+interface PreparedBestdoriBgSkinAssets {
+  packageFiles: Record<string, string>;
+  previewPackageFiles?: Record<string, string> | null;
+}
+
 type DownloadProgressOptions = {
   operationId?: string;
 };
 
 let runtimeSeAssets: SeSkinAssets | null = null;
 let runtimeFieldSkinAssets: FieldSkinAssets | null = null;
+let runtimeBgSkinAssets: BGSkin | null = null;
 
 export function resolveRhythmRipNameFromType(
   typeValue: string,
@@ -401,6 +437,20 @@ export function resolveDirectionalSeRipNameFromType(
     return null;
   }
   const mappedRaw = DIRECTIONAL_SE_TYPE_TO_RIP_NAME[trimmed];
+  if (typeof mappedRaw === "string" && mappedRaw.length > 0 && RIP_NAME_PATTERN.test(mappedRaw)) {
+    return mappedRaw;
+  }
+  return RIP_NAME_PATTERN.test(trimmed) ? trimmed : null;
+}
+
+export function resolveBgSkinRipNameFromType(
+  typeValue: string,
+): string | null {
+  const trimmed = typeValue.trim();
+  if (trimmed.length === 0) {
+    return null;
+  }
+  const mappedRaw = BG_TYPE_TO_RIP_NAME[trimmed];
   if (typeof mappedRaw === "string" && mappedRaw.length > 0 && RIP_NAME_PATTERN.test(mappedRaw)) {
     return mappedRaw;
   }
@@ -470,11 +520,13 @@ export const DEFAULT_SKIN_SELECTION: SkinSelection = {
   directionalType: DEFAULT_DIRECTIONAL_TYPE,
   rhythmSeType: DEFAULT_RHYTHM_SE_TYPE,
   directionalSeType: DEFAULT_DIRECTIONAL_SE_TYPE,
+  bgType: DEFAULT_BG_TYPE,
   fieldType: DEFAULT_FIELD_TYPE,
   rhythmRipName: resolveRhythmRipNameFromType(DEFAULT_RHYTHM_TYPE) ?? "skin00",
   directionalRipName: resolveDirectionalRipNameFromType(DEFAULT_DIRECTIONAL_TYPE) ?? "directionalflickskin00",
   rhythmSeRipName: resolveRhythmSeRipNameFromType(DEFAULT_RHYTHM_SE_TYPE) ?? "skin00",
   directionalSeRipName: resolveDirectionalSeRipNameFromType(DEFAULT_DIRECTIONAL_SE_TYPE) ?? "directionalflickskin00",
+  bgSkinRipName: resolveBgSkinRipNameFromType(DEFAULT_BG_TYPE) ?? "skin00",
   fieldSkinRipName: resolveFieldSkinRipNameFromType(DEFAULT_FIELD_TYPE) ?? "skin00",
 };
 
@@ -483,6 +535,12 @@ const FIELD_SKIN_FILE_NAMES = Object.freeze({
   bgLineRhythm: "bg_line_rhythm.png",
   gamePlayLine: "game_play_line.png",
   gamePlayLineSkillAdjustEffect: "game_play_line_skill_adjust_effect.png",
+});
+const BG_SKIN_FILE_NAMES = Object.freeze({
+  liveBG: "liveBG.png",
+  liveBGNormal: "liveBG_normal.png",
+  liveBGFever: "liveBG_fever.png",
+  previewBG: "previewBG.png",
 });
 
 const NOTE_ASSET_LANES: NoteAssetLane[] = ["0", "1", "2", "3", "4", "5", "6"];
@@ -563,6 +621,17 @@ async function fetchTextOrThrow(url: string): Promise<string> {
   return response.text();
 }
 
+async function fetchTextOrNullWhenNotFound(url: string): Promise<string | null> {
+  const response = await fetch(url);
+  if (response.status === 404) {
+    return null;
+  }
+  if (!response.ok) {
+    throw new Error(`Download failed (${response.status}): ${url}`);
+  }
+  return response.text();
+}
+
 async function fetchBlobOrThrow(url: string): Promise<Blob> {
   const response = await fetch(url);
   if (!response.ok) {
@@ -592,6 +661,14 @@ function buildBestdoriTapseAssetBase(ripName: string): string {
 
 function buildBestdoriFieldSkinAssetBase(ripName: string): string {
   return `${BESTDORI_FIELD_SKIN_ASSET_ROOT}/${ripName}_rip`;
+}
+
+function buildBestdoriBgSkinAssetBase(ripName: string): string {
+  return `${BESTDORI_BG_SKIN_ASSET_ROOT}/${ripName}_rip`;
+}
+
+function buildBestdoriBgSkinPreviewRipName(ripName: string): string {
+  return `${ripName}preview`;
 }
 
 function normalizeLowercaseFileMap(fileMap: Record<string, string>): Record<string, string> {
@@ -699,6 +776,57 @@ function withFieldSkinAssets(files: Record<string, string>): FieldSkinAssets {
   };
 }
 
+function resolveBgAssetFromFiles(
+  files: Record<string, string>,
+  fileName: string,
+): string | null {
+  const normalized = fileName.trim().toLowerCase();
+  if (!normalized) {
+    return null;
+  }
+  const resolved = files[normalized];
+  if (typeof resolved === "string" && resolved.length > 0) {
+    return resolved;
+  }
+  return null;
+}
+
+function resolveFirstBgAssetFromFiles(
+  files: Record<string, string>,
+  fileNames: readonly string[],
+): string | null {
+  for (const fileName of fileNames) {
+    const resolved = resolveBgAssetFromFiles(files, fileName);
+    if (resolved) {
+      return resolved;
+    }
+  }
+  return null;
+}
+
+function withBgSkinAssets(files: Record<string, string>): BGSkinAssets {
+  const liveBG = resolveFirstBgAssetFromFiles(
+    files,
+    [BG_SKIN_FILE_NAMES.liveBG, BG_SKIN_FILE_NAMES.liveBGNormal],
+  );
+  if (!liveBG) {
+    throw new Error("BGSkin asset missing: liveBG");
+  }
+  const liveBGFever = resolveBgAssetFromFiles(files, BG_SKIN_FILE_NAMES.liveBGFever);
+  return {
+    liveBG,
+    ...(liveBGFever ? { liveBGFever } : {}),
+  };
+}
+
+function withBgSkinPreview(files: Record<string, string>): BGSkinPreview | undefined {
+  const previewBG = resolveBgAssetFromFiles(files, BG_SKIN_FILE_NAMES.previewBG);
+  if (!previewBG) {
+    return undefined;
+  }
+  return { previewBG };
+}
+
 function resolveMimeTypeByFileName(fileName: string): string | undefined {
   const normalized = fileName.trim().toLowerCase();
   if (normalized.endsWith(".png")) {
@@ -724,7 +852,7 @@ function resolveMimeTypeByFileName(fileName: string): string | undefined {
 
 async function loadPreparedBinaryFilesAsDataUrlMap(
   fileMap: Record<string, string>,
-  commandName: "read_skin_binary_file" | "read_sound_binary_file" | "read_field_skin_binary_file",
+  commandName: "read_skin_binary_file" | "read_sound_binary_file" | "read_field_skin_binary_file" | "read_bg_skin_binary_file",
 ): Promise<Record<string, string>> {
   const entries = Object.entries(fileMap);
   const loaded = await Promise.all(
@@ -797,6 +925,82 @@ async function downloadWebFieldSkinFiles(ripName: string): Promise<Record<string
   return Object.fromEntries(loaded);
 }
 
+async function downloadWebBgSkinMainFiles(ripName: string): Promise<Record<string, string>> {
+  const manifestText = await fetchTextOrThrow(`${BESTDORI_BG_SKIN_EXPLORER_ROOT}/${ripName}.json`);
+  let names: string[];
+  try {
+    const parsed = JSON.parse(manifestText);
+    if (!Array.isArray(parsed)) {
+      throw new Error("manifest is not an array");
+    }
+    names = parsed
+      .map((item) => String(item).trim())
+      .filter((item) => item.length > 0);
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    throw new Error(`Parse bgskin manifest failed (${ripName}): ${detail}`);
+  }
+
+  const nameLookup = new Map<string, string>();
+  for (const name of names) {
+    nameLookup.set(name.toLowerCase(), name);
+  }
+
+  const base = buildBestdoriBgSkinAssetBase(ripName);
+  const requiredLiveBgName =
+    nameLookup.get(BG_SKIN_FILE_NAMES.liveBG.toLowerCase())
+    ?? nameLookup.get(BG_SKIN_FILE_NAMES.liveBGNormal.toLowerCase())
+    ?? BG_SKIN_FILE_NAMES.liveBG;
+  const liveBgBlob = await fetchBlobOrThrow(`${base}/${requiredLiveBgName}`);
+  const liveBgDataUrl = await blobToDataUrl(liveBgBlob);
+
+  const output: Record<string, string> = {
+    [BG_SKIN_FILE_NAMES.liveBG.toLowerCase()]: liveBgDataUrl,
+  };
+  const feverName = nameLookup.get(BG_SKIN_FILE_NAMES.liveBGFever.toLowerCase());
+  if (feverName) {
+    const feverBlob = await fetchBlobOrThrow(`${base}/${feverName}`);
+    output[BG_SKIN_FILE_NAMES.liveBGFever.toLowerCase()] = await blobToDataUrl(feverBlob);
+  }
+
+  return output;
+}
+
+async function downloadWebBgSkinPreviewFiles(previewRipName: string): Promise<Record<string, string> | null> {
+  const manifestText = await fetchTextOrNullWhenNotFound(`${BESTDORI_BG_SKIN_EXPLORER_ROOT}/${previewRipName}.json`);
+  if (!manifestText) {
+    return null;
+  }
+  let names: string[];
+  try {
+    const parsed = JSON.parse(manifestText);
+    if (!Array.isArray(parsed)) {
+      throw new Error("manifest is not an array");
+    }
+    names = parsed
+      .map((item) => String(item).trim())
+      .filter((item) => item.length > 0);
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    throw new Error(`Parse bgskin preview manifest failed (${previewRipName}): ${detail}`);
+  }
+
+  const nameLookup = new Map<string, string>();
+  for (const name of names) {
+    nameLookup.set(name.toLowerCase(), name);
+  }
+  const previewName = nameLookup.get(BG_SKIN_FILE_NAMES.previewBG.toLowerCase());
+  if (!previewName) {
+    return null;
+  }
+
+  const base = buildBestdoriBgSkinAssetBase(previewRipName);
+  const previewBlob = await fetchBlobOrThrow(`${base}/${previewName}`);
+  return {
+    [BG_SKIN_FILE_NAMES.previewBG.toLowerCase()]: await blobToDataUrl(previewBlob),
+  };
+}
+
 export function setRuntimeSeAssets(value: SeSkinAssets | null): void {
   runtimeSeAssets = value;
 }
@@ -811,6 +1015,14 @@ export function setRuntimeFieldSkinAssets(value: FieldSkinAssets | null): void {
 
 export function getRuntimeFieldSkinAssets(): FieldSkinAssets | null {
   return runtimeFieldSkinAssets;
+}
+
+export function setRuntimeBgSkinAssets(value: BGSkin | null): void {
+  runtimeBgSkinAssets = value;
+}
+
+export function getRuntimeBgSkinAssets(): BGSkin | null {
+  return runtimeBgSkinAssets;
 }
 
 export async function ensureCommonTapSkillSeAsset(options?: DownloadProgressOptions): Promise<string> {
@@ -1072,11 +1284,13 @@ export function readSkinSelectionFromStorage(): SkinSelection {
       directionalType: parsed.directionalType,
       rhythmSeType: parsed.rhythmSeType,
       directionalSeType: parsed.directionalSeType,
+      bgType: parsed.bgType,
       fieldType: parsed.fieldType,
       rhythmRipName: parsed.rhythmRipName,
       directionalRipName: parsed.directionalRipName,
       rhythmSeRipName: parsed.rhythmSeRipName,
       directionalSeRipName: parsed.directionalSeRipName,
+      bgSkinRipName: parsed.bgSkinRipName,
       fieldSkinRipName: parsed.fieldSkinRipName,
     });
   } catch {
@@ -1097,11 +1311,13 @@ export function normalizeSkinSelection(
     directionalType: unknown;
     rhythmSeType: unknown;
     directionalSeType: unknown;
+    bgType: unknown;
     fieldType: unknown;
     rhythmRipName: unknown;
     directionalRipName: unknown;
     rhythmSeRipName: unknown;
     directionalSeRipName: unknown;
+    bgSkinRipName: unknown;
     fieldSkinRipName: unknown;
   }>,
 ): SkinSelection {
@@ -1121,6 +1337,10 @@ export function normalizeSkinSelection(
     typeof input.directionalSeType === "string" && input.directionalSeType.trim().length > 0
       ? input.directionalSeType.trim()
       : DEFAULT_SKIN_SELECTION.directionalSeType;
+  const bgType =
+    typeof input.bgType === "string" && input.bgType.trim().length > 0
+      ? input.bgType.trim()
+      : DEFAULT_SKIN_SELECTION.bgType;
   const fieldType =
     typeof input.fieldType === "string" && input.fieldType.trim().length > 0
       ? input.fieldType.trim()
@@ -1136,6 +1356,8 @@ export function normalizeSkinSelection(
     resolveRhythmSeRipNameFromType(rhythmSeType) ?? DEFAULT_SKIN_SELECTION.rhythmSeRipName;
   const directionalSeFallbackRip =
     resolveDirectionalSeRipNameFromType(directionalSeType) ?? DEFAULT_SKIN_SELECTION.directionalSeRipName;
+  const bgSkinFallbackRip =
+    resolveBgSkinRipNameFromType(bgType) ?? DEFAULT_SKIN_SELECTION.bgSkinRipName;
   const fieldSkinFallbackRip =
     resolveFieldSkinRipNameFromType(fieldType) ?? DEFAULT_SKIN_SELECTION.fieldSkinRipName;
 
@@ -1163,6 +1385,12 @@ export function normalizeSkinSelection(
       RIP_NAME_PATTERN.test(input.directionalSeRipName.trim())
       ? input.directionalSeRipName.trim()
       : directionalSeFallbackRip;
+  const bgSkinRipName =
+    typeof input.bgSkinRipName === "string" &&
+      input.bgSkinRipName.trim().length > 0 &&
+      RIP_NAME_PATTERN.test(input.bgSkinRipName.trim())
+      ? input.bgSkinRipName.trim()
+      : bgSkinFallbackRip;
   const fieldSkinRipName =
     typeof input.fieldSkinRipName === "string" &&
       input.fieldSkinRipName.trim().length > 0 &&
@@ -1175,11 +1403,13 @@ export function normalizeSkinSelection(
     directionalType,
     rhythmSeType,
     directionalSeType,
+    bgType,
     fieldType,
     rhythmRipName,
     directionalRipName,
     rhythmSeRipName,
     directionalSeRipName,
+    bgSkinRipName,
     fieldSkinRipName,
   };
 }
@@ -1590,4 +1820,44 @@ export async function downloadBestdoriFieldSkinAssets(
   }
   const files = await downloadWebFieldSkinFiles(normalizedRipName);
   return withFieldSkinAssets(files);
+}
+
+export async function downloadBestdoriBgSkinAssets(
+  ripName: string,
+  options?: DownloadProgressOptions,
+): Promise<BGSkin> {
+  const normalizedRipName = ripName.trim();
+  if (!normalizedRipName || !RIP_NAME_PATTERN.test(normalizedRipName)) {
+    throw new Error("Invalid bgskin ripName, only [a-zA-Z0-9_-] is allowed.");
+  }
+
+  if (isTauriEnv()) {
+    const prepared = await invoke<PreparedBestdoriBgSkinAssets>("prepare_bestdori_bg_skin_assets", {
+      ripName: normalizedRipName,
+      taskId: options?.operationId ?? null,
+    });
+    const packageFiles = normalizeLowercaseFileMap(prepared.packageFiles);
+    const mainFiles = await loadPreparedBinaryFilesAsDataUrlMap(packageFiles, "read_bg_skin_binary_file");
+
+    const previewPackageFiles = prepared.previewPackageFiles
+      ? normalizeLowercaseFileMap(prepared.previewPackageFiles)
+      : null;
+    const previewFiles = previewPackageFiles
+      ? await loadPreparedBinaryFilesAsDataUrlMap(previewPackageFiles, "read_bg_skin_binary_file")
+      : null;
+    const preview = previewFiles ? withBgSkinPreview(previewFiles) : undefined;
+    return {
+      assets: withBgSkinAssets(mainFiles),
+      ...(preview ? { preview } : {}),
+    };
+  }
+
+  const mainFiles = await downloadWebBgSkinMainFiles(normalizedRipName);
+  const previewRipName = buildBestdoriBgSkinPreviewRipName(normalizedRipName);
+  const previewFiles = await downloadWebBgSkinPreviewFiles(previewRipName);
+  const preview = previewFiles ? withBgSkinPreview(previewFiles) : undefined;
+  return {
+    assets: withBgSkinAssets(mainFiles),
+    ...(preview ? { preview } : {}),
+  };
 }

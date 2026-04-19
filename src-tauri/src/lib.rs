@@ -5,12 +5,19 @@ use std::fs;
 use std::io::Write;
 use std::net::{IpAddr, Ipv4Addr};
 use std::path::{Component, Path, PathBuf};
+use std::time::Duration;
 use tauri::{Emitter, Manager};
 
 const BESTDORI_ASSET_ROOT: &str = "https://bestdori.com/assets/jp/ingameskin/noteskin";
 const BESTDORI_EXPLORER_ROOT: &str = "https://bestdori.com/api/explorer/jp/assets/ingameskin/noteskin";
 const BESTDORI_FIELD_SKIN_ASSET_ROOT: &str = "https://bestdori.com/assets/jp/ingameskin/fieldskin";
 const BESTDORI_FIELD_SKIN_EXPLORER_ROOT: &str = "https://bestdori.com/api/explorer/jp/assets/ingameskin/fieldskin";
+const BESTDORI_BG_SKIN_ASSET_ROOT: &str = "https://bestdori.com/assets/jp/ingameskin/bgskin";
+const BESTDORI_BG_SKIN_EXPLORER_ROOT: &str = "https://bestdori.com/api/explorer/jp/assets/ingameskin/bgskin";
+const BG_SKIN_LIVE_BG_FILE_NAME: &str = "liveBG.png";
+const BG_SKIN_LIVE_BG_NORMAL_FILE_NAME: &str = "liveBG_normal.png";
+const BG_SKIN_LIVE_BG_FEVER_FILE_NAME: &str = "liveBG_fever.png";
+const BG_SKIN_PREVIEW_FILE_NAME: &str = "previewBG.png";
 const BESTDORI_TAPSE_ASSET_ROOT: &str = "https://bestdori.com/assets/jp/sound/tapseskin";
 const BESTDORI_TAPSE_EXPLORER_ROOT: &str = "https://bestdori.com/api/explorer/jp/assets/sound/tapseskin";
 const BESTDORI_COMMON_SOUND_ROOT: &str = "https://bestdori.com/assets/jp/sound/common_rip";
@@ -241,6 +248,18 @@ fn resolve_field_skin_assets_root(app: &tauri::AppHandle) -> Result<PathBuf, Str
     directory.push("game");
     directory.push("fieldskin");
     fs::create_dir_all(&directory).map_err(|error| format!("create field skin assets dir failed: {error}"))?;
+    Ok(directory)
+}
+
+fn resolve_bg_skin_assets_root(app: &tauri::AppHandle) -> Result<PathBuf, String> {
+    let mut directory = app
+        .path()
+        .app_local_data_dir()
+        .map_err(|error| format!("resolve app local data dir failed: {error}"))?;
+    directory.push("assets");
+    directory.push("game");
+    directory.push("bgskin");
+    fs::create_dir_all(&directory).map_err(|error| format!("create bg skin assets dir failed: {error}"))?;
     Ok(directory)
 }
 
@@ -591,6 +610,138 @@ async fn ensure_field_skin_package_downloaded(
     })
 }
 
+async fn ensure_bg_skin_package_downloaded(
+    app: &tauri::AppHandle,
+    root: &Path,
+    rip_name: &str,
+    is_preview_package: bool,
+    client: &reqwest::Client,
+    operation_id: Option<&str>,
+    scope_id: &str,
+    scope_label: &str,
+) -> Result<DownloadedBgSkinPackage, String> {
+    let package_dir = root.join(rip_name);
+    let manifest_file_name = format!("{rip_name}.json");
+    let manifest_path = package_dir.join(&manifest_file_name);
+    let filenames: Vec<String> = if manifest_path.exists() {
+        let local_manifest_bytes =
+            fs::read(&manifest_path).map_err(|error| format!("read local manifest failed: {error}"))?;
+        match serde_json::from_slice::<Vec<String>>(&local_manifest_bytes) {
+            Ok(parsed) => parsed,
+            Err(_) => {
+                let manifest_url = format!("{BESTDORI_BG_SKIN_EXPLORER_ROOT}/{rip_name}.json");
+                let downloaded_manifest_bytes = download_url_bytes(client, &manifest_url).await?;
+                let parsed: Vec<String> = serde_json::from_slice(&downloaded_manifest_bytes).map_err(|error| {
+                    format!("parse explorer manifest failed ({manifest_url}): {error}")
+                })?;
+                fs::create_dir_all(&package_dir)
+                    .map_err(|error| format!("create bgskin package dir failed: {error}"))?;
+                fs::write(&manifest_path, &downloaded_manifest_bytes)
+                    .map_err(|error| format!("write local manifest failed: {error}"))?;
+                parsed
+            }
+        }
+    } else {
+        let manifest_url = format!("{BESTDORI_BG_SKIN_EXPLORER_ROOT}/{rip_name}.json");
+        let downloaded_manifest_bytes = download_url_bytes(client, &manifest_url).await?;
+        let parsed: Vec<String> = serde_json::from_slice(&downloaded_manifest_bytes)
+            .map_err(|error| format!("parse explorer manifest failed ({manifest_url}): {error}"))?;
+        fs::create_dir_all(&package_dir)
+            .map_err(|error| format!("create bgskin package dir failed: {error}"))?;
+        fs::write(&manifest_path, &downloaded_manifest_bytes)
+            .map_err(|error| format!("write local manifest failed: {error}"))?;
+        parsed
+    };
+
+    let mut selected_filenames: Vec<String> = Vec::new();
+    let mut name_lookup = HashMap::new();
+    for name in &filenames {
+        name_lookup.insert(name.to_lowercase(), name.clone());
+    }
+
+    if is_preview_package {
+        if let Some(preview_name) = name_lookup.get(&BG_SKIN_PREVIEW_FILE_NAME.to_lowercase()) {
+            selected_filenames.push(preview_name.clone());
+        }
+    } else {
+        let live_bg_name = name_lookup
+            .get(&BG_SKIN_LIVE_BG_FILE_NAME.to_lowercase())
+            .or_else(|| name_lookup.get(&BG_SKIN_LIVE_BG_NORMAL_FILE_NAME.to_lowercase()))
+            .cloned()
+            .unwrap_or_else(|| BG_SKIN_LIVE_BG_FILE_NAME.to_string());
+        selected_filenames.push(live_bg_name);
+        if let Some(fever_name) = name_lookup.get(&BG_SKIN_LIVE_BG_FEVER_FILE_NAME.to_lowercase()) {
+            selected_filenames.push(fever_name.clone());
+        }
+    }
+
+    let mut progress = operation_id.map(|id| {
+        DownloadScopeProgress::new(
+            app.clone(),
+            id.to_string(),
+            scope_id.to_string(),
+            scope_label.to_string(),
+            selected_filenames.len(),
+        )
+    });
+    if let Some(progress) = progress.as_ref() {
+        progress.report_scope_message(format!(
+            "已获取资源清单，共 {} 项，需下载 {} 项。",
+            filenames.len(),
+            selected_filenames.len(),
+        ));
+    }
+
+    let mut downloaded_filenames: Vec<String> = Vec::new();
+    for (index, filename) in selected_filenames.iter().enumerate() {
+        let relative = normalize_asset_relative_path(&filename)?;
+        let target_path = package_dir.join(&relative);
+        let file_url = format!("{BESTDORI_BG_SKIN_ASSET_ROOT}/{}_rip/{}", rip_name, filename);
+        let is_optional_fever =
+            !is_preview_package && filename.eq_ignore_ascii_case(BG_SKIN_LIVE_BG_FEVER_FILE_NAME);
+        if let Some(progress_scope) = progress.as_mut() {
+            if let Err(error) = ensure_file_from_url(
+                &target_path,
+                &file_url,
+                client,
+                Some(progress_scope),
+                filename,
+                index + 1,
+            )
+            .await
+            {
+                if is_optional_fever {
+                    let _ = remove_file_if_exists(&target_path);
+                    progress_scope.report_scope_message(format!(
+                        "可选背景资源下载失败，已跳过：{filename}（{error}）"
+                    ));
+                    continue;
+                }
+                progress_scope.report_scope_error(error.clone());
+                return Err(error);
+            }
+        } else {
+            if let Err(error) = ensure_file_from_url(&target_path, &file_url, client, None, filename, index + 1).await {
+                if is_optional_fever {
+                    let _ = remove_file_if_exists(&target_path);
+                    continue;
+                }
+                return Err(error);
+            }
+        }
+
+        downloaded_filenames.push(filename.clone());
+    }
+    if let Some(progress) = progress.as_ref() {
+        progress.report_scope_complete();
+    }
+
+    Ok(DownloadedBgSkinPackage {
+        directory: package_dir,
+        manifest_filenames: downloaded_filenames,
+    })
+}
+
 async fn ensure_tapseskin_package_downloaded(
     app: &tauri::AppHandle,
     root: &Path,
@@ -779,6 +930,13 @@ struct PreparedBestdoriFieldSkinAssets {
     package_files: HashMap<String, String>,
 }
 
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct PreparedBestdoriBgSkinAssets {
+    package_files: HashMap<String, String>,
+    preview_package_files: Option<HashMap<String, String>>,
+}
+
 struct DownloadedNoteskinPackage {
     directory: PathBuf,
     manifest_filenames: Vec<String>,
@@ -790,6 +948,11 @@ struct DownloadedTapseskinPackage {
 }
 
 struct DownloadedFieldSkinPackage {
+    directory: PathBuf,
+    manifest_filenames: Vec<String>,
+}
+
+struct DownloadedBgSkinPackage {
     directory: PathBuf,
     manifest_filenames: Vec<String>,
 }
@@ -863,6 +1026,7 @@ fn build_bestdori_http_client() -> Result<reqwest::Client, String> {
     reqwest::Client::builder()
         .local_address(IpAddr::V4(Ipv4Addr::UNSPECIFIED))
         .http1_only()
+        .timeout(Duration::from_secs(45))
         .user_agent("chart-editor/1.0")
         .build()
         .map_err(|error| format!("build http client failed: {error}"))
@@ -982,6 +1146,66 @@ async fn prepare_bestdori_field_skin_assets(
 }
 
 #[tauri::command]
+async fn prepare_bestdori_bg_skin_assets(
+    app: tauri::AppHandle,
+    rip_name: String,
+    task_id: Option<String>,
+) -> Result<PreparedBestdoriBgSkinAssets, String> {
+    let rip_name = normalize_rip_name(&rip_name, "rip_name")?;
+    let preview_rip_name = format!("{rip_name}preview");
+    let root = resolve_bg_skin_assets_root(&app)?;
+    let client = build_bestdori_http_client()?;
+
+    let package = ensure_bg_skin_package_downloaded(
+        &app,
+        &root,
+        &rip_name,
+        false,
+        &client,
+        task_id.as_deref(),
+        &format!("bgskin:{rip_name}"),
+        &format!("背景资源：{rip_name}"),
+    )
+    .await?;
+
+    let preview_package = match ensure_bg_skin_package_downloaded(
+        &app,
+        &root,
+        &preview_rip_name,
+        true,
+        &client,
+        task_id.as_deref(),
+        &format!("bgskin:{preview_rip_name}"),
+        &format!("背景预览资源：{preview_rip_name}"),
+    )
+    .await
+    {
+        Ok(downloaded) => Some(downloaded),
+        Err(error) => {
+            if error.contains("http status 404") {
+                None
+            } else {
+                return Err(error);
+            }
+        }
+    };
+
+    let preview_package_files = match preview_package {
+        Some(downloaded) => Some(build_package_file_map(
+            &downloaded.directory,
+            &downloaded.manifest_filenames,
+            &preview_rip_name,
+        )?),
+        None => None,
+    };
+
+    Ok(PreparedBestdoriBgSkinAssets {
+        package_files: build_package_file_map(&package.directory, &package.manifest_filenames, &rip_name)?,
+        preview_package_files,
+    })
+}
+
+#[tauri::command]
 async fn ensure_common_sound_asset(app: tauri::AppHandle, task_id: Option<String>) -> Result<String, String> {
     let root = resolve_sound_assets_root(&app)?;
     let common_dir = root.join("common");
@@ -1060,6 +1284,19 @@ fn read_field_skin_binary_file(app: tauri::AppHandle, path: String) -> Result<St
     let canonical_target = canonicalize_existing_path(&target)?;
     if !is_path_within(&canonical_root, &canonical_target) {
         return Err("path is outside fieldskin assets directory".to_string());
+    }
+    let bytes = fs::read(&canonical_target).map_err(|error| format!("read binary file failed: {error}"))?;
+    Ok(encode_base64(bytes))
+}
+
+#[tauri::command]
+fn read_bg_skin_binary_file(app: tauri::AppHandle, path: String) -> Result<String, String> {
+    let root = resolve_bg_skin_assets_root(&app)?;
+    let target = PathBuf::from(path);
+    let canonical_root = canonicalize_existing_path(&root)?;
+    let canonical_target = canonicalize_existing_path(&target)?;
+    if !is_path_within(&canonical_root, &canonical_target) {
+        return Err("path is outside bgskin assets directory".to_string());
     }
     let bytes = fs::read(&canonical_target).map_err(|error| format!("read binary file failed: {error}"))?;
     Ok(encode_base64(bytes))
@@ -1232,10 +1469,12 @@ pub fn run() {
             prepare_bestdori_skin_assets,
             prepare_bestdori_tapseskin_assets,
             prepare_bestdori_field_skin_assets,
+            prepare_bestdori_bg_skin_assets,
             ensure_common_sound_asset,
             read_skin_text_file,
             read_skin_binary_file,
             read_field_skin_binary_file,
+            read_bg_skin_binary_file,
             read_sound_binary_file,
             save_editor_session_cache,
             load_editor_session_cache,

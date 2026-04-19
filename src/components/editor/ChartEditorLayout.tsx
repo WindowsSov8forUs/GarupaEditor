@@ -261,12 +261,14 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     resolveDirectionalRipNameFromType,
     resolveRhythmSeRipNameFromType,
     resolveDirectionalSeRipNameFromType,
+    resolveBgSkinRipNameFromType,
     resolveFieldSkinRipNameFromType,
     HABAHIRO_RHYTHM_SKIN_TYPES,
     RHYTHM_SKIN_TYPES,
     DIRECTIONAL_SKIN_TYPES,
     RHYTHM_SE_SKIN_TYPES,
     DIRECTIONAL_SE_SKIN_TYPES,
+    BG_SKIN_TYPES,
     FIELD_SKIN_TYPES,
     formatTypeLabel,
     applyWindowPreset,
@@ -1719,6 +1721,15 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
             }),
           )
         }
+        onBgTypeChange={(value) =>
+          setPendingSkinSelection((current: any) =>
+            normalizeSkinSelection({
+              ...current,
+              bgType: value,
+              bgSkinRipName: resolveBgSkinRipNameFromType(value) ?? current.bgSkinRipName,
+            }),
+          )
+        }
         onFieldTypeChange={(value) =>
           setPendingSkinSelection((current: any) =>
             normalizeSkinSelection({
@@ -1732,6 +1743,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         directionalSkinTypes={DIRECTIONAL_SKIN_TYPES}
         rhythmSeSkinTypes={RHYTHM_SE_SKIN_TYPES}
         directionalSeSkinTypes={DIRECTIONAL_SE_SKIN_TYPES}
+        bgSkinTypes={BG_SKIN_TYPES}
         fieldSkinTypes={FIELD_SKIN_TYPES}
         formatTypeLabel={formatTypeLabel}
         isSkinApplying={isSkinApplying}
