@@ -6,8 +6,15 @@ import type {
   SimulatorChartSvEvent,
 } from "../launchPayload";
 import { LEGACY_TIMING_FPS, legacyOffsetToMs } from "./legacyMath";
-import { isJudgedType } from "./score";
-import type { ChartEvent, ParsedChart, SimulatorSettings, TimingGroupDef } from "./types";
+import { isJudgedEvent } from "./score";
+import type {
+  ChartEvent,
+  ParsedChart,
+  RuntimeNoteSemantic,
+  RuntimeSlideRole,
+  SimulatorSettings,
+  TimingGroupDef,
+} from "./types";
 
 interface BpmSegment {
   beatStart: number;
@@ -24,7 +31,7 @@ interface NoteDescriptor {
   noteId: string;
   beat: number;
   lane: number;
-  type: number;
+  note: RuntimeNoteSemantic;
   timingGroup: number;
   predecessorNoteId: string | null;
   order: number;
@@ -45,24 +52,6 @@ interface SvRuntimeEvent {
 }
 
 const BEAT_EPSILON = 1e-6;
-const SAMELINE_EXCLUDED_TYPES = new Set<number>([
-  0,
-  4,
-  7,
-  14,
-  15,
-  16,
-  20,
-  41,
-  42,
-  72,
-  77,
-  78,
-  100,
-  104,
-  107,
-  110,
-]);
 
 function toFinite(value: unknown, fallback: number): number {
   const numeric = Number(value);
@@ -82,79 +71,78 @@ function normalizeTimingGroup(value: unknown): number {
 }
 
 function normalizeDirectionalWidth(value: unknown): number {
-  return Math.round(toFinite(value, 1));
+  return Math.max(1, Math.round(toFinite(value, 1)));
 }
 
-function mapDirectionalType(note: SimulatorChartNote): number | null {
-  const width = normalizeDirectionalWidth(note.width);
-  if (note.type === "directional_flick_left") {
-    return 50 + width;
+function buildTopLevelSemantic(note: SimulatorChartNote): RuntimeNoteSemantic | null {
+  if (note.type === "single" || note.type === "flick" || note.type === "skill") {
+    return {
+      baseType: note.type,
+      slideRole: "none",
+      directionalWidth: 1,
+    };
   }
-  if (note.type === "directional_flick_right") {
-    return 60 + width;
+  if (note.type === "directional_flick_left" || note.type === "directional_flick_right") {
+    return {
+      baseType: note.type,
+      slideRole: "none",
+      directionalWidth: normalizeDirectionalWidth(note.width),
+    };
   }
   return null;
 }
 
-function mapTopLevelType(note: SimulatorChartNote): number | null {
-  const directional = mapDirectionalType(note);
-  if (directional !== null) {
-    return directional;
-  }
-  if (note.type === "single") {
-    return 1;
-  }
-  if (note.type === "flick") {
-    return 2;
-  }
-  if (note.type === "skill") {
-    return 11;
-  }
-  return null;
-}
-
-function mapSlideType(note: SimulatorChartNote, index: number, length: number): number | null {
-  const directional = mapDirectionalType(note);
-  if (directional !== null) {
-    return directional;
+function resolveSlideRoleForChainNote(
+  note: SimulatorChartNote,
+  index: number,
+  length: number,
+): RuntimeSlideRole {
+  if (note.type === "directional_flick_left" || note.type === "directional_flick_right") {
+    return "none";
   }
   if (note.type === "hidden") {
-    return 77;
+    return "hidden";
   }
   if (length <= 1) {
-    if (note.type === "single") {
-      return 1;
-    }
-    if (note.type === "flick") {
-      return 2;
-    }
-    if (note.type === "skill") {
-      return 11;
-    }
-    return null;
+    return "none";
   }
-
   if (index === 0) {
-    if (note.type === "skill") {
-      return 75;
-    }
-    return 71;
+    return "start";
   }
-
   if (index === length - 1) {
-    if (note.type === "flick") {
-      return 74;
-    }
-    if (note.type === "skill") {
-      return 76;
-    }
-    return 73;
+    return "end";
   }
+  return "middle";
+}
 
-  if (note.type === "skill") {
-    return 75;
+function buildSlideSemantic(
+  note: SimulatorChartNote,
+  index: number,
+  length: number,
+): RuntimeNoteSemantic | null {
+  const slideRole = resolveSlideRoleForChainNote(note, index, length);
+  if (note.type === "single" || note.type === "flick" || note.type === "skill") {
+    return {
+      baseType: note.type,
+      slideRole,
+      directionalWidth: 1,
+    };
   }
-  return 72;
+  if (note.type === "hidden") {
+    return {
+      baseType: "hidden",
+      slideRole: "hidden",
+      directionalWidth: 1,
+    };
+  }
+  if (note.type === "directional_flick_left" || note.type === "directional_flick_right") {
+    return {
+      baseType: note.type,
+      slideRole: "none",
+      directionalWidth: normalizeDirectionalWidth(note.width),
+    };
+  }
+  return null;
 }
 
 function buildBpmSegments(baseBpm: number, events: SimulatorChartBpmEvent[]): BpmSegment[] {
@@ -264,15 +252,15 @@ function buildNoteDescriptors(
     if (slideRoles.has(note.id)) {
       continue;
     }
-    const mappedType = mapTopLevelType(note);
-    if (mappedType === null) {
+    const semantic = buildTopLevelSemantic(note);
+    if (semantic === null) {
       continue;
     }
     descriptors.push({
       noteId: note.id,
       beat: normalizeBeat(note.beat),
       lane: normalizeLane(note.lane),
-      type: mappedType,
+      note: semantic,
       timingGroup: normalizeTimingGroup(note.timingGroup),
       predecessorNoteId: null,
       order,
@@ -290,15 +278,15 @@ function buildNoteDescriptors(
       if (!note) {
         continue;
       }
-      const mappedType = mapSlideType(note, index, chainLength);
-      if (mappedType === null) {
+      const semantic = buildSlideSemantic(note, index, chainLength);
+      if (semantic === null) {
         continue;
       }
       descriptors.push({
         noteId,
         beat: normalizeBeat(note.beat),
         lane: normalizeLane(note.lane),
-        type: mappedType,
+        note: semantic,
         timingGroup: chainTimingGroup,
         predecessorNoteId: index > 0 ? validNoteIds[index - 1] : null,
         order,
@@ -404,6 +392,16 @@ function timingGroupPosAt(
   return pos + atMs * speed;
 }
 
+function shouldExcludeFromSameLine(event: ChartEvent): boolean {
+  if (event.eventType !== "note" || !event.note) {
+    return true;
+  }
+  if (event.note.baseType === "hidden") {
+    return true;
+  }
+  return event.note.slideRole === "middle" || event.note.slideRole === "hidden";
+}
+
 function assignSamelineLanes(events: ChartEvent[], enabled: boolean): void {
   for (let index = 0; index < events.length; index += 1) {
     events[index].samelineLane = null;
@@ -417,7 +415,7 @@ function assignSamelineLanes(events: ChartEvent[], enabled: boolean): void {
 
   for (let index = 0; index < events.length; index += 1) {
     const event = events[index];
-    if (SAMELINE_EXCLUDED_TYPES.has(event.type)) {
+    if (shouldExcludeFromSameLine(event)) {
       continue;
     }
     if (
@@ -478,7 +476,8 @@ export function parseEditorChart(
   internalEvents.push({
     event: {
       beat: 0,
-      type: 0,
+      eventType: "music_start",
+      note: null,
       lane: 0,
       slideId: 0,
       tgId: -1,
@@ -505,7 +504,8 @@ export function parseEditorChart(
     internalEvents.push({
       event: {
         beat,
-        type: 20,
+        eventType: "bpm",
+        note: null,
         lane: 0,
         slideId: 0,
         tgId: -1,
@@ -537,7 +537,8 @@ export function parseEditorChart(
     internalEvents.push({
       event: {
         beat: descriptor.beat,
-        type: descriptor.type,
+        eventType: "note",
+        note: descriptor.note,
         lane: descriptor.lane,
         slideId: 0,
         tgId,
@@ -588,7 +589,7 @@ export function parseEditorChart(
   let maxTimeMs = 10;
   for (let index = 0; index < internalEvents.length; index += 1) {
     const { event, atMs } = internalEvents[index];
-    if (isJudgedType(event.type)) {
+    if (isJudgedEvent(event)) {
       noteCount += 1;
     }
     if (atMs > maxTimeMs) {

@@ -62,9 +62,28 @@ export interface TimingGroupDef {
   changes: TimingGroupChange[];
 }
 
+export type RuntimeEventType = "music_start" | "bpm" | "note";
+
+export type RuntimeNoteBaseType =
+  | "single"
+  | "flick"
+  | "skill"
+  | "hidden"
+  | "directional_flick_left"
+  | "directional_flick_right";
+
+export type RuntimeSlideRole = "none" | "start" | "middle" | "end" | "hidden";
+
+export interface RuntimeNoteSemantic {
+  baseType: RuntimeNoteBaseType;
+  slideRole: RuntimeSlideRole;
+  directionalWidth: number;
+}
+
 export interface ChartEvent {
   beat: number;
-  type: number;
+  eventType: RuntimeEventType;
+  note: RuntimeNoteSemantic | null;
   lane: number;
   slideId: number;
   tgId: number;
@@ -109,7 +128,7 @@ export interface HitEffectEvent {
 export interface ActiveNote {
   id: number;
   eventIndex: number;
-  type: number;
+  note: RuntimeNoteSemantic;
   lane: number;
   issameline: number | null;
   startMs: number;
