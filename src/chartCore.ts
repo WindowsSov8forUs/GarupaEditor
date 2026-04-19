@@ -96,10 +96,12 @@ interface ChartSkinInfo {
   directionalType?: string;
   rhythmSeType?: string;
   directionalSeType?: string;
+  fieldType?: string;
   rhythmRipName?: string;
   directionalRipName?: string;
   rhythmSeRipName?: string;
   directionalSeRipName?: string;
+  fieldSkinRipName?: string;
 }
 
 export type ChartJsonDirection = "Left" | "Right";
@@ -649,20 +651,25 @@ export function parseSkinSelectionFromDocument(
   const hasDirectionalType = typeof skin.directionalType === "string";
   const hasRhythmSeType = typeof skin.rhythmSeType === "string";
   const hasDirectionalSeType = typeof skin.directionalSeType === "string";
+  const hasFieldType = typeof skin.fieldType === "string";
   const hasRhythmRipName = typeof skin.rhythmRipName === "string" && skin.rhythmRipName.trim().length > 0;
   const hasDirectionalRipName =
     typeof skin.directionalRipName === "string" && skin.directionalRipName.trim().length > 0;
   const hasRhythmSeRipName = typeof skin.rhythmSeRipName === "string" && skin.rhythmSeRipName.trim().length > 0;
   const hasDirectionalSeRipName =
     typeof skin.directionalSeRipName === "string" && skin.directionalSeRipName.trim().length > 0;
+  const hasFieldSkinRipName =
+    typeof skin.fieldSkinRipName === "string" && skin.fieldSkinRipName.trim().length > 0;
 
   let rhythmType: string | undefined = hasRhythmType ? skin.rhythmType : undefined;
   let directionalType: string | undefined = hasDirectionalType ? skin.directionalType : undefined;
   let rhythmSeType: string | undefined = hasRhythmSeType ? skin.rhythmSeType : undefined;
   let directionalSeType: string | undefined = hasDirectionalSeType ? skin.directionalSeType : undefined;
+  let fieldType: string | undefined = hasFieldType ? skin.fieldType : undefined;
   if (typeof skin.name === "string") {
     const rhythmMatch = /rhythm-type(\d+)/i.exec(skin.name);
     const directionalMatch = /directional-type(\d+)/i.exec(skin.name);
+    const fieldMatch = /field-type(\d+)/i.exec(skin.name);
     if (rhythmType === undefined && rhythmMatch) {
       rhythmType = rhythmMatch[1];
     }
@@ -675,6 +682,9 @@ export function parseSkinSelectionFromDocument(
     if (directionalSeType === undefined && directionalMatch) {
       directionalSeType = directionalMatch[1];
     }
+    if (fieldType === undefined && fieldMatch) {
+      fieldType = fieldMatch[1];
+    }
   }
 
   if (
@@ -682,10 +692,12 @@ export function parseSkinSelectionFromDocument(
     directionalType === undefined &&
     rhythmSeType === undefined &&
     directionalSeType === undefined &&
+    fieldType === undefined &&
     !hasRhythmRipName &&
     !hasDirectionalRipName &&
     !hasRhythmSeRipName &&
-    !hasDirectionalSeRipName
+    !hasDirectionalSeRipName &&
+    !hasFieldSkinRipName
   ) {
     return null;
   }
@@ -695,10 +707,12 @@ export function parseSkinSelectionFromDocument(
     directionalType: directionalType ?? DEFAULT_SKIN_SELECTION.directionalType,
     rhythmSeType: rhythmSeType ?? DEFAULT_SKIN_SELECTION.rhythmSeType,
     directionalSeType: directionalSeType ?? DEFAULT_SKIN_SELECTION.directionalSeType,
+    fieldType: fieldType ?? DEFAULT_SKIN_SELECTION.fieldType,
     rhythmRipName: skin.rhythmRipName,
     directionalRipName: skin.directionalRipName,
     rhythmSeRipName: skin.rhythmSeRipName,
     directionalSeRipName: skin.directionalSeRipName,
+    fieldSkinRipName: skin.fieldSkinRipName,
   });
 }
 

@@ -19,7 +19,9 @@ import {
 import {
   combineSkinAssets,
   ensureCommonTapSkillSeAsset,
+  setRuntimeFieldSkinAssets,
   setRuntimeSeAssets,
+  type FieldSkinAssets,
   type RhythmSeSkinAssets,
   type DirectionalSeSkinAssets,
   type DirectionalSkinAssets,
@@ -167,6 +169,7 @@ export function useEditorIoAndShortcuts(params: any) {
     formatTypeLabel,
     downloadBestdoriRhythmSkinAssets,
     downloadBestdoriDirectionalSkinAssets,
+    downloadBestdoriFieldSkinAssets,
     downloadBestdoriRhythmSeSkinAssets,
     downloadBestdoriDirectionalSeSkinAssets,
     setSkinSelection,
@@ -193,6 +196,7 @@ export function useEditorIoAndShortcuts(params: any) {
   const directionalSkinAssetsRef = useRef<DirectionalSkinAssets | null>(null);
   const rhythmSeSkinAssetsRef = useRef<RhythmSeSkinAssets | null>(null);
   const directionalSeSkinAssetsRef = useRef<DirectionalSeSkinAssets | null>(null);
+  const fieldSkinAssetsRef = useRef<FieldSkinAssets | null>(null);
   const commonTapSkillSeRef = useRef<string>("");
 
   const toBeatValue = (value: unknown): number => Number(toFinite(value, 0).toFixed(6));
@@ -1478,13 +1482,15 @@ export function useEditorIoAndShortcuts(params: any) {
     const shouldReloadDirectionalSe =
       directionalSeSkinAssetsRef.current === null ||
       normalized.directionalSeRipName !== skinSelection.directionalSeRipName;
-
+    const shouldReloadFieldSkin =
+      fieldSkinAssetsRef.current === null ||
+      normalized.fieldSkinRipName !== skinSelection.fieldSkinRipName;
     setStatusMessage(
-      `正在加载皮肤：节奏图示 ${formatTypeLabel(normalized.rhythmType)}，方向滑键 ${formatTypeLabel(normalized.directionalType)}，节奏图示SE ${formatTypeLabel(normalized.rhythmSeType)}，方向滑键SE ${formatTypeLabel(normalized.directionalSeType)}。`,
+      `正在加载皮肤：节奏图示 ${formatTypeLabel(normalized.rhythmType)}，方向滑键 ${formatTypeLabel(normalized.directionalType)}，节奏图示SE ${formatTypeLabel(normalized.rhythmSeType)}，方向滑键SE ${formatTypeLabel(normalized.directionalSeType)}，轨道样式 ${formatTypeLabel(normalized.fieldType)}。`,
     );
 
     try {
-      const [nextRhythm, nextDirectional, nextRhythmSe, nextDirectionalSe, commonTapSkillSe] = await Promise.all([
+      const [nextRhythm, nextDirectional, nextRhythmSe, nextDirectionalSe, nextFieldSkin, commonTapSkillSe] = await Promise.all([
         shouldReloadRhythm
           ? downloadBestdoriRhythmSkinAssets(normalized, { operationId: downloadOperationId })
           : Promise.resolve(rhythmSkinAssetsRef.current),
@@ -1497,6 +1503,9 @@ export function useEditorIoAndShortcuts(params: any) {
         shouldReloadDirectionalSe
           ? downloadBestdoriDirectionalSeSkinAssets(normalized, { operationId: downloadOperationId })
           : Promise.resolve(directionalSeSkinAssetsRef.current),
+        shouldReloadFieldSkin
+          ? downloadBestdoriFieldSkinAssets(normalized.fieldSkinRipName, { operationId: downloadOperationId })
+          : Promise.resolve(fieldSkinAssetsRef.current),
         commonTapSkillSeRef.current
           ? Promise.resolve(commonTapSkillSeRef.current)
           : ensureCommonTapSkillSeAsset({ operationId: downloadOperationId }),
@@ -1505,7 +1514,7 @@ export function useEditorIoAndShortcuts(params: any) {
         return;
       }
 
-      if (!nextRhythm || !nextDirectional || !nextRhythmSe || !nextDirectionalSe || !commonTapSkillSe) {
+      if (!nextRhythm || !nextDirectional || !nextRhythmSe || !nextDirectionalSe || !nextFieldSkin || !commonTapSkillSe) {
         throw new Error("Skin assets incomplete after split loading.");
       }
 
@@ -1513,7 +1522,9 @@ export function useEditorIoAndShortcuts(params: any) {
       directionalSkinAssetsRef.current = nextDirectional;
       rhythmSeSkinAssetsRef.current = nextRhythmSe;
       directionalSeSkinAssetsRef.current = nextDirectionalSe;
+      fieldSkinAssetsRef.current = nextFieldSkin;
       commonTapSkillSeRef.current = commonTapSkillSe;
+      setRuntimeFieldSkinAssets(nextFieldSkin);
       setRuntimeSeAssets({
         rhythm: nextRhythmSe,
         directional: nextDirectionalSe,
@@ -1531,7 +1542,7 @@ export function useEditorIoAndShortcuts(params: any) {
 
       if (announceSuccess) {
         setStatusMessage(
-          `皮肤已生效：节奏图示 ${formatTypeLabel(normalized.rhythmType)}，方向滑键 ${formatTypeLabel(normalized.directionalType)}，节奏图示SE ${formatTypeLabel(normalized.rhythmSeType)}，方向滑键SE ${formatTypeLabel(normalized.directionalSeType)}。`,
+          `皮肤已生效：节奏图示 ${formatTypeLabel(normalized.rhythmType)}，方向滑键 ${formatTypeLabel(normalized.directionalType)}，节奏图示SE ${formatTypeLabel(normalized.rhythmSeType)}，方向滑键SE ${formatTypeLabel(normalized.directionalSeType)}，轨道样式 ${formatTypeLabel(normalized.fieldType)}。`,
         );
       }
     } catch (error) {

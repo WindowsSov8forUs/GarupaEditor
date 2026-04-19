@@ -60,6 +60,7 @@ import {
   regressChartWithoutSpRhythm,
 } from "./modeChartRegression";
 import {
+  FIELD_SKIN_TYPES,
   DIRECTIONAL_SKIN_TYPES,
   DIRECTIONAL_SE_SKIN_TYPES,
   HABAHIRO_RHYTHM_RIP_NAME,
@@ -67,11 +68,13 @@ import {
   HABAHIRO_RHYTHM_TYPE,
   RHYTHM_SKIN_TYPES,
   RHYTHM_SE_SKIN_TYPES,
+  downloadBestdoriFieldSkinAssets,
   downloadBestdoriDirectionalSeSkinAssets,
   downloadBestdoriDirectionalSkinAssets,
   downloadBestdoriRhythmSeSkinAssets,
   downloadBestdoriRhythmSkinAssets,
   formatTypeLabel,
+  getRuntimeFieldSkinAssets,
   getRuntimeSeAssets,
   isHabahiroRhythmRipName,
   normalizeSkinSelection,
@@ -80,6 +83,7 @@ import {
   resolveHabahiroRhythmRipNameFromType,
   resolveDirectionalSeRipNameFromType,
   resolveDirectionalRipNameFromType,
+  resolveFieldSkinRipNameFromType,
   resolveRhythmSeRipNameFromType,
   resolveRhythmRipNameFromType,
   writeSkinSelectionToStorage,
@@ -2496,6 +2500,7 @@ function ChartEditorController() {
     formatTypeLabel,
     downloadBestdoriRhythmSkinAssets,
     downloadBestdoriDirectionalSkinAssets,
+    downloadBestdoriFieldSkinAssets,
     downloadBestdoriRhythmSeSkinAssets,
     downloadBestdoriDirectionalSeSkinAssets,
     setSkinSelection,
@@ -4555,14 +4560,6 @@ function ChartEditorController() {
         ?? WINDOW_SIZE_PRESETS[1];
       const playbackWidth = Math.max(1, Math.floor(Number(playbackPreset?.width ?? 1366)));
       const playbackHeight = Math.max(1, Math.floor(Number(playbackPreset?.height ?? 768)));
-      const coordScaleX = playbackWidth / 1280;
-      const coordScaleY = playbackHeight / 720;
-      const playbackTopX = 622 * coordScaleX;
-      const playbackTopY = 20 * coordScaleY;
-      const playbackTopDistance = 6 * coordScaleX;
-      const playbackBottomX = 197 * coordScaleX;
-      const playbackBottomY = 589 * coordScaleY;
-      const playbackBottomDistance = 147 * coordScaleX;
       const playbackFpsValue = playbackFps === 120 ? 120 : 60;
       const playbackNoteSizePercent = Math.max(
         10,
@@ -4594,6 +4591,7 @@ function ChartEditorController() {
         }
       }
       const runtimeSe = getRuntimeSeAssets();
+      const runtimeFieldSkin = getRuntimeFieldSkinAssets();
       const audioPayload = (bgmDataUrl || runtimeSe)
         ? {
             bgmDataUrl: bgmDataUrl ?? null,
@@ -4609,7 +4607,7 @@ function ChartEditorController() {
       const normalizedPlaybackSlideChains = slideChains
         .map((chain) => {
           const validNoteIds = chain.noteIds.filter((noteId) => playbackNoteById.has(noteId));
-          if (validNoteIds.length <= 0) {
+          if (validNoteIds.length < 2) {
             return null;
           }
           const headNote = playbackNoteById.get(validNoteIds[0]);
@@ -4628,12 +4626,6 @@ function ChartEditorController() {
         settings: {
           windowWidth: playbackWidth,
           windowHeight: playbackHeight,
-          topX: playbackTopX,
-          topY: playbackTopY,
-          topDistance: playbackTopDistance,
-          bottomX: playbackBottomX,
-          bottomY: playbackBottomY,
-          bottomDistance: playbackBottomDistance,
           fps: playbackFpsValue,
           noteSizePercent: playbackNoteSizePercent,
           noteSpeed: playbackNoteSpeed,
@@ -4649,6 +4641,7 @@ function ChartEditorController() {
         mv: mvPayload,
         skin: {
           noteSkin: skinAssets,
+          fieldSkin: runtimeFieldSkin ?? null,
         },
         chartData: {
           baseBpm: metadata.bpm,
@@ -5012,11 +5005,13 @@ function ChartEditorController() {
         resolveDirectionalRipNameFromType,
         resolveRhythmSeRipNameFromType,
         resolveDirectionalSeRipNameFromType,
+        resolveFieldSkinRipNameFromType,
         HABAHIRO_RHYTHM_SKIN_TYPES,
         RHYTHM_SKIN_TYPES,
         DIRECTIONAL_SKIN_TYPES,
         RHYTHM_SE_SKIN_TYPES,
         DIRECTIONAL_SE_SKIN_TYPES,
+        FIELD_SKIN_TYPES,
         formatTypeLabel,
         skinAssets,
         applyWindowPreset,

@@ -1,6 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import directionalTypeRipMapJson from "./data/directional-type-rip-map.json";
 import directionalSeTypeRipMapJson from "./data/directional-se-type-rip-map.json";
+import fieldTypeRipMapJson from "./data/field-type-rip-map.json";
 import habahiroTypeRipMapJson from "./data/habahiro-type-rip-map.json";
 import rhythmTypeRipMapJson from "./data/rhythm-type-rip-map.json";
 import rhythmSeTypeRipMapJson from "./data/rhythm-se-type-rip-map.json";
@@ -16,6 +17,8 @@ const BESTDORI_ASSET_ROOT = "https://bestdori.com/assets/jp/ingameskin/noteskin"
 const BESTDORI_TAPSE_ASSET_ROOT = "https://bestdori.com/assets/jp/sound/tapseskin";
 const BESTDORI_TAPSE_EXPLORER_ROOT = "https://bestdori.com/api/explorer/jp/assets/sound/tapseskin";
 const BESTDORI_COMMON_SOUND_ROOT = "https://bestdori.com/assets/jp/sound/common_rip";
+const BESTDORI_FIELD_SKIN_ASSET_ROOT = "https://bestdori.com/assets/jp/ingameskin/fieldskin";
+const BESTDORI_FIELD_SKIN_EXPLORER_ROOT = "https://bestdori.com/api/explorer/jp/assets/ingameskin/fieldskin";
 const RIP_NAME_PATTERN = /^[A-Za-z0-9_-]+$/;
 
 type TypeRipMapEntry = {
@@ -28,6 +31,7 @@ const DIRECTIONAL_TYPE_RIP_ENTRIES = directionalTypeRipMapJson as TypeRipMapEntr
 const RHYTHM_SE_TYPE_RIP_ENTRIES = rhythmSeTypeRipMapJson as TypeRipMapEntry[];
 const DIRECTIONAL_SE_TYPE_RIP_ENTRIES = directionalSeTypeRipMapJson as TypeRipMapEntry[];
 const HABAHIRO_TYPE_RIP_ENTRIES = habahiroTypeRipMapJson as TypeRipMapEntry[];
+const FIELD_TYPE_RIP_ENTRIES = fieldTypeRipMapJson as TypeRipMapEntry[];
 
 const DEFAULT_HABAHIRO_TYPE = HABAHIRO_TYPE_RIP_ENTRIES[0]?.type ?? "2026\u611A\u4EBA\u8282";
 const DEFAULT_HABAHIRO_RIP_NAME = HABAHIRO_TYPE_RIP_ENTRIES[0]?.ripName ?? "habahiro";
@@ -46,6 +50,9 @@ export const RHYTHM_SE_SKIN_TYPES: readonly string[] = Object.freeze(
 export const DIRECTIONAL_SE_SKIN_TYPES: readonly string[] = Object.freeze(
   DIRECTIONAL_SE_TYPE_RIP_ENTRIES.map((entry) => entry.type),
 );
+export const FIELD_SKIN_TYPES: readonly string[] = Object.freeze(
+  FIELD_TYPE_RIP_ENTRIES.map((entry) => entry.type),
+);
 export const HABAHIRO_RHYTHM_SKIN_TYPES: readonly string[] = Object.freeze(
   HABAHIRO_TYPE_RIP_ENTRIES.length > 0
     ? HABAHIRO_TYPE_RIP_ENTRIES.map((entry) => entry.type)
@@ -56,6 +63,7 @@ const DEFAULT_RHYTHM_TYPE = RHYTHM_SKIN_TYPES[0] ?? "TYPE1";
 const DEFAULT_DIRECTIONAL_TYPE = DIRECTIONAL_SKIN_TYPES[0] ?? "TYPE1";
 const DEFAULT_RHYTHM_SE_TYPE = RHYTHM_SE_SKIN_TYPES[0] ?? "TYPE1";
 const DEFAULT_DIRECTIONAL_SE_TYPE = DIRECTIONAL_SE_SKIN_TYPES[0] ?? "TYPE1";
+const DEFAULT_FIELD_TYPE = FIELD_SKIN_TYPES[0] ?? "TYPE1";
 
 const RHYTHM_TYPE_TO_RIP_NAME: Readonly<Record<string, string>> = Object.freeze(
   Object.fromEntries(
@@ -84,6 +92,11 @@ const DIRECTIONAL_SE_TYPE_TO_RIP_NAME: Readonly<Record<string, string>> = Object
 const HABAHIRO_TYPE_TO_RIP_NAME: Readonly<Record<string, string>> = Object.freeze(
   Object.fromEntries(
     HABAHIRO_TYPE_RIP_ENTRIES.map((entry) => [entry.type, entry.ripName]),
+  ),
+);
+const FIELD_TYPE_TO_RIP_NAME: Readonly<Record<string, string>> = Object.freeze(
+  Object.fromEntries(
+    FIELD_TYPE_RIP_ENTRIES.map((entry) => [entry.type, entry.ripName]),
   ),
 );
 
@@ -223,15 +236,23 @@ export interface SeSkinAssets {
   tapSkill: string;
 }
 
+export interface FieldSkinAssets {
+  bgLineRhythm: string;
+  gamePlayLine: string;
+  gamePlayLineSkillAdjustEffect: string;
+}
+
 export interface SkinSelection {
   rhythmType: string;
   directionalType: string;
   rhythmSeType: string;
   directionalSeType: string;
+  fieldType: string;
   rhythmRipName: string;
   directionalRipName: string;
   rhythmSeRipName: string;
   directionalSeRipName: string;
+  fieldSkinRipName: string;
 }
 
 type AnyRhythmAssets = RhythmAssets | HabahiroRhythmAssets;
@@ -319,11 +340,16 @@ interface PreparedBestdoriTapseskinAssets {
   packageFiles: Record<string, string>;
 }
 
+interface PreparedBestdoriFieldSkinAssets {
+  packageFiles: Record<string, string>;
+}
+
 type DownloadProgressOptions = {
   operationId?: string;
 };
 
 let runtimeSeAssets: SeSkinAssets | null = null;
+let runtimeFieldSkinAssets: FieldSkinAssets | null = null;
 
 export function resolveRhythmRipNameFromType(
   typeValue: string,
@@ -381,6 +407,20 @@ export function resolveDirectionalSeRipNameFromType(
   return RIP_NAME_PATTERN.test(trimmed) ? trimmed : null;
 }
 
+export function resolveFieldSkinRipNameFromType(
+  typeValue: string,
+): string | null {
+  const trimmed = typeValue.trim();
+  if (trimmed.length === 0) {
+    return null;
+  }
+  const mappedRaw = FIELD_TYPE_TO_RIP_NAME[trimmed];
+  if (typeof mappedRaw === "string" && mappedRaw.length > 0 && RIP_NAME_PATTERN.test(mappedRaw)) {
+    return mappedRaw;
+  }
+  return RIP_NAME_PATTERN.test(trimmed) ? trimmed : null;
+}
+
 export function resolveHabahiroRhythmRipNameFromType(
   typeValue: string,
 ): string | null {
@@ -430,13 +470,20 @@ export const DEFAULT_SKIN_SELECTION: SkinSelection = {
   directionalType: DEFAULT_DIRECTIONAL_TYPE,
   rhythmSeType: DEFAULT_RHYTHM_SE_TYPE,
   directionalSeType: DEFAULT_DIRECTIONAL_SE_TYPE,
+  fieldType: DEFAULT_FIELD_TYPE,
   rhythmRipName: resolveRhythmRipNameFromType(DEFAULT_RHYTHM_TYPE) ?? "skin00",
   directionalRipName: resolveDirectionalRipNameFromType(DEFAULT_DIRECTIONAL_TYPE) ?? "directionalflickskin00",
   rhythmSeRipName: resolveRhythmSeRipNameFromType(DEFAULT_RHYTHM_SE_TYPE) ?? "skin00",
   directionalSeRipName: resolveDirectionalSeRipNameFromType(DEFAULT_DIRECTIONAL_SE_TYPE) ?? "directionalflickskin00",
+  fieldSkinRipName: resolveFieldSkinRipNameFromType(DEFAULT_FIELD_TYPE) ?? "skin00",
 };
 
 const SKIN_SELECTION_STORAGE_KEY = "chart-editor:bestdori-skin-selection:v1";
+const FIELD_SKIN_FILE_NAMES = Object.freeze({
+  bgLineRhythm: "bg_line_rhythm.png",
+  gamePlayLine: "game_play_line.png",
+  gamePlayLineSkillAdjustEffect: "game_play_line_skill_adjust_effect.png",
+});
 
 const NOTE_ASSET_LANES: NoteAssetLane[] = ["0", "1", "2", "3", "4", "5", "6"];
 const HABAHIRO_NOTE_ASSET_KEYS: readonly HabahiroNoteAssetKey[] = [
@@ -543,6 +590,10 @@ function buildBestdoriTapseAssetBase(ripName: string): string {
   return `${BESTDORI_TAPSE_ASSET_ROOT}/${ripName}_rip`;
 }
 
+function buildBestdoriFieldSkinAssetBase(ripName: string): string {
+  return `${BESTDORI_FIELD_SKIN_ASSET_ROOT}/${ripName}_rip`;
+}
+
 function normalizeLowercaseFileMap(fileMap: Record<string, string>): Record<string, string> {
   const normalized: Record<string, string> = {};
   for (const [name, value] of Object.entries(fileMap)) {
@@ -609,6 +660,45 @@ function withDirectionalSeAssets(files: Record<string, string>): DirectionalSeSk
   };
 }
 
+function resolveFieldAssetFromFiles(
+  files: Record<string, string>,
+  fileName: string,
+): string | null {
+  const normalized = fileName.trim().toLowerCase();
+  if (!normalized) {
+    return null;
+  }
+  const resolved = files[normalized];
+  if (typeof resolved === "string" && resolved.length > 0) {
+    return resolved;
+  }
+  return null;
+}
+
+function requireFieldAssetFromFiles(
+  files: Record<string, string>,
+  fileName: string,
+  label: string,
+): string {
+  const resolved = resolveFieldAssetFromFiles(files, fileName);
+  if (!resolved) {
+    throw new Error(`FieldSkin 资源缺失：${label}`);
+  }
+  return resolved;
+}
+
+function withFieldSkinAssets(files: Record<string, string>): FieldSkinAssets {
+  return {
+    bgLineRhythm: requireFieldAssetFromFiles(files, FIELD_SKIN_FILE_NAMES.bgLineRhythm, "bgLineRhythm"),
+    gamePlayLine: requireFieldAssetFromFiles(files, FIELD_SKIN_FILE_NAMES.gamePlayLine, "gamePlayLine"),
+    gamePlayLineSkillAdjustEffect: requireFieldAssetFromFiles(
+      files,
+      FIELD_SKIN_FILE_NAMES.gamePlayLineSkillAdjustEffect,
+      "gamePlayLineSkillAdjustEffect",
+    ),
+  };
+}
+
 function resolveMimeTypeByFileName(fileName: string): string | undefined {
   const normalized = fileName.trim().toLowerCase();
   if (normalized.endsWith(".png")) {
@@ -634,7 +724,7 @@ function resolveMimeTypeByFileName(fileName: string): string | undefined {
 
 async function loadPreparedBinaryFilesAsDataUrlMap(
   fileMap: Record<string, string>,
-  commandName: "read_skin_binary_file" | "read_sound_binary_file",
+  commandName: "read_skin_binary_file" | "read_sound_binary_file" | "read_field_skin_binary_file",
 ): Promise<Record<string, string>> {
   const entries = Object.entries(fileMap);
   const loaded = await Promise.all(
@@ -676,12 +766,51 @@ async function downloadWebTapseskinFiles(ripName: string): Promise<Record<string
   return Object.fromEntries(loaded);
 }
 
+async function downloadWebFieldSkinFiles(ripName: string): Promise<Record<string, string>> {
+  const manifestText = await fetchTextOrThrow(`${BESTDORI_FIELD_SKIN_EXPLORER_ROOT}/${ripName}.json`);
+  let names: string[];
+  try {
+    const parsed = JSON.parse(manifestText);
+    if (!Array.isArray(parsed)) {
+      throw new Error("manifest is not an array");
+    }
+    names = parsed
+      .map((item) => String(item).trim())
+      .filter((item) => item.length > 0);
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    throw new Error(`Parse fieldskin manifest failed (${ripName}): ${detail}`);
+  }
+  const nameLookup = new Map<string, string>();
+  for (const name of names) {
+    nameLookup.set(name.toLowerCase(), name);
+  }
+  const base = buildBestdoriFieldSkinAssetBase(ripName);
+  const loaded = await Promise.all(
+    Object.values(FIELD_SKIN_FILE_NAMES).map(async (expectedName) => {
+      const actualName = nameLookup.get(expectedName.toLowerCase()) ?? expectedName;
+      const blob = await fetchBlobOrThrow(`${base}/${actualName}`);
+      const dataUrl = await blobToDataUrl(blob);
+      return [expectedName.toLowerCase(), dataUrl] as const;
+    }),
+  );
+  return Object.fromEntries(loaded);
+}
+
 export function setRuntimeSeAssets(value: SeSkinAssets | null): void {
   runtimeSeAssets = value;
 }
 
 export function getRuntimeSeAssets(): SeSkinAssets | null {
   return runtimeSeAssets;
+}
+
+export function setRuntimeFieldSkinAssets(value: FieldSkinAssets | null): void {
+  runtimeFieldSkinAssets = value;
+}
+
+export function getRuntimeFieldSkinAssets(): FieldSkinAssets | null {
+  return runtimeFieldSkinAssets;
 }
 
 export async function ensureCommonTapSkillSeAsset(options?: DownloadProgressOptions): Promise<string> {
@@ -943,10 +1072,12 @@ export function readSkinSelectionFromStorage(): SkinSelection {
       directionalType: parsed.directionalType,
       rhythmSeType: parsed.rhythmSeType,
       directionalSeType: parsed.directionalSeType,
+      fieldType: parsed.fieldType,
       rhythmRipName: parsed.rhythmRipName,
       directionalRipName: parsed.directionalRipName,
       rhythmSeRipName: parsed.rhythmSeRipName,
       directionalSeRipName: parsed.directionalSeRipName,
+      fieldSkinRipName: parsed.fieldSkinRipName,
     });
   } catch {
     return DEFAULT_SKIN_SELECTION;
@@ -966,10 +1097,12 @@ export function normalizeSkinSelection(
     directionalType: unknown;
     rhythmSeType: unknown;
     directionalSeType: unknown;
+    fieldType: unknown;
     rhythmRipName: unknown;
     directionalRipName: unknown;
     rhythmSeRipName: unknown;
     directionalSeRipName: unknown;
+    fieldSkinRipName: unknown;
   }>,
 ): SkinSelection {
   const rhythmType =
@@ -988,6 +1121,10 @@ export function normalizeSkinSelection(
     typeof input.directionalSeType === "string" && input.directionalSeType.trim().length > 0
       ? input.directionalSeType.trim()
       : DEFAULT_SKIN_SELECTION.directionalSeType;
+  const fieldType =
+    typeof input.fieldType === "string" && input.fieldType.trim().length > 0
+      ? input.fieldType.trim()
+      : DEFAULT_SKIN_SELECTION.fieldType;
 
   const rhythmFallbackRip =
     resolveHabahiroRhythmRipNameFromType(rhythmType)
@@ -999,6 +1136,8 @@ export function normalizeSkinSelection(
     resolveRhythmSeRipNameFromType(rhythmSeType) ?? DEFAULT_SKIN_SELECTION.rhythmSeRipName;
   const directionalSeFallbackRip =
     resolveDirectionalSeRipNameFromType(directionalSeType) ?? DEFAULT_SKIN_SELECTION.directionalSeRipName;
+  const fieldSkinFallbackRip =
+    resolveFieldSkinRipNameFromType(fieldType) ?? DEFAULT_SKIN_SELECTION.fieldSkinRipName;
 
   const rhythmRipName =
     typeof input.rhythmRipName === "string" &&
@@ -1024,16 +1163,24 @@ export function normalizeSkinSelection(
       RIP_NAME_PATTERN.test(input.directionalSeRipName.trim())
       ? input.directionalSeRipName.trim()
       : directionalSeFallbackRip;
+  const fieldSkinRipName =
+    typeof input.fieldSkinRipName === "string" &&
+      input.fieldSkinRipName.trim().length > 0 &&
+      RIP_NAME_PATTERN.test(input.fieldSkinRipName.trim())
+      ? input.fieldSkinRipName.trim()
+      : fieldSkinFallbackRip;
 
   return {
     rhythmType,
     directionalType,
     rhythmSeType,
     directionalSeType,
+    fieldType,
     rhythmRipName,
     directionalRipName,
     rhythmSeRipName,
     directionalSeRipName,
+    fieldSkinRipName,
   };
 }
 
@@ -1422,4 +1569,25 @@ export async function downloadBestdoriDirectionalSeSkinAssets(
   }
   const files = await downloadWebTapseskinFiles(ripName);
   return withDirectionalSeAssets(files);
+}
+
+export async function downloadBestdoriFieldSkinAssets(
+  ripName: string,
+  options?: DownloadProgressOptions,
+): Promise<FieldSkinAssets> {
+  const normalizedRipName = ripName.trim();
+  if (!normalizedRipName || !RIP_NAME_PATTERN.test(normalizedRipName)) {
+    throw new Error("ripName 非法，仅允许 [a-zA-Z0-9_-]。");
+  }
+  if (isTauriEnv()) {
+    const prepared = await invoke<PreparedBestdoriFieldSkinAssets>("prepare_bestdori_field_skin_assets", {
+      ripName: normalizedRipName,
+      taskId: options?.operationId ?? null,
+    });
+    const packageFiles = normalizeLowercaseFileMap(prepared.packageFiles);
+    const files = await loadPreparedBinaryFilesAsDataUrlMap(packageFiles, "read_field_skin_binary_file");
+    return withFieldSkinAssets(files);
+  }
+  const files = await downloadWebFieldSkinFiles(normalizedRipName);
+  return withFieldSkinAssets(files);
 }

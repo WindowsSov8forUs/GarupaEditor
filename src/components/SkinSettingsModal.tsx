@@ -12,10 +12,12 @@ type SkinSettingsModalProps = {
   onDirectionalTypeChange: (value: string) => void;
   onRhythmSeTypeChange: (value: string) => void;
   onDirectionalSeTypeChange: (value: string) => void;
+  onFieldTypeChange: (value: string) => void;
   rhythmSkinTypes: readonly string[];
   directionalSkinTypes: readonly string[];
   rhythmSeSkinTypes: readonly string[];
   directionalSeSkinTypes: readonly string[];
+  fieldSkinTypes: readonly string[];
   formatTypeLabel: (type: string) => string;
   isSkinApplying: boolean;
   onApplySkinSelection: () => void;
@@ -43,10 +45,12 @@ export function SkinSettingsModal({
   onDirectionalTypeChange,
   onRhythmSeTypeChange,
   onDirectionalSeTypeChange,
+  onFieldTypeChange,
   rhythmSkinTypes,
   directionalSkinTypes,
   rhythmSeSkinTypes,
   directionalSeSkinTypes,
+  fieldSkinTypes,
   formatTypeLabel,
   isSkinApplying,
   onApplySkinSelection,
@@ -61,11 +65,13 @@ export function SkinSettingsModal({
   const directionalIndex = resolveTypeIndex(pendingSkinSelection.directionalType, directionalSkinTypes);
   const rhythmSeIndex = resolveTypeIndex(pendingSkinSelection.rhythmSeType, rhythmSeSkinTypes);
   const directionalSeIndex = resolveTypeIndex(pendingSkinSelection.directionalSeType, directionalSeSkinTypes);
+  const fieldIndex = resolveTypeIndex(pendingSkinSelection.fieldType, fieldSkinTypes);
 
   const rhythmValue = rhythmSkinTypes[rhythmIndex] ?? pendingSkinSelection.rhythmType;
   const directionalValue = directionalSkinTypes[directionalIndex] ?? pendingSkinSelection.directionalType;
   const rhythmSeValue = rhythmSeSkinTypes[rhythmSeIndex] ?? pendingSkinSelection.rhythmSeType;
   const directionalSeValue = directionalSeSkinTypes[directionalSeIndex] ?? pendingSkinSelection.directionalSeType;
+  const fieldValue = fieldSkinTypes[fieldIndex] ?? pendingSkinSelection.fieldType;
   const transitionClassName = phase === "enter" ? "is-enter" : "is-exit";
 
   return (
@@ -237,6 +243,45 @@ export function SkinSettingsModal({
                     const nextType = directionalSeSkinTypes[directionalSeIndex + 1];
                     if (nextType) {
                       onDirectionalSeTypeChange(nextType);
+                    }
+                  }}
+                >
+                  <StepperIcon type="right" />
+                </button>
+              </div>
+            </div>
+
+            <div className="setting-block">
+              <span className="setting-title-strip">轨道样式</span>
+              <div className="inline-stepper">
+                <button
+                  type="button"
+                  className="stepper-btn"
+                  disabled={fieldIndex <= 0}
+                  onClick={() => {
+                    const nextType = fieldSkinTypes[fieldIndex - 1];
+                    if (nextType) {
+                      onFieldTypeChange(nextType);
+                    }
+                  }}
+                >
+                  <StepperIcon type="left" />
+                </button>
+                <input
+                  type="text"
+                  className="stepper-input"
+                  value={formatTypeLabel(fieldValue)}
+                  readOnly
+                  tabIndex={-1}
+                />
+                <button
+                  type="button"
+                  className="stepper-btn"
+                  disabled={fieldIndex >= fieldSkinTypes.length - 1}
+                  onClick={() => {
+                    const nextType = fieldSkinTypes[fieldIndex + 1];
+                    if (nextType) {
+                      onFieldTypeChange(nextType);
                     }
                   }}
                 >

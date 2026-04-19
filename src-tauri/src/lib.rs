@@ -9,6 +9,8 @@ use tauri::{Emitter, Manager};
 
 const BESTDORI_ASSET_ROOT: &str = "https://bestdori.com/assets/jp/ingameskin/noteskin";
 const BESTDORI_EXPLORER_ROOT: &str = "https://bestdori.com/api/explorer/jp/assets/ingameskin/noteskin";
+const BESTDORI_FIELD_SKIN_ASSET_ROOT: &str = "https://bestdori.com/assets/jp/ingameskin/fieldskin";
+const BESTDORI_FIELD_SKIN_EXPLORER_ROOT: &str = "https://bestdori.com/api/explorer/jp/assets/ingameskin/fieldskin";
 const BESTDORI_TAPSE_ASSET_ROOT: &str = "https://bestdori.com/assets/jp/sound/tapseskin";
 const BESTDORI_TAPSE_EXPLORER_ROOT: &str = "https://bestdori.com/api/explorer/jp/assets/sound/tapseskin";
 const BESTDORI_COMMON_SOUND_ROOT: &str = "https://bestdori.com/assets/jp/sound/common_rip";
@@ -227,6 +229,18 @@ fn resolve_skin_assets_root(app: &tauri::AppHandle) -> Result<PathBuf, String> {
     directory.push("game");
     directory.push("noteskin");
     fs::create_dir_all(&directory).map_err(|error| format!("create skin assets dir failed: {error}"))?;
+    Ok(directory)
+}
+
+fn resolve_field_skin_assets_root(app: &tauri::AppHandle) -> Result<PathBuf, String> {
+    let mut directory = app
+        .path()
+        .app_local_data_dir()
+        .map_err(|error| format!("resolve app local data dir failed: {error}"))?;
+    directory.push("assets");
+    directory.push("game");
+    directory.push("fieldskin");
+    fs::create_dir_all(&directory).map_err(|error| format!("create field skin assets dir failed: {error}"))?;
     Ok(directory)
 }
 
@@ -491,6 +505,92 @@ async fn ensure_noteskin_package_downloaded(
     })
 }
 
+async fn ensure_field_skin_package_downloaded(
+    app: &tauri::AppHandle,
+    root: &Path,
+    rip_name: &str,
+    client: &reqwest::Client,
+    operation_id: Option<&str>,
+    scope_id: &str,
+    scope_label: &str,
+) -> Result<DownloadedFieldSkinPackage, String> {
+    let package_dir = root.join(rip_name);
+    fs::create_dir_all(&package_dir)
+        .map_err(|error| format!("create fieldskin package dir failed: {error}"))?;
+
+    let manifest_file_name = format!("{rip_name}.json");
+    let manifest_path = package_dir.join(&manifest_file_name);
+    let filenames: Vec<String> = if manifest_path.exists() {
+        let local_manifest_bytes =
+            fs::read(&manifest_path).map_err(|error| format!("read local manifest failed: {error}"))?;
+        match serde_json::from_slice::<Vec<String>>(&local_manifest_bytes) {
+            Ok(parsed) => parsed,
+            Err(_) => {
+                let manifest_url = format!("{BESTDORI_FIELD_SKIN_EXPLORER_ROOT}/{rip_name}.json");
+                let downloaded_manifest_bytes = download_url_bytes(client, &manifest_url).await?;
+                let parsed: Vec<String> = serde_json::from_slice(&downloaded_manifest_bytes).map_err(|error| {
+                    format!("parse explorer manifest failed ({manifest_url}): {error}")
+                })?;
+                fs::write(&manifest_path, &downloaded_manifest_bytes)
+                    .map_err(|error| format!("write local manifest failed: {error}"))?;
+                parsed
+            }
+        }
+    } else {
+        let manifest_url = format!("{BESTDORI_FIELD_SKIN_EXPLORER_ROOT}/{rip_name}.json");
+        let downloaded_manifest_bytes = download_url_bytes(client, &manifest_url).await?;
+        let parsed: Vec<String> = serde_json::from_slice(&downloaded_manifest_bytes)
+            .map_err(|error| format!("parse explorer manifest failed ({manifest_url}): {error}"))?;
+        fs::write(&manifest_path, &downloaded_manifest_bytes)
+            .map_err(|error| format!("write local manifest failed: {error}"))?;
+        parsed
+    };
+
+    let mut progress = operation_id.map(|id| {
+        DownloadScopeProgress::new(
+            app.clone(),
+            id.to_string(),
+            scope_id.to_string(),
+            scope_label.to_string(),
+            filenames.len(),
+        )
+    });
+    if let Some(progress) = progress.as_ref() {
+        progress.report_scope_message(format!("已获取资源清单，共 {} 项。", filenames.len()));
+    }
+
+    for (index, filename) in filenames.iter().enumerate() {
+        let relative = normalize_asset_relative_path(&filename)?;
+        let target_path = package_dir.join(&relative);
+        let file_url = format!("{BESTDORI_FIELD_SKIN_ASSET_ROOT}/{}_rip/{}", rip_name, filename);
+        if let Some(progress_scope) = progress.as_mut() {
+            if let Err(error) = ensure_file_from_url(
+                &target_path,
+                &file_url,
+                client,
+                Some(progress_scope),
+                filename,
+                index + 1,
+            )
+            .await
+            {
+                progress_scope.report_scope_error(error.clone());
+                return Err(error);
+            }
+        } else {
+            ensure_file_from_url(&target_path, &file_url, client, None, filename, index + 1).await?;
+        }
+    }
+    if let Some(progress) = progress.as_ref() {
+        progress.report_scope_complete();
+    }
+
+    Ok(DownloadedFieldSkinPackage {
+        directory: package_dir,
+        manifest_filenames: filenames,
+    })
+}
+
 async fn ensure_tapseskin_package_downloaded(
     app: &tauri::AppHandle,
     root: &Path,
@@ -673,12 +773,23 @@ struct PreparedBestdoriTapseskinAssets {
     package_files: HashMap<String, String>,
 }
 
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct PreparedBestdoriFieldSkinAssets {
+    package_files: HashMap<String, String>,
+}
+
 struct DownloadedNoteskinPackage {
     directory: PathBuf,
     manifest_filenames: Vec<String>,
 }
 
 struct DownloadedTapseskinPackage {
+    directory: PathBuf,
+    manifest_filenames: Vec<String>,
+}
+
+struct DownloadedFieldSkinPackage {
     directory: PathBuf,
     manifest_filenames: Vec<String>,
 }
@@ -847,6 +958,30 @@ async fn prepare_bestdori_tapseskin_assets(
 }
 
 #[tauri::command]
+async fn prepare_bestdori_field_skin_assets(
+    app: tauri::AppHandle,
+    rip_name: String,
+    task_id: Option<String>,
+) -> Result<PreparedBestdoriFieldSkinAssets, String> {
+    let rip_name = normalize_rip_name(&rip_name, "rip_name")?;
+    let root = resolve_field_skin_assets_root(&app)?;
+    let client = build_bestdori_http_client()?;
+    let package = ensure_field_skin_package_downloaded(
+        &app,
+        &root,
+        &rip_name,
+        &client,
+        task_id.as_deref(),
+        &format!("fieldskin:{rip_name}"),
+        &format!("轨道资源：{rip_name}"),
+    )
+    .await?;
+    Ok(PreparedBestdoriFieldSkinAssets {
+        package_files: build_package_file_map(&package.directory, &package.manifest_filenames, &rip_name)?,
+    })
+}
+
+#[tauri::command]
 async fn ensure_common_sound_asset(app: tauri::AppHandle, task_id: Option<String>) -> Result<String, String> {
     let root = resolve_sound_assets_root(&app)?;
     let common_dir = root.join("common");
@@ -912,6 +1047,19 @@ fn read_skin_binary_file(app: tauri::AppHandle, path: String) -> Result<String, 
     let canonical_target = canonicalize_existing_path(&target)?;
     if !is_path_within(&canonical_root, &canonical_target) {
         return Err("path is outside noteskin assets directory".to_string());
+    }
+    let bytes = fs::read(&canonical_target).map_err(|error| format!("read binary file failed: {error}"))?;
+    Ok(encode_base64(bytes))
+}
+
+#[tauri::command]
+fn read_field_skin_binary_file(app: tauri::AppHandle, path: String) -> Result<String, String> {
+    let root = resolve_field_skin_assets_root(&app)?;
+    let target = PathBuf::from(path);
+    let canonical_root = canonicalize_existing_path(&root)?;
+    let canonical_target = canonicalize_existing_path(&target)?;
+    if !is_path_within(&canonical_root, &canonical_target) {
+        return Err("path is outside fieldskin assets directory".to_string());
     }
     let bytes = fs::read(&canonical_target).map_err(|error| format!("read binary file failed: {error}"))?;
     Ok(encode_base64(bytes))
@@ -1083,9 +1231,11 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             prepare_bestdori_skin_assets,
             prepare_bestdori_tapseskin_assets,
+            prepare_bestdori_field_skin_assets,
             ensure_common_sound_asset,
             read_skin_text_file,
             read_skin_binary_file,
+            read_field_skin_binary_file,
             read_sound_binary_file,
             save_editor_session_cache,
             load_editor_session_cache,

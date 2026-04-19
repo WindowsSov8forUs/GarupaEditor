@@ -261,11 +261,13 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     resolveDirectionalRipNameFromType,
     resolveRhythmSeRipNameFromType,
     resolveDirectionalSeRipNameFromType,
+    resolveFieldSkinRipNameFromType,
     HABAHIRO_RHYTHM_SKIN_TYPES,
     RHYTHM_SKIN_TYPES,
     DIRECTIONAL_SKIN_TYPES,
     RHYTHM_SE_SKIN_TYPES,
     DIRECTIONAL_SE_SKIN_TYPES,
+    FIELD_SKIN_TYPES,
     formatTypeLabel,
     applyWindowPreset,
     applyAppOptionSettings,
@@ -1717,10 +1719,20 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
             }),
           )
         }
+        onFieldTypeChange={(value) =>
+          setPendingSkinSelection((current: any) =>
+            normalizeSkinSelection({
+              ...current,
+              fieldType: value,
+              fieldSkinRipName: resolveFieldSkinRipNameFromType(value) ?? current.fieldSkinRipName,
+            }),
+          )
+        }
         rhythmSkinTypes={appOptionSettings.habahiro ? HABAHIRO_RHYTHM_SKIN_TYPES : RHYTHM_SKIN_TYPES}
         directionalSkinTypes={DIRECTIONAL_SKIN_TYPES}
         rhythmSeSkinTypes={RHYTHM_SE_SKIN_TYPES}
         directionalSeSkinTypes={DIRECTIONAL_SE_SKIN_TYPES}
+        fieldSkinTypes={FIELD_SKIN_TYPES}
         formatTypeLabel={formatTypeLabel}
         isSkinApplying={isSkinApplying}
         onApplySkinSelection={() => void applyBestdoriSkinSelection(pendingSkinSelection, true)}

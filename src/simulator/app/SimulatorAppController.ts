@@ -194,11 +194,12 @@ export class SimulatorAppController {
 
     const rendererRef = this.renderer;
     const noteSkinPayload = this.launchPayload?.skin?.noteSkin ?? null;
+    const fieldSkinPayload = this.launchPayload?.skin?.fieldSkin ?? null;
     const assetsPromise = (() => {
       if (!noteSkinPayload) {
         throw new Error("NoteSkin payload is required.");
       }
-      return loadNoteSkinTextureBundle(noteSkinPayload).catch(() => null);
+      return loadNoteSkinTextureBundle(noteSkinPayload, fieldSkinPayload).catch(() => null);
     })();
 
     this.ui.status.textContent = "loading audio/assets...";

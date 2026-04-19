@@ -1,5 +1,5 @@
 import { Texture } from "pixi.js";
-import type { SkinAssets } from "../../skinLoader";
+import type { FieldSkinAssets, SkinAssets } from "../../skinLoader";
 import { EMBEDDED_EFFECT_FRAME_URLS } from "./embeddedEffects";
 
 type LaneKey = "0" | "1" | "2" | "3" | "4" | "5" | "6";
@@ -15,6 +15,7 @@ type DefaultRhythmAssets = {
   noteSlideAmong: string;
   longNoteLine: string;
   longNoteLine2: string;
+  simultaneousLine: string;
 };
 
 type HabahiroRhythmAssets = {
@@ -27,6 +28,7 @@ type HabahiroRhythmAssets = {
   noteSlideAmong: Record<string, string>;
   longNoteLine: string;
   longNoteLine2: string;
+  simultaneousLine: string;
 };
 
 type DirectionalAssets = {
@@ -55,6 +57,12 @@ export interface NoteSkinTextureBundle {
   lines: {
     longNoteLine: Texture | null;
     longNoteLine2: Texture | null;
+    simultaneousLine: Texture | null;
+  };
+  field: {
+    bgLineRhythm: Texture | null;
+    gamePlayLine: Texture | null;
+    gamePlayLineSkillAdjustEffect: Texture | null;
   };
   effects: {
     normal: Texture[];
@@ -64,12 +72,12 @@ export interface NoteSkinTextureBundle {
   destroy(): void;
 }
 
-const LANE_KEYS: LaneKey[] = ["0", "1", "2", "3", "4", "5", "6"];
 const NORMAL_TYPE_SET = new Set([1, 10, 101]);
 const LONG_TYPE_SET = new Set([3, 5, 6, 8, 9, 71, 73, 103, 105]);
 const SKILL_TYPE_SET = new Set([11, 31, 32, 33, 34, 35, 36, 75, 76, 109]);
 const FLICK_TYPE_SET = new Set([2, 12, 13, 26, 74, 102, 106]);
 const SLIDE_TYPE_SET = new Set([4, 7, 14, 15, 16, 37, 38, 39, 72, 77, 78, 104, 107, 108]);
+const LANE_KEYS: LaneKey[] = ["0", "1", "2", "3", "4", "5", "6"];
 
 function laneIndex(lane: number): number {
   const rounded = Math.round(lane);
@@ -144,6 +152,7 @@ async function loadTextureFromUrl(url: string): Promise<Texture | null> {
 
 export async function loadNoteSkinTextureBundle(
   noteSkin: SkinAssets,
+  fieldSkin?: FieldSkinAssets | null,
 ): Promise<NoteSkinTextureBundle> {
   const trackedTextures: Texture[] = [];
   const textureCache = new Map<string, Texture | null>();
@@ -200,6 +209,12 @@ export async function loadNoteSkinTextureBundle(
   const noteFlickTopR = await loadCachedTexture(directionalAssets.noteFlickTopR);
   const longNoteLine = await loadCachedTexture(rhythmAssets.longNoteLine);
   const longNoteLine2 = await loadCachedTexture(rhythmAssets.longNoteLine2);
+  const simultaneousLine = await loadCachedTexture(rhythmAssets.simultaneousLine);
+  const fieldBgLineRhythm = await loadCachedTexture(fieldSkin?.bgLineRhythm ?? null);
+  const fieldGamePlayLine = await loadCachedTexture(fieldSkin?.gamePlayLine ?? null);
+  const fieldGamePlayLineSkillAdjustEffect = await loadCachedTexture(
+    fieldSkin?.gamePlayLineSkillAdjustEffect ?? null,
+  );
 
   const loadEffectFrames = async (frameUrls: readonly string[]): Promise<Texture[]> => {
     if (frameUrls.length === 0) {
@@ -239,6 +254,12 @@ export async function loadNoteSkinTextureBundle(
     lines: {
       longNoteLine,
       longNoteLine2,
+      simultaneousLine,
+    },
+    field: {
+      bgLineRhythm: fieldBgLineRhythm,
+      gamePlayLine: fieldGamePlayLine,
+      gamePlayLineSkillAdjustEffect: fieldGamePlayLineSkillAdjustEffect,
     },
     effects: {
       normal: effectNormal,
