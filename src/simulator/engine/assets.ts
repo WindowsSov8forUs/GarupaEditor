@@ -1,5 +1,6 @@
 import { Texture } from "pixi.js";
 import type { BGSkin, FieldSkinAssets, SkinAssets } from "../../skinLoader";
+import type { RuntimeNoteSemantic } from "./types";
 import { EMBEDDED_EFFECT_FRAME_URLS } from "./embeddedEffects";
 
 type LaneKey = "0" | "1" | "2" | "3" | "4" | "5" | "6";
@@ -75,11 +76,6 @@ export interface NoteSkinTextureBundle {
   destroy(): void;
 }
 
-const NORMAL_TYPE_SET = new Set([1, 10, 101]);
-const LONG_TYPE_SET = new Set([3, 5, 6, 8, 9, 71, 73, 103, 105]);
-const SKILL_TYPE_SET = new Set([11, 31, 32, 33, 34, 35, 36, 75, 76, 109]);
-const FLICK_TYPE_SET = new Set([2, 12, 13, 26, 74, 102, 106]);
-const SLIDE_TYPE_SET = new Set([4, 7, 14, 15, 16, 37, 38, 39, 72, 77, 78, 104, 107, 108]);
 const LANE_KEYS: LaneKey[] = ["0", "1", "2", "3", "4", "5", "6"];
 
 function laneIndex(lane: number): number {
@@ -284,7 +280,7 @@ export async function loadNoteSkinTextureBundle(
 
 export function resolveRhythmNoteTexture(
   bundle: NoteSkinTextureBundle,
-  type: number,
+  note: RuntimeNoteSemantic,
   lane: number,
   gray: boolean,
 ): Texture | null {
@@ -292,22 +288,39 @@ export function resolveRhythmNoteTexture(
   if (gray) {
     return bundle.rhythm.noteNormal16[laneIdx] ?? null;
   }
-  if (NORMAL_TYPE_SET.has(type)) {
-    return bundle.rhythm.noteNormal[laneIdx] ?? null;
+  if (note.baseType === "directional_flick_left" || note.baseType === "directional_flick_right") {
+    return null;
   }
-  if (LONG_TYPE_SET.has(type)) {
-    return bundle.rhythm.noteLong[laneIdx] ?? null;
-  }
-  if (SKILL_TYPE_SET.has(type)) {
-    return bundle.rhythm.noteSkill[laneIdx] ?? null;
-  }
-  if (FLICK_TYPE_SET.has(type)) {
-    return bundle.rhythm.noteFlick[laneIdx] ?? null;
-  }
-  if (SLIDE_TYPE_SET.has(type)) {
+  if (note.baseType === "hidden") {
     return bundle.rhythm.noteSlideAmong ?? null;
   }
-  return null;
+  if (note.baseType === "skill") {
+    return bundle.rhythm.noteSkill[laneIdx] ?? null;
+  }
+  if (note.baseType === "flick") {
+    if (note.slideRole === "none" || note.slideRole === "end") {
+      return bundle.rhythm.noteFlick[laneIdx] ?? null;
+    }
+    if (note.slideRole === "start") {
+      return bundle.rhythm.noteLong[laneIdx] ?? null;
+    }
+    return bundle.rhythm.noteSlideAmong ?? null;
+  }
+  if (note.slideRole === "none") {
+    return bundle.rhythm.noteNormal[laneIdx] ?? null;
+  }
+  if (note.slideRole === "start" || note.slideRole === "end") {
+    return bundle.rhythm.noteLong[laneIdx] ?? null;
+  }
+  return bundle.rhythm.noteSlideAmong ?? null;
+}
+
+export function resolveSlideBottomMarkerTexture(
+  bundle: NoteSkinTextureBundle,
+  lane: number,
+): Texture | null {
+  const laneIdx = laneIndex(lane);
+  return bundle.rhythm.noteLong[laneIdx] ?? null;
 }
 
 export function resolveDirectionalLaneTexture(

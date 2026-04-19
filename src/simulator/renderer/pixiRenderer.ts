@@ -5,6 +5,7 @@ import {
   resolveDirectionalLaneTexture,
   resolveFlickTopTexture,
   resolveRhythmNoteTexture,
+  resolveSlideBottomMarkerTexture,
 } from "../engine/assets";
 import { LEGACY_TIMING_FPS, legacyOffsetToMs } from "../engine/legacyMath";
 import {
@@ -12,6 +13,7 @@ import {
   ChartEvent,
   HitEffectEvent,
   RuntimeStats,
+  RuntimeNoteSemantic,
   SimulatorSettings,
   TimingGroupDef,
 } from "../engine/types";
@@ -62,25 +64,25 @@ interface StageGeometry {
   stageJudge: number;
 }
 
-function isDirectionalType(type: number): boolean {
-  return type >= 51 && type <= 69;
+function isDirectionalNote(note: RuntimeNoteSemantic): boolean {
+  return note.baseType === "directional_flick_left" || note.baseType === "directional_flick_right";
 }
 
-function isFlickType(type: number): boolean {
-  return type === 2 || type === 12 || type === 13 || type === 26 || type === 74 || type === 102 || type === 106;
+function shouldRenderFlickTop(note: RuntimeNoteSemantic): boolean {
+  return note.baseType === "flick" && (note.slideRole === "none" || note.slideRole === "end");
 }
 
-function colorForType(type: number): number {
-  if (type === 2 || type === 12 || type === 13 || type === 26 || type === 74 || type === 102 || type === 106) {
+function colorForNote(note: RuntimeNoteSemantic): number {
+  if (note.baseType === "flick" && (note.slideRole === "none" || note.slideRole === "end")) {
     return 0xff9d66;
   }
-  if (type === 11 || type === 31 || type === 32 || type === 33 || type === 34 || type === 35 || type === 36 || type === 75 || type === 76 || type === 109) {
+  if (note.baseType === "skill") {
     return 0xffe77a;
   }
-  if ((type >= 51 && type <= 59) || (type >= 61 && type <= 69)) {
+  if (isDirectionalNote(note)) {
     return 0xc6a7ff;
   }
-  if (type === 4 || type === 7 || type === 14 || type === 15 || type === 16 || type === 37 || type === 38 || type === 39 || type === 72 || type === 77 || type === 78 || type === 104 || type === 107 || type === 108) {
+  if (note.baseType === "hidden" || note.slideRole === "middle") {
     return 0x9be9b6;
   }
   return 0x87b7ff;
@@ -213,7 +215,7 @@ export class PixiRenderer {
       if (!event) {
         continue;
       }
-      if (event.type === 77 || event.type === 107) {
+      if (event.eventType === "note" && event.note?.baseType === "hidden") {
         hiddenRoots.add(resolveRootIndex(index));
       }
     }
@@ -685,14 +687,14 @@ export class PixiRenderer {
       if (!n.started) {
         continue;
       }
-      if (!this.settings.displayHiddenSlideAmong && (n.type === 77 || n.type === 107)) {
+      if (!this.settings.displayHiddenSlideAmong && n.note.baseType === "hidden") {
         continue;
       }
 
-      const color = colorForType(n.type);
+      const color = colorForNote(n.note);
       const visual = this.resolveNoteVisualState(n, elapsedMs);
       const noteScale = visual.scale;
-      const directional = isDirectionalType(n.type);
+      const directional = isDirectionalNote(n.note);
 
       if (n.issameline !== null && Number.isFinite(n.issameline)) {
         const x2 = this.laneXAtPercent(n.issameline, visual.percent);
@@ -721,9 +723,9 @@ export class PixiRenderer {
       }
 
       const lane = this.textureLaneIndex(n.lane);
-      const alpha = n.type === 77 || n.type === 107 ? 0.45 : 1;
+      const alpha = n.note.baseType === "hidden" ? 0.45 : 1;
       const tex = this.assets
-        ? resolveRhythmNoteTexture(this.assets, n.type, lane, n.gray)
+        ? resolveRhythmNoteTexture(this.assets, n.note, lane, n.gray)
         : null;
 
       if (!directional) {
@@ -739,7 +741,7 @@ export class PixiRenderer {
         }
       }
 
-      if (isFlickType(n.type)) {
+      if (shouldRenderFlickTop(n.note)) {
         const flickTex = this.assets ? resolveFlickTopTexture(this.assets) : null;
         const flickFps = Math.max(1, Math.floor(this.settings.fps / 3));
         const flickBaseTex = tex ?? flickTex;
@@ -961,7 +963,7 @@ export class PixiRenderer {
       const y = this.stageBottomY();
 
       const markerTex = this.assets
-        ? resolveRhythmNoteTexture(this.assets, 3, lane, false)
+        ? resolveSlideBottomMarkerTexture(this.assets, lane)
         : null;
       if (markerTex && this.noteSpriteLayer) {
         const s = this.allocSprite(this.noteSpritePool, this.noteSpriteLayer);
@@ -982,12 +984,12 @@ export class PixiRenderer {
     y: number,
     lineG: Graphics,
   ): void {
-    if (n.type < 51 || n.type > 69) {
+    if (!isDirectionalNote(n.note)) {
       return;
     }
 
-    const originalLeft = n.type >= 51 && n.type <= 59;
-    const width = originalLeft ? n.type - 50 : n.type - 60;
+    const originalLeft = n.note.baseType === "directional_flick_left";
+    const width = Math.max(1, Math.round(n.note.directionalWidth));
     const step = originalLeft ? -1 : 1;
     const textureFamilyLeft = this.settings.mirror ? !originalLeft : originalLeft;
 
