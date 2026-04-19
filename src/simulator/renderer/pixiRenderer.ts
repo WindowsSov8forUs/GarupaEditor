@@ -52,6 +52,16 @@ interface SlideConnection {
   useSpecialTexture: boolean;
 }
 
+interface StageGeometry {
+  viewportWidth: number;
+  viewportHeight: number;
+  stageWidth: number;
+  stageHeight: number;
+  stageBottom: number;
+  stageTop: number;
+  stageJudge: number;
+}
+
 function isDirectionalType(type: number): boolean {
   return type >= 51 && type <= 69;
 }
@@ -101,8 +111,12 @@ const NOTE_SCALE_MIN = 0.028169014084507;
 const NOTE_BASE_TEXTURE_WIDTH = 308;
 const NOTE_WIDTH_TO_LANE_WIDTH_RATIO = 1.35;
 const FIELD_BG_TO_JUDGE_WIDTH_RATIO = 1.35 / 0.875;
-const BG_LANE_HEIGHT_FACTOR = 0.81;
 const SIMULTANEOUS_LINE_HEIGHT_TO_NOTE_WIDTH = 27 / 308;
+const STAGE_HEIGHT_TO_WIDTH_RATIO = 634141 / 940938;
+const STAGE_JUDGE_TO_HEIGHT_RATIO = 338256 / 877231;
+const STAGE_TO_WINDOW_RATIO = 462 / 667;
+const FIELD_BG_WIDTH_TO_STAGE_WIDTH_RATIO = (7 / 8) / STAGE_TO_WINDOW_RATIO;
+const JUDGE_LINE_WIDTH_TO_STAGE_WIDTH_RATIO = 1.35 / STAGE_TO_WINDOW_RATIO;
 
 export class PixiRenderer {
   private app: Application | null = null;
@@ -150,6 +164,7 @@ export class PixiRenderer {
   private mvVideoKeySerial = 0;
   private settings: SimulatorSettings;
   private assets: NoteSkinTextureBundle | null = null;
+  private stageGeometryCache: StageGeometry | null = null;
 
   constructor(settings: SimulatorSettings) {
     this.settings = settings;
@@ -317,6 +332,7 @@ export class PixiRenderer {
     }
     this.app.renderer.resize(Math.max(1, Math.floor(width)), Math.max(1, Math.floor(height)));
     this.lanesDirty = true;
+    this.stageGeometryCache = null;
   }
 
   render(notes: readonly ActiveNote[], stats: RuntimeStats, progress: number, mvFrame: MvRenderFrame | null): void {
@@ -375,6 +391,7 @@ export class PixiRenderer {
     this.slideLineMeshPool = [];
     this.simultaneousLineSpritePool = [];
     this.effectSpritePool = [];
+    this.stageGeometryCache = null;
     this.noteSpritePrevUsed = 0;
     this.slideLineMeshPrevUsed = 0;
     this.simultaneousLineSpritePrevUsed = 0;
@@ -514,18 +531,18 @@ export class PixiRenderer {
       return;
     }
 
-    const stageWidth = this.stageWidth();
-    const stageHeight = this.stageHeight();
+    const viewportWidth = this.viewportWidth();
+    const viewportHeight = this.viewportHeight();
     const sourceWidth = Math.max(1, texture.width);
     const sourceHeight = Math.max(1, texture.height);
-    const scale = Math.max(stageWidth / sourceWidth, stageHeight / sourceHeight);
+    const scale = Math.max(viewportWidth / sourceWidth, viewportHeight / sourceHeight);
 
     this.liveBgSprite.texture = texture;
     this.liveBgSprite.visible = true;
     this.liveBgSprite.alpha = 1;
     this.liveBgSprite.anchor.set(0.5, 0.5);
-    this.liveBgSprite.x = stageWidth * 0.5;
-    this.liveBgSprite.y = stageHeight * 0.5;
+    this.liveBgSprite.x = viewportWidth * 0.5;
+    this.liveBgSprite.y = viewportHeight * 0.5;
     this.liveBgSprite.scale.set(scale, scale);
   }
 
@@ -599,14 +616,15 @@ export class PixiRenderer {
     }
     g.clear();
 
-    const topY = this.stageLaneTopY();
-    const bottomY = this.stageJudgeY();
+    const geometry = this.stageGeometry();
+    const topY = geometry.stageTop;
+    const bottomY = geometry.stageBottom;
     const laneBgTexture = this.assets?.field.bgLineRhythm ?? null;
     const judgeLineTexture = this.assets?.field.gamePlayLine ?? null;
 
     if (this.laneBgSprite) {
       if (laneBgTexture) {
-        const laneCenterX = this.stageWidth() * 0.5;
+        const laneCenterX = geometry.viewportWidth * 0.5;
         const drawWidth = this.stageFieldBgWidth();
         const scale = drawWidth / Math.max(1, laneBgTexture.width);
         this.laneBgSprite.texture = laneBgTexture;
@@ -624,13 +642,13 @@ export class PixiRenderer {
       if (judgeLineTexture) {
         const drawWidth = this.laneBgSprite?.visible
           ? Math.max(1, this.laneBgSprite.width * FIELD_BG_TO_JUDGE_WIDTH_RATIO)
-          : Math.max(1, this.stageWidth() * 1.35);
+          : Math.max(1, this.stageJudgeLineWidth());
         const scale = drawWidth / Math.max(1, judgeLineTexture.width);
         this.judgeLineSprite.texture = judgeLineTexture;
         this.judgeLineSprite.alpha = 1;
         this.judgeLineSprite.visible = true;
-        this.judgeLineSprite.x = this.stageWidth() * 0.5;
-        this.judgeLineSprite.y = this.stageJudgeY();
+        this.judgeLineSprite.x = geometry.viewportWidth * 0.5;
+        this.judgeLineSprite.y = geometry.stageBottom;
         this.judgeLineSprite.scale.set(scale, scale);
       } else {
         this.judgeLineSprite.visible = false;
@@ -649,8 +667,8 @@ export class PixiRenderer {
 
     if (!judgeLineTexture) {
       g.setStrokeStyle({ width: 3, color: 0xffffff, alpha: 0.9 });
-      g.moveTo(this.laneXAtPercent(0, 1), this.stageJudgeY());
-      g.lineTo(this.laneXAtPercent(6, 1), this.stageJudgeY());
+      g.moveTo(this.laneXAtPercent(0, 1), geometry.stageBottom);
+      g.lineTo(this.laneXAtPercent(6, 1), geometry.stageBottom);
     }
     this.lanesDirty = false;
   }
@@ -940,7 +958,7 @@ export class PixiRenderer {
     for (const laneValue of slideBottomLanes) {
       const lane = this.textureLaneIndex(laneValue);
       const x = this.laneXAtPercent(laneValue, 1);
-      const y = this.stageJudgeY();
+      const y = this.stageBottomY();
 
       const markerTex = this.assets
         ? resolveRhythmNoteTexture(this.assets, 3, lane, false)
@@ -1035,7 +1053,7 @@ export class PixiRenderer {
         ? this.assets?.effects.normal
         : this.assets?.effects.flick;
       const drawX = this.laneXAtPercent(e.lane, 1);
-      const y = this.stageJudgeY();
+      const y = this.stageBottomY();
 
       if (frames && frames.length > 0) {
         if (e.frame >= frames.length) {
@@ -1132,10 +1150,11 @@ export class PixiRenderer {
   }
 
   private laneXAtPercent(lane: number, percent: number): number {
+    const geometry = this.stageGeometry();
     const p = Math.max(0, Math.min(1, percent));
     const logicalLane = this.settings.mirror ? 6 - lane : lane;
     const centeredLane = logicalLane - 3;
-    return this.stageWidth() * 0.5 + centeredLane * this.stageLaneWidth() * p;
+    return geometry.viewportWidth * 0.5 + centeredLane * this.stageLaneWidth() * p;
   }
 
   private textureLaneIndex(lane: number): number {
@@ -1143,49 +1162,75 @@ export class PixiRenderer {
   }
 
   private laneYAtPercent(percent: number): number {
+    const geometry = this.stageGeometry();
     const p = Math.max(0, Math.min(1, percent));
-    const topY = this.stageLaneTopY();
-    const bottomY = this.stageJudgeY();
-    return topY + (bottomY - topY) * p;
+    return geometry.stageTop + geometry.stageHeight * p;
   }
 
-  private stageWidth(): number {
+  private viewportWidth(): number {
     return this.app?.screen.width ?? this.settings.windowX;
   }
 
-  private stageHeight(): number {
+  private viewportHeight(): number {
     return this.app?.screen.height ?? this.settings.windowY;
   }
 
+  private stageGeometry(): StageGeometry {
+    const viewportWidth = this.viewportWidth();
+    const viewportHeight = this.viewportHeight();
+    const cached = this.stageGeometryCache;
+    if (
+      cached
+      && Math.abs(cached.viewportWidth - viewportWidth) < 1e-6
+      && Math.abs(cached.viewportHeight - viewportHeight) < 1e-6
+    ) {
+      return cached;
+    }
+
+    const stageWidthByViewportWidth = viewportWidth * STAGE_TO_WINDOW_RATIO;
+    const stageHeightByViewportWidth = stageWidthByViewportWidth * STAGE_HEIGHT_TO_WIDTH_RATIO;
+
+    let stageWidth: number;
+    let stageHeight: number;
+    if (stageHeightByViewportWidth <= viewportHeight + 1e-6) {
+      stageWidth = stageWidthByViewportWidth;
+      stageHeight = stageHeightByViewportWidth;
+    } else {
+      stageHeight = viewportHeight * STAGE_TO_WINDOW_RATIO;
+      stageWidth = stageHeight / STAGE_HEIGHT_TO_WIDTH_RATIO;
+    }
+
+    const stageJudge = stageHeight * STAGE_JUDGE_TO_HEIGHT_RATIO;
+    const stageBottom = viewportHeight * 0.5 + stageJudge;
+    const stageTop = stageBottom - stageHeight;
+
+    const geometry: StageGeometry = {
+      viewportWidth,
+      viewportHeight,
+      stageWidth,
+      stageHeight,
+      stageBottom,
+      stageTop,
+      stageJudge,
+    };
+    this.stageGeometryCache = geometry;
+    return geometry;
+  }
+
   private stageLaneWidth(): number {
-    return (154 * this.stageWidth()) / 1334;
+    return this.stageGeometry().stageWidth / 6;
   }
 
   private stageFieldBgWidth(): number {
-    return this.stageWidth() * 0.875;
+    return this.stageGeometry().stageWidth * FIELD_BG_WIDTH_TO_STAGE_WIDTH_RATIO;
   }
 
-  private stageFieldBgHeight(): number {
-    const laneBgTexture = this.assets?.field.bgLineRhythm ?? null;
-    if (!laneBgTexture) {
-      return this.stageLaneHeight();
-    }
-    const drawWidth = this.stageFieldBgWidth();
-    const scale = drawWidth / Math.max(1, laneBgTexture.width);
-    return laneBgTexture.height * scale;
+  private stageJudgeLineWidth(): number {
+    return this.stageGeometry().stageWidth * JUDGE_LINE_WIDTH_TO_STAGE_WIDTH_RATIO;
   }
 
-  private stageLaneHeight(): number {
-    return this.stageHeight() * 0.82;
-  }
-
-  private stageJudgeY(): number {
-    return this.stageLaneHeight();
-  }
-
-  private stageLaneTopY(): number {
-    const bgHeight = this.stageFieldBgHeight();
-    return this.stageHeight() - (bgHeight  / BG_LANE_HEIGHT_FACTOR);
+  private stageBottomY(): number {
+    return this.stageGeometry().stageBottom;
   }
 
   private pickConnectionTexture(connection: SlideConnection): Texture | null {
