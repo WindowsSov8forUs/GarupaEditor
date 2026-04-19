@@ -279,7 +279,7 @@ export class SimulatorAppController {
       this.audio.playBgm();
     }
 
-    for (const se of this.runtime.consumePendingSeTypes()) {
+    for (const se of this.runtime.consumePendingSeNotes()) {
       this.audio.playSe(se);
     }
 

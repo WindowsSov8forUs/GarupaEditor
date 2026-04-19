@@ -1,6 +1,13 @@
 import { LEGACY_TIMING_FPS, legacyOffsetToMs } from "./legacyMath";
-import { hitEffectKind, isHiddenNoSeType, isJudgedType } from "./score";
-import { ActiveNote, HitEffectEvent, ParsedChart, RuntimeStats, SimulatorSettings } from "./types";
+import { hitEffectKind, isGrayEligibleNote, isHiddenNoSeNote, isJudgedNote } from "./score";
+import {
+  ActiveNote,
+  HitEffectEvent,
+  ParsedChart,
+  RuntimeNoteSemantic,
+  RuntimeStats,
+  SimulatorSettings,
+} from "./types";
 
 interface TimingGroupRuntime {
   speed: number;
@@ -9,13 +16,9 @@ interface TimingGroupRuntime {
 }
 
 interface PendingSystemEvent {
-  type: 0 | 20;
+  type: "music_start" | "bpm";
   startMs: number;
   bpm?: number;
-}
-
-function isGrayEligibleType(type: number): boolean {
-  return type === 1 || type === 10 || type === 101;
 }
 
 export class LegacyRuntime {
@@ -41,7 +44,7 @@ export class LegacyRuntime {
   private bpmText = 0;
   private processedObjects = 0;
 
-  private pendingSeTypes: number[] = [];
+  private pendingSeNotes: RuntimeNoteSemantic[] = [];
   private pendingHitEffects: HitEffectEvent[] = [];
   private pendingMusicStart = false;
 
@@ -75,9 +78,9 @@ export class LegacyRuntime {
     return v;
   }
 
-  consumePendingSeTypes(): number[] {
-    const out = this.pendingSeTypes;
-    this.pendingSeTypes = [];
+  consumePendingSeNotes(): RuntimeNoteSemantic[] {
+    const out = this.pendingSeNotes;
+    this.pendingSeNotes = [];
     return out;
   }
 
@@ -121,10 +124,10 @@ export class LegacyRuntime {
       if (note.t >= this.settings.noteSpeedFrames) {
         if (!note.sePlayed) {
           note.sePlayed = true;
-          this.pushSe(note.type);
+          this.pushSe(note.note);
         }
 
-        this.resolveHit(note.type, note.lane, elapsed);
+        this.resolveHit(note.note, note.lane, elapsed);
         this.activeIdByEvent.delete(note.eventIndex);
         this.activeNotes.splice(i, 1);
         this.processedObjects += 1;
@@ -164,24 +167,28 @@ export class LegacyRuntime {
         break;
       }
 
-      if (ev.type === 20) {
+      if (ev.eventType === "bpm") {
         this.pendingSystemEvents.push({
-          type: 20,
+          type: "bpm",
           startMs: ev.startMs,
           bpm: ev.bpm,
         });
-      } else if (ev.type === 0) {
+      } else if (ev.eventType === "music_start") {
         this.pendingSystemEvents.push({
-          type: 0,
+          type: "music_start",
           startMs: ev.startMs,
         });
       } else {
+        if (!ev.note) {
+          this.spawnIndex += 1;
+          continue;
+        }
         const id = this.nextNoteId++;
         const parentActiveId = ev.parentEventIndex >= 0 ? this.activeIdByEvent.get(ev.parentEventIndex) ?? -1 : -1;
         const n: ActiveNote = {
           id,
           eventIndex: this.spawnIndex,
-          type: ev.type,
+          note: ev.note,
           lane: ev.lane,
           issameline: ev.samelineLane,
           startMs: ev.startMs,
@@ -190,7 +197,7 @@ export class LegacyRuntime {
           started: false,
           sePlayed: false,
           t: 0,
-          gray: this.isGrayNote(ev.beat, ev.type),
+          gray: this.isGrayNote(ev.beat, ev.note),
           parentEventIndex: ev.parentEventIndex,
           parentActiveId
         };
@@ -209,7 +216,7 @@ export class LegacyRuntime {
         break;
       }
       this.pendingSystemEvents.shift();
-      if (event.type === 20) {
+      if (event.type === "bpm") {
         this.bpmText = event.bpm ?? this.bpmText;
       } else {
         this.pendingMusicStart = true;
@@ -239,16 +246,16 @@ export class LegacyRuntime {
     }
   }
 
-  private isGrayNote(beat: number, type: number): boolean {
-    if (!this.settings.grayEnabled || !isGrayEligibleType(type)) {
+  private isGrayNote(beat: number, note: RuntimeNoteSemantic): boolean {
+    if (!this.settings.grayEnabled || !isGrayEligibleNote(note)) {
       return false;
     }
     const p = beat * this.settings.grayMultiplier;
     return p - Math.floor(p) >= 0.0001;
   }
 
-  private resolveHit(type: number, lane: number, elapsedMs: number): void {
-    if (!isJudgedType(type)) {
+  private resolveHit(note: RuntimeNoteSemantic, lane: number, elapsedMs: number): void {
+    if (!isJudgedNote(note)) {
       return;
     }
 
@@ -260,18 +267,18 @@ export class LegacyRuntime {
     this.npsExpiryMs.push(elapsedMs + 1000);
 
     if (this.settings.effectEnable) {
-      const k = hitEffectKind(type);
+      const k = hitEffectKind(note);
       if (k) {
         this.pendingHitEffects.push({ kind: k, lane });
       }
     }
   }
 
-  private pushSe(type: number): void {
-    if (isHiddenNoSeType(type)) {
+  private pushSe(note: RuntimeNoteSemantic): void {
+    if (isHiddenNoSeNote(note)) {
       return;
     }
-    this.pendingSeTypes.push(type);
+    this.pendingSeNotes.push(note);
   }
 
   private displayScore(): number {
