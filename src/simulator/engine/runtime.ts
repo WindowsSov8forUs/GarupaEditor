@@ -41,7 +41,7 @@ export class LegacyRuntime {
   private notes = 0;
   private nps = 0;
   private npsMax = 0;
-  private bpmText = 0;
+  private bpmValue = 0;
   private processedObjects = 0;
 
   private pendingSeNotes: RuntimeNoteSemantic[] = [];
@@ -52,7 +52,7 @@ export class LegacyRuntime {
     this.settings = settings;
     this.chart = chart;
     this.notes = chart.noteCount;
-    this.bpmText = chart.initialBpm;
+    this.bpmValue = chart.initialBpm > 0 ? chart.initialBpm : 120;
     this.tgState = chart.timingGroups.map(() => ({ speed: 1, pos: 0, cursor: 0 }));
   }
 
@@ -217,7 +217,10 @@ export class LegacyRuntime {
       }
       this.pendingSystemEvents.shift();
       if (event.type === "bpm") {
-        this.bpmText = event.bpm ?? this.bpmText;
+        const bpm = event.bpm;
+        if (typeof bpm === "number" && Number.isFinite(bpm) && bpm > 0) {
+          this.bpmValue = bpm;
+        }
       } else {
         this.pendingMusicStart = true;
       }
@@ -289,7 +292,7 @@ export class LegacyRuntime {
       notes: this.notes,
       nps: this.nps,
       npsMax: this.npsMax,
-      bpmText: this.bpmText,
+      bpmValue: this.bpmValue,
       score: this.displayScore(),
       activeObjects: this.activeNotes.length,
       processedObjects: this.processedObjects,

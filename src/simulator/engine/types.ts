@@ -110,7 +110,7 @@ export interface RuntimeStats {
   notes: number;
   nps: number;
   npsMax: number;
-  bpmText: number;
+  bpmValue: number;
   score: number;
   activeObjects: number;
   processedObjects: number;
