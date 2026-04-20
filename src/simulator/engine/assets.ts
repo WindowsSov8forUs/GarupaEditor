@@ -1,7 +1,12 @@
 import { Texture } from "pixi.js";
 import type { BGSkin, FieldSkinAssets, SkinAssets } from "../../skinLoader";
 import type { RuntimeNoteSemantic } from "./types";
-import { EMBEDDED_EFFECT_FRAME_URLS } from "./embeddedEffects";
+import {
+  buildParticleEffectPack,
+  type ParticleEffectPack,
+} from "./particlePack";
+import embeddedParticleManifest from "../assets/particles/bandori1/manifest.json";
+import embeddedParticleAtlasUrl from "../assets/particles/bandori1/texture.png";
 
 type LaneKey = "0" | "1" | "2" | "3" | "4" | "5" | "6";
 type LaneAssetMap = Record<LaneKey, string>;
@@ -68,11 +73,7 @@ export interface NoteSkinTextureBundle {
   background: {
     liveBG: Texture | null;
   };
-  effects: {
-    normal: Texture[];
-    flick: Texture[];
-    slide: Texture[];
-  };
+  particleEffects: ParticleEffectPack | null;
   destroy(): void;
 }
 
@@ -217,24 +218,10 @@ export async function loadNoteSkinTextureBundle(
   );
   const liveBgTexture = await loadCachedTexture(bgSkin?.assets.liveBG ?? null);
 
-  const loadEffectFrames = async (frameUrls: readonly string[]): Promise<Texture[]> => {
-    if (frameUrls.length === 0) {
-      return [];
-    }
-    const output: Texture[] = [];
-    for (const frameUrl of frameUrls) {
-      const texture = await loadCachedTexture(frameUrl);
-      if (texture) {
-        output.push(texture);
-      }
-    }
-    return output;
-  };
-
-  // Current policy: use simulator-embedded effect frames.
-  const effectNormal = await loadEffectFrames(EMBEDDED_EFFECT_FRAME_URLS.normal);
-  const effectFlick = await loadEffectFrames(EMBEDDED_EFFECT_FRAME_URLS.flick);
-  const effectSlide = await loadEffectFrames(EMBEDDED_EFFECT_FRAME_URLS.slide);
+  const particleAtlasTexture = await loadCachedTexture(embeddedParticleAtlasUrl);
+  const particleEffects = particleAtlasTexture
+    ? buildParticleEffectPack(embeddedParticleManifest, particleAtlasTexture)
+    : null;
 
   return {
     rhythm: {
@@ -265,12 +252,9 @@ export async function loadNoteSkinTextureBundle(
     background: {
       liveBG: liveBgTexture,
     },
-    effects: {
-      normal: effectNormal,
-      flick: effectFlick,
-      slide: effectSlide,
-    },
+    particleEffects,
     destroy: () => {
+      particleEffects?.destroy();
       for (const texture of trackedTextures) {
         texture.destroy(true);
       }
