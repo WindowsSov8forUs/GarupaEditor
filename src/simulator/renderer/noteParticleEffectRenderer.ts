@@ -27,6 +27,8 @@ export interface ActiveParticleEmitter {
   loop: boolean;
   preset: ParticleLayoutPreset;
   seedBase: number;
+  advanceScale: number;
+  layoutScale: number;
 }
 
 export interface ParticleEmitterDrawContext {
@@ -140,7 +142,8 @@ export function drawParticleEmitter(
         );
 
         const localX = evaluateCurve(particle.x, progress, 0, termSeeds);
-        const localY = evaluateCurve(particle.y, progress, 0, termSeeds);
+        const localYRaw = evaluateCurve(particle.y, progress, 0, termSeeds);
+        const localY = scaleDirectionalLinearAdvanceY(emitter, particle.y, termSeeds, localYRaw);
         const localW = Math.max(0, evaluateCurve(particle.w, progress, 0, termSeeds));
         const localH = Math.max(0, evaluateCurve(particle.h, progress, 0, termSeeds));
         const localR = evaluateCurve(particle.r, progress, 0, termSeeds);
@@ -194,6 +197,27 @@ export function drawParticleEmitter(
   }
 }
 
+function isDirectionalLinearPreset(preset: ParticleLayoutPreset): boolean {
+  return preset === "directionalLinearLeft" || preset === "directionalLinearRight";
+}
+
+function scaleDirectionalLinearAdvanceY(
+  emitter: ActiveParticleEmitter,
+  yCurve: ParticleCurve,
+  seeds: ParticleSeedSet,
+  localY: number,
+): number {
+  if (!isDirectionalLinearPreset(emitter.preset)) {
+    return localY;
+  }
+  const scale = Number.isFinite(emitter.advanceScale) ? emitter.advanceScale : 1;
+  if (scale <= 0 || Math.abs(scale - 1) <= 1e-6) {
+    return localY;
+  }
+  const startY = evaluateCurve(yCurve, 0, 0, seeds);
+  return startY + (localY - startY) * scale;
+}
+
 function resolveLayoutBasis(
   emitter: ActiveParticleEmitter,
   noteEffectSize: number,
@@ -216,8 +240,11 @@ function resolveLayoutBasis(
   }
 
   if (emitter.preset === "circular") {
-    const w = 1.5 * noteEffectSize;
-    const h = 1 * noteEffectSize * wToH;
+    const circleScale = Number.isFinite(emitter.layoutScale) && emitter.layoutScale > 0
+      ? emitter.layoutScale
+      : 1;
+    const w = 1.5 * noteEffectSize * circleScale;
+    const h = 1 * noteEffectSize * wToH * circleScale;
     const l = lane - w;
     const r = lane + w;
     const t = 1 - h;

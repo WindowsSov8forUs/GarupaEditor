@@ -5,6 +5,7 @@ import {
   resolveDirectionalLaneTexture,
   resolveFlickTopTexture,
   resolveRhythmNoteTexture,
+  resolveSlideBottomMarkerFlashTexture,
   resolveSlideBottomMarkerTexture,
 } from "../engine/assets";
 import { LEGACY_TIMING_FPS, legacyOffsetToMs } from "../engine/legacyMath";
@@ -45,6 +46,8 @@ interface SlideConnection {
   fromEventIndex: number;
   toEventIndex: number;
   rootEventIndex: number;
+  markerSourceBaseType: RuntimeNoteSemantic["baseType"] | null;
+  markerSourceIsHead: boolean;
   fromLane: number;
   toLane: number;
   fromHitMs: number;
@@ -73,6 +76,17 @@ interface StageGeometry {
   stageBottom: number;
   stageTop: number;
   stageJudge: number;
+}
+
+interface SlideBottomMarker {
+  lane: number;
+  connection: SlideConnection;
+}
+
+interface BpmFlashCycleSegment {
+  startMs: number;
+  bpm: number;
+  cyclesAtStart: number;
 }
 
 function isDirectionalNote(note: RuntimeNoteSemantic): boolean {
@@ -131,7 +145,8 @@ const EFFECT_MESH_VERTICES_X = 2;
 const EFFECT_MESH_VERTICES_Y = 2;
 const NOTE_SCALE_MIN = 0.028169014084507;
 const NOTE_BASE_TEXTURE_WIDTH = 308;
-const NOTE_WIDTH_TO_LANE_WIDTH_RATIO = 1.35;
+const NOTE_WIDTH_TO_LANE_WIDTH_RATIO = 1.38;
+const LONG_NOTE_LINE_HALF_WIDTH_TO_LANE_WIDTH = 0.48;
 const FIELD_BG_TO_JUDGE_WIDTH_RATIO = 1.35 / 0.875;
 const SIMULTANEOUS_LINE_HEIGHT_TO_NOTE_WIDTH = 27 / 308;
 const STAGE_HEIGHT_TO_WIDTH_RATIO = 634141 / 940938;
@@ -139,6 +154,8 @@ const STAGE_JUDGE_TO_HEIGHT_RATIO = 338256 / 877231;
 const STAGE_TO_WINDOW_RATIO = 462 / 667;
 const FIELD_BG_WIDTH_TO_STAGE_WIDTH_RATIO = (7 / 8) / STAGE_TO_WINDOW_RATIO;
 const JUDGE_LINE_WIDTH_TO_STAGE_WIDTH_RATIO = 1.35 / STAGE_TO_WINDOW_RATIO;
+const HIT_CIRCLE_LAYOUT_SCALE_NON_DIRECTIONAL = 1.15;
+const HIT_CIRCLE_LAYOUT_SCALE_DIRECTIONAL = 0.85;
 
 function mixUint32(value: number): number {
   let x = value >>> 0;
@@ -198,6 +215,8 @@ export class PixiRenderer {
   private slideConnections: SlideConnection[] = [];
   private slideConnectionByFromEventIndex = new Map<number, SlideConnection>();
   private eventRootIndexByEventIndex = new Map<number, number>();
+  private slideFlashFirstTriggerCycleByRootEventIndex = new Map<number, number>();
+  private bpmFlashCycleSegments: BpmFlashCycleSegment[] = [];
   private activeHoldEffects = new Map<number, ActiveHoldEffect>();
   private timingGroups: readonly TimingGroupDef[] = [];
   private lanesDirty = true;
@@ -261,6 +280,44 @@ export class PixiRenderer {
       return root;
     };
     const eventRootIndexByEventIndex = new Map<number, number>();
+    const visibleSourceMemo = new Map<number, { eventIndex: number; baseType: RuntimeNoteSemantic["baseType"] } | null>();
+    const resolveLastVisibleSource = (
+      index: number,
+    ): { eventIndex: number; baseType: RuntimeNoteSemantic["baseType"] } | null => {
+      const memoized = visibleSourceMemo.get(index);
+      if (memoized !== undefined) {
+        return memoized;
+      }
+      const path: number[] = [];
+      let cursor = index;
+      while (cursor >= 0 && cursor < events.length) {
+        const cached = visibleSourceMemo.get(cursor);
+        if (cached !== undefined) {
+          for (const p of path) {
+            visibleSourceMemo.set(p, cached);
+          }
+          return cached;
+        }
+        path.push(cursor);
+        const ev = events[cursor];
+        if (ev?.eventType === "note" && ev.note && ev.note.baseType !== "hidden") {
+          const found = { eventIndex: cursor, baseType: ev.note.baseType };
+          for (const p of path) {
+            visibleSourceMemo.set(p, found);
+          }
+          return found;
+        }
+        const parentIndex = ev?.parentEventIndex ?? -1;
+        if (parentIndex < 0 || parentIndex >= events.length) {
+          break;
+        }
+        cursor = parentIndex;
+      }
+      for (const p of path) {
+        visibleSourceMemo.set(p, null);
+      }
+      return null;
+    };
     const hiddenRoots = new Set<number>();
     for (let index = 0; index < events.length; index += 1) {
       const event = events[index];
@@ -284,10 +341,16 @@ export class PixiRenderer {
       if (!parent) {
         continue;
       }
+      const rootEventIndex = eventRootIndexByEventIndex.get(index) ?? index;
+      const markerSource = resolveLastVisibleSource(event.parentEventIndex);
       connections.push({
         fromEventIndex: event.parentEventIndex,
         toEventIndex: index,
-        rootEventIndex: eventRootIndexByEventIndex.get(index) ?? index,
+        rootEventIndex,
+        markerSourceBaseType: markerSource?.baseType ?? null,
+        markerSourceIsHead: markerSource
+          ? markerSource.eventIndex === rootEventIndex
+          : true,
         fromLane: parent.lane,
         toLane: event.lane,
         fromHitMs: parent.startMs + travelMs,
@@ -313,6 +376,8 @@ export class PixiRenderer {
       this.slideConnectionByFromEventIndex.set(connection.fromEventIndex, connection);
     }
     this.eventRootIndexByEventIndex = eventRootIndexByEventIndex;
+    this.buildBpmFlashCycleSegments(events);
+    this.slideFlashFirstTriggerCycleByRootEventIndex.clear();
   }
 
   pushParticleTriggers(events: ParticleTriggerEvent[]): void {
@@ -479,6 +544,8 @@ export class PixiRenderer {
     this.slideConnections = [];
     this.slideConnectionByFromEventIndex.clear();
     this.eventRootIndexByEventIndex.clear();
+    this.slideFlashFirstTriggerCycleByRootEventIndex.clear();
+    this.bpmFlashCycleSegments = [];
     this.noteSpritePool = [];
     this.slideLineMeshPool = [];
     this.simultaneousLineSpritePool = [];
@@ -793,8 +860,8 @@ export class PixiRenderer {
     const fallbackG = this.fallbackNoteG!;
     lineG.clear();
     fallbackG.clear();
-    const slideBottomLanes: number[] = [];
-    this.drawSlideConnections(lineG, elapsedMs, slideBottomLanes);
+    const slideBottomMarkers: SlideBottomMarker[] = [];
+    this.drawSlideConnections(lineG, elapsedMs, slideBottomMarkers);
 
     for (const n of notes) {
       if (!n.started) {
@@ -877,7 +944,7 @@ export class PixiRenderer {
       this.drawDirectional(n, noteScale, visual.percent, visual.y, lineG);
     }
 
-    this.drawSlideBottomMarkers(slideBottomLanes, fallbackG);
+    this.drawSlideBottomMarkers(slideBottomMarkers, elapsedMs, fallbackG);
   }
 
   private resolveNoteVisualState(
@@ -950,7 +1017,7 @@ export class PixiRenderer {
   private drawSlideConnections(
     graphics: Graphics,
     elapsedMs: number,
-    slideBottomLanes: number[],
+    slideBottomMarkers: SlideBottomMarker[],
   ): void {
     if (this.slideConnections.length === 0) {
       return;
@@ -1004,7 +1071,7 @@ export class PixiRenderer {
       );
 
       if (fromPassed) {
-        slideBottomLanes.push(fromLane);
+        slideBottomMarkers.push({ lane: fromLane, connection });
       }
     }
   }
@@ -1051,6 +1118,104 @@ export class PixiRenderer {
     return pos + speed * x;
   }
 
+  private buildBpmFlashCycleSegments(events: readonly ChartEvent[]): void {
+    const isPositiveBpm = (value: number): boolean => Number.isFinite(value) && value > 0;
+    let initialBpm = 120;
+    for (const event of events) {
+      if (isPositiveBpm(event.bpm)) {
+        initialBpm = event.bpm;
+        break;
+      }
+    }
+
+    const rawChanges: { startMs: number; bpm: number; order: number }[] = [];
+    for (let index = 0; index < events.length; index += 1) {
+      const event = events[index];
+      if (event.eventType !== "bpm" || !isPositiveBpm(event.bpm)) {
+        continue;
+      }
+      rawChanges.push({
+        startMs: event.startMs,
+        bpm: event.bpm,
+        order: index,
+      });
+    }
+
+    rawChanges.sort((left, right) => {
+      if (Math.abs(left.startMs - right.startMs) > 1e-9) {
+        return left.startMs - right.startMs;
+      }
+      return left.order - right.order;
+    });
+
+    const dedupedChanges: { startMs: number; bpm: number }[] = [];
+    for (const change of rawChanges) {
+      const last = dedupedChanges[dedupedChanges.length - 1];
+      if (last && Math.abs(last.startMs - change.startMs) <= 1e-9) {
+        last.bpm = change.bpm;
+        continue;
+      }
+      dedupedChanges.push({ startMs: change.startMs, bpm: change.bpm });
+    }
+
+    let bpmAtZero = initialBpm;
+    for (const change of dedupedChanges) {
+      if (change.startMs > 0) {
+        break;
+      }
+      bpmAtZero = change.bpm;
+    }
+
+    const segments: BpmFlashCycleSegment[] = [{
+      startMs: 0,
+      bpm: bpmAtZero,
+      cyclesAtStart: 0,
+    }];
+    let lastStartMs = 0;
+    let lastBpm = bpmAtZero;
+    let cyclesAtStart = 0;
+
+    for (const change of dedupedChanges) {
+      if (change.startMs <= 0) {
+        continue;
+      }
+      const dt = Math.max(0, change.startMs - lastStartMs);
+      cyclesAtStart += (dt * lastBpm) / 120000;
+      segments.push({
+        startMs: change.startMs,
+        bpm: change.bpm,
+        cyclesAtStart,
+      });
+      lastStartMs = change.startMs;
+      lastBpm = change.bpm;
+    }
+
+    this.bpmFlashCycleSegments = segments;
+  }
+
+  private flashCycleAtElapsed(elapsedMs: number): number {
+    const t = Math.max(0, elapsedMs);
+    const segments = this.bpmFlashCycleSegments;
+    if (segments.length === 0) {
+      return t / 1000;
+    }
+
+    let low = 0;
+    let high = segments.length - 1;
+    while (low <= high) {
+      const mid = (low + high) >> 1;
+      if (segments[mid].startMs <= t) {
+        low = mid + 1;
+      } else {
+        high = mid - 1;
+      }
+    }
+
+    const segment = segments[Math.max(0, high)];
+    const bpm = Number.isFinite(segment.bpm) && segment.bpm > 0 ? segment.bpm : 120;
+    return segment.cyclesAtStart + ((t - segment.startMs) * bpm) / 120000;
+  }
+
   private percentFromFrameRaw(frameRaw: number): number {
     const frames = Math.max(1, this.settings.noteSpeedFrames);
     const exponent = (50 * (frameRaw - frames)) / frames;
@@ -1065,20 +1230,57 @@ export class PixiRenderer {
     return fromLane + ((toLane - fromLane) * (nowAxis - fromAxis)) / denominator;
   }
 
-  private drawSlideBottomMarkers(slideBottomLanes: readonly number[], fallbackG: Graphics): void {
-    if (slideBottomLanes.length === 0) {
+  private drawSlideBottomMarkers(
+    slideBottomMarkers: readonly SlideBottomMarker[],
+    elapsedMs: number,
+    fallbackG: Graphics,
+  ): void {
+    if (slideBottomMarkers.length === 0) {
       return;
     }
+    const currentFlashCycle = this.flashCycleAtElapsed(elapsedMs);
 
-    for (const laneValue of slideBottomLanes) {
+    for (const marker of slideBottomMarkers) {
+      const laneValue = marker.lane;
       const lane = this.textureLaneIndex(laneValue);
       const x = this.laneXAtPercent(laneValue, 1);
       const y = this.stageBottomY();
+      const markerIsMiddle = !marker.connection.markerSourceIsHead;
 
       const markerTex = this.assets
-        ? resolveSlideBottomMarkerTexture(this.assets, lane)
+        ? resolveSlideBottomMarkerTexture(
+          this.assets,
+          lane,
+          marker.connection.markerSourceBaseType,
+          marker.connection.markerSourceIsHead,
+        )
+        : null;
+      const flashTex = this.assets && markerIsMiddle
+        ? resolveSlideBottomMarkerFlashTexture(this.assets, lane, marker.connection.markerSourceIsHead)
         : null;
       if (markerTex && this.noteSpriteLayer) {
+        if (flashTex) {
+          let cycleBase = this.slideFlashFirstTriggerCycleByRootEventIndex.get(marker.connection.rootEventIndex);
+          if (cycleBase === undefined) {
+            cycleBase = currentFlashCycle;
+            this.slideFlashFirstTriggerCycleByRootEventIndex.set(marker.connection.rootEventIndex, cycleBase);
+          }
+          const flashProgressRaw = currentFlashCycle - cycleBase;
+          const flashProgress = ((flashProgressRaw % 1) + 1) % 1;
+          const flashAlphaRaw = flashProgress < 0.5
+            ? flashProgress * 2
+            : (1 - flashProgress) * 2;
+          const flashAlpha = flashAlphaRaw * 0.5;
+          const flashSprite = this.allocSprite(this.noteSpritePool, this.noteSpriteLayer);
+          this.applySprite(
+            flashSprite,
+            flashTex,
+            x,
+            y,
+            this.noteSpriteScale(this.settings.noteSize),
+            flashAlpha,
+          );
+        }
         const s = this.allocSprite(this.noteSpritePool, this.noteSpriteLayer);
         this.applySprite(s, markerTex, x, y, this.noteSpriteScale(this.settings.noteSize), 1);
       } else {
@@ -1175,13 +1377,34 @@ export class PixiRenderer {
     const isDirectional = directionalLeft || directionalRight;
     const isFlickHit = note.baseType === "flick" && (note.slideRole === "none" || note.slideRole === "end");
     const isTapLike = !isDirectional && !isFlickHit;
+    const directionalAdvanceScale = Math.max(1, Math.round(note.directionalWidth)) / 2;
 
     if (isTapLike) {
       this.enqueueParticleEmitterBySlot("tapNoteLinear", lane, startMs, 400, false, "linear");
-      this.enqueueParticleEmitterBySlot("tapNoteCircular", lane, startMs, 600, false, "circular");
+      this.enqueueParticleEmitterBySlot(
+        "tapNoteCircular",
+        lane,
+        startMs,
+        600,
+        false,
+        "circular",
+        undefined,
+        1,
+        HIT_CIRCLE_LAYOUT_SCALE_NON_DIRECTIONAL,
+      );
     } else if (isFlickHit) {
       this.enqueueParticleEmitterBySlot("flickNoteLinear", lane, startMs, 400, false, "linear");
-      this.enqueueParticleEmitterBySlot("flickNoteCircular", lane, startMs, 600, false, "circular");
+      this.enqueueParticleEmitterBySlot(
+        "flickNoteCircular",
+        lane,
+        startMs,
+        600,
+        false,
+        "circular",
+        undefined,
+        1,
+        HIT_CIRCLE_LAYOUT_SCALE_NON_DIRECTIONAL,
+      );
     } else if (directionalLeft) {
       this.enqueueParticleEmitterBySlot(
         "directionalFlickNoteLeftLinear",
@@ -1191,6 +1414,7 @@ export class PixiRenderer {
         false,
         "directionalLinearLeft",
         "directionalFlickNoteLeftLinearFallback",
+        directionalAdvanceScale,
       );
       this.enqueueParticleEmitterBySlot(
         "directionalFlickNoteLeftCircular",
@@ -1200,6 +1424,8 @@ export class PixiRenderer {
         false,
         "circular",
         "directionalFlickNoteLeftCircularFallback",
+        1,
+        HIT_CIRCLE_LAYOUT_SCALE_DIRECTIONAL,
       );
     } else if (directionalRight) {
       this.enqueueParticleEmitterBySlot(
@@ -1210,6 +1436,7 @@ export class PixiRenderer {
         false,
         "directionalLinearRight",
         "directionalFlickNoteRightLinearFallback",
+        directionalAdvanceScale,
       );
       this.enqueueParticleEmitterBySlot(
         "directionalFlickNoteRightCircular",
@@ -1219,6 +1446,8 @@ export class PixiRenderer {
         false,
         "circular",
         "directionalFlickNoteRightCircularFallback",
+        1,
+        HIT_CIRCLE_LAYOUT_SCALE_DIRECTIONAL,
       );
     }
 
@@ -1237,6 +1466,8 @@ export class PixiRenderer {
     loop: boolean,
     preset: ParticleLayoutPreset,
     fallbackSlotKey?: string,
+    advanceScale = 1,
+    layoutScale = 1,
   ): void {
     const pack = this.assets?.particleEffects;
     if (!pack) {
@@ -1257,6 +1488,8 @@ export class PixiRenderer {
       loop,
       preset,
       seedBase: this.allocateEmitterSeed(slotKey, startMs, lane),
+      advanceScale: Number.isFinite(advanceScale) && advanceScale > 0 ? advanceScale : 1,
+      layoutScale: Number.isFinite(layoutScale) && layoutScale > 0 ? layoutScale : 1,
     });
   }
 
@@ -1340,6 +1573,8 @@ export class PixiRenderer {
       loop: true,
       preset,
       seedBase: this.allocateEmitterSeed(slotKey, startMs, lane),
+      advanceScale: 1,
+      layoutScale: 1,
     };
     this.activeParticleEmitters.push(emitter);
     return emitter;
@@ -1484,7 +1719,7 @@ export class PixiRenderer {
   private connectorHalfWidthAtPercent(percent: number): number {
     const p = Math.max(0, Math.min(1, percent));
     const laneSpacing = this.stageLaneWidth() * p;
-    return Math.max(1, laneSpacing * this.settings.noteSize * 0.5);
+    return Math.max(1, laneSpacing * this.settings.noteSize * LONG_NOTE_LINE_HALF_WIDTH_TO_LANE_WIDTH);
   }
 
   private noteSpriteScale(noteScale: number): number {
@@ -1512,7 +1747,7 @@ export class PixiRenderer {
     const lines = [
       `Combo: ${stats.combo}/${stats.notes}`,
       `Score: ${Math.floor(stats.score)}`,
-      `BPM: ${stats.bpmText}`,
+      `BPM: ${stats.bpmValue}`,
       `NPS: ${stats.nps} (Max ${stats.npsMax})`,
       `Objects: ${stats.activeObjects}/${stats.totalObjects}`,
       `Processed: ${stats.processedObjects}`

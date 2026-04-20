@@ -1,6 +1,6 @@
 import { Texture } from "pixi.js";
 import type { BGSkin, FieldSkinAssets, SkinAssets } from "../../skinLoader";
-import type { RuntimeNoteSemantic } from "./types";
+import type { RuntimeNoteBaseType, RuntimeNoteSemantic } from "./types";
 import {
   buildParticleEffectPack,
   type ParticleEffectPack,
@@ -18,6 +18,7 @@ type DefaultRhythmAssets = {
   noteFlick: LaneAssetMap;
   noteFlickTop: string;
   noteLong: LaneAssetMap;
+  noteLongFlash: LaneAssetMap;
   noteSlideAmong: string;
   longNoteLine: string;
   longNoteLine2: string;
@@ -31,6 +32,7 @@ type HabahiroRhythmAssets = {
   noteFlick: Record<string, string>;
   noteFlickTop: Record<string, string>;
   noteLong: Record<string, string>;
+  noteLongFlash: Record<string, string>;
   noteSlideAmong: Record<string, string>;
   longNoteLine: string;
   longNoteLine2: string;
@@ -51,6 +53,7 @@ export interface NoteSkinTextureBundle {
     noteSkill: Array<Texture | null>;
     noteFlick: Array<Texture | null>;
     noteLong: Array<Texture | null>;
+    noteLongFlash: Array<Texture | null>;
     noteSlideAmong: Texture | null;
     noteFlickTop: Texture | null;
   };
@@ -183,6 +186,7 @@ export async function loadNoteSkinTextureBundle(
   const noteSkill: Array<Texture | null> = new Array(8).fill(null);
   const noteFlick: Array<Texture | null> = new Array(8).fill(null);
   const noteLong: Array<Texture | null> = new Array(8).fill(null);
+  const noteLongFlash: Array<Texture | null> = new Array(8).fill(null);
   const directionalLeft: Array<Texture | null> = new Array(8).fill(null);
   const directionalRight: Array<Texture | null> = new Array(8).fill(null);
 
@@ -192,6 +196,7 @@ export async function loadNoteSkinTextureBundle(
     noteSkill[lane] = await loadCachedTexture(readLaneAssetUrl(rhythmAssets.noteSkill, lane));
     noteFlick[lane] = await loadCachedTexture(readLaneAssetUrl(rhythmAssets.noteFlick, lane));
     noteLong[lane] = await loadCachedTexture(readLaneAssetUrl(rhythmAssets.noteLong, lane));
+    noteLongFlash[lane] = await loadCachedTexture(readLaneAssetUrl(rhythmAssets.noteLongFlash, lane));
     directionalLeft[lane] = await loadCachedTexture(readLaneAssetUrl(directionalAssets.noteFlickL, lane));
     directionalRight[lane] = await loadCachedTexture(readLaneAssetUrl(directionalAssets.noteFlickR, lane));
   }
@@ -230,6 +235,7 @@ export async function loadNoteSkinTextureBundle(
       noteSkill,
       noteFlick,
       noteLong,
+      noteLongFlash,
       noteSlideAmong,
       noteFlickTop,
     },
@@ -302,9 +308,44 @@ export function resolveRhythmNoteTexture(
 export function resolveSlideBottomMarkerTexture(
   bundle: NoteSkinTextureBundle,
   lane: number,
+  markerSourceBaseType: RuntimeNoteBaseType | null,
+  markerSourceIsHead: boolean,
 ): Texture | null {
   const laneIdx = laneIndex(lane);
-  return bundle.rhythm.noteLong[laneIdx] ?? null;
+  if (!markerSourceIsHead) {
+    return bundle.rhythm.noteSlideAmong
+      ?? bundle.rhythm.noteLong[laneIdx]
+      ?? null;
+  }
+  switch (markerSourceBaseType) {
+    case "single":
+      return bundle.rhythm.noteLong[laneIdx] ?? null;
+    case "flick":
+      return bundle.rhythm.noteFlick[laneIdx]
+        ?? bundle.rhythm.noteLong[laneIdx]
+        ?? null;
+    case "skill":
+      return bundle.rhythm.noteSkill[laneIdx]
+        ?? bundle.rhythm.noteLong[laneIdx]
+        ?? null;
+    case "directional_flick_left":
+    case "directional_flick_right":
+      return bundle.rhythm.noteLong[laneIdx] ?? null;
+    default:
+      return bundle.rhythm.noteLong[laneIdx] ?? null;
+  }
+}
+
+export function resolveSlideBottomMarkerFlashTexture(
+  bundle: NoteSkinTextureBundle,
+  lane: number,
+  markerSourceIsHead: boolean,
+): Texture | null {
+  if (markerSourceIsHead) {
+    return null;
+  }
+  const laneIdx = laneIndex(lane);
+  return bundle.rhythm.noteLongFlash[laneIdx] ?? null;
 }
 
 export function resolveDirectionalLaneTexture(
