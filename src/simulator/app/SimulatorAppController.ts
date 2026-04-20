@@ -52,6 +52,7 @@ export class SimulatorAppController {
   private fpsCounterTime = 0;
   private fpsCounterFrames = 0;
   private fpsText = "0";
+  private lastElapsedMs = 0;
   private isDisposed = false;
 
   private settings: SimulatorSettings | null = null;
@@ -71,9 +72,26 @@ export class SimulatorAppController {
     });
   };
 
+  private readonly onHostPointerDown = (event: PointerEvent) => {
+    if (event.button !== 0) {
+      return;
+    }
+    if (!this.renderer || !this.runtime || !this.settings?.effectEnable) {
+      return;
+    }
+    const rect = this.ui.host.getBoundingClientRect();
+    const viewportX = event.clientX - rect.left;
+    const lane = this.renderer.resolveSlotLaneFromViewportX(viewportX);
+    if (lane === null) {
+      return;
+    }
+    this.renderer.triggerEmptyTapEffects(lane, this.lastElapsedMs);
+  };
+
   constructor(parent: HTMLElement) {
     this.ui = this.buildUi(parent);
     this.ui.startButton.addEventListener("click", this.onStartClick);
+    this.ui.host.addEventListener("pointerdown", this.onHostPointerDown);
     void this.attachLaunchPayloadBridge();
   }
 
@@ -92,6 +110,7 @@ export class SimulatorAppController {
       this.launchPayloadUnlisten = null;
     }
     this.ui.startButton.removeEventListener("click", this.onStartClick);
+    this.ui.host.removeEventListener("pointerdown", this.onHostPointerDown);
     this.ui.root.remove();
   }
 
@@ -238,6 +257,7 @@ export class SimulatorAppController {
     this.fpsCounterTime = performance.now();
     this.lastLoopTickMs = 0;
     this.loopAccumulatorMs = 0;
+    this.lastElapsedMs = 0;
 
     this.ui.status.textContent = `running | notes=${chart.noteCount} | max=${Math.floor(chart.maxTimeMs)}ms`;
     this.ui.startButton.disabled = false;
@@ -274,6 +294,7 @@ export class SimulatorAppController {
     }
 
     const stats = this.runtime.update(now);
+    this.lastElapsedMs = stats.elapsedMs;
 
     if (this.runtime.consumePendingMusicStart()) {
       this.audio.playBgm();
@@ -283,9 +304,9 @@ export class SimulatorAppController {
       this.audio.playSe(se);
     }
 
-    const hitEffects = this.runtime.consumePendingHitEffects();
-    if (hitEffects.length > 0) {
-      this.renderer.pushHitEffects(hitEffects);
+    const particleTriggers = this.runtime.consumePendingParticleTriggers();
+    if (particleTriggers.length > 0) {
+      this.renderer.pushParticleTriggers(particleTriggers);
     }
 
     const elapsedMs = stats.elapsedMs;
@@ -412,6 +433,7 @@ export class SimulatorAppController {
     }
     this.lastLoopTickMs = 0;
     this.loopAccumulatorMs = 0;
+    this.lastElapsedMs = 0;
     this.audio.stopBgm();
     if (this.chartMvResource?.kind === "video") {
       this.chartMvResource.video.pause();

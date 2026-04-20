@@ -1,8 +1,8 @@
 import { LEGACY_TIMING_FPS, legacyOffsetToMs } from "./legacyMath";
-import { hitEffectKind, isGrayEligibleNote, isHiddenNoSeNote, isJudgedNote } from "./score";
+import { isGrayEligibleNote, isHiddenNoSeNote, isJudgedNote } from "./score";
 import {
   ActiveNote,
-  HitEffectEvent,
+  ParticleTriggerEvent,
   ParsedChart,
   RuntimeNoteSemantic,
   RuntimeStats,
@@ -45,7 +45,7 @@ export class LegacyRuntime {
   private processedObjects = 0;
 
   private pendingSeNotes: RuntimeNoteSemantic[] = [];
-  private pendingHitEffects: HitEffectEvent[] = [];
+  private pendingParticleTriggers: ParticleTriggerEvent[] = [];
   private pendingMusicStart = false;
 
   constructor(settings: SimulatorSettings, chart: ParsedChart) {
@@ -84,9 +84,9 @@ export class LegacyRuntime {
     return out;
   }
 
-  consumePendingHitEffects(): HitEffectEvent[] {
-    const out = this.pendingHitEffects;
-    this.pendingHitEffects = [];
+  consumePendingParticleTriggers(): ParticleTriggerEvent[] {
+    const out = this.pendingParticleTriggers;
+    this.pendingParticleTriggers = [];
     return out;
   }
 
@@ -127,7 +127,7 @@ export class LegacyRuntime {
           this.pushSe(note.note);
         }
 
-        this.resolveHit(note.note, note.lane, elapsed);
+        this.resolveHit(note.note, note.lane, elapsed, note.eventIndex);
         this.activeIdByEvent.delete(note.eventIndex);
         this.activeNotes.splice(i, 1);
         this.processedObjects += 1;
@@ -254,7 +254,7 @@ export class LegacyRuntime {
     return p - Math.floor(p) >= 0.0001;
   }
 
-  private resolveHit(note: RuntimeNoteSemantic, lane: number, elapsedMs: number): void {
+  private resolveHit(note: RuntimeNoteSemantic, lane: number, elapsedMs: number, eventIndex: number): void {
     if (!isJudgedNote(note)) {
       return;
     }
@@ -267,10 +267,7 @@ export class LegacyRuntime {
     this.npsExpiryMs.push(elapsedMs + 1000);
 
     if (this.settings.effectEnable) {
-      const k = hitEffectKind(note);
-      if (k) {
-        this.pendingHitEffects.push({ kind: k, lane });
-      }
+      this.pendingParticleTriggers.push({ note, lane, elapsedMs, eventIndex });
     }
   }
 

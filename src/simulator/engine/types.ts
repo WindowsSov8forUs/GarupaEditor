@@ -118,11 +118,11 @@ export interface RuntimeStats {
   elapsedMs: number;
 }
 
-export type HitEffectKind = "normal" | "flick";
-
-export interface HitEffectEvent {
-  kind: HitEffectKind;
+export interface ParticleTriggerEvent {
+  note: RuntimeNoteSemantic;
   lane: number;
+  elapsedMs: number;
+  eventIndex: number;
 }
 
 export interface ActiveNote {

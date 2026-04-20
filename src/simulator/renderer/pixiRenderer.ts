@@ -8,10 +8,17 @@ import {
   resolveSlideBottomMarkerTexture,
 } from "../engine/assets";
 import { LEGACY_TIMING_FPS, legacyOffsetToMs } from "../engine/legacyMath";
+import type { ParticleEffectDefinition } from "../engine/particlePack";
+import {
+  ActiveParticleEmitter,
+  drawParticleEmitter,
+  ParticleEmitterDrawContext,
+  ParticleLayoutPreset,
+} from "./noteParticleEffectRenderer";
 import {
   ActiveNote,
   ChartEvent,
-  HitEffectEvent,
+  ParticleTriggerEvent,
   RuntimeStats,
   RuntimeNoteSemantic,
   SimulatorSettings,
@@ -34,13 +41,10 @@ type MvRenderFrame =
       sourceHeight: number;
     };
 
-interface ActiveEffect {
-  kind: "normal" | "flick";
-  lane: number;
-  frame: number;
-}
-
 interface SlideConnection {
+  fromEventIndex: number;
+  toEventIndex: number;
+  rootEventIndex: number;
   fromLane: number;
   toLane: number;
   fromHitMs: number;
@@ -52,6 +56,13 @@ interface SlideConnection {
   fromTgPos: number;
   toTgPos: number;
   useSpecialTexture: boolean;
+}
+
+interface ActiveHoldEffect {
+  rootEventIndex: number;
+  currentFromEventIndex: number;
+  linearEmitter: ActiveParticleEmitter | null;
+  circularEmitter: ActiveParticleEmitter | null;
 }
 
 interface StageGeometry {
@@ -70,6 +81,13 @@ function isDirectionalNote(note: RuntimeNoteSemantic): boolean {
 
 function shouldRenderFlickTop(note: RuntimeNoteSemantic): boolean {
   return note.baseType === "flick" && (note.slideRole === "none" || note.slideRole === "end");
+}
+
+function isHoldRenderableSlideNote(note: RuntimeNoteSemantic): boolean {
+  if (note.baseType === "hidden") {
+    return false;
+  }
+  return note.slideRole === "start" || note.slideRole === "middle" || note.slideRole === "end";
 }
 
 function colorForNote(note: RuntimeNoteSemantic): number {
@@ -109,6 +127,8 @@ function browserPath(path: string): string {
 
 const SLIDE_LINE_MESH_VERTICES_X = 4;
 const SLIDE_LINE_MESH_VERTICES_Y = 32;
+const EFFECT_MESH_VERTICES_X = 2;
+const EFFECT_MESH_VERTICES_Y = 2;
 const NOTE_SCALE_MIN = 0.028169014084507;
 const NOTE_BASE_TEXTURE_WIDTH = 308;
 const NOTE_WIDTH_TO_LANE_WIDTH_RATIO = 1.35;
@@ -119,6 +139,25 @@ const STAGE_JUDGE_TO_HEIGHT_RATIO = 338256 / 877231;
 const STAGE_TO_WINDOW_RATIO = 462 / 667;
 const FIELD_BG_WIDTH_TO_STAGE_WIDTH_RATIO = (7 / 8) / STAGE_TO_WINDOW_RATIO;
 const JUDGE_LINE_WIDTH_TO_STAGE_WIDTH_RATIO = 1.35 / STAGE_TO_WINDOW_RATIO;
+
+function mixUint32(value: number): number {
+  let x = value >>> 0;
+  x ^= x >>> 16;
+  x = Math.imul(x, 0x7feb352d) >>> 0;
+  x ^= x >>> 15;
+  x = Math.imul(x, 0x846ca68b) >>> 0;
+  x ^= x >>> 16;
+  return x >>> 0;
+}
+
+function hashString32(text: string): number {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < text.length; i += 1) {
+    hash ^= text.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193) >>> 0;
+  }
+  return mixUint32(hash);
+}
 
 export class PixiRenderer {
   private app: Application | null = null;
@@ -152,8 +191,14 @@ export class PixiRenderer {
   private effectSpritePool: Sprite[] = [];
   private effectSpriteCursor = 0;
   private effectSpritePrevUsed = 0;
-  private activeEffects: ActiveEffect[] = [];
+  private effectMeshPool: PerspectiveMesh[] = [];
+  private effectMeshCursor = 0;
+  private effectMeshPrevUsed = 0;
+  private activeParticleEmitters: ActiveParticleEmitter[] = [];
   private slideConnections: SlideConnection[] = [];
+  private slideConnectionByFromEventIndex = new Map<number, SlideConnection>();
+  private eventRootIndexByEventIndex = new Map<number, number>();
+  private activeHoldEffects = new Map<number, ActiveHoldEffect>();
   private timingGroups: readonly TimingGroupDef[] = [];
   private lanesDirty = true;
   private flickFrame = 0;
@@ -164,6 +209,7 @@ export class PixiRenderer {
   private mvCurrentPath = "";
   private mvVideoKeyByElement = new WeakMap<HTMLVideoElement, string>();
   private mvVideoKeySerial = 0;
+  private particleEmitterSeedSerial = 1;
   private settings: SimulatorSettings;
   private assets: NoteSkinTextureBundle | null = null;
   private stageGeometryCache: StageGeometry | null = null;
@@ -180,6 +226,11 @@ export class PixiRenderer {
   setChartEvents(events: readonly ChartEvent[], timingGroups: readonly TimingGroupDef[] = []): void {
     const travelMs = Math.max(1, this.settings.noteSpeedSeconds * 1000);
     this.timingGroups = timingGroups;
+    for (const hold of this.activeHoldEffects.values()) {
+      this.destroyHoldEffectEmitters(hold);
+    }
+    this.activeHoldEffects.clear();
+    this.particleEmitterSeedSerial = 1;
     const rootIndexMemo = new Map<number, number>();
     const resolveRootIndex = (index: number): number => {
       const memoized = rootIndexMemo.get(index);
@@ -209,14 +260,17 @@ export class PixiRenderer {
       }
       return root;
     };
+    const eventRootIndexByEventIndex = new Map<number, number>();
     const hiddenRoots = new Set<number>();
     for (let index = 0; index < events.length; index += 1) {
       const event = events[index];
       if (!event) {
         continue;
       }
+      const rootIndex = resolveRootIndex(index);
+      eventRootIndexByEventIndex.set(index, rootIndex);
       if (event.eventType === "note" && event.note?.baseType === "hidden") {
-        hiddenRoots.add(resolveRootIndex(index));
+        hiddenRoots.add(rootIndex);
       }
     }
 
@@ -231,6 +285,9 @@ export class PixiRenderer {
         continue;
       }
       connections.push({
+        fromEventIndex: event.parentEventIndex,
+        toEventIndex: index,
+        rootEventIndex: eventRootIndexByEventIndex.get(index) ?? index,
         fromLane: parent.lane,
         toLane: event.lane,
         fromHitMs: parent.startMs + travelMs,
@@ -251,15 +308,43 @@ export class PixiRenderer {
       return left.toHitMs - right.toHitMs;
     });
     this.slideConnections = connections;
+    this.slideConnectionByFromEventIndex.clear();
+    for (const connection of connections) {
+      this.slideConnectionByFromEventIndex.set(connection.fromEventIndex, connection);
+    }
+    this.eventRootIndexByEventIndex = eventRootIndexByEventIndex;
   }
 
-  pushHitEffects(events: HitEffectEvent[]): void {
+  pushParticleTriggers(events: ParticleTriggerEvent[]): void {
     if (!events.length) {
       return;
     }
-    for (const e of events) {
-      this.activeEffects.push({ kind: e.kind, lane: e.lane, frame: 0 });
+    for (const trigger of events) {
+      this.spawnParticleEmittersForTrigger(trigger);
     }
+  }
+
+  triggerEmptyTapEffects(lane: number, elapsedMs: number): void {
+    this.enqueueParticleEmitterBySlot("lane", lane, elapsedMs, 200, false, "lane");
+    this.enqueueParticleEmitterBySlot("slot", lane, elapsedMs, 600, false, "slot");
+  }
+
+  resolveSlotLaneFromViewportX(viewportX: number): number | null {
+    if (!Number.isFinite(viewportX)) {
+      return null;
+    }
+    const geometry = this.stageGeometry();
+    const laneWidth = this.stageLaneWidth();
+    if (!Number.isFinite(laneWidth) || laneWidth <= 1e-6) {
+      return null;
+    }
+    const logicalLane = ((viewportX - geometry.viewportWidth * 0.5) / laneWidth) + 3;
+    const lane = this.settings.mirror ? 6 - logicalLane : logicalLane;
+    const snappedLane = Math.round(lane);
+    if (snappedLane < 0 || snappedLane > 6) {
+      return null;
+    }
+    return snappedLane;
   }
 
   async mount(host: HTMLElement): Promise<void> {
@@ -354,6 +439,7 @@ export class PixiRenderer {
     this.slideLineMeshCursor = 0;
     this.simultaneousLineSpriteCursor = 0;
     this.effectSpriteCursor = 0;
+    this.effectMeshCursor = 0;
     this.frameTick += 1;
     this.flickFrame = Math.floor((stats.elapsedMs * this.settings.fps) / 1000) % Math.max(1, Math.floor(this.settings.fps / 3));
 
@@ -361,7 +447,7 @@ export class PixiRenderer {
     this.updateMvFrame(mvFrame);
     this.drawLanes();
     this.drawNotes(notes, stats.elapsedMs);
-    this.drawEffects();
+    this.drawParticleEffects(stats.elapsedMs);
     this.noteSpritePrevUsed = this.compactSpritePool(this.noteSpritePool, this.noteSpriteCursor, this.noteSpritePrevUsed);
     this.slideLineMeshPrevUsed = this.compactMeshPool(
       this.slideLineMeshPool,
@@ -374,6 +460,7 @@ export class PixiRenderer {
       this.simultaneousLineSpritePrevUsed,
     );
     this.effectSpritePrevUsed = this.compactSpritePool(this.effectSpritePool, this.effectSpriteCursor, this.effectSpritePrevUsed);
+    this.effectMeshPrevUsed = this.compactMeshPool(this.effectMeshPool, this.effectMeshCursor, this.effectMeshPrevUsed);
     this.drawHud(stats, progress);
   }
 
@@ -387,17 +474,22 @@ export class PixiRenderer {
     }
     this.mvTextureCache.clear();
     this.mvTextureOrder = [];
-    this.activeEffects = [];
+    this.activeParticleEmitters = [];
+    this.activeHoldEffects.clear();
     this.slideConnections = [];
+    this.slideConnectionByFromEventIndex.clear();
+    this.eventRootIndexByEventIndex.clear();
     this.noteSpritePool = [];
     this.slideLineMeshPool = [];
     this.simultaneousLineSpritePool = [];
     this.effectSpritePool = [];
+    this.effectMeshPool = [];
     this.stageGeometryCache = null;
     this.noteSpritePrevUsed = 0;
     this.slideLineMeshPrevUsed = 0;
     this.simultaneousLineSpritePrevUsed = 0;
     this.effectSpritePrevUsed = 0;
+    this.effectMeshPrevUsed = 0;
     this.liveBgSprite = null;
     this.laneBgSprite = null;
     this.judgeLineSprite = null;
@@ -456,6 +548,27 @@ export class PixiRenderer {
       this.slideLineMeshPool.push(mesh);
     }
     const mesh = this.slideLineMeshPool[this.slideLineMeshCursor++];
+    if (mesh.texture !== texture) {
+      mesh.texture = texture;
+    }
+    mesh.visible = true;
+    return mesh;
+  }
+
+  private allocEffectMesh(texture: Texture): PerspectiveMesh | null {
+    if (!this.effectSpriteLayer) {
+      return null;
+    }
+    if (this.effectMeshPool.length <= this.effectMeshCursor) {
+      const mesh = new PerspectiveMesh({
+        texture,
+        verticesX: EFFECT_MESH_VERTICES_X,
+        verticesY: EFFECT_MESH_VERTICES_Y,
+      });
+      this.effectSpriteLayer.addChild(mesh);
+      this.effectMeshPool.push(mesh);
+    }
+    const mesh = this.effectMeshPool[this.effectMeshCursor++];
     if (mesh.texture !== texture) {
       mesh.texture = texture;
     }
@@ -1046,52 +1159,326 @@ export class PixiRenderer {
     }
   }
 
-  private drawEffects(): void {
-    const fallbackG = this.fallbackNoteG!;
+  private spawnParticleEmittersForTrigger(trigger: ParticleTriggerEvent): void {
+    const pack = this.assets?.particleEffects;
+    if (!pack) {
+      return;
+    }
 
-    for (let i = this.activeEffects.length - 1; i >= 0; i -= 1) {
-      const e = this.activeEffects[i];
-      const frames = e.kind === "normal"
-        ? this.assets?.effects.normal
-        : this.assets?.effects.flick;
-      const drawX = this.laneXAtPercent(e.lane, 1);
-      const y = this.stageBottomY();
+    const lane = trigger.lane;
+    const note = trigger.note;
+    const startMs = trigger.elapsedMs;
+    const rawDirectionalLeft = note.baseType === "directional_flick_left";
+    const rawDirectionalRight = note.baseType === "directional_flick_right";
+    const directionalLeft = this.settings.mirror ? rawDirectionalRight : rawDirectionalLeft;
+    const directionalRight = this.settings.mirror ? rawDirectionalLeft : rawDirectionalRight;
+    const isDirectional = directionalLeft || directionalRight;
+    const isFlickHit = note.baseType === "flick" && (note.slideRole === "none" || note.slideRole === "end");
+    const isTapLike = !isDirectional && !isFlickHit;
 
-      if (frames && frames.length > 0) {
-        if (e.frame >= frames.length) {
-          this.removeActiveEffectAt(i);
-          continue;
-        }
-        const tex = frames[e.frame];
-        if (this.effectSpriteLayer) {
-          const s = this.allocSprite(this.effectSpritePool, this.effectSpriteLayer);
-          const { anchorX, anchorY } = this.effectAnchor(e.kind, tex);
-          this.applySprite(s, tex, drawX, y, this.settings.effectSize, 1, anchorX, anchorY);
-        }
-      } else {
-        const alpha = Math.max(0, 1 - e.frame / 8);
-        fallbackG.fill({ color: e.kind === "flick" ? 0xffb184 : 0xb6d2ff, alpha });
-        fallbackG.circle(drawX, y, Math.max(8, this.settings.effectSize * (26 + e.frame * 5)));
-        fallbackG.fill();
+    if (isTapLike) {
+      this.enqueueParticleEmitterBySlot("tapNoteLinear", lane, startMs, 400, false, "linear");
+      this.enqueueParticleEmitterBySlot("tapNoteCircular", lane, startMs, 600, false, "circular");
+    } else if (isFlickHit) {
+      this.enqueueParticleEmitterBySlot("flickNoteLinear", lane, startMs, 400, false, "linear");
+      this.enqueueParticleEmitterBySlot("flickNoteCircular", lane, startMs, 600, false, "circular");
+    } else if (directionalLeft) {
+      this.enqueueParticleEmitterBySlot(
+        "directionalFlickNoteLeftLinear",
+        lane,
+        startMs,
+        400,
+        false,
+        "directionalLinearLeft",
+        "directionalFlickNoteLeftLinearFallback",
+      );
+      this.enqueueParticleEmitterBySlot(
+        "directionalFlickNoteLeftCircular",
+        lane,
+        startMs,
+        600,
+        false,
+        "circular",
+        "directionalFlickNoteLeftCircularFallback",
+      );
+    } else if (directionalRight) {
+      this.enqueueParticleEmitterBySlot(
+        "directionalFlickNoteRightLinear",
+        lane,
+        startMs,
+        400,
+        false,
+        "directionalLinearRight",
+        "directionalFlickNoteRightLinearFallback",
+      );
+      this.enqueueParticleEmitterBySlot(
+        "directionalFlickNoteRightCircular",
+        lane,
+        startMs,
+        600,
+        false,
+        "circular",
+        "directionalFlickNoteRightCircularFallback",
+      );
+    }
+
+    this.enqueueParticleEmitterBySlot("lane", lane, startMs, 200, false, "lane");
+
+    if (isHoldRenderableSlideNote(note)) {
+      this.activateHoldEffect(trigger);
+    }
+  }
+
+  private enqueueParticleEmitterBySlot(
+    slotKey: string,
+    lane: number,
+    startMs: number,
+    durationMs: number,
+    loop: boolean,
+    preset: ParticleLayoutPreset,
+    fallbackSlotKey?: string,
+  ): void {
+    const pack = this.assets?.particleEffects;
+    if (!pack) {
+      return;
+    }
+
+    const effect = this.resolveParticleEffectBySlot(pack, slotKey)
+      ?? (fallbackSlotKey ? this.resolveParticleEffectBySlot(pack, fallbackSlotKey) : null);
+    if (!effect) {
+      return;
+    }
+
+    this.activeParticleEmitters.push({
+      effect,
+      lane,
+      startMs,
+      durationMs: Math.max(1, durationMs),
+      loop,
+      preset,
+      seedBase: this.allocateEmitterSeed(slotKey, startMs, lane),
+    });
+  }
+
+  private resolveParticleEffectBySlot(
+    pack: NonNullable<NoteSkinTextureBundle["particleEffects"]>,
+    slotKey: string,
+  ): ParticleEffectDefinition | null {
+    const effectName = pack.slotToEffectName[slotKey];
+    if (!effectName) {
+      return null;
+    }
+    return pack.effectsByName.get(effectName) ?? null;
+  }
+
+  private findFirstSlideConnectionFromRoot(rootEventIndex: number): number | null {
+    for (const connection of this.slideConnections) {
+      if (connection.rootEventIndex === rootEventIndex) {
+        return connection.fromEventIndex;
+      }
+    }
+    return null;
+  }
+
+  private activateHoldEffect(trigger: ParticleTriggerEvent): void {
+    const rootEventIndex = this.eventRootIndexByEventIndex.get(trigger.eventIndex) ?? trigger.eventIndex;
+    if (this.activeHoldEffects.has(rootEventIndex)) {
+      return;
+    }
+    const fromEventIndex = this.slideConnectionByFromEventIndex.has(trigger.eventIndex)
+      ? trigger.eventIndex
+      : this.findFirstSlideConnectionFromRoot(rootEventIndex);
+    if (fromEventIndex === null) {
+      return;
+    }
+    const pack = this.assets?.particleEffects;
+    if (!pack) {
+      return;
+    }
+    const linearEmitter = this.spawnHoldEmitterBySlot(
+      pack,
+      "holdLinear",
+      trigger.lane,
+      trigger.elapsedMs,
+      "holdLinear",
+    );
+    const circularEmitter = this.spawnHoldEmitterBySlot(
+      pack,
+      "holdCircular",
+      trigger.lane,
+      trigger.elapsedMs,
+      "holdCircular",
+    );
+    if (!linearEmitter && !circularEmitter) {
+      return;
+    }
+
+    this.activeHoldEffects.set(rootEventIndex, {
+      rootEventIndex,
+      currentFromEventIndex: fromEventIndex,
+      linearEmitter,
+      circularEmitter,
+    });
+  }
+
+  private spawnHoldEmitterBySlot(
+    pack: NonNullable<NoteSkinTextureBundle["particleEffects"]>,
+    slotKey: string,
+    lane: number,
+    startMs: number,
+    preset: ParticleLayoutPreset,
+  ): ActiveParticleEmitter | null {
+    const effect = this.resolveParticleEffectBySlot(pack, slotKey);
+    if (!effect) {
+      return null;
+    }
+    const emitter: ActiveParticleEmitter = {
+      effect,
+      lane,
+      startMs,
+      durationMs: 1000,
+      loop: true,
+      preset,
+      seedBase: this.allocateEmitterSeed(slotKey, startMs, lane),
+    };
+    this.activeParticleEmitters.push(emitter);
+    return emitter;
+  }
+
+  private allocateEmitterSeed(slotKey: string, startMs: number, lane: number): number {
+    const slotHash = hashString32(slotKey);
+    const serialHash = mixUint32(this.particleEmitterSeedSerial++);
+    const laneHash = mixUint32(Math.round(lane * 1024));
+    const timeHash = mixUint32(Math.round(startMs * 1000));
+    return mixUint32(slotHash ^ serialHash ^ laneHash ^ timeHash);
+  }
+
+  private removeEmitterInstance(emitter: ActiveParticleEmitter | null): void {
+    if (!emitter) {
+      return;
+    }
+    const index = this.activeParticleEmitters.indexOf(emitter);
+    if (index >= 0) {
+      this.activeParticleEmitters.splice(index, 1);
+    }
+  }
+
+  private destroyHoldEffectEmitters(hold: ActiveHoldEffect): void {
+    this.removeEmitterInstance(hold.linearEmitter);
+    this.removeEmitterInstance(hold.circularEmitter);
+    hold.linearEmitter = null;
+    hold.circularEmitter = null;
+  }
+
+  private resolveActiveHoldConnection(
+    hold: ActiveHoldEffect,
+    elapsedMs: number,
+  ): SlideConnection | null {
+    let connection = this.slideConnectionByFromEventIndex.get(hold.currentFromEventIndex) ?? null;
+    while (connection && elapsedMs > connection.toHitMs + 1e-6) {
+      hold.currentFromEventIndex = connection.toEventIndex;
+      connection = this.slideConnectionByFromEventIndex.get(hold.currentFromEventIndex) ?? null;
+    }
+    return connection;
+  }
+
+  private holdLaneAtConnection(connection: SlideConnection, elapsedMs: number): number {
+    const nowAxis = this.axisNowAt(elapsedMs, connection.fromTgId);
+    const fromAxis = this.axisHitAt(connection.fromHitMs, connection.fromTgId, connection.fromTgPos);
+    const toAxis = this.axisHitAt(connection.toHitMs, connection.toTgId, connection.toTgPos);
+    return this.interpolateLane(connection.fromLane, connection.toLane, nowAxis, fromAxis, toAxis);
+  }
+
+  private updateHoldParticleEmitters(elapsedMs: number): void {
+    if (this.activeHoldEffects.size <= 0) {
+      return;
+    }
+
+    for (const [rootEventIndex, hold] of this.activeHoldEffects) {
+      const connection = this.resolveActiveHoldConnection(hold, elapsedMs);
+      if (!connection) {
+        this.destroyHoldEffectEmitters(hold);
+        this.activeHoldEffects.delete(rootEventIndex);
+        continue;
       }
 
-      e.frame += 1;
-      const cap = frames && frames.length > 0 ? frames.length : 8;
-      if (e.frame >= cap) {
-        this.removeActiveEffectAt(i);
+      const lane = this.holdLaneAtConnection(connection, elapsedMs);
+      if (hold.linearEmitter) {
+        hold.linearEmitter.lane = lane;
+      }
+      if (hold.circularEmitter) {
+        hold.circularEmitter.lane = lane;
       }
     }
   }
 
-  private removeActiveEffectAt(index: number): void {
-    const last = this.activeEffects.length - 1;
-    if (index < 0 || index > last) {
+  private drawParticleEffects(elapsedMs: number): void {
+    const pack = this.assets?.particleEffects;
+    if (!pack) {
+      this.activeParticleEmitters = [];
+      this.activeHoldEffects.clear();
       return;
     }
-    if (index !== last) {
-      this.activeEffects[index] = this.activeEffects[last];
+    const fallbackG = this.fallbackNoteG!;
+    const drawContext = this.particleEmitterDrawContext();
+    this.updateHoldParticleEmitters(elapsedMs);
+
+    for (let i = this.activeParticleEmitters.length - 1; i >= 0; i -= 1) {
+      const emitter = this.activeParticleEmitters[i];
+      const elapsed = elapsedMs - emitter.startMs;
+      if (elapsed < 0) {
+        continue;
+      }
+
+      const lifeMs = Math.max(1, emitter.durationMs * emitter.effect.maxLife);
+      if (!emitter.loop && elapsed > lifeMs) {
+        this.activeParticleEmitters.splice(i, 1);
+        continue;
+      }
+
+      this.drawParticleEmitterAtElapsed(drawContext, pack, emitter, elapsed, fallbackG);
     }
-    this.activeEffects.pop();
+
+  }
+
+  private drawParticleEmitterAtElapsed(
+    drawContext: ParticleEmitterDrawContext,
+    pack: NonNullable<NoteSkinTextureBundle["particleEffects"]>,
+    emitter: ActiveParticleEmitter,
+    elapsedMs: number,
+    fallbackG: Graphics,
+  ): void {
+    if (elapsedMs < 0) {
+      return;
+    }
+
+    const durationMs = Math.max(1, emitter.durationMs);
+    if (!emitter.loop) {
+      drawParticleEmitter(drawContext, pack, emitter, elapsedMs / durationMs, fallbackG);
+      return;
+    }
+
+    const phase = ((elapsedMs / durationMs) % 1 + 1) % 1;
+    const overlapCycles = Math.max(1, Math.ceil(emitter.effect.maxLife));
+    for (let cycleOffset = 0; cycleOffset < overlapCycles; cycleOffset += 1) {
+      drawParticleEmitter(drawContext, pack, emitter, phase + cycleOffset, fallbackG);
+    }
+  }
+
+  private particleEmitterDrawContext(): ParticleEmitterDrawContext {
+    const geometry = this.stageGeometry();
+    const stageWToH = (geometry.stageWidth / 6) / Math.max(1e-6, geometry.stageHeight);
+    const viewportWidth = this.viewportWidth();
+    const viewportHeight = this.viewportHeight();
+    return {
+      settings: this.settings,
+      viewportWidth,
+      viewportHeight,
+      stageWToH,
+      laneXAtPercentRaw: (lane, percent) => this.laneXAtPercentRaw(lane, percent),
+      laneYAtPercentRaw: (percent) => this.laneYAtPercentRaw(percent),
+      allocEffectMesh: (texture) => this.allocEffectMesh(texture),
+    };
   }
 
   private connectorHalfWidthAtPercent(percent: number): number {
@@ -1104,23 +1491,6 @@ export class PixiRenderer {
     const widthScale = (this.stageLaneWidth() * NOTE_WIDTH_TO_LANE_WIDTH_RATIO) / NOTE_BASE_TEXTURE_WIDTH;
     const scale = noteScale * widthScale;
     return Number.isFinite(scale) && scale > 0 ? scale : 1;
-  }
-
-  private effectAnchor(kind: "normal" | "flick" | "slide", texture: Texture): { anchorX: number; anchorY: number } {
-    const originX = kind === "normal"
-      ? this.settings.effectNormalX
-      : kind === "flick"
-        ? this.settings.effectFlickX
-        : this.settings.effectSlideX;
-    const originY = kind === "normal"
-      ? this.settings.effectNormalY
-      : kind === "flick"
-        ? this.settings.effectFlickY
-        : this.settings.effectSlideY;
-    return {
-      anchorX: originX / Math.max(1, texture.width),
-      anchorY: originY / Math.max(1, texture.height)
-    };
   }
 
   private drawHud(stats: RuntimeStats, progress: number): void {
@@ -1151,22 +1521,30 @@ export class PixiRenderer {
     this.hudText!.text = lines.join("\n");
   }
 
-  private laneXAtPercent(lane: number, percent: number): number {
+  private laneXAtPercentRaw(lane: number, percent: number): number {
     const geometry = this.stageGeometry();
-    const p = Math.max(0, Math.min(1, percent));
     const logicalLane = this.settings.mirror ? 6 - lane : lane;
     const centeredLane = logicalLane - 3;
-    return geometry.viewportWidth * 0.5 + centeredLane * this.stageLaneWidth() * p;
+    return geometry.viewportWidth * 0.5 + centeredLane * this.stageLaneWidth() * percent;
+  }
+
+  private laneXAtPercent(lane: number, percent: number): number {
+    const p = Math.max(0, Math.min(1, percent));
+    return this.laneXAtPercentRaw(lane, p);
   }
 
   private textureLaneIndex(lane: number): number {
     return Math.max(1, Math.min(7, Math.round(lane) + 1));
   }
 
-  private laneYAtPercent(percent: number): number {
+  private laneYAtPercentRaw(percent: number): number {
     const geometry = this.stageGeometry();
+    return geometry.stageTop + geometry.stageHeight * percent;
+  }
+
+  private laneYAtPercent(percent: number): number {
     const p = Math.max(0, Math.min(1, percent));
-    return geometry.stageTop + geometry.stageHeight * p;
+    return this.laneYAtPercentRaw(p);
   }
 
   private viewportWidth(): number {

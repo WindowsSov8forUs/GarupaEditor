@@ -8,10 +8,6 @@ export type SeKind =
   | "directional_fl_2"
   | "directional_fl_3";
 
-function isDirectionalNote(note: RuntimeNoteSemantic): boolean {
-  return note.baseType === "directional_flick_left" || note.baseType === "directional_flick_right";
-}
-
 function isFlickHitNote(note: RuntimeNoteSemantic): boolean {
   return note.baseType === "flick" && (note.slideRole === "none" || note.slideRole === "end");
 }
@@ -34,19 +30,6 @@ export function isHiddenNoSeNote(note: RuntimeNoteSemantic): boolean {
 
 export function isGrayEligibleNote(note: RuntimeNoteSemantic): boolean {
   return note.baseType === "single" && note.slideRole === "none";
-}
-
-export function hitEffectKind(note: RuntimeNoteSemantic): "normal" | "flick" | null {
-  if (isHiddenNote(note) || isDirectionalNote(note)) {
-    return null;
-  }
-  if (isFlickHitNote(note)) {
-    return "flick";
-  }
-  if (note.baseType === "single" || note.baseType === "flick" || note.baseType === "skill") {
-    return "normal";
-  }
-  return null;
 }
 
 export function resolveSeKind(note: RuntimeNoteSemantic): SeKind | null {
