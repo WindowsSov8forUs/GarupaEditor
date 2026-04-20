@@ -1,0 +1,27 @@
+{
+  "skin00": [
+    "assets-star-forassetbundle-startapp-ingameskin-judgeskin-skin00-judge.png",
+    "assets-star-forassetbundle-startapp-ingameskin-judgeskin-skin00-judge.asset",
+    "ingameskin-judgeskin-skin00.bundle"
+  ],
+  "skin_april2019": [
+    "assets-star-forassetbundle-asneeded-ingameskin-judgeskin-skinapril2019-judge.png",
+    "assets-star-forassetbundle-asneeded-ingameskin-judgeskin-skinapril2019-judge.asset",
+    "ingameskin-judgeskin-skin_april2019.bundle"
+  ],
+  "skinapril2021": [
+    "assets-star-forassetbundle-asneeded-ingameskin-judgeskin-skinapril2021-judge.png",
+    "assets-star-forassetbundle-asneeded-ingameskin-judgeskin-skinapril2021-judge.asset",
+    "ingameskin-judgeskin-skinapril2021.bundle"
+  ],
+  "skin_bike": [
+    "Judge.png",
+    ".asset",
+    "ingameskin-judgeskin-skin_bike.bundle"
+  ],
+  "habahiro": [
+    "assets-star-forassetbundle-asneeded-ingameskin-judgeskin-habahiro-judge.png",
+    "assets-star-forassetbundle-asneeded-ingameskin-judgeskin-habahiro-judge.asset",
+    "ingameskin-judgeskin-habahiro.bundle"
+  ]
+}

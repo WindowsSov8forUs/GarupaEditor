@@ -3,13 +3,18 @@ import directionalTypeRipMapJson from "./data/directional-type-rip-map.json";
 import directionalSeTypeRipMapJson from "./data/directional-se-type-rip-map.json";
 import bgTypeRipMapJson from "./data/bg-type-rip-map.json";
 import fieldTypeRipMapJson from "./data/field-type-rip-map.json";
+import judgeRipFilesMapJson from "./data/judge-rip-files-map.json";
+import judgeTypeRipMapJson from "./data/judge-type-rip-map.json";
 import habahiroTypeRipMapJson from "./data/habahiro-type-rip-map.json";
 import rhythmTypeRipMapJson from "./data/rhythm-type-rip-map.json";
 import rhythmSeTypeRipMapJson from "./data/rhythm-se-type-rip-map.json";
 import {
+  extractNamedSpritesFromAsset,
   extractNamedSprites,
+  parseAssetJsonOrThrow,
   parseBundleJsonOrThrow,
   parseSpritesJsonOrThrow,
+  type AssetManifest,
   type BundleManifest,
   type SpriteManifest,
 } from "./noteSkinAssetTool";
@@ -22,11 +27,18 @@ const BESTDORI_FIELD_SKIN_ASSET_ROOT = "https://bestdori.com/assets/jp/ingameski
 const BESTDORI_FIELD_SKIN_EXPLORER_ROOT = "https://bestdori.com/api/explorer/jp/assets/ingameskin/fieldskin";
 const BESTDORI_BG_SKIN_ASSET_ROOT = "https://bestdori.com/assets/jp/ingameskin/bgskin";
 const BESTDORI_BG_SKIN_EXPLORER_ROOT = "https://bestdori.com/api/explorer/jp/assets/ingameskin/bgskin";
+const BESTDORI_JUDGE_SKIN_ASSET_ROOT = "https://bestdori.com/assets/jp/ingameskin/judgeskin";
 const RIP_NAME_PATTERN = /^[A-Za-z0-9_-]+$/;
 
 type TypeRipMapEntry = {
   type: string;
   ripName: string;
+};
+
+type JudgeSkinFileEntry = {
+  atlasFile: string;
+  assetFile: string;
+  bundleFile: string;
 };
 
 const RHYTHM_TYPE_RIP_ENTRIES = rhythmTypeRipMapJson as TypeRipMapEntry[];
@@ -36,6 +48,8 @@ const DIRECTIONAL_SE_TYPE_RIP_ENTRIES = directionalSeTypeRipMapJson as TypeRipMa
 const HABAHIRO_TYPE_RIP_ENTRIES = habahiroTypeRipMapJson as TypeRipMapEntry[];
 const BG_TYPE_RIP_ENTRIES = bgTypeRipMapJson as TypeRipMapEntry[];
 const FIELD_TYPE_RIP_ENTRIES = fieldTypeRipMapJson as TypeRipMapEntry[];
+const JUDGE_TYPE_RIP_ENTRIES = judgeTypeRipMapJson as TypeRipMapEntry[];
+const JUDGE_SKIN_FILES_BY_RIP = judgeRipFilesMapJson as Record<string, string[]>;
 
 const DEFAULT_HABAHIRO_TYPE = HABAHIRO_TYPE_RIP_ENTRIES[0]?.type ?? "2026\u611A\u4EBA\u8282";
 const DEFAULT_HABAHIRO_RIP_NAME = HABAHIRO_TYPE_RIP_ENTRIES[0]?.ripName ?? "habahiro";
@@ -60,6 +74,9 @@ export const BG_SKIN_TYPES: readonly string[] = Object.freeze(
 export const FIELD_SKIN_TYPES: readonly string[] = Object.freeze(
   FIELD_TYPE_RIP_ENTRIES.map((entry) => entry.type),
 );
+export const JUDGE_SKIN_TYPES: readonly string[] = Object.freeze(
+  JUDGE_TYPE_RIP_ENTRIES.map((entry) => entry.type),
+);
 export const HABAHIRO_RHYTHM_SKIN_TYPES: readonly string[] = Object.freeze(
   HABAHIRO_TYPE_RIP_ENTRIES.length > 0
     ? HABAHIRO_TYPE_RIP_ENTRIES.map((entry) => entry.type)
@@ -72,6 +89,7 @@ const DEFAULT_RHYTHM_SE_TYPE = RHYTHM_SE_SKIN_TYPES[0] ?? "TYPE1";
 const DEFAULT_DIRECTIONAL_SE_TYPE = DIRECTIONAL_SE_SKIN_TYPES[0] ?? "TYPE1";
 const DEFAULT_BG_TYPE = BG_SKIN_TYPES[0] ?? "TYPE1";
 const DEFAULT_FIELD_TYPE = FIELD_SKIN_TYPES[0] ?? "TYPE1";
+const DEFAULT_JUDGE_TYPE = JUDGE_SKIN_TYPES[0] ?? "TYPE1";
 
 const RHYTHM_TYPE_TO_RIP_NAME: Readonly<Record<string, string>> = Object.freeze(
   Object.fromEntries(
@@ -111,6 +129,11 @@ const HABAHIRO_TYPE_TO_RIP_NAME: Readonly<Record<string, string>> = Object.freez
 const FIELD_TYPE_TO_RIP_NAME: Readonly<Record<string, string>> = Object.freeze(
   Object.fromEntries(
     FIELD_TYPE_RIP_ENTRIES.map((entry) => [entry.type, entry.ripName]),
+  ),
+);
+const JUDGE_TYPE_TO_RIP_NAME: Readonly<Record<string, string>> = Object.freeze(
+  Object.fromEntries(
+    JUDGE_TYPE_RIP_ENTRIES.map((entry) => [entry.type, entry.ripName]),
   ),
 );
 
@@ -270,6 +293,23 @@ export interface BGSkin {
   preview?: BGSkinPreview;
 }
 
+export interface JudgeSkinAssets {
+  judgePerfect: string;
+  judgeGreat: string;
+  judgeGood: string;
+  judgeBad: string;
+  judgeMiss: string;
+  judgeAuto: string;
+  judgeFast: string;
+  judgeSlow: string;
+}
+
+export interface JudgeSkin {
+  asset: AssetManifest;
+  bundle: BundleManifest;
+  assets: JudgeSkinAssets;
+}
+
 export interface SkinSelection {
   rhythmType: string;
   directionalType: string;
@@ -277,12 +317,14 @@ export interface SkinSelection {
   directionalSeType: string;
   bgType: string;
   fieldType: string;
+  judgeType: string;
   rhythmRipName: string;
   directionalRipName: string;
   rhythmSeRipName: string;
   directionalSeRipName: string;
   bgSkinRipName: string;
   fieldSkinRipName: string;
+  judgeSkinRipName: string;
 }
 
 type AnyRhythmAssets = RhythmAssets | HabahiroRhythmAssets;
@@ -379,6 +421,10 @@ interface PreparedBestdoriBgSkinAssets {
   previewPackageFiles?: Record<string, string> | null;
 }
 
+interface PreparedBestdoriJudgeSkinAssets {
+  packageFiles: Record<string, string>;
+}
+
 type DownloadProgressOptions = {
   operationId?: string;
 };
@@ -386,6 +432,7 @@ type DownloadProgressOptions = {
 let runtimeSeAssets: SeSkinAssets | null = null;
 let runtimeFieldSkinAssets: FieldSkinAssets | null = null;
 let runtimeBgSkinAssets: BGSkin | null = null;
+let runtimeJudgeSkinAssets: JudgeSkin | null = null;
 
 export function resolveRhythmRipNameFromType(
   typeValue: string,
@@ -471,6 +518,20 @@ export function resolveFieldSkinRipNameFromType(
   return RIP_NAME_PATTERN.test(trimmed) ? trimmed : null;
 }
 
+export function resolveJudgeSkinRipNameFromType(
+  typeValue: string,
+): string | null {
+  const trimmed = typeValue.trim();
+  if (trimmed.length === 0) {
+    return null;
+  }
+  const mappedRaw = JUDGE_TYPE_TO_RIP_NAME[trimmed];
+  if (typeof mappedRaw === "string" && mappedRaw.length > 0 && RIP_NAME_PATTERN.test(mappedRaw)) {
+    return mappedRaw;
+  }
+  return RIP_NAME_PATTERN.test(trimmed) ? trimmed : null;
+}
+
 export function resolveHabahiroRhythmRipNameFromType(
   typeValue: string,
 ): string | null {
@@ -522,12 +583,14 @@ export const DEFAULT_SKIN_SELECTION: SkinSelection = {
   directionalSeType: DEFAULT_DIRECTIONAL_SE_TYPE,
   bgType: DEFAULT_BG_TYPE,
   fieldType: DEFAULT_FIELD_TYPE,
+  judgeType: DEFAULT_JUDGE_TYPE,
   rhythmRipName: resolveRhythmRipNameFromType(DEFAULT_RHYTHM_TYPE) ?? "skin00",
   directionalRipName: resolveDirectionalRipNameFromType(DEFAULT_DIRECTIONAL_TYPE) ?? "directionalflickskin00",
   rhythmSeRipName: resolveRhythmSeRipNameFromType(DEFAULT_RHYTHM_SE_TYPE) ?? "skin00",
   directionalSeRipName: resolveDirectionalSeRipNameFromType(DEFAULT_DIRECTIONAL_SE_TYPE) ?? "directionalflickskin00",
   bgSkinRipName: resolveBgSkinRipNameFromType(DEFAULT_BG_TYPE) ?? "skin00",
   fieldSkinRipName: resolveFieldSkinRipNameFromType(DEFAULT_FIELD_TYPE) ?? "skin00",
+  judgeSkinRipName: resolveJudgeSkinRipNameFromType(DEFAULT_JUDGE_TYPE) ?? "skin00",
 };
 
 const SKIN_SELECTION_STORAGE_KEY = "chart-editor:bestdori-skin-selection:v1";
@@ -541,6 +604,19 @@ const BG_SKIN_FILE_NAMES = Object.freeze({
   liveBGNormal: "liveBG_normal.png",
   liveBGFever: "liveBG_fever.png",
   previewBG: "previewBG.png",
+});
+const JUDGE_SKIN_FILE_NAMES = Object.freeze({
+  asset: "judge.asset",
+  bundle: "judge.bundle",
+  atlas: "judge.png",
+  judgePerfect: "judge_perfect",
+  judgeGreat: "judge_great",
+  judgeGood: "judge_good",
+  judgeBad: "judge_bad",
+  judgeMiss: "judge_miss",
+  judgeAuto: "judge_auto",
+  judgeFast: "judge_fast",
+  judgeSlow: "judge_slow",
 });
 
 const NOTE_ASSET_LANES: NoteAssetLane[] = ["0", "1", "2", "3", "4", "5", "6"];
@@ -665,6 +741,31 @@ function buildBestdoriFieldSkinAssetBase(ripName: string): string {
 
 function buildBestdoriBgSkinAssetBase(ripName: string): string {
   return `${BESTDORI_BG_SKIN_ASSET_ROOT}/${ripName}_rip`;
+}
+
+function buildBestdoriJudgeSkinAssetBase(ripName: string): string {
+  return `${BESTDORI_JUDGE_SKIN_ASSET_ROOT}/${ripName}_rip`;
+}
+
+function resolveJudgeSkinFileEntryOrThrow(ripName: string): JudgeSkinFileEntry {
+  const rawList = JUDGE_SKIN_FILES_BY_RIP[ripName];
+  if (!Array.isArray(rawList)) {
+    throw new Error(`JudgeSkin filenames not configured for ripName: ${ripName}`);
+  }
+  const fileList = rawList
+    .map((value) => (typeof value === "string" ? value.trim() : ""))
+    .filter((value) => value.length > 0);
+  const assetCandidates = fileList.filter((value) => value.toLowerCase().endsWith(".asset"));
+  const bundleCandidates = fileList.filter((value) => value.toLowerCase().endsWith(".bundle"));
+  const atlasCandidates = fileList.filter((value) => value.toLowerCase().endsWith(".png"));
+  if (assetCandidates.length !== 1 || bundleCandidates.length !== 1 || atlasCandidates.length !== 1) {
+    throw new Error(`JudgeSkin filenames invalid for ripName: ${ripName}`);
+  }
+  return {
+    atlasFile: atlasCandidates[0],
+    assetFile: assetCandidates[0],
+    bundleFile: bundleCandidates[0],
+  };
 }
 
 function buildBestdoriBgSkinPreviewRipName(ripName: string): string {
@@ -827,6 +928,19 @@ function withBgSkinPreview(files: Record<string, string>): BGSkinPreview | undef
   return { previewBG };
 }
 
+function withJudgeSkinAssets(sprites: Partial<Record<string, string>>): JudgeSkinAssets {
+  return {
+    judgePerfect: requireSprite(sprites, JUDGE_SKIN_FILE_NAMES.judgePerfect, "JudgeSkin"),
+    judgeGreat: requireSprite(sprites, JUDGE_SKIN_FILE_NAMES.judgeGreat, "JudgeSkin"),
+    judgeGood: requireSprite(sprites, JUDGE_SKIN_FILE_NAMES.judgeGood, "JudgeSkin"),
+    judgeBad: requireSprite(sprites, JUDGE_SKIN_FILE_NAMES.judgeBad, "JudgeSkin"),
+    judgeMiss: requireSprite(sprites, JUDGE_SKIN_FILE_NAMES.judgeMiss, "JudgeSkin"),
+    judgeAuto: requireSprite(sprites, JUDGE_SKIN_FILE_NAMES.judgeAuto, "JudgeSkin"),
+    judgeFast: requireSprite(sprites, JUDGE_SKIN_FILE_NAMES.judgeFast, "JudgeSkin"),
+    judgeSlow: requireSprite(sprites, JUDGE_SKIN_FILE_NAMES.judgeSlow, "JudgeSkin"),
+  };
+}
+
 function resolveMimeTypeByFileName(fileName: string): string | undefined {
   const normalized = fileName.trim().toLowerCase();
   if (normalized.endsWith(".png")) {
@@ -852,7 +966,12 @@ function resolveMimeTypeByFileName(fileName: string): string | undefined {
 
 async function loadPreparedBinaryFilesAsDataUrlMap(
   fileMap: Record<string, string>,
-  commandName: "read_skin_binary_file" | "read_sound_binary_file" | "read_field_skin_binary_file" | "read_bg_skin_binary_file",
+  commandName:
+    | "read_skin_binary_file"
+    | "read_sound_binary_file"
+    | "read_field_skin_binary_file"
+    | "read_bg_skin_binary_file"
+    | "read_judge_skin_binary_file",
 ): Promise<Record<string, string>> {
   const entries = Object.entries(fileMap);
   const loaded = await Promise.all(
@@ -1001,6 +1120,28 @@ async function downloadWebBgSkinPreviewFiles(previewRipName: string): Promise<Re
   };
 }
 
+async function downloadWebJudgeSkinSourceFiles(
+  ripName: string,
+): Promise<{
+  assetText: string;
+  bundleText: string;
+  atlasDataUrl: string;
+}> {
+  const fileEntry = resolveJudgeSkinFileEntryOrThrow(ripName);
+
+  const base = buildBestdoriJudgeSkinAssetBase(ripName);
+  const [assetText, bundleText, atlasBlob] = await Promise.all([
+    fetchTextOrThrow(`${base}/${fileEntry.assetFile}`),
+    fetchTextOrThrow(`${base}/${fileEntry.bundleFile}`),
+    fetchBlobOrThrow(`${base}/${fileEntry.atlasFile}`),
+  ]);
+  return {
+    assetText,
+    bundleText,
+    atlasDataUrl: await blobToDataUrl(atlasBlob),
+  };
+}
+
 export function setRuntimeSeAssets(value: SeSkinAssets | null): void {
   runtimeSeAssets = value;
 }
@@ -1023,6 +1164,14 @@ export function setRuntimeBgSkinAssets(value: BGSkin | null): void {
 
 export function getRuntimeBgSkinAssets(): BGSkin | null {
   return runtimeBgSkinAssets;
+}
+
+export function setRuntimeJudgeSkinAssets(value: JudgeSkin | null): void {
+  runtimeJudgeSkinAssets = value;
+}
+
+export function getRuntimeJudgeSkinAssets(): JudgeSkin | null {
+  return runtimeJudgeSkinAssets;
 }
 
 export async function ensureCommonTapSkillSeAsset(options?: DownloadProgressOptions): Promise<string> {
@@ -1286,12 +1435,14 @@ export function readSkinSelectionFromStorage(): SkinSelection {
       directionalSeType: parsed.directionalSeType,
       bgType: parsed.bgType,
       fieldType: parsed.fieldType,
+      judgeType: parsed.judgeType,
       rhythmRipName: parsed.rhythmRipName,
       directionalRipName: parsed.directionalRipName,
       rhythmSeRipName: parsed.rhythmSeRipName,
       directionalSeRipName: parsed.directionalSeRipName,
       bgSkinRipName: parsed.bgSkinRipName,
       fieldSkinRipName: parsed.fieldSkinRipName,
+      judgeSkinRipName: parsed.judgeSkinRipName,
     });
   } catch {
     return DEFAULT_SKIN_SELECTION;
@@ -1313,12 +1464,14 @@ export function normalizeSkinSelection(
     directionalSeType: unknown;
     bgType: unknown;
     fieldType: unknown;
+    judgeType: unknown;
     rhythmRipName: unknown;
     directionalRipName: unknown;
     rhythmSeRipName: unknown;
     directionalSeRipName: unknown;
     bgSkinRipName: unknown;
     fieldSkinRipName: unknown;
+    judgeSkinRipName: unknown;
   }>,
 ): SkinSelection {
   const rhythmType =
@@ -1345,6 +1498,10 @@ export function normalizeSkinSelection(
     typeof input.fieldType === "string" && input.fieldType.trim().length > 0
       ? input.fieldType.trim()
       : DEFAULT_SKIN_SELECTION.fieldType;
+  const judgeType =
+    typeof input.judgeType === "string" && input.judgeType.trim().length > 0
+      ? input.judgeType.trim()
+      : DEFAULT_SKIN_SELECTION.judgeType;
 
   const rhythmFallbackRip =
     resolveHabahiroRhythmRipNameFromType(rhythmType)
@@ -1360,6 +1517,8 @@ export function normalizeSkinSelection(
     resolveBgSkinRipNameFromType(bgType) ?? DEFAULT_SKIN_SELECTION.bgSkinRipName;
   const fieldSkinFallbackRip =
     resolveFieldSkinRipNameFromType(fieldType) ?? DEFAULT_SKIN_SELECTION.fieldSkinRipName;
+  const judgeSkinFallbackRip =
+    resolveJudgeSkinRipNameFromType(judgeType) ?? DEFAULT_SKIN_SELECTION.judgeSkinRipName;
 
   const rhythmRipName =
     typeof input.rhythmRipName === "string" &&
@@ -1397,6 +1556,12 @@ export function normalizeSkinSelection(
       RIP_NAME_PATTERN.test(input.fieldSkinRipName.trim())
       ? input.fieldSkinRipName.trim()
       : fieldSkinFallbackRip;
+  const judgeSkinRipName =
+    typeof input.judgeSkinRipName === "string" &&
+      input.judgeSkinRipName.trim().length > 0 &&
+      RIP_NAME_PATTERN.test(input.judgeSkinRipName.trim())
+      ? input.judgeSkinRipName.trim()
+      : judgeSkinFallbackRip;
 
   return {
     rhythmType,
@@ -1405,12 +1570,14 @@ export function normalizeSkinSelection(
     directionalSeType,
     bgType,
     fieldType,
+    judgeType,
     rhythmRipName,
     directionalRipName,
     rhythmSeRipName,
     directionalSeRipName,
     bgSkinRipName,
     fieldSkinRipName,
+    judgeSkinRipName,
   };
 }
 
@@ -1859,5 +2026,59 @@ export async function downloadBestdoriBgSkinAssets(
   return {
     assets: withBgSkinAssets(mainFiles),
     ...(preview ? { preview } : {}),
+  };
+}
+
+export async function downloadBestdoriJudgeSkinAssets(
+  ripName: string,
+  options?: DownloadProgressOptions,
+): Promise<JudgeSkin> {
+  const normalizedRipName = ripName.trim();
+  if (!normalizedRipName || !RIP_NAME_PATTERN.test(normalizedRipName)) {
+    throw new Error("Invalid judgeskin ripName, only [a-zA-Z0-9_-] is allowed.");
+  }
+
+  let assetRaw: string;
+  let bundleRaw: string;
+  let atlasDataUrl: string;
+  const fileEntry = resolveJudgeSkinFileEntryOrThrow(normalizedRipName);
+
+  if (isTauriEnv()) {
+    const prepared = await invoke<PreparedBestdoriJudgeSkinAssets>("prepare_bestdori_judge_skin_assets", {
+      ripName: normalizedRipName,
+      taskId: options?.operationId ?? null,
+    });
+    const packageFiles = normalizeLowercaseFileMap(prepared.packageFiles);
+    const assetPath = resolvePreparedFilePath(packageFiles, fileEntry.assetFile);
+    const bundlePath = resolvePreparedFilePath(packageFiles, fileEntry.bundleFile);
+    assetRaw = await invoke<string>("read_judge_skin_text_file", { path: assetPath });
+    bundleRaw = await invoke<string>("read_judge_skin_text_file", { path: bundlePath });
+
+    const fileDataUrls = await loadPreparedBinaryFilesAsDataUrlMap(packageFiles, "read_judge_skin_binary_file");
+    atlasDataUrl = resolvePreparedFilePath(fileDataUrls, fileEntry.atlasFile);
+  } else {
+    const sourceFiles = await downloadWebJudgeSkinSourceFiles(normalizedRipName);
+    assetRaw = sourceFiles.assetText;
+    bundleRaw = sourceFiles.bundleText;
+    atlasDataUrl = sourceFiles.atlasDataUrl;
+  }
+
+  const assetManifest = parseAssetJsonOrThrow(assetRaw, `${normalizedRipName}:judge.asset`);
+  const bundleManifest = parseBundleJsonOrThrow(bundleRaw, `${normalizedRipName}:judge.bundle`);
+  const atlasKey = fileEntry.atlasFile.toLowerCase();
+  const sprites = await extractNamedSpritesFromAsset({
+    filePathByName: {
+      [atlasKey]: atlasDataUrl,
+    },
+    asset: assetManifest,
+    bundle: bundleManifest,
+    atlasFileName: atlasKey,
+    coordinateOrigin: "top-left",
+  });
+
+  return {
+    asset: assetManifest,
+    bundle: bundleManifest,
+    assets: withJudgeSkinAssets(sprites),
   };
 }

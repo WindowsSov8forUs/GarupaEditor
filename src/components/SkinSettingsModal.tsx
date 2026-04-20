@@ -14,12 +14,14 @@ type SkinSettingsModalProps = {
   onDirectionalSeTypeChange: (value: string) => void;
   onBgTypeChange: (value: string) => void;
   onFieldTypeChange: (value: string) => void;
+  onJudgeTypeChange: (value: string) => void;
   rhythmSkinTypes: readonly string[];
   directionalSkinTypes: readonly string[];
   rhythmSeSkinTypes: readonly string[];
   directionalSeSkinTypes: readonly string[];
   bgSkinTypes: readonly string[];
   fieldSkinTypes: readonly string[];
+  judgeSkinTypes: readonly string[];
   formatTypeLabel: (type: string) => string;
   isSkinApplying: boolean;
   onApplySkinSelection: () => void;
@@ -49,12 +51,14 @@ export function SkinSettingsModal({
   onDirectionalSeTypeChange,
   onBgTypeChange,
   onFieldTypeChange,
+  onJudgeTypeChange,
   rhythmSkinTypes,
   directionalSkinTypes,
   rhythmSeSkinTypes,
   directionalSeSkinTypes,
   bgSkinTypes,
   fieldSkinTypes,
+  judgeSkinTypes,
   formatTypeLabel,
   isSkinApplying,
   onApplySkinSelection,
@@ -71,6 +75,7 @@ export function SkinSettingsModal({
   const directionalSeIndex = resolveTypeIndex(pendingSkinSelection.directionalSeType, directionalSeSkinTypes);
   const bgIndex = resolveTypeIndex(pendingSkinSelection.bgType, bgSkinTypes);
   const fieldIndex = resolveTypeIndex(pendingSkinSelection.fieldType, fieldSkinTypes);
+  const judgeIndex = resolveTypeIndex(pendingSkinSelection.judgeType, judgeSkinTypes);
 
   const rhythmValue = rhythmSkinTypes[rhythmIndex] ?? pendingSkinSelection.rhythmType;
   const directionalValue = directionalSkinTypes[directionalIndex] ?? pendingSkinSelection.directionalType;
@@ -78,6 +83,7 @@ export function SkinSettingsModal({
   const directionalSeValue = directionalSeSkinTypes[directionalSeIndex] ?? pendingSkinSelection.directionalSeType;
   const bgValue = bgSkinTypes[bgIndex] ?? pendingSkinSelection.bgType;
   const fieldValue = fieldSkinTypes[fieldIndex] ?? pendingSkinSelection.fieldType;
+  const judgeValue = judgeSkinTypes[judgeIndex] ?? pendingSkinSelection.judgeType;
   const transitionClassName = phase === "enter" ? "is-enter" : "is-exit";
 
   return (
@@ -327,6 +333,45 @@ export function SkinSettingsModal({
                     const nextType = bgSkinTypes[bgIndex + 1];
                     if (nextType) {
                       onBgTypeChange(nextType);
+                    }
+                  }}
+                >
+                  <StepperIcon type="right" />
+                </button>
+              </div>
+            </div>
+
+            <div className="setting-block">
+              <span className="setting-title-strip">判定样式</span>
+              <div className="inline-stepper">
+                <button
+                  type="button"
+                  className="stepper-btn"
+                  disabled={judgeIndex <= 0}
+                  onClick={() => {
+                    const nextType = judgeSkinTypes[judgeIndex - 1];
+                    if (nextType) {
+                      onJudgeTypeChange(nextType);
+                    }
+                  }}
+                >
+                  <StepperIcon type="left" />
+                </button>
+                <input
+                  type="text"
+                  className="stepper-input"
+                  value={formatTypeLabel(judgeValue)}
+                  readOnly
+                  tabIndex={-1}
+                />
+                <button
+                  type="button"
+                  className="stepper-btn"
+                  disabled={judgeIndex >= judgeSkinTypes.length - 1}
+                  onClick={() => {
+                    const nextType = judgeSkinTypes[judgeIndex + 1];
+                    if (nextType) {
+                      onJudgeTypeChange(nextType);
                     }
                   }}
                 >

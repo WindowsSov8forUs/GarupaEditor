@@ -21,9 +21,11 @@ import {
   ensureCommonTapSkillSeAsset,
   setRuntimeBgSkinAssets,
   setRuntimeFieldSkinAssets,
+  setRuntimeJudgeSkinAssets,
   setRuntimeSeAssets,
   type BGSkin,
   type FieldSkinAssets,
+  type JudgeSkin,
   type RhythmSeSkinAssets,
   type DirectionalSeSkinAssets,
   type DirectionalSkinAssets,
@@ -173,6 +175,7 @@ export function useEditorIoAndShortcuts(params: any) {
     downloadBestdoriDirectionalSkinAssets,
     downloadBestdoriBgSkinAssets,
     downloadBestdoriFieldSkinAssets,
+    downloadBestdoriJudgeSkinAssets,
     downloadBestdoriRhythmSeSkinAssets,
     downloadBestdoriDirectionalSeSkinAssets,
     setSkinSelection,
@@ -201,6 +204,7 @@ export function useEditorIoAndShortcuts(params: any) {
   const directionalSeSkinAssetsRef = useRef<DirectionalSeSkinAssets | null>(null);
   const bgSkinAssetsRef = useRef<BGSkin | null>(null);
   const fieldSkinAssetsRef = useRef<FieldSkinAssets | null>(null);
+  const judgeSkinAssetsRef = useRef<JudgeSkin | null>(null);
   const commonTapSkillSeRef = useRef<string>("");
 
   const toBeatValue = (value: unknown): number => Number(toFinite(value, 0).toFixed(6));
@@ -1492,12 +1496,15 @@ export function useEditorIoAndShortcuts(params: any) {
     const shouldReloadFieldSkin =
       fieldSkinAssetsRef.current === null ||
       normalized.fieldSkinRipName !== skinSelection.fieldSkinRipName;
+    const shouldReloadJudgeSkin =
+      judgeSkinAssetsRef.current === null ||
+      normalized.judgeSkinRipName !== skinSelection.judgeSkinRipName;
     setStatusMessage(
-      `正在加载皮肤：节奏图示 ${formatTypeLabel(normalized.rhythmType)}，方向滑键 ${formatTypeLabel(normalized.directionalType)}，节奏图示SE ${formatTypeLabel(normalized.rhythmSeType)}，方向滑键SE ${formatTypeLabel(normalized.directionalSeType)}，背景 ${formatTypeLabel(normalized.bgType)}，轨道样式 ${formatTypeLabel(normalized.fieldType)}。`,
+      `正在加载皮肤：节奏图示 ${formatTypeLabel(normalized.rhythmType)}，方向滑键 ${formatTypeLabel(normalized.directionalType)}，节奏图示SE ${formatTypeLabel(normalized.rhythmSeType)}，方向滑键SE ${formatTypeLabel(normalized.directionalSeType)}，背景 ${formatTypeLabel(normalized.bgType)}，轨道样式 ${formatTypeLabel(normalized.fieldType)}，判定样式 ${formatTypeLabel(normalized.judgeType)}。`,
     );
 
     try {
-      const [nextRhythm, nextDirectional, nextRhythmSe, nextDirectionalSe, nextBgSkin, nextFieldSkin, commonTapSkillSe] = await Promise.all([
+      const [nextRhythm, nextDirectional, nextRhythmSe, nextDirectionalSe, nextBgSkin, nextFieldSkin, nextJudgeSkin, commonTapSkillSe] = await Promise.all([
         shouldReloadRhythm
           ? downloadBestdoriRhythmSkinAssets(normalized, { operationId: downloadOperationId })
           : Promise.resolve(rhythmSkinAssetsRef.current),
@@ -1516,6 +1523,9 @@ export function useEditorIoAndShortcuts(params: any) {
         shouldReloadFieldSkin
           ? downloadBestdoriFieldSkinAssets(normalized.fieldSkinRipName, { operationId: downloadOperationId })
           : Promise.resolve(fieldSkinAssetsRef.current),
+        shouldReloadJudgeSkin
+          ? downloadBestdoriJudgeSkinAssets(normalized.judgeSkinRipName, { operationId: downloadOperationId })
+          : Promise.resolve(judgeSkinAssetsRef.current),
         commonTapSkillSeRef.current
           ? Promise.resolve(commonTapSkillSeRef.current)
           : ensureCommonTapSkillSeAsset({ operationId: downloadOperationId }),
@@ -1524,7 +1534,7 @@ export function useEditorIoAndShortcuts(params: any) {
         return;
       }
 
-      if (!nextRhythm || !nextDirectional || !nextRhythmSe || !nextDirectionalSe || !nextBgSkin || !nextFieldSkin || !commonTapSkillSe) {
+      if (!nextRhythm || !nextDirectional || !nextRhythmSe || !nextDirectionalSe || !nextBgSkin || !nextFieldSkin || !nextJudgeSkin || !commonTapSkillSe) {
         throw new Error("Skin assets incomplete after split loading.");
       }
 
@@ -1534,9 +1544,11 @@ export function useEditorIoAndShortcuts(params: any) {
       directionalSeSkinAssetsRef.current = nextDirectionalSe;
       bgSkinAssetsRef.current = nextBgSkin;
       fieldSkinAssetsRef.current = nextFieldSkin;
+      judgeSkinAssetsRef.current = nextJudgeSkin;
       commonTapSkillSeRef.current = commonTapSkillSe;
       setRuntimeBgSkinAssets(nextBgSkin);
       setRuntimeFieldSkinAssets(nextFieldSkin);
+      setRuntimeJudgeSkinAssets(nextJudgeSkin);
       setRuntimeSeAssets({
         rhythm: nextRhythmSe,
         directional: nextDirectionalSe,
@@ -1554,7 +1566,7 @@ export function useEditorIoAndShortcuts(params: any) {
 
       if (announceSuccess) {
         setStatusMessage(
-          `皮肤已生效：节奏图示 ${formatTypeLabel(normalized.rhythmType)}，方向滑键 ${formatTypeLabel(normalized.directionalType)}，节奏图示SE ${formatTypeLabel(normalized.rhythmSeType)}，方向滑键SE ${formatTypeLabel(normalized.directionalSeType)}，背景 ${formatTypeLabel(normalized.bgType)}，轨道样式 ${formatTypeLabel(normalized.fieldType)}。`,
+          `皮肤已生效：节奏图示 ${formatTypeLabel(normalized.rhythmType)}，方向滑键 ${formatTypeLabel(normalized.directionalType)}，节奏图示SE ${formatTypeLabel(normalized.rhythmSeType)}，方向滑键SE ${formatTypeLabel(normalized.directionalSeType)}，背景 ${formatTypeLabel(normalized.bgType)}，轨道样式 ${formatTypeLabel(normalized.fieldType)}，判定样式 ${formatTypeLabel(normalized.judgeType)}。`,
         );
       }
     } catch (error) {

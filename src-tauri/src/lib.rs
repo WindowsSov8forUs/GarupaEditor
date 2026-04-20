@@ -5,6 +5,7 @@ use std::fs;
 use std::io::Write;
 use std::net::{IpAddr, Ipv4Addr};
 use std::path::{Component, Path, PathBuf};
+use std::sync::OnceLock;
 use std::time::Duration;
 use tauri::{Emitter, Manager};
 
@@ -14,6 +15,7 @@ const BESTDORI_FIELD_SKIN_ASSET_ROOT: &str = "https://bestdori.com/assets/jp/ing
 const BESTDORI_FIELD_SKIN_EXPLORER_ROOT: &str = "https://bestdori.com/api/explorer/jp/assets/ingameskin/fieldskin";
 const BESTDORI_BG_SKIN_ASSET_ROOT: &str = "https://bestdori.com/assets/jp/ingameskin/bgskin";
 const BESTDORI_BG_SKIN_EXPLORER_ROOT: &str = "https://bestdori.com/api/explorer/jp/assets/ingameskin/bgskin";
+const BESTDORI_JUDGE_SKIN_ASSET_ROOT: &str = "https://bestdori.com/assets/jp/ingameskin/judgeskin";
 const BG_SKIN_LIVE_BG_FILE_NAME: &str = "liveBG.png";
 const BG_SKIN_LIVE_BG_NORMAL_FILE_NAME: &str = "liveBG_normal.png";
 const BG_SKIN_LIVE_BG_FEVER_FILE_NAME: &str = "liveBG_fever.png";
@@ -263,6 +265,18 @@ fn resolve_bg_skin_assets_root(app: &tauri::AppHandle) -> Result<PathBuf, String
     Ok(directory)
 }
 
+fn resolve_judge_skin_assets_root(app: &tauri::AppHandle) -> Result<PathBuf, String> {
+    let mut directory = app
+        .path()
+        .app_local_data_dir()
+        .map_err(|error| format!("resolve app local data dir failed: {error}"))?;
+    directory.push("assets");
+    directory.push("game");
+    directory.push("judgeskin");
+    fs::create_dir_all(&directory).map_err(|error| format!("create judge skin assets dir failed: {error}"))?;
+    Ok(directory)
+}
+
 fn resolve_sound_assets_root(app: &tauri::AppHandle) -> Result<PathBuf, String> {
     let mut directory = app
         .path()
@@ -312,6 +326,83 @@ fn normalize_rip_name(value: &str, label: &str) -> Result<String, String> {
         ));
     }
     Ok(trimmed.to_string())
+}
+
+struct JudgeSkinFileEntry {
+    atlas_file: String,
+    asset_file: String,
+    bundle_file: String,
+}
+
+static JUDGE_SKIN_FILE_MAP: OnceLock<Result<HashMap<String, Vec<String>>, String>> = OnceLock::new();
+
+fn load_judge_skin_file_map() -> Result<&'static HashMap<String, Vec<String>>, String> {
+    let parsed = JUDGE_SKIN_FILE_MAP.get_or_init(|| {
+        let raw = include_str!("../../src/data/judge-rip-files-map.json");
+        let raw = raw.trim_start_matches('\u{feff}');
+        serde_json::from_str(raw)
+            .map_err(|error| format!("parse judge-rip-files-map.json failed: {error}"))
+    });
+    match parsed {
+        Ok(map) => Ok(map),
+        Err(error) => Err(error.clone()),
+    }
+}
+
+fn resolve_judge_skin_file_entry(rip_name: &str) -> Result<Option<JudgeSkinFileEntry>, String> {
+    let map = load_judge_skin_file_map()?;
+    let Some(raw_list) = map.get(rip_name) else {
+        return Ok(None);
+    };
+
+    let mut atlas_file: Option<String> = None;
+    let mut asset_file: Option<String> = None;
+    let mut bundle_file: Option<String> = None;
+    for raw_name in raw_list {
+        let name = raw_name.trim();
+        if name.is_empty() {
+            continue;
+        }
+        let lower = name.to_ascii_lowercase();
+        if lower.ends_with(".asset") {
+            if asset_file.is_some() {
+                return Err(format!(
+                    "JudgeSkin filenames invalid for rip_name `{rip_name}`: duplicated .asset entry"
+                ));
+            }
+            asset_file = Some(name.to_string());
+            continue;
+        }
+        if lower.ends_with(".bundle") {
+            if bundle_file.is_some() {
+                return Err(format!(
+                    "JudgeSkin filenames invalid for rip_name `{rip_name}`: duplicated .bundle entry"
+                ));
+            }
+            bundle_file = Some(name.to_string());
+            continue;
+        }
+        if lower.ends_with(".png") {
+            if atlas_file.is_some() {
+                return Err(format!(
+                    "JudgeSkin filenames invalid for rip_name `{rip_name}`: duplicated .png entry"
+                ));
+            }
+            atlas_file = Some(name.to_string());
+            continue;
+        }
+    }
+
+    match (atlas_file, asset_file, bundle_file) {
+        (Some(atlas_file), Some(asset_file), Some(bundle_file)) => Ok(Some(JudgeSkinFileEntry {
+            atlas_file,
+            asset_file,
+            bundle_file,
+        })),
+        _ => Err(format!(
+            "JudgeSkin filenames invalid for rip_name `{rip_name}`: need exactly one .png/.asset/.bundle"
+        )),
+    }
 }
 
 fn ensure_parent_directory(path: &Path) -> Result<(), String> {
@@ -742,6 +833,80 @@ async fn ensure_bg_skin_package_downloaded(
     })
 }
 
+async fn ensure_judge_skin_package_downloaded(
+    app: &tauri::AppHandle,
+    root: &Path,
+    rip_name: &str,
+    client: &reqwest::Client,
+    operation_id: Option<&str>,
+    scope_id: &str,
+    scope_label: &str,
+) -> Result<DownloadedJudgeSkinPackage, String> {
+    let file_entry = resolve_judge_skin_file_entry(rip_name)?
+        .ok_or_else(|| format!("JudgeSkin filenames not configured for rip_name: {rip_name}"))?;
+    let package_dir = root.join(rip_name);
+    fs::create_dir_all(&package_dir).map_err(|error| format!("create judgeskin package dir failed: {error}"))?;
+
+    let selected_filenames = vec![
+        file_entry.asset_file,
+        file_entry.atlas_file,
+        file_entry.bundle_file,
+    ];
+    let manifest_file_name = format!("{rip_name}.json");
+    let manifest_path = package_dir.join(&manifest_file_name);
+    let manifest_bytes = serde_json::to_vec(&selected_filenames)
+        .map_err(|error| format!("serialize judgeskin manifest failed: {error}"))?;
+    fs::write(&manifest_path, manifest_bytes)
+        .map_err(|error| format!("write judgeskin manifest failed: {error}"))?;
+
+    let mut progress = operation_id.map(|id| {
+        DownloadScopeProgress::new(
+            app.clone(),
+            id.to_string(),
+            scope_id.to_string(),
+            scope_label.to_string(),
+            selected_filenames.len(),
+        )
+    });
+    if let Some(progress) = progress.as_ref() {
+        progress.report_scope_message(format!("JudgeSkin 使用内置文件表，共 {} 项。", selected_filenames.len()));
+    }
+
+    let mut downloaded_filenames: Vec<String> = Vec::new();
+    for (index, filename) in selected_filenames.iter().enumerate() {
+        let relative = normalize_asset_relative_path(&filename)?;
+        let target_path = package_dir.join(&relative);
+        let file_url = format!("{BESTDORI_JUDGE_SKIN_ASSET_ROOT}/{}_rip/{}", rip_name, filename);
+        if let Some(progress_scope) = progress.as_mut() {
+            if let Err(error) = ensure_file_from_url(
+                &target_path,
+                &file_url,
+                client,
+                Some(progress_scope),
+                filename,
+                index + 1,
+            )
+            .await
+            {
+                progress_scope.report_scope_error(error.clone());
+                return Err(error);
+            }
+        } else {
+            ensure_file_from_url(&target_path, &file_url, client, None, filename, index + 1).await?;
+        }
+        downloaded_filenames.push(filename.clone());
+    }
+
+    if let Some(progress) = progress.as_ref() {
+        progress.report_scope_complete();
+    }
+
+    Ok(DownloadedJudgeSkinPackage {
+        directory: package_dir,
+        manifest_filenames: downloaded_filenames,
+    })
+}
+
 async fn ensure_tapseskin_package_downloaded(
     app: &tauri::AppHandle,
     root: &Path,
@@ -937,6 +1102,12 @@ struct PreparedBestdoriBgSkinAssets {
     preview_package_files: Option<HashMap<String, String>>,
 }
 
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct PreparedBestdoriJudgeSkinAssets {
+    package_files: HashMap<String, String>,
+}
+
 struct DownloadedNoteskinPackage {
     directory: PathBuf,
     manifest_filenames: Vec<String>,
@@ -953,6 +1124,11 @@ struct DownloadedFieldSkinPackage {
 }
 
 struct DownloadedBgSkinPackage {
+    directory: PathBuf,
+    manifest_filenames: Vec<String>,
+}
+
+struct DownloadedJudgeSkinPackage {
     directory: PathBuf,
     manifest_filenames: Vec<String>,
 }
@@ -1206,6 +1382,30 @@ async fn prepare_bestdori_bg_skin_assets(
 }
 
 #[tauri::command]
+async fn prepare_bestdori_judge_skin_assets(
+    app: tauri::AppHandle,
+    rip_name: String,
+    task_id: Option<String>,
+) -> Result<PreparedBestdoriJudgeSkinAssets, String> {
+    let rip_name = normalize_rip_name(&rip_name, "rip_name")?;
+    let root = resolve_judge_skin_assets_root(&app)?;
+    let client = build_bestdori_http_client()?;
+    let package = ensure_judge_skin_package_downloaded(
+        &app,
+        &root,
+        &rip_name,
+        &client,
+        task_id.as_deref(),
+        &format!("judgeskin:{rip_name}"),
+        &format!("判定资源：{rip_name}"),
+    )
+    .await?;
+    Ok(PreparedBestdoriJudgeSkinAssets {
+        package_files: build_package_file_map(&package.directory, &package.manifest_filenames, &rip_name)?,
+    })
+}
+
+#[tauri::command]
 async fn ensure_common_sound_asset(app: tauri::AppHandle, task_id: Option<String>) -> Result<String, String> {
     let root = resolve_sound_assets_root(&app)?;
     let common_dir = root.join("common");
@@ -1297,6 +1497,31 @@ fn read_bg_skin_binary_file(app: tauri::AppHandle, path: String) -> Result<Strin
     let canonical_target = canonicalize_existing_path(&target)?;
     if !is_path_within(&canonical_root, &canonical_target) {
         return Err("path is outside bgskin assets directory".to_string());
+    }
+    let bytes = fs::read(&canonical_target).map_err(|error| format!("read binary file failed: {error}"))?;
+    Ok(encode_base64(bytes))
+}
+
+#[tauri::command]
+fn read_judge_skin_text_file(app: tauri::AppHandle, path: String) -> Result<String, String> {
+    let root = resolve_judge_skin_assets_root(&app)?;
+    let target = PathBuf::from(path);
+    let canonical_root = canonicalize_existing_path(&root)?;
+    let canonical_target = canonicalize_existing_path(&target)?;
+    if !is_path_within(&canonical_root, &canonical_target) {
+        return Err("path is outside judgeskin assets directory".to_string());
+    }
+    fs::read_to_string(&canonical_target).map_err(|error| format!("read text file failed: {error}"))
+}
+
+#[tauri::command]
+fn read_judge_skin_binary_file(app: tauri::AppHandle, path: String) -> Result<String, String> {
+    let root = resolve_judge_skin_assets_root(&app)?;
+    let target = PathBuf::from(path);
+    let canonical_root = canonicalize_existing_path(&root)?;
+    let canonical_target = canonicalize_existing_path(&target)?;
+    if !is_path_within(&canonical_root, &canonical_target) {
+        return Err("path is outside judgeskin assets directory".to_string());
     }
     let bytes = fs::read(&canonical_target).map_err(|error| format!("read binary file failed: {error}"))?;
     Ok(encode_base64(bytes))
@@ -1470,11 +1695,14 @@ pub fn run() {
             prepare_bestdori_tapseskin_assets,
             prepare_bestdori_field_skin_assets,
             prepare_bestdori_bg_skin_assets,
+            prepare_bestdori_judge_skin_assets,
             ensure_common_sound_asset,
             read_skin_text_file,
             read_skin_binary_file,
             read_field_skin_binary_file,
             read_bg_skin_binary_file,
+            read_judge_skin_text_file,
+            read_judge_skin_binary_file,
             read_sound_binary_file,
             save_editor_session_cache,
             load_editor_session_cache,

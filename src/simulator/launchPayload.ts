@@ -1,4 +1,4 @@
-import type { BGSkin, FieldSkinAssets, SeSkinAssets, SkinAssets } from "../skinLoader";
+import type { BGSkin, FieldSkinAssets, JudgeSkin, SeSkinAssets, SkinAssets } from "../skinLoader";
 
 export const SIMULATOR_WINDOW_READY_EVENT = "simulator:ready";
 export const SIMULATOR_WINDOW_PAYLOAD_EVENT = "simulator:payload";
@@ -33,6 +33,7 @@ export type SimulatorSkinPayload = {
   noteSkin: SkinAssets;
   fieldSkin?: FieldSkinAssets | null;
   bgSkin?: BGSkin | null;
+  judgeSkin?: JudgeSkin | null;
 };
 
 export type SimulatorChartNoteType =

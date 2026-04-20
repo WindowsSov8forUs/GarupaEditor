@@ -62,6 +62,7 @@ import {
 import {
   BG_SKIN_TYPES,
   FIELD_SKIN_TYPES,
+  JUDGE_SKIN_TYPES,
   DIRECTIONAL_SKIN_TYPES,
   DIRECTIONAL_SE_SKIN_TYPES,
   HABAHIRO_RHYTHM_RIP_NAME,
@@ -71,6 +72,7 @@ import {
   RHYTHM_SE_SKIN_TYPES,
   downloadBestdoriBgSkinAssets,
   downloadBestdoriFieldSkinAssets,
+  downloadBestdoriJudgeSkinAssets,
   downloadBestdoriDirectionalSeSkinAssets,
   downloadBestdoriDirectionalSkinAssets,
   downloadBestdoriRhythmSeSkinAssets,
@@ -78,6 +80,7 @@ import {
   formatTypeLabel,
   getRuntimeBgSkinAssets,
   getRuntimeFieldSkinAssets,
+  getRuntimeJudgeSkinAssets,
   getRuntimeSeAssets,
   isHabahiroRhythmRipName,
   normalizeSkinSelection,
@@ -88,6 +91,7 @@ import {
   resolveDirectionalSeRipNameFromType,
   resolveDirectionalRipNameFromType,
   resolveFieldSkinRipNameFromType,
+  resolveJudgeSkinRipNameFromType,
   resolveRhythmSeRipNameFromType,
   resolveRhythmRipNameFromType,
   writeSkinSelectionToStorage,
@@ -2506,6 +2510,7 @@ function ChartEditorController() {
     downloadBestdoriDirectionalSkinAssets,
     downloadBestdoriBgSkinAssets,
     downloadBestdoriFieldSkinAssets,
+    downloadBestdoriJudgeSkinAssets,
     downloadBestdoriRhythmSeSkinAssets,
     downloadBestdoriDirectionalSeSkinAssets,
     setSkinSelection,
@@ -4598,6 +4603,7 @@ function ChartEditorController() {
       const runtimeSe = getRuntimeSeAssets();
       const runtimeFieldSkin = getRuntimeFieldSkinAssets();
       const runtimeBgSkin = getRuntimeBgSkinAssets();
+      const runtimeJudgeSkin = getRuntimeJudgeSkinAssets();
       const audioPayload = (bgmDataUrl || runtimeSe)
         ? {
             bgmDataUrl: bgmDataUrl ?? null,
@@ -4649,6 +4655,7 @@ function ChartEditorController() {
           noteSkin: skinAssets,
           fieldSkin: runtimeFieldSkin ?? null,
           bgSkin: runtimeBgSkin ?? null,
+          judgeSkin: runtimeJudgeSkin ?? null,
         },
         chartData: {
           baseBpm: metadata.bpm,
@@ -5014,6 +5021,7 @@ function ChartEditorController() {
         resolveDirectionalSeRipNameFromType,
         resolveBgSkinRipNameFromType,
         resolveFieldSkinRipNameFromType,
+        resolveJudgeSkinRipNameFromType,
         HABAHIRO_RHYTHM_SKIN_TYPES,
         RHYTHM_SKIN_TYPES,
         DIRECTIONAL_SKIN_TYPES,
@@ -5021,6 +5029,7 @@ function ChartEditorController() {
         DIRECTIONAL_SE_SKIN_TYPES,
         BG_SKIN_TYPES,
         FIELD_SKIN_TYPES,
+        JUDGE_SKIN_TYPES,
         formatTypeLabel,
         skinAssets,
         applyWindowPreset,
