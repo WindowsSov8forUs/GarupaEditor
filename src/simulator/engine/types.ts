@@ -125,6 +125,23 @@ export interface ParticleTriggerEvent {
   eventIndex: number;
 }
 
+export type RuntimeJudgeKind =
+  | "perfect"
+  | "great"
+  | "good"
+  | "bad"
+  | "miss"
+  | "auto"
+  | "fast"
+  | "slow";
+
+export interface JudgeTriggerEvent {
+  kind: RuntimeJudgeKind;
+  lane: number;
+  elapsedMs: number;
+  eventIndex: number;
+}
+
 export interface ActiveNote {
   id: number;
   eventIndex: number;

@@ -4,6 +4,7 @@ import {
   resolveDirectionalArrowTexture,
   resolveDirectionalLaneTexture,
   resolveFlickTopTexture,
+  resolveJudgeTexture,
   resolveRhythmNoteTexture,
   resolveSlideBottomMarkerFlashTexture,
   resolveSlideBottomMarkerTexture,
@@ -16,11 +17,14 @@ import {
   ParticleEmitterDrawContext,
   ParticleLayoutPreset,
 } from "./noteParticleEffectRenderer";
+import { drawComboHud } from "./comboHudRenderer";
 import {
   ActiveNote,
   ChartEvent,
+  JudgeTriggerEvent,
   ParticleTriggerEvent,
   RuntimeStats,
+  RuntimeJudgeKind,
   RuntimeNoteSemantic,
   SimulatorSettings,
   TimingGroupDef,
@@ -66,6 +70,17 @@ interface ActiveHoldEffect {
   currentFromEventIndex: number;
   linearEmitter: ActiveParticleEmitter | null;
   circularEmitter: ActiveParticleEmitter | null;
+}
+
+interface ActiveJudgeOverlay {
+  kind: RuntimeJudgeKind;
+  startMs: number;
+}
+
+interface ActiveEmptyTouchLaneEffect {
+  lane: number;
+  seedBase: number;
+  holdEmitter: ActiveParticleEmitter | null;
 }
 
 interface StageGeometry {
@@ -120,6 +135,20 @@ function colorForNote(note: RuntimeNoteSemantic): number {
   return 0x87b7ff;
 }
 
+function judgePulseScale(elapsedSecSinceHit: number): number {
+  if (!(elapsedSecSinceHit >= 0)) {
+    return 1;
+  }
+  const we = -elapsedSecSinceHit;
+  if (we < -0.2) {
+    return 1;
+  }
+  if (we < -0.1) {
+    return we + 1.2;
+  }
+  return 1.1 - 3 * (we + 0.1);
+}
+
 function browserPath(path: string): string {
   if (
     path.startsWith("data:")
@@ -156,6 +185,13 @@ const FIELD_BG_WIDTH_TO_STAGE_WIDTH_RATIO = (7 / 8) / STAGE_TO_WINDOW_RATIO;
 const JUDGE_LINE_WIDTH_TO_STAGE_WIDTH_RATIO = 1.35 / STAGE_TO_WINDOW_RATIO;
 const HIT_CIRCLE_LAYOUT_SCALE_NON_DIRECTIONAL = 1.15;
 const HIT_CIRCLE_LAYOUT_SCALE_DIRECTIONAL = 0.85;
+const LANE_EFFECT_FADE_DURATION_MS = 200;
+const LANE_EFFECT_EMPTY_TOUCH_HOLD_MAX_DURATION_MS = 60000;
+const DIRECTIONAL_LINEAR_DOUBLE_PLAY_WIDTH_THRESHOLD = 3;
+const DIRECTIONAL_LINEAR_DOUBLE_PLAY_DELAY_MS = 160;
+const JUDGE_OVERLAY_DURATION_MS = 1000;
+const JUDGE_OVERLAY_Y_FROM_JUDGE_TO_STAGE_HEIGHT_RATIO = 0.18;
+const JUDGE_OVERLAY_HEIGHT_TO_STAGE_HEIGHT_RATIO = 0.1;
 
 function mixUint32(value: number): number {
   let x = value >>> 0;
@@ -192,6 +228,8 @@ export class PixiRenderer {
   private slideLineLayer: Container | null = null;
   private noteSpriteLayer: Container | null = null;
   private effectSpriteLayer: Container | null = null;
+  private comboHudLayer: Container | null = null;
+  private judgeHudLayer: Container | null = null;
 
   private noteSpritePool: Sprite[] = [];
   private noteSpriteCursor = 0;
@@ -211,7 +249,15 @@ export class PixiRenderer {
   private effectMeshPool: PerspectiveMesh[] = [];
   private effectMeshCursor = 0;
   private effectMeshPrevUsed = 0;
+  private comboHudSpritePool: Sprite[] = [];
+  private comboHudSpriteCursor = 0;
+  private comboHudSpritePrevUsed = 0;
+  private judgeHudSpritePool: Sprite[] = [];
+  private judgeHudSpriteCursor = 0;
+  private judgeHudSpritePrevUsed = 0;
   private activeParticleEmitters: ActiveParticleEmitter[] = [];
+  private activeJudgeOverlay: ActiveJudgeOverlay | null = null;
+  private activeEmptyTouchLaneEffect: ActiveEmptyTouchLaneEffect | null = null;
   private slideConnections: SlideConnection[] = [];
   private slideConnectionByFromEventIndex = new Map<number, SlideConnection>();
   private eventRootIndexByEventIndex = new Map<number, number>();
@@ -232,6 +278,8 @@ export class PixiRenderer {
   private settings: SimulatorSettings;
   private assets: NoteSkinTextureBundle | null = null;
   private stageGeometryCache: StageGeometry | null = null;
+  private lastRenderedCombo = 0;
+  private lastComboHitMs = Number.NEGATIVE_INFINITY;
 
   constructor(settings: SimulatorSettings) {
     this.settings = settings;
@@ -378,6 +426,13 @@ export class PixiRenderer {
     this.eventRootIndexByEventIndex = eventRootIndexByEventIndex;
     this.buildBpmFlashCycleSegments(events);
     this.slideFlashFirstTriggerCycleByRootEventIndex.clear();
+    this.activeJudgeOverlay = null;
+    if (this.activeEmptyTouchLaneEffect) {
+      this.removeEmitterInstance(this.activeEmptyTouchLaneEffect.holdEmitter);
+    }
+    this.activeEmptyTouchLaneEffect = null;
+    this.lastRenderedCombo = 0;
+    this.lastComboHitMs = Number.NEGATIVE_INFINITY;
   }
 
   pushParticleTriggers(events: ParticleTriggerEvent[]): void {
@@ -389,9 +444,24 @@ export class PixiRenderer {
     }
   }
 
+  pushJudgeTriggers(events: JudgeTriggerEvent[]): void {
+    if (!events.length) {
+      return;
+    }
+    const latest = events[events.length - 1];
+    this.activeJudgeOverlay = {
+      kind: latest.kind,
+      startMs: latest.elapsedMs,
+    };
+  }
+
   triggerEmptyTapEffects(lane: number, elapsedMs: number): void {
-    this.enqueueParticleEmitterBySlot("lane", lane, elapsedMs, 200, false, "lane");
+    this.startLaneEffect(lane, elapsedMs, true);
     this.enqueueParticleEmitterBySlot("slot", lane, elapsedMs, 600, false, "slot");
+  }
+
+  endEmptyTapEffects(elapsedMs: number): void {
+    this.releaseEmptyTouchLaneEffect(elapsedMs);
   }
 
   resolveSlotLaneFromViewportX(viewportX: number): number | null {
@@ -450,6 +520,8 @@ export class PixiRenderer {
     this.slideLineLayer = new Container();
     this.noteSpriteLayer = new Container();
     this.effectSpriteLayer = new Container();
+    this.comboHudLayer = new Container();
+    this.judgeHudLayer = new Container();
     this.hudG = new Graphics();
     this.hudText = new Text({
       text: "",
@@ -472,6 +544,8 @@ export class PixiRenderer {
       this.slideLineLayer,
       this.effectSpriteLayer,
       this.noteSpriteLayer,
+      this.comboHudLayer,
+      this.judgeHudLayer,
       this.fallbackNoteG,
       this.hudG,
       this.hudText
@@ -505,6 +579,8 @@ export class PixiRenderer {
     this.simultaneousLineSpriteCursor = 0;
     this.effectSpriteCursor = 0;
     this.effectMeshCursor = 0;
+    this.comboHudSpriteCursor = 0;
+    this.judgeHudSpriteCursor = 0;
     this.frameTick += 1;
     this.flickFrame = Math.floor((stats.elapsedMs * this.settings.fps) / 1000) % Math.max(1, Math.floor(this.settings.fps / 3));
 
@@ -513,6 +589,8 @@ export class PixiRenderer {
     this.drawLanes();
     this.drawNotes(notes, stats.elapsedMs);
     this.drawParticleEffects(stats.elapsedMs);
+    this.drawComboHudOverlay(stats);
+    this.drawJudgeHudOverlay(stats.elapsedMs);
     this.noteSpritePrevUsed = this.compactSpritePool(this.noteSpritePool, this.noteSpriteCursor, this.noteSpritePrevUsed);
     this.slideLineMeshPrevUsed = this.compactMeshPool(
       this.slideLineMeshPool,
@@ -526,6 +604,16 @@ export class PixiRenderer {
     );
     this.effectSpritePrevUsed = this.compactSpritePool(this.effectSpritePool, this.effectSpriteCursor, this.effectSpritePrevUsed);
     this.effectMeshPrevUsed = this.compactMeshPool(this.effectMeshPool, this.effectMeshCursor, this.effectMeshPrevUsed);
+    this.comboHudSpritePrevUsed = this.compactSpritePool(
+      this.comboHudSpritePool,
+      this.comboHudSpriteCursor,
+      this.comboHudSpritePrevUsed,
+    );
+    this.judgeHudSpritePrevUsed = this.compactSpritePool(
+      this.judgeHudSpritePool,
+      this.judgeHudSpriteCursor,
+      this.judgeHudSpritePrevUsed,
+    );
     this.drawHud(stats, progress);
   }
 
@@ -540,6 +628,8 @@ export class PixiRenderer {
     this.mvTextureCache.clear();
     this.mvTextureOrder = [];
     this.activeParticleEmitters = [];
+    this.activeJudgeOverlay = null;
+    this.activeEmptyTouchLaneEffect = null;
     this.activeHoldEffects.clear();
     this.slideConnections = [];
     this.slideConnectionByFromEventIndex.clear();
@@ -551,16 +641,24 @@ export class PixiRenderer {
     this.simultaneousLineSpritePool = [];
     this.effectSpritePool = [];
     this.effectMeshPool = [];
+    this.comboHudSpritePool = [];
+    this.judgeHudSpritePool = [];
     this.stageGeometryCache = null;
     this.noteSpritePrevUsed = 0;
     this.slideLineMeshPrevUsed = 0;
     this.simultaneousLineSpritePrevUsed = 0;
     this.effectSpritePrevUsed = 0;
     this.effectMeshPrevUsed = 0;
+    this.comboHudSpritePrevUsed = 0;
+    this.judgeHudSpritePrevUsed = 0;
     this.liveBgSprite = null;
     this.laneBgSprite = null;
     this.judgeLineSprite = null;
     this.simultaneousLineLayer = null;
+    this.comboHudLayer = null;
+    this.judgeHudLayer = null;
+    this.lastRenderedCombo = 0;
+    this.lastComboHitMs = Number.NEGATIVE_INFINITY;
     this.app?.destroy(true);
     this.app = null;
   }
@@ -656,6 +754,89 @@ export class PixiRenderer {
     const sprite = this.simultaneousLineSpritePool[this.simultaneousLineSpriteCursor++];
     sprite.visible = true;
     return sprite;
+  }
+
+  private allocComboHudSprite(): Sprite | null {
+    if (!this.comboHudLayer) {
+      return null;
+    }
+    if (this.comboHudSpritePool.length <= this.comboHudSpriteCursor) {
+      const sprite = new Sprite(Texture.WHITE);
+      sprite.visible = false;
+      this.comboHudLayer.addChild(sprite);
+      this.comboHudSpritePool.push(sprite);
+    }
+    const sprite = this.comboHudSpritePool[this.comboHudSpriteCursor++];
+    sprite.visible = true;
+    return sprite;
+  }
+
+  private allocJudgeHudSprite(): Sprite | null {
+    if (!this.judgeHudLayer) {
+      return null;
+    }
+    if (this.judgeHudSpritePool.length <= this.judgeHudSpriteCursor) {
+      const sprite = new Sprite(Texture.WHITE);
+      sprite.visible = false;
+      this.judgeHudLayer.addChild(sprite);
+      this.judgeHudSpritePool.push(sprite);
+    }
+    const sprite = this.judgeHudSpritePool[this.judgeHudSpriteCursor++];
+    sprite.visible = true;
+    return sprite;
+  }
+
+  private drawComboHudOverlay(stats: RuntimeStats): void {
+    if (stats.combo > this.lastRenderedCombo) {
+      this.lastComboHitMs = stats.elapsedMs;
+    } else if (stats.combo <= 0) {
+      this.lastComboHitMs = Number.NEGATIVE_INFINITY;
+    }
+    this.lastRenderedCombo = stats.combo;
+
+    drawComboHud({
+      viewportWidth: this.viewportWidth(),
+      viewportHeight: this.viewportHeight(),
+      elapsedMs: stats.elapsedMs,
+      combo: stats.combo,
+      lastComboHitMs: this.lastComboHitMs,
+      textures: this.assets?.hud ?? null,
+      allocSprite: () => this.allocComboHudSprite(),
+    });
+  }
+
+  private drawJudgeHudOverlay(elapsedMs: number): void {
+    if (!this.activeJudgeOverlay || !this.assets) {
+      return;
+    }
+
+    const overlay = this.activeJudgeOverlay;
+    const ageMs = elapsedMs - overlay.startMs;
+    if (ageMs < 0) {
+      return;
+    }
+    if (ageMs > JUDGE_OVERLAY_DURATION_MS) {
+      this.activeJudgeOverlay = null;
+      return;
+    }
+
+    // Keep full judge-kind routing, runtime currently only emits "auto".
+    const texture = resolveJudgeTexture(this.assets, overlay.kind);
+    if (!texture) {
+      return;
+    }
+
+    const geometry = this.stageGeometry();
+    const sprite = this.allocJudgeHudSprite();
+    if (!sprite) {
+      return;
+    }
+    const x = geometry.viewportWidth * 0.5;
+    const y = geometry.stageBottom - geometry.stageHeight * JUDGE_OVERLAY_Y_FROM_JUDGE_TO_STAGE_HEIGHT_RATIO;
+    const pulseScale = judgePulseScale(ageMs / 1000);
+    const targetHeight = geometry.stageHeight * JUDGE_OVERLAY_HEIGHT_TO_STAGE_HEIGHT_RATIO * pulseScale;
+    const scale = targetHeight / Math.max(1, texture.height);
+    this.applySprite(sprite, texture, x, y, scale, 1, 0.5, 0.5);
   }
 
   private applySprite(
@@ -1377,7 +1558,9 @@ export class PixiRenderer {
     const isDirectional = directionalLeft || directionalRight;
     const isFlickHit = note.baseType === "flick" && (note.slideRole === "none" || note.slideRole === "end");
     const isTapLike = !isDirectional && !isFlickHit;
-    const directionalAdvanceScale = Math.max(1, Math.round(note.directionalWidth)) / 2;
+    const directionalWidth = Math.max(1, Math.round(note.directionalWidth));
+    const directionalAdvanceScale = directionalWidth / 2;
+    const shouldDoubleDirectionalLinear = directionalWidth >= DIRECTIONAL_LINEAR_DOUBLE_PLAY_WIDTH_THRESHOLD;
 
     if (isTapLike) {
       this.enqueueParticleEmitterBySlot("tapNoteLinear", lane, startMs, 400, false, "linear");
@@ -1416,6 +1599,18 @@ export class PixiRenderer {
         "directionalFlickNoteLeftLinearFallback",
         directionalAdvanceScale,
       );
+      if (shouldDoubleDirectionalLinear) {
+        this.enqueueParticleEmitterBySlot(
+          "directionalFlickNoteLeftLinear",
+          lane,
+          startMs + DIRECTIONAL_LINEAR_DOUBLE_PLAY_DELAY_MS,
+          400,
+          false,
+          "directionalLinearLeft",
+          "directionalFlickNoteLeftLinearFallback",
+          directionalAdvanceScale,
+        );
+      }
       this.enqueueParticleEmitterBySlot(
         "directionalFlickNoteLeftCircular",
         lane,
@@ -1438,6 +1633,18 @@ export class PixiRenderer {
         "directionalFlickNoteRightLinearFallback",
         directionalAdvanceScale,
       );
+      if (shouldDoubleDirectionalLinear) {
+        this.enqueueParticleEmitterBySlot(
+          "directionalFlickNoteRightLinear",
+          lane,
+          startMs + DIRECTIONAL_LINEAR_DOUBLE_PLAY_DELAY_MS,
+          400,
+          false,
+          "directionalLinearRight",
+          "directionalFlickNoteRightLinearFallback",
+          directionalAdvanceScale,
+        );
+      }
       this.enqueueParticleEmitterBySlot(
         "directionalFlickNoteRightCircular",
         lane,
@@ -1451,7 +1658,7 @@ export class PixiRenderer {
       );
     }
 
-    this.enqueueParticleEmitterBySlot("lane", lane, startMs, 200, false, "lane");
+    this.startLaneEffect(lane, startMs, false);
 
     if (isHoldRenderableSlideNote(note)) {
       this.activateHoldEffect(trigger);
@@ -1468,29 +1675,101 @@ export class PixiRenderer {
     fallbackSlotKey?: string,
     advanceScale = 1,
     layoutScale = 1,
-  ): void {
+    seedBaseOverride?: number,
+  ): ActiveParticleEmitter | null {
     const pack = this.assets?.particleEffects;
     if (!pack) {
-      return;
+      return null;
     }
 
     const effect = this.resolveParticleEffectBySlot(pack, slotKey)
       ?? (fallbackSlotKey ? this.resolveParticleEffectBySlot(pack, fallbackSlotKey) : null);
     if (!effect) {
-      return;
+      return null;
     }
 
-    this.activeParticleEmitters.push({
+    const seedBase = typeof seedBaseOverride === "number" && Number.isFinite(seedBaseOverride) && seedBaseOverride > 0
+      ? seedBaseOverride
+      : this.allocateEmitterSeed(slotKey, startMs, lane);
+    const emitter: ActiveParticleEmitter = {
       effect,
       lane,
       startMs,
       durationMs: Math.max(1, durationMs),
       loop,
       preset,
-      seedBase: this.allocateEmitterSeed(slotKey, startMs, lane),
+      seedBase,
       advanceScale: Number.isFinite(advanceScale) && advanceScale > 0 ? advanceScale : 1,
       layoutScale: Number.isFinite(layoutScale) && layoutScale > 0 ? layoutScale : 1,
-    });
+    };
+    this.activeParticleEmitters.push(emitter);
+    return emitter;
+  }
+
+  private startLaneEffect(lane: number, startMs: number, hold: boolean): void {
+    if (hold) {
+      const active = this.activeEmptyTouchLaneEffect;
+      if (active && Math.abs(active.lane - lane) <= 1e-6) {
+        return;
+      }
+      if (active) {
+        this.releaseEmptyTouchLaneEffect(startMs);
+      }
+      const seedBase = this.allocateEmitterSeed("lane", startMs, lane);
+      const holdEmitter = this.enqueueParticleEmitterBySlot(
+        "lane",
+        lane,
+        startMs,
+        LANE_EFFECT_EMPTY_TOUCH_HOLD_MAX_DURATION_MS,
+        false,
+        "laneHold",
+        undefined,
+        1,
+        1,
+        seedBase,
+      );
+      this.activeEmptyTouchLaneEffect = {
+        lane,
+        seedBase,
+        holdEmitter,
+      };
+      return;
+    }
+
+    const seedBase = this.allocateEmitterSeed("lane", startMs, lane);
+    this.enqueueParticleEmitterBySlot(
+      "lane",
+      lane,
+      startMs,
+      LANE_EFFECT_FADE_DURATION_MS,
+      false,
+      "laneNarrowFade",
+      undefined,
+      1,
+      1,
+      seedBase,
+    );
+  }
+
+  private releaseEmptyTouchLaneEffect(elapsedMs: number): void {
+    const active = this.activeEmptyTouchLaneEffect;
+    if (!active) {
+      return;
+    }
+    this.removeEmitterInstance(active.holdEmitter);
+    this.enqueueParticleEmitterBySlot(
+      "lane",
+      active.lane,
+      elapsedMs,
+      LANE_EFFECT_FADE_DURATION_MS,
+      false,
+      "laneNarrowFade",
+      undefined,
+      1,
+      1,
+      active.seedBase,
+    );
+    this.activeEmptyTouchLaneEffect = null;
   }
 
   private resolveParticleEffectBySlot(
@@ -1651,6 +1930,7 @@ export class PixiRenderer {
     const pack = this.assets?.particleEffects;
     if (!pack) {
       this.activeParticleEmitters = [];
+      this.activeEmptyTouchLaneEffect = null;
       this.activeHoldEffects.clear();
       return;
     }
@@ -1689,7 +1969,10 @@ export class PixiRenderer {
 
     const durationMs = Math.max(1, emitter.durationMs);
     if (!emitter.loop) {
-      drawParticleEmitter(drawContext, pack, emitter, elapsedMs / durationMs, fallbackG);
+      const unitElapsed = emitter.preset === "laneHold"
+        ? 1
+        : (elapsedMs / durationMs);
+      drawParticleEmitter(drawContext, pack, emitter, unitElapsed, fallbackG);
       return;
     }
 

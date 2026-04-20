@@ -2,6 +2,7 @@ import { LEGACY_TIMING_FPS, legacyOffsetToMs } from "./legacyMath";
 import { isGrayEligibleNote, isHiddenNoSeNote, isJudgedNote } from "./score";
 import {
   ActiveNote,
+  JudgeTriggerEvent,
   ParticleTriggerEvent,
   ParsedChart,
   RuntimeNoteSemantic,
@@ -46,6 +47,7 @@ export class LegacyRuntime {
 
   private pendingSeNotes: RuntimeNoteSemantic[] = [];
   private pendingParticleTriggers: ParticleTriggerEvent[] = [];
+  private pendingJudgeTriggers: JudgeTriggerEvent[] = [];
   private pendingMusicStart = false;
 
   constructor(settings: SimulatorSettings, chart: ParsedChart) {
@@ -87,6 +89,12 @@ export class LegacyRuntime {
   consumePendingParticleTriggers(): ParticleTriggerEvent[] {
     const out = this.pendingParticleTriggers;
     this.pendingParticleTriggers = [];
+    return out;
+  }
+
+  consumePendingJudgeTriggers(): JudgeTriggerEvent[] {
+    const out = this.pendingJudgeTriggers;
+    this.pendingJudgeTriggers = [];
     return out;
   }
 
@@ -268,6 +276,14 @@ export class LegacyRuntime {
       this.npsMax = this.nps;
     }
     this.npsExpiryMs.push(elapsedMs + 1000);
+
+    // Current runtime uses auto-judge semantics. Keep full judge kind interface for future expansion.
+    this.pendingJudgeTriggers.push({
+      kind: "auto",
+      lane,
+      elapsedMs,
+      eventIndex,
+    });
 
     if (this.settings.effectEnable) {
       this.pendingParticleTriggers.push({ note, lane, elapsedMs, eventIndex });

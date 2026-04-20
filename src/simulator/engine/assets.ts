@@ -1,5 +1,5 @@
-import { Texture } from "pixi.js";
-import type { BGSkin, FieldSkinAssets, SkinAssets } from "../../skinLoader";
+import { Rectangle, Texture } from "pixi.js";
+import type { BGSkin, FieldSkinAssets, JudgeSkin, SkinAssets } from "../../skinLoader";
 import type { RuntimeNoteBaseType, RuntimeNoteSemantic } from "./types";
 import {
   buildParticleEffectPack,
@@ -7,6 +7,8 @@ import {
 } from "./particlePack";
 import embeddedParticleManifest from "../assets/particles/bandori1/manifest.json";
 import embeddedParticleAtlasUrl from "../assets/particles/bandori1/texture.png";
+import embeddedComboLabelUrl from "../assets/ui/combo.png";
+import embeddedComboDigitsUrl from "../assets/ui/digits.png";
 
 type LaneKey = "0" | "1" | "2" | "3" | "4" | "5" | "6";
 type LaneAssetMap = Record<LaneKey, string>;
@@ -75,6 +77,20 @@ export interface NoteSkinTextureBundle {
   };
   background: {
     liveBG: Texture | null;
+  };
+  hud: {
+    comboLabel: Texture | null;
+    comboDigits: Array<Texture | null>;
+  };
+  judge: {
+    perfect: Texture | null;
+    great: Texture | null;
+    good: Texture | null;
+    bad: Texture | null;
+    miss: Texture | null;
+    auto: Texture | null;
+    fast: Texture | null;
+    slow: Texture | null;
   };
   particleEffects: ParticleEffectPack | null;
   destroy(): void;
@@ -157,8 +173,10 @@ export async function loadNoteSkinTextureBundle(
   noteSkin: SkinAssets,
   fieldSkin?: FieldSkinAssets | null,
   bgSkin?: BGSkin | null,
+  judgeSkin?: JudgeSkin | null,
 ): Promise<NoteSkinTextureBundle> {
   const trackedTextures: Texture[] = [];
+  const trackedDerivedTextures: Texture[] = [];
   const textureCache = new Map<string, Texture | null>();
 
   const loadCachedTexture = async (url: string | null | undefined): Promise<Texture | null> => {
@@ -222,6 +240,22 @@ export async function loadNoteSkinTextureBundle(
     fieldSkin?.gamePlayLineSkillAdjustEffect ?? null,
   );
   const liveBgTexture = await loadCachedTexture(bgSkin?.assets.liveBG ?? null);
+  const judgePerfectTexture = await loadCachedTexture(judgeSkin?.assets.judgePerfect ?? null);
+  const judgeGreatTexture = await loadCachedTexture(judgeSkin?.assets.judgeGreat ?? null);
+  const judgeGoodTexture = await loadCachedTexture(judgeSkin?.assets.judgeGood ?? null);
+  const judgeBadTexture = await loadCachedTexture(judgeSkin?.assets.judgeBad ?? null);
+  const judgeMissTexture = await loadCachedTexture(judgeSkin?.assets.judgeMiss ?? null);
+  const judgeAutoTexture = await loadCachedTexture(judgeSkin?.assets.judgeAuto ?? null);
+  const judgeFastTexture = await loadCachedTexture(judgeSkin?.assets.judgeFast ?? null);
+  const judgeSlowTexture = await loadCachedTexture(judgeSkin?.assets.judgeSlow ?? null);
+  const comboLabelTexture = await loadCachedTexture(embeddedComboLabelUrl);
+  const comboDigitsAtlasTexture = await loadCachedTexture(embeddedComboDigitsUrl);
+  const comboDigitTextures = buildDigitTextures(comboDigitsAtlasTexture);
+  for (const texture of comboDigitTextures) {
+    if (texture) {
+      trackedDerivedTextures.push(texture);
+    }
+  }
 
   const particleAtlasTexture = await loadCachedTexture(embeddedParticleAtlasUrl);
   const particleEffects = particleAtlasTexture
@@ -258,9 +292,26 @@ export async function loadNoteSkinTextureBundle(
     background: {
       liveBG: liveBgTexture,
     },
+    hud: {
+      comboLabel: comboLabelTexture,
+      comboDigits: comboDigitTextures,
+    },
+    judge: {
+      perfect: judgePerfectTexture,
+      great: judgeGreatTexture,
+      good: judgeGoodTexture,
+      bad: judgeBadTexture,
+      miss: judgeMissTexture,
+      auto: judgeAutoTexture,
+      fast: judgeFastTexture,
+      slow: judgeSlowTexture,
+    },
     particleEffects,
     destroy: () => {
       particleEffects?.destroy();
+      for (const texture of trackedDerivedTextures) {
+        texture.destroy(false);
+      }
       for (const texture of trackedTextures) {
         texture.destroy(true);
       }
@@ -336,6 +387,25 @@ export function resolveSlideBottomMarkerTexture(
   }
 }
 
+function buildDigitTextures(texture: Texture | null): Array<Texture | null> {
+  const digits: Array<Texture | null> = new Array(10).fill(null);
+  if (!texture) {
+    return digits;
+  }
+  const digitWidth = Math.floor(texture.width / 10);
+  const digitHeight = Math.floor(texture.height);
+  if (digitWidth <= 0 || digitHeight <= 0) {
+    return digits;
+  }
+  for (let digit = 0; digit <= 9; digit += 1) {
+    digits[digit] = new Texture({
+      source: texture.source,
+      frame: new Rectangle(digit * digitWidth, 0, digitWidth, digitHeight),
+    });
+  }
+  return digits;
+}
+
 export function resolveSlideBottomMarkerFlashTexture(
   bundle: NoteSkinTextureBundle,
   lane: number,
@@ -370,4 +440,28 @@ export function resolveDirectionalArrowTexture(
 
 export function resolveFlickTopTexture(bundle: NoteSkinTextureBundle): Texture | null {
   return bundle.rhythm.noteFlickTop ?? null;
+}
+
+export function resolveJudgeTexture(
+  bundle: NoteSkinTextureBundle,
+  kind: "perfect" | "great" | "good" | "bad" | "miss" | "auto" | "fast" | "slow",
+): Texture | null {
+  switch (kind) {
+    case "perfect":
+      return bundle.judge.perfect ?? bundle.judge.auto ?? null;
+    case "great":
+      return bundle.judge.great ?? bundle.judge.auto ?? null;
+    case "good":
+      return bundle.judge.good ?? bundle.judge.auto ?? null;
+    case "bad":
+      return bundle.judge.bad ?? bundle.judge.auto ?? null;
+    case "miss":
+      return bundle.judge.miss ?? bundle.judge.auto ?? null;
+    case "fast":
+      return bundle.judge.fast ?? bundle.judge.auto ?? null;
+    case "slow":
+      return bundle.judge.slow ?? bundle.judge.auto ?? null;
+    default:
+      return bundle.judge.auto ?? null;
+  }
 }

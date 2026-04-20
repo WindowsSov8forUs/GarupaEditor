@@ -54,6 +54,7 @@ export class SimulatorAppController {
   private fpsText = "0";
   private lastElapsedMs = 0;
   private isDisposed = false;
+  private activeEmptyTapPointerId: number | null = null;
 
   private settings: SimulatorSettings | null = null;
   private chartMvResource: MvResource | null = null;
@@ -76,6 +77,9 @@ export class SimulatorAppController {
     if (event.button !== 0) {
       return;
     }
+    if (this.activeEmptyTapPointerId !== null) {
+      return;
+    }
     if (!this.renderer || !this.runtime || !this.settings?.effectEnable) {
       return;
     }
@@ -85,13 +89,36 @@ export class SimulatorAppController {
     if (lane === null) {
       return;
     }
+    this.activeEmptyTapPointerId = event.pointerId;
+    try {
+      this.ui.host.setPointerCapture(event.pointerId);
+    } catch {
+      // ignore unsupported capture errors
+    }
     this.renderer.triggerEmptyTapEffects(lane, this.lastElapsedMs);
+  };
+
+  private readonly onHostPointerUpOrCancel = (event: PointerEvent) => {
+    if (this.activeEmptyTapPointerId === null || event.pointerId !== this.activeEmptyTapPointerId) {
+      return;
+    }
+    if (this.renderer && this.settings?.effectEnable) {
+      this.renderer.endEmptyTapEffects(this.lastElapsedMs);
+    }
+    this.activeEmptyTapPointerId = null;
+    try {
+      this.ui.host.releasePointerCapture(event.pointerId);
+    } catch {
+      // ignore unsupported capture errors
+    }
   };
 
   constructor(parent: HTMLElement) {
     this.ui = this.buildUi(parent);
     this.ui.startButton.addEventListener("click", this.onStartClick);
     this.ui.host.addEventListener("pointerdown", this.onHostPointerDown);
+    this.ui.host.addEventListener("pointerup", this.onHostPointerUpOrCancel);
+    this.ui.host.addEventListener("pointercancel", this.onHostPointerUpOrCancel);
     void this.attachLaunchPayloadBridge();
   }
 
@@ -111,6 +138,8 @@ export class SimulatorAppController {
     }
     this.ui.startButton.removeEventListener("click", this.onStartClick);
     this.ui.host.removeEventListener("pointerdown", this.onHostPointerDown);
+    this.ui.host.removeEventListener("pointerup", this.onHostPointerUpOrCancel);
+    this.ui.host.removeEventListener("pointercancel", this.onHostPointerUpOrCancel);
     this.ui.root.remove();
   }
 
@@ -215,11 +244,17 @@ export class SimulatorAppController {
     const noteSkinPayload = this.launchPayload?.skin?.noteSkin ?? null;
     const fieldSkinPayload = this.launchPayload?.skin?.fieldSkin ?? null;
     const bgSkinPayload = this.launchPayload?.skin?.bgSkin ?? null;
+    const judgeSkinPayload = this.launchPayload?.skin?.judgeSkin ?? null;
     const assetsPromise = (() => {
       if (!noteSkinPayload) {
         throw new Error("NoteSkin payload is required.");
       }
-      return loadNoteSkinTextureBundle(noteSkinPayload, fieldSkinPayload, bgSkinPayload).catch(() => null);
+      return loadNoteSkinTextureBundle(
+        noteSkinPayload,
+        fieldSkinPayload,
+        bgSkinPayload,
+        judgeSkinPayload,
+      ).catch(() => null);
     })();
 
     this.ui.status.textContent = "loading audio/assets...";
@@ -307,6 +342,10 @@ export class SimulatorAppController {
     const particleTriggers = this.runtime.consumePendingParticleTriggers();
     if (particleTriggers.length > 0) {
       this.renderer.pushParticleTriggers(particleTriggers);
+    }
+    const judgeTriggers = this.runtime.consumePendingJudgeTriggers();
+    if (judgeTriggers.length > 0) {
+      this.renderer.pushJudgeTriggers(judgeTriggers);
     }
 
     const elapsedMs = stats.elapsedMs;
@@ -430,6 +469,10 @@ export class SimulatorAppController {
     if (this.rafId) {
       cancelAnimationFrame(this.rafId);
       this.rafId = 0;
+    }
+    if (this.renderer && this.activeEmptyTapPointerId !== null) {
+      this.renderer.endEmptyTapEffects(this.lastElapsedMs);
+      this.activeEmptyTapPointerId = null;
     }
     this.lastLoopTickMs = 0;
     this.loopAccumulatorMs = 0;

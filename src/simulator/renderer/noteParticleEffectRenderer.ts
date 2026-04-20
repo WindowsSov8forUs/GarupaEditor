@@ -13,6 +13,8 @@ export type ParticleLayoutPreset =
   | "linear"
   | "circular"
   | "lane"
+  | "laneHold"
+  | "laneNarrowFade"
   | "slot"
   | "holdLinear"
   | "holdCircular"
@@ -101,6 +103,21 @@ interface ParticleLayoutBasis {
 
 const SLOT_EFFECT_SIZE_DEFAULT = 1;
 const LANE_EFFECT_TOP_PERCENT = 0.05;
+const LANE_HOLD_PHASE_CLAMP = 0.7;
+const LANE_NARROW_FADE_END_WIDTH_RATIO = 1 / 2;
+const LANE_NARROW_FADE_END_ALPHA_RATIO = 0;
+const LANE_EFFECT_BASE_ALPHA = 0.5;
+const DIRECTIONAL_LINEAR_HALF_HEIGHT_TO_NOTE_SIZE = 0.25;
+
+function resolveParticleCurveElapsed(emitter: ActiveParticleEmitter, unitElapsed: number): number {
+  if (emitter.preset === "laneHold") {
+    return Math.min(unitElapsed, LANE_HOLD_PHASE_CLAMP);
+  }
+  if (emitter.preset === "laneNarrowFade") {
+    return LANE_HOLD_PHASE_CLAMP;
+  }
+  return unitElapsed;
+}
 
 export function drawParticleEmitter(
   context: ParticleEmitterDrawContext,
@@ -118,6 +135,8 @@ export function drawParticleEmitter(
   const transformSeeds = createSeeds(emitter.seedBase ^ 0x3f2d);
   const transformedBaseQuad = applyEffectTransform(layout.baseQuad, emitter.effect, transformSeeds);
 
+  const curveElapsed = resolveParticleCurveElapsed(emitter, unitElapsed);
+
   for (let groupIndex = 0; groupIndex < emitter.effect.groups.length; groupIndex += 1) {
     const group = emitter.effect.groups[groupIndex];
     for (let instanceIndex = 0; instanceIndex < group.count; instanceIndex += 1) {
@@ -125,12 +144,12 @@ export function drawParticleEmitter(
         const particle = group.particles[particleIndex];
         const particleStart = particle.start;
         const particleEnd = particle.start + particle.duration;
-        if (unitElapsed < particleStart || unitElapsed > particleEnd) {
+        if (curveElapsed < particleStart || curveElapsed > particleEnd) {
           continue;
         }
 
-        const progress = Math.max(0, Math.min(1, (unitElapsed - particleStart) / Math.max(1e-6, particle.duration)));
-        const spawnIndex = resolveParticleSpawnIndex(unitElapsed, particleStart);
+        const progress = Math.max(0, Math.min(1, (curveElapsed - particleStart) / Math.max(1e-6, particle.duration)));
+        const spawnIndex = resolveParticleSpawnIndex(curveElapsed, particleStart);
         const termSeeds = createSeeds(
           composeParticleSeed(
             emitter.seedBase,
@@ -144,10 +163,21 @@ export function drawParticleEmitter(
         const localX = evaluateCurve(particle.x, progress, 0, termSeeds);
         const localYRaw = evaluateCurve(particle.y, progress, 0, termSeeds);
         const localY = scaleDirectionalLinearAdvanceY(emitter, particle.y, termSeeds, localYRaw);
-        const localW = Math.max(0, evaluateCurve(particle.w, progress, 0, termSeeds));
+        let localW = Math.max(0, evaluateCurve(particle.w, progress, 0, termSeeds));
         const localH = Math.max(0, evaluateCurve(particle.h, progress, 0, termSeeds));
         const localR = evaluateCurve(particle.r, progress, 0, termSeeds);
-        const localA = Math.max(0, Math.min(1, evaluateCurve(particle.a, progress, 0, termSeeds)));
+        let localA = Math.max(0, Math.min(1, evaluateCurve(particle.a, progress, 0, termSeeds)));
+        if (emitter.preset === "laneHold" || emitter.preset === "laneNarrowFade") {
+          // Lane effect brightness is controlled by stage logic, not by particle alpha curve.
+          localA = LANE_EFFECT_BASE_ALPHA;
+        }
+        if (emitter.preset === "laneNarrowFade") {
+          const phase = Math.max(0, Math.min(1, unitElapsed));
+          const widthScale = 1 + (LANE_NARROW_FADE_END_WIDTH_RATIO - 1) * phase;
+          const alphaScale = 1 + (LANE_NARROW_FADE_END_ALPHA_RATIO - 1) * phase;
+          localW *= widthScale;
+          localA *= alphaScale;
+        }
         if (localA <= 0 || localW <= 0 || localH <= 0) {
           continue;
         }
@@ -226,7 +256,11 @@ function resolveLayoutBasis(
 ): ParticleLayoutBasis {
   const lane = emitter.lane;
 
-  if (emitter.preset === "lane") {
+  if (
+    emitter.preset === "lane"
+    || emitter.preset === "laneHold"
+    || emitter.preset === "laneNarrowFade"
+  ) {
     const l = lane - 0.5;
     const r = lane + 0.5;
     const t = LANE_EFFECT_TOP_PERCENT;
@@ -283,7 +317,7 @@ function resolveLayoutBasis(
 
   if (emitter.preset === "directionalLinearLeft") {
     const w = noteEffectSize;
-    const h = 0.5 * noteEffectSize * wToH;
+    const h = DIRECTIONAL_LINEAR_HALF_HEIGHT_TO_NOTE_SIZE * noteEffectSize * wToH;
     const l = lane - w;
     const r = lane;
     const t = 1 - h;
@@ -296,7 +330,7 @@ function resolveLayoutBasis(
 
   if (emitter.preset === "directionalLinearRight") {
     const w = noteEffectSize;
-    const h = 0.5 * noteEffectSize * wToH;
+    const h = DIRECTIONAL_LINEAR_HALF_HEIGHT_TO_NOTE_SIZE * noteEffectSize * wToH;
     const l = lane;
     const r = lane + w;
     const t = 1 - h;
