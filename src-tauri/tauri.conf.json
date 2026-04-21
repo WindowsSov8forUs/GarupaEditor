@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "tauri-app",
+  "productName": "GarupaEditor",
   "version": "0.1.0",
   "identifier": "com.chart.editor",
   "build": {
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "tauri-app",
+        "title": "GarupaEditor",
         "width": 1366,
         "height": 768,
         "minWidth": 1100,

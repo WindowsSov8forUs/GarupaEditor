@@ -4460,7 +4460,7 @@ function ChartEditorController() {
       targetUrl.hash = `static-render?request=${encodeURIComponent(requestId)}`;
 
       const renderWindow = new WebviewWindow(windowLabel, {
-        title: `谱面预览 - ${metadata.title}`,
+        title: `${metadata.title} - preview`,
         width: 1440,
         height: 900,
         minWidth: 980,
@@ -4679,7 +4679,7 @@ function ChartEditorController() {
       );
 
       const simulatorWindow = new WebviewWindow(windowLabel, {
-        title: `内置播放器 - ${metadata.title}`,
+        title: `${metadata.title} - playing`,
         width: playbackWidth,
         height: playbackHeight,
         minWidth: 1100,
