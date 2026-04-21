@@ -1,4 +1,5 @@
 import type { BGSkin, FieldSkinAssets, JudgeSkin, SeSkinAssets, SkinAssets } from "../skinLoader";
+import type { ChartMetadata } from "../chartCore";
 
 export const SIMULATOR_WINDOW_READY_EVENT = "simulator:ready";
 export const SIMULATOR_WINDOW_PAYLOAD_EVENT = "simulator:payload";
@@ -19,7 +20,6 @@ export type SimulatorDisplayPayload = {
 };
 
 export type SimulatorAudioPayload = {
-  bgmDataUrl?: string | null;
   seRuntimeAssets?: SeSkinAssets | null;
 };
 
@@ -28,6 +28,8 @@ export type SimulatorMvPayload = {
   src: string;
   offsetMs?: number;
 };
+
+export type SimulatorChartMetadataPayload = ChartMetadata;
 
 export type SimulatorSkinPayload = {
   noteSkin: SkinAssets;
@@ -86,9 +88,9 @@ export type SimulatorChartPayload = {
 export type SimulatorLaunchPayload = {
   requestId: string;
   chartData: SimulatorChartPayload;
+  metadata?: SimulatorChartMetadataPayload | null;
   settings?: SimulatorDisplayPayload | null;
   audio?: SimulatorAudioPayload | null;
-  mv?: SimulatorMvPayload | null;
   skin?: SimulatorSkinPayload | null;
   autoStart?: boolean;
 };

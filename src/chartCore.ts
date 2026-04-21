@@ -3,6 +3,7 @@
   normalizeSkinSelection,
   type SkinSelection,
 } from "./skinLoader";
+import { getDifficultyStyle as getDifficultyStyleFromMap } from "./difficultyStyle";
 
 const BASE_LANE_WIDTH = 48;
 const DEFAULT_PLAYFIELD_ZOOM = 1;
@@ -40,6 +41,7 @@ export interface ChartMetadata {
   difficultyLevel: string;
   bpm: number;
   offsetMs: number;
+  bgmDataUrl: string | null;
   coverDataUrl: string | null;
   mvDataUrl: string | null;
   mvOffsetMs: number;
@@ -247,14 +249,6 @@ export const WINDOW_SIZE_PRESETS: WindowPreset[] = [
   { id: "fhd", label: "1920 x 1080 (Full HD)", width: 1920, height: 1080 },
 ];
 
-const DIFFICULTY_STYLE_MAP: Record<Difficulty, { fill: string; stroke: string }> = {
-  EASY: { fill: "rgb(51, 102, 255)", stroke: "rgb(12, 56, 253)" },
-  NORMAL: { fill: "rgb(102, 255, 51)", stroke: "rgb(22, 197, 42)" },
-  HARD: { fill: "rgb(255, 204, 50)", stroke: "rgb(255, 158, 41)" },
-  EXPERT: { fill: "rgb(255, 50, 52)", stroke: "rgb(201, 5, 6)" },
-  SPECIAL: { fill: "rgb(237, 34, 152)", stroke: "rgb(183, 4, 96)" },
-};
-
 export const DEFAULT_METADATA: ChartMetadata = {
   title: "Untitled",
   artist: "Unknown Artist",
@@ -263,6 +257,7 @@ export const DEFAULT_METADATA: ChartMetadata = {
   difficultyLevel: "26",
   bpm: 120,
   offsetMs: 0,
+  bgmDataUrl: null,
   coverDataUrl: null,
   mvDataUrl: null,
   mvOffsetMs: 0,
@@ -738,7 +733,7 @@ export function parseSkinSelectionFromDocument(
 
 export function getDifficultyStyle(value: unknown): { fill: string; stroke: string } {
   const normalized = normalizeDifficulty(value);
-  return DIFFICULTY_STYLE_MAP[normalized];
+  return getDifficultyStyleFromMap(normalized);
 }
 
 export function getLaneValues(laneCount: LaneCount): number[] {
@@ -797,6 +792,10 @@ export function normalizeMetadata(input: Partial<ChartMetadata>): ChartMetadata 
     difficultyLevel: normalizeDifficultyLevel(input.difficultyLevel),
     bpm: clamp(toFinite(input.bpm, DEFAULT_METADATA.bpm), 40, 300),
     offsetMs: Math.round(clamp(toFinite(input.offsetMs, DEFAULT_METADATA.offsetMs), -5000, 5000)),
+    bgmDataUrl:
+      typeof input.bgmDataUrl === "string" && input.bgmDataUrl.trim() !== ""
+        ? input.bgmDataUrl
+        : null,
     coverDataUrl:
       typeof input.coverDataUrl === "string" && input.coverDataUrl.trim() !== ""
         ? input.coverDataUrl
