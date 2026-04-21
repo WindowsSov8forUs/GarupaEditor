@@ -7,7 +7,7 @@ use std::net::{IpAddr, Ipv4Addr};
 use std::path::{Component, Path, PathBuf};
 use std::sync::OnceLock;
 use std::time::Duration;
-use tauri::{Emitter, Manager};
+use tauri::Emitter;
 
 const BESTDORI_ASSET_ROOT: &str = "https://bestdori.com/assets/jp/ingameskin/noteskin";
 const BESTDORI_EXPLORER_ROOT: &str = "https://bestdori.com/api/explorer/jp/assets/ingameskin/noteskin";
@@ -229,11 +229,17 @@ fn decode_base64(value: &str) -> Result<Vec<u8>, String> {
         .map_err(|error| format!("decode base64 failed: {error}"))
 }
 
-fn resolve_skin_assets_root(app: &tauri::AppHandle) -> Result<PathBuf, String> {
-    let mut directory = app
-        .path()
-        .app_local_data_dir()
-        .map_err(|error| format!("resolve app local data dir failed: {error}"))?;
+fn resolve_executable_directory() -> Result<PathBuf, String> {
+    let executable =
+        std::env::current_exe().map_err(|error| format!("resolve executable path failed: {error}"))?;
+    executable
+        .parent()
+        .map(Path::to_path_buf)
+        .ok_or_else(|| "resolve executable directory failed: missing parent".to_string())
+}
+
+fn resolve_skin_assets_root(_app: &tauri::AppHandle) -> Result<PathBuf, String> {
+    let mut directory = resolve_executable_directory()?;
     directory.push("assets");
     directory.push("game");
     directory.push("noteskin");
@@ -241,11 +247,8 @@ fn resolve_skin_assets_root(app: &tauri::AppHandle) -> Result<PathBuf, String> {
     Ok(directory)
 }
 
-fn resolve_field_skin_assets_root(app: &tauri::AppHandle) -> Result<PathBuf, String> {
-    let mut directory = app
-        .path()
-        .app_local_data_dir()
-        .map_err(|error| format!("resolve app local data dir failed: {error}"))?;
+fn resolve_field_skin_assets_root(_app: &tauri::AppHandle) -> Result<PathBuf, String> {
+    let mut directory = resolve_executable_directory()?;
     directory.push("assets");
     directory.push("game");
     directory.push("fieldskin");
@@ -253,11 +256,8 @@ fn resolve_field_skin_assets_root(app: &tauri::AppHandle) -> Result<PathBuf, Str
     Ok(directory)
 }
 
-fn resolve_bg_skin_assets_root(app: &tauri::AppHandle) -> Result<PathBuf, String> {
-    let mut directory = app
-        .path()
-        .app_local_data_dir()
-        .map_err(|error| format!("resolve app local data dir failed: {error}"))?;
+fn resolve_bg_skin_assets_root(_app: &tauri::AppHandle) -> Result<PathBuf, String> {
+    let mut directory = resolve_executable_directory()?;
     directory.push("assets");
     directory.push("game");
     directory.push("bgskin");
@@ -265,11 +265,8 @@ fn resolve_bg_skin_assets_root(app: &tauri::AppHandle) -> Result<PathBuf, String
     Ok(directory)
 }
 
-fn resolve_judge_skin_assets_root(app: &tauri::AppHandle) -> Result<PathBuf, String> {
-    let mut directory = app
-        .path()
-        .app_local_data_dir()
-        .map_err(|error| format!("resolve app local data dir failed: {error}"))?;
+fn resolve_judge_skin_assets_root(_app: &tauri::AppHandle) -> Result<PathBuf, String> {
+    let mut directory = resolve_executable_directory()?;
     directory.push("assets");
     directory.push("game");
     directory.push("judgeskin");
@@ -277,11 +274,8 @@ fn resolve_judge_skin_assets_root(app: &tauri::AppHandle) -> Result<PathBuf, Str
     Ok(directory)
 }
 
-fn resolve_sound_assets_root(app: &tauri::AppHandle) -> Result<PathBuf, String> {
-    let mut directory = app
-        .path()
-        .app_local_data_dir()
-        .map_err(|error| format!("resolve app local data dir failed: {error}"))?;
+fn resolve_sound_assets_root(_app: &tauri::AppHandle) -> Result<PathBuf, String> {
+    let mut directory = resolve_executable_directory()?;
     directory.push("assets");
     directory.push("sound");
     fs::create_dir_all(&directory).map_err(|error| format!("create sound assets dir failed: {error}"))?;
@@ -295,11 +289,8 @@ fn resolve_tapseskin_assets_root(app: &tauri::AppHandle) -> Result<PathBuf, Stri
     Ok(directory)
 }
 
-fn resolve_session_cache_root(app: &tauri::AppHandle) -> Result<PathBuf, String> {
-    let mut directory = app
-        .path()
-        .app_local_data_dir()
-        .map_err(|error| format!("resolve app local data dir failed: {error}"))?;
+fn resolve_session_cache_root(_app: &tauri::AppHandle) -> Result<PathBuf, String> {
+    let mut directory = resolve_executable_directory()?;
     directory.push("cache");
     directory.push(SESSION_DIR_NAME);
     fs::create_dir_all(&directory).map_err(|error| format!("create session cache dir failed: {error}"))?;
