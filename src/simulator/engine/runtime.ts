@@ -22,6 +22,8 @@ interface PendingSystemEvent {
   bpm?: number;
 }
 
+const RUNTIME_POST_ROLL_MS = 3000;
+
 export class LegacyRuntime {
   private readonly settings: SimulatorSettings;
   private readonly chart: ParsedChart;
@@ -49,6 +51,8 @@ export class LegacyRuntime {
   private pendingParticleTriggers: ParticleTriggerEvent[] = [];
   private pendingJudgeTriggers: JudgeTriggerEvent[] = [];
   private pendingMusicStart = false;
+  private lastElapsedMs = 0;
+  private finishAtMs: number | null = null;
 
   constructor(settings: SimulatorSettings, chart: ParsedChart) {
     this.settings = settings;
@@ -61,6 +65,15 @@ export class LegacyRuntime {
   start(nowMs: number): void {
     this.startMs = nowMs;
     this.started = true;
+    this.lastElapsedMs = 0;
+    this.finishAtMs = null;
+  }
+
+  shiftStartMs(deltaMs: number): void {
+    if (!this.started || !Number.isFinite(deltaMs) || Math.abs(deltaMs) < 1e-6) {
+      return;
+    }
+    this.startMs += deltaMs;
   }
 
   isStarted(): boolean {
@@ -68,10 +81,7 @@ export class LegacyRuntime {
   }
 
   isFinished(): boolean {
-    return this.combo >= this.notes
-      && this.activeNotes.length === 0
-      && this.pendingSystemEvents.length === 0
-      && this.spawnIndex >= this.chart.events.length;
+    return this.finishAtMs !== null && this.lastElapsedMs >= this.finishAtMs;
   }
 
   consumePendingMusicStart(): boolean {
@@ -112,6 +122,7 @@ export class LegacyRuntime {
     }
 
     const elapsed = nowMs - this.startMs;
+    this.lastElapsedMs = elapsed;
     this.updateTimingGroups(elapsed);
     this.spawnDueEvents(elapsed);
     this.flushPendingSystemEvents(elapsed);
@@ -140,6 +151,18 @@ export class LegacyRuntime {
         this.activeNotes.splice(i, 1);
         this.processedObjects += 1;
       }
+    }
+
+    const coreFinished = this.combo >= this.notes
+      && this.activeNotes.length === 0
+      && this.pendingSystemEvents.length === 0
+      && this.spawnIndex >= this.chart.events.length;
+    if (coreFinished) {
+      if (this.finishAtMs === null) {
+        this.finishAtMs = elapsed + RUNTIME_POST_ROLL_MS;
+      }
+    } else {
+      this.finishAtMs = null;
     }
 
     return this.stats(elapsed);

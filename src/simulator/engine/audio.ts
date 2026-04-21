@@ -6,6 +6,8 @@ export class AudioEngine {
   private ctx: AudioContext | null = null;
   private bgmBuffer: AudioBuffer | null = null;
   private bgmSource: AudioBufferSourceNode | null = null;
+  private bgmStartCtxTime = 0;
+  private bgmOffsetSec = 0;
   private seBuffers = new Map<SeKind, AudioBuffer>();
   private decodedAudioCache = new Map<string, AudioBuffer>();
 
@@ -40,6 +42,7 @@ export class AudioEngine {
 
   clearBgm(): void {
     this.bgmBuffer = null;
+    this.bgmOffsetSec = 0;
   }
 
   async loadSeFromRuntimeAssets(runtimeSe: SeSkinAssets | null | undefined): Promise<void> {
@@ -108,12 +111,49 @@ export class AudioEngine {
     const source = this.ctx.createBufferSource();
     source.buffer = this.bgmBuffer;
     source.connect(this.ctx.destination);
-    source.start();
+    source.start(0, 0);
     this.bgmSource = source;
+    this.bgmStartCtxTime = this.ctx.currentTime;
+    this.bgmOffsetSec = 0;
+  }
+
+  pauseBgm(): void {
+    if (!this.ctx || !this.bgmSource || !this.bgmBuffer) {
+      return;
+    }
+    const playedSec = Math.max(0, this.ctx.currentTime - this.bgmStartCtxTime);
+    const duration = Math.max(0, this.bgmBuffer.duration);
+    this.bgmOffsetSec = Math.max(0, Math.min(duration, this.bgmOffsetSec + playedSec));
+    try {
+      this.bgmSource.stop();
+    } catch {
+      // ignored
+    }
+    this.bgmSource.disconnect();
+    this.bgmSource = null;
+  }
+
+  resumeBgm(): void {
+    if (!this.ctx || !this.bgmBuffer || this.bgmSource) {
+      return;
+    }
+    const duration = Math.max(0, this.bgmBuffer.duration);
+    if (duration <= 0) {
+      return;
+    }
+    const offset = Math.max(0, Math.min(duration - 0.001, this.bgmOffsetSec));
+    const source = this.ctx.createBufferSource();
+    source.buffer = this.bgmBuffer;
+    source.connect(this.ctx.destination);
+    source.start(0, offset);
+    this.bgmSource = source;
+    this.bgmStartCtxTime = this.ctx.currentTime;
+    this.bgmOffsetSec = offset;
   }
 
   stopBgm(): void {
     if (!this.bgmSource) {
+      this.bgmOffsetSec = 0;
       return;
     }
     try {
@@ -123,6 +163,7 @@ export class AudioEngine {
     }
     this.bgmSource.disconnect();
     this.bgmSource = null;
+    this.bgmOffsetSec = 0;
   }
 
   playSe(note: RuntimeNoteSemantic): void {

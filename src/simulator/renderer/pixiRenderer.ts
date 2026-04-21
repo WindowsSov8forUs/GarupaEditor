@@ -1,4 +1,4 @@
-import { Application, Color, Container, Graphics, PerspectiveMesh, Sprite, Text, TextStyle, Texture } from "pixi.js";
+import { Application, Color, Container, Graphics, PerspectiveMesh, Sprite, Texture } from "pixi.js";
 import {
   NoteSkinTextureBundle,
   resolveDirectionalArrowTexture,
@@ -45,6 +45,14 @@ type MvRenderFrame =
       sourceWidth: number;
       sourceHeight: number;
     };
+
+export interface SimulatorStartupRenderState {
+  liveBgAlpha: number;
+  liveBgScale: number;
+  liveBgAnchorTopCenter: boolean;
+  playfieldAlpha: number;
+  uiAlpha: number;
+}
 
 interface SlideConnection {
   fromEventIndex: number;
@@ -212,9 +220,18 @@ function hashString32(text: string): number {
   return mixUint32(hash);
 }
 
+function clamp01(value: number): number {
+  if (!Number.isFinite(value)) {
+    return 0;
+  }
+  return Math.max(0, Math.min(1, value));
+}
+
 export class PixiRenderer {
   private app: Application | null = null;
   private root: Container | null = null;
+  private playfieldLayer: Container | null = null;
+  private uiLayer: Container | null = null;
   private liveBgSprite: Sprite | null = null;
   private laneBgSprite: Sprite | null = null;
   private lanesG: Graphics | null = null;
@@ -222,8 +239,6 @@ export class PixiRenderer {
   private linesG: Graphics | null = null;
   private simultaneousLineLayer: Container | null = null;
   private fallbackNoteG: Graphics | null = null;
-  private hudG: Graphics | null = null;
-  private hudText: Text | null = null;
   private mvSprite: Sprite | null = null;
   private slideLineLayer: Container | null = null;
   private noteSpriteLayer: Container | null = null;
@@ -280,6 +295,7 @@ export class PixiRenderer {
   private stageGeometryCache: StageGeometry | null = null;
   private lastRenderedCombo = 0;
   private lastComboHitMs = Number.NEGATIVE_INFINITY;
+  private startupRenderState: SimulatorStartupRenderState | null = null;
 
   constructor(settings: SimulatorSettings) {
     this.settings = settings;
@@ -288,6 +304,10 @@ export class PixiRenderer {
   setAssets(bundle: NoteSkinTextureBundle | null): void {
     this.assets = bundle;
     this.lanesDirty = true;
+  }
+
+  setStartupRenderState(state: SimulatorStartupRenderState | null): void {
+    this.startupRenderState = state;
   }
 
   setChartEvents(events: readonly ChartEvent[], timingGroups: readonly TimingGroupDef[] = []): void {
@@ -490,7 +510,7 @@ export class PixiRenderer {
     await this.app.init({
       width: initialWidth,
       height: initialHeight,
-      background: new Color("#0b1020"),
+      background: new Color("#000000"),
       antialias: true,
       autoDensity: true,
       resolution: Math.max(1, window.devicePixelRatio || 1)
@@ -500,6 +520,8 @@ export class PixiRenderer {
     host.appendChild(this.app.canvas);
 
     this.root = new Container();
+    this.playfieldLayer = new Container();
+    this.uiLayer = new Container();
     this.app.stage.addChild(this.root);
 
     this.liveBgSprite = new Sprite();
@@ -522,20 +544,8 @@ export class PixiRenderer {
     this.effectSpriteLayer = new Container();
     this.comboHudLayer = new Container();
     this.judgeHudLayer = new Container();
-    this.hudG = new Graphics();
-    this.hudText = new Text({
-      text: "",
-      style: new TextStyle({
-        fontFamily: "Segoe UI",
-        fontSize: 16,
-        fill: 0xffffff,
-        stroke: { width: 2, color: 0x081226 }
-      })
-    });
 
-    this.root.addChild(
-      this.liveBgSprite,
-      this.mvSprite,
+    this.playfieldLayer.addChild(
       this.laneBgSprite,
       this.lanesG,
       this.judgeLineSprite,
@@ -544,11 +554,18 @@ export class PixiRenderer {
       this.slideLineLayer,
       this.effectSpriteLayer,
       this.noteSpriteLayer,
+      this.fallbackNoteG,
+    );
+    this.uiLayer.addChild(
       this.comboHudLayer,
       this.judgeHudLayer,
-      this.fallbackNoteG,
-      this.hudG,
-      this.hudText
+    );
+
+    this.root.addChild(
+      this.liveBgSprite,
+      this.mvSprite,
+      this.playfieldLayer,
+      this.uiLayer,
     );
   }
 
@@ -561,18 +578,22 @@ export class PixiRenderer {
     this.stageGeometryCache = null;
   }
 
-  render(notes: readonly ActiveNote[], stats: RuntimeStats, progress: number, mvFrame: MvRenderFrame | null): void {
+  render(notes: readonly ActiveNote[], stats: RuntimeStats, mvFrame: MvRenderFrame | null): void {
     if (
       !this.lanesG
       || !this.linesG
       || !this.fallbackNoteG
-      || !this.hudG
-      || !this.hudText
       || !this.mvSprite
       || !this.liveBgSprite
+      || !this.playfieldLayer
+      || !this.uiLayer
     ) {
       return;
     }
+
+    const startup = this.startupRenderState;
+    this.playfieldLayer.alpha = clamp01(startup?.playfieldAlpha ?? 1);
+    this.uiLayer.alpha = clamp01(startup?.playfieldAlpha ?? 1);
 
     this.noteSpriteCursor = 0;
     this.slideLineMeshCursor = 0;
@@ -614,7 +635,6 @@ export class PixiRenderer {
       this.judgeHudSpriteCursor,
       this.judgeHudSpritePrevUsed,
     );
-    this.drawHud(stats, progress);
   }
 
   destroy(): void {
@@ -651,6 +671,9 @@ export class PixiRenderer {
     this.effectMeshPrevUsed = 0;
     this.comboHudSpritePrevUsed = 0;
     this.judgeHudSpritePrevUsed = 0;
+    this.startupRenderState = null;
+    this.playfieldLayer = null;
+    this.uiLayer = null;
     this.liveBgSprite = null;
     this.laneBgSprite = null;
     this.judgeLineSprite = null;
@@ -898,14 +921,18 @@ export class PixiRenderer {
     const viewportHeight = this.viewportHeight();
     const sourceWidth = Math.max(1, texture.width);
     const sourceHeight = Math.max(1, texture.height);
-    const scale = Math.max(viewportWidth / sourceWidth, viewportHeight / sourceHeight);
+    const baseScale = Math.max(viewportWidth / sourceWidth, viewportHeight / sourceHeight);
+    const startup = this.startupRenderState;
+    const scaleMultiplier = startup ? Math.max(0, startup.liveBgScale) : 1;
+    const scale = baseScale * scaleMultiplier;
+    const useTopAnchor = startup?.liveBgAnchorTopCenter === true;
 
     this.liveBgSprite.texture = texture;
     this.liveBgSprite.visible = true;
-    this.liveBgSprite.alpha = 1;
-    this.liveBgSprite.anchor.set(0.5, 0.5);
+    this.liveBgSprite.alpha = clamp01(startup?.liveBgAlpha ?? 1);
+    this.liveBgSprite.anchor.set(0.5, useTopAnchor ? 0 : 0.5);
     this.liveBgSprite.x = viewportWidth * 0.5;
-    this.liveBgSprite.y = viewportHeight * 0.5;
+    this.liveBgSprite.y = useTopAnchor ? 0 : (viewportHeight * 0.5);
     this.liveBgSprite.scale.set(scale, scale);
   }
 
@@ -2009,34 +2036,6 @@ export class PixiRenderer {
     const widthScale = (this.stageLaneWidth() * NOTE_WIDTH_TO_LANE_WIDTH_RATIO) / NOTE_BASE_TEXTURE_WIDTH;
     const scale = noteScale * widthScale;
     return Number.isFinite(scale) && scale > 0 ? scale : 1;
-  }
-
-  private drawHud(stats: RuntimeStats, progress: number): void {
-    const g = this.hudG!;
-    g.clear();
-
-    const w = this.app?.screen.width ?? this.settings.windowX;
-    g.fill({ color: 0xffffff, alpha: 0.23 });
-    g.rect(0, 0, w * progress, 6);
-    g.fill();
-
-    g.fill({ color: 0x0f152a, alpha: 0.75 });
-    g.roundRect(w - 340, 16, 320, 188, 10);
-    g.fill();
-
-    this.hudText!.x = w - 326;
-    this.hudText!.y = 26;
-
-    const lines = [
-      `Combo: ${stats.combo}/${stats.notes}`,
-      `Score: ${Math.floor(stats.score)}`,
-      `BPM: ${stats.bpmValue}`,
-      `NPS: ${stats.nps} (Max ${stats.npsMax})`,
-      `Objects: ${stats.activeObjects}/${stats.totalObjects}`,
-      `Processed: ${stats.processedObjects}`
-    ];
-
-    this.hudText!.text = lines.join("\n");
   }
 
   private laneXAtPercentRaw(lane: number, percent: number): number {

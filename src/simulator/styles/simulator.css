@@ -1,3 +1,61 @@
+@font-face {
+  font-family: "TTShinGoM";
+  src: url("../../assets/fonts/TTShinGoM.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "GB18030";
+  src: url("../../assets/fonts/GB18030.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "ChartUI";
+  src: url("../../assets/fonts/TTShinGoM.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  unicode-range:
+    U+0000-00FF,
+    U+0100-024F,
+    U+0250-02AF,
+    U+02B0-02FF,
+    U+0300-036F,
+    U+1E00-1EFF,
+    U+2000-206F,
+    U+20A0-20CF,
+    U+2100-214F,
+    U+2460-24FF,
+    U+2500-257F,
+    U+25A0-25FF,
+    U+3000-303F,
+    U+3040-309F,
+    U+30A0-30FF,
+    U+31F0-31FF,
+    U+FF61-FF9F;
+}
+
+@font-face {
+  font-family: "ChartUI";
+  src: url("../../assets/fonts/GB18030.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  unicode-range:
+    U+2E80-2EFF,
+    U+2F00-2FDF,
+    U+31C0-31EF,
+    U+3400-4DBF,
+    U+4E00-9FFF,
+    U+F900-FAFF,
+    U+2F800-2FA1F;
+}
+
 .simulator-page {
   width: 100%;
   height: 100%;
@@ -12,58 +70,9 @@
   height: 100%;
   position: relative;
   color: #e9f0ff;
-  font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
-  background:
-    radial-gradient(1200px 500px at -10% -20%, #22346a 0%, transparent 55%),
-    radial-gradient(900px 520px at 120% -10%, #5f2141 0%, transparent 45%),
-    linear-gradient(180deg, #0f1930 0%, #06090f 100%);
-}
-
-.simulator-topbar {
-  position: absolute;
-  top: 10px;
-  right: 16px;
-  z-index: 10;
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  padding: 8px 12px;
-  background: rgba(3, 7, 15, 0.6);
-  border: 1px solid rgba(160, 183, 255, 0.22);
-  border-radius: 10px;
-  backdrop-filter: blur(6px);
-}
-
-.simulator-topbar label {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: 12px;
-  color: #b8c3e6;
-}
-
-.simulator-topbar input,
-.simulator-topbar select,
-.simulator-topbar button {
-  height: 32px;
-  border-radius: 8px;
-  border: 1px solid rgba(157, 182, 255, 0.33);
-  background: #111a30;
-  color: #f0f6ff;
-  padding: 0 10px;
-  font-size: 14px;
-}
-
-.simulator-topbar button {
-  background: linear-gradient(180deg, #2e66ff 0%, #1c3e98 100%);
-  border: 0;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.simulator-topbar button:disabled {
-  opacity: 0.6;
-  cursor: default;
+  font-family: "ChartUI", "GB18030", "TTShinGoM", "Microsoft YaHei UI", sans-serif;
+  font-synthesis: none;
+  background: #000;
 }
 
 .simulator-canvas-wrap {
@@ -74,10 +83,155 @@
   overflow: hidden;
 }
 
-.simulator-status {
-  margin-left: auto;
-  min-width: 220px;
-  text-align: right;
-  font-size: 12px;
-  color: #acc0ff;
+.simulator-ui-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.simulator-pause-mask {
+  position: absolute;
+  inset: 0;
+  display: none;
+  background: rgba(0, 0, 0, 0.2);
+  pointer-events: auto;
+}
+
+.simulator-pause-anchor {
+  position: absolute;
+  top: 10px;
+  right: 16px;
+  background: transparent;
+  pointer-events: none;
+  contain: layout paint;
+}
+
+.simulator-pause-anchor > .simulator-pause-button {
+  position: relative;
+  width: 56px;
+  min-width: 56px;
+  height: 56px;
+  min-height: 56px;
+  pointer-events: auto;
+  transition: none !important;
+  transform: none !important;
+  contain: layout paint;
+}
+
+.simulator-pause-anchor > .simulator-pause-button:hover,
+.simulator-pause-anchor > .simulator-pause-button:active {
+  transform: none !important;
+  border-color: var(--btn-frame-border-local) !important;
+  box-shadow: 0 1px 2px rgba(67, 74, 86, 0.18) !important;
+}
+
+.simulator-pause-anchor > .simulator-pause-button:hover::before,
+.simulator-pause-anchor > .simulator-pause-button:active::before {
+  border-color: var(--btn-core-border-local) !important;
+}
+
+.simulator-pause-anchor > .simulator-pause-button.is-blocked {
+  pointer-events: none;
+  cursor: default;
+}
+
+.simulator-pause-icon {
+  display: inline-flex;
+  width: 34px;
+  height: 34px;
+}
+
+.simulator-boot-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.simulator-boot-back,
+.simulator-boot-frame,
+.simulator-boot-cover-wrap,
+.simulator-boot-title,
+.simulator-boot-difficulty {
+  position: absolute;
+}
+
+.simulator-boot-back {
+  z-index: 1;
+  background: var(--sim-difficulty-fill, rgb(255, 50, 52));
+}
+
+.simulator-boot-frame {
+  z-index: 2;
+  background: #fff;
+}
+
+.simulator-boot-cover-wrap {
+  z-index: 3;
+  overflow: hidden;
+}
+
+.simulator-boot-title {
+  z-index: 4;
+  box-sizing: border-box;
+  border-style: solid;
+  border-color: #fff;
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.simulator-boot-title-text {
+  position: absolute;
+  z-index: 5;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  transform-origin: center center;
+  max-width: 96vw;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: "ChartUI", "GB18030", "TTShinGoM", "Microsoft YaHei UI", sans-serif;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: rgb(64, 64, 64);
+}
+
+.simulator-boot-difficulty {
+  z-index: 6;
+  background: var(--sim-difficulty-fill, rgb(255, 50, 52));
+  overflow: hidden;
+}
+
+.simulator-boot-difficulty-text {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  transform-origin: center center;
+  white-space: nowrap;
+  font-family: "ChartUI", "GB18030", "TTShinGoM", "Microsoft YaHei UI", sans-serif;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #fff;
+  text-shadow:
+    -1px 0 var(--sim-difficulty-text-stroke, rgb(130, 20, 24)),
+    1px 0 var(--sim-difficulty-text-stroke, rgb(130, 20, 24)),
+    0 -1px var(--sim-difficulty-text-stroke, rgb(130, 20, 24)),
+    0 1px var(--sim-difficulty-text-stroke, rgb(130, 20, 24)),
+    -1px -1px var(--sim-difficulty-text-stroke, rgb(130, 20, 24)),
+    1px -1px var(--sim-difficulty-text-stroke, rgb(130, 20, 24)),
+    -1px 1px var(--sim-difficulty-text-stroke, rgb(130, 20, 24)),
+    1px 1px var(--sim-difficulty-text-stroke, rgb(130, 20, 24));
+}
+
+.simulator-boot-cover {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.52);
 }

@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
+  <rect
+    x="4.5"
+    y="3"
+    width="5"
+    height="18"
+    rx="1.5"
+    fill="currentColor"
+    stroke="#fff"
+    stroke-width="1.5"
+    paint-order="stroke fill"
+  />
+  <rect
+    x="14.5"
+    y="3"
+    width="5"
+    height="18"
+    rx="1.5"
+    fill="currentColor"
+    stroke="#fff"
+    stroke-width="1.5"
+    paint-order="stroke fill"
+  />
+</svg>
