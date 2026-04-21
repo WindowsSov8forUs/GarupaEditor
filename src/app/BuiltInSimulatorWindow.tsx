@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { SimulatorAppController } from "../simulator/app/SimulatorAppController";
+import "../App.css";
 import "../simulator/styles/simulator.css";
 
 function BuiltInSimulatorWindow() {

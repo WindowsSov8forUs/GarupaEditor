@@ -208,32 +208,6 @@ async function blobUrlToDataUrl(blobUrl: string): Promise<string> {
   });
 }
 
-function resolveSimulatorMvPayload(
-  source: string | null | undefined,
-  offsetMs: number,
-): SimulatorLaunchPayload["mv"] {
-  if (typeof source !== "string") {
-    return null;
-  }
-  const trimmed = source.trim();
-  if (trimmed.length === 0) {
-    return null;
-  }
-
-  const lower = trimmed.toLowerCase();
-  const kind: "image" | "video" =
-    lower.startsWith("data:video/")
-    || /\.(mp4|webm|ogg|mov|m4v|avi|mkv)(?:[?#].*)?$/i.test(trimmed)
-      ? "video"
-      : "image";
-
-  return {
-    kind,
-    src: trimmed,
-    offsetMs,
-  };
-}
-
 function lowerBoundByTime<T>(
   list: T[],
   target: number,
@@ -4604,13 +4578,17 @@ function ChartEditorController() {
       const runtimeFieldSkin = getRuntimeFieldSkinAssets();
       const runtimeBgSkin = getRuntimeBgSkinAssets();
       const runtimeJudgeSkin = getRuntimeJudgeSkinAssets();
-      const audioPayload = (bgmDataUrl || runtimeSe)
+      const audioPayload = runtimeSe
         ? {
-            bgmDataUrl: bgmDataUrl ?? null,
             seRuntimeAssets: runtimeSe ?? null,
           }
         : null;
-      const mvPayload = resolveSimulatorMvPayload(metadata.mvDataUrl, playbackMvOffsetMs);
+      const simulatorMetadata: ChartMetadata = {
+        ...metadata,
+        offsetMs: playbackOffsetMs,
+        mvOffsetMs: playbackMvOffsetMs,
+        bgmDataUrl: bgmDataUrl ?? null,
+      };
       const normalizedPlaybackNotes = notes.map((note) => ({
         ...note,
         timingGroup: normalizeTimingGroup(note.timingGroup, 0),
@@ -4635,6 +4613,7 @@ function ChartEditorController() {
       const launchPayload: SimulatorLaunchPayload = {
         requestId,
         autoStart: true,
+        metadata: simulatorMetadata,
         settings: {
           windowWidth: playbackWidth,
           windowHeight: playbackHeight,
@@ -4650,7 +4629,6 @@ function ChartEditorController() {
           mvAlphaPercent: playbackMvAlpha,
         },
         audio: audioPayload,
-        mv: mvPayload,
         skin: {
           noteSkin: skinAssets,
           fieldSkin: runtimeFieldSkin ?? null,
@@ -4741,11 +4719,7 @@ function ChartEditorController() {
     appOptionSettings.mirrorEnabled,
     audioObjectUrl,
     clamp,
-    metadata.offsetMs,
-    metadata.mvDataUrl,
-    metadata.mvOffsetMs,
-    metadata.title,
-    metadata.bpm,
+    metadata,
     notes,
     slideChains,
     bpmEvents,
