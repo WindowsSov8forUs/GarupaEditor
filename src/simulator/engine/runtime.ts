@@ -322,7 +322,7 @@ export class LegacyRuntime {
 
   private displayScore(): number {
     const notes = Math.max(1, this.notes);
-    return this.combo / notes * 10000000 + this.combo;
+    return Math.max(0, Math.floor(this.combo / notes * 10000000 + this.combo));
   }
 
   private stats(elapsedMs: number): RuntimeStats {

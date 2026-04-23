@@ -97,12 +97,215 @@
   display: none;
   background: rgba(0, 0, 0, 0.2);
   pointer-events: auto;
+  z-index: 3;
+}
+
+.simulator-score-hud {
+  position: absolute;
+  z-index: 1;
+  pointer-events: none;
+  contain: layout paint;
+}
+
+.simulator-score-gain-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.simulator-score-gain-svg {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.simulator-score-gain-svg text {
+  font-family: "TTShinGoM", "ChartUI", "GB18030", "Microsoft YaHei UI", sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  dominant-baseline: middle;
+  text-anchor: start;
+  white-space: pre;
+}
+
+.simulator-score-gain-svg-stroke {
+  fill: none;
+  stroke: rgb(32, 65, 84);
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  paint-order: stroke fill;
+}
+
+.simulator-score-gain-svg-fill {
+  stroke: none;
+}
+
+.simulator-score-auto-live {
+  position: absolute;
+  z-index: 1;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(255, 59, 113);
+}
+
+.simulator-score-auto-live-text {
+  display: inline-block;
+  color: #ffffff;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  text-align: center;
+  white-space: nowrap;
+  text-shadow: -1px -1px 1px rgba(0, 0, 0, 0.35);
+  font-family: "TTShinGoM", "ChartUI", "GB18030", "Microsoft YaHei UI", sans-serif;
+}
+
+.simulator-score-frame-svg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.simulator-score-frame-fill {
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.18));
+}
+
+.simulator-score-frame-stroke {
+  fill: none;
+  stroke: rgb(204, 204, 204);
+  stroke-linejoin: miter;
+  stroke-linecap: butt;
+}
+
+.simulator-score-top-badge {
+  position: absolute;
+  z-index: 2;
+  border-radius: 50%;
+  border: 2px solid rgb(72, 72, 72);
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.simulator-score-top-badge-icon {
+  display: block;
+  width: 70%;
+  height: 70%;
+}
+
+.simulator-score-top-track {
+  position: absolute;
+  z-index: 2;
+  left: 7.3%;
+  top: 5.6%;
+  width: 91%;
+  height: 31.5%;
+  box-sizing: border-box;
+  border: 2px solid rgb(72, 72, 72);
+  border-radius: max(3px, 0.18em);
+  background: #535353;
+  overflow: hidden;
+}
+
+.simulator-score-gauge-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 16%;
+  background: linear-gradient(180deg, #79ffd9 0%, #49eec3 55%, #33d9ad 100%);
+}
+
+.simulator-score-rank-row {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  color: #c4c7cc;
+  text-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.25),
+    0 -1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.simulator-score-rank-label {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: inline-grid;
+  grid-auto-flow: row;
+  justify-items: center;
+  align-items: center;
+  white-space: nowrap;
+  font-family: "TTShinGoM", "ChartUI", "GB18030", "Microsoft YaHei UI", sans-serif;
+  font-size: max(9px, 0.78em);
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.simulator-score-rank-label::after {
+  content: "";
+  display: block;
+  width: 1ch;
+  height: 0.46em;
+  margin-top: 0.1em;
+  background: currentColor;
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+}
+
+.simulator-score-value {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.1em;
+  font-family: "TTShinGoM", "ChartUI", "GB18030", "Microsoft YaHei UI", sans-serif;
+  font-size: max(16px, 1.65em);
+  line-height: 1;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.simulator-score-digit {
+  display: inline-block;
+  width: 0.68em;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.simulator-score-digit.is-pad {
+  color: rgb(204, 204, 204);
+  text-shadow: none;
+}
+
+.simulator-score-digit.is-filled {
+  color: rgb(255, 59, 113);
+  text-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.9),
+    0 -1px 0 rgba(162, 26, 56, 0.22),
+    1px 0 0 rgba(162, 26, 56, 0.16),
+    -1px 0 0 rgba(162, 26, 56, 0.16);
+}
+
+.simulator-pause-anchor {
+  z-index: 4;
 }
 
 .simulator-pause-anchor {
   position: absolute;
-  top: 10px;
-  right: 16px;
   background: transparent;
   pointer-events: none;
   contain: layout paint;
