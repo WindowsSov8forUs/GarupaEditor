@@ -1,4 +1,3 @@
-import { invoke } from "@tauri-apps/api/core";
 import directionalTypeRipMapJson from "./data/directional-type-rip-map.json";
 import directionalSeTypeRipMapJson from "./data/directional-se-type-rip-map.json";
 import bgTypeRipMapJson from "./data/bg-type-rip-map.json";
@@ -18,27 +17,31 @@ import {
   type BundleManifest,
   type SpriteManifest,
 } from "./noteSkinAssetTool";
+import {
+  type JudgeSkinFileEntry,
+  prepareBestdoriBgSkinAssets,
+  prepareBestdoriFieldSkinAssets,
+  prepareBestdoriJudgeSkinAssets,
+  prepareBestdoriSkinAssets,
+  prepareBestdoriTapseskinAssets,
+  readJudgeSkinTextFile,
+  readSkinTextFile,
+} from "./services/bestdori/api";
+import {
+  ensureCommonTapSkillSeDataUrl,
+  loadPreparedBgSkinBinaryFilesAsDataUrlMap,
+  loadPreparedFieldSkinBinaryFilesAsDataUrlMap,
+  loadPreparedJudgeSkinBinaryFilesAsDataUrlMap,
+  loadPreparedSkinBinaryFilesAsDataUrlMap,
+  loadPreparedSoundBinaryFilesAsDataUrlMap,
+  normalizeLowercaseFileMap,
+} from "./services/bestdori/resourceFlows";
 
-const BESTDORI_ASSET_ROOT = "https://bestdori.com/assets/jp/ingameskin/noteskin";
-const BESTDORI_TAPSE_ASSET_ROOT = "https://bestdori.com/assets/jp/sound/tapseskin";
-const BESTDORI_TAPSE_EXPLORER_ROOT = "https://bestdori.com/api/explorer/jp/assets/sound/tapseskin";
-const BESTDORI_COMMON_SOUND_ROOT = "https://bestdori.com/assets/jp/sound/common_rip";
-const BESTDORI_FIELD_SKIN_ASSET_ROOT = "https://bestdori.com/assets/jp/ingameskin/fieldskin";
-const BESTDORI_FIELD_SKIN_EXPLORER_ROOT = "https://bestdori.com/api/explorer/jp/assets/ingameskin/fieldskin";
-const BESTDORI_BG_SKIN_ASSET_ROOT = "https://bestdori.com/assets/jp/ingameskin/bgskin";
-const BESTDORI_BG_SKIN_EXPLORER_ROOT = "https://bestdori.com/api/explorer/jp/assets/ingameskin/bgskin";
-const BESTDORI_JUDGE_SKIN_ASSET_ROOT = "https://bestdori.com/assets/jp/ingameskin/judgeskin";
 const RIP_NAME_PATTERN = /^[A-Za-z0-9_-]+$/;
 
 type TypeRipMapEntry = {
   type: string;
   ripName: string;
-};
-
-type JudgeSkinFileEntry = {
-  atlasFile: string;
-  assetFile: string;
-  bundleFile: string;
 };
 
 const RHYTHM_TYPE_RIP_ENTRIES = rhythmTypeRipMapJson as TypeRipMapEntry[];
@@ -403,28 +406,6 @@ export type CanvasRenderResourceRuntimeAssets = PlayfieldSpriteRuntimeAssets & {
   simultaneousLine: string;
 };
 
-interface PreparedBestdoriSkinAssets {
-  packageFiles: Record<string, string>;
-  samplePackageFiles: Record<string, string>;
-}
-
-interface PreparedBestdoriTapseskinAssets {
-  packageFiles: Record<string, string>;
-}
-
-interface PreparedBestdoriFieldSkinAssets {
-  packageFiles: Record<string, string>;
-}
-
-interface PreparedBestdoriBgSkinAssets {
-  packageFiles: Record<string, string>;
-  previewPackageFiles?: Record<string, string> | null;
-}
-
-interface PreparedBestdoriJudgeSkinAssets {
-  packageFiles: Record<string, string>;
-}
-
 type DownloadProgressOptions = {
   operationId?: string;
 };
@@ -561,10 +542,6 @@ function buildRhythmSampleBundleFileName(rhythmRipName: string): string {
   return `ingameskin-noteskin-${resolveRhythmSampleRipName(rhythmRipName)}.bundle`;
 }
 
-function buildBestdoriAssetBase(ripName: string): string {
-  return `${BESTDORI_ASSET_ROOT}/${ripName}_rip`;
-}
-
 function resolvePreparedFilePath(
   fileMap: Record<string, string>,
   fileName: string,
@@ -662,91 +639,6 @@ const HABAHIRO_WIDTH_TO_NOTE_ASSET_KEY: Readonly<Record<HabahiroWidth, HabahiroN
   7: "0_1_2_3_4_5_6",
 });
 
-function isTauriEnv(): boolean {
-  if (typeof window === "undefined") {
-    return false;
-  }
-  const tauriWindow = window as Window & { __TAURI__?: unknown; __TAURI_INTERNALS__?: unknown };
-  if ("__TAURI_INTERNALS__" in tauriWindow || "__TAURI__" in tauriWindow) {
-    return true;
-  }
-  if (typeof window.location?.protocol === "string" && window.location.protocol === "tauri:") {
-    return true;
-  }
-  if (typeof navigator !== "undefined" && /\btauri\b/i.test(navigator.userAgent ?? "")) {
-    return true;
-  }
-  return false;
-}
-
-function decodeBase64ToArrayBuffer(base64: string): ArrayBuffer {
-  const binary = atob(base64);
-  const buffer = new ArrayBuffer(binary.length);
-  const bytes = new Uint8Array(buffer);
-  for (let index = 0; index < binary.length; index += 1) {
-    bytes[index] = binary.charCodeAt(index);
-  }
-  return buffer;
-}
-
-async function fetchTextOrThrow(url: string): Promise<string> {
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`Download failed (${response.status}): ${url}`);
-  }
-  return response.text();
-}
-
-async function fetchTextOrNullWhenNotFound(url: string): Promise<string | null> {
-  const response = await fetch(url);
-  if (response.status === 404) {
-    return null;
-  }
-  if (!response.ok) {
-    throw new Error(`Download failed (${response.status}): ${url}`);
-  }
-  return response.text();
-}
-
-async function fetchBlobOrThrow(url: string): Promise<Blob> {
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`Download failed (${response.status}): ${url}`);
-  }
-  return response.blob();
-}
-
-async function blobToDataUrl(blob: Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onerror = () => reject(new Error("Blob to DataURL failed."));
-    reader.onload = () => {
-      if (typeof reader.result === "string") {
-        resolve(reader.result);
-      } else {
-        reject(new Error("Blob to DataURL returned unexpected type."));
-      }
-    };
-    reader.readAsDataURL(blob);
-  });
-}
-
-function buildBestdoriTapseAssetBase(ripName: string): string {
-  return `${BESTDORI_TAPSE_ASSET_ROOT}/${ripName}_rip`;
-}
-
-function buildBestdoriFieldSkinAssetBase(ripName: string): string {
-  return `${BESTDORI_FIELD_SKIN_ASSET_ROOT}/${ripName}_rip`;
-}
-
-function buildBestdoriBgSkinAssetBase(ripName: string): string {
-  return `${BESTDORI_BG_SKIN_ASSET_ROOT}/${ripName}_rip`;
-}
-
-function buildBestdoriJudgeSkinAssetBase(ripName: string): string {
-  return `${BESTDORI_JUDGE_SKIN_ASSET_ROOT}/${ripName}_rip`;
-}
-
 function resolveJudgeSkinFileEntryOrThrow(ripName: string): JudgeSkinFileEntry {
   const rawList = JUDGE_SKIN_FILES_BY_RIP[ripName];
   if (!Array.isArray(rawList)) {
@@ -766,18 +658,6 @@ function resolveJudgeSkinFileEntryOrThrow(ripName: string): JudgeSkinFileEntry {
     assetFile: assetCandidates[0],
     bundleFile: bundleCandidates[0],
   };
-}
-
-function buildBestdoriBgSkinPreviewRipName(ripName: string): string {
-  return `${ripName}preview`;
-}
-
-function normalizeLowercaseFileMap(fileMap: Record<string, string>): Record<string, string> {
-  const normalized: Record<string, string> = {};
-  for (const [name, value] of Object.entries(fileMap)) {
-    normalized[name.toLowerCase()] = value;
-  }
-  return normalized;
 }
 
 function resolveSeAssetFromFiles(
@@ -804,7 +684,7 @@ function requireSeAssetFromFiles(
 ): string {
   const resolved = resolveSeAssetFromFiles(files, candidates);
   if (!resolved) {
-    throw new Error(`SE 资源缺失：${label}`);
+    throw new Error(`SE asset missing: ${label}`);
   }
   return resolved;
 }
@@ -860,7 +740,7 @@ function requireFieldAssetFromFiles(
 ): string {
   const resolved = resolveFieldAssetFromFiles(files, fileName);
   if (!resolved) {
-    throw new Error(`FieldSkin 资源缺失：${label}`);
+    throw new Error(`FieldSkin asset missing: ${label}`);
   }
   return resolved;
 }
@@ -941,207 +821,6 @@ function withJudgeSkinAssets(sprites: Partial<Record<string, string>>): JudgeSki
   };
 }
 
-function resolveMimeTypeByFileName(fileName: string): string | undefined {
-  const normalized = fileName.trim().toLowerCase();
-  if (normalized.endsWith(".png")) {
-    return "image/png";
-  }
-  if (normalized.endsWith(".jpg") || normalized.endsWith(".jpeg")) {
-    return "image/jpeg";
-  }
-  if (normalized.endsWith(".webp")) {
-    return "image/webp";
-  }
-  if (normalized.endsWith(".mp3")) {
-    return "audio/mpeg";
-  }
-  if (normalized.endsWith(".wav")) {
-    return "audio/wav";
-  }
-  if (normalized.endsWith(".ogg")) {
-    return "audio/ogg";
-  }
-  return undefined;
-}
-
-async function loadPreparedBinaryFilesAsDataUrlMap(
-  fileMap: Record<string, string>,
-  commandName:
-    | "read_skin_binary_file"
-    | "read_sound_binary_file"
-    | "read_field_skin_binary_file"
-    | "read_bg_skin_binary_file"
-    | "read_judge_skin_binary_file",
-): Promise<Record<string, string>> {
-  const entries = Object.entries(fileMap);
-  const loaded = await Promise.all(
-    entries.map(async ([name, path]) => {
-      const base64 = await invoke<string>(commandName, { path });
-      const mimeType = resolveMimeTypeByFileName(name);
-      const dataUrl = await blobToDataUrl(
-        new Blob([decodeBase64ToArrayBuffer(base64)], mimeType ? { type: mimeType } : undefined),
-      );
-      return [name.toLowerCase(), dataUrl] as const;
-    }),
-  );
-  return Object.fromEntries(loaded);
-}
-
-async function downloadWebTapseskinFiles(ripName: string): Promise<Record<string, string>> {
-  const manifestText = await fetchTextOrThrow(`${BESTDORI_TAPSE_EXPLORER_ROOT}/${ripName}.json`);
-  let names: string[];
-  try {
-    const parsed = JSON.parse(manifestText);
-    if (!Array.isArray(parsed)) {
-      throw new Error("manifest is not an array");
-    }
-    names = parsed
-      .map((item) => String(item).trim())
-      .filter((item) => item.length > 0);
-  } catch (error) {
-    const detail = error instanceof Error ? error.message : String(error);
-    throw new Error(`Parse tapseskin manifest failed (${ripName}): ${detail}`);
-  }
-  const base = buildBestdoriTapseAssetBase(ripName);
-  const loaded = await Promise.all(
-    names.map(async (name) => {
-      const blob = await fetchBlobOrThrow(`${base}/${name}`);
-      const dataUrl = await blobToDataUrl(blob);
-      return [name.toLowerCase(), dataUrl] as const;
-    }),
-  );
-  return Object.fromEntries(loaded);
-}
-
-async function downloadWebFieldSkinFiles(ripName: string): Promise<Record<string, string>> {
-  const manifestText = await fetchTextOrThrow(`${BESTDORI_FIELD_SKIN_EXPLORER_ROOT}/${ripName}.json`);
-  let names: string[];
-  try {
-    const parsed = JSON.parse(manifestText);
-    if (!Array.isArray(parsed)) {
-      throw new Error("manifest is not an array");
-    }
-    names = parsed
-      .map((item) => String(item).trim())
-      .filter((item) => item.length > 0);
-  } catch (error) {
-    const detail = error instanceof Error ? error.message : String(error);
-    throw new Error(`Parse fieldskin manifest failed (${ripName}): ${detail}`);
-  }
-  const nameLookup = new Map<string, string>();
-  for (const name of names) {
-    nameLookup.set(name.toLowerCase(), name);
-  }
-  const base = buildBestdoriFieldSkinAssetBase(ripName);
-  const loaded = await Promise.all(
-    Object.values(FIELD_SKIN_FILE_NAMES).map(async (expectedName) => {
-      const actualName = nameLookup.get(expectedName.toLowerCase()) ?? expectedName;
-      const blob = await fetchBlobOrThrow(`${base}/${actualName}`);
-      const dataUrl = await blobToDataUrl(blob);
-      return [expectedName.toLowerCase(), dataUrl] as const;
-    }),
-  );
-  return Object.fromEntries(loaded);
-}
-
-async function downloadWebBgSkinMainFiles(ripName: string): Promise<Record<string, string>> {
-  const manifestText = await fetchTextOrThrow(`${BESTDORI_BG_SKIN_EXPLORER_ROOT}/${ripName}.json`);
-  let names: string[];
-  try {
-    const parsed = JSON.parse(manifestText);
-    if (!Array.isArray(parsed)) {
-      throw new Error("manifest is not an array");
-    }
-    names = parsed
-      .map((item) => String(item).trim())
-      .filter((item) => item.length > 0);
-  } catch (error) {
-    const detail = error instanceof Error ? error.message : String(error);
-    throw new Error(`Parse bgskin manifest failed (${ripName}): ${detail}`);
-  }
-
-  const nameLookup = new Map<string, string>();
-  for (const name of names) {
-    nameLookup.set(name.toLowerCase(), name);
-  }
-
-  const base = buildBestdoriBgSkinAssetBase(ripName);
-  const requiredLiveBgName =
-    nameLookup.get(BG_SKIN_FILE_NAMES.liveBG.toLowerCase())
-    ?? nameLookup.get(BG_SKIN_FILE_NAMES.liveBGNormal.toLowerCase())
-    ?? BG_SKIN_FILE_NAMES.liveBG;
-  const liveBgBlob = await fetchBlobOrThrow(`${base}/${requiredLiveBgName}`);
-  const liveBgDataUrl = await blobToDataUrl(liveBgBlob);
-
-  const output: Record<string, string> = {
-    [BG_SKIN_FILE_NAMES.liveBG.toLowerCase()]: liveBgDataUrl,
-  };
-  const feverName = nameLookup.get(BG_SKIN_FILE_NAMES.liveBGFever.toLowerCase());
-  if (feverName) {
-    const feverBlob = await fetchBlobOrThrow(`${base}/${feverName}`);
-    output[BG_SKIN_FILE_NAMES.liveBGFever.toLowerCase()] = await blobToDataUrl(feverBlob);
-  }
-
-  return output;
-}
-
-async function downloadWebBgSkinPreviewFiles(previewRipName: string): Promise<Record<string, string> | null> {
-  const manifestText = await fetchTextOrNullWhenNotFound(`${BESTDORI_BG_SKIN_EXPLORER_ROOT}/${previewRipName}.json`);
-  if (!manifestText) {
-    return null;
-  }
-  let names: string[];
-  try {
-    const parsed = JSON.parse(manifestText);
-    if (!Array.isArray(parsed)) {
-      throw new Error("manifest is not an array");
-    }
-    names = parsed
-      .map((item) => String(item).trim())
-      .filter((item) => item.length > 0);
-  } catch (error) {
-    const detail = error instanceof Error ? error.message : String(error);
-    throw new Error(`Parse bgskin preview manifest failed (${previewRipName}): ${detail}`);
-  }
-
-  const nameLookup = new Map<string, string>();
-  for (const name of names) {
-    nameLookup.set(name.toLowerCase(), name);
-  }
-  const previewName = nameLookup.get(BG_SKIN_FILE_NAMES.previewBG.toLowerCase());
-  if (!previewName) {
-    return null;
-  }
-
-  const base = buildBestdoriBgSkinAssetBase(previewRipName);
-  const previewBlob = await fetchBlobOrThrow(`${base}/${previewName}`);
-  return {
-    [BG_SKIN_FILE_NAMES.previewBG.toLowerCase()]: await blobToDataUrl(previewBlob),
-  };
-}
-
-async function downloadWebJudgeSkinSourceFiles(
-  ripName: string,
-): Promise<{
-  assetText: string;
-  bundleText: string;
-  atlasDataUrl: string;
-}> {
-  const fileEntry = resolveJudgeSkinFileEntryOrThrow(ripName);
-
-  const base = buildBestdoriJudgeSkinAssetBase(ripName);
-  const [assetText, bundleText, atlasBlob] = await Promise.all([
-    fetchTextOrThrow(`${base}/${fileEntry.assetFile}`),
-    fetchTextOrThrow(`${base}/${fileEntry.bundleFile}`),
-    fetchBlobOrThrow(`${base}/${fileEntry.atlasFile}`),
-  ]);
-  return {
-    assetText,
-    bundleText,
-    atlasDataUrl: await blobToDataUrl(atlasBlob),
-  };
-}
-
 export function setRuntimeSeAssets(value: SeSkinAssets | null): void {
   runtimeSeAssets = value;
 }
@@ -1175,15 +854,7 @@ export function getRuntimeJudgeSkinAssets(): JudgeSkin | null {
 }
 
 export async function ensureCommonTapSkillSeAsset(options?: DownloadProgressOptions): Promise<string> {
-  if (isTauriEnv()) {
-    const path = await invoke<string>("ensure_common_sound_asset", {
-      taskId: options?.operationId ?? null,
-    });
-    const base64 = await invoke<string>("read_sound_binary_file", { path });
-    return blobToDataUrl(new Blob([decodeBase64ToArrayBuffer(base64)], { type: "audio/mpeg" }));
-  }
-  const blob = await fetchBlobOrThrow(`${BESTDORI_COMMON_SOUND_ROOT}/SE_RHYTHM_TAP_SKILL.mp3`);
-  return blobToDataUrl(blob);
+  return ensureCommonTapSkillSeDataUrl(options);
 }
 
 function buildLaneMappedNoteAssetsByPrefix(
@@ -1599,7 +1270,6 @@ export async function downloadBestdoriRhythmSkinAssets(
   options?: DownloadProgressOptions,
 ): Promise<AnyRhythmSkinAssets> {
   const normalized = normalizeSkinSelection(selection);
-  const rhythmSampleRipName = resolveRhythmSampleRipName(normalized.rhythmRipName);
   const rhythmSampleBundleFileName = buildRhythmSampleBundleFileName(normalized.rhythmRipName);
 
   let rhythmAtlasFileMap: Record<string, string> | null = null;
@@ -1619,124 +1289,42 @@ export async function downloadBestdoriRhythmSkinAssets(
     NoteSlideAmong: string;
   };
 
-  if (isTauriEnv()) {
-    const prepared = await invoke<PreparedBestdoriSkinAssets>("prepare_bestdori_skin_assets", {
-      ripName: normalized.rhythmRipName,
-      taskId: options?.operationId ?? null,
-    });
-    const rhythmSpritesPath = resolvePreparedFilePath(prepared.packageFiles, ".sprites");
-    const rhythmBundlePath = resolvePreparedFilePath(
-      prepared.packageFiles,
-      `ingameskin-noteskin-${normalized.rhythmRipName}.bundle`,
-    );
-    const sampleBundlePath = resolvePreparedFilePath(
-      prepared.samplePackageFiles,
-      rhythmSampleBundleFileName,
-    );
-    const longLinePath = resolvePreparedFilePath(prepared.packageFiles, "longNoteLine.png");
-    const longLineSpecialPath = resolvePreparedFilePath(prepared.packageFiles, "longNoteLine2.png");
-    const simultaneousLinePath = resolvePreparedFilePath(prepared.packageFiles, "simultaneous_line.png");
-    const sampleNoteNormal3Path = resolvePreparedFilePath(prepared.samplePackageFiles, "note_normal_3.png");
-    const sampleNoteSkill3Path = resolvePreparedFilePath(prepared.samplePackageFiles, "note_skill_3.png");
-    const sampleNoteFlick3Path = resolvePreparedFilePath(prepared.samplePackageFiles, "note_flick_3.png");
-    const sampleNoteFlickTopPath = resolvePreparedFilePath(prepared.samplePackageFiles, "note_flick_top.png");
-    const sampleNoteLong3Path = resolvePreparedFilePath(prepared.samplePackageFiles, "note_long_3.png");
-    const sampleNoteSlideAmongPath = resolvePreparedFilePath(prepared.samplePackageFiles, "note_slide_among.png");
-    const [
-      rhythmSpritesFetchedText,
-      rhythmBundleText,
-      rhythmSampleBundleText,
-      longLineBase64,
-      simultaneousLineBase64,
-      longLineSpecialBase64,
-      sampleNoteNormal3Base64,
-      sampleNoteSkill3Base64,
-      sampleNoteFlick3Base64,
-      sampleNoteFlickTopBase64,
-      sampleNoteLong3Base64,
-      sampleNoteSlideAmongBase64,
-    ] = await Promise.all([
-      invoke<string>("read_skin_text_file", { path: rhythmSpritesPath }),
-      invoke<string>("read_skin_text_file", { path: rhythmBundlePath }),
-      invoke<string>("read_skin_text_file", { path: sampleBundlePath }),
-      invoke<string>("read_skin_binary_file", { path: longLinePath }),
-      invoke<string>("read_skin_binary_file", { path: simultaneousLinePath }),
-      invoke<string>("read_skin_binary_file", { path: longLineSpecialPath }),
-      invoke<string>("read_skin_binary_file", { path: sampleNoteNormal3Path }),
-      invoke<string>("read_skin_binary_file", { path: sampleNoteSkill3Path }),
-      invoke<string>("read_skin_binary_file", { path: sampleNoteFlick3Path }),
-      invoke<string>("read_skin_binary_file", { path: sampleNoteFlickTopPath }),
-      invoke<string>("read_skin_binary_file", { path: sampleNoteLong3Path }),
-      invoke<string>("read_skin_binary_file", { path: sampleNoteSlideAmongPath }),
+  const prepared = await prepareBestdoriSkinAssets(normalized.rhythmRipName, options?.operationId);
+  const packageFiles = normalizeLowercaseFileMap(prepared.packageFiles);
+  const samplePackageFiles = normalizeLowercaseFileMap(prepared.samplePackageFiles);
+
+  const rhythmSpritesPath = resolvePreparedFilePath(packageFiles, ".sprites");
+  const rhythmBundlePath = resolvePreparedFilePath(
+    packageFiles,
+    `ingameskin-noteskin-${normalized.rhythmRipName}.bundle`,
+  );
+  const sampleBundlePath = resolvePreparedFilePath(samplePackageFiles, rhythmSampleBundleFileName);
+
+  const [rhythmSpritesFetchedText, rhythmBundleText, rhythmSampleBundleText, packageDataUrls, sampleDataUrls] =
+    await Promise.all([
+      readSkinTextFile(rhythmSpritesPath),
+      readSkinTextFile(rhythmBundlePath),
+      readSkinTextFile(sampleBundlePath),
+      loadPreparedSkinBinaryFilesAsDataUrlMap(packageFiles),
+      loadPreparedSkinBinaryFilesAsDataUrlMap(samplePackageFiles),
     ]);
 
-    rhythmSpritesManifest = parseSpritesJsonOrThrow(rhythmSpritesFetchedText, "rhythm .sprites");
-    rhythmSpritesJson = rhythmSpritesManifest;
-    rhythmBundleJson = parseBundleJsonOrThrow(rhythmBundleText, "rhythm .bundle");
-    rhythmSampleBundleJson = parseBundleJsonOrThrow(rhythmSampleBundleText, "rhythm sample .bundle");
-    rhythmAtlasFileMap = prepared.packageFiles;
-    longLineAssetSrc = await blobToDataUrl(new Blob([decodeBase64ToArrayBuffer(longLineBase64)]));
-    simultaneousLineAssetSrc = await blobToDataUrl(new Blob([decodeBase64ToArrayBuffer(simultaneousLineBase64)]));
-    longLineSpecialAssetSrc = await blobToDataUrl(new Blob([decodeBase64ToArrayBuffer(longLineSpecialBase64)]));
-    sampleAssets = {
-      NoteNormal3: await blobToDataUrl(new Blob([decodeBase64ToArrayBuffer(sampleNoteNormal3Base64)])),
-      NoteSkill3: await blobToDataUrl(new Blob([decodeBase64ToArrayBuffer(sampleNoteSkill3Base64)])),
-      NoteFlick3: await blobToDataUrl(new Blob([decodeBase64ToArrayBuffer(sampleNoteFlick3Base64)])),
-      NoteFlickTop: await blobToDataUrl(new Blob([decodeBase64ToArrayBuffer(sampleNoteFlickTopBase64)])),
-      NoteLong3: await blobToDataUrl(new Blob([decodeBase64ToArrayBuffer(sampleNoteLong3Base64)])),
-      NoteSlideAmong: await blobToDataUrl(new Blob([decodeBase64ToArrayBuffer(sampleNoteSlideAmongBase64)])),
-    };
-  } else {
-    const rhythmBase = buildBestdoriAssetBase(normalized.rhythmRipName);
-    const rhythmSampleBase = buildBestdoriAssetBase(rhythmSampleRipName);
-    const [
-      rhythmAtlasBlob,
-      rhythmSpritesFetchedText,
-      rhythmBundleText,
-      rhythmSampleBundleText,
-      longLineBlob,
-      longLineSpecialBlob,
-      simultaneousLineBlob,
-      sampleNoteNormal3Blob,
-      sampleNoteSkill3Blob,
-      sampleNoteFlick3Blob,
-      sampleNoteFlickTopBlob,
-      sampleNoteLong3Blob,
-      sampleNoteSlideAmongBlob,
-    ] = await Promise.all([
-      fetchBlobOrThrow(`${rhythmBase}/RhythmGameSprites.png`),
-      fetchTextOrThrow(`${rhythmBase}/.sprites`),
-      fetchTextOrThrow(`${rhythmBase}/ingameskin-noteskin-${normalized.rhythmRipName}.bundle`),
-      fetchTextOrThrow(`${rhythmSampleBase}/${rhythmSampleBundleFileName}`),
-      fetchBlobOrThrow(`${rhythmBase}/longNoteLine.png`),
-      fetchBlobOrThrow(`${rhythmBase}/longNoteLine2.png`),
-      fetchBlobOrThrow(`${rhythmBase}/simultaneous_line.png`),
-      fetchBlobOrThrow(`${rhythmSampleBase}/note_normal_3.png`),
-      fetchBlobOrThrow(`${rhythmSampleBase}/note_skill_3.png`),
-      fetchBlobOrThrow(`${rhythmSampleBase}/note_flick_3.png`),
-      fetchBlobOrThrow(`${rhythmSampleBase}/note_flick_top.png`),
-      fetchBlobOrThrow(`${rhythmSampleBase}/note_long_3.png`),
-      fetchBlobOrThrow(`${rhythmSampleBase}/note_slide_among.png`),
-    ]);
-    rhythmSpritesManifest = parseSpritesJsonOrThrow(rhythmSpritesFetchedText, "rhythm .sprites");
-    rhythmSpritesJson = rhythmSpritesManifest;
-    rhythmBundleJson = parseBundleJsonOrThrow(rhythmBundleText, "rhythm .bundle");
-    rhythmSampleBundleJson = parseBundleJsonOrThrow(rhythmSampleBundleText, "rhythm sample .bundle");
-    rhythmAtlasFileMap = {
-      "rhythmgamesprites.png": await blobToDataUrl(rhythmAtlasBlob),
-    };
-    longLineAssetSrc = await blobToDataUrl(longLineBlob);
-    simultaneousLineAssetSrc = await blobToDataUrl(simultaneousLineBlob);
-    longLineSpecialAssetSrc = await blobToDataUrl(longLineSpecialBlob);
-    sampleAssets = {
-      NoteNormal3: await blobToDataUrl(sampleNoteNormal3Blob),
-      NoteSkill3: await blobToDataUrl(sampleNoteSkill3Blob),
-      NoteFlick3: await blobToDataUrl(sampleNoteFlick3Blob),
-      NoteFlickTop: await blobToDataUrl(sampleNoteFlickTopBlob),
-      NoteLong3: await blobToDataUrl(sampleNoteLong3Blob),
-      NoteSlideAmong: await blobToDataUrl(sampleNoteSlideAmongBlob),
-    };
-  }
+  rhythmSpritesManifest = parseSpritesJsonOrThrow(rhythmSpritesFetchedText, "rhythm .sprites");
+  rhythmSpritesJson = rhythmSpritesManifest;
+  rhythmBundleJson = parseBundleJsonOrThrow(rhythmBundleText, "rhythm .bundle");
+  rhythmSampleBundleJson = parseBundleJsonOrThrow(rhythmSampleBundleText, "rhythm sample .bundle");
+  rhythmAtlasFileMap = packageDataUrls;
+  longLineAssetSrc = resolvePreparedFilePath(packageDataUrls, "longNoteLine.png");
+  longLineSpecialAssetSrc = resolvePreparedFilePath(packageDataUrls, "longNoteLine2.png");
+  simultaneousLineAssetSrc = resolvePreparedFilePath(packageDataUrls, "simultaneous_line.png");
+  sampleAssets = {
+    NoteNormal3: resolvePreparedFilePath(sampleDataUrls, "note_normal_3.png"),
+    NoteSkill3: resolvePreparedFilePath(sampleDataUrls, "note_skill_3.png"),
+    NoteFlick3: resolvePreparedFilePath(sampleDataUrls, "note_flick_3.png"),
+    NoteFlickTop: resolvePreparedFilePath(sampleDataUrls, "note_flick_top.png"),
+    NoteLong3: resolvePreparedFilePath(sampleDataUrls, "note_long_3.png"),
+    NoteSlideAmong: resolvePreparedFilePath(sampleDataUrls, "note_slide_among.png"),
+  };
 
   if (!rhythmAtlasFileMap) {
     throw new Error("rhythm atlas file map is not prepared");
@@ -1818,88 +1406,39 @@ export async function downloadBestdoriDirectionalSkinAssets(
   let flickNoteLineL: string;
   let flickNoteLineR: string;
 
-  if (isTauriEnv()) {
-    const prepared = await invoke<PreparedBestdoriSkinAssets>("prepare_bestdori_skin_assets", {
-      ripName: normalized.directionalRipName,
-      taskId: options?.operationId ?? null,
-    });
-    const directionalSpritesPath = resolvePreparedFilePath(prepared.packageFiles, ".sprites");
-    const directionalBundlePath = resolvePreparedFilePath(
-      prepared.packageFiles,
-      `ingameskin-noteskin-${normalized.directionalRipName}.bundle`,
-    );
-    const sampleBundlePath = resolvePreparedFilePath(
-      prepared.samplePackageFiles,
-      `ingameskin-noteskin-${normalized.directionalRipName}sample.bundle`,
-    );
-    const flickNoteLineLPath = resolvePreparedFilePath(prepared.packageFiles, "FlickNoteLine_l.png");
-    const flickNoteLineRPath = resolvePreparedFilePath(prepared.packageFiles, "FlickNoteLine_r.png");
-    const sampleNoteFlickL3Path = resolvePreparedFilePath(prepared.samplePackageFiles, "note_flick_l_3.png");
-    const sampleNoteFlickR3Path = resolvePreparedFilePath(prepared.samplePackageFiles, "note_flick_r_3.png");
-    const [
-      directionalSpritesFetchedText,
-      directionalBundleText,
-      directionalSampleBundleText,
-      flickNoteLineLBase64,
-      flickNoteLineRBase64,
-      sampleNoteFlickL3Base64,
-      sampleNoteFlickR3Base64,
-    ] = await Promise.all([
-      invoke<string>("read_skin_text_file", { path: directionalSpritesPath }),
-      invoke<string>("read_skin_text_file", { path: directionalBundlePath }),
-      invoke<string>("read_skin_text_file", { path: sampleBundlePath }),
-      invoke<string>("read_skin_binary_file", { path: flickNoteLineLPath }),
-      invoke<string>("read_skin_binary_file", { path: flickNoteLineRPath }),
-      invoke<string>("read_skin_binary_file", { path: sampleNoteFlickL3Path }),
-      invoke<string>("read_skin_binary_file", { path: sampleNoteFlickR3Path }),
+  const prepared = await prepareBestdoriSkinAssets(normalized.directionalRipName, options?.operationId);
+  const packageFiles = normalizeLowercaseFileMap(prepared.packageFiles);
+  const samplePackageFiles = normalizeLowercaseFileMap(prepared.samplePackageFiles);
+
+  const directionalSpritesPath = resolvePreparedFilePath(packageFiles, ".sprites");
+  const directionalBundlePath = resolvePreparedFilePath(
+    packageFiles,
+    `ingameskin-noteskin-${normalized.directionalRipName}.bundle`,
+  );
+  const sampleBundlePath = resolvePreparedFilePath(
+    samplePackageFiles,
+    `ingameskin-noteskin-${normalized.directionalRipName}sample.bundle`,
+  );
+  const [directionalSpritesFetchedText, directionalBundleText, directionalSampleBundleText, packageDataUrls, sampleDataUrls] =
+    await Promise.all([
+      readSkinTextFile(directionalSpritesPath),
+      readSkinTextFile(directionalBundlePath),
+      readSkinTextFile(sampleBundlePath),
+      loadPreparedSkinBinaryFilesAsDataUrlMap(packageFiles),
+      loadPreparedSkinBinaryFilesAsDataUrlMap(samplePackageFiles),
     ]);
-    directionalSpritesManifest = parseSpritesJsonOrThrow(directionalSpritesFetchedText, "directional .sprites");
-    directionalSpritesJson = directionalSpritesManifest;
-    directionalBundleJson = parseBundleJsonOrThrow(directionalBundleText, "directional .bundle");
-    directionalSampleBundleJson = parseBundleJsonOrThrow(directionalSampleBundleText, "directional sample .bundle");
-    directionalAtlasFileMap = prepared.packageFiles;
-    flickNoteLineL = await blobToDataUrl(new Blob([decodeBase64ToArrayBuffer(flickNoteLineLBase64)]));
-    flickNoteLineR = await blobToDataUrl(new Blob([decodeBase64ToArrayBuffer(flickNoteLineRBase64)]));
-    sampleAssets = {
-      NoteFlickL3: await blobToDataUrl(new Blob([decodeBase64ToArrayBuffer(sampleNoteFlickL3Base64)])),
-      NoteFlickR3: await blobToDataUrl(new Blob([decodeBase64ToArrayBuffer(sampleNoteFlickR3Base64)])),
-    };
-  } else {
-    const directionalBase = buildBestdoriAssetBase(normalized.directionalRipName);
-    const directionalSampleBase = buildBestdoriAssetBase(`${normalized.directionalRipName}sample`);
-    const [
-      directionalAtlasBlob,
-      directionalSpritesFetchedText,
-      directionalBundleText,
-      directionalSampleBundleText,
-      flickNoteLineLBlob,
-      flickNoteLineRBlob,
-      sampleNoteFlickL3Blob,
-      sampleNoteFlickR3Blob,
-    ] = await Promise.all([
-      fetchBlobOrThrow(`${directionalBase}/DirectionalFlickSprites.png`),
-      fetchTextOrThrow(`${directionalBase}/.sprites`),
-      fetchTextOrThrow(`${directionalBase}/ingameskin-noteskin-${normalized.directionalRipName}.bundle`),
-      fetchTextOrThrow(`${directionalSampleBase}/ingameskin-noteskin-${normalized.directionalRipName}sample.bundle`),
-      fetchBlobOrThrow(`${directionalBase}/FlickNoteLine_l.png`),
-      fetchBlobOrThrow(`${directionalBase}/FlickNoteLine_r.png`),
-      fetchBlobOrThrow(`${directionalSampleBase}/note_flick_l_3.png`),
-      fetchBlobOrThrow(`${directionalSampleBase}/note_flick_r_3.png`),
-    ]);
-    directionalSpritesManifest = parseSpritesJsonOrThrow(directionalSpritesFetchedText, "directional .sprites");
-    directionalSpritesJson = directionalSpritesManifest;
-    directionalBundleJson = parseBundleJsonOrThrow(directionalBundleText, "directional .bundle");
-    directionalSampleBundleJson = parseBundleJsonOrThrow(directionalSampleBundleText, "directional sample .bundle");
-    directionalAtlasFileMap = {
-      "directionalflicksprites.png": await blobToDataUrl(directionalAtlasBlob),
-    };
-    flickNoteLineL = await blobToDataUrl(flickNoteLineLBlob);
-    flickNoteLineR = await blobToDataUrl(flickNoteLineRBlob);
-    sampleAssets = {
-      NoteFlickL3: await blobToDataUrl(sampleNoteFlickL3Blob),
-      NoteFlickR3: await blobToDataUrl(sampleNoteFlickR3Blob),
-    };
-  }
+
+  directionalSpritesManifest = parseSpritesJsonOrThrow(directionalSpritesFetchedText, "directional .sprites");
+  directionalSpritesJson = directionalSpritesManifest;
+  directionalBundleJson = parseBundleJsonOrThrow(directionalBundleText, "directional .bundle");
+  directionalSampleBundleJson = parseBundleJsonOrThrow(directionalSampleBundleText, "directional sample .bundle");
+  directionalAtlasFileMap = packageDataUrls;
+  flickNoteLineL = resolvePreparedFilePath(packageDataUrls, "FlickNoteLine_l.png");
+  flickNoteLineR = resolvePreparedFilePath(packageDataUrls, "FlickNoteLine_r.png");
+  sampleAssets = {
+    NoteFlickL3: resolvePreparedFilePath(sampleDataUrls, "note_flick_l_3.png"),
+    NoteFlickR3: resolvePreparedFilePath(sampleDataUrls, "note_flick_r_3.png"),
+  };
 
   if (!directionalAtlasFileMap) {
     throw new Error("directional atlas file map is not prepared");
@@ -1936,16 +1475,9 @@ export async function downloadBestdoriRhythmSeSkinAssets(
 ): Promise<RhythmSeSkinAssets> {
   const normalized = normalizeSkinSelection(selection);
   const ripName = normalized.rhythmSeRipName;
-  if (isTauriEnv()) {
-    const prepared = await invoke<PreparedBestdoriTapseskinAssets>("prepare_bestdori_tapseskin_assets", {
-      ripName,
-      taskId: options?.operationId ?? null,
-    });
-    const packageFiles = normalizeLowercaseFileMap(prepared.packageFiles);
-    const files = await loadPreparedBinaryFilesAsDataUrlMap(packageFiles, "read_sound_binary_file");
-    return withRhythmSeAssets(files);
-  }
-  const files = await downloadWebTapseskinFiles(ripName);
+  const prepared = await prepareBestdoriTapseskinAssets(ripName, options?.operationId);
+  const packageFiles = normalizeLowercaseFileMap(prepared.packageFiles);
+  const files = await loadPreparedSoundBinaryFilesAsDataUrlMap(packageFiles);
   return withRhythmSeAssets(files);
 }
 
@@ -1955,16 +1487,9 @@ export async function downloadBestdoriDirectionalSeSkinAssets(
 ): Promise<DirectionalSeSkinAssets> {
   const normalized = normalizeSkinSelection(selection);
   const ripName = normalized.directionalSeRipName;
-  if (isTauriEnv()) {
-    const prepared = await invoke<PreparedBestdoriTapseskinAssets>("prepare_bestdori_tapseskin_assets", {
-      ripName,
-      taskId: options?.operationId ?? null,
-    });
-    const packageFiles = normalizeLowercaseFileMap(prepared.packageFiles);
-    const files = await loadPreparedBinaryFilesAsDataUrlMap(packageFiles, "read_sound_binary_file");
-    return withDirectionalSeAssets(files);
-  }
-  const files = await downloadWebTapseskinFiles(ripName);
+  const prepared = await prepareBestdoriTapseskinAssets(ripName, options?.operationId);
+  const packageFiles = normalizeLowercaseFileMap(prepared.packageFiles);
+  const files = await loadPreparedSoundBinaryFilesAsDataUrlMap(packageFiles);
   return withDirectionalSeAssets(files);
 }
 
@@ -1974,18 +1499,11 @@ export async function downloadBestdoriFieldSkinAssets(
 ): Promise<FieldSkinAssets> {
   const normalizedRipName = ripName.trim();
   if (!normalizedRipName || !RIP_NAME_PATTERN.test(normalizedRipName)) {
-    throw new Error("ripName 非法，仅允许 [a-zA-Z0-9_-]。");
+    throw new Error("Invalid fieldskin ripName, only [a-zA-Z0-9_-] is allowed.");
   }
-  if (isTauriEnv()) {
-    const prepared = await invoke<PreparedBestdoriFieldSkinAssets>("prepare_bestdori_field_skin_assets", {
-      ripName: normalizedRipName,
-      taskId: options?.operationId ?? null,
-    });
-    const packageFiles = normalizeLowercaseFileMap(prepared.packageFiles);
-    const files = await loadPreparedBinaryFilesAsDataUrlMap(packageFiles, "read_field_skin_binary_file");
-    return withFieldSkinAssets(files);
-  }
-  const files = await downloadWebFieldSkinFiles(normalizedRipName);
+  const prepared = await prepareBestdoriFieldSkinAssets(normalizedRipName, options?.operationId);
+  const packageFiles = normalizeLowercaseFileMap(prepared.packageFiles);
+  const files = await loadPreparedFieldSkinBinaryFilesAsDataUrlMap(packageFiles);
   return withFieldSkinAssets(files);
 }
 
@@ -1998,30 +1516,16 @@ export async function downloadBestdoriBgSkinAssets(
     throw new Error("Invalid bgskin ripName, only [a-zA-Z0-9_-] is allowed.");
   }
 
-  if (isTauriEnv()) {
-    const prepared = await invoke<PreparedBestdoriBgSkinAssets>("prepare_bestdori_bg_skin_assets", {
-      ripName: normalizedRipName,
-      taskId: options?.operationId ?? null,
-    });
-    const packageFiles = normalizeLowercaseFileMap(prepared.packageFiles);
-    const mainFiles = await loadPreparedBinaryFilesAsDataUrlMap(packageFiles, "read_bg_skin_binary_file");
+  const prepared = await prepareBestdoriBgSkinAssets(normalizedRipName, options?.operationId);
+  const packageFiles = normalizeLowercaseFileMap(prepared.packageFiles);
+  const mainFiles = await loadPreparedBgSkinBinaryFilesAsDataUrlMap(packageFiles);
 
-    const previewPackageFiles = prepared.previewPackageFiles
-      ? normalizeLowercaseFileMap(prepared.previewPackageFiles)
-      : null;
-    const previewFiles = previewPackageFiles
-      ? await loadPreparedBinaryFilesAsDataUrlMap(previewPackageFiles, "read_bg_skin_binary_file")
-      : null;
-    const preview = previewFiles ? withBgSkinPreview(previewFiles) : undefined;
-    return {
-      assets: withBgSkinAssets(mainFiles),
-      ...(preview ? { preview } : {}),
-    };
-  }
-
-  const mainFiles = await downloadWebBgSkinMainFiles(normalizedRipName);
-  const previewRipName = buildBestdoriBgSkinPreviewRipName(normalizedRipName);
-  const previewFiles = await downloadWebBgSkinPreviewFiles(previewRipName);
+  const previewPackageFiles = prepared.previewPackageFiles
+    ? normalizeLowercaseFileMap(prepared.previewPackageFiles)
+    : null;
+  const previewFiles = previewPackageFiles
+    ? await loadPreparedBgSkinBinaryFilesAsDataUrlMap(previewPackageFiles)
+    : null;
   const preview = previewFiles ? withBgSkinPreview(previewFiles) : undefined;
   return {
     assets: withBgSkinAssets(mainFiles),
@@ -2043,25 +1547,15 @@ export async function downloadBestdoriJudgeSkinAssets(
   let atlasDataUrl: string;
   const fileEntry = resolveJudgeSkinFileEntryOrThrow(normalizedRipName);
 
-  if (isTauriEnv()) {
-    const prepared = await invoke<PreparedBestdoriJudgeSkinAssets>("prepare_bestdori_judge_skin_assets", {
-      ripName: normalizedRipName,
-      taskId: options?.operationId ?? null,
-    });
-    const packageFiles = normalizeLowercaseFileMap(prepared.packageFiles);
-    const assetPath = resolvePreparedFilePath(packageFiles, fileEntry.assetFile);
-    const bundlePath = resolvePreparedFilePath(packageFiles, fileEntry.bundleFile);
-    assetRaw = await invoke<string>("read_judge_skin_text_file", { path: assetPath });
-    bundleRaw = await invoke<string>("read_judge_skin_text_file", { path: bundlePath });
+  const prepared = await prepareBestdoriJudgeSkinAssets(normalizedRipName, options?.operationId);
+  const packageFiles = normalizeLowercaseFileMap(prepared.packageFiles);
+  const assetPath = resolvePreparedFilePath(packageFiles, fileEntry.assetFile);
+  const bundlePath = resolvePreparedFilePath(packageFiles, fileEntry.bundleFile);
+  assetRaw = await readJudgeSkinTextFile(assetPath);
+  bundleRaw = await readJudgeSkinTextFile(bundlePath);
 
-    const fileDataUrls = await loadPreparedBinaryFilesAsDataUrlMap(packageFiles, "read_judge_skin_binary_file");
-    atlasDataUrl = resolvePreparedFilePath(fileDataUrls, fileEntry.atlasFile);
-  } else {
-    const sourceFiles = await downloadWebJudgeSkinSourceFiles(normalizedRipName);
-    assetRaw = sourceFiles.assetText;
-    bundleRaw = sourceFiles.bundleText;
-    atlasDataUrl = sourceFiles.atlasDataUrl;
-  }
+  const fileDataUrls = await loadPreparedJudgeSkinBinaryFilesAsDataUrlMap(packageFiles);
+  atlasDataUrl = resolvePreparedFilePath(fileDataUrls, fileEntry.atlasFile);
 
   const assetManifest = parseAssetJsonOrThrow(assetRaw, `${normalizedRipName}:judge.asset`);
   const bundleManifest = parseBundleJsonOrThrow(bundleRaw, `${normalizedRipName}:judge.bundle`);
@@ -2082,3 +1576,4 @@ export async function downloadBestdoriJudgeSkinAssets(
     assets: withJudgeSkinAssets(sprites),
   };
 }
+

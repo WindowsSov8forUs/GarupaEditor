@@ -88,9 +88,7 @@ type BestdoriV2ChartItem =
 
 export type BestdoriV2Chart = BestdoriV2ChartItem[];
 
-export type ChartFormatName = "current-json" | "bestdori-v2";
-
-export type ChartFormatConvertOptions = {
+type ChartFormatConvertOptions = {
   normalizeBpmAtZero?: boolean;
 };
 
@@ -361,8 +359,13 @@ export function parseBestdoriV2Chart(input: unknown): BestdoriV2Chart {
       throw new Error(`item[${itemIndex}].type is required`);
     }
 
+    const type = rawType.trim();
     const label = `item[${itemIndex}]`;
-    if (rawType === "BPM") {
+    if (type === "System") {
+      return;
+    }
+
+    if (type === "BPM") {
       items.push({
         type: "BPM",
         beat: parseFiniteNumber(rawItem.beat, `${label}.beat`),
@@ -371,7 +374,7 @@ export function parseBestdoriV2Chart(input: unknown): BestdoriV2Chart {
       return;
     }
 
-    if (rawType === "Single") {
+    if (type === "Single") {
       const beat = parseFiniteNumber(rawItem.beat, `${label}.beat`);
       const lane = parseFiniteNumber(rawItem.lane, `${label}.lane`);
       const flick = parseBooleanFlag(rawItem.flick);
@@ -386,7 +389,7 @@ export function parseBestdoriV2Chart(input: unknown): BestdoriV2Chart {
       return;
     }
 
-    if (rawType === "Directional") {
+    if (type === "Directional") {
       items.push({
         type: "Directional",
         beat: parseFiniteNumber(rawItem.beat, `${label}.beat`),
@@ -397,7 +400,7 @@ export function parseBestdoriV2Chart(input: unknown): BestdoriV2Chart {
       return;
     }
 
-    if (rawType === "Slide") {
+    if (type === "Slide" || type === "Long") {
       const rawConnections = rawItem.connections;
       if (!Array.isArray(rawConnections)) {
         throw new Error(`${label}.connections must be an array`);
@@ -591,32 +594,56 @@ function convertCurrentHeadOrTailVisibleToBestdori(
   };
 }
 
-function convertCurrentSlideToBestdori(item: CurrentSlideItem): BestdoriV2SlideItem | null {
+function convertCurrentSlideToBestdori(item: CurrentSlideItem): BestdoriV2ChartItem | null {
   const original = item.connections;
   if (original.length === 0) {
     return null;
   }
 
-  let startIndex = 0;
-  while (startIndex < original.length && original[startIndex].type === "Hidden") {
-    startIndex += 1;
-  }
-
-  let endIndex = original.length - 1;
-  while (endIndex >= startIndex && original[endIndex].type === "Hidden") {
-    endIndex -= 1;
-  }
-
-  if (startIndex > endIndex) {
+  const visibleConnections = original.filter((connection) => connection.type !== "Hidden");
+  if (visibleConnections.length === 0) {
     return null;
   }
 
-  const trimmed = original.slice(startIndex, endIndex + 1);
-  if (trimmed.length === 0) {
+  if (visibleConnections.length === 1) {
+    const connection = visibleConnections[0];
+    if (connection.type === "Skill") {
+      return {
+        type: "Single",
+        beat: connection.beat,
+        lane: connection.lane,
+        skill: true,
+      };
+    }
+    if (connection.type === "Flick") {
+      return {
+        type: "Single",
+        beat: connection.beat,
+        lane: connection.lane,
+        flick: true,
+      };
+    }
+    return {
+      type: "Single",
+      beat: connection.beat,
+      lane: connection.lane,
+    };
+  }
+
+  const connections = [...original].sort((left, right) => left.beat - right.beat);
+
+  while (connections.length > 0 && connections[0]?.type === "Hidden") {
+    connections.shift();
+  }
+  while (connections.length > 0 && connections[connections.length - 1]?.type === "Hidden") {
+    connections.pop();
+  }
+
+  if (connections.length === 0) {
     return null;
   }
 
-  const connections: BestdoriV2SlideConnection[] = trimmed.map((connection, index) => {
+  const mappedConnections: BestdoriV2SlideConnection[] = connections.map((connection, index) => {
     if (connection.type === "Hidden") {
       return {
         beat: connection.beat,
@@ -626,7 +653,7 @@ function convertCurrentSlideToBestdori(item: CurrentSlideItem): BestdoriV2SlideI
     }
 
     const isHead = index === 0;
-    const isTail = index === trimmed.length - 1;
+    const isTail = index === connections.length - 1;
     if (isHead) {
       return convertCurrentHeadOrTailVisibleToBestdori(connection, true, false);
     }
@@ -642,7 +669,7 @@ function convertCurrentSlideToBestdori(item: CurrentSlideItem): BestdoriV2SlideI
 
   return {
     type: "Slide",
-    connections,
+    connections: mappedConnections,
   };
 }
 
@@ -691,44 +718,3 @@ export function convertCurrentChartJsonToBestdoriV2(
   return options.normalizeBpmAtZero === false ? converted : normalizeBestdoriBpmAtZero(converted);
 }
 
-export function convertChartFormat(
-  input: unknown,
-  sourceFormat: ChartFormatName,
-  targetFormat: ChartFormatName,
-  options: ChartFormatConvertOptions = {},
-): CurrentChartJson | BestdoriV2Chart {
-  if (sourceFormat === targetFormat) {
-    if (sourceFormat === "current-json") {
-      const parsedCurrent = parseCurrentChartJson(input);
-      return options.normalizeBpmAtZero === false ? parsedCurrent : normalizeCurrentBpmAtZero(parsedCurrent);
-    }
-    const parsedBestdori = parseBestdoriV2Chart(input);
-    return options.normalizeBpmAtZero === false ? parsedBestdori : normalizeBestdoriBpmAtZero(parsedBestdori);
-  }
-
-  if (sourceFormat === "bestdori-v2" && targetFormat === "current-json") {
-    return convertBestdoriV2ToCurrentChartJson(input, options);
-  }
-
-  if (sourceFormat === "current-json" && targetFormat === "bestdori-v2") {
-    return convertCurrentChartJsonToBestdoriV2(input, options);
-  }
-
-  throw new Error(`Unsupported chart format conversion: ${sourceFormat} -> ${targetFormat}`);
-}
-
-export function convertChartFormatFromJsonText(
-  text: string,
-  sourceFormat: ChartFormatName,
-  targetFormat: ChartFormatName,
-  options: ChartFormatConvertOptions = {},
-): CurrentChartJson | BestdoriV2Chart {
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(text);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    throw new Error(`Invalid JSON text: ${message}`);
-  }
-  return convertChartFormat(parsed, sourceFormat, targetFormat, options);
-}

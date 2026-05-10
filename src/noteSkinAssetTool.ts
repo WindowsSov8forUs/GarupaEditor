@@ -1,4 +1,4 @@
-import { invoke } from "@tauri-apps/api/core";
+import { readSkinBinaryFileAsDataUrl } from "./services/bestdori/api";
 
 type JsonPrimitive = string | number | boolean | null;
 type JsonValue = JsonPrimitive | JsonArray | JsonObject;
@@ -368,20 +368,6 @@ export function parseAssetJsonOrThrow(raw: string, label: string): AssetManifest
   };
 }
 
-async function loadImageFromBlob(blob: Blob): Promise<HTMLImageElement> {
-  const objectUrl = URL.createObjectURL(blob);
-  try {
-    return await new Promise((resolve, reject) => {
-      const image = new Image();
-      image.onload = () => resolve(image);
-      image.onerror = () => reject(new Error("Texture image load failed."));
-      image.src = objectUrl;
-    });
-  } finally {
-    URL.revokeObjectURL(objectUrl);
-  }
-}
-
 async function loadImageFromUrl(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const image = new Image();
@@ -479,16 +465,6 @@ function buildAtlasFileByPreloadRange(bundle: BundleManifest): Map<string, strin
   return output;
 }
 
-function decodeBase64ToArrayBuffer(base64: string): ArrayBuffer {
-  const binary = atob(base64);
-  const buffer = new ArrayBuffer(binary.length);
-  const bytes = new Uint8Array(buffer);
-  for (let index = 0; index < binary.length; index += 1) {
-    bytes[index] = binary.charCodeAt(index);
-  }
-  return buffer;
-}
-
 function isLoadableUrl(path: string): boolean {
   return /^https?:\/\//i.test(path)
     || /^data:/i.test(path)
@@ -500,8 +476,8 @@ async function loadImageFromMappedPath(path: string): Promise<HTMLImageElement> 
   if (isLoadableUrl(path)) {
     return loadImageFromUrl(path);
   }
-  const base64 = await invoke<string>("read_skin_binary_file", { path });
-  return loadImageFromBlob(new Blob([decodeBase64ToArrayBuffer(base64)]));
+  const dataUrl = await readSkinBinaryFileAsDataUrl(path, path);
+  return loadImageFromUrl(dataUrl);
 }
 
 function resolveSpriteTexturePathId(entry: SpriteManifestEntry): string | null {

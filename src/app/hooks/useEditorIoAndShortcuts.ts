@@ -1,4 +1,4 @@
-﻿import { invoke } from "@tauri-apps/api/core";
+import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { writeText as writeClipboardText } from "@tauri-apps/plugin-clipboard-manager";
 import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
@@ -42,6 +42,18 @@ import {
   regressChartWithoutHabahiro,
   regressChartWithoutSpRhythm,
 } from "../modeChartRegression";
+import {
+  fetchBestdoriFileBlob,
+  fetchBestdoriCommunityPostDetails,
+  fetchBestdoriOfficialChartImportPayload,
+  resolveBestdoriCommunitySongResourceUrls,
+  type BestdoriPostTag,
+} from "../../services/bestdori/api";
+import {
+  publishBestdoriCommunityChartFlow,
+  uploadSonolusLevelFlow,
+} from "../../services/bestdori/resourceFlows";
+import { isTauriRuntimeEnvironment } from "../../services/bestdori/transport";
 
 type ParsedJsonNote = {
   note: ChartNote;
@@ -69,6 +81,21 @@ type AppliedChartJsonSummary = {
 };
 
 type ImportJsonModalLevel = "chart" | "bestdori-v2";
+type OfficialChartDifficulty = "EASY" | "NORMAL" | "HARD" | "EXPERT" | "SPECIAL";
+const OFFICIAL_CHART_DIFFICULTY_TO_API: Readonly<Record<OfficialChartDifficulty, "easy" | "normal" | "hard" | "expert" | "special">> = {
+  EASY: "easy",
+  NORMAL: "normal",
+  HARD: "hard",
+  EXPERT: "expert",
+  SPECIAL: "special",
+};
+const COMMUNITY_POST_DIFF_TO_METADATA_DIFFICULTY: Readonly<Record<number, ChartMetadata["difficulty"]>> = {
+  0: "EASY",
+  1: "NORMAL",
+  2: "HARD",
+  3: "EXPERT",
+  4: "SPECIAL",
+};
 const DOWNLOAD_PROGRESS_EVENT_NAME = "download-progress";
 
 type DownloadProgressPayload = {
@@ -100,23 +127,6 @@ type DownloadProgressUiState = {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
-}
-
-function isTauriEnvironment(): boolean {
-  if (typeof window === "undefined") {
-    return false;
-  }
-  const tauriWindow = window as Window & { __TAURI__?: unknown; __TAURI_INTERNALS__?: unknown };
-  if ("__TAURI_INTERNALS__" in tauriWindow || "__TAURI__" in tauriWindow) {
-    return true;
-  }
-  if (typeof window.location?.protocol === "string" && window.location.protocol === "tauri:") {
-    return true;
-  }
-  if (typeof navigator !== "undefined" && /\btauri\b/i.test(navigator.userAgent ?? "")) {
-    return true;
-  }
-  return false;
 }
 
 export function useEditorIoAndShortcuts(params: any) {
@@ -155,12 +165,15 @@ export function useEditorIoAndShortcuts(params: any) {
     applyBestdoriSkinSelectionRef,
     setAudioDurationSec,
     setAudioFileName,
+    audioFileName,
     jsonImportRef,
+    bestdoriV2ImportRef,
     sanitizeFileName,
     setIsMetadataEditorOpen,
     setIsAppSettingsOpen,
     setIsSkinSettingsOpen,
     setAudioObjectUrl,
+    audioObjectUrl,
     formatDuration,
     windowPresetId,
     WINDOW_SIZE_PRESETS,
@@ -503,7 +516,13 @@ export function useEditorIoAndShortcuts(params: any) {
   const [isImportJsonModalOpen, setIsImportJsonModalOpen] = useState(false);
   const [importJsonModalLevel, setImportJsonModalLevel] = useState<ImportJsonModalLevel>("chart");
   const [importJsonText, setImportJsonText] = useState("");
-  const [importBestdoriV2Text, setImportBestdoriV2Text] = useState("");
+  const [importOfficialChartId, setImportOfficialChartId] = useState("");
+  const [importOfficialChartDifficulty, setImportOfficialChartDifficulty] = useState<OfficialChartDifficulty>("EASY");
+  const [importCommunityPostId, setImportCommunityPostId] = useState("");
+  const [uploadCommunityPostContent, setUploadCommunityPostContent] = useState("");
+  const [uploadCommunityPostTags, setUploadCommunityPostTags] = useState<BestdoriPostTag[]>([]);
+  const [importJsonSelectedPath, setImportJsonSelectedPath] = useState("");
+  const [importBestdoriV2SelectedPath, setImportBestdoriV2SelectedPath] = useState("");
   const [isExportJsonModalOpen, setIsExportJsonModalOpen] = useState(false);
   const [isExportJsonSaving, setIsExportJsonSaving] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState<DownloadProgressUiState>({
@@ -575,7 +594,7 @@ export function useEditorIoAndShortcuts(params: any) {
   };
 
   useEffect(() => {
-    if (!isTauriEnvironment()) {
+    if (!isTauriRuntimeEnvironment()) {
       return;
     }
 
@@ -875,7 +894,7 @@ export function useEditorIoAndShortcuts(params: any) {
 
     const fileName = getExportFileName();
 
-    if (!isTauriEnvironment()) {
+    if (!isTauriRuntimeEnvironment()) {
       const payload = new Blob([exportJson], { type: "application/json;charset=utf-8" });
       const url = URL.createObjectURL(payload);
       const link = document.createElement("a");
@@ -912,15 +931,11 @@ export function useEditorIoAndShortcuts(params: any) {
   };
 
   const exportBestdoriV2ToClipboard = async () => {
-    const hasSvItems = chartJson.some((item) => isRecord(item) && item.type === "SV");
-    const doExport = async (dropSvItems: boolean) => {
-      const sourceChart = dropSvItems
-        ? chartJson.filter((item) => item.type !== "SV")
-        : chartJson;
-      const bestdori = convertCurrentChartJsonToBestdoriV2(sourceChart);
+    try {
+      const bestdori = convertCurrentChartJsonToBestdoriV2(chartJson);
       const bestdoriJsonText = JSON.stringify(bestdori);
 
-      if (isTauriEnvironment()) {
+      if (isTauriRuntimeEnvironment()) {
         await writeClipboardText(bestdoriJsonText);
       } else if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(bestdoriJsonText);
@@ -936,47 +951,6 @@ export function useEditorIoAndShortcuts(params: any) {
       } else {
         setStatusMessage("已导出 Bestdori V2 到剪贴板。");
       }
-    };
-
-    if (hasSvItems) {
-      if (typeof openOverlayDialog === "function") {
-        openOverlayDialog(
-          {
-            tone: "warning",
-            message: "当前谱面包含 SV 事件。\n导出 Bestdori V2 将删除全部 SV 事件，仅对导出结果生效。\n是否继续？",
-          },
-          {
-            onConfirm: () => {
-              void doExport(true).catch((error) => {
-                const message = error instanceof Error ? error.message : String(error);
-                if (typeof openOverlayDialog === "function") {
-                  openOverlayDialog({
-                    tone: "error",
-                    message: `导出谱面为 Bestdori 格式代码失败：\n${message}`,
-                  });
-                } else {
-                  setStatusMessage(`导出 Bestdori V2 失败：${message}`);
-                }
-              });
-            },
-            onCancel: () => {
-              setStatusMessage("已取消导出。");
-            },
-          },
-        );
-        return;
-      }
-      if (typeof window !== "undefined") {
-        const confirmed = window.confirm("当前谱面包含 SV 事件。导出 Bestdori V2 将删除全部 SV 事件，是否继续？");
-        if (!confirmed) {
-          setStatusMessage("已取消导出。");
-          return;
-        }
-      }
-    }
-
-    try {
-      await doExport(hasSvItems);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       if (typeof openOverlayDialog === "function") {
@@ -994,23 +968,32 @@ export function useEditorIoAndShortcuts(params: any) {
     jsonImportRef.current?.click();
   };
 
+  const triggerBestdoriV2Import = () => {
+    bestdoriV2ImportRef.current?.click();
+  };
+
   const openImportJsonModal = () => {
     setImportJsonText(exportJson);
     setImportJsonModalLevel("chart");
+    setImportCommunityPostId("");
+    setImportJsonSelectedPath("");
+    setImportBestdoriV2SelectedPath("");
     setIsImportJsonModalOpen(true);
   };
 
   const closeImportJsonModal = () => {
     setImportJsonModalLevel("chart");
+    setImportCommunityPostId("");
+    setImportJsonSelectedPath("");
+    setImportBestdoriV2SelectedPath("");
     setIsImportJsonModalOpen(false);
   };
 
-  const backToImportJsonModalChartLevel = () => {
-    setImportJsonModalLevel("chart");
-  };
-
   const openImportJsonModalBestdoriV2Level = () => {
-    setImportBestdoriV2Text("");
+    setImportOfficialChartId("");
+    setImportOfficialChartDifficulty("EASY");
+    setImportCommunityPostId("");
+    setImportBestdoriV2SelectedPath("");
     setImportJsonModalLevel("bestdori-v2");
   };
 
@@ -1282,25 +1265,533 @@ export function useEditorIoAndShortcuts(params: any) {
     }
   };
 
-  const applyImportBestdoriV2Text = () => {
+  const resolveCommunityPostDifficulty = (diff: unknown): ChartMetadata["difficulty"] => {
+    const parsedAsNumber = Number(diff);
+    if (Number.isInteger(parsedAsNumber) && parsedAsNumber >= 0 && parsedAsNumber <= 4) {
+      return COMMUNITY_POST_DIFF_TO_METADATA_DIFFICULTY[parsedAsNumber] ?? "EASY";
+    }
+    if (typeof diff === "string") {
+      const normalized = diff.trim().toUpperCase();
+      if (
+        normalized === "EASY"
+        || normalized === "NORMAL"
+        || normalized === "HARD"
+        || normalized === "EXPERT"
+        || normalized === "SPECIAL"
+      ) {
+        return normalized;
+      }
+    }
+    return "EASY";
+  };
+
+  const resolveCommunityPostCharter = (author: unknown): string => {
+    if (!isRecord(author)) {
+      return "";
+    }
+    const nickname = typeof author.nickname === "string" ? author.nickname.trim() : "";
+    if (nickname.length > 0) {
+      return nickname;
+    }
+    const username = typeof author.username === "string" ? author.username.trim() : "";
+    if (username.length > 0) {
+      return username;
+    }
+    return "";
+  };
+
+  const resolveTrimmedString = (value: unknown): string => {
+    if (typeof value !== "string") {
+      return "";
+    }
+    return value.trim();
+  };
+
+  const readBlobAsDataUrl = (blob: Blob): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error("blob to data url failed"));
+      reader.onload = () => {
+        if (typeof reader.result === "string") {
+          resolve(reader.result);
+        } else {
+          reject(new Error("blob to data url returned invalid result"));
+        }
+      };
+      reader.readAsDataURL(blob);
+    });
+
+  const pushBlockingProgress = (operationId: string, percent: number, message: string) => {
+    if (currentDownloadOperationIdRef.current !== operationId) {
+      return;
+    }
+    const clampedPercent = Math.max(0, Math.min(99, Math.round(percent)));
+    const previousLogs = downloadLogRef.current;
+    const nextLogs = previousLogs[previousLogs.length - 1] === message
+      ? previousLogs
+      : [...previousLogs, message].slice(-2);
+    downloadLogRef.current = nextLogs;
+    setDownloadProgress({
+      visible: true,
+      blocking: true,
+      percent: clampedPercent,
+      message,
+      logs: nextLogs,
+    });
+  };
+
+  const hasVisiblePlayableNote = (chartItems: unknown): boolean => {
+    if (!Array.isArray(chartItems)) {
+      return false;
+    }
+    return chartItems.some((item) => {
+      if (!item || typeof item !== "object") {
+        return false;
+      }
+      const typedItem = item as { type?: unknown; connections?: unknown };
+      if (typedItem.type === "Single" || typedItem.type === "Flick" || typedItem.type === "Skill" || typedItem.type === "Directional") {
+        return true;
+      }
+      return typedItem.type === "Slide" && Array.isArray(typedItem.connections) && typedItem.connections.length > 0;
+    });
+  };
+
+  const applyImportOfficialChart = async () => {
+    const chartIdText = importOfficialChartId.trim();
+    if (!/^\d+$/.test(chartIdText)) {
+      setStatusMessage("官方谱面导入失败：ID 必须为正整数。");
+      return;
+    }
+    const chartId = Number.parseInt(chartIdText, 10);
+    if (!Number.isFinite(chartId) || chartId < 1) {
+      setStatusMessage("官方谱面导入失败：ID 必须为正整数。");
+      return;
+    }
+
+    const difficulty = importOfficialChartDifficulty;
+    const importOperationId = `official-chart-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    const pushImportProgress = (percent: number, message: string) =>
+      pushBlockingProgress(importOperationId, percent, message);
+
+    startDownloadProgress(importOperationId, "正在获取官方谱面数据…");
     try {
-      const parsed: unknown = JSON.parse(importBestdoriV2Text);
-      const converted = convertBestdoriV2ToCurrentChartJson(parsed);
-      setImportJsonText(JSON.stringify(converted));
+      pushImportProgress(15, "正在请求官方谱面与歌曲信息…");
+      const payload = await fetchBestdoriOfficialChartImportPayload(chartId, OFFICIAL_CHART_DIFFICULTY_TO_API[difficulty]);
+      pushImportProgress(42, "正在转换谱面结构…");
+      const converted = convertBestdoriV2ToCurrentChartJson(payload.chart);
+      const hasVisibleNote = hasVisiblePlayableNote(converted);
+      if (!hasVisibleNote) {
+        throw new Error("官方谱面解析成功，但未解析到可见音符。");
+      }
+      pushImportProgress(58, "正在应用谱面内容…");
+      const summary = applyParsedCurrentChartJson(converted);
+      let audioDecoded = false;
+      let importedBgmDataUrl: string | null = null;
+      try {
+        pushImportProgress(70, "正在下载歌曲音频…");
+        const audioBlob = await fetchBestdoriFileBlob(payload.resources.audioUrl, "audio/mpeg", "bestdori song audio");
+        if (audioBlob.size > 0) {
+          pushImportProgress(82, "正在处理音频数据…");
+          const audioObjectUrl = URL.createObjectURL(audioBlob);
+          importedBgmDataUrl = await readBlobAsDataUrl(audioBlob);
+          setAudioObjectUrl((current: string | null) => {
+            if (current) {
+              URL.revokeObjectURL(current);
+            }
+            return audioObjectUrl;
+          });
+          setAudioFileName(payload.audioFileName);
+          setAudioDurationSec(0);
+          const probe = new Audio(audioObjectUrl);
+          probe.preload = "metadata";
+          probe.onloadedmetadata = () => {
+            if (Number.isFinite(probe.duration) && probe.duration > 0) {
+              setAudioDurationSec(probe.duration);
+            } else {
+              setAudioDurationSec(0);
+            }
+          };
+          probe.onerror = () => {
+            setAudioDurationSec(0);
+          };
+          audioDecoded = true;
+        }
+      } catch {
+        audioDecoded = false;
+      }
+      if (!audioDecoded) {
+        setAudioObjectUrl((current: string | null) => {
+          if (current) {
+            URL.revokeObjectURL(current);
+          }
+          return null;
+        });
+        setAudioFileName("");
+        setAudioDurationSec(0);
+      }
+      pushImportProgress(92, "正在写入谱面元信息…");
+      let importedCoverDataUrl = payload.resources.jacketUrl;
+      try {
+        const coverBlob = await fetchBestdoriFileBlob(payload.resources.jacketUrl, "image/png", "bestdori song jacket");
+        if (coverBlob.size > 0) {
+          importedCoverDataUrl = await readBlobAsDataUrl(coverBlob);
+        }
+      } catch {
+        // keep URL fallback when jacket download fails
+      }
+      setMetadata((current: ChartMetadata) => ({
+        ...current,
+        title: resolveTrimmedString(payload.metadata.title),
+        artist: resolveTrimmedString(payload.metadata.artist),
+        charter: resolveTrimmedString(payload.metadata.charter),
+        difficulty: resolveCommunityPostDifficulty(payload.metadata.difficulty),
+        difficultyLevel: resolveTrimmedString(payload.metadata.difficultyLevel),
+        offsetMs: Number.isFinite(Number(payload.metadata.offsetMs))
+          ? Math.round(Number(payload.metadata.offsetMs))
+          : 0,
+        bgmDataUrl: importedBgmDataUrl,
+        coverDataUrl: resolveTrimmedString(importedCoverDataUrl) || null,
+        mvDataUrl: resolveTrimmedString(payload.resources.mvUrl) || null,
+        mvOffsetMs: 0,
+      }));
+      const label = audioDecoded
+        ? `已导入官方谱面 ${chartId}/${difficulty} 并同步歌曲信息`
+        : `已导入官方谱面 ${chartId}/${difficulty} 并同步歌曲信息（音频未载入）`;
+      applyChartImportStatus(label, summary);
+      completeDownloadProgress("官方谱面导入完成。");
       setImportJsonModalLevel("chart");
-      setStatusMessage("已将 Bestdori V2 转换为当前谱面 JSON，请在导入页点击“应用”。");
+      setIsImportJsonModalOpen(false);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      setStatusMessage(`Bestdori V2 转换失败：${message}`);
+      completeDownloadProgress(`官方谱面导入失败：${message}`, 900);
+      setStatusMessage(`官方谱面导入失败：${message}`);
+    } finally {
+      if (currentDownloadOperationIdRef.current === importOperationId) {
+        currentDownloadOperationIdRef.current = null;
+        downloadScopeMapRef.current = new Map();
+      }
+    }
+  };
+
+  const applyImportCommunityChart = async () => {
+    const postIdText = importCommunityPostId.trim();
+    if (!/^\d+$/.test(postIdText)) {
+      setStatusMessage("社区谱面导入失败：谱面 ID 必须为正整数。");
+      return;
+    }
+    const postId = Number.parseInt(postIdText, 10);
+    if (!Number.isFinite(postId) || postId < 1) {
+      setStatusMessage("社区谱面导入失败：谱面 ID 必须为正整数。");
+      return;
+    }
+
+    const importOperationId = `community-chart-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    const resolveFileNameFromUrl = (value: string, fallback: string): string => {
+      try {
+        const parsed = new URL(value);
+        const tail = parsed.pathname.split("/").filter((item) => item.length > 0).pop();
+        return tail && tail.trim().length > 0 ? tail : fallback;
+      } catch {
+        return fallback;
+      }
+    };
+    const isBestdoriHostUrl = (value: string): boolean => {
+      try {
+        const parsed = new URL(value);
+        const host = parsed.host.toLowerCase();
+        return host === "bestdori.com" || host === "www.bestdori.com";
+      } catch {
+        return false;
+      }
+    };
+    const pushImportProgress = (percent: number, message: string) =>
+      pushBlockingProgress(importOperationId, percent, message);
+
+    startDownloadProgress(importOperationId, "正在获取社区谱面数据…");
+    try {
+      pushImportProgress(12, "正在请求社区帖子详情…");
+      const details = await fetchBestdoriCommunityPostDetails(postId);
+      const post = details.post;
+      if (!post || typeof post !== "object") {
+        throw new Error("社区帖子详情缺失 post。");
+      }
+      if (post.categoryName !== "SELF_POST" || post.categoryId !== "chart") {
+        throw new Error("该帖子不是社区谱面（仅支持 SELF_POST/chart）。");
+      }
+      if (!Array.isArray(post.chart)) {
+        throw new Error("该帖子不包含可导入的谱面数据。");
+      }
+
+      pushImportProgress(34, "正在转换谱面结构…");
+      const converted = convertBestdoriV2ToCurrentChartJson(post.chart);
+      const hasVisibleNote = hasVisiblePlayableNote(converted);
+      if (!hasVisibleNote) {
+        throw new Error("社区谱面解析成功，但未解析到可见音符。");
+      }
+
+      pushImportProgress(54, "正在应用谱面内容…");
+      const summary = applyParsedCurrentChartJson(converted);
+      const songResources = await resolveBestdoriCommunitySongResourceUrls(post.song);
+
+      let importedBgmDataUrl: string | null = null;
+      let importedCoverDataUrl: string | null = null;
+      let audioReadyForEditor = false;
+      const audioUrl = typeof songResources?.audioUrl === "string" ? songResources.audioUrl.trim() : "";
+      const coverUrl = typeof songResources?.coverUrl === "string" ? songResources.coverUrl.trim() : "";
+
+      if (audioUrl.length > 0) {
+        try {
+          if (isBestdoriHostUrl(audioUrl)) {
+            pushImportProgress(66, "正在下载社区歌曲音频…");
+            const audioBlob = await fetchBestdoriFileBlob(audioUrl, "audio/mpeg", "bestdori community song audio");
+            if (audioBlob.size > 0) {
+              const objectUrl = URL.createObjectURL(audioBlob);
+              importedBgmDataUrl = await readBlobAsDataUrl(audioBlob);
+              setAudioObjectUrl((current: string | null) => {
+                if (current) {
+                  URL.revokeObjectURL(current);
+                }
+                return objectUrl;
+              });
+              setAudioFileName(resolveFileNameFromUrl(audioUrl, `community-post-${postId}.mp3`));
+              setAudioDurationSec(0);
+              const probe = new Audio(objectUrl);
+              probe.preload = "metadata";
+              probe.onloadedmetadata = () => {
+                if (Number.isFinite(probe.duration) && probe.duration > 0) {
+                  setAudioDurationSec(probe.duration);
+                } else {
+                  setAudioDurationSec(0);
+                }
+              };
+              probe.onerror = () => {
+                setAudioDurationSec(0);
+              };
+              audioReadyForEditor = true;
+            }
+          }
+        } catch {
+          audioReadyForEditor = false;
+        }
+      }
+
+      if (!audioReadyForEditor) {
+        if (audioUrl.length > 0) {
+          setAudioObjectUrl((current: string | null) => {
+            if (current) {
+              URL.revokeObjectURL(current);
+            }
+            return audioUrl;
+          });
+          setAudioFileName(resolveFileNameFromUrl(audioUrl, `community-post-${postId}.mp3`));
+          setAudioDurationSec(0);
+          importedBgmDataUrl = audioUrl;
+        } else {
+          setAudioObjectUrl((current: string | null) => {
+            if (current) {
+              URL.revokeObjectURL(current);
+            }
+            return null;
+          });
+          setAudioFileName("");
+          setAudioDurationSec(0);
+          importedBgmDataUrl = null;
+        }
+      }
+
+      if (coverUrl.length > 0) {
+        importedCoverDataUrl = coverUrl;
+        if (isBestdoriHostUrl(coverUrl)) {
+          try {
+            pushImportProgress(78, "正在下载社区歌曲封面…");
+            const coverBlob = await fetchBestdoriFileBlob(coverUrl, "image/png", "bestdori community song cover");
+            if (coverBlob.size > 0) {
+              importedCoverDataUrl = await readBlobAsDataUrl(coverBlob);
+            }
+          } catch {
+            // fallback to raw cover url
+          }
+        }
+      }
+
+      pushImportProgress(92, "正在写入谱面元信息…");
+      setMetadata((current: ChartMetadata) => ({
+        ...current,
+        title: resolveTrimmedString(post.title),
+        artist: resolveTrimmedString(post.artists),
+        charter: resolveCommunityPostCharter(post.author),
+        difficulty: resolveCommunityPostDifficulty(post.diff),
+        difficultyLevel: Number.isFinite(Number(post.level)) && Number(post.level) > 0
+          ? String(Math.round(Number(post.level)))
+          : "",
+        offsetMs: 0,
+        bgmDataUrl: importedBgmDataUrl,
+        coverDataUrl: resolveTrimmedString(importedCoverDataUrl) || null,
+        mvDataUrl: null,
+        mvOffsetMs: 0,
+      }));
+
+      const label = audioUrl.length > 0
+        ? `已导入社区谱面 ${postId} 并同步歌曲信息`
+        : `已导入社区谱面 ${postId}`;
+      applyChartImportStatus(label, summary);
+      completeDownloadProgress("社区谱面导入完成。");
+      setImportJsonModalLevel("chart");
+      setIsImportJsonModalOpen(false);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      completeDownloadProgress(`社区谱面导入失败：${message}`, 900);
+      setStatusMessage(`社区谱面导入失败：${message}`);
+    } finally {
+      if (currentDownloadOperationIdRef.current === importOperationId) {
+        currentDownloadOperationIdRef.current = null;
+        downloadScopeMapRef.current = new Map();
+      }
+    }
+  };
+
+  const applyUploadCommunityChart = async () => {
+    const uploadOperationId = `upload-community-chart-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    const pushUploadProgress = (percent: number, message: string) =>
+      pushBlockingProgress(uploadOperationId, percent, message);
+    const progressByStage: Record<string, { percent: number; message: string }> = {
+      "checking-login": { percent: 8, message: "正在校验 Bestdori 登录状态…" },
+      "converting-chart": { percent: 28, message: "正在转换谱面结构…" },
+      "resolving-audio": { percent: 42, message: "正在准备歌曲音频…" },
+      "uploading-audio": { percent: 56, message: "正在上传歌曲音频…" },
+      "resolving-cover": { percent: 68, message: "正在准备歌曲封面…" },
+      "uploading-cover": { percent: 80, message: "正在上传歌曲封面…" },
+      posting: { percent: 92, message: "正在发布社区谱面…" },
+    };
+
+    startDownloadProgress(uploadOperationId, "正在上传社区谱面…");
+    try {
+      const metadataAudioSource = resolveTrimmedString(metadata.bgmDataUrl);
+      const runtimeAudioSource = resolveTrimmedString(audioObjectUrl);
+      const resolvedAudioSource = metadataAudioSource || runtimeAudioSource || null;
+      const parsedTags = uploadCommunityPostTags.length > 0 ? uploadCommunityPostTags : undefined;
+      const result = await publishBestdoriCommunityChartFlow({
+        chartJson,
+        metadata,
+        audioSourceUrl: resolvedAudioSource,
+        audioFileName: resolveTrimmedString(audioFileName),
+        coverSourceUrl: resolveTrimmedString(metadata.coverDataUrl),
+        contentText: uploadCommunityPostContent,
+        tags: parsedTags,
+        onStage: (stage) => {
+          const entry = progressByStage[stage];
+          if (!entry) {
+            return;
+          }
+          pushUploadProgress(entry.percent, entry.message);
+        },
+      });
+
+      const svWarning = result.svDropped ? "（注意：SV 不支持，已在上传前转换时忽略）" : "";
+      completeDownloadProgress("社区谱面上传完成。");
+      if (typeof openOverlayDialog === "function") {
+        openOverlayDialog({
+          tone: "info",
+          message: `社区谱面上传成功。\n${result.postUrl}${svWarning ? `\n${svWarning}` : ""}`,
+        });
+      } else {
+        setStatusMessage(`社区谱面上传成功：${result.postUrl}${svWarning}`);
+      }
+      setImportJsonModalLevel("chart");
+      setIsImportJsonModalOpen(false);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      completeDownloadProgress(`社区谱面上传失败：${message}`, 900);
+      if (typeof openOverlayDialog === "function") {
+        openOverlayDialog({
+          tone: "error",
+          message: `社区谱面上传失败：\n${message}`,
+        });
+      } else {
+        setStatusMessage(`社区谱面上传失败：${message}`);
+      }
+    } finally {
+      if (currentDownloadOperationIdRef.current === uploadOperationId) {
+        currentDownloadOperationIdRef.current = null;
+        downloadScopeMapRef.current = new Map();
+      }
+    }
+  };
+
+  const applyUploadTestServerChart = async () => {
+    const uploadOperationId = `upload-test-server-chart-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    const pushUploadProgress = (percent: number, message: string) =>
+      pushBlockingProgress(uploadOperationId, percent, message);
+    const progressByStage: Record<string, { percent: number; message: string }> = {
+      "converting-chart": { percent: 30, message: "正在转换谱面结构…" },
+      "resolving-audio": { percent: 55, message: "正在准备歌曲音频…" },
+      uploading: { percent: 90, message: "正在上传到测试服…" },
+    };
+
+    startDownloadProgress(uploadOperationId, "正在上传到测试服…");
+    try {
+      const metadataAudioSource = resolveTrimmedString(metadata.bgmDataUrl);
+      const runtimeAudioSource = resolveTrimmedString(audioObjectUrl);
+      const resolvedAudioSource = metadataAudioSource || runtimeAudioSource || null;
+      const difficultyValue = Number(metadata.difficultyLevel);
+      const resolvedDifficulty = Number.isFinite(difficultyValue) && difficultyValue >= 0
+        ? Math.trunc(difficultyValue)
+        : undefined;
+      const result = await uploadSonolusLevelFlow({
+        chartJson,
+        metadata,
+        audioSourceUrl: resolvedAudioSource,
+        audioFileName: resolveTrimmedString(audioFileName),
+        difficulty: resolvedDifficulty,
+        onStage: (stage) => {
+          const entry = progressByStage[stage];
+          if (!entry) {
+            return;
+          }
+          pushUploadProgress(entry.percent, entry.message);
+        },
+      });
+
+      const svWarning = result.svDropped ? "\n注意：SV 不支持，已在上传前转换时忽略。" : "";
+      completeDownloadProgress("测试服谱面上传完成。");
+      if (typeof openOverlayDialog === "function") {
+        openOverlayDialog({
+          tone: "info",
+          message: `测试服上传成功。\nID: ${result.uid}${svWarning}`,
+        });
+      } else {
+        setStatusMessage(`测试服上传成功：ID ${result.uid}`);
+      }
+      setImportJsonModalLevel("chart");
+      setIsImportJsonModalOpen(false);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      completeDownloadProgress(`测试服谱面上传失败：${message}`, 900);
+      if (typeof openOverlayDialog === "function") {
+        openOverlayDialog({
+          tone: "error",
+          message: `测试服上传失败：\n${message}`,
+        });
+      } else {
+        setStatusMessage(`测试服上传失败：${message}`);
+      }
+    } finally {
+      if (currentDownloadOperationIdRef.current === uploadOperationId) {
+        currentDownloadOperationIdRef.current = null;
+        downloadScopeMapRef.current = new Map();
+      }
     }
   };
 
   const handleJsonImport = async (event: ChangeEvent<HTMLInputElement>) => {
+    const pickedPath = event.currentTarget.value;
     const file = event.currentTarget.files?.[0];
     event.currentTarget.value = "";
     if (!file) {
       return;
     }
+    const previousSelectedPath = importJsonSelectedPath;
+    setImportJsonSelectedPath(pickedPath || file.name);
 
     try {
       const text = await file.text();
@@ -1310,8 +1801,33 @@ export function useEditorIoAndShortcuts(params: any) {
       setImportJsonModalLevel("chart");
       setIsImportJsonModalOpen(false);
     } catch (error) {
+      setImportJsonSelectedPath(previousSelectedPath);
       const message = error instanceof Error ? error.message : String(error);
       setStatusMessage(`导入失败：${message}`);
+    }
+  };
+
+  const handleBestdoriV2Import = async (event: ChangeEvent<HTMLInputElement>) => {
+    const pickedPath = event.currentTarget.value;
+    const file = event.currentTarget.files?.[0];
+    event.currentTarget.value = "";
+    if (!file) {
+      return;
+    }
+    const previousSelectedPath = importBestdoriV2SelectedPath;
+    setImportBestdoriV2SelectedPath(pickedPath || file.name);
+
+    try {
+      const text = await file.text();
+      const parsed: unknown = JSON.parse(text);
+      const converted = convertBestdoriV2ToCurrentChartJson(parsed);
+      setImportJsonText(JSON.stringify(converted));
+      setImportJsonModalLevel("chart");
+      setStatusMessage("已将 Bestdori V2 转换为当前谱面 JSON，请在导入页点击“应用”。");
+    } catch (error) {
+      setImportBestdoriV2SelectedPath(previousSelectedPath);
+      const message = error instanceof Error ? error.message : String(error);
+      setStatusMessage(`Bestdori V2 导入失败：${message}`);
     }
   };
 
@@ -1426,16 +1942,63 @@ export function useEditorIoAndShortcuts(params: any) {
         // ignore
       }
 
+      const normalizePositivePixel = (value: unknown): number | null => {
+        const numeric = Number(value);
+        if (!Number.isFinite(numeric) || numeric <= 0) {
+          return null;
+        }
+        return Math.max(1, Math.floor(numeric));
+      };
+      const requestedWidth = normalizePositivePixel(preset.width) ?? 1;
+      const requestedHeight = normalizePositivePixel(preset.height) ?? 1;
+
+      let nonClientExtraWidth = 0;
+      let nonClientExtraHeight = 0;
+      try {
+        const [innerSize, outerSize] = await Promise.all([
+          typeof (appWindow as any).innerSize === "function" ? (appWindow as any).innerSize() : Promise.resolve(null),
+          typeof (appWindow as any).outerSize === "function" ? (appWindow as any).outerSize() : Promise.resolve(null),
+        ]);
+        const innerWidth = normalizePositivePixel((innerSize as { width?: unknown } | null)?.width);
+        const innerHeight = normalizePositivePixel((innerSize as { height?: unknown } | null)?.height);
+        const outerWidth = normalizePositivePixel((outerSize as { width?: unknown } | null)?.width);
+        const outerHeight = normalizePositivePixel((outerSize as { height?: unknown } | null)?.height);
+        if (innerWidth !== null && outerWidth !== null) {
+          nonClientExtraWidth = Math.max(0, outerWidth - innerWidth);
+        }
+        if (innerHeight !== null && outerHeight !== null) {
+          nonClientExtraHeight = Math.max(0, outerHeight - innerHeight);
+        }
+      } catch {
+        // ignore size probing failures
+      }
+
+      const screenAvailableWidth = normalizePositivePixel(window.screen?.availWidth);
+      const screenAvailableHeight = normalizePositivePixel(window.screen?.availHeight);
+      const maxLogicalInnerWidth = screenAvailableWidth !== null
+        ? Math.max(320, screenAvailableWidth - nonClientExtraWidth)
+        : null;
+      const maxLogicalInnerHeight = screenAvailableHeight !== null
+        ? Math.max(240, screenAvailableHeight - nonClientExtraHeight)
+        : null;
+      const nextWidth = maxLogicalInnerWidth !== null
+        ? Math.min(requestedWidth, maxLogicalInnerWidth)
+        : requestedWidth;
+      const nextHeight = maxLogicalInnerHeight !== null
+        ? Math.min(requestedHeight, maxLogicalInnerHeight)
+        : requestedHeight;
+      const wasClamped = nextWidth !== requestedWidth || nextHeight !== requestedHeight;
+
       let resized = false;
       try {
-        await appWindow.setSize(new LogicalSize(preset.width, preset.height));
+        await appWindow.setSize(new LogicalSize(nextWidth, nextHeight));
         resized = true;
       } catch {
         // Fallback for API/runtime differences.
         await appWindow.setSize({
           type: "Logical",
-          width: preset.width,
-          height: preset.height,
+          width: nextWidth,
+          height: nextHeight,
         } as any);
         resized = true;
       }
@@ -1452,7 +2015,11 @@ export function useEditorIoAndShortcuts(params: any) {
       }
 
       if (!options?.silent) {
-        setStatusMessage(`窗口分辨率已设置为 ${preset.label}。`);
+        if (wasClamped) {
+          setStatusMessage(`窗口分辨率已设置为 ${preset.label}（已按屏幕可用区域自动缩小）。`);
+        } else {
+          setStatusMessage(`窗口分辨率已设置为 ${preset.label}。`);
+        }
       }
     } catch (error) {
       if (!options?.silent) {
@@ -1604,14 +2171,26 @@ export function useEditorIoAndShortcuts(params: any) {
     isImportJsonModalOpen,
     importJsonModalLevel,
     importJsonText,
-    importBestdoriV2Text,
+    importOfficialChartId,
+    importOfficialChartDifficulty,
+    importCommunityPostId,
+    uploadCommunityPostContent,
+    uploadCommunityPostTags,
+    importJsonSelectedPath,
+    importBestdoriV2SelectedPath,
     setImportJsonText,
-    setImportBestdoriV2Text,
+    setImportOfficialChartId,
+    setImportOfficialChartDifficulty,
+    setImportCommunityPostId,
+    setUploadCommunityPostContent,
+    setUploadCommunityPostTags,
     applyImportJsonText,
-    applyImportBestdoriV2Text,
+    applyImportOfficialChart,
+    applyImportCommunityChart,
+    applyUploadCommunityChart,
+    applyUploadTestServerChart,
     openImportJsonModal,
     closeImportJsonModal,
-    backToImportJsonModalChartLevel,
     openImportJsonModalBestdoriV2Level,
     isExportJsonModalOpen,
     closeExportJsonModal,
@@ -1622,7 +2201,9 @@ export function useEditorIoAndShortcuts(params: any) {
     clearAllNotes,
     downloadJson,
     triggerJsonImport,
+    triggerBestdoriV2Import,
     handleJsonImport,
+    handleBestdoriV2Import,
     openMetadataEditor,
     openAppSettings,
     openSkinSettings,
