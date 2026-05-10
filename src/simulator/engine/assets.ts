@@ -1,0 +1,467 @@
+import { Rectangle, Texture } from "pixi.js";
+import type { BGSkin, FieldSkinAssets, JudgeSkin, SkinAssets } from "../../skinLoader";
+import type { RuntimeNoteBaseType, RuntimeNoteSemantic } from "./types";
+import {
+  buildParticleEffectPack,
+  type ParticleEffectPack,
+} from "./particlePack";
+import embeddedParticleManifest from "../assets/particles/bandori1/manifest.json";
+import embeddedParticleAtlasUrl from "../assets/particles/bandori1/texture.png";
+import embeddedComboLabelUrl from "../assets/ui/combo.png";
+import embeddedComboDigitsUrl from "../assets/ui/digits.png";
+
+type LaneKey = "0" | "1" | "2" | "3" | "4" | "5" | "6";
+type LaneAssetMap = Record<LaneKey, string>;
+
+type DefaultRhythmAssets = {
+  noteNormal: LaneAssetMap;
+  noteNormal16: LaneAssetMap;
+  noteSkill: LaneAssetMap;
+  noteFlick: LaneAssetMap;
+  noteFlickTop: string;
+  noteLong: LaneAssetMap;
+  noteLongFlash: LaneAssetMap;
+  noteSlideAmong: string;
+  longNoteLine: string;
+  longNoteLine2: string;
+  simultaneousLine: string;
+};
+
+type HabahiroRhythmAssets = {
+  noteNormal: Record<string, string>;
+  noteNormal16: Record<string, string>;
+  noteSkill: Record<string, string>;
+  noteFlick: Record<string, string>;
+  noteFlickTop: Record<string, string>;
+  noteLong: Record<string, string>;
+  noteLongFlash: Record<string, string>;
+  noteSlideAmong: Record<string, string>;
+  longNoteLine: string;
+  longNoteLine2: string;
+  simultaneousLine: string;
+};
+
+type DirectionalAssets = {
+  noteFlickL: LaneAssetMap;
+  noteFlickR: LaneAssetMap;
+  noteFlickTopL: string;
+  noteFlickTopR: string;
+};
+
+export interface NoteSkinTextureBundle {
+  rhythm: {
+    noteNormal: Array<Texture | null>;
+    noteNormal16: Array<Texture | null>;
+    noteSkill: Array<Texture | null>;
+    noteFlick: Array<Texture | null>;
+    noteLong: Array<Texture | null>;
+    noteLongFlash: Array<Texture | null>;
+    noteSlideAmong: Texture | null;
+    noteFlickTop: Texture | null;
+  };
+  directional: {
+    noteFlickL: Array<Texture | null>;
+    noteFlickR: Array<Texture | null>;
+    noteFlickTopL: Texture | null;
+    noteFlickTopR: Texture | null;
+  };
+  lines: {
+    longNoteLine: Texture | null;
+    longNoteLine2: Texture | null;
+    simultaneousLine: Texture | null;
+  };
+  field: {
+    bgLineRhythm: Texture | null;
+    gamePlayLine: Texture | null;
+    gamePlayLineSkillAdjustEffect: Texture | null;
+  };
+  background: {
+    liveBG: Texture | null;
+  };
+  hud: {
+    comboLabel: Texture | null;
+    comboDigits: Array<Texture | null>;
+  };
+  judge: {
+    perfect: Texture | null;
+    great: Texture | null;
+    good: Texture | null;
+    bad: Texture | null;
+    miss: Texture | null;
+    auto: Texture | null;
+    fast: Texture | null;
+    slow: Texture | null;
+  };
+  particleEffects: ParticleEffectPack | null;
+  destroy(): void;
+}
+
+const LANE_KEYS: LaneKey[] = ["0", "1", "2", "3", "4", "5", "6"];
+
+function laneIndex(lane: number): number {
+  const rounded = Math.round(lane);
+  return Math.max(1, Math.min(7, rounded));
+}
+
+function laneKeyForIndex(lane: number): LaneKey {
+  return LANE_KEYS[laneIndex(lane) - 1]!;
+}
+
+function isRecord(value: unknown): value is Record<string, string> {
+  return typeof value === "object" && value !== null;
+}
+
+function isHabahiroRhythmAssets(
+  value: DefaultRhythmAssets | HabahiroRhythmAssets,
+): value is HabahiroRhythmAssets {
+  return isRecord((value as HabahiroRhythmAssets).noteFlickTop);
+}
+
+function firstNonEmptyValue(record: Record<string, string>): string | null {
+  for (const value of Object.values(record)) {
+    if (typeof value === "string" && value.length > 0) {
+      return value;
+    }
+  }
+  return null;
+}
+
+function readLaneAssetUrl(
+  laneAssets: LaneAssetMap | Record<string, string>,
+  lane: number,
+): string | null {
+  const key = laneKeyForIndex(lane);
+  const value = laneAssets[key];
+  if (typeof value === "string" && value.length > 0) {
+    return value;
+  }
+  if (isRecord(laneAssets)) {
+    return firstNonEmptyValue(laneAssets);
+  }
+  return null;
+}
+
+function readScalarAssetUrl(
+  value: string | Record<string, string>,
+  fallbackKey: string,
+): string | null {
+  if (typeof value === "string") {
+    return value.length > 0 ? value : null;
+  }
+  const direct = value[fallbackKey];
+  if (typeof direct === "string" && direct.length > 0) {
+    return direct;
+  }
+  return firstNonEmptyValue(value);
+}
+
+async function loadTextureFromUrl(url: string): Promise<Texture | null> {
+  try {
+    const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const element = new Image();
+      element.onload = () => resolve(element);
+      element.onerror = () => reject(new Error(`image decode failed: ${url.slice(0, 96)}`));
+      element.src = url;
+    });
+    return Texture.from(image);
+  } catch {
+    return null;
+  }
+}
+
+export async function loadNoteSkinTextureBundle(
+  noteSkin: SkinAssets,
+  fieldSkin?: FieldSkinAssets | null,
+  bgSkin?: BGSkin | null,
+  judgeSkin?: JudgeSkin | null,
+): Promise<NoteSkinTextureBundle> {
+  const trackedTextures: Texture[] = [];
+  const trackedDerivedTextures: Texture[] = [];
+  const textureCache = new Map<string, Texture | null>();
+
+  const loadCachedTexture = async (url: string | null | undefined): Promise<Texture | null> => {
+    const normalized = typeof url === "string" ? url.trim() : "";
+    if (!normalized) {
+      return null;
+    }
+    if (textureCache.has(normalized)) {
+      return textureCache.get(normalized) ?? null;
+    }
+    const texture = await loadTextureFromUrl(normalized);
+    textureCache.set(normalized, texture);
+    if (texture) {
+      trackedTextures.push(texture);
+    }
+    return texture;
+  };
+
+  const rhythmAssets = noteSkin.rhythm.assets.assets as DefaultRhythmAssets | HabahiroRhythmAssets;
+  const directionalAssets = noteSkin.directional.assets.assets as DirectionalAssets;
+  const isHabahiro = isHabahiroRhythmAssets(rhythmAssets);
+
+  const noteNormal: Array<Texture | null> = new Array(8).fill(null);
+  const noteNormal16: Array<Texture | null> = new Array(8).fill(null);
+  const noteSkill: Array<Texture | null> = new Array(8).fill(null);
+  const noteFlick: Array<Texture | null> = new Array(8).fill(null);
+  const noteLong: Array<Texture | null> = new Array(8).fill(null);
+  const noteLongFlash: Array<Texture | null> = new Array(8).fill(null);
+  const directionalLeft: Array<Texture | null> = new Array(8).fill(null);
+  const directionalRight: Array<Texture | null> = new Array(8).fill(null);
+
+  for (let lane = 1; lane <= 7; lane += 1) {
+    noteNormal[lane] = await loadCachedTexture(readLaneAssetUrl(rhythmAssets.noteNormal, lane));
+    noteNormal16[lane] = await loadCachedTexture(readLaneAssetUrl(rhythmAssets.noteNormal16, lane));
+    noteSkill[lane] = await loadCachedTexture(readLaneAssetUrl(rhythmAssets.noteSkill, lane));
+    noteFlick[lane] = await loadCachedTexture(readLaneAssetUrl(rhythmAssets.noteFlick, lane));
+    noteLong[lane] = await loadCachedTexture(readLaneAssetUrl(rhythmAssets.noteLong, lane));
+    noteLongFlash[lane] = await loadCachedTexture(readLaneAssetUrl(rhythmAssets.noteLongFlash, lane));
+    directionalLeft[lane] = await loadCachedTexture(readLaneAssetUrl(directionalAssets.noteFlickL, lane));
+    directionalRight[lane] = await loadCachedTexture(readLaneAssetUrl(directionalAssets.noteFlickR, lane));
+  }
+
+  const noteSlideAmong = await loadCachedTexture(
+    isHabahiro
+      ? readScalarAssetUrl(rhythmAssets.noteSlideAmong, "1")
+      : rhythmAssets.noteSlideAmong,
+  );
+  const noteFlickTop = await loadCachedTexture(
+    isHabahiro
+      ? readScalarAssetUrl(rhythmAssets.noteFlickTop, "1")
+      : rhythmAssets.noteFlickTop,
+  );
+  const noteFlickTopL = await loadCachedTexture(directionalAssets.noteFlickTopL);
+  const noteFlickTopR = await loadCachedTexture(directionalAssets.noteFlickTopR);
+  const longNoteLine = await loadCachedTexture(rhythmAssets.longNoteLine);
+  const longNoteLine2 = await loadCachedTexture(rhythmAssets.longNoteLine2);
+  const simultaneousLine = await loadCachedTexture(rhythmAssets.simultaneousLine);
+  const fieldBgLineRhythm = await loadCachedTexture(fieldSkin?.bgLineRhythm ?? null);
+  const fieldGamePlayLine = await loadCachedTexture(fieldSkin?.gamePlayLine ?? null);
+  const fieldGamePlayLineSkillAdjustEffect = await loadCachedTexture(
+    fieldSkin?.gamePlayLineSkillAdjustEffect ?? null,
+  );
+  const liveBgTexture = await loadCachedTexture(bgSkin?.assets.liveBG ?? null);
+  const judgePerfectTexture = await loadCachedTexture(judgeSkin?.assets.judgePerfect ?? null);
+  const judgeGreatTexture = await loadCachedTexture(judgeSkin?.assets.judgeGreat ?? null);
+  const judgeGoodTexture = await loadCachedTexture(judgeSkin?.assets.judgeGood ?? null);
+  const judgeBadTexture = await loadCachedTexture(judgeSkin?.assets.judgeBad ?? null);
+  const judgeMissTexture = await loadCachedTexture(judgeSkin?.assets.judgeMiss ?? null);
+  const judgeAutoTexture = await loadCachedTexture(judgeSkin?.assets.judgeAuto ?? null);
+  const judgeFastTexture = await loadCachedTexture(judgeSkin?.assets.judgeFast ?? null);
+  const judgeSlowTexture = await loadCachedTexture(judgeSkin?.assets.judgeSlow ?? null);
+  const comboLabelTexture = await loadCachedTexture(embeddedComboLabelUrl);
+  const comboDigitsAtlasTexture = await loadCachedTexture(embeddedComboDigitsUrl);
+  const comboDigitTextures = buildDigitTextures(comboDigitsAtlasTexture);
+  for (const texture of comboDigitTextures) {
+    if (texture) {
+      trackedDerivedTextures.push(texture);
+    }
+  }
+
+  const particleAtlasTexture = await loadCachedTexture(embeddedParticleAtlasUrl);
+  const particleEffects = particleAtlasTexture
+    ? buildParticleEffectPack(embeddedParticleManifest, particleAtlasTexture)
+    : null;
+
+  return {
+    rhythm: {
+      noteNormal,
+      noteNormal16,
+      noteSkill,
+      noteFlick,
+      noteLong,
+      noteLongFlash,
+      noteSlideAmong,
+      noteFlickTop,
+    },
+    directional: {
+      noteFlickL: directionalLeft,
+      noteFlickR: directionalRight,
+      noteFlickTopL,
+      noteFlickTopR,
+    },
+    lines: {
+      longNoteLine,
+      longNoteLine2,
+      simultaneousLine,
+    },
+    field: {
+      bgLineRhythm: fieldBgLineRhythm,
+      gamePlayLine: fieldGamePlayLine,
+      gamePlayLineSkillAdjustEffect: fieldGamePlayLineSkillAdjustEffect,
+    },
+    background: {
+      liveBG: liveBgTexture,
+    },
+    hud: {
+      comboLabel: comboLabelTexture,
+      comboDigits: comboDigitTextures,
+    },
+    judge: {
+      perfect: judgePerfectTexture,
+      great: judgeGreatTexture,
+      good: judgeGoodTexture,
+      bad: judgeBadTexture,
+      miss: judgeMissTexture,
+      auto: judgeAutoTexture,
+      fast: judgeFastTexture,
+      slow: judgeSlowTexture,
+    },
+    particleEffects,
+    destroy: () => {
+      particleEffects?.destroy();
+      for (const texture of trackedDerivedTextures) {
+        texture.destroy(false);
+      }
+      for (const texture of trackedTextures) {
+        texture.destroy(true);
+      }
+    },
+  };
+}
+
+export function resolveRhythmNoteTexture(
+  bundle: NoteSkinTextureBundle,
+  note: RuntimeNoteSemantic,
+  lane: number,
+  gray: boolean,
+): Texture | null {
+  const laneIdx = laneIndex(lane);
+  if (gray) {
+    return bundle.rhythm.noteNormal16[laneIdx] ?? null;
+  }
+  if (note.baseType === "directional_flick_left" || note.baseType === "directional_flick_right") {
+    return null;
+  }
+  if (note.baseType === "hidden") {
+    return bundle.rhythm.noteSlideAmong ?? null;
+  }
+  if (note.baseType === "skill") {
+    return bundle.rhythm.noteSkill[laneIdx] ?? null;
+  }
+  if (note.baseType === "flick") {
+    if (note.slideRole === "none" || note.slideRole === "end") {
+      return bundle.rhythm.noteFlick[laneIdx] ?? null;
+    }
+    if (note.slideRole === "start") {
+      return bundle.rhythm.noteLong[laneIdx] ?? null;
+    }
+    return bundle.rhythm.noteSlideAmong ?? null;
+  }
+  if (note.slideRole === "none") {
+    return bundle.rhythm.noteNormal[laneIdx] ?? null;
+  }
+  if (note.slideRole === "start" || note.slideRole === "end") {
+    return bundle.rhythm.noteLong[laneIdx] ?? null;
+  }
+  return bundle.rhythm.noteSlideAmong ?? null;
+}
+
+export function resolveSlideBottomMarkerTexture(
+  bundle: NoteSkinTextureBundle,
+  lane: number,
+  markerSourceBaseType: RuntimeNoteBaseType | null,
+  markerSourceIsHead: boolean,
+): Texture | null {
+  const laneIdx = laneIndex(lane);
+  if (!markerSourceIsHead) {
+    return bundle.rhythm.noteSlideAmong
+      ?? bundle.rhythm.noteLong[laneIdx]
+      ?? null;
+  }
+  switch (markerSourceBaseType) {
+    case "single":
+      return bundle.rhythm.noteLong[laneIdx] ?? null;
+    case "flick":
+      return bundle.rhythm.noteFlick[laneIdx]
+        ?? bundle.rhythm.noteLong[laneIdx]
+        ?? null;
+    case "skill":
+      return bundle.rhythm.noteSkill[laneIdx]
+        ?? bundle.rhythm.noteLong[laneIdx]
+        ?? null;
+    case "directional_flick_left":
+    case "directional_flick_right":
+      return bundle.rhythm.noteLong[laneIdx] ?? null;
+    default:
+      return bundle.rhythm.noteLong[laneIdx] ?? null;
+  }
+}
+
+function buildDigitTextures(texture: Texture | null): Array<Texture | null> {
+  const digits: Array<Texture | null> = new Array(10).fill(null);
+  if (!texture) {
+    return digits;
+  }
+  const digitWidth = Math.floor(texture.width / 10);
+  const digitHeight = Math.floor(texture.height);
+  if (digitWidth <= 0 || digitHeight <= 0) {
+    return digits;
+  }
+  for (let digit = 0; digit <= 9; digit += 1) {
+    digits[digit] = new Texture({
+      source: texture.source,
+      frame: new Rectangle(digit * digitWidth, 0, digitWidth, digitHeight),
+    });
+  }
+  return digits;
+}
+
+export function resolveSlideBottomMarkerFlashTexture(
+  bundle: NoteSkinTextureBundle,
+  lane: number,
+  markerSourceIsHead: boolean,
+): Texture | null {
+  if (markerSourceIsHead) {
+    return null;
+  }
+  const laneIdx = laneIndex(lane);
+  return bundle.rhythm.noteLongFlash[laneIdx] ?? null;
+}
+
+export function resolveDirectionalLaneTexture(
+  bundle: NoteSkinTextureBundle,
+  isLeft: boolean,
+  lane: number,
+): Texture | null {
+  const laneIdx = laneIndex(lane);
+  return isLeft
+    ? (bundle.directional.noteFlickL[laneIdx] ?? null)
+    : (bundle.directional.noteFlickR[laneIdx] ?? null);
+}
+
+export function resolveDirectionalArrowTexture(
+  bundle: NoteSkinTextureBundle,
+  isLeft: boolean,
+): Texture | null {
+  return isLeft
+    ? (bundle.directional.noteFlickTopL ?? null)
+    : (bundle.directional.noteFlickTopR ?? null);
+}
+
+export function resolveFlickTopTexture(bundle: NoteSkinTextureBundle): Texture | null {
+  return bundle.rhythm.noteFlickTop ?? null;
+}
+
+export function resolveJudgeTexture(
+  bundle: NoteSkinTextureBundle,
+  kind: "perfect" | "great" | "good" | "bad" | "miss" | "auto" | "fast" | "slow",
+): Texture | null {
+  switch (kind) {
+    case "perfect":
+      return bundle.judge.perfect ?? bundle.judge.auto ?? null;
+    case "great":
+      return bundle.judge.great ?? bundle.judge.auto ?? null;
+    case "good":
+      return bundle.judge.good ?? bundle.judge.auto ?? null;
+    case "bad":
+      return bundle.judge.bad ?? bundle.judge.auto ?? null;
+    case "miss":
+      return bundle.judge.miss ?? bundle.judge.auto ?? null;
+    case "fast":
+      return bundle.judge.fast ?? bundle.judge.auto ?? null;
+    case "slow":
+      return bundle.judge.slow ?? bundle.judge.auto ?? null;
+    default:
+      return bundle.judge.auto ?? null;
+  }
+}

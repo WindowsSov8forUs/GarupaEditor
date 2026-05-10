@@ -22,9 +22,8 @@ function degradeDirectionalToFlick(note: ChartNote): ChartNote {
       width: normalizeNoteWidth(note.width),
     };
   }
-  const { width: _unusedWidth, ...rest } = note;
   return {
-    ...rest,
+    ...note,
     type: "flick",
     width: 1,
   };
@@ -43,10 +42,10 @@ export function isChartUsingHabahiro(input: ChartStateLike): boolean {
 }
 
 /**
- * 去 SP 节奏图示（回退为非 SP 可兼容谱面）
- * 1) DirectionalFlick -> Flick
- * 2) 清除所有 Slide 序列中的 Hidden 节点
- * 3) 若某 Slide 清除后为空（原本全 Hidden），直接删除该 Slide
+ * Regress SP-only chart features back to a standard chart:
+ * 1) Directional flick -> flick
+ * 2) Remove hidden notes inside slide chains
+ * 3) Drop slide chains that become empty
  */
 export function regressChartWithoutSpRhythm(input: ChartStateLike): ChartStateLike {
   const nextNotes = input.notes.map(degradeDirectionalToFlick);
@@ -89,7 +88,7 @@ export function regressChartWithoutSpRhythm(input: ChartStateLike): ChartStateLi
 }
 
 /**
- * 去 2026 愚人节（habahiro）：将所有非 Directional 音符宽度强制回退为 1。
+ * Regress habahiro chart style by forcing non-directional note width to 1.
  */
 export function regressChartWithoutHabahiro(input: ChartStateLike): ChartStateLike {
   const nextNotes = input.notes.map((note) => {

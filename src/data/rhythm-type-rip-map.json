@@ -5,5 +5,20 @@
   { "type": "TYPE4", "ripName": "skin03" },
   { "type": "TYPE5", "ripName": "skin04" },
   { "type": "TYPE6", "ripName": "skin05" },
-  { "type": "TYPE7", "ripName": "skin06" }
+  { "type": "TYPE7", "ripName": "skin06" },
+  { "type": "2023夏联动", "ripName": "collabo23_summer_g" },
+  { "type": "2024秋联动", "ripName": "skin_collabo24_autumn_i" },
+  { "type": "2025秋联动", "ripName": "skin_collabo25_autumn_s" },
+  { "type": "2018四月", "ripName": "skin_april2018" },
+  { "type": "2019四月", "ripName": "skin_april2019" },
+  { "type": "2021四月", "ripName": "skin_april2021" },
+  { "type": "2024四月", "ripName": "skin_april_2024" },
+  { "type": "CAFE", "ripName": "skin_cafe" },
+  { "type": "COIN", "ripName": "skin_coin" },
+  { "type": "DELTA", "ripName": "skin_delta" },
+  { "type": "MAID", "ripName": "skin_maid" },
+  { "type": "MIKU", "ripName": "skin_miku" },
+  { "type": "PERSONA", "ripName": "skin_persona" },
+  { "type": "STAGE", "ripName": "skin_stage" },
+  { "type": "WITCH", "ripName": "skin_witch" }
 ]

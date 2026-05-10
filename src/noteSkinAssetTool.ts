@@ -1,4 +1,4 @@
-import { invoke } from "@tauri-apps/api/core";
+import { readSkinBinaryFileAsDataUrl } from "./services/bestdori/api";
 
 type JsonPrimitive = string | number | boolean | null;
 type JsonValue = JsonPrimitive | JsonArray | JsonObject;
@@ -61,6 +61,32 @@ interface SpriteManifestEntry {
 }
 
 export type SpriteManifest = SpriteManifestEntry[];
+
+interface AssetSpriteEntry {
+  name: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  borderLeft: number;
+  borderRight: number;
+  borderTop: number;
+  borderBottom: number;
+  paddingLeft: number;
+  paddingRight: number;
+  paddingTop: number;
+  paddingBottom: number;
+}
+
+interface AssetBase {
+  m_Name: string;
+  mSprites: AssetSpriteEntry[];
+  mPixelSize: number;
+}
+
+export interface AssetManifest {
+  Base: AssetBase;
+}
 
 interface BundleContainerEntry {
   asset: AssetFileRef;
@@ -296,6 +322,36 @@ function parseBundleBase(value: unknown, label: string): BundleBase {
   };
 }
 
+function parseAssetSpriteEntry(value: unknown, label: string): AssetSpriteEntry {
+  const object = assertObject(value, label);
+  return {
+    name: assertString(object.name, `${label}.name`),
+    x: assertFiniteNumber(object.x, `${label}.x`),
+    y: assertFiniteNumber(object.y, `${label}.y`),
+    width: assertFiniteNumber(object.width, `${label}.width`),
+    height: assertFiniteNumber(object.height, `${label}.height`),
+    borderLeft: assertFiniteNumber(object.borderLeft, `${label}.borderLeft`),
+    borderRight: assertFiniteNumber(object.borderRight, `${label}.borderRight`),
+    borderTop: assertFiniteNumber(object.borderTop, `${label}.borderTop`),
+    borderBottom: assertFiniteNumber(object.borderBottom, `${label}.borderBottom`),
+    paddingLeft: assertFiniteNumber(object.paddingLeft, `${label}.paddingLeft`),
+    paddingRight: assertFiniteNumber(object.paddingRight, `${label}.paddingRight`),
+    paddingTop: assertFiniteNumber(object.paddingTop, `${label}.paddingTop`),
+    paddingBottom: assertFiniteNumber(object.paddingBottom, `${label}.paddingBottom`),
+  };
+}
+
+function parseAssetBase(value: unknown, label: string): AssetBase {
+  const object = assertObject(value, label);
+  return {
+    m_Name: assertString(object.m_Name, `${label}.m_Name`),
+    mSprites: assertArray(object.mSprites, `${label}.mSprites`).map((entry, index) =>
+      parseAssetSpriteEntry(entry, `${label}.mSprites[${index}]`)
+    ),
+    mPixelSize: assertFiniteNumber(object.mPixelSize, `${label}.mPixelSize`),
+  };
+}
+
 export function parseBundleJsonOrThrow(raw: string, label: string): BundleManifest {
   const parsed = parseJsonValueOrThrow(raw, label);
   const object = assertObject(parsed, label);
@@ -304,18 +360,12 @@ export function parseBundleJsonOrThrow(raw: string, label: string): BundleManife
   };
 }
 
-async function loadImageFromBlob(blob: Blob): Promise<HTMLImageElement> {
-  const objectUrl = URL.createObjectURL(blob);
-  try {
-    return await new Promise((resolve, reject) => {
-      const image = new Image();
-      image.onload = () => resolve(image);
-      image.onerror = () => reject(new Error("Texture image load failed."));
-      image.src = objectUrl;
-    });
-  } finally {
-    URL.revokeObjectURL(objectUrl);
-  }
+export function parseAssetJsonOrThrow(raw: string, label: string): AssetManifest {
+  const parsed = parseJsonValueOrThrow(raw, label);
+  const object = assertObject(parsed, label);
+  return {
+    Base: parseAssetBase(object.Base, `${label}.Base`),
+  };
 }
 
 async function loadImageFromUrl(url: string): Promise<HTMLImageElement> {
@@ -343,6 +393,30 @@ function cropSprite(image: HTMLImageElement, rect: SpriteRect): string {
     image,
     sourceX,
     sourceY,
+    rect.width,
+    rect.height,
+    0,
+    0,
+    rect.width,
+    rect.height,
+  );
+
+  return canvas.toDataURL("image/png");
+}
+
+function cropSpriteTopLeft(image: HTMLImageElement, rect: SpriteRect): string {
+  const canvas = document.createElement("canvas");
+  canvas.width = rect.width;
+  canvas.height = rect.height;
+  const context = canvas.getContext("2d");
+  if (!context) {
+    throw new Error("Cannot create Canvas 2D context.");
+  }
+
+  context.drawImage(
+    image,
+    rect.x,
+    rect.y,
     rect.width,
     rect.height,
     0,
@@ -391,16 +465,6 @@ function buildAtlasFileByPreloadRange(bundle: BundleManifest): Map<string, strin
   return output;
 }
 
-function decodeBase64ToArrayBuffer(base64: string): ArrayBuffer {
-  const binary = atob(base64);
-  const buffer = new ArrayBuffer(binary.length);
-  const bytes = new Uint8Array(buffer);
-  for (let index = 0; index < binary.length; index += 1) {
-    bytes[index] = binary.charCodeAt(index);
-  }
-  return buffer;
-}
-
 function isLoadableUrl(path: string): boolean {
   return /^https?:\/\//i.test(path)
     || /^data:/i.test(path)
@@ -412,8 +476,8 @@ async function loadImageFromMappedPath(path: string): Promise<HTMLImageElement> 
   if (isLoadableUrl(path)) {
     return loadImageFromUrl(path);
   }
-  const base64 = await invoke<string>("read_skin_binary_file", { path });
-  return loadImageFromBlob(new Blob([decodeBase64ToArrayBuffer(base64)]));
+  const dataUrl = await readSkinBinaryFileAsDataUrl(path, path);
+  return loadImageFromUrl(dataUrl);
 }
 
 function resolveSpriteTexturePathId(entry: SpriteManifestEntry): string | null {
@@ -436,6 +500,16 @@ type ExtractNamedSpritesParams = {
   filePathByName: Record<string, string>;
   sprites: SpriteManifest;
   bundle: BundleManifest;
+};
+
+export type AssetSpriteCoordinateOrigin = "top-left" | "bottom-left";
+
+type ExtractNamedSpritesFromAssetParams = {
+  filePathByName: Record<string, string>;
+  asset: AssetManifest;
+  bundle?: BundleManifest;
+  atlasFileName?: string;
+  coordinateOrigin?: AssetSpriteCoordinateOrigin;
 };
 
 export async function extractNamedSprites(
@@ -481,6 +555,77 @@ export async function extractNamedSprites(
 
     const image = await getImageForFile(atlasFile);
     output[name] = cropSprite(image, rect);
+  }
+
+  return output;
+}
+
+function listBundleAtlasFiles(bundle: BundleManifest): string[] {
+  const files = new Set<string>();
+  for (const assetPath of Object.keys(bundle.Base.m_Container)) {
+    const fileName = getAssetFilename(assetPath);
+    if (fileName.endsWith(".png")) {
+      files.add(fileName);
+    }
+  }
+  return Array.from(files.values());
+}
+
+function resolveAtlasFileNameForAssetExtraction(
+  bundle: BundleManifest | undefined,
+  atlasFileName: string | undefined,
+): string {
+  if (atlasFileName && atlasFileName.trim().length > 0) {
+    return atlasFileName.trim().toLowerCase();
+  }
+  if (!bundle) {
+    throw new Error("atlasFileName is required when bundle is not provided.");
+  }
+  const atlasFiles = listBundleAtlasFiles(bundle);
+  if (atlasFiles.length <= 0) {
+    throw new Error("bundle does not contain any .png atlas file.");
+  }
+  if (atlasFiles.length > 1) {
+    throw new Error(`bundle has multiple atlas files (${atlasFiles.join(", ")}), atlasFileName is required.`);
+  }
+  return atlasFiles[0];
+}
+
+export async function extractNamedSpritesFromAsset(
+  params: ExtractNamedSpritesFromAssetParams,
+): Promise<Record<string, string>> {
+  const {
+    filePathByName,
+    asset,
+    bundle,
+    atlasFileName,
+    coordinateOrigin = "top-left",
+  } = params;
+
+  const atlasFile = resolveAtlasFileNameForAssetExtraction(bundle, atlasFileName);
+  const atlasPath = filePathByName[atlasFile] ?? filePathByName[atlasFile.toLowerCase()];
+  if (!atlasPath) {
+    throw new Error(`file map missing atlas: ${atlasFile}`);
+  }
+  const image = await loadImageFromMappedPath(atlasPath);
+
+  const output: Record<string, string> = {};
+  for (const sprite of asset.Base.mSprites) {
+    if (sprite.name.length <= 0) {
+      continue;
+    }
+    const normalizedRect = normalizeRectForCrop(
+      {
+        x: sprite.x,
+        y: coordinateOrigin === "bottom-left"
+          ? image.height - sprite.y - sprite.height
+          : sprite.y,
+        width: sprite.width,
+        height: sprite.height,
+      },
+      `${sprite.name}.rect`,
+    );
+    output[sprite.name] = cropSpriteTopLeft(image, normalizedRect);
   }
 
   return output;

@@ -3,5 +3,6 @@
   { "type": "TYPE2", "ripName": "directionalflickskin01" },
   { "type": "TYPE3", "ripName": "directionalflickskin02" },
   { "type": "TYPE4", "ripName": "directionalflickskin03" },
-  { "type": "TYPE5", "ripName": "directionalflickskin04" }
+  { "type": "TYPE5", "ripName": "directionalflickskin04" },
+  { "type": "PERSONA", "ripName": "directionalflickskin_persona" }
 ]

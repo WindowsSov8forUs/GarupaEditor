@@ -3,6 +3,7 @@
   normalizeSkinSelection,
   type SkinSelection,
 } from "./skinLoader";
+import { getDifficultyStyle as getDifficultyStyleFromMap } from "./difficultyStyle";
 
 const BASE_LANE_WIDTH = 48;
 const DEFAULT_PLAYFIELD_ZOOM = 1;
@@ -40,7 +41,10 @@ export interface ChartMetadata {
   difficultyLevel: string;
   bpm: number;
   offsetMs: number;
+  bgmDataUrl: string | null;
   coverDataUrl: string | null;
+  mvDataUrl: string | null;
+  mvOffsetMs: number;
 }
 
 export interface ChartSettings {
@@ -51,9 +55,12 @@ export interface ChartSettings {
 
 export interface EditorOptionSettings {
   rhythmNoteSizePercent: number;
+  rhythmNoteSpeed: number;
   longLineBrightnessPercent: number;
+  clickEffectEnabled: boolean;
   simultaneousLineEnabled: boolean;
   colorAssistEnabled: boolean;
+  mirrorEnabled: boolean;
   noteSeVolumePercent: number;
   verticalScalePercent: number;
   habahiro: boolean;
@@ -65,6 +72,7 @@ export interface ChartNote {
   type: NoteType;
   lane: number;
   beat: number;
+  timingGroup?: number;
   width?: number;
   endBeat?: number;
   endLane?: number;
@@ -76,6 +84,13 @@ export interface ChartBpmEvent {
   bpm: number;
 }
 
+export interface ChartSvEvent {
+  id: string;
+  beat: number;
+  value: number;
+  timingGroup: number;
+}
+
 interface ChartSkinInfo {
   name: string;
   assetPath: string;
@@ -83,10 +98,16 @@ interface ChartSkinInfo {
   directionalType?: string;
   rhythmSeType?: string;
   directionalSeType?: string;
+  bgType?: string;
+  fieldType?: string;
+  judgeType?: string;
   rhythmRipName?: string;
   directionalRipName?: string;
   rhythmSeRipName?: string;
   directionalSeRipName?: string;
+  bgSkinRipName?: string;
+  fieldSkinRipName?: string;
+  judgeSkinRipName?: string;
 }
 
 export type ChartJsonDirection = "Left" | "Right";
@@ -97,6 +118,7 @@ interface ChartJsonSimpleNote {
   beat: number;
   lane: number;
   width: number;
+  timingGroup?: number;
 }
 
 interface ChartJsonDirectionalNote {
@@ -105,6 +127,7 @@ interface ChartJsonDirectionalNote {
   lane: number;
   width: number;
   direction: ChartJsonDirection;
+  timingGroup?: number;
 }
 
 export type ChartJsonSlideConnection = ChartJsonSimpleNote | ChartJsonDirectionalNote;
@@ -112,6 +135,7 @@ export type ChartJsonSlideConnection = ChartJsonSimpleNote | ChartJsonDirectiona
 export interface ChartJsonSlideItem {
   type: "Slide";
   connections: ChartJsonSlideConnection[];
+  timingGroup?: number;
 }
 
 export interface ChartJsonBpmItem {
@@ -120,8 +144,15 @@ export interface ChartJsonBpmItem {
   value: number;
 }
 
+export interface ChartJsonSvItem {
+  type: "SV";
+  beat: number;
+  value: number;
+  timingGroup?: number;
+}
+
 export type ChartJsonTopLevelNote = Exclude<ChartJsonSimpleNote, { type: "Hidden" }> | ChartJsonDirectionalNote;
-type ChartJsonItem = ChartJsonTopLevelNote | ChartJsonSlideItem | ChartJsonBpmItem;
+type ChartJsonItem = ChartJsonTopLevelNote | ChartJsonSlideItem | ChartJsonBpmItem | ChartJsonSvItem;
 export type ChartJson = ChartJsonItem[];
 
 export interface WindowPreset {
@@ -218,14 +249,6 @@ export const WINDOW_SIZE_PRESETS: WindowPreset[] = [
   { id: "fhd", label: "1920 x 1080 (Full HD)", width: 1920, height: 1080 },
 ];
 
-const DIFFICULTY_STYLE_MAP: Record<Difficulty, { fill: string; stroke: string }> = {
-  EASY: { fill: "rgb(51, 102, 255)", stroke: "rgb(12, 56, 253)" },
-  NORMAL: { fill: "rgb(102, 255, 51)", stroke: "rgb(22, 197, 42)" },
-  HARD: { fill: "rgb(255, 204, 50)", stroke: "rgb(255, 158, 41)" },
-  EXPERT: { fill: "rgb(255, 50, 52)", stroke: "rgb(201, 5, 6)" },
-  SPECIAL: { fill: "rgb(237, 34, 152)", stroke: "rgb(183, 4, 96)" },
-};
-
 export const DEFAULT_METADATA: ChartMetadata = {
   title: "Untitled",
   artist: "Unknown Artist",
@@ -234,7 +257,10 @@ export const DEFAULT_METADATA: ChartMetadata = {
   difficultyLevel: "26",
   bpm: 120,
   offsetMs: 0,
+  bgmDataUrl: null,
   coverDataUrl: null,
+  mvDataUrl: null,
+  mvOffsetMs: 0,
 };
 
 export const DEFAULT_SETTINGS: ChartSettings = {
@@ -245,9 +271,12 @@ export const DEFAULT_SETTINGS: ChartSettings = {
 
 export const DEFAULT_EDITOR_OPTION_SETTINGS: EditorOptionSettings = {
   rhythmNoteSizePercent: 100,
+  rhythmNoteSpeed: 9.7,
   longLineBrightnessPercent: 100,
+  clickEffectEnabled: true,
   simultaneousLineEnabled: true,
   colorAssistEnabled: true,
+  mirrorEnabled: false,
   noteSeVolumePercent: 100,
   verticalScalePercent: 100,
   habahiro: false,
@@ -308,6 +337,11 @@ export function normalizeDifficultyLevel(value: unknown): string {
 export function normalizePositiveInt(value: unknown, fallback: number): number {
   const normalized = Math.round(toFinite(value, fallback));
   return Math.max(1, normalized);
+}
+
+export function normalizeTimingGroup(value: unknown, fallback = 0): number {
+  const normalized = Math.round(toFinite(value, fallback));
+  return Math.max(0, normalized);
 }
 
 function normalizeBpmValue(value: unknown, fallback: number): number {
@@ -399,6 +433,18 @@ export function sortBpmEvents(events: ChartBpmEvent[]): ChartBpmEvent[] {
   });
 }
 
+export function sortSvEvents(events: ChartSvEvent[]): ChartSvEvent[] {
+  return [...events].sort((a, b) => {
+    if (a.timingGroup !== b.timingGroup) {
+      return a.timingGroup - b.timingGroup;
+    }
+    if (!approxEq(a.beat, b.beat)) {
+      return a.beat - b.beat;
+    }
+    return 0;
+  });
+}
+
 export function normalizeBpmEvent(
   input: Partial<ChartBpmEvent> & { tick?: number },
   beatDivision: number,
@@ -413,6 +459,25 @@ export function normalizeBpmEvent(
     id: typeof input.id === "string" && input.id.length > 0 ? input.id : createId(),
     beat,
     bpm,
+  };
+}
+
+export function normalizeSvEvent(
+  input: Partial<ChartSvEvent> & { tick?: number },
+  beatDivision: number,
+  fallbackValue: number,
+): ChartSvEvent | null {
+  const fallbackBeat = toFinite(input.tick, 0) / beatDivision;
+  const rawBeat = toFinite(input.beat, fallbackBeat);
+  const beat = Math.max(0, Number(rawBeat.toFixed(6)));
+  const value = Number(toFinite(input.value, fallbackValue).toFixed(6));
+  const timingGroup = normalizeTimingGroup(input.timingGroup, 0);
+
+  return {
+    id: typeof input.id === "string" && input.id.length > 0 ? input.id : createId(),
+    beat,
+    value,
+    timingGroup,
   };
 }
 
@@ -585,20 +650,33 @@ export function parseSkinSelectionFromDocument(
   const hasDirectionalType = typeof skin.directionalType === "string";
   const hasRhythmSeType = typeof skin.rhythmSeType === "string";
   const hasDirectionalSeType = typeof skin.directionalSeType === "string";
+  const hasBgType = typeof skin.bgType === "string";
+  const hasFieldType = typeof skin.fieldType === "string";
+  const hasJudgeType = typeof skin.judgeType === "string";
   const hasRhythmRipName = typeof skin.rhythmRipName === "string" && skin.rhythmRipName.trim().length > 0;
   const hasDirectionalRipName =
     typeof skin.directionalRipName === "string" && skin.directionalRipName.trim().length > 0;
   const hasRhythmSeRipName = typeof skin.rhythmSeRipName === "string" && skin.rhythmSeRipName.trim().length > 0;
   const hasDirectionalSeRipName =
     typeof skin.directionalSeRipName === "string" && skin.directionalSeRipName.trim().length > 0;
+  const hasBgSkinRipName =
+    typeof skin.bgSkinRipName === "string" && skin.bgSkinRipName.trim().length > 0;
+  const hasFieldSkinRipName =
+    typeof skin.fieldSkinRipName === "string" && skin.fieldSkinRipName.trim().length > 0;
+  const hasJudgeSkinRipName =
+    typeof skin.judgeSkinRipName === "string" && skin.judgeSkinRipName.trim().length > 0;
 
   let rhythmType: string | undefined = hasRhythmType ? skin.rhythmType : undefined;
   let directionalType: string | undefined = hasDirectionalType ? skin.directionalType : undefined;
   let rhythmSeType: string | undefined = hasRhythmSeType ? skin.rhythmSeType : undefined;
   let directionalSeType: string | undefined = hasDirectionalSeType ? skin.directionalSeType : undefined;
+  let bgType: string | undefined = hasBgType ? skin.bgType : undefined;
+  let fieldType: string | undefined = hasFieldType ? skin.fieldType : undefined;
+  let judgeType: string | undefined = hasJudgeType ? skin.judgeType : undefined;
   if (typeof skin.name === "string") {
     const rhythmMatch = /rhythm-type(\d+)/i.exec(skin.name);
     const directionalMatch = /directional-type(\d+)/i.exec(skin.name);
+    const fieldMatch = /field-type(\d+)/i.exec(skin.name);
     if (rhythmType === undefined && rhythmMatch) {
       rhythmType = rhythmMatch[1];
     }
@@ -611,6 +689,9 @@ export function parseSkinSelectionFromDocument(
     if (directionalSeType === undefined && directionalMatch) {
       directionalSeType = directionalMatch[1];
     }
+    if (fieldType === undefined && fieldMatch) {
+      fieldType = fieldMatch[1];
+    }
   }
 
   if (
@@ -618,10 +699,16 @@ export function parseSkinSelectionFromDocument(
     directionalType === undefined &&
     rhythmSeType === undefined &&
     directionalSeType === undefined &&
+    bgType === undefined &&
+    fieldType === undefined &&
+    judgeType === undefined &&
     !hasRhythmRipName &&
     !hasDirectionalRipName &&
     !hasRhythmSeRipName &&
-    !hasDirectionalSeRipName
+    !hasDirectionalSeRipName &&
+    !hasBgSkinRipName &&
+    !hasFieldSkinRipName &&
+    !hasJudgeSkinRipName
   ) {
     return null;
   }
@@ -631,16 +718,22 @@ export function parseSkinSelectionFromDocument(
     directionalType: directionalType ?? DEFAULT_SKIN_SELECTION.directionalType,
     rhythmSeType: rhythmSeType ?? DEFAULT_SKIN_SELECTION.rhythmSeType,
     directionalSeType: directionalSeType ?? DEFAULT_SKIN_SELECTION.directionalSeType,
+    bgType: bgType ?? DEFAULT_SKIN_SELECTION.bgType,
+    fieldType: fieldType ?? DEFAULT_SKIN_SELECTION.fieldType,
+    judgeType: judgeType ?? DEFAULT_SKIN_SELECTION.judgeType,
     rhythmRipName: skin.rhythmRipName,
     directionalRipName: skin.directionalRipName,
     rhythmSeRipName: skin.rhythmSeRipName,
     directionalSeRipName: skin.directionalSeRipName,
+    bgSkinRipName: skin.bgSkinRipName,
+    fieldSkinRipName: skin.fieldSkinRipName,
+    judgeSkinRipName: skin.judgeSkinRipName,
   });
 }
 
 export function getDifficultyStyle(value: unknown): { fill: string; stroke: string } {
   const normalized = normalizeDifficulty(value);
-  return DIFFICULTY_STYLE_MAP[normalized];
+  return getDifficultyStyleFromMap(normalized);
 }
 
 export function getLaneValues(laneCount: LaneCount): number[] {
@@ -699,10 +792,19 @@ export function normalizeMetadata(input: Partial<ChartMetadata>): ChartMetadata 
     difficultyLevel: normalizeDifficultyLevel(input.difficultyLevel),
     bpm: clamp(toFinite(input.bpm, DEFAULT_METADATA.bpm), 40, 300),
     offsetMs: Math.round(clamp(toFinite(input.offsetMs, DEFAULT_METADATA.offsetMs), -5000, 5000)),
+    bgmDataUrl:
+      typeof input.bgmDataUrl === "string" && input.bgmDataUrl.trim() !== ""
+        ? input.bgmDataUrl
+        : null,
     coverDataUrl:
       typeof input.coverDataUrl === "string" && input.coverDataUrl.trim() !== ""
         ? input.coverDataUrl
         : null,
+    mvDataUrl:
+      typeof input.mvDataUrl === "string" && input.mvDataUrl.trim() !== ""
+        ? input.mvDataUrl
+        : null,
+    mvOffsetMs: Math.round(clamp(toFinite(input.mvOffsetMs, DEFAULT_METADATA.mvOffsetMs), -5000, 5000)),
   };
 }
 
@@ -741,6 +843,9 @@ export function normalizeEditorOptionSettings(
   const rhythmNoteSizePercent = Math.round(
     clamp(toFinite(input.rhythmNoteSizePercent, DEFAULT_EDITOR_OPTION_SETTINGS.rhythmNoteSizePercent), 10, 200),
   );
+  const rhythmNoteSpeed = Number(
+    clamp(toFinite(input.rhythmNoteSpeed, DEFAULT_EDITOR_OPTION_SETTINGS.rhythmNoteSpeed), 1, 12).toFixed(2),
+  );
   const longLineBrightnessPercent = Math.round(
     clamp(
       toFinite(input.longLineBrightnessPercent, DEFAULT_EDITOR_OPTION_SETTINGS.longLineBrightnessPercent),
@@ -757,7 +862,12 @@ export function normalizeEditorOptionSettings(
 
   return {
     rhythmNoteSizePercent,
+    rhythmNoteSpeed,
     longLineBrightnessPercent,
+    clickEffectEnabled:
+      typeof input.clickEffectEnabled === "boolean"
+        ? input.clickEffectEnabled
+        : DEFAULT_EDITOR_OPTION_SETTINGS.clickEffectEnabled,
     simultaneousLineEnabled:
       typeof input.simultaneousLineEnabled === "boolean"
         ? input.simultaneousLineEnabled
@@ -766,6 +876,10 @@ export function normalizeEditorOptionSettings(
       typeof input.colorAssistEnabled === "boolean"
         ? input.colorAssistEnabled
         : DEFAULT_EDITOR_OPTION_SETTINGS.colorAssistEnabled,
+    mirrorEnabled:
+      typeof input.mirrorEnabled === "boolean"
+        ? input.mirrorEnabled
+        : DEFAULT_EDITOR_OPTION_SETTINGS.mirrorEnabled,
     noteSeVolumePercent,
     verticalScalePercent,
     habahiro:
@@ -790,12 +904,14 @@ export function normalizeNote(
   const fallbackBeat = toFinite(input.tick, 0) / beatDivision;
   const beatCandidate = toFinite(input.beat, fallbackBeat);
   const beat = Math.max(0, Number(beatCandidate.toFixed(6)));
+  const timingGroup = normalizeTimingGroup(input.timingGroup, 0);
 
   const normalized: ChartNote = {
     id: typeof input.id === "string" && input.id.length > 0 ? input.id : createId(),
     type,
     lane,
     beat,
+    timingGroup,
   };
 
   if (isDirectionalNoteType(type)) {

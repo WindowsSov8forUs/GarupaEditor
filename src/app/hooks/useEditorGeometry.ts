@@ -146,16 +146,16 @@ export function useEditorGeometry(params: any) {
     viewBottomTimeSecRef.current = yToTime(playfield.scrollTop + playfield.clientHeight);
   }, [beatToSec, boardHeight, clamp, didInitTimelineScrollRef, isSkinReady, playfieldRef, timeToY, totalDurationSec, viewBottomTimeSecRef, yToTime]);
 
-  const handlePlayfieldScroll = (event: UIEvent<HTMLDivElement>) => {
+  const handlePlayfieldScroll = useCallback((event: UIEvent<HTMLDivElement>) => {
     const playfield = event.currentTarget;
     const maxScrollTop = Math.max(0, boardHeight - playfield.clientHeight);
     if (playfield.scrollTop > maxScrollTop) {
       playfield.scrollTop = maxScrollTop;
     }
     viewBottomTimeSecRef.current = yToTime(playfield.scrollTop + playfield.clientHeight);
-  };
+  }, [boardHeight, viewBottomTimeSecRef, yToTime]);
 
-  const getNoteSpanLanes = (note: Pick<ChartNote, "type" | "lane" | "width">): number => {
+  const getNoteSpanLanes = useCallback((note: Pick<ChartNote, "type" | "lane" | "width">): number => {
     if (isDirectionalNoteType(note.type)) {
       return normalizeDirectionalWidth(note.width);
     }
@@ -163,9 +163,9 @@ export function useEditorGeometry(params: any) {
       return normalizeRhythmWidth(note.width);
     }
     return 1;
-  };
+  }, [isDirectionalNoteType, isHabahiroEnabled, normalizeDirectionalWidth, normalizeRhythmWidth]);
 
-  const getLaneSpanBounds = (
+  const getLaneSpanBounds = useCallback((
     type: NoteType,
     lane: number,
     spanLanes: number,
@@ -180,9 +180,9 @@ export function useEditorGeometry(params: any) {
       return { start: lane, end: lane + Math.max(1, spanLanes) - 1 };
     }
     return { start: lane, end: lane };
-  };
+  }, [isHabahiroEnabled]);
 
-  const resolvePreviewSpanLanes = (
+  const resolvePreviewSpanLanes = useCallback((
     type: NoteType,
     options?: { directionalWidth?: number; rhythmWidth?: number },
   ): number => {
@@ -193,7 +193,15 @@ export function useEditorGeometry(params: any) {
       return normalizeRhythmWidth(options?.rhythmWidth ?? toolRhythmWidth);
     }
     return 1;
-  };
+  }, [
+    isDirectionalNoteType,
+    isHabahiroEnabled,
+    isRhythmWidthEditableType,
+    normalizeDirectionalWidth,
+    normalizeRhythmWidth,
+    toolDirectionalWidth,
+    toolRhythmWidth,
+  ]);
 
   const getSlideAnchorLane = useCallback(
     (note: Pick<ChartNote, "type" | "lane" | "width">, mode: "incoming" | "outgoing"): number => {
@@ -300,7 +308,7 @@ export function useEditorGeometry(params: any) {
     [getNoteCenterAt, getNoteHitboxWidth, noteVisualScale, notes],
   );
 
-  const isPlacementBlocked = (
+  const isPlacementBlocked = useCallback((
     lane: number,
     beat: number,
     options?: {
@@ -331,9 +339,9 @@ export function useEditorGeometry(params: any) {
       const noteBounds = getLaneSpanBounds(note.type, note.lane, noteSpan);
       return previewBounds.start <= noteBounds.end && noteBounds.start <= previewBounds.end;
     });
-  };
+  }, [approxEq, getLaneSpanBounds, getNoteSpanLanes, notes, resolvePreviewSpanLanes, tool]);
 
-  const resolveBoardPlacement = (
+  const resolveBoardPlacement = useCallback((
     x: number,
     y: number,
     options?: {
@@ -389,7 +397,21 @@ export function useEditorGeometry(params: any) {
 
     const beat = Math.max(0, quantizeBeat(yToBeat(y), beatDivision));
     return { lane, beat };
-  };
+  }, [
+    LANE_WIDTH,
+    beatDivision,
+    boardHeight,
+    boardWidth,
+    clamp,
+    isDirectionalNoteType,
+    isHabahiroEnabled,
+    isRhythmWidthEditableType,
+    laneValues,
+    quantizeBeat,
+    resolvePreviewSpanLanes,
+    tool,
+    yToBeat,
+  ]);
 
   const finishSelectionDrag = useCallback(
     (clientX?: number, clientY?: number) => {

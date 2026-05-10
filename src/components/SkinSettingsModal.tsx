@@ -1,5 +1,6 @@
-﻿import { type SkinSelection } from "../skinLoader";
+import { type SkinSelection } from "../skinLoader";
 import optionsTitleIcon from "../assets/icons/options-title.svg";
+import { SettingPrimaryTitle } from "./SettingPrimaryTitle";
 import { StepperIcon } from "./StepperIcon";
 import { useModalTransition } from "./useModalTransition";
 
@@ -12,13 +13,28 @@ type SkinSettingsModalProps = {
   onDirectionalTypeChange: (value: string) => void;
   onRhythmSeTypeChange: (value: string) => void;
   onDirectionalSeTypeChange: (value: string) => void;
+  onBgTypeChange: (value: string) => void;
+  onFieldTypeChange: (value: string) => void;
+  onJudgeTypeChange: (value: string) => void;
   rhythmSkinTypes: readonly string[];
   directionalSkinTypes: readonly string[];
   rhythmSeSkinTypes: readonly string[];
   directionalSeSkinTypes: readonly string[];
+  bgSkinTypes: readonly string[];
+  fieldSkinTypes: readonly string[];
+  judgeSkinTypes: readonly string[];
   formatTypeLabel: (type: string) => string;
   isSkinApplying: boolean;
   onApplySkinSelection: () => void;
+};
+
+type TypeStepperProps = {
+  title: string;
+  value: string;
+  index: number;
+  types: readonly string[];
+  onChange: (value: string) => void;
+  formatTypeLabel: (type: string) => string;
 };
 
 function resolveTypeIndex(currentType: string, options: readonly string[]): number {
@@ -34,6 +50,56 @@ function resolveTypeIndex(currentType: string, options: readonly string[]): numb
   return 0;
 }
 
+function TypeStepper({
+  title,
+  value,
+  index,
+  types,
+  onChange,
+  formatTypeLabel,
+}: TypeStepperProps) {
+  return (
+    <div className="setting-block">
+      <span className="setting-title-strip">{title}</span>
+      <div className="inline-stepper">
+        <button
+          type="button"
+          className="stepper-btn"
+          disabled={index <= 0}
+          onClick={() => {
+            const nextType = types[index - 1];
+            if (nextType) {
+              onChange(nextType);
+            }
+          }}
+        >
+          <StepperIcon type="left" />
+        </button>
+        <input
+          type="text"
+          className="stepper-input"
+          value={formatTypeLabel(value)}
+          readOnly
+          tabIndex={-1}
+        />
+        <button
+          type="button"
+          className="stepper-btn"
+          disabled={index >= types.length - 1}
+          onClick={() => {
+            const nextType = types[index + 1];
+            if (nextType) {
+              onChange(nextType);
+            }
+          }}
+        >
+          <StepperIcon type="right" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function SkinSettingsModal({
   open,
   onClose,
@@ -43,10 +109,16 @@ export function SkinSettingsModal({
   onDirectionalTypeChange,
   onRhythmSeTypeChange,
   onDirectionalSeTypeChange,
+  onBgTypeChange,
+  onFieldTypeChange,
+  onJudgeTypeChange,
   rhythmSkinTypes,
   directionalSkinTypes,
   rhythmSeSkinTypes,
   directionalSeSkinTypes,
+  bgSkinTypes,
+  fieldSkinTypes,
+  judgeSkinTypes,
   formatTypeLabel,
   isSkinApplying,
   onApplySkinSelection,
@@ -61,17 +133,23 @@ export function SkinSettingsModal({
   const directionalIndex = resolveTypeIndex(pendingSkinSelection.directionalType, directionalSkinTypes);
   const rhythmSeIndex = resolveTypeIndex(pendingSkinSelection.rhythmSeType, rhythmSeSkinTypes);
   const directionalSeIndex = resolveTypeIndex(pendingSkinSelection.directionalSeType, directionalSeSkinTypes);
+  const bgIndex = resolveTypeIndex(pendingSkinSelection.bgType, bgSkinTypes);
+  const fieldIndex = resolveTypeIndex(pendingSkinSelection.fieldType, fieldSkinTypes);
+  const judgeIndex = resolveTypeIndex(pendingSkinSelection.judgeType, judgeSkinTypes);
 
   const rhythmValue = rhythmSkinTypes[rhythmIndex] ?? pendingSkinSelection.rhythmType;
   const directionalValue = directionalSkinTypes[directionalIndex] ?? pendingSkinSelection.directionalType;
   const rhythmSeValue = rhythmSeSkinTypes[rhythmSeIndex] ?? pendingSkinSelection.rhythmSeType;
   const directionalSeValue = directionalSeSkinTypes[directionalSeIndex] ?? pendingSkinSelection.directionalSeType;
+  const bgValue = bgSkinTypes[bgIndex] ?? pendingSkinSelection.bgType;
+  const fieldValue = fieldSkinTypes[fieldIndex] ?? pendingSkinSelection.fieldType;
+  const judgeValue = judgeSkinTypes[judgeIndex] ?? pendingSkinSelection.judgeType;
   const transitionClassName = phase === "enter" ? "is-enter" : "is-exit";
 
   return (
     <div className={`modal-mask modal-transition-mask ${transitionClassName}`} onClick={onClose}>
       <section
-        className={`modal-card modal-transition-card ${transitionClassName}`}
+        className={`modal-card skin-settings-modal modal-transition-card ${transitionClassName}`}
         onClick={(event) => event.stopPropagation()}
       >
         <header className="modal-header modal-titleline-header">
@@ -88,161 +166,81 @@ export function SkinSettingsModal({
         </header>
 
         <div className="modal-body">
-          <div className="modal-grid">
-            <div className="setting-block">
-              <span className="setting-title-strip">{rhythmTypeTitle}</span>
-              <div className="inline-stepper">
-                <button
-                  type="button"
-                  className="stepper-btn"
-                  disabled={rhythmIndex <= 0}
-                  onClick={() => {
-                    const nextType = rhythmSkinTypes[rhythmIndex - 1];
-                    if (nextType) {
-                      onRhythmTypeChange(nextType);
-                    }
-                  }}
-                >
-                  <StepperIcon type="left" />
-                </button>
-                <input
-                  type="text"
-                  className="stepper-input"
-                  value={formatTypeLabel(rhythmValue)}
-                  readOnly
-                  tabIndex={-1}
-                />
-                <button
-                  type="button"
-                  className="stepper-btn"
-                  disabled={rhythmIndex >= rhythmSkinTypes.length - 1}
-                  onClick={() => {
-                    const nextType = rhythmSkinTypes[rhythmIndex + 1];
-                    if (nextType) {
-                      onRhythmTypeChange(nextType);
-                    }
-                  }}
-                >
-                  <StepperIcon type="right" />
-                </button>
-              </div>
-            </div>
+          <div className="skin-settings-page-shell">
+            <div className="app-settings-group-list">
+              <section className="app-settings-group">
+                <SettingPrimaryTitle text="谱面样式" />
+                <div className="app-settings-group-grid">
+                  <TypeStepper
+                    title={rhythmTypeTitle}
+                    value={rhythmValue}
+                    index={rhythmIndex}
+                    types={rhythmSkinTypes}
+                    onChange={onRhythmTypeChange}
+                    formatTypeLabel={formatTypeLabel}
+                  />
+                  <TypeStepper
+                    title="方向滑键样式"
+                    value={directionalValue}
+                    index={directionalIndex}
+                    types={directionalSkinTypes}
+                    onChange={onDirectionalTypeChange}
+                    formatTypeLabel={formatTypeLabel}
+                  />
+                </div>
+              </section>
 
-            <div className="setting-block">
-              <span className="setting-title-strip">方向滑键样式</span>
-              <div className="inline-stepper">
-                <button
-                  type="button"
-                  className="stepper-btn"
-                  disabled={directionalIndex <= 0}
-                  onClick={() => {
-                    const nextType = directionalSkinTypes[directionalIndex - 1];
-                    if (nextType) {
-                      onDirectionalTypeChange(nextType);
-                    }
-                  }}
-                >
-                  <StepperIcon type="left" />
-                </button>
-                <input
-                  type="text"
-                  className="stepper-input"
-                  value={formatTypeLabel(directionalValue)}
-                  readOnly
-                  tabIndex={-1}
-                />
-                <button
-                  type="button"
-                  className="stepper-btn"
-                  disabled={directionalIndex >= directionalSkinTypes.length - 1}
-                  onClick={() => {
-                    const nextType = directionalSkinTypes[directionalIndex + 1];
-                    if (nextType) {
-                      onDirectionalTypeChange(nextType);
-                    }
-                  }}
-                >
-                  <StepperIcon type="right" />
-                </button>
-              </div>
-            </div>
+              <section className="app-settings-group">
+                <SettingPrimaryTitle text="音效样式" />
+                <div className="app-settings-group-grid">
+                  <TypeStepper
+                    title="节奏图示SE"
+                    value={rhythmSeValue}
+                    index={rhythmSeIndex}
+                    types={rhythmSeSkinTypes}
+                    onChange={onRhythmSeTypeChange}
+                    formatTypeLabel={formatTypeLabel}
+                  />
+                  <TypeStepper
+                    title="方向滑键SE"
+                    value={directionalSeValue}
+                    index={directionalSeIndex}
+                    types={directionalSeSkinTypes}
+                    onChange={onDirectionalSeTypeChange}
+                    formatTypeLabel={formatTypeLabel}
+                  />
+                </div>
+              </section>
 
-            <div className="setting-block">
-              <span className="setting-title-strip">节奏图示SE</span>
-              <div className="inline-stepper">
-                <button
-                  type="button"
-                  className="stepper-btn"
-                  disabled={rhythmSeIndex <= 0}
-                  onClick={() => {
-                    const nextType = rhythmSeSkinTypes[rhythmSeIndex - 1];
-                    if (nextType) {
-                      onRhythmSeTypeChange(nextType);
-                    }
-                  }}
-                >
-                  <StepperIcon type="left" />
-                </button>
-                <input
-                  type="text"
-                  className="stepper-input"
-                  value={formatTypeLabel(rhythmSeValue)}
-                  readOnly
-                  tabIndex={-1}
-                />
-                <button
-                  type="button"
-                  className="stepper-btn"
-                  disabled={rhythmSeIndex >= rhythmSeSkinTypes.length - 1}
-                  onClick={() => {
-                    const nextType = rhythmSeSkinTypes[rhythmSeIndex + 1];
-                    if (nextType) {
-                      onRhythmSeTypeChange(nextType);
-                    }
-                  }}
-                >
-                  <StepperIcon type="right" />
-                </button>
-              </div>
-            </div>
-
-            <div className="setting-block">
-              <span className="setting-title-strip">方向滑键SE</span>
-              <div className="inline-stepper">
-                <button
-                  type="button"
-                  className="stepper-btn"
-                  disabled={directionalSeIndex <= 0}
-                  onClick={() => {
-                    const nextType = directionalSeSkinTypes[directionalSeIndex - 1];
-                    if (nextType) {
-                      onDirectionalSeTypeChange(nextType);
-                    }
-                  }}
-                >
-                  <StepperIcon type="left" />
-                </button>
-                <input
-                  type="text"
-                  className="stepper-input"
-                  value={formatTypeLabel(directionalSeValue)}
-                  readOnly
-                  tabIndex={-1}
-                />
-                <button
-                  type="button"
-                  className="stepper-btn"
-                  disabled={directionalSeIndex >= directionalSeSkinTypes.length - 1}
-                  onClick={() => {
-                    const nextType = directionalSeSkinTypes[directionalSeIndex + 1];
-                    if (nextType) {
-                      onDirectionalSeTypeChange(nextType);
-                    }
-                  }}
-                >
-                  <StepperIcon type="right" />
-                </button>
-              </div>
+              <section className="app-settings-group">
+                <SettingPrimaryTitle text="演出样式" />
+                <div className="app-settings-group-grid app-settings-group-grid-triple">
+                  <TypeStepper
+                    title="轨道样式"
+                    value={fieldValue}
+                    index={fieldIndex}
+                    types={fieldSkinTypes}
+                    onChange={onFieldTypeChange}
+                    formatTypeLabel={formatTypeLabel}
+                  />
+                  <TypeStepper
+                    title="背景"
+                    value={bgValue}
+                    index={bgIndex}
+                    types={bgSkinTypes}
+                    onChange={onBgTypeChange}
+                    formatTypeLabel={formatTypeLabel}
+                  />
+                  <TypeStepper
+                    title="判定样式"
+                    value={judgeValue}
+                    index={judgeIndex}
+                    types={judgeSkinTypes}
+                    onChange={onJudgeTypeChange}
+                    formatTypeLabel={formatTypeLabel}
+                  />
+                </div>
+              </section>
             </div>
           </div>
 
@@ -256,4 +254,3 @@ export function SkinSettingsModal({
     </div>
   );
 }
-

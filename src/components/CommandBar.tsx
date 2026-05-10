@@ -1,24 +1,50 @@
-﻿import { memo } from "react";
+﻿import { memo, type KeyboardEvent } from "react";
 import importJsonIcon from "../assets/icons/json-import.svg";
 import exportJsonIcon from "../assets/icons/json-export.svg";
 import skinIcon from "../assets/icons/skin.svg";
 import previewIcon from "../assets/icons/preview.svg";
+import simulatorIcon from "../assets/icons/display.svg";
 
 type CommandBarProps = {
   onImportJson: () => void;
   onExportJson: () => void;
   onOpenStaticRender: () => void;
+  onOpenSimulator: () => void;
   onOpenSkinSettings: () => void;
   onOpenAppSettings: () => void;
+  userNickname?: string | null;
+  userUsername?: string | null;
+  onUserBarClick?: () => void;
 };
 
 export const CommandBar = memo(function CommandBar({
   onImportJson,
   onExportJson,
   onOpenStaticRender,
+  onOpenSimulator,
   onOpenSkinSettings,
   onOpenAppSettings,
+  userNickname,
+  userUsername,
+  onUserBarClick,
 }: CommandBarProps) {
+  const nickname = typeof userNickname === "string" ? userNickname.trim() : "";
+  const username = typeof userUsername === "string" ? userUsername.trim() : "";
+  const hasNickname = nickname.length > 0;
+  const hasUsername = username.length > 0;
+  const nicknameText = hasNickname ? nickname : hasUsername ? username : "未登录";
+  const usernameText = hasNickname && hasUsername ? `@${username}` : "";
+
+  const handleUserBarKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (!onUserBarClick) {
+      return;
+    }
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      onUserBarClick();
+    }
+  };
+
   return (
     <div className="command-bar">
       <div className="command-group">
@@ -50,8 +76,29 @@ export const CommandBar = memo(function CommandBar({
           <img className="command-text-icon" src={previewIcon} alt="" aria-hidden="true" />
           <span className="sr-only">预览</span>
         </button>
+        <button
+          type="button"
+          className="command-icon-button"
+          onClick={onOpenSimulator}
+          title="播放器"
+          aria-label="播放器"
+        >
+          <img className="command-text-icon" src={simulatorIcon} alt="" aria-hidden="true" />
+          <span className="sr-only">播放器</span>
+        </button>
       </div>
       <div className="command-group command-group-right">
+        <div
+          className={`command-user-bar ${onUserBarClick ? "is-clickable" : ""}`}
+          role={onUserBarClick ? "button" : undefined}
+          tabIndex={onUserBarClick ? 0 : undefined}
+          onClick={onUserBarClick}
+          onKeyDown={handleUserBarKeyDown}
+          title={onUserBarClick ? "登录" : undefined}
+        >
+          <div className="command-user-row command-user-row-nickname">{nicknameText}</div>
+          <div className="command-user-row command-user-row-username">{usernameText}</div>
+        </div>
         <button type="button" className="command-icon-button" onClick={onOpenAppSettings} title="目录">
           <span className="sr-only">目录</span>
           <svg viewBox="0 0 24 24" aria-hidden="true">

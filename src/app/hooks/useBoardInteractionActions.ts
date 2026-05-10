@@ -394,6 +394,24 @@ export function useBoardInteractionActions(params: any) {
       return;
     }
 
+    const resolveChainTimingGroup = (): number => {
+      for (const noteId of noteIds) {
+        const committedRole = committedSlideRoleByNoteId.get(noteId);
+        if (committedRole) {
+          const committedChain = committedSlideChainById.get(committedRole.chainId);
+          if (committedChain) {
+            return Math.max(0, Math.round(toFinite(committedChain.timingGroup, 0)));
+          }
+        }
+        const note = noteById.get(noteId);
+        if (note) {
+          return Math.max(0, Math.round(toFinite(note.timingGroup, 0)));
+        }
+      }
+      return 0;
+    };
+    const nextChainTimingGroup = resolveChainTimingGroup();
+
     const noteIdSet = new Set(noteIds);
     setSlideChains((previous: any[]) => {
       const cleaned = previous
@@ -407,6 +425,7 @@ export function useBoardInteractionActions(params: any) {
         {
           id: createId(),
           noteIds,
+          timingGroup: nextChainTimingGroup,
         },
       ];
     });
@@ -434,7 +453,26 @@ export function useBoardInteractionActions(params: any) {
     if (options?.disarmTool) {
       setIsToolArmed(false);
     }
-  }, [clearSelectedBpmEvents, createId, noteById, setIsToolArmed, setNotes, setSelectedBpmEventId, setSingleSelectedNote, setSlideBuildCursor, setSlideBuildState, setSlideChains, setStatusMessage, slideBuildRef, sortNotes, suppressNextBoardClickRef, suppressNextNoteClickRef]);
+  }, [
+    clearSelectedBpmEvents,
+    committedSlideChainById,
+    committedSlideRoleByNoteId,
+    createId,
+    noteById,
+    setIsToolArmed,
+    setNotes,
+    setSelectedBpmEventId,
+    setSingleSelectedNote,
+    setSlideBuildCursor,
+    setSlideBuildState,
+    setSlideChains,
+    setStatusMessage,
+    slideBuildRef,
+    sortNotes,
+    suppressNextBoardClickRef,
+    suppressNextNoteClickRef,
+    toFinite,
+  ]);
 
   const placeBpmEvent = (beat: number) => {
     const quantizedBeat = quantizeBeat(beat, beatDivision);

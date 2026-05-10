@@ -1,0 +1,7 @@
+{
+  "EASY": { "fill": "rgb(51, 102, 255)", "stroke": "rgb(12, 56, 253)" },
+  "NORMAL": { "fill": "rgb(102, 255, 51)", "stroke": "rgb(22, 197, 42)" },
+  "HARD": { "fill": "rgb(255, 204, 50)", "stroke": "rgb(255, 158, 41)" },
+  "EXPERT": { "fill": "rgb(255, 50, 52)", "stroke": "rgb(201, 5, 6)" },
+  "SPECIAL": { "fill": "rgb(237, 34, 152)", "stroke": "rgb(183, 4, 96)" }
+}

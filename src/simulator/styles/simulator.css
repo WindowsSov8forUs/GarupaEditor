@@ -1,0 +1,466 @@
+@font-face {
+  font-family: "TTShinGoM";
+  src: url("../../assets/fonts/TTShinGoM.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "GB18030";
+  src: url("../../assets/fonts/GB18030.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "ChartUI";
+  src: url("../../assets/fonts/TTShinGoM.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  unicode-range:
+    U+0000-00FF,
+    U+0100-024F,
+    U+0250-02AF,
+    U+02B0-02FF,
+    U+0300-036F,
+    U+1E00-1EFF,
+    U+2000-206F,
+    U+20A0-20CF,
+    U+2100-214F,
+    U+2460-24FF,
+    U+2500-257F,
+    U+25A0-25FF,
+    U+3000-303F,
+    U+3040-309F,
+    U+30A0-30FF,
+    U+31F0-31FF,
+    U+FF61-FF9F;
+}
+
+@font-face {
+  font-family: "ChartUI";
+  src: url("../../assets/fonts/GB18030.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  unicode-range:
+    U+2E80-2EFF,
+    U+2F00-2FDF,
+    U+31C0-31EF,
+    U+3400-4DBF,
+    U+4E00-9FFF,
+    U+F900-FAFF,
+    U+2F800-2FA1F;
+}
+
+.simulator-page {
+  width: 100%;
+  height: 100%;
+}
+
+.simulator-page * {
+  box-sizing: border-box;
+}
+
+.simulator-shell {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  color: #e9f0ff;
+  font-family: "ChartUI", "GB18030", "TTShinGoM", "Microsoft YaHei UI", sans-serif;
+  font-synthesis: none;
+  background: #000;
+}
+
+.simulator-canvas-wrap {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.simulator-mv-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  display: none;
+  opacity: 0;
+}
+
+.simulator-mv-video {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 100%;
+  height: auto;
+  transform: translateY(-50%);
+  display: block;
+}
+
+.simulator-canvas-host {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.simulator-ui-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.simulator-pause-mask {
+  position: absolute;
+  inset: 0;
+  display: none;
+  background: rgba(0, 0, 0, 0.2);
+  pointer-events: auto;
+  z-index: 3;
+}
+
+.simulator-score-hud {
+  position: absolute;
+  z-index: 1;
+  pointer-events: none;
+  contain: layout paint;
+}
+
+.simulator-score-gain-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.simulator-score-gain-svg {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.simulator-score-gain-svg text {
+  font-family: "TTShinGoM", "ChartUI", "GB18030", "Microsoft YaHei UI", sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  dominant-baseline: middle;
+  text-anchor: start;
+  white-space: pre;
+}
+
+.simulator-score-gain-svg-stroke {
+  fill: none;
+  stroke: rgb(32, 65, 84);
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  paint-order: stroke fill;
+}
+
+.simulator-score-gain-svg-fill {
+  stroke: none;
+}
+
+.simulator-score-auto-live {
+  position: absolute;
+  z-index: 1;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(255, 59, 113);
+}
+
+.simulator-score-auto-live-text {
+  display: inline-block;
+  color: #ffffff;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  text-align: center;
+  white-space: nowrap;
+  text-shadow: -1px -1px 1px rgba(0, 0, 0, 0.35);
+  font-family: "TTShinGoM", "ChartUI", "GB18030", "Microsoft YaHei UI", sans-serif;
+}
+
+.simulator-score-frame-svg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.simulator-score-frame-fill {
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.18));
+}
+
+.simulator-score-frame-stroke {
+  fill: none;
+  stroke: rgb(204, 204, 204);
+  stroke-linejoin: miter;
+  stroke-linecap: butt;
+}
+
+.simulator-score-top-badge {
+  position: absolute;
+  z-index: 2;
+  border-radius: 50%;
+  border: 2px solid rgb(72, 72, 72);
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.simulator-score-top-badge-icon {
+  display: block;
+  width: 70%;
+  height: 70%;
+}
+
+.simulator-score-top-track {
+  position: absolute;
+  z-index: 2;
+  left: 7.3%;
+  top: 5.6%;
+  width: 91%;
+  height: 31.5%;
+  box-sizing: border-box;
+  border: 2px solid rgb(72, 72, 72);
+  border-radius: max(3px, 0.18em);
+  background: #535353;
+  overflow: hidden;
+}
+
+.simulator-score-gauge-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 16%;
+  background: linear-gradient(180deg, #79ffd9 0%, #49eec3 55%, #33d9ad 100%);
+}
+
+.simulator-score-rank-row {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  color: #c4c7cc;
+  text-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.25),
+    0 -1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.simulator-score-rank-label {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: inline-grid;
+  grid-auto-flow: row;
+  justify-items: center;
+  align-items: center;
+  white-space: nowrap;
+  font-family: "TTShinGoM", "ChartUI", "GB18030", "Microsoft YaHei UI", sans-serif;
+  font-size: max(3px, 0.54em);
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.simulator-score-rank-label::after {
+  content: "";
+  display: block;
+  width: 1ch;
+  height: 0.46em;
+  margin-top: 0.1em;
+  background: currentColor;
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+}
+
+.simulator-score-value {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.1em;
+  font-family: "TTShinGoM", "ChartUI", "GB18030", "Microsoft YaHei UI", sans-serif;
+  font-size: max(8px, 1.65em);
+  line-height: 1;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.simulator-score-digit {
+  display: inline-block;
+  width: 0.68em;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.simulator-score-digit.is-pad {
+  color: rgb(204, 204, 204);
+  text-shadow: none;
+}
+
+.simulator-score-digit.is-filled {
+  color: rgb(255, 59, 113);
+  text-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.9),
+    0 -1px 0 rgba(162, 26, 56, 0.22),
+    1px 0 0 rgba(162, 26, 56, 0.16),
+    -1px 0 0 rgba(162, 26, 56, 0.16);
+}
+
+.simulator-pause-anchor {
+  z-index: 4;
+}
+
+.simulator-pause-anchor {
+  position: absolute;
+  background: transparent;
+  pointer-events: none;
+  contain: layout paint;
+}
+
+.simulator-pause-anchor > .simulator-pause-button {
+  position: relative;
+  width: 42px;
+  min-width: 42px;
+  height: 42px;
+  min-height: 42px;
+  pointer-events: auto;
+  transition: none !important;
+  transform: none !important;
+  contain: layout paint;
+}
+
+.simulator-pause-anchor > .simulator-pause-button:hover,
+.simulator-pause-anchor > .simulator-pause-button:active {
+  transform: none !important;
+  border-color: var(--btn-frame-border-local) !important;
+  box-shadow: 0 1px 2px rgba(67, 74, 86, 0.18) !important;
+}
+
+.simulator-pause-anchor > .simulator-pause-button:hover::before,
+.simulator-pause-anchor > .simulator-pause-button:active::before {
+  border-color: var(--btn-core-border-local) !important;
+}
+
+.simulator-pause-anchor > .simulator-pause-button.is-blocked {
+  pointer-events: none;
+  cursor: default;
+}
+
+.simulator-pause-icon {
+  display: inline-flex;
+  width: 26px;
+  height: 26px;
+}
+
+.simulator-boot-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.simulator-boot-back,
+.simulator-boot-frame,
+.simulator-boot-cover-wrap,
+.simulator-boot-title,
+.simulator-boot-difficulty {
+  position: absolute;
+}
+
+.simulator-boot-back {
+  z-index: 1;
+  background: var(--sim-difficulty-fill, rgb(255, 50, 52));
+}
+
+.simulator-boot-frame {
+  z-index: 2;
+  background: #fff;
+}
+
+.simulator-boot-cover-wrap {
+  z-index: 3;
+  overflow: hidden;
+}
+
+.simulator-boot-title {
+  z-index: 4;
+  box-sizing: border-box;
+  border-style: solid;
+  border-color: #fff;
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.simulator-boot-title-text {
+  position: absolute;
+  z-index: 5;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  transform-origin: center center;
+  max-width: 96vw;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: "ChartUI", "GB18030", "TTShinGoM", "Microsoft YaHei UI", sans-serif;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: rgb(64, 64, 64);
+}
+
+.simulator-boot-difficulty {
+  z-index: 6;
+  background: var(--sim-difficulty-fill, rgb(255, 50, 52));
+  overflow: hidden;
+}
+
+.simulator-boot-difficulty-text {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  transform-origin: center center;
+  white-space: nowrap;
+  font-family: "ChartUI", "GB18030", "TTShinGoM", "Microsoft YaHei UI", sans-serif;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #fff;
+  text-shadow:
+    -1px 0 var(--sim-difficulty-text-stroke, rgb(130, 20, 24)),
+    1px 0 var(--sim-difficulty-text-stroke, rgb(130, 20, 24)),
+    0 -1px var(--sim-difficulty-text-stroke, rgb(130, 20, 24)),
+    0 1px var(--sim-difficulty-text-stroke, rgb(130, 20, 24)),
+    -1px -1px var(--sim-difficulty-text-stroke, rgb(130, 20, 24)),
+    1px -1px var(--sim-difficulty-text-stroke, rgb(130, 20, 24)),
+    -1px 1px var(--sim-difficulty-text-stroke, rgb(130, 20, 24)),
+    1px 1px var(--sim-difficulty-text-stroke, rgb(130, 20, 24));
+}
+
+.simulator-boot-cover {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.52);
+}

@@ -1,7 +1,9 @@
-﻿import {
+import {
   memo,
   useCallback,
+  useEffect,
   useMemo,
+  useState,
   type CSSProperties,
   type KeyboardEvent as ReactKeyboardEvent,
   type MouseEvent as ReactMouseEvent,
@@ -35,7 +37,7 @@ type ToolActionButtonConfig = {
   pointerAction?: () => void;
 };
 type StepperActionButtonConfig = {
-  icon: "left" | "right" | "minus" | "plus";
+  icon: "left" | "right" | "minus" | "plus" | "leftDouble" | "rightDouble";
   onClick: () => void;
   disabled?: boolean;
   title?: string;
@@ -98,7 +100,7 @@ type SidebarPanelProps = {
   onTogglePlayTool: () => void;
   isPlayToolSelected: boolean;
   isPlaybackPlaying: boolean;
-  playbackNowLabel: string;
+  getPlaybackNowLabel: () => string;
   playbackTotalLabel: string;
   playbackSpeedLabel: string;
   playbackVolumeLabel: string;
@@ -204,7 +206,7 @@ export const SidebarPanel = memo(function SidebarPanel({
   onTogglePlayTool,
   isPlayToolSelected,
   isPlaybackPlaying,
-  playbackNowLabel,
+  getPlaybackNowLabel,
   playbackTotalLabel,
   playbackSpeedLabel,
   playbackVolumeLabel,
@@ -379,6 +381,28 @@ export const SidebarPanel = memo(function SidebarPanel({
     }),
     [handleActionClick, handleActionMouseDown],
   );
+  const [playbackNowLabel, setPlaybackNowLabel] = useState<string>(() => getPlaybackNowLabel());
+  useEffect(() => {
+    setPlaybackNowLabel(getPlaybackNowLabel());
+  }, [getPlaybackNowLabel, isPlayToolSelected, isPlaybackPlaying]);
+  useEffect(() => {
+    if (!isPlayToolSelected) {
+      return;
+    }
+    let timer = 0;
+    const refresh = () => {
+      setPlaybackNowLabel((previous) => {
+        const next = getPlaybackNowLabel();
+        return previous === next ? previous : next;
+      });
+      const intervalMs = isPlaybackPlaying ? 120 : 250;
+      timer = window.setTimeout(refresh, intervalMs);
+    };
+    refresh();
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [getPlaybackNowLabel, isPlayToolSelected, isPlaybackPlaying]);
   const handleEnterKeyBlur = useCallback((event: ReactKeyboardEvent<HTMLInputElement>) => {
     if (event.key !== "Enter") {
       return;
