@@ -33,7 +33,8 @@
         "languages": [
           "SimpChinese"
         ],
-        "displayLanguageSelector": false
+        "displayLanguageSelector": false,
+        "installerHooks": "./nsis-hooks.nsh"
       }
     },
     "icon": [
