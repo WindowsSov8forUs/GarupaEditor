@@ -1,7 +1,7 @@
 import type { Sprite } from "pixi.js";
 import type { NoteSkinTextureBundle } from "../engine/assets";
 
-export interface ComboHudDrawContext {
+interface ComboHudDrawContext {
   viewportWidth: number;
   viewportHeight: number;
   elapsedMs: number;

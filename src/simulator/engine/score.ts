@@ -12,7 +12,7 @@ function isFlickHitNote(note: RuntimeNoteSemantic): boolean {
   return note.baseType === "flick" && (note.slideRole === "none" || note.slideRole === "end");
 }
 
-export function isHiddenNote(note: RuntimeNoteSemantic): boolean {
+function isHiddenNote(note: RuntimeNoteSemantic): boolean {
   return note.baseType === "hidden";
 }
 

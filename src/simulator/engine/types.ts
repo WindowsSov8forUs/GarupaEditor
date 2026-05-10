@@ -17,12 +17,10 @@ export interface SimulatorSettings {
   effectSlideY: number;
   sameline: boolean;
   grayEnabled: boolean;
-  grayMultiplier: number;
   mirror: boolean;
-  offset: number;
+  offsetMs: number;
   mvmode: boolean;
   mvAlpha: number;
-  displayHiddenSlideAmong: boolean;
 }
 
 export const DEFAULT_SETTINGS: SimulatorSettings = {
@@ -43,15 +41,13 @@ export const DEFAULT_SETTINGS: SimulatorSettings = {
   effectSlideY: 589,
   sameline: true,
   grayEnabled: true,
-  grayMultiplier: 2,
   mirror: false,
-  offset: 46,
+  offsetMs: 276,
   mvmode: false,
   mvAlpha: 0.3,
-  displayHiddenSlideAmong: false
 };
 
-export interface TimingGroupChange {
+interface TimingGroupChange {
   atMs: number;
   speed: number;
   pos: number;
@@ -62,7 +58,7 @@ export interface TimingGroupDef {
   changes: TimingGroupChange[];
 }
 
-export type RuntimeEventType = "music_start" | "bpm" | "note";
+type RuntimeEventType = "music_start" | "bpm" | "note";
 
 export type RuntimeNoteBaseType =
   | "single"
@@ -85,7 +81,6 @@ export interface ChartEvent {
   eventType: RuntimeEventType;
   note: RuntimeNoteSemantic | null;
   lane: number;
-  slideId: number;
   tgId: number;
   tgPos: number;
   startMs: number;
@@ -95,13 +90,10 @@ export interface ChartEvent {
 }
 
 export interface ParsedChart {
-  musicOffset: number;
   initialBpm: number;
   events: ChartEvent[];
   noteCount: number;
   maxTimeMs: number;
-  musicStartMs: number;
-  hasTimingGroup: boolean;
   timingGroups: TimingGroupDef[];
 }
 
@@ -159,13 +151,3 @@ export interface ActiveNote {
   parentActiveId: number;
 }
 
-export interface MvConfig {
-  id: string;
-  rootDir: string;
-  fps: number;
-  frames: number;
-  offset: number;
-  alpha: number;
-  width: number;
-  height: number;
-}

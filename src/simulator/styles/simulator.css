@@ -83,6 +83,32 @@
   overflow: hidden;
 }
 
+.simulator-mv-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  display: none;
+  opacity: 0;
+}
+
+.simulator-mv-video {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 100%;
+  height: auto;
+  transform: translateY(-50%);
+  display: block;
+}
+
+.simulator-canvas-host {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
 .simulator-ui-layer {
   position: absolute;
   inset: 0;
@@ -246,7 +272,7 @@
   align-items: center;
   white-space: nowrap;
   font-family: "TTShinGoM", "ChartUI", "GB18030", "Microsoft YaHei UI", sans-serif;
-  font-size: max(9px, 0.78em);
+  font-size: max(3px, 0.54em);
   line-height: 1;
   font-weight: 700;
   letter-spacing: 0.02em;
@@ -273,7 +299,7 @@
   justify-content: center;
   gap: 0.1em;
   font-family: "TTShinGoM", "ChartUI", "GB18030", "Microsoft YaHei UI", sans-serif;
-  font-size: max(16px, 1.65em);
+  font-size: max(8px, 1.65em);
   line-height: 1;
   font-weight: 600;
   letter-spacing: 0;
@@ -313,10 +339,10 @@
 
 .simulator-pause-anchor > .simulator-pause-button {
   position: relative;
-  width: 56px;
-  min-width: 56px;
-  height: 56px;
-  min-height: 56px;
+  width: 42px;
+  min-width: 42px;
+  height: 42px;
+  min-height: 42px;
   pointer-events: auto;
   transition: none !important;
   transform: none !important;
@@ -342,8 +368,8 @@
 
 .simulator-pause-icon {
   display: inline-flex;
-  width: 34px;
-  height: 34px;
+  width: 26px;
+  height: 26px;
 }
 
 .simulator-boot-layer {

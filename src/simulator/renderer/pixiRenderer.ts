@@ -1,4 +1,4 @@
-import { Application, Color, Container, Graphics, PerspectiveMesh, Sprite, Texture } from "pixi.js";
+import { Application, Container, Graphics, PerspectiveMesh, Sprite, Texture } from "pixi.js";
 import {
   NoteSkinTextureBundle,
   resolveDirectionalArrowTexture,
@@ -9,7 +9,7 @@ import {
   resolveSlideBottomMarkerFlashTexture,
   resolveSlideBottomMarkerTexture,
 } from "../engine/assets";
-import { LEGACY_TIMING_FPS, legacyOffsetToMs } from "../engine/legacyMath";
+import { SIMULATOR_TIMING_FPS } from "../engine/simulatorTiming";
 import type { ParticleEffectDefinition } from "../engine/particlePack";
 import {
   ActiveParticleEmitter,
@@ -31,20 +31,13 @@ import {
 } from "../engine/types";
 
 type MvRenderFrame =
-  | {
-      kind: "image";
-      src: string;
-      alpha: number;
-      sourceWidth: number;
-      sourceHeight: number;
-    }
-  | {
-      kind: "video";
-      video: HTMLVideoElement;
-      alpha: number;
-      sourceWidth: number;
-      sourceHeight: number;
-    };
+  {
+    kind: "image";
+    src: string;
+    alpha: number;
+    sourceWidth: number;
+    sourceHeight: number;
+  };
 
 export interface SimulatorStartupRenderState {
   liveBgAlpha: number;
@@ -287,8 +280,6 @@ export class PixiRenderer {
   private mvTextureCache = new Map<string, Texture>();
   private mvTextureOrder: string[] = [];
   private mvCurrentPath = "";
-  private mvVideoKeyByElement = new WeakMap<HTMLVideoElement, string>();
-  private mvVideoKeySerial = 0;
   private particleEmitterSeedSerial = 1;
   private settings: SimulatorSettings;
   private assets: NoteSkinTextureBundle | null = null;
@@ -296,6 +287,7 @@ export class PixiRenderer {
   private lastRenderedCombo = 0;
   private lastComboHitMs = Number.NEGATIVE_INFINITY;
   private startupRenderState: SimulatorStartupRenderState | null = null;
+  private webglContextLost = false;
 
   constructor(settings: SimulatorSettings) {
     this.settings = settings;
@@ -308,6 +300,22 @@ export class PixiRenderer {
 
   setStartupRenderState(state: SimulatorStartupRenderState | null): void {
     this.startupRenderState = state;
+  }
+
+  isWebglContextLost(): boolean {
+    return this.webglContextLost;
+  }
+
+  getWebglContextAlphaEnabled(): boolean | null {
+    const gl = (this.app?.renderer as { gl?: WebGLRenderingContext | WebGL2RenderingContext | null } | undefined)?.gl;
+    if (!gl) {
+      return null;
+    }
+    const attrs = gl.getContextAttributes?.();
+    if (!attrs) {
+      return null;
+    }
+    return attrs.alpha ?? null;
   }
 
   setChartEvents(events: readonly ChartEvent[], timingGroups: readonly TimingGroupDef[] = []): void {
@@ -510,7 +518,11 @@ export class PixiRenderer {
     await this.app.init({
       width: initialWidth,
       height: initialHeight,
-      background: new Color("#000000"),
+      backgroundColor: 0x000000,
+      backgroundAlpha: 0,
+      clearBeforeRender: true,
+      preference: "webgl",
+      premultipliedAlpha: true,
       antialias: true,
       autoDensity: true,
       resolution: Math.max(1, window.devicePixelRatio || 1)
@@ -518,16 +530,32 @@ export class PixiRenderer {
 
     host.innerHTML = "";
     host.appendChild(this.app.canvas);
+    this.app.canvas.style.background = "transparent";
+    this.app.canvas.style.backgroundColor = "transparent";
+    const rendererWithBackground = this.app.renderer as unknown as {
+      background?: { alpha?: number; clearBeforeRender?: boolean };
+    };
+    if (rendererWithBackground.background) {
+      rendererWithBackground.background.alpha = 0;
+      rendererWithBackground.background.clearBeforeRender = true;
+    }
+    this.app.canvas.addEventListener("webglcontextlost", this.onWebglContextLost as EventListener, { passive: false });
+    this.app.canvas.addEventListener("webglcontextrestored", this.onWebglContextRestored as EventListener);
 
     this.root = new Container();
+    this.root.sortableChildren = true;
     this.playfieldLayer = new Container();
     this.uiLayer = new Container();
     this.app.stage.addChild(this.root);
 
     this.liveBgSprite = new Sprite();
     this.liveBgSprite.visible = false;
+    this.liveBgSprite.zIndex = 0;
     this.mvSprite = new Sprite();
     this.mvSprite.visible = false;
+    this.mvSprite.zIndex = 1;
+    this.playfieldLayer.zIndex = 10;
+    this.uiLayer.zIndex = 20;
 
     this.laneBgSprite = new Sprite(Texture.WHITE);
     this.laneBgSprite.visible = false;
@@ -594,6 +622,7 @@ export class PixiRenderer {
     const startup = this.startupRenderState;
     this.playfieldLayer.alpha = clamp01(startup?.playfieldAlpha ?? 1);
     this.uiLayer.alpha = clamp01(startup?.playfieldAlpha ?? 1);
+    this.playfieldLayer.visible = true;
 
     this.noteSpriteCursor = 0;
     this.slideLineMeshCursor = 0;
@@ -638,6 +667,10 @@ export class PixiRenderer {
   }
 
   destroy(): void {
+    if (this.app?.canvas) {
+      this.app.canvas.removeEventListener("webglcontextlost", this.onWebglContextLost as EventListener);
+      this.app.canvas.removeEventListener("webglcontextrestored", this.onWebglContextRestored as EventListener);
+    }
     if (this.assets) {
       this.assets.destroy();
       this.assets = null;
@@ -672,6 +705,7 @@ export class PixiRenderer {
     this.comboHudSpritePrevUsed = 0;
     this.judgeHudSpritePrevUsed = 0;
     this.startupRenderState = null;
+    this.webglContextLost = false;
     this.playfieldLayer = null;
     this.uiLayer = null;
     this.liveBgSprite = null;
@@ -685,6 +719,19 @@ export class PixiRenderer {
     this.app?.destroy(true);
     this.app = null;
   }
+
+  private readonly onWebglContextLost = (event: Event): void => {
+    this.webglContextLost = true;
+    if (typeof (event as { preventDefault?: () => void }).preventDefault === "function") {
+      (event as { preventDefault: () => void }).preventDefault();
+    }
+  };
+
+  private readonly onWebglContextRestored = (): void => {
+    this.webglContextLost = false;
+    this.lanesDirty = true;
+    this.stageGeometryCache = null;
+  };
 
   private compactSpritePool(pool: Sprite[], used: number, prevUsed: number): number {
     if (used >= prevUsed) {
@@ -946,20 +993,15 @@ export class PixiRenderer {
       return;
     }
 
-    const path = mvFrame.kind === "image"
-      ? `image:${browserPath(mvFrame.src)}`
-      : this.resolveVideoTextureKey(mvFrame.video);
+    const path = `image:${browserPath(mvFrame.src)}`;
     this.mvSprite.visible = true;
+    this.mvSprite.tint = 0xffffff;
     this.mvSprite.alpha = mvFrame.alpha;
 
     if (this.mvCurrentPath !== path) {
       let tex = this.mvTextureCache.get(path);
       if (!tex) {
-        if (mvFrame.kind === "image") {
-          tex = Texture.from(browserPath(mvFrame.src));
-        } else {
-          tex = Texture.from(mvFrame.video);
-        }
+        tex = Texture.from(browserPath(mvFrame.src));
         this.mvTextureCache.set(path, tex);
         this.mvTextureOrder.push(path);
         if (this.mvTextureOrder.length > 180) {
@@ -987,16 +1029,6 @@ export class PixiRenderer {
     this.mvSprite.x = (rw - drawWidth) / 2;
     this.mvSprite.y = (rh - drawHeight) / 2;
     this.mvSprite.scale.set(scale, scale);
-  }
-
-  private resolveVideoTextureKey(video: HTMLVideoElement): string {
-    const cached = this.mvVideoKeyByElement.get(video);
-    if (cached) {
-      return cached;
-    }
-    const next = `video:${this.mvVideoKeySerial += 1}`;
-    this.mvVideoKeyByElement.set(video, next);
-    return next;
   }
 
   private drawLanes(): void {
@@ -1075,7 +1107,7 @@ export class PixiRenderer {
       if (!n.started) {
         continue;
       }
-      if (!this.settings.displayHiddenSlideAmong && n.note.baseType === "hidden") {
+      if (n.note.baseType === "hidden") {
         continue;
       }
 
@@ -1111,7 +1143,7 @@ export class PixiRenderer {
       }
 
       const lane = this.textureLaneIndex(n.lane);
-      const alpha = n.note.baseType === "hidden" ? 0.45 : 1;
+      const alpha = 1;
       const tex = this.assets
         ? resolveRhythmNoteTexture(this.assets, n.note, lane, n.gray)
         : null;
@@ -1300,12 +1332,12 @@ export class PixiRenderer {
 
   private frameRawAt(elapsedMs: number, startMs: number, tgId: number, tgPos: number): number {
     if (tgId < 0) {
-      return ((elapsedMs - startMs) * LEGACY_TIMING_FPS) / 1000;
+      return ((elapsedMs - startMs) * SIMULATOR_TIMING_FPS) / 1000;
     }
     const nowPos = this.timingGroupPosAt(tgId, elapsedMs);
-    return (nowPos * LEGACY_TIMING_FPS) / 100
+    return (nowPos * SIMULATOR_TIMING_FPS) / 100
       + this.settings.noteSpeedFrames
-      - (tgPos * LEGACY_TIMING_FPS) / 100;
+      - (tgPos * SIMULATOR_TIMING_FPS) / 100;
   }
 
   private timingGroupPosAt(tgId: number, elapsedMs: number): number {
@@ -1313,7 +1345,7 @@ export class PixiRenderer {
     if (!group) {
       return elapsedMs;
     }
-    const x = elapsedMs - legacyOffsetToMs(this.settings.offset);
+    const x = elapsedMs - this.settings.offsetMs;
     let speed = 1;
     let pos = 0;
     for (const change of group.changes) {

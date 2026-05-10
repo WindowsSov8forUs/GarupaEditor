@@ -1,4 +1,4 @@
-import { LEGACY_TIMING_FPS, legacyOffsetToMs } from "./legacyMath";
+import { SIMULATOR_TIMING_FPS } from "./simulatorTiming";
 import { isGrayEligibleNote, isHiddenNoSeNote, isJudgedNote } from "./score";
 import {
   ActiveNote,
@@ -24,7 +24,7 @@ interface PendingSystemEvent {
 
 const RUNTIME_POST_ROLL_MS = 3000;
 
-export class LegacyRuntime {
+export class SimulatorRuntime {
   private readonly settings: SimulatorSettings;
   private readonly chart: ParsedChart;
 
@@ -53,6 +53,7 @@ export class LegacyRuntime {
   private pendingMusicStart = false;
   private lastElapsedMs = 0;
   private finishAtMs: number | null = null;
+  private static readonly COLOR_ASSIST_BEAT_MULTIPLIER = 2;
 
   constructor(settings: SimulatorSettings, chart: ParsedChart) {
     this.settings = settings;
@@ -169,7 +170,7 @@ export class LegacyRuntime {
   }
 
   private updateTimingGroups(elapsedMs: number): void {
-    const x = elapsedMs - legacyOffsetToMs(this.settings.offset);
+    const x = elapsedMs - this.settings.offsetMs;
     for (let tg = 0; tg < this.chart.timingGroups.length; tg += 1) {
       const def = this.chart.timingGroups[tg];
       const state = this.tgState[tg];
@@ -187,7 +188,7 @@ export class LegacyRuntime {
       return 0;
     }
     const state = this.tgState[tgId];
-    const x = elapsedMs - legacyOffsetToMs(this.settings.offset);
+    const x = elapsedMs - this.settings.offsetMs;
     return state.pos + state.speed * x;
   }
 
@@ -261,9 +262,9 @@ export class LegacyRuntime {
 
   private updateNote(note: ActiveNote, elapsedMs: number): void {
     if (note.tgId >= 0) {
-      const tRaw = (this.tgPosAt(note.tgId, elapsedMs) * LEGACY_TIMING_FPS) / 100
+      const tRaw = (this.tgPosAt(note.tgId, elapsedMs) * SIMULATOR_TIMING_FPS) / 100
         + this.settings.noteSpeedFrames
-        - (note.tgPos * LEGACY_TIMING_FPS) / 100;
+        - (note.tgPos * SIMULATOR_TIMING_FPS) / 100;
       if (tRaw < 0) {
         note.started = false;
         note.t = 0;
@@ -273,7 +274,7 @@ export class LegacyRuntime {
       }
     } else if (elapsedMs >= note.startMs) {
       note.started = true;
-      note.t = Math.floor((elapsedMs - note.startMs) * LEGACY_TIMING_FPS / 1000);
+      note.t = Math.floor((elapsedMs - note.startMs) * SIMULATOR_TIMING_FPS / 1000);
     } else {
       note.started = false;
       note.t = 0;
@@ -284,7 +285,7 @@ export class LegacyRuntime {
     if (!this.settings.grayEnabled || !isGrayEligibleNote(note)) {
       return false;
     }
-    const p = beat * this.settings.grayMultiplier;
+    const p = beat * SimulatorRuntime.COLOR_ASSIST_BEAT_MULTIPLIER;
     return p - Math.floor(p) >= 0.0001;
   }
 

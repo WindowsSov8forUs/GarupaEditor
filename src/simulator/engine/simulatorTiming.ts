@@ -1,39 +1,29 @@
 import { DEFAULT_SETTINGS, SimulatorSettings } from "./types";
 import type { SimulatorDisplayPayload } from "../launchPayload";
 
-export const LEGACY_TIMING_FPS = 60;
+export const SIMULATOR_TIMING_FPS = 60;
 
 const GBP_SPEED_MIN = 1;
 const GBP_SPEED_MAX = 12;
 const MIN_TRAVEL_SECONDS = 0.01;
 
-export function clampGbpNoteSpeed(value: number): number {
+function clampGbpNoteSpeed(value: number): number {
   if (!Number.isFinite(value)) {
     return DEFAULT_SETTINGS.noteSpeedRaw;
   }
   return Math.max(GBP_SPEED_MIN, Math.min(GBP_SPEED_MAX, value));
 }
 
-export function gbpNoteSpeedToTravelSeconds(gbpSpeedInput: number): number {
+function gbpNoteSpeedToTravelSeconds(gbpSpeedInput: number): number {
   const gbpSpeed = clampGbpNoteSpeed(gbpSpeedInput);
   // Borrowed from bandori-chart-new/MySongSimulator:
   // noteOnScreenDuration = (12 - simNoteSpeed) / 2
   return Math.max(MIN_TRAVEL_SECONDS, (12 - gbpSpeed) / 2);
 }
 
-export function legacyOffsetToMs(offset: number): number {
-  return (offset * LEGACY_TIMING_FPS) / 10;
-}
-
-export function legacyMsToOffset(ms: number): number {
-  return (ms * 10) / LEGACY_TIMING_FPS;
-}
-
 function createDefaultSettings(): SimulatorSettings {
   const settings: SimulatorSettings = { ...DEFAULT_SETTINGS };
   settings.noteSpeedRaw = clampGbpNoteSpeed(settings.noteSpeedRaw);
-  settings.grayMultiplier = 2;
-  settings.displayHiddenSlideAmong = false;
   // Effect.Size now follows Display.Notesize and is no longer an independent setting.
   settings.effectSize = Number((settings.noteSize * DEFAULT_SETTINGS.effectSize).toFixed(4));
   // Effect.Normalx/y, Flickx/y, Slidex/y are now internal constants.
@@ -102,9 +92,7 @@ export function buildSettingsFromPayload(payloadSettings: SimulatorDisplayPayloa
     settings.mvAlpha = Math.max(30, Math.min(100, Number(source.mvAlphaPercent))) / 100;
   }
   if (source.offsetMs !== undefined && Number.isFinite(Number(source.offsetMs))) {
-    settings.offset = legacyMsToOffset(
-      Math.max(-5000, Math.min(5000, Math.round(Number(source.offsetMs)))),
-    );
+    settings.offsetMs = Math.max(-5000, Math.min(5000, Math.round(Number(source.offsetMs))));
   }
 
   return settings;
@@ -112,8 +100,8 @@ export function buildSettingsFromPayload(payloadSettings: SimulatorDisplayPayloa
 
 export function precomputeLut(settings: SimulatorSettings): void {
   const targetTravelSeconds = gbpNoteSpeedToTravelSeconds(settings.noteSpeedRaw);
-  const targetTravelFrames = Math.max(1, Math.round(targetTravelSeconds * LEGACY_TIMING_FPS));
-  const noteSpeedSeconds = targetTravelFrames / LEGACY_TIMING_FPS;
+  const targetTravelFrames = Math.max(1, Math.round(targetTravelSeconds * SIMULATOR_TIMING_FPS));
+  const noteSpeedSeconds = targetTravelFrames / SIMULATOR_TIMING_FPS;
   settings.noteSpeedFrames = targetTravelFrames;
   settings.noteSpeedSeconds = noteSpeedSeconds;
 }

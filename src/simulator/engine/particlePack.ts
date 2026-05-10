@@ -5,7 +5,7 @@ type ParticleEaseFamily = "Sine" | "Quad" | "Cubic" | "Quart" | "Quint" | "Expo"
 
 export type ParticleEase = "linear" | "none" | `${ParticleEaseMode}${ParticleEaseFamily}`;
 
-export interface ParticleExpressionTerm {
+interface ParticleExpressionTerm {
   c: number;
   r1: number;
   r2: number;
@@ -41,7 +41,7 @@ export interface ParticleCurve {
   ease: ParticleEase;
 }
 
-export interface ParticleTemplateDefinition {
+interface ParticleTemplateDefinition {
   spriteIndex: number;
   color: number;
   start: number;
@@ -54,7 +54,7 @@ export interface ParticleTemplateDefinition {
   a: ParticleCurve;
 }
 
-export interface ParticleGroupDefinition {
+interface ParticleGroupDefinition {
   count: number;
   particles: ParticleTemplateDefinition[];
 }
@@ -70,7 +70,7 @@ export interface ParticleTransformTerm extends ParticleExpressionTerm {
   y4: number;
 }
 
-export interface ParticleTransformDefinition {
+interface ParticleTransformDefinition {
   x1: ParticleTransformTerm;
   y1: ParticleTransformTerm;
   x2: ParticleTransformTerm;

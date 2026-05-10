@@ -19,7 +19,7 @@ export type SimulatorDisplayPayload = {
   mvAlphaPercent?: number;
 };
 
-export type SimulatorAudioPayload = {
+type SimulatorAudioPayload = {
   seRuntimeAssets?: SeSkinAssets | null;
 };
 
@@ -29,16 +29,16 @@ export type SimulatorMvPayload = {
   offsetMs?: number;
 };
 
-export type SimulatorChartMetadataPayload = ChartMetadata;
+type SimulatorChartMetadataPayload = ChartMetadata;
 
-export type SimulatorSkinPayload = {
+type SimulatorSkinPayload = {
   noteSkin: SkinAssets;
   fieldSkin?: FieldSkinAssets | null;
   bgSkin?: BGSkin | null;
   judgeSkin?: JudgeSkin | null;
 };
 
-export type SimulatorChartNoteType =
+type SimulatorChartNoteType =
   | "single"
   | "flick"
   | "skill"

@@ -1,6 +1,6 @@
 import type { SimulatorMvPayload } from "../launchPayload";
 
-export type MvImageResource = {
+type MvImageResource = {
   kind: "image";
   src: string;
   width: number;
@@ -8,13 +8,14 @@ export type MvImageResource = {
   offsetMs: number;
 };
 
-export type MvVideoResource = {
+type MvVideoResource = {
   kind: "video";
   src: string;
   video: HTMLVideoElement;
   width: number;
   height: number;
   offsetMs: number;
+  objectUrl?: string;
 };
 
 export type MvResource = MvImageResource | MvVideoResource;
@@ -28,7 +29,7 @@ function normalizeMvOffsetMs(input: unknown): number {
   return Math.round(Math.max(-5000, Math.min(5000, numeric)));
 }
 
-export function normalizeMvSource(input: string): string {
+function normalizeMvSource(input: string): string {
   const source = input.trim();
   if (!source) {
     return "";
@@ -63,13 +64,23 @@ async function loadImageSize(source: string): Promise<{ width: number; height: n
 }
 
 async function loadVideoResource(source: string): Promise<RawMvVideoResource> {
+  let playableSource = source;
+  let objectUrl: string | undefined;
+  if (source.startsWith("data:video/")) {
+    const response = await fetch(source);
+    const blob = await response.blob();
+    objectUrl = URL.createObjectURL(blob);
+    playableSource = objectUrl;
+  }
   return await new Promise((resolve, reject) => {
     const video = document.createElement("video");
     video.preload = "auto";
     video.muted = true;
+    video.defaultMuted = true;
     video.playsInline = true;
+    video.autoplay = false;
     video.loop = false;
-    video.src = source;
+    video.src = playableSource;
 
     const cleanup = () => {
       video.removeEventListener("loadedmetadata", handleLoaded);
@@ -83,10 +94,14 @@ async function loadVideoResource(source: string): Promise<RawMvVideoResource> {
         video,
         width: Math.max(1, video.videoWidth || 1),
         height: Math.max(1, video.videoHeight || 1),
+        ...(objectUrl ? { objectUrl } : {}),
       });
     };
     const handleError = () => {
       cleanup();
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+      }
       reject(new Error(`video load failed: ${source}`));
     };
 

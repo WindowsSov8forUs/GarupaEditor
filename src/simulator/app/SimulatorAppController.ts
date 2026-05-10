@@ -5,11 +5,10 @@ import { loadNoteSkinTextureBundle } from "../engine/assets";
 import { parseEditorChart } from "../engine/editorChartParser";
 import {
   buildSettingsFromPayload,
-  legacyOffsetToMs,
   precomputeLut,
-} from "../engine/legacyMath";
+} from "../engine/simulatorTiming";
 import { loadMvResourceFromPayload, type MvResource } from "../engine/mv";
-import { LegacyRuntime } from "../engine/runtime";
+import { SimulatorRuntime } from "../engine/runtime";
 import { JudgeTriggerEvent, ParsedChart, RuntimeStats, SimulatorSettings } from "../engine/types";
 import {
   SIMULATOR_WINDOW_PAYLOAD_EVENT,
@@ -26,6 +25,8 @@ import simulatorPlayIconSvg from "../../assets/icons/simulator-play.svg?raw";
 interface UiRefs {
   root: HTMLDivElement;
   host: HTMLDivElement;
+  canvasHost: HTMLDivElement;
+  mvLayer: HTMLDivElement;
   uiLayer: HTMLDivElement;
   pauseMask: HTMLDivElement;
   scoreHud: HTMLDivElement;
@@ -58,6 +59,7 @@ interface UiRefs {
 }
 
 type StartupPhase = "waiting_touch" | "animating" | "running";
+type MvVideoRenderState = "hidden" | "video" | "black_tail";
 
 interface ScoreGainAnimation {
   el: SVGSVGElement;
@@ -86,6 +88,8 @@ const STARTUP_TIMELINE_TOTAL_MS =
   + STARTUP_STAGE_POST_UI_DURATION_MS;
 const STARTUP_CHART_PREROLL_MS = 3000;
 const SCORE_HUD_LEFT_MARGIN_RATIO = 16 / 1280;
+const SCORE_HUD_LAYOUT_INPUT_WIDTH = 1024;
+const SCORE_HUD_LAYOUT_INPUT_HEIGHT = 576;
 const PAUSE_BUTTON_RIGHT_MARGIN_RATIO = 5 / 720;
 const OVERLAY_UI_TOP_MARGIN_RATIO = 18 / 1280;
 const SCORE_HUD_TOP_WIDTH_RATIO = 11 / 32;
@@ -104,6 +108,7 @@ const SCORE_HUD_BADGE_COLOR = "rgb(72, 72, 72)";
 const SCORE_HUD_BADGE_DIAMETER_BY_HEIGHT = 9 / 26;
 const SCORE_HUD_BADGE_ICON_SIZE_BY_DIAMETER = 17 / 27;
 const SCORE_HUD_BADGE_BORDER_WIDTH_PX = 2;
+const SCORE_HUD_FRAME_STROKE_WIDTH_PX = 2;
 const SCORE_HUD_GAIN_ANIM_TOTAL_MS = ((12 / 15) * 1000 * 3) / 4;
 const SCORE_HUD_GAIN_PHASE_1_END = 4 / 15;
 const SCORE_HUD_GAIN_PHASE_2_END = 8 / 15;
@@ -167,9 +172,49 @@ function resolveMvPayloadFromMetadata(
   };
 }
 
+function resolveMvPayloadCandidatesFromMetadata(
+  metadata: SimulatorLaunchPayload["metadata"] | null | undefined,
+): SimulatorMvPayload[] {
+  const primary = resolveMvPayloadFromMetadata(metadata);
+  const fallbackRaw = (metadata as { mvDataUrlFallback?: unknown } | null | undefined)?.mvDataUrlFallback;
+  const fallbackSource = typeof fallbackRaw === "string" ? fallbackRaw.trim() : "";
+  if (!primary) {
+    if (!fallbackSource) {
+      return [];
+    }
+    return [
+      {
+        kind:
+          fallbackSource.toLowerCase().startsWith("data:video/")
+          || /\.(mp4|webm|ogg|mov|m4v|avi|mkv)(?:[?#].*)?$/i.test(fallbackSource)
+            ? "video"
+            : "image",
+        src: fallbackSource,
+        offsetMs: 0,
+      },
+    ];
+  }
+  if (!fallbackSource || fallbackSource === primary.src) {
+    return [primary];
+  }
+  const fallbackKind: "image" | "video" =
+    fallbackSource.toLowerCase().startsWith("data:video/")
+    || /\.(mp4|webm|ogg|mov|m4v|avi|mkv)(?:[?#].*)?$/i.test(fallbackSource)
+      ? "video"
+      : "image";
+  return [
+    primary,
+    {
+      kind: fallbackKind,
+      src: fallbackSource,
+      offsetMs: primary.offsetMs,
+    },
+  ];
+}
+
 export class SimulatorAppController {
   private ui: UiRefs;
-  private runtime: LegacyRuntime | null = null;
+  private runtime: SimulatorRuntime | null = null;
   private renderer: PixiRenderer | null = null;
   private isStarting = false;
   private pendingStartupTouch = false;
@@ -187,6 +232,11 @@ export class SimulatorAppController {
 
   private settings: SimulatorSettings | null = null;
   private chartMvResource: MvResource | null = null;
+  private mvPreflightPromise: Promise<void> | null = null;
+  private mvPreflightResource: MvResource | null = null;
+  private mvPreflightFailed = false;
+  private mvPreflightKey = "";
+  private mvPreflightToken = 0;
 
   private readonly launchRequestId = parseLaunchRequestIdFromHash();
   private launchPayload: SimulatorLaunchPayload | null = null;
@@ -209,9 +259,172 @@ export class SimulatorAppController {
   private bootRevealRafId = 0;
   private bootPendingAlpha = 1;
   private bootPendingVisible = false;
+  private domMvVideo: HTMLVideoElement | null = null;
   private readonly onWindowResize = () => {
     this.updateBootLayerLayout();
   };
+
+  private disposeMvResource(resource: MvResource | null): void {
+    if (!resource || resource.kind !== "video") {
+      return;
+    }
+    const video = resource.video;
+    try {
+      video.pause();
+    } catch {
+      // ignore pause errors
+    }
+    video.removeAttribute("src");
+    try {
+      video.load();
+    } catch {
+      // ignore unload errors
+    }
+    if (resource.objectUrl) {
+      try {
+        URL.revokeObjectURL(resource.objectUrl);
+      } catch {
+        // ignore revoke errors
+      }
+    }
+  }
+
+  private clearDomMvVideo(): void {
+    while (this.ui.mvLayer.firstChild) {
+      this.ui.mvLayer.removeChild(this.ui.mvLayer.firstChild);
+    }
+    this.domMvVideo = null;
+    this.ui.mvLayer.style.display = "none";
+    this.ui.mvLayer.style.opacity = "0";
+    this.ui.mvLayer.style.zIndex = "0";
+  }
+
+  private attachDomMvVideo(video: HTMLVideoElement, alpha: number): void {
+    if (this.domMvVideo !== video) {
+      this.clearDomMvVideo();
+      video.classList.add("simulator-mv-video");
+      this.ui.mvLayer.appendChild(video);
+      this.domMvVideo = video;
+    }
+    this.ui.mvLayer.style.display = "block";
+    this.ui.mvLayer.style.opacity = `${this.clamp01(alpha)}`;
+    this.applyMvLayerOrdering();
+  }
+
+  private applyMvLayerOrdering(): void {
+    const glAlpha = this.renderer?.getWebglContextAlphaEnabled();
+    if (glAlpha === false) {
+      this.ui.mvLayer.style.zIndex = "2";
+    } else {
+      this.ui.mvLayer.style.zIndex = "0";
+    }
+  }
+
+  private resetMvPreflightState(): void {
+    this.mvPreflightToken += 1;
+    this.mvPreflightPromise = null;
+    this.mvPreflightFailed = false;
+    this.mvPreflightKey = "";
+    if (this.mvPreflightResource) {
+      this.disposeMvResource(this.mvPreflightResource);
+      this.mvPreflightResource = null;
+    }
+  }
+
+  private buildMvPreflightKey(mvModeEnabled: boolean, payloadMvCandidates: readonly SimulatorMvPayload[]): string {
+    if (!mvModeEnabled) {
+      return "off";
+    }
+    if (payloadMvCandidates.length <= 0) {
+      return "on:none";
+    }
+    const parts = payloadMvCandidates.map((candidate) => {
+      const offset = Number.isFinite(candidate.offsetMs) ? Math.round(candidate.offsetMs ?? 0) : 0;
+      return `${candidate.kind}:${offset}:${candidate.src}`;
+    });
+    return `on:${parts.join("|")}`;
+  }
+
+  private scheduleMvPreflight(payload: SimulatorLaunchPayload | null | undefined): void {
+    if (!payload) {
+      this.resetMvPreflightState();
+      return;
+    }
+    const previewSettings = buildSettingsFromPayload(payload.settings ?? null);
+    const payloadMvCandidates = resolveMvPayloadCandidatesFromMetadata(payload.metadata);
+    const key = this.buildMvPreflightKey(previewSettings.mvmode, payloadMvCandidates);
+    if (
+      this.mvPreflightKey === key
+      && (this.mvPreflightPromise !== null || this.mvPreflightResource !== null || this.mvPreflightFailed)
+    ) {
+      return;
+    }
+
+    const token = this.mvPreflightToken + 1;
+    this.mvPreflightToken = token;
+    this.mvPreflightPromise = null;
+    this.mvPreflightFailed = false;
+    this.mvPreflightKey = key;
+    if (this.mvPreflightResource) {
+      this.disposeMvResource(this.mvPreflightResource);
+      this.mvPreflightResource = null;
+    }
+
+    if (!previewSettings.mvmode) {
+      return;
+    }
+    if (payloadMvCandidates.length <= 0) {
+      this.mvPreflightFailed = true;
+      return;
+    }
+
+    this.mvPreflightPromise = (async () => {
+      let resource: MvResource | null = null;
+      for (const candidate of payloadMvCandidates) {
+        resource = await loadMvResourceFromPayload(candidate).catch(() => null);
+        if (resource) {
+          break;
+        }
+      }
+      return resource;
+    })()
+      .then((resource) => {
+        if (token !== this.mvPreflightToken) {
+          this.disposeMvResource(resource);
+          return;
+        }
+        if (!resource) {
+          this.mvPreflightFailed = true;
+          return;
+        }
+        this.mvPreflightResource = resource;
+      })
+      .catch(() => {
+        if (token !== this.mvPreflightToken) {
+          return;
+        }
+        this.mvPreflightFailed = true;
+      });
+  }
+
+  private async consumeMvPreflightForPayload(
+    payload: SimulatorLaunchPayload,
+  ): Promise<{ resource: MvResource | null; failed: boolean }> {
+    this.scheduleMvPreflight(payload);
+    if (this.mvPreflightPromise) {
+      await this.mvPreflightPromise;
+      this.mvPreflightPromise = null;
+    }
+    const previewSettings = buildSettingsFromPayload(payload.settings ?? null);
+    const payloadMvCandidates = resolveMvPayloadCandidatesFromMetadata(payload.metadata);
+    const expectedKey = this.buildMvPreflightKey(previewSettings.mvmode, payloadMvCandidates);
+    if (this.mvPreflightKey !== expectedKey) {
+      return { resource: null, failed: previewSettings.mvmode };
+    }
+    const resource = this.mvPreflightResource;
+    this.mvPreflightResource = null;
+    return { resource, failed: this.mvPreflightFailed || resource === null };
+  }
 
   private beginStartIfNeeded(): void {
     if (this.isDisposed || this.isStarting || !this.launchPayload) {
@@ -233,6 +446,25 @@ export class SimulatorAppController {
       return;
     }
     if (this.startupPhase === "waiting_touch") {
+      const preflightVideo = this.mvPreflightResource?.kind === "video" ? this.mvPreflightResource.video : null;
+      if (preflightVideo) {
+        try {
+          preflightVideo.muted = true;
+          preflightVideo.defaultMuted = true;
+          void preflightVideo.play().then(() => {
+            preflightVideo.pause();
+            try {
+              preflightVideo.currentTime = 0;
+            } catch {
+              // ignore seek errors
+            }
+          }).catch(() => {
+            // ignore warmup play rejection
+          });
+        } catch {
+          // ignore warmup errors
+        }
+      }
       this.pendingStartupTouch = true;
       if (this.renderer && this.runtime && this.settings) {
         this.startupPhase = "animating";
@@ -318,6 +550,7 @@ export class SimulatorAppController {
     this.renderer = null;
     this.runtime = null;
     this.releaseMvResource();
+    this.resetMvPreflightState();
     if (this.launchPayloadUnlisten) {
       void this.launchPayloadUnlisten();
       this.launchPayloadUnlisten = null;
@@ -339,6 +572,11 @@ export class SimulatorAppController {
 
     const host = document.createElement("div");
     host.className = "simulator-canvas-wrap";
+    const mvLayer = document.createElement("div");
+    mvLayer.className = "simulator-mv-layer";
+    const canvasHost = document.createElement("div");
+    canvasHost.className = "simulator-canvas-host";
+    host.append(mvLayer, canvasHost);
 
     const uiLayer = document.createElement("div");
     uiLayer.className = "simulator-ui-layer";
@@ -476,6 +714,8 @@ export class SimulatorAppController {
     return {
       root,
       host,
+      canvasHost,
+      mvLayer,
       uiLayer,
       pauseMask,
       scoreHud,
@@ -525,6 +765,7 @@ export class SimulatorAppController {
             return;
           }
           this.launchPayload = envelope.payload;
+          this.scheduleMvPreflight(envelope.payload);
           this.applyLaunchMetadata(envelope.payload.metadata);
           this.applyBootCoverState(1, true);
         },
@@ -571,7 +812,8 @@ export class SimulatorAppController {
     }
 
     this.renderer = new PixiRenderer(settings);
-    await this.renderer.mount(this.ui.host);
+    await this.renderer.mount(this.ui.canvasHost);
+    this.applyMvLayerOrdering();
 
     const rendererRef = this.renderer;
     const noteSkinPayload = this.launchPayload?.skin?.noteSkin ?? null;
@@ -617,12 +859,25 @@ export class SimulatorAppController {
     this.renderer.setChartEvents(chart.events, chart.timingGroups);
     this.updateScoreRankMarkerPositions(chart.noteCount);
 
-    const payloadMv = resolveMvPayloadFromMetadata(payloadMetadata);
     if (settings.mvmode) {
-      this.chartMvResource = await loadMvResourceFromPayload(payloadMv).catch(() => null);
+      const preflight = await this.consumeMvPreflightForPayload(this.launchPayload);
+      if (preflight.failed || !preflight.resource) {
+        settings.mvmode = false;
+        this.chartMvResource = null;
+        if (typeof console !== "undefined" && typeof console.warn === "function") {
+          console.warn("[Simulator] MV preflight failed, fallback to BG rendering.");
+        }
+      } else {
+        this.chartMvResource = preflight.resource;
+      }
+    }
+    if (settings.mvmode && this.chartMvResource?.kind === "video") {
+      this.attachDomMvVideo(this.chartMvResource.video, settings.mvAlpha);
+    } else {
+      this.clearDomMvVideo();
     }
 
-    this.runtime = new LegacyRuntime(settings, chart);
+    this.runtime = new SimulatorRuntime(settings, chart);
 
     this.lastLoopTickMs = 0;
     this.loopAccumulatorMs = 0;
@@ -668,6 +923,9 @@ export class SimulatorAppController {
     }
 
     const startupRenderState = this.resolveStartupRenderState(now);
+    if (this.startupPhase === "running" || this.runtimeStarted) {
+      startupRenderState.playfieldAlpha = this.startupLaneTargetAlpha;
+    }
     this.renderer.setStartupRenderState(startupRenderState);
     this.applyUiAlpha(startupRenderState.uiAlpha);
     const bootCoverState = this.resolveBootCoverState(now);
@@ -684,8 +942,7 @@ export class SimulatorAppController {
       && this.settings
       && now - this.startupTouchMs >= STARTUP_TIMELINE_TOTAL_MS
     ) {
-      const offsetMs = legacyOffsetToMs(this.settings.offset);
-      const runtimeShiftMs = STARTUP_CHART_PREROLL_MS - offsetMs;
+      const runtimeShiftMs = STARTUP_CHART_PREROLL_MS - this.settings.offsetMs;
       this.runtime.start(now + runtimeShiftMs);
       this.runtimeStarted = true;
       this.startupPhase = "running";
@@ -719,10 +976,37 @@ export class SimulatorAppController {
 
     this.updateScoreGainAnimations(now);
 
-    const elapsedMs = stats.elapsedMs;
-    const mvFrame = this.runtimeStarted ? this.resolveChartMvFrame(elapsedMs) : null;
+    if (this.settings?.mvmode && this.renderer.isWebglContextLost()) {
+      this.fallbackToLiveBgOnMvRuntimeError(new Error("webgl context lost"));
+    }
 
-    this.renderer.render(this.runtime.getActiveNotes(), stats, mvFrame);
+    const elapsedMs = stats.elapsedMs;
+    let mvFrame:
+      | { kind: "image"; src: string; alpha: number; sourceWidth: number; sourceHeight: number }
+      | null = null;
+    if (this.domMvVideo && !this.runtimeStarted) {
+      this.ui.mvLayer.style.display = "none";
+    }
+    this.applyMvLayerOrdering();
+    if (this.runtimeStarted) {
+      try {
+        mvFrame = this.resolveChartMvFrame(elapsedMs);
+      } catch (error) {
+        this.fallbackToLiveBgOnMvRuntimeError(error);
+        mvFrame = null;
+      }
+    }
+
+    try {
+      this.renderer.render(this.runtime.getActiveNotes(), stats, mvFrame);
+    } catch (error) {
+      if (this.settings?.mvmode) {
+        this.fallbackToLiveBgOnMvRuntimeError(error);
+        this.renderer.render(this.runtime.getActiveNotes(), stats, null);
+      } else {
+        throw error;
+      }
+    }
 
     if (!this.runtimeStarted || !this.runtime.isFinished()) {
       this.rafId = requestAnimationFrame(this.loop);
@@ -1003,7 +1287,7 @@ export class SimulatorAppController {
     this.applyRectStyle(this.ui.bootDifficultyBadge, diffX, diffY, diffWidth, diffHeight);
     this.ui.bootDifficultyBadge.style.borderRadius = "5px";
     this.ui.bootDifficultyText.style.fontSize = `${Math.max(1, diffFontSize)}px`;
-    this.updateScoreHudLayout(windowWidth, windowHeight);
+    this.updateScoreHudLayout(SCORE_HUD_LAYOUT_INPUT_WIDTH, SCORE_HUD_LAYOUT_INPUT_HEIGHT);
     this.ui.pauseAnchor.style.top = `${windowHeight * OVERLAY_UI_TOP_MARGIN_RATIO}px`;
     this.ui.pauseAnchor.style.right = `${windowWidth * PAUSE_BUTTON_RIGHT_MARGIN_RATIO}px`;
     this.ui.pauseAnchor.style.left = "";
@@ -1105,8 +1389,7 @@ export class SimulatorAppController {
     this.ui.scoreFrameSvg.setAttribute("viewBox", `0 0 ${topWidth} ${totalHeight}`);
     this.ui.scoreFrameFill.setAttribute("d", framePath);
     this.ui.scoreFrameStroke.setAttribute("d", framePath);
-    const frameStrokeWidth = 2;
-    this.ui.scoreFrameStroke.setAttribute("stroke-width", `${frameStrokeWidth}`);
+    this.ui.scoreFrameStroke.setAttribute("stroke-width", `${SCORE_HUD_FRAME_STROKE_WIDTH_PX}`);
 
     const trackWidth = topWidth * SCORE_HUD_TRACK_WIDTH_BY_TOP_WIDTH;
     const trackHeight = upperHeight * SCORE_HUD_TRACK_HEIGHT_BY_UPPER;
@@ -1364,7 +1647,6 @@ export class SimulatorAppController {
 
   private resolveChartMvFrame(elapsedMs: number):
     | { kind: "image"; src: string; alpha: number; sourceWidth: number; sourceHeight: number }
-    | { kind: "video"; video: HTMLVideoElement; alpha: number; sourceWidth: number; sourceHeight: number }
     | null {
     if (!this.settings?.mvmode || !this.chartMvResource) {
       return null;
@@ -1381,7 +1663,24 @@ export class SimulatorAppController {
     }
 
     const video = this.chartMvResource.video;
-    const videoElapsedMs = elapsedMs - this.chartMvResource.offsetMs;
+    const mvVideoRenderState = this.syncVideoPlayback(video, elapsedMs, this.chartMvResource.offsetMs);
+    this.ui.mvLayer.style.opacity = `${this.clamp01(this.settings.mvAlpha)}`;
+    this.ui.mvLayer.style.display = mvVideoRenderState === "hidden" ? "none" : "block";
+    this.ui.mvLayer.style.backgroundColor = "#000";
+    if (this.domMvVideo !== video) {
+      this.attachDomMvVideo(video, this.settings.mvAlpha);
+    }
+    if (this.domMvVideo) {
+      this.domMvVideo.style.visibility = mvVideoRenderState === "video" ? "visible" : "hidden";
+    }
+    return null;
+  }
+
+  private syncVideoPlayback(video: HTMLVideoElement, elapsedMs: number, offsetMs: number): MvVideoRenderState {
+    if (video.error) {
+      throw new Error(`mv video element error: code=${video.error.code}`);
+    }
+    const videoElapsedMs = elapsedMs - offsetMs;
     if (videoElapsedMs < 0) {
       if (!video.paused) {
         video.pause();
@@ -1393,72 +1692,72 @@ export class SimulatorAppController {
           // ignore seek errors
         }
       }
-      return null;
+      return "hidden";
     }
 
     const targetSeconds = Math.max(0, videoElapsedMs / 1000);
     const duration = Number.isFinite(video.duration) && video.duration > 0 ? video.duration : null;
+    if (duration !== null && targetSeconds >= duration) {
+      const tailSeconds = Math.max(0, duration - 0.001);
+      if (!video.paused) {
+        video.pause();
+      }
+      if (Math.abs(video.currentTime - tailSeconds) > 0.03) {
+        try {
+          video.currentTime = tailSeconds;
+        } catch {
+          // ignore seek errors
+        }
+      }
+      return "black_tail";
+    }
+
     if (this.isPaused) {
       if (!video.paused) {
         video.pause();
       }
-      if (Math.abs(video.currentTime - targetSeconds) > 0.12) {
+      if (Math.abs(video.currentTime - targetSeconds) > 0.08) {
         try {
           video.currentTime = targetSeconds;
         } catch {
           // ignore seek errors
         }
       }
-    } else if (duration !== null && targetSeconds >= duration) {
-      const freezeSeconds = Math.max(0, duration - 0.001);
-      if (!video.paused) {
-        video.pause();
-      }
-      if (Math.abs(video.currentTime - freezeSeconds) > 0.03) {
-        try {
-          video.currentTime = freezeSeconds;
-        } catch {
-          // ignore seek errors
-        }
-      }
-    } else {
-      if (Math.abs(video.currentTime - targetSeconds) > 0.12) {
-        try {
-          video.currentTime = targetSeconds;
-        } catch {
-          // ignore seek errors
-        }
-      }
-      if (video.paused) {
-        void video.play().catch(() => {});
-      }
+      return "video";
     }
 
-    return {
-      kind: "video",
-      video,
-      alpha: this.settings.mvAlpha,
-      sourceWidth: this.chartMvResource.width,
-      sourceHeight: this.chartMvResource.height,
-    };
+    video.playbackRate = 1;
+    if (video.paused) {
+      if (Math.abs(video.currentTime - targetSeconds) > 0.08) {
+        try {
+          video.currentTime = targetSeconds;
+        } catch {
+          // ignore seek errors
+        }
+      }
+      void video.play().catch((error: unknown) => {
+        if (typeof console !== "undefined" && typeof console.warn === "function") {
+          console.warn("[Simulator] MV video play() rejected.", error);
+        }
+      });
+    }
+    return "video";
   }
 
   private releaseMvResource(): void {
-    if (this.chartMvResource?.kind === "video") {
-      const video = this.chartMvResource.video;
-      try {
-        video.pause();
-      } catch {
-        // ignore pause errors
-      }
-      video.removeAttribute("src");
-      try {
-        video.load();
-      } catch {
-        // ignore unload errors
-      }
-    }
+    this.clearDomMvVideo();
+    this.disposeMvResource(this.chartMvResource);
     this.chartMvResource = null;
+  }
+
+  private fallbackToLiveBgOnMvRuntimeError(error: unknown): void {
+    this.releaseMvResource();
+    if (this.settings) {
+      this.settings.mvmode = false;
+    }
+    if (typeof console !== "undefined" && typeof console.warn === "function") {
+      console.warn("[Simulator] MV runtime render failed, fallback to BG rendering.", error);
+    }
   }
 
   private stopLoop(): void {
@@ -1489,6 +1788,7 @@ export class SimulatorAppController {
     this.applyUiAlpha(0);
     this.updateScoreHud(null);
     this.audio.stopBgm();
+    this.clearDomMvVideo();
     if (this.chartMvResource?.kind === "video") {
       this.chartMvResource.video.pause();
     }

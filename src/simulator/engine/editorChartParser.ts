@@ -5,7 +5,7 @@ import type {
   SimulatorChartSlideChain,
   SimulatorChartSvEvent,
 } from "../launchPayload";
-import { LEGACY_TIMING_FPS, legacyOffsetToMs } from "./legacyMath";
+import { SIMULATOR_TIMING_FPS } from "./simulatorTiming";
 import { isJudgedEvent } from "./score";
 import type {
   ChartEvent,
@@ -466,8 +466,8 @@ export function parseEditorChart(
   const usedGroups = Array.from(usedGroupSet.values()).sort((a, b) => a - b);
   const { timingGroups, internalToRuntimeGroup } = buildTimingGroupDefs(usedGroups, groupedSv);
 
-  const offsetMs = legacyOffsetToMs(settings.offset);
-  const travelMs = settings.noteSpeedFrames * 1000 / LEGACY_TIMING_FPS;
+  const offsetMs = settings.offsetMs;
+  const travelMs = settings.noteSpeedFrames * 1000 / SIMULATOR_TIMING_FPS;
   const musicStartMs = offsetMs;
 
   const internalEvents: InternalEvent[] = [];
@@ -479,7 +479,6 @@ export function parseEditorChart(
       eventType: "music_start",
       note: null,
       lane: 0,
-      slideId: 0,
       tgId: -1,
       tgPos: 0,
       startMs: musicStartMs,
@@ -507,7 +506,6 @@ export function parseEditorChart(
         eventType: "bpm",
         note: null,
         lane: 0,
-        slideId: 0,
         tgId: -1,
         tgPos: 0,
         startMs: atMs + offsetMs - travelMs,
@@ -540,7 +538,6 @@ export function parseEditorChart(
         eventType: "note",
         note: descriptor.note,
         lane: descriptor.lane,
-        slideId: 0,
         tgId,
         tgPos,
         startMs,
@@ -600,13 +597,10 @@ export function parseEditorChart(
   const maxRenderTimeMs = Math.max(maxTimeMs + 2000, musicStartMs + 2000);
 
   return {
-    musicOffset: settings.offset,
     initialBpm: baseBpm,
     events,
     noteCount,
     maxTimeMs: maxRenderTimeMs,
-    musicStartMs,
-    hasTimingGroup: useTimingGroups,
     timingGroups,
   };
 }
