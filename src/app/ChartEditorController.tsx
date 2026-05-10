@@ -208,6 +208,15 @@ async function blobUrlToDataUrl(blobUrl: string): Promise<string> {
   });
 }
 
+async function dataUrlToBlobUrl(dataUrl: string): Promise<string> {
+  const response = await fetch(dataUrl);
+  if (!response.ok) {
+    throw new Error(`mv fetch failed: ${response.status}`);
+  }
+  const blob = await response.blob();
+  return URL.createObjectURL(blob);
+}
+
 function lowerBoundByTime<T>(
   list: T[],
   target: number,
@@ -459,6 +468,10 @@ function routeStatusMessage(rawMessage: string): StatusMessageRoute {
   if (message.startsWith("Bestdori V2 转换失败：")) {
     const detail = stripStatusPrefix(message, "Bestdori V2 转换失败：");
     return { channel: "dialog", tone: "error", message: `转换 Bestdori 格式谱面代码失败：\n${detail}` };
+  }
+  if (message.startsWith("官方谱面导入失败：")) {
+    const detail = stripStatusPrefix(message, "官方谱面导入失败：");
+    return { channel: "dialog", tone: "error", message: `导入官方谱面失败：\n${detail}` };
   }
   if (message.startsWith("导入失败：")) {
     const detail = stripStatusPrefix(message, "导入失败：");
@@ -1002,6 +1015,7 @@ function ChartEditorController() {
   const suppressNextBoardClickRef = useRef(false);
   const suppressNextNoteClickRef = useRef(false);
   const jsonImportRef = useRef<HTMLInputElement | null>(null);
+  const bestdoriV2ImportRef = useRef<HTMLInputElement | null>(null);
   const skinApplySeqRef = useRef(0);
   const didInitSkinRef = useRef(false);
   const applyBestdoriSkinSelectionRef = useRef<any>(async () => {});
@@ -2395,21 +2409,35 @@ function ChartEditorController() {
     isImportJsonModalOpen,
     importJsonModalLevel,
     importJsonText,
-    importBestdoriV2Text,
+    importOfficialChartId,
+    importOfficialChartDifficulty,
+    importCommunityPostId,
+    uploadCommunityPostContent,
+    uploadCommunityPostTags,
+    importJsonSelectedPath,
+    importBestdoriV2SelectedPath,
     setImportJsonText,
-    setImportBestdoriV2Text,
+    setImportOfficialChartId,
+    setImportOfficialChartDifficulty,
+    setImportCommunityPostId,
+    setUploadCommunityPostContent,
+    setUploadCommunityPostTags,
     applyImportJsonText,
-    applyImportBestdoriV2Text,
+    applyImportOfficialChart,
+    applyImportCommunityChart,
+    applyUploadCommunityChart,
+    applyUploadTestServerChart,
     openImportJsonModal,
     closeImportJsonModal,
-    backToImportJsonModalChartLevel,
     openImportJsonModalBestdoriV2Level,
     isExportJsonModalOpen,
     closeExportJsonModal,
     saveExportJsonToSelectedPath,
     exportBestdoriV2ToClipboard,
     triggerJsonImport,
+    triggerBestdoriV2Import,
     handleJsonImport,
+    handleBestdoriV2Import,
     openMetadataEditor,
     openAppSettings,
     openSkinSettings,
@@ -2426,6 +2454,7 @@ function ChartEditorController() {
     settings,
     audioFileName,
     audioDurationSec,
+    audioObjectUrl,
     skinSelection,
     bpmEvents,
     svEvents,
@@ -2465,6 +2494,7 @@ function ChartEditorController() {
     setAudioDurationSec,
     setAudioFileName,
     jsonImportRef,
+    bestdoriV2ImportRef,
     sanitizeFileName,
     setIsMetadataEditorOpen,
     setIsAppSettingsOpen,
@@ -2517,6 +2547,9 @@ function ChartEditorController() {
     audioFileName,
     audioDurationSec,
     audioObjectUrl,
+    uploadCommunityPostContent,
+    uploadCommunityPostTags,
+    skinSelection,
     windowPresetId,
     playbackWindowPresetId,
     playbackFps,
@@ -2526,6 +2559,7 @@ function ChartEditorController() {
     normalizeMetadata,
     normalizeSettings,
     normalizeEditorOptionSettings,
+    normalizeSkinSelection,
     normalizeNote,
     normalizeBpmEvent,
     normalizeSvEvent,
@@ -2549,12 +2583,15 @@ function ChartEditorController() {
     setAudioFileName,
     setAudioDurationSec,
     setAudioObjectUrl,
+    setUploadCommunityPostContent,
+    setUploadCommunityPostTags,
     setWindowPresetId,
     setPlaybackWindowPresetId,
     setPlaybackFps,
     setPlaybackMvMode,
     setPlaybackMvAlphaPercent,
     applyWindowPresetById,
+    applyBestdoriSkinSelection,
     clearAllSelections,
     setStatusMessage,
   });
@@ -4574,6 +4611,18 @@ function ChartEditorController() {
           setStatusMessage(`播放器音频资源转换失败：${message}`);
         }
       }
+      let playbackMvDataUrl: string | null = metadata.mvDataUrl;
+      if (
+        typeof playbackMvDataUrl === "string"
+        && playbackMvDataUrl.startsWith("data:video/")
+      ) {
+        try {
+          playbackMvDataUrl = await dataUrlToBlobUrl(playbackMvDataUrl);
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          setStatusMessage(`播放器MV资源转换失败：${message}`);
+        }
+      }
       const runtimeSe = getRuntimeSeAssets();
       const runtimeFieldSkin = getRuntimeFieldSkinAssets();
       const runtimeBgSkin = getRuntimeBgSkinAssets();
@@ -4588,7 +4637,11 @@ function ChartEditorController() {
         offsetMs: playbackOffsetMs,
         mvOffsetMs: playbackMvOffsetMs,
         bgmDataUrl: bgmDataUrl ?? null,
+        mvDataUrl: playbackMvDataUrl,
       };
+      const simulatorMetadataWithFallback = simulatorMetadata as ChartMetadata & { mvDataUrlFallback?: string | null };
+      simulatorMetadataWithFallback.mvDataUrlFallback =
+        playbackMvDataUrl !== metadata.mvDataUrl ? metadata.mvDataUrl : null;
       const normalizedPlaybackNotes = notes.map((note) => ({
         ...note,
         timingGroup: normalizeTimingGroup(note.timingGroup, 0),
@@ -4613,7 +4666,7 @@ function ChartEditorController() {
       const launchPayload: SimulatorLaunchPayload = {
         requestId,
         autoStart: true,
-        metadata: simulatorMetadata,
+        metadata: simulatorMetadataWithFallback,
         settings: {
           windowWidth: playbackWidth,
           windowHeight: playbackHeight,
@@ -4757,8 +4810,11 @@ function ChartEditorController() {
     <ChartEditorLayout
       vm={{
         jsonImportRef,
+        bestdoriV2ImportRef,
         handleJsonImport,
+        handleBestdoriV2Import,
         triggerJsonImport,
+        triggerBestdoriV2Import,
         openImportJsonModal,
         downloadJson,
         openStaticRenderWindow,
@@ -4767,13 +4823,25 @@ function ChartEditorController() {
         isImportJsonModalOpen,
         importJsonModalLevel,
         importJsonText,
-        importBestdoriV2Text,
+        importOfficialChartId,
+        importOfficialChartDifficulty,
+        importCommunityPostId,
+        uploadCommunityPostContent,
+        uploadCommunityPostTags,
+        importJsonSelectedPath,
+        importBestdoriV2SelectedPath,
         setImportJsonText,
-        setImportBestdoriV2Text,
+        setImportOfficialChartId,
+        setImportOfficialChartDifficulty,
+        setImportCommunityPostId,
+        setUploadCommunityPostContent,
+        setUploadCommunityPostTags,
         applyImportJsonText,
-        applyImportBestdoriV2Text,
+        applyImportOfficialChart,
+        applyImportCommunityChart,
+        applyUploadCommunityChart,
+        applyUploadTestServerChart,
         closeImportJsonModal,
-        backToImportJsonModalChartLevel,
         openImportJsonModalBestdoriV2Level,
         isExportJsonModalOpen,
         closeExportJsonModal,

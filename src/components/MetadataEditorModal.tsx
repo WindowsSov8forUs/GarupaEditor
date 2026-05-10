@@ -16,7 +16,9 @@ import {
   type ChartMetadata,
 } from "../chartCore";
 import optionsTitleIcon from "../assets/icons/options-title.svg";
+import { SettingPrimaryTitle } from "./SettingPrimaryTitle";
 import { StepperIcon } from "./StepperIcon";
+import { TopTabs } from "./TopTabs";
 import { useModalTransition } from "./useModalTransition";
 
 type MetadataEditorModalProps = {
@@ -30,8 +32,41 @@ type MetadataEditorModalProps = {
   onMvUpload: (event: ChangeEvent<HTMLInputElement>) => void;
 };
 
+type MetadataEditorTab = "info" | "files";
+
 function normalizeLevel(value: unknown, fallback: number): number {
   return Math.max(1, Math.round(toFinite(value, fallback)));
+}
+
+function normalizeSource(value: string | null | undefined): string {
+  if (typeof value !== "string") {
+    return "";
+  }
+  return value.trim();
+}
+
+function formatSourceLabel(source: string): string {
+  const normalized = normalizeSource(source);
+  if (!normalized) {
+    return "";
+  }
+  if (normalized.startsWith("data:")) {
+    const commaIndex = normalized.indexOf(",");
+    const header = commaIndex >= 0 ? normalized.slice(0, commaIndex) : normalized;
+    return `${header},...`;
+  }
+  return normalized;
+}
+
+function isLikelyImageSource(source: string): boolean {
+  const trimmed = source.trim().toLowerCase();
+  if (trimmed.length <= 0) {
+    return false;
+  }
+  if (trimmed.startsWith("data:image/")) {
+    return true;
+  }
+  return /\.(png|jpe?g|gif|bmp|webp|svg)(?:[?#].*)?$/i.test(trimmed);
 }
 
 export function MetadataEditorModal({
@@ -45,10 +80,8 @@ export function MetadataEditorModal({
   onMvUpload,
 }: MetadataEditorModalProps) {
   const { mounted, phase } = useModalTransition(open);
+  const [tab, setTab] = useState<MetadataEditorTab>("info");
   const [levelInput, setLevelInput] = useState(metadata.difficultyLevel);
-  const [coverFileLabel, setCoverFileLabel] = useState("");
-  const [audioFileLabel, setAudioFileLabel] = useState("");
-  const [mvFileLabel, setMvFileLabel] = useState("");
   const coverInputRef = useRef<HTMLInputElement | null>(null);
   const audioInputRef = useRef<HTMLInputElement | null>(null);
   const mvInputRef = useRef<HTMLInputElement | null>(null);
@@ -56,6 +89,12 @@ export function MetadataEditorModal({
   useEffect(() => {
     setLevelInput(metadata.difficultyLevel);
   }, [metadata.difficultyLevel, open]);
+
+  useEffect(() => {
+    if (open) {
+      setTab("info");
+    }
+  }, [open]);
 
   const difficultyIndex = useMemo(() => {
     const index = DIFFICULTY_OPTIONS.indexOf(metadata.difficulty);
@@ -79,20 +118,14 @@ export function MetadataEditorModal({
   };
 
   const handleCoverInputChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const fileName = event.currentTarget.files?.[0]?.name ?? "";
-    setCoverFileLabel(fileName);
     onCoverUpload(event);
   };
 
   const handleAudioInputChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const fileName = event.currentTarget.files?.[0]?.name ?? "";
-    setAudioFileLabel(fileName);
     onAudioUpload(event);
   };
 
   const handleMvInputChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const fileName = event.currentTarget.files?.[0]?.name ?? "";
-    setMvFileLabel(fileName);
     onMvUpload(event);
   };
 
@@ -101,11 +134,14 @@ export function MetadataEditorModal({
   }
 
   const transitionClassName = phase === "enter" ? "is-enter" : "is-exit";
+  const coverSource = normalizeSource(metadata.coverDataUrl);
+  const audioSource = normalizeSource(audioObjectUrl) || normalizeSource(metadata.bgmDataUrl);
+  const mvSource = normalizeSource(metadata.mvDataUrl);
 
   return (
     <div className={`modal-mask modal-transition-mask ${transitionClassName}`} onClick={onClose}>
       <section
-        className={`modal-card modal-transition-card ${transitionClassName}`}
+        className={`modal-card metadata-editor-modal modal-transition-card ${transitionClassName}`}
         onClick={(event) => event.stopPropagation()}
       >
         <header className="modal-header modal-titleline-header">
@@ -122,149 +158,219 @@ export function MetadataEditorModal({
         </header>
 
         <div className="modal-body">
-          <div className="metadata-editor-grid">
-            <div className="metadata-editor-row metadata-editor-row-three">
-              <div className="setting-block">
-                <span className="setting-title-strip">曲名</span>
-                <input
-                  className="value-input metadata-left-input"
-                  value={metadata.title}
-                  onChange={(event) => {
-                    const value = event.currentTarget.value;
-                    setMetadata((current) => ({ ...current, title: value }));
-                  }}
-                />
-              </div>
+          <TopTabs
+            className="metadata-editor-tabs"
+            ariaLabel="谱面信息分组"
+            tabs={[
+              { key: "info", label: "信息编辑" },
+              { key: "files", label: "文件上传" },
+            ]}
+            activeKey={tab}
+            onChange={(key) => setTab(key as MetadataEditorTab)}
+          />
 
-              <div className="setting-block">
-                <span className="setting-title-strip">艺术家</span>
-                <input
-                  className="value-input metadata-left-input"
-                  value={metadata.artist}
-                  onChange={(event) => {
-                    const value = event.currentTarget.value;
-                    setMetadata((current) => ({ ...current, artist: value }));
-                  }}
-                />
-              </div>
+          {tab === "info" && (
+            <div className="metadata-editor-page-shell">
+              <div className="metadata-editor-grid">
+                <div className="metadata-editor-row metadata-editor-row-three">
+                  <div className="setting-block">
+                    <span className="setting-title-strip">曲名</span>
+                    <input
+                      className="value-input metadata-left-input"
+                      value={metadata.title}
+                      onChange={(event) => {
+                        const value = event.currentTarget.value;
+                        setMetadata((current) => ({ ...current, title: value }));
+                      }}
+                    />
+                  </div>
 
-              <div className="setting-block">
-                <span className="setting-title-strip">谱师</span>
-                <input
-                  className="value-input metadata-left-input"
-                  value={metadata.charter}
-                  onChange={(event) => {
-                    const value = event.currentTarget.value;
-                    setMetadata((current) => ({ ...current, charter: value }));
-                  }}
-                />
-              </div>
-            </div>
+                  <div className="setting-block">
+                    <span className="setting-title-strip">艺术家</span>
+                    <input
+                      className="value-input metadata-left-input"
+                      value={metadata.artist}
+                      onChange={(event) => {
+                        const value = event.currentTarget.value;
+                        setMetadata((current) => ({ ...current, artist: value }));
+                      }}
+                    />
+                  </div>
 
-            <div className="metadata-editor-row metadata-editor-row-two">
-              <div className="setting-block">
-                <span className="setting-title-strip">难度</span>
-                <div className="inline-stepper">
-                  <button
-                    type="button"
-                    className="stepper-btn"
-                    disabled={difficultyIndex <= 0}
-                    onClick={() => {
-                      const nextDifficulty = DIFFICULTY_OPTIONS[Math.max(0, difficultyIndex - 1)];
-                      if (!nextDifficulty) {
-                        return;
-                      }
-                      setMetadata((current) => ({ ...current, difficulty: nextDifficulty }));
-                    }}
-                  >
-                    <StepperIcon type="minus" />
-                  </button>
-                  <input
-                    type="text"
-                    className="stepper-input"
-                    value={metadata.difficulty}
-                    readOnly
-                    tabIndex={-1}
-                  />
-                  <button
-                    type="button"
-                    className="stepper-btn"
-                    disabled={difficultyIndex >= DIFFICULTY_OPTIONS.length - 1}
-                    onClick={() => {
-                      const nextDifficulty = DIFFICULTY_OPTIONS[Math.min(DIFFICULTY_OPTIONS.length - 1, difficultyIndex + 1)];
-                      if (!nextDifficulty) {
-                        return;
-                      }
-                      setMetadata((current) => ({ ...current, difficulty: nextDifficulty }));
-                    }}
-                  >
-                    <StepperIcon type="plus" />
-                  </button>
+                  <div className="setting-block">
+                    <span className="setting-title-strip">谱师</span>
+                    <input
+                      className="value-input metadata-left-input"
+                      value={metadata.charter}
+                      onChange={(event) => {
+                        const value = event.currentTarget.value;
+                        setMetadata((current) => ({ ...current, charter: value }));
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div className="metadata-editor-row metadata-editor-row-two">
+                  <div className="setting-block">
+                    <span className="setting-title-strip">难度</span>
+                    <div className="inline-stepper">
+                      <button
+                        type="button"
+                        className="stepper-btn"
+                        disabled={difficultyIndex <= 0}
+                        onClick={() => {
+                          const nextDifficulty = DIFFICULTY_OPTIONS[Math.max(0, difficultyIndex - 1)];
+                          if (!nextDifficulty) {
+                            return;
+                          }
+                          setMetadata((current) => ({ ...current, difficulty: nextDifficulty }));
+                        }}
+                      >
+                        <StepperIcon type="minus" />
+                      </button>
+                      <input
+                        type="text"
+                        className="stepper-input"
+                        value={metadata.difficulty}
+                        readOnly
+                        tabIndex={-1}
+                      />
+                      <button
+                        type="button"
+                        className="stepper-btn"
+                        disabled={difficultyIndex >= DIFFICULTY_OPTIONS.length - 1}
+                        onClick={() => {
+                          const nextDifficulty = DIFFICULTY_OPTIONS[Math.min(DIFFICULTY_OPTIONS.length - 1, difficultyIndex + 1)];
+                          if (!nextDifficulty) {
+                            return;
+                          }
+                          setMetadata((current) => ({ ...current, difficulty: nextDifficulty }));
+                        }}
+                      >
+                        <StepperIcon type="plus" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="setting-block">
+                    <span className="setting-title-strip">等级</span>
+                    <div className="inline-stepper">
+                      <button
+                        type="button"
+                        className="stepper-btn"
+                        onClick={() => {
+                          const currentLevel = normalizeLevel(levelInput, normalizeLevel(metadata.difficultyLevel, 1));
+                          const nextLevel = Math.max(1, currentLevel - 1);
+                          const next = String(nextLevel);
+                          setLevelInput(next);
+                          setMetadata((current) => ({ ...current, difficultyLevel: next }));
+                        }}
+                      >
+                        <StepperIcon type="minus" />
+                      </button>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        className="stepper-input"
+                        value={levelInput}
+                        onChange={(event) => {
+                          setLevelInput(event.currentTarget.value);
+                        }}
+                        onBlur={() => {
+                          commitLevelInput();
+                        }}
+                        onKeyDown={handleLevelInputKeyDown}
+                      />
+                      <button
+                        type="button"
+                        className="stepper-btn"
+                        onClick={() => {
+                          const currentLevel = normalizeLevel(levelInput, normalizeLevel(metadata.difficultyLevel, 1));
+                          const nextLevel = currentLevel + 1;
+                          const next = String(nextLevel);
+                          setLevelInput(next);
+                          setMetadata((current) => ({ ...current, difficultyLevel: next }));
+                        }}
+                      >
+                        <StepperIcon type="plus" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="metadata-editor-row metadata-editor-row-two">
+                  <div className="setting-block">
+                    <span className="setting-title-strip">谱面Offset (ms)</span>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      className="value-input"
+                      value={metadata.offsetMs}
+                      onChange={(event) => {
+                        const value = event.currentTarget.value;
+                        setMetadata((current) => ({
+                          ...current,
+                          offsetMs: Math.round(clamp(toFinite(value, current.offsetMs), -5000, 5000)),
+                        }));
+                      }}
+                    />
+                  </div>
+
+                  <div className="setting-block">
+                    <span className="setting-title-strip">MV Offset (ms)</span>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      className="value-input"
+                      value={metadata.mvOffsetMs}
+                      onChange={(event) => {
+                        const value = event.currentTarget.value;
+                        setMetadata((current) => ({
+                          ...current,
+                          mvOffsetMs: Math.round(clamp(toFinite(value, current.mvOffsetMs), -5000, 5000)),
+                        }));
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
-
-              <div className="setting-block">
-                <span className="setting-title-strip">等级</span>
-                <div className="inline-stepper">
-                  <button
-                    type="button"
-                    className="stepper-btn"
-                    onClick={() => {
-                      const currentLevel = normalizeLevel(levelInput, normalizeLevel(metadata.difficultyLevel, 1));
-                      const nextLevel = Math.max(1, currentLevel - 1);
-                      const next = String(nextLevel);
-                      setLevelInput(next);
-                      setMetadata((current) => ({ ...current, difficultyLevel: next }));
-                    }}
-                  >
-                    <StepperIcon type="minus" />
-                  </button>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    className="stepper-input"
-                    value={levelInput}
-                    onChange={(event) => {
-                      setLevelInput(event.currentTarget.value);
-                    }}
-                    onBlur={() => {
-                      commitLevelInput();
-                    }}
-                    onKeyDown={handleLevelInputKeyDown}
-                  />
-                  <button
-                    type="button"
-                    className="stepper-btn"
-                    onClick={() => {
-                      const currentLevel = normalizeLevel(levelInput, normalizeLevel(metadata.difficultyLevel, 1));
-                      const nextLevel = currentLevel + 1;
-                      const next = String(nextLevel);
-                      setLevelInput(next);
-                      setMetadata((current) => ({ ...current, difficultyLevel: next }));
-                    }}
-                  >
-                    <StepperIcon type="plus" />
-                  </button>
-                </div>
-              </div>
             </div>
+          )}
 
-            <div className="metadata-editor-row metadata-editor-row-three">
-              <div className="setting-block">
-                <span className="setting-title-strip">封面</span>
-                <div className="metadata-file-row">
+          {tab === "files" && (
+            <div className="metadata-editor-page-shell">
+              <section className="metadata-upload-group">
+                <SettingPrimaryTitle text="封面" />
+                <div className="metadata-upload-block">
+                  <div className="metadata-upload-preview">
+                    {coverSource.length > 0
+                      ? <img src={coverSource} alt="封面预览" className="metadata-upload-preview-media metadata-upload-preview-image" />
+                      : null}
+                  </div>
+                  <div className="metadata-upload-source-line">
+                    {coverSource.length > 0
+                      ? (
+                        <a
+                          href={coverSource}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="metadata-upload-source-link"
+                          title={coverSource}
+                        >
+                          {formatSourceLabel(coverSource)}
+                        </a>
+                      )
+                      : <span className="metadata-upload-source-empty">文件未上传</span>}
+                  </div>
                   <button
                     type="button"
-                    className="metadata-file-trigger"
+                    className="metadata-file-trigger metadata-upload-action-button"
                     onClick={() => {
                       coverInputRef.current?.click();
                     }}
                   >
-                    <span className="btn-content">选择文件</span>
+                    <span className="btn-content">上传文件</span>
                   </button>
-                  <div className="metadata-file-name" title={coverFileLabel || "未选择文件"}>
-                    {coverFileLabel || "未选择文件"}
-                  </div>
                   <input
                     ref={coverInputRef}
                     type="file"
@@ -273,23 +379,47 @@ export function MetadataEditorModal({
                     onChange={handleCoverInputChange}
                   />
                 </div>
-              </div>
+              </section>
 
-              <div className="setting-block">
-                <span className="setting-title-strip">音频</span>
-                <div className="metadata-file-row">
+              <section className="metadata-upload-group">
+                <SettingPrimaryTitle text="音频" />
+                <div className="metadata-upload-block">
+                  <div className="metadata-upload-preview">
+                    {audioSource.length > 0
+                      ? (
+                        <audio
+                          controls
+                          preload="metadata"
+                          src={audioSource}
+                          className="metadata-upload-preview-media metadata-upload-preview-audio"
+                        />
+                      )
+                      : null}
+                  </div>
+                  <div className="metadata-upload-source-line">
+                    {audioSource.length > 0
+                      ? (
+                        <a
+                          href={audioSource}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="metadata-upload-source-link"
+                          title={audioSource}
+                        >
+                          {formatSourceLabel(audioSource)}
+                        </a>
+                      )
+                      : <span className="metadata-upload-source-empty">文件未上传</span>}
+                  </div>
                   <button
                     type="button"
-                    className="metadata-file-trigger"
+                    className="metadata-file-trigger metadata-upload-action-button"
                     onClick={() => {
                       audioInputRef.current?.click();
                     }}
                   >
-                    <span className="btn-content">选择文件</span>
+                    <span className="btn-content">上传文件</span>
                   </button>
-                  <div className="metadata-file-name" title={audioFileLabel || "未选择文件"}>
-                    {audioFileLabel || "未选择文件"}
-                  </div>
                   <input
                     ref={audioInputRef}
                     type="file"
@@ -298,23 +428,51 @@ export function MetadataEditorModal({
                     onChange={handleAudioInputChange}
                   />
                 </div>
-              </div>
+              </section>
 
-              <div className="setting-block">
-                <span className="setting-title-strip">MV</span>
-                <div className="metadata-file-row">
+              <section className="metadata-upload-group">
+                <SettingPrimaryTitle text="MV" />
+                <div className="metadata-upload-block">
+                  <div className="metadata-upload-preview">
+                    {mvSource.length > 0
+                      ? (
+                        isLikelyImageSource(mvSource)
+                          ? <img src={mvSource} alt="MV预览" className="metadata-upload-preview-media metadata-upload-preview-image" />
+                          : (
+                            <video
+                              controls
+                              preload="metadata"
+                              src={mvSource}
+                              className="metadata-upload-preview-media metadata-upload-preview-video"
+                            />
+                          )
+                      )
+                      : null}
+                  </div>
+                  <div className="metadata-upload-source-line">
+                    {mvSource.length > 0
+                      ? (
+                        <a
+                          href={mvSource}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="metadata-upload-source-link"
+                          title={mvSource}
+                        >
+                          {formatSourceLabel(mvSource)}
+                        </a>
+                      )
+                      : <span className="metadata-upload-source-empty">文件未上传</span>}
+                  </div>
                   <button
                     type="button"
-                    className="metadata-file-trigger"
+                    className="metadata-file-trigger metadata-upload-action-button"
                     onClick={() => {
                       mvInputRef.current?.click();
                     }}
                   >
-                    <span className="btn-content">选择文件</span>
+                    <span className="btn-content">上传文件</span>
                   </button>
-                  <div className="metadata-file-name" title={mvFileLabel || "未选择文件"}>
-                    {mvFileLabel || "未选择文件"}
-                  </div>
                   <input
                     ref={mvInputRef}
                     type="file"
@@ -323,51 +481,15 @@ export function MetadataEditorModal({
                     onChange={handleMvInputChange}
                   />
                 </div>
-              </div>
+              </section>
             </div>
-
-            <div className="metadata-editor-row metadata-editor-row-two">
-              <div className="setting-block">
-                <span className="setting-title-strip">谱面Offset (ms)</span>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  className="value-input"
-                  value={metadata.offsetMs}
-                  onChange={(event) => {
-                    const value = event.currentTarget.value;
-                    setMetadata((current) => ({
-                      ...current,
-                      offsetMs: Math.round(clamp(toFinite(value, current.offsetMs), -5000, 5000)),
-                    }));
-                  }}
-                />
-              </div>
-
-              <div className="setting-block">
-                <span className="setting-title-strip">MV Offset (ms)</span>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  className="value-input"
-                  value={metadata.mvOffsetMs}
-                  onChange={(event) => {
-                    const value = event.currentTarget.value;
-                    setMetadata((current) => ({
-                      ...current,
-                      mvOffsetMs: Math.round(clamp(toFinite(value, current.mvOffsetMs), -5000, 5000)),
-                    }));
-                  }}
-                />
-              </div>
-            </div>
-          </div>
-
-          {audioObjectUrl && (
-            <audio controls src={audioObjectUrl} className="audio-preview">
-              <track kind="captions" />
-            </audio>
           )}
+
+          <div className="modal-actions is-centered metadata-editor-actions">
+            <button type="button" className="app-settings-back-button" onClick={onClose}>
+              <span className="btn-content">返回</span>
+            </button>
+          </div>
         </div>
       </section>
     </div>

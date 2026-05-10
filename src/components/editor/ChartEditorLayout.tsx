@@ -1,4 +1,5 @@
 ﻿import { AppSettingsModal } from "../AppSettingsModal";
+import { BestdoriLoginModal } from "../BestdoriLoginModal";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type MouseEvent as ReactMouseEvent } from "react";
 import { CommandBar } from "../CommandBar";
 import { ExportJsonModal } from "../ExportJsonModal";
@@ -7,6 +8,7 @@ import { MetadataEditorModal } from "../MetadataEditorModal";
 import { DownloadProgressModal } from "../DownloadProgressModal";
 import { OverlayDialogModal } from "../OverlayDialogModal";
 import { SkinSettingsModal } from "../SkinSettingsModal";
+import { bestdoriGetMe, bestdoriLogin } from "../../services/bestdori/api";
 import { SidebarPanel } from "./SidebarPanel";
 import { TimelineStrip } from "./TimelineStrip";
 
@@ -28,8 +30,11 @@ function isHalfBeatAligned(value: number): boolean {
 export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
   const {
     jsonImportRef,
+    bestdoriV2ImportRef,
     handleJsonImport,
+    handleBestdoriV2Import,
     triggerJsonImport,
+    triggerBestdoriV2Import,
     openImportJsonModal,
     downloadJson,
     openStaticRenderWindow,
@@ -38,14 +43,25 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     isImportJsonModalOpen,
     importJsonModalLevel,
     importJsonText,
-    importBestdoriV2Text,
+    importOfficialChartId,
+    importOfficialChartDifficulty,
+    importCommunityPostId,
+    uploadCommunityPostContent,
+    uploadCommunityPostTags,
+    importJsonSelectedPath,
+    importBestdoriV2SelectedPath,
     setImportJsonText,
-    setImportBestdoriV2Text,
+    setImportOfficialChartId,
+    setImportOfficialChartDifficulty,
+    setImportCommunityPostId,
+    setUploadCommunityPostContent,
+    setUploadCommunityPostTags,
     applyImportJsonText,
-    applyImportBestdoriV2Text,
+    applyImportOfficialChart,
+    applyImportCommunityChart,
+    applyUploadCommunityChart,
+    applyUploadTestServerChart,
     closeImportJsonModal,
-    backToImportJsonModalChartLevel,
-    openImportJsonModalBestdoriV2Level,
     isExportJsonModalOpen,
     closeExportJsonModal,
     saveExportJsonToSelectedPath,
@@ -55,6 +71,8 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     cancelOverlayDialog,
     openAppSettings,
     openSkinSettings,
+    bestdoriNickname,
+    bestdoriUsername,
     workspaceRef,
     sidebarWidth,
     metadata,
@@ -283,6 +301,96 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     noteVisualScale,
     copiedChartPayload,
   } = vm;
+  const [isBestdoriLoginOpen, setIsBestdoriLoginOpen] = useState(false);
+  const [bestdoriLoginUsernameInput, setBestdoriLoginUsernameInput] = useState("");
+  const [bestdoriLoginPasswordInput, setBestdoriLoginPasswordInput] = useState("");
+  const [bestdoriLoginSubmitting, setBestdoriLoginSubmitting] = useState(false);
+  const [bestdoriLoginErrorMessage, setBestdoriLoginErrorMessage] = useState("");
+  const [bestdoriNicknameDisplay, setBestdoriNicknameDisplay] = useState(
+    typeof bestdoriNickname === "string" ? bestdoriNickname.trim() : "",
+  );
+  const [bestdoriUsernameDisplay, setBestdoriUsernameDisplay] = useState(
+    typeof bestdoriUsername === "string" ? bestdoriUsername.trim() : "",
+  );
+
+  useEffect(() => {
+    if (typeof bestdoriNickname === "string") {
+      setBestdoriNicknameDisplay(bestdoriNickname.trim());
+    }
+  }, [bestdoriNickname]);
+
+  useEffect(() => {
+    if (typeof bestdoriUsername === "string") {
+      setBestdoriUsernameDisplay(bestdoriUsername.trim());
+    }
+  }, [bestdoriUsername]);
+
+  useEffect(() => {
+    let disposed = false;
+    void (async () => {
+      try {
+        const response = await bestdoriGetMe();
+        if (!response.result || disposed) {
+          return;
+        }
+        const resolvedUsername = typeof response.username === "string" ? response.username.trim() : "";
+        const resolvedNickname = typeof response.nickname === "string" ? response.nickname.trim() : "";
+        setBestdoriUsernameDisplay(resolvedUsername);
+        setBestdoriNicknameDisplay(resolvedNickname);
+      } catch {
+        // Ignore "not logged in" and transient network errors; user can log in manually.
+      }
+    })();
+    return () => {
+      disposed = true;
+    };
+  }, []);
+
+  const openBestdoriLoginModal = useCallback(() => {
+    setBestdoriLoginErrorMessage("");
+    setBestdoriLoginPasswordInput("");
+    setBestdoriLoginUsernameInput((current) => current || bestdoriUsernameDisplay);
+    setIsBestdoriLoginOpen(true);
+  }, [bestdoriUsernameDisplay]);
+
+  const closeBestdoriLoginModal = useCallback(() => {
+    if (bestdoriLoginSubmitting) {
+      return;
+    }
+    setIsBestdoriLoginOpen(false);
+    setBestdoriLoginPasswordInput("");
+  }, [bestdoriLoginSubmitting]);
+
+  const submitBestdoriLogin = useCallback(async () => {
+    if (bestdoriLoginSubmitting) {
+      return;
+    }
+    const username = bestdoriLoginUsernameInput.trim();
+    const password = bestdoriLoginPasswordInput.trim();
+    if (!username || !password) {
+      setBestdoriLoginErrorMessage("请输入用户名和密码。");
+      return;
+    }
+    setBestdoriLoginSubmitting(true);
+    setBestdoriLoginErrorMessage("");
+    try {
+      const response = await bestdoriLogin(username, password);
+      const resolvedUsername = typeof response.username === "string" ? response.username.trim() : username;
+      const resolvedNickname = typeof response.nickname === "string" ? response.nickname.trim() : "";
+      setBestdoriUsernameDisplay(resolvedUsername);
+      setBestdoriNicknameDisplay(resolvedNickname);
+      setIsBestdoriLoginOpen(false);
+      setBestdoriLoginPasswordInput("");
+      setStatusMessage("Bestdori 登录成功。");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      setBestdoriLoginErrorMessage(message);
+      setStatusMessage(`Bestdori 登录失败：${message}`);
+    } finally {
+      setBestdoriLoginSubmitting(false);
+    }
+  }, [bestdoriLoginPasswordInput, bestdoriLoginSubmitting, bestdoriLoginUsernameInput, setStatusMessage]);
+
   const isColorAssistEnabled = appOptionSettings?.colorAssistEnabled === true;
   const isCanvasRenderBackend = renderBackendMode === "canvas";
   const canvasBpmCursorPreviewRef = useRef<HTMLDivElement | null>(null);
@@ -967,6 +1075,15 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
           void handleJsonImport(event);
         }}
       />
+      <input
+        ref={bestdoriV2ImportRef}
+        type="file"
+        accept=".json,application/json"
+        className="hidden-input"
+        onChange={(event) => {
+          void handleBestdoriV2Import(event);
+        }}
+      />
 
       <CommandBar
         onImportJson={openImportJsonModal}
@@ -975,6 +1092,9 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         onOpenSimulator={openSimulatorWindow}
         onOpenSkinSettings={openSkinSettings}
         onOpenAppSettings={openAppSettings}
+        userNickname={bestdoriNicknameDisplay}
+        userUsername={bestdoriUsernameDisplay}
+        onUserBarClick={openBestdoriLoginModal}
       />
 
       <section
@@ -1660,6 +1780,18 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         onMvUpload={handleMvUpload}
       />
 
+      <BestdoriLoginModal
+        open={isBestdoriLoginOpen}
+        username={bestdoriLoginUsernameInput}
+        password={bestdoriLoginPasswordInput}
+        submitting={bestdoriLoginSubmitting}
+        errorMessage={bestdoriLoginErrorMessage}
+        onUsernameChange={setBestdoriLoginUsernameInput}
+        onPasswordChange={setBestdoriLoginPasswordInput}
+        onSubmit={() => void submitBestdoriLogin()}
+        onClose={closeBestdoriLoginModal}
+      />
+
       <AppSettingsModal
         open={isAppSettingsOpen}
         onClose={() => setIsAppSettingsOpen(false)}
@@ -1765,23 +1897,35 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
       <ExportJsonModal
         open={isExportJsonModalOpen}
         jsonText={exportJson}
+        uploadCommunityPostContent={uploadCommunityPostContent}
+        uploadCommunityPostTags={uploadCommunityPostTags}
         onClose={closeExportJsonModal}
         onSaveAs={() => void saveExportJsonToSelectedPath()}
         onExportBestdoriV2={() => void exportBestdoriV2ToClipboard()}
+        onUploadCommunityPostContentChange={setUploadCommunityPostContent}
+        onUploadCommunityPostTagsChange={setUploadCommunityPostTags}
+        onApplyUploadCommunityChart={() => void applyUploadCommunityChart()}
+        onApplyUploadTestServerChart={() => void applyUploadTestServerChart()}
       />
 
       <ImportJsonModal
         open={isImportJsonModalOpen}
         level={importJsonModalLevel}
         chartJsonText={importJsonText}
-        bestdoriJsonText={importBestdoriV2Text}
+        officialChartId={importOfficialChartId}
+        officialChartDifficulty={importOfficialChartDifficulty}
+        communityPostId={importCommunityPostId}
+        importJsonSelectedPath={importJsonSelectedPath}
+        importBestdoriV2SelectedPath={importBestdoriV2SelectedPath}
         onChartJsonTextChange={setImportJsonText}
-        onBestdoriJsonTextChange={setImportBestdoriV2Text}
+        onOfficialChartIdChange={setImportOfficialChartId}
+        onOfficialChartDifficultyChange={setImportOfficialChartDifficulty}
+        onCommunityPostIdChange={setImportCommunityPostId}
         onApplyChartJson={applyImportJsonText}
-        onApplyBestdoriV2={applyImportBestdoriV2Text}
+        onApplyOfficialChart={() => void applyImportOfficialChart()}
+        onApplyCommunityChart={() => void applyImportCommunityChart()}
         onImportJsonFile={triggerJsonImport}
-        onOpenBestdoriV2={openImportJsonModalBestdoriV2Level}
-        onBackToChart={backToImportJsonModalChartLevel}
+        onImportBestdoriV2File={triggerBestdoriV2Import}
         onClose={closeImportJsonModal}
       />
 
