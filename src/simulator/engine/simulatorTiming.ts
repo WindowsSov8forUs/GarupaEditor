@@ -87,6 +87,9 @@ export function buildSettingsFromPayload(payloadSettings: SimulatorDisplayPayloa
   if (source.mvMode !== undefined) {
     settings.mvmode = source.mvMode;
   }
+  if (source.habahiro !== undefined) {
+    settings.habahiro = source.habahiro;
+  }
 
   if (source.mvAlphaPercent !== undefined && Number.isFinite(Number(source.mvAlphaPercent))) {
     settings.mvAlpha = Math.max(30, Math.min(100, Number(source.mvAlphaPercent))) / 100;

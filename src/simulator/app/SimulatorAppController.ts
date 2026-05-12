@@ -1021,6 +1021,7 @@ export class SimulatorAppController {
         liveBgAnchorTopCenter: true,
         playfieldAlpha: 0,
         uiAlpha: 0,
+        chartObjectsVisible: false,
       };
     }
 
@@ -1080,6 +1081,7 @@ export class SimulatorAppController {
       liveBgAnchorTopCenter: true,
       playfieldAlpha: this.clamp01(playfieldAlpha),
       uiAlpha: this.clamp01(uiAlpha),
+      chartObjectsVisible: this.startupPhase === "running" && this.runtimeStarted,
     };
   }
 

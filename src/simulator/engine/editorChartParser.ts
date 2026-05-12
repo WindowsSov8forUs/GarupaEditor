@@ -74,12 +74,23 @@ function normalizeDirectionalWidth(value: unknown): number {
   return Math.max(1, Math.round(toFinite(value, 1)));
 }
 
-function buildTopLevelSemantic(note: SimulatorChartNote): RuntimeNoteSemantic | null {
+function normalizeRhythmWidth(value: unknown, settings: SimulatorSettings): number {
+  if (!settings.habahiro) {
+    return 1;
+  }
+  return Math.max(1, Math.min(7, Math.round(toFinite(value, 1))));
+}
+
+function buildTopLevelSemantic(
+  note: SimulatorChartNote,
+  settings: SimulatorSettings,
+): RuntimeNoteSemantic | null {
   if (note.type === "single" || note.type === "flick" || note.type === "skill") {
     return {
       baseType: note.type,
       slideRole: "none",
       directionalWidth: 1,
+      rhythmWidth: normalizeRhythmWidth(note.width, settings),
     };
   }
   if (note.type === "directional_flick_left" || note.type === "directional_flick_right") {
@@ -87,6 +98,7 @@ function buildTopLevelSemantic(note: SimulatorChartNote): RuntimeNoteSemantic | 
       baseType: note.type,
       slideRole: "none",
       directionalWidth: normalizeDirectionalWidth(note.width),
+      rhythmWidth: 1,
     };
   }
   return null;
@@ -119,6 +131,7 @@ function buildSlideSemantic(
   note: SimulatorChartNote,
   index: number,
   length: number,
+  settings: SimulatorSettings,
 ): RuntimeNoteSemantic | null {
   const slideRole = resolveSlideRoleForChainNote(note, index, length);
   if (note.type === "single" || note.type === "flick" || note.type === "skill") {
@@ -126,6 +139,7 @@ function buildSlideSemantic(
       baseType: note.type,
       slideRole,
       directionalWidth: 1,
+      rhythmWidth: normalizeRhythmWidth(note.width, settings),
     };
   }
   if (note.type === "hidden") {
@@ -133,6 +147,7 @@ function buildSlideSemantic(
       baseType: "hidden",
       slideRole: "hidden",
       directionalWidth: 1,
+      rhythmWidth: normalizeRhythmWidth(note.width, settings),
     };
   }
   if (note.type === "directional_flick_left" || note.type === "directional_flick_right") {
@@ -140,6 +155,7 @@ function buildSlideSemantic(
       baseType: note.type,
       slideRole: "none",
       directionalWidth: normalizeDirectionalWidth(note.width),
+      rhythmWidth: 1,
     };
   }
   return null;
@@ -232,6 +248,7 @@ function buildSlideRoles(
 function buildNoteDescriptors(
   notes: SimulatorChartNote[],
   slideChains: SimulatorChartSlideChain[],
+  settings: SimulatorSettings,
 ): NoteDescriptor[] {
   const notesById = new Map<string, SimulatorChartNote>();
   for (const note of notes) {
@@ -252,7 +269,7 @@ function buildNoteDescriptors(
     if (slideRoles.has(note.id)) {
       continue;
     }
-    const semantic = buildTopLevelSemantic(note);
+    const semantic = buildTopLevelSemantic(note, settings);
     if (semantic === null) {
       continue;
     }
@@ -278,7 +295,7 @@ function buildNoteDescriptors(
       if (!note) {
         continue;
       }
-      const semantic = buildSlideSemantic(note, index, chainLength);
+      const semantic = buildSlideSemantic(note, index, chainLength, settings);
       if (semantic === null) {
         continue;
       }
@@ -402,6 +419,14 @@ function shouldExcludeFromSameLine(event: ChartEvent): boolean {
   return event.note.slideRole === "middle" || event.note.slideRole === "hidden";
 }
 
+function renderCenterLaneForEvent(event: ChartEvent): number {
+  const note = event.note;
+  if (!note || note.baseType === "directional_flick_left" || note.baseType === "directional_flick_right") {
+    return event.lane;
+  }
+  return event.lane + (Math.max(1, note.rhythmWidth) - 1) / 2;
+}
+
 function assignSamelineLanes(events: ChartEvent[], enabled: boolean): void {
   for (let index = 0; index < events.length; index += 1) {
     events[index].samelineLane = null;
@@ -428,7 +453,7 @@ function assignSamelineLanes(events: ChartEvent[], enabled: boolean): void {
     }
     event.samelineLane = null;
     samelineBeat = event.beat;
-    samelineLane = event.lane;
+    samelineLane = renderCenterLaneForEvent(event);
   }
 }
 
@@ -447,7 +472,7 @@ export function parseEditorChart(
   const svEvents = Array.isArray(chartData.svEvents) ? chartData.svEvents : [];
 
   const segments = buildBpmSegments(baseBpm, bpmEvents);
-  const noteDescriptors = buildNoteDescriptors(notes, slideChains);
+  const noteDescriptors = buildNoteDescriptors(notes, slideChains, settings);
   const groupedSv = buildSvRuntimeMap(svEvents, segments);
   const hasNonZeroTimingGroupNote = noteDescriptors.some((descriptor) => descriptor.timingGroup !== 0);
   const hasSv = svEvents.length > 0;

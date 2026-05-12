@@ -31,6 +31,7 @@ export interface ActiveParticleEmitter {
   seedBase: number;
   advanceScale: number;
   layoutScale: number;
+  laneWidth: number;
 }
 
 export interface ParticleEmitterDrawContext {
@@ -108,6 +109,10 @@ const LANE_NARROW_FADE_END_WIDTH_RATIO = 1 / 2;
 const LANE_NARROW_FADE_END_ALPHA_RATIO = 0;
 const LANE_EFFECT_BASE_ALPHA = 0.5;
 const DIRECTIONAL_LINEAR_HALF_HEIGHT_TO_NOTE_SIZE = 0.25;
+
+function emitterLaneWidth(emitter: ActiveParticleEmitter): number {
+  return Math.max(1, Number.isFinite(emitter.laneWidth) ? emitter.laneWidth : 1);
+}
 
 function resolveParticleCurveElapsed(emitter: ActiveParticleEmitter, unitElapsed: number): number {
   if (emitter.preset === "laneHold") {
@@ -261,8 +266,9 @@ function resolveLayoutBasis(
     || emitter.preset === "laneHold"
     || emitter.preset === "laneNarrowFade"
   ) {
-    const l = lane - 0.5;
-    const r = lane + 0.5;
+    const halfWidth = emitterLaneWidth(emitter) / 2;
+    const l = lane - halfWidth;
+    const r = lane + halfWidth;
     const t = LANE_EFFECT_TOP_PERCENT;
     const b = 1;
     return {
@@ -303,8 +309,9 @@ function resolveLayoutBasis(
   }
 
   if (emitter.preset === "slot") {
-    const w = 0.5 * slotEffectSize;
-    const h = 2 * w * wToH;
+    const baseHalfWidth = 0.5 * slotEffectSize;
+    const w = baseHalfWidth * emitterLaneWidth(emitter);
+    const h = 2 * baseHalfWidth * wToH;
     const l = lane - w;
     const r = lane + w;
     const t = 1 - h;

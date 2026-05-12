@@ -21,6 +21,7 @@ export interface SimulatorSettings {
   offsetMs: number;
   mvmode: boolean;
   mvAlpha: number;
+  habahiro: boolean;
 }
 
 export const DEFAULT_SETTINGS: SimulatorSettings = {
@@ -45,6 +46,7 @@ export const DEFAULT_SETTINGS: SimulatorSettings = {
   offsetMs: 276,
   mvmode: false,
   mvAlpha: 0.3,
+  habahiro: false,
 };
 
 interface TimingGroupChange {
@@ -74,6 +76,7 @@ export interface RuntimeNoteSemantic {
   baseType: RuntimeNoteBaseType;
   slideRole: RuntimeSlideRole;
   directionalWidth: number;
+  rhythmWidth: number;
 }
 
 export interface ChartEvent {

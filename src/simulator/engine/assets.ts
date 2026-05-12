@@ -41,6 +41,54 @@ type HabahiroRhythmAssets = {
   simultaneousLine: string;
 };
 
+type HabahiroNoteAssetKey =
+  | "0"
+  | "1"
+  | "2"
+  | "3"
+  | "4"
+  | "5"
+  | "6"
+  | "0_1"
+  | "1_2"
+  | "2_3"
+  | "3_4"
+  | "4_5"
+  | "5_6"
+  | "0_1_2"
+  | "1_2_3"
+  | "2_3_4"
+  | "3_4_5"
+  | "4_5_6"
+  | "0_1_2_3"
+  | "1_2_3_4"
+  | "2_3_4_5"
+  | "3_4_5_6"
+  | "0_1_2_3_4"
+  | "1_2_3_4_5"
+  | "2_3_4_5_6"
+  | "0_1_2_3_4_5"
+  | "1_2_3_4_5_6"
+  | "0_1_2_3_4_5_6";
+
+type HabahiroWidth = 1 | 2 | 3 | 4 | 5 | 6 | 7;
+type HabahiroFlickTopWidth = 1 | 2 | 3;
+type HabahiroTextureMap = Partial<Record<HabahiroNoteAssetKey, Texture | null>>;
+type HabahiroWidthTextureMap = Partial<Record<HabahiroWidth, Texture | null>>;
+type HabahiroFlickTopTextureMap = Partial<Record<HabahiroFlickTopWidth, Texture | null>>;
+
+interface HabahiroTextureBundle {
+  enabled: boolean;
+  noteNormal: HabahiroTextureMap;
+  noteNormal16: HabahiroTextureMap;
+  noteSkill: HabahiroTextureMap;
+  noteFlick: HabahiroTextureMap;
+  noteLong: HabahiroTextureMap;
+  noteLongFlash: HabahiroTextureMap;
+  noteSlideAmong: HabahiroWidthTextureMap;
+  noteFlickTop: HabahiroFlickTopTextureMap;
+}
+
 type DirectionalAssets = {
   noteFlickL: LaneAssetMap;
   noteFlickR: LaneAssetMap;
@@ -58,6 +106,7 @@ export interface NoteSkinTextureBundle {
     noteLongFlash: Array<Texture | null>;
     noteSlideAmong: Texture | null;
     noteFlickTop: Texture | null;
+    habahiro: HabahiroTextureBundle;
   };
   directional: {
     noteFlickL: Array<Texture | null>;
@@ -97,10 +146,46 @@ export interface NoteSkinTextureBundle {
 }
 
 const LANE_KEYS: LaneKey[] = ["0", "1", "2", "3", "4", "5", "6"];
+const HABAHIRO_WIDTH_VALUES: readonly HabahiroWidth[] = [1, 2, 3, 4, 5, 6, 7];
+const HABAHIRO_NOTE_ASSET_KEYS: readonly HabahiroNoteAssetKey[] = [
+  "0",
+  "1",
+  "2",
+  "3",
+  "4",
+  "5",
+  "6",
+  "0_1",
+  "1_2",
+  "2_3",
+  "3_4",
+  "4_5",
+  "5_6",
+  "0_1_2",
+  "1_2_3",
+  "2_3_4",
+  "3_4_5",
+  "4_5_6",
+  "0_1_2_3",
+  "1_2_3_4",
+  "2_3_4_5",
+  "3_4_5_6",
+  "0_1_2_3_4",
+  "1_2_3_4_5",
+  "2_3_4_5_6",
+  "0_1_2_3_4_5",
+  "1_2_3_4_5_6",
+  "0_1_2_3_4_5_6",
+];
 
 function laneIndex(lane: number): number {
   const rounded = Math.round(lane);
   return Math.max(1, Math.min(7, rounded));
+}
+
+function logicalLaneIndex(lane: number): number {
+  const rounded = Math.round(Number.isFinite(lane) ? lane : 0);
+  return Math.max(1, Math.min(7, rounded + 1));
 }
 
 function laneKeyForIndex(lane: number): LaneKey {
@@ -155,6 +240,73 @@ function readScalarAssetUrl(
   return firstNonEmptyValue(value);
 }
 
+function normalizeHabahiroWidth(value: number): HabahiroWidth {
+  const rounded = Math.round(Number.isFinite(value) ? value : 1);
+  return Math.max(1, Math.min(7, rounded)) as HabahiroWidth;
+}
+
+function habahiroFlickTopWidth(value: number): HabahiroFlickTopWidth {
+  const width = normalizeHabahiroWidth(value);
+  if (width <= 1) {
+    return 1;
+  }
+  if (width === 2) {
+    return 2;
+  }
+  return 3;
+}
+
+function habahiroAssetKeyForCenterLaneAndWidth(centerLaneValue: number, widthValue: number): HabahiroNoteAssetKey {
+  const width = normalizeHabahiroWidth(widthValue);
+  const rawCenter = Number.isFinite(centerLaneValue) ? centerLaneValue : (width - 1) / 2;
+  const minCenter = (width - 1) / 2;
+  const maxCenter = 6 - (width - 1) / 2;
+  const center = Math.max(minCenter, Math.min(maxCenter, rawCenter));
+  const start = Math.max(0, Math.min(7 - width, Math.round(center - (width - 1) / 2)));
+  return Array.from({ length: width }, (_, index) => `${start + index}`).join("_") as HabahiroNoteAssetKey;
+}
+
+function resolveHabahiroTexture(
+  map: HabahiroTextureMap,
+  centerLane: number,
+  width: number,
+): Texture | null {
+  return map[habahiroAssetKeyForCenterLaneAndWidth(centerLane, width)] ?? null;
+}
+
+async function loadHabahiroTextureMap(
+  assets: Record<string, string>,
+  loadCachedTexture: (url: string | null | undefined) => Promise<Texture | null>,
+): Promise<HabahiroTextureMap> {
+  const output: HabahiroTextureMap = {};
+  for (const key of HABAHIRO_NOTE_ASSET_KEYS) {
+    output[key] = await loadCachedTexture(assets[key] ?? null);
+  }
+  return output;
+}
+
+async function loadHabahiroWidthTextureMap(
+  assets: Record<string, string>,
+  loadCachedTexture: (url: string | null | undefined) => Promise<Texture | null>,
+): Promise<HabahiroWidthTextureMap> {
+  const output: HabahiroWidthTextureMap = {};
+  for (const width of HABAHIRO_WIDTH_VALUES) {
+    output[width] = await loadCachedTexture(assets[String(width)] ?? null);
+  }
+  return output;
+}
+
+async function loadHabahiroFlickTopTextureMap(
+  assets: Record<string, string>,
+  loadCachedTexture: (url: string | null | undefined) => Promise<Texture | null>,
+): Promise<HabahiroFlickTopTextureMap> {
+  return {
+    1: await loadCachedTexture(assets["1"] ?? null),
+    2: await loadCachedTexture(assets["2"] ?? null),
+    3: await loadCachedTexture(assets["3"] ?? null),
+  };
+}
+
 async function loadTextureFromUrl(url: string): Promise<Texture | null> {
   try {
     const image = await new Promise<HTMLImageElement>((resolve, reject) => {
@@ -207,6 +359,17 @@ export async function loadNoteSkinTextureBundle(
   const noteLongFlash: Array<Texture | null> = new Array(8).fill(null);
   const directionalLeft: Array<Texture | null> = new Array(8).fill(null);
   const directionalRight: Array<Texture | null> = new Array(8).fill(null);
+  const emptyHabahiroBundle: HabahiroTextureBundle = {
+    enabled: false,
+    noteNormal: {},
+    noteNormal16: {},
+    noteSkill: {},
+    noteFlick: {},
+    noteLong: {},
+    noteLongFlash: {},
+    noteSlideAmong: {},
+    noteFlickTop: {},
+  };
 
   for (let lane = 1; lane <= 7; lane += 1) {
     noteNormal[lane] = await loadCachedTexture(readLaneAssetUrl(rhythmAssets.noteNormal, lane));
@@ -229,6 +392,19 @@ export async function loadNoteSkinTextureBundle(
       ? readScalarAssetUrl(rhythmAssets.noteFlickTop, "1")
       : rhythmAssets.noteFlickTop,
   );
+  const habahiroBundle: HabahiroTextureBundle = isHabahiro
+    ? {
+        enabled: true,
+        noteNormal: await loadHabahiroTextureMap(rhythmAssets.noteNormal, loadCachedTexture),
+        noteNormal16: await loadHabahiroTextureMap(rhythmAssets.noteNormal16, loadCachedTexture),
+        noteSkill: await loadHabahiroTextureMap(rhythmAssets.noteSkill, loadCachedTexture),
+        noteFlick: await loadHabahiroTextureMap(rhythmAssets.noteFlick, loadCachedTexture),
+        noteLong: await loadHabahiroTextureMap(rhythmAssets.noteLong, loadCachedTexture),
+        noteLongFlash: await loadHabahiroTextureMap(rhythmAssets.noteLongFlash, loadCachedTexture),
+        noteSlideAmong: await loadHabahiroWidthTextureMap(rhythmAssets.noteSlideAmong, loadCachedTexture),
+        noteFlickTop: await loadHabahiroFlickTopTextureMap(rhythmAssets.noteFlickTop, loadCachedTexture),
+      }
+    : emptyHabahiroBundle;
   const noteFlickTopL = await loadCachedTexture(directionalAssets.noteFlickTopL);
   const noteFlickTopR = await loadCachedTexture(directionalAssets.noteFlickTopR);
   const longNoteLine = await loadCachedTexture(rhythmAssets.longNoteLine);
@@ -272,6 +448,7 @@ export async function loadNoteSkinTextureBundle(
       noteLongFlash,
       noteSlideAmong,
       noteFlickTop,
+      habahiro: habahiroBundle,
     },
     directional: {
       noteFlickL: directionalLeft,
@@ -324,34 +501,82 @@ export function resolveRhythmNoteTexture(
   note: RuntimeNoteSemantic,
   lane: number,
   gray: boolean,
+  centerLane = lane,
 ): Texture | null {
-  const laneIdx = laneIndex(lane);
+  const laneIdx = logicalLaneIndex(lane);
+  const rhythmWidth = Math.max(1, note.rhythmWidth);
+  const habahiro = bundle.rhythm.habahiro.enabled ? bundle.rhythm.habahiro : null;
   if (gray) {
+    if (habahiro) {
+      return resolveHabahiroTexture(habahiro.noteNormal16, centerLane, rhythmWidth)
+        ?? bundle.rhythm.noteNormal16[laneIdx]
+        ?? null;
+    }
     return bundle.rhythm.noteNormal16[laneIdx] ?? null;
   }
   if (note.baseType === "directional_flick_left" || note.baseType === "directional_flick_right") {
     return null;
   }
   if (note.baseType === "hidden") {
+    if (habahiro) {
+      return habahiro.noteSlideAmong[normalizeHabahiroWidth(rhythmWidth)]
+        ?? bundle.rhythm.noteSlideAmong
+        ?? null;
+    }
     return bundle.rhythm.noteSlideAmong ?? null;
   }
   if (note.baseType === "skill") {
+    if (habahiro) {
+      return resolveHabahiroTexture(habahiro.noteSkill, centerLane, rhythmWidth)
+        ?? bundle.rhythm.noteSkill[laneIdx]
+        ?? null;
+    }
     return bundle.rhythm.noteSkill[laneIdx] ?? null;
   }
   if (note.baseType === "flick") {
     if (note.slideRole === "none" || note.slideRole === "end") {
+      if (habahiro) {
+        return resolveHabahiroTexture(habahiro.noteFlick, centerLane, rhythmWidth)
+          ?? bundle.rhythm.noteFlick[laneIdx]
+          ?? null;
+      }
       return bundle.rhythm.noteFlick[laneIdx] ?? null;
     }
     if (note.slideRole === "start") {
+      if (habahiro) {
+        return resolveHabahiroTexture(habahiro.noteLong, centerLane, rhythmWidth)
+          ?? bundle.rhythm.noteLong[laneIdx]
+          ?? null;
+      }
       return bundle.rhythm.noteLong[laneIdx] ?? null;
+    }
+    if (habahiro) {
+      return habahiro.noteSlideAmong[normalizeHabahiroWidth(rhythmWidth)]
+        ?? bundle.rhythm.noteSlideAmong
+        ?? null;
     }
     return bundle.rhythm.noteSlideAmong ?? null;
   }
   if (note.slideRole === "none") {
+    if (habahiro) {
+      return resolveHabahiroTexture(habahiro.noteNormal, centerLane, rhythmWidth)
+        ?? bundle.rhythm.noteNormal[laneIdx]
+        ?? null;
+    }
     return bundle.rhythm.noteNormal[laneIdx] ?? null;
   }
   if (note.slideRole === "start" || note.slideRole === "end") {
+    if (habahiro) {
+      return resolveHabahiroTexture(habahiro.noteLong, centerLane, rhythmWidth)
+        ?? bundle.rhythm.noteLong[laneIdx]
+        ?? null;
+    }
     return bundle.rhythm.noteLong[laneIdx] ?? null;
+  }
+  if (habahiro) {
+    return habahiro.noteSlideAmong[normalizeHabahiroWidth(rhythmWidth)]
+      ?? bundle.rhythm.noteSlideAmong
+      ?? null;
   }
   return bundle.rhythm.noteSlideAmong ?? null;
 }
@@ -361,28 +586,66 @@ export function resolveSlideBottomMarkerTexture(
   lane: number,
   markerSourceBaseType: RuntimeNoteBaseType | null,
   markerSourceIsHead: boolean,
+  rhythmWidth = 1,
+  centerLane = lane,
 ): Texture | null {
-  const laneIdx = laneIndex(lane);
+  const laneIdx = logicalLaneIndex(lane);
+  const habahiro = bundle.rhythm.habahiro.enabled ? bundle.rhythm.habahiro : null;
   if (!markerSourceIsHead) {
+    if (habahiro) {
+      return habahiro.noteSlideAmong[normalizeHabahiroWidth(rhythmWidth)]
+        ?? bundle.rhythm.noteSlideAmong
+        ?? bundle.rhythm.noteLong[laneIdx]
+        ?? null;
+    }
     return bundle.rhythm.noteSlideAmong
       ?? bundle.rhythm.noteLong[laneIdx]
       ?? null;
   }
   switch (markerSourceBaseType) {
     case "single":
+      if (habahiro) {
+        return resolveHabahiroTexture(habahiro.noteLong, centerLane, rhythmWidth)
+          ?? bundle.rhythm.noteLong[laneIdx]
+          ?? null;
+      }
       return bundle.rhythm.noteLong[laneIdx] ?? null;
     case "flick":
+      if (habahiro) {
+        return resolveHabahiroTexture(habahiro.noteFlick, centerLane, rhythmWidth)
+          ?? resolveHabahiroTexture(habahiro.noteLong, centerLane, rhythmWidth)
+          ?? bundle.rhythm.noteFlick[laneIdx]
+          ?? bundle.rhythm.noteLong[laneIdx]
+          ?? null;
+      }
       return bundle.rhythm.noteFlick[laneIdx]
         ?? bundle.rhythm.noteLong[laneIdx]
         ?? null;
     case "skill":
+      if (habahiro) {
+        return resolveHabahiroTexture(habahiro.noteSkill, centerLane, rhythmWidth)
+          ?? resolveHabahiroTexture(habahiro.noteLong, centerLane, rhythmWidth)
+          ?? bundle.rhythm.noteSkill[laneIdx]
+          ?? bundle.rhythm.noteLong[laneIdx]
+          ?? null;
+      }
       return bundle.rhythm.noteSkill[laneIdx]
         ?? bundle.rhythm.noteLong[laneIdx]
         ?? null;
     case "directional_flick_left":
     case "directional_flick_right":
+      if (habahiro) {
+        return resolveHabahiroTexture(habahiro.noteLong, centerLane, rhythmWidth)
+          ?? bundle.rhythm.noteLong[laneIdx]
+          ?? null;
+      }
       return bundle.rhythm.noteLong[laneIdx] ?? null;
     default:
+      if (habahiro) {
+        return resolveHabahiroTexture(habahiro.noteLong, centerLane, rhythmWidth)
+          ?? bundle.rhythm.noteLong[laneIdx]
+          ?? null;
+      }
       return bundle.rhythm.noteLong[laneIdx] ?? null;
   }
 }
@@ -410,11 +673,19 @@ export function resolveSlideBottomMarkerFlashTexture(
   bundle: NoteSkinTextureBundle,
   lane: number,
   markerSourceIsHead: boolean,
+  rhythmWidth = 1,
+  centerLane = lane,
 ): Texture | null {
   if (markerSourceIsHead) {
     return null;
   }
-  const laneIdx = laneIndex(lane);
+  const laneIdx = logicalLaneIndex(lane);
+  const habahiro = bundle.rhythm.habahiro.enabled ? bundle.rhythm.habahiro : null;
+  if (habahiro) {
+    return resolveHabahiroTexture(habahiro.noteLongFlash, centerLane, rhythmWidth)
+      ?? bundle.rhythm.noteLongFlash[laneIdx]
+      ?? null;
+  }
   return bundle.rhythm.noteLongFlash[laneIdx] ?? null;
 }
 
@@ -438,7 +709,13 @@ export function resolveDirectionalArrowTexture(
     : (bundle.directional.noteFlickTopR ?? null);
 }
 
-export function resolveFlickTopTexture(bundle: NoteSkinTextureBundle): Texture | null {
+export function resolveFlickTopTexture(bundle: NoteSkinTextureBundle, rhythmWidth = 1): Texture | null {
+  const habahiro = bundle.rhythm.habahiro.enabled ? bundle.rhythm.habahiro : null;
+  if (habahiro) {
+    return habahiro.noteFlickTop[habahiroFlickTopWidth(rhythmWidth)]
+      ?? bundle.rhythm.noteFlickTop
+      ?? null;
+  }
   return bundle.rhythm.noteFlickTop ?? null;
 }
 
