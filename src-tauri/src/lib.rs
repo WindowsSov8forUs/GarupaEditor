@@ -1244,7 +1244,7 @@ fn build_bestdori_http_client() -> Result<reqwest::Client, String> {
         .local_address(IpAddr::V4(Ipv4Addr::UNSPECIFIED))
         .http1_only()
         .timeout(Duration::from_secs(45))
-        .user_agent("chart-editor/1.0")
+        .user_agent("GarupaEditor/0.1.0")
         .build()
         .map_err(|error| format!("build http client failed: {error}"))
 }

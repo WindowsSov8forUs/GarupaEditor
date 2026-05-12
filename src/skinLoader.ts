@@ -570,7 +570,7 @@ export const DEFAULT_SKIN_SELECTION: SkinSelection = {
   judgeSkinRipName: resolveJudgeSkinRipNameFromType(DEFAULT_JUDGE_TYPE) ?? "skin00",
 };
 
-const SKIN_SELECTION_STORAGE_KEY = "chart-editor:bestdori-skin-selection:v1";
+const SKIN_SELECTION_STORAGE_KEY = "garupa-editor:bestdori-skin-selection:v1";
 const FIELD_SKIN_FILE_NAMES = Object.freeze({
   bgLineRhythm: "bg_line_rhythm.png",
   gamePlayLine: "game_play_line.png",

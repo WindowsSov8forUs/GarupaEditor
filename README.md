@@ -1,6 +1,6 @@
-﻿# Tauri 音游谱面编辑器（Bandori-inspired）
+# GarupaEditor
 
-一个基于 `Tauri + React + TypeScript` 的桌面谱面编辑器原型，采用 Beat 制与 7 轨标准编号，支持可视化编辑与 JSON 导入导出。
+GarupaEditor 是一个基于 `Tauri + React + TypeScript` 的桌面谱面编辑器原型，采用 Beat 制与 7 轨标准编号，支持可视化编辑与 JSON 导入导出。
 
 ## 运行
 
