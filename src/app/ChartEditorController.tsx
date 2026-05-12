@@ -60,6 +60,10 @@ import {
   regressChartWithoutSpRhythm,
 } from "./modeChartRegression";
 import {
+  applyHabahiroSlideWidths,
+  inferPreferredHabahiroSlideWidths,
+} from "./habahiroSlideWidth";
+import {
   BG_SKIN_TYPES,
   FIELD_SKIN_TYPES,
   JUDGE_SKIN_TYPES,
@@ -793,13 +797,20 @@ function ChartEditorController() {
 
   const setNotes = useCallback((nextAction: SetStateAction<ChartNote[]>) => {
     setNotesState((previous) => {
-      const next = resolveStateAction(nextAction, previous);
+      const rawNext = resolveStateAction(nextAction, previous);
+      const next = appOptionSettings.habahiro
+        ? applyHabahiroSlideWidths(
+          rawNext,
+          slideChainsRef.current,
+          inferPreferredHabahiroSlideWidths(previous, rawNext, slideChainsRef.current),
+        )
+        : rawNext;
       if (!Object.is(previous, next)) {
         pushUndoSnapshotIfNeeded();
       }
       return next;
     });
-  }, [pushUndoSnapshotIfNeeded, resolveStateAction]);
+  }, [appOptionSettings.habahiro, pushUndoSnapshotIfNeeded, resolveStateAction]);
 
   const setSlideChains = useCallback((nextAction: SetStateAction<SlideChain[]>) => {
     setSlideChainsState((previous) => {
@@ -810,6 +821,13 @@ function ChartEditorController() {
       return next;
     });
   }, [pushUndoSnapshotIfNeeded, resolveStateAction]);
+
+  useEffect(() => {
+    if (!appOptionSettings.habahiro || slideChains.length === 0) {
+      return;
+    }
+    setNotesState((previous) => applyHabahiroSlideWidths(previous, slideChains));
+  }, [appOptionSettings.habahiro, slideChains]);
 
   const setBpmEvents = useCallback((nextAction: SetStateAction<ChartBpmEvent[]>) => {
     setBpmEventsState((previous) => {
@@ -1543,7 +1561,10 @@ function ChartEditorController() {
             overlappedExistingNoteIds.size > 0
               ? previous.filter((note) => !overlappedExistingNoteIds.has(note.id))
               : previous;
-          return sortNotes([...remainedNotes, ...pastedNotes]);
+          const nextNotes = sortNotes([...remainedNotes, ...pastedNotes]);
+          return appOptionSettings.habahiro
+            ? applyHabahiroSlideWidths(nextNotes, pastedSlideChains)
+            : nextNotes;
         });
       }
       if (overlappedExistingNoteIds.size > 0) {
@@ -1582,6 +1603,7 @@ function ChartEditorController() {
       beatDivision,
       copiedChartPayload,
       createId,
+      appOptionSettings.habahiro,
       approxEq,
       metadata.bpm,
       normalizeBaseBpmForWrite,
@@ -2307,6 +2329,7 @@ function ChartEditorController() {
   const { splitLongLineSegment, deleteSelectedLongLineSegment, applyLongLineSettings } = useLongLineActions({
     slideChains,
     notes,
+    isHabahiroEnabled,
     spRhythmNoteEnabled: appOptionSettings.spRhythmNoteEnabled,
     setSlideChains,
     setNotes,
@@ -3734,6 +3757,17 @@ function ChartEditorController() {
       shouldApplyRegressedChart = true;
     }
 
+    if (turningOnHabahiro) {
+      const normalizedNotes = applyHabahiroSlideWidths(nextChartState.notes, nextChartState.slideChains);
+      if (!Object.is(normalizedNotes, nextChartState.notes)) {
+        nextChartState = {
+          ...nextChartState,
+          notes: normalizedNotes,
+        };
+        shouldApplyRegressedChart = true;
+      }
+    }
+
     if (shouldApplyRegressedChart) {
       setNotes(sortNotes(nextChartState.notes));
       setSlideChains(nextChartState.slideChains);
@@ -4680,6 +4714,7 @@ function ChartEditorController() {
           effectEnable: appOptionSettings.clickEffectEnabled,
           mvMode: playbackMvMode,
           mvAlphaPercent: playbackMvAlpha,
+          habahiro: appOptionSettings.habahiro,
         },
         audio: audioPayload,
         skin: {

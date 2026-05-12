@@ -1,6 +1,7 @@
 ﻿import { startTransition, useCallback, type MouseEvent } from "react";
 import type { ChartNote, EditorTool, NoteType } from "../../chartCore";
 import { isLastBeatOrderedBpmNegative } from "../editorHelpers";
+import { applyHabahiroSlideWidthToNoteIds } from "../habahiroSlideWidth";
 
 export function useBoardInteractionActions(params: any) {
   const {
@@ -352,8 +353,18 @@ export function useBoardInteractionActions(params: any) {
     };
     slideBuildRef.current = next;
     setSlideBuildState(next);
+    if (isHabahiroEnabled) {
+      setNotes((currentNotes: ChartNote[]) => applyHabahiroSlideWidthToNoteIds(currentNotes, nextIds));
+    }
     return { appended: true, merged, blocked: false };
-  }, [committedSlideChainById, committedSlideRoleByNoteId, setSlideBuildState, slideBuildRef]);
+  }, [
+    committedSlideChainById,
+    committedSlideRoleByNoteId,
+    isHabahiroEnabled,
+    setNotes,
+    setSlideBuildState,
+    slideBuildRef,
+  ]);
 
   const cancelSlideBuild = useCallback(
     (message = "已取消 Slide 创建。") => {
@@ -388,7 +399,7 @@ export function useBoardInteractionActions(params: any) {
     suppressNextBoardClickRef.current = true;
     suppressNextNoteClickRef.current = true;
 
-    const noteIds = Array.from(new Set(current.noteIds));
+    const noteIds = Array.from(new Set(current.noteIds)) as string[];
     if (noteIds.length === 0) {
       setStatusMessage("状态已更新。");
       return;
@@ -432,15 +443,20 @@ export function useBoardInteractionActions(params: any) {
 
     if (noteIds.length >= 3) {
       const middleIdSet = new Set(noteIds.slice(1, -1));
-      setNotes((previous: ChartNote[]) =>
-        sortNotes(
+      setNotes((previous: ChartNote[]) => {
+        const converted = sortNotes(
           previous.map((note) =>
             middleIdSet.has(note.id) && note.type === "skill"
               ? { ...note, type: "single" as const }
               : note,
           ),
-        ),
-      );
+        );
+        return isHabahiroEnabled
+          ? applyHabahiroSlideWidthToNoteIds(converted, noteIds)
+          : converted;
+      });
+    } else if (isHabahiroEnabled) {
+      setNotes((previous: ChartNote[]) => applyHabahiroSlideWidthToNoteIds(previous, noteIds));
     }
 
     const tailId = [...noteIds]
@@ -458,6 +474,7 @@ export function useBoardInteractionActions(params: any) {
     committedSlideChainById,
     committedSlideRoleByNoteId,
     createId,
+    isHabahiroEnabled,
     noteById,
     setIsToolArmed,
     setNotes,

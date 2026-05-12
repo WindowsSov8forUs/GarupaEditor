@@ -2,6 +2,7 @@
 import {
   isDirectionalNoteType,
   normalizeDirectionalWidth,
+  normalizeRhythmWidth,
   type ChartNote,
 } from "../../chartCore";
 import type {
@@ -355,6 +356,33 @@ function buildLaneByBeatResolver(
   return (beat: number) => resolveShapeLaneByBeat(shape, curveType, beat0, lane0, beat1, lane1, beat);
 }
 
+function resolveFirstRhythmWidth(noteIds: readonly string[], noteMap: Map<string, ChartNote>): number | null {
+  for (const noteId of noteIds) {
+    const note = noteMap.get(noteId);
+    if (note && !isDirectionalNoteType(note.type)) {
+      return normalizeRhythmWidth(note.width);
+    }
+  }
+  return null;
+}
+
+function resolveHabahiroPathAnchorLane(
+  note: ChartNote,
+  mode: "incoming" | "outgoing",
+  rhythmWidth: number,
+): number {
+  if (isDirectionalNoteType(note.type)) {
+    const span = normalizeDirectionalWidth(note.width);
+    if (mode === "incoming") {
+      return note.lane;
+    }
+    return note.type === "directional_flick_right"
+      ? note.lane + span - 1
+      : note.lane - span + 1;
+  }
+  return note.lane + (rhythmWidth - 1) / 2;
+}
+
 function isDivisionPoint(distanceBeat: number, divisionStep: number | null): boolean {
   if (!divisionStep || divisionStep <= EPSILON) {
     return false;
@@ -491,6 +519,7 @@ export function useLongLineActions(params: any) {
   const {
     slideChains,
     notes,
+    isHabahiroEnabled,
     spRhythmNoteEnabled,
     setSlideChains,
     setNotes,
@@ -639,16 +668,25 @@ export function useLongLineActions(params: any) {
       const beatDelta = endNote.beat - startNote.beat;
       const totalDistance = Math.abs(beatDelta);
       const direction = beatDelta >= 0 ? 1 : -1;
+      const generatedRhythmWidth = isHabahiroEnabled
+        ? (resolveFirstRhythmWidth(chainNoteIds, noteMap) ?? 1)
+        : null;
+      const startPathLane = generatedRhythmWidth === null
+        ? startNote.lane
+        : resolveHabahiroPathAnchorLane(startNote, "outgoing", generatedRhythmWidth);
+      const endPathLane = generatedRhythmWidth === null
+        ? endNote.lane
+        : resolveHabahiroPathAnchorLane(endNote, "incoming", generatedRhythmWidth);
       const resolveLaneByBeat = buildLaneByBeatResolver(
         settings.shape,
         settings.curveType,
         startNote.beat,
-        startNote.lane,
+        startPathLane,
         endNote.beat,
-        endNote.lane,
+        endPathLane,
       );
 
-      const generatedNotes: any[] = [];
+      const generatedNotes: ChartNote[] = [];
       if (settings.precision !== "1" && totalDistance > EPSILON) {
         for (let stepIndex = 1; ; stepIndex += 1) {
           const distanceBeat = stepIndex * precisionStep;
@@ -656,17 +694,21 @@ export function useLongLineActions(params: any) {
             break;
           }
           const beat = Number((startNote.beat + direction * distanceBeat).toFixed(20));
-          const lane = Number(resolveLaneByBeat(beat).toFixed(20));
+          const pathLane = resolveLaneByBeat(beat);
+          const lane = Number((generatedRhythmWidth === null
+            ? pathLane
+            : pathLane - (generatedRhythmWidth - 1) / 2).toFixed(20));
 
           const convertedToSingle = isDivisionPoint(distanceBeat, divisionStep);
-          const generated = {
+          const generated: ChartNote = {
             id: createId(),
             type: convertedToSingle ? "single" : "hidden",
             lane,
             beat,
+            ...(generatedRhythmWidth === null ? {} : { width: generatedRhythmWidth }),
           };
           generatedNotes.push(generated);
-          noteMap.set(generated.id, generated as ChartNote);
+          noteMap.set(generated.id, generated);
         }
       }
 
@@ -684,7 +726,7 @@ export function useLongLineActions(params: any) {
           }
           const nextLane = Number((Number(current.lane) + offset).toFixed(20));
           current.lane = nextLane;
-          noteMap.set(current.id, current as ChartNote);
+          noteMap.set(current.id, current);
         }
       }
 
@@ -736,6 +778,7 @@ export function useLongLineActions(params: any) {
     },
     [
       createId,
+      isHabahiroEnabled,
       notes,
       setNotes,
       setSelectedLongLineSegmentId,

@@ -17,6 +17,7 @@ export type SimulatorDisplayPayload = {
   effectEnable?: boolean;
   mvMode?: boolean;
   mvAlphaPercent?: number;
+  habahiro?: boolean;
 };
 
 type SimulatorAudioPayload = {

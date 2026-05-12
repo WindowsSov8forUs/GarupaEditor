@@ -42,6 +42,7 @@ import {
   regressChartWithoutHabahiro,
   regressChartWithoutSpRhythm,
 } from "../modeChartRegression";
+import { applyHabahiroSlideWidths } from "../habahiroSlideWidth";
 import {
   fetchBestdoriFileBlob,
   fetchBestdoriCommunityPostDetails,
@@ -1210,8 +1211,12 @@ export function useEditorIoAndShortcuts(params: any) {
       regressedChartState = regressChartWithoutHabahiro(regressedChartState);
       regressedHabahiro = true;
     }
-    const importedNotes = sortNotes(regressedChartState.notes);
     const importedSlideChains = regressedChartState.slideChains;
+    const importedNotes = sortNotes(
+      appOptionSettings.habahiro
+        ? applyHabahiroSlideWidths(regressedChartState.notes, importedSlideChains)
+        : regressedChartState.notes,
+    );
 
     setMetadata(nextMetadata);
     setNotes(importedNotes);

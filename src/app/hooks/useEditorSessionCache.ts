@@ -10,6 +10,7 @@ import type {
   WindowPreset,
 } from "../../chartCore";
 import type { SlideChain } from "../editorHelpers";
+import { applyHabahiroSlideWidths } from "../habahiroSlideWidth";
 
 const SESSION_SCHEMA_VERSION = 1;
 const SESSION_AUTOSAVE_DELAY_MS = 1000;
@@ -228,6 +229,7 @@ export function useEditorSessionCache(params: any) {
         let restoredSettings = false;
         let ignoredBaseBpmCount = 0;
         let ignoredEventZeroCount = 0;
+        let restoredAppOptionSettings = normalizeEditorOptionSettings({});
 
         if (typeof loadedSettingsJson === "string" && loadedSettingsJson.trim().length > 0) {
           const parsedUnknown = JSON.parse(loadedSettingsJson) as unknown;
@@ -235,11 +237,12 @@ export function useEditorSessionCache(params: any) {
             throw new Error("settings cache JSON root must be an object");
           }
           const snapshot = parsedUnknown as Partial<SettingsSnapshotV1>;
-          const nextAppOptionSettings = normalizeEditorOptionSettings(
+          restoredAppOptionSettings = normalizeEditorOptionSettings(
             isRecord(snapshot.appOptionSettings)
               ? (snapshot.appOptionSettings as Partial<EditorOptionSettings>)
               : {},
           );
+          const nextAppOptionSettings = restoredAppOptionSettings;
           setAppOptionSettings(nextAppOptionSettings);
 
           const rawWindowPresetId = normalizeOptionalText(snapshot.windowPresetId);
@@ -455,7 +458,10 @@ export function useEditorSessionCache(params: any) {
 
           setSettings(nextSettings);
           setMetadata(nextMetadata);
-          setNotes(nextNotes);
+          const restoredNotes = restoredAppOptionSettings.habahiro
+            ? applyHabahiroSlideWidths(nextNotes, nextSlideChains)
+            : nextNotes;
+          setNotes(restoredNotes);
           setSlideChains(nextSlideChains);
           setBpmEvents(sortedNormalizedBpmEvents);
           setSvEvents(sortedNormalizedSvEvents);
