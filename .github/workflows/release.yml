@@ -13,8 +13,43 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  create-release:
+    name: Create draft release
+    runs-on: ubuntu-24.04
+    outputs:
+      release_id: ${{ steps.release.outputs.release_id }}
+    steps:
+      - name: Create or reuse draft release
+        id: release
+        uses: actions/github-script@v7
+        env:
+          PROJECT_NAME: ${{ env.PROJECT_NAME }}
+        with:
+          script: |
+            const tag = context.ref.replace('refs/tags/', '');
+            const { owner, repo } = context.repo;
+            let release;
+            try {
+              ({ data: release } = await github.rest.repos.getReleaseByTag({ owner, repo, tag }));
+            } catch (error) {
+              if (error.status !== 404) {
+                throw error;
+              }
+              ({ data: release } = await github.rest.repos.createRelease({
+                owner,
+                repo,
+                tag_name: tag,
+                name: `${process.env.PROJECT_NAME} ${tag}`,
+                body: `自动构建 ${process.env.PROJECT_NAME} 的多平台可安装发布包。`,
+                draft: true,
+                prerelease: false
+              }));
+            }
+            core.setOutput('release_id', String(release.id));
+
   build:
     name: ${{ matrix.name }}
+    needs: create-release
     runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
@@ -37,25 +72,25 @@ jobs:
             target: x86_64-apple-darwin
             platform: macos
             arch: x64
-            tauriArgs: --target x86_64-apple-darwin
+            tauriArgs: --target x86_64-apple-darwin --bundles app
           - name: macOS arm64
             runner: macos-15
             target: aarch64-apple-darwin
             platform: macos
             arch: arm64
-            tauriArgs: --target aarch64-apple-darwin
+            tauriArgs: --target aarch64-apple-darwin --bundles app
           - name: Linux x64
             runner: ubuntu-24.04
             target: x86_64-unknown-linux-gnu
             platform: linux
             arch: x64
-            tauriArgs: --target x86_64-unknown-linux-gnu
+            tauriArgs: --target x86_64-unknown-linux-gnu --bundles deb,rpm
           - name: Linux arm64
             runner: ubuntu-24.04-arm
             target: aarch64-unknown-linux-gnu
             platform: linux
             arch: arm64
-            tauriArgs: --target aarch64-unknown-linux-gnu
+            tauriArgs: --target aarch64-unknown-linux-gnu --bundles deb,rpm
 
     steps:
       - name: Checkout
@@ -126,15 +161,34 @@ jobs:
             Copy-Item -LiteralPath $loader -Destination (Join-Path $targetDir "WebView2Loader.dll") -Force
           }
 
-      - name: Build release bundle
+      - name: Build and upload release bundle
+        if: matrix.platform != 'macos'
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
+          releaseId: ${{ needs.create-release.outputs.release_id }}
           tagName: ${{ github.ref_name }}
-          releaseName: ${{ env.PROJECT_NAME }} ${{ github.ref_name }}
-          releaseBody: "Automated installable packages for ${{ env.PROJECT_NAME }}."
-          releaseDraft: true
-          prerelease: false
           args: ${{ matrix.tauriArgs }}
           assetNamePattern: "${{ env.PROJECT_NAME }}_[version]_[platform]_[arch][setup][ext]"
+
+      - name: Build macOS app bundle
+        if: matrix.platform == 'macos'
+        run: npm run tauri -- build ${{ matrix.tauriArgs }}
+
+      - name: Upload macOS app archive
+        if: matrix.platform == 'macos'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          APP_PATH="src-tauri/target/${{ matrix.target }}/release/bundle/macos/${PROJECT_NAME}.app"
+          VERSION="$(node -p "require('./package.json').version")"
+          if [ "${{ matrix.arch }}" = "arm64" ]; then
+            ASSET_ARCH="aarch64"
+          else
+            ASSET_ARCH="${{ matrix.arch }}"
+          fi
+          ARCHIVE="${PROJECT_NAME}_${VERSION}_darwin_${ASSET_ARCH}.app.tar.gz"
+          test -d "$APP_PATH"
+          tar -C "$(dirname "$APP_PATH")" -czf "$ARCHIVE" "$(basename "$APP_PATH")"
+          gh release upload "${{ github.ref_name }}" "$ARCHIVE" --clobber
