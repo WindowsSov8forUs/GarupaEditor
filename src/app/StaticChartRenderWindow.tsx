@@ -1092,7 +1092,8 @@ export default function StaticChartRenderWindow() {
 
   const handleWheelZoom = useCallback((event: ReactWheelEvent<HTMLDivElement>) => {
     const viewport = previewViewportRef.current ?? event.currentTarget;
-    if (!event.ctrlKey) {
+    const primaryModifier = event.ctrlKey || event.metaKey;
+    if (!primaryModifier) {
       const dominantDelta =
         Math.abs(event.deltaX) > Math.abs(event.deltaY)
           ? event.deltaX

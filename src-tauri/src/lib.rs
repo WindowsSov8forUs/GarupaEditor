@@ -291,20 +291,22 @@ fn decode_base64(value: &str) -> Result<Vec<u8>, String> {
         .map_err(|error| format!("decode base64 failed: {error}"))
 }
 
-fn resolve_executable_directory() -> Result<PathBuf, String> {
-    let executable = std::env::current_exe()
-        .map_err(|error| format!("resolve executable path failed: {error}"))?;
-    executable
-        .parent()
-        .map(Path::to_path_buf)
-        .ok_or_else(|| "resolve executable directory failed: missing parent".to_string())
+fn resolve_app_storage_root(app: &tauri::AppHandle) -> Result<PathBuf, String> {
+    let directory = app
+        .path()
+        .app_data_dir()
+        .map_err(|error| format!("resolve app data dir failed: {error}"))?;
+    fs::create_dir_all(&directory)
+        .map_err(|error| format!("create app data dir failed: {error}"))?;
+    Ok(directory)
 }
 
 fn resolve_game_skin_assets_root(
+    app: &tauri::AppHandle,
     folder_name: &str,
     create_error_label: &str,
 ) -> Result<PathBuf, String> {
-    let mut directory = resolve_executable_directory()?;
+    let mut directory = resolve_app_storage_root(app)?;
     directory.push("assets");
     directory.push("game");
     directory.push(folder_name);
@@ -312,24 +314,24 @@ fn resolve_game_skin_assets_root(
     Ok(directory)
 }
 
-fn resolve_skin_assets_root(_app: &tauri::AppHandle) -> Result<PathBuf, String> {
-    resolve_game_skin_assets_root("noteskin", "create skin assets dir failed")
+fn resolve_skin_assets_root(app: &tauri::AppHandle) -> Result<PathBuf, String> {
+    resolve_game_skin_assets_root(app, "noteskin", "create skin assets dir failed")
 }
 
-fn resolve_field_skin_assets_root(_app: &tauri::AppHandle) -> Result<PathBuf, String> {
-    resolve_game_skin_assets_root("fieldskin", "create field skin assets dir failed")
+fn resolve_field_skin_assets_root(app: &tauri::AppHandle) -> Result<PathBuf, String> {
+    resolve_game_skin_assets_root(app, "fieldskin", "create field skin assets dir failed")
 }
 
-fn resolve_bg_skin_assets_root(_app: &tauri::AppHandle) -> Result<PathBuf, String> {
-    resolve_game_skin_assets_root("bgskin", "create bg skin assets dir failed")
+fn resolve_bg_skin_assets_root(app: &tauri::AppHandle) -> Result<PathBuf, String> {
+    resolve_game_skin_assets_root(app, "bgskin", "create bg skin assets dir failed")
 }
 
-fn resolve_judge_skin_assets_root(_app: &tauri::AppHandle) -> Result<PathBuf, String> {
-    resolve_game_skin_assets_root("judgeskin", "create judge skin assets dir failed")
+fn resolve_judge_skin_assets_root(app: &tauri::AppHandle) -> Result<PathBuf, String> {
+    resolve_game_skin_assets_root(app, "judgeskin", "create judge skin assets dir failed")
 }
 
-fn resolve_sound_assets_root(_app: &tauri::AppHandle) -> Result<PathBuf, String> {
-    let mut directory = resolve_executable_directory()?;
+fn resolve_sound_assets_root(app: &tauri::AppHandle) -> Result<PathBuf, String> {
+    let mut directory = resolve_app_storage_root(app)?;
     directory.push("assets");
     directory.push("sound");
     fs::create_dir_all(&directory)
@@ -380,7 +382,7 @@ fn resolve_bestdori_namespace_root(
             Ok(directory)
         }
         _ => {
-            let mut directory = resolve_executable_directory()?;
+            let mut directory = resolve_app_storage_root(app)?;
             directory.push("assets");
             directory.push("bestdori");
             directory.push(normalized);
@@ -391,8 +393,8 @@ fn resolve_bestdori_namespace_root(
     }
 }
 
-fn resolve_session_cache_root(_app: &tauri::AppHandle) -> Result<PathBuf, String> {
-    let mut directory = resolve_executable_directory()?;
+fn resolve_session_cache_root(app: &tauri::AppHandle) -> Result<PathBuf, String> {
+    let mut directory = resolve_app_storage_root(app)?;
     directory.push("cache");
     directory.push(SESSION_DIR_NAME);
     fs::create_dir_all(&directory)

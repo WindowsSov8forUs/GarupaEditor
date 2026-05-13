@@ -754,7 +754,9 @@ export function useEditorIoAndShortcuts(params: any) {
         return;
       }
 
-      if (event.ctrlKey && !event.shiftKey && event.key.toLowerCase() === "z") {
+      const primaryModifier = event.ctrlKey || event.metaKey;
+
+      if (primaryModifier && !event.altKey && !event.shiftKey && event.key.toLowerCase() === "z") {
         event.preventDefault();
         if (typeof undoLastOperation === "function") {
           undoLastOperation();
@@ -763,7 +765,7 @@ export function useEditorIoAndShortcuts(params: any) {
       }
 
       if (
-        event.ctrlKey &&
+        primaryModifier &&
         !event.altKey &&
         (
           (!event.shiftKey && event.key.toLowerCase() === "y")
@@ -778,7 +780,7 @@ export function useEditorIoAndShortcuts(params: any) {
       }
 
       if (
-        event.ctrlKey &&
+        primaryModifier &&
         !event.altKey &&
         !event.shiftKey &&
         event.key.toLowerCase() === "c"
@@ -791,7 +793,7 @@ export function useEditorIoAndShortcuts(params: any) {
       }
 
       if (
-        event.ctrlKey &&
+        primaryModifier &&
         !event.altKey &&
         !event.shiftKey &&
         event.key.toLowerCase() === "v"
@@ -804,7 +806,8 @@ export function useEditorIoAndShortcuts(params: any) {
       }
 
       if (
-        event.ctrlKey &&
+        primaryModifier &&
+        !event.altKey &&
         event.shiftKey &&
         (event.key === "Delete" || event.key === "Backspace")
       ) {

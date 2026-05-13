@@ -6,35 +6,18 @@ GarupaEditor 是一个基于 `Tauri + React + TypeScript` 的桌面谱面编辑�
 
 ```bash
 npm install
-npm run tauri dev
+npm run desktop:dev
 ```
 
-或使用更明确的桌面命令：
+## 构建与验证
 
 ```bash
-npm run desktop:dev
+npm run build
+cargo check --manifest-path src-tauri/Cargo.toml
 npm run desktop:build
 ```
 
-## 一键测试启动
-
-Windows 下可直接双击根目录 `test-start.bat`，或使用：
-
-```bash
-npm run test:start
-```
-
-该脚本会依次执行：
-
-1. 前端构建检查（`npm run build`）
-2. Rust 检查（`cargo check --manifest-path src-tauri/Cargo.toml`）
-3. 启动开发环境（`npm run tauri dev`）
-
-如果只想快速验证“能启动”而不一直挂起进程，可用：
-
-```bash
-npm run test:start:smoke
-```
+`npm run desktop:build` 会先执行前端生产构建，再调用 Tauri 生成当前平台可安装包。
 
 ## 已实现
 
@@ -51,8 +34,8 @@ npm run test:start:smoke
 - 小节数自动推算（音频时长 + BPM + 已放置音符，自动留后续空间）
 - 音符工具图标化 + 快捷键：
   - `1-7` 切换音符类型
-  - `Ctrl+Z` 撤销
-  - `Ctrl+Shift+Delete` 清空
+  - `Ctrl+Z` / `Cmd+Z` 撤销
+  - `Ctrl+Shift+Delete` / `Cmd+Shift+Delete` 清空
   - `Delete` 删除选中音符
 - 桌面窗口默认尺寸 `1366 x 768`，分辨率预设移入“应用设置”
 
