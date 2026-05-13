@@ -108,7 +108,9 @@ jobs:
             libayatana-appindicator3-dev \
             librsvg2-dev \
             patchelf \
-            rpm
+            rpm \
+            xdg-utils
+          command -v xdg-open
 
       - name: Install frontend dependencies
         run: npm ci
