@@ -5,6 +5,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type MutableRefObject,
   type SetStateAction,
   type MouseEvent as ReactMouseEvent,
 } from "react";
@@ -395,6 +396,10 @@ function stripStatusPrefix(message: string, prefix: string): string {
   return message.slice(prefix.length).trim();
 }
 
+function normalizeDisplayPath(value: string): string {
+  return value.replace(/\\/g, "/");
+}
+
 function routeStatusMessage(rawMessage: string): StatusMessageRoute {
   const message = rawMessage.trim();
   if (message.length <= 0) {
@@ -456,7 +461,8 @@ function routeStatusMessage(rawMessage: string): StatusMessageRoute {
     return { channel: "dialog", tone: "error", message: `导出谱面失败：\n${detail}` };
   }
   if (message.startsWith("已导出到 ")) {
-    return { channel: "dialog", tone: "info", message };
+    const path = stripStatusPrefix(message, "已导出到 ");
+    return { channel: "dialog", tone: "info", message: `已导出到 ${normalizeDisplayPath(path)}` };
   }
   if (message === "已导出 Bestdori V2 到剪贴板。") {
     return { channel: "dialog", tone: "info", message: "已导出谱面为 Bestdori 格式，可直接粘贴。" };
@@ -972,6 +978,7 @@ function ChartEditorController() {
   const playbackDurationLimitSecRef = useRef(0);
   const playbackHasAudioTrackRef = useRef(false);
   const playbackNowSecRef = useRef(0);
+  const playbackStartSeqRef = useRef(0);
   const playbackIsPlayingRef = useRef(false);
   const playbackEventCursorRef = useRef(0);
   const playbackSlideStartCursorRef = useRef(0);
@@ -982,6 +989,15 @@ function ChartEditorController() {
   const playbackLongLoopSrcRef = useRef<string | null>(null);
   const playbackSeAudioContextRef = useRef<AudioContext | null>(null);
   const playbackSeMasterGainRef = useRef<GainNode | null>(null);
+  const playbackBgmGainRef = useRef<GainNode | null>(null);
+  const playbackBgmBufferBySrcRef = useRef<Map<string, AudioBuffer>>(new Map());
+  const playbackBgmDecodeTaskBySrcRef = useRef<Map<string, Promise<AudioBuffer | null>>>(new Map());
+  const playbackBgmCacheSeqRef = useRef(0);
+  const playbackBgmSourceRef = useRef<AudioBufferSourceNode | null>(null);
+  const playbackBgmClockBaseSecRef = useRef(0);
+  const playbackBgmClockBaseContextTimeSecRef = useRef(0);
+  const playbackBgmPlaybackRateRef = useRef(1);
+  const playbackBgmDurationSecRef = useRef(0);
   const playbackSeBufferBySrcRef = useRef<Map<string, AudioBuffer>>(new Map());
   const playbackSeDecodeTaskBySrcRef = useRef<Map<string, Promise<AudioBuffer | null>>>(new Map());
   const playbackSeWebAudioOneshotSetRef = useRef<Set<AudioBufferSourceNode>>(new Set());
@@ -1169,16 +1185,19 @@ function ChartEditorController() {
   const totalSteps = Math.max(1, Math.ceil(totalBeats * beatDivision));
   const boardWidth = settings.laneCount * LANE_WIDTH;
   const boardHeight = Math.max(1, totalDurationSec * timelinePixelsPerSecond);
-  const trackPlayableBeats = Math.max(0, totalBeats - beatsPerMeasure);
-  const trackPlayableDurationSec = useMemo(
-    () => beatToSeconds(trackPlayableBeats, bpmTimeline),
-    [bpmTimeline, trackPlayableBeats],
-  );
   const hasUploadedAudio = Boolean(audioObjectUrl);
-  const playbackDurationSec = Math.max(0, Number(Math.max(audioDurationSec, totalDurationSec).toFixed(6)));
-  const playbackCeilingSec = hasUploadedAudio ? playbackDurationSec : trackPlayableDurationSec;
+  const chartPlayableDurationSec = useMemo(
+    () => Math.max(0, beatToSeconds(maxNoteBeat, bpmTimeline)),
+    [bpmTimeline, maxNoteBeat],
+  );
+  const playbackCeilingSec = hasUploadedAudio
+    ? Math.max(
+      Number.isFinite(audioDurationSec) && audioDurationSec > 0 ? audioDurationSec : 0,
+      chartPlayableDurationSec,
+    )
+    : chartPlayableDurationSec;
   const currentPlaybackSpeed = PLAYBACK_SPEED_OPTIONS[Math.max(0, playbackSpeedIndex)] ?? 1;
-  const playbackTotalLabel = hasUploadedAudio ? formatDuration(playbackDurationSec) : "?";
+  const playbackTotalLabel = hasUploadedAudio ? formatDuration(playbackCeilingSec) : "?";
   const playbackSpeedLabel = `${Number(currentPlaybackSpeed.toFixed(2))}x`;
   const playbackVolumeLabel = `${Math.round(playbackVolumePercent)}`;
   const playbackPositionLabel = `${Math.round(playbackLinePositionPercent)}%`;
@@ -2907,11 +2926,11 @@ function ChartEditorController() {
   );
 
   useEffect(() => {
-    playbackGuideTotalLabelRef.current = hasUploadedAudio ? formatDurationPrecise(playbackDurationSec) : "?";
+    playbackGuideTotalLabelRef.current = hasUploadedAudio ? formatDurationPrecise(playbackCeilingSec) : "?";
     if (isPlayToolSelected && !playbackIsPlayingRef.current && playbackGuidePendingRef.current) {
       queuePlaybackGuide(playbackGuidePendingRef.current);
     }
-  }, [hasUploadedAudio, isPlayToolSelected, playbackDurationSec, queuePlaybackGuide]);
+  }, [hasUploadedAudio, isPlayToolSelected, playbackCeilingSec, queuePlaybackGuide]);
 
   useEffect(() => {
     if (!isPlayToolSelected || !isPlaybackPlaying) {
@@ -2978,8 +2997,29 @@ function ChartEditorController() {
     playbackSlideEndCursorRef.current = 0;
   }, []);
 
+  const stopPlaybackBgmSource = useCallback(() => {
+    const source = playbackBgmSourceRef.current;
+    playbackBgmSourceRef.current = null;
+    playbackBgmDurationSecRef.current = 0;
+    if (!source) {
+      return;
+    }
+    try {
+      source.stop();
+    } catch {
+      // ignore already-stopped sources
+    }
+    try {
+      source.disconnect();
+    } catch {
+      // ignore disconnect failure
+    }
+  }, []);
+
   const stopPlayback = useCallback((message: string | null = "已停止播放。") => {
     clearPlaybackTick();
+    playbackStartSeqRef.current += 1;
+    stopPlaybackBgmSource();
     const audio = playbackAudioRef.current;
     if (audio) {
       audio.pause();
@@ -2996,7 +3036,14 @@ function ChartEditorController() {
     if (message) {
       setStatusMessage(message);
     }
-  }, [clearPlaybackTick, hidePlaybackGuide, hidePlaybackRuntimeLine, setStatusMessage, stopAllPlaybackSoundEffects]);
+  }, [
+    clearPlaybackTick,
+    hidePlaybackGuide,
+    hidePlaybackRuntimeLine,
+    setStatusMessage,
+    stopAllPlaybackSoundEffects,
+    stopPlaybackBgmSource,
+  ]);
 
   const getPlayfieldBottomTimeSec = useCallback(() => {
     const playfield = playfieldRef.current;
@@ -3053,23 +3100,31 @@ function ChartEditorController() {
       const masterGain = context.createGain();
       masterGain.gain.value = clamp(playbackVolumePercent / 100, 0, 1) * noteSeVolumeScale;
       masterGain.connect(context.destination);
+      const bgmGain = context.createGain();
+      bgmGain.gain.value = clamp(playbackVolumePercent / 100, 0, 1);
+      bgmGain.connect(context.destination);
       playbackSeAudioContextRef.current = context;
       playbackSeMasterGainRef.current = masterGain;
+      playbackBgmGainRef.current = bgmGain;
       return context;
     } catch {
       return null;
     }
   }, [clamp, noteSeVolumeScale, playbackVolumePercent]);
 
-  const decodePlaybackSeBuffer = useCallback(async (src: string): Promise<AudioBuffer | null> => {
+  const decodePlaybackAudioBuffer = useCallback(async (
+    src: string,
+    cacheRef: MutableRefObject<Map<string, AudioBuffer>>,
+    taskRef: MutableRefObject<Map<string, Promise<AudioBuffer | null>>>,
+  ): Promise<AudioBuffer | null> => {
     if (!src) {
       return null;
     }
-    const cached = playbackSeBufferBySrcRef.current.get(src);
+    const cached = cacheRef.current.get(src);
     if (cached) {
       return cached;
     }
-    const pending = playbackSeDecodeTaskBySrcRef.current.get(src);
+    const pending = taskRef.current.get(src);
     if (pending) {
       return pending;
     }
@@ -3086,18 +3141,77 @@ function ChartEditorController() {
         }
         const binary = await response.arrayBuffer();
         const decoded = await context.decodeAudioData(binary.slice(0));
-        playbackSeBufferBySrcRef.current.set(src, decoded);
+        cacheRef.current.set(src, decoded);
         return decoded;
       } catch {
         return null;
       } finally {
-        playbackSeDecodeTaskBySrcRef.current.delete(src);
+        taskRef.current.delete(src);
       }
     })();
 
-    playbackSeDecodeTaskBySrcRef.current.set(src, task);
+    taskRef.current.set(src, task);
     return task;
   }, [ensurePlaybackSeAudioContext]);
+
+  const decodePlaybackSeBuffer = useCallback((src: string): Promise<AudioBuffer | null> => (
+    decodePlaybackAudioBuffer(src, playbackSeBufferBySrcRef, playbackSeDecodeTaskBySrcRef)
+  ), [decodePlaybackAudioBuffer]);
+
+  const decodePlaybackBgmBuffer = useCallback(async (src: string): Promise<AudioBuffer | null> => {
+    const cacheSeq = playbackBgmCacheSeqRef.current;
+    const decoded = await decodePlaybackAudioBuffer(
+      src,
+      playbackBgmBufferBySrcRef,
+      playbackBgmDecodeTaskBySrcRef,
+    );
+    return playbackBgmCacheSeqRef.current === cacheSeq ? decoded : null;
+  }, [decodePlaybackAudioBuffer]);
+
+  const startPlaybackBgmAt = useCallback((
+    buffer: AudioBuffer,
+    offsetSec: number,
+    playbackRate: number,
+  ): number | null => {
+    const context = ensurePlaybackSeAudioContext();
+    if (!context || buffer.duration <= 0) {
+      return null;
+    }
+    stopPlaybackBgmSource();
+    const source = context.createBufferSource();
+    const safeRate = Math.max(0.01, playbackRate);
+    const safeOffset = clamp(offsetSec, 0, Math.max(0, buffer.duration - 0.001));
+    source.buffer = buffer;
+    source.playbackRate.value = safeRate;
+    source.connect(playbackBgmGainRef.current ?? context.destination);
+    source.onended = () => {
+      if (playbackBgmSourceRef.current === source) {
+        playbackBgmSourceRef.current = null;
+      }
+    };
+    source.start(0, safeOffset);
+    playbackBgmSourceRef.current = source;
+    playbackBgmClockBaseSecRef.current = safeOffset;
+    playbackBgmClockBaseContextTimeSecRef.current = context.currentTime;
+    playbackBgmPlaybackRateRef.current = safeRate;
+    playbackBgmDurationSecRef.current = buffer.duration;
+    return safeOffset;
+  }, [clamp, ensurePlaybackSeAudioContext, stopPlaybackBgmSource]);
+
+  const getPlaybackBgmTimeSec = useCallback((): number | null => {
+    const context = playbackSeAudioContextRef.current;
+    const source = playbackBgmSourceRef.current;
+    const duration = playbackBgmDurationSecRef.current;
+    if (!context || !source || duration <= 0) {
+      return null;
+    }
+    const elapsedSec = Math.max(0, context.currentTime - playbackBgmClockBaseContextTimeSecRef.current);
+    return clamp(
+      playbackBgmClockBaseSecRef.current + elapsedSec * playbackBgmPlaybackRateRef.current,
+      0,
+      duration,
+    );
+  }, [clamp]);
 
   const preloadPlaybackSeBuffers = useCallback(async (
     runtimeSe: SeSkinAssets | null,
@@ -3454,15 +3568,17 @@ function ChartEditorController() {
     const prevTimeSec = playbackNowSecRef.current;
     let nextTimeSec = clamp(prevTimeSec + deltaSec * currentPlaybackSpeed, 0, safeDuration);
     if (playbackHasAudioTrackRef.current) {
-      const audio = playbackAudioRef.current;
-      if (audio) {
-        const mediaLimit = Number.isFinite(audio.duration) && audio.duration > 0
-          ? Math.min(audio.duration, safeDuration)
-          : safeDuration;
-        const mediaTime = clamp(audio.currentTime, 0, mediaLimit);
-        if (Number.isFinite(mediaTime)) {
-          nextTimeSec = Math.max(prevTimeSec, mediaTime);
-        }
+      const mediaLimit = playbackBgmDurationSecRef.current > 0
+        ? Math.min(playbackBgmDurationSecRef.current, safeDuration)
+        : safeDuration;
+      const mediaTime = getPlaybackBgmTimeSec();
+      if (mediaTime !== null && Number.isFinite(mediaTime)) {
+        nextTimeSec = clamp(mediaTime, 0, mediaLimit);
+      }
+      if (nextTimeSec >= mediaLimit - 1e-3 && safeDuration > mediaLimit + 1e-3) {
+        playbackHasAudioTrackRef.current = false;
+        stopPlaybackBgmSource();
+        playbackTickLastNowMsRef.current = nowMs;
       }
     }
     playbackNowSecRef.current = nextTimeSec;
@@ -3477,9 +3593,11 @@ function ChartEditorController() {
   }, [
     clamp,
     currentPlaybackSpeed,
+    getPlaybackBgmTimeSec,
     playbackCeilingSec,
     processPlaybackSoundFrame,
     stopPlayback,
+    stopPlaybackBgmSource,
     syncPlaybackViewport,
     updatePlaybackRuntimeLine,
   ]);
@@ -3489,11 +3607,17 @@ function ChartEditorController() {
   }, [runPlaybackTick]);
 
   const startPlaybackAt = useCallback(async (seconds: number, announce = true) => {
+    const startSeq = playbackStartSeqRef.current + 1;
+    playbackStartSeqRef.current = startSeq;
+    const isStartCurrent = () => playbackStartSeqRef.current === startSeq;
     const audio = playbackAudioRef.current;
     const safeDuration = Math.max(0, playbackCeilingSec);
-    const safeSeconds = clamp(seconds, 0, safeDuration);
+    let safeSeconds = clamp(seconds, 0, safeDuration);
     const runtimeSe = getRuntimeSeAssets();
     await preloadPlaybackSeBuffers(runtimeSe, { waitForReady: true, timeoutMs: 240 });
+    if (!isStartCurrent()) {
+      return;
+    }
     const seContext = ensurePlaybackSeAudioContext();
     if (seContext && seContext.state === "suspended") {
       try {
@@ -3502,31 +3626,40 @@ function ChartEditorController() {
         // ignore resume failure
       }
     }
+    if (!isStartCurrent()) {
+      return;
+    }
     clearPlaybackTick();
     playbackDurationLimitSecRef.current = safeDuration;
-    playbackTickLastNowMsRef.current = performance.now();
     playbackViewportSyncStampRef.current = 0;
-    playbackNowSecRef.current = safeSeconds;
     stopAllPlaybackSoundEffects();
-    resetPlaybackSoundStateAt(safeSeconds);
-    syncPlaybackViewport(safeSeconds);
+    stopPlaybackBgmSource();
     playbackHasAudioTrackRef.current = false;
     if (hasUploadedAudio && audio) {
-      const targetAudioTime =
-        Number.isFinite(audio.duration) && audio.duration > 0
-          ? clamp(safeSeconds, 0, audio.duration)
-          : safeSeconds;
-      audio.currentTime = targetAudioTime;
-      audio.playbackRate = currentPlaybackSpeed;
-      audio.volume = clamp(playbackVolumePercent / 100, 0, 1);
-      try {
-        await audio.play();
+      audio.pause();
+      const buffer = await decodePlaybackBgmBuffer(audio.src);
+      if (!isStartCurrent()) {
+        return;
+      }
+      if (!buffer) {
+        setStatusMessage("音频解码失败，请重试播放。");
+        return;
+      }
+      const shouldStartAudio = safeSeconds < buffer.duration - 1e-3;
+      if (shouldStartAudio) {
+        const startedAt = startPlaybackBgmAt(buffer, safeSeconds, currentPlaybackSpeed);
+        if (startedAt === null) {
+          setStatusMessage("音频播放失败，请重试播放。");
+          return;
+        }
+        safeSeconds = startedAt;
         playbackHasAudioTrackRef.current = true;
-      } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        setStatusMessage(`音频播放失败，已切换为无音频播放：${message}`);
       }
     }
+    playbackNowSecRef.current = safeSeconds;
+    resetPlaybackSoundStateAt(safeSeconds);
+    syncPlaybackViewport(safeSeconds);
+    playbackTickLastNowMsRef.current = performance.now();
     playbackIsPlayingRef.current = true;
     setIsPlaybackPlaying(true);
     hidePlaybackGuide();
@@ -3545,13 +3678,16 @@ function ChartEditorController() {
     playbackTotalLabel,
     playbackVolumePercent,
     preloadPlaybackSeBuffers,
+    decodePlaybackBgmBuffer,
     resetPlaybackSoundStateAt,
     ensurePlaybackSeAudioContext,
     setStatusMessage,
+    startPlaybackBgmAt,
     syncPlaybackViewport,
     hidePlaybackGuide,
     updatePlaybackRuntimeLine,
     stopAllPlaybackSoundEffects,
+    stopPlaybackBgmSource,
   ]);
 
   const onTogglePlayTool = useCallback(() => {
@@ -3847,7 +3983,18 @@ function ChartEditorController() {
     if (audio) {
       audio.playbackRate = currentPlaybackSpeed;
     }
-  }, [currentPlaybackSpeed]);
+    const source = playbackBgmSourceRef.current;
+    if (source) {
+      const context = playbackSeAudioContextRef.current;
+      const currentBgmTimeSec = getPlaybackBgmTimeSec();
+      if (context && currentBgmTimeSec !== null) {
+        playbackBgmClockBaseSecRef.current = currentBgmTimeSec;
+        playbackBgmClockBaseContextTimeSecRef.current = context.currentTime;
+      }
+      source.playbackRate.value = currentPlaybackSpeed;
+      playbackBgmPlaybackRateRef.current = currentPlaybackSpeed;
+    }
+  }, [currentPlaybackSpeed, getPlaybackBgmTimeSec]);
 
   useEffect(() => {
     const audio = playbackAudioRef.current;
@@ -3857,6 +4004,10 @@ function ChartEditorController() {
     const seMasterGain = playbackSeMasterGainRef.current;
     if (seMasterGain) {
       seMasterGain.gain.value = clamp(playbackVolumePercent / 100, 0, 1) * noteSeVolumeScale;
+    }
+    const bgmGain = playbackBgmGainRef.current;
+    if (bgmGain) {
+      bgmGain.gain.value = clamp(playbackVolumePercent / 100, 0, 1);
     }
   }, [clamp, noteSeVolumeScale, playbackVolumePercent]);
 
@@ -3871,6 +4022,9 @@ function ChartEditorController() {
 
   useEffect(() => {
     stopPlayback(null);
+    playbackBgmCacheSeqRef.current += 1;
+    playbackBgmBufferBySrcRef.current.clear();
+    playbackBgmDecodeTaskBySrcRef.current.clear();
     const previous = playbackAudioRef.current;
     if (previous) {
       previous.pause();
@@ -3890,14 +4044,7 @@ function ChartEditorController() {
     audio.playbackRate = currentPlaybackSpeed;
     audio.volume = clamp(playbackVolumePercent / 100, 0, 1);
     playbackAudioRef.current = audio;
-    const handleEnded = () => {
-      if (playbackIsPlayingRef.current) {
-        stopPlayback("播放结束。");
-      }
-    };
-    audio.addEventListener("ended", handleEnded);
     return () => {
-      audio.removeEventListener("ended", handleEnded);
       audio.pause();
       audio.removeAttribute("src");
       try {
@@ -3909,7 +4056,14 @@ function ChartEditorController() {
         playbackAudioRef.current = null;
       }
     };
-  }, [audioObjectUrl, clamp, currentPlaybackSpeed, playbackVolumePercent, stopPlayback]);
+  }, [
+    audioObjectUrl,
+    clamp,
+    currentPlaybackSpeed,
+    playbackVolumePercent,
+    stopPlayback,
+    stopPlaybackBgmSource,
+  ]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -3952,14 +4106,22 @@ function ChartEditorController() {
       }
       const seContext = playbackSeAudioContextRef.current;
       if (seContext) {
+        stopPlaybackBgmSource();
         void seContext.close().catch(() => {
           // ignore close failure
         });
         playbackSeAudioContextRef.current = null;
         playbackSeMasterGainRef.current = null;
+        playbackBgmGainRef.current = null;
       }
     };
-  }, [clearPlaybackGuideFrame, clearPlaybackTick, hidePlaybackRuntimeLine, stopAllPlaybackSoundEffects]);
+  }, [
+    clearPlaybackGuideFrame,
+    clearPlaybackTick,
+    hidePlaybackRuntimeLine,
+    stopAllPlaybackSoundEffects,
+    stopPlaybackBgmSource,
+  ]);
 
   const handleBoardMouseMove = useCallback((event: ReactMouseEvent<HTMLDivElement>) => {
     if (isPlayToolSelected) {
