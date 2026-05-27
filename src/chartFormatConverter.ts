@@ -581,6 +581,13 @@ function convertCurrentHeadOrTailVisibleToBestdori(
       skill: true,
     };
   }
+  if (note.type === "Directional" && allowFlick) {
+    return {
+      beat: note.beat,
+      lane: note.lane,
+      flick: true,
+    };
+  }
   if (note.type === "Flick" && allowFlick) {
     return {
       beat: note.beat,
@@ -616,6 +623,14 @@ function convertCurrentSlideToBestdori(item: CurrentSlideItem): BestdoriV2ChartI
       };
     }
     if (connection.type === "Flick") {
+      return {
+        type: "Single",
+        beat: connection.beat,
+        lane: connection.lane,
+        flick: true,
+      };
+    }
+    if (connection.type === "Directional") {
       return {
         type: "Single",
         beat: connection.beat,
