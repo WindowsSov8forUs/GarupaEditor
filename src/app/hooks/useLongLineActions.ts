@@ -366,10 +366,10 @@ function resolveFirstRhythmWidth(noteIds: readonly string[], noteMap: Map<string
   return null;
 }
 
-function resolveHabahiroPathAnchorLane(
+function resolvePathAnchorLane(
   note: ChartNote,
   mode: "incoming" | "outgoing",
-  rhythmWidth: number,
+  rhythmWidth: number | null,
 ): number {
   if (isDirectionalNoteType(note.type)) {
     const span = normalizeDirectionalWidth(note.width);
@@ -380,7 +380,10 @@ function resolveHabahiroPathAnchorLane(
       ? note.lane + span - 1
       : note.lane - span + 1;
   }
-  return note.lane + (rhythmWidth - 1) / 2;
+  if (rhythmWidth !== null) {
+    return note.lane + (rhythmWidth - 1) / 2;
+  }
+  return note.lane;
 }
 
 function isDivisionPoint(distanceBeat: number, divisionStep: number | null): boolean {
@@ -671,12 +674,8 @@ export function useLongLineActions(params: any) {
       const generatedRhythmWidth = isHabahiroEnabled
         ? (resolveFirstRhythmWidth(chainNoteIds, noteMap) ?? 1)
         : null;
-      const startPathLane = generatedRhythmWidth === null
-        ? startNote.lane
-        : resolveHabahiroPathAnchorLane(startNote, "outgoing", generatedRhythmWidth);
-      const endPathLane = generatedRhythmWidth === null
-        ? endNote.lane
-        : resolveHabahiroPathAnchorLane(endNote, "incoming", generatedRhythmWidth);
+      const startPathLane = resolvePathAnchorLane(startNote, "outgoing", generatedRhythmWidth);
+      const endPathLane = resolvePathAnchorLane(endNote, "incoming", generatedRhythmWidth);
       const resolveLaneByBeat = buildLaneByBeatResolver(
         settings.shape,
         settings.curveType,
