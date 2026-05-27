@@ -9,7 +9,7 @@ export type SeKind =
   | "directional_fl_3";
 
 function isFlickHitNote(note: RuntimeNoteSemantic): boolean {
-  return note.baseType === "flick" && (note.slideRole === "none" || note.slideRole === "end");
+  return note.baseType === "flick";
 }
 
 function isHiddenNote(note: RuntimeNoteSemantic): boolean {

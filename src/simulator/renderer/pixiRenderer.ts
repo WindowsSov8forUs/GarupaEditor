@@ -58,8 +58,8 @@ interface SlideConnection {
   slideRhythmWidth: number;
   fromLane: number;
   toLane: number;
-  fromRhythmWidth: number;
-  toRhythmWidth: number;
+  fromAnchorLane: number;
+  toAnchorLane: number;
   fromHitMs: number;
   toHitMs: number;
   fromStartMs: number;
@@ -127,8 +127,28 @@ function renderCenterLaneForNote(lane: number, note: RuntimeNoteSemantic): numbe
   return lane + (rhythmWidthForNote(note) - 1) / 2;
 }
 
+function slideAnchorLaneForNote(
+  lane: number,
+  note: RuntimeNoteSemantic | null,
+  mode: "incoming" | "outgoing",
+): number {
+  if (!note) {
+    return lane;
+  }
+  if (isDirectionalNote(note)) {
+    const width = Math.max(1, Number.isFinite(note.directionalWidth) ? note.directionalWidth : 1);
+    if (mode === "incoming") {
+      return lane;
+    }
+    return note.baseType === "directional_flick_right"
+      ? lane + width - 1
+      : lane - width + 1;
+  }
+  return renderCenterLaneForNote(lane, note);
+}
+
 function shouldRenderFlickTop(note: RuntimeNoteSemantic): boolean {
-  return note.baseType === "flick" && (note.slideRole === "none" || note.slideRole === "end");
+  return note.baseType === "flick";
 }
 
 function isHoldRenderableSlideNote(note: RuntimeNoteSemantic): boolean {
@@ -475,8 +495,8 @@ export class PixiRenderer {
         slideRhythmWidth,
         fromLane: parent.lane,
         toLane: event.lane,
-        fromRhythmWidth: parent.note ? rhythmWidthForNote(parent.note) : 1,
-        toRhythmWidth: event.note ? rhythmWidthForNote(event.note) : 1,
+        fromAnchorLane: slideAnchorLaneForNote(parent.lane, parent.note, "outgoing"),
+        toAnchorLane: slideAnchorLaneForNote(event.lane, event.note, "incoming"),
         fromHitMs: parent.startMs + travelMs,
         toHitMs: event.startMs + travelMs,
         fromStartMs: parent.startMs,
@@ -1349,17 +1369,17 @@ export class PixiRenderer {
           this.axisHitAt(connection.toHitMs, connection.toTgId, connection.toTgPos),
         )
         : connection.fromLane;
-      const fromCenterLane = connection.fromLane + (Math.max(1, connection.fromRhythmWidth) - 1) / 2;
-      const toRenderLane = connection.toLane + (Math.max(1, connection.toRhythmWidth) - 1) / 2;
+      const fromAnchorLane = connection.fromAnchorLane;
+      const toAnchorLane = connection.toAnchorLane;
       const fromRenderLane = fromPassed
         ? this.interpolateLane(
-          fromCenterLane,
-          toRenderLane,
+          fromAnchorLane,
+          toAnchorLane,
           this.axisNowAt(elapsedMs, connection.fromTgId),
           this.axisHitAt(connection.fromHitMs, connection.fromTgId, connection.fromTgPos),
           this.axisHitAt(connection.toHitMs, connection.toTgId, connection.toTgPos),
         )
-        : fromCenterLane;
+        : fromAnchorLane;
 
       this.drawConnector(
         graphics,
@@ -1367,7 +1387,7 @@ export class PixiRenderer {
         this.laneXAtPercent(fromRenderLane, fromPercent),
         this.laneYAtPercent(fromPercent),
         this.connectorHalfWidthAtPercent(fromPercent, connection.slideRhythmWidth),
-        this.laneXAtPercent(toRenderLane, toPercent),
+        this.laneXAtPercent(toAnchorLane, toPercent),
         this.laneYAtPercent(toPercent),
         this.connectorHalfWidthAtPercent(toPercent, connection.slideRhythmWidth),
         1,
@@ -1693,7 +1713,7 @@ export class PixiRenderer {
     const directionalLeft = this.settings.mirror ? rawDirectionalRight : rawDirectionalLeft;
     const directionalRight = this.settings.mirror ? rawDirectionalLeft : rawDirectionalRight;
     const isDirectional = directionalLeft || directionalRight;
-    const isFlickHit = note.baseType === "flick" && (note.slideRole === "none" || note.slideRole === "end");
+    const isFlickHit = note.baseType === "flick";
     const isTapLike = !isDirectional && !isFlickHit;
     const directionalWidth = Math.max(1, Math.round(note.directionalWidth));
     const directionalAdvanceScale = directionalWidth / 2;
@@ -2067,9 +2087,7 @@ export class PixiRenderer {
     const nowAxis = this.axisNowAt(elapsedMs, connection.fromTgId);
     const fromAxis = this.axisHitAt(connection.fromHitMs, connection.fromTgId, connection.fromTgPos);
     const toAxis = this.axisHitAt(connection.toHitMs, connection.toTgId, connection.toTgPos);
-    const fromLane = connection.fromLane + (Math.max(1, connection.fromRhythmWidth) - 1) / 2;
-    const toLane = connection.toLane + (Math.max(1, connection.toRhythmWidth) - 1) / 2;
-    return this.interpolateLane(fromLane, toLane, nowAxis, fromAxis, toAxis);
+    return this.interpolateLane(connection.fromAnchorLane, connection.toAnchorLane, nowAxis, fromAxis, toAxis);
   }
 
   private updateHoldParticleEmitters(elapsedMs: number): void {
