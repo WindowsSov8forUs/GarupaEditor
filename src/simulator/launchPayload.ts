@@ -53,7 +53,7 @@ export type SimulatorChartNote = {
   type: SimulatorChartNoteType;
   lane: number;
   beat: number;
-  timingGroup?: number;
+  timingGroup?: string;
   width?: number;
   endBeat?: number;
   endLane?: number;
@@ -62,7 +62,7 @@ export type SimulatorChartNote = {
 export type SimulatorChartSlideChain = {
   id: string;
   noteIds: string[];
-  timingGroup?: number;
+  timingGroup?: string;
 };
 
 export type SimulatorChartBpmEvent = {
@@ -75,7 +75,7 @@ export type SimulatorChartSvEvent = {
   id?: string;
   beat: number;
   value: number;
-  timingGroup?: number;
+  timingGroup?: string;
 };
 
 export type SimulatorChartPayload = {

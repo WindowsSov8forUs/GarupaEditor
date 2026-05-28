@@ -19,6 +19,13 @@ export type StaticBpmVisualLine = {
   bpm: number;
 };
 
+export type StaticSvVisualLine = {
+  key: string;
+  beat: number;
+  value: number;
+  timingGroup: string;
+};
+
 export type StaticBpmTimelineNode = {
   beat: number;
   bpm: number;
@@ -46,6 +53,7 @@ export type StaticRenderPayload = {
   timelinePixelsPerSecond: number;
   bpmTimeline: StaticBpmTimelineNode[];
   bpmVisualLines: StaticBpmVisualLine[];
+  svVisualLines: StaticSvVisualLine[];
   simultaneousSegments: RenderSimultaneousSegment[];
   connectionSegments: RenderConnectionSegment[];
   noteVisuals: StaticNoteVisual[];

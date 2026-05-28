@@ -22,7 +22,9 @@ export const DIFFICULTY_OPTIONS = ["EASY", "NORMAL", "HARD", "EXPERT", "SPECIAL"
 
 type LaneCount = (typeof LANE_COUNT_OPTIONS)[number];
 type Difficulty = (typeof DIFFICULTY_OPTIONS)[number];
-export type EditorTool = NoteType | "bpm" | "copy" | "paste";
+export type EditorTool = NoteType | "bpm" | "sv" | "copy" | "paste";
+export const GLOBAL_TIMING_GROUP_ID = "#Global";
+export type ChartTimingGroupId = string;
 
 export type NoteType =
   | "single"
@@ -72,7 +74,7 @@ export interface ChartNote {
   type: NoteType;
   lane: number;
   beat: number;
-  timingGroup?: number;
+  timingGroup?: ChartTimingGroupId;
   width?: number;
   endBeat?: number;
   endLane?: number;
@@ -88,8 +90,14 @@ export interface ChartSvEvent {
   id: string;
   beat: number;
   value: number;
-  timingGroup: number;
+  timingGroup: ChartTimingGroupId;
 }
+
+export interface ChartTimingGroup {
+  sv: ChartSvEvent[];
+}
+
+export type ChartTimingGroupMap = Record<ChartTimingGroupId, ChartTimingGroup>;
 
 interface ChartSkinInfo {
   name: string;
@@ -118,7 +126,7 @@ interface ChartJsonSimpleNote {
   beat: number;
   lane: number;
   width: number;
-  timingGroup?: number;
+  timingGroup?: ChartTimingGroupId;
 }
 
 interface ChartJsonDirectionalNote {
@@ -127,7 +135,7 @@ interface ChartJsonDirectionalNote {
   lane: number;
   width: number;
   direction: ChartJsonDirection;
-  timingGroup?: number;
+  timingGroup?: ChartTimingGroupId;
 }
 
 export type ChartJsonSlideConnection = ChartJsonSimpleNote | ChartJsonDirectionalNote;
@@ -135,7 +143,7 @@ export type ChartJsonSlideConnection = ChartJsonSimpleNote | ChartJsonDirectiona
 export interface ChartJsonSlideItem {
   type: "Slide";
   connections: ChartJsonSlideConnection[];
-  timingGroup?: number;
+  timingGroup?: ChartTimingGroupId;
 }
 
 export interface ChartJsonBpmItem {
@@ -148,7 +156,7 @@ export interface ChartJsonSvItem {
   type: "SV";
   beat: number;
   value: number;
-  timingGroup?: number;
+  timingGroup?: ChartTimingGroupId;
 }
 
 export type ChartJsonTopLevelNote = Exclude<ChartJsonSimpleNote, { type: "Hidden" }> | ChartJsonDirectionalNote;
@@ -339,9 +347,82 @@ export function normalizePositiveInt(value: unknown, fallback: number): number {
   return Math.max(1, normalized);
 }
 
-export function normalizeTimingGroup(value: unknown, fallback = 0): number {
-  const normalized = Math.round(toFinite(value, fallback));
-  return Math.max(0, normalized);
+export function normalizeTimingGroup(value: unknown, fallback: ChartTimingGroupId = GLOBAL_TIMING_GROUP_ID): ChartTimingGroupId {
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (trimmed.length === 0 || trimmed === GLOBAL_TIMING_GROUP_ID) {
+      return GLOBAL_TIMING_GROUP_ID;
+    }
+    if (/^#[A-Za-z0-9 -]+$/.test(trimmed)) {
+      return trimmed;
+    }
+    return fallback;
+  }
+  if (typeof value === "number" && Number.isFinite(value)) {
+    const normalized = Math.max(0, Math.round(value));
+    return normalized === 0 ? GLOBAL_TIMING_GROUP_ID : `#${normalized}`;
+  }
+  return fallback;
+}
+
+export function normalizeNoteTimingGroup(value: unknown): ChartTimingGroupId | undefined {
+  const normalized = normalizeTimingGroup(value, GLOBAL_TIMING_GROUP_ID);
+  return normalized === GLOBAL_TIMING_GROUP_ID ? undefined : normalized;
+}
+
+export function ensureTimingGroups(value: unknown): ChartTimingGroupMap {
+  const groups: ChartTimingGroupMap = {
+    [GLOBAL_TIMING_GROUP_ID]: { sv: [] },
+  };
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return groups;
+  }
+  for (const [rawId, rawGroup] of Object.entries(value as Record<string, unknown>)) {
+    const id = normalizeTimingGroup(rawId, GLOBAL_TIMING_GROUP_ID);
+    if (id === GLOBAL_TIMING_GROUP_ID && rawId !== GLOBAL_TIMING_GROUP_ID) {
+      continue;
+    }
+    const rawSv = rawGroup && typeof rawGroup === "object" && !Array.isArray(rawGroup)
+      ? (rawGroup as { sv?: unknown }).sv
+      : [];
+    const sv = Array.isArray(rawSv)
+      ? rawSv
+        .map((event) => normalizeSvEvent({ ...(event as Partial<ChartSvEvent>), timingGroup: id }, 1, 1))
+        .filter((event): event is ChartSvEvent => event !== null)
+      : [];
+    groups[id] = { sv: sortSvEvents(sv) };
+  }
+  if (!groups[GLOBAL_TIMING_GROUP_ID]) {
+    groups[GLOBAL_TIMING_GROUP_ID] = { sv: [] };
+  }
+  return groups;
+}
+
+export function flattenTimingGroups(timingGroups: ChartTimingGroupMap): ChartSvEvent[] {
+  const events: ChartSvEvent[] = [];
+  const groups = ensureTimingGroups(timingGroups);
+  for (const [groupId, group] of Object.entries(groups)) {
+    for (const event of group.sv ?? []) {
+      events.push({ ...event, timingGroup: normalizeTimingGroup(groupId, GLOBAL_TIMING_GROUP_ID) });
+    }
+  }
+  return sortSvEvents(events);
+}
+
+export function buildTimingGroupsFromSvEvents(events: readonly ChartSvEvent[]): ChartTimingGroupMap {
+  const groups: ChartTimingGroupMap = {
+    [GLOBAL_TIMING_GROUP_ID]: { sv: [] },
+  };
+  for (const event of events) {
+    const groupId = normalizeTimingGroup(event.timingGroup, GLOBAL_TIMING_GROUP_ID);
+    const group = groups[groupId] ?? { sv: [] };
+    group.sv.push({ ...event, timingGroup: groupId });
+    groups[groupId] = group;
+  }
+  for (const [groupId, group] of Object.entries(groups)) {
+    groups[groupId] = { sv: sortSvEvents(group.sv) };
+  }
+  return groups;
 }
 
 function normalizeBpmValue(value: unknown, fallback: number): number {
@@ -367,7 +448,7 @@ export function isDirectionalNoteType(type: NoteType): boolean {
 }
 
 export function isNoteTool(tool: EditorTool): tool is NoteType {
-  return tool !== "bpm" && tool !== "copy" && tool !== "paste";
+  return tool !== "bpm" && tool !== "sv" && tool !== "copy" && tool !== "paste";
 }
 
 function normalizeIncomingNoteType(raw: unknown): NoteType {
@@ -435,8 +516,16 @@ export function sortBpmEvents(events: ChartBpmEvent[]): ChartBpmEvent[] {
 
 export function sortSvEvents(events: ChartSvEvent[]): ChartSvEvent[] {
   return [...events].sort((a, b) => {
-    if (a.timingGroup !== b.timingGroup) {
-      return a.timingGroup - b.timingGroup;
+    const leftGroup = normalizeTimingGroup(a.timingGroup, GLOBAL_TIMING_GROUP_ID);
+    const rightGroup = normalizeTimingGroup(b.timingGroup, GLOBAL_TIMING_GROUP_ID);
+    if (leftGroup !== rightGroup) {
+      if (leftGroup === GLOBAL_TIMING_GROUP_ID) {
+        return -1;
+      }
+      if (rightGroup === GLOBAL_TIMING_GROUP_ID) {
+        return 1;
+      }
+      return leftGroup.localeCompare(rightGroup);
     }
     if (!approxEq(a.beat, b.beat)) {
       return a.beat - b.beat;
@@ -471,7 +560,7 @@ export function normalizeSvEvent(
   const rawBeat = toFinite(input.beat, fallbackBeat);
   const beat = Math.max(0, Number(rawBeat.toFixed(6)));
   const value = Number(toFinite(input.value, fallbackValue).toFixed(6));
-  const timingGroup = normalizeTimingGroup(input.timingGroup, 0);
+  const timingGroup = normalizeTimingGroup(input.timingGroup, GLOBAL_TIMING_GROUP_ID);
 
   return {
     id: typeof input.id === "string" && input.id.length > 0 ? input.id : createId(),
@@ -904,15 +993,17 @@ export function normalizeNote(
   const fallbackBeat = toFinite(input.tick, 0) / beatDivision;
   const beatCandidate = toFinite(input.beat, fallbackBeat);
   const beat = Math.max(0, Number(beatCandidate.toFixed(6)));
-  const timingGroup = normalizeTimingGroup(input.timingGroup, 0);
+  const timingGroup = normalizeNoteTimingGroup(input.timingGroup);
 
   const normalized: ChartNote = {
     id: typeof input.id === "string" && input.id.length > 0 ? input.id : createId(),
     type,
     lane,
     beat,
-    timingGroup,
   };
+  if (timingGroup) {
+    normalized.timingGroup = timingGroup;
+  }
 
   if (isDirectionalNoteType(type)) {
     normalized.width = normalizeDirectionalWidth(input.width);
