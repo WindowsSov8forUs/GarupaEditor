@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, type UIEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, type UIEvent } from "react";
 import type { ChartNote, NoteType } from "../../chartCore";
 import { buildSelectionMoveOffsetMap } from "../slideHiddenMoveOffsets";
 
@@ -9,6 +9,11 @@ export function useEditorGeometry(params: any) {
     laneMin,
     bpmTimeline,
     boardHeight,
+    displayAxis,
+    isSvPreviewEnabled,
+    isPlaybackPlaying,
+    svPreviewTimeSecRef,
+    setSvPreviewTimeSec,
     timelinePixelsPerSecond,
     totalDurationSec,
     playfieldRef,
@@ -39,6 +44,7 @@ export function useEditorGeometry(params: any) {
     selectionDragRef,
     playfieldBoardRef,
     bpmEvents,
+    svEvents,
     clearAllSelections,
     setStatusMessage,
     setMultiSelectedNotes,
@@ -47,6 +53,8 @@ export function useEditorGeometry(params: any) {
     clearSelectedNotes,
     setSelectedBpmEventIds,
     setSelectedBpmEventId,
+    setSelectedSvEventIds,
+    setSelectedSvEventId,
     NOTE_SPECS,
     setSelectionDrag,
     selectionMoveRef,
@@ -55,6 +63,7 @@ export function useEditorGeometry(params: any) {
     noteVisualScale,
     onSelectionDragCompleted,
   } = params;
+  const svPreviewScrollFrameRef = useRef<number | null>(null);
 
   const laneToColumn = useCallback((lane: number): number => lane - laneMin, [laneMin]);
 
@@ -64,18 +73,21 @@ export function useEditorGeometry(params: any) {
   );
 
   const timeToY = useCallback(
-    (timeSec: number): number => boardHeight - timeSec * timelinePixelsPerSecond - 1,
-    [boardHeight, timelinePixelsPerSecond],
+    (timeSec: number): number => displayAxis?.timeToY(timeSec) ?? (boardHeight - timeSec * timelinePixelsPerSecond - 1),
+    [boardHeight, displayAxis, timelinePixelsPerSecond],
   );
 
   const yToTime = useCallback(
     (y: number): number => {
-      const rawSec = (boardHeight + ZERO_BEAT_RENDER_OFFSET_PX - y - 1) / timelinePixelsPerSecond;
+      if (displayAxis?.yToTime) {
+        return displayAxis.yToTime(y);
+      }
+      const rawSec = (boardHeight - y - 1) / timelinePixelsPerSecond;
       const zeroBeatOffsetSec = ZERO_BEAT_RENDER_OFFSET_PX / timelinePixelsPerSecond;
       const normalizedSec = rawSec <= zeroBeatOffsetSec ? 0 : rawSec;
       return clamp(normalizedSec, 0, totalDurationSec);
     },
-    [boardHeight, clamp, timelinePixelsPerSecond, totalDurationSec],
+    [boardHeight, clamp, displayAxis, timelinePixelsPerSecond, totalDurationSec],
   );
 
   const beatToY = useCallback((beat: number): number => timeToY(beatToSec(beat)), [beatToSec, timeToY]);
@@ -111,6 +123,41 @@ export function useEditorGeometry(params: any) {
     [timeToInteractionBeat, yToTime],
   );
 
+  const syncSvPreviewTimeFromViewport = useCallback((timeSec: number) => {
+    if (!isSvPreviewEnabled || isPlaybackPlaying || typeof setSvPreviewTimeSec !== "function") {
+      return;
+    }
+    const safeTimeSec = clamp(Number.isFinite(timeSec) ? timeSec : 0, 0, totalDurationSec);
+    const currentTimeSec = Number(svPreviewTimeSecRef?.current ?? 0);
+    if (Math.abs(currentTimeSec - safeTimeSec) <= 1e-4) {
+      return;
+    }
+    if (svPreviewScrollFrameRef.current !== null) {
+      cancelAnimationFrame(svPreviewScrollFrameRef.current);
+    }
+    svPreviewScrollFrameRef.current = requestAnimationFrame(() => {
+      svPreviewScrollFrameRef.current = null;
+      if (svPreviewTimeSecRef) {
+        svPreviewTimeSecRef.current = safeTimeSec;
+      }
+      setSvPreviewTimeSec(safeTimeSec);
+    });
+  }, [
+    clamp,
+    isPlaybackPlaying,
+    isSvPreviewEnabled,
+    setSvPreviewTimeSec,
+    svPreviewTimeSecRef,
+    totalDurationSec,
+  ]);
+
+  useEffect(() => () => {
+    if (svPreviewScrollFrameRef.current !== null) {
+      cancelAnimationFrame(svPreviewScrollFrameRef.current);
+      svPreviewScrollFrameRef.current = null;
+    }
+  }, []);
+
   useEffect(() => {
     if (!isSkinReady) {
       return;
@@ -121,7 +168,8 @@ export function useEditorGeometry(params: any) {
       return;
     }
 
-    const maxScrollTop = Math.max(0, boardHeight - playfield.clientHeight);
+    const effectiveScrollHeight = Math.max(boardHeight, Number(displayAxis?.contentHeight) || 0);
+    const maxScrollTop = Math.max(0, effectiveScrollHeight - playfield.clientHeight);
 
     if (!didInitTimelineScrollRef.current) {
       const zeroBeatScrollTop = clamp(
@@ -131,6 +179,7 @@ export function useEditorGeometry(params: any) {
       );
       playfield.scrollTop = zeroBeatScrollTop;
       viewBottomTimeSecRef.current = 0;
+      syncSvPreviewTimeFromViewport(0);
       didInitTimelineScrollRef.current = true;
       return;
     }
@@ -144,16 +193,20 @@ export function useEditorGeometry(params: any) {
     const nextScrollTop = clamp(nextBottomY - playfield.clientHeight, 0, maxScrollTop);
     playfield.scrollTop = nextScrollTop;
     viewBottomTimeSecRef.current = yToTime(playfield.scrollTop + playfield.clientHeight);
-  }, [beatToSec, boardHeight, clamp, didInitTimelineScrollRef, isSkinReady, playfieldRef, timeToY, totalDurationSec, viewBottomTimeSecRef, yToTime]);
+    syncSvPreviewTimeFromViewport(viewBottomTimeSecRef.current);
+  }, [beatToSec, boardHeight, clamp, didInitTimelineScrollRef, displayAxis, isSkinReady, playfieldRef, syncSvPreviewTimeFromViewport, timeToY, totalDurationSec, viewBottomTimeSecRef, yToTime]);
 
   const handlePlayfieldScroll = useCallback((event: UIEvent<HTMLDivElement>) => {
     const playfield = event.currentTarget;
-    const maxScrollTop = Math.max(0, boardHeight - playfield.clientHeight);
+    const effectiveScrollHeight = Math.max(boardHeight, Number(displayAxis?.contentHeight) || 0);
+    const maxScrollTop = Math.max(0, effectiveScrollHeight - playfield.clientHeight);
     if (playfield.scrollTop > maxScrollTop) {
       playfield.scrollTop = maxScrollTop;
     }
-    viewBottomTimeSecRef.current = yToTime(playfield.scrollTop + playfield.clientHeight);
-  }, [boardHeight, viewBottomTimeSecRef, yToTime]);
+    const bottomTimeSec = yToTime(playfield.scrollTop + playfield.clientHeight);
+    viewBottomTimeSecRef.current = bottomTimeSec;
+    syncSvPreviewTimeFromViewport(bottomTimeSec);
+  }, [boardHeight, displayAxis, syncSvPreviewTimeFromViewport, viewBottomTimeSecRef, yToTime]);
 
   const getNoteSpanLanes = useCallback((note: Pick<ChartNote, "type" | "lane" | "width">): number => {
     if (isDirectionalNoteType(note.type)) {
@@ -447,6 +500,7 @@ export function useEditorGeometry(params: any) {
       const centerX = (left + right) / 2;
       const centerY = (top + bottom) / 2;
       const includeBpm = left <= 0 && right >= boardWidth;
+      const includeSv = includeBpm;
 
       const hitNotes: ChartNote[] = [];
       let picked: ChartNote | null = null;
@@ -490,8 +544,16 @@ export function useEditorGeometry(params: any) {
             })
             .map((event: any) => event.id)
         : [];
+      const hitSvIds = includeSv
+        ? (svEvents ?? [])
+            .filter((event: any) => {
+              const y = beatToY(event.beat);
+              return y >= top && y <= bottom;
+            })
+            .map((event: any) => event.id)
+        : [];
 
-      if (hitNotes.length === 0 && hitBpmIds.length === 0) {
+      if (hitNotes.length === 0 && hitBpmIds.length === 0 && hitSvIds.length === 0) {
         clearAllSelections();
         setStatusMessage("框选未命中对象。");
         return;
@@ -509,6 +571,7 @@ export function useEditorGeometry(params: any) {
       }
 
       setSelectedBpmEventIds(hitBpmIds);
+      setSelectedSvEventIds(hitSvIds);
       const bpmById = new Map<string, { beat: number }>();
       for (const event of bpmEvents as any[]) {
         if (!event || typeof event.id !== "string") {
@@ -538,9 +601,38 @@ export function useEditorGeometry(params: any) {
         return selectedId;
       }, null);
       setSelectedBpmEventId(primaryBpmId);
+      const svById = new Map<string, { beat: number }>();
+      for (const event of svEvents ?? []) {
+        if (!event || typeof event.id !== "string") {
+          continue;
+        }
+        const beat = Number(event.beat);
+        if (!Number.isFinite(beat)) {
+          continue;
+        }
+        svById.set(event.id, { beat });
+      }
+      const primarySvId = hitSvIds.reduce((selectedId: string | null, id: string) => {
+        if (selectedId === null) {
+          return id;
+        }
+        const selectedEvent = svById.get(selectedId);
+        const currentEvent = svById.get(id);
+        if (!selectedEvent) {
+          return id;
+        }
+        if (!currentEvent) {
+          return selectedId;
+        }
+        if (currentEvent.beat > selectedEvent.beat) {
+          return id;
+        }
+        return selectedId;
+      }, null);
+      setSelectedSvEventId(primarySvId);
 
-      if (hitNotes.length > 0 && hitBpmIds.length > 0) {
-        setStatusMessage(`框选选中 ${hitNotes.length} 个音符，${hitBpmIds.length} 条 BPM 线。`);
+      if (hitNotes.length > 0 && (hitBpmIds.length > 0 || hitSvIds.length > 0)) {
+        setStatusMessage(`框选选中 ${hitNotes.length} 个音符、${hitBpmIds.length} 条 BPM 线、${hitSvIds.length} 条 SV 线。`);
       } else if (hitNotes.length > 0 && picked) {
         setStatusMessage(
           hitNotes.length > 1
@@ -548,13 +640,14 @@ export function useEditorGeometry(params: any) {
             : `框选选中 ${NOTE_SPECS[picked.type].label}。`,
         );
       } else {
-        setStatusMessage(`框选选中 ${hitBpmIds.length} 条 BPM 线。`);
+        setStatusMessage(`框选选中 ${hitBpmIds.length} 条 BPM 线、${hitSvIds.length} 条 SV 线。`);
       }
 
       if (typeof onSelectionDragCompleted === "function") {
         onSelectionDragCompleted({
           noteIds: hitNotes.map((note) => note.id),
           bpmIds: hitBpmIds,
+          svIds: hitSvIds,
           primaryNoteId: picked?.id ?? null,
         });
       }
@@ -565,6 +658,7 @@ export function useEditorGeometry(params: any) {
       beatToY,
       boardWidth,
       bpmEvents,
+      svEvents,
       clearAllSelections,
       clearSelectedNotes,
       getNoteHitboxWidth,
@@ -576,6 +670,8 @@ export function useEditorGeometry(params: any) {
       setMultiSelectedNotes,
       setSelectedBpmEventId,
       setSelectedBpmEventIds,
+      setSelectedSvEventId,
+      setSelectedSvEventIds,
       setSelectionDrag,
       setStatusMessage,
       setToolLane,

@@ -16,7 +16,7 @@ import { DownloadProgressModal } from "../components/DownloadProgressModal";
 import { OverlayDialogModal, type OverlayDialogState } from "../components/OverlayDialogModal";
 import { StepperIcon } from "../components/StepperIcon";
 import type { RenderConnectionSegment, RenderSimultaneousSegment } from "./hooks/useEditorRenderModel";
-import type { StaticBpmVisualLine, StaticNoteVisual, StaticRenderPayload } from "./staticRenderTypes";
+import type { StaticBpmVisualLine, StaticNoteVisual, StaticRenderPayload, StaticSvVisualLine } from "./staticRenderTypes";
 
 const GRID_COLOR = "rgb(26, 51, 59)";
 const GRID_BEAT_COLOR = "rgb(0, 166, 166)";
@@ -592,6 +592,29 @@ function drawSegmentFrame(args: {
     context.lineTo(windowWidth, y);
     context.stroke();
     context.fillText(`BPM ${line.bpm.toFixed(2)}`, bpmLabelX, y - 6);
+  }
+  context.restore();
+
+  context.save();
+  context.lineWidth = 1;
+  context.font = "12px 'TTShinGoM', 'GB18030', sans-serif";
+  context.textAlign = "left";
+  context.textBaseline = "alphabetic";
+  const svLabelX = Math.min(windowWidth - 18, boardXOffset + payload.boardWidth + 12);
+  for (const line of (payload.svVisualLines ?? []) as StaticSvVisualLine[]) {
+    const yWorld = beatToY(payload, line.beat);
+    if (yWorld < segmentTop - 24 || yWorld > segmentBottom + 24) {
+      continue;
+    }
+    const y = toLocalY(yWorld);
+    const isNonGlobal = line.timingGroup !== "#Global";
+    context.strokeStyle = isNonGlobal ? "rgb(87, 150, 255)" : "rgb(42, 188, 116)";
+    context.fillStyle = isNonGlobal ? "rgb(87, 150, 255)" : "rgb(42, 188, 116)";
+    context.beginPath();
+    context.moveTo(0, y);
+    context.lineTo(windowWidth, y);
+    context.stroke();
+    context.fillText(`×${line.value.toFixed(2)}`, svLabelX, y + 13);
   }
   context.restore();
 

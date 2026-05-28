@@ -3,6 +3,7 @@ import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { writeText as writeClipboardText } from "@tauri-apps/plugin-clipboard-manager";
 import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import {
+  GLOBAL_TIMING_GROUP_ID,
   type ChartBpmEvent,
   type ChartJson,
   type ChartJsonBpmItem,
@@ -14,6 +15,7 @@ import {
   type ChartMetadata,
   type ChartNote,
   type ChartSvEvent,
+  normalizeNoteTimingGroup,
   type NoteType,
 } from "../../chartCore";
 import {
@@ -70,7 +72,7 @@ type ShiftedBpmItem = {
 type ShiftedSvItem = {
   beat: number;
   value: number;
-  timingGroup: number;
+  timingGroup: string;
   sourceIndex: number;
 };
 
@@ -200,6 +202,8 @@ export function useEditorIoAndShortcuts(params: any) {
     selectedNoteIds,
     selectedBpmEventIds,
     selectedBpmEventId,
+    selectedSvEventIds,
+    selectedSvEventId,
     deleteCurrentSelection,
     NOTE_TYPES,
     setTool,
@@ -225,7 +229,11 @@ export function useEditorIoAndShortcuts(params: any) {
   const toLaneValue = (value: unknown): number => Number(toFinite(value, 0).toFixed(6));
   const toBpmValue = (value: unknown): number => Number(toFinite(value, metadata.bpm).toFixed(6));
   const toSvValue = (value: unknown): number => Number(toFinite(value, 1).toFixed(6));
-  const toTimingGroupValue = (value: unknown): number => normalizeTimingGroup(value, 0);
+  const toTimingGroupValue = (value: unknown): string => normalizeTimingGroup(value, GLOBAL_TIMING_GROUP_ID);
+  const toOptionalTimingGroupValue = (value: unknown): string | undefined => {
+    const normalized = toTimingGroupValue(value);
+    return normalized === GLOBAL_TIMING_GROUP_ID ? undefined : normalized;
+  };
   const toRhythmWidthValue = (value: unknown): number => Math.max(1, Math.round(toFinite(value, 1)));
   const toDirectionalWidthValue = (value: unknown): number => Math.max(1, Math.round(toFinite(value, 1)));
 
@@ -261,12 +269,11 @@ export function useEditorIoAndShortcuts(params: any) {
     return Number(parseFiniteNumber(value, label).toFixed(6));
   };
 
-  const parseTimingGroupNumber = (value: unknown, label: string, fallback = 0): number => {
+  const parseTimingGroupId = (value: unknown, _label: string, fallback = GLOBAL_TIMING_GROUP_ID): string => {
     if (value === undefined) {
       return fallback;
     }
-    const numeric = parseFiniteNumber(value, label);
-    return normalizeTimingGroup(numeric, fallback);
+    return normalizeTimingGroup(value, fallback);
   };
 
   const shiftAndClampBeat = (beat: number, offset: number): number => {
@@ -291,7 +298,7 @@ export function useEditorIoAndShortcuts(params: any) {
         beat: toBeatValue(note.beat),
         lane: toLaneValue(note.lane),
         width: toRhythmWidthValue(note.width),
-        timingGroup: toTimingGroupValue(note.timingGroup),
+        timingGroup: toOptionalTimingGroupValue(note.timingGroup),
       };
     }
     if (note.type === "flick") {
@@ -300,7 +307,7 @@ export function useEditorIoAndShortcuts(params: any) {
         beat: toBeatValue(note.beat),
         lane: toLaneValue(note.lane),
         width: toRhythmWidthValue(note.width),
-        timingGroup: toTimingGroupValue(note.timingGroup),
+        timingGroup: toOptionalTimingGroupValue(note.timingGroup),
       };
     }
     if (note.type === "skill") {
@@ -309,7 +316,7 @@ export function useEditorIoAndShortcuts(params: any) {
         beat: toBeatValue(note.beat),
         lane: toLaneValue(note.lane),
         width: toRhythmWidthValue(note.width),
-        timingGroup: toTimingGroupValue(note.timingGroup),
+        timingGroup: toOptionalTimingGroupValue(note.timingGroup),
       };
     }
     const direction = mapDirectionFromInternalType(note.type);
@@ -320,7 +327,7 @@ export function useEditorIoAndShortcuts(params: any) {
         lane: toLaneValue(note.lane),
         width: toDirectionalWidthValue(note.width),
         direction,
-        timingGroup: toTimingGroupValue(note.timingGroup),
+        timingGroup: toOptionalTimingGroupValue(note.timingGroup),
       };
     }
     return null;
@@ -333,7 +340,7 @@ export function useEditorIoAndShortcuts(params: any) {
         beat: toBeatValue(note.beat),
         lane: toLaneValue(note.lane),
         width: toRhythmWidthValue(note.width),
-        timingGroup: toTimingGroupValue(note.timingGroup),
+        timingGroup: toOptionalTimingGroupValue(note.timingGroup),
       };
     }
     const topLevel = mapTopLevelNoteToJson(note);
@@ -343,7 +350,7 @@ export function useEditorIoAndShortcuts(params: any) {
   const buildExportItemKey = (
     item: ChartJsonSlideConnection | ChartJsonTopLevelNote,
   ): string => {
-    const timingGroup = toTimingGroupValue((item as { timingGroup?: number }).timingGroup);
+    const timingGroup = toTimingGroupValue((item as { timingGroup?: string }).timingGroup);
     if (item.type === "Directional") {
       return buildJsonNoteKey("Directional", item.beat, item.lane, item.width, item.direction, timingGroup);
     }
@@ -356,7 +363,7 @@ export function useEditorIoAndShortcuts(params: any) {
     lane: number,
     width?: number,
     direction?: ChartJsonDirection,
-    timingGroup = 0,
+    timingGroup = GLOBAL_TIMING_GROUP_ID,
   ): string => {
     const normalizedBeat = Number(beat.toFixed(6));
     if (type === "Directional") {
@@ -369,7 +376,7 @@ export function useEditorIoAndShortcuts(params: any) {
     source: Record<string, unknown>,
     label: string,
     allowHidden: boolean,
-    fallbackTimingGroup = 0,
+    fallbackTimingGroup = GLOBAL_TIMING_GROUP_ID,
   ): ParsedJsonNote => {
     const rawType = source.type;
     if (typeof rawType !== "string") {
@@ -380,7 +387,7 @@ export function useEditorIoAndShortcuts(params: any) {
       const beat = parseBeatNumber(source.beat, `${label}.beat`);
       const lane = parseLaneNumber(source.lane, `${label}.lane`);
       const width = parsePositiveIntegerNumber(source.width, `${label}.width`);
-      const timingGroup = parseTimingGroupNumber(source.timingGroup, `${label}.timingGroup`, fallbackTimingGroup);
+      const timingGroup = parseTimingGroupId(source.timingGroup, `${label}.timingGroup`, fallbackTimingGroup);
       const rawDirection = source.direction;
       if (rawDirection !== "Left" && rawDirection !== "Right") {
         throw new Error(`${label}.direction must be Left or Right`);
@@ -393,7 +400,7 @@ export function useEditorIoAndShortcuts(params: any) {
           beat,
           lane,
           width,
-          timingGroup,
+          timingGroup: normalizeNoteTimingGroup(timingGroup),
         },
         key: buildJsonNoteKey("Directional", beat, lane, width, rawDirection, timingGroup),
       };
@@ -409,7 +416,7 @@ export function useEditorIoAndShortcuts(params: any) {
 
     const beat = parseBeatNumber(source.beat, `${label}.beat`);
     const lane = parseLaneNumber(source.lane, `${label}.lane`);
-    const timingGroup = parseTimingGroupNumber(source.timingGroup, `${label}.timingGroup`, fallbackTimingGroup);
+    const timingGroup = parseTimingGroupId(source.timingGroup, `${label}.timingGroup`, fallbackTimingGroup);
     const width = source.width === undefined
       ? 1
       : parsePositiveIntegerNumber(source.width, `${label}.width`);
@@ -430,7 +437,7 @@ export function useEditorIoAndShortcuts(params: any) {
           beat,
           lane,
           width,
-          timingGroup,
+          timingGroup: normalizeNoteTimingGroup(timingGroup),
         },
       key: buildJsonNoteKey(rawType, beat, lane, width, undefined, timingGroup),
     };
@@ -468,7 +475,7 @@ export function useEditorIoAndShortcuts(params: any) {
 
     const slideConnectionKeySet = new Set<string>();
     const slideItems: ChartJsonSlideItem[] = normalizedSlideChains
-      .map((chain: { noteIds: string[]; timingGroup?: number }): ChartJsonSlideItem | null => {
+      .map((chain: { noteIds: string[]; timingGroup?: string }): ChartJsonSlideItem | null => {
         const chainTimingGroup = toTimingGroupValue(chain.timingGroup);
         const connections: ChartJsonSlideConnection[] = [];
         for (const id of chain.noteIds) {
@@ -482,7 +489,7 @@ export function useEditorIoAndShortcuts(params: any) {
           }
           connections.push({
             ...mapped,
-            timingGroup: chainTimingGroup,
+            timingGroup: toOptionalTimingGroupValue(chainTimingGroup),
           });
         }
 
@@ -499,7 +506,7 @@ export function useEditorIoAndShortcuts(params: any) {
         return {
           type: "Slide" as const,
           connections,
-          timingGroup: chainTimingGroup,
+          timingGroup: toOptionalTimingGroupValue(chainTimingGroup),
         };
       })
       .filter((item: ChartJsonSlideItem | null): item is ChartJsonSlideItem => item !== null);
@@ -818,7 +825,7 @@ export function useEditorIoAndShortcuts(params: any) {
 
       if (
         event.key === "Delete" &&
-        (selectedNoteIds.length > 0 || selectedBpmEventIds.length > 0 || selectedBpmEventId !== null)
+        (selectedNoteIds.length > 0 || selectedBpmEventIds.length > 0 || selectedBpmEventId !== null || selectedSvEventIds.length > 0 || selectedSvEventId !== null)
       ) {
         event.preventDefault();
         deleteCurrentSelection();
@@ -1008,7 +1015,7 @@ export function useEditorIoAndShortcuts(params: any) {
 
     const topLevelParsedNotes: ParsedJsonNote[] = [];
     const slideParsedNotes: ParsedJsonNote[] = [];
-    const nextSlideChains: Array<{ id: string; noteIds: string[]; timingGroup?: number }> = [];
+    const nextSlideChains: Array<{ id: string; noteIds: string[]; timingGroup?: string }> = [];
     const rawBpmItems: ShiftedBpmItem[] = [];
     const rawSvItems: ShiftedSvItem[] = [];
 
@@ -1032,7 +1039,7 @@ export function useEditorIoAndShortcuts(params: any) {
       if (itemType === "SV") {
         const beat = parseBeatNumber(rawItem.beat, `item[${itemIndex}].beat`);
         const value = Number(parseFiniteNumber(rawItem.value, `item[${itemIndex}].value`).toFixed(6));
-        const timingGroup = parseTimingGroupNumber(rawItem.timingGroup, `item[${itemIndex}].timingGroup`, 0);
+        const timingGroup = parseTimingGroupId(rawItem.timingGroup, `item[${itemIndex}].timingGroup`, GLOBAL_TIMING_GROUP_ID);
         rawSvItems.push({ beat, value, timingGroup, sourceIndex: itemIndex });
         return;
       }
@@ -1046,7 +1053,7 @@ export function useEditorIoAndShortcuts(params: any) {
           throw new Error(`item[${itemIndex}].connections cannot be empty`);
         }
 
-        const chainTimingGroup = parseTimingGroupNumber(rawItem.timingGroup, `item[${itemIndex}].timingGroup`, 0);
+        const chainTimingGroup = parseTimingGroupId(rawItem.timingGroup, `item[${itemIndex}].timingGroup`, GLOBAL_TIMING_GROUP_ID);
         const noteIds: string[] = [];
         rawConnections.forEach((rawConnection, connectionIndex) => {
           if (!isRecord(rawConnection)) {
@@ -1058,7 +1065,7 @@ export function useEditorIoAndShortcuts(params: any) {
             true,
             chainTimingGroup,
           );
-          parsedConnection.note.timingGroup = chainTimingGroup;
+          parsedConnection.note.timingGroup = normalizeNoteTimingGroup(chainTimingGroup);
           slideParsedNotes.push(parsedConnection);
           noteIds.push(parsedConnection.note.id);
         });

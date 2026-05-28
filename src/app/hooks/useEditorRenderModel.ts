@@ -34,6 +34,7 @@ export type RenderConnectionSegment = {
   maxY: number;
   textureKind: "long" | "slide";
   opacity: number;
+  muted?: boolean;
 };
 
 export type RenderSimultaneousSegment = {
@@ -73,12 +74,14 @@ export function useEditorRenderModel(params: any) {
     slideBuildState,
     noteById,
     getRenderedNotePlacement,
+    getNoteDisplayY,
     getSlideAnchorLane,
     laneToColumn,
     getNoteSpanLanes,
     LANE_WIDTH,
     longLineOpacityScale,
     isSimultaneousLineEnabled,
+    isSlideChainMuted,
   } = params;
 
   const timings = useMemo<RenderTimingSegment[]>(() => {
@@ -129,12 +132,12 @@ export function useEditorRenderModel(params: any) {
         lane: placement.lane,
         beat: placement.beat,
         x: (laneToColumn(startLane) + spanLanes / 2) * LANE_WIDTH,
-        y: beatToY(placement.beat),
+        y: getNoteDisplayY?.(note, placement.beat) ?? beatToY(placement.beat),
         spanLanes,
       });
     }
     return sprites;
-  }, [LANE_WIDTH, beatToY, getNoteSpanLanes, getRenderedNotePlacement, laneToColumn, notes]);
+  }, [LANE_WIDTH, beatToY, getNoteDisplayY, getNoteSpanLanes, getRenderedNotePlacement, laneToColumn, notes]);
 
   const simultaneousSegments = useMemo<RenderSimultaneousSegment[]>(() => {
     if (!isSimultaneousLineEnabled) {
@@ -171,7 +174,7 @@ export function useEditorRenderModel(params: any) {
         return {
           id: note.id,
           beat: placement.beat,
-          y: normalizeCoord(beatToY(placement.beat)),
+          y: normalizeCoord(getNoteDisplayY?.(note, placement.beat) ?? beatToY(placement.beat)),
           sortLane: startLane,
           leftX,
           rightX,
@@ -242,6 +245,7 @@ export function useEditorRenderModel(params: any) {
     beatToY,
     effectiveSlideChains,
     getNoteSpanLanes,
+    getNoteDisplayY,
     getRenderedNotePlacement,
     isSimultaneousLineEnabled,
     laneToColumn,
@@ -271,6 +275,7 @@ export function useEditorRenderModel(params: any) {
       const isAllHiddenChain = chainNotes.every((note: ChartNote) => note.type === "hidden");
       const textureKind: "long" | "slide" = hasHiddenNote ? "slide" : "long";
       const opacity = (isAllHiddenChain ? 0.5 : 1) * longLineOpacityScale;
+      const muted = Boolean(isSlideChainMuted?.(chain));
       const segmentGroupByIndex = new Map<number, string>();
       const segmentGroupRangeById = new Map<string, { start: number; end: number }>();
       const visibleIndexes = chainNotes
@@ -323,7 +328,7 @@ export function useEditorRenderModel(params: any) {
         return {
           incomingX: normalizeCoord((laneToColumn(incomingAnchorLane) + 0.5) * LANE_WIDTH),
           outgoingX: normalizeCoord((laneToColumn(outgoingAnchorLane) + 0.5) * LANE_WIDTH),
-          y: normalizeCoord(beatToY(placement.beat)),
+          y: normalizeCoord(getNoteDisplayY?.(note, placement.beat) ?? beatToY(placement.beat)),
           spanLanes,
           directional: isDirectionalType(note.type),
         };
@@ -368,6 +373,7 @@ export function useEditorRenderModel(params: any) {
           maxY,
           textureKind,
           opacity,
+          muted,
         });
       }
     }
@@ -378,8 +384,10 @@ export function useEditorRenderModel(params: any) {
     beatToY,
     effectiveSlideChains,
     getNoteSpanLanes,
+    getNoteDisplayY,
     getRenderedNotePlacement,
     getSlideAnchorLane,
+    isSlideChainMuted,
     laneToColumn,
     noteById,
     slideBuildState,

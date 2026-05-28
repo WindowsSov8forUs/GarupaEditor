@@ -1,6 +1,11 @@
 ﻿import { invoke } from "@tauri-apps/api/core";
 import { useEffect, useRef, useState } from "react";
-import type {
+import {
+  GLOBAL_TIMING_GROUP_ID,
+  buildTimingGroupsFromSvEvents,
+  ensureTimingGroups,
+  flattenTimingGroups,
+  type ChartTimingGroupMap,
   ChartBpmEvent,
   ChartMetadata,
   ChartNote,
@@ -45,6 +50,7 @@ type ChartSnapshotV1 = {
   notes: Array<Partial<ChartNote>>;
   slideChains: Array<Partial<SlideChain>>;
   bpmEvents: Array<Partial<ChartBpmEvent>>;
+  timingGroups?: ChartTimingGroupMap;
   svEvents?: Array<Partial<ChartSvEvent>>;
   audioFileName?: string;
   audioDurationSec?: number;
@@ -152,7 +158,7 @@ export function useEditorSessionCache(params: any) {
     notes,
     slideChains,
     bpmEvents,
-    svEvents,
+    timingGroups,
     audioFileName,
     audioDurationSec,
     audioObjectUrl,
@@ -187,7 +193,7 @@ export function useEditorSessionCache(params: any) {
     setNotes,
     setSlideChains,
     setBpmEvents,
-    setSvEvents,
+    setTimingGroups,
     setToolBpmValue,
     setAudioFileName,
     setAudioDurationSec,
@@ -386,7 +392,7 @@ export function useEditorSessionCache(params: any) {
               return {
                 id: chainId,
                 noteIds,
-                timingGroup: normalizeTimingGroup(item.timingGroup, 0),
+                timingGroup: normalizeTimingGroup(item.timingGroup, GLOBAL_TIMING_GROUP_ID),
               } as SlideChain;
             })
             .filter((item: SlideChain | null): item is SlideChain => item !== null);
@@ -443,7 +449,7 @@ export function useEditorSessionCache(params: any) {
             const normalized = normalizeSvEvent(
               {
                 ...(rawItem as Partial<ChartSvEvent>),
-                timingGroup: normalizeTimingGroup(rawItem.timingGroup, 0),
+                timingGroup: normalizeTimingGroup(rawItem.timingGroup, GLOBAL_TIMING_GROUP_ID),
               },
               nextBeatDivision,
               1,
@@ -455,6 +461,9 @@ export function useEditorSessionCache(params: any) {
             dedupedSvByGroupBeat.set(key, normalized);
           }
           const sortedNormalizedSvEvents = sortSvEvents(Array.from(dedupedSvByGroupBeat.values()));
+          const restoredTimingGroups = isRecord(snapshot.timingGroups)
+            ? ensureTimingGroups(snapshot.timingGroups)
+            : buildTimingGroupsFromSvEvents(sortedNormalizedSvEvents);
 
           setSettings(nextSettings);
           setMetadata(nextMetadata);
@@ -464,7 +473,7 @@ export function useEditorSessionCache(params: any) {
           setNotes(restoredNotes);
           setSlideChains(nextSlideChains);
           setBpmEvents(sortedNormalizedBpmEvents);
-          setSvEvents(sortedNormalizedSvEvents);
+          setTimingGroups(restoredTimingGroups);
           setToolBpmValue(nextMetadata.bpm);
 
           const restoredAudioDuration = Number(snapshot.audioDurationSec);
@@ -537,7 +546,7 @@ export function useEditorSessionCache(params: any) {
             notes: nextNotes,
             slideChains: nextSlideChains,
             bpmEvents: sortedNormalizedBpmEvents,
-            svEvents: sortedNormalizedSvEvents,
+            timingGroups: restoredTimingGroups,
             audioFileName: restoredAudioFileName,
             audioDurationSec: safeAudioDuration,
           } as Omit<ChartSnapshotV1, "savedAt">);
@@ -657,7 +666,7 @@ export function useEditorSessionCache(params: any) {
             notes,
             slideChains,
             bpmEvents,
-            svEvents,
+            timingGroups: ensureTimingGroups(timingGroups),
             audioFileName,
             audioDurationSec: safeAudioDuration,
           };
@@ -671,7 +680,7 @@ export function useEditorSessionCache(params: any) {
               notes.length > 0 ||
               slideChains.length > 0 ||
               bpmEvents.length > 0 ||
-              svEvents.length > 0;
+              flattenTimingGroups(timingGroups).length > 0;
             const hasAnyMediaData =
               (typeof audioObjectUrl === "string" && audioObjectUrl.length > 0)
               || (typeof audioFileName === "string" && audioFileName.trim().length > 0)
@@ -793,7 +802,7 @@ export function useEditorSessionCache(params: any) {
     audioFileName,
     audioObjectUrl,
     bpmEvents,
-    svEvents,
+    timingGroups,
     didRestoreAttemptFinish,
     metadata,
     notes,

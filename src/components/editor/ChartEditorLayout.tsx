@@ -87,6 +87,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     tool,
     applyToolFromPalette,
     applyBpmToolFromPalette,
+    applySvToolFromPalette,
     applyCopyToolFromPalette,
     applyPasteToolFromPalette,
     onTogglePlayTool,
@@ -108,6 +109,21 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     stepPlaybackSpeed,
     stepPlaybackVolume,
     stepPlaybackPosition,
+    timingGroupIds,
+    isTimingGroupPanelOpen,
+    setIsTimingGroupPanelOpen,
+    selectedTimingGroupId,
+    setSelectedTimingGroupId,
+    isTimingGroupModeActive,
+    setIsTimingGroupModeEnabled,
+    createTimingGroup,
+    renameTimingGroup,
+    deleteTimingGroup,
+    showTimingGroupSetting,
+    isTimingGroupSettingLocked,
+    selectedObjectTimingGroupId,
+    setSelectedObjectTimingGroupId,
+    isNoteOutsideActiveTimingGroup,
     getPaletteSpriteLayers,
     getPaletteSpriteAspectRatio,
     renderPaletteSpriteStack,
@@ -142,6 +158,13 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     setBpmInputText,
     bpmInputEditingRef,
     commitBpmInput,
+    svInputText,
+    setSvInputText,
+    svInputEditingRef,
+    commitSvInput,
+    showSvSetting,
+    isSvPreviewEnabled,
+    setIsSvPreviewEnabled,
     showLaneSetting,
     isLaneSettingLocked,
     stepActiveLane,
@@ -196,8 +219,10 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     handleBoardMouseLeave,
     handleBoardContextMenu,
     boardHeight,
+    scrollContentHeight,
     renderBackendMode,
     renderBpmLines,
+    renderSvLines,
     cursorPreview,
     cursorPreviewRef,
     resolveDirectionalWidenPreviewAt,
@@ -221,6 +246,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     getNoteSpanLanes,
     LANE_WIDTH,
     getRenderedNotePlacement,
+    getNoteDisplayY,
     laneToColumn,
     formatBeat,
     selectedNoteIdSet,
@@ -393,14 +419,17 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
 
   const isColorAssistEnabled = appOptionSettings?.colorAssistEnabled === true;
   const isCanvasRenderBackend = renderBackendMode === "canvas";
+  const effectiveScrollContentHeight = Math.max(boardHeight, Number(scrollContentHeight) || 0);
   const canvasBpmCursorPreviewRef = useRef<HTMLDivElement | null>(null);
   const canvasBpmSnapPreviewRef = useRef<HTMLDivElement | null>(null);
+  const canvasSvCursorPreviewRef = useRef<HTMLDivElement | null>(null);
+  const canvasSvSnapPreviewRef = useRef<HTMLDivElement | null>(null);
   const canvasNoteCursorPreviewRef = useRef<HTMLDivElement | null>(null);
   const canvasNoteSnapPreviewRef = useRef<HTMLDivElement | null>(null);
   const canvasNoteReplacePreviewRef = useRef<HTMLDivElement | null>(null);
   const canvasDirectionalWidenPreviewRef = useRef<HTMLDivElement | null>(null);
 
-  const isPlacementNoteTool = isToolArmed && tool !== "bpm" && tool !== "copy" && tool !== "paste";
+  const isPlacementNoteTool = isToolArmed && tool !== "bpm" && tool !== "sv" && tool !== "copy" && tool !== "paste";
   const isPasteToolSelected = isToolArmed && tool === "paste";
   const canvasPreviewType = isPlacementNoteTool ? tool : null;
   const canvasPreviewRhythmWidth = canvasPreviewType && isHabahiroEnabled && isRhythmWidthEditableType(canvasPreviewType)
@@ -521,6 +550,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
           label: string;
         }>,
         bpmYPositions: [] as number[],
+        svYPositions: [] as number[],
       };
     }
 
@@ -538,6 +568,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
           label: string;
         }>,
         bpmYPositions: [] as number[],
+        svYPositions: [] as number[],
       };
     }
 
@@ -577,7 +608,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         key: `${source.id}-${index}`,
         type: source.type,
         x: (laneToColumn(directionalStartLane) + spanLanes / 2) * LANE_WIDTH,
-        y: beatToY(adjustedBeat),
+        y: getNoteDisplayY?.(adjustedNote, adjustedBeat) ?? beatToY(adjustedBeat),
         spanLanes,
         isDirectional,
         layers,
@@ -588,9 +619,13 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     const bpmYPositions = copiedChartPayload.bpmEvents
       .map((event: any) => beatToY(Math.max(0, Number((event.beat + beatDelta).toFixed(6)))))
       .filter((value: number) => Number.isFinite(value));
+    const svYPositions = copiedChartPayload.svEvents
+      .map((event: any) => beatToY(Math.max(0, Number((event.beat + beatDelta).toFixed(6)))))
+      .filter((value: number) => Number.isFinite(value));
     return {
       notes: previewNotes,
       bpmYPositions,
+      svYPositions,
     };
   }, [
     LANE_WIDTH,
@@ -598,6 +633,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     beatToY,
     copiedChartPayload,
     cursorPreview,
+    getNoteDisplayY,
     getNoteSpanLanes,
     getSpriteAspectRatio,
     getSpriteLayers,
@@ -610,18 +646,18 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
   ]);
   const [canvasInteractionWindow, setCanvasInteractionWindow] = useState(() => ({
     top: 0,
-    bottom: boardHeight,
+    bottom: effectiveScrollContentHeight,
   }));
   const updateCanvasInteractionWindow = useCallback((scrollTop: number, clientHeight: number) => {
     if (!isCanvasRenderBackend) {
       return;
     }
     const rawTop = Math.max(0, scrollTop - CANVAS_INTERACTION_OVERSCAN_PX);
-    const rawBottom = Math.min(boardHeight, scrollTop + clientHeight + CANVAS_INTERACTION_OVERSCAN_PX);
+    const rawBottom = Math.min(effectiveScrollContentHeight, scrollTop + clientHeight + CANVAS_INTERACTION_OVERSCAN_PX);
     const top = Math.max(0, Math.floor(rawTop / CANVAS_INTERACTION_SNAP_PX) * CANVAS_INTERACTION_SNAP_PX);
     const bottom = Math.max(
       top + 1,
-      Math.min(boardHeight, Math.ceil(rawBottom / CANVAS_INTERACTION_SNAP_PX) * CANVAS_INTERACTION_SNAP_PX),
+      Math.min(effectiveScrollContentHeight, Math.ceil(rawBottom / CANVAS_INTERACTION_SNAP_PX) * CANVAS_INTERACTION_SNAP_PX),
     );
     setCanvasInteractionWindow((previous) => {
       if (Math.abs(previous.top - top) < 1e-6 && Math.abs(previous.bottom - bottom) < 1e-6) {
@@ -629,7 +665,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
       }
       return { top, bottom };
     });
-  }, [boardHeight, isCanvasRenderBackend]);
+  }, [effectiveScrollContentHeight, isCanvasRenderBackend]);
   useEffect(() => {
     if (!isCanvasRenderBackend) {
       return;
@@ -639,7 +675,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
       return;
     }
     updateCanvasInteractionWindow(playfield.scrollTop, playfield.clientHeight);
-  }, [boardHeight, isCanvasRenderBackend, playfieldRef, updateCanvasInteractionWindow]);
+  }, [effectiveScrollContentHeight, isCanvasRenderBackend, playfieldRef, updateCanvasInteractionWindow]);
   const handlePlayfieldScrollInternal = useCallback((event: any) => {
     handlePlayfieldScroll(event);
     updateCanvasInteractionWindow(event.currentTarget.scrollTop, event.currentTarget.clientHeight);
@@ -682,6 +718,8 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     const hideAll = () => {
       hide(canvasBpmCursorPreviewRef.current);
       hide(canvasBpmSnapPreviewRef.current);
+      hide(canvasSvCursorPreviewRef.current);
+      hide(canvasSvSnapPreviewRef.current);
       hide(canvasNoteCursorPreviewRef.current);
       hide(canvasNoteSnapPreviewRef.current);
       hide(canvasNoteReplacePreviewRef.current);
@@ -696,18 +734,24 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         return;
       }
 
-      if (tool === "bpm") {
+      if (tool === "bpm" || tool === "sv") {
         hide(canvasNoteCursorPreviewRef.current);
         hide(canvasNoteSnapPreviewRef.current);
         hide(canvasNoteReplacePreviewRef.current);
         hide(canvasDirectionalWidenPreviewRef.current);
-        show(canvasBpmCursorPreviewRef.current);
-        applyPos(canvasBpmCursorPreviewRef.current, 0, livePreview.y);
+        const cursorRef = tool === "bpm" ? canvasBpmCursorPreviewRef : canvasSvCursorPreviewRef;
+        const snapRef = tool === "bpm" ? canvasBpmSnapPreviewRef : canvasSvSnapPreviewRef;
+        const inactiveCursorRef = tool === "bpm" ? canvasSvCursorPreviewRef : canvasBpmCursorPreviewRef;
+        const inactiveSnapRef = tool === "bpm" ? canvasSvSnapPreviewRef : canvasBpmSnapPreviewRef;
+        hide(inactiveCursorRef.current);
+        hide(inactiveSnapRef.current);
+        show(cursorRef.current);
+        applyPos(cursorRef.current, 0, livePreview.y);
         if (livePreview.snappedBeat !== null) {
-          show(canvasBpmSnapPreviewRef.current);
-          applyPos(canvasBpmSnapPreviewRef.current, 0, beatToY(livePreview.snappedBeat));
+          show(snapRef.current);
+          applyPos(snapRef.current, 0, beatToY(livePreview.snappedBeat));
         } else {
-          hide(canvasBpmSnapPreviewRef.current);
+          hide(snapRef.current);
         }
         rafId = requestAnimationFrame(tick);
         return;
@@ -715,6 +759,8 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
 
       hide(canvasBpmCursorPreviewRef.current);
       hide(canvasBpmSnapPreviewRef.current);
+      hide(canvasSvCursorPreviewRef.current);
+      hide(canvasSvSnapPreviewRef.current);
       if (!canvasPreviewHasSprite) {
         hide(canvasNoteCursorPreviewRef.current);
         hide(canvasNoteSnapPreviewRef.current);
@@ -801,6 +847,8 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
       cancelAnimationFrame(rafId);
       hide(canvasBpmCursorPreviewRef.current);
       hide(canvasBpmSnapPreviewRef.current);
+      hide(canvasSvCursorPreviewRef.current);
+      hide(canvasSvSnapPreviewRef.current);
       hide(canvasNoteCursorPreviewRef.current);
       hide(canvasNoteSnapPreviewRef.current);
       hide(canvasNoteReplacePreviewRef.current);
@@ -849,6 +897,8 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     deleteSelectedNotes,
     clearAllSelections,
     deleteNote,
+    isSvPreviewEnabled,
+    isNoteOutsideActiveTimingGroup,
   };
 
   const handleSharedNoteMouseDown = useCallback((event: ReactMouseEvent<HTMLButtonElement>) => {
@@ -859,6 +909,14 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     }
     const note = runtime.noteById?.get(noteId);
     if (!note) {
+      return;
+    }
+    if (runtime.isNoteOutsideActiveTimingGroup?.(note)) {
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+    if (runtime.isSvPreviewEnabled) {
       return;
     }
     if (runtime.isToolArmed && (runtime.tool === "copy" || runtime.tool === "paste")) {
@@ -904,6 +962,24 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     if (!note) {
       return;
     }
+    if (runtime.isNoteOutsideActiveTimingGroup?.(note)) {
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+    if (runtime.isSvPreviewEnabled) {
+      event.stopPropagation();
+      runtime.setStatusMessage("SV 预览为只读模式，请关闭后再编辑。");
+      if (event.metaKey || event.ctrlKey) {
+        runtime.toggleSelectedNote(note.id);
+        runtime.clearSelectedBpmEvents();
+        runtime.setSelectedBpmEventId(null);
+        return;
+      }
+      runtime.clearAllSelections();
+      runtime.toggleSelectedNote(note.id);
+      return;
+    }
     if (runtime.isToolArmed && (runtime.tool === "copy" || runtime.tool === "paste")) {
       return;
     }
@@ -936,6 +1012,9 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     }
     event.preventDefault();
     event.stopPropagation();
+    if (runtime.isNoteOutsideActiveTimingGroup?.(note)) {
+      return;
+    }
     const activeSlideBuild = runtime.slideBuildRef.current;
     if (activeSlideBuild) {
       if (activeSlideBuild.persistUntilRightClick) {
@@ -964,7 +1043,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         const isDirectional = isDirectionalNoteType(note.type);
         const spanLanes = getNoteSpanLanes(note);
         const { lane: renderLane, beat: renderBeat } = getRenderedNotePlacement(note);
-        const renderY = beatToY(renderBeat);
+        const renderY = getNoteDisplayY?.(note, renderBeat) ?? beatToY(renderBeat);
         if (
           isCanvasRenderBackend
           && (renderY < canvasInteractionWindow.top - 48 || renderY > canvasInteractionWindow.bottom + 48)
@@ -1004,7 +1083,8 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
           : "";
         const isNoteSelected = selectedNoteIdSet.has(note.id)
           || (isSlideBuilding && slideBuildSelectedIdSet.has(note.id));
-        const noteTokenClassName = `note-token note-hitbox has-sprite ${spriteLayers.overlay ? "composite" : ""} ${isNoteSelected ? "selected" : ""} ${isDirectional ? "directional" : ""}`;
+        const isTimingGroupMuted = isNoteOutsideActiveTimingGroup?.(note) === true;
+        const noteTokenClassName = `note-token note-hitbox has-sprite ${spriteLayers.overlay ? "composite" : ""} ${isNoteSelected ? "selected" : ""} ${isDirectional ? "directional" : ""} ${isTimingGroupMuted ? "timing-group-muted" : ""}`;
 
         return (
           <button
@@ -1045,12 +1125,14 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
       formatBeat,
       getNoteSpanLanes,
       getRenderedNotePlacement,
+      getNoteDisplayY,
       getSpriteAspectRatio,
       handleSharedNoteClick,
       handleSharedNoteContextMenu,
       handleSharedNoteMouseDown,
       isCanvasRenderBackend,
       isDirectionalNoteType,
+      isNoteOutsideActiveTimingGroup,
       isSlideBuilding,
       laneToColumn,
       noteVisualScale,
@@ -1118,6 +1200,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
           getSpriteAspectRatio={getPaletteSpriteAspectRatio}
           renderSpriteStack={renderPaletteSpriteStack}
           onSelectBpmTool={applyBpmToolFromPalette}
+          onSelectSvTool={applySvToolFromPalette}
           onSelectCopyTool={applyCopyToolFromPalette}
           onSelectPasteTool={applyPasteToolFromPalette}
           onTogglePlayTool={onTogglePlayTool}
@@ -1139,6 +1222,20 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
           stepPlaybackSpeed={stepPlaybackSpeed}
           stepPlaybackVolume={stepPlaybackVolume}
           stepPlaybackPosition={stepPlaybackPosition}
+          timingGroupIds={timingGroupIds}
+          isTimingGroupPanelOpen={isTimingGroupPanelOpen}
+          setIsTimingGroupPanelOpen={setIsTimingGroupPanelOpen}
+          selectedTimingGroupId={selectedTimingGroupId}
+          setSelectedTimingGroupId={setSelectedTimingGroupId}
+          isTimingGroupModeActive={isTimingGroupModeActive}
+          setIsTimingGroupModeEnabled={setIsTimingGroupModeEnabled}
+          createTimingGroup={createTimingGroup}
+          renameTimingGroup={renameTimingGroup}
+          deleteTimingGroup={deleteTimingGroup}
+          showTimingGroupSetting={showTimingGroupSetting}
+          isTimingGroupSettingLocked={isTimingGroupSettingLocked}
+          selectedObjectTimingGroupId={selectedObjectTimingGroupId}
+          setSelectedObjectTimingGroupId={setSelectedObjectTimingGroupId}
           undoLastNote={undoLastNote}
           redoLastNote={redoLastNote}
           canUndoLastOperation={canUndoLastOperation}
@@ -1164,6 +1261,11 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
           setBpmInputText={setBpmInputText}
           bpmInputEditingRef={bpmInputEditingRef}
           commitBpmInput={commitBpmInput}
+          svInputText={svInputText}
+          setSvInputText={setSvInputText}
+          svInputEditingRef={svInputEditingRef}
+          commitSvInput={commitSvInput}
+          showSvSetting={showSvSetting}
           showLaneSetting={showLaneSetting}
           isLaneSettingLocked={isLaneSettingLocked}
           stepActiveLane={stepActiveLane}
@@ -1216,7 +1318,12 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         />
 
         <section className="editor-panel">
-          <TimelineStrip settings={settings} applySettingsPatch={applySettingsPatch} />
+          <TimelineStrip
+            settings={settings}
+            applySettingsPatch={applySettingsPatch}
+            isSvPreviewEnabled={isSvPreviewEnabled}
+            setIsSvPreviewEnabled={setIsSvPreviewEnabled}
+          />
 
           {isSkinReady ? (
             <div
@@ -1230,13 +1337,15 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
             >
               <div
                 className={`playfield-host ${selectionDrag?.isDragging ? "is-marquee-selecting" : ""} ${isSlideBuilding ? "is-slide-building" : ""} ${isCanvasRenderBackend ? "canvas-render-backend" : ""}`}
+                style={{ height: effectiveScrollContentHeight }}
                 onMouseDown={handleBoardMouseDown}
                 onMouseMove={handleBoardMouseMove}
                 onMouseLeave={handleBoardMouseLeave}
                 onContextMenu={handleBoardContextMenu}
               >
-                <div className="bpm-overlay-layer" style={{ height: boardHeight }}>
+                <div className="bpm-overlay-layer" style={{ height: effectiveScrollContentHeight }}>
                   {renderBpmLines()}
+                  {renderSvLines?.()}
                   {!isCanvasRenderBackend && isToolArmed && tool === "bpm" && cursorPreview && (
                     <>
                       <div className="bpm-marker bpm-preview bpm-preview-cursor" style={{ top: cursorPreview.y }}>
@@ -1248,6 +1357,21 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
                           style={{ top: beatToY(cursorPreview.snappedBeat) }}
                         >
                           <div className="bpm-line" />
+                        </div>
+                      )}
+                    </>
+                  )}
+                  {!isCanvasRenderBackend && isToolArmed && tool === "sv" && cursorPreview && (
+                    <>
+                      <div className="bpm-marker sv-marker sv-preview sv-preview-cursor" style={{ top: cursorPreview.y }}>
+                        <div className="bpm-line sv-line" />
+                      </div>
+                      {cursorPreview.snappedBeat !== null && (
+                        <div
+                          className="bpm-marker sv-marker sv-preview sv-preview-snap"
+                          style={{ top: beatToY(cursorPreview.snappedBeat) }}
+                        >
+                          <div className="bpm-line sv-line" />
                         </div>
                       )}
                     </>
@@ -1270,6 +1394,22 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
                       >
                         <div className="bpm-line" />
                       </div>
+                      <div
+                        ref={canvasSvCursorPreviewRef}
+                        className="bpm-marker sv-marker sv-preview sv-preview-cursor"
+                        style={{ display: "none" }}
+                        aria-hidden="true"
+                      >
+                        <div className="bpm-line sv-line" />
+                      </div>
+                      <div
+                        ref={canvasSvSnapPreviewRef}
+                        className="bpm-marker sv-marker sv-preview sv-preview-snap"
+                        style={{ display: "none" }}
+                        aria-hidden="true"
+                      >
+                        <div className="bpm-line sv-line" />
+                      </div>
                     </>
                   )}
                   {isPasteToolSelected && pastePreviewVisuals.bpmYPositions.map((y: number, index: number) => (
@@ -1280,6 +1420,16 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
                       aria-hidden="true"
                     >
                       <div className="bpm-line" />
+                    </div>
+                  ))}
+                  {isPasteToolSelected && pastePreviewVisuals.svYPositions.map((y: number, index: number) => (
+                    <div
+                      key={`paste-sv-preview-${index}-${y.toFixed(3)}`}
+                      className="bpm-marker sv-marker sv-preview sv-preview-copy"
+                      style={{ top: y }}
+                      aria-hidden="true"
+                    >
+                      <div className="bpm-line sv-line" />
                     </div>
                   ))}
                   {isPlayToolSelected && !isPlaybackPlaying && (
@@ -1297,7 +1447,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
                 <div
                   ref={playfieldBoardRef}
                   className={`playfield-board ${isCanvasRenderBackend ? "canvas-render-backend" : ""}`}
-                  style={{ width: boardWidth, height: boardHeight }}
+                  style={{ width: boardWidth, height: effectiveScrollContentHeight }}
                   onClick={handleBoardClick}
                   onContextMenu={handleBoardContextMenu}
                 >
@@ -1307,21 +1457,21 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
                         ref={playfieldTrackCanvasRef}
                         className="playfield-canvas-layer playfield-canvas-track-layer"
                         width={boardWidth}
-                        height={boardHeight}
+                        height={effectiveScrollContentHeight}
                         aria-hidden="true"
                       />
                       <canvas
                         ref={playfieldNoteCanvasRef}
                         className="playfield-canvas-layer playfield-canvas-note-layer"
                         width={boardWidth}
-                        height={boardHeight}
+                        height={effectiveScrollContentHeight}
                         aria-hidden="true"
                       />
                       <canvas
                         ref={playfieldPlaybackCanvasRef}
                         className="playfield-canvas-layer playfield-canvas-playback-layer"
                         width={boardWidth}
-                        height={boardHeight}
+                        height={effectiveScrollContentHeight}
                         aria-hidden="true"
                       />
                     </>
@@ -1342,7 +1492,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
                   </div>
 
                   {!isCanvasRenderBackend && (slideBuildCommittedGuideLines.length > 0 || slideBuildGuideLine) && (
-                    <svg className="slide-build-guide-layer" width={boardWidth} height={boardHeight} aria-hidden="true">
+                    <svg className="slide-build-guide-layer" width={boardWidth} height={effectiveScrollContentHeight} aria-hidden="true">
                       {slideBuildCommittedGuideLines.map((line: any) => (
                         <line
                           key={line.key}
