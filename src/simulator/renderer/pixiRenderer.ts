@@ -10,6 +10,7 @@ import {
   resolveSlideBottomMarkerTexture,
 } from "../engine/assets";
 import { SIMULATOR_TIMING_FPS } from "../engine/simulatorTiming";
+import { axisAtMs } from "../engine/timingGroup";
 import type { ParticleEffectDefinition } from "../engine/particlePack";
 import {
   ActiveParticleEmitter,
@@ -27,8 +28,8 @@ import {
   RuntimeJudgeKind,
   RuntimeNoteSemantic,
   SimulatorSettings,
-  TimingGroupDef,
 } from "../engine/types";
+import type { TimingGroupDef, VisibilityWindow } from "../engine/timingGroup";
 
 type MvRenderFrame =
   {
@@ -64,6 +65,10 @@ interface SlideConnection {
   toHitMs: number;
   fromStartMs: number;
   toStartMs: number;
+  fromVisibleEndMs: number;
+  toVisibleEndMs: number;
+  fromVisibilityWindows: VisibilityWindow[];
+  toVisibilityWindows: VisibilityWindow[];
   fromTgId: number;
   toTgId: number;
   fromTgPos: number;
@@ -358,7 +363,6 @@ export class PixiRenderer {
   }
 
   setChartEvents(events: readonly ChartEvent[], timingGroups: readonly TimingGroupDef[] = []): void {
-    const travelMs = Math.max(1, this.settings.noteSpeedSeconds * 1000);
     this.timingGroups = timingGroups;
     for (const hold of this.activeHoldEffects.values()) {
       this.destroyHoldEffectEmitters(hold);
@@ -497,10 +501,14 @@ export class PixiRenderer {
         toLane: event.lane,
         fromAnchorLane: slideAnchorLaneForNote(parent.lane, parent.note, "outgoing"),
         toAnchorLane: slideAnchorLaneForNote(event.lane, event.note, "incoming"),
-        fromHitMs: parent.startMs + travelMs,
-        toHitMs: event.startMs + travelMs,
+        fromHitMs: parent.hitMs,
+        toHitMs: event.hitMs,
         fromStartMs: parent.startMs,
         toStartMs: event.startMs,
+        fromVisibleEndMs: parent.visibleEndMs,
+        toVisibleEndMs: event.visibleEndMs,
+        fromVisibilityWindows: parent.visibilityWindows,
+        toVisibilityWindows: event.visibilityWindows,
         fromTgId: parent.tgId,
         toTgId: event.tgId,
         fromTgPos: parent.tgPos,
@@ -1335,14 +1343,14 @@ export class PixiRenderer {
     if (this.slideConnections.length === 0) {
       return;
     }
-    const travelMs = Math.max(1, this.settings.noteSpeedSeconds * 1000);
-    const windowEndMs = elapsedMs + travelMs;
-
     for (const connection of this.slideConnections) {
-      if (connection.fromHitMs >= windowEndMs) {
-        break;
-      }
-      if (connection.toHitMs < elapsedMs) {
+      const visibleStartMs = Math.min(connection.fromStartMs, connection.toStartMs);
+      const visibleEndMs = Math.max(
+        connection.fromVisibleEndMs,
+        connection.toVisibleEndMs,
+        connection.toHitMs,
+      );
+      if (visibleStartMs > elapsedMs || visibleEndMs < elapsedMs) {
         continue;
       }
       const fromFrameRaw = this.frameRawAt(
@@ -1357,6 +1365,9 @@ export class PixiRenderer {
         connection.toTgId,
         connection.toTgPos,
       );
+      if (!this.shouldDrawSlideConnectionEndpointRange(connection, elapsedMs, fromFrameRaw, toFrameRaw)) {
+        continue;
+      }
       const fromPercent = this.percentFromFrameRaw(fromFrameRaw);
       const toPercent = this.percentFromFrameRaw(toFrameRaw);
       const fromPassed = fromFrameRaw >= this.settings.noteSpeedFrames;
@@ -1399,6 +1410,40 @@ export class PixiRenderer {
     }
   }
 
+  private shouldDrawSlideConnectionEndpointRange(
+    connection: SlideConnection,
+    elapsedMs: number,
+    fromFrameRaw: number,
+    toFrameRaw: number,
+  ): boolean {
+    const fromPassed = fromFrameRaw >= this.settings.noteSpeedFrames;
+    if (!fromPassed && !this.isFrameRawVisibleInWindow(fromFrameRaw, connection.fromVisibilityWindows, elapsedMs)) {
+      return false;
+    }
+    if (toFrameRaw > this.settings.noteSpeedFrames + 1e-6
+      && !this.isElapsedInVisibilityWindows(connection.toVisibilityWindows, elapsedMs)) {
+      return false;
+    }
+    return true;
+  }
+
+  private isFrameRawVisibleInWindow(
+    frameRaw: number,
+    windows: readonly VisibilityWindow[],
+    elapsedMs: number,
+  ): boolean {
+    return frameRaw >= -1e-6
+      && frameRaw <= this.settings.noteSpeedFrames + 1e-6
+      && this.isElapsedInVisibilityWindows(windows, elapsedMs);
+  }
+
+  private isElapsedInVisibilityWindows(windows: readonly VisibilityWindow[], elapsedMs: number): boolean {
+    if (windows.length === 0) {
+      return true;
+    }
+    return windows.some((window) => elapsedMs + 1e-6 >= window.startMs && elapsedMs <= window.endMs + 1e-6);
+  }
+
   private axisNowAt(elapsedMs: number, tgId: number): number {
     if (tgId < 0) {
       return elapsedMs;
@@ -1418,9 +1463,9 @@ export class PixiRenderer {
       return ((elapsedMs - startMs) * SIMULATOR_TIMING_FPS) / 1000;
     }
     const nowPos = this.timingGroupPosAt(tgId, elapsedMs);
-    return (nowPos * SIMULATOR_TIMING_FPS) / 100
+    return (nowPos * SIMULATOR_TIMING_FPS) / 1000
       + this.settings.noteSpeedFrames
-      - (tgPos * SIMULATOR_TIMING_FPS) / 100;
+      - (tgPos * SIMULATOR_TIMING_FPS) / 1000;
   }
 
   private timingGroupPosAt(tgId: number, elapsedMs: number): number {
@@ -1429,16 +1474,7 @@ export class PixiRenderer {
       return elapsedMs;
     }
     const x = elapsedMs - this.settings.offsetMs;
-    let speed = 1;
-    let pos = 0;
-    for (const change of group.changes) {
-      if (x + 1e-9 < change.atMs) {
-        break;
-      }
-      speed = change.speed;
-      pos = change.pos;
-    }
-    return pos + speed * x;
+    return axisAtMs(group, x);
   }
 
   private buildBpmFlashCycleSegments(events: readonly ChartEvent[]): void {
