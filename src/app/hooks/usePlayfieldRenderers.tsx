@@ -31,8 +31,10 @@ export function usePlayfieldRenderers(params: any) {
     clearSelectedBpmEvents,
     setStatusMessage,
     setIsToolArmed,
+    isToolArmed,
     setBpmEvents,
     setSvEvents,
+    tool,
     slideBuildRef,
     finalizeSlideBuild,
     cancelSlideBuild,
@@ -53,6 +55,7 @@ export function usePlayfieldRenderers(params: any) {
     isSimultaneousLineEnabled,
   } = params;
   const isCanvasBackend = renderBackendMode === "canvas";
+  const isPlacementNoteTool = isToolArmed && tool !== "bpm" && tool !== "sv" && tool !== "copy" && tool !== "paste";
   const beatToTrackY = typeof trackBeatToY === "function" ? trackBeatToY : beatToY;
   const runtimeLineAssets = useMemo(
     () => (skinAssets ? projectPlayfieldLineRuntimeAssets(skinAssets) : null),
@@ -375,6 +378,9 @@ export function usePlayfieldRenderers(params: any) {
             if (isPreviewChain) {
               return;
             }
+            if (isPlacementNoteTool) {
+              return;
+            }
             if (isMuted) {
               event.preventDefault();
               event.stopPropagation();
@@ -385,6 +391,9 @@ export function usePlayfieldRenderers(params: any) {
           }}
           onClick={(event) => {
             if (isPreviewChain) {
+              return;
+            }
+            if (isPlacementNoteTool) {
               return;
             }
             if (isMuted) {
