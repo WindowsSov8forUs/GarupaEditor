@@ -530,8 +530,15 @@ export function parseEditorChart(
       : -1;
     const tgDef = tgId >= 0 ? timingGroups[tgId] : null;
     const tgPos = useTimingGroups ? axisAtMs(tgDef, atMs) : 0;
+    const visibilitySearchStartMs = Math.min(0, atMs - travelMs);
     const visibilityWindows = useTimingGroups
-      ? findVisibilityWindows(tgDef, tgPos, travelMs, 0, Math.max(maxTimeMsFromSegments(segments), atMs) + 10000)
+      ? findVisibilityWindows(
+        tgDef,
+        tgPos,
+        travelMs,
+        visibilitySearchStartMs,
+        Math.max(maxTimeMsFromSegments(segments), atMs) + 10000,
+      )
       : [];
     const startMs = useTimingGroups && visibilityWindows.length > 0
       ? visibilityWindows[0].startMs + offsetMs

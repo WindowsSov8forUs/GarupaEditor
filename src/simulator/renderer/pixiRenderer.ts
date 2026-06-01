@@ -1955,8 +1955,7 @@ export class PixiRenderer {
     );
   }
 
-  private startSlotEffect(lane: number, startMs: number, laneWidth = 1): void {
-    const effectLaneWidth = Math.max(1, Number.isFinite(laneWidth) ? laneWidth : 1);
+  private startSlotEffect(lane: number, startMs: number, _laneWidth = 1): void {
     this.enqueueParticleEmitterBySlot(
       "slot",
       lane,
@@ -1968,7 +1967,7 @@ export class PixiRenderer {
       1,
       1,
       undefined,
-      effectLaneWidth,
+      1,
     );
   }
 
