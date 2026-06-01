@@ -277,7 +277,6 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     isSkinApplying,
     isMetadataEditorOpen,
     setMetadata,
-    audioObjectUrl,
     setIsMetadataEditorOpen,
     handleCoverUpload,
     handleAudioUpload,
@@ -1938,7 +1937,6 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         open={isMetadataEditorOpen}
         metadata={metadata}
         setMetadata={setMetadata}
-        audioObjectUrl={audioObjectUrl}
         onClose={() => setIsMetadataEditorOpen(false)}
         onCoverUpload={handleCoverUpload}
         onAudioUpload={handleAudioUpload}

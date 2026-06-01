@@ -177,7 +177,6 @@ export function useEditorIoAndShortcuts(params: any) {
     setIsAppSettingsOpen,
     setIsSkinSettingsOpen,
     setAudioObjectUrl,
-    audioObjectUrl,
     formatDuration,
     windowPresetId,
     WINDOW_SIZE_PRESETS,
@@ -1436,14 +1435,27 @@ export function useEditorIoAndShortcuts(params: any) {
         audioDecoded = false;
       }
       if (!audioDecoded) {
-        setAudioObjectUrl((current: string | null) => {
-          if (current) {
-            URL.revokeObjectURL(current);
-          }
-          return null;
-        });
-        setAudioFileName("");
-        setAudioDurationSec(0);
+        const fallbackAudioUrl = resolveTrimmedString(payload.resources.audioUrl);
+        if (fallbackAudioUrl) {
+          importedBgmDataUrl = fallbackAudioUrl;
+          setAudioObjectUrl((current: string | null) => {
+            if (current) {
+              URL.revokeObjectURL(current);
+            }
+            return fallbackAudioUrl;
+          });
+          setAudioFileName(payload.audioFileName);
+          setAudioDurationSec(0);
+        } else {
+          setAudioObjectUrl((current: string | null) => {
+            if (current) {
+              URL.revokeObjectURL(current);
+            }
+            return null;
+          });
+          setAudioFileName("");
+          setAudioDurationSec(0);
+        }
       }
       pushImportProgress(92, "正在写入谱面元信息…");
       let importedCoverDataUrl = payload.resources.jacketUrl;
@@ -1682,9 +1694,7 @@ export function useEditorIoAndShortcuts(params: any) {
 
     startDownloadProgress(uploadOperationId, "正在上传社区谱面…");
     try {
-      const metadataAudioSource = resolveTrimmedString(metadata.bgmDataUrl);
-      const runtimeAudioSource = resolveTrimmedString(audioObjectUrl);
-      const resolvedAudioSource = metadataAudioSource || runtimeAudioSource || null;
+      const resolvedAudioSource = resolveTrimmedString(metadata.bgmDataUrl) || null;
       const parsedTags = uploadCommunityPostTags.length > 0 ? uploadCommunityPostTags : undefined;
       const result = await publishBestdoriCommunityChartFlow({
         chartJson,
@@ -1747,9 +1757,7 @@ export function useEditorIoAndShortcuts(params: any) {
 
     startDownloadProgress(uploadOperationId, "正在上传至 NotGarupa 服务器…");
     try {
-      const metadataAudioSource = resolveTrimmedString(metadata.bgmDataUrl);
-      const runtimeAudioSource = resolveTrimmedString(audioObjectUrl);
-      const resolvedAudioSource = metadataAudioSource || runtimeAudioSource || null;
+      const resolvedAudioSource = resolveTrimmedString(metadata.bgmDataUrl) || null;
       const difficultyValue = Number(metadata.difficultyLevel);
       const resolvedDifficulty = Number.isFinite(difficultyValue) && difficultyValue >= 1
         ? Math.trunc(difficultyValue)
@@ -1815,9 +1823,7 @@ export function useEditorIoAndShortcuts(params: any) {
 
     startDownloadProgress(uploadOperationId, "正在上传到测试服…");
     try {
-      const metadataAudioSource = resolveTrimmedString(metadata.bgmDataUrl);
-      const runtimeAudioSource = resolveTrimmedString(audioObjectUrl);
-      const resolvedAudioSource = metadataAudioSource || runtimeAudioSource || null;
+      const resolvedAudioSource = resolveTrimmedString(metadata.bgmDataUrl) || null;
       const difficultyValue = Number(metadata.difficultyLevel);
       const resolvedDifficulty = Number.isFinite(difficultyValue) && difficultyValue >= 0
         ? Math.trunc(difficultyValue)
@@ -1953,28 +1959,40 @@ export function useEditorIoAndShortcuts(params: any) {
       return;
     }
 
-    const objectUrl = URL.createObjectURL(file);
-    setAudioObjectUrl((current: string | null) => {
-      if (current) {
-        URL.revokeObjectURL(current);
-      }
-      return objectUrl;
-    });
-    setAudioFileName(file.name);
+    void (async () => {
+      let objectUrl: string | null = null;
+      try {
+        const dataUrl = await readBlobAsDataUrl(file);
+        objectUrl = URL.createObjectURL(file);
+        setMetadata((current: ChartMetadata) => ({ ...current, bgmDataUrl: dataUrl }));
+        setAudioObjectUrl((current: string | null) => {
+          if (current) {
+            URL.revokeObjectURL(current);
+          }
+          return objectUrl;
+        });
+        setAudioFileName(file.name);
 
-    const probe = new Audio(objectUrl);
-    probe.preload = "metadata";
-    probe.onloadedmetadata = () => {
-      if (Number.isFinite(probe.duration) && probe.duration > 0) {
-        setAudioDurationSec(probe.duration);
-        setStatusMessage(`音频已载入：${file.name}（${formatDuration(probe.duration)}）。`);
-      } else {
-        setAudioDurationSec(0);
+        const probe = new Audio(objectUrl);
+        probe.preload = "metadata";
+        probe.onloadedmetadata = () => {
+          if (Number.isFinite(probe.duration) && probe.duration > 0) {
+            setAudioDurationSec(probe.duration);
+            setStatusMessage(`Audio loaded: ${file.name} (${formatDuration(probe.duration)})`);
+          } else {
+            setAudioDurationSec(0);
+          }
+        };
+        probe.onerror = () => {
+          setStatusMessage("Audio read failed. Please check the file format.");
+        };
+      } catch {
+        if (objectUrl) {
+          URL.revokeObjectURL(objectUrl);
+        }
+        setStatusMessage("Audio read failed. Please check the file format.");
       }
-    };
-    probe.onerror = () => {
-      setStatusMessage("音频读取失败，请确认格式。");
-    };
+    })();
   };
 
   const handleMvUpload = (event: ChangeEvent<HTMLInputElement>) => {

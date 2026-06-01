@@ -10,7 +10,7 @@ type SlideChainLike = {
 };
 
 function isRhythmWidthSlideNode(note: ChartNote | undefined): note is ChartNote {
-  return !!note && !isDirectionalNoteType(note.type);
+  return !!note && note.type !== "hidden" && !isDirectionalNoteType(note.type);
 }
 
 function findTargetWidthForNoteIds(

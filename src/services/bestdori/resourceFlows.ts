@@ -433,7 +433,7 @@ export async function publishBestdoriCommunityChartFlow(
   }
 
   const titleFileStem = sanitizeFileNameSegment(title ?? "chart") || "chart";
-  const normalizedAudioSource = trimNonEmptyStringOrNull(params.audioSourceUrl) ?? trimNonEmptyStringOrNull(metadata.bgmDataUrl);
+  const normalizedAudioSource = trimNonEmptyStringOrNull(params.audioSourceUrl);
   const normalizedCoverSource = trimNonEmptyStringOrNull(params.coverSourceUrl) ?? trimNonEmptyStringOrNull(metadata.coverDataUrl);
   if (!normalizedAudioSource) {
     throw new Error("社区谱面上传需要歌曲音频，请先在谱面信息中上传音频。");
@@ -648,7 +648,7 @@ export async function uploadSonolusLevelFlow(
 
   const title = trimNonEmptyStringOrNull(metadata.title) ?? "GarupaEditor Chart";
   const titleFileStem = sanitizeFileNameSegment(title) || "chart";
-  const normalizedAudioSource = trimNonEmptyStringOrNull(params.audioSourceUrl) ?? trimNonEmptyStringOrNull(metadata.bgmDataUrl);
+  const normalizedAudioSource = trimNonEmptyStringOrNull(params.audioSourceUrl);
   if (!normalizedAudioSource) {
     throw new Error("sonolus upload requires audio source");
   }
@@ -696,7 +696,7 @@ export async function uploadNotGarupaLevelFlow(
   const artists = trimNonEmptyStringOrNull(metadata.artist) ?? "Unknown Artist";
   const author = trimNonEmptyStringOrNull(metadata.charter) ?? "GarupaEditor";
   const titleFileStem = sanitizeFileNameSegment(title) || "chart";
-  const normalizedAudioSource = trimNonEmptyStringOrNull(params.audioSourceUrl) ?? trimNonEmptyStringOrNull(metadata.bgmDataUrl);
+  const normalizedAudioSource = trimNonEmptyStringOrNull(params.audioSourceUrl);
   if (!normalizedAudioSource) {
     throw new Error("上传至 NotGarupa 服务器需要歌曲音频，请先在谱面信息中上传音频。");
   }

@@ -51,6 +51,7 @@ import { usePlayfieldRenderers } from "./hooks/usePlayfieldRenderers";
 import { useSelectionAndEditorSync } from "./hooks/useSelectionAndEditorSync";
 import { useSidebarResizeState } from "./hooks/useSidebarResizeState";
 import { buildSelectionMirrorOffsetMap } from "./slideHiddenMoveOffsets";
+import { cleanupSlideChainsHidden } from "./slideChainCleanup";
 import {
   useNotePaletteSpriteRendering,
   usePlayfieldSpriteRendering,
@@ -211,26 +212,6 @@ function formatDurationPrecise(sec: number): string {
   const second = Math.floor((totalMs % 60000) / 1000);
   const millisecond = totalMs % 1000;
   return `${minute}:${second.toString().padStart(2, "0")}.${millisecond.toString().padStart(3, "0")}`;
-}
-
-async function blobUrlToDataUrl(blobUrl: string): Promise<string> {
-  const response = await fetch(blobUrl);
-  if (!response.ok) {
-    throw new Error(`audio fetch failed: ${response.status}`);
-  }
-  const blob = await response.blob();
-  return await new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onerror = () => reject(new Error("audio data URL encode failed"));
-    reader.onload = () => {
-      if (typeof reader.result !== "string") {
-        reject(new Error("audio data URL encode failed"));
-        return;
-      }
-      resolve(reader.result);
-    };
-    reader.readAsDataURL(blob);
-  });
 }
 
 async function dataUrlToBlobUrl(dataUrl: string): Promise<string> {
@@ -1445,7 +1426,7 @@ function ChartEditorController() {
   const totalSteps = Math.max(1, Math.ceil(totalBeats * beatDivision));
   const boardWidth = settings.laneCount * LANE_WIDTH;
   const boardHeight = Math.max(1, totalDurationSec * timelinePixelsPerSecond);
-  const hasUploadedAudio = Boolean(audioObjectUrl);
+  const hasUploadedAudio = typeof metadata.bgmDataUrl === "string" && metadata.bgmDataUrl.trim().length > 0;
   const chartPlayableDurationSec = useMemo(
     () => Math.max(0, beatToSeconds(maxNoteBeat, bpmTimeline)),
     [bpmTimeline, maxNoteBeat],
@@ -1911,13 +1892,24 @@ function ChartEditorController() {
         return mapped && mapped !== GLOBAL_TIMING_GROUP_ID ? mapped : undefined;
       };
       const notePositionKey = (lane: number, beat: number) => `${lane.toFixed(6)}|${beat.toFixed(6)}`;
+      const shouldPasteNoteOverlap = (left: ChartNote, right: ChartNote): boolean => {
+        if (left.type === "hidden" || right.type === "hidden") {
+          return false;
+        }
+        if (isDirectionalNoteType(left.type) || isDirectionalNoteType(right.type)) {
+          return true;
+        }
+        return normalizeRhythmWidth(left.width) === normalizeRhythmWidth(right.width);
+      };
       const sourceToPastedId = new Map<string, string>();
-      const existingNoteIdByPosition = new Map<string, string>();
+      const existingNotesByPosition = new Map<string, ChartNote[]>();
       for (const note of notesRef.current) {
-        existingNoteIdByPosition.set(notePositionKey(note.lane, note.beat), note.id);
+        const positionKey = notePositionKey(note.lane, note.beat);
+        const notesAtPosition = existingNotesByPosition.get(positionKey) ?? [];
+        notesAtPosition.push(note);
+        existingNotesByPosition.set(positionKey, notesAtPosition);
       }
       const overlappedExistingNoteIds = new Set<string>();
-      const pastedPositionKeys = new Set<string>();
       const pastedNotes: ChartNote[] = [];
 
       for (const source of copiedChartPayload.notes) {
@@ -1941,34 +1933,44 @@ function ChartEditorController() {
           continue;
         }
         const positionKey = notePositionKey(normalized.lane, normalized.beat);
-        if (pastedPositionKeys.has(positionKey)) {
-          continue;
+        if (normalized.type !== "hidden") {
+          const hasOverlappedPastedNote = pastedNotes.some(
+            (note) =>
+              note.type !== "hidden" &&
+              notePositionKey(note.lane, note.beat) === positionKey &&
+              shouldPasteNoteOverlap(note, normalized),
+          );
+          if (hasOverlappedPastedNote) {
+            continue;
+          }
         }
-        pastedPositionKeys.add(positionKey);
-        const overlappedExistingId = existingNoteIdByPosition.get(positionKey);
-        if (typeof overlappedExistingId === "string" && overlappedExistingId.length > 0) {
-          overlappedExistingNoteIds.add(overlappedExistingId);
+        const overlappedExistingNotes = existingNotesByPosition.get(positionKey) ?? [];
+        for (const existingNote of overlappedExistingNotes) {
+          if (shouldPasteNoteOverlap(existingNote, normalized)) {
+            overlappedExistingNoteIds.add(existingNote.id);
+          }
         }
         sourceToPastedId.set(source.id, normalized.id);
         pastedNotes.push(normalized);
       }
 
-      const pastedSlideChains = copiedChartPayload.slideChains
-        .map((chain) => {
-          const noteIds = chain.noteIds
-            .map((id) => sourceToPastedId.get(id))
-            .filter((id): id is string => typeof id === "string");
-          if (noteIds.length < 2) {
-            return null;
-          }
-          const timingGroup = remapCopiedTimingGroup(chain.timingGroup);
-          return {
-            id: createId(),
-            noteIds,
-            ...(timingGroup ? { timingGroup } : {}),
-          };
-        })
-        .filter((chain): chain is SlideChain => chain !== null);
+      const pastedNoteMap = new Map(pastedNotes.map((note) => [note.id, note] as const));
+      const pastedSlideChains = cleanupSlideChainsHidden({
+        chains: copiedChartPayload.slideChains
+          .map((chain) => {
+            const noteIds = chain.noteIds
+              .map((id) => sourceToPastedId.get(id))
+              .filter((id): id is string => typeof id === "string");
+            const timingGroup = remapCopiedTimingGroup(chain.timingGroup);
+            return {
+              id: createId(),
+              noteIds,
+              ...(timingGroup ? { timingGroup } : {}),
+            };
+          }),
+        noteMap: pastedNoteMap,
+        minLength: 2,
+      });
 
       const occupiedBpmBeatKeys = new Set(
         bpmEventsRef.current.map((event) => event.beat.toFixed(6)),
@@ -2058,13 +2060,20 @@ function ChartEditorController() {
         });
       }
       if (overlappedExistingNoteIds.size > 0) {
+        const remainedNoteMap = new Map(
+          notesRef.current
+            .filter((note) => !overlappedExistingNoteIds.has(note.id))
+            .map((note) => [note.id, note] as const),
+        );
         setSlideChains((previous) =>
-          previous
-            .map((chain) => ({
+          cleanupSlideChainsHidden({
+            chains: previous.map((chain) => ({
               ...chain,
               noteIds: chain.noteIds.filter((id) => !overlappedExistingNoteIds.has(id)),
-            }))
-            .filter((chain) => chain.noteIds.length >= 2),
+            })),
+            noteMap: remainedNoteMap,
+            minLength: 2,
+          }),
         );
       }
       if (pastedSlideChains.length > 0) {
@@ -2441,7 +2450,7 @@ function ChartEditorController() {
       !hasLongLineSelection &&
       !isEditingPlacedBpm &&
       !isEditingPlacedSv &&
-      (!isToolArmed || tool === "slide" || tool === "copy" || tool === "paste")
+      (!isToolArmed || (tool === "slide" && !showWidthSetting) || tool === "copy" || tool === "paste")
     );
   const isBeatSettingLocked = hasBeatEditableSelection
     ? hasBaseSvBeatSelection
@@ -5587,15 +5596,10 @@ function ChartEditorController() {
       const targetUrl = new URL(locationHref);
       targetUrl.hash = `simulator?request=${encodeURIComponent(requestId)}`;
 
-      let bgmDataUrl: string | null = null;
-      if (audioObjectUrl) {
-        try {
-          bgmDataUrl = await blobUrlToDataUrl(audioObjectUrl);
-        } catch (error) {
-          const message = error instanceof Error ? error.message : String(error);
-          setStatusMessage(`播放器音频资源转换失败：${message}`);
-        }
-      }
+      const bgmDataUrl =
+        typeof metadata.bgmDataUrl === "string" && metadata.bgmDataUrl.trim().length > 0
+          ? metadata.bgmDataUrl
+          : null;
       let playbackMvDataUrl: string | null = metadata.mvDataUrl;
       if (
         typeof playbackMvDataUrl === "string"

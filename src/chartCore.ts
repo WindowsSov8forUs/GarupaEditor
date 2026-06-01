@@ -507,7 +507,7 @@ export function normalizeRhythmWidth(raw: unknown): number {
 }
 
 export function isRhythmWidthEditableType(type: NoteType): boolean {
-  return type === "single" || type === "flick" || type === "skill";
+  return type === "single" || type === "flick" || type === "skill" || type === "slide";
 }
 
 export function sortBpmEvents(events: ChartBpmEvent[]): ChartBpmEvent[] {

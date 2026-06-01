@@ -1,5 +1,11 @@
 import { useCallback, useEffect } from "react";
-import type { ChartBpmEvent, ChartNote, ChartSvEvent } from "../../chartCore";
+import {
+  isDirectionalNoteType,
+  normalizeRhythmWidth,
+  type ChartBpmEvent,
+  type ChartNote,
+  type ChartSvEvent,
+} from "../../chartCore";
 import { type SlideBuildState } from "../editorHelpers";
 import { buildSelectionMoveOffsetMap } from "../slideHiddenMoveOffsets";
 import { cleanupSlideChainsHidden } from "../slideChainCleanup";
@@ -263,6 +269,19 @@ export function useSelectionAndEditorSync(params: any) {
     [],
   );
 
+  const shouldNotesOverlap = useCallback((left: ChartNote, right: ChartNote): boolean => {
+    if (left.type === "hidden" || right.type === "hidden") {
+      return false;
+    }
+    if (notePositionKey(left.lane, left.beat) !== notePositionKey(right.lane, right.beat)) {
+      return false;
+    }
+    if (isDirectionalNoteType(left.type) || isDirectionalNoteType(right.type)) {
+      return true;
+    }
+    return normalizeRhythmWidth(left.width) === normalizeRhythmWidth(right.width);
+  }, [notePositionKey]);
+
   const commitSelectedNoteTransform = useCallback(
     (
       transform: (note: ChartNote) => ChartNote | null,
@@ -292,23 +311,17 @@ export function useSelectionAndEditorSync(params: any) {
         }
 
         const transformedNotes = Array.from(transformedById.values());
-        const occupied = new Set(
-          transformedNotes.map((note) => notePositionKey(note.lane, note.beat)),
-        );
         const remained = previous.filter(
           (note) =>
             !selectedSet.has(note.id) &&
-            (
-              note.type === "hidden" ||
-              !occupied.has(notePositionKey(note.lane, note.beat))
-            ),
+            !transformedNotes.some((transformed) => shouldNotesOverlap(note, transformed)),
         );
 
         return sortNotes([...remained, ...transformedNotes]);
       });
       setStatusMessage(statusMessageText);
     },
-    [notePositionKey, normalizeNote, selectedNoteIds, setNotes, setStatusMessage, settings, sortNotes],
+    [normalizeNote, selectedNoteIds, setNotes, setStatusMessage, settings, shouldNotesOverlap, sortNotes],
   );
 
   const applySelectedOffset = useCallback(
@@ -439,17 +452,11 @@ export function useSelectionAndEditorSync(params: any) {
           }
 
           const transformedNotes = Array.from(transformedById.values());
-          const occupied = new Set(
-            transformedNotes.map((note) => notePositionKey(note.lane, note.beat)),
-          );
           const transformedIdSet = new Set(transformedById.keys());
           const remained = previous.filter(
             (note) =>
               !transformedIdSet.has(note.id) &&
-              (
-                note.type === "hidden" ||
-                !occupied.has(notePositionKey(note.lane, note.beat))
-              ),
+              !transformedNotes.some((transformed) => shouldNotesOverlap(note, transformed)),
           );
 
           return sortNotes([...remained, ...transformedNotes]);
@@ -471,7 +478,6 @@ export function useSelectionAndEditorSync(params: any) {
       beatDivision,
       isLastBeatOrderedBpmNegative,
       metadata.bpm,
-      notePositionKey,
       normalizeNote,
       quantizeBeat,
       selectedBpmEventIds,
@@ -482,6 +488,7 @@ export function useSelectionAndEditorSync(params: any) {
       setSvEvents,
       setStatusMessage,
       settings,
+      shouldNotesOverlap,
       slideChains,
       sortBpmEvents,
       sortSvEvents,

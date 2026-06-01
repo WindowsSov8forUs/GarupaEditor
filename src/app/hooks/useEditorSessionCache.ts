@@ -75,13 +75,6 @@ type ParsedDataUrl = {
   base64Data: string;
 };
 
-type CachedAudioResource = {
-  sourceUrl: string;
-  base64Data: string;
-  mimeType: string | null;
-  fileName: string | null;
-};
-
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
@@ -135,21 +128,6 @@ function buildResourceSignature(
   return `${safeMime}|${safeFileName}|${base64Data.length}|${head}|${tail}`;
 }
 
-async function blobToDataUrl(blob: Blob): Promise<string> {
-  return await new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onerror = () => reject(new Error("read blob failed"));
-    reader.onload = () => {
-      if (typeof reader.result !== "string") {
-        reject(new Error("blob to data URL failed"));
-        return;
-      }
-      resolve(reader.result);
-    };
-    reader.readAsDataURL(blob);
-  });
-}
-
 export function useEditorSessionCache(params: any) {
   const {
     metadata,
@@ -161,7 +139,6 @@ export function useEditorSessionCache(params: any) {
     timingGroups,
     audioFileName,
     audioDurationSec,
-    audioObjectUrl,
     uploadCommunityPostContent,
     uploadCommunityPostTags,
     skinSelection,
@@ -212,7 +189,6 @@ export function useEditorSessionCache(params: any) {
   } = params;
 
   const [didRestoreAttemptFinish, setDidRestoreAttemptFinish] = useState(false);
-  const audioResourceRef = useRef<CachedAudioResource | null>(null);
   const lastSavedChartFingerprintRef = useRef<string | null>(null);
   const lastSavedSettingsFingerprintRef = useRef<string | null>(null);
   const lastSavedCoverSignatureRef = useRef<string>(CLEARED_RESOURCE_SIGNATURE);
@@ -353,8 +329,14 @@ export function useEditorSessionCache(params: any) {
             : {};
           const loadedCoverDataUrl = normalizeOptionalText(loadedChart.coverDataUrl);
           const loadedMvDataUrl = normalizeOptionalText(loadedChart.mvDataUrl);
+          const loadedAudioBase64 = normalizeOptionalText(loadedChart.audioBase64);
+          const loadedAudioMimeType = normalizeOptionalText(loadedChart.audioMimeType) ?? "audio/mpeg";
+          const restoredBgmDataUrl = loadedAudioBase64
+            ? `data:${loadedAudioMimeType};base64,${loadedAudioBase64}`
+            : normalizeOptionalText(snapshotMetadata.bgmDataUrl);
           const nextMetadataBase = normalizeMetadata({
             ...snapshotMetadata,
+            bgmDataUrl: restoredBgmDataUrl,
             coverDataUrl: loadedCoverDataUrl ?? snapshotMetadata.coverDataUrl ?? null,
             mvDataUrl: loadedMvDataUrl ?? snapshotMetadata.mvDataUrl ?? null,
           });
@@ -487,11 +469,9 @@ export function useEditorSessionCache(params: any) {
             normalizeOptionalText(loadedChart.audioFileName) ?? normalizeOptionalText(snapshot.audioFileName) ?? "";
           setAudioFileName(restoredAudioFileName);
 
-          const loadedAudioBase64 = normalizeOptionalText(loadedChart.audioBase64);
           let restoredAudioSignature = CLEARED_RESOURCE_SIGNATURE;
           if (loadedAudioBase64) {
-            const audioMimeType = normalizeOptionalText(loadedChart.audioMimeType) ?? "audio/mpeg";
-            const audioBlob = new Blob([decodeBase64ToBytes(loadedAudioBase64)], { type: audioMimeType });
+            const audioBlob = new Blob([decodeBase64ToBytes(loadedAudioBase64)], { type: loadedAudioMimeType });
             const audioUrl = URL.createObjectURL(audioBlob);
             setAudioObjectUrl((current: string | null) => {
               if (current) {
@@ -499,17 +479,18 @@ export function useEditorSessionCache(params: any) {
               }
               return audioUrl;
             });
-            audioResourceRef.current = {
-              sourceUrl: audioUrl,
-              base64Data: loadedAudioBase64,
-              mimeType: audioMimeType,
-              fileName: restoredAudioFileName || null,
-            };
             restoredAudioSignature = buildResourceSignature(
               loadedAudioBase64,
-              audioMimeType,
+              loadedAudioMimeType,
               restoredAudioFileName || null,
             );
+          } else if (restoredBgmDataUrl) {
+            setAudioObjectUrl((current: string | null) => {
+              if (current) {
+                URL.revokeObjectURL(current);
+              }
+              return restoredBgmDataUrl;
+            });
           } else {
             setAudioObjectUrl((current: string | null) => {
               if (current) {
@@ -517,7 +498,6 @@ export function useEditorSessionCache(params: any) {
               }
               return null;
             });
-            audioResourceRef.current = null;
           }
 
           const restoredCoverParsed = parseDataUrl(
@@ -536,6 +516,7 @@ export function useEditorSessionCache(params: any) {
 
           const restoredMetadataForChartCache = normalizeMetadata({
             ...nextMetadata,
+            bgmDataUrl: loadedAudioBase64 ? null : nextMetadata.bgmDataUrl,
             coverDataUrl: restoredCoverParsed ? null : nextMetadata.coverDataUrl,
             mvDataUrl: restoredMvParsed ? null : nextMetadata.mvDataUrl,
           });
@@ -589,59 +570,6 @@ export function useEditorSessionCache(params: any) {
   }, []);
 
   useEffect(() => {
-    if (!audioObjectUrl) {
-      audioResourceRef.current = null;
-      return;
-    }
-
-    const existing = audioResourceRef.current;
-    if (existing && existing.sourceUrl === audioObjectUrl) {
-      const nextFileName = normalizeOptionalText(audioFileName);
-      if (existing.fileName !== nextFileName) {
-        audioResourceRef.current = {
-          ...existing,
-          fileName: nextFileName,
-        };
-      }
-      return;
-    }
-
-    let cancelled = false;
-
-    void (async () => {
-      try {
-        const response = await fetch(audioObjectUrl);
-        const blob = await response.blob();
-        const dataUrl = await blobToDataUrl(blob);
-        const parsed = parseDataUrl(dataUrl);
-        if (!parsed) {
-          throw new Error("audio data URL parse failed");
-        }
-        if (cancelled) {
-          return;
-        }
-        audioResourceRef.current = {
-          sourceUrl: audioObjectUrl,
-          base64Data: parsed.base64Data,
-          mimeType: parsed.mimeType,
-          fileName: normalizeOptionalText(audioFileName),
-        };
-      } catch (error) {
-        if (cancelled) {
-          return;
-        }
-        audioResourceRef.current = null;
-        const message = error instanceof Error ? error.message : String(error);
-        setStatusMessage(`音频缓存处理失败：${message}`);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [audioFileName, audioObjectUrl, setStatusMessage]);
-
-  useEffect(() => {
     if (!didRestoreAttemptFinish) {
       return;
     }
@@ -650,9 +578,11 @@ export function useEditorSessionCache(params: any) {
       void (async () => {
         try {
           const parsedCover = parseDataUrl(metadata.coverDataUrl);
+          const parsedAudio = parseDataUrl(metadata.bgmDataUrl);
           const parsedMv = parseDataUrl(metadata.mvDataUrl);
           const metadataForChart = normalizeMetadata({
             ...metadata,
+            bgmDataUrl: parsedAudio ? null : metadata.bgmDataUrl,
             coverDataUrl: parsedCover ? null : metadata.coverDataUrl,
             mvDataUrl: parsedMv ? null : metadata.mvDataUrl,
           });
@@ -682,7 +612,7 @@ export function useEditorSessionCache(params: any) {
               bpmEvents.length > 0 ||
               flattenTimingGroups(timingGroups).length > 0;
             const hasAnyMediaData =
-              (typeof audioObjectUrl === "string" && audioObjectUrl.length > 0)
+              (typeof metadata.bgmDataUrl === "string" && metadata.bgmDataUrl.trim().length > 0)
               || (typeof audioFileName === "string" && audioFileName.trim().length > 0)
               || safeAudioDuration > 0
               || (typeof metadata.coverDataUrl === "string" && metadata.coverDataUrl.trim().length > 0)
@@ -703,18 +633,14 @@ export function useEditorSessionCache(params: any) {
           const shouldClearCover =
             parsedCover === null && lastSavedCoverSignatureRef.current !== CLEARED_RESOURCE_SIGNATURE;
 
-          const audioResource = audioResourceRef.current;
-          const isAudioPayloadPending = Boolean(audioObjectUrl && !audioResource);
           const audioPayload: SessionResourcePayload | null =
-            isAudioPayloadPending
-              ? null
-              : audioObjectUrl && audioResource
-                ? {
-                    base64Data: audioResource.base64Data,
-                    mimeType: audioResource.mimeType,
-                    fileName: normalizeOptionalText(audioFileName) ?? audioResource.fileName,
-                  }
-                : null;
+            parsedAudio
+              ? {
+                  base64Data: parsedAudio.base64Data,
+                  mimeType: parsedAudio.mimeType,
+                  fileName: normalizeOptionalText(audioFileName),
+                }
+              : null;
           const audioSignature = audioPayload
             ? buildResourceSignature(
                 audioPayload.base64Data,
@@ -723,11 +649,9 @@ export function useEditorSessionCache(params: any) {
               )
             : CLEARED_RESOURCE_SIGNATURE;
           const shouldWriteAudio =
-            !isAudioPayloadPending &&
             audioPayload !== null &&
             lastSavedAudioSignatureRef.current !== audioSignature;
           const shouldClearAudio =
-            !isAudioPayloadPending &&
             audioPayload === null &&
             lastSavedAudioSignatureRef.current !== CLEARED_RESOURCE_SIGNATURE;
 
@@ -800,7 +724,6 @@ export function useEditorSessionCache(params: any) {
   }, [
     audioDurationSec,
     audioFileName,
-    audioObjectUrl,
     bpmEvents,
     timingGroups,
     didRestoreAttemptFinish,

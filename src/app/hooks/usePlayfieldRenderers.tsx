@@ -56,6 +56,8 @@ export function usePlayfieldRenderers(params: any) {
   } = params;
   const isCanvasBackend = renderBackendMode === "canvas";
   const isPlacementNoteTool = isToolArmed && tool !== "bpm" && tool !== "sv" && tool !== "copy" && tool !== "paste";
+  const isPasteToolSelected = isToolArmed && tool === "paste";
+  const shouldBypassLongLineLeftClick = isPlacementNoteTool || isPasteToolSelected;
   const beatToTrackY = typeof trackBeatToY === "function" ? trackBeatToY : beatToY;
   const runtimeLineAssets = useMemo(
     () => (skinAssets ? projectPlayfieldLineRuntimeAssets(skinAssets) : null),
@@ -378,7 +380,7 @@ export function usePlayfieldRenderers(params: any) {
             if (isPreviewChain) {
               return;
             }
-            if (isPlacementNoteTool) {
+            if (shouldBypassLongLineLeftClick) {
               return;
             }
             if (isMuted) {
@@ -393,7 +395,7 @@ export function usePlayfieldRenderers(params: any) {
             if (isPreviewChain) {
               return;
             }
-            if (isPlacementNoteTool) {
+            if (shouldBypassLongLineLeftClick) {
               return;
             }
             if (isMuted) {

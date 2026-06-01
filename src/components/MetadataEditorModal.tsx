@@ -25,7 +25,6 @@ type MetadataEditorModalProps = {
   open: boolean;
   metadata: ChartMetadata;
   setMetadata: Dispatch<SetStateAction<ChartMetadata>>;
-  audioObjectUrl: string | null;
   onClose: () => void;
   onCoverUpload: (event: ChangeEvent<HTMLInputElement>) => void;
   onAudioUpload: (event: ChangeEvent<HTMLInputElement>) => void;
@@ -73,7 +72,6 @@ export function MetadataEditorModal({
   open,
   metadata,
   setMetadata,
-  audioObjectUrl,
   onClose,
   onCoverUpload,
   onAudioUpload,
@@ -161,7 +159,7 @@ export function MetadataEditorModal({
 
   const transitionClassName = phase === "enter" ? "is-enter" : "is-exit";
   const coverSource = normalizeSource(metadata.coverDataUrl);
-  const audioSource = normalizeSource(audioObjectUrl) || normalizeSource(metadata.bgmDataUrl);
+  const audioSource = normalizeSource(metadata.bgmDataUrl);
   const mvSource = normalizeSource(metadata.mvDataUrl);
 
   return (
