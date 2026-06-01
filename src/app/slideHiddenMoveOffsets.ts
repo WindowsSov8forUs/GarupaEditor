@@ -37,13 +37,49 @@ function buildSlideHiddenOffsetMap(args: BuildSlideHiddenOffsetMapArgs): Map<str
 
   const toFixed6 = (value: number): number => Number(value.toFixed(6));
   const clamp01 = (value: number): number => Math.max(0, Math.min(1, value));
+  const samePosition = (left: ChartNote, right: ChartNote): boolean =>
+    Math.abs(left.lane - right.lane) <= epsilon && Math.abs(left.beat - right.beat) <= epsilon;
   const noteMap = new Map(notes.map((note) => [note.id, note] as const));
   const hiddenOffsetById = new Map<string, NoteOffset>();
+  const exactFollowHiddenIds = new Set<string>();
+
+  const setHiddenOffsetByMagnitude = (noteId: string, nextOffset: NoteOffset) => {
+    const previousOffset = hiddenOffsetById.get(noteId);
+    if (!previousOffset) {
+      hiddenOffsetById.set(noteId, nextOffset);
+      return;
+    }
+    const previousMagnitude = Math.abs(previousOffset.lane) + Math.abs(previousOffset.beat);
+    const nextMagnitude = Math.abs(nextOffset.lane) + Math.abs(nextOffset.beat);
+    if (nextMagnitude > previousMagnitude) {
+      hiddenOffsetById.set(noteId, nextOffset);
+    }
+  };
 
   for (const chain of slideChains) {
     const chainNotes = chain.noteIds
       .map((id) => noteMap.get(id))
       .filter((note): note is ChartNote => note !== undefined);
+    for (let index = 0; index < chainNotes.length; index += 1) {
+      const note = chainNotes[index];
+      if (note.type === "hidden" || !selectedNoteIds.has(note.id)) {
+        continue;
+      }
+
+      const exactOffset = { lane: toFixed6(laneDelta), beat: toFixed6(beatDelta) };
+      const previous = chainNotes[index - 1];
+      if (previous?.type === "hidden" && samePosition(note, previous)) {
+        hiddenOffsetById.set(previous.id, exactOffset);
+        exactFollowHiddenIds.add(previous.id);
+      }
+
+      const next = chainNotes[index + 1];
+      if (next?.type === "hidden" && samePosition(note, next)) {
+        hiddenOffsetById.set(next.id, exactOffset);
+        exactFollowHiddenIds.add(next.id);
+      }
+    }
+
     if (chainNotes.length < 3) {
       continue;
     }
@@ -84,7 +120,7 @@ function buildSlideHiddenOffsetMap(args: BuildSlideHiddenOffsetMapArgs): Map<str
       for (let middleIndex = 1; middleIndex <= middleCount; middleIndex += 1) {
         const noteIndex = leftIndex + middleIndex;
         const note = chainNotes[noteIndex];
-        if (note.type !== "hidden" || selectedNoteIds.has(note.id)) {
+        if (note.type !== "hidden" || selectedNoteIds.has(note.id) || exactFollowHiddenIds.has(note.id)) {
           continue;
         }
 
@@ -102,16 +138,7 @@ function buildSlideHiddenOffsetMap(args: BuildSlideHiddenOffsetMapArgs): Map<str
           continue;
         }
 
-        const previousOffset = hiddenOffsetById.get(note.id);
-        if (!previousOffset) {
-          hiddenOffsetById.set(note.id, { lane: noteLaneDelta, beat: noteBeatDelta });
-        } else {
-          const previousMagnitude = Math.abs(previousOffset.lane) + Math.abs(previousOffset.beat);
-          const nextMagnitude = Math.abs(noteLaneDelta) + Math.abs(noteBeatDelta);
-          if (nextMagnitude > previousMagnitude) {
-            hiddenOffsetById.set(note.id, { lane: noteLaneDelta, beat: noteBeatDelta });
-          }
-        }
+        setHiddenOffsetByMagnitude(note.id, { lane: noteLaneDelta, beat: noteBeatDelta });
       }
     }
   }

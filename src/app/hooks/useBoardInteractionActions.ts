@@ -227,7 +227,9 @@ export function useBoardInteractionActions(params: any) {
 
     setNotes((previous: ChartNote[]) => {
       const filtered = previous.filter(
-        (note) => !(note.lane === normalized.lane && approxEq(note.beat, normalized.beat)),
+        (note) =>
+          note.type === "hidden" ||
+          !(note.lane === normalized.lane && approxEq(note.beat, normalized.beat)),
       );
       return sortNotes([...filtered, normalized]);
     });
@@ -723,7 +725,10 @@ export function useBoardInteractionActions(params: any) {
       const filtered = previous.filter(
         (note) =>
           note.id !== target.id &&
-          !(note.lane === replacement.lane && approxEq(note.beat, replacement.beat)),
+          (
+            note.type === "hidden" ||
+            !(note.lane === replacement.lane && approxEq(note.beat, replacement.beat))
+          ),
       );
       return sortNotes([...filtered, replacement]);
     });

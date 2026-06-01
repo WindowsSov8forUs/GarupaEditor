@@ -298,7 +298,10 @@ export function useSelectionAndEditorSync(params: any) {
         const remained = previous.filter(
           (note) =>
             !selectedSet.has(note.id) &&
-            !occupied.has(notePositionKey(note.lane, note.beat)),
+            (
+              note.type === "hidden" ||
+              !occupied.has(notePositionKey(note.lane, note.beat))
+            ),
         );
 
         return sortNotes([...remained, ...transformedNotes]);
@@ -443,7 +446,10 @@ export function useSelectionAndEditorSync(params: any) {
           const remained = previous.filter(
             (note) =>
               !transformedIdSet.has(note.id) &&
-              !occupied.has(notePositionKey(note.lane, note.beat)),
+              (
+                note.type === "hidden" ||
+                !occupied.has(notePositionKey(note.lane, note.beat))
+              ),
           );
 
           return sortNotes([...remained, ...transformedNotes]);
