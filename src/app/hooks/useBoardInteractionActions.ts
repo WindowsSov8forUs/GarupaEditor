@@ -396,7 +396,25 @@ export function useBoardInteractionActions(params: any) {
         }
         merged = true;
       } else if (existingChain) {
-        blocked = true;
+        const beforeIds = existingChain.noteIds.slice(0, existingRole.index);
+        const suffixIds = existingChain.noteIds.slice(existingRole.index);
+        replaceCommittedSlideChainSegments(existingChain, [
+          {
+            ...existingChain,
+            id: createId(),
+            noteIds: beforeIds,
+          },
+          {
+            ...existingChain,
+            noteIds: suffixIds,
+          },
+        ]);
+        for (const id of suffixIds) {
+          if (!nextIds.includes(id)) {
+            nextIds.push(id);
+          }
+        }
+        merged = true;
       }
     } else {
       nextIds.push(noteId);
@@ -425,7 +443,9 @@ export function useBoardInteractionActions(params: any) {
   }, [
     committedSlideChainById,
     committedSlideRoleByNoteId,
+    createId,
     isHabahiroEnabled,
+    replaceCommittedSlideChainSegments,
     setNotes,
     setSlideBuildState,
     slideBuildRef,
