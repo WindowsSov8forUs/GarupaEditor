@@ -874,8 +874,10 @@ struct PreparedBestdoriPackage {
 struct PrepareBestdoriPackageParams {
     namespace: String,
     package_key: String,
+    package_cache_key: Option<String>,
     asset_base_url: String,
     manifest_url: Option<String>,
+    required_filenames: Option<Vec<String>>,
     fallback_filenames: Option<Vec<String>>,
     task_id: Option<String>,
 }
@@ -895,8 +897,18 @@ struct BestdoriPostMultipartFileParams {
     file_name: String,
     file_base64: String,
     mime_type: Option<String>,
+    files: Option<Vec<BestdoriPostMultipartFileItem>>,
     fields: Option<HashMap<String, String>>,
     host_scope: Option<String>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct BestdoriPostMultipartFileItem {
+    field_name: String,
+    file_name: String,
+    file_base64: String,
+    mime_type: Option<String>,
 }
 
 fn build_package_file_map(
@@ -979,14 +991,14 @@ impl RemoteHostScope {
     fn allows_host(self, host: &str) -> bool {
         match self {
             Self::Bestdori => host == "bestdori.com" || host == "www.bestdori.com",
-            Self::Sonolus => host == "sonolus.ayachan.fun" || host == "chengdu.sov8.cn",
+            Self::Sonolus => host == "sonolus.ayachan.fun" || host == "chengdu.sov8.cn" || host == "notgarupa.sov8.cn",
         }
     }
 
     fn expected_host(self) -> &'static str {
         match self {
             Self::Bestdori => "bestdori.com",
-            Self::Sonolus => "sonolus.ayachan.fun",
+            Self::Sonolus => "notgarupa.sov8.cn",
         }
     }
 }
@@ -1019,6 +1031,7 @@ async fn load_manifest_filenames_for_package(
     client: &reqwest::Client,
     cookie_header: Option<&str>,
     manifest_url: Option<&str>,
+    required_filenames: Option<Vec<String>>,
     fallback_filenames: Option<Vec<String>>,
 ) -> Result<Vec<String>, String> {
     let manifest_path = package_dir.join(".manifest.json");
@@ -1027,6 +1040,14 @@ async fn load_manifest_filenames_for_package(
         Some(list) => Some(list),
         None => builtin_fallback,
     };
+
+    if let Some(required) = required_filenames {
+        let serialized = serde_json::to_vec(&required)
+            .map_err(|error| format!("serialize required manifest failed: {error}"))?;
+        fs::write(&manifest_path, serialized)
+            .map_err(|error| format!("write local manifest failed: {error}"))?;
+        return Ok(required);
+    }
 
     if manifest_path.exists() {
         let local_manifest_bytes = fs::read(&manifest_path)
@@ -1081,8 +1102,10 @@ struct EnsureBestdoriPackageDownloadParams<'a> {
     app: &'a tauri::AppHandle,
     root: &'a Path,
     package_key: &'a str,
+    manifest_key: &'a str,
     asset_base_url: &'a str,
     manifest_url: Option<&'a str>,
+    required_filenames: Option<Vec<String>>,
     fallback_filenames: Option<Vec<String>>,
     client: &'a reqwest::Client,
     cookie_header: Option<&'a str>,
@@ -1099,11 +1122,12 @@ async fn ensure_bestdori_package_downloaded(
         .map_err(|error| format!("create package dir failed: {error}"))?;
 
     let filenames = load_manifest_filenames_for_package(
-        params.package_key,
+        params.manifest_key,
         &package_dir,
         params.client,
         params.cookie_header,
         params.manifest_url,
+        params.required_filenames,
         params.fallback_filenames,
     )
     .await?;
@@ -1334,26 +1358,33 @@ async fn prepare_bestdori_package(
 ) -> Result<PreparedBestdoriPackage, String> {
     let namespace = normalize_namespace(&params.namespace, "namespace")?;
     let package_key = normalize_rip_name(&params.package_key, "package_key")?;
+    let package_cache_key = match params.package_cache_key.as_deref() {
+        Some(value) => normalize_rip_name(value, "package_cache_key")?,
+        None => package_key.clone(),
+    };
     let asset_base_url = normalize_url(&params.asset_base_url, "asset_base_url")?;
     let manifest_url = params
         .manifest_url
         .as_deref()
         .map(|value| normalize_url(value, "manifest_url"))
         .transpose()?;
+    let required_filenames = normalize_optional_fallback_filenames(params.required_filenames)?;
     let fallback_filenames = normalize_optional_fallback_filenames(params.fallback_filenames)?;
 
     let root = resolve_bestdori_namespace_root(&app, &namespace)?;
     let client = build_bestdori_http_client()?;
     let cookie_header = get_bestdori_cookie_header(&auth_state)?;
-    let scope_id = format!("{namespace}:{package_key}");
-    let scope_label = format!("{namespace}:{package_key}");
+    let scope_id = format!("{namespace}:{package_cache_key}");
+    let scope_label = format!("{namespace}:{package_cache_key}");
     let (package_dir, manifest_filenames) = ensure_bestdori_package_downloaded(
         EnsureBestdoriPackageDownloadParams {
             app: &app,
             root: &root,
-            package_key: &package_key,
+            package_key: &package_cache_key,
+            manifest_key: &package_key,
             asset_base_url: &asset_base_url,
             manifest_url: manifest_url.as_deref(),
+            required_filenames,
             fallback_filenames,
             client: &client,
             cookie_header: cookie_header.as_deref(),
@@ -1364,7 +1395,7 @@ async fn prepare_bestdori_package(
     )
     .await?;
 
-    let package_files = build_package_file_map(&package_dir, &manifest_filenames, &package_key)?;
+    let package_files = build_package_file_map(&package_dir, &manifest_filenames, &package_cache_key)?;
     Ok(PreparedBestdoriPackage { package_files })
 }
 
@@ -1448,19 +1479,6 @@ async fn bestdori_post_multipart_file(
         "url",
         params.host_scope.as_deref(),
     )?;
-    let field_name = normalize_login_value(&params.field_name, "field_name")?;
-    let file_name = normalize_login_value(&params.file_name, "file_name")?;
-    let file_bytes = decode_base64(&params.file_base64)?;
-    if file_bytes.is_empty() {
-        return Err("multipart file content cannot be empty".to_string());
-    }
-
-    let mut file_part = reqwest::multipart::Part::bytes(file_bytes).file_name(file_name);
-    if let Some(mime_type) = normalize_mime_type(params.mime_type) {
-        file_part = file_part
-            .mime_str(&mime_type)
-            .map_err(|error| format!("invalid multipart mime type: {error}"))?;
-    }
     let mut form = reqwest::multipart::Form::new();
     if let Some(fields) = params.fields {
         for (key, value) in fields {
@@ -1468,7 +1486,33 @@ async fn bestdori_post_multipart_file(
             form = form.text(normalized_key, value);
         }
     }
-    form = form.part(field_name, file_part);
+    let files = params.files.unwrap_or_else(|| {
+        vec![BestdoriPostMultipartFileItem {
+            field_name: params.field_name,
+            file_name: params.file_name,
+            file_base64: params.file_base64,
+            mime_type: params.mime_type,
+        }]
+    });
+    if files.is_empty() {
+        return Err("multipart files cannot be empty".to_string());
+    }
+    for file in files {
+        let field_name = normalize_login_value(&file.field_name, "field_name")?;
+        let file_name = normalize_login_value(&file.file_name, "file_name")?;
+        let file_bytes = decode_base64(&file.file_base64)?;
+        if file_bytes.is_empty() {
+            return Err("multipart file content cannot be empty".to_string());
+        }
+
+        let mut file_part = reqwest::multipart::Part::bytes(file_bytes).file_name(file_name);
+        if let Some(mime_type) = normalize_mime_type(file.mime_type) {
+            file_part = file_part
+                .mime_str(&mime_type)
+                .map_err(|error| format!("invalid multipart mime type: {error}"))?;
+        }
+        form = form.part(field_name, file_part);
+    }
 
     let request = with_optional_cookie_header(client.post(&normalized_url).multipart(form), cookie_header.as_deref());
     send_request_expect_json(request, &normalized_url).await

@@ -116,6 +116,13 @@ interface ChartSkinInfo {
   bgSkinRipName?: string;
   fieldSkinRipName?: string;
   judgeSkinRipName?: string;
+  rhythmServer?: string;
+  directionalServer?: string;
+  rhythmSeServer?: string;
+  directionalSeServer?: string;
+  bgSkinServer?: string;
+  fieldSkinServer?: string;
+  judgeSkinServer?: string;
 }
 
 export type ChartJsonDirection = "Left" | "Right";
@@ -754,6 +761,14 @@ export function parseSkinSelectionFromDocument(
     typeof skin.fieldSkinRipName === "string" && skin.fieldSkinRipName.trim().length > 0;
   const hasJudgeSkinRipName =
     typeof skin.judgeSkinRipName === "string" && skin.judgeSkinRipName.trim().length > 0;
+  const hasRhythmServer = typeof skin.rhythmServer === "string" && skin.rhythmServer.trim().length > 0;
+  const hasDirectionalServer = typeof skin.directionalServer === "string" && skin.directionalServer.trim().length > 0;
+  const hasRhythmSeServer = typeof skin.rhythmSeServer === "string" && skin.rhythmSeServer.trim().length > 0;
+  const hasDirectionalSeServer =
+    typeof skin.directionalSeServer === "string" && skin.directionalSeServer.trim().length > 0;
+  const hasBgSkinServer = typeof skin.bgSkinServer === "string" && skin.bgSkinServer.trim().length > 0;
+  const hasFieldSkinServer = typeof skin.fieldSkinServer === "string" && skin.fieldSkinServer.trim().length > 0;
+  const hasJudgeSkinServer = typeof skin.judgeSkinServer === "string" && skin.judgeSkinServer.trim().length > 0;
 
   let rhythmType: string | undefined = hasRhythmType ? skin.rhythmType : undefined;
   let directionalType: string | undefined = hasDirectionalType ? skin.directionalType : undefined;
@@ -797,7 +812,14 @@ export function parseSkinSelectionFromDocument(
     !hasDirectionalSeRipName &&
     !hasBgSkinRipName &&
     !hasFieldSkinRipName &&
-    !hasJudgeSkinRipName
+    !hasJudgeSkinRipName &&
+    !hasRhythmServer &&
+    !hasDirectionalServer &&
+    !hasRhythmSeServer &&
+    !hasDirectionalSeServer &&
+    !hasBgSkinServer &&
+    !hasFieldSkinServer &&
+    !hasJudgeSkinServer
   ) {
     return null;
   }
@@ -817,6 +839,13 @@ export function parseSkinSelectionFromDocument(
     bgSkinRipName: skin.bgSkinRipName,
     fieldSkinRipName: skin.fieldSkinRipName,
     judgeSkinRipName: skin.judgeSkinRipName,
+    rhythmServer: skin.rhythmServer,
+    directionalServer: skin.directionalServer,
+    rhythmSeServer: skin.rhythmSeServer,
+    directionalSeServer: skin.directionalSeServer,
+    bgSkinServer: skin.bgSkinServer,
+    fieldSkinServer: skin.fieldSkinServer,
+    judgeSkinServer: skin.judgeSkinServer,
   });
 }
 

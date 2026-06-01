@@ -53,6 +53,7 @@ import {
   type BestdoriPostTag,
 } from "../../services/bestdori/api";
 import {
+  uploadNotGarupaLevelFlow,
   publishBestdoriCommunityChartFlow,
   uploadSonolusLevelFlow,
 } from "../../services/bestdori/resourceFlows";
@@ -1733,6 +1734,75 @@ export function useEditorIoAndShortcuts(params: any) {
     }
   };
 
+  const applyUploadNotGarupaServerChart = async () => {
+    const uploadOperationId = `upload-notgarupa-server-chart-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    const pushUploadProgress = (percent: number, message: string) =>
+      pushBlockingProgress(uploadOperationId, percent, message);
+    const progressByStage: Record<string, { percent: number; message: string }> = {
+      "converting-chart": { percent: 25, message: "正在准备 Garupa 谱面 JSON…" },
+      "resolving-audio": { percent: 45, message: "正在准备歌曲音频…" },
+      "resolving-cover": { percent: 65, message: "正在准备歌曲封面…" },
+      uploading: { percent: 90, message: "正在上传至 NotGarupa 服务器…" },
+    };
+
+    startDownloadProgress(uploadOperationId, "正在上传至 NotGarupa 服务器…");
+    try {
+      const metadataAudioSource = resolveTrimmedString(metadata.bgmDataUrl);
+      const runtimeAudioSource = resolveTrimmedString(audioObjectUrl);
+      const resolvedAudioSource = metadataAudioSource || runtimeAudioSource || null;
+      const difficultyValue = Number(metadata.difficultyLevel);
+      const resolvedDifficulty = Number.isFinite(difficultyValue) && difficultyValue >= 1
+        ? Math.trunc(difficultyValue)
+        : 1;
+      const result = await uploadNotGarupaLevelFlow({
+        chartJson,
+        metadata,
+        audioSourceUrl: resolvedAudioSource,
+        audioFileName: resolveTrimmedString(audioFileName),
+        coverSourceUrl: resolveTrimmedString(metadata.coverDataUrl),
+        coverFileName: "cover.png",
+        description: uploadCommunityPostContent,
+        tags: uploadCommunityPostTags,
+        difficulty: resolvedDifficulty,
+        onStage: (stage) => {
+          const entry = progressByStage[stage];
+          if (!entry) {
+            return;
+          }
+          pushUploadProgress(entry.percent, entry.message);
+        },
+      });
+
+      completeDownloadProgress("NotGarupa 服务器谱面上传完成。");
+      if (typeof openOverlayDialog === "function") {
+        openOverlayDialog({
+          tone: "info",
+          message: `NotGarupa 服务器上传成功。\nID: ${result.uid}\n${result.levelUrl}`,
+        });
+      } else {
+        setStatusMessage(`NotGarupa 服务器上传成功：ID ${result.uid}`);
+      }
+      setImportJsonModalLevel("chart");
+      setIsImportJsonModalOpen(false);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      completeDownloadProgress(`NotGarupa 服务器谱面上传失败：${message}`, 900);
+      if (typeof openOverlayDialog === "function") {
+        openOverlayDialog({
+          tone: "error",
+          message: `NotGarupa 服务器上传失败：\n${message}`,
+        });
+      } else {
+        setStatusMessage(`NotGarupa 服务器上传失败：${message}`);
+      }
+    } finally {
+      if (currentDownloadOperationIdRef.current === uploadOperationId) {
+        currentDownloadOperationIdRef.current = null;
+        downloadScopeMapRef.current = new Map();
+      }
+    }
+  };
+
   const applyUploadTestServerChart = async () => {
     const uploadOperationId = `upload-test-server-chart-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
     const pushUploadProgress = (percent: number, message: string) =>
@@ -2062,25 +2132,32 @@ export function useEditorIoAndShortcuts(params: any) {
     startDownloadProgress(downloadOperationId, "正在准备下载资源…");
     const shouldReloadRhythm =
       rhythmSkinAssetsRef.current === null ||
-      normalized.rhythmRipName !== skinSelection.rhythmRipName;
+      normalized.rhythmRipName !== skinSelection.rhythmRipName ||
+      normalized.rhythmServer !== skinSelection.rhythmServer;
     const shouldReloadDirectional =
       directionalSkinAssetsRef.current === null ||
-      normalized.directionalRipName !== skinSelection.directionalRipName;
+      normalized.directionalRipName !== skinSelection.directionalRipName ||
+      normalized.directionalServer !== skinSelection.directionalServer;
     const shouldReloadRhythmSe =
       rhythmSeSkinAssetsRef.current === null ||
-      normalized.rhythmSeRipName !== skinSelection.rhythmSeRipName;
+      normalized.rhythmSeRipName !== skinSelection.rhythmSeRipName ||
+      normalized.rhythmSeServer !== skinSelection.rhythmSeServer;
     const shouldReloadDirectionalSe =
       directionalSeSkinAssetsRef.current === null ||
-      normalized.directionalSeRipName !== skinSelection.directionalSeRipName;
+      normalized.directionalSeRipName !== skinSelection.directionalSeRipName ||
+      normalized.directionalSeServer !== skinSelection.directionalSeServer;
     const shouldReloadBgSkin =
       bgSkinAssetsRef.current === null ||
-      normalized.bgSkinRipName !== skinSelection.bgSkinRipName;
+      normalized.bgSkinRipName !== skinSelection.bgSkinRipName ||
+      normalized.bgSkinServer !== skinSelection.bgSkinServer;
     const shouldReloadFieldSkin =
       fieldSkinAssetsRef.current === null ||
-      normalized.fieldSkinRipName !== skinSelection.fieldSkinRipName;
+      normalized.fieldSkinRipName !== skinSelection.fieldSkinRipName ||
+      normalized.fieldSkinServer !== skinSelection.fieldSkinServer;
     const shouldReloadJudgeSkin =
       judgeSkinAssetsRef.current === null ||
-      normalized.judgeSkinRipName !== skinSelection.judgeSkinRipName;
+      normalized.judgeSkinRipName !== skinSelection.judgeSkinRipName ||
+      normalized.judgeSkinServer !== skinSelection.judgeSkinServer;
     setStatusMessage(
       `正在加载皮肤：节奏图示 ${formatTypeLabel(normalized.rhythmType)}，方向滑键 ${formatTypeLabel(normalized.directionalType)}，节奏图示SE ${formatTypeLabel(normalized.rhythmSeType)}，方向滑键SE ${formatTypeLabel(normalized.directionalSeType)}，背景 ${formatTypeLabel(normalized.bgType)}，轨道样式 ${formatTypeLabel(normalized.fieldType)}，判定样式 ${formatTypeLabel(normalized.judgeType)}。`,
     );
@@ -2100,17 +2177,17 @@ export function useEditorIoAndShortcuts(params: any) {
           ? downloadBestdoriDirectionalSeSkinAssets(normalized, { operationId: downloadOperationId })
           : Promise.resolve(directionalSeSkinAssetsRef.current),
         shouldReloadBgSkin
-          ? downloadBestdoriBgSkinAssets(normalized.bgSkinRipName, { operationId: downloadOperationId })
+          ? downloadBestdoriBgSkinAssets(normalized.bgSkinRipName, { operationId: downloadOperationId }, normalized.bgSkinServer)
           : Promise.resolve(bgSkinAssetsRef.current),
         shouldReloadFieldSkin
-          ? downloadBestdoriFieldSkinAssets(normalized.fieldSkinRipName, { operationId: downloadOperationId })
+          ? downloadBestdoriFieldSkinAssets(normalized.fieldSkinRipName, { operationId: downloadOperationId }, normalized.fieldSkinServer)
           : Promise.resolve(fieldSkinAssetsRef.current),
         shouldReloadJudgeSkin
-          ? downloadBestdoriJudgeSkinAssets(normalized.judgeSkinRipName, { operationId: downloadOperationId })
+          ? downloadBestdoriJudgeSkinAssets(normalized.judgeSkinRipName, { operationId: downloadOperationId }, normalized.judgeSkinServer)
           : Promise.resolve(judgeSkinAssetsRef.current),
-        commonTapSkillSeRef.current
+        commonTapSkillSeRef.current && !shouldReloadRhythmSe
           ? Promise.resolve(commonTapSkillSeRef.current)
-          : ensureCommonTapSkillSeAsset({ operationId: downloadOperationId }),
+          : ensureCommonTapSkillSeAsset({ operationId: downloadOperationId, server: normalized.rhythmSeServer }),
       ]);
       if (skinApplySeqRef.current !== sequence) {
         return;
@@ -2203,6 +2280,7 @@ export function useEditorIoAndShortcuts(params: any) {
     applyImportOfficialChart,
     applyImportCommunityChart,
     applyUploadCommunityChart,
+    applyUploadNotGarupaServerChart,
     applyUploadTestServerChart,
     openImportJsonModal,
     closeImportJsonModal,

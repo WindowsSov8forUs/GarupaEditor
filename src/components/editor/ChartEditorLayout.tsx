@@ -60,6 +60,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     applyImportOfficialChart,
     applyImportCommunityChart,
     applyUploadCommunityChart,
+    applyUploadNotGarupaServerChart,
     applyUploadTestServerChart,
     closeImportJsonModal,
     isExportJsonModalOpen,
@@ -308,6 +309,13 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     resolveBgSkinRipNameFromType,
     resolveFieldSkinRipNameFromType,
     resolveJudgeSkinRipNameFromType,
+    resolveRhythmServerFromType,
+    resolveDirectionalServerFromType,
+    resolveRhythmSeServerFromType,
+    resolveDirectionalSeServerFromType,
+    resolveBgSkinServerFromType,
+    resolveFieldSkinServerFromType,
+    bestdoriSkinCatalogOptions,
     HABAHIRO_RHYTHM_SKIN_TYPES,
     RHYTHM_SKIN_TYPES,
     DIRECTIONAL_SKIN_TYPES,
@@ -327,6 +335,13 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     noteVisualScale,
     copiedChartPayload,
   } = vm;
+  const rhythmSkinTypes = bestdoriSkinCatalogOptions?.rhythm ?? RHYTHM_SKIN_TYPES;
+  const habahiroRhythmSkinTypes = bestdoriSkinCatalogOptions?.habahiroRhythm ?? HABAHIRO_RHYTHM_SKIN_TYPES;
+  const directionalSkinTypes = bestdoriSkinCatalogOptions?.directional ?? DIRECTIONAL_SKIN_TYPES;
+  const rhythmSeSkinTypes = bestdoriSkinCatalogOptions?.rhythmSe ?? RHYTHM_SE_SKIN_TYPES;
+  const directionalSeSkinTypes = bestdoriSkinCatalogOptions?.directionalSe ?? DIRECTIONAL_SE_SKIN_TYPES;
+  const bgSkinTypes = bestdoriSkinCatalogOptions?.bg ?? BG_SKIN_TYPES;
+  const fieldSkinTypes = bestdoriSkinCatalogOptions?.field ?? FIELD_SKIN_TYPES;
   const [isBestdoriLoginOpen, setIsBestdoriLoginOpen] = useState(false);
   const [bestdoriLoginUsernameInput, setBestdoriLoginUsernameInput] = useState("");
   const [bestdoriLoginPasswordInput, setBestdoriLoginPasswordInput] = useState("");
@@ -1975,6 +1990,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
                 resolveHabahiroRhythmRipNameFromType(value)
                 ?? resolveRhythmRipNameFromType(value)
                 ?? current.rhythmRipName,
+              rhythmServer: resolveRhythmServerFromType(value) ?? current.rhythmServer,
             }),
           )
         }
@@ -1984,6 +2000,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
               ...current,
               directionalType: value,
               directionalRipName: resolveDirectionalRipNameFromType(value) ?? current.directionalRipName,
+              directionalServer: resolveDirectionalServerFromType(value) ?? current.directionalServer,
             }),
           )
         }
@@ -1993,6 +2010,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
               ...current,
               rhythmSeType: value,
               rhythmSeRipName: resolveRhythmSeRipNameFromType(value) ?? current.rhythmSeRipName,
+              rhythmSeServer: resolveRhythmSeServerFromType(value) ?? current.rhythmSeServer,
             }),
           )
         }
@@ -2002,6 +2020,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
               ...current,
               directionalSeType: value,
               directionalSeRipName: resolveDirectionalSeRipNameFromType(value) ?? current.directionalSeRipName,
+              directionalSeServer: resolveDirectionalSeServerFromType(value) ?? current.directionalSeServer,
             }),
           )
         }
@@ -2011,6 +2030,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
               ...current,
               bgType: value,
               bgSkinRipName: resolveBgSkinRipNameFromType(value) ?? current.bgSkinRipName,
+              bgSkinServer: resolveBgSkinServerFromType(value) ?? current.bgSkinServer,
             }),
           )
         }
@@ -2020,6 +2040,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
               ...current,
               fieldType: value,
               fieldSkinRipName: resolveFieldSkinRipNameFromType(value) ?? current.fieldSkinRipName,
+              fieldSkinServer: resolveFieldSkinServerFromType(value) ?? current.fieldSkinServer,
             }),
           )
         }
@@ -2032,12 +2053,12 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
             }),
           )
         }
-        rhythmSkinTypes={appOptionSettings.habahiro ? HABAHIRO_RHYTHM_SKIN_TYPES : RHYTHM_SKIN_TYPES}
-        directionalSkinTypes={DIRECTIONAL_SKIN_TYPES}
-        rhythmSeSkinTypes={RHYTHM_SE_SKIN_TYPES}
-        directionalSeSkinTypes={DIRECTIONAL_SE_SKIN_TYPES}
-        bgSkinTypes={BG_SKIN_TYPES}
-        fieldSkinTypes={FIELD_SKIN_TYPES}
+        rhythmSkinTypes={appOptionSettings.habahiro ? habahiroRhythmSkinTypes : rhythmSkinTypes}
+        directionalSkinTypes={directionalSkinTypes}
+        rhythmSeSkinTypes={rhythmSeSkinTypes}
+        directionalSeSkinTypes={directionalSeSkinTypes}
+        bgSkinTypes={bgSkinTypes}
+        fieldSkinTypes={fieldSkinTypes}
         judgeSkinTypes={JUDGE_SKIN_TYPES}
         formatTypeLabel={formatTypeLabel}
         isSkinApplying={isSkinApplying}
@@ -2055,6 +2076,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         onUploadCommunityPostContentChange={setUploadCommunityPostContent}
         onUploadCommunityPostTagsChange={setUploadCommunityPostTags}
         onApplyUploadCommunityChart={() => void applyUploadCommunityChart()}
+        onApplyUploadNotGarupaServerChart={() => void applyUploadNotGarupaServerChart()}
         onApplyUploadTestServerChart={() => void applyUploadTestServerChart()}
       />
 

@@ -89,18 +89,26 @@ import {
   getRuntimeJudgeSkinAssets,
   getRuntimeSeAssets,
   isHabahiroRhythmRipName,
+  loadBestdoriSkinCatalogOptions,
   normalizeSkinSelection,
   projectCanvasRenderResourceRuntimeAssets,
   readSkinSelectionFromStorage,
   resolveHabahiroRhythmRipNameFromType,
+  resolveBgSkinServerFromType,
   resolveBgSkinRipNameFromType,
+  resolveDirectionalSeServerFromType,
   resolveDirectionalSeRipNameFromType,
+  resolveDirectionalServerFromType,
   resolveDirectionalRipNameFromType,
+  resolveFieldSkinServerFromType,
   resolveFieldSkinRipNameFromType,
   resolveJudgeSkinRipNameFromType,
+  resolveRhythmSeServerFromType,
   resolveRhythmSeRipNameFromType,
+  resolveRhythmServerFromType,
   resolveRhythmRipNameFromType,
   writeSkinSelectionToStorage,
+  type BestdoriSkinCatalogOptions,
   type SeSkinAssets,
   type SkinAssets,
   type SkinSelection,
@@ -1200,8 +1208,21 @@ function ChartEditorController() {
   const [pendingSkinSelection, setPendingSkinSelection] = useState<SkinSelection>(() =>
     readSkinSelectionFromStorage(),
   );
+  const [bestdoriSkinCatalogOptions, setBestdoriSkinCatalogOptions] = useState<BestdoriSkinCatalogOptions | null>(null);
   const [skinAssets, setSkinAssets] = useState<SkinAssets | null>(null);
   const [isSkinApplying, setIsSkinApplying] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    void loadBestdoriSkinCatalogOptions().then((options) => {
+      if (!cancelled) {
+        setBestdoriSkinCatalogOptions(options);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   const [spriteAspectRatios, setSpriteAspectRatios] = useState<Record<string, number>>({});
   const isSkinReady = skinAssets !== null;
 
@@ -1292,7 +1313,7 @@ function ChartEditorController() {
   const skinApplySeqRef = useRef(0);
   const didInitSkinRef = useRef(false);
   const applyBestdoriSkinSelectionRef = useRef<any>(async () => {});
-  const lastStandardRhythmSkinRef = useRef<Pick<SkinSelection, "rhythmType" | "rhythmRipName"> | null>(null);
+  const lastStandardRhythmSkinRef = useRef<Pick<SkinSelection, "rhythmType" | "rhythmRipName" | "rhythmServer"> | null>(null);
   const syncingHabahiroSkinRef = useRef(false);
   const sidebarResizeRef = useRef<{ startX: number; startWidth: number } | null>(null);
   const viewBottomTimeSecRef = useRef<number | null>(null);
@@ -2997,6 +3018,7 @@ function ChartEditorController() {
     applyImportOfficialChart,
     applyImportCommunityChart,
     applyUploadCommunityChart,
+    applyUploadNotGarupaServerChart,
     applyUploadTestServerChart,
     openImportJsonModal,
     closeImportJsonModal,
@@ -4486,27 +4508,30 @@ function ChartEditorController() {
     lastStandardRhythmSkinRef.current = {
       rhythmType: skinSelection.rhythmType,
       rhythmRipName: skinSelection.rhythmRipName,
+      rhythmServer: skinSelection.rhythmServer,
     };
-  }, [skinSelection.rhythmRipName, skinSelection.rhythmType]);
+  }, [skinSelection.rhythmRipName, skinSelection.rhythmServer, skinSelection.rhythmType]);
 
   const buildHabahiroSkinSelection = useCallback((): SkinSelection => {
     return normalizeSkinSelection({
       ...skinSelection,
       rhythmType: HABAHIRO_RHYTHM_TYPE,
       rhythmRipName: HABAHIRO_RHYTHM_RIP_NAME,
+      rhythmServer: resolveRhythmServerFromType(HABAHIRO_RHYTHM_RIP_NAME) ?? skinSelection.rhythmServer,
     });
-  }, [normalizeSkinSelection, skinSelection]);
+  }, [normalizeSkinSelection, resolveRhythmServerFromType, skinSelection]);
 
   const buildStandardRhythmSkinSelection = useCallback((): SkinSelection => {
     const remembered = lastStandardRhythmSkinRef.current;
-    const fallbackType = RHYTHM_SKIN_TYPES[0] ?? "TYPE1";
+    const fallbackType = bestdoriSkinCatalogOptions?.rhythm?.[0] ?? RHYTHM_SKIN_TYPES[0] ?? "TYPE1";
     const fallbackRip = resolveRhythmRipNameFromType(fallbackType) ?? "skin00";
     return normalizeSkinSelection({
       ...skinSelection,
       rhythmType: remembered?.rhythmType ?? fallbackType,
       rhythmRipName: remembered?.rhythmRipName ?? fallbackRip,
+      rhythmServer: remembered?.rhythmServer ?? resolveRhythmServerFromType(fallbackType) ?? skinSelection.rhythmServer,
     });
-  }, [normalizeSkinSelection, resolveRhythmRipNameFromType, skinSelection]);
+  }, [bestdoriSkinCatalogOptions, normalizeSkinSelection, resolveRhythmRipNameFromType, resolveRhythmServerFromType, skinSelection]);
 
   const requestSpRhythmRegressionConfirm = useCallback(() => {
     return new Promise<boolean>((resolve) => {
@@ -5235,6 +5260,7 @@ function ChartEditorController() {
     setStatusMessage,
     setIsToolArmed,
     isToolArmed,
+    tool,
     sortBpmEvents,
     setBpmEvents,
     setSvEvents,
@@ -5800,6 +5826,7 @@ function ChartEditorController() {
         applyImportOfficialChart,
         applyImportCommunityChart,
         applyUploadCommunityChart,
+        applyUploadNotGarupaServerChart,
         applyUploadTestServerChart,
         closeImportJsonModal,
         openImportJsonModalBestdoriV2Level,
@@ -6050,6 +6077,13 @@ function ChartEditorController() {
         resolveBgSkinRipNameFromType,
         resolveFieldSkinRipNameFromType,
         resolveJudgeSkinRipNameFromType,
+        resolveRhythmServerFromType,
+        resolveDirectionalServerFromType,
+        resolveRhythmSeServerFromType,
+        resolveDirectionalSeServerFromType,
+        resolveBgSkinServerFromType,
+        resolveFieldSkinServerFromType,
+        bestdoriSkinCatalogOptions,
         HABAHIRO_RHYTHM_SKIN_TYPES,
         RHYTHM_SKIN_TYPES,
         DIRECTIONAL_SKIN_TYPES,
