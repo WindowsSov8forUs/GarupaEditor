@@ -9,6 +9,7 @@ import {
 } from "../../chartCore";
 import { isLastBeatOrderedBpmNegative } from "../editorHelpers";
 import { applyHabahiroSlideWidthToNoteIds } from "../habahiroSlideWidth";
+import { cleanupSlideChainsHidden } from "../slideChainCleanup";
 
 export function useBoardInteractionActions(params: any) {
   const {
@@ -310,8 +311,49 @@ export function useBoardInteractionActions(params: any) {
     });
   }, [setSlideBuildState, slideBuildRef]);
 
+  const replaceCommittedSlideChainSegments = useCallback(
+    (chain: any, segments: any[]) => {
+      setSlideChains((previous: any[]) => {
+        const replacementChains = cleanupSlideChainsHidden({
+          chains: segments,
+          noteMap: noteById,
+          minLength: 2,
+        });
+        return previous.flatMap((currentChain) =>
+          currentChain.id === chain.id ? replacementChains : [currentChain],
+        );
+      });
+    },
+    [noteById, setSlideChains],
+  );
+
   const startSlideBuildFromSeedNote = useCallback((seedNote: ChartNote) => {
     const committedRole = committedSlideRoleByNoteId.get(seedNote.id);
+    if (committedRole && committedRole.index > 0 && committedRole.index < committedRole.length - 1) {
+      const chain = committedSlideChainById.get(committedRole.chainId);
+      if (chain && chain.noteIds.length > 0) {
+        const prefixIds = chain.noteIds.slice(0, committedRole.index + 1);
+        const suffixIds = chain.noteIds.slice(committedRole.index + 1);
+        replaceCommittedSlideChainSegments(chain, [
+          {
+            ...chain,
+            noteIds: prefixIds,
+          },
+          {
+            ...chain,
+            id: createId(),
+            noteIds: suffixIds,
+          },
+        ]);
+        beginSlideBuild(seedNote.id, null, {
+          persistUntilRightClick: false,
+          mode: "drag",
+          initialNoteIds: prefixIds,
+        });
+        setStatusMessage("状态已更新。");
+        return;
+      }
+    }
     if (committedRole && committedRole.index === committedRole.length - 1) {
       const chain = committedSlideChainById.get(committedRole.chainId);
       if (chain && chain.noteIds.length > 0) {
@@ -325,7 +367,7 @@ export function useBoardInteractionActions(params: any) {
       }
     }
     beginSlideBuild(seedNote.id, null, { persistUntilRightClick: false, mode: "drag" });
-  }, [beginSlideBuild, committedSlideChainById, committedSlideRoleByNoteId, setStatusMessage]);
+  }, [beginSlideBuild, committedSlideChainById, committedSlideRoleByNoteId, createId, replaceCommittedSlideChainSegments, setStatusMessage]);
 
   const appendSlideBuildNote = useCallback((noteId: string): { appended: boolean; merged: boolean; blocked: boolean } => {
     const previous = slideBuildRef.current;
