@@ -17,6 +17,7 @@ import {
   drawParticleEmitter,
   ParticleEmitterDrawContext,
   ParticleLayoutPreset,
+  ParticleVisualLayer,
 } from "./noteParticleEffectRenderer";
 import { drawComboHud } from "./comboHudRenderer";
 import {
@@ -560,8 +561,8 @@ export class PixiRenderer {
   }
 
   triggerEmptyTapEffects(lane: number, elapsedMs: number): void {
-    this.startLaneEffect(lane, elapsedMs, true, 1);
-    this.startSlotEffect(lane, elapsedMs, 1);
+    this.startPerspectiveLaneRectangleEffect(lane, elapsedMs, true, 1);
+    this.startSpriteParticleEffect("slot", lane, elapsedMs);
   }
 
   endEmptyTapEffects(elapsedMs: number): void {
@@ -1756,7 +1757,9 @@ export class PixiRenderer {
     const shouldDoubleDirectionalLinear = directionalWidth >= DIRECTIONAL_LINEAR_DOUBLE_PLAY_WIDTH_THRESHOLD;
 
     if (isTapLike) {
-      this.enqueueParticleEmitterBySlot("tapNoteLinear", lane, startMs, 400, false, "linear");
+      this.startSpriteParticleEffect("tapNoteLinear", lane, startMs);
+      this.startHitTrapezoidEffect(lane, startMs, laneEffectWidth);
+      this.startHitRoundedRectangleEffect("tapNoteLinear", lane, startMs, laneEffectWidth);
       this.enqueueParticleEmitterBySlot(
         "tapNoteCircular",
         lane,
@@ -1769,7 +1772,8 @@ export class PixiRenderer {
         HIT_CIRCLE_LAYOUT_SCALE_NON_DIRECTIONAL,
       );
     } else if (isFlickHit) {
-      this.enqueueParticleEmitterBySlot("flickNoteLinear", lane, startMs, 400, false, "linear");
+      this.startSpriteParticleEffect("flickNoteLinear", lane, startMs);
+      this.startHitRoundedRectangleEffect("flickNoteLinear", lane, startMs, laneEffectWidth);
       this.enqueueParticleEmitterBySlot(
         "flickNoteCircular",
         lane,
@@ -1851,8 +1855,9 @@ export class PixiRenderer {
       );
     }
 
-    this.startLaneEffect(particleLane, startMs, false, laneEffectWidth);
-    this.startSlotEffect(particleLane, startMs, laneEffectWidth);
+    this.startLaneRectangleEffect(particleLane, startMs, laneEffectWidth);
+    this.startPerspectiveLaneRectangleEffect(particleLane, startMs, false, laneEffectWidth);
+    this.startSpriteParticleEffect("slot", particleLane, startMs);
 
     if (isHoldRenderableSlideNote(note)) {
       this.activateHoldEffect(trigger);
@@ -1871,6 +1876,7 @@ export class PixiRenderer {
     layoutScale = 1,
     seedBaseOverride?: number,
     laneWidth = 1,
+    visualLayer?: ParticleVisualLayer,
   ): ActiveParticleEmitter | null {
     const pack = this.assets?.particleEffects;
     if (!pack) {
@@ -1897,12 +1903,87 @@ export class PixiRenderer {
       advanceScale: Number.isFinite(advanceScale) && advanceScale > 0 ? advanceScale : 1,
       layoutScale: Number.isFinite(layoutScale) && layoutScale > 0 ? layoutScale : 1,
       laneWidth: Number.isFinite(laneWidth) && laneWidth > 0 ? laneWidth : 1,
+      visualLayer,
     };
     this.activeParticleEmitters.push(emitter);
     return emitter;
   }
 
-  private startLaneEffect(lane: number, startMs: number, hold: boolean, laneWidth = 1): void {
+  private startSpriteParticleEffect(slotKey: "tapNoteLinear" | "flickNoteLinear" | "slot", lane: number, startMs: number): void {
+    const preset: ParticleLayoutPreset = slotKey === "slot" ? "slot" : "linear";
+    const durationMs = slotKey === "slot" ? SLOT_EFFECT_DURATION_MS : 400;
+    this.enqueueParticleEmitterBySlot(
+      slotKey,
+      lane,
+      startMs,
+      durationMs,
+      false,
+      preset,
+      undefined,
+      1,
+      1,
+      undefined,
+      1,
+      "spriteParticles",
+    );
+  }
+
+  private startHitTrapezoidEffect(lane: number, startMs: number, laneWidth: number): void {
+    const effectLaneWidth = Math.max(1, Number.isFinite(laneWidth) ? laneWidth : 1);
+    this.enqueueParticleEmitterBySlot(
+      "tapNoteLinear",
+      lane,
+      startMs,
+      400,
+      false,
+      "linear",
+      undefined,
+      1,
+      1,
+      undefined,
+      effectLaneWidth,
+      "trapezoid",
+    );
+  }
+
+  private startHitRoundedRectangleEffect(slotKey: "tapNoteLinear" | "flickNoteLinear", lane: number, startMs: number, laneWidth: number): void {
+    const effectLaneWidth = Math.max(1, Number.isFinite(laneWidth) ? laneWidth : 1);
+    this.enqueueParticleEmitterBySlot(
+      slotKey,
+      lane,
+      startMs,
+      400,
+      false,
+      "linear",
+      undefined,
+      1,
+      1,
+      undefined,
+      effectLaneWidth,
+      "roundedRect",
+    );
+  }
+
+  private startLaneRectangleEffect(lane: number, startMs: number, laneWidth: number): void {
+    const effectLaneWidth = Math.max(1, Number.isFinite(laneWidth) ? laneWidth : 1);
+    const seedBase = this.allocateEmitterSeed("slot", startMs, lane);
+    this.enqueueParticleEmitterBySlot(
+      "slot",
+      lane,
+      startMs,
+      SLOT_EFFECT_DURATION_MS,
+      false,
+      "slot",
+      undefined,
+      1,
+      1,
+      seedBase,
+      effectLaneWidth,
+      "laneRectangle",
+    );
+  }
+
+  private startPerspectiveLaneRectangleEffect(lane: number, startMs: number, hold: boolean, laneWidth: number): void {
     const effectLaneWidth = Math.max(1, Number.isFinite(laneWidth) ? laneWidth : 1);
     if (hold) {
       const active = this.activeEmptyTouchLaneEffect;
@@ -1929,6 +2010,7 @@ export class PixiRenderer {
         1,
         seedBase,
         effectLaneWidth,
+        "perspectiveLaneRectangle",
       );
       this.activeEmptyTouchLaneEffect = {
         lane,
@@ -1952,22 +2034,7 @@ export class PixiRenderer {
       1,
       seedBase,
       effectLaneWidth,
-    );
-  }
-
-  private startSlotEffect(lane: number, startMs: number, _laneWidth = 1): void {
-    this.enqueueParticleEmitterBySlot(
-      "slot",
-      lane,
-      startMs,
-      SLOT_EFFECT_DURATION_MS,
-      false,
-      "slot",
-      undefined,
-      1,
-      1,
-      undefined,
-      1,
+      "perspectiveLaneRectangle",
     );
   }
 
@@ -1989,6 +2056,7 @@ export class PixiRenderer {
       1,
       active.seedBase,
       active.laneWidth,
+      "perspectiveLaneRectangle",
     );
     this.activeEmptyTouchLaneEffect = null;
   }
