@@ -75,6 +75,7 @@ interface SlideConnection {
   fromTgPos: number;
   toTgPos: number;
   useSpecialTexture: boolean;
+  mode: "normal" | "leadingIgnored" | "trailingIgnored" | "allIgnored";
 }
 
 interface ActiveHoldEffect {
@@ -458,12 +459,18 @@ export class PixiRenderer {
       }
     }
     const slideRhythmWidthByRootEventIndex = new Map<number, number>();
+    const visibleEventIndicesByRootEventIndex = new Map<number, number[]>();
     for (let index = 0; index < events.length; index += 1) {
       const event = events[index];
       if (event.eventType !== "note" || !event.note || isDirectionalNote(event.note)) {
         continue;
       }
       const rootIndex = eventRootIndexByEventIndex.get(index) ?? index;
+      if (event.note.baseType !== "hidden") {
+        const visibleIndices = visibleEventIndicesByRootEventIndex.get(rootIndex) ?? [];
+        visibleIndices.push(index);
+        visibleEventIndicesByRootEventIndex.set(rootIndex, visibleIndices);
+      }
       if (!slideRhythmWidthByRootEventIndex.has(rootIndex)) {
         slideRhythmWidthByRootEventIndex.set(rootIndex, rhythmWidthForNote(event.note));
       }
@@ -481,6 +488,7 @@ export class PixiRenderer {
       }
       const rootEventIndex = eventRootIndexByEventIndex.get(index) ?? index;
       const markerSource = resolveLastVisibleSource(event.parentEventIndex);
+      const visibleIndices = visibleEventIndicesByRootEventIndex.get(rootEventIndex) ?? [];
       const slideRhythmWidth =
         slideRhythmWidthByRootEventIndex.get(rootEventIndex)
         ?? Math.max(
@@ -515,6 +523,7 @@ export class PixiRenderer {
         fromTgPos: parent.tgPos,
         toTgPos: event.tgPos,
         useSpecialTexture: hiddenRoots.has(resolveRootIndex(index)),
+        mode: this.resolveSlideConnectionMode(event.parentEventIndex, index, visibleIndices),
       });
     }
     connections.sort((left, right) => {
@@ -1366,6 +1375,29 @@ export class PixiRenderer {
         connection.toTgId,
         connection.toTgPos,
       );
+      if (connection.fromTgId >= 0 && connection.fromTgId === connection.toTgId) {
+        this.drawSlideConnectionAxisSegments(graphics, connection, elapsedMs);
+        const fromPassed = fromFrameRaw >= this.settings.noteSpeedFrames;
+        if (fromPassed && connection.mode !== "allIgnored") {
+          const nowAxis = this.axisNowAt(elapsedMs, connection.fromTgId);
+          const fromBaseLane = this.interpolateLane(
+            connection.fromLane,
+            connection.toLane,
+            nowAxis,
+            this.axisHitAt(connection.fromHitMs, connection.fromTgId, connection.fromTgPos),
+            this.axisHitAt(connection.toHitMs, connection.toTgId, connection.toTgPos),
+          );
+          const fromRenderLane = this.interpolateLane(
+            connection.fromAnchorLane,
+            connection.toAnchorLane,
+            nowAxis,
+            this.axisHitAt(connection.fromHitMs, connection.fromTgId, connection.fromTgPos),
+            this.axisHitAt(connection.toHitMs, connection.toTgId, connection.toTgPos),
+          );
+          slideBottomMarkers.push({ lane: fromBaseLane, renderLane: fromRenderLane, connection });
+        }
+        continue;
+      }
       if (!this.shouldDrawSlideConnectionEndpointRange(connection, elapsedMs, fromFrameRaw, toFrameRaw)) {
         continue;
       }
@@ -1402,13 +1434,147 @@ export class PixiRenderer {
         this.laneXAtPercent(toAnchorLane, toPercent),
         this.laneYAtPercent(toPercent),
         this.connectorHalfWidthAtPercent(toPercent, connection.slideRhythmWidth),
-        1,
+        this.slideConnectionRenderAlpha(connection),
       );
 
-      if (fromPassed) {
+      if (fromPassed && connection.mode !== "allIgnored") {
         slideBottomMarkers.push({ lane: fromBaseLane, renderLane: fromRenderLane, connection });
       }
     }
+  }
+
+  private resolveSlideConnectionMode(
+    fromEventIndex: number,
+    toEventIndex: number,
+    visibleEventIndices: readonly number[],
+  ): SlideConnection["mode"] {
+    if (visibleEventIndices.length === 0) {
+      return "allIgnored";
+    }
+    const firstVisibleIndex = visibleEventIndices[0];
+    const lastVisibleIndex = visibleEventIndices[visibleEventIndices.length - 1];
+    if (toEventIndex <= firstVisibleIndex && fromEventIndex < firstVisibleIndex) {
+      return "leadingIgnored";
+    }
+    if (fromEventIndex >= lastVisibleIndex) {
+      return "trailingIgnored";
+    }
+    return "normal";
+  }
+
+  private drawSlideConnectionAxisSegments(
+    graphics: Graphics,
+    connection: SlideConnection,
+    elapsedMs: number,
+  ): void {
+    const travelAxisMs = this.noteTravelAxisMs();
+    const nowAxis = this.axisNowAt(elapsedMs, connection.fromTgId);
+    const visibleAxisMin = nowAxis;
+    const visibleAxisMax = nowAxis + travelAxisMs;
+    if (visibleAxisMin > visibleAxisMax) {
+      return;
+    }
+
+    const group = this.timingGroups[connection.fromTgId] ?? null;
+    const startChartMs = connection.fromHitMs - this.settings.offsetMs;
+    const endChartMs = connection.toHitMs - this.settings.offsetMs;
+    let segmentStartMs = startChartMs;
+    let segmentStartAxis = connection.fromTgPos;
+    let speed = this.speedAtChartMs(group, startChartMs);
+
+    for (const change of group?.changes ?? []) {
+      if (change.atMs <= startChartMs + 1e-6) {
+        speed = change.speed;
+        continue;
+      }
+      if (change.atMs >= endChartMs - 1e-6) {
+        break;
+      }
+      this.drawSlideConnectionAxisSegment(
+        graphics,
+        connection,
+        segmentStartMs,
+        change.atMs,
+        segmentStartAxis,
+        speed,
+        visibleAxisMin,
+        visibleAxisMax,
+        nowAxis,
+      );
+      segmentStartAxis += (change.atMs - segmentStartMs) * speed;
+      segmentStartMs = change.atMs;
+      speed = change.speed;
+    }
+
+    this.drawSlideConnectionAxisSegment(
+      graphics,
+      connection,
+      segmentStartMs,
+      endChartMs,
+      segmentStartAxis,
+      speed,
+      visibleAxisMin,
+      visibleAxisMax,
+      nowAxis,
+    );
+  }
+
+  private drawSlideConnectionAxisSegment(
+    graphics: Graphics,
+    connection: SlideConnection,
+    startChartMs: number,
+    endChartMs: number,
+    startAxis: number,
+    speed: number,
+    minVisibleAxis: number,
+    maxVisibleAxis: number,
+    nowAxis: number,
+  ): void {
+    if (endChartMs <= startChartMs + 1e-6) {
+      return;
+    }
+
+    let visibleStartMs = startChartMs;
+    let visibleEndMs = endChartMs;
+    if (Math.abs(speed) <= 1e-9) {
+      if (startAxis < minVisibleAxis - 1e-6 || startAxis > maxVisibleAxis + 1e-6) {
+        return;
+      }
+    } else {
+      const minTime = startChartMs + (minVisibleAxis - startAxis) / speed;
+      const maxTime = startChartMs + (maxVisibleAxis - startAxis) / speed;
+      visibleStartMs = Math.max(startChartMs, Math.min(minTime, maxTime));
+      visibleEndMs = Math.min(endChartMs, Math.max(minTime, maxTime));
+    }
+
+    if (visibleEndMs <= visibleStartMs + 1e-6) {
+      return;
+    }
+
+    const startAxisAtVisible = startAxis + (visibleStartMs - startChartMs) * speed;
+    const endAxisAtVisible = startAxis + (visibleEndMs - startChartMs) * speed;
+    const startPercent = this.percentFromAxisDiff(nowAxis - startAxisAtVisible);
+    const endPercent = this.percentFromAxisDiff(nowAxis - endAxisAtVisible);
+    const startElapsedMs = visibleStartMs + this.settings.offsetMs;
+    const endElapsedMs = visibleEndMs + this.settings.offsetMs;
+    const startLane = this.laneAtConnectionElapsed(connection, startElapsedMs);
+    const endLane = this.laneAtConnectionElapsed(connection, endElapsedMs);
+
+    this.drawConnector(
+      graphics,
+      connection,
+      this.laneXAtPercent(startLane, startPercent),
+      this.laneYAtPercent(startPercent),
+      this.connectorHalfWidthAtPercent(startPercent, connection.slideRhythmWidth),
+      this.laneXAtPercent(endLane, endPercent),
+      this.laneYAtPercent(endPercent),
+      this.connectorHalfWidthAtPercent(endPercent, connection.slideRhythmWidth),
+      this.slideConnectionRenderAlpha(connection),
+    );
+  }
+
+  private slideConnectionRenderAlpha(connection: SlideConnection): number {
+    return connection.mode === "allIgnored" ? 0.5 : 1;
   }
 
   private shouldDrawSlideConnectionEndpointRange(
@@ -1582,12 +1748,45 @@ export class PixiRenderer {
     return Math.max(0, Math.min(1, 0.05 + 0.95 * Math.pow(1.1, exponent)));
   }
 
+  private noteTravelAxisMs(): number {
+    return Math.max(1, (this.settings.noteSpeedFrames * 1000) / SIMULATOR_TIMING_FPS);
+  }
+
+  private percentFromAxisDiff(axisDiff: number): number {
+    const duration = this.noteTravelAxisMs();
+    const exponent = 50 * Math.max(-1, Math.min(0, axisDiff / duration));
+    return Math.max(0, Math.min(1, 0.05 + 0.95 * Math.pow(1.1, exponent)));
+  }
+
   private interpolateLane(fromLane: number, toLane: number, nowAxis: number, fromAxis: number, toAxis: number): number {
     const denominator = toAxis - fromAxis;
     if (Math.abs(denominator) < 1e-6) {
       return toLane;
     }
     return fromLane + ((toLane - fromLane) * (nowAxis - fromAxis)) / denominator;
+  }
+
+  private speedAtChartMs(group: TimingGroupDef | null | undefined, chartMs: number): number {
+    let speed = 1;
+    for (const change of group?.changes ?? []) {
+      if (change.atMs > chartMs + 1e-6) {
+        break;
+      }
+      speed = change.speed;
+    }
+    return speed;
+  }
+
+  private laneAtConnectionElapsed(
+    connection: SlideConnection,
+    elapsedMs: number,
+  ): number {
+    const denominator = connection.toHitMs - connection.fromHitMs;
+    if (Math.abs(denominator) < 1e-6) {
+      return connection.toAnchorLane;
+    }
+    const progress = Math.max(0, Math.min(1, (elapsedMs - connection.fromHitMs) / denominator));
+    return connection.fromAnchorLane + (connection.toAnchorLane - connection.fromAnchorLane) * progress;
   }
 
   private drawSlideBottomMarkers(
@@ -2074,7 +2273,7 @@ export class PixiRenderer {
 
   private findFirstSlideConnectionFromRoot(rootEventIndex: number): number | null {
     for (const connection of this.slideConnections) {
-      if (connection.rootEventIndex === rootEventIndex) {
+      if (connection.rootEventIndex === rootEventIndex && connection.mode === "normal") {
         return connection.fromEventIndex;
       }
     }
@@ -2086,7 +2285,8 @@ export class PixiRenderer {
     if (this.activeHoldEffects.has(rootEventIndex)) {
       return;
     }
-    const fromEventIndex = this.slideConnectionByFromEventIndex.has(trigger.eventIndex)
+    const triggerConnection = this.slideConnectionByFromEventIndex.get(trigger.eventIndex) ?? null;
+    const fromEventIndex = triggerConnection?.mode === "normal"
       ? trigger.eventIndex
       : this.findFirstSlideConnectionFromRoot(rootEventIndex);
     if (fromEventIndex === null) {
@@ -2179,7 +2379,7 @@ export class PixiRenderer {
     elapsedMs: number,
   ): SlideConnection | null {
     let connection = this.slideConnectionByFromEventIndex.get(hold.currentFromEventIndex) ?? null;
-    while (connection && elapsedMs > connection.toHitMs + 1e-6) {
+    while (connection && (connection.mode !== "normal" || elapsedMs > connection.toHitMs + 1e-6)) {
       hold.currentFromEventIndex = connection.toEventIndex;
       connection = this.slideConnectionByFromEventIndex.get(hold.currentFromEventIndex) ?? null;
     }
