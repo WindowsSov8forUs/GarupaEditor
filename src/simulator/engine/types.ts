@@ -1,3 +1,5 @@
+import type { TimingGroupDef, VisibilityWindow } from "./timingGroup";
+
 export interface SimulatorSettings {
   windowX: number;
   windowY: number;
@@ -49,17 +51,6 @@ export const DEFAULT_SETTINGS: SimulatorSettings = {
   habahiro: false,
 };
 
-interface TimingGroupChange {
-  atMs: number;
-  speed: number;
-  pos: number;
-}
-
-export interface TimingGroupDef {
-  id: number;
-  changes: TimingGroupChange[];
-}
-
 type RuntimeEventType = "music_start" | "bpm" | "note";
 
 export type RuntimeNoteBaseType =
@@ -87,6 +78,9 @@ export interface ChartEvent {
   tgId: number;
   tgPos: number;
   startMs: number;
+  hitMs: number;
+  visibleEndMs: number;
+  visibilityWindows: VisibilityWindow[];
   samelineLane: number | null;
   bpm: number;
   parentEventIndex: number;
@@ -144,6 +138,9 @@ export interface ActiveNote {
   lane: number;
   issameline: number | null;
   startMs: number;
+  hitMs: number;
+  visibleEndMs: number;
+  visibilityWindows: VisibilityWindow[];
   tgId: number;
   tgPos: number;
   started: boolean;

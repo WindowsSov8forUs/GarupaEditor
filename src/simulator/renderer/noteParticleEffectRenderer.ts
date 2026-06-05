@@ -21,6 +21,13 @@ export type ParticleLayoutPreset =
   | "directionalLinearLeft"
   | "directionalLinearRight";
 
+export type ParticleVisualLayer =
+  | "spriteParticles"
+  | "laneRectangle"
+  | "perspectiveLaneRectangle"
+  | "trapezoid"
+  | "roundedRect";
+
 export interface ActiveParticleEmitter {
   effect: ParticleEffectDefinition;
   lane: number;
@@ -32,6 +39,7 @@ export interface ActiveParticleEmitter {
   advanceScale: number;
   layoutScale: number;
   laneWidth: number;
+  visualLayer?: ParticleVisualLayer;
 }
 
 export interface ParticleEmitterDrawContext {
@@ -114,6 +122,35 @@ function emitterLaneWidth(emitter: ActiveParticleEmitter): number {
   return Math.max(1, Number.isFinite(emitter.laneWidth) ? emitter.laneWidth : 1);
 }
 
+function shouldDrawParticleForVisualLayer(emitter: ActiveParticleEmitter, spriteIndex: number): boolean {
+  switch (emitter.visualLayer) {
+    case undefined:
+      return true;
+    case "spriteParticles":
+      return (
+        (emitter.effect.name === "#NOTE_LINEAR_TAP_CYAN" || emitter.effect.name === "#NOTE_LINEAR_ALTERNATIVE_RED")
+        && spriteIndex === 0
+      ) || (emitter.effect.name === "#SLOT_LINEAR" && spriteIndex === 4);
+    case "laneRectangle":
+      return emitter.effect.name === "#SLOT_LINEAR" && spriteIndex === 10;
+    case "perspectiveLaneRectangle":
+      return emitter.effect.name === "#LANE_LINEAR" && spriteIndex === 10;
+    case "trapezoid":
+      return emitter.effect.name === "#NOTE_LINEAR_TAP_CYAN" && spriteIndex === 8;
+    case "roundedRect":
+      return (
+        emitter.effect.name === "#NOTE_LINEAR_TAP_CYAN"
+        || emitter.effect.name === "#NOTE_LINEAR_ALTERNATIVE_RED"
+      ) && spriteIndex === 9;
+  }
+}
+
+function shouldScaleParticleWidthByLaneWidth(emitter: ActiveParticleEmitter): boolean {
+  return emitter.visualLayer === "laneRectangle"
+    || emitter.visualLayer === "perspectiveLaneRectangle"
+    || emitter.visualLayer === "roundedRect";
+}
+
 function resolveParticleCurveElapsed(emitter: ActiveParticleEmitter, unitElapsed: number): number {
   if (emitter.preset === "laneHold") {
     return Math.min(unitElapsed, LANE_HOLD_PHASE_CLAMP);
@@ -147,6 +184,9 @@ export function drawParticleEmitter(
     for (let instanceIndex = 0; instanceIndex < group.count; instanceIndex += 1) {
       for (let particleIndex = 0; particleIndex < group.particles.length; particleIndex += 1) {
         const particle = group.particles[particleIndex];
+        if (!shouldDrawParticleForVisualLayer(emitter, particle.spriteIndex)) {
+          continue;
+        }
         const particleStart = particle.start;
         const particleEnd = particle.start + particle.duration;
         if (curveElapsed < particleStart || curveElapsed > particleEnd) {
@@ -169,6 +209,9 @@ export function drawParticleEmitter(
         const localYRaw = evaluateCurve(particle.y, progress, 0, termSeeds);
         const localY = scaleDirectionalLinearAdvanceY(emitter, particle.y, termSeeds, localYRaw);
         let localW = Math.max(0, evaluateCurve(particle.w, progress, 0, termSeeds));
+        if (shouldScaleParticleWidthByLaneWidth(emitter)) {
+          localW *= emitterLaneWidth(emitter);
+        }
         const localH = Math.max(0, evaluateCurve(particle.h, progress, 0, termSeeds));
         const localR = evaluateCurve(particle.r, progress, 0, termSeeds);
         let localA = Math.max(0, Math.min(1, evaluateCurve(particle.a, progress, 0, termSeeds)));
@@ -266,7 +309,7 @@ function resolveLayoutBasis(
     || emitter.preset === "laneHold"
     || emitter.preset === "laneNarrowFade"
   ) {
-    const halfWidth = emitterLaneWidth(emitter) / 2;
+    const halfWidth = 0.5;
     const l = lane - halfWidth;
     const r = lane + halfWidth;
     const t = LANE_EFFECT_TOP_PERCENT;
@@ -310,7 +353,7 @@ function resolveLayoutBasis(
 
   if (emitter.preset === "slot") {
     const baseHalfWidth = 0.5 * slotEffectSize;
-    const w = baseHalfWidth * emitterLaneWidth(emitter);
+    const w = baseHalfWidth;
     const h = 2 * baseHalfWidth * wToH;
     const l = lane - w;
     const r = lane + w;
@@ -348,7 +391,19 @@ function resolveLayoutBasis(
     };
   }
 
-  // linear + holdLinear share Sonolus linearEffectLayout.
+  if (emitter.preset === "holdLinear") {
+    const w = 0.5 * noteEffectSize;
+    const h = noteEffectSize * wToH;
+    const l = lane - w;
+    const r = lane + w;
+    const t = 1 - h;
+    const b = 1;
+    return {
+      baseQuad: rectQuad(l, r, t, b),
+      xProjection: "judge",
+    };
+  }
+
   const w = 0.5 * noteEffectSize;
   const h = noteEffectSize * wToH;
   const l = lane - w;

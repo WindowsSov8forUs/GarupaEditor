@@ -28,6 +28,7 @@ dist-ssr
 /tsc-trace*.txt
 /status_messages*.csv
 /tests/
+/docs/
 /test-start*.bat
 /scripts/test-*.ps1
 /src-tauri/target_check/

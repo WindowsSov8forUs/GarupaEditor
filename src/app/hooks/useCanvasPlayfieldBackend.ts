@@ -51,12 +51,23 @@ type CanvasNoteVisual = {
   overlay: string | null;
   overlayMode: CanvasOverlayMode;
   selected: boolean;
+  muted?: boolean;
 };
 
 type CanvasBpmVisual = {
   key: string;
   beat: number;
+  y?: number;
   bpm: number;
+  selected: boolean;
+};
+
+type CanvasSvVisual = {
+  key: string;
+  beat: number;
+  y?: number;
+  value: number;
+  timingGroup: string;
   selected: boolean;
 };
 
@@ -127,7 +138,7 @@ function drawConnectionSegment(
   context.save();
   // B-test: force non-smoothed texture sampling for long-line segments.
   context.imageSmoothingEnabled = false;
-  context.globalAlpha = segment.opacity;
+  context.globalAlpha = segment.opacity * (segment.muted ? 0.36 : 1);
   context.translate(geometry.topX, geometry.topY);
   context.transform(1, 0, geometry.shearX, 1, 0, 0);
   context.drawImage(texture, -laneWidth * 0.5, 0, laneWidth, geometry.height);
@@ -274,6 +285,7 @@ export function useCanvasPlayfieldBackend(params: {
   timeToY: (timeSec: number) => number;
   totalDurationSec: number;
   bpmVisualLines: CanvasBpmVisual[];
+  svVisualLines: CanvasSvVisual[];
   selectedLongLineSegmentId: string | null;
   simultaneousSegments: RenderSimultaneousSegment[];
   connectionSegments: RenderConnectionSegment[];
@@ -288,6 +300,7 @@ export function useCanvasPlayfieldBackend(params: {
   playbackLineMode: "follow" | "free";
   playbackLinePositionPercent: number;
   getPlaybackNowTimeSec: () => number;
+  useFullGridScan: boolean;
   resourcesVersion: number;
 }) {
   const {
@@ -310,6 +323,7 @@ export function useCanvasPlayfieldBackend(params: {
     timeToY,
     totalDurationSec,
     bpmVisualLines,
+    svVisualLines,
     selectedLongLineSegmentId,
     simultaneousSegments,
     connectionSegments,
@@ -324,6 +338,7 @@ export function useCanvasPlayfieldBackend(params: {
     playbackLineMode,
     playbackLinePositionPercent,
     getPlaybackNowTimeSec,
+    useFullGridScan,
     resourcesVersion,
   } = params;
   const runtimeSkin = useMemo<CanvasRenderResourceRuntimeAssets | null>(
@@ -346,6 +361,7 @@ export function useCanvasPlayfieldBackend(params: {
     timeToY: (timeSec: number) => number;
     totalDurationSec: number;
     bpmVisualLines: CanvasBpmVisual[];
+    svVisualLines: CanvasSvVisual[];
     selectedLongLineSegmentId: string | null;
     simultaneousSegments: RenderSimultaneousSegment[];
     connectionSegments: RenderConnectionSegment[];
@@ -360,6 +376,7 @@ export function useCanvasPlayfieldBackend(params: {
     playbackLineMode: "follow" | "free";
     playbackLinePositionPercent: number;
     getPlaybackNowTimeSec: () => number;
+    useFullGridScan: boolean;
     resourcesVersion: number;
   } | null>(null);
   const trackRenderMemoRef = useRef<{
@@ -380,6 +397,7 @@ export function useCanvasPlayfieldBackend(params: {
     beatDivision: number;
     beatsPerMeasure: number;
     beatToYRef: (beat: number) => number;
+    useFullGridScan: boolean;
     yToBeatRef: (y: number) => number;
   } | null>(null);
   const noteRenderMemoRef = useRef<{
@@ -398,6 +416,7 @@ export function useCanvasPlayfieldBackend(params: {
     laneWidth: number;
     noteVisualScale: number;
     bpmVisualLinesRef: CanvasBpmVisual[];
+    svVisualLinesRef: CanvasSvVisual[];
     selectedLongLineSegmentId: string | null;
     simultaneousSegmentsRef: RenderSimultaneousSegment[];
     connectionSegmentsRef: RenderConnectionSegment[];
@@ -449,6 +468,7 @@ export function useCanvasPlayfieldBackend(params: {
     timeToY,
     totalDurationSec,
     bpmVisualLines,
+    svVisualLines,
     selectedLongLineSegmentId,
     simultaneousSegments,
     connectionSegments,
@@ -463,6 +483,7 @@ export function useCanvasPlayfieldBackend(params: {
     playbackLineMode,
     playbackLinePositionPercent,
     getPlaybackNowTimeSec,
+    useFullGridScan,
     resourcesVersion,
   };
 
@@ -535,6 +556,7 @@ export function useCanvasPlayfieldBackend(params: {
         beatDivision: snapshot.beatDivision,
         beatsPerMeasure: snapshot.beatsPerMeasure,
         beatToYRef: snapshot.beatToY,
+        useFullGridScan: snapshot.useFullGridScan,
         yToBeatRef: snapshot.yToBeat,
       };
       const previousTrackMemo = trackRenderMemoRef.current;
@@ -555,6 +577,7 @@ export function useCanvasPlayfieldBackend(params: {
         || previousTrackMemo.beatDivision !== trackMemo.beatDivision
         || previousTrackMemo.beatsPerMeasure !== trackMemo.beatsPerMeasure
         || previousTrackMemo.beatToYRef !== trackMemo.beatToYRef
+        || previousTrackMemo.useFullGridScan !== trackMemo.useFullGridScan
         || previousTrackMemo.yToBeatRef !== trackMemo.yToBeatRef;
 
       const noteMemo = {
@@ -573,6 +596,7 @@ export function useCanvasPlayfieldBackend(params: {
         laneWidth: snapshot.laneWidth,
         noteVisualScale: snapshot.noteVisualScale,
         bpmVisualLinesRef: snapshot.bpmVisualLines,
+        svVisualLinesRef: snapshot.svVisualLines,
         selectedLongLineSegmentId: snapshot.selectedLongLineSegmentId,
         simultaneousSegmentsRef: snapshot.simultaneousSegments,
         connectionSegmentsRef: snapshot.connectionSegments,
@@ -618,6 +642,7 @@ export function useCanvasPlayfieldBackend(params: {
         || previousNoteMemo.laneWidth !== noteMemo.laneWidth
         || previousNoteMemo.noteVisualScale !== noteMemo.noteVisualScale
         || previousNoteMemo.bpmVisualLinesRef !== noteMemo.bpmVisualLinesRef
+        || previousNoteMemo.svVisualLinesRef !== noteMemo.svVisualLinesRef
         || previousNoteMemo.selectedLongLineSegmentId !== noteMemo.selectedLongLineSegmentId
         || previousNoteMemo.simultaneousSegmentsRef !== noteMemo.simultaneousSegmentsRef
         || previousNoteMemo.connectionSegmentsRef !== noteMemo.connectionSegmentsRef
@@ -780,11 +805,15 @@ export function useCanvasPlayfieldBackend(params: {
         const beatB = snapshot.yToBeat(windowTop);
         const minBeat = Math.max(0, Math.min(beatA, beatB));
         const maxBeat = Math.max(0, Math.max(beatA, beatB));
-        const minStep = Math.max(0, Math.floor(minBeat * snapshot.beatDivision) - snapshot.beatDivision);
-        const maxStep = Math.min(
-          snapshot.totalSteps,
-          Math.ceil(maxBeat * snapshot.beatDivision) + snapshot.beatDivision,
-        );
+        const minStep = snapshot.useFullGridScan
+          ? 0
+          : Math.max(0, Math.floor(minBeat * snapshot.beatDivision) - snapshot.beatDivision);
+        const maxStep = snapshot.useFullGridScan
+          ? snapshot.totalSteps
+          : Math.min(
+              snapshot.totalSteps,
+              Math.ceil(maxBeat * snapshot.beatDivision) + snapshot.beatDivision,
+            );
 
         for (let step = minStep; step <= maxStep; step += 1) {
           const beat = step / snapshot.beatDivision;
@@ -990,7 +1019,7 @@ export function useCanvasPlayfieldBackend(params: {
           snapshot.laneWidth,
           snapshot.noteVisualScale,
           getFrameImage,
-          1,
+          note.muted ? 0.36 : 1,
         );
       }
 
@@ -1004,7 +1033,7 @@ export function useCanvasPlayfieldBackend(params: {
       const viewportLeftOnBoard = -Math.max(0, (viewportWidth - logicalBoardWidth) / 2);
       const bpmLabelX = boardXOffset + viewportLeftOnBoard + 8;
       for (const line of snapshot.bpmVisualLines) {
-        const yWorld = snapshot.beatToY(line.beat);
+        const yWorld = Number.isFinite(line.y) ? Number(line.y) : snapshot.beatToY(line.beat);
         if (yWorld < windowTop - 24 || yWorld > windowBottom + 24) {
           continue;
         }
@@ -1014,6 +1043,35 @@ export function useCanvasPlayfieldBackend(params: {
         context.lineTo(width, y);
         context.stroke();
         context.fillText(`BPM ${line.bpm.toFixed(2)}`, bpmLabelX, y - 6);
+      }
+      context.restore();
+
+      context.save();
+      context.strokeStyle = "rgb(42, 188, 116)";
+      context.fillStyle = "rgb(42, 188, 116)";
+      context.lineWidth = 1;
+      context.font = "12px 'TTShinGoM', 'GB18030', sans-serif";
+      context.textAlign = "left";
+      context.textBaseline = "alphabetic";
+      for (const line of snapshot.svVisualLines) {
+        const yWorld = Number.isFinite(line.y) ? Number(line.y) : snapshot.beatToY(line.beat);
+        if (yWorld < windowTop - 24 || yWorld > windowBottom + 24) {
+          continue;
+        }
+        const y = yWorld - windowTop;
+        const isNonGlobal = line.timingGroup !== "#Global";
+        if (line.selected) {
+          context.strokeStyle = isNonGlobal ? "rgb(123, 180, 255)" : "rgb(45, 225, 145)";
+          context.fillStyle = isNonGlobal ? "rgb(123, 180, 255)" : "rgb(45, 225, 145)";
+        } else {
+          context.strokeStyle = isNonGlobal ? "rgb(87, 150, 255)" : "rgb(42, 188, 116)";
+          context.fillStyle = isNonGlobal ? "rgb(87, 150, 255)" : "rgb(42, 188, 116)";
+        }
+        context.beginPath();
+        context.moveTo(0, y);
+        context.lineTo(width, y);
+        context.stroke();
+        context.fillText(`×${line.value.toFixed(2)}`, bpmLabelX, y + 13);
       }
       context.restore();
 

@@ -86,13 +86,13 @@ function areAllHiddenAtSameBeat(
   return notes.every((note) => Math.abs(Number(note.beat) - anchorBeat) <= beatEpsilon);
 }
 
-export function cleanupSlideChainsHidden(args: {
-  chains: SlideChainLike[];
+export function cleanupSlideChainsHidden<T extends SlideChainLike>(args: {
+  chains: T[];
   noteMap: Map<string, ChartNote>;
   minLength: number;
   beatEpsilon?: number;
   positionEpsilon?: number;
-}): SlideChainLike[] {
+}): T[] {
   const {
     chains,
     noteMap,
@@ -101,7 +101,7 @@ export function cleanupSlideChainsHidden(args: {
     positionEpsilon = HIDDEN_POSITION_EPSILON,
   } = args;
 
-  const cleanedChains: SlideChainLike[] = [];
+  const cleanedChains: T[] = [];
 
   for (const chain of chains) {
     const existingIds = chain.noteIds.filter((id) => noteMap.has(id));

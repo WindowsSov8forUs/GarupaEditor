@@ -95,6 +95,7 @@ type SidebarPanelProps = {
     aspectRatio?: number,
   ) => ReactNode;
   onSelectBpmTool: () => void;
+  onSelectSvTool: () => void;
   onSelectCopyTool: () => void;
   onSelectPasteTool: () => void;
   onTogglePlayTool: () => void;
@@ -116,6 +117,20 @@ type SidebarPanelProps = {
   stepPlaybackSpeed: (delta: number) => void;
   stepPlaybackVolume: (delta: number) => void;
   stepPlaybackPosition: (delta: number) => void;
+  isTimingGroupPanelOpen: boolean;
+  setIsTimingGroupPanelOpen: (value: boolean) => void;
+  timingGroupIds: string[];
+  selectedTimingGroupId: string;
+  setSelectedTimingGroupId: (value: string) => void;
+  isTimingGroupModeActive: boolean;
+  setIsTimingGroupModeEnabled: (value: boolean) => void;
+  createTimingGroup: () => void;
+  renameTimingGroup: (sourceId: string, targetId: string) => void;
+  deleteTimingGroup: (groupId: string) => void;
+  showTimingGroupSetting: boolean;
+  isTimingGroupSettingLocked: boolean;
+  selectedObjectTimingGroupId: string;
+  setSelectedObjectTimingGroupId: (value: string) => void;
   undoLastNote: () => void;
   redoLastNote: () => void;
   mirrorSelectedNotes: () => void;
@@ -141,6 +156,11 @@ type SidebarPanelProps = {
   setBpmInputText: (value: string) => void;
   bpmInputEditingRef: MutableRefObject<boolean>;
   commitBpmInput: () => void;
+  svInputText: string;
+  setSvInputText: (value: string) => void;
+  svInputEditingRef: MutableRefObject<boolean>;
+  commitSvInput: () => void;
+  showSvSetting: boolean;
   showLaneSetting: boolean;
   isLaneSettingLocked: boolean;
   stepActiveLane: (delta: number) => void;
@@ -201,6 +221,7 @@ export const SidebarPanel = memo(function SidebarPanel({
   getSpriteAspectRatio,
   renderSpriteStack,
   onSelectBpmTool,
+  onSelectSvTool,
   onSelectCopyTool,
   onSelectPasteTool,
   onTogglePlayTool,
@@ -222,6 +243,20 @@ export const SidebarPanel = memo(function SidebarPanel({
   stepPlaybackSpeed,
   stepPlaybackVolume,
   stepPlaybackPosition,
+  isTimingGroupPanelOpen,
+  setIsTimingGroupPanelOpen,
+  timingGroupIds,
+  selectedTimingGroupId,
+  setSelectedTimingGroupId,
+  isTimingGroupModeActive,
+  setIsTimingGroupModeEnabled,
+  createTimingGroup,
+  renameTimingGroup,
+  deleteTimingGroup,
+  showTimingGroupSetting,
+  isTimingGroupSettingLocked,
+  selectedObjectTimingGroupId,
+  setSelectedObjectTimingGroupId,
   undoLastNote,
   redoLastNote,
   mirrorSelectedNotes,
@@ -247,6 +282,11 @@ export const SidebarPanel = memo(function SidebarPanel({
   setBpmInputText,
   bpmInputEditingRef,
   commitBpmInput,
+  svInputText,
+  setSvInputText,
+  svInputEditingRef,
+  commitSvInput,
+  showSvSetting,
   showLaneSetting,
   isLaneSettingLocked,
   stepActiveLane,
@@ -290,14 +330,20 @@ export const SidebarPanel = memo(function SidebarPanel({
   applyCurrentLongLineSettings,
   deleteCurrentSelection,
 }: SidebarPanelProps) {
+  const [timingGroupRenameText, setTimingGroupRenameText] = useState(selectedTimingGroupId);
   const hasSettingsContent =
     showBeatSetting ||
     showBpmSetting ||
+    showSvSetting ||
+    showTimingGroupSetting ||
     showLaneSetting ||
     showWidthSetting ||
     showDirectionSetting ||
     showSlideSegmentSetting ||
     canDeleteSelection;
+  useEffect(() => {
+    setTimingGroupRenameText(selectedTimingGroupId);
+  }, [selectedTimingGroupId]);
   const paletteToolSprites = useMemo(
     () =>
       isSkinReady
@@ -338,7 +384,7 @@ export const SidebarPanel = memo(function SidebarPanel({
     [applyToolFromPalette, isToolArmed, tool],
   );
   const activateSpecialTool = useCallback(
-    (nextTool: "bpm" | "copy" | "paste", action: () => void) => {
+    (nextTool: "bpm" | "sv" | "copy" | "paste", action: () => void) => {
       if (isToolArmed && tool === nextTool) {
         return;
       }
@@ -349,6 +395,10 @@ export const SidebarPanel = memo(function SidebarPanel({
   const activateBpmTool = useCallback(
     () => activateSpecialTool("bpm", onSelectBpmTool),
     [activateSpecialTool, onSelectBpmTool],
+  );
+  const activateSvTool = useCallback(
+    () => activateSpecialTool("sv", onSelectSvTool),
+    [activateSpecialTool, onSelectSvTool],
   );
   const activateCopyTool = useCallback(
     () => activateSpecialTool("copy", onSelectCopyTool),
@@ -573,6 +623,26 @@ export const SidebarPanel = memo(function SidebarPanel({
                     <span className="bpm-text">BPM</span>
                   </span>
                 </button>
+                <button
+                  type="button"
+                  className={`tool-icon-button bpm-tool-button ${isToolArmed && tool === "sv" ? "active" : ""}`}
+                  {...buildMouseActionHandlers(activateSvTool)}
+                  title="SV"
+                >
+                  <span className="tool-icon-core">
+                    <span className="bpm-text">SV</span>
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  className={`tool-icon-button bpm-tool-button ${isTimingGroupPanelOpen ? "active" : ""}`}
+                  {...buildMouseActionHandlers(() => setIsTimingGroupPanelOpen(!isTimingGroupPanelOpen))}
+                  title="时间组"
+                >
+                  <span className="tool-icon-core">
+                    <span className="bpm-text">TG</span>
+                  </span>
+                </button>
               </div>
               <div className="tool-grid play-tool-row">
                 <button
@@ -625,6 +695,68 @@ export const SidebarPanel = memo(function SidebarPanel({
             })}
           </div>
         </section>
+
+        {isTimingGroupPanelOpen && (
+          <section className="selected-note-panel timing-group-panel">
+            <div className="selected-note-grid timing-group-settings-grid">
+              <SettingBlock title="TimingGroup">
+                <select
+                  className="value-input"
+                  value={selectedTimingGroupId}
+                  onChange={(event) => setSelectedTimingGroupId(event.currentTarget.value)}
+                >
+                  {timingGroupIds.map((id) => (
+                    <option key={id} value={id}>{id}</option>
+                  ))}
+                </select>
+              </SettingBlock>
+              <SettingBlock title="Group ID">
+                <input
+                  type="text"
+                  className="value-input"
+                  value={timingGroupRenameText}
+                  disabled={selectedTimingGroupId === "#Global"}
+                  onChange={(event) => setTimingGroupRenameText(event.currentTarget.value)}
+                  onBlur={() => {
+                    const text = timingGroupRenameText.trim();
+                    if (text && text !== selectedTimingGroupId) {
+                      renameTimingGroup(selectedTimingGroupId, text);
+                    } else {
+                      setTimingGroupRenameText(selectedTimingGroupId);
+                    }
+                  }}
+                  onKeyDown={handleEnterKeyBlur}
+                />
+              </SettingBlock>
+              <div className="timing-group-panel-separator" />
+              <SettingBlock title="TimingGroup 编辑模式" className="timing-group-mode-block">
+                <label className={`ui-checkbox timing-group-mode-checkbox ${selectedTimingGroupId === "#Global" ? "is-disabled" : ""}`}>
+                  <input
+                    type="checkbox"
+                    className="ui-checkbox-input"
+                    checked={isTimingGroupModeActive}
+                    disabled={selectedTimingGroupId === "#Global"}
+                    onChange={(event) => setIsTimingGroupModeEnabled(event.currentTarget.checked)}
+                  />
+                  <span className="ui-checkbox-box" aria-hidden="true" />
+                </label>
+              </SettingBlock>
+              <div className="selected-note-delete-row timing-group-action-row">
+                <button type="button" className="timing-group-panel-button timing-group-create-button" onClick={createTimingGroup}>
+                  <span className="btn-content">新建</span>
+                </button>
+                <button
+                  type="button"
+                  className="timing-group-panel-button"
+                  disabled={selectedTimingGroupId === "#Global"}
+                  onClick={() => deleteTimingGroup(selectedTimingGroupId)}
+                >
+                  <span className="btn-content">删除</span>
+                </button>
+              </div>
+            </div>
+          </section>
+        )}
 
         {isPlayToolSelected && (
           <section className="selected-note-panel playback-settings-panel">
@@ -781,6 +913,49 @@ export const SidebarPanel = memo(function SidebarPanel({
                   }}
                   onKeyDown={handleEnterKeyBlur}
                 />
+              </SettingBlock>
+            )}
+
+            {showSvSetting && (
+              <SettingBlock title="ScrollVelocity 值">
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  className="value-input"
+                  value={svInputText}
+                  onChange={(event) => {
+                    setSvInputText(event.currentTarget.value);
+                  }}
+                  onFocus={() => {
+                    svInputEditingRef.current = true;
+                  }}
+                  onBlur={() => {
+                    svInputEditingRef.current = false;
+                    commitSvInput();
+                  }}
+                  onKeyDown={handleEnterKeyBlur}
+                />
+              </SettingBlock>
+            )}
+
+            {showTimingGroupSetting && (
+              <SettingBlock title="timing group">
+                <select
+                  className={`value-input ${isTimingGroupSettingLocked ? "is-disabled" : ""}`}
+                  value={selectedObjectTimingGroupId === "#Global" ? "-" : selectedObjectTimingGroupId}
+                  disabled={isTimingGroupSettingLocked}
+                  onChange={(event) => {
+                    const value = event.currentTarget.value;
+                    setSelectedObjectTimingGroupId(value === "-" ? "#Global" : value);
+                  }}
+                >
+                  <option value="-">-</option>
+                  {timingGroupIds
+                    .filter((id) => id !== "#Global")
+                    .map((id) => (
+                      <option key={id} value={id}>{id}</option>
+                    ))}
+                </select>
               </SettingBlock>
             )}
 

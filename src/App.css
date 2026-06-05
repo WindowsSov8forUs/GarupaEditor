@@ -1437,9 +1437,21 @@ label.ui-checkbox.is-disabled .ui-checkbox-box {
 .stepper-input {
   width: 100%;
   height: 34px;
+  min-height: 34px;
+  box-sizing: border-box;
+  padding-top: 0;
+  padding-bottom: 0;
+  line-height: 1.2;
   text-align: center;
   font-size: 0.9rem;
   color: #4f4c58;
+}
+
+select.value-input,
+select.stepper-input {
+  line-height: normal;
+  padding-top: 0;
+  padding-bottom: 0;
 }
 
 .metadata-left-input {
@@ -1592,6 +1604,68 @@ label.ui-checkbox.is-disabled .ui-checkbox-box {
   gap: 8px;
 }
 
+.timing-group-settings-grid {
+  align-items: start;
+}
+
+.timing-group-panel-separator {
+  grid-column: 1 / -1;
+  height: 1px;
+  background: rgba(205, 208, 218, 0.88);
+}
+
+.timing-group-mode-block,
+.timing-group-action-row {
+  grid-column: 1 / -1;
+}
+
+.timing-group-mode-block {
+  align-items: center;
+}
+
+.timing-group-mode-block .setting-title-strip {
+  align-self: stretch;
+}
+
+.timing-group-mode-checkbox {
+  justify-content: center;
+  min-height: 34px;
+}
+
+.timing-group-action-row {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.timing-group-panel-button {
+  width: 72px;
+  min-width: 72px;
+  min-height: 34px;
+  padding: 0 12px;
+  font-size: 0.86rem;
+}
+
+.timing-group-create-button {
+  --btn-frame-top-local: #f9fafc;
+  --btn-frame-bottom-local: #f1f3f7;
+  --btn-frame-border-local: #b9bec6;
+  --btn-core-top-local: rgb(255, 59, 113);
+  --btn-core-bottom-local: rgb(255, 59, 113);
+  --btn-core-border-local: rgba(255, 255, 255, 0.95);
+  --btn-text-color-local: #fff;
+  color: #fff;
+}
+
+button.timing-group-create-button:not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice)::before {
+  background: linear-gradient(180deg, rgb(255, 59, 113), rgb(255, 59, 113));
+  border-color: rgba(255, 255, 255, 0.95);
+}
+
+.timing-group-create-button .btn-content {
+  color: #fff;
+}
+
 .delete-icon-button {
   --btn-frame-top-local: rgb(255, 59, 113);
   --btn-frame-bottom-local: rgb(255, 59, 113);
@@ -1692,6 +1766,17 @@ button.apply-icon-button:not(.note-token):not(.bpm-label-button):not(.bpm-line-b
 .timeline-inline-stepper {
   grid-template-columns: auto minmax(0, 52px) auto;
   gap: 4px;
+}
+
+.timeline-toggle-item {
+  min-width: 104px;
+}
+
+.timeline-toggle-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
 }
 
 .timeline-stepper-input {
@@ -1884,6 +1969,38 @@ button.apply-icon-button:not(.note-token):not(.bpm-label-button):not(.bpm-line-b
   background: rgb(217, 13, 35);
 }
 
+.bpm-marker.sv-marker .sv-line {
+  background: rgb(42, 188, 116);
+}
+
+.bpm-marker.sv-marker.non-global .sv-line {
+  background: rgb(87, 150, 255);
+}
+
+.bpm-marker.sv-marker.selected .sv-line {
+  background: rgb(45, 225, 145);
+}
+
+.bpm-marker.sv-marker.non-global.selected .sv-line {
+  background: rgb(123, 180, 255);
+}
+
+.sv-label-button {
+  color: rgb(42, 188, 116);
+}
+
+.bpm-marker.sv-marker.non-global .sv-label-button {
+  color: rgb(87, 150, 255);
+}
+
+.sv-label-button.selected {
+  color: rgb(45, 225, 145);
+}
+
+.bpm-marker.sv-marker.non-global .sv-label-button.selected {
+  color: rgb(123, 180, 255);
+}
+
 .bpm-marker.bpm-preview {
   z-index: 7;
 }
@@ -1898,6 +2015,22 @@ button.apply-icon-button:not(.note-token):not(.bpm-label-button):not(.bpm-line-b
 
 .bpm-marker.bpm-preview-copy .bpm-line {
   background: rgba(255, 255, 255, 0.86);
+}
+
+.bpm-marker.sv-preview {
+  z-index: 7;
+}
+
+.bpm-marker.sv-preview .sv-line {
+  background: rgb(42, 188, 116);
+}
+
+.bpm-marker.sv-preview-snap .sv-line {
+  background: rgb(45, 225, 145);
+}
+
+.bpm-marker.sv-preview-copy .sv-line {
+  background: rgba(42, 188, 116, 0.72);
 }
 
 .playback-guide {
@@ -2012,6 +2145,11 @@ button.apply-icon-button:not(.note-token):not(.bpm-label-button):not(.bpm-line-b
 }
 
 .playfield-host.canvas-render-backend .bpm-label-button.canvas-hitbox {
+  color: transparent;
+  text-shadow: none;
+}
+
+.playfield-host.canvas-render-backend .bpm-marker.sv-marker.non-global .bpm-label-button.canvas-hitbox {
   color: transparent;
   text-shadow: none;
 }
@@ -2217,6 +2355,14 @@ button.apply-icon-button:not(.note-token):not(.bpm-label-button):not(.bpm-line-b
 .note-token.note-hitbox.selected:hover::after {
   border-color: rgba(255, 220, 0, 0.8);
   opacity: 1;
+}
+
+.note-token.note-hitbox.timing-group-muted {
+  opacity: 0.36;
+}
+
+.sv-marker.timing-group-muted {
+  opacity: 0.55;
 }
 
 .note-token:focus-visible {

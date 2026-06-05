@@ -7,17 +7,40 @@ import {
   isTauriRuntimeEnvironment,
 } from "./transport";
 
-export const BESTDORI_ASSET_ROOT = "https://bestdori.com/assets/jp/ingameskin/noteskin";
-export const BESTDORI_EXPLORER_ROOT = "https://bestdori.com/api/explorer/jp/assets/ingameskin/noteskin";
-export const BESTDORI_TAPSE_ASSET_ROOT = "https://bestdori.com/assets/jp/sound/tapseskin";
-export const BESTDORI_TAPSE_EXPLORER_ROOT = "https://bestdori.com/api/explorer/jp/assets/sound/tapseskin";
-export const BESTDORI_COMMON_SOUND_ROOT = "https://bestdori.com/assets/jp/sound/common_rip";
-export const BESTDORI_FIELD_SKIN_ASSET_ROOT = "https://bestdori.com/assets/jp/ingameskin/fieldskin";
-export const BESTDORI_FIELD_SKIN_EXPLORER_ROOT = "https://bestdori.com/api/explorer/jp/assets/ingameskin/fieldskin";
-export const BESTDORI_BG_SKIN_ASSET_ROOT = "https://bestdori.com/assets/jp/ingameskin/bgskin";
-export const BESTDORI_BG_SKIN_EXPLORER_ROOT = "https://bestdori.com/api/explorer/jp/assets/ingameskin/bgskin";
-export const BESTDORI_JUDGE_SKIN_ASSET_ROOT = "https://bestdori.com/assets/jp/ingameskin/judgeskin";
+const BESTDORI_ROOT = "https://bestdori.com";
+export type BestdoriAssetServer = "jp" | "en" | "tw" | "cn" | "kr";
+export type BestdoriAssetFamily = "noteskin" | "fieldskin" | "bgskin" | "judgeskin" | "tapseskin" | "sound-common";
+
+export const BESTDORI_ASSET_SERVERS: readonly BestdoriAssetServer[] = ["jp", "en", "tw", "cn", "kr"];
+export const DEFAULT_BESTDORI_ASSET_SERVER: BestdoriAssetServer = "jp";
 export const BESTDORI_COMMON_TAP_SKILL_FILE_NAME = "SE_RHYTHM_TAP_SKILL.mp3";
+
+const BESTDORI_COMMON_SOUND_FILE_NAMES = Object.freeze([
+  "miss.mp3",
+  "bad.mp3",
+  BESTDORI_COMMON_TAP_SKILL_FILE_NAME,
+]);
+
+const BESTDORI_RHYTHM_TAPSE_FILE_NAMES = Object.freeze([
+  "perfect.mp3",
+  "great.mp3",
+  "good.mp3",
+  "flick.mp3",
+  "SE_RHYTHM_TAP_LONG.mp3",
+  "game_button.mp3",
+]);
+
+const BESTDORI_DIRECTIONAL_TAPSE_FILE_NAMES = Object.freeze([
+  "directional_fl.mp3",
+  "directional_fl_2.mp3",
+  "directional_fl_3.mp3",
+]);
+
+const BESTDORI_FIELD_SKIN_FILE_NAMES = Object.freeze([
+  "bg_line_rhythm.png",
+  "game_play_line.png",
+  "game_play_line_skill_adjust_effect.png",
+]);
 
 const HABAHIRO_RIP_NAME = "habahiro";
 const HABAHIRO_SAMPLE_RIP_NAME = "habahiro_sample";
@@ -43,6 +66,10 @@ export interface PreparedBestdoriBgSkinAssets {
 }
 
 export interface PreparedBestdoriJudgeSkinAssets {
+  packageFiles: Record<string, string>;
+}
+
+export interface PreparedBestdoriCommonSoundAssets {
   packageFiles: Record<string, string>;
 }
 
@@ -74,8 +101,10 @@ interface PreparedBestdoriPackage {
 interface PrepareBestdoriPackageParams {
   namespace: string;
   packageKey: string;
+  packageCacheKey?: string | null;
   assetBaseUrl: string;
   manifestUrl?: string | null;
+  requiredFilenames?: string[] | null;
   fallbackFilenames?: string[] | null;
   taskId?: string | null;
 }
@@ -83,6 +112,15 @@ interface PrepareBestdoriPackageParams {
 interface ReadBestdoriFileParams {
   namespace: string;
   path: string;
+}
+
+export interface PrepareBestdoriAssetPackageParams {
+  server?: BestdoriAssetServer | string | null;
+  family: BestdoriAssetFamily;
+  id: string;
+  requiredFilenames?: string[] | null;
+  fallbackFilenames?: string[] | null;
+  taskId?: string | null;
 }
 
 export type BestdoriOfficialChartDifficulty = "easy" | "normal" | "hard" | "expert" | "special";
@@ -308,9 +346,17 @@ export interface BestdoriFileUploadStatusResponse {
 export interface SonolusUploadLevelParams {
   title: string;
   chart: string;
+  chartFileName?: string;
   bgmFileName: string;
   bgmFileBytes: ArrayBuffer | Uint8Array;
   bgmMimeType?: string;
+  coverFileName?: string;
+  coverFileBytes?: ArrayBuffer | Uint8Array;
+  coverMimeType?: string;
+  artists?: string;
+  author?: string;
+  description?: string;
+  tags?: string[];
   difficulty?: number;
   lifetime?: number;
   hidden?: boolean;
@@ -367,9 +413,86 @@ const BESTDORI_COMMUNITY_POST_REQUIRED_FIELDS = [
 const BESTDORI_UPLOAD_PREPARE_ENDPOINT = "https://bestdori.com/api/upload/prepare";
 const BESTDORI_UPLOAD_ENDPOINT = "https://bestdori.com/api/upload";
 export const SONOLUS_TEST_SERVER_ROOT = "https://sonolus.ayachan.fun/test";
+export const NOTGARUPA_SERVER_ROOT = "https://notgarupa.sov8.cn";
 const SONOLUS_TEST_LEVELS_ENDPOINT = `${SONOLUS_TEST_SERVER_ROOT}/sonolus/levels`;
+const NOTGARUPA_LEVELS_ENDPOINT = `${NOTGARUPA_SERVER_ROOT}/sonolus/levels`;
 export const BESTDORI_DEFAULT_SONG_COVER_URL = defaultCoverImage;
 export const BESTDORI_OFFICIAL_CHART_TEAM = "=BANDORI OFFICIAL CHART TEAM=";
+
+export function normalizeBestdoriAssetServer(value: string | null | undefined): BestdoriAssetServer {
+  const normalized = typeof value === "string" ? value.trim().toLowerCase() : "";
+  return (BESTDORI_ASSET_SERVERS as readonly string[]).includes(normalized)
+    ? (normalized as BestdoriAssetServer)
+    : DEFAULT_BESTDORI_ASSET_SERVER;
+}
+
+function buildBestdoriAssetPackageId(server: BestdoriAssetServer, family: BestdoriAssetFamily, id: string): string {
+  return `${server}-${family}-${id}`;
+}
+
+function buildBestdoriAssetPackageUrls(
+  serverInput: string | null | undefined,
+  family: BestdoriAssetFamily,
+  idInput: string,
+): { server: BestdoriAssetServer; id: string; assetBaseUrl: string; manifestUrl: string | null; packageCacheKey: string } {
+  const server = normalizeBestdoriAssetServer(serverInput);
+  const id = normalizeRipName(idInput, "id");
+  const encodedId = encodeURIComponent(id);
+  const base = `${BESTDORI_ROOT}/assets/${server}`;
+  const explorerBase = `${BESTDORI_ROOT}/api/explorer/${server}/assets`;
+  const packageCacheKey = buildBestdoriAssetPackageId(server, family, id);
+
+  switch (family) {
+    case "noteskin":
+      return {
+        server,
+        id,
+        assetBaseUrl: `${base}/ingameskin/noteskin/${encodedId}_rip`,
+        manifestUrl: `${explorerBase}/ingameskin/noteskin/${encodedId}.json`,
+        packageCacheKey,
+      };
+    case "fieldskin":
+      return {
+        server,
+        id,
+        assetBaseUrl: `${base}/ingameskin/fieldskin/${encodedId}_rip`,
+        manifestUrl: `${explorerBase}/ingameskin/fieldskin/${encodedId}.json`,
+        packageCacheKey,
+      };
+    case "bgskin":
+      return {
+        server,
+        id,
+        assetBaseUrl: `${base}/ingameskin/bgskin/${encodedId}_rip`,
+        manifestUrl: `${explorerBase}/ingameskin/bgskin/${encodedId}.json`,
+        packageCacheKey,
+      };
+    case "judgeskin":
+      return {
+        server,
+        id,
+        assetBaseUrl: `${base}/ingameskin/judgeskin/${encodedId}_rip`,
+        manifestUrl: null,
+        packageCacheKey,
+      };
+    case "tapseskin":
+      return {
+        server,
+        id,
+        assetBaseUrl: `${base}/sound/tapseskin/${encodedId}_rip`,
+        manifestUrl: `${explorerBase}/sound/tapseskin/${encodedId}.json`,
+        packageCacheKey,
+      };
+    case "sound-common":
+      return {
+        server,
+        id,
+        assetBaseUrl: `${base}/sound/common_rip`,
+        manifestUrl: `${explorerBase}/sound/common.json`,
+        packageCacheKey,
+      };
+  }
+}
 
 function ensureBestdoriBackendAvailable(): void {
   if (!isTauriRuntimeEnvironment()) {
@@ -386,10 +509,6 @@ function normalizeRipName(value: string, label: string): string {
     throw new Error(`${label} contains invalid characters, only [a-zA-Z0-9_-] is allowed`);
   }
   return trimmed;
-}
-
-function buildAssetBase(root: string, ripName: string): string {
-  return `${root}/${ripName}_rip`;
 }
 
 function isHttpNotFoundError(error: unknown): boolean {
@@ -781,11 +900,29 @@ async function prepareBestdoriPackage(params: PrepareBestdoriPackageParams): Pro
     params: {
       namespace: params.namespace,
       packageKey: params.packageKey,
+      packageCacheKey: params.packageCacheKey ?? null,
       assetBaseUrl: params.assetBaseUrl,
       manifestUrl: params.manifestUrl ?? null,
+      requiredFilenames: params.requiredFilenames ?? null,
       fallbackFilenames: params.fallbackFilenames ?? null,
       taskId: params.taskId ?? null,
     },
+  });
+}
+
+export async function prepareBestdoriAssetPackage(
+  params: PrepareBestdoriAssetPackageParams,
+): Promise<PreparedBestdoriPackage> {
+  const urls = buildBestdoriAssetPackageUrls(params.server, params.family, params.id);
+  return prepareBestdoriPackage({
+    namespace: params.family,
+    packageKey: urls.id,
+    packageCacheKey: urls.packageCacheKey,
+    assetBaseUrl: urls.assetBaseUrl,
+    manifestUrl: urls.manifestUrl,
+    requiredFilenames: params.requiredFilenames ?? null,
+    fallbackFilenames: params.fallbackFilenames ?? null,
+    taskId: params.taskId ?? null,
   });
 }
 
@@ -802,23 +939,22 @@ async function readBestdoriBinaryFile(params: ReadBestdoriFileParams): Promise<s
 export async function prepareBestdoriSkinAssets(
   ripName: string,
   operationId?: string,
+  server?: BestdoriAssetServer | string | null,
 ): Promise<PreparedBestdoriSkinAssets> {
   const normalizedRipName = normalizeRipName(ripName, "ripName");
   const sampleRipName =
     normalizedRipName === HABAHIRO_RIP_NAME ? HABAHIRO_SAMPLE_RIP_NAME : `${normalizedRipName}sample`;
   const [mainPackage, samplePackage] = await Promise.all([
-    prepareBestdoriPackage({
-      namespace: "noteskin",
-      packageKey: normalizedRipName,
-      assetBaseUrl: buildAssetBase(BESTDORI_ASSET_ROOT, normalizedRipName),
-      manifestUrl: `${BESTDORI_EXPLORER_ROOT}/${normalizedRipName}.json`,
+    prepareBestdoriAssetPackage({
+      server,
+      family: "noteskin",
+      id: normalizedRipName,
       taskId: operationId ?? null,
     }),
-    prepareBestdoriPackage({
-      namespace: "noteskin",
-      packageKey: sampleRipName,
-      assetBaseUrl: buildAssetBase(BESTDORI_ASSET_ROOT, sampleRipName),
-      manifestUrl: `${BESTDORI_EXPLORER_ROOT}/${sampleRipName}.json`,
+    prepareBestdoriAssetPackage({
+      server,
+      family: "noteskin",
+      id: sampleRipName,
       taskId: operationId ?? null,
     }),
   ]);
@@ -874,6 +1010,14 @@ async function requestBestdoriJson<T>(
   return response.json() as Promise<T>;
 }
 
+export async function fetchBestdoriJson<T>(endpoint: string, label = "bestdori json"): Promise<T> {
+  const normalizedEndpoint = endpoint.trim();
+  const absoluteEndpoint = normalizedEndpoint.startsWith("/")
+    ? `${BESTDORI_ROOT}${normalizedEndpoint}`
+    : normalizedEndpoint;
+  return requestBestdoriJson<T>(absoluteEndpoint, label);
+}
+
 async function requestBestdoriPostJson<T>(
   endpoint: string,
   label: string,
@@ -905,13 +1049,17 @@ async function requestBestdoriPostJson<T>(
   return response.json() as Promise<T>;
 }
 
-interface RequestBestdoriPostMultipartFileParams {
+interface RequestBestdoriPostMultipartFileItem {
   fieldName: string;
   fileName: string;
   fileBytes: Uint8Array;
   mimeType?: string;
+}
+
+interface RequestBestdoriPostMultipartFileParams extends RequestBestdoriPostMultipartFileItem {
   fields?: Record<string, string>;
   hostScope?: RequestHostScope;
+  files?: RequestBestdoriPostMultipartFileItem[];
 }
 
 async function requestBestdoriPostMultipartFileJson<T>(
@@ -923,18 +1071,37 @@ async function requestBestdoriPostMultipartFileJson<T>(
   if (!normalizedEndpoint) {
     throw new Error(`${label} endpoint is empty`);
   }
-  if (params.fileBytes.length <= 0) {
-    throw new Error(`${label} fileBytes cannot be empty`);
+  const files = params.files ?? [
+    {
+      fieldName: params.fieldName,
+      fileName: params.fileName,
+      fileBytes: params.fileBytes,
+      mimeType: params.mimeType,
+    },
+  ];
+  if (files.length <= 0) {
+    throw new Error(`${label} files cannot be empty`);
+  }
+  for (const file of files) {
+    if (file.fileBytes.length <= 0) {
+      throw new Error(`${label} fileBytes cannot be empty`);
+    }
   }
 
   if (isTauriRuntimeEnvironment()) {
     return invokeTauriCommand<T>("bestdori_post_multipart_file", {
       params: {
         url: normalizedEndpoint,
-        fieldName: params.fieldName,
-        fileName: params.fileName,
-        fileBase64: encodeBytesToBase64(params.fileBytes),
-        mimeType: trimNonEmptyStringOrNull(params.mimeType) ?? null,
+        fieldName: files[0]?.fieldName ?? params.fieldName,
+        fileName: files[0]?.fileName ?? params.fileName,
+        fileBase64: encodeBytesToBase64(files[0]?.fileBytes ?? params.fileBytes),
+        mimeType: trimNonEmptyStringOrNull(files[0]?.mimeType ?? params.mimeType) ?? null,
+        files: files.map((file) => ({
+          fieldName: file.fieldName,
+          fileName: file.fileName,
+          fileBase64: encodeBytesToBase64(file.fileBytes),
+          mimeType: trimNonEmptyStringOrNull(file.mimeType) ?? null,
+        })),
         fields: params.fields ?? null,
         hostScope: params.hostScope ?? "bestdori",
       },
@@ -951,11 +1118,13 @@ async function requestBestdoriPostMultipartFileJson<T>(
       formData.append(normalizedKey, value);
     }
   }
-  const mimeType = trimNonEmptyStringOrNull(params.mimeType);
-  const fileBlob = mimeType
-    ? new Blob([params.fileBytes], { type: mimeType })
-    : new Blob([params.fileBytes]);
-  formData.append(params.fieldName, fileBlob, params.fileName);
+  for (const file of files) {
+    const mimeType = trimNonEmptyStringOrNull(file.mimeType);
+    const fileBlob = mimeType
+      ? new Blob([file.fileBytes], { type: mimeType })
+      : new Blob([file.fileBytes]);
+    formData.append(file.fieldName, fileBlob, file.fileName);
+  }
   const response = await fetch(normalizedEndpoint, {
     method: "POST",
     cache: "no-store",
@@ -1089,15 +1258,20 @@ function normalizeSonolusUploadLifetime(value: number | undefined): number {
   return normalized;
 }
 
-function extractSonolusUploadUid(value: unknown): number {
-  const uid = Math.trunc(Number(value));
-  if (!Number.isFinite(uid) || uid < 1) {
-    throw new Error("sonolus level upload response missing uid");
+function extractSonolusUploadUid(value: unknown): string {
+  if (typeof value === "string") {
+    const normalized = value.trim();
+    if (normalized) {
+      return normalized;
+    }
   }
-  return uid;
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return String(Math.trunc(value));
+  }
+  throw new Error("sonolus level upload response missing uid");
 }
 
-export async function uploadSonolusLevel(params: SonolusUploadLevelParams): Promise<number> {
+export async function uploadSonolusLevel(params: SonolusUploadLevelParams): Promise<string> {
   const title = normalizeSonolusUploadTitle(params.title);
   const chart = normalizeSonolusUploadChart(params.chart);
   const difficulty = normalizeSonolusUploadDifficulty(params.difficulty);
@@ -1125,6 +1299,72 @@ export async function uploadSonolusLevel(params: SonolusUploadLevelParams): Prom
       fileBytes: bgmFileBytes,
       mimeType: params.bgmMimeType,
       fields,
+      hostScope: "sonolus",
+    },
+  );
+  return extractSonolusUploadUid(response.uid);
+}
+
+export async function uploadNotGarupaLevel(params: SonolusUploadLevelParams): Promise<string> {
+  const title = normalizeSonolusUploadTitle(params.title);
+  const chart = normalizeSonolusUploadChart(params.chart);
+  const difficulty = normalizeSonolusUploadDifficulty(params.difficulty);
+  normalizeSonolusUploadLifetime(params.lifetime);
+  const chartFileName = normalizeBestdoriUploadFileName(params.chartFileName ?? "chart.json");
+  const bgmFileName = normalizeBestdoriUploadFileName(params.bgmFileName);
+  const bgmFileBytes = normalizeBestdoriFileBytes(params.bgmFileBytes);
+  if (bgmFileBytes.length <= 0) {
+    throw new Error("sonolus level bgm file cannot be empty");
+  }
+  if (!params.coverFileName || !params.coverFileBytes) {
+    throw new Error("notgarupa level cover file is required");
+  }
+  const coverFileName = normalizeBestdoriUploadFileName(params.coverFileName);
+  const coverFileBytes = normalizeBestdoriFileBytes(params.coverFileBytes);
+  if (coverFileBytes.length <= 0) {
+    throw new Error("sonolus level cover file cannot be empty");
+  }
+  const chartBytes = new TextEncoder().encode(chart);
+  const fields: Record<string, string> = {
+    title,
+    rating: String(difficulty),
+    artists: trimNonEmptyStringOrNull(params.artists) ?? "Unknown Artist",
+    author: trimNonEmptyStringOrNull(params.author) ?? "GarupaEditor",
+    description: trimNonEmptyStringOrNull(params.description) ?? "",
+    tags: JSON.stringify(Array.isArray(params.tags) ? params.tags : []),
+  };
+  if (params.hidden === true) {
+    fields.hidden = "true";
+  }
+  const response = await requestBestdoriPostMultipartFileJson<{ uid?: unknown }>(
+    NOTGARUPA_LEVELS_ENDPOINT,
+    "notgarupa level upload",
+    {
+      fieldName: "bgm",
+      fileName: bgmFileName,
+      fileBytes: bgmFileBytes,
+      mimeType: params.bgmMimeType,
+      fields,
+      files: [
+        {
+          fieldName: "chart",
+          fileName: chartFileName,
+          fileBytes: chartBytes,
+          mimeType: "application/json",
+        },
+        {
+          fieldName: "bgm",
+          fileName: bgmFileName,
+          fileBytes: bgmFileBytes,
+          mimeType: params.bgmMimeType,
+        },
+        {
+          fieldName: "cover",
+          fileName: coverFileName,
+          fileBytes: coverFileBytes,
+          mimeType: params.coverMimeType,
+        },
+      ],
       hostScope: "sonolus",
     },
   );
@@ -1387,13 +1627,16 @@ export async function fetchBestdoriOfficialChartImportPayload(
 export async function prepareBestdoriTapseskinAssets(
   ripName: string,
   operationId?: string,
+  server?: BestdoriAssetServer | string | null,
 ): Promise<PreparedBestdoriTapseskinAssets> {
   const normalizedRipName = normalizeRipName(ripName, "ripName");
-  const packageData = await prepareBestdoriPackage({
-    namespace: "tapseskin",
-    packageKey: normalizedRipName,
-    assetBaseUrl: buildAssetBase(BESTDORI_TAPSE_ASSET_ROOT, normalizedRipName),
-    manifestUrl: `${BESTDORI_TAPSE_EXPLORER_ROOT}/${normalizedRipName}.json`,
+  const packageData = await prepareBestdoriAssetPackage({
+    server,
+    family: "tapseskin",
+    id: normalizedRipName,
+    requiredFilenames: normalizedRipName.startsWith("directionalflickskin")
+      ? [...BESTDORI_DIRECTIONAL_TAPSE_FILE_NAMES]
+      : [...BESTDORI_RHYTHM_TAPSE_FILE_NAMES],
     taskId: operationId ?? null,
   });
   return { packageFiles: packageData.packageFiles };
@@ -1402,13 +1645,14 @@ export async function prepareBestdoriTapseskinAssets(
 export async function prepareBestdoriFieldSkinAssets(
   ripName: string,
   operationId?: string,
+  server?: BestdoriAssetServer | string | null,
 ): Promise<PreparedBestdoriFieldSkinAssets> {
   const normalizedRipName = normalizeRipName(ripName, "ripName");
-  const packageData = await prepareBestdoriPackage({
-    namespace: "fieldskin",
-    packageKey: normalizedRipName,
-    assetBaseUrl: buildAssetBase(BESTDORI_FIELD_SKIN_ASSET_ROOT, normalizedRipName),
-    manifestUrl: `${BESTDORI_FIELD_SKIN_EXPLORER_ROOT}/${normalizedRipName}.json`,
+  const packageData = await prepareBestdoriAssetPackage({
+    server,
+    family: "fieldskin",
+    id: normalizedRipName,
+    requiredFilenames: [...BESTDORI_FIELD_SKIN_FILE_NAMES],
     taskId: operationId ?? null,
   });
   return { packageFiles: packageData.packageFiles };
@@ -1417,24 +1661,24 @@ export async function prepareBestdoriFieldSkinAssets(
 export async function prepareBestdoriBgSkinAssets(
   ripName: string,
   operationId?: string,
+  server?: BestdoriAssetServer | string | null,
 ): Promise<PreparedBestdoriBgSkinAssets> {
   const normalizedRipName = normalizeRipName(ripName, "ripName");
   const previewRipName = `${normalizedRipName}preview`;
-  const mainPackage = await prepareBestdoriPackage({
-    namespace: "bgskin",
-    packageKey: normalizedRipName,
-    assetBaseUrl: buildAssetBase(BESTDORI_BG_SKIN_ASSET_ROOT, normalizedRipName),
-    manifestUrl: `${BESTDORI_BG_SKIN_EXPLORER_ROOT}/${normalizedRipName}.json`,
+  const mainPackage = await prepareBestdoriAssetPackage({
+    server,
+    family: "bgskin",
+    id: normalizedRipName,
     taskId: operationId ?? null,
   });
 
   let previewPackageFiles: Record<string, string> | null = null;
   try {
-    const previewPackage = await prepareBestdoriPackage({
-      namespace: "bgskin",
-      packageKey: previewRipName,
-      assetBaseUrl: buildAssetBase(BESTDORI_BG_SKIN_ASSET_ROOT, previewRipName),
-      manifestUrl: `${BESTDORI_BG_SKIN_EXPLORER_ROOT}/${previewRipName}.json`,
+    const previewPackage = await prepareBestdoriAssetPackage({
+      server,
+      family: "bgskin",
+      id: previewRipName,
+      requiredFilenames: ["previewBG.png"],
       taskId: operationId ?? null,
     });
     previewPackageFiles = previewPackage.packageFiles;
@@ -1453,27 +1697,40 @@ export async function prepareBestdoriBgSkinAssets(
 export async function prepareBestdoriJudgeSkinAssets(
   ripName: string,
   operationId?: string,
+  server?: BestdoriAssetServer | string | null,
 ): Promise<PreparedBestdoriJudgeSkinAssets> {
   const normalizedRipName = normalizeRipName(ripName, "ripName");
   const fallbackFilenames = resolveJudgeSkinFallbackFilenamesOrThrow(normalizedRipName);
-  const packageData = await prepareBestdoriPackage({
-    namespace: "judgeskin",
-    packageKey: normalizedRipName,
-    assetBaseUrl: buildAssetBase(BESTDORI_JUDGE_SKIN_ASSET_ROOT, normalizedRipName),
+  const packageData = await prepareBestdoriAssetPackage({
+    server,
+    family: "judgeskin",
+    id: normalizedRipName,
     fallbackFilenames,
     taskId: operationId ?? null,
   });
   return { packageFiles: packageData.packageFiles };
 }
 
-export async function ensureCommonSoundAsset(operationId?: string): Promise<string> {
-  const packageData = await prepareBestdoriPackage({
-    namespace: "sound-common",
-    packageKey: "common_rip",
-    assetBaseUrl: BESTDORI_COMMON_SOUND_ROOT,
-    fallbackFilenames: [BESTDORI_COMMON_TAP_SKILL_FILE_NAME],
+export async function prepareBestdoriCommonSoundAssets(
+  operationId?: string,
+  server?: BestdoriAssetServer | string | null,
+): Promise<PreparedBestdoriCommonSoundAssets> {
+  const packageData = await prepareBestdoriAssetPackage({
+    server,
+    family: "sound-common",
+    id: "common",
+    requiredFilenames: [...BESTDORI_COMMON_SOUND_FILE_NAMES],
+    fallbackFilenames: [...BESTDORI_COMMON_SOUND_FILE_NAMES],
     taskId: operationId ?? null,
   });
+  return { packageFiles: packageData.packageFiles };
+}
+
+export async function ensureCommonSoundAsset(
+  operationId?: string,
+  server?: BestdoriAssetServer | string | null,
+): Promise<string> {
+  const packageData = await prepareBestdoriCommonSoundAssets(operationId, server);
   const key = BESTDORI_COMMON_TAP_SKILL_FILE_NAME.toLowerCase();
   const resolved = packageData.packageFiles[key];
   if (!resolved) {

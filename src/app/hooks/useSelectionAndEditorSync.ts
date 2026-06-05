@@ -1,5 +1,11 @@
 import { useCallback, useEffect } from "react";
-import type { ChartBpmEvent, ChartNote } from "../../chartCore";
+import {
+  isDirectionalNoteType,
+  normalizeRhythmWidth,
+  type ChartBpmEvent,
+  type ChartNote,
+  type ChartSvEvent,
+} from "../../chartCore";
 import { type SlideBuildState } from "../editorHelpers";
 import { buildSelectionMoveOffsetMap } from "../slideHiddenMoveOffsets";
 import { cleanupSlideChainsHidden } from "../slideChainCleanup";
@@ -9,14 +15,17 @@ export function useSelectionAndEditorSync(params: any) {
     setSelectedNoteIds,
     setSelectedBpmEventIds,
     setSelectedBpmEventId,
+    setSelectedSvEventIds,
+    setSelectedSvEventId,
     setSelectedLongLineSegmentId,
     setSlideChains,
     setNotes,
     slideRoleByNoteId,
     noteById,
     sortNotes,
-    notes,
+    allNotes,
     bpmEvents,
+    svEvents,
     metadata,
     slideChains,
     setSlideBuildState,
@@ -27,6 +36,7 @@ export function useSelectionAndEditorSync(params: any) {
     selectionMoveRef,
     setSelectionMovePreview,
     selectedBpmEventIds,
+    selectedSvEventIds,
     showBeatSetting,
     isBeatSettingLocked,
     setBeatInputText,
@@ -37,6 +47,10 @@ export function useSelectionAndEditorSync(params: any) {
     setBpmInputText,
     bpmInputEditingRef,
     activeBpmValue,
+    showSvSetting,
+    setSvInputText,
+    svInputEditingRef,
+    activeSvValue,
     showLaneSetting,
     isLaneSettingLocked,
     setLaneInputText,
@@ -60,7 +74,9 @@ export function useSelectionAndEditorSync(params: any) {
     beatDivision,
     approxEq,
     setBpmEvents,
+    setSvEvents,
     sortBpmEvents,
+    sortSvEvents,
     isLastBeatOrderedBpmNegative,
     spRhythmNoteEnabled,
   } = params;
@@ -77,8 +93,10 @@ export function useSelectionAndEditorSync(params: any) {
     clearSelectedNotes();
     clearSelectedBpmEvents();
     setSelectedBpmEventId(null);
+    setSelectedSvEventIds((previous: string[]) => (previous.length === 0 ? previous : []));
+    setSelectedSvEventId(null);
     setSelectedLongLineSegmentId(null);
-  }, [clearSelectedBpmEvents, clearSelectedNotes, setSelectedBpmEventId, setSelectedLongLineSegmentId]);
+  }, [clearSelectedBpmEvents, clearSelectedNotes, setSelectedBpmEventId, setSelectedLongLineSegmentId, setSelectedSvEventId, setSelectedSvEventIds]);
 
   const removeNoteIdsFromSlideChains = useCallback((noteIds: string[]) => {
     if (noteIds.length === 0) {
@@ -251,6 +269,19 @@ export function useSelectionAndEditorSync(params: any) {
     [],
   );
 
+  const shouldNotesOverlap = useCallback((left: ChartNote, right: ChartNote): boolean => {
+    if (left.type === "hidden" || right.type === "hidden") {
+      return false;
+    }
+    if (notePositionKey(left.lane, left.beat) !== notePositionKey(right.lane, right.beat)) {
+      return false;
+    }
+    if (isDirectionalNoteType(left.type) || isDirectionalNoteType(right.type)) {
+      return true;
+    }
+    return normalizeRhythmWidth(left.width) === normalizeRhythmWidth(right.width);
+  }, [notePositionKey]);
+
   const commitSelectedNoteTransform = useCallback(
     (
       transform: (note: ChartNote) => ChartNote | null,
@@ -280,20 +311,17 @@ export function useSelectionAndEditorSync(params: any) {
         }
 
         const transformedNotes = Array.from(transformedById.values());
-        const occupied = new Set(
-          transformedNotes.map((note) => notePositionKey(note.lane, note.beat)),
-        );
         const remained = previous.filter(
           (note) =>
             !selectedSet.has(note.id) &&
-            !occupied.has(notePositionKey(note.lane, note.beat)),
+            !transformedNotes.some((transformed) => shouldNotesOverlap(note, transformed)),
         );
 
         return sortNotes([...remained, ...transformedNotes]);
       });
       setStatusMessage(statusMessageText);
     },
-    [notePositionKey, normalizeNote, selectedNoteIds, setNotes, setStatusMessage, settings, sortNotes],
+    [normalizeNote, selectedNoteIds, setNotes, setStatusMessage, settings, shouldNotesOverlap, sortNotes],
   );
 
   const applySelectedOffset = useCallback(
@@ -303,7 +331,7 @@ export function useSelectionAndEditorSync(params: any) {
       reason = "已批量移动选中音符。",
       options?: { quantizeBeatDelta?: boolean },
     ) => {
-      if (selectedNoteIds.length === 0 && selectedBpmEventIds.length === 0) {
+      if (selectedNoteIds.length === 0 && selectedBpmEventIds.length === 0 && selectedSvEventIds.length === 0) {
         return;
       }
 
@@ -318,7 +346,9 @@ export function useSelectionAndEditorSync(params: any) {
       }
 
       const shouldMoveSelectedBpmEvents = selectedBpmEventIds.length > 0 && !approxEq(beatDelta, 0);
+      const shouldMoveSelectedSvEvents = selectedSvEventIds.length > 0 && !approxEq(beatDelta, 0);
       const selectedBpmSet = shouldMoveSelectedBpmEvents ? new Set(selectedBpmEventIds) : null;
+      const selectedSvSet = shouldMoveSelectedSvEvents ? new Set(selectedSvEventIds) : null;
       const minEventBeat = Number((1 / beatDivision).toFixed(6));
       const buildShiftedBpmEvents = (source: ChartBpmEvent[]): ChartBpmEvent[] => {
         if (!shouldMoveSelectedBpmEvents || !selectedBpmSet) {
@@ -342,6 +372,31 @@ export function useSelectionAndEditorSync(params: any) {
             !occupiedBeats.has(event.beat.toFixed(6)),
         );
         return sortBpmEvents([...remained, ...shiftedEvents]);
+      };
+      const buildShiftedSvEvents = (source: ChartSvEvent[]): ChartSvEvent[] => {
+        if (!shouldMoveSelectedSvEvents || !selectedSvSet) {
+          return source;
+        }
+        const shiftedById = new Map<string, ChartSvEvent>();
+        for (const event of source) {
+          if (!selectedSvSet.has(event.id)) {
+            continue;
+          }
+          shiftedById.set(event.id, {
+            ...event,
+            beat: Math.max(0, Number((event.beat + beatDelta).toFixed(6))),
+          });
+        }
+        const shiftedEvents = Array.from(shiftedById.values());
+        const occupiedKeys = new Set(
+          shiftedEvents.map((event) => `${event.timingGroup}|${event.beat.toFixed(6)}`),
+        );
+        const remained = source.filter(
+          (event) =>
+            !selectedSvSet.has(event.id) &&
+            !occupiedKeys.has(`${event.timingGroup}|${event.beat.toFixed(6)}`),
+        );
+        return sortSvEvents([...remained, ...shiftedEvents]);
       };
 
       if (shouldMoveSelectedBpmEvents) {
@@ -397,14 +452,11 @@ export function useSelectionAndEditorSync(params: any) {
           }
 
           const transformedNotes = Array.from(transformedById.values());
-          const occupied = new Set(
-            transformedNotes.map((note) => notePositionKey(note.lane, note.beat)),
-          );
           const transformedIdSet = new Set(transformedById.keys());
           const remained = previous.filter(
             (note) =>
               !transformedIdSet.has(note.id) &&
-              !occupied.has(notePositionKey(note.lane, note.beat)),
+              !transformedNotes.some((transformed) => shouldNotesOverlap(note, transformed)),
           );
 
           return sortNotes([...remained, ...transformedNotes]);
@@ -413,6 +465,9 @@ export function useSelectionAndEditorSync(params: any) {
 
       if (shouldMoveSelectedBpmEvents) {
         setBpmEvents((previous: ChartBpmEvent[]) => buildShiftedBpmEvents(previous));
+      }
+      if (shouldMoveSelectedSvEvents) {
+        setSvEvents((previous: ChartSvEvent[]) => buildShiftedSvEvents(previous));
       }
 
       setStatusMessage(reason);
@@ -423,18 +478,22 @@ export function useSelectionAndEditorSync(params: any) {
       beatDivision,
       isLastBeatOrderedBpmNegative,
       metadata.bpm,
-      notePositionKey,
       normalizeNote,
       quantizeBeat,
       selectedBpmEventIds,
+      selectedSvEventIds,
       selectedNoteIds,
       setNotes,
       setBpmEvents,
+      setSvEvents,
       setStatusMessage,
       settings,
+      shouldNotesOverlap,
       slideChains,
       sortBpmEvents,
+      sortSvEvents,
       sortNotes,
+      svEvents,
       toFinite,
     ],
   );
@@ -444,14 +503,14 @@ export function useSelectionAndEditorSync(params: any) {
       if (previous.length === 0) {
         return previous;
       }
-      const existing = new Set(notes.map((note: ChartNote) => note.id));
+      const existing = new Set(allNotes.map((note: ChartNote) => note.id));
       const next = previous.filter((id) => existing.has(id));
       if (next.length === previous.length && next.every((id, index) => id === previous[index])) {
         return previous;
       }
       return next;
     });
-  }, [notes, setSelectedNoteIds]);
+  }, [allNotes, setSelectedNoteIds]);
 
   useEffect(() => {
     setSelectedBpmEventIds((previous: string[]) => {
@@ -468,7 +527,7 @@ export function useSelectionAndEditorSync(params: any) {
   }, [bpmEvents, setSelectedBpmEventIds]);
 
   useEffect(() => {
-    const existing = new Set(notes.map((note: ChartNote) => note.id));
+    const existing = new Set(allNotes.map((note: ChartNote) => note.id));
     setSlideChains((previous: any[]) => {
       if (previous.length === 0) {
         return previous;
@@ -513,7 +572,7 @@ export function useSelectionAndEditorSync(params: any) {
       }
       return next;
     });
-  }, [notes, setSlideBuildState, setSlideChains, slideBuildRef]);
+  }, [allNotes, setSlideBuildState, setSlideChains, slideBuildRef]);
 
   useEffect(() => {
     const slideNoteIdSet = new Set(slideChains.flatMap((chain: any) => chain.noteIds));
@@ -574,6 +633,17 @@ export function useSelectionAndEditorSync(params: any) {
     }
     setBpmInputText(formatEditorNumeric(activeBpmValue));
   }, [activeBpmValue, formatEditorNumeric, setBpmInputText, showBpmSetting]);
+
+  useEffect(() => {
+    if (!showSvSetting) {
+      setSvInputText("");
+      return;
+    }
+    if (svInputEditingRef.current) {
+      return;
+    }
+    setSvInputText(formatEditorNumeric(activeSvValue));
+  }, [activeSvValue, formatEditorNumeric, setSvInputText, showSvSetting, svInputEditingRef]);
 
   useEffect(() => {
     if (!showLaneSetting || isLaneSettingLocked) {

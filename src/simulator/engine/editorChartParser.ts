@@ -13,8 +13,14 @@ import type {
   RuntimeNoteSemantic,
   RuntimeSlideRole,
   SimulatorSettings,
-  TimingGroupDef,
 } from "./types";
+import {
+  axisAtMs,
+  buildTimingGroupDefs,
+  findVisibilityWindows,
+  normalizeSvValue,
+  type TimingGroupSourceEvent,
+} from "./timingGroup";
 
 interface BpmSegment {
   beatStart: number;
@@ -23,7 +29,7 @@ interface BpmSegment {
 }
 
 interface SlideNoteRole {
-  timingGroup: number;
+  timingGroup: string;
   predecessorNoteId: string | null;
 }
 
@@ -32,7 +38,7 @@ interface NoteDescriptor {
   beat: number;
   lane: number;
   note: RuntimeNoteSemantic;
-  timingGroup: number;
+  timingGroup: string;
   predecessorNoteId: string | null;
   order: number;
 }
@@ -43,12 +49,6 @@ interface InternalEvent {
   atMs: number;
   noteId: string | null;
   predecessorNoteId: string | null;
-}
-
-interface SvRuntimeEvent {
-  atMs: number;
-  speed: number;
-  order: number;
 }
 
 const BEAT_EPSILON = 1e-6;
@@ -66,8 +66,23 @@ function normalizeLane(value: unknown): number {
   return Number(toFinite(value, 0).toFixed(6));
 }
 
-function normalizeTimingGroup(value: unknown): number {
-  return Math.max(0, Math.round(toFinite(value, 0)));
+function normalizeTimingGroup(value: unknown): string {
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (trimmed.length === 0 || trimmed === "#Global") {
+      return "#Global";
+    }
+    if (/^#[A-Za-z0-9 -]+$/.test(trimmed)) {
+      return trimmed;
+    }
+    return "#Global";
+  }
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) {
+    return "#Global";
+  }
+  const normalized = Math.max(0, Math.round(numeric));
+  return normalized === 0 ? "#Global" : `#${normalized}`;
 }
 
 function normalizeDirectionalWidth(value: unknown): number {
@@ -223,6 +238,11 @@ function bpmAtBeat(segments: BpmSegment[], beat: number): number {
   return segments[Math.max(0, high)].bpm;
 }
 
+function maxTimeMsFromSegments(segments: BpmSegment[]): number {
+  const last = segments[segments.length - 1];
+  return last ? Math.max(0, last.msAtStart) : 0;
+}
+
 function buildSlideRoles(
   notesById: Map<string, SimulatorChartNote>,
   slideChains: SimulatorChartSlideChain[],
@@ -318,95 +338,21 @@ function buildNoteDescriptors(
 function buildSvRuntimeMap(
   svEvents: SimulatorChartSvEvent[],
   segments: BpmSegment[],
-): Map<number, SvRuntimeEvent[]> {
-  const grouped = new Map<number, SvRuntimeEvent[]>();
+): TimingGroupSourceEvent[] {
+  const output: TimingGroupSourceEvent[] = [];
   for (let index = 0; index < svEvents.length; index += 1) {
     const sv = svEvents[index];
     const timingGroup = normalizeTimingGroup(sv.timingGroup);
     const beat = normalizeBeat(sv.beat);
-    const speed = Number(toFinite(sv.value, 1).toFixed(6));
-    const entry: SvRuntimeEvent = {
+    const speed = normalizeSvValue(sv.value, 1);
+    output.push({
+      timingGroup,
       atMs: beatToMs(segments, beat),
-      speed,
+      value: speed,
       order: index,
-    };
-    const list = grouped.get(timingGroup) ?? [];
-    list.push(entry);
-    grouped.set(timingGroup, list);
-  }
-
-  for (const [timingGroup, list] of grouped.entries()) {
-    list.sort((left, right) => {
-      if (Math.abs(left.atMs - right.atMs) > 1e-9) {
-        return left.atMs - right.atMs;
-      }
-      return left.order - right.order;
-    });
-    grouped.set(timingGroup, list);
-  }
-
-  return grouped;
-}
-
-function buildTimingGroupDefs(
-  usedGroups: number[],
-  groupedSv: Map<number, SvRuntimeEvent[]>,
-): {
-  timingGroups: TimingGroupDef[];
-  internalToRuntimeGroup: Map<number, number>;
-} {
-  const internalToRuntimeGroup = new Map<number, number>();
-  const timingGroups: TimingGroupDef[] = [];
-
-  for (let index = 0; index < usedGroups.length; index += 1) {
-    const internalGroup = usedGroups[index];
-    internalToRuntimeGroup.set(internalGroup, index);
-
-    const runtimeEvents = groupedSv.get(internalGroup) ?? [];
-    const changes: TimingGroupDef["changes"] = [];
-    let speed = 1;
-    let pos = 0;
-    for (const runtimeEvent of runtimeEvents) {
-      pos = pos + runtimeEvent.atMs * speed;
-      pos = pos - runtimeEvent.atMs * runtimeEvent.speed;
-      speed = runtimeEvent.speed;
-      changes.push({
-        atMs: runtimeEvent.atMs,
-        speed: runtimeEvent.speed,
-        pos,
-      });
-    }
-
-    timingGroups.push({
-      id: index,
-      changes,
     });
   }
-
-  return {
-    timingGroups,
-    internalToRuntimeGroup,
-  };
-}
-
-function timingGroupPosAt(
-  runtimeEvents: SvRuntimeEvent[] | undefined,
-  atMs: number,
-): number {
-  if (!runtimeEvents || runtimeEvents.length === 0) {
-    return atMs;
-  }
-  let speed = 1;
-  let pos = 0;
-  for (const runtimeEvent of runtimeEvents) {
-    if (runtimeEvent.atMs > atMs + 1e-9) {
-      break;
-    }
-    pos = pos + runtimeEvent.atMs * speed;
-    pos = pos - runtimeEvent.atMs * runtimeEvent.speed;
-    speed = runtimeEvent.speed;
-  }
-  return pos + atMs * speed;
+  return output;
 }
 
 function shouldExcludeFromSameLine(event: ChartEvent): boolean {
@@ -474,13 +420,13 @@ export function parseEditorChart(
   const segments = buildBpmSegments(baseBpm, bpmEvents);
   const noteDescriptors = buildNoteDescriptors(notes, slideChains, settings);
   const groupedSv = buildSvRuntimeMap(svEvents, segments);
-  const hasNonZeroTimingGroupNote = noteDescriptors.some((descriptor) => descriptor.timingGroup !== 0);
+  const hasNonGlobalTimingGroupNote = noteDescriptors.some((descriptor) => descriptor.timingGroup !== "#Global");
   const hasSv = svEvents.length > 0;
-  const useTimingGroups = hasSv || hasNonZeroTimingGroupNote;
+  const useTimingGroups = hasSv || hasNonGlobalTimingGroupNote;
 
-  const usedGroupSet = new Set<number>();
+  const usedGroupSet = new Set<string>();
   if (useTimingGroups) {
-    usedGroupSet.add(0);
+    usedGroupSet.add("#Global");
     for (const descriptor of noteDescriptors) {
       usedGroupSet.add(normalizeTimingGroup(descriptor.timingGroup));
     }
@@ -488,8 +434,33 @@ export function parseEditorChart(
       usedGroupSet.add(normalizeTimingGroup(sv.timingGroup));
     }
   }
-  const usedGroups = Array.from(usedGroupSet.values()).sort((a, b) => a - b);
-  const { timingGroups, internalToRuntimeGroup } = buildTimingGroupDefs(usedGroups, groupedSv);
+  const usedGroups = Array.from(usedGroupSet.values()).sort((left, right) => {
+    if (left === "#Global") {
+      return -1;
+    }
+    if (right === "#Global") {
+      return 1;
+    }
+    return left.localeCompare(right, "en", { numeric: true });
+  });
+  const sortedSvEvents = groupedSv.sort((left, right) => {
+    if (Math.abs(left.atMs - right.atMs) > BEAT_EPSILON) {
+      return left.atMs - right.atMs;
+    }
+    return left.order - right.order;
+  });
+  const globalSvEvents = sortedSvEvents.filter((event) => normalizeTimingGroup(event.timingGroup) === "#Global");
+  const effectiveSvEvents = usedGroups.flatMap((groupId) => {
+    const groupSvEvents = groupId === "#Global"
+      ? []
+      : sortedSvEvents.filter((event) => normalizeTimingGroup(event.timingGroup) === groupId);
+    return [...groupSvEvents, ...globalSvEvents].map((event, order) => ({
+      ...event,
+      timingGroup: groupId,
+      order,
+    }));
+  });
+  const { timingGroups, internalToRuntimeGroup } = buildTimingGroupDefs(usedGroups, effectiveSvEvents);
 
   const offsetMs = settings.offsetMs;
   const travelMs = settings.noteSpeedFrames * 1000 / SIMULATOR_TIMING_FPS;
@@ -507,6 +478,9 @@ export function parseEditorChart(
       tgId: -1,
       tgPos: 0,
       startMs: musicStartMs,
+      hitMs: musicStartMs,
+      visibleEndMs: musicStartMs,
+      visibilityWindows: [],
       samelineLane: null,
       bpm: bpmAtBeat(segments, 0),
       parentEventIndex: -1,
@@ -534,6 +508,9 @@ export function parseEditorChart(
         tgId: -1,
         tgPos: 0,
         startMs: atMs + offsetMs - travelMs,
+        hitMs: atMs + offsetMs,
+        visibleEndMs: atMs + offsetMs,
+        visibilityWindows: [],
         samelineLane: null,
         bpm,
         parentEventIndex: -1,
@@ -551,11 +528,30 @@ export function parseEditorChart(
     const tgId = useTimingGroups
       ? (internalToRuntimeGroup.get(normalizedTimingGroup) ?? 0)
       : -1;
-    const tgRuntimeEvents = groupedSv.get(normalizedTimingGroup);
-    const tgPos = useTimingGroups ? timingGroupPosAt(tgRuntimeEvents, atMs) : 0;
-    // Keep note activation lead-time consistent across TG and non-TG paths:
-    // runtime TG progression still determines the actual on-screen position.
-    const startMs = atMs + offsetMs - travelMs;
+    const tgDef = tgId >= 0 ? timingGroups[tgId] : null;
+    const tgPos = useTimingGroups ? axisAtMs(tgDef, atMs) : 0;
+    const visibilitySearchStartMs = Math.min(0, atMs - travelMs);
+    const visibilityWindows = useTimingGroups
+      ? findVisibilityWindows(
+        tgDef,
+        tgPos,
+        travelMs,
+        visibilitySearchStartMs,
+        Math.max(maxTimeMsFromSegments(segments), atMs) + 10000,
+      )
+      : [];
+    const startMs = useTimingGroups && visibilityWindows.length > 0
+      ? visibilityWindows[0].startMs + offsetMs
+      : atMs + offsetMs - travelMs;
+    const visibleEndMs = useTimingGroups && visibilityWindows.length > 0
+      ? visibilityWindows[visibilityWindows.length - 1].endMs + offsetMs
+      : atMs + offsetMs;
+    const eventVisibilityWindows = useTimingGroups
+      ? visibilityWindows.map((window) => ({
+        startMs: window.startMs + offsetMs,
+        endMs: window.endMs + offsetMs,
+      }))
+      : [];
 
     internalEvents.push({
       event: {
@@ -566,6 +562,9 @@ export function parseEditorChart(
         tgId,
         tgPos,
         startMs,
+        hitMs: atMs + offsetMs,
+        visibleEndMs,
+        visibilityWindows: eventVisibilityWindows,
         samelineLane: null,
         bpm: bpmAtBeat(segments, descriptor.beat),
         parentEventIndex: -1,
@@ -614,8 +613,9 @@ export function parseEditorChart(
     if (isJudgedEvent(event)) {
       noteCount += 1;
     }
-    if (atMs > maxTimeMs) {
-      maxTimeMs = atMs;
+    const eventMaxMs = Math.max(atMs, event.hitMs, event.visibleEndMs);
+    if (eventMaxMs > maxTimeMs) {
+      maxTimeMs = eventMaxMs;
     }
   }
 

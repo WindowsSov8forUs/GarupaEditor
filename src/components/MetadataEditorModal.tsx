@@ -25,7 +25,6 @@ type MetadataEditorModalProps = {
   open: boolean;
   metadata: ChartMetadata;
   setMetadata: Dispatch<SetStateAction<ChartMetadata>>;
-  audioObjectUrl: string | null;
   onClose: () => void;
   onCoverUpload: (event: ChangeEvent<HTMLInputElement>) => void;
   onAudioUpload: (event: ChangeEvent<HTMLInputElement>) => void;
@@ -73,7 +72,6 @@ export function MetadataEditorModal({
   open,
   metadata,
   setMetadata,
-  audioObjectUrl,
   onClose,
   onCoverUpload,
   onAudioUpload,
@@ -82,6 +80,8 @@ export function MetadataEditorModal({
   const { mounted, phase } = useModalTransition(open);
   const [tab, setTab] = useState<MetadataEditorTab>("info");
   const [levelInput, setLevelInput] = useState(metadata.difficultyLevel);
+  const [offsetInput, setOffsetInput] = useState(String(metadata.offsetMs));
+  const [mvOffsetInput, setMvOffsetInput] = useState(String(metadata.mvOffsetMs));
   const coverInputRef = useRef<HTMLInputElement | null>(null);
   const audioInputRef = useRef<HTMLInputElement | null>(null);
   const mvInputRef = useRef<HTMLInputElement | null>(null);
@@ -89,6 +89,14 @@ export function MetadataEditorModal({
   useEffect(() => {
     setLevelInput(metadata.difficultyLevel);
   }, [metadata.difficultyLevel, open]);
+
+  useEffect(() => {
+    setOffsetInput(String(metadata.offsetMs));
+  }, [metadata.offsetMs, open]);
+
+  useEffect(() => {
+    setMvOffsetInput(String(metadata.mvOffsetMs));
+  }, [metadata.mvOffsetMs, open]);
 
   useEffect(() => {
     if (open) {
@@ -117,6 +125,22 @@ export function MetadataEditorModal({
     }
   };
 
+  const commitOffsetInput = () => {
+    const nextValue = offsetInput.trim() === ""
+      ? 0
+      : Math.round(clamp(toFinite(offsetInput, metadata.offsetMs), -5000, 5000));
+    setMetadata((current) => ({ ...current, offsetMs: nextValue }));
+    setOffsetInput(String(nextValue));
+  };
+
+  const commitMvOffsetInput = () => {
+    const nextValue = mvOffsetInput.trim() === ""
+      ? 0
+      : Math.round(clamp(toFinite(mvOffsetInput, metadata.mvOffsetMs), -5000, 5000));
+    setMetadata((current) => ({ ...current, mvOffsetMs: nextValue }));
+    setMvOffsetInput(String(nextValue));
+  };
+
   const handleCoverInputChange = (event: ChangeEvent<HTMLInputElement>) => {
     onCoverUpload(event);
   };
@@ -135,7 +159,7 @@ export function MetadataEditorModal({
 
   const transitionClassName = phase === "enter" ? "is-enter" : "is-exit";
   const coverSource = normalizeSource(metadata.coverDataUrl);
-  const audioSource = normalizeSource(audioObjectUrl) || normalizeSource(metadata.bgmDataUrl);
+  const audioSource = normalizeSource(metadata.bgmDataUrl);
   const mvSource = normalizeSource(metadata.mvDataUrl);
 
   return (
@@ -305,13 +329,18 @@ export function MetadataEditorModal({
                       type="text"
                       inputMode="numeric"
                       className="value-input"
-                      value={metadata.offsetMs}
+                      value={offsetInput}
                       onChange={(event) => {
-                        const value = event.currentTarget.value;
-                        setMetadata((current) => ({
-                          ...current,
-                          offsetMs: Math.round(clamp(toFinite(value, current.offsetMs), -5000, 5000)),
-                        }));
+                        setOffsetInput(event.currentTarget.value);
+                      }}
+                      onBlur={() => {
+                        commitOffsetInput();
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                          event.preventDefault();
+                          event.currentTarget.blur();
+                        }
                       }}
                     />
                   </div>
@@ -322,13 +351,18 @@ export function MetadataEditorModal({
                       type="text"
                       inputMode="numeric"
                       className="value-input"
-                      value={metadata.mvOffsetMs}
+                      value={mvOffsetInput}
                       onChange={(event) => {
-                        const value = event.currentTarget.value;
-                        setMetadata((current) => ({
-                          ...current,
-                          mvOffsetMs: Math.round(clamp(toFinite(value, current.mvOffsetMs), -5000, 5000)),
-                        }));
+                        setMvOffsetInput(event.currentTarget.value);
+                      }}
+                      onBlur={() => {
+                        commitMvOffsetInput();
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                          event.preventDefault();
+                          event.currentTarget.blur();
+                        }
                       }}
                     />
                   </div>

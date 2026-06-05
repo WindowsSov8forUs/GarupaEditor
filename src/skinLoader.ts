@@ -19,17 +19,29 @@ import {
 } from "./noteSkinAssetTool";
 import {
   type JudgeSkinFileEntry,
+  type BestdoriAssetServer,
+  DEFAULT_BESTDORI_ASSET_SERVER,
   prepareBestdoriBgSkinAssets,
+  prepareBestdoriCommonSoundAssets,
   prepareBestdoriFieldSkinAssets,
   prepareBestdoriJudgeSkinAssets,
   prepareBestdoriSkinAssets,
   prepareBestdoriTapseskinAssets,
+  normalizeBestdoriAssetServer,
   readJudgeSkinTextFile,
   readSkinTextFile,
 } from "./services/bestdori/api";
 import {
+  buildFallbackBestdoriSkinCatalogOptions,
+  loadBestdoriSkinCatalogOptions as loadBestdoriSkinCatalogOptionsFromService,
+  type BestdoriCatalogKind,
+  type BestdoriSkinCatalogOptions,
+} from "./services/bestdori/catalog";
+export type { BestdoriSkinCatalogOptions } from "./services/bestdori/catalog";
+import {
   ensureCommonTapSkillSeDataUrl,
   loadPreparedBgSkinBinaryFilesAsDataUrlMap,
+  loadPreparedCommonSoundBinaryFilesAsDataUrlMap,
   loadPreparedFieldSkinBinaryFilesAsDataUrlMap,
   loadPreparedJudgeSkinBinaryFilesAsDataUrlMap,
   loadPreparedSkinBinaryFilesAsDataUrlMap,
@@ -139,6 +151,34 @@ const JUDGE_TYPE_TO_RIP_NAME: Readonly<Record<string, string>> = Object.freeze(
     JUDGE_TYPE_RIP_ENTRIES.map((entry) => [entry.type, entry.ripName]),
   ),
 );
+
+let activeBestdoriSkinCatalogOptions: BestdoriSkinCatalogOptions = buildFallbackBestdoriSkinCatalogOptions();
+
+export function activateBestdoriSkinCatalogOptions(options: BestdoriSkinCatalogOptions): void {
+  activeBestdoriSkinCatalogOptions = options;
+}
+
+export async function loadBestdoriSkinCatalogOptions(): Promise<BestdoriSkinCatalogOptions> {
+  const options = await loadBestdoriSkinCatalogOptionsFromService();
+  activateBestdoriSkinCatalogOptions(options);
+  return options;
+}
+
+function resolveCatalogResource(kind: BestdoriCatalogKind, value: string) {
+  const normalized = value.trim();
+  if (!normalized) {
+    return null;
+  }
+  return activeBestdoriSkinCatalogOptions.resources[kind]?.[normalized] ?? null;
+}
+
+function resolveCatalogResourceId(kind: BestdoriCatalogKind, value: string): string | null {
+  return resolveCatalogResource(kind, value)?.id ?? null;
+}
+
+function resolveCatalogResourceServer(kind: BestdoriCatalogKind, value: string): BestdoriAssetServer | null {
+  return resolveCatalogResource(kind, value)?.server ?? null;
+}
 
 export type SkinNoteType =
   | "single"
@@ -328,6 +368,13 @@ export interface SkinSelection {
   bgSkinRipName: string;
   fieldSkinRipName: string;
   judgeSkinRipName: string;
+  rhythmServer: BestdoriAssetServer;
+  directionalServer: BestdoriAssetServer;
+  rhythmSeServer: BestdoriAssetServer;
+  directionalSeServer: BestdoriAssetServer;
+  bgSkinServer: BestdoriAssetServer;
+  fieldSkinServer: BestdoriAssetServer;
+  judgeSkinServer: BestdoriAssetServer;
 }
 
 type AnyRhythmAssets = RhythmAssets | HabahiroRhythmAssets;
@@ -422,6 +469,10 @@ export function resolveRhythmRipNameFromType(
   if (trimmed.length === 0) {
     return null;
   }
+  const catalogId = resolveCatalogResourceId("rhythm", trimmed) ?? resolveCatalogResourceId("habahiroRhythm", trimmed);
+  if (catalogId) {
+    return catalogId;
+  }
   const mappedRaw = RHYTHM_TYPE_TO_RIP_NAME[trimmed];
   if (typeof mappedRaw === "string" && mappedRaw.length > 0 && RIP_NAME_PATTERN.test(mappedRaw)) {
     return mappedRaw;
@@ -435,6 +486,10 @@ export function resolveDirectionalRipNameFromType(
   const trimmed = typeValue.trim();
   if (trimmed.length === 0) {
     return null;
+  }
+  const catalogId = resolveCatalogResourceId("directional", trimmed);
+  if (catalogId) {
+    return catalogId;
   }
   const mappedRaw = DIRECTIONAL_TYPE_TO_RIP_NAME[trimmed];
   if (typeof mappedRaw === "string" && mappedRaw.length > 0 && RIP_NAME_PATTERN.test(mappedRaw)) {
@@ -450,6 +505,10 @@ export function resolveRhythmSeRipNameFromType(
   if (trimmed.length === 0) {
     return null;
   }
+  const catalogId = resolveCatalogResourceId("rhythmSe", trimmed);
+  if (catalogId) {
+    return catalogId;
+  }
   const mappedRaw = RHYTHM_SE_TYPE_TO_RIP_NAME[trimmed];
   if (typeof mappedRaw === "string" && mappedRaw.length > 0 && RIP_NAME_PATTERN.test(mappedRaw)) {
     return mappedRaw;
@@ -463,6 +522,10 @@ export function resolveDirectionalSeRipNameFromType(
   const trimmed = typeValue.trim();
   if (trimmed.length === 0) {
     return null;
+  }
+  const catalogId = resolveCatalogResourceId("directionalSe", trimmed);
+  if (catalogId) {
+    return catalogId;
   }
   const mappedRaw = DIRECTIONAL_SE_TYPE_TO_RIP_NAME[trimmed];
   if (typeof mappedRaw === "string" && mappedRaw.length > 0 && RIP_NAME_PATTERN.test(mappedRaw)) {
@@ -478,6 +541,10 @@ export function resolveBgSkinRipNameFromType(
   if (trimmed.length === 0) {
     return null;
   }
+  const catalogId = resolveCatalogResourceId("bg", trimmed);
+  if (catalogId) {
+    return catalogId;
+  }
   const mappedRaw = BG_TYPE_TO_RIP_NAME[trimmed];
   if (typeof mappedRaw === "string" && mappedRaw.length > 0 && RIP_NAME_PATTERN.test(mappedRaw)) {
     return mappedRaw;
@@ -491,6 +558,10 @@ export function resolveFieldSkinRipNameFromType(
   const trimmed = typeValue.trim();
   if (trimmed.length === 0) {
     return null;
+  }
+  const catalogId = resolveCatalogResourceId("field", trimmed);
+  if (catalogId) {
+    return catalogId;
   }
   const mappedRaw = FIELD_TYPE_TO_RIP_NAME[trimmed];
   if (typeof mappedRaw === "string" && mappedRaw.length > 0 && RIP_NAME_PATTERN.test(mappedRaw)) {
@@ -520,6 +591,10 @@ export function resolveHabahiroRhythmRipNameFromType(
   if (trimmed.length === 0) {
     return null;
   }
+  const catalogId = resolveCatalogResourceId("habahiroRhythm", trimmed);
+  if (catalogId) {
+    return catalogId;
+  }
   const mappedRaw = HABAHIRO_TYPE_TO_RIP_NAME[trimmed];
   if (typeof mappedRaw === "string" && mappedRaw.length > 0 && RIP_NAME_PATTERN.test(mappedRaw)) {
     return mappedRaw;
@@ -529,6 +604,30 @@ export function resolveHabahiroRhythmRipNameFromType(
 
 export function isHabahiroRhythmRipName(ripName: string): boolean {
   return ripName.trim().toLowerCase() === HABAHIRO_RHYTHM_RIP_NAME;
+}
+
+export function resolveRhythmServerFromType(typeValue: string): BestdoriAssetServer | null {
+  return resolveCatalogResourceServer("rhythm", typeValue) ?? resolveCatalogResourceServer("habahiroRhythm", typeValue);
+}
+
+export function resolveDirectionalServerFromType(typeValue: string): BestdoriAssetServer | null {
+  return resolveCatalogResourceServer("directional", typeValue);
+}
+
+export function resolveRhythmSeServerFromType(typeValue: string): BestdoriAssetServer | null {
+  return resolveCatalogResourceServer("rhythmSe", typeValue);
+}
+
+export function resolveDirectionalSeServerFromType(typeValue: string): BestdoriAssetServer | null {
+  return resolveCatalogResourceServer("directionalSe", typeValue);
+}
+
+export function resolveBgSkinServerFromType(typeValue: string): BestdoriAssetServer | null {
+  return resolveCatalogResourceServer("bg", typeValue);
+}
+
+export function resolveFieldSkinServerFromType(typeValue: string): BestdoriAssetServer | null {
+  return resolveCatalogResourceServer("field", typeValue);
 }
 
 function resolveRhythmSampleRipName(rhythmRipName: string): string {
@@ -568,9 +667,17 @@ export const DEFAULT_SKIN_SELECTION: SkinSelection = {
   bgSkinRipName: resolveBgSkinRipNameFromType(DEFAULT_BG_TYPE) ?? "skin00",
   fieldSkinRipName: resolveFieldSkinRipNameFromType(DEFAULT_FIELD_TYPE) ?? "skin00",
   judgeSkinRipName: resolveJudgeSkinRipNameFromType(DEFAULT_JUDGE_TYPE) ?? "skin00",
+  rhythmServer: DEFAULT_BESTDORI_ASSET_SERVER,
+  directionalServer: DEFAULT_BESTDORI_ASSET_SERVER,
+  rhythmSeServer: DEFAULT_BESTDORI_ASSET_SERVER,
+  directionalSeServer: DEFAULT_BESTDORI_ASSET_SERVER,
+  bgSkinServer: DEFAULT_BESTDORI_ASSET_SERVER,
+  fieldSkinServer: DEFAULT_BESTDORI_ASSET_SERVER,
+  judgeSkinServer: DEFAULT_BESTDORI_ASSET_SERVER,
 };
 
-const SKIN_SELECTION_STORAGE_KEY = "garupa-editor:bestdori-skin-selection:v1";
+const SKIN_SELECTION_STORAGE_KEY = "garupa-editor:bestdori-skin-selection:v2";
+const LEGACY_SKIN_SELECTION_STORAGE_KEY = "garupa-editor:bestdori-skin-selection:v1";
 const FIELD_SKIN_FILE_NAMES = Object.freeze({
   bgLineRhythm: "bg_line_rhythm.png",
   gamePlayLine: "game_play_line.png",
@@ -853,7 +960,9 @@ export function getRuntimeJudgeSkinAssets(): JudgeSkin | null {
   return runtimeJudgeSkinAssets;
 }
 
-export async function ensureCommonTapSkillSeAsset(options?: DownloadProgressOptions): Promise<string> {
+export async function ensureCommonTapSkillSeAsset(
+  options?: DownloadProgressOptions & { server?: BestdoriAssetServer | string | null },
+): Promise<string> {
   return ensureCommonTapSkillSeDataUrl(options);
 }
 
@@ -1085,7 +1194,11 @@ export function projectCanvasRenderResourceRuntimeAssets<
 }
 
 export function formatTypeLabel(type: string): string {
-  return type.trim().length > 0 ? type.trim() : "TYPE?";
+  const trimmed = type.trim();
+  if (!trimmed) {
+    return "TYPE?";
+  }
+  return activeBestdoriSkinCatalogOptions.labels[trimmed] ?? trimmed;
 }
 
 export function readSkinSelectionFromStorage(): SkinSelection {
@@ -1094,7 +1207,9 @@ export function readSkinSelectionFromStorage(): SkinSelection {
   }
 
   try {
-    const raw = window.localStorage.getItem(SKIN_SELECTION_STORAGE_KEY);
+    const raw =
+      window.localStorage.getItem(SKIN_SELECTION_STORAGE_KEY)
+      ?? window.localStorage.getItem(LEGACY_SKIN_SELECTION_STORAGE_KEY);
     if (!raw) {
       return DEFAULT_SKIN_SELECTION;
     }
@@ -1114,6 +1229,13 @@ export function readSkinSelectionFromStorage(): SkinSelection {
       bgSkinRipName: parsed.bgSkinRipName,
       fieldSkinRipName: parsed.fieldSkinRipName,
       judgeSkinRipName: parsed.judgeSkinRipName,
+      rhythmServer: parsed.rhythmServer,
+      directionalServer: parsed.directionalServer,
+      rhythmSeServer: parsed.rhythmSeServer,
+      directionalSeServer: parsed.directionalSeServer,
+      bgSkinServer: parsed.bgSkinServer,
+      fieldSkinServer: parsed.fieldSkinServer,
+      judgeSkinServer: parsed.judgeSkinServer,
     });
   } catch {
     return DEFAULT_SKIN_SELECTION;
@@ -1143,6 +1265,13 @@ export function normalizeSkinSelection(
     bgSkinRipName: unknown;
     fieldSkinRipName: unknown;
     judgeSkinRipName: unknown;
+    rhythmServer: unknown;
+    directionalServer: unknown;
+    rhythmSeServer: unknown;
+    directionalSeServer: unknown;
+    bgSkinServer: unknown;
+    fieldSkinServer: unknown;
+    judgeSkinServer: unknown;
   }>,
 ): SkinSelection {
   const rhythmType =
@@ -1234,13 +1363,47 @@ export function normalizeSkinSelection(
       ? input.judgeSkinRipName.trim()
       : judgeSkinFallbackRip;
 
+  const rhythmServer = normalizeBestdoriAssetServer(
+    typeof input.rhythmServer === "string"
+      ? input.rhythmServer
+      : resolveRhythmServerFromType(rhythmType),
+  );
+  const directionalServer = normalizeBestdoriAssetServer(
+    typeof input.directionalServer === "string"
+      ? input.directionalServer
+      : resolveDirectionalServerFromType(directionalType),
+  );
+  const rhythmSeServer = normalizeBestdoriAssetServer(
+    typeof input.rhythmSeServer === "string"
+      ? input.rhythmSeServer
+      : resolveRhythmSeServerFromType(rhythmSeType),
+  );
+  const directionalSeServer = normalizeBestdoriAssetServer(
+    typeof input.directionalSeServer === "string"
+      ? input.directionalSeServer
+      : resolveDirectionalSeServerFromType(directionalSeType),
+  );
+  const bgSkinServer = normalizeBestdoriAssetServer(
+    typeof input.bgSkinServer === "string"
+      ? input.bgSkinServer
+      : resolveBgSkinServerFromType(bgType),
+  );
+  const fieldSkinServer = normalizeBestdoriAssetServer(
+    typeof input.fieldSkinServer === "string"
+      ? input.fieldSkinServer
+      : resolveFieldSkinServerFromType(fieldType),
+  );
+  const judgeSkinServer = normalizeBestdoriAssetServer(
+    typeof input.judgeSkinServer === "string" ? input.judgeSkinServer : DEFAULT_BESTDORI_ASSET_SERVER,
+  );
+
   return {
-    rhythmType,
-    directionalType,
-    rhythmSeType,
-    directionalSeType,
-    bgType,
-    fieldType,
+    rhythmType: rhythmRipName,
+    directionalType: directionalRipName,
+    rhythmSeType: rhythmSeRipName,
+    directionalSeType: directionalSeRipName,
+    bgType: bgSkinRipName,
+    fieldType: fieldSkinRipName,
     judgeType,
     rhythmRipName,
     directionalRipName,
@@ -1249,6 +1412,13 @@ export function normalizeSkinSelection(
     bgSkinRipName,
     fieldSkinRipName,
     judgeSkinRipName,
+    rhythmServer,
+    directionalServer,
+    rhythmSeServer,
+    directionalSeServer,
+    bgSkinServer,
+    fieldSkinServer,
+    judgeSkinServer,
   };
 }
 
@@ -1289,7 +1459,11 @@ export async function downloadBestdoriRhythmSkinAssets(
     NoteSlideAmong: string;
   };
 
-  const prepared = await prepareBestdoriSkinAssets(normalized.rhythmRipName, options?.operationId);
+  const prepared = await prepareBestdoriSkinAssets(
+    normalized.rhythmRipName,
+    options?.operationId,
+    normalized.rhythmServer,
+  );
   const packageFiles = normalizeLowercaseFileMap(prepared.packageFiles);
   const samplePackageFiles = normalizeLowercaseFileMap(prepared.samplePackageFiles);
 
@@ -1406,7 +1580,11 @@ export async function downloadBestdoriDirectionalSkinAssets(
   let flickNoteLineL: string;
   let flickNoteLineR: string;
 
-  const prepared = await prepareBestdoriSkinAssets(normalized.directionalRipName, options?.operationId);
+  const prepared = await prepareBestdoriSkinAssets(
+    normalized.directionalRipName,
+    options?.operationId,
+    normalized.directionalServer,
+  );
   const packageFiles = normalizeLowercaseFileMap(prepared.packageFiles);
   const samplePackageFiles = normalizeLowercaseFileMap(prepared.samplePackageFiles);
 
@@ -1475,9 +1653,13 @@ export async function downloadBestdoriRhythmSeSkinAssets(
 ): Promise<RhythmSeSkinAssets> {
   const normalized = normalizeSkinSelection(selection);
   const ripName = normalized.rhythmSeRipName;
-  const prepared = await prepareBestdoriTapseskinAssets(ripName, options?.operationId);
+  const prepared = await prepareBestdoriTapseskinAssets(ripName, options?.operationId, normalized.rhythmSeServer);
   const packageFiles = normalizeLowercaseFileMap(prepared.packageFiles);
-  const files = await loadPreparedSoundBinaryFilesAsDataUrlMap(packageFiles);
+  const commonPrepared = await prepareBestdoriCommonSoundAssets(options?.operationId, normalized.rhythmSeServer);
+  const files = {
+    ...(await loadPreparedSoundBinaryFilesAsDataUrlMap(packageFiles)),
+    ...(await loadPreparedCommonSoundBinaryFilesAsDataUrlMap(normalizeLowercaseFileMap(commonPrepared.packageFiles))),
+  };
   return withRhythmSeAssets(files);
 }
 
@@ -1487,7 +1669,7 @@ export async function downloadBestdoriDirectionalSeSkinAssets(
 ): Promise<DirectionalSeSkinAssets> {
   const normalized = normalizeSkinSelection(selection);
   const ripName = normalized.directionalSeRipName;
-  const prepared = await prepareBestdoriTapseskinAssets(ripName, options?.operationId);
+  const prepared = await prepareBestdoriTapseskinAssets(ripName, options?.operationId, normalized.directionalSeServer);
   const packageFiles = normalizeLowercaseFileMap(prepared.packageFiles);
   const files = await loadPreparedSoundBinaryFilesAsDataUrlMap(packageFiles);
   return withDirectionalSeAssets(files);
@@ -1496,12 +1678,13 @@ export async function downloadBestdoriDirectionalSeSkinAssets(
 export async function downloadBestdoriFieldSkinAssets(
   ripName: string,
   options?: DownloadProgressOptions,
+  server?: BestdoriAssetServer | string | null,
 ): Promise<FieldSkinAssets> {
   const normalizedRipName = ripName.trim();
   if (!normalizedRipName || !RIP_NAME_PATTERN.test(normalizedRipName)) {
     throw new Error("Invalid fieldskin ripName, only [a-zA-Z0-9_-] is allowed.");
   }
-  const prepared = await prepareBestdoriFieldSkinAssets(normalizedRipName, options?.operationId);
+  const prepared = await prepareBestdoriFieldSkinAssets(normalizedRipName, options?.operationId, server);
   const packageFiles = normalizeLowercaseFileMap(prepared.packageFiles);
   const files = await loadPreparedFieldSkinBinaryFilesAsDataUrlMap(packageFiles);
   return withFieldSkinAssets(files);
@@ -1510,13 +1693,14 @@ export async function downloadBestdoriFieldSkinAssets(
 export async function downloadBestdoriBgSkinAssets(
   ripName: string,
   options?: DownloadProgressOptions,
+  server?: BestdoriAssetServer | string | null,
 ): Promise<BGSkin> {
   const normalizedRipName = ripName.trim();
   if (!normalizedRipName || !RIP_NAME_PATTERN.test(normalizedRipName)) {
     throw new Error("Invalid bgskin ripName, only [a-zA-Z0-9_-] is allowed.");
   }
 
-  const prepared = await prepareBestdoriBgSkinAssets(normalizedRipName, options?.operationId);
+  const prepared = await prepareBestdoriBgSkinAssets(normalizedRipName, options?.operationId, server);
   const packageFiles = normalizeLowercaseFileMap(prepared.packageFiles);
   const mainFiles = await loadPreparedBgSkinBinaryFilesAsDataUrlMap(packageFiles);
 
@@ -1536,6 +1720,7 @@ export async function downloadBestdoriBgSkinAssets(
 export async function downloadBestdoriJudgeSkinAssets(
   ripName: string,
   options?: DownloadProgressOptions,
+  server?: BestdoriAssetServer | string | null,
 ): Promise<JudgeSkin> {
   const normalizedRipName = ripName.trim();
   if (!normalizedRipName || !RIP_NAME_PATTERN.test(normalizedRipName)) {
@@ -1547,7 +1732,7 @@ export async function downloadBestdoriJudgeSkinAssets(
   let atlasDataUrl: string;
   const fileEntry = resolveJudgeSkinFileEntryOrThrow(normalizedRipName);
 
-  const prepared = await prepareBestdoriJudgeSkinAssets(normalizedRipName, options?.operationId);
+  const prepared = await prepareBestdoriJudgeSkinAssets(normalizedRipName, options?.operationId, server);
   const packageFiles = normalizeLowercaseFileMap(prepared.packageFiles);
   const assetPath = resolvePreparedFilePath(packageFiles, fileEntry.assetFile);
   const bundlePath = resolvePreparedFilePath(packageFiles, fileEntry.bundleFile);

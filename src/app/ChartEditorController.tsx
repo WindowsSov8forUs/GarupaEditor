@@ -13,6 +13,7 @@ import { emitTo, listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
 import { LogicalSize, getCurrentWindow } from "@tauri-apps/api/window";
 import { ChartEditorLayout } from "../components/editor/ChartEditorLayout";
+import { createEditorDisplayAxis } from "./editorDisplayAxis";
 import {
   BASE_BPM_LINE_ID,
   DEFAULT_SPRITE_ASPECT_RATIO,
@@ -50,6 +51,7 @@ import { usePlayfieldRenderers } from "./hooks/usePlayfieldRenderers";
 import { useSelectionAndEditorSync } from "./hooks/useSelectionAndEditorSync";
 import { useSidebarResizeState } from "./hooks/useSidebarResizeState";
 import { buildSelectionMirrorOffsetMap } from "./slideHiddenMoveOffsets";
+import { cleanupSlideChainsHidden } from "./slideChainCleanup";
 import {
   useNotePaletteSpriteRendering,
   usePlayfieldSpriteRendering,
@@ -88,18 +90,26 @@ import {
   getRuntimeJudgeSkinAssets,
   getRuntimeSeAssets,
   isHabahiroRhythmRipName,
+  loadBestdoriSkinCatalogOptions,
   normalizeSkinSelection,
   projectCanvasRenderResourceRuntimeAssets,
   readSkinSelectionFromStorage,
   resolveHabahiroRhythmRipNameFromType,
+  resolveBgSkinServerFromType,
   resolveBgSkinRipNameFromType,
+  resolveDirectionalSeServerFromType,
   resolveDirectionalSeRipNameFromType,
+  resolveDirectionalServerFromType,
   resolveDirectionalRipNameFromType,
+  resolveFieldSkinServerFromType,
   resolveFieldSkinRipNameFromType,
   resolveJudgeSkinRipNameFromType,
+  resolveRhythmSeServerFromType,
   resolveRhythmSeRipNameFromType,
+  resolveRhythmServerFromType,
   resolveRhythmRipNameFromType,
   writeSkinSelectionToStorage,
+  type BestdoriSkinCatalogOptions,
   type SeSkinAssets,
   type SkinAssets,
   type SkinSelection,
@@ -109,6 +119,7 @@ import {
   DEFAULT_EDITOR_OPTION_SETTINGS,
   DEFAULT_METADATA,
   DEFAULT_SETTINGS,
+  GLOBAL_TIMING_GROUP_ID,
   LANE_WIDTH,
   NOTE_SPECS,
   NOTE_TYPES,
@@ -118,6 +129,7 @@ import {
   buildBpmTimeline,
   clamp,
   createId,
+  flattenTimingGroups,
   formatBeat,
   formatDuration,
   getLaneValues,
@@ -129,6 +141,8 @@ import {
   normalizeDirectionalWidth,
   normalizeTimingGroup,
   normalizeRhythmWidth,
+  ensureTimingGroups,
+  buildTimingGroupsFromSvEvents,
   normalizeMetadata,
   normalizeEditorOptionSettings,
   normalizeNote,
@@ -147,6 +161,8 @@ import {
   type ChartMetadata,
   type ChartNote,
   type ChartSvEvent,
+  type ChartTimingGroupId,
+  type ChartTimingGroupMap,
   type EditorOptionSettings,
   type ChartSettings,
   type EditorTool,
@@ -168,6 +184,11 @@ import {
   type SimulatorLaunchPayload,
   type SimulatorWindowReadyPayload,
 } from "../simulator/launchPayload";
+import {
+  buildTimingGroupDefs,
+  normalizeTimingGroupId,
+  type TimingGroupDef,
+} from "../simulator/engine/timingGroup";
 
 const TIMELINE_REFERENCE_BPM = 120;
 const RENDER_BACKEND_MODE =
@@ -191,26 +212,6 @@ function formatDurationPrecise(sec: number): string {
   const second = Math.floor((totalMs % 60000) / 1000);
   const millisecond = totalMs % 1000;
   return `${minute}:${second.toString().padStart(2, "0")}.${millisecond.toString().padStart(3, "0")}`;
-}
-
-async function blobUrlToDataUrl(blobUrl: string): Promise<string> {
-  const response = await fetch(blobUrl);
-  if (!response.ok) {
-    throw new Error(`audio fetch failed: ${response.status}`);
-  }
-  const blob = await response.blob();
-  return await new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onerror = () => reject(new Error("audio data URL encode failed"));
-    reader.onload = () => {
-      if (typeof reader.result !== "string") {
-        reject(new Error("audio data URL encode failed"));
-        return;
-      }
-      resolve(reader.result);
-    };
-    reader.readAsDataURL(blob);
-  });
 }
 
 async function dataUrlToBlobUrl(dataUrl: string): Promise<string> {
@@ -296,16 +297,18 @@ type EditorUndoSnapshot = {
   notes: ChartNote[];
   slideChains: SlideChain[];
   bpmEvents: ChartBpmEvent[];
-  svEvents: ChartSvEvent[];
+  timingGroups: ChartTimingGroupMap;
 };
 
 type CopiedSlideChain = {
   noteIds: string[];
+  timingGroup?: ChartTimingGroupId;
 };
 
 type CopiedChartPayload = {
   notes: ChartNote[];
   bpmEvents: ChartBpmEvent[];
+  svEvents: ChartSvEvent[];
   slideChains: CopiedSlideChain[];
   anchorBeat: number;
   anchorLane: number;
@@ -551,7 +554,8 @@ function ChartEditorController() {
   const [notes, setNotesState] = useState<ChartNote[]>([]);
   const [slideChains, setSlideChainsState] = useState<SlideChain[]>([]);
   const [bpmEvents, setBpmEventsState] = useState<ChartBpmEvent[]>([]);
-  const [svEvents, setSvEventsState] = useState<ChartSvEvent[]>([]);
+  const [timingGroups, setTimingGroupsState] = useState<ChartTimingGroupMap>(() => ensureTimingGroups(null));
+  const svEvents = useMemo(() => flattenTimingGroups(timingGroups), [timingGroups]);
   const [tool, setTool] = useState<EditorTool>("single");
   const [isToolArmed, setIsToolArmed] = useState(true);
   const toolDurationBeats = 1;
@@ -561,10 +565,20 @@ function ChartEditorController() {
   const [toolLane, setToolLane] = useState(0);
   const [useToolLaneOverride, setUseToolLaneOverride] = useState(false);
   const [toolBpmValue, setToolBpmValue] = useState(DEFAULT_METADATA.bpm);
+  const [toolSvValue, setToolSvValue] = useState(1);
   const [selectedNoteIds, setSelectedNoteIds] = useState<string[]>([]);
   const [selectedBpmEventIds, setSelectedBpmEventIds] = useState<string[]>([]);
   const [selectedBpmEventId, setSelectedBpmEventId] = useState<string | null>(null);
+  const [selectedSvEventIds, setSelectedSvEventIds] = useState<string[]>([]);
+  const [selectedSvEventId, setSelectedSvEventId] = useState<string | null>(null);
+  const [selectedTimingGroupId, setSelectedTimingGroupId] = useState<ChartTimingGroupId>(GLOBAL_TIMING_GROUP_ID);
+  const [isTimingGroupPanelOpen, setIsTimingGroupPanelOpen] = useState(false);
+  const [isTimingGroupModeEnabled, setIsTimingGroupModeEnabled] = useState(false);
   const [selectedLongLineSegmentId, setSelectedLongLineSegmentId] = useState<string | null>(null);
+  const [isSvPreviewEnabled, setIsSvPreviewEnabled] = useState(false);
+  const [svPreviewTimeSec, setSvPreviewTimeSec] = useState(0);
+  const isSvPreviewEnabledRef = useRef(false);
+  const svPreviewTimeSecRef = useRef(0);
   const [copiedChartPayload, setCopiedChartPayload] = useState<CopiedChartPayload | null>(null);
   const [cursorPreview, setCursorPreviewState] = useState<CursorPreviewState | null>(null);
   const [isPlayToolSelected, setIsPlayToolSelected] = useState(false);
@@ -717,6 +731,7 @@ function ChartEditorController() {
   const notesRef = useRef(notes);
   const slideChainsRef = useRef(slideChains);
   const bpmEventsRef = useRef(bpmEvents);
+  const timingGroupsRef = useRef(timingGroups);
   const svEventsRef = useRef(svEvents);
   const undoStackRef = useRef<EditorUndoSnapshot[]>([]);
   const redoStackRef = useRef<EditorUndoSnapshot[]>([]);
@@ -729,14 +744,15 @@ function ChartEditorController() {
     notesRef.current = notes;
     slideChainsRef.current = slideChains;
     bpmEventsRef.current = bpmEvents;
+    timingGroupsRef.current = timingGroups;
     svEventsRef.current = svEvents;
-  }, [bpmEvents, notes, slideChains, svEvents]);
+  }, [bpmEvents, notes, slideChains, svEvents, timingGroups]);
 
   const cloneUndoSnapshot = useCallback((snapshot: EditorUndoSnapshot): EditorUndoSnapshot => ({
     notes: snapshot.notes.map((note) => ({ ...note })),
     slideChains: snapshot.slideChains.map((chain) => ({ ...chain, noteIds: [...chain.noteIds] })),
     bpmEvents: snapshot.bpmEvents.map((event) => ({ ...event })),
-    svEvents: snapshot.svEvents.map((event) => ({ ...event })),
+    timingGroups: ensureTimingGroups(snapshot.timingGroups),
   }), []);
 
   const buildCurrentUndoSnapshot = useCallback((): EditorUndoSnapshot => (
@@ -744,7 +760,7 @@ function ChartEditorController() {
       notes: notesRef.current,
       slideChains: slideChainsRef.current,
       bpmEvents: bpmEventsRef.current,
-      svEvents: svEventsRef.current,
+      timingGroups: timingGroupsRef.current,
     })
   ), [cloneUndoSnapshot]);
 
@@ -845,15 +861,221 @@ function ChartEditorController() {
     });
   }, [pushUndoSnapshotIfNeeded, resolveStateAction]);
 
-  const setSvEvents = useCallback((nextAction: SetStateAction<ChartSvEvent[]>) => {
-    setSvEventsState((previous) => {
-      const next = resolveStateAction(nextAction, previous);
+  const setTimingGroups = useCallback((nextAction: SetStateAction<ChartTimingGroupMap>) => {
+    setTimingGroupsState((previous) => {
+      const next = ensureTimingGroups(resolveStateAction(nextAction, previous));
       if (!Object.is(previous, next)) {
         pushUndoSnapshotIfNeeded();
       }
       return next;
     });
   }, [pushUndoSnapshotIfNeeded, resolveStateAction]);
+
+  const setSvEvents = useCallback((nextAction: SetStateAction<ChartSvEvent[]>) => {
+    setTimingGroupsState((previousGroups) => {
+      const previous = flattenTimingGroups(previousGroups);
+      const next = resolveStateAction(nextAction, previous);
+      if (!Object.is(previous, next)) {
+        pushUndoSnapshotIfNeeded();
+      }
+      return buildTimingGroupsFromSvEvents(next);
+    });
+  }, [pushUndoSnapshotIfNeeded, resolveStateAction]);
+
+  const timingGroupIds = useMemo(() => {
+    const ids = Object.keys(ensureTimingGroups(timingGroups));
+    ids.sort((left, right) => {
+      if (left === GLOBAL_TIMING_GROUP_ID) {
+        return -1;
+      }
+      if (right === GLOBAL_TIMING_GROUP_ID) {
+        return 1;
+      }
+      return left.localeCompare(right, "en", { numeric: true });
+    });
+    return ids;
+  }, [timingGroups]);
+
+  const isTimingGroupModeActive =
+    isTimingGroupModeEnabled && selectedTimingGroupId !== GLOBAL_TIMING_GROUP_ID;
+  const activeTimingGroupId = isTimingGroupModeActive
+    ? selectedTimingGroupId
+    : GLOBAL_TIMING_GROUP_ID;
+  const toolTimingGroup = activeTimingGroupId;
+
+  const normalizeObjectTimingGroup = useCallback(
+    (value: unknown): ChartTimingGroupId => normalizeTimingGroup(value, GLOBAL_TIMING_GROUP_ID),
+    [normalizeTimingGroup],
+  );
+
+  const createTimingGroup = useCallback(() => {
+    setTimingGroups((previous) => {
+      const groups = ensureTimingGroups(previous);
+      let index = 1;
+      while (groups[`#${index}`]) {
+        index += 1;
+      }
+      const id = `#${index}`;
+      setSelectedTimingGroupId(id);
+      setIsTimingGroupModeEnabled(true);
+      return {
+        ...groups,
+        [id]: { sv: [] },
+      };
+    });
+    setSelectedNoteIds([]);
+    setSelectedBpmEventIds([]);
+    setSelectedBpmEventId(null);
+    setSelectedSvEventIds([]);
+    setSelectedSvEventId(null);
+    setSelectedLongLineSegmentId(null);
+    setStatusMessage("已创建 Timing Group。");
+  }, [
+    setSelectedBpmEventId,
+    setSelectedBpmEventIds,
+    setSelectedLongLineSegmentId,
+    setSelectedNoteIds,
+    setSelectedSvEventId,
+    setSelectedSvEventIds,
+    setStatusMessage,
+    setTimingGroups,
+  ]);
+
+  const renameTimingGroup = useCallback((sourceId: ChartTimingGroupId, targetId: ChartTimingGroupId) => {
+    const normalizedSource = normalizeObjectTimingGroup(sourceId);
+    const normalizedTarget = normalizeObjectTimingGroup(targetId);
+    if (normalizedSource === GLOBAL_TIMING_GROUP_ID) {
+      setStatusMessage("#Global 不能重命名。");
+      return;
+    }
+    if (normalizedTarget === GLOBAL_TIMING_GROUP_ID || !/^#[A-Za-z0-9 -]+$/.test(targetId)) {
+      setStatusMessage("Timing Group 名称必须形如 #Name，且只能包含英文、数字、空格和 -。");
+      return;
+    }
+    if (normalizedSource === normalizedTarget) {
+      return;
+    }
+    const groups = ensureTimingGroups(timingGroupsRef.current);
+    if (groups[normalizedTarget]) {
+      setStatusMessage("目标 Timing Group 已存在。");
+      return;
+    }
+    setTimingGroups((previous) => {
+      const current = ensureTimingGroups(previous);
+      const sourceGroup = current[normalizedSource];
+      if (!sourceGroup) {
+        return current;
+      }
+      const next: ChartTimingGroupMap = {};
+      for (const [id, group] of Object.entries(current)) {
+        if (id === normalizedSource) {
+          next[normalizedTarget] = {
+            sv: group.sv.map((event) => ({ ...event, timingGroup: normalizedTarget })),
+          };
+          continue;
+        }
+        next[id] = group;
+      }
+      return next;
+    });
+    setNotes((previous) => previous.map((note) =>
+      normalizeObjectTimingGroup(note.timingGroup) === normalizedSource
+        ? { ...note, timingGroup: normalizedTarget }
+        : note,
+    ));
+    setSlideChains((previous) => previous.map((chain) =>
+      normalizeObjectTimingGroup(chain.timingGroup) === normalizedSource
+        ? { ...chain, timingGroup: normalizedTarget }
+        : chain,
+    ));
+    setSelectedTimingGroupId(normalizedTarget);
+    setStatusMessage("已重命名 Timing Group。");
+  }, [
+    normalizeObjectTimingGroup,
+    setNotes,
+    setSlideChains,
+    setStatusMessage,
+    setTimingGroups,
+  ]);
+
+  const deleteTimingGroup = useCallback((groupId: ChartTimingGroupId) => {
+    const normalized = normalizeObjectTimingGroup(groupId);
+    if (normalized === GLOBAL_TIMING_GROUP_ID) {
+      setStatusMessage("#Global 不能删除。");
+      return;
+    }
+    setTimingGroups((previous) => {
+      const current = ensureTimingGroups(previous);
+      if (!current[normalized]) {
+        return current;
+      }
+      const next: ChartTimingGroupMap = {};
+      for (const [id, group] of Object.entries(current)) {
+        if (id !== normalized) {
+          next[id] = group;
+        }
+      }
+      return next;
+    });
+    setNotes((previous) => previous.map((note) =>
+      normalizeObjectTimingGroup(note.timingGroup) === normalized
+        ? { ...note, timingGroup: undefined }
+        : note,
+    ));
+    setSlideChains((previous) => previous.map((chain) =>
+      normalizeObjectTimingGroup(chain.timingGroup) === normalized
+        ? { ...chain, timingGroup: undefined }
+        : chain,
+    ));
+    setSelectedTimingGroupId(GLOBAL_TIMING_GROUP_ID);
+    setIsTimingGroupModeEnabled(false);
+    setSelectedSvEventIds([]);
+    setSelectedSvEventId(null);
+    setSelectedNoteIds([]);
+    setSelectedLongLineSegmentId(null);
+    setStatusMessage("已删除 Timing Group。");
+  }, [
+    normalizeObjectTimingGroup,
+    setNotes,
+    setSelectedNoteIds,
+    setSelectedLongLineSegmentId,
+    setSelectedSvEventId,
+    setSelectedSvEventIds,
+    setSlideChains,
+    setStatusMessage,
+    setTimingGroups,
+  ]);
+
+  useEffect(() => {
+    const groups = ensureTimingGroups(timingGroups);
+    if (groups[selectedTimingGroupId]) {
+      return;
+    }
+    setSelectedTimingGroupId(GLOBAL_TIMING_GROUP_ID);
+    setIsTimingGroupModeEnabled(false);
+  }, [selectedTimingGroupId, timingGroups]);
+
+  useEffect(() => {
+    if (isTimingGroupModeActive) {
+      return;
+    }
+    setSelectedSvEventIds((previous) => {
+      const globalIds = new Set(
+        svEvents
+          .filter((event) => normalizeObjectTimingGroup(event.timingGroup) === GLOBAL_TIMING_GROUP_ID)
+          .map((event) => event.id),
+      );
+      const next = previous.filter((id) => globalIds.has(id));
+      return next.length === previous.length ? previous : next;
+    });
+    setSelectedSvEventId((previous) => {
+      if (!previous) {
+        return previous;
+      }
+      const event = svEvents.find((item) => item.id === previous);
+      return event && normalizeObjectTimingGroup(event.timingGroup) === GLOBAL_TIMING_GROUP_ID ? previous : null;
+    });
+  }, [isTimingGroupModeActive, normalizeObjectTimingGroup, svEvents]);
 
   const canUndoLastOperation = useMemo(
     () => undoStackRef.current.length > 0,
@@ -882,10 +1104,12 @@ function ChartEditorController() {
     setNotesState(snapshot.notes.map((note) => ({ ...note })));
     setSlideChainsState(snapshot.slideChains.map((chain) => ({ ...chain, noteIds: [...chain.noteIds] })));
     setBpmEventsState(snapshot.bpmEvents.map((event) => ({ ...event })));
-    setSvEventsState(snapshot.svEvents.map((event) => ({ ...event })));
+    setTimingGroupsState(ensureTimingGroups(snapshot.timingGroups));
     setSelectedNoteIds([]);
     setSelectedBpmEventIds([]);
     setSelectedBpmEventId(null);
+    setSelectedSvEventIds([]);
+    setSelectedSvEventId(null);
     setSelectedLongLineSegmentId(null);
     setStatusMessage("已撤回上一个操作。");
     setUndoVersion((previous) => previous + 1);
@@ -915,10 +1139,12 @@ function ChartEditorController() {
     setNotesState(snapshot.notes.map((note) => ({ ...note })));
     setSlideChainsState(snapshot.slideChains.map((chain) => ({ ...chain, noteIds: [...chain.noteIds] })));
     setBpmEventsState(snapshot.bpmEvents.map((event) => ({ ...event })));
-    setSvEventsState(snapshot.svEvents.map((event) => ({ ...event })));
+    setTimingGroupsState(ensureTimingGroups(snapshot.timingGroups));
     setSelectedNoteIds([]);
     setSelectedBpmEventIds([]);
     setSelectedBpmEventId(null);
+    setSelectedSvEventIds([]);
+    setSelectedSvEventId(null);
     setSelectedLongLineSegmentId(null);
     setStatusMessage("已重做上一个操作。");
     setUndoVersion((previous) => previous + 1);
@@ -936,6 +1162,7 @@ function ChartEditorController() {
   const [isCoverLoadFailed, setIsCoverLoadFailed] = useState(false);
   const [beatInputText, setBeatInputText] = useState("");
   const [bpmInputText, setBpmInputText] = useState("");
+  const [svInputText, setSvInputText] = useState("");
   const [laneInputText, setLaneInputText] = useState("");
   const [widthInputText, setWidthInputText] = useState("");
   const [slideVibrationInputText, setSlideVibrationInputText] = useState("");
@@ -948,6 +1175,7 @@ function ChartEditorController() {
   const [slideBuildCursor, setSlideBuildCursor] = useState<{ x: number; y: number } | null>(null);
   const beatInputEditingRef = useRef(false);
   const bpmInputEditingRef = useRef(false);
+  const svInputEditingRef = useRef(false);
   const laneInputEditingRef = useRef(false);
   const widthInputEditingRef = useRef(false);
   const slideVibrationInputEditingRef = useRef(false);
@@ -961,8 +1189,21 @@ function ChartEditorController() {
   const [pendingSkinSelection, setPendingSkinSelection] = useState<SkinSelection>(() =>
     readSkinSelectionFromStorage(),
   );
+  const [bestdoriSkinCatalogOptions, setBestdoriSkinCatalogOptions] = useState<BestdoriSkinCatalogOptions | null>(null);
   const [skinAssets, setSkinAssets] = useState<SkinAssets | null>(null);
   const [isSkinApplying, setIsSkinApplying] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    void loadBestdoriSkinCatalogOptions().then((options) => {
+      if (!cancelled) {
+        setBestdoriSkinCatalogOptions(options);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   const [spriteAspectRatios, setSpriteAspectRatios] = useState<Record<string, number>>({});
   const isSkinReady = skinAssets !== null;
 
@@ -1053,7 +1294,7 @@ function ChartEditorController() {
   const skinApplySeqRef = useRef(0);
   const didInitSkinRef = useRef(false);
   const applyBestdoriSkinSelectionRef = useRef<any>(async () => {});
-  const lastStandardRhythmSkinRef = useRef<Pick<SkinSelection, "rhythmType" | "rhythmRipName"> | null>(null);
+  const lastStandardRhythmSkinRef = useRef<Pick<SkinSelection, "rhythmType" | "rhythmRipName" | "rhythmServer"> | null>(null);
   const syncingHabahiroSkinRef = useRef(false);
   const sidebarResizeRef = useRef<{ startX: number; startWidth: number } | null>(null);
   const viewBottomTimeSecRef = useRef<number | null>(null);
@@ -1185,7 +1426,7 @@ function ChartEditorController() {
   const totalSteps = Math.max(1, Math.ceil(totalBeats * beatDivision));
   const boardWidth = settings.laneCount * LANE_WIDTH;
   const boardHeight = Math.max(1, totalDurationSec * timelinePixelsPerSecond);
-  const hasUploadedAudio = Boolean(audioObjectUrl);
+  const hasUploadedAudio = typeof metadata.bgmDataUrl === "string" && metadata.bgmDataUrl.trim().length > 0;
   const chartPlayableDurationSec = useMemo(
     () => Math.max(0, beatToSeconds(maxNoteBeat, bpmTimeline)),
     [bpmTimeline, maxNoteBeat],
@@ -1206,6 +1447,17 @@ function ChartEditorController() {
     () => formatDuration(playbackNowSecRef.current),
     [formatDuration],
   );
+  useEffect(() => {
+    isSvPreviewEnabledRef.current = isSvPreviewEnabled;
+    if (isSvPreviewEnabled) {
+      const currentTimeSec = Math.max(0, playbackNowSecRef.current);
+      svPreviewTimeSecRef.current = currentTimeSec;
+      setSvPreviewTimeSec(currentTimeSec);
+    }
+  }, [isSvPreviewEnabled]);
+  useEffect(() => {
+    svPreviewTimeSecRef.current = svPreviewTimeSec;
+  }, [svPreviewTimeSec]);
   useEffect(() => {
     playbackLineModeRef.current = playbackLineMode;
   }, [playbackLineMode]);
@@ -1284,6 +1536,7 @@ function ChartEditorController() {
   );
   const selectedNoteIdSet = useMemo(() => new Set(selectedNoteIds), [selectedNoteIds]);
   const selectedBpmEventIdSet = useMemo(() => new Set(selectedBpmEventIds), [selectedBpmEventIds]);
+  const selectedSvEventIdSet = useMemo(() => new Set(selectedSvEventIds), [selectedSvEventIds]);
   const selectedNotes = useMemo(
     () => notes.filter((note) => selectedNoteIdSet.has(note.id)),
     [notes, selectedNoteIdSet],
@@ -1292,10 +1545,144 @@ function ChartEditorController() {
     () => bpmEvents.filter((event) => selectedBpmEventIdSet.has(event.id)),
     [bpmEvents, selectedBpmEventIdSet],
   );
+  const selectedSvEvents = useMemo(
+    () => svEvents.filter((event) => selectedSvEventIdSet.has(event.id)),
+    [svEvents, selectedSvEventIdSet],
+  );
+  const noteTimingGroupIdByNoteId = useMemo(() => {
+    const map = new Map<string, ChartTimingGroupId>();
+    for (const note of notes) {
+      map.set(note.id, normalizeObjectTimingGroup(note.timingGroup));
+    }
+    for (const chain of slideChains) {
+      const chainTimingGroup = normalizeObjectTimingGroup(chain.timingGroup);
+      for (const noteId of chain.noteIds) {
+        map.set(noteId, chainTimingGroup);
+      }
+    }
+    return map;
+  }, [normalizeObjectTimingGroup, notes, slideChains]);
+  const selectedObjectTimingGroupId = useMemo(() => {
+    if (selectedNotes.length === 0) {
+      return GLOBAL_TIMING_GROUP_ID;
+    }
+    const groups = selectedNotes.map((note) =>
+      noteTimingGroupIdByNoteId.get(note.id) ?? normalizeObjectTimingGroup(note.timingGroup),
+    );
+    const first = groups[0] ?? GLOBAL_TIMING_GROUP_ID;
+    return groups.every((group) => group === first) ? first : GLOBAL_TIMING_GROUP_ID;
+  }, [normalizeObjectTimingGroup, noteTimingGroupIdByNoteId, selectedNotes]);
+  const visibleSvEvents = useMemo(() => {
+    return svEvents.filter((event) => {
+      const groupId = normalizeObjectTimingGroup(event.timingGroup);
+      if (!isTimingGroupModeActive) {
+        return groupId === GLOBAL_TIMING_GROUP_ID;
+      }
+      return groupId === GLOBAL_TIMING_GROUP_ID || groupId === selectedTimingGroupId;
+    });
+  }, [isTimingGroupModeActive, normalizeObjectTimingGroup, selectedTimingGroupId, svEvents]);
+  const interactiveSvEvents = useMemo(
+    () => visibleSvEvents.filter((event) => {
+      if (!isTimingGroupModeActive) {
+        return true;
+      }
+      return normalizeObjectTimingGroup(event.timingGroup) === selectedTimingGroupId;
+    }),
+    [isTimingGroupModeActive, normalizeObjectTimingGroup, selectedTimingGroupId, visibleSvEvents],
+  );
+  const isNoteOutsideActiveTimingGroup = useCallback((note: ChartNote): boolean => {
+    if (!isTimingGroupModeActive) {
+      return false;
+    }
+    const groupId = noteTimingGroupIdByNoteId.get(note.id) ?? normalizeObjectTimingGroup(note.timingGroup);
+    return groupId !== selectedTimingGroupId;
+  }, [
+    isTimingGroupModeActive,
+    normalizeObjectTimingGroup,
+    noteTimingGroupIdByNoteId,
+    selectedTimingGroupId,
+  ]);
+  const interactiveNotes = useMemo(
+    () => notes.filter((note) => !isNoteOutsideActiveTimingGroup(note)),
+    [isNoteOutsideActiveTimingGroup, notes],
+  );
+  useEffect(() => {
+    if (!isTimingGroupModeActive) {
+      return;
+    }
+    const interactiveIds = new Set(interactiveNotes.map((note) => note.id));
+    setSelectedNoteIds((previous) => {
+      const next = previous.filter((id) => interactiveIds.has(id));
+      return next.length === previous.length ? previous : next;
+    });
+  }, [interactiveNotes, isTimingGroupModeActive]);
+  const setSelectedObjectTimingGroupId = useCallback((nextGroup: ChartTimingGroupId) => {
+    const normalizedGroup = normalizeObjectTimingGroup(nextGroup);
+    const nextNoteTimingGroup = normalizedGroup === GLOBAL_TIMING_GROUP_ID ? undefined : normalizedGroup;
+    const selectedSet = new Set(selectedNoteIds);
+    if (selectedSet.size === 0) {
+      return;
+    }
+    const chainIdsToUpdate = new Set<string>();
+    for (const id of selectedSet) {
+      const role = slideRoleByNoteId.get(id);
+      if (role) {
+        chainIdsToUpdate.add(role.chainId);
+      }
+    }
+    setSlideChains((previous) =>
+      previous.map((chain) =>
+        chainIdsToUpdate.has(chain.id)
+          ? { ...chain, timingGroup: nextNoteTimingGroup }
+          : chain,
+      ),
+    );
+    const chainNoteIds = new Set<string>();
+    for (const chain of slideChains) {
+      if (chainIdsToUpdate.has(chain.id)) {
+        for (const id of chain.noteIds) {
+          chainNoteIds.add(id);
+        }
+      }
+    }
+    setNotes((previous) =>
+      previous.map((note) =>
+        selectedSet.has(note.id) || chainNoteIds.has(note.id)
+          ? { ...note, timingGroup: nextNoteTimingGroup }
+          : note,
+      ),
+    );
+    setStatusMessage("已更新 timing group。");
+  }, [
+    normalizeObjectTimingGroup,
+    selectedNoteIds,
+    setNotes,
+    setSlideChains,
+    setStatusMessage,
+    slideChains,
+    slideRoleByNoteId,
+  ]);
   const buildCopiedChartPayload = useCallback(
-    (noteIds: string[], bpmIds: string[]): CopiedChartPayload | null => {
+    (noteIds: string[], bpmIds: string[], svIds: string[] = []): CopiedChartPayload | null => {
       const selectedNoteIdSet = new Set(noteIds);
       const selectedBpmIdSet = new Set(bpmIds);
+      const selectedSvIdSet = new Set(svIds);
+      const copiedSvEvents = sortSvEvents(
+        svEvents
+          .filter((event) => selectedSvIdSet.has(event.id))
+          .filter((event) => normalizeObjectTimingGroup(event.timingGroup) !== GLOBAL_TIMING_GROUP_ID)
+          .map((event) => ({ ...event })),
+      );
+      const copiedSvGroupSet = new Set(
+        copiedSvEvents.map((event) => normalizeObjectTimingGroup(event.timingGroup)),
+      );
+      const sanitizeCopiedNoteTimingGroup = (note: ChartNote): ChartNote => {
+        const timingGroup = noteTimingGroupIdByNoteId.get(note.id) ?? normalizeObjectTimingGroup(note.timingGroup);
+        return {
+          ...note,
+          timingGroup: copiedSvGroupSet.has(timingGroup) ? timingGroup : undefined,
+        };
+      };
       const copiedNoteById = new Map<string, ChartNote>();
       const copiedChains: CopiedSlideChain[] = [];
 
@@ -1367,10 +1754,14 @@ function ChartEditorController() {
             if (!note) {
               continue;
             }
-            copiedNoteById.set(id, { ...note });
+            copiedNoteById.set(id, sanitizeCopiedNoteTimingGroup(note));
           }
           if (segmentIds.length >= 2) {
-            copiedChains.push({ noteIds: [...segmentIds] });
+            const chainTimingGroup = normalizeObjectTimingGroup(chain.timingGroup);
+            copiedChains.push({
+              noteIds: [...segmentIds],
+              timingGroup: copiedSvGroupSet.has(chainTimingGroup) ? chainTimingGroup : undefined,
+            });
           }
         };
 
@@ -1398,7 +1789,7 @@ function ChartEditorController() {
         if (!note) {
           continue;
         }
-        copiedNoteById.set(id, { ...note });
+        copiedNoteById.set(id, sanitizeCopiedNoteTimingGroup(note));
       }
 
       const copiedNotes = sortNotes(Array.from(copiedNoteById.values()));
@@ -1407,13 +1798,14 @@ function ChartEditorController() {
           .filter((event) => selectedBpmIdSet.has(event.id))
           .map((event) => ({ ...event })),
       );
-      if (copiedNotes.length === 0 && copiedBpmEvents.length === 0) {
+      if (copiedNotes.length === 0 && copiedBpmEvents.length === 0 && copiedSvEvents.length === 0) {
         return null;
       }
 
       const beatValues = [
         ...copiedNotes.map((note) => note.beat),
         ...copiedBpmEvents.map((event) => event.beat),
+        ...copiedSvEvents.map((event) => event.beat),
       ];
       const anchorBeat = beatValues.reduce((minValue, beat) => Math.min(minValue, beat), beatValues[0] ?? 0);
       const notesAtAnchorBeat = copiedNotes.filter((note) => approxEq(note.beat, anchorBeat));
@@ -1425,17 +1817,29 @@ function ChartEditorController() {
       return {
         notes: copiedNotes,
         bpmEvents: copiedBpmEvents,
+        svEvents: copiedSvEvents,
         slideChains: copiedChains,
         anchorBeat,
         anchorLane,
         laneAnchorEnabled,
       };
     },
-    [approxEq, bpmEvents, noteById, slideChains, sortBpmEvents, sortNotes],
+    [
+      approxEq,
+      bpmEvents,
+      normalizeObjectTimingGroup,
+      noteById,
+      noteTimingGroupIdByNoteId,
+      slideChains,
+      sortBpmEvents,
+      sortNotes,
+      sortSvEvents,
+      svEvents,
+    ],
   );
   const copySelectionToClipboardPayload = useCallback(
-    (noteIds: string[], bpmIds: string[]) => {
-      const payload = buildCopiedChartPayload(noteIds, bpmIds);
+    (noteIds: string[], bpmIds: string[], svIds: string[] = []) => {
+      const payload = buildCopiedChartPayload(noteIds, bpmIds, svIds);
       if (!payload) {
         setStatusMessage("当前选择无可复制对象。");
         return;
@@ -1451,7 +1855,7 @@ function ChartEditorController() {
       const hiddenLabel = hiddenNoteCount > 0 ? ` + ${hiddenNoteCount} Hidden` : "";
       const slideLabel = slideSegmentCount > 0 ? `，${slideSegmentCount} 段 Slide` : "";
       setStatusMessage(
-        `已复制 ${visibleNoteCount}${hiddenLabel} 个音符，${payload.bpmEvents.length} 条 BPM${slideLabel}。`,
+        `已复制 ${visibleNoteCount}${hiddenLabel} 个音符，${payload.bpmEvents.length} 条 BPM，${payload.svEvents.length} 条 SV${slideLabel}。`,
       );
     },
     [buildCopiedChartPayload, setStatusMessage],
@@ -1466,14 +1870,46 @@ function ChartEditorController() {
       const laneDelta = copiedChartPayload.laneAnchorEnabled
         ? Number((placement.lane - copiedChartPayload.anchorLane).toFixed(6))
         : 0;
+      const copiedGroupIds = Array.from(new Set(
+        copiedChartPayload.svEvents
+          .map((event) => normalizeObjectTimingGroup(event.timingGroup))
+          .filter((groupId) => groupId !== GLOBAL_TIMING_GROUP_ID),
+      ));
+      const allocatedGroupIds = new Set(Object.keys(ensureTimingGroups(timingGroupsRef.current)));
+      const pastedGroupBySource = new Map<string, string>();
+      for (const sourceGroupId of copiedGroupIds) {
+        let index = 1;
+        while (allocatedGroupIds.has(`#${index}`)) {
+          index += 1;
+        }
+        const nextGroupId = `#${index}`;
+        allocatedGroupIds.add(nextGroupId);
+        pastedGroupBySource.set(sourceGroupId, nextGroupId);
+      }
+      const remapCopiedTimingGroup = (value: unknown): string | undefined => {
+        const groupId = normalizeObjectTimingGroup(value);
+        const mapped = pastedGroupBySource.get(groupId);
+        return mapped && mapped !== GLOBAL_TIMING_GROUP_ID ? mapped : undefined;
+      };
       const notePositionKey = (lane: number, beat: number) => `${lane.toFixed(6)}|${beat.toFixed(6)}`;
+      const shouldPasteNoteOverlap = (left: ChartNote, right: ChartNote): boolean => {
+        if (left.type === "hidden" || right.type === "hidden") {
+          return false;
+        }
+        if (isDirectionalNoteType(left.type) || isDirectionalNoteType(right.type)) {
+          return true;
+        }
+        return normalizeRhythmWidth(left.width) === normalizeRhythmWidth(right.width);
+      };
       const sourceToPastedId = new Map<string, string>();
-      const existingNoteIdByPosition = new Map<string, string>();
+      const existingNotesByPosition = new Map<string, ChartNote[]>();
       for (const note of notesRef.current) {
-        existingNoteIdByPosition.set(notePositionKey(note.lane, note.beat), note.id);
+        const positionKey = notePositionKey(note.lane, note.beat);
+        const notesAtPosition = existingNotesByPosition.get(positionKey) ?? [];
+        notesAtPosition.push(note);
+        existingNotesByPosition.set(positionKey, notesAtPosition);
       }
       const overlappedExistingNoteIds = new Set<string>();
-      const pastedPositionKeys = new Set<string>();
       const pastedNotes: ChartNote[] = [];
 
       for (const source of copiedChartPayload.notes) {
@@ -1489,6 +1925,7 @@ function ChartEditorController() {
             ...(typeof source.endBeat === "number"
               ? { endBeat: Math.max(0, Number((source.endBeat + beatDelta).toFixed(6))) }
               : {}),
+            timingGroup: remapCopiedTimingGroup(source.timingGroup),
           },
           settings,
         );
@@ -1496,32 +1933,44 @@ function ChartEditorController() {
           continue;
         }
         const positionKey = notePositionKey(normalized.lane, normalized.beat);
-        if (pastedPositionKeys.has(positionKey)) {
-          continue;
+        if (normalized.type !== "hidden") {
+          const hasOverlappedPastedNote = pastedNotes.some(
+            (note) =>
+              note.type !== "hidden" &&
+              notePositionKey(note.lane, note.beat) === positionKey &&
+              shouldPasteNoteOverlap(note, normalized),
+          );
+          if (hasOverlappedPastedNote) {
+            continue;
+          }
         }
-        pastedPositionKeys.add(positionKey);
-        const overlappedExistingId = existingNoteIdByPosition.get(positionKey);
-        if (typeof overlappedExistingId === "string" && overlappedExistingId.length > 0) {
-          overlappedExistingNoteIds.add(overlappedExistingId);
+        const overlappedExistingNotes = existingNotesByPosition.get(positionKey) ?? [];
+        for (const existingNote of overlappedExistingNotes) {
+          if (shouldPasteNoteOverlap(existingNote, normalized)) {
+            overlappedExistingNoteIds.add(existingNote.id);
+          }
         }
         sourceToPastedId.set(source.id, normalized.id);
         pastedNotes.push(normalized);
       }
 
-      const pastedSlideChains = copiedChartPayload.slideChains
-        .map((chain) => {
-          const noteIds = chain.noteIds
-            .map((id) => sourceToPastedId.get(id))
-            .filter((id): id is string => typeof id === "string");
-          if (noteIds.length < 2) {
-            return null;
-          }
-          return {
-            id: createId(),
-            noteIds,
-          };
-        })
-        .filter((chain): chain is SlideChain => chain !== null);
+      const pastedNoteMap = new Map(pastedNotes.map((note) => [note.id, note] as const));
+      const pastedSlideChains = cleanupSlideChainsHidden({
+        chains: copiedChartPayload.slideChains
+          .map((chain) => {
+            const noteIds = chain.noteIds
+              .map((id) => sourceToPastedId.get(id))
+              .filter((id): id is string => typeof id === "string");
+            const timingGroup = remapCopiedTimingGroup(chain.timingGroup);
+            return {
+              id: createId(),
+              noteIds,
+              ...(timingGroup ? { timingGroup } : {}),
+            };
+          }),
+        noteMap: pastedNoteMap,
+        minLength: 2,
+      });
 
       const occupiedBpmBeatKeys = new Set(
         bpmEventsRef.current.map((event) => event.beat.toFixed(6)),
@@ -1570,7 +2019,31 @@ function ChartEditorController() {
         }
       }
 
-      if (pastedNotes.length === 0 && pastedSlideChains.length === 0 && pastedBpmEvents.length === 0) {
+      const occupiedSvKeys = new Set(
+        svEventsRef.current.map((event) => `${normalizeTimingGroup(event.timingGroup, "#Global")}|${event.beat.toFixed(6)}`),
+      );
+      const pastedSvEvents = copiedChartPayload.svEvents
+        .map((event) => normalizeSvEvent(
+          {
+            ...event,
+            id: createId(),
+            beat: Math.max(0, Number((event.beat + beatDelta).toFixed(6))),
+            timingGroup: remapCopiedTimingGroup(event.timingGroup) ?? GLOBAL_TIMING_GROUP_ID,
+          },
+          beatDivision,
+          1,
+        ))
+        .filter((event): event is ChartSvEvent => event !== null)
+        .filter((event) => {
+          const key = `${normalizeTimingGroup(event.timingGroup, "#Global")}|${event.beat.toFixed(6)}`;
+          if (occupiedSvKeys.has(key)) {
+            return false;
+          }
+          occupiedSvKeys.add(key);
+          return true;
+        });
+
+      if (pastedNotes.length === 0 && pastedSlideChains.length === 0 && pastedBpmEvents.length === 0 && pastedSvEvents.length === 0) {
         return;
       }
 
@@ -1587,13 +2060,20 @@ function ChartEditorController() {
         });
       }
       if (overlappedExistingNoteIds.size > 0) {
+        const remainedNoteMap = new Map(
+          notesRef.current
+            .filter((note) => !overlappedExistingNoteIds.has(note.id))
+            .map((note) => [note.id, note] as const),
+        );
         setSlideChains((previous) =>
-          previous
-            .map((chain) => ({
+          cleanupSlideChainsHidden({
+            chains: previous.map((chain) => ({
               ...chain,
               noteIds: chain.noteIds.filter((id) => !overlappedExistingNoteIds.has(id)),
-            }))
-            .filter((chain) => chain.noteIds.length >= 2),
+            })),
+            noteMap: remainedNoteMap,
+            minLength: 2,
+          }),
         );
       }
       if (pastedSlideChains.length > 0) {
@@ -1602,6 +2082,9 @@ function ChartEditorController() {
       if (pastedBpmEvents.length > 0) {
         setBpmEvents((previous) => sortBpmEvents([...previous, ...pastedBpmEvents]));
       }
+      if (pastedSvEvents.length > 0) {
+        setSvEvents((previous) => sortSvEvents([...previous, ...pastedSvEvents]));
+      }
 
       const pastedVisibleNoteIds = pastedNotes
         .filter((note) => note.type !== "hidden")
@@ -1609,13 +2092,15 @@ function ChartEditorController() {
       setSelectedNoteIds(pastedVisibleNoteIds);
       setSelectedBpmEventIds(pastedBpmEvents.map((event) => event.id));
       setSelectedBpmEventId(pastedBpmEvents[0]?.id ?? null);
+      setSelectedSvEventIds(pastedSvEvents.map((event) => event.id));
+      setSelectedSvEventId(pastedSvEvents[0]?.id ?? null);
       setSelectedLongLineSegmentId(null);
 
       const visibleNoteCount = pastedNotes.reduce((count, note) => (note.type === "hidden" ? count : count + 1), 0);
       const hiddenNoteCount = pastedNotes.length - visibleNoteCount;
       const hiddenLabel = hiddenNoteCount > 0 ? ` + ${hiddenNoteCount} Hidden` : "";
       setStatusMessage(
-        `已粘贴 ${visibleNoteCount}${hiddenLabel} 个音符，${pastedBpmEvents.length} 条 BPM。`,
+        `已粘贴 ${visibleNoteCount}${hiddenLabel} 个音符，${pastedBpmEvents.length} 条 BPM，${pastedSvEvents.length} 条 SV。`,
       );
     },
     [
@@ -1628,27 +2113,34 @@ function ChartEditorController() {
       normalizeBaseBpmForWrite,
       normalizeBpmEvent,
       normalizeEventBpmForWrite,
+      normalizeSvEvent,
+      normalizeTimingGroup,
+      normalizeObjectTimingGroup,
       isLastBeatOrderedBpmNegative,
       normalizeNote,
       setNotes,
       setBpmEvents,
       setSelectedBpmEventId,
       setSelectedBpmEventIds,
+      setSelectedSvEventId,
+      setSelectedSvEventIds,
       setSelectedLongLineSegmentId,
       setSelectedNoteIds,
       setSlideChains,
+      setSvEvents,
       setStatusMessage,
       settings,
       sortBpmEvents,
+      sortSvEvents,
       sortNotes,
     ],
   );
   const handleSelectionDragCompletedForCopyTool = useCallback(
-    (payload: { noteIds: string[]; bpmIds: string[] }) => {
+    (payload: { noteIds: string[]; bpmIds: string[]; svIds?: string[] }) => {
       if (!isToolArmed || tool !== "copy") {
         return;
       }
-      copySelectionToClipboardPayload(payload.noteIds, payload.bpmIds);
+      copySelectionToClipboardPayload(payload.noteIds, payload.bpmIds, payload.svIds ?? []);
     },
     [copySelectionToClipboardPayload, isToolArmed, tool],
   );
@@ -1661,13 +2153,18 @@ function ChartEditorController() {
             ? [selectedBpmEventId]
             : []
         );
-    copySelectionToClipboardPayload(selectedNoteIds, bpmIds);
+    const svIds = selectedSvEventIds.length > 0
+      ? selectedSvEventIds
+      : (selectedSvEventId ? [selectedSvEventId] : []);
+    copySelectionToClipboardPayload(selectedNoteIds, bpmIds, svIds);
   }, [
     BASE_BPM_LINE_ID,
     copySelectionToClipboardPayload,
     selectedBpmEventId,
     selectedBpmEventIds,
     selectedNoteIds,
+    selectedSvEventId,
+    selectedSvEventIds,
   ]);
   const pasteAtMousePositionByShortcut = useCallback(() => {
     if (!copiedChartPayload) {
@@ -1706,14 +2203,19 @@ function ChartEditorController() {
   );
   const selectedNoteCount = selectedNoteIds.length;
   const selectedBpmEventCount = selectedBpmEventIds.length;
+  const selectedSvEventCount = selectedSvEventIds.length;
   const hasNoteSelection = selectedNoteCount > 0;
-  const hasOffsetSelection = hasNoteSelection || selectedBpmEventCount > 0;
+  const hasTimelineEventSelection = selectedBpmEventCount > 0 || selectedSvEventCount > 0;
+  const hasBeatEditableSelection = hasNoteSelection || hasTimelineEventSelection;
   const minSelectedBeat = useMemo(() => {
     const beats: number[] = [];
     for (const note of selectedNotes) {
       beats.push(note.beat);
     }
     for (const event of selectedBpmEvents) {
+      beats.push(event.beat);
+    }
+    for (const event of selectedSvEvents) {
       beats.push(event.beat);
     }
     if (selectedBpmEventId === BASE_BPM_LINE_ID) {
@@ -1723,7 +2225,7 @@ function ChartEditorController() {
       return 0;
     }
     return beats.reduce((minValue, beat) => Math.min(minValue, beat), beats[0]);
-  }, [selectedBpmEventId, selectedBpmEvents, selectedNotes]);
+  }, [selectedBpmEventId, selectedBpmEvents, selectedNotes, selectedSvEvents]);
   const minSelectedLane = selectedNotes.length > 0
     ? selectedNotes.reduce((minValue, note) => Math.min(minValue, note.lane), selectedNotes[0].lane)
     : 0;
@@ -1743,10 +2245,18 @@ function ChartEditorController() {
     },
     [bpmEvents, metadata.bpm, selectedBpmEventId],
   );
+  const selectedSvEvent = useMemo(
+    () => selectedSvEventId ? (svEvents.find((event) => event.id === selectedSvEventId) ?? null) : null,
+    [selectedSvEventId, svEvents],
+  );
   const isBaseBpmSelected = selectedBpmEventId === BASE_BPM_LINE_ID;
+  const hasBaseSvBeatSelection =
+    selectedSvEvents.some((event) => approxEq(event.beat, 0)) ||
+    (selectedSvEvent !== null && approxEq(selectedSvEvent.beat, 0));
 
   const isEditingPlacedBpm = selectedBpmEvent !== null;
-  const isEditingPlacedObject = hasNoteSelection || isEditingPlacedBpm;
+  const isEditingPlacedSv = selectedSvEvent !== null;
+  const isEditingPlacedObject = hasNoteSelection || isEditingPlacedBpm || isEditingPlacedSv;
   const hasLongLineSelection = selectedLongLineSegmentId !== null;
   const playbackNoteHitEvents = useMemo(() => {
     const events: Array<{ id: string; note: ChartNote; timeSec: number }> = [];
@@ -1860,7 +2370,7 @@ function ChartEditorController() {
     );
   const isHabahiroEnabled = appOptionSettings.habahiro === true;
   const isDirectionalToolSettings =
-    !hasOffsetSelection &&
+    !hasBeatEditableSelection &&
     !hasLongLineSelection &&
     !isEditingPlacedBpm &&
     (activeSettingsType === "directional_flick_left" || activeSettingsType === "directional_flick_right");
@@ -1868,7 +2378,7 @@ function ChartEditorController() {
     selectedNotes.length > 0 && selectedNotes.every((note) => isDirectionalNoteType(note.type));
   const isRhythmWidthToolSettings =
     isHabahiroEnabled &&
-    !hasOffsetSelection &&
+    !hasBeatEditableSelection &&
     !hasLongLineSelection &&
     !isEditingPlacedBpm &&
     activeSettingsType !== null &&
@@ -1891,7 +2401,13 @@ function ChartEditorController() {
       : null);
   const showBeatSetting =
     !hasLongLineSelection &&
-    (hasOffsetSelection || isEditingPlacedBpm || (activeSettingsType !== null && activeSettingsType !== "slide"));
+    (
+      hasBeatEditableSelection ||
+      isEditingPlacedBpm ||
+      isEditingPlacedSv ||
+      (isToolArmed && tool === "sv") ||
+      (activeSettingsType !== null && activeSettingsType !== "slide")
+    );
   const showLaneSetting =
     hasNoteSelection ||
     (!hasLongLineSelection &&
@@ -1908,28 +2424,49 @@ function ChartEditorController() {
   const showWidthSetting = widthSettingMode !== null;
   const showDirectionSetting = hasDirectionalNoteSelection || isDirectionalToolSettings;
   const showBpmSetting = !hasLongLineSelection && !hasNoteSelection && activeSettingsType === "bpm";
+  const showSvSetting =
+    !hasLongLineSelection &&
+    !hasNoteSelection &&
+    !isEditingPlacedBpm &&
+    (isEditingPlacedSv || (!hasBeatEditableSelection && isToolArmed && tool === "sv"));
+  const showTimingGroupSetting =
+    !hasLongLineSelection &&
+    !isEditingPlacedBpm &&
+    !isEditingPlacedSv &&
+    !hasTimelineEventSelection &&
+    (
+      hasNoteSelection ||
+      (activeSettingsType !== null && activeSettingsType !== "bpm" && activeSettingsType !== "slide")
+    );
   const showSlideSegmentSetting =
     appOptionSettings.spRhythmNoteEnabled
     && hasLongLineSelection
-    && !hasOffsetSelection
+    && !hasBeatEditableSelection
     && !showBpmSetting;
   const hideSettingsPanel =
     (hasLongLineSelection && !appOptionSettings.spRhythmNoteEnabled) ||
     (
-      !hasOffsetSelection &&
+      !hasBeatEditableSelection &&
       !hasLongLineSelection &&
       !isEditingPlacedBpm &&
-      (!isToolArmed || tool === "slide" || tool === "copy" || tool === "paste")
+      !isEditingPlacedSv &&
+      (!isToolArmed || (tool === "slide" && !showWidthSetting) || tool === "copy" || tool === "paste")
     );
-  const isBeatSettingLocked = hasOffsetSelection ? false : (!isEditingPlacedObject || isBaseBpmSelected);
+  const isBeatSettingLocked = hasBeatEditableSelection
+    ? hasBaseSvBeatSelection
+    : (!isEditingPlacedObject || isBaseBpmSelected || hasBaseSvBeatSelection);
   const isLaneSettingLocked = hasNoteSelection ? false : !isEditingPlacedObject;
+  const isTimingGroupSettingLocked = !hasNoteSelection;
 
-  const activeBeatValue = hasOffsetSelection
+  const activeBeatValue = hasBeatEditableSelection
     ? minSelectedBeat
     : isEditingPlacedBpm
     ? (selectedBpmEvent?.beat ?? 0)
+    : isEditingPlacedSv
+      ? (selectedSvEvent?.beat ?? 0)
     : 0;
   const activeBpmValue = isEditingPlacedBpm ? (selectedBpmEvent?.bpm ?? toolBpmValue) : toolBpmValue;
+  const activeSvValue = isEditingPlacedSv ? (selectedSvEvent?.value ?? toolSvValue) : toolSvValue;
   const activeLaneValue = hasNoteSelection ? minSelectedLane : toolLane;
   const activeWidthValue =
     widthSettingMode === "directional"
@@ -1961,7 +2498,8 @@ function ChartEditorController() {
   }, []);
 
   const commitSlideVibrationInput = useCallback(() => {
-    const parsed = parseNumericExpression(slideVibrationInputText);
+    const text = slideVibrationInputText.trim();
+    const parsed = text === "" ? 0 : parseNumericExpression(text);
     if (parsed === null) {
       setSlideVibrationInputText(formatSlideVibrationText(slideVibration));
       return;
@@ -2071,7 +2609,7 @@ function ChartEditorController() {
         }
       }
 
-      if (cached.type === "directional" && !hasOffsetSelection && !hasLongLineSelection && !isEditingPlacedBpm) {
+      if (cached.type === "directional" && !hasBeatEditableSelection && !hasLongLineSelection && !isEditingPlacedBpm) {
         const nextWidth = normalizeDirectionalWidth(cached.width);
         if (nextWidth !== normalizeDirectionalWidth(toolDirectionalWidth)) {
           setToolDirectionalWidth(nextWidth);
@@ -2085,7 +2623,7 @@ function ChartEditorController() {
       if (
         cached.type === "rhythm"
         && isHabahiroEnabled
-        && !hasOffsetSelection
+        && !hasBeatEditableSelection
         && !hasLongLineSelection
         && !isEditingPlacedBpm
       ) {
@@ -2119,8 +2657,8 @@ function ChartEditorController() {
   }, [
     approxEq,
     currentEditorConfigType,
+    hasBeatEditableSelection,
     hasLongLineSelection,
-    hasOffsetSelection,
     isHabahiroEnabled,
     isEditingPlacedBpm,
     isToolArmed,
@@ -2147,7 +2685,9 @@ function ChartEditorController() {
   const canDeleteSelection =
     selectedNoteCount > 0 ||
     selectedBpmEventCount > 0 ||
+    selectedSvEventCount > 0 ||
     (selectedBpmEventId !== null && selectedBpmEventId !== BASE_BPM_LINE_ID) ||
+    selectedSvEventId !== null ||
     hasLongLineSelection;
   const canMirrorSelection = selectedNoteCount > 0;
   const mirrorSelectedNotes = useCallback(() => {
@@ -2289,14 +2829,17 @@ function ChartEditorController() {
     setSelectedNoteIds,
     setSelectedBpmEventIds,
     setSelectedBpmEventId,
+    setSelectedSvEventIds,
+    setSelectedSvEventId,
     setSelectedLongLineSegmentId,
     setSlideChains,
     setNotes,
     slideRoleByNoteId,
     noteById,
     sortNotes,
-    notes,
+    allNotes: notes,
     bpmEvents,
+    svEvents: interactiveSvEvents,
     metadata,
     slideChains,
     setSlideBuildState,
@@ -2307,6 +2850,7 @@ function ChartEditorController() {
     selectionMoveRef,
     setSelectionMovePreview,
     selectedBpmEventIds,
+    selectedSvEventIds,
     showBeatSetting,
     isBeatSettingLocked,
     setBeatInputText,
@@ -2317,6 +2861,10 @@ function ChartEditorController() {
     setBpmInputText,
     bpmInputEditingRef,
     activeBpmValue,
+    showSvSetting,
+    setSvInputText,
+    svInputEditingRef,
+    activeSvValue,
     showLaneSetting,
     isLaneSettingLocked,
     setLaneInputText,
@@ -2340,14 +2888,16 @@ function ChartEditorController() {
     beatDivision,
     approxEq,
     setBpmEvents,
+    setSvEvents,
     sortBpmEvents,
+    sortSvEvents,
     isLastBeatOrderedBpmNegative,
     spRhythmNoteEnabled: appOptionSettings.spRhythmNoteEnabled,
   });
 
   const { splitLongLineSegment, deleteSelectedLongLineSegment, applyLongLineSettings } = useLongLineActions({
     slideChains,
-    notes,
+    notes: interactiveNotes,
     isHabahiroEnabled,
     spRhythmNoteEnabled: appOptionSettings.spRhythmNoteEnabled,
     setSlideChains,
@@ -2376,6 +2926,7 @@ function ChartEditorController() {
     setSettings,
     setNotes,
     setBpmEvents,
+    setSvEvents,
     normalizeSettings,
     normalizeNote,
     normalizeBpmEvent,
@@ -2390,7 +2941,7 @@ function ChartEditorController() {
     normalizeEventBpmForWrite,
     toFinite,
     approxEq,
-    hasOffsetSelection,
+    hasBeatEditableSelection,
     applySelectedOffset,
     commitSelectedNoteTransform,
     minSelectedBeat,
@@ -2424,6 +2975,10 @@ function ChartEditorController() {
     parseNumericExpression,
     bpmInputText,
     setBpmInputText,
+    isEditingPlacedSv,
+    selectedSvEvent,
+    normalizeTimingGroup,
+    sortSvEvents,
     isLaneSettingLocked,
     laneInputText,
     setLaneInputText,
@@ -2434,9 +2989,13 @@ function ChartEditorController() {
     selectedNoteIds,
     setStatusMessage,
     selectedBpmEventIds,
+    selectedSvEventIds,
+    selectedSvEventId,
     setSelectedNoteIds,
     setSelectedBpmEventIds,
     setSelectedBpmEventId,
+    setSelectedSvEventIds,
+    setSelectedSvEventId,
     selectedLongLineSegmentId,
     deleteSelectedLongLineSegment,
     setSelectedLongLineSegmentId,
@@ -2468,6 +3027,7 @@ function ChartEditorController() {
     applyImportOfficialChart,
     applyImportCommunityChart,
     applyUploadCommunityChart,
+    applyUploadNotGarupaServerChart,
     applyUploadTestServerChart,
     openImportJsonModal,
     closeImportJsonModal,
@@ -2567,6 +3127,8 @@ function ChartEditorController() {
     selectedNoteIds,
     selectedBpmEventIds,
     selectedBpmEventId,
+    selectedSvEventIds,
+    selectedSvEventId,
     deleteCurrentSelection,
     NOTE_TYPES,
     setTool,
@@ -2585,6 +3147,7 @@ function ChartEditorController() {
     notes,
     slideChains,
     bpmEvents,
+    timingGroups,
     svEvents,
     audioFileName,
     audioDurationSec,
@@ -2620,7 +3183,8 @@ function ChartEditorController() {
     setNotes: setNotesState,
     setSlideChains: setSlideChainsState,
     setBpmEvents: setBpmEventsState,
-    setSvEvents: setSvEventsState,
+    setTimingGroups: setTimingGroupsState,
+    setSvEvents,
     setToolBpmValue,
     setAudioFileName,
     setAudioDurationSec,
@@ -2637,6 +3201,82 @@ function ChartEditorController() {
     clearAllSelections,
     setStatusMessage,
   });
+
+  const svPreviewTimingGroups = useMemo(() => {
+    const usedGroups = new Set<string>([GLOBAL_TIMING_GROUP_ID]);
+    for (const note of notes) {
+      usedGroups.add(normalizeTimingGroupId(note.timingGroup));
+    }
+    for (const chain of slideChains) {
+      usedGroups.add(normalizeTimingGroupId(chain.timingGroup));
+    }
+    for (const event of svEvents) {
+      usedGroups.add(normalizeTimingGroupId(event.timingGroup));
+    }
+    const sortedGroups = [...usedGroups].sort((left, right) => {
+      if (left === GLOBAL_TIMING_GROUP_ID) {
+        return -1;
+      }
+      if (right === GLOBAL_TIMING_GROUP_ID) {
+        return 1;
+      }
+      return left.localeCompare(right, "en", { numeric: true });
+    });
+    const sortedSvEvents = sortSvEvents(svEvents);
+    const globalSvEvents = sortedSvEvents.filter(
+      (event) => normalizeTimingGroupId(event.timingGroup) === GLOBAL_TIMING_GROUP_ID,
+    );
+    const sourceEvents = sortedGroups.flatMap((groupId) => {
+      const groupSvEvents = groupId === GLOBAL_TIMING_GROUP_ID
+        ? []
+        : sortedSvEvents.filter((event) => normalizeTimingGroupId(event.timingGroup) === groupId);
+      return [...groupSvEvents, ...globalSvEvents].map((event, order) => ({
+        timingGroup: groupId,
+        atMs: beatToSeconds(event.beat, bpmTimeline) * 1000,
+        value: event.value,
+        order,
+      }));
+    });
+    const built = buildTimingGroupDefs(
+      sortedGroups,
+      sourceEvents,
+    );
+    const byInternalGroup = new Map<string, TimingGroupDef>();
+    for (const [internalGroup, runtimeGroup] of built.internalToRuntimeGroup.entries()) {
+      const def = built.timingGroups[runtimeGroup];
+      if (def) {
+        byInternalGroup.set(internalGroup, def);
+      }
+    }
+    return byInternalGroup;
+  }, [beatToSeconds, bpmTimeline, notes, slideChains, sortSvEvents, svEvents]);
+  const noteTimingGroupById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const note of notes) {
+      map.set(note.id, normalizeTimingGroupId(note.timingGroup));
+    }
+    for (const chain of slideChains) {
+      const chainTimingGroup = normalizeTimingGroupId(chain.timingGroup);
+      for (const noteId of chain.noteIds ?? []) {
+        map.set(noteId, chainTimingGroup);
+      }
+    }
+    return map;
+  }, [notes, slideChains]);
+  const displayAxis = useMemo(() => createEditorDisplayAxis({
+    enabled: isSvPreviewEnabled,
+    totalDurationSec,
+    pixelsPerSecond: timelinePixelsPerSecond,
+    previewTimeSec: svPreviewTimeSec,
+    mainGroup: svPreviewTimingGroups.get(GLOBAL_TIMING_GROUP_ID) ?? null,
+  }), [
+    isSvPreviewEnabled,
+    svPreviewTimeSec,
+    svPreviewTimingGroups,
+    timelinePixelsPerSecond,
+    totalDurationSec,
+  ]);
+  const scrollContentHeight = Math.max(boardHeight, displayAxis.contentHeight);
 
   const {
     laneToColumn,
@@ -2657,6 +3297,11 @@ function ChartEditorController() {
     laneMin,
     bpmTimeline,
     boardHeight,
+    displayAxis,
+    isSvPreviewEnabled,
+    isPlaybackPlaying,
+    svPreviewTimeSecRef,
+    setSvPreviewTimeSec,
     timelinePixelsPerSecond,
     totalDurationSec,
     playfieldRef,
@@ -2666,7 +3311,7 @@ function ChartEditorController() {
     beatDivision,
     boardWidth,
     laneValues,
-    notes,
+    notes: interactiveNotes,
     slideChains,
     tool,
     toolDirectionalWidth,
@@ -2687,6 +3332,7 @@ function ChartEditorController() {
     selectionDragRef,
     playfieldBoardRef,
     bpmEvents,
+    svEvents: interactiveSvEvents,
     clearAllSelections,
     setStatusMessage,
     setMultiSelectedNotes,
@@ -2695,6 +3341,8 @@ function ChartEditorController() {
     clearSelectedNotes,
     setSelectedBpmEventIds,
     setSelectedBpmEventId,
+    setSelectedSvEventIds,
+    setSelectedSvEventId,
     NOTE_SPECS,
     setSelectionDrag,
     selectionMoveRef,
@@ -2708,6 +3356,7 @@ function ChartEditorController() {
     startSidebarResize,
     applyToolFromPalette: applyToolFromPaletteRaw,
     applyBpmToolFromPalette: applyBpmToolFromPaletteRaw,
+    applySvToolFromPalette: applySvToolFromPaletteRaw,
     applyCopyToolFromPalette: applyCopyToolFromPaletteRaw,
     applyPasteToolFromPalette: applyPasteToolFromPaletteRaw,
     setSlideBuildMode,
@@ -2771,19 +3420,28 @@ function ChartEditorController() {
     removeNoteIdsFromSlideChains,
     setSlideChains,
     normalizeBpmEvent,
+    normalizeSvEvent,
     normalizeBaseBpmForWrite,
     normalizeEventBpmForWrite,
     toolBpmValue,
     metadata,
     setMetadata,
     setBpmEvents,
+    setSvEvents,
     bpmEvents,
+    svEvents,
     BASE_BPM_LINE_ID,
     clearSelectedNotes,
     setSelectedBpmEventIds,
+    setSelectedSvEventIds,
+    setSelectedSvEventId,
+    toolSvValue,
+    toolTimingGroup,
     selectedNoteIds,
     selectedBpmEventIds,
     selectedBpmEventId,
+    selectedSvEventIds,
+    selectedSvEventId,
     selectedLongLineSegmentId,
     playfieldBoardRef,
     selectionMoveRef,
@@ -2803,9 +3461,11 @@ function ChartEditorController() {
     commitSelectedNoteTransform,
     toolLaneShift,
     sortBpmEvents,
+    sortSvEvents,
     isPasteToolReady: copiedChartPayload !== null,
     isPasteLaneAnchorEnabled: copiedChartPayload?.laneAnchorEnabled === true,
     applyPasteAtPlacement: applyCopiedPayloadAtPlacement,
+    isSvPreviewEnabled,
   });
 
   const clearPlaybackTick = useCallback(() => {
@@ -2856,7 +3516,7 @@ function ChartEditorController() {
       const ratioFromBottom = clamp(playbackLinePositionPercent / 100, 0, 1);
       const anchorInViewport = viewportHeight * (1 - ratioFromBottom);
       const yInViewport = playbackWorldY - viewportTop;
-      const maxScrollTop = Math.max(0, boardHeight - viewportHeight);
+      const maxScrollTop = Math.max(0, scrollContentHeight - viewportHeight);
       const isViewportPinnedAtTop = viewportTop <= PLAYBACK_VIEWPORT_EDGE_TOLERANCE_PX;
       const isViewportPinnedAtBottom =
         viewportTop >= maxScrollTop - PLAYBACK_VIEWPORT_EDGE_TOLERANCE_PX;
@@ -2882,7 +3542,7 @@ function ChartEditorController() {
     if (host.style.display !== "block") {
       host.style.display = "block";
     }
-  }, [boardHeight, clamp, isPlayToolSelected, playbackLinePositionPercent, timeToY]);
+  }, [clamp, isPlayToolSelected, playbackLinePositionPercent, scrollContentHeight, timeToY]);
 
   const flushPlaybackGuide = useCallback(() => {
     playbackGuideRafRef.current = null;
@@ -3045,6 +3705,40 @@ function ChartEditorController() {
     stopPlaybackBgmSource,
   ]);
 
+  const setActiveSvValue = useCallback((value: number) => {
+    const nextValue = Number(toFinite(value, toolSvValue).toFixed(6));
+    if (!Number.isFinite(nextValue)) {
+      setStatusMessage("SV 值必须为有限数字。");
+      return;
+    }
+    if (selectedSvEvent) {
+      setSvEvents((previous) => sortSvEvents(previous.map((event) =>
+        event.id === selectedSvEvent.id ? { ...event, value: nextValue } : event,
+      )));
+      setStatusMessage("已更新 SV 值。");
+      return;
+    }
+    setToolSvValue(nextValue);
+  }, [selectedSvEvent, setStatusMessage, setSvEvents, sortSvEvents, toFinite, toolSvValue]);
+
+  const commitSvInput = useCallback(() => {
+    const text = svInputText.trim();
+    const parsed = text === "" ? 0 : parseNumericExpression(text);
+    if (parsed === null) {
+      setSvInputText(formatEditorNumeric(activeSvValue));
+      return;
+    }
+    const nextValue = Number(toFinite(parsed, activeSvValue).toFixed(6));
+    setActiveSvValue(nextValue);
+    setSvInputText(formatEditorNumeric(nextValue));
+  }, [
+    activeSvValue,
+    parseNumericExpression,
+    setActiveSvValue,
+    svInputText,
+    toFinite,
+  ]);
+
   const getPlayfieldBottomTimeSec = useCallback(() => {
     const playfield = playfieldRef.current;
     if (!playfield) {
@@ -3068,7 +3762,7 @@ function ChartEditorController() {
     }
     playbackViewportSyncStampRef.current = nowMs;
     const viewportHeight = Math.max(1, playfield.clientHeight);
-    const maxScrollTop = Math.max(0, boardHeight - viewportHeight);
+    const maxScrollTop = Math.max(0, scrollContentHeight - viewportHeight);
     const ratioFromBottom = clamp(playbackLinePositionPercent / 100, 0, 1);
     const anchorLocalY = viewportHeight * (1 - ratioFromBottom);
     const worldY = timeToY(timeSec);
@@ -3077,7 +3771,7 @@ function ChartEditorController() {
       playfield.scrollTop = nextScrollTop;
     }
     viewBottomTimeSecRef.current = yToTime(playfield.scrollTop + playfield.clientHeight);
-  }, [boardHeight, clamp, playbackLinePositionPercent, timeToY, viewBottomTimeSecRef, yToTime]);
+  }, [clamp, playbackLinePositionPercent, scrollContentHeight, timeToY, viewBottomTimeSecRef, yToTime]);
 
   const ensurePlaybackSeAudioContext = useCallback((): AudioContext | null => {
     const existingContext = playbackSeAudioContextRef.current;
@@ -3582,6 +4276,10 @@ function ChartEditorController() {
       }
     }
     playbackNowSecRef.current = nextTimeSec;
+    if (isSvPreviewEnabledRef.current) {
+      svPreviewTimeSecRef.current = nextTimeSec;
+      setSvPreviewTimeSec(nextTimeSec);
+    }
     processPlaybackSoundFrame(prevTimeSec, nextTimeSec);
     syncPlaybackViewport(nextTimeSec);
     updatePlaybackRuntimeLine(nextTimeSec);
@@ -3657,6 +4355,10 @@ function ChartEditorController() {
       }
     }
     playbackNowSecRef.current = safeSeconds;
+    if (isSvPreviewEnabledRef.current) {
+      svPreviewTimeSecRef.current = safeSeconds;
+      setSvPreviewTimeSec(safeSeconds);
+    }
     resetPlaybackSoundStateAt(safeSeconds);
     syncPlaybackViewport(safeSeconds);
     playbackTickLastNowMsRef.current = performance.now();
@@ -3735,6 +4437,18 @@ function ChartEditorController() {
     applyBpmToolFromPaletteRaw();
   }, [applyBpmToolFromPaletteRaw, hidePlaybackGuide, hidePlaybackRuntimeLine, isPlayToolSelected, isPlaybackPlaying, stopPlayback]);
 
+  const applySvToolFromPalette = useCallback(() => {
+    if (isPlayToolSelected) {
+      setIsPlayToolSelected(false);
+      hidePlaybackGuide();
+      hidePlaybackRuntimeLine();
+      if (isPlaybackPlaying) {
+        stopPlayback(null);
+      }
+    }
+    applySvToolFromPaletteRaw();
+  }, [applySvToolFromPaletteRaw, hidePlaybackGuide, hidePlaybackRuntimeLine, isPlayToolSelected, isPlaybackPlaying, stopPlayback]);
+
   const applyCopyToolFromPalette = useCallback(() => {
     if (isPlayToolSelected) {
       setIsPlayToolSelected(false);
@@ -3803,27 +4517,30 @@ function ChartEditorController() {
     lastStandardRhythmSkinRef.current = {
       rhythmType: skinSelection.rhythmType,
       rhythmRipName: skinSelection.rhythmRipName,
+      rhythmServer: skinSelection.rhythmServer,
     };
-  }, [skinSelection.rhythmRipName, skinSelection.rhythmType]);
+  }, [skinSelection.rhythmRipName, skinSelection.rhythmServer, skinSelection.rhythmType]);
 
   const buildHabahiroSkinSelection = useCallback((): SkinSelection => {
     return normalizeSkinSelection({
       ...skinSelection,
       rhythmType: HABAHIRO_RHYTHM_TYPE,
       rhythmRipName: HABAHIRO_RHYTHM_RIP_NAME,
+      rhythmServer: resolveRhythmServerFromType(HABAHIRO_RHYTHM_RIP_NAME) ?? skinSelection.rhythmServer,
     });
-  }, [normalizeSkinSelection, skinSelection]);
+  }, [normalizeSkinSelection, resolveRhythmServerFromType, skinSelection]);
 
   const buildStandardRhythmSkinSelection = useCallback((): SkinSelection => {
     const remembered = lastStandardRhythmSkinRef.current;
-    const fallbackType = RHYTHM_SKIN_TYPES[0] ?? "TYPE1";
+    const fallbackType = bestdoriSkinCatalogOptions?.rhythm?.[0] ?? RHYTHM_SKIN_TYPES[0] ?? "TYPE1";
     const fallbackRip = resolveRhythmRipNameFromType(fallbackType) ?? "skin00";
     return normalizeSkinSelection({
       ...skinSelection,
       rhythmType: remembered?.rhythmType ?? fallbackType,
       rhythmRipName: remembered?.rhythmRipName ?? fallbackRip,
+      rhythmServer: remembered?.rhythmServer ?? resolveRhythmServerFromType(fallbackType) ?? skinSelection.rhythmServer,
     });
-  }, [normalizeSkinSelection, resolveRhythmRipNameFromType, skinSelection]);
+  }, [bestdoriSkinCatalogOptions, normalizeSkinSelection, resolveRhythmRipNameFromType, resolveRhythmServerFromType, skinSelection]);
 
   const requestSpRhythmRegressionConfirm = useCallback(() => {
     return new Promise<boolean>((resolve) => {
@@ -4131,14 +4848,18 @@ function ChartEditorController() {
       const board = playfieldBoardRef.current;
       if (board) {
         const rect = board.getBoundingClientRect();
-        const y = clamp(event.clientY - rect.top, 0, boardHeight);
+        const y = clamp(event.clientY - rect.top, 0, scrollContentHeight);
         const timeSec = clamp(yToTime(y), 0, Math.max(playbackCeilingSec, 0));
+        if (isSvPreviewEnabledRef.current && Math.abs(svPreviewTimeSecRef.current - timeSec) > 1e-4) {
+          svPreviewTimeSecRef.current = timeSec;
+          setSvPreviewTimeSec(timeSec);
+        }
         queuePlaybackGuide({ y, timeSec });
       }
       return;
     }
     handleBoardMouseMoveRaw(event);
-  }, [boardHeight, clamp, handleBoardMouseMoveRaw, isPlayToolSelected, playbackCeilingSec, queuePlaybackGuide, yToTime]);
+  }, [clamp, handleBoardMouseMoveRaw, isPlayToolSelected, playbackCeilingSec, queuePlaybackGuide, scrollContentHeight, yToTime]);
 
   const handleBoardMouseLeave = useCallback(() => {
     if (isPlayToolSelected) {
@@ -4172,13 +4893,13 @@ function ChartEditorController() {
         return;
       }
       const rect = board.getBoundingClientRect();
-      const y = clamp(event.clientY - rect.top, 0, boardHeight);
+      const y = clamp(event.clientY - rect.top, 0, scrollContentHeight);
       const seconds = clamp(yToTime(y), 0, Math.max(playbackCeilingSec, 0));
       void startPlaybackAt(seconds);
       return;
     }
     handleBoardMouseDownRaw(event);
-  }, [boardHeight, clamp, handleBoardMouseDownRaw, isPlayToolSelected, playbackCeilingSec, startPlaybackAt, stopPlayback, yToTime]);
+  }, [clamp, handleBoardMouseDownRaw, isPlayToolSelected, playbackCeilingSec, scrollContentHeight, startPlaybackAt, stopPlayback, yToTime]);
 
   useEditorPointerLifecycle({
     slideBuildRef,
@@ -4220,21 +4941,57 @@ function ChartEditorController() {
     DEFAULT_SPRITE_ASPECT_RATIO,
   });
   const isCanvasRenderBackend = RENDER_BACKEND_MODE === "canvas";
+  const getNoteDisplayY = useCallback((note: ChartNote, beat: number): number => {
+    const hitSec = beatToSeconds(beat, bpmTimeline);
+    const timingGroup = noteTimingGroupById.get(note.id) ?? normalizeTimingGroupId(note.timingGroup);
+    const group = isSvPreviewEnabled
+      ? (svPreviewTimingGroups.get(timingGroup) ?? svPreviewTimingGroups.get(GLOBAL_TIMING_GROUP_ID) ?? null)
+      : null;
+    return displayAxis.timeToGroupY(hitSec, group);
+  }, [
+    beatToSeconds,
+    bpmTimeline,
+    displayAxis,
+    isSvPreviewEnabled,
+    noteTimingGroupById,
+    svPreviewTimingGroups,
+  ]);
+  const getTrackDisplayY = useCallback((beat: number): number => {
+    const hitSec = beatToSeconds(beat, bpmTimeline);
+    const group = isSvPreviewEnabled
+      ? (svPreviewTimingGroups.get(GLOBAL_TIMING_GROUP_ID) ?? null)
+      : null;
+    return displayAxis.timeToGroupY(hitSec, group);
+  }, [
+    beatToSeconds,
+    bpmTimeline,
+    displayAxis,
+    isSvPreviewEnabled,
+    svPreviewTimingGroups,
+  ]);
+  const isSlideChainOutsideActiveTimingGroup = useCallback((chain: SlideChain): boolean => {
+    if (!isTimingGroupModeActive) {
+      return false;
+    }
+    return normalizeObjectTimingGroup(chain.timingGroup) !== selectedTimingGroupId;
+  }, [isTimingGroupModeActive, normalizeObjectTimingGroup, selectedTimingGroupId]);
   const renderModel = useEditorRenderModel({
     bpmTimeline,
     totalBeats,
     beatToY,
-    notes,
+    notes: interactiveNotes,
     effectiveSlideChains,
     slideBuildState,
     noteById,
     getRenderedNotePlacement,
+    getNoteDisplayY,
     getSlideAnchorLane,
     laneToColumn,
     getNoteSpanLanes,
     LANE_WIDTH,
     longLineOpacityScale,
     isSimultaneousLineEnabled: appOptionSettings.simultaneousLineEnabled,
+    isSlideChainMuted: isSlideChainOutsideActiveTimingGroup,
   });
   const resolveDirectionalWidenPreviewAt = useCallback(
     (x: number, y: number): DirectionalWidenPreviewState | null => {
@@ -4283,13 +5040,13 @@ function ChartEditorController() {
       return {
         type: directionalTool,
         x: (laneToColumn(previewLane) + 0.5) * LANE_WIDTH,
-        y: beatToY(currentRenderBeat),
+        y: getNoteDisplayY(hitNote, currentRenderBeat),
       };
     },
     [
       LANE_WIDTH,
-      beatToY,
       findNoteAtBoardPoint,
+      getNoteDisplayY,
       getNoteSpanLanes,
       getRenderedNotePlacement,
       isDirectionalNoteType,
@@ -4338,15 +5095,15 @@ function ChartEditorController() {
       return {
         type: previewType,
         x: (laneToColumn(startLane) + spanLanes / 2) * LANE_WIDTH,
-        y: beatToY(renderBeat),
+        y: getNoteDisplayY(hitNote, renderBeat),
         spanLanes,
         width: previewWidth,
       };
     },
     [
       LANE_WIDTH,
-      beatToY,
       findNoteAtBoardPoint,
+      getNoteDisplayY,
       getNoteSpanLanes,
       getRenderedNotePlacement,
       isHabahiroEnabled,
@@ -4378,24 +5135,27 @@ function ChartEditorController() {
       }
       const isSelected = selectedNoteIdSet.has(note.id)
         || (isSlideBuilding && slideBuildSelectedIdSet.has(note.id));
+      const muted = isNoteOutsideActiveTimingGroup(note);
       return [{
         id: note.id,
         type: note.type,
         x: (laneToColumn(directionalStartLane) + spanLanes / 2) * LANE_WIDTH,
-        y: beatToY(renderBeat),
+        y: getNoteDisplayY(note, renderBeat),
         spanLanes,
         base: layers.base ?? null,
         overlay: layers.overlay ?? null,
         overlayMode: layers.overlayMode,
         selected: isSelected,
+        muted,
       }];
     });
   }, [
     LANE_WIDTH,
-    beatToY,
+    getNoteDisplayY,
     getNoteSpanLanes,
     getRenderedNotePlacement,
     isSlideBuilding,
+    isNoteOutsideActiveTimingGroup,
     laneToColumn,
     notes,
     resolvePlacedNoteLayers,
@@ -4423,6 +5183,7 @@ function ChartEditorController() {
             ? "base"
             : (sourceEvent?.id ?? `bpm-${index}-${node.beat.toFixed(6)}-${node.bpm.toFixed(6)}`),
           beat: Math.max(0, node.beat + bpmPreviewOffset),
+          y: getTrackDisplayY(Math.max(0, node.beat + bpmPreviewOffset)),
           bpm: node.bpm,
           selected: selectionId === BASE_BPM_LINE_ID
             ? selectedBpmEventId === BASE_BPM_LINE_ID
@@ -4436,11 +5197,27 @@ function ChartEditorController() {
     approxEq,
     bpmEvents,
     bpmTimeline,
+    getTrackDisplayY,
     selectedBpmEventId,
     selectedBpmEventIdSet,
     selectionMovePreview,
     totalBeats,
   ]);
+  const canvasSvVisualLines = useMemo(() => {
+    return (visibleSvEvents ?? [])
+      .filter((event: ChartSvEvent) => event.beat >= 0 && event.beat <= totalBeats + 1e-6)
+      .map((event: ChartSvEvent) => {
+        const timingGroup = normalizeTimingGroup(event.timingGroup, "#Global");
+        return {
+          key: event.id,
+          beat: event.beat,
+          y: getTrackDisplayY(event.beat),
+          value: event.value,
+          timingGroup,
+          selected: selectedSvEventIdSet.has(event.id) || selectedSvEventId === event.id,
+        };
+      });
+  }, [getTrackDisplayY, selectedSvEventId, selectedSvEventIdSet, visibleSvEvents, totalBeats]);
   const visibleSimultaneousSegments = useMemo(
     () => (appOptionSettings.simultaneousLineEnabled ? renderModel.simultaneousSegments : []),
     [appOptionSettings.simultaneousLineEnabled, renderModel.simultaneousSegments],
@@ -4459,6 +5236,7 @@ function ChartEditorController() {
     renderGridLines,
     renderSimultaneousSegments,
     renderBpmLines,
+    renderSvLines,
     renderSlideSegments,
     slideBuildCommittedGuideLines,
     slideBuildGuideLine,
@@ -4469,14 +5247,21 @@ function ChartEditorController() {
     beatDivision,
     beatsPerMeasure,
     approxEq,
-    beatToY,
+    beatToY: getTrackDisplayY,
     bpmTimeline,
     totalBeats,
     bpmEvents,
+    svEvents: visibleSvEvents,
     BASE_BPM_LINE_ID,
     selectionMovePreview,
     selectedBpmEventIdSet,
     selectedBpmEventId,
+    selectedSvEventIdSet,
+    selectedSvEventId,
+    isTimingGroupModeActive,
+    selectedTimingGroupId,
+    setSelectedSvEventIds,
+    setSelectedSvEventId,
     selectedBpmEvents,
     setSelectedBpmEventId,
     clearSelectedNotes,
@@ -4484,12 +5269,16 @@ function ChartEditorController() {
     setStatusMessage,
     setIsToolArmed,
     isToolArmed,
+    tool,
     sortBpmEvents,
     setBpmEvents,
+    setSvEvents,
     setMetadata,
     metadata,
     normalizeEditorBpm,
     toolBpmValue,
+    toolSvValue,
+    toolTimingGroup,
     slideBuildRef,
     finalizeSlideBuild,
     cancelSlideBuild,
@@ -4521,19 +5310,20 @@ function ChartEditorController() {
     playbackCanvasRef: playfieldPlaybackCanvasRef,
     playfieldRef,
     boardWidth,
-    boardHeight,
+    boardHeight: scrollContentHeight,
     laneValues,
     laneWidth: LANE_WIDTH,
     noteVisualScale,
     totalSteps,
     beatDivision,
     beatsPerMeasure,
-    beatToY,
+    beatToY: getTrackDisplayY,
     yToBeat,
     yToTime,
     timeToY,
     totalDurationSec,
     bpmVisualLines: canvasBpmVisualLines,
+    svVisualLines: canvasSvVisualLines,
     selectedLongLineSegmentId,
     simultaneousSegments: visibleSimultaneousSegments,
     connectionSegments: renderModel.connectionSegments,
@@ -4548,6 +5338,7 @@ function ChartEditorController() {
     playbackLineMode,
     playbackLinePositionPercent,
     getPlaybackNowTimeSec,
+    useFullGridScan: isSvPreviewEnabled,
     resourcesVersion: canvasResourceVersion,
   });
 
@@ -4582,6 +5373,12 @@ function ChartEditorController() {
         beat: Number(line.beat),
         bpm: Number(line.bpm),
       })),
+      svVisualLines: canvasSvVisualLines.map((line: any) => ({
+        key: String(line.key),
+        beat: Number(line.beat),
+        value: Number(line.value),
+        timingGroup: String(line.timingGroup ?? GLOBAL_TIMING_GROUP_ID),
+      })),
       simultaneousSegments: visibleSimultaneousSegments.map((segment) => ({ ...segment })),
       connectionSegments: renderModel.connectionSegments
         .filter((segment) => !segment.isPreviewChain)
@@ -4611,6 +5408,7 @@ function ChartEditorController() {
     bpmTimeline,
     canvasBpmVisualLines,
     canvasNoteVisuals,
+    canvasSvVisualLines,
     laneValues,
     metadata.title,
     noteVisualScale,
@@ -4798,15 +5596,10 @@ function ChartEditorController() {
       const targetUrl = new URL(locationHref);
       targetUrl.hash = `simulator?request=${encodeURIComponent(requestId)}`;
 
-      let bgmDataUrl: string | null = null;
-      if (audioObjectUrl) {
-        try {
-          bgmDataUrl = await blobUrlToDataUrl(audioObjectUrl);
-        } catch (error) {
-          const message = error instanceof Error ? error.message : String(error);
-          setStatusMessage(`播放器音频资源转换失败：${message}`);
-        }
-      }
+      const bgmDataUrl =
+        typeof metadata.bgmDataUrl === "string" && metadata.bgmDataUrl.trim().length > 0
+          ? metadata.bgmDataUrl
+          : null;
       let playbackMvDataUrl: string | null = metadata.mvDataUrl;
       if (
         typeof playbackMvDataUrl === "string"
@@ -4840,7 +5633,7 @@ function ChartEditorController() {
         playbackMvDataUrl !== metadata.mvDataUrl ? metadata.mvDataUrl : null;
       const normalizedPlaybackNotes = notes.map((note) => ({
         ...note,
-        timingGroup: normalizeTimingGroup(note.timingGroup, 0),
+        timingGroup: normalizeTimingGroup(note.timingGroup, "#Global"),
       }));
       const playbackNoteById = new Map(normalizedPlaybackNotes.map((note) => [note.id, note] as const));
       const normalizedPlaybackSlideChains = slideChains
@@ -4850,14 +5643,14 @@ function ChartEditorController() {
             return null;
           }
           const headNote = playbackNoteById.get(validNoteIds[0]);
-          const timingGroup = normalizeTimingGroup(chain.timingGroup ?? headNote?.timingGroup ?? 0, 0);
+          const timingGroup = normalizeTimingGroup(chain.timingGroup ?? headNote?.timingGroup ?? "#Global", "#Global");
           return {
             id: chain.id,
             noteIds: validNoteIds,
             timingGroup,
           };
         })
-        .filter((chain): chain is { id: string; noteIds: string[]; timingGroup: number } => chain !== null);
+        .filter((chain): chain is { id: string; noteIds: string[]; timingGroup: string } => chain !== null);
 
       const launchPayload: SimulatorLaunchPayload = {
         requestId,
@@ -4898,7 +5691,7 @@ function ChartEditorController() {
             id: event.id,
             beat: event.beat,
             value: event.value,
-            timingGroup: normalizeTimingGroup(event.timingGroup, 0),
+            timingGroup: normalizeTimingGroup(event.timingGroup, "#Global"),
           })),
         },
       };
@@ -5037,6 +5830,7 @@ function ChartEditorController() {
         applyImportOfficialChart,
         applyImportCommunityChart,
         applyUploadCommunityChart,
+        applyUploadNotGarupaServerChart,
         applyUploadTestServerChart,
         closeImportJsonModal,
         openImportJsonModalBestdoriV2Level,
@@ -5063,6 +5857,7 @@ function ChartEditorController() {
         tool,
         applyToolFromPalette,
         applyBpmToolFromPalette,
+        applySvToolFromPalette,
         applyCopyToolFromPalette,
         applyPasteToolFromPalette,
         onTogglePlayTool,
@@ -5084,6 +5879,21 @@ function ChartEditorController() {
         stepPlaybackSpeed,
         stepPlaybackVolume,
         stepPlaybackPosition,
+        timingGroupIds,
+        isTimingGroupPanelOpen,
+        setIsTimingGroupPanelOpen,
+        selectedTimingGroupId,
+        setSelectedTimingGroupId,
+        isTimingGroupModeActive,
+        setIsTimingGroupModeEnabled,
+        createTimingGroup,
+        renameTimingGroup,
+        deleteTimingGroup,
+        showTimingGroupSetting,
+        isTimingGroupSettingLocked,
+        selectedObjectTimingGroupId,
+        setSelectedObjectTimingGroupId,
+        isNoteOutsideActiveTimingGroup,
         getPaletteSpriteLayers,
         getPaletteSpriteAspectRatio,
         renderPaletteSpriteStack,
@@ -5120,6 +5930,13 @@ function ChartEditorController() {
         setBpmInputText,
         bpmInputEditingRef,
         commitBpmInput,
+        svInputText,
+        setSvInputText,
+        svInputEditingRef,
+        commitSvInput,
+        showSvSetting,
+        isSvPreviewEnabled,
+        setIsSvPreviewEnabled,
         showLaneSetting,
         isLaneSettingLocked,
         stepActiveLane,
@@ -5175,13 +5992,16 @@ function ChartEditorController() {
         handleBoardMouseLeave,
         handleBoardContextMenu,
         boardHeight,
+        scrollContentHeight,
         renderBackendMode: RENDER_BACKEND_MODE,
         renderBpmLines,
+        renderSvLines,
         cursorPreview,
         cursorPreviewRef: canvasCursorPreviewRef,
         resolveDirectionalWidenPreviewAt,
         resolveNoteReplacePreviewAt,
         beatToY,
+        getNoteDisplayY,
         playfieldTrackCanvasRef,
         playfieldNoteCanvasRef,
         playfieldPlaybackCanvasRef,
@@ -5261,6 +6081,13 @@ function ChartEditorController() {
         resolveBgSkinRipNameFromType,
         resolveFieldSkinRipNameFromType,
         resolveJudgeSkinRipNameFromType,
+        resolveRhythmServerFromType,
+        resolveDirectionalServerFromType,
+        resolveRhythmSeServerFromType,
+        resolveDirectionalSeServerFromType,
+        resolveBgSkinServerFromType,
+        resolveFieldSkinServerFromType,
+        bestdoriSkinCatalogOptions,
         HABAHIRO_RHYTHM_SKIN_TYPES,
         RHYTHM_SKIN_TYPES,
         DIRECTIONAL_SKIN_TYPES,

@@ -7,7 +7,7 @@ type CurrentSimpleNote = {
   beat: number;
   lane: number;
   width: number;
-  timingGroup?: number;
+  timingGroup?: string;
 };
 
 type CurrentDirectionalNote = {
@@ -16,7 +16,7 @@ type CurrentDirectionalNote = {
   lane: number;
   width: number;
   direction: ChartJsonDirection;
-  timingGroup?: number;
+  timingGroup?: string;
 };
 
 type CurrentSlideConnection = CurrentSimpleNote | CurrentDirectionalNote;
@@ -24,7 +24,7 @@ type CurrentSlideConnection = CurrentSimpleNote | CurrentDirectionalNote;
 type CurrentSlideItem = {
   type: "Slide";
   connections: CurrentSlideConnection[];
-  timingGroup?: number;
+  timingGroup?: string;
 };
 
 type CurrentBpmItem = {
@@ -37,7 +37,7 @@ type CurrentSvItem = {
   type: "SV";
   beat: number;
   value: number;
-  timingGroup?: number;
+  timingGroup?: string;
 };
 
 type CurrentTopLevelNote = Exclude<CurrentSimpleNote, { type: "Hidden" }> | CurrentDirectionalNote;
@@ -125,12 +125,23 @@ function parsePositiveInteger(value: unknown, label: string): number {
   return numeric;
 }
 
-function parseTimingGroup(value: unknown, label: string): number {
+function parseTimingGroup(value: unknown, label: string): string | undefined {
   if (value === undefined) {
-    return 0;
+    return undefined;
+  }
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (trimmed.length === 0 || trimmed === "#Global") {
+      return undefined;
+    }
+    if (/^#[A-Za-z0-9 -]+$/.test(trimmed)) {
+      return trimmed;
+    }
+    throw new Error(`${label} must be a valid timing group id`);
   }
   const numeric = parseFiniteNumber(value, label);
-  return Math.max(0, Math.round(numeric));
+  const normalized = Math.max(0, Math.round(numeric));
+  return normalized === 0 ? undefined : `#${normalized}`;
 }
 
 function shiftAndClampBeat(beat: number, offset: number): number {
@@ -451,7 +462,6 @@ function convertBestdoriSlideConnectionToCurrent(connection: BestdoriV2SlideConn
       beat: connection.beat,
       lane: connection.lane,
       width: 1,
-      timingGroup: 0,
     };
   }
   if (connection.skill === true) {
@@ -460,7 +470,6 @@ function convertBestdoriSlideConnectionToCurrent(connection: BestdoriV2SlideConn
       beat: connection.beat,
       lane: connection.lane,
       width: 1,
-      timingGroup: 0,
     };
   }
   if (connection.flick === true) {
@@ -469,7 +478,6 @@ function convertBestdoriSlideConnectionToCurrent(connection: BestdoriV2SlideConn
       beat: connection.beat,
       lane: connection.lane,
       width: 1,
-      timingGroup: 0,
     };
   }
   return {
@@ -477,7 +485,6 @@ function convertBestdoriSlideConnectionToCurrent(connection: BestdoriV2SlideConn
     beat: connection.beat,
     lane: connection.lane,
     width: 1,
-    timingGroup: 0,
   };
 }
 
@@ -497,7 +504,6 @@ function convertBestdoriItemToCurrent(item: BestdoriV2ChartItem): CurrentChartIt
       lane: item.lane,
       width: item.width,
       direction: item.direction,
-      timingGroup: 0,
     };
   }
 
@@ -508,7 +514,6 @@ function convertBestdoriItemToCurrent(item: BestdoriV2ChartItem): CurrentChartIt
         beat: item.beat,
         lane: item.lane,
         width: 1,
-        timingGroup: 0,
       };
     }
     if (item.flick === true) {
@@ -517,7 +522,6 @@ function convertBestdoriItemToCurrent(item: BestdoriV2ChartItem): CurrentChartIt
         beat: item.beat,
         lane: item.lane,
         width: 1,
-        timingGroup: 0,
       };
     }
     return {
@@ -525,14 +529,12 @@ function convertBestdoriItemToCurrent(item: BestdoriV2ChartItem): CurrentChartIt
       beat: item.beat,
       lane: item.lane,
       width: 1,
-      timingGroup: 0,
     };
   }
 
   return {
     type: "Slide",
     connections: item.connections.map((connection) => convertBestdoriSlideConnectionToCurrent(connection)),
-    timingGroup: 0,
   };
 }
 

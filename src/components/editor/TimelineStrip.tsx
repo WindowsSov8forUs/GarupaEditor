@@ -10,9 +10,16 @@ import { StepperIcon } from "../StepperIcon";
 type TimelineStripProps = {
   settings: ChartSettings;
   applySettingsPatch: (patch: Partial<ChartSettings>) => void;
+  isSvPreviewEnabled: boolean;
+  setIsSvPreviewEnabled: (value: boolean) => void;
 };
 
-export const TimelineStrip = memo(function TimelineStrip({ settings, applySettingsPatch }: TimelineStripProps) {
+export const TimelineStrip = memo(function TimelineStrip({
+  settings,
+  applySettingsPatch,
+  isSvPreviewEnabled,
+  setIsSvPreviewEnabled,
+}: TimelineStripProps) {
   const laneCountIndex = LANE_COUNT_OPTIONS.findIndex((value) => value === settings.laneCount);
   const canStepLaneCountDown = laneCountIndex > 0;
   const canStepLaneCountUp = laneCountIndex >= 0 && laneCountIndex < LANE_COUNT_OPTIONS.length - 1;
@@ -132,6 +139,19 @@ export const TimelineStrip = memo(function TimelineStrip({ settings, applySettin
             <StepperIcon type="plus" />
           </button>
         </div>
+      </div>
+
+      <div className="timeline-item timeline-toggle-item">
+        <label className="timeline-toggle-label">
+          <span className="timeline-key">SV 预览</span>
+          <input
+            type="checkbox"
+            className="ui-checkbox-input"
+            checked={isSvPreviewEnabled}
+            onChange={(event) => setIsSvPreviewEnabled(event.currentTarget.checked)}
+          />
+          <span className="ui-checkbox-box" aria-hidden="true" />
+        </label>
       </div>
     </div>
   );

@@ -16,6 +16,8 @@ import {
   readJudgeSkinBinaryFileAsDataUrl,
   readSkinBinaryFileAsDataUrl,
   readSoundBinaryFileAsDataUrl,
+  NOTGARUPA_SERVER_ROOT,
+  uploadNotGarupaLevel,
   uploadSonolusLevel,
   type BestdoriPostContentSegment,
   type BestdoriPostTag,
@@ -58,6 +60,12 @@ export async function loadPreparedSoundBinaryFilesAsDataUrlMap(
   return loadPreparedBinaryFilesAsDataUrlMap(fileMap, readSoundBinaryFileAsDataUrl);
 }
 
+export async function loadPreparedCommonSoundBinaryFilesAsDataUrlMap(
+  fileMap: Record<string, string>,
+): Promise<Record<string, string>> {
+  return loadPreparedBinaryFilesAsDataUrlMap(fileMap, readCommonSoundBinaryFileAsDataUrl);
+}
+
 export async function loadPreparedFieldSkinBinaryFilesAsDataUrlMap(
   fileMap: Record<string, string>,
 ): Promise<Record<string, string>> {
@@ -76,8 +84,8 @@ export async function loadPreparedJudgeSkinBinaryFilesAsDataUrlMap(
   return loadPreparedBinaryFilesAsDataUrlMap(fileMap, readJudgeSkinBinaryFileAsDataUrl);
 }
 
-export async function ensureCommonTapSkillSeDataUrl(options?: { operationId?: string }): Promise<string> {
-  const path = await ensureCommonSoundAsset(options?.operationId);
+export async function ensureCommonTapSkillSeDataUrl(options?: { operationId?: string; server?: string | null }): Promise<string> {
+  const path = await ensureCommonSoundAsset(options?.operationId, options?.server);
   return readCommonSoundBinaryFileAsDataUrl(path, BESTDORI_COMMON_TAP_SKILL_FILE_NAME);
 }
 
@@ -425,7 +433,7 @@ export async function publishBestdoriCommunityChartFlow(
   }
 
   const titleFileStem = sanitizeFileNameSegment(title ?? "chart") || "chart";
-  const normalizedAudioSource = trimNonEmptyStringOrNull(params.audioSourceUrl) ?? trimNonEmptyStringOrNull(metadata.bgmDataUrl);
+  const normalizedAudioSource = trimNonEmptyStringOrNull(params.audioSourceUrl);
   const normalizedCoverSource = trimNonEmptyStringOrNull(params.coverSourceUrl) ?? trimNonEmptyStringOrNull(metadata.coverDataUrl);
   if (!normalizedAudioSource) {
     throw new Error("社区谱面上传需要歌曲音频，请先在谱面信息中上传音频。");
@@ -523,14 +531,19 @@ export async function publishBestdoriCommunityChartFlow(
 }
 
 const SONOLUS_LEVEL_URL_ROOT = `${SONOLUS_TEST_SERVER_ROOT}/sonolus/levels`;
+const NOTGARUPA_LEVEL_URL_ROOT = `${NOTGARUPA_SERVER_ROOT}/sonolus/levels`;
 
-export type UploadSonolusLevelFlowStage = "converting-chart" | "resolving-audio" | "uploading";
+export type UploadSonolusLevelFlowStage = "converting-chart" | "resolving-audio" | "resolving-cover" | "uploading";
 
 export interface UploadSonolusLevelFlowParams {
   chartJson: unknown;
   metadata: ChartMetadata;
   audioSourceUrl?: string | null;
   audioFileName?: string | null;
+  coverSourceUrl?: string | null;
+  coverFileName?: string | null;
+  description?: string | null;
+  tags?: BestdoriPostTag[] | null;
   difficulty?: number;
   lifetime?: number;
   hidden?: boolean;
@@ -538,18 +551,49 @@ export interface UploadSonolusLevelFlowParams {
 }
 
 export interface UploadSonolusLevelFlowResult {
-  uid: number;
+  uid: string;
   levelUrl: string;
   chartUrl: string;
   svDropped: boolean;
 }
 
-function buildSonolusLevelUrl(uid: number): string {
+function buildSonolusLevelUrl(uid: string): string {
   return `${SONOLUS_LEVEL_URL_ROOT}/${uid}`;
 }
 
-function buildSonolusChartUrl(uid: number): string {
+function buildSonolusChartUrl(uid: string): string {
   return `${SONOLUS_LEVEL_URL_ROOT}/${uid}/bdv2.json`;
+}
+
+export type UploadNotGarupaLevelFlowStage = "converting-chart" | "resolving-audio" | "resolving-cover" | "uploading";
+
+export interface UploadNotGarupaLevelFlowParams {
+  chartJson: unknown;
+  metadata: ChartMetadata;
+  audioSourceUrl?: string | null;
+  audioFileName?: string | null;
+  coverSourceUrl?: string | null;
+  coverFileName?: string | null;
+  description?: string | null;
+  tags?: BestdoriPostTag[] | null;
+  difficulty?: number;
+  lifetime?: number;
+  hidden?: boolean;
+  onStage?: (stage: UploadNotGarupaLevelFlowStage) => void;
+}
+
+export interface UploadNotGarupaLevelFlowResult {
+  uid: string;
+  levelUrl: string;
+  chartUrl: string;
+}
+
+function buildNotGarupaLevelUrl(uid: string): string {
+  return `${NOTGARUPA_LEVEL_URL_ROOT}/${uid}`;
+}
+
+function buildNotGarupaChartUrl(uid: string): string {
+  return `${NOTGARUPA_LEVEL_URL_ROOT}/${uid}/chart.json`;
 }
 
 interface ResolvedUploadSourceFile {
@@ -604,7 +648,7 @@ export async function uploadSonolusLevelFlow(
 
   const title = trimNonEmptyStringOrNull(metadata.title) ?? "GarupaEditor Chart";
   const titleFileStem = sanitizeFileNameSegment(title) || "chart";
-  const normalizedAudioSource = trimNonEmptyStringOrNull(params.audioSourceUrl) ?? trimNonEmptyStringOrNull(metadata.bgmDataUrl);
+  const normalizedAudioSource = trimNonEmptyStringOrNull(params.audioSourceUrl);
   if (!normalizedAudioSource) {
     throw new Error("sonolus upload requires audio source");
   }
@@ -633,6 +677,77 @@ export async function uploadSonolusLevelFlow(
     levelUrl: buildSonolusLevelUrl(uid),
     chartUrl: buildSonolusChartUrl(uid),
     svDropped,
+  };
+}
+
+export async function uploadNotGarupaLevelFlow(
+  params: UploadNotGarupaLevelFlowParams,
+): Promise<UploadNotGarupaLevelFlowResult> {
+  const metadata = params.metadata;
+  const chartSource = params.chartJson;
+
+  params.onStage?.("converting-chart");
+  if (!Array.isArray(chartSource) || chartSource.length <= 0) {
+    throw new Error("garupa chart is empty");
+  }
+  const chartJsonText = JSON.stringify(chartSource);
+
+  const title = trimNonEmptyStringOrNull(metadata.title) ?? "GarupaEditor Chart";
+  const artists = trimNonEmptyStringOrNull(metadata.artist) ?? "Unknown Artist";
+  const author = trimNonEmptyStringOrNull(metadata.charter) ?? "GarupaEditor";
+  const titleFileStem = sanitizeFileNameSegment(title) || "chart";
+  const normalizedAudioSource = trimNonEmptyStringOrNull(params.audioSourceUrl);
+  if (!normalizedAudioSource) {
+    throw new Error("上传至 NotGarupa 服务器需要歌曲音频，请先在谱面信息中上传音频。");
+  }
+  const normalizedCoverSource = trimNonEmptyStringOrNull(params.coverSourceUrl) ?? trimNonEmptyStringOrNull(metadata.coverDataUrl);
+  if (!normalizedCoverSource) {
+    throw new Error("上传至 NotGarupa 服务器需要歌曲封面，请先在谱面信息中上传封面。");
+  }
+  params.onStage?.("resolving-audio");
+  const audioSourceFile = await resolveUploadSourceFile(
+    normalizedAudioSource,
+    trimNonEmptyStringOrNull(params.audioFileName),
+    `${titleFileStem}.mp3`,
+    "audio/mpeg",
+  );
+  params.onStage?.("resolving-cover");
+  const coverSourceFile = await resolveUploadSourceFile(
+    normalizedCoverSource,
+    trimNonEmptyStringOrNull(params.coverFileName),
+    `${titleFileStem}.png`,
+    "image/png",
+  );
+  const tags = Array.isArray(params.tags)
+    ? params.tags
+      .map((tag) => trimNonEmptyStringOrNull(tag?.data))
+      .filter((tag): tag is string => Boolean(tag))
+    : [];
+
+  params.onStage?.("uploading");
+  const uid = await uploadNotGarupaLevel({
+    title,
+    chart: chartJsonText,
+    chartFileName: "chart.json",
+    bgmFileName: audioSourceFile.fileName,
+    bgmFileBytes: audioSourceFile.fileBytes,
+    bgmMimeType: audioSourceFile.mimeType,
+    coverFileName: coverSourceFile.fileName,
+    coverFileBytes: coverSourceFile.fileBytes,
+    coverMimeType: coverSourceFile.mimeType,
+    artists,
+    author,
+    description: trimNonEmptyStringOrNull(params.description) ?? "",
+    tags,
+    difficulty: params.difficulty,
+    lifetime: params.lifetime,
+    hidden: params.hidden,
+  });
+
+  return {
+    uid,
+    levelUrl: buildNotGarupaLevelUrl(uid),
+    chartUrl: buildNotGarupaChartUrl(uid),
   };
 }
 

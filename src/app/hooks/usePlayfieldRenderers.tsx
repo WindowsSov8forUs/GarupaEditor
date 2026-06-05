@@ -10,20 +10,31 @@ export function usePlayfieldRenderers(params: any) {
     beatsPerMeasure,
     approxEq,
     beatToY,
+    trackBeatToY,
     bpmTimeline,
     totalBeats,
     bpmEvents,
+    svEvents,
     BASE_BPM_LINE_ID,
     selectionMovePreview,
     selectedBpmEventIdSet,
     selectedBpmEventId,
+    selectedSvEventIdSet,
+    selectedSvEventId,
+    isTimingGroupModeActive,
+    selectedTimingGroupId,
+    setSelectedSvEventIds,
+    setSelectedSvEventId,
     setSelectedBpmEventIds,
     setSelectedBpmEventId,
     clearSelectedNotes,
     clearSelectedBpmEvents,
     setStatusMessage,
     setIsToolArmed,
+    isToolArmed,
     setBpmEvents,
+    setSvEvents,
+    tool,
     slideBuildRef,
     finalizeSlideBuild,
     cancelSlideBuild,
@@ -44,6 +55,10 @@ export function usePlayfieldRenderers(params: any) {
     isSimultaneousLineEnabled,
   } = params;
   const isCanvasBackend = renderBackendMode === "canvas";
+  const isPlacementNoteTool = isToolArmed && tool !== "bpm" && tool !== "sv" && tool !== "copy" && tool !== "paste";
+  const isPasteToolSelected = isToolArmed && tool === "paste";
+  const shouldBypassLongLineLeftClick = isPlacementNoteTool || isPasteToolSelected;
+  const beatToTrackY = typeof trackBeatToY === "function" ? trackBeatToY : beatToY;
   const runtimeLineAssets = useMemo(
     () => (skinAssets ? projectPlayfieldLineRuntimeAssets(skinAssets) : null),
     [skinAssets],
@@ -86,7 +101,7 @@ export function usePlayfieldRenderers(params: any) {
         <div
           key={`line-${step}`}
           className={lineClass}
-          style={{ top: beatToY(beat) }}
+          style={{ top: beatToTrackY(beat) }}
           aria-hidden="true"
         />,
       );
@@ -116,7 +131,7 @@ export function usePlayfieldRenderers(params: any) {
         selectedBpmEventIdSet.has(selectionId)
           ? selectionMovePreview.beatDelta
           : 0;
-      const lineY = beatToY(Math.max(0, node.beat + bpmPreviewOffset));
+      const lineY = beatToTrackY(Math.max(0, node.beat + bpmPreviewOffset));
       const lineKey = isBaseLine
         ? "base"
         : (sourceEvent?.id ?? `beat-${node.beat.toFixed(6)}-bpm-${node.bpm.toFixed(6)}`);
@@ -243,6 +258,77 @@ export function usePlayfieldRenderers(params: any) {
     return segments;
   };
 
+  const renderSvLines = () => {
+    const lines: ReactNode[] = [];
+    for (const event of svEvents ?? []) {
+      if (event.beat < 0 || event.beat > totalBeats + 1e-6) {
+        continue;
+      }
+      const isSelected = selectedSvEventIdSet?.has(event.id) || selectedSvEventId === event.id;
+      const eventTimingGroup = typeof event.timingGroup === "string" && event.timingGroup.trim().length > 0
+        ? event.timingGroup.trim()
+        : "#Global";
+      const isSvInteractionDisabled =
+        isTimingGroupModeActive && eventTimingGroup !== selectedTimingGroupId;
+      const lineY = beatToTrackY(event.beat);
+      const handleSvSelect = (mouseEvent: any) => {
+        if (isSvInteractionDisabled) {
+          return;
+        }
+        mouseEvent.stopPropagation();
+        setSelectedLongLineSegmentId(null);
+        clearSelectedNotes();
+        clearSelectedBpmEvents();
+        setSelectedBpmEventId(null);
+        setSelectedSvEventId(event.id);
+        setSelectedSvEventIds([event.id]);
+        setIsToolArmed(false);
+        setStatusMessage(`已选中 SV：Beat ${event.beat.toFixed(3)} / ×${event.value.toFixed(3)}。`);
+      };
+      const handleSvContextMenu = (mouseEvent: any) => {
+        mouseEvent.preventDefault();
+        mouseEvent.stopPropagation();
+        if (isSvInteractionDisabled) {
+          return;
+        }
+        setSvEvents((previous: any[]) => previous.filter((item) => item.id !== event.id));
+        setSelectedSvEventId(null);
+        setSelectedSvEventIds([]);
+        setStatusMessage("已删除 SV 线。");
+      };
+      lines.push(
+        <div
+          key={`sv-line-${event.id}`}
+          className={`bpm-marker sv-marker ${eventTimingGroup !== "#Global" ? "non-global" : ""} ${isSelected ? "selected" : ""} ${isSvInteractionDisabled ? "timing-group-muted" : ""} ${isCanvasBackend ? "canvas-hitbox" : ""}`}
+          style={{ top: lineY }}
+        >
+          <button
+            type="button"
+            className={`bpm-line-button sv-line-button ${isSelected ? "selected" : ""} ${isCanvasBackend ? "canvas-hitbox" : ""}`}
+            disabled={isSvInteractionDisabled}
+            onMouseDown={(mouseEvent) => mouseEvent.stopPropagation()}
+            onClick={handleSvSelect}
+            onContextMenu={handleSvContextMenu}
+            title={`×${event.value.toFixed(3)} @ Beat ${event.beat.toFixed(3)}`}
+          >
+            <div className="bpm-line sv-line" />
+          </button>
+          <button
+            type="button"
+            className={`bpm-label-button sv-label-button ${isSelected ? "selected" : ""} ${isCanvasBackend ? "canvas-hitbox" : ""}`}
+            disabled={isSvInteractionDisabled}
+            onMouseDown={(mouseEvent) => mouseEvent.stopPropagation()}
+            onClick={handleSvSelect}
+            onContextMenu={handleSvContextMenu}
+          >
+            ×{event.value.toFixed(2)}
+          </button>
+        </div>,
+      );
+    }
+    return lines;
+  };
+
   const renderSlideSegments = (
     visibleWindow: { top: number; bottom: number } | null = null,
   ) => {
@@ -277,11 +363,12 @@ export function usePlayfieldRenderers(params: any) {
       const segmentGroupId = segment.groupId;
       const isGroupStart = segment.groupStart;
       const isGroupEnd = segment.groupEnd;
+      const isMuted = Boolean(segment.muted);
       const isSelectedGroup = !isPreviewChain && selectedLongLineSegmentId === segmentGroupId;
       segments.push(
         <div
           key={`slide-segment-${segment.chainId}-${segment.index}`}
-          className={`slide-segment ${isPreviewChain ? "" : "selectable"} ${isSelectedGroup ? "selected" : ""} ${isGroupStart ? "group-start" : ""} ${isGroupEnd ? "group-end" : ""} ${isCanvasBackend ? "hitbox-only" : ""}`}
+          className={`slide-segment ${isPreviewChain || isMuted ? "" : "selectable"} ${isSelectedGroup ? "selected" : ""} ${isGroupStart ? "group-start" : ""} ${isGroupEnd ? "group-end" : ""} ${isMuted ? "timing-group-muted" : ""} ${isCanvasBackend ? "hitbox-only" : ""}`}
           style={{
             left: topX - lineWidth * 0.5,
             top: topY,
@@ -293,11 +380,27 @@ export function usePlayfieldRenderers(params: any) {
             if (isPreviewChain) {
               return;
             }
+            if (shouldBypassLongLineLeftClick) {
+              return;
+            }
+            if (isMuted) {
+              event.preventDefault();
+              event.stopPropagation();
+              return;
+            }
             event.preventDefault();
             event.stopPropagation();
           }}
           onClick={(event) => {
             if (isPreviewChain) {
+              return;
+            }
+            if (shouldBypassLongLineLeftClick) {
+              return;
+            }
+            if (isMuted) {
+              event.preventDefault();
+              event.stopPropagation();
               return;
             }
             event.preventDefault();
@@ -313,6 +416,11 @@ export function usePlayfieldRenderers(params: any) {
           }}
           onContextMenu={(event) => {
             if (isPreviewChain) {
+              return;
+            }
+            if (isMuted) {
+              event.preventDefault();
+              event.stopPropagation();
               return;
             }
             event.preventDefault();
@@ -347,7 +455,7 @@ export function usePlayfieldRenderers(params: any) {
               className="slide-segment-image"
               draggable={false}
               style={{
-                opacity: segment.opacity,
+                opacity: segment.opacity * (isMuted ? 0.36 : 1),
               }}
             />
           )}
@@ -416,6 +524,7 @@ export function usePlayfieldRenderers(params: any) {
     renderGridLines,
     renderSimultaneousSegments,
     renderBpmLines,
+    renderSvLines,
     renderSlideSegments,
     slideBuildCommittedGuideLines,
     slideBuildGuideLine,

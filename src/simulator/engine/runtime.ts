@@ -1,5 +1,6 @@
 import { SIMULATOR_TIMING_FPS } from "./simulatorTiming";
 import { isGrayEligibleNote, isHiddenNoSeNote, isJudgedNote } from "./score";
+import { axisAtMs } from "./timingGroup";
 import {
   ActiveNote,
   JudgeTriggerEvent,
@@ -9,12 +10,7 @@ import {
   RuntimeStats,
   SimulatorSettings,
 } from "./types";
-
-interface TimingGroupRuntime {
-  speed: number;
-  pos: number;
-  cursor: number;
-}
+import type { VisibilityWindow } from "./timingGroup";
 
 interface PendingSystemEvent {
   type: "music_start" | "bpm";
@@ -32,8 +28,6 @@ export class SimulatorRuntime {
   private readonly activeIdByEvent = new Map<number, number>();
   private readonly npsExpiryMs: number[] = [];
   private readonly pendingSystemEvents: PendingSystemEvent[] = [];
-
-  private readonly tgState: TimingGroupRuntime[];
 
   private startMs = 0;
   private started = false;
@@ -54,13 +48,13 @@ export class SimulatorRuntime {
   private lastElapsedMs = 0;
   private finishAtMs: number | null = null;
   private static readonly COLOR_ASSIST_BEAT_MULTIPLIER = 2;
+  private static readonly VISIBILITY_EPSILON_MS = 1e-6;
 
   constructor(settings: SimulatorSettings, chart: ParsedChart) {
     this.settings = settings;
     this.chart = chart;
     this.notes = chart.noteCount;
     this.bpmValue = chart.initialBpm > 0 ? chart.initialBpm : 120;
-    this.tgState = chart.timingGroups.map(() => ({ speed: 1, pos: 0, cursor: 0 }));
   }
 
   start(nowMs: number): void {
@@ -124,7 +118,6 @@ export class SimulatorRuntime {
 
     const elapsed = nowMs - this.startMs;
     this.lastElapsedMs = elapsed;
-    this.updateTimingGroups(elapsed);
     this.spawnDueEvents(elapsed);
     this.flushPendingSystemEvents(elapsed);
 
@@ -137,20 +130,24 @@ export class SimulatorRuntime {
       const note = this.activeNotes[i];
       this.updateNote(note, elapsed);
 
-      if (!note.started) {
-        continue;
-      }
-
-      if (note.t >= this.settings.noteSpeedFrames) {
+      if (!note.sePlayed && elapsed >= note.hitMs) {
         if (!note.sePlayed) {
           note.sePlayed = true;
           this.pushSe(note.note);
         }
 
         this.resolveHit(note.note, note.lane, elapsed, note.eventIndex);
+      }
+
+      if (note.sePlayed && elapsed >= Math.max(note.hitMs, note.visibleEndMs) - 1e-6) {
         this.activeIdByEvent.delete(note.eventIndex);
         this.activeNotes.splice(i, 1);
         this.processedObjects += 1;
+        continue;
+      }
+      if (!note.started && elapsed > note.visibleEndMs + 1e-6) {
+        this.activeIdByEvent.delete(note.eventIndex);
+        this.activeNotes.splice(i, 1);
       }
     }
 
@@ -169,27 +166,12 @@ export class SimulatorRuntime {
     return this.stats(elapsed);
   }
 
-  private updateTimingGroups(elapsedMs: number): void {
-    const x = elapsedMs - this.settings.offsetMs;
-    for (let tg = 0; tg < this.chart.timingGroups.length; tg += 1) {
-      const def = this.chart.timingGroups[tg];
-      const state = this.tgState[tg];
-      while (state.cursor < def.changes.length && x >= def.changes[state.cursor].atMs) {
-        const ch = def.changes[state.cursor];
-        state.speed = ch.speed;
-        state.pos = ch.pos;
-        state.cursor += 1;
-      }
-    }
-  }
-
   private tgPosAt(tgId: number, elapsedMs: number): number {
-    if (tgId < 0 || tgId >= this.tgState.length) {
+    if (tgId < 0 || tgId >= this.chart.timingGroups.length) {
       return 0;
     }
-    const state = this.tgState[tgId];
     const x = elapsedMs - this.settings.offsetMs;
-    return state.pos + state.speed * x;
+    return axisAtMs(this.chart.timingGroups[tgId], x);
   }
 
   private spawnDueEvents(elapsedMs: number): void {
@@ -224,6 +206,9 @@ export class SimulatorRuntime {
           lane: ev.lane,
           issameline: ev.samelineLane,
           startMs: ev.startMs,
+          hitMs: ev.hitMs,
+          visibleEndMs: ev.visibleEndMs,
+          visibilityWindows: ev.visibilityWindows,
           tgId: ev.tgId,
           tgPos: ev.tgPos,
           started: false,
@@ -262,10 +247,15 @@ export class SimulatorRuntime {
 
   private updateNote(note: ActiveNote, elapsedMs: number): void {
     if (note.tgId >= 0) {
-      const tRaw = (this.tgPosAt(note.tgId, elapsedMs) * SIMULATOR_TIMING_FPS) / 100
+      const tRaw = (this.tgPosAt(note.tgId, elapsedMs) * SIMULATOR_TIMING_FPS) / 1000
         + this.settings.noteSpeedFrames
-        - (note.tgPos * SIMULATOR_TIMING_FPS) / 100;
-      if (tRaw < 0) {
+        - (note.tgPos * SIMULATOR_TIMING_FPS) / 1000;
+      const inWindow = this.isInVisibilityWindow(note.visibilityWindows, elapsedMs);
+      if (
+        !inWindow
+        || tRaw < -SimulatorRuntime.VISIBILITY_EPSILON_MS
+        || tRaw > this.settings.noteSpeedFrames + SimulatorRuntime.VISIBILITY_EPSILON_MS
+      ) {
         note.started = false;
         note.t = 0;
       } else {
@@ -279,6 +269,16 @@ export class SimulatorRuntime {
       note.started = false;
       note.t = 0;
     }
+  }
+
+  private isInVisibilityWindow(windows: readonly VisibilityWindow[], elapsedMs: number): boolean {
+    if (windows.length === 0) {
+      return true;
+    }
+    return windows.some((window) => (
+      elapsedMs + SimulatorRuntime.VISIBILITY_EPSILON_MS >= window.startMs
+      && elapsedMs <= window.endMs + SimulatorRuntime.VISIBILITY_EPSILON_MS
+    ));
   }
 
   private isGrayNote(beat: number, note: RuntimeNoteSemantic): boolean {

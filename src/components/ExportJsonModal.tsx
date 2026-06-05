@@ -10,7 +10,7 @@ import { StepperIcon } from "./StepperIcon";
 import { TopTabs } from "./TopTabs";
 import { useModalTransition } from "./useModalTransition";
 
-type ExportModalTab = "chart-code" | "upload" | "upload-test";
+type ExportModalTab = "chart-code" | "upload-server" | "upload" | "upload-test";
 
 type ExportJsonModalProps = {
   open: boolean;
@@ -23,6 +23,7 @@ type ExportJsonModalProps = {
   onUploadCommunityPostContentChange: (value: string) => void;
   onUploadCommunityPostTagsChange: (value: BestdoriPostTag[]) => void;
   onApplyUploadCommunityChart: () => void;
+  onApplyUploadNotGarupaServerChart: () => void;
   onApplyUploadTestServerChart: () => void;
 };
 
@@ -37,6 +38,7 @@ export function ExportJsonModal({
   onUploadCommunityPostContentChange,
   onUploadCommunityPostTagsChange,
   onApplyUploadCommunityChart,
+  onApplyUploadNotGarupaServerChart,
   onApplyUploadTestServerChart,
 }: ExportJsonModalProps) {
   const { mounted, phase } = useModalTransition(open);
@@ -128,6 +130,53 @@ export function ExportJsonModal({
   }
 
   const transitionClassName = phase === "enter" ? "is-enter" : "is-exit";
+  const uploadSettings = (
+    <>
+      <div className="export-json-field">
+        <span className="setting-title-strip">描述文本</span>
+        <textarea
+          className="export-json-textarea"
+          value={uploadCommunityPostContent}
+          onChange={(event) => onUploadCommunityPostContentChange(event.currentTarget.value)}
+          readOnly={false}
+          spellCheck={false}
+        />
+      </div>
+      <p className="import-json-upload-note">
+        上传时会使用当前谱面与谱面信息（标题、艺术家、谱师、等级），并上传音频与封面资源。
+      </p>
+      <div className="setting-block">
+        <span className="setting-title-strip">标签</span>
+        <div className="upload-tag-current-row">
+          {uploadCommunityPostTags.map((tag, index) => (
+            <div key={`${tag.type}:${tag.data}:${index}`} className="upload-tag-chip">
+              <span className="upload-tag-chip-label">
+                <span className="upload-tag-hash">#</span>
+                <span className="upload-tag-chip-data">{tag.data}</span>
+              </span>
+              <button
+                type="button"
+                className="upload-tag-chip-remove"
+                onClick={() => removeTagAt(index)}
+                title="删除标签"
+                aria-label="删除标签"
+              >
+                <span className="upload-tag-remove-icon" aria-hidden="true">
+                  <StepperIcon type="close" />
+                </span>
+              </button>
+            </div>
+          ))}
+          <button type="button" className="upload-tag-add-button" onClick={() => setIsTagPickerOpen(true)}>
+            <span className="upload-tag-add-icon" aria-hidden="true">
+              <StepperIcon type="plus" />
+            </span>
+            <span className="btn-content">添加</span>
+          </button>
+        </div>
+      </div>
+    </>
+  );
 
   return (
     <div className={`modal-mask modal-transition-mask ${transitionClassName}`} onClick={onClose}>
@@ -154,6 +203,7 @@ export function ExportJsonModal({
             ariaLabel="导出谱面分组"
             tabs={[
               { key: "chart-code", label: "导出谱面代码" },
+              { key: "upload-server", label: "上传至服务器" },
               { key: "upload", label: "上传社区谱面" },
               { key: "upload-test", label: "上传测试服" },
             ]}
@@ -174,52 +224,17 @@ export function ExportJsonModal({
             </div>
           )}
 
+          {tab === "upload-server" && (
+            <div className="export-json-page-shell">
+              <SettingPrimaryTitle text="上传至 NotGarupa 服务器" />
+              {uploadSettings}
+            </div>
+          )}
+
           {tab === "upload" && (
             <div className="export-json-page-shell">
               <SettingPrimaryTitle text="上传 Bestdori 社区谱面" />
-              <div className="export-json-field">
-                <span className="setting-title-strip">帖子文本</span>
-                <textarea
-                  className="export-json-textarea"
-                  value={uploadCommunityPostContent}
-                  onChange={(event) => onUploadCommunityPostContentChange(event.currentTarget.value)}
-                  readOnly={false}
-                  spellCheck={false}
-                />
-              </div>
-              <p className="import-json-upload-note">
-                上传时会使用当前谱面与谱面信息（标题、艺术家、难度、等级），并按需上传音频与封面资源。
-              </p>
-              <div className="setting-block">
-                <span className="setting-title-strip">标签</span>
-                <div className="upload-tag-current-row">
-                  {uploadCommunityPostTags.map((tag, index) => (
-                    <div key={`${tag.type}:${tag.data}:${index}`} className="upload-tag-chip">
-                      <span className="upload-tag-chip-label">
-                        <span className="upload-tag-hash">#</span>
-                        <span className="upload-tag-chip-data">{tag.data}</span>
-                      </span>
-                      <button
-                        type="button"
-                        className="upload-tag-chip-remove"
-                        onClick={() => removeTagAt(index)}
-                        title="删除标签"
-                        aria-label="删除标签"
-                      >
-                        <span className="upload-tag-remove-icon" aria-hidden="true">
-                          <StepperIcon type="close" />
-                        </span>
-                      </button>
-                    </div>
-                  ))}
-                  <button type="button" className="upload-tag-add-button" onClick={() => setIsTagPickerOpen(true)}>
-                    <span className="upload-tag-add-icon" aria-hidden="true">
-                      <StepperIcon type="plus" />
-                    </span>
-                    <span className="btn-content">添加</span>
-                  </button>
-                </div>
-              </div>
+              {uploadSettings}
             </div>
           )}
 
@@ -243,6 +258,14 @@ export function ExportJsonModal({
           {tab === "upload" && (
             <div className="modal-actions is-centered app-settings-display-actions export-json-actions">
               <button type="button" className="app-settings-apply-button" onClick={onApplyUploadCommunityChart}>
+                <span className="btn-content">上传</span>
+              </button>
+            </div>
+          )}
+
+          {tab === "upload-server" && (
+            <div className="modal-actions is-centered app-settings-display-actions export-json-actions">
+              <button type="button" className="app-settings-apply-button" onClick={onApplyUploadNotGarupaServerChart}>
                 <span className="btn-content">上传</span>
               </button>
             </div>

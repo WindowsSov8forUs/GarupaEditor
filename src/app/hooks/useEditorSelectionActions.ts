@@ -7,6 +7,7 @@ export function useEditorSelectionActions(params: any) {
     setSettings,
     setNotes,
     setBpmEvents,
+    setSvEvents,
     normalizeSettings,
     normalizeNote,
     normalizeBpmEvent,
@@ -21,7 +22,7 @@ export function useEditorSelectionActions(params: any) {
     normalizeEventBpmForWrite,
     toFinite,
     approxEq,
-    hasOffsetSelection,
+    hasBeatEditableSelection,
     applySelectedOffset,
     commitSelectedNoteTransform,
     minSelectedBeat,
@@ -55,6 +56,10 @@ export function useEditorSelectionActions(params: any) {
     parseNumericExpression,
     bpmInputText,
     setBpmInputText,
+    isEditingPlacedSv,
+    selectedSvEvent,
+    normalizeTimingGroup,
+    sortSvEvents,
     isLaneSettingLocked,
     laneInputText,
     setLaneInputText,
@@ -65,9 +70,13 @@ export function useEditorSelectionActions(params: any) {
     selectedNoteIds,
     setStatusMessage,
     selectedBpmEventIds,
+    selectedSvEventIds,
+    selectedSvEventId,
     setSelectedNoteIds,
     setSelectedBpmEventIds,
     setSelectedBpmEventId,
+    setSelectedSvEventIds,
+    setSelectedSvEventId,
     selectedLongLineSegmentId,
     deleteSelectedLongLineSegment,
     setSelectedLongLineSegmentId,
@@ -157,7 +166,7 @@ export function useEditorSelectionActions(params: any) {
 
   const updateActiveBeat = (raw: unknown) => {
     const nextBeat = Math.max(0, Number(toFinite(raw, activeBeatValue).toFixed(6)));
-    if (hasOffsetSelection) {
+    if (hasBeatEditableSelection) {
       applySelectedOffset(0, nextBeat - minSelectedBeat, "已更新选中对象 Beat。", {
         quantizeBeatDelta: false,
       });
@@ -170,6 +179,24 @@ export function useEditorSelectionActions(params: any) {
       }
       updateSelectedBpmEvent({ beat: nextBeat });
       setSelectedBpmEventId(selectedBpmEvent.id);
+      return;
+    }
+
+    if (isEditingPlacedSv && selectedSvEvent) {
+      setSvEvents((previous: any[]) => {
+        const selectedTimingGroup = normalizeTimingGroup(selectedSvEvent.timingGroup, "#Global");
+        const filtered = previous.filter((event) =>
+          event.id === selectedSvEvent.id ||
+          !(
+            normalizeTimingGroup(event.timingGroup, "#Global") === selectedTimingGroup &&
+            approxEq(event.beat, nextBeat)
+          ),
+        );
+        return sortSvEvents(filtered.map((event) =>
+          event.id === selectedSvEvent.id ? { ...event, beat: nextBeat } : event,
+        ));
+      });
+      setSelectedSvEventId(selectedSvEvent.id);
     }
   };
 
@@ -300,7 +327,8 @@ export function useEditorSelectionActions(params: any) {
       return;
     }
 
-    const parsed = parseNumericExpression(beatInputText);
+    const text = beatInputText.trim();
+    const parsed = text === "" ? 0 : parseNumericExpression(text);
     if (parsed === null) {
       setBeatInputText(formatEditorNumeric(activeBeatValue));
       return;
@@ -316,11 +344,15 @@ export function useEditorSelectionActions(params: any) {
     isBeatSettingLocked,
     parseNumericExpression,
     setBeatInputText,
+    setSelectedSvEventId,
+    setSvEvents,
+    sortSvEvents,
     toFinite,
   ]);
 
   const commitBpmInput = useCallback(() => {
-    const parsed = parseNumericExpression(bpmInputText);
+    const text = bpmInputText.trim();
+    const parsed = text === "" ? 0 : parseNumericExpression(text);
     if (parsed === null) {
       setBpmInputText(formatEditorNumeric(activeBpmValue));
       return;
@@ -345,7 +377,8 @@ export function useEditorSelectionActions(params: any) {
       return;
     }
 
-    const parsed = parseNumericExpression(laneInputText);
+    const text = laneInputText.trim();
+    const parsed = text === "" ? 0 : parseNumericExpression(text);
     if (parsed === null) {
       setLaneInputText(String(activeLaneValue));
       return;
@@ -362,7 +395,8 @@ export function useEditorSelectionActions(params: any) {
       return;
     }
 
-    const parsed = parseNumericExpression(widthInputText);
+    const text = widthInputText.trim();
+    const parsed = text === "" ? 0 : parseNumericExpression(text);
     if (parsed === null) {
       setWidthInputText(String(activeWidthValue));
       return;
@@ -420,17 +454,23 @@ export function useEditorSelectionActions(params: any) {
 
     const noteIdsToDelete = selectedNoteIds;
     const bpmIdsToDelete = selectedBpmEventIds;
+    const svIdsToDelete = selectedSvEventIds;
     let removedNoteCount = noteIdsToDelete.length;
     let hiddenNoteCount = 0;
     let removedBpmCount = bpmIdsToDelete.length;
+    let removedSvCount = svIdsToDelete.length;
 
-    if (removedNoteCount === 0 && removedBpmCount === 0) {
+    if (removedNoteCount === 0 && removedBpmCount === 0 && removedSvCount === 0) {
       if (selectedBpmEventId && selectedBpmEventId !== BASE_BPM_LINE_ID) {
         setBpmEvents((previous: any[]) => previous.filter((event) => event.id !== selectedBpmEventId));
         setSelectedBpmEventId(null);
         setStatusMessage("已删除 BPM 线。");
       } else if (selectedBpmEventId === BASE_BPM_LINE_ID) {
         setStatusMessage("Beat 0 的基础 BPM 线不可删除。");
+      } else if (selectedSvEventId) {
+        setSvEvents((previous: any[]) => previous.filter((event) => event.id !== selectedSvEventId));
+        setSelectedSvEventId(null);
+        setStatusMessage("已删除 SV 线。");
       }
       return;
     }
@@ -448,6 +488,15 @@ export function useEditorSelectionActions(params: any) {
       setSelectedBpmEventIds([]);
       if (selectedBpmEventId && selectedBpmSet.has(selectedBpmEventId)) {
         setSelectedBpmEventId(null);
+      }
+    }
+
+    if (removedSvCount > 0) {
+      const selectedSvSet = new Set(svIdsToDelete);
+      setSvEvents((previous: any[]) => previous.filter((event) => !selectedSvSet.has(event.id)));
+      setSelectedSvEventIds([]);
+      if (selectedSvEventId && selectedSvSet.has(selectedSvEventId)) {
+        setSelectedSvEventId(null);
       }
     }
 
@@ -481,6 +530,10 @@ export function useEditorSelectionActions(params: any) {
     }
     if (removedBpmCount > 0) {
       setStatusMessage(removedBpmCount > 1 ? `已删除 ${removedBpmCount} 条 BPM 线。` : "已删除 BPM 线。");
+      return;
+    }
+    if (removedSvCount > 0) {
+      setStatusMessage(removedSvCount > 1 ? `已删除 ${removedSvCount} 条 SV 线。` : "已删除 SV 线。");
     }
   };
 

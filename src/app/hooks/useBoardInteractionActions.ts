@@ -1,7 +1,15 @@
 ﻿import { startTransition, useCallback, type MouseEvent } from "react";
-import type { ChartNote, EditorTool, NoteType } from "../../chartCore";
+import {
+  GLOBAL_TIMING_GROUP_ID,
+  normalizeNoteTimingGroup,
+  normalizeTimingGroup,
+  type ChartNote,
+  type EditorTool,
+  type NoteType,
+} from "../../chartCore";
 import { isLastBeatOrderedBpmNegative } from "../editorHelpers";
 import { applyHabahiroSlideWidthToNoteIds } from "../habahiroSlideWidth";
+import { cleanupSlideChainsHidden } from "../slideChainCleanup";
 
 export function useBoardInteractionActions(params: any) {
   const {
@@ -52,18 +60,26 @@ export function useBoardInteractionActions(params: any) {
     removeNoteIdsFromSlideChains,
     setSlideChains,
     normalizeBpmEvent,
+    normalizeSvEvent,
     normalizeBaseBpmForWrite,
     normalizeEventBpmForWrite,
     toolBpmValue,
     metadata,
     setMetadata,
     setBpmEvents,
+    setSvEvents,
     bpmEvents,
     BASE_BPM_LINE_ID,
     setSelectedBpmEventIds,
+    setSelectedSvEventIds,
+    setSelectedSvEventId,
+    toolSvValue,
+    toolTimingGroup,
     selectedNoteIds,
     selectedBpmEventIds,
     selectedBpmEventId,
+    selectedSvEventIds,
+    selectedSvEventId,
     selectedLongLineSegmentId,
     playfieldBoardRef,
     selectionMoveRef,
@@ -84,6 +100,7 @@ export function useBoardInteractionActions(params: any) {
     isPasteToolReady,
     isPasteLaneAnchorEnabled,
     applyPasteAtPlacement,
+    isSvPreviewEnabled,
   } = params;
   const startSidebarResize = (event: MouseEvent<HTMLDivElement>) => {
     if (event.button !== 0) {
@@ -155,6 +172,10 @@ export function useBoardInteractionActions(params: any) {
     switchToolState("bpm");
   }, [switchToolState]);
 
+  const applySvToolFromPalette = useCallback(() => {
+    switchToolState("sv");
+  }, [switchToolState]);
+
   const applyCopyToolFromPalette = useCallback(() => {
     switchToolState("copy");
   }, [switchToolState]);
@@ -179,6 +200,7 @@ export function useBoardInteractionActions(params: any) {
       type: noteTool,
       lane: resolvedLane,
       beat: quantizedBeat,
+      timingGroup: normalizeNoteTimingGroup(toolTimingGroup),
       ...(NOTE_SPECS[noteTool].hasTail
         ? {
           endBeat: quantizeBeat(quantizedBeat + duration, beatDivision),
@@ -206,7 +228,9 @@ export function useBoardInteractionActions(params: any) {
 
     setNotes((previous: ChartNote[]) => {
       const filtered = previous.filter(
-        (note) => !(note.lane === normalized.lane && approxEq(note.beat, normalized.beat)),
+        (note) =>
+          note.type === "hidden" ||
+          !(note.lane === normalized.lane && approxEq(note.beat, normalized.beat)),
       );
       return sortNotes([...filtered, normalized]);
     });
@@ -227,7 +251,7 @@ export function useBoardInteractionActions(params: any) {
   };
 
   const placeNote = (lane: number, beat: number) => {
-    if (tool === "bpm" || tool === "copy" || tool === "paste") {
+    if (tool === "bpm" || tool === "sv" || tool === "copy" || tool === "paste") {
       return null;
     }
     return placeNoteWithType(tool, lane, beat);
@@ -287,8 +311,49 @@ export function useBoardInteractionActions(params: any) {
     });
   }, [setSlideBuildState, slideBuildRef]);
 
+  const replaceCommittedSlideChainSegments = useCallback(
+    (chain: any, segments: any[]) => {
+      setSlideChains((previous: any[]) => {
+        const replacementChains = cleanupSlideChainsHidden({
+          chains: segments,
+          noteMap: noteById,
+          minLength: 2,
+        });
+        return previous.flatMap((currentChain) =>
+          currentChain.id === chain.id ? replacementChains : [currentChain],
+        );
+      });
+    },
+    [noteById, setSlideChains],
+  );
+
   const startSlideBuildFromSeedNote = useCallback((seedNote: ChartNote) => {
     const committedRole = committedSlideRoleByNoteId.get(seedNote.id);
+    if (committedRole && committedRole.index > 0 && committedRole.index < committedRole.length - 1) {
+      const chain = committedSlideChainById.get(committedRole.chainId);
+      if (chain && chain.noteIds.length > 0) {
+        const prefixIds = chain.noteIds.slice(0, committedRole.index + 1);
+        const suffixIds = chain.noteIds.slice(committedRole.index + 1);
+        replaceCommittedSlideChainSegments(chain, [
+          {
+            ...chain,
+            noteIds: prefixIds,
+          },
+          {
+            ...chain,
+            id: createId(),
+            noteIds: suffixIds,
+          },
+        ]);
+        beginSlideBuild(seedNote.id, null, {
+          persistUntilRightClick: false,
+          mode: "drag",
+          initialNoteIds: prefixIds,
+        });
+        setStatusMessage("状态已更新。");
+        return;
+      }
+    }
     if (committedRole && committedRole.index === committedRole.length - 1) {
       const chain = committedSlideChainById.get(committedRole.chainId);
       if (chain && chain.noteIds.length > 0) {
@@ -302,7 +367,7 @@ export function useBoardInteractionActions(params: any) {
       }
     }
     beginSlideBuild(seedNote.id, null, { persistUntilRightClick: false, mode: "drag" });
-  }, [beginSlideBuild, committedSlideChainById, committedSlideRoleByNoteId, setStatusMessage]);
+  }, [beginSlideBuild, committedSlideChainById, committedSlideRoleByNoteId, createId, replaceCommittedSlideChainSegments, setStatusMessage]);
 
   const appendSlideBuildNote = useCallback((noteId: string): { appended: boolean; merged: boolean; blocked: boolean } => {
     const previous = slideBuildRef.current;
@@ -331,7 +396,25 @@ export function useBoardInteractionActions(params: any) {
         }
         merged = true;
       } else if (existingChain) {
-        blocked = true;
+        const beforeIds = existingChain.noteIds.slice(0, existingRole.index);
+        const suffixIds = existingChain.noteIds.slice(existingRole.index);
+        replaceCommittedSlideChainSegments(existingChain, [
+          {
+            ...existingChain,
+            id: createId(),
+            noteIds: beforeIds,
+          },
+          {
+            ...existingChain,
+            noteIds: suffixIds,
+          },
+        ]);
+        for (const id of suffixIds) {
+          if (!nextIds.includes(id)) {
+            nextIds.push(id);
+          }
+        }
+        merged = true;
       }
     } else {
       nextIds.push(noteId);
@@ -360,7 +443,9 @@ export function useBoardInteractionActions(params: any) {
   }, [
     committedSlideChainById,
     committedSlideRoleByNoteId,
+    createId,
     isHabahiroEnabled,
+    replaceCommittedSlideChainSegments,
     setNotes,
     setSlideBuildState,
     slideBuildRef,
@@ -405,21 +490,25 @@ export function useBoardInteractionActions(params: any) {
       return;
     }
 
-    const resolveChainTimingGroup = (): number => {
+    const resolveChainTimingGroup = (): string => {
+      const placementTimingGroup = normalizeTimingGroup(toolTimingGroup, GLOBAL_TIMING_GROUP_ID);
+      if (placementTimingGroup !== GLOBAL_TIMING_GROUP_ID) {
+        return placementTimingGroup;
+      }
       for (const noteId of noteIds) {
         const committedRole = committedSlideRoleByNoteId.get(noteId);
         if (committedRole) {
           const committedChain = committedSlideChainById.get(committedRole.chainId);
           if (committedChain) {
-            return Math.max(0, Math.round(toFinite(committedChain.timingGroup, 0)));
+            return normalizeTimingGroup(committedChain.timingGroup, GLOBAL_TIMING_GROUP_ID);
           }
         }
         const note = noteById.get(noteId);
         if (note) {
-          return Math.max(0, Math.round(toFinite(note.timingGroup, 0)));
+          return normalizeTimingGroup(note.timingGroup, GLOBAL_TIMING_GROUP_ID);
         }
       }
-      return 0;
+      return GLOBAL_TIMING_GROUP_ID;
     };
     const nextChainTimingGroup = resolveChainTimingGroup();
 
@@ -436,7 +525,7 @@ export function useBoardInteractionActions(params: any) {
         {
           id: createId(),
           noteIds,
-          timingGroup: nextChainTimingGroup,
+          timingGroup: normalizeNoteTimingGroup(nextChainTimingGroup),
         },
       ];
     });
@@ -542,6 +631,32 @@ export function useBoardInteractionActions(params: any) {
     setStatusMessage("状态已更新。");
   };
 
+  const placeSvEvent = (beat: number) => {
+    const quantizedBeat = quantizeBeat(beat, beatDivision);
+    const timingGroup = normalizeTimingGroup(toolTimingGroup, GLOBAL_TIMING_GROUP_ID);
+    const value = Number(toFinite(toolSvValue, 1).toFixed(6));
+    if (!Number.isFinite(value)) {
+      setStatusMessage("SV 值必须为有限数字。");
+      return;
+    }
+    const created = normalizeSvEvent({ beat: quantizedBeat, value, timingGroup }, beatDivision, 1);
+    if (!created) {
+      return;
+    }
+    setSvEvents((previous: any[]) => {
+      const filtered = previous.filter((event) =>
+        !(normalizeTimingGroup(event.timingGroup, GLOBAL_TIMING_GROUP_ID) === timingGroup && approxEq(event.beat, created.beat)),
+      );
+      return params.sortSvEvents([...filtered, created]);
+    });
+    clearSelectedNotes();
+    clearSelectedBpmEvents();
+    setSelectedBpmEventId(null);
+    setSelectedSvEventId(created.id);
+    setSelectedSvEventIds([created.id]);
+    setStatusMessage("状态已更新。");
+  };
+
   const applyToolToPlacedNote = (target: ChartNote) => {
     if (!isToolArmed) {
       setToolLane(target.lane);
@@ -555,6 +670,11 @@ export function useBoardInteractionActions(params: any) {
 
     if (tool === "bpm") {
       placeBpmEvent(target.beat);
+      return;
+    }
+
+    if (tool === "sv") {
+      placeSvEvent(target.beat);
       return;
     }
 
@@ -667,7 +787,10 @@ export function useBoardInteractionActions(params: any) {
       const filtered = previous.filter(
         (note) =>
           note.id !== target.id &&
-          !(note.lane === replacement.lane && approxEq(note.beat, replacement.beat)),
+          (
+            note.type === "hidden" ||
+            !(note.lane === replacement.lane && approxEq(note.beat, replacement.beat))
+          ),
       );
       return sortNotes([...filtered, replacement]);
     });
@@ -699,6 +822,8 @@ export function useBoardInteractionActions(params: any) {
       selectedNoteIds.length > 0 ||
       selectedBpmEventIds.length > 0 ||
       selectedBpmEventId !== null ||
+      selectedSvEventIds.length > 0 ||
+      selectedSvEventId !== null ||
       selectedLongLineSegmentId !== null;
     const hadToolArmed = isToolArmed;
     if (!hadSelection && !hadToolArmed) {
@@ -842,6 +967,11 @@ export function useBoardInteractionActions(params: any) {
   };
 
   const handleBoardClick = (event: MouseEvent<HTMLDivElement>) => {
+    if (isSvPreviewEnabled) {
+      event.preventDefault();
+      setStatusMessage("SV 预览为只读模式，请关闭后再编辑。");
+      return;
+    }
     if (suppressNextBoardClickRef.current) {
       suppressNextBoardClickRef.current = false;
       return;
@@ -875,13 +1005,18 @@ export function useBoardInteractionActions(params: any) {
       return;
     }
 
-    const placement = resolveBoardPlacement(clickX, clickY, { ignoreLane: tool === "bpm" });
+    const placement = resolveBoardPlacement(clickX, clickY, { ignoreLane: tool === "bpm" || tool === "sv" });
     if (!placement) {
       return;
     }
 
     if (tool === "bpm") {
       placeBpmEvent(placement.beat);
+      return;
+    }
+
+    if (tool === "sv") {
+      placeSvEvent(placement.beat);
       return;
     }
 
@@ -926,6 +1061,14 @@ export function useBoardInteractionActions(params: any) {
   };
 
   const handleBoardMouseDown = (event: MouseEvent<HTMLDivElement>) => {
+    if (isSvPreviewEnabled) {
+      const targetElement = event.target as HTMLElement | null;
+      if (!targetElement?.closest(".note-token, .bpm-line-button, .bpm-label-button")) {
+        event.preventDefault();
+        setStatusMessage("SV 预览为只读模式，请关闭后再编辑。");
+        return;
+      }
+    }
     if (event.button !== 0) {
       return;
     }
@@ -1031,6 +1174,7 @@ export function useBoardInteractionActions(params: any) {
     startSidebarResize,
     applyToolFromPalette,
     applyBpmToolFromPalette,
+    applySvToolFromPalette,
     applyCopyToolFromPalette,
     applyPasteToolFromPalette,
     placeNoteWithType,
@@ -1043,6 +1187,7 @@ export function useBoardInteractionActions(params: any) {
     finalizeSlideBuild,
     applyToolToPlacedNote,
     placeBpmEvent,
+    placeSvEvent,
     handleBoardContextMenu,
     handleBoardMouseMove,
     handleBoardMouseLeave,
