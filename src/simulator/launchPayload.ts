@@ -22,6 +22,8 @@ export type SimulatorDisplayPayload = {
 
 type SimulatorAudioPayload = {
   seRuntimeAssets?: SeSkinAssets | null;
+  bgmVolumePercent?: number;
+  seVolumePercent?: number;
 };
 
 export type SimulatorMvPayload = {
