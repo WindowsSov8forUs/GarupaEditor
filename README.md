@@ -1,93 +1,153 @@
 # GarupaEditor
 
-GarupaEditor 是一个基于 `Tauri + React + TypeScript` 的桌面谱面编辑器原型，采用 Beat 制与 7 轨标准编号，支持可视化编辑与 JSON 导入导出。
+基于 Tauri 架构，GarupaEditor 提供多平台的 BanG Dream! Girls Band Party 自制谱制作、预览、播放、导入、导出与上传功能。
 
-## 运行
-
-```bash
-npm install
-npm run desktop:dev
+```
+不仅提供基础的 Bestdori 可用谱面制作功能，GarupaEditor 同时还支持：
+- 7/9/11 轨道与界外谱面编辑
+- 多宽度音符
+- 无头/无尾 Slide 与无判定 Slide
+- 变速 SV 与 TimingGroup
 ```
 
-## 构建与验证
+## 安装
 
+目前 GarupaEditor 仅提供了对桌面平台的多平台支持，且仅在 Windows 平台上进行过测试。
+
+### Windows 平台
+
+下载:
+- `GarupaEditor_0.2.0_windows_x64-setup.exe`
+- `GarupaEditor_0.2.0_windows_x64.msi`
+- `GarupaEditor_0.2.0_windows_arm64-setup.exe`
+- `GarupaEditor_0.2.0_windows_arm64.msi`
+
+推荐普通用户用 `*-setup.exe`，双击安装。
+`x64` 用于常见 Intel/AMD Windows，`arm64` 用于 Windows on ARM。
+
+### macOS
+
+下载：
+- `GarupaEditor_0.2.0_darwin_x64.app.tar.gz`
+- `GarupaEditor_0.2.0_darwin_aarch64.app.tar.gz`
+
+`darwin_x64` 是 Intel Mac，`darwin_aarch64` 是 Apple Silicon/M 系列 Mac。
+解压后得到 `GarupaEditor.app`，拖到“应用程序”即可。当前不是 `.dmg`，也没有签名/公证，首次打开可能需要右键选择“打开”。
+
+### Linux
+
+Debian / Ubuntu 下载：
+- `GarupaEditor_0.2.0_linux_amd64.deb`
+- `GarupaEditor_0.2.0_linux_arm64.deb`
+
+安装：
 ```bash
-npm run build
-cargo check --manifest-path src-tauri/Cargo.toml
-npm run desktop:build
+sudo apt install ./GarupaEditor_0.2.0_linux_amd64.deb
 ```
 
-`npm run desktop:build` 会先执行前端生产构建，再调用 Tauri 生成当前平台可安装包。
+Fedora / RHEL / openSUSE 下载：
+- `GarupaEditor_0.2.0_linux_x86_64.rpm`
+- `GarupaEditor_0.2.0_linux_aarch64.rpm`
 
-## 已实现
+安装：
+```bash
+sudo dnf install ./GarupaEditor_0.2.0_linux_x86_64.rpm
+```
 
-- 顶部命令区：`导入 JSON / 导出 JSON / 复制 JSON / 谱面编辑 / 应用设置`
-- 左右分栏独立滚动，分栏间距可拖动滑杆调整
-- 左侧固定“谱面信息”卡片 + 独立滚动编辑工具区
-- 谱面信息二级编辑界面（封面上传、音频上传、曲目信息、Offset、BPM 预留接口）
-- 可视化编辑区从底部向上（Beat 增加方向向上），轨道居中显示
-- 轨道标准：
-  - 7 轨：`0` 到 `6`
-  - 9 轨：`-1` 到 `7`
-  - 11 轨：`-2` 到 `8`
-- 轨道数仅支持 `7 / 9 / 11`，拍号为 `分子/分母` 输入
-- 小节数自动推算（音频时长 + BPM + 已放置音符，自动留后续空间）
-- 音符工具图标化 + 快捷键：
-  - `1-7` 切换音符类型
-  - `Ctrl+Z` / `Cmd+Z` 撤销
-  - `Ctrl+Shift+Delete` / `Cmd+Shift+Delete` 清空
-  - `Delete` 删除选中音符
-- 桌面窗口默认尺寸 `1366 x 768`，分辨率预设移入“应用设置”
+## Garupa JSON 谱面结构
 
-## JSON 结构
+不同于 **Bestdori** ，**GarupaEditor** 与对应的 **NotGarupa** Sonolus 引擎使用独立的 `Garupa JSON` 结构，用以在传递谱面时承载更多的功能与扩展性。
+
+示例：
+
+```json
+[
+  { "type": "BPM", "beat": 0, "value": 120 },
+  { "type": "SV", "beat": 16, "value": 0.5, "timingGroup": "#1" },
+  { "type": "Single", "beat": 1, "lane": 3, "width": 1 },
+  { "type": "Flick", "beat": 2, "lane": 4, "width": 1 },
+  { "type": "Skill", "beat": 3, "lane": 2, "width": 1 },
+  {
+    "type": "Directional",
+    "beat": 4,
+    "lane": 5,
+    "width": 1,
+    "direction": "Right"
+  },
+  {
+    "type": "Slide",
+    "connections": [
+      { "type": "Single", "beat": 8, "lane": 2, "width": 1 },
+      { "type": "Hidden", "beat": 9, "lane": 3, "width": 1 },
+      { "type": "Flick", "beat": 10, "lane": 4, "width": 1 }
+    ]
+  }
+]
+```
+
+### 顶层项目类型
+
+- `BPM`
+  - `{ type: "BPM", beat: number, value: number }`
+  - 至少必须有一个 BPM。
+  - 导出时会自动把当前基础 BPM 写成 `{ beat: 0, value: metadata.bpm }`。
+  - 导入时会选最早的 BPM 作为基础 BPM，并把整张谱的 beat 平移到从 `0` 开始。
+
+- `SV`
+  - `{ type: "SV", beat: number, value: number, timingGroup?: string }`
+  - `value` 是速度倍率。
+  - `timingGroup` 缺省或 `#Global` 表示全局组。
+
+- 普通顶层音符
+  - `Single`
+  - `Flick`
+  - `Skill`
+  - `Directional`
+  - 顶层不允许 `Hidden`。
+
+- `Slide`
+  - `{ type: "Slide", connections: [...], timingGroup?: string }`
+  - `connections` 不能为空。
+  - `Hidden` 只允许出现在 `Slide.connections` 里。
+
+### 音符字段
+
+普通节奏音符：
+
+```json
+{ "type": "Single", "beat": 1, "lane": 3, "width": 1, "timingGroup": "#1" }
+```
+
+适用于：
+- `Single`
+- `Flick`
+- `Skill`
+- `Hidden`，但仅 Slide 内
+
+字段：
+- `beat`: 数字，节拍位置
+- `lane`: 数字，轨道位置
+- `width`: 正整数；导出一定带，导入普通音符缺省时按 `1`
+- `timingGroup`: 可选，非全局时才通常导出
+
+方向 Flick：
 
 ```json
 {
-  "version": "0.2.1",
-  "style": "bandori-inspired-beat",
-  "metadata": {
-    "title": "Untitled Song",
-    "artist": "Unknown Artist",
-    "charter": "Your Name",
-    "difficulty": "Expert",
-    "difficultyLevel": "26",
-    "bpm": 120,
-    "offsetMs": 0,
-    "coverDataUrl": null
-  },
-  "settings": {
-    "laneCount": 7,
-    "timeSignatureNumerator": 4,
-    "timeSignatureDenominator": 4,
-    "beatSnap": 4
-  },
-  "audio": {
-    "fileName": "song.ogg",
-    "durationSec": 132.4
-  },
-  "skin": {
-    "name": "default",
-    "assetPath": ""
-  },
-  "notes": [
-    {
-      "id": "uuid",
-      "type": "single",
-      "lane": 3,
-      "beat": 16
-    },
-    {
-      "id": "uuid",
-      "type": "slide",
-      "lane": 2,
-      "beat": 20.5,
-      "endBeat": 22,
-      "endLane": 5
-    }
-  ]
+  "type": "Directional",
+  "beat": 4,
+  "lane": 5,
+  "width": 1,
+  "direction": "Left"
 }
 ```
 
-## 参考说明
+`direction` 只能是：
+- `"Left"`
+- `"Right"`
 
-当前实现是“Bandori 风格启发”的编辑器原型，不是官方谱面格式逆向；可继续扩展自动存盘、音频波形、判定线回放等功能。
+### `timingGroup` 规则
+
+- 缺省、空字符串、`#Global` 都表示全局 timing group。
+- 非全局组使用类似 `#1`、`#Group A` 的字符串。
+- 导出时，全局组在音符和 Slide 上通常省略；SV 会写出归一化后的 `timingGroup`。
