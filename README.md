@@ -2,13 +2,11 @@
 
 基于 Tauri 架构，GarupaEditor 提供多平台的 BanG Dream! Girls Band Party 自制谱制作、预览、播放、导入、导出与上传功能。
 
-```
 不仅提供基础的 Bestdori 可用谱面制作功能，GarupaEditor 同时还支持：
 - 7/9/11 轨道与界外谱面编辑
 - 多宽度音符
 - 无头/无尾 Slide 与无判定 Slide
 - 变速 SV 与 TimingGroup
-```
 
 ## 安装
 
@@ -17,10 +15,10 @@
 ### Windows 平台
 
 下载:
-- `GarupaEditor_0.2.0_windows_x64-setup.exe`
-- `GarupaEditor_0.2.0_windows_x64.msi`
-- `GarupaEditor_0.2.0_windows_arm64-setup.exe`
-- `GarupaEditor_0.2.0_windows_arm64.msi`
+- `*_windows_x64-setup.exe`
+- `*_windows_x64.msi`
+- `*_windows_arm64-setup.exe`
+- `*_windows_arm64.msi`
 
 推荐普通用户用 `*-setup.exe`，双击安装。
 `x64` 用于常见 Intel/AMD Windows，`arm64` 用于 Windows on ARM。
@@ -28,8 +26,8 @@
 ### macOS
 
 下载：
-- `GarupaEditor_0.2.0_darwin_x64.app.tar.gz`
-- `GarupaEditor_0.2.0_darwin_aarch64.app.tar.gz`
+- `*_darwin_x64.app.tar.gz`
+- `*_darwin_aarch64.app.tar.gz`
 
 `darwin_x64` 是 Intel Mac，`darwin_aarch64` 是 Apple Silicon/M 系列 Mac。
 解压后得到 `GarupaEditor.app`，拖到“应用程序”即可。当前不是 `.dmg`，也没有签名/公证，首次打开可能需要右键选择“打开”。
@@ -37,21 +35,21 @@
 ### Linux
 
 Debian / Ubuntu 下载：
-- `GarupaEditor_0.2.0_linux_amd64.deb`
-- `GarupaEditor_0.2.0_linux_arm64.deb`
+- `*_linux_amd64.deb`
+- `*_linux_arm64.deb`
 
 安装：
 ```bash
-sudo apt install ./GarupaEditor_0.2.0_linux_amd64.deb
+sudo apt install ./*_linux_amd64.deb
 ```
 
 Fedora / RHEL / openSUSE 下载：
-- `GarupaEditor_0.2.0_linux_x86_64.rpm`
-- `GarupaEditor_0.2.0_linux_aarch64.rpm`
+- `*_linux_x86_64.rpm`
+- `*_linux_aarch64.rpm`
 
 安装：
 ```bash
-sudo dnf install ./GarupaEditor_0.2.0_linux_x86_64.rpm
+sudo dnf install ./*_linux_x86_64.rpm
 ```
 
 ## Garupa JSON 谱面结构
