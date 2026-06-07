@@ -43,7 +43,7 @@ npm run desktop:build
 
 ```json
 {
-  "version": "0.2.0",
+  "version": "0.2.1",
   "style": "bandori-inspired-beat",
   "metadata": {
     "title": "Untitled Song",
