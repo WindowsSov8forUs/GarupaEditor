@@ -5616,11 +5616,12 @@ function ChartEditorController() {
       const runtimeFieldSkin = getRuntimeFieldSkinAssets();
       const runtimeBgSkin = getRuntimeBgSkinAssets();
       const runtimeJudgeSkin = getRuntimeJudgeSkinAssets();
-      const audioPayload = runtimeSe
-        ? {
-            seRuntimeAssets: runtimeSe ?? null,
-          }
-        : null;
+      const simulatorBgmVolumePercent = clamp(playbackVolumePercent, 0, 100);
+      const audioPayload = {
+        seRuntimeAssets: runtimeSe ?? null,
+        bgmVolumePercent: simulatorBgmVolumePercent,
+        seVolumePercent: simulatorBgmVolumePercent * noteSeVolumeScale,
+      };
       const simulatorMetadata: ChartMetadata = {
         ...metadata,
         offsetMs: playbackOffsetMs,
@@ -5770,9 +5771,11 @@ function ChartEditorController() {
     sortBpmEvents,
     sortSvEvents,
     normalizeTimingGroup,
+    noteSeVolumeScale,
     playbackFps,
     playbackMvMode,
     playbackMvAlphaPercent,
+    playbackVolumePercent,
     playbackWindowPresetId,
     skinAssets,
     setStatusMessage,

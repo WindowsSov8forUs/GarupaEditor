@@ -4,6 +4,10 @@ import type { RuntimeNoteSemantic } from "./types";
 
 export class AudioEngine {
   private ctx: AudioContext | null = null;
+  private bgmGain: GainNode | null = null;
+  private seGain: GainNode | null = null;
+  private bgmVolume = 1;
+  private seVolume = 1;
   private bgmBuffer: AudioBuffer | null = null;
   private bgmSource: AudioBufferSourceNode | null = null;
   private bgmStartCtxTime = 0;
@@ -21,10 +25,42 @@ export class AudioEngine {
     return bytes.buffer;
   }
 
+  private normalizeVolumePercent(value: unknown): number {
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric)) {
+      return 1;
+    }
+    return Math.max(0, Math.min(100, numeric)) / 100;
+  }
+
+  private applyGainVolumes(): void {
+    if (this.bgmGain) {
+      this.bgmGain.gain.value = this.bgmVolume;
+    }
+    if (this.seGain) {
+      this.seGain.gain.value = this.seVolume;
+    }
+  }
+
+  setVolumes(volumes: { bgmVolumePercent?: number; seVolumePercent?: number } | null | undefined): void {
+    this.bgmVolume = this.normalizeVolumePercent(volumes?.bgmVolumePercent);
+    this.seVolume = this.normalizeVolumePercent(volumes?.seVolumePercent);
+    this.applyGainVolumes();
+  }
+
   async ensureContext(): Promise<void> {
     if (!this.ctx) {
       this.ctx = new AudioContext();
     }
+    if (!this.bgmGain) {
+      this.bgmGain = this.ctx.createGain();
+      this.bgmGain.connect(this.ctx.destination);
+    }
+    if (!this.seGain) {
+      this.seGain = this.ctx.createGain();
+      this.seGain.connect(this.ctx.destination);
+    }
+    this.applyGainVolumes();
     if (this.ctx.state === "suspended") {
       await this.ctx.resume();
     }
@@ -110,7 +146,7 @@ export class AudioEngine {
     this.stopBgm();
     const source = this.ctx.createBufferSource();
     source.buffer = this.bgmBuffer;
-    source.connect(this.ctx.destination);
+    source.connect(this.bgmGain ?? this.ctx.destination);
     source.start(0, 0);
     this.bgmSource = source;
     this.bgmStartCtxTime = this.ctx.currentTime;
@@ -144,7 +180,7 @@ export class AudioEngine {
     const offset = Math.max(0, Math.min(duration - 0.001, this.bgmOffsetSec));
     const source = this.ctx.createBufferSource();
     source.buffer = this.bgmBuffer;
-    source.connect(this.ctx.destination);
+    source.connect(this.bgmGain ?? this.ctx.destination);
     source.start(0, offset);
     this.bgmSource = source;
     this.bgmStartCtxTime = this.ctx.currentTime;
@@ -177,7 +213,7 @@ export class AudioEngine {
     }
     const source = this.ctx.createBufferSource();
     source.buffer = buffer;
-    source.connect(this.ctx.destination);
+    source.connect(this.seGain ?? this.ctx.destination);
     source.start();
   }
 }

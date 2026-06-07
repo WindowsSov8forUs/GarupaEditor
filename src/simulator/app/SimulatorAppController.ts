@@ -834,6 +834,10 @@ export class SimulatorAppController {
 
     await this.audio.ensureContext();
     const payloadAudio = this.launchPayload?.audio ?? null;
+    this.audio.setVolumes({
+      bgmVolumePercent: payloadAudio?.bgmVolumePercent,
+      seVolumePercent: payloadAudio?.seVolumePercent,
+    });
     const payloadBgmDataUrl =
       typeof payloadMetadata?.bgmDataUrl === "string" && payloadMetadata.bgmDataUrl.trim() !== ""
         ? payloadMetadata.bgmDataUrl
