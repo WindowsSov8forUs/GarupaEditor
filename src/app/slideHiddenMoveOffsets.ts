@@ -225,7 +225,10 @@ export function buildSelectionMirrorOffsetMap(args: BuildSelectionMirrorOffsetMa
     if (!selectedNoteIds.has(noteId)) {
       return;
     }
-    setOffsetByMagnitude(noteId, offset.lane, offset.beat);
+    offsetById.set(noteId, {
+      lane: toFixed6(offset.lane),
+      beat: toFixed6(offset.beat),
+    });
   });
 
   const applyHiddenMirrorRange = (
