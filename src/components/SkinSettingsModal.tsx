@@ -1,4 +1,4 @@
-import { type SkinSelection } from "../skinLoader";
+import { type BestdoriCatalogKind, type SkinSelection } from "../skinLoader";
 import optionsTitleIcon from "../assets/icons/options-title.svg";
 import { SettingPrimaryTitle } from "./SettingPrimaryTitle";
 import { StepperIcon } from "./StepperIcon";
@@ -23,7 +23,8 @@ type SkinSettingsModalProps = {
   bgSkinTypes: readonly string[];
   fieldSkinTypes: readonly string[];
   judgeSkinTypes: readonly string[];
-  formatTypeLabel: (type: string) => string;
+  rhythmCatalogKind: BestdoriCatalogKind;
+  formatTypeLabel: (kind: BestdoriCatalogKind | null, type: string) => string;
   isSkinApplying: boolean;
   onApplySkinSelection: () => void;
 };
@@ -33,8 +34,9 @@ type TypeStepperProps = {
   value: string;
   index: number;
   types: readonly string[];
+  catalogKind: BestdoriCatalogKind | null;
   onChange: (value: string) => void;
-  formatTypeLabel: (type: string) => string;
+  formatTypeLabel: (kind: BestdoriCatalogKind | null, type: string) => string;
 };
 
 function resolveTypeIndex(currentType: string, options: readonly string[]): number {
@@ -55,6 +57,7 @@ function TypeStepper({
   value,
   index,
   types,
+  catalogKind,
   onChange,
   formatTypeLabel,
 }: TypeStepperProps) {
@@ -78,7 +81,7 @@ function TypeStepper({
         <input
           type="text"
           className="stepper-input"
-          value={formatTypeLabel(value)}
+          value={formatTypeLabel(catalogKind, value)}
           readOnly
           tabIndex={-1}
         />
@@ -105,6 +108,7 @@ export function SkinSettingsModal({
   onClose,
   pendingSkinSelection,
   rhythmTypeTitle,
+  rhythmCatalogKind,
   onRhythmTypeChange,
   onDirectionalTypeChange,
   onRhythmSeTypeChange,
@@ -176,6 +180,7 @@ export function SkinSettingsModal({
                     value={rhythmValue}
                     index={rhythmIndex}
                     types={rhythmSkinTypes}
+                    catalogKind={rhythmCatalogKind}
                     onChange={onRhythmTypeChange}
                     formatTypeLabel={formatTypeLabel}
                   />
@@ -184,6 +189,7 @@ export function SkinSettingsModal({
                     value={directionalValue}
                     index={directionalIndex}
                     types={directionalSkinTypes}
+                    catalogKind="directional"
                     onChange={onDirectionalTypeChange}
                     formatTypeLabel={formatTypeLabel}
                   />
@@ -198,6 +204,7 @@ export function SkinSettingsModal({
                     value={rhythmSeValue}
                     index={rhythmSeIndex}
                     types={rhythmSeSkinTypes}
+                    catalogKind="rhythmSe"
                     onChange={onRhythmSeTypeChange}
                     formatTypeLabel={formatTypeLabel}
                   />
@@ -206,6 +213,7 @@ export function SkinSettingsModal({
                     value={directionalSeValue}
                     index={directionalSeIndex}
                     types={directionalSeSkinTypes}
+                    catalogKind="directionalSe"
                     onChange={onDirectionalSeTypeChange}
                     formatTypeLabel={formatTypeLabel}
                   />
@@ -220,6 +228,7 @@ export function SkinSettingsModal({
                     value={fieldValue}
                     index={fieldIndex}
                     types={fieldSkinTypes}
+                    catalogKind="field"
                     onChange={onFieldTypeChange}
                     formatTypeLabel={formatTypeLabel}
                   />
@@ -228,6 +237,7 @@ export function SkinSettingsModal({
                     value={bgValue}
                     index={bgIndex}
                     types={bgSkinTypes}
+                    catalogKind="bg"
                     onChange={onBgTypeChange}
                     formatTypeLabel={formatTypeLabel}
                   />
@@ -236,6 +246,7 @@ export function SkinSettingsModal({
                     value={judgeValue}
                     index={judgeIndex}
                     types={judgeSkinTypes}
+                    catalogKind={null}
                     onChange={onJudgeTypeChange}
                     formatTypeLabel={formatTypeLabel}
                   />

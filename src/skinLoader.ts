@@ -37,7 +37,7 @@ import {
   type BestdoriCatalogKind,
   type BestdoriSkinCatalogOptions,
 } from "./services/bestdori/catalog";
-export type { BestdoriSkinCatalogOptions } from "./services/bestdori/catalog";
+export type { BestdoriCatalogKind, BestdoriSkinCatalogOptions } from "./services/bestdori/catalog";
 import {
   ensureCommonTapSkillSeDataUrl,
   loadPreparedBgSkinBinaryFilesAsDataUrlMap,
@@ -1193,12 +1193,12 @@ export function projectCanvasRenderResourceRuntimeAssets<
   };
 }
 
-export function formatTypeLabel(type: string): string {
+export function formatTypeLabel(kind: BestdoriCatalogKind | null, type: string): string {
   const trimmed = type.trim();
   if (!trimmed) {
     return "TYPE?";
   }
-  return activeBestdoriSkinCatalogOptions.labels[trimmed] ?? trimmed;
+  return kind ? activeBestdoriSkinCatalogOptions.labels[kind]?.[trimmed] ?? trimmed : trimmed;
 }
 
 export function readSkinSelectionFromStorage(): SkinSelection {

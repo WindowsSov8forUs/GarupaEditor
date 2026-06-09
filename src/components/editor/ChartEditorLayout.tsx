@@ -1979,6 +1979,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         onClose={() => setIsSkinSettingsOpen(false)}
         pendingSkinSelection={pendingSkinSelection}
         rhythmTypeTitle={appOptionSettings.habahiro ? "节奏图示样式（幅广）" : "节奏图示样式"}
+        rhythmCatalogKind={appOptionSettings.habahiro ? "habahiroRhythm" : "rhythm"}
         onRhythmTypeChange={(value) =>
           setPendingSkinSelection((current: any) =>
             normalizeSkinSelection({
