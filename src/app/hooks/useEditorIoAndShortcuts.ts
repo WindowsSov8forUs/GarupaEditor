@@ -21,6 +21,7 @@ import {
 import {
   combineSkinAssets,
   ensureCommonTapSkillSeAsset,
+  isHabahiroRhythmRipName,
   setRuntimeBgSkinAssets,
   setRuntimeFieldSkinAssets,
   setRuntimeJudgeSkinAssets,
@@ -2176,8 +2177,9 @@ export function useEditorIoAndShortcuts(params: any) {
       judgeSkinAssetsRef.current === null ||
       normalized.judgeSkinRipName !== skinSelection.judgeSkinRipName ||
       normalized.judgeSkinServer !== skinSelection.judgeSkinServer;
+    const rhythmCatalogKind = isHabahiroRhythmRipName(normalized.rhythmRipName) ? "habahiroRhythm" : "rhythm";
     setStatusMessage(
-      `正在加载皮肤：节奏图示 ${formatTypeLabel(normalized.rhythmType)}，方向滑键 ${formatTypeLabel(normalized.directionalType)}，节奏图示SE ${formatTypeLabel(normalized.rhythmSeType)}，方向滑键SE ${formatTypeLabel(normalized.directionalSeType)}，背景 ${formatTypeLabel(normalized.bgType)}，轨道样式 ${formatTypeLabel(normalized.fieldType)}，判定样式 ${formatTypeLabel(normalized.judgeType)}。`,
+      `正在加载皮肤：节奏图示 ${formatTypeLabel(rhythmCatalogKind, normalized.rhythmType)}，方向滑键 ${formatTypeLabel("directional", normalized.directionalType)}，节奏图示SE ${formatTypeLabel("rhythmSe", normalized.rhythmSeType)}，方向滑键SE ${formatTypeLabel("directionalSe", normalized.directionalSeType)}，背景 ${formatTypeLabel("bg", normalized.bgType)}，轨道样式 ${formatTypeLabel("field", normalized.fieldType)}，判定样式 ${formatTypeLabel(null, normalized.judgeType)}。`,
     );
 
     try {
@@ -2243,7 +2245,7 @@ export function useEditorIoAndShortcuts(params: any) {
 
       if (announceSuccess) {
         setStatusMessage(
-          `皮肤已生效：节奏图示 ${formatTypeLabel(normalized.rhythmType)}，方向滑键 ${formatTypeLabel(normalized.directionalType)}，节奏图示SE ${formatTypeLabel(normalized.rhythmSeType)}，方向滑键SE ${formatTypeLabel(normalized.directionalSeType)}，背景 ${formatTypeLabel(normalized.bgType)}，轨道样式 ${formatTypeLabel(normalized.fieldType)}，判定样式 ${formatTypeLabel(normalized.judgeType)}。`,
+          `皮肤已生效：节奏图示 ${formatTypeLabel(rhythmCatalogKind, normalized.rhythmType)}，方向滑键 ${formatTypeLabel("directional", normalized.directionalType)}，节奏图示SE ${formatTypeLabel("rhythmSe", normalized.rhythmSeType)}，方向滑键SE ${formatTypeLabel("directionalSe", normalized.directionalSeType)}，背景 ${formatTypeLabel("bg", normalized.bgType)}，轨道样式 ${formatTypeLabel("field", normalized.fieldType)}，判定样式 ${formatTypeLabel(null, normalized.judgeType)}。`,
         );
       }
     } catch (error) {

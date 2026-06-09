@@ -58,7 +58,7 @@ export interface BestdoriSkinCatalogOptions {
   directionalSe: string[];
   bg: string[];
   field: string[];
-  labels: Record<string, string>;
+  labels: Record<BestdoriCatalogKind, Record<string, string>>;
   resources: Record<BestdoriCatalogKind, Record<string, BestdoriCatalogResource>>;
 }
 
@@ -195,13 +195,14 @@ function fallbackResources(kind: keyof typeof fallbackMaps, family: BestdoriAsse
 }
 
 function buildOptions(groups: Record<BestdoriCatalogKind, BestdoriCatalogResource[]>): BestdoriSkinCatalogOptions {
-  const labels: Record<string, string> = {};
+  const labels = {} as Record<BestdoriCatalogKind, Record<string, string>>;
   const resources = {} as Record<BestdoriCatalogKind, Record<string, BestdoriCatalogResource>>;
   for (const [kind, list] of Object.entries(groups) as [BestdoriCatalogKind, BestdoriCatalogResource[]][]) {
+    labels[kind] = {};
     resources[kind] = {};
     for (const item of list) {
       resources[kind][item.id] = item;
-      labels[item.id] = item.title;
+      labels[kind][item.id] = item.title;
     }
   }
   return {
