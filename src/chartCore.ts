@@ -67,6 +67,7 @@ export interface EditorOptionSettings {
   verticalScalePercent: number;
   habahiro: boolean;
   spRhythmNoteEnabled: boolean;
+  exGarupaEnabled: boolean;
 }
 
 export interface ChartNote {
@@ -296,6 +297,7 @@ export const DEFAULT_EDITOR_OPTION_SETTINGS: EditorOptionSettings = {
   verticalScalePercent: 100,
   habahiro: false,
   spRhythmNoteEnabled: true,
+  exGarupaEnabled: true,
 };
 
 export function clamp(value: number, min: number, max: number): number {
@@ -1008,6 +1010,10 @@ export function normalizeEditorOptionSettings(
       typeof input.spRhythmNoteEnabled === "boolean"
         ? input.spRhythmNoteEnabled
         : DEFAULT_EDITOR_OPTION_SETTINGS.spRhythmNoteEnabled,
+    exGarupaEnabled:
+      typeof input.exGarupaEnabled === "boolean"
+        ? input.exGarupaEnabled
+        : DEFAULT_EDITOR_OPTION_SETTINGS.exGarupaEnabled,
   };
 }
 

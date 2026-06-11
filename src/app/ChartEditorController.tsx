@@ -58,9 +58,12 @@ import {
 } from "./hooks/useSpriteRenderingHelpers";
 import {
   isChartUsingHabahiro,
+  isChartUsingExGarupa,
   isChartUsingSpRhythm,
+  regressChartWithoutExGarupa,
   regressChartWithoutHabahiro,
   regressChartWithoutSpRhythm,
+  type ChartStateLike,
 } from "./modeChartRegression";
 import {
   applyHabahiroSlideWidths,
@@ -902,6 +905,14 @@ function ChartEditorController() {
     ? selectedTimingGroupId
     : GLOBAL_TIMING_GROUP_ID;
   const toolTimingGroup = activeTimingGroupId;
+  const isExGarupaEnabled = appOptionSettings.exGarupaEnabled === true;
+  const setTimingGroupPanelOpenForMode = useCallback((value: boolean) => {
+    if (value && !isExGarupaEnabled) {
+      setStatusMessage("ExGarupa 模式关闭时不可使用 Timing Group。");
+      return;
+    }
+    setIsTimingGroupPanelOpen(value);
+  }, [isExGarupaEnabled, setStatusMessage]);
 
   const normalizeObjectTimingGroup = useCallback(
     (value: unknown): ChartTimingGroupId => normalizeTimingGroup(value, GLOBAL_TIMING_GROUP_ID),
@@ -909,6 +920,10 @@ function ChartEditorController() {
   );
 
   const createTimingGroup = useCallback(() => {
+    if (!isExGarupaEnabled) {
+      setStatusMessage("ExGarupa 模式关闭时不可使用 Timing Group。");
+      return;
+    }
     setTimingGroups((previous) => {
       const groups = ensureTimingGroups(previous);
       let index = 1;
@@ -931,6 +946,7 @@ function ChartEditorController() {
     setSelectedLongLineSegmentId(null);
     setStatusMessage("已创建 Timing Group。");
   }, [
+    isExGarupaEnabled,
     setSelectedBpmEventId,
     setSelectedBpmEventIds,
     setSelectedLongLineSegmentId,
@@ -942,6 +958,10 @@ function ChartEditorController() {
   ]);
 
   const renameTimingGroup = useCallback((sourceId: ChartTimingGroupId, targetId: ChartTimingGroupId) => {
+    if (!isExGarupaEnabled) {
+      setStatusMessage("ExGarupa 模式关闭时不可使用 Timing Group。");
+      return;
+    }
     const normalizedSource = normalizeObjectTimingGroup(sourceId);
     const normalizedTarget = normalizeObjectTimingGroup(targetId);
     if (normalizedSource === GLOBAL_TIMING_GROUP_ID) {
@@ -991,6 +1011,7 @@ function ChartEditorController() {
     setSelectedTimingGroupId(normalizedTarget);
     setStatusMessage("已重命名 Timing Group。");
   }, [
+    isExGarupaEnabled,
     normalizeObjectTimingGroup,
     setNotes,
     setSlideChains,
@@ -999,6 +1020,10 @@ function ChartEditorController() {
   ]);
 
   const deleteTimingGroup = useCallback((groupId: ChartTimingGroupId) => {
+    if (!isExGarupaEnabled) {
+      setStatusMessage("ExGarupa 模式关闭时不可使用 Timing Group。");
+      return;
+    }
     const normalized = normalizeObjectTimingGroup(groupId);
     if (normalized === GLOBAL_TIMING_GROUP_ID) {
       setStatusMessage("#Global 不能删除。");
@@ -1035,6 +1060,7 @@ function ChartEditorController() {
     setSelectedLongLineSegmentId(null);
     setStatusMessage("已删除 Timing Group。");
   }, [
+    isExGarupaEnabled,
     normalizeObjectTimingGroup,
     setNotes,
     setSelectedNoteIds,
@@ -1617,6 +1643,10 @@ function ChartEditorController() {
     });
   }, [interactiveNotes, isTimingGroupModeActive]);
   const setSelectedObjectTimingGroupId = useCallback((nextGroup: ChartTimingGroupId) => {
+    if (!isExGarupaEnabled) {
+      setStatusMessage("ExGarupa 模式关闭时不可使用 Timing Group。");
+      return;
+    }
     const normalizedGroup = normalizeObjectTimingGroup(nextGroup);
     const nextNoteTimingGroup = normalizedGroup === GLOBAL_TIMING_GROUP_ID ? undefined : normalizedGroup;
     const selectedSet = new Set(selectedNoteIds);
@@ -1654,6 +1684,7 @@ function ChartEditorController() {
     );
     setStatusMessage("已更新 timing group。");
   }, [
+    isExGarupaEnabled,
     normalizeObjectTimingGroup,
     selectedNoteIds,
     setNotes,
@@ -2404,8 +2435,8 @@ function ChartEditorController() {
     (
       hasBeatEditableSelection ||
       isEditingPlacedBpm ||
-      isEditingPlacedSv ||
-      (isToolArmed && tool === "sv") ||
+      (isExGarupaEnabled && isEditingPlacedSv) ||
+      (isExGarupaEnabled && isToolArmed && tool === "sv") ||
       (activeSettingsType !== null && activeSettingsType !== "slide")
     );
   const showLaneSetting =
@@ -2425,11 +2456,13 @@ function ChartEditorController() {
   const showDirectionSetting = hasDirectionalNoteSelection || isDirectionalToolSettings;
   const showBpmSetting = !hasLongLineSelection && !hasNoteSelection && activeSettingsType === "bpm";
   const showSvSetting =
+    isExGarupaEnabled &&
     !hasLongLineSelection &&
     !hasNoteSelection &&
     !isEditingPlacedBpm &&
     (isEditingPlacedSv || (!hasBeatEditableSelection && isToolArmed && tool === "sv"));
   const showTimingGroupSetting =
+    isExGarupaEnabled &&
     !hasLongLineSelection &&
     !isEditingPlacedBpm &&
     !isEditingPlacedSv &&
@@ -2439,12 +2472,12 @@ function ChartEditorController() {
       (activeSettingsType !== null && activeSettingsType !== "bpm" && activeSettingsType !== "slide")
     );
   const showSlideSegmentSetting =
-    appOptionSettings.spRhythmNoteEnabled
+    isExGarupaEnabled
     && hasLongLineSelection
     && !hasBeatEditableSelection
     && !showBpmSetting;
   const hideSettingsPanel =
-    (hasLongLineSelection && !appOptionSettings.spRhythmNoteEnabled) ||
+    (hasLongLineSelection && !isExGarupaEnabled) ||
     (
       !hasBeatEditableSelection &&
       !hasLongLineSelection &&
@@ -2892,14 +2925,14 @@ function ChartEditorController() {
     sortBpmEvents,
     sortSvEvents,
     isLastBeatOrderedBpmNegative,
-    spRhythmNoteEnabled: appOptionSettings.spRhythmNoteEnabled,
+    exGarupaEnabled: isExGarupaEnabled,
   });
 
   const { splitLongLineSegment, deleteSelectedLongLineSegment, applyLongLineSettings } = useLongLineActions({
     slideChains,
     notes: interactiveNotes,
     isHabahiroEnabled,
-    spRhythmNoteEnabled: appOptionSettings.spRhythmNoteEnabled,
+    exGarupaEnabled: isExGarupaEnabled,
     setSlideChains,
     setNotes,
     sortNotes,
@@ -3079,6 +3112,7 @@ function ChartEditorController() {
     normalizeBpmEvent,
     createId,
     setBpmEvents,
+    setTimingGroups,
     setSvEvents,
     setToolBpmValue,
     setSingleSelectedNote,
@@ -3466,6 +3500,8 @@ function ChartEditorController() {
     isPasteLaneAnchorEnabled: copiedChartPayload?.laneAnchorEnabled === true,
     applyPasteAtPlacement: applyCopiedPayloadAtPlacement,
     isSvPreviewEnabled,
+    exGarupaEnabled: isExGarupaEnabled,
+    regressChartWithoutExGarupa,
   });
 
   const clearPlaybackTick = useCallback(() => {
@@ -4438,6 +4474,10 @@ function ChartEditorController() {
   }, [applyBpmToolFromPaletteRaw, hidePlaybackGuide, hidePlaybackRuntimeLine, isPlayToolSelected, isPlaybackPlaying, stopPlayback]);
 
   const applySvToolFromPalette = useCallback(() => {
+    if (!isExGarupaEnabled) {
+      setStatusMessage("ExGarupa 模式关闭时不可使用 SV。");
+      return;
+    }
     if (isPlayToolSelected) {
       setIsPlayToolSelected(false);
       hidePlaybackGuide();
@@ -4447,7 +4487,7 @@ function ChartEditorController() {
       }
     }
     applySvToolFromPaletteRaw();
-  }, [applySvToolFromPaletteRaw, hidePlaybackGuide, hidePlaybackRuntimeLine, isPlayToolSelected, isPlaybackPlaying, stopPlayback]);
+  }, [applySvToolFromPaletteRaw, hidePlaybackGuide, hidePlaybackRuntimeLine, isExGarupaEnabled, isPlayToolSelected, isPlaybackPlaying, setStatusMessage, stopPlayback]);
 
   const applyCopyToolFromPalette = useCallback(() => {
     if (isPlayToolSelected) {
@@ -4547,7 +4587,7 @@ function ChartEditorController() {
       openOverlayDialog(
         {
           tone: "warning",
-          message: "关闭“SP节奏图示”后将对当前谱面执行不可逆修改（DirectionalFlick 将回退为 Flick，Slide 中 Hidden 将被清除）。是否继续应用？",
+          message: "关闭“SP节奏图示”后将对当前谱面执行不可逆修改（普通 Directional Flick 将回退为 Flick）。是否继续应用？",
         },
         {
           onConfirm: () => resolve(true),
@@ -4572,18 +4612,36 @@ function ChartEditorController() {
     });
   }, [openOverlayDialog]);
 
+  const requestExGarupaRegressionConfirm = useCallback(() => {
+    return new Promise<boolean>((resolve) => {
+      openOverlayDialog(
+        {
+          tone: "warning",
+          message: "关闭“ExGarupa”后将对当前谱面执行不可逆修改（SV、非 Global Timing Group、无头/无尾 Slide 和扩展 Slide 节点将回退）。是否继续应用？",
+        },
+        {
+          onConfirm: () => resolve(true),
+          onCancel: () => resolve(false),
+        },
+      );
+    });
+  }, [openOverlayDialog]);
+
   const applyAppOptionSettings = useCallback(async (nextDraft: EditorOptionSettings) => {
     const normalizedNext = normalizeEditorOptionSettings(nextDraft);
     const turningOffSpRhythm =
       appOptionSettings.spRhythmNoteEnabled === true
       && normalizedNext.spRhythmNoteEnabled === false;
+    const turningOffExGarupa =
+      appOptionSettings.exGarupaEnabled === true
+      && normalizedNext.exGarupaEnabled === false;
     const turningOnHabahiro =
       appOptionSettings.habahiro === false
       && normalizedNext.habahiro === true;
     const turningOffHabahiro =
       appOptionSettings.habahiro === true
       && normalizedNext.habahiro === false;
-    let nextChartState = { notes, slideChains };
+    let nextChartState: ChartStateLike = { notes, slideChains, svEvents, timingGroups };
     let shouldApplyRegressedChart = false;
 
     if (turningOffSpRhythm) {
@@ -4595,6 +4653,18 @@ function ChartEditorController() {
         }
       }
       nextChartState = regressChartWithoutSpRhythm(nextChartState);
+      shouldApplyRegressedChart = true;
+    }
+
+    if (turningOffExGarupa) {
+      const chartUsesExGarupa = isChartUsingExGarupa(nextChartState);
+      if (chartUsesExGarupa) {
+        const confirmed = await requestExGarupaRegressionConfirm();
+        if (!confirmed) {
+          return false;
+        }
+      }
+      nextChartState = regressChartWithoutExGarupa(nextChartState);
       shouldApplyRegressedChart = true;
     }
 
@@ -4624,7 +4694,16 @@ function ChartEditorController() {
     if (shouldApplyRegressedChart) {
       setNotes(sortNotes(nextChartState.notes));
       setSlideChains(nextChartState.slideChains);
+      if (nextChartState.svEvents) {
+        setSvEvents(nextChartState.svEvents);
+      }
+      if (nextChartState.timingGroups) {
+        setTimingGroups(nextChartState.timingGroups);
+      }
       clearAllSelections();
+      setSelectedTimingGroupId(GLOBAL_TIMING_GROUP_ID);
+      setIsTimingGroupModeEnabled(false);
+      setIsTimingGroupPanelOpen(false);
     }
 
     if (turningOnHabahiro || turningOffHabahiro) {
@@ -4651,12 +4730,17 @@ function ChartEditorController() {
     normalizeEditorOptionSettings,
     notes,
     requestHabahiroRegressionConfirm,
+    requestExGarupaRegressionConfirm,
     requestSpRhythmRegressionConfirm,
     setStatusMessage,
     setNotes,
     setSlideChains,
+    setSvEvents,
+    setTimingGroups,
     slideChains,
     sortNotes,
+    svEvents,
+    timingGroups,
   ]);
 
   useEffect(() => {

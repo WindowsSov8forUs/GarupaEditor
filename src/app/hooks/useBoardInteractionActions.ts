@@ -92,6 +92,7 @@ export function useBoardInteractionActions(params: any) {
     setSelectionDrag,
     selectedNoteIdSet,
     notes,
+    slideChains,
     setSelectionMovePreview,
     clearSelectedNotes,
     selectedNotes,
@@ -101,6 +102,8 @@ export function useBoardInteractionActions(params: any) {
     isPasteLaneAnchorEnabled,
     applyPasteAtPlacement,
     isSvPreviewEnabled,
+    exGarupaEnabled,
+    regressChartWithoutExGarupa,
   } = params;
   const startSidebarResize = (event: MouseEvent<HTMLDivElement>) => {
     if (event.button !== 0) {
@@ -513,14 +516,14 @@ export function useBoardInteractionActions(params: any) {
     const nextChainTimingGroup = resolveChainTimingGroup();
 
     const noteIdSet = new Set(noteIds);
-    setSlideChains((previous: any[]) => {
+    const buildNextChains = (previous: any[]) => {
       const cleaned = previous
         .map((chain) => ({
           ...chain,
           noteIds: chain.noteIds.filter((id: string) => !noteIdSet.has(id)),
         }))
         .filter((chain) => chain.noteIds.length > 0);
-      return [
+      const nextChains = [
         ...cleaned,
         {
           id: createId(),
@@ -528,25 +531,51 @@ export function useBoardInteractionActions(params: any) {
           timingGroup: normalizeNoteTimingGroup(nextChainTimingGroup),
         },
       ];
-    });
-
-    if (noteIds.length >= 3) {
-      const middleIdSet = new Set(noteIds.slice(1, -1));
-      setNotes((previous: ChartNote[]) => {
-        const converted = sortNotes(
-          previous.map((note) =>
+      return nextChains;
+    };
+    const applyNextNotes = (previous: ChartNote[], nextChains: any[]) => {
+      const middleIdSet = noteIds.length >= 3 ? new Set(noteIds.slice(1, -1)) : null;
+      const converted = sortNotes(
+        middleIdSet
+          ? previous.map((note) =>
             middleIdSet.has(note.id) && note.type === "skill"
               ? { ...note, type: "single" as const }
               : note,
-          ),
-        );
-        return isHabahiroEnabled
-          ? applyHabahiroSlideWidthToNoteIds(converted, noteIds)
-          : converted;
-      });
-    } else if (isHabahiroEnabled) {
-      setNotes((previous: ChartNote[]) => applyHabahiroSlideWidthToNoteIds(previous, noteIds));
-    }
+          )
+          : previous,
+      );
+      const regressed = exGarupaEnabled
+        ? { notes: converted, slideChains: nextChains }
+        : regressChartWithoutExGarupa({
+          notes: converted,
+          slideChains: nextChains,
+        });
+      const nextNotes = sortNotes(regressed.notes);
+      return isHabahiroEnabled
+        ? applyHabahiroSlideWidthToNoteIds(nextNotes, noteIds)
+        : nextNotes;
+    };
+
+    setSlideChains((previous: any[]) => {
+      const nextChains = buildNextChains(previous);
+      if (!exGarupaEnabled) {
+        return regressChartWithoutExGarupa({
+          notes: Array.from(noteById.values()),
+          slideChains: nextChains,
+        }).slideChains;
+      }
+      return nextChains;
+    });
+    setNotes((previous: ChartNote[]) => {
+      const baseChains = buildNextChains(slideChains);
+      const nextChains = exGarupaEnabled
+        ? baseChains
+        : regressChartWithoutExGarupa({
+          notes: previous,
+          slideChains: baseChains,
+        }).slideChains;
+      return applyNextNotes(previous, nextChains);
+    });
 
     const tailId = [...noteIds]
       .reverse()
@@ -564,7 +593,9 @@ export function useBoardInteractionActions(params: any) {
     committedSlideRoleByNoteId,
     createId,
     isHabahiroEnabled,
+    exGarupaEnabled,
     noteById,
+    regressChartWithoutExGarupa,
     setIsToolArmed,
     setNotes,
     setSelectedBpmEventId,

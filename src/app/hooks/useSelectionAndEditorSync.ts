@@ -78,7 +78,7 @@ export function useSelectionAndEditorSync(params: any) {
     sortBpmEvents,
     sortSvEvents,
     isLastBeatOrderedBpmNegative,
-    spRhythmNoteEnabled,
+    exGarupaEnabled,
   } = params;
 
   const clearSelectedNotes = useCallback(() => {
@@ -119,7 +119,7 @@ export function useSelectionAndEditorSync(params: any) {
       return { removedCount: 0, hiddenCount: 0 };
     }
 
-    if (!spRhythmNoteEnabled) {
+    if (!exGarupaEnabled) {
       const removeSet = new Set(uniqueIds);
       const removedCount = uniqueIds.reduce((count, id) => (noteById.has(id) ? count + 1 : count), 0);
       if (removedCount === 0) {
@@ -227,7 +227,7 @@ export function useSelectionAndEditorSync(params: any) {
     setSlideChains,
     slideRoleByNoteId,
     sortNotes,
-    spRhythmNoteEnabled,
+    exGarupaEnabled,
   ]);
 
   const setSingleSelectedNote = useCallback((noteId: string | null) => {

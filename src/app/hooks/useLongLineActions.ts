@@ -523,7 +523,7 @@ export function useLongLineActions(params: any) {
     slideChains,
     notes,
     isHabahiroEnabled,
-    spRhythmNoteEnabled,
+    exGarupaEnabled,
     setSlideChains,
     setNotes,
     sortNotes,
@@ -570,7 +570,7 @@ export function useLongLineActions(params: any) {
       if (!startNote || !endNote) {
         return false;
       }
-      const useHiddenBridge = spRhythmNoteEnabled === true;
+      const useHiddenBridge = exGarupaEnabled === true;
       const keepMiddle = useHiddenBridge ? !(options?.deleteMiddle ?? false) : false;
       const split = makeSplit({
         chainNoteIds,
@@ -611,7 +611,7 @@ export function useLongLineActions(params: any) {
       setStatusMessage,
       slideChains,
       sortNotes,
-      spRhythmNoteEnabled,
+      exGarupaEnabled,
     ],
   );
 
