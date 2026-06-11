@@ -603,6 +603,7 @@ export function useBoardInteractionActions(params: any) {
     setSlideBuildCursor,
     setSlideBuildState,
     setSlideChains,
+    slideChains,
     setStatusMessage,
     slideBuildRef,
     sortNotes,

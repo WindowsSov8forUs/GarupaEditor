@@ -3490,6 +3490,7 @@ function ChartEditorController() {
     setSelectionDrag,
     selectedNoteIdSet,
     notes,
+    slideChains,
     setSelectionMovePreview,
     selectedNotes,
     commitSelectedNoteTransform,
