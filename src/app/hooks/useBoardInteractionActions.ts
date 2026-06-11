@@ -9,6 +9,7 @@ import {
 } from "../../chartCore";
 import { isLastBeatOrderedBpmNegative } from "../editorHelpers";
 import { applyHabahiroSlideWidthToNoteIds } from "../habahiroSlideWidth";
+import { canUseHabahiro, canUseSpRhythm, canUseSv, normalizeSlideBuildForMode } from "../modeChartRegression";
 import { cleanupSlideChainsHidden } from "../slideChainCleanup";
 
 export function useBoardInteractionActions(params: any) {
@@ -34,7 +35,7 @@ export function useBoardInteractionActions(params: any) {
     normalizeDirectionalWidth,
     isRhythmWidthEditableType,
     normalizeRhythmWidth,
-    isHabahiroEnabled,
+    modeOptions,
     toolDirectionalWidth,
     toolRhythmWidth,
     normalizeNote,
@@ -92,7 +93,6 @@ export function useBoardInteractionActions(params: any) {
     setSelectionDrag,
     selectedNoteIdSet,
     notes,
-    slideChains,
     setSelectionMovePreview,
     clearSelectedNotes,
     selectedNotes,
@@ -103,7 +103,6 @@ export function useBoardInteractionActions(params: any) {
     applyPasteAtPlacement,
     isSvPreviewEnabled,
     exGarupaEnabled,
-    regressChartWithoutExGarupa,
   } = params;
   const startSidebarResize = (event: MouseEvent<HTMLDivElement>) => {
     if (event.button !== 0) {
@@ -168,16 +167,24 @@ export function useBoardInteractionActions(params: any) {
   ]);
 
   const applyToolFromPalette = useCallback((nextType: NoteType) => {
+    if (isDirectionalNoteType(nextType) && !canUseSpRhythm(modeOptions)) {
+      setStatusMessage("SP rhythm mode is off; Directional Flick is unavailable.");
+      return;
+    }
     switchToolState(nextType);
-  }, [switchToolState]);
+  }, [isDirectionalNoteType, modeOptions, setStatusMessage, switchToolState]);
 
   const applyBpmToolFromPalette = useCallback(() => {
     switchToolState("bpm");
   }, [switchToolState]);
 
   const applySvToolFromPalette = useCallback(() => {
+    if (!canUseSv(modeOptions)) {
+      setStatusMessage("ExGarupa is off; SV is unavailable.");
+      return;
+    }
     switchToolState("sv");
-  }, [switchToolState]);
+  }, [modeOptions, setStatusMessage, switchToolState]);
 
   const applyCopyToolFromPalette = useCallback(() => {
     switchToolState("copy");
@@ -215,7 +222,7 @@ export function useBoardInteractionActions(params: any) {
           width: normalizeDirectionalWidth(toolDirectionalWidth),
         }
         : (
-          isHabahiroEnabled && isRhythmWidthEditableType(noteTool)
+          canUseHabahiro(modeOptions) && isRhythmWidthEditableType(noteTool)
             ? {
               width: normalizeRhythmWidth(toolRhythmWidth),
             }
@@ -439,7 +446,7 @@ export function useBoardInteractionActions(params: any) {
     };
     slideBuildRef.current = next;
     setSlideBuildState(next);
-    if (isHabahiroEnabled) {
+    if (canUseHabahiro(modeOptions)) {
       setNotes((currentNotes: ChartNote[]) => applyHabahiroSlideWidthToNoteIds(currentNotes, nextIds));
     }
     return { appended: true, merged, blocked: false };
@@ -447,7 +454,7 @@ export function useBoardInteractionActions(params: any) {
     committedSlideChainById,
     committedSlideRoleByNoteId,
     createId,
-    isHabahiroEnabled,
+    modeOptions,
     replaceCommittedSlideChainSegments,
     setNotes,
     setSlideBuildState,
@@ -516,70 +523,50 @@ export function useBoardInteractionActions(params: any) {
     const nextChainTimingGroup = resolveChainTimingGroup();
 
     const noteIdSet = new Set(noteIds);
-    const buildNextChains = (previous: any[]) => {
+    const buildNextChains = (previous: any[], normalizedChain: any | null) => {
       const cleaned = previous
         .map((chain) => ({
           ...chain,
           noteIds: chain.noteIds.filter((id: string) => !noteIdSet.has(id)),
         }))
         .filter((chain) => chain.noteIds.length > 0);
-      const nextChains = [
-        ...cleaned,
-        {
-          id: createId(),
-          noteIds,
-          timingGroup: normalizeNoteTimingGroup(nextChainTimingGroup),
-        },
-      ];
-      return nextChains;
+      return normalizedChain ? [...cleaned, normalizedChain] : cleaned;
     };
-    const applyNextNotes = (previous: ChartNote[], nextChains: any[]) => {
-      const middleIdSet = noteIds.length >= 3 ? new Set(noteIds.slice(1, -1)) : null;
-      const converted = sortNotes(
-        middleIdSet
-          ? previous.map((note) =>
-            middleIdSet.has(note.id) && note.type === "skill"
-              ? { ...note, type: "single" as const }
-              : note,
-          )
-          : previous,
+
+    const rawChain = {
+      id: createId(),
+      noteIds,
+      timingGroup: normalizeNoteTimingGroup(nextChainTimingGroup),
+    };
+    const normalizedBuild = normalizeSlideBuildForMode(
+      notes,
+      rawChain,
+      exGarupaEnabled,
+    );
+    const normalizedNoteById = new Map(normalizedBuild.notes.map((note) => [note.id, note] as const));
+    const normalizedNoteIds = normalizedBuild.chain?.noteIds ?? [];
+
+    const applyNextNotes = (previous: ChartNote[]) => {
+      const nextNotes = sortNotes(
+        previous.map((note) => normalizedNoteById.get(note.id) ?? note),
       );
-      const regressed = exGarupaEnabled
-        ? { notes: converted, slideChains: nextChains }
-        : regressChartWithoutExGarupa({
-          notes: converted,
-          slideChains: nextChains,
-        });
-      const nextNotes = sortNotes(regressed.notes);
-      return isHabahiroEnabled
-        ? applyHabahiroSlideWidthToNoteIds(nextNotes, noteIds)
+      return canUseHabahiro(modeOptions)
+        ? applyHabahiroSlideWidthToNoteIds(nextNotes, normalizedNoteIds)
         : nextNotes;
     };
 
     setSlideChains((previous: any[]) => {
-      const nextChains = buildNextChains(previous);
-      if (!exGarupaEnabled) {
-        return regressChartWithoutExGarupa({
-          notes: Array.from(noteById.values()),
-          slideChains: nextChains,
-        }).slideChains;
-      }
-      return nextChains;
+      return buildNextChains(previous, normalizedBuild.chain);
     });
     setNotes((previous: ChartNote[]) => {
-      const baseChains = buildNextChains(slideChains);
-      const nextChains = exGarupaEnabled
-        ? baseChains
-        : regressChartWithoutExGarupa({
-          notes: previous,
-          slideChains: baseChains,
-        }).slideChains;
-      return applyNextNotes(previous, nextChains);
+      return applyNextNotes(previous);
     });
 
-    const tailId = [...noteIds]
+    const selectionNoteIds = normalizedNoteIds.length > 0 ? normalizedNoteIds : noteIds;
+    const tailId = [...selectionNoteIds]
       .reverse()
-      .find((id) => noteById.get(id)?.type !== "hidden") ?? (noteIds[noteIds.length - 1] ?? noteIds[0]);
+      .find((id) => (normalizedNoteById.get(id) ?? noteById.get(id))?.type !== "hidden")
+      ?? (selectionNoteIds[selectionNoteIds.length - 1] ?? selectionNoteIds[0]);
     setSingleSelectedNote(tailId);
     clearSelectedBpmEvents();
     setSelectedBpmEventId(null);
@@ -592,10 +579,10 @@ export function useBoardInteractionActions(params: any) {
     committedSlideChainById,
     committedSlideRoleByNoteId,
     createId,
-    isHabahiroEnabled,
+    modeOptions,
     exGarupaEnabled,
     noteById,
-    regressChartWithoutExGarupa,
+    notes,
     setIsToolArmed,
     setNotes,
     setSelectedBpmEventId,
@@ -603,12 +590,12 @@ export function useBoardInteractionActions(params: any) {
     setSlideBuildCursor,
     setSlideBuildState,
     setSlideChains,
-    slideChains,
     setStatusMessage,
     slideBuildRef,
     sortNotes,
     suppressNextBoardClickRef,
     suppressNextNoteClickRef,
+    toolTimingGroup,
     toFinite,
   ]);
 
@@ -706,6 +693,10 @@ export function useBoardInteractionActions(params: any) {
     }
 
     if (tool === "sv") {
+      if (!canUseSv(modeOptions)) {
+        setStatusMessage("ExGarupa is off; SV is unavailable.");
+        return;
+      }
       placeSvEvent(target.beat);
       return;
     }
@@ -714,7 +705,7 @@ export function useBoardInteractionActions(params: any) {
       return;
     }
 
-    const nextType = tool;
+    const nextType = isDirectionalNoteType(tool) && !canUseSpRhythm(modeOptions) ? "flick" : tool;
     const isBatchTarget = selectedNoteIds.length > 1 && selectedNoteIdSet.has(target.id);
 
     if (isBatchTarget) {
@@ -737,7 +728,7 @@ export function useBoardInteractionActions(params: any) {
                 : normalizeDirectionalWidth(toolDirectionalWidth),
             }
             : (
-              isHabahiroEnabled && isRhythmWidthEditableType(nextType)
+              canUseHabahiro(modeOptions) && isRhythmWidthEditableType(nextType)
                 ? {
                   width: isRhythmWidthEditableType(note.type)
                     ? normalizeRhythmWidth(note.width)
@@ -792,7 +783,7 @@ export function useBoardInteractionActions(params: any) {
             : normalizeDirectionalWidth(toolDirectionalWidth),
         }
         : (
-          isHabahiroEnabled && isRhythmWidthEditableType(nextType)
+          canUseHabahiro(modeOptions) && isRhythmWidthEditableType(nextType)
             ? {
               width: isRhythmWidthEditableType(target.type)
                 ? normalizeRhythmWidth(target.width)
@@ -1048,6 +1039,10 @@ export function useBoardInteractionActions(params: any) {
     }
 
     if (tool === "sv") {
+      if (!canUseSv(modeOptions)) {
+        setStatusMessage("ExGarupa is off; SV is unavailable.");
+        return;
+      }
       placeSvEvent(placement.beat);
       return;
     }

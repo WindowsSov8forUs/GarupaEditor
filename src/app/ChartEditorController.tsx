@@ -57,6 +57,9 @@ import {
   usePlayfieldSpriteRendering,
 } from "./hooks/useSpriteRenderingHelpers";
 import {
+  canUseExGarupa,
+  canUseHabahiro,
+  canUseSpRhythm,
   isChartUsingHabahiro,
   isChartUsingExGarupa,
   isChartUsingSpRhythm,
@@ -583,6 +586,9 @@ function ChartEditorController() {
   const isSvPreviewEnabledRef = useRef(false);
   const svPreviewTimeSecRef = useRef(0);
   const [copiedChartPayload, setCopiedChartPayload] = useState<CopiedChartPayload | null>(null);
+  const canUseSpRhythmMode = canUseSpRhythm(appOptionSettings);
+  const isHabahiroEnabled = canUseHabahiro(appOptionSettings);
+  const isExGarupaEnabled = canUseExGarupa(appOptionSettings);
   const [cursorPreview, setCursorPreviewState] = useState<CursorPreviewState | null>(null);
   const [isPlayToolSelected, setIsPlayToolSelected] = useState(false);
   const [isPlaybackPlaying, setIsPlaybackPlaying] = useState(false);
@@ -823,7 +829,7 @@ function ChartEditorController() {
   const setNotes = useCallback((nextAction: SetStateAction<ChartNote[]>) => {
     setNotesState((previous) => {
       const rawNext = resolveStateAction(nextAction, previous);
-      const next = appOptionSettings.habahiro
+      const next = isHabahiroEnabled
         ? applyHabahiroSlideWidths(
           rawNext,
           slideChainsRef.current,
@@ -835,7 +841,7 @@ function ChartEditorController() {
       }
       return next;
     });
-  }, [appOptionSettings.habahiro, pushUndoSnapshotIfNeeded, resolveStateAction]);
+  }, [isHabahiroEnabled, pushUndoSnapshotIfNeeded, resolveStateAction]);
 
   const setSlideChains = useCallback((nextAction: SetStateAction<SlideChain[]>) => {
     setSlideChainsState((previous) => {
@@ -848,11 +854,11 @@ function ChartEditorController() {
   }, [pushUndoSnapshotIfNeeded, resolveStateAction]);
 
   useEffect(() => {
-    if (!appOptionSettings.habahiro || slideChains.length === 0) {
+    if (!isHabahiroEnabled || slideChains.length === 0) {
       return;
     }
     setNotesState((previous) => applyHabahiroSlideWidths(previous, slideChains));
-  }, [appOptionSettings.habahiro, slideChains]);
+  }, [isHabahiroEnabled, slideChains]);
 
   const setBpmEvents = useCallback((nextAction: SetStateAction<ChartBpmEvent[]>) => {
     setBpmEventsState((previous) => {
@@ -905,7 +911,6 @@ function ChartEditorController() {
     ? selectedTimingGroupId
     : GLOBAL_TIMING_GROUP_ID;
   const toolTimingGroup = activeTimingGroupId;
-  const isExGarupaEnabled = appOptionSettings.exGarupaEnabled === true;
   const setTimingGroupPanelOpenForMode = useCallback((value: boolean) => {
     if (value && !isExGarupaEnabled) {
       setStatusMessage("ExGarupa 模式关闭时不可使用 Timing Group。");
@@ -2085,7 +2090,7 @@ function ChartEditorController() {
               ? previous.filter((note) => !overlappedExistingNoteIds.has(note.id))
               : previous;
           const nextNotes = sortNotes([...remainedNotes, ...pastedNotes]);
-          return appOptionSettings.habahiro
+          return isHabahiroEnabled
             ? applyHabahiroSlideWidths(nextNotes, pastedSlideChains)
             : nextNotes;
         });
@@ -2138,7 +2143,7 @@ function ChartEditorController() {
       beatDivision,
       copiedChartPayload,
       createId,
-      appOptionSettings.habahiro,
+      isHabahiroEnabled,
       approxEq,
       metadata.bpm,
       normalizeBaseBpmForWrite,
@@ -2399,7 +2404,6 @@ function ChartEditorController() {
         ? tool
         : null
     );
-  const isHabahiroEnabled = appOptionSettings.habahiro === true;
   const isDirectionalToolSettings =
     !hasBeatEditableSelection &&
     !hasLongLineSelection &&
@@ -2738,7 +2742,7 @@ function ChartEditorController() {
     const notePositionKey = (lane: number, beat: number): string => `${lane.toFixed(6)}|${beat.toFixed(6)}`;
     const mirrorLaneByNote = (note: Pick<ChartNote, "type" | "width">, lane: number): number => {
       const mirrored = toFixed6(2 * MIRROR_AXIS_LANE - lane);
-      if (appOptionSettings.habahiro && !isDirectionalNoteType(note.type)) {
+      if (isHabahiroEnabled && !isDirectionalNoteType(note.type)) {
         const span = normalizeRhythmWidth(note.width);
         return toFixed6(mirrored - (span - 1));
       }
@@ -2835,7 +2839,7 @@ function ChartEditorController() {
 
     setStatusMessage("已按 lane 3 轴镜像翻转选中音符。");
   }, [
-    appOptionSettings.habahiro,
+    isHabahiroEnabled,
     isDirectionalNoteType,
     normalizeNote,
     normalizeRhythmWidth,
@@ -2926,6 +2930,7 @@ function ChartEditorController() {
     sortSvEvents,
     isLastBeatOrderedBpmNegative,
     exGarupaEnabled: isExGarupaEnabled,
+    modeOptions: appOptionSettings,
   });
 
   const { splitLongLineSegment, deleteSelectedLongLineSegment, applyLongLineSettings } = useLongLineActions({
@@ -3502,7 +3507,7 @@ function ChartEditorController() {
     applyPasteAtPlacement: applyCopiedPayloadAtPlacement,
     isSvPreviewEnabled,
     exGarupaEnabled: isExGarupaEnabled,
-    regressChartWithoutExGarupa,
+    modeOptions: appOptionSettings,
   });
 
   const clearPlaybackTick = useCallback(() => {
@@ -4631,16 +4636,16 @@ function ChartEditorController() {
   const applyAppOptionSettings = useCallback(async (nextDraft: EditorOptionSettings) => {
     const normalizedNext = normalizeEditorOptionSettings(nextDraft);
     const turningOffSpRhythm =
-      appOptionSettings.spRhythmNoteEnabled === true
+      canUseSpRhythmMode
       && normalizedNext.spRhythmNoteEnabled === false;
     const turningOffExGarupa =
-      appOptionSettings.exGarupaEnabled === true
+      isExGarupaEnabled
       && normalizedNext.exGarupaEnabled === false;
     const turningOnHabahiro =
-      appOptionSettings.habahiro === false
+      !isHabahiroEnabled
       && normalizedNext.habahiro === true;
     const turningOffHabahiro =
-      appOptionSettings.habahiro === true
+      isHabahiroEnabled
       && normalizedNext.habahiro === false;
     let nextChartState: ChartStateLike = { notes, slideChains, svEvents, timingGroups };
     let shouldApplyRegressedChart = false;
@@ -4723,8 +4728,9 @@ function ChartEditorController() {
     setStatusMessage("已应用选项设置。");
     return true;
   }, [
-    appOptionSettings.habahiro,
-    appOptionSettings.spRhythmNoteEnabled,
+    canUseSpRhythmMode,
+    isHabahiroEnabled,
+    isExGarupaEnabled,
     buildHabahiroSkinSelection,
     buildStandardRhythmSkinSelection,
     clearAllSelections,
@@ -4749,7 +4755,7 @@ function ChartEditorController() {
       return;
     }
     const skinIsHabahiro = isHabahiroRhythmRipName(skinSelection.rhythmRipName);
-    if (appOptionSettings.habahiro && !skinIsHabahiro) {
+    if (isHabahiroEnabled && !skinIsHabahiro) {
       syncingHabahiroSkinRef.current = true;
       void applyBestdoriSkinSelectionRef.current(buildHabahiroSkinSelection(), true, false)
         .finally(() => {
@@ -4757,7 +4763,7 @@ function ChartEditorController() {
         });
       return;
     }
-    if (!appOptionSettings.habahiro && skinIsHabahiro) {
+    if (!isHabahiroEnabled && skinIsHabahiro) {
       syncingHabahiroSkinRef.current = true;
       void applyBestdoriSkinSelectionRef.current(buildStandardRhythmSkinSelection(), true, false)
         .finally(() => {
@@ -4765,7 +4771,7 @@ function ChartEditorController() {
         });
     }
   }, [
-    appOptionSettings.habahiro,
+    isHabahiroEnabled,
     buildHabahiroSkinSelection,
     buildStandardRhythmSkinSelection,
     skinSelection.rhythmRipName,
@@ -4866,6 +4872,19 @@ function ChartEditorController() {
     stopPlayback,
     stopPlaybackBgmSource,
   ]);
+
+  useEffect(() => {
+    if (!isExGarupaEnabled) {
+      setIsTimingGroupPanelOpen(false);
+      setIsTimingGroupModeEnabled(false);
+      setSelectedTimingGroupId(GLOBAL_TIMING_GROUP_ID);
+      setSelectedSvEventIds([]);
+      setSelectedSvEventId(null);
+      if (tool === "sv") {
+        setIsToolArmed(false);
+      }
+    }
+  }, [isExGarupaEnabled, setSelectedSvEventId, setSelectedSvEventIds, tool]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -5386,7 +5405,7 @@ function ChartEditorController() {
     isSimultaneousLineEnabled: appOptionSettings.simultaneousLineEnabled,
     setSelectedBpmEventIds,
     onLongLineContextAction: (segmentGroupId: string) =>
-      splitLongLineSegment(segmentGroupId, { deleteMiddle: !appOptionSettings.spRhythmNoteEnabled }),
+      splitLongLineSegment(segmentGroupId, { deleteMiddle: !isExGarupaEnabled }),
   });
   useCanvasPlayfieldBackend({
     enabled: isCanvasRenderBackend && isSkinReady && isCanvasResourceReady,
@@ -5755,7 +5774,7 @@ function ChartEditorController() {
           effectEnable: appOptionSettings.clickEffectEnabled,
           mvMode: playbackMvMode,
           mvAlphaPercent: playbackMvAlpha,
-          habahiro: appOptionSettings.habahiro,
+          habahiro: isHabahiroEnabled,
         },
         audio: audioPayload,
         skin: {
@@ -5969,7 +5988,7 @@ function ChartEditorController() {
         stepPlaybackPosition,
         timingGroupIds,
         isTimingGroupPanelOpen,
-        setIsTimingGroupPanelOpen,
+        setIsTimingGroupPanelOpen: setTimingGroupPanelOpenForMode,
         selectedTimingGroupId,
         setSelectedTimingGroupId,
         isTimingGroupModeActive,

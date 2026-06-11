@@ -8,6 +8,7 @@ import {
 } from "../../chartCore";
 import { type SlideBuildState } from "../editorHelpers";
 import { buildSelectionMoveOffsetMap } from "../slideHiddenMoveOffsets";
+import { canUseSpRhythm } from "../modeChartRegression";
 import { cleanupSlideChainsHidden } from "../slideChainCleanup";
 
 export function useSelectionAndEditorSync(params: any) {
@@ -78,7 +79,7 @@ export function useSelectionAndEditorSync(params: any) {
     sortBpmEvents,
     sortSvEvents,
     isLastBeatOrderedBpmNegative,
-    exGarupaEnabled,
+    modeOptions,
   } = params;
 
   const clearSelectedNotes = useCallback(() => {
@@ -119,7 +120,7 @@ export function useSelectionAndEditorSync(params: any) {
       return { removedCount: 0, hiddenCount: 0 };
     }
 
-    if (!exGarupaEnabled) {
+    if (!canUseSpRhythm(modeOptions)) {
       const removeSet = new Set(uniqueIds);
       const removedCount = uniqueIds.reduce((count, id) => (noteById.has(id) ? count + 1 : count), 0);
       if (removedCount === 0) {
@@ -227,7 +228,7 @@ export function useSelectionAndEditorSync(params: any) {
     setSlideChains,
     slideRoleByNoteId,
     sortNotes,
-    exGarupaEnabled,
+    modeOptions,
   ]);
 
   const setSingleSelectedNote = useCallback((noteId: string | null) => {

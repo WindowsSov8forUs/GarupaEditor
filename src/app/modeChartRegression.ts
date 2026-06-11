@@ -5,6 +5,7 @@ import {
   type ChartNote,
   type ChartSvEvent,
   type ChartTimingGroupMap,
+  type EditorOptionSettings,
 } from "../chartCore";
 import type { SlideChain } from "./editorHelpers";
 
@@ -13,6 +14,13 @@ export type ChartStateLike = {
   slideChains: SlideChain[];
   svEvents?: ChartSvEvent[];
   timingGroups?: ChartTimingGroupMap;
+};
+
+export type SlideNodeRole = "head" | "middle" | "tail";
+
+export type NormalizedSlideBuild = {
+  notes: ChartNote[];
+  chain: SlideChain | null;
 };
 
 function normalizeNoteWidth(value: unknown): number {
@@ -35,6 +43,126 @@ function degradeDirectionalToFlick(note: ChartNote): ChartNote {
     ...note,
     type: "flick",
     width: 1,
+  };
+}
+
+type ModeOptionInput = Pick<EditorOptionSettings, "spRhythmNoteEnabled" | "habahiro" | "exGarupaEnabled">;
+
+export function canUseSpRhythm(options: Pick<ModeOptionInput, "spRhythmNoteEnabled">): boolean {
+  return options.spRhythmNoteEnabled === true;
+}
+
+export function canUseHabahiro(options: Pick<ModeOptionInput, "habahiro">): boolean {
+  return options.habahiro === true;
+}
+
+export function canUseExGarupa(options: Pick<ModeOptionInput, "exGarupaEnabled">): boolean {
+  return options.exGarupaEnabled === true;
+}
+
+export function canUseSv(options: Pick<ModeOptionInput, "exGarupaEnabled">): boolean {
+  return canUseExGarupa(options);
+}
+
+export function canUseTimingGroup(options: Pick<ModeOptionInput, "exGarupaEnabled">): boolean {
+  return canUseExGarupa(options);
+}
+
+export function normalizeSlideNodeForMode(
+  note: ChartNote,
+  role: SlideNodeRole,
+  exGarupaEnabled: boolean,
+): ChartNote {
+  if (exGarupaEnabled) {
+    return note;
+  }
+
+  if (role === "head" && (note.type === "flick" || isDirectionalType(note.type))) {
+    return {
+      ...note,
+      type: "single",
+      width: normalizeNoteWidth(note.width),
+      timingGroup: undefined,
+    };
+  }
+
+  if (role === "middle" && note.type !== "single" && note.type !== "hidden") {
+    return {
+      ...note,
+      type: "single",
+      width: normalizeNoteWidth(note.width),
+      timingGroup: undefined,
+    };
+  }
+
+  return {
+    ...note,
+    timingGroup: undefined,
+  };
+}
+
+export function normalizeSlideBuildForMode(
+  notes: ChartNote[],
+  chain: SlideChain,
+  exGarupaEnabled: boolean,
+): NormalizedSlideBuild {
+  if (exGarupaEnabled) {
+    return {
+      notes,
+      chain,
+    };
+  }
+
+  const noteById = new Map(notes.map((note) => [note.id, note] as const));
+  const existingIds = chain.noteIds.filter((id) => noteById.has(id));
+  const firstVisible = existingIds.findIndex((id) => noteById.get(id)?.type !== "hidden");
+  if (firstVisible < 0) {
+    return {
+      notes,
+      chain: null,
+    };
+  }
+
+  let lastVisible = -1;
+  for (let index = existingIds.length - 1; index >= 0; index -= 1) {
+    if (noteById.get(existingIds[index])?.type !== "hidden") {
+      lastVisible = index;
+      break;
+    }
+  }
+  if (lastVisible < firstVisible) {
+    return {
+      notes,
+      chain: null,
+    };
+  }
+
+  const keptIds = existingIds.slice(firstVisible, lastVisible + 1);
+  if (keptIds.filter((id) => noteById.get(id)?.type !== "hidden").length < 2) {
+    return {
+      notes,
+      chain: null,
+    };
+  }
+
+  const keptIdSet = new Set(keptIds);
+  const roleById = new Map<string, SlideNodeRole>();
+  keptIds.forEach((id, index) => {
+    roleById.set(id, index === 0 ? "head" : index === keptIds.length - 1 ? "tail" : "middle");
+  });
+
+  return {
+    notes: notes.map((note) => {
+      if (!keptIdSet.has(note.id)) {
+        return note;
+      }
+      return normalizeSlideNodeForMode(note, roleById.get(note.id) ?? "middle", false);
+    }),
+    chain: {
+      ...chain,
+      noteIds: keptIds,
+      timingGroup: normalizeNoteTimingGroup(GLOBAL_TIMING_GROUP_ID),
+    },
   };
 }
 
