@@ -40,10 +40,13 @@ import {
   convertCurrentChartJsonToBestdoriV2,
 } from "../../chartFormatConverter";
 import {
+  isChartUsingExGarupa,
   isChartUsingHabahiro,
   isChartUsingSpRhythm,
+  regressChartWithoutExGarupa,
   regressChartWithoutHabahiro,
   regressChartWithoutSpRhythm,
+  type ChartStateLike,
 } from "../modeChartRegression";
 import { applyHabahiroSlideWidths } from "../habahiroSlideWidth";
 import {
@@ -81,6 +84,7 @@ type ShiftedSvItem = {
 type AppliedChartJsonSummary = {
   visibleNoteCount: number;
   beatOffset: number;
+  regressedExGarupa: boolean;
   regressedSpRhythm: boolean;
   regressedHabahiro: boolean;
 };
@@ -155,6 +159,7 @@ export function useEditorIoAndShortcuts(params: any) {
     setMetadata,
     createId,
     setBpmEvents,
+    setTimingGroups,
     setSvEvents,
     setToolBpmValue,
     setSingleSelectedNote,
@@ -1208,12 +1213,18 @@ export function useEditorIoAndShortcuts(params: any) {
     }
     const nextSvEvents = sortSvEvents(Array.from(dedupedSvByGroupBeat.values()));
 
+    const shouldRegressExGarupaOnImport = appOptionSettings.exGarupaEnabled === false;
     const shouldRegressSpRhythmOnImport = appOptionSettings.spRhythmNoteEnabled === false;
     const shouldRegressHabahiroOnImport = appOptionSettings.habahiro === false;
-    const nextChartState = { notes: nextNotes, slideChains: nextSlideChains };
-    let regressedChartState = nextChartState;
+    const nextChartState = { notes: nextNotes, slideChains: nextSlideChains, svEvents: nextSvEvents };
+    let regressedChartState: ChartStateLike = nextChartState;
+    let regressedExGarupa = false;
     let regressedSpRhythm = false;
     let regressedHabahiro = false;
+    if (shouldRegressExGarupaOnImport && isChartUsingExGarupa(regressedChartState)) {
+      regressedChartState = regressChartWithoutExGarupa(regressedChartState);
+      regressedExGarupa = true;
+    }
     if (shouldRegressSpRhythmOnImport && isChartUsingSpRhythm(regressedChartState)) {
       regressedChartState = regressChartWithoutSpRhythm(regressedChartState);
       regressedSpRhythm = true;
@@ -1223,6 +1234,7 @@ export function useEditorIoAndShortcuts(params: any) {
       regressedHabahiro = true;
     }
     const importedSlideChains = regressedChartState.slideChains;
+    const importedSvEvents = regressedChartState.svEvents ?? nextSvEvents;
     const importedNotes = sortNotes(
       appOptionSettings.habahiro
         ? applyHabahiroSlideWidths(regressedChartState.notes, importedSlideChains)
@@ -1233,7 +1245,10 @@ export function useEditorIoAndShortcuts(params: any) {
     setNotes(importedNotes);
     setSlideChains(importedSlideChains);
     setBpmEvents(nextBpmEvents);
-    setSvEvents(nextSvEvents);
+    setSvEvents(importedSvEvents);
+    if (regressedChartState.timingGroups && typeof setTimingGroups === "function") {
+      setTimingGroups(regressedChartState.timingGroups);
+    }
     setToolBpmValue(baseBpm);
     setSingleSelectedNote(importedNotes.find((note: ChartNote) => note.type !== "hidden")?.id ?? null);
     clearSelectedBpmEvents();
@@ -1247,6 +1262,7 @@ export function useEditorIoAndShortcuts(params: any) {
     return {
       visibleNoteCount,
       beatOffset,
+      regressedExGarupa,
       regressedSpRhythm,
       regressedHabahiro,
     };

@@ -76,6 +76,7 @@ type SidebarPanelProps = {
   isCoverLoadFailed: boolean;
   setIsCoverLoadFailed: (value: boolean) => void;
   isSkinReady: boolean;
+  isExGarupaEnabled: boolean;
   isToolArmed: boolean;
   tool: EditorTool;
   applyToolFromPalette: (nextType: NoteType) => void;
@@ -214,6 +215,7 @@ export const SidebarPanel = memo(function SidebarPanel({
   isCoverLoadFailed,
   setIsCoverLoadFailed,
   isSkinReady,
+  isExGarupaEnabled,
   isToolArmed,
   tool,
   applyToolFromPalette,
@@ -626,6 +628,7 @@ export const SidebarPanel = memo(function SidebarPanel({
                 <button
                   type="button"
                   className={`tool-icon-button bpm-tool-button ${isToolArmed && tool === "sv" ? "active" : ""}`}
+                  disabled={!isExGarupaEnabled}
                   {...buildMouseActionHandlers(activateSvTool)}
                   title="SV"
                 >
@@ -636,6 +639,7 @@ export const SidebarPanel = memo(function SidebarPanel({
                 <button
                   type="button"
                   className={`tool-icon-button bpm-tool-button ${isTimingGroupPanelOpen ? "active" : ""}`}
+                  disabled={!isExGarupaEnabled}
                   {...buildMouseActionHandlers(() => setIsTimingGroupPanelOpen(!isTimingGroupPanelOpen))}
                   title="时间组"
                 >

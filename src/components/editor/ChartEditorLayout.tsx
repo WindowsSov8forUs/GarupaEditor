@@ -1207,6 +1207,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
           isCoverLoadFailed={isCoverLoadFailed}
           setIsCoverLoadFailed={setIsCoverLoadFailed}
           isSkinReady={isSkinReady}
+          isExGarupaEnabled={vm.appOptionSettings.exGarupaEnabled === true}
           isToolArmed={isToolArmed}
           tool={tool}
           applyToolFromPalette={applyToolFromPalette}
