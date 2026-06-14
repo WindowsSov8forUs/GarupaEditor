@@ -271,6 +271,7 @@ export function useCanvasPlayfieldBackend(params: {
   noteCanvasRef: RefObject<HTMLCanvasElement | null>;
   playbackCanvasRef: RefObject<HTMLCanvasElement | null>;
   playfieldRef: RefObject<HTMLDivElement | null>;
+  playfieldBoardRef: RefObject<HTMLDivElement | null>;
   boardWidth: number;
   boardHeight: number;
   laneValues: number[];
@@ -309,6 +310,7 @@ export function useCanvasPlayfieldBackend(params: {
     noteCanvasRef,
     playbackCanvasRef,
     playfieldRef,
+    playfieldBoardRef,
     boardWidth,
     boardHeight,
     laneValues,
@@ -1030,8 +1032,16 @@ export function useCanvasPlayfieldBackend(params: {
       context.font = "12px 'TTShinGoM', 'GB18030', sans-serif";
       context.textAlign = "left";
       context.textBaseline = "alphabetic";
-      const viewportLeftOnBoard = -Math.max(0, (viewportWidth - logicalBoardWidth) / 2);
-      const bpmLabelX = boardXOffset + viewportLeftOnBoard + 8;
+      const boardElement = playfieldBoardRef.current;
+      let timelineLabelX = 8;
+      if (playfield && boardElement) {
+        const playfieldRect = playfield.getBoundingClientRect();
+        const boardRect = boardElement.getBoundingClientRect();
+        const boardScale = boardRect.width > 0 ? logicalBoardWidth / boardRect.width : 1;
+        const viewportLeftInBoard = (playfieldRect.left - boardRect.left) * boardScale;
+        timelineLabelX = 8 + Math.min(0, viewportLeftInBoard);
+      }
+      const bpmLabelX = boardXOffset + timelineLabelX;
       for (const line of snapshot.bpmVisualLines) {
         const yWorld = Number.isFinite(line.y) ? Number(line.y) : snapshot.beatToY(line.beat);
         if (yWorld < windowTop - 24 || yWorld > windowBottom + 24) {
