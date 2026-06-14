@@ -1788,6 +1788,7 @@ button.apply-icon-button:not(.note-token):not(.bpm-label-button):not(.bpm-line-b
 }
 
 .playfield-scroll {
+  position: relative;
   flex: 1;
   min-height: 0;
   overflow-y: auto;
@@ -1827,13 +1828,38 @@ button.apply-icon-button:not(.note-token):not(.bpm-label-button):not(.bpm-line-b
   pointer-events: none;
 }
 
+.playfield-host.is-tool-armed .bpm-line-button,
+.playfield-scroll.is-tool-armed .bpm-line-button,
+.playfield-scroll.is-marquee-selecting .bpm-line-button {
+  pointer-events: none;
+}
+
 .bpm-overlay-layer {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   pointer-events: none;
-  z-index: 5;
+  z-index: 1;
+}
+
+.bpm-viewport-hitbox-layer {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.playfield-board-scale-layer {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.playfield-board-visual-layer {
+  position: relative;
+  transform-origin: top left;
 }
 
 .playfield-board {
@@ -2100,31 +2126,35 @@ button.apply-icon-button:not(.note-token):not(.bpm-label-button):not(.bpm-line-b
 .bpm-label-button {
   position: absolute;
   top: -16px;
-  left: 8px;
+  left: var(--timeline-label-x, 8px);
   width: 210px;
   padding: 0;
   border: none;
   background: transparent;
-  pointer-events: auto;
+  pointer-events: none;
   text-align: left;
   color: rgb(217, 13, 35);
   font-size: 0.72rem;
   line-height: 1.1;
   font-weight: 500;
   text-shadow: none;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .bpm-line-button {
   position: absolute;
   left: 0;
   right: 0;
-  top: -4px;
-  height: 8px;
+  top: -9px;
+  height: 18px;
   padding: 0;
   border: none;
   border-radius: 0;
   background: transparent;
   pointer-events: auto;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .bpm-line {
@@ -2144,12 +2174,26 @@ button.apply-icon-button:not(.note-token):not(.bpm-label-button):not(.bpm-line-b
   opacity: 0;
 }
 
+.bpm-viewport-hitbox-layer .bpm-line-button.canvas-hitbox .bpm-line {
+  opacity: 0;
+}
+
 .playfield-host.canvas-render-backend .bpm-label-button.canvas-hitbox {
   color: transparent;
   text-shadow: none;
 }
 
+.bpm-viewport-hitbox-layer .bpm-label-button.canvas-hitbox {
+  color: transparent;
+  text-shadow: none;
+}
+
 .playfield-host.canvas-render-backend .bpm-marker.sv-marker.non-global .bpm-label-button.canvas-hitbox {
+  color: transparent;
+  text-shadow: none;
+}
+
+.bpm-viewport-hitbox-layer .bpm-marker.sv-marker.non-global .bpm-label-button.canvas-hitbox {
   color: transparent;
   text-shadow: none;
 }
@@ -3675,6 +3719,117 @@ button.export-tag-candidate-button:not(.note-token):not(.bpm-label-button):not(.
   border: 1px solid var(--panel-border);
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.68);
+}
+
+@media (orientation: landscape) {
+  .app-shell.is-mobile-runtime .workspace {
+    --mobile-sidebar-width: clamp(230px, 36vw, 330px);
+    display: flex;
+    position: relative;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+    align-items: stretch;
+  }
+
+  .app-shell.is-mobile-runtime .workspace-divider {
+    display: block;
+    flex: 0 0 12px;
+  }
+
+  .app-shell.is-mobile-runtime .sidebar {
+    position: relative;
+    z-index: 24;
+    width: var(--mobile-sidebar-width);
+    flex: 0 0 var(--mobile-sidebar-width);
+    min-width: var(--mobile-sidebar-width);
+    max-width: var(--mobile-sidebar-width);
+    height: 100%;
+    max-height: none;
+    padding: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    transition:
+      flex-basis 160ms ease,
+      width 160ms ease,
+      min-width 160ms ease,
+      max-width 160ms ease,
+      opacity 120ms ease;
+  }
+
+  .app-shell.is-mobile-runtime .editor-panel {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .app-shell.is-mobile-runtime .playfield-scroll {
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+  }
+
+  .app-shell.is-mobile-runtime .playfield-host {
+    justify-content: center;
+    padding-inline: 4px;
+  }
+
+  .app-shell.is-mobile-runtime .playfield-board-visual-layer {
+    transform: scale(var(--mobile-board-scale, 1));
+  }
+
+  .app-shell.is-mobile-runtime .timeline-strip {
+    display: none;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 520px) {
+  .app-shell.is-mobile-runtime {
+    padding: max(6px, env(safe-area-inset-top)) 8px max(6px, env(safe-area-inset-bottom));
+    gap: 6px;
+  }
+
+  .app-shell.is-mobile-runtime .command-bar {
+    --command-control-size: 34px;
+    --command-control-gap: 4px;
+    align-items: center;
+    gap: 6px;
+    flex: 0 0 auto;
+  }
+
+  .app-shell.is-mobile-runtime .command-group {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .app-shell.is-mobile-runtime .command-group::-webkit-scrollbar {
+    display: none;
+  }
+
+  .app-shell.is-mobile-runtime .command-group-right {
+    flex: 0 0 auto;
+    margin-left: 0;
+  }
+
+  .app-shell.is-mobile-runtime .command-user-bar {
+    display: none;
+  }
+
+  .app-shell.is-mobile-runtime .command-icon-button > img,
+  .app-shell.is-mobile-runtime .command-icon-button > svg {
+    width: 21px;
+    height: 21px;
+  }
+
+  .app-shell.is-mobile-runtime .playfield-scroll {
+    touch-action: pan-y pinch-zoom;
+  }
+
+  .app-shell.is-mobile-runtime .playfield-host {
+    width: 100%;
+  }
 }
 
 .static-render-strip {

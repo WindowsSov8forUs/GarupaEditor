@@ -9,6 +9,7 @@ import { DownloadProgressModal } from "../DownloadProgressModal";
 import { OverlayDialogModal } from "../OverlayDialogModal";
 import { SkinSettingsModal } from "../SkinSettingsModal";
 import { bestdoriGetMe, bestdoriLogin } from "../../services/bestdori/api";
+import { isMobileRuntime } from "../../app/mobileRuntime";
 import { SidebarPanel } from "./SidebarPanel";
 import { TimelineStrip } from "./TimelineStrip";
 
@@ -18,6 +19,9 @@ type ChartEditorLayoutProps = {
 
 const CANVAS_INTERACTION_OVERSCAN_PX = 240;
 const CANVAS_INTERACTION_SNAP_PX = 96;
+const MOBILE_BOARD_SIDE_PADDING_PX = 16;
+const MOBILE_BOARD_MIN_SCALE = 0.65;
+const MOBILE_BOARD_MAX_SCALE = 8;
 
 function isHalfBeatAligned(value: number): boolean {
   if (!Number.isFinite(value)) {
@@ -334,6 +338,10 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     noteVisualScale,
     copiedChartPayload,
   } = vm;
+  const mobileRuntime = isMobileRuntime();
+  const [playfieldViewportWidth, setPlayfieldViewportWidth] = useState(0);
+  const [playfieldScrollTop, setPlayfieldScrollTop] = useState(0);
+  const [timelineLabelX, setTimelineLabelX] = useState(8);
   const rhythmSkinTypes = bestdoriSkinCatalogOptions?.rhythm ?? RHYTHM_SKIN_TYPES;
   const habahiroRhythmSkinTypes = bestdoriSkinCatalogOptions?.habahiroRhythm ?? HABAHIRO_RHYTHM_SKIN_TYPES;
   const directionalSkinTypes = bestdoriSkinCatalogOptions?.directional ?? DIRECTIONAL_SKIN_TYPES;
@@ -492,6 +500,58 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         : undefined
     );
   const canvasPreviewTokenClassName = `note-token has-sprite preview-token ${canvasPreviewLayers?.overlay ? "composite" : ""} ${canvasPreviewIsDirectional ? "directional" : ""}`;
+  useEffect(() => {
+    const playfield = playfieldRef.current;
+    if (!playfield) {
+      return;
+    }
+
+    const updatePlayfieldMeasurements = () => {
+      setPlayfieldViewportWidth(playfield.clientWidth);
+      const board = playfieldBoardRef.current;
+      if (!board) {
+        setTimelineLabelX(8);
+        return;
+      }
+      const playfieldRect = playfield.getBoundingClientRect();
+      const boardRect = board.getBoundingClientRect();
+      const boardScale = boardRect.width > 0 ? boardWidth / boardRect.width : 1;
+      const viewportLeftInBoard = (playfieldRect.left - boardRect.left) * boardScale;
+      setTimelineLabelX(8 + Math.min(0, viewportLeftInBoard));
+    };
+
+    updatePlayfieldMeasurements();
+
+    if (typeof ResizeObserver !== "undefined") {
+      const observer = new ResizeObserver(updatePlayfieldMeasurements);
+      observer.observe(playfield);
+      const board = playfieldBoardRef.current;
+      if (board) {
+        observer.observe(board);
+      }
+      return () => {
+        observer.disconnect();
+      };
+    }
+
+    window.addEventListener("resize", updatePlayfieldMeasurements);
+    return () => {
+      window.removeEventListener("resize", updatePlayfieldMeasurements);
+    };
+  }, [boardWidth, playfieldBoardRef, playfieldRef]);
+  const mobileBoardScale = useMemo(() => {
+    if (!mobileRuntime || playfieldViewportWidth <= 0 || boardWidth <= 0) {
+      return 1;
+    }
+    const availableWidth = Math.max(1, playfieldViewportWidth - MOBILE_BOARD_SIDE_PADDING_PX);
+    const fitWidthScale = availableWidth / boardWidth;
+    return Math.min(MOBILE_BOARD_MAX_SCALE, Math.max(MOBILE_BOARD_MIN_SCALE, fitWidthScale));
+  }, [boardWidth, mobileRuntime, playfieldViewportWidth]);
+  const scaledBoardWidth = mobileRuntime ? Math.max(1, boardWidth * mobileBoardScale) : boardWidth;
+  const scaledScrollContentHeight = mobileRuntime
+    ? Math.max(1, effectiveScrollContentHeight * mobileBoardScale)
+    : effectiveScrollContentHeight;
+  const viewportTimelineScale = isCanvasRenderBackend && mobileRuntime ? mobileBoardScale : 1;
   const canvasPreviewTokenStyle: CSSProperties = useMemo(
     () => ({
       left: -9999,
@@ -691,6 +751,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     updateCanvasInteractionWindow(playfield.scrollTop, playfield.clientHeight);
   }, [effectiveScrollContentHeight, isCanvasRenderBackend, playfieldRef, updateCanvasInteractionWindow]);
   const handlePlayfieldScrollInternal = useCallback((event: any) => {
+    setPlayfieldScrollTop(event.currentTarget.scrollTop);
     handlePlayfieldScroll(event);
     updateCanvasInteractionWindow(event.currentTarget.scrollTop, event.currentTarget.clientHeight);
   }, [handlePlayfieldScroll, updateCanvasInteractionWindow]);
@@ -1161,7 +1222,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
   );
 
   return (
-    <main className="app-shell">
+    <main className={`app-shell ${mobileRuntime ? "is-mobile-runtime" : ""}`}>
       <input
         ref={jsonImportRef}
         type="file"
@@ -1195,7 +1256,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
 
       <section
         ref={workspaceRef}
-        className="workspace"
+        className={`workspace ${mobileRuntime ? "is-mobile-workspace" : ""}`}
         style={{ "--sidebar-width": `${sidebarWidth}px` } as CSSProperties}
       >
         <SidebarPanel
@@ -1342,7 +1403,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
 
           {isSkinReady ? (
             <div
-              className="playfield-scroll"
+              className={`playfield-scroll ${selectionDrag?.isDragging ? "is-marquee-selecting" : ""} ${isToolArmed ? "is-tool-armed" : ""}`}
               ref={playfieldRef}
               onScroll={handlePlayfieldScrollInternal}
               tabIndex={0}
@@ -1351,16 +1412,43 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
               }}
             >
               <div
-                className={`playfield-host ${selectionDrag?.isDragging ? "is-marquee-selecting" : ""} ${isSlideBuilding ? "is-slide-building" : ""} ${isCanvasRenderBackend ? "canvas-render-backend" : ""}`}
-                style={{ height: effectiveScrollContentHeight }}
+                className={`playfield-host ${selectionDrag?.isDragging ? "is-marquee-selecting" : ""} ${isSlideBuilding ? "is-slide-building" : ""} ${isToolArmed ? "is-tool-armed" : ""} ${isCanvasRenderBackend ? "canvas-render-backend" : ""}`}
+                style={{ height: scaledScrollContentHeight }}
                 onMouseDown={handleBoardMouseDown}
                 onMouseMove={handleBoardMouseMove}
                 onMouseLeave={handleBoardMouseLeave}
                 onContextMenu={handleBoardContextMenu}
               >
-                <div className="bpm-overlay-layer" style={{ height: effectiveScrollContentHeight }}>
-                  {renderBpmLines()}
-                  {renderSvLines?.()}
+                {isCanvasRenderBackend && (
+                  <div className="bpm-viewport-hitbox-layer" style={{ top: playfieldScrollTop }}>
+                    {renderBpmLines({ viewportHitbox: true, scrollTop: playfieldScrollTop, scale: viewportTimelineScale })}
+                    {renderSvLines?.({ viewportHitbox: true, scrollTop: playfieldScrollTop, scale: viewportTimelineScale })}
+                  </div>
+                )}
+                <div
+                  className="playfield-board-scale-layer"
+                  style={{
+                    width: scaledBoardWidth,
+                    height: scaledScrollContentHeight,
+                    "--mobile-board-scale": `${mobileBoardScale}`,
+                  } as CSSProperties}
+                >
+                  <div
+                    className="playfield-board-visual-layer"
+                    style={{
+                      width: boardWidth,
+                      height: effectiveScrollContentHeight,
+                    }}
+                  >
+                <div
+                  className="bpm-overlay-layer"
+                  style={{
+                    height: effectiveScrollContentHeight,
+                    "--timeline-label-x": `${timelineLabelX}px`,
+                  } as CSSProperties}
+                >
+                  {!isCanvasRenderBackend && renderBpmLines()}
+                  {!isCanvasRenderBackend && renderSvLines?.()}
                   {!isCanvasRenderBackend && isToolArmed && tool === "bpm" && cursorPreview && (
                     <>
                       <div className="bpm-marker bpm-preview bpm-preview-cursor" style={{ top: cursorPreview.y }}>
@@ -1921,6 +2009,8 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
                       aria-hidden="true"
                     />
                   )}
+                </div>
+                  </div>
                 </div>
               </div>
             </div>
