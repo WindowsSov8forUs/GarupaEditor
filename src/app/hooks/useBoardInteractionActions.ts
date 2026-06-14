@@ -1090,7 +1090,7 @@ export function useBoardInteractionActions(params: any) {
   const handleBoardMouseDown = (event: MouseEvent<HTMLDivElement>) => {
     if (isSvPreviewEnabled) {
       const targetElement = event.target as HTMLElement | null;
-      if (!targetElement?.closest(".note-token, .bpm-line-button, .bpm-label-button")) {
+      if (!targetElement?.closest(".note-token, .bpm-line-button")) {
         event.preventDefault();
         setStatusMessage("SV 预览为只读模式，请关闭后再编辑。");
         return;
@@ -1102,8 +1102,11 @@ export function useBoardInteractionActions(params: any) {
 
     const targetElement = event.target as HTMLElement | null;
     const isNoteTarget = Boolean(targetElement?.closest(".note-token"));
-    const isBpmTarget = Boolean(targetElement?.closest(".bpm-line-button, .bpm-label-button"));
-    if (isBpmTarget || (isNoteTarget && !(isToolArmed && tool === "slide"))) {
+    const isBpmTarget = Boolean(targetElement?.closest(".bpm-line-button"));
+    if (
+      (isBpmTarget && !isToolArmed) ||
+      (isNoteTarget && !(isToolArmed && tool === "slide"))
+    ) {
       return;
     }
 

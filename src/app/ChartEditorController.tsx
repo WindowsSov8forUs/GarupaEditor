@@ -5417,6 +5417,7 @@ function ChartEditorController() {
     noteCanvasRef: playfieldNoteCanvasRef,
     playbackCanvasRef: playfieldPlaybackCanvasRef,
     playfieldRef,
+    playfieldBoardRef,
     boardWidth,
     boardHeight: scrollContentHeight,
     laneValues,
