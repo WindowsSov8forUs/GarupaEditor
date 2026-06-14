@@ -11,10 +11,17 @@ import {
   type WheelEvent as ReactWheelEvent,
 } from "react";
 import { beatToSeconds, sanitizeFileName } from "../chartCore";
+import backArrowIcon from "../assets/icons/back-arrow.svg";
 import imageExportIcon from "../assets/icons/image-export.svg";
 import { DownloadProgressModal } from "../components/DownloadProgressModal";
 import { OverlayDialogModal, type OverlayDialogState } from "../components/OverlayDialogModal";
 import { StepperIcon } from "../components/StepperIcon";
+import {
+  isMobileRuntime,
+  navigateBackToEditor,
+  readMobileRoutePayload,
+  removeMobileRoutePayload,
+} from "./mobileRuntime";
 import type { RenderConnectionSegment, RenderSimultaneousSegment } from "./hooks/useEditorRenderModel";
 import type { StaticBpmVisualLine, StaticNoteVisual, StaticRenderPayload, StaticSvVisualLine } from "./staticRenderTypes";
 
@@ -94,18 +101,21 @@ function resolveDynamicExportWidthLimit(exportHeight: number): number {
   return Math.max(1, Math.min(MAX_EXPORT_CANVAS_WIDTH, widthByPixelBudget));
 }
 
-function parseRequestIdFromHash(): string {
+function parseStaticRenderRouteParams(): { requestId: string; isMobileRoute: boolean } {
   if (typeof window === "undefined") {
-    return "";
+    return { requestId: "", isMobileRoute: false };
   }
   const hash = window.location.hash ?? "";
   const queryIndex = hash.indexOf("?");
   if (queryIndex < 0) {
-    return "";
+    return { requestId: "", isMobileRoute: false };
   }
   const query = hash.slice(queryIndex + 1);
   const params = new URLSearchParams(query);
-  return params.get("request") ?? "";
+  return {
+    requestId: params.get("request") ?? "",
+    isMobileRoute: params.get("mode") === "mobile",
+  };
 }
 
 function formatTimeLabel(seconds: number): string {
@@ -720,7 +730,8 @@ function renderSegmentCanvas(args: {
 }
 
 export default function StaticChartRenderWindow() {
-  const requestId = useMemo(() => parseRequestIdFromHash(), []);
+  const routeParams = useMemo(() => parseStaticRenderRouteParams(), []);
+  const { requestId, isMobileRoute } = routeParams;
   const [payload, setPayload] = useState<StaticRenderPayload | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
   const [overlayDialog, setOverlayDialog] = useState<OverlayDialogState | null>(null);
@@ -839,7 +850,7 @@ export default function StaticChartRenderWindow() {
         void unlisten();
       }
     };
-  }, [clearLoadingHideTimer, completeLoadingProgress, requestId, updateLoadingProgress]);
+  }, [clearLoadingHideTimer, completeLoadingProgress, isMobileRoute, requestId, updateLoadingProgress]);
 
   const updateSliceHeight = useCallback(() => {
     const host = previewViewportRef.current;
@@ -1257,6 +1268,18 @@ export default function StaticChartRenderWindow() {
   return (
     <main className="static-render-page">
       <header className="static-render-toolbar">
+        {isMobileRoute ? (
+          <button
+            type="button"
+            className="command-icon-button static-render-mobile-back-button"
+            onClick={navigateBackToEditor}
+            title="返回编辑器"
+            aria-label="返回编辑器"
+          >
+            <img src={backArrowIcon} alt="" aria-hidden="true" />
+            <span className="sr-only">返回编辑器</span>
+          </button>
+        ) : null}
         <div className="static-render-toolbar-center">
           <div className="inline-stepper static-render-zoom-stepper" role="group" aria-label="缩放控制">
             <button

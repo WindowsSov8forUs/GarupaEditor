@@ -19,6 +19,11 @@ import {
 } from "../launchPayload";
 import { PixiRenderer, type SimulatorStartupRenderState } from "../renderer/pixiRenderer";
 import { getDifficultyStyle } from "../../difficultyStyle";
+import {
+  isMobileRuntime,
+  readMobileRoutePayload,
+  removeMobileRoutePayload,
+} from "../../app/mobileRuntime";
 import simulatorPauseIconSvg from "../../assets/icons/simulator-pause.svg?raw";
 import simulatorPlayIconSvg from "../../assets/icons/simulator-play.svg?raw";
 
@@ -751,6 +756,17 @@ export class SimulatorAppController {
   private async attachLaunchPayloadBridge(): Promise<void> {
     if (!this.launchRequestId) {
       return;
+    }
+    if (isMobileRuntime()) {
+      const envelope = readMobileRoutePayload<SimulatorWindowPayloadEnvelope>(this.launchRequestId);
+      if (envelope?.requestId === this.launchRequestId && envelope.payload) {
+        this.launchPayload = envelope.payload;
+        this.scheduleMvPreflight(envelope.payload);
+        this.applyLaunchMetadata(envelope.payload.metadata);
+        this.applyBootCoverState(1, true);
+        removeMobileRoutePayload(this.launchRequestId);
+        return;
+      }
     }
     try {
       const currentWindow = getCurrentWebviewWindow();
