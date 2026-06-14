@@ -1,5 +1,6 @@
 import { memo, type CSSProperties } from "react";
 import { formatDuration, getDifficultyStyle, type ChartMetadata } from "../chartCore";
+import editIcon from "../assets/icons/edit.svg";
 import { OverflowScrollText } from "./OverflowScrollText";
 
 type ChartInfoPanelProps = {
@@ -21,15 +22,6 @@ export const ChartInfoPanel = memo(function ChartInfoPanel({
 }: ChartInfoPanelProps) {
   return (
     <section className="chart-info-panel">
-      <button
-        type="button"
-        className="icon-button chart-info-edit-button"
-        title="编辑谱面信息"
-        onClick={onOpenMetadataEditor}
-      >
-        <span className="btn-content">✎</span>
-      </button>
-
       <div className="chart-info-body">
         <div className="cover-column">
           <div className="cover-frame">
@@ -53,6 +45,15 @@ export const ChartInfoPanel = memo(function ChartInfoPanel({
             <h3>
               <OverflowScrollText text={metadata.title || "Untitled"} className="chart-title-text" />
             </h3>
+            <button
+              type="button"
+              className="icon-button chart-info-edit-button"
+              title="编辑谱面信息"
+              aria-label="编辑谱面信息"
+              onClick={onOpenMetadataEditor}
+            >
+              <img src={editIcon} alt="" aria-hidden="true" />
+            </button>
           </div>
 
           <p className="chart-level-row">

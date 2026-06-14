@@ -584,13 +584,18 @@ textarea:focus {
 }
 
 button.chart-info-edit-button:not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice) {
-  position: absolute;
-  top: 14px;
-  right: 12px;
-  bottom: auto;
-  left: auto;
+  position: relative;
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
   margin: 0;
-  z-index: 2;
+  z-index: auto;
+}
+
+.chart-info-edit-button > img {
+  width: 16px;
+  height: 16px;
+  display: block;
 }
 
 .cover-frame {
@@ -629,7 +634,7 @@ button.chart-info-edit-button:not(.note-token):not(.bpm-label-button):not(.bpm-l
   gap: 8px;
   min-width: 0;
   max-width: 100%;
-  padding-right: 58px;
+  padding-right: 0;
 }
 
 .chart-title-row h3 {
