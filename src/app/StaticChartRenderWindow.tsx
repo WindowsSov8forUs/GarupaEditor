@@ -1320,7 +1320,7 @@ export default function StaticChartRenderWindow() {
           </div>
           <button
             type="button"
-            className="static-render-export-button"
+            className="command-icon-button static-render-export-button"
             onClick={() => void handleExport()}
             disabled={!payload || isExporting}
             title={isExporting ? "导出中…" : "导出图片"}
