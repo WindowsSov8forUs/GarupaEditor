@@ -63,6 +63,17 @@ export function usePlayfieldRenderers(params: any) {
     () => (skinAssets ? projectPlayfieldLineRuntimeAssets(skinAssets) : null),
     [skinAssets],
   );
+  const resolveTimelineLineY = (
+    lineY: number,
+    options?: { viewportHitbox?: boolean; scrollTop?: number; scale?: number },
+  ) => {
+    if (!options?.viewportHitbox) {
+      return lineY;
+    }
+    const scale = Number.isFinite(options.scale) ? Number(options.scale) : 1;
+    const scrollTop = Number.isFinite(options.scrollTop) ? Number(options.scrollTop) : 0;
+    return lineY * scale - scrollTop;
+  };
 
   const renderLaneGuides = () => {
     if (isCanvasBackend) {
@@ -110,7 +121,7 @@ export function usePlayfieldRenderers(params: any) {
     return lines;
   };
 
-  const renderBpmLines = () => {
+  const renderBpmLines = (options?: { viewportHitbox?: boolean; scrollTop?: number; scale?: number }) => {
     const lines: ReactNode[] = [];
 
     for (let nodeIndex = 0; nodeIndex < bpmTimeline.length; nodeIndex += 1) {
@@ -131,7 +142,10 @@ export function usePlayfieldRenderers(params: any) {
         selectedBpmEventIdSet.has(selectionId)
           ? selectionMovePreview.beatDelta
           : 0;
-      const lineY = beatToTrackY(Math.max(0, node.beat + bpmPreviewOffset));
+      const lineY = resolveTimelineLineY(
+        beatToTrackY(Math.max(0, node.beat + bpmPreviewOffset)),
+        options,
+      );
       const lineKey = isBaseLine
         ? "base"
         : (sourceEvent?.id ?? `beat-${node.beat.toFixed(6)}-bpm-${node.bpm.toFixed(6)}`);
@@ -140,7 +154,11 @@ export function usePlayfieldRenderers(params: any) {
         : selectionId !== null
           ? selectedBpmEventIdSet.has(selectionId)
           : false;
+      const shouldHandleBpmLineEvent = () => !isToolArmed;
       const handleBpmSelect = (event: any) => {
+        if (!shouldHandleBpmLineEvent()) {
+          return;
+        }
         event.stopPropagation();
         setSelectedLongLineSegmentId(null);
         clearSelectedNotes();
@@ -155,6 +173,9 @@ export function usePlayfieldRenderers(params: any) {
         setStatusMessage(`已选中 BPM 线：Beat ${node.beat.toFixed(3)} / BPM ${node.bpm.toFixed(3)}。`);
       };
       const handleBpmContextMenu = (event: any) => {
+        if (!shouldHandleBpmLineEvent()) {
+          return;
+        }
         event.preventDefault();
         event.stopPropagation();
         if (selectionId === BASE_BPM_LINE_ID) {
@@ -196,7 +217,9 @@ export function usePlayfieldRenderers(params: any) {
             type="button"
             className={`bpm-line-button ${isSelected ? "selected" : ""} ${isCanvasBackend ? "canvas-hitbox" : ""}`}
             onMouseDown={(event) => {
-              event.stopPropagation();
+              if (shouldHandleBpmLineEvent()) {
+                event.stopPropagation();
+              }
             }}
             onClick={handleBpmSelect}
             onContextMenu={handleBpmContextMenu}
@@ -204,17 +227,9 @@ export function usePlayfieldRenderers(params: any) {
           >
             <div className="bpm-line" />
           </button>
-          <button
-            type="button"
-            className={`bpm-label-button ${isSelected ? "selected" : ""} ${isCanvasBackend ? "canvas-hitbox" : ""}`}
-            onMouseDown={(event) => {
-              event.stopPropagation();
-            }}
-            onClick={handleBpmSelect}
-            onContextMenu={handleBpmContextMenu}
-          >
+          <span className={`bpm-label-button ${isSelected ? "selected" : ""} ${isCanvasBackend ? "canvas-hitbox" : ""}`}>
             BPM {node.bpm.toFixed(2)}
-          </button>
+          </span>
         </div>,
       );
     }
@@ -258,7 +273,7 @@ export function usePlayfieldRenderers(params: any) {
     return segments;
   };
 
-  const renderSvLines = () => {
+  const renderSvLines = (options?: { viewportHitbox?: boolean; scrollTop?: number; scale?: number }) => {
     const lines: ReactNode[] = [];
     for (const event of svEvents ?? []) {
       if (event.beat < 0 || event.beat > totalBeats + 1e-6) {
@@ -270,9 +285,10 @@ export function usePlayfieldRenderers(params: any) {
         : "#Global";
       const isSvInteractionDisabled =
         isTimingGroupModeActive && eventTimingGroup !== selectedTimingGroupId;
-      const lineY = beatToTrackY(event.beat);
+      const lineY = resolveTimelineLineY(beatToTrackY(event.beat), options);
+      const shouldHandleSvLineEvent = () => !isToolArmed && !isSvInteractionDisabled;
       const handleSvSelect = (mouseEvent: any) => {
-        if (isSvInteractionDisabled) {
+        if (!shouldHandleSvLineEvent()) {
           return;
         }
         mouseEvent.stopPropagation();
@@ -286,11 +302,11 @@ export function usePlayfieldRenderers(params: any) {
         setStatusMessage(`已选中 SV：Beat ${event.beat.toFixed(3)} / ×${event.value.toFixed(3)}。`);
       };
       const handleSvContextMenu = (mouseEvent: any) => {
-        mouseEvent.preventDefault();
-        mouseEvent.stopPropagation();
-        if (isSvInteractionDisabled) {
+        if (!shouldHandleSvLineEvent()) {
           return;
         }
+        mouseEvent.preventDefault();
+        mouseEvent.stopPropagation();
         setSvEvents((previous: any[]) => previous.filter((item) => item.id !== event.id));
         setSelectedSvEventId(null);
         setSelectedSvEventIds([]);
@@ -306,23 +322,20 @@ export function usePlayfieldRenderers(params: any) {
             type="button"
             className={`bpm-line-button sv-line-button ${isSelected ? "selected" : ""} ${isCanvasBackend ? "canvas-hitbox" : ""}`}
             disabled={isSvInteractionDisabled}
-            onMouseDown={(mouseEvent) => mouseEvent.stopPropagation()}
+            onMouseDown={(mouseEvent) => {
+              if (shouldHandleSvLineEvent()) {
+                mouseEvent.stopPropagation();
+              }
+            }}
             onClick={handleSvSelect}
             onContextMenu={handleSvContextMenu}
             title={`×${event.value.toFixed(3)} @ Beat ${event.beat.toFixed(3)}`}
           >
             <div className="bpm-line sv-line" />
           </button>
-          <button
-            type="button"
-            className={`bpm-label-button sv-label-button ${isSelected ? "selected" : ""} ${isCanvasBackend ? "canvas-hitbox" : ""}`}
-            disabled={isSvInteractionDisabled}
-            onMouseDown={(mouseEvent) => mouseEvent.stopPropagation()}
-            onClick={handleSvSelect}
-            onContextMenu={handleSvContextMenu}
-          >
+          <span className={`bpm-label-button sv-label-button ${isSelected ? "selected" : ""} ${isCanvasBackend ? "canvas-hitbox" : ""}`}>
             ×{event.value.toFixed(2)}
-          </button>
+          </span>
         </div>,
       );
     }
