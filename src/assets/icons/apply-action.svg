@@ -1,4 +1,20 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
-  <rect x="12" y="12" width="40" height="40" rx="8" fill="#ffffff"/>
-  <path d="M22 33.5L29 40.5L44 24.5" stroke="rgb(255, 59, 113)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
+  <g transform="translate(12 12) scale(1.25) translate(-12 -12)">
+    <path
+      d="M4.8 12.2 10.1 17.2 19.2 7.8"
+      fill="none"
+      stroke="#ffffff"
+      stroke-width="3.8"
+      stroke-linecap="round"
+      stroke-linejoin="miter"
+    />
+    <path
+      d="M4.8 12.2 10.1 17.2 19.2 7.8"
+      fill="none"
+      stroke="rgb(255, 59, 113)"
+      stroke-width="2.4"
+      stroke-linecap="round"
+      stroke-linejoin="miter"
+    />
+  </g>
 </svg>

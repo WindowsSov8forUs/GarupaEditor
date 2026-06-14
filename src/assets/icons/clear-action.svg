@@ -1,9 +1,19 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
-  <path
-    d="M9.5 4.5C9.5 3.95 9.95 3.5 10.5 3.5H13.5C14.05 3.5 14.5 3.95 14.5 4.5V5.5H18C18.55 5.5 19 5.95 19 6.5C19 7.05 18.55 7.5 18 7.5H17.3L16.45 18.1C16.36 19.18 15.46 20 14.38 20H9.62C8.54 20 7.64 19.18 7.55 18.1L6.7 7.5H6C5.45 7.5 5 7.05 5 6.5C5 5.95 5.45 5.5 6 5.5H9.5V4.5Z"
-    fill="rgb(255, 59, 113)"
-  />
-  <rect x="9.7" y="9.2" width="1.6" height="7.1" rx="0.8" fill="rgb(255, 59, 113)" />
-  <rect x="11.2" y="9.2" width="1.6" height="7.1" rx="0.8" fill="rgb(255, 59, 113)" />
-  <rect x="12.7" y="9.2" width="1.6" height="7.1" rx="0.8" fill="rgb(255, 59, 113)" />
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
+  <defs>
+    <path id="trash-body" d="M6.75 9.2q0-1.2 1.2-1.2h8.1q1.2 0 1.2 1.2l-.67 8.75q-.06.72-.54 1.25t-1.2.6H9.16q-.72-.07-1.2-.6t-.54-1.25L6.75 9.2Z"/>
+    <path
+      id="trash-lid"
+      d="M9.45 5.38 9.59 4.73q.03-.36.27-.62t.6-.3q.1-.01.19-.01h2.7q.09 0 .19.01.36.04.6.3t.27.62l.14.65h3.6q.95 0 .95.87t-.95.87H5.85q-.95 0-.95-.87t.95-.87H9.45Z"
+    />
+  </defs>
+  <g transform="translate(12 12) scale(1.25) translate(-12 -12)">
+    <g fill="none" stroke="#ffffff" stroke-width="1">
+      <use href="#trash-body"/>
+      <use href="#trash-lid" stroke-linejoin="miter" stroke-miterlimit="2"/>
+    </g>
+    <g fill="rgb(255, 59, 113)">
+      <use href="#trash-body"/>
+      <use href="#trash-lid"/>
+    </g>
+  </g>
 </svg>

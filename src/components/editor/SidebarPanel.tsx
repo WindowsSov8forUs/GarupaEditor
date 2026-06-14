@@ -1233,7 +1233,7 @@ export const SidebarPanel = memo(function SidebarPanel({
                 title="删除选中对象"
                 onClick={deleteCurrentSelection}
               >
-                <span className="btn-content">✕</span>
+                <img src={clearActionIcon} alt="" className="tool-action-glyph" aria-hidden="true" />
               </button>
             </div>
           )}
