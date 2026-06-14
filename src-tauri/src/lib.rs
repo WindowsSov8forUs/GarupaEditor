@@ -32,6 +32,7 @@ const CHART_RESOURCES_META_NAME: &str = "chart-resources.v2.json";
 const CHART_COVER_FILE_NAME: &str = "cover.bin";
 const CHART_AUDIO_FILE_NAME: &str = "audio.bin";
 const CHART_MV_FILE_NAME: &str = "mv.bin";
+const SHARE_DIR_NAME: &str = "shared";
 const HABAHIRO_RIP_NAME: &str = "habahiro";
 const HABAHIRO_SAMPLE_RIP_NAME: &str = "habahiro_sample";
 const HABAHIRO_MANIFEST_FILENAMES: &[&str] = &[
@@ -281,6 +282,22 @@ struct BestdoriAuthCache {
     user_me: Option<BestdoriUserMeResponse>,
 }
 
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct ShareFileParams {
+    file_name: String,
+    mime_type: String,
+    base64_data: String,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct PreparedShareFile {
+    path: String,
+    file_name: String,
+    mime_type: String,
+}
+
 fn encode_base64(bytes: impl AsRef<[u8]>) -> String {
     base64::engine::general_purpose::STANDARD.encode(bytes)
 }
@@ -399,6 +416,15 @@ fn resolve_session_cache_root(app: &tauri::AppHandle) -> Result<PathBuf, String>
     directory.push(SESSION_DIR_NAME);
     fs::create_dir_all(&directory)
         .map_err(|error| format!("create session cache dir failed: {error}"))?;
+    Ok(directory)
+}
+
+fn resolve_share_cache_root(app: &tauri::AppHandle) -> Result<PathBuf, String> {
+    let mut directory = resolve_app_storage_root(app)?;
+    directory.push("cache");
+    directory.push(SHARE_DIR_NAME);
+    fs::create_dir_all(&directory)
+        .map_err(|error| format!("create share cache dir failed: {error}"))?;
     Ok(directory)
 }
 
@@ -831,6 +857,24 @@ fn normalize_optional_file_name(value: Option<String>) -> Option<String> {
     value
         .map(|raw| raw.trim().to_string())
         .filter(|trimmed| !trimmed.is_empty())
+}
+
+fn sanitize_share_file_name(value: &str, fallback: &str) -> String {
+    let normalized = value
+        .trim()
+        .chars()
+        .map(|ch| match ch {
+            '/' | '\\' | ':' | '*' | '?' | '"' | '<' | '>' | '|' => '_',
+            ch if ch.is_control() => '_',
+            ch => ch,
+        })
+        .collect::<String>();
+    let trimmed = normalized.trim_matches(['.', ' ']).to_string();
+    if trimmed.is_empty() {
+        fallback.to_string()
+    } else {
+        trimmed
+    }
 }
 
 fn write_decoded_base64_file(path: &Path, base64_data: &str, write_error_label: &str) -> Result<(), String> {
@@ -1919,6 +1963,26 @@ fn save_chart_png_via_dialog(
     Err("desktop file dialog is not available on mobile".to_string())
 }
 
+#[tauri::command]
+fn share_file(app: tauri::AppHandle, params: ShareFileParams) -> Result<PreparedShareFile, String> {
+    let file_name = sanitize_share_file_name(&params.file_name, "shared-file.bin");
+    let mime_type = normalize_mime_type(Some(params.mime_type))
+        .unwrap_or_else(|| "application/octet-stream".to_string());
+    let bytes = decode_base64(&params.base64_data)?;
+    if bytes.is_empty() {
+        return Err("shared file data is empty".to_string());
+    }
+    let root = resolve_share_cache_root(&app)?;
+    let path = root.join(&file_name);
+    ensure_parent_directory(&path)?;
+    fs::write(&path, bytes).map_err(|error| format!("write shared file failed: {error}"))?;
+    Ok(PreparedShareFile {
+        path: path.to_string_lossy().to_string(),
+        file_name,
+        mime_type,
+    })
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -1950,7 +2014,8 @@ pub fn run() {
             save_editor_settings_cache,
             load_editor_settings_cache,
             save_chart_json_via_dialog,
-            save_chart_png_via_dialog
+            save_chart_png_via_dialog,
+            share_file
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
