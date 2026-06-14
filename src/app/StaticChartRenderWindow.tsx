@@ -21,6 +21,7 @@ import {
   navigateBackToEditor,
   readMobileRoutePayload,
   removeMobileRoutePayload,
+  shareFile,
 } from "./mobileRuntime";
 import type { RenderConnectionSegment, RenderSimultaneousSegment } from "./hooks/useEditorRenderModel";
 import type { StaticBpmVisualLine, StaticNoteVisual, StaticRenderPayload, StaticSvVisualLine } from "./staticRenderTypes";
@@ -1239,10 +1240,16 @@ export default function StaticChartRenderWindow() {
       }
       const imageBase64 = dataUrl.slice(base64Index + 1);
       const defaultFileName = `${sanitizeFileName(payload.chartTitle)}-preview.png`;
-      const savedPath = await invoke<string | null>("save_chart_png_via_dialog", {
-        defaultFileName,
-        pngBase64: imageBase64,
-      });
+      const savedPath = isMobileRuntime()
+        ? (await shareFile({
+          fileName: defaultFileName,
+          mimeType: "image/png",
+          base64Data: imageBase64,
+        })).path
+        : await invoke<string | null>("save_chart_png_via_dialog", {
+          defaultFileName,
+          pngBase64: imageBase64,
+        });
       if (typeof savedPath === "string" && savedPath.length > 0) {
         showOverlayDialog({
           tone: "info",
