@@ -1841,6 +1841,7 @@ fn load_editor_settings_cache(app: tauri::AppHandle) -> Result<Option<String>, S
 }
 
 #[tauri::command]
+#[cfg(not(mobile))]
 fn save_chart_json_via_dialog(
     default_file_name: String,
     json_text: String,
@@ -1869,6 +1870,16 @@ fn save_chart_json_via_dialog(
 }
 
 #[tauri::command]
+#[cfg(mobile)]
+fn save_chart_json_via_dialog(
+    _default_file_name: String,
+    _json_text: String,
+) -> Result<Option<String>, String> {
+    Err("desktop file dialog is not available on mobile".to_string())
+}
+
+#[tauri::command]
+#[cfg(not(mobile))]
 fn save_chart_png_via_dialog(
     default_file_name: String,
     png_base64: String,
@@ -1897,6 +1908,15 @@ fn save_chart_png_via_dialog(
     ensure_parent_directory(&final_path)?;
     fs::write(&final_path, png_bytes).map_err(|error| format!("save chart png failed: {error}"))?;
     Ok(Some(final_path.to_string_lossy().to_string()))
+}
+
+#[tauri::command]
+#[cfg(mobile)]
+fn save_chart_png_via_dialog(
+    _default_file_name: String,
+    _png_base64: String,
+) -> Result<Option<String>, String> {
+    Err("desktop file dialog is not available on mobile".to_string())
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
