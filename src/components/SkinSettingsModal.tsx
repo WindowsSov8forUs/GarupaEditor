@@ -165,7 +165,7 @@ export function SkinSettingsModal({
             </div>
           </div>
           <button type="button" className="icon-button" onClick={onClose}>
-            <span className="btn-content">×</span>
+            <StepperIcon type="close" />
           </button>
         </header>
 
