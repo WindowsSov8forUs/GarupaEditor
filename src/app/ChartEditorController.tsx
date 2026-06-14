@@ -17,11 +17,7 @@ import { createEditorDisplayAxis } from "./editorDisplayAxis";
 import {
   BASE_BPM_LINE_ID,
   DEFAULT_SPRITE_ASPECT_RATIO,
-  EDITOR_MIN_WIDTH,
   isLastBeatOrderedBpmNegative,
-  SIDEBAR_MAX_WIDTH,
-  SIDEBAR_MIN_WIDTH,
-  WORKSPACE_DIVIDER_WIDTH,
   formatEditorNumeric,
   normalizeEditorBpm,
   normalizeBaseBpmForWrite,
@@ -49,7 +45,6 @@ import { useEditorPointerLifecycle } from "./hooks/useEditorPointerLifecycle";
 import { useEditorSelectionActions } from "./hooks/useEditorSelectionActions";
 import { usePlayfieldRenderers } from "./hooks/usePlayfieldRenderers";
 import { useSelectionAndEditorSync } from "./hooks/useSelectionAndEditorSync";
-import { useSidebarResizeState } from "./hooks/useSidebarResizeState";
 import { isMobileRuntime, writeMobileRoutePayload } from "./mobileRuntime";
 import { buildSelectionMirrorOffsetMap } from "./slideHiddenMoveOffsets";
 import { cleanupSlideChainsHidden } from "./slideChainCleanup";
@@ -1301,7 +1296,6 @@ function ChartEditorController() {
   const canvasCursorPreviewRef = useRef<CursorPreviewState | null>(null);
   const cursorPreviewPendingRef = useRef<CursorPreviewState | null>(null);
   const cursorPreviewRafRef = useRef<number | null>(null);
-  const workspaceRef = useRef<HTMLElement | null>(null);
   const selectionDragRef = useRef<{
     startX: number;
     startY: number;
@@ -1328,7 +1322,6 @@ function ChartEditorController() {
   const applyBestdoriSkinSelectionRef = useRef<any>(async () => {});
   const lastStandardRhythmSkinRef = useRef<Pick<SkinSelection, "rhythmType" | "rhythmRipName" | "rhythmServer"> | null>(null);
   const syncingHabahiroSkinRef = useRef(false);
-  const sidebarResizeRef = useRef<{ startX: number; startWidth: number } | null>(null);
   const viewBottomTimeSecRef = useRef<number | null>(null);
   const didInitTimelineScrollRef = useRef(false);
   const editorConfigCacheRef = useRef<Partial<Record<EditorConfigCacheKey, EditorConfigCacheValue>>>({});
@@ -1393,16 +1386,6 @@ function ChartEditorController() {
       return { ...current, title: "Untitled" };
     });
   }, []);
-
-  const { sidebarWidth, getSidebarResizeBounds } = useSidebarResizeState({
-    workspaceRef,
-    sidebarResizeRef,
-    clamp,
-    SIDEBAR_MIN_WIDTH,
-    SIDEBAR_MAX_WIDTH,
-    WORKSPACE_DIVIDER_WIDTH,
-    EDITOR_MIN_WIDTH,
-  });
 
   const laneValues = useMemo(() => getLaneValues(settings.laneCount), [settings.laneCount]);
   const laneMin = laneValues[0];
@@ -3393,7 +3376,6 @@ function ChartEditorController() {
   });
   resolveBoardPlacementRef.current = resolveBoardPlacement;
   const {
-    startSidebarResize,
     applyToolFromPalette: applyToolFromPaletteRaw,
     applyBpmToolFromPalette: applyBpmToolFromPaletteRaw,
     applySvToolFromPalette: applySvToolFromPaletteRaw,
@@ -3412,10 +3394,6 @@ function ChartEditorController() {
     beginSelectedNotesMove,
     handleBoardMouseDown: handleBoardMouseDownRaw,
   } = useBoardInteractionActions({
-    getSidebarResizeBounds,
-    sidebarResizeRef,
-    sidebarWidth,
-    clamp,
     setTool,
     setIsToolArmed,
     clearAllSelections,
@@ -5983,8 +5961,6 @@ function ChartEditorController() {
         cancelOverlayDialog,
         openAppSettings,
         openSkinSettings,
-        workspaceRef,
-        sidebarWidth,
         metadata,
         coverImageSrc,
         audioDurationSec,
@@ -6120,7 +6096,6 @@ function ChartEditorController() {
         canApplyLongLineSettings,
         applyCurrentLongLineSettings,
         deleteCurrentSelection,
-        startSidebarResize,
         settings,
         applySettingsPatch,
         playfieldRef,

@@ -78,8 +78,6 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     openSkinSettings,
     bestdoriNickname,
     bestdoriUsername,
-    workspaceRef,
-    sidebarWidth,
     metadata,
     coverImageSrc,
     audioDurationSec,
@@ -212,7 +210,6 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     canApplyLongLineSettings,
     applyCurrentLongLineSettings,
     deleteCurrentSelection,
-    startSidebarResize,
     settings,
     applySettingsPatch,
     playfieldRef,
@@ -1254,11 +1251,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         onUserBarClick={openBestdoriLoginModal}
       />
 
-      <section
-        ref={workspaceRef}
-        className={`workspace ${mobileRuntime ? "is-mobile-workspace" : ""}`}
-        style={{ "--sidebar-width": `${sidebarWidth}px` } as CSSProperties}
-      >
+      <section className={`workspace ${mobileRuntime ? "is-mobile-workspace" : ""}`}>
         <SidebarPanel
           metadata={metadata}
           coverImageSrc={coverImageSrc}
@@ -1389,8 +1382,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
           className="workspace-divider"
           role="separator"
           aria-orientation="vertical"
-          aria-label="拖动调整左右区域宽度"
-          onMouseDown={startSidebarResize}
+          aria-label="左右区域分隔"
         />
 
         <section className="editor-panel">

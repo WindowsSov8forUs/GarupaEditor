@@ -1,4 +1,4 @@
-﻿import { startTransition, useCallback, type MouseEvent } from "react";
+import { startTransition, useCallback, type MouseEvent } from "react";
 import {
   GLOBAL_TIMING_GROUP_ID,
   normalizeNoteTimingGroup,
@@ -14,10 +14,6 @@ import { cleanupSlideChainsHidden } from "../slideChainCleanup";
 
 export function useBoardInteractionActions(params: any) {
   const {
-    getSidebarResizeBounds,
-    sidebarResizeRef,
-    sidebarWidth,
-    clamp,
     setTool,
     setIsToolArmed,
     clearAllSelections,
@@ -104,18 +100,6 @@ export function useBoardInteractionActions(params: any) {
     isSvPreviewEnabled,
     exGarupaEnabled,
   } = params;
-  const startSidebarResize = (event: MouseEvent<HTMLDivElement>) => {
-    if (event.button !== 0) {
-      return;
-    }
-    event.preventDefault();
-    const { minWidth, maxWidth } = getSidebarResizeBounds();
-    sidebarResizeRef.current = {
-      startX: event.clientX,
-      startWidth: Math.round(clamp(sidebarWidth, minWidth, maxWidth)),
-    };
-    document.body.classList.add("is-resizing-layout");
-  };
   const scheduleAfterFrame = useCallback((task: () => void) => {
     if (typeof requestAnimationFrame === "function") {
       requestAnimationFrame(() => task());
@@ -1201,7 +1185,6 @@ export function useBoardInteractionActions(params: any) {
   };
 
   return {
-    startSidebarResize,
     applyToolFromPalette,
     applyBpmToolFromPalette,
     applySvToolFromPalette,
