@@ -9,6 +9,7 @@ import {
   useState,
 } from "react";
 import ChartEditorController from "./app/ChartEditorController";
+import { isMobileRuntime } from "./app/mobileRuntime";
 
 const StaticChartRenderWindow = lazy(() => import("./app/StaticChartRenderWindow"));
 const BuiltInSimulatorWindow = lazy(() => import("./app/BuiltInSimulatorWindow"));
@@ -68,6 +69,7 @@ function App() {
   const [hash, setHash] = useState(() =>
     typeof window !== "undefined" ? window.location.hash ?? "" : "",
   );
+  const mobileRuntime = isMobileRuntime();
 
   useEffect(() => {
     const handleHashChange = () => {
@@ -86,14 +88,14 @@ function App() {
     </main>
   );
 
-  if (isStaticRenderRoute) {
+  if (!mobileRuntime && isStaticRenderRoute) {
     return (
       <Suspense fallback={routeLoadingFallback}>
         <StaticChartRenderWindow />
       </Suspense>
     );
   }
-  if (isSimulatorRoute) {
+  if (!mobileRuntime && isSimulatorRoute) {
     return (
       <Suspense fallback={routeLoadingFallback}>
         <BuiltInSimulatorWindow />
@@ -102,9 +104,18 @@ function App() {
   }
 
   return (
-    <AppErrorBoundary key={appVersion} onRecover={() => setAppVersion((current) => current + 1)}>
-      <ChartEditorController />
-    </AppErrorBoundary>
+    <>
+      <AppErrorBoundary key={appVersion} onRecover={() => setAppVersion((current) => current + 1)}>
+        <ChartEditorController />
+      </AppErrorBoundary>
+      {mobileRuntime && (isStaticRenderRoute || isSimulatorRoute) ? (
+        <div className="mobile-route-overlay" role="presentation">
+          <Suspense fallback={routeLoadingFallback}>
+            {isStaticRenderRoute ? <StaticChartRenderWindow /> : <BuiltInSimulatorWindow />}
+          </Suspense>
+        </div>
+      ) : null}
+    </>
   );
 }
 

@@ -9,6 +9,7 @@ import { SettingPrimaryTitle } from "./SettingPrimaryTitle";
 import { StepperIcon } from "./StepperIcon";
 import { TopTabs } from "./TopTabs";
 import { useModalTransition } from "./useModalTransition";
+import { isMobileRuntime } from "../app/mobileRuntime";
 
 type ExportModalTab = "chart-code" | "upload-server" | "upload" | "upload-test";
 
@@ -50,6 +51,7 @@ export function ExportJsonModal({
   const [isTagCandidatesLoading, setIsTagCandidatesLoading] = useState(false);
   const [tagCandidatesError, setTagCandidatesError] = useState("");
   const tagSearchSeqRef = useRef(0);
+  const mobileReadOnly = isMobileRuntime();
 
   const upsertTag = (nextTag: BestdoriPostTag) => {
     const normalizedType = nextTag.type.trim();
@@ -84,6 +86,12 @@ export function ExportJsonModal({
       setIsTagCandidatesLoading(false);
     }
   }, [open]);
+
+  useEffect(() => {
+    if (mobileReadOnly && tab !== "chart-code") {
+      setTab("chart-code");
+    }
+  }, [mobileReadOnly, tab]);
 
   useEffect(() => {
     if (!open || !isTagPickerOpen) {

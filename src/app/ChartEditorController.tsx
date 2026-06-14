@@ -50,6 +50,7 @@ import { useEditorSelectionActions } from "./hooks/useEditorSelectionActions";
 import { usePlayfieldRenderers } from "./hooks/usePlayfieldRenderers";
 import { useSelectionAndEditorSync } from "./hooks/useSelectionAndEditorSync";
 import { useSidebarResizeState } from "./hooks/useSidebarResizeState";
+import { isMobileRuntime, writeMobileRoutePayload } from "./mobileRuntime";
 import { buildSelectionMirrorOffsetMap } from "./slideHiddenMoveOffsets";
 import { cleanupSlideChainsHidden } from "./slideChainCleanup";
 import {
@@ -4887,6 +4888,9 @@ function ChartEditorController() {
   }, [isExGarupaEnabled, setSelectedSvEventId, setSelectedSvEventIds, tool]);
 
   useEffect(() => {
+    if (isMobileRuntime()) {
+      return;
+    }
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.code !== "Space" || event.repeat) {
         return;
@@ -5594,6 +5598,21 @@ function ChartEditorController() {
       const targetUrl = new URL(locationHref);
       targetUrl.hash = `static-render?request=${encodeURIComponent(requestId)}`;
 
+      if (isMobileRuntime()) {
+        targetUrl.hash = `static-render?request=${encodeURIComponent(requestId)}&mode=mobile`;
+        const wrotePayload = writeMobileRoutePayload(requestId, {
+          requestId,
+          payload: staticRenderPayload,
+        });
+        if (!wrotePayload) {
+          throw new Error("移动端预览数据写入失败。");
+        }
+        completePreviewLoadingProgress("预览已就绪。");
+        window.location.hash = targetUrl.hash;
+        setStatusMessage("已切换到移动端预览。");
+        return;
+      }
+
       const renderWindow = new WebviewWindow(windowLabel, {
         title: `${metadata.title} - preview`,
         width: 1440,
@@ -5800,6 +5819,19 @@ function ChartEditorController() {
           })),
         },
       };
+
+      if (isMobileRuntime()) {
+        const wrotePayload = writeMobileRoutePayload(requestId, {
+          requestId,
+          payload: launchPayload,
+        });
+        if (!wrotePayload) {
+          throw new Error("移动端播放器数据写入失败。");
+        }
+        window.location.hash = targetUrl.hash;
+        setStatusMessage("已切换到移动端播放器。");
+        return;
+      }
 
       readyUnlisten = await listen<SimulatorWindowReadyPayload>(
         SIMULATOR_WINDOW_READY_EVENT,
