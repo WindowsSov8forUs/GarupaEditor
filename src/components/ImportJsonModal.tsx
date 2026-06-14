@@ -92,7 +92,7 @@ export function ImportJsonModal(props: ImportJsonModalProps) {
           </div>
           <div className="modal-header-actions">
             <button type="button" className="icon-button" onClick={onClose} title="关闭">
-              <span className="btn-content">×</span>
+              <StepperIcon type="close" />
             </button>
           </div>
         </header>

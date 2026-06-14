@@ -201,7 +201,7 @@ export function ExportJsonModal({
             </div>
           </div>
           <button type="button" className="icon-button" onClick={onClose}>
-            <span className="btn-content">×</span>
+            <StepperIcon type="close" />
           </button>
         </header>
 
@@ -306,7 +306,7 @@ export function ExportJsonModal({
                 </div>
               </div>
               <button type="button" className="icon-button" onClick={() => setIsTagPickerOpen(false)}>
-                <span className="btn-content">×</span>
+                <StepperIcon type="close" />
               </button>
             </header>
             <div className="modal-body">
