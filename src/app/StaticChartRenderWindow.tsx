@@ -814,6 +814,16 @@ export default function StaticChartRenderWindow() {
         completeLoadingProgress("预览初始化失败。", 900);
         return;
       }
+      if (isMobileRoute || isMobileRuntime()) {
+        const envelope = readMobileRoutePayload<StaticPayloadEnvelope>(requestId);
+        if (envelope?.requestId === requestId && envelope.payload) {
+          setPayload(envelope.payload);
+          removeMobileRoutePayload(requestId);
+          updateLoadingProgress(74, "正在生成预览画面...");
+          setErrorMessage("");
+          return;
+        }
+      }
       try {
         updateLoadingProgress(22, "正在等待主窗口连接…");
         const currentWindow = getCurrentWebviewWindow();
