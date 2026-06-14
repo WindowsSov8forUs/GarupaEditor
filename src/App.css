@@ -1099,6 +1099,11 @@ button.tool-icon-button.active:not(.note-token):not(.bpm-label-button):not(.bpm-
   --btn-text-color-local: #4b515a;
 }
 
+.clear-action .tool-action-glyph {
+  width: 155%;
+  height: 155%;
+}
+
 .mirror-action,
 .copy-action,
 .paste-action {
@@ -1674,6 +1679,11 @@ button.timing-group-create-button:not(.note-token):not(.bpm-label-button):not(.b
   color: rgb(255, 59, 113);
 }
 
+.delete-icon-button .tool-action-glyph {
+  width: 155%;
+  height: 155%;
+}
+
 .apply-icon-button {
   --btn-frame-top-local: #f9fafc;
   --btn-frame-bottom-local: #f1f3f7;
@@ -1688,6 +1698,11 @@ button.timing-group-create-button:not(.note-token):not(.bpm-label-button):not(.b
   min-height: 42px;
   padding: 0;
   font-size: 0;
+}
+
+.apply-icon-button .tool-action-glyph {
+  width: 170%;
+  height: 170%;
 }
 
 button.apply-icon-button:not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice)::before {
