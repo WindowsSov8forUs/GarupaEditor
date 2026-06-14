@@ -587,8 +587,7 @@ export const SidebarPanel = memo(function SidebarPanel({
         onCoverImageError={handleCoverImageError}
       />
 
-      <div className="sidebar-scroll">
-        <section className="note-tools-panel">
+      <section className="note-tools-panel">
           {isSkinReady ? (
             <>
               <div className="tool-grid">
@@ -1239,7 +1238,6 @@ export const SidebarPanel = memo(function SidebarPanel({
             </div>
           )}
         </section>}
-      </div>
     </aside>
   );
 });
