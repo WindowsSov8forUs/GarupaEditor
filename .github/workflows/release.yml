@@ -216,7 +216,7 @@ jobs:
 
       - name: Build Android release packages
         if: matrix.platform == 'android'
-        run: npm run android:build -- --target ${{ matrix.androidTarget }} --apk --aab --ci
+        run: npm run android:build -- --target ${{ matrix.androidTarget }} --apk --ci
 
       - name: Upload Android release packages
         if: matrix.platform == 'android'
@@ -225,14 +225,10 @@ jobs:
         run: |
           VERSION="$(node -p "require('./package.json').version")"
           APK_SOURCE="src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release-unsigned.apk"
-          AAB_SOURCE="src-tauri/gen/android/app/build/outputs/bundle/universalRelease/app-universal-release.aab"
           APK_ASSET="${PROJECT_NAME}_${VERSION}_android_${{ matrix.arch }}.apk"
-          AAB_ASSET="${PROJECT_NAME}_${VERSION}_android_${{ matrix.arch }}.aab"
           test -f "$APK_SOURCE"
-          test -f "$AAB_SOURCE"
           cp "$APK_SOURCE" "$APK_ASSET"
-          cp "$AAB_SOURCE" "$AAB_ASSET"
-          gh release upload "${{ github.ref_name }}" "$APK_ASSET" "$AAB_ASSET" --clobber
+          gh release upload "${{ github.ref_name }}" "$APK_ASSET" --clobber
 
       - name: Build and upload release bundle
         if: matrix.platform != 'macos' && matrix.platform != 'android'
