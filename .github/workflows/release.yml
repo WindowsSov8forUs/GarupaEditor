@@ -40,7 +40,7 @@ jobs:
                 repo,
                 tag_name: tag,
                 name: `${process.env.PROJECT_NAME} ${tag}`,
-                body: `自动构建 ${process.env.PROJECT_NAME} 的多平台可安装发布包。`,
+                body: `\u81ea\u52a8\u6784\u5efa ${process.env.PROJECT_NAME} \u7684\u591a\u5e73\u53f0\u53ef\u5b89\u88c5\u53d1\u5e03\u5305\u3002`,
                 draft: true,
                 prerelease: false
               }));
@@ -72,13 +72,13 @@ jobs:
             target: x86_64-apple-darwin
             platform: macos
             arch: x64
-            tauriArgs: --target x86_64-apple-darwin --bundles app
+            tauriArgs: --target x86_64-apple-darwin --bundles dmg
           - name: macOS arm64
             runner: macos-15
             target: aarch64-apple-darwin
             platform: macos
             arch: arm64
-            tauriArgs: --target aarch64-apple-darwin --bundles app
+            tauriArgs: --target aarch64-apple-darwin --bundles dmg
           - name: Linux x64
             runner: ubuntu-24.04
             target: x86_64-unknown-linux-gnu
@@ -241,23 +241,24 @@ jobs:
           args: ${{ matrix.tauriArgs }}
           assetNamePattern: "${{ env.PROJECT_NAME }}_[version]_[platform]_[arch][setup][ext]"
 
-      - name: Build macOS app bundle
+      - name: Build macOS DMG package
         if: matrix.platform == 'macos'
         run: npm run tauri -- build ${{ matrix.tauriArgs }}
 
-      - name: Upload macOS app archive
+      - name: Upload macOS DMG package
         if: matrix.platform == 'macos'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          APP_PATH="src-tauri/target/${{ matrix.target }}/release/bundle/macos/${PROJECT_NAME}.app"
           VERSION="$(node -p "require('./package.json').version")"
           if [ "${{ matrix.arch }}" = "arm64" ]; then
             ASSET_ARCH="aarch64"
           else
             ASSET_ARCH="${{ matrix.arch }}"
           fi
-          ARCHIVE="${PROJECT_NAME}_${VERSION}_darwin_${ASSET_ARCH}.app.tar.gz"
-          test -d "$APP_PATH"
-          tar -C "$(dirname "$APP_PATH")" -czf "$ARCHIVE" "$(basename "$APP_PATH")"
-          gh release upload "${{ github.ref_name }}" "$ARCHIVE" --clobber
+          DMG_DIR="src-tauri/target/${{ matrix.target }}/release/bundle/dmg"
+          DMG_SOURCE="$(find "$DMG_DIR" -maxdepth 1 -type f -name "*.dmg" | head -n 1)"
+          test -n "$DMG_SOURCE"
+          DMG_ASSET="${PROJECT_NAME}_${VERSION}_darwin_${ASSET_ARCH}.dmg"
+          cp "$DMG_SOURCE" "$DMG_ASSET"
+          gh release upload "${{ github.ref_name }}" "$DMG_ASSET" --clobber
