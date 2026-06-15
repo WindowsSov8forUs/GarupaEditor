@@ -1,4 +1,8 @@
-# GarupaEditor
+<div align="center">
+  <img src="assets/garupaeditor-logo.png" alt="GarupaEditor" width="720">
+  <h1>GarupaEditor</h1>
+  <p><em>扩展的、多平台的 Garupa 自制谱制作工具，不仅是 Garupa 。</em></p>
+</div>
 
 基于 Tauri 架构，GarupaEditor 提供多平台的 BanG Dream! Girls Band Party 自制谱制作、预览、播放、导入、导出与上传功能。
 
@@ -10,7 +14,7 @@
 
 ## 安装
 
-目前 GarupaEditor 仅提供了对桌面平台的多平台支持，且仅在 Windows 平台上进行过测试。
+目前 GarupaEditor 提供 Windows、macOS、Linux 与 Android 平台的安装包。桌面端优先推荐使用对应平台的安装器或软件包，Android 端目前提供未签名 APK。
 
 ### Windows 平台
 
@@ -26,11 +30,11 @@
 ### macOS
 
 下载：
-- `*_darwin_x64.app.tar.gz`
-- `*_darwin_aarch64.app.tar.gz`
+- `*_darwin_x64.dmg`
+- `*_darwin_aarch64.dmg`
 
 `darwin_x64` 是 Intel Mac，`darwin_aarch64` 是 Apple Silicon/M 系列 Mac。
-解压后得到 `GarupaEditor.app`，拖到“应用程序”即可。当前不是 `.dmg`，也没有签名/公证，首次打开可能需要右键选择“打开”。
+打开 `.dmg` 后将 `GarupaEditor.app` 拖到“应用程序”即可。当前没有签名/公证，首次打开可能需要右键选择“打开”。
 
 ### Linux
 
@@ -51,6 +55,13 @@ Fedora / RHEL / openSUSE 下载：
 ```bash
 sudo dnf install ./*_linux_x86_64.rpm
 ```
+
+### Android
+
+下载：
+- `*_android_aarch64.apk`
+
+当前 Android 包为 aarch64 APK，未签名。安装前可能需要在设备上允许从当前来源安装应用。
 
 ## Garupa JSON 谱面结构
 
