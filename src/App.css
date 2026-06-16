@@ -838,7 +838,7 @@ button.chart-info-edit-button:not(.note-token):not(.bpm-label-button):not(.bpm-l
   --btn-core-border-local: rgba(255, 59, 113, 0.95);
 }
 
-button.tool-icon-button.active:not(.note-token):not(.bpm-label-button):not(.bpm-line-button)::before {
+button.tool-icon-button.active:not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button)::before {
   background: linear-gradient(180deg, rgb(255, 59, 113), rgb(255, 59, 113));
   border-color: rgba(255, 59, 113, 0.95);
 }
@@ -1124,6 +1124,11 @@ button.tool-icon-button.active:not(.note-token):not(.bpm-label-button):not(.bpm-
   --btn-core-bottom-local: rgb(255, 59, 113);
   --btn-core-border-local: rgba(255, 255, 255, 0.12);
   --btn-text-color-local: #fff;
+}
+
+button.tool-action-icon.active:not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button)::before {
+  background: linear-gradient(180deg, rgb(255, 59, 113), rgb(255, 59, 113));
+  border-color: rgba(255, 255, 255, 0.12);
 }
 
 .tool-action-icon.active .tool-action-glyph {
@@ -2471,17 +2476,19 @@ button.apply-icon-button:not(.note-token):not(.bpm-label-button):not(.bpm-line-b
 
 .modal-transition-mask {
   animation-duration: 180ms;
-  animation-timing-function: ease;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
   animation-fill-mode: both;
 }
 
 .modal-transition-mask.is-enter {
   animation-name: modal-mask-fade-in;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
   pointer-events: auto;
 }
 
 .modal-transition-mask.is-exit {
   animation-name: modal-mask-fade-out;
+  animation-timing-function: cubic-bezier(0.64, 0, 0.78, 0);
   pointer-events: none;
 }
 
@@ -2489,15 +2496,18 @@ button.apply-icon-button:not(.note-token):not(.bpm-label-button):not(.bpm-line-b
   animation-duration: 180ms;
   animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
   animation-fill-mode: both;
+  transform-origin: center;
   will-change: transform, opacity;
 }
 
 .modal-transition-card.is-enter {
-  animation-name: modal-card-enter-from-bottom;
+  animation-name: modal-card-scale-in;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .modal-transition-card.is-exit {
-  animation-name: modal-card-exit-to-bottom;
+  animation-name: modal-card-scale-out;
+  animation-timing-function: cubic-bezier(0.64, 0, 0.78, 0);
   pointer-events: none;
 }
 
@@ -2521,27 +2531,27 @@ button.apply-icon-button:not(.note-token):not(.bpm-label-button):not(.bpm-line-b
   }
 }
 
-@keyframes modal-card-enter-from-bottom {
+@keyframes modal-card-scale-in {
   from {
     opacity: 0;
-    transform: translate3d(0, 26px, 0);
+    transform: scale(0);
   }
 
   to {
     opacity: 1;
-    transform: translate3d(0, 0, 0);
+    transform: scale(1);
   }
 }
 
-@keyframes modal-card-exit-to-bottom {
+@keyframes modal-card-scale-out {
   from {
     opacity: 1;
-    transform: translate3d(0, 0, 0);
+    transform: scale(1);
   }
 
   to {
     opacity: 0;
-    transform: translate3d(0, 26px, 0);
+    transform: scale(0);
   }
 }
 
@@ -2974,12 +2984,14 @@ button.apply-icon-button:not(.note-token):not(.bpm-label-button):not(.bpm-line-b
 }
 
 .app-settings-back-button,
-.app-settings-apply-button {
+.app-settings-apply-button,
+.modal-actions > button:not(.app-settings-back-button) {
   min-width: 92px;
   min-height: 34px;
 }
 
-.app-settings-apply-button {
+.app-settings-apply-button,
+.modal-actions > button:not(.app-settings-back-button) {
   --btn-frame-top-local: #f9fafc;
   --btn-frame-bottom-local: #f1f3f7;
   --btn-frame-border-local: #b9bec6;
@@ -2990,12 +3002,14 @@ button.apply-icon-button:not(.note-token):not(.bpm-label-button):not(.bpm-line-b
   color: #ffffff;
 }
 
-button.app-settings-apply-button:not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice)::before {
+button.app-settings-apply-button:not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice)::before,
+.modal-actions > button:not(.app-settings-back-button):not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice)::before {
   background: linear-gradient(180deg, rgb(255, 59, 113), rgb(255, 59, 113));
   border-color: rgba(255, 255, 255, 0.95);
 }
 
-.app-settings-apply-button .btn-content {
+.app-settings-apply-button .btn-content,
+.modal-actions > button:not(.app-settings-back-button) .btn-content {
   color: #ffffff;
 }
 

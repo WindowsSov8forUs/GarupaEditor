@@ -8,6 +8,7 @@ import {
 import { SettingPrimaryTitle } from "./SettingPrimaryTitle";
 import { StepperIcon } from "./StepperIcon";
 import { TopTabs } from "./TopTabs";
+import { useModalLayer } from "./useModalLayer";
 import { useModalTransition } from "./useModalTransition";
 import { isMobileRuntime } from "../app/mobileRuntime";
 
@@ -43,8 +44,11 @@ export function ExportJsonModal({
   onApplyUploadTestServerChart,
 }: ExportJsonModalProps) {
   const { mounted, phase } = useModalTransition(open);
+  const modalLayerStyle = useModalLayer(open, mounted);
   const [tab, setTab] = useState<ExportModalTab>("chart-code");
   const [isTagPickerOpen, setIsTagPickerOpen] = useState(false);
+  const { mounted: tagPickerMounted, phase: tagPickerPhase } = useModalTransition(isTagPickerOpen);
+  const tagPickerLayerStyle = useModalLayer(isTagPickerOpen, tagPickerMounted);
   const [tagPickerType, setTagPickerType] = useState("text");
   const [tagPickerKeyword, setTagPickerKeyword] = useState("");
   const [tagCandidates, setTagCandidates] = useState<BestdoriPostTagSearchEntry[]>([]);
@@ -187,7 +191,7 @@ export function ExportJsonModal({
   );
 
   return (
-    <div className={`modal-mask modal-transition-mask ${transitionClassName}`} onClick={onClose}>
+    <div className={`modal-mask modal-transition-mask ${transitionClassName}`} style={modalLayerStyle}>
       <section
         className={`modal-card export-json-modal modal-transition-card ${transitionClassName}`}
         onClick={(event) => event.stopPropagation()}
@@ -200,9 +204,6 @@ export function ExportJsonModal({
               <span className="modal-titleline-rule" />
             </div>
           </div>
-          <button type="button" className="icon-button" onClick={onClose}>
-            <StepperIcon type="close" />
-          </button>
         </header>
 
         <div className="modal-body">
@@ -254,11 +255,14 @@ export function ExportJsonModal({
 
           {tab === "chart-code" && (
             <div className="modal-actions is-centered app-settings-display-actions export-json-actions">
-              <button type="button" onClick={onSaveAs}>
+              <button type="button" className="app-settings-apply-button" onClick={onSaveAs}>
                 <span className="btn-content">另存为 .json</span>
               </button>
-              <button type="button" onClick={onExportBestdoriV2}>
+              <button type="button" className="app-settings-apply-button" onClick={onExportBestdoriV2}>
                 <span className="btn-content">导出为 Bestdori V2</span>
+              </button>
+              <button type="button" className="app-settings-back-button" onClick={onClose}>
+                <span className="btn-content">关闭</span>
               </button>
             </div>
           )}
@@ -268,6 +272,9 @@ export function ExportJsonModal({
               <button type="button" className="app-settings-apply-button" onClick={onApplyUploadCommunityChart}>
                 <span className="btn-content">上传</span>
               </button>
+              <button type="button" className="app-settings-back-button" onClick={onClose}>
+                <span className="btn-content">关闭</span>
+              </button>
             </div>
           )}
 
@@ -275,6 +282,9 @@ export function ExportJsonModal({
             <div className="modal-actions is-centered app-settings-display-actions export-json-actions">
               <button type="button" className="app-settings-apply-button" onClick={onApplyUploadNotGarupaServerChart}>
                 <span className="btn-content">上传</span>
+              </button>
+              <button type="button" className="app-settings-back-button" onClick={onClose}>
+                <span className="btn-content">关闭</span>
               </button>
             </div>
           )}
@@ -284,17 +294,20 @@ export function ExportJsonModal({
               <button type="button" className="app-settings-apply-button" onClick={onApplyUploadTestServerChart}>
                 <span className="btn-content">上传</span>
               </button>
+              <button type="button" className="app-settings-back-button" onClick={onClose}>
+                <span className="btn-content">关闭</span>
+              </button>
             </div>
           )}
         </div>
       </section>
-      {isTagPickerOpen && (
+      {tagPickerMounted && (
         <div
-          className={`modal-mask modal-transition-mask ${transitionClassName}`}
-          onClick={() => setIsTagPickerOpen(false)}
+          className={`modal-mask modal-transition-mask ${tagPickerPhase === "enter" ? "is-enter" : "is-exit"}`}
+          style={tagPickerLayerStyle}
         >
           <section
-            className={`modal-card export-tag-picker-modal modal-transition-card ${transitionClassName}`}
+            className={`modal-card export-tag-picker-modal modal-transition-card ${tagPickerPhase === "enter" ? "is-enter" : "is-exit"}`}
             onClick={(event) => event.stopPropagation()}
           >
             <header className="modal-header modal-titleline-header">
@@ -305,9 +318,6 @@ export function ExportJsonModal({
                   <span className="modal-titleline-rule" />
                 </div>
               </div>
-              <button type="button" className="icon-button" onClick={() => setIsTagPickerOpen(false)}>
-                <StepperIcon type="close" />
-              </button>
             </header>
             <div className="modal-body">
               <div className="export-tag-picker-body">
@@ -362,6 +372,11 @@ export function ExportJsonModal({
                     ))}
                   </div>
                 </div>
+              </div>
+              <div className="modal-actions is-centered">
+                <button type="button" className="app-settings-back-button" onClick={() => setIsTagPickerOpen(false)}>
+                  <span className="btn-content">关闭</span>
+                </button>
               </div>
             </div>
           </section>

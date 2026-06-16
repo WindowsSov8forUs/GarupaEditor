@@ -2,10 +2,9 @@
 import { type EditorOptionSettings } from "../chartCore";
 import displayIcon from "../assets/icons/display.svg";
 import optionsIcon from "../assets/icons/settings.svg";
-import optionsTitleIcon from "../assets/icons/options-title.svg";
 import { StepperIcon } from "./StepperIcon";
 import { SettingPrimaryTitle } from "./SettingPrimaryTitle";
-import { useModalTransition } from "./useModalTransition";
+import { StandardModal, StandardValueModal } from "./StandardModal";
 
 type AppSettingsModalProps = {
   open: boolean;
@@ -26,7 +25,7 @@ type AppSettingsModalProps = {
   onApplyOptionSettings: (value: EditorOptionSettings) => boolean | void | Promise<boolean | void>;
 };
 
-type SettingsPage = "menu" | "display" | "options";
+type SettingsChildPage = "display" | "options";
 type PercentKey =
   | "rhythmNoteSizePercent"
   | "longLineBrightnessPercent"
@@ -166,17 +165,18 @@ export function AppSettingsModal({
   optionSettings,
   onApplyOptionSettings,
 }: AppSettingsModalProps) {
-  const { mounted, phase } = useModalTransition(open);
-  const [page, setPage] = useState<SettingsPage>("menu");
+  const [childPage, setChildPage] = useState<SettingsChildPage | null>(null);
   const [draftOptionSettings, setDraftOptionSettings] = useState<EditorOptionSettings>(
     normalizeOptionDraft(optionSettings),
   );
 
   useEffect(() => {
     if (open) {
-      setPage("menu");
+      setChildPage(null);
       setDraftOptionSettings(normalizeOptionDraft(optionSettings));
+      return;
     }
+    setChildPage(null);
   }, [open, optionSettings]);
 
   const currentPresetIndex = useMemo(
@@ -202,8 +202,6 @@ export function AppSettingsModal({
   );
   const canStepPlaybackMvAlphaDown = resolvedPlaybackMvAlphaPercent > PLAYBACK_MV_ALPHA_MIN;
   const canStepPlaybackMvAlphaUp = resolvedPlaybackMvAlphaPercent < PLAYBACK_MV_ALPHA_MAX;
-  const pageTitle = page === "menu" ? "目录" : page === "display" ? "显示" : "选项";
-
   const stepWindowPreset = (delta: number) => {
     if (windowPresets.length === 0) {
       return;
@@ -242,7 +240,7 @@ export function AppSettingsModal({
 
   const applyDisplaySettings = () => {
     onApplyWindowPreset();
-    setPage("menu");
+    setChildPage(null);
   };
 
   const applyOptionSettings = async () => {
@@ -250,7 +248,7 @@ export function AppSettingsModal({
     if (result === false) {
       return;
     }
-    setPage("menu");
+    setChildPage(null);
   };
   const rhythmNoteSpeed = normalizeRhythmNoteSpeed(draftOptionSettings.rhythmNoteSpeed);
   const canStepRhythmNoteSpeedDown = true;
@@ -262,56 +260,46 @@ export function AppSettingsModal({
     }));
   };
 
-  if (!mounted) {
-    return null;
-  }
-
   return (
-    <div className={`modal-mask modal-transition-mask ${phase === "enter" ? "is-enter" : "is-exit"}`} onClick={onClose}>
-      <section
-        className={`modal-card app-settings-modal modal-transition-card ${phase === "enter" ? "is-enter" : "is-exit"}`}
-        onClick={(event) => event.stopPropagation()}
+    <>
+      <StandardModal
+        open={open}
+        title="目录"
+        cardClassName="app-settings-modal"
+        footerClassName="app-settings-display-actions"
+        onClose={onClose}
       >
-        <header className="modal-header modal-titleline-header">
-          <div className="modal-titleline-main">
-            <img src={optionsTitleIcon} alt="" aria-hidden="true" className="modal-titleline-icon" />
-            <div className="modal-titleline-content">
-              <h3 className="modal-titleline-text">{pageTitle}</h3>
-              <span className="modal-titleline-rule" />
-            </div>
-          </div>
-          <div className="modal-header-actions">
-            <button type="button" className="icon-button" onClick={onClose}>
-              <StepperIcon type="close" />
-            </button>
-          </div>
-        </header>
+        <div className="app-settings-menu-grid">
+          <button
+            type="button"
+            className="command-text-button settings-secondary-button app-settings-menu-button"
+            onClick={() => setChildPage("display")}
+            title="显示"
+          >
+            <img src={displayIcon} alt="" aria-hidden="true" className="command-text-icon" />
+            <span className="command-text-label">显示</span>
+          </button>
+          <button
+            type="button"
+            className="command-text-button settings-secondary-button app-settings-menu-button"
+            onClick={() => setChildPage("options")}
+            title="选项"
+          >
+            <img src={optionsIcon} alt="" aria-hidden="true" className="command-text-icon" />
+            <span className="command-text-label">选项</span>
+          </button>
+        </div>
+      </StandardModal>
 
-        <div className="modal-body">
-          {page === "menu" && (
-            <div className="app-settings-menu-grid">
-              <button
-                type="button"
-                className="command-text-button settings-secondary-button app-settings-menu-button"
-                onClick={() => setPage("display")}
-                title="显示"
-              >
-                <img src={displayIcon} alt="" aria-hidden="true" className="command-text-icon" />
-                <span className="command-text-label">显示</span>
-              </button>
-              <button
-                type="button"
-                className="command-text-button settings-secondary-button app-settings-menu-button"
-                onClick={() => setPage("options")}
-                title="选项"
-              >
-                <img src={optionsIcon} alt="" aria-hidden="true" className="command-text-icon" />
-                <span className="command-text-label">选项</span>
-              </button>
-            </div>
-          )}
-
-          {page === "display" && (
+      <StandardValueModal
+        value={childPage}
+        title={(renderedChildPage) => renderedChildPage === "display" ? "显示" : "选项"}
+        cardClassName="app-settings-modal"
+        hideCloseAction
+      >
+        {(renderedChildPage) => (
+          <>
+          {renderedChildPage === "display" && (
             <>
               <div className="app-settings-page-shell">
                 <div className="app-settings-group-list">
@@ -489,7 +477,7 @@ export function AppSettingsModal({
                 <button
                   type="button"
                   className="app-settings-back-button"
-                  onClick={() => setPage("menu")}
+                  onClick={() => setChildPage(null)}
                 >
                   <span className="btn-content">返回</span>
                 </button>
@@ -497,7 +485,7 @@ export function AppSettingsModal({
             </>
           )}
 
-          {page === "options" && (
+          {renderedChildPage === "options" && (
             <>
               <div className="app-settings-page-shell">
                 <div className="app-settings-group-list">
@@ -790,16 +778,17 @@ export function AppSettingsModal({
                 <button
                   type="button"
                   className="app-settings-back-button"
-                  onClick={() => setPage("menu")}
+                  onClick={() => setChildPage(null)}
                 >
                   <span className="btn-content">返回</span>
                 </button>
               </div>
             </>
           )}
-        </div>
-      </section>
-    </div>
+          </>
+        )}
+      </StandardValueModal>
+    </>
   );
 }
 
