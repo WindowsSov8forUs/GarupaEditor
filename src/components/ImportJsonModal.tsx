@@ -4,6 +4,7 @@ import { FileTriggerInput } from "./FileTriggerInput";
 import { SettingPrimaryTitle } from "./SettingPrimaryTitle";
 import { StepperIcon } from "./StepperIcon";
 import { TopTabs } from "./TopTabs";
+import { useModalLayer } from "./useModalLayer";
 import { useModalTransition } from "./useModalTransition";
 
 type ImportModalLevel = "chart" | "bestdori-v2";
@@ -55,6 +56,7 @@ export function ImportJsonModal(props: ImportJsonModalProps) {
     onClose,
   } = props;
   const { mounted, phase } = useModalTransition(open);
+  const modalLayerStyle = useModalLayer(open, mounted);
   const [tab, setTab] = useState<ImportModalTab>(level === "bestdori-v2" ? "official" : "chart-code");
   const officialDifficultyIndex = Math.max(0, OFFICIAL_DIFFICULTIES.indexOf(officialChartDifficulty));
 
@@ -77,7 +79,7 @@ export function ImportJsonModal(props: ImportJsonModalProps) {
       : onApplyChartJson;
 
   return (
-    <div className={`modal-mask modal-transition-mask ${transitionClassName}`} onClick={onClose}>
+    <div className={`modal-mask modal-transition-mask ${transitionClassName}`} style={modalLayerStyle}>
       <section
         className={`modal-card export-json-modal import-json-modal modal-transition-card ${transitionClassName}`}
         onClick={(event) => event.stopPropagation()}
@@ -89,11 +91,6 @@ export function ImportJsonModal(props: ImportJsonModalProps) {
               <h3 className="modal-titleline-text">导入谱面</h3>
               <span className="modal-titleline-rule" />
             </div>
-          </div>
-          <div className="modal-header-actions">
-            <button type="button" className="icon-button" onClick={onClose} title="关闭">
-              <StepperIcon type="close" />
-            </button>
           </div>
         </header>
 
@@ -219,6 +216,9 @@ export function ImportJsonModal(props: ImportJsonModalProps) {
             <div className="modal-actions is-centered app-settings-display-actions import-json-actions">
               <button type="button" className="app-settings-apply-button" onClick={applyHandler}>
                 <span className="btn-content">应用</span>
+              </button>
+              <button type="button" className="app-settings-back-button" onClick={onClose}>
+                <span className="btn-content">关闭</span>
               </button>
             </div>
           )}

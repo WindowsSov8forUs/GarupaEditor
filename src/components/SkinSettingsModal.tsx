@@ -2,6 +2,7 @@ import { type BestdoriCatalogKind, type SkinSelection } from "../skinLoader";
 import optionsTitleIcon from "../assets/icons/options-title.svg";
 import { SettingPrimaryTitle } from "./SettingPrimaryTitle";
 import { StepperIcon } from "./StepperIcon";
+import { useModalLayer } from "./useModalLayer";
 import { useModalTransition } from "./useModalTransition";
 
 type SkinSettingsModalProps = {
@@ -128,6 +129,7 @@ export function SkinSettingsModal({
   onApplySkinSelection,
 }: SkinSettingsModalProps) {
   const { mounted, phase } = useModalTransition(open);
+  const modalLayerStyle = useModalLayer(open, mounted);
 
   if (!mounted) {
     return null;
@@ -151,7 +153,7 @@ export function SkinSettingsModal({
   const transitionClassName = phase === "enter" ? "is-enter" : "is-exit";
 
   return (
-    <div className={`modal-mask modal-transition-mask ${transitionClassName}`} onClick={onClose}>
+    <div className={`modal-mask modal-transition-mask ${transitionClassName}`} style={modalLayerStyle}>
       <section
         className={`modal-card skin-settings-modal modal-transition-card ${transitionClassName}`}
         onClick={(event) => event.stopPropagation()}
@@ -164,9 +166,6 @@ export function SkinSettingsModal({
               <span className="modal-titleline-rule" />
             </div>
           </div>
-          <button type="button" className="icon-button" onClick={onClose}>
-            <StepperIcon type="close" />
-          </button>
         </header>
 
         <div className="modal-body">
@@ -256,8 +255,11 @@ export function SkinSettingsModal({
           </div>
 
           <div className="modal-actions is-centered">
-            <button type="button" onClick={onApplySkinSelection} disabled={isSkinApplying}>
+            <button type="button" className="app-settings-apply-button" onClick={onApplySkinSelection} disabled={isSkinApplying}>
               <span className="btn-content">保存</span>
+            </button>
+            <button type="button" className="app-settings-back-button" onClick={onClose} disabled={isSkinApplying}>
+              <span className="btn-content">关闭</span>
             </button>
           </div>
         </div>

@@ -1,5 +1,6 @@
 ﻿import { useCallback, type KeyboardEvent } from "react";
 import optionsTitleIcon from "../assets/icons/options-title.svg";
+import { useModalLayer } from "./useModalLayer";
 import { useModalTransition } from "./useModalTransition";
 
 type BestdoriLoginModalProps = {
@@ -26,6 +27,7 @@ export function BestdoriLoginModal({
   onClose,
 }: BestdoriLoginModalProps) {
   const { mounted, phase } = useModalTransition(open);
+  const modalLayerStyle = useModalLayer(open, mounted);
 
   const handleConfirm = useCallback(() => {
     if (submitting) {
@@ -50,11 +52,7 @@ export function BestdoriLoginModal({
   return (
     <div
       className={`modal-mask modal-transition-mask ${transitionClassName}`}
-      onClick={() => {
-        if (!submitting) {
-          onClose();
-        }
-      }}
+      style={modalLayerStyle}
     >
       <section
         className={`modal-card bestdori-login-modal modal-transition-card ${transitionClassName}`}
@@ -68,9 +66,6 @@ export function BestdoriLoginModal({
               <span className="modal-titleline-rule" />
             </div>
           </div>
-          <button type="button" className="icon-button" onClick={onClose} disabled={submitting} title={"\u5173\u95ED"}>
-            <span className="btn-content">{"\u00D7"}</span>
-          </button>
         </header>
 
         <div className="modal-body">
@@ -112,6 +107,9 @@ export function BestdoriLoginModal({
               disabled={submitting || username.trim().length === 0 || password.trim().length === 0}
             >
               <span className="btn-content">{submitting ? "\u767B\u5F55\u4E2D..." : "\u767B\u5F55"}</span>
+            </button>
+            <button type="button" className="app-settings-back-button" onClick={onClose} disabled={submitting}>
+              <span className="btn-content">{"\u5173\u95ED"}</span>
             </button>
           </div>
         </div>

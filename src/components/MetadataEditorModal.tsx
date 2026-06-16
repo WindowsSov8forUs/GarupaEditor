@@ -19,6 +19,7 @@ import optionsTitleIcon from "../assets/icons/options-title.svg";
 import { SettingPrimaryTitle } from "./SettingPrimaryTitle";
 import { StepperIcon } from "./StepperIcon";
 import { TopTabs } from "./TopTabs";
+import { useModalLayer } from "./useModalLayer";
 import { useModalTransition } from "./useModalTransition";
 
 type MetadataEditorModalProps = {
@@ -78,6 +79,7 @@ export function MetadataEditorModal({
   onMvUpload,
 }: MetadataEditorModalProps) {
   const { mounted, phase } = useModalTransition(open);
+  const modalLayerStyle = useModalLayer(open, mounted);
   const [tab, setTab] = useState<MetadataEditorTab>("info");
   const [levelInput, setLevelInput] = useState(metadata.difficultyLevel);
   const [offsetInput, setOffsetInput] = useState(String(metadata.offsetMs));
@@ -163,7 +165,7 @@ export function MetadataEditorModal({
   const mvSource = normalizeSource(metadata.mvDataUrl);
 
   return (
-    <div className={`modal-mask modal-transition-mask ${transitionClassName}`} onClick={onClose}>
+    <div className={`modal-mask modal-transition-mask ${transitionClassName}`} style={modalLayerStyle}>
       <section
         className={`modal-card metadata-editor-modal modal-transition-card ${transitionClassName}`}
         onClick={(event) => event.stopPropagation()}
@@ -176,9 +178,6 @@ export function MetadataEditorModal({
               <span className="modal-titleline-rule" />
             </div>
           </div>
-          <button type="button" className="icon-button" onClick={onClose}>
-            <StepperIcon type="close" />
-          </button>
         </header>
 
         <div className="modal-body">
@@ -521,7 +520,7 @@ export function MetadataEditorModal({
 
           <div className="modal-actions is-centered metadata-editor-actions">
             <button type="button" className="app-settings-back-button" onClick={onClose}>
-              <span className="btn-content">返回</span>
+              <span className="btn-content">关闭</span>
             </button>
           </div>
         </div>
