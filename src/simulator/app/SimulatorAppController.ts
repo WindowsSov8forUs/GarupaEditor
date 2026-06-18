@@ -112,7 +112,7 @@ const SCORE_HUD_ACCENT_PINK = "rgb(255, 59, 113)";
 const SCORE_HUD_BADGE_COLOR = "rgb(72, 72, 72)";
 const SCORE_HUD_BADGE_DIAMETER_BY_HEIGHT = 9 / 26;
 const SCORE_HUD_BADGE_ICON_SIZE_BY_DIAMETER = 17 / 27;
-const SCORE_HUD_BADGE_BORDER_WIDTH_PX = 2;
+const SCORE_HUD_BADGE_BORDER_WIDTH_PX = 1;
 const SCORE_HUD_FRAME_STROKE_WIDTH_PX = 2;
 const SCORE_HUD_GAIN_ANIM_TOTAL_MS = ((12 / 15) * 1000 * 3) / 4;
 const SCORE_HUD_GAIN_PHASE_1_END = 4 / 15;
@@ -135,6 +135,13 @@ const SCORE_HUD_RANK_THRESHOLDS = [
   { label: "A", score: 4500000 },
   { label: "S", score: 6750000 },
   { label: "SS", score: 9000000 },
+] as const;
+const SCORE_HUD_GAUGE_FILL_CLASSES = [
+  "is-rank-0-c",
+  "is-rank-c-b",
+  "is-rank-b-a",
+  "is-rank-a-s",
+  "is-rank-s-ss",
 ] as const;
 
 function parseLaunchRequestIdFromHash(): string {
@@ -634,7 +641,7 @@ export class SimulatorAppController {
     const scoreTopBadgeIconPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
     scoreTopBadgeIconPath.setAttribute(
       "d",
-      "M50 10 L61 38 L91 38 L67 56 L76 86 L50 68 L24 86 L33 56 L9 38 L39 38 Z",
+      "M50 10 L65 35 L91 38 L71 58 L76 86 L50 72 L24 86 L29 58 L9 38 L35 35 Z",
     );
     scoreTopBadgeIconPath.setAttribute("fill", SCORE_HUD_BADGE_COLOR);
     scoreTopBadgeIconPath.setAttribute("stroke", SCORE_HUD_BADGE_COLOR);
@@ -1474,6 +1481,24 @@ export class SimulatorAppController {
       return this.clamp01(score / fullScore);
     })();
     this.ui.scoreGaugeFill.style.width = `${(targetGauge * 100).toFixed(3)}%`;
+    const gaugeFillClass = (() => {
+      if (score >= SCORE_HUD_RANK_THRESHOLDS[3].score) {
+        return "is-rank-s-ss";
+      }
+      if (score >= SCORE_HUD_RANK_THRESHOLDS[2].score) {
+        return "is-rank-a-s";
+      }
+      if (score >= SCORE_HUD_RANK_THRESHOLDS[1].score) {
+        return "is-rank-b-a";
+      }
+      if (score >= SCORE_HUD_RANK_THRESHOLDS[0].score) {
+        return "is-rank-c-b";
+      }
+      return "is-rank-0-c";
+    })();
+    for (const className of SCORE_HUD_GAUGE_FILL_CLASSES) {
+      this.ui.scoreGaugeFill.classList.toggle(className, className === gaugeFillClass);
+    }
   }
 
   private updateScoreRankMarkerPositions(noteCount: number): void {
