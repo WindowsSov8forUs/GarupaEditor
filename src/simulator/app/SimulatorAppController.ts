@@ -136,6 +136,13 @@ const SCORE_HUD_RANK_THRESHOLDS = [
   { label: "S", score: 6750000 },
   { label: "SS", score: 9000000 },
 ] as const;
+const SCORE_HUD_GAUGE_FILL_CLASSES = [
+  "is-rank-0-c",
+  "is-rank-c-b",
+  "is-rank-b-a",
+  "is-rank-a-s",
+  "is-rank-s-ss",
+] as const;
 
 function parseLaunchRequestIdFromHash(): string {
   if (typeof window === "undefined") {
@@ -1474,6 +1481,24 @@ export class SimulatorAppController {
       return this.clamp01(score / fullScore);
     })();
     this.ui.scoreGaugeFill.style.width = `${(targetGauge * 100).toFixed(3)}%`;
+    const gaugeFillClass = (() => {
+      if (score >= SCORE_HUD_RANK_THRESHOLDS[3].score) {
+        return "is-rank-s-ss";
+      }
+      if (score >= SCORE_HUD_RANK_THRESHOLDS[2].score) {
+        return "is-rank-a-s";
+      }
+      if (score >= SCORE_HUD_RANK_THRESHOLDS[1].score) {
+        return "is-rank-b-a";
+      }
+      if (score >= SCORE_HUD_RANK_THRESHOLDS[0].score) {
+        return "is-rank-c-b";
+      }
+      return "is-rank-0-c";
+    })();
+    for (const className of SCORE_HUD_GAUGE_FILL_CLASSES) {
+      this.ui.scoreGaugeFill.classList.toggle(className, className === gaugeFillClass);
+    }
   }
 
   private updateScoreRankMarkerPositions(noteCount: number): void {

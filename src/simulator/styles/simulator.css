@@ -249,7 +249,29 @@
   top: 0;
   height: 100%;
   width: 16%;
-  background: linear-gradient(180deg, #79ffd9 0%, #49eec3 55%, #33d9ad 100%);
+  background: linear-gradient(180deg, #9de6ff 0%, #47c6f4 55%, #25a8da 100%);
+}
+
+.simulator-score-gauge-fill.is-rank-0-c {
+  background: linear-gradient(180deg, #9de6ff 0%, #47c6f4 55%, #25a8da 100%);
+}
+
+.simulator-score-gauge-fill.is-rank-c-b {
+  background: linear-gradient(180deg, #95ffd8 0%, #29e6a6 55%, #18d092 100%);
+}
+
+.simulator-score-gauge-fill.is-rank-b-a {
+  background: linear-gradient(180deg, #ffe8a7 0%, #ffb32a 55%, #ffa019 100%);
+}
+
+.simulator-score-gauge-fill.is-rank-a-s {
+  background: linear-gradient(180deg, #ff9fc5 0%, #ff367c 55%, #f52368 100%);
+}
+
+.simulator-score-gauge-fill.is-rank-s-ss {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.46) 0%, rgba(255, 255, 255, 0.2) 44%, rgba(255, 255, 255, 0) 45%),
+    linear-gradient(90deg, #27e3a1 0%, #20bde9 25%, #7b65ff 48%, #f03aa8 72%, #ffb12f 100%);
 }
 
 .simulator-score-rank-row {
