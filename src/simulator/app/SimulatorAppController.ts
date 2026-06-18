@@ -1482,13 +1482,14 @@ export class SimulatorAppController {
       return;
     }
     this.lastScoreRankNotes = notes;
+    const fullScore = SCORE_HUD_BASE_FULL_SCORE + notes;
     for (let index = 0; index < SCORE_HUD_RANK_THRESHOLDS.length; index += 1) {
       const marker = this.ui.scoreRankLabels[index];
       if (!marker) {
         continue;
       }
       const threshold = SCORE_HUD_RANK_THRESHOLDS[index];
-      const ratio = this.clamp01(threshold.score / SCORE_HUD_BASE_FULL_SCORE);
+      const ratio = this.clamp01(threshold.score / Math.max(1, fullScore));
       marker.style.left = `${(ratio * 100).toFixed(4)}%`;
     }
   }
