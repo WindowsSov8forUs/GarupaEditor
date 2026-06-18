@@ -112,7 +112,7 @@ const SCORE_HUD_ACCENT_PINK = "rgb(255, 59, 113)";
 const SCORE_HUD_BADGE_COLOR = "rgb(72, 72, 72)";
 const SCORE_HUD_BADGE_DIAMETER_BY_HEIGHT = 9 / 26;
 const SCORE_HUD_BADGE_ICON_SIZE_BY_DIAMETER = 17 / 27;
-const SCORE_HUD_BADGE_BORDER_WIDTH_PX = 2;
+const SCORE_HUD_BADGE_BORDER_WIDTH_PX = 1;
 const SCORE_HUD_FRAME_STROKE_WIDTH_PX = 2;
 const SCORE_HUD_GAIN_ANIM_TOTAL_MS = ((12 / 15) * 1000 * 3) / 4;
 const SCORE_HUD_GAIN_PHASE_1_END = 4 / 15;
@@ -641,7 +641,7 @@ export class SimulatorAppController {
     const scoreTopBadgeIconPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
     scoreTopBadgeIconPath.setAttribute(
       "d",
-      "M50 10 L61 38 L91 38 L67 56 L76 86 L50 68 L24 86 L33 56 L9 38 L39 38 Z",
+      "M50 10 L65 35 L91 38 L71 58 L76 86 L50 72 L24 86 L29 58 L9 38 L35 35 Z",
     );
     scoreTopBadgeIconPath.setAttribute("fill", SCORE_HUD_BADGE_COLOR);
     scoreTopBadgeIconPath.setAttribute("stroke", SCORE_HUD_BADGE_COLOR);
