@@ -50,6 +50,7 @@ export function usePlayfieldRenderers(params: any) {
     slideBuildState,
     slideBuildCursor,
     onLongLineContextAction,
+    onSlideToolLongLineClick,
     renderBackendMode,
     noteVisualScale,
     isSimultaneousLineEnabled,
@@ -393,6 +394,11 @@ export function usePlayfieldRenderers(params: any) {
             if (isPreviewChain) {
               return;
             }
+            if (isToolArmed && tool === "slide") {
+              event.preventDefault();
+              event.stopPropagation();
+              return;
+            }
             if (shouldBypassLongLineLeftClick) {
               return;
             }
@@ -406,6 +412,17 @@ export function usePlayfieldRenderers(params: any) {
           }}
           onClick={(event) => {
             if (isPreviewChain) {
+              return;
+            }
+            if (isToolArmed && tool === "slide") {
+              event.preventDefault();
+              event.stopPropagation();
+              if (slideBuildRef.current) {
+                return;
+              }
+              if (typeof onSlideToolLongLineClick === "function") {
+                onSlideToolLongLineClick(segment, event);
+              }
               return;
             }
             if (shouldBypassLongLineLeftClick) {
