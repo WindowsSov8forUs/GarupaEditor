@@ -130,8 +130,8 @@ const SCORE_HUD_AUTO_LIVE_HEIGHT_BY_TOTAL_HEIGHT = 37 / 78;
 const SCORE_HUD_AUTO_LIVE_FONT_BY_HEIGHT = 20 / 37;
 const SCORE_HUD_BASE_FULL_SCORE = 10000000;
 const SCORE_HUD_RANK_THRESHOLDS = [
-  { label: "C", score: 400000 },
-  { label: "B", score: 2500000 },
+  { label: "C", score: 375000 },
+  { label: "B", score: 2250000 },
   { label: "A", score: 4500000 },
   { label: "S", score: 6750000 },
   { label: "SS", score: 9000000 },
@@ -1482,14 +1482,13 @@ export class SimulatorAppController {
       return;
     }
     this.lastScoreRankNotes = notes;
-    const fullScore = SCORE_HUD_BASE_FULL_SCORE + notes;
     for (let index = 0; index < SCORE_HUD_RANK_THRESHOLDS.length; index += 1) {
       const marker = this.ui.scoreRankLabels[index];
       if (!marker) {
         continue;
       }
       const threshold = SCORE_HUD_RANK_THRESHOLDS[index];
-      const ratio = this.clamp01(threshold.score / Math.max(1, fullScore));
+      const ratio = this.clamp01(threshold.score / SCORE_HUD_BASE_FULL_SCORE);
       marker.style.left = `${(ratio * 100).toFixed(4)}%`;
     }
   }
