@@ -1332,6 +1332,14 @@ label.ui-checkbox.is-disabled .ui-checkbox-box {
   padding: 1px 10px 0 13px;
 }
 
+.setting-title-strip--fit {
+  align-self: flex-start;
+  width: fit-content;
+  max-width: 100%;
+  padding-right: 13px;
+  overflow-wrap: anywhere;
+}
+
 .setting-title-primary {
   --setting-primary-bar-height: 16px;
   --setting-primary-outline-width: 2.1px;
