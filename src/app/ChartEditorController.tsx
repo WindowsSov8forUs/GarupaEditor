@@ -148,6 +148,7 @@ import {
   normalizeMetadata,
   normalizeEditorOptionSettings,
   normalizeNote,
+  normalizeNoteTimingGroup,
   normalizePositiveInt,
   normalizeSettings,
   parseSkinSelectionFromDocument,
@@ -3375,6 +3376,89 @@ function ChartEditorController() {
     onSelectionDragCompleted: handleSelectionDragCompletedForCopyTool,
   });
   resolveBoardPlacementRef.current = resolveBoardPlacement;
+
+  const insertSingleNodeOnLongLine = useCallback((segment: any, event: ReactMouseEvent<HTMLElement>) => {
+    if (!isToolArmed || tool !== "slide" || slideBuildRef.current) {
+      return;
+    }
+    const board = playfieldBoardRef.current;
+    if (!board) {
+      return;
+    }
+    const rect = board.getBoundingClientRect();
+    const placement = resolveBoardPlacement(
+      event.clientX - rect.left,
+      event.clientY - rect.top,
+      { type: "single" },
+    );
+    if (!placement || isPlacementBlocked(placement.lane, placement.beat, { type: "single" })) {
+      return;
+    }
+
+    const chainId = typeof segment?.chainId === "string" ? segment.chainId : null;
+    const segmentIndex = Number(segment?.index);
+    if (!chainId || !Number.isInteger(segmentIndex) || segmentIndex < 0) {
+      return;
+    }
+
+    const normalized = normalizeNote(
+      {
+        id: createId(),
+        type: "single",
+        lane: Number(toFinite(placement.lane, 0).toFixed(6)),
+        beat: quantizeBeat(placement.beat, beatDivision),
+        timingGroup: normalizeNoteTimingGroup(toolTimingGroup),
+      },
+      settings,
+    );
+    if (!normalized) {
+      return;
+    }
+
+    setNotes((previous: ChartNote[]) => {
+      const filtered = previous.filter(
+        (note) =>
+          note.type === "hidden" ||
+          !(note.lane === normalized.lane && approxEq(note.beat, normalized.beat)),
+      );
+      return sortNotes([...filtered, normalized]);
+    });
+    setSlideChains((previous: SlideChain[]) =>
+      previous.map((chain) => {
+        if (chain.id !== chainId || segmentIndex >= chain.noteIds.length - 1) {
+          return chain;
+        }
+        const nextNoteIds = [...chain.noteIds];
+        nextNoteIds.splice(segmentIndex + 1, 0, normalized.id);
+        return {
+          ...chain,
+          noteIds: nextNoteIds,
+        };
+      }),
+    );
+    setSelectedLongLineSegmentId(null);
+    clearSelectedNotes();
+    clearSelectedBpmEvents();
+    setSelectedBpmEventId(null);
+    setStatusMessage("已在 Slide 连接段上添加 Single 节点。");
+  }, [
+    approxEq,
+    beatDivision,
+    clearSelectedBpmEvents,
+    clearSelectedNotes,
+    isPlacementBlocked,
+    isToolArmed,
+    resolveBoardPlacement,
+    setNotes,
+    setSelectedBpmEventId,
+    setSelectedLongLineSegmentId,
+    setSlideChains,
+    setStatusMessage,
+    settings,
+    tool,
+    toolTimingGroup,
+  ]);
+
   const {
     applyToolFromPalette: applyToolFromPaletteRaw,
     applyBpmToolFromPalette: applyBpmToolFromPaletteRaw,
@@ -5388,6 +5472,7 @@ function ChartEditorController() {
     setSelectedBpmEventIds,
     onLongLineContextAction: (segmentGroupId: string) =>
       splitLongLineSegment(segmentGroupId, { deleteMiddle: !isExGarupaEnabled }),
+    onSlideToolLongLineClick: insertSingleNodeOnLongLine,
   });
   useCanvasPlayfieldBackend({
     enabled: isCanvasRenderBackend && isSkinReady && isCanvasResourceReady,

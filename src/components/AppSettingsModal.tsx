@@ -31,6 +31,7 @@ type PercentKey =
   | "longLineBrightnessPercent"
   | "noteSeVolumePercent"
   | "verticalScalePercent";
+type SettingTitleWidth = "full" | "fit";
 
 const RHYTHM_NOTE_SPEED_MIN = 1;
 const RHYTHM_NOTE_SPEED_MAX = 12;
@@ -69,6 +70,7 @@ function wrapRhythmNoteSpeed(value: number): number {
 
 type PercentStepperProps = {
   title: string;
+  titleWidth?: SettingTitleWidth;
   value: number;
   min: number;
   max: number;
@@ -90,14 +92,17 @@ function normalizeOptionDraft(value: EditorOptionSettings): EditorOptionSettings
 }
 
 function PercentStepper(props: PercentStepperProps) {
-  const { title, value, min, max, smallStep, largeStep, onStep } = props;
+  const { title, titleWidth = "full", value, min, max, smallStep, largeStep, onStep } = props;
   const rounded = Math.round(value);
   const canDown = rounded > min;
   const canUp = rounded < max;
+  const titleClassName = titleWidth === "fit"
+    ? "setting-title-strip setting-title-strip--fit"
+    : "setting-title-strip";
 
   return (
     <div className="setting-block">
-      <span className="setting-title-strip">{title}</span>
+      <span className={titleClassName}>{title}</span>
       <div className="inline-stepper inline-stepper-extended">
         <button
           type="button"

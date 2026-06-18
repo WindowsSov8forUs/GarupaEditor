@@ -32,6 +32,7 @@ type SkinSettingsModalProps = {
 
 type TypeStepperProps = {
   title: string;
+  titleWidth?: "full" | "fit";
   value: string;
   index: number;
   types: readonly string[];
@@ -55,6 +56,7 @@ function resolveTypeIndex(currentType: string, options: readonly string[]): numb
 
 function TypeStepper({
   title,
+  titleWidth = "full",
   value,
   index,
   types,
@@ -62,9 +64,13 @@ function TypeStepper({
   onChange,
   formatTypeLabel,
 }: TypeStepperProps) {
+  const titleClassName = titleWidth === "fit"
+    ? "setting-title-strip setting-title-strip--fit"
+    : "setting-title-strip";
+
   return (
     <div className="setting-block">
-      <span className="setting-title-strip">{title}</span>
+      <span className={titleClassName}>{title}</span>
       <div className="inline-stepper">
         <button
           type="button"

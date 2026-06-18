@@ -46,6 +46,7 @@ type SettingBlockProps = {
   title: string;
   children: ReactNode;
   className?: string;
+  titleWidth?: "full" | "fit";
 };
 
 const PALETTE_TOOL_TYPES = [
@@ -57,11 +58,14 @@ const PALETTE_TOOL_TYPES = [
   "directional_flick_right",
 ] as const;
 
-function SettingBlock({ title, children, className }: SettingBlockProps) {
+function SettingBlock({ title, children, className, titleWidth = "full" }: SettingBlockProps) {
   const blockClassName = className ? `setting-block ${className}` : "setting-block";
+  const titleClassName = titleWidth === "fit"
+    ? "setting-title-strip setting-title-strip--fit"
+    : "setting-title-strip";
   return (
     <div className={blockClassName}>
-      <span className="setting-title-strip">{title}</span>
+      <span className={titleClassName}>{title}</span>
       {children}
     </div>
   );
