@@ -130,8 +130,8 @@ const SCORE_HUD_AUTO_LIVE_HEIGHT_BY_TOTAL_HEIGHT = 37 / 78;
 const SCORE_HUD_AUTO_LIVE_FONT_BY_HEIGHT = 20 / 37;
 const SCORE_HUD_BASE_FULL_SCORE = 10000000;
 const SCORE_HUD_RANK_THRESHOLDS = [
-  { label: "C", score: 400000 },
-  { label: "B", score: 2500000 },
+  { label: "C", score: 375000 },
+  { label: "B", score: 2250000 },
   { label: "A", score: 4500000 },
   { label: "S", score: 6750000 },
   { label: "SS", score: 9000000 },
