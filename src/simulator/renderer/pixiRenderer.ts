@@ -105,6 +105,7 @@ interface StageGeometry {
   stageBottom: number;
   stageTop: number;
   stageJudge: number;
+  viewportBottomPercent: number;
 }
 
 interface SlideBottomMarker {
@@ -1204,6 +1205,9 @@ export class PixiRenderer {
 
       const color = colorForNote(n.note);
       const visual = this.resolveNoteVisualState(n, elapsedMs);
+      if (!this.isPercentRenderable(visual.percent)) {
+        continue;
+      }
       const noteScale = visual.scale;
       const directional = isDirectionalNote(n.note);
       const renderLane = renderCenterLaneForNote(n.lane, n.note);
@@ -1403,6 +1407,9 @@ export class PixiRenderer {
       }
       const fromPercent = this.percentFromFrameRaw(fromFrameRaw);
       const toPercent = this.percentFromFrameRaw(toFrameRaw);
+      if (!this.isPercentRangeRenderable(fromPercent, toPercent)) {
+        continue;
+      }
       const fromPassed = fromFrameRaw >= this.settings.noteSpeedFrames;
       const fromBaseLane = fromPassed
         ? this.interpolateLane(
@@ -1555,6 +1562,9 @@ export class PixiRenderer {
     const endAxisAtVisible = startAxis + (visibleEndMs - startChartMs) * speed;
     const startPercent = this.percentFromAxisDiff(nowAxis - startAxisAtVisible);
     const endPercent = this.percentFromAxisDiff(nowAxis - endAxisAtVisible);
+    if (!this.isPercentRangeRenderable(startPercent, endPercent)) {
+      return;
+    }
     const startElapsedMs = visibleStartMs + this.settings.offsetMs;
     const endElapsedMs = visibleEndMs + this.settings.offsetMs;
     const startLane = this.laneAtConnectionElapsed(connection, startElapsedMs);
@@ -1745,7 +1755,7 @@ export class PixiRenderer {
   private percentFromFrameRaw(frameRaw: number): number {
     const frames = Math.max(1, this.settings.noteSpeedFrames);
     const exponent = (50 * (frameRaw - frames)) / frames;
-    return Math.max(0, Math.min(1, 0.05 + 0.95 * Math.pow(1.1, exponent)));
+    return 0.05 + 0.95 * Math.pow(1.1, exponent);
   }
 
   private noteTravelAxisMs(): number {
@@ -1755,7 +1765,7 @@ export class PixiRenderer {
   private percentFromAxisDiff(axisDiff: number): number {
     const duration = this.noteTravelAxisMs();
     const exponent = 50 * Math.max(-1, Math.min(0, axisDiff / duration));
-    return Math.max(0, Math.min(1, 0.05 + 0.95 * Math.pow(1.1, exponent)));
+    return 0.05 + 0.95 * Math.pow(1.1, exponent);
   }
 
   private interpolateLane(fromLane: number, toLane: number, nowAxis: number, fromAxis: number, toAxis: number): number {
@@ -2490,8 +2500,7 @@ export class PixiRenderer {
   }
 
   private connectorHalfWidthAtPercent(percent: number, laneWidth = 1): number {
-    const p = Math.max(0, Math.min(1, percent));
-    const laneSpacing = this.stageLaneWidth() * p;
+    const laneSpacing = this.stageLaneWidth() * percent;
     const widthScale = Math.max(1, Number.isFinite(laneWidth) ? laneWidth : 1);
     return Math.max(1, laneSpacing * this.settings.noteSize * LONG_NOTE_LINE_HALF_WIDTH_TO_LANE_WIDTH * widthScale);
   }
@@ -2510,8 +2519,7 @@ export class PixiRenderer {
   }
 
   private laneXAtPercent(lane: number, percent: number): number {
-    const p = Math.max(0, Math.min(1, percent));
-    return this.laneXAtPercentRaw(lane, p);
+    return this.laneXAtPercentRaw(lane, percent);
   }
 
   private textureLaneIndex(lane: number): number {
@@ -2524,8 +2532,7 @@ export class PixiRenderer {
   }
 
   private laneYAtPercent(percent: number): number {
-    const p = Math.max(0, Math.min(1, percent));
-    return this.laneYAtPercentRaw(p);
+    return this.laneYAtPercentRaw(percent);
   }
 
   private viewportWidth(): number {
@@ -2534,6 +2541,21 @@ export class PixiRenderer {
 
   private viewportHeight(): number {
     return this.app?.screen.height ?? this.settings.windowY;
+  }
+
+  private viewportBottomPercent(): number {
+    return this.stageGeometry().viewportBottomPercent;
+  }
+
+  private isPercentRenderable(percent: number): boolean {
+    return Number.isFinite(percent) && percent <= this.viewportBottomPercent();
+  }
+
+  private isPercentRangeRenderable(first: number, second: number): boolean {
+    if (!Number.isFinite(first) || !Number.isFinite(second)) {
+      return false;
+    }
+    return Math.min(first, second) <= this.viewportBottomPercent();
   }
 
   private stageGeometry(): StageGeometry {
@@ -2564,6 +2586,7 @@ export class PixiRenderer {
     const stageJudge = stageHeight * STAGE_JUDGE_TO_HEIGHT_RATIO;
     const stageBottom = viewportHeight * 0.5 + stageJudge;
     const stageTop = stageBottom - stageHeight;
+    const viewportBottomPercent = (viewportHeight - stageTop) / Math.max(1e-6, stageHeight);
 
     const geometry: StageGeometry = {
       viewportWidth,
@@ -2573,6 +2596,7 @@ export class PixiRenderer {
       stageBottom,
       stageTop,
       stageJudge,
+      viewportBottomPercent,
     };
     this.stageGeometryCache = geometry;
     return geometry;
