@@ -10,7 +10,6 @@ import {
   RuntimeStats,
   SimulatorSettings,
 } from "./types";
-import type { VisibilityWindow } from "./timingGroup";
 
 interface PendingSystemEvent {
   type: "music_start" | "bpm";
@@ -48,7 +47,6 @@ export class SimulatorRuntime {
   private lastElapsedMs = 0;
   private finishAtMs: number | null = null;
   private static readonly COLOR_ASSIST_BEAT_MULTIPLIER = 2;
-  private static readonly VISIBILITY_EPSILON_MS = 1e-6;
 
   constructor(settings: SimulatorSettings, chart: ParsedChart) {
     this.settings = settings;
@@ -250,17 +248,12 @@ export class SimulatorRuntime {
       const tRaw = (this.tgPosAt(note.tgId, elapsedMs) * SIMULATOR_TIMING_FPS) / 1000
         + this.settings.noteSpeedFrames
         - (note.tgPos * SIMULATOR_TIMING_FPS) / 1000;
-      const inWindow = this.isInVisibilityWindow(note.visibilityWindows, elapsedMs);
-      if (
-        !inWindow
-        || tRaw < -SimulatorRuntime.VISIBILITY_EPSILON_MS
-        || tRaw > this.settings.noteSpeedFrames + SimulatorRuntime.VISIBILITY_EPSILON_MS
-      ) {
-        note.started = false;
-        note.t = 0;
-      } else {
+      if (elapsedMs >= note.startMs) {
         note.started = true;
         note.t = Math.floor(tRaw);
+      } else {
+        note.started = false;
+        note.t = 0;
       }
     } else if (elapsedMs >= note.startMs) {
       note.started = true;
@@ -269,16 +262,6 @@ export class SimulatorRuntime {
       note.started = false;
       note.t = 0;
     }
-  }
-
-  private isInVisibilityWindow(windows: readonly VisibilityWindow[], elapsedMs: number): boolean {
-    if (windows.length === 0) {
-      return true;
-    }
-    return windows.some((window) => (
-      elapsedMs + SimulatorRuntime.VISIBILITY_EPSILON_MS >= window.startMs
-      && elapsedMs <= window.endMs + SimulatorRuntime.VISIBILITY_EPSILON_MS
-    ));
   }
 
   private isGrayNote(beat: number, note: RuntimeNoteSemantic): boolean {
