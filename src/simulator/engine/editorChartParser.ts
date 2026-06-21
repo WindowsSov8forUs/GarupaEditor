@@ -17,7 +17,6 @@ import type {
 import {
   axisAtMs,
   buildTimingGroupDefs,
-  findVisibilityWindows,
   normalizeSvValue,
   type TimingGroupSourceEvent,
 } from "./timingGroup";
@@ -236,11 +235,6 @@ function bpmAtBeat(segments: BpmSegment[], beat: number): number {
     }
   }
   return segments[Math.max(0, high)].bpm;
-}
-
-function maxTimeMsFromSegments(segments: BpmSegment[]): number {
-  const last = segments[segments.length - 1];
-  return last ? Math.max(0, last.msAtStart) : 0;
 }
 
 function buildSlideRoles(
@@ -530,28 +524,9 @@ export function parseEditorChart(
       : -1;
     const tgDef = tgId >= 0 ? timingGroups[tgId] : null;
     const tgPos = useTimingGroups ? axisAtMs(tgDef, atMs) : 0;
-    const visibilitySearchStartMs = Math.min(0, atMs - travelMs);
-    const visibilityWindows = useTimingGroups
-      ? findVisibilityWindows(
-        tgDef,
-        tgPos,
-        travelMs,
-        visibilitySearchStartMs,
-        Math.max(maxTimeMsFromSegments(segments), atMs) + 10000,
-      )
-      : [];
-    const startMs = useTimingGroups && visibilityWindows.length > 0
-      ? visibilityWindows[0].startMs + offsetMs
-      : atMs + offsetMs - travelMs;
-    const visibleEndMs = useTimingGroups && visibilityWindows.length > 0
-      ? visibilityWindows[visibilityWindows.length - 1].endMs + offsetMs
-      : atMs + offsetMs;
-    const eventVisibilityWindows = useTimingGroups
-      ? visibilityWindows.map((window) => ({
-        startMs: window.startMs + offsetMs,
-        endMs: window.endMs + offsetMs,
-      }))
-      : [];
+    const startMs = atMs + offsetMs - travelMs;
+    const visibleEndMs = atMs + offsetMs;
+    const eventVisibilityWindows: [] = [];
 
     internalEvents.push({
       event: {
