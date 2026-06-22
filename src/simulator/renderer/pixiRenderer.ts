@@ -1349,73 +1349,107 @@ export class PixiRenderer {
       return;
     }
     for (const connection of this.slideConnections) {
-      const fromEvent = connection.fromEvent;
-      const toEvent = connection.toEvent;
-      const visibleStartMs = Math.min(fromEvent.startMs, toEvent.startMs);
-      const visibleEndMs = Math.max(
-        fromEvent.visibleEndMs,
-        toEvent.visibleEndMs,
-        toEvent.hitMs,
-      );
-      if (visibleStartMs > elapsedMs || visibleEndMs < elapsedMs) {
+      if (!this.isSlideConnectionInLifecycleRange(connection, elapsedMs)
+        || this.isSlideConnectionBackConsumed(connection)) {
         continue;
       }
-      const fromFrameRaw = this.frameRawAt(
-        elapsedMs,
-        fromEvent.startMs,
-        fromEvent.tgId,
-        fromEvent.tgPos,
-      );
-      const toFrameRaw = this.frameRawAt(
-        elapsedMs,
-        toEvent.startMs,
-        toEvent.tgId,
-        toEvent.tgPos,
-      );
-      if (fromEvent.tgId >= 0 && fromEvent.tgId === toEvent.tgId) {
-        this.drawSlideConnectionAxisSegments(graphics, connection, elapsedMs);
-        if (this.shouldDrawSlideBottomMarker(connection, elapsedMs)) {
+
+      const frontConsumed = this.isSlideConnectionFrontConsumed(connection);
+      if (frontConsumed) {
+        this.drawConsumingSlideConnection(graphics, connection, elapsedMs);
+        if (this.shouldDrawSlideBottomMarker(connection)) {
           slideBottomMarkers.push(this.resolveSlideBottomMarker(connection, elapsedMs));
         }
-        continue;
-      }
-      if (!this.shouldDrawSlideConnectionEndpointRange(connection, elapsedMs, fromFrameRaw, toFrameRaw)) {
-        continue;
-      }
-      const fromPercent = this.percentFromFrameRaw(fromFrameRaw);
-      const toPercent = this.percentFromFrameRaw(toFrameRaw);
-      if (!this.isPercentRangeRenderable(fromPercent, toPercent)) {
-        continue;
-      }
-      const fromPassed = fromFrameRaw >= this.settings.noteSpeedFrames;
-      const fromAnchorLane = connection.fromAnchorLane;
-      const toAnchorLane = connection.toAnchorLane;
-      const fromRenderLane = fromPassed
-        ? this.interpolateLane(
-          fromAnchorLane,
-          toAnchorLane,
-          this.axisNowAt(elapsedMs, fromEvent.tgId),
-          this.axisHitAt(fromEvent.hitMs, fromEvent.tgId, fromEvent.tgPos),
-          this.axisHitAt(toEvent.hitMs, toEvent.tgId, toEvent.tgPos),
-        )
-        : fromAnchorLane;
-
-      this.drawConnector(
-        graphics,
-        connection,
-        this.laneXAtPercent(fromRenderLane, fromPercent),
-        this.laneYAtPercent(fromPercent),
-        this.connectorHalfWidthAtPercent(fromPercent, connection.slideRhythmWidth),
-        this.laneXAtPercent(toAnchorLane, toPercent),
-        this.laneYAtPercent(toPercent),
-        this.connectorHalfWidthAtPercent(toPercent, connection.slideRhythmWidth),
-        this.slideConnectionRenderAlpha(connection),
-      );
-
-      if (this.shouldDrawSlideBottomMarker(connection, elapsedMs)) {
-        slideBottomMarkers.push(this.resolveSlideBottomMarker(connection, elapsedMs));
+      } else {
+        this.drawUnconsumedSlideConnection(graphics, connection, elapsedMs);
       }
     }
+  }
+
+  private isSlideConnectionInLifecycleRange(connection: SlideConnection, elapsedMs: number): boolean {
+    const fromEvent = connection.fromEvent;
+    const toEvent = connection.toEvent;
+    const visibleStartMs = Math.min(fromEvent.startMs, toEvent.startMs);
+    const visibleEndMs = Math.max(
+      fromEvent.visibleEndMs,
+      toEvent.visibleEndMs,
+      toEvent.hitMs,
+    );
+    return visibleStartMs <= elapsedMs && visibleEndMs >= elapsedMs;
+  }
+
+  private drawUnconsumedSlideConnection(
+    graphics: Graphics,
+    connection: SlideConnection,
+    elapsedMs: number,
+  ): void {
+    this.drawSlideConnectionBody(graphics, connection, elapsedMs, true);
+  }
+
+  private drawConsumingSlideConnection(
+    graphics: Graphics,
+    connection: SlideConnection,
+    elapsedMs: number,
+  ): void {
+    this.drawConsumingSlideConnectionToNextNode(graphics, connection, elapsedMs);
+  }
+
+  private drawSlideConnectionBody(
+    graphics: Graphics,
+    connection: SlideConnection,
+    elapsedMs: number,
+    allowPastJudgeLine: boolean,
+  ): void {
+    const fromEvent = connection.fromEvent;
+    const toEvent = connection.toEvent;
+    const fromFrameRaw = this.frameRawAt(
+      elapsedMs,
+      fromEvent.startMs,
+      fromEvent.tgId,
+      fromEvent.tgPos,
+    );
+    const toFrameRaw = this.frameRawAt(
+      elapsedMs,
+      toEvent.startMs,
+      toEvent.tgId,
+      toEvent.tgPos,
+    );
+    if (fromEvent.tgId >= 0 && fromEvent.tgId === toEvent.tgId) {
+      this.drawSlideConnectionAxisSegments(graphics, connection, elapsedMs, allowPastJudgeLine);
+      return;
+    }
+    if (!this.shouldDrawSlideConnectionEndpointRange(connection, elapsedMs, fromFrameRaw, toFrameRaw)) {
+      return;
+    }
+    const fromPercent = this.percentFromFrameRaw(fromFrameRaw);
+    const toPercent = this.percentFromFrameRaw(toFrameRaw);
+    if (!this.isPercentRangeRenderable(fromPercent, toPercent)) {
+      return;
+    }
+    const fromPassed = fromFrameRaw >= this.settings.noteSpeedFrames;
+    const fromAnchorLane = connection.fromAnchorLane;
+    const toAnchorLane = connection.toAnchorLane;
+    const fromRenderLane = fromPassed
+      ? this.interpolateLane(
+        fromAnchorLane,
+        toAnchorLane,
+        this.axisNowAt(elapsedMs, fromEvent.tgId),
+        this.axisHitAt(fromEvent.hitMs, fromEvent.tgId, fromEvent.tgPos),
+        this.axisHitAt(toEvent.hitMs, toEvent.tgId, toEvent.tgPos),
+      )
+      : fromAnchorLane;
+
+    this.drawConnector(
+      graphics,
+      connection,
+      this.laneXAtPercent(fromRenderLane, fromPercent),
+      this.laneYAtPercent(fromPercent),
+      this.connectorHalfWidthAtPercent(fromPercent, connection.slideRhythmWidth),
+      this.laneXAtPercent(toAnchorLane, toPercent),
+      this.laneYAtPercent(toPercent),
+      this.connectorHalfWidthAtPercent(toPercent, connection.slideRhythmWidth),
+      this.slideConnectionRenderAlpha(connection),
+    );
   }
 
   private resolveSlideConnectionMode(
@@ -1441,10 +1475,13 @@ export class PixiRenderer {
     graphics: Graphics,
     connection: SlideConnection,
     elapsedMs: number,
+    allowPastJudgeLine: boolean,
   ): void {
     const travelAxisMs = this.noteTravelAxisMs();
     const nowAxis = this.axisNowAt(elapsedMs, connection.fromEvent.tgId);
-    const visibleAxisMin = nowAxis;
+    const visibleAxisMin = allowPastJudgeLine
+      ? nowAxis - this.viewportBottomPastJudgeAxisMs()
+      : nowAxis;
     const visibleAxisMax = nowAxis + travelAxisMs;
     if (visibleAxisMin > visibleAxisMax) {
       return;
@@ -1491,6 +1528,37 @@ export class PixiRenderer {
       visibleAxisMin,
       visibleAxisMax,
       nowAxis,
+    );
+  }
+
+  private drawConsumingSlideConnectionToNextNode(
+    graphics: Graphics,
+    connection: SlideConnection,
+    elapsedMs: number,
+  ): void {
+    const toEvent = connection.toEvent;
+    const toFrameRaw = this.frameRawAt(
+      elapsedMs,
+      toEvent.startMs,
+      toEvent.tgId,
+      toEvent.tgPos,
+    );
+    const toPercent = this.percentFromFrameRaw(toFrameRaw);
+    if (!this.isPercentRenderable(toPercent)) {
+      return;
+    }
+
+    const markerLane = this.laneAtConnectionElapsed(connection, elapsedMs);
+    this.drawConnector(
+      graphics,
+      connection,
+      this.laneXAtPercent(connection.toAnchorLane, toPercent),
+      this.laneYAtPercent(toPercent),
+      this.connectorHalfWidthAtPercent(toPercent, connection.slideRhythmWidth),
+      this.laneXAtPercent(markerLane, 1),
+      this.stageBottomY(),
+      this.connectorHalfWidthAtPercent(1, connection.slideRhythmWidth),
+      this.slideConnectionRenderAlpha(connection),
     );
   }
 
@@ -1744,8 +1812,18 @@ export class PixiRenderer {
 
   private percentFromAxisDiff(axisDiff: number): number {
     const duration = this.noteTravelAxisMs();
-    const exponent = 50 * Math.max(-1, Math.min(0, axisDiff / duration));
+    const exponent = (50 * axisDiff) / duration;
     return 0.05 + 0.95 * Math.pow(1.1, exponent);
+  }
+
+  private viewportBottomPastJudgeAxisMs(): number {
+    const viewportBottomPercent = this.viewportBottomPercent();
+    const normalized = (viewportBottomPercent - 0.05) / 0.95;
+    if (!Number.isFinite(normalized) || normalized <= 1) {
+      return 0;
+    }
+    const duration = this.noteTravelAxisMs();
+    return (duration * Math.log(normalized)) / (50 * Math.log(1.1));
   }
 
   private interpolateLane(fromLane: number, toLane: number, nowAxis: number, fromAxis: number, toAxis: number): number {
@@ -1783,15 +1861,16 @@ export class PixiRenderer {
     };
   }
 
-  private shouldDrawSlideBottomMarker(connection: SlideConnection, elapsedMs: number): boolean {
-    if (connection.mode === "allIgnored") {
-      return false;
-    }
-    const fromHitMs = connection.fromEvent.hitMs;
-    const toHitMs = connection.toEvent.hitMs;
-    const startMs = Math.min(fromHitMs, toHitMs);
-    const endMs = Math.max(fromHitMs, toHitMs);
-    return elapsedMs + 1e-6 >= startMs && elapsedMs <= endMs + 1e-6;
+  private isSlideConnectionFrontConsumed(connection: SlideConnection): boolean {
+    return this.noteLifecycleStates.get(connection.fromEventIndex)?.hitProcessed === true;
+  }
+
+  private isSlideConnectionBackConsumed(connection: SlideConnection): boolean {
+    return this.noteLifecycleStates.get(connection.toEventIndex)?.hitProcessed === true;
+  }
+
+  private shouldDrawSlideBottomMarker(connection: SlideConnection): boolean {
+    return connection.mode !== "allIgnored" && this.isSlideConnectionFrontConsumed(connection);
   }
 
   private speedAtChartMs(group: TimingGroupDef | null | undefined, chartMs: number): number {
