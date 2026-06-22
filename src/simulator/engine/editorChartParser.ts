@@ -17,6 +17,7 @@ import type {
 import {
   axisAtMs,
   buildTimingGroupDefs,
+  findVisibilityWindows,
   normalizeSvValue,
   type TimingGroupSourceEvent,
 } from "./timingGroup";
@@ -458,6 +459,9 @@ export function parseEditorChart(
 
   const offsetMs = settings.offsetMs;
   const travelMs = settings.noteSpeedFrames * 1000 / SIMULATOR_TIMING_FPS;
+  const noteTimes = noteDescriptors.map((descriptor) => beatToMs(segments, descriptor.beat));
+  const chartSearchStartMs = Math.min(0, ...noteTimes) - travelMs - 1000;
+  const chartSearchEndMs = Math.max(0, ...noteTimes) + travelMs + 10000;
   const musicStartMs = offsetMs;
 
   const internalEvents: InternalEvent[] = [];
@@ -524,7 +528,18 @@ export function parseEditorChart(
       : -1;
     const tgDef = tgId >= 0 ? timingGroups[tgId] : null;
     const tgPos = useTimingGroups ? axisAtMs(tgDef, atMs) : 0;
-    const startMs = atMs + offsetMs - travelMs;
+    const visibilityWindows = useTimingGroups
+      ? findVisibilityWindows(
+        tgDef,
+        tgPos,
+        travelMs,
+        chartSearchStartMs,
+        chartSearchEndMs,
+      )
+      : [];
+    const startMs = visibilityWindows.length > 0
+      ? Math.min(visibilityWindows[0].startMs + offsetMs, atMs + offsetMs)
+      : atMs + offsetMs - travelMs;
     const visibleEndMs = atMs + offsetMs;
     const eventVisibilityWindows: [] = [];
 
