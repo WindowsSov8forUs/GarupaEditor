@@ -31,7 +31,7 @@ import {
   RuntimeNoteSemantic,
   SimulatorSettings,
 } from "../engine/types";
-import type { TimingGroupDef, VisibilityWindow } from "../engine/timingGroup";
+import type { TimingGroupDef } from "../engine/timingGroup";
 
 type MvRenderFrame =
   {
@@ -102,6 +102,14 @@ interface SlideBottomMarker {
   renderLane: number;
   connection: SlideConnection;
 }
+
+interface SlideConnectionRenderPoint {
+  x: number;
+  y: number;
+  percent: number;
+}
+
+type SlideConnectionEndpoint = "from" | "to";
 
 interface SlideConnectionEndpointState {
   from: RuntimeNoteLifecycleState | null;
@@ -680,6 +688,7 @@ export class PixiRenderer {
 
   render(
     notes: readonly ActiveNote[],
+    activeNotesMap: ReadonlyMap<number, ActiveNote>,
     noteLifecycleStates: ReadonlyMap<number, RuntimeNoteLifecycleState>,
     stats: RuntimeStats,
     mvFrame: MvRenderFrame | null,
@@ -716,7 +725,7 @@ export class PixiRenderer {
     this.updateMvFrame(mvFrame);
     this.drawLanes();
     if (startup?.chartObjectsVisible ?? true) {
-      this.drawNotes(notes, stats.elapsedMs);
+      this.drawNotes(notes, activeNotesMap, stats.elapsedMs);
       this.drawParticleEffects(stats.elapsedMs);
       this.drawComboHudOverlay(stats);
       this.drawJudgeHudOverlay(stats.elapsedMs);
@@ -1178,13 +1187,17 @@ export class PixiRenderer {
     this.lanesDirty = false;
   }
 
-  private drawNotes(notes: readonly ActiveNote[], elapsedMs: number): void {
+  private drawNotes(
+    notes: readonly ActiveNote[],
+    activeNotesMap: ReadonlyMap<number, ActiveNote>,
+    elapsedMs: number,
+  ): void {
     const lineG = this.linesG!;
     const fallbackG = this.fallbackNoteG!;
     lineG.clear();
     fallbackG.clear();
     const slideBottomMarkers: SlideBottomMarker[] = [];
-    this.drawSlideConnections(lineG, elapsedMs, slideBottomMarkers);
+    this.drawSlideConnections(lineG, elapsedMs, slideBottomMarkers, activeNotesMap);
 
     for (const n of notes) {
       if (!n.started) {
@@ -1287,6 +1300,25 @@ export class PixiRenderer {
     };
   }
 
+  private resolveActiveNoteRenderPoint(
+    note: ActiveNote | undefined,
+    elapsedMs: number,
+  ): SlideConnectionRenderPoint | null {
+    if (!note) {
+      return null;
+    }
+    const visual = this.resolveNoteVisualState(note, elapsedMs);
+    if (!Number.isFinite(visual.percent)) {
+      return null;
+    }
+    const renderLane = renderCenterLaneForNote(note.lane, note.note);
+    return {
+      x: this.laneXAtPercent(renderLane, visual.percent),
+      y: visual.y,
+      percent: visual.percent,
+    };
+  }
+
   private drawConnector(
     graphics: Graphics,
     connection: SlideConnection,
@@ -1344,112 +1376,100 @@ export class PixiRenderer {
     graphics: Graphics,
     elapsedMs: number,
     slideBottomMarkers: SlideBottomMarker[],
+    activeNotesMap: ReadonlyMap<number, ActiveNote>,
   ): void {
     if (this.slideConnections.length === 0) {
       return;
     }
     for (const connection of this.slideConnections) {
-      if (!this.isSlideConnectionInLifecycleRange(connection, elapsedMs)
-        || this.isSlideConnectionBackConsumed(connection)) {
+      const fromActiveNote = activeNotesMap.get(connection.fromEventIndex);
+      const toActiveNote = activeNotesMap.get(connection.toEventIndex);
+      const fromConsumed = this.isSlideConnectionFrontConsumed(connection);
+      const toConsumed = this.isSlideConnectionBackConsumed(connection);
+      if ((!fromActiveNote && !toActiveNote) || (fromConsumed && toConsumed)) {
         continue;
       }
 
-      const frontConsumed = this.isSlideConnectionFrontConsumed(connection);
-      if (frontConsumed) {
-        this.drawConsumingSlideConnection(graphics, connection, elapsedMs);
-        if (this.shouldDrawSlideBottomMarker(connection)) {
-          slideBottomMarkers.push(this.resolveSlideBottomMarker(connection, elapsedMs));
-        }
-      } else {
-        this.drawUnconsumedSlideConnection(graphics, connection, elapsedMs);
+      const fromPoint = this.resolveSlideConnectionEndpointRenderPoint(
+        connection,
+        "from",
+        fromActiveNote,
+        fromConsumed,
+        elapsedMs,
+      );
+      const toPoint = this.resolveSlideConnectionEndpointRenderPoint(
+        connection,
+        "to",
+        toActiveNote,
+        toConsumed,
+        elapsedMs,
+      );
+      if (!fromPoint || !toPoint) {
+        continue;
+      }
+
+      this.drawConnector(
+        graphics,
+        connection,
+        fromPoint.x,
+        fromPoint.y,
+        this.connectorHalfWidthAtPercent(fromPoint.percent, connection.slideRhythmWidth),
+        toPoint.x,
+        toPoint.y,
+        this.connectorHalfWidthAtPercent(toPoint.percent, connection.slideRhythmWidth),
+        this.slideConnectionRenderAlpha(connection),
+      );
+      if (this.shouldDrawSlideBottomMarker(connection, fromConsumed, toConsumed)) {
+        slideBottomMarkers.push(this.resolveSlideBottomMarker(connection, elapsedMs));
       }
     }
   }
 
-  private isSlideConnectionInLifecycleRange(connection: SlideConnection, elapsedMs: number): boolean {
-    const fromEvent = connection.fromEvent;
-    const toEvent = connection.toEvent;
-    const visibleStartMs = Math.min(fromEvent.startMs, toEvent.startMs);
-    const visibleEndMs = Math.max(
-      fromEvent.visibleEndMs,
-      toEvent.visibleEndMs,
-      toEvent.hitMs,
-    );
-    return visibleStartMs <= elapsedMs && visibleEndMs >= elapsedMs;
+  private resolveSlideConnectionEndpointRenderPoint(
+    connection: SlideConnection,
+    endpoint: SlideConnectionEndpoint,
+    activeNote: ActiveNote | undefined,
+    consumed: boolean,
+    elapsedMs: number,
+  ): SlideConnectionRenderPoint | null {
+    if (consumed) {
+      return this.resolveSlideConnectionMarkerRenderPoint(connection, elapsedMs);
+    }
+    if (activeNote) {
+      return this.resolveActiveNoteRenderPoint(activeNote, elapsedMs);
+    }
+    return this.resolveStaticSlideConnectionEndpointRenderPoint(connection, endpoint, elapsedMs);
   }
 
-  private drawUnconsumedSlideConnection(
-    graphics: Graphics,
+  private resolveSlideConnectionMarkerRenderPoint(
     connection: SlideConnection,
     elapsedMs: number,
-  ): void {
-    this.drawSlideConnectionBody(graphics, connection, elapsedMs, true);
+  ): SlideConnectionRenderPoint {
+    const markerLane = this.laneAtConnectionElapsed(connection, elapsedMs);
+    return {
+      x: this.laneXAtPercent(markerLane, 1),
+      y: this.stageBottomY(),
+      percent: 1,
+    };
   }
 
-  private drawConsumingSlideConnection(
-    graphics: Graphics,
+  private resolveStaticSlideConnectionEndpointRenderPoint(
     connection: SlideConnection,
+    endpoint: SlideConnectionEndpoint,
     elapsedMs: number,
-  ): void {
-    this.drawConsumingSlideConnectionToNextNode(graphics, connection, elapsedMs);
-  }
-
-  private drawSlideConnectionBody(
-    graphics: Graphics,
-    connection: SlideConnection,
-    elapsedMs: number,
-    allowPastJudgeLine: boolean,
-  ): void {
-    const fromEvent = connection.fromEvent;
-    const toEvent = connection.toEvent;
-    const fromFrameRaw = this.frameRawAt(
-      elapsedMs,
-      fromEvent.startMs,
-      fromEvent.tgId,
-      fromEvent.tgPos,
-    );
-    const toFrameRaw = this.frameRawAt(
-      elapsedMs,
-      toEvent.startMs,
-      toEvent.tgId,
-      toEvent.tgPos,
-    );
-    if (fromEvent.tgId >= 0 && fromEvent.tgId === toEvent.tgId) {
-      this.drawSlideConnectionAxisSegments(graphics, connection, elapsedMs, allowPastJudgeLine);
-      return;
+  ): SlideConnectionRenderPoint | null {
+    const event = endpoint === "from" ? connection.fromEvent : connection.toEvent;
+    const anchorLane = endpoint === "from" ? connection.fromAnchorLane : connection.toAnchorLane;
+    const frameRaw = this.frameRawAt(elapsedMs, event.startMs, event.tgId, event.tgPos);
+    const percent = this.percentFromFrameRaw(frameRaw);
+    if (!Number.isFinite(percent)) {
+      return null;
     }
-    if (!this.shouldDrawSlideConnectionEndpointRange(connection, elapsedMs, fromFrameRaw, toFrameRaw)) {
-      return;
-    }
-    const fromPercent = this.percentFromFrameRaw(fromFrameRaw);
-    const toPercent = this.percentFromFrameRaw(toFrameRaw);
-    if (!this.isPercentRangeRenderable(fromPercent, toPercent)) {
-      return;
-    }
-    const fromPassed = fromFrameRaw >= this.settings.noteSpeedFrames;
-    const fromAnchorLane = connection.fromAnchorLane;
-    const toAnchorLane = connection.toAnchorLane;
-    const fromRenderLane = fromPassed
-      ? this.interpolateLane(
-        fromAnchorLane,
-        toAnchorLane,
-        this.axisNowAt(elapsedMs, fromEvent.tgId),
-        this.axisHitAt(fromEvent.hitMs, fromEvent.tgId, fromEvent.tgPos),
-        this.axisHitAt(toEvent.hitMs, toEvent.tgId, toEvent.tgPos),
-      )
-      : fromAnchorLane;
-
-    this.drawConnector(
-      graphics,
-      connection,
-      this.laneXAtPercent(fromRenderLane, fromPercent),
-      this.laneYAtPercent(fromPercent),
-      this.connectorHalfWidthAtPercent(fromPercent, connection.slideRhythmWidth),
-      this.laneXAtPercent(toAnchorLane, toPercent),
-      this.laneYAtPercent(toPercent),
-      this.connectorHalfWidthAtPercent(toPercent, connection.slideRhythmWidth),
-      this.slideConnectionRenderAlpha(connection),
-    );
+    return {
+      x: this.laneXAtPercent(anchorLane, percent),
+      y: this.laneYAtPercent(percent),
+      percent,
+    };
   }
 
   private resolveSlideConnectionMode(
@@ -1471,154 +1491,6 @@ export class PixiRenderer {
     return "normal";
   }
 
-  private drawSlideConnectionAxisSegments(
-    graphics: Graphics,
-    connection: SlideConnection,
-    elapsedMs: number,
-    allowPastJudgeLine: boolean,
-  ): void {
-    const travelAxisMs = this.noteTravelAxisMs();
-    const nowAxis = this.axisNowAt(elapsedMs, connection.fromEvent.tgId);
-    const visibleAxisMin = allowPastJudgeLine
-      ? nowAxis - this.viewportBottomPastJudgeAxisMs()
-      : nowAxis;
-    const visibleAxisMax = nowAxis + travelAxisMs;
-    if (visibleAxisMin > visibleAxisMax) {
-      return;
-    }
-
-    const group = this.timingGroups[connection.fromEvent.tgId] ?? null;
-    const startChartMs = connection.fromEvent.hitMs - this.settings.offsetMs;
-    const endChartMs = connection.toEvent.hitMs - this.settings.offsetMs;
-    let segmentStartMs = startChartMs;
-    let segmentStartAxis = connection.fromEvent.tgPos;
-    let speed = this.speedAtChartMs(group, startChartMs);
-
-    for (const change of group?.changes ?? []) {
-      if (change.atMs <= startChartMs + 1e-6) {
-        speed = change.speed;
-        continue;
-      }
-      if (change.atMs >= endChartMs - 1e-6) {
-        break;
-      }
-      this.drawSlideConnectionAxisSegment(
-        graphics,
-        connection,
-        segmentStartMs,
-        change.atMs,
-        segmentStartAxis,
-        speed,
-        visibleAxisMin,
-        visibleAxisMax,
-        nowAxis,
-      );
-      segmentStartAxis += (change.atMs - segmentStartMs) * speed;
-      segmentStartMs = change.atMs;
-      speed = change.speed;
-    }
-
-    this.drawSlideConnectionAxisSegment(
-      graphics,
-      connection,
-      segmentStartMs,
-      endChartMs,
-      segmentStartAxis,
-      speed,
-      visibleAxisMin,
-      visibleAxisMax,
-      nowAxis,
-    );
-  }
-
-  private drawConsumingSlideConnectionToNextNode(
-    graphics: Graphics,
-    connection: SlideConnection,
-    elapsedMs: number,
-  ): void {
-    const toEvent = connection.toEvent;
-    const toFrameRaw = this.frameRawAt(
-      elapsedMs,
-      toEvent.startMs,
-      toEvent.tgId,
-      toEvent.tgPos,
-    );
-    const toPercent = this.percentFromFrameRaw(toFrameRaw);
-    if (!this.isPercentRenderable(toPercent)) {
-      return;
-    }
-
-    const markerLane = this.laneAtConnectionElapsed(connection, elapsedMs);
-    this.drawConnector(
-      graphics,
-      connection,
-      this.laneXAtPercent(connection.toAnchorLane, toPercent),
-      this.laneYAtPercent(toPercent),
-      this.connectorHalfWidthAtPercent(toPercent, connection.slideRhythmWidth),
-      this.laneXAtPercent(markerLane, 1),
-      this.stageBottomY(),
-      this.connectorHalfWidthAtPercent(1, connection.slideRhythmWidth),
-      this.slideConnectionRenderAlpha(connection),
-    );
-  }
-
-  private drawSlideConnectionAxisSegment(
-    graphics: Graphics,
-    connection: SlideConnection,
-    startChartMs: number,
-    endChartMs: number,
-    startAxis: number,
-    speed: number,
-    minVisibleAxis: number,
-    maxVisibleAxis: number,
-    nowAxis: number,
-  ): void {
-    if (endChartMs <= startChartMs + 1e-6) {
-      return;
-    }
-
-    let visibleStartMs = startChartMs;
-    let visibleEndMs = endChartMs;
-    if (Math.abs(speed) <= 1e-9) {
-      if (startAxis < minVisibleAxis - 1e-6 || startAxis > maxVisibleAxis + 1e-6) {
-        return;
-      }
-    } else {
-      const minTime = startChartMs + (minVisibleAxis - startAxis) / speed;
-      const maxTime = startChartMs + (maxVisibleAxis - startAxis) / speed;
-      visibleStartMs = Math.max(startChartMs, Math.min(minTime, maxTime));
-      visibleEndMs = Math.min(endChartMs, Math.max(minTime, maxTime));
-    }
-
-    if (visibleEndMs <= visibleStartMs + 1e-6) {
-      return;
-    }
-
-    const startAxisAtVisible = startAxis + (visibleStartMs - startChartMs) * speed;
-    const endAxisAtVisible = startAxis + (visibleEndMs - startChartMs) * speed;
-    const startPercent = this.percentFromAxisDiff(nowAxis - startAxisAtVisible);
-    const endPercent = this.percentFromAxisDiff(nowAxis - endAxisAtVisible);
-    if (!this.isPercentRangeRenderable(startPercent, endPercent)) {
-      return;
-    }
-    const startElapsedMs = visibleStartMs + this.settings.offsetMs;
-    const endElapsedMs = visibleEndMs + this.settings.offsetMs;
-    const startLane = this.laneAtConnectionElapsed(connection, startElapsedMs);
-    const endLane = this.laneAtConnectionElapsed(connection, endElapsedMs);
-
-    this.drawConnector(
-      graphics,
-      connection,
-      this.laneXAtPercent(startLane, startPercent),
-      this.laneYAtPercent(startPercent),
-      this.connectorHalfWidthAtPercent(startPercent, connection.slideRhythmWidth),
-      this.laneXAtPercent(endLane, endPercent),
-      this.laneYAtPercent(endPercent),
-      this.connectorHalfWidthAtPercent(endPercent, connection.slideRhythmWidth),
-      this.slideConnectionRenderAlpha(connection),
-    );
-  }
-
   private resolveSlideConnectionEndpointState(connection: SlideConnection): SlideConnectionEndpointState {
     return {
       from: this.noteLifecycleStates.get(connection.fromEventIndex) ?? null,
@@ -1633,54 +1505,6 @@ export class PixiRenderer {
     const runtimeEndpointKnown = endpointState.from !== null || endpointState.to !== null;
     void runtimeEndpointKnown;
     return connection.mode === "allIgnored" ? 0.5 : 1;
-  }
-
-  private shouldDrawSlideConnectionEndpointRange(
-    connection: SlideConnection,
-    elapsedMs: number,
-    fromFrameRaw: number,
-    toFrameRaw: number,
-  ): boolean {
-    const fromPassed = fromFrameRaw >= this.settings.noteSpeedFrames;
-    if (!fromPassed && !this.isFrameRawVisibleInWindow(fromFrameRaw, connection.fromEvent.visibilityWindows, elapsedMs)) {
-      return false;
-    }
-    if (toFrameRaw > this.settings.noteSpeedFrames + 1e-6
-      && !this.isElapsedInVisibilityWindows(connection.toEvent.visibilityWindows, elapsedMs)) {
-      return false;
-    }
-    return true;
-  }
-
-  private isFrameRawVisibleInWindow(
-    frameRaw: number,
-    windows: readonly VisibilityWindow[],
-    elapsedMs: number,
-  ): boolean {
-    return frameRaw >= -1e-6
-      && frameRaw <= this.settings.noteSpeedFrames + 1e-6
-      && this.isElapsedInVisibilityWindows(windows, elapsedMs);
-  }
-
-  private isElapsedInVisibilityWindows(windows: readonly VisibilityWindow[], elapsedMs: number): boolean {
-    if (windows.length === 0) {
-      return true;
-    }
-    return windows.some((window) => elapsedMs + 1e-6 >= window.startMs && elapsedMs <= window.endMs + 1e-6);
-  }
-
-  private axisNowAt(elapsedMs: number, tgId: number): number {
-    if (tgId < 0) {
-      return elapsedMs;
-    }
-    return this.timingGroupPosAt(tgId, elapsedMs);
-  }
-
-  private axisHitAt(hitMs: number, tgId: number, tgPos: number): number {
-    if (tgId < 0) {
-      return hitMs;
-    }
-    return tgPos;
   }
 
   private frameRawAt(elapsedMs: number, startMs: number, tgId: number, tgPos: number): number {
@@ -1806,34 +1630,6 @@ export class PixiRenderer {
     return 0.05 + 0.95 * Math.pow(1.1, exponent);
   }
 
-  private noteTravelAxisMs(): number {
-    return Math.max(1, (this.settings.noteSpeedFrames * 1000) / SIMULATOR_TIMING_FPS);
-  }
-
-  private percentFromAxisDiff(axisDiff: number): number {
-    const duration = this.noteTravelAxisMs();
-    const exponent = (50 * axisDiff) / duration;
-    return 0.05 + 0.95 * Math.pow(1.1, exponent);
-  }
-
-  private viewportBottomPastJudgeAxisMs(): number {
-    const viewportBottomPercent = this.viewportBottomPercent();
-    const normalized = (viewportBottomPercent - 0.05) / 0.95;
-    if (!Number.isFinite(normalized) || normalized <= 1) {
-      return 0;
-    }
-    const duration = this.noteTravelAxisMs();
-    return (duration * Math.log(normalized)) / (50 * Math.log(1.1));
-  }
-
-  private interpolateLane(fromLane: number, toLane: number, nowAxis: number, fromAxis: number, toAxis: number): number {
-    const denominator = toAxis - fromAxis;
-    if (Math.abs(denominator) < 1e-6) {
-      return toLane;
-    }
-    return fromLane + ((toLane - fromLane) * (nowAxis - fromAxis)) / denominator;
-  }
-
   private laneAtConnectionProgress(
     fromLane: number,
     toLane: number,
@@ -1869,19 +1665,12 @@ export class PixiRenderer {
     return this.noteLifecycleStates.get(connection.toEventIndex)?.hitProcessed === true;
   }
 
-  private shouldDrawSlideBottomMarker(connection: SlideConnection): boolean {
-    return connection.mode !== "allIgnored" && this.isSlideConnectionFrontConsumed(connection);
-  }
-
-  private speedAtChartMs(group: TimingGroupDef | null | undefined, chartMs: number): number {
-    let speed = 1;
-    for (const change of group?.changes ?? []) {
-      if (change.atMs > chartMs + 1e-6) {
-        break;
-      }
-      speed = change.speed;
-    }
-    return speed;
+  private shouldDrawSlideBottomMarker(
+    connection: SlideConnection,
+    fromConsumed: boolean,
+    toConsumed: boolean,
+  ): boolean {
+    return connection.mode !== "allIgnored" && (fromConsumed || toConsumed);
   }
 
   private laneAtConnectionElapsed(
@@ -2641,13 +2430,6 @@ export class PixiRenderer {
 
   private isPercentRenderable(percent: number): boolean {
     return Number.isFinite(percent) && percent <= this.viewportBottomPercent();
-  }
-
-  private isPercentRangeRenderable(first: number, second: number): boolean {
-    if (!Number.isFinite(first) || !Number.isFinite(second)) {
-      return false;
-    }
-    return Math.min(first, second) <= this.viewportBottomPercent();
   }
 
   private stageGeometry(): StageGeometry {

@@ -25,6 +25,7 @@ export class SimulatorRuntime {
   private readonly chart: ParsedChart;
 
   private readonly activeNotes: ActiveNote[] = [];
+  private readonly activeNotesMap = new Map<number, ActiveNote>();
   private readonly activeIdByEvent = new Map<number, number>();
   private readonly noteLifecycleByEvent = new Map<number, RuntimeNoteLifecycleState>();
   private readonly npsExpiryMs: number[] = [];
@@ -107,6 +108,10 @@ export class SimulatorRuntime {
     return this.activeNotes;
   }
 
+  getActiveNotesMap(): ReadonlyMap<number, ActiveNote> {
+    return this.activeNotesMap;
+  }
+
   getNoteLifecycleStates(): ReadonlyMap<number, RuntimeNoteLifecycleState> {
     return this.noteLifecycleByEvent;
   }
@@ -146,15 +151,13 @@ export class SimulatorRuntime {
 
       if (note.sePlayed && elapsed >= Math.max(note.hitMs, note.visibleEndMs) - 1e-6) {
         this.markNoteRemoved(note.eventIndex);
-        this.activeIdByEvent.delete(note.eventIndex);
-        this.activeNotes.splice(i, 1);
+        this.removeActiveNoteAt(i);
         this.processedObjects += 1;
         continue;
       }
       if (!note.started && elapsed > note.visibleEndMs + 1e-6) {
         this.markNoteRemoved(note.eventIndex);
-        this.activeIdByEvent.delete(note.eventIndex);
-        this.activeNotes.splice(i, 1);
+        this.removeActiveNoteAt(i);
       }
     }
 
@@ -225,8 +228,7 @@ export class SimulatorRuntime {
           parentEventIndex: ev.parentEventIndex,
           parentActiveId
         };
-        this.activeNotes.push(n);
-        this.activeIdByEvent.set(this.spawnIndex, id);
+        this.addActiveNote(n);
         this.noteLifecycleByEvent.set(this.spawnIndex, {
           eventIndex: this.spawnIndex,
           spawned: true,
@@ -240,6 +242,23 @@ export class SimulatorRuntime {
 
       this.spawnIndex += 1;
     }
+  }
+
+  private addActiveNote(note: ActiveNote): void {
+    this.activeNotes.push(note);
+    this.activeNotesMap.set(note.eventIndex, note);
+    this.activeIdByEvent.set(note.eventIndex, note.id);
+  }
+
+  private removeActiveNoteAt(index: number): ActiveNote | null {
+    const note = this.activeNotes[index] ?? null;
+    if (!note) {
+      return null;
+    }
+    this.activeNotesMap.delete(note.eventIndex);
+    this.activeIdByEvent.delete(note.eventIndex);
+    this.activeNotes.splice(index, 1);
+    return note;
   }
 
   private flushPendingSystemEvents(elapsedMs: number): void {
