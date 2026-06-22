@@ -1374,24 +1374,8 @@ export class PixiRenderer {
       );
       if (fromEvent.tgId >= 0 && fromEvent.tgId === toEvent.tgId) {
         this.drawSlideConnectionAxisSegments(graphics, connection, elapsedMs);
-        const fromPassed = fromFrameRaw >= this.settings.noteSpeedFrames;
-        if (fromPassed && connection.mode !== "allIgnored") {
-          const nowAxis = this.axisNowAt(elapsedMs, fromEvent.tgId);
-          const fromBaseLane = this.interpolateLane(
-            fromEvent.lane,
-            toEvent.lane,
-            nowAxis,
-            this.axisHitAt(fromEvent.hitMs, fromEvent.tgId, fromEvent.tgPos),
-            this.axisHitAt(toEvent.hitMs, toEvent.tgId, toEvent.tgPos),
-          );
-          const fromRenderLane = this.interpolateLane(
-            connection.fromAnchorLane,
-            connection.toAnchorLane,
-            nowAxis,
-            this.axisHitAt(fromEvent.hitMs, fromEvent.tgId, fromEvent.tgPos),
-            this.axisHitAt(toEvent.hitMs, toEvent.tgId, toEvent.tgPos),
-          );
-          slideBottomMarkers.push({ lane: fromBaseLane, renderLane: fromRenderLane, connection });
+        if (this.shouldDrawSlideBottomMarker(connection, elapsedMs)) {
+          slideBottomMarkers.push(this.resolveSlideBottomMarker(connection, elapsedMs));
         }
         continue;
       }
@@ -1404,15 +1388,6 @@ export class PixiRenderer {
         continue;
       }
       const fromPassed = fromFrameRaw >= this.settings.noteSpeedFrames;
-      const fromBaseLane = fromPassed
-        ? this.interpolateLane(
-          fromEvent.lane,
-          toEvent.lane,
-          this.axisNowAt(elapsedMs, fromEvent.tgId),
-          this.axisHitAt(fromEvent.hitMs, fromEvent.tgId, fromEvent.tgPos),
-          this.axisHitAt(toEvent.hitMs, toEvent.tgId, toEvent.tgPos),
-        )
-        : fromEvent.lane;
       const fromAnchorLane = connection.fromAnchorLane;
       const toAnchorLane = connection.toAnchorLane;
       const fromRenderLane = fromPassed
@@ -1437,8 +1412,8 @@ export class PixiRenderer {
         this.slideConnectionRenderAlpha(connection),
       );
 
-      if (fromPassed && connection.mode !== "allIgnored") {
-        slideBottomMarkers.push({ lane: fromBaseLane, renderLane: fromRenderLane, connection });
+      if (this.shouldDrawSlideBottomMarker(connection, elapsedMs)) {
+        slideBottomMarkers.push(this.resolveSlideBottomMarker(connection, elapsedMs));
       }
     }
   }
@@ -1781,6 +1756,44 @@ export class PixiRenderer {
     return fromLane + ((toLane - fromLane) * (nowAxis - fromAxis)) / denominator;
   }
 
+  private laneAtConnectionProgress(
+    fromLane: number,
+    toLane: number,
+    connection: SlideConnection,
+    elapsedMs: number,
+  ): number {
+    const denominator = connection.toEvent.hitMs - connection.fromEvent.hitMs;
+    if (Math.abs(denominator) < 1e-6) {
+      return toLane;
+    }
+    const progress = Math.max(0, Math.min(1, (elapsedMs - connection.fromEvent.hitMs) / denominator));
+    return fromLane + (toLane - fromLane) * progress;
+  }
+
+  private resolveSlideBottomMarker(connection: SlideConnection, elapsedMs: number): SlideBottomMarker {
+    return {
+      lane: this.laneAtConnectionProgress(
+        connection.fromEvent.lane,
+        connection.toEvent.lane,
+        connection,
+        elapsedMs,
+      ),
+      renderLane: this.laneAtConnectionElapsed(connection, elapsedMs),
+      connection,
+    };
+  }
+
+  private shouldDrawSlideBottomMarker(connection: SlideConnection, elapsedMs: number): boolean {
+    if (connection.mode === "allIgnored") {
+      return false;
+    }
+    const fromHitMs = connection.fromEvent.hitMs;
+    const toHitMs = connection.toEvent.hitMs;
+    const startMs = Math.min(fromHitMs, toHitMs);
+    const endMs = Math.max(fromHitMs, toHitMs);
+    return elapsedMs + 1e-6 >= startMs && elapsedMs <= endMs + 1e-6;
+  }
+
   private speedAtChartMs(group: TimingGroupDef | null | undefined, chartMs: number): number {
     let speed = 1;
     for (const change of group?.changes ?? []) {
@@ -1796,12 +1809,7 @@ export class PixiRenderer {
     connection: SlideConnection,
     elapsedMs: number,
   ): number {
-    const denominator = connection.toEvent.hitMs - connection.fromEvent.hitMs;
-    if (Math.abs(denominator) < 1e-6) {
-      return connection.toAnchorLane;
-    }
-    const progress = Math.max(0, Math.min(1, (elapsedMs - connection.fromEvent.hitMs) / denominator));
-    return connection.fromAnchorLane + (connection.toAnchorLane - connection.fromAnchorLane) * progress;
+    return this.laneAtConnectionProgress(connection.fromAnchorLane, connection.toAnchorLane, connection, elapsedMs);
   }
 
   private drawSlideBottomMarkers(
@@ -2405,10 +2413,7 @@ export class PixiRenderer {
   }
 
   private holdLaneAtConnection(connection: SlideConnection, elapsedMs: number): number {
-    const nowAxis = this.axisNowAt(elapsedMs, connection.fromEvent.tgId);
-    const fromAxis = this.axisHitAt(connection.fromEvent.hitMs, connection.fromEvent.tgId, connection.fromEvent.tgPos);
-    const toAxis = this.axisHitAt(connection.toEvent.hitMs, connection.toEvent.tgId, connection.toEvent.tgPos);
-    return this.interpolateLane(connection.fromAnchorLane, connection.toAnchorLane, nowAxis, fromAxis, toAxis);
+    return this.laneAtConnectionElapsed(connection, elapsedMs);
   }
 
   private updateHoldParticleEmitters(elapsedMs: number): void {
