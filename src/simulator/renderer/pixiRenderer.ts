@@ -1384,9 +1384,12 @@ export class PixiRenderer {
     for (const connection of this.slideConnections) {
       const fromActiveNote = activeNotesMap.get(connection.fromEventIndex);
       const toActiveNote = activeNotesMap.get(connection.toEventIndex);
+      const endpointState = this.resolveSlideConnectionEndpointState(connection);
+      const fromCreated = endpointState.from?.spawned === true;
+      const toCreated = endpointState.to?.spawned === true;
       const fromConsumed = this.isSlideConnectionFrontConsumed(connection);
       const toConsumed = this.isSlideConnectionBackConsumed(connection);
-      if ((!fromActiveNote && !toActiveNote) || (fromConsumed && toConsumed)) {
+      if ((!fromCreated && !toCreated) || (fromConsumed && toConsumed)) {
         continue;
       }
 
