@@ -1025,11 +1025,11 @@ export class SimulatorAppController {
     }
 
     try {
-      this.renderer.render(this.runtime.getActiveNotes(), stats, mvFrame);
+      this.renderer.render(this.runtime.getActiveNotes(), this.runtime.getNoteLifecycleStates(), stats, mvFrame);
     } catch (error) {
       if (this.settings?.mvmode) {
         this.fallbackToLiveBgOnMvRuntimeError(error);
-        this.renderer.render(this.runtime.getActiveNotes(), stats, null);
+        this.renderer.render(this.runtime.getActiveNotes(), this.runtime.getNoteLifecycleStates(), stats, null);
       } else {
         throw error;
       }

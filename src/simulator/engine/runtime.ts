@@ -6,6 +6,7 @@ import {
   JudgeTriggerEvent,
   ParticleTriggerEvent,
   ParsedChart,
+  RuntimeNoteLifecycleState,
   RuntimeNoteSemantic,
   RuntimeStats,
   SimulatorSettings,
@@ -25,6 +26,7 @@ export class SimulatorRuntime {
 
   private readonly activeNotes: ActiveNote[] = [];
   private readonly activeIdByEvent = new Map<number, number>();
+  private readonly noteLifecycleByEvent = new Map<number, RuntimeNoteLifecycleState>();
   private readonly npsExpiryMs: number[] = [];
   private readonly pendingSystemEvents: PendingSystemEvent[] = [];
 
@@ -105,6 +107,10 @@ export class SimulatorRuntime {
     return this.activeNotes;
   }
 
+  getNoteLifecycleStates(): ReadonlyMap<number, RuntimeNoteLifecycleState> {
+    return this.noteLifecycleByEvent;
+  }
+
   getProgress(elapsedMs: number): number {
     return Math.max(0, Math.min(1, elapsedMs / Math.max(1, this.chart.maxTimeMs)));
   }
@@ -134,16 +140,19 @@ export class SimulatorRuntime {
           this.pushSe(note.note);
         }
 
+        this.markNoteHitProcessed(note.eventIndex);
         this.resolveHit(note.note, note.lane, elapsed, note.eventIndex);
       }
 
       if (note.sePlayed && elapsed >= Math.max(note.hitMs, note.visibleEndMs) - 1e-6) {
+        this.markNoteRemoved(note.eventIndex);
         this.activeIdByEvent.delete(note.eventIndex);
         this.activeNotes.splice(i, 1);
         this.processedObjects += 1;
         continue;
       }
       if (!note.started && elapsed > note.visibleEndMs + 1e-6) {
+        this.markNoteRemoved(note.eventIndex);
         this.activeIdByEvent.delete(note.eventIndex);
         this.activeNotes.splice(i, 1);
       }
@@ -218,6 +227,15 @@ export class SimulatorRuntime {
         };
         this.activeNotes.push(n);
         this.activeIdByEvent.set(this.spawnIndex, id);
+        this.noteLifecycleByEvent.set(this.spawnIndex, {
+          eventIndex: this.spawnIndex,
+          spawned: true,
+          started: false,
+          hitProcessed: false,
+          judged: false,
+          removed: false,
+          hidden: ev.note.baseType === "hidden",
+        });
       }
 
       this.spawnIndex += 1;
@@ -262,6 +280,7 @@ export class SimulatorRuntime {
       note.started = false;
       note.t = 0;
     }
+    this.markNoteStarted(note.eventIndex, note.started);
   }
 
   private isGrayNote(beat: number, note: RuntimeNoteSemantic): boolean {
@@ -277,6 +296,7 @@ export class SimulatorRuntime {
       return;
     }
 
+    this.markNoteJudged(eventIndex);
     this.combo += 1;
     this.nps += 1;
     if (this.nps > this.npsMax) {
@@ -302,6 +322,34 @@ export class SimulatorRuntime {
       return;
     }
     this.pendingSeNotes.push(note);
+  }
+
+  private markNoteStarted(eventIndex: number, started: boolean): void {
+    const state = this.noteLifecycleByEvent.get(eventIndex);
+    if (state) {
+      state.started = started;
+    }
+  }
+
+  private markNoteHitProcessed(eventIndex: number): void {
+    const state = this.noteLifecycleByEvent.get(eventIndex);
+    if (state) {
+      state.hitProcessed = true;
+    }
+  }
+
+  private markNoteJudged(eventIndex: number): void {
+    const state = this.noteLifecycleByEvent.get(eventIndex);
+    if (state) {
+      state.judged = true;
+    }
+  }
+
+  private markNoteRemoved(eventIndex: number): void {
+    const state = this.noteLifecycleByEvent.get(eventIndex);
+    if (state) {
+      state.removed = true;
+    }
   }
 
   private displayScore(): number {

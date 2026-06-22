@@ -25,6 +25,7 @@ import {
   ChartEvent,
   JudgeTriggerEvent,
   ParticleTriggerEvent,
+  RuntimeNoteLifecycleState,
   RuntimeStats,
   RuntimeJudgeKind,
   RuntimeNoteSemantic,
@@ -54,26 +55,14 @@ interface SlideConnection {
   fromEventIndex: number;
   toEventIndex: number;
   rootEventIndex: number;
+  fromEvent: ChartEvent;
+  toEvent: ChartEvent;
+  fromAnchorLane: number;
+  toAnchorLane: number;
   markerSourceBaseType: RuntimeNoteSemantic["baseType"] | null;
   markerSourceIsHead: boolean;
   markerSourceRhythmWidth: number;
   slideRhythmWidth: number;
-  fromLane: number;
-  toLane: number;
-  fromAnchorLane: number;
-  toAnchorLane: number;
-  fromHitMs: number;
-  toHitMs: number;
-  fromStartMs: number;
-  toStartMs: number;
-  fromVisibleEndMs: number;
-  toVisibleEndMs: number;
-  fromVisibilityWindows: VisibilityWindow[];
-  toVisibilityWindows: VisibilityWindow[];
-  fromTgId: number;
-  toTgId: number;
-  fromTgPos: number;
-  toTgPos: number;
   useSpecialTexture: boolean;
   mode: "normal" | "leadingIgnored" | "trailingIgnored" | "allIgnored";
 }
@@ -112,6 +101,11 @@ interface SlideBottomMarker {
   lane: number;
   renderLane: number;
   connection: SlideConnection;
+}
+
+interface SlideConnectionEndpointState {
+  from: RuntimeNoteLifecycleState | null;
+  to: RuntimeNoteLifecycleState | null;
 }
 
 interface BpmFlashCycleSegment {
@@ -315,6 +309,7 @@ export class PixiRenderer {
   private activeEmptyTouchLaneEffect: ActiveEmptyTouchLaneEffect | null = null;
   private slideConnections: SlideConnection[] = [];
   private slideConnectionByFromEventIndex = new Map<number, SlideConnection>();
+  private noteLifecycleStates: ReadonlyMap<number, RuntimeNoteLifecycleState> = new Map();
   private eventRootIndexByEventIndex = new Map<number, number>();
   private slideFlashFirstTriggerCycleByRootEventIndex = new Map<number, number>();
   private bpmFlashCycleSegments: BpmFlashCycleSegment[] = [];
@@ -501,37 +496,27 @@ export class PixiRenderer {
         fromEventIndex: event.parentEventIndex,
         toEventIndex: index,
         rootEventIndex,
+        fromEvent: parent,
+        toEvent: event,
+        fromAnchorLane: slideAnchorLaneForNote(parent.lane, parent.note, "outgoing"),
+        toAnchorLane: slideAnchorLaneForNote(event.lane, event.note, "incoming"),
         markerSourceBaseType: markerSource?.baseType ?? null,
         markerSourceIsHead: markerSource
           ? markerSource.eventIndex === rootEventIndex
           : true,
         markerSourceRhythmWidth: markerSource?.rhythmWidth ?? 1,
         slideRhythmWidth,
-        fromLane: parent.lane,
-        toLane: event.lane,
-        fromAnchorLane: slideAnchorLaneForNote(parent.lane, parent.note, "outgoing"),
-        toAnchorLane: slideAnchorLaneForNote(event.lane, event.note, "incoming"),
-        fromHitMs: parent.hitMs,
-        toHitMs: event.hitMs,
-        fromStartMs: parent.startMs,
-        toStartMs: event.startMs,
-        fromVisibleEndMs: parent.visibleEndMs,
-        toVisibleEndMs: event.visibleEndMs,
-        fromVisibilityWindows: parent.visibilityWindows,
-        toVisibilityWindows: event.visibilityWindows,
-        fromTgId: parent.tgId,
-        toTgId: event.tgId,
-        fromTgPos: parent.tgPos,
-        toTgPos: event.tgPos,
         useSpecialTexture: hiddenRoots.has(resolveRootIndex(index)),
         mode: this.resolveSlideConnectionMode(event.parentEventIndex, index, visibleIndices),
       });
     }
     connections.sort((left, right) => {
-      if (left.fromHitMs !== right.fromHitMs) {
-        return left.fromHitMs - right.fromHitMs;
+      const leftFromHitMs = events[left.fromEventIndex]?.hitMs ?? 0;
+      const rightFromHitMs = events[right.fromEventIndex]?.hitMs ?? 0;
+      if (leftFromHitMs !== rightFromHitMs) {
+        return leftFromHitMs - rightFromHitMs;
       }
-      return left.toHitMs - right.toHitMs;
+      return (events[left.toEventIndex]?.hitMs ?? 0) - (events[right.toEventIndex]?.hitMs ?? 0);
     });
     this.slideConnections = connections;
     this.slideConnectionByFromEventIndex.clear();
@@ -693,7 +678,12 @@ export class PixiRenderer {
     this.stageGeometryCache = null;
   }
 
-  render(notes: readonly ActiveNote[], stats: RuntimeStats, mvFrame: MvRenderFrame | null): void {
+  render(
+    notes: readonly ActiveNote[],
+    noteLifecycleStates: ReadonlyMap<number, RuntimeNoteLifecycleState>,
+    stats: RuntimeStats,
+    mvFrame: MvRenderFrame | null,
+  ): void {
     if (
       !this.lanesG
       || !this.linesG
@@ -718,6 +708,7 @@ export class PixiRenderer {
     this.effectMeshCursor = 0;
     this.comboHudSpriteCursor = 0;
     this.judgeHudSpriteCursor = 0;
+    this.noteLifecycleStates = noteLifecycleStates;
     this.frameTick += 1;
     this.flickFrame = Math.floor((stats.elapsedMs * this.settings.fps) / 1000) % Math.max(1, Math.floor(this.settings.fps / 3));
 
@@ -1358,45 +1349,47 @@ export class PixiRenderer {
       return;
     }
     for (const connection of this.slideConnections) {
-      const visibleStartMs = Math.min(connection.fromStartMs, connection.toStartMs);
+      const fromEvent = connection.fromEvent;
+      const toEvent = connection.toEvent;
+      const visibleStartMs = Math.min(fromEvent.startMs, toEvent.startMs);
       const visibleEndMs = Math.max(
-        connection.fromVisibleEndMs,
-        connection.toVisibleEndMs,
-        connection.toHitMs,
+        fromEvent.visibleEndMs,
+        toEvent.visibleEndMs,
+        toEvent.hitMs,
       );
       if (visibleStartMs > elapsedMs || visibleEndMs < elapsedMs) {
         continue;
       }
       const fromFrameRaw = this.frameRawAt(
         elapsedMs,
-        connection.fromStartMs,
-        connection.fromTgId,
-        connection.fromTgPos,
+        fromEvent.startMs,
+        fromEvent.tgId,
+        fromEvent.tgPos,
       );
       const toFrameRaw = this.frameRawAt(
         elapsedMs,
-        connection.toStartMs,
-        connection.toTgId,
-        connection.toTgPos,
+        toEvent.startMs,
+        toEvent.tgId,
+        toEvent.tgPos,
       );
-      if (connection.fromTgId >= 0 && connection.fromTgId === connection.toTgId) {
+      if (fromEvent.tgId >= 0 && fromEvent.tgId === toEvent.tgId) {
         this.drawSlideConnectionAxisSegments(graphics, connection, elapsedMs);
         const fromPassed = fromFrameRaw >= this.settings.noteSpeedFrames;
         if (fromPassed && connection.mode !== "allIgnored") {
-          const nowAxis = this.axisNowAt(elapsedMs, connection.fromTgId);
+          const nowAxis = this.axisNowAt(elapsedMs, fromEvent.tgId);
           const fromBaseLane = this.interpolateLane(
-            connection.fromLane,
-            connection.toLane,
+            fromEvent.lane,
+            toEvent.lane,
             nowAxis,
-            this.axisHitAt(connection.fromHitMs, connection.fromTgId, connection.fromTgPos),
-            this.axisHitAt(connection.toHitMs, connection.toTgId, connection.toTgPos),
+            this.axisHitAt(fromEvent.hitMs, fromEvent.tgId, fromEvent.tgPos),
+            this.axisHitAt(toEvent.hitMs, toEvent.tgId, toEvent.tgPos),
           );
           const fromRenderLane = this.interpolateLane(
             connection.fromAnchorLane,
             connection.toAnchorLane,
             nowAxis,
-            this.axisHitAt(connection.fromHitMs, connection.fromTgId, connection.fromTgPos),
-            this.axisHitAt(connection.toHitMs, connection.toTgId, connection.toTgPos),
+            this.axisHitAt(fromEvent.hitMs, fromEvent.tgId, fromEvent.tgPos),
+            this.axisHitAt(toEvent.hitMs, toEvent.tgId, toEvent.tgPos),
           );
           slideBottomMarkers.push({ lane: fromBaseLane, renderLane: fromRenderLane, connection });
         }
@@ -1413,22 +1406,22 @@ export class PixiRenderer {
       const fromPassed = fromFrameRaw >= this.settings.noteSpeedFrames;
       const fromBaseLane = fromPassed
         ? this.interpolateLane(
-          connection.fromLane,
-          connection.toLane,
-          this.axisNowAt(elapsedMs, connection.fromTgId),
-          this.axisHitAt(connection.fromHitMs, connection.fromTgId, connection.fromTgPos),
-          this.axisHitAt(connection.toHitMs, connection.toTgId, connection.toTgPos),
+          fromEvent.lane,
+          toEvent.lane,
+          this.axisNowAt(elapsedMs, fromEvent.tgId),
+          this.axisHitAt(fromEvent.hitMs, fromEvent.tgId, fromEvent.tgPos),
+          this.axisHitAt(toEvent.hitMs, toEvent.tgId, toEvent.tgPos),
         )
-        : connection.fromLane;
+        : fromEvent.lane;
       const fromAnchorLane = connection.fromAnchorLane;
       const toAnchorLane = connection.toAnchorLane;
       const fromRenderLane = fromPassed
         ? this.interpolateLane(
           fromAnchorLane,
           toAnchorLane,
-          this.axisNowAt(elapsedMs, connection.fromTgId),
-          this.axisHitAt(connection.fromHitMs, connection.fromTgId, connection.fromTgPos),
-          this.axisHitAt(connection.toHitMs, connection.toTgId, connection.toTgPos),
+          this.axisNowAt(elapsedMs, fromEvent.tgId),
+          this.axisHitAt(fromEvent.hitMs, fromEvent.tgId, fromEvent.tgPos),
+          this.axisHitAt(toEvent.hitMs, toEvent.tgId, toEvent.tgPos),
         )
         : fromAnchorLane;
 
@@ -1475,18 +1468,18 @@ export class PixiRenderer {
     elapsedMs: number,
   ): void {
     const travelAxisMs = this.noteTravelAxisMs();
-    const nowAxis = this.axisNowAt(elapsedMs, connection.fromTgId);
+    const nowAxis = this.axisNowAt(elapsedMs, connection.fromEvent.tgId);
     const visibleAxisMin = nowAxis;
     const visibleAxisMax = nowAxis + travelAxisMs;
     if (visibleAxisMin > visibleAxisMax) {
       return;
     }
 
-    const group = this.timingGroups[connection.fromTgId] ?? null;
-    const startChartMs = connection.fromHitMs - this.settings.offsetMs;
-    const endChartMs = connection.toHitMs - this.settings.offsetMs;
+    const group = this.timingGroups[connection.fromEvent.tgId] ?? null;
+    const startChartMs = connection.fromEvent.hitMs - this.settings.offsetMs;
+    const endChartMs = connection.toEvent.hitMs - this.settings.offsetMs;
     let segmentStartMs = startChartMs;
-    let segmentStartAxis = connection.fromTgPos;
+    let segmentStartAxis = connection.fromEvent.tgPos;
     let speed = this.speedAtChartMs(group, startChartMs);
 
     for (const change of group?.changes ?? []) {
@@ -1583,7 +1576,19 @@ export class PixiRenderer {
     );
   }
 
-  private slideConnectionRenderAlpha(connection: SlideConnection): number {
+  private resolveSlideConnectionEndpointState(connection: SlideConnection): SlideConnectionEndpointState {
+    return {
+      from: this.noteLifecycleStates.get(connection.fromEventIndex) ?? null,
+      to: this.noteLifecycleStates.get(connection.toEventIndex) ?? null,
+    };
+  }
+
+  private slideConnectionRenderAlpha(
+    connection: SlideConnection,
+  ): number {
+    const endpointState = this.resolveSlideConnectionEndpointState(connection);
+    const runtimeEndpointKnown = endpointState.from !== null || endpointState.to !== null;
+    void runtimeEndpointKnown;
     return connection.mode === "allIgnored" ? 0.5 : 1;
   }
 
@@ -1594,11 +1599,11 @@ export class PixiRenderer {
     toFrameRaw: number,
   ): boolean {
     const fromPassed = fromFrameRaw >= this.settings.noteSpeedFrames;
-    if (!fromPassed && !this.isFrameRawVisibleInWindow(fromFrameRaw, connection.fromVisibilityWindows, elapsedMs)) {
+    if (!fromPassed && !this.isFrameRawVisibleInWindow(fromFrameRaw, connection.fromEvent.visibilityWindows, elapsedMs)) {
       return false;
     }
     if (toFrameRaw > this.settings.noteSpeedFrames + 1e-6
-      && !this.isElapsedInVisibilityWindows(connection.toVisibilityWindows, elapsedMs)) {
+      && !this.isElapsedInVisibilityWindows(connection.toEvent.visibilityWindows, elapsedMs)) {
       return false;
     }
     return true;
@@ -1791,11 +1796,11 @@ export class PixiRenderer {
     connection: SlideConnection,
     elapsedMs: number,
   ): number {
-    const denominator = connection.toHitMs - connection.fromHitMs;
+    const denominator = connection.toEvent.hitMs - connection.fromEvent.hitMs;
     if (Math.abs(denominator) < 1e-6) {
       return connection.toAnchorLane;
     }
-    const progress = Math.max(0, Math.min(1, (elapsedMs - connection.fromHitMs) / denominator));
+    const progress = Math.max(0, Math.min(1, (elapsedMs - connection.fromEvent.hitMs) / denominator));
     return connection.fromAnchorLane + (connection.toAnchorLane - connection.fromAnchorLane) * progress;
   }
 
@@ -2389,7 +2394,10 @@ export class PixiRenderer {
     elapsedMs: number,
   ): SlideConnection | null {
     let connection = this.slideConnectionByFromEventIndex.get(hold.currentFromEventIndex) ?? null;
-    while (connection && (connection.mode !== "normal" || elapsedMs > connection.toHitMs + 1e-6)) {
+    while (connection) {
+      if (connection.mode === "normal" && elapsedMs <= connection.toEvent.hitMs + 1e-6) {
+        break;
+      }
       hold.currentFromEventIndex = connection.toEventIndex;
       connection = this.slideConnectionByFromEventIndex.get(hold.currentFromEventIndex) ?? null;
     }
@@ -2397,9 +2405,9 @@ export class PixiRenderer {
   }
 
   private holdLaneAtConnection(connection: SlideConnection, elapsedMs: number): number {
-    const nowAxis = this.axisNowAt(elapsedMs, connection.fromTgId);
-    const fromAxis = this.axisHitAt(connection.fromHitMs, connection.fromTgId, connection.fromTgPos);
-    const toAxis = this.axisHitAt(connection.toHitMs, connection.toTgId, connection.toTgPos);
+    const nowAxis = this.axisNowAt(elapsedMs, connection.fromEvent.tgId);
+    const fromAxis = this.axisHitAt(connection.fromEvent.hitMs, connection.fromEvent.tgId, connection.fromEvent.tgPos);
+    const toAxis = this.axisHitAt(connection.toEvent.hitMs, connection.toEvent.tgId, connection.toEvent.tgPos);
     return this.interpolateLane(connection.fromAnchorLane, connection.toAnchorLane, nowAxis, fromAxis, toAxis);
   }
 

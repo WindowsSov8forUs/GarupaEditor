@@ -107,6 +107,16 @@ export interface RuntimeStats {
   elapsedMs: number;
 }
 
+export interface RuntimeNoteLifecycleState {
+  eventIndex: number;
+  spawned: boolean;
+  started: boolean;
+  hitProcessed: boolean;
+  judged: boolean;
+  removed: boolean;
+  hidden: boolean;
+}
+
 export interface ParticleTriggerEvent {
   note: RuntimeNoteSemantic;
   lane: number;
