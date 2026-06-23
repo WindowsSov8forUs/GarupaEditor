@@ -1027,6 +1027,7 @@ export class SimulatorAppController {
     try {
       this.renderer.render(
         this.runtime.getActiveNotes(),
+        this.runtime.getActiveSlides(),
         this.runtime.getActiveNotesMap(),
         this.runtime.getNoteLifecycleStates(),
         stats,
@@ -1037,6 +1038,7 @@ export class SimulatorAppController {
         this.fallbackToLiveBgOnMvRuntimeError(error);
         this.renderer.render(
           this.runtime.getActiveNotes(),
+          this.runtime.getActiveSlides(),
           this.runtime.getActiveNotesMap(),
           this.runtime.getNoteLifecycleStates(),
           stats,

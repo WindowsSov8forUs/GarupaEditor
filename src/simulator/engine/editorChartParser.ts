@@ -9,6 +9,7 @@ import { SIMULATOR_TIMING_FPS } from "./simulatorTiming";
 import { isJudgedEvent } from "./score";
 import type {
   ChartEvent,
+  NoteChartEvent,
   ParsedChart,
   RuntimeNoteSemantic,
   RuntimeSlideRole,
@@ -40,6 +41,8 @@ interface NoteDescriptor {
   note: RuntimeNoteSemantic;
   timingGroup: string;
   predecessorNoteId: string | null;
+  slideChainId: string | null;
+  slideChainNodeIndex: number;
   order: number;
 }
 
@@ -49,6 +52,7 @@ interface InternalEvent {
   atMs: number;
   noteId: string | null;
   predecessorNoteId: string | null;
+  slideChainId: string | null;
 }
 
 const BEAT_EPSILON = 1e-6;
@@ -295,6 +299,8 @@ function buildNoteDescriptors(
       note: semantic,
       timingGroup: normalizeTimingGroup(note.timingGroup),
       predecessorNoteId: null,
+      slideChainId: null,
+      slideChainNodeIndex: -1,
       order,
     });
     order += 1;
@@ -321,6 +327,8 @@ function buildNoteDescriptors(
         note: semantic,
         timingGroup: chainTimingGroup,
         predecessorNoteId: index > 0 ? validNoteIds[index - 1] : null,
+        slideChainId: chain.id,
+        slideChainNodeIndex: index,
         order,
       });
       order += 1;
@@ -360,9 +368,9 @@ function shouldExcludeFromSameLine(event: ChartEvent): boolean {
   return event.note.slideRole === "middle" || event.note.slideRole === "hidden";
 }
 
-function renderCenterLaneForEvent(event: ChartEvent): number {
+function renderCenterLaneForEvent(event: NoteChartEvent): number {
   const note = event.note;
-  if (!note || note.baseType === "directional_flick_left" || note.baseType === "directional_flick_right") {
+  if (note.baseType === "directional_flick_left" || note.baseType === "directional_flick_right") {
     return event.lane;
   }
   return event.lane + (Math.max(1, note.rhythmWidth) - 1) / 2;
@@ -370,7 +378,10 @@ function renderCenterLaneForEvent(event: ChartEvent): number {
 
 function assignSamelineLanes(events: ChartEvent[], enabled: boolean): void {
   for (let index = 0; index < events.length; index += 1) {
-    events[index].samelineLane = null;
+    const event = events[index];
+    if (event.eventType === "note") {
+      event.samelineLane = null;
+    }
   }
   if (!enabled) {
     return;
@@ -384,6 +395,9 @@ function assignSamelineLanes(events: ChartEvent[], enabled: boolean): void {
     if (shouldExcludeFromSameLine(event)) {
       continue;
     }
+    if (event.eventType !== "note") {
+      continue;
+    }
     if (
       samelineBeat !== null
       && samelineLane !== null
@@ -395,6 +409,37 @@ function assignSamelineLanes(events: ChartEvent[], enabled: boolean): void {
     event.samelineLane = null;
     samelineBeat = event.beat;
     samelineLane = renderCenterLaneForEvent(event);
+  }
+}
+
+function assignSlideTypes(events: ChartEvent[]): void {
+  for (let index = 0; index < events.length; index += 1) {
+    const event = events[index];
+    if (event.eventType !== "slide" || event.nodeEventIndices.length < 2) {
+      continue;
+    }
+    const allNodesHidden = event.nodeEventIndices.every((nodeEventIndex) => {
+      const nodeEvent = events[nodeEventIndex];
+      return nodeEvent?.eventType === "note" && nodeEvent.note.baseType === "hidden";
+    });
+    if (allNodesHidden) {
+      event.slideType = "hidden";
+      continue;
+    }
+
+    const headNodeEvent = events[event.headNodeEventIndex];
+    const tailNodeEvent = events[event.tailNodeEventIndex];
+    if (
+      event.nodeEventIndices.length === 2
+      && headNodeEvent?.eventType === "note"
+      && tailNodeEvent?.eventType === "note"
+      && headNodeEvent.lane === tailNodeEvent.lane
+    ) {
+      event.slideType = "long";
+      continue;
+    }
+
+    event.slideType = "slide";
   }
 }
 
@@ -414,6 +459,10 @@ export function parseEditorChart(
 
   const segments = buildBpmSegments(baseBpm, bpmEvents);
   const noteDescriptors = buildNoteDescriptors(notes, slideChains, settings);
+  const noteDescriptorById = new Map<string, NoteDescriptor>();
+  for (const descriptor of noteDescriptors) {
+    noteDescriptorById.set(descriptor.noteId, descriptor);
+  }
   const groupedSv = buildSvRuntimeMap(svEvents, segments);
   const hasNonGlobalTimingGroupNote = noteDescriptors.some((descriptor) => descriptor.timingGroup !== "#Global");
   const hasSv = svEvents.length > 0;
@@ -471,22 +520,16 @@ export function parseEditorChart(
     event: {
       beat: 0,
       eventType: "music_start",
-      note: null,
-      lane: 0,
-      tgId: -1,
-      tgPos: 0,
       startMs: musicStartMs,
       hitMs: musicStartMs,
       visibleEndMs: musicStartMs,
-      visibilityWindows: [],
-      samelineLane: null,
       bpm: bpmAtBeat(segments, 0),
-      parentEventIndex: -1,
     },
     order: -3,
     atMs: 0,
     noteId: null,
     predecessorNoteId: null,
+    slideChainId: null,
   });
 
   for (let index = 0; index < bpmEvents.length; index += 1) {
@@ -501,22 +544,16 @@ export function parseEditorChart(
       event: {
         beat,
         eventType: "bpm",
-        note: null,
-        lane: 0,
-        tgId: -1,
-        tgPos: 0,
         startMs: atMs + offsetMs - travelMs,
         hitMs: atMs + offsetMs,
         visibleEndMs: atMs + offsetMs,
-        visibilityWindows: [],
-        samelineLane: null,
         bpm,
-        parentEventIndex: -1,
       },
       order: -2 + index / 1000000,
       atMs,
       noteId: null,
       predecessorNoteId: null,
+      slideChainId: null,
     });
   }
 
@@ -541,7 +578,10 @@ export function parseEditorChart(
       ? Math.min(visibilityWindows[0].startMs + offsetMs, atMs + offsetMs)
       : atMs + offsetMs - travelMs;
     const visibleEndMs = atMs + offsetMs;
-    const eventVisibilityWindows: [] = [];
+    const eventVisibilityWindows = visibilityWindows.map((window) => ({
+      startMs: window.startMs + offsetMs,
+      endMs: window.endMs + offsetMs,
+    }));
 
     internalEvents.push({
       event: {
@@ -556,13 +596,61 @@ export function parseEditorChart(
         visibleEndMs,
         visibilityWindows: eventVisibilityWindows,
         samelineLane: null,
-        bpm: bpmAtBeat(segments, descriptor.beat),
-        parentEventIndex: -1,
+        prevSlideNodeEventIndex: -1,
+        nextSlideNodeEventIndex: -1,
+        slideChainEventIndex: -1,
       },
       order: descriptor.order,
       atMs,
       noteId: descriptor.noteId,
       predecessorNoteId: descriptor.predecessorNoteId,
+      slideChainId: descriptor.slideChainId,
+    });
+  }
+
+  for (const chain of slideChains) {
+    const chainId = typeof chain.id === "string" ? chain.id : "";
+    if (chainId.length === 0) {
+      continue;
+    }
+    const validDescriptors = chain.noteIds
+      .map((noteId) => noteDescriptorById.get(noteId) ?? null)
+      .filter((descriptor): descriptor is NoteDescriptor => descriptor !== null && descriptor.slideChainId === chainId);
+    if (validDescriptors.length === 0) {
+      continue;
+    }
+    const headDescriptor = validDescriptors[0];
+    const tailDescriptor = validDescriptors[validDescriptors.length - 1];
+    const headAtMs = beatToMs(segments, headDescriptor.beat);
+    const tailAtMs = beatToMs(segments, tailDescriptor.beat);
+    const chainTimingGroup = normalizeTimingGroup(chain.timingGroup);
+    const tgId = useTimingGroups
+      ? (internalToRuntimeGroup.get(chainTimingGroup) ?? 0)
+      : -1;
+    const tgDef = tgId >= 0 ? timingGroups[tgId] : null;
+    const tgPos = useTimingGroups ? axisAtMs(tgDef, headAtMs) : 0;
+    const headStartMs = headAtMs + offsetMs - travelMs;
+    const tailHitMs = tailAtMs + offsetMs;
+    internalEvents.push({
+      event: {
+        beat: headDescriptor.beat,
+        eventType: "slide",
+        lane: headDescriptor.lane,
+        tgId,
+        tgPos,
+        startMs: headStartMs,
+        hitMs: headAtMs + offsetMs,
+        visibleEndMs: tailHitMs,
+        nodeEventIndices: [],
+        headNodeEventIndex: -1,
+        tailNodeEventIndex: -1,
+        slideType: "slide",
+      },
+      order: headDescriptor.order - 0.5,
+      atMs: headAtMs,
+      noteId: null,
+      predecessorNoteId: null,
+      slideChainId: chainId,
     });
   }
 
@@ -577,23 +665,82 @@ export function parseEditorChart(
   });
 
   const noteIndexById = new Map<string, number>();
+  const slideIndexByChainId = new Map<string, number>();
   for (let index = 0; index < internalEvents.length; index += 1) {
-    const noteId = internalEvents[index].noteId;
+    const internalEvent = internalEvents[index];
+    const noteId = internalEvent.noteId;
     if (noteId) {
       noteIndexById.set(noteId, index);
+    }
+    if (internalEvent.event.eventType === "slide" && internalEvent.slideChainId) {
+      slideIndexByChainId.set(internalEvent.slideChainId, index);
     }
   }
 
   const events: ChartEvent[] = internalEvents.map((entry) => {
-    const parentEventIndex =
-      entry.predecessorNoteId && noteIndexById.has(entry.predecessorNoteId)
-        ? (noteIndexById.get(entry.predecessorNoteId) ?? -1)
-        : -1;
-    return {
-      ...entry.event,
-      parentEventIndex,
-    };
+    if (entry.event.eventType === "note") {
+      const prevSlideNodeEventIndex =
+        entry.predecessorNoteId && noteIndexById.has(entry.predecessorNoteId)
+          ? (noteIndexById.get(entry.predecessorNoteId) ?? -1)
+          : -1;
+      return {
+        ...entry.event,
+        prevSlideNodeEventIndex,
+        nextSlideNodeEventIndex: -1,
+        slideChainEventIndex: entry.slideChainId ? slideIndexByChainId.get(entry.slideChainId) ?? -1 : -1,
+      };
+    }
+    if (entry.event.eventType === "slide") {
+      return {
+        ...entry.event,
+        nodeEventIndices: [],
+        headNodeEventIndex: -1,
+        tailNodeEventIndex: -1,
+        slideType: "slide",
+      };
+    }
+    return entry.event;
   });
+  for (let index = 0; index < events.length; index += 1) {
+    const event = events[index];
+    if (event.eventType !== "note") {
+      continue;
+    }
+    const prevSlideNodeEventIndex = event.prevSlideNodeEventIndex;
+    if (prevSlideNodeEventIndex >= 0 && prevSlideNodeEventIndex < events.length) {
+      const prevEvent = events[prevSlideNodeEventIndex];
+      if (prevEvent.eventType === "note") {
+        prevEvent.nextSlideNodeEventIndex = index;
+      }
+    }
+  }
+  for (const [chainId, slideChainEventIndex] of slideIndexByChainId) {
+    const noteEventIndices = internalEvents
+      .map((entry, index) => ({ entry, index }))
+      .filter(({ entry }) => entry.event.eventType === "note" && entry.slideChainId === chainId)
+      .sort((left, right) => {
+        const leftDescriptor = left.entry.noteId ? noteDescriptorById.get(left.entry.noteId) : null;
+        const rightDescriptor = right.entry.noteId ? noteDescriptorById.get(right.entry.noteId) : null;
+        return (leftDescriptor?.slideChainNodeIndex ?? 0) - (rightDescriptor?.slideChainNodeIndex ?? 0);
+      })
+      .map(({ index }) => index);
+    const headEventIndex = noteEventIndices[0] ?? -1;
+    const tailEventIndex = noteEventIndices[noteEventIndices.length - 1] ?? -1;
+    const slideEvent = events[slideChainEventIndex];
+    if (slideEvent.eventType === "slide") {
+      slideEvent.nodeEventIndices = noteEventIndices;
+      slideEvent.headNodeEventIndex = headEventIndex;
+      slideEvent.tailNodeEventIndex = tailEventIndex;
+    }
+    for (const noteEventIndex of noteEventIndices) {
+      const noteEvent = events[noteEventIndex];
+      if (noteEvent.eventType !== "note") {
+        continue;
+      }
+      noteEvent.slideChainEventIndex = slideChainEventIndex;
+    }
+  }
+  assignSlideTypes(events);
   assignSamelineLanes(events, settings.sameline);
 
   let noteCount = 0;
