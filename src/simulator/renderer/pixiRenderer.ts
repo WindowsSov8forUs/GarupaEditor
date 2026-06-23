@@ -22,13 +22,17 @@ import {
 import { drawComboHud } from "./comboHudRenderer";
 import {
   ActiveNote,
+  ActiveSlide,
   ChartEvent,
   JudgeTriggerEvent,
+  NoteChartEvent,
   ParticleTriggerEvent,
   RuntimeNoteLifecycleState,
   RuntimeStats,
   RuntimeJudgeKind,
   RuntimeNoteSemantic,
+  RuntimeSlideType,
+  SlideChartEvent,
   SimulatorSettings,
 } from "../engine/types";
 import type { TimingGroupDef } from "../engine/timingGroup";
@@ -42,6 +46,31 @@ type MvRenderFrame =
     sourceHeight: number;
   };
 
+type NoteVisualState = {
+  x: number;
+  y: number;
+  percent: number;
+  scale: number;
+};
+
+type ActiveNoteBodyRenderState = {
+  color: number;
+  visual: NoteVisualState;
+  noteScale: number;
+  directional: boolean;
+  renderX: number;
+  alpha: number;
+  tex: Texture | null;
+};
+
+type ActiveNoteBodyWindowState = {
+  visual: NoteVisualState;
+  noteScale: number;
+  directional: boolean;
+  renderX: number;
+  tex: Texture | null;
+};
+
 export interface SimulatorStartupRenderState {
   liveBgAlpha: number;
   liveBgScale: number;
@@ -54,21 +83,22 @@ export interface SimulatorStartupRenderState {
 interface SlideConnection {
   fromEventIndex: number;
   toEventIndex: number;
-  rootEventIndex: number;
-  fromEvent: ChartEvent;
-  toEvent: ChartEvent;
+  slideChainEventIndex: number;
+  fromEvent: NoteChartEvent;
+  toEvent: NoteChartEvent;
   fromAnchorLane: number;
   toAnchorLane: number;
   markerSourceBaseType: RuntimeNoteSemantic["baseType"] | null;
   markerSourceIsHead: boolean;
   markerSourceRhythmWidth: number;
   slideRhythmWidth: number;
+  slideType: RuntimeSlideType;
   useSpecialTexture: boolean;
-  mode: "normal" | "leadingIgnored" | "trailingIgnored" | "allIgnored";
+  mode: "normal" | "leadingIgnored" | "trailingIgnored";
 }
 
 interface ActiveHoldEffect {
-  rootEventIndex: number;
+  slideChainEventIndex: number;
   currentFromEventIndex: number;
   linearEmitter: ActiveParticleEmitter | null;
   circularEmitter: ActiveParticleEmitter | null;
@@ -100,7 +130,11 @@ interface StageGeometry {
 interface SlideBottomMarker {
   lane: number;
   renderLane: number;
-  connection: SlideConnection;
+  slideChainEventIndex: number;
+  sourceBaseType: RuntimeNoteSemantic["baseType"] | null;
+  sourceIsHead: boolean;
+  sourceRhythmWidth: number;
+  slideRhythmWidth: number;
 }
 
 interface SlideConnectionRenderPoint {
@@ -318,8 +352,8 @@ export class PixiRenderer {
   private slideConnections: SlideConnection[] = [];
   private slideConnectionByFromEventIndex = new Map<number, SlideConnection>();
   private noteLifecycleStates: ReadonlyMap<number, RuntimeNoteLifecycleState> = new Map();
-  private eventRootIndexByEventIndex = new Map<number, number>();
-  private slideFlashFirstTriggerCycleByRootEventIndex = new Map<number, number>();
+  private eventSlideChainIndexByEventIndex = new Map<number, number>();
+  private slideFlashFirstTriggerCycleByChainEventIndex = new Map<number, number>();
   private bpmFlashCycleSegments: BpmFlashCycleSegment[] = [];
   private activeHoldEffects = new Map<number, ActiveHoldEffect>();
   private timingGroups: readonly TimingGroupDef[] = [];
@@ -375,148 +409,92 @@ export class PixiRenderer {
     }
     this.activeHoldEffects.clear();
     this.particleEmitterSeedSerial = 1;
-    const rootIndexMemo = new Map<number, number>();
-    const resolveRootIndex = (index: number): number => {
-      const memoized = rootIndexMemo.get(index);
-      if (memoized !== undefined) {
-        return memoized;
-      }
-      const path: number[] = [];
-      let cursor = index;
-      while (cursor >= 0 && cursor < events.length) {
-        path.push(cursor);
-        const parentIndex = events[cursor]?.parentEventIndex ?? -1;
-        if (parentIndex < 0 || parentIndex >= events.length) {
-          break;
-        }
-        const cachedParentRoot = rootIndexMemo.get(parentIndex);
-        if (cachedParentRoot !== undefined) {
-          for (const p of path) {
-            rootIndexMemo.set(p, cachedParentRoot);
-          }
-          return cachedParentRoot;
-        }
-        cursor = parentIndex;
-      }
-      const root = cursor >= 0 && cursor < events.length ? cursor : index;
-      for (const p of path) {
-        rootIndexMemo.set(p, root);
-      }
-      return root;
-    };
-    const eventRootIndexByEventIndex = new Map<number, number>();
-    const visibleSourceMemo = new Map<
-      number,
-      { eventIndex: number; baseType: RuntimeNoteSemantic["baseType"]; rhythmWidth: number } | null
-    >();
+    const eventSlideChainIndexByEventIndex = new Map<number, number>();
+    const slideRhythmWidthBySlideChainEventIndex = new Map<number, number>();
     const resolveLastVisibleSource = (
-      index: number,
+      slideEvent: ChartEvent,
+      throughEventIndex: number,
     ): { eventIndex: number; baseType: RuntimeNoteSemantic["baseType"]; rhythmWidth: number } | null => {
-      const memoized = visibleSourceMemo.get(index);
-      if (memoized !== undefined) {
-        return memoized;
+      if (slideEvent.eventType !== "slide") {
+        return null;
       }
-      const path: number[] = [];
-      let cursor = index;
-      while (cursor >= 0 && cursor < events.length) {
-        const cached = visibleSourceMemo.get(cursor);
-        if (cached !== undefined) {
-          for (const p of path) {
-            visibleSourceMemo.set(p, cached);
-          }
-          return cached;
-        }
-        path.push(cursor);
-        const ev = events[cursor];
-        if (ev?.eventType === "note" && ev.note && ev.note.baseType !== "hidden") {
-          const found = {
-            eventIndex: cursor,
-            baseType: ev.note.baseType,
-            rhythmWidth: rhythmWidthForNote(ev.note),
+      let source: { eventIndex: number; baseType: RuntimeNoteSemantic["baseType"]; rhythmWidth: number } | null = null;
+      for (const nodeEventIndex of slideEvent.nodeEventIndices) {
+        const nodeEvent = events[nodeEventIndex];
+        if (nodeEvent?.eventType === "note" && nodeEvent.note.baseType !== "hidden") {
+          source = {
+            eventIndex: nodeEventIndex,
+            baseType: nodeEvent.note.baseType,
+            rhythmWidth: rhythmWidthForNote(nodeEvent.note),
           };
-          for (const p of path) {
-            visibleSourceMemo.set(p, found);
-          }
-          return found;
         }
-        const parentIndex = ev?.parentEventIndex ?? -1;
-        if (parentIndex < 0 || parentIndex >= events.length) {
+        if (nodeEventIndex === throughEventIndex) {
           break;
         }
-        cursor = parentIndex;
       }
-      for (const p of path) {
-        visibleSourceMemo.set(p, null);
-      }
-      return null;
+      return source;
     };
-    const hiddenRoots = new Set<number>();
     for (let index = 0; index < events.length; index += 1) {
       const event = events[index];
-      if (!event) {
+      if (event.eventType !== "slide") {
         continue;
       }
-      const rootIndex = resolveRootIndex(index);
-      eventRootIndexByEventIndex.set(index, rootIndex);
-      if (event.eventType === "note" && event.note?.baseType === "hidden") {
-        hiddenRoots.add(rootIndex);
-      }
-    }
-    const slideRhythmWidthByRootEventIndex = new Map<number, number>();
-    const visibleEventIndicesByRootEventIndex = new Map<number, number[]>();
-    for (let index = 0; index < events.length; index += 1) {
-      const event = events[index];
-      if (event.eventType !== "note" || !event.note || isDirectionalNote(event.note)) {
-        continue;
-      }
-      const rootIndex = eventRootIndexByEventIndex.get(index) ?? index;
-      if (event.note.baseType !== "hidden") {
-        const visibleIndices = visibleEventIndicesByRootEventIndex.get(rootIndex) ?? [];
-        visibleIndices.push(index);
-        visibleEventIndicesByRootEventIndex.set(rootIndex, visibleIndices);
-      }
-      if (!slideRhythmWidthByRootEventIndex.has(rootIndex)) {
-        slideRhythmWidthByRootEventIndex.set(rootIndex, rhythmWidthForNote(event.note));
+      for (const nodeEventIndex of event.nodeEventIndices) {
+        const nodeEvent = events[nodeEventIndex];
+        if (nodeEvent?.eventType !== "note") {
+          continue;
+        }
+        eventSlideChainIndexByEventIndex.set(nodeEventIndex, index);
+        if (!isDirectionalNote(nodeEvent.note)) {
+          if (!slideRhythmWidthBySlideChainEventIndex.has(index)) {
+            slideRhythmWidthBySlideChainEventIndex.set(index, rhythmWidthForNote(nodeEvent.note));
+          }
+        }
       }
     }
 
     const connections: SlideConnection[] = [];
-    for (let index = 0; index < events.length; index += 1) {
-      const event = events[index];
-      if (event.parentEventIndex < 0 || event.parentEventIndex >= events.length) {
+    for (let slideChainEventIndex = 0; slideChainEventIndex < events.length; slideChainEventIndex += 1) {
+      const slideEvent = events[slideChainEventIndex];
+      if (slideEvent.eventType !== "slide") {
         continue;
       }
-      const parent = events[event.parentEventIndex];
-      if (!parent) {
-        continue;
+      const staticSlideRhythmWidth = slideRhythmWidthBySlideChainEventIndex.get(slideChainEventIndex);
+      for (let nodeIndex = 1; nodeIndex < slideEvent.nodeEventIndices.length; nodeIndex += 1) {
+        const fromEventIndex = slideEvent.nodeEventIndices[nodeIndex - 1];
+        const toEventIndex = slideEvent.nodeEventIndices[nodeIndex];
+        const fromEvent = events[fromEventIndex];
+        const toEvent = events[toEventIndex];
+        if (fromEvent?.eventType !== "note" || toEvent?.eventType !== "note") {
+          continue;
+        }
+        const markerSource = resolveLastVisibleSource(slideEvent, fromEventIndex);
+        const slideRhythmWidth =
+          staticSlideRhythmWidth
+          ?? Math.max(
+            rhythmWidthForNote(fromEvent.note),
+            rhythmWidthForNote(toEvent.note),
+            markerSource?.rhythmWidth ?? 1,
+          );
+        connections.push({
+          fromEventIndex,
+          toEventIndex,
+          slideChainEventIndex,
+          fromEvent,
+          toEvent,
+          fromAnchorLane: slideAnchorLaneForNote(fromEvent.lane, fromEvent.note, "outgoing"),
+          toAnchorLane: slideAnchorLaneForNote(toEvent.lane, toEvent.note, "incoming"),
+          markerSourceBaseType: markerSource?.baseType ?? null,
+          markerSourceIsHead: markerSource
+            ? markerSource.eventIndex === slideEvent.headNodeEventIndex
+            : true,
+          markerSourceRhythmWidth: markerSource?.rhythmWidth ?? 1,
+          slideRhythmWidth,
+          slideType: slideEvent.slideType,
+          useSpecialTexture: slideEvent.slideType === "hidden",
+          mode: this.resolveSlideConnectionMode(slideEvent, nodeIndex, events),
+        });
       }
-      const rootEventIndex = eventRootIndexByEventIndex.get(index) ?? index;
-      const markerSource = resolveLastVisibleSource(event.parentEventIndex);
-      const visibleIndices = visibleEventIndicesByRootEventIndex.get(rootEventIndex) ?? [];
-      const slideRhythmWidth =
-        slideRhythmWidthByRootEventIndex.get(rootEventIndex)
-        ?? Math.max(
-          parent.note ? rhythmWidthForNote(parent.note) : 1,
-          event.note ? rhythmWidthForNote(event.note) : 1,
-          markerSource?.rhythmWidth ?? 1,
-        );
-      connections.push({
-        fromEventIndex: event.parentEventIndex,
-        toEventIndex: index,
-        rootEventIndex,
-        fromEvent: parent,
-        toEvent: event,
-        fromAnchorLane: slideAnchorLaneForNote(parent.lane, parent.note, "outgoing"),
-        toAnchorLane: slideAnchorLaneForNote(event.lane, event.note, "incoming"),
-        markerSourceBaseType: markerSource?.baseType ?? null,
-        markerSourceIsHead: markerSource
-          ? markerSource.eventIndex === rootEventIndex
-          : true,
-        markerSourceRhythmWidth: markerSource?.rhythmWidth ?? 1,
-        slideRhythmWidth,
-        useSpecialTexture: hiddenRoots.has(resolveRootIndex(index)),
-        mode: this.resolveSlideConnectionMode(event.parentEventIndex, index, visibleIndices),
-      });
     }
     connections.sort((left, right) => {
       const leftFromHitMs = events[left.fromEventIndex]?.hitMs ?? 0;
@@ -531,9 +509,9 @@ export class PixiRenderer {
     for (const connection of connections) {
       this.slideConnectionByFromEventIndex.set(connection.fromEventIndex, connection);
     }
-    this.eventRootIndexByEventIndex = eventRootIndexByEventIndex;
+    this.eventSlideChainIndexByEventIndex = eventSlideChainIndexByEventIndex;
     this.buildBpmFlashCycleSegments(events);
-    this.slideFlashFirstTriggerCycleByRootEventIndex.clear();
+    this.slideFlashFirstTriggerCycleByChainEventIndex.clear();
     this.activeJudgeOverlay = null;
     if (this.activeEmptyTouchLaneEffect) {
       this.removeEmitterInstance(this.activeEmptyTouchLaneEffect.holdEmitter);
@@ -688,11 +666,15 @@ export class PixiRenderer {
 
   render(
     notes: readonly ActiveNote[],
+    activeSlides: readonly ActiveSlide[],
     activeNotesMap: ReadonlyMap<number, ActiveNote>,
     noteLifecycleStates: ReadonlyMap<number, RuntimeNoteLifecycleState>,
     stats: RuntimeStats,
     mvFrame: MvRenderFrame | null,
   ): void {
+    this.noteLifecycleStates = noteLifecycleStates;
+    this.clearNoteInWindowStates(notes);
+
     if (
       !this.lanesG
       || !this.linesG
@@ -717,7 +699,6 @@ export class PixiRenderer {
     this.effectMeshCursor = 0;
     this.comboHudSpriteCursor = 0;
     this.judgeHudSpriteCursor = 0;
-    this.noteLifecycleStates = noteLifecycleStates;
     this.frameTick += 1;
     this.flickFrame = Math.floor((stats.elapsedMs * this.settings.fps) / 1000) % Math.max(1, Math.floor(this.settings.fps / 3));
 
@@ -725,7 +706,7 @@ export class PixiRenderer {
     this.updateMvFrame(mvFrame);
     this.drawLanes();
     if (startup?.chartObjectsVisible ?? true) {
-      this.drawNotes(notes, activeNotesMap, stats.elapsedMs);
+      this.drawNotes(notes, activeSlides, activeNotesMap, stats.elapsedMs);
       this.drawParticleEffects(stats.elapsedMs);
       this.drawComboHudOverlay(stats);
       this.drawJudgeHudOverlay(stats.elapsedMs);
@@ -778,8 +759,8 @@ export class PixiRenderer {
     this.activeHoldEffects.clear();
     this.slideConnections = [];
     this.slideConnectionByFromEventIndex.clear();
-    this.eventRootIndexByEventIndex.clear();
-    this.slideFlashFirstTriggerCycleByRootEventIndex.clear();
+    this.eventSlideChainIndexByEventIndex.clear();
+    this.slideFlashFirstTriggerCycleByChainEventIndex.clear();
     this.bpmFlashCycleSegments = [];
     this.noteSpritePool = [];
     this.slideLineMeshPool = [];
@@ -1189,6 +1170,7 @@ export class PixiRenderer {
 
   private drawNotes(
     notes: readonly ActiveNote[],
+    activeSlides: readonly ActiveSlide[],
     activeNotesMap: ReadonlyMap<number, ActiveNote>,
     elapsedMs: number,
   ): void {
@@ -1196,26 +1178,37 @@ export class PixiRenderer {
     const fallbackG = this.fallbackNoteG!;
     lineG.clear();
     fallbackG.clear();
-    const slideBottomMarkers: SlideBottomMarker[] = [];
-    this.drawSlideConnections(lineG, elapsedMs, slideBottomMarkers, activeNotesMap);
+    const slideBottomMarkers = this.resolveActiveSlideBottomMarkers(activeSlides, elapsedMs);
+    const noteRenderStates = new Map<ActiveNote, ActiveNoteBodyRenderState>();
+    for (const n of notes) {
+      const inWindowState = this.resolveActiveNoteInWindowState(n, elapsedMs);
+      if (!inWindowState) {
+        continue;
+      }
+      this.markNoteInWindow(n, true);
+      const renderState = this.resolveActiveNoteBodyRenderState(n, inWindowState, elapsedMs);
+      if (!renderState) {
+        continue;
+      }
+      noteRenderStates.set(n, renderState);
+    }
+
+    this.drawSlideConnections(lineG, elapsedMs, activeNotesMap);
 
     for (const n of notes) {
-      if (!n.started) {
+      const renderState = noteRenderStates.get(n);
+      if (!renderState) {
         continue;
       }
-      if (n.note.baseType === "hidden") {
-        continue;
-      }
-
-      const color = colorForNote(n.note);
-      const visual = this.resolveNoteVisualState(n, elapsedMs);
-      if (!this.isPercentRenderable(visual.percent)) {
-        continue;
-      }
-      const noteScale = visual.scale;
-      const directional = isDirectionalNote(n.note);
-      const renderLane = renderCenterLaneForNote(n.lane, n.note);
-      const renderX = this.laneXAtPercent(renderLane, visual.percent);
+      const {
+        color,
+        visual,
+        noteScale,
+        directional,
+        renderX,
+        alpha,
+        tex,
+      } = renderState;
 
       if (n.issameline !== null && Number.isFinite(n.issameline)) {
         const x2 = this.laneXAtPercent(n.issameline, visual.percent);
@@ -1242,12 +1235,6 @@ export class PixiRenderer {
           }
         }
       }
-
-      const lane = n.lane;
-      const alpha = 1;
-      const tex = this.assets
-        ? resolveRhythmNoteTexture(this.assets, n.note, lane, n.gray, renderLane)
-        : null;
 
       if (!directional) {
         if (tex && this.noteSpriteLayer) {
@@ -1286,10 +1273,112 @@ export class PixiRenderer {
     this.drawSlideBottomMarkers(slideBottomMarkers, elapsedMs, fallbackG);
   }
 
+  private clearNoteInWindowStates(notes: readonly ActiveNote[]): void {
+    for (const note of notes) {
+      this.markNoteInWindow(note, false);
+    }
+  }
+
+  private markNoteInWindow(note: ActiveNote, inWindow: boolean): void {
+    note.inWindow = inWindow;
+    const state = this.noteLifecycleStates.get(note.eventIndex);
+    if (state) {
+      state.inWindow = inWindow;
+    }
+  }
+
+  private resolveActiveNoteBodyRenderState(
+    note: ActiveNote,
+    windowState: ActiveNoteBodyWindowState,
+    elapsedMs: number,
+  ): ActiveNoteBodyRenderState | null {
+    if (!this.isActiveNoteWithinVisibilityWindow(note, elapsedMs)) {
+      return null;
+    }
+    if (note.note.baseType === "hidden") {
+      return null;
+    }
+
+    const { visual, noteScale, directional, renderX, tex } = windowState;
+    if (!this.isPercentRenderable(visual.percent)) {
+      return null;
+    }
+
+    const alpha = 1;
+
+    return {
+      color: colorForNote(note.note),
+      visual,
+      noteScale,
+      directional,
+      renderX,
+      alpha,
+      tex,
+    };
+  }
+
+  private resolveActiveNoteInWindowState(
+    note: ActiveNote,
+    elapsedMs: number,
+  ): ActiveNoteBodyWindowState | null {
+    if (!note.started) {
+      return null;
+    }
+    if (!this.isActiveNoteUnconsumedAndNotExpired(note, elapsedMs)) {
+      return null;
+    }
+
+    return this.resolveActiveNoteBodyWindowState(note, elapsedMs);
+  }
+
+  private resolveActiveNoteBodyWindowState(
+    note: ActiveNote,
+    elapsedMs: number,
+  ): ActiveNoteBodyWindowState | null {
+    const visual = this.resolveNoteVisualState(note, elapsedMs);
+    const noteScale = visual.scale;
+    const directional = isDirectionalNote(note.note);
+    const renderLane = renderCenterLaneForNote(note.lane, note.note);
+    const renderX = this.laneXAtPercent(renderLane, visual.percent);
+    const tex = this.assets
+      ? resolveRhythmNoteTexture(this.assets, note.note, note.lane, note.gray, renderLane)
+      : null;
+
+    if (!this.isNoteBodyFullyWithinFrameStart(note, visual.y, noteScale, tex)) {
+      return null;
+    }
+
+    return {
+      visual,
+      noteScale,
+      directional,
+      renderX,
+      tex,
+    };
+  }
+
+  private isActiveNoteUnconsumedAndNotExpired(note: ActiveNote, elapsedMs: number): boolean {
+    const state = this.noteLifecycleStates.get(note.eventIndex);
+    if (state?.consumed === true) {
+      return false;
+    }
+    return elapsedMs <= note.visibleEndMs + 1e-6;
+  }
+
+  private isActiveNoteWithinVisibilityWindow(note: ActiveNote, elapsedMs: number): boolean {
+    if (note.visibilityWindows.length === 0) {
+      return true;
+    }
+    return note.visibilityWindows.some((window) => (
+      elapsedMs >= window.startMs - 1e-6
+      && elapsedMs <= window.endMs + 1e-6
+    ));
+  }
+
   private resolveNoteVisualState(
     note: ActiveNote,
     elapsedMs: number,
-  ): { x: number; y: number; percent: number; scale: number } {
+  ): NoteVisualState {
     const frameRaw = this.frameRawAt(elapsedMs, note.startMs, note.tgId, note.tgPos);
     const percent = this.percentFromFrameRaw(frameRaw);
     return {
@@ -1298,6 +1387,63 @@ export class PixiRenderer {
       percent,
       scale: Math.max(NOTE_SCALE_MIN, percent * this.settings.noteSize),
     };
+  }
+
+  private isNoteBodyFullyWithinFrameStart(
+    note: ActiveNote,
+    y: number,
+    noteScale: number,
+    texture: Texture | null,
+  ): boolean {
+    const topY = this.noteBodyTopY(note, y, noteScale, texture);
+    return topY >= this.frameStartBoundaryY() - 1e-6;
+  }
+
+  private noteBodyTopY(
+    note: ActiveNote,
+    y: number,
+    noteScale: number,
+    texture: Texture | null,
+  ): number {
+    const spriteScale = this.noteSpriteScale(noteScale);
+    return y - this.noteMainBodyHalfHeight(note, noteScale, spriteScale, texture);
+  }
+
+  private noteMainBodyHalfHeight(
+    note: ActiveNote,
+    noteScale: number,
+    spriteScale: number,
+    texture: Texture | null,
+  ): number {
+    if (note.note.baseType === "hidden") {
+      return 0;
+    }
+    if (isDirectionalNote(note.note)) {
+      const directionalTexture = this.resolveDirectionalNoteBodyTexture(note);
+      return directionalTexture
+        ? (directionalTexture.height * spriteScale) / 2
+        : Math.max(6, noteScale * 28.4);
+    }
+    return texture
+      ? (texture.height * spriteScale) / 2
+      : Math.max(5, noteScale * 39.76);
+  }
+
+  private resolveDirectionalNoteBodyTexture(note: ActiveNote): Texture | null {
+    if (!this.assets || !isDirectionalNote(note.note)) {
+      return null;
+    }
+    const originalLeft = note.note.baseType === "directional_flick_left";
+    const textureFamilyLeft = this.settings.mirror ? !originalLeft : originalLeft;
+    return resolveDirectionalLaneTexture(
+      this.assets,
+      textureFamilyLeft,
+      note.lane,
+    );
+  }
+
+  private frameStartBoundaryY(): number {
+    return this.laneYAtPercent(this.percentFromFrameRaw(0));
   }
 
   private resolveActiveNoteRenderPoint(
@@ -1375,7 +1521,6 @@ export class PixiRenderer {
   private drawSlideConnections(
     graphics: Graphics,
     elapsedMs: number,
-    slideBottomMarkers: SlideBottomMarker[],
     activeNotesMap: ReadonlyMap<number, ActiveNote>,
   ): void {
     if (this.slideConnections.length === 0) {
@@ -1385,11 +1530,13 @@ export class PixiRenderer {
       const fromActiveNote = activeNotesMap.get(connection.fromEventIndex);
       const toActiveNote = activeNotesMap.get(connection.toEventIndex);
       const endpointState = this.resolveSlideConnectionEndpointState(connection);
-      const fromCreated = endpointState.from?.spawned === true;
-      const toCreated = endpointState.to?.spawned === true;
+      const fromInWindow = endpointState.from?.spawned === true && endpointState.from.inWindow === true;
+      const toInWindow = endpointState.to?.spawned === true && endpointState.to.inWindow === true;
       const fromConsumed = this.isSlideConnectionFrontConsumed(connection);
       const toConsumed = this.isSlideConnectionBackConsumed(connection);
-      if ((!fromCreated && !toCreated) || (fromConsumed && toConsumed)) {
+      const fromEndpointAvailable = fromConsumed || fromInWindow;
+      const toEndpointAvailable = toConsumed || toInWindow;
+      if ((!fromEndpointAvailable && !toEndpointAvailable) || (fromConsumed && toConsumed)) {
         continue;
       }
 
@@ -1397,6 +1544,7 @@ export class PixiRenderer {
         connection,
         "from",
         fromActiveNote,
+        fromInWindow,
         fromConsumed,
         elapsedMs,
       );
@@ -1404,6 +1552,7 @@ export class PixiRenderer {
         connection,
         "to",
         toActiveNote,
+        toInWindow,
         toConsumed,
         elapsedMs,
       );
@@ -1422,9 +1571,6 @@ export class PixiRenderer {
         this.connectorHalfWidthAtPercent(toPoint.percent, connection.slideRhythmWidth),
         this.slideConnectionRenderAlpha(connection),
       );
-      if (this.shouldDrawSlideBottomMarker(connection, fromConsumed, toConsumed)) {
-        slideBottomMarkers.push(this.resolveSlideBottomMarker(connection, elapsedMs));
-      }
     }
   }
 
@@ -1432,16 +1578,17 @@ export class PixiRenderer {
     connection: SlideConnection,
     endpoint: SlideConnectionEndpoint,
     activeNote: ActiveNote | undefined,
+    activeNoteInWindow: boolean,
     consumed: boolean,
     elapsedMs: number,
   ): SlideConnectionRenderPoint | null {
     if (consumed) {
       return this.resolveSlideConnectionMarkerRenderPoint(connection, elapsedMs);
     }
-    if (activeNote) {
+    if (activeNote && activeNoteInWindow) {
       return this.resolveActiveNoteRenderPoint(activeNote, elapsedMs);
     }
-    return this.resolveStaticSlideConnectionEndpointRenderPoint(connection, endpoint, elapsedMs);
+    return this.resolveStaticSlideConnectionEndpointRenderPoint(connection, endpoint);
   }
 
   private resolveSlideConnectionMarkerRenderPoint(
@@ -1459,12 +1606,9 @@ export class PixiRenderer {
   private resolveStaticSlideConnectionEndpointRenderPoint(
     connection: SlideConnection,
     endpoint: SlideConnectionEndpoint,
-    elapsedMs: number,
   ): SlideConnectionRenderPoint | null {
-    const event = endpoint === "from" ? connection.fromEvent : connection.toEvent;
     const anchorLane = endpoint === "from" ? connection.fromAnchorLane : connection.toAnchorLane;
-    const frameRaw = this.frameRawAt(elapsedMs, event.startMs, event.tgId, event.tgPos);
-    const percent = this.percentFromFrameRaw(frameRaw);
+    const percent = this.percentFromFrameRaw(0);
     if (!Number.isFinite(percent)) {
       return null;
     }
@@ -1476,22 +1620,52 @@ export class PixiRenderer {
   }
 
   private resolveSlideConnectionMode(
-    fromEventIndex: number,
-    toEventIndex: number,
-    visibleEventIndices: readonly number[],
+    slideEvent: SlideChartEvent,
+    toNodeIndex: number,
+    events: readonly ChartEvent[],
   ): SlideConnection["mode"] {
-    if (visibleEventIndices.length === 0) {
-      return "allIgnored";
+    if (slideEvent.slideType === "hidden") {
+      return "normal";
     }
-    const firstVisibleIndex = visibleEventIndices[0];
-    const lastVisibleIndex = visibleEventIndices[visibleEventIndices.length - 1];
-    if (toEventIndex <= firstVisibleIndex && fromEventIndex < firstVisibleIndex) {
+    const fromNodeIndex = toNodeIndex - 1;
+    const lastNodeIndex = slideEvent.nodeEventIndices.length - 1;
+    if (
+      this.isSlideNodeHidden(slideEvent, events, 0)
+      && this.areSlideNodesHidden(slideEvent, events, 0, fromNodeIndex)
+    ) {
       return "leadingIgnored";
     }
-    if (fromEventIndex >= lastVisibleIndex) {
+    if (
+      this.isSlideNodeHidden(slideEvent, events, lastNodeIndex)
+      && this.areSlideNodesHidden(slideEvent, events, toNodeIndex, lastNodeIndex)
+    ) {
       return "trailingIgnored";
     }
     return "normal";
+  }
+
+  private isSlideNodeHidden(
+    slideEvent: SlideChartEvent,
+    events: readonly ChartEvent[],
+    nodeIndex: number,
+  ): boolean {
+    const eventIndex = slideEvent.nodeEventIndices[nodeIndex] ?? -1;
+    const event = events[eventIndex];
+    return event?.eventType === "note" && event.note.baseType === "hidden";
+  }
+
+  private areSlideNodesHidden(
+    slideEvent: SlideChartEvent,
+    events: readonly ChartEvent[],
+    startNodeIndex: number,
+    endNodeIndex: number,
+  ): boolean {
+    for (let nodeIndex = startNodeIndex; nodeIndex <= endNodeIndex; nodeIndex += 1) {
+      if (!this.isSlideNodeHidden(slideEvent, events, nodeIndex)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private resolveSlideConnectionEndpointState(connection: SlideConnection): SlideConnectionEndpointState {
@@ -1507,7 +1681,7 @@ export class PixiRenderer {
     const endpointState = this.resolveSlideConnectionEndpointState(connection);
     const runtimeEndpointKnown = endpointState.from !== null || endpointState.to !== null;
     void runtimeEndpointKnown;
-    return connection.mode === "allIgnored" ? 0.5 : 1;
+    return connection.slideType === "hidden" ? 0.5 : 1;
   }
 
   private frameRawAt(elapsedMs: number, startMs: number, tgId: number, tgPos: number): number {
@@ -1533,7 +1707,7 @@ export class PixiRenderer {
     const isPositiveBpm = (value: number): boolean => Number.isFinite(value) && value > 0;
     let initialBpm = 120;
     for (const event of events) {
-      if (isPositiveBpm(event.bpm)) {
+      if ((event.eventType === "music_start" || event.eventType === "bpm") && isPositiveBpm(event.bpm)) {
         initialBpm = event.bpm;
         break;
       }
@@ -1647,33 +1821,72 @@ export class PixiRenderer {
     return fromLane + (toLane - fromLane) * progress;
   }
 
-  private resolveSlideBottomMarker(connection: SlideConnection, elapsedMs: number): SlideBottomMarker {
-    return {
-      lane: this.laneAtConnectionProgress(
-        connection.fromEvent.lane,
-        connection.toEvent.lane,
-        connection,
-        elapsedMs,
-      ),
-      renderLane: this.laneAtConnectionElapsed(connection, elapsedMs),
-      connection,
-    };
+  private resolveActiveSlideBottomMarkers(
+    activeSlides: readonly ActiveSlide[],
+    elapsedMs: number,
+  ): SlideBottomMarker[] {
+    const markers: SlideBottomMarker[] = [];
+    for (const slide of activeSlides) {
+      const marker = slide.marker;
+      if (!marker) {
+        continue;
+      }
+      const connection = this.resolveActiveSlideMarkerConnection(slide, marker.sourceEventIndex, elapsedMs);
+      if (!connection) {
+        continue;
+      }
+      markers.push({
+        lane: this.laneAtConnectionProgress(
+          connection.fromEvent.lane,
+          connection.toEvent.lane,
+          connection,
+          elapsedMs,
+        ),
+        renderLane: this.laneAtConnectionElapsed(connection, elapsedMs),
+        slideChainEventIndex: slide.eventIndex,
+        sourceBaseType: marker.sourceBaseType,
+        sourceIsHead: marker.sourceIsHead,
+        sourceRhythmWidth: marker.sourceRhythmWidth,
+        slideRhythmWidth: connection.slideRhythmWidth,
+      });
+    }
+    return markers;
+  }
+
+  private resolveActiveSlideMarkerConnection(
+    slide: ActiveSlide,
+    sourceEventIndex: number,
+    elapsedMs: number,
+  ): SlideConnection | null {
+    const sourceConnection = this.slideConnectionByFromEventIndex.get(sourceEventIndex) ?? null;
+    if (
+      sourceConnection
+      && sourceConnection.slideChainEventIndex === slide.eventIndex
+      && elapsedMs < sourceConnection.toEvent.hitMs - 1e-6
+    ) {
+      return sourceConnection;
+    }
+
+    for (const connection of this.slideConnections) {
+      if (connection.slideChainEventIndex !== slide.eventIndex) {
+        continue;
+      }
+      if (
+        elapsedMs >= connection.fromEvent.hitMs - 1e-6
+        && elapsedMs < connection.toEvent.hitMs - 1e-6
+      ) {
+        return connection;
+      }
+    }
+    return null;
   }
 
   private isSlideConnectionFrontConsumed(connection: SlideConnection): boolean {
-    return this.noteLifecycleStates.get(connection.fromEventIndex)?.hitProcessed === true;
+    return this.noteLifecycleStates.get(connection.fromEventIndex)?.consumed === true;
   }
 
   private isSlideConnectionBackConsumed(connection: SlideConnection): boolean {
-    return this.noteLifecycleStates.get(connection.toEventIndex)?.hitProcessed === true;
-  }
-
-  private shouldDrawSlideBottomMarker(
-    connection: SlideConnection,
-    fromConsumed: boolean,
-    toConsumed: boolean,
-  ): boolean {
-    return connection.mode !== "allIgnored" && (fromConsumed || toConsumed);
+    return this.noteLifecycleStates.get(connection.toEventIndex)?.consumed === true;
   }
 
   private laneAtConnectionElapsed(
@@ -1697,20 +1910,20 @@ export class PixiRenderer {
       const lane = marker.lane;
       const markerRhythmWidth = Math.max(
         1,
-        marker.connection.slideRhythmWidth,
-        marker.connection.markerSourceRhythmWidth,
+        marker.slideRhythmWidth,
+        marker.sourceRhythmWidth,
       );
       const markerRenderLane = marker.renderLane;
       const x = this.laneXAtPercent(markerRenderLane, 1);
       const y = this.stageBottomY();
-      const markerIsMiddle = !marker.connection.markerSourceIsHead;
+      const markerIsMiddle = !marker.sourceIsHead;
 
       const markerTex = this.assets
         ? resolveSlideBottomMarkerTexture(
           this.assets,
           lane,
-          marker.connection.markerSourceBaseType,
-          marker.connection.markerSourceIsHead,
+          marker.sourceBaseType,
+          marker.sourceIsHead,
           markerRhythmWidth,
           markerRenderLane,
         )
@@ -1719,17 +1932,17 @@ export class PixiRenderer {
         ? resolveSlideBottomMarkerFlashTexture(
           this.assets,
           lane,
-          marker.connection.markerSourceIsHead,
+          marker.sourceIsHead,
           markerRhythmWidth,
           markerRenderLane,
         )
         : null;
       if (markerTex && this.noteSpriteLayer) {
         if (flashTex) {
-          let cycleBase = this.slideFlashFirstTriggerCycleByRootEventIndex.get(marker.connection.rootEventIndex);
+          let cycleBase = this.slideFlashFirstTriggerCycleByChainEventIndex.get(marker.slideChainEventIndex);
           if (cycleBase === undefined) {
             cycleBase = currentFlashCycle;
-            this.slideFlashFirstTriggerCycleByRootEventIndex.set(marker.connection.rootEventIndex, cycleBase);
+            this.slideFlashFirstTriggerCycleByChainEventIndex.set(marker.slideChainEventIndex, cycleBase);
           }
           const flashProgressRaw = currentFlashCycle - cycleBase;
           const flashProgress = ((flashProgressRaw % 1) + 1) % 1;
@@ -2165,9 +2378,9 @@ export class PixiRenderer {
     return pack.effectsByName.get(effectName) ?? null;
   }
 
-  private findFirstSlideConnectionFromRoot(rootEventIndex: number): number | null {
+  private findFirstSlideConnectionFromChain(slideChainEventIndex: number): number | null {
     for (const connection of this.slideConnections) {
-      if (connection.rootEventIndex === rootEventIndex && connection.mode === "normal") {
+      if (connection.slideChainEventIndex === slideChainEventIndex && connection.mode === "normal") {
         return connection.fromEventIndex;
       }
     }
@@ -2175,14 +2388,17 @@ export class PixiRenderer {
   }
 
   private activateHoldEffect(trigger: ParticleTriggerEvent): void {
-    const rootEventIndex = this.eventRootIndexByEventIndex.get(trigger.eventIndex) ?? trigger.eventIndex;
-    if (this.activeHoldEffects.has(rootEventIndex)) {
+    const slideChainEventIndex = this.eventSlideChainIndexByEventIndex.get(trigger.eventIndex) ?? -1;
+    if (slideChainEventIndex < 0) {
+      return;
+    }
+    if (this.activeHoldEffects.has(slideChainEventIndex)) {
       return;
     }
     const triggerConnection = this.slideConnectionByFromEventIndex.get(trigger.eventIndex) ?? null;
     const fromEventIndex = triggerConnection?.mode === "normal"
       ? trigger.eventIndex
-      : this.findFirstSlideConnectionFromRoot(rootEventIndex);
+      : this.findFirstSlideConnectionFromChain(slideChainEventIndex);
     if (fromEventIndex === null) {
       return;
     }
@@ -2208,8 +2424,8 @@ export class PixiRenderer {
       return;
     }
 
-    this.activeHoldEffects.set(rootEventIndex, {
-      rootEventIndex,
+    this.activeHoldEffects.set(slideChainEventIndex, {
+      slideChainEventIndex,
       currentFromEventIndex: fromEventIndex,
       linearEmitter,
       circularEmitter,
@@ -2292,11 +2508,11 @@ export class PixiRenderer {
       return;
     }
 
-    for (const [rootEventIndex, hold] of this.activeHoldEffects) {
+    for (const [slideChainEventIndex, hold] of this.activeHoldEffects) {
       const connection = this.resolveActiveHoldConnection(hold, elapsedMs);
       if (!connection) {
         this.destroyHoldEffectEmitters(hold);
-        this.activeHoldEffects.delete(rootEventIndex);
+        this.activeHoldEffects.delete(slideChainEventIndex);
         continue;
       }
 
