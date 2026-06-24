@@ -407,6 +407,7 @@ export class PixiRenderer {
     this.activeHoldEffects.clear();
     this.particleEmitterSeedSerial = 1;
     const eventSlideChainIndexByEventIndex = new Map<number, number>();
+    const hiddenSlideChainEventIndices = new Set<number>();
     const slideRhythmWidthBySlideChainEventIndex = new Map<number, number>();
     const resolveLastVisibleSource = (
       slideEvent: ChartEvent,
@@ -442,6 +443,9 @@ export class PixiRenderer {
           continue;
         }
         eventSlideChainIndexByEventIndex.set(nodeEventIndex, index);
+        if (nodeEvent.note.baseType === "hidden") {
+          hiddenSlideChainEventIndices.add(index);
+        }
         if (!isDirectionalNote(nodeEvent.note)) {
           if (!slideRhythmWidthBySlideChainEventIndex.has(index)) {
             slideRhythmWidthBySlideChainEventIndex.set(index, rhythmWidthForNote(nodeEvent.note));
@@ -488,7 +492,7 @@ export class PixiRenderer {
           markerSourceRhythmWidth: markerSource?.rhythmWidth ?? 1,
           slideRhythmWidth,
           slideType: slideEvent.slideType,
-          useSpecialTexture: slideEvent.slideType === "hidden",
+          useSpecialTexture: hiddenSlideChainEventIndices.has(slideChainEventIndex),
           mode: this.resolveSlideConnectionMode(slideEvent, nodeIndex, events),
         });
       }
