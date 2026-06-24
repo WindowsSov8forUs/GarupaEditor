@@ -883,7 +883,7 @@ export class SimulatorAppController {
 
     precomputeLut(settings);
     const chart: ParsedChart = parseEditorChart(this.launchPayload.chartData, settings);
-    this.renderer.setChartEvents(chart.events, chart.timingGroups);
+    this.renderer.setChart(chart);
     this.updateScoreRankMarkerPositions(chart.noteCount);
 
     if (settings.mvmode) {

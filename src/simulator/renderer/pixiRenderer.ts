@@ -33,12 +33,14 @@ import {
   ChartEvent,
   JudgeTriggerEvent,
   NoteChartEvent,
+  ParsedChart,
   ParticleTriggerEvent,
   RuntimeNoteLifecycleState,
   RuntimeStats,
   RuntimeJudgeKind,
   RuntimeNoteSemantic,
   RuntimeSlideType,
+  SimultaneousGroup,
   SlideChartEvent,
   SimulatorSettings,
 } from "../engine/types";
@@ -340,7 +342,9 @@ export class PixiRenderer {
   private activeParticleEmitters: ActiveParticleEmitter[] = [];
   private activeJudgeOverlay: ActiveJudgeOverlay | null = null;
   private activeEmptyTouchLaneEffect: ActiveEmptyTouchLaneEffect | null = null;
+  private chartEvents: readonly ChartEvent[] = [];
   private slideConnections: SlideConnection[] = [];
+  private simultaneousGroups: readonly SimultaneousGroup[] = [];
   private slideConnectionByFromEventIndex = new Map<number, SlideConnection>();
   private noteLifecycleStates: ReadonlyMap<number, RuntimeNoteLifecycleState> = new Map();
   private eventSlideChainIndexByEventIndex = new Map<number, number>();
@@ -393,8 +397,10 @@ export class PixiRenderer {
     return attrs.alpha ?? null;
   }
 
-  setChartEvents(events: readonly ChartEvent[], timingGroups: readonly TimingGroupDef[] = []): void {
-    this.timingGroups = timingGroups;
+  setChart(chart: ParsedChart): void {
+    const events = chart.events;
+    this.timingGroups = chart.timingGroups;
+    this.simultaneousGroups = chart.simultaneousGroups;
     for (const hold of this.activeHoldEffects.values()) {
       this.destroyHoldEffectEmitters(hold);
     }
@@ -495,6 +501,7 @@ export class PixiRenderer {
       }
       return (events[left.toEventIndex]?.hitMs ?? 0) - (events[right.toEventIndex]?.hitMs ?? 0);
     });
+    this.chartEvents = events;
     this.slideConnections = connections;
     this.slideConnectionByFromEventIndex.clear();
     for (const connection of connections) {
@@ -748,7 +755,9 @@ export class PixiRenderer {
     this.activeJudgeOverlay = null;
     this.activeEmptyTouchLaneEffect = null;
     this.activeHoldEffects.clear();
+    this.chartEvents = [];
     this.slideConnections = [];
+    this.simultaneousGroups = [];
     this.slideConnectionByFromEventIndex.clear();
     this.eventSlideChainIndexByEventIndex.clear();
     this.slideFlashFirstTriggerCycleByChainEventIndex.clear();
@@ -1013,6 +1022,23 @@ export class PixiRenderer {
     sprite.height = Number.isFinite(height) && height > 0 ? height : 1;
   }
 
+  private applyStretchSpriteBetweenPoints(
+    sprite: Sprite,
+    texture: Texture,
+    fromX: number,
+    fromY: number,
+    toX: number,
+    toY: number,
+    height: number,
+    alpha = 1,
+  ): void {
+    const dx = toX - fromX;
+    const dy = toY - fromY;
+    const width = Math.hypot(dx, dy);
+    this.applyStretchSprite(sprite, texture, fromX, fromY, width, height, alpha, 0, 0.5);
+    sprite.rotation = Math.atan2(dy, dx);
+  }
+
   private updateLiveBackgroundFrame(): void {
     if (!this.liveBgSprite) {
       return;
@@ -1185,6 +1211,7 @@ export class PixiRenderer {
     }
 
     this.drawSlideConnections(lineG, elapsedMs, activeNotesMap);
+    this.drawSimultaneousLines(lineG, elapsedMs, activeNotesMap, noteRenderStates);
 
     for (const n of notes) {
       const renderState = noteRenderStates.get(n);
@@ -1200,32 +1227,6 @@ export class PixiRenderer {
         alpha,
         tex,
       } = renderState;
-
-      if (n.issameline !== null && Number.isFinite(n.issameline)) {
-        const x2 = this.laneXAtPercent(n.issameline, visual.percent);
-        const fromX = Math.min(renderX, x2);
-        const toX = Math.max(renderX, x2);
-        const width = toX - fromX;
-        if (width > 1e-6) {
-          const simultaneousLineTexture = this.assets?.lines.simultaneousLine ?? null;
-          if (simultaneousLineTexture) {
-            const s = this.allocSimultaneousLineSprite();
-            if (s) {
-              const noteBaseWidth = this.assets?.rhythm.noteNormal[this.textureLaneIndex(n.lane)]?.width ?? 308;
-              const spriteScale = this.noteSpriteScale(noteScale);
-              const lineHeight = Math.max(
-                1,
-                spriteScale * noteBaseWidth * SIMULTANEOUS_LINE_HEIGHT_TO_NOTE_WIDTH,
-              );
-              this.applyStretchSprite(s, simultaneousLineTexture, fromX, visual.y, width, lineHeight, 1, 0, 0.5);
-            }
-          } else {
-            lineG.setStrokeStyle({ width: 1 + visual.percent * 8, color: 0xffffff, alpha: 0.8 });
-            lineG.moveTo(fromX, visual.y);
-            lineG.lineTo(toX, visual.y);
-          }
-        }
-      }
 
       if (!directional) {
         if (tex && this.noteSpriteLayer) {
@@ -1262,6 +1263,117 @@ export class PixiRenderer {
     }
 
     this.drawSlideBottomMarkers(slideBottomMarkers, elapsedMs, fallbackG);
+  }
+
+  private drawSimultaneousLines(
+    lineG: Graphics,
+    elapsedMs: number,
+    activeNotesMap: ReadonlyMap<number, ActiveNote>,
+    noteRenderStates: ReadonlyMap<ActiveNote, ActiveNoteBodyRenderState>,
+  ): void {
+    void elapsedMs;
+    for (const group of this.simultaneousGroups) {
+      const eventIndexes = group.eventIndexes;
+      let previousRenderable: {
+        event: NoteChartEvent;
+        activeNote: ActiveNote;
+        renderState: ActiveNoteBodyRenderState;
+      } | null = null;
+      for (const eventIndex of eventIndexes) {
+        const event = this.chartEvents[eventIndex];
+        if (event?.eventType !== "note") {
+          continue;
+        }
+        const activeNote = activeNotesMap.get(eventIndex);
+        if (!activeNote) {
+          continue;
+        }
+        const renderState = noteRenderStates.get(activeNote);
+        if (!renderState) {
+          continue;
+        }
+        const currentRenderable = { event, activeNote, renderState };
+        if (previousRenderable) {
+          this.drawSimultaneousLine(
+            lineG,
+            previousRenderable.activeNote,
+            currentRenderable.activeNote,
+            previousRenderable.renderState,
+            currentRenderable.renderState,
+          );
+        }
+        previousRenderable = currentRenderable;
+      }
+    }
+  }
+
+  private drawSimultaneousLine(
+    lineG: Graphics,
+    fromActiveNote: ActiveNote,
+    toActiveNote: ActiveNote,
+    fromRenderState: ActiveNoteBodyRenderState,
+    toRenderState: ActiveNoteBodyRenderState,
+  ): void {
+    const fromPoint = this.resolveSimultaneousLineEndpointRenderPoint(fromActiveNote, fromRenderState, "from");
+    const toPoint = this.resolveSimultaneousLineEndpointRenderPoint(toActiveNote, toRenderState, "to");
+    const lineLength = Math.hypot(toPoint.x - fromPoint.x, toPoint.y - fromPoint.y);
+    if (lineLength > 1e-6) {
+      const simultaneousLineTexture = this.assets?.lines.simultaneousLine ?? null;
+      if (simultaneousLineTexture) {
+        const s = this.allocSimultaneousLineSprite();
+        if (s) {
+          const noteBaseWidth = this.assets?.rhythm.noteNormal[this.textureLaneIndex(toActiveNote.lane)]?.width ?? 308;
+          const noteScale = toRenderState.noteScale;
+          const spriteScale = this.noteSpriteScale(noteScale);
+          const lineHeight = Math.max(
+            1,
+            spriteScale * noteBaseWidth * SIMULTANEOUS_LINE_HEIGHT_TO_NOTE_WIDTH,
+          );
+          this.applyStretchSpriteBetweenPoints(
+            s,
+            simultaneousLineTexture,
+            fromPoint.x,
+            fromPoint.y,
+            toPoint.x,
+            toPoint.y,
+            lineHeight,
+          );
+        }
+      } else {
+        const percent = toRenderState.visual.percent;
+        lineG.setStrokeStyle({ width: 1 + percent * 8, color: 0xffffff, alpha: 0.8 });
+        lineG.moveTo(fromPoint.x, fromPoint.y);
+        lineG.lineTo(toPoint.x, toPoint.y);
+      }
+    }
+  }
+
+  private resolveSimultaneousLineEndpointRenderPoint(
+    activeNote: ActiveNote,
+    renderState: ActiveNoteBodyRenderState,
+    side: "from" | "to",
+  ): { x: number; y: number } {
+    const lane = this.resolveSimultaneousLineEndpointLane(activeNote, side);
+    return {
+      x: this.laneXAtPercent(lane, renderState.visual.percent),
+      y: renderState.visual.y,
+    };
+  }
+
+  private resolveSimultaneousLineEndpointLane(activeNote: ActiveNote, side: "from" | "to"): number {
+    const note = activeNote.note;
+    if (!isDirectionalNote(note)) {
+      return renderCenterLaneForNote(activeNote.lane, note);
+    }
+    const width = Math.max(1, Math.round(note.directionalWidth));
+    const baseLane = Math.round(activeNote.lane);
+    const leftLane = note.baseType === "directional_flick_right"
+      ? baseLane
+      : baseLane - width + 1;
+    const rightLane = note.baseType === "directional_flick_right"
+      ? baseLane + width - 1
+      : baseLane;
+    return side === "from" ? rightLane : leftLane;
   }
 
   private clearNoteInWindowStates(notes: readonly ActiveNote[]): void {
