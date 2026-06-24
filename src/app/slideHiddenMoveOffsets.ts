@@ -84,19 +84,19 @@ function buildSlideHiddenOffsetMap(args: BuildSlideHiddenOffsetMapArgs): Map<str
       continue;
     }
 
-    const visibleIndexes: number[] = [];
+    const visibleIndices: number[] = [];
     for (let index = 0; index < chainNotes.length; index += 1) {
       if (chainNotes[index].type !== "hidden") {
-        visibleIndexes.push(index);
+        visibleIndices.push(index);
       }
     }
-    if (visibleIndexes.length < 2) {
+    if (visibleIndices.length < 2) {
       continue;
     }
 
-    for (let pairIndex = 0; pairIndex < visibleIndexes.length - 1; pairIndex += 1) {
-      const leftIndex = visibleIndexes[pairIndex];
-      const rightIndex = visibleIndexes[pairIndex + 1];
+    for (let pairIndex = 0; pairIndex < visibleIndices.length - 1; pairIndex += 1) {
+      const leftIndex = visibleIndices[pairIndex];
+      const rightIndex = visibleIndices[pairIndex + 1];
       if (rightIndex - leftIndex <= 1) {
         continue;
       }
@@ -257,13 +257,13 @@ export function buildSelectionMirrorOffsetMap(args: BuildSelectionMirrorOffsetMa
       continue;
     }
 
-    const visibleIndexes: number[] = [];
+    const visibleIndices: number[] = [];
     for (let index = 0; index < chainNotes.length; index += 1) {
       if (chainNotes[index].type !== "hidden") {
-        visibleIndexes.push(index);
+        visibleIndices.push(index);
       }
     }
-    if (visibleIndexes.length === 0) {
+    if (visibleIndices.length === 0) {
       continue;
     }
 
@@ -281,8 +281,8 @@ export function buildSelectionMirrorOffsetMap(args: BuildSelectionMirrorOffsetMa
       continue;
     }
 
-    if (visibleIndexes.length === 1) {
-      const onlyVisible = chainNotes[visibleIndexes[0]];
+    if (visibleIndices.length === 1) {
+      const onlyVisible = chainNotes[visibleIndices[0]];
       if (!selectedNoteIds.has(onlyVisible.id)) {
         continue;
       }
@@ -290,8 +290,8 @@ export function buildSelectionMirrorOffsetMap(args: BuildSelectionMirrorOffsetMa
       continue;
     }
 
-    const firstVisibleIndex = visibleIndexes[0];
-    const lastVisibleIndex = visibleIndexes[visibleIndexes.length - 1];
+    const firstVisibleIndex = visibleIndices[0];
+    const lastVisibleIndex = visibleIndices[visibleIndices.length - 1];
     const firstVisibleNote = chainNotes[firstVisibleIndex];
     const lastVisibleNote = chainNotes[lastVisibleIndex];
 
@@ -303,9 +303,9 @@ export function buildSelectionMirrorOffsetMap(args: BuildSelectionMirrorOffsetMa
       applyHiddenMirrorRange(chainNotes, lastVisibleIndex + 1, chainNotes.length);
     }
 
-    for (let pairIndex = 0; pairIndex < visibleIndexes.length - 1; pairIndex += 1) {
-      const leftIndex = visibleIndexes[pairIndex];
-      const rightIndex = visibleIndexes[pairIndex + 1];
+    for (let pairIndex = 0; pairIndex < visibleIndices.length - 1; pairIndex += 1) {
+      const leftIndex = visibleIndices[pairIndex];
+      const rightIndex = visibleIndices[pairIndex + 1];
       if (rightIndex - leftIndex <= 1) {
         continue;
       }

@@ -430,7 +430,7 @@ function assignSamelineLanes(events: ChartEvent[], enabled: boolean): Simultaneo
     const groupIndex = simultaneousGroups.length;
     const simultaneousGroup: SimultaneousGroup = {
       groupIndex,
-      eventIndexes: group.map((item) => item.eventIndex),
+      eventIndices: group.map((item) => item.eventIndex),
     };
     for (const item of group) {
       item.event.samelineGroup = groupIndex;
