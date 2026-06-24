@@ -3,14 +3,16 @@ import { isGrayEligibleNote, isHiddenNoSeNote, isJudgedNote } from "./score";
 import { axisAtMs } from "./timingGroup";
 import {
   ActiveNote,
+  ActiveSlide,
   JudgeTriggerEvent,
   ParticleTriggerEvent,
   ParsedChart,
+  RuntimeNoteLifecycleState,
   RuntimeNoteSemantic,
+  RuntimeSlideLifecycleState,
   RuntimeStats,
   SimulatorSettings,
 } from "./types";
-import type { VisibilityWindow } from "./timingGroup";
 
 interface PendingSystemEvent {
   type: "music_start" | "bpm";
@@ -25,7 +27,12 @@ export class SimulatorRuntime {
   private readonly chart: ParsedChart;
 
   private readonly activeNotes: ActiveNote[] = [];
+  private readonly activeNotesMap = new Map<number, ActiveNote>();
+  private readonly activeSlides: ActiveSlide[] = [];
+  private readonly activeSlidesMap = new Map<number, ActiveSlide>();
   private readonly activeIdByEvent = new Map<number, number>();
+  private readonly noteLifecycleByEvent = new Map<number, RuntimeNoteLifecycleState>();
+  private readonly slideLifecycleByEvent = new Map<number, RuntimeSlideLifecycleState>();
   private readonly npsExpiryMs: number[] = [];
   private readonly pendingSystemEvents: PendingSystemEvent[] = [];
 
@@ -33,6 +40,7 @@ export class SimulatorRuntime {
   private started = false;
   private spawnIndex = 0;
   private nextNoteId = 1;
+  private nextSlideId = 1;
 
   private combo = 0;
   private notes = 0;
@@ -48,7 +56,6 @@ export class SimulatorRuntime {
   private lastElapsedMs = 0;
   private finishAtMs: number | null = null;
   private static readonly COLOR_ASSIST_BEAT_MULTIPLIER = 2;
-  private static readonly VISIBILITY_EPSILON_MS = 1e-6;
 
   constructor(settings: SimulatorSettings, chart: ParsedChart) {
     this.settings = settings;
@@ -107,6 +114,26 @@ export class SimulatorRuntime {
     return this.activeNotes;
   }
 
+  getActiveNotesMap(): ReadonlyMap<number, ActiveNote> {
+    return this.activeNotesMap;
+  }
+
+  getActiveSlides(): readonly ActiveSlide[] {
+    return this.activeSlides;
+  }
+
+  getActiveSlidesMap(): ReadonlyMap<number, ActiveSlide> {
+    return this.activeSlidesMap;
+  }
+
+  getNoteLifecycleStates(): ReadonlyMap<number, RuntimeNoteLifecycleState> {
+    return this.noteLifecycleByEvent;
+  }
+
+  getSlideLifecycleStates(): ReadonlyMap<number, RuntimeSlideLifecycleState> {
+    return this.slideLifecycleByEvent;
+  }
+
   getProgress(elapsedMs: number): number {
     return Math.max(0, Math.min(1, elapsedMs / Math.max(1, this.chart.maxTimeMs)));
   }
@@ -130,29 +157,30 @@ export class SimulatorRuntime {
       const note = this.activeNotes[i];
       this.updateNote(note, elapsed);
 
-      if (!note.sePlayed && elapsed >= note.hitMs) {
-        if (!note.sePlayed) {
-          note.sePlayed = true;
-          this.pushSe(note.note);
-        }
-
-        this.resolveHit(note.note, note.lane, elapsed, note.eventIndex);
+      if (note.note.baseType === "hidden") {
+        this.handleHiddenNoteIfDue(note, i, elapsed);
+        continue;
       }
 
-      if (note.sePlayed && elapsed >= Math.max(note.hitMs, note.visibleEndMs) - 1e-6) {
-        this.activeIdByEvent.delete(note.eventIndex);
-        this.activeNotes.splice(i, 1);
+      if (this.consumeNoteIfDue(note, elapsed)) {
+        this.removeActiveNoteAt(i);
         this.processedObjects += 1;
         continue;
       }
-      if (!note.started && elapsed > note.visibleEndMs + 1e-6) {
-        this.activeIdByEvent.delete(note.eventIndex);
-        this.activeNotes.splice(i, 1);
+    }
+
+    for (let i = this.activeSlides.length - 1; i >= 0; i -= 1) {
+      const slide = this.activeSlides[i];
+      this.updateSlide(slide, elapsed);
+      if (elapsed >= slide.visibleEndMs - 1e-6) {
+        this.removeActiveSlideAt(i);
+        this.processedObjects += 1;
       }
     }
 
     const coreFinished = this.combo >= this.notes
       && this.activeNotes.length === 0
+      && this.activeSlides.length === 0
       && this.pendingSystemEvents.length === 0
       && this.spawnIndex >= this.chart.events.length;
     if (coreFinished) {
@@ -181,49 +209,147 @@ export class SimulatorRuntime {
         break;
       }
 
-      if (ev.eventType === "bpm") {
-        this.pendingSystemEvents.push({
-          type: "bpm",
-          startMs: ev.startMs,
-          bpm: ev.bpm,
-        });
-      } else if (ev.eventType === "music_start") {
-        this.pendingSystemEvents.push({
-          type: "music_start",
-          startMs: ev.startMs,
-        });
-      } else {
-        if (!ev.note) {
-          this.spawnIndex += 1;
-          continue;
+      switch (ev.eventType) {
+        case "bpm":
+          this.pendingSystemEvents.push({
+            type: "bpm",
+            startMs: ev.startMs,
+            bpm: ev.bpm,
+          });
+          break;
+        case "music_start":
+          this.pendingSystemEvents.push({
+            type: "music_start",
+            startMs: ev.startMs,
+          });
+          break;
+        case "note": {
+          if (!ev.note) {
+            this.processedObjects += 1;
+            break;
+          }
+          const id = this.nextNoteId++;
+          const prevSlideNodeActiveId = ev.prevSlideNodeEventIndex >= 0 ? this.activeIdByEvent.get(ev.prevSlideNodeEventIndex) ?? -1 : -1;
+          const activeSlide = ev.slideChainEventIndex >= 0 ? this.activeSlidesMap.get(ev.slideChainEventIndex) ?? null : null;
+          const n: ActiveNote = {
+            id,
+            eventIndex: this.spawnIndex,
+            note: ev.note,
+            lane: ev.lane,
+            samelineGroup: ev.samelineGroup,
+            startMs: ev.startMs,
+            hitMs: ev.hitMs,
+            visibleEndMs: ev.visibleEndMs,
+            visibilityWindows: ev.visibilityWindows,
+            tgId: ev.tgId,
+            tgPos: ev.tgPos,
+            started: false,
+            t: 0,
+            gray: this.isGrayNote(ev.beat, ev.note),
+            prevSlideNodeEventIndex: ev.prevSlideNodeEventIndex,
+            prevSlideNodeActiveId,
+            nextSlideNodeEventIndex: ev.nextSlideNodeEventIndex,
+            slideChainEventIndex: ev.slideChainEventIndex,
+            activeSlide,
+            inWindow: false,
+            consumed: false,
+          };
+          this.addActiveNote(n);
+          this.noteLifecycleByEvent.set(this.spawnIndex, {
+            eventIndex: this.spawnIndex,
+            spawned: true,
+            started: false,
+            inWindow: false,
+            consumed: false,
+            judged: false,
+            hidden: ev.note.baseType === "hidden",
+          });
+          break;
         }
-        const id = this.nextNoteId++;
-        const parentActiveId = ev.parentEventIndex >= 0 ? this.activeIdByEvent.get(ev.parentEventIndex) ?? -1 : -1;
-        const n: ActiveNote = {
-          id,
-          eventIndex: this.spawnIndex,
-          note: ev.note,
-          lane: ev.lane,
-          issameline: ev.samelineLane,
-          startMs: ev.startMs,
-          hitMs: ev.hitMs,
-          visibleEndMs: ev.visibleEndMs,
-          visibilityWindows: ev.visibilityWindows,
-          tgId: ev.tgId,
-          tgPos: ev.tgPos,
-          started: false,
-          sePlayed: false,
-          t: 0,
-          gray: this.isGrayNote(ev.beat, ev.note),
-          parentEventIndex: ev.parentEventIndex,
-          parentActiveId
-        };
-        this.activeNotes.push(n);
-        this.activeIdByEvent.set(this.spawnIndex, id);
+        case "slide": {
+          const id = this.nextSlideId++;
+          const slide: ActiveSlide = {
+            id,
+            eventIndex: this.spawnIndex,
+            startMs: ev.startMs,
+            hitMs: ev.hitMs,
+            visibleEndMs: ev.visibleEndMs,
+            lane: ev.lane,
+            tgId: ev.tgId,
+            tgPos: ev.tgPos,
+            nodeEventIndices: ev.nodeEventIndices,
+            headNodeEventIndex: ev.headNodeEventIndex,
+            tailNodeEventIndex: ev.tailNodeEventIndex,
+            slideType: ev.slideType,
+            active: false,
+            marker: null,
+          };
+          this.addActiveSlide(slide);
+          this.bindActiveSlideNotes(slide);
+          this.slideLifecycleByEvent.set(this.spawnIndex, {
+            eventIndex: this.spawnIndex,
+            spawned: true,
+            active: false,
+          });
+          break;
+        }
+        default:
+          this.processedObjects += 1;
+          break;
       }
 
       this.spawnIndex += 1;
     }
+  }
+
+  private addActiveNote(note: ActiveNote): void {
+    this.activeNotes.push(note);
+    this.activeNotesMap.set(note.eventIndex, note);
+    this.activeIdByEvent.set(note.eventIndex, note.id);
+  }
+
+  private addActiveSlide(slide: ActiveSlide): void {
+    this.activeSlides.push(slide);
+    this.activeSlidesMap.set(slide.eventIndex, slide);
+  }
+
+  private bindActiveSlideNotes(slide: ActiveSlide): void {
+    for (const note of this.activeNotes) {
+      if (note.slideChainEventIndex !== slide.eventIndex) {
+        continue;
+      }
+      note.activeSlide = slide;
+    }
+  }
+
+  private removeActiveNoteAt(index: number): ActiveNote | null {
+    const note = this.activeNotes[index] ?? null;
+    if (!note) {
+      return null;
+    }
+    const state = this.noteLifecycleByEvent.get(note.eventIndex);
+    if (state) {
+      state.inWindow = false;
+    }
+    this.activeNotesMap.delete(note.eventIndex);
+    this.activeIdByEvent.delete(note.eventIndex);
+    this.activeNotes.splice(index, 1);
+    return note;
+  }
+
+  private removeActiveSlideAt(index: number): ActiveSlide | null {
+    const slide = this.activeSlides[index] ?? null;
+    if (!slide) {
+      return null;
+    }
+    const state = this.slideLifecycleByEvent.get(slide.eventIndex);
+    if (state) {
+      state.active = false;
+    }
+    slide.active = false;
+    this.activeSlidesMap.delete(slide.eventIndex);
+    this.activeSlides.splice(index, 1);
+    return slide;
   }
 
   private flushPendingSystemEvents(elapsedMs: number): void {
@@ -250,17 +376,12 @@ export class SimulatorRuntime {
       const tRaw = (this.tgPosAt(note.tgId, elapsedMs) * SIMULATOR_TIMING_FPS) / 1000
         + this.settings.noteSpeedFrames
         - (note.tgPos * SIMULATOR_TIMING_FPS) / 1000;
-      const inWindow = this.isInVisibilityWindow(note.visibilityWindows, elapsedMs);
-      if (
-        !inWindow
-        || tRaw < -SimulatorRuntime.VISIBILITY_EPSILON_MS
-        || tRaw > this.settings.noteSpeedFrames + SimulatorRuntime.VISIBILITY_EPSILON_MS
-      ) {
-        note.started = false;
-        note.t = 0;
-      } else {
+      if (elapsedMs >= note.startMs) {
         note.started = true;
         note.t = Math.floor(tRaw);
+      } else {
+        note.started = false;
+        note.t = 0;
       }
     } else if (elapsedMs >= note.startMs) {
       note.started = true;
@@ -269,16 +390,96 @@ export class SimulatorRuntime {
       note.started = false;
       note.t = 0;
     }
+    this.markNoteStarted(note.eventIndex, note.started);
   }
 
-  private isInVisibilityWindow(windows: readonly VisibilityWindow[], elapsedMs: number): boolean {
-    if (windows.length === 0) {
-      return true;
+  private updateSlide(slide: ActiveSlide, elapsedMs: number): void {
+    const active = elapsedMs >= slide.startMs - 1e-6 && elapsedMs < slide.visibleEndMs - 1e-6;
+    slide.active = active;
+    const state = this.slideLifecycleByEvent.get(slide.eventIndex);
+    if (state) {
+      state.active = active;
     }
-    return windows.some((window) => (
-      elapsedMs + SimulatorRuntime.VISIBILITY_EPSILON_MS >= window.startMs
-      && elapsedMs <= window.endMs + SimulatorRuntime.VISIBILITY_EPSILON_MS
-    ));
+  }
+
+  private handleHiddenNoteIfDue(note: ActiveNote, activeIndex: number, elapsedMs: number): void {
+    if (elapsedMs < note.hitMs) {
+      return;
+    }
+
+    const isHeadNode = note.activeSlide?.headNodeEventIndex === note.eventIndex;
+    if (isHeadNode || this.isNoteConsumed(note.prevSlideNodeEventIndex)) {
+      note.consumed = true;
+      this.markNoteConsumed(note.eventIndex);
+      if (isHeadNode) {
+        this.updateSlideMarkerForHiddenHeadNote(note);
+      }
+    }
+    this.removeActiveNoteAt(activeIndex);
+    this.processedObjects += 1;
+  }
+
+  private consumeNoteIfDue(note: ActiveNote, elapsedMs: number): boolean {
+    if (!this.isNoteConsumed(note.eventIndex) && elapsedMs >= note.hitMs) {
+      this.consumeNote(note, elapsedMs);
+    }
+
+    if (!this.isNoteConsumed(note.eventIndex) || elapsedMs < Math.max(note.hitMs, note.visibleEndMs) - 1e-6) {
+      return false;
+    }
+
+    return true;
+  }
+
+  private consumeNote(note: ActiveNote, elapsedMs: number): void {
+    if (this.isNoteConsumed(note.eventIndex)) {
+      return;
+    }
+
+    this.pushSe(note.note);
+    note.consumed = true;
+    this.markNoteConsumed(note.eventIndex);
+    this.updateSlideMarkerForConsumedNote(note);
+    this.resolveHit(note.note, note.lane, elapsedMs, note.eventIndex);
+  }
+
+  private updateSlideMarkerForConsumedNote(note: ActiveNote): void {
+    const slide = note.activeSlide;
+    if (!slide || note.note.baseType === "hidden") {
+      return;
+    }
+
+    if (note.note.slideRole === "start" || note.note.slideRole === "middle") {
+      slide.marker = {
+        sourceEventIndex: note.eventIndex,
+        sourceBaseType: note.note.baseType,
+        sourceIsHead: note.eventIndex === slide.headNodeEventIndex,
+        sourceRhythmWidth: Math.max(1, Number.isFinite(note.note.rhythmWidth) ? note.note.rhythmWidth : 1),
+      };
+      return;
+    }
+
+    if (note.note.slideRole === "end") {
+      slide.marker = null;
+    }
+  }
+
+  private updateSlideMarkerForHiddenHeadNote(note: ActiveNote): void {
+    const slide = note.activeSlide;
+    if (!slide || slide.slideType === "hidden") {
+      return;
+    }
+
+    slide.marker = {
+      sourceEventIndex: note.eventIndex,
+      sourceBaseType: "single",
+      sourceIsHead: true,
+      sourceRhythmWidth: Math.max(1, Number.isFinite(note.note.rhythmWidth) ? note.note.rhythmWidth : 1),
+    };
+  }
+
+  private isNoteConsumed(eventIndex: number): boolean {
+    return this.noteLifecycleByEvent.get(eventIndex)?.consumed === true;
   }
 
   private isGrayNote(beat: number, note: RuntimeNoteSemantic): boolean {
@@ -294,6 +495,7 @@ export class SimulatorRuntime {
       return;
     }
 
+    this.markNoteJudged(eventIndex);
     this.combo += 1;
     this.nps += 1;
     if (this.nps > this.npsMax) {
@@ -321,6 +523,27 @@ export class SimulatorRuntime {
     this.pendingSeNotes.push(note);
   }
 
+  private markNoteStarted(eventIndex: number, started: boolean): void {
+    const state = this.noteLifecycleByEvent.get(eventIndex);
+    if (state) {
+      state.started = started;
+    }
+  }
+
+  private markNoteConsumed(eventIndex: number): void {
+    const state = this.noteLifecycleByEvent.get(eventIndex);
+    if (state) {
+      state.consumed = true;
+    }
+  }
+
+  private markNoteJudged(eventIndex: number): void {
+    const state = this.noteLifecycleByEvent.get(eventIndex);
+    if (state) {
+      state.judged = true;
+    }
+  }
+
   private displayScore(): number {
     const notes = Math.max(1, this.notes);
     return Math.max(0, Math.floor(this.combo / notes * 10000000 + this.combo));
@@ -334,7 +557,7 @@ export class SimulatorRuntime {
       npsMax: this.npsMax,
       bpmValue: this.bpmValue,
       score: this.displayScore(),
-      activeObjects: this.activeNotes.length,
+      activeObjects: this.activeNotes.length + this.activeSlides.length,
       processedObjects: this.processedObjects,
       totalObjects: this.chart.events.length,
       elapsedMs

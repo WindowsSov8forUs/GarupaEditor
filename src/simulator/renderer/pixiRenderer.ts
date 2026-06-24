@@ -10,6 +10,13 @@ import {
   resolveSlideBottomMarkerTexture,
 } from "../engine/assets";
 import { SIMULATOR_TIMING_FPS } from "../engine/simulatorTiming";
+import {
+  calculateStageGeometry,
+  FIELD_BG_WIDTH_TO_STAGE_WIDTH_RATIO,
+  JUDGE_LINE_WIDTH_TO_STAGE_WIDTH_RATIO,
+  type StageGeometry,
+} from "../engine/stageGeometry";
+import { percentFromFrameRaw as calculatePercentFromFrameRaw } from "../engine/noteMotion";
 import { axisAtMs } from "../engine/timingGroup";
 import type { ParticleEffectDefinition } from "../engine/particlePack";
 import {
@@ -22,15 +29,22 @@ import {
 import { drawComboHud } from "./comboHudRenderer";
 import {
   ActiveNote,
+  ActiveSlide,
   ChartEvent,
   JudgeTriggerEvent,
+  NoteChartEvent,
+  ParsedChart,
   ParticleTriggerEvent,
+  RuntimeNoteLifecycleState,
   RuntimeStats,
   RuntimeJudgeKind,
   RuntimeNoteSemantic,
+  RuntimeSlideType,
+  SimultaneousGroup,
+  SlideChartEvent,
   SimulatorSettings,
 } from "../engine/types";
-import type { TimingGroupDef, VisibilityWindow } from "../engine/timingGroup";
+import type { TimingGroupDef } from "../engine/timingGroup";
 
 type MvRenderFrame =
   {
@@ -40,6 +54,31 @@ type MvRenderFrame =
     sourceWidth: number;
     sourceHeight: number;
   };
+
+type NoteVisualState = {
+  x: number;
+  y: number;
+  percent: number;
+  scale: number;
+};
+
+type ActiveNoteBodyRenderState = {
+  color: number;
+  visual: NoteVisualState;
+  noteScale: number;
+  directional: boolean;
+  renderX: number;
+  alpha: number;
+  tex: Texture | null;
+};
+
+type ActiveNoteBodyWindowState = {
+  visual: NoteVisualState;
+  noteScale: number;
+  directional: boolean;
+  renderX: number;
+  tex: Texture | null;
+};
 
 export interface SimulatorStartupRenderState {
   liveBgAlpha: number;
@@ -53,33 +92,22 @@ export interface SimulatorStartupRenderState {
 interface SlideConnection {
   fromEventIndex: number;
   toEventIndex: number;
-  rootEventIndex: number;
+  slideChainEventIndex: number;
+  fromEvent: NoteChartEvent;
+  toEvent: NoteChartEvent;
+  fromAnchorLane: number;
+  toAnchorLane: number;
   markerSourceBaseType: RuntimeNoteSemantic["baseType"] | null;
   markerSourceIsHead: boolean;
   markerSourceRhythmWidth: number;
   slideRhythmWidth: number;
-  fromLane: number;
-  toLane: number;
-  fromAnchorLane: number;
-  toAnchorLane: number;
-  fromHitMs: number;
-  toHitMs: number;
-  fromStartMs: number;
-  toStartMs: number;
-  fromVisibleEndMs: number;
-  toVisibleEndMs: number;
-  fromVisibilityWindows: VisibilityWindow[];
-  toVisibilityWindows: VisibilityWindow[];
-  fromTgId: number;
-  toTgId: number;
-  fromTgPos: number;
-  toTgPos: number;
+  slideType: RuntimeSlideType;
   useSpecialTexture: boolean;
-  mode: "normal" | "leadingIgnored" | "trailingIgnored" | "allIgnored";
+  mode: "normal" | "leadingIgnored" | "trailingIgnored";
 }
 
 interface ActiveHoldEffect {
-  rootEventIndex: number;
+  slideChainEventIndex: number;
   currentFromEventIndex: number;
   linearEmitter: ActiveParticleEmitter | null;
   circularEmitter: ActiveParticleEmitter | null;
@@ -97,20 +125,27 @@ interface ActiveEmptyTouchLaneEffect {
   holdEmitter: ActiveParticleEmitter | null;
 }
 
-interface StageGeometry {
-  viewportWidth: number;
-  viewportHeight: number;
-  stageWidth: number;
-  stageHeight: number;
-  stageBottom: number;
-  stageTop: number;
-  stageJudge: number;
-}
-
 interface SlideBottomMarker {
   lane: number;
   renderLane: number;
-  connection: SlideConnection;
+  slideChainEventIndex: number;
+  sourceBaseType: RuntimeNoteSemantic["baseType"] | null;
+  sourceIsHead: boolean;
+  sourceRhythmWidth: number;
+  slideRhythmWidth: number;
+}
+
+interface SlideConnectionRenderPoint {
+  x: number;
+  y: number;
+  percent: number;
+}
+
+type SlideConnectionEndpoint = "from" | "to";
+
+interface SlideConnectionEndpointState {
+  from: RuntimeNoteLifecycleState | null;
+  to: RuntimeNoteLifecycleState | null;
 }
 
 interface BpmFlashCycleSegment {
@@ -224,11 +259,6 @@ const NOTE_WIDTH_TO_LANE_WIDTH_RATIO = 1.38;
 const LONG_NOTE_LINE_HALF_WIDTH_TO_LANE_WIDTH = 0.48;
 const FIELD_BG_TO_JUDGE_WIDTH_RATIO = 1.35 / 0.875;
 const SIMULTANEOUS_LINE_HEIGHT_TO_NOTE_WIDTH = 27 / 308;
-const STAGE_HEIGHT_TO_WIDTH_RATIO = 634141 / 940938;
-const STAGE_JUDGE_TO_HEIGHT_RATIO = 338256 / 877231;
-const STAGE_TO_WINDOW_RATIO = 462 / 667;
-const FIELD_BG_WIDTH_TO_STAGE_WIDTH_RATIO = (7 / 8) / STAGE_TO_WINDOW_RATIO;
-const JUDGE_LINE_WIDTH_TO_STAGE_WIDTH_RATIO = 1.35 / STAGE_TO_WINDOW_RATIO;
 const HIT_CIRCLE_LAYOUT_SCALE_NON_DIRECTIONAL = 1.15;
 const HIT_CIRCLE_LAYOUT_SCALE_DIRECTIONAL = 0.85;
 const LANE_EFFECT_FADE_DURATION_MS = 200;
@@ -312,10 +342,13 @@ export class PixiRenderer {
   private activeParticleEmitters: ActiveParticleEmitter[] = [];
   private activeJudgeOverlay: ActiveJudgeOverlay | null = null;
   private activeEmptyTouchLaneEffect: ActiveEmptyTouchLaneEffect | null = null;
+  private chartEvents: readonly ChartEvent[] = [];
   private slideConnections: SlideConnection[] = [];
+  private simultaneousGroups: readonly SimultaneousGroup[] = [];
   private slideConnectionByFromEventIndex = new Map<number, SlideConnection>();
-  private eventRootIndexByEventIndex = new Map<number, number>();
-  private slideFlashFirstTriggerCycleByRootEventIndex = new Map<number, number>();
+  private noteLifecycleStates: ReadonlyMap<number, RuntimeNoteLifecycleState> = new Map();
+  private eventSlideChainIndexByEventIndex = new Map<number, number>();
+  private slideFlashFirstTriggerCycleByChainEventIndex = new Map<number, number>();
   private bpmFlashCycleSegments: BpmFlashCycleSegment[] = [];
   private activeHoldEffects = new Map<number, ActiveHoldEffect>();
   private timingGroups: readonly TimingGroupDef[] = [];
@@ -364,182 +397,119 @@ export class PixiRenderer {
     return attrs.alpha ?? null;
   }
 
-  setChartEvents(events: readonly ChartEvent[], timingGroups: readonly TimingGroupDef[] = []): void {
-    this.timingGroups = timingGroups;
+  setChart(chart: ParsedChart): void {
+    const events = chart.events;
+    this.timingGroups = chart.timingGroups;
+    this.simultaneousGroups = chart.simultaneousGroups;
     for (const hold of this.activeHoldEffects.values()) {
       this.destroyHoldEffectEmitters(hold);
     }
     this.activeHoldEffects.clear();
     this.particleEmitterSeedSerial = 1;
-    const rootIndexMemo = new Map<number, number>();
-    const resolveRootIndex = (index: number): number => {
-      const memoized = rootIndexMemo.get(index);
-      if (memoized !== undefined) {
-        return memoized;
-      }
-      const path: number[] = [];
-      let cursor = index;
-      while (cursor >= 0 && cursor < events.length) {
-        path.push(cursor);
-        const parentIndex = events[cursor]?.parentEventIndex ?? -1;
-        if (parentIndex < 0 || parentIndex >= events.length) {
-          break;
-        }
-        const cachedParentRoot = rootIndexMemo.get(parentIndex);
-        if (cachedParentRoot !== undefined) {
-          for (const p of path) {
-            rootIndexMemo.set(p, cachedParentRoot);
-          }
-          return cachedParentRoot;
-        }
-        cursor = parentIndex;
-      }
-      const root = cursor >= 0 && cursor < events.length ? cursor : index;
-      for (const p of path) {
-        rootIndexMemo.set(p, root);
-      }
-      return root;
-    };
-    const eventRootIndexByEventIndex = new Map<number, number>();
-    const visibleSourceMemo = new Map<
-      number,
-      { eventIndex: number; baseType: RuntimeNoteSemantic["baseType"]; rhythmWidth: number } | null
-    >();
+    const eventSlideChainIndexByEventIndex = new Map<number, number>();
+    const slideRhythmWidthBySlideChainEventIndex = new Map<number, number>();
     const resolveLastVisibleSource = (
-      index: number,
+      slideEvent: ChartEvent,
+      throughEventIndex: number,
     ): { eventIndex: number; baseType: RuntimeNoteSemantic["baseType"]; rhythmWidth: number } | null => {
-      const memoized = visibleSourceMemo.get(index);
-      if (memoized !== undefined) {
-        return memoized;
+      if (slideEvent.eventType !== "slide") {
+        return null;
       }
-      const path: number[] = [];
-      let cursor = index;
-      while (cursor >= 0 && cursor < events.length) {
-        const cached = visibleSourceMemo.get(cursor);
-        if (cached !== undefined) {
-          for (const p of path) {
-            visibleSourceMemo.set(p, cached);
-          }
-          return cached;
-        }
-        path.push(cursor);
-        const ev = events[cursor];
-        if (ev?.eventType === "note" && ev.note && ev.note.baseType !== "hidden") {
-          const found = {
-            eventIndex: cursor,
-            baseType: ev.note.baseType,
-            rhythmWidth: rhythmWidthForNote(ev.note),
+      let source: { eventIndex: number; baseType: RuntimeNoteSemantic["baseType"]; rhythmWidth: number } | null = null;
+      for (const nodeEventIndex of slideEvent.nodeEventIndices) {
+        const nodeEvent = events[nodeEventIndex];
+        if (nodeEvent?.eventType === "note" && nodeEvent.note.baseType !== "hidden") {
+          source = {
+            eventIndex: nodeEventIndex,
+            baseType: nodeEvent.note.baseType,
+            rhythmWidth: rhythmWidthForNote(nodeEvent.note),
           };
-          for (const p of path) {
-            visibleSourceMemo.set(p, found);
-          }
-          return found;
         }
-        const parentIndex = ev?.parentEventIndex ?? -1;
-        if (parentIndex < 0 || parentIndex >= events.length) {
+        if (nodeEventIndex === throughEventIndex) {
           break;
         }
-        cursor = parentIndex;
       }
-      for (const p of path) {
-        visibleSourceMemo.set(p, null);
-      }
-      return null;
+      return source;
     };
-    const hiddenRoots = new Set<number>();
     for (let index = 0; index < events.length; index += 1) {
       const event = events[index];
-      if (!event) {
+      if (event.eventType !== "slide") {
         continue;
       }
-      const rootIndex = resolveRootIndex(index);
-      eventRootIndexByEventIndex.set(index, rootIndex);
-      if (event.eventType === "note" && event.note?.baseType === "hidden") {
-        hiddenRoots.add(rootIndex);
-      }
-    }
-    const slideRhythmWidthByRootEventIndex = new Map<number, number>();
-    const visibleEventIndicesByRootEventIndex = new Map<number, number[]>();
-    for (let index = 0; index < events.length; index += 1) {
-      const event = events[index];
-      if (event.eventType !== "note" || !event.note || isDirectionalNote(event.note)) {
-        continue;
-      }
-      const rootIndex = eventRootIndexByEventIndex.get(index) ?? index;
-      if (event.note.baseType !== "hidden") {
-        const visibleIndices = visibleEventIndicesByRootEventIndex.get(rootIndex) ?? [];
-        visibleIndices.push(index);
-        visibleEventIndicesByRootEventIndex.set(rootIndex, visibleIndices);
-      }
-      if (!slideRhythmWidthByRootEventIndex.has(rootIndex)) {
-        slideRhythmWidthByRootEventIndex.set(rootIndex, rhythmWidthForNote(event.note));
+      for (const nodeEventIndex of event.nodeEventIndices) {
+        const nodeEvent = events[nodeEventIndex];
+        if (nodeEvent?.eventType !== "note") {
+          continue;
+        }
+        eventSlideChainIndexByEventIndex.set(nodeEventIndex, index);
+        if (!isDirectionalNote(nodeEvent.note)) {
+          if (!slideRhythmWidthBySlideChainEventIndex.has(index)) {
+            slideRhythmWidthBySlideChainEventIndex.set(index, rhythmWidthForNote(nodeEvent.note));
+          }
+        }
       }
     }
 
     const connections: SlideConnection[] = [];
-    for (let index = 0; index < events.length; index += 1) {
-      const event = events[index];
-      if (event.parentEventIndex < 0 || event.parentEventIndex >= events.length) {
+    for (let slideChainEventIndex = 0; slideChainEventIndex < events.length; slideChainEventIndex += 1) {
+      const slideEvent = events[slideChainEventIndex];
+      if (slideEvent.eventType !== "slide") {
         continue;
       }
-      const parent = events[event.parentEventIndex];
-      if (!parent) {
-        continue;
+      const staticSlideRhythmWidth = slideRhythmWidthBySlideChainEventIndex.get(slideChainEventIndex);
+      for (let nodeIndex = 1; nodeIndex < slideEvent.nodeEventIndices.length; nodeIndex += 1) {
+        const fromEventIndex = slideEvent.nodeEventIndices[nodeIndex - 1];
+        const toEventIndex = slideEvent.nodeEventIndices[nodeIndex];
+        const fromEvent = events[fromEventIndex];
+        const toEvent = events[toEventIndex];
+        if (fromEvent?.eventType !== "note" || toEvent?.eventType !== "note") {
+          continue;
+        }
+        const markerSource = resolveLastVisibleSource(slideEvent, fromEventIndex);
+        const slideRhythmWidth =
+          staticSlideRhythmWidth
+          ?? Math.max(
+            rhythmWidthForNote(fromEvent.note),
+            rhythmWidthForNote(toEvent.note),
+            markerSource?.rhythmWidth ?? 1,
+          );
+        connections.push({
+          fromEventIndex,
+          toEventIndex,
+          slideChainEventIndex,
+          fromEvent,
+          toEvent,
+          fromAnchorLane: slideAnchorLaneForNote(fromEvent.lane, fromEvent.note, "outgoing"),
+          toAnchorLane: slideAnchorLaneForNote(toEvent.lane, toEvent.note, "incoming"),
+          markerSourceBaseType: markerSource?.baseType ?? null,
+          markerSourceIsHead: markerSource
+            ? markerSource.eventIndex === slideEvent.headNodeEventIndex
+            : true,
+          markerSourceRhythmWidth: markerSource?.rhythmWidth ?? 1,
+          slideRhythmWidth,
+          slideType: slideEvent.slideType,
+          useSpecialTexture: slideEvent.slideType === "hidden",
+          mode: this.resolveSlideConnectionMode(slideEvent, nodeIndex, events),
+        });
       }
-      const rootEventIndex = eventRootIndexByEventIndex.get(index) ?? index;
-      const markerSource = resolveLastVisibleSource(event.parentEventIndex);
-      const visibleIndices = visibleEventIndicesByRootEventIndex.get(rootEventIndex) ?? [];
-      const slideRhythmWidth =
-        slideRhythmWidthByRootEventIndex.get(rootEventIndex)
-        ?? Math.max(
-          parent.note ? rhythmWidthForNote(parent.note) : 1,
-          event.note ? rhythmWidthForNote(event.note) : 1,
-          markerSource?.rhythmWidth ?? 1,
-        );
-      connections.push({
-        fromEventIndex: event.parentEventIndex,
-        toEventIndex: index,
-        rootEventIndex,
-        markerSourceBaseType: markerSource?.baseType ?? null,
-        markerSourceIsHead: markerSource
-          ? markerSource.eventIndex === rootEventIndex
-          : true,
-        markerSourceRhythmWidth: markerSource?.rhythmWidth ?? 1,
-        slideRhythmWidth,
-        fromLane: parent.lane,
-        toLane: event.lane,
-        fromAnchorLane: slideAnchorLaneForNote(parent.lane, parent.note, "outgoing"),
-        toAnchorLane: slideAnchorLaneForNote(event.lane, event.note, "incoming"),
-        fromHitMs: parent.hitMs,
-        toHitMs: event.hitMs,
-        fromStartMs: parent.startMs,
-        toStartMs: event.startMs,
-        fromVisibleEndMs: parent.visibleEndMs,
-        toVisibleEndMs: event.visibleEndMs,
-        fromVisibilityWindows: parent.visibilityWindows,
-        toVisibilityWindows: event.visibilityWindows,
-        fromTgId: parent.tgId,
-        toTgId: event.tgId,
-        fromTgPos: parent.tgPos,
-        toTgPos: event.tgPos,
-        useSpecialTexture: hiddenRoots.has(resolveRootIndex(index)),
-        mode: this.resolveSlideConnectionMode(event.parentEventIndex, index, visibleIndices),
-      });
     }
     connections.sort((left, right) => {
-      if (left.fromHitMs !== right.fromHitMs) {
-        return left.fromHitMs - right.fromHitMs;
+      const leftFromHitMs = events[left.fromEventIndex]?.hitMs ?? 0;
+      const rightFromHitMs = events[right.fromEventIndex]?.hitMs ?? 0;
+      if (leftFromHitMs !== rightFromHitMs) {
+        return leftFromHitMs - rightFromHitMs;
       }
-      return left.toHitMs - right.toHitMs;
+      return (events[left.toEventIndex]?.hitMs ?? 0) - (events[right.toEventIndex]?.hitMs ?? 0);
     });
+    this.chartEvents = events;
     this.slideConnections = connections;
     this.slideConnectionByFromEventIndex.clear();
     for (const connection of connections) {
       this.slideConnectionByFromEventIndex.set(connection.fromEventIndex, connection);
     }
-    this.eventRootIndexByEventIndex = eventRootIndexByEventIndex;
+    this.eventSlideChainIndexByEventIndex = eventSlideChainIndexByEventIndex;
     this.buildBpmFlashCycleSegments(events);
-    this.slideFlashFirstTriggerCycleByRootEventIndex.clear();
+    this.slideFlashFirstTriggerCycleByChainEventIndex.clear();
     this.activeJudgeOverlay = null;
     if (this.activeEmptyTouchLaneEffect) {
       this.removeEmitterInstance(this.activeEmptyTouchLaneEffect.holdEmitter);
@@ -692,7 +662,17 @@ export class PixiRenderer {
     this.stageGeometryCache = null;
   }
 
-  render(notes: readonly ActiveNote[], stats: RuntimeStats, mvFrame: MvRenderFrame | null): void {
+  render(
+    notes: readonly ActiveNote[],
+    activeSlides: readonly ActiveSlide[],
+    activeNotesMap: ReadonlyMap<number, ActiveNote>,
+    noteLifecycleStates: ReadonlyMap<number, RuntimeNoteLifecycleState>,
+    stats: RuntimeStats,
+    mvFrame: MvRenderFrame | null,
+  ): void {
+    this.noteLifecycleStates = noteLifecycleStates;
+    this.clearNoteInWindowStates(notes);
+
     if (
       !this.lanesG
       || !this.linesG
@@ -724,7 +704,7 @@ export class PixiRenderer {
     this.updateMvFrame(mvFrame);
     this.drawLanes();
     if (startup?.chartObjectsVisible ?? true) {
-      this.drawNotes(notes, stats.elapsedMs);
+      this.drawNotes(notes, activeSlides, activeNotesMap, stats.elapsedMs);
       this.drawParticleEffects(stats.elapsedMs);
       this.drawComboHudOverlay(stats);
       this.drawJudgeHudOverlay(stats.elapsedMs);
@@ -775,10 +755,12 @@ export class PixiRenderer {
     this.activeJudgeOverlay = null;
     this.activeEmptyTouchLaneEffect = null;
     this.activeHoldEffects.clear();
+    this.chartEvents = [];
     this.slideConnections = [];
+    this.simultaneousGroups = [];
     this.slideConnectionByFromEventIndex.clear();
-    this.eventRootIndexByEventIndex.clear();
-    this.slideFlashFirstTriggerCycleByRootEventIndex.clear();
+    this.eventSlideChainIndexByEventIndex.clear();
+    this.slideFlashFirstTriggerCycleByChainEventIndex.clear();
     this.bpmFlashCycleSegments = [];
     this.noteSpritePool = [];
     this.slideLineMeshPool = [];
@@ -1040,6 +1022,23 @@ export class PixiRenderer {
     sprite.height = Number.isFinite(height) && height > 0 ? height : 1;
   }
 
+  private applyStretchSpriteBetweenPoints(
+    sprite: Sprite,
+    texture: Texture,
+    fromX: number,
+    fromY: number,
+    toX: number,
+    toY: number,
+    height: number,
+    alpha = 1,
+  ): void {
+    const dx = toX - fromX;
+    const dy = toY - fromY;
+    const width = Math.hypot(dx, dy);
+    this.applyStretchSprite(sprite, texture, fromX, fromY, width, height, alpha, 0, 0.5);
+    sprite.rotation = Math.atan2(dy, dx);
+  }
+
   private updateLiveBackgroundFrame(): void {
     if (!this.liveBgSprite) {
       return;
@@ -1186,60 +1185,48 @@ export class PixiRenderer {
     this.lanesDirty = false;
   }
 
-  private drawNotes(notes: readonly ActiveNote[], elapsedMs: number): void {
+  private drawNotes(
+    notes: readonly ActiveNote[],
+    activeSlides: readonly ActiveSlide[],
+    activeNotesMap: ReadonlyMap<number, ActiveNote>,
+    elapsedMs: number,
+  ): void {
     const lineG = this.linesG!;
     const fallbackG = this.fallbackNoteG!;
     lineG.clear();
     fallbackG.clear();
-    const slideBottomMarkers: SlideBottomMarker[] = [];
-    this.drawSlideConnections(lineG, elapsedMs, slideBottomMarkers);
+    const slideBottomMarkers = this.resolveActiveSlideBottomMarkers(activeSlides, elapsedMs);
+    const noteRenderStates = new Map<ActiveNote, ActiveNoteBodyRenderState>();
+    for (const n of notes) {
+      const inWindowState = this.resolveActiveNoteInWindowState(n, elapsedMs);
+      if (!inWindowState) {
+        continue;
+      }
+      this.markNoteInWindow(n, true);
+      const renderState = this.resolveActiveNoteBodyRenderState(n, inWindowState, elapsedMs);
+      if (!renderState) {
+        continue;
+      }
+      noteRenderStates.set(n, renderState);
+    }
+
+    this.drawSlideConnections(lineG, elapsedMs, activeNotesMap);
+    this.drawSimultaneousLines(lineG, elapsedMs, activeNotesMap, noteRenderStates);
 
     for (const n of notes) {
-      if (!n.started) {
+      const renderState = noteRenderStates.get(n);
+      if (!renderState) {
         continue;
       }
-      if (n.note.baseType === "hidden") {
-        continue;
-      }
-
-      const color = colorForNote(n.note);
-      const visual = this.resolveNoteVisualState(n, elapsedMs);
-      const noteScale = visual.scale;
-      const directional = isDirectionalNote(n.note);
-      const renderLane = renderCenterLaneForNote(n.lane, n.note);
-      const renderX = this.laneXAtPercent(renderLane, visual.percent);
-
-      if (n.issameline !== null && Number.isFinite(n.issameline)) {
-        const x2 = this.laneXAtPercent(n.issameline, visual.percent);
-        const fromX = Math.min(renderX, x2);
-        const toX = Math.max(renderX, x2);
-        const width = toX - fromX;
-        if (width > 1e-6) {
-          const simultaneousLineTexture = this.assets?.lines.simultaneousLine ?? null;
-          if (simultaneousLineTexture) {
-            const s = this.allocSimultaneousLineSprite();
-            if (s) {
-              const noteBaseWidth = this.assets?.rhythm.noteNormal[this.textureLaneIndex(n.lane)]?.width ?? 308;
-              const spriteScale = this.noteSpriteScale(noteScale);
-              const lineHeight = Math.max(
-                1,
-                spriteScale * noteBaseWidth * SIMULTANEOUS_LINE_HEIGHT_TO_NOTE_WIDTH,
-              );
-              this.applyStretchSprite(s, simultaneousLineTexture, fromX, visual.y, width, lineHeight, 1, 0, 0.5);
-            }
-          } else {
-            lineG.setStrokeStyle({ width: 1 + visual.percent * 8, color: 0xffffff, alpha: 0.8 });
-            lineG.moveTo(fromX, visual.y);
-            lineG.lineTo(toX, visual.y);
-          }
-        }
-      }
-
-      const lane = n.lane;
-      const alpha = 1;
-      const tex = this.assets
-        ? resolveRhythmNoteTexture(this.assets, n.note, lane, n.gray, renderLane)
-        : null;
+      const {
+        color,
+        visual,
+        noteScale,
+        directional,
+        renderX,
+        alpha,
+        tex,
+      } = renderState;
 
       if (!directional) {
         if (tex && this.noteSpriteLayer) {
@@ -1278,10 +1265,223 @@ export class PixiRenderer {
     this.drawSlideBottomMarkers(slideBottomMarkers, elapsedMs, fallbackG);
   }
 
+  private drawSimultaneousLines(
+    lineG: Graphics,
+    elapsedMs: number,
+    activeNotesMap: ReadonlyMap<number, ActiveNote>,
+    noteRenderStates: ReadonlyMap<ActiveNote, ActiveNoteBodyRenderState>,
+  ): void {
+    void elapsedMs;
+    for (const group of this.simultaneousGroups) {
+      const eventIndexes = group.eventIndexes;
+      let previousRenderable: {
+        event: NoteChartEvent;
+        activeNote: ActiveNote;
+        renderState: ActiveNoteBodyRenderState;
+      } | null = null;
+      for (const eventIndex of eventIndexes) {
+        const event = this.chartEvents[eventIndex];
+        if (event?.eventType !== "note") {
+          continue;
+        }
+        const activeNote = activeNotesMap.get(eventIndex);
+        if (!activeNote) {
+          continue;
+        }
+        const renderState = noteRenderStates.get(activeNote);
+        if (!renderState) {
+          continue;
+        }
+        const currentRenderable = { event, activeNote, renderState };
+        if (previousRenderable) {
+          this.drawSimultaneousLine(
+            lineG,
+            previousRenderable.activeNote,
+            currentRenderable.activeNote,
+            previousRenderable.renderState,
+            currentRenderable.renderState,
+          );
+        }
+        previousRenderable = currentRenderable;
+      }
+    }
+  }
+
+  private drawSimultaneousLine(
+    lineG: Graphics,
+    fromActiveNote: ActiveNote,
+    toActiveNote: ActiveNote,
+    fromRenderState: ActiveNoteBodyRenderState,
+    toRenderState: ActiveNoteBodyRenderState,
+  ): void {
+    const fromPoint = this.resolveSimultaneousLineEndpointRenderPoint(fromActiveNote, fromRenderState, "from");
+    const toPoint = this.resolveSimultaneousLineEndpointRenderPoint(toActiveNote, toRenderState, "to");
+    const lineLength = Math.hypot(toPoint.x - fromPoint.x, toPoint.y - fromPoint.y);
+    if (lineLength > 1e-6) {
+      const simultaneousLineTexture = this.assets?.lines.simultaneousLine ?? null;
+      if (simultaneousLineTexture) {
+        const s = this.allocSimultaneousLineSprite();
+        if (s) {
+          const noteBaseWidth = this.assets?.rhythm.noteNormal[this.textureLaneIndex(toActiveNote.lane)]?.width ?? 308;
+          const noteScale = toRenderState.noteScale;
+          const spriteScale = this.noteSpriteScale(noteScale);
+          const lineHeight = Math.max(
+            1,
+            spriteScale * noteBaseWidth * SIMULTANEOUS_LINE_HEIGHT_TO_NOTE_WIDTH,
+          );
+          this.applyStretchSpriteBetweenPoints(
+            s,
+            simultaneousLineTexture,
+            fromPoint.x,
+            fromPoint.y,
+            toPoint.x,
+            toPoint.y,
+            lineHeight,
+          );
+        }
+      } else {
+        const percent = toRenderState.visual.percent;
+        lineG.setStrokeStyle({ width: 1 + percent * 8, color: 0xffffff, alpha: 0.8 });
+        lineG.moveTo(fromPoint.x, fromPoint.y);
+        lineG.lineTo(toPoint.x, toPoint.y);
+      }
+    }
+  }
+
+  private resolveSimultaneousLineEndpointRenderPoint(
+    activeNote: ActiveNote,
+    renderState: ActiveNoteBodyRenderState,
+    side: "from" | "to",
+  ): { x: number; y: number } {
+    const lane = this.resolveSimultaneousLineEndpointLane(activeNote, side);
+    return {
+      x: this.laneXAtPercent(lane, renderState.visual.percent),
+      y: renderState.visual.y,
+    };
+  }
+
+  private resolveSimultaneousLineEndpointLane(activeNote: ActiveNote, side: "from" | "to"): number {
+    const note = activeNote.note;
+    if (!isDirectionalNote(note)) {
+      return renderCenterLaneForNote(activeNote.lane, note);
+    }
+    const width = Math.max(1, Math.round(note.directionalWidth));
+    const baseLane = Math.round(activeNote.lane);
+    const leftLane = note.baseType === "directional_flick_right"
+      ? baseLane
+      : baseLane - width + 1;
+    const rightLane = note.baseType === "directional_flick_right"
+      ? baseLane + width - 1
+      : baseLane;
+    return side === "from" ? rightLane : leftLane;
+  }
+
+  private clearNoteInWindowStates(notes: readonly ActiveNote[]): void {
+    for (const note of notes) {
+      this.markNoteInWindow(note, false);
+    }
+  }
+
+  private markNoteInWindow(note: ActiveNote, inWindow: boolean): void {
+    note.inWindow = inWindow;
+    const state = this.noteLifecycleStates.get(note.eventIndex);
+    if (state) {
+      state.inWindow = inWindow;
+    }
+  }
+
+  private resolveActiveNoteBodyRenderState(
+    note: ActiveNote,
+    windowState: ActiveNoteBodyWindowState,
+    elapsedMs: number,
+  ): ActiveNoteBodyRenderState | null {
+    if (!this.isActiveNoteWithinVisibilityWindow(note, elapsedMs)) {
+      return null;
+    }
+    if (note.note.baseType === "hidden") {
+      return null;
+    }
+
+    const { visual, noteScale, directional, renderX, tex } = windowState;
+    if (!this.isPercentRenderable(visual.percent)) {
+      return null;
+    }
+
+    const alpha = 1;
+
+    return {
+      color: colorForNote(note.note),
+      visual,
+      noteScale,
+      directional,
+      renderX,
+      alpha,
+      tex,
+    };
+  }
+
+  private resolveActiveNoteInWindowState(
+    note: ActiveNote,
+    elapsedMs: number,
+  ): ActiveNoteBodyWindowState | null {
+    if (!note.started) {
+      return null;
+    }
+    if (!this.isActiveNoteUnconsumedAndNotExpired(note, elapsedMs)) {
+      return null;
+    }
+
+    return this.resolveActiveNoteBodyWindowState(note, elapsedMs);
+  }
+
+  private resolveActiveNoteBodyWindowState(
+    note: ActiveNote,
+    elapsedMs: number,
+  ): ActiveNoteBodyWindowState | null {
+    const visual = this.resolveNoteVisualState(note, elapsedMs);
+    const noteScale = visual.scale;
+    const directional = isDirectionalNote(note.note);
+    const renderLane = renderCenterLaneForNote(note.lane, note.note);
+    const renderX = this.laneXAtPercent(renderLane, visual.percent);
+    const tex = this.assets
+      ? resolveRhythmNoteTexture(this.assets, note.note, note.lane, note.gray, renderLane)
+      : null;
+
+    if (!this.isNoteBodyFullyWithinFrameStart(note, visual.y, noteScale, tex)) {
+      return null;
+    }
+
+    return {
+      visual,
+      noteScale,
+      directional,
+      renderX,
+      tex,
+    };
+  }
+
+  private isActiveNoteUnconsumedAndNotExpired(note: ActiveNote, elapsedMs: number): boolean {
+    const state = this.noteLifecycleStates.get(note.eventIndex);
+    if (state?.consumed === true) {
+      return false;
+    }
+    return elapsedMs <= note.visibleEndMs + 1e-6;
+  }
+
+  private isActiveNoteWithinVisibilityWindow(note: ActiveNote, elapsedMs: number): boolean {
+    if (note.visibilityWindows.length === 0) {
+      return true;
+    }
+    return note.visibilityWindows.some((window) => (
+      elapsedMs >= window.startMs - 1e-6
+      && elapsedMs <= window.endMs + 1e-6
+    ));
+  }
+
   private resolveNoteVisualState(
     note: ActiveNote,
     elapsedMs: number,
-  ): { x: number; y: number; percent: number; scale: number } {
+  ): NoteVisualState {
     const frameRaw = this.frameRawAt(elapsedMs, note.startMs, note.tgId, note.tgPos);
     const percent = this.percentFromFrameRaw(frameRaw);
     return {
@@ -1289,6 +1489,82 @@ export class PixiRenderer {
       y: this.laneYAtPercent(percent),
       percent,
       scale: Math.max(NOTE_SCALE_MIN, percent * this.settings.noteSize),
+    };
+  }
+
+  private isNoteBodyFullyWithinFrameStart(
+    note: ActiveNote,
+    y: number,
+    noteScale: number,
+    texture: Texture | null,
+  ): boolean {
+    const topY = this.noteBodyTopY(note, y, noteScale, texture);
+    return topY >= this.frameStartBoundaryY() - 1e-6;
+  }
+
+  private noteBodyTopY(
+    note: ActiveNote,
+    y: number,
+    noteScale: number,
+    texture: Texture | null,
+  ): number {
+    const spriteScale = this.noteSpriteScale(noteScale);
+    return y - this.noteMainBodyHalfHeight(note, noteScale, spriteScale, texture);
+  }
+
+  private noteMainBodyHalfHeight(
+    note: ActiveNote,
+    noteScale: number,
+    spriteScale: number,
+    texture: Texture | null,
+  ): number {
+    if (note.note.baseType === "hidden") {
+      return 0;
+    }
+    if (isDirectionalNote(note.note)) {
+      const directionalTexture = this.resolveDirectionalNoteBodyTexture(note);
+      return directionalTexture
+        ? (directionalTexture.height * spriteScale) / 2
+        : Math.max(6, noteScale * 28.4);
+    }
+    return texture
+      ? (texture.height * spriteScale) / 2
+      : Math.max(5, noteScale * 39.76);
+  }
+
+  private resolveDirectionalNoteBodyTexture(note: ActiveNote): Texture | null {
+    if (!this.assets || !isDirectionalNote(note.note)) {
+      return null;
+    }
+    const originalLeft = note.note.baseType === "directional_flick_left";
+    const textureFamilyLeft = this.settings.mirror ? !originalLeft : originalLeft;
+    return resolveDirectionalLaneTexture(
+      this.assets,
+      textureFamilyLeft,
+      note.lane,
+    );
+  }
+
+  private frameStartBoundaryY(): number {
+    return this.laneYAtPercent(this.percentFromFrameRaw(0));
+  }
+
+  private resolveActiveNoteRenderPoint(
+    note: ActiveNote | undefined,
+    elapsedMs: number,
+  ): SlideConnectionRenderPoint | null {
+    if (!note) {
+      return null;
+    }
+    const visual = this.resolveNoteVisualState(note, elapsedMs);
+    if (!Number.isFinite(visual.percent)) {
+      return null;
+    }
+    const renderLane = renderCenterLaneForNote(note.lane, note.note);
+    return {
+      x: this.laneXAtPercent(renderLane, visual.percent),
+      y: visual.y,
+      percent: visual.percent,
     };
   }
 
@@ -1348,281 +1624,167 @@ export class PixiRenderer {
   private drawSlideConnections(
     graphics: Graphics,
     elapsedMs: number,
-    slideBottomMarkers: SlideBottomMarker[],
+    activeNotesMap: ReadonlyMap<number, ActiveNote>,
   ): void {
     if (this.slideConnections.length === 0) {
       return;
     }
     for (const connection of this.slideConnections) {
-      const visibleStartMs = Math.min(connection.fromStartMs, connection.toStartMs);
-      const visibleEndMs = Math.max(
-        connection.fromVisibleEndMs,
-        connection.toVisibleEndMs,
-        connection.toHitMs,
-      );
-      if (visibleStartMs > elapsedMs || visibleEndMs < elapsedMs) {
+      const fromActiveNote = activeNotesMap.get(connection.fromEventIndex);
+      const toActiveNote = activeNotesMap.get(connection.toEventIndex);
+      const endpointState = this.resolveSlideConnectionEndpointState(connection);
+      const fromInWindow = endpointState.from?.spawned === true && endpointState.from.inWindow === true;
+      const toInWindow = endpointState.to?.spawned === true && endpointState.to.inWindow === true;
+      const fromConsumed = this.isSlideConnectionFrontConsumed(connection);
+      const toConsumed = this.isSlideConnectionBackConsumed(connection);
+      const fromEndpointAvailable = fromConsumed || fromInWindow;
+      const toEndpointAvailable = toConsumed || toInWindow;
+      if ((!fromEndpointAvailable && !toEndpointAvailable) || (fromConsumed && toConsumed)) {
         continue;
       }
-      const fromFrameRaw = this.frameRawAt(
+
+      const fromPoint = this.resolveSlideConnectionEndpointRenderPoint(
+        connection,
+        "from",
+        fromActiveNote,
+        fromInWindow,
+        fromConsumed,
         elapsedMs,
-        connection.fromStartMs,
-        connection.fromTgId,
-        connection.fromTgPos,
       );
-      const toFrameRaw = this.frameRawAt(
+      const toPoint = this.resolveSlideConnectionEndpointRenderPoint(
+        connection,
+        "to",
+        toActiveNote,
+        toInWindow,
+        toConsumed,
         elapsedMs,
-        connection.toStartMs,
-        connection.toTgId,
-        connection.toTgPos,
       );
-      if (connection.fromTgId >= 0 && connection.fromTgId === connection.toTgId) {
-        this.drawSlideConnectionAxisSegments(graphics, connection, elapsedMs);
-        const fromPassed = fromFrameRaw >= this.settings.noteSpeedFrames;
-        if (fromPassed && connection.mode !== "allIgnored") {
-          const nowAxis = this.axisNowAt(elapsedMs, connection.fromTgId);
-          const fromBaseLane = this.interpolateLane(
-            connection.fromLane,
-            connection.toLane,
-            nowAxis,
-            this.axisHitAt(connection.fromHitMs, connection.fromTgId, connection.fromTgPos),
-            this.axisHitAt(connection.toHitMs, connection.toTgId, connection.toTgPos),
-          );
-          const fromRenderLane = this.interpolateLane(
-            connection.fromAnchorLane,
-            connection.toAnchorLane,
-            nowAxis,
-            this.axisHitAt(connection.fromHitMs, connection.fromTgId, connection.fromTgPos),
-            this.axisHitAt(connection.toHitMs, connection.toTgId, connection.toTgPos),
-          );
-          slideBottomMarkers.push({ lane: fromBaseLane, renderLane: fromRenderLane, connection });
-        }
+      if (!fromPoint || !toPoint) {
         continue;
       }
-      if (!this.shouldDrawSlideConnectionEndpointRange(connection, elapsedMs, fromFrameRaw, toFrameRaw)) {
-        continue;
-      }
-      const fromPercent = this.percentFromFrameRaw(fromFrameRaw);
-      const toPercent = this.percentFromFrameRaw(toFrameRaw);
-      const fromPassed = fromFrameRaw >= this.settings.noteSpeedFrames;
-      const fromBaseLane = fromPassed
-        ? this.interpolateLane(
-          connection.fromLane,
-          connection.toLane,
-          this.axisNowAt(elapsedMs, connection.fromTgId),
-          this.axisHitAt(connection.fromHitMs, connection.fromTgId, connection.fromTgPos),
-          this.axisHitAt(connection.toHitMs, connection.toTgId, connection.toTgPos),
-        )
-        : connection.fromLane;
-      const fromAnchorLane = connection.fromAnchorLane;
-      const toAnchorLane = connection.toAnchorLane;
-      const fromRenderLane = fromPassed
-        ? this.interpolateLane(
-          fromAnchorLane,
-          toAnchorLane,
-          this.axisNowAt(elapsedMs, connection.fromTgId),
-          this.axisHitAt(connection.fromHitMs, connection.fromTgId, connection.fromTgPos),
-          this.axisHitAt(connection.toHitMs, connection.toTgId, connection.toTgPos),
-        )
-        : fromAnchorLane;
 
       this.drawConnector(
         graphics,
         connection,
-        this.laneXAtPercent(fromRenderLane, fromPercent),
-        this.laneYAtPercent(fromPercent),
-        this.connectorHalfWidthAtPercent(fromPercent, connection.slideRhythmWidth),
-        this.laneXAtPercent(toAnchorLane, toPercent),
-        this.laneYAtPercent(toPercent),
-        this.connectorHalfWidthAtPercent(toPercent, connection.slideRhythmWidth),
+        fromPoint.x,
+        fromPoint.y,
+        this.connectorHalfWidthAtPercent(fromPoint.percent, connection.slideRhythmWidth),
+        toPoint.x,
+        toPoint.y,
+        this.connectorHalfWidthAtPercent(toPoint.percent, connection.slideRhythmWidth),
         this.slideConnectionRenderAlpha(connection),
       );
-
-      if (fromPassed && connection.mode !== "allIgnored") {
-        slideBottomMarkers.push({ lane: fromBaseLane, renderLane: fromRenderLane, connection });
-      }
     }
   }
 
-  private resolveSlideConnectionMode(
-    fromEventIndex: number,
-    toEventIndex: number,
-    visibleEventIndices: readonly number[],
-  ): SlideConnection["mode"] {
-    if (visibleEventIndices.length === 0) {
-      return "allIgnored";
+  private resolveSlideConnectionEndpointRenderPoint(
+    connection: SlideConnection,
+    endpoint: SlideConnectionEndpoint,
+    activeNote: ActiveNote | undefined,
+    activeNoteInWindow: boolean,
+    consumed: boolean,
+    elapsedMs: number,
+  ): SlideConnectionRenderPoint | null {
+    if (consumed) {
+      return this.resolveSlideConnectionMarkerRenderPoint(connection, elapsedMs);
     }
-    const firstVisibleIndex = visibleEventIndices[0];
-    const lastVisibleIndex = visibleEventIndices[visibleEventIndices.length - 1];
-    if (toEventIndex <= firstVisibleIndex && fromEventIndex < firstVisibleIndex) {
+    if (activeNote && activeNoteInWindow) {
+      return this.resolveActiveNoteRenderPoint(activeNote, elapsedMs);
+    }
+    return this.resolveStaticSlideConnectionEndpointRenderPoint(connection, endpoint);
+  }
+
+  private resolveSlideConnectionMarkerRenderPoint(
+    connection: SlideConnection,
+    elapsedMs: number,
+  ): SlideConnectionRenderPoint {
+    const markerLane = this.laneAtConnectionElapsed(connection, elapsedMs);
+    return {
+      x: this.laneXAtPercent(markerLane, 1),
+      y: this.stageBottomY(),
+      percent: 1,
+    };
+  }
+
+  private resolveStaticSlideConnectionEndpointRenderPoint(
+    connection: SlideConnection,
+    endpoint: SlideConnectionEndpoint,
+  ): SlideConnectionRenderPoint | null {
+    const anchorLane = endpoint === "from" ? connection.fromAnchorLane : connection.toAnchorLane;
+    const percent = this.percentFromFrameRaw(0);
+    if (!Number.isFinite(percent)) {
+      return null;
+    }
+    return {
+      x: this.laneXAtPercent(anchorLane, percent),
+      y: this.laneYAtPercent(percent),
+      percent,
+    };
+  }
+
+  private resolveSlideConnectionMode(
+    slideEvent: SlideChartEvent,
+    toNodeIndex: number,
+    events: readonly ChartEvent[],
+  ): SlideConnection["mode"] {
+    if (slideEvent.slideType === "hidden") {
+      return "normal";
+    }
+    const fromNodeIndex = toNodeIndex - 1;
+    const lastNodeIndex = slideEvent.nodeEventIndices.length - 1;
+    if (
+      this.isSlideNodeHidden(slideEvent, events, 0)
+      && this.areSlideNodesHidden(slideEvent, events, 0, fromNodeIndex)
+    ) {
       return "leadingIgnored";
     }
-    if (fromEventIndex >= lastVisibleIndex) {
+    if (
+      this.isSlideNodeHidden(slideEvent, events, lastNodeIndex)
+      && this.areSlideNodesHidden(slideEvent, events, toNodeIndex, lastNodeIndex)
+    ) {
       return "trailingIgnored";
     }
     return "normal";
   }
 
-  private drawSlideConnectionAxisSegments(
-    graphics: Graphics,
-    connection: SlideConnection,
-    elapsedMs: number,
-  ): void {
-    const travelAxisMs = this.noteTravelAxisMs();
-    const nowAxis = this.axisNowAt(elapsedMs, connection.fromTgId);
-    const visibleAxisMin = nowAxis;
-    const visibleAxisMax = nowAxis + travelAxisMs;
-    if (visibleAxisMin > visibleAxisMax) {
-      return;
-    }
-
-    const group = this.timingGroups[connection.fromTgId] ?? null;
-    const startChartMs = connection.fromHitMs - this.settings.offsetMs;
-    const endChartMs = connection.toHitMs - this.settings.offsetMs;
-    let segmentStartMs = startChartMs;
-    let segmentStartAxis = connection.fromTgPos;
-    let speed = this.speedAtChartMs(group, startChartMs);
-
-    for (const change of group?.changes ?? []) {
-      if (change.atMs <= startChartMs + 1e-6) {
-        speed = change.speed;
-        continue;
-      }
-      if (change.atMs >= endChartMs - 1e-6) {
-        break;
-      }
-      this.drawSlideConnectionAxisSegment(
-        graphics,
-        connection,
-        segmentStartMs,
-        change.atMs,
-        segmentStartAxis,
-        speed,
-        visibleAxisMin,
-        visibleAxisMax,
-        nowAxis,
-      );
-      segmentStartAxis += (change.atMs - segmentStartMs) * speed;
-      segmentStartMs = change.atMs;
-      speed = change.speed;
-    }
-
-    this.drawSlideConnectionAxisSegment(
-      graphics,
-      connection,
-      segmentStartMs,
-      endChartMs,
-      segmentStartAxis,
-      speed,
-      visibleAxisMin,
-      visibleAxisMax,
-      nowAxis,
-    );
-  }
-
-  private drawSlideConnectionAxisSegment(
-    graphics: Graphics,
-    connection: SlideConnection,
-    startChartMs: number,
-    endChartMs: number,
-    startAxis: number,
-    speed: number,
-    minVisibleAxis: number,
-    maxVisibleAxis: number,
-    nowAxis: number,
-  ): void {
-    if (endChartMs <= startChartMs + 1e-6) {
-      return;
-    }
-
-    let visibleStartMs = startChartMs;
-    let visibleEndMs = endChartMs;
-    if (Math.abs(speed) <= 1e-9) {
-      if (startAxis < minVisibleAxis - 1e-6 || startAxis > maxVisibleAxis + 1e-6) {
-        return;
-      }
-    } else {
-      const minTime = startChartMs + (minVisibleAxis - startAxis) / speed;
-      const maxTime = startChartMs + (maxVisibleAxis - startAxis) / speed;
-      visibleStartMs = Math.max(startChartMs, Math.min(minTime, maxTime));
-      visibleEndMs = Math.min(endChartMs, Math.max(minTime, maxTime));
-    }
-
-    if (visibleEndMs <= visibleStartMs + 1e-6) {
-      return;
-    }
-
-    const startAxisAtVisible = startAxis + (visibleStartMs - startChartMs) * speed;
-    const endAxisAtVisible = startAxis + (visibleEndMs - startChartMs) * speed;
-    const startPercent = this.percentFromAxisDiff(nowAxis - startAxisAtVisible);
-    const endPercent = this.percentFromAxisDiff(nowAxis - endAxisAtVisible);
-    const startElapsedMs = visibleStartMs + this.settings.offsetMs;
-    const endElapsedMs = visibleEndMs + this.settings.offsetMs;
-    const startLane = this.laneAtConnectionElapsed(connection, startElapsedMs);
-    const endLane = this.laneAtConnectionElapsed(connection, endElapsedMs);
-
-    this.drawConnector(
-      graphics,
-      connection,
-      this.laneXAtPercent(startLane, startPercent),
-      this.laneYAtPercent(startPercent),
-      this.connectorHalfWidthAtPercent(startPercent, connection.slideRhythmWidth),
-      this.laneXAtPercent(endLane, endPercent),
-      this.laneYAtPercent(endPercent),
-      this.connectorHalfWidthAtPercent(endPercent, connection.slideRhythmWidth),
-      this.slideConnectionRenderAlpha(connection),
-    );
-  }
-
-  private slideConnectionRenderAlpha(connection: SlideConnection): number {
-    return connection.mode === "allIgnored" ? 0.5 : 1;
-  }
-
-  private shouldDrawSlideConnectionEndpointRange(
-    connection: SlideConnection,
-    elapsedMs: number,
-    fromFrameRaw: number,
-    toFrameRaw: number,
+  private isSlideNodeHidden(
+    slideEvent: SlideChartEvent,
+    events: readonly ChartEvent[],
+    nodeIndex: number,
   ): boolean {
-    const fromPassed = fromFrameRaw >= this.settings.noteSpeedFrames;
-    if (!fromPassed && !this.isFrameRawVisibleInWindow(fromFrameRaw, connection.fromVisibilityWindows, elapsedMs)) {
-      return false;
-    }
-    if (toFrameRaw > this.settings.noteSpeedFrames + 1e-6
-      && !this.isElapsedInVisibilityWindows(connection.toVisibilityWindows, elapsedMs)) {
-      return false;
+    const eventIndex = slideEvent.nodeEventIndices[nodeIndex] ?? -1;
+    const event = events[eventIndex];
+    return event?.eventType === "note" && event.note.baseType === "hidden";
+  }
+
+  private areSlideNodesHidden(
+    slideEvent: SlideChartEvent,
+    events: readonly ChartEvent[],
+    startNodeIndex: number,
+    endNodeIndex: number,
+  ): boolean {
+    for (let nodeIndex = startNodeIndex; nodeIndex <= endNodeIndex; nodeIndex += 1) {
+      if (!this.isSlideNodeHidden(slideEvent, events, nodeIndex)) {
+        return false;
+      }
     }
     return true;
   }
 
-  private isFrameRawVisibleInWindow(
-    frameRaw: number,
-    windows: readonly VisibilityWindow[],
-    elapsedMs: number,
-  ): boolean {
-    return frameRaw >= -1e-6
-      && frameRaw <= this.settings.noteSpeedFrames + 1e-6
-      && this.isElapsedInVisibilityWindows(windows, elapsedMs);
+  private resolveSlideConnectionEndpointState(connection: SlideConnection): SlideConnectionEndpointState {
+    return {
+      from: this.noteLifecycleStates.get(connection.fromEventIndex) ?? null,
+      to: this.noteLifecycleStates.get(connection.toEventIndex) ?? null,
+    };
   }
 
-  private isElapsedInVisibilityWindows(windows: readonly VisibilityWindow[], elapsedMs: number): boolean {
-    if (windows.length === 0) {
-      return true;
-    }
-    return windows.some((window) => elapsedMs + 1e-6 >= window.startMs && elapsedMs <= window.endMs + 1e-6);
-  }
-
-  private axisNowAt(elapsedMs: number, tgId: number): number {
-    if (tgId < 0) {
-      return elapsedMs;
-    }
-    return this.timingGroupPosAt(tgId, elapsedMs);
-  }
-
-  private axisHitAt(hitMs: number, tgId: number, tgPos: number): number {
-    if (tgId < 0) {
-      return hitMs;
-    }
-    return tgPos;
+  private slideConnectionRenderAlpha(
+    connection: SlideConnection,
+  ): number {
+    const endpointState = this.resolveSlideConnectionEndpointState(connection);
+    const runtimeEndpointKnown = endpointState.from !== null || endpointState.to !== null;
+    void runtimeEndpointKnown;
+    return connection.slideType === "hidden" ? 0.5 : 1;
   }
 
   private frameRawAt(elapsedMs: number, startMs: number, tgId: number, tgPos: number): number {
@@ -1648,7 +1810,7 @@ export class PixiRenderer {
     const isPositiveBpm = (value: number): boolean => Number.isFinite(value) && value > 0;
     let initialBpm = 120;
     for (const event of events) {
-      if (isPositiveBpm(event.bpm)) {
+      if ((event.eventType === "music_start" || event.eventType === "bpm") && isPositiveBpm(event.bpm)) {
         initialBpm = event.bpm;
         break;
       }
@@ -1743,50 +1905,96 @@ export class PixiRenderer {
   }
 
   private percentFromFrameRaw(frameRaw: number): number {
-    const frames = Math.max(1, this.settings.noteSpeedFrames);
-    const exponent = (50 * (frameRaw - frames)) / frames;
-    return Math.max(0, Math.min(1, 0.05 + 0.95 * Math.pow(1.1, exponent)));
+    return calculatePercentFromFrameRaw(frameRaw, this.settings.noteSpeedFrames);
   }
 
-  private noteTravelAxisMs(): number {
-    return Math.max(1, (this.settings.noteSpeedFrames * 1000) / SIMULATOR_TIMING_FPS);
-  }
-
-  private percentFromAxisDiff(axisDiff: number): number {
-    const duration = this.noteTravelAxisMs();
-    const exponent = 50 * Math.max(-1, Math.min(0, axisDiff / duration));
-    return Math.max(0, Math.min(1, 0.05 + 0.95 * Math.pow(1.1, exponent)));
-  }
-
-  private interpolateLane(fromLane: number, toLane: number, nowAxis: number, fromAxis: number, toAxis: number): number {
-    const denominator = toAxis - fromAxis;
+  private laneAtConnectionProgress(
+    fromLane: number,
+    toLane: number,
+    connection: SlideConnection,
+    elapsedMs: number,
+  ): number {
+    const denominator = connection.toEvent.hitMs - connection.fromEvent.hitMs;
     if (Math.abs(denominator) < 1e-6) {
       return toLane;
     }
-    return fromLane + ((toLane - fromLane) * (nowAxis - fromAxis)) / denominator;
+    const progress = Math.max(0, Math.min(1, (elapsedMs - connection.fromEvent.hitMs) / denominator));
+    return fromLane + (toLane - fromLane) * progress;
   }
 
-  private speedAtChartMs(group: TimingGroupDef | null | undefined, chartMs: number): number {
-    let speed = 1;
-    for (const change of group?.changes ?? []) {
-      if (change.atMs > chartMs + 1e-6) {
-        break;
+  private resolveActiveSlideBottomMarkers(
+    activeSlides: readonly ActiveSlide[],
+    elapsedMs: number,
+  ): SlideBottomMarker[] {
+    const markers: SlideBottomMarker[] = [];
+    for (const slide of activeSlides) {
+      const marker = slide.marker;
+      if (!marker) {
+        continue;
       }
-      speed = change.speed;
+      const connection = this.resolveActiveSlideMarkerConnection(slide, marker.sourceEventIndex, elapsedMs);
+      if (!connection) {
+        continue;
+      }
+      markers.push({
+        lane: this.laneAtConnectionProgress(
+          connection.fromEvent.lane,
+          connection.toEvent.lane,
+          connection,
+          elapsedMs,
+        ),
+        renderLane: this.laneAtConnectionElapsed(connection, elapsedMs),
+        slideChainEventIndex: slide.eventIndex,
+        sourceBaseType: marker.sourceBaseType,
+        sourceIsHead: marker.sourceIsHead,
+        sourceRhythmWidth: marker.sourceRhythmWidth,
+        slideRhythmWidth: connection.slideRhythmWidth,
+      });
     }
-    return speed;
+    return markers;
+  }
+
+  private resolveActiveSlideMarkerConnection(
+    slide: ActiveSlide,
+    sourceEventIndex: number,
+    elapsedMs: number,
+  ): SlideConnection | null {
+    const sourceConnection = this.slideConnectionByFromEventIndex.get(sourceEventIndex) ?? null;
+    if (
+      sourceConnection
+      && sourceConnection.slideChainEventIndex === slide.eventIndex
+      && elapsedMs < sourceConnection.toEvent.hitMs - 1e-6
+    ) {
+      return sourceConnection;
+    }
+
+    for (const connection of this.slideConnections) {
+      if (connection.slideChainEventIndex !== slide.eventIndex) {
+        continue;
+      }
+      if (
+        elapsedMs >= connection.fromEvent.hitMs - 1e-6
+        && elapsedMs < connection.toEvent.hitMs - 1e-6
+      ) {
+        return connection;
+      }
+    }
+    return null;
+  }
+
+  private isSlideConnectionFrontConsumed(connection: SlideConnection): boolean {
+    return this.noteLifecycleStates.get(connection.fromEventIndex)?.consumed === true;
+  }
+
+  private isSlideConnectionBackConsumed(connection: SlideConnection): boolean {
+    return this.noteLifecycleStates.get(connection.toEventIndex)?.consumed === true;
   }
 
   private laneAtConnectionElapsed(
     connection: SlideConnection,
     elapsedMs: number,
   ): number {
-    const denominator = connection.toHitMs - connection.fromHitMs;
-    if (Math.abs(denominator) < 1e-6) {
-      return connection.toAnchorLane;
-    }
-    const progress = Math.max(0, Math.min(1, (elapsedMs - connection.fromHitMs) / denominator));
-    return connection.fromAnchorLane + (connection.toAnchorLane - connection.fromAnchorLane) * progress;
+    return this.laneAtConnectionProgress(connection.fromAnchorLane, connection.toAnchorLane, connection, elapsedMs);
   }
 
   private drawSlideBottomMarkers(
@@ -1803,20 +2011,20 @@ export class PixiRenderer {
       const lane = marker.lane;
       const markerRhythmWidth = Math.max(
         1,
-        marker.connection.slideRhythmWidth,
-        marker.connection.markerSourceRhythmWidth,
+        marker.slideRhythmWidth,
+        marker.sourceRhythmWidth,
       );
       const markerRenderLane = marker.renderLane;
       const x = this.laneXAtPercent(markerRenderLane, 1);
       const y = this.stageBottomY();
-      const markerIsMiddle = !marker.connection.markerSourceIsHead;
+      const markerIsMiddle = !marker.sourceIsHead;
 
       const markerTex = this.assets
         ? resolveSlideBottomMarkerTexture(
           this.assets,
           lane,
-          marker.connection.markerSourceBaseType,
-          marker.connection.markerSourceIsHead,
+          marker.sourceBaseType,
+          marker.sourceIsHead,
           markerRhythmWidth,
           markerRenderLane,
         )
@@ -1825,17 +2033,17 @@ export class PixiRenderer {
         ? resolveSlideBottomMarkerFlashTexture(
           this.assets,
           lane,
-          marker.connection.markerSourceIsHead,
+          marker.sourceIsHead,
           markerRhythmWidth,
           markerRenderLane,
         )
         : null;
       if (markerTex && this.noteSpriteLayer) {
         if (flashTex) {
-          let cycleBase = this.slideFlashFirstTriggerCycleByRootEventIndex.get(marker.connection.rootEventIndex);
+          let cycleBase = this.slideFlashFirstTriggerCycleByChainEventIndex.get(marker.slideChainEventIndex);
           if (cycleBase === undefined) {
             cycleBase = currentFlashCycle;
-            this.slideFlashFirstTriggerCycleByRootEventIndex.set(marker.connection.rootEventIndex, cycleBase);
+            this.slideFlashFirstTriggerCycleByChainEventIndex.set(marker.slideChainEventIndex, cycleBase);
           }
           const flashProgressRaw = currentFlashCycle - cycleBase;
           const flashProgress = ((flashProgressRaw % 1) + 1) % 1;
@@ -2271,9 +2479,9 @@ export class PixiRenderer {
     return pack.effectsByName.get(effectName) ?? null;
   }
 
-  private findFirstSlideConnectionFromRoot(rootEventIndex: number): number | null {
+  private findFirstSlideConnectionFromChain(slideChainEventIndex: number): number | null {
     for (const connection of this.slideConnections) {
-      if (connection.rootEventIndex === rootEventIndex && connection.mode === "normal") {
+      if (connection.slideChainEventIndex === slideChainEventIndex && connection.mode === "normal") {
         return connection.fromEventIndex;
       }
     }
@@ -2281,14 +2489,17 @@ export class PixiRenderer {
   }
 
   private activateHoldEffect(trigger: ParticleTriggerEvent): void {
-    const rootEventIndex = this.eventRootIndexByEventIndex.get(trigger.eventIndex) ?? trigger.eventIndex;
-    if (this.activeHoldEffects.has(rootEventIndex)) {
+    const slideChainEventIndex = this.eventSlideChainIndexByEventIndex.get(trigger.eventIndex) ?? -1;
+    if (slideChainEventIndex < 0) {
+      return;
+    }
+    if (this.activeHoldEffects.has(slideChainEventIndex)) {
       return;
     }
     const triggerConnection = this.slideConnectionByFromEventIndex.get(trigger.eventIndex) ?? null;
     const fromEventIndex = triggerConnection?.mode === "normal"
       ? trigger.eventIndex
-      : this.findFirstSlideConnectionFromRoot(rootEventIndex);
+      : this.findFirstSlideConnectionFromChain(slideChainEventIndex);
     if (fromEventIndex === null) {
       return;
     }
@@ -2314,8 +2525,8 @@ export class PixiRenderer {
       return;
     }
 
-    this.activeHoldEffects.set(rootEventIndex, {
-      rootEventIndex,
+    this.activeHoldEffects.set(slideChainEventIndex, {
+      slideChainEventIndex,
       currentFromEventIndex: fromEventIndex,
       linearEmitter,
       circularEmitter,
@@ -2379,7 +2590,10 @@ export class PixiRenderer {
     elapsedMs: number,
   ): SlideConnection | null {
     let connection = this.slideConnectionByFromEventIndex.get(hold.currentFromEventIndex) ?? null;
-    while (connection && (connection.mode !== "normal" || elapsedMs > connection.toHitMs + 1e-6)) {
+    while (connection) {
+      if (connection.mode === "normal" && elapsedMs <= connection.toEvent.hitMs + 1e-6) {
+        break;
+      }
       hold.currentFromEventIndex = connection.toEventIndex;
       connection = this.slideConnectionByFromEventIndex.get(hold.currentFromEventIndex) ?? null;
     }
@@ -2387,10 +2601,7 @@ export class PixiRenderer {
   }
 
   private holdLaneAtConnection(connection: SlideConnection, elapsedMs: number): number {
-    const nowAxis = this.axisNowAt(elapsedMs, connection.fromTgId);
-    const fromAxis = this.axisHitAt(connection.fromHitMs, connection.fromTgId, connection.fromTgPos);
-    const toAxis = this.axisHitAt(connection.toHitMs, connection.toTgId, connection.toTgPos);
-    return this.interpolateLane(connection.fromAnchorLane, connection.toAnchorLane, nowAxis, fromAxis, toAxis);
+    return this.laneAtConnectionElapsed(connection, elapsedMs);
   }
 
   private updateHoldParticleEmitters(elapsedMs: number): void {
@@ -2398,11 +2609,11 @@ export class PixiRenderer {
       return;
     }
 
-    for (const [rootEventIndex, hold] of this.activeHoldEffects) {
+    for (const [slideChainEventIndex, hold] of this.activeHoldEffects) {
       const connection = this.resolveActiveHoldConnection(hold, elapsedMs);
       if (!connection) {
         this.destroyHoldEffectEmitters(hold);
-        this.activeHoldEffects.delete(rootEventIndex);
+        this.activeHoldEffects.delete(slideChainEventIndex);
         continue;
       }
 
@@ -2490,8 +2701,7 @@ export class PixiRenderer {
   }
 
   private connectorHalfWidthAtPercent(percent: number, laneWidth = 1): number {
-    const p = Math.max(0, Math.min(1, percent));
-    const laneSpacing = this.stageLaneWidth() * p;
+    const laneSpacing = this.stageLaneWidth() * percent;
     const widthScale = Math.max(1, Number.isFinite(laneWidth) ? laneWidth : 1);
     return Math.max(1, laneSpacing * this.settings.noteSize * LONG_NOTE_LINE_HALF_WIDTH_TO_LANE_WIDTH * widthScale);
   }
@@ -2510,8 +2720,7 @@ export class PixiRenderer {
   }
 
   private laneXAtPercent(lane: number, percent: number): number {
-    const p = Math.max(0, Math.min(1, percent));
-    return this.laneXAtPercentRaw(lane, p);
+    return this.laneXAtPercentRaw(lane, percent);
   }
 
   private textureLaneIndex(lane: number): number {
@@ -2524,8 +2733,7 @@ export class PixiRenderer {
   }
 
   private laneYAtPercent(percent: number): number {
-    const p = Math.max(0, Math.min(1, percent));
-    return this.laneYAtPercentRaw(p);
+    return this.laneYAtPercentRaw(percent);
   }
 
   private viewportWidth(): number {
@@ -2534,6 +2742,14 @@ export class PixiRenderer {
 
   private viewportHeight(): number {
     return this.app?.screen.height ?? this.settings.windowY;
+  }
+
+  private viewportBottomPercent(): number {
+    return this.stageGeometry().viewportBottomPercent;
+  }
+
+  private isPercentRenderable(percent: number): boolean {
+    return Number.isFinite(percent) && percent <= this.viewportBottomPercent();
   }
 
   private stageGeometry(): StageGeometry {
@@ -2548,32 +2764,7 @@ export class PixiRenderer {
       return cached;
     }
 
-    const stageWidthByViewportWidth = viewportWidth * STAGE_TO_WINDOW_RATIO;
-    const stageHeightByViewportWidth = stageWidthByViewportWidth * STAGE_HEIGHT_TO_WIDTH_RATIO;
-
-    let stageWidth: number;
-    let stageHeight: number;
-    if (stageHeightByViewportWidth <= viewportHeight + 1e-6) {
-      stageWidth = stageWidthByViewportWidth;
-      stageHeight = stageHeightByViewportWidth;
-    } else {
-      stageHeight = viewportHeight * STAGE_TO_WINDOW_RATIO;
-      stageWidth = stageHeight / STAGE_HEIGHT_TO_WIDTH_RATIO;
-    }
-
-    const stageJudge = stageHeight * STAGE_JUDGE_TO_HEIGHT_RATIO;
-    const stageBottom = viewportHeight * 0.5 + stageJudge;
-    const stageTop = stageBottom - stageHeight;
-
-    const geometry: StageGeometry = {
-      viewportWidth,
-      viewportHeight,
-      stageWidth,
-      stageHeight,
-      stageBottom,
-      stageTop,
-      stageJudge,
-    };
+    const geometry = calculateStageGeometry(viewportWidth, viewportHeight);
     this.stageGeometryCache = geometry;
     return geometry;
   }

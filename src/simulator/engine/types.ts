@@ -51,7 +51,7 @@ export const DEFAULT_SETTINGS: SimulatorSettings = {
   habahiro: false,
 };
 
-type RuntimeEventType = "music_start" | "bpm" | "note";
+export type RuntimeEventType = "music_start" | "bpm" | "note" | "slide";
 
 export type RuntimeNoteBaseType =
   | "single"
@@ -62,6 +62,7 @@ export type RuntimeNoteBaseType =
   | "directional_flick_right";
 
 export type RuntimeSlideRole = "none" | "start" | "middle" | "end" | "hidden";
+export type RuntimeSlideType = "long" | "slide" | "hidden";
 
 export interface RuntimeNoteSemantic {
   baseType: RuntimeNoteBaseType;
@@ -70,20 +71,57 @@ export interface RuntimeNoteSemantic {
   rhythmWidth: number;
 }
 
-export interface ChartEvent {
+interface ChartEventBase {
   beat: number;
   eventType: RuntimeEventType;
-  note: RuntimeNoteSemantic | null;
-  lane: number;
-  tgId: number;
-  tgPos: number;
   startMs: number;
   hitMs: number;
   visibleEndMs: number;
-  visibilityWindows: VisibilityWindow[];
-  samelineLane: number | null;
+}
+
+export interface MusicStartChartEvent extends ChartEventBase {
+  eventType: "music_start";
   bpm: number;
-  parentEventIndex: number;
+}
+
+export interface BpmChartEvent extends ChartEventBase {
+  eventType: "bpm";
+  bpm: number;
+}
+
+export interface NoteChartEvent extends ChartEventBase {
+  eventType: "note";
+  note: RuntimeNoteSemantic;
+  lane: number;
+  tgId: number;
+  tgPos: number;
+  visibilityWindows: VisibilityWindow[];
+  samelineGroup: number | null;
+  prevSlideNodeEventIndex: number;
+  nextSlideNodeEventIndex: number;
+  slideChainEventIndex: number;
+}
+
+export interface SlideChartEvent extends ChartEventBase {
+  eventType: "slide";
+  lane: number;
+  tgId: number;
+  tgPos: number;
+  nodeEventIndices: number[];
+  headNodeEventIndex: number;
+  tailNodeEventIndex: number;
+  slideType: RuntimeSlideType;
+}
+
+export type ChartEvent =
+  | MusicStartChartEvent
+  | BpmChartEvent
+  | NoteChartEvent
+  | SlideChartEvent;
+
+export interface SimultaneousGroup {
+  groupIndex: number;
+  eventIndexes: number[];
 }
 
 export interface ParsedChart {
@@ -92,6 +130,7 @@ export interface ParsedChart {
   noteCount: number;
   maxTimeMs: number;
   timingGroups: TimingGroupDef[];
+  simultaneousGroups: SimultaneousGroup[];
 }
 
 export interface RuntimeStats {
@@ -105,6 +144,29 @@ export interface RuntimeStats {
   processedObjects: number;
   totalObjects: number;
   elapsedMs: number;
+}
+
+export interface RuntimeNoteLifecycleState {
+  eventIndex: number;
+  spawned: boolean;
+  started: boolean;
+  inWindow: boolean;
+  consumed: boolean;
+  judged: boolean;
+  hidden: boolean;
+}
+
+export interface RuntimeSlideLifecycleState {
+  eventIndex: number;
+  spawned: boolean;
+  active: boolean;
+}
+
+export interface RuntimeSlideMarkerState {
+  sourceEventIndex: number;
+  sourceBaseType: RuntimeNoteSemantic["baseType"];
+  sourceIsHead: boolean;
+  sourceRhythmWidth: number;
 }
 
 export interface ParticleTriggerEvent {
@@ -136,7 +198,7 @@ export interface ActiveNote {
   eventIndex: number;
   note: RuntimeNoteSemantic;
   lane: number;
-  issameline: number | null;
+  samelineGroup: number | null;
   startMs: number;
   hitMs: number;
   visibleEndMs: number;
@@ -144,10 +206,30 @@ export interface ActiveNote {
   tgId: number;
   tgPos: number;
   started: boolean;
-  sePlayed: boolean;
   t: number;
   gray: boolean;
-  parentEventIndex: number;
-  parentActiveId: number;
+  prevSlideNodeEventIndex: number;
+  prevSlideNodeActiveId: number;
+  nextSlideNodeEventIndex: number;
+  slideChainEventIndex: number;
+  activeSlide: ActiveSlide | null;
+  inWindow: boolean;
+  consumed: boolean;
 }
 
+export interface ActiveSlide {
+  id: number;
+  eventIndex: number;
+  startMs: number;
+  hitMs: number;
+  visibleEndMs: number;
+  lane: number;
+  tgId: number;
+  tgPos: number;
+  nodeEventIndices: number[];
+  headNodeEventIndex: number;
+  tailNodeEventIndex: number;
+  slideType: RuntimeSlideType;
+  active: boolean;
+  marker: RuntimeSlideMarkerState | null;
+}

@@ -134,17 +134,23 @@ export function findVisibilityWindows(
   group: TimingGroupDef | null | undefined,
   noteAxisMs: number,
   travelAxisMs: number,
+  viewportBottomAxisMs: number,
   chartStartMs: number,
   chartEndMs: number,
 ): VisibilityWindow[] {
   const startLimit = Math.min(chartStartMs, chartEndMs);
   const endLimit = Math.max(chartStartMs, chartEndMs);
-  if (!Number.isFinite(noteAxisMs) || !Number.isFinite(travelAxisMs) || endLimit <= startLimit) {
+  if (
+    !Number.isFinite(noteAxisMs)
+    || !Number.isFinite(travelAxisMs)
+    || !Number.isFinite(viewportBottomAxisMs)
+    || endLimit <= startLimit
+  ) {
     return [];
   }
 
   const lower = noteAxisMs - Math.abs(travelAxisMs);
-  const upper = noteAxisMs;
+  const upper = noteAxisMs + Math.max(0, viewportBottomAxisMs);
   const changes = group?.changes ?? [];
   const boundaries = [
     startLimit,
