@@ -45,24 +45,24 @@ function buildSegmentRanges(
     return [];
   }
   const notesByIndex: Array<ChartNote | null> = chainNoteIds.map((id) => noteMap.get(id) ?? null);
-  const visibleIndexes = notesByIndex
+  const visibleIndices = notesByIndex
     .map((note, index) => ({ note, index }))
     .filter(({ note }) => note !== null && note.type !== "hidden")
     .map(({ index }) => index);
   const lastIndex = notesByIndex.length - 1;
   const ranges: Array<{ start: number; end: number }> = [];
-  if (visibleIndexes.length === 0) {
+  if (visibleIndices.length === 0) {
     ranges.push({ start: 0, end: lastIndex });
   } else {
-    const firstVisible = visibleIndexes[0];
-    const lastVisible = visibleIndexes[visibleIndexes.length - 1];
+    const firstVisible = visibleIndices[0];
+    const lastVisible = visibleIndices[visibleIndices.length - 1];
     if (firstVisible > 0) {
       ranges.push({ start: 0, end: firstVisible });
     }
-    for (let visibleIndex = 0; visibleIndex < visibleIndexes.length - 1; visibleIndex += 1) {
+    for (let visibleIndex = 0; visibleIndex < visibleIndices.length - 1; visibleIndex += 1) {
       ranges.push({
-        start: visibleIndexes[visibleIndex],
-        end: visibleIndexes[visibleIndex + 1],
+        start: visibleIndices[visibleIndex],
+        end: visibleIndices[visibleIndex + 1],
       });
     }
     if (lastVisible < lastIndex) {

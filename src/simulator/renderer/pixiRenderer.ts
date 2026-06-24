@@ -1273,13 +1273,13 @@ export class PixiRenderer {
   ): void {
     void elapsedMs;
     for (const group of this.simultaneousGroups) {
-      const eventIndexes = group.eventIndexes;
+      const eventIndices = group.eventIndices;
       let previousRenderable: {
         event: NoteChartEvent;
         activeNote: ActiveNote;
         renderState: ActiveNoteBodyRenderState;
       } | null = null;
-      for (const eventIndex of eventIndexes) {
+      for (const eventIndex of eventIndices) {
         const event = this.chartEvents[eventIndex];
         if (event?.eventType !== "note") {
           continue;

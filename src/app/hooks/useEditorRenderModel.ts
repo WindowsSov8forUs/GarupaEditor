@@ -278,24 +278,24 @@ export function useEditorRenderModel(params: any) {
       const muted = Boolean(isSlideChainMuted?.(chain));
       const segmentGroupByIndex = new Map<number, string>();
       const segmentGroupRangeById = new Map<string, { start: number; end: number }>();
-      const visibleIndexes = chainNotes
+      const visibleIndices = chainNotes
         .map((note: ChartNote, index: number) => ({ note, index }))
         .filter(({ note }: { note: ChartNote }) => note.type !== "hidden")
         .map(({ index }: { index: number }) => index);
       const lastIndex = chainNotes.length - 1;
       const ranges: Array<{ start: number; end: number }> = [];
-      if (visibleIndexes.length === 0) {
+      if (visibleIndices.length === 0) {
         ranges.push({ start: 0, end: lastIndex });
       } else {
-        const firstVisible = visibleIndexes[0];
-        const lastVisible = visibleIndexes[visibleIndexes.length - 1];
+        const firstVisible = visibleIndices[0];
+        const lastVisible = visibleIndices[visibleIndices.length - 1];
         if (firstVisible > 0) {
           ranges.push({ start: 0, end: firstVisible });
         }
-        for (let visibleIndex = 0; visibleIndex < visibleIndexes.length - 1; visibleIndex += 1) {
+        for (let visibleIndex = 0; visibleIndex < visibleIndices.length - 1; visibleIndex += 1) {
           ranges.push({
-            start: visibleIndexes[visibleIndex],
-            end: visibleIndexes[visibleIndex + 1],
+            start: visibleIndices[visibleIndex],
+            end: visibleIndices[visibleIndex + 1],
           });
         }
         if (lastVisible < lastIndex) {

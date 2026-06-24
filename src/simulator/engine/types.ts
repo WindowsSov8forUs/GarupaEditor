@@ -121,7 +121,7 @@ export type ChartEvent =
 
 export interface SimultaneousGroup {
   groupIndex: number;
-  eventIndexes: number[];
+  eventIndices: number[];
 }
 
 export interface ParsedChart {
