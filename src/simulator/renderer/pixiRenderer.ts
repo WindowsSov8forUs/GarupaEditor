@@ -10,6 +10,13 @@ import {
   resolveSlideBottomMarkerTexture,
 } from "../engine/assets";
 import { SIMULATOR_TIMING_FPS } from "../engine/simulatorTiming";
+import {
+  calculateStageGeometry,
+  FIELD_BG_WIDTH_TO_STAGE_WIDTH_RATIO,
+  JUDGE_LINE_WIDTH_TO_STAGE_WIDTH_RATIO,
+  type StageGeometry,
+} from "../engine/stageGeometry";
+import { percentFromFrameRaw as calculatePercentFromFrameRaw } from "../engine/noteMotion";
 import { axisAtMs } from "../engine/timingGroup";
 import type { ParticleEffectDefinition } from "../engine/particlePack";
 import {
@@ -114,17 +121,6 @@ interface ActiveEmptyTouchLaneEffect {
   laneWidth: number;
   seedBase: number;
   holdEmitter: ActiveParticleEmitter | null;
-}
-
-interface StageGeometry {
-  viewportWidth: number;
-  viewportHeight: number;
-  stageWidth: number;
-  stageHeight: number;
-  stageBottom: number;
-  stageTop: number;
-  stageJudge: number;
-  viewportBottomPercent: number;
 }
 
 interface SlideBottomMarker {
@@ -261,11 +257,6 @@ const NOTE_WIDTH_TO_LANE_WIDTH_RATIO = 1.38;
 const LONG_NOTE_LINE_HALF_WIDTH_TO_LANE_WIDTH = 0.48;
 const FIELD_BG_TO_JUDGE_WIDTH_RATIO = 1.35 / 0.875;
 const SIMULTANEOUS_LINE_HEIGHT_TO_NOTE_WIDTH = 27 / 308;
-const STAGE_HEIGHT_TO_WIDTH_RATIO = 634141 / 940938;
-const STAGE_JUDGE_TO_HEIGHT_RATIO = 338256 / 877231;
-const STAGE_TO_WINDOW_RATIO = 462 / 667;
-const FIELD_BG_WIDTH_TO_STAGE_WIDTH_RATIO = (7 / 8) / STAGE_TO_WINDOW_RATIO;
-const JUDGE_LINE_WIDTH_TO_STAGE_WIDTH_RATIO = 1.35 / STAGE_TO_WINDOW_RATIO;
 const HIT_CIRCLE_LAYOUT_SCALE_NON_DIRECTIONAL = 1.15;
 const HIT_CIRCLE_LAYOUT_SCALE_DIRECTIONAL = 0.85;
 const LANE_EFFECT_FADE_DURATION_MS = 200;
@@ -1802,9 +1793,7 @@ export class PixiRenderer {
   }
 
   private percentFromFrameRaw(frameRaw: number): number {
-    const frames = Math.max(1, this.settings.noteSpeedFrames);
-    const exponent = (50 * (frameRaw - frames)) / frames;
-    return 0.05 + 0.95 * Math.pow(1.1, exponent);
+    return calculatePercentFromFrameRaw(frameRaw, this.settings.noteSpeedFrames);
   }
 
   private laneAtConnectionProgress(
@@ -2663,34 +2652,7 @@ export class PixiRenderer {
       return cached;
     }
 
-    const stageWidthByViewportWidth = viewportWidth * STAGE_TO_WINDOW_RATIO;
-    const stageHeightByViewportWidth = stageWidthByViewportWidth * STAGE_HEIGHT_TO_WIDTH_RATIO;
-
-    let stageWidth: number;
-    let stageHeight: number;
-    if (stageHeightByViewportWidth <= viewportHeight + 1e-6) {
-      stageWidth = stageWidthByViewportWidth;
-      stageHeight = stageHeightByViewportWidth;
-    } else {
-      stageHeight = viewportHeight * STAGE_TO_WINDOW_RATIO;
-      stageWidth = stageHeight / STAGE_HEIGHT_TO_WIDTH_RATIO;
-    }
-
-    const stageJudge = stageHeight * STAGE_JUDGE_TO_HEIGHT_RATIO;
-    const stageBottom = viewportHeight * 0.5 + stageJudge;
-    const stageTop = stageBottom - stageHeight;
-    const viewportBottomPercent = (viewportHeight - stageTop) / Math.max(1e-6, stageHeight);
-
-    const geometry: StageGeometry = {
-      viewportWidth,
-      viewportHeight,
-      stageWidth,
-      stageHeight,
-      stageBottom,
-      stageTop,
-      stageJudge,
-      viewportBottomPercent,
-    };
+    const geometry = calculateStageGeometry(viewportWidth, viewportHeight);
     this.stageGeometryCache = geometry;
     return geometry;
   }
