@@ -27,6 +27,13 @@
 推荐普通用户用 `*-setup.exe`，双击安装。
 `x64` 用于常见 Intel/AMD Windows，`arm64` 用于 Windows on ARM。
 
+#### Windows SmartScreen 提示
+
+当前 Windows 安装包暂未进行代码签名，安装时可能会出现 Microsoft Defender SmartScreen 的“Windows 已保护你的电脑”或“发布者未知”提示。
+这表示 Windows 无法识别发布者身份，并不代表安装包已经被判定为病毒。
+
+请确认安装包来自本项目的 GitHub Release 页面；确认来源无误后，可以在提示中选择“仍要运行”继续安装。
+
 ### macOS
 
 下载：
