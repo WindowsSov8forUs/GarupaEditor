@@ -6,7 +6,9 @@ import type {
   SimulatorChartSvEvent,
 } from "../launchPayload";
 import { SIMULATOR_TIMING_FPS } from "./simulatorTiming";
+import { frameDeltaFromJudgeToPercent } from "./noteMotion";
 import { isJudgedEvent } from "./score";
+import { calculateStageGeometry } from "./stageGeometry";
 import type {
   ChartEvent,
   NoteChartEvent,
@@ -508,9 +510,15 @@ export function parseEditorChart(
 
   const offsetMs = settings.offsetMs;
   const travelMs = settings.noteSpeedFrames * 1000 / SIMULATOR_TIMING_FPS;
+  const viewportBottomPercent = calculateStageGeometry(settings.windowX, settings.windowY).viewportBottomPercent;
+  const viewportBottomAxisMs = Math.max(
+    0,
+    frameDeltaFromJudgeToPercent(viewportBottomPercent, settings.noteSpeedFrames)
+      * 1000 / SIMULATOR_TIMING_FPS,
+  );
   const noteTimes = noteDescriptors.map((descriptor) => beatToMs(segments, descriptor.beat));
-  const chartSearchStartMs = Math.min(0, ...noteTimes) - travelMs - 1000;
-  const chartSearchEndMs = Math.max(0, ...noteTimes) + travelMs + 10000;
+  const chartSearchStartMs = Math.min(0, ...noteTimes) - travelMs - viewportBottomAxisMs - 1000;
+  const chartSearchEndMs = Math.max(0, ...noteTimes) + travelMs + viewportBottomAxisMs + 10000;
   const musicStartMs = offsetMs;
 
   const internalEvents: InternalEvent[] = [];
@@ -570,6 +578,7 @@ export function parseEditorChart(
         tgDef,
         tgPos,
         travelMs,
+        viewportBottomAxisMs,
         chartSearchStartMs,
         chartSearchEndMs,
       )
