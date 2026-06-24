@@ -236,7 +236,7 @@ export class SimulatorRuntime {
             eventIndex: this.spawnIndex,
             note: ev.note,
             lane: ev.lane,
-            issameline: ev.samelineLane,
+            samelineGroup: ev.samelineGroup,
             startMs: ev.startMs,
             hitMs: ev.hitMs,
             visibleEndMs: ev.visibleEndMs,

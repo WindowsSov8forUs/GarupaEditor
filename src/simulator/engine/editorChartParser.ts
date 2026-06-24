@@ -16,6 +16,7 @@ import type {
   RuntimeNoteSemantic,
   RuntimeSlideRole,
   SimulatorSettings,
+  SimultaneousGroup,
 } from "./types";
 import {
   axisAtMs,
@@ -55,6 +56,12 @@ interface InternalEvent {
   noteId: string | null;
   predecessorNoteId: string | null;
   slideChainId: string | null;
+}
+
+interface SamelineGroupItem {
+  event: NoteChartEvent;
+  eventIndex: number;
+  lane: number;
 }
 
 const BEAT_EPSILON = 1e-6;
@@ -378,19 +385,19 @@ function renderCenterLaneForEvent(event: NoteChartEvent): number {
   return event.lane + (Math.max(1, note.rhythmWidth) - 1) / 2;
 }
 
-function assignSamelineLanes(events: ChartEvent[], enabled: boolean): void {
+function assignSamelineLanes(events: ChartEvent[], enabled: boolean): SimultaneousGroup[] {
   for (let index = 0; index < events.length; index += 1) {
     const event = events[index];
     if (event.eventType === "note") {
-      event.samelineLane = null;
+      event.samelineGroup = null;
     }
   }
   if (!enabled) {
-    return;
+    return [];
   }
 
-  let samelineBeat: number | null = null;
-  let samelineLane: number | null = null;
+  const samelineGroupByBeat = new Map<string, SamelineGroupItem[]>();
+  const simultaneousGroups: SimultaneousGroup[] = [];
 
   for (let index = 0; index < events.length; index += 1) {
     const event = events[index];
@@ -400,18 +407,37 @@ function assignSamelineLanes(events: ChartEvent[], enabled: boolean): void {
     if (event.eventType !== "note") {
       continue;
     }
-    if (
-      samelineBeat !== null
-      && samelineLane !== null
-      && Math.abs(event.beat - samelineBeat) <= BEAT_EPSILON
-    ) {
-      event.samelineLane = samelineLane;
+    const item: SamelineGroupItem = {
+      event,
+      eventIndex: index,
+      lane: renderCenterLaneForEvent(event),
+    };
+    const beatKey = event.beat.toFixed(6);
+    const group = samelineGroupByBeat.get(beatKey);
+    if (group) {
+      group.push(item);
+    } else {
+      const nextGroup = [item];
+      samelineGroupByBeat.set(beatKey, nextGroup);
+    }
+  }
+
+  for (const group of samelineGroupByBeat.values()) {
+    if (group.length < 2) {
       continue;
     }
-    event.samelineLane = null;
-    samelineBeat = event.beat;
-    samelineLane = renderCenterLaneForEvent(event);
+    group.sort((left, right) => left.lane - right.lane);
+    const groupIndex = simultaneousGroups.length;
+    const simultaneousGroup: SimultaneousGroup = {
+      groupIndex,
+      eventIndexes: group.map((item) => item.eventIndex),
+    };
+    for (const item of group) {
+      item.event.samelineGroup = groupIndex;
+    }
+    simultaneousGroups.push(simultaneousGroup);
   }
+  return simultaneousGroups;
 }
 
 function assignSlideTypes(events: ChartEvent[]): void {
@@ -604,7 +630,7 @@ export function parseEditorChart(
         hitMs: atMs + offsetMs,
         visibleEndMs,
         visibilityWindows: eventVisibilityWindows,
-        samelineLane: null,
+        samelineGroup: null,
         prevSlideNodeEventIndex: -1,
         nextSlideNodeEventIndex: -1,
         slideChainEventIndex: -1,
@@ -750,7 +776,7 @@ export function parseEditorChart(
     }
   }
   assignSlideTypes(events);
-  assignSamelineLanes(events, settings.sameline);
+  const simultaneousGroups = assignSamelineLanes(events, settings.sameline);
 
   let noteCount = 0;
   let maxTimeMs = 10;
@@ -773,5 +799,6 @@ export function parseEditorChart(
     noteCount,
     maxTimeMs: maxRenderTimeMs,
     timingGroups,
+    simultaneousGroups,
   };
 }

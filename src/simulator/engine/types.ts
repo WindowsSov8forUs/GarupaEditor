@@ -96,7 +96,7 @@ export interface NoteChartEvent extends ChartEventBase {
   tgId: number;
   tgPos: number;
   visibilityWindows: VisibilityWindow[];
-  samelineLane: number | null;
+  samelineGroup: number | null;
   prevSlideNodeEventIndex: number;
   nextSlideNodeEventIndex: number;
   slideChainEventIndex: number;
@@ -119,12 +119,18 @@ export type ChartEvent =
   | NoteChartEvent
   | SlideChartEvent;
 
+export interface SimultaneousGroup {
+  groupIndex: number;
+  eventIndexes: number[];
+}
+
 export interface ParsedChart {
   initialBpm: number;
   events: ChartEvent[];
   noteCount: number;
   maxTimeMs: number;
   timingGroups: TimingGroupDef[];
+  simultaneousGroups: SimultaneousGroup[];
 }
 
 export interface RuntimeStats {
@@ -192,7 +198,7 @@ export interface ActiveNote {
   eventIndex: number;
   note: RuntimeNoteSemantic;
   lane: number;
-  issameline: number | null;
+  samelineGroup: number | null;
   startMs: number;
   hitMs: number;
   visibleEndMs: number;
