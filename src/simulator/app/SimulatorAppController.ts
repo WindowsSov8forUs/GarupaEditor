@@ -2,6 +2,8 @@ import { emit, type UnlistenFn } from "@tauri-apps/api/event";
 import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
 import { AudioEngine } from "../engine/audio";
 import { loadNoteSkinTextureBundle } from "../engine/assets";
+import { loadPauseButtonImageDataUrl } from "../engine/uiAtlas";
+import { projectNguiAnchoredPoint, RHYTHM_HUD_ANCHORS, RHYTHM_HUD_WIDGETS } from "../engine/uiHudLayout";
 import { parseEditorChart } from "../engine/editorChartParser";
 import {
   buildSettingsFromPayload,
@@ -24,8 +26,6 @@ import {
   readMobileRoutePayload,
   removeMobileRoutePayload,
 } from "../../app/mobileRuntime";
-import simulatorPauseIconSvg from "../../assets/icons/simulator-pause.svg?raw";
-import simulatorPlayIconSvg from "../../assets/icons/simulator-play.svg?raw";
 
 interface UiRefs {
   root: HTMLDivElement;
@@ -50,8 +50,7 @@ interface UiRefs {
   scoreDigits: HTMLSpanElement[];
   pauseAnchor: HTMLDivElement;
   pauseButton: HTMLButtonElement;
-  pauseIconPause: HTMLSpanElement;
-  pauseIconPlay: HTMLSpanElement;
+  pauseIconPause: HTMLImageElement;
   bootLayer: HTMLDivElement;
   bootBack: HTMLDivElement;
   bootFrame: HTMLDivElement;
@@ -95,7 +94,6 @@ const STARTUP_CHART_PREROLL_MS = 3000;
 const SCORE_HUD_LEFT_MARGIN_RATIO = 16 / 1280;
 const SCORE_HUD_LAYOUT_INPUT_WIDTH = 1024;
 const SCORE_HUD_LAYOUT_INPUT_HEIGHT = 576;
-const PAUSE_BUTTON_RIGHT_MARGIN_RATIO = 5 / 720;
 const OVERLAY_UI_TOP_MARGIN_RATIO = 18 / 1280;
 const SCORE_HUD_TOP_WIDTH_RATIO = 11 / 32;
 const SCORE_HUD_TOTAL_HEIGHT_BY_TOP_WIDTH = 39 / 220;
@@ -681,17 +679,22 @@ export class SimulatorAppController {
     pauseAnchor.className = "simulator-pause-anchor";
     const pauseButton = document.createElement("button");
     pauseButton.type = "button";
-    pauseButton.className = "simulator-pause-button tool-icon-button";
+    pauseButton.className = "simulator-pause-button";
     pauseButton.setAttribute("aria-label", "暂停");
     const pauseCore = document.createElement("span");
     pauseCore.className = "tool-icon-core";
-    const pauseIconPause = document.createElement("span");
-    pauseIconPause.className = "play-tool-icon simulator-pause-icon simulator-pause-icon-pause";
-    pauseIconPause.innerHTML = simulatorPauseIconSvg;
-    const pauseIconPlay = document.createElement("span");
-    pauseIconPlay.className = "play-tool-icon simulator-pause-icon simulator-pause-icon-play";
-    pauseIconPlay.innerHTML = simulatorPlayIconSvg;
-    pauseCore.append(pauseIconPause, pauseIconPlay);
+    const pauseIconPause = document.createElement("img");
+    pauseIconPause.className = "simulator-pause-icon simulator-pause-icon-pause";
+    pauseIconPause.alt = "";
+    pauseIconPause.decoding = "async";
+    void loadPauseButtonImageDataUrl()
+      .then((url) => {
+        if (url) {
+          pauseIconPause.src = url;
+        }
+      })
+      .catch(() => {});
+    pauseCore.append(pauseIconPause);
     pauseButton.append(pauseCore);
     pauseAnchor.append(pauseButton);
     uiLayer.append(pauseMask, scoreHud, scoreAutoLive, pauseAnchor);
@@ -747,7 +750,6 @@ export class SimulatorAppController {
       pauseAnchor,
       pauseButton,
       pauseIconPause,
-      pauseIconPlay,
       bootLayer,
       bootBack,
       bootFrame,
@@ -1230,8 +1232,7 @@ export class SimulatorAppController {
   private applyPauseUiState(): void {
     this.ui.pauseMask.style.display = this.isPaused ? "block" : "none";
     this.ui.pauseButton.setAttribute("aria-label", this.isPaused ? "继续" : "暂停");
-    this.ui.pauseIconPause.style.display = this.isPaused ? "none" : "inline-flex";
-    this.ui.pauseIconPlay.style.display = this.isPaused ? "inline-flex" : "none";
+    this.ui.pauseIconPause.style.display = "block";
   }
 
   private clearActiveTouchCapture(): void {
@@ -1331,11 +1332,32 @@ export class SimulatorAppController {
     this.ui.bootDifficultyBadge.style.borderRadius = "5px";
     this.ui.bootDifficultyText.style.fontSize = `${Math.max(1, diffFontSize)}px`;
     this.updateScoreHudLayout(SCORE_HUD_LAYOUT_INPUT_WIDTH, SCORE_HUD_LAYOUT_INPUT_HEIGHT);
-    this.ui.pauseAnchor.style.top = `${windowHeight * OVERLAY_UI_TOP_MARGIN_RATIO}px`;
-    this.ui.pauseAnchor.style.right = `${windowWidth * PAUSE_BUTTON_RIGHT_MARGIN_RATIO}px`;
-    this.ui.pauseAnchor.style.left = "";
+    this.updatePauseButtonLayout(windowWidth, windowHeight);
 
     this.updateBootDifficultyTextScale();
+  }
+
+  private updatePauseButtonLayout(windowWidth: number, windowHeight: number): void {
+    const projected = projectNguiAnchoredPoint(
+      {
+        horizontal: "right",
+        vertical: "top",
+        offset: RHYTHM_HUD_ANCHORS.pauseRightTop,
+      },
+      {
+        width: windowWidth,
+        height: windowHeight,
+      },
+    );
+    const buttonWidth = Math.max(1, RHYTHM_HUD_WIDGETS.pauseCover.width * projected.scale);
+    const buttonHeight = Math.max(1, RHYTHM_HUD_WIDGETS.pauseCover.height * projected.scale);
+
+    this.ui.pauseAnchor.style.left = `${projected.x}px`;
+    this.ui.pauseAnchor.style.top = `${projected.y}px`;
+    this.ui.pauseAnchor.style.right = "";
+    this.ui.pauseAnchor.style.bottom = "";
+    this.ui.pauseAnchor.style.setProperty("--sim-pause-button-width", `${buttonWidth}px`);
+    this.ui.pauseAnchor.style.setProperty("--sim-pause-button-height", `${buttonHeight}px`);
   }
 
   private applyRectStyle(el: HTMLElement, x: number, y: number, w: number, h: number): void {
