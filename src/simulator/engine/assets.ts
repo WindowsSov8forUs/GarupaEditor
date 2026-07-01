@@ -1,4 +1,4 @@
-import { Rectangle, Texture } from "pixi.js";
+import { Texture } from "pixi.js";
 import type { BGSkin, FieldSkinAssets, JudgeSkin, SkinAssets } from "../../skinLoader";
 import type { RuntimeNoteBaseType, RuntimeNoteSemantic } from "./types";
 import {
@@ -8,7 +8,23 @@ import {
 import embeddedParticleManifest from "../assets/particles/bandori1/manifest.json";
 import embeddedParticleAtlasUrl from "../assets/particles/bandori1/texture.png";
 import embeddedComboLabelUrl from "../assets/ui/combo.png";
-import embeddedComboDigitsUrl from "../assets/ui/digits.png";
+import embeddedIconComboNumberUrl from "../assets/ui/IconComboNumber.png";
+import embeddedRhythmGameUiUrl from "../assets/ui/RhythmGameUI.png";
+import embeddedNoteLaneEffect1Url from "../assets/ui/NoteLaneEffect_1.png";
+import embeddedNoteLaneEffect2Url from "../assets/ui/NoteLaneEffect_2.png";
+import embeddedNoteLaneEffect3Url from "../assets/ui/NoteLaneEffect_3.png";
+import embeddedNoteLaneEffect4Url from "../assets/ui/NoteLaneEffect_4.png";
+import {
+  buildPixiAtlasTextureList,
+  COMBO_NUMBER_DIGIT_HEIGHT,
+  COMBO_NUMBER_DIGIT_WIDTH,
+  COMBO_NUMBER_PADDING,
+  cropPixiAtlasTexture,
+  ICON_COMBO_NUMBER_AP_DIGIT_RECTS,
+  ICON_COMBO_NUMBER_NORMAL_DIGIT_RECTS,
+  ICON_COMBO_NUMBER_PLUS_RECT,
+  RHYTHM_GAME_UI_RECTS,
+} from "./uiAtlas";
 
 type LaneKey = "0" | "1" | "2" | "3" | "4" | "5" | "6";
 type LaneAssetMap = Record<LaneKey, string>;
@@ -130,6 +146,16 @@ export interface NoteSkinTextureBundle {
   hud: {
     comboLabel: Texture | null;
     comboDigits: Array<Texture | null>;
+    comboAtlas: {
+      normalDigits: Array<Texture | null>;
+      apDigits: Array<Texture | null>;
+      plus: Texture | null;
+      digitWidth: number;
+      digitHeight: number;
+      padding: number;
+    };
+    pauseButtonImage: Texture | null;
+    laneEffects: Array<Texture | null>;
   };
   judge: {
     perfect: Texture | null;
@@ -425,13 +451,38 @@ export async function loadNoteSkinTextureBundle(
   const judgeFastTexture = await loadCachedTexture(judgeSkin?.assets.judgeFast ?? null);
   const judgeSlowTexture = await loadCachedTexture(judgeSkin?.assets.judgeSlow ?? null);
   const comboLabelTexture = await loadCachedTexture(embeddedComboLabelUrl);
-  const comboDigitsAtlasTexture = await loadCachedTexture(embeddedComboDigitsUrl);
-  const comboDigitTextures = buildDigitTextures(comboDigitsAtlasTexture);
-  for (const texture of comboDigitTextures) {
+  const iconComboNumberTexture = await loadCachedTexture(embeddedIconComboNumberUrl);
+  const comboNormalDigitTextures = buildPixiAtlasTextureList(
+    iconComboNumberTexture,
+    ICON_COMBO_NUMBER_NORMAL_DIGIT_RECTS,
+  );
+  const comboApDigitTextures = buildPixiAtlasTextureList(
+    iconComboNumberTexture,
+    ICON_COMBO_NUMBER_AP_DIGIT_RECTS,
+  );
+  const comboPlusTexture = cropPixiAtlasTexture(iconComboNumberTexture, ICON_COMBO_NUMBER_PLUS_RECT);
+  const comboDerivedTextures = [
+    ...comboNormalDigitTextures,
+    ...comboApDigitTextures,
+    comboPlusTexture,
+  ];
+  for (const texture of comboDerivedTextures) {
     if (texture) {
       trackedDerivedTextures.push(texture);
     }
   }
+  const rhythmGameUiTexture = await loadCachedTexture(embeddedRhythmGameUiUrl);
+  const pauseButtonImageTexture = cropPixiAtlasTexture(rhythmGameUiTexture, RHYTHM_GAME_UI_RECTS.buttonPause);
+  if (pauseButtonImageTexture) {
+    trackedDerivedTextures.push(pauseButtonImageTexture);
+  }
+  const laneEffectTextures: Array<Texture | null> = [
+    null,
+    await loadCachedTexture(embeddedNoteLaneEffect1Url),
+    await loadCachedTexture(embeddedNoteLaneEffect2Url),
+    await loadCachedTexture(embeddedNoteLaneEffect3Url),
+    await loadCachedTexture(embeddedNoteLaneEffect4Url),
+  ];
 
   const particleAtlasTexture = await loadCachedTexture(embeddedParticleAtlasUrl);
   const particleEffects = particleAtlasTexture
@@ -471,7 +522,17 @@ export async function loadNoteSkinTextureBundle(
     },
     hud: {
       comboLabel: comboLabelTexture,
-      comboDigits: comboDigitTextures,
+      comboDigits: comboNormalDigitTextures,
+      comboAtlas: {
+        normalDigits: comboNormalDigitTextures,
+        apDigits: comboApDigitTextures,
+        plus: comboPlusTexture,
+        digitWidth: COMBO_NUMBER_DIGIT_WIDTH,
+        digitHeight: COMBO_NUMBER_DIGIT_HEIGHT,
+        padding: COMBO_NUMBER_PADDING,
+      },
+      pauseButtonImage: pauseButtonImageTexture,
+      laneEffects: laneEffectTextures,
     },
     judge: {
       perfect: judgePerfectTexture,
@@ -648,25 +709,6 @@ export function resolveSlideBottomMarkerTexture(
       }
       return bundle.rhythm.noteLong[laneIdx] ?? null;
   }
-}
-
-function buildDigitTextures(texture: Texture | null): Array<Texture | null> {
-  const digits: Array<Texture | null> = new Array(10).fill(null);
-  if (!texture) {
-    return digits;
-  }
-  const digitWidth = Math.floor(texture.width / 10);
-  const digitHeight = Math.floor(texture.height);
-  if (digitWidth <= 0 || digitHeight <= 0) {
-    return digits;
-  }
-  for (let digit = 0; digit <= 9; digit += 1) {
-    digits[digit] = new Texture({
-      source: texture.source,
-      frame: new Rectangle(digit * digitWidth, 0, digitWidth, digitHeight),
-    });
-  }
-  return digits;
 }
 
 export function resolveSlideBottomMarkerFlashTexture(
