@@ -18,6 +18,12 @@ import {
 } from "../engine/stageGeometry";
 import { percentFromFrameRaw as calculatePercentFromFrameRaw } from "../engine/noteMotion";
 import { axisAtMs } from "../engine/timingGroup";
+import {
+  projectNguiDisplayPoint,
+  RHYTHM_HUD_ANCHORS,
+  RHYTHM_HUD_TRANSFORM_SCALES,
+  RHYTHM_HUD_WIDGETS,
+} from "../engine/uiHudLayout";
 import type { ParticleEffectDefinition } from "../engine/particlePack";
 import {
   ActiveParticleEmitter,
@@ -120,9 +126,14 @@ interface ActiveJudgeOverlay {
 
 interface ActiveEmptyTouchLaneEffect {
   lane: number;
-  laneWidth: number;
-  seedBase: number;
-  holdEmitter: ActiveParticleEmitter | null;
+}
+
+interface ActiveLaneEffect {
+  lane: number;
+  visualLane: number;
+  state: "idle" | "fadeOut";
+  startMs: number;
+  fadeStartMs: number | null;
 }
 
 interface SlideBottomMarker {
@@ -216,20 +227,6 @@ function colorForNote(note: RuntimeNoteSemantic): number {
   return 0x87b7ff;
 }
 
-function judgePulseScale(elapsedSecSinceHit: number): number {
-  if (!(elapsedSecSinceHit >= 0)) {
-    return 1;
-  }
-  const we = -elapsedSecSinceHit;
-  if (we < -0.2) {
-    return 1;
-  }
-  if (we < -0.1) {
-    return we + 1.2;
-  }
-  return 1.1 - 3 * (we + 0.1);
-}
-
 function browserPath(path: string): string {
   if (
     path.startsWith("data:")
@@ -261,14 +258,47 @@ const FIELD_BG_TO_JUDGE_WIDTH_RATIO = 1.35 / 0.875;
 const SIMULTANEOUS_LINE_HEIGHT_TO_NOTE_WIDTH = 27 / 308;
 const HIT_CIRCLE_LAYOUT_SCALE_NON_DIRECTIONAL = 1.15;
 const HIT_CIRCLE_LAYOUT_SCALE_DIRECTIONAL = 0.85;
-const LANE_EFFECT_FADE_DURATION_MS = 200;
-const LANE_EFFECT_EMPTY_TOUCH_HOLD_MAX_DURATION_MS = 60000;
+const NOTE_LANE_EFFECT_FADE_DURATION_MS = 1000 / 6;
+const NOTE_LANE_EFFECT_OFF_RESERVE_MS = (2 * 1000) / SIMULATOR_TIMING_FPS;
+// Source: HOST________/VSCode/bangdream-apk/reverse/analysis/targets/runtime-ui-binding-report.*
+// level3 Button1..Button7 Transform spacing is 2.2 Unity units, and
+// NoteLaneEffect_1..4 Sprite metadata has 500 px height at 69 PPU.
+const NOTE_LANE_EFFECT_HEIGHT_TO_LANE_WIDTH_RATIO = (500 / 69) / 2.2;
+// Source: NoteLaneEffect_1..4 Sprite m_Rect, m_RD.textureRect and m_Pivot.
+// The checked-in PNGs are tight Sprite exports, so the full-rect pivot is
+// translated into tight texture coordinates. SpriteRenderer.flipX is applied
+// later with negative X scale around that same translated pivot.
+const NOTE_LANE_EFFECT_ANCHOR_BY_TEXTURE_INDEX: Record<number, { x: number; y: number }> = {
+  1: { x: (774 * 0.5 - 307.0696716308594) / 466.9303283691406, y: 1 },
+  2: { x: (526 * 0.5 - 184.2117919921875) / 341.7882080078125, y: 1 },
+  3: { x: (278 * 0.5 - 60.23698043823242) / 217.7630157470703, y: 1 },
+  4: { x: 0.5, y: 1 },
+};
 const SLOT_EFFECT_DURATION_MS = 600;
 const DIRECTIONAL_LINEAR_DOUBLE_PLAY_WIDTH_THRESHOLD = 3;
 const DIRECTIONAL_LINEAR_DOUBLE_PLAY_DELAY_MS = 160;
-const JUDGE_OVERLAY_DURATION_MS = 1000;
-const JUDGE_OVERLAY_Y_FROM_JUDGE_TO_STAGE_HEIGHT_RATIO = 0.18;
-const JUDGE_OVERLAY_HEIGHT_TO_STAGE_HEIGHT_RATIO = 0.1;
+// Source: AnimationClip GameJudge streamed keyframes in runtime-ui-binding-report.*.
+const JUDGE_OVERLAY_DURATION_MS = 480;
+
+function lerpNumber(from: number, to: number, t: number): number {
+  return from + (to - from) * clamp01(t);
+}
+
+function judgeOverlayClip(ageMs: number): { scale: number; alpha: number } {
+  if (ageMs <= 40) {
+    return {
+      scale: lerpNumber(0.8, 1.1, ageMs / 40),
+      alpha: lerpNumber(0.6, 1, ageMs / 40),
+    };
+  }
+  if (ageMs <= 80) {
+    return {
+      scale: lerpNumber(1.1, 1, (ageMs - 40) / 40),
+      alpha: 1,
+    };
+  }
+  return { scale: 1, alpha: 1 };
+}
 
 function mixUint32(value: number): number {
   let x = value >>> 0;
@@ -342,6 +372,7 @@ export class PixiRenderer {
   private activeParticleEmitters: ActiveParticleEmitter[] = [];
   private activeJudgeOverlay: ActiveJudgeOverlay | null = null;
   private activeEmptyTouchLaneEffect: ActiveEmptyTouchLaneEffect | null = null;
+  private activeLaneEffects: Array<ActiveLaneEffect | null> = new Array(7).fill(null);
   private chartEvents: readonly ChartEvent[] = [];
   private slideConnections: SlideConnection[] = [];
   private simultaneousGroups: readonly SimultaneousGroup[] = [];
@@ -375,6 +406,7 @@ export class PixiRenderer {
   setAssets(bundle: NoteSkinTextureBundle | null): void {
     this.assets = bundle;
     this.lanesDirty = true;
+    this.clearLaneEffects();
   }
 
   setStartupRenderState(state: SimulatorStartupRenderState | null): void {
@@ -515,10 +547,8 @@ export class PixiRenderer {
     this.buildBpmFlashCycleSegments(events);
     this.slideFlashFirstTriggerCycleByChainEventIndex.clear();
     this.activeJudgeOverlay = null;
-    if (this.activeEmptyTouchLaneEffect) {
-      this.removeEmitterInstance(this.activeEmptyTouchLaneEffect.holdEmitter);
-    }
     this.activeEmptyTouchLaneEffect = null;
+    this.clearLaneEffects();
     this.lastRenderedCombo = 0;
     this.lastComboHitMs = Number.NEGATIVE_INFINITY;
   }
@@ -544,7 +574,7 @@ export class PixiRenderer {
   }
 
   triggerEmptyTapEffects(lane: number, elapsedMs: number): void {
-    this.startPerspectiveLaneRectangleEffect(lane, elapsedMs, true, 1);
+    this.startOfficialLaneEffect(lane, elapsedMs, true);
     this.startSpriteParticleEffect("slot", lane, elapsedMs);
   }
 
@@ -709,6 +739,7 @@ export class PixiRenderer {
     this.drawLanes();
     if (startup?.chartObjectsVisible ?? true) {
       this.drawNotes(notes, activeSlides, activeNotesMap, stats.elapsedMs);
+      this.drawOfficialLaneEffects(stats.elapsedMs);
       this.drawParticleEffects(stats.elapsedMs);
       this.drawComboHudOverlay(stats);
       this.drawJudgeHudOverlay(stats.elapsedMs);
@@ -758,6 +789,7 @@ export class PixiRenderer {
     this.activeParticleEmitters = [];
     this.activeJudgeOverlay = null;
     this.activeEmptyTouchLaneEffect = null;
+    this.clearLaneEffects();
     this.activeHoldEffects.clear();
     this.chartEvents = [];
     this.slideConnections = [];
@@ -888,6 +920,13 @@ export class PixiRenderer {
     return mesh;
   }
 
+  private allocEffectSprite(): Sprite | null {
+    if (!this.effectSpriteLayer) {
+      return null;
+    }
+    return this.allocSprite(this.effectSpritePool, this.effectSpriteLayer);
+  }
+
   private allocSimultaneousLineSprite(): Sprite | null {
     if (!this.simultaneousLineLayer) {
       return null;
@@ -973,17 +1012,22 @@ export class PixiRenderer {
       return;
     }
 
-    const geometry = this.stageGeometry();
     const sprite = this.allocJudgeHudSprite();
     if (!sprite) {
       return;
     }
-    const x = geometry.viewportWidth * 0.5;
-    const y = geometry.stageBottom - geometry.stageHeight * JUDGE_OVERLAY_Y_FROM_JUDGE_TO_STAGE_HEIGHT_RATIO;
-    const pulseScale = judgePulseScale(ageMs / 1000);
-    const targetHeight = geometry.stageHeight * JUDGE_OVERLAY_HEIGHT_TO_STAGE_HEIGHT_RATIO * pulseScale;
+    const geometry = this.stageGeometry();
+    const projected = projectNguiDisplayPoint(RHYTHM_HUD_ANCHORS.judgementResult, {
+      width: geometry.viewportWidth,
+      height: geometry.viewportHeight,
+    });
+    const clip = judgeOverlayClip(ageMs);
+    const targetHeight = RHYTHM_HUD_WIDGETS.judgementResult.height
+      * projected.scale
+      * RHYTHM_HUD_TRANSFORM_SCALES.judgementResult
+      * clip.scale;
     const scale = targetHeight / Math.max(1, texture.height);
-    this.applySprite(sprite, texture, x, y, scale, 1, 0.5, 0.5);
+    this.applySprite(sprite, texture, projected.x, projected.y, scale, clip.alpha, 0.5, 0.5);
   }
 
   private applySprite(
@@ -2146,16 +2190,17 @@ export class PixiRenderer {
   }
 
   private spawnParticleEmittersForTrigger(trigger: ParticleTriggerEvent): void {
-    const pack = this.assets?.particleEffects;
-    if (!pack) {
-      return;
-    }
-
     const note = trigger.note;
     const particleLane = renderCenterLaneForNote(trigger.lane, note);
     const lane = isDirectionalNote(note) ? trigger.lane : particleLane;
     const laneEffectWidth = isDirectionalNote(note) ? 1 : rhythmWidthForNote(note);
     const startMs = trigger.elapsedMs;
+    this.startOfficialLaneEffect(trigger.lane, startMs, false);
+
+    const pack = this.assets?.particleEffects;
+    if (!pack) {
+      return;
+    }
     const rawDirectionalLeft = note.baseType === "directional_flick_left";
     const rawDirectionalRight = note.baseType === "directional_flick_right";
     const directionalLeft = this.settings.mirror ? rawDirectionalRight : rawDirectionalLeft;
@@ -2266,8 +2311,6 @@ export class PixiRenderer {
       );
     }
 
-    this.startLaneRectangleEffect(particleLane, startMs, laneEffectWidth);
-    this.startPerspectiveLaneRectangleEffect(particleLane, startMs, false, laneEffectWidth);
     this.startSpriteParticleEffect("slot", particleLane, startMs);
 
     if (isHoldRenderableSlideNote(note)) {
@@ -2375,78 +2418,34 @@ export class PixiRenderer {
     );
   }
 
-  private startLaneRectangleEffect(lane: number, startMs: number, laneWidth: number): void {
-    const effectLaneWidth = Math.max(1, Number.isFinite(laneWidth) ? laneWidth : 1);
-    const seedBase = this.allocateEmitterSeed("slot", startMs, lane);
-    this.enqueueParticleEmitterBySlot(
-      "slot",
-      lane,
-      startMs,
-      SLOT_EFFECT_DURATION_MS,
-      false,
-      "slot",
-      undefined,
-      1,
-      1,
-      seedBase,
-      effectLaneWidth,
-      "laneRectangle",
-    );
-  }
-
-  private startPerspectiveLaneRectangleEffect(lane: number, startMs: number, hold: boolean, laneWidth: number): void {
-    const effectLaneWidth = Math.max(1, Number.isFinite(laneWidth) ? laneWidth : 1);
+  private startOfficialLaneEffect(lane: number, startMs: number, hold: boolean): void {
+    if (!this.settings.effectEnable) {
+      return;
+    }
+    const normalizedLane = Math.max(0, Math.min(6, Math.round(Number.isFinite(lane) ? lane : 0)));
+    const visualLane = this.visualLaneIndex(normalizedLane);
     if (hold) {
       const active = this.activeEmptyTouchLaneEffect;
       if (
         active
-        && Math.abs(active.lane - lane) <= 1e-6
-        && Math.abs(active.laneWidth - effectLaneWidth) <= 1e-6
+        && Math.abs(active.lane - normalizedLane) <= 1e-6
       ) {
         return;
       }
       if (active) {
         this.releaseEmptyTouchLaneEffect(startMs);
       }
-      const seedBase = this.allocateEmitterSeed("lane", startMs, lane);
-      const holdEmitter = this.enqueueParticleEmitterBySlot(
-        "lane",
-        lane,
-        startMs,
-        LANE_EFFECT_EMPTY_TOUCH_HOLD_MAX_DURATION_MS,
-        false,
-        "laneHold",
-        undefined,
-        1,
-        1,
-        seedBase,
-        effectLaneWidth,
-        "perspectiveLaneRectangle",
-      );
       this.activeEmptyTouchLaneEffect = {
-        lane,
-        laneWidth: effectLaneWidth,
-        seedBase,
-        holdEmitter,
+        lane: normalizedLane,
       };
-      return;
     }
-
-    const seedBase = this.allocateEmitterSeed("lane", startMs, lane);
-    this.enqueueParticleEmitterBySlot(
-      "lane",
-      lane,
+    this.activeLaneEffects[visualLane] = {
+      lane: normalizedLane,
+      visualLane,
+      state: "idle",
       startMs,
-      LANE_EFFECT_FADE_DURATION_MS,
-      false,
-      "laneNarrowFade",
-      undefined,
-      1,
-      1,
-      seedBase,
-      effectLaneWidth,
-      "perspectiveLaneRectangle",
-    );
+      fadeStartMs: hold ? null : startMs + NOTE_LANE_EFFECT_OFF_RESERVE_MS,
+    };
   }
 
   private releaseEmptyTouchLaneEffect(elapsedMs: number): void {
@@ -2454,22 +2453,101 @@ export class PixiRenderer {
     if (!active) {
       return;
     }
-    this.removeEmitterInstance(active.holdEmitter);
-    this.enqueueParticleEmitterBySlot(
-      "lane",
-      active.lane,
-      elapsedMs,
-      LANE_EFFECT_FADE_DURATION_MS,
-      false,
-      "laneNarrowFade",
-      undefined,
-      1,
-      1,
-      active.seedBase,
-      active.laneWidth,
-      "perspectiveLaneRectangle",
-    );
+    const visualLane = this.visualLaneIndex(active.lane);
+    const laneEffect = this.activeLaneEffects[visualLane];
+    if (laneEffect) {
+      laneEffect.state = "fadeOut";
+      laneEffect.fadeStartMs = elapsedMs;
+    }
     this.activeEmptyTouchLaneEffect = null;
+  }
+
+  private clearLaneEffects(): void {
+    this.activeLaneEffects = new Array(7).fill(null);
+    this.activeEmptyTouchLaneEffect = null;
+  }
+
+  private visualLaneIndex(lane: number): number {
+    const normalizedLane = Math.max(0, Math.min(6, Math.round(Number.isFinite(lane) ? lane : 0)));
+    return this.settings.mirror ? 6 - normalizedLane : normalizedLane;
+  }
+
+  private laneXAtVisualPercentRaw(visualLane: number, percent: number): number {
+    const geometry = this.stageGeometry();
+    const centeredLane = visualLane - 3;
+    return geometry.viewportWidth * 0.5 + centeredLane * this.stageLaneWidth() * percent;
+  }
+
+  private laneEffectTextureIndex(visualLane: number): number {
+    const distanceFromCenter = Math.abs(Math.max(0, Math.min(6, Math.round(visualLane))) - 3);
+    switch (distanceFromCenter) {
+      case 3:
+        return 1;
+      case 2:
+        return 2;
+      case 1:
+        return 3;
+      default:
+        return 4;
+    }
+  }
+
+  private drawOfficialLaneEffects(elapsedMs: number): void {
+    if (!this.settings.effectEnable || !this.assets) {
+      this.clearLaneEffects();
+      return;
+    }
+    const geometry = this.stageGeometry();
+    const targetHeight = this.stageLaneWidth() * NOTE_LANE_EFFECT_HEIGHT_TO_LANE_WIDTH_RATIO;
+
+    for (let visualLane = 0; visualLane < this.activeLaneEffects.length; visualLane += 1) {
+      const effect = this.activeLaneEffects[visualLane];
+      if (!effect) {
+        continue;
+      }
+      if (elapsedMs < effect.startMs) {
+        continue;
+      }
+      if (effect.state === "idle" && effect.fadeStartMs !== null && elapsedMs >= effect.fadeStartMs) {
+        effect.state = "fadeOut";
+      }
+
+      let alpha = 1;
+      let animationScale = 1;
+      if (effect.state === "fadeOut") {
+        const fadeStartMs = effect.fadeStartMs ?? elapsedMs;
+        const phase = clamp01((elapsedMs - fadeStartMs) / NOTE_LANE_EFFECT_FADE_DURATION_MS);
+        if (phase >= 1) {
+          this.activeLaneEffects[visualLane] = null;
+          continue;
+        }
+        animationScale = lerpNumber(1, 0.7, phase);
+        alpha = 1 - phase;
+      }
+
+      const texture = this.assets.hud.laneEffects[this.laneEffectTextureIndex(effect.visualLane)] ?? null;
+      if (!texture) {
+        continue;
+      }
+      const textureIndex = this.laneEffectTextureIndex(effect.visualLane);
+      const sprite = this.allocEffectSprite();
+      if (!sprite) {
+        return;
+      }
+      const baseScale = targetHeight / Math.max(1, texture.height);
+      const anchor = NOTE_LANE_EFFECT_ANCHOR_BY_TEXTURE_INDEX[textureIndex] ?? { x: 0.5, y: 1 };
+      const flipX = effect.visualLane > 3;
+      sprite.texture = texture;
+      sprite.anchor.set(anchor.x, anchor.y);
+      sprite.x = this.laneXAtVisualPercentRaw(effect.visualLane, 1);
+      sprite.y = geometry.stageBottom;
+      sprite.alpha = alpha;
+      sprite.rotation = 0;
+      sprite.scale.set(
+        baseScale * animationScale * (flipX ? -1 : 1),
+        baseScale * animationScale,
+      );
+    }
   }
 
   private resolveParticleEffectBySlot(
@@ -2635,7 +2713,6 @@ export class PixiRenderer {
     const pack = this.assets?.particleEffects;
     if (!pack) {
       this.activeParticleEmitters = [];
-      this.activeEmptyTouchLaneEffect = null;
       this.activeHoldEffects.clear();
       return;
     }
