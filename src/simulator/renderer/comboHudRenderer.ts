@@ -1,5 +1,6 @@
 import type { Sprite } from "pixi.js";
 import type { NoteSkinTextureBundle } from "../engine/assets";
+import { projectNguiDisplayPoint, RHYTHM_HUD_ANCHORS, RHYTHM_HUD_WIDGETS } from "../engine/uiHudLayout";
 
 interface ComboHudDrawContext {
   viewportWidth: number;
@@ -11,26 +12,26 @@ interface ComboHudDrawContext {
   allocSprite: () => Sprite | null;
 }
 
-const COMBO_ORIGIN_X_RATIO = 0.85;
-const COMBO_ORIGIN_Y_RATIO = 0.4375;
-const COMBO_LABEL_HEIGHT_UNIT = 0.05;
-const COMBO_LABEL_WIDTH_UNIT = (150 * COMBO_LABEL_HEIGHT_UNIT) / 41;
-const COMBO_DIGIT_HEIGHT_UNIT = 0.125;
-const COMBO_DIGIT_WIDTH_UNIT = 9 / 96;
-const COMBO_LABEL_CENTER_Y_OFFSET_UNIT = (COMBO_DIGIT_HEIGHT_UNIT + COMBO_LABEL_HEIGHT_UNIT) * 0.5;
+const COMBO_NUMBER_CLIP_END_MS = 1000;
+// Source: AnimationClip combo_number streamed keyframes in
+// HOST________/VSCode/bangdream-apk/reverse/analysis/targets/runtime-ui-binding-report.*.
+const COMBO_NUMBER_CLIP_POP_MS = 1000 / 12;
+const COMBO_NUMBER_CLIP_SETTLE_MS = 1000 / 6;
+function lerp(from: number, to: number, t: number): number {
+  return from + (to - from) * Math.max(0, Math.min(1, t));
+}
 
-function comboPulseScale(elapsedSecSinceHit: number): number {
-  if (!(elapsedSecSinceHit >= 0)) {
+function comboNumberClipScale(ageMs: number): number {
+  if (!(ageMs >= 0) || ageMs > COMBO_NUMBER_CLIP_END_MS) {
     return 1;
   }
-  const we = -elapsedSecSinceHit;
-  if (we < -0.2) {
-    return 1;
+  if (ageMs <= COMBO_NUMBER_CLIP_POP_MS) {
+    return lerp(0.8, 1.1, ageMs / COMBO_NUMBER_CLIP_POP_MS);
   }
-  if (we < -0.1) {
-    return we + 1.2;
+  if (ageMs <= COMBO_NUMBER_CLIP_SETTLE_MS) {
+    return lerp(1.1, 1.0, (ageMs - COMBO_NUMBER_CLIP_POP_MS) / (COMBO_NUMBER_CLIP_SETTLE_MS - COMBO_NUMBER_CLIP_POP_MS));
   }
-  return 1.1 - 3 * (we + 0.1);
+  return 1;
 }
 
 export function drawComboHud(context: ComboHudDrawContext): void {
@@ -44,14 +45,22 @@ export function drawComboHud(context: ComboHudDrawContext): void {
     return;
   }
 
-  const pulseScale = comboPulseScale((context.elapsedMs - context.lastComboHitMs) / 1000);
-  const unit = context.viewportHeight * pulseScale;
-  if (!Number.isFinite(unit) || unit <= 0) {
+  const clipScale = comboNumberClipScale(context.elapsedMs - context.lastComboHitMs);
+  const numberProjected = projectNguiDisplayPoint(RHYTHM_HUD_ANCHORS.comboNumberLabel, {
+    width: context.viewportWidth,
+    height: context.viewportHeight,
+  });
+  const unitProjected = projectNguiDisplayPoint(RHYTHM_HUD_ANCHORS.comboUnit, {
+    width: context.viewportWidth,
+    height: context.viewportHeight,
+  });
+  const nguiScale = numberProjected.scale;
+  if (!Number.isFinite(nguiScale) || nguiScale <= 0) {
     return;
   }
 
-  const originX = context.viewportWidth * COMBO_ORIGIN_X_RATIO;
-  const originY = context.viewportHeight * COMBO_ORIGIN_Y_RATIO;
+  const originX = numberProjected.x;
+  const originY = numberProjected.y;
 
   const labelTexture = textures.comboLabel;
   if (labelTexture) {
@@ -59,29 +68,37 @@ export function drawComboHud(context: ComboHudDrawContext): void {
     if (labelSprite) {
       labelSprite.texture = labelTexture;
       labelSprite.anchor.set(0.5, 0.5);
-      labelSprite.x = originX;
-      labelSprite.y = originY + unit * COMBO_LABEL_CENTER_Y_OFFSET_UNIT;
+      labelSprite.x = unitProjected.x;
+      labelSprite.y = unitProjected.y;
       labelSprite.alpha = 1;
       labelSprite.rotation = 0;
-      labelSprite.width = unit * COMBO_LABEL_WIDTH_UNIT;
-      labelSprite.height = unit * COMBO_LABEL_HEIGHT_UNIT;
+      labelSprite.width = RHYTHM_HUD_WIDGETS.comboUnit.width * nguiScale * clipScale;
+      labelSprite.height = RHYTHM_HUD_WIDGETS.comboUnit.height * nguiScale * clipScale;
     }
   }
 
   const comboText = String(combo);
-  let slot = -comboText.length / 2;
-  const digitWidth = unit * COMBO_DIGIT_WIDTH_UNIT;
-  const digitHeight = unit * COMBO_DIGIT_HEIGHT_UNIT;
+  const comboAtlas = textures.comboAtlas;
+  const digitSourceHeight = Math.max(1, comboAtlas.digitHeight);
+  const digitScale = (RHYTHM_HUD_WIDGETS.comboDigit.height * nguiScale * clipScale) / digitSourceHeight;
+  const digitWidth = comboAtlas.digitWidth * digitScale;
+  const digitHeight = RHYTHM_HUD_WIDGETS.comboDigit.height * nguiScale * clipScale;
+  const digitAdvanceNgui = comboAtlas.digitWidth + comboAtlas.padding;
+  const digitAdvance = digitAdvanceNgui * nguiScale * clipScale;
+  // UISpriteNumber.SetNumber arrangeType=0 lays out digits from the ones place
+  // leftward, then align=1 shifts all populated digits by totalWidth * 0.5.
+  const totalWidth = comboText.length * digitAdvance;
+  let digitX = originX - (totalWidth * 0.5);
 
   for (const ch of comboText) {
     const digit = ch.charCodeAt(0) - 48;
     if (digit < 0 || digit > 9) {
-      slot += 1;
+      digitX += digitAdvance;
       continue;
     }
-    const digitTexture = textures.comboDigits[digit] ?? null;
+    const digitTexture = comboAtlas.normalDigits[digit] ?? textures.comboDigits[digit] ?? null;
     if (!digitTexture) {
-      slot += 1;
+      digitX += digitAdvance;
       continue;
     }
     const digitSprite = context.allocSprite();
@@ -90,12 +107,12 @@ export function drawComboHud(context: ComboHudDrawContext): void {
     }
     digitSprite.texture = digitTexture;
     digitSprite.anchor.set(0.5, 0.5);
-    digitSprite.x = originX + (slot + 0.5) * digitWidth;
+    digitSprite.x = digitX;
     digitSprite.y = originY;
     digitSprite.alpha = 1;
     digitSprite.rotation = 0;
     digitSprite.width = digitWidth;
     digitSprite.height = digitHeight;
-    slot += 1;
+    digitX += digitAdvance;
   }
 }
