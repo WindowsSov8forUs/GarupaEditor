@@ -2,8 +2,25 @@ import { emit, type UnlistenFn } from "@tauri-apps/api/event";
 import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
 import { AudioEngine } from "../engine/audio";
 import { loadNoteSkinTextureBundle } from "../engine/assets";
-import { loadPauseButtonImageDataUrl } from "../engine/uiAtlas";
-import { projectNguiAnchoredPoint, RHYTHM_HUD_ANCHORS, RHYTHM_HUD_WIDGETS } from "../engine/uiHudLayout";
+import {
+  loadPauseButtonImageDataUrl,
+  loadRhythmGameUiHudSpriteDataUrls,
+  loadRhythmGameUiSpriteDataUrls,
+  loadScoreFontGlyphDataUrls,
+  RHYTHM_GAME_UI_RECTS,
+  SCORE_FONT_GLYPHS,
+  SCORE_FONT_LINE_HEIGHT,
+} from "../engine/uiAtlas";
+import {
+  projectNguiOffsetFromAnchoredRoot,
+  projectNguiAnchoredPoint,
+  getLevel3StarAnchor,
+  getLevel3NguiSpriteMetrics,
+  getLevel3WidgetMetrics,
+  resolveNguiDrawingRect,
+  sumLevel3LocalPositionBetween,
+  RHYTHM_UI_PATHS,
+} from "../engine/uiHudLayout";
 import { parseEditorChart } from "../engine/editorChartParser";
 import {
   buildSettingsFromPayload,
@@ -11,7 +28,7 @@ import {
 } from "../engine/simulatorTiming";
 import { loadMvResourceFromPayload, type MvResource } from "../engine/mv";
 import { SimulatorRuntime } from "../engine/runtime";
-import { JudgeTriggerEvent, ParsedChart, RuntimeStats, SimulatorSettings } from "../engine/types";
+import { ParsedChart, RuntimeStats, SimulatorSettings } from "../engine/types";
 import {
   SIMULATOR_WINDOW_PAYLOAD_EVENT,
   SIMULATOR_WINDOW_READY_EVENT,
@@ -35,22 +52,19 @@ interface UiRefs {
   uiLayer: HTMLDivElement;
   pauseMask: HTMLDivElement;
   scoreHud: HTMLDivElement;
-  scoreGainLayer: HTMLDivElement;
-  scoreAutoLive: HTMLDivElement;
-  scoreAutoLiveText: HTMLSpanElement;
-  scoreFrameSvg: SVGSVGElement;
-  scoreFrameFill: SVGPathElement;
-  scoreFrameStroke: SVGPathElement;
-  scoreTopBadge: HTMLDivElement;
-  scoreTopBadgeIcon: SVGSVGElement;
+  scoreBase: HTMLDivElement;
   scoreTopTrack: HTMLDivElement;
-  scoreRankLabels: HTMLSpanElement[];
   scoreGaugeFill: HTMLDivElement;
   scoreText: HTMLSpanElement;
   scoreDigits: HTMLSpanElement[];
+  lifeGauge: HTMLDivElement;
+  lifeGaugeBg: HTMLImageElement;
+  lifeGaugeFillWrap: HTMLDivElement;
+  lifeGaugeFill: HTMLImageElement;
   pauseAnchor: HTMLDivElement;
   pauseButton: HTMLButtonElement;
   pauseIconPause: HTMLImageElement;
+  pauseCoverIcon: HTMLImageElement;
   bootLayer: HTMLDivElement;
   bootBack: HTMLDivElement;
   bootFrame: HTMLDivElement;
@@ -64,16 +78,6 @@ interface UiRefs {
 
 type StartupPhase = "waiting_touch" | "animating" | "running";
 type MvVideoRenderState = "hidden" | "video" | "black_tail";
-
-interface ScoreGainAnimation {
-  el: SVGSVGElement;
-  strokeText: SVGTextElement;
-  fillText: SVGTextElement;
-  fontPx: number;
-  startMs: number;
-}
-
-const SVG_NS = "http://www.w3.org/2000/svg";
 
 const STARTUP_STAGE_LIVE_BG_FADE_IN_MS = 250;
 const STARTUP_STAGE_COVER_FADE_OUT_MS = 750;
@@ -91,56 +95,46 @@ const STARTUP_TIMELINE_TOTAL_MS =
   + STARTUP_STAGE_UI_FADE_IN_MS
   + STARTUP_STAGE_POST_UI_DURATION_MS;
 const STARTUP_CHART_PREROLL_MS = 3000;
-const SCORE_HUD_LEFT_MARGIN_RATIO = 16 / 1280;
-const SCORE_HUD_LAYOUT_INPUT_WIDTH = 1024;
-const SCORE_HUD_LAYOUT_INPUT_HEIGHT = 576;
-const OVERLAY_UI_TOP_MARGIN_RATIO = 18 / 1280;
-const SCORE_HUD_TOP_WIDTH_RATIO = 11 / 32;
-const SCORE_HUD_TOTAL_HEIGHT_BY_TOP_WIDTH = 39 / 220;
-const SCORE_HUD_UPPER_HEIGHT_RATIO = 37 / 78;
-const SCORE_HUD_LOWER_BASE_WIDTH_BY_TOP_WIDTH = 97 / 220;
-const SCORE_HUD_SLOPE_JOIN_X_RATIO = 5 / 11;
-const SCORE_HUD_TRACK_HEIGHT_BY_UPPER = 24 / 37;
-const SCORE_HUD_TRACK_WIDTH_BY_TOP_WIDTH = 393 / 440;
-const SCORE_HUD_TOP_RADIUS_BY_HEIGHT = 8 / 102;
-const SCORE_HUD_BOTTOM_RADIUS_MULTIPLIER = 2;
 const SCORE_HUD_DIGIT_COUNT = 8;
-const SCORE_HUD_DIGIT_PAD_COLOR = "rgb(204, 204, 204)";
-const SCORE_HUD_ACCENT_PINK = "rgb(255, 59, 113)";
-const SCORE_HUD_BADGE_COLOR = "rgb(72, 72, 72)";
-const SCORE_HUD_BADGE_DIAMETER_BY_HEIGHT = 9 / 26;
-const SCORE_HUD_BADGE_ICON_SIZE_BY_DIAMETER = 17 / 27;
-const SCORE_HUD_BADGE_BORDER_WIDTH_PX = 1;
-const SCORE_HUD_FRAME_STROKE_WIDTH_PX = 2;
-const SCORE_HUD_GAIN_ANIM_TOTAL_MS = ((12 / 15) * 1000 * 3) / 4;
-const SCORE_HUD_GAIN_PHASE_1_END = 4 / 15;
-const SCORE_HUD_GAIN_PHASE_2_END = 8 / 15;
-const SCORE_HUD_GAIN_PHASE_3_END = 12 / 15;
-const SCORE_HUD_GAIN_X0 = SCORE_HUD_LOWER_BASE_WIDTH_BY_TOP_WIDTH;
-const SCORE_HUD_GAIN_X1 = 31 / 50;
-const SCORE_HUD_GAIN_X2 = 32 / 50;
-const SCORE_HUD_GAIN_X3 = 33 / 50;
-const SCORE_HUD_GAIN_FONT_SCALE = 1.08;
-const SCORE_HUD_GAIN_STROKE_WIDTH_PX = 2;
-const SCORE_HUD_AUTO_LIVE_GAP_PX = 5;
-const SCORE_HUD_AUTO_LIVE_WIDTH_BY_TOP_WIDTH = 193 / 440;
-const SCORE_HUD_AUTO_LIVE_HEIGHT_BY_TOTAL_HEIGHT = 37 / 78;
-const SCORE_HUD_AUTO_LIVE_FONT_BY_HEIGHT = 20 / 37;
 const SCORE_HUD_BASE_FULL_SCORE = 10000000;
-const SCORE_HUD_RANK_THRESHOLDS = [
-  { label: "C", score: 375000 },
-  { label: "B", score: 2250000 },
-  { label: "A", score: 4500000 },
-  { label: "S", score: 6750000 },
-  { label: "SS", score: 9000000 },
-] as const;
-const SCORE_HUD_GAUGE_FILL_CLASSES = [
-  "is-rank-0-c",
-  "is-rank-c-b",
-  "is-rank-b-a",
-  "is-rank-a-s",
-  "is-rank-s-ss",
-] as const;
+const SCORE_HUD_TOTAL_SCORE_FONT_SIZE = 28;
+const SCORE_HUD_TOTAL_SCORE_WIDGET = getLevel3WidgetMetrics(RHYTHM_UI_PATHS.scoreTotalScore);
+const SCORE_HUD_DIGIT_SCALE = SCORE_HUD_TOTAL_SCORE_FONT_SIZE / SCORE_FONT_LINE_HEIGHT;
+const PAUSE_MAIN_WIDGET = getLevel3WidgetMetrics(RHYTHM_UI_PATHS.pauseMain);
+const PAUSE_COVER_WIDGET = getLevel3WidgetMetrics(RHYTHM_UI_PATHS.pauseCover);
+const PAUSE_MAIN_SPRITE = getLevel3NguiSpriteMetrics(RHYTHM_UI_PATHS.pauseMain);
+const PAUSE_COVER_SPRITE = getLevel3NguiSpriteMetrics(RHYTHM_UI_PATHS.pauseCover);
+const PAUSE_MAIN_DRAW_RECT = resolveNguiDrawingRect(
+  PAUSE_MAIN_WIDGET,
+  PAUSE_MAIN_SPRITE,
+  RHYTHM_GAME_UI_RECTS.buttonPause,
+);
+const PAUSE_COVER_DRAW_RECT = resolveNguiDrawingRect(
+  PAUSE_COVER_WIDGET,
+  PAUSE_COVER_SPRITE,
+  RHYTHM_GAME_UI_RECTS.buttonPause,
+);
+const NGUI_BASIC_SPRITE_SIMPLE_TYPE = 0;
+
+for (const [label, sprite] of [
+  ["Pause", PAUSE_MAIN_SPRITE],
+  ["Pause/cover", PAUSE_COVER_SPRITE],
+] as const) {
+  if (
+    sprite.type !== NGUI_BASIC_SPRITE_SIMPLE_TYPE
+    || sprite.typeName !== "Simple"
+    || sprite.spriteName !== "button_pause"
+    || !sprite.fixedAspect
+  ) {
+    throw new Error(`Unsupported ${label} UISprite binding: ${JSON.stringify(sprite)}`);
+  }
+}
+
+// Source: Pause/cover UISprite 1128 serialized UIWidget color in
+// HOST________/VSCode/bangdream-apk/reverse/analysis/targets/level3-hud-subtree-report.*.
+// ButtonTouchColor ctor constants are not decoded to RGBA yet, so this keeps
+// the recovered cover widget color instead of inventing a touch flash color.
+const PAUSE_COVER_ALPHA = 0.501960813999176;
 
 function parseLaunchRequestIdFromHash(): string {
   if (typeof window === "undefined") {
@@ -259,17 +253,13 @@ export class SimulatorAppController {
   private lastPauseBlocked: boolean | null = null;
   private runtimeStarted = false;
   private lastRenderedScore = Number.NaN;
-  private lastScoreRankNotes = Number.NaN;
-  private scoreHudLayoutWidth = 1;
-  private scoreValueFontPx = 1;
-  private scoreValueCenterYPx = 0;
-  private scoreGainAnimations: ScoreGainAnimation[] = [];
-  private scoreGainGradientSeq = 0;
   private bootRevealPrepared = false;
   private bootRevealRafId = 0;
   private bootPendingAlpha = 1;
   private bootPendingVisible = false;
   private domMvVideo: HTMLVideoElement | null = null;
+  private pauseCoverFlashRaf1 = 0;
+  private pauseCoverFlashRaf2 = 0;
   private readonly onWindowResize = () => {
     this.updateBootLayerLayout();
   };
@@ -518,6 +508,9 @@ export class SimulatorAppController {
     if (this.startupPhase !== "running" || !this.runtimeStarted) {
       return;
     }
+    if (!this.isPaused) {
+      this.startPauseCoverFlash();
+    }
     this.setPaused(!this.isPaused);
   };
 
@@ -570,6 +563,7 @@ export class SimulatorAppController {
     this.ui.host.removeEventListener("pointerup", this.onHostPointerUpOrCancel);
     this.ui.host.removeEventListener("pointercancel", this.onHostPointerUpOrCancel);
     window.removeEventListener("resize", this.onWindowResize);
+    this.clearPauseCoverFlash();
     this.ui.root.remove();
   }
 
@@ -595,85 +589,67 @@ export class SimulatorAppController {
 
     const scoreHud = document.createElement("div");
     scoreHud.className = "simulator-score-hud";
-    const scoreGainLayer = document.createElement("div");
-    scoreGainLayer.className = "simulator-score-gain-layer";
-    const scoreAutoLive = document.createElement("div");
-    scoreAutoLive.className = "simulator-score-auto-live";
-    const scoreAutoLiveText = document.createElement("span");
-    scoreAutoLiveText.className = "simulator-score-auto-live-text";
-    scoreAutoLiveText.textContent = "AUTO LIVE";
-    scoreAutoLive.appendChild(scoreAutoLiveText);
-    const scoreFrameSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    scoreFrameSvg.classList.add("simulator-score-frame-svg");
-    scoreFrameSvg.setAttribute("viewBox", "0 0 611 102");
-    scoreFrameSvg.setAttribute("preserveAspectRatio", "none");
-    scoreFrameSvg.setAttribute("aria-hidden", "true");
-    const scoreFrameDefs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
-    const scoreFrameGradient = document.createElementNS("http://www.w3.org/2000/svg", "linearGradient");
-    scoreFrameGradient.setAttribute("id", "sim-score-frame-fill");
-    scoreFrameGradient.setAttribute("x1", "0");
-    scoreFrameGradient.setAttribute("y1", "0");
-    scoreFrameGradient.setAttribute("x2", "0");
-    scoreFrameGradient.setAttribute("y2", "1");
-    const scoreFrameGradientStopTop = document.createElementNS("http://www.w3.org/2000/svg", "stop");
-    scoreFrameGradientStopTop.setAttribute("offset", "0%");
-    scoreFrameGradientStopTop.setAttribute("stop-color", "#ffffff");
-    const scoreFrameGradientStopBottom = document.createElementNS("http://www.w3.org/2000/svg", "stop");
-    scoreFrameGradientStopBottom.setAttribute("offset", "100%");
-    scoreFrameGradientStopBottom.setAttribute("stop-color", "#f1f7fd");
-    scoreFrameGradient.append(scoreFrameGradientStopTop, scoreFrameGradientStopBottom);
-    scoreFrameDefs.appendChild(scoreFrameGradient);
-    const scoreFrameFill = document.createElementNS("http://www.w3.org/2000/svg", "path");
-    scoreFrameFill.classList.add("simulator-score-frame-fill");
-    scoreFrameFill.setAttribute("fill", "url(#sim-score-frame-fill)");
-    const scoreFrameStroke = document.createElementNS("http://www.w3.org/2000/svg", "path");
-    scoreFrameStroke.classList.add("simulator-score-frame-stroke");
-    scoreFrameSvg.append(scoreFrameDefs, scoreFrameFill, scoreFrameStroke);
-
-    const scoreTopBadge = document.createElement("div");
-    scoreTopBadge.className = "simulator-score-top-badge";
-    const scoreTopBadgeIcon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    scoreTopBadgeIcon.setAttribute("class", "simulator-score-top-badge-icon");
-    scoreTopBadgeIcon.setAttribute("viewBox", "0 0 100 100");
-    scoreTopBadgeIcon.setAttribute("aria-hidden", "true");
-    const scoreTopBadgeIconPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
-    scoreTopBadgeIconPath.setAttribute(
-      "d",
-      "M50 10 L65 35 L91 38 L71 58 L76 86 L50 72 L24 86 L29 58 L9 38 L35 35 Z",
-    );
-    scoreTopBadgeIconPath.setAttribute("fill", SCORE_HUD_BADGE_COLOR);
-    scoreTopBadgeIconPath.setAttribute("stroke", SCORE_HUD_BADGE_COLOR);
-    scoreTopBadgeIconPath.setAttribute("stroke-width", "6");
-    scoreTopBadgeIconPath.setAttribute("stroke-linejoin", "round");
-    scoreTopBadgeIconPath.setAttribute("stroke-linecap", "round");
-    scoreTopBadgeIcon.appendChild(scoreTopBadgeIconPath);
-    scoreTopBadge.appendChild(scoreTopBadgeIcon);
+    const scoreBase = document.createElement("div");
+    scoreBase.className = "simulator-score-base";
     const scoreTopTrack = document.createElement("div");
     scoreTopTrack.className = "simulator-score-top-track";
     const scoreGaugeFill = document.createElement("div");
     scoreGaugeFill.className = "simulator-score-gauge-fill";
-    const scoreRankRow = document.createElement("div");
-    scoreRankRow.className = "simulator-score-rank-row";
-    const scoreRankLabels: HTMLSpanElement[] = [];
-    for (const { label } of SCORE_HUD_RANK_THRESHOLDS) {
-      const marker = document.createElement("span");
-      marker.className = "simulator-score-rank-label";
-      marker.textContent = label;
-      scoreRankLabels.push(marker);
-      scoreRankRow.appendChild(marker);
-    }
-    scoreTopTrack.append(scoreGaugeFill, scoreRankRow);
+    scoreTopTrack.append(scoreGaugeFill);
     const scoreText = document.createElement("span");
     scoreText.className = "simulator-score-value";
     const scoreDigits: HTMLSpanElement[] = [];
     for (let index = 0; index < SCORE_HUD_DIGIT_COUNT; index += 1) {
       const digit = document.createElement("span");
-      digit.className = "simulator-score-digit is-pad";
+      digit.className = "simulator-score-digit";
       digit.textContent = "0";
       scoreDigits.push(digit);
       scoreText.appendChild(digit);
     }
-    scoreHud.append(scoreFrameSvg, scoreGainLayer, scoreTopBadge, scoreTopTrack, scoreText);
+    scoreHud.append(scoreBase, scoreTopTrack, scoreText);
+
+    const lifeGauge = document.createElement("div");
+    lifeGauge.className = "simulator-life-gauge";
+    const lifeGaugeBg = document.createElement("img");
+    lifeGaugeBg.className = "simulator-life-gauge-bg";
+    lifeGaugeBg.alt = "";
+    lifeGaugeBg.decoding = "async";
+    const lifeGaugeFillWrap = document.createElement("div");
+    lifeGaugeFillWrap.className = "simulator-life-gauge-fill-wrap";
+    const lifeGaugeFill = document.createElement("img");
+    lifeGaugeFill.className = "simulator-life-gauge-fill";
+    lifeGaugeFill.alt = "";
+    lifeGaugeFill.decoding = "async";
+    lifeGaugeFillWrap.appendChild(lifeGaugeFill);
+    lifeGauge.append(lifeGaugeBg, lifeGaugeFillWrap);
+
+    void loadRhythmGameUiHudSpriteDataUrls()
+      .then((sprites) => {
+        if (sprites.gaugeBaseScore) {
+          scoreBase.style.backgroundImage = `url("${sprites.gaugeBaseScore}")`;
+        }
+        if (sprites.scoreMeterBlue) {
+          scoreGaugeFill.style.backgroundImage = `url("${sprites.scoreMeterBlue}")`;
+        }
+        if (sprites.bgHealth) {
+          lifeGaugeBg.src = sprites.bgHealth;
+        }
+        if (sprites.hpMeterMain ?? sprites.hpMeter) {
+          lifeGaugeFill.src = sprites.hpMeterMain ?? sprites.hpMeter ?? "";
+        }
+      })
+      .catch(() => {});
+    void loadRhythmGameUiSpriteDataUrls().catch(() => {});
+    void loadScoreFontGlyphDataUrls()
+      .then((glyphs) => {
+        for (const digit of scoreDigits) {
+          const value = digit.dataset.scoreGlyph as keyof typeof glyphs | undefined;
+          if (value && glyphs[value]) {
+            digit.style.backgroundImage = `url("${glyphs[value]}")`;
+          }
+        }
+      })
+      .catch(() => {});
 
     const pauseAnchor = document.createElement("div");
     pauseAnchor.className = "simulator-pause-anchor";
@@ -687,17 +663,23 @@ export class SimulatorAppController {
     pauseIconPause.className = "simulator-pause-icon simulator-pause-icon-pause";
     pauseIconPause.alt = "";
     pauseIconPause.decoding = "async";
+    const pauseCoverIcon = document.createElement("img");
+    pauseCoverIcon.className = "simulator-pause-icon simulator-pause-icon-cover";
+    pauseCoverIcon.alt = "";
+    pauseCoverIcon.decoding = "async";
+    pauseCoverIcon.style.setProperty("--sim-pause-cover-alpha", `${PAUSE_COVER_ALPHA}`);
     void loadPauseButtonImageDataUrl()
       .then((url) => {
         if (url) {
           pauseIconPause.src = url;
+          pauseCoverIcon.src = url;
         }
       })
       .catch(() => {});
-    pauseCore.append(pauseIconPause);
+    pauseCore.append(pauseIconPause, pauseCoverIcon);
     pauseButton.append(pauseCore);
     pauseAnchor.append(pauseButton);
-    uiLayer.append(pauseMask, scoreHud, scoreAutoLive, pauseAnchor);
+    uiLayer.append(pauseMask, scoreHud, lifeGauge, pauseAnchor);
 
     const bootLayer = document.createElement("div");
     bootLayer.className = "simulator-boot-layer";
@@ -734,22 +716,19 @@ export class SimulatorAppController {
       uiLayer,
       pauseMask,
       scoreHud,
-      scoreGainLayer,
-      scoreAutoLive,
-      scoreAutoLiveText,
-      scoreFrameSvg,
-      scoreFrameFill,
-      scoreFrameStroke,
-      scoreTopBadge,
-      scoreTopBadgeIcon,
+      scoreBase,
       scoreTopTrack,
-      scoreRankLabels,
       scoreGaugeFill,
       scoreText,
       scoreDigits,
+      lifeGauge,
+      lifeGaugeBg,
+      lifeGaugeFillWrap,
+      lifeGaugeFill,
       pauseAnchor,
       pauseButton,
       pauseIconPause,
+      pauseCoverIcon,
       bootLayer,
       bootBack,
       bootFrame,
@@ -886,7 +865,6 @@ export class SimulatorAppController {
     precomputeLut(settings);
     const chart: ParsedChart = parseEditorChart(this.launchPayload.chartData, settings);
     this.renderer.setChart(chart);
-    this.updateScoreRankMarkerPositions(chart.noteCount);
 
     if (settings.mvmode) {
       const preflight = await this.consumeMvPreflightForPayload(this.launchPayload);
@@ -998,12 +976,9 @@ export class SimulatorAppController {
       }
       const judgeTriggers = this.runtime.consumePendingJudgeTriggers();
       if (judgeTriggers.length > 0) {
-        this.spawnScoreGainAnimationsFromJudgeTriggers(stats, judgeTriggers, now);
         this.renderer.pushJudgeTriggers(judgeTriggers);
       }
     }
-
-    this.updateScoreGainAnimations(now);
 
     if (this.settings?.mvmode && this.renderer.isWebglContextLost()) {
       this.fallbackToLiveBgOnMvRuntimeError(new Error("webgl context lost"));
@@ -1235,6 +1210,32 @@ export class SimulatorAppController {
     this.ui.pauseIconPause.style.display = "block";
   }
 
+  private clearPauseCoverFlash(): void {
+    if (this.pauseCoverFlashRaf1) {
+      cancelAnimationFrame(this.pauseCoverFlashRaf1);
+      this.pauseCoverFlashRaf1 = 0;
+    }
+    if (this.pauseCoverFlashRaf2) {
+      cancelAnimationFrame(this.pauseCoverFlashRaf2);
+      this.pauseCoverFlashRaf2 = 0;
+    }
+    this.ui.pauseCoverIcon.style.display = "none";
+  }
+
+  private startPauseCoverFlash(): void {
+    this.clearPauseCoverFlash();
+    this.ui.pauseCoverIcon.style.display = "block";
+    // Source: PauseButton.<finishCoverFlash>d__25.MoveNext yields null twice,
+    // then calls coverSprite.gameObject.SetActive(false). There is no lerp.
+    this.pauseCoverFlashRaf1 = requestAnimationFrame(() => {
+      this.pauseCoverFlashRaf1 = 0;
+      this.pauseCoverFlashRaf2 = requestAnimationFrame(() => {
+        this.pauseCoverFlashRaf2 = 0;
+        this.ui.pauseCoverIcon.style.display = "none";
+      });
+    });
+  }
+
   private clearActiveTouchCapture(): void {
     if (this.activeEmptyTapPointerId === null) {
       return;
@@ -1331,7 +1332,8 @@ export class SimulatorAppController {
     this.applyRectStyle(this.ui.bootDifficultyBadge, diffX, diffY, diffWidth, diffHeight);
     this.ui.bootDifficultyBadge.style.borderRadius = "5px";
     this.ui.bootDifficultyText.style.fontSize = `${Math.max(1, diffFontSize)}px`;
-    this.updateScoreHudLayout(SCORE_HUD_LAYOUT_INPUT_WIDTH, SCORE_HUD_LAYOUT_INPUT_HEIGHT);
+    this.updateScoreHudLayout(windowWidth, windowHeight);
+    this.updateLifeGaugeLayout(windowWidth, windowHeight);
     this.updatePauseButtonLayout(windowWidth, windowHeight);
 
     this.updateBootDifficultyTextScale();
@@ -1340,17 +1342,22 @@ export class SimulatorAppController {
   private updatePauseButtonLayout(windowWidth: number, windowHeight: number): void {
     const projected = projectNguiAnchoredPoint(
       {
-        horizontal: "right",
-        vertical: "top",
-        offset: RHYTHM_HUD_ANCHORS.pauseRightTop,
+        ...getLevel3StarAnchor(RHYTHM_UI_PATHS.pauseRoot),
+        offset: sumLevel3LocalPositionBetween(RHYTHM_UI_PATHS.pauseRoot, RHYTHM_UI_PATHS.pauseMain),
       },
       {
         width: windowWidth,
         height: windowHeight,
       },
     );
-    const buttonWidth = Math.max(1, RHYTHM_HUD_WIDGETS.pauseCover.width * projected.scale);
-    const buttonHeight = Math.max(1, RHYTHM_HUD_WIDGETS.pauseCover.height * projected.scale);
+    const buttonWidth = Math.max(1, PAUSE_MAIN_WIDGET.width * projected.scale);
+    const buttonHeight = Math.max(1, PAUSE_MAIN_WIDGET.height * projected.scale);
+    const coverWidth = Math.max(1, PAUSE_COVER_WIDGET.width * projected.scale);
+    const coverHeight = Math.max(1, PAUSE_COVER_WIDGET.height * projected.scale);
+    const buttonDrawWidth = Math.max(1, PAUSE_MAIN_DRAW_RECT.width * projected.scale);
+    const buttonDrawHeight = Math.max(1, PAUSE_MAIN_DRAW_RECT.height * projected.scale);
+    const coverDrawWidth = Math.max(1, PAUSE_COVER_DRAW_RECT.width * projected.scale);
+    const coverDrawHeight = Math.max(1, PAUSE_COVER_DRAW_RECT.height * projected.scale);
 
     this.ui.pauseAnchor.style.left = `${projected.x}px`;
     this.ui.pauseAnchor.style.top = `${projected.y}px`;
@@ -1358,6 +1365,12 @@ export class SimulatorAppController {
     this.ui.pauseAnchor.style.bottom = "";
     this.ui.pauseAnchor.style.setProperty("--sim-pause-button-width", `${buttonWidth}px`);
     this.ui.pauseAnchor.style.setProperty("--sim-pause-button-height", `${buttonHeight}px`);
+    this.ui.pauseAnchor.style.setProperty("--sim-pause-cover-width", `${coverWidth}px`);
+    this.ui.pauseAnchor.style.setProperty("--sim-pause-cover-height", `${coverHeight}px`);
+    this.ui.pauseAnchor.style.setProperty("--sim-pause-button-draw-width", `${buttonDrawWidth}px`);
+    this.ui.pauseAnchor.style.setProperty("--sim-pause-button-draw-height", `${buttonDrawHeight}px`);
+    this.ui.pauseAnchor.style.setProperty("--sim-pause-cover-draw-width", `${coverDrawWidth}px`);
+    this.ui.pauseAnchor.style.setProperty("--sim-pause-cover-draw-height", `${coverDrawHeight}px`);
   }
 
   private applyRectStyle(el: HTMLElement, x: number, y: number, w: number, h: number): void {
@@ -1376,136 +1389,110 @@ export class SimulatorAppController {
     textEl.style.transform = `translate(-50%, -50%) scaleX(${scaleX})`;
   }
 
-  private buildScoreHudFramePath(
-    topWidth: number,
-    totalHeight: number,
-    upperHeight: number,
-    lowerBaseWidth: number,
-  ): string {
-    const width = Math.max(1, topWidth);
-    const height = Math.max(1, totalHeight);
-    const upper = Math.max(0, Math.min(height, upperHeight));
-    const lowerBase = Math.max(1, Math.min(width, lowerBaseWidth));
-    const topRadius = Math.max(2, height * SCORE_HUD_TOP_RADIUS_BY_HEIGHT);
-    const bottomRadius = Math.max(topRadius, topRadius * SCORE_HUD_BOTTOM_RADIUS_MULTIPLIER);
-    const slopeJoinX = width * SCORE_HUD_SLOPE_JOIN_X_RATIO;
-    const joinY = upper;
-    const cornerX = lowerBase;
-    const cornerY = height;
-    const upperBottomRightRoundStartY = Math.max(topRadius, joinY - topRadius);
-    const upperBottomRightRoundEndX = Math.max(topRadius, width - topRadius);
-    const inDx = cornerX - slopeJoinX;
-    const inDy = cornerY - joinY;
-    const inLen = Math.hypot(inDx, inDy);
-    const ax = inLen > 1e-4 ? inDx / inLen : -1;
-    const ay = inLen > 1e-4 ? inDy / inLen : 0;
-    const bx = -1;
-    const by = 0;
-    const dot = Math.max(-0.999999, Math.min(0.999999, ax * bx + ay * by));
-    const theta = Math.acos(dot);
-    const tanHalf = Math.tan(theta * 0.5);
-    const idealFilletOffset = tanHalf > 1e-4 ? bottomRadius / tanHalf : bottomRadius;
-    const maxOffsetOnSlant = Math.max(0, inLen - 1e-3);
-    const maxOffsetOnBottom = Math.max(0, cornerX - 1e-3);
-    const filletOffset = Math.max(
-      0,
-      Math.min(idealFilletOffset, maxOffsetOnSlant, maxOffsetOnBottom),
+  private updateScoreHudLayout(windowWidth: number, windowHeight: number): void {
+    const viewport = { width: windowWidth, height: windowHeight };
+    const scoreRootAnchor = getLevel3StarAnchor(RHYTHM_UI_PATHS.scoreRoot);
+    const scoreBackgroundWidget = getLevel3WidgetMetrics(RHYTHM_UI_PATHS.scoreBackground);
+    const scoreForegroundWidget = getLevel3WidgetMetrics(RHYTHM_UI_PATHS.scoreForeground);
+    const background = projectNguiOffsetFromAnchoredRoot(
+      scoreRootAnchor,
+      sumLevel3LocalPositionBetween(RHYTHM_UI_PATHS.scoreRoot, RHYTHM_UI_PATHS.scoreBackground),
+      viewport,
     );
-    const slantRoundStartX = cornerX - ax * filletOffset;
-    const slantRoundStartY = cornerY - ay * filletOffset;
-    const bottomRoundEndX = cornerX - filletOffset;
-    const leftBottomRoundStartY = Math.max(topRadius, height - bottomRadius);
-    return [
-      `M ${topRadius} 0`,
-      `H ${Math.max(topRadius, width - topRadius)}`,
-      `Q ${width} 0 ${width} ${topRadius}`,
-      `V ${upperBottomRightRoundStartY}`,
-      `Q ${width} ${joinY} ${upperBottomRightRoundEndX} ${joinY}`,
-      `H ${slopeJoinX}`,
-      `L ${slantRoundStartX} ${slantRoundStartY}`,
-      `Q ${cornerX} ${cornerY} ${bottomRoundEndX} ${height}`,
-      `H ${bottomRadius}`,
-      `Q 0 ${height} 0 ${leftBottomRoundStartY}`,
-      `V ${topRadius}`,
-      `Q 0 0 ${topRadius} 0`,
-      "Z",
-    ].join(" ");
+    const scorePoint = projectNguiOffsetFromAnchoredRoot(
+      scoreRootAnchor,
+      sumLevel3LocalPositionBetween(RHYTHM_UI_PATHS.scoreRoot, RHYTHM_UI_PATHS.scoreTotalScore),
+      viewport,
+    );
+    const meterPoint = projectNguiOffsetFromAnchoredRoot(
+      scoreRootAnchor,
+      sumLevel3LocalPositionBetween(RHYTHM_UI_PATHS.scoreRoot, RHYTHM_UI_PATHS.scoreForeground),
+      viewport,
+    );
+    const scale = background.scale;
+    const baseWidth = scoreBackgroundWidget.width * scale;
+    const baseHeight = scoreBackgroundWidget.height * scale;
+    const meterWidth = scoreForegroundWidget.width * scale;
+    const meterHeight = scoreForegroundWidget.height * scale;
+    this.applyRectStyle(this.ui.scoreHud, 0, 0, windowWidth, windowHeight);
+    this.applyRectStyle(this.ui.scoreBase, background.x, background.y - (baseHeight * 0.5), baseWidth, baseHeight);
+    this.applyRectStyle(
+      this.ui.scoreTopTrack,
+      meterPoint.x,
+      meterPoint.y - (meterHeight * 0.5),
+      meterWidth,
+      meterHeight,
+    );
+    const digitScale = scale * SCORE_HUD_DIGIT_SCALE;
+    this.ui.scoreText.style.left = `${scorePoint.x}px`;
+    this.ui.scoreText.style.top = `${scorePoint.y}px`;
+    this.ui.scoreText.style.display = "inline-flex";
+    this.ui.scoreTopTrack.style.setProperty("--sim-score-meter-width", `${meterWidth}px`);
+    this.ui.scoreTopTrack.style.setProperty("--sim-score-meter-height", `${meterHeight}px`);
+    this.ui.scoreGaugeFill.style.height = `${meterHeight}px`;
+    this.ui.scoreGaugeFill.style.backgroundSize = `${meterWidth}px ${meterHeight}px`;
+    this.ui.scoreText.style.setProperty("--sim-score-font-scale", `${digitScale}`);
+    this.ui.scoreText.style.width = `${SCORE_HUD_TOTAL_SCORE_WIDGET.width}px`;
+    this.ui.scoreText.style.height = `${SCORE_HUD_TOTAL_SCORE_WIDGET.height}px`;
+    this.ui.scoreText.style.transform = `translate(-50%, -50%) scale(${digitScale})`;
+    this.layoutBitmapScoreDigits();
   }
 
-  private updateScoreHudLayout(windowWidth: number, windowHeight: number): void {
-    const topWidth = Math.max(1, windowWidth * SCORE_HUD_TOP_WIDTH_RATIO);
-    const totalHeight = Math.max(1, topWidth * SCORE_HUD_TOTAL_HEIGHT_BY_TOP_WIDTH);
-    const upperHeight = totalHeight * SCORE_HUD_UPPER_HEIGHT_RATIO;
-    const lowerBaseWidth = topWidth * SCORE_HUD_LOWER_BASE_WIDTH_BY_TOP_WIDTH;
-    const slopeJoinX = topWidth * SCORE_HUD_SLOPE_JOIN_X_RATIO;
-    const lowerHeight = Math.max(1, totalHeight - upperHeight);
-    const left = windowWidth * SCORE_HUD_LEFT_MARGIN_RATIO;
-    const top = windowHeight * OVERLAY_UI_TOP_MARGIN_RATIO;
-    this.scoreHudLayoutWidth = topWidth;
-    this.applyRectStyle(this.ui.scoreHud, left, top, topWidth, totalHeight);
-    const autoLiveWidth = topWidth * SCORE_HUD_AUTO_LIVE_WIDTH_BY_TOP_WIDTH;
-    const autoLiveHeight = totalHeight * SCORE_HUD_AUTO_LIVE_HEIGHT_BY_TOTAL_HEIGHT;
-    const autoLiveTop = top + totalHeight + SCORE_HUD_AUTO_LIVE_GAP_PX;
-    this.applyRectStyle(this.ui.scoreAutoLive, left, autoLiveTop, autoLiveWidth, autoLiveHeight);
-    this.ui.scoreAutoLive.style.borderRadius = `${Math.max(0, autoLiveHeight * 0.5)}px`;
-    this.ui.scoreAutoLive.style.background = SCORE_HUD_ACCENT_PINK;
-    this.ui.scoreAutoLiveText.style.fontSize = `${Math.max(1, autoLiveHeight * SCORE_HUD_AUTO_LIVE_FONT_BY_HEIGHT)}px`;
-    const framePath = this.buildScoreHudFramePath(topWidth, totalHeight, upperHeight, lowerBaseWidth);
-    this.ui.scoreFrameSvg.setAttribute("viewBox", `0 0 ${topWidth} ${totalHeight}`);
-    this.ui.scoreFrameFill.setAttribute("d", framePath);
-    this.ui.scoreFrameStroke.setAttribute("d", framePath);
-    this.ui.scoreFrameStroke.setAttribute("stroke-width", `${SCORE_HUD_FRAME_STROKE_WIDTH_PX}`);
-
-    const trackWidth = topWidth * SCORE_HUD_TRACK_WIDTH_BY_TOP_WIDTH;
-    const trackHeight = upperHeight * SCORE_HUD_TRACK_HEIGHT_BY_UPPER;
-    const trackX = topWidth - trackWidth - (topWidth * (8 / 440));
-    const trackY = (upperHeight - trackHeight) * 0.5;
-    this.applyRectStyle(this.ui.scoreTopTrack, trackX, trackY, trackWidth, trackHeight);
-
-    const badgeDiameter = totalHeight * SCORE_HUD_BADGE_DIAMETER_BY_HEIGHT;
-    const badgeWidth = badgeDiameter;
-    const badgeHeight = badgeDiameter;
-    const badgeX = topWidth * (5 / 440);
-    const badgeY = (upperHeight - badgeHeight) * 0.5;
-    this.applyRectStyle(this.ui.scoreTopBadge, badgeX, badgeY, badgeWidth, badgeHeight);
-    this.ui.scoreTopBadge.style.borderRadius = "50%";
-    this.ui.scoreTopBadge.style.background = "transparent";
-    this.ui.scoreTopBadge.style.borderColor = SCORE_HUD_BADGE_COLOR;
-    this.ui.scoreTopBadge.style.borderWidth = `${SCORE_HUD_BADGE_BORDER_WIDTH_PX}px`;
-    this.ui.scoreTopBadgeIcon.style.width = `${badgeDiameter * SCORE_HUD_BADGE_ICON_SIZE_BY_DIAMETER}px`;
-    this.ui.scoreTopBadgeIcon.style.height = `${badgeDiameter * SCORE_HUD_BADGE_ICON_SIZE_BY_DIAMETER}px`;
-
-    const denom = Math.max(1e-6, slopeJoinX + lowerBaseWidth);
-    const lowerCenterX = (slopeJoinX * slopeJoinX + slopeJoinX * lowerBaseWidth + lowerBaseWidth * lowerBaseWidth)
-      / (3 * denom);
-    const lowerCenterYOffset = lowerHeight * (slopeJoinX + 2 * lowerBaseWidth) / (3 * denom);
-    const scoreCenterY = upperHeight + lowerCenterYOffset;
-    this.scoreValueCenterYPx = scoreCenterY;
-    this.ui.scoreText.style.left = `${lowerCenterX}px`;
-    this.ui.scoreText.style.top = `${scoreCenterY}px`;
-    this.scoreValueFontPx = Math.max(1, lowerHeight * 0.68);
-    this.ui.scoreText.style.fontSize = `${this.scoreValueFontPx}px`;
-    this.updateScoreGainAnimations(performance.now());
+  private updateLifeGaugeLayout(windowWidth: number, windowHeight: number): void {
+    const viewport = { width: windowWidth, height: windowHeight };
+    const lifeGaugeRootAnchor = getLevel3StarAnchor(RHYTHM_UI_PATHS.lifeGaugeRoot);
+    const lifeGaugeBackgroundWidget = getLevel3WidgetMetrics(RHYTHM_UI_PATHS.lifeGaugeBackground);
+    const lifeGaugeFrontWidget = getLevel3WidgetMetrics(RHYTHM_UI_PATHS.lifeGaugeFront);
+    const background = projectNguiOffsetFromAnchoredRoot(
+      lifeGaugeRootAnchor,
+      sumLevel3LocalPositionBetween(RHYTHM_UI_PATHS.lifeGaugeRoot, RHYTHM_UI_PATHS.lifeGaugeBackground),
+      viewport,
+    );
+    const front = projectNguiOffsetFromAnchoredRoot(
+      lifeGaugeRootAnchor,
+      sumLevel3LocalPositionBetween(RHYTHM_UI_PATHS.lifeGaugeRoot, RHYTHM_UI_PATHS.lifeGaugeFront),
+      viewport,
+    );
+    const scale = background.scale;
+    const bgWidth = lifeGaugeBackgroundWidget.width * scale;
+    const bgHeight = lifeGaugeBackgroundWidget.height * scale;
+    const frontWidth = lifeGaugeFrontWidget.width * scale;
+    const frontHeight = lifeGaugeFrontWidget.height * scale;
+    this.applyRectStyle(this.ui.lifeGauge, 0, 0, windowWidth, windowHeight);
+    this.applyRectStyle(
+      this.ui.lifeGaugeBg,
+      background.x - (bgWidth * 0.5),
+      background.y - (bgHeight * 0.5),
+      bgWidth,
+      bgHeight,
+    );
+    this.applyRectStyle(
+      this.ui.lifeGaugeFillWrap,
+      front.x - (frontWidth * 0.5),
+      front.y - (frontHeight * 0.5),
+      frontWidth,
+      frontHeight,
+    );
+    this.applyRectStyle(this.ui.lifeGaugeFill, 0, 0, frontWidth, frontHeight);
+    this.ui.lifeGaugeFill.style.width = `${frontWidth}px`;
+    // The simulator currently has no real life state. Keep the restored gauge at full life.
+    this.ui.lifeGaugeFillWrap.style.width = `${frontWidth}px`;
   }
 
   private updateScoreHud(stats: RuntimeStats | null): void {
-    if (stats) {
-      this.updateScoreRankMarkerPositions(stats.notes);
-    }
     const score = Math.max(0, Math.floor(stats?.score ?? 0));
     if (!Number.isFinite(this.lastRenderedScore) || this.lastRenderedScore !== score) {
       const clamped = Math.min(999_999_999, score);
       const raw = clamped <= 0 ? "" : String(clamped);
       const padded = raw.padStart(SCORE_HUD_DIGIT_COUNT, "0").slice(-SCORE_HUD_DIGIT_COUNT);
-      const filledStart = Math.max(0, SCORE_HUD_DIGIT_COUNT - raw.length);
       for (let index = 0; index < this.ui.scoreDigits.length; index += 1) {
         const digit = this.ui.scoreDigits[index];
-        digit.textContent = padded[index] ?? "0";
-        const isPad = index < filledStart;
-        digit.classList.toggle("is-pad", isPad);
-        digit.classList.toggle("is-filled", !isPad);
-        digit.style.color = isPad ? SCORE_HUD_DIGIT_PAD_COLOR : SCORE_HUD_ACCENT_PINK;
+        const value = padded[index] ?? "0";
+        digit.textContent = "";
+        digit.dataset.scoreGlyph = value;
+        this.applyBitmapScoreGlyph(digit, value);
       }
+      this.layoutBitmapScoreDigits();
       this.lastRenderedScore = score;
     }
     const targetGauge = (() => {
@@ -1517,180 +1504,33 @@ export class SimulatorAppController {
       return this.clamp01(score / fullScore);
     })();
     this.ui.scoreGaugeFill.style.width = `${(targetGauge * 100).toFixed(3)}%`;
-    const gaugeFillClass = (() => {
-      if (score >= SCORE_HUD_RANK_THRESHOLDS[3].score) {
-        return "is-rank-s-ss";
-      }
-      if (score >= SCORE_HUD_RANK_THRESHOLDS[2].score) {
-        return "is-rank-a-s";
-      }
-      if (score >= SCORE_HUD_RANK_THRESHOLDS[1].score) {
-        return "is-rank-b-a";
-      }
-      if (score >= SCORE_HUD_RANK_THRESHOLDS[0].score) {
-        return "is-rank-c-b";
-      }
-      return "is-rank-0-c";
-    })();
-    for (const className of SCORE_HUD_GAUGE_FILL_CLASSES) {
-      this.ui.scoreGaugeFill.classList.toggle(className, className === gaugeFillClass);
-    }
   }
 
-  private updateScoreRankMarkerPositions(noteCount: number): void {
-    const notes = Math.max(0, Math.floor(noteCount));
-    if (Number.isFinite(this.lastScoreRankNotes) && this.lastScoreRankNotes === notes) {
+  private applyBitmapScoreGlyph(el: HTMLElement, value: string): void {
+    const glyph = SCORE_FONT_GLYPHS[value as keyof typeof SCORE_FONT_GLYPHS];
+    if (!glyph) {
+      el.style.display = "none";
       return;
     }
-    this.lastScoreRankNotes = notes;
-    const fullScore = SCORE_HUD_BASE_FULL_SCORE + notes;
-    for (let index = 0; index < SCORE_HUD_RANK_THRESHOLDS.length; index += 1) {
-      const marker = this.ui.scoreRankLabels[index];
-      if (!marker) {
-        continue;
-      }
-      const threshold = SCORE_HUD_RANK_THRESHOLDS[index];
-      const ratio = this.clamp01(threshold.score / Math.max(1, fullScore));
-      marker.style.left = `${(ratio * 100).toFixed(4)}%`;
-    }
+    el.style.display = "inline-block";
+    el.style.opacity = "1";
+    el.style.width = `${glyph.xAdvance}px`;
+    el.style.height = `${SCORE_FONT_LINE_HEIGHT}px`;
+    el.style.backgroundSize = `${glyph.width}px ${glyph.height}px`;
+    el.style.backgroundPosition = `${glyph.xOffset}px ${glyph.yOffset}px`;
+    void loadScoreFontGlyphDataUrls()
+      .then((glyphs) => {
+        const url = glyphs[value as keyof typeof glyphs];
+        if (url) {
+          el.style.backgroundImage = `url("${url}")`;
+        }
+      })
+      .catch(() => {});
   }
 
-  private displayScoreGainPerNote(notes: number): number {
-    const safeNotes = Math.max(1, Math.floor(notes));
-    return Math.max(0, Math.floor(SCORE_HUD_BASE_FULL_SCORE / safeNotes + 1));
-  }
-
-  private createScoreGainAnimationElement(label: string, fontPx: number): ScoreGainAnimation {
-    const svg = document.createElementNS(SVG_NS, "svg");
-    svg.classList.add("simulator-score-gain-svg");
-    svg.setAttribute("width", "1");
-    svg.setAttribute("height", "1");
-    const defs = document.createElementNS(SVG_NS, "defs");
-    const gradient = document.createElementNS(SVG_NS, "linearGradient");
-    const gradientId = `sim-score-gain-gradient-${this.scoreGainGradientSeq++}`;
-    gradient.setAttribute("id", gradientId);
-    gradient.setAttribute("x1", "0");
-    gradient.setAttribute("y1", "0");
-    gradient.setAttribute("x2", "0");
-    gradient.setAttribute("y2", "1");
-    const stopTop = document.createElementNS(SVG_NS, "stop");
-    stopTop.setAttribute("offset", "0%");
-    stopTop.setAttribute("stop-color", "rgb(235, 255, 255)");
-    const stopBottom = document.createElementNS(SVG_NS, "stop");
-    stopBottom.setAttribute("offset", "100%");
-    stopBottom.setAttribute("stop-color", "rgb(191, 220, 243)");
-    gradient.append(stopTop, stopBottom);
-    defs.appendChild(gradient);
-
-    const strokeText = document.createElementNS(SVG_NS, "text");
-    strokeText.classList.add("simulator-score-gain-svg-stroke");
-    strokeText.setAttribute("x", "0");
-    strokeText.setAttribute("y", "0");
-    strokeText.setAttribute("stroke-width", `${SCORE_HUD_GAIN_STROKE_WIDTH_PX}`);
-    strokeText.textContent = label;
-
-    const fillText = document.createElementNS(SVG_NS, "text");
-    fillText.classList.add("simulator-score-gain-svg-fill");
-    fillText.setAttribute("x", "0");
-    fillText.setAttribute("y", "0");
-    fillText.setAttribute("fill", `url(#${gradientId})`);
-    fillText.textContent = label;
-
-    svg.append(defs, strokeText, fillText);
-    const animation: ScoreGainAnimation = {
-      el: svg,
-      strokeText,
-      fillText,
-      fontPx: Number.NaN,
-      startMs: 0,
-    };
-    this.applyScoreGainAnimationFont(animation, fontPx);
-    return animation;
-  }
-
-  private applyScoreGainAnimationFont(animation: ScoreGainAnimation, fontPx: number): void {
-    const px = Math.max(1, fontPx);
-    if (Number.isFinite(animation.fontPx) && Math.abs(animation.fontPx - px) < 1e-3) {
-      return;
-    }
-    animation.fontPx = px;
-    const value = `${px}px`;
-    animation.strokeText.setAttribute("font-size", value);
-    animation.fillText.setAttribute("font-size", value);
-  }
-
-  private spawnScoreGainAnimationsFromJudgeTriggers(
-    _stats: RuntimeStats,
-    judgeTriggers: readonly JudgeTriggerEvent[],
-    nowMs: number,
-  ): void {
-    if (judgeTriggers.length === 0) {
-      return;
-    }
-    const notes = Math.max(1, Math.floor(_stats.notes));
-    const gain = this.displayScoreGainPerNote(notes);
-    if (gain <= 0) {
-      return;
-    }
-    for (let index = 0; index < judgeTriggers.length; index += 1) {
-      const animation = this.createScoreGainAnimationElement(
-        `+${gain}`,
-        Math.max(1, this.scoreValueFontPx * SCORE_HUD_GAIN_FONT_SCALE),
-      );
-      animation.startMs = nowMs;
-      this.ui.scoreGainLayer.appendChild(animation.el);
-      this.scoreGainAnimations.push(animation);
-    }
-  }
-
-  private updateScoreGainAnimations(nowMs: number): void {
-    if (this.scoreGainAnimations.length === 0) {
-      return;
-    }
-    const width = Math.max(1, this.scoreHudLayoutWidth);
-    const gainFontPx = Math.max(1, this.scoreValueFontPx * SCORE_HUD_GAIN_FONT_SCALE);
-    const active: ScoreGainAnimation[] = [];
-    for (const animation of this.scoreGainAnimations) {
-      const elapsed = Math.max(0, nowMs - animation.startMs);
-      const t = elapsed / SCORE_HUD_GAIN_ANIM_TOTAL_MS;
-      if (t >= SCORE_HUD_GAIN_PHASE_3_END) {
-        animation.el.remove();
-        continue;
-      }
-      let xRatio = SCORE_HUD_GAIN_X3;
-      let opacity = 0;
-      if (t <= SCORE_HUD_GAIN_PHASE_1_END) {
-        const phase = this.clamp01(t / SCORE_HUD_GAIN_PHASE_1_END);
-        xRatio = this.lerp(SCORE_HUD_GAIN_X0, SCORE_HUD_GAIN_X1, phase);
-        opacity = this.easeOutCubic(phase);
-      } else if (t <= SCORE_HUD_GAIN_PHASE_2_END) {
-        const phase = this.clamp01(
-          (t - SCORE_HUD_GAIN_PHASE_1_END) / (SCORE_HUD_GAIN_PHASE_2_END - SCORE_HUD_GAIN_PHASE_1_END),
-        );
-        xRatio = this.lerp(SCORE_HUD_GAIN_X1, SCORE_HUD_GAIN_X2, phase);
-        opacity = 1;
-      } else {
-        const phase = this.clamp01(
-          (t - SCORE_HUD_GAIN_PHASE_2_END) / (SCORE_HUD_GAIN_PHASE_3_END - SCORE_HUD_GAIN_PHASE_2_END),
-        );
-        xRatio = this.lerp(SCORE_HUD_GAIN_X2, SCORE_HUD_GAIN_X3, phase);
-        opacity = 1 - this.easeInCubic(phase);
-      }
-      animation.el.style.left = `${(xRatio * width).toFixed(3)}px`;
-      animation.el.style.top = `${this.scoreValueCenterYPx.toFixed(3)}px`;
-      animation.el.style.opacity = `${this.clamp01(opacity)}`;
-      this.applyScoreGainAnimationFont(animation, gainFontPx);
-      active.push(animation);
-    }
-    this.scoreGainAnimations = active;
-  }
-
-  private clearScoreGainAnimations(): void {
-    for (const animation of this.scoreGainAnimations) {
-      animation.el.remove();
-    }
-    this.scoreGainAnimations = [];
-    this.ui.scoreGainLayer.textContent = "";
+  private layoutBitmapScoreDigits(): void {
+    this.ui.scoreText.style.width = `${SCORE_HUD_TOTAL_SCORE_WIDGET.width}px`;
+    this.ui.scoreText.style.height = `${SCORE_HUD_TOTAL_SCORE_WIDGET.height}px`;
   }
 
   private applyBootTitle(value: unknown): void {
@@ -1716,16 +1556,6 @@ export class SimulatorAppController {
     const p = this.clamp01(t);
     // smoothstep: ease-in at start, ease-out at end
     return p * p * (3 - 2 * p);
-  }
-
-  private easeOutCubic(t: number): number {
-    const p = this.clamp01(t);
-    return 1 - (1 - p) ** 3;
-  }
-
-  private easeInCubic(t: number): number {
-    const p = this.clamp01(t);
-    return p ** 3;
   }
 
   private resolveChartMvFrame(elapsedMs: number):
@@ -1864,8 +1694,6 @@ export class SimulatorAppController {
     this.lastAppliedUiAlpha = Number.NaN;
     this.lastPauseBlocked = null;
     this.lastRenderedScore = Number.NaN;
-    this.lastScoreRankNotes = Number.NaN;
-    this.clearScoreGainAnimations();
     this.pendingStartupTouch = false;
     this.applyPauseUiState();
     this.applyUiAlpha(0);

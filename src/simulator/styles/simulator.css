@@ -133,113 +133,23 @@
   contain: layout paint;
 }
 
-.simulator-score-gain-layer {
+.simulator-score-base {
   position: absolute;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  overflow: visible;
-}
-
-.simulator-score-gain-svg {
-  position: absolute;
+  z-index: 0;
   left: 0;
   top: 0;
-  z-index: 0;
-  overflow: visible;
-  pointer-events: none;
-}
-
-.simulator-score-gain-svg text {
-  font-family: "TTShinGoM", "ChartUI", "GB18030", "Microsoft YaHei UI", sans-serif;
-  font-weight: 700;
-  letter-spacing: 0.01em;
-  dominant-baseline: middle;
-  text-anchor: start;
-  white-space: pre;
-}
-
-.simulator-score-gain-svg-stroke {
-  fill: none;
-  stroke: rgb(32, 65, 84);
-  stroke-linejoin: round;
-  stroke-linecap: round;
-  paint-order: stroke fill;
-}
-
-.simulator-score-gain-svg-fill {
-  stroke: none;
-}
-
-.simulator-score-auto-live {
-  position: absolute;
-  z-index: 1;
-  pointer-events: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgb(255, 59, 113);
-}
-
-.simulator-score-auto-live-text {
-  display: inline-block;
-  color: #ffffff;
-  line-height: 1;
-  font-weight: 700;
-  letter-spacing: 0.01em;
-  text-align: center;
-  white-space: nowrap;
-  text-shadow: -1px -1px 1px rgba(0, 0, 0, 0.35);
-  font-family: "TTShinGoM", "ChartUI", "GB18030", "Microsoft YaHei UI", sans-serif;
-}
-
-.simulator-score-frame-svg {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  width: 100%;
-  height: 100%;
-}
-
-.simulator-score-frame-fill {
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.18));
-}
-
-.simulator-score-frame-stroke {
-  fill: none;
-  stroke: rgb(204, 204, 204);
-  stroke-linejoin: miter;
-  stroke-linecap: butt;
-}
-
-.simulator-score-top-badge {
-  position: absolute;
-  z-index: 2;
-  border-radius: 50%;
-  border: 2px solid rgb(72, 72, 72);
-  background: transparent;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.simulator-score-top-badge-icon {
-  display: block;
-  width: 70%;
-  height: 70%;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 100% 100%;
 }
 
 .simulator-score-top-track {
   position: absolute;
   z-index: 2;
-  left: 7.3%;
-  top: 5.6%;
-  width: 91%;
-  height: 31.5%;
   box-sizing: border-box;
-  border: 1px solid rgb(72, 72, 72);
-  border-radius: max(3px, 0.18em);
-  background: #535353;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
   overflow: hidden;
 }
 
@@ -249,70 +159,11 @@
   top: 0;
   height: 100%;
   width: 16%;
-  border-radius: max(3px, 0.18em);
-  background: linear-gradient(180deg, #9fe8ff 0%, #9fe8ff 52%, #2cb9eb 52%, #2cb9eb 100%);
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.28),
-    inset 0 1px 2px rgba(255, 255, 255, 0.32),
-    inset 0 -1px 2px rgba(0, 0, 0, 0.1);
-}
-
-.simulator-score-gauge-fill.is-rank-0-c {
-  background: linear-gradient(180deg, #9fe8ff 0%, #9fe8ff 52%, #2cb9eb 52%, #2cb9eb 100%);
-}
-
-.simulator-score-gauge-fill.is-rank-c-b {
-  background: linear-gradient(180deg, #9bffd8 0%, #9bffd8 52%, #22e2a3 52%, #22e2a3 100%);
-}
-
-.simulator-score-gauge-fill.is-rank-b-a {
-  background: linear-gradient(180deg, #ffe8a8 0%, #ffe8a8 52%, #ffae24 52%, #ffae24 100%);
-}
-
-.simulator-score-gauge-fill.is-rank-a-s {
-  background: linear-gradient(180deg, #ff9fc6 0%, #ff9fc6 52%, #ff2f78 52%, #ff2f78 100%);
-}
-
-.simulator-score-gauge-fill.is-rank-s-ss {
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.52) 0%, rgba(255, 255, 255, 0.52) 52%, rgba(255, 255, 255, 0) 52%, rgba(255, 255, 255, 0) 100%),
-    linear-gradient(90deg, #27e3a1 0%, #20bde9 25%, #7b65ff 48%, #f03aa8 72%, #ffb12f 100%);
-}
-
-.simulator-score-rank-row {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  color: #ffffff;
-  text-shadow:
-    0 1px 0 rgba(0, 0, 0, 0.25),
-    0 -1px 0 rgba(255, 255, 255, 0.08);
-}
-
-.simulator-score-rank-label {
-  position: absolute;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  display: inline-grid;
-  grid-auto-flow: row;
-  justify-items: center;
-  align-items: center;
-  white-space: nowrap;
-  font-family: "TTShinGoM", "ChartUI", "GB18030", "Microsoft YaHei UI", sans-serif;
-  font-size: max(3px, 0.54em);
-  line-height: 1;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-}
-
-.simulator-score-rank-label::after {
-  content: "";
-  display: block;
-  width: 1ch;
-  height: 0.46em;
-  margin-top: 0.1em;
-  background: currentColor;
-  clip-path: polygon(0 0, 100% 0, 50% 100%);
+  border-radius: 0;
+  background-repeat: no-repeat;
+  background-position: left center;
+  background-size: 100% 100%;
+  box-shadow: none;
 }
 
 .simulator-score-value {
@@ -322,39 +173,48 @@
   top: 50%;
   transform: translate(-50%, -50%);
   display: inline-flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  gap: 0.1em;
-  font-family: "TTShinGoM", "ChartUI", "GB18030", "Microsoft YaHei UI", sans-serif;
-  font-size: max(8px, 1.65em);
-  line-height: 1;
-  font-weight: 600;
+  gap: 0;
+  transform-origin: center;
+  font-size: 1px;
+  line-height: 0;
   letter-spacing: 0;
 }
 
 .simulator-score-digit {
   display: inline-block;
-  width: 0.68em;
-  text-align: center;
+  flex: 0 0 auto;
+  background-repeat: no-repeat;
+  background-position: center;
+  color: transparent;
+  text-align: left;
   font-variant-numeric: tabular-nums;
-}
-
-.simulator-score-digit.is-pad {
-  color: rgb(204, 204, 204);
-  text-shadow: none;
-}
-
-.simulator-score-digit.is-filled {
-  color: rgb(255, 59, 113);
-  text-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.9),
-    0 -1px 0 rgba(162, 26, 56, 0.22),
-    1px 0 0 rgba(162, 26, 56, 0.16),
-    -1px 0 0 rgba(162, 26, 56, 0.16);
 }
 
 .simulator-pause-anchor {
   z-index: 4;
+}
+
+.simulator-life-gauge {
+  position: absolute;
+  z-index: 1;
+  pointer-events: none;
+  contain: layout paint;
+}
+
+.simulator-life-gauge-bg,
+.simulator-life-gauge-fill {
+  position: absolute;
+  display: block;
+  object-fit: fill;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.simulator-life-gauge-fill-wrap {
+  position: absolute;
+  overflow: hidden;
 }
 
 .simulator-pause-anchor {
@@ -362,7 +222,7 @@
   background: transparent;
   pointer-events: none;
   contain: layout paint;
-  /* Pause cover UISprite/UIWidget pivot is center in the recovered level3 fields. */
+  /* Pause main UISprite/UIWidget pivot is center in the recovered level3 fields. */
   transform: translate(-50%, -50%);
 }
 
@@ -418,10 +278,28 @@
 }
 
 .simulator-pause-icon-pause {
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
+  /* Source: Pause UISprite 1172 has mType=Simple and widget 68x70 in
+     HOST________/VSCode/bangdream-apk/reverse/analysis/targets/level3-ui-coordinate-paths-current.json.
+     The same UISprite has fixedAspect=true in level3-hud-subtree-report.json,
+     so the 64x64 atlas sprite uses a centered square drawing region inside
+     the 68x70 widget instead of filling the whole widget rectangle. */
+  left: 50%;
+  top: 50%;
+  width: var(--sim-pause-button-draw-width, 64px);
+  height: var(--sim-pause-button-draw-height, 64px);
+  transform: translate(-50%, -50%);
+}
+
+.simulator-pause-icon-cover {
+  left: 50%;
+  top: 50%;
+  width: var(--sim-pause-cover-draw-width, 64px);
+  height: var(--sim-pause-cover-draw-height, 64px);
+  transform: translate(-50%, -50%);
+  display: none;
+  opacity: var(--sim-pause-cover-alpha, 0.501960814);
+  filter: brightness(0);
+  transition: none;
 }
 
 .simulator-boot-layer {
