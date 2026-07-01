@@ -19,11 +19,19 @@ import {
 import { percentFromFrameRaw as calculatePercentFromFrameRaw } from "../engine/noteMotion";
 import { axisAtMs } from "../engine/timingGroup";
 import {
+  getLevel3NguiSpriteMetrics,
+  getLevel3WidgetMetrics,
   projectNguiDisplayPoint,
-  RHYTHM_HUD_ANCHORS,
+  resolveNguiDrawingCenterOffset,
+  resolveNguiDrawingRect,
   RHYTHM_HUD_TRANSFORM_SCALES,
-  RHYTHM_HUD_WIDGETS,
+  RHYTHM_UI_PATHS,
+  sumLevel3LocalPositionBetween,
 } from "../engine/uiHudLayout";
+import {
+  getRuntimeLaneEffectBinding,
+  RHYTHM_LANE_EFFECT_HEIGHT_TO_LANE_WIDTH_RATIO,
+} from "../engine/runtimeUiBindings";
 import type { ParticleEffectDefinition } from "../engine/particlePack";
 import {
   ActiveParticleEmitter,
@@ -260,25 +268,13 @@ const HIT_CIRCLE_LAYOUT_SCALE_NON_DIRECTIONAL = 1.15;
 const HIT_CIRCLE_LAYOUT_SCALE_DIRECTIONAL = 0.85;
 const NOTE_LANE_EFFECT_FADE_DURATION_MS = 1000 / 6;
 const NOTE_LANE_EFFECT_OFF_RESERVE_MS = (2 * 1000) / SIMULATOR_TIMING_FPS;
-// Source: HOST________/VSCode/bangdream-apk/reverse/analysis/targets/runtime-ui-binding-report.*
-// level3 Button1..Button7 Transform spacing is 2.2 Unity units, and
-// NoteLaneEffect_1..4 Sprite metadata has 500 px height at 69 PPU.
-const NOTE_LANE_EFFECT_HEIGHT_TO_LANE_WIDTH_RATIO = (500 / 69) / 2.2;
-// Source: NoteLaneEffect_1..4 Sprite m_Rect, m_RD.textureRect and m_Pivot.
-// The checked-in PNGs are tight Sprite exports, so the full-rect pivot is
-// translated into tight texture coordinates. SpriteRenderer.flipX is applied
-// later with negative X scale around that same translated pivot.
-const NOTE_LANE_EFFECT_ANCHOR_BY_TEXTURE_INDEX: Record<number, { x: number; y: number }> = {
-  1: { x: (774 * 0.5 - 307.0696716308594) / 466.9303283691406, y: 1 },
-  2: { x: (526 * 0.5 - 184.2117919921875) / 341.7882080078125, y: 1 },
-  3: { x: (278 * 0.5 - 60.23698043823242) / 217.7630157470703, y: 1 },
-  4: { x: 0.5, y: 1 },
-};
 const SLOT_EFFECT_DURATION_MS = 600;
 const DIRECTIONAL_LINEAR_DOUBLE_PLAY_WIDTH_THRESHOLD = 3;
 const DIRECTIONAL_LINEAR_DOUBLE_PLAY_DELAY_MS = 160;
 // Source: AnimationClip GameJudge streamed keyframes in runtime-ui-binding-report.*.
 const JUDGE_OVERLAY_DURATION_MS = 480;
+const JUDGEMENT_RESULT_WIDGET = getLevel3WidgetMetrics(RHYTHM_UI_PATHS.judgementResult);
+const JUDGEMENT_RESULT_SPRITE = getLevel3NguiSpriteMetrics(RHYTHM_UI_PATHS.judgementResult);
 
 function lerpNumber(from: number, to: number, t: number): number {
   return from + (to - from) * clamp01(t);
@@ -1017,17 +1013,29 @@ export class PixiRenderer {
       return;
     }
     const geometry = this.stageGeometry();
-    const projected = projectNguiDisplayPoint(RHYTHM_HUD_ANCHORS.judgementResult, {
+    const projected = projectNguiDisplayPoint(sumLevel3LocalPositionBetween(
+      RHYTHM_UI_PATHS.informationRoot,
+      RHYTHM_UI_PATHS.judgementResult,
+    ), {
       width: geometry.viewportWidth,
       height: geometry.viewportHeight,
     });
     const clip = judgeOverlayClip(ageMs);
-    const targetHeight = RHYTHM_HUD_WIDGETS.judgementResult.height
-      * projected.scale
-      * RHYTHM_HUD_TRANSFORM_SCALES.judgementResult
-      * clip.scale;
-    const scale = targetHeight / Math.max(1, texture.height);
-    this.applySprite(sprite, texture, projected.x, projected.y, scale, clip.alpha, 0.5, 0.5);
+    const drawingRect = resolveNguiDrawingRect(
+      JUDGEMENT_RESULT_WIDGET,
+      JUDGEMENT_RESULT_SPRITE,
+      { width: texture.width, height: texture.height },
+    );
+    const drawingOffset = resolveNguiDrawingCenterOffset(JUDGEMENT_RESULT_WIDGET, drawingRect);
+    const displayScale = projected.scale * RHYTHM_HUD_TRANSFORM_SCALES.judgementResult * clip.scale;
+    sprite.texture = texture;
+    sprite.anchor.set(0.5, 0.5);
+    sprite.x = projected.x + (drawingOffset.x * displayScale);
+    sprite.y = projected.y - (drawingOffset.y * displayScale);
+    sprite.alpha = clip.alpha;
+    sprite.rotation = 0;
+    sprite.width = Math.max(1, drawingRect.width * displayScale);
+    sprite.height = Math.max(1, drawingRect.height * displayScale);
   }
 
   private applySprite(
@@ -2478,27 +2486,13 @@ export class PixiRenderer {
     return geometry.viewportWidth * 0.5 + centeredLane * this.stageLaneWidth() * percent;
   }
 
-  private laneEffectTextureIndex(visualLane: number): number {
-    const distanceFromCenter = Math.abs(Math.max(0, Math.min(6, Math.round(visualLane))) - 3);
-    switch (distanceFromCenter) {
-      case 3:
-        return 1;
-      case 2:
-        return 2;
-      case 1:
-        return 3;
-      default:
-        return 4;
-    }
-  }
-
   private drawOfficialLaneEffects(elapsedMs: number): void {
     if (!this.settings.effectEnable || !this.assets) {
       this.clearLaneEffects();
       return;
     }
     const geometry = this.stageGeometry();
-    const targetHeight = this.stageLaneWidth() * NOTE_LANE_EFFECT_HEIGHT_TO_LANE_WIDTH_RATIO;
+    const targetHeight = this.stageLaneWidth() * RHYTHM_LANE_EFFECT_HEIGHT_TO_LANE_WIDTH_RATIO;
 
     for (let visualLane = 0; visualLane < this.activeLaneEffects.length; visualLane += 1) {
       const effect = this.activeLaneEffects[visualLane];
@@ -2525,27 +2519,29 @@ export class PixiRenderer {
         alpha = 1 - phase;
       }
 
-      const texture = this.assets.hud.laneEffects[this.laneEffectTextureIndex(effect.visualLane)] ?? null;
+      const binding = getRuntimeLaneEffectBinding(effect.visualLane);
+      const texture = this.assets.hud.laneEffects[binding.textureIndex] ?? null;
       if (!texture) {
         continue;
       }
-      const textureIndex = this.laneEffectTextureIndex(effect.visualLane);
       const sprite = this.allocEffectSprite();
       if (!sprite) {
         return;
       }
-      const baseScale = targetHeight / Math.max(1, texture.height);
-      const anchor = NOTE_LANE_EFFECT_ANCHOR_BY_TEXTURE_INDEX[textureIndex] ?? { x: 0.5, y: 1 };
-      const flipX = effect.visualLane > 3;
+      const baseScale = targetHeight / Math.max(1, binding.rect.height);
+      const renderScale = baseScale * animationScale;
+      const textureLeftFromPivot = binding.textureRectOffset.x - binding.pivot.x * binding.rect.width;
+      const textureBottomFromPivot = binding.textureRectOffset.y - binding.pivot.y * binding.rect.height;
       sprite.texture = texture;
-      sprite.anchor.set(anchor.x, anchor.y);
-      sprite.x = this.laneXAtVisualPercentRaw(effect.visualLane, 1);
-      sprite.y = geometry.stageBottom;
+      sprite.anchor.set(0, 1);
+      sprite.x = this.laneXAtVisualPercentRaw(effect.visualLane, 1)
+        + (binding.flipX ? -textureLeftFromPivot : textureLeftFromPivot) * renderScale;
+      sprite.y = geometry.stageBottom - textureBottomFromPivot * renderScale;
       sprite.alpha = alpha;
       sprite.rotation = 0;
       sprite.scale.set(
-        baseScale * animationScale * (flipX ? -1 : 1),
-        baseScale * animationScale,
+        renderScale * (binding.flipX ? -1 : 1),
+        renderScale,
       );
     }
   }
