@@ -1,5 +1,6 @@
 import type { Sprite } from "pixi.js";
 import type { NoteSkinTextureBundle } from "../engine/assets";
+import { evaluateRuntimeAnimationCurve, getRuntimeAnimationClipDurationMs } from "../engine/runtimeAnimationClip";
 import {
   getLevel3NguiSpriteMetrics,
   getLevel3WidgetMetrics,
@@ -20,30 +21,18 @@ interface ComboHudDrawContext {
   allocSprite: () => Sprite | null;
 }
 
-const COMBO_NUMBER_CLIP_END_MS = 1000;
+const COMBO_NUMBER_CLIP_NAME = "combo_number";
+const COMBO_NUMBER_CLIP_END_MS = getRuntimeAnimationClipDurationMs(COMBO_NUMBER_CLIP_NAME, 1000);
+const COMBO_NUMBER_SCALE_X_CURVE_INDEX = 0;
 const COMBO_DIGIT_SAMPLE_WIDGET = getLevel3WidgetMetrics(RHYTHM_UI_PATHS.comboDigitSample);
 const COMBO_UNIT_WIDGET = getLevel3WidgetMetrics(RHYTHM_UI_PATHS.comboUnit);
 const COMBO_UNIT_SPRITE = getLevel3NguiSpriteMetrics(RHYTHM_UI_PATHS.comboUnit);
-// Source: AnimationClip combo_number streamed keyframes in
-// HOST________/VSCode/bangdream-apk/reverse/analysis/targets/runtime-ui-binding-report.*.
-const COMBO_NUMBER_CLIP_POP_MS = 1000 / 12;
-const COMBO_NUMBER_CLIP_SETTLE_MS = 1000 / 6;
-
-function lerp(from: number, to: number, t: number): number {
-  return from + (to - from) * Math.max(0, Math.min(1, t));
-}
 
 function comboNumberClipScale(ageMs: number): number {
   if (!(ageMs >= 0) || ageMs > COMBO_NUMBER_CLIP_END_MS) {
     return 1;
   }
-  if (ageMs <= COMBO_NUMBER_CLIP_POP_MS) {
-    return lerp(0.8, 1.1, ageMs / COMBO_NUMBER_CLIP_POP_MS);
-  }
-  if (ageMs <= COMBO_NUMBER_CLIP_SETTLE_MS) {
-    return lerp(1.1, 1.0, (ageMs - COMBO_NUMBER_CLIP_POP_MS) / (COMBO_NUMBER_CLIP_SETTLE_MS - COMBO_NUMBER_CLIP_POP_MS));
-  }
-  return 1;
+  return evaluateRuntimeAnimationCurve(COMBO_NUMBER_CLIP_NAME, COMBO_NUMBER_SCALE_X_CURVE_INDEX, ageMs, 1);
 }
 
 function resolveComboChildDisplayPoint(

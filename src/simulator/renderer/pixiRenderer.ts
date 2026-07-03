@@ -10,6 +10,7 @@ import {
   resolveSlideBottomMarkerTexture,
 } from "../engine/assets";
 import { SIMULATOR_TIMING_FPS } from "../engine/simulatorTiming";
+import { evaluateRuntimeAnimationCurve, getRuntimeAnimationClipDurationMs } from "../engine/runtimeAnimationClip";
 import {
   calculateStageGeometry,
   FIELD_BG_WIDTH_TO_STAGE_WIDTH_RATIO,
@@ -271,29 +272,20 @@ const NOTE_LANE_EFFECT_OFF_RESERVE_MS = (2 * 1000) / SIMULATOR_TIMING_FPS;
 const SLOT_EFFECT_DURATION_MS = 600;
 const DIRECTIONAL_LINEAR_DOUBLE_PLAY_WIDTH_THRESHOLD = 3;
 const DIRECTIONAL_LINEAR_DOUBLE_PLAY_DELAY_MS = 160;
-// Source: AnimationClip GameJudge streamed keyframes in runtime-ui-binding-report.*.
-const JUDGE_OVERLAY_DURATION_MS = 480;
+const JUDGE_OVERLAY_CLIP_NAME = "GameJudge";
+const JUDGE_OVERLAY_DURATION_MS = getRuntimeAnimationClipDurationMs(JUDGE_OVERLAY_CLIP_NAME, 480);
+const JUDGE_OVERLAY_SCALE_X_CURVE_INDEX = 0;
+const JUDGE_OVERLAY_SCALE_Y_CURVE_INDEX = 1;
+const JUDGE_OVERLAY_ALPHA_CURVE_INDEX = 3;
 const JUDGEMENT_RESULT_WIDGET = getLevel3WidgetMetrics(RHYTHM_UI_PATHS.judgementResult);
 const JUDGEMENT_RESULT_SPRITE = getLevel3NguiSpriteMetrics(RHYTHM_UI_PATHS.judgementResult);
 
-function lerpNumber(from: number, to: number, t: number): number {
-  return from + (to - from) * clamp01(t);
-}
-
-function judgeOverlayClip(ageMs: number): { scale: number; alpha: number } {
-  if (ageMs <= 40) {
-    return {
-      scale: lerpNumber(0.8, 1.1, ageMs / 40),
-      alpha: lerpNumber(0.6, 1, ageMs / 40),
-    };
-  }
-  if (ageMs <= 80) {
-    return {
-      scale: lerpNumber(1.1, 1, (ageMs - 40) / 40),
-      alpha: 1,
-    };
-  }
-  return { scale: 1, alpha: 1 };
+function judgeOverlayClip(ageMs: number): { scaleX: number; scaleY: number; alpha: number } {
+  return {
+    scaleX: evaluateRuntimeAnimationCurve(JUDGE_OVERLAY_CLIP_NAME, JUDGE_OVERLAY_SCALE_X_CURVE_INDEX, ageMs, 1),
+    scaleY: evaluateRuntimeAnimationCurve(JUDGE_OVERLAY_CLIP_NAME, JUDGE_OVERLAY_SCALE_Y_CURVE_INDEX, ageMs, 1),
+    alpha: evaluateRuntimeAnimationCurve(JUDGE_OVERLAY_CLIP_NAME, JUDGE_OVERLAY_ALPHA_CURVE_INDEX, ageMs, 1),
+  };
 }
 
 function mixUint32(value: number): number {
@@ -320,6 +312,10 @@ function clamp01(value: number): number {
     return 0;
   }
   return Math.max(0, Math.min(1, value));
+}
+
+function lerpNumber(from: number, to: number, t: number): number {
+  return from + (to - from) * clamp01(t);
 }
 
 export class PixiRenderer {
@@ -1027,15 +1023,17 @@ export class PixiRenderer {
       { width: texture.width, height: texture.height },
     );
     const drawingOffset = resolveNguiDrawingCenterOffset(JUDGEMENT_RESULT_WIDGET, drawingRect);
-    const displayScale = projected.scale * RHYTHM_HUD_TRANSFORM_SCALES.judgementResult * clip.scale;
+    const baseDisplayScale = projected.scale * RHYTHM_HUD_TRANSFORM_SCALES.judgementResult;
+    const displayScaleX = baseDisplayScale * clip.scaleX;
+    const displayScaleY = baseDisplayScale * clip.scaleY;
     sprite.texture = texture;
     sprite.anchor.set(0.5, 0.5);
-    sprite.x = projected.x + (drawingOffset.x * displayScale);
-    sprite.y = projected.y - (drawingOffset.y * displayScale);
+    sprite.x = projected.x + (drawingOffset.x * displayScaleX);
+    sprite.y = projected.y - (drawingOffset.y * displayScaleY);
     sprite.alpha = clip.alpha;
     sprite.rotation = 0;
-    sprite.width = Math.max(1, drawingRect.width * displayScale);
-    sprite.height = Math.max(1, drawingRect.height * displayScale);
+    sprite.width = Math.max(1, drawingRect.width * displayScaleX);
+    sprite.height = Math.max(1, drawingRect.height * displayScaleY);
   }
 
   private applySprite(
