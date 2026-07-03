@@ -5842,6 +5842,7 @@ function ChartEditorController() {
 
       const launchPayload: SimulatorLaunchPayload = {
         requestId,
+        playMode: "auto",
         autoStart: true,
         metadata: simulatorMetadataWithFallback,
         settings: {

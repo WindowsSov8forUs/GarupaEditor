@@ -4,6 +4,8 @@ import type { ChartMetadata } from "../chartCore";
 export const SIMULATOR_WINDOW_READY_EVENT = "simulator:ready";
 export const SIMULATOR_WINDOW_PAYLOAD_EVENT = "simulator:payload";
 
+export type SimulatorPlayMode = "auto";
+
 export type SimulatorDisplayPayload = {
   windowWidth?: number;
   windowHeight?: number;
@@ -90,6 +92,7 @@ export type SimulatorChartPayload = {
 
 export type SimulatorLaunchPayload = {
   requestId: string;
+  playMode: SimulatorPlayMode;
   chartData: SimulatorChartPayload;
   metadata?: SimulatorChartMetadataPayload | null;
   settings?: SimulatorDisplayPayload | null;
