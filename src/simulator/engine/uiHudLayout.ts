@@ -201,6 +201,8 @@ export const RHYTHM_UI_PATHS = {
   scoreBackground: "GamePlay/UI_Root/Display/Score/Progress/Background",
   scoreForeground: "GamePlay/UI_Root/Display/Score/Progress/Foreground",
   scoreBackgroundCover: "GamePlay/UI_Root/Display/Score/Progress/Background_Cover",
+  scoreHighRankPanel: "GamePlay/UI_Root/Display/Score/Progress/Panel",
+  scoreHighRankEffect: "GamePlay/UI_Root/Display/Score/Progress/Panel/HighRankEffect",
   scoreRankObject: "GamePlay/UI_Root/Display/Score/Progress/RankObject",
   scoreRankC: "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankC",
   scoreRankCLabel: "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankC/C",

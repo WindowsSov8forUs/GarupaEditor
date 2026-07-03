@@ -2,6 +2,7 @@ import type { RuntimeStats } from "./types";
 
 export type SimulatorScoreRankLabel = "C" | "B" | "A" | "S" | "SS";
 export type SimulatorScoreGaugeRank = "D" | SimulatorScoreRankLabel;
+export type SimulatorScoreHighRankEffectClip = "ScoreGaugeSS" | "ScoreGaugeSSS";
 export type SimulatorScoreGaugeSpriteKey =
   | "scoreMeterBlue"
   | "scoreMeterGreen"
@@ -87,9 +88,25 @@ export const SIMULATOR_SCORE_GAUGE_SPRITE_BY_RANK: Record<
   SS: "scoreMeterS",
 };
 
+// Source: HOST________/VSCode/bangdream-apk/reverse/analysis/targets/
+// score-high-rank-effect-current.md. Score.onChangedScoreGaugeRank maps
+// SS and SS_plus to ScoreGaugeSS, and SSS to ScoreGaugeSSS. GarupaEditor
+// currently exposes simulator ranks only up to SS, so only the evidenced SS
+// mapping is reachable here; the rank threshold remains simulator-owned.
+export const SIMULATOR_HIGH_RANK_EFFECT_CLIP_BY_RANK: Partial<
+  Record<SimulatorScoreGaugeRank, SimulatorScoreHighRankEffectClip>
+> = {
+  SS: "ScoreGaugeSS",
+};
+
 export function buildScoreHudState(stats: RuntimeStats | null): SimulatorScoreHudState {
   const score = Math.max(0, Math.floor(stats?.score ?? 0));
   const scoreMax = Math.max(1, Math.floor(stats?.scoreMax ?? 1));
+  // Source: score-gauge-color-current.md confirms the real single-play path
+  // uses score / scoreMax for UIProgressBar.value, then invokes
+  // Score.onChangeScoreRatio with the same ratio. The score/rank threshold
+  // values remain GarupaEditor simulator logic, but the gauge ratio must not
+  // use the SS marker threshold as a clipping denominator.
   const scoreRatio = stats ? clamp01(score / scoreMax) : 0;
   const gaugeRank = stats ? resolveSimulatorScoreGaugeRank(score) : "D";
   const gaugeSpriteKey = SIMULATOR_SCORE_GAUGE_SPRITE_BY_RANK[gaugeRank];
