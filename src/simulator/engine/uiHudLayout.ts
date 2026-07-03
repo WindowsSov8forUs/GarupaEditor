@@ -56,6 +56,10 @@ interface Level3UiNode {
 interface Level3HudSubtreeComponent {
   script?: string;
   raw?: {
+    ints_96_176?: Array<{
+      offset: number;
+      value: number;
+    }>;
     ngui_sprite?: {
       type: number;
       type_name: string;
@@ -97,6 +101,10 @@ export interface NguiWidgetMetrics {
   width: number;
   height: number;
   pivot: number;
+}
+
+export interface NguiWidgetDepthMetrics {
+  depth: number;
 }
 
 export interface NguiSpriteMetrics {
@@ -192,10 +200,28 @@ export const RHYTHM_UI_PATHS = {
   scoreRoot: "GamePlay/UI_Root/Display/Score",
   scoreBackground: "GamePlay/UI_Root/Display/Score/Progress/Background",
   scoreForeground: "GamePlay/UI_Root/Display/Score/Progress/Foreground",
+  scoreBackgroundCover: "GamePlay/UI_Root/Display/Score/Progress/Background_Cover",
+  scoreRankObject: "GamePlay/UI_Root/Display/Score/Progress/RankObject",
+  scoreRankC: "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankC",
+  scoreRankCLabel: "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankC/C",
+  scoreRankCSeparator: "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankC/Separator",
+  scoreRankB: "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankB",
+  scoreRankBLabel: "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankB/B",
+  scoreRankBSeparator: "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankB/Separator",
+  scoreRankA: "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankA",
+  scoreRankALabel: "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankA/A",
+  scoreRankASeparator: "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankA/Separator",
+  scoreRankS: "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankS",
+  scoreRankSLabel: "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankS/S",
+  scoreRankSSeparator: "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankS/Separator",
+  scoreRankSS: "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankSS",
+  scoreRankSSLabel: "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankSS/SS",
+  scoreRankSSSeparator: "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankSS/Separator",
   scoreTotalScore: "GamePlay/UI_Root/Display/Score/Base/TotalScore",
   lifeGaugeRoot: "GamePlay/UI_Root/Display/LifeGauge",
   lifeGaugeBackground: "GamePlay/UI_Root/Display/LifeGauge/GaugeObject/hp_gauge_round/GaugeBG",
   lifeGaugeFront: "GamePlay/UI_Root/Display/LifeGauge/GaugeObject/hp_gauge_round/FrontGauge",
+  lifeGaugeSecondFront: "GamePlay/UI_Root/Display/LifeGauge/GaugeObject/hp_gauge_second/FrontGauge",
   pauseRoot: "GamePlay/UI_Root/Display/Button",
   pauseMain: "GamePlay/UI_Root/Display/Button/Pause",
   pauseCover: "GamePlay/UI_Root/Display/Button/Pause/cover",
@@ -308,6 +334,17 @@ export function getLevel3NguiSpriteMetrics(path: string): NguiSpriteMetrics {
       pathId: sprite.atlas.path_id,
     },
   };
+}
+
+export function getLevel3WidgetDepthMetrics(path: string): NguiWidgetDepthMetrics {
+  const node = level3HudSubtreeNodeByPath.get(path);
+  const rawWidget = node?.components.find((component) => component.raw?.ints_96_176)?.raw;
+  const depth = rawWidget?.ints_96_176?.find((entry) => entry.offset === 144)?.value;
+  if (typeof depth !== "number" || !Number.isFinite(depth)) {
+    throw new Error(`Missing NGUI widget depth for level3 UI node: ${path}`);
+  }
+
+  return { depth };
 }
 
 export function resolveNguiDrawingRect(

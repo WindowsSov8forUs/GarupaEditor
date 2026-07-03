@@ -140,6 +140,7 @@ export interface RuntimeStats {
   npsMax: number;
   bpmValue: number;
   score: number;
+  scoreMax: number;
   activeObjects: number;
   processedObjects: number;
   totalObjects: number;

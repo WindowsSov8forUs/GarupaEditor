@@ -21,6 +21,7 @@ interface PendingSystemEvent {
 }
 
 const RUNTIME_POST_ROLL_MS = 3000;
+const SIMULATOR_SCORE_BASE_VALUE = 10_000_000;
 
 export class SimulatorRuntime {
   private readonly settings: SimulatorSettings;
@@ -44,6 +45,7 @@ export class SimulatorRuntime {
 
   private combo = 0;
   private notes = 0;
+  private readonly scoreMax: number;
   private nps = 0;
   private npsMax = 0;
   private bpmValue = 0;
@@ -61,6 +63,7 @@ export class SimulatorRuntime {
     this.settings = settings;
     this.chart = chart;
     this.notes = chart.noteCount;
+    this.scoreMax = Math.max(1, SIMULATOR_SCORE_BASE_VALUE + Math.max(0, this.notes));
     this.bpmValue = chart.initialBpm > 0 ? chart.initialBpm : 120;
   }
 
@@ -546,7 +549,7 @@ export class SimulatorRuntime {
 
   private displayScore(): number {
     const notes = Math.max(1, this.notes);
-    return Math.max(0, Math.floor(this.combo / notes * 10000000 + this.combo));
+    return Math.max(0, Math.floor(this.combo / notes * SIMULATOR_SCORE_BASE_VALUE + this.combo));
   }
 
   private stats(elapsedMs: number): RuntimeStats {
@@ -557,6 +560,7 @@ export class SimulatorRuntime {
       npsMax: this.npsMax,
       bpmValue: this.bpmValue,
       score: this.displayScore(),
+      scoreMax: this.scoreMax,
       activeObjects: this.activeNotes.length + this.activeSlides.length,
       processedObjects: this.processedObjects,
       totalObjects: this.chart.events.length,

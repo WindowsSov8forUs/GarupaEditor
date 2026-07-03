@@ -1,11 +1,13 @@
 import { Rectangle, Texture } from "pixi.js";
 import {
   getLevel3NguiSpriteMetrics,
+  getLevel3WidgetMetrics,
   RHYTHM_UI_PATHS,
   type NguiSpriteAdvancedType,
   type NguiSpriteAdvancedTypes,
 } from "./uiHudLayout";
 import embeddedRhythmGameUiUrl from "../assets/ui/RhythmGameUI.png";
+import embeddedUiCommonUrl from "../assets/ui/UICommon.png";
 import embeddedScoreFontUrl from "../assets/ui/score.png";
 
 export interface AtlasRect {
@@ -24,6 +26,7 @@ export interface NguiSlicedSpriteData extends AtlasRect {
   paddingRight: number;
   paddingTop: number;
   paddingBottom: number;
+  centerType: NguiSpriteAdvancedType;
 }
 
 export interface NguiAdvancedSpriteData extends NguiSlicedSpriteData {
@@ -37,6 +40,8 @@ export interface RenderedHudSpriteDataUrls {
   hpMeterSecond: string | null;
   gaugeBaseScore: string | null;
   scoreMeterBlue: string | null;
+  bgGaugeScoreMulti: string | null;
+  levelMark: string | null;
 }
 
 export interface BitmapGlyphRect extends AtlasRect {
@@ -91,7 +96,36 @@ export const RHYTHM_GAME_UI_RECTS = {
   effectHealthCautionInside: { x: 802, y: 194, width: 188, height: 27 },
   gaugeBaseScore: { x: 648, y: 449, width: 236, height: 82 },
   scoreMeterBlue: { x: 413, y: 133, width: 40, height: 22 },
+  bgGaugeScoreMulti: { x: 277, y: 195, width: 18, height: 18 },
 } as const satisfies Record<string, AtlasRect>;
+
+// Source: RankObject Separator UISprite atlas PPtr fileID=16/pathID=1883
+// resolves to sharedassets0.assets UIAtlas. That UIAtlas material is UICommon
+// pathID=6, whose _MainTex is Texture2D pathID=18. Raw UIAtlas.mSprites entry
+// 27 is level_mark: x=128, y=4, width=8, height=5, with zero border/padding.
+export const UI_COMMON_ATLAS_RECTS = {
+  levelMark: { x: 128, y: 4, width: 8, height: 5 },
+} as const satisfies Record<string, AtlasRect>;
+
+const lifeGaugeBackgroundSprite = getLevel3NguiSpriteMetrics(RHYTHM_UI_PATHS.lifeGaugeBackground);
+const lifeGaugeFrontSprite = getLevel3NguiSpriteMetrics(RHYTHM_UI_PATHS.lifeGaugeFront);
+const lifeGaugeSecondFrontSprite = getLevel3NguiSpriteMetrics(RHYTHM_UI_PATHS.lifeGaugeSecondFront);
+const scoreBackgroundSprite = getLevel3NguiSpriteMetrics(RHYTHM_UI_PATHS.scoreBackground);
+const scoreForegroundSprite = getLevel3NguiSpriteMetrics(RHYTHM_UI_PATHS.scoreForeground);
+const scoreBackgroundCoverSprite = getLevel3NguiSpriteMetrics(RHYTHM_UI_PATHS.scoreBackgroundCover);
+const lifeGaugeBackgroundWidget = getLevel3WidgetMetrics(RHYTHM_UI_PATHS.lifeGaugeBackground);
+const lifeGaugeFrontWidget = getLevel3WidgetMetrics(RHYTHM_UI_PATHS.lifeGaugeFront);
+const lifeGaugeSecondFrontWidget = getLevel3WidgetMetrics(RHYTHM_UI_PATHS.lifeGaugeSecondFront);
+const scoreBackgroundWidget = getLevel3WidgetMetrics(RHYTHM_UI_PATHS.scoreBackground);
+const scoreForegroundWidget = getLevel3WidgetMetrics(RHYTHM_UI_PATHS.scoreForeground);
+const scoreBackgroundCoverWidget = getLevel3WidgetMetrics(RHYTHM_UI_PATHS.scoreBackgroundCover);
+
+function requireAdvancedTypes(name: string, advancedTypes: NguiSpriteAdvancedTypes | undefined): NguiSpriteAdvancedTypes {
+  if (!advancedTypes) {
+    throw new Error(`Missing AdvancedType fields for NGUI sprite: ${name}`);
+  }
+  return advancedTypes;
+}
 
 export const RHYTHM_GAME_UI_SLICED_SPRITES = {
   bgHealth: {
@@ -104,6 +138,7 @@ export const RHYTHM_GAME_UI_SLICED_SPRITES = {
     paddingRight: 0,
     paddingTop: 0,
     paddingBottom: 0,
+    centerType: requireAdvancedTypes("bg_health", lifeGaugeBackgroundSprite.advancedTypes).center,
   },
   hpMeter: {
     ...RHYTHM_GAME_UI_RECTS.hpMeter,
@@ -115,6 +150,7 @@ export const RHYTHM_GAME_UI_SLICED_SPRITES = {
     paddingRight: 0,
     paddingTop: 0,
     paddingBottom: 0,
+    centerType: requireAdvancedTypes("hp_meter", lifeGaugeFrontSprite.advancedTypes).center,
   },
   scoreMeterBlue: {
     ...RHYTHM_GAME_UI_RECTS.scoreMeterBlue,
@@ -126,17 +162,9 @@ export const RHYTHM_GAME_UI_SLICED_SPRITES = {
     paddingRight: 0,
     paddingTop: 0,
     paddingBottom: 0,
+    centerType: requireAdvancedTypes("score_meter_blue", scoreForegroundSprite.advancedTypes).center,
   },
 } as const satisfies Record<string, NguiSlicedSpriteData>;
-
-const scoreBackgroundSprite = getLevel3NguiSpriteMetrics(RHYTHM_UI_PATHS.scoreBackground);
-
-function requireAdvancedTypes(name: string, advancedTypes: NguiSpriteAdvancedTypes | undefined): NguiSpriteAdvancedTypes {
-  if (!advancedTypes) {
-    throw new Error(`Missing AdvancedType fields for NGUI sprite: ${name}`);
-  }
-  return advancedTypes;
-}
 
 export const RHYTHM_GAME_UI_ADVANCED_SPRITES = {
   gaugeBaseScore: {
@@ -149,25 +177,51 @@ export const RHYTHM_GAME_UI_ADVANCED_SPRITES = {
     paddingRight: 0,
     paddingTop: 0,
     paddingBottom: 0,
+    centerType: requireAdvancedTypes("gauge_base_score", scoreBackgroundSprite.advancedTypes).center,
     advancedTypes: requireAdvancedTypes("gauge_base_score", scoreBackgroundSprite.advancedTypes),
+  },
+  bgGaugeScoreMulti: {
+    ...RHYTHM_GAME_UI_RECTS.bgGaugeScoreMulti,
+    borderLeft: 8,
+    borderRight: 8,
+    borderTop: 8,
+    borderBottom: 8,
+    paddingLeft: 0,
+    paddingRight: 0,
+    paddingTop: 0,
+    paddingBottom: 0,
+    centerType: requireAdvancedTypes("bg_gauge_score_multi", scoreBackgroundCoverSprite.advancedTypes).center,
+    advancedTypes: requireAdvancedTypes("bg_gauge_score_multi", scoreBackgroundCoverSprite.advancedTypes),
   },
 } as const satisfies Record<string, NguiAdvancedSpriteData>;
 
 // Source: level3 UISprite/UIWidget serialized width/height for the restored HUD sprites.
 const RHYTHM_GAME_UI_HUD_RENDER_SIZES = {
-  bgHealth: { width: 266, height: 62 },
-  hpMeter: { width: 224, height: 26 },
-  hpMeterMain: { width: 224, height: 26 },
-  hpMeterSecond: { width: 224, height: 26 },
-  gaugeBaseScore: { width: 470, height: 82 },
-  scoreMeterBlue: { width: 421, height: 24 },
+  bgHealth: { width: lifeGaugeBackgroundWidget.width, height: lifeGaugeBackgroundWidget.height },
+  hpMeter: { width: lifeGaugeFrontWidget.width, height: lifeGaugeFrontWidget.height },
+  hpMeterMain: { width: lifeGaugeFrontWidget.width, height: lifeGaugeFrontWidget.height },
+  hpMeterSecond: { width: lifeGaugeSecondFrontWidget.width, height: lifeGaugeSecondFrontWidget.height },
+  gaugeBaseScore: { width: scoreBackgroundWidget.width, height: scoreBackgroundWidget.height },
+  scoreMeterBlue: { width: scoreForegroundWidget.width, height: scoreForegroundWidget.height },
+  bgGaugeScoreMulti: { width: scoreBackgroundCoverWidget.width, height: scoreBackgroundCoverWidget.height },
 } as const;
 
-// Source: HOST________/VSCode/bangdream-apk/reverse/analysis/targets/level3-hud-subtree-report.*,
-// UISprite f116-128 color fields on LifeGauge hp_gauge_round/FrontGauge and
-// hp_gauge_second/FrontGauge.
+if (lifeGaugeSecondFrontSprite.spriteName !== lifeGaugeFrontSprite.spriteName) {
+  throw new Error(`Unsupported hp_gauge_second sprite binding: ${JSON.stringify(lifeGaugeSecondFrontSprite)}`);
+}
+
+// Source: HOST________/VSCode/bangdream-apk/reverse/ghidra/decompilations/
+// ghidra-decompile-rhythm-systems/331D8F4__01__b'InGameUtility$$.cctor'.c.
+// InGameUtility.NormalGaugeColor is initialized by
+// ColorUtility.GetColorWithHex(0x6e, 0xff, 0x69, 0xff), then
+// InGameLifeGauge.updateGaugeColor applies it to hp_gauge_round/FrontGauge.
+// hpMeterSecond still uses its serialized UISprite f116-128 color from
+// HOST________/VSCode/bangdream-apk/reverse/analysis/targets/level3-hud-subtree-report.*.
+// RhythmGameUI uses shader "Unlit/Transparent Colored", and
+// NGUIAtlas.get_premultipliedAlpha only enables PMA for Premultiplied shaders
+// in ghidra-decompile-ngui-atlas-pma. Keep these as straight RGBA tints.
 const RHYTHM_GAME_UI_HUD_RENDER_TINTS = {
-  hpMeterMain: { red: 0.40441179275512695, green: 1, blue: 0.6303246021270752, alpha: 1 },
+  hpMeterMain: { red: 0x6e / 0xff, green: 1, blue: 0x69 / 0xff, alpha: 1 },
   hpMeterSecond: { red: 0.365517258644104, green: 1, blue: 0, alpha: 0.39100000262260437 },
 } as const;
 
@@ -217,6 +271,8 @@ async function loadImageElement(url: string): Promise<HTMLImageElement> {
 
 let rhythmGameUiDataUrlCache: Promise<Record<keyof typeof RHYTHM_GAME_UI_RECTS, string | null>> | null = null;
 let rhythmGameUiHudDataUrlCache: Promise<RenderedHudSpriteDataUrls> | null = null;
+let rhythmGameUiImageCache: Promise<HTMLImageElement> | null = null;
+let uiCommonDataUrlCache: Promise<Record<keyof typeof UI_COMMON_ATLAS_RECTS, string | null>> | null = null;
 let scoreFontDataUrlCache: Promise<Record<keyof typeof SCORE_FONT_GLYPHS, string | null>> | null = null;
 
 async function loadAtlasSpriteDataUrls<T extends Record<string, AtlasRect>>(
@@ -251,6 +307,21 @@ async function loadAtlasSpriteDataUrls<T extends Record<string, AtlasRect>>(
   return output;
 }
 
+function resolveNguiBorderPair(start: number, end: number, targetSize: number): { start: number; end: number } {
+  const clampedStart = Math.max(0, start);
+  const clampedEnd = Math.max(0, end);
+  const clampedTarget = Math.max(0, targetSize);
+  const borderTotal = clampedStart + clampedEnd;
+  if (borderTotal <= clampedTarget || borderTotal <= 0) {
+    return { start: clampedStart, end: clampedEnd };
+  }
+  const scale = clampedTarget / borderTotal;
+  return {
+    start: clampedStart * scale,
+    end: clampedEnd * scale,
+  };
+}
+
 function drawNineSlicedSprite(
   ctx: CanvasRenderingContext2D,
   image: HTMLImageElement,
@@ -265,10 +336,12 @@ function drawNineSlicedSprite(
   const bottom = Math.max(0, Math.min(sprite.borderBottom, sprite.height - top));
   const centerWidth = Math.max(0, sprite.width - left - right);
   const centerHeight = Math.max(0, sprite.height - top - bottom);
-  const targetLeft = Math.min(left, targetWidth);
-  const targetRight = Math.min(right, Math.max(0, targetWidth - targetLeft));
-  const targetTop = Math.min(top, targetHeight);
-  const targetBottom = Math.min(bottom, Math.max(0, targetHeight - targetTop));
+  const targetHorizontalBorders = resolveNguiBorderPair(left, right, targetWidth);
+  const targetVerticalBorders = resolveNguiBorderPair(top, bottom, targetHeight);
+  const targetLeft = targetHorizontalBorders.start;
+  const targetRight = targetHorizontalBorders.end;
+  const targetTop = targetVerticalBorders.start;
+  const targetBottom = targetVerticalBorders.end;
   const targetCenterWidth = Math.max(0, targetWidth - targetLeft - targetRight);
   const targetCenterHeight = Math.max(0, targetHeight - targetTop - targetBottom);
 
@@ -283,12 +356,17 @@ function drawNineSlicedSprite(
     { sy: sprite.y + sprite.height - bottom, sh: bottom, dy: targetHeight - targetBottom, dh: targetBottom },
   ];
 
-  for (const col of cols) {
+  for (let colIndex = 0; colIndex < cols.length; colIndex += 1) {
+    const col = cols[colIndex];
     if (col.sw <= 0 || col.dw <= 0) {
       continue;
     }
-    for (const row of rows) {
+    for (let rowIndex = 0; rowIndex < rows.length; rowIndex += 1) {
+      const row = rows[rowIndex];
       if (row.sh <= 0 || row.dh <= 0) {
+        continue;
+      }
+      if (colIndex === 1 && rowIndex === 1 && sprite.centerType.name === "Invisible") {
         continue;
       }
       ctx.drawImage(image, col.sx, row.sy, col.sw, row.sh, col.dx, row.dy, col.dw, row.dh);
@@ -369,10 +447,12 @@ function drawAdvancedSprite(
   const bottom = Math.max(0, Math.min(sprite.borderBottom, sprite.height - top));
   const centerWidth = Math.max(0, sprite.width - left - right);
   const centerHeight = Math.max(0, sprite.height - top - bottom);
-  const targetLeft = Math.min(left, targetWidth);
-  const targetRight = Math.min(right, Math.max(0, targetWidth - targetLeft));
-  const targetTop = Math.min(top, targetHeight);
-  const targetBottom = Math.min(bottom, Math.max(0, targetHeight - targetTop));
+  const targetHorizontalBorders = resolveNguiBorderPair(left, right, targetWidth);
+  const targetVerticalBorders = resolveNguiBorderPair(top, bottom, targetHeight);
+  const targetLeft = targetHorizontalBorders.start;
+  const targetRight = targetHorizontalBorders.end;
+  const targetTop = targetVerticalBorders.start;
+  const targetBottom = targetVerticalBorders.end;
   const targetCenterWidth = Math.max(0, targetWidth - targetLeft - targetRight);
   const targetCenterHeight = Math.max(0, targetHeight - targetTop - targetBottom);
 
@@ -398,9 +478,9 @@ function drawAdvancedSprite(
 }
 
 async function loadRenderedRhythmGameUiHudSpriteDataUrls(): Promise<RenderedHudSpriteDataUrls> {
-  const image = await loadImageElement(embeddedRhythmGameUiUrl);
+  const image = await loadRhythmGameUiImage();
   const output = {} as RenderedHudSpriteDataUrls;
-  for (const key of Object.keys(RHYTHM_GAME_UI_HUD_RENDER_SIZES) as Array<keyof RenderedHudSpriteDataUrls>) {
+  for (const key of Object.keys(RHYTHM_GAME_UI_HUD_RENDER_SIZES) as Array<keyof typeof RHYTHM_GAME_UI_HUD_RENDER_SIZES>) {
     const size = RHYTHM_GAME_UI_HUD_RENDER_SIZES[key];
     const advancedSprite = RHYTHM_GAME_UI_ADVANCED_SPRITES[key as keyof typeof RHYTHM_GAME_UI_ADVANCED_SPRITES];
     if (advancedSprite) {
@@ -440,7 +520,16 @@ async function loadRenderedRhythmGameUiHudSpriteDataUrls(): Promise<RenderedHudS
     drawNineSlicedSprite(ctx, image, sprite, size.width, size.height, tint);
     output[key] = canvas.toDataURL("image/png");
   }
+  const uiCommonSprites = await loadUiCommonSpriteDataUrls();
+  output.levelMark = uiCommonSprites.levelMark;
   return output;
+}
+
+function loadRhythmGameUiImage(): Promise<HTMLImageElement> {
+  if (!rhythmGameUiImageCache) {
+    rhythmGameUiImageCache = loadImageElement(embeddedRhythmGameUiUrl);
+  }
+  return rhythmGameUiImageCache;
 }
 
 export async function loadRhythmGameUiSpriteDataUrls(): Promise<Record<keyof typeof RHYTHM_GAME_UI_RECTS, string | null>> {
@@ -457,6 +546,20 @@ export async function loadRhythmGameUiSpriteDataUrls(): Promise<Record<keyof typ
   return rhythmGameUiDataUrlCache;
 }
 
+export async function loadUiCommonSpriteDataUrls(): Promise<Record<keyof typeof UI_COMMON_ATLAS_RECTS, string | null>> {
+  if (!uiCommonDataUrlCache) {
+    uiCommonDataUrlCache = loadAtlasSpriteDataUrls(embeddedUiCommonUrl, UI_COMMON_ATLAS_RECTS)
+      .catch(() => {
+        const output = {} as Record<keyof typeof UI_COMMON_ATLAS_RECTS, string | null>;
+        for (const key of Object.keys(UI_COMMON_ATLAS_RECTS) as Array<keyof typeof UI_COMMON_ATLAS_RECTS>) {
+          output[key] = null;
+        }
+        return output;
+      });
+  }
+  return uiCommonDataUrlCache;
+}
+
 export async function loadRhythmGameUiHudSpriteDataUrls(): Promise<RenderedHudSpriteDataUrls> {
   if (!rhythmGameUiHudDataUrlCache) {
     rhythmGameUiHudDataUrlCache = loadRenderedRhythmGameUiHudSpriteDataUrls()
@@ -467,6 +570,8 @@ export async function loadRhythmGameUiHudSpriteDataUrls(): Promise<RenderedHudSp
         hpMeterSecond: null,
         gaugeBaseScore: null,
         scoreMeterBlue: null,
+        bgGaugeScoreMulti: null,
+        levelMark: null,
       }));
   }
   return rhythmGameUiHudDataUrlCache;

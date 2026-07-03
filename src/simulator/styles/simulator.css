@@ -117,6 +117,24 @@
   opacity: 0;
 }
 
+.simulator-runtime-error {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  z-index: 1000;
+  display: none;
+  min-height: 16px;
+  padding: 1px 6px;
+  overflow: hidden;
+  color: #ff3131;
+  background: rgba(0, 0, 0, 0.92);
+  font: 11px/14px Consolas, "SFMono-Regular", "Cascadia Mono", monospace;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+
 .simulator-pause-mask {
   position: absolute;
   inset: 0;
@@ -150,25 +168,25 @@
   border: 0;
   border-radius: 0;
   background: transparent;
-  overflow: hidden;
 }
 
 .simulator-score-gauge-fill {
   position: absolute;
   left: 0;
   top: 0;
-  height: 100%;
-  width: 16%;
+  display: block;
   border-radius: 0;
-  background-repeat: no-repeat;
-  background-position: left center;
-  background-size: 100% 100%;
   box-shadow: none;
+  background-repeat: no-repeat;
+  background-origin: border-box;
+  background-clip: border-box;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
 .simulator-score-value {
   position: absolute;
-  z-index: 2;
+  z-index: 3;
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
@@ -190,6 +208,50 @@
   color: transparent;
   text-align: left;
   font-variant-numeric: tabular-nums;
+}
+
+.simulator-score-rank-object {
+  position: absolute;
+  z-index: 3;
+  pointer-events: none;
+  contain: layout paint;
+}
+
+.simulator-score-rank-marker {
+  position: absolute;
+  display: none;
+  pointer-events: none;
+}
+
+.simulator-score-rank-label,
+.simulator-score-rank-separator {
+  position: absolute;
+  display: block;
+  transform: translate(-50%, -50%);
+  transform-origin: center;
+  pointer-events: none;
+}
+
+.simulator-score-rank-label {
+  user-select: none;
+}
+
+.simulator-score-rank-separator {
+  user-select: none;
+}
+
+.simulator-score-rank-separator-image {
+  position: absolute;
+  display: block;
+  object-fit: fill;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.simulator-score-rank-separator[hidden],
+.simulator-score-rank-separator-image[hidden] {
+  display: none;
 }
 
 .simulator-pause-anchor {
@@ -214,7 +276,6 @@
 
 .simulator-life-gauge-fill-wrap {
   position: absolute;
-  overflow: hidden;
 }
 
 .simulator-pause-anchor {

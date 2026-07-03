@@ -7,6 +7,7 @@ import {
   loadRhythmGameUiHudSpriteDataUrls,
   loadRhythmGameUiSpriteDataUrls,
   loadScoreFontGlyphDataUrls,
+  UI_COMMON_ATLAS_RECTS,
   RHYTHM_GAME_UI_RECTS,
   SCORE_FONT_GLYPHS,
   SCORE_FONT_LINE_HEIGHT,
@@ -16,6 +17,7 @@ import {
   projectNguiAnchoredPoint,
   getLevel3StarAnchor,
   getLevel3NguiSpriteMetrics,
+  getLevel3WidgetDepthMetrics,
   getLevel3WidgetMetrics,
   resolveNguiDrawingRect,
   sumLevel3LocalPositionBetween,
@@ -28,6 +30,17 @@ import {
 } from "../engine/simulatorTiming";
 import { loadMvResourceFromPayload, type MvResource } from "../engine/mv";
 import { SimulatorRuntime } from "../engine/runtime";
+import {
+  buildScoreHudState,
+  SIMULATOR_SCORE_GAUGE_RANK_CLASSES,
+  SIMULATOR_SCORE_RANK_THRESHOLDS,
+  type SimulatorScoreRankLabel,
+  type SimulatorScoreRankMarker,
+} from "../engine/scoreHud";
+import {
+  loadNguiFontMetricApproximation,
+  type NguiFontMetricApproximation,
+} from "../engine/nguiFontMetrics";
 import { ParsedChart, RuntimeStats, SimulatorSettings } from "../engine/types";
 import {
   SIMULATOR_WINDOW_PAYLOAD_EVENT,
@@ -43,6 +56,14 @@ import {
   readMobileRoutePayload,
   removeMobileRoutePayload,
 } from "../../app/mobileRuntime";
+import ttShinGoMFontUrl from "../../assets/fonts/TTShinGoM.ttf?url";
+
+interface ScoreRankMarkerRefs {
+  root: HTMLDivElement;
+  label: HTMLCanvasElement;
+  separator: HTMLDivElement;
+  separatorImage: HTMLImageElement;
+}
 
 interface UiRefs {
   root: HTMLDivElement;
@@ -50,6 +71,7 @@ interface UiRefs {
   canvasHost: HTMLDivElement;
   mvLayer: HTMLDivElement;
   uiLayer: HTMLDivElement;
+  runtimeErrorOverlay: HTMLDivElement;
   pauseMask: HTMLDivElement;
   scoreHud: HTMLDivElement;
   scoreBase: HTMLDivElement;
@@ -57,10 +79,14 @@ interface UiRefs {
   scoreGaugeFill: HTMLDivElement;
   scoreText: HTMLSpanElement;
   scoreDigits: HTMLSpanElement[];
+  scoreRankObject: HTMLDivElement;
+  scoreRankMarkers: Record<SimulatorScoreRankLabel, ScoreRankMarkerRefs>;
   lifeGauge: HTMLDivElement;
   lifeGaugeBg: HTMLImageElement;
   lifeGaugeFillWrap: HTMLDivElement;
   lifeGaugeFill: HTMLImageElement;
+  lifeGaugeSecondFillWrap: HTMLDivElement;
+  lifeGaugeSecondFill: HTMLImageElement;
   pauseAnchor: HTMLDivElement;
   pauseButton: HTMLButtonElement;
   pauseIconPause: HTMLImageElement;
@@ -96,14 +122,62 @@ const STARTUP_TIMELINE_TOTAL_MS =
   + STARTUP_STAGE_POST_UI_DURATION_MS;
 const STARTUP_CHART_PREROLL_MS = 3000;
 const SCORE_HUD_DIGIT_COUNT = 8;
-const SCORE_HUD_BASE_FULL_SCORE = 10000000;
+const SIMULATOR_RUNTIME_ERROR_MAX_LENGTH = 220;
 const SCORE_HUD_TOTAL_SCORE_FONT_SIZE = 28;
+// Source: level3 RankObject UILabel raw data. The labels use mFontSize=12,
+// widget 22x26, center pivot, white color, and text C/B/A/S/SS.
+const SCORE_RANK_LABEL_FONT_SIZE = 12;
+const SCORE_RANK_LABEL_FONT_FAMILY = "\"TTShinGoM\", \"ChartUI\", \"Microsoft YaHei UI\", sans-serif";
 const SCORE_HUD_TOTAL_SCORE_WIDGET = getLevel3WidgetMetrics(RHYTHM_UI_PATHS.scoreTotalScore);
 const SCORE_HUD_DIGIT_SCALE = SCORE_HUD_TOTAL_SCORE_FONT_SIZE / SCORE_FONT_LINE_HEIGHT;
 const PAUSE_MAIN_WIDGET = getLevel3WidgetMetrics(RHYTHM_UI_PATHS.pauseMain);
 const PAUSE_COVER_WIDGET = getLevel3WidgetMetrics(RHYTHM_UI_PATHS.pauseCover);
 const PAUSE_MAIN_SPRITE = getLevel3NguiSpriteMetrics(RHYTHM_UI_PATHS.pauseMain);
 const PAUSE_COVER_SPRITE = getLevel3NguiSpriteMetrics(RHYTHM_UI_PATHS.pauseCover);
+const LIFE_GAUGE_BACKGROUND_DEPTH = getLevel3WidgetDepthMetrics(RHYTHM_UI_PATHS.lifeGaugeBackground).depth;
+const LIFE_GAUGE_FRONT_DEPTH = getLevel3WidgetDepthMetrics(RHYTHM_UI_PATHS.lifeGaugeFront).depth;
+const LIFE_GAUGE_SECOND_FRONT_DEPTH = getLevel3WidgetDepthMetrics(RHYTHM_UI_PATHS.lifeGaugeSecondFront).depth;
+const SIMULATOR_SCORE_RANK_LABELS = SIMULATOR_SCORE_RANK_THRESHOLDS.map(
+  (threshold) => threshold.label,
+) as readonly SimulatorScoreRankLabel[];
+const SCORE_RANK_PATHS = {
+  C: {
+    root: RHYTHM_UI_PATHS.scoreRankC,
+    label: RHYTHM_UI_PATHS.scoreRankCLabel,
+    separator: RHYTHM_UI_PATHS.scoreRankCSeparator,
+  },
+  B: {
+    root: RHYTHM_UI_PATHS.scoreRankB,
+    label: RHYTHM_UI_PATHS.scoreRankBLabel,
+    separator: RHYTHM_UI_PATHS.scoreRankBSeparator,
+  },
+  A: {
+    root: RHYTHM_UI_PATHS.scoreRankA,
+    label: RHYTHM_UI_PATHS.scoreRankALabel,
+    separator: RHYTHM_UI_PATHS.scoreRankASeparator,
+  },
+  S: {
+    root: RHYTHM_UI_PATHS.scoreRankS,
+    label: RHYTHM_UI_PATHS.scoreRankSLabel,
+    separator: RHYTHM_UI_PATHS.scoreRankSSeparator,
+  },
+  SS: {
+    root: RHYTHM_UI_PATHS.scoreRankSS,
+    label: RHYTHM_UI_PATHS.scoreRankSSLabel,
+    separator: RHYTHM_UI_PATHS.scoreRankSSSeparator,
+  },
+} as const satisfies Record<SimulatorScoreRankLabel, { root: string; label: string; separator: string }>;
+const SCORE_RANK_SEPARATOR_SPRITES = Object.fromEntries(
+  SIMULATOR_SCORE_RANK_LABELS.map((rank) => [
+    rank,
+    getLevel3NguiSpriteMetrics(SCORE_RANK_PATHS[rank].separator),
+  ]),
+) as Record<SimulatorScoreRankLabel, ReturnType<typeof getLevel3NguiSpriteMetrics>>;
+// Source: UIProgressBar.FillDirection enum in dump.cs.
+const NGUI_PROGRESS_FILL_LEFT_TO_RIGHT = 0;
+const NGUI_PROGRESS_FILL_RIGHT_TO_LEFT = 1;
+const NGUI_PROGRESS_FILL_BOTTOM_TO_TOP = 2;
+const NGUI_PROGRESS_FILL_TOP_TO_BOTTOM = 3;
 const PAUSE_MAIN_DRAW_RECT = resolveNguiDrawingRect(
   PAUSE_MAIN_WIDGET,
   PAUSE_MAIN_SPRITE,
@@ -136,6 +210,54 @@ for (const [label, sprite] of [
 // the recovered cover widget color instead of inventing a touch flash color.
 const PAUSE_COVER_ALPHA = 0.501960813999176;
 
+interface NguiProgressDrawRegionRect {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+}
+
+function applyNguiProgressDrawRegion(
+  element: HTMLElement,
+  fullWidth: number,
+  fullHeight: number,
+  value: number,
+  fillDirection: number,
+): NguiProgressDrawRegionRect {
+  const amount = Math.max(0, Math.min(1, value));
+  let xMin = 0;
+  let yMin = 0;
+  let xMax = 1;
+  let yMax = 1;
+  if (fillDirection === NGUI_PROGRESS_FILL_RIGHT_TO_LEFT) {
+    xMin = 1 - amount;
+  } else if (fillDirection === NGUI_PROGRESS_FILL_BOTTOM_TO_TOP) {
+    yMax = amount;
+  } else if (fillDirection === NGUI_PROGRESS_FILL_TOP_TO_BOTTOM) {
+    yMin = 1 - amount;
+  } else {
+    xMax = amount;
+  }
+
+  // Source: UIProgressBar.ForceUpdate calls UIWidget.set_drawRegion(Vector4)
+  // on mFG. This mirrors the resulting NGUI foreground widget draw rectangle;
+  // it is not a texture crop or CSS mask.
+  const rect = {
+    left: fullWidth * xMin,
+    top: fullHeight * yMin,
+    width: fullWidth * (xMax - xMin),
+    height: fullHeight * (yMax - yMin),
+  };
+  element.style.left = `${rect.left}px`;
+  element.style.top = `${rect.top}px`;
+  element.style.width = `${rect.width}px`;
+  element.style.height = `${rect.height}px`;
+  element.style.clipPath = "";
+  element.style.backgroundSize = `${fullWidth}px ${fullHeight}px`;
+  element.style.backgroundPosition = `${-rect.left}px ${-rect.top}px`;
+  return rect;
+}
+
 function parseLaunchRequestIdFromHash(): string {
   if (typeof window === "undefined") {
     return "";
@@ -147,6 +269,29 @@ function parseLaunchRequestIdFromHash(): string {
   }
   const params = new URLSearchParams(hash.slice(queryIndex + 1));
   return params.get("request")?.trim() ?? "";
+}
+
+function formatRuntimeIssueMessage(context: string, error?: unknown): string {
+  const detail = (() => {
+    if (error instanceof Error) {
+      return error.message;
+    }
+    if (typeof error === "string") {
+      return error;
+    }
+    if (error === null || typeof error === "undefined") {
+      return "";
+    }
+    try {
+      return JSON.stringify(error);
+    } catch {
+      return String(error);
+    }
+  })();
+  const message = detail ? `${context}: ${detail}` : context;
+  return message.length > SIMULATOR_RUNTIME_ERROR_MAX_LENGTH
+    ? `${message.slice(0, SIMULATOR_RUNTIME_ERROR_MAX_LENGTH - 1)}…`
+    : message;
 }
 
 function resolveMvPayloadFromMetadata(
@@ -252,7 +397,11 @@ export class SimulatorAppController {
   private lastAppliedUiAlpha = Number.NaN;
   private lastPauseBlocked: boolean | null = null;
   private runtimeStarted = false;
+  private readonly reportedRuntimeIssueKeys = new Set<string>();
   private lastRenderedScore = Number.NaN;
+  private lastScoreGaugeValue = 0;
+  private lastScoreRankMarkers: readonly SimulatorScoreRankMarker[] = [];
+  private rankFontMetricApproximation: NguiFontMetricApproximation | null = null;
   private bootRevealPrepared = false;
   private bootRevealRafId = 0;
   private bootPendingAlpha = 1;
@@ -395,15 +544,17 @@ export class SimulatorAppController {
         }
         if (!resource) {
           this.mvPreflightFailed = true;
+          this.reportRuntimeIssue("MV 资源预加载失败，已回退为普通背景", undefined, "mv-preflight");
           return;
         }
         this.mvPreflightResource = resource;
       })
-      .catch(() => {
+      .catch((error: unknown) => {
         if (token !== this.mvPreflightToken) {
           return;
         }
         this.mvPreflightFailed = true;
+        this.reportRuntimeIssue("MV 资源预加载异常，已回退为普通背景", error, "mv-preflight");
       });
   }
 
@@ -432,7 +583,9 @@ export class SimulatorAppController {
     }
     this.isStarting = true;
     void this.start()
-      .catch(() => {})
+      .catch((error: unknown) => {
+        this.reportRuntimeIssue("模拟器启动失败", error, "simulator-start");
+      })
       .finally(() => {
         this.isStarting = false;
       });
@@ -540,7 +693,51 @@ export class SimulatorAppController {
     this.ui.host.addEventListener("pointerup", this.onHostPointerUpOrCancel);
     this.ui.host.addEventListener("pointercancel", this.onHostPointerUpOrCancel);
     window.addEventListener("resize", this.onWindowResize);
+    if ("fonts" in document) {
+      void document.fonts.load(`${SCORE_RANK_LABEL_FONT_SIZE}px TTShinGoM`).catch(() => {});
+      void document.fonts.ready.then(() => this.updateFontSensitiveLayout()).catch(() => {});
+    }
+    void loadNguiFontMetricApproximation(ttShinGoMFontUrl)
+      .then((metrics) => {
+        if (this.isDisposed) {
+          return;
+        }
+        this.rankFontMetricApproximation = metrics;
+        this.updateFontSensitiveLayout();
+      })
+      .catch((error) => {
+        this.reportRuntimeIssue(
+          "Rank 字体近似 metrics 解析失败，已回退到 Canvas 中线",
+          error,
+          "rank-font-metrics",
+        );
+      });
     void this.attachLaunchPayloadBridge();
+  }
+
+  private updateFontSensitiveLayout(): void {
+    if (this.isDisposed) {
+      return;
+    }
+    this.updateBootLayerLayout();
+    const rect = this.ui.root.getBoundingClientRect();
+    this.updateScoreRankMarkerLayout(
+      Math.max(1, rect.width || window.innerWidth || 1),
+      Math.max(1, rect.height || window.innerHeight || 1),
+      this.lastScoreRankMarkers,
+    );
+  }
+
+  private reportRuntimeIssue(context: string, error?: unknown, key = context): void {
+    const message = formatRuntimeIssueMessage(context, error);
+    if (!this.reportedRuntimeIssueKeys.has(key)) {
+      this.reportedRuntimeIssueKeys.add(key);
+      if (typeof console !== "undefined" && typeof console.warn === "function") {
+        console.warn(`[Simulator] ${message}`, error);
+      }
+    }
+    this.ui.runtimeErrorOverlay.textContent = message;
+    this.ui.runtimeErrorOverlay.style.display = "block";
   }
 
   dispose(): void {
@@ -584,6 +781,10 @@ export class SimulatorAppController {
 
     const uiLayer = document.createElement("div");
     uiLayer.className = "simulator-ui-layer";
+    const runtimeErrorOverlay = document.createElement("div");
+    runtimeErrorOverlay.className = "simulator-runtime-error";
+    runtimeErrorOverlay.setAttribute("role", "status");
+    runtimeErrorOverlay.setAttribute("aria-live", "polite");
     const pauseMask = document.createElement("div");
     pauseMask.className = "simulator-pause-mask";
 
@@ -606,7 +807,30 @@ export class SimulatorAppController {
       scoreDigits.push(digit);
       scoreText.appendChild(digit);
     }
-    scoreHud.append(scoreBase, scoreTopTrack, scoreText);
+    const scoreRankObject = document.createElement("div");
+    scoreRankObject.className = "simulator-score-rank-object";
+    const scoreRankMarkers = {} as Record<SimulatorScoreRankLabel, ScoreRankMarkerRefs>;
+    for (const rank of SIMULATOR_SCORE_RANK_LABELS) {
+      const marker = document.createElement("div");
+      marker.className = "simulator-score-rank-marker";
+      marker.dataset.rank = rank;
+      const label = document.createElement("canvas");
+      label.className = "simulator-score-rank-label";
+      label.setAttribute("aria-label", rank);
+      const separator = document.createElement("img");
+      const separatorFrame = document.createElement("div");
+      separatorFrame.className = "simulator-score-rank-separator";
+      separator.className = "simulator-score-rank-separator-image";
+      separator.alt = "";
+      separator.decoding = "async";
+      separator.hidden = true;
+      separatorFrame.hidden = true;
+      separatorFrame.appendChild(separator);
+      marker.append(label, separatorFrame);
+      scoreRankObject.appendChild(marker);
+      scoreRankMarkers[rank] = { root: marker, label, separator: separatorFrame, separatorImage: separator };
+    }
+    scoreHud.append(scoreBase, scoreTopTrack, scoreRankObject, scoreText);
 
     const lifeGauge = document.createElement("div");
     lifeGauge.className = "simulator-life-gauge";
@@ -620,8 +844,23 @@ export class SimulatorAppController {
     lifeGaugeFill.className = "simulator-life-gauge-fill";
     lifeGaugeFill.alt = "";
     lifeGaugeFill.decoding = "async";
+    const lifeGaugeSecondFillWrap = document.createElement("div");
+    lifeGaugeSecondFillWrap.className = "simulator-life-gauge-fill-wrap simulator-life-gauge-fill-wrap-second";
+    const lifeGaugeSecondFill = document.createElement("img");
+    lifeGaugeSecondFill.className = "simulator-life-gauge-fill simulator-life-gauge-fill-second";
+    lifeGaugeSecondFill.alt = "";
+    lifeGaugeSecondFill.decoding = "async";
     lifeGaugeFillWrap.appendChild(lifeGaugeFill);
-    lifeGauge.append(lifeGaugeBg, lifeGaugeFillWrap);
+    lifeGaugeSecondFillWrap.appendChild(lifeGaugeSecondFill);
+    // Source: UIPanel.CompareFunc first sorts UIWidget.mDepth, then Transform
+    // sibling index. The depths are read from level3-hud-subtree-report.json
+    // raw UISprite offset 144 instead of copied in as visual constants.
+    const lifeGaugeLayers = [
+      { element: lifeGaugeBg, depth: LIFE_GAUGE_BACKGROUND_DEPTH, sibling: 0 },
+      { element: lifeGaugeFillWrap, depth: LIFE_GAUGE_FRONT_DEPTH, sibling: 1 },
+      { element: lifeGaugeSecondFillWrap, depth: LIFE_GAUGE_SECOND_FRONT_DEPTH, sibling: 2 },
+    ].sort((a, b) => (a.depth - b.depth) || (a.sibling - b.sibling));
+    lifeGauge.append(...lifeGaugeLayers.map((layer) => layer.element));
 
     void loadRhythmGameUiHudSpriteDataUrls()
       .then((sprites) => {
@@ -631,15 +870,36 @@ export class SimulatorAppController {
         if (sprites.scoreMeterBlue) {
           scoreGaugeFill.style.backgroundImage = `url("${sprites.scoreMeterBlue}")`;
         }
+        if (sprites.levelMark) {
+          for (const marker of Object.values(scoreRankMarkers)) {
+            marker.separatorImage.src = sprites.levelMark;
+            marker.separatorImage.hidden = false;
+            marker.separator.hidden = false;
+          }
+        } else {
+          this.reportRuntimeIssue(
+            "level_mark 贴图加载失败：UICommon 裁切结果为空",
+            undefined,
+            "level-mark-empty",
+          );
+        }
+        this.applyScoreGaugeDrawRegion();
         if (sprites.bgHealth) {
           lifeGaugeBg.src = sprites.bgHealth;
         }
         if (sprites.hpMeterMain ?? sprites.hpMeter) {
           lifeGaugeFill.src = sprites.hpMeterMain ?? sprites.hpMeter ?? "";
         }
+        if (sprites.hpMeterSecond) {
+          lifeGaugeSecondFill.src = sprites.hpMeterSecond;
+        }
       })
-      .catch(() => {});
-    void loadRhythmGameUiSpriteDataUrls().catch(() => {});
+      .catch((error: unknown) => {
+        this.reportRuntimeIssue("HUD 贴图加载失败，已跳过部分 UI 贴图", error, "hud-assets");
+      });
+    void loadRhythmGameUiSpriteDataUrls().catch((error: unknown) => {
+      this.reportRuntimeIssue("RhythmGameUI 图集裁切失败", error, "rhythm-game-ui-atlas");
+    });
     void loadScoreFontGlyphDataUrls()
       .then((glyphs) => {
         for (const digit of scoreDigits) {
@@ -649,7 +909,9 @@ export class SimulatorAppController {
           }
         }
       })
-      .catch(() => {});
+      .catch((error: unknown) => {
+        this.reportRuntimeIssue("分数字体贴图加载失败", error, "score-font-atlas");
+      });
 
     const pauseAnchor = document.createElement("div");
     pauseAnchor.className = "simulator-pause-anchor";
@@ -675,7 +937,9 @@ export class SimulatorAppController {
           pauseCoverIcon.src = url;
         }
       })
-      .catch(() => {});
+      .catch((error: unknown) => {
+        this.reportRuntimeIssue("暂停按钮贴图加载失败", error, "pause-button-image");
+      });
     pauseCore.append(pauseIconPause, pauseCoverIcon);
     pauseButton.append(pauseCore);
     pauseAnchor.append(pauseButton);
@@ -704,7 +968,7 @@ export class SimulatorAppController {
     bootDifficultyBadge.appendChild(bootDifficultyText);
     bootLayer.append(bootBack, bootFrame, bootCoverWrap, bootTitleBar, bootTitleText, bootDifficultyBadge);
 
-    shell.append(host, bootLayer, uiLayer);
+    shell.append(host, bootLayer, uiLayer, runtimeErrorOverlay);
     root.appendChild(shell);
     parent.appendChild(root);
 
@@ -714,6 +978,7 @@ export class SimulatorAppController {
       canvasHost,
       mvLayer,
       uiLayer,
+      runtimeErrorOverlay,
       pauseMask,
       scoreHud,
       scoreBase,
@@ -721,10 +986,14 @@ export class SimulatorAppController {
       scoreGaugeFill,
       scoreText,
       scoreDigits,
+      scoreRankObject,
+      scoreRankMarkers,
       lifeGauge,
       lifeGaugeBg,
       lifeGaugeFillWrap,
       lifeGaugeFill,
+      lifeGaugeSecondFillWrap,
+      lifeGaugeSecondFill,
       pauseAnchor,
       pauseButton,
       pauseIconPause,
@@ -833,7 +1102,10 @@ export class SimulatorAppController {
         fieldSkinPayload,
         bgSkinPayload,
         judgeSkinPayload,
-      ).catch(() => null);
+      ).catch((error: unknown) => {
+        this.reportRuntimeIssue("音符/判定贴图加载失败，已使用空资源继续", error, "note-skin-assets");
+        return null;
+      });
     })();
 
     await this.audio.ensureContext();
@@ -850,8 +1122,12 @@ export class SimulatorAppController {
     const audioPromise = Promise.all([
       (payloadBgmDataUrl
         ? this.audio.loadBgmFromDataUrl(payloadBgmDataUrl)
-        : Promise.resolve(this.audio.clearBgm())).catch(() => {}),
-      this.audio.loadSeFromRuntimeAssets(payloadSeRuntimeAssets ?? null).catch(() => {}),
+        : Promise.resolve(this.audio.clearBgm())).catch((error: unknown) => {
+          this.reportRuntimeIssue("BGM 加载失败，已静音继续", error, "bgm-load");
+        }),
+      this.audio.loadSeFromRuntimeAssets(payloadSeRuntimeAssets ?? null).catch((error: unknown) => {
+        this.reportRuntimeIssue("打击音加载失败，已静音继续", error, "se-load");
+      }),
     ]);
 
     const assets = await assetsPromise;
@@ -1380,6 +1656,48 @@ export class SimulatorAppController {
     el.style.height = `${Math.max(0, h)}px`;
   }
 
+  private snapCssPixel(value: number): number {
+    const dpr = Math.max(1, window.devicePixelRatio || 1);
+    return Math.round(value * dpr) / dpr;
+  }
+
+  private renderScoreRankLabel(
+    canvas: HTMLCanvasElement,
+    rank: SimulatorScoreRankLabel,
+    logicalWidth: number,
+    logicalHeight: number,
+    fontSize: number,
+  ): void {
+    const dpr = Math.max(1, window.devicePixelRatio || 1);
+    const pixelWidth = Math.max(1, Math.round(logicalWidth * dpr));
+    const pixelHeight = Math.max(1, Math.round(logicalHeight * dpr));
+    if (canvas.width !== pixelWidth) {
+      canvas.width = pixelWidth;
+    }
+    if (canvas.height !== pixelHeight) {
+      canvas.height = pixelHeight;
+    }
+
+    const context = canvas.getContext("2d");
+    if (!context) {
+      return;
+    }
+
+    context.setTransform(dpr, 0, 0, dpr, 0, 0);
+    context.clearRect(0, 0, logicalWidth, logicalHeight);
+    context.fillStyle = "#fff";
+    context.textAlign = "center";
+    context.font = `${fontSize}px ${SCORE_RANK_LABEL_FONT_FAMILY}`;
+    // Boundary from reverse/analysis/targets/score-rank-hud-chain-current.md:
+    // Rank UILabel structure/size/pivot/alignment is recovered, but Unity
+    // native CharacterInfo metrics are not. This baseline is a documented
+    // TTF-derived approximation, not exact decompiled text placement.
+    const baseline = this.rankFontMetricApproximation?.resolveApproximateCenterPivotCanvasBaseline(logicalHeight, fontSize)
+      ?? Math.round(logicalHeight * 0.5);
+    context.textBaseline = "alphabetic";
+    context.fillText(rank, logicalWidth * 0.5, baseline);
+  }
+
   private updateBootDifficultyTextScale(): void {
     const textEl = this.ui.bootDifficultyText;
     const badgeEl = this.ui.bootDifficultyBadge;
@@ -1429,13 +1747,105 @@ export class SimulatorAppController {
     this.ui.scoreText.style.display = "inline-flex";
     this.ui.scoreTopTrack.style.setProperty("--sim-score-meter-width", `${meterWidth}px`);
     this.ui.scoreTopTrack.style.setProperty("--sim-score-meter-height", `${meterHeight}px`);
+    this.ui.scoreGaugeFill.style.width = `${meterWidth}px`;
     this.ui.scoreGaugeFill.style.height = `${meterHeight}px`;
-    this.ui.scoreGaugeFill.style.backgroundSize = `${meterWidth}px ${meterHeight}px`;
+    this.applyScoreGaugeDrawRegion();
     this.ui.scoreText.style.setProperty("--sim-score-font-scale", `${digitScale}`);
     this.ui.scoreText.style.width = `${SCORE_HUD_TOTAL_SCORE_WIDGET.width}px`;
     this.ui.scoreText.style.height = `${SCORE_HUD_TOTAL_SCORE_WIDGET.height}px`;
     this.ui.scoreText.style.transform = `translate(-50%, -50%) scale(${digitScale})`;
     this.layoutBitmapScoreDigits();
+    this.updateScoreRankMarkerLayout(windowWidth, windowHeight, this.lastScoreRankMarkers);
+  }
+
+  private updateScoreRankMarkerLayout(
+    windowWidth: number,
+    windowHeight: number,
+    markers: readonly SimulatorScoreRankMarker[],
+  ): void {
+    this.applyRectStyle(this.ui.scoreRankObject, 0, 0, windowWidth, windowHeight);
+    const markerByRank = new Map(markers.map((marker) => [marker.rank, marker]));
+    const viewport = { width: windowWidth, height: windowHeight };
+    const scoreRootAnchor = getLevel3StarAnchor(RHYTHM_UI_PATHS.scoreRoot);
+    const rankObjectPoint = projectNguiOffsetFromAnchoredRoot(
+      scoreRootAnchor,
+      sumLevel3LocalPositionBetween(RHYTHM_UI_PATHS.scoreRoot, RHYTHM_UI_PATHS.scoreRankObject),
+      viewport,
+    );
+    const scoreForegroundWidget = getLevel3WidgetMetrics(RHYTHM_UI_PATHS.scoreForeground);
+    const rankObjectLocalFromScoreRoot = sumLevel3LocalPositionBetween(
+      RHYTHM_UI_PATHS.scoreRoot,
+      RHYTHM_UI_PATHS.scoreRankObject,
+    );
+    const foregroundLocalFromScoreRoot = sumLevel3LocalPositionBetween(
+      RHYTHM_UI_PATHS.scoreRoot,
+      RHYTHM_UI_PATHS.scoreForeground,
+    );
+    const foregroundLocalFromRankObject = {
+      x: foregroundLocalFromScoreRoot.x - rankObjectLocalFromScoreRoot.x,
+      y: foregroundLocalFromScoreRoot.y - rankObjectLocalFromScoreRoot.y,
+    };
+
+    for (const rank of SIMULATOR_SCORE_RANK_LABELS) {
+      const refs = this.ui.scoreRankMarkers[rank];
+      const marker = markerByRank.get(rank);
+      if (!marker || !Number.isFinite(marker.ratio)) {
+        refs.root.style.display = "none";
+        continue;
+      }
+
+      const paths = SCORE_RANK_PATHS[rank];
+      const ratio = this.clamp01(marker.ratio);
+      const labelLocal = sumLevel3LocalPositionBetween(paths.root, paths.label);
+      const separatorLocal = sumLevel3LocalPositionBetween(paths.root, paths.separator);
+      const labelWidget = getLevel3WidgetMetrics(paths.label);
+      const separatorWidget = getLevel3WidgetMetrics(paths.separator);
+      const separatorDrawingRect = resolveNguiDrawingRect(
+        separatorWidget,
+        SCORE_RANK_SEPARATOR_SPRITES[rank],
+        UI_COMMON_ATLAS_RECTS.levelMark,
+      );
+      const scale = rankObjectPoint.scale;
+      // Source: reverse/analysis/targets/score-rank-hud-chain-current.md.
+      // The game computes X as slider local x + foreground width * score /
+      // scoreMax, then initializeScoreRankIcon writes the full rank root local
+      // position to (positionX, 0, 0). The serialized rank* y=-2 is only the
+      // prefab/default value and is not the shown runtime Y.
+      const rankRootLocalX = foregroundLocalFromRankObject.x + (scoreForegroundWidget.width * ratio);
+      const rankRootLocalY = 0;
+      const rootX = rankObjectPoint.x + (rankRootLocalX * scale);
+      const rootY = rankObjectPoint.y - (rankRootLocalY * scale);
+
+      refs.root.style.display = "block";
+      refs.root.style.left = `${rootX}px`;
+      refs.root.style.top = `${rootY}px`;
+      const labelWidth = labelWidget.width * scale;
+      const labelHeight = labelWidget.height * scale;
+      this.applyRectStyle(
+        refs.label,
+        labelLocal.x * scale,
+        -labelLocal.y * scale,
+        labelWidth,
+        labelHeight,
+      );
+      this.renderScoreRankLabel(refs.label, rank, labelWidget.width, labelWidget.height, SCORE_RANK_LABEL_FONT_SIZE);
+      this.applyRectStyle(
+        refs.separator,
+        this.snapCssPixel(separatorLocal.x * scale),
+        this.snapCssPixel(-separatorLocal.y * scale),
+        this.snapCssPixel(separatorWidget.width * scale),
+        this.snapCssPixel(separatorWidget.height * scale),
+      );
+      this.applyRectStyle(
+        refs.separatorImage,
+        this.snapCssPixel(separatorDrawingRect.x * scale),
+        this.snapCssPixel(separatorDrawingRect.y * scale),
+        this.snapCssPixel(separatorDrawingRect.width * scale),
+        this.snapCssPixel(separatorDrawingRect.height * scale),
+      );
+      refs.separator.hidden = !refs.separatorImage.src;
+      refs.separatorImage.hidden = !refs.separatorImage.src;
+    }
   }
 
   private updateLifeGaugeLayout(windowWidth: number, windowHeight: number): void {
@@ -1443,6 +1853,7 @@ export class SimulatorAppController {
     const lifeGaugeRootAnchor = getLevel3StarAnchor(RHYTHM_UI_PATHS.lifeGaugeRoot);
     const lifeGaugeBackgroundWidget = getLevel3WidgetMetrics(RHYTHM_UI_PATHS.lifeGaugeBackground);
     const lifeGaugeFrontWidget = getLevel3WidgetMetrics(RHYTHM_UI_PATHS.lifeGaugeFront);
+    const lifeGaugeSecondFrontWidget = getLevel3WidgetMetrics(RHYTHM_UI_PATHS.lifeGaugeSecondFront);
     const background = projectNguiOffsetFromAnchoredRoot(
       lifeGaugeRootAnchor,
       sumLevel3LocalPositionBetween(RHYTHM_UI_PATHS.lifeGaugeRoot, RHYTHM_UI_PATHS.lifeGaugeBackground),
@@ -1453,11 +1864,18 @@ export class SimulatorAppController {
       sumLevel3LocalPositionBetween(RHYTHM_UI_PATHS.lifeGaugeRoot, RHYTHM_UI_PATHS.lifeGaugeFront),
       viewport,
     );
+    const secondFront = projectNguiOffsetFromAnchoredRoot(
+      lifeGaugeRootAnchor,
+      sumLevel3LocalPositionBetween(RHYTHM_UI_PATHS.lifeGaugeRoot, RHYTHM_UI_PATHS.lifeGaugeSecondFront),
+      viewport,
+    );
     const scale = background.scale;
     const bgWidth = lifeGaugeBackgroundWidget.width * scale;
     const bgHeight = lifeGaugeBackgroundWidget.height * scale;
     const frontWidth = lifeGaugeFrontWidget.width * scale;
     const frontHeight = lifeGaugeFrontWidget.height * scale;
+    const secondFrontWidth = lifeGaugeSecondFrontWidget.width * scale;
+    const secondFrontHeight = lifeGaugeSecondFrontWidget.height * scale;
     this.applyRectStyle(this.ui.lifeGauge, 0, 0, windowWidth, windowHeight);
     this.applyRectStyle(
       this.ui.lifeGaugeBg,
@@ -1474,13 +1892,23 @@ export class SimulatorAppController {
       frontHeight,
     );
     this.applyRectStyle(this.ui.lifeGaugeFill, 0, 0, frontWidth, frontHeight);
-    this.ui.lifeGaugeFill.style.width = `${frontWidth}px`;
-    // The simulator currently has no real life state. Keep the restored gauge at full life.
-    this.ui.lifeGaugeFillWrap.style.width = `${frontWidth}px`;
+    this.applyRectStyle(
+      this.ui.lifeGaugeSecondFillWrap,
+      secondFront.x - (secondFrontWidth * 0.5),
+      secondFront.y - (secondFrontHeight * 0.5),
+      secondFrontWidth,
+      secondFrontHeight,
+    );
+    this.applyRectStyle(this.ui.lifeGaugeSecondFill, 0, 0, secondFrontWidth, secondFrontHeight);
+    // Source: score-life-fill-direction-current.md confirms these FrontGauge
+    // objects are UISprite type=Sliced, not UIProgressBar instances. Their
+    // serialized fillDirection=Radial360 is not active progress evidence while
+    // type is Sliced, so do not apply UIProgressBar.drawRegion here.
   }
 
   private updateScoreHud(stats: RuntimeStats | null): void {
-    const score = Math.max(0, Math.floor(stats?.score ?? 0));
+    const hudState = buildScoreHudState(stats);
+    const score = hudState.score;
     if (!Number.isFinite(this.lastRenderedScore) || this.lastRenderedScore !== score) {
       const clamped = Math.min(999_999_999, score);
       const raw = clamped <= 0 ? "" : String(clamped);
@@ -1495,15 +1923,37 @@ export class SimulatorAppController {
       this.layoutBitmapScoreDigits();
       this.lastRenderedScore = score;
     }
-    const targetGauge = (() => {
-      if (!stats) {
-        return 0;
-      }
-      const notes = Math.max(0, Math.floor(stats.notes));
-      const fullScore = Math.max(1, SCORE_HUD_BASE_FULL_SCORE + notes);
-      return this.clamp01(score / fullScore);
-    })();
-    this.ui.scoreGaugeFill.style.width = `${(targetGauge * 100).toFixed(3)}%`;
+    this.lastScoreGaugeValue = hudState.scoreRatio;
+    this.lastScoreRankMarkers = hudState.rankMarkers;
+    for (const className of SIMULATOR_SCORE_GAUGE_RANK_CLASSES) {
+      this.ui.scoreGaugeFill.classList.toggle(className, className === hudState.gaugeRankClass);
+    }
+    const rect = this.ui.root.getBoundingClientRect();
+    this.updateScoreRankMarkerLayout(rect.width, rect.height, this.lastScoreRankMarkers);
+    // Source: score-life-fill-direction-current.md confirms Score/Progress
+    // UISlider has UIProgressBar.mFill=0=LeftToRight and mFG=1217
+    // Foreground. ForceUpdate applies the value through foreground
+    // UIWidget.set_drawRegion(Vector4), not through a mask/texture crop.
+    this.applyScoreGaugeDrawRegion();
+  }
+
+  private applyScoreGaugeDrawRegion(): void {
+    const gaugeRect = this.ui.scoreTopTrack.getBoundingClientRect();
+    if (gaugeRect.width <= 0 || gaugeRect.height <= 0) {
+      this.reportRuntimeIssue(
+        "分数条 drawRegion 跳过：Foreground 尺寸无效",
+        new Error(`${gaugeRect.width.toFixed(3)}x${gaugeRect.height.toFixed(3)}`),
+        "score-gauge-invalid-size",
+      );
+      return;
+    }
+    applyNguiProgressDrawRegion(
+      this.ui.scoreGaugeFill,
+      gaugeRect.width,
+      gaugeRect.height,
+      this.lastScoreGaugeValue,
+      NGUI_PROGRESS_FILL_LEFT_TO_RIGHT,
+    );
   }
 
   private applyBitmapScoreGlyph(el: HTMLElement, value: string): void {
@@ -1525,7 +1975,9 @@ export class SimulatorAppController {
           el.style.backgroundImage = `url("${url}")`;
         }
       })
-      .catch(() => {});
+      .catch((error: unknown) => {
+        this.reportRuntimeIssue("分数字形贴图加载失败", error, "score-glyph-load");
+      });
   }
 
   private layoutBitmapScoreDigits(): void {
@@ -1649,9 +2101,7 @@ export class SimulatorAppController {
         }
       }
       void video.play().catch((error: unknown) => {
-        if (typeof console !== "undefined" && typeof console.warn === "function") {
-          console.warn("[Simulator] MV video play() rejected.", error);
-        }
+        this.reportRuntimeIssue("MV 视频播放被浏览器拒绝", error, "mv-video-play");
       });
     }
     return "video";
@@ -1668,9 +2118,7 @@ export class SimulatorAppController {
     if (this.settings) {
       this.settings.mvmode = false;
     }
-    if (typeof console !== "undefined" && typeof console.warn === "function") {
-      console.warn("[Simulator] MV runtime render failed, fallback to BG rendering.", error);
-    }
+    this.reportRuntimeIssue("MV 渲染失败，已回退为普通背景", error, "mv-runtime-render");
   }
 
   private stopLoop(): void {
