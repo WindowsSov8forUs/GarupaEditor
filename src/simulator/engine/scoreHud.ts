@@ -12,19 +12,11 @@ export interface SimulatorScoreRankMarker {
   ratio: number;
 }
 
-export type SimulatorScoreGaugeRankClass =
-  | "is-rank-0-c"
-  | "is-rank-c-b"
-  | "is-rank-b-a"
-  | "is-rank-a-s"
-  | "is-rank-s-ss";
-
 export interface SimulatorScoreHudState {
   score: number;
   scoreMax: number;
   scoreRatio: number;
   rankMarkers: readonly SimulatorScoreRankMarker[];
-  gaugeRankClass: SimulatorScoreGaugeRankClass;
 }
 
 export const SIMULATOR_SCORE_RANK_THRESHOLDS: readonly SimulatorScoreRankThreshold[] = [
@@ -35,35 +27,11 @@ export const SIMULATOR_SCORE_RANK_THRESHOLDS: readonly SimulatorScoreRankThresho
   { label: "SS", score: 9_000_000 },
 ];
 
-export const SIMULATOR_SCORE_GAUGE_RANK_CLASSES: readonly SimulatorScoreGaugeRankClass[] = [
-  "is-rank-0-c",
-  "is-rank-c-b",
-  "is-rank-b-a",
-  "is-rank-a-s",
-  "is-rank-s-ss",
-];
-
 function clamp01(value: number): number {
   if (!Number.isFinite(value)) {
     return 0;
   }
   return Math.max(0, Math.min(1, value));
-}
-
-function resolveGaugeRankClass(score: number): SimulatorScoreGaugeRankClass {
-  if (score >= SIMULATOR_SCORE_RANK_THRESHOLDS[3].score) {
-    return "is-rank-s-ss";
-  }
-  if (score >= SIMULATOR_SCORE_RANK_THRESHOLDS[2].score) {
-    return "is-rank-a-s";
-  }
-  if (score >= SIMULATOR_SCORE_RANK_THRESHOLDS[1].score) {
-    return "is-rank-b-a";
-  }
-  if (score >= SIMULATOR_SCORE_RANK_THRESHOLDS[0].score) {
-    return "is-rank-c-b";
-  }
-  return "is-rank-0-c";
 }
 
 export function buildScoreHudState(stats: RuntimeStats | null): SimulatorScoreHudState {
@@ -82,6 +50,5 @@ export function buildScoreHudState(stats: RuntimeStats | null): SimulatorScoreHu
     scoreMax,
     scoreRatio,
     rankMarkers,
-    gaugeRankClass: resolveGaugeRankClass(score),
   };
 }

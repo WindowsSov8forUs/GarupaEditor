@@ -39,7 +39,6 @@ export interface RenderedHudSpriteDataUrls {
   hpMeterMain: string | null;
   hpMeterSecond: string | null;
   gaugeBaseScore: string | null;
-  scoreMeterBlue: string | null;
   bgGaugeScoreMulti: string | null;
   levelMark: string | null;
 }
@@ -117,7 +116,6 @@ const lifeGaugeBackgroundWidget = getLevel3WidgetMetrics(RHYTHM_UI_PATHS.lifeGau
 const lifeGaugeFrontWidget = getLevel3WidgetMetrics(RHYTHM_UI_PATHS.lifeGaugeFront);
 const lifeGaugeSecondFrontWidget = getLevel3WidgetMetrics(RHYTHM_UI_PATHS.lifeGaugeSecondFront);
 const scoreBackgroundWidget = getLevel3WidgetMetrics(RHYTHM_UI_PATHS.scoreBackground);
-const scoreForegroundWidget = getLevel3WidgetMetrics(RHYTHM_UI_PATHS.scoreForeground);
 const scoreBackgroundCoverWidget = getLevel3WidgetMetrics(RHYTHM_UI_PATHS.scoreBackgroundCover);
 
 function requireAdvancedTypes(name: string, advancedTypes: NguiSpriteAdvancedTypes | undefined): NguiSpriteAdvancedTypes {
@@ -202,7 +200,6 @@ const RHYTHM_GAME_UI_HUD_RENDER_SIZES = {
   hpMeterMain: { width: lifeGaugeFrontWidget.width, height: lifeGaugeFrontWidget.height },
   hpMeterSecond: { width: lifeGaugeSecondFrontWidget.width, height: lifeGaugeSecondFrontWidget.height },
   gaugeBaseScore: { width: scoreBackgroundWidget.width, height: scoreBackgroundWidget.height },
-  scoreMeterBlue: { width: scoreForegroundWidget.width, height: scoreForegroundWidget.height },
   bgGaugeScoreMulti: { width: scoreBackgroundCoverWidget.width, height: scoreBackgroundCoverWidget.height },
 } as const;
 
@@ -569,7 +566,6 @@ export async function loadRhythmGameUiHudSpriteDataUrls(): Promise<RenderedHudSp
         hpMeterMain: null,
         hpMeterSecond: null,
         gaugeBaseScore: null,
-        scoreMeterBlue: null,
         bgGaugeScoreMulti: null,
         levelMark: null,
       }));

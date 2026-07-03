@@ -5,7 +5,6 @@ import { loadNoteSkinTextureBundle } from "../engine/assets";
 import {
   loadPauseButtonImageDataUrl,
   loadRhythmGameUiHudSpriteDataUrls,
-  loadRhythmGameUiSpriteDataUrls,
   loadScoreFontGlyphDataUrls,
   UI_COMMON_ATLAS_RECTS,
   RHYTHM_GAME_UI_RECTS,
@@ -32,7 +31,6 @@ import { loadMvResourceFromPayload, type MvResource } from "../engine/mv";
 import { SimulatorRuntime } from "../engine/runtime";
 import {
   buildScoreHudState,
-  SIMULATOR_SCORE_GAUGE_RANK_CLASSES,
   SIMULATOR_SCORE_RANK_THRESHOLDS,
   type SimulatorScoreRankLabel,
   type SimulatorScoreRankMarker,
@@ -50,6 +48,7 @@ import {
   type SimulatorWindowPayloadEnvelope,
 } from "../launchPayload";
 import { PixiRenderer, type SimulatorStartupRenderState } from "../renderer/pixiRenderer";
+import { ScoreGaugeMeshRenderer } from "../renderer/scoreGaugeMeshRenderer";
 import { getDifficultyStyle } from "../../difficultyStyle";
 import {
   isMobileRuntime,
@@ -134,6 +133,7 @@ const PAUSE_MAIN_WIDGET = getLevel3WidgetMetrics(RHYTHM_UI_PATHS.pauseMain);
 const PAUSE_COVER_WIDGET = getLevel3WidgetMetrics(RHYTHM_UI_PATHS.pauseCover);
 const PAUSE_MAIN_SPRITE = getLevel3NguiSpriteMetrics(RHYTHM_UI_PATHS.pauseMain);
 const PAUSE_COVER_SPRITE = getLevel3NguiSpriteMetrics(RHYTHM_UI_PATHS.pauseCover);
+const SCORE_FOREGROUND_WIDGET = getLevel3WidgetMetrics(RHYTHM_UI_PATHS.scoreForeground);
 const LIFE_GAUGE_BACKGROUND_DEPTH = getLevel3WidgetDepthMetrics(RHYTHM_UI_PATHS.lifeGaugeBackground).depth;
 const LIFE_GAUGE_FRONT_DEPTH = getLevel3WidgetDepthMetrics(RHYTHM_UI_PATHS.lifeGaugeFront).depth;
 const LIFE_GAUGE_SECOND_FRONT_DEPTH = getLevel3WidgetDepthMetrics(RHYTHM_UI_PATHS.lifeGaugeSecondFront).depth;
@@ -253,8 +253,6 @@ function applyNguiProgressDrawRegion(
   element.style.width = `${rect.width}px`;
   element.style.height = `${rect.height}px`;
   element.style.clipPath = "";
-  element.style.backgroundSize = `${fullWidth}px ${fullHeight}px`;
-  element.style.backgroundPosition = `${-rect.left}px ${-rect.top}px`;
   return rect;
 }
 
@@ -400,6 +398,7 @@ export class SimulatorAppController {
   private readonly reportedRuntimeIssueKeys = new Set<string>();
   private lastRenderedScore = Number.NaN;
   private lastScoreGaugeValue = 0;
+  private readonly scoreGaugeMeshRenderer = new ScoreGaugeMeshRenderer();
   private lastScoreRankMarkers: readonly SimulatorScoreRankMarker[] = [];
   private rankFontMetricApproximation: NguiFontMetricApproximation | null = null;
   private bootRevealPrepared = false;
@@ -747,6 +746,7 @@ export class SimulatorAppController {
     this.isDisposed = true;
     this.stopLoop();
     this.renderer?.destroy();
+    this.scoreGaugeMeshRenderer.destroy();
     this.renderer = null;
     this.runtime = null;
     this.releaseMvResource();
@@ -867,9 +867,6 @@ export class SimulatorAppController {
         if (sprites.gaugeBaseScore) {
           scoreBase.style.backgroundImage = `url("${sprites.gaugeBaseScore}")`;
         }
-        if (sprites.scoreMeterBlue) {
-          scoreGaugeFill.style.backgroundImage = `url("${sprites.scoreMeterBlue}")`;
-        }
         if (sprites.levelMark) {
           for (const marker of Object.values(scoreRankMarkers)) {
             marker.separatorImage.src = sprites.levelMark;
@@ -897,9 +894,11 @@ export class SimulatorAppController {
       .catch((error: unknown) => {
         this.reportRuntimeIssue("HUD 贴图加载失败，已跳过部分 UI 贴图", error, "hud-assets");
       });
-    void loadRhythmGameUiSpriteDataUrls().catch((error: unknown) => {
-      this.reportRuntimeIssue("RhythmGameUI 图集裁切失败", error, "rhythm-game-ui-atlas");
-    });
+    void this.scoreGaugeMeshRenderer.mount(scoreGaugeFill)
+      .then(() => this.applyScoreGaugeDrawRegion())
+      .catch((error: unknown) => {
+        this.reportRuntimeIssue("RhythmGameUI 图集加载失败，分数条前景 mesh 已跳过", error, "rhythm-game-ui-atlas");
+      });
     void loadScoreFontGlyphDataUrls()
       .then((glyphs) => {
         for (const digit of scoreDigits) {
@@ -1925,9 +1924,6 @@ export class SimulatorAppController {
     }
     this.lastScoreGaugeValue = hudState.scoreRatio;
     this.lastScoreRankMarkers = hudState.rankMarkers;
-    for (const className of SIMULATOR_SCORE_GAUGE_RANK_CLASSES) {
-      this.ui.scoreGaugeFill.classList.toggle(className, className === hudState.gaugeRankClass);
-    }
     const rect = this.ui.root.getBoundingClientRect();
     this.updateScoreRankMarkerLayout(rect.width, rect.height, this.lastScoreRankMarkers);
     // Source: score-life-fill-direction-current.md confirms Score/Progress
@@ -1940,6 +1936,7 @@ export class SimulatorAppController {
   private applyScoreGaugeDrawRegion(): void {
     const gaugeRect = this.ui.scoreTopTrack.getBoundingClientRect();
     if (gaugeRect.width <= 0 || gaugeRect.height <= 0) {
+      this.ui.scoreGaugeFill.style.display = "none";
       this.reportRuntimeIssue(
         "分数条 drawRegion 跳过：Foreground 尺寸无效",
         new Error(`${gaugeRect.width.toFixed(3)}x${gaugeRect.height.toFixed(3)}`),
@@ -1947,13 +1944,36 @@ export class SimulatorAppController {
       );
       return;
     }
-    applyNguiProgressDrawRegion(
+    const drawRect = applyNguiProgressDrawRegion(
       this.ui.scoreGaugeFill,
       gaugeRect.width,
       gaugeRect.height,
       this.lastScoreGaugeValue,
       NGUI_PROGRESS_FILL_LEFT_TO_RIGHT,
     );
+    if (drawRect.width <= 0 || drawRect.height <= 0) {
+      this.ui.scoreGaugeFill.style.display = "none";
+      return;
+    }
+    this.ui.scoreGaugeFill.style.display = "block";
+    const localDrawWidth = Math.max(0, SCORE_FOREGROUND_WIDGET.width * this.clamp01(this.lastScoreGaugeValue));
+    const localDrawHeight = SCORE_FOREGROUND_WIDGET.height;
+    if (localDrawWidth <= 0 || localDrawHeight <= 0) {
+      this.ui.scoreGaugeFill.style.display = "none";
+      return;
+    }
+    // Source chain: Score/Progress UISlider mFill=LeftToRight writes
+    // Foreground UIWidget.drawRegion, then UISprite type=Sliced dispatches
+    // UIBasicSprite.SlicedFill for score_meter_blue in NGUI widget-local
+    // coordinates. The dedicated Pixi renderer keeps that as a single
+    // nine-slice mesh and applies the UIRoot projection scale separately.
+    this.scoreGaugeMeshRenderer.update({
+      screenWidth: drawRect.width,
+      screenHeight: drawRect.height,
+      localWidth: localDrawWidth,
+      localHeight: localDrawHeight,
+      nguiScale: gaugeRect.width / Math.max(1e-6, SCORE_FOREGROUND_WIDGET.width),
+    });
   }
 
   private applyBitmapScoreGlyph(el: HTMLElement, value: string): void {
