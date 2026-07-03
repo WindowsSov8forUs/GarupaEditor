@@ -31,7 +31,10 @@ import { loadMvResourceFromPayload, type MvResource } from "../engine/mv";
 import { SimulatorRuntime } from "../engine/runtime";
 import {
   buildScoreHudState,
+  SIMULATOR_HIGH_RANK_EFFECT_CLIP_BY_RANK,
   SIMULATOR_SCORE_RANK_THRESHOLDS,
+  type SimulatorScoreHighRankEffectClip,
+  type SimulatorScoreGaugeRank,
   type SimulatorScoreGaugeSpriteKey,
   type SimulatorScoreRankLabel,
   type SimulatorScoreRankMarker,
@@ -50,6 +53,7 @@ import {
 } from "../launchPayload";
 import { PixiRenderer, type SimulatorStartupRenderState } from "../renderer/pixiRenderer";
 import { ScoreGaugeMeshRenderer } from "../renderer/scoreGaugeMeshRenderer";
+import { ScoreHighRankEffectRenderer } from "../renderer/scoreHighRankEffectRenderer";
 import { getDifficultyStyle } from "../../difficultyStyle";
 import {
   isMobileRuntime,
@@ -59,7 +63,8 @@ import {
 import ttShinGoMFontUrl from "../../assets/fonts/TTShinGoM.ttf?url";
 
 interface ScoreRankMarkerRefs {
-  root: HTMLDivElement;
+  labelRoot: HTMLDivElement;
+  separatorRoot: HTMLDivElement;
   label: HTMLCanvasElement;
   separator: HTMLDivElement;
   separatorImage: HTMLImageElement;
@@ -77,9 +82,12 @@ interface UiRefs {
   scoreBase: HTMLDivElement;
   scoreTopTrack: HTMLDivElement;
   scoreGaugeFill: HTMLDivElement;
+  scoreHighRankEffect: HTMLDivElement;
   scoreText: HTMLSpanElement;
   scoreDigits: HTMLSpanElement[];
   scoreRankObject: HTMLDivElement;
+  scoreRankSeparatorObject: HTMLDivElement;
+  scoreRankLabelObject: HTMLDivElement;
   scoreRankMarkers: Record<SimulatorScoreRankLabel, ScoreRankMarkerRefs>;
   lifeGauge: HTMLDivElement;
   lifeGaugeBg: HTMLImageElement;
@@ -401,6 +409,9 @@ export class SimulatorAppController {
   private lastScoreGaugeValue = 0;
   private lastScoreGaugeSpriteKey: SimulatorScoreGaugeSpriteKey = "scoreMeterBlue";
   private readonly scoreGaugeMeshRenderer = new ScoreGaugeMeshRenderer();
+  private readonly scoreHighRankEffectRenderer = new ScoreHighRankEffectRenderer();
+  private lastScoreHighRankGaugeRank: SimulatorScoreGaugeRank = "D";
+  private lastScoreHighRankEffectClip: SimulatorScoreHighRankEffectClip | null = null;
   private lastScoreRankMarkers: readonly SimulatorScoreRankMarker[] = [];
   private rankFontMetricApproximation: NguiFontMetricApproximation | null = null;
   private bootRevealPrepared = false;
@@ -749,6 +760,7 @@ export class SimulatorAppController {
     this.stopLoop();
     this.renderer?.destroy();
     this.scoreGaugeMeshRenderer.destroy();
+    this.scoreHighRankEffectRenderer.destroy();
     this.renderer = null;
     this.runtime = null;
     this.releaseMvResource();
@@ -799,6 +811,8 @@ export class SimulatorAppController {
     const scoreGaugeFill = document.createElement("div");
     scoreGaugeFill.className = "simulator-score-gauge-fill";
     scoreTopTrack.append(scoreGaugeFill);
+    const scoreHighRankEffect = document.createElement("div");
+    scoreHighRankEffect.className = "simulator-score-high-rank-effect";
     const scoreText = document.createElement("span");
     scoreText.className = "simulator-score-value";
     const scoreDigits: HTMLSpanElement[] = [];
@@ -811,11 +825,19 @@ export class SimulatorAppController {
     }
     const scoreRankObject = document.createElement("div");
     scoreRankObject.className = "simulator-score-rank-object";
+    const scoreRankSeparatorObject = document.createElement("div");
+    scoreRankSeparatorObject.className = "simulator-score-rank-layer simulator-score-rank-separator-layer";
+    const scoreRankLabelObject = document.createElement("div");
+    scoreRankLabelObject.className = "simulator-score-rank-layer simulator-score-rank-label-layer";
+    scoreRankObject.append(scoreRankSeparatorObject, scoreRankLabelObject);
     const scoreRankMarkers = {} as Record<SimulatorScoreRankLabel, ScoreRankMarkerRefs>;
     for (const rank of SIMULATOR_SCORE_RANK_LABELS) {
-      const marker = document.createElement("div");
-      marker.className = "simulator-score-rank-marker";
-      marker.dataset.rank = rank;
+      const labelRoot = document.createElement("div");
+      labelRoot.className = "simulator-score-rank-marker simulator-score-rank-label-marker";
+      labelRoot.dataset.rank = rank;
+      const separatorRoot = document.createElement("div");
+      separatorRoot.className = "simulator-score-rank-marker simulator-score-rank-separator-marker";
+      separatorRoot.dataset.rank = rank;
       const label = document.createElement("canvas");
       label.className = "simulator-score-rank-label";
       label.setAttribute("aria-label", rank);
@@ -828,11 +850,13 @@ export class SimulatorAppController {
       separator.hidden = true;
       separatorFrame.hidden = true;
       separatorFrame.appendChild(separator);
-      marker.append(label, separatorFrame);
-      scoreRankObject.appendChild(marker);
-      scoreRankMarkers[rank] = { root: marker, label, separator: separatorFrame, separatorImage: separator };
+      labelRoot.appendChild(label);
+      separatorRoot.appendChild(separatorFrame);
+      scoreRankLabelObject.appendChild(labelRoot);
+      scoreRankSeparatorObject.appendChild(separatorRoot);
+      scoreRankMarkers[rank] = { labelRoot, separatorRoot, label, separator: separatorFrame, separatorImage: separator };
     }
-    scoreHud.append(scoreBase, scoreTopTrack, scoreRankObject, scoreText);
+    scoreHud.append(scoreBase, scoreTopTrack, scoreHighRankEffect, scoreRankObject, scoreText);
 
     const lifeGauge = document.createElement("div");
     lifeGauge.className = "simulator-life-gauge";
@@ -900,6 +924,14 @@ export class SimulatorAppController {
       .then(() => this.applyScoreGaugeDrawRegion())
       .catch((error: unknown) => {
         this.reportRuntimeIssue("RhythmGameUI 图集加载失败，分数条前景 mesh 已跳过", error, "rhythm-game-ui-atlas");
+      });
+    void this.scoreHighRankEffectRenderer.mount(scoreHighRankEffect)
+      .then(() => {
+        const rect = root.getBoundingClientRect();
+        this.updateScoreHighRankEffectLayout(rect.width, rect.height);
+      })
+      .catch((error: unknown) => {
+        this.reportRuntimeIssue("HighRankEffect 贴图或动画数据加载失败", error, "score-high-rank-effect");
       });
     void loadScoreFontGlyphDataUrls()
       .then((glyphs) => {
@@ -985,9 +1017,12 @@ export class SimulatorAppController {
       scoreBase,
       scoreTopTrack,
       scoreGaugeFill,
+      scoreHighRankEffect,
       scoreText,
       scoreDigits,
       scoreRankObject,
+      scoreRankSeparatorObject,
+      scoreRankLabelObject,
       scoreRankMarkers,
       lifeGauge,
       lifeGaugeBg,
@@ -1757,6 +1792,26 @@ export class SimulatorAppController {
     this.ui.scoreText.style.transform = `translate(-50%, -50%) scale(${digitScale})`;
     this.layoutBitmapScoreDigits();
     this.updateScoreRankMarkerLayout(windowWidth, windowHeight, this.lastScoreRankMarkers);
+    this.updateScoreHighRankEffectLayout(windowWidth, windowHeight);
+  }
+
+  private updateScoreHighRankEffectLayout(windowWidth: number, windowHeight: number): void {
+    this.applyRectStyle(this.ui.scoreHighRankEffect, 0, 0, windowWidth, windowHeight);
+    const viewport = { width: windowWidth, height: windowHeight };
+    const scoreRootAnchor = getLevel3StarAnchor(RHYTHM_UI_PATHS.scoreRoot);
+    const highRankPanelPoint = projectNguiOffsetFromAnchoredRoot(
+      scoreRootAnchor,
+      sumLevel3LocalPositionBetween(RHYTHM_UI_PATHS.scoreRoot, RHYTHM_UI_PATHS.scoreHighRankPanel),
+      viewport,
+    );
+    this.scoreHighRankEffectRenderer.updateLayout({
+      screenWidth: windowWidth,
+      screenHeight: windowHeight,
+      rootX: highRankPanelPoint.x,
+      rootY: highRankPanelPoint.y,
+      nguiScale: highRankPanelPoint.scale,
+      scoreRatio: this.lastScoreGaugeValue,
+    });
   }
 
   private updateScoreRankMarkerLayout(
@@ -1765,6 +1820,8 @@ export class SimulatorAppController {
     markers: readonly SimulatorScoreRankMarker[],
   ): void {
     this.applyRectStyle(this.ui.scoreRankObject, 0, 0, windowWidth, windowHeight);
+    this.applyRectStyle(this.ui.scoreRankSeparatorObject, 0, 0, windowWidth, windowHeight);
+    this.applyRectStyle(this.ui.scoreRankLabelObject, 0, 0, windowWidth, windowHeight);
     const markerByRank = new Map(markers.map((marker) => [marker.rank, marker]));
     const viewport = { width: windowWidth, height: windowHeight };
     const scoreRootAnchor = getLevel3StarAnchor(RHYTHM_UI_PATHS.scoreRoot);
@@ -1791,7 +1848,8 @@ export class SimulatorAppController {
       const refs = this.ui.scoreRankMarkers[rank];
       const marker = markerByRank.get(rank);
       if (!marker || !Number.isFinite(marker.ratio)) {
-        refs.root.style.display = "none";
+        refs.labelRoot.style.display = "none";
+        refs.separatorRoot.style.display = "none";
         continue;
       }
 
@@ -1817,9 +1875,12 @@ export class SimulatorAppController {
       const rootX = rankObjectPoint.x + (rankRootLocalX * scale);
       const rootY = rankObjectPoint.y - (rankRootLocalY * scale);
 
-      refs.root.style.display = "block";
-      refs.root.style.left = `${rootX}px`;
-      refs.root.style.top = `${rootY}px`;
+      refs.labelRoot.style.display = "block";
+      refs.separatorRoot.style.display = "block";
+      refs.labelRoot.style.left = `${rootX}px`;
+      refs.labelRoot.style.top = `${rootY}px`;
+      refs.separatorRoot.style.left = `${rootX}px`;
+      refs.separatorRoot.style.top = `${rootY}px`;
       const labelWidth = labelWidget.width * scale;
       const labelHeight = labelWidget.height * scale;
       this.applyRectStyle(
@@ -1925,8 +1986,31 @@ export class SimulatorAppController {
       this.lastRenderedScore = score;
     }
     this.lastScoreGaugeValue = hudState.scoreRatio;
+    this.scoreHighRankEffectRenderer.updateScoreRatio(this.lastScoreGaugeValue);
     this.lastScoreGaugeSpriteKey = hudState.gaugeSpriteKey;
     this.lastScoreRankMarkers = hudState.rankMarkers;
+    const highRankEffectClip = stats
+      ? SIMULATOR_HIGH_RANK_EFFECT_CLIP_BY_RANK[hudState.gaugeRank] ?? null
+      : null;
+    if (!stats || !highRankEffectClip) {
+      this.scoreHighRankEffectRenderer.stop();
+      this.lastScoreHighRankGaugeRank = "D";
+      this.lastScoreHighRankEffectClip = null;
+    } else {
+      // Source: score-high-rank-effect-current.md confirms
+      // Score.onChangedScoreGaugeRank maps recovered rank transitions to
+      // Animator.Play(ScoreGaugeSS/ScoreGaugeSSS). The rank threshold remains
+      // GarupaEditor simulator logic; reaching the simulator SS threshold
+      // resolves to gaugeRank=SS and therefore ScoreGaugeSS.
+      if (
+        this.lastScoreHighRankGaugeRank !== hudState.gaugeRank ||
+        this.lastScoreHighRankEffectClip !== highRankEffectClip
+      ) {
+        this.scoreHighRankEffectRenderer.play(highRankEffectClip);
+      }
+      this.lastScoreHighRankGaugeRank = hudState.gaugeRank;
+      this.lastScoreHighRankEffectClip = highRankEffectClip;
+    }
     const rect = this.ui.root.getBoundingClientRect();
     this.updateScoreRankMarkerLayout(rect.width, rect.height, this.lastScoreRankMarkers);
     // Source: score-life-fill-direction-current.md confirms Score/Progress

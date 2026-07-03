@@ -194,9 +194,28 @@
   background: transparent;
 }
 
+.simulator-score-high-rank-effect {
+  position: absolute;
+  z-index: 5;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  contain: layout paint;
+}
+
+.simulator-score-high-rank-canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  background: transparent;
+}
+
 .simulator-score-value {
   position: absolute;
-  z-index: 3;
+  z-index: 6;
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
@@ -222,9 +241,29 @@
 
 .simulator-score-rank-object {
   position: absolute;
-  z-index: 3;
+  /* Source: score-high-rank-effect-current.md keeps HighRankEffect under the
+     recovered Score/Progress/Panel clipping path, not under RankObject.
+     Keep rank markers below the effect canvas so the visible SS separator
+     cannot become an extra browser-side occlusion boundary. */
+  z-index: 2;
   pointer-events: none;
-  contain: layout paint;
+}
+
+.simulator-score-rank-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* Source: level3-hud-subtree-report.md records level_mark UISprite depth 29,
+   while rank UILabel widgets use depth 40. Keep them in separate browser layers
+   so the lower-depth separator is not lifted together with the text. */
+.simulator-score-rank-separator-layer {
+  z-index: 2;
+}
+
+.simulator-score-rank-label-layer {
+  z-index: 4;
 }
 
 .simulator-score-rank-marker {
