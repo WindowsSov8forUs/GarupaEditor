@@ -32,6 +32,7 @@ import { SimulatorRuntime } from "../engine/runtime";
 import {
   buildScoreHudState,
   SIMULATOR_SCORE_RANK_THRESHOLDS,
+  type SimulatorScoreGaugeSpriteKey,
   type SimulatorScoreRankLabel,
   type SimulatorScoreRankMarker,
 } from "../engine/scoreHud";
@@ -398,6 +399,7 @@ export class SimulatorAppController {
   private readonly reportedRuntimeIssueKeys = new Set<string>();
   private lastRenderedScore = Number.NaN;
   private lastScoreGaugeValue = 0;
+  private lastScoreGaugeSpriteKey: SimulatorScoreGaugeSpriteKey = "scoreMeterBlue";
   private readonly scoreGaugeMeshRenderer = new ScoreGaugeMeshRenderer();
   private lastScoreRankMarkers: readonly SimulatorScoreRankMarker[] = [];
   private rankFontMetricApproximation: NguiFontMetricApproximation | null = null;
@@ -1923,6 +1925,7 @@ export class SimulatorAppController {
       this.lastRenderedScore = score;
     }
     this.lastScoreGaugeValue = hudState.scoreRatio;
+    this.lastScoreGaugeSpriteKey = hudState.gaugeSpriteKey;
     this.lastScoreRankMarkers = hudState.rankMarkers;
     const rect = this.ui.root.getBoundingClientRect();
     this.updateScoreRankMarkerLayout(rect.width, rect.height, this.lastScoreRankMarkers);
@@ -1963,16 +1966,18 @@ export class SimulatorAppController {
       return;
     }
     // Source chain: Score/Progress UISlider mFill=LeftToRight writes
-    // Foreground UIWidget.drawRegion, then UISprite type=Sliced dispatches
-    // UIBasicSprite.SlicedFill for score_meter_blue in NGUI widget-local
+    // Foreground UIWidget.drawRegion. SinglePlayScoreGauge.updateScoreRank
+    // switches the same Foreground UISprite.spriteName, then UISprite
+    // type=Sliced dispatches UIBasicSprite.SlicedFill in NGUI widget-local
     // coordinates. The dedicated Pixi renderer keeps that as a single
-    // nine-slice mesh and applies the UIRoot projection scale separately.
+    // sliced mesh and applies the UIRoot projection scale separately.
     this.scoreGaugeMeshRenderer.update({
       screenWidth: drawRect.width,
       screenHeight: drawRect.height,
       localWidth: localDrawWidth,
       localHeight: localDrawHeight,
       nguiScale: gaugeRect.width / Math.max(1e-6, SCORE_FOREGROUND_WIDGET.width),
+      scoreMeterSpriteKey: this.lastScoreGaugeSpriteKey,
     });
   }
 

@@ -95,6 +95,10 @@ export const RHYTHM_GAME_UI_RECTS = {
   effectHealthCautionInside: { x: 802, y: 194, width: 188, height: 27 },
   gaugeBaseScore: { x: 648, y: 449, width: 236, height: 82 },
   scoreMeterBlue: { x: 413, y: 133, width: 40, height: 22 },
+  scoreMeterGreen: { x: 504, y: 128, width: 40, height: 22 },
+  scoreMeterOrange: { x: 586, y: 151, width: 40, height: 22 },
+  scoreMeterPink: { x: 277, y: 125, width: 40, height: 22 },
+  scoreMeterS: { x: 0, y: 393, width: 662, height: 22 },
   bgGaugeScoreMulti: { x: 277, y: 195, width: 18, height: 18 },
 } as const satisfies Record<string, AtlasRect>;
 
@@ -161,6 +165,59 @@ export const RHYTHM_GAME_UI_SLICED_SPRITES = {
     paddingTop: 0,
     paddingBottom: 0,
     centerType: requireAdvancedTypes("score_meter_blue", scoreForegroundSprite.advancedTypes).center,
+  },
+  // Source: HOST________/VSCode/bangdream-apk/reverse/analysis/targets/
+  // score-gauge-color-current.md. SinglePlayScoreGauge.updateScoreRank
+  // switches Score/Progress/Foreground UISprite.spriteName across these
+  // atlas entries. Rects and borders are from the level3 fileID=31/pathID=3
+  // UIAtlas decode for RhythmGameUI.
+  scoreMeterGreen: {
+    ...RHYTHM_GAME_UI_RECTS.scoreMeterGreen,
+    borderLeft: 5,
+    borderRight: 5,
+    borderTop: 0,
+    borderBottom: 0,
+    paddingLeft: 0,
+    paddingRight: 0,
+    paddingTop: 0,
+    paddingBottom: 0,
+    centerType: requireAdvancedTypes("score_meter_green", scoreForegroundSprite.advancedTypes).center,
+  },
+  scoreMeterOrange: {
+    ...RHYTHM_GAME_UI_RECTS.scoreMeterOrange,
+    borderLeft: 5,
+    borderRight: 5,
+    borderTop: 0,
+    borderBottom: 0,
+    paddingLeft: 0,
+    paddingRight: 0,
+    paddingTop: 0,
+    paddingBottom: 0,
+    centerType: requireAdvancedTypes("score_meter_orange", scoreForegroundSprite.advancedTypes).center,
+  },
+  scoreMeterPink: {
+    ...RHYTHM_GAME_UI_RECTS.scoreMeterPink,
+    borderLeft: 5,
+    borderRight: 5,
+    borderTop: 0,
+    borderBottom: 0,
+    paddingLeft: 0,
+    paddingRight: 0,
+    paddingTop: 0,
+    paddingBottom: 0,
+    centerType: requireAdvancedTypes("score_meter_pink", scoreForegroundSprite.advancedTypes).center,
+  },
+  scoreMeterS: {
+    ...RHYTHM_GAME_UI_RECTS.scoreMeterS,
+    borderLeft: 0,
+    borderRight: 0,
+    borderTop: 0,
+    borderBottom: 0,
+    paddingLeft: 0,
+    paddingRight: 0,
+    paddingTop: 0,
+    paddingBottom: 0,
+    centerType: requireAdvancedTypes("score_meter_s", scoreForegroundSprite.advancedTypes).center,
   },
 } as const satisfies Record<string, NguiSlicedSpriteData>;
 

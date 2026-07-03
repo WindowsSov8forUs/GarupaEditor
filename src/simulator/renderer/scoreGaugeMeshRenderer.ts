@@ -1,5 +1,6 @@
 import { Application, Assets, Container, NineSliceSprite, Texture } from "pixi.js";
 import embeddedRhythmGameUiUrl from "../assets/ui/RhythmGameUI.png";
+import type { SimulatorScoreGaugeSpriteKey } from "../engine/scoreHud";
 import {
   cropPixiAtlasTexture,
   RHYTHM_GAME_UI_RECTS,
@@ -12,15 +13,16 @@ export interface ScoreGaugeMeshState {
   localWidth: number;
   localHeight: number;
   nguiScale: number;
+  scoreMeterSpriteKey: SimulatorScoreGaugeSpriteKey;
 }
-
-const SCORE_METER_BLUE = RHYTHM_GAME_UI_SLICED_SPRITES.scoreMeterBlue;
 
 export class ScoreGaugeMeshRenderer {
   private app: Application | null = null;
   private root: Container | null = null;
   private gauge: NineSliceSprite | null = null;
-  private gaugeTexture: Texture | null = null;
+  private sourceTexture: Texture | null = null;
+  private gaugeTextures = new Map<SimulatorScoreGaugeSpriteKey, Texture>();
+  private currentScoreMeterSpriteKey: SimulatorScoreGaugeSpriteKey | null = null;
   private pendingState: ScoreGaugeMeshState | null = null;
   private isDestroyed = false;
 
@@ -31,6 +33,7 @@ export class ScoreGaugeMeshRenderer {
       localWidth: 1,
       localHeight: 1,
       nguiScale: 1,
+      scoreMeterSpriteKey: "scoreMeterBlue",
     };
 
     const app = new Application();
@@ -67,28 +70,11 @@ export class ScoreGaugeMeshRenderer {
     if (this.isDestroyed || this.app !== app) {
       return;
     }
-    const gaugeTexture = cropPixiAtlasTexture(sourceTexture, RHYTHM_GAME_UI_RECTS.scoreMeterBlue);
-    if (!gaugeTexture) {
-      this.destroy();
-      throw new Error("score_meter_blue texture frame is unavailable");
-    }
+    this.sourceTexture = sourceTexture;
 
-    this.gaugeTexture = gaugeTexture;
     const root = new Container();
-    const gauge = new NineSliceSprite({
-      texture: gaugeTexture,
-      leftWidth: SCORE_METER_BLUE.borderLeft,
-      rightWidth: SCORE_METER_BLUE.borderRight,
-      topHeight: SCORE_METER_BLUE.borderTop,
-      bottomHeight: SCORE_METER_BLUE.borderBottom,
-      width: initialState.localWidth,
-      height: initialState.localHeight,
-      anchor: { x: 0, y: 0 },
-    });
-    root.addChild(gauge);
     app.stage.addChild(root);
     this.root = root;
-    this.gauge = gauge;
     this.renderState(initialState);
   }
 
@@ -99,19 +85,72 @@ export class ScoreGaugeMeshRenderer {
 
   destroy(): void {
     this.isDestroyed = true;
-    this.gaugeTexture?.destroy(false);
-    this.gaugeTexture = null;
+    for (const texture of this.gaugeTextures.values()) {
+      texture.destroy(false);
+    }
+    this.gaugeTextures.clear();
+    this.sourceTexture = null;
     this.gauge = null;
     this.root = null;
+    this.currentScoreMeterSpriteKey = null;
     this.app?.destroy({ removeView: true }, { children: true, texture: false, textureSource: false });
     this.app = null;
+  }
+
+  private getScoreMeterTexture(spriteKey: SimulatorScoreGaugeSpriteKey): Texture {
+    const cached = this.gaugeTextures.get(spriteKey);
+    if (cached) {
+      return cached;
+    }
+    const sourceTexture = this.sourceTexture;
+    const rect = RHYTHM_GAME_UI_RECTS[spriteKey];
+    const texture = cropPixiAtlasTexture(sourceTexture, rect);
+    if (!texture) {
+      throw new Error(`${spriteKey} texture frame is unavailable`);
+    }
+    this.gaugeTextures.set(spriteKey, texture);
+    return texture;
+  }
+
+  private applyScoreMeterSprite(spriteKey: SimulatorScoreGaugeSpriteKey, state: ScoreGaugeMeshState): NineSliceSprite {
+    const root = this.root;
+    if (!root) {
+      throw new Error("score gauge root is unavailable");
+    }
+    const sprite = RHYTHM_GAME_UI_SLICED_SPRITES[spriteKey];
+    const texture = this.getScoreMeterTexture(spriteKey);
+    let gauge = this.gauge;
+    if (!gauge) {
+      gauge = new NineSliceSprite({
+        texture,
+        leftWidth: sprite.borderLeft,
+        rightWidth: sprite.borderRight,
+        topHeight: sprite.borderTop,
+        bottomHeight: sprite.borderBottom,
+        width: state.localWidth,
+        height: state.localHeight,
+        anchor: { x: 0, y: 0 },
+      });
+      root.addChild(gauge);
+      this.gauge = gauge;
+      this.currentScoreMeterSpriteKey = spriteKey;
+      return gauge;
+    }
+    if (this.currentScoreMeterSpriteKey !== spriteKey) {
+      gauge.texture = texture;
+      gauge.leftWidth = sprite.borderLeft;
+      gauge.rightWidth = sprite.borderRight;
+      gauge.topHeight = sprite.borderTop;
+      gauge.bottomHeight = sprite.borderBottom;
+      this.currentScoreMeterSpriteKey = spriteKey;
+    }
+    return gauge;
   }
 
   private renderState(state: ScoreGaugeMeshState): void {
     const app = this.app;
     const root = this.root;
-    const gauge = this.gauge;
-    if (!app || !root || !gauge) {
+    if (!app || !root || !this.sourceTexture) {
       return;
     }
     const screenWidth = Math.max(1, state.screenWidth);
@@ -120,10 +159,11 @@ export class ScoreGaugeMeshRenderer {
 
     // Source chain:
     // Score/Progress UISlider mFill=LeftToRight -> UIProgressBar.ForceUpdate
-    // writes Foreground UIWidget.drawRegion. The Foreground UISprite is
-    // score_meter_blue with type=Sliced, so rendering is UIBasicSprite.SlicedFill
-    // over the current widget-local draw rect. Keep NGUI-local units inside the
-    // mesh and apply the UIRoot projection scale on the root container.
+    // writes Foreground UIWidget.drawRegion. SinglePlayScoreGauge.updateScoreRank
+    // changes that same Foreground UISprite through UISprite.set_spriteName
+    // (score_meter_blue/green/orange/pink/s), all still rendered as the
+    // widget-local sliced sprite mesh.
+    const gauge = this.applyScoreMeterSprite(state.scoreMeterSpriteKey, state);
     gauge.setSize(Math.max(0.001, state.localWidth), Math.max(0.001, state.localHeight));
     root.scale.set(Math.max(0.001, state.nguiScale));
     app.render();
