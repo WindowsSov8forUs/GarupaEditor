@@ -5,6 +5,8 @@ import {
   ActiveNote,
   ActiveSlide,
   JudgeTriggerEvent,
+  LifeFeedbackEvent,
+  LifeFeedbackEventKind,
   ParticleTriggerEvent,
   ParsedChart,
   RuntimeNoteLifecycleState,
@@ -22,6 +24,8 @@ interface PendingSystemEvent {
 
 const RUNTIME_POST_ROLL_MS = 3000;
 const SIMULATOR_SCORE_BASE_VALUE = 10_000_000;
+const SIMULATOR_INITIAL_LIFE = 1000;
+const SIMULATOR_MAX_LIFE = 1000;
 
 export class SimulatorRuntime {
   private readonly settings: SimulatorSettings;
@@ -46,6 +50,8 @@ export class SimulatorRuntime {
   private combo = 0;
   private notes = 0;
   private readonly scoreMax: number;
+  private readonly lifeMax = SIMULATOR_MAX_LIFE;
+  private life = SIMULATOR_INITIAL_LIFE;
   private nps = 0;
   private npsMax = 0;
   private bpmValue = 0;
@@ -54,6 +60,7 @@ export class SimulatorRuntime {
   private pendingSeNotes: RuntimeNoteSemantic[] = [];
   private pendingParticleTriggers: ParticleTriggerEvent[] = [];
   private pendingJudgeTriggers: JudgeTriggerEvent[] = [];
+  private pendingLifeFeedbackEvents: LifeFeedbackEvent[] = [];
   private pendingMusicStart = false;
   private lastElapsedMs = 0;
   private finishAtMs: number | null = null;
@@ -111,6 +118,35 @@ export class SimulatorRuntime {
     const out = this.pendingJudgeTriggers;
     this.pendingJudgeTriggers = [];
     return out;
+  }
+
+  consumePendingLifeFeedbackEvents(): LifeFeedbackEvent[] {
+    const out = this.pendingLifeFeedbackEvents;
+    this.pendingLifeFeedbackEvents = [];
+    return out;
+  }
+
+  applyLifeDamage(amount: number, elapsedMs?: number): void {
+    const normalizedAmount = this.normalizeLifeAmount(amount);
+    if (normalizedAmount <= 0) {
+      return;
+    }
+    this.applyLifeValue(this.life - normalizedAmount, "damage", elapsedMs);
+  }
+
+  applyLifeHeal(amount: number, elapsedMs?: number): void {
+    const normalizedAmount = this.normalizeLifeAmount(amount);
+    if (normalizedAmount <= 0) {
+      return;
+    }
+    this.applyLifeValue(this.life + normalizedAmount, "heal", elapsedMs);
+  }
+
+  setLife(value: number, elapsedMs?: number): void {
+    if (!Number.isFinite(value)) {
+      return;
+    }
+    this.applyLifeValue(Math.floor(value), "set", elapsedMs);
   }
 
   getActiveNotes(): readonly ActiveNote[] {
@@ -195,6 +231,39 @@ export class SimulatorRuntime {
     }
 
     return this.stats(elapsed);
+  }
+
+  private normalizeLifeAmount(amount: number): number {
+    if (!Number.isFinite(amount)) {
+      return 0;
+    }
+    return Math.max(0, Math.floor(amount));
+  }
+
+  private normalizeLifeElapsedMs(elapsedMs: number | undefined): number {
+    if (elapsedMs !== undefined && Number.isFinite(elapsedMs)) {
+      return elapsedMs;
+    }
+    return this.lastElapsedMs;
+  }
+
+  private applyLifeValue(value: number, kind: LifeFeedbackEventKind, elapsedMs: number | undefined): void {
+    const lifeBefore = this.life;
+    const lifeAfter = Math.max(0, Math.min(this.lifeMax, Math.floor(value)));
+    if (lifeAfter === lifeBefore) {
+      return;
+    }
+    this.life = lifeAfter;
+    const delta = lifeAfter - lifeBefore;
+    this.pendingLifeFeedbackEvents.push({
+      kind,
+      amount: Math.abs(delta),
+      delta,
+      lifeBefore,
+      lifeAfter,
+      lifeMax: this.lifeMax,
+      elapsedMs: this.normalizeLifeElapsedMs(elapsedMs),
+    });
   }
 
   private tgPosAt(tgId: number, elapsedMs: number): number {
@@ -561,6 +630,8 @@ export class SimulatorRuntime {
       bpmValue: this.bpmValue,
       score: this.displayScore(),
       scoreMax: this.scoreMax,
+      life: this.life,
+      lifeMax: this.lifeMax,
       activeObjects: this.activeNotes.length + this.activeSlides.length,
       processedObjects: this.processedObjects,
       totalObjects: this.chart.events.length,

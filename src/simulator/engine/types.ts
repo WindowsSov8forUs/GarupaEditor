@@ -141,6 +141,8 @@ export interface RuntimeStats {
   bpmValue: number;
   score: number;
   scoreMax: number;
+  life: number;
+  lifeMax: number;
   activeObjects: number;
   processedObjects: number;
   totalObjects: number;
@@ -192,6 +194,18 @@ export interface JudgeTriggerEvent {
   lane: number;
   elapsedMs: number;
   eventIndex: number;
+}
+
+export type LifeFeedbackEventKind = "damage" | "heal" | "set";
+
+export interface LifeFeedbackEvent {
+  kind: LifeFeedbackEventKind;
+  amount: number;
+  delta: number;
+  lifeBefore: number;
+  lifeAfter: number;
+  lifeMax: number;
+  elapsedMs: number;
 }
 
 export interface ActiveNote {
