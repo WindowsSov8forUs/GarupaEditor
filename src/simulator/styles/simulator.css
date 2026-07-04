@@ -216,27 +216,9 @@
 .simulator-score-value {
   position: absolute;
   z-index: 6;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  display: inline-flex;
-  align-items: flex-start;
-  justify-content: center;
-  gap: 0;
-  transform-origin: center;
-  font-size: 1px;
-  line-height: 0;
-  letter-spacing: 0;
-}
-
-.simulator-score-digit {
-  display: inline-block;
-  flex: 0 0 auto;
-  background-repeat: no-repeat;
-  background-position: center;
-  color: transparent;
-  text-align: left;
-  font-variant-numeric: tabular-nums;
+  display: block;
+  pointer-events: none;
+  background: transparent;
 }
 
 .simulator-score-rank-object {

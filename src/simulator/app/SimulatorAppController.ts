@@ -5,19 +5,18 @@ import { loadNoteSkinTextureBundle } from "../engine/assets";
 import {
   loadPauseButtonImageDataUrl,
   loadRhythmGameUiHudSpriteDataUrls,
-  loadScoreFontGlyphDataUrls,
   UI_COMMON_ATLAS_RECTS,
   RHYTHM_GAME_UI_RECTS,
-  SCORE_FONT_GLYPHS,
-  SCORE_FONT_LINE_HEIGHT,
 } from "../engine/uiAtlas";
 import {
   projectNguiOffsetFromAnchoredRoot,
   projectNguiAnchoredPoint,
+  projectNguiLabelRect,
   getLevel3StarAnchor,
   getLevel3NguiSpriteMetrics,
   getLevel3WidgetDepthMetrics,
   getLevel3WidgetMetrics,
+  resolveScoreNumberLabelAnchoredRect,
   resolveNguiDrawingRect,
   sumLevel3LocalPositionBetween,
   RHYTHM_UI_PATHS,
@@ -39,6 +38,14 @@ import {
   type SimulatorScoreRankLabel,
   type SimulatorScoreRankMarker,
 } from "../engine/scoreHud";
+import {
+  createScoreNumberLabelModel,
+  formatScoreNumberLabelNguiText,
+  renderScoreNumberLabelCanvas,
+  requestScoreNumberLabelProcess,
+  setScoreNumberLabelText,
+  type ScoreNumberLabelModel,
+} from "../engine/scoreNumberLabel";
 import {
   loadNguiFontMetricApproximation,
   type NguiFontMetricApproximation,
@@ -83,8 +90,7 @@ interface UiRefs {
   scoreTopTrack: HTMLDivElement;
   scoreGaugeFill: HTMLDivElement;
   scoreHighRankEffect: HTMLDivElement;
-  scoreText: HTMLSpanElement;
-  scoreDigits: HTMLSpanElement[];
+  scoreText: HTMLCanvasElement;
   scoreRankObject: HTMLDivElement;
   scoreRankSeparatorObject: HTMLDivElement;
   scoreRankLabelObject: HTMLDivElement;
@@ -129,15 +135,13 @@ const STARTUP_TIMELINE_TOTAL_MS =
   + STARTUP_STAGE_UI_FADE_IN_MS
   + STARTUP_STAGE_POST_UI_DURATION_MS;
 const STARTUP_CHART_PREROLL_MS = 3000;
-const SCORE_HUD_DIGIT_COUNT = 8;
 const SIMULATOR_RUNTIME_ERROR_MAX_LENGTH = 220;
-const SCORE_HUD_TOTAL_SCORE_FONT_SIZE = 28;
+// Source: score-number-label-uilabel1271-raw.json, Score/Base/TotalScore UILabel 1271 raw fields.
+const SCORE_HUD_NUMBER_LABEL_FONT_SIZE = 28;
 // Source: level3 RankObject UILabel raw data. The labels use mFontSize=12,
 // widget 22x26, center pivot, white color, and text C/B/A/S/SS.
 const SCORE_RANK_LABEL_FONT_SIZE = 12;
 const SCORE_RANK_LABEL_FONT_FAMILY = "\"TTShinGoM\", \"ChartUI\", \"Microsoft YaHei UI\", sans-serif";
-const SCORE_HUD_TOTAL_SCORE_WIDGET = getLevel3WidgetMetrics(RHYTHM_UI_PATHS.scoreTotalScore);
-const SCORE_HUD_DIGIT_SCALE = SCORE_HUD_TOTAL_SCORE_FONT_SIZE / SCORE_FONT_LINE_HEIGHT;
 const PAUSE_MAIN_WIDGET = getLevel3WidgetMetrics(RHYTHM_UI_PATHS.pauseMain);
 const PAUSE_COVER_WIDGET = getLevel3WidgetMetrics(RHYTHM_UI_PATHS.pauseCover);
 const PAUSE_MAIN_SPRITE = getLevel3NguiSpriteMetrics(RHYTHM_UI_PATHS.pauseMain);
@@ -413,7 +417,8 @@ export class SimulatorAppController {
   private lastScoreHighRankGaugeRank: SimulatorScoreGaugeRank = "D";
   private lastScoreHighRankEffectClip: SimulatorScoreHighRankEffectClip | null = null;
   private lastScoreRankMarkers: readonly SimulatorScoreRankMarker[] = [];
-  private rankFontMetricApproximation: NguiFontMetricApproximation | null = null;
+  private nguiFontMetricApproximation: NguiFontMetricApproximation | null = null;
+  private readonly scoreNumberLabel: ScoreNumberLabelModel = createScoreNumberLabelModel();
   private bootRevealPrepared = false;
   private bootRevealRafId = 0;
   private bootPendingAlpha = 1;
@@ -706,6 +711,7 @@ export class SimulatorAppController {
     this.ui.host.addEventListener("pointercancel", this.onHostPointerUpOrCancel);
     window.addEventListener("resize", this.onWindowResize);
     if ("fonts" in document) {
+      void document.fonts.load(`${SCORE_HUD_NUMBER_LABEL_FONT_SIZE}px TTShinGoM`).catch(() => {});
       void document.fonts.load(`${SCORE_RANK_LABEL_FONT_SIZE}px TTShinGoM`).catch(() => {});
       void document.fonts.ready.then(() => this.updateFontSensitiveLayout()).catch(() => {});
     }
@@ -714,7 +720,7 @@ export class SimulatorAppController {
         if (this.isDisposed) {
           return;
         }
-        this.rankFontMetricApproximation = metrics;
+        this.nguiFontMetricApproximation = metrics;
         this.updateFontSensitiveLayout();
       })
       .catch((error) => {
@@ -731,6 +737,7 @@ export class SimulatorAppController {
     if (this.isDisposed) {
       return;
     }
+    requestScoreNumberLabelProcess(this.scoreNumberLabel);
     this.updateBootLayerLayout();
     const rect = this.ui.root.getBoundingClientRect();
     this.updateScoreRankMarkerLayout(
@@ -738,6 +745,7 @@ export class SimulatorAppController {
       Math.max(1, rect.height || window.innerHeight || 1),
       this.lastScoreRankMarkers,
     );
+    this.renderScoreNumberLabel(this.lastRenderedScore);
   }
 
   private reportRuntimeIssue(context: string, error?: unknown, key = context): void {
@@ -813,16 +821,9 @@ export class SimulatorAppController {
     scoreTopTrack.append(scoreGaugeFill);
     const scoreHighRankEffect = document.createElement("div");
     scoreHighRankEffect.className = "simulator-score-high-rank-effect";
-    const scoreText = document.createElement("span");
+    const scoreText = document.createElement("canvas");
     scoreText.className = "simulator-score-value";
-    const scoreDigits: HTMLSpanElement[] = [];
-    for (let index = 0; index < SCORE_HUD_DIGIT_COUNT; index += 1) {
-      const digit = document.createElement("span");
-      digit.className = "simulator-score-digit";
-      digit.textContent = "0";
-      scoreDigits.push(digit);
-      scoreText.appendChild(digit);
-    }
+    scoreText.setAttribute("aria-label", "score");
     const scoreRankObject = document.createElement("div");
     scoreRankObject.className = "simulator-score-rank-object";
     const scoreRankSeparatorObject = document.createElement("div");
@@ -933,19 +934,6 @@ export class SimulatorAppController {
       .catch((error: unknown) => {
         this.reportRuntimeIssue("HighRankEffect 贴图或动画数据加载失败", error, "score-high-rank-effect");
       });
-    void loadScoreFontGlyphDataUrls()
-      .then((glyphs) => {
-        for (const digit of scoreDigits) {
-          const value = digit.dataset.scoreGlyph as keyof typeof glyphs | undefined;
-          if (value && glyphs[value]) {
-            digit.style.backgroundImage = `url("${glyphs[value]}")`;
-          }
-        }
-      })
-      .catch((error: unknown) => {
-        this.reportRuntimeIssue("分数字体贴图加载失败", error, "score-font-atlas");
-      });
-
     const pauseAnchor = document.createElement("div");
     pauseAnchor.className = "simulator-pause-anchor";
     const pauseButton = document.createElement("button");
@@ -1019,7 +1007,6 @@ export class SimulatorAppController {
       scoreGaugeFill,
       scoreHighRankEffect,
       scoreText,
-      scoreDigits,
       scoreRankObject,
       scoreRankSeparatorObject,
       scoreRankLabelObject,
@@ -1728,7 +1715,7 @@ export class SimulatorAppController {
     // Rank UILabel structure/size/pivot/alignment is recovered, but Unity
     // native CharacterInfo metrics are not. This baseline is a documented
     // TTF-derived approximation, not exact decompiled text placement.
-    const baseline = this.rankFontMetricApproximation?.resolveApproximateCenterPivotCanvasBaseline(logicalHeight, fontSize)
+    const baseline = this.nguiFontMetricApproximation?.resolveApproximateCenterPivotCanvasBaseline(logicalHeight, fontSize)
       ?? Math.round(logicalHeight * 0.5);
     context.textBaseline = "alphabetic";
     context.fillText(rank, logicalWidth * 0.5, baseline);
@@ -1753,10 +1740,10 @@ export class SimulatorAppController {
       sumLevel3LocalPositionBetween(RHYTHM_UI_PATHS.scoreRoot, RHYTHM_UI_PATHS.scoreBackground),
       viewport,
     );
-    const scorePoint = projectNguiOffsetFromAnchoredRoot(
-      scoreRootAnchor,
-      sumLevel3LocalPositionBetween(RHYTHM_UI_PATHS.scoreRoot, RHYTHM_UI_PATHS.scoreTotalScore),
+    const scoreRect = projectNguiLabelRect(
+      resolveScoreNumberLabelAnchoredRect(),
       viewport,
+      scoreRootAnchor,
     );
     const meterPoint = projectNguiOffsetFromAnchoredRoot(
       scoreRootAnchor,
@@ -1777,20 +1764,23 @@ export class SimulatorAppController {
       meterWidth,
       meterHeight,
     );
-    const digitScale = scale * SCORE_HUD_DIGIT_SCALE;
-    this.ui.scoreText.style.left = `${scorePoint.x}px`;
-    this.ui.scoreText.style.top = `${scorePoint.y}px`;
-    this.ui.scoreText.style.display = "inline-flex";
+    this.applyRectStyle(this.ui.scoreText, scoreRect.x, scoreRect.y, scoreRect.width, scoreRect.height);
+    this.ui.scoreText.dataset.nguiRect = JSON.stringify({
+      x: scoreRect.x,
+      y: scoreRect.y,
+      width: scoreRect.width,
+      height: scoreRect.height,
+      centerX: scoreRect.center.x,
+      centerY: scoreRect.center.y,
+      scale: scoreRect.scale,
+    });
+    this.ui.scoreText.style.display = "block";
     this.ui.scoreTopTrack.style.setProperty("--sim-score-meter-width", `${meterWidth}px`);
     this.ui.scoreTopTrack.style.setProperty("--sim-score-meter-height", `${meterHeight}px`);
     this.ui.scoreGaugeFill.style.width = `${meterWidth}px`;
     this.ui.scoreGaugeFill.style.height = `${meterHeight}px`;
     this.applyScoreGaugeDrawRegion();
-    this.ui.scoreText.style.setProperty("--sim-score-font-scale", `${digitScale}`);
-    this.ui.scoreText.style.width = `${SCORE_HUD_TOTAL_SCORE_WIDGET.width}px`;
-    this.ui.scoreText.style.height = `${SCORE_HUD_TOTAL_SCORE_WIDGET.height}px`;
-    this.ui.scoreText.style.transform = `translate(-50%, -50%) scale(${digitScale})`;
-    this.layoutBitmapScoreDigits();
+    this.layoutScoreNumberLabel();
     this.updateScoreRankMarkerLayout(windowWidth, windowHeight, this.lastScoreRankMarkers);
     this.updateScoreHighRankEffectLayout(windowWidth, windowHeight);
   }
@@ -1972,17 +1962,8 @@ export class SimulatorAppController {
     const hudState = buildScoreHudState(stats);
     const score = hudState.score;
     if (!Number.isFinite(this.lastRenderedScore) || this.lastRenderedScore !== score) {
-      const clamped = Math.min(999_999_999, score);
-      const raw = clamped <= 0 ? "" : String(clamped);
-      const padded = raw.padStart(SCORE_HUD_DIGIT_COUNT, "0").slice(-SCORE_HUD_DIGIT_COUNT);
-      for (let index = 0; index < this.ui.scoreDigits.length; index += 1) {
-        const digit = this.ui.scoreDigits[index];
-        const value = padded[index] ?? "0";
-        digit.textContent = "";
-        digit.dataset.scoreGlyph = value;
-        this.applyBitmapScoreGlyph(digit, value);
-      }
-      this.layoutBitmapScoreDigits();
+      this.renderScoreNumberLabel(score);
+      this.layoutScoreNumberLabel();
       this.lastRenderedScore = score;
     }
     this.lastScoreGaugeValue = hudState.scoreRatio;
@@ -2065,33 +2046,23 @@ export class SimulatorAppController {
     });
   }
 
-  private applyBitmapScoreGlyph(el: HTMLElement, value: string): void {
-    const glyph = SCORE_FONT_GLYPHS[value as keyof typeof SCORE_FONT_GLYPHS];
-    if (!glyph) {
-      el.style.display = "none";
-      return;
-    }
-    el.style.display = "inline-block";
-    el.style.opacity = "1";
-    el.style.width = `${glyph.xAdvance}px`;
-    el.style.height = `${SCORE_FONT_LINE_HEIGHT}px`;
-    el.style.backgroundSize = `${glyph.width}px ${glyph.height}px`;
-    el.style.backgroundPosition = `${glyph.xOffset}px ${glyph.yOffset}px`;
-    void loadScoreFontGlyphDataUrls()
-      .then((glyphs) => {
-        const url = glyphs[value as keyof typeof glyphs];
-        if (url) {
-          el.style.backgroundImage = `url("${url}")`;
-        }
-      })
-      .catch((error: unknown) => {
-        this.reportRuntimeIssue("分数字形贴图加载失败", error, "score-glyph-load");
-      });
+  private renderScoreNumberLabel(score: number): void {
+    const nguiText = formatScoreNumberLabelNguiText(score);
+    this.ui.scoreText.dataset.nguiText = nguiText;
+    setScoreNumberLabelText(this.scoreNumberLabel, nguiText);
+    renderScoreNumberLabelCanvas(
+      this.ui.scoreText,
+      this.scoreNumberLabel,
+      this.nguiFontMetricApproximation,
+    );
   }
 
-  private layoutBitmapScoreDigits(): void {
-    this.ui.scoreText.style.width = `${SCORE_HUD_TOTAL_SCORE_WIDGET.width}px`;
-    this.ui.scoreText.style.height = `${SCORE_HUD_TOTAL_SCORE_WIDGET.height}px`;
+  private layoutScoreNumberLabel(): void {
+    renderScoreNumberLabelCanvas(
+      this.ui.scoreText,
+      this.scoreNumberLabel,
+      this.nguiFontMetricApproximation,
+    );
   }
 
   private applyBootTitle(value: unknown): void {

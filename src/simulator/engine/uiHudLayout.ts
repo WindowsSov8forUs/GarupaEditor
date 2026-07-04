@@ -19,6 +19,16 @@ export interface ProjectedNguiPoint {
   activeHeight: number;
 }
 
+export interface NguiProjectedRect {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  center: NguiPoint;
+  scale: number;
+  activeHeight: number;
+}
+
 export type NguiHorizontalAnchor = "left" | "center" | "right";
 export type NguiVerticalAnchor = "top" | "center" | "bottom";
 
@@ -155,6 +165,30 @@ export interface NguiDrawingCenterOffset {
   y: number;
 }
 
+export interface ScoreNumberLabelAnchoredRect {
+  path: "GamePlay/UI_Root/Display/Score/Base/TotalScore";
+  rootPath: "GamePlay/UI_Root/Display/Score";
+  parentPath: "GamePlay/UI_Root/Display/Score/Base";
+  anchorTargetPath: "GamePlay/UI_Root/Display/Score/Progress";
+  center: NguiPoint;
+  localCenter: NguiPoint;
+  parentLocalPositionFromRoot: NguiPoint;
+  width: number;
+  height: number;
+  pivot: number;
+  anchors: {
+    left: 0;
+    right: -30;
+    bottom: -98;
+    top: 20;
+    leftRelative: 0;
+    rightRelative: 0.5;
+    bottomRelative: 0;
+    topRelative: 1;
+    updateAnchors: "OnStart";
+  };
+}
+
 const level3UiNodes = (level3UiCoordinateData as { nodes: Level3UiNode[] }).nodes;
 const level3UiNodeByPath = new Map(level3UiNodes.map((node) => [node.path, node]));
 const level3HudSubtreeRoots = (level3HudSubtreeData as { roots: Level3HudSubtreeNode[] }).roots;
@@ -184,6 +218,7 @@ if (!uiRootNode?.uiRootFields) {
 export const RHYTHM_UI_ROOT = uiRootNode.uiRootFields;
 
 export const RHYTHM_UI_PATHS = {
+  displayRoot: "GamePlay/UI_Root/Display",
   informationRoot: "GamePlay/UI_Root_Back/Display/Information",
   comboNumberRoot: "GamePlay/UI_Root_Back/Display/Information/Combo/combo_number",
   comboNumberLabel: "GamePlay/UI_Root_Back/Display/Information/Combo/combo_number/combo_num_label",
@@ -219,7 +254,7 @@ export const RHYTHM_UI_PATHS = {
   scoreRankSS: "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankSS",
   scoreRankSSLabel: "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankSS/SS",
   scoreRankSSSeparator: "GamePlay/UI_Root/Display/Score/Progress/RankObject/rankSS/Separator",
-  scoreTotalScore: "GamePlay/UI_Root/Display/Score/Base/TotalScore",
+  scoreValue: "GamePlay/UI_Root/Display/Score/Base/TotalScore",
   lifeGaugeRoot: "GamePlay/UI_Root/Display/LifeGauge",
   lifeGaugeBackground: "GamePlay/UI_Root/Display/LifeGauge/GaugeObject/hp_gauge_round/GaugeBG",
   lifeGaugeFront: "GamePlay/UI_Root/Display/LifeGauge/GaugeObject/hp_gauge_round/FrontGauge",
@@ -231,6 +266,27 @@ export const RHYTHM_UI_PATHS = {
 
 export const RHYTHM_HUD_WIDGETS = {
   comboDigit: { width: 82, height: 116, padding: -12 },
+} as const;
+
+// Source: score-number-label-score1327-bindings-raw.json and
+// score-number-label-uilabel1271-raw.json. Score.totalScoreLabel binds to
+// Score/Base/TotalScore UILabel 1271. UILabel 1249 is the static SCORE title.
+export const RHYTHM_SCORE_NUMBER_LABEL_ANCHORED_WIDGET: NguiWidgetMetrics = {
+  width: 188,
+  height: 204,
+  pivot: 5,
+};
+
+const SCORE_NUMBER_LABEL_ANCHORS = {
+  left: 0,
+  right: -30,
+  bottom: -98,
+  top: 20,
+  leftRelative: 0,
+  rightRelative: 0.5,
+  bottomRelative: 0,
+  topRelative: 1,
+  updateAnchors: "OnStart",
 } as const;
 
 // Source: runtime-ui-binding-report.*. Keep this until those clip/controller
@@ -257,6 +313,34 @@ function roundToEven(value: number): number {
     return floor;
   }
   return floor % 2 === 0 ? floor : floor + 1;
+}
+
+function nguiPivotOffset(pivot: number): NguiPoint {
+  switch (pivot) {
+    case 0:
+      return { x: 0, y: 1 };
+    case 1:
+      return { x: 0.5, y: 1 };
+    case 2:
+      return { x: 1, y: 1 };
+    case 3:
+      return { x: 0, y: 0.5 };
+    case 5:
+      return { x: 1, y: 0.5 };
+    case 6:
+      return { x: 0, y: 0 };
+    case 7:
+      return { x: 0.5, y: 0 };
+    case 8:
+      return { x: 1, y: 0 };
+    case 4:
+    default:
+      return { x: 0.5, y: 0.5 };
+  }
+}
+
+function lerp(start: number, end: number, relative: number): number {
+  return start + ((end - start) * relative);
 }
 
 function horizontalFromStarAnchor(value: number): NguiHorizontalAnchor {
@@ -400,7 +484,6 @@ export function getLevel3StarAnchor(path: string): NguiAnchoredPoint {
   if (!starAnchor) {
     throw new Error(`Missing StarUIAnchor for level3 UI node: ${path}`);
   }
-
   return {
     horizontal: horizontalFromStarAnchor(starAnchor.horizontal),
     vertical: verticalFromStarAnchor(starAnchor.vertical),
@@ -511,5 +594,94 @@ export function projectNguiOffsetFromAnchoredRoot(
     y: projectedRoot.y - (localOffset.y * projectedRoot.scale),
     scale: projectedRoot.scale,
     activeHeight: projectedRoot.activeHeight,
+  };
+}
+
+// Source: score-number-label-score1327-bindings-raw.json and
+// score-number-label-uilabel1271-raw.json. Score.totalScoreLabel @ managed
+// 0x70 serializes at raw 0xb4 and points to UILabel 1271
+// (Score/Base/TotalScore). UILabel 1271 anchors to Score/Progress transform
+// 685 with left=0/right=-30/bottom=-98/top=20 and right relative=0.5.
+// Score/Progress has UIWidget 1339 with pivot Left, width=435, height=86, so
+// the resolved local pivot under Score/Base is:
+//   Progress local from Base = (25,-45) - (148,-65) = (-123,20)
+//   target sides = left -123, right 312, bottom -23, top 63
+//   label sides = left -123, right 64.5, bottom -121, top 83
+//   pivot Right = (64.5,-19) -> RoundToInt half-to-even = (64,-19)
+export function resolveScoreNumberLabelAnchoredRect(): ScoreNumberLabelAnchoredRect {
+  const rootPath = "GamePlay/UI_Root/Display/Score" as const;
+  const parentPath = "GamePlay/UI_Root/Display/Score/Base" as const;
+  const anchorTargetPath = "GamePlay/UI_Root/Display/Score/Progress" as const;
+  const parentLocalPositionFromRoot = sumLevel3LocalPositionBetween(rootPath, parentPath);
+  const anchorTargetLocalFromRoot = sumLevel3LocalPositionBetween(rootPath, anchorTargetPath);
+  const anchorTargetLocalFromParent = {
+    x: anchorTargetLocalFromRoot.x - parentLocalPositionFromRoot.x,
+    y: anchorTargetLocalFromRoot.y - parentLocalPositionFromRoot.y,
+  };
+  const anchorTargetWidget = getLevel3WidgetMetrics(anchorTargetPath);
+  const anchorTargetPivot = nguiPivotOffset(anchorTargetWidget.pivot);
+  const targetLeft = anchorTargetLocalFromParent.x - (anchorTargetWidget.width * anchorTargetPivot.x);
+  const targetRight = targetLeft + anchorTargetWidget.width;
+  const targetBottom = anchorTargetLocalFromParent.y - (anchorTargetWidget.height * anchorTargetPivot.y);
+  const targetTop = targetBottom + anchorTargetWidget.height;
+  const left = lerp(targetLeft, targetRight, SCORE_NUMBER_LABEL_ANCHORS.leftRelative)
+    + SCORE_NUMBER_LABEL_ANCHORS.left;
+  const right = lerp(targetLeft, targetRight, SCORE_NUMBER_LABEL_ANCHORS.rightRelative)
+    + SCORE_NUMBER_LABEL_ANCHORS.right;
+  const bottom = lerp(targetBottom, targetTop, SCORE_NUMBER_LABEL_ANCHORS.bottomRelative)
+    + SCORE_NUMBER_LABEL_ANCHORS.bottom;
+  const top = lerp(targetBottom, targetTop, SCORE_NUMBER_LABEL_ANCHORS.topRelative)
+    + SCORE_NUMBER_LABEL_ANCHORS.top;
+  const labelPivot = nguiPivotOffset(RHYTHM_SCORE_NUMBER_LABEL_ANCHORED_WIDGET.pivot);
+  const localCenter = {
+    x: roundToEven(lerp(left, right, labelPivot.x)),
+    y: roundToEven(lerp(bottom, top, labelPivot.y)),
+  };
+  const rootLocalCenter = {
+    x: parentLocalPositionFromRoot.x + localCenter.x,
+    y: parentLocalPositionFromRoot.y + localCenter.y,
+  };
+
+  return {
+    path: RHYTHM_UI_PATHS.scoreValue,
+    rootPath,
+    parentPath,
+    anchorTargetPath,
+    center: rootLocalCenter,
+    localCenter,
+    parentLocalPositionFromRoot,
+    width: RHYTHM_SCORE_NUMBER_LABEL_ANCHORED_WIDGET.width,
+    height: RHYTHM_SCORE_NUMBER_LABEL_ANCHORED_WIDGET.height,
+    pivot: RHYTHM_SCORE_NUMBER_LABEL_ANCHORED_WIDGET.pivot,
+    anchors: SCORE_NUMBER_LABEL_ANCHORS,
+  };
+}
+
+// Source-backed projection only: UIRoot scale and screen transform are applied
+// to the resolved NGUI label rect. Text placement stays inside NGUIText/canvas
+// processing and no browser-side baseline or text offset is introduced here.
+export function projectNguiLabelRect(
+  rect: Pick<ScoreNumberLabelAnchoredRect, "center" | "width" | "height" | "pivot">,
+  viewport: HudViewportSize,
+  root?: NguiAnchoredPoint,
+): NguiProjectedRect {
+  const projectedCenter = root
+    ? projectNguiOffsetFromAnchoredRoot(root, rect.center, viewport)
+    : projectNguiDisplayPoint(rect.center, viewport);
+  const width = rect.width * projectedCenter.scale;
+  const height = rect.height * projectedCenter.scale;
+  const pivotOffset = nguiPivotOffset(rect.pivot);
+
+  return {
+    x: projectedCenter.x - (width * pivotOffset.x),
+    y: projectedCenter.y - (height * (1 - pivotOffset.y)),
+    width,
+    height,
+    center: {
+      x: projectedCenter.x,
+      y: projectedCenter.y,
+    },
+    scale: projectedCenter.scale,
+    activeHeight: projectedCenter.activeHeight,
   };
 }

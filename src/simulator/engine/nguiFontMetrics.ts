@@ -10,6 +10,8 @@ interface TtfGlyphBounds {
 
 export interface NguiFontMetricApproximation {
   resolveBaseline(fontSize: number): number;
+  resolveGlyphAdvance(char: string, fontSize: number): number;
+  resolvePrintedLineHeight(fontSize: number): number;
   resolveApproximateCenterPivotCanvasBaseline(widgetHeight: number, fontSize: number): number;
 }
 
@@ -135,12 +137,28 @@ function resolveGlyphBounds(
   };
 }
 
+function resolveGlyphAdvanceWidth(
+  view: DataView,
+  hhea: TtfTable,
+  hmtx: TtfTable,
+  glyphId: number,
+): number {
+  const numberOfHMetrics = readU16(view, hhea.offset + 34);
+  if (numberOfHMetrics <= 0) {
+    return 0;
+  }
+  const metricIndex = Math.min(glyphId, numberOfHMetrics - 1);
+  return readU16(view, hmtx.offset + (metricIndex * 4));
+}
+
 export function parseNguiFontMetricApproximation(buffer: ArrayBuffer): NguiFontMetricApproximation {
   const view = new DataView(buffer);
   const tables = readTableDirectory(view);
   const head = requireTable(tables, "head");
   const cmap = requireTable(tables, "cmap");
   const glyf = requireTable(tables, "glyf");
+  const hhea = requireTable(tables, "hhea");
+  const hmtx = requireTable(tables, "hmtx");
   const loca = requireTable(tables, "loca");
   const unitsPerEm = readU16(view, head.offset + 18);
   const indexToLocFormat = readI16(view, head.offset + 50);
@@ -173,6 +191,32 @@ export function parseNguiFontMetricApproximation(buffer: ArrayBuffer): NguiFontM
 
   return {
     resolveBaseline,
+    resolveGlyphAdvance(char: string, fontSize: number): number {
+      const codePoint = char.codePointAt(0);
+      if (codePoint === undefined || fontSize <= 0) {
+        return 0;
+      }
+      const glyphId = resolveFormat4GlyphId(view, cmap.offset, codePoint);
+      const advanceWidth = resolveGlyphAdvanceWidth(view, hhea, hmtx, glyphId);
+      // Source-backed fragment: NGUIText.GetGlyphWidth consumes
+      // CharacterInfo.advance per glyph. Boundary: this is TTF hmtx advance
+      // scaled to the requested font size, not Unity native CharacterInfo.
+      return roundToNearestEven(advanceWidth * (fontSize / unitsPerEm));
+    },
+    resolvePrintedLineHeight(fontSize: number): number {
+      const scale = fontSize / unitsPerEm;
+      const sourceBounds = parenBounds ?? fallbackBounds;
+      if (!sourceBounds) {
+        return fontSize;
+      }
+      const maxY = roundToNearestEven(sourceBounds.maxY * scale);
+      const minY = roundToNearestEven(sourceBounds.minY * scale);
+      // Approximation boundary: NGUIText.CalculatePrintedSize derives height
+      // from CharacterInfo bounds and final line height. This keeps the same
+      // glyph-bounds dependency using TTF data, while Unity native
+      // CharacterInfo remains unrecovered.
+      return Math.max(1, maxY - minY);
+    },
     resolveApproximateCenterPivotCanvasBaseline(widgetHeight: number, fontSize: number): number {
       // Approximation boundary: this applies the recovered NGUI baseline
       // fragment to TTF-derived bounds, then places the font-size box in the
