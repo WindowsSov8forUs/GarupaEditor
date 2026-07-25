@@ -16,10 +16,10 @@
 | 任务 | 状态 | 最近批次 | 结果 |
 | --- | --- | --- | --- |
 | T01 冻结第一切片证据包 | 已完成 | 2026-07-26 第一批 | 已冻结 E01–E13、manifest、夹具目录和证据缺口 |
-| T02 建立目录与依赖边界 | 待实施 | - | - |
-| T03 定义证据门和宿主 API | 待实施 | - | - |
-| T04 建立原作管理器对象图 | 待实施 | - | - |
-| T05 建立音符类型与状态框架 | 待实施 | - | - |
+| T02 建立目录与依赖边界 | 已完成 | 2026-07-26 第二批 | 已建立 host、engine、backends、testing 与隔离类型检查 |
+| T03 定义证据门和宿主 API | 已完成 | 2026-07-26 第二批 | 已建立结构化证据结果和可移植宿主生命周期接口 |
+| T04 建立原作管理器对象图 | 已完成 | 2026-07-26 第二批 | 已建立首批原作 owner、所有权和行为证据门 |
+| T05 建立音符类型与状态框架 | 已完成 | 2026-07-26 第二批 | 已建立 Front/After、Long/Slide/Flick 派生族和四态分派 |
 | T06 恢复 SetupNotes、对象池和活跃列表 | 待实施 | - | - |
 | T07 恢复确定性子步调度 | 待实施 | - | - |
 | T08 建立暂停与恢复框架 | 待实施 | - | - |
@@ -39,6 +39,20 @@
 - `fixtures/README.md` 已明确 T01 不生成行为夹具，后续夹具不得来自旧模拟器。
 - `verify.mjs` 已提供源文件、复制文件和 Git 暂存区的可重复 SHA-256 校验。
 - 本批只进行证据哈希、manifest、路径和差异检查，不运行构建或测试。
+
+#### 2026-07-26 第二批：T02–T05 类型与宿主边界
+
+- 已建立 `src/simulator/host`、`engine`、`backends` 和 `testing` 四个职责边界。
+- 已建立 `createSimulatorEngine` 以及 `initialize`、`step`、`pause`、`resume`、`snapshot`、`dispose` 宿主接口。
+- 已建立 `ok` / `evidence-required` 结果、证据引用和证据绑定值；缺少来源的关键输入失败关闭。
+- `UnitsPerBar` 仍由 G01 阻断，未进入宿主构造输入，也未设置调用者默认值。
+- 预构造批次的 bar、分数位置、Note family 与类型字段逐项要求证据绑定；宿主 `snapshot` 在 T10 前继续返回证据门。
+- 已建立 `InGameManager`、`InGameMusicScoreController`、`NoteManager`、`SlideNoteManager`、`InGameOneFrameJudgementController`、`InputManager` 和 `GamePlayButton` 框架边界。
+- 已建立 `NoteBase`、`NoteFrontBase`、`NoteAfterBase` 以及 Long、Slide、Flick、Directional 和 Multiple Directional 类型；未由冻结证据证明的二级继承未被固化。
+- OneFrame 控制器本批只进入对象图，容器初始化与调用顺序继续由 T09 阻断。
+- 已按 E03 恢复 Move `0`、Wait `1`、Stop `2`、Deactive `3` 分派；具体行为继续返回证据门。
+- 已增加模拟器隔离 `tsconfig.json` 和可重复禁止依赖扫描，当前未导入 React、Pixi、Tauri、DOM、主程序或编辑器谱面模型。
+- 本批验证为 `npx.cmd tsc -p src/simulator/tsconfig.json`、`node src/simulator/testing/verifyDependencies.mjs`、证据包校验和 `git diff --check`；未运行整体构建。
 
 ## 2. 固定范围
 
