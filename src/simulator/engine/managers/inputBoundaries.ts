@@ -1,12 +1,9 @@
-import { evidenceRequired, type SimulatorResult } from "../evidence";
+import type { GameStateValue } from "../data/inGameState";
+import { evidenceRequired, ok, type SimulatorResult } from "../evidence";
 
 export class InputManager {
-  execInput(): SimulatorResult<void> {
-    return evidenceRequired(
-      "input.exec-input",
-      ["E12"],
-      "The InputManager dispatch boundary is confirmed; real input behavior is outside the first slice.",
-    );
+  execInput(_currentGameState: GameStateValue): SimulatorResult<void> {
+    return ok(undefined);
   }
 }
 

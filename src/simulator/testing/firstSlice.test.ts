@@ -6,6 +6,13 @@ import {
   type SimulatorResult,
 } from "../engine/evidence";
 import { InGameManager } from "../engine/managers/inGameManager";
+import { InGameDirector } from "../engine/managers/inGameDirector";
+import {
+  GameState,
+  isPausedState,
+  PauseState,
+  type GameStateValue,
+} from "../engine/data/inGameState";
 import { InGameMusicScoreController } from "../engine/managers/inGameMusicScoreController";
 import { InGameOneFrameJudgementController } from "../engine/managers/inGameOneFrameJudgementController";
 import { GamePlayButton, InputManager } from "../engine/managers/inputBoundaries";
@@ -72,6 +79,15 @@ class FakeClock implements NoteManagerClock {
 
   canActivateBatch(): SimulatorResult<boolean> {
     return ok(this.activateBatch);
+  }
+}
+
+class TraceInputManager extends InputManager {
+  readonly states: number[] = [];
+
+  override execInput(currentGameState: GameStateValue): SimulatorResult<void> {
+    this.states.push(currentGameState);
+    return ok(undefined);
   }
 }
 
@@ -170,6 +186,17 @@ test("管理器对象图保持单一所有者和确定构造顺序", () => {
     "OneFrame controller owner mismatch",
   );
   assert(inGame.inputManager === input, "InputManager owner mismatch");
+  const director = new InGameDirector(inGame);
+  assert(director.inGameManager === inGame, "InGameDirector owner mismatch");
+  assertDeepEqual(
+    director.snapshot(),
+    {
+      playerLoopNode: "Update.ScriptRunBehaviourUpdate",
+      callback: "InGameDirector.Update",
+      target: "InGameManager.ExecUpdate",
+    },
+    "original frame owner",
+  );
   const poolIds = graph.manager.snapshot().pools.flatMap((pool) =>
     pool.objects.map((object) => object.poolObjectId),
   );
@@ -434,14 +461,51 @@ test("暂停冻结时钟、游标、列表、池和 OneFrame 状态", () => {
     new InputManager(),
   );
   requireOk(inGame.initialize(), "initialize manager");
-  requireOk(inGame.step(0.01), "step before pause");
+  const director = new InGameDirector(inGame);
+  requireOk(director.update(0.01), "step before pause");
   requireOk(inGame.pause(), "pause manager");
   const frozen = inGame.snapshot();
-  requireOk(inGame.step(0.05), "paused step");
+  assertEqual(frozen.currentGameState, GameState.PauseSound, "steady pause state");
+  assertEqual(frozen.pauseState, PauseState.None, "portable pause skips UI command");
+  requireOk(director.update(0.05), "paused step");
   assertDeepEqual(inGame.snapshot(), frozen, "paused state must be byte-stable as JSON");
   requireOk(inGame.resume(), "resume manager");
-  requireOk(inGame.step(0.01), "step after resume");
+  assertEqual(
+    inGame.snapshot().currentGameState,
+    GameState.PlayingSound,
+    "steady resume state",
+  );
+  requireOk(director.update(0.01), "step after resume");
   assertEqual(graph.clock.advances.length, 2, "clock resumes from retained state");
+});
+
+test("G05 isPaused 精确覆盖 PauseState 1 2 与 GameState 6 7", () => {
+  assert(!isPausedState(GameState.PlayingSound, PauseState.None), "playing state");
+  assert(isPausedState(GameState.PlayingSound, PauseState.Pause), "pause command");
+  assert(isPausedState(GameState.PlayingSound, PauseState.Resume), "resume command");
+  assert(isPausedState(GameState.PauseNone, PauseState.None), "PauseNone state");
+  assert(isPausedState(GameState.PauseSound, PauseState.None), "PauseSound state");
+});
+
+test("G05 PauseSound 保留输入分派但阻断音符调度", () => {
+  const graph = createTestGraph([]);
+  const input = new TraceInputManager();
+  const inGame = new InGameManager(
+    new InGameMusicScoreController(engineInput().clock),
+    graph.manager,
+    graph.controller,
+    input,
+  );
+  requireOk(inGame.initialize(), "initialize manager");
+  requireOk(inGame.execUpdate(0.01), "playing update");
+  requireOk(inGame.pause(), "enter PauseSound");
+  requireOk(inGame.execUpdate(0.01), "paused update");
+  assertDeepEqual(
+    input.states,
+    [GameState.PlayingSound, GameState.PauseSound],
+    "game-state input dispatch",
+  );
+  assertEqual(graph.clock.advances.length, 1, "PauseSound blocks NoteManager");
 });
 
 test("OneFrame 容器统一获取、占用、Reflect 和回收", () => {
@@ -485,7 +549,7 @@ test("Note 只能通过 SetupNotes 安装的回调请求 OneFrame 容器", () =>
   );
 });
 
-test("未闭合输入、判定和数值时钟统一失败关闭", () => {
+test("未闭合触摸、判定和数值时钟统一失败关闭", () => {
   const missingClockEvidence = engineInput();
   const invalidInput = {
     ...missingClockEvidence,
@@ -505,7 +569,6 @@ test("未闭合输入、判定和数值时钟统一失败关闭", () => {
   );
   requireOk(engine.initialize(), "initialize evidence-bound engine");
   requireOk(engine.step(0.01), "closed G01 clock step");
-  assertEqual(new InputManager().execInput().status, "evidence-required", "input gate");
   assertEqual(
     new GamePlayButton().execTouchBegan().status,
     "evidence-required",
@@ -532,7 +595,7 @@ test("快照确定且序列化不触发后端事件", () => {
   assertEqual(first.backendTrace.length, 1, "snapshot must not record events");
   assertDeepEqual(
     first.evidenceGaps,
-    ["G04", "G05"],
+    [],
     "open evidence gaps",
   );
 });

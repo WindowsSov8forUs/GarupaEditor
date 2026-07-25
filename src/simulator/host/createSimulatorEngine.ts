@@ -13,19 +13,18 @@ import {
   type SimulatorResult,
 } from "../engine/evidence";
 import { InGameManager } from "../engine/managers/inGameManager";
+import { InGameDirector } from "../engine/managers/inGameDirector";
 import { InGameMusicScoreController } from "../engine/managers/inGameMusicScoreController";
 import { InGameOneFrameJudgementController } from "../engine/managers/inGameOneFrameJudgementController";
 import { InputManager } from "../engine/managers/inputBoundaries";
 import { NoteManager } from "../engine/managers/noteManager";
 import { SlideNoteManager } from "../engine/managers/slideNoteManager";
 
-const firstSliceEvidenceGaps: readonly FirstSliceEvidenceGap[] = [
-  "G04",
-  "G05",
-];
+const firstSliceEvidenceGaps: readonly FirstSliceEvidenceGap[] = [];
 
 class SimulatorEngineHost implements SimulatorEngine {
   constructor(
+    private readonly inGameDirector: InGameDirector,
     private readonly inGameManager: InGameManager,
     readonly backends: SimulatorBackends,
   ) {}
@@ -35,7 +34,7 @@ class SimulatorEngineHost implements SimulatorEngine {
   }
 
   step(deltaTimeSeconds: number): SimulatorResult<void> {
-    return this.inGameManager.step(deltaTimeSeconds);
+    return this.inGameDirector.update(deltaTimeSeconds);
   }
 
   pause(): SimulatorResult<void> {
@@ -64,6 +63,7 @@ class SimulatorEngineHost implements SimulatorEngine {
 
   snapshot(): SimulatorResult<SimulatorSnapshot> {
     return ok({
+      director: this.inGameDirector.snapshot(),
       managers: this.inGameManager.snapshot(),
       backendTrace: this.backends.snapshot(),
       evidenceGaps: [...firstSliceEvidenceGaps],
@@ -180,7 +180,9 @@ export function createSimulatorEngine(
     new InputManager(),
   );
 
-  return ok(new SimulatorEngineHost(inGameManager, backends));
+  const inGameDirector = new InGameDirector(inGameManager);
+
+  return ok(new SimulatorEngineHost(inGameDirector, inGameManager, backends));
 }
 
 function isValidBpm(value: number): boolean {

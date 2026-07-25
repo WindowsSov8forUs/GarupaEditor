@@ -3,6 +3,13 @@ import {
   ok,
   type SimulatorResult,
 } from "../evidence";
+import {
+  GameState,
+  isPausedState,
+  PauseState,
+  type GameStateValue,
+  type PauseStateValue,
+} from "../data/inGameState";
 import type { EngineLifecycleSnapshot, EngineLifecycleState } from "../lifecycle";
 import { InGameMusicScoreController } from "./inGameMusicScoreController";
 import { InGameOneFrameJudgementController } from "./inGameOneFrameJudgementController";
@@ -10,6 +17,8 @@ import { InputManager } from "./inputBoundaries";
 import { NoteManager } from "./noteManager";
 
 export interface InGameManagerSnapshot extends EngineLifecycleSnapshot {
+  readonly currentGameState: GameStateValue;
+  readonly pauseState: PauseStateValue;
   readonly musicScore: ReturnType<InGameMusicScoreController["snapshot"]>;
   readonly noteManager: ReturnType<NoteManager["snapshot"]>;
   readonly oneFrame: ReturnType<InGameOneFrameJudgementController["snapshot"]>;
@@ -17,7 +26,8 @@ export interface InGameManagerSnapshot extends EngineLifecycleSnapshot {
 
 export class InGameManager {
   private lifecycleState: EngineLifecycleState = "created";
-  private pausedValue = false;
+  private currentGameStateValue: GameStateValue = GameState.PlayingSound;
+  private pauseStateValue: PauseStateValue = PauseState.None;
 
   constructor(
     readonly musicScoreController: InGameMusicScoreController,
@@ -50,9 +60,23 @@ export class InGameManager {
     return ok(undefined);
   }
 
-  step(deltaTimeSeconds: number): SimulatorResult<void> {
-    if (this.pausedValue) {
+  execUpdate(deltaTimeSeconds: number): SimulatorResult<void> {
+    if (this.currentGameStateValue === GameState.PauseNone) {
       return ok(undefined);
+    }
+    const inputResult = this.inputManager.execInput(this.currentGameStateValue);
+    if (inputResult.status !== "ok") {
+      return inputResult;
+    }
+    if (this.currentGameStateValue === GameState.PauseSound) {
+      return ok(undefined);
+    }
+    if (this.currentGameStateValue === GameState.PlayingNone) {
+      return evidenceRequired(
+        "ingame.playing-none-input-inspection",
+        ["E22", "E23", "E25"],
+        "PlayingNone requires the original OneFrame input-inspection list, which is outside the first slice.",
+      );
     }
     const updateResult = this.noteManager.execUpdate(deltaTimeSeconds);
     if (updateResult.status !== "ok") {
@@ -66,31 +90,40 @@ export class InGameManager {
   }
 
   pause(): SimulatorResult<void> {
-    if (this.pausedValue) {
+    if (this.isPaused()) {
       return ok(undefined);
     }
-    this.pausedValue = true;
+    this.currentGameStateValue = GameState.PauseSound;
+    this.pauseStateValue = PauseState.None;
     return ok(undefined);
   }
 
   resume(): SimulatorResult<void> {
-    if (!this.pausedValue) {
+    if (!this.isPaused()) {
       return ok(undefined);
     }
-    this.pausedValue = false;
+    this.currentGameStateValue = GameState.PlayingSound;
+    this.pauseStateValue = PauseState.None;
     return ok(undefined);
   }
 
   dispose(): SimulatorResult<void> {
     this.lifecycleState = "disposed";
-    this.pausedValue = false;
+    this.currentGameStateValue = GameState.PlayingSound;
+    this.pauseStateValue = PauseState.None;
     return ok(undefined);
+  }
+
+  private isPaused(): boolean {
+    return isPausedState(this.currentGameStateValue, this.pauseStateValue);
   }
 
   snapshot(): InGameManagerSnapshot {
     return {
       state: this.lifecycleState,
-      paused: this.pausedValue,
+      paused: this.isPaused(),
+      currentGameState: this.currentGameStateValue,
+      pauseState: this.pauseStateValue,
       musicScore: this.musicScoreController.snapshot(),
       noteManager: this.noteManager.snapshot(),
       oneFrame: this.oneFrameJudgementController.snapshot(),

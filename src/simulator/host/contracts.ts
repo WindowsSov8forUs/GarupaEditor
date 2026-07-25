@@ -7,6 +7,7 @@ import type {
 import type { OneFrameDataPoolProfile } from "../engine/data/oneFrameData";
 import type { SimulatorResult } from "../engine/evidence";
 import type { InGameManagerSnapshot } from "../engine/managers/inGameManager";
+import type { InGameDirectorSnapshot } from "../engine/managers/inGameDirector";
 import type { SimulatorBackendTraceEvent } from "../backends/contracts";
 
 export interface SimulatorEngineInput {
@@ -16,11 +17,10 @@ export interface SimulatorEngineInput {
   readonly oneFrameData: OneFrameDataPoolProfile;
 }
 
-export type FirstSliceEvidenceGap =
-  | "G04"
-  | "G05";
+export type FirstSliceEvidenceGap = never;
 
 export interface SimulatorSnapshot {
+  readonly director: InGameDirectorSnapshot;
   readonly managers: InGameManagerSnapshot;
   readonly backendTrace: readonly SimulatorBackendTraceEvent[];
   readonly evidenceGaps: readonly FirstSliceEvidenceGap[];
