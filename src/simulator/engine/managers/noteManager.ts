@@ -23,6 +23,7 @@ import {
 import { SlideNoteManager } from "./slideNoteManager";
 
 export interface NoteManagerClock {
+  setExecuteFrame(executeFrame: number): void;
   advance(deltaTimeSeconds: number): SimulatorResult<void>;
   canActivateBatch(batch: NoteBatchInformation): SimulatorResult<boolean>;
 }
@@ -64,8 +65,12 @@ export interface NoteManagerSnapshot {
   readonly pools: readonly NotePoolSnapshot[];
   readonly slideNoteManagerInitialized: boolean;
   readonly schedulerTrace: readonly NoteManagerTraceEntry[];
-  readonly unresolvedSchedulerGaps: readonly ["G06"];
+  readonly bpmChangeCount: number;
+  readonly performanceLevelCounters: readonly number[];
+  readonly unresolvedSchedulerGaps: readonly [];
 }
+
+export type PerformanceLevelCounters = [number, number, number, number];
 
 interface NotePool {
   readonly family: NoteFamily;
@@ -77,6 +82,9 @@ export class NoteManager {
   private readonly activeNotesValue: NoteBase[] = [];
   private readonly notePoolsValue = new Map<NoteFamily, NotePool>();
   private readonly schedulerTraceValue: NoteManagerTraceEntry[] = [];
+  private readonly performanceLevelCountersValue: PerformanceLevelCounters = [
+    0, 0, 0, 0,
+  ];
   private nextBatchIndexValue = 0;
   private setupComplete = false;
 
@@ -84,6 +92,7 @@ export class NoteManager {
     private readonly batches: NoteBatchInformationList,
     readonly slideNoteManager: SlideNoteManager,
     private readonly clock: NoteManagerClock,
+    private readonly bpmChangeCount: number,
     private readonly getUsableOneFrameData: () => SimulatorResult<OneFrameDataHandle>,
     private readonly createPoolObject: NotePoolObjectFactory = createDefaultPoolObject,
   ) {}
@@ -147,11 +156,21 @@ export class NoteManager {
       );
     }
 
-    const substepCount = selectSubstepCount(deltaTimeSeconds);
-    const substepDelta = deltaTimeSeconds / substepCount;
+    const frameDelta = Math.fround(deltaTimeSeconds);
+    const executeFrame =
+      frameDelta <= Math.fround(0.0166666675)
+        ? Math.fround(frameDelta * 60)
+        : 1;
+    const substepCount = selectSubstepCount(
+      frameDelta,
+      this.bpmChangeCount,
+      this.performanceLevelCountersValue,
+    );
+    const substepDelta = Math.fround(frameDelta / substepCount);
+    this.clock.setExecuteFrame(Math.fround(executeFrame / substepCount));
     this.schedulerTraceValue.push({
       kind: "frame",
-      deltaTimeSeconds,
+      deltaTimeSeconds: frameDelta,
       substepCount,
     });
 
@@ -229,7 +248,9 @@ export class NoteManager {
       })),
       slideNoteManagerInitialized: this.slideNoteManager.isInitialized,
       schedulerTrace: [...this.schedulerTraceValue],
-      unresolvedSchedulerGaps: ["G06"],
+      bpmChangeCount: this.bpmChangeCount,
+      performanceLevelCounters: [...this.performanceLevelCountersValue],
+      unresolvedSchedulerGaps: [],
     };
   }
 
@@ -311,17 +332,37 @@ export class NoteManager {
   }
 }
 
-export function selectSubstepCount(deltaTimeSeconds: number): 1 | 2 | 3 | 4 {
-  if (deltaTimeSeconds < 0.018) {
+export function selectSubstepCount(
+  deltaTimeSeconds: number,
+  bpmChangeCount: number,
+  counters: PerformanceLevelCounters,
+): 1 | 2 | 3 | 4 {
+  if (bpmChangeCount < 1) {
     return 1;
   }
-  if (deltaTimeSeconds < 0.033) {
-    return 2;
+
+  const delta = Math.fround(deltaTimeSeconds);
+  let bucketIndex: 0 | 1 | 2 | 3;
+  let substepCount: 1 | 2 | 3 | 4;
+  if (delta < 0.0179999992) {
+    bucketIndex = 0;
+    substepCount = 1;
+  } else if (delta < 0.0329999998) {
+    bucketIndex = 1;
+    substepCount = 2;
+  } else if (delta < 0.0500000007) {
+    bucketIndex = 2;
+    substepCount = 3;
+  } else {
+    bucketIndex = 3;
+    substepCount = 4;
   }
-  if (deltaTimeSeconds < 0.05) {
-    return 3;
+
+  counters[bucketIndex] = (counters[bucketIndex] + 1) >>> 0;
+  if (counters[0] > 100 || counters[1] > 20 || counters[2] >= 6) {
+    return 1;
   }
-  return 4;
+  return substepCount;
 }
 
 function createDefaultPoolObject(

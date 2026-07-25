@@ -17,6 +17,7 @@ export type {
   NoteFamily,
   NoteInformationFixture,
   SimulatorClockProfile,
+  SimulatorNoteManagerProfile,
 } from "./engine/data/noteData";
 export type {
   OneFrameDataHandle,

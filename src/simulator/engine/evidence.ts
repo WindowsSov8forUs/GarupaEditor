@@ -11,7 +11,10 @@ export type EvidenceId =
   | "E10"
   | "E11"
   | "E12"
-  | "E13";
+  | "E13"
+  | "E14"
+  | "E15"
+  | "E16";
 
 export interface EvidenceReference {
   readonly id: EvidenceId;

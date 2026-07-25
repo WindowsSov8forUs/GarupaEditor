@@ -2,6 +2,7 @@ import type { SimulatorBackends } from "../backends/contracts";
 import type {
   NoteBatchInformationList,
   SimulatorClockProfile,
+  SimulatorNoteManagerProfile,
 } from "../engine/data/noteData";
 import type { OneFrameDataPoolProfile } from "../engine/data/oneFrameData";
 import type { SimulatorResult } from "../engine/evidence";
@@ -11,16 +12,15 @@ import type { SimulatorBackendTraceEvent } from "../backends/contracts";
 export interface SimulatorEngineInput {
   readonly noteBatches: NoteBatchInformationList;
   readonly clock: SimulatorClockProfile;
+  readonly noteManager: SimulatorNoteManagerProfile;
   readonly oneFrameData: OneFrameDataPoolProfile;
 }
 
 export type FirstSliceEvidenceGap =
-  | "G01"
   | "G02"
   | "G03"
   | "G04"
-  | "G05"
-  | "G06";
+  | "G05";
 
 export interface SimulatorSnapshot {
   readonly managers: InGameManagerSnapshot;

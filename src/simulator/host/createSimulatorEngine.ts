@@ -20,12 +20,10 @@ import { NoteManager } from "../engine/managers/noteManager";
 import { SlideNoteManager } from "../engine/managers/slideNoteManager";
 
 const firstSliceEvidenceGaps: readonly FirstSliceEvidenceGap[] = [
-  "G01",
   "G02",
   "G03",
   "G04",
   "G05",
-  "G06",
 ];
 
 class SimulatorEngineHost implements SimulatorEngine {
@@ -92,6 +90,15 @@ export function createSimulatorEngine(
   if (bpm.status !== "ok") {
     return bpm;
   }
+  const nextBpm = readEvidenceBound(
+    input.clock.nextBpm,
+    "clock.next-bpm",
+    ["E14"],
+    "Launcher BPM must be tied to the frozen G01 clock evidence.",
+  );
+  if (nextBpm.status !== "ok") {
+    return nextBpm;
+  }
   const initialPosition = readEvidenceBound(
     input.clock.initialMusicPosition,
     "clock.initial-music-position",
@@ -100,6 +107,47 @@ export function createSimulatorEngine(
   );
   if (initialPosition.status !== "ok") {
     return initialPosition;
+  }
+  const initialLauncherPosition = readEvidenceBound(
+    input.clock.initialLauncherMusicPosition,
+    "clock.initial-launcher-music-position",
+    ["E14"],
+    "Initial launcher position must be tied to the frozen G01 activation-window evidence.",
+  );
+  if (initialLauncherPosition.status !== "ok") {
+    return initialLauncherPosition;
+  }
+  if (
+    !isValidBpm(bpm.value) ||
+    !isValidBpm(nextBpm.value) ||
+    !isValidMusicPosition(initialPosition.value) ||
+    !isValidMusicPosition(initialLauncherPosition.value)
+  ) {
+    return evidenceRequired(
+      "clock.invalid-profile",
+      ["E03", "E14"],
+      "The recovered Float32 clock requires positive finite BPM values, Int32 bar counters, and finite beat progress.",
+    );
+  }
+  const bpmChangeCount = readEvidenceBound(
+    input.noteManager.bpmChangeCount,
+    "note-manager.bpm-change-count",
+    ["E14"],
+    "The adaptive scheduler gate must use the parsed BMS BPM-change count.",
+  );
+  if (bpmChangeCount.status !== "ok") {
+    return bpmChangeCount;
+  }
+  if (
+    !Number.isInteger(bpmChangeCount.value) ||
+    bpmChangeCount.value < 0 ||
+    bpmChangeCount.value > 0x7fffffff
+  ) {
+    return evidenceRequired(
+      "note-manager.invalid-bpm-change-count",
+      ["E14"],
+      "The recovered NoteManager field is a non-negative Int32 parsed BPM-change count.",
+    );
   }
   const noteBatchValidation = validateNoteBatches(input.noteBatches);
   if (noteBatchValidation.status !== "ok") {
@@ -124,6 +172,7 @@ export function createSimulatorEngine(
     input.noteBatches,
     slideNoteManager,
     musicScoreController,
+    bpmChangeCount.value,
     () => oneFrameJudgementController.getUsableOneFrameData(),
   );
   const inGameManager = new InGameManager(
@@ -136,6 +185,19 @@ export function createSimulatorEngine(
   return ok(new SimulatorEngineHost(inGameManager, backends));
 }
 
+function isValidBpm(value: number): boolean {
+  return Number.isFinite(value) && value > 0;
+}
+
+function isValidMusicPosition(value: { readonly bar: number; readonly beatProgress: number }): boolean {
+  return (
+    Number.isInteger(value.bar) &&
+    value.bar >= -0x80000000 &&
+    value.bar <= 0x7fffffff &&
+    Number.isFinite(value.beatProgress)
+  );
+}
+
 function validateNoteBatches(noteBatches: NoteBatchInformationList): SimulatorResult<void> {
   for (const batch of noteBatches) {
     const batchValues = [batch.barIndex, batch.numerator, batch.denominator];
@@ -144,6 +206,13 @@ function validateNoteBatches(noteBatches: NoteBatchInformationList): SimulatorRe
         "note-batches.batch-evidence",
         ["E10"],
         `Batch ${batch.fixtureId} contains a value without frozen batch evidence.`,
+      );
+    }
+    if (batchValues.some((value) => !isInt32(value.value))) {
+      return evidenceRequired(
+        "note-batches.batch-int32",
+        ["E10", "E14"],
+        `Batch ${batch.fixtureId} must preserve the original Int32 position fields.`,
       );
     }
 
@@ -168,6 +237,7 @@ function validateNoteBatches(noteBatches: NoteBatchInformationList): SimulatorRe
         note.gameNoteType,
         note.frontNoteType,
         note.afterNoteType,
+        note.barIndex,
         note.absolutePosition,
       ];
       if (noteValues.some((value) => value.evidence.length === 0)) {
@@ -177,7 +247,22 @@ function validateNoteBatches(noteBatches: NoteBatchInformationList): SimulatorRe
           `Note ${note.fixtureId} contains a value without frozen note evidence.`,
         );
       }
+      if (!isInt32(note.barIndex.value) || !isInt32(note.absolutePosition.value)) {
+        return evidenceRequired(
+          "note-batches.note-position-int32",
+          ["E10", "E14"],
+          `Note ${note.fixtureId} must preserve the original Int32 position fields.`,
+        );
+      }
     }
   }
   return ok(undefined);
+}
+
+function isInt32(value: number): boolean {
+  return (
+    Number.isInteger(value) &&
+    value >= -0x80000000 &&
+    value <= 0x7fffffff
+  );
 }

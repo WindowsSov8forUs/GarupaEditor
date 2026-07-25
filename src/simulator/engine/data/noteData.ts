@@ -15,7 +15,13 @@ export interface MusicPosition {
 
 export interface SimulatorClockProfile {
   readonly currentBpm: EvidenceBound<number>;
+  readonly nextBpm: EvidenceBound<number>;
   readonly initialMusicPosition: EvidenceBound<MusicPosition>;
+  readonly initialLauncherMusicPosition: EvidenceBound<MusicPosition>;
+}
+
+export interface SimulatorNoteManagerProfile {
+  readonly bpmChangeCount: EvidenceBound<number>;
 }
 
 export interface NoteInformationFixture {
@@ -25,6 +31,7 @@ export interface NoteInformationFixture {
   readonly gameNoteType: EvidenceBound<number>;
   readonly frontNoteType: EvidenceBound<number>;
   readonly afterNoteType: EvidenceBound<number>;
+  readonly barIndex: EvidenceBound<number>;
   readonly absolutePosition: EvidenceBound<number>;
 }
 

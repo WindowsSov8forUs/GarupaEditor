@@ -58,7 +58,12 @@ function requireOk<T>(result: SimulatorResult<T>, message: string): T {
 
 class FakeClock implements NoteManagerClock {
   readonly advances: number[] = [];
+  readonly executeFrames: number[] = [];
   activateBatch = true;
+
+  setExecuteFrame(executeFrame: number): void {
+    this.executeFrames.push(executeFrame);
+  }
 
   advance(deltaTimeSeconds: number): SimulatorResult<void> {
     this.advances.push(deltaTimeSeconds);
@@ -117,6 +122,7 @@ interface TestGraph {
 function createTestGraph(
   noteIds: readonly string[],
   deactivateOnUpdate: ReadonlySet<string> = new Set<string>(),
+  bpmChangeCount = 1,
 ): TestGraph {
   const calls: string[] = [];
   const notes: TraceNote[] = [];
@@ -130,6 +136,7 @@ function createTestGraph(
     [noteBatch("group", noteIds)],
     new SlideNoteManager(),
     clock,
+    bpmChangeCount,
     () => controller.getUsableOneFrameData(),
     (_family, poolObjectId, noteEvidence) => {
       const note = new TraceNote(
@@ -195,13 +202,141 @@ test("宿主生命周期按 initialize pause resume dispose 分发", () => {
 });
 
 test("四档 deltaTime 阈值选择 1 至 4 子步", () => {
-  assertEqual(selectSubstepCount(0), 1, "zero delta");
-  assertEqual(selectSubstepCount(0.017999), 1, "below first threshold");
-  assertEqual(selectSubstepCount(0.018), 2, "first threshold");
-  assertEqual(selectSubstepCount(0.032999), 2, "below second threshold");
-  assertEqual(selectSubstepCount(0.033), 3, "second threshold");
-  assertEqual(selectSubstepCount(0.049999), 3, "below third threshold");
-  assertEqual(selectSubstepCount(0.05), 4, "third threshold");
+  const counters: [number, number, number, number] = [0, 0, 0, 0];
+  assertEqual(selectSubstepCount(0, 1, counters), 1, "zero delta");
+  assertEqual(selectSubstepCount(0.017999, 1, counters), 1, "below first threshold");
+  assertEqual(selectSubstepCount(0.018, 1, counters), 2, "first threshold");
+  assertEqual(selectSubstepCount(0.032999, 1, counters), 2, "below second threshold");
+  assertEqual(selectSubstepCount(0.033, 1, counters), 3, "second threshold");
+  assertEqual(selectSubstepCount(0.049999, 1, counters), 3, "below third threshold");
+  assertEqual(selectSubstepCount(0.05, 1, counters), 4, "third threshold");
+});
+
+test("G01 音乐位置按 192 刻度分别推进主时钟与发射器时钟", () => {
+  const controller = new InGameMusicScoreController(engineInput().clock);
+  requireOk(controller.advance(1), "advance one second");
+  let snapshot = controller.snapshot();
+  assertEqual(snapshot.bar, 0, "main bar after one second");
+  assertEqual(snapshot.beatProgress, 96, "main beat after one second");
+  assertEqual(snapshot.launcherBar, 1, "launcher single overflow");
+  assertEqual(snapshot.launcherBeatProgress, 0, "launcher overflow remainder");
+
+  requireOk(controller.advance(1), "advance second second");
+  snapshot = controller.snapshot();
+  assertEqual(snapshot.bar, 1, "main bar after two seconds");
+  assertEqual(snapshot.beatProgress, 0, "main overflow remainder");
+  assertEqual(snapshot.launcherBar, 1, "launcher bar after two seconds");
+  assertEqual(snapshot.launcherBeatProgress, 96, "launcher beat after two seconds");
+});
+
+test("G01 音符组使用当前位置开区间与发射器位置闭区间激活", () => {
+  const controller = new InGameMusicScoreController(engineInput().clock);
+  const halfBarBatch = {
+    ...noteBatch("half-bar", ["A"]),
+    numerator: bound(1, evidence("E14", "half-bar numerator")),
+    denominator: bound(2, evidence("E14", "half-bar denominator")),
+  };
+  assertEqual(
+    requireOk(controller.canActivateBatch(halfBarBatch), "launcher boundary"),
+    true,
+    "batch at LauncherMusicPos activates",
+  );
+
+  const currentBoundaryController = new InGameMusicScoreController({
+    ...engineInput().clock,
+    initialMusicPosition: bound(
+      { bar: 0, beatProgress: 96 },
+      evidence("E14", "current boundary"),
+    ),
+  });
+  assertEqual(
+    requireOk(
+      currentBoundaryController.canActivateBatch(halfBarBatch),
+      "current boundary",
+    ),
+    false,
+    "batch at MusicPos does not activate",
+  );
+
+  const staleController = new InGameMusicScoreController({
+    ...engineInput().clock,
+    initialMusicPosition: bound(
+      { bar: 1, beatProgress: 0 },
+      evidence("E14", "stale bar current position"),
+    ),
+    initialLauncherMusicPosition: bound(
+      { bar: 1, beatProgress: 96 },
+      evidence("E14", "stale bar launcher position"),
+    ),
+  });
+  assertEqual(
+    requireOk(staleController.canActivateBatch(halfBarBatch), "stale batch"),
+    false,
+    "first-member bar behind MusicBarProgress",
+  );
+  assertEqual(
+    requireOk(controller.canActivateBatch(noteBatch("empty", [])), "empty batch"),
+    true,
+    "empty batch activates immediately",
+  );
+});
+
+test("G06 历史计数器在递增后按 101 21 6 次阈值强制单步", () => {
+  const fast: [number, number, number, number] = [0, 0, 0, 0];
+  for (let sample = 1; sample <= 100; sample += 1) {
+    assertEqual(selectSubstepCount(0.01, 1, fast), 1, `fast sample ${sample}`);
+  }
+  assertEqual(selectSubstepCount(0.01, 1, fast), 1, "101st fast sample");
+  assertEqual(fast[0], 101, "fast counter after fallback");
+
+  const medium: [number, number, number, number] = [0, 0, 0, 0];
+  for (let sample = 1; sample <= 20; sample += 1) {
+    assertEqual(selectSubstepCount(0.02, 1, medium), 2, `medium sample ${sample}`);
+  }
+  assertEqual(selectSubstepCount(0.02, 1, medium), 1, "21st medium sample");
+
+  const slow: [number, number, number, number] = [0, 0, 0, 0];
+  for (let sample = 1; sample <= 5; sample += 1) {
+    assertEqual(selectSubstepCount(0.04, 1, slow), 3, `slow sample ${sample}`);
+  }
+  assertEqual(selectSubstepCount(0.04, 1, slow), 1, "6th slow sample");
+
+  const verySlow: [number, number, number, number] = [0, 0, 0, 0];
+  for (let sample = 1; sample <= 200; sample += 1) {
+    assertEqual(selectSubstepCount(0.05, 1, verySlow), 4, `very slow sample ${sample}`);
+  }
+  assertEqual(verySlow[3], 200, "fourth counter remains observational");
+});
+
+test("G06 无 BPM 变化时固定单步且不递增计数器", () => {
+  const counters: [number, number, number, number] = [0, 0, 0, 0];
+  assertEqual(selectSubstepCount(0.05, 0, counters), 1, "disabled adaptive steps");
+  assertDeepEqual(counters, [0, 0, 0, 0], "disabled counters");
+
+  const graph = createTestGraph([], new Set<string>(), 0);
+  requireOk(graph.manager.execUpdate(0.05), "disabled adaptive frame");
+  assertDeepEqual(graph.clock.advances, [Math.fround(0.05)], "single clock advance");
+  assertDeepEqual(graph.clock.executeFrames, [1], "unsplit ExecuteFrame");
+  assertDeepEqual(
+    graph.manager.snapshot().performanceLevelCounters,
+    [0, 0, 0, 0],
+    "manager counters remain zero",
+  );
+});
+
+test("G06 最终子步数同时平分 deltaTime 与 ExecuteFrame", () => {
+  const graph = createTestGraph([]);
+  requireOk(graph.manager.execUpdate(0.05), "four-substep frame");
+  assertEqual(graph.clock.advances.length, 4, "four clock advances");
+  for (const delta of graph.clock.advances) {
+    assertEqual(delta, Math.fround(Math.fround(0.05) / 4), "substep delta");
+  }
+  assertDeepEqual(graph.clock.executeFrames, [0.25], "substep ExecuteFrame");
+  assertDeepEqual(
+    graph.manager.snapshot().performanceLevelCounters,
+    [0, 0, 0, 1],
+    "fourth bucket occupancy",
+  );
 });
 
 test("同时音符组激活后延迟一个子步更新", () => {
@@ -369,7 +504,7 @@ test("未闭合输入、判定和数值时钟统一失败关闭", () => {
     "create evidence-bound engine",
   );
   requireOk(engine.initialize(), "initialize evidence-bound engine");
-  assertEqual(engine.step(0.01).status, "evidence-required", "G01 clock gate");
+  requireOk(engine.step(0.01), "closed G01 clock step");
   assertEqual(new InputManager().execInput().status, "evidence-required", "input gate");
   assertEqual(
     new GamePlayButton().execTouchBegan().status,
@@ -397,7 +532,7 @@ test("快照确定且序列化不触发后端事件", () => {
   assertEqual(first.backendTrace.length, 1, "snapshot must not record events");
   assertDeepEqual(
     first.evidenceGaps,
-    ["G01", "G02", "G03", "G04", "G05", "G06"],
+    ["G02", "G03", "G04", "G05"],
     "open evidence gaps",
   );
 });
