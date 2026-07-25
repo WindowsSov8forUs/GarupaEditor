@@ -11,6 +11,35 @@
 
 本任务书是第一切片的唯一执行依据。实施者不得从已删除的 GarupaEditor 模拟器、常见音游架构、个人经验或方便实现的默认值补齐原作行为。
 
+### 1.1 执行进度
+
+| 任务 | 状态 | 最近批次 | 结果 |
+| --- | --- | --- | --- |
+| T01 冻结第一切片证据包 | 已完成 | 2026-07-26 第一批 | 已冻结 E01–E13、manifest、夹具目录和证据缺口 |
+| T02 建立目录与依赖边界 | 待实施 | - | - |
+| T03 定义证据门和宿主 API | 待实施 | - | - |
+| T04 建立原作管理器对象图 | 待实施 | - | - |
+| T05 建立音符类型与状态框架 | 待实施 | - | - |
+| T06 恢复 SetupNotes、对象池和活跃列表 | 待实施 | - | - |
+| T07 恢复确定性子步调度 | 待实施 | - | - |
+| T08 建立暂停与恢复框架 | 待实施 | - | - |
+| T09 建立 OneFrameData 容器框架 | 待实施 | - | - |
+| T10 建立记录后端和快照 | 待实施 | - | - |
+| T11 隔离测试和验收 | 待实施 | - | - |
+
+### 1.2 批次记录
+
+#### 2026-07-26 第一批：T01 证据冻结
+
+- 逆向仓库 HEAD 已确认等于 `f4392a327f536275cf1f1733e27b778ee2ce600c`。
+- E01–E13 已按源目录结构复制到 `tmp/simulator-reverse-evidence/first-slice/artifacts/`。
+- `manifest.json` 已记录源路径、复制路径、完整 SHA-256、确认状态和消费任务。
+- `.gitattributes` 已将临时证据包标记为 `-text`，并把 CRLF 的 CR 视为行尾，防止换行转换破坏字节级哈希且保留差异检查。
+- `OPEN_GAPS.md` 已登记 `UnitsPerBar`、相同位置上游顺序、跨 Note 低索引移除、PlayerLoop 相位、暂停门条件和慢帧历史规则。
+- `fixtures/README.md` 已明确 T01 不生成行为夹具，后续夹具不得来自旧模拟器。
+- `verify.mjs` 已提供源文件、复制文件和 Git 暂存区的可重复 SHA-256 校验。
+- 本批只进行证据哈希、manifest、路径和差异检查，不运行构建或测试。
+
 ## 2. 固定范围
 
 ### 2.1 纳入范围
@@ -162,7 +191,7 @@ evidence-required(capability, requiredEvidence, boundary)
 **验证**
 
 - 重新计算复制后文件 SHA-256，必须与第 4 节一致。
-- manifest 中不得出现 `runtime/tools/` 或旧 GarupaEditor 路径。
+- manifest 的证据条目中不得引用 `runtime/tools/` 或旧 GarupaEditor 路径；源信息可以把 `runtime/tools/` 记录为明确排除项。
 
 **停止条件**
 

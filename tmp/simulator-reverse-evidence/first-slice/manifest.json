@@ -1,0 +1,123 @@
+{
+  "schemaVersion": 1,
+  "frozenAt": "2026-07-26",
+  "source": {
+    "repository": "HOST___________________GirlsBandParty-Reverse",
+    "commit": "f4392a327f536275cf1f1733e27b778ee2ce600c",
+    "sample": {
+      "package": "jp.co.craftegg.band",
+      "versionName": "10.1.3",
+      "versionCode": 229,
+      "abi": "arm64-v8a"
+    },
+    "excludedUntrackedPaths": [
+      "runtime/tools/"
+    ]
+  },
+  "entries": [
+    {
+      "id": "E01",
+      "sourcePath": "artifacts/rhythm/rhythm_owner_completion.tsv",
+      "copiedPath": "artifacts/rhythm/rhythm_owner_completion.tsv",
+      "sha256": "8944D61D770541EF6F74AE9CC0BF8135530B034C6D71F5A53AF02ED53D2CE819",
+      "status": "confirmed-generated-index",
+      "consumers": ["T02", "T04", "T11"]
+    },
+    {
+      "id": "E02",
+      "sourcePath": "artifacts/rhythm/rhythm_seed_targets.tsv",
+      "copiedPath": "artifacts/rhythm/rhythm_seed_targets.tsv",
+      "sha256": "EEF390E058125BB95A753BF6E30CCC30096F72A3C169704996F7E2AEE0F973ED",
+      "status": "confirmed-generated-index",
+      "consumers": ["T04", "T05", "T09", "T11"]
+    },
+    {
+      "id": "E03",
+      "sourcePath": "artifacts/investigations/note-scheduling-clock/README.md",
+      "copiedPath": "artifacts/investigations/note-scheduling-clock/README.md",
+      "sha256": "2023CC732769768801BCD7615C70D6B1F396E64EAA60AE086AFA310494231626",
+      "status": "confirmed-static-with-explicit-inference",
+      "consumers": ["T03", "T04", "T05", "T07", "T08", "T11"]
+    },
+    {
+      "id": "E04",
+      "sourcePath": "artifacts/investigations/simultaneous-note-ordering/README.md",
+      "copiedPath": "artifacts/investigations/simultaneous-note-ordering/README.md",
+      "sha256": "F22105A34817312C7A39F0F39AF35B6EC5EC7F99938F2443C1EAC23B1D919DBD",
+      "status": "confirmed-static-with-explicit-inference",
+      "consumers": ["T06", "T07", "T11"]
+    },
+    {
+      "id": "E05",
+      "sourcePath": "artifacts/investigations/runtime-integration-prototype/note_manager_two_phase_substep_order.json",
+      "copiedPath": "artifacts/investigations/runtime-integration-prototype/note_manager_two_phase_substep_order.json",
+      "sha256": "774C1C39644EE937E47FE64171E5715AF915A194E9EB8A59FDA44F1F664CB177",
+      "status": "confirmed-static",
+      "consumers": ["T07", "T11"]
+    },
+    {
+      "id": "E06",
+      "sourcePath": "artifacts/investigations/runtime-integration-prototype/multiple_flick_active_list_order.json",
+      "copiedPath": "artifacts/investigations/runtime-integration-prototype/multiple_flick_active_list_order.json",
+      "sha256": "EC64154569BA4B30D644D27E839BEABA5357A6554FAAEA95080295B118ABB391",
+      "status": "confirmed-static-with-explicit-inference",
+      "consumers": ["T06", "T11"]
+    },
+    {
+      "id": "E07",
+      "sourcePath": "artifacts/investigations/runtime-integration-prototype/note_manager_active_list_mutation.json",
+      "copiedPath": "artifacts/investigations/runtime-integration-prototype/note_manager_active_list_mutation.json",
+      "sha256": "E1B8E48695F0BD7EFC0C3750BC7ADAF113533326DC98A8FB685FC70B787E7BFD",
+      "status": "confirmed-static-with-explicit-unresolved-boundaries",
+      "consumers": ["T06", "T07", "T11"]
+    },
+    {
+      "id": "E08",
+      "sourcePath": "artifacts/investigations/judgement-result-pipeline/README.md",
+      "copiedPath": "artifacts/investigations/judgement-result-pipeline/README.md",
+      "sha256": "C19DEA87B7F39F1C89342F8635506B52EFBFA8A34F5625411BFE1719BF3AC627",
+      "status": "confirmed-static-with-explicit-inference",
+      "consumers": ["T03", "T04", "T09", "T11"]
+    },
+    {
+      "id": "E09",
+      "sourcePath": "artifacts/investigations/application-pause-resume/README.md",
+      "copiedPath": "artifacts/investigations/application-pause-resume/README.md",
+      "sha256": "DBF517809B205B659A45436338D4218A790BD052173323A005555DBB6E1A725F",
+      "status": "confirmed-static-with-inferred-interface-slots",
+      "consumers": ["T08", "T11"]
+    },
+    {
+      "id": "E10",
+      "sourcePath": "artifacts/investigations/bms-note-batch/README.md",
+      "copiedPath": "artifacts/investigations/bms-note-batch/README.md",
+      "sha256": "CBD71659829C42E4F0247277D23AA741A122F9BF3016C8E9BDD8D33140FE99EF",
+      "status": "confirmed-static-with-explicit-inference",
+      "consumers": ["T03", "T06", "T11"]
+    },
+    {
+      "id": "E11",
+      "sourcePath": "artifacts/investigations/runtime-integration-prototype/targets.tsv",
+      "copiedPath": "artifacts/investigations/runtime-integration-prototype/targets.tsv",
+      "sha256": "8BCB3052C44DEFB5884E717BD96A71A2CE698D6C0B47EDAB17AAC52B745F679D",
+      "status": "confirmed-evidence-routing-index",
+      "consumers": ["T03", "T09", "T10", "T11"]
+    },
+    {
+      "id": "E12",
+      "sourcePath": "artifacts/investigations/touch-note-arbitration/README.md",
+      "copiedPath": "artifacts/investigations/touch-note-arbitration/README.md",
+      "sha256": "403FB9A1F7F448904CD48EE0DB4C199443AA798C8965AB16CD0E3F801DEDBD91",
+      "status": "confirmed-static-framework-boundary-only",
+      "consumers": ["T05", "T11"]
+    },
+    {
+      "id": "E13",
+      "sourcePath": "artifacts/investigations/touch-hold-release/README.md",
+      "copiedPath": "artifacts/investigations/touch-hold-release/README.md",
+      "sha256": "51E859649352C43EFFAB0073F18AD06FDE2C5D1E0478E9C61851E5F56E36D5E3",
+      "status": "confirmed-static-framework-boundary-only",
+      "consumers": ["T05", "T11"]
+    }
+  ]
+}
