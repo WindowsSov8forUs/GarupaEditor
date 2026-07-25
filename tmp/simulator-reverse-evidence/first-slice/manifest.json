@@ -3,7 +3,7 @@
   "frozenAt": "2026-07-26",
   "source": {
     "repository": "HOST___________________GirlsBandParty-Reverse",
-    "commit": "0ad31d30ead506913406006c4417047cf61e95a4",
+    "commit": "326b305f14121d7a0e7e046410dac993147360cb",
     "sample": {
       "package": "jp.co.craftegg.band",
       "versionName": "10.1.3",
@@ -35,7 +35,7 @@
       "id": "E03",
       "sourcePath": "artifacts/investigations/note-scheduling-clock/README.md",
       "copiedPath": "artifacts/investigations/note-scheduling-clock/README.md",
-      "sha256": "5E56429CFD8C5920D247CFBB6BF0B45B64FC3A4E5F66E99E9D22B152F1873777",
+      "sha256": "CB13700C9A3B8CA4DC66DE2AFCD923A7917868260385E731F5BE5262FF7CA946",
       "status": "confirmed-static-with-explicit-inference",
       "consumers": ["T03", "T04", "T05", "T07", "T08", "T11"]
     },
@@ -142,6 +142,46 @@
       "sha256": "F0972AD43B68999901B2406B368C070FD25FD6CF1F288745A6B0589EDCE181BF",
       "status": "confirmed-evidence-routing-index",
       "consumers": ["T01", "T11"]
+    },
+    {
+      "id": "E17",
+      "sourcePath": "artifacts/investigations/equal-position-and-cross-note-mutation/closure.json",
+      "copiedPath": "artifacts/investigations/equal-position-and-cross-note-mutation/closure.json",
+      "sha256": "3DF63B02A1A7031635E5A23A685D39EC7596769F421562B9B2F8A8FDE4BA2992",
+      "status": "confirmed-static-closed-g02-g03",
+      "consumers": ["T06", "T07", "T10", "T11"]
+    },
+    {
+      "id": "E18",
+      "sourcePath": "artifacts/investigations/equal-position-and-cross-note-mutation/README.md",
+      "copiedPath": "artifacts/investigations/equal-position-and-cross-note-mutation/README.md",
+      "sha256": "F4815999E89BBB3307A56D208C1AF3707901355305297CA7E1A6690E3421CC16",
+      "status": "confirmed-static-closure-report",
+      "consumers": ["T06", "T07", "T11"]
+    },
+    {
+      "id": "E19",
+      "sourcePath": "artifacts/investigations/equal-position-and-cross-note-mutation/targets.tsv",
+      "copiedPath": "artifacts/investigations/equal-position-and-cross-note-mutation/targets.tsv",
+      "sha256": "142DCCF7AFAF8981606D042484F64A753A8C48FB042ABFDC1D128D4445829457",
+      "status": "confirmed-evidence-routing-index",
+      "consumers": ["T01", "T11"]
+    },
+    {
+      "id": "E20",
+      "sourcePath": "artifacts/investigations/equal-position-and-cross-note-mutation/decompiled/native_ranges.txt",
+      "copiedPath": "artifacts/investigations/equal-position-and-cross-note-mutation/decompiled/native_ranges.txt",
+      "sha256": "592D03A9CDB868161AB671099AD822A38228B174666BCF30B345E4DF41DE1ABE",
+      "status": "confirmed-native-instruction-ranges",
+      "consumers": ["T06", "T07", "T11"]
+    },
+    {
+      "id": "E21",
+      "sourcePath": "artifacts/investigations/equal-position-and-cross-note-mutation/decompiled/xrefs.json",
+      "copiedPath": "artifacts/investigations/equal-position-and-cross-note-mutation/decompiled/xrefs.json",
+      "sha256": "CF707F476EBCE9A8464DBD27343B1CD20DB60CDE79E4B41FCD9BBE6BD42D9DA1",
+      "status": "confirmed-direct-xref-report",
+      "consumers": ["T07", "T11"]
     }
   ]
 }
