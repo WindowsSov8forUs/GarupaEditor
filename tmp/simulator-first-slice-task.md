@@ -23,8 +23,8 @@
 | T06 恢复 SetupNotes、对象池和活跃列表 | 已完成 | 2026-07-26 第三批 | 已建立夹具派生分族池、环形游标和激活/失活列表回调 |
 | T07 恢复确定性子步调度 | 已完成 | 2026-07-26 第三批 | 已恢复四档子步、固定反向 Update、存活 AfterUpdate 和单组末尾激活 |
 | T08 建立暂停与恢复框架 | 已完成 | 2026-07-26 第三批 | 已建立冻结调度的暂停门和抽象记录后端状态广播 |
-| T09 建立 OneFrameData 容器框架 | 待实施 | - | - |
-| T10 建立记录后端和快照 | 待实施 | - | - |
+| T09 建立 OneFrameData 容器框架 | 已完成 | 2026-07-26 第四批 | 已建立控制器独占容器池、获取/占用/收集与统一 Reflect 边界 |
+| T10 建立记录后端和快照 | 已完成 | 2026-07-26 第四批 | 已建立五类无副作用记录端口和稳定第一切片快照 |
 | T11 隔离测试和验收 | 待实施 | - | - |
 
 ### 1.2 批次记录
@@ -68,6 +68,20 @@
 - `pause` 只设置宿主调度门并向可移植生命周期记录端口广播 `paused`；`resume` 只解除门并广播 `running`，均不修改音乐、BPM、组游标、活跃列表或池。
 - 生命周期广播是 GarupaEditor 测试端口，不使用或命名原作状态 `5/7`、暂停状态 `1/2` 或接口槽 `26–32`，具体记录实现留给 T10。
 - 本批定向验证为不入库的 T06–T08 行为探针、模拟器隔离 TypeScript 类型检查、禁止依赖扫描、冻结证据包校验和 `git diff --check`；T11 前未新增完整测试套件，也未运行整体构建。
+
+#### 2026-07-26 第四批：T09–T10 帧容器、记录后端与快照
+
+- 已建立 `OneFrameDataPoolProfile`，由宿主夹具提供带 E02/E08 引用的非负容量；实现不选择或宣称原作池大小。
+- `InGameOneFrameJudgementController` 独占容器分配、占用状态、收集顺序和回收；对外只提供稳定 `containerId` 句柄，不暴露可变内部集合。
+- `NoteBase.RegisterCallbackGetUsableOneFrameData` 已在 `SetupNotes` 中统一安装；Note 只能经回调请求可用容器，不持有控制器或池集合。
+- 测试专用 `stageFixture` 只建立 `IsUse`/Reflect 所需占用状态并要求显式 E08 引用，不填充分数、Combo、Power、判定、HUD 或音频字段。
+- 完整 `OneFrameData.Setup` 业务路径继续由 `one-frame.setup-business-data` 返回 `evidence-required`，不得通过占用夹具伪装为原作判定结果。
+- `ReflectOneFrameData` 按控制器池顺序收集当帧占用容器、记录单一批次轨迹并统一清除占用；不执行 E08 中后续分数、生命、Combo、显示或音频消费。
+- `InGameManager.initialize` 先建立 OneFrame 容器，再安装 Note 回调；成功 step 在 Note 调度完成后进入统一 Reflect，暂停 step 不产生 Reflect。
+- 已建立 renderer、audio、input、resources 和 lifecycle 五类无副作用记录端口；事件只包含从零递增序号、稳定端口名、动作和可选字符串详情。
+- `SimulatorSnapshot` 包含管理器状态、调度与 OneFrame 轨迹、活跃顺序、池占用、后端事件和 G01–G06 缺口；快照返回深拷贝，不触发新事件。
+- 快照是第一切片测试设施，不包含编辑器载荷、窗口标识或 UI 布局，也不成为未来主程序进入模拟器的协议。
+- 本批定向验证为不入库的 T09–T10 行为探针、模拟器隔离 TypeScript 类型检查、禁止依赖扫描、冻结证据包校验和 `git diff --check`；未运行整体构建。
 
 ## 2. 固定范围
 

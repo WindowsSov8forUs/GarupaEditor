@@ -1,9 +1,15 @@
 export type {
   SimulatorBackends,
   SimulatorBackendPort,
+  SimulatorBackendRequest,
+  SimulatorBackendTraceEvent,
   SimulatorLifecycleBackend,
   SimulatorLifecycleBackendState,
 } from "./backends/contracts";
+export {
+  createRecordingSimulatorBackends,
+  RecordingSimulatorBackends,
+} from "./backends/recordingBackend";
 export type {
   MusicPosition,
   NoteBatchInformation,
@@ -12,6 +18,10 @@ export type {
   NoteInformationFixture,
   SimulatorClockProfile,
 } from "./engine/data/noteData";
+export type {
+  OneFrameDataHandle,
+  OneFrameDataPoolProfile,
+} from "./engine/data/oneFrameData";
 export type {
   EvidenceBound,
   EvidenceId,
@@ -38,4 +48,9 @@ export {
   NoteSlideMultipleDirectionalFlickAfter,
 } from "./engine/notes/noteTypes";
 export { createSimulatorEngine } from "./host/createSimulatorEngine";
-export type { SimulatorEngine, SimulatorEngineInput } from "./host/contracts";
+export type {
+  FirstSliceEvidenceGap,
+  SimulatorEngine,
+  SimulatorEngineInput,
+  SimulatorSnapshot,
+} from "./host/contracts";

@@ -4,6 +4,7 @@ import type {
   NoteFamily,
   NoteInformationFixture,
 } from "../data/noteData";
+import type { OneFrameDataHandle } from "../data/oneFrameData";
 import {
   evidenceRequired,
   ok,
@@ -83,6 +84,7 @@ export class NoteManager {
     private readonly batches: NoteBatchInformationList,
     readonly slideNoteManager: SlideNoteManager,
     private readonly clock: NoteManagerClock,
+    private readonly getUsableOneFrameData: () => SimulatorResult<OneFrameDataHandle>,
     private readonly createPoolObject: NotePoolObjectFactory = createDefaultPoolObject,
   ) {}
 
@@ -119,6 +121,7 @@ export class NoteManager {
           onActivate: (activeNote) => this.appendActiveNote(activeNote),
           onDeactivate: (inactiveNote) => this.removeActiveNote(inactiveNote),
         });
+        note.registerCallbackGetUsableOneFrameData(this.getUsableOneFrameData);
         return note;
       });
       this.notePoolsValue.set(family, { family, objects, cursor: 0 });

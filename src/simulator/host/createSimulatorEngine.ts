@@ -1,5 +1,11 @@
 import type { SimulatorBackends } from "../backends/contracts";
 import type { NoteBatchInformationList } from "../engine/data/noteData";
+import type {
+  FirstSliceEvidenceGap,
+  SimulatorEngine,
+  SimulatorEngineInput,
+  SimulatorSnapshot,
+} from "./contracts";
 import {
   evidenceRequired,
   readEvidenceBound,
@@ -12,7 +18,15 @@ import { InGameOneFrameJudgementController } from "../engine/managers/inGameOneF
 import { InputManager } from "../engine/managers/inputBoundaries";
 import { NoteManager } from "../engine/managers/noteManager";
 import { SlideNoteManager } from "../engine/managers/slideNoteManager";
-import type { SimulatorEngine, SimulatorEngineInput } from "./contracts";
+
+const firstSliceEvidenceGaps: readonly FirstSliceEvidenceGap[] = [
+  "G01",
+  "G02",
+  "G03",
+  "G04",
+  "G05",
+  "G06",
+];
 
 class SimulatorEngineHost implements SimulatorEngine {
   constructor(
@@ -52,12 +66,12 @@ class SimulatorEngineHost implements SimulatorEngine {
     return ok(undefined);
   }
 
-  snapshot(): SimulatorResult<ReturnType<InGameManager["snapshot"]>> {
-    return evidenceRequired(
-      "engine.snapshot",
-      ["E11"],
-      "The public snapshot contract and recording backend are implemented in T10.",
-    );
+  snapshot(): SimulatorResult<SimulatorSnapshot> {
+    return ok({
+      managers: this.inGameManager.snapshot(),
+      backendTrace: this.backends.snapshot(),
+      evidenceGaps: [...firstSliceEvidenceGaps],
+    });
   }
 
   dispose(): SimulatorResult<void> {
@@ -91,18 +105,31 @@ export function createSimulatorEngine(
   if (noteBatchValidation.status !== "ok") {
     return noteBatchValidation;
   }
+  const oneFrameCapacity = readEvidenceBound(
+    input.oneFrameData.capacity,
+    "one-frame.pool-capacity",
+    ["E02", "E08"],
+    "OneFrameData pool capacity must be tied to the frozen controller and aggregation evidence.",
+  );
+  if (oneFrameCapacity.status !== "ok") {
+    return oneFrameCapacity;
+  }
 
   const slideNoteManager = new SlideNoteManager();
   const musicScoreController = new InGameMusicScoreController(input.clock);
+  const oneFrameJudgementController = new InGameOneFrameJudgementController(
+    input.oneFrameData,
+  );
   const noteManager = new NoteManager(
     input.noteBatches,
     slideNoteManager,
     musicScoreController,
+    () => oneFrameJudgementController.getUsableOneFrameData(),
   );
   const inGameManager = new InGameManager(
     musicScoreController,
     noteManager,
-    new InGameOneFrameJudgementController(),
+    oneFrameJudgementController,
     new InputManager(),
   );
 

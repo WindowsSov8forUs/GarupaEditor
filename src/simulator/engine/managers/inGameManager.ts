@@ -12,7 +12,7 @@ import { NoteManager } from "./noteManager";
 export interface InGameManagerSnapshot extends EngineLifecycleSnapshot {
   readonly musicScore: ReturnType<InGameMusicScoreController["snapshot"]>;
   readonly noteManager: ReturnType<NoteManager["snapshot"]>;
-  readonly oneFrameInitialized: boolean;
+  readonly oneFrame: ReturnType<InGameOneFrameJudgementController["snapshot"]>;
 }
 
 export class InGameManager {
@@ -38,6 +38,10 @@ export class InGameManager {
       return ok(undefined);
     }
 
+    const oneFrameInitialization = this.oneFrameJudgementController.initialize();
+    if (oneFrameInitialization.status !== "ok") {
+      return oneFrameInitialization;
+    }
     const noteInitialization = this.noteManager.execAwakeEnd();
     if (noteInitialization.status !== "ok") {
       return noteInitialization;
@@ -50,7 +54,15 @@ export class InGameManager {
     if (this.pausedValue) {
       return ok(undefined);
     }
-    return this.noteManager.execUpdate(deltaTimeSeconds);
+    const updateResult = this.noteManager.execUpdate(deltaTimeSeconds);
+    if (updateResult.status !== "ok") {
+      return updateResult;
+    }
+    const reflectResult = this.oneFrameJudgementController.reflectOneFrameData();
+    if (reflectResult.status !== "ok") {
+      return reflectResult;
+    }
+    return ok(undefined);
   }
 
   pause(): SimulatorResult<void> {
@@ -81,7 +93,7 @@ export class InGameManager {
       paused: this.pausedValue,
       musicScore: this.musicScoreController.snapshot(),
       noteManager: this.noteManager.snapshot(),
-      oneFrameInitialized: this.oneFrameJudgementController.isInitialized,
+      oneFrame: this.oneFrameJudgementController.snapshot(),
     };
   }
 }

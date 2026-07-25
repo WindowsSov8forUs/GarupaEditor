@@ -5,6 +5,7 @@ import {
   type SimulatorResult,
 } from "../evidence";
 import type { NoteInformationFixture } from "../data/noteData";
+import type { OneFrameDataHandle } from "../data/oneFrameData";
 
 export enum NoteState {
   Move = 0,
@@ -28,6 +29,7 @@ export class NoteBase {
   private stateValue = NoteState.Deactive;
   private lifecycleCallbacks: NoteLifecycleCallbacks | null = null;
   private fixtureValue: NoteInformationFixture | null = null;
+  private getUsableOneFrameData: (() => SimulatorResult<OneFrameDataHandle>) | null = null;
 
   constructor(
     readonly poolObjectId: string,
@@ -48,6 +50,23 @@ export class NoteBase {
 
   setLifecycleCallbacks(callbacks: NoteLifecycleCallbacks): void {
     this.lifecycleCallbacks = callbacks;
+  }
+
+  registerCallbackGetUsableOneFrameData(
+    callback: () => SimulatorResult<OneFrameDataHandle>,
+  ): void {
+    this.getUsableOneFrameData = callback;
+  }
+
+  requestUsableOneFrameData(): SimulatorResult<OneFrameDataHandle> {
+    if (this.getUsableOneFrameData === null) {
+      return evidenceRequired(
+        "note.one-frame-callback-unregistered",
+        ["E02", "E08"],
+        "NoteBase.RegisterCallbackGetUsableOneFrameData must be installed during SetupNotes.",
+      );
+    }
+    return this.getUsableOneFrameData();
   }
 
   activate(fixture: NoteInformationFixture): SimulatorResult<void> {

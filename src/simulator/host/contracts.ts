@@ -3,12 +3,29 @@ import type {
   NoteBatchInformationList,
   SimulatorClockProfile,
 } from "../engine/data/noteData";
+import type { OneFrameDataPoolProfile } from "../engine/data/oneFrameData";
 import type { SimulatorResult } from "../engine/evidence";
 import type { InGameManagerSnapshot } from "../engine/managers/inGameManager";
+import type { SimulatorBackendTraceEvent } from "../backends/contracts";
 
 export interface SimulatorEngineInput {
   readonly noteBatches: NoteBatchInformationList;
   readonly clock: SimulatorClockProfile;
+  readonly oneFrameData: OneFrameDataPoolProfile;
+}
+
+export type FirstSliceEvidenceGap =
+  | "G01"
+  | "G02"
+  | "G03"
+  | "G04"
+  | "G05"
+  | "G06";
+
+export interface SimulatorSnapshot {
+  readonly managers: InGameManagerSnapshot;
+  readonly backendTrace: readonly SimulatorBackendTraceEvent[];
+  readonly evidenceGaps: readonly FirstSliceEvidenceGap[];
 }
 
 export interface SimulatorEngine {
@@ -16,7 +33,7 @@ export interface SimulatorEngine {
   step(deltaTimeSeconds: number): SimulatorResult<void>;
   pause(): SimulatorResult<void>;
   resume(): SimulatorResult<void>;
-  snapshot(): SimulatorResult<InGameManagerSnapshot>;
+  snapshot(): SimulatorResult<SimulatorSnapshot>;
   dispose(): SimulatorResult<void>;
 }
 
