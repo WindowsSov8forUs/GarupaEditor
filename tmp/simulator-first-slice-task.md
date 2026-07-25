@@ -5,7 +5,7 @@
 - 目标分支：`codex/refactor-simulator-implementation`
 - 上级计划：`tmp/simulator-reconstruction-plan.md`
 - 唯一原作证据仓库：`HOST________\VSCode\GirlsBandParty-Reverse`
-- 锁定证据提交：`326b305f14121d7a0e7e046410dac993147360cb`
+- 锁定证据提交：`74ab76f6838847d98aae1a15741a5f024e3774ff`
 - 锁定游戏样本：`jp.co.craftegg.band` 10.1.3（version code 229，`arm64-v8a`）
 - 第一切片目标：建立原作引擎对象边界与确定性生命周期框架，不交付可见画面、音频、真实输入或主程序入口。
 - 第一切片状态：T01–T11 已完成，验收结果见 `tmp/simulator-first-slice-acceptance.md`。
@@ -16,17 +16,17 @@
 
 | 任务 | 状态 | 最近批次 | 结果 |
 | --- | --- | --- | --- |
-| T01 冻结第一切片证据包 | 已完成 | 2026-07-26 G02/G03 闭合批 | 已冻结 E01–E21、manifest、夹具目录和证据缺口 |
+| T01 冻结第一切片证据包 | 已完成 | 2026-07-26 G04/G05 闭合批 | 已冻结 E01–E25、manifest、夹具目录和全部第一切片缺口闭合记录 |
 | T02 建立目录与依赖边界 | 已完成 | 2026-07-26 第二批 | 已建立 host、engine、backends、testing 与隔离类型检查 |
 | T03 定义证据门和宿主 API | 已完成 | 2026-07-26 第二批 | 已建立结构化证据结果和可移植宿主生命周期接口 |
-| T04 建立原作管理器对象图 | 已完成 | 2026-07-26 第二批 | 已建立首批原作 owner、所有权和行为证据门 |
+| T04 建立原作管理器对象图 | 已完成 | 2026-07-26 G04/G05 闭合批 | 已恢复 InGameDirector.Update 到 InGameManager.ExecUpdate 的原作帧入口所有权 |
 | T05 建立音符类型与状态框架 | 已完成 | 2026-07-26 第二批 | 已建立 Front/After、Long/Slide/Flick 派生族和四态分派 |
 | T06 恢复 SetupNotes、对象池和活跃列表 | 已完成 | 2026-07-26 G02/G03 闭合批 | 已按预构造 informationList 原序建立分族池、环形游标和激活/失活列表回调 |
-| T07 恢复确定性子步调度 | 已完成 | 2026-07-26 G02/G03 闭合批 | 已恢复双时钟、自适应子步、固定反向 Update，并关闭合成跨 Note 移除边界 |
-| T08 建立暂停与恢复框架 | 已完成 | 2026-07-26 第三批 | 已建立冻结调度的暂停门和抽象记录后端状态广播 |
+| T07 恢复确定性子步调度 | 已完成 | 2026-07-26 G04/G05 闭合批 | 已恢复 ScriptRunBehaviourUpdate 原作入口、双时钟、自适应子步和固定反向 Update |
+| T08 建立暂停与恢复框架 | 已完成 | 2026-07-26 G04/G05 闭合批 | 已按真实 GameState/PauseState 门冻结音符调度并保留 PauseSound 输入分派 |
 | T09 建立 OneFrameData 容器框架 | 已完成 | 2026-07-26 第四批 | 已建立控制器独占容器池、获取/占用/收集与统一 Reflect 边界 |
-| T10 建立记录后端和快照 | 已完成 | 2026-07-26 第四批 | 已建立五类无副作用记录端口和稳定第一切片快照 |
-| T11 隔离测试和验收 | 已完成 | 2026-07-26 G01/G06 闭合批 | 已建立无新增测试框架依赖的隔离入口、18 项定向测试和验收记录 |
+| T10 建立记录后端和快照 | 已完成 | 2026-07-26 G04/G05 闭合批 | 已建立帧入口、管理器状态、五类记录端口和无开放缺口快照 |
+| T11 隔离测试和验收 | 已完成 | 2026-07-26 G04/G05 闭合批 | 已建立无新增测试框架依赖的隔离入口、20 项定向测试和验收记录 |
 
 ### 1.2 批次记录
 
@@ -57,6 +57,15 @@
 - G03 以第一切片调用图内的否定结论闭合：保留实时列表、固定递减索引、自移除和下一子步 Count 刷新，不暴露伪造的跨 Note 移除入口。
 - 快照开放缺口缩减为 G04/G05；仍不实现属于后续判定/输入切片的多方向侧链消费行为。
 
+#### 2026-07-26 G04/G05 闭合批：原作帧入口与暂停更新门
+
+- Reverse 在 `74ab76f6838847d98aae1a15741a5f024e3774ff` 闭合 `Update.ScriptRunBehaviourUpdate -> InGameDirector.Update -> InGameManager.ExecUpdate` 的原作帧入口链。
+- E09 已同步确认的枚举与门条件，E22–E25 已冻结 G04/G05 机器可读结论、说明、路由和原始指令；manifest 仍排除未跟踪 `runtime/tools/`。
+- 已恢复 `GameState` 4–7、`PauseState` 0–2 和 `isPaused` 精确公式；`PauseSound` 继续调用无设备副作用的 `InputManager.ExecInput` 边界，但不进入 NoteManager 或 OneFrame Reflect。
+- 宿主 `step` 经 `InGameDirector.Update` 驱动；宿主 `pause/resume` 直接映射确认的 `PauseSound/PlayingSound` 稳态，不伪造暂停面板与倒计时。
+- 第一切片快照证据缺口清空；无依赖的其他 MonoBehaviour 顺序、渲染呈现、暂停 UI、真实输入和具体音频设备仍在后续切片。
+- 定向测试扩展为 20 项；仍不运行 GarupaEditor 整体构建。
+
 #### 2026-07-26 第二批：T02–T05 类型与宿主边界
 
 - 已建立 `src/simulator/host`、`engine`、`backends` 和 `testing` 四个职责边界。
@@ -82,8 +91,8 @@
 - 调度器记录稳定的 frame、music-advance、note-update、note-after-update、note-activate 轨迹；公开宿主快照仍由 T10 阻断。
 - G01 已按 `MUSIC_BAR_DIVISION_COUNT = 192` 恢复主/发射器 Float32 时钟、批次 Int32 绝对位置和开/闭激活窗口。
 - G06 已恢复四个持久 `uint` 计数器、BPM 变化计数门、递增后 `101/21/6` 回退边界，以及 `deltaTime`/`ExecuteFrame` 同步平分。
-- `pause` 只设置宿主调度门并向可移植生命周期记录端口广播 `paused`；`resume` 只解除门并广播 `running`，均不修改音乐、BPM、组游标、活跃列表或池。
-- 生命周期广播是 GarupaEditor 测试端口，不使用或命名原作状态 `5/7`、暂停状态 `1/2` 或接口槽 `26–32`，具体记录实现留给 T10。
+- 本批当时的 `pause/resume` 先以宿主布尔门冻结调度；该临时实现已由后续 G04/G05 闭合批替换为确认的 `GameState`/`PauseState` 门。
+- 生命周期广播始终是 GarupaEditor 测试端口；原作枚举已在 G04/G05 批确认，接口槽 `26–32` 的具体名称仍不进入第一切片。
 - 本批定向验证为不入库的 T06–T08 行为探针、模拟器隔离 TypeScript 类型检查、禁止依赖扫描、冻结证据包校验和 `git diff --check`；T11 前未新增完整测试套件，也未运行整体构建。
 
 #### 2026-07-26 第四批：T09–T10 帧容器、记录后端与快照
@@ -96,7 +105,7 @@
 - `ReflectOneFrameData` 按控制器池顺序收集当帧占用容器、记录单一批次轨迹并统一清除占用；不执行 E08 中后续分数、生命、Combo、显示或音频消费。
 - `InGameManager.initialize` 先建立 OneFrame 容器，再安装 Note 回调；成功 step 在 Note 调度完成后进入统一 Reflect，暂停 step 不产生 Reflect。
 - 已建立 renderer、audio、input、resources 和 lifecycle 五类无副作用记录端口；事件只包含从零递增序号、稳定端口名、动作和可选字符串详情。
-- `SimulatorSnapshot` 包含管理器状态、调度与 OneFrame 轨迹、活跃顺序、池占用、后端事件和 G04/G05 缺口；G01/G06 的时钟与计数器状态进入管理器快照。
+- `SimulatorSnapshot` 包含 `InGameDirector.Update` 帧入口、管理器状态、调度与 OneFrame 轨迹、活跃顺序、池占用和后端事件；G01–G06 已闭合，因此证据缺口为空。
 - 快照是第一切片测试设施，不包含编辑器载荷、窗口标识或 UI 布局，也不成为未来主程序进入模拟器的协议。
 - 本批定向验证为不入库的 T09–T10 行为探针、模拟器隔离 TypeScript 类型检查、禁止依赖扫描、冻结证据包校验和 `git diff --check`；未运行整体构建。
 
@@ -104,9 +113,9 @@
 
 - 已增加 `npm.cmd run simulator:test:first-slice`，使用项目现有 TypeScript 编译器把测试编译到系统临时目录，由 Node 执行后自动清理；未引入 Vitest、Jest 或模拟器运行依赖。
 - 测试范围只包含 `src/simulator` 与 `src/simulator/testing`，不加载 React、Pixi、Tauri、DOM、编辑器谱面、窗口协议或主程序模块。
-- 已建立 18 项独立断言组，新增覆盖 192 刻度双时钟、激活窗口、`101/21/6` 历史回退、无 BPM 变化固定单步和 `ExecuteFrame` 平分。
+- 已建立 20 项独立断言组，覆盖原作帧入口、真实暂停状态公式、PauseSound 输入分派、192 刻度双时钟、激活窗口、`101/21/6` 历史回退、无 BPM 变化固定单步和 `ExecuteFrame` 平分。
 - 测试入口末尾强制执行禁止依赖扫描；任何测试或依赖边界失败均返回非零状态。
-- `tmp/simulator-first-slice-acceptance.md` 已逐项记录任务书要求、提交边界、验证命令、结果、未运行范围、G01/G02/G03/G06 闭合和 G04/G05 保留证据门。
+- `tmp/simulator-first-slice-acceptance.md` 已逐项记录任务书要求、提交边界、验证命令、结果、未运行范围和 G01–G06 全部第一切片闭合边界。
 - 最终验收命令为第一切片定向测试、模拟器隔离 TypeScript 类型检查、禁止依赖扫描、证据包工作树与 Git 索引哈希校验以及 `git diff --check`。
 - 未运行 `npm run build`、Vite/Tauri 构建、主程序测试或完整模拟器联调；第一切片完成不承诺程序整体可运行。
 
@@ -131,7 +140,7 @@
 - BMS 文本解析和 `NoteBatchInformationListFactory` 的实际实现。
 - Auto Live、真实触摸、判定、分数、生命、技能和 Fever 行为。
 - Pixi 绘制、Web Audio 播放、资源加载和 UI。
-- Unity PlayerLoop 中相对其他 MonoBehaviour 的精确相位。
+- 无引擎对象依赖的其他 MonoBehaviour 回调相对顺序，以及完整 Unity PlayerLoop 外围系统。
 - CRIWARE、Unity GPU、原生音频设备和实体设备延迟。
 - GarupaEditor 整体构建和完整模拟器联调。
 
@@ -159,7 +168,7 @@
 | E06 | `artifacts/investigations/runtime-integration-prototype/multiple_flick_active_list_order.json` | `EC64154569BA4B30D644D27E839BEABA5357A6554FAAEA95080295B118ABB391` | `SetupNotes` 激活/失活回调和列表追加/移除 |
 | E07 | `artifacts/investigations/runtime-integration-prototype/note_manager_active_list_mutation.json` | `E1B8E48695F0BD7EFC0C3750BC7ADAF113533326DC98A8FB685FC70B787E7BFD` | 反向遍历中的即时列表突变与下一子步 Count 刷新 |
 | E08 | `artifacts/investigations/judgement-result-pipeline/README.md` | `150A105CD75CFBB62D39F54CD57BC0D3A8A2ACDCD7BA3510350FE6C5CBC47DC7` | `OneFrameData` 获取、填充、收集和 Reflect 边界 |
-| E09 | `artifacts/investigations/application-pause-resume/README.md` | `B630C31E80918685C45E7B9C643C5D24ADE7B6C4F2451CE4640C27A440C5053E` | 暂停/恢复顺序和不修改运行进度的边界 |
+| E09 | `artifacts/investigations/application-pause-resume/README.md` | `2C2E5C4F38F68812FE330B0E8364CF411D83E362CD0ADB8ECAADC20B8CB2ECDF` | 暂停/恢复顺序、确认枚举和更新门摘要 |
 | E10 | `artifacts/investigations/bms-note-batch/README.md` | `37B64F06EDFBC7D8F92053F82CD18D672A47B8D8089B1C5B0DCFF4D35ACC1F22` | 预构造 `NoteBatchInformationList` 夹具的结构边界 |
 | E11 | `artifacts/investigations/runtime-integration-prototype/targets.tsv` | `8BCB3052C44DEFB5884E717BD96A71A2CE698D6C0B47EDAB17AAC52B745F679D` | 总体实现行为到原作证据的路由索引 |
 | E12 | `artifacts/investigations/touch-note-arbitration/README.md` | `0558A928918794D603368A5CA4813D44FF9B957EDF5C50C30809C85605C2E489` | 仅确认输入管理边界；第一切片不得实现触摸行为 |
@@ -172,6 +181,10 @@
 | E19 | `artifacts/investigations/equal-position-and-cross-note-mutation/targets.tsv` | `142DCCF7AFAF8981606D042484F64A753A8C48FB042ABFDC1D128D4445829457` | G02/G03 原作方法与证据路由 |
 | E20 | `artifacts/investigations/equal-position-and-cross-note-mutation/decompiled/native_ranges.txt` | `592D03A9CDB868161AB671099AD822A38228B174666BCF30B345E4DF41DE1ABE` | G02/G03 锁定 RVA 原始指令清单 |
 | E21 | `artifacts/investigations/equal-position-and-cross-note-mutation/decompiled/xrefs.json` | `CF707F476EBCE9A8464DBD27343B1CD20DB60CDE79E4B41FCD9BBE6BD42D9DA1` | 解析入口与状态变更直接交叉引用 |
+| E22 | `artifacts/investigations/ingame-playerloop-pause-gates/closure.json` | `6F0EFD625BB32C954CBAF6873CA118A8F2415CA43ECB739FC0F43604A4D9BC01` | G04/G05 机器可读闭合事实 |
+| E23 | `artifacts/investigations/ingame-playerloop-pause-gates/README.md` | `4FA5508C93424B8DF253C3C640E5323FC991BB26740220824384AC20A70D8A25` | 原作帧入口与暂停门闭合报告 |
+| E24 | `artifacts/investigations/ingame-playerloop-pause-gates/targets.tsv` | `C0E832D149A413102EBDC55AB4591E09413FC5BFCAE2E300DE039D6CAD8B746E` | G04/G05 原作方法与证据路由 |
+| E25 | `artifacts/investigations/ingame-playerloop-pause-gates/decompiled/native_ranges.txt` | `69A6E867620CCD6499ABBF2BA56DDE29830C4E22EB160FCDDAE183E52576C2D8` | 帧入口、状态分派和暂停写入原始指令 |
 
 逆向仓库当前存在未跟踪目录 `runtime/tools/`。该目录不属于锁定提交，禁止复制、引用或据此作出实现判断。
 
@@ -257,14 +270,14 @@ evidence-required(capability, requiredEvidence, boundary)
 **落地步骤**
 
 1. 验证逆向仓库 HEAD 严格等于锁定提交。
-2. 验证 E01–E21 的完整 SHA-256。
+2. 验证 E01–E25 的完整 SHA-256。
 3. 仅复制第一切片实际引用的最小文件，不复制完整调查目录或本地原始样本。
 4. `manifest.json` 为每项记录源提交、源相对路径、复制后路径、SHA-256、确认状态和消费任务。
-5. `OPEN_GAPS.md` 初始化记录：`UnitsPerBar` 名称/值边界、相同位置成员上游排序、跨 Note 低索引移除实例、Unity PlayerLoop 相位、暂停状态精确更新门条件。
+5. `OPEN_GAPS.md` 持续记录 G01–G06 的闭合状态、第一切片边界和后续切片禁止越界项。
 
 **原作证据**
 
-- E01–E21。
+- E01–E25。
 
 **验证**
 
@@ -352,6 +365,7 @@ evidence-required(capability, requiredEvidence, boundary)
 
 **产物**
 
+- `InGameDirector`
 - `InGameManager`
 - `InGameMusicScoreController`
 - `NoteManager`
@@ -362,14 +376,15 @@ evidence-required(capability, requiredEvidence, boundary)
 **落地步骤**
 
 1. 依据 E01/E02 建立确认过的类名和方法边界。
-2. `InGameManager` 只负责第一切片管理器组合、生命周期分发和状态持有。
-3. `NoteManager` 持有预构造批次、活跃列表、对象池和 `SlideNoteManager`。
-4. `InGameOneFrameJudgementController` 持有 OneFrame 容器池。
-5. 任何无法由证据证明的字段使用中性内部名称，并在证据登记中标记 `inferred`，不得写成原作字段名。
+2. `InGameDirector.Update` 持有并驱动 `InGameManager.ExecUpdate`，宿主不得跳过该 owner。
+3. `InGameManager` 只负责第一切片管理器组合、生命周期分发和状态持有。
+4. `NoteManager` 持有预构造批次、活跃列表、对象池和 `SlideNoteManager`。
+5. `InGameOneFrameJudgementController` 持有 OneFrame 容器池。
+6. 任何无法由证据证明的字段使用中性内部名称，并在证据登记中标记 `inferred`，不得写成原作字段名。
 
 **原作证据**
 
-- E01、E02、E03、E08。
+- E01、E02、E03、E08、E22–E25。
 
 **验证**
 
@@ -476,7 +491,7 @@ evidence-required(capability, requiredEvidence, boundary)
 
 **原作证据**
 
-- E03、E04、E05、E07、E14–E21。
+- E03、E04、E05、E07、E14–E25。
 
 **验证**
 
@@ -490,7 +505,7 @@ evidence-required(capability, requiredEvidence, boundary)
 
 **停止条件**
 
-- 测试需要定义 Unity PlayerLoop 精确相位。
+- 证据不能定位原作托管帧 owner 或其 PlayerLoop 节点。
 
 ### T08：建立暂停与恢复框架
 
@@ -506,18 +521,19 @@ evidence-required(capability, requiredEvidence, boundary)
 
 **落地步骤**
 
-1. `pause` 设置宿主门并按证据顺序通知记录后端。
-2. 暂停期间 `step` 不推进音乐位置、不调用 Note Update、不改变组游标或池。
-3. `resume` 恢复门，下一次 `step` 从保留状态继续。
-4. 不实现暂停 UI、倒计时、具体音频设备调用或未确认接口槽名称。
+1. `pause` 将可移植宿主直接映射到确认的稳态 `GameState.PauseSound`，并通知记录后端。
+2. 暂停期间 `step` 保留原作 `InputManager.ExecInput(PauseSound)` 边界，但不推进音乐位置、不调用 Note Update/Reflect、不改变组游标或池。
+3. `resume` 映射到 `GameState.PlayingSound`，下一次 `step` 从保留状态继续。
+4. `isPaused` 严格按 PauseState 1/2 或 GameState 6/7 计算。
+5. 不实现暂停 UI、倒计时、具体音频设备调用或未确认接口槽名称。
 
 **原作证据**
 
-- E09；E03 用于确认恢复后继续进入现有调度器。
+- E09、E22–E25；E03 用于确认恢复后继续进入现有调度器。
 
 **验证**
 
-- 暂停前后音乐位置、BPM、组索引、活跃列表和池占用完全相同。
+- 暂停前后音乐位置、BPM、组索引、活跃列表和池占用完全相同，PauseSound 输入边界仍被分派。
 - 恢复后的首个 step 延续原调用顺序。
 
 **停止条件**
@@ -572,7 +588,7 @@ evidence-required(capability, requiredEvidence, boundary)
 **落地步骤**
 
 1. 后端只记录生命周期和端口请求，不访问 DOM、Canvas、AudioContext 或设备输入。
-2. 快照包含管理器状态、调用轨迹、活跃顺序、池占用、OneFrame 占用和证据缺口。
+2. 快照包含原作帧入口、管理器状态、调用轨迹、活跃顺序、池占用、OneFrame 占用和证据闭合状态。
 3. 快照不得包含编辑器载荷、窗口标识或未来 UI 布局。
 4. 调用轨迹使用稳定事件名，测试不得依赖对象内存地址或随机 ID。
 
@@ -613,8 +629,8 @@ evidence-required(capability, requiredEvidence, boundary)
 
 **原作证据**
 
-- E01–E11、E14–E21 覆盖对象图、调度、状态、暂停、音乐时钟、自适应子步、等位置顺序、列表突变和 OneFrame 框架。
-- E12/E13 只用于验证输入和派生职责仍被证据门阻断。
+- E01–E11、E14–E25 覆盖对象图、原作帧入口、调度、状态、暂停、音乐时钟、自适应子步、等位置顺序、列表突变和 OneFrame 框架。
+- E12/E13 只用于验证真实触摸和派生职责仍被证据门阻断；E22–E25 只放行无设备副作用的 `InputManager.ExecInput` 帧边界。
 
 **必测场景**
 
@@ -626,10 +642,11 @@ evidence-required(capability, requiredEvidence, boundary)
 6. Update 中 Deactive 对 AfterUpdate 的过滤。
 7. 列表自移除在当前与下一子步的表现。
 8. 暂停期间时钟、游标、列表和池完全冻结。
-9. OneFrame 容器获取、Reflect 和回收。
-10. 未闭合能力统一返回 `evidence-required`。
-11. `engine` 禁止导入 React、Pixi、Tauri、DOM、主程序或编辑器谱面模块。
-12. `dispose` 幂等。
+9. `InGameDirector.Update` 帧入口与 PauseSound 输入/音符分派门。
+10. OneFrame 容器获取、Reflect 和回收。
+11. 未闭合能力统一返回 `evidence-required`。
+12. `engine` 禁止导入 React、Pixi、Tauri、DOM、主程序或编辑器谱面模块。
+13. `dispose` 幂等。
 
 **验收命令范围**
 
@@ -673,7 +690,7 @@ evidence-required(capability, requiredEvidence, boundary)
 
 同时满足以下条件才可声明第一切片完成：
 
-- E01–E21 已锁定、复制并在 manifest 中可追溯。
+- E01–E25 已锁定、复制并在 manifest 中可追溯。
 - 宿主、原作引擎和后端依赖方向符合第 5 节。
 - 管理器对象图和音符状态框架可由预构造夹具初始化。
 - 已确认调度、列表突变、AfterUpdate、暂停和 OneFrame 容器测试全部通过。
@@ -681,4 +698,4 @@ evidence-required(capability, requiredEvidence, boundary)
 - 没有修改模拟器入口、主程序、编辑器谱面模型或窗口通信。
 - 五个后续实现提交保持原子化且各自可审计。
 
-第一切片完成不代表模拟器可运行，也不代表原作判定、渲染、音频或完整 PlayerLoop 已恢复。
+第一切片现已在任务书定义的原作引擎框架与确定性生命周期范围内严格复原。完成不代表模拟器可运行，也不代表原作判定、渲染、音频、真实输入或完整 PlayerLoop 外围系统已恢复。

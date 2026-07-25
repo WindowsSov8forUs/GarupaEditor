@@ -21,7 +21,7 @@
 
 可见渲染、实际音频、真实输入、完整判定和主程序入口仍未实现；第一切片完成不表示模拟器或 GarupaEditor 整体可运行。
 
-G01/G02/G03/G06 已按冻结证据闭合：音乐位置使用原作 `NoteManager.MUSIC_BAR_DIVISION_COUNT = 192`，预构造 `informationList` 顺序被原样消费，调度器保留实时活跃列表、固定递减索引和四个持久 `uint` 计数器，并按递增后的 `101/21/6` 边界强制单步，同时平分 `deltaTime` 与 `ExecuteFrame`。当前快照只保留 G04/G05。
+G01–G06 已按冻结证据在第一切片范围内闭合：音乐位置使用原作 `NoteManager.MUSIC_BAR_DIVISION_COUNT = 192`，预构造 `informationList` 顺序被原样消费，调度器保留实时活跃列表、固定递减索引和四个持久 `uint` 计数器，并按递增后的 `101/21/6` 边界强制单步，同时平分 `deltaTime` 与 `ExecuteFrame`。`InGameDirector.Update` 已恢复为原作帧入口 owner，暂停门使用确认的 `GameState` 与 `PauseState`；当前快照不再保留第一切片证据缺口。
 
 OneFrame 容量必须由证据绑定的宿主夹具显式提供；完整判定数据填充继续失败关闭。公开快照只服务第一切片隔离测试，不是主程序入口或窗口通信协议。
 

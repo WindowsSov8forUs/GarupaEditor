@@ -35,20 +35,24 @@
 - 后续边界：判定/输入切片若引入多方向侧链消费，必须同时冻结真实调用者和发生相位。
 - 来源：E07、E17、E18、E20、E21。
 
-## 开放缺口
+## 第一切片已闭合缺口
+
+第一切片当前没有仍处于 `evidence-required` 的 G01–G06 缺口。以下 G04/G05 已按第一切片实际对象图闭合；列出的外部时序与 UI 行为仍属于后续切片，不得反向扩张为第一切片实现。
 
 ### G04：Unity PlayerLoop 精确相位
 
-- 状态：`evidence-required`
-- 已确认：`NoteManager.ExecUpdate` 内部的音乐推进、Update、AfterUpdate 和音符组处理顺序。
-- 未确认：该方法相对其他 MonoBehaviour、渲染、音频和原生 PlayerLoop 阶段的位置。
-- 来源：E03、E05、E07。
-- 实现约束：宿主 `step` 是可移植驱动边界，不得宣称等同 Unity PlayerLoop。
+- 状态：`closed-scoped`
+- 已恢复：`Update.ScriptRunBehaviourUpdate -> InGameDirector.Update -> InGameManager.ExecUpdate -> updatePlayState -> NoteManager.ExecUpdate` 的原作引擎入口链。
+- 已确认：`Update.ScriptRunBehaviourUpdate` 是 Update 阶段第 1/4 个原生子节点；已发现的三个直接 `SetPlayerLoop` 写入者均保留相关原生兄弟顺序。
+- 第一切片边界：恢复 `InGameDirector.Update` 对 `InGameManager.ExecUpdate` 的所有权；宿主 `step` 只提供可移植帧触发，不冒充 Unity API。
+- 后续边界：无对象依赖的其他 MonoBehaviour 回调相对顺序，以及渲染线程、GPU、显示与采集时钟不进入第一切片。
+- 来源：E22–E25；E03、E05、E07 用于下游调度。
 
 ### G05：暂停状态的精确更新门条件
 
-- 状态：`evidence-required`
-- 已确认：暂停/恢复状态写入、音频控制广播顺序，以及暂停不修改时钟、BPM、组游标或对象池。
-- 未确认：暂停状态 `1/2` 和游戏状态 `5/7` 的完整枚举名称及精确帧循环门条件。
-- 来源：E09。
-- 实现约束：第一切片只冻结宿主调度，不命名原作枚举或复原暂停 UI。
+- 状态：`closed`
+- 已恢复：`GameState.PlayingNone = 4`、`PlayingSound = 5`、`PauseNone = 6`、`PauseSound = 7`，以及 `CE.PauseState.None = 0`、`Pause = 1`、`Resume = 2`。
+- 已恢复：`isPaused` 对 PauseState 1/2 与 GameState 6/7 的精确公式；只有 GameState 4/5 进入 `updatePlayState`，GameState 7 只保留 `InputManager.ExecInput` 边界而不进入 `NoteManager.ExecUpdate`。
+- 第一切片边界：可移植 `pause/resume` 直接映射到证据确认的稳态 `PauseSound/PlayingSound`，不伪造暂停 UI 与倒计时回调。
+- 后续边界：暂停面板动画、恢复倒计时、接口槽真实名称和具体音频设备行为继续留在后续切片。
+- 来源：E09、E22–E25。
