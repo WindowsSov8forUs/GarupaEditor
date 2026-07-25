@@ -1,6 +1,6 @@
 import type { SimulatorBackends } from "../backends/contracts";
 import type {
-  NoteBatchInformationList,
+  FirstSliceNoteBatchListFixture,
   SimulatorClockProfile,
   SimulatorNoteManagerProfile,
 } from "../engine/data/noteData";
@@ -11,7 +11,7 @@ import type { InGameDirectorSnapshot } from "../engine/managers/inGameDirector";
 import type { SimulatorBackendTraceEvent } from "../backends/contracts";
 
 export interface SimulatorEngineInput {
-  readonly noteBatches: NoteBatchInformationList;
+  readonly noteBatches: FirstSliceNoteBatchListFixture;
   readonly clock: SimulatorClockProfile;
   readonly noteManager: SimulatorNoteManagerProfile;
   readonly oneFrameData: OneFrameDataPoolProfile;

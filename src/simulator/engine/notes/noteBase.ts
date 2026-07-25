@@ -4,7 +4,7 @@ import {
   type EvidenceReference,
   type SimulatorResult,
 } from "../evidence";
-import type { NoteInformationFixture } from "../data/noteData";
+import type { FirstSliceNoteInformationFixture } from "../data/noteData";
 import type { OneFrameDataHandle } from "../data/oneFrameData";
 
 export enum NoteState {
@@ -28,7 +28,7 @@ export interface NoteStateSnapshot {
 export class NoteBase {
   private stateValue = NoteState.Deactive;
   private lifecycleCallbacks: NoteLifecycleCallbacks | null = null;
-  private fixtureValue: NoteInformationFixture | null = null;
+  private fixtureValue: FirstSliceNoteInformationFixture | null = null;
   private getUsableOneFrameData: (() => SimulatorResult<OneFrameDataHandle>) | null = null;
 
   constructor(
@@ -40,7 +40,7 @@ export class NoteBase {
     return this.fixtureValue?.fixtureId ?? this.poolObjectId;
   }
 
-  get fixture(): NoteInformationFixture | null {
+  get fixture(): FirstSliceNoteInformationFixture | null {
     return this.fixtureValue;
   }
 
@@ -69,7 +69,7 @@ export class NoteBase {
     return this.getUsableOneFrameData();
   }
 
-  activate(fixture: NoteInformationFixture): SimulatorResult<void> {
+  activate(fixture: FirstSliceNoteInformationFixture): SimulatorResult<void> {
     if (this.stateValue !== NoteState.Deactive) {
       return evidenceRequired(
         "note-pool.activate-active-object",

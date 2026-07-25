@@ -1,7 +1,7 @@
 import type {
-  NoteBatchInformation,
+  FirstSliceNoteBatchFixture,
   NoteFamily,
-  NoteInformationFixture,
+  FirstSliceNoteInformationFixture,
 } from "../engine/data/noteData";
 import type {
   EvidenceBound,
@@ -27,7 +27,7 @@ export function bound<T>(
 export function noteFixture(
   fixtureId: string,
   family: NoteFamily = "normal",
-): NoteInformationFixture {
+): FirstSliceNoteInformationFixture {
   const batchEvidence = evidence("E10", `preconstructed fixture ${fixtureId}`);
   const familyEvidence = evidence("E02", `confirmed Note family ${family}`);
   return {
@@ -44,7 +44,7 @@ export function noteFixture(
 export function noteBatch(
   fixtureId: string,
   noteIds: readonly string[],
-): NoteBatchInformation {
+): FirstSliceNoteBatchFixture {
   const batchEvidence = evidence("E10", `preconstructed batch ${fixtureId}`);
   return {
     fixtureId,
@@ -56,7 +56,7 @@ export function noteBatch(
 }
 
 export function engineInput(
-  noteBatches: readonly NoteBatchInformation[] = [],
+  noteBatches: readonly FirstSliceNoteBatchFixture[] = [],
 ): SimulatorEngineInput {
   const clockEvidence = evidence("E03", "first-slice clock fixture");
   const schedulerClosureEvidence = evidence(

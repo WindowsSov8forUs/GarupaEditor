@@ -1,5 +1,5 @@
 import type { SimulatorBackends } from "../backends/contracts";
-import type { NoteBatchInformationList } from "../engine/data/noteData";
+import type { FirstSliceNoteBatchListFixture } from "../engine/data/noteData";
 import type {
   FirstSliceEvidenceGap,
   SimulatorEngine,
@@ -198,7 +198,7 @@ function isValidMusicPosition(value: { readonly bar: number; readonly beatProgre
   );
 }
 
-function validateNoteBatches(noteBatches: NoteBatchInformationList): SimulatorResult<void> {
+function validateNoteBatches(noteBatches: FirstSliceNoteBatchListFixture): SimulatorResult<void> {
   for (const batch of noteBatches) {
     const batchValues = [batch.barIndex, batch.numerator, batch.denominator];
     if (batchValues.some((value) => value.evidence.length === 0)) {

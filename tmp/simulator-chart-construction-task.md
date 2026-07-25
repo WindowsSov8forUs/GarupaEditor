@@ -10,7 +10,7 @@
 - 排除的逆向仓库内容：未跟踪的 `runtime/tools/` 及任何未进入锁定提交的文件
 - 锁定游戏样本：`jp.co.craftegg.band` 10.1.3（version code 229，`arm64-v8a`）
 - 阶段目标：从原始 BMS 文本恢复原作 `MusicScoreBezierConverter -> NoteDataBMSBuilder -> NoteBatchInformationListFactory` 构造链，并产出原作形状的 `NoteBatchInformationList`。
-- 阶段状态：C01 已完成，C02–C10 尚未实施；本文件是该阶段唯一执行任务书。
+- 阶段状态：C01–C02 已完成，C03–C10 尚未实施；本文件是该阶段唯一执行任务书。
 
 本阶段继续维持 GarupaEditor 当前 TypeScript 技术栈方向。Reverse 仓库中的 Python 原型只能作为离线 oracle，不能成为模拟器运行依赖。实施者不得从已删除的 GarupaEditor 模拟器、常见 BMS 实现、通用曲线库、个人经验或方便实现的默认值补齐原作行为。
 
@@ -19,7 +19,7 @@
 | 任务 | 状态 | 结果 |
 | --- | --- | --- |
 | C01 冻结谱面构造证据包 | 已完成 | 已冻结 E01–E18、F01–F04、22 项 manifest、开放缺口和三方哈希校验器 |
-| C02 建立构造边界与 API | 待实施 | 尚未建立原作构造对象和可移植纯函数入口 |
+| C02 建立构造边界与 API | 已完成 | 已建立原作字段类型、四个构造 owner、深度冻结边界与 C03 前失败关闭纯函数入口 |
 | C03 恢复 Header 与 Bezier 转换 | 待实施 | 尚未恢复控制 WAV、曲线采样、量化和文本重组 |
 | C04 恢复 BMS 文本解析 | 待实施 | 尚未恢复 Header、小节、CC、WAV 和 Note material 构造 |
 | C05 恢复批次与同位置顺序 | 待实施 | 尚未恢复 button group 顺序、组内排序和 material 合并 |
@@ -42,6 +42,18 @@
 - `verify.mjs` 已验证 Reverse 提交与工作树边界、18 份源证据与冻结副本、4 份离线样本以及 Git 索引中的字节数和 SHA-256。
 - 本批不创建模拟器代码，不修改第一切片实现，不运行 TypeScript 检查、模拟器测试、Vite/Tauri 构建或 GarupaEditor 整体构建。
 - 本批验证命令为 `node tmp/simulator-reverse-evidence/chart-construction/verify.mjs`、暂存后的 `node tmp/simulator-reverse-evidence/chart-construction/verify.mjs --index` 和 `git diff --check`。
+
+#### 2026-07-26 第二批：C02 构造数据与 API 边界
+
+- 第一切片中带 `fixtureId` 和逐字段 `EvidenceBound` 的预构造载体已显式改名为 `FirstSliceNoteInformationFixture`、`FirstSliceNoteBatchFixture` 和 `FirstSliceNoteBatchListFixture`，不再占用原作数据名称。
+- `src/simulator/engine/chart/types.ts` 已建立 `ButtonType`、`GameNoteType`、`FrontNoteType`、`AfterNoteType`、`GameNoteAdditionalType`、`VirtualLaneDirection` 的 IL2CPP 确认值。
+- 同一类型边界已建立原作形状的只读 `NoteInformation`、`NoteBatchInformation`、`NoteBatchInformationList` 以及 GarupaEditor 聚合结果 `ChartConstructionResult`；原作记录不含 `fixtureId`、`sourceOrder` 或同步投影字段。
+- `MusicScoreHeaderParser`、`MusicScoreBezierConverter`、`NoteDataBMSBuilder`、`NoteBatchInformationListFactory` 已建立独立 owner；每次公开调用创建新的工厂上下文，不使用可变全局 singleton。
+- `createNoteBatchInformationList({ musicScoreData, isCommand? })` 已公开，`isCommand` 省略时为 `false`；C03 尚未恢复前统一在 `chart-construction.header-parse` 返回 `evidence-required`，不接受空谱面或其他输入的默认结果。
+- 谱面构造证据 ID 已使用 `chart-construction:E01` 至 `chart-construction:E18` 作用域与第一切片证据区分；这只属于 GarupaEditor 诊断边界，不进入原作记录。
+- `freezeChartConstructionResult` 已深度冻结批次、Note、button、声音值、Slide 图和 BPM 列表，并在共享终端节点出现于根 `slideNoteList` 与批次列表时保留同一对象身份。
+- 已新增 `npm.cmd run simulator:test:chart-boundary`，4 项测试覆盖枚举值、独立上下文、C03 失败关闭、深度冻结、共享节点身份和禁止适配器字段。
+- 本批通过模拟器隔离 TypeScript 检查、4 项 C02 边界测试、20 项第一切片回归、禁止依赖扫描和证据包索引校验；未运行 Vite/Tauri 或 GarupaEditor 整体构建。
 
 ## 2. 固定范围
 

@@ -10,12 +10,48 @@ export {
   createRecordingSimulatorBackends,
   RecordingSimulatorBackends,
 } from "./backends/recordingBackend";
+export {
+  createNoteBatchInformationList,
+  MusicScoreBezierConverter,
+  MusicScoreHeaderParser,
+  NoteBatchInformationListFactory,
+  NoteDataBMSBuilder,
+} from "./engine/chart/construction";
+export {
+  ChartConstructionEvidence,
+} from "./engine/chart/evidence";
 export type {
-  MusicPosition,
+  ChartConstructionEvidenceId,
+} from "./engine/chart/evidence";
+export type {
+  ChartConstructionInput,
+  ChartConstructionResult,
   NoteBatchInformation,
   NoteBatchInformationList,
+  NoteInformation,
+} from "./engine/chart/types";
+export {
+  AfterNoteType,
+  ButtonType,
+  FrontNoteType,
+  GameNoteAdditionalType,
+  GameNoteType,
+  VirtualLaneDirection,
+} from "./engine/chart/types";
+export type {
+  AfterNoteTypeValue,
+  ButtonTypeValue,
+  FrontNoteTypeValue,
+  GameNoteAdditionalTypeValue,
+  GameNoteTypeValue,
+  VirtualLaneDirectionValue,
+} from "./engine/chart/types";
+export type {
+  MusicPosition,
+  FirstSliceNoteBatchFixture,
+  FirstSliceNoteBatchListFixture,
   NoteFamily,
-  NoteInformationFixture,
+  FirstSliceNoteInformationFixture,
   SimulatorClockProfile,
   SimulatorNoteManagerProfile,
 } from "./engine/data/noteData";
@@ -28,6 +64,7 @@ export type {
   EvidenceId,
   EvidenceReference,
   EvidenceRequired,
+  FirstSliceEvidenceId,
   SimulatorResult,
 } from "./engine/evidence";
 export { NoteBase, NoteState } from "./engine/notes/noteBase";

@@ -8,6 +8,7 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "simulator:test:first-slice": "node src/simulator/testing/runFirstSliceTests.mjs",
+    "simulator:test:chart-boundary": "node src/simulator/testing/runChartConstructionBoundaryTests.mjs",
     "tauri": "tauri",
     "desktop:dev": "tauri dev",
     "desktop:build": "tauri build",

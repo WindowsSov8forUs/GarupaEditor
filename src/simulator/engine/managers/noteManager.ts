@@ -1,8 +1,8 @@
 import type {
-  NoteBatchInformation,
-  NoteBatchInformationList,
+  FirstSliceNoteBatchFixture,
+  FirstSliceNoteBatchListFixture,
   NoteFamily,
-  NoteInformationFixture,
+  FirstSliceNoteInformationFixture,
 } from "../data/noteData";
 import type { OneFrameDataHandle } from "../data/oneFrameData";
 import {
@@ -25,7 +25,7 @@ import { SlideNoteManager } from "./slideNoteManager";
 export interface NoteManagerClock {
   setExecuteFrame(executeFrame: number): void;
   advance(deltaTimeSeconds: number): SimulatorResult<void>;
-  canActivateBatch(batch: NoteBatchInformation): SimulatorResult<boolean>;
+  canActivateBatch(batch: FirstSliceNoteBatchFixture): SimulatorResult<boolean>;
 }
 
 export type NotePoolObjectFactory = (
@@ -89,7 +89,7 @@ export class NoteManager {
   private setupComplete = false;
 
   constructor(
-    private readonly batches: NoteBatchInformationList,
+    private readonly batches: FirstSliceNoteBatchListFixture,
     readonly slideNoteManager: SlideNoteManager,
     private readonly clock: NoteManagerClock,
     private readonly bpmChangeCount: number,
@@ -110,7 +110,7 @@ export class NoteManager {
       return ok(undefined);
     }
 
-    const familyFixtures = new Map<NoteFamily, NoteInformationFixture[]>();
+    const familyFixtures = new Map<NoteFamily, FirstSliceNoteInformationFixture[]>();
     for (const batch of this.batches) {
       for (const fixture of batch.informationList) {
         const fixtures = familyFixtures.get(fixture.family.value) ?? [];
@@ -290,7 +290,7 @@ export class NoteManager {
   }
 
   private acquirePoolObject(
-    fixture: NoteInformationFixture,
+    fixture: FirstSliceNoteInformationFixture,
   ): SimulatorResult<NoteBase> {
     const pool = this.notePoolsValue.get(fixture.family.value);
     if (pool === undefined || pool.objects.length === 0) {

@@ -1,6 +1,6 @@
 import type {
   MusicPosition,
-  NoteBatchInformation,
+  FirstSliceNoteBatchFixture,
   SimulatorClockProfile,
 } from "../data/noteData";
 import {
@@ -71,7 +71,7 @@ export class InGameMusicScoreController {
     return ok(undefined);
   }
 
-  canActivateBatch(batch: NoteBatchInformation): SimulatorResult<boolean> {
+  canActivateBatch(batch: FirstSliceNoteBatchFixture): SimulatorResult<boolean> {
     if (batch.informationList.length === 0) {
       return ok(true);
     }
@@ -142,7 +142,7 @@ function advancePosition(
   return { bar: nextBar, beatProgress: nextProgress };
 }
 
-function batchAbsolutePosition(batch: NoteBatchInformation): number {
+function batchAbsolutePosition(batch: FirstSliceNoteBatchFixture): number {
   const fractionalPosition =
     batch.denominator.value === 0
       ? 0

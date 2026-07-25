@@ -24,7 +24,7 @@ export interface SimulatorNoteManagerProfile {
   readonly bpmChangeCount: EvidenceBound<number>;
 }
 
-export interface NoteInformationFixture {
+export interface FirstSliceNoteInformationFixture {
   readonly fixtureId: string;
   readonly family: EvidenceBound<NoteFamily>;
   readonly gameNoteType: EvidenceBound<number>;
@@ -34,12 +34,12 @@ export interface NoteInformationFixture {
   readonly absolutePosition: EvidenceBound<number>;
 }
 
-export interface NoteBatchInformation {
+export interface FirstSliceNoteBatchFixture {
   readonly fixtureId: string;
   readonly barIndex: EvidenceBound<number>;
   readonly numerator: EvidenceBound<number>;
   readonly denominator: EvidenceBound<number>;
-  readonly informationList: readonly NoteInformationFixture[];
+  readonly informationList: readonly FirstSliceNoteInformationFixture[];
 }
 
-export type NoteBatchInformationList = readonly NoteBatchInformation[];
+export type FirstSliceNoteBatchListFixture = readonly FirstSliceNoteBatchFixture[];

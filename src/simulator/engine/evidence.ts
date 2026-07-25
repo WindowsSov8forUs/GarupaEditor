@@ -1,4 +1,6 @@
-export type EvidenceId =
+import type { ChartConstructionEvidenceId } from "./chart/evidence";
+
+export type FirstSliceEvidenceId =
   | "E01"
   | "E02"
   | "E03"
@@ -24,6 +26,8 @@ export type EvidenceId =
   | "E23"
   | "E24"
   | "E25";
+
+export type EvidenceId = FirstSliceEvidenceId | ChartConstructionEvidenceId;
 
 export interface EvidenceReference {
   readonly id: EvidenceId;
