@@ -29,11 +29,27 @@ class SimulatorEngineHost implements SimulatorEngine {
   }
 
   pause(): SimulatorResult<void> {
-    return this.inGameManager.pause();
+    if (this.inGameManager.snapshot().paused) {
+      return ok(undefined);
+    }
+    const pauseResult = this.inGameManager.pause();
+    if (pauseResult.status !== "ok") {
+      return pauseResult;
+    }
+    this.backends.lifecycle.recordState("paused");
+    return ok(undefined);
   }
 
   resume(): SimulatorResult<void> {
-    return this.inGameManager.resume();
+    if (!this.inGameManager.snapshot().paused) {
+      return ok(undefined);
+    }
+    const resumeResult = this.inGameManager.resume();
+    if (resumeResult.status !== "ok") {
+      return resumeResult;
+    }
+    this.backends.lifecycle.recordState("running");
+    return ok(undefined);
   }
 
   snapshot(): SimulatorResult<ReturnType<InGameManager["snapshot"]>> {
@@ -77,9 +93,14 @@ export function createSimulatorEngine(
   }
 
   const slideNoteManager = new SlideNoteManager();
-  const noteManager = new NoteManager(input.noteBatches, slideNoteManager);
+  const musicScoreController = new InGameMusicScoreController(input.clock);
+  const noteManager = new NoteManager(
+    input.noteBatches,
+    slideNoteManager,
+    musicScoreController,
+  );
   const inGameManager = new InGameManager(
-    new InGameMusicScoreController(input.clock),
+    musicScoreController,
     noteManager,
     new InGameOneFrameJudgementController(),
     new InputManager(),
@@ -99,7 +120,22 @@ function validateNoteBatches(noteBatches: NoteBatchInformationList): SimulatorRe
       );
     }
 
+    let previousSourceOrder = Number.NEGATIVE_INFINITY;
+    const sourceOrders = new Set<number>();
     for (const note of batch.informationList) {
+      if (
+        !Number.isInteger(note.sourceOrder) ||
+        sourceOrders.has(note.sourceOrder) ||
+        note.sourceOrder <= previousSourceOrder
+      ) {
+        return evidenceRequired(
+          "note-batches.source-order",
+          ["E04", "E06", "E10"],
+          `Batch ${batch.fixtureId} must carry unique ascending sourceOrder values in informationList order.`,
+        );
+      }
+      sourceOrders.add(note.sourceOrder);
+      previousSourceOrder = note.sourceOrder;
       const noteValues = [
         note.family,
         note.gameNoteType,

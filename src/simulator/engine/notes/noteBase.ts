@@ -4,6 +4,7 @@ import {
   type EvidenceReference,
   type SimulatorResult,
 } from "../evidence";
+import type { NoteInformationFixture } from "../data/noteData";
 
 export enum NoteState {
   Move = 0,
@@ -18,18 +19,28 @@ export interface NoteLifecycleCallbacks {
 }
 
 export interface NoteStateSnapshot {
-  readonly fixtureId: string;
+  readonly poolObjectId: string;
+  readonly fixtureId: string | null;
   readonly state: NoteState;
 }
 
 export class NoteBase {
   private stateValue = NoteState.Deactive;
   private lifecycleCallbacks: NoteLifecycleCallbacks | null = null;
+  private fixtureValue: NoteInformationFixture | null = null;
 
   constructor(
-    readonly fixtureId: string,
+    readonly poolObjectId: string,
     readonly evidence: readonly EvidenceReference[],
   ) {}
+
+  get fixtureId(): string {
+    return this.fixtureValue?.fixtureId ?? this.poolObjectId;
+  }
+
+  get fixture(): NoteInformationFixture | null {
+    return this.fixtureValue;
+  }
 
   get state(): NoteState {
     return this.stateValue;
@@ -39,6 +50,18 @@ export class NoteBase {
     this.lifecycleCallbacks = callbacks;
   }
 
+  activate(fixture: NoteInformationFixture): SimulatorResult<void> {
+    if (this.stateValue !== NoteState.Deactive) {
+      return evidenceRequired(
+        "note-pool.activate-active-object",
+        ["E04", "E06"],
+        `Pool object ${this.poolObjectId} cannot bind ${fixture.fixtureId} while active.`,
+      );
+    }
+    this.fixtureValue = fixture;
+    return this.changeState(NoteState.Move);
+  }
+
   changeState(nextState: NoteState): SimulatorResult<void> {
     const previousState = this.stateValue;
     if (previousState === nextState) {
@@ -46,7 +69,7 @@ export class NoteBase {
     }
 
     this.stateValue = nextState;
-    if (previousState === NoteState.Deactive && nextState !== NoteState.Deactive) {
+    if (previousState === NoteState.Deactive && nextState === NoteState.Move) {
       this.lifecycleCallbacks?.onActivate(this);
     } else if (previousState !== NoteState.Deactive && nextState === NoteState.Deactive) {
       this.lifecycleCallbacks?.onDeactivate(this);
@@ -61,11 +84,10 @@ export class NoteBase {
     }
 
     const phaseResult = this.executeStatePhase(deltaTimeSeconds);
-    const updateResult = this.onUpdate(deltaTimeSeconds);
     if (phaseResult.status !== "ok") {
       return phaseResult;
     }
-    return updateResult;
+    return this.onUpdate(deltaTimeSeconds);
   }
 
   executeAfterUpdate(_deltaTimeSeconds: number): SimulatorResult<void> {
@@ -78,7 +100,8 @@ export class NoteBase {
 
   snapshot(): NoteStateSnapshot {
     return {
-      fixtureId: this.fixtureId,
+      poolObjectId: this.poolObjectId,
+      fixtureId: this.fixtureValue?.fixtureId ?? null,
       state: this.stateValue,
     };
   }

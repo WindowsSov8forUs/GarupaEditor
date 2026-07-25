@@ -54,19 +54,19 @@ export class InGameManager {
   }
 
   pause(): SimulatorResult<void> {
-    return evidenceRequired(
-      "engine.pause",
-      ["E09"],
-      "Pause evidence is frozen; the host gate and backend broadcasts are implemented in T08.",
-    );
+    if (this.pausedValue) {
+      return ok(undefined);
+    }
+    this.pausedValue = true;
+    return ok(undefined);
   }
 
   resume(): SimulatorResult<void> {
-    return evidenceRequired(
-      "engine.resume",
-      ["E09"],
-      "Resume evidence is frozen; retained-state continuation is implemented in T08.",
-    );
+    if (!this.pausedValue) {
+      return ok(undefined);
+    }
+    this.pausedValue = false;
+    return ok(undefined);
   }
 
   dispose(): SimulatorResult<void> {

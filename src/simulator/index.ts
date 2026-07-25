@@ -1,4 +1,9 @@
-export type { SimulatorBackends, SimulatorBackendPort } from "./backends/contracts";
+export type {
+  SimulatorBackends,
+  SimulatorBackendPort,
+  SimulatorLifecycleBackend,
+  SimulatorLifecycleBackendState,
+} from "./backends/contracts";
 export type {
   MusicPosition,
   NoteBatchInformation,
@@ -25,6 +30,7 @@ export {
   NoteLong,
   NoteMultipleDirectionalFlick,
   NoteMultipleDirectionalFlickAfter,
+  NoteNormal,
   NoteSlide,
   NoteSlideAfter,
   NoteSlideDirectionalFlickAfter,

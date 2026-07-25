@@ -4,6 +4,8 @@ export class NoteFrontBase extends NoteBase {}
 
 export class NoteAfterBase extends NoteBase {}
 
+export class NoteNormal extends NoteFrontBase {}
+
 export class NoteLong extends NoteFrontBase {
   private afterNoteValue: NoteAfterBase | null = null;
 

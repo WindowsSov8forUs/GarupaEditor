@@ -1,4 +1,7 @@
-import type { SimulatorClockProfile } from "../data/noteData";
+import type {
+  NoteBatchInformation,
+  SimulatorClockProfile,
+} from "../data/noteData";
 import {
   evidenceRequired,
   type SimulatorResult,
@@ -17,7 +20,15 @@ export class InGameMusicScoreController {
     return evidenceRequired(
       "music-score.advance",
       ["E03"],
-      "The update formula is confirmed, but UnitsPerBar remains evidence-bound and scheduler integration belongs to T07.",
+      "The update formula and scheduler position are confirmed, but G01 UnitsPerBar remains evidence-required.",
+    );
+  }
+
+  canActivateBatch(_batch: NoteBatchInformation): SimulatorResult<boolean> {
+    return evidenceRequired(
+      "music-score.note-group-activation",
+      ["E03", "E04"],
+      "The activation order is confirmed, but comparing the absolute group position requires unresolved G01 UnitsPerBar.",
     );
   }
 
