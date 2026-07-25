@@ -83,7 +83,7 @@
       "id": "E09",
       "sourcePath": "artifacts/investigations/application-pause-resume/README.md",
       "copiedPath": "artifacts/investigations/application-pause-resume/README.md",
-      "sha256": "A2E6324DD6712B0C7DD96B58754BC4ED725D49222F0061782B4672CB7CA89916",
+      "sha256": "2C2E5C4F38F68812FE330B0E8364CF411D83E362CD0ADB8ECAADC20B8CB2ECDF",
       "status": "confirmed-static-with-closed-state-gates-and-inferred-interface-slots",
       "consumers": ["T08", "T11"]
     },
@@ -91,7 +91,7 @@
       "id": "E10",
       "sourcePath": "artifacts/investigations/bms-note-batch/README.md",
       "copiedPath": "artifacts/investigations/bms-note-batch/README.md",
-      "sha256": "37B64F06EDFBC7D8F92053F82CD18D672A47B8D8089B1C5B0DCFF4D35ACC1F22",
+      "sha256": "CBD71659829C42E4F0247277D23AA741A122F9BF3016C8E9BDD8D33140FE99EF",
       "status": "confirmed-static-with-explicit-inference",
       "consumers": ["T03", "T06", "T11"]
     },
@@ -155,7 +155,7 @@
       "id": "E18",
       "sourcePath": "artifacts/investigations/equal-position-and-cross-note-mutation/README.md",
       "copiedPath": "artifacts/investigations/equal-position-and-cross-note-mutation/README.md",
-      "sha256": "7ADA4FD567B8B5C142A98AE046BC2E5C5A300A97BB658A2D6C21C3E623D67E9E",
+      "sha256": "F4815999E89BBB3307A56D208C1AF3707901355305297CA7E1A6690E3421CC16",
       "status": "confirmed-static-closure-report",
       "consumers": ["T06", "T07", "T11"]
     },
@@ -187,7 +187,7 @@
       "id": "E22",
       "sourcePath": "artifacts/investigations/ingame-playerloop-pause-gates/closure.json",
       "copiedPath": "artifacts/investigations/ingame-playerloop-pause-gates/closure.json",
-      "sha256": "21690BDBFE498DD7732709D46469E4003AD3C3A79E8630108FBBF73B219CFF3A",
+      "sha256": "6F0EFD625BB32C954CBAF6873CA118A8F2415CA43ECB739FC0F43604A4D9BC01",
       "status": "confirmed-static-closed-g04-g05",
       "consumers": ["T03", "T04", "T07", "T08", "T10", "T11"]
     },

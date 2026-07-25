@@ -1,0 +1,297 @@
+consumer	behavior	evidence
+clock	music position and substeps	../note-scheduling-clock/README.md
+ui	judgement outward display update	../judgement-result-pipeline/README.md
+render	Long and Slide visual lifecycle	../timeout-flick-paths/README.md
+render	NoteMeshAdvanced 42-vertex strip topology	advanced_note_mesh.json
+render	NoteMesh special width-rate branches	../../rhythm/decompiled_bundles/note.c#0x30e2ef4
+render	Transform scale and safe-area endpoint projection	note_mesh_projection.json
+render	note arrival progress and exponential position curve	note_motion_curve.json
+render	NoteBase perspective scale and HighAspectRatio blend	note_scale_projection.json
+render	After Note Wait-state virtual scale	after_note_scale.json
+render	virtual-lane start and goal X override	virtual_lane_projection.json
+render	base and advanced NoteMesh UV and vertex-color arrays	note_mesh_render_data.json
+render	normalMaterial assignment and SetMaterial override	note_mesh_render_data.json
+render	_Threshold activation write and GetSuddenPos formula	note_mesh_render_data.json
+render	Activate Deactivate ResetNote pooled mesh lifecycle	note_mesh_lifecycle.json
+render	Advanced OnUpdate state and Renderer.enabled gates	note_mesh_lifecycle.json
+render	SetupMeshColor RGB override with preserved alpha	note_mesh_lifecycle.json
+audio	standard versus Flick judgement cue	../judgement-result-pipeline/README.md
+audio	held-note sound fade	../timeout-flick-paths/README.md
+control	pause and resume ordering	../application-pause-resume/README.md
+input	lane candidate arbitration and finger ownership	../touch-note-arbitration/README.md
+input	Flick movement thresholds	../timeout-flick-paths/README.md
+judgement	rounded frame result windows	../judgement-result-pipeline/README.md
+judgement	no-input timeout Miss	../timeout-flick-paths/README.md
+hold	physical release tail judgement	../touch-hold-release/README.md
+hold	held sound fade and finger clear	../touch-hold-release/README.md
+hold	tail timeout Miss	../timeout-flick-paths/README.md
+slide	intermediate moved-touch judgement	../touch-hold-release/README.md
+slide	non-end miss damage divided by five	../touch-hold-release/README.md
+hold	in-lane grace reset and decrement	../touch-hold-release/README.md
+hold	Flick and directional end thresholds	../touch-hold-release/README.md
+hold	multiple-count directional threshold	../touch-hold-release/README.md
+control	synthetic button TouchEnded after move success	../touch-hold-release/README.md
+aggregation	OneFrameData Setup field contract	../judgement-result-pipeline/README.md
+aggregation	ReflectOneFrameData display mutation	../judgement-result-pipeline/README.md
+aggregation	OneFrameTotalData representative result	../judgement-result-pipeline/README.md
+score	result type correction before aggregation	../../rhythm/decompiled_bundles/note.c#0x3a76dd8
+score	Combo correction before cached score-up rate	../judgement-result-pipeline/README.md
+skill	Never Die lethal damage leaves five life	../../rhythm/decompiled_bundles/skill.c#0x33dbbe8
+skill	Never Die damage guard type two	../../rhythm/decompiled_bundles/skill.c#0x33dbc00
+resource	note Sprite filename and loader routing	../../rhythm/decompiled_bundles/note.c#0x330b5e8
+resource	Long and curve Slide mesh materials	../../rhythm/decompiled_bundles/note.c#0x330b274
+resource	Long and curve Slide material Resources paths	note_mesh_material_bindings.json
+resource	Long and curve Slide texture resource names	note_mesh_material_bindings.json
+render	NoteMesh shared-material assignment	note_mesh_material_selection.json
+render	isCurved Long versus Curve Slide material selection	note_mesh_material_selection.json
+render	NoteSyncLine position margin and width formulas	note_sync_line_rendering.json
+render	NoteSyncLine material sorting Threshold and lifecycle	note_sync_line_rendering.json
+render	Multiple directional Flick back-line endpoint sorting and width	multiple_directional_flick_back_line.json
+render	Multiple directional Flick left right material selection	multiple_directional_flick_back_line.json
+render	front-note SpriteRenderer assignment visibility and sorting	front_note_sprite_rendering.json
+resource	Normal Flick Long and Slide-head sprite key selection	front_note_sprite_rendering.json
+audio	standard and Flick judgement routing	../judgement-result-pipeline/README.md
+audio	corrected result and Flick cue-name slot routing	judge_cue_routes.json
+audio	CRIWARE cue sheet loader contract	../../il2cpp/method_index_core.csv
+resource	confirmed note filename string literals	../../../static/il2cpp/dump/stringliteral.json
+resource	semantic note kind to confirmed base name	note_filename_bases.json
+resource	button combination format strings	note_filename_format_strings.json
+resource	contiguous ButtonType filename map	../../rhythm/decompiled_bundles/note.c#0x330bf2c
+render	Slide intermediate-node independent transform and lifecycle	slide_intermediate_sprite_rendering.json
+resource	Slide intermediate note_slide_among range-key and invisible Sprite override	slide_intermediate_sprite_rendering.json
+render	per-After-node Slide mesh acquisition and endpoint selection	slide_segment_mesh_rendering.json
+render	Slide segment KillMesh renderer-only lifecycle	slide_segment_mesh_rendering.json
+render	Slide After real-line over-line mesh-kill and Stop gates	slide_after_move_state.json
+runtime	NoteState enum and signed After-node progress	slide_after_move_state.json
+render	Slide Stop visible and movable After traversal	slide_after_stop_state.json
+render	Slide Stop horizontal retargeting and WaitingDeactive transition	slide_after_stop_state.json
+runtime	Slide Stop miss types adjustment delay and MissSecondInterval	slide_after_stop_state.json
+judge	Slide After shared Miss callback reason metadata and one-fifth damage	slide_after_miss_and_deactivate.json
+runtime	WaitingDeactive retention and root-owned After-node pool release	slide_after_miss_and_deactivate.json
+judge	Slide Stop AfterSlower Through Force and ThroughFlick exact selection	slide_after_stop_miss_conditions.json
+runtime	Slide input eight-frame window versus Stop MissSecondInterval separation	slide_after_stop_miss_conditions.json
+runtime	NoteManager clamped ExecuteFrame producer and adaptive substep division	slide_tail_execute_frame.json
+runtime	standalone terminal Slide After Move Stop and miss lifecycle	slide_tail_execute_frame.json
+runtime	NoteManager four-bucket adaptive substep counters and fallback	note_manager_adaptive_substeps.json
+runtime	parsed BMS BPM-change activation gate and performance-state snapshot	note_manager_adaptive_substeps.json
+render	ordinary and directional Slide tail Flick Sprite and top-icon routing	slide_tail_flick_visuals.json
+render	multiple-direction Slide tail icon visibility and sorting order	slide_tail_flick_visuals.json
+runtime	multiple-direction Slide tail NoteState and Sprite propagation	slide_tail_flick_visuals.json
+runtime	multiple-direction Slide tail side-reference cleanup and back-line disable	slide_tail_flick_visuals.json
+runtime	terminal AfterNoteType subclass factory route and Slide A/B pool group	slide_tail_factory_and_z_order.json
+runtime	root and terminal Slide GameNoteType field separation	slide_tail_factory_and_z_order.json
+render	multiple-direction terminal and added-side node Z delta routing	slide_tail_factory_and_z_order.json
+runtime	multiple-direction visual and After-bridge recursive note counts	slide_tail_factory_and_z_order.json
+runtime	NoteManager Slide multiple-direction same-group and terminal bridge selection	slide_tail_side_connection_graph.json
+runtime	LeftNote RightNote LeftNote2 RightNote2 and far-After graph fields	slide_tail_side_connection_graph.json
+render	directed visual-pair and terminal-owned back-line topology	slide_tail_side_connection_graph.json
+runtime	graph-wide NoteState SpriteDisabled and root-reference lifecycle	slide_tail_side_connection_graph.json
+runtime	ChangeLeftNoteUsed recursive partial graph consumption	slide_tail_side_consumption.json
+runtime	ChangeRightNoteUsed recursive partial graph consumption	slide_tail_side_consumption.json
+runtime	visual-owned versus terminal-owned back-line deactivation	slide_tail_side_consumption.json
+runtime	InfoData result-used flags and opposite-edge severing	slide_tail_side_consumption.json
+runtime	multiple-direction back-line Move Stop and Deactive OnUpdate routes	multiple_flick_back_line_update.json
+render	back-line X-sorted endpoint refresh and scale-based width	multiple_flick_back_line_update.json
+runtime	back-line same-update Renderer disable and Deactivate ordering	multiple_flick_back_line_update.json
+runtime	back-line target clearing and pooled GameObject deactivation	multiple_flick_back_line_update.json
+runtime	NoteManager reverse active-note Update then retained-note After phases	note_manager_two_phase_substep_order.json
+runtime	Deactive-only refExecuteNotes filter and append-order dispatch	note_manager_two_phase_substep_order.json
+runtime	adaptive substeps repeat the complete two-phase Note schedule	note_manager_two_phase_substep_order.json
+render	terminal Update-owned versus visual After-owned back-line scheduling	note_manager_two_phase_substep_order.json
+runtime	SetupNotes Move and Deactive callbacks maintain activeNoteList	multiple_flick_active_list_order.json
+runtime	launchNoteList forward activation and active-list tail append order	multiple_flick_active_list_order.json
+runtime	chart information order preservation through multiple-direction setup	multiple_flick_active_list_order.json
+runtime	graph-owned confirmed versus compatibility active-node order	multiple_flick_active_list_order.json
+runtime	fixed reverse index against live activeNoteList mutation	note_manager_active_list_mutation.json
+runtime	OnDeactivate immediate removal and Move reactivation tail append	note_manager_active_list_mutation.json
+runtime	adaptive substep active-list Count refresh	note_manager_active_list_mutation.json
+runtime	append-time refExecuteNotes independence from later removal	note_manager_active_list_mutation.json
+runtime	NoteBase ChangeState initiator-only activation callback	multiple_flick_state_propagation_callbacks.json
+runtime	terminal right-chain then left-chain direct NoteState propagation	multiple_flick_state_propagation_callbacks.json
+runtime	visual-side connected-component direct NoteState propagation	multiple_flick_state_propagation_callbacks.json
+runtime	propagated Deactive members preserved in activeNoteList	multiple_flick_state_propagation_callbacks.json
+runtime	NoteFrontBase Activate Deactive-only guard	multiple_flick_activation_guard_order.json
+runtime	propagation-suppressed launch candidate activation	multiple_flick_activation_guard_order.json
+runtime	terminal-first versus side-component-first active subset	multiple_flick_activation_guard_order.json
+runtime	empty visual Move Wait and Stop state handlers	multiple_flick_activation_guard_order.json
+render	back-line Setup endpoint and zero-width initialization	multiple_flick_back_line_setup_lifecycle.json
+render	Setup omission of Renderer enabled write	multiple_flick_back_line_setup_lifecycle.json
+runtime	BackLine Deactivate ResetNote and pool reuse state	multiple_flick_back_line_setup_lifecycle.json
+render	inactive owner preserves Setup state without After refresh	multiple_flick_back_line_setup_lifecycle.json
+render	back-line prefab serialized Renderer enabled true	multiple_flick_back_line_prefab_defaults.json
+render	back-line prefab null material and zero sorting defaults	multiple_flick_back_line_prefab_defaults.json
+render	back-line prefab constant 0.28 width curve	multiple_flick_back_line_prefab_defaults.json
+render	back-line prefab Transform local Z 0.99	multiple_flick_back_line_prefab_defaults.json
+render	back-line left and right Material serialized assets	multiple_flick_back_line_material_shader.json
+render	back-line shared star Transparent Colored Shader	multiple_flick_back_line_material_shader.json
+render	back-line transparent blend ZWrite and Cull state	multiple_flick_back_line_material_shader.json
+render	back-line serialized threshold 750 and runtime override	multiple_flick_back_line_material_shader.json
+render	back-line Setup preserves zero sorting values	multiple_flick_back_line_material_shader.json
+render	directional Flick skin bundle naming and loader route	multiple_flick_back_line_texture_boundary.json
+render	back-line external FlickNoteLine left texture assignment	multiple_flick_back_line_texture_boundary.json
+render	back-line external FlickNoteLine right texture assignment	multiple_flick_back_line_texture_boundary.json
+render	back-line directional-enabled texture load guard	multiple_flick_back_line_texture_boundary.json
+render	back-line GLES and Vulkan platform program blocks	multiple_flick_back_line_shader_programs.json
+render	back-line LOD 200 texture alpha and Threshold formula	multiple_flick_back_line_shader_programs.json
+render	back-line LOD 100 textured vertex-color fallback	multiple_flick_back_line_shader_programs.json
+render	back-line Unity Vulkan snippet container and Smol-V ranges	multiple_flick_back_line_shader_programs.json
+render	back-line four decoded standard SPIR-V module hashes	multiple_flick_back_line_shader_programs.json
+render	back-line Vulkan LOD 200 texture alpha and Threshold parity	multiple_flick_back_line_shader_programs.json
+render	back-line Vulkan LOD 100 textured fallback parity	multiple_flick_back_line_shader_programs.json
+render	current JP directional Flick bundle inventory	multiple_flick_back_line_texture_pixels.json
+render	back-line twelve external PNG hashes and PathIDs	multiple_flick_back_line_texture_pixels.json
+render	back-line common 10x78 row alpha profile	multiple_flick_back_line_texture_pixels.json
+render	back-line per-skin outer and core RGB profiles	multiple_flick_back_line_texture_pixels.json
+render	MasterData default directional skin selection boundary	multiple_flick_back_line_texture_pixels.json
+render	explicit texture profile to Shader-input integration	multiple_flick_back_line_texture_pixels.json
+render	back-line serialized Stretch and View LineRenderer contract	multiple_flick_back_line_line_renderer_uv.json
+render	back-line managed UV override API absence	multiple_flick_back_line_line_renderer_uv.json
+render	back-line U and V reversal texture invariance	multiple_flick_back_line_line_renderer_uv.json
+render	back-line camera-facing canonical quad and Stretch UVs	multiple_flick_back_line_line_renderer_uv.json
+render	back-line Release data-version hash Android URL construction	multiple_flick_back_line_asset_bundle_acquisition.json
+render	back-line per-bundle Path.Combine and timestamp cache buster	multiple_flick_back_line_asset_bundle_acquisition.json
+render	application API headers and dataVersion acquisition boundary	multiple_flick_back_line_asset_bundle_acquisition.json
+render	Bestdori exported bundle versus original AssetBundle boundary	multiple_flick_back_line_asset_bundle_acquisition.json
+render	back-line historical Texture2D import boundary superseded	multiple_flick_back_line_asset_bundle_acquisition.json
+render	AppGet empty account-header and AES-CBC response chain	multiple_flick_back_line_original_texture_settings.json
+render	validated sample dataVersion 10.1.0.200	multiple_flick_back_line_original_texture_settings.json
+render	AssetBundle UnityWebRequest without custom headers or Range	multiple_flick_back_line_original_texture_settings.json
+render	original directionalflickskin00 UnityFS object identity	multiple_flick_back_line_original_texture_settings.json
+render	back-line Bilinear Clamp one-mip sRGB import settings	multiple_flick_back_line_original_texture_settings.json
+render	back-line readable and non-streaming Texture2D flags	multiple_flick_back_line_original_texture_settings.json
+render	confirmed skin00 Clamp Bilinear sRGB CPU sampler	multiple_flick_back_line_original_texture_settings.json
+render	all six current JP original directional Flick bundles	multiple_flick_back_line_cross_skin_texture_settings.json
+render	cross-version catalog hash CRC and file-size identity	multiple_flick_back_line_cross_skin_texture_settings.json
+render	cross-skin common Bilinear Clamp one-mip sRGB contract	multiple_flick_back_line_cross_skin_texture_settings.json
+render	cross-skin readable true and false partition	multiple_flick_back_line_cross_skin_texture_settings.json
+render	all-profile confirmed CPU sampler settings map	multiple_flick_back_line_cross_skin_texture_settings.json
+render	transient CDN 403 versus propagated edge 200 boundary	multiple_flick_back_line_cross_skin_texture_settings.json
+render	Long Curve Slide and Sync APK Material assets	note_mesh_material_shader_assets.json
+render	shared star/Star Transparent Colored Shader identity	note_mesh_material_shader_assets.json
+render	per-Material serialized Threshold defaults and runtime overrides	note_mesh_material_shader_assets.json
+render	shared GLES and Vulkan fragment semantics reuse	note_mesh_material_shader_assets.json
+render	five AVD-cached normal note-skin UnityFS bundles	note_mesh_texture_profiles.json
+render	ten Long and curve Slide Texture2D profiles	note_mesh_texture_profiles.json
+render	Bestdori PNG to original UnityFS RGBA byte identity	note_mesh_texture_profiles.json
+render	Long and curve Slide Bilinear Clamp one-mip sRGB sampler	note_mesh_texture_profiles.json
+render	runtime note-skin texture selection on MeshGeometry	note_mesh_texture_profiles.json
+render	NoteManager simultaneous_line Sprite load chain	sync_note_line_texture_profiles.json
+render	five original sync Sprite and Texture2D PPtr pairs	sync_note_line_texture_profiles.json
+render	sync-line RGBA32 Bilinear Clamp one-mip sRGB settings	sync_note_line_texture_profiles.json
+render	Bestdori transparent-RGB non-equivalence boundary	sync_note_line_texture_profiles.json
+render	runtime sync-line texture selection on SyncLineGeometry	sync_note_line_texture_profiles.json
+render	NoteSyncLine prefab LineRenderer serialized defaults	sync_note_line_prefab_defaults.json
+audio	TapSE and DirectionalFlickSE cue sheets ACB paths and exported cue identities	judge_cue_audio_assets.json
+audio	AVD production UnityFS original ACB embedded AWB and nine HCA stream profiles	judge_cue_acb_runtime_assets.json
+audio	ACB UTF cue Sequence noteOn Synth Waveform chains and playback controls	judge_cue_acb_playback_controls.json
+audio	current sound/common TutorialProject ACF MasterOut DSP category and build-time identity boundary	judge_audio_global_acf.json
+audio	bootstrap and sound/common ACF registration chain with empty managed DSP selection	judge_audio_acf_registration_dsp_selection.json
+audio	judgement SE volume pitch pan seek and low-latency resource-pool controls	judge_audio_player_controls.json
+audio	serialized CRI Atom native output sampling buffering renderer and voice-pool configuration	judge_audio_native_output_config.json
+audio	managed Native renderer requests zero low-latency pool allocation and exact CRI renderer matching boundary	judge_audio_native_low_latency_pool_behavior.json
+audio	manual rhythm-adjust phase sampling and placeholder Android latency-estimator state boundary	judge_audio_rhythm_adjust_latency_state_machine.json
+timing	judgement adjustment settings protobuf and asymmetric music gameplay frame-delay consumption	judge_timing_adjustment_consumption_chain.json
+timing	judgement adjustment durable AES save transaction and complete secondary gameplay consumer classification	judge_timing_adjustment_persistence_and_secondary_consumers.json
+render	RhythmGame scene button launcher note-start and virtual-lane projection constants	rhythm_game_scene_projection_constants.json
+render	screen-width-adjusted button launcher note-start and virtual-lane position propagation	rhythm_game_screen_width_projection.json
+render	screen-width-derived note-setting and particle scale pipeline	rhythm_game_multiresolution_scale_pipeline.json
+render	StarUIManager screen safe-area and reciprocal ratio pipeline	rhythm_game_safe_area_ratio_pipeline.json
+score	standard result Combo base-score and representative-result pipeline	rhythm_game_standard_score_pipeline.json
+chart	NoteBatchInformation and NoteInformation root terminal and multiple-direction adapter	bms_note_information_adapter.json
+chart	batch finalize RemoveAll order endpoint-aware After candidate pairing and front sync chain	batch_finalize_and_front_sync.json
+chart	Multiple Directional outward far-endpoint reconnect projection	batch_finalize_and_front_sync.json
+render	front Long-end Slide-end and Slide-side sync endpoint geometry	runtime_integration.py
+chart	production BMS Single Directional Long and source Slide canonical field oracle	production_bms_validation.json
+chart	runtime Bezier Slide author-node ordered-subsequence validation	production_bms_validation.json
+chart	production HABAHIRO CC-derived Single Directional Long and Slide lane oracle	production_habahiro_bms_validation.json
+chart	production HABAHIRO Slide main-path support-node and runtime-subsequence validation	production_habahiro_bms_validation.json
+chart	HABAHIRO lane-change command separation before playable-note sync planning	habahiro_lane_change.json
+runtime	HABAHIRO marker-position Animation.Play trigger and explicit ChangeLane animation event	habahiro_lane_change.json
+render	HABAHIRO two-texture and two-sprite field-line skin transition	habahiro_lane_change.json
+gameplay	Skill-note mode eligibility and local MultiNormal ownership	skill_fever_consumers.json
+gameplay	root Skill Great/Perfect enqueue and Good/Bad/Miss failure routing	skill_fever_consumers.json
+network	Skill played-index and failed-flag reservation	skill_fever_consumers.json
+gameplay	root and terminal Fever judgement consumers	skill_fever_consumers.json
+score	five-difficulty Fever Great/Perfect point and progress table	skill_fever_consumers.json
+chart	BMS basic BPM string and CC03/CC08 command separation	bpm_state_transition.json
+runtime	first source-ordered BPM command activation per arriving batch	bpm_state_transition.json
+timing	192-unit bar/beat BPM crossing and backward state restoration	bpm_state_transition.json
+audio	BPM value and original string update callback boundary	bpm_state_transition.json
+gameplay	Situation Skill None Begin Playing and Finishing state machine	skill_playback_state_machine.json
+gameplay	Skill duration effective timer Encore reservation and queue order	skill_playback_state_machine.json
+score	fixed and percentage one-shot life restoration with under-life gate	skill_playback_state_machine.json
+runtime	Skill finish callback item-zero removal 0.75-second delay and Stop drain	skill_playback_state_machine.json
+gameplay	FeverReady FeverStart and FeverEnd command-to-state transitions	fever_command_state_machine.json
+network	own-team member point eighty pass-condition aggregation	fever_command_state_machine.json
+score	FeverLevel one exact two-times score rate gate	fever_command_state_machine.json
+runtime	Fever command callback then next-frame effect reservation	fever_command_state_machine.json
+gameplay	Skill judge-effect correction before note consumers	skill_activate_effect_consumers.json
+gameplay	Skill damage fixed rate zero-guard and Never Die consumers	skill_activate_effect_consumers.json
+score	Skill result life continuous Perfect-only under-Great and Crescendo rate branches	skill_activate_effect_consumers.json
+runtime	per-frame adjusted-result score-type damage-guard and Never Die retention	runtime_integration.py
+ui	Life Heal Damage Guard and Never Die Skill presentation gates	skill_ui_consumers.json
+ui	Score Up 0x5F1 effect mask and eligible-heal suppression	skill_ui_consumers.json
+ui	judge-effect button-line adjustment presentation	skill_ui_consumers.json
+render	per-Skill psyllium mode and character-color selection boundary	skill_ui_consumers.json
+runtime	once-effect life callback and UI visual finish lifecycle	runtime_integration.py
+audio	concrete Skill and Audience CRI cue routing	skill_se_routing.json
+runtime	practice-mode Audience suppression and cue-before-callback order	skill_se_routing.json
+audio	production RhythmGameSE cue IDs Sequence Track Synth Waveform and MemoryAwbId chains	skill_se_acb_profile.json
+audio	Skill and Audience HCA offsets sample profiles MasterOut and raw priority controls	skill_se_acb_profile.json
+ui	Life Heal Damage Guard and Never Die exact shared Animator overwrite order	../skill-ui-animation-helpers/skill_ui_animation_helpers.json
+ui	Life exact gauge and icon sprites WHITE_ALPHA colors and finish lifecycle	../skill-ui-animation-helpers/skill_ui_animation_helpers.json
+ui	ScoreUpGauge and SkillAdjustEffect exact Animator lifecycle	../skill-ui-animation-helpers/skill_ui_animation_helpers.json
+render	Psyllium Skill Fever Normal and before-color restore branches	../skill-ui-animation-helpers/skill_ui_animation_helpers.json
+asset	RhythmGame scene three controllers and four 60 Hz clip profiles	../skill-ui-animation-helpers/skill_ui_animation_helpers.json
+render	four Skill UI clip streamed cubic coefficients and constant channels	../skill-ui-animation-curves/skill_ui_animation_curves.json
+runtime	backend-neutral Skill UI clip clamp loop and polynomial evaluator	runtime_integration.py
+score	Team Live Festival Judge Combo and Life stage-rate product	../event-score-multipliers/event_score_multipliers.json
+score	Festival stage multiplier excludes Free Live event-bonus score	../event-score-multipliers/event_score_multipliers.json
+runtime	ordinary and Free Live event-bonus one-note maximum records	runtime_integration.py
+score	active-member three-parameter total and play-level base-score construction	../base-score-construction/base_score_construction.json
+chart	analyzeBMS maximum Note count and InGameRecord final store	../base-score-construction/base_score_construction.json
+runtime	onAwakeEnd maximum-count load and InitBaseScore call order	../base-score-construction/base_score_construction.json
+score	multiplayer single-player Game Over base-score dispatch	../base-score-construction/base_score_construction.json
+score	Festival Auto Live result-correction bypass and real-value Skill addition	../base-score-construction/base_score_construction.json
+score	Versus and Festival Free Live event-bonus setup gate	../free-live-event-bonus-construction/free_live_event_bonus_construction.json
+score	original Area Item and event-buff member parameter construction	../free-live-event-bonus-construction/free_live_event_bonus_construction.json
+runtime	structured Free Live event-bonus deck profile and base-score input	runtime_integration.py
+runtime	noneligible setup no-op and normal post-game bonus clear	../free-live-event-bonus-construction/free_live_event_bonus_construction.json
+score	character attribute paired situation and limit-break event-percent sources	../free-live-event-bonus-construction/free_live_event_bonus_construction.json
+score	event character-parameter weighted flat value and target priority	../free-live-event-bonus-construction/free_live_event_bonus_construction.json
+asset	standard skin01 Note Sprite atlas names Rect pivots PPU and Texture2D PathIDs	../note-sprite-atlas-bindings/sprite_bindings.tsv
+asset	directional Flick skin01 Sprite atlas names Rect pivots PPU and Texture2D PathIDs	../note-sprite-atlas-bindings/sprite_bindings.tsv
+resource	verified external Note atlas URL and SHA-256 catalog bindings	resource_manifest.json
+resource	ordinary skin lacks contiguous combination names and returns null	../note-sprite-combination-lookup/README.md
+resource	Habahiro profile supplies all contiguous main-family Sprite names	../note-sprite-combination-lookup/habahiro_sprite_bindings.tsv
+runtime	chart-level normal Habahiro and directional noteskin routing	runtime_integration.py
+scene	GameCamera orthographic projection and GetScreenSize consumption	../rhythm-game-camera-projection/camera_projection.json
+runtime	orthographic world-to-pixel and projection-config construction	runtime_integration.py
+render	normal Habahiro and directional Sprite atlas software draw	software_renderer.py
+render	mesh UV vertex-color Shader threshold and alpha rasterization	software_renderer.py
+render	deterministic RenderState and RuntimeIntegration PNG frame	../software-render-backend/validation_results.json
+asset	ordinary and directional original judgement-particle prefab inventories	../gameplay-button-particle-routing/gameplay_button_particle_routing.json
+render	GamePlayButton result jump table and prefab routing	../gameplay-button-particle-routing/gameplay_button_particle_routing.json
+runtime	per-button ParticleSystem Play Clear Stop and TapKeep lifecycle	runtime_integration.py
+render	all 120 serialized gameplay particle system module profiles	../gameplay-particle-simulation/gameplay_particle_profiles.json
+runtime	deterministic burst rate lifetime motion size color rotation and UV particle simulation	particle_simulation.py
+asset	8 hash-pinned particle texture sources and material shader bindings	../gameplay-particle-simulation/particle_texture_sources.json
+render	particle billboard stretched billboard UV frame sorting and blend rasterization	software_renderer.py
+asset	Combo NGUI atlases scene hierarchy and UISpriteNumber layout	../hud-combo-rendering/hud_combo_rendering.json
+render	ordinary Combo digits and unit in the software frame	software_renderer.py
+ui	Combo changed-value show timer and root-scale animation	../hud-combo-animation/hud_combo_animation.json
+ui	All Perfect result gate child replay and alpha loop	../hud-combo-animation/hud_combo_animation.json
+scene	Score AddScore Result and JudgeTiming shared level3 assembly	../hud-score-result-rendering/hud_score_result_rendering.json
+ui	eight-digit zero-filled Score BMFont and leading-zero color split	../hud-score-result-rendering/hud_score_result_rendering.json
+runtime	four-slot eight-depth AddScore animation and one-second Result lifetime	runtime_integration.py
+render	original Score BMFont and AddScore Sprite digit software rendering	software_renderer.py
+ui	judgement Sprite names Fast Slow gate and ScoreUpType overlays	../hud-score-result-rendering/hud_score_result_rendering.json
+ui	exact Score ColorUtility tints and Judge atlas boundary	../hud-judge-color-rendering/hud_judge_color_rendering.json
+render	default downloaded Judge atlas and Fast Slow software rendering	../hud-judge-atlas-rendering/hud_judge_atlas_rendering.json
+scene	Life Gauge pointers sliders sprites and dynamic font	../hud-life-rendering/hud_life_rendering.json
+runtime	Life primary second color warning and game-over visual state	runtime_integration.py
+render	NGUI sliced Life Gauge fill warning and embedded-font label	software_renderer.py
+runtime	LifeHealGauge controller assignment to scene Animator 886	../hud-life-rendering/hud_life_rendering.json
+scene	Life Skill SpriteBase SpriteIcon and four dynamic Sprite bindings	../hud-skill-overlay-rendering/hud_skill_overlay_rendering.json
+runtime	Life Skill overlay animation clock and pause freeze	runtime_integration.py
+render	Life Heal Damage Guard and Never Die overlay software rendering	software_renderer.py

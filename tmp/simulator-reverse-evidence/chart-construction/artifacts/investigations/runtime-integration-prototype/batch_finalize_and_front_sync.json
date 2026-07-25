@@ -1,0 +1,88 @@
+{
+  "version": 2,
+  "status": "confirmed-static-endpoint-aware-sync-integration",
+  "locked_sample": "jp.co.craftegg.band 10.1.3 (229) arm64-v8a",
+  "function_boundaries": [
+    "NoteBatchInformationListFactory.excuteNecessaryEndTimeAndSynchronizedNoteConduct 0x376FB74..0x376FE3C",
+    "NoteBatchInformationListFactory.<excuteNecessaryEndTimeAndSynchronizedNoteConduct>b__25_0 0x37722B8..0x37722FC",
+    "NoteBatchInformationListFactory.<excuteNecessaryEndTimeAndSynchronizedNoteConduct>b__25_1 0x37722FC..0x3772300",
+    "NoteBatchInformationListFactory.<excuteNecessaryEndTimeAndSynchronizedNoteConduct>b__25_2 0x3772300..0x3772348",
+    "NoteBatchInformationListFactory.<>c.<excuteNecessaryEndTimeAndSynchronizedNoteConduct>b__25_3 0x3772400..0x3772418",
+    "NoteManager.activateNoteAndConnectSyncLine 0x37793F8..0x3779F74",
+    "NoteManager.isMultipleDirectionalFlickSameGroupNotes 0x377A140..0x377A18C",
+    "NoteManager.syncLineReconnect 0x377A18C..0x377A264",
+    "NoteManager.isSameGroupNoteFrontAndAfterNote 0x377A4A0..0x377A728",
+    "NoteManager.setupSyncLineForFrontAndLongNoteEnd 0x377A728..0x377ABF8",
+    "NoteManager.setupSyncLineForLongNoteEnd 0x377ABF8..0x377AF8C",
+    "NoteManager.syncLineReconnectAfterMultiNotes 0x377AF8C..0x377B494",
+    "NoteManager.getFarNote 0x377B494..0x377B650",
+    "NoteManager.isAdjacentTwoNotes 0x377B770..0x377B7AC"
+  ],
+  "finalize_remove_all_order": [
+    {
+      "predicate": "b__25_0",
+      "rule": "remove GameNoteType Long, LongDirectionalFlickLeft or LongDirectionalFlickRight when buttonType is -1"
+    },
+    {
+      "predicate": "b__25_1",
+      "rule": "tail-branch to checkDeleteBgmNote; remove an otherwise unsupported buttonType -1 record only when its unbaked ButtonTypes and SoundValueList are empty and AfterNoteType is neither DirectionalFlickRight nor SlideFlickEnd"
+    },
+    {
+      "predicate": "b__25_2",
+      "rule": "remove non-head SlideA, SlideB and terminal directional Slide types 4..9 and 14..17"
+    },
+    {
+      "predicate": "b__25_3",
+      "rule": "remove records marked IsMultiRangeCombine"
+    }
+  ],
+  "finalize_ordering": {
+    "generic_method": "System.Collections.Generic.List<NoteInformation>.RemoveAll",
+    "method_info_slot": "0x6F27E70",
+    "consequence": "the four passes delete members without reordering surviving informationList entries"
+  },
+  "front_sync_rule": {
+    "activation_order": "informationList index zero upward",
+    "ordinary_connection": "the later activated front calls NoteBase.SetupSyncLine with the preceding eligible front as sync target",
+    "multiple_directional_exclusion": "adjacent FrontNoteType MultipleDirectionalFlick members with the same GameNoteType use the dedicated back-line route",
+    "direction_group_exclusion": "Long and Slide additional directional members use IsSameDirectionGroup and tail reconnection instead of the ordinary front chain",
+    "integrated_scope": "all projected front roots retain source activation order; ordinary fronts chain, while arriving Long or Slide After candidates take priority at the same absolute position"
+  },
+  "after_sync_rule": {
+    "candidate_lifetime": "a Long or Slide root contributes its future terminal After endpoint; candidates older than the current batch position expire",
+    "front_priority": "setupSyncLineForFrontAndLongNoteEnd scans candidate order and connects the first same-position After that is not a same-group multiple-direction support relation",
+    "remaining_pairing": "setupSyncLineForLongNoteEnd connects the first two remaining same-position After endpoints; ordinary endpoints are then removed",
+    "multiple_retention": "AfterNoteType 4, 5, 11 and 12 remain eligible for the subsequent multiple-direction reconnect pass"
+  },
+  "far_endpoint_rule": {
+    "tuple_order": "getFarNote returns the instantiated note group's far-left and far-right endpoints through virtual methods",
+    "reconnect": "syncLineReconnectAfterMultiNotes compares endpoint X and replaces each side with the outward far endpoint",
+    "adapter_projection": "SyncEndpointSpec records front/end and left/right endpoint identity; Slide endpoints additionally preserve the selected side-node id"
+  },
+  "implementation": {
+    "file": "runtime_integration.py",
+    "entries": [
+      "note_specs_from_information_batches",
+      "_apply_endpoint_sync_connections",
+      "RuntimeIntegration.update local resolve_sync_endpoint"
+    ],
+    "tests": [
+      "test_note_information_batch_connects_simple_fronts_in_source_order",
+      "test_note_information_batch_connects_long_tail_before_front_chain",
+      "test_note_information_batch_reconnects_multiple_directional_far_edge",
+      "test_note_information_batch_pairs_two_ordinary_long_ends",
+      "test_note_information_batch_selects_long_multiple_far_end",
+      "test_note_information_batch_selects_slide_far_side_node",
+      "test_runtime_renders_long_end_to_front_sync_connection",
+      "test_runtime_renders_slide_far_side_sync_endpoint"
+    ]
+  },
+  "inference": [
+    "filtered additional support records are represented by the owning NoteSpec far endpoint rather than independent playable NoteSpec objects",
+    "the adapter's lane and source-order extrema stand in for the instantiated virtual GetFarLeft and GetFarRight receiver results"
+  ],
+  "unresolved": [
+    "the serialized NoteManager noteSyncEdgeMargin value remains caller supplied",
+    "live object state can still remove or reconnect a line after activation; the static planner projects construction order and endpoint identity, not runtime callback timing"
+  ]
+}

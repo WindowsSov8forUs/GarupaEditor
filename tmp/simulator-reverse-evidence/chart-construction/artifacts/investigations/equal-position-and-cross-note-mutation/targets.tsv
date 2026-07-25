@@ -1,0 +1,12 @@
+rva	end_rva	owner	method	closure	evidence
+0x376ea70	0x376ef2c	NoteBatchInformationListFactory	CreateNoteBatchInformationList	G02	decompiled/native_ranges.txt
+0x3773264	0x3773ac0	NoteDataBMSBuilder	createBarData	G02	decompiled/native_ranges.txt
+0x3773b00	0x3774174	NoteDataBMSBuilder	createNoteData	G02	decompiled/native_ranges.txt
+0x386f6a0	0x386f6e4	BMSNoteMaterial	CompareTo	G02	../../rhythm/decompiled_bundles/note.c#0x386f6a0
+0x376f0fc	0x376f8a8	NoteBatchInformationListFactory	convertResultDictionary	G02	../bms-note-batch/decompiled/convert_result_dictionary.c
+0x37760c0	0x377644c	NoteManager	ExecUpdate	G03	../runtime-integration-prototype/note_manager_active_list_mutation.json
+0x3a74e5c	0x3a74ec8	NoteBase	ChangeState	G03	decompiled/xrefs.json
+0x30e821c	0x30e8220	NoteAddSlideMultipleDirectionalFlickVisual	MoveState	G03	../runtime-integration-prototype/multiple_flick_activation_guard_order.json
+0x30e84ec	0x30e84f0	NoteAddSlideMultipleDirectionalFlickVisual	WaitState	G03	../runtime-integration-prototype/multiple_flick_activation_guard_order.json
+0x30e8640	0x30e8644	NoteAddSlideMultipleDirectionalFlickVisual	StopState	G03	../runtime-integration-prototype/multiple_flick_activation_guard_order.json
+0x32227b4	0x32228b8	NoteSlideMultipleDirectionalFlickAfter	ChangeSideNoteUsed	G03	decompiled/native_ranges.txt

@@ -1,0 +1,24 @@
+{
+  "locked_sample": "jp.co.craftegg.band 10.1.3 (229) arm64-v8a",
+  "status": "confirmed_static",
+  "g02": {
+    "status": "closed",
+    "outer_order": "BMSBarData.bmsNoteList_ preserves button-group first-occurrence order from the parsed BMS line stream",
+    "inner_order": "BMSBarDataWithButton.noteList_ is maintained by BMSNoteMaterial absolutePos comparison",
+    "equal_same_button": "equal absolutePos reuses the existing material and does not create a second ordered member",
+    "equal_different_button": "runtime members retain outer button-group first-occurrence order",
+    "first_slice_rule": "a preconstructed NoteBatchInformation.informationList is consumed verbatim without a synthetic sourceOrder or lane/button sort"
+  },
+  "g03": {
+    "status": "closed_scoped_negative",
+    "confirmed_scheduler": "fixed descending index reads the live active list and refreshes Count only at the next adaptive substep",
+    "confirmed_mutation": "self deactivation removes the current Note immediately and activation appends a missing Note",
+    "excluded_synthetic_behavior": "the first slice has no confirmed represented Update caller that removes a different lower-index active Note",
+    "deferred_caller": "multiple-direction graph consumption belongs to later judgement/input behavior and must be introduced with its caller timing evidence",
+    "first_slice_rule": "do not expose a fabricated cross-Note mutation hook"
+  },
+  "unresolved": [
+    "live-device chart examples are optional corroboration and are not used to replace the static construction rule",
+    "judgement-driven multiple-direction side consumption remains outside the first-slice behavior scope"
+  ]
+}

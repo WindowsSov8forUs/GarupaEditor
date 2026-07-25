@@ -10,7 +10,7 @@
 - 排除的逆向仓库内容：未跟踪的 `runtime/tools/` 及任何未进入锁定提交的文件
 - 锁定游戏样本：`jp.co.craftegg.band` 10.1.3（version code 229，`arm64-v8a`）
 - 阶段目标：从原始 BMS 文本恢复原作 `MusicScoreBezierConverter -> NoteDataBMSBuilder -> NoteBatchInformationListFactory` 构造链，并产出原作形状的 `NoteBatchInformationList`。
-- 阶段状态：C01–C10 尚未实施；本文件是该阶段唯一执行任务书。
+- 阶段状态：C01 已完成，C02–C10 尚未实施；本文件是该阶段唯一执行任务书。
 
 本阶段继续维持 GarupaEditor 当前 TypeScript 技术栈方向。Reverse 仓库中的 Python 原型只能作为离线 oracle，不能成为模拟器运行依赖。实施者不得从已删除的 GarupaEditor 模拟器、常见 BMS 实现、通用曲线库、个人经验或方便实现的默认值补齐原作行为。
 
@@ -18,7 +18,7 @@
 
 | 任务 | 状态 | 结果 |
 | --- | --- | --- |
-| C01 冻结谱面构造证据包 | 待实施 | 尚未创建证据目录、manifest 或离线生产样本 |
+| C01 冻结谱面构造证据包 | 已完成 | 已冻结 E01–E18、F01–F04、22 项 manifest、开放缺口和三方哈希校验器 |
 | C02 建立构造边界与 API | 待实施 | 尚未建立原作构造对象和可移植纯函数入口 |
 | C03 恢复 Header 与 Bezier 转换 | 待实施 | 尚未恢复控制 WAV、曲线采样、量化和文本重组 |
 | C04 恢复 BMS 文本解析 | 待实施 | 尚未恢复 Header、小节、CC、WAV 和 Note material 构造 |
@@ -28,6 +28,20 @@
 | C08 恢复 BPM、Skill 与 Fever 构造数据 | 待实施 | 尚未恢复命令记录的数据边界和失败关闭条件 |
 | C09 恢复终结过滤与同步准备 | 待实施 | 尚未恢复四次过滤和同步所需端点身份 |
 | C10 建立生产 oracle、隔离测试与验收 | 待实施 | 尚未建立离线生产验证和阶段验收记录 |
+
+### 1.2 批次记录
+
+#### 2026-07-26 第一批：C01 证据冻结
+
+- Reverse `HEAD` 已确认等于 `74ab76f6838847d98aae1a15741a5f024e3774ff`；工作树只有明确排除的未跟踪 `runtime/tools/`。
+- E01–E18 已按 Reverse 原目录结构冻结到 `tmp/simulator-reverse-evidence/chart-construction/artifacts/`。
+- F01–F04 已从 E11/E12 登记 URL 下载到 `fixtures/`；四个文件的字节数与 SHA-256 全部匹配本任务书第 4.3 节。
+- `manifest.json` 已登记 22 项证据和样本的来源类型、源提交或 URL、冻结路径、字节数、完整 SHA-256、确认状态与消费任务。
+- `.gitattributes` 已对本证据包设置 `-text -whitespace`，保留原始 BMS 中受哈希保护的尾随空格、末尾空行和换行字节，同时避免 `git diff --check` 把原作字节报告为待修格式问题。
+- `OPEN_GAPS.md` 已登记非零 BPM 生产 oracle、`noteSyncEdgeMargin`、激活后同步线生命周期和命令记录消费者四项开放边界。
+- `verify.mjs` 已验证 Reverse 提交与工作树边界、18 份源证据与冻结副本、4 份离线样本以及 Git 索引中的字节数和 SHA-256。
+- 本批不创建模拟器代码，不修改第一切片实现，不运行 TypeScript 检查、模拟器测试、Vite/Tauri 构建或 GarupaEditor 整体构建。
+- 本批验证命令为 `node tmp/simulator-reverse-evidence/chart-construction/verify.mjs`、暂存后的 `node tmp/simulator-reverse-evidence/chart-construction/verify.mjs --index` 和 `git diff --check`。
 
 ## 2. 固定范围
 
