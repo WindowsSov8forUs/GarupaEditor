@@ -5,7 +5,7 @@
 - 目标分支：`codex/refactor-simulator-implementation`
 - 上级计划：`tmp/simulator-reconstruction-plan.md`
 - 唯一原作证据仓库：`HOST________\VSCode\GirlsBandParty-Reverse`
-- 锁定证据提交：`0ad31d30ead506913406006c4417047cf61e95a4`
+- 锁定证据提交：`326b305f14121d7a0e7e046410dac993147360cb`
 - 锁定游戏样本：`jp.co.craftegg.band` 10.1.3（version code 229，`arm64-v8a`）
 - 第一切片目标：建立原作引擎对象边界与确定性生命周期框架，不交付可见画面、音频、真实输入或主程序入口。
 - 第一切片状态：T01–T11 已完成，验收结果见 `tmp/simulator-first-slice-acceptance.md`。
@@ -16,13 +16,13 @@
 
 | 任务 | 状态 | 最近批次 | 结果 |
 | --- | --- | --- | --- |
-| T01 冻结第一切片证据包 | 已完成 | 2026-07-26 G01/G06 闭合批 | 已冻结 E01–E16、manifest、夹具目录和证据缺口 |
+| T01 冻结第一切片证据包 | 已完成 | 2026-07-26 G02/G03 闭合批 | 已冻结 E01–E21、manifest、夹具目录和证据缺口 |
 | T02 建立目录与依赖边界 | 已完成 | 2026-07-26 第二批 | 已建立 host、engine、backends、testing 与隔离类型检查 |
 | T03 定义证据门和宿主 API | 已完成 | 2026-07-26 第二批 | 已建立结构化证据结果和可移植宿主生命周期接口 |
 | T04 建立原作管理器对象图 | 已完成 | 2026-07-26 第二批 | 已建立首批原作 owner、所有权和行为证据门 |
 | T05 建立音符类型与状态框架 | 已完成 | 2026-07-26 第二批 | 已建立 Front/After、Long/Slide/Flick 派生族和四态分派 |
-| T06 恢复 SetupNotes、对象池和活跃列表 | 已完成 | 2026-07-26 第三批 | 已建立夹具派生分族池、环形游标和激活/失活列表回调 |
-| T07 恢复确定性子步调度 | 已完成 | 2026-07-26 G01/G06 闭合批 | 已恢复双音乐时钟、完整自适应子步、固定反向 Update、存活 AfterUpdate 和单组末尾激活 |
+| T06 恢复 SetupNotes、对象池和活跃列表 | 已完成 | 2026-07-26 G02/G03 闭合批 | 已按预构造 informationList 原序建立分族池、环形游标和激活/失活列表回调 |
+| T07 恢复确定性子步调度 | 已完成 | 2026-07-26 G02/G03 闭合批 | 已恢复双时钟、自适应子步、固定反向 Update，并关闭合成跨 Note 移除边界 |
 | T08 建立暂停与恢复框架 | 已完成 | 2026-07-26 第三批 | 已建立冻结调度的暂停门和抽象记录后端状态广播 |
 | T09 建立 OneFrameData 容器框架 | 已完成 | 2026-07-26 第四批 | 已建立控制器独占容器池、获取/占用/收集与统一 Reflect 边界 |
 | T10 建立记录后端和快照 | 已完成 | 2026-07-26 第四批 | 已建立五类无副作用记录端口和稳定第一切片快照 |
@@ -49,6 +49,14 @@
 - 实现和快照已移除 G01/G06 开放状态，保留 G02–G05。
 - 定向测试由 13 项扩展为 18 项；仍不运行 GarupaEditor 整体构建。
 
+#### 2026-07-26 G02/G03 闭合批：等位置顺序与活跃列表突变
+
+- Reverse 在 `326b305f14121d7a0e7e046410dac993147360cb` 闭合按钮组首次出现顺序、组内绝对位置排序和相同按钮同位置合并规则。
+- E17–E21 已冻结到临时证据包；manifest 锁定提交同步更新，仍排除未跟踪 `runtime/tools/`。
+- 第一切片继续直接消费预构造 `NoteBatchInformation.informationList`，删除无原作字段依据的 `sourceOrder`，不执行 lane、button、位置或类型排序。
+- G03 以第一切片调用图内的否定结论闭合：保留实时列表、固定递减索引、自移除和下一子步 Count 刷新，不暴露伪造的跨 Note 移除入口。
+- 快照开放缺口缩减为 G04/G05；仍不实现属于后续判定/输入切片的多方向侧链消费行为。
+
 #### 2026-07-26 第二批：T02–T05 类型与宿主边界
 
 - 已建立 `src/simulator/host`、`engine`、`backends` 和 `testing` 四个职责边界。
@@ -66,11 +74,11 @@
 #### 2026-07-26 第三批：T06–T08 池化、调度与暂停
 
 - `SetupNotes` 现按预构造夹具中的 Note family 建立互相分离的池；池容量取本夹具该 family 的实例总数，只作为第一切片有界载体，不声明等于原作运行时容量。
-- 每个分族池持有独立环形游标，按当前游标向前寻找 Deactive 对象；成员严格依 `informationList` 现有源顺序立即绑定、激活和追加，不执行 lane、button、位置或类型排序。
-- 宿主验证现在要求每组 `sourceOrder` 为唯一严格递增整数；缺少或冲突时以 `evidence-required` 失败关闭，不推断 G02 的上游排序。
+- 每个分族池持有独立环形游标，按当前游标向前寻找 Deactive 对象；成员严格依预构造 `informationList` 的现有顺序立即绑定、激活和追加，不执行 lane、button、位置或类型排序。
+- G02 已由 E17–E20 闭合；BMS 工厂不在第一切片实现范围，因此宿主不复制原作上游排序器，也不要求无原作字段依据的 `sourceOrder`。
 - `NoteBase` 已分离稳定池对象 ID 与当前绑定夹具 ID；Move 边界去重追加到活跃列表尾部，Deactive 边界即时移除，池继续持有对象。
 - `ExecUpdate` 已按 E03 的 `<0.018`、`<0.033`、`<0.05` 阈值选择 1–4 子步，并在每个子步按音乐推进、固定递减索引 Update、存活对象 AfterUpdate、当前单组激活的顺序执行。
-- 每个子步重新读取活跃列表 Count；同一遍历中的即时突变作用于实时列表和保留的递减索引。若未证实的跨 Note 移除使索引失效，则由 G03 对应证据门停止，不制造原作调用路径。
+- 每个子步重新读取活跃列表 Count；同一遍历中的即时自移除作用于实时列表和保留的递减索引。G03 已确认第一切片没有可表示的跨 Note 移除调用者，后续判定切片必须连同真实调用时机另行引入。
 - 调度器记录稳定的 frame、music-advance、note-update、note-after-update、note-activate 轨迹；公开宿主快照仍由 T10 阻断。
 - G01 已按 `MUSIC_BAR_DIVISION_COUNT = 192` 恢复主/发射器 Float32 时钟、批次 Int32 绝对位置和开/闭激活窗口。
 - G06 已恢复四个持久 `uint` 计数器、BPM 变化计数门、递增后 `101/21/6` 回退边界，以及 `deltaTime`/`ExecuteFrame` 同步平分。
@@ -88,7 +96,7 @@
 - `ReflectOneFrameData` 按控制器池顺序收集当帧占用容器、记录单一批次轨迹并统一清除占用；不执行 E08 中后续分数、生命、Combo、显示或音频消费。
 - `InGameManager.initialize` 先建立 OneFrame 容器，再安装 Note 回调；成功 step 在 Note 调度完成后进入统一 Reflect，暂停 step 不产生 Reflect。
 - 已建立 renderer、audio、input、resources 和 lifecycle 五类无副作用记录端口；事件只包含从零递增序号、稳定端口名、动作和可选字符串详情。
-- `SimulatorSnapshot` 包含管理器状态、调度与 OneFrame 轨迹、活跃顺序、池占用、后端事件和 G02–G05 缺口；G01/G06 的时钟与计数器状态进入管理器快照。
+- `SimulatorSnapshot` 包含管理器状态、调度与 OneFrame 轨迹、活跃顺序、池占用、后端事件和 G04/G05 缺口；G01/G06 的时钟与计数器状态进入管理器快照。
 - 快照是第一切片测试设施，不包含编辑器载荷、窗口标识或 UI 布局，也不成为未来主程序进入模拟器的协议。
 - 本批定向验证为不入库的 T09–T10 行为探针、模拟器隔离 TypeScript 类型检查、禁止依赖扫描、冻结证据包校验和 `git diff --check`；未运行整体构建。
 
@@ -98,7 +106,7 @@
 - 测试范围只包含 `src/simulator` 与 `src/simulator/testing`，不加载 React、Pixi、Tauri、DOM、编辑器谱面、窗口协议或主程序模块。
 - 已建立 18 项独立断言组，新增覆盖 192 刻度双时钟、激活窗口、`101/21/6` 历史回退、无 BPM 变化固定单步和 `ExecuteFrame` 平分。
 - 测试入口末尾强制执行禁止依赖扫描；任何测试或依赖边界失败均返回非零状态。
-- `tmp/simulator-first-slice-acceptance.md` 已逐项记录任务书要求、提交边界、验证命令、结果、未运行范围、G01/G06 闭合和 G02–G05 保留证据门。
+- `tmp/simulator-first-slice-acceptance.md` 已逐项记录任务书要求、提交边界、验证命令、结果、未运行范围、G01/G02/G03/G06 闭合和 G04/G05 保留证据门。
 - 最终验收命令为第一切片定向测试、模拟器隔离 TypeScript 类型检查、禁止依赖扫描、证据包工作树与 Git 索引哈希校验以及 `git diff --check`。
 - 未运行 `npm run build`、Vite/Tauri 构建、主程序测试或完整模拟器联调；第一切片完成不承诺程序整体可运行。
 
@@ -159,6 +167,11 @@
 | E14 | `artifacts/investigations/music-bar-division-adaptive-substeps/closure.json` | `09A4B3639384887135D60CC296E2D590D550F12D647941C1C508B62610586C0E` | G01/G06 机器可读闭合事实 |
 | E15 | `artifacts/investigations/music-bar-division-adaptive-substeps/README.md` | `6720E2EDBD1470004B6437FF245402B30097DD93DCECC248E0DA7C0ABCEFE92B` | 音乐刻度、激活窗口和自适应子步闭合报告 |
 | E16 | `artifacts/investigations/music-bar-division-adaptive-substeps/targets.tsv` | `F0972AD43B68999901B2406B368C070FD25FD6CF1F288745A6B0589EDCE181BF` | G01/G06 原作方法与证据路由 |
+| E17 | `artifacts/investigations/equal-position-and-cross-note-mutation/closure.json` | `3DF63B02A1A7031635E5A23A685D39EC7596769F421562B9B2F8A8FDE4BA2992` | G02/G03 机器可读闭合事实 |
+| E18 | `artifacts/investigations/equal-position-and-cross-note-mutation/README.md` | `7ADA4FD567B8B5C142A98AE046BC2E5C5A300A97BB658A2D6C21C3E623D67E9E` | 等位置构造顺序与跨 Note 突变边界报告 |
+| E19 | `artifacts/investigations/equal-position-and-cross-note-mutation/targets.tsv` | `142DCCF7AFAF8981606D042484F64A753A8C48FB042ABFDC1D128D4445829457` | G02/G03 原作方法与证据路由 |
+| E20 | `artifacts/investigations/equal-position-and-cross-note-mutation/decompiled/native_ranges.txt` | `592D03A9CDB868161AB671099AD822A38228B174666BCF30B345E4DF41DE1ABE` | G02/G03 锁定 RVA 原始指令清单 |
+| E21 | `artifacts/investigations/equal-position-and-cross-note-mutation/decompiled/xrefs.json` | `CF707F476EBCE9A8464DBD27343B1CD20DB60CDE79E4B41FCD9BBE6BD42D9DA1` | 解析入口与状态变更直接交叉引用 |
 
 逆向仓库当前存在未跟踪目录 `runtime/tools/`。该目录不属于锁定提交，禁止复制、引用或据此作出实现判断。
 
@@ -244,14 +257,14 @@ evidence-required(capability, requiredEvidence, boundary)
 **落地步骤**
 
 1. 验证逆向仓库 HEAD 严格等于锁定提交。
-2. 验证 E01–E16 的完整 SHA-256。
+2. 验证 E01–E21 的完整 SHA-256。
 3. 仅复制第一切片实际引用的最小文件，不复制完整调查目录或本地原始样本。
 4. `manifest.json` 为每项记录源提交、源相对路径、复制后路径、SHA-256、确认状态和消费任务。
 5. `OPEN_GAPS.md` 初始化记录：`UnitsPerBar` 名称/值边界、相同位置成员上游排序、跨 Note 低索引移除实例、Unity PlayerLoop 相位、暂停状态精确更新门条件。
 
 **原作证据**
 
-- E01–E16。
+- E01–E21。
 
 **验证**
 
@@ -425,7 +438,7 @@ evidence-required(capability, requiredEvidence, boundary)
 
 **原作证据**
 
-- E04、E06、E07、E10。
+- E04、E06、E07、E10、E17–E20。
 
 **验证**
 
@@ -463,7 +476,7 @@ evidence-required(capability, requiredEvidence, boundary)
 
 **原作证据**
 
-- E03、E04、E05、E07、E14、E15、E16。
+- E03、E04、E05、E07、E14–E21。
 
 **验证**
 
@@ -600,7 +613,7 @@ evidence-required(capability, requiredEvidence, boundary)
 
 **原作证据**
 
-- E01–E11、E14–E16 覆盖对象图、调度、状态、暂停、音乐时钟、自适应子步和 OneFrame 框架。
+- E01–E11、E14–E21 覆盖对象图、调度、状态、暂停、音乐时钟、自适应子步、等位置顺序、列表突变和 OneFrame 框架。
 - E12/E13 只用于验证输入和派生职责仍被证据门阻断。
 
 **必测场景**
@@ -660,7 +673,7 @@ evidence-required(capability, requiredEvidence, boundary)
 
 同时满足以下条件才可声明第一切片完成：
 
-- E01–E16 已锁定、复制并在 manifest 中可追溯。
+- E01–E21 已锁定、复制并在 manifest 中可追溯。
 - 宿主、原作引擎和后端依赖方向符合第 5 节。
 - 管理器对象图和音符状态框架可由预构造夹具初始化。
 - 已确认调度、列表突变、AfterUpdate、暂停和 OneFrame 容器测试全部通过。
