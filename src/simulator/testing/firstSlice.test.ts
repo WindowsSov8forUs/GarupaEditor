@@ -339,19 +339,19 @@ test("G06 最终子步数同时平分 deltaTime 与 ExecuteFrame", () => {
   );
 });
 
-test("同时音符组激活后延迟一个子步更新", () => {
-  const graph = createTestGraph(["A", "B", "C"]);
+test("预构造 informationList 原序激活且延迟一个子步更新", () => {
+  const graph = createTestGraph(["C", "A", "B"]);
   requireOk(graph.manager.execUpdate(0.01), "activation step");
   assertDeepEqual(graph.calls, [], "new notes must not update immediately");
   assertDeepEqual(
     graph.manager.snapshot().activeNoteIds,
-    ["A", "B", "C"],
-    "source-order activation",
+    ["C", "A", "B"],
+    "informationList-order activation",
   );
   requireOk(graph.manager.execUpdate(0.01), "first active step");
   assertDeepEqual(
     graph.calls,
-    ["update:C", "update:B", "update:A", "after:C", "after:B", "after:A"],
+    ["update:B", "update:A", "update:C", "after:B", "after:A", "after:C"],
     "next-substep execution",
   );
 });
@@ -532,7 +532,7 @@ test("快照确定且序列化不触发后端事件", () => {
   assertEqual(first.backendTrace.length, 1, "snapshot must not record events");
   assertDeepEqual(
     first.evidenceGaps,
-    ["G02", "G03", "G04", "G05"],
+    ["G04", "G05"],
     "open evidence gaps",
   );
 });

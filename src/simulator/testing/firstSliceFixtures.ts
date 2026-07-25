@@ -26,14 +26,12 @@ export function bound<T>(
 
 export function noteFixture(
   fixtureId: string,
-  sourceOrder: number,
   family: NoteFamily = "normal",
 ): NoteInformationFixture {
   const batchEvidence = evidence("E10", `preconstructed fixture ${fixtureId}`);
   const familyEvidence = evidence("E02", `confirmed Note family ${family}`);
   return {
     fixtureId,
-    sourceOrder,
     family: bound(family, familyEvidence),
     gameNoteType: bound(0, batchEvidence),
     frontNoteType: bound(0, batchEvidence),
@@ -53,9 +51,7 @@ export function noteBatch(
     barIndex: bound(0, batchEvidence),
     numerator: bound(0, batchEvidence),
     denominator: bound(1, batchEvidence),
-    informationList: noteIds.map((noteId, sourceOrder) =>
-      noteFixture(noteId, sourceOrder),
-    ),
+    informationList: noteIds.map((noteId) => noteFixture(noteId)),
   };
 }
 

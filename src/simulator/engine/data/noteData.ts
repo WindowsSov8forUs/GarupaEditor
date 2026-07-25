@@ -26,7 +26,6 @@ export interface SimulatorNoteManagerProfile {
 
 export interface NoteInformationFixture {
   readonly fixtureId: string;
-  readonly sourceOrder: number;
   readonly family: EvidenceBound<NoteFamily>;
   readonly gameNoteType: EvidenceBound<number>;
   readonly frontNoteType: EvidenceBound<number>;

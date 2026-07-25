@@ -191,9 +191,9 @@ export class NoteManager {
         const note = this.activeNotesValue[activeIndex];
         if (note === undefined) {
           return evidenceRequired(
-            "note-manager.cross-note-list-mutation",
-            ["E07"],
-            "The fixed reverse index became invalid after a cross-Note removal; G03 has no confirmed original caller for this path.",
+            "note-manager.unrepresented-cross-note-mutation",
+            ["E17"],
+            "The first slice has no represented original Update caller that removes a different lower-index active Note.",
           );
         }
 

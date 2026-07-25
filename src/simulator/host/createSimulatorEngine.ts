@@ -20,8 +20,6 @@ import { NoteManager } from "../engine/managers/noteManager";
 import { SlideNoteManager } from "../engine/managers/slideNoteManager";
 
 const firstSliceEvidenceGaps: readonly FirstSliceEvidenceGap[] = [
-  "G02",
-  "G03",
   "G04",
   "G05",
 ];
@@ -216,22 +214,7 @@ function validateNoteBatches(noteBatches: NoteBatchInformationList): SimulatorRe
       );
     }
 
-    let previousSourceOrder = Number.NEGATIVE_INFINITY;
-    const sourceOrders = new Set<number>();
     for (const note of batch.informationList) {
-      if (
-        !Number.isInteger(note.sourceOrder) ||
-        sourceOrders.has(note.sourceOrder) ||
-        note.sourceOrder <= previousSourceOrder
-      ) {
-        return evidenceRequired(
-          "note-batches.source-order",
-          ["E04", "E06", "E10"],
-          `Batch ${batch.fixtureId} must carry unique ascending sourceOrder values in informationList order.`,
-        );
-      }
-      sourceOrders.add(note.sourceOrder);
-      previousSourceOrder = note.sourceOrder;
       const noteValues = [
         note.family,
         note.gameNoteType,

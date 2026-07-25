@@ -17,8 +17,6 @@ export interface SimulatorEngineInput {
 }
 
 export type FirstSliceEvidenceGap =
-  | "G02"
-  | "G03"
   | "G04"
   | "G05";
 
