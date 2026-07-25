@@ -10,7 +10,7 @@ The investigated sample is `jp.co.craftegg.band` 10.1.3 (`229`), `arm64-v8a`.
 
 Application lifecycle suspension and menu pause are recoverable as a control/broadcast layer around the existing gameplay scheduler. They do not restore snapshots or directly change note/music position. Instead they gate the current game state, pause/resume global audio and registered live controllers, and return to the playing state after resume countdown.
 
-This is reconstructed IL2CPP behavior. InGameManager method names and boundaries are confirmed. The exact managed names of several interface slots on the aggregate live controller remain inferred from call order and known implementations.
+This is reconstructed IL2CPP behavior. InGameManager method names and boundaries are confirmed. The exact managed names of several interface slots on the aggregate live controller remain inferred from call order and known implementations. The later `../ingame-playerloop-pause-gates/` investigation confirms the managed enum names and the exact first-slice update gate.
 
 ## Application Lifecycle
 
@@ -53,16 +53,16 @@ current game state = 5
 
 No snapshot, BPM cursor, note group index, or note pool is modified. On the next permitted live update, `NoteManager.ExecUpdate` continues from the existing clock state. This is fundamentally different from `../move-time-state-restore/`, which rewinds to a snapshot and replays frames.
 
-## State Values
+## State Values and Update Gate
 
-Confirmed numeric writes:
+Confirmed managed names and numeric values:
 
-- pause state `1` when the pause menu executes;
-- pause state `2` when resume countdown finishes;
-- current game state `7` before sound pause;
-- current game state `5` at the end of `resumeGame`.
+- `CE.PauseState.Pause = 1` when the pause menu executes;
+- `CE.PauseState.Resume = 2` when resume countdown finishes;
+- `GameState.PauseNone = 6` and `GameState.PauseSound = 7` are the paused game states;
+- `GameState.PlayingNone = 4` and `GameState.PlayingSound = 5` are the two states dispatched to `updatePlayState`.
 
-The user-facing enum member names for these values remain unconfirmed.
+`get_isPaused` returns true for pause states `Pause`/`Resume` or game states `PauseNone`/`PauseSound`. `InGameManager.ExecUpdate` dispatches only `PlayingNone` and `PlayingSound` to `updatePlayState`; `PauseSound` does not reach `NoteManager.ExecUpdate`. See `../ingame-playerloop-pause-gates/` for the native ranges and reproducible closure.
 
 ## Confirmed Facts vs Inference
 
@@ -78,13 +78,13 @@ Inferred semantic labels:
 
 - aggregate live-controller slots `26-32` as pre-pause, pause-sound, pause, resume-sound, resume, and application-resume callbacks;
 - names of the auxiliary/stage controller fields in `onSuspend`;
-- enum names corresponding to states `5`, `7`, and pause states `1/2`.
+- aggregate interface slot names remain inferred; the enum names are now confirmed by IL2CPP metadata.
 
 ## Remaining Work
 
 - Recover the aggregate live-controller interface/type header to replace slot semantics with managed method names.
 - Trace audio-device loss/reinitialization beneath the two global audio calls.
-- Prove exact frame-loop gating conditions for pause states `1/2` and current states `5/7`.
+- Recover unrelated MonoBehaviour ordering only if a later slice introduces a concrete dependency on it.
 - Pause freezing versus move-time rewind/replay is now validated in `../deterministic-engine-harness/`.
 
 ## Reproduction

@@ -1,0 +1,12 @@
+gap	owner	method_or_node	rva_or_anchor	confirmed_role
+G04	InGameDirector	Update	0x32F8C4C	MonoBehaviour Update tail-calls InGameManager.ExecUpdate
+G04	InGameManager	ExecUpdate	0x32F8C64	GameState dispatch owner
+G04	UnityEngine.PlayerLoop.Update	ScriptRunBehaviourUpdate	perfect-particle-playerloop-native-update	Update phase child 1 of 4
+G04	PlayerLoop writers	SetPlayerLoop	0x65D51E4	all discovered direct writers preserve retained native sibling order
+G05	InGameManager	get_isPaused	0x32F92E0	PauseState 1 or 2 and GameState 6 or 7 are paused
+G05	InGameManager	updatePlayState	0x32F9BB0	calls NoteManager.ExecUpdate behind canThroughInputInspection
+G05	InGameManager	canThroughInputInspection	0x32FDC3C	PlayingSound passes directly and PlayingNone inspects OneFrame input data
+G05	InGameManager	onPauseSound	0x32FEAE0	writes PauseSound 7 before pauseSound
+G05	InGameManager	resumeGame	0x32FC948	writes PlayingSound 5 after resume callbacks
+G05	InGameManager	onExecutePause	0x32FECD0	writes PauseState Pause 1
+G05	InGameManager	onFinishResumeCountdownAnimation	0x32FED1C	writes PauseState Resume 2

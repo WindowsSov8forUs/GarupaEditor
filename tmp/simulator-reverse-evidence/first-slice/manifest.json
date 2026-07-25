@@ -3,7 +3,7 @@
   "frozenAt": "2026-07-26",
   "source": {
     "repository": "HOST___________________GirlsBandParty-Reverse",
-    "commit": "326b305f14121d7a0e7e046410dac993147360cb",
+    "commit": "74ab76f6838847d98aae1a15741a5f024e3774ff",
     "sample": {
       "package": "jp.co.craftegg.band",
       "versionName": "10.1.3",
@@ -83,8 +83,8 @@
       "id": "E09",
       "sourcePath": "artifacts/investigations/application-pause-resume/README.md",
       "copiedPath": "artifacts/investigations/application-pause-resume/README.md",
-      "sha256": "B630C31E80918685C45E7B9C643C5D24ADE7B6C4F2451CE4640C27A440C5053E",
-      "status": "confirmed-static-with-inferred-interface-slots",
+      "sha256": "A2E6324DD6712B0C7DD96B58754BC4ED725D49222F0061782B4672CB7CA89916",
+      "status": "confirmed-static-with-closed-state-gates-and-inferred-interface-slots",
       "consumers": ["T08", "T11"]
     },
     {
@@ -155,7 +155,7 @@
       "id": "E18",
       "sourcePath": "artifacts/investigations/equal-position-and-cross-note-mutation/README.md",
       "copiedPath": "artifacts/investigations/equal-position-and-cross-note-mutation/README.md",
-      "sha256": "F4815999E89BBB3307A56D208C1AF3707901355305297CA7E1A6690E3421CC16",
+      "sha256": "7ADA4FD567B8B5C142A98AE046BC2E5C5A300A97BB658A2D6C21C3E623D67E9E",
       "status": "confirmed-static-closure-report",
       "consumers": ["T06", "T07", "T11"]
     },
@@ -182,6 +182,38 @@
       "sha256": "CF707F476EBCE9A8464DBD27343B1CD20DB60CDE79E4B41FCD9BBE6BD42D9DA1",
       "status": "confirmed-direct-xref-report",
       "consumers": ["T07", "T11"]
+    },
+    {
+      "id": "E22",
+      "sourcePath": "artifacts/investigations/ingame-playerloop-pause-gates/closure.json",
+      "copiedPath": "artifacts/investigations/ingame-playerloop-pause-gates/closure.json",
+      "sha256": "21690BDBFE498DD7732709D46469E4003AD3C3A79E8630108FBBF73B219CFF3A",
+      "status": "confirmed-static-closed-g04-g05",
+      "consumers": ["T03", "T04", "T07", "T08", "T10", "T11"]
+    },
+    {
+      "id": "E23",
+      "sourcePath": "artifacts/investigations/ingame-playerloop-pause-gates/README.md",
+      "copiedPath": "artifacts/investigations/ingame-playerloop-pause-gates/README.md",
+      "sha256": "4FA5508C93424B8DF253C3C640E5323FC991BB26740220824384AC20A70D8A25",
+      "status": "confirmed-static-closure-report",
+      "consumers": ["T04", "T07", "T08", "T11"]
+    },
+    {
+      "id": "E24",
+      "sourcePath": "artifacts/investigations/ingame-playerloop-pause-gates/targets.tsv",
+      "copiedPath": "artifacts/investigations/ingame-playerloop-pause-gates/targets.tsv",
+      "sha256": "C0E832D149A413102EBDC55AB4591E09413FC5BFCAE2E300DE039D6CAD8B746E",
+      "status": "confirmed-evidence-routing-index",
+      "consumers": ["T01", "T11"]
+    },
+    {
+      "id": "E25",
+      "sourcePath": "artifacts/investigations/ingame-playerloop-pause-gates/decompiled/native_ranges.txt",
+      "copiedPath": "artifacts/investigations/ingame-playerloop-pause-gates/decompiled/native_ranges.txt",
+      "sha256": "69A6E867620CCD6499ABBF2BA56DDE29830C4E22EB160FCDDAE183E52576C2D8",
+      "status": "confirmed-native-instruction-ranges",
+      "consumers": ["T04", "T07", "T08", "T11"]
     }
   ]
 }
