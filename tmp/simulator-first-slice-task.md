@@ -5,7 +5,7 @@
 - 目标分支：`codex/refactor-simulator-implementation`
 - 上级计划：`tmp/simulator-reconstruction-plan.md`
 - 唯一原作证据仓库：`HOST________\VSCode\GirlsBandParty-Reverse`
-- 锁定证据提交：`f4392a327f536275cf1f1733e27b778ee2ce600c`
+- 锁定证据提交：`0ad31d30ead506913406006c4417047cf61e95a4`
 - 锁定游戏样本：`jp.co.craftegg.band` 10.1.3（version code 229，`arm64-v8a`）
 - 第一切片目标：建立原作引擎对象边界与确定性生命周期框架，不交付可见画面、音频、真实输入或主程序入口。
 - 第一切片状态：T01–T11 已完成，验收结果见 `tmp/simulator-first-slice-acceptance.md`。
@@ -16,37 +16,45 @@
 
 | 任务 | 状态 | 最近批次 | 结果 |
 | --- | --- | --- | --- |
-| T01 冻结第一切片证据包 | 已完成 | 2026-07-26 第一批 | 已冻结 E01–E13、manifest、夹具目录和证据缺口 |
+| T01 冻结第一切片证据包 | 已完成 | 2026-07-26 G01/G06 闭合批 | 已冻结 E01–E16、manifest、夹具目录和证据缺口 |
 | T02 建立目录与依赖边界 | 已完成 | 2026-07-26 第二批 | 已建立 host、engine、backends、testing 与隔离类型检查 |
 | T03 定义证据门和宿主 API | 已完成 | 2026-07-26 第二批 | 已建立结构化证据结果和可移植宿主生命周期接口 |
 | T04 建立原作管理器对象图 | 已完成 | 2026-07-26 第二批 | 已建立首批原作 owner、所有权和行为证据门 |
 | T05 建立音符类型与状态框架 | 已完成 | 2026-07-26 第二批 | 已建立 Front/After、Long/Slide/Flick 派生族和四态分派 |
 | T06 恢复 SetupNotes、对象池和活跃列表 | 已完成 | 2026-07-26 第三批 | 已建立夹具派生分族池、环形游标和激活/失活列表回调 |
-| T07 恢复确定性子步调度 | 已完成 | 2026-07-26 第三批 | 已恢复四档子步、固定反向 Update、存活 AfterUpdate 和单组末尾激活 |
+| T07 恢复确定性子步调度 | 已完成 | 2026-07-26 G01/G06 闭合批 | 已恢复双音乐时钟、完整自适应子步、固定反向 Update、存活 AfterUpdate 和单组末尾激活 |
 | T08 建立暂停与恢复框架 | 已完成 | 2026-07-26 第三批 | 已建立冻结调度的暂停门和抽象记录后端状态广播 |
 | T09 建立 OneFrameData 容器框架 | 已完成 | 2026-07-26 第四批 | 已建立控制器独占容器池、获取/占用/收集与统一 Reflect 边界 |
 | T10 建立记录后端和快照 | 已完成 | 2026-07-26 第四批 | 已建立五类无副作用记录端口和稳定第一切片快照 |
-| T11 隔离测试和验收 | 已完成 | 2026-07-26 第五批 | 已建立无新增测试框架依赖的隔离入口、13 项定向测试和验收记录 |
+| T11 隔离测试和验收 | 已完成 | 2026-07-26 G01/G06 闭合批 | 已建立无新增测试框架依赖的隔离入口、18 项定向测试和验收记录 |
 
 ### 1.2 批次记录
 
 #### 2026-07-26 第一批：T01 证据冻结
 
 - 逆向仓库 HEAD 已确认等于 `f4392a327f536275cf1f1733e27b778ee2ce600c`。
-- E01–E13 已按源目录结构复制到 `tmp/simulator-reverse-evidence/first-slice/artifacts/`。
+- E01–E16 已按源目录结构复制到 `tmp/simulator-reverse-evidence/first-slice/artifacts/`。
 - `manifest.json` 已记录源路径、复制路径、完整 SHA-256、确认状态和消费任务。
 - `.gitattributes` 已将临时证据包标记为 `-text`，并把 CRLF 的 CR 视为行尾，防止换行转换破坏字节级哈希且保留差异检查。
-- `OPEN_GAPS.md` 已登记 `UnitsPerBar`、相同位置上游顺序、跨 Note 低索引移除、PlayerLoop 相位、暂停门条件和慢帧历史规则。
+- `OPEN_GAPS.md` 已登记 G01/G06 闭合证据，并继续保留 G02–G05 开放边界。
 - `fixtures/README.md` 已明确 T01 不生成行为夹具，后续夹具不得来自旧模拟器。
 - `verify.mjs` 已提供源文件、复制文件和 Git 暂存区的可重复 SHA-256 校验。
 - 本批只进行证据哈希、manifest、路径和差异检查，不运行构建或测试。
+
+#### 2026-07-26 G01/G06 闭合批：音乐时钟与自适应子步
+
+- Reverse 在 `0ad31d30ead506913406006c4417047cf61e95a4` 闭合 `MUSIC_BAR_DIVISION_COUNT = 192`、双时钟推进、批次绝对位置和音符组激活窗口。
+- 同一证据包闭合 BPM 变化计数门、四个持久 `uint` 计数器、递增后 `101/21/6` 回退和 `ExecuteFrame` 平分。
+- E14–E16 已冻结到临时证据包；manifest 锁定提交更新为 `0ad31d30ead506913406006c4417047cf61e95a4`。
+- 实现和快照已移除 G01/G06 开放状态，保留 G02–G05。
+- 定向测试由 13 项扩展为 18 项；仍不运行 GarupaEditor 整体构建。
 
 #### 2026-07-26 第二批：T02–T05 类型与宿主边界
 
 - 已建立 `src/simulator/host`、`engine`、`backends` 和 `testing` 四个职责边界。
 - 已建立 `createSimulatorEngine` 以及 `initialize`、`step`、`pause`、`resume`、`snapshot`、`dispose` 宿主接口。
 - 已建立 `ok` / `evidence-required` 结果、证据引用和证据绑定值；缺少来源的关键输入失败关闭。
-- `UnitsPerBar` 仍由 G01 阻断，未进入宿主构造输入，也未设置调用者默认值。
+- G01 已由 E14–E16 闭合；宿主显式接收带证据的主/发射器初始位置与 BPM，不设置调用者默认值。
 - 预构造批次的 bar、分数位置、Note family 与类型字段逐项要求证据绑定；宿主 `snapshot` 在 T10 前继续返回证据门。
 - 已建立 `InGameManager`、`InGameMusicScoreController`、`NoteManager`、`SlideNoteManager`、`InGameOneFrameJudgementController`、`InputManager` 和 `GamePlayButton` 框架边界。
 - 已建立 `NoteBase`、`NoteFrontBase`、`NoteAfterBase` 以及 Long、Slide、Flick、Directional 和 Multiple Directional 类型；未由冻结证据证明的二级继承未被固化。
@@ -64,8 +72,8 @@
 - `ExecUpdate` 已按 E03 的 `<0.018`、`<0.033`、`<0.05` 阈值选择 1–4 子步，并在每个子步按音乐推进、固定递减索引 Update、存活对象 AfterUpdate、当前单组激活的顺序执行。
 - 每个子步重新读取活跃列表 Count；同一遍历中的即时突变作用于实时列表和保留的递减索引。若未证实的跨 Note 移除使索引失效，则由 G03 对应证据门停止，不制造原作调用路径。
 - 调度器记录稳定的 frame、music-advance、note-update、note-after-update、note-activate 轨迹；公开宿主快照仍由 T10 阻断。
-- G01 `UnitsPerBar` 仍阻断默认音乐推进和音符组位置比较；调度顺序通过可注入的引擎内时钟边界隔离，测试 oracle 不进入宿主输入或运行依赖。
-- G06 慢帧历史强制单步规则未被猜测，管理器快照继续显式列出该缺口；已确认的四档阈值选择独立恢复。
+- G01 已按 `MUSIC_BAR_DIVISION_COUNT = 192` 恢复主/发射器 Float32 时钟、批次 Int32 绝对位置和开/闭激活窗口。
+- G06 已恢复四个持久 `uint` 计数器、BPM 变化计数门、递增后 `101/21/6` 回退边界，以及 `deltaTime`/`ExecuteFrame` 同步平分。
 - `pause` 只设置宿主调度门并向可移植生命周期记录端口广播 `paused`；`resume` 只解除门并广播 `running`，均不修改音乐、BPM、组游标、活跃列表或池。
 - 生命周期广播是 GarupaEditor 测试端口，不使用或命名原作状态 `5/7`、暂停状态 `1/2` 或接口槽 `26–32`，具体记录实现留给 T10。
 - 本批定向验证为不入库的 T06–T08 行为探针、模拟器隔离 TypeScript 类型检查、禁止依赖扫描、冻结证据包校验和 `git diff --check`；T11 前未新增完整测试套件，也未运行整体构建。
@@ -80,7 +88,7 @@
 - `ReflectOneFrameData` 按控制器池顺序收集当帧占用容器、记录单一批次轨迹并统一清除占用；不执行 E08 中后续分数、生命、Combo、显示或音频消费。
 - `InGameManager.initialize` 先建立 OneFrame 容器，再安装 Note 回调；成功 step 在 Note 调度完成后进入统一 Reflect，暂停 step 不产生 Reflect。
 - 已建立 renderer、audio、input、resources 和 lifecycle 五类无副作用记录端口；事件只包含从零递增序号、稳定端口名、动作和可选字符串详情。
-- `SimulatorSnapshot` 包含管理器状态、调度与 OneFrame 轨迹、活跃顺序、池占用、后端事件和 G01–G06 缺口；快照返回深拷贝，不触发新事件。
+- `SimulatorSnapshot` 包含管理器状态、调度与 OneFrame 轨迹、活跃顺序、池占用、后端事件和 G02–G05 缺口；G01/G06 的时钟与计数器状态进入管理器快照。
 - 快照是第一切片测试设施，不包含编辑器载荷、窗口标识或 UI 布局，也不成为未来主程序进入模拟器的协议。
 - 本批定向验证为不入库的 T09–T10 行为探针、模拟器隔离 TypeScript 类型检查、禁止依赖扫描、冻结证据包校验和 `git diff --check`；未运行整体构建。
 
@@ -88,9 +96,9 @@
 
 - 已增加 `npm.cmd run simulator:test:first-slice`，使用项目现有 TypeScript 编译器把测试编译到系统临时目录，由 Node 执行后自动清理；未引入 Vitest、Jest 或模拟器运行依赖。
 - 测试范围只包含 `src/simulator` 与 `src/simulator/testing`，不加载 React、Pixi、Tauri、DOM、编辑器谱面、窗口协议或主程序模块。
-- 已按第 7 节 12 项必测场景建立 13 项独立断言组，另覆盖源顺序、重复激活去重、池对象失活保留、Note 获取 OneFrame 回调和快照无副作用。
+- 已建立 18 项独立断言组，新增覆盖 192 刻度双时钟、激活窗口、`101/21/6` 历史回退、无 BPM 变化固定单步和 `ExecuteFrame` 平分。
 - 测试入口末尾强制执行禁止依赖扫描；任何测试或依赖边界失败均返回非零状态。
-- `tmp/simulator-first-slice-acceptance.md` 已逐项记录任务书要求、提交边界、验证命令、结果、未运行范围和 G01–G06 保留证据门。
+- `tmp/simulator-first-slice-acceptance.md` 已逐项记录任务书要求、提交边界、验证命令、结果、未运行范围、G01/G06 闭合和 G02–G05 保留证据门。
 - 最终验收命令为第一切片定向测试、模拟器隔离 TypeScript 类型检查、禁止依赖扫描、证据包工作树与 Git 索引哈希校验以及 `git diff --check`。
 - 未运行 `npm run build`、Vite/Tauri 构建、主程序测试或完整模拟器联调；第一切片完成不承诺程序整体可运行。
 
@@ -137,7 +145,7 @@
 | --- | --- | --- | --- |
 | E01 | `artifacts/rhythm/rhythm_owner_completion.tsv` | `8944D61D770541EF6F74AE9CC0BF8135530B034C6D71F5A53AF02ED53D2CE819` | 确认原作 owner、领域分层和方法闭合度 |
 | E02 | `artifacts/rhythm/rhythm_seed_targets.tsv` | `EEF390E058125BB95A753BF6E30CCC30096F72A3C169704996F7E2AEE0F973ED` | 确认 Note、Slide、OneFrame 关键方法与 RVA |
-| E03 | `artifacts/investigations/note-scheduling-clock/README.md` | `45AE7E1CAD65BAEF6CED9EA1C05A7BB54C4238514C90A8394DE6887E42D20201` | 子步阈值、音乐位置先行、四态分派和 AfterUpdate 边界 |
+| E03 | `artifacts/investigations/note-scheduling-clock/README.md` | `CB13700C9A3B8CA4DC66DE2AFCD923A7917868260385E731F5BE5262FF7CA946` | 子步阈值、音乐位置先行、四态分派和 AfterUpdate 边界 |
 | E04 | `artifacts/investigations/simultaneous-note-ordering/README.md` | `A15D27EDD7FB1368760E196789A35D5486F804C856F42BAE40FDB5FB5FAD3E95` | 音符组激活、活跃列表顺序和新组延迟一子步 |
 | E05 | `artifacts/investigations/runtime-integration-prototype/note_manager_two_phase_substep_order.json` | `774C1C39644EE937E47FE64171E5715AF915A194E9EB8A59FDA44F1F664CB177` | 每个子步的 Update/AfterUpdate 两阶段顺序 |
 | E06 | `artifacts/investigations/runtime-integration-prototype/multiple_flick_active_list_order.json` | `EC64154569BA4B30D644D27E839BEABA5357A6554FAAEA95080295B118ABB391` | `SetupNotes` 激活/失活回调和列表追加/移除 |
@@ -148,6 +156,9 @@
 | E11 | `artifacts/investigations/runtime-integration-prototype/targets.tsv` | `8BCB3052C44DEFB5884E717BD96A71A2CE698D6C0B47EDAB17AAC52B745F679D` | 总体实现行为到原作证据的路由索引 |
 | E12 | `artifacts/investigations/touch-note-arbitration/README.md` | `0558A928918794D603368A5CA4813D44FF9B957EDF5C50C30809C85605C2E489` | 仅确认输入管理边界；第一切片不得实现触摸行为 |
 | E13 | `artifacts/investigations/touch-hold-release/README.md` | `08238B2199D22C4EAB53168B46E2341FCB25A82B0B3660A7888AD96850AD49B0` | 仅确认 Long/Slide/Flick 派生职责；第一切片不得实现判定行为 |
+| E14 | `artifacts/investigations/music-bar-division-adaptive-substeps/closure.json` | `09A4B3639384887135D60CC296E2D590D550F12D647941C1C508B62610586C0E` | G01/G06 机器可读闭合事实 |
+| E15 | `artifacts/investigations/music-bar-division-adaptive-substeps/README.md` | `6720E2EDBD1470004B6437FF245402B30097DD93DCECC248E0DA7C0ABCEFE92B` | 音乐刻度、激活窗口和自适应子步闭合报告 |
+| E16 | `artifacts/investigations/music-bar-division-adaptive-substeps/targets.tsv` | `F0972AD43B68999901B2406B368C070FD25FD6CF1F288745A6B0589EDCE181BF` | G01/G06 原作方法与证据路由 |
 
 逆向仓库当前存在未跟踪目录 `runtime/tools/`。该目录不属于锁定提交，禁止复制、引用或据此作出实现判断。
 
@@ -233,14 +244,14 @@ evidence-required(capability, requiredEvidence, boundary)
 **落地步骤**
 
 1. 验证逆向仓库 HEAD 严格等于锁定提交。
-2. 验证 E01–E13 的完整 SHA-256。
+2. 验证 E01–E16 的完整 SHA-256。
 3. 仅复制第一切片实际引用的最小文件，不复制完整调查目录或本地原始样本。
 4. `manifest.json` 为每项记录源提交、源相对路径、复制后路径、SHA-256、确认状态和消费任务。
 5. `OPEN_GAPS.md` 初始化记录：`UnitsPerBar` 名称/值边界、相同位置成员上游排序、跨 Note 低索引移除实例、Unity PlayerLoop 相位、暂停状态精确更新门条件。
 
 **原作证据**
 
-- E01–E13。
+- E01–E16。
 
 **验证**
 
@@ -440,22 +451,25 @@ evidence-required(capability, requiredEvidence, boundary)
 
 **落地步骤**
 
-1. 按 E03 阈值选择子步：`<0.018` 为 1，`<0.033` 为 2，`<0.05` 为 3，其余为 4。
-2. 保留历史慢帧计数器的证据门；未完整复原前不得猜测重置规则。
-3. 每个子步先推进 `InGameMusicScoreController`。
-4. 从活跃列表 `Count - 1` 开始使用固定递减索引调用 `ExecuteUpdate`。
-5. Update 后立即把当时仍非 Deactive 的对象追加到临时 After 列表。
-6. 正向遍历临时列表调用 `ExecuteAfterUpdate`。
-7. 最后只处理当前一个音符组；新激活对象下一子步才更新。
-8. 每个新子步重新读取活跃列表 Count。
+1. 按 E14 的 Float32 阈值选择初始子步：`<0.0179999992` 为 1，`<0.0329999998` 为 2，`<0.0500000007` 为 3，其余为 4。
+2. BPM 变化计数至少为一时，先递增对应持久 `uint` 计数器，再按 `>100`、`>20`、`>=6` 强制单步；第四计数器不直接触发回退。
+3. 按最终子步数同时平分 Float32 `deltaTime` 与 `ExecuteFrame`；无 BPM 变化时固定单步且不递增计数器。
+4. 每个子步先推进 `InGameMusicScoreController`。
+5. 从活跃列表 `Count - 1` 开始使用固定递减索引调用 `ExecuteUpdate`。
+6. Update 后立即把当时仍非 Deactive 的对象追加到临时 After 列表。
+7. 正向遍历临时列表调用 `ExecuteAfterUpdate`。
+8. 最后只处理当前一个音符组；新激活对象下一子步才更新。
+9. 每个新子步重新读取活跃列表 Count。
 
 **原作证据**
 
-- E03、E04、E05、E07。
+- E03、E04、E05、E07、E14、E15、E16。
 
 **验证**
 
 - 四组 deltaTime 边界测试。
+- `101/21/6` 次历史回退、第四计数器无直接回退和无 BPM 变化固定单步。
+- 最终子步数同时平分 `deltaTime` 与 `ExecuteFrame`。
 - 同时组 `[A, B, C]` 下一子步产生 `C, B, A` Update 和 AfterUpdate。
 - Update 中失活的 B 不进入 AfterUpdate。
 - 当前反向遍历自移除后，下一子步不再出现该对象。
@@ -463,7 +477,7 @@ evidence-required(capability, requiredEvidence, boundary)
 
 **停止条件**
 
-- 测试需要定义 Unity PlayerLoop 相位或未确认慢帧历史规则。
+- 测试需要定义 Unity PlayerLoop 精确相位。
 
 ### T08：建立暂停与恢复框架
 
@@ -586,7 +600,7 @@ evidence-required(capability, requiredEvidence, boundary)
 
 **原作证据**
 
-- E01–E11 覆盖对象图、调度、状态、暂停和 OneFrame 框架。
+- E01–E11、E14–E16 覆盖对象图、调度、状态、暂停、音乐时钟、自适应子步和 OneFrame 框架。
 - E12/E13 只用于验证输入和派生职责仍被证据门阻断。
 
 **必测场景**
@@ -646,7 +660,7 @@ evidence-required(capability, requiredEvidence, boundary)
 
 同时满足以下条件才可声明第一切片完成：
 
-- E01–E13 已锁定、复制并在 manifest 中可追溯。
+- E01–E16 已锁定、复制并在 manifest 中可追溯。
 - 宿主、原作引擎和后端依赖方向符合第 5 节。
 - 管理器对象图和音符状态框架可由预构造夹具初始化。
 - 已确认调度、列表突变、AfterUpdate、暂停和 OneFrame 容器测试全部通过。

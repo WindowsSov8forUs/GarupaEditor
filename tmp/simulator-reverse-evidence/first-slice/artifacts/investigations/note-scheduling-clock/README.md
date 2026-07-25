@@ -69,7 +69,7 @@ beatProgress + UnitsPerBar * barProgress
 progress += deltaTime / (GetBarSeconds(bpm) / UnitsPerBar)
 ```
 
-It carries overflow into the bar counter and then invokes the music-position callback. The `240 / BPM` numerator proves a four-quarter-note bar duration. The numeric value and managed name of the separate static `UnitsPerBar` field are not yet recovered.
+It carries overflow into the bar counter and then invokes the music-position callback. The `240 / BPM` numerator proves a four-quarter-note bar duration. The separate static field is now closed by `../music-bar-division-adaptive-substeps/`: its managed name is `NoteManager.MUSIC_BAR_DIVISION_COUNT` and its value is exactly `192`.
 
 ## Judgement Offset
 
@@ -104,7 +104,7 @@ Confirmed:
 
 Inferred semantic labels:
 
-- `UnitsPerBar`, `totalElapsed`, `moveElapsed`, `stopElapsed`, and auxiliary-list names;
+- `totalElapsed`, `moveElapsed`, `stopElapsed`, and auxiliary-list names;
 - exact managed callback names for the state-transition fields;
 - the user-facing name of the historical slow-frame counters.
 
@@ -112,7 +112,7 @@ Inferred semantic labels:
 
 - Move-time seek and `ReturnTime` restoration are now recovered in `../move-time-state-restore/`; ordinary application pause/resume remains open.
 - Simultaneous activation/update/after-update ordering is now recovered in `../simultaneous-note-ordering/`; upstream equal-position group construction remains open.
-- Recover the type/field header for `InGameMusicScoreController` and normalize `UnitsPerBar`.
+- `MUSIC_BAR_DIVISION_COUNT` and the adaptive historical counters are closed in `../music-bar-division-adaptive-substeps/`.
 - The standalone clock/substep/offset validation harness is now available in `../deterministic-engine-harness/`.
 
 ## Reproduction

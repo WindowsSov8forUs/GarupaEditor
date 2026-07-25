@@ -3,7 +3,7 @@
   "frozenAt": "2026-07-26",
   "source": {
     "repository": "HOST___________________GirlsBandParty-Reverse",
-    "commit": "f4392a327f536275cf1f1733e27b778ee2ce600c",
+    "commit": "0ad31d30ead506913406006c4417047cf61e95a4",
     "sample": {
       "package": "jp.co.craftegg.band",
       "versionName": "10.1.3",
@@ -35,7 +35,7 @@
       "id": "E03",
       "sourcePath": "artifacts/investigations/note-scheduling-clock/README.md",
       "copiedPath": "artifacts/investigations/note-scheduling-clock/README.md",
-      "sha256": "2023CC732769768801BCD7615C70D6B1F396E64EAA60AE086AFA310494231626",
+      "sha256": "5E56429CFD8C5920D247CFBB6BF0B45B64FC3A4E5F66E99E9D22B152F1873777",
       "status": "confirmed-static-with-explicit-inference",
       "consumers": ["T03", "T04", "T05", "T07", "T08", "T11"]
     },
@@ -43,7 +43,7 @@
       "id": "E04",
       "sourcePath": "artifacts/investigations/simultaneous-note-ordering/README.md",
       "copiedPath": "artifacts/investigations/simultaneous-note-ordering/README.md",
-      "sha256": "F22105A34817312C7A39F0F39AF35B6EC5EC7F99938F2443C1EAC23B1D919DBD",
+      "sha256": "A15D27EDD7FB1368760E196789A35D5486F804C856F42BAE40FDB5FB5FAD3E95",
       "status": "confirmed-static-with-explicit-inference",
       "consumers": ["T06", "T07", "T11"]
     },
@@ -75,7 +75,7 @@
       "id": "E08",
       "sourcePath": "artifacts/investigations/judgement-result-pipeline/README.md",
       "copiedPath": "artifacts/investigations/judgement-result-pipeline/README.md",
-      "sha256": "C19DEA87B7F39F1C89342F8635506B52EFBFA8A34F5625411BFE1719BF3AC627",
+      "sha256": "150A105CD75CFBB62D39F54CD57BC0D3A8A2ACDCD7BA3510350FE6C5CBC47DC7",
       "status": "confirmed-static-with-explicit-inference",
       "consumers": ["T03", "T04", "T09", "T11"]
     },
@@ -83,7 +83,7 @@
       "id": "E09",
       "sourcePath": "artifacts/investigations/application-pause-resume/README.md",
       "copiedPath": "artifacts/investigations/application-pause-resume/README.md",
-      "sha256": "DBF517809B205B659A45436338D4218A790BD052173323A005555DBB6E1A725F",
+      "sha256": "B630C31E80918685C45E7B9C643C5D24ADE7B6C4F2451CE4640C27A440C5053E",
       "status": "confirmed-static-with-inferred-interface-slots",
       "consumers": ["T08", "T11"]
     },
@@ -91,7 +91,7 @@
       "id": "E10",
       "sourcePath": "artifacts/investigations/bms-note-batch/README.md",
       "copiedPath": "artifacts/investigations/bms-note-batch/README.md",
-      "sha256": "CBD71659829C42E4F0247277D23AA741A122F9BF3016C8E9BDD8D33140FE99EF",
+      "sha256": "37B64F06EDFBC7D8F92053F82CD18D672A47B8D8089B1C5B0DCFF4D35ACC1F22",
       "status": "confirmed-static-with-explicit-inference",
       "consumers": ["T03", "T06", "T11"]
     },
@@ -107,7 +107,7 @@
       "id": "E12",
       "sourcePath": "artifacts/investigations/touch-note-arbitration/README.md",
       "copiedPath": "artifacts/investigations/touch-note-arbitration/README.md",
-      "sha256": "403FB9A1F7F448904CD48EE0DB4C199443AA798C8965AB16CD0E3F801DEDBD91",
+      "sha256": "0558A928918794D603368A5CA4813D44FF9B957EDF5C50C30809C85605C2E489",
       "status": "confirmed-static-framework-boundary-only",
       "consumers": ["T05", "T11"]
     },
@@ -115,9 +115,33 @@
       "id": "E13",
       "sourcePath": "artifacts/investigations/touch-hold-release/README.md",
       "copiedPath": "artifacts/investigations/touch-hold-release/README.md",
-      "sha256": "51E859649352C43EFFAB0073F18AD06FDE2C5D1E0478E9C61851E5F56E36D5E3",
+      "sha256": "08238B2199D22C4EAB53168B46E2341FCB25A82B0B3660A7888AD96850AD49B0",
       "status": "confirmed-static-framework-boundary-only",
       "consumers": ["T05", "T11"]
+    },
+    {
+      "id": "E14",
+      "sourcePath": "artifacts/investigations/music-bar-division-adaptive-substeps/closure.json",
+      "copiedPath": "artifacts/investigations/music-bar-division-adaptive-substeps/closure.json",
+      "sha256": "09A4B3639384887135D60CC296E2D590D550F12D647941C1C508B62610586C0E",
+      "status": "confirmed-static-closed-g01-g06",
+      "consumers": ["T03", "T06", "T07", "T10", "T11"]
+    },
+    {
+      "id": "E15",
+      "sourcePath": "artifacts/investigations/music-bar-division-adaptive-substeps/README.md",
+      "copiedPath": "artifacts/investigations/music-bar-division-adaptive-substeps/README.md",
+      "sha256": "6720E2EDBD1470004B6437FF245402B30097DD93DCECC248E0DA7C0ABCEFE92B",
+      "status": "confirmed-static-closure-report",
+      "consumers": ["T03", "T07", "T11"]
+    },
+    {
+      "id": "E16",
+      "sourcePath": "artifacts/investigations/music-bar-division-adaptive-substeps/targets.tsv",
+      "copiedPath": "artifacts/investigations/music-bar-division-adaptive-substeps/targets.tsv",
+      "sha256": "F0972AD43B68999901B2406B368C070FD25FD6CF1F288745A6B0589EDCE181BF",
+      "status": "confirmed-evidence-routing-index",
+      "consumers": ["T01", "T11"]
     }
   ]
 }

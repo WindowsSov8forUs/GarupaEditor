@@ -39,8 +39,8 @@ if (trackedSourceChanges) {
   fail(`Tracked source changes are not allowed:\n${trackedSourceChanges}`);
 }
 
-if (manifest.entries.length !== 13) {
-  fail(`Expected 13 evidence entries, found ${manifest.entries.length}`);
+if (manifest.entries.length !== 16) {
+  fail(`Expected 16 evidence entries, found ${manifest.entries.length}`);
 }
 
 const ids = new Set();
