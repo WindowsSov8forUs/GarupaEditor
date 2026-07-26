@@ -10,6 +10,7 @@
     "simulator:test:first-slice": "node src/simulator/testing/runFirstSliceTests.mjs",
     "simulator:test:chart-boundary": "node src/simulator/testing/runChartConstructionBoundaryTests.mjs",
     "simulator:test:chart-parsing": "node src/simulator/testing/runChartConstructionParsingTests.mjs",
+    "simulator:test:chart-batches": "node src/simulator/testing/runChartBatchConversionTests.mjs",
     "tauri": "tauri",
     "desktop:dev": "tauri dev",
     "desktop:build": "tauri build",

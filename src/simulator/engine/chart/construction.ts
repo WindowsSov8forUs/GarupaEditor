@@ -1,4 +1,5 @@
 import { evidenceRequired, type SimulatorResult } from "../evidence";
+import { convertResultDictionary } from "./batchConversion";
 import { NoteDataBMSBuilder } from "./bmsBuilder";
 import { ChartConstructionEvidence } from "./evidence";
 import {
@@ -12,6 +13,7 @@ import type {
 
 export { MusicScoreBezierConverter, MusicScoreHeaderParser } from "./musicScoreBezier";
 export { NoteDataBMSBuilder } from "./bmsBuilder";
+export { convertResultDictionary } from "./batchConversion";
 
 export class NoteBatchInformationListFactory {
   private readonly headerParser = new MusicScoreHeaderParser();
@@ -35,15 +37,17 @@ export class NoteBatchInformationListFactory {
     if (initializeBuilder.status !== "ok") {
       return initializeBuilder;
     }
+    const noteBatches = convertResultDictionary(this.bmsBuilder.resultDictionary);
+    void noteBatches;
     return evidenceRequired(
-      "chart-construction.batch-factory",
+      "chart-construction.long-slide-graph",
       [
         ChartConstructionEvidence.E01,
         ChartConstructionEvidence.E04,
         ChartConstructionEvidence.E09,
         ChartConstructionEvidence.E10,
       ],
-      "C05 through C09 must restore ordering, Long and Slide ownership, HABAHIRO combining, command data, and final filtering.",
+      "C06 through C09 must restore Long and Slide ownership, HABAHIRO combining, command data, and final filtering.",
     );
   }
 }
