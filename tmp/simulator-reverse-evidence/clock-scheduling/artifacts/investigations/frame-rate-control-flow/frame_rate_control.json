@@ -1,0 +1,1370 @@
+{
+  "schema_version": 1,
+  "locked_sample": {
+    "package": "jp.co.craftegg.band",
+    "version": "10.1.3",
+    "version_code": 229,
+    "libil2cpp_sha256": "66c9c666c50962b662df8d894e851c7d18f07142dca145cfac3d30d063d1d9fa"
+  },
+  "sources": {
+    "dump_cs": {
+      "path": "static/il2cpp/dump/dump.cs",
+      "sha256": "b2672c8bec6ade997fe13793df442d9f8381c98d1eabca1bf06cd9710a4b638f"
+    },
+    "method_index": {
+      "path": "artifacts/il2cpp/method_index_core.csv",
+      "sha256": "280fe920379bd5fbef6ab22ba5f2e84f84fed6a451bb115088e52d8530234ca6"
+    },
+    "string_literals": {
+      "path": "static/il2cpp/dump/stringliteral.json",
+      "sha256": "ad6434d271c8a58b29b08406cb77873dc1854522d44e2c25159d249e854a06d8"
+    },
+    "set_display_refresh_rate_smali": {
+      "path": "static/apktool/base/smali_classes5/jp/co/craftegg/band/lib/SetDisplayRefreshRate.smali",
+      "sha256": "449be119d51c1d3c22c5aae5633a3bf85dba49d790a6217c93158640eb471f1f"
+    },
+    "refresh_rate_setter_smali": {
+      "path": "static/apktool/base/smali_classes5/jp/co/craftegg/band/lib/RefreshRateSetter.smali",
+      "sha256": "e55c34eed4b7760fc996cab9839eec0610f3f8116ef268bb804197f185c9d1b4"
+    }
+  },
+  "functions": [
+    {
+      "name": "DeviceUtility.RefreshRateInit",
+      "start_rva": "0x3B03A48",
+      "end_rva_exclusive": "0x3B03BF8",
+      "size": 432,
+      "sha256": "9a5cc2b72a8bd1955cdbe1efe264504ff8b8b9b7c40b32a52fd3149116005ec7",
+      "direct_branches": [
+        {
+          "rva": "0x3B03A70",
+          "mnemonic": "BL",
+          "target": "0x2E10210"
+        },
+        {
+          "rva": "0x3B03A7C",
+          "mnemonic": "BL",
+          "target": "0x2E10210"
+        },
+        {
+          "rva": "0x3B03A88",
+          "mnemonic": "BL",
+          "target": "0x2E10210"
+        },
+        {
+          "rva": "0x3B03AA0",
+          "mnemonic": "BL",
+          "target": "0x6588E34"
+        },
+        {
+          "rva": "0x3B03AB0",
+          "mnemonic": "BL",
+          "target": "0x658BF04"
+        },
+        {
+          "rva": "0x3B03AD4",
+          "mnemonic": "BL",
+          "target": "0x2E10384"
+        },
+        {
+          "rva": "0x3B03AF4",
+          "mnemonic": "BL",
+          "target": "0x2E10210"
+        },
+        {
+          "rva": "0x3B03B10",
+          "mnemonic": "BL",
+          "target": "0x2E10384"
+        },
+        {
+          "rva": "0x3B03B24",
+          "mnemonic": "BL",
+          "target": "0x5A98FA8"
+        },
+        {
+          "rva": "0x3B03B38",
+          "mnemonic": "BL",
+          "target": "0x2E10384"
+        },
+        {
+          "rva": "0x3B03B4C",
+          "mnemonic": "B",
+          "target": "0x3B03B54"
+        },
+        {
+          "rva": "0x3B03B64",
+          "mnemonic": "BL",
+          "target": "0x2E10384"
+        },
+        {
+          "rva": "0x3B03B84",
+          "mnemonic": "BL",
+          "target": "0x2E10384"
+        },
+        {
+          "rva": "0x3B03B8C",
+          "mnemonic": "BL",
+          "target": "0x657AFA4"
+        },
+        {
+          "rva": "0x3B03BA8",
+          "mnemonic": "BL",
+          "target": "0x2E10384"
+        },
+        {
+          "rva": "0x3B03BB8",
+          "mnemonic": "B",
+          "target": "0x3B03BD8"
+        },
+        {
+          "rva": "0x3B03BC8",
+          "mnemonic": "BL",
+          "target": "0x2E10384"
+        },
+        {
+          "rva": "0x3B03BD0",
+          "mnemonic": "BL",
+          "target": "0x657AFA4"
+        },
+        {
+          "rva": "0x3B03BDC",
+          "mnemonic": "BL",
+          "target": "0x2EE4AE0"
+        }
+      ]
+    },
+    {
+      "name": "DeviceUtility.SetTargetFrameRate",
+      "start_rva": "0x3B03BF8",
+      "end_rva_exclusive": "0x3B03CB0",
+      "size": 184,
+      "sha256": "f51f85f9a90fa82fbfa04f8ab48f45e27106d484207c6946f2c2c6f7dafabba7",
+      "direct_branches": [
+        {
+          "rva": "0x3B03C20",
+          "mnemonic": "BL",
+          "target": "0x2E10210"
+        },
+        {
+          "rva": "0x3B03C2C",
+          "mnemonic": "BL",
+          "target": "0x2E10210"
+        },
+        {
+          "rva": "0x3B03C4C",
+          "mnemonic": "BL",
+          "target": "0x2E10384"
+        },
+        {
+          "rva": "0x3B03C58",
+          "mnemonic": "BL",
+          "target": "0x657AFCC"
+        },
+        {
+          "rva": "0x3B03C68",
+          "mnemonic": "BL",
+          "target": "0x2E10384"
+        },
+        {
+          "rva": "0x3B03C90",
+          "mnemonic": "BL",
+          "target": "0x2E10384"
+        },
+        {
+          "rva": "0x3B03CAC",
+          "mnemonic": "B",
+          "target": "0x2EE4AE4"
+        }
+      ]
+    },
+    {
+      "name": "PluginInterface._RefreshRateInit",
+      "start_rva": "0x2EE4160",
+      "end_rva_exclusive": "0x2EE4304",
+      "size": 420,
+      "sha256": "4e838caaccf34e639d56e26dd38ea4e03a320f48fabf6d0244d921ea403e0100",
+      "direct_branches": [
+        {
+          "rva": "0x2EE4190",
+          "mnemonic": "BL",
+          "target": "0x2E10210"
+        },
+        {
+          "rva": "0x2EE419C",
+          "mnemonic": "BL",
+          "target": "0x2E10210"
+        },
+        {
+          "rva": "0x2EE41A8",
+          "mnemonic": "BL",
+          "target": "0x2E10210"
+        },
+        {
+          "rva": "0x2EE41B4",
+          "mnemonic": "BL",
+          "target": "0x2E10210"
+        },
+        {
+          "rva": "0x2EE41C0",
+          "mnemonic": "BL",
+          "target": "0x2E10210"
+        },
+        {
+          "rva": "0x2EE41CC",
+          "mnemonic": "BL",
+          "target": "0x2E10210"
+        },
+        {
+          "rva": "0x2EE41E8",
+          "mnemonic": "BL",
+          "target": "0x2DA9B84"
+        },
+        {
+          "rva": "0x2EE41FC",
+          "mnemonic": "BL",
+          "target": "0x2DA9B28"
+        },
+        {
+          "rva": "0x2EE4208",
+          "mnemonic": "BL",
+          "target": "0x2E10384"
+        },
+        {
+          "rva": "0x2EE423C",
+          "mnemonic": "BL",
+          "target": "0x2DA9B28"
+        },
+        {
+          "rva": "0x2EE424C",
+          "mnemonic": "BL",
+          "target": "0x2E10498"
+        },
+        {
+          "rva": "0x2EE4260",
+          "mnemonic": "BL",
+          "target": "0x6564B78"
+        },
+        {
+          "rva": "0x2EE426C",
+          "mnemonic": "BL",
+          "target": "0x2E102F4"
+        },
+        {
+          "rva": "0x2EE4280",
+          "mnemonic": "BL",
+          "target": "0x2E1038C"
+        },
+        {
+          "rva": "0x2EE429C",
+          "mnemonic": "BL",
+          "target": "0x2E10388"
+        },
+        {
+          "rva": "0x2EE42B8",
+          "mnemonic": "BL",
+          "target": "0x2E101BC"
+        },
+        {
+          "rva": "0x2EE42D8",
+          "mnemonic": "BL",
+          "target": "0x6565028"
+        },
+        {
+          "rva": "0x2EE42F0",
+          "mnemonic": "BL",
+          "target": "0x2E1049C"
+        },
+        {
+          "rva": "0x2EE42F4",
+          "mnemonic": "BL",
+          "target": "0x2E104A4"
+        },
+        {
+          "rva": "0x2EE42F8",
+          "mnemonic": "BL",
+          "target": "0x2E104C0"
+        },
+        {
+          "rva": "0x2EE4300",
+          "mnemonic": "BL",
+          "target": "0x2E10374"
+        }
+      ]
+    },
+    {
+      "name": "PluginInterface._SetRefreshRate",
+      "start_rva": "0x2EE4304",
+      "end_rva_exclusive": "0x2EE44A8",
+      "size": 420,
+      "sha256": "7a968e201f1a280b3bf59d64107763d2512afcf1369c45aa8bfb7b2a122f3424",
+      "direct_branches": [
+        {
+          "rva": "0x2EE4334",
+          "mnemonic": "BL",
+          "target": "0x2E10210"
+        },
+        {
+          "rva": "0x2EE4340",
+          "mnemonic": "BL",
+          "target": "0x2E10210"
+        },
+        {
+          "rva": "0x2EE434C",
+          "mnemonic": "BL",
+          "target": "0x2E10210"
+        },
+        {
+          "rva": "0x2EE4358",
+          "mnemonic": "BL",
+          "target": "0x2E10210"
+        },
+        {
+          "rva": "0x2EE4364",
+          "mnemonic": "BL",
+          "target": "0x2E10210"
+        },
+        {
+          "rva": "0x2EE4370",
+          "mnemonic": "BL",
+          "target": "0x2E10210"
+        },
+        {
+          "rva": "0x2EE438C",
+          "mnemonic": "BL",
+          "target": "0x2DA9B84"
+        },
+        {
+          "rva": "0x2EE43A0",
+          "mnemonic": "BL",
+          "target": "0x2DA9B28"
+        },
+        {
+          "rva": "0x2EE43AC",
+          "mnemonic": "BL",
+          "target": "0x2E10384"
+        },
+        {
+          "rva": "0x2EE43E0",
+          "mnemonic": "BL",
+          "target": "0x2DA9B28"
+        },
+        {
+          "rva": "0x2EE43F0",
+          "mnemonic": "BL",
+          "target": "0x2E10498"
+        },
+        {
+          "rva": "0x2EE4404",
+          "mnemonic": "BL",
+          "target": "0x6564B78"
+        },
+        {
+          "rva": "0x2EE4410",
+          "mnemonic": "BL",
+          "target": "0x2E102F4"
+        },
+        {
+          "rva": "0x2EE4424",
+          "mnemonic": "BL",
+          "target": "0x2E1038C"
+        },
+        {
+          "rva": "0x2EE4440",
+          "mnemonic": "BL",
+          "target": "0x2E10388"
+        },
+        {
+          "rva": "0x2EE445C",
+          "mnemonic": "BL",
+          "target": "0x2E101BC"
+        },
+        {
+          "rva": "0x2EE447C",
+          "mnemonic": "BL",
+          "target": "0x6565028"
+        },
+        {
+          "rva": "0x2EE4494",
+          "mnemonic": "BL",
+          "target": "0x2E1049C"
+        },
+        {
+          "rva": "0x2EE4498",
+          "mnemonic": "BL",
+          "target": "0x2E104A4"
+        },
+        {
+          "rva": "0x2EE449C",
+          "mnemonic": "BL",
+          "target": "0x2E104C0"
+        },
+        {
+          "rva": "0x2EE44A4",
+          "mnemonic": "BL",
+          "target": "0x2E10374"
+        }
+      ]
+    },
+    {
+      "name": "PluginInterface.RefreshRateInit",
+      "start_rva": "0x2EE4AE0",
+      "end_rva_exclusive": "0x2EE4AE4",
+      "size": 4,
+      "sha256": "1240b90ac6dc027a5dedf24ffdf374fc75afa61278076a1f0bd64c0e1130f4a6",
+      "direct_branches": [
+        {
+          "rva": "0x2EE4AE0",
+          "mnemonic": "B",
+          "target": "0x2EE4160"
+        }
+      ]
+    },
+    {
+      "name": "PluginInterface.SetRefreshRate",
+      "start_rva": "0x2EE4AE4",
+      "end_rva_exclusive": "0x2EE4AE8",
+      "size": 4,
+      "sha256": "9d8bccbe14a822baa2de150c671b9e4252f10a00ff5a530fb5b36c167d23c1c9",
+      "direct_branches": [
+        {
+          "rva": "0x2EE4AE4",
+          "mnemonic": "B",
+          "target": "0x2EE4304"
+        }
+      ]
+    },
+    {
+      "name": "LiveEffectVolumeTabPage.initializeHighFrequencyMode",
+      "start_rva": "0x38FD9D0",
+      "end_rva_exclusive": "0x38FDAFC",
+      "size": 300,
+      "sha256": "768463670dd77cab0bfc65a2506c155d964e4ed8e4476e39df21d567e895c684",
+      "direct_branches": [
+        {
+          "rva": "0x38FD9F8",
+          "mnemonic": "BL",
+          "target": "0x2E10210"
+        },
+        {
+          "rva": "0x38FDA04",
+          "mnemonic": "BL",
+          "target": "0x2E10210"
+        },
+        {
+          "rva": "0x38FDA10",
+          "mnemonic": "BL",
+          "target": "0x2E10210"
+        },
+        {
+          "rva": "0x38FDA1C",
+          "mnemonic": "BL",
+          "target": "0x2E10210"
+        },
+        {
+          "rva": "0x38FDA28",
+          "mnemonic": "BL",
+          "target": "0x2E10210"
+        },
+        {
+          "rva": "0x38FDA60",
+          "mnemonic": "BL",
+          "target": "0x2E10498"
+        },
+        {
+          "rva": "0x38FDA74",
+          "mnemonic": "BL",
+          "target": "0x5277BF0"
+        },
+        {
+          "rva": "0x38FDAC0",
+          "mnemonic": "BL",
+          "target": "0x2E10384"
+        },
+        {
+          "rva": "0x38FDAD0",
+          "mnemonic": "BL",
+          "target": "0x32D8AF4"
+        },
+        {
+          "rva": "0x38FDAF4",
+          "mnemonic": "B",
+          "target": "0x30767D8"
+        },
+        {
+          "rva": "0x38FDAF8",
+          "mnemonic": "BL",
+          "target": "0x2E1049C"
+        }
+      ]
+    },
+    {
+      "name": "LiveEffectVolumeTabPage.<initializeHighFrequencyMode>b__57_0",
+      "start_rva": "0x38FF100",
+      "end_rva_exclusive": "0x38FF128",
+      "size": 40,
+      "sha256": "f572fe685ab6e92263689c9311da52c46a88ffe088b9ef08116642489957b775",
+      "direct_branches": [
+        {
+          "rva": "0x38FF124",
+          "mnemonic": "BL",
+          "target": "0x2E1049C"
+        }
+      ]
+    },
+    {
+      "name": "CE.LiveCoreSettingsProtoData.get_HighFrequencyMode",
+      "start_rva": "0x581C18C",
+      "end_rva_exclusive": "0x581C194",
+      "size": 8,
+      "sha256": "91bfc7522b6ab1c012cdc8a27d2e383f8ffa9904970ccce323babaa6ff918b54",
+      "direct_branches": []
+    },
+    {
+      "name": "CE.LiveCoreSettingsProtoData.set_HighFrequencyMode",
+      "start_rva": "0x581C194",
+      "end_rva_exclusive": "0x581C1A0",
+      "size": 12,
+      "sha256": "c40d61434987fc521c70bef9499484617f171817956c7aa3a8cbd050a3ba99a8",
+      "direct_branches": []
+    },
+    {
+      "name": "LiveCoreSettings..ctor(data)",
+      "start_rva": "0x3A8856C",
+      "end_rva_exclusive": "0x3A88AB8",
+      "size": 1356,
+      "sha256": "3deca451580af8d59bb581b51ab802cefc27aa3b8bbd7d96a0c65bdb9d354ee3",
+      "direct_branches": [
+        {
+          "rva": "0x3A88598",
+          "mnemonic": "BL",
+          "target": "0x2E10210"
+        },
+        {
+          "rva": "0x3A885A4",
+          "mnemonic": "BL",
+          "target": "0x2E10210"
+        },
+        {
+          "rva": "0x3A885B0",
+          "mnemonic": "BL",
+          "target": "0x2E10210"
+        },
+        {
+          "rva": "0x3A885BC",
+          "mnemonic": "BL",
+          "target": "0x2E10210"
+        },
+        {
+          "rva": "0x3A885C8",
+          "mnemonic": "BL",
+          "target": "0x2E10210"
+        },
+        {
+          "rva": "0x3A885D4",
+          "mnemonic": "BL",
+          "target": "0x2E10210"
+        },
+        {
+          "rva": "0x3A885E0",
+          "mnemonic": "BL",
+          "target": "0x2E10210"
+        },
+        {
+          "rva": "0x3A885EC",
+          "mnemonic": "BL",
+          "target": "0x2E10210"
+        },
+        {
+          "rva": "0x3A885F8",
+          "mnemonic": "BL",
+          "target": "0x2E10210"
+        },
+        {
+          "rva": "0x3A8860C",
+          "mnemonic": "BL",
+          "target": "0x5ADAFE8"
+        },
+        {
+          "rva": "0x3A88618",
+          "mnemonic": "BL",
+          "target": "0x3A89224"
+        },
+        {
+          "rva": "0x3A88654",
+          "mnemonic": "B",
+          "target": "0x3A886AC"
+        },
+        {
+          "rva": "0x3A88664",
+          "mnemonic": "BL",
+          "target": "0x2E10498"
+        },
+        {
+          "rva": "0x3A88670",
+          "mnemonic": "BL",
+          "target": "0x581BF58"
+        },
+        {
+          "rva": "0x3A88678",
+          "mnemonic": "BL",
+          "target": "0x3A89224"
+        },
+        {
+          "rva": "0x3A886C0",
+          "mnemonic": "BL",
+          "target": "0x2E10498"
+        },
+        {
+          "rva": "0x3A886CC",
+          "mnemonic": "BL",
+          "target": "0x5199D84"
+        },
+        {
+          "rva": "0x3A886EC",
+          "mnemonic": "BL",
+          "target": "0x519A748"
+        },
+        {
+          "rva": "0x3A886FC",
+          "mnemonic": "BL",
+          "target": "0x2E101BC"
+        },
+        {
+          "rva": "0x3A8870C",
+          "mnemonic": "BL",
+          "target": "0x2E101BC"
+        },
+        {
+          "rva": "0x3A887DC",
+          "mnemonic": "BL",
+          "target": "0x2E101BC"
+        },
+        {
+          "rva": "0x3A887E4",
+          "mnemonic": "B",
+          "target": "0x3A888DC"
+        },
+        {
+          "rva": "0x3A88870",
+          "mnemonic": "BL",
+          "target": "0x2E10498"
+        },
+        {
+          "rva": "0x3A88884",
+          "mnemonic": "BL",
+          "target": "0x51ABD68"
+        },
+        {
+          "rva": "0x3A88894",
+          "mnemonic": "BL",
+          "target": "0x2E101BC"
+        },
+        {
+          "rva": "0x3A888A4",
+          "mnemonic": "BL",
+          "target": "0x2E101BC"
+        },
+        {
+          "rva": "0x3A888B4",
+          "mnemonic": "BL",
+          "target": "0x2E10498"
+        },
+        {
+          "rva": "0x3A888C8",
+          "mnemonic": "BL",
+          "target": "0x518AE9C"
+        },
+        {
+          "rva": "0x3A888D8",
+          "mnemonic": "BL",
+          "target": "0x2E101BC"
+        },
+        {
+          "rva": "0x3A888E8",
+          "mnemonic": "BL",
+          "target": "0x2E101BC"
+        },
+        {
+          "rva": "0x3A88900",
+          "mnemonic": "B",
+          "target": "0x3A88948"
+        },
+        {
+          "rva": "0x3A88920",
+          "mnemonic": "BL",
+          "target": "0x2E10498"
+        },
+        {
+          "rva": "0x3A88934",
+          "mnemonic": "BL",
+          "target": "0x518AE9C"
+        },
+        {
+          "rva": "0x3A88944",
+          "mnemonic": "BL",
+          "target": "0x2E101BC"
+        },
+        {
+          "rva": "0x3A88954",
+          "mnemonic": "BL",
+          "target": "0x2E101BC"
+        },
+        {
+          "rva": "0x3A8896C",
+          "mnemonic": "B",
+          "target": "0x3A889B0"
+        },
+        {
+          "rva": "0x3A88988",
+          "mnemonic": "BL",
+          "target": "0x2E10498"
+        },
+        {
+          "rva": "0x3A8899C",
+          "mnemonic": "BL",
+          "target": "0x51ABD68"
+        },
+        {
+          "rva": "0x3A889AC",
+          "mnemonic": "BL",
+          "target": "0x2E101BC"
+        },
+        {
+          "rva": "0x3A889BC",
+          "mnemonic": "BL",
+          "target": "0x2E101BC"
+        },
+        {
+          "rva": "0x3A88A14",
+          "mnemonic": "B",
+          "target": "0x3A88A7C"
+        },
+        {
+          "rva": "0x3A88A94",
+          "mnemonic": "BL",
+          "target": "0x2E10384"
+        },
+        {
+          "rva": "0x3A88AB0",
+          "mnemonic": "B",
+          "target": "0x32CE8AC"
+        },
+        {
+          "rva": "0x3A88AB4",
+          "mnemonic": "BL",
+          "target": "0x2E1049C"
+        }
+      ]
+    },
+    {
+      "name": "LiveCoreSettings.get_IsHighFrequencyMode",
+      "start_rva": "0x3A8920C",
+      "end_rva_exclusive": "0x3A89214",
+      "size": 8,
+      "sha256": "00f68c2e15cc2c44d8fdd178c0686168c0e80619c1721880cd56cdf765854bbb",
+      "direct_branches": []
+    },
+    {
+      "name": "InGameDirector.Awake",
+      "start_rva": "0x32F8668",
+      "end_rva_exclusive": "0x32F8BB8",
+      "size": 1360,
+      "sha256": "b98574258964d555c0d52bd6b2c0e1a0c267803f29722a4138592243f808d5bf",
+      "direct_branches": [
+        {
+          "rva": "0x32F8694",
+          "mnemonic": "BL",
+          "target": "0x2E10210"
+        },
+        {
+          "rva": "0x32F86A0",
+          "mnemonic": "BL",
+          "target": "0x2E10210"
+        },
+        {
+          "rva": "0x32F86AC",
+          "mnemonic": "BL",
+          "target": "0x2E10210"
+        },
+        {
+          "rva": "0x32F86B8",
+          "mnemonic": "BL",
+          "target": "0x2E10210"
+        },
+        {
+          "rva": "0x32F86C4",
+          "mnemonic": "BL",
+          "target": "0x2E10210"
+        },
+        {
+          "rva": "0x32F86D0",
+          "mnemonic": "BL",
+          "target": "0x2E10210"
+        },
+        {
+          "rva": "0x32F86DC",
+          "mnemonic": "BL",
+          "target": "0x2E10210"
+        },
+        {
+          "rva": "0x32F86E8",
+          "mnemonic": "BL",
+          "target": "0x2E10210"
+        },
+        {
+          "rva": "0x32F86F8",
+          "mnemonic": "BL",
+          "target": "0x497C258"
+        },
+        {
+          "rva": "0x32F8750",
+          "mnemonic": "BL",
+          "target": "0x2DA9E1C"
+        },
+        {
+          "rva": "0x32F8754",
+          "mnemonic": "B",
+          "target": "0x32F8768"
+        },
+        {
+          "rva": "0x32F8778",
+          "mnemonic": "BL",
+          "target": "0x497C258"
+        },
+        {
+          "rva": "0x32F87C0",
+          "mnemonic": "BL",
+          "target": "0x2E10384"
+        },
+        {
+          "rva": "0x32F87CC",
+          "mnemonic": "BL",
+          "target": "0x3B03BF8"
+        },
+        {
+          "rva": "0x32F87D8",
+          "mnemonic": "BL",
+          "target": "0x420F1DC"
+        },
+        {
+          "rva": "0x32F87E8",
+          "mnemonic": "BL",
+          "target": "0x2E101BC"
+        },
+        {
+          "rva": "0x32F87FC",
+          "mnemonic": "BL",
+          "target": "0x2E10384"
+        },
+        {
+          "rva": "0x32F880C",
+          "mnemonic": "BL",
+          "target": "0x65BE9CC"
+        },
+        {
+          "rva": "0x32F8828",
+          "mnemonic": "BL",
+          "target": "0x2E10384"
+        },
+        {
+          "rva": "0x32F884C",
+          "mnemonic": "B",
+          "target": "0x3AB6294"
+        },
+        {
+          "rva": "0x32F8864",
+          "mnemonic": "B",
+          "target": "0x32F886C"
+        },
+        {
+          "rva": "0x32F8868",
+          "mnemonic": "BL",
+          "target": "0x2E1049C"
+        },
+        {
+          "rva": "0x32F889C",
+          "mnemonic": "BL",
+          "target": "0x2E10210"
+        },
+        {
+          "rva": "0x32F88A8",
+          "mnemonic": "BL",
+          "target": "0x2E10210"
+        },
+        {
+          "rva": "0x32F88B4",
+          "mnemonic": "BL",
+          "target": "0x2E10210"
+        },
+        {
+          "rva": "0x32F88C0",
+          "mnemonic": "BL",
+          "target": "0x2E10210"
+        },
+        {
+          "rva": "0x32F88CC",
+          "mnemonic": "BL",
+          "target": "0x2E10210"
+        },
+        {
+          "rva": "0x32F88D8",
+          "mnemonic": "BL",
+          "target": "0x2E10210"
+        },
+        {
+          "rva": "0x32F88E4",
+          "mnemonic": "BL",
+          "target": "0x2E10210"
+        },
+        {
+          "rva": "0x32F88F0",
+          "mnemonic": "BL",
+          "target": "0x2E10210"
+        },
+        {
+          "rva": "0x32F88FC",
+          "mnemonic": "BL",
+          "target": "0x2E10210"
+        },
+        {
+          "rva": "0x32F8908",
+          "mnemonic": "BL",
+          "target": "0x2E10210"
+        },
+        {
+          "rva": "0x32F8914",
+          "mnemonic": "BL",
+          "target": "0x2E10210"
+        },
+        {
+          "rva": "0x32F8924",
+          "mnemonic": "BL",
+          "target": "0x497C258"
+        },
+        {
+          "rva": "0x32F8940",
+          "mnemonic": "BL",
+          "target": "0x3AFFEF4"
+        },
+        {
+          "rva": "0x32F896C",
+          "mnemonic": "BL",
+          "target": "0x2E10384"
+        },
+        {
+          "rva": "0x32F8978",
+          "mnemonic": "BL",
+          "target": "0x331C170"
+        },
+        {
+          "rva": "0x32F8988",
+          "mnemonic": "BL",
+          "target": "0x2E10498"
+        },
+        {
+          "rva": "0x32F8998",
+          "mnemonic": "BL",
+          "target": "0x32F1E88"
+        },
+        {
+          "rva": "0x32F89AC",
+          "mnemonic": "BL",
+          "target": "0x2E101BC"
+        },
+        {
+          "rva": "0x32F89D0",
+          "mnemonic": "BL",
+          "target": "0x2E10498"
+        },
+        {
+          "rva": "0x32F89E0",
+          "mnemonic": "BL",
+          "target": "0x33082DC"
+        },
+        {
+          "rva": "0x32F89F0",
+          "mnemonic": "BL",
+          "target": "0x2E101BC"
+        },
+        {
+          "rva": "0x32F89F8",
+          "mnemonic": "BL",
+          "target": "0x2E10498"
+        },
+        {
+          "rva": "0x32F8A04",
+          "mnemonic": "BL",
+          "target": "0x33081D0"
+        },
+        {
+          "rva": "0x32F8A14",
+          "mnemonic": "BL",
+          "target": "0x2E101BC"
+        },
+        {
+          "rva": "0x32F8A20",
+          "mnemonic": "BL",
+          "target": "0x3312D4C"
+        },
+        {
+          "rva": "0x32F8A30",
+          "mnemonic": "BL",
+          "target": "0x2E101BC"
+        },
+        {
+          "rva": "0x32F8A38",
+          "mnemonic": "BL",
+          "target": "0x32F9540"
+        },
+        {
+          "rva": "0x32F8A40",
+          "mnemonic": "BL",
+          "target": "0x32F9620"
+        },
+        {
+          "rva": "0x32F8A48",
+          "mnemonic": "BL",
+          "target": "0x32F9924"
+        },
+        {
+          "rva": "0x32F8A50",
+          "mnemonic": "BL",
+          "target": "0x32F99FC"
+        },
+        {
+          "rva": "0x32F8A64",
+          "mnemonic": "BL",
+          "target": "0x386F704"
+        },
+        {
+          "rva": "0x32F8A78",
+          "mnemonic": "BL",
+          "target": "0x3307180"
+        },
+        {
+          "rva": "0x32F8A88",
+          "mnemonic": "BL",
+          "target": "0x65BB120"
+        },
+        {
+          "rva": "0x32F8AA8",
+          "mnemonic": "BL",
+          "target": "0x65BDE58"
+        },
+        {
+          "rva": "0x32F8AB0",
+          "mnemonic": "BL",
+          "target": "0x2E10498"
+        },
+        {
+          "rva": "0x32F8ABC",
+          "mnemonic": "BL",
+          "target": "0x5ADAFE8"
+        },
+        {
+          "rva": "0x32F8ACC",
+          "mnemonic": "BL",
+          "target": "0x2E101BC"
+        },
+        {
+          "rva": "0x32F8AD4",
+          "mnemonic": "BL",
+          "target": "0x497C258"
+        },
+        {
+          "rva": "0x32F8AF0",
+          "mnemonic": "BL",
+          "target": "0x2E10498"
+        },
+        {
+          "rva": "0x32F8B00",
+          "mnemonic": "BL",
+          "target": "0x32F5D24"
+        },
+        {
+          "rva": "0x32F8B10",
+          "mnemonic": "BL",
+          "target": "0x2E101BC"
+        },
+        {
+          "rva": "0x32F8B18",
+          "mnemonic": "BL",
+          "target": "0x5ADF1B4"
+        },
+        {
+          "rva": "0x32F8B20",
+          "mnemonic": "BL",
+          "target": "0x65B8EB8"
+        },
+        {
+          "rva": "0x32F8B40",
+          "mnemonic": "BL",
+          "target": "0x497C258"
+        },
+        {
+          "rva": "0x32F8B50",
+          "mnemonic": "BL",
+          "target": "0x3291C58"
+        },
+        {
+          "rva": "0x32F8B54",
+          "mnemonic": "B",
+          "target": "0x32F8B5C"
+        },
+        {
+          "rva": "0x32F8B7C",
+          "mnemonic": "BL",
+          "target": "0x3307164"
+        },
+        {
+          "rva": "0x32F8B84",
+          "mnemonic": "BL",
+          "target": "0x497C258"
+        },
+        {
+          "rva": "0x32F8BB0",
+          "mnemonic": "B",
+          "target": "0x3AFFEF4"
+        },
+        {
+          "rva": "0x32F8BB4",
+          "mnemonic": "BL",
+          "target": "0x2E1049C"
+        }
+      ]
+    }
+  ],
+  "critical_branches": [
+    {
+      "rva": "0x3B03AA0",
+      "bytes": "e514aa94",
+      "mnemonic": "BL",
+      "target_rva": "0x6588E34",
+      "callee": "UnityEngine.Screen.get_currentResolution"
+    },
+    {
+      "rva": "0x3B03AB0",
+      "bytes": "1521aa94",
+      "mnemonic": "BL",
+      "target_rva": "0x658BF04",
+      "callee": "UnityEngine.Resolution.get_refreshRateRatio"
+    },
+    {
+      "rva": "0x3B03B24",
+      "bytes": "21557e94",
+      "mnemonic": "BL",
+      "target_rva": "0x5A98FA8",
+      "callee": "System.Math.Round(double,int,MidpointRounding)"
+    },
+    {
+      "rva": "0x3B03B8C",
+      "bytes": "06dda994",
+      "mnemonic": "BL",
+      "target_rva": "0x657AFA4",
+      "callee": "UnityEngine.Application.get_targetFrameRate"
+    },
+    {
+      "rva": "0x3B03BD0",
+      "bytes": "f5dca994",
+      "mnemonic": "BL",
+      "target_rva": "0x657AFA4",
+      "callee": "UnityEngine.Application.get_targetFrameRate"
+    },
+    {
+      "rva": "0x3B03BDC",
+      "bytes": "c183cf97",
+      "mnemonic": "BL",
+      "target_rva": "0x2EE4AE0",
+      "callee": "PluginInterface.RefreshRateInit"
+    },
+    {
+      "rva": "0x3B03C58",
+      "bytes": "dddca994",
+      "mnemonic": "BL",
+      "target_rva": "0x657AFCC",
+      "callee": "UnityEngine.Application.set_targetFrameRate"
+    },
+    {
+      "rva": "0x3B03CAC",
+      "bytes": "8e83cf17",
+      "mnemonic": "B",
+      "target_rva": "0x2EE4AE4",
+      "callee": "PluginInterface.SetRefreshRate"
+    },
+    {
+      "rva": "0x2EE4AE0",
+      "bytes": "a0fdff17",
+      "mnemonic": "B",
+      "target_rva": "0x2EE4160",
+      "callee": "PluginInterface._RefreshRateInit"
+    },
+    {
+      "rva": "0x2EE4AE4",
+      "bytes": "08feff17",
+      "mnemonic": "B",
+      "target_rva": "0x2EE4304",
+      "callee": "PluginInterface._SetRefreshRate"
+    },
+    {
+      "rva": "0x32F87CC",
+      "bytes": "0b2d2094",
+      "mnemonic": "BL",
+      "target_rva": "0x3B03BF8",
+      "callee": "DeviceUtility.SetTargetFrameRate"
+    }
+  ],
+  "managed_control_flow": {
+    "refresh_rate_init": [
+      "Read Screen.currentResolution.refreshRateRatio numerator and denominator.",
+      "Compute numerator / denominator as double and Math.Round(value, 1, ToEven).",
+      "Store the rounded value as float DeviceUtility.initDisplayRefreshRate.",
+      "Call PluginInterface.RefreshRateInit(max(initDisplayRefreshRate, Application.targetFrameRate))."
+    ],
+    "set_target_frame_rate": [
+      "Set Application.targetFrameRate to the requested integer.",
+      "Call PluginInterface.SetRefreshRate(max(initDisplayRefreshRate, requestedFrameRate))."
+    ]
+  },
+  "android_plugin_control_flow": {
+    "class_literal": "jp.co.craftegg.band.lib.SetDisplayRefreshRate",
+    "init_method_literal": "setRefreshRateInit",
+    "update_method_literal": "setRefreshRate",
+    "initialization": [
+      "Run once on UnityPlayer.currentActivity UI thread when no setter exists.",
+      "Find the unitySurfaceView SurfaceView, create RefreshRateSetter, and register it as SurfaceHolder.Callback.",
+      "If the current Surface is valid, bind it and apply the requested rate immediately."
+    ],
+    "surface_lifecycle": [
+      "setFrameRate stores the requested float even when no Surface is available.",
+      "surfaceCreated binds the Surface and reapplies the stored rate.",
+      "surfaceDestroyed clears the Surface reference.",
+      "On Android API level 30 or newer, UI-thread work calls Surface.setFrameRate(rate, 0)."
+    ]
+  },
+  "high_frequency_mode": {
+    "initializer_rva": "0x38FD9D0",
+    "callback_rva": "0x38FF100",
+    "settings_path": "LiveEffectVolumeTabPage+0x30 -> LiveCoreSettingsProtoData+0x20 -> HighFrequencyMode+0xA0",
+    "callback_bytes": "fe0f1ff8081840f9e80000b4081140f9a80000b42900001209810239fe0741f8c0035fd6de44d497",
+    "callback_behavior": "Store value & 1 to LiveCoreSettingsProtoData+0xA0.",
+    "direct_frame_rate_call": false,
+    "critical_instructions": [
+      {
+        "rva": "0x38FF114",
+        "bytes": "29000012",
+        "word": "0x12000029",
+        "behavior": "mask settings callback value to one bit"
+      },
+      {
+        "rva": "0x38FF118",
+        "bytes": "09810239",
+        "word": "0x39028109",
+        "behavior": "store settings value to LiveCoreSettingsProtoData+0xA0"
+      },
+      {
+        "rva": "0x581C18C",
+        "bytes": "00804239",
+        "word": "0x39428000",
+        "behavior": "read LiveCoreSettingsProtoData+0xA0"
+      },
+      {
+        "rva": "0x581C194",
+        "bytes": "28000012",
+        "word": "0x12000028",
+        "behavior": "mask ProtoData setter value to one bit"
+      },
+      {
+        "rva": "0x581C198",
+        "bytes": "08800239",
+        "word": "0x39028008",
+        "behavior": "store ProtoData setter value to +0xA0"
+      },
+      {
+        "rva": "0x3A88A08",
+        "bytes": "a8824239",
+        "word": "0x394282A8",
+        "behavior": "load ProtoData HighFrequencyMode from +0xA0"
+      },
+      {
+        "rva": "0x3A88A0C",
+        "bytes": "08a70239",
+        "word": "0x3902A708",
+        "behavior": "copy HighFrequencyMode to LiveCoreSettings+0xA9"
+      },
+      {
+        "rva": "0x3A8920C",
+        "bytes": "00a44239",
+        "word": "0x3942A400",
+        "behavior": "read LiveCoreSettings+0xA9"
+      },
+      {
+        "rva": "0x32F8790",
+        "bytes": "08a54239",
+        "word": "0x3942A508",
+        "behavior": "read gameplay LiveCoreSettings+0xA9"
+      },
+      {
+        "rva": "0x32F87A8",
+        "bytes": "1f010071",
+        "word": "0x7100011F",
+        "behavior": "compare HighFrequencyMode with zero"
+      },
+      {
+        "rva": "0x32F87B0",
+        "bytes": "080f8052",
+        "word": "0x52800F08",
+        "behavior": "load high-frequency target 120"
+      },
+      {
+        "rva": "0x32F87B4",
+        "bytes": "8a078052",
+        "word": "0x5280078A",
+        "behavior": "load standard target 60"
+      },
+      {
+        "rva": "0x32F87B8",
+        "bytes": "5401881a",
+        "word": "0x1A880154",
+        "behavior": "select 60 when disabled and 120 when enabled"
+      },
+      {
+        "rva": "0x32F87CC",
+        "bytes": "0b2d2094",
+        "word": "0x94202D0B",
+        "behavior": "call DeviceUtility.SetTargetFrameRate"
+      }
+    ],
+    "construction_copy": {
+      "source": "LiveCoreSettingsProtoData+0xA0",
+      "destination": "LiveCoreSettings+0xA9",
+      "load_rva": "0x3A88A08",
+      "store_rva": "0x3A88A0C"
+    },
+    "gameplay_consumer": {
+      "function": "InGameDirector.Awake",
+      "function_rva": "0x32F8668",
+      "field_read_rva": "0x32F8790",
+      "disabled_target_frame_rate": 60,
+      "enabled_target_frame_rate": 120,
+      "select_rva": "0x32F87B8",
+      "set_target_frame_rate_call_rva": "0x32F87CC",
+      "set_target_frame_rate_target_rva": "0x3B03BF8",
+      "direct_frame_rate_call": true
+    },
+    "boundary": "The settings callback only persists the value; InGameDirector.Awake consumes the constructed runtime setting when gameplay starts."
+  },
+  "confirmed": [
+    "The managed target frame rate and Android Surface frame-rate request are separate writes.",
+    "Both managed entry points request the larger of initDisplayRefreshRate and the requested/current Application target.",
+    "The APK implementation retains the requested Surface rate across Surface destruction and reapplies it on recreation.",
+    "HighFrequencyMode setting-page callback only persists one boolean byte and does not directly call the recovered frame-rate chain.",
+    "LiveCoreSettings construction copies ProtoData HighFrequencyMode from +0xA0 to runtime offset +0xA9.",
+    "InGameDirector.Awake selects target frame rate 60 when HighFrequencyMode is false and 120 when true, then directly calls DeviceUtility.SetTargetFrameRate."
+  ],
+  "inference": [
+    "Surface.setFrameRate(rate, 0) is a platform hint; the compositor/display may still choose a different physical mode."
+  ],
+  "unresolved": [
+    "Actual device compositor mode selection and frame pacing remain runtime/platform observations."
+  ]
+}

@@ -1,0 +1,83 @@
+{
+  "scope": "NoteManager.ExecUpdate per-substep Note update and After-update scheduling",
+  "status": "confirmed_static",
+  "native_entries": {
+    "NoteManager.ExecUpdate": "0x37760C0..0x377644C",
+    "NoteBase.get_IsStateDeactive": "0x3A76508",
+    "NoteBase.ExecuteUpdate": "0x3A76840..0x3A768F0",
+    "NoteBase.ExecuteAfterUpdate": "0x3A768F0..0x3A76974",
+    "NoteAddSlideMultipleDirectionalFlickVisual.ExecuteAfterUpdate": "0x30E84F8..0x30E8588",
+    "NoteSlideMultipleDirectionalFlickAfter.MoveState": "0x3222FDC..0x32232F8",
+    "NoteMultipleDirectionalFlickBackLine.OnUpdate": "0x32230E0..0x32232F8"
+  },
+  "metadata_fields": {
+    "activeNoteList": "+0x38",
+    "activeNoteBpmChangeList": "+0x48",
+    "refExecuteNotes": "+0x98",
+    "executeCount": "+0xA0",
+    "source": "static/il2cpp/dump/dump.cs and static/il2cpp/dump/il2cpp.h"
+  },
+  "per_substep_order": [
+    "advance InGameMusicScoreController by the divided delta time",
+    "iterate activeNoteBpmChangeList in forward order",
+    "iterate activeNoteList in reverse order and call NoteBase.ExecuteUpdate",
+    "after each ExecuteUpdate, append the Note to refExecuteNotes only when get_IsStateDeactive returns false",
+    "iterate refExecuteNotes in append order and dispatch virtual ExecuteAfterUpdate",
+    "call NoteManager.playNoteGroupInformationList",
+    "repeat the complete sequence for the next adaptive substep"
+  ],
+  "after_update_dispatch": {
+    "object_class_method_pointer_offset": "+0x218",
+    "object_class_method_info_offset": "+0x220",
+    "vtable_slot": 14,
+    "metadata_name": "ExecuteAfterUpdate",
+    "proof": "NoteBase_VTable and NoteAddSlideMultipleDirectionalFlickVisual_VTable both name slot 14 ExecuteAfterUpdate; Il2CppClass vtable base plus fourteen 16-byte VirtualInvokeData entries yields the observed +0x218 method pointer"
+  },
+  "multiple_direction_back_line_order": [
+    "the terminal After does not override ExecuteAfterUpdate; its inherited slot 14 has no back-line call",
+    "NoteSlideMultipleDirectionalFlickAfter.MoveState checks backLine +0x200 and tail-branches to OnUpdate at 0x32230C8 during that terminal Note's ExecuteUpdate",
+    "NoteAddSlideMultipleDirectionalFlickVisual.ExecuteAfterUpdate first calls NoteBase.ExecuteAfterUpdate at 0x30E8534",
+    "the same override then tail-calls NoteMultipleDirectionalFlickBackLine.OnUpdate at 0x30E8574 when its line reference is non-null",
+    "visual-owned lines therefore observe every Note mutation completed before the After phase, while terminal-owned lines observe only mutations completed before the terminal's reverse-order ExecuteUpdate position"
+  ],
+  "timing_correction": {
+    "previous_model": "all multiple-direction lines were advanced together in the batched After phase",
+    "confirmed_model": "terminal-owned lines advance inline in terminal MoveState during ExecuteUpdate; visual-owned lines advance from the visual ExecuteAfterUpdate override after the full Update traversal",
+    "consequence": "a terminal bridge can mechanically deactivate in the same substep when its target changed earlier in reverse active-list order, but guarded group activation makes a side target's own Update occur after the terminal; the reachable same-Update route is terminal-owned side consumption"
+  },
+  "prototype_behavior": {
+    "helper": "advance_note_manager_two_phase_substeps",
+    "active_order": "reads the propagation-guarded graph active subset derived by multiple_flick_activation_guard_order.json and reloads its live membership per note and per substep",
+    "update_phase": "applies the supplied backend-neutral Note update callback in reverse active-list order and advances a moving terminal owner's line inline",
+    "filter": "nodes whose state is Deactive after ExecuteUpdate are excluded from that substep's refExecuteNotes sequence",
+    "after_phase": "dispatches retained nodes in append order and advances only visual-owned lines from visual After update",
+    "trace": "NoteManagerTwoPhaseTrace distinguishes update_back_line from after_back_line events"
+  },
+  "confirmed": [
+    "refExecuteNotes is a NoteFrontBase array rather than a List",
+    "executeCount is reset before the reverse active-note traversal",
+    "Deactive is the exact filter for After-phase retention",
+    "After-phase order equals the reverse active-list append order",
+    "adaptive subdivision repeats the full two-phase sequence per substep",
+    "terminal-owned and visual-owned multiple-direction lines have different scheduler positions"
+  ],
+  "inferred": [
+    "the backend-neutral prototype represents only the recovered Slide-tail subset of the heterogeneous activeNoteList"
+  ],
+  "unresolved": [
+    "the concrete Unity PlayerLoop placement of NoteManager.ExecUpdate relative to unrelated MonoBehaviour Update methods",
+    "source-order values for concrete chart instances not yet parsed into the prototype, although the insertion rule is confirmed",
+    "After-update effects for active Note subclasses not yet represented by the runtime-integration prototype",
+    "live-device confirmation of terminal self-consumption and next-substep side-target observation on an actual chart"
+  ],
+  "verification_scripts": [
+    "../../../tmp/disassemble_slide_intermediate_rendering.py",
+    "../../../tmp/find_slide_tail_factory_callers.py"
+  ],
+  "continued_from": "multiple_flick_back_line_update.json",
+  "continued_by": [
+    "multiple_flick_active_list_order.json",
+    "note_manager_active_list_mutation.json",
+    "multiple_flick_activation_guard_order.json"
+  ]
+}

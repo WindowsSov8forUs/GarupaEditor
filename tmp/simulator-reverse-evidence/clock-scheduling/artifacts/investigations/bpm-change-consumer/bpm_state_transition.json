@@ -1,0 +1,41 @@
+{
+  "status": "confirmed-static-consumer-integrated",
+  "start_bpm": {
+    "source": "#BPM value",
+    "fields": ["NoteDataBMSBuilder.startBpm", "NoteDataBMSBuilder.StartBpmString"],
+    "counts_as_change": false
+  },
+  "change_channels": {
+    "03": "two-character hexadecimal BPM",
+    "08": "two-character key resolved through #BPMxx"
+  },
+  "activation": {
+    "batch_calls": 1,
+    "selection": "first source-ordered record with ccNum 3 or 8",
+    "crossing": "currentBar > barIndex or currentBar == barIndex and musicBeatProgress >= 192 * numerator / denominator"
+  },
+  "completion_order": [
+    "InGameMusicScoreController.UpdateBPM(bpm, bpmString)",
+    "NoteBpmChange.isActive = false",
+    "NoteManager.onBpmChanged removes the object from activeNoteBpmChangeList"
+  ],
+  "prototype": {
+    "chart_fields": ["start_bpm", "start_bpm_string", "bpm_change_commands"],
+    "runtime_fields": ["current_bpm", "current_bpm_string", "next_bpm", "next_bpm_string", "next_command_index"],
+    "tempo_units_per_bar": 192,
+    "event": "bpm_changed",
+    "restore": "rebuild current and next BPM from the basic value and commands at or before the restored position"
+  },
+  "production_oracles": [
+    {"chart": "poppin_shuffle_special", "start_bpm": 220.0, "change_commands": 0},
+    {"chart": "786_miracle_april_habahiro_special", "start_bpm": 180.0, "change_commands": 0}
+  ],
+  "inference": [
+    "the backend-neutral model does not reproduce launcher lead time or pooled-object residency"
+  ],
+  "unresolved": [
+    "live callback timing relative to the Unity audio transport",
+    "a locked production oracle containing a nonzero CC03 or CC08 change"
+  ],
+  "avd_used": false
+}

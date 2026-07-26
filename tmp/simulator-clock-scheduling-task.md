@@ -11,7 +11,7 @@
 - 排除的逆向仓库内容：未跟踪的 `runtime/tools/` 及任何未进入锁定提交的文件
 - 锁定游戏样本：`jp.co.craftegg.band` 10.1.3（version code 229，`arm64-v8a`）
 - 阶段目标：把已完成的原作形状 `NoteBatchInformationList` 接入模拟器运行时，恢复原作托管层的帧率请求、双音乐时钟、BPM command、判定偏移、自适应子步、两阶段 Note 调度和暂停冻结语义。
-- 阶段状态：任务书已建立，S01–S10 尚未实施；S02 是 S03–S10 的前置证据硬门。
+- 阶段状态：S01 静态证据冻结已完成；S02 是 S03–S10 的前置证据硬门，当前尚未闭合。
 
 本阶段继续维持 GarupaEditor 当前 TypeScript 技术栈，不因 Reverse 中的 Python 验证模型改变运行技术栈。Reverse 是唯一行为依据；旧 GarupaEditor 模拟器、通用节奏游戏实现、浏览器计时经验和方便实现的默认值均不得作为原作行为来源。
 
@@ -28,7 +28,7 @@
 
 | 任务 | 状态 | 完成条件 |
 | --- | --- | --- |
-| S01 冻结时钟与调度静态证据 | 待实施 | E01–E26、上游样本依赖、manifest、开放缺口和三方哈希校验器全部落地 |
+| S01 冻结时钟与调度静态证据 | 已完成 | E01–E26、上游 F01–F04 依赖、manifest、开放缺口和源/副本/Git 索引三方哈希校验器已落地并通过验证 |
 | S02 完成实体设备证据闭环 | 证据硬门 | 非零 BPM、初始主/launcher 时钟和 launcher lead 轨迹先进入 Reverse 提交，再更新本任务书最终锁定提交 |
 | S03 接入谱面构造结果 | 等待 S02 | 生产运行时不再依赖 `FirstSlice*Fixture` 或调用者提供的时钟/BPM 派生值 |
 | S04 恢复 60/120 FPS 请求边界 | 等待 S02 | `InGameDirector.Awake` 只向记录型后端请求确认的 60/120 目标值 |
@@ -38,6 +38,20 @@
 | S08 恢复自适应子步 | 等待 S02 | `ExecuteFrame`、四计数器、严格阈值和 `101/21/6` 回退完整闭合 |
 | S09 恢复两阶段调度与列表突变 | 等待 S02 | 每子步顺序、同时组延迟、反向 Update、AfterUpdate 过滤和实时列表语义完整闭合 |
 | S10 建立生产 oracle 与阶段验收 | 等待 S02 | 零变化生产回归、非零 BPM 实体轨迹、60/120、偏移、暂停和失败关闭全部通过 |
+
+### 1.3 批次记录
+
+#### 2026-07-26 第一批：S01 静态证据冻结
+
+- Reverse `HEAD` 已核对为 `74ab76f6838847d98aae1a15741a5f024e3774ff`，工作树只有明确排除的 `?? runtime/tools/`。
+- E01–E26 已按 Reverse 相对目录字节保持复制到 `tmp/simulator-reverse-evidence/clock-scheduling/artifacts/`，共 26 个静态证据文件。
+- `manifest.json` 已记录源提交、源路径、冻结路径、字节数、完整 SHA-256、确认状态和消费任务。
+- `OPEN_GAPS.md` 已登记 S02 为 `required-before-code`，并逐项列明非零 BPM、初始主/launcher 时钟、launcher lead-time、BPM 字符串和逐子步生命周期缺口。
+- F01–F04 沿用谱面构造阶段既有冻结副本，只在 manifest 中登记为上游依赖并校验字节数与哈希；本批未重复复制或下载。
+- `verify.mjs` 已覆盖 Reverse 基线与排除状态、26 个源文件/冻结副本、4 个上游依赖、S02 硬门和 S03–S10 阻断，并完成 Git 索引三方校验。
+- 工作树验证已通过：`node tmp/simulator-reverse-evidence/clock-scheduling/verify.mjs` 输出 `entries=26, upstream=4, runtimeGate=required-before-code, index=skipped`；暂存后 `node tmp/simulator-reverse-evidence/clock-scheduling/verify.mjs --index` 输出 `index=checked`；`git diff --check` 与 `git diff --cached --check` 均通过。
+- 本批只落地证据与文档，未修改 `src/simulator` 或 `package.json`，未运行 TypeScript、模拟器测试、Vite/Tauri 或 GarupaEditor 整体构建。
+- 下一批只能进入 S02，在 Reverse 仓库完成实体设备证据闭环；S02 完成前 S03–S10 保持阻断。
 
 ## 2. 固定范围
 
@@ -327,6 +341,12 @@ interface FrameRateBackend {
 
 - 任一哈希、源提交或相对路径不一致。
 - Reverse 出现除 `runtime/tools/` 外未登记内容。
+
+**完成记录（2026-07-26）**
+
+- E01–E26、F01–F04 依赖、manifest、`OPEN_GAPS.md` 和 `verify.mjs` 已落地。
+- 源文件、工作树冻结副本与 Git 索引三方校验通过。
+- 未触发停止条件；S02 继续保持 `required-before-code`。
 
 ### S02 完成实体设备证据闭环
 
@@ -858,7 +878,7 @@ docs(simulator): 记录时钟与调度阶段任务与证据
 14. 任务书和 `tmp/simulator-clock-scheduling-acceptance.md` 明确保留 move-time、Note 行为、判定、输入、音频、渲染和主程序入口为后续阶段。
 15. 完成规定隔离验证并推送远端；不以 GarupaEditor 整体可运行为验收条件。
 
-## 11. 本任务书落地验证
+## 11. 本任务书初始落地验证
 
 本次只创建 `tmp/simulator-clock-scheduling-task.md`：
 

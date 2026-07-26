@@ -1,0 +1,7 @@
+component	source_investigation	confirmed_behavior	harness_coverage
+TempoMap	../note-scheduling-clock/	GetBarSeconds=240/BPM and BPM-aware position advancement	cross-BPM forward/backward advancement
+FrameScheduler	../note-scheduling-clock/	frame thresholds select 1/2/3/4 substeps	exact threshold cases 0.017/0.02/0.04/0.05
+JudgeOffset	../note-scheduling-clock/	signed offset repeats 1/60-second tempo-map steps	round-trip across a BPM boundary
+Snapshot	../move-time-state-restore/	integer-second scheduling snapshot and <=16-second replay	continuous versus restore-and-replay equality
+ReplayInput	../move-time-state-restore/	replay skips live input sampling	input counter unchanged during replay
+Pause	../application-pause-resume/	pause freezes scheduler without rewinding clock	clock and note/command cursors unchanged

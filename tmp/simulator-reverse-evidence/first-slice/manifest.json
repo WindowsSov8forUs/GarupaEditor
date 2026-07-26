@@ -35,7 +35,7 @@
       "id": "E03",
       "sourcePath": "artifacts/investigations/note-scheduling-clock/README.md",
       "copiedPath": "artifacts/investigations/note-scheduling-clock/README.md",
-      "sha256": "CB13700C9A3B8CA4DC66DE2AFCD923A7917868260385E731F5BE5262FF7CA946",
+      "sha256": "5E56429CFD8C5920D247CFBB6BF0B45B64FC3A4E5F66E99E9D22B152F1873777",
       "status": "confirmed-static-with-explicit-inference",
       "consumers": ["T03", "T04", "T05", "T07", "T08", "T11"]
     },
@@ -43,7 +43,7 @@
       "id": "E04",
       "sourcePath": "artifacts/investigations/simultaneous-note-ordering/README.md",
       "copiedPath": "artifacts/investigations/simultaneous-note-ordering/README.md",
-      "sha256": "A15D27EDD7FB1368760E196789A35D5486F804C856F42BAE40FDB5FB5FAD3E95",
+      "sha256": "F22105A34817312C7A39F0F39AF35B6EC5EC7F99938F2443C1EAC23B1D919DBD",
       "status": "confirmed-static-with-explicit-inference",
       "consumers": ["T06", "T07", "T11"]
     },
@@ -91,7 +91,7 @@
       "id": "E10",
       "sourcePath": "artifacts/investigations/bms-note-batch/README.md",
       "copiedPath": "artifacts/investigations/bms-note-batch/README.md",
-      "sha256": "CBD71659829C42E4F0247277D23AA741A122F9BF3016C8E9BDD8D33140FE99EF",
+      "sha256": "37B64F06EDFBC7D8F92053F82CD18D672A47B8D8089B1C5B0DCFF4D35ACC1F22",
       "status": "confirmed-static-with-explicit-inference",
       "consumers": ["T03", "T06", "T11"]
     },
@@ -155,7 +155,7 @@
       "id": "E18",
       "sourcePath": "artifacts/investigations/equal-position-and-cross-note-mutation/README.md",
       "copiedPath": "artifacts/investigations/equal-position-and-cross-note-mutation/README.md",
-      "sha256": "F4815999E89BBB3307A56D208C1AF3707901355305297CA7E1A6690E3421CC16",
+      "sha256": "7ADA4FD567B8B5C142A98AE046BC2E5C5A300A97BB658A2D6C21C3E623D67E9E",
       "status": "confirmed-static-closure-report",
       "consumers": ["T06", "T07", "T11"]
     },

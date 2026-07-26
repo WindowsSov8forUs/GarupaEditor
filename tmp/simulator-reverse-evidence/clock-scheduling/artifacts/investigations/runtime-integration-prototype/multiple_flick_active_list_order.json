@@ -1,0 +1,81 @@
+{
+  "scope": "multiple-direction Slide terminal and side-visual activeNoteList order",
+  "status": "confirmed_static",
+  "native_entries": {
+    "NoteManager.SetupNotes": "0x3777098..0x3777A14",
+    "NoteManager.initNoteBases": "0x3777A14..0x3777DFC",
+    "NoteManager.<SetupNotes>b__65_0": "0x377E380..0x377E4B0",
+    "NoteManager.<SetupNotes>b__65_1": "0x377E4B0..0x377E58C",
+    "NoteManager.activateNoteAndConnectSyncLine": "0x3771DC8",
+    "NoteBatchInformationListFactory.setupMultipleDirectionalFlickNote": "0x376FE3C..0x3770500"
+  },
+  "activation_callbacks": {
+    "setup": [
+      "SetupNotes writes NoteBase.OnActivate at +0xC8",
+      "SetupNotes writes NoteBase.OnDeactivate at +0xD0"
+    ],
+    "state_route": [
+      "NoteBase.ChangeState first dispatches virtual SetNoteState",
+      "the final Deactive state invokes OnDeactivate",
+      "the final Move state invokes OnActivate"
+    ],
+    "active_list_mutation": [
+      "<SetupNotes>b__65_0 checks whether activeNoteList +0x38 already contains the Note",
+      "a Note not already present is appended to the List tail",
+      "<SetupNotes>b__65_1 removes the Note from activeNoteList"
+    ]
+  },
+  "chart_order_chain": [
+    "convertResultDictionary traverses BMSBarData.bmsNoteList_ in source order",
+    "each BMSBarDataWithButton.noteList_ is traversed in source order",
+    "excuteMakeNoteBatchInformationList appends each constructed NoteInformation to NoteBatchInformation.informationList_",
+    "setupMultipleDirectionalFlickNote mutates GameNoteType FrontNoteType and AfterNoteType but does not reorder or remove informationList_ entries",
+    "activateNoteAndConnectSyncLine traverses launchNoteList from index zero to Count minus one and immediately activates each Note",
+    "each launch candidate is attempted in that order; the Deactive activation guard and state propagation can suppress later callbacks as continued by multiple_flick_activation_guard_order.json"
+  ],
+  "order_rule": {
+    "confirmed": "the activation-candidate order for a constructed multiple-direction group is chart-data-driven; the final activeNoteList is its propagation-guarded ordered subset",
+    "source_keys": [
+      "BMSBarData.bmsNoteList_ button-group first-occurrence order",
+      "the source order inside each BMSBarDataWithButton.noteList_"
+    ],
+    "rejected_model": "there is no native global left-to-root-to-right or button-sorted activation order",
+    "instance_requirement": "a concrete prototype group needs source-order metadata from its chart instance to claim confirmed scheduling order"
+  },
+  "prototype_behavior": {
+    "side_order_field": "SlideTailSideNodeSpec.source_order",
+    "terminal_order_field": "NoteSpec.end_source_order",
+    "graph_fields": [
+      "SlideTailConnectionGraph.active_node_order",
+      "SlideTailConnectionGraph.active_node_order_source"
+    ],
+    "confirmed_source_label": "confirmed_chart_order",
+    "compatibility_source_label": "compatibility_button_order",
+    "compatibility_boundary": "legacy specifications with no source-order values simulate guarded activation over graph button order but are not labeled confirmed",
+    "validation": "partial source metadata and duplicate source-order values are rejected",
+    "scheduler": "advance_note_manager_two_phase_substeps consumes the graph-owned active_node_order and no longer accepts an external order argument"
+  },
+  "confirmed": [
+    "activeNoteList is maintained dynamically by Move and Deactive state callbacks",
+    "OnActivate appends rather than button-sorts the active Note",
+    "launchNoteList activation is forward and immediate",
+    "multiple-direction post-processing preserves informationList_ order",
+    "the candidate scheduling rule is known even when a particular chart instance's source order has not yet been supplied",
+    "final membership requires the Deactive activation guard modeled by multiple_flick_activation_guard_order.json"
+  ],
+  "inferred": [
+    "the backend-neutral source_order integer represents relative order within the modeled multiple-direction group rather than a recovered serialized field name"
+  ],
+  "unresolved": [
+    "live-device confirmation of guarded active membership on actual chart data"
+  ],
+  "verification_scripts": [
+    "../../../tmp/disassemble_slide_intermediate_rendering.py",
+    "../../../tmp/find_slide_tail_factory_callers.py"
+  ],
+  "continued_from": "note_manager_two_phase_substep_order.json",
+  "continued_by": [
+    "note_manager_active_list_mutation.json",
+    "multiple_flick_activation_guard_order.json"
+  ]
+}

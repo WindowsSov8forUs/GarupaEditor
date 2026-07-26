@@ -1,0 +1,83 @@
+{
+  "title": "Standalone Slide tail runtime and NoteManager ExecuteFrame producer",
+  "source": {
+    "note_manager_exec_update": {
+      "method": "NoteManager.ExecUpdate",
+      "rva": "0x37760C0",
+      "instruction_range": "0x37760C0..0x377644C"
+    },
+    "terminal_stop_state": {
+      "method": "NoteSlideAfter.StopState",
+      "rva": "0x3220D68",
+      "terminal_flick_range": "0x3220E7C..0x3220EFC",
+      "ordinary_time_range": "0x3220F00..0x3220F7C"
+    }
+  },
+  "execute_frame": {
+    "threshold": {
+      "address": "0x1536A68",
+      "bits": "0x3C888889",
+      "seconds": 0.0166666675
+    },
+    "initial_formula": {
+      "instructions": "0x3776124..0x377614C",
+      "normal_or_short_frame": "deltaTime * 60",
+      "long_frame": "1.0 when deltaTime is strictly greater than the threshold",
+      "equivalent": "min(deltaTime * 60, 1.0) for nonnegative deltaTime"
+    },
+    "adaptive_substeps": {
+      "instructions": "0x3776150..0x3776254",
+      "possible_counts": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "delta_thresholds": [
+        {
+          "address": "0x15367EC",
+          "seconds": 0.0179999992
+        },
+        {
+          "address": "0x1536768",
+          "seconds": 0.0329999998
+        },
+        {
+          "address": "0x1536758",
+          "seconds": 0.0500000007
+        }
+      ],
+      "division": "0x3776248..0x3776254 divides both ExecuteFrame and deltaTime by the chosen update count before the per-note loop.",
+      "conservation": "Each substep sees initial ExecuteFrame / count, so the sum across all substeps equals the initial clamped ExecuteFrame."
+    }
+  },
+  "terminal_after": {
+    "identity": "The final Slide endpoint is a NoteSlideAfter with afterNote == null, not merely a generic hold-release timestamp.",
+    "move_state": "The endpoint uses the same signed progress, real-line, over-line, Transform snap and Stop transition as other After nodes, with existAfterNote=false.",
+    "ordinary_miss": "A stopped terminal endpoint uses AfterThrough when elapsed seconds are strictly greater than 0.21666667; AfterForce is unavailable without a successor.",
+    "type_eight_miss": "A stopped terminal endpoint whose root GameNoteType is 8 accumulates ExecuteFrame and emits AfterThroughFlick at frameCounter >= 7.",
+    "damage": "The shared NoteSlide.onMiss does not apply the one-fifth division to a terminal After node, so tail Miss uses full configured damage.",
+    "release": "After callback submission, the root tail resolution removes render state and the existing root-owned deactivate cascade releases the pooled After object."
+  },
+  "prototype": {
+    "execute_frame_helper": "note_manager_execute_frame implements the clamped producer and explicit 1..4 substep division.",
+    "tail_state": "SlideTailRuntimeState independently exposes lane, width, progress, projected position, scale, NoteState, GameNoteType, end gesture, frame counter and miss reason.",
+    "render_output": "RenderState.slide_tails and snapshot.render.slide_tails expose the active terminal After node separately from intermediate nodes and mesh segments.",
+    "automatic_miss": "_expire_slide_tail replaces the earlier generic sweetFrame+9 timeout for Slide tails and routes AfterThrough or AfterThroughFlick metadata through the shared tail result path.",
+    "non_slide_behavior": "Long-note tail release and timeout behavior remains on the existing generic lifecycle."
+  },
+  "confirmed": [
+    "ExecuteFrame is produced directly by NoteManager.ExecUpdate rather than by Unity Time access inside NoteSlideAfter.",
+    "ExecuteFrame represents clamped 60 Hz frame progress, not raw seconds.",
+    "adaptive NoteManager substeps divide both time delta and ExecuteFrame consistently.",
+    "terminal type-8 Slide After timeout is frame-progress based while ordinary terminal timeout is score-time based.",
+    "the terminal After Miss path uses full damage rather than intermediate one-fifth damage"
+  ],
+  "inference": [
+    "The backend-neutral runtime's one update call corresponds to one unsplit NoteManager outer update; note_manager_execute_frame exposes substep division for backends that reproduce the adaptive loop."
+  ],
+  "unresolved": [
+    "Terminal directional and multiple-Flick After subclasses still share the generic SlideTailRuntimeState visual fields; subtype-specific Sprite and side-note animation state remains separate."
+  ],
+  "continued_by": "note_manager_adaptive_substeps.json"
+}

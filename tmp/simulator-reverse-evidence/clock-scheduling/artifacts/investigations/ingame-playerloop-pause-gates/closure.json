@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "sample": "jp.co.craftegg.band 10.1.3 (229), Unity 2022.3.62f1, arm64-v8a",
+  "status": "G04-G05-closed-for-first-slice",
+  "sources": {
+    "libil2cpp": {
+      "path": "samples/jp.co.craftegg.band/10.1.3_229/extracted/libil2cpp.so",
+      "size": 119819736,
+      "sha256": "66c9c666c50962b662df8d894e851c7d18f07142dca145cfac3d30d063d1d9fa"
+    },
+    "il2cpp_dump": {
+      "path": "static/il2cpp/dump/dump.cs",
+      "size": 53109731,
+      "sha256": "b2672c8bec6ade997fe13793df442d9f8381c98d1eabca1bf06cd9710a4b638f"
+    },
+    "playerloop_investigation": {
+      "path": "artifacts/investigations/perfect-particle-playerloop-native-update/perfect_particle_playerloop_native_update.json",
+      "size": 8333,
+      "sha256": "c094936bb526f8aba65a15fa371ba993d8618b2171692bf6fee5f3eedc09c7e0"
+    },
+    "application_pause_investigation": {
+      "path": "artifacts/investigations/application-pause-resume/README.md",
+      "size": 5229,
+      "sha256": "2c2e5c4f38f68812fe330b0e8364cf411d83e362cd0adb8ecaadc20b8cb2ecdf"
+    },
+    "native_ranges": {
+      "path": "artifacts/investigations/ingame-playerloop-pause-gates/decompiled/native_ranges.txt",
+      "size": 5513,
+      "sha256": "94ea3f9f9b706f506eeb3e0bfa9dc7922d912a7bc20e0b2f414ffeda7eef802e"
+    }
+  },
+  "G04": {
+    "status": "closed-scoped",
+    "entry_chain": [
+      "InGameDirector.Update @ 0x32F8C4C",
+      "InGameManager.ExecUpdate @ 0x32F8C64",
+      "InGameManager.updatePlayState @ 0x32F9BB0",
+      "NoteManager.ExecUpdate @ 0x37760C0"
+    ],
+    "playerloop_phase": {
+      "node": "Update.ScriptRunBehaviourUpdate",
+      "phase_child_ordinal": 1,
+      "phase_child_count": 4
+    },
+    "relative_native_order": {
+      "script_update_before_particle_begin": true,
+      "particle_begin_before_particle_end": true,
+      "direct_set_playerloop_writers_preserve_order": true
+    },
+    "first_slice_boundary": "Restore InGameDirector.Update as the original managed owner of InGameManager.ExecUpdate; the portable host step supplies the frame trigger but is not named as a Unity PlayerLoop API.",
+    "not_claimed": "Ordering among unrelated MonoBehaviour Update callbacks and device presentation latency are not consumed by the first-slice engine object graph."
+  },
+  "G05": {
+    "status": "closed",
+    "game_states": {
+      "PlayingNone": 4,
+      "PlayingSound": 5,
+      "PauseNone": 6,
+      "PauseSound": 7
+    },
+    "pause_states": {
+      "None": 0,
+      "Pause": 1,
+      "Resume": 2
+    },
+    "is_paused_formula": "pauseState is Pause or Resume, or currentGameState is PauseNone or PauseSound",
+    "note_update_gate": "ExecUpdate dispatches updatePlayState only for PlayingNone and PlayingSound; updatePlayState calls NoteManager.ExecUpdate only when canThroughInputInspection returns true.",
+    "playing_gate_detail": "canThroughInputInspection returns true directly for PlayingSound; PlayingNone continues through the OneFrame input-inspection list condition.",
+    "pause_sound_effect": "onPauseSound writes currentGameState = PauseSound before tail-calling pauseSound, so later ExecUpdate does not enter updatePlayState or NoteManager.ExecUpdate.",
+    "resume_effect": "resumeGame writes currentGameState = PlayingSound after audio/controller resume callbacks.",
+    "pause_command_order": "ExecUpdate performs GameState dispatch first, then consumes PauseState Pause or Resume, then resets PauseState to None.",
+    "first_slice_boundary": "The portable pause/resume API maps directly to the confirmed steady PauseSound and PlayingSound states because pause UI/countdown callbacks are outside this slice."
+  },
+  "unresolved_outside_first_slice": [
+    "Exact ordering among unrelated MonoBehaviour Update callbacks without an engine-object dependency",
+    "Render-thread, GPU, display-presentation, and capture-clock timing",
+    "Pause UI animation and resume-countdown implementation",
+    "Concrete audio-device backend behavior"
+  ]
+}
