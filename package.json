@@ -15,6 +15,7 @@
     "simulator:test:chart-multi-range": "node src/simulator/testing/runChartMultiRangeTests.mjs",
     "simulator:test:chart-command-data": "node src/simulator/testing/runChartCommandDataTests.mjs",
     "simulator:test:chart-finalize": "node src/simulator/testing/runChartFinalizeTests.mjs",
+    "simulator:test:chart-production": "node src/simulator/testing/runChartProductionAcceptanceTests.mjs",
     "tauri": "tauri",
     "desktop:dev": "tauri dev",
     "desktop:build": "tauri build",

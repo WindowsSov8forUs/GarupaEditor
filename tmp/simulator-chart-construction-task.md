@@ -10,7 +10,7 @@
 - 排除的逆向仓库内容：未跟踪的 `runtime/tools/` 及任何未进入锁定提交的文件
 - 锁定游戏样本：`jp.co.craftegg.band` 10.1.3（version code 229，`arm64-v8a`）
 - 阶段目标：从原始 BMS 文本恢复原作 `MusicScoreBezierConverter -> NoteDataBMSBuilder -> NoteBatchInformationListFactory` 构造链，并产出原作形状的 `NoteBatchInformationList`。
-- 阶段状态：C01–C09 已完成，C10 尚未实施；本文件是该阶段唯一执行任务书。
+- 阶段状态：C01–C10 已完成；谱面构造阶段已在本任务书定义的证据边界内验收。
 
 本阶段继续维持 GarupaEditor 当前 TypeScript 技术栈方向。Reverse 仓库中的 Python 原型只能作为离线 oracle，不能成为模拟器运行依赖。实施者不得从已删除的 GarupaEditor 模拟器、常见 BMS 实现、通用曲线库、个人经验或方便实现的默认值补齐原作行为。
 
@@ -27,7 +27,7 @@
 | C07 恢复 HABAHIRO 与多范围合并 | 已完成 | 已恢复原作连续范围合并、CC 旁路双坐标、Long/Slide 来源集合和 lane-change 记录 |
 | C08 恢复 BPM、Skill 与 Fever 构造数据 | 已完成 | 已恢复 BPM command 记录、Skill 源序索引、Long 终端附加字段和命令模式转换边界 |
 | C09 恢复终结过滤与同步准备 | 已完成 | 已恢复四次稳定过滤、空批次逆序删除、同步端点身份与测试侧静态同步投影 |
-| C10 建立生产 oracle、隔离测试与验收 | 待实施 | 尚未建立离线生产验证和阶段验收记录 |
+| C10 建立生产 oracle、隔离测试与验收 | 已完成 | 已建立离线生产验收入口、旁路 oracle 适配器和阶段验收记录，两份冻结生产样本全部匹配 |
 
 ### 1.2 批次记录
 
@@ -128,6 +128,16 @@
 - 普通生产样本确认 656 批次、935 构造记录和 192 条静态端点同步关系；HABAHIRO 样本确认 371 批次、770 构造记录和 266 条静态端点同步关系。
 - 已新增 `npm.cmd run simulator:test:chart-finalize`，覆盖四遍顺序、各谓词正反例、存活子序列、空批次删除、深度冻结公开结果和两份生产数量/同步 oracle；既有构造测试已统一推进到 C09 成功入口。
 - 本批仅运行 `src/simulator` 隔离 TypeScript 检查、谱面构造定向测试、第一切片回归、禁止依赖扫描、`git diff --check` 和证据包索引校验；未运行 Vite/Tauri 或 GarupaEditor 整体构建。
+
+#### 2026-07-26 第九批：C10 生产 oracle、隔离测试与阶段验收
+
+- 新增 `chartProductionOracle.mjs` 测试旁路适配器，只投影 playable root、普通/宽谱来源 lane、Long/Slide authoring 字段、展开节点和统计签名；该适配器不进入生产类型或运行路径。
+- 新增 `simulator:test:chart-production` 离线验收入口，直接读取冻结 F01–F04 和 E11/E12，不访问网络、不调用 Python，并在每次执行后运行禁止依赖扫描。
+- 普通生产样本确认 656 批次、935 构造记录、825 playable roots、298 个源 Slide 节点、1577 个展开节点和 192 条静态同步关系；Single、Directional、Long、Slide authoring 字段与 F02 全量匹配。
+- HABAHIRO 生产样本确认 371 批次、770 构造记录、598 playable roots、51 个 Slide 根、626 个展开节点、位置 1728 的 lane-change 记录和 266 条静态同步关系；来源 CC lane、内部 baked button、Long 路径和 Slide 主路径与 F04/E12 匹配。
+- 两份样本均验证重复构造的序列化结果完全一致；公开构造结果继续深度冻结，原作形状记录未加入 `fixtureId`、`sourceOrder` 或 `SyncConnectionSpec`。
+- 阶段验收记录写入 `tmp/simulator-chart-construction-acceptance.md`。非零 BPM 生产 oracle、`noteSyncEdgeMargin`、同步运行时断线/重连、Skill/Fever/lane-change 消费，以及判定、渲染、音频、输入和主程序入口继续属于开放边界。
+- 本批运行谱面构造全部隔离测试、第一切片回归、模拟器隔离 TypeScript 检查、禁止依赖扫描、证据包索引校验和 `git diff --check`；未运行 Vite/Tauri 或 GarupaEditor 整体构建。
 
 ## 2. 固定范围
 
