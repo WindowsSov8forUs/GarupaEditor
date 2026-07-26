@@ -88,7 +88,7 @@ test("谱面构造枚举保持 IL2CPP 确认值", () => {
   assertEqual(VirtualLaneDirection.Right, 2, "right virtual lane");
 });
 
-test("每次构造调用建立独立上下文并在 C03 失败关闭", () => {
+test("每次构造调用建立独立上下文并在 C05 失败关闭", () => {
   const firstFactory = new NoteBatchInformationListFactory();
   const secondFactory = new NoteBatchInformationListFactory();
   const firstParser = new MusicScoreHeaderParser();
@@ -104,11 +104,11 @@ test("每次构造调用建立独立上下文并在 C03 失败关闭", () => {
     isCommand: false,
   });
   assert(first !== second, "result objects must not be shared");
-  assert(first.status === "evidence-required", "C03 must remain fail-closed");
-  assertEqual(first.capability, "chart-construction.header-parse", "failure boundary");
+  assert(first.status === "evidence-required", "C05 must remain fail-closed");
+  assertEqual(first.capability, "chart-construction.batch-factory", "failure boundary");
   assert(
-    first.requiredEvidence.includes(ChartConstructionEvidence.E08),
-    "failure must route to frozen Header evidence",
+    first.requiredEvidence.includes(ChartConstructionEvidence.E09),
+    "failure must route to frozen batch evidence",
   );
   assert(second.status === "evidence-required", "explicit default must remain fail-closed");
 });

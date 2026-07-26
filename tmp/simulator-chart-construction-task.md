@@ -10,7 +10,7 @@
 - 排除的逆向仓库内容：未跟踪的 `runtime/tools/` 及任何未进入锁定提交的文件
 - 锁定游戏样本：`jp.co.craftegg.band` 10.1.3（version code 229，`arm64-v8a`）
 - 阶段目标：从原始 BMS 文本恢复原作 `MusicScoreBezierConverter -> NoteDataBMSBuilder -> NoteBatchInformationListFactory` 构造链，并产出原作形状的 `NoteBatchInformationList`。
-- 阶段状态：C01–C02 已完成，C03–C10 尚未实施；本文件是该阶段唯一执行任务书。
+- 阶段状态：C01–C04 已完成，C05–C10 尚未实施；本文件是该阶段唯一执行任务书。
 
 本阶段继续维持 GarupaEditor 当前 TypeScript 技术栈方向。Reverse 仓库中的 Python 原型只能作为离线 oracle，不能成为模拟器运行依赖。实施者不得从已删除的 GarupaEditor 模拟器、常见 BMS 实现、通用曲线库、个人经验或方便实现的默认值补齐原作行为。
 
@@ -19,9 +19,9 @@
 | 任务 | 状态 | 结果 |
 | --- | --- | --- |
 | C01 冻结谱面构造证据包 | 已完成 | 已冻结 E01–E18、F01–F04、22 项 manifest、开放缺口和三方哈希校验器 |
-| C02 建立构造边界与 API | 已完成 | 已建立原作字段类型、四个构造 owner、深度冻结边界与 C03 前失败关闭纯函数入口 |
-| C03 恢复 Header 与 Bezier 转换 | 待实施 | 尚未恢复控制 WAV、曲线采样、量化和文本重组 |
-| C04 恢复 BMS 文本解析 | 待实施 | 尚未恢复 Header、小节、CC、WAV 和 Note material 构造 |
+| C02 建立构造边界与 API | 已完成 | 已建立原作字段类型、四个构造 owner、深度冻结边界与分阶段失败关闭纯函数入口 |
+| C03 恢复 Header 与 Bezier 转换 | 已完成 | 普通与 HABAHIRO 生产转换文本均达到 Reverse oracle 字节级哈希一致 |
+| C04 恢复 BMS 文本解析 | 已完成 | 已恢复原作材料对象、Header/小节/CC/WAV/BPM 解析、分组顺序与同位置复用 |
 | C05 恢复批次与同位置顺序 | 待实施 | 尚未恢复 button group 顺序、组内排序和 material 合并 |
 | C06 恢复 Long、Slide 与派生节点 | 待实施 | 尚未恢复根、终端、中间节点和追加节点对象图 |
 | C07 恢复 HABAHIRO 与多范围合并 | 待实施 | 尚未恢复宽谱合并、双坐标和 lane-change 记录 |
@@ -49,11 +49,24 @@
 - `src/simulator/engine/chart/types.ts` 已建立 `ButtonType`、`GameNoteType`、`FrontNoteType`、`AfterNoteType`、`GameNoteAdditionalType`、`VirtualLaneDirection` 的 IL2CPP 确认值。
 - 同一类型边界已建立原作形状的只读 `NoteInformation`、`NoteBatchInformation`、`NoteBatchInformationList` 以及 GarupaEditor 聚合结果 `ChartConstructionResult`；原作记录不含 `fixtureId`、`sourceOrder` 或同步投影字段。
 - `MusicScoreHeaderParser`、`MusicScoreBezierConverter`、`NoteDataBMSBuilder`、`NoteBatchInformationListFactory` 已建立独立 owner；每次公开调用创建新的工厂上下文，不使用可变全局 singleton。
-- `createNoteBatchInformationList({ musicScoreData, isCommand? })` 已公开，`isCommand` 省略时为 `false`；C03 尚未恢复前统一在 `chart-construction.header-parse` 返回 `evidence-required`，不接受空谱面或其他输入的默认结果。
+- `createNoteBatchInformationList({ musicScoreData, isCommand? })` 已公开，`isCommand` 省略时为 `false`；当前 C05 尚未恢复，完成 Header、Bezier 与 Builder 后统一在 `chart-construction.batch-factory` 返回 `evidence-required`，不伪造批次结果。
 - 谱面构造证据 ID 已使用 `chart-construction:E01` 至 `chart-construction:E18` 作用域与第一切片证据区分；这只属于 GarupaEditor 诊断边界，不进入原作记录。
 - `freezeChartConstructionResult` 已深度冻结批次、Note、button、声音值、Slide 图和 BPM 列表，并在共享终端节点出现于根 `slideNoteList` 与批次列表时保留同一对象身份。
-- 已新增 `npm.cmd run simulator:test:chart-boundary`，4 项测试覆盖枚举值、独立上下文、C03 失败关闭、深度冻结、共享节点身份和禁止适配器字段。
+- 已新增 `npm.cmd run simulator:test:chart-boundary`，4 项测试覆盖枚举值、独立上下文、分阶段失败关闭、深度冻结、共享节点身份和禁止适配器字段。
 - 本批通过模拟器隔离 TypeScript 检查、4 项 C02 边界测试、20 项第一切片回归、禁止依赖扫描和证据包索引校验；未运行 Vite/Tauri 或 GarupaEditor 整体构建。
+
+#### 2026-07-26 第三批：C03 Header/Bezier 与 C04 BMS 文本解析
+
+- `MusicScoreHeaderParser` 已恢复 Parse/ReParse、控制 WAV 识别、主 WAV 与最多 200 个附加 WAV key、`#HABAHIRO` 状态和控制 Header 清除顺序。
+- `MusicScoreBezierConverter` 已恢复二次曲线 200 次采样、192 刻度、步长 3 量化、force 前后排序、同位置归并、角度/常量化简、HABAHIRO 支撑 lane 展开和谱面文本重组；未引入通用曲线库。
+- 冻结普通生产 BMS 的转换结果为 2107 行，SHA-256 为 `B3F3AEC64444D2553060641B1ADA203F99478727489A627C97F39B3FEA08880D`；冻结 HABAHIRO 生产 BMS 的转换结果为 1778 行，SHA-256 为 `C1C68FC617D1621F6F15C01F28E1C9CF64293D7CB154608CABD94F9D67CEFE1A`，均与 E11/E12 字节级一致。
+- HABAHIRO 样本归并使用确定性补偿求和复现 Reverse Python 3.14 离线 oracle 的浮点边界；该算法仅用于已确认的曲线样本平均，不扩展为其他数值规则。
+- `BMSBarData`、`BMSBarDataWithButton` 与 `BMSNoteMaterial` 已按 IL2CPP 字段形状建立；原作材料不含 `sourceOrder`、fixture 身份或同步投影字段。
+- `NoteDataBMSBuilder` 已恢复 Header、小节、CC、WAV、起始 BPM 原字符串、CC03 十六进制 BPM、CC08 查表 BPM、声音值、不可见标记、附加类型和虚拟 lane 解析。
+- 每个小节的 button group 保留 BMS 流中首次出现顺序，组内材料按 `absolutePos` 插入；CC01 同 button 同位置复用材料并追加音乐/声音值；HABAHIRO 同内部 button、同位置但不同 CC 的来源身份保持为独立材料。
+- 两份生产转换文本分别构造 2563 与 2564 个材料；起始 BPM、原字符串、宽谱标记与 E11/E12 一致。生产样本无非零 BPM 变化，因此本批只用合成静态夹具验证 CC03/08，不宣称非零 BPM 生产闭合。
+- 已新增 `npm.cmd run simulator:test:chart-parsing`，8 项测试覆盖两份生产哈希和材料数、button group 顺序、CC01 合并、CC03/08、虚拟 lane、HABAHIRO CC 碰撞与失败关闭。
+- 本批通过 8 项 C03/C04 定向测试、4 项构造边界回归、20 项第一切片回归、模拟器隔离 TypeScript 检查和禁止依赖扫描；未运行 Vite/Tauri 或 GarupaEditor 整体构建。
 
 ## 2. 固定范围
 
