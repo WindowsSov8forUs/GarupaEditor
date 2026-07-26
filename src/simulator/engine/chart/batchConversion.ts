@@ -5,16 +5,29 @@ import type {
 import { bmsNoteMaterialAbsolutePos } from "./bmsBuilder";
 import {
   AfterNoteType,
+  ButtonType,
   GameNoteAdditionalType,
   type ButtonTypeValue,
   type NoteBatchInformation,
   type NoteInformation,
 } from "./types";
 
+export interface ResultDictionaryConversionOptions {
+  readonly bpmChangeValueList?: readonly BMSNoteMaterial[];
+  readonly isMultiRange?: boolean;
+}
+
+type MutableNoteInformation = {
+  -readonly [Key in keyof NoteInformation]: NoteInformation[Key];
+};
+
 export function convertResultDictionary(
   resultDictionary: ReadonlyMap<number, BMSBarData>,
+  options: ResultDictionaryConversionOptions = {},
 ): NoteBatchInformation[] {
   const batches: NoteBatchInformation[] = [];
+  const skillPositions = new Set<number>();
+  let skillNoteIndex = 0;
   const orderedBars = [...resultDictionary.entries()]
     .sort(([leftBar], [rightBar]) => leftBar - rightBar);
   for (const [, barData] of orderedBars) {
@@ -24,10 +37,23 @@ export function convertResultDictionary(
           buttonGroup.buttonType_,
           material,
         );
+        if (
+          noteInformation.gameNoteAdditionalType === GameNoteAdditionalType.Skill
+          && (!options.isMultiRange || !skillPositions.has(noteInformation.absolutePos))
+        ) {
+          skillNoteIndex += 1;
+          (noteInformation as MutableNoteInformation).skillNoteIndex = skillNoteIndex;
+          skillPositions.add(noteInformation.absolutePos);
+        }
         const batch = createNoteBatchInformation(material);
         insertNoteBatchInformation(batches, batch, noteInformation);
       }
     }
+  }
+  for (const material of options.bpmChangeValueList ?? []) {
+    const noteInformation = createNoteInformation(ButtonType.None, material);
+    const batch = createNoteBatchInformation(material);
+    insertNoteBatchInformation(batches, batch, noteInformation);
   }
   return batches;
 }

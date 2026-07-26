@@ -46,18 +46,28 @@ export class NoteBatchInformationListFactory {
     musicScoreData: string,
     isCommand = false,
   ): SimulatorResult<ChartConstructionResult> {
-    const convertedScore = this.bezierConverter.convert(musicScoreData);
-    if (convertedScore.status !== "ok") {
-      return convertedScore;
+    let constructionScore = musicScoreData;
+    if (!isCommand) {
+      const convertedScore = this.bezierConverter.convert(musicScoreData);
+      if (convertedScore.status !== "ok") {
+        return convertedScore;
+      }
+      constructionScore = convertedScore.value ?? musicScoreData;
     }
     const initializeBuilder = this.bmsBuilder.initialize(
-      convertedScore.value ?? musicScoreData,
+      constructionScore,
       isCommand,
     );
     if (initializeBuilder.status !== "ok") {
       return initializeBuilder;
     }
-    const noteBatches = convertResultDictionary(this.bmsBuilder.resultDictionary);
+    const noteBatches = convertResultDictionary(
+      this.bmsBuilder.resultDictionary,
+      {
+        bpmChangeValueList: this.bmsBuilder.bpmChangeValueList,
+        isMultiRange: this.bmsBuilder.isMultiRangeNotes,
+      },
+    );
     registerMultiRangeSources(
       noteBatches,
       this.bmsBuilder.isMultiRangeNotes,
@@ -73,14 +83,14 @@ export class NoteBatchInformationListFactory {
     );
     this.habahiroChangeAbsolutePosValue = findHabahiroChangeAbsolutePos(noteBatches);
     return evidenceRequired(
-      "chart-construction.command-data",
+      "chart-construction.finalize",
       [
         ChartConstructionEvidence.E01,
         ChartConstructionEvidence.E04,
         ChartConstructionEvidence.E09,
         ChartConstructionEvidence.E10,
       ],
-      "C08 and C09 must restore command data, additional indices, and final filtering.",
+      "C09 must restore final filtering and synchronization preparation.",
     );
   }
 }

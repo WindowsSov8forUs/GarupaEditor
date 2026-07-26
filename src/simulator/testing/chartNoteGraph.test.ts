@@ -162,12 +162,12 @@ test("Slide 多方向追加节点归属 A 族终端", () => {
   assertEqual(addition.fireNoteType, FrontNoteType.SlideAMultipleDirectionalFlickAdd, "addition fire type");
 });
 
-test("公开入口完成 C07 后在 C08 命令数据边界失败关闭", () => {
+test("公开入口完成 C08 后在 C09 终结边界失败关闭", () => {
   const result = createNoteBatchInformationList({
     musicScoreData: "#BPM 120\n#WAV01 normal.wav\n#00011:01\n",
   });
-  assert(result.status === "evidence-required", "C08 must remain fail-closed");
-  assertEqual(result.capability, "chart-construction.command-data", "failure boundary");
+  assert(result.status === "evidence-required", "C09 must remain fail-closed");
+  assertEqual(result.capability, "chart-construction.finalize", "failure boundary");
   assert(
     result.requiredEvidence.includes(ChartConstructionEvidence.E09),
     "failure must route to frozen graph evidence",

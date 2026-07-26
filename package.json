@@ -13,6 +13,7 @@
     "simulator:test:chart-batches": "node src/simulator/testing/runChartBatchConversionTests.mjs",
     "simulator:test:chart-graphs": "node src/simulator/testing/runChartNoteGraphTests.mjs",
     "simulator:test:chart-multi-range": "node src/simulator/testing/runChartMultiRangeTests.mjs",
+    "simulator:test:chart-command-data": "node src/simulator/testing/runChartCommandDataTests.mjs",
     "tauri": "tauri",
     "desktop:dev": "tauri dev",
     "desktop:build": "tauri build",

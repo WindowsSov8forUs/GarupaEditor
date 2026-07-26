@@ -10,7 +10,7 @@
 - 排除的逆向仓库内容：未跟踪的 `runtime/tools/` 及任何未进入锁定提交的文件
 - 锁定游戏样本：`jp.co.craftegg.band` 10.1.3（version code 229，`arm64-v8a`）
 - 阶段目标：从原始 BMS 文本恢复原作 `MusicScoreBezierConverter -> NoteDataBMSBuilder -> NoteBatchInformationListFactory` 构造链，并产出原作形状的 `NoteBatchInformationList`。
-- 阶段状态：C01–C07 已完成，C08–C10 尚未实施；本文件是该阶段唯一执行任务书。
+- 阶段状态：C01–C08 已完成，C09–C10 尚未实施；本文件是该阶段唯一执行任务书。
 
 本阶段继续维持 GarupaEditor 当前 TypeScript 技术栈方向。Reverse 仓库中的 Python 原型只能作为离线 oracle，不能成为模拟器运行依赖。实施者不得从已删除的 GarupaEditor 模拟器、常见 BMS 实现、通用曲线库、个人经验或方便实现的默认值补齐原作行为。
 
@@ -25,7 +25,7 @@
 | C05 恢复批次与同位置顺序 | 已完成 | 已恢复材料到基础 Note/批次转换、绝对位置二分插入和跨 button 首次出现顺序 |
 | C06 恢复 Long、Slide 与派生节点 | 已完成 | 已恢复 Long 配对、Slide A/B 有序对象图、同位置支撑节点和多方向追加族 |
 | C07 恢复 HABAHIRO 与多范围合并 | 已完成 | 已恢复原作连续范围合并、CC 旁路双坐标、Long/Slide 来源集合和 lane-change 记录 |
-| C08 恢复 BPM、Skill 与 Fever 构造数据 | 待实施 | 尚未恢复命令记录的数据边界和失败关闭条件 |
+| C08 恢复 BPM、Skill 与 Fever 构造数据 | 已完成 | 已恢复 BPM command 记录、Skill 源序索引、Long 终端附加字段和命令模式转换边界 |
 | C09 恢复终结过滤与同步准备 | 待实施 | 尚未恢复四次过滤和同步所需端点身份 |
 | C10 建立生产 oracle、隔离测试与验收 | 待实施 | 尚未建立离线生产验证和阶段验收记录 |
 
@@ -49,7 +49,7 @@
 - `src/simulator/engine/chart/types.ts` 已建立 `ButtonType`、`GameNoteType`、`FrontNoteType`、`AfterNoteType`、`GameNoteAdditionalType`、`VirtualLaneDirection` 的 IL2CPP 确认值。
 - 同一类型边界已建立原作形状的只读 `NoteInformation`、`NoteBatchInformation`、`NoteBatchInformationList` 以及 GarupaEditor 聚合结果 `ChartConstructionResult`；原作记录不含 `fixtureId`、`sourceOrder` 或同步投影字段。
 - `MusicScoreHeaderParser`、`MusicScoreBezierConverter`、`NoteDataBMSBuilder`、`NoteBatchInformationListFactory` 已建立独立 owner；每次公开调用创建新的工厂上下文，不使用可变全局 singleton。
-- `createNoteBatchInformationList({ musicScoreData, isCommand? })` 已公开，`isCommand` 省略时为 `false`；当前 C07 已恢复，入口完成多范围合并后统一在 C08 的 `chart-construction.command-data` 返回 `evidence-required`，不伪造命令数据或终结结果。
+- `createNoteBatchInformationList({ musicScoreData, isCommand? })` 已公开，`isCommand` 省略时为 `false`；当前 C08 已恢复，入口完成命令数据构造后统一在 C09 的 `chart-construction.finalize` 返回 `evidence-required`，不伪造终结过滤或同步准备结果。
 - 谱面构造证据 ID 已使用 `chart-construction:E01` 至 `chart-construction:E18` 作用域与第一切片证据区分；这只属于 GarupaEditor 诊断边界，不进入原作记录。
 - `freezeChartConstructionResult` 已深度冻结批次、Note、button、声音值、Slide 图和 BPM 列表，并在共享终端节点出现于根 `slideNoteList` 与批次列表时保留同一对象身份。
 - 已新增 `npm.cmd run simulator:test:chart-boundary`，4 项测试覆盖枚举值、独立上下文、分阶段失败关闭、深度冻结、共享节点身份和禁止适配器字段。
@@ -102,8 +102,20 @@
 - Long 根与终端的来源 CC 分别保存在 `ccNums` 和 `afterCcNums`；Slide 同位置支撑记录合并到图节点时同步合并 CC 来源，同时继续保持原作节点与批次成员的对象身份。
 - additional type 4 继续作为原作 `NoteInformation` lane-change 构造记录存在；工厂记录最后一条 lane-change 的绝对位置。冻结 HABAHIRO 样本确认位置为 1728、来源 CC 为 13，但不创建动画、材质切换或 playable root。
 - 已新增 `npm.cmd run simulator:test:chart-multi-range`，6 项合成测试覆盖连续范围、整批中点选择、Long 终端双来源、Slide 节点来源、命令模式与 lane-change，并验证生产 HABAHIRO 的 626 个 Slide 节点均保留来源 CC 和位置 1728 的 lane-change oracle。
-- 公开入口的失败关闭边界已推进到 C08 的 `chart-construction.command-data`；C08–C10 未闭合内容仍返回 `evidence-required`。
+- 公开入口的失败关闭边界已推进到 C09 的 `chart-construction.finalize`；C09–C10 未闭合内容仍返回 `evidence-required`。
 - 本批通过 C07 定向与生产 oracle、C06/C05/C03/C04/边界/第一切片全部回归、模拟器隔离 TypeScript 检查、禁止依赖扫描和证据包索引校验；未运行 Vite/Tauri 或 GarupaEditor 整体构建。
+
+#### 2026-07-26 第七批：C08 BPM、Skill 与 Fever 构造数据
+
+- `NoteDataBMSBuilder.createBpmChangeList` 的 TypeScript 对应实现已把 CC03/08 材料恢复为 `ButtonType.None`、`GameNoteType.None`、`GameNoteAdditionalType.BpmChange` 的原作记录形状，并保留 CC、分数位置、绝对位置、BPM 数值与原字符串。
+- `convertResultDictionary` 已把排序后的 BPM change 材料插入对应批次；`bpmChangeRealValueList` 与 `bpmChangeStringRealValueList` 继续保持并行，起始 BPM 仍独立保存且不计入 change count。
+- Skill 索引在构造源序中从 1 连续分配；普通谱面每条 Skill 记录递增，HABAHIRO 只对同一绝对位置的首条 Skill 来源分配索引，其余同位置来源保持 0，并由既有 Slide/多范围合并路径把非零索引保留到代表节点。
+- Long 配对继续把终端 `gameNoteAdditionalType` 写入根的 `gameNoteAdditionalTypeLongNoteEnd`；终端为 Skill 时复制 `skillNoteIndex` 到 `skillAfterNoteIndex`，Fever 只保留附加类型且不伪造 Skill 索引。
+- `isCommand=true` 已按 E01/E04 顶层顺序跳过 `MusicScoreBezierConverter`，直接解析输入；非命令模式仍先执行 Bezier 转换。公开入口随后在 C09 `chart-construction.finalize` 失败关闭。
+- 冻结普通生产样本确认起始 BPM `220`、原字符串 `"220"`、零 change command，以及测试侧 playable-root 投影中的 6 个根 Skill、30 个根 Fever、0 个终端 Skill/Fever；HABAHIRO 样本确认起始 BPM `180`、原字符串 `"180"` 和零 change command。
+- 已新增 `npm.cmd run simulator:test:chart-command-data`，7 项合成测试覆盖 CC03/08 记录、字符串与位置顺序、普通/宽谱 Skill 索引、Long 终端 Skill/Fever、非法 BPM、C09 失败关闭和命令模式跳过 Bezier，并附两份生产 oracle。
+- E11/E12 均没有非零 BPM change；`OPEN_GAPS.md` 中的非零 CC03/08 生产或实体设备 oracle 缺口继续开放。本批只确认静态算法与记录形状，不宣称该路径生产闭合，也不实现音频 transport、Skill、Fever、UI、分数或协程消费者。
+- 本批通过 C08 定向与生产 oracle、C07/C06/C05/C03/C04/边界/第一切片全部回归、模拟器隔离 TypeScript 检查、禁止依赖扫描和证据包索引校验；未运行 Vite/Tauri 或 GarupaEditor 整体构建。
 
 ## 2. 固定范围
 
