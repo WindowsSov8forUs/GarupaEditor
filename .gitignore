@@ -49,3 +49,6 @@ dist-ssr
 
 # Local dialogue/state snapshot (not for VCS)
 /LOCAL_DIALOGUE_FULL_SNAPSHOT.md
+
+# Local Claude working instructions (not for VCS)
+/CLAUDE.md
