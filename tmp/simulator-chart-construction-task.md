@@ -10,7 +10,7 @@
 - 排除的逆向仓库内容：未跟踪的 `runtime/tools/` 及任何未进入锁定提交的文件
 - 锁定游戏样本：`jp.co.craftegg.band` 10.1.3（version code 229，`arm64-v8a`）
 - 阶段目标：从原始 BMS 文本恢复原作 `MusicScoreBezierConverter -> NoteDataBMSBuilder -> NoteBatchInformationListFactory` 构造链，并产出原作形状的 `NoteBatchInformationList`。
-- 阶段状态：C01–C06 已完成，C07–C10 尚未实施；本文件是该阶段唯一执行任务书。
+- 阶段状态：C01–C07 已完成，C08–C10 尚未实施；本文件是该阶段唯一执行任务书。
 
 本阶段继续维持 GarupaEditor 当前 TypeScript 技术栈方向。Reverse 仓库中的 Python 原型只能作为离线 oracle，不能成为模拟器运行依赖。实施者不得从已删除的 GarupaEditor 模拟器、常见 BMS 实现、通用曲线库、个人经验或方便实现的默认值补齐原作行为。
 
@@ -24,7 +24,7 @@
 | C04 恢复 BMS 文本解析 | 已完成 | 已恢复原作材料对象、Header/小节/CC/WAV/BPM 解析、分组顺序与同位置复用 |
 | C05 恢复批次与同位置顺序 | 已完成 | 已恢复材料到基础 Note/批次转换、绝对位置二分插入和跨 button 首次出现顺序 |
 | C06 恢复 Long、Slide 与派生节点 | 已完成 | 已恢复 Long 配对、Slide A/B 有序对象图、同位置支撑节点和多方向追加族 |
-| C07 恢复 HABAHIRO 与多范围合并 | 待实施 | 尚未恢复宽谱合并、双坐标和 lane-change 记录 |
+| C07 恢复 HABAHIRO 与多范围合并 | 已完成 | 已恢复原作连续范围合并、CC 旁路双坐标、Long/Slide 来源集合和 lane-change 记录 |
 | C08 恢复 BPM、Skill 与 Fever 构造数据 | 待实施 | 尚未恢复命令记录的数据边界和失败关闭条件 |
 | C09 恢复终结过滤与同步准备 | 待实施 | 尚未恢复四次过滤和同步所需端点身份 |
 | C10 建立生产 oracle、隔离测试与验收 | 待实施 | 尚未建立离线生产验证和阶段验收记录 |
@@ -49,7 +49,7 @@
 - `src/simulator/engine/chart/types.ts` 已建立 `ButtonType`、`GameNoteType`、`FrontNoteType`、`AfterNoteType`、`GameNoteAdditionalType`、`VirtualLaneDirection` 的 IL2CPP 确认值。
 - 同一类型边界已建立原作形状的只读 `NoteInformation`、`NoteBatchInformation`、`NoteBatchInformationList` 以及 GarupaEditor 聚合结果 `ChartConstructionResult`；原作记录不含 `fixtureId`、`sourceOrder` 或同步投影字段。
 - `MusicScoreHeaderParser`、`MusicScoreBezierConverter`、`NoteDataBMSBuilder`、`NoteBatchInformationListFactory` 已建立独立 owner；每次公开调用创建新的工厂上下文，不使用可变全局 singleton。
-- `createNoteBatchInformationList({ musicScoreData, isCommand? })` 已公开，`isCommand` 省略时为 `false`；当前 C07 尚未恢复，完成 Long/Slide 图后统一在 `chart-construction.multi-range-combine` 返回 `evidence-required`，不伪造 HABAHIRO 合并结果。
+- `createNoteBatchInformationList({ musicScoreData, isCommand? })` 已公开，`isCommand` 省略时为 `false`；当前 C07 已恢复，入口完成多范围合并后统一在 C08 的 `chart-construction.command-data` 返回 `evidence-required`，不伪造命令数据或终结结果。
 - 谱面构造证据 ID 已使用 `chart-construction:E01` 至 `chart-construction:E18` 作用域与第一切片证据区分；这只属于 GarupaEditor 诊断边界，不进入原作记录。
 - `freezeChartConstructionResult` 已深度冻结批次、Note、button、声音值、Slide 图和 BPM 列表，并在共享终端节点出现于根 `slideNoteList` 与批次列表时保留同一对象身份。
 - 已新增 `npm.cmd run simulator:test:chart-boundary`，4 项测试覆盖枚举值、独立上下文、分阶段失败关闭、深度冻结、共享节点身份和禁止适配器字段。
@@ -92,6 +92,18 @@
 - 冻结 HABAHIRO 生产 BMS 在转换前形成 51 个 Slide 根、共 141 个 authoring 节点；转换后仍为 51 个根、共 626 个节点，全部源路径均为展开路径的有序子序列。
 - 已新增 `npm.cmd run simulator:test:chart-graphs`，6 项合成测试覆盖四种 Long 终端、Slide A/B、隐藏节点、共享身份、宽谱同位置节点、Long/Slide 多方向追加和 C07 失败关闭，并附两份生产有序子序列 oracle。
 - 本批通过 C06 合成与生产图测试、C05/C03/C04/边界/第一切片全部回归、模拟器隔离 TypeScript 检查和禁止依赖扫描；未运行 Vite/Tauri 或 GarupaEditor 整体构建。
+
+#### 2026-07-26 第六批：C07 HABAHIRO 与多范围合并
+
+- `registerMultiRangeSources` 使用 `WeakMap<NoteInformation, MultiRangeSourceIdentity>` 旁路保存根、Long 终端和每个 Slide 节点的 `ccNums`/`afterCcNums`；原作形状记录没有新增 CC 集合、`sourceOrder` 或 fixture 字段。
+- `combiningDictionary` 已按批次当前 `informationList` 顺序恢复同类型、连续 button run；Slide A/B 到多方向追加类型 4–25 被排除，`buttonType === -1` 的 Long 终端占位按原作跳过，命令模式不执行合并。
+- `combineNotes` 以 run 首尾 button 的整数中点为键，并按原作对整批 `informationList` 执行 `FirstOrDefault`，不将代表查找限制在当前 run；该非直觉行为已由 E01/E04 和独立回归固定。
+- 非中心覆盖成员追加 button、非零虚拟 lane 和嵌套声音值并标记 `isMultiRangeCombine = true`；中心代表保留 `false`，随后 bake 有序 button 集合与 half-button 中心。C07 不提前搬运或消费 Skill/Fever 索引。
+- Long 根与终端的来源 CC 分别保存在 `ccNums` 和 `afterCcNums`；Slide 同位置支撑记录合并到图节点时同步合并 CC 来源，同时继续保持原作节点与批次成员的对象身份。
+- additional type 4 继续作为原作 `NoteInformation` lane-change 构造记录存在；工厂记录最后一条 lane-change 的绝对位置。冻结 HABAHIRO 样本确认位置为 1728、来源 CC 为 13，但不创建动画、材质切换或 playable root。
+- 已新增 `npm.cmd run simulator:test:chart-multi-range`，6 项合成测试覆盖连续范围、整批中点选择、Long 终端双来源、Slide 节点来源、命令模式与 lane-change，并验证生产 HABAHIRO 的 626 个 Slide 节点均保留来源 CC 和位置 1728 的 lane-change oracle。
+- 公开入口的失败关闭边界已推进到 C08 的 `chart-construction.command-data`；C08–C10 未闭合内容仍返回 `evidence-required`。
+- 本批通过 C07 定向与生产 oracle、C06/C05/C03/C04/边界/第一切片全部回归、模拟器隔离 TypeScript 检查、禁止依赖扫描和证据包索引校验；未运行 Vite/Tauri 或 GarupaEditor 整体构建。
 
 ## 2. 固定范围
 
@@ -613,7 +625,7 @@ createNoteBatchInformationList({
 
 1. 按 `informationList` 当前顺序扫描可合并 run。
 2. 只合并相同 `GameNoteType`、连续 button 且满足 E01/E04 类型门的记录。
-3. 选取首尾整数中点对应的现有记录作为代表。
+3. 计算首尾整数中点，并按原作在整批 `informationList` 上执行 `FirstOrDefault` 选取该 button 的首个现有记录作为代表，不擅自限制到当前 run。
 4. 合并覆盖 button、非零虚拟 lane、嵌套声音值并 bake button 数组。
 5. 标记覆盖记录的 `IsMultiRangeCombine`。
 6. 独立保留根、Long 终端和每个 Slide 节点的 CC 来源集合。
@@ -627,7 +639,7 @@ createNoteBatchInformationList({
 
 **确认事实**
 
-- 中点现有记录成为合并代表，覆盖记录仍保留到最终过滤。
+- 整批中首个匹配中点 button 的现有记录成为合并代表；非中心覆盖记录置 `IsMultiRangeCombine`，并保留到最终过滤。
 - CC 来源 lane 与内部 half-button 索引不是同一坐标。
 - 锁定 HABAHIRO 样本在绝对位置 1728 产生一条 lane-change 记录，来源 CC 为 13。
 
@@ -647,7 +659,7 @@ createNoteBatchInformationList({
 
 **测试**
 
-- 覆盖连续与非连续 button、不同类型、Long button `-1` 和被排除类型。
+- 覆盖连续与非连续 button、不同类型、整批 `FirstOrDefault` 中点选择、Long button `-1` 和被排除类型。
 - 验证同内部 button/位置但不同 CC 的记录不会丢失。
 - 验证 767 条带 CC 记录、311 个合并 CC 集合和位置 1728 的 lane-change 记录。
 

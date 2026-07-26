@@ -7,6 +7,11 @@ import {
   MusicScoreHeaderParser,
 } from "./musicScoreBezier";
 import { setupLongAndSlideNoteGraphs } from "./noteGraph";
+import {
+  combineMultiRangeBatches,
+  findHabahiroChangeAbsolutePos,
+} from "./multiRangeCombine";
+import { registerMultiRangeSources } from "./multiRangeSources";
 import type {
   ChartConstructionInput,
   ChartConstructionResult,
@@ -16,6 +21,14 @@ export { MusicScoreBezierConverter, MusicScoreHeaderParser } from "./musicScoreB
 export { NoteDataBMSBuilder } from "./bmsBuilder";
 export { convertResultDictionary } from "./batchConversion";
 export { setupLongAndSlideNoteGraphs } from "./noteGraph";
+export {
+  combineMultiRangeBatches,
+  findHabahiroChangeAbsolutePos,
+} from "./multiRangeCombine";
+export {
+  getMultiRangeSourceIdentity,
+  multiRangeLaneFromCc,
+} from "./multiRangeSources";
 
 export class NoteBatchInformationListFactory {
   private readonly headerParser = new MusicScoreHeaderParser();
@@ -23,6 +36,11 @@ export class NoteBatchInformationListFactory {
     this.headerParser,
   );
   private readonly bmsBuilder = new NoteDataBMSBuilder();
+  private habahiroChangeAbsolutePosValue = -1;
+
+  get habahiroChangeAbsolutePos(): number {
+    return this.habahiroChangeAbsolutePosValue;
+  }
 
   createNoteBatchInformationList(
     musicScoreData: string,
@@ -40,19 +58,29 @@ export class NoteBatchInformationListFactory {
       return initializeBuilder;
     }
     const noteBatches = convertResultDictionary(this.bmsBuilder.resultDictionary);
+    registerMultiRangeSources(
+      noteBatches,
+      this.bmsBuilder.isMultiRangeNotes,
+    );
     setupLongAndSlideNoteGraphs(
       noteBatches,
       this.bmsBuilder.isMultiRangeNotes,
     );
+    combineMultiRangeBatches(
+      noteBatches,
+      this.bmsBuilder.isMultiRangeNotes,
+      isCommand,
+    );
+    this.habahiroChangeAbsolutePosValue = findHabahiroChangeAbsolutePos(noteBatches);
     return evidenceRequired(
-      "chart-construction.multi-range-combine",
+      "chart-construction.command-data",
       [
         ChartConstructionEvidence.E01,
         ChartConstructionEvidence.E04,
         ChartConstructionEvidence.E09,
         ChartConstructionEvidence.E10,
       ],
-      "C07 through C09 must restore HABAHIRO combining, command data, and final filtering.",
+      "C08 and C09 must restore command data, additional indices, and final filtering.",
     );
   }
 }

@@ -11,6 +11,10 @@ import {
   type NoteBatchInformation,
   type NoteInformation,
 } from "./types";
+import {
+  mergeMultiRangeSourceIdentity,
+  setMultiRangeAfterSourceIdentity,
+} from "./multiRangeSources";
 
 type MutableNoteInformation = {
   -readonly [Key in keyof NoteInformation]: NoteInformation[Key];
@@ -100,6 +104,7 @@ function setupLongNotePairs(
       if (terminal.gameNoteAdditionalType === GameNoteAdditionalType.Skill) {
         root.skillAfterNoteIndex = terminal.skillNoteIndex;
       }
+      setMultiRangeAfterSourceIdentity(root, terminal);
       terminal.buttonType = ButtonType.None;
     }
   }
@@ -155,6 +160,7 @@ function setupSlideNoteFamily(
       ]);
       matching.buttonTypes = buttons;
       matching.buttonTypesArray = [...buttons];
+      mergeMultiRangeSourceIdentity(matching, note);
       if (note.skillNoteIndex !== 0) {
         matching.skillNoteIndex = note.skillNoteIndex;
       }
@@ -201,7 +207,7 @@ function bakeSlideButtons(root: MutableNoteInformation): void {
   }
 }
 
-function bakeNoteButtons(note: MutableNoteInformation): void {
+export function bakeNoteButtons(note: MutableNoteInformation): void {
   const buttons = uniqueSortedButtons(note.buttonTypes);
   note.buttonTypes = buttons;
   note.buttonTypesArray = [...buttons];
