@@ -57,7 +57,7 @@ function notes(batches: readonly NoteBatchInformation[]): readonly NoteInformati
   return batches.flatMap((batch) => batch.informationList);
 }
 
-test("CC03 与 CC08 生成原作 BpmChange 记录并保持值、字符串和顺序", () => {
+test("CC03 与 CC08 生成原作 type 3 记录并保持值、字符串和顺序", () => {
   const { builder, batches } = build([
     "#BPM 120.00",
     "#BPM01 175.50",
@@ -72,10 +72,13 @@ test("CC03 与 CC08 生成原作 BpmChange 记录并保持值、字符串和顺�
   assertDeepEqual(commands.map((note) => note.absolutePos), [0, 288], "command positions");
   assertDeepEqual(commands.map((note) => note.ccNum), [3, 8], "command CC order");
   assert(commands.every((note) => note.buttonType === ButtonType.None), "command buttons");
-  assert(commands.every((note) => note.gameNoteType === GameNoteType.None), "command game types");
+  assert(
+    commands.every((note) => note.gameNoteType === GameNoteType.LongEndFlick),
+    "command game types",
+  );
   assert(
     commands.every(
-      (note) => note.gameNoteAdditionalType === GameNoteAdditionalType.BpmChange,
+      (note) => note.gameNoteAdditionalType === GameNoteAdditionalType.None,
     ),
     "command additional types",
   );
@@ -157,12 +160,12 @@ test("非法 BPM command 继续失败关闭", () => {
   assertEqual(missingKey.status, "evidence-required", "missing BPM key status");
 });
 
-test("公开入口完成 C08 后在 C09 终结边界失败关闭", () => {
+test("公开入口完成 C09 后返回命令附加数据", () => {
   const result = createNoteBatchInformationList({
     musicScoreData: "#BPM 120\n#WAV01 skill.wav\n#00011:01\n",
   });
-  assert(result.status === "evidence-required", "C09 must remain fail-closed");
-  assertEqual(result.capability, "chart-construction.finalize", "failure boundary");
+  assert(result.status === "ok", "C09 command construction status");
+  assertEqual(result.value.noteBatches.length, 1, "command batch count");
 });
 
 test("命令模式按原作跳过 Bezier 转换并直接解析输入", () => {
@@ -176,8 +179,7 @@ test("命令模式按原作跳过 Bezier 转换并直接解析输入", () => {
     musicScoreData,
     isCommand: true,
   });
-  assert(result.status === "evidence-required", "command input reaches C09 boundary");
-  assertEqual(result.capability, "chart-construction.finalize", "command failure boundary");
+  assert(result.status === "ok", "command input skips Bezier and completes C09");
   const nonCommand = createNoteBatchInformationList({ musicScoreData });
   assert(nonCommand.status === "evidence-required", "non-command malformed Bezier fails");
   assertEqual(

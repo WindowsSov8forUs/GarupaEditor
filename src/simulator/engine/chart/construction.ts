@@ -1,12 +1,16 @@
-import { evidenceRequired, type SimulatorResult } from "../evidence";
+import { ok, type SimulatorResult } from "../evidence";
 import { convertResultDictionary } from "./batchConversion";
 import { NoteDataBMSBuilder } from "./bmsBuilder";
-import { ChartConstructionEvidence } from "./evidence";
+import { finalizeNoteBatches } from "./finalize";
+import { freezeChartConstructionResult } from "./immutability";
 import {
   MusicScoreBezierConverter,
   MusicScoreHeaderParser,
 } from "./musicScoreBezier";
-import { setupLongAndSlideNoteGraphs } from "./noteGraph";
+import {
+  setupLongAndSlideNoteGraphs,
+  setupMultipleDirectionalFlickNotes,
+} from "./noteGraph";
 import {
   combineMultiRangeBatches,
   findHabahiroChangeAbsolutePos,
@@ -20,7 +24,11 @@ import type {
 export { MusicScoreBezierConverter, MusicScoreHeaderParser } from "./musicScoreBezier";
 export { NoteDataBMSBuilder } from "./bmsBuilder";
 export { convertResultDictionary } from "./batchConversion";
-export { setupLongAndSlideNoteGraphs } from "./noteGraph";
+export {
+  setupLongAndSlideNoteGraphs,
+  setupMultipleDirectionalFlickNotes,
+} from "./noteGraph";
+export { finalizeNoteBatches } from "./finalize";
 export {
   combineMultiRangeBatches,
   findHabahiroChangeAbsolutePos,
@@ -82,16 +90,19 @@ export class NoteBatchInformationListFactory {
       isCommand,
     );
     this.habahiroChangeAbsolutePosValue = findHabahiroChangeAbsolutePos(noteBatches);
-    return evidenceRequired(
-      "chart-construction.finalize",
-      [
-        ChartConstructionEvidence.E01,
-        ChartConstructionEvidence.E04,
-        ChartConstructionEvidence.E09,
-        ChartConstructionEvidence.E10,
+    finalizeNoteBatches(noteBatches);
+    setupMultipleDirectionalFlickNotes(noteBatches);
+    return ok(freezeChartConstructionResult({
+      noteBatches,
+      startBpm: this.bmsBuilder.startBpm,
+      startBpmString: this.bmsBuilder.startBpmString,
+      bpmChangeRealValueList: [...this.bmsBuilder.bpmChangeRealValueList],
+      bpmChangeStringRealValueList: [
+        ...this.bmsBuilder.bpmChangeStringRealValueList,
       ],
-      "C09 must restore final filtering and synchronization preparation.",
-    );
+      isMultiRangeNotes: this.bmsBuilder.isMultiRangeNotes,
+      habahiroChangeAbsolutePos: this.habahiroChangeAbsolutePosValue,
+    }));
   }
 }
 

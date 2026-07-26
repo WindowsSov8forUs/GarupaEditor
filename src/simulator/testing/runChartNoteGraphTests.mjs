@@ -35,7 +35,10 @@ function validateProductionGraphs() {
   );
   const { NoteDataBMSBuilder } = require(join(chartRoot, "bmsBuilder.js"));
   const { convertResultDictionary } = require(join(chartRoot, "batchConversion.js"));
-  const { setupLongAndSlideNoteGraphs } = require(join(chartRoot, "noteGraph.js"));
+  const {
+    setupLongAndSlideNoteGraphs,
+    setupMultipleDirectionalFlickNotes,
+  } = require(join(chartRoot, "noteGraph.js"));
   const fixturesRoot = join(
     repositoryRoot,
     "tmp",
@@ -86,6 +89,7 @@ function validateProductionGraphs() {
     assertEqual(initialized.status, "ok", "production builder status");
     const batches = convertResultDictionary(builder.resultDictionary);
     setupLongAndSlideNoteGraphs(batches, builder.isMultiRangeNotes);
+    setupMultipleDirectionalFlickNotes(batches);
     return batches
       .flatMap((batch) => batch.informationList)
       .filter((note) => note.isSlideNoteHead);

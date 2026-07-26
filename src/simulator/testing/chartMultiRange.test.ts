@@ -105,7 +105,7 @@ test("中点代表按整批 informationList 的 FirstOrDefault 选择", () => {
   assertDeepEqual(firstCenter.buttonTypesArray, [1, 2], "whole-batch center receives later run");
   assertDeepEqual(
     getMultiRangeSourceIdentity(firstCenter).ccNums,
-    [12, 32, 33],
+    [12, 33],
     "whole-batch center source CC values",
   );
 });

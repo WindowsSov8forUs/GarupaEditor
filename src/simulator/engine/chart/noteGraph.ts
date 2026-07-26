@@ -59,7 +59,6 @@ export function setupLongAndSlideNoteGraphs(
   setupLongNotePairs(notes, isMultiRange);
   setupSlideNoteFamily(notes, SLIDE_A_NOTE_TYPES, isMultiRange);
   setupSlideNoteFamily(notes, SLIDE_B_NOTE_TYPES, isMultiRange);
-  setupMultipleDirectionalFlickNotes(batches);
 }
 
 function flattenNotes(
@@ -214,13 +213,12 @@ export function bakeNoteButtons(note: MutableNoteInformation): void {
   if (buttons.length === 0) {
     return;
   }
-  note.buttonType = buttons[Math.floor((buttons.length - 1) / 2)]!;
   note.halfButtonIndex = buttons.length % 2 === 0
     ? Math.trunc(buttons.reduce<number>((sum, button) => sum + button, 0) / buttons.length)
     : -1;
 }
 
-function setupMultipleDirectionalFlickNotes(
+export function setupMultipleDirectionalFlickNotes(
   batches: readonly NoteBatchInformation[],
 ): void {
   const groupRoots: MutableNoteInformation[] = [];

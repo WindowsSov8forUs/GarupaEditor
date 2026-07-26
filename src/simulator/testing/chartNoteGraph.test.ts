@@ -1,8 +1,10 @@
 import { convertResultDictionary } from "../engine/chart/batchConversion";
 import { NoteDataBMSBuilder } from "../engine/chart/bmsBuilder";
 import { createNoteBatchInformationList } from "../engine/chart/construction";
-import { ChartConstructionEvidence } from "../engine/chart/evidence";
-import { setupLongAndSlideNoteGraphs } from "../engine/chart/noteGraph";
+import {
+  setupLongAndSlideNoteGraphs,
+  setupMultipleDirectionalFlickNotes,
+} from "../engine/chart/noteGraph";
 import {
   AfterNoteType,
   ButtonType,
@@ -41,6 +43,7 @@ function build(lines: readonly string[]): readonly NoteBatchInformation[] {
   assert(initialized.status === "ok", "synthetic BMS must initialize");
   const batches = convertResultDictionary(builder.resultDictionary);
   setupLongAndSlideNoteGraphs(batches, builder.isMultiRangeNotes);
+  setupMultipleDirectionalFlickNotes(batches);
   return batches;
 }
 
@@ -162,16 +165,12 @@ test("Slide 多方向追加节点归属 A 族终端", () => {
   assertEqual(addition.fireNoteType, FrontNoteType.SlideAMultipleDirectionalFlickAdd, "addition fire type");
 });
 
-test("公开入口完成 C08 后在 C09 终结边界失败关闭", () => {
+test("公开入口完成 C09 后返回已终结构造结果", () => {
   const result = createNoteBatchInformationList({
     musicScoreData: "#BPM 120\n#WAV01 normal.wav\n#00011:01\n",
   });
-  assert(result.status === "evidence-required", "C09 must remain fail-closed");
-  assertEqual(result.capability, "chart-construction.finalize", "failure boundary");
-  assert(
-    result.requiredEvidence.includes(ChartConstructionEvidence.E09),
-    "failure must route to frozen graph evidence",
-  );
+  assert(result.status === "ok", "C09 graph construction status");
+  assertEqual(result.value.noteBatches.length, 1, "finalized graph batch count");
 });
 
 let failures = 0;

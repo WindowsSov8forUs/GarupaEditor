@@ -112,7 +112,7 @@ function combineMultiRangeRun(
   const soundValues = [...representative.soundValueList];
   for (let index = startIndex; index <= endIndex; index += 1) {
     const source = notes[index];
-    if (source === undefined || source === representative) {
+    if (source === undefined || source.buttonType === centerButton) {
       continue;
     }
     for (const button of source.buttonTypes) {

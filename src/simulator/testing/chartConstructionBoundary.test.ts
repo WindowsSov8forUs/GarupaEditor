@@ -3,7 +3,6 @@ import {
   MusicScoreHeaderParser,
   NoteBatchInformationListFactory,
 } from "../engine/chart/construction";
-import { ChartConstructionEvidence } from "../engine/chart/evidence";
 import { freezeChartConstructionResult } from "../engine/chart/immutability";
 import {
   AfterNoteType,
@@ -88,7 +87,7 @@ test("谱面构造枚举保持 IL2CPP 确认值", () => {
   assertEqual(VirtualLaneDirection.Right, 2, "right virtual lane");
 });
 
-test("每次构造调用建立独立上下文并在 C09 失败关闭", () => {
+test("每次构造调用建立独立上下文并返回独立 C09 结果", () => {
   const firstFactory = new NoteBatchInformationListFactory();
   const secondFactory = new NoteBatchInformationListFactory();
   const firstParser = new MusicScoreHeaderParser();
@@ -104,13 +103,9 @@ test("每次构造调用建立独立上下文并在 C09 失败关闭", () => {
     isCommand: false,
   });
   assert(first !== second, "result objects must not be shared");
-  assert(first.status === "evidence-required", "C09 must remain fail-closed");
-  assertEqual(first.capability, "chart-construction.finalize", "failure boundary");
-  assert(
-    first.requiredEvidence.includes(ChartConstructionEvidence.E09),
-    "failure must route to frozen batch evidence",
-  );
-  assert(second.status === "evidence-required", "explicit default must remain fail-closed");
+  assert(first.status === "ok", "default C09 construction status");
+  assert(second.status === "ok", "explicit default C09 construction status");
+  assert(first.value !== second.value, "construction values must not be shared");
 });
 
 test("构造结果深度冻结并保留共享节点身份", () => {

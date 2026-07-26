@@ -10,7 +10,7 @@
 - 排除的逆向仓库内容：未跟踪的 `runtime/tools/` 及任何未进入锁定提交的文件
 - 锁定游戏样本：`jp.co.craftegg.band` 10.1.3（version code 229，`arm64-v8a`）
 - 阶段目标：从原始 BMS 文本恢复原作 `MusicScoreBezierConverter -> NoteDataBMSBuilder -> NoteBatchInformationListFactory` 构造链，并产出原作形状的 `NoteBatchInformationList`。
-- 阶段状态：C01–C08 已完成，C09–C10 尚未实施；本文件是该阶段唯一执行任务书。
+- 阶段状态：C01–C09 已完成，C10 尚未实施；本文件是该阶段唯一执行任务书。
 
 本阶段继续维持 GarupaEditor 当前 TypeScript 技术栈方向。Reverse 仓库中的 Python 原型只能作为离线 oracle，不能成为模拟器运行依赖。实施者不得从已删除的 GarupaEditor 模拟器、常见 BMS 实现、通用曲线库、个人经验或方便实现的默认值补齐原作行为。
 
@@ -26,7 +26,7 @@
 | C06 恢复 Long、Slide 与派生节点 | 已完成 | 已恢复 Long 配对、Slide A/B 有序对象图、同位置支撑节点和多方向追加族 |
 | C07 恢复 HABAHIRO 与多范围合并 | 已完成 | 已恢复原作连续范围合并、CC 旁路双坐标、Long/Slide 来源集合和 lane-change 记录 |
 | C08 恢复 BPM、Skill 与 Fever 构造数据 | 已完成 | 已恢复 BPM command 记录、Skill 源序索引、Long 终端附加字段和命令模式转换边界 |
-| C09 恢复终结过滤与同步准备 | 待实施 | 尚未恢复四次过滤和同步所需端点身份 |
+| C09 恢复终结过滤与同步准备 | 已完成 | 已恢复四次稳定过滤、空批次逆序删除、同步端点身份与测试侧静态同步投影 |
 | C10 建立生产 oracle、隔离测试与验收 | 待实施 | 尚未建立离线生产验证和阶段验收记录 |
 
 ### 1.2 批次记录
@@ -102,20 +102,32 @@
 - Long 根与终端的来源 CC 分别保存在 `ccNums` 和 `afterCcNums`；Slide 同位置支撑记录合并到图节点时同步合并 CC 来源，同时继续保持原作节点与批次成员的对象身份。
 - additional type 4 继续作为原作 `NoteInformation` lane-change 构造记录存在；工厂记录最后一条 lane-change 的绝对位置。冻结 HABAHIRO 样本确认位置为 1728、来源 CC 为 13，但不创建动画、材质切换或 playable root。
 - 已新增 `npm.cmd run simulator:test:chart-multi-range`，6 项合成测试覆盖连续范围、整批中点选择、Long 终端双来源、Slide 节点来源、命令模式与 lane-change，并验证生产 HABAHIRO 的 626 个 Slide 节点均保留来源 CC 和位置 1728 的 lane-change oracle。
-- 公开入口的失败关闭边界已推进到 C09 的 `chart-construction.finalize`；C09–C10 未闭合内容仍返回 `evidence-required`。
+- 当批公开入口的失败关闭边界已推进到 C09 的 `chart-construction.finalize`；当时 C09–C10 未闭合内容仍返回 `evidence-required`。
 - 本批通过 C07 定向与生产 oracle、C06/C05/C03/C04/边界/第一切片全部回归、模拟器隔离 TypeScript 检查、禁止依赖扫描和证据包索引校验；未运行 Vite/Tauri 或 GarupaEditor 整体构建。
 
 #### 2026-07-26 第七批：C08 BPM、Skill 与 Fever 构造数据
 
-- `NoteDataBMSBuilder.createBpmChangeList` 的 TypeScript 对应实现已把 CC03/08 材料恢复为 `ButtonType.None`、`GameNoteType.None`、`GameNoteAdditionalType.BpmChange` 的原作记录形状，并保留 CC、分数位置、绝对位置、BPM 数值与原字符串。
+- `NoteDataBMSBuilder.createBpmChangeList` 的 TypeScript 对应实现已把 CC03/08 材料恢复为 `ButtonType.None`、`GameNoteType.LongEndFlick`（数值 3）、`GameNoteAdditionalType.None` 的原作记录形状，并保留 CC、分数位置、绝对位置、BPM 数值与原字符串；`ccNum` 继续作为 BPM command 投影的判别字段。
 - `convertResultDictionary` 已把排序后的 BPM change 材料插入对应批次；`bpmChangeRealValueList` 与 `bpmChangeStringRealValueList` 继续保持并行，起始 BPM 仍独立保存且不计入 change count。
 - Skill 索引在构造源序中从 1 连续分配；普通谱面每条 Skill 记录递增，HABAHIRO 只对同一绝对位置的首条 Skill 来源分配索引，其余同位置来源保持 0，并由既有 Slide/多范围合并路径把非零索引保留到代表节点。
 - Long 配对继续把终端 `gameNoteAdditionalType` 写入根的 `gameNoteAdditionalTypeLongNoteEnd`；终端为 Skill 时复制 `skillNoteIndex` 到 `skillAfterNoteIndex`，Fever 只保留附加类型且不伪造 Skill 索引。
-- `isCommand=true` 已按 E01/E04 顶层顺序跳过 `MusicScoreBezierConverter`，直接解析输入；非命令模式仍先执行 Bezier 转换。公开入口随后在 C09 `chart-construction.finalize` 失败关闭。
+- `isCommand=true` 已按 E01/E04 顶层顺序跳过 `MusicScoreBezierConverter`，直接解析输入；非命令模式仍先执行 Bezier 转换。当批公开入口随后在 C09 `chart-construction.finalize` 失败关闭。
 - 冻结普通生产样本确认起始 BPM `220`、原字符串 `"220"`、零 change command，以及测试侧 playable-root 投影中的 6 个根 Skill、30 个根 Fever、0 个终端 Skill/Fever；HABAHIRO 样本确认起始 BPM `180`、原字符串 `"180"` 和零 change command。
-- 已新增 `npm.cmd run simulator:test:chart-command-data`，7 项合成测试覆盖 CC03/08 记录、字符串与位置顺序、普通/宽谱 Skill 索引、Long 终端 Skill/Fever、非法 BPM、C09 失败关闭和命令模式跳过 Bezier，并附两份生产 oracle。
+- 已新增 `npm.cmd run simulator:test:chart-command-data`，7 项合成测试覆盖 CC03/08 记录、字符串与位置顺序、普通/宽谱 Skill 索引、Long 终端 Skill/Fever、非法 BPM、当批 C09 失败关闭和命令模式跳过 Bezier，并附两份生产 oracle。
 - E11/E12 均没有非零 BPM change；`OPEN_GAPS.md` 中的非零 CC03/08 生产或实体设备 oracle 缺口继续开放。本批只确认静态算法与记录形状，不宣称该路径生产闭合，也不实现音频 transport、Skill、Fever、UI、分数或协程消费者。
 - 本批通过 C08 定向与生产 oracle、C07/C06/C05/C03/C04/边界/第一切片全部回归、模拟器隔离 TypeScript 检查、禁止依赖扫描和证据包索引校验；未运行 Vite/Tauri 或 GarupaEditor 整体构建。
+
+#### 2026-07-26 第八批：C09 终结过滤与同步准备
+
+- `finalizeNoteBatches` 已按 E10 固定执行 Long 占位、`checkDeleteBgmNote`、非 head Slide 支撑和 `IsMultiRangeCombine` 四次稳定删除，并在四遍完成后逆序移除空批次；存活记录不重排。
+- 第一遍恢复 `GameNoteType` 1、3、12、13 的 button `-1` 占位删除；CC03/08 复用的 type 3 BPM 记录通过 `ccNum` 旁路保留，不把 BPM 语义伪装为附加类型。
+- 第二遍保留追加 button、有效声音值以及 `AfterNoteType` 3/8 终端例外；Bezier 控制 WAV Header 被移除后留下的空声音普通记录按 Reverse 生产适配器归入同一 unsupported-BGM 谓词，不新增第五次过滤。
+- `BakeButtonTypes` 已纠正为只烘焙 button 数组与 half-button，不重写标量 `buttonType`；因此 Long 终端保持 `-1` 进入第一遍。HABAHIRO `combineNotes` 对与中心相同 button 的重复来源不追加 CC 或标记覆盖，与整批 `FirstOrDefault` 语义一致。
+- 公开 `createNoteBatchInformationList` 已在 C09 完成后返回深度冻结的 `ok` 结果；`createSimulatorEngine` 仍不解析 BMS，主程序入口、渲染、音频和输入均未改动。
+- 测试侧 `chartSyncProjection.mjs` 只从最终批次、Long/Slide 终端和旁路 CC 身份投影 E10 激活顺序；未向 `NoteInformation`、`ChartConstructionResult` 或生产路径加入 `SyncConnectionSpec`。
+- 普通生产样本确认 656 批次、935 构造记录和 192 条静态端点同步关系；HABAHIRO 样本确认 371 批次、770 构造记录和 266 条静态端点同步关系。
+- 已新增 `npm.cmd run simulator:test:chart-finalize`，覆盖四遍顺序、各谓词正反例、存活子序列、空批次删除、深度冻结公开结果和两份生产数量/同步 oracle；既有构造测试已统一推进到 C09 成功入口。
+- 本批仅运行 `src/simulator` 隔离 TypeScript 检查、谱面构造定向测试、第一切片回归、禁止依赖扫描、`git diff --check` 和证据包索引校验；未运行 Vite/Tauri 或 GarupaEditor 整体构建。
 
 ## 2. 固定范围
 
@@ -755,7 +767,7 @@ createNoteBatchInformationList({
 
 **实施步骤**
 
-1. 第一遍移除 button `-1` 的 Long 和对应 directional Long 类型。
+1. 第一遍移除 button `-1` 的 Long、Long flick 终端和对应 directional Long 类型，并按 CC03/08 身份保留 BPM 记录。
 2. 第二遍按 `checkDeleteBgmNote` 与空 button/声音值/终端例外规则过滤。
 3. 第三遍移除非 head Slide 和已确认终端 directional Slide 类型。
 4. 第四遍移除 `IsMultiRangeCombine` 覆盖记录。
