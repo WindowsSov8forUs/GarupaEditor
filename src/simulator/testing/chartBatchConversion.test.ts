@@ -120,12 +120,12 @@ test("重复构造产生完全一致的批次和 informationList 顺序", () => 
   assertDeepEqual(first, second, "deterministic batches");
 });
 
-test("公开入口完成 C05 后在 C06 Long/Slide 图边界失败关闭", () => {
+test("公开入口在当前 C07 多范围合并边界失败关闭", () => {
   const result = createNoteBatchInformationList({
     musicScoreData: "#BPM 120\n#WAV01 normal.wav\n#00011:01\n",
   });
-  assert(result.status === "evidence-required", "C06 must remain fail-closed");
-  assertEqual(result.capability, "chart-construction.long-slide-graph", "failure boundary");
+  assert(result.status === "evidence-required", "C07 must remain fail-closed");
+  assertEqual(result.capability, "chart-construction.multi-range-combine", "failure boundary");
   assert(
     result.requiredEvidence.includes(ChartConstructionEvidence.E09),
     "failure must route to frozen object-graph evidence",

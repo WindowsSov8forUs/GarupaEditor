@@ -10,7 +10,7 @@
 - 排除的逆向仓库内容：未跟踪的 `runtime/tools/` 及任何未进入锁定提交的文件
 - 锁定游戏样本：`jp.co.craftegg.band` 10.1.3（version code 229，`arm64-v8a`）
 - 阶段目标：从原始 BMS 文本恢复原作 `MusicScoreBezierConverter -> NoteDataBMSBuilder -> NoteBatchInformationListFactory` 构造链，并产出原作形状的 `NoteBatchInformationList`。
-- 阶段状态：C01–C05 已完成，C06–C10 尚未实施；本文件是该阶段唯一执行任务书。
+- 阶段状态：C01–C06 已完成，C07–C10 尚未实施；本文件是该阶段唯一执行任务书。
 
 本阶段继续维持 GarupaEditor 当前 TypeScript 技术栈方向。Reverse 仓库中的 Python 原型只能作为离线 oracle，不能成为模拟器运行依赖。实施者不得从已删除的 GarupaEditor 模拟器、常见 BMS 实现、通用曲线库、个人经验或方便实现的默认值补齐原作行为。
 
@@ -23,7 +23,7 @@
 | C03 恢复 Header 与 Bezier 转换 | 已完成 | 普通与 HABAHIRO 生产转换文本均达到 Reverse oracle 字节级哈希一致 |
 | C04 恢复 BMS 文本解析 | 已完成 | 已恢复原作材料对象、Header/小节/CC/WAV/BPM 解析、分组顺序与同位置复用 |
 | C05 恢复批次与同位置顺序 | 已完成 | 已恢复材料到基础 Note/批次转换、绝对位置二分插入和跨 button 首次出现顺序 |
-| C06 恢复 Long、Slide 与派生节点 | 待实施 | 尚未恢复根、终端、中间节点和追加节点对象图 |
+| C06 恢复 Long、Slide 与派生节点 | 已完成 | 已恢复 Long 配对、Slide A/B 有序对象图、同位置支撑节点和多方向追加族 |
 | C07 恢复 HABAHIRO 与多范围合并 | 待实施 | 尚未恢复宽谱合并、双坐标和 lane-change 记录 |
 | C08 恢复 BPM、Skill 与 Fever 构造数据 | 待实施 | 尚未恢复命令记录的数据边界和失败关闭条件 |
 | C09 恢复终结过滤与同步准备 | 待实施 | 尚未恢复四次过滤和同步所需端点身份 |
@@ -49,7 +49,7 @@
 - `src/simulator/engine/chart/types.ts` 已建立 `ButtonType`、`GameNoteType`、`FrontNoteType`、`AfterNoteType`、`GameNoteAdditionalType`、`VirtualLaneDirection` 的 IL2CPP 确认值。
 - 同一类型边界已建立原作形状的只读 `NoteInformation`、`NoteBatchInformation`、`NoteBatchInformationList` 以及 GarupaEditor 聚合结果 `ChartConstructionResult`；原作记录不含 `fixtureId`、`sourceOrder` 或同步投影字段。
 - `MusicScoreHeaderParser`、`MusicScoreBezierConverter`、`NoteDataBMSBuilder`、`NoteBatchInformationListFactory` 已建立独立 owner；每次公开调用创建新的工厂上下文，不使用可变全局 singleton。
-- `createNoteBatchInformationList({ musicScoreData, isCommand? })` 已公开，`isCommand` 省略时为 `false`；当前 C06 尚未恢复，完成基础批次转换后统一在 `chart-construction.long-slide-graph` 返回 `evidence-required`，不伪造 Long/Slide 图结果。
+- `createNoteBatchInformationList({ musicScoreData, isCommand? })` 已公开，`isCommand` 省略时为 `false`；当前 C07 尚未恢复，完成 Long/Slide 图后统一在 `chart-construction.multi-range-combine` 返回 `evidence-required`，不伪造 HABAHIRO 合并结果。
 - 谱面构造证据 ID 已使用 `chart-construction:E01` 至 `chart-construction:E18` 作用域与第一切片证据区分；这只属于 GarupaEditor 诊断边界，不进入原作记录。
 - `freezeChartConstructionResult` 已深度冻结批次、Note、button、声音值、Slide 图和 BPM 列表，并在共享终端节点出现于根 `slideNoteList` 与批次列表时保留同一对象身份。
 - 已新增 `npm.cmd run simulator:test:chart-boundary`，4 项测试覆盖枚举值、独立上下文、分阶段失败关闭、深度冻结、共享节点身份和禁止适配器字段。
@@ -78,6 +78,20 @@
 - 原作形状的 `NoteInformation` 与批次中均未加入 `sourceOrder`、fixture ID 或同步投影字段；确定性测试身份只存在于测试输入本身。
 - 已新增 `npm.cmd run simulator:test:chart-batches`，6 项测试覆盖跨 button 同位置顺序、同 button 合并、批次二分插入、基础字段映射、重复运行确定性和 C06 失败关闭。
 - 本批通过 6 项 C05 定向测试、8 项 C03/C04 回归、4 项构造边界回归、20 项第一切片回归、模拟器隔离 TypeScript 检查和禁止依赖扫描；未运行 Vite/Tauri 或 GarupaEditor 整体构建。
+
+#### 2026-07-26 第五批：C06 Long、Slide 与派生节点
+
+- Long 记录已按时间顺序和构造 lane 身份成对；根写入终点绝对位置、终端短节奏标记、终端附加类型，并将终端类型 3、12、13 分别映射为 `AfterNoteType` 1、2、3；普通终端映射为 0。
+- Long 终端只把 `buttonType` 改为 `ButtonType.None`，保留自身材料字段和批次对象身份，供 C09 按原作过滤；根与终端未复制为新的适配器记录。
+- Slide A/B 已按排序后的批次时间和 `informationList` 原序分别收集；只从家族 head 开始，按现有顺序追加中间、隐藏与终端节点，不按几何 lane 重排。
+- `isSlideNoteHead`、`slideNoteList` 与终端 `AfterNoteType` 已写回原对象；`slideNoteList` 成员与批次中支撑成员保持同一对象身份，最后一个成员作为终端。
+- HABAHIRO Slide 同位置支撑 lane 按 E09 合并到现有图节点的 baked button 集合，重复来源记录保留并标记 `IsMultiRangeCombine`；一般宽谱连续 Note 合并仍留给 C07。
+- `BakeButtonTypes` 与 `UpdateCenterButtonType` 的图节点边界已恢复：button 数组确定排序，中心 button 取下中位，偶数宽度计算 half-button index，奇数宽度保持 `-1`。
+- Long/Slide 多方向追加节点已按终端位置、方向族和相邻 button 规则归属；根与追加成员更新为已确认的 multiple `AfterNoteType`、追加 `GameNoteType` 和 `FrontNoteType`，不创建独立 playable root 投影。
+- 冻结普通生产 BMS 在转换前形成 93 个 Slide 根、共 298 个 authoring 节点；Bezier 转换后仍为 93 个根、共 1577 个节点，全部源路径均为展开路径的有序子序列。
+- 冻结 HABAHIRO 生产 BMS 在转换前形成 51 个 Slide 根、共 141 个 authoring 节点；转换后仍为 51 个根、共 626 个节点，全部源路径均为展开路径的有序子序列。
+- 已新增 `npm.cmd run simulator:test:chart-graphs`，6 项合成测试覆盖四种 Long 终端、Slide A/B、隐藏节点、共享身份、宽谱同位置节点、Long/Slide 多方向追加和 C07 失败关闭，并附两份生产有序子序列 oracle。
+- 本批通过 C06 合成与生产图测试、C05/C03/C04/边界/第一切片全部回归、模拟器隔离 TypeScript 检查和禁止依赖扫描；未运行 Vite/Tauri 或 GarupaEditor 整体构建。
 
 ## 2. 固定范围
 

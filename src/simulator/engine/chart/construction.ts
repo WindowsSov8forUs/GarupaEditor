@@ -6,6 +6,7 @@ import {
   MusicScoreBezierConverter,
   MusicScoreHeaderParser,
 } from "./musicScoreBezier";
+import { setupLongAndSlideNoteGraphs } from "./noteGraph";
 import type {
   ChartConstructionInput,
   ChartConstructionResult,
@@ -14,6 +15,7 @@ import type {
 export { MusicScoreBezierConverter, MusicScoreHeaderParser } from "./musicScoreBezier";
 export { NoteDataBMSBuilder } from "./bmsBuilder";
 export { convertResultDictionary } from "./batchConversion";
+export { setupLongAndSlideNoteGraphs } from "./noteGraph";
 
 export class NoteBatchInformationListFactory {
   private readonly headerParser = new MusicScoreHeaderParser();
@@ -38,16 +40,19 @@ export class NoteBatchInformationListFactory {
       return initializeBuilder;
     }
     const noteBatches = convertResultDictionary(this.bmsBuilder.resultDictionary);
-    void noteBatches;
+    setupLongAndSlideNoteGraphs(
+      noteBatches,
+      this.bmsBuilder.isMultiRangeNotes,
+    );
     return evidenceRequired(
-      "chart-construction.long-slide-graph",
+      "chart-construction.multi-range-combine",
       [
         ChartConstructionEvidence.E01,
         ChartConstructionEvidence.E04,
         ChartConstructionEvidence.E09,
         ChartConstructionEvidence.E10,
       ],
-      "C06 through C09 must restore Long and Slide ownership, HABAHIRO combining, command data, and final filtering.",
+      "C07 through C09 must restore HABAHIRO combining, command data, and final filtering.",
     );
   }
 }
