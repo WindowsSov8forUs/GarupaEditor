@@ -1,0 +1,206 @@
+{
+  "schema_version": 2,
+  "reverse_baseline_commit": "74ab76f6838847d98aae1a15741a5f024e3774ff",
+  "pass": 2,
+  "overall_status": "unresolved",
+  "s02_gate": "blocked",
+  "sections": {
+    "R04_environment_identity": "partial",
+    "R05_static_call_graph": "confirmed-by-E01-E26",
+    "R06_chart_runtime_input": "partial",
+    "R07_60_120_request": "60-and-120-confirmed-on-10.1.4",
+    "R08_initial_dual_clock": "confirmed-for-cc03-cc08",
+    "R09_substep_clock": "partial",
+    "R10_bpm_lifecycle": "partial-fast-acquire-reset-excluded-cursor-wrap-reuse-unresolved",
+    "R11_adaptive_substeps": "confirmed-with-collector-induced-slow-frames",
+    "R12_two_phase_scheduling": "partial",
+    "R13_pause_resume": "confirmed",
+    "R14_judge_offset": "partial",
+    "R15_sample_matrix": "partial",
+    "R16_trace_schema": "partial",
+    "R17_artifact_package": "confirmed"
+  },
+  "sample_matrix": {
+    "normal_zero_bpm_60": "confirmed",
+    "habahiro_zero_bpm_60": "blocked-chart-unavailable",
+    "nonzero_cc03_60": "confirmed",
+    "nonzero_cc08_60": "confirmed",
+    "same_nonzero_120": "unresolved-on-10.1.3-confirmed-on-10.1.4",
+    "cross_bar_bpm_command": "confirmed",
+    "same_batch_multiple_bpm": "static-only",
+    "launcher_crosses_multiple_batches": "static-only",
+    "slow_frame_2_3_4": "confirmed-collector-induced",
+    "fallback_101_21_6": "partial",
+    "pause_before_bpm": "confirmed",
+    "pause_during_bpm": "confirmed",
+    "pause_after_bpm": "confirmed",
+    "positive_offset_cross_bpm": "confirmed",
+    "negative_offset_cross_bpm_bar": "partial"
+  },
+  "blocking_findings": [
+    "habahiro_zero_bpm_60",
+    "same_nonzero_120",
+    "fallback_101_21_6_counter1_counter2_boundaries",
+    "bpm_pool_cursor_wrap_reuse"
+  ],
+  "pass2_findings": {
+    "adaptive_fallback_counter_mapping": {
+      "status": "confirmed",
+      "claim": "The history fallback compares counters[1], counters[2] and counters[3] of the uint[4] at NoteManager+0x78. counters[0], the sub-0.018 s bucket, is incremented and never compared.",
+      "runtime_proof": "Six independent runs collapse to a single substep on exactly the frame where counters[3] reaches 6. Runs ikuoku-cc08-run-021-pause-during and ikuoku-cc08-run-022-pause-bracket fire the fallback with counters[2] equal to 1, which rules out the previously frozen counter[2] >= 6 mapping.",
+      "static_proof": "artifacts/rhythm/decompiled_bundles/note.c, NoteManager.ExecUpdate slice at 0x37760C0",
+      "corrects": "artifacts/investigations/music-bar-division-adaptive-substeps/README.md section G06",
+      "boundaries_unchanged": true
+    },
+    "zero_change_single_step_gate": {
+      "status": "confirmed",
+      "claim": "A chart with no BPM-change command takes the fixed single-step path and updates none of the counters, but the gate reads NoteManager+0x74, which accumulates across the process.",
+      "runtime_proof": "tentai-zero-run-024-fresh-process: 3100 frames, 3100 clock substeps, zero adaptive decisions and zero bucket increments. tentai-zero-run-023-warm-process plays the same chart in a process that already parsed a BPM-change chart and takes the adaptive path 1726 times."
+    },
+    "pause_gate_location": {
+      "status": "confirmed",
+      "claim": "InGameManager.ExecUpdate keeps running through a pause while NoteManager.ExecUpdate is not entered at all.",
+      "runtime_proof": "Three brackets: 0 NoteManager.ExecUpdate, 0 clock substeps, 0 BPM updates, 0 note updates and 0 batch activations against 2036-3780 InGameManager.ExecUpdate calls per freeze. The frame after the resume is the immediate successor of the frame before the pause and advances by one ordinary frame, so nothing catches up the paused wall-clock time."
+    },
+    "judge_offset_per_step_tempo": {
+      "status": "confirmed",
+      "claim": "Each 1/60 s step re-reads the tempo at the cursor position rather than reusing the CurrentBPM of the call site.",
+      "runtime_proof": "ikuoku-cc08-run-025-offset-plus5 frame 991: steps 0-3 advance 1.32667 ticks at BPM 99.5 inside bar 15, step 4 carries into bar 16 and reads BPM 95.5, and step 5 advances 1.27333 ticks."
+    }
+  },
+  "collection_boundaries": {
+    "collector_induced_slow_frames": "The agent's per-frame snapshots slow the client to roughly 20 fps. The 2/3/4-substep samples are therefore collector-induced slow frames, not a deliberately injected stall, and these runs must not be cited as evidence of what deltas an untraced client produces.",
+    "high_frequency_getter": "LiveCoreSettings.get_IsHighFrequencyMode produced no event in any pass-2 run, so the managed getter is not on the consumed path and the 120 branch has no frozen consumer evidence.",
+    "capture_device_package_drift": "The capture device auto-updated jp.co.craftegg.band from 10.1.3 / 229 to 10.1.4 / 230 at 2026-07-27 05:57 local, after the pass-2 runs were taken. All ten frozen runs record 10.1.3 / 229 in their metadata and verify_runtime_oracle.py now asserts it. No further runtime capture can extend this package until the device is returned to 10.1.3 / 229 or a separate 10.1.4 baseline is established: section 4 forbids merging evidence across package versions, and every RVA, field offset and probe address in this investigation is proven against 10.1.3 only."
+  },
+  "conflicts_requiring_revision": [
+    "The earlier static/prototype equivalence between NoteManager +0x74 and the current chart's effective BPM-command count is disproved by live builder accumulation.",
+    "The frozen static bucket-to-counter mapping for the adaptive history fallback is off by one; the runtime evidence and a re-read of the decompiled ExecUpdate agree on counters[1]/[2]/[3]."
+  ],
+  "unavailable_samples": {
+    "habahiro_zero_bpm_60": {
+      "chart": "786 miracle_april SPECIAL (habahiro)",
+      "reason": "The chart is exclusive to a limited-time event and is not selectable on the capture account outside that event window.",
+      "consequence": "The row stays blocking. It is not a collection defect and no further capture attempt can close it until the event returns; do not substitute a synthetic chart or another wide-lane chart for it.",
+      "static_reference": "artifacts/investigations/runtime-integration-prototype/production_habahiro_bms_validation.json"
+    }
+  },
+  "version_10_1_4": {
+    "package_version": "10.1.4",
+    "package_version_code": "230",
+    "address_table_proof": "artifacts/investigations/package-version-rebaseline-10-1-4/",
+    "runs": [
+      "ikuoku-cc08-run-030-120-mode",
+      "settings-run-031-high-frequency-toggle",
+      "ikuoku-cc08-run-032-scheduling-60",
+      "ikuoku-cc08-run-033-pause-bracket",
+      "tentai-zero-run-034-fresh-process-manual",
+      "ikuoku-cc08-run-035-pause-during-setup",
+      "ikuoku-cc08-run-036-pause-during-resume",
+      "thesis-cc03-run-037-nonzero-60",
+      "ikuoku-cc08-run-057-offset-plus5",
+      "ikuoku-cc08-run-059-offset-minus5",
+      "ikuoku-cc08-run-060-full-note-detail"
+    ],
+    "sample_matrix": {
+      "same_nonzero_120": "confirmed",
+      "nonzero_cc08_60": "confirmed",
+      "normal_zero_bpm_60": "confirmed",
+      "pause_before_bpm": "confirmed",
+      "pause_during_bpm": "confirmed",
+      "pause_after_bpm": "confirmed",
+      "positive_offset_cross_bpm": "confirmed",
+      "negative_offset_cross_bpm_bar": "confirmed",
+      "slow_frame_2_3_4": "observed-collector-induced",
+      "fallback_101_21_6": "partial-counter3-confirmed-counter1-counter2-runtime-unreachable",
+      "habahiro_zero_bpm_60": "blocked-chart-unavailable",
+      "cross_bar_bpm_command": "confirmed",
+      "nonzero_cc03_60": "confirmed",
+      "reverse_index_update": "confirmed",
+      "bpm_pool_cursor_wrap_reuse": "blocked-production-chart-unavailable"
+    },
+    "findings": {
+      "target_frame_rate_120": {
+        "status": "confirmed",
+        "claim": "InGameDirector.Awake requests Application.targetFrameRate(120) when the frame-rate setting is 120FPS, at the same point in the same call where it requests 60 otherwise. Exactly one request is issued inside Awake.",
+        "evidence": "summaries/frame_rate_request_120.json"
+      },
+      "setting_source": {
+        "status": "confirmed-partial",
+        "claim": "The 60/120 branch reads LiveCoreSettings +0xA9 inline. The toggle lives in LiveEffectVolumeTabPage (the ライブ演出・音量設定 tab, section フレームレート) and persists through CE.LiveCoreSettingsProtoData.set_HighFrequencyMode.",
+        "unresolved": "The UI change callback produced no event when the radio was switched, so the write path from the radio to the field is not observed end to end."
+      },
+      "cross_version_stability": {
+        "status": "confirmed",
+        "claim": "On 10.1.4 the same chart yields a byte-identical consumed BMS, the same launcher lead 79.5999984741211, the same start BPM 99.5/\"99.5\" and the same committed 95.5/\"95.5\" as the frozen 10.1.3 runs."
+      },
+      "fresh_process_zero_bpm": {
+        "status": "confirmed",
+        "claim": "On a fresh process, the normal zero-BPM-change chart produces 763 frames and 763 clock substeps with no adaptive decisions or bucket increments.",
+        "evidence": "tentai-zero-run-034-fresh-process-manual",
+        "boundary": "The run used no auto-live and ended after the unattended life gauge expired."
+      },
+      "pause_during_bpm": {
+        "status": "confirmed-split-capture",
+        "claim": "While the CC08 BPM object is resident, menu pause freezes NoteManager frames, clock substeps, note updates and BPM-object updates while InGameManager continues; resume restarts the clock and commits BPM 95.5.",
+        "evidence": "summaries/pause_during_bpm_10_1_4.json",
+        "boundary": "Runs 035 and 036 are a split capture of one process and one BPM object. The client Continue flow kept the no-auto-live chart alive, and repeated pause-button input won the UI race after its countdown. No process memory or return value was modified."
+      },
+      "judgement_offsets": {
+        "status": "confirmed",
+        "claim": "At +5, FastAbsolutePos crosses bar 15 to 16 and switches from 99.5 to 95.5 inside one call. At -5 after the 95.5 commit, SlowAbsolutePos borrows from bar 16 to 15 inside one call while retaining 95.5 for every timed step.",
+        "evidence": "summaries/judge_offset_10_1_4.json",
+        "boundary": "The negative path confirms reverse bar borrowing across the tempo-command boundary and also confirms that this routine does not re-read the prior bar's 99.5 BPM."
+      },
+      "reverse_index_update": {
+        "status": "confirmed",
+        "claim": "All 16 sampled substeps with two main active-list members update those members in exact reverse list order. Interleaved pointers absent from the manager list are nested child updates and are excluded from the main-loop ordering assertion.",
+        "evidence": "summaries/reverse_index_update_10_1_4.json"
+      },
+      "adaptive_fallback_lower_buckets": {
+        "status": "blocked-runtime-reachability-under-observation",
+        "claim": "The counter[3] threshold is confirmed dynamically, but the counter[1] 101-frame and counter[2] 21-frame thresholds cannot be accumulated reliably with the required original-client probes attached.",
+        "evidence": "docs/CLOCK_SCHEDULING_CAPTURE_LOG.md incidents 14 and 15",
+        "boundary": "Runs 061-067 bracket the collector configurations. Heavy configurations immediately perturb frames into buckets 2/3; light configurations sustain the sub-0.018 s bucket, with at most two isolated bucket-2 frames and no bucket-1 frame. No touch injection or autoplay was used. The static comparisons remain confirmed, but the two dynamic threshold rows stay fail-closed."
+      },
+      "bpm_pool_cursor_wrap_reuse": {
+        "status": "blocked-production-chart-unavailable",
+        "claim": "The complete cached production inventory contains no BMS with enough BPM commands to wrap the 30-slot BPM pool cursor in one chart.",
+        "evidence": "summaries/cached_bpm_candidates_10_1_4.json",
+        "boundary": "Across 81 musicscore bundles and 4,176 BMS assets, 445 charts contain BPM commands and the maximum is 16. A 31-acquire sample is therefore unavailable in the current production inventory; no synthetic chart may replace it."
+      }
+    },
+    "boundary": "Section 4 forbids merging traces across package versions. These runs do not close any 10.1.3 row and are not merged with the 10.1.3 samples.",
+    "locked_version": true,
+    "recapture_blocker": {
+      "status": "resolved",
+      "symptom": "Live starts failed with 通信に失敗しました before InGameDirector.Awake.",
+      "cause": "The client's auto-live option triggered a server-side consumption request that failed for this account.",
+      "resolution": "Turn auto-live off. Controlled trials showed that lives then start normally with or without Frida attached.",
+      "consequence": "Network startup is no longer a blocker. The remaining rows are explicit chart-availability or observation/reachability boundaries, not ordinary pending captures."
+    },
+    "trace_reading_caveats": {
+      "note_after_update_event_is_not_an_object_count": {
+        "observed": "In ikuoku-cc08-run-032-scheduling-60 the note_after_update_enter events split across two hooked methods: NoteBase.ExecuteAfterUpdate 388 and NoteLong.ExecuteAfterUpdate 136.",
+        "consequence": "A NoteLong object produces two AfterUpdate events per pass, so the event count must never be read as the number of objects that ran AfterUpdate. Group by note pointer instead."
+      },
+      "second_note_update_in_a_substep_is_not_a_second_list_element": {
+        "observed": "Every sampled substep with two note_update_enter events reports active_note_count = 1 with a single member, and the second event carries a different note pointer that is not in that list.",
+        "consequence": "That second update is not a second main-active-list element; it is reached from elsewhere, most likely a nested child updated by its parent. It is not evidence about the manager loop traversal order.",
+        "status": "unresolved"
+      },
+      "reverse_index_row_needs_a_targeted_capture": {
+        "status": "resolved-by-run-060",
+        "result": "High-duty-cycle note detail sampled 16 multi-member substeps; after filtering nested child pointers, all 16 main-list sequences equal the reverse of list-member order."
+      }
+    }
+  },
+  "locked_package_version": {
+    "version_name": "10.1.4",
+    "version_code": "230",
+    "decision": "The capture device auto-updated to 10.1.4 / 230 and the operator chose to lock the final evidence on that version rather than downgrade. The 10.1.3 evidence stays frozen as its own closed sample and is retained as cross-version corroboration, not merged.",
+    "target_set_proof": "artifacts/investigations/package-version-rebaseline-10-1-4/",
+    "s02_gating_matrix": "version_10_1_4.sample_matrix",
+    "note": "The top-level `sample_matrix` below records the 10.1.3 sample set. It no longer gates S02 on its own; it is the earlier version's closed sample."
+  }
+}

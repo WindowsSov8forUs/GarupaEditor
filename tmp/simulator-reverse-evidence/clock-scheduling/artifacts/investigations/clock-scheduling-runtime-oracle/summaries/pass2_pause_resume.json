@@ -1,0 +1,457 @@
+{
+  "schema_version": 1,
+  "pass": 2,
+  "gate": {
+    "status": "confirmed",
+    "detail": "InGameManager.ExecUpdate keeps running through the freeze while NoteManager.ExecUpdate is not entered at all, so the gate sits above the note-manager frame and not inside it."
+  },
+  "ordered_path": [
+    {
+      "step": 1,
+      "owner_method": "InGameManager.onExecutePause",
+      "observed": "GameState 5, PauseState 0 -> 1; prePauseSound nested inside"
+    },
+    {
+      "step": 2,
+      "owner_method": "InGameManager.onPauseSound",
+      "observed": "next frame, GameState 5 -> 7; pauseSound nested inside"
+    },
+    {
+      "step": 3,
+      "owner_method": "InGameManager.onClickResume",
+      "observed": "PauseState 1 -> 0"
+    },
+    {
+      "step": 4,
+      "owner_method": "InGameManager.onFinishResumeCountdownAnimation",
+      "observed": "PauseState 0 -> 2"
+    },
+    {
+      "step": 5,
+      "owner_method": "InGameManager.resumeGame",
+      "observed": "GameState 7 -> 5"
+    }
+  ],
+  "state_controller_note": "InGameStateController.ChangeGameState produced no event in any pause run; the observed transitions are the InGameManager fields.",
+  "brackets": [
+    {
+      "run_id": "ikuoku-cc08-run-021-pause-during",
+      "paused_at_frame": 962,
+      "resumed_frame": 963,
+      "active_bpm_count_while_frozen": 1,
+      "note_manager_exec_update_calls_while_frozen": 0,
+      "ingame_manager_exec_calls_while_frozen": 3780,
+      "play_state_update_calls_while_frozen": 1,
+      "clock_substep_calls_while_frozen": 0,
+      "bpm_object_update_calls_while_frozen": 0,
+      "note_update_calls_while_frozen": 0,
+      "batch_activation_calls_while_frozen": 0,
+      "frame_before_pause": {
+        "sequence": 18050,
+        "frame_id": 962,
+        "clock": {
+          "current_bpm": 99.5,
+          "current_bpm_string": "99.5",
+          "basic_bpm": 99.5,
+          "basic_bpm_string": "99.5",
+          "next_bpm": 95.5,
+          "launcher_bar": 16,
+          "launcher_beat": 13.73144245147705,
+          "launcher_absolute_pos": 3085.731442451477,
+          "music_bar": 15,
+          "music_beat": 126.6617202758789,
+          "music_absolute_pos": 3006.661720275879,
+          "before_music_pos": 0,
+          "float_bits": {
+            "execute_frame": "0x3f800000",
+            "current_bpm": "0x42c70000",
+            "basic_bpm": "0x42c70000",
+            "next_bpm": "0x42bf0000",
+            "launcher_beat": "0x415bb3fd",
+            "music_beat": "0x42fd52cd",
+            "before_music_pos": "0x00000000"
+          }
+        },
+        "scheduling": {
+          "active_note_count": 2,
+          "active_note_list": {
+            "count": 2,
+            "members": [
+              "0x76fad0e6c0",
+              "0x76fad0e480"
+            ],
+            "truncated": false
+          },
+          "active_bpm_count": 1,
+          "active_bpm_list": {
+            "count": 1,
+            "members": [
+              "0x773b434d20"
+            ],
+            "truncated": false
+          },
+          "bpm_pool_cursor": 1,
+          "bpm_pool_length": 30,
+          "note_group_index": 22,
+          "bpm_change_count": 5,
+          "performance_counters": [
+            353,
+            2,
+            370,
+            236
+          ],
+          "note_batch_count": 73
+        }
+      },
+      "frame_after_resume": {
+        "sequence": 25732,
+        "frame_id": 963,
+        "clock": {
+          "current_bpm": 99.5,
+          "current_bpm_string": "99.5",
+          "basic_bpm": 99.5,
+          "basic_bpm_string": "99.5",
+          "next_bpm": 95.5,
+          "launcher_bar": 16,
+          "launcher_beat": 16.26371192932129,
+          "launcher_absolute_pos": 3088.2637119293213,
+          "music_bar": 15,
+          "music_beat": 129.300048828125,
+          "music_absolute_pos": 3009.300048828125,
+          "before_music_pos": 0,
+          "float_bits": {
+            "execute_frame": "0x3f800000",
+            "current_bpm": "0x42c70000",
+            "basic_bpm": "0x42c70000",
+            "next_bpm": "0x42bf0000",
+            "launcher_beat": "0x41821c15",
+            "music_beat": "0x43014cd0",
+            "before_music_pos": "0x00000000"
+          }
+        },
+        "scheduling": {
+          "active_note_count": 2,
+          "active_note_list": {
+            "count": 2,
+            "members": [
+              "0x76fad0e6c0",
+              "0x76fad0e480"
+            ],
+            "truncated": false
+          },
+          "active_bpm_count": 1,
+          "active_bpm_list": {
+            "count": 1,
+            "members": [
+              "0x773b434d20"
+            ],
+            "truncated": false
+          },
+          "bpm_pool_cursor": 1,
+          "bpm_pool_length": 30,
+          "note_group_index": 22,
+          "bpm_change_count": 5,
+          "performance_counters": [
+            353,
+            2,
+            371,
+            236
+          ],
+          "note_batch_count": 73
+        }
+      },
+      "clock_comparison": {
+        "frame_before_pause": 962,
+        "frame_after_resume": 963,
+        "consecutive_frames": true,
+        "music_absolute_pos_before": 3006.661720275879,
+        "music_absolute_pos_after": 3009.300048828125,
+        "music_advance_across_freeze": 2.6383285522460938,
+        "music_advance_previous_frame": 3.9616470336914062,
+        "advance_is_one_ordinary_frame": true,
+        "launcher_absolute_pos_before": 3085.731442451477,
+        "launcher_absolute_pos_after": 3088.2637119293213,
+        "current_bpm_before": 99.5,
+        "current_bpm_after": 99.5,
+        "current_bpm_string_before": "99.5",
+        "current_bpm_string_after": "99.5"
+      }
+    },
+    {
+      "run_id": "ikuoku-cc08-run-022-pause-bracket",
+      "paused_at_frame": 254,
+      "resumed_frame": 255,
+      "active_bpm_count_while_frozen": 0,
+      "note_manager_exec_update_calls_while_frozen": 0,
+      "ingame_manager_exec_calls_while_frozen": 2036,
+      "play_state_update_calls_while_frozen": 1,
+      "clock_substep_calls_while_frozen": 0,
+      "bpm_object_update_calls_while_frozen": 0,
+      "note_update_calls_while_frozen": 0,
+      "batch_activation_calls_while_frozen": 0,
+      "frame_before_pause": {
+        "sequence": 5819,
+        "frame_id": 254,
+        "clock": {
+          "current_bpm": 99.5,
+          "current_bpm_string": "99.5",
+          "basic_bpm": 99.5,
+          "basic_bpm_string": "99.5",
+          "next_bpm": 99.5,
+          "launcher_bar": 4,
+          "launcher_beat": 148.01588439941406,
+          "launcher_absolute_pos": 916.0158843994141,
+          "music_bar": 4,
+          "music_beat": 68.41580200195312,
+          "music_absolute_pos": 836.4158020019531,
+          "before_music_pos": 0,
+          "float_bits": {
+            "execute_frame": "0x3f7e9bfd",
+            "current_bpm": "0x42c70000",
+            "basic_bpm": "0x42c70000",
+            "next_bpm": "0x42c70000",
+            "launcher_beat": "0x43140411",
+            "music_beat": "0x4288d4e4",
+            "before_music_pos": "0x00000000"
+          }
+        },
+        "scheduling": {
+          "active_note_count": 1,
+          "active_note_list": {
+            "count": 1,
+            "members": [
+              "0x76ee91a480"
+            ],
+            "truncated": false
+          },
+          "active_bpm_count": 0,
+          "active_bpm_list": {
+            "count": 0,
+            "members": [],
+            "truncated": false
+          },
+          "bpm_pool_cursor": 0,
+          "bpm_pool_length": 30,
+          "note_group_index": 5,
+          "bpm_change_count": 7,
+          "performance_counters": [
+            91,
+            0,
+            97,
+            65
+          ],
+          "note_batch_count": 73
+        }
+      },
+      "frame_after_resume": {
+        "sequence": 9967,
+        "frame_id": 255,
+        "clock": {
+          "current_bpm": 99.5,
+          "current_bpm_string": "99.5",
+          "basic_bpm": 99.5,
+          "basic_bpm_string": "99.5",
+          "next_bpm": 99.5,
+          "launcher_bar": 4,
+          "launcher_beat": 150.6551513671875,
+          "launcher_absolute_pos": 918.6551513671875,
+          "music_bar": 4,
+          "music_beat": 71.05506896972656,
+          "music_absolute_pos": 839.0550689697266,
+          "before_music_pos": 0,
+          "float_bits": {
+            "execute_frame": "0x3f800000",
+            "current_bpm": "0x42c70000",
+            "basic_bpm": "0x42c70000",
+            "next_bpm": "0x42c70000",
+            "launcher_beat": "0x4316a7b8",
+            "music_beat": "0x428e1c32",
+            "before_music_pos": "0x00000000"
+          }
+        },
+        "scheduling": {
+          "active_note_count": 1,
+          "active_note_list": {
+            "count": 1,
+            "members": [
+              "0x76ee91a480"
+            ],
+            "truncated": false
+          },
+          "active_bpm_count": 0,
+          "active_bpm_list": {
+            "count": 0,
+            "members": [],
+            "truncated": false
+          },
+          "bpm_pool_cursor": 0,
+          "bpm_pool_length": 30,
+          "note_group_index": 5,
+          "bpm_change_count": 7,
+          "performance_counters": [
+            91,
+            0,
+            98,
+            65
+          ],
+          "note_batch_count": 73
+        }
+      },
+      "clock_comparison": {
+        "frame_before_pause": 254,
+        "frame_after_resume": 255,
+        "consecutive_frames": true,
+        "music_absolute_pos_before": 836.4158020019531,
+        "music_absolute_pos_after": 839.0550689697266,
+        "music_advance_across_freeze": 2.6392669677734375,
+        "music_advance_previous_frame": 1.3194580078125,
+        "advance_is_one_ordinary_frame": true,
+        "launcher_absolute_pos_before": 916.0158843994141,
+        "launcher_absolute_pos_after": 918.6551513671875,
+        "current_bpm_before": 99.5,
+        "current_bpm_after": 99.5,
+        "current_bpm_string_before": "99.5",
+        "current_bpm_string_after": "99.5"
+      }
+    },
+    {
+      "run_id": "ikuoku-cc08-run-022-pause-bracket",
+      "paused_at_frame": 976,
+      "resumed_frame": 977,
+      "active_bpm_count_while_frozen": 0,
+      "note_manager_exec_update_calls_while_frozen": 0,
+      "ingame_manager_exec_calls_while_frozen": 2214,
+      "play_state_update_calls_while_frozen": 1,
+      "clock_substep_calls_while_frozen": 0,
+      "bpm_object_update_calls_while_frozen": 0,
+      "note_update_calls_while_frozen": 0,
+      "batch_activation_calls_while_frozen": 0,
+      "frame_before_pause": {
+        "sequence": 22506,
+        "frame_id": 976,
+        "clock": {
+          "current_bpm": 95.5,
+          "current_bpm_string": "95.5",
+          "basic_bpm": 99.5,
+          "basic_bpm_string": "99.5",
+          "next_bpm": 95.5,
+          "launcher_bar": 16,
+          "launcher_beat": 97.38119506835938,
+          "launcher_absolute_pos": 3169.3811950683594,
+          "music_bar": 16,
+          "music_beat": 20.9622802734375,
+          "music_absolute_pos": 3092.9622802734375,
+          "before_music_pos": 0,
+          "float_bits": {
+            "execute_frame": "0x3f7e98fe",
+            "current_bpm": "0x42bf0000",
+            "basic_bpm": "0x42c70000",
+            "next_bpm": "0x42bf0000",
+            "launcher_beat": "0x42c2c32c",
+            "music_beat": "0x41a7b2c0",
+            "before_music_pos": "0x00000000"
+          }
+        },
+        "scheduling": {
+          "active_note_count": 2,
+          "active_note_list": {
+            "count": 2,
+            "members": [
+              "0x76eea22480",
+              "0x76eea22240"
+            ],
+            "truncated": false
+          },
+          "active_bpm_count": 0,
+          "active_bpm_list": {
+            "count": 0,
+            "members": [],
+            "truncated": false
+          },
+          "bpm_pool_cursor": 1,
+          "bpm_pool_length": 30,
+          "note_group_index": 22,
+          "bpm_change_count": 7,
+          "performance_counters": [
+            338,
+            0,
+            395,
+            242
+          ],
+          "note_batch_count": 73
+        }
+      },
+      "frame_after_resume": {
+        "sequence": 27016,
+        "frame_id": 977,
+        "clock": {
+          "current_bpm": 95.5,
+          "current_bpm_string": "95.5",
+          "basic_bpm": 99.5,
+          "basic_bpm_string": "99.5",
+          "next_bpm": 95.5,
+          "launcher_bar": 16,
+          "launcher_beat": 99.919921875,
+          "launcher_absolute_pos": 3171.919921875,
+          "music_bar": 16,
+          "music_beat": 23.501008987426758,
+          "music_absolute_pos": 3095.5010089874268,
+          "before_music_pos": 0,
+          "float_bits": {
+            "execute_frame": "0x3f800000",
+            "current_bpm": "0x42bf0000",
+            "basic_bpm": "0x42c70000",
+            "next_bpm": "0x42bf0000",
+            "launcher_beat": "0x42c7d700",
+            "music_beat": "0x41bc0211",
+            "before_music_pos": "0x00000000"
+          }
+        },
+        "scheduling": {
+          "active_note_count": 2,
+          "active_note_list": {
+            "count": 2,
+            "members": [
+              "0x76eea22480",
+              "0x76eea22240"
+            ],
+            "truncated": false
+          },
+          "active_bpm_count": 0,
+          "active_bpm_list": {
+            "count": 0,
+            "members": [],
+            "truncated": false
+          },
+          "bpm_pool_cursor": 1,
+          "bpm_pool_length": 30,
+          "note_group_index": 22,
+          "bpm_change_count": 7,
+          "performance_counters": [
+            338,
+            0,
+            396,
+            242
+          ],
+          "note_batch_count": 73
+        }
+      },
+      "clock_comparison": {
+        "frame_before_pause": 976,
+        "frame_after_resume": 977,
+        "consecutive_frames": true,
+        "music_absolute_pos_before": 3092.9622802734375,
+        "music_absolute_pos_after": 3095.5010089874268,
+        "music_advance_across_freeze": 2.538728713989258,
+        "music_advance_previous_frame": 1.266357421875,
+        "advance_is_one_ordinary_frame": true,
+        "launcher_absolute_pos_before": 3169.3811950683594,
+        "launcher_absolute_pos_after": 3171.919921875,
+        "current_bpm_before": 95.5,
+        "current_bpm_after": 95.5,
+        "current_bpm_string_before": "95.5",
+        "current_bpm_string_after": "95.5"
+      }
+    }
+  ]
+}

@@ -1,0 +1,242 @@
+{
+  "schema_version": 1,
+  "agent_schema_version": 3,
+  "probe_type": "native-arm64-clock-scheduling-runtime-oracle",
+  "started_at_utc": "2026-07-27T08:09:43.477952+00:00",
+  "stopped_at_utc": "2026-07-27T08:11:23.234475+00:00",
+  "device": {
+    "id": "socket@127.0.0.1:47913",
+    "name": "127.0.0.1:47913",
+    "cpu_abi": "arm64-v8a",
+    "root_id": "uid=0(root) gid=0(root) groups=0(root) context=u:r:magisk:s0",
+    "selinux": "Enforcing"
+  },
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "version_name": "10.1.4",
+    "version_code": "230",
+    "primary_cpu_abi": "arm64-v8a"
+  },
+  "address_table": {
+    "version_code": "230",
+    "version_name": "10.1.4"
+  },
+  "frida": {
+    "python_package_version": "17.15.3",
+    "server": {
+      "process": "frida-server-17.15.3",
+      "path": "/data/local/tmp/frida-server-17.15.3",
+      "sha256": "6FC94038ACC834AFFF23AB18C71E3B05BE27A3E3BCB79A1A215B6C36AA973977"
+    },
+    "pid": 5048,
+    "transport": "remote",
+    "remote_address": "127.0.0.1:47913"
+  },
+  "rvas": {
+    "Application.set_targetFrameRate": "0x657A588",
+    "DeviceUtility.SetTargetFrameRate": "0x3B02DA0",
+    "InGameDirector.Awake": "0x32F77AC",
+    "InGameDirector.Update": "0x32F7D90",
+    "InGameManager.ExecUpdate": "0x32F7DA8",
+    "InGameManager.OnApplicationPause": "0x32F84C8",
+    "InGameManager.canThroughInputInspection": "0x32FCD80",
+    "InGameManager.changePauseState": "0x32FD3B4",
+    "InGameManager.onClickResume": "0x32FDE44",
+    "InGameManager.onExecutePause": "0x32FDE14",
+    "InGameManager.onFinishResumeCountdownAnimation": "0x32FDE60",
+    "InGameManager.onHardwareBackKeyProcess": "0x32F8CA0",
+    "InGameManager.onPauseSound": "0x32FDC24",
+    "InGameManager.pauseSound": "0x32FB948",
+    "InGameManager.prePauseSound": "0x32FB8A4",
+    "InGameManager.resumeGame": "0x32FBA8C",
+    "InGameManager.updatePlayState": "0x32F8CF4",
+    "InGameMusicScoreController.SetBasicBPM": "0x3303540",
+    "InGameMusicScoreController.SetBasicBPMString": "0x3303550",
+    "InGameMusicScoreController.SetCurrentBPM": "0x3303528",
+    "InGameMusicScoreController.SetExecuteFrame": "0x3303518",
+    "InGameMusicScoreController.SetLauncherMusicBarProgress": "0x3303570",
+    "InGameMusicScoreController.SetLauncherMusicBeatProgress": "0x3303580",
+    "InGameMusicScoreController.SetMusicBarProgress": "0x3303600",
+    "InGameMusicScoreController.SetMusicBeatProgress": "0x3303610",
+    "InGameMusicScoreController.SetNextBPM": "0x3303560",
+    "InGameMusicScoreController.SetupFirstGameProgress": "0x3303A6C",
+    "InGameMusicScoreController.UpdateBPM": "0x3303A60",
+    "InGameMusicScoreController.UpdateMusicScoreProgress": "0x33038B4",
+    "InGameStateController.ChangeGameState": "0x330730C",
+    "LiveCoreSettings.get_IsHighFrequencyMode": "0x3A883B4",
+    "LiveCoreSettingsProtoData.get_HighFrequencyMode": "0x581B748",
+    "LiveCoreSettingsProtoData.set_HighFrequencyMode": "0x581B750",
+    "LiveEffectVolumeTabPage.initializeHighFrequencyMode": "0x38FCB78",
+    "LiveEffectVolumeTabPage.onHighFrequencyModeChanged": "0x38FE2A8",
+    "NoteAddLongMultipleDirectionalFlickVisual.ExecuteAfterUpdate": "0x30E5DCC",
+    "NoteAddSlideMultipleDirectionalFlickVisual.ExecuteAfterUpdate": "0x30E763C",
+    "NoteBase.ChangeState": "0x3A74004",
+    "NoteBase.Deactivate": "0x3A74CBC",
+    "NoteBase.ExecuteAfterUpdate": "0x3A75A98",
+    "NoteBase.ExecuteUpdate": "0x3A759E8",
+    "NoteBase.ResetNote": "0x3A75D48",
+    "NoteBatchInformationListFactory.CreateNoteBatchInformationList": "0x376DC18",
+    "NoteBpmChange.ExecUpdate": "0x30E8D84",
+    "NoteBpmChange.Reset": "0x30E8D7C",
+    "NoteBpmChange.Setup": "0x30E8D1C",
+    "NoteBpmChange.updateBpm": "0x30E8E58",
+    "NoteDataBMSBuilder.Initialize": "0x376E0D4",
+    "NoteFrontBase.Deactivate": "0x30DF884",
+    "NoteLong.ExecuteAfterUpdate": "0x30EA7C4",
+    "NoteManager.ExecUpdate": "0x3775268",
+    "NoteManager.FastAbsolutePos": "0x377B970",
+    "NoteManager.GetAdjustMusicPos": "0x3775BA8",
+    "NoteManager.Init": "0x37749B4",
+    "NoteManager.SetupNotes": "0x3776240",
+    "NoteManager.SlowAbsolutePos": "0x377BBD0",
+    "NoteManager.activateBPMChangeNoteProcess": "0x377A7F8",
+    "NoteManager.activateCommandNote": "0x3777DA4",
+    "NoteManager.activateNote": "0x377911C",
+    "NoteManager.activateNotesJustNow": "0x377765C",
+    "NoteManager.analyzeBMS": "0x377BEF8",
+    "NoteManager.canActivateNote": "0x3777750",
+    "NoteManager.getNoteBpmChangeData": "0x377A9B4",
+    "NoteManager.onBpmChanged": "0x377AAB0",
+    "NoteManager.playNoteGroupInformationList": "0x37755F4",
+    "NoteManager.resetNotes": "0x377AB08",
+    "NoteManager.setupBpmChangeNote": "0x3775BFC",
+    "NoteMultipleDirectionalFlick.ExecuteAfterUpdate": "0x30EC62C",
+    "NoteMultipleDirectionalFlickAfter.ExecuteAfterUpdate": "0x30EE610",
+    "NoteSlide.ExecuteAfterUpdate": "0x321EF00"
+  },
+  "instruction_probes": {
+    "ExecUpdate.deltaAndPreDivisionExecuteFrame": {
+      "rva": "0x37752F0",
+      "insn": "cbz x0, <null-check>",
+      "purpose": "raw deltaTime in s8 and the pre-division ExecuteFrame in s0 selected by fcsel",
+      "owner_range": [
+        "0x3775268",
+        "0x37755F4"
+      ],
+      "patch_bytes": 16
+    },
+    "ExecUpdate.slowBucketIncrement": {
+      "rva": "0x37753B0",
+      "insn": "str w11, [x10]",
+      "purpose": "selected 2/3/4 bucket increment before the history fallback check",
+      "owner_range": [
+        "0x3775268",
+        "0x37755F4"
+      ],
+      "patch_bytes": 16
+    },
+    "ExecUpdate.substepDecision": {
+      "rva": "0x37753F0",
+      "insn": "scvtf s1, w22",
+      "purpose": "final substep count in w22 with the pre-division delta and ExecuteFrame",
+      "owner_range": [
+        "0x3775268",
+        "0x37755F4"
+      ],
+      "patch_bytes": 16
+    },
+    "FastAbsolutePos.stepHead": {
+      "rva": "0x377BA54",
+      "insn": "scvtf s0, w8",
+      "purpose": "per-step cursor bar/beat/absolute position before advancing",
+      "owner_range": [
+        "0x377B970",
+        "0x377BBD0"
+      ],
+      "patch_bytes": 16
+    },
+    "FastAbsolutePos.stepBpm": {
+      "rva": "0x377BB44",
+      "insn": "fdiv s1, s1, s8",
+      "purpose": "tempo selected for this step",
+      "owner_range": [
+        "0x377B970",
+        "0x377BBD0"
+      ],
+      "patch_bytes": 16
+    },
+    "SlowAbsolutePos.stepHead": {
+      "rva": "0x377BCB0",
+      "insn": "scvtf s0, w8",
+      "purpose": "per-step cursor bar/beat/absolute position before rewinding",
+      "owner_range": [
+        "0x377BBD0",
+        "0x377BDD0"
+      ],
+      "patch_bytes": 16
+    },
+    "SlowAbsolutePos.stepBpm": {
+      "rva": "0x377BD58",
+      "insn": "fdiv s1, s1, s8",
+      "purpose": "tempo selected for this step",
+      "owner_range": [
+        "0x377BBD0",
+        "0x377BDD0"
+      ],
+      "patch_bytes": 16
+    }
+  },
+  "constant_rvas": {
+    "execute_frame_cutoff_and_fast_step_seconds": "0x15366A8",
+    "slow_step_seconds": "0x1536008",
+    "substep_threshold_two": "0x153642C",
+    "substep_threshold_three": "0x15363A8",
+    "substep_threshold_four": "0x1536398",
+    "judgement_adjust_range_and_b_max": "0x1532A50"
+  },
+  "capture_config": {
+    "profile": "judge-offset",
+    "adaptive_probes": true,
+    "judge_probes": true,
+    "note_detail": false,
+    "note_detail_lead_frames": 40,
+    "note_detail_duty_on": 0,
+    "note_detail_duty_off": 0,
+    "judge_sample_budget": 60,
+    "judge_step_budget": 10000,
+    "batch_flush_ms": 25,
+    "batch_max_events": 400,
+    "disabled_labels": []
+  },
+  "disabled_labels": [],
+  "device_input_actions": [],
+  "event_count": 38253,
+  "runtime_bms_count": 1,
+  "script_errors": [],
+  "session_detached": [
+    {
+      "reason": "application-requested",
+      "crash": null,
+      "at_utc": "2026-07-27T08:11:23.622377+00:00",
+      "events_before_detach": 38253,
+      "during_teardown": true
+    }
+  ],
+  "collection_complete": true,
+  "collector": {
+    "message_thread_role": "enqueue-only",
+    "writer_thread": "trace-writer",
+    "flush_granularity": "per-batch",
+    "post_issued_from": "writer-thread",
+    "batch_count": 3810,
+    "max_queue_depth_batches": 1,
+    "writer_drained_before_close": true,
+    "post_failures": [],
+    "fault_count": 0,
+    "faults": []
+  },
+  "max_string_chars": 256,
+  "expected_bms": {
+    "path": "artifacts\\investigations\\clock-scheduling-runtime-oracle\\sources\\653_ikuoku_easy.bms.txt",
+    "bytes": 1688,
+    "sha256": "4C2F8D202DED5DFD9C4144C0FE000B1E3524E0F25D3FEAF4DD102413F6CD6325",
+    "decoded_utf8_sha256": "4C2F8D202DED5DFD9C4144C0FE000B1E3524E0F25D3FEAF4DD102413F6CD6325"
+  },
+  "guardrails": {
+    "patched_apk": false,
+    "wrote_process_memory": false,
+    "replaced_return_value": false,
+    "interceptor_observation_hooks": true,
+    "instruction_probes_read_registers_only": true
+  }
+}

@@ -1,0 +1,985 @@
+{
+  "schema_version": 1,
+  "samples": [
+    {
+      "sample_id": "cc03",
+      "run_id": "thesis-cc03-run-001",
+      "song_id": 87,
+      "song_name": "残酷な天使のテーゼ",
+      "difficulty": "easy",
+      "music_score_key": "087_thesis_easy",
+      "bundle_path": "musicscore/musicscore90",
+      "bundle_sha256": "B46BBCB3EC4EB79D5462353AEEB4F7624032BEAFEADD298EFFF150DB4C71E538",
+      "bundle_cache_key": null,
+      "bms": {
+        "path": "sources/087_thesis_easy.bms.txt",
+        "bytes": 2463,
+        "sha256": "06FDD68C34D6CE51B16BD5D0E42DC8283AD8284C8A54234DCC70CFA438FF3206"
+      },
+      "bundle_text_asset": null,
+      "raw_trace": {
+        "path": "traces/raw/thesis-cc03-run-001.jsonl.gz",
+        "bytes": 672464,
+        "sha256": "EDC84010ED227D208A2659035472671EB55D959296B30B68B3403BFB69D4193F",
+        "uncompressed_bytes": 27400760,
+        "uncompressed_sha256": "DB0BDF834D03684CD996A79A6512B2D738F028E5AF333199805C177E3F3797D3"
+      },
+      "normalized_trace": {
+        "path": "traces/normalized/thesis-cc03-run-001.lifecycle.jsonl",
+        "bytes": 97344,
+        "sha256": "1F310BB744AA03FEA73372D72277C7172DFE916514914C219DB312FA16D8713A"
+      },
+      "coverage": [
+        "60_target_request",
+        "dual_clock_initialization",
+        "launcher_lead",
+        "CC03_lifecycle"
+      ]
+    },
+    {
+      "sample_id": "cc08",
+      "run_id": "ikuoku-cc08-run-003",
+      "song_id": 653,
+      "song_name": "幾億光年",
+      "difficulty": "easy",
+      "music_score_key": "653_ikuoku_easy",
+      "bundle_path": "musicscore/musicscore660",
+      "bundle_sha256": "14172F64733E58E275EF7665F8A451236386B3FE1FD45C83342C23457EAC8029",
+      "bundle_cache_key": "732902106be3618450695e273c48219a2d915e6f6c118b87c45586395fa85c42",
+      "bms": {
+        "path": "sources/653_ikuoku_easy.bms.txt",
+        "bytes": 1688,
+        "sha256": "4C2F8D202DED5DFD9C4144C0FE000B1E3524E0F25D3FEAF4DD102413F6CD6325"
+      },
+      "bundle_text_asset": {
+        "path": "sources/653_ikuoku_easy.bundle-textasset.txt",
+        "bytes": 1691,
+        "sha256": "C09736F52128AAF27360D0E980A3513C47A8A6770BF30057E15B5EA966E1634A",
+        "runtime_conversion": "strip UTF-8 BOM",
+        "matches_runtime_bms": true
+      },
+      "raw_trace": {
+        "path": "traces/raw/ikuoku-cc08-run-003.jsonl.gz",
+        "bytes": 1588158,
+        "sha256": "4F66364768D07900A4BAD9147FDBCCF3663D9F9265E943B4EB1CFB6ACDEEE27A",
+        "uncompressed_bytes": 73788444,
+        "uncompressed_sha256": "7AD288ACE791C9C4C984364826A0388D51C33E293A74D652E55E637884B033CE"
+      },
+      "normalized_trace": {
+        "path": "traces/normalized/ikuoku-cc08-run-003.lifecycle.jsonl",
+        "bytes": 128875,
+        "sha256": "22242E73F68B64F02723D5C76C6292F7629EF1260407B62D8979294712F5E1B1"
+      },
+      "coverage": [
+        "60_target_request",
+        "dual_clock_initialization",
+        "launcher_lead",
+        "CC08_lifecycle"
+      ]
+    }
+  ],
+  "supplemental_runs": [
+    {
+      "run_id": "ikuoku-cc08-run-006-reset-note",
+      "purpose": "exclude Reset/ResetNote from the successful BPM pool acquire fast path",
+      "raw_trace": {
+        "path": "traces/raw/ikuoku-cc08-run-006-reset-note.jsonl.gz",
+        "bytes": 1521692,
+        "sha256": "863560E250C4DE89BB3E41417C008C356FD0075BD90A6CCE063788D5381B1A87",
+        "uncompressed_bytes": 70798998,
+        "uncompressed_sha256": "CA203B548EB2B095D197465BC74CA3508E11820909CC68F69615761B692BB986"
+      },
+      "normalized_trace": {
+        "path": "traces/normalized/ikuoku-cc08-run-006-reset-note.pool.jsonl",
+        "bytes": 3060,
+        "sha256": "64773960FB3BD9F5C4B765E1555A6FE304C9739D387012D75EA7129FE1D4E21F"
+      }
+    },
+    {
+      "run_id": "ikuoku-cc08-run-020-scheduling-60",
+      "capture_directory": "runtime/captures/clock-scheduling/w02-ikuoku-scheduling-auto",
+      "purpose": "60-mode CC08 lifecycle, two-phase scheduling, and live adaptive substeps",
+      "coverage": [
+        "60_target_request",
+        "dual_clock_initialization",
+        "launcher_lead",
+        "CC08_lifecycle",
+        "adaptive_2_3_4",
+        "fallback_101_21_6",
+        "two_phase_scheduling"
+      ],
+      "event_count": 47587,
+      "collection_complete": true,
+      "collector": {
+        "message_thread_role": "enqueue-only",
+        "flush_granularity": "per-batch",
+        "post_issued_from": "writer-thread",
+        "batch_count": 1438,
+        "max_queue_depth_batches": 1,
+        "fault_count": 0
+      },
+      "auto_live": true,
+      "frame_count": 2544,
+      "clock_substep_count": 2571,
+      "raw_trace": {
+        "path": "traces/raw/ikuoku-cc08-run-020-scheduling-60.jsonl.gz",
+        "bytes": 1440586,
+        "sha256": "0CAF4DEA8F56D2B98158FE6960F914A031065454D81A0E12F25B00A70618F1DC",
+        "uncompressed_bytes": 60311167,
+        "uncompressed_sha256": "6DCF2250FCE61310266967EFD2231EE9C23B15816B16AE9B4509AE2CD10ABAD0"
+      },
+      "normalized_traces": [
+        {
+          "path": "traces/normalized/ikuoku-cc08-run-020-scheduling-60.lifecycle.jsonl",
+          "bytes": 46228,
+          "sha256": "D5F3E04DEAD3D43527827A3D2C2E513E7348E9DE40A5025BF5EC496E3FA88D13"
+        },
+        {
+          "path": "traces/normalized/ikuoku-cc08-run-020-scheduling-60.adaptive.jsonl",
+          "bytes": 2673005,
+          "sha256": "BE9EC0A8925E9A3D49CBD4C53896AF28F01DABC87CE8FF59097C9C7BAF7F2AA4"
+        }
+      ],
+      "consumed_bms": {
+        "path": "sources/653_ikuoku_easy.bms.txt",
+        "bytes": 1688,
+        "sha256": "4C2F8D202DED5DFD9C4144C0FE000B1E3524E0F25D3FEAF4DD102413F6CD6325"
+      }
+    },
+    {
+      "run_id": "ikuoku-cc08-run-021-pause-during",
+      "capture_directory": "runtime/captures/clock-scheduling/w03-ikuoku-pause",
+      "purpose": "pause and resume while a BPM command is resident in the active BPM list",
+      "coverage": [
+        "pause_during_bpm"
+      ],
+      "event_count": 57369,
+      "collection_complete": true,
+      "collector": {
+        "message_thread_role": "enqueue-only",
+        "flush_granularity": "per-batch",
+        "post_issued_from": "writer-thread",
+        "batch_count": 2153,
+        "max_queue_depth_batches": 1,
+        "fault_count": 0
+      },
+      "auto_live": true,
+      "frame_count": 2742,
+      "clock_substep_count": 2759,
+      "raw_trace": {
+        "path": "traces/raw/ikuoku-cc08-run-021-pause-during.jsonl.gz",
+        "bytes": 1560132,
+        "sha256": "D9D0FC2BCA70E6538B31A8230BBD8F83AD6897ACBD6AC78AA048C25370E2E4DA",
+        "uncompressed_bytes": 71963218,
+        "uncompressed_sha256": "A6FA65B61E43C7463A66A3642F1151BBD690BDAA6A2111E16F13F65FEE4502C5"
+      },
+      "normalized_traces": [
+        {
+          "path": "traces/normalized/ikuoku-cc08-run-021-pause-during.lifecycle.jsonl",
+          "bytes": 58079,
+          "sha256": "7FF1B4289E218DAE2198354C45CB6326F116331F0420242ED79F34844317648F"
+        },
+        {
+          "path": "traces/normalized/ikuoku-cc08-run-021-pause-during.pause.jsonl",
+          "bytes": 19920,
+          "sha256": "5C4C6D667532ACEEE8E896363EF7E97A1EC9662DE19BCE268A3DFB607A3BBE4B"
+        },
+        {
+          "path": "traces/normalized/ikuoku-cc08-run-021-pause-during.adaptive.jsonl",
+          "bytes": 2770230,
+          "sha256": "055DF7C6861F3B7262852B833955BE52B705DA59B211258E8DB93198C4137D2E"
+        }
+      ],
+      "consumed_bms": {
+        "path": "sources/653_ikuoku_easy.bms.txt",
+        "bytes": 1688,
+        "sha256": "4C2F8D202DED5DFD9C4144C0FE000B1E3524E0F25D3FEAF4DD102413F6CD6325"
+      }
+    },
+    {
+      "run_id": "ikuoku-cc08-run-022-pause-bracket",
+      "capture_directory": "runtime/captures/clock-scheduling/w04-ikuoku-pause-bracket",
+      "purpose": "pause and resume before the BPM command is acquired and after it commits",
+      "coverage": [
+        "pause_before_bpm",
+        "pause_after_bpm"
+      ],
+      "event_count": 56989,
+      "collection_complete": true,
+      "collector": {
+        "message_thread_role": "enqueue-only",
+        "flush_granularity": "per-batch",
+        "post_issued_from": "writer-thread",
+        "batch_count": 2163,
+        "max_queue_depth_batches": 1,
+        "fault_count": 0
+      },
+      "auto_live": true,
+      "frame_count": 2653,
+      "clock_substep_count": 2670,
+      "raw_trace": {
+        "path": "traces/raw/ikuoku-cc08-run-022-pause-bracket.jsonl.gz",
+        "bytes": 1533480,
+        "sha256": "05EDE793D443B9DBBB54D0F2F83B0B75A3C0E0B5AFF70A396D6ED715D767F018",
+        "uncompressed_bytes": 71361771,
+        "uncompressed_sha256": "4C0BF2B553AEE2BA874037F15AAC2D9527F2A1BC9796BCFB84321731C0AFD8DC"
+      },
+      "normalized_traces": [
+        {
+          "path": "traces/normalized/ikuoku-cc08-run-022-pause-bracket.lifecycle.jsonl",
+          "bytes": 58071,
+          "sha256": "D3C71830B0F0866BF60900F1C94DFBB943D5F5A5ADC5BC2DF970DDF63CEF7117"
+        },
+        {
+          "path": "traces/normalized/ikuoku-cc08-run-022-pause-bracket.pause.jsonl",
+          "bytes": 39192,
+          "sha256": "AD893A1BB305A04642AC62C507CEB8820F29A18AD2AB1B5A2930164FC82F429C"
+        },
+        {
+          "path": "traces/normalized/ikuoku-cc08-run-022-pause-bracket.adaptive.jsonl",
+          "bytes": 2746409,
+          "sha256": "6307EF759C3F83245375C816A27ED410BC0CCDED80A7B290E038B32B434F66A5"
+        }
+      ],
+      "consumed_bms": {
+        "path": "sources/653_ikuoku_easy.bms.txt",
+        "bytes": 1688,
+        "sha256": "4C2F8D202DED5DFD9C4144C0FE000B1E3524E0F25D3FEAF4DD102413F6CD6325"
+      }
+    },
+    {
+      "run_id": "tentai-zero-run-023-warm-process",
+      "capture_directory": "runtime/captures/clock-scheduling/w05-tentai-zero-60",
+      "purpose": "zero-BPM-change chart in a process that already parsed a BPM-change chart",
+      "coverage": [
+        "normal_zero_bpm_60",
+        "process_accumulated_change_count"
+      ],
+      "event_count": 54652,
+      "collection_complete": true,
+      "collector": {
+        "message_thread_role": "enqueue-only",
+        "flush_granularity": "per-batch",
+        "post_issued_from": "writer-thread",
+        "batch_count": 1496,
+        "max_queue_depth_batches": 1,
+        "fault_count": 0
+      },
+      "auto_live": true,
+      "frame_count": 3202,
+      "clock_substep_count": 3229,
+      "raw_trace": {
+        "path": "traces/raw/tentai-zero-run-023-warm-process.jsonl.gz",
+        "bytes": 1588340,
+        "sha256": "83F3DD7E3055250965D68901E7F34BE3AC81136AA1F05A5F146B878000F491C0",
+        "uncompressed_bytes": 67972742,
+        "uncompressed_sha256": "D009A9EA0BA7E026D34187BB35744F158F0030F4C5EF30E26861C2D3B1EC76D0"
+      },
+      "normalized_traces": [
+        {
+          "path": "traces/normalized/tentai-zero-run-023-warm-process.lifecycle.jsonl",
+          "bytes": 13348,
+          "sha256": "10516EBD5ABD55680419F30D9C58B7BBB60E6F411CB329BE770E928E1557FD03"
+        },
+        {
+          "path": "traces/normalized/tentai-zero-run-023-warm-process.adaptive.jsonl",
+          "bytes": 2987654,
+          "sha256": "E6EAA24C894F73C076948696AEBA806982EFB1A70C5B705DDFBF15A5F8D5ADB1"
+        }
+      ],
+      "consumed_bms": null
+    },
+    {
+      "run_id": "tentai-zero-run-024-fresh-process",
+      "capture_directory": "runtime/captures/clock-scheduling/w06-tentai-zero-freshproc",
+      "purpose": "zero-BPM-change chart as the first chart of a freshly started process",
+      "coverage": [
+        "normal_zero_bpm_60",
+        "zero_change_single_step_gate"
+      ],
+      "event_count": 49804,
+      "collection_complete": true,
+      "collector": {
+        "message_thread_role": "enqueue-only",
+        "flush_granularity": "per-batch",
+        "post_issued_from": "writer-thread",
+        "batch_count": 1501,
+        "max_queue_depth_batches": 1,
+        "fault_count": 0
+      },
+      "auto_live": true,
+      "frame_count": 3100,
+      "clock_substep_count": 3100,
+      "raw_trace": {
+        "path": "traces/raw/tentai-zero-run-024-fresh-process.jsonl.gz",
+        "bytes": 1366135,
+        "sha256": "B0C892FDB07E64A61E0AA680330BA8E7477154ACE05A43BA76BA825366233B0A",
+        "uncompressed_bytes": 64617379,
+        "uncompressed_sha256": "B9EE963046135865ED9C0C1AF7110B4729B82CFD9EFEF056AF151E6C6F8AABFF"
+      },
+      "normalized_traces": [
+        {
+          "path": "traces/normalized/tentai-zero-run-024-fresh-process.lifecycle.jsonl",
+          "bytes": 13356,
+          "sha256": "43899ECF22EF9165CC7408F42FAA6C31864281BD0FEE0B93EDFBABB1E2D04200"
+        },
+        {
+          "path": "traces/normalized/tentai-zero-run-024-fresh-process.adaptive.jsonl",
+          "bytes": 1478999,
+          "sha256": "4CE091752FF1797D58C00AFD6EDB98DE825E84C9B67285D5306060EDE27ADAB2"
+        }
+      ],
+      "consumed_bms": null
+    },
+    {
+      "run_id": "ikuoku-cc08-run-025-offset-plus5",
+      "capture_directory": "runtime/captures/clock-scheduling/w07-ikuoku-offset-plus5",
+      "purpose": "positive judgement offset stepping across a bar and across the BPM change",
+      "coverage": [
+        "positive_offset_cross_bpm",
+        "positive_offset_cross_bar"
+      ],
+      "event_count": 55065,
+      "collection_complete": true,
+      "collector": {
+        "message_thread_role": "enqueue-only",
+        "flush_granularity": "per-batch",
+        "post_issued_from": "writer-thread",
+        "batch_count": 1444,
+        "max_queue_depth_batches": 1,
+        "fault_count": 0
+      },
+      "auto_live": true,
+      "frame_count": 2674,
+      "clock_substep_count": 2697,
+      "raw_trace": {
+        "path": "traces/raw/ikuoku-cc08-run-025-offset-plus5.jsonl.gz",
+        "bytes": 1499977,
+        "sha256": "6B3F0A9A8E33D363BE5415F25BB105B845B01D2898B0716778275E9E0F4B7CF4",
+        "uncompressed_bytes": 60496596,
+        "uncompressed_sha256": "4EF070956267BD58743AD9F287A20E38FAC0007194C269995475C9F66F6329EC"
+      },
+      "normalized_traces": [
+        {
+          "path": "traces/normalized/ikuoku-cc08-run-025-offset-plus5.lifecycle.jsonl",
+          "bytes": 50569,
+          "sha256": "44529DC10E60386072985F12741193454B85B925846EAF8F1247173408D8F7D6"
+        },
+        {
+          "path": "traces/normalized/ikuoku-cc08-run-025-offset-plus5.adaptive.jsonl",
+          "bytes": 2772479,
+          "sha256": "15854E917438819C69A0CAABD8FF6C06AC8750C434F2904BF67D6FF69FE44D98"
+        }
+      ],
+      "consumed_bms": {
+        "path": "sources/653_ikuoku_easy.bms.txt",
+        "bytes": 1688,
+        "sha256": "4C2F8D202DED5DFD9C4144C0FE000B1E3524E0F25D3FEAF4DD102413F6CD6325"
+      }
+    },
+    {
+      "run_id": "ikuoku-cc08-run-026-offset-minus5",
+      "capture_directory": "runtime/captures/clock-scheduling/w08-ikuoku-offset-minus5",
+      "purpose": "negative judgement offset stepping with a bar borrow",
+      "coverage": [
+        "negative_offset_cross_bar"
+      ],
+      "event_count": 55516,
+      "collection_complete": true,
+      "collector": {
+        "message_thread_role": "enqueue-only",
+        "flush_granularity": "per-batch",
+        "post_issued_from": "writer-thread",
+        "batch_count": 1440,
+        "max_queue_depth_batches": 1,
+        "fault_count": 0
+      },
+      "auto_live": true,
+      "frame_count": 2689,
+      "clock_substep_count": 2708,
+      "raw_trace": {
+        "path": "traces/raw/ikuoku-cc08-run-026-offset-minus5.jsonl.gz",
+        "bytes": 1516627,
+        "sha256": "01A2F4320A9EC569BF9B66EDE3B51A6B6E2904985AB0A566C109BC82982B429A",
+        "uncompressed_bytes": 60959636,
+        "uncompressed_sha256": "C1C7ABA54D29B115DD3814A6690EB5C7923CDB7BB918996ED0A2A452AE12B321"
+      },
+      "normalized_traces": [
+        {
+          "path": "traces/normalized/ikuoku-cc08-run-026-offset-minus5.lifecycle.jsonl",
+          "bytes": 53764,
+          "sha256": "0EE42CE8171731314C63576E5C7BE867FD29A5842D00314FC6CE0C83805A1A34"
+        },
+        {
+          "path": "traces/normalized/ikuoku-cc08-run-026-offset-minus5.adaptive.jsonl",
+          "bytes": 2750956,
+          "sha256": "A186940EF7282D6001EB024389EB7E6A2E7EC88800630615707F310C2F83A682"
+        }
+      ],
+      "consumed_bms": {
+        "path": "sources/653_ikuoku_easy.bms.txt",
+        "bytes": 1688,
+        "sha256": "4C2F8D202DED5DFD9C4144C0FE000B1E3524E0F25D3FEAF4DD102413F6CD6325"
+      }
+    }
+  ],
+  "pass2_auto_live_boundary": "Every pass-2 run used the client's own オートライブ so the chart plays to the end without human input. Clock, BPM and note scheduling run their normal paths; only the source of input judgement differs, and judgement display is suppressed by that mode.",
+  "version_10_1_4_runs": [
+    {
+      "run_id": "ikuoku-cc08-run-030-120-mode",
+      "capture_directory": "runtime/captures/clock-scheduling/v14-ikuoku-120",
+      "package_version": "10.1.4",
+      "package_version_code": "230",
+      "address_table": {
+        "version_code": "230",
+        "version_name": "10.1.4"
+      },
+      "purpose": "120-mode target frame rate request and CC08 lifecycle on 10.1.4 / 230",
+      "coverage": [
+        "120_target_request",
+        "same_nonzero_120",
+        "CC08_lifecycle",
+        "dual_clock_initialization",
+        "launcher_lead"
+      ],
+      "event_count": 47712,
+      "collection_complete": true,
+      "collector": {
+        "message_thread_role": "enqueue-only",
+        "flush_granularity": "per-batch",
+        "post_issued_from": "writer-thread",
+        "batch_count": 1451,
+        "max_queue_depth_batches": 1,
+        "fault_count": 0
+      },
+      "raw_trace": {
+        "path": "traces/raw/ikuoku-cc08-run-030-120-mode.jsonl.gz",
+        "bytes": 1467487,
+        "sha256": "5E3732041EC5255C22413FFE7D81808D25FDF81FF84187645878AD0CD61A8547",
+        "uncompressed_bytes": 60523535,
+        "uncompressed_sha256": "DA424017C2B12568DE2E5D7256B2A1768268D4667DB4609BFD3485175718837D"
+      },
+      "normalized_trace": {
+        "path": "traces/normalized/ikuoku-cc08-run-030-120-mode.lifecycle.jsonl",
+        "bytes": 44003,
+        "sha256": "BA0B2A82B330B6FD5AE0F537AC1D9DABAC9E9162205792B97C06142481EFC961"
+      },
+      "consumed_bms": {
+        "path": "sources/653_ikuoku_easy.bms.txt",
+        "sha256": "4C2F8D202DED5DFD9C4144C0FE000B1E3524E0F25D3FEAF4DD102413F6CD6325",
+        "identical_to_frozen_10_1_3_source": true
+      },
+      "target_frame_rate_requests": [
+        60,
+        60,
+        120,
+        60,
+        60,
+        60
+      ],
+      "requests_inside_director_awake": [
+        120
+      ]
+    },
+    {
+      "run_id": "settings-run-031-high-frequency-toggle",
+      "capture_directory": "runtime/captures/clock-scheduling/v14-hf-toggle",
+      "package_version": "10.1.4",
+      "package_version_code": "230",
+      "address_table": {
+        "version_code": "230",
+        "version_name": "10.1.4"
+      },
+      "purpose": "settings UI owning the frame-rate toggle, captured while switching 60 -> 120",
+      "coverage": [
+        "high_frequency_setting_owner"
+      ],
+      "event_count": 176,
+      "collection_complete": true,
+      "collector": {
+        "message_thread_role": "enqueue-only",
+        "flush_granularity": "per-batch",
+        "post_issued_from": "writer-thread",
+        "batch_count": 102,
+        "max_queue_depth_batches": 0,
+        "fault_count": 0
+      },
+      "raw_trace": {
+        "path": "traces/raw/settings-run-031-high-frequency-toggle.jsonl.gz",
+        "bytes": 4612,
+        "sha256": "6A039427B35B4FC95846784D926A6A80FC67381EBE9B9AD65D1B010D7BC365E1",
+        "uncompressed_bytes": 43459,
+        "uncompressed_sha256": "7B1657EF0CC216EAA201D476E8EE75F161359C43D46CDE40E56D928EFF587022"
+      },
+      "normalized_trace": {
+        "path": "traces/normalized/settings-run-031-high-frequency-toggle.lifecycle.jsonl",
+        "bytes": 1896,
+        "sha256": "FB6BDEFF663FD4E35B8C965881DA396FA8DB6EA76082BEA069DB6D137B160E48"
+      },
+      "consumed_bms": null,
+      "target_frame_rate_requests": [],
+      "requests_inside_director_awake": []
+    },
+    {
+      "run_id": "ikuoku-cc08-run-032-scheduling-60",
+      "capture_directory": "runtime/captures/clock-scheduling/n14-ikuoku-sched-60",
+      "package_version": "10.1.4",
+      "package_version_code": "230",
+      "address_table": {
+        "version_code": "230",
+        "version_name": "10.1.4"
+      },
+      "purpose": "60-mode CC08 lifecycle, two-phase scheduling and adaptive substeps on 10.1.4",
+      "coverage": [
+        "60_target_request",
+        "dual_clock_initialization",
+        "launcher_lead",
+        "CC08_lifecycle",
+        "cross_bar_bpm_command",
+        "adaptive_2_3_4",
+        "fallback_101_21_6",
+        "two_phase_scheduling"
+      ],
+      "event_count": 47030,
+      "collection_complete": true,
+      "collector": {
+        "message_thread_role": "enqueue-only",
+        "flush_granularity": "per-batch",
+        "post_issued_from": "writer-thread",
+        "batch_count": 1446,
+        "max_queue_depth_batches": 1,
+        "fault_count": 0
+      },
+      "raw_trace": {
+        "path": "traces/raw/ikuoku-cc08-run-032-scheduling-60.jsonl.gz",
+        "bytes": 1448231,
+        "sha256": "B86489435A71E2B38AFD16E5B1CA13EFD7C2611B4694ECA0BC4E855C4AACF17F",
+        "uncompressed_bytes": 59487128,
+        "uncompressed_sha256": "FF8715A93B1A1B7E9D7E42354D78F0C5AD5D857AA2BC82BAF0A5EF323803C07D"
+      },
+      "normalized_trace": {
+        "path": "traces/normalized/ikuoku-cc08-run-032-scheduling-60.lifecycle.jsonl",
+        "bytes": 43977,
+        "sha256": "DF5EADB915D3BCEAFC21B1725E37556A19B9E7FCF2D766B6694BDD70B2BB39AD"
+      },
+      "consumed_bms": {
+        "path": "sources/653_ikuoku_easy.bms.txt",
+        "sha256": "4C2F8D202DED5DFD9C4144C0FE000B1E3524E0F25D3FEAF4DD102413F6CD6325",
+        "identical_to_frozen_10_1_3_source": true
+      },
+      "target_frame_rate_requests": [
+        60,
+        60,
+        60,
+        60,
+        60,
+        60
+      ],
+      "requests_inside_director_awake": [
+        60
+      ]
+    },
+    {
+      "run_id": "ikuoku-cc08-run-033-pause-bracket",
+      "capture_directory": "runtime/captures/clock-scheduling/n14-ikuoku-pause-bracket",
+      "package_version": "10.1.4",
+      "package_version_code": "230",
+      "address_table": {
+        "version_code": "230",
+        "version_name": "10.1.4"
+      },
+      "purpose": "pause and resume before the BPM command is acquired and after it commits",
+      "coverage": [
+        "pause_before_bpm",
+        "pause_after_bpm"
+      ],
+      "event_count": 56799,
+      "collection_complete": true,
+      "collector": {
+        "message_thread_role": "enqueue-only",
+        "flush_granularity": "per-batch",
+        "post_issued_from": "writer-thread",
+        "batch_count": 2156,
+        "max_queue_depth_batches": 1,
+        "fault_count": 0
+      },
+      "raw_trace": {
+        "path": "traces/raw/ikuoku-cc08-run-033-pause-bracket.jsonl.gz",
+        "bytes": 1551436,
+        "sha256": "64ED5433D9D43624A8F38336AA905DB7A4A46ED99964D602DD0EE304C99740B8",
+        "uncompressed_bytes": 71001713,
+        "uncompressed_sha256": "5C60434BCDAFEAACD88681F63BAE1FB60158758E5DA32EA022D9A7BEA71547A1"
+      },
+      "normalized_trace": {
+        "path": "traces/normalized/ikuoku-cc08-run-033-pause-bracket.lifecycle.jsonl",
+        "bytes": 58064,
+        "sha256": "BEBDE3600D41F6EA690D97E714C8794D99547096A424A7DA2E36B3C6F0E6F038"
+      },
+      "consumed_bms": {
+        "path": "sources/653_ikuoku_easy.bms.txt",
+        "sha256": "4C2F8D202DED5DFD9C4144C0FE000B1E3524E0F25D3FEAF4DD102413F6CD6325",
+        "identical_to_frozen_10_1_3_source": true
+      },
+      "target_frame_rate_requests": [
+        60,
+        60,
+        60,
+        60,
+        60,
+        60
+      ],
+      "requests_inside_director_awake": [
+        60
+      ]
+    },
+    {
+      "run_id": "tentai-zero-run-034-fresh-process-manual",
+      "capture_directory": "runtime/captures/clock-scheduling/n14-tentai-zero-manual",
+      "package_version": "10.1.4",
+      "package_version_code": "230",
+      "address_table": {
+        "version_code": "230",
+        "version_name": "10.1.4"
+      },
+      "purpose": "fresh-process zero-BPM-change scheduling without auto-live on 10.1.4",
+      "coverage": [
+        "normal_zero_bpm_60",
+        "fresh_process_zero_bpm",
+        "single_step_per_frame",
+        "no_auto_live_boundary"
+      ],
+      "event_count": 26072,
+      "collection_complete": true,
+      "collector": {
+        "message_thread_role": "enqueue-only",
+        "flush_granularity": "per-batch",
+        "post_issued_from": "writer-thread",
+        "batch_count": 1561,
+        "max_queue_depth_batches": 1,
+        "fault_count": 0
+      },
+      "raw_trace": {
+        "path": "traces/raw/tentai-zero-run-034-fresh-process-manual.jsonl.gz",
+        "bytes": 530592,
+        "sha256": "FAF6E3FE6DFF21EFD0C74C2FF75286D4035F28B2FE4D31B005FFE6D823F03519",
+        "uncompressed_bytes": 34646332,
+        "uncompressed_sha256": "B3C66DE8ABDD92CC76CC981662233E9F458C54F7311BFF79BEFC0D34A048A8E1"
+      },
+      "normalized_trace": {
+        "path": "traces/normalized/tentai-zero-run-034-fresh-process-manual.lifecycle.jsonl",
+        "bytes": 12082,
+        "sha256": "442B6DA991F33E096034294840001709D84803FB49771C8C93CC29F1804D9B13"
+      },
+      "consumed_bms": null,
+      "target_frame_rate_requests": [
+        60,
+        60,
+        60
+      ],
+      "requests_inside_director_awake": [
+        60
+      ]
+    },
+    {
+      "run_id": "ikuoku-cc08-run-035-pause-during-setup",
+      "capture_directory": "runtime/captures/clock-scheduling/n14-ikuoku-pause-during-r6",
+      "package_version": "10.1.4",
+      "package_version_code": "230",
+      "address_table": {
+        "version_code": "230",
+        "version_name": "10.1.4"
+      },
+      "purpose": "CC08 setup followed by pause while the BPM object is resident",
+      "coverage": [
+        "pause_during_bpm",
+        "bpm_resident_pause_enter",
+        "continued_life_boundary",
+        "no_auto_live_boundary"
+      ],
+      "event_count": 45027,
+      "collection_complete": true,
+      "collector": {
+        "message_thread_role": "enqueue-only",
+        "flush_granularity": "per-batch",
+        "post_issued_from": "writer-thread",
+        "batch_count": 2816,
+        "max_queue_depth_batches": 1,
+        "fault_count": 0
+      },
+      "raw_trace": {
+        "path": "traces/raw/ikuoku-cc08-run-035-pause-during-setup.jsonl.gz",
+        "bytes": 944749,
+        "sha256": "5AC0835BA1A73E131C76FDDE406795BC25CCDD879B4620327F27194EDD2E23A0",
+        "uncompressed_bytes": 59934408,
+        "uncompressed_sha256": "9AAC618711100C4210F005A73B2BB016E3680E1A742B65C1E051B758E801886C"
+      },
+      "normalized_trace": {
+        "path": "traces/normalized/ikuoku-cc08-run-035-pause-during-setup.lifecycle.jsonl",
+        "bytes": 28405,
+        "sha256": "9557E308D21226C228699CF2FD29C7AEDD1350451F30D5B2AB5178FE75242028"
+      },
+      "consumed_bms": {
+        "path": "sources/653_ikuoku_easy.bms.txt",
+        "sha256": "4C2F8D202DED5DFD9C4144C0FE000B1E3524E0F25D3FEAF4DD102413F6CD6325",
+        "identical_to_frozen_10_1_3_source": true
+      },
+      "target_frame_rate_requests": [
+        60,
+        60,
+        60
+      ],
+      "requests_inside_director_awake": [
+        60
+      ]
+    },
+    {
+      "run_id": "ikuoku-cc08-run-036-pause-during-resume",
+      "capture_directory": "runtime/captures/clock-scheduling/n14-ikuoku-pause-during-r7-resume",
+      "package_version": "10.1.4",
+      "package_version_code": "230",
+      "address_table": {
+        "version_code": "230",
+        "version_name": "10.1.4"
+      },
+      "purpose": "attach during the same resident-BPM pause and observe resume through commit",
+      "coverage": [
+        "pause_during_bpm",
+        "bpm_resident_pause_resume",
+        "split_capture_same_process"
+      ],
+      "event_count": 13685,
+      "collection_complete": true,
+      "collector": {
+        "message_thread_role": "enqueue-only",
+        "flush_granularity": "per-batch",
+        "post_issued_from": "writer-thread",
+        "batch_count": 760,
+        "max_queue_depth_batches": 1,
+        "fault_count": 0
+      },
+      "raw_trace": {
+        "path": "traces/raw/ikuoku-cc08-run-036-pause-during-resume.jsonl.gz",
+        "bytes": 315435,
+        "sha256": "C5287FFA535DF2CC75795D6287A900FFD2C9C90B546EC8DE0D863D6B0FBEAEA7",
+        "uncompressed_bytes": 18252150,
+        "uncompressed_sha256": "E5D8786595D8F2321727F5C4E68554F2B630870A4CB0E63CB5CF5F2E03550094"
+      },
+      "normalized_trace": {
+        "path": "traces/normalized/ikuoku-cc08-run-036-pause-during-resume.lifecycle.jsonl",
+        "bytes": 19198,
+        "sha256": "D3957703155BD7B7557FF690911B178F32615722904C45847AE176784685B242"
+      },
+      "consumed_bms": null,
+      "target_frame_rate_requests": [],
+      "requests_inside_director_awake": []
+    },
+    {
+      "run_id": "thesis-cc03-run-037-nonzero-60",
+      "capture_directory": "runtime/captures/clock-scheduling/n14-thesis-cc03-run-037",
+      "package_version": "10.1.4",
+      "package_version_code": "230",
+      "address_table": {
+        "version_code": "230",
+        "version_name": "10.1.4"
+      },
+      "purpose": "60-mode CC03 lifecycle on 10.1.4, including the 85 to 140 BPM commit",
+      "coverage": [
+        "nonzero_cc03_60",
+        "CC03_lifecycle",
+        "launcher_lead",
+        "no_auto_live_boundary",
+        "continued_life_boundary"
+      ],
+      "event_count": 36309,
+      "collection_complete": true,
+      "collector": {
+        "message_thread_role": "enqueue-only",
+        "flush_granularity": "per-batch",
+        "post_issued_from": "writer-thread",
+        "batch_count": 2350,
+        "max_queue_depth_batches": 1,
+        "fault_count": 0
+      },
+      "raw_trace": {
+        "path": "traces/raw/thesis-cc03-run-037-nonzero-60.jsonl.gz",
+        "bytes": 700514,
+        "sha256": "6651D95895FFBF4891592D0C719698D226DD82B6D2CDC4D557C040E38DB9C45E",
+        "uncompressed_bytes": 47250044,
+        "uncompressed_sha256": "C52742CC611411B926CE2AAB7EA0D68314A00AB779CDD6F4486F278B81EA8E2A"
+      },
+      "normalized_trace": {
+        "path": "traces/normalized/thesis-cc03-run-037-nonzero-60.lifecycle.jsonl",
+        "bytes": 63858,
+        "sha256": "C558D831705DA29CF5B0AE619D69FDB31A590D0DC87FC98D8D55DE21BC5A0734"
+      },
+      "consumed_bms": {
+        "path": "sources/087_thesis_easy.bms.txt",
+        "sha256": "06FDD68C34D6CE51B16BD5D0E42DC8283AD8284C8A54234DCC70CFA438FF3206",
+        "identical_to_frozen_10_1_3_source": true
+      },
+      "target_frame_rate_requests": [
+        60,
+        60,
+        60
+      ],
+      "requests_inside_director_awake": [
+        60
+      ]
+    },
+    {
+      "run_id": "ikuoku-cc08-run-057-offset-plus5",
+      "capture_directory": "runtime/captures/clock-scheduling/n14-ikuoku-offset-plus5-run-057",
+      "package_version": "10.1.4",
+      "package_version_code": "230",
+      "address_table": {
+        "version_code": "230",
+        "version_name": "10.1.4"
+      },
+      "purpose": "positive judgement offset crossing the CC08 bar and tempo boundary",
+      "coverage": [
+        "positive_offset_cross_bpm",
+        "positive_offset_cross_bar",
+        "no_auto_live_boundary"
+      ],
+      "event_count": 40811,
+      "collection_complete": true,
+      "collector": {
+        "message_thread_role": "enqueue-only",
+        "flush_granularity": "per-batch",
+        "post_issued_from": "writer-thread",
+        "batch_count": 3793,
+        "max_queue_depth_batches": 11,
+        "fault_count": 0
+      },
+      "raw_trace": {
+        "path": "traces/raw/ikuoku-cc08-run-057-offset-plus5.jsonl.gz",
+        "bytes": 1080074,
+        "sha256": "7934C7344AB194C09AFFAC319E59327A50D830203B16EA285FE32716A1ECDBFA",
+        "uncompressed_bytes": 45320754,
+        "uncompressed_sha256": "AA2AA366E09A7DFD417343F3496C0948105F4597EA06088AB445A6C5448B01D8"
+      },
+      "normalized_trace": {
+        "path": "traces/normalized/ikuoku-cc08-run-057-offset-plus5.lifecycle.jsonl",
+        "bytes": 78487,
+        "sha256": "A1B61DE03171BF20AF16371CBB86DA2F8236E63F3CB176D4479F876D9AD72795"
+      },
+      "consumed_bms": {
+        "path": "sources/653_ikuoku_easy.bms.txt",
+        "sha256": "4C2F8D202DED5DFD9C4144C0FE000B1E3524E0F25D3FEAF4DD102413F6CD6325",
+        "identical_to_frozen_10_1_3_source": true
+      },
+      "target_frame_rate_requests": [
+        60,
+        60,
+        60
+      ],
+      "requests_inside_director_awake": [
+        60
+      ]
+    },
+    {
+      "run_id": "ikuoku-cc08-run-059-offset-minus5",
+      "capture_directory": "runtime/captures/clock-scheduling/n14-ikuoku-offset-minus5-run-059",
+      "package_version": "10.1.4",
+      "package_version_code": "230",
+      "address_table": {
+        "version_code": "230",
+        "version_name": "10.1.4"
+      },
+      "purpose": "negative judgement offset borrowing across the committed CC08 bar boundary",
+      "coverage": [
+        "negative_offset_cross_bpm_bar",
+        "negative_offset_cross_bar",
+        "negative_offset_retains_current_bpm",
+        "no_auto_live_boundary"
+      ],
+      "event_count": 38253,
+      "collection_complete": true,
+      "collector": {
+        "message_thread_role": "enqueue-only",
+        "flush_granularity": "per-batch",
+        "post_issued_from": "writer-thread",
+        "batch_count": 3810,
+        "max_queue_depth_batches": 1,
+        "fault_count": 0
+      },
+      "raw_trace": {
+        "path": "traces/raw/ikuoku-cc08-run-059-offset-minus5.jsonl.gz",
+        "bytes": 979173,
+        "sha256": "DC1D2DA15DF3323B7F8E747F9494DF80B05F290E6B9B28F4B85E51700CE451A0",
+        "uncompressed_bytes": 41784599,
+        "uncompressed_sha256": "89077A3D5C2FC78918FBB3130C264B3A7819E02A47B73D51F6AB89A1ADB0AD5D"
+      },
+      "normalized_trace": {
+        "path": "traces/normalized/ikuoku-cc08-run-059-offset-minus5.lifecycle.jsonl",
+        "bytes": 74280,
+        "sha256": "E2A9F4762FEA59BC8BFDC5611F45470EF4C58D107B3CDD376743B20FE38EB84D"
+      },
+      "consumed_bms": {
+        "path": "sources/653_ikuoku_easy.bms.txt",
+        "sha256": "4C2F8D202DED5DFD9C4144C0FE000B1E3524E0F25D3FEAF4DD102413F6CD6325",
+        "identical_to_frozen_10_1_3_source": true
+      },
+      "target_frame_rate_requests": [
+        60,
+        60,
+        60
+      ],
+      "requests_inside_director_awake": [
+        60
+      ]
+    },
+    {
+      "run_id": "ikuoku-cc08-run-060-full-note-detail",
+      "capture_directory": "runtime/captures/clock-scheduling/n14-ikuoku-full-detail-run-060",
+      "package_version": "10.1.4",
+      "package_version_code": "230",
+      "address_table": {
+        "version_code": "230",
+        "version_name": "10.1.4"
+      },
+      "purpose": "high-duty-cycle note detail proving reverse-index main active-list updates",
+      "coverage": [
+        "reverse_index_update",
+        "nested_note_update_interleave",
+        "no_auto_live_boundary"
+      ],
+      "event_count": 22854,
+      "collection_complete": true,
+      "collector": {
+        "message_thread_role": "enqueue-only",
+        "flush_granularity": "per-batch",
+        "post_issued_from": "writer-thread",
+        "batch_count": 1922,
+        "max_queue_depth_batches": 1,
+        "fault_count": 0
+      },
+      "raw_trace": {
+        "path": "traces/raw/ikuoku-cc08-run-060-full-note-detail.jsonl.gz",
+        "bytes": 907739,
+        "sha256": "E9B671CE2AB7A67BE79A9BD9E814B4F8A4FFEF5758359BDD2D7BB827972E3103",
+        "uncompressed_bytes": 38959541,
+        "uncompressed_sha256": "CA70BF9FA9D4D1EEE6E8DB462867F05BABE133CE540EE299A39B2F2891C113F3"
+      },
+      "normalized_trace": {
+        "path": "traces/normalized/ikuoku-cc08-run-060-full-note-detail.lifecycle.jsonl",
+        "bytes": 47000,
+        "sha256": "CF531529AC0E400596E3060D8F50AA9B79B1E03C98C5D884A3DF1E11538F81C9"
+      },
+      "consumed_bms": {
+        "path": "sources/653_ikuoku_easy.bms.txt",
+        "sha256": "4C2F8D202DED5DFD9C4144C0FE000B1E3524E0F25D3FEAF4DD102413F6CD6325",
+        "identical_to_frozen_10_1_3_source": true
+      },
+      "target_frame_rate_requests": [
+        60,
+        60,
+        60
+      ],
+      "requests_inside_director_awake": [
+        60
+      ]
+    }
+  ],
+  "version_separation": "`samples` and `supplemental_runs` are 10.1.3 / 229. `version_10_1_4_runs` is 10.1.4 / 230. They are never merged into one closed sample; see artifacts/investigations/package-version-rebaseline-10-1-4/ for the address migration that makes the same capture tooling valid on both."
+}

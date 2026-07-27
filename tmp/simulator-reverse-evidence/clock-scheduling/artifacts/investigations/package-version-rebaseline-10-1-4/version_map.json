@@ -1,0 +1,1581 @@
+{
+  "schema_version": 1,
+  "question": "Which addresses and offsets does the clock-scheduling capture need in 10.1.4 / 230, and does anything it depends on behave differently?",
+  "baseline": {
+    "version_name": "10.1.3",
+    "version_code": "229",
+    "libil2cpp_sha256": "66C9C666C50962B662DF8D894E851C7D18F07142DCA145CFAC3D30D063D1D9FA"
+  },
+  "target": {
+    "version_name": "10.1.4",
+    "version_code": "230",
+    "libil2cpp_sha256": "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F"
+  },
+  "hook_status_counts": {
+    "mapped": 70
+  },
+  "probe_status_counts": {
+    "mapped": 7
+  },
+  "constant_status_counts": {
+    "mapped": 6
+  },
+  "layout_status_counts": {
+    "unchanged": 8
+  },
+  "hooks": [
+    {
+      "label": "Application.set_targetFrameRate",
+      "dump_name": "UnityEngine.Application$$set_targetFrameRate",
+      "baseline_rva": "0x657AFCC",
+      "status": "mapped",
+      "target_rva": "0x657A588",
+      "rva_delta": -2628,
+      "signature_unchanged": true
+    },
+    {
+      "label": "DeviceUtility.SetTargetFrameRate",
+      "dump_name": "DeviceUtility$$SetTargetFrameRate",
+      "baseline_rva": "0x3B03BF8",
+      "status": "mapped",
+      "target_rva": "0x3B02DA0",
+      "rva_delta": -3672,
+      "signature_unchanged": true
+    },
+    {
+      "label": "InGameDirector.Awake",
+      "dump_name": "InGameDirector$$Awake",
+      "baseline_rva": "0x32F8668",
+      "status": "mapped",
+      "target_rva": "0x32F77AC",
+      "rva_delta": -3772,
+      "signature_unchanged": true
+    },
+    {
+      "label": "InGameDirector.Update",
+      "dump_name": "InGameDirector$$Update",
+      "baseline_rva": "0x32F8C4C",
+      "status": "mapped",
+      "target_rva": "0x32F7D90",
+      "rva_delta": -3772,
+      "signature_unchanged": true
+    },
+    {
+      "label": "InGameManager.ExecUpdate",
+      "dump_name": "InGameManager$$ExecUpdate",
+      "baseline_rva": "0x32F8C64",
+      "status": "mapped",
+      "target_rva": "0x32F7DA8",
+      "rva_delta": -3772,
+      "signature_unchanged": true
+    },
+    {
+      "label": "InGameManager.OnApplicationPause",
+      "dump_name": "InGameManager$$OnApplicationPause",
+      "baseline_rva": "0x32F9384",
+      "status": "mapped",
+      "target_rva": "0x32F84C8",
+      "rva_delta": -3772,
+      "signature_unchanged": true
+    },
+    {
+      "label": "InGameManager.canThroughInputInspection",
+      "dump_name": "InGameManager$$canThroughInputInspection",
+      "baseline_rva": "0x32FDC3C",
+      "status": "mapped",
+      "target_rva": "0x32FCD80",
+      "rva_delta": -3772,
+      "signature_unchanged": true
+    },
+    {
+      "label": "InGameManager.changePauseState",
+      "dump_name": "InGameManager$$changePauseState",
+      "baseline_rva": "0x32FE270",
+      "status": "mapped",
+      "target_rva": "0x32FD3B4",
+      "rva_delta": -3772,
+      "signature_unchanged": true
+    },
+    {
+      "label": "InGameManager.onClickResume",
+      "dump_name": "InGameManager$$onClickResume",
+      "baseline_rva": "0x32FED00",
+      "status": "mapped",
+      "target_rva": "0x32FDE44",
+      "rva_delta": -3772,
+      "signature_unchanged": true
+    },
+    {
+      "label": "InGameManager.onExecutePause",
+      "dump_name": "InGameManager$$onExecutePause",
+      "baseline_rva": "0x32FECD0",
+      "status": "mapped",
+      "target_rva": "0x32FDE14",
+      "rva_delta": -3772,
+      "signature_unchanged": true
+    },
+    {
+      "label": "InGameManager.onFinishResumeCountdownAnimation",
+      "dump_name": "InGameManager$$onFinishResumeCountdownAnimation",
+      "baseline_rva": "0x32FED1C",
+      "status": "mapped",
+      "target_rva": "0x32FDE60",
+      "rva_delta": -3772,
+      "signature_unchanged": true
+    },
+    {
+      "label": "InGameManager.onHardwareBackKeyProcess",
+      "dump_name": "InGameManager$$onHardwareBackKeyProcess",
+      "baseline_rva": "0x32F9B5C",
+      "status": "mapped",
+      "target_rva": "0x32F8CA0",
+      "rva_delta": -3772,
+      "signature_unchanged": true
+    },
+    {
+      "label": "InGameManager.onPauseSound",
+      "dump_name": "InGameManager$$onPauseSound",
+      "baseline_rva": "0x32FEAE0",
+      "status": "mapped",
+      "target_rva": "0x32FDC24",
+      "rva_delta": -3772,
+      "signature_unchanged": true
+    },
+    {
+      "label": "InGameManager.pauseSound",
+      "dump_name": "InGameManager$$pauseSound",
+      "baseline_rva": "0x32FC804",
+      "status": "mapped",
+      "target_rva": "0x32FB948",
+      "rva_delta": -3772,
+      "signature_unchanged": true
+    },
+    {
+      "label": "InGameManager.prePauseSound",
+      "dump_name": "InGameManager$$prePauseSound",
+      "baseline_rva": "0x32FC760",
+      "status": "mapped",
+      "target_rva": "0x32FB8A4",
+      "rva_delta": -3772,
+      "signature_unchanged": true
+    },
+    {
+      "label": "InGameManager.resumeGame",
+      "dump_name": "InGameManager$$resumeGame",
+      "baseline_rva": "0x32FC948",
+      "status": "mapped",
+      "target_rva": "0x32FBA8C",
+      "rva_delta": -3772,
+      "signature_unchanged": true
+    },
+    {
+      "label": "InGameManager.updatePlayState",
+      "dump_name": "InGameManager$$updatePlayState",
+      "baseline_rva": "0x32F9BB0",
+      "status": "mapped",
+      "target_rva": "0x32F8CF4",
+      "rva_delta": -3772,
+      "signature_unchanged": true
+    },
+    {
+      "label": "InGameMusicScoreController.SetBasicBPM",
+      "dump_name": "InGameMusicScoreController$$SetBasicBPM",
+      "baseline_rva": "0x33043FC",
+      "status": "mapped",
+      "target_rva": "0x3303540",
+      "rva_delta": -3772,
+      "signature_unchanged": true
+    },
+    {
+      "label": "InGameMusicScoreController.SetBasicBPMString",
+      "dump_name": "InGameMusicScoreController$$SetBasicBPMString",
+      "baseline_rva": "0x330440C",
+      "status": "mapped",
+      "target_rva": "0x3303550",
+      "rva_delta": -3772,
+      "signature_unchanged": true
+    },
+    {
+      "label": "InGameMusicScoreController.SetCurrentBPM",
+      "dump_name": "InGameMusicScoreController$$SetCurrentBPM",
+      "baseline_rva": "0x33043E4",
+      "status": "mapped",
+      "target_rva": "0x3303528",
+      "rva_delta": -3772,
+      "signature_unchanged": true
+    },
+    {
+      "label": "InGameMusicScoreController.SetExecuteFrame",
+      "dump_name": "InGameMusicScoreController$$SetExecuteFrame",
+      "baseline_rva": "0x33043D4",
+      "status": "mapped",
+      "target_rva": "0x3303518",
+      "rva_delta": -3772,
+      "signature_unchanged": true
+    },
+    {
+      "label": "InGameMusicScoreController.SetLauncherMusicBarProgress",
+      "dump_name": "InGameMusicScoreController$$SetLauncherMusicBarProgress",
+      "baseline_rva": "0x330442C",
+      "status": "mapped",
+      "target_rva": "0x3303570",
+      "rva_delta": -3772,
+      "signature_unchanged": true
+    },
+    {
+      "label": "InGameMusicScoreController.SetLauncherMusicBeatProgress",
+      "dump_name": "InGameMusicScoreController$$SetLauncherMusicBeatProgress",
+      "baseline_rva": "0x330443C",
+      "status": "mapped",
+      "target_rva": "0x3303580",
+      "rva_delta": -3772,
+      "signature_unchanged": true
+    },
+    {
+      "label": "InGameMusicScoreController.SetMusicBarProgress",
+      "dump_name": "InGameMusicScoreController$$SetMusicBarProgress",
+      "baseline_rva": "0x33044BC",
+      "status": "mapped",
+      "target_rva": "0x3303600",
+      "rva_delta": -3772,
+      "signature_unchanged": true
+    },
+    {
+      "label": "InGameMusicScoreController.SetMusicBeatProgress",
+      "dump_name": "InGameMusicScoreController$$SetMusicBeatProgress",
+      "baseline_rva": "0x33044CC",
+      "status": "mapped",
+      "target_rva": "0x3303610",
+      "rva_delta": -3772,
+      "signature_unchanged": true
+    },
+    {
+      "label": "InGameMusicScoreController.SetNextBPM",
+      "dump_name": "InGameMusicScoreController$$SetNextBPM",
+      "baseline_rva": "0x330441C",
+      "status": "mapped",
+      "target_rva": "0x3303560",
+      "rva_delta": -3772,
+      "signature_unchanged": true
+    },
+    {
+      "label": "InGameMusicScoreController.SetupFirstGameProgress",
+      "dump_name": "InGameMusicScoreController$$SetupFirstGameProgress",
+      "baseline_rva": "0x3304928",
+      "status": "mapped",
+      "target_rva": "0x3303A6C",
+      "rva_delta": -3772,
+      "signature_unchanged": true
+    },
+    {
+      "label": "InGameMusicScoreController.UpdateBPM",
+      "dump_name": "InGameMusicScoreController$$UpdateBPM",
+      "baseline_rva": "0x330491C",
+      "status": "mapped",
+      "target_rva": "0x3303A60",
+      "rva_delta": -3772,
+      "signature_unchanged": true
+    },
+    {
+      "label": "InGameMusicScoreController.UpdateMusicScoreProgress",
+      "dump_name": "InGameMusicScoreController$$UpdateMusicScoreProgress",
+      "baseline_rva": "0x3304770",
+      "status": "mapped",
+      "target_rva": "0x33038B4",
+      "rva_delta": -3772,
+      "signature_unchanged": true
+    },
+    {
+      "label": "InGameStateController.ChangeGameState",
+      "dump_name": "InGameStateController$$ChangeGameState",
+      "baseline_rva": "0x33081C8",
+      "status": "mapped",
+      "target_rva": "0x330730C",
+      "rva_delta": -3772,
+      "signature_unchanged": true
+    },
+    {
+      "label": "LiveCoreSettings.get_IsHighFrequencyMode",
+      "dump_name": "LiveCoreSettings$$get_IsHighFrequencyMode",
+      "baseline_rva": "0x3A8920C",
+      "status": "mapped",
+      "target_rva": "0x3A883B4",
+      "rva_delta": -3672,
+      "signature_unchanged": true
+    },
+    {
+      "label": "LiveCoreSettingsProtoData.get_HighFrequencyMode",
+      "dump_name": "CE.LiveCoreSettingsProtoData$$get_HighFrequencyMode",
+      "baseline_rva": "0x581C18C",
+      "status": "mapped",
+      "target_rva": "0x581B748",
+      "rva_delta": -2628,
+      "signature_unchanged": true
+    },
+    {
+      "label": "LiveCoreSettingsProtoData.set_HighFrequencyMode",
+      "dump_name": "CE.LiveCoreSettingsProtoData$$set_HighFrequencyMode",
+      "baseline_rva": "0x581C194",
+      "status": "mapped",
+      "target_rva": "0x581B750",
+      "rva_delta": -2628,
+      "signature_unchanged": true
+    },
+    {
+      "label": "LiveEffectVolumeTabPage.initializeHighFrequencyMode",
+      "dump_name": "LiveEffectVolumeTabPage$$initializeHighFrequencyMode",
+      "baseline_rva": "0x38FD9D0",
+      "status": "mapped",
+      "target_rva": "0x38FCB78",
+      "rva_delta": -3672,
+      "signature_unchanged": true
+    },
+    {
+      "label": "LiveEffectVolumeTabPage.onHighFrequencyModeChanged",
+      "dump_name": "LiveEffectVolumeTabPage$$<initializeHighFrequencyMode>b__57_0",
+      "baseline_rva": "0x38FF100",
+      "status": "mapped",
+      "target_rva": "0x38FE2A8",
+      "rva_delta": -3672,
+      "signature_unchanged": true
+    },
+    {
+      "label": "NoteAddLongMultipleDirectionalFlickVisual.ExecuteAfterUpdate",
+      "dump_name": "NoteAddLongMultipleDirectionalFlickVisual$$ExecuteAfterUpdate",
+      "baseline_rva": "0x30E6C88",
+      "status": "mapped",
+      "target_rva": "0x30E5DCC",
+      "rva_delta": -3772,
+      "signature_unchanged": true
+    },
+    {
+      "label": "NoteAddSlideMultipleDirectionalFlickVisual.ExecuteAfterUpdate",
+      "dump_name": "NoteAddSlideMultipleDirectionalFlickVisual$$ExecuteAfterUpdate",
+      "baseline_rva": "0x30E84F8",
+      "status": "mapped",
+      "target_rva": "0x30E763C",
+      "rva_delta": -3772,
+      "signature_unchanged": true
+    },
+    {
+      "label": "NoteBase.ChangeState",
+      "dump_name": "NoteBase$$ChangeState",
+      "baseline_rva": "0x3A74E5C",
+      "status": "mapped",
+      "target_rva": "0x3A74004",
+      "rva_delta": -3672,
+      "signature_unchanged": true
+    },
+    {
+      "label": "NoteBase.Deactivate",
+      "dump_name": "NoteBase$$Deactivate",
+      "baseline_rva": "0x3A75B14",
+      "status": "mapped",
+      "target_rva": "0x3A74CBC",
+      "rva_delta": -3672,
+      "signature_unchanged": true
+    },
+    {
+      "label": "NoteBase.ExecuteAfterUpdate",
+      "dump_name": "NoteBase$$ExecuteAfterUpdate",
+      "baseline_rva": "0x3A768F0",
+      "status": "mapped",
+      "target_rva": "0x3A75A98",
+      "rva_delta": -3672,
+      "signature_unchanged": true
+    },
+    {
+      "label": "NoteBase.ExecuteUpdate",
+      "dump_name": "NoteBase$$ExecuteUpdate",
+      "baseline_rva": "0x3A76840",
+      "status": "mapped",
+      "target_rva": "0x3A759E8",
+      "rva_delta": -3672,
+      "signature_unchanged": true
+    },
+    {
+      "label": "NoteBase.ResetNote",
+      "dump_name": "NoteBase$$ResetNote",
+      "baseline_rva": "0x3A76BA0",
+      "status": "mapped",
+      "target_rva": "0x3A75D48",
+      "rva_delta": -3672,
+      "signature_unchanged": true
+    },
+    {
+      "label": "NoteBatchInformationListFactory.CreateNoteBatchInformationList",
+      "dump_name": "NoteBatchInformationListFactory$$CreateNoteBatchInformationList",
+      "baseline_rva": "0x376EA70",
+      "status": "mapped",
+      "target_rva": "0x376DC18",
+      "rva_delta": -3672,
+      "signature_unchanged": true
+    },
+    {
+      "label": "NoteBpmChange.ExecUpdate",
+      "dump_name": "NoteBpmChange$$ExecUpdate",
+      "baseline_rva": "0x30E9C40",
+      "status": "mapped",
+      "target_rva": "0x30E8D84",
+      "rva_delta": -3772,
+      "signature_unchanged": true
+    },
+    {
+      "label": "NoteBpmChange.Reset",
+      "dump_name": "NoteBpmChange$$Reset",
+      "baseline_rva": "0x30E9C38",
+      "status": "mapped",
+      "target_rva": "0x30E8D7C",
+      "rva_delta": -3772,
+      "signature_unchanged": true
+    },
+    {
+      "label": "NoteBpmChange.Setup",
+      "dump_name": "NoteBpmChange$$Setup",
+      "baseline_rva": "0x30E9BD8",
+      "status": "mapped",
+      "target_rva": "0x30E8D1C",
+      "rva_delta": -3772,
+      "signature_unchanged": true
+    },
+    {
+      "label": "NoteBpmChange.updateBpm",
+      "dump_name": "NoteBpmChange$$updateBpm",
+      "baseline_rva": "0x30E9D14",
+      "status": "mapped",
+      "target_rva": "0x30E8E58",
+      "rva_delta": -3772,
+      "signature_unchanged": true
+    },
+    {
+      "label": "NoteDataBMSBuilder.Initialize",
+      "dump_name": "NoteDataBMSBuilder$$Initialize",
+      "baseline_rva": "0x376EF2C",
+      "status": "mapped",
+      "target_rva": "0x376E0D4",
+      "rva_delta": -3672,
+      "signature_unchanged": true
+    },
+    {
+      "label": "NoteFrontBase.Deactivate",
+      "dump_name": "NoteFrontBase$$Deactivate",
+      "baseline_rva": "0x30E0740",
+      "status": "mapped",
+      "target_rva": "0x30DF884",
+      "rva_delta": -3772,
+      "signature_unchanged": true
+    },
+    {
+      "label": "NoteLong.ExecuteAfterUpdate",
+      "dump_name": "NoteLong$$ExecuteAfterUpdate",
+      "baseline_rva": "0x30EB680",
+      "status": "mapped",
+      "target_rva": "0x30EA7C4",
+      "rva_delta": -3772,
+      "signature_unchanged": true
+    },
+    {
+      "label": "NoteManager.ExecUpdate",
+      "dump_name": "NoteManager$$ExecUpdate",
+      "baseline_rva": "0x37760C0",
+      "status": "mapped",
+      "target_rva": "0x3775268",
+      "rva_delta": -3672,
+      "signature_unchanged": true
+    },
+    {
+      "label": "NoteManager.FastAbsolutePos",
+      "dump_name": "NoteManager$$FastAbsolutePos",
+      "baseline_rva": "0x377C7C8",
+      "status": "mapped",
+      "target_rva": "0x377B970",
+      "rva_delta": -3672,
+      "signature_unchanged": true
+    },
+    {
+      "label": "NoteManager.GetAdjustMusicPos",
+      "dump_name": "NoteManager$$GetAdjustMusicPos",
+      "baseline_rva": "0x3776A00",
+      "status": "mapped",
+      "target_rva": "0x3775BA8",
+      "rva_delta": -3672,
+      "signature_unchanged": true
+    },
+    {
+      "label": "NoteManager.Init",
+      "dump_name": "NoteManager$$Init",
+      "baseline_rva": "0x377580C",
+      "status": "mapped",
+      "target_rva": "0x37749B4",
+      "rva_delta": -3672,
+      "signature_unchanged": true
+    },
+    {
+      "label": "NoteManager.SetupNotes",
+      "dump_name": "NoteManager$$SetupNotes",
+      "baseline_rva": "0x3777098",
+      "status": "mapped",
+      "target_rva": "0x3776240",
+      "rva_delta": -3672,
+      "signature_unchanged": true
+    },
+    {
+      "label": "NoteManager.SlowAbsolutePos",
+      "dump_name": "NoteManager$$SlowAbsolutePos",
+      "baseline_rva": "0x377CA28",
+      "status": "mapped",
+      "target_rva": "0x377BBD0",
+      "rva_delta": -3672,
+      "signature_unchanged": true
+    },
+    {
+      "label": "NoteManager.activateBPMChangeNoteProcess",
+      "dump_name": "NoteManager$$activateBPMChangeNoteProcess",
+      "baseline_rva": "0x377B650",
+      "status": "mapped",
+      "target_rva": "0x377A7F8",
+      "rva_delta": -3672,
+      "signature_unchanged": true
+    },
+    {
+      "label": "NoteManager.activateCommandNote",
+      "dump_name": "NoteManager$$activateCommandNote",
+      "baseline_rva": "0x3778BFC",
+      "status": "mapped",
+      "target_rva": "0x3777DA4",
+      "rva_delta": -3672,
+      "signature_unchanged": true
+    },
+    {
+      "label": "NoteManager.activateNote",
+      "dump_name": "NoteManager$$activateNote",
+      "baseline_rva": "0x3779F74",
+      "status": "mapped",
+      "target_rva": "0x377911C",
+      "rva_delta": -3672,
+      "signature_unchanged": true
+    },
+    {
+      "label": "NoteManager.activateNotesJustNow",
+      "dump_name": "NoteManager$$activateNotesJustNow",
+      "baseline_rva": "0x37784B4",
+      "status": "mapped",
+      "target_rva": "0x377765C",
+      "rva_delta": -3672,
+      "signature_unchanged": true
+    },
+    {
+      "label": "NoteManager.analyzeBMS",
+      "dump_name": "NoteManager$$analyzeBMS",
+      "baseline_rva": "0x377CD50",
+      "status": "mapped",
+      "target_rva": "0x377BEF8",
+      "rva_delta": -3672,
+      "signature_unchanged": true
+    },
+    {
+      "label": "NoteManager.canActivateNote",
+      "dump_name": "NoteManager$$canActivateNote",
+      "baseline_rva": "0x37785A8",
+      "status": "mapped",
+      "target_rva": "0x3777750",
+      "rva_delta": -3672,
+      "signature_unchanged": true
+    },
+    {
+      "label": "NoteManager.getNoteBpmChangeData",
+      "dump_name": "NoteManager$$getNoteBpmChangeData",
+      "baseline_rva": "0x377B80C",
+      "status": "mapped",
+      "target_rva": "0x377A9B4",
+      "rva_delta": -3672,
+      "signature_unchanged": true
+    },
+    {
+      "label": "NoteManager.onBpmChanged",
+      "dump_name": "NoteManager$$onBpmChanged",
+      "baseline_rva": "0x377B908",
+      "status": "mapped",
+      "target_rva": "0x377AAB0",
+      "rva_delta": -3672,
+      "signature_unchanged": true
+    },
+    {
+      "label": "NoteManager.playNoteGroupInformationList",
+      "dump_name": "NoteManager$$playNoteGroupInformationList",
+      "baseline_rva": "0x377644C",
+      "status": "mapped",
+      "target_rva": "0x37755F4",
+      "rva_delta": -3672,
+      "signature_unchanged": true
+    },
+    {
+      "label": "NoteManager.resetNotes",
+      "dump_name": "NoteManager$$resetNotes",
+      "baseline_rva": "0x377B960",
+      "status": "mapped",
+      "target_rva": "0x377AB08",
+      "rva_delta": -3672,
+      "signature_unchanged": true
+    },
+    {
+      "label": "NoteManager.setupBpmChangeNote",
+      "dump_name": "NoteManager$$setupBpmChangeNote",
+      "baseline_rva": "0x3776A54",
+      "status": "mapped",
+      "target_rva": "0x3775BFC",
+      "rva_delta": -3672,
+      "signature_unchanged": true
+    },
+    {
+      "label": "NoteMultipleDirectionalFlick.ExecuteAfterUpdate",
+      "dump_name": "NoteMultipleDirectionalFlick$$ExecuteAfterUpdate",
+      "baseline_rva": "0x30ED4E8",
+      "status": "mapped",
+      "target_rva": "0x30EC62C",
+      "rva_delta": -3772,
+      "signature_unchanged": true
+    },
+    {
+      "label": "NoteMultipleDirectionalFlickAfter.ExecuteAfterUpdate",
+      "dump_name": "NoteMultipleDirectionalFlickAfter$$ExecuteAfterUpdate",
+      "baseline_rva": "0x30EF4CC",
+      "status": "mapped",
+      "target_rva": "0x30EE610",
+      "rva_delta": -3772,
+      "signature_unchanged": true
+    },
+    {
+      "label": "NoteSlide.ExecuteAfterUpdate",
+      "dump_name": "NoteSlide$$ExecuteAfterUpdate",
+      "baseline_rva": "0x321FDBC",
+      "status": "mapped",
+      "target_rva": "0x321EF00",
+      "rva_delta": -3772,
+      "signature_unchanged": true
+    }
+  ],
+  "probe_owners": [
+    {
+      "owner_label": "NoteManager.ExecUpdate",
+      "baseline_start": "0x37760C0",
+      "target_start": "0x3775268",
+      "size": "0x38C",
+      "differing_words": 30,
+      "non_pc_relative_differing_words": 12,
+      "differing_word_detail": [
+        {
+          "offset": "0x1C",
+          "baseline_word": "0x39653E88",
+          "target_word": "0x3977BE88",
+          "pc_relative": null
+        },
+        {
+          "offset": "0x30",
+          "baseline_word": "0xF9412000",
+          "target_word": "0xF9449400",
+          "pc_relative": null
+        },
+        {
+          "offset": "0x34",
+          "baseline_word": "0x97DA6847",
+          "target_word": "0x97DA69EF",
+          "pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x3C",
+          "baseline_word": "0xF9412400",
+          "target_word": "0xF9449800",
+          "pc_relative": null
+        },
+        {
+          "offset": "0x40",
+          "baseline_word": "0x97DA6844",
+          "target_word": "0x97DA69EC",
+          "pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x48",
+          "baseline_word": "0xF9412800",
+          "target_word": "0xF9449C00",
+          "pc_relative": null
+        },
+        {
+          "offset": "0x4C",
+          "baseline_word": "0x97DA6841",
+          "target_word": "0x97DA69E9",
+          "pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x54",
+          "baseline_word": "0xF9412C00",
+          "target_word": "0xF944A000",
+          "pc_relative": null
+        },
+        {
+          "offset": "0x58",
+          "baseline_word": "0x97DA683E",
+          "target_word": "0x97DA69E6",
+          "pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x60",
+          "baseline_word": "0x39253E88",
+          "target_word": "0x3937BE88",
+          "pc_relative": null
+        },
+        {
+          "offset": "0x64",
+          "baseline_word": "0x90FEEE08",
+          "target_word": "0xB0FEEE08",
+          "pc_relative": "ADR/ADRP"
+        },
+        {
+          "offset": "0x68",
+          "baseline_word": "0xBD4A6900",
+          "target_word": "0xBD46A900",
+          "pc_relative": null
+        },
+        {
+          "offset": "0x9C",
+          "baseline_word": "0x90FEEE08",
+          "target_word": "0xB0FEEE08",
+          "pc_relative": "ADR/ADRP"
+        },
+        {
+          "offset": "0xA0",
+          "baseline_word": "0xBD47ED01",
+          "target_word": "0xBD442D01",
+          "pc_relative": null
+        },
+        {
+          "offset": "0xD0",
+          "baseline_word": "0x90FEEE08",
+          "target_word": "0xB0FEEE08",
+          "pc_relative": "ADR/ADRP"
+        },
+        {
+          "offset": "0xD4",
+          "baseline_word": "0xBD476901",
+          "target_word": "0xBD43A901",
+          "pc_relative": null
+        },
+        {
+          "offset": "0x104",
+          "baseline_word": "0x90FEEE09",
+          "target_word": "0xB0FEEE09",
+          "pc_relative": "ADR/ADRP"
+        },
+        {
+          "offset": "0x108",
+          "baseline_word": "0xBD475921",
+          "target_word": "0xBD439921",
+          "pc_relative": null
+        },
+        {
+          "offset": "0x1A0",
+          "baseline_word": "0xF9412B18",
+          "target_word": "0xF9449F18",
+          "pc_relative": null
+        },
+        {
+          "offset": "0x1A4",
+          "baseline_word": "0xF9412F39",
+          "target_word": "0xF944A339",
+          "pc_relative": null
+        },
+        {
+          "offset": "0x1BC",
+          "baseline_word": "0x97EE393D",
+          "target_word": "0x97EE3924",
+          "pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x1E0",
+          "baseline_word": "0x947FC925",
+          "target_word": "0x947FCA2A",
+          "pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x1EC",
+          "baseline_word": "0x97E5CE65",
+          "target_word": "0x97E5CE4C",
+          "pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x220",
+          "baseline_word": "0x947FC915",
+          "target_word": "0x947FCA1A",
+          "pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x268",
+          "baseline_word": "0x97DA6818",
+          "target_word": "0x97DA69C0",
+          "pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x288",
+          "baseline_word": "0x97DA679D",
+          "target_word": "0x97DA6945",
+          "pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x304",
+          "baseline_word": "0x97DA6836",
+          "target_word": "0x97DA69DE",
+          "pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x37C",
+          "baseline_word": "0x97DA681A",
+          "target_word": "0x97DA69C2",
+          "pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x380",
+          "baseline_word": "0x97DA6820",
+          "target_word": "0x97DA69C8",
+          "pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x388",
+          "baseline_word": "0x97DA67CB",
+          "target_word": "0x97DA6973",
+          "pc_relative": "B/BL"
+        }
+      ]
+    },
+    {
+      "owner_label": "NoteManager.FastAbsolutePos",
+      "baseline_start": "0x377C7C8",
+      "target_start": "0x377B970",
+      "size": "0x260",
+      "differing_words": 35,
+      "non_pc_relative_differing_words": 12,
+      "differing_word_detail": [
+        {
+          "offset": "0x28",
+          "baseline_word": "0x3965C6A8",
+          "target_word": "0x397846A8",
+          "pc_relative": null
+        },
+        {
+          "offset": "0x3C",
+          "baseline_word": "0xF9409800",
+          "target_word": "0xF9440C00",
+          "pc_relative": null
+        },
+        {
+          "offset": "0x40",
+          "baseline_word": "0x97DA4E82",
+          "target_word": "0x97DA502A",
+          "pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x44",
+          "baseline_word": "0xD001A840",
+          "target_word": "0xF001A840",
+          "pc_relative": "ADR/ADRP"
+        },
+        {
+          "offset": "0x48",
+          "baseline_word": "0xF9469400",
+          "target_word": "0xF9421C00",
+          "pc_relative": null
+        },
+        {
+          "offset": "0x4C",
+          "baseline_word": "0x97DA4E7F",
+          "target_word": "0x97DA5027",
+          "pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x50",
+          "baseline_word": "0xD001A840",
+          "target_word": "0xF001A840",
+          "pc_relative": "ADR/ADRP"
+        },
+        {
+          "offset": "0x54",
+          "baseline_word": "0xF9467000",
+          "target_word": "0xF941F800",
+          "pc_relative": null
+        },
+        {
+          "offset": "0x58",
+          "baseline_word": "0x97DA4E7C",
+          "target_word": "0x97DA5024",
+          "pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x5C",
+          "baseline_word": "0xD001A880",
+          "target_word": "0xF001A880",
+          "pc_relative": "ADR/ADRP"
+        },
+        {
+          "offset": "0x60",
+          "baseline_word": "0xF945B400",
+          "target_word": "0xF9411C00",
+          "pc_relative": null
+        },
+        {
+          "offset": "0x64",
+          "baseline_word": "0x97DA4E79",
+          "target_word": "0x97DA5021",
+          "pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x68",
+          "baseline_word": "0xD001A880",
+          "target_word": "0xF001A880",
+          "pc_relative": "ADR/ADRP"
+        },
+        {
+          "offset": "0x6C",
+          "baseline_word": "0xF9451400",
+          "target_word": "0xF9407C00",
+          "pc_relative": null
+        },
+        {
+          "offset": "0x70",
+          "baseline_word": "0x97DA4E76",
+          "target_word": "0x97DA501E",
+          "pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x78",
+          "baseline_word": "0x3925C6A8",
+          "target_word": "0x393846A8",
+          "pc_relative": null
+        },
+        {
+          "offset": "0x84",
+          "baseline_word": "0xD001A897",
+          "target_word": "0xF001A897",
+          "pc_relative": "ADR/ADRP"
+        },
+        {
+          "offset": "0x88",
+          "baseline_word": "0xF945B6F7",
+          "target_word": "0xF9411EF7",
+          "pc_relative": null
+        },
+        {
+          "offset": "0x8C",
+          "baseline_word": "0xD001A858",
+          "target_word": "0xF001A858",
+          "pc_relative": "ADR/ADRP"
+        },
+        {
+          "offset": "0x94",
+          "baseline_word": "0xF9467318",
+          "target_word": "0xF941FB18",
+          "pc_relative": null
+        },
+        {
+          "offset": "0x98",
+          "baseline_word": "0xF9409B39",
+          "target_word": "0xF9440F39",
+          "pc_relative": null
+        },
+        {
+          "offset": "0xA4",
+          "baseline_word": "0xD0FEEDC8",
+          "target_word": "0xF0FEEDC8",
+          "pc_relative": "ADR/ADRP"
+        },
+        {
+          "offset": "0xA8",
+          "baseline_word": "0xD001A89B",
+          "target_word": "0xF001A89B",
+          "pc_relative": "ADR/ADRP"
+        },
+        {
+          "offset": "0xB0",
+          "baseline_word": "0xBD4A690C",
+          "target_word": "0xBD46A90C",
+          "pc_relative": null
+        },
+        {
+          "offset": "0xB4",
+          "baseline_word": "0xF945177B",
+          "target_word": "0xF9407F7B",
+          "pc_relative": null
+        },
+        {
+          "offset": "0xCC",
+          "baseline_word": "0x97DA4EBC",
+          "target_word": "0x97DA5064",
+          "pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x120",
+          "baseline_word": "0x97EE1EFB",
+          "target_word": "0x97EE1EE2",
+          "pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x138",
+          "baseline_word": "0x947F16D2",
+          "target_word": "0x947F17D7",
+          "pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x158",
+          "baseline_word": "0x947F16CA",
+          "target_word": "0x947F17CF",
+          "pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x18C",
+          "baseline_word": "0x947F16BD",
+          "target_word": "0x947F17C2",
+          "pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x1A0",
+          "baseline_word": "0x9464F710",
+          "target_word": "0x9464F7CD",
+          "pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x1B4",
+          "baseline_word": "0x97DA4E82",
+          "target_word": "0x97DA502A",
+          "pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x1C4",
+          "baseline_word": "0x97DA4E7E",
+          "target_word": "0x97DA5026",
+          "pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x1FC",
+          "baseline_word": "0x97DA4E70",
+          "target_word": "0x97DA5018",
+          "pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x24C",
+          "baseline_word": "0x97DA4EA2",
+          "target_word": "0x97DA504A",
+          "pc_relative": "B/BL"
+        }
+      ]
+    },
+    {
+      "owner_label": "NoteManager.SlowAbsolutePos",
+      "baseline_start": "0x377CA28",
+      "target_start": "0x377BBD0",
+      "size": "0x200",
+      "differing_words": 33,
+      "non_pc_relative_differing_words": 12,
+      "differing_word_detail": [
+        {
+          "offset": "0x24",
+          "baseline_word": "0x3965CAA8",
+          "target_word": "0x39784AA8",
+          "pc_relative": null
+        },
+        {
+          "offset": "0x38",
+          "baseline_word": "0xF9409800",
+          "target_word": "0xF9440C00",
+          "pc_relative": null
+        },
+        {
+          "offset": "0x3C",
+          "baseline_word": "0x97DA4DEB",
+          "target_word": "0x97DA4F93",
+          "pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x40",
+          "baseline_word": "0xD001A840",
+          "target_word": "0xF001A840",
+          "pc_relative": "ADR/ADRP"
+        },
+        {
+          "offset": "0x44",
+          "baseline_word": "0xF9469400",
+          "target_word": "0xF9421C00",
+          "pc_relative": null
+        },
+        {
+          "offset": "0x48",
+          "baseline_word": "0x97DA4DE8",
+          "target_word": "0x97DA4F90",
+          "pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x4C",
+          "baseline_word": "0xD001A840",
+          "target_word": "0xF001A840",
+          "pc_relative": "ADR/ADRP"
+        },
+        {
+          "offset": "0x50",
+          "baseline_word": "0xF9467000",
+          "target_word": "0xF941F800",
+          "pc_relative": null
+        },
+        {
+          "offset": "0x54",
+          "baseline_word": "0x97DA4DE5",
+          "target_word": "0x97DA4F8D",
+          "pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x58",
+          "baseline_word": "0xD001A880",
+          "target_word": "0xF001A880",
+          "pc_relative": "ADR/ADRP"
+        },
+        {
+          "offset": "0x5C",
+          "baseline_word": "0xF945B400",
+          "target_word": "0xF9411C00",
+          "pc_relative": null
+        },
+        {
+          "offset": "0x60",
+          "baseline_word": "0x97DA4DE2",
+          "target_word": "0x97DA4F8A",
+          "pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x64",
+          "baseline_word": "0xD001A880",
+          "target_word": "0xF001A880",
+          "pc_relative": "ADR/ADRP"
+        },
+        {
+          "offset": "0x68",
+          "baseline_word": "0xF9451400",
+          "target_word": "0xF9407C00",
+          "pc_relative": null
+        },
+        {
+          "offset": "0x6C",
+          "baseline_word": "0x97DA4DDF",
+          "target_word": "0x97DA4F87",
+          "pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x74",
+          "baseline_word": "0x3925CAA8",
+          "target_word": "0x39384AA8",
+          "pc_relative": null
+        },
+        {
+          "offset": "0x80",
+          "baseline_word": "0xD001A897",
+          "target_word": "0xF001A897",
+          "pc_relative": "ADR/ADRP"
+        },
+        {
+          "offset": "0x84",
+          "baseline_word": "0xF945B6F7",
+          "target_word": "0xF9411EF7",
+          "pc_relative": null
+        },
+        {
+          "offset": "0x88",
+          "baseline_word": "0xD001A858",
+          "target_word": "0xF001A858",
+          "pc_relative": "ADR/ADRP"
+        },
+        {
+          "offset": "0x90",
+          "baseline_word": "0xF9467318",
+          "target_word": "0xF941FB18",
+          "pc_relative": null
+        },
+        {
+          "offset": "0x94",
+          "baseline_word": "0xF9409B39",
+          "target_word": "0xF9440F39",
+          "pc_relative": null
+        },
+        {
+          "offset": "0xA0",
+          "baseline_word": "0xD0FEEDC8",
+          "target_word": "0xF0FEEDC8",
+          "pc_relative": "ADR/ADRP"
+        },
+        {
+          "offset": "0xA4",
+          "baseline_word": "0xD001A89B",
+          "target_word": "0xF001A89B",
+          "pc_relative": "ADR/ADRP"
+        },
+        {
+          "offset": "0xAC",
+          "baseline_word": "0xBD43C90B",
+          "target_word": "0xBD40090B",
+          "pc_relative": null
+        },
+        {
+          "offset": "0xB0",
+          "baseline_word": "0xF945177B",
+          "target_word": "0xF9407F7B",
+          "pc_relative": null
+        },
+        {
+          "offset": "0xC8",
+          "baseline_word": "0x97DA4E25",
+          "target_word": "0x97DA4FCD",
+          "pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x11C",
+          "baseline_word": "0x947F1641",
+          "target_word": "0x947F1746",
+          "pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x140",
+          "baseline_word": "0x947F1638",
+          "target_word": "0x947F173D",
+          "pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x154",
+          "baseline_word": "0x9464F68B",
+          "target_word": "0x9464F748",
+          "pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x168",
+          "baseline_word": "0x97DA4DFD",
+          "target_word": "0x97DA4FA5",
+          "pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x178",
+          "baseline_word": "0x97DA4DF9",
+          "target_word": "0x97DA4FA1",
+          "pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x1B0",
+          "baseline_word": "0x97DA4DEB",
+          "target_word": "0x97DA4F93",
+          "pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x1FC",
+          "baseline_word": "0x97DA4E1E",
+          "target_word": "0x97DA4FC6",
+          "pc_relative": "B/BL"
+        }
+      ]
+    }
+  ],
+  "probes": [
+    {
+      "label": "ExecUpdate.deltaAndPreDivisionExecuteFrame",
+      "insn": "cbz x0, <null-check>",
+      "purpose": "raw deltaTime in s8 and the pre-division ExecuteFrame in s0 selected by fcsel",
+      "baseline_rva": "0x3776148",
+      "owner_label": "NoteManager.ExecUpdate",
+      "baseline_owner_range": [
+        "0x37760C0",
+        "0x377644C"
+      ],
+      "offset_in_owner": "0x88",
+      "target_owner_range": [
+        "0x3775268",
+        "0x37755F4"
+      ],
+      "target_rva": "0x37752F0",
+      "baseline_word": "0xB40013E0",
+      "target_word": "0xB40013E0",
+      "instruction_identical": true,
+      "status": "mapped"
+    },
+    {
+      "label": "ExecUpdate.slowBucketIncrement",
+      "insn": "str w11, [x10]",
+      "purpose": "selected 2/3/4 bucket increment before the history fallback check",
+      "baseline_rva": "0x3776208",
+      "owner_label": "NoteManager.ExecUpdate",
+      "baseline_owner_range": [
+        "0x37760C0",
+        "0x377644C"
+      ],
+      "offset_in_owner": "0x148",
+      "target_owner_range": [
+        "0x3775268",
+        "0x37755F4"
+      ],
+      "target_rva": "0x37753B0",
+      "baseline_word": "0xB900014B",
+      "target_word": "0xB900014B",
+      "instruction_identical": true,
+      "status": "mapped"
+    },
+    {
+      "label": "ExecUpdate.substepDecision",
+      "insn": "scvtf s1, w22",
+      "purpose": "final substep count in w22 with the pre-division delta and ExecuteFrame",
+      "baseline_rva": "0x3776248",
+      "owner_label": "NoteManager.ExecUpdate",
+      "baseline_owner_range": [
+        "0x37760C0",
+        "0x377644C"
+      ],
+      "offset_in_owner": "0x188",
+      "target_owner_range": [
+        "0x3775268",
+        "0x37755F4"
+      ],
+      "target_rva": "0x37753F0",
+      "baseline_word": "0x1E2202C1",
+      "target_word": "0x1E2202C1",
+      "instruction_identical": true,
+      "status": "mapped"
+    },
+    {
+      "label": "FastAbsolutePos.stepBpm",
+      "insn": "fdiv s1, s1, s8",
+      "purpose": "tempo selected for this step",
+      "baseline_rva": "0x377C99C",
+      "owner_label": "NoteManager.FastAbsolutePos",
+      "baseline_owner_range": [
+        "0x377C7C8",
+        "0x377CA28"
+      ],
+      "offset_in_owner": "0x1D4",
+      "target_owner_range": [
+        "0x377B970",
+        "0x377BBD0"
+      ],
+      "target_rva": "0x377BB44",
+      "baseline_word": "0x1E281821",
+      "target_word": "0x1E281821",
+      "instruction_identical": true,
+      "status": "mapped"
+    },
+    {
+      "label": "FastAbsolutePos.stepHead",
+      "insn": "scvtf s0, w8",
+      "purpose": "per-step cursor bar/beat/absolute position before advancing",
+      "baseline_rva": "0x377C8AC",
+      "owner_label": "NoteManager.FastAbsolutePos",
+      "baseline_owner_range": [
+        "0x377C7C8",
+        "0x377CA28"
+      ],
+      "offset_in_owner": "0xE4",
+      "target_owner_range": [
+        "0x377B970",
+        "0x377BBD0"
+      ],
+      "target_rva": "0x377BA54",
+      "baseline_word": "0x1E220100",
+      "target_word": "0x1E220100",
+      "instruction_identical": true,
+      "status": "mapped"
+    },
+    {
+      "label": "SlowAbsolutePos.stepBpm",
+      "insn": "fdiv s1, s1, s8",
+      "purpose": "tempo selected for this step",
+      "baseline_rva": "0x377CBB0",
+      "owner_label": "NoteManager.SlowAbsolutePos",
+      "baseline_owner_range": [
+        "0x377CA28",
+        "0x377CC28"
+      ],
+      "offset_in_owner": "0x188",
+      "target_owner_range": [
+        "0x377BBD0",
+        "0x377BDD0"
+      ],
+      "target_rva": "0x377BD58",
+      "baseline_word": "0x1E281821",
+      "target_word": "0x1E281821",
+      "instruction_identical": true,
+      "status": "mapped"
+    },
+    {
+      "label": "SlowAbsolutePos.stepHead",
+      "insn": "scvtf s0, w8",
+      "purpose": "per-step cursor bar/beat/absolute position before rewinding",
+      "baseline_rva": "0x377CB08",
+      "owner_label": "NoteManager.SlowAbsolutePos",
+      "baseline_owner_range": [
+        "0x377CA28",
+        "0x377CC28"
+      ],
+      "offset_in_owner": "0xE0",
+      "target_owner_range": [
+        "0x377BBD0",
+        "0x377BDD0"
+      ],
+      "target_rva": "0x377BCB0",
+      "baseline_word": "0x1E220100",
+      "target_word": "0x1E220100",
+      "instruction_identical": true,
+      "status": "mapped"
+    }
+  ],
+  "constants": [
+    {
+      "name": "execute_frame_cutoff_and_fast_step_seconds",
+      "baseline_rva": "0x1536A68",
+      "baseline_bits": "0x3C888889",
+      "baseline_float32": 0.01666666753590107,
+      "context_bytes": 32,
+      "target_context_hits": 1,
+      "target_rva": "0x15366A8",
+      "rva_delta": -960,
+      "target_bits": "0x3C888889",
+      "bits_identical": true,
+      "status": "mapped"
+    },
+    {
+      "name": "judgement_adjust_range_and_b_max",
+      "baseline_rva": "0x1532E10",
+      "baseline_bits": "0x0000001E",
+      "baseline_float32": 4.203895392974451e-44,
+      "context_bytes": 32,
+      "target_context_hits": 1,
+      "target_rva": "0x1532A50",
+      "rva_delta": -960,
+      "target_bits": "0x0000001E",
+      "bits_identical": true,
+      "status": "mapped"
+    },
+    {
+      "name": "slow_step_seconds",
+      "baseline_rva": "0x15363C8",
+      "baseline_bits": "0xBC888889",
+      "baseline_float32": -0.01666666753590107,
+      "context_bytes": 32,
+      "target_context_hits": 1,
+      "target_rva": "0x1536008",
+      "rva_delta": -960,
+      "target_bits": "0xBC888889",
+      "bits_identical": true,
+      "status": "mapped"
+    },
+    {
+      "name": "substep_threshold_four",
+      "baseline_rva": "0x1536758",
+      "baseline_bits": "0x3D4CCCCD",
+      "baseline_float32": 0.05000000074505806,
+      "context_bytes": 32,
+      "target_context_hits": 1,
+      "target_rva": "0x1536398",
+      "rva_delta": -960,
+      "target_bits": "0x3D4CCCCD",
+      "bits_identical": true,
+      "status": "mapped"
+    },
+    {
+      "name": "substep_threshold_three",
+      "baseline_rva": "0x1536768",
+      "baseline_bits": "0x3D072B02",
+      "baseline_float32": 0.032999999821186066,
+      "context_bytes": 32,
+      "target_context_hits": 1,
+      "target_rva": "0x15363A8",
+      "rva_delta": -960,
+      "target_bits": "0x3D072B02",
+      "bits_identical": true,
+      "status": "mapped"
+    },
+    {
+      "name": "substep_threshold_two",
+      "baseline_rva": "0x15367EC",
+      "baseline_bits": "0x3C9374BC",
+      "baseline_float32": 0.017999999225139618,
+      "context_bytes": 32,
+      "target_context_hits": 1,
+      "target_rva": "0x153642C",
+      "rva_delta": -960,
+      "target_bits": "0x3C9374BC",
+      "bits_identical": true,
+      "status": "mapped"
+    }
+  ],
+  "field_layout": [
+    {
+      "type": "NoteManager",
+      "baseline_field_count": 34,
+      "target_field_count": 34,
+      "changed_offsets": {},
+      "added_fields": [],
+      "removed_fields": [],
+      "status": "unchanged"
+    },
+    {
+      "type": "InGameMusicScoreController",
+      "baseline_field_count": 13,
+      "target_field_count": 13,
+      "changed_offsets": {},
+      "added_fields": [],
+      "removed_fields": [],
+      "status": "unchanged"
+    },
+    {
+      "type": "LiveCoreSettings",
+      "baseline_field_count": 35,
+      "target_field_count": 35,
+      "changed_offsets": {},
+      "added_fields": [],
+      "removed_fields": [],
+      "status": "unchanged"
+    },
+    {
+      "type": "NoteBpmChange",
+      "baseline_field_count": 6,
+      "target_field_count": 6,
+      "changed_offsets": {},
+      "added_fields": [],
+      "removed_fields": [],
+      "status": "unchanged"
+    },
+    {
+      "type": "InGameManager",
+      "baseline_field_count": 40,
+      "target_field_count": 40,
+      "changed_offsets": {},
+      "added_fields": [],
+      "removed_fields": [],
+      "status": "unchanged"
+    },
+    {
+      "type": "NoteBatchInformation",
+      "baseline_field_count": 5,
+      "target_field_count": 5,
+      "changed_offsets": {},
+      "added_fields": [],
+      "removed_fields": [],
+      "status": "unchanged"
+    },
+    {
+      "type": "NoteInformation",
+      "baseline_field_count": 32,
+      "target_field_count": 32,
+      "changed_offsets": {},
+      "added_fields": [],
+      "removed_fields": [],
+      "status": "unchanged"
+    },
+    {
+      "type": "NoteDataBMSBuilder",
+      "baseline_field_count": 17,
+      "target_field_count": 17,
+      "changed_offsets": {},
+      "added_fields": [],
+      "removed_fields": [],
+      "status": "unchanged"
+    }
+  ]
+}

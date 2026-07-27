@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "run_id": "ikuoku-cc08-run-006-reset-note",
+  "dynamic": {
+    "pool_length": 30,
+    "cursor_after_acquire": 1,
+    "object_pointer": "0x765f23bc30",
+    "same_pointer_through_setup": true,
+    "reset_override_event_count": 0,
+    "reset_note_event_count": 0,
+    "previous_run_manager_pointer": "0x7770d096c0",
+    "previous_run_object_pointer": "0x765d320780",
+    "new_manager_and_pool": true
+  },
+  "static_fast_path": {
+    "source": "NoteManager.getNoteBpmChangeData 0x377B80C, artifacts/rhythm/decompiled_bundles/note.c",
+    "behavior": "Starting at +0x50 cursor, scan the 30-slot +0x40 pool cyclically; increment cursor and return the first object whose +0x10 active flag is false.",
+    "reset_call_on_success": false
+  },
+  "conclusion": {
+    "fast_acquire_reset": "excluded",
+    "cursor_wrap_reuse": "unresolved",
+    "reason": "The production sample performs one acquire per newly constructed manager; no run reaches the 31st acquire in one 30-slot pool."
+  }
+}

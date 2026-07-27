@@ -1,0 +1,250 @@
+{
+  "schema_version": 1,
+  "package_version": "10.1.4",
+  "package_version_code": "230",
+  "runs": {
+    "positive": {
+      "run_id": "ikuoku-cc08-run-057-offset-plus5",
+      "judgement_adjust_value_b": 5,
+      "direction": "fast",
+      "call_count": 548,
+      "cross_bar_call_count": 32,
+      "cross_bpm_call_count": 2,
+      "cross_bar_sample": {
+        "frame_id": 823,
+        "direction": "fast",
+        "frames_argument": 5,
+        "controller_bpm": 99.5,
+        "steps": [
+          {
+            "step_index": 0,
+            "cursor_bar": 8,
+            "cursor_beat": 186.95103454589844,
+            "step_bpm": 99.5
+          },
+          {
+            "step_index": 1,
+            "cursor_bar": 8,
+            "cursor_beat": 188.27769470214844,
+            "step_bpm": 99.5
+          },
+          {
+            "step_index": 2,
+            "cursor_bar": 8,
+            "cursor_beat": 189.60435485839844,
+            "step_bpm": 99.5
+          },
+          {
+            "step_index": 3,
+            "cursor_bar": 8,
+            "cursor_beat": 190.93101501464844,
+            "step_bpm": 99.5
+          },
+          {
+            "step_index": 4,
+            "cursor_bar": 9,
+            "cursor_beat": 0.2576751708984375,
+            "step_bpm": 99.5
+          },
+          {
+            "step_index": 5,
+            "cursor_bar": 9,
+            "cursor_beat": 1.5843418836593628,
+            "step_bpm": null
+          }
+        ],
+        "result": 1729.5843505859375
+      },
+      "cross_bpm_sample": {
+        "frame_id": 1473,
+        "direction": "fast",
+        "frames_argument": 5,
+        "controller_bpm": 99.5,
+        "steps": [
+          {
+            "step_index": 0,
+            "cursor_bar": 15,
+            "cursor_beat": 187.30038452148438,
+            "step_bpm": 99.5
+          },
+          {
+            "step_index": 1,
+            "cursor_bar": 15,
+            "cursor_beat": 188.62704467773438,
+            "step_bpm": 99.5
+          },
+          {
+            "step_index": 2,
+            "cursor_bar": 15,
+            "cursor_beat": 189.95370483398438,
+            "step_bpm": 99.5
+          },
+          {
+            "step_index": 3,
+            "cursor_bar": 15,
+            "cursor_beat": 191.28036499023438,
+            "step_bpm": 99.5
+          },
+          {
+            "step_index": 4,
+            "cursor_bar": 16,
+            "cursor_beat": 0.607025146484375,
+            "step_bpm": 95.5
+          },
+          {
+            "step_index": 5,
+            "cursor_bar": 16,
+            "cursor_beat": 1.8803585767745972,
+            "step_bpm": null
+          }
+        ],
+        "result": 3073.88037109375
+      },
+      "tempo_command_bar_sample": {
+        "frame_id": 1472,
+        "direction": "fast",
+        "frames_argument": 5,
+        "controller_bpm": 99.5,
+        "steps": [
+          {
+            "step_index": 0,
+            "cursor_bar": 15,
+            "cursor_beat": 185.97293090820312,
+            "step_bpm": 99.5
+          },
+          {
+            "step_index": 1,
+            "cursor_bar": 15,
+            "cursor_beat": 187.29959106445312,
+            "step_bpm": 99.5
+          },
+          {
+            "step_index": 2,
+            "cursor_bar": 15,
+            "cursor_beat": 188.62625122070312,
+            "step_bpm": 99.5
+          },
+          {
+            "step_index": 3,
+            "cursor_bar": 15,
+            "cursor_beat": 189.95291137695312,
+            "step_bpm": 99.5
+          },
+          {
+            "step_index": 4,
+            "cursor_bar": 15,
+            "cursor_beat": 191.27957153320312,
+            "step_bpm": 99.5
+          },
+          {
+            "step_index": 5,
+            "cursor_bar": 16,
+            "cursor_beat": 0.606231689453125,
+            "step_bpm": null
+          }
+        ],
+        "result": 3072.606201171875
+      }
+    },
+    "negative": {
+      "run_id": "ikuoku-cc08-run-059-offset-minus5",
+      "judgement_adjust_value_b": -5,
+      "direction": "slow",
+      "call_count": 558,
+      "cross_bar_call_count": 35,
+      "cross_bpm_call_count": 0,
+      "cross_bar_sample": {
+        "frame_id": 638,
+        "direction": "slow",
+        "frames_argument": 5,
+        "controller_bpm": 99.5,
+        "steps": [
+          {
+            "step_index": 0,
+            "cursor_bar": 7,
+            "cursor_beat": 1.6828460693359375,
+            "step_bpm": 99.5
+          },
+          {
+            "step_index": 1,
+            "cursor_bar": 7,
+            "cursor_beat": 0.3561793565750122,
+            "step_bpm": 99.5
+          },
+          {
+            "step_index": 2,
+            "cursor_bar": 6,
+            "cursor_beat": 191.02951049804688,
+            "step_bpm": 99.5
+          },
+          {
+            "step_index": 3,
+            "cursor_bar": 6,
+            "cursor_beat": 189.70285034179688,
+            "step_bpm": 99.5
+          },
+          {
+            "step_index": 4,
+            "cursor_bar": 6,
+            "cursor_beat": 188.37619018554688,
+            "step_bpm": 99.5
+          },
+          {
+            "step_index": 5,
+            "cursor_bar": 6,
+            "cursor_beat": 187.04953002929688,
+            "step_bpm": null
+          }
+        ],
+        "result": 1339.049560546875
+      },
+      "cross_bpm_sample": null,
+      "tempo_command_bar_sample": {
+        "frame_id": 1452,
+        "direction": "slow",
+        "frames_argument": 5,
+        "controller_bpm": 95.5,
+        "steps": [
+          {
+            "step_index": 0,
+            "cursor_bar": 16,
+            "cursor_beat": 3.194326877593994,
+            "step_bpm": 95.5
+          },
+          {
+            "step_index": 1,
+            "cursor_bar": 16,
+            "cursor_beat": 1.920993447303772,
+            "step_bpm": 95.5
+          },
+          {
+            "step_index": 2,
+            "cursor_bar": 16,
+            "cursor_beat": 0.6476600170135498,
+            "step_bpm": 95.5
+          },
+          {
+            "step_index": 3,
+            "cursor_bar": 15,
+            "cursor_beat": 191.37432861328125,
+            "step_bpm": 95.5
+          },
+          {
+            "step_index": 4,
+            "cursor_bar": 15,
+            "cursor_beat": 190.1009979248047,
+            "step_bpm": 95.5
+          },
+          {
+            "step_index": 5,
+            "cursor_bar": 15,
+            "cursor_beat": 188.82766723632812,
+            "step_bpm": null
+          }
+        ],
+        "result": 3068.82763671875
+      }
+    }
+  },
+  "negative_boundary": "SlowAbsolutePos borrows from bar 16 into bar 15 after the 95.5 BPM commit, but all five timed steps retain 95.5 instead of looking up the prior bar's 99.5 BPM. The reverse bar crossing is confirmed; a reverse tempo re-read does not occur."
+}

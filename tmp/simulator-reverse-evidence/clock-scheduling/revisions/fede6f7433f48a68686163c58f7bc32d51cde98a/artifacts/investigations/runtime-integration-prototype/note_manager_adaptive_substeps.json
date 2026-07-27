@@ -1,0 +1,111 @@
+{
+  "title": "NoteManager adaptive substep counters and single-step fallback",
+  "source": {
+    "constructor": {
+      "method": "NoteManager..ctor",
+      "rva": "0x377E0C0",
+      "counter_allocation": "0x377E28C..0x377E2A4 allocates a four-element uint array and stores it at +0x78."
+    },
+    "bms_analysis": {
+      "method": "NoteManager.analyzeBMS",
+      "rva": "0x377CD50",
+      "count_write": "0x377D27C..0x377D28C copies the process-history-accumulated NoteDataBMSBuilder BPM-value-list count after the normal parse to NoteManager +0x74."
+    },
+    "frame_update": {
+      "method": "NoteManager.ExecUpdate",
+      "rva": "0x37760C0",
+      "selection_range": "0x3776150..0x3776248",
+      "division_range": "0x3776248..0x3776254"
+    }
+  },
+  "fields": {
+    "bpmChangeCount": "NoteManager +0x74",
+    "performanceLevelCounterArray": "NoteManager +0x78",
+    "musicScoreController": "NoteManager +0xE8",
+    "executeFrame": "InGameMusicScoreController +0x18"
+  },
+  "activation": {
+    "condition": "bpmChangeCount >= 1",
+    "disabled_behavior": "When the count is below one, the method uses one update step and does not increment any performance counter."
+  },
+  "buckets": [
+    {
+      "index": 0,
+      "condition": "deltaTime < 0.0179999992",
+      "initial_steps": 1,
+      "counter_offset": "+0x20"
+    },
+    {
+      "index": 1,
+      "condition": "0.0179999992 <= deltaTime < 0.0329999998",
+      "initial_steps": 2,
+      "counter_offset": "+0x24"
+    },
+    {
+      "index": 2,
+      "condition": "0.0329999998 <= deltaTime < 0.0500000007",
+      "initial_steps": 3,
+      "counter_offset": "+0x28"
+    },
+    {
+      "index": 3,
+      "condition": "deltaTime >= 0.0500000007",
+      "initial_steps": 4,
+      "counter_offset": "+0x2C"
+    }
+  ],
+  "update_order": [
+    "select the current delta-time bucket",
+    "increment that bucket's uint counter",
+    "evaluate the updated history counters",
+    "force one step when any fallback threshold is reached",
+    "divide both deltaTime and ExecuteFrame by the final step count",
+    "execute the active-note loop finalStepCount times"
+  ],
+  "fallback": {
+    "counter_0": "counter[0] is incremented for sub-0.0179999992 frames and never compared",
+    "counter_1": "force one step when counter[1] > 100",
+    "counter_2": "force one step when counter[2] > 20",
+    "counter_3": "force one step when counter[3] > 5",
+    "comparison_operands": "+0x24, +0x28 and +0x2C of the uint[4] at NoteManager +0x78",
+    "precedence": "The fallback is evaluated after the current bucket increments, so the 101st bucket-1, 21st bucket-2, and 6th bucket-3 samples respectively use one step.",
+    "second_pass_correction": {
+      "previous_mapping": "counter[0] > 100, counter[1] > 20, counter[2] >= 6, counter[3] uncompared",
+      "static_evidence": "comparison operands in the decompiled ExecUpdate at 0x37760C0",
+      "runtime_evidence": "artifacts/investigations/clock-scheduling-runtime-oracle pass 2; six runs force a single step exactly as counter[3] reaches 6, two of them with counter[2] still at 1",
+      "boundaries_unchanged": [
+        "101",
+        "21",
+        "6"
+      ]
+    }
+  },
+  "lifecycle": {
+    "initialization": "The four counters begin at zero in the constructor-allocated managed array.",
+    "reset_search": "Static inspection of the NoteManager method range found no replacement or explicit zeroing of the array after construction.",
+    "bpm_count": "bpmChangeCount is refreshed during analyzeBMS from a builder list that runtime capture proves is not cleared by Initialize and accumulates across parses and gameplay sessions."
+  },
+  "prototype": {
+    "state": "NoteManagerPerformanceState stores the four counters, final update-step count, substep deltaTime and substep ExecuteFrame.",
+    "transition": "advance_note_manager_performance implements exact strict bucket comparisons, post-increment fallback thresholds, and disabled behavior.",
+    "runtime": "RuntimeIntegration updates the performance state before advancing its deterministic clock and exposes it through snapshot.note_manager.",
+    "tempo_bridge": "The backend-neutral TempoMap change count supplies isolated-chart intent for the executable prototype but is not equivalent to the original process-history-accumulated +0x74 field.",
+    "substep_scope": "The prototype preserves the recovered substep values as observable scheduling state while its outer deterministic engine update remains a single call."
+  },
+  "confirmed": [
+    "the adaptive policy uses a persistent four-element uint counter array",
+    "bucket comparisons are strict at 0.018, 0.033 and 0.05 seconds",
+    "history fallback is based on the updated counters",
+    "the first three counters can permanently force subsequent NoteManager updates to one step",
+    "the fourth counter is observational and does not directly force fallback",
+    "runtime capture shows NoteDataBMSBuilder BPM value/string lists survive Initialize and append once in each of the normal and command parses"
+  ],
+  "inference": [
+    "TempoMap.changes length is an isolated-chart prototype policy and not an exact equivalent of the original NoteManager +0x74 field."
+  ],
+  "unresolved": [
+    "The reason for the asymmetric 100, 20 and 6 sample thresholds is not named in managed metadata.",
+    "A backend that reproduces the exact inner active-note loop must execute note state updates once per selected substep rather than only expose the scheduling state."
+  ],
+  "continued_by": "slide_tail_flick_visuals.json"
+}

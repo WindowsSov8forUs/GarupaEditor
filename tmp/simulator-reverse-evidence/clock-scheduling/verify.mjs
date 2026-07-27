@@ -24,7 +24,7 @@ function listFiles(root) {
 }
 
 function git(args, cwd, encoding = "utf8") {
-  return execFileSync("git", args, { cwd, encoding });
+  return execFileSync("git", args, { cwd, encoding, maxBuffer: 64 * 1024 * 1024 });
 }
 
 function fail(message) {
@@ -41,6 +41,40 @@ function checkBytes(id, path, expectedBytes, expectedHash) {
     fail(`${id} hash mismatch: ${hash}`);
   }
   return bytes;
+}
+
+function checkGitBlob(id, commit, path, expectedBytes, expectedHash) {
+  const bytes = git(["show", `${commit}:${path}`], sourceRoot, null);
+  if (!matchesFrozenBytes(bytes, expectedBytes, expectedHash)) {
+    fail(`${id} source blob does not reproduce frozen bytes`);
+  }
+}
+
+function matchesFrozenBytes(bytes, expectedBytes, expectedHash) {
+  if (bytes.length === expectedBytes && sha256(bytes) === expectedHash) {
+    return true;
+  }
+  if (bytes.includes(0)) {
+    return false;
+  }
+  const checkoutBytes = Buffer.from(
+    bytes.toString("utf8").replace(/\r?\n/g, "\r\n"),
+    "utf8",
+  );
+  return checkoutBytes.length === expectedBytes && sha256(checkoutBytes) === expectedHash;
+}
+
+function checkIndex(id, copiedPath, expectedBytes, expectedHash) {
+  if (!validateIndex) {
+    return;
+  }
+  const indexPath = relative(projectRoot, resolve(packageRoot, copiedPath))
+    .split(sep)
+    .join("/");
+  const indexBytes = git(["show", `:${indexPath}`], projectRoot, null);
+  if (!matchesFrozenBytes(indexBytes, expectedBytes, expectedHash)) {
+    fail(`${id} index blob does not reproduce frozen bytes`);
+  }
 }
 
 const sourceRoot = manifest.source.repository;
@@ -70,8 +104,11 @@ if (manifest.upstreamDependencies.length !== 4) {
 }
 
 const requiredTasks = ["S03", "S04", "S05", "S06", "S07", "S08", "S09", "S10"];
-if (manifest.runtimeEvidenceGate.status !== "required-before-code") {
+if (manifest.runtimeEvidenceGate.status !== "blocked-by-runtime-closure") {
   fail(`Unexpected runtime gate status: ${manifest.runtimeEvidenceGate.status}`);
+}
+if (manifest.runtimeEvidenceGate.closureStatus !== "blocked") {
+  fail(`Unexpected runtime closure status: ${manifest.runtimeEvidenceGate.closureStatus}`);
 }
 if (
   requiredTasks.some((task) => !manifest.runtimeEvidenceGate.requiredBeforeTasks.includes(task)) ||
@@ -102,42 +139,120 @@ for (const entry of manifest.entries) {
     entry.bytes,
     entry.sha256,
   );
-  checkBytes(
-    `${entry.id} source`,
-    resolve(sourceRoot, entry.sourcePath),
+  checkGitBlob(
+    entry.id,
+    manifest.source.staticBaselineCommit,
+    entry.sourcePath,
     entry.bytes,
     entry.sha256,
   );
+  checkIndex(entry.id, entry.copiedPath, entry.bytes, entry.sha256);
+}
 
-  if (validateIndex) {
-    const indexPath = relative(projectRoot, resolve(packageRoot, entry.copiedPath))
-      .split(sep)
-      .join("/");
-    const indexBytes = git(["show", `:${indexPath}`], projectRoot, null);
-    if (indexBytes.length !== entry.bytes) {
-      fail(`${entry.id} index byte length mismatch: ${indexBytes.length}`);
-    }
-    const indexHash = sha256(indexBytes);
-    if (indexHash !== entry.sha256) {
-      fail(`${entry.id} index hash mismatch: ${indexHash}`);
-    }
+const runtimePackage = manifest.runtimeEvidence.package;
+if (ids.has(runtimePackage.id)) {
+  fail(`Duplicate manifest id: ${runtimePackage.id}`);
+}
+ids.add(runtimePackage.id);
+
+const runtimeOraclePath = resolve(packageRoot, runtimePackage.copiedRoot);
+const runtimeFiles = listFiles(runtimeOraclePath);
+if (runtimeFiles.length !== runtimePackage.files) {
+  fail(`Expected ${runtimePackage.files} runtime files, found ${runtimeFiles.length}`);
+}
+const runtimeBytes = runtimeFiles.reduce((total, path) => total + readFileSync(path).length, 0);
+if (runtimeBytes !== runtimePackage.bytes) {
+  fail(`Runtime package byte length mismatch: ${runtimeBytes}`);
+}
+
+const checksumPath = resolve(runtimeOraclePath, runtimePackage.sha256Manifest);
+const checksumBytes = checkBytes(
+  `${runtimePackage.id} checksum manifest`,
+  checksumPath,
+  runtimePackage.sha256ManifestBytes,
+  runtimePackage.sha256ManifestHash,
+);
+checkGitBlob(
+  `${runtimePackage.id} checksum manifest`,
+  runtimePackage.sourceCommit,
+  `${runtimePackage.sourceRoot}/${runtimePackage.sha256Manifest}`,
+  runtimePackage.sha256ManifestBytes,
+  runtimePackage.sha256ManifestHash,
+);
+checkIndex(
+  `${runtimePackage.id} checksum manifest`,
+  `${runtimePackage.copiedRoot}/${runtimePackage.sha256Manifest}`,
+  runtimePackage.sha256ManifestBytes,
+  runtimePackage.sha256ManifestHash,
+);
+
+const checksumLines = checksumBytes.toString("utf8").trimEnd().split(/\r?\n/);
+if (checksumLines.length !== runtimePackage.files - 1) {
+  fail(`Expected ${runtimePackage.files - 1} runtime checksum rows, found ${checksumLines.length}`);
+}
+const expectedRuntimePaths = new Set([runtimePackage.sha256Manifest]);
+for (const line of checksumLines) {
+  const match = /^([0-9A-F]{64})  (.+)$/.exec(line);
+  if (!match) {
+    fail(`Invalid runtime checksum row: ${line}`);
+  }
+  const [, expectedHash, relativePath] = match;
+  if (expectedRuntimePaths.has(relativePath)) {
+    fail(`Duplicate runtime checksum path: ${relativePath}`);
+  }
+  expectedRuntimePaths.add(relativePath);
+  const copiedPath = `${runtimePackage.copiedRoot}/${relativePath}`;
+  const sourcePath = `${runtimePackage.sourceRoot}/${relativePath}`;
+  const bytes = readFileSync(resolve(packageRoot, copiedPath));
+  if (sha256(bytes) !== expectedHash) {
+    fail(`${runtimePackage.id} copied hash mismatch: ${relativePath}`);
+  }
+  const sourceBytes = git(["show", `${runtimePackage.sourceCommit}:${sourcePath}`], sourceRoot, null);
+  if (sourceBytes.length !== bytes.length || sha256(sourceBytes) !== expectedHash) {
+    fail(`${runtimePackage.id} source mismatch: ${relativePath}`);
+  }
+  checkIndex(`${runtimePackage.id} ${relativePath}`, copiedPath, bytes.length, expectedHash);
+}
+for (const path of runtimeFiles) {
+  const relativePath = relative(runtimeOraclePath, path).split(sep).join("/");
+  if (!expectedRuntimePaths.has(relativePath)) {
+    fail(`Unexpected runtime package file: ${relativePath}`);
   }
 }
 
-const artifactFiles = listFiles(resolve(packageRoot, "artifacts"));
-if (artifactFiles.length !== 26) {
-  fail(`Expected 26 copied artifacts, found ${artifactFiles.length}`);
+const closure = JSON.parse(readFileSync(resolve(runtimeOraclePath, "closure.json"), "utf8"));
+if (closure.s02_gate !== manifest.runtimeEvidenceGate.closureStatus) {
+  fail(`Runtime closure gate mismatch: ${closure.s02_gate}`);
+}
+for (const finding of manifest.runtimeEvidenceGate.blockingFindings) {
+  if (!closure.blocking_findings.includes(finding)) {
+    fail(`Missing runtime blocking finding: ${finding}`);
+  }
 }
 
-const runtimeOraclePath = resolve(
-  packageRoot,
-  "artifacts/investigations/clock-scheduling-runtime-oracle",
-);
-if (
-  manifest.runtimeEvidenceGate.status === "required-before-code" &&
-  listFiles(runtimeOraclePath).length !== 0
-) {
-  fail("Runtime oracle files exist before S02 closure");
+for (const entry of manifest.runtimeEvidence.entries) {
+  if (ids.has(entry.id)) {
+    fail(`Duplicate manifest id: ${entry.id}`);
+  }
+  ids.add(entry.id);
+  checkBytes(
+    `${entry.id} copied`,
+    resolve(packageRoot, entry.copiedPath),
+    entry.bytes,
+    entry.sha256,
+  );
+  checkGitBlob(entry.id, entry.sourceCommit, entry.sourcePath, entry.bytes, entry.sha256);
+  checkIndex(entry.id, entry.copiedPath, entry.bytes, entry.sha256);
+}
+
+const artifactFiles = listFiles(resolve(packageRoot, "artifacts"));
+const expectedArtifactCount = manifest.entries.length + runtimePackage.files + 5;
+if (artifactFiles.length !== expectedArtifactCount) {
+  fail(`Expected ${expectedArtifactCount} copied artifacts, found ${artifactFiles.length}`);
+}
+const revisionFiles = listFiles(resolve(packageRoot, "revisions"));
+if (revisionFiles.length !== 4) {
+  fail(`Expected 4 frozen revision files, found ${revisionFiles.length}`);
 }
 
 const upstreamIds = new Set();
@@ -155,5 +270,5 @@ for (const dependency of manifest.upstreamDependencies) {
 }
 
 console.log(
-  `clock-scheduling evidence verified: entries=${manifest.entries.length}, upstream=${manifest.upstreamDependencies.length}, runtimeGate=${manifest.runtimeEvidenceGate.status}, index=${validateIndex ? "checked" : "skipped"}`,
+  `clock-scheduling evidence verified: static=${manifest.entries.length}, runtime=${runtimePackage.files}, revisions=${manifest.runtimeEvidence.entries.length}, upstream=${manifest.upstreamDependencies.length}, runtimeGate=${manifest.runtimeEvidenceGate.status}, index=${validateIndex ? "checked" : "skipped"}`,
 );

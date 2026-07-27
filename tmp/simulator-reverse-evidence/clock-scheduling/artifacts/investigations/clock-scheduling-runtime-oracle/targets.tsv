@@ -1,0 +1,54 @@
+owner	method_or_field	rva	signature_or_offset	type	purpose
+NoteBatchInformationListFactory	CreateNoteBatchInformationList	0x376EA70	managed instance method	method	builder parse mode and ordered batch result
+NoteDataBMSBuilder	Initialize	0x376EF2C	managed instance method	method	prove persistent BPM lists across initialization
+InGameDirector	Awake	0x32F8668	managed instance method	method	gameplay initialization boundary
+InGameDirector	Update	0x32F8C4C	managed instance method	method	outer frame identity
+InGameManager	ExecUpdate	0x32F8C64	managed instance method	method	outer gameplay update boundary
+InGameManager	updatePlayState	0x32F9BB0	managed instance method	method	play-state gate observation
+UnityEngine.Application	set_targetFrameRate	0x657AFCC	static void(int)	method	60/120 request consumer
+NoteManager	Init	0x377580C	managed instance method	method	manager initialization snapshot
+NoteManager	ExecUpdate	0x37760C0	managed instance method	method	frame and adaptive-substep boundary
+NoteManager	SetupNotes	0x3777098	managed instance method	method	pool and list initialization
+NoteManager	activateNotesJustNow	0x37784B4	managed instance method	method	batch activation boundary
+NoteManager	activateBPMChangeNoteProcess	0x377B650	managed instance method	method	first CC03/CC08 scan
+NoteManager	setupBpmChangeNote	0x3776A54	managed instance method	method	pool acquire and active-list append
+NoteManager	getNoteBpmChangeData	0x377B80C	managed instance method	method	BPM pool acquire
+NoteManager	onBpmChanged	0x377B908	managed instance method	method	callback and immediate list removal
+NoteManager	analyzeBMS	0x377CD50	managed instance method	method	builder count transfer
+InGameMusicScoreController	SetExecuteFrame	0x33043D4	managed instance method	method	execute-frame write
+InGameMusicScoreController	SetCurrentBPM	0x33043E4	managed instance method	method	current BPM write
+InGameMusicScoreController	SetBasicBPM	0x33043FC	managed instance method	method	basic BPM write
+InGameMusicScoreController	SetBasicBPMString	0x330440C	managed instance method	method	basic BPM string write
+InGameMusicScoreController	SetNextBPM	0x330441C	managed instance method	method	next BPM write
+InGameMusicScoreController	SetLauncherMusicBarProgress	0x330442C	managed instance method	method	launcher bar write
+InGameMusicScoreController	SetLauncherMusicBeatProgress	0x330443C	managed instance method	method	launcher beat write
+InGameMusicScoreController	SetMusicBarProgress	0x33044BC	managed instance method	method	music bar write
+InGameMusicScoreController	SetMusicBeatProgress	0x33044CC	managed instance method	method	music beat write
+InGameMusicScoreController	UpdateMusicScoreProgress	0x3304770	managed instance method	method	per-substep clock update
+InGameMusicScoreController	UpdateBPM	0x330491C	managed instance method	method	current numeric/string commit
+InGameMusicScoreController	SetupFirstGameProgress	0x3304928	managed instance method	method	initial dual-clock and lead
+NoteBpmChange	Setup	0x30E9BD8	managed instance method	method	command object binding
+NoteBpmChange	Reset	0x30E9C38	managed instance method	method	active flag reset and reuse boundary
+NoteBpmChange	ExecUpdate	0x30E9C40	managed instance method	method	bar/beat threshold evaluation
+NoteBpmChange	updateBpm	0x30E9D14	managed instance method	method	commit and callback order
+NoteBase	ResetNote	0x3A76BA0	managed instance method	method	pool acquire reset wrapper and virtual Reset dispatch
+NoteDataBMSBuilder	bpmValues	field	+0x18	List<float>	persistent numeric BPM list
+NoteDataBMSBuilder	bpmStrings	field	+0x20	List<string>	persistent original BPM strings
+NoteDataBMSBuilder	bpmMaterials	field	+0x28	List<object>	builder material list
+NoteDataBMSBuilder	existChangeBpm	field	+0x30	bool	parse state
+NoteDataBMSBuilder	bpmChangeBarIndex	field	+0x34	int32	parse state
+NoteDataBMSBuilder	startBpm	field	+0x38	float32	basic BPM numeric and raw bits
+NoteDataBMSBuilder	startBpmString	field	+0x40	string	basic BPM original string
+NoteManager	bpmChangeCount	field	+0x74	int32	accumulated builder-list count after normal parse
+NoteManager	performanceCounters	field	+0x78	uint32[4]	adaptive history counters
+NoteManager	musicScoreController	field	+0xE8	object	clock/BPM owner
+InGameMusicScoreController	executeFrame	field	+0x18	float32	per-substep execute frame
+InGameMusicScoreController	currentBpm	field	+0x1C	float32	current tempo
+InGameMusicScoreController	currentBpmString	field	+0x20	string	current tempo source string
+InGameMusicScoreController	basicBpm	field	+0x28	float32	start tempo
+InGameMusicScoreController	basicBpmString	field	+0x30	string	start tempo source string
+InGameMusicScoreController	nextBpm	field	+0x38	float32	launcher tempo
+InGameMusicScoreController	launcherBarProgress	field	+0x3C	int32	launcher bar
+InGameMusicScoreController	launcherBeatProgress	field	+0x40	float32	launcher beat and raw bits
+InGameMusicScoreController	musicBarProgress	field	+0x44	int32	main music bar
+InGameMusicScoreController	musicBeatProgress	field	+0x48	float32	main music beat and raw bits

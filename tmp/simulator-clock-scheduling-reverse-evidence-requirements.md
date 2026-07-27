@@ -6,7 +6,7 @@
 - 适用阶段：`simulator-clock-scheduling-task.md` 的 S02–S10。
 - 唯一行为依据：`HOST________\VSCode\GirlsBandParty-Reverse` 中已经提交、可校验、可追溯的逆向产物。
 - 静态基线提交：`74ab76f6838847d98aae1a15741a5f024e3774ff`。
-- 当前冻结证据提交：`f71f73fd2e408cfc888c5bbcce0a59c8eb73b18d`。该提交已完成所有普通可执行采证任务；S02 仍因第 27 节列出的明确可用性/观察可达性边界保持 fail-closed，因此这里不称其为“S02 解锁提交”。
+- 当前冻结证据提交：`e96733cd96a5e7446d2b9adbc413bf77de0bcf98`。运行 oracle 文件内容延续 `f71f73fd2e408cfc888c5bbcce0a59c8eb73b18d` 的最终静态批次，后续提交补充并修正交接边界表述；S02 仍因第 27 节列出的明确可用性/观察可达性边界保持 fail-closed，因此这里不称其为“S02 解锁提交”。
 - 第一批运行时证据：`2aee4dbe486be1feda9fdf28cb94d14204058f42`；已冻结 60 模式 CC03/CC08、双时钟初始化、launcher lead、bundle/BMS 一致性和 `bpmChangeCount` 运行时修正。
 - 第二批运行时证据：`3051532a`（含 `da94ca43` 证据提交与 `864e7bc4` 采集稳定性文档）；新增七条完整采集，闭合零 BPM-change 60 模式、三类暂停/恢复、正 offset 跨 BPM，并修订自适应回退计数器映射。仍不是最终解锁提交。
 - 第三批运行时证据：`803ac909`；采集设备自动升级到 10.1.4 / 230，已完成时钟调度目标集的跨版本重建证明，并在 10.1.4 上闭合 120 模式请求。详见第 25 节。
@@ -404,7 +404,7 @@ trace label 必须与原作字段名分栏存储。若某个字段只有 offset 
 4. CC03 与 CC08 的完整对象生命周期、列表顺序、池复用和切换时机全部闭合。
 5. 60/120 请求、双时钟逐子步、adaptive 1–4 子步、调度突变、暂停恢复和 offset 结果均可由校验器复核。
 6. Reverse `closure.json` 不存在阻断 S03–S10 的 unresolved 项。
-7. Reverse 最终提交除明确排除的 `runtime/tools/` 外，不依赖未跟踪文件。
+7. Reverse 最终提交除明确排除的 `.claude/` 与 `runtime/tools/` 外，不依赖未跟踪文件。
 8. GarupaEditor 任务书填写最终 Reverse 锁定提交，并将新增 R 系列证据完整冻结到 `tmp/simulator-reverse-evidence/clock-scheduling/`。
 9. Reverse 源文件、GarupaEditor 冻结副本、manifest 和 Git index 的 bytes/SHA-256 全部一致。
 10. 在解除硬门前不以任何 GarupaEditor 代码或测试结果替代缺失原作证据。

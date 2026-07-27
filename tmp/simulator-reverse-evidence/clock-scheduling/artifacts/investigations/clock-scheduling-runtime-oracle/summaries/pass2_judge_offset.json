@@ -1,0 +1,498 @@
+{
+  "schema_version": 1,
+  "pass": 2,
+  "step_model": {
+    "status": "confirmed",
+    "step_seconds": "1/60",
+    "step_ticks_formula": "192 * bpm / (60 * 240)",
+    "per_step_tempo_query": "each step re-reads the tempo at the cursor position instead of reusing CurrentBPM from the call site",
+    "positive_direction_owner": "NoteManager.FastAbsolutePos",
+    "negative_direction_owner": "NoteManager.SlowAbsolutePos"
+  },
+  "unresolved": {
+    "negative_offset_cross_bpm": "no negative-direction call in the captured windows spans the tempo change; the armed windows sat before bar 16",
+    "allowed_range": "the setting's permitted range is not closed; only -5 and +5 were exercised"
+  },
+  "runs": [
+    {
+      "run_id": "ikuoku-cc08-run-025-offset-plus5",
+      "judgement_adjust_value_b": 5,
+      "call_count": 550,
+      "cross_bpm_call_count": 8,
+      "cross_bar_call_count": 9,
+      "cross_bpm_sample": {
+        "frame_id": 991,
+        "substep_id": 1,
+        "direction": "fast",
+        "frames_argument": 5,
+        "entry_clock": {
+          "current_bpm": 99.5,
+          "current_bpm_string": "99.5",
+          "basic_bpm": 99.5,
+          "basic_bpm_string": "99.5",
+          "next_bpm": 95.5,
+          "launcher_bar": 16,
+          "launcher_beat": 71.98527526855469,
+          "launcher_absolute_pos": 3143.9852752685547,
+          "music_bar": 15,
+          "music_beat": 187.35589599609375,
+          "music_absolute_pos": 3067.3558959960938,
+          "before_music_pos": 0,
+          "float_bits": {
+            "execute_frame": "0x3f800000",
+            "current_bpm": "0x42c70000",
+            "basic_bpm": "0x42c70000",
+            "next_bpm": "0x42bf0000",
+            "launcher_beat": "0x428ff876",
+            "music_beat": "0x433b5b1c",
+            "before_music_pos": "0x00000000"
+          }
+        },
+        "steps": [
+          {
+            "step_index": 0,
+            "total_steps": 5,
+            "cursor_bar": 15,
+            "cursor_beat": 187.35589599609375,
+            "cursor_beat_bits": "0x433b5b1c",
+            "cursor_bar_ticks": 2880,
+            "step_bpm": 99.5,
+            "step_bpm_bits": "0x42c70000"
+          },
+          {
+            "step_index": 1,
+            "total_steps": 5,
+            "cursor_bar": 15,
+            "cursor_beat": 188.68255615234375,
+            "cursor_beat_bits": "0x433caebc",
+            "cursor_bar_ticks": 2880,
+            "step_bpm": 99.5,
+            "step_bpm_bits": "0x42c70000"
+          },
+          {
+            "step_index": 2,
+            "total_steps": 5,
+            "cursor_bar": 15,
+            "cursor_beat": 190.00921630859375,
+            "cursor_beat_bits": "0x433e025c",
+            "cursor_bar_ticks": 2880,
+            "step_bpm": 99.5,
+            "step_bpm_bits": "0x42c70000"
+          },
+          {
+            "step_index": 3,
+            "total_steps": 5,
+            "cursor_bar": 15,
+            "cursor_beat": 191.33587646484375,
+            "cursor_beat_bits": "0x433f55fc",
+            "cursor_bar_ticks": 2880,
+            "step_bpm": 99.5,
+            "step_bpm_bits": "0x42c70000"
+          },
+          {
+            "step_index": 4,
+            "total_steps": 5,
+            "cursor_bar": 16,
+            "cursor_beat": 0.66253662109375,
+            "cursor_beat_bits": "0x3f299c00",
+            "cursor_bar_ticks": 3072,
+            "step_bpm": 95.5,
+            "step_bpm_bits": "0x42bf0000"
+          },
+          {
+            "step_index": 5,
+            "total_steps": 5,
+            "cursor_bar": 16,
+            "cursor_beat": 1.9358700513839722,
+            "cursor_beat_bits": "0x3ff7ca97",
+            "cursor_bar_ticks": 3072,
+            "step_bpm": null,
+            "step_bpm_bits": null
+          }
+        ],
+        "result": 3073.935791015625,
+        "result_bits": "0x45401ef9"
+      },
+      "cross_bar_sample": {
+        "frame_id": 319,
+        "substep_id": 1,
+        "direction": "fast",
+        "frames_argument": 5,
+        "entry_clock": {
+          "current_bpm": 99.5,
+          "current_bpm_string": "99.5",
+          "basic_bpm": 99.5,
+          "basic_bpm_string": "99.5",
+          "next_bpm": 99.5,
+          "launcher_bar": 5,
+          "launcher_beat": 73.4484634399414,
+          "launcher_absolute_pos": 1033.4484634399414,
+          "music_bar": 4,
+          "music_beat": 185.8484649658203,
+          "music_absolute_pos": 953.8484649658203,
+          "before_music_pos": 0,
+          "float_bits": {
+            "execute_frame": "0x3f800000",
+            "current_bpm": "0x42c70000",
+            "basic_bpm": "0x42c70000",
+            "next_bpm": "0x42c70000",
+            "launcher_beat": "0x4292e59d",
+            "music_beat": "0x4339d935",
+            "before_music_pos": "0x00000000"
+          }
+        },
+        "steps": [
+          {
+            "step_index": 0,
+            "total_steps": 5,
+            "cursor_bar": 4,
+            "cursor_beat": 185.8484649658203,
+            "cursor_beat_bits": "0x4339d935",
+            "cursor_bar_ticks": 768,
+            "step_bpm": 99.5,
+            "step_bpm_bits": "0x42c70000"
+          },
+          {
+            "step_index": 1,
+            "total_steps": 5,
+            "cursor_bar": 4,
+            "cursor_beat": 187.1751251220703,
+            "cursor_beat_bits": "0x433b2cd5",
+            "cursor_bar_ticks": 768,
+            "step_bpm": 99.5,
+            "step_bpm_bits": "0x42c70000"
+          },
+          {
+            "step_index": 2,
+            "total_steps": 5,
+            "cursor_bar": 4,
+            "cursor_beat": 188.5017852783203,
+            "cursor_beat_bits": "0x433c8075",
+            "cursor_bar_ticks": 768,
+            "step_bpm": 99.5,
+            "step_bpm_bits": "0x42c70000"
+          },
+          {
+            "step_index": 3,
+            "total_steps": 5,
+            "cursor_bar": 4,
+            "cursor_beat": 189.8284454345703,
+            "cursor_beat_bits": "0x433dd415",
+            "cursor_bar_ticks": 768,
+            "step_bpm": 99.5,
+            "step_bpm_bits": "0x42c70000"
+          },
+          {
+            "step_index": 4,
+            "total_steps": 5,
+            "cursor_bar": 4,
+            "cursor_beat": 191.1551055908203,
+            "cursor_beat_bits": "0x433f27b5",
+            "cursor_bar_ticks": 768,
+            "step_bpm": 99.5,
+            "step_bpm_bits": "0x42c70000"
+          },
+          {
+            "step_index": 5,
+            "total_steps": 5,
+            "cursor_bar": 5,
+            "cursor_beat": 0.4817657470703125,
+            "cursor_beat_bits": "0x3ef6aa00",
+            "cursor_bar_ticks": 960,
+            "step_bpm": null,
+            "step_bpm_bits": null
+          }
+        ],
+        "result": 960.4817504882812,
+        "result_bits": "0x44701ed5"
+      },
+      "plain_sample": {
+        "frame_id": 303,
+        "substep_id": 1,
+        "direction": "fast",
+        "frames_argument": 5,
+        "entry_clock": {
+          "current_bpm": 99.5,
+          "current_bpm_string": "99.5",
+          "basic_bpm": 99.5,
+          "basic_bpm_string": "99.5",
+          "next_bpm": 99.5,
+          "launcher_bar": 5,
+          "launcher_beat": 24.650436401367188,
+          "launcher_absolute_pos": 984.6504364013672,
+          "music_bar": 4,
+          "music_beat": 137.05039978027344,
+          "music_absolute_pos": 905.0503997802734,
+          "before_music_pos": 0,
+          "float_bits": {
+            "execute_frame": "0x3f800000",
+            "current_bpm": "0x42c70000",
+            "basic_bpm": "0x42c70000",
+            "next_bpm": "0x42c70000",
+            "launcher_beat": "0x41c53418",
+            "music_beat": "0x43090ce7",
+            "before_music_pos": "0x00000000"
+          }
+        },
+        "steps": [
+          {
+            "step_index": 0,
+            "total_steps": 5,
+            "cursor_bar": 4,
+            "cursor_beat": 137.05039978027344,
+            "cursor_beat_bits": "0x43090ce7",
+            "cursor_bar_ticks": 768,
+            "step_bpm": 99.5,
+            "step_bpm_bits": "0x42c70000"
+          },
+          {
+            "step_index": 1,
+            "total_steps": 5,
+            "cursor_bar": 4,
+            "cursor_beat": 138.37705993652344,
+            "cursor_beat_bits": "0x430a6087",
+            "cursor_bar_ticks": 768,
+            "step_bpm": 99.5,
+            "step_bpm_bits": "0x42c70000"
+          },
+          {
+            "step_index": 2,
+            "total_steps": 5,
+            "cursor_bar": 4,
+            "cursor_beat": 139.70372009277344,
+            "cursor_beat_bits": "0x430bb427",
+            "cursor_bar_ticks": 768,
+            "step_bpm": 99.5,
+            "step_bpm_bits": "0x42c70000"
+          },
+          {
+            "step_index": 3,
+            "total_steps": 5,
+            "cursor_bar": 4,
+            "cursor_beat": 141.03038024902344,
+            "cursor_beat_bits": "0x430d07c7",
+            "cursor_bar_ticks": 768,
+            "step_bpm": 99.5,
+            "step_bpm_bits": "0x42c70000"
+          },
+          {
+            "step_index": 4,
+            "total_steps": 5,
+            "cursor_bar": 4,
+            "cursor_beat": 142.35704040527344,
+            "cursor_beat_bits": "0x430e5b67",
+            "cursor_bar_ticks": 768,
+            "step_bpm": 99.5,
+            "step_bpm_bits": "0x42c70000"
+          },
+          {
+            "step_index": 5,
+            "total_steps": 5,
+            "cursor_bar": 4,
+            "cursor_beat": 143.68370056152344,
+            "cursor_beat_bits": "0x430faf07",
+            "cursor_bar_ticks": 768,
+            "step_bpm": null,
+            "step_bpm_bits": null
+          }
+        ],
+        "result": 911.6837158203125,
+        "result_bits": "0x4463ebc2"
+      }
+    },
+    {
+      "run_id": "ikuoku-cc08-run-026-offset-minus5",
+      "judgement_adjust_value_b": -5,
+      "call_count": 550,
+      "cross_bpm_call_count": 0,
+      "cross_bar_call_count": 23,
+      "cross_bpm_sample": null,
+      "cross_bar_sample": {
+        "frame_id": 317,
+        "substep_id": 1,
+        "direction": "slow",
+        "frames_argument": 5,
+        "entry_clock": {
+          "current_bpm": 99.5,
+          "current_bpm_string": "99.5",
+          "basic_bpm": 99.5,
+          "basic_bpm_string": "99.5",
+          "next_bpm": 99.5,
+          "launcher_bar": 5,
+          "launcher_beat": 80.05485534667969,
+          "launcher_absolute_pos": 1040.0548553466797,
+          "music_bar": 5,
+          "music_beat": 0.454833984375,
+          "music_absolute_pos": 960.454833984375,
+          "before_music_pos": 0,
+          "float_bits": {
+            "execute_frame": "0x3f800000",
+            "current_bpm": "0x42c70000",
+            "basic_bpm": "0x42c70000",
+            "next_bpm": "0x42c70000",
+            "launcher_beat": "0x42a01c16",
+            "music_beat": "0x3ee8e000",
+            "before_music_pos": "0x00000000"
+          }
+        },
+        "steps": [
+          {
+            "step_index": 0,
+            "total_steps": 5,
+            "cursor_bar": 5,
+            "cursor_beat": 0.454833984375,
+            "cursor_beat_bits": "0x3ee8e000",
+            "cursor_bar_ticks": 960,
+            "step_bpm": 99.5,
+            "step_bpm_bits": "0x42c70000"
+          },
+          {
+            "step_index": 1,
+            "total_steps": 5,
+            "cursor_bar": 4,
+            "cursor_beat": 191.128173828125,
+            "cursor_beat_bits": "0x433f20d0",
+            "cursor_bar_ticks": 768,
+            "step_bpm": 99.5,
+            "step_bpm_bits": "0x42c70000"
+          },
+          {
+            "step_index": 2,
+            "total_steps": 5,
+            "cursor_bar": 4,
+            "cursor_beat": 189.801513671875,
+            "cursor_beat_bits": "0x433dcd30",
+            "cursor_bar_ticks": 768,
+            "step_bpm": 99.5,
+            "step_bpm_bits": "0x42c70000"
+          },
+          {
+            "step_index": 3,
+            "total_steps": 5,
+            "cursor_bar": 4,
+            "cursor_beat": 188.474853515625,
+            "cursor_beat_bits": "0x433c7990",
+            "cursor_bar_ticks": 768,
+            "step_bpm": 99.5,
+            "step_bpm_bits": "0x42c70000"
+          },
+          {
+            "step_index": 4,
+            "total_steps": 5,
+            "cursor_bar": 4,
+            "cursor_beat": 187.148193359375,
+            "cursor_beat_bits": "0x433b25f0",
+            "cursor_bar_ticks": 768,
+            "step_bpm": 99.5,
+            "step_bpm_bits": "0x42c70000"
+          },
+          {
+            "step_index": 5,
+            "total_steps": 5,
+            "cursor_bar": 4,
+            "cursor_beat": 185.821533203125,
+            "cursor_beat_bits": "0x4339d250",
+            "cursor_bar_ticks": 768,
+            "step_bpm": null,
+            "step_bpm_bits": null
+          }
+        ],
+        "result": 953.821533203125,
+        "result_bits": "0x446e7494"
+      },
+      "plain_sample": {
+        "frame_id": 303,
+        "substep_id": 1,
+        "direction": "slow",
+        "frames_argument": 5,
+        "entry_clock": {
+          "current_bpm": 99.5,
+          "current_bpm_string": "99.5",
+          "basic_bpm": 99.5,
+          "basic_bpm_string": "99.5",
+          "next_bpm": 99.5,
+          "launcher_bar": 5,
+          "launcher_beat": 24.652385711669922,
+          "launcher_absolute_pos": 984.6523857116699,
+          "music_bar": 4,
+          "music_beat": 137.05235290527344,
+          "music_absolute_pos": 905.0523529052734,
+          "before_music_pos": 0,
+          "float_bits": {
+            "execute_frame": "0x3f800000",
+            "current_bpm": "0x42c70000",
+            "basic_bpm": "0x42c70000",
+            "next_bpm": "0x42c70000",
+            "launcher_beat": "0x41c53816",
+            "music_beat": "0x43090d67",
+            "before_music_pos": "0x00000000"
+          }
+        },
+        "steps": [
+          {
+            "step_index": 0,
+            "total_steps": 5,
+            "cursor_bar": 4,
+            "cursor_beat": 137.05235290527344,
+            "cursor_beat_bits": "0x43090d67",
+            "cursor_bar_ticks": 768,
+            "step_bpm": 99.5,
+            "step_bpm_bits": "0x42c70000"
+          },
+          {
+            "step_index": 1,
+            "total_steps": 5,
+            "cursor_bar": 4,
+            "cursor_beat": 135.72569274902344,
+            "cursor_beat_bits": "0x4307b9c7",
+            "cursor_bar_ticks": 768,
+            "step_bpm": 99.5,
+            "step_bpm_bits": "0x42c70000"
+          },
+          {
+            "step_index": 2,
+            "total_steps": 5,
+            "cursor_bar": 4,
+            "cursor_beat": 134.39903259277344,
+            "cursor_beat_bits": "0x43066627",
+            "cursor_bar_ticks": 768,
+            "step_bpm": 99.5,
+            "step_bpm_bits": "0x42c70000"
+          },
+          {
+            "step_index": 3,
+            "total_steps": 5,
+            "cursor_bar": 4,
+            "cursor_beat": 133.07237243652344,
+            "cursor_beat_bits": "0x43051287",
+            "cursor_bar_ticks": 768,
+            "step_bpm": 99.5,
+            "step_bpm_bits": "0x42c70000"
+          },
+          {
+            "step_index": 4,
+            "total_steps": 5,
+            "cursor_bar": 4,
+            "cursor_beat": 131.74571228027344,
+            "cursor_beat_bits": "0x4303bee7",
+            "cursor_bar_ticks": 768,
+            "step_bpm": 99.5,
+            "step_bpm_bits": "0x42c70000"
+          },
+          {
+            "step_index": 5,
+            "total_steps": 5,
+            "cursor_bar": 4,
+            "cursor_beat": 130.41905212402344,
+            "cursor_beat_bits": "0x43026b47",
+            "cursor_bar_ticks": 768,
+            "step_bpm": null,
+            "step_bpm_bits": null
+          }
+        ],
+        "result": 898.4190673828125,
+        "result_bits": "0x44609ad2"
+      }
+    }
+  ]
+}

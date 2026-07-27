@@ -1,0 +1,100 @@
+{
+  "schema_version": 1,
+  "package_version": "10.1.4",
+  "package_version_code": "230",
+  "run_ids": [
+    "ikuoku-cc08-run-035-pause-during-setup",
+    "ikuoku-cc08-run-036-pause-during-resume"
+  ],
+  "same_process_pid": 31900,
+  "resident_bpm_object": "0x773547b0f0",
+  "setup": {
+    "frame_id": 1076,
+    "cc_num": 8,
+    "absolute_pos": 3072,
+    "bpm": 95.5
+  },
+  "pause": {
+    "frame_id": 1081,
+    "game_state": 7,
+    "active_bpm_count": 1,
+    "frozen_frame_ids_after_pause": [
+      1081
+    ],
+    "events_after_pause": {
+      "ingame_manager_exec_leave": 737,
+      "ingame_manager_exec_enter": 736,
+      "agent_heartbeat": 12,
+      "director_update_sample": 6
+    }
+  },
+  "resume": {
+    "attached_game_state": 7,
+    "attached_active_bpm_count": 1,
+    "events_before_resume_click": {
+      "hook_installed": 70,
+      "probe_installed": 3,
+      "agent_ready": 1,
+      "director_update_sample": 14,
+      "ingame_manager_exec_enter": 1190,
+      "ingame_manager_exec_leave": 1190,
+      "agent_heartbeat": 19,
+      "judge_adjust_enter": 1,
+      "judge_adjust_leave": 1
+    },
+    "finish_resume_pause_state": 2,
+    "first_frame_id": 1,
+    "committed_frame_id": 9,
+    "committed_bpm": 95.5,
+    "events_after_resume": {
+      "ingame_manager_exec_leave": 2365,
+      "ingame_manager_exec_enter": 2364,
+      "play_state_update_enter": 430,
+      "can_through_input_inspection_leave": 402,
+      "frame_enter": 402,
+      "adaptive_delta_input": 402,
+      "clock_substep_enter": 402,
+      "clock_substep_leave": 402,
+      "bpm_object_update_enter": 9,
+      "bpm_object_update_leave": 9,
+      "note_update_enter": 58,
+      "note_update_leave": 58,
+      "note_after_update_enter": 81,
+      "play_group_enter": 402,
+      "activate_batch_enter": 402,
+      "can_activate_note_leave": 52,
+      "activate_batch_leave": 402,
+      "play_group_leave": 402,
+      "frame_leave": 402,
+      "play_state_update_leave": 430,
+      "adaptive_bucket_increment": 193,
+      "adaptive_substep_decision": 193,
+      "bpm_object_commit_enter": 1,
+      "update_bpm_enter": 1,
+      "update_bpm_leave": 1,
+      "on_bpm_changed_enter": 1,
+      "on_bpm_changed_leave": 1,
+      "bpm_object_commit_leave": 1,
+      "note_change_state_enter": 9,
+      "judge_adjust_enter": 207,
+      "judge_adjust_leave": 207,
+      "agent_heartbeat": 46,
+      "note_deactivate_enter": 6,
+      "note_deactivate_leave": 6,
+      "activate_bpm_process_enter": 9,
+      "activate_bpm_process_leave": 9,
+      "activate_command_note_enter": 10,
+      "activate_command_note_leave": 10,
+      "activate_note_enter": 3,
+      "activate_note_leave": 3,
+      "director_update_sample": 20,
+      "pause_path_enter": 2,
+      "pause_path_leave": 2
+    }
+  },
+  "boundary": {
+    "split_capture": "The resume run attached to the same paused process and the same resident BPM object after the setup run's bounded capture ended.",
+    "continued_life": "The chart used the client's Continue flow because no-auto-live life depletion reached the CC08 setup frame. No process memory or return value was modified.",
+    "operator_input": "A repeated pause-button input was used after the Continue countdown to win the UI race at the setup frame; the pause and resume lifecycle are proven by original-client hooks, not inferred from the input command."
+  }
+}

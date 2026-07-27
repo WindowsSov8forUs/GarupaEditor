@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "application": {
+    "package": "jp.co.craftegg.band",
+    "version_name": "10.1.3",
+    "version_code": 229,
+    "region": "JP",
+    "channel": "Google Play"
+  },
+  "device": {
+    "serial": "FICIPZUGEIQC4P7H",
+    "model": "LineageOS GSI on ARM64",
+    "abi": "arm64-v8a",
+    "android": "13",
+    "sdk": 33,
+    "kernel": "Linux 4.14.186+ aarch64",
+    "cpu_part": "ARM Cortex-A55 compatible, implementer 0x41 part 0xd05",
+    "root": true,
+    "selinux": "Enforcing"
+  },
+  "apk_files": [
+    {
+      "name": "base.apk",
+      "bytes": 132355852,
+      "sha256": "083AB505EEFCFC025EED8D9D722797A93AEB0D09F182A41EBB32C94928D4CC2E"
+    },
+    {
+      "name": "split_config.arm64_v8a.apk",
+      "bytes": 47114476,
+      "sha256": "B9BC9DE42D63D88D958F15F306140592EA6BB093180338129A89C999439584D9"
+    }
+  ],
+  "binary_files": [
+    {
+      "name": "libil2cpp.so",
+      "bytes": 119819736,
+      "sha256": "66C9C666C50962B662DF8D894E851C7D18F07142DCA145CFAC3D30D063D1D9FA"
+    },
+    {
+      "name": "global-metadata.dat",
+      "bytes": 28185252,
+      "sha256": "B485E5BB999F491C4B5EC7850AD856122B6EAE51DD4FAA06C4063F3AFC7D87FE"
+    },
+    {
+      "name": "libunity.so",
+      "bytes": 25175544,
+      "sha256": "1936D77586CC3E3856006F8B44711667E22766721DA9BB50FE0AC81178C83378"
+    }
+  ],
+  "unity": {
+    "version": "2022.3.62f1",
+    "source": "locked extracted globalgamemanagers and existing sample manifest"
+  },
+  "il2cpp_metadata_version": {
+    "status": "unresolved",
+    "reason": "Not independently decoded by this runtime batch."
+  },
+  "runtime": {
+    "pid": 10520,
+    "libil2cpp_base_cc08": "0x738AEA8000",
+    "frida_client_server": "17.15.3",
+    "high_frequency_mode": false,
+    "requested_target_frame_rate": 60
+  },
+  "collection_guardrails": {
+    "patched_apk": false,
+    "wrote_process_memory": false,
+    "replaced_return_value": false,
+    "observation_hooks_only": true
+  }
+}
