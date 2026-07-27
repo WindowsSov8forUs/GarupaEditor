@@ -16,6 +16,7 @@
     "simulator:test:chart-command-data": "node src/simulator/testing/runChartCommandDataTests.mjs",
     "simulator:test:chart-finalize": "node src/simulator/testing/runChartFinalizeTests.mjs",
     "simulator:test:chart-production": "node src/simulator/testing/runChartProductionAcceptanceTests.mjs",
+    "simulator:test:clock-scheduling": "node src/simulator/testing/runClockSchedulingTests.mjs",
     "tauri": "tauri",
     "desktop:dev": "tauri dev",
     "desktop:build": "tauri build",

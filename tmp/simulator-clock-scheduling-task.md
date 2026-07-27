@@ -12,7 +12,7 @@
 - 排除的逆向仓库内容：未跟踪的 `.claude/`、`runtime/tools/` 及任何未进入锁定提交的文件
 - 锁定游戏样本：`jp.co.craftegg.band` 10.1.4（version code 230，`arm64-v8a`）；10.1.3/229 仅作独立历史样本和跨版本佐证，不与 10.1.4 trace 合并
 - 阶段目标：把已完成的原作形状 `NoteBatchInformationList` 接入模拟器运行时，恢复原作托管层的帧率请求、双音乐时钟、BPM command、判定偏移、自适应子步、两阶段 Note 调度和暂停冻结语义。
-- 阶段状态：S01 静态证据冻结已完成；Reverse 运行 oracle 已同步至 `2ba3bdbbab9be2de6fedb9b22f623bd80611c023`。runs 081/083/086/087 已闭合低 bucket `101/21` 动态回退边界，连同既有 `6` 边界使 S02 硬门关闭；HABAHIRO 实体样本与 30 槽 BPM 池回绕继续作为只读捕捉不可得的非阻断保真度例外。
+- 阶段状态：**S01–S10 已全部完成，时钟与调度阶段关闭，可开启下一阶段 Auto Live**。Reverse 最终运行 oracle 锁定至 `2ba3bdbbab9be2de6fedb9b22f623bd80611c023`；HABAHIRO 实体样本与 30 槽 BPM 池回绕继续作为只读捕捉不可得的非阻断保真度例外。
 
 本阶段继续维持 GarupaEditor 当前 TypeScript 技术栈，不因 Reverse 中的 Python 验证模型改变运行技术栈。Reverse 是唯一行为依据；旧 GarupaEditor 模拟器、通用节奏游戏实现、浏览器计时经验和方便实现的默认值均不得作为原作行为来源。
 
@@ -39,7 +39,7 @@
 | S07 恢复判定偏移时钟 | 已完成 | `[-5,5]` 整数 offset 按 1/60 秒逐步计算；Fast 重查 tempo，Slow 保留调用点 BPM |
 | S08 恢复自适应子步 | 已完成 | 进程累积门、四计数器、严格阈值、修订后的 `counter[1]/[2]/[3]` 回退和双量守恒已恢复 |
 | S09 恢复两阶段调度与列表突变 | 已完成 | BPM-before-Note、反向实时 Update、survivor AfterUpdate、单组激活和下一子步 Count 已恢复 |
-| S10 建立生产 oracle 与阶段验收 | 可开始 | 零变化生产回归、非零 BPM 实体轨迹、60/120、偏移、暂停和失败关闭全部通过 |
+| S10 建立生产 oracle 与阶段验收 | 已完成 | 普通/HABAHIRO 生产构造、CC03/CC08 实体源投影、60/120、偏移、暂停、自适应、调度、失败关闭和全部隔离回归通过；见验收记录 |
 
 ### 1.3 批次记录
 
@@ -93,6 +93,16 @@
 - 自适应门改用进程累积 count，并修正为 `counter[1] > 100`、`counter[2] > 20`、`counter[3] > 5`；`counter[0]` 只记录。
 - 两阶段调度保持时钟→BPM 正序→Note 实时反序→survivor AfterUpdate→一个批次；生产 Note 具体行为继续 `evidence-required`。
 - 隔离类型检查、第一切片回归和新时钟调度验收入口已通过；S10 将运行全部规定回归并形成独立验收记录。
+
+#### 2026-07-27 第六批：S10 阶段验收
+
+- 新增 `simulator:test:clock-scheduling` 独立入口，直接消费 F01/F03 生产 BMS 与最终 R01 中 CC03/CC08 原作实际消费源，并验证初始化、Float32 单步、BPM 生命周期、offset、帧率请求、进程累积门和失败关闭。
+- 普通零变化谱面以 220/`"220"` 初始化，HABAHIRO 静态生产谱面以 180/`"180"` 初始化；两者无 change command，冷进程单步门和计数器冻结通过。
+- CC03 85→140 与 CC08 99.5→95.5 的命令位置、原字符串、launcher 预告、池游标、驻留、提交、inactive 和同步移除通过。
+- 实体 trace 中 frame 2267 的 Float32 子步从 109.47891998291016 精确推进到 110.79721069335938；Fast +5 跨 CC08 后切换 tempo，Slow -5 借位时保持 95.5。
+- 全部规定隔离验证通过：模拟器 TypeScript、第一切片 17 项、谱面构造全部系列、生产谱面验收和时钟调度 15 组。
+- 证据工作树与 Git index 校验在 S02 最终批已通过；本批未运行 Vite/Tauri 或 GarupaEditor 整体构建。
+- 验收记录：`tmp/simulator-clock-scheduling-acceptance.md`。下一阶段只允许按整体计划进入 Auto Live，不得提前接入主程序、输入、渲染或音频。
 
 ## 2. 固定范围
 
