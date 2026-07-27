@@ -296,15 +296,15 @@ Reverse `2ba3bdbbab9be2de6fedb9b22f623bd80611c023` 已提交并由 R01 完整冻
 
 ### 6.4 最终关闭的低 bucket 回退边界
 
-- runs 081/083 两次独立确认  20→21 时，候选 3 子步在同帧回退为 1 子步。
-- runs 086/087 两次独立确认  100→101 时，候选 2 子步在同帧回退为 1 子步。
-- 连同既有 pass-2 runs 的  5→6 回退， 三个动态边界全部闭合。
+- runs 081/083 两次独立确认 `counter[2]` 20→21 时，候选 3 子步在同帧回退为 1 子步。
+- runs 086/087 两次独立确认 `counter[1]` 100→101 时，候选 2 子步在同帧回退为 1 子步。
+- 连同既有 pass-2 runs 的 `counter[3]` 5→6 回退，`101/21/6` 三个动态边界全部闭合。
 - 控制条件、metadata 与 guardrail 均进入最终提交；采集没有替换返回值或直接写进程内存。
 
 ### 6.5 S02 关闭结论
 
-- Reverse  为 、，离线校验器输出 。
-- GarupaEditor 冻结 122 个 runtime-oracle 文件（ 121 行）及最终 handoff；源提交、冻结副本与 Git 索引由  校验。
+- Reverse `closure.json` 为 `s02_gate = closed`、`blocking_findings = []`，离线校验器输出 `S02 closed with explicit non-blocking fidelity boundaries`。
+- GarupaEditor 冻结 122 个 runtime-oracle 文件（`SHA256SUMS` 121 行）及最终 handoff；源提交、冻结副本与 Git 索引由 `verify.mjs` 校验。
 - 第 6.3 节两项只读不可得边界不参与门控，实施与验收不得宣称百分百还原。
 - S03–S10 已解除前置阻断。
 
