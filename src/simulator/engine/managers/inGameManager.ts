@@ -61,6 +61,13 @@ export class InGameManager {
   }
 
   execUpdate(deltaTimeSeconds: number): SimulatorResult<void> {
+    if (this.lifecycleState !== "initialized") {
+      return evidenceRequired(
+        "ingame.update-outside-initialized-lifecycle",
+        [],
+        "InGameManager.ExecUpdate is only represented after initialization and before disposal.",
+      );
+    }
     if (this.currentGameStateValue === GameState.PauseNone) {
       return ok(undefined);
     }
@@ -90,6 +97,13 @@ export class InGameManager {
   }
 
   pause(): SimulatorResult<void> {
+    if (this.lifecycleState !== "initialized") {
+      return evidenceRequired(
+        "ingame.pause-outside-initialized-lifecycle",
+        [],
+        "The recovered scheduling freeze is only represented for an initialized live.",
+      );
+    }
     if (this.isPaused()) {
       return ok(undefined);
     }
@@ -99,6 +113,13 @@ export class InGameManager {
   }
 
   resume(): SimulatorResult<void> {
+    if (this.lifecycleState !== "initialized") {
+      return evidenceRequired(
+        "ingame.resume-outside-initialized-lifecycle",
+        [],
+        "The recovered resume path is only represented for an initialized live.",
+      );
+    }
     if (!this.isPaused()) {
       return ok(undefined);
     }
@@ -108,6 +129,9 @@ export class InGameManager {
   }
 
   dispose(): SimulatorResult<void> {
+    if (this.lifecycleState === "disposed") {
+      return ok(undefined);
+    }
     this.lifecycleState = "disposed";
     this.currentGameStateValue = GameState.PlayingSound;
     this.pauseStateValue = PauseState.None;

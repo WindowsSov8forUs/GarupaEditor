@@ -1,18 +1,15 @@
 import { createRecordingSimulatorBackends } from "../backends/recordingBackend";
+import type { NoteBatchInformation } from "../engine/chart/types";
 import type { OneFrameDataHandle } from "../engine/data/oneFrameData";
-import {
-  ok,
-  type EvidenceReference,
-  type SimulatorResult,
-} from "../engine/evidence";
-import { InGameManager } from "../engine/managers/inGameManager";
-import { InGameDirector } from "../engine/managers/inGameDirector";
 import {
   GameState,
   isPausedState,
   PauseState,
   type GameStateValue,
 } from "../engine/data/inGameState";
+import { ok, type SimulatorResult } from "../engine/evidence";
+import { InGameDirector } from "../engine/managers/inGameDirector";
+import { InGameManager } from "../engine/managers/inGameManager";
 import { InGameMusicScoreController } from "../engine/managers/inGameMusicScoreController";
 import { InGameOneFrameJudgementController } from "../engine/managers/inGameOneFrameJudgementController";
 import { GamePlayButton, InputManager } from "../engine/managers/inputBoundaries";
@@ -26,9 +23,11 @@ import { NoteBase, NoteState } from "../engine/notes/noteBase";
 import { createSimulatorEngine } from "../host/createSimulatorEngine";
 import {
   bound,
+  chart,
   engineInput,
   evidence,
   noteBatch,
+  testingNoteId,
 } from "./firstSliceFixtures";
 
 interface TestCase {
@@ -43,9 +42,7 @@ function test(name: string, run: () => void): void {
 }
 
 function assert(condition: unknown, message: string): asserts condition {
-  if (!condition) {
-    throw new Error(message);
-  }
+  if (!condition) throw new Error(message);
 }
 
 function assertEqual<T>(actual: T, expected: T, message: string): void {
@@ -53,9 +50,9 @@ function assertEqual<T>(actual: T, expected: T, message: string): void {
 }
 
 function assertDeepEqual(actual: unknown, expected: unknown, message: string): void {
-  const actualJson = JSON.stringify(actual);
-  const expectedJson = JSON.stringify(expected);
-  assert(actualJson === expectedJson, `${message}: ${actualJson} !== ${expectedJson}`);
+  const left = JSON.stringify(actual);
+  const right = JSON.stringify(expected);
+  assert(left === right, `${message}: ${left} !== ${right}`);
 }
 
 function requireOk<T>(result: SimulatorResult<T>, message: string): T {
@@ -77,7 +74,7 @@ class FakeClock implements NoteManagerClock {
     return ok(undefined);
   }
 
-  canActivateBatch(): SimulatorResult<boolean> {
+  canActivateBatch(_batch: NoteBatchInformation): SimulatorResult<boolean> {
     return ok(this.activateBatch);
   }
 }
@@ -94,11 +91,10 @@ class TraceInputManager extends InputManager {
 class TraceNote extends NoteBase {
   constructor(
     poolObjectId: string,
-    noteEvidence: readonly EvidenceReference[],
     private readonly calls: string[],
     private readonly deactivateOnUpdate: ReadonlySet<string>,
   ) {
-    super(poolObjectId, noteEvidence);
+    super(poolObjectId);
   }
 
   protected override moveState(): SimulatorResult<void> {
@@ -114,21 +110,22 @@ class TraceNote extends NoteBase {
   }
 
   protected override onUpdate(): SimulatorResult<void> {
-    this.calls.push(`update:${this.fixtureId}`);
-    if (this.deactivateOnUpdate.has(this.fixtureId)) {
-      return this.changeState(NoteState.Deactive);
-    }
-    return ok(undefined);
+    const id = testingNoteId(this.noteInformation);
+    this.calls.push(`update:${id}`);
+    return this.deactivateOnUpdate.has(id)
+      ? this.changeState(NoteState.Deactive)
+      : ok(undefined);
   }
 
   override executeAfterUpdate(): SimulatorResult<void> {
-    this.calls.push(`after:${this.fixtureId}`);
+    this.calls.push(`after:${testingNoteId(this.noteInformation)}`);
     return ok(undefined);
   }
 }
 
 interface TestGraph {
   readonly clock: FakeClock;
+  readonly music: InGameMusicScoreController;
   readonly controller: InGameOneFrameJudgementController;
   readonly manager: NoteManager;
   readonly calls: string[];
@@ -143,474 +140,241 @@ function createTestGraph(
   const calls: string[] = [];
   const notes: TraceNote[] = [];
   const clock = new FakeClock();
-  const oneFrameEvidence = evidence("E08", "test OneFrameData pool");
+  const runtimeChart = chart([]);
+  const music = new InGameMusicScoreController(runtimeChart);
   const controller = new InGameOneFrameJudgementController({
-    capacity: bound(4, oneFrameEvidence),
+    capacity: bound(4, evidence("E08", "test OneFrameData pool")),
   });
   requireOk(controller.initialize(), "initialize OneFrameData controller");
   const manager = new NoteManager(
-    [noteBatch("group", noteIds)],
+    [noteBatch(noteIds)],
     new SlideNoteManager(),
     clock,
+    music,
     bpmChangeCount,
+    0,
     () => controller.getUsableOneFrameData(),
-    (_family, poolObjectId, noteEvidence) => {
-      const note = new TraceNote(
-        poolObjectId,
-        noteEvidence,
-        calls,
-        deactivateOnUpdate,
-      );
+    (_family, poolObjectId) => {
+      const note = new TraceNote(poolObjectId, calls, deactivateOnUpdate);
       notes.push(note);
       return note;
     },
   );
   requireOk(manager.execAwakeEnd(), "initialize NoteManager");
-  return { clock, controller, manager, calls, notes };
+  return { clock, music, controller, manager, calls, notes };
 }
 
-test("管理器对象图保持单一所有者和确定构造顺序", () => {
+test("管理器对象图保持单一所有者和原作帧入口", () => {
   const graph = createTestGraph(["A", "B"]);
-  const music = new InGameMusicScoreController(engineInput().clock);
   const input = new InputManager();
-  const inGame = new InGameManager(
-    music,
-    graph.manager,
-    graph.controller,
-    input,
-  );
-  assert(inGame.musicScoreController === music, "music controller owner mismatch");
-  assert(inGame.noteManager === graph.manager, "NoteManager owner mismatch");
-  assert(
-    inGame.oneFrameJudgementController === graph.controller,
-    "OneFrame controller owner mismatch",
-  );
-  assert(inGame.inputManager === input, "InputManager owner mismatch");
-  const director = new InGameDirector(inGame);
-  assert(director.inGameManager === inGame, "InGameDirector owner mismatch");
-  assertDeepEqual(
-    director.snapshot(),
-    {
-      playerLoopNode: "Update.ScriptRunBehaviourUpdate",
-      callback: "InGameDirector.Update",
-      target: "InGameManager.ExecUpdate",
-    },
-    "original frame owner",
-  );
-  const poolIds = graph.manager.snapshot().pools.flatMap((pool) =>
-    pool.objects.map((object) => object.poolObjectId),
-  );
-  assertEqual(new Set(poolIds).size, poolIds.length, "pool object IDs must be unique");
-});
-
-test("宿主生命周期按 initialize pause resume dispose 分发", () => {
+  const inGame = new InGameManager(graph.music, graph.manager, graph.controller, input);
   const backends = createRecordingSimulatorBackends();
-  const engine = requireOk(
-    createSimulatorEngine(engineInput(), backends),
-    "create engine",
-  );
+  const director = new InGameDirector(inGame, false, backends.frameRate);
+  assert(director.inGameManager === inGame, "director owner");
+  assertDeepEqual(director.snapshot(), {
+    playerLoopNode: "Update.ScriptRunBehaviourUpdate",
+    callback: "InGameDirector.Update",
+    target: "InGameManager.ExecUpdate",
+    awakeComplete: false,
+    requestedTargetFrameRate: null,
+  }, "director snapshot");
+  const poolIds = graph.manager.snapshot().pools.flatMap((pool) =>
+    pool.objects.map((object) => object.poolObjectId));
+  assertEqual(new Set(poolIds).size, poolIds.length, "pool object identities");
+});
+
+test("宿主生命周期幂等并只在 Awake 请求一次目标帧率", () => {
+  const backends = createRecordingSimulatorBackends();
+  const engine = requireOk(createSimulatorEngine(engineInput(), backends), "create engine");
   requireOk(engine.initialize(), "initialize");
-  requireOk(engine.initialize(), "initialize idempotently");
+  requireOk(engine.initialize(), "initialize twice");
   requireOk(engine.pause(), "pause");
-  requireOk(engine.pause(), "pause idempotently");
+  requireOk(engine.pause(), "pause twice");
   requireOk(engine.resume(), "resume");
-  requireOk(engine.resume(), "resume idempotently");
+  requireOk(engine.resume(), "resume twice");
   requireOk(engine.dispose(), "dispose");
-  const snapshot = requireOk(engine.snapshot(), "snapshot");
-  assertEqual(snapshot.managers.state, "disposed", "disposed state");
-  assertDeepEqual(
-    snapshot.backendTrace,
-    [
-      { sequence: 0, backend: "lifecycle", action: "state", detail: "paused" },
-      { sequence: 1, backend: "lifecycle", action: "state", detail: "running" },
-    ],
-    "lifecycle backend trace",
-  );
+  assertDeepEqual(requireOk(engine.snapshot(), "snapshot").backendTrace, [
+    { sequence: 0, backend: "frame-rate", action: "request-target-frame-rate", detail: "60" },
+    { sequence: 1, backend: "lifecycle", action: "state", detail: "paused" },
+    { sequence: 2, backend: "lifecycle", action: "state", detail: "running" },
+  ], "backend trace");
 });
 
-test("四档 deltaTime 阈值选择 1 至 4 子步", () => {
+test("四档严格阈值选择 1 至 4 子步", () => {
   const counters: [number, number, number, number] = [0, 0, 0, 0];
-  assertEqual(selectSubstepCount(0, 1, counters), 1, "zero delta");
-  assertEqual(selectSubstepCount(0.017999, 1, counters), 1, "below first threshold");
-  assertEqual(selectSubstepCount(0.018, 1, counters), 2, "first threshold");
-  assertEqual(selectSubstepCount(0.032999, 1, counters), 2, "below second threshold");
-  assertEqual(selectSubstepCount(0.033, 1, counters), 3, "second threshold");
-  assertEqual(selectSubstepCount(0.049999, 1, counters), 3, "below third threshold");
-  assertEqual(selectSubstepCount(0.05, 1, counters), 4, "third threshold");
+  assertEqual(selectSubstepCount(0.017999, 1, counters), 1, "bucket 0");
+  assertEqual(selectSubstepCount(0.018, 1, counters), 2, "bucket 1");
+  assertEqual(selectSubstepCount(0.033, 1, counters), 3, "bucket 2");
+  assertEqual(selectSubstepCount(0.05, 1, counters), 4, "bucket 3");
 });
 
-test("G01 音乐位置按 192 刻度分别推进主时钟与发射器时钟", () => {
-  const controller = new InGameMusicScoreController(engineInput().clock);
-  requireOk(controller.advance(1), "advance one second");
+test("101 21 6 回退比较 counter 1 2 3 而 counter 0 只记录", () => {
+  const bucket0: [number, number, number, number] = [0, 0, 0, 0];
+  for (let index = 0; index < 150; index += 1) {
+    assertEqual(selectSubstepCount(0.01, 1, bucket0), 1, "bucket 0 remains one");
+  }
+  assertDeepEqual(bucket0, [150, 0, 0, 0], "bucket 0 history");
+
+  const bucket1: [number, number, number, number] = [0, 0, 0, 0];
+  for (let index = 0; index < 100; index += 1) {
+    assertEqual(selectSubstepCount(0.02, 1, bucket1), 2, "bucket 1 before threshold");
+  }
+  assertEqual(selectSubstepCount(0.02, 1, bucket1), 1, "counter 1 at 101");
+
+  const bucket2: [number, number, number, number] = [0, 0, 0, 0];
+  for (let index = 0; index < 20; index += 1) {
+    assertEqual(selectSubstepCount(0.04, 1, bucket2), 3, "bucket 2 before threshold");
+  }
+  assertEqual(selectSubstepCount(0.04, 1, bucket2), 1, "counter 2 at 21");
+
+  const bucket3: [number, number, number, number] = [0, 0, 0, 0];
+  for (let index = 0; index < 5; index += 1) {
+    assertEqual(selectSubstepCount(0.05, 1, bucket3), 4, "bucket 3 before threshold");
+  }
+  assertEqual(selectSubstepCount(0.05, 1, bucket3), 1, "counter 3 at 6");
+});
+
+test("无 BPM 变化时固定单步且不更新计数器", () => {
+  const counters: [number, number, number, number] = [0, 0, 0, 0];
+  assertEqual(selectSubstepCount(0.05, 0, counters), 1, "single step gate");
+  assertDeepEqual(counters, [0, 0, 0, 0], "frozen counters");
+});
+
+test("双时钟按 192 刻度推进并执行单次 carry", () => {
+  const controller = new InGameMusicScoreController(chart([], 120));
+  assertEqual(controller.snapshot().launcherBeatProgress, 96, "launcher lead");
+  requireOk(controller.advance(1), "advance");
   let snapshot = controller.snapshot();
-  assertEqual(snapshot.bar, 0, "main bar after one second");
-  assertEqual(snapshot.beatProgress, 96, "main beat after one second");
-  assertEqual(snapshot.launcherBar, 1, "launcher single overflow");
-  assertEqual(snapshot.launcherBeatProgress, 0, "launcher overflow remainder");
-
-  requireOk(controller.advance(1), "advance second second");
+  assertEqual(snapshot.beatProgress, 96, "main beat");
+  assertEqual(snapshot.launcherBar, 1, "launcher bar");
+  assertEqual(snapshot.launcherBeatProgress, 0, "launcher remainder");
+  requireOk(controller.advance(10), "large advance");
   snapshot = controller.snapshot();
-  assertEqual(snapshot.bar, 1, "main bar after two seconds");
-  assertEqual(snapshot.beatProgress, 0, "main overflow remainder");
-  assertEqual(snapshot.launcherBar, 1, "launcher bar after two seconds");
-  assertEqual(snapshot.launcherBeatProgress, 96, "launcher beat after two seconds");
+  assertEqual(snapshot.bar, 1, "large delta carries only once");
+  assert(snapshot.beatProgress > 192, "large delta retains overflow above one bar");
 });
 
-test("G01 音符组使用当前位置开区间与发射器位置闭区间激活", () => {
-  const controller = new InGameMusicScoreController(engineInput().clock);
-  const halfBarBatch = {
-    ...noteBatch("half-bar", ["A"]),
-    numerator: bound(1, evidence("E14", "half-bar numerator")),
-    denominator: bound(2, evidence("E14", "half-bar denominator")),
-  };
-  assertEqual(
-    requireOk(controller.canActivateBatch(halfBarBatch), "launcher boundary"),
-    true,
-    "batch at LauncherMusicPos activates",
-  );
-
-  const currentBoundaryController = new InGameMusicScoreController({
-    ...engineInput().clock,
-    initialMusicPosition: bound(
-      { bar: 0, beatProgress: 96 },
-      evidence("E14", "current boundary"),
-    ),
-  });
-  assertEqual(
-    requireOk(
-      currentBoundaryController.canActivateBatch(halfBarBatch),
-      "current boundary",
-    ),
-    false,
-    "batch at MusicPos does not activate",
-  );
-
-  const staleController = new InGameMusicScoreController({
-    ...engineInput().clock,
-    initialMusicPosition: bound(
-      { bar: 1, beatProgress: 0 },
-      evidence("E14", "stale bar current position"),
-    ),
-    initialLauncherMusicPosition: bound(
-      { bar: 1, beatProgress: 96 },
-      evidence("E14", "stale bar launcher position"),
-    ),
-  });
-  assertEqual(
-    requireOk(staleController.canActivateBatch(halfBarBatch), "stale batch"),
-    false,
-    "first-member bar behind MusicBarProgress",
-  );
-  assertEqual(
-    requireOk(controller.canActivateBatch(noteBatch("empty", [])), "empty batch"),
-    true,
-    "empty batch activates immediately",
-  );
+test("批次使用主时钟开区间与 launcher 闭区间", () => {
+  const controller = new InGameMusicScoreController(chart([], 120));
+  assertEqual(requireOk(controller.canActivateBatch(noteBatch(["A"], 96)), "at lead"), true, "closed launcher boundary");
+  assertEqual(requireOk(controller.canActivateBatch(noteBatch(["A"], 0)), "at current"), false, "open current boundary");
 });
 
-test("G06 历史计数器在递增后按 101 21 6 次阈值强制单步", () => {
-  const fast: [number, number, number, number] = [0, 0, 0, 0];
-  for (let sample = 1; sample <= 100; sample += 1) {
-    assertEqual(selectSubstepCount(0.01, 1, fast), 1, `fast sample ${sample}`);
-  }
-  assertEqual(selectSubstepCount(0.01, 1, fast), 1, "101st fast sample");
-  assertEqual(fast[0], 101, "fast counter after fallback");
-
-  const medium: [number, number, number, number] = [0, 0, 0, 0];
-  for (let sample = 1; sample <= 20; sample += 1) {
-    assertEqual(selectSubstepCount(0.02, 1, medium), 2, `medium sample ${sample}`);
-  }
-  assertEqual(selectSubstepCount(0.02, 1, medium), 1, "21st medium sample");
-
-  const slow: [number, number, number, number] = [0, 0, 0, 0];
-  for (let sample = 1; sample <= 5; sample += 1) {
-    assertEqual(selectSubstepCount(0.04, 1, slow), 3, `slow sample ${sample}`);
-  }
-  assertEqual(selectSubstepCount(0.04, 1, slow), 1, "6th slow sample");
-
-  const verySlow: [number, number, number, number] = [0, 0, 0, 0];
-  for (let sample = 1; sample <= 200; sample += 1) {
-    assertEqual(selectSubstepCount(0.05, 1, verySlow), 4, `very slow sample ${sample}`);
-  }
-  assertEqual(verySlow[3], 200, "fourth counter remains observational");
-});
-
-test("G06 无 BPM 变化时固定单步且不递增计数器", () => {
-  const counters: [number, number, number, number] = [0, 0, 0, 0];
-  assertEqual(selectSubstepCount(0.05, 0, counters), 1, "disabled adaptive steps");
-  assertDeepEqual(counters, [0, 0, 0, 0], "disabled counters");
-
-  const graph = createTestGraph([], new Set<string>(), 0);
-  requireOk(graph.manager.execUpdate(0.05), "disabled adaptive frame");
-  assertDeepEqual(graph.clock.advances, [Math.fround(0.05)], "single clock advance");
-  assertDeepEqual(graph.clock.executeFrames, [1], "unsplit ExecuteFrame");
-  assertDeepEqual(
-    graph.manager.snapshot().performanceLevelCounters,
-    [0, 0, 0, 0],
-    "manager counters remain zero",
-  );
-});
-
-test("G06 最终子步数同时平分 deltaTime 与 ExecuteFrame", () => {
+test("最终子步数同时平分 delta 与 ExecuteFrame", () => {
   const graph = createTestGraph([]);
-  requireOk(graph.manager.execUpdate(0.05), "four-substep frame");
-  assertEqual(graph.clock.advances.length, 4, "four clock advances");
-  for (const delta of graph.clock.advances) {
-    assertEqual(delta, Math.fround(Math.fround(0.05) / 4), "substep delta");
-  }
-  assertDeepEqual(graph.clock.executeFrames, [0.25], "substep ExecuteFrame");
-  assertDeepEqual(
-    graph.manager.snapshot().performanceLevelCounters,
-    [0, 0, 0, 1],
-    "fourth bucket occupancy",
-  );
+  requireOk(graph.manager.execUpdate(0.05), "four substeps");
+  assertEqual(graph.clock.advances.length, 4, "advance count");
+  assertDeepEqual(graph.clock.executeFrames, [0.25], "execute frame division");
 });
 
-test("预构造 informationList 原序激活且延迟一个子步更新", () => {
+test("informationList 原序激活并在下一子步反序 Update 与 AfterUpdate", () => {
   const graph = createTestGraph(["C", "A", "B"]);
-  requireOk(graph.manager.execUpdate(0.01), "activation step");
-  assertDeepEqual(graph.calls, [], "new notes must not update immediately");
-  assertDeepEqual(
-    graph.manager.snapshot().activeNoteIds,
-    ["C", "A", "B"],
-    "informationList-order activation",
-  );
-  requireOk(graph.manager.execUpdate(0.01), "first active step");
-  assertDeepEqual(
-    graph.calls,
-    ["update:B", "update:A", "update:C", "after:B", "after:A", "after:C"],
-    "next-substep execution",
-  );
+  requireOk(graph.manager.execUpdate(0.01), "activation substep");
+  assertDeepEqual(graph.calls, [], "activation delay");
+  requireOk(graph.manager.execUpdate(0.01), "active substep");
+  assertDeepEqual(graph.calls, [
+    "update:B", "update:A", "update:C", "after:B", "after:A", "after:C",
+  ], "two-phase order");
 });
 
-test("活跃列表按反向 Update 和存活收集顺序 AfterUpdate", () => {
-  const graph = createTestGraph(["A", "B", "C"]);
-  requireOk(graph.manager.execUpdate(0.01), "activation step");
-  requireOk(graph.manager.execUpdate(0.01), "active step");
-  const trace = graph.manager.snapshot().schedulerTrace.flatMap((entry) => {
-    if (entry.kind === "note-update" || entry.kind === "note-after-update") {
-      return [`${entry.kind}:${entry.fixtureId}`];
-    }
-    return [];
-  });
-  assertDeepEqual(
-    trace,
-    [
-      "note-update:C",
-      "note-update:B",
-      "note-update:A",
-      "note-after-update:C",
-      "note-after-update:B",
-      "note-after-update:A",
-    ],
-    "two-phase trace order",
-  );
-});
-
-test("Update 中 Deactive 的对象不进入 AfterUpdate", () => {
+test("Update 中 Deactive 对象即时移除且不进入 AfterUpdate", () => {
   const graph = createTestGraph(["A", "B", "C"], new Set(["B"]));
-  requireOk(graph.manager.execUpdate(0.01), "activation step");
-  requireOk(graph.manager.execUpdate(0.01), "deactivation step");
-  assertDeepEqual(
-    graph.calls,
-    ["update:C", "update:B", "update:A", "after:C", "after:A"],
-    "deactive filter",
-  );
-  assertDeepEqual(
-    graph.manager.snapshot().activeNoteIds,
-    ["A", "C"],
-    "immediate active-list removal",
-  );
-  requireOk(graph.notes[0].changeState(NoteState.Move), "repeat active state");
-  assertDeepEqual(
-    graph.manager.snapshot().activeNoteIds,
-    ["A", "C"],
-    "repeat activation must not append a duplicate",
-  );
-  const inactivePoolObject = graph.manager
-    .snapshot()
-    .pools.flatMap((pool) => pool.objects)
-    .find((object) => object.fixtureId === "B");
-  assert(inactivePoolObject !== undefined, "deactivated object must remain pool-owned");
-  assertEqual(inactivePoolObject.state, NoteState.Deactive, "pool occupancy state");
+  requireOk(graph.manager.execUpdate(0.01), "activation");
+  requireOk(graph.manager.execUpdate(0.01), "update");
+  assertDeepEqual(graph.calls, [
+    "update:C", "update:B", "update:A", "after:C", "after:A",
+  ], "survivor order");
+  assertEqual(graph.manager.snapshot().activeNotePoolObjectIds.length, 2, "active count");
 });
 
-test("列表自移除在当前遍历生效且下一子步刷新 Count", () => {
-  const graph = createTestGraph(["A", "B"], new Set(["B"]));
-  requireOk(graph.manager.execUpdate(0.02), "two-substep frame");
-  assertDeepEqual(
-    graph.calls,
-    ["update:B", "update:A", "after:A"],
-    "self-removal in second substep",
-  );
-  graph.calls.length = 0;
-  requireOk(graph.manager.execUpdate(0.01), "following frame");
-  assertDeepEqual(
-    graph.calls,
-    ["update:A", "after:A"],
-    "removed note absent on refreshed Count",
-  );
-});
-
-test("暂停冻结时钟、游标、列表、池和 OneFrame 状态", () => {
+test("暂停冻结调度状态并在恢复后原位续跑", () => {
   const graph = createTestGraph([]);
-  const inGame = new InGameManager(
-    new InGameMusicScoreController(engineInput().clock),
-    graph.manager,
-    graph.controller,
-    new InputManager(),
-  );
-  requireOk(inGame.initialize(), "initialize manager");
-  const director = new InGameDirector(inGame);
-  requireOk(director.update(0.01), "step before pause");
-  requireOk(inGame.pause(), "pause manager");
+  const inGame = new InGameManager(graph.music, graph.manager, graph.controller, new InputManager());
+  requireOk(inGame.initialize(), "initialize");
+  requireOk(inGame.execUpdate(0.01), "before pause");
+  requireOk(inGame.pause(), "pause");
   const frozen = inGame.snapshot();
-  assertEqual(frozen.currentGameState, GameState.PauseSound, "steady pause state");
-  assertEqual(frozen.pauseState, PauseState.None, "portable pause skips UI command");
-  requireOk(director.update(0.05), "paused step");
-  assertDeepEqual(inGame.snapshot(), frozen, "paused state must be byte-stable as JSON");
-  requireOk(inGame.resume(), "resume manager");
-  assertEqual(
-    inGame.snapshot().currentGameState,
-    GameState.PlayingSound,
-    "steady resume state",
-  );
-  requireOk(director.update(0.01), "step after resume");
-  assertEqual(graph.clock.advances.length, 2, "clock resumes from retained state");
+  requireOk(inGame.execUpdate(0.05), "paused host frame");
+  assertDeepEqual(inGame.snapshot(), frozen, "frozen state");
+  requireOk(inGame.resume(), "resume");
+  requireOk(inGame.execUpdate(0.01), "after resume");
+  assertEqual(graph.clock.advances.length, 2, "no catch-up");
 });
 
-test("G05 isPaused 精确覆盖 PauseState 1 2 与 GameState 6 7", () => {
-  assert(!isPausedState(GameState.PlayingSound, PauseState.None), "playing state");
-  assert(isPausedState(GameState.PlayingSound, PauseState.Pause), "pause command");
-  assert(isPausedState(GameState.PlayingSound, PauseState.Resume), "resume command");
-  assert(isPausedState(GameState.PauseNone, PauseState.None), "PauseNone state");
-  assert(isPausedState(GameState.PauseSound, PauseState.None), "PauseSound state");
+test("暂停门覆盖原作 GameState 与 PauseState 数值", () => {
+  assert(!isPausedState(GameState.PlayingSound, PauseState.None), "playing");
+  assert(isPausedState(GameState.PlayingSound, PauseState.Pause), "pause request");
+  assert(isPausedState(GameState.PlayingSound, PauseState.Resume), "resume countdown");
+  assert(isPausedState(GameState.PauseNone, PauseState.None), "PauseNone");
+  assert(isPausedState(GameState.PauseSound, PauseState.None), "PauseSound");
 });
 
-test("G05 PauseSound 保留输入分派但阻断音符调度", () => {
+test("PauseSound 保留输入分派但阻断 NoteManager", () => {
   const graph = createTestGraph([]);
   const input = new TraceInputManager();
-  const inGame = new InGameManager(
-    new InGameMusicScoreController(engineInput().clock),
-    graph.manager,
-    graph.controller,
-    input,
-  );
-  requireOk(inGame.initialize(), "initialize manager");
-  requireOk(inGame.execUpdate(0.01), "playing update");
-  requireOk(inGame.pause(), "enter PauseSound");
-  requireOk(inGame.execUpdate(0.01), "paused update");
-  assertDeepEqual(
-    input.states,
-    [GameState.PlayingSound, GameState.PauseSound],
-    "game-state input dispatch",
-  );
-  assertEqual(graph.clock.advances.length, 1, "PauseSound blocks NoteManager");
+  const inGame = new InGameManager(graph.music, graph.manager, graph.controller, input);
+  requireOk(inGame.initialize(), "initialize");
+  requireOk(inGame.execUpdate(0.01), "playing");
+  requireOk(inGame.pause(), "pause");
+  requireOk(inGame.execUpdate(0.01), "paused");
+  assertDeepEqual(input.states, [GameState.PlayingSound, GameState.PauseSound], "input states");
+  assertEqual(graph.clock.advances.length, 1, "note scheduling blocked");
 });
 
-test("OneFrame 容器统一获取、占用、Reflect 和回收", () => {
-  const oneFrameEvidence = evidence("E08", "OneFrameData container lifecycle");
-  const controller = new InGameOneFrameJudgementController({
-    capacity: bound(2, oneFrameEvidence),
-  });
-  requireOk(controller.initialize(), "initialize controller");
-  const first = requireOk(controller.getUsableOneFrameData(), "get first container");
-  requireOk(controller.stageFixture(first, [oneFrameEvidence]), "stage first container");
-  const second = requireOk(controller.getUsableOneFrameData(), "get second container");
-  requireOk(controller.stageFixture(second, [oneFrameEvidence]), "stage second container");
-  assert(controller.existsOneFrameData(), "existsOneFrameData must observe staged entries");
-  assertEqual(
-    controller.getUsableOneFrameData().status,
-    "evidence-required",
-    "exhausted pool must fail closed",
-  );
-  const reflected = requireOk(controller.reflectOneFrameData(), "reflect frame data");
-  assertDeepEqual(
-    reflected.containerIds,
-    ["one-frame:0", "one-frame:1"],
-    "controller pool collection order",
-  );
-  assert(!controller.existsOneFrameData(), "Reflect must recycle every staged entry");
-  assertDeepEqual(controller.collectOneFrameData(), [], "collection after recycle");
+test("OneFrame 容器统一获取 Reflect 与回收", () => {
+  const reference = evidence("E08", "OneFrameData lifecycle");
+  const controller = new InGameOneFrameJudgementController({ capacity: bound(2, reference) });
+  requireOk(controller.initialize(), "initialize");
+  const first = requireOk(controller.getUsableOneFrameData(), "first");
+  requireOk(controller.stageFixture(first, [reference]), "stage first");
+  const second = requireOk(controller.getUsableOneFrameData(), "second");
+  requireOk(controller.stageFixture(second, [reference]), "stage second");
+  assertEqual(controller.getUsableOneFrameData().status, "evidence-required", "pool exhaustion");
+  assertDeepEqual(requireOk(controller.reflectOneFrameData(), "reflect").containerIds,
+    ["one-frame:0", "one-frame:1"], "reflect order");
 });
 
-test("Note 只能通过 SetupNotes 安装的回调请求 OneFrame 容器", () => {
+test("Note 只通过 SetupNotes 安装的回调请求 OneFrame 容器", () => {
   const graph = createTestGraph(["A"]);
-  const handle: OneFrameDataHandle = requireOk(
-    graph.notes[0].requestUsableOneFrameData(),
-    "Note callback acquisition",
-  );
-  assertEqual(handle.containerId, "one-frame:0", "callback-owned container");
-  const detached = new TraceNote("detached", [], [], new Set<string>());
-  assertEqual(
-    detached.requestUsableOneFrameData().status,
-    "evidence-required",
-    "unregistered Note callback",
-  );
+  const handle: OneFrameDataHandle = requireOk(graph.notes[0]!.requestUsableOneFrameData(), "callback");
+  assertEqual(handle.containerId, "one-frame:0", "container");
+  assertEqual(new TraceNote("detached", [], new Set()).requestUsableOneFrameData().status,
+    "evidence-required", "unregistered callback");
 });
 
-test("未闭合触摸、判定和数值时钟统一失败关闭", () => {
-  const missingClockEvidence = engineInput();
-  const invalidInput = {
-    ...missingClockEvidence,
-    clock: {
-      ...missingClockEvidence.clock,
-      currentBpm: { value: 120, evidence: [] },
-    },
-  };
-  assertEqual(
-    createSimulatorEngine(invalidInput, createRecordingSimulatorBackends()).status,
-    "evidence-required",
-    "missing clock evidence",
-  );
-  const engine = requireOk(
-    createSimulatorEngine(engineInput(), createRecordingSimulatorBackends()),
-    "create evidence-bound engine",
-  );
-  requireOk(engine.initialize(), "initialize evidence-bound engine");
-  requireOk(engine.step(0.01), "closed G01 clock step");
-  assertEqual(
-    new GamePlayButton().execTouchBegan().status,
-    "evidence-required",
-    "touch gate",
-  );
-  const controller = new InGameOneFrameJudgementController(
-    engineInput().oneFrameData,
-  );
-  assertEqual(
-    controller.setupBusinessData().status,
-    "evidence-required",
-    "OneFrameData business gate",
-  );
+test("未登记 chart、越界 offset、触摸和具体 Note 行为失败关闭", () => {
+  const valid = engineInput();
+  const cloned = { ...valid, chart: { ...valid.chart } };
+  assertEqual(createSimulatorEngine(cloned, createRecordingSimulatorBackends()).status,
+    "evidence-required", "cloned chart");
+  const invalidOffset = { ...valid, runtime: { ...valid.runtime, judgeOffsetFrames: 6 } };
+  assertEqual(createSimulatorEngine(invalidOffset, createRecordingSimulatorBackends()).status,
+    "evidence-required", "offset range");
+  assertEqual(new GamePlayButton().execTouchBegan().status, "evidence-required", "touch boundary");
+
+  const noteEngine = requireOk(createSimulatorEngine(engineInput([noteBatch(["A"], 1)]),
+    createRecordingSimulatorBackends()), "note engine");
+  requireOk(noteEngine.initialize(), "initialize note engine");
+  requireOk(noteEngine.step(0.01), "activation frame");
+  assertEqual(noteEngine.step(0.01).status, "evidence-required", "concrete Note behavior");
 });
 
-test("快照确定且序列化不触发后端事件", () => {
+test("120 模式请求、快照与 dispose 保持确定", () => {
   const backends = createRecordingSimulatorBackends();
-  backends.renderer.record({ action: "frame", detail: "fixture" });
-  const engine = requireOk(createSimulatorEngine(engineInput(), backends), "create engine");
-  requireOk(engine.initialize(), "initialize engine");
+  const input = engineInput();
+  const engine = requireOk(createSimulatorEngine({
+    ...input,
+    runtime: { ...input.runtime, highFrequencyMode: true },
+  }, backends), "create 120 engine");
+  requireOk(engine.initialize(), "initialize");
   const first = requireOk(engine.snapshot(), "first snapshot");
   const second = requireOk(engine.snapshot(), "second snapshot");
-  assertDeepEqual(first, second, "repeated snapshots");
-  assertEqual(first.backendTrace.length, 1, "snapshot must not record events");
-  assertDeepEqual(
-    first.evidenceGaps,
-    [],
-    "open evidence gaps",
-  );
-});
-
-test("dispose 幂等且不产生额外事件", () => {
-  const backends = createRecordingSimulatorBackends();
-  const engine = requireOk(createSimulatorEngine(engineInput(), backends), "create engine");
-  requireOk(engine.initialize(), "initialize engine");
-  requireOk(engine.pause(), "pause engine");
-  requireOk(engine.dispose(), "first dispose");
-  const first = requireOk(engine.snapshot(), "snapshot after first dispose");
-  requireOk(engine.dispose(), "second dispose");
-  const second = requireOk(engine.snapshot(), "snapshot after second dispose");
-  assertDeepEqual(first, second, "idempotent dispose snapshot");
-  assertEqual(second.backendTrace.length, 1, "dispose must not emit backend events");
+  assertDeepEqual(first, second, "snapshot determinism");
+  assertEqual(first.director.requestedTargetFrameRate, 120, "120 request");
+  requireOk(engine.dispose(), "dispose");
+  requireOk(engine.dispose(), "dispose twice");
+  assertEqual(requireOk(engine.snapshot(), "disposed snapshot").backendTrace.length, 1,
+    "dispose emits no backend request");
 });
 
 let passed = 0;

@@ -1,17 +1,18 @@
-import type {
-  FirstSliceNoteBatchFixture,
-  FirstSliceNoteBatchListFixture,
-  NoteFamily,
-  FirstSliceNoteInformationFixture,
-} from "../data/noteData";
+import {
+  ButtonType,
+  FrontNoteType,
+  type NoteBatchInformation,
+  type NoteInformation,
+} from "../chart/types";
+import type { NoteFamily } from "../data/noteData";
 import type { OneFrameDataHandle } from "../data/oneFrameData";
 import {
   evidenceRequired,
   ok,
-  type EvidenceReference,
   type SimulatorResult,
 } from "../evidence";
 import { NoteBase, NoteState } from "../notes/noteBase";
+import { NoteBpmChange } from "../notes/noteBpmChange";
 import {
   NoteDirectionalFlick,
   NoteFlick,
@@ -21,35 +22,49 @@ import {
   NoteSlide,
 } from "../notes/noteTypes";
 import { SlideNoteManager } from "./slideNoteManager";
+import type { InGameMusicScoreController } from "./inGameMusicScoreController";
+
+const BPM_POOL_LENGTH = 30;
 
 export interface NoteManagerClock {
   setExecuteFrame(executeFrame: number): void;
   advance(deltaTimeSeconds: number): SimulatorResult<void>;
-  canActivateBatch(batch: FirstSliceNoteBatchFixture): SimulatorResult<boolean>;
+  canActivateBatch(batch: NoteBatchInformation): SimulatorResult<boolean>;
 }
 
 export type NotePoolObjectFactory = (
   family: NoteFamily,
   poolObjectId: string,
-  evidence: readonly EvidenceReference[],
 ) => NoteBase;
 
 export type NoteManagerTraceEntry =
   | {
       readonly kind: "frame";
       readonly deltaTimeSeconds: number;
+      readonly executeFrame: number;
       readonly substepCount: number;
     }
   | {
       readonly kind: "music-advance";
       readonly substepIndex: number;
       readonly deltaTimeSeconds: number;
+      readonly executeFrame: number;
     }
   | {
-      readonly kind: "note-update" | "note-after-update" | "note-activate";
+      readonly kind:
+        | "bpm-update"
+        | "bpm-activate"
+        | "note-update"
+        | "note-after-update"
+        | "note-activate";
       readonly substepIndex: number;
-      readonly fixtureId: string;
+      readonly noteIndex: number;
       readonly poolObjectId: string;
+    }
+  | {
+      readonly kind: "group-activate";
+      readonly substepIndex: number;
+      readonly batchIndex: number;
     };
 
 export interface NotePoolSnapshot {
@@ -61,13 +76,15 @@ export interface NotePoolSnapshot {
 export interface NoteManagerSnapshot {
   readonly batchCount: number;
   readonly nextBatchIndex: number;
-  readonly activeNoteIds: readonly string[];
+  readonly activeNotePoolObjectIds: readonly string[];
+  readonly activeBpmPoolIndices: readonly number[];
+  readonly bpmPoolCursor: number;
+  readonly bpmPool: readonly ReturnType<NoteBpmChange["snapshot"]>[];
   readonly pools: readonly NotePoolSnapshot[];
   readonly slideNoteManagerInitialized: boolean;
   readonly schedulerTrace: readonly NoteManagerTraceEntry[];
   readonly bpmChangeCount: number;
   readonly performanceLevelCounters: readonly number[];
-  readonly unresolvedSchedulerGaps: readonly [];
 }
 
 export type PerformanceLevelCounters = [number, number, number, number];
@@ -80,19 +97,27 @@ interface NotePool {
 
 export class NoteManager {
   private readonly activeNotesValue: NoteBase[] = [];
+  private readonly activeBpmChangesValue: NoteBpmChange[] = [];
+  private readonly bpmPoolValue = Array.from(
+    { length: BPM_POOL_LENGTH },
+    (_, index) => new NoteBpmChange(index),
+  );
   private readonly notePoolsValue = new Map<NoteFamily, NotePool>();
   private readonly schedulerTraceValue: NoteManagerTraceEntry[] = [];
   private readonly performanceLevelCountersValue: PerformanceLevelCounters = [
     0, 0, 0, 0,
   ];
   private nextBatchIndexValue = 0;
+  private bpmPoolCursorValue = 0;
   private setupComplete = false;
 
   constructor(
-    private readonly batches: FirstSliceNoteBatchListFixture,
+    private readonly batches: readonly NoteBatchInformation[],
     readonly slideNoteManager: SlideNoteManager,
     private readonly clock: NoteManagerClock,
+    private readonly musicScoreController: InGameMusicScoreController,
     private readonly bpmChangeCount: number,
+    private readonly judgeOffsetFrames: number,
     private readonly getUsableOneFrameData: () => SimulatorResult<OneFrameDataHandle>,
     private readonly createPoolObject: NotePoolObjectFactory = createDefaultPoolObject,
   ) {}
@@ -110,22 +135,26 @@ export class NoteManager {
       return ok(undefined);
     }
 
-    const familyFixtures = new Map<NoteFamily, FirstSliceNoteInformationFixture[]>();
+    const familyNotes = new Map<NoteFamily, NoteInformation[]>();
     for (const batch of this.batches) {
-      for (const fixture of batch.informationList) {
-        const fixtures = familyFixtures.get(fixture.family.value) ?? [];
-        fixtures.push(fixture);
-        familyFixtures.set(fixture.family.value, fixtures);
+      for (const noteInformation of batch.informationList) {
+        if (isNonPlayableCommand(noteInformation)) {
+          continue;
+        }
+        const familyResult = noteFamily(noteInformation);
+        if (familyResult.status !== "ok") {
+          return familyResult;
+        }
+        const family = familyResult.value;
+        const notes = familyNotes.get(family) ?? [];
+        notes.push(noteInformation);
+        familyNotes.set(family, notes);
       }
     }
 
-    for (const [family, fixtures] of familyFixtures) {
-      const objects = fixtures.map((fixture, index) => {
-        const note = this.createPoolObject(
-          family,
-          `${family}:${index}`,
-          fixture.family.evidence,
-        );
+    for (const [family, notes] of familyNotes) {
+      const objects = notes.map((_, index) => {
+        const note = this.createPoolObject(family, `${family}:${index}`);
         note.setLifecycleCallbacks({
           onActivate: (activeNote) => this.appendActiveNote(activeNote),
           onDeactivate: (inactiveNote) => this.removeActiveNote(inactiveNote),
@@ -157,20 +186,26 @@ export class NoteManager {
     }
 
     const frameDelta = Math.fround(deltaTimeSeconds);
-    const executeFrame =
-      frameDelta <= Math.fround(0.0166666675)
-        ? Math.fround(frameDelta * 60)
-        : 1;
+    if (!Number.isFinite(frameDelta)) {
+      return evidenceRequired(
+        "note-manager.delta-outside-float32",
+        ["E03"],
+        "ExecUpdate delta must remain finite after the original Float32 conversion.",
+      );
+    }
+    const executeFrame = Math.min(Math.fround(frameDelta * 60), 1);
     const substepCount = selectSubstepCount(
       frameDelta,
       this.bpmChangeCount,
       this.performanceLevelCountersValue,
     );
     const substepDelta = Math.fround(frameDelta / substepCount);
-    this.clock.setExecuteFrame(Math.fround(executeFrame / substepCount));
+    const substepExecuteFrame = Math.fround(executeFrame / substepCount);
+    this.clock.setExecuteFrame(substepExecuteFrame);
     this.schedulerTraceValue.push({
       kind: "frame",
       deltaTimeSeconds: frameDelta,
+      executeFrame,
       substepCount,
     });
 
@@ -183,7 +218,30 @@ export class NoteManager {
         kind: "music-advance",
         substepIndex,
         deltaTimeSeconds: substepDelta,
+        executeFrame: substepExecuteFrame,
       });
+
+      let bpmIndex = 0;
+      while (bpmIndex < this.activeBpmChangesValue.length) {
+        const bpmChange = this.activeBpmChangesValue[bpmIndex];
+        if (bpmChange === undefined) {
+          break;
+        }
+        const noteIndex = bpmChange.snapshot().noteIndex ?? -1;
+        const updateResult = bpmChange.execUpdate(this.musicScoreController);
+        if (updateResult.status !== "ok") {
+          return updateResult;
+        }
+        this.schedulerTraceValue.push({
+          kind: "bpm-update",
+          substepIndex,
+          noteIndex,
+          poolObjectId: `bpm:${bpmChange.poolIndex}`,
+        });
+        if (this.activeBpmChangesValue[bpmIndex] === bpmChange) {
+          bpmIndex += 1;
+        }
+      }
 
       const afterUpdateNotes: NoteBase[] = [];
       let activeIndex = this.activeNotesValue.length - 1;
@@ -193,15 +251,14 @@ export class NoteManager {
           return evidenceRequired(
             "note-manager.unrepresented-cross-note-mutation",
             ["E17"],
-            "The first slice has no represented original Update caller that removes a different lower-index active Note.",
+            "No recovered Update caller removes a different lower-index active Note in this stage.",
           );
         }
-
-        const fixtureId = note.fixtureId;
+        const noteIndex = note.noteInformation?.index ?? -1;
         this.schedulerTraceValue.push({
           kind: "note-update",
           substepIndex,
-          fixtureId,
+          noteIndex,
           poolObjectId: note.poolObjectId,
         });
         const updateResult = note.executeUpdate(substepDelta);
@@ -218,7 +275,7 @@ export class NoteManager {
         this.schedulerTraceValue.push({
           kind: "note-after-update",
           substepIndex,
-          fixtureId: note.fixtureId,
+          noteIndex: note.noteInformation?.index ?? -1,
           poolObjectId: note.poolObjectId,
         });
         const afterUpdateResult = note.executeAfterUpdate(substepDelta);
@@ -236,11 +293,24 @@ export class NoteManager {
     return ok(undefined);
   }
 
+  getAdjustedMusicPosition(): number {
+    return this.musicScoreController.getAdjustedMusicPosition(
+      this.judgeOffsetFrames,
+    );
+  }
+
   snapshot(): NoteManagerSnapshot {
     return {
       batchCount: this.batches.length,
       nextBatchIndex: this.nextBatchIndexValue,
-      activeNoteIds: this.activeNotesValue.map((note) => note.fixtureId),
+      activeNotePoolObjectIds: this.activeNotesValue.map(
+        (note) => note.poolObjectId,
+      ),
+      activeBpmPoolIndices: this.activeBpmChangesValue.map(
+        (note) => note.poolIndex,
+      ),
+      bpmPoolCursor: this.bpmPoolCursorValue,
+      bpmPool: this.bpmPoolValue.map((note) => note.snapshot()),
       pools: [...this.notePoolsValue.values()].map((pool) => ({
         family: pool.family,
         cursor: pool.cursor,
@@ -250,7 +320,6 @@ export class NoteManager {
       schedulerTrace: [...this.schedulerTraceValue],
       bpmChangeCount: this.bpmChangeCount,
       performanceLevelCounters: [...this.performanceLevelCountersValue],
-      unresolvedSchedulerGaps: [],
     };
   }
 
@@ -268,43 +337,96 @@ export class NoteManager {
       return ok(undefined);
     }
 
-    for (const fixture of batch.informationList) {
-      const noteResult = this.acquirePoolObject(fixture);
+    const bpmCommand = batch.informationList.find(isBpmCommand);
+    if (bpmCommand !== undefined) {
+      const bpmObject = this.acquireBpmObject();
+      if (bpmObject.status !== "ok") {
+        return bpmObject;
+      }
+      this.musicScoreController.updateNextBpm(
+        bpmCommand.bpm,
+        bpmCommand.bpmString,
+      );
+      bpmObject.value.setup(
+        bpmCommand,
+        (completed) => this.removeActiveBpmChange(completed),
+      );
+      this.activeBpmChangesValue.push(bpmObject.value);
+      this.schedulerTraceValue.push({
+        kind: "bpm-activate",
+        substepIndex,
+        noteIndex: bpmCommand.index,
+        poolObjectId: `bpm:${bpmObject.value.poolIndex}`,
+      });
+    }
+
+    for (const noteInformation of batch.informationList) {
+      if (isNonPlayableCommand(noteInformation)) {
+        continue;
+      }
+      const noteResult = this.acquirePoolObject(noteInformation);
       if (noteResult.status !== "ok") {
         return noteResult;
       }
-      const activationResult = noteResult.value.activate(fixture);
+      const activationResult = noteResult.value.activate(noteInformation);
       if (activationResult.status !== "ok") {
         return activationResult;
       }
       this.schedulerTraceValue.push({
         kind: "note-activate",
         substepIndex,
-        fixtureId: fixture.fixtureId,
+        noteIndex: noteInformation.index,
         poolObjectId: noteResult.value.poolObjectId,
       });
     }
 
+    this.schedulerTraceValue.push({
+      kind: "group-activate",
+      substepIndex,
+      batchIndex: this.nextBatchIndexValue,
+    });
     this.nextBatchIndexValue += 1;
     return ok(undefined);
   }
 
+  private acquireBpmObject(): SimulatorResult<NoteBpmChange> {
+    for (let offset = 0; offset < this.bpmPoolValue.length; offset += 1) {
+      const index = (this.bpmPoolCursorValue + offset) % this.bpmPoolValue.length;
+      const object = this.bpmPoolValue[index];
+      if (object === undefined || object.isActive) {
+        continue;
+      }
+      this.bpmPoolCursorValue = (index + 1) % this.bpmPoolValue.length;
+      return ok(object);
+    }
+    return evidenceRequired(
+      "note-manager.bpm-pool-exhausted",
+      ["E07", "E10"],
+      "The recovered 30-slot BPM pool has no inactive object.",
+    );
+  }
+
   private acquirePoolObject(
-    fixture: FirstSliceNoteInformationFixture,
+    noteInformation: NoteInformation,
   ): SimulatorResult<NoteBase> {
-    const pool = this.notePoolsValue.get(fixture.family.value);
+    const familyResult = noteFamily(noteInformation);
+    if (familyResult.status !== "ok") {
+      return familyResult;
+    }
+    const family = familyResult.value;
+    const pool = this.notePoolsValue.get(family);
     if (pool === undefined || pool.objects.length === 0) {
       return evidenceRequired(
         "note-manager.pool-missing",
         ["E06", "E10"],
-        `No ${fixture.family.value} pool exists for ${fixture.fixtureId}.`,
+        `No ${family} pool exists for note ${noteInformation.index}.`,
       );
     }
 
     for (let offset = 0; offset < pool.objects.length; offset += 1) {
       const index = (pool.cursor + offset) % pool.objects.length;
       const note = pool.objects[index];
-      if (note.state !== NoteState.Deactive) {
+      if (note === undefined || note.state !== NoteState.Deactive) {
         continue;
       }
       pool.cursor = (index + 1) % pool.objects.length;
@@ -314,7 +436,7 @@ export class NoteManager {
     return evidenceRequired(
       "note-manager.pool-exhausted",
       ["E04", "E06"],
-      `No deactive ${fixture.family.value} pool object is available for ${fixture.fixtureId}.`,
+      `No deactive ${family} pool object is available for note ${noteInformation.index}.`,
     );
   }
 
@@ -328,6 +450,13 @@ export class NoteManager {
     const index = this.activeNotesValue.indexOf(note);
     if (index >= 0) {
       this.activeNotesValue.splice(index, 1);
+    }
+  }
+
+  private removeActiveBpmChange(note: NoteBpmChange): void {
+    const index = this.activeBpmChangesValue.indexOf(note);
+    if (index >= 0) {
+      this.activeBpmChangesValue.splice(index, 1);
     }
   }
 }
@@ -359,29 +488,65 @@ export function selectSubstepCount(
   }
 
   counters[bucketIndex] = (counters[bucketIndex] + 1) >>> 0;
-  if (counters[0] > 100 || counters[1] > 20 || counters[2] >= 6) {
+  if (counters[1] > 100 || counters[2] > 20 || counters[3] > 5) {
     return 1;
   }
   return substepCount;
 }
 
+export function noteFamily(
+  noteInformation: NoteInformation,
+): SimulatorResult<NoteFamily> {
+  switch (noteInformation.fireNoteType) {
+    case FrontNoteType.Normal:
+      return ok("normal");
+    case FrontNoteType.Long:
+      return ok("long");
+    case FrontNoteType.Flick:
+      return ok("flick");
+    case FrontNoteType.SlideA:
+    case FrontNoteType.SlideB:
+      return ok("slide");
+    case FrontNoteType.DirectionalFlick:
+      return ok("directional-flick");
+    case FrontNoteType.MultipleDirectionalFlick:
+    case FrontNoteType.LongMultipleDirectionalFlickAdd:
+    case FrontNoteType.SlideAMultipleDirectionalFlickAdd:
+    case FrontNoteType.SlideBMultipleDirectionalFlickAdd:
+      return ok("multiple-directional-flick");
+    default:
+      return evidenceRequired(
+        "note-manager.unrepresented-note-family",
+        ["E11", "E13"],
+        `FrontNoteType ${noteInformation.fireNoteType} has no recovered playable-root pool mapping.`,
+      );
+  }
+}
+
+function isBpmCommand(noteInformation: NoteInformation): boolean {
+  return noteInformation.ccNum === 3 || noteInformation.ccNum === 8;
+}
+
+function isNonPlayableCommand(noteInformation: NoteInformation): boolean {
+  return noteInformation.buttonType === ButtonType.None;
+}
+
 function createDefaultPoolObject(
   family: NoteFamily,
   poolObjectId: string,
-  evidence: readonly EvidenceReference[],
 ): NoteBase {
   switch (family) {
     case "normal":
-      return new NoteNormal(poolObjectId, evidence);
+      return new NoteNormal(poolObjectId);
     case "long":
-      return new NoteLong(poolObjectId, evidence);
+      return new NoteLong(poolObjectId);
     case "slide":
-      return new NoteSlide(poolObjectId, evidence);
+      return new NoteSlide(poolObjectId);
     case "flick":
-      return new NoteFlick(poolObjectId, evidence);
+      return new NoteFlick(poolObjectId);
     case "directional-flick":
-      return new NoteDirectionalFlick(poolObjectId, evidence);
+      return new NoteDirectionalFlick(poolObjectId);
     case "multiple-directional-flick":
-      return new NoteMultipleDirectionalFlick(poolObjectId, evidence);
+      return new NoteMultipleDirectionalFlick(poolObjectId);
   }
 }

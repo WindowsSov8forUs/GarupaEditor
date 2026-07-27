@@ -1,52 +1,81 @@
 import type {
-  MusicPosition,
-  FirstSliceNoteBatchFixture,
-  SimulatorClockProfile,
-} from "../data/noteData";
-import {
-  ok,
-  type SimulatorResult,
-} from "../evidence";
+  ChartConstructionResult,
+  NoteBatchInformation,
+  NoteInformation,
+} from "../chart/types";
+import { ButtonType } from "../chart/types";
+import type { MusicPosition } from "../data/noteData";
+import { ok, type SimulatorResult } from "../evidence";
 
 export const MUSIC_BAR_DIVISION_COUNT = 192;
+const LAUNCHER_LEAD_SECONDS = Math.fround(0.8);
+const JUDGE_OFFSET_STEP_SECONDS = Math.fround(1 / 60);
 
 export interface MusicScoreControllerSnapshot {
   readonly executeFrame: number;
+  readonly basicBpm: number;
+  readonly basicBpmString: string;
   readonly currentBpm: number;
+  readonly currentBpmString: string;
   readonly nextBpm: number;
+  readonly nextBpmString: string;
   readonly bar: number;
   readonly beatProgress: number;
   readonly launcherBar: number;
   readonly launcherBeatProgress: number;
   readonly musicPosition: number;
   readonly launcherMusicPosition: number;
+  readonly musicPositionCallbackCount: number;
 }
 
 export class InGameMusicScoreController {
   private executeFrameValue = 0;
-  private readonly currentBpmValue: number;
-  private readonly nextBpmValue: number;
-  private musicBarProgressValue: number;
-  private musicBeatProgressValue: number;
-  private launcherMusicBarProgressValue: number;
+  private readonly basicBpmValue: number;
+  private readonly basicBpmStringValue: string;
+  private currentBpmValue: number;
+  private currentBpmStringValue: string;
+  private nextBpmValue: number;
+  private nextBpmStringValue: string;
+  private musicBarProgressValue = 0;
+  private musicBeatProgressValue = 0;
+  private launcherMusicBarProgressValue = 0;
   private launcherMusicBeatProgressValue: number;
+  private musicPositionCallbackCountValue = 0;
+  private readonly tempoCommands: readonly NoteInformation[];
 
-  constructor(profile: SimulatorClockProfile) {
-    this.currentBpmValue = Math.fround(profile.currentBpm.value);
-    this.nextBpmValue = Math.fround(profile.nextBpm.value);
-    this.musicBarProgressValue = profile.initialMusicPosition.value.bar | 0;
-    this.musicBeatProgressValue = Math.fround(
-      profile.initialMusicPosition.value.beatProgress,
+  constructor(chart: ChartConstructionResult) {
+    this.basicBpmValue = Math.fround(chart.startBpm);
+    this.basicBpmStringValue = chart.startBpmString;
+    this.currentBpmValue = this.basicBpmValue;
+    this.currentBpmStringValue = this.basicBpmStringValue;
+    this.nextBpmValue = this.basicBpmValue;
+    this.nextBpmStringValue = this.basicBpmStringValue;
+    let launcherLead = Math.fround(
+      this.basicBpmValue * LAUNCHER_LEAD_SECONDS,
     );
-    this.launcherMusicBarProgressValue =
-      profile.initialLauncherMusicPosition.value.bar | 0;
-    this.launcherMusicBeatProgressValue = Math.fround(
-      profile.initialLauncherMusicPosition.value.beatProgress,
-    );
+    if (launcherLead >= MUSIC_BAR_DIVISION_COUNT) {
+      launcherLead = Math.fround(launcherLead - MUSIC_BAR_DIVISION_COUNT);
+      this.launcherMusicBarProgressValue = 1;
+    }
+    this.launcherMusicBeatProgressValue = launcherLead;
+    this.tempoCommands = chart.noteBatches.flatMap((batch) => {
+      const command = batch.informationList.find(isBpmCommand);
+      return command === undefined ? [] : [command];
+    });
   }
 
   setExecuteFrame(executeFrame: number): void {
     this.executeFrameValue = Math.fround(executeFrame);
+  }
+
+  updateNextBpm(bpm: number, bpmString: string): void {
+    this.nextBpmValue = Math.fround(bpm);
+    this.nextBpmStringValue = bpmString;
+  }
+
+  updateBpm(bpm: number, bpmString: string): void {
+    this.currentBpmValue = Math.fround(bpm);
+    this.currentBpmStringValue = bpmString;
   }
 
   advance(deltaTimeSeconds: number): SimulatorResult<void> {
@@ -68,73 +97,125 @@ export class InGameMusicScoreController {
     );
     this.launcherMusicBarProgressValue = launcherAdvance.bar;
     this.launcherMusicBeatProgressValue = launcherAdvance.beatProgress;
+    this.musicPositionCallbackCountValue += 1;
     return ok(undefined);
   }
 
-  canActivateBatch(batch: FirstSliceNoteBatchFixture): SimulatorResult<boolean> {
-    if (batch.informationList.length === 0) {
+  canActivateBatch(batch: NoteBatchInformation): SimulatorResult<boolean> {
+    const first = batch.informationList.find(
+      (note) => note.buttonType !== ButtonType.None || isBpmCommand(note),
+    );
+    if (first === undefined) {
       return ok(true);
     }
-    if (
-      batch.informationList[0].barIndex.value < this.musicBarProgressValue
-    ) {
+    if (first.barIndex < this.musicBarProgressValue) {
       return ok(false);
     }
-
-    const batchPosition = batchAbsolutePosition(batch);
-    const musicPosition = this.musicPosition();
     return ok(
-      musicPosition < batchPosition &&
-        batchPosition <= this.launcherMusicPosition(),
+      this.musicPosition < batch.absolutePos &&
+        batch.absolutePos <= this.launcherMusicPosition,
     );
+  }
+
+  getAdjustedMusicPosition(offsetFrames: number): number {
+    if (offsetFrames === 0) {
+      return this.musicPosition;
+    }
+    let cursor: MusicPosition = {
+      bar: this.musicBarProgressValue,
+      beatProgress: this.musicBeatProgressValue,
+    };
+    if (offsetFrames > 0) {
+      for (let index = 0; index < offsetFrames; index += 1) {
+        cursor = advancePosition(
+          cursor.bar,
+          cursor.beatProgress,
+          this.bpmAtPosition(absolutePosition(cursor)),
+          JUDGE_OFFSET_STEP_SECONDS,
+        );
+      }
+    } else {
+      const committedBpm = this.currentBpmValue;
+      for (let index = 0; index < -offsetFrames; index += 1) {
+        cursor = rewindPosition(
+          cursor.bar,
+          cursor.beatProgress,
+          committedBpm,
+          JUDGE_OFFSET_STEP_SECONDS,
+        );
+      }
+    }
+    return absolutePosition(cursor);
+  }
+
+  get currentBar(): number {
+    return this.musicBarProgressValue;
+  }
+
+  get currentBeatProgress(): number {
+    return this.musicBeatProgressValue;
+  }
+
+  get musicPosition(): number {
+    return absolutePosition({
+      bar: this.musicBarProgressValue,
+      beatProgress: this.musicBeatProgressValue,
+    });
+  }
+
+  get launcherMusicPosition(): number {
+    return absolutePosition({
+      bar: this.launcherMusicBarProgressValue,
+      beatProgress: this.launcherMusicBeatProgressValue,
+    });
   }
 
   snapshot(): MusicScoreControllerSnapshot {
     return {
       executeFrame: this.executeFrameValue,
+      basicBpm: this.basicBpmValue,
+      basicBpmString: this.basicBpmStringValue,
       currentBpm: this.currentBpmValue,
+      currentBpmString: this.currentBpmStringValue,
       nextBpm: this.nextBpmValue,
+      nextBpmString: this.nextBpmStringValue,
       bar: this.musicBarProgressValue,
       beatProgress: this.musicBeatProgressValue,
       launcherBar: this.launcherMusicBarProgressValue,
       launcherBeatProgress: this.launcherMusicBeatProgressValue,
-      musicPosition: this.musicPosition(),
-      launcherMusicPosition: this.launcherMusicPosition(),
+      musicPosition: this.musicPosition,
+      launcherMusicPosition: this.launcherMusicPosition,
+      musicPositionCallbackCount: this.musicPositionCallbackCountValue,
     };
   }
 
-  private musicPosition(): number {
-    return Math.fround(
-      this.musicBeatProgressValue +
-        Math.imul(MUSIC_BAR_DIVISION_COUNT, this.musicBarProgressValue),
-    );
-  }
-
-  private launcherMusicPosition(): number {
-    return Math.fround(
-      this.launcherMusicBeatProgressValue +
-        Math.imul(
-          MUSIC_BAR_DIVISION_COUNT,
-          this.launcherMusicBarProgressValue,
-        ),
-    );
+  private bpmAtPosition(position: number): number {
+    let bpm = this.basicBpmValue;
+    for (const command of this.tempoCommands) {
+      if (command.absolutePos > position) {
+        break;
+      }
+      bpm = Math.fround(command.bpm);
+    }
+    return bpm;
   }
 }
 
-function advancePosition(
+export function advancePosition(
   bar: number,
   beatProgress: number,
   bpm: number,
   deltaTimeSeconds: number,
 ): MusicPosition {
-  const barSeconds = Math.fround(240 / bpm);
+  const barSeconds = Math.fround(240 / Math.fround(bpm));
   const secondsPerPosition = Math.fround(
     barSeconds / MUSIC_BAR_DIVISION_COUNT,
   );
   let nextProgress = Math.fround(
-    beatProgress + Math.fround(deltaTimeSeconds / secondsPerPosition),
+    Math.fround(beatProgress) +
+      Math.fround(Math.fround(deltaTimeSeconds) / secondsPerPosition),
   );
-  let nextBar = bar;
+  let nextBar = bar | 0;
   if (nextProgress >= MUSIC_BAR_DIVISION_COUNT) {
     nextProgress = Math.fround(nextProgress - MUSIC_BAR_DIVISION_COUNT);
     nextBar = (nextBar + 1) | 0;
@@ -142,16 +223,35 @@ function advancePosition(
   return { bar: nextBar, beatProgress: nextProgress };
 }
 
-function batchAbsolutePosition(batch: FirstSliceNoteBatchFixture): number {
-  const fractionalPosition =
-    batch.denominator.value === 0
-      ? 0
-      : Math.trunc(
-          Math.imul(batch.numerator.value, MUSIC_BAR_DIVISION_COUNT) /
-            batch.denominator.value,
-        ) | 0;
-  return (
-    Math.imul(batch.barIndex.value, MUSIC_BAR_DIVISION_COUNT) +
-    fractionalPosition
-  ) | 0;
+function rewindPosition(
+  bar: number,
+  beatProgress: number,
+  bpm: number,
+  deltaTimeSeconds: number,
+): MusicPosition {
+  const barSeconds = Math.fround(240 / Math.fround(bpm));
+  const secondsPerPosition = Math.fround(
+    barSeconds / MUSIC_BAR_DIVISION_COUNT,
+  );
+  let nextProgress = Math.fround(
+    Math.fround(beatProgress) -
+      Math.fround(Math.fround(deltaTimeSeconds) / secondsPerPosition),
+  );
+  let nextBar = bar | 0;
+  if (nextProgress < 0) {
+    nextProgress = Math.fround(nextProgress + MUSIC_BAR_DIVISION_COUNT);
+    nextBar = (nextBar - 1) | 0;
+  }
+  return { bar: nextBar, beatProgress: nextProgress };
+}
+
+function absolutePosition(position: MusicPosition): number {
+  return Math.fround(
+    Math.fround(position.beatProgress) +
+      Math.imul(MUSIC_BAR_DIVISION_COUNT, position.bar),
+  );
+}
+
+function isBpmCommand(note: NoteInformation): boolean {
+  return note.ccNum === 3 || note.ccNum === 8;
 }

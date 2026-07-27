@@ -5,6 +5,7 @@ export type {
   SimulatorBackendTraceEvent,
   SimulatorLifecycleBackend,
   SimulatorLifecycleBackendState,
+  SimulatorFrameRateBackend,
 } from "./backends/contracts";
 export {
   createRecordingSimulatorBackends,
@@ -48,12 +49,7 @@ export type {
 } from "./engine/chart/types";
 export type {
   MusicPosition,
-  FirstSliceNoteBatchFixture,
-  FirstSliceNoteBatchListFixture,
   NoteFamily,
-  FirstSliceNoteInformationFixture,
-  SimulatorClockProfile,
-  SimulatorNoteManagerProfile,
 } from "./engine/data/noteData";
 export type {
   OneFrameDataHandle,
@@ -68,6 +64,7 @@ export type {
   SimulatorResult,
 } from "./engine/evidence";
 export { NoteBase, NoteState } from "./engine/notes/noteBase";
+export { NoteBpmChange } from "./engine/notes/noteBpmChange";
 export {
   NoteAfterBase,
   NoteDirectionalFlick,
@@ -87,7 +84,6 @@ export {
 } from "./engine/notes/noteTypes";
 export { createSimulatorEngine } from "./host/createSimulatorEngine";
 export type {
-  FirstSliceEvidenceGap,
   SimulatorEngine,
   SimulatorEngineInput,
   SimulatorSnapshot,

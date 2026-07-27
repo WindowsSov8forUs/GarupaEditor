@@ -1,10 +1,9 @@
 import {
   evidenceRequired,
   ok,
-  type EvidenceReference,
   type SimulatorResult,
 } from "../evidence";
-import type { FirstSliceNoteInformationFixture } from "../data/noteData";
+import type { NoteInformation } from "../chart/types";
 import type { OneFrameDataHandle } from "../data/oneFrameData";
 
 export enum NoteState {
@@ -21,27 +20,20 @@ export interface NoteLifecycleCallbacks {
 
 export interface NoteStateSnapshot {
   readonly poolObjectId: string;
-  readonly fixtureId: string | null;
+  readonly noteIndex: number | null;
   readonly state: NoteState;
 }
 
 export class NoteBase {
   private stateValue = NoteState.Deactive;
   private lifecycleCallbacks: NoteLifecycleCallbacks | null = null;
-  private fixtureValue: FirstSliceNoteInformationFixture | null = null;
+  private noteInformationValue: NoteInformation | null = null;
   private getUsableOneFrameData: (() => SimulatorResult<OneFrameDataHandle>) | null = null;
 
-  constructor(
-    readonly poolObjectId: string,
-    readonly evidence: readonly EvidenceReference[],
-  ) {}
+  constructor(readonly poolObjectId: string) {}
 
-  get fixtureId(): string {
-    return this.fixtureValue?.fixtureId ?? this.poolObjectId;
-  }
-
-  get fixture(): FirstSliceNoteInformationFixture | null {
-    return this.fixtureValue;
+  get noteInformation(): NoteInformation | null {
+    return this.noteInformationValue;
   }
 
   get state(): NoteState {
@@ -69,15 +61,15 @@ export class NoteBase {
     return this.getUsableOneFrameData();
   }
 
-  activate(fixture: FirstSliceNoteInformationFixture): SimulatorResult<void> {
+  activate(noteInformation: NoteInformation): SimulatorResult<void> {
     if (this.stateValue !== NoteState.Deactive) {
       return evidenceRequired(
         "note-pool.activate-active-object",
         ["E04", "E06"],
-        `Pool object ${this.poolObjectId} cannot bind ${fixture.fixtureId} while active.`,
+        `Pool object ${this.poolObjectId} cannot bind note ${noteInformation.index} while active.`,
       );
     }
-    this.fixtureValue = fixture;
+    this.noteInformationValue = noteInformation;
     return this.changeState(NoteState.Move);
   }
 
@@ -120,7 +112,7 @@ export class NoteBase {
   snapshot(): NoteStateSnapshot {
     return {
       poolObjectId: this.poolObjectId,
-      fixtureId: this.fixtureValue?.fixtureId ?? null,
+      noteIndex: this.noteInformationValue?.index ?? null,
       state: this.stateValue,
     };
   }

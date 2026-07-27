@@ -1,26 +1,29 @@
 import type { SimulatorBackends } from "../backends/contracts";
-import type { FirstSliceNoteBatchListFixture } from "../engine/data/noteData";
-import type {
-  FirstSliceEvidenceGap,
-  SimulatorEngine,
-  SimulatorEngineInput,
-  SimulatorSnapshot,
-} from "./contracts";
+import {
+  ButtonType,
+  FrontNoteType,
+  type ChartConstructionResult,
+  type NoteInformation,
+} from "../engine/chart/types";
 import {
   evidenceRequired,
-  readEvidenceBound,
   ok,
+  readEvidenceBound,
   type SimulatorResult,
 } from "../engine/evidence";
-import { InGameManager } from "../engine/managers/inGameManager";
+import { getConstructedChartRuntimeMetadata } from "../engine/runtime/chartRuntimeMetadata";
 import { InGameDirector } from "../engine/managers/inGameDirector";
+import { InGameManager } from "../engine/managers/inGameManager";
 import { InGameMusicScoreController } from "../engine/managers/inGameMusicScoreController";
 import { InGameOneFrameJudgementController } from "../engine/managers/inGameOneFrameJudgementController";
 import { InputManager } from "../engine/managers/inputBoundaries";
 import { NoteManager } from "../engine/managers/noteManager";
 import { SlideNoteManager } from "../engine/managers/slideNoteManager";
-
-const firstSliceEvidenceGaps: readonly FirstSliceEvidenceGap[] = [];
+import type {
+  SimulatorEngine,
+  SimulatorEngineInput,
+  SimulatorSnapshot,
+} from "./contracts";
 
 class SimulatorEngineHost implements SimulatorEngine {
   constructor(
@@ -30,6 +33,10 @@ class SimulatorEngineHost implements SimulatorEngine {
   ) {}
 
   initialize(): SimulatorResult<void> {
+    const awake = this.inGameDirector.awake();
+    if (awake.status !== "ok") {
+      return awake;
+    }
     return this.inGameManager.initialize();
   }
 
@@ -61,12 +68,17 @@ class SimulatorEngineHost implements SimulatorEngine {
     return ok(undefined);
   }
 
+  getAdjustedMusicPosition(): SimulatorResult<number> {
+    return ok(this.inGameManager.noteManager.getAdjustedMusicPosition());
+  }
+
   snapshot(): SimulatorResult<SimulatorSnapshot> {
     return ok({
       director: this.inGameDirector.snapshot(),
       managers: this.inGameManager.snapshot(),
+      adjustedMusicPosition:
+        this.inGameManager.noteManager.getAdjustedMusicPosition(),
       backendTrace: this.backends.snapshot(),
-      evidenceGaps: [...firstSliceEvidenceGaps],
     });
   }
 
@@ -79,98 +91,59 @@ export function createSimulatorEngine(
   input: SimulatorEngineInput,
   backends: SimulatorBackends,
 ): SimulatorResult<SimulatorEngine> {
-  const bpm = readEvidenceBound(
-    input.clock.currentBpm,
-    "clock.current-bpm",
-    ["E03"],
-    "Current BPM must be tied to the frozen music-score evidence.",
-  );
-  if (bpm.status !== "ok") {
-    return bpm;
+  const chartValidation = validateChart(input.chart);
+  if (chartValidation.status !== "ok") {
+    return chartValidation;
   }
-  const nextBpm = readEvidenceBound(
-    input.clock.nextBpm,
-    "clock.next-bpm",
-    ["E14"],
-    "Launcher BPM must be tied to the frozen G01 clock evidence.",
-  );
-  if (nextBpm.status !== "ok") {
-    return nextBpm;
-  }
-  const initialPosition = readEvidenceBound(
-    input.clock.initialMusicPosition,
-    "clock.initial-music-position",
-    ["E03", "E10"],
-    "Initial music position must be tied to the frozen clock and preconstructed-score evidence.",
-  );
-  if (initialPosition.status !== "ok") {
-    return initialPosition;
-  }
-  const initialLauncherPosition = readEvidenceBound(
-    input.clock.initialLauncherMusicPosition,
-    "clock.initial-launcher-music-position",
-    ["E14"],
-    "Initial launcher position must be tied to the frozen G01 activation-window evidence.",
-  );
-  if (initialLauncherPosition.status !== "ok") {
-    return initialLauncherPosition;
-  }
-  if (
-    !isValidBpm(bpm.value) ||
-    !isValidBpm(nextBpm.value) ||
-    !isValidMusicPosition(initialPosition.value) ||
-    !isValidMusicPosition(initialLauncherPosition.value)
-  ) {
+  const runtimeMetadata = getConstructedChartRuntimeMetadata(input.chart);
+  if (runtimeMetadata === undefined) {
     return evidenceRequired(
-      "clock.invalid-profile",
-      ["E03", "E14"],
-      "The recovered Float32 clock requires positive finite BPM values, Int32 bar counters, and finite beat progress.",
+      "runtime.unregistered-chart-construction",
+      ["E07", "E25"],
+      "The runtime only accepts the exact ChartConstructionResult produced by the recovered chart factory; cloned or caller-synthesized charts have no proven process-history BPM count.",
     );
   }
-  const bpmChangeCount = readEvidenceBound(
-    input.noteManager.bpmChangeCount,
-    "note-manager.bpm-change-count",
-    ["E14"],
-    "The adaptive scheduler gate must use the parsed BMS BPM-change count.",
-  );
-  if (bpmChangeCount.status !== "ok") {
-    return bpmChangeCount;
-  }
-  if (
-    !Number.isInteger(bpmChangeCount.value) ||
-    bpmChangeCount.value < 0 ||
-    bpmChangeCount.value > 0x7fffffff
-  ) {
+  if (runtimeMetadata.isCommand) {
     return evidenceRequired(
-      "note-manager.invalid-bpm-change-count",
-      ["E14"],
-      "The recovered NoteManager field is a non-negative Int32 parsed BPM-change count.",
+      "runtime.command-parse-chart",
+      ["E07", "E25"],
+      "The gameplay runtime consumes the normal construction result captured before the separate command parse, not an isCommand construction result.",
     );
   }
-  const noteBatchValidation = validateNoteBatches(input.noteBatches);
-  if (noteBatchValidation.status !== "ok") {
-    return noteBatchValidation;
+  if (
+    typeof input.runtime.highFrequencyMode !== "boolean" ||
+    !Number.isInteger(input.runtime.judgeOffsetFrames) ||
+    input.runtime.judgeOffsetFrames < -5 ||
+    input.runtime.judgeOffsetFrames > 5
+  ) {
+    return evidenceRequired(
+      "runtime.invalid-confirmed-settings",
+      ["E19", "E22"],
+      "High Frequency must be boolean and the confirmed production judgement-offset range is the signed integer interval [-5, 5].",
+    );
   }
   const oneFrameCapacity = readEvidenceBound(
     input.oneFrameData.capacity,
     "one-frame.pool-capacity",
     ["E02", "E08"],
-    "OneFrameData pool capacity must be tied to the frozen controller and aggregation evidence.",
+    "OneFrameData pool capacity must remain tied to the frozen controller evidence.",
   );
   if (oneFrameCapacity.status !== "ok") {
     return oneFrameCapacity;
   }
 
   const slideNoteManager = new SlideNoteManager();
-  const musicScoreController = new InGameMusicScoreController(input.clock);
+  const musicScoreController = new InGameMusicScoreController(input.chart);
   const oneFrameJudgementController = new InGameOneFrameJudgementController(
     input.oneFrameData,
   );
   const noteManager = new NoteManager(
-    input.noteBatches,
+    input.chart.noteBatches,
     slideNoteManager,
     musicScoreController,
-    bpmChangeCount.value,
+    musicScoreController,
+    runtimeMetadata.processBpmChangeCount,
+    input.runtime.judgeOffsetFrames,
     () => oneFrameJudgementController.getUsableOneFrameData(),
   );
   const inGameManager = new InGameManager(
@@ -179,69 +152,104 @@ export function createSimulatorEngine(
     oneFrameJudgementController,
     new InputManager(),
   );
-
-  const inGameDirector = new InGameDirector(inGameManager);
+  const inGameDirector = new InGameDirector(
+    inGameManager,
+    input.runtime.highFrequencyMode,
+    backends.frameRate,
+  );
 
   return ok(new SimulatorEngineHost(inGameDirector, inGameManager, backends));
 }
 
-function isValidBpm(value: number): boolean {
-  return Number.isFinite(value) && value > 0;
-}
+function validateChart(chart: ChartConstructionResult): SimulatorResult<void> {
+  if (
+    !isValidBpm(chart.startBpm) ||
+    chart.startBpmString.length === 0 ||
+    chart.bpmChangeRealValueList.length !==
+      chart.bpmChangeStringRealValueList.length
+  ) {
+    return evidenceRequired(
+      "runtime.invalid-chart-bpm-state",
+      ["E07", "E08"],
+      "The chart must preserve positive finite start/change BPM values and their original parallel strings.",
+    );
+  }
 
-function isValidMusicPosition(value: { readonly bar: number; readonly beatProgress: number }): boolean {
-  return (
-    Number.isInteger(value.bar) &&
-    value.bar >= -0x80000000 &&
-    value.bar <= 0x7fffffff &&
-    Number.isFinite(value.beatProgress)
-  );
-}
-
-function validateNoteBatches(noteBatches: FirstSliceNoteBatchListFixture): SimulatorResult<void> {
-  for (const batch of noteBatches) {
-    const batchValues = [batch.barIndex, batch.numerator, batch.denominator];
-    if (batchValues.some((value) => value.evidence.length === 0)) {
+  for (const batch of chart.noteBatches) {
+    if (
+      !isInt32(batch.barIndex) ||
+      !isInt32(batch.numerator) ||
+      !isInt32(batch.denominator) ||
+      !isInt32(batch.absolutePos)
+    ) {
       return evidenceRequired(
-        "note-batches.batch-evidence",
-        ["E10"],
-        `Batch ${batch.fixtureId} contains a value without frozen batch evidence.`,
-      );
-    }
-    if (batchValues.some((value) => !isInt32(value.value))) {
-      return evidenceRequired(
-        "note-batches.batch-int32",
+        "runtime.invalid-chart-batch-position",
         ["E10", "E14"],
-        `Batch ${batch.fixtureId} must preserve the original Int32 position fields.`,
+        "Runtime batches must preserve the recovered Int32 position fields.",
       );
     }
-
-    for (const note of batch.informationList) {
-      const noteValues = [
-        note.family,
-        note.gameNoteType,
-        note.frontNoteType,
-        note.afterNoteType,
-        note.barIndex,
-        note.absolutePosition,
-      ];
-      if (noteValues.some((value) => value.evidence.length === 0)) {
-        return evidenceRequired(
-          "note-batches.note-evidence",
-          ["E10", "E12", "E13"],
-          `Note ${note.fixtureId} contains a value without frozen note evidence.`,
-        );
-      }
-      if (!isInt32(note.barIndex.value) || !isInt32(note.absolutePosition.value)) {
-        return evidenceRequired(
-          "note-batches.note-position-int32",
-          ["E10", "E14"],
-          `Note ${note.fixtureId} must preserve the original Int32 position fields.`,
-        );
+    for (const noteInformation of batch.informationList) {
+      const validation = validateNoteInformation(noteInformation);
+      if (validation.status !== "ok") {
+        return validation;
       }
     }
   }
   return ok(undefined);
+}
+
+function validateNoteInformation(
+  noteInformation: NoteInformation,
+): SimulatorResult<void> {
+  if (
+    !isInt32(noteInformation.index) ||
+    !isInt32(noteInformation.barIndex) ||
+    !isInt32(noteInformation.numerator) ||
+    !isInt32(noteInformation.denominator) ||
+    !isInt32(noteInformation.absolutePos)
+  ) {
+    return evidenceRequired(
+      "runtime.invalid-note-position",
+      ["E10", "E14"],
+      "NoteInformation must preserve recovered Int32 fields.",
+    );
+  }
+  if (noteInformation.ccNum === 3 || noteInformation.ccNum === 8) {
+    if (
+      noteInformation.denominator === 0 ||
+      !isValidBpm(noteInformation.bpm) ||
+      noteInformation.bpmString.length === 0
+    ) {
+      return evidenceRequired(
+        "runtime.invalid-bpm-command",
+        ["E07", "E10"],
+        "CC03/CC08 commands require a nonzero denominator, positive finite BPM and original string.",
+      );
+    }
+    return ok(undefined);
+  }
+  if (noteInformation.buttonType === ButtonType.None) {
+    return ok(undefined);
+  }
+  const validFrontType =
+    noteInformation.fireNoteType >= FrontNoteType.Normal &&
+    noteInformation.fireNoteType <=
+      FrontNoteType.SlideBMultipleDirectionalFlickAdd;
+  if (
+    !validFrontType
+  ) {
+    return evidenceRequired(
+      "runtime.unrepresented-note-root",
+      ["E11", "E13"],
+      `A surviving non-BPM record must map to a confirmed playable root family (index=${noteInformation.index}, ccNum=${noteInformation.ccNum}, buttonType=${noteInformation.buttonType}, fireNoteType=${noteInformation.fireNoteType}).`,
+    );
+  }
+  return ok(undefined);
+}
+
+function isValidBpm(value: number): boolean {
+  const floatValue = Math.fround(value);
+  return Number.isFinite(value) && Number.isFinite(floatValue) && floatValue > 0;
 }
 
 function isInt32(value: number): boolean {

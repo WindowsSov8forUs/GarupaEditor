@@ -32,13 +32,13 @@
 | --- | --- | --- |
 | S01 冻结时钟与调度静态证据 | 已完成 | E01–E26、上游 F01–F04 依赖、manifest、开放缺口和源/副本/Git 索引三方哈希校验器已落地并通过验证 |
 | S02 完成实体设备证据闭环 | 已完成 | 最终 Reverse 提交 `2ba3bdbb` 与 122 文件运行 oracle 已冻结；`101/21/6` 已闭合，两项只读不可得边界保留为非阻断保真度例外 |
-| S03 接入谱面构造结果 | 可开始 | 生产运行时不再依赖 `FirstSlice*Fixture` 或调用者提供的时钟/BPM 派生值 |
-| S04 恢复 60/120 FPS 请求边界 | 可开始 | `InGameDirector.Awake` 只向记录型后端请求确认的 60/120 目标值 |
-| S05 恢复双音乐时钟 | 可开始 | 主/launcher 初始状态、Float32 推进和回调轨迹匹配实体证据 |
-| S06 恢复 BPM command 消费 | 可开始 | launcher 预告、专用活跃列表、切换阈值和即时移除顺序匹配非零 BPM oracle |
-| S07 恢复判定偏移时钟 | 可开始 | 正负 offset 按各自已确认的 1/60 秒路径计算；Fast 跨界切换 tempo，Slow 负向借位保留调用点 BPM |
-| S08 恢复自适应子步 | 可开始 | `ExecuteFrame`、四计数器、严格阈值和 `101/21/6` 回退完整闭合 |
-| S09 恢复两阶段调度与列表突变 | 可开始 | 每子步顺序、同时组延迟、反向 Update、AfterUpdate 过滤和实时列表语义完整闭合 |
+| S03 接入谱面构造结果 | 已完成 | 生产运行时直接接收已登记的 `ChartConstructionResult`，并使用构造时冻结的进程累积 BPM count；fixture 身份仅留测试侧 |
+| S04 恢复 60/120 FPS 请求边界 | 已完成 | `InGameDirector.Awake` 幂等地向记录型后端请求一次 60/120，不建立 pacing 循环 |
+| S05 恢复双音乐时钟 | 已完成 | start/current/next 数值与字符串、0.8 秒 launcher lead、Float32 推进、单次 carry 和 callback 计数已恢复 |
+| S06 恢复 BPM command 消费 | 已完成 | CC03/CC08 首条选择、30 槽池、next 预告、正序活跃列表、提交与即时移除已恢复 |
+| S07 恢复判定偏移时钟 | 已完成 | `[-5,5]` 整数 offset 按 1/60 秒逐步计算；Fast 重查 tempo，Slow 保留调用点 BPM |
+| S08 恢复自适应子步 | 已完成 | 进程累积门、四计数器、严格阈值、修订后的 `counter[1]/[2]/[3]` 回退和双量守恒已恢复 |
+| S09 恢复两阶段调度与列表突变 | 已完成 | BPM-before-Note、反向实时 Update、survivor AfterUpdate、单组激活和下一子步 Count 已恢复 |
 | S10 建立生产 oracle 与阶段验收 | 可开始 | 零变化生产回归、非零 BPM 实体轨迹、60/120、偏移、暂停和失败关闭全部通过 |
 
 ### 1.3 批次记录
@@ -81,6 +81,18 @@
 - R01 更新为 122 个运行 oracle 文件、44,838,972 bytes；`SHA256SUMS` 含 121 行，哈希为 `B6A69C72FC45D594A65CAD886DBAAB4E884E60EC3539732DEEC01A673EA14F2F`。
 - 最终 closure 为 `s02_gate = closed`、`blocking_findings = []`；HABAHIRO 与 BPM pool cursor-wrap 仍是显式非阻断保真度例外。
 - manifest、`OPEN_GAPS.md`、校验器和最终 handoff 已同步；S03–S10 前置硬门解除。
+
+#### 2026-07-27 第五批：S03–S09 时钟调度运行链
+
+- 宿主输入已改为 `ChartConstructionResult + runtime settings + OneFrameData`；克隆、调用者合成或 `isCommand` 构造结果因缺少原作进程历史身份而失败关闭。
+- 谱面构造阶段在不污染公开结果类型的前提下登记构造身份、当前 chart BPM command 数和进程累积 count；零变化谱面在热进程中按原作证据进入 adaptive 门。
+- `InGameDirector.Awake` 新增 60/120 后端请求；初始化幂等、dispose 不发反向请求，且没有浏览器/Surface pacing 实现。
+- 双时钟从 start BPM 数值/字符串初始化，launcher lead 按 0.8 秒的 Float32 位置恢复；每子步使用 current/next BPM、192 刻度、单次 carry 和位置 callback。
+- `NoteBpmChange`、30 槽池和专用活跃列表已落地；每批只选择源序首个 CC03/CC08，提交顺序为 current/string 写入、inactive、callback 即时移除。
+- 判定 offset 仅接受生产 UI 已闭合的 `[-5,5]` 整数；Fast 每步按位置查 tempo，Slow 跨 bar 借位时固定使用调用点已提交 BPM。
+- 自适应门改用进程累积 count，并修正为 `counter[1] > 100`、`counter[2] > 20`、`counter[3] > 5`；`counter[0]` 只记录。
+- 两阶段调度保持时钟→BPM 正序→Note 实时反序→survivor AfterUpdate→一个批次；生产 Note 具体行为继续 `evidence-required`。
+- 隔离类型检查、第一切片回归和新时钟调度验收入口已通过；S10 将运行全部规定回归并形成独立验收记录。
 
 ## 2. 固定范围
 

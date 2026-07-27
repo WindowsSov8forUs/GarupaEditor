@@ -20,6 +20,7 @@ import type {
   ChartConstructionInput,
   ChartConstructionResult,
 } from "./types";
+import { registerConstructedChartRuntimeMetadata } from "../runtime/chartRuntimeMetadata";
 
 export { MusicScoreBezierConverter, MusicScoreHeaderParser } from "./musicScoreBezier";
 export { NoteDataBMSBuilder } from "./bmsBuilder";
@@ -92,7 +93,7 @@ export class NoteBatchInformationListFactory {
     this.habahiroChangeAbsolutePosValue = findHabahiroChangeAbsolutePos(noteBatches);
     finalizeNoteBatches(noteBatches);
     setupMultipleDirectionalFlickNotes(noteBatches);
-    return ok(freezeChartConstructionResult({
+    const result = freezeChartConstructionResult({
       noteBatches,
       startBpm: this.bmsBuilder.startBpm,
       startBpmString: this.bmsBuilder.startBpmString,
@@ -102,7 +103,9 @@ export class NoteBatchInformationListFactory {
       ],
       isMultiRangeNotes: this.bmsBuilder.isMultiRangeNotes,
       habahiroChangeAbsolutePos: this.habahiroChangeAbsolutePosValue,
-    }));
+    });
+    registerConstructedChartRuntimeMetadata(result, isCommand);
+    return ok(result);
   }
 }
 

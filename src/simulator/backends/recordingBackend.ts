@@ -5,6 +5,7 @@ import type {
   SimulatorBackendTraceEvent,
   SimulatorLifecycleBackend,
   SimulatorLifecycleBackendState,
+  SimulatorFrameRateBackend,
 } from "./contracts";
 
 type RecordedBackend = SimulatorBackendTraceEvent["backend"];
@@ -36,6 +37,22 @@ class RecordingLifecyclePort implements SimulatorLifecycleBackend {
   }
 }
 
+class RecordingFrameRatePort implements SimulatorFrameRateBackend {
+  constructor(
+    private readonly append: (
+      backend: RecordedBackend,
+      request: SimulatorBackendRequest,
+    ) => void,
+  ) {}
+
+  requestTargetFrameRate(value: 60 | 120): void {
+    this.append("frame-rate", {
+      action: "request-target-frame-rate",
+      detail: String(value),
+    });
+  }
+}
+
 export class RecordingSimulatorBackends implements SimulatorBackends {
   private readonly events: SimulatorBackendTraceEvent[] = [];
 
@@ -44,6 +61,7 @@ export class RecordingSimulatorBackends implements SimulatorBackends {
   readonly input = new RecordingPort("input", this.append.bind(this));
   readonly resources = new RecordingPort("resources", this.append.bind(this));
   readonly lifecycle = new RecordingLifecyclePort(this.append.bind(this));
+  readonly frameRate = new RecordingFrameRatePort(this.append.bind(this));
 
   snapshot(): readonly SimulatorBackendTraceEvent[] {
     return this.events.map((event) => ({ ...event }));

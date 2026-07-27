@@ -10,7 +10,7 @@ export interface SimulatorBackendRequest {
 
 export interface SimulatorBackendTraceEvent {
   readonly sequence: number;
-  readonly backend: "renderer" | "audio" | "input" | "resources" | "lifecycle";
+  readonly backend: "renderer" | "audio" | "input" | "resources" | "lifecycle" | "frame-rate";
   readonly action: string;
   readonly detail?: string;
 }
@@ -21,11 +21,16 @@ export interface SimulatorLifecycleBackend {
   recordState(state: SimulatorLifecycleBackendState): void;
 }
 
+export interface SimulatorFrameRateBackend {
+  requestTargetFrameRate(value: 60 | 120): void;
+}
+
 export interface SimulatorBackends {
   readonly renderer: SimulatorBackendPort;
   readonly audio: SimulatorBackendPort;
   readonly input: SimulatorBackendPort;
   readonly resources: SimulatorBackendPort;
   readonly lifecycle: SimulatorLifecycleBackend;
+  readonly frameRate: SimulatorFrameRateBackend;
   snapshot(): readonly SimulatorBackendTraceEvent[];
 }
