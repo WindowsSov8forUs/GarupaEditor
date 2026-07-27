@@ -979,6 +979,190 @@
       "requests_inside_director_awake": [
         60
       ]
+    },
+    {
+      "run_id": "ikuoku-cc08-run-081-bucket2-fallback",
+      "capture_directory": "runtime/captures/clock-scheduling/n14-ikuoku-live-affinity4-bucket2-trigger-run-081",
+      "package_version": "10.1.4",
+      "package_version_code": "230",
+      "address_table": {
+        "version_code": "230",
+        "version_name": "10.1.4"
+      },
+      "purpose": "bucket-2 history fallback at counter[2] 20 to 21 under bounded CPU controls",
+      "coverage": [
+        "fallback_101_21_6",
+        "fallback_counter2_21",
+        "no_auto_live_boundary"
+      ],
+      "event_count": 85,
+      "collection_complete": true,
+      "collector": {
+        "message_thread_role": "enqueue-only",
+        "flush_granularity": "per-batch",
+        "post_issued_from": "writer-thread",
+        "batch_count": 78,
+        "max_queue_depth_batches": 0,
+        "fault_count": 0
+      },
+      "raw_trace": {
+        "path": "traces/raw/ikuoku-cc08-run-081-bucket2-fallback.jsonl.gz",
+        "bytes": 3448,
+        "sha256": "8282F06876F79D79D6AE991F63D163D0D1B918CD20B9F0FFF650867251DCEDE8",
+        "uncompressed_bytes": 26170,
+        "uncompressed_sha256": "8D3CEAE489B01A5E70156067DDFE71A0909B0C860EE50132960373006C54CA88"
+      },
+      "normalized_trace": {
+        "path": "traces/normalized/ikuoku-cc08-run-081-bucket2-fallback.lifecycle.jsonl",
+        "bytes": 10552,
+        "sha256": "358300D1BDB727FA717DA1E4A8B4F2C67BB03F6794EE9B8E62CD12CB0E1D81A8"
+      },
+      "consumed_bms": {
+        "path": "sources/653_ikuoku_easy.bms.txt",
+        "sha256": "4C2F8D202DED5DFD9C4144C0FE000B1E3524E0F25D3FEAF4DD102413F6CD6325",
+        "identical_to_frozen_10_1_3_source": true
+      },
+      "target_frame_rate_requests": [],
+      "requests_inside_director_awake": []
+    },
+    {
+      "run_id": "ikuoku-cc08-run-083-bucket2-fallback-repeat",
+      "capture_directory": "runtime/captures/clock-scheduling/n14-ikuoku-live-affinity4-bucket2-trigger-run-083",
+      "package_version": "10.1.4",
+      "package_version_code": "230",
+      "address_table": {
+        "version_code": "230",
+        "version_name": "10.1.4"
+      },
+      "purpose": "independent repeat of the bucket-2 counter[2] 20 to 21 fallback",
+      "coverage": [
+        "fallback_101_21_6",
+        "fallback_counter2_21",
+        "independent_repeat",
+        "no_auto_live_boundary"
+      ],
+      "event_count": 138,
+      "collection_complete": true,
+      "collector": {
+        "message_thread_role": "enqueue-only",
+        "flush_granularity": "per-batch",
+        "post_issued_from": "writer-thread",
+        "batch_count": 130,
+        "max_queue_depth_batches": 0,
+        "fault_count": 0
+      },
+      "raw_trace": {
+        "path": "traces/raw/ikuoku-cc08-run-083-bucket2-fallback-repeat.jsonl.gz",
+        "bytes": 4299,
+        "sha256": "6A5840DF5C89811E6260BFD0090F42A0E75E4ADEDE230A5766D925B2BC88BA9D",
+        "uncompressed_bytes": 38544,
+        "uncompressed_sha256": "2A9E1A33B3B60810FC4E75168C8B4D32324415A1B7577CF09B6350C0049C31B8"
+      },
+      "normalized_trace": {
+        "path": "traces/normalized/ikuoku-cc08-run-083-bucket2-fallback-repeat.lifecycle.jsonl",
+        "bytes": 12320,
+        "sha256": "202ACAE983F6A979BB091BE3E9F8299B75C33FFA718073FBEAA1BBB0EAEA56FD"
+      },
+      "consumed_bms": {
+        "path": "sources/653_ikuoku_easy.bms.txt",
+        "sha256": "4C2F8D202DED5DFD9C4144C0FE000B1E3524E0F25D3FEAF4DD102413F6CD6325",
+        "identical_to_frozen_10_1_3_source": true
+      },
+      "target_frame_rate_requests": [],
+      "requests_inside_director_awake": []
+    },
+    {
+      "run_id": "ikuoku-cc08-run-086-bucket1-fallback",
+      "capture_directory": "runtime/captures/clock-scheduling/n14-ikuoku-live-target40-timescale075-bucket1-trigger-run-086",
+      "package_version": "10.1.4",
+      "package_version_code": "230",
+      "address_table": {
+        "version_code": "230",
+        "version_name": "10.1.4"
+      },
+      "purpose": "bucket-1 history fallback at counter[1] 100 to 101 using original Unity APIs",
+      "coverage": [
+        "fallback_101_21_6",
+        "fallback_counter1_101",
+        "original_api_timing_control",
+        "no_auto_live_boundary"
+      ],
+      "event_count": 142,
+      "collection_complete": true,
+      "collector": {
+        "message_thread_role": "enqueue-only",
+        "flush_granularity": "per-batch",
+        "post_issued_from": "writer-thread",
+        "batch_count": 132,
+        "max_queue_depth_batches": 0,
+        "fault_count": 0
+      },
+      "raw_trace": {
+        "path": "traces/raw/ikuoku-cc08-run-086-bucket1-fallback.jsonl.gz",
+        "bytes": 4450,
+        "sha256": "155AE91558AF5445F1F931D8FA3742A05AFEE0A0821D043039FF13D137AF9567",
+        "uncompressed_bytes": 40214,
+        "uncompressed_sha256": "2D7EBB43C4430093BB4664F9332F22C8096A76A415427950EE328CC025B26E3B"
+      },
+      "normalized_trace": {
+        "path": "traces/normalized/ikuoku-cc08-run-086-bucket1-fallback.lifecycle.jsonl",
+        "bytes": 13982,
+        "sha256": "1A785F4DC2A59B680711BBC974E1CBFC0AB4D2572F422BE977394748B76012C7"
+      },
+      "consumed_bms": {
+        "path": "sources/653_ikuoku_easy.bms.txt",
+        "sha256": "4C2F8D202DED5DFD9C4144C0FE000B1E3524E0F25D3FEAF4DD102413F6CD6325",
+        "identical_to_frozen_10_1_3_source": true
+      },
+      "target_frame_rate_requests": [],
+      "requests_inside_director_awake": []
+    },
+    {
+      "run_id": "ikuoku-cc08-run-087-bucket1-fallback-repeat",
+      "capture_directory": "runtime/captures/clock-scheduling/n14-ikuoku-live-target40-timescale075-bucket1-trigger-run-087",
+      "package_version": "10.1.4",
+      "package_version_code": "230",
+      "address_table": {
+        "version_code": "230",
+        "version_name": "10.1.4"
+      },
+      "purpose": "independent repeat of the bucket-1 counter[1] 100 to 101 fallback",
+      "coverage": [
+        "fallback_101_21_6",
+        "fallback_counter1_101",
+        "original_api_timing_control",
+        "independent_repeat",
+        "no_auto_live_boundary"
+      ],
+      "event_count": 132,
+      "collection_complete": true,
+      "collector": {
+        "message_thread_role": "enqueue-only",
+        "flush_granularity": "per-batch",
+        "post_issued_from": "writer-thread",
+        "batch_count": 122,
+        "max_queue_depth_batches": 0,
+        "fault_count": 0
+      },
+      "raw_trace": {
+        "path": "traces/raw/ikuoku-cc08-run-087-bucket1-fallback-repeat.jsonl.gz",
+        "bytes": 4308,
+        "sha256": "DE0FD9A59C1E09400389EEF1475D6951AEE6FF4861F8314D3C1A12B6495C6289",
+        "uncompressed_bytes": 38083,
+        "uncompressed_sha256": "BE3FA3850DB924A15FF4DFF9DEE7BB5E9F76551035445033CD258CC53F16BDFF"
+      },
+      "normalized_trace": {
+        "path": "traces/normalized/ikuoku-cc08-run-087-bucket1-fallback-repeat.lifecycle.jsonl",
+        "bytes": 13983,
+        "sha256": "8C2C454E25B1663DE96EB2855A99304E93974ED87DBE11C59853685C41CF0A27"
+      },
+      "consumed_bms": {
+        "path": "sources/653_ikuoku_easy.bms.txt",
+        "sha256": "4C2F8D202DED5DFD9C4144C0FE000B1E3524E0F25D3FEAF4DD102413F6CD6325",
+        "identical_to_frozen_10_1_3_source": true
+      },
+      "target_frame_rate_requests": [],
+      "requests_inside_director_awake": []
     }
   ],
   "version_separation": "`samples` and `supplemental_runs` are 10.1.3 / 229. `version_10_1_4_runs` is 10.1.4 / 230. They are never merged into one closed sample; see artifacts/investigations/package-version-rebaseline-10-1-4/ for the address migration that makes the same capture tooling valid on both."

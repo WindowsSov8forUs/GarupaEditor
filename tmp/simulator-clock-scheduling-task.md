@@ -8,11 +8,11 @@
 - 前置阶段验收：`tmp/simulator-chart-construction-acceptance.md`
 - 唯一原作证据仓库：`HOST________\VSCode\GirlsBandParty-Reverse`
 - 静态证据基线提交：`74ab76f6838847d98aae1a15741a5f024e3774ff`
-- 当前运行证据提交：`e96733cd96a5e7446d2b9adbc413bf77de0bcf98`
+- 当前运行证据提交：`2ba3bdbbab9be2de6fedb9b22f623bd80611c023`
 - 排除的逆向仓库内容：未跟踪的 `.claude/`、`runtime/tools/` 及任何未进入锁定提交的文件
 - 锁定游戏样本：`jp.co.craftegg.band` 10.1.4（version code 230，`arm64-v8a`）；10.1.3/229 仅作独立历史样本和跨版本佐证，不与 10.1.4 trace 合并
 - 阶段目标：把已完成的原作形状 `NoteBatchInformationList` 接入模拟器运行时，恢复原作托管层的帧率请求、双音乐时钟、BPM command、判定偏移、自适应子步、两阶段 Note 调度和暂停冻结语义。
-- 阶段状态：S01 静态证据冻结已完成；Reverse 运行 oracle 已同步至 `e96733cd96a5e7446d2b9adbc413bf77de0bcf98`。HABAHIRO 实体样本与 30 槽 BPM 池回绕改列只读捕捉不可得的非阻断保真度例外；S02 当前仅受低 bucket 历史回退动态边界阻断。
+- 阶段状态：S01 静态证据冻结已完成；Reverse 运行 oracle 已同步至 `2ba3bdbbab9be2de6fedb9b22f623bd80611c023`。runs 081/083/086/087 已闭合低 bucket `101/21` 动态回退边界，连同既有 `6` 边界使 S02 硬门关闭；HABAHIRO 实体样本与 30 槽 BPM 池回绕继续作为只读捕捉不可得的非阻断保真度例外。
 
 本阶段继续维持 GarupaEditor 当前 TypeScript 技术栈，不因 Reverse 中的 Python 验证模型改变运行技术栈。Reverse 是唯一行为依据；旧 GarupaEditor 模拟器、通用节奏游戏实现、浏览器计时经验和方便实现的默认值均不得作为原作行为来源。
 
@@ -20,7 +20,7 @@
 
 - 判定偏移时钟属于本阶段；判定窗口、输入仲裁和 Note 结果不属于本阶段。
 - move-time、`InGameSnapshotData`、`ReturnTime`、对象池重建和最多 16 秒无输入回放后置，不进入本阶段。
-- 非零 CC03/CC08、初始双时钟、60/120、暂停和偏移的生产/实体证据已经取得；低 bucket 历史回退动态边界仍是 S02 硬门。
+- 非零 CC03/CC08、初始双时钟、60/120、暂停、偏移和 `101/21/6` 自适应回退的生产/实体证据已经取得；S02 硬门已关闭。
 - HABAHIRO 实体样本与 30 槽 BPM 池回绕在只读捕捉前提下不可获得，统一标注为“根据已有证据进行还原，不阻断，无法依赖实体证据，不确保百分百还原”。
 - 60/120 FPS 只恢复 `InGameDirector.Awake` 的目标帧率选择和后端请求，不宣称浏览器、Android Surface、合成器或显示器实际达到对应 cadence。
 - 生产 Note 进入尚未恢复的具体 Move/Wait/Stop/OnUpdate/AfterUpdate 行为时必须返回 `evidence-required`；不得以 no-op 保持表面可运行。
@@ -31,15 +31,15 @@
 | 任务 | 状态 | 完成条件 |
 | --- | --- | --- |
 | S01 冻结时钟与调度静态证据 | 已完成 | E01–E26、上游 F01–F04 依赖、manifest、开放缺口和源/副本/Git 索引三方哈希校验器已落地并通过验证 |
-| S02 完成实体设备证据闭环 | 已同步、仍阻断 | R01–R11 已冻结；HABAHIRO 与 BPM 池回绕已列非阻断例外，当前只等待 `counter[1]/[2]` 回退动态边界决策 |
-| S03 接入谱面构造结果 | 等待 S02 | 生产运行时不再依赖 `FirstSlice*Fixture` 或调用者提供的时钟/BPM 派生值 |
-| S04 恢复 60/120 FPS 请求边界 | 等待 S02 | `InGameDirector.Awake` 只向记录型后端请求确认的 60/120 目标值 |
-| S05 恢复双音乐时钟 | 等待 S02 | 主/launcher 初始状态、Float32 推进和回调轨迹匹配实体证据 |
-| S06 恢复 BPM command 消费 | 等待 S02 | launcher 预告、专用活跃列表、切换阈值和即时移除顺序匹配非零 BPM oracle |
-| S07 恢复判定偏移时钟 | 等待 S02 | 正负 offset 按各自已确认的 1/60 秒路径计算；Fast 跨界切换 tempo，Slow 负向借位保留调用点 BPM |
-| S08 恢复自适应子步 | 等待 S02 | `ExecuteFrame`、四计数器、严格阈值和 `101/21/6` 回退完整闭合 |
-| S09 恢复两阶段调度与列表突变 | 等待 S02 | 每子步顺序、同时组延迟、反向 Update、AfterUpdate 过滤和实时列表语义完整闭合 |
-| S10 建立生产 oracle 与阶段验收 | 等待 S02 | 零变化生产回归、非零 BPM 实体轨迹、60/120、偏移、暂停和失败关闭全部通过 |
+| S02 完成实体设备证据闭环 | 已完成 | 最终 Reverse 提交 `2ba3bdbb` 与 122 文件运行 oracle 已冻结；`101/21/6` 已闭合，两项只读不可得边界保留为非阻断保真度例外 |
+| S03 接入谱面构造结果 | 可开始 | 生产运行时不再依赖 `FirstSlice*Fixture` 或调用者提供的时钟/BPM 派生值 |
+| S04 恢复 60/120 FPS 请求边界 | 可开始 | `InGameDirector.Awake` 只向记录型后端请求确认的 60/120 目标值 |
+| S05 恢复双音乐时钟 | 可开始 | 主/launcher 初始状态、Float32 推进和回调轨迹匹配实体证据 |
+| S06 恢复 BPM command 消费 | 可开始 | launcher 预告、专用活跃列表、切换阈值和即时移除顺序匹配非零 BPM oracle |
+| S07 恢复判定偏移时钟 | 可开始 | 正负 offset 按各自已确认的 1/60 秒路径计算；Fast 跨界切换 tempo，Slow 负向借位保留调用点 BPM |
+| S08 恢复自适应子步 | 可开始 | `ExecuteFrame`、四计数器、严格阈值和 `101/21/6` 回退完整闭合 |
+| S09 恢复两阶段调度与列表突变 | 可开始 | 每子步顺序、同时组延迟、反向 Update、AfterUpdate 过滤和实时列表语义完整闭合 |
+| S10 建立生产 oracle 与阶段验收 | 可开始 | 零变化生产回归、非零 BPM 实体轨迹、60/120、偏移、暂停和失败关闭全部通过 |
 
 ### 1.3 批次记录
 
@@ -75,6 +75,13 @@
 - manifest 与校验器改为只让 `fallback_101_21_6_counter1_counter2_boundaries` 阻断 S03–S10，并强制登记两项非阻断保真度例外。
 - 工作树证据校验已通过，输出 `static=26, runtime=109, revisions=10, upstream=4, runtimeGate=blocked-by-adaptive-fallback-runtime-evidence, index=skipped`；暂存后索引校验输出相同计数且 `index=checked`，`git diff --cached --check` 通过。本批不修改 `src/simulator`，不运行 TypeScript、模拟器测试、Vite/Tauri 或整体构建。
 
+#### 2026-07-27 第四批：S02 最终证据关闭
+
+- Reverse 最终锁定提交更新为 `2ba3bdbbab9be2de6fedb9b22f623bd80611c023`；runs 081/083 闭合 `counter[2]` 20→21，runs 086/087 闭合 `counter[1]` 100→101。
+- R01 更新为 122 个运行 oracle 文件、44,838,972 bytes；`SHA256SUMS` 含 121 行，哈希为 `B6A69C72FC45D594A65CAD886DBAAB4E884E60EC3539732DEEC01A673EA14F2F`。
+- 最终 closure 为 `s02_gate = closed`、`blocking_findings = []`；HABAHIRO 与 BPM pool cursor-wrap 仍是显式非阻断保真度例外。
+- manifest、`OPEN_GAPS.md`、校验器和最终 handoff 已同步；S03–S10 前置硬门解除。
+
 ## 2. 固定范围
 
 ### 2.1 纳入范围
@@ -106,8 +113,8 @@
 ## 3. 强制执行规则
 
 1. 每个字段、阈值、顺序、列表操作和状态转移必须指向第 5 节证据 ID；不得用第一切片现状反推原作。
-2. 静态证据基线固定为 `74ab76f6838847d98aae1a15741a5f024e3774ff`；当前运行证据提交为 `e96733cd96a5e7446d2b9adbc413bf77de0bcf98`，但因 closure 仍阻断，它不是最终闭合提交。后续 S02 新证据进入 Reverse 后必须再次更新锁定提交；禁止直接引用 Reverse 未提交工作树。
-3. S02 未完成前不得实施 S03–S10。允许为采证编写 Reverse 工具，但采集结果必须先提交 Reverse，再冻结到 GarupaEditor 临时证据包。
+2. 静态证据基线固定为 `74ab76f6838847d98aae1a15741a5f024e3774ff`；最终运行证据提交为 `2ba3bdbbab9be2de6fedb9b22f623bd80611c023`，其 `closure.json` 明确 `s02_gate = closed`；禁止直接引用 Reverse 未提交工作树。
+3. S02 已完成，S03–S10 可按本任务书顺序实施；任何新增或冲突证据仍须先提交 Reverse，再冻结到 GarupaEditor 临时证据包。
 4. `.claude/` 与 `runtime/tools/` 始终排除；即使其中存在说明或可运行脚本，也不能成为证据或 GarupaEditor 依赖。
 5. 生产类型不得加入 fixture ID、证据 ID、调度测试回调或合成 `sourceOrder`。测试身份必须存在于旁路适配器。
 6. `createSimulatorEngine` 是 GarupaEditor 可移植宿主边界，不冒充原作公开 API；原作管理器内部不依赖 React、Pixi、Tauri、DOM 或编辑器谱面类型。
@@ -155,7 +162,7 @@ tmp/simulator-reverse-evidence/clock-scheduling/
 - Reverse 静态基线和当前/最终证据提交；
 - Reverse 工作树除 `.claude/` 与 `runtime/tools/` 外无未登记文件；
 - E01–E26 的源文件与冻结副本字节数、SHA-256；
-- R01 `SHA256SUMS` 下全部 109 个运行证据文件、R02–R06 重定位证据、R07–R10 修订证据和 R11 交接边界文档的源提交/冻结副本/Git 索引一致性；
+- R01 `SHA256SUMS` 下全部 122 个运行证据文件、R02–R06 重定位证据、R07–R10 修订证据和 R11 最终交接文档的源提交/冻结副本/Git 索引一致性；
 - 谱面构造证据包 F01–F04 的既有冻结哈希；
 - 暂存后 Git 索引中的全部证据字节。
 
@@ -223,7 +230,7 @@ tmp/simulator-reverse-evidence/clock-scheduling/
 
 | ID | 内容 | 完整性锚点 | 状态 | 主要消费任务 |
 | --- | --- | --- | --- | --- |
-| R01 | `clock-scheduling-runtime-oracle/` 全部 109 个已提交文件 | `SHA256SUMS` SHA-256 `AF04F94BA3BBA7EB59048DCD9409F6739D5C1186E6E69DDCEAF84AC54ED388C8` | 已校验、closure 阻断 | S02–S10 |
+| R01 | `clock-scheduling-runtime-oracle/` 全部 122 个已提交文件 | `SHA256SUMS` SHA-256 `B6A69C72FC45D594A65CAD886DBAAB4E884E60EC3539732DEEC01A673EA14F2F` | 已校验、S02 closure 已关闭 | S02–S10 |
 | R02 | 10.1.4 重定位 README | `5E37640F8F9F0B24E10B016606FE46E9361F4005606BE82EBC00FF44761E09B5` | 已确认 | S02、S04–S07、S09、S10 |
 | R03 | 10.1.4 重定位提取器 | `3DD7854E3120EA87967C7E86774465CC89FAA0F9ACED02BCF5CAE55CBC38376E` | 已确认工具 | S02 |
 | R04 | 10.1.4 targets | `2295CCD41B1660EB666613A8A36D354D7B763C9E2DFF83DE2C1B433011819019` | 已确认 | S02、S04–S07、S09 |
@@ -235,13 +242,13 @@ tmp/simulator-reverse-evidence/clock-scheduling/
 | R10 | 修订后的 adaptive prototype oracle | `EC5C0CD7938828D50D5704B0FD0DAA492864F79DAC74F0FE34CDAA0723E39E71` | 修订 E14 映射 | S02、S08、S09 |
 | R11 | 最新时钟调度交接边界 | `42AED247AB18D6C0B47F60E601C3696C41D18999E5401C281CF40993B826E5F0` | 当前边界说明 | S02、S03、S08、S10 |
 
-R01 的顶层 `overall_status = unresolved`、`s02_gate = blocked`。已冻结不等于已闭合，R01 的 blocking findings 必须原样传递到本任务书和 `OPEN_GAPS.md`。
+最终 R01 的顶层 `overall_status = confirmed-with-explicit-nonblocking-boundaries`、`s02_gate = closed`、`blocking_findings = []`；两项生产样本不可得边界继续在 manifest、`OPEN_GAPS.md` 与验收记录中显式保留。
 
 ## 6. S02 实体设备证据硬门
 
 ### 6.1 已提交调查产物
 
-Reverse `e96733cd96a5e7446d2b9adbc413bf77de0bcf98` 已提交并由 R01 完整冻结：
+Reverse `2ba3bdbbab9be2de6fedb9b22f623bd80611c023` 已提交并由 R01 完整冻结：
 
 - 10.1.3/229 和锁定的 10.1.4/230 环境、目标、源 BMS、样本 manifest 与完整哈希；
 - CC03 85→140、CC08 99.5→95.5 的 60 模式轨迹；
@@ -265,24 +272,19 @@ Reverse `e96733cd96a5e7446d2b9adbc413bf77de0bcf98` 已提交并由 R01 完整冻
 1. `786 miracle_april SPECIAL` HABAHIRO 零 BPM-change 60 模式实体样本当前不可选；根据已有证据进行还原，不阻断，无法依赖实体证据，不确保百分百还原。
 2. 当前 4176 个生产 BMS 中单谱面最多 16 个 BPM command，无法触发 30 槽 BPM pool 第 31 次 acquire、游标回绕和复用；根据已有证据进行还原，不阻断，无法依赖实体证据，不确保百分百还原。
 
-### 6.4 仍阻断的问题
+### 6.4 最终关闭的低 bucket 回退边界
 
-`counter[1] > 100` 与 `counter[2] > 20` 两个动态边界仍阻断 S02。静态反编译已经确认比较对象、严格阈值和先递增后比较顺序；动态缺口的具体原因如下：
+- runs 081/083 两次独立确认  20→21 时，候选 3 子步在同帧回退为 1 子步。
+- runs 086/087 两次独立确认  100→101 时，候选 2 子步在同帧回退为 1 子步。
+- 连同既有 pass-2 runs 的  5→6 回退， 三个动态边界全部闭合。
+- 控制条件、metadata 与 guardrail 均进入最终提交；采集没有替换返回值或直接写进程内存。
 
-- runs 061–067 全部使用原作客户端、无 autoplay、无触摸注入，并从重到轻缩减只读探针。
-- 重探针配置的进程内逐帧快照成本立即把帧推入 bucket 2/3，无法连续累积 `counter[1]` 所需的 101 个 bucket-1 frame。
-- 轻探针配置使客户端维持约 16.5 ms、持续落入 bucket 0；最轻有效配置仅产生两个孤立 bucket-2 frame，且从未出现 bucket-1 frame，无法累积 `counter[2]` 所需的 21 个 bucket-2 frame。
-- 主机写盘背压已被排除，扰动来自 agent 在客户端进程内的观测成本；继续减探针会失去确认输入 bucket、计数器和输出步数所需的证据字段。
-- 因此这是“必要观测会改变目标时序，减轻观测后目标序列又不可达”的动态证据边界，不是算法阈值未知。
+### 6.5 S02 关闭结论
 
-### 6.5 硬停止条件
-
-- 第 6.4 节动态边界尚未取得新的证据或明确降级决策。
-- 第 6.4 节只能通过修改原作控制流、模拟器结果或不可审计的观测方式补齐。
-- 新 trace 未提交 Reverse、无完整 SHA-256、不可离线校验或跨版本混合。
-- 新证据与 R01/R07–R10 冲突且未先在 Reverse 修订结论。
-
-第 6.3 节不再参与解锁；只有第 6.4 节动态边界取得新证据或另行明确为可接受的非阻断保真度例外，并同步更新 manifest、`OPEN_GAPS.md` 和本任务书后，才允许 S03 开始。
+- Reverse  为 、，离线校验器输出 。
+- GarupaEditor 冻结 122 个 runtime-oracle 文件（ 121 行）及最终 handoff；源提交、冻结副本与 Git 索引由  校验。
+- 第 6.3 节两项只读不可得边界不参与门控，实施与验收不得宣称百分百还原。
+- S03–S10 已解除前置阻断。
 
 ## 7. 运行边界与接口决策
 
@@ -404,11 +406,11 @@ interface FrameRateBackend {
 
 1. 在 Reverse 设计只读 hook 与采集 schema。已完成。
 2. 取得原作实际消费的非零 CC03/CC08、零变化、60/120、暂停和 offset 样本。已完成可用部分。
-3. 将原始数据、解析结果、版本重定位和校验器提交 Reverse。已完成至 `e96733cd96a5e7446d2b9adbc413bf77de0bcf98`。
+3. 将原始数据、解析结果、版本重定位和校验器提交 Reverse。已完成至最终提交 `2ba3bdbbab9be2de6fedb9b22f623bd80611c023`。
 4. 复核静态证据与实体轨迹，修订 change-count、counter mapping 和 Slow offset 结论。已完成当前冲突。
 5. 冻结已提交产物并更新本任务书锁定提交、哈希和进度。已完成 R01–R11。
 6. 将 HABAHIRO 与 30 槽池回绕登记为第 6.3 节非阻断保真度例外；实现只消费已有证据，不宣称实体闭合。已完成。
-7. 在不改变原作行为且不以探针扰动制造结果的条件下闭合两个低 bucket 回退边界；不可达则继续阻断。
+7. runs 081/083/086/087 已闭合两个低 bucket 回退边界，S02 硬门关闭。
 
 **原作证据**
 
@@ -425,7 +427,7 @@ interface FrameRateBackend {
 
 **未解决项**
 
-- 第 6.4 节低 bucket 动态触发边界。
+- 无阻断项；第 6.3 节两项行为只能按已有证据还原，不能宣称百分百复原。
 - 第 6.3 节两项行为只能按已有证据还原，不能宣称百分百复原。
 - 实际音频 transport 相对 BPM callback 的设备层时序不属于本阶段，除非实体证据同时静态闭合其 owner。
 
@@ -436,13 +438,13 @@ interface FrameRateBackend {
 
 **测试**
 
-- Reverse `verify_runtime_oracle.py`，当前已通过并明确输出 S02 remains blocked。
+- Reverse `verify_runtime_oracle.py` 已通过并明确输出 `S02 closed with explicit non-blocking fidelity boundaries`。
 - GarupaEditor `verify.mjs` 对源提交、冻结副本、R01 `SHA256SUMS` 和 Git index 的一致性校验。
 - 后续新增样本的重复采集事件顺序与 closure 字段完备性。
 
 **停止条件**
 
-- 第 6.5 节任一条件成立。
+- 新证据使最终 closure 再次出现 blocking finding，或源提交、冻结副本与 manifest 不一致。
 
 ### S03 接入谱面构造结果
 
@@ -735,7 +737,7 @@ interface FrameRateBackend {
 
 **未解决项**
 
-- `counter[1] > 100` 与 `counter[2] > 20` 尚无动态可达证据，S02 未解除前不得实现为已闭合生产行为。
+- 无；`counter[1]/[2]/[3]` 的 `101/21/6` 动态边界均已闭合。
 
 **禁止越界项**
 

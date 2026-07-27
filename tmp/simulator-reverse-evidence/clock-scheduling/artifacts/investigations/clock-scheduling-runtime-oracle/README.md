@@ -190,8 +190,12 @@ close no 10.1.3 row.
 | `ikuoku-cc08-run-057-offset-plus5` | 40,811 | +5 fast crossing, bar 15→16 and BPM 99.5→95.5 |
 | `ikuoku-cc08-run-059-offset-minus5` | 38,253 | -5 slow crossing, bar 16→15 retaining BPM 95.5 |
 | `ikuoku-cc08-run-060-full-note-detail` | 22,854 | reverse-index main active-list Update order, 16/16 multi-member substeps |
+| `ikuoku-cc08-run-081-bucket2-fallback` | 85 | `counter[2]` 20→21, candidate 3→fallback 1 |
+| `ikuoku-cc08-run-083-bucket2-fallback-repeat` | 138 | independent repeat of the `counter[2]` boundary |
+| `ikuoku-cc08-run-086-bucket1-fallback` | 142 | `counter[1]` 100→101, candidate 2→fallback 1 |
+| `ikuoku-cc08-run-087-bucket1-fallback-repeat` | 132 | independent repeat of the `counter[1]` boundary |
 
-All eleven are complete collections with zero writer faults. Run 034 closes
+All fifteen are complete collections with zero writer faults. Run 034 closes
 `normal_zero_bpm_60` on the locked version with 763 frames, 763 clock substeps, and no adaptive
 decision or bucket increment. Runs 035 and 036 close `pause_during_bpm` as a split capture of one
 process and one BPM object: no clock, note or BPM-object update occurs while frozen, and resume
@@ -203,11 +207,12 @@ Run 060 closes reverse-index ordering: all 16 sampled multi-member substeps upda
 active-list members in exact reverse list order after nested child updates are filtered by pointer
 membership.
 
-Runs 061–067 bracket the adaptive collector configurations without autoplay or touch injection.
-Heavy hooks perturb frames into buckets 2/3; light hooks sustain bucket 0, with at most two
-isolated bucket-2 frames and no bucket-1 frame. The `counter[1]`/`counter[2]` dynamic thresholds
-are therefore blocked by observation-induced perturbation/runtime reachability, not left as an
-ordinary capture TODO.
+Runs 061–067 bracket the earlier adaptive collector configurations and remain tuning history.
+Runs 081 and 083 independently close `counter[2]` 20→21 under bounded CPU controls. Runs 086 and
+087 independently close `counter[1]` 100→101 by calling the original
+`Application.set_targetFrameRate(40)` and `Time.set_timeScale(0.75)` APIs after BMS parsing.
+The machine-readable summary records the controls, guardrails and exact threshold frames; no APK
+patch, process-memory write or return-value replacement is used.
 
 The cached production inventory contains 81 musicscore bundles and 4,176 BMS assets. Only 445
 contain BPM commands and the maximum is 16, so no current chart can produce the 31 acquisitions
@@ -235,16 +240,18 @@ unchanged signature but produced no event when the radio was switched. Compiler-
 names are positional, so that name may denote a different closure in the new build. The setting
 source is closed by the read site and the UI owner, not by this callback.
 
-## Unresolved
+## Explicit Non-Blocking Fidelity Boundaries
 
 - The HABAHIRO zero-change row cannot be captured at all on this account: `786 miracle_april`
   SPECIAL is exclusive to a limited-time event and is not selectable outside that window. The row
-  stays blocking, but as an availability boundary rather than a collection gap — it must not be
-  substituted with a synthetic chart or another wide-lane chart.
+  remains an availability boundary rather than a collection gap — it must not be substituted with
+  a synthetic chart or another wide-lane chart, and percent-perfect fidelity is not claimed.
 - The 30-slot BPM cursor-wrap sample is blocked by production chart availability: the complete
   cached inventory has at most 16 BPM commands per chart.
-- The slow-frame 2/3/4 substeps remain collector-induced. `counter[3] = 6` is dynamic; the
-  `counter[1]`/`counter[2]` thresholds remain fail-closed at the observation/reachability boundary.
+- The ordinary slow-frame 2/3/4 samples remain collector-induced. The three history thresholds
+  `counter[1] = 101`, `counter[2] = 21` and `counter[3] = 6` are dynamically confirmed, with the
+  lower-bucket timing controls explicitly recorded as evidence boundaries.
 - HABAHIRO zero-change 60-mode remains unavailable until its limited-time chart returns.
 
-These unresolved items keep S02 blocked and S03-S10 fail closed.
+These explicit fidelity boundaries do not block S02. The locked 10.1.4 matrix has no remaining
+ordinary evidence gap, and the offline verifier closes the S02 gate while preserving both limits.

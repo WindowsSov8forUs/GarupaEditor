@@ -87,12 +87,27 @@ if (sourceHead !== expectedHead) {
 const sourceStatus = git(["status", "--porcelain"], sourceRoot)
   .split(/\r?\n/)
   .filter(Boolean);
+const trackedSourceChanges = [];
 for (const line of sourceStatus) {
   const isAllowedUntrackedPath = manifest.source.excludedUntrackedPaths.some(
     (path) => line === `?? ${path}`,
   );
+  if (isAllowedUntrackedPath) {
+    continue;
+  }
+  if (!line.startsWith("?? ")) {
+    trackedSourceChanges.push(line);
+    continue;
+  }
   if (!isAllowedUntrackedPath) {
     fail(`Unexpected source worktree entry: ${line}`);
+  }
+}
+if (trackedSourceChanges.length > 0) {
+  try {
+    git(["diff", "--ignore-space-at-eol", "--quiet"], sourceRoot);
+  } catch {
+    fail("Source worktree contains non-EOL tracked changes outside the locked commit");
   }
 }
 
@@ -104,20 +119,14 @@ if (manifest.upstreamDependencies.length !== 4) {
 }
 
 const requiredTasks = ["S03", "S04", "S05", "S06", "S07", "S08", "S09", "S10"];
-if (manifest.runtimeEvidenceGate.status !== "blocked-by-adaptive-fallback-runtime-evidence") {
+if (manifest.runtimeEvidenceGate.status !== "closed-with-explicit-nonblocking-fidelity-boundaries") {
   fail(`Unexpected runtime gate status: ${manifest.runtimeEvidenceGate.status}`);
 }
-if (manifest.runtimeEvidenceGate.sourceClosureStatus !== "blocked") {
+if (manifest.runtimeEvidenceGate.sourceClosureStatus !== "closed") {
   fail(`Unexpected source runtime closure status: ${manifest.runtimeEvidenceGate.sourceClosureStatus}`);
 }
-const expectedBlockingFindings = ["fallback_101_21_6_counter1_counter2_boundaries"];
-if (
-  manifest.runtimeEvidenceGate.blockingFindings.length !== expectedBlockingFindings.length ||
-  expectedBlockingFindings.some(
-    (finding) => !manifest.runtimeEvidenceGate.blockingFindings.includes(finding),
-  )
-) {
-  fail("Only the adaptive fallback dynamic boundary may block S03-S10");
+if (manifest.runtimeEvidenceGate.blockingFindings.length !== 0) {
+  fail("Closed S02 gate must not retain blocking findings");
 }
 const expectedNonBlockingFindings = [
   "habahiro_zero_bpm_60",
@@ -138,11 +147,8 @@ if (
 ) {
   fail("Read-only unavailable findings must remain explicit non-blocking fidelity exceptions");
 }
-if (
-  requiredTasks.some((task) => !manifest.runtimeEvidenceGate.requiredBeforeTasks.includes(task)) ||
-  manifest.runtimeEvidenceGate.requiredBeforeTasks.length !== requiredTasks.length
-) {
-  fail("Runtime gate must block every task from S03 through S10");
+if (manifest.runtimeEvidenceGate.requiredBeforeTasks.length !== 0) {
+  fail("Closed runtime gate must not block S03 through S10");
 }
 
 const ids = new Set();
@@ -252,14 +258,13 @@ const closure = JSON.parse(readFileSync(resolve(runtimeOraclePath, "closure.json
 if (closure.s02_gate !== manifest.runtimeEvidenceGate.sourceClosureStatus) {
   fail(`Runtime closure gate mismatch: ${closure.s02_gate}`);
 }
-for (const finding of manifest.runtimeEvidenceGate.blockingFindings) {
-  if (!closure.blocking_findings.includes(finding)) {
-    fail(`Missing runtime blocking finding: ${finding}`);
-  }
+if (closure.blocking_findings.length !== 0) {
+  fail("Frozen runtime closure unexpectedly retains blocking findings");
 }
 for (const finding of manifest.runtimeEvidenceGate.nonBlockingUnverifiableFindings) {
-  if (!closure.blocking_findings.includes(finding.id)) {
-    fail(`Missing source non-blocking unavailable finding: ${finding.id}`);
+  const matrixStatus = closure.version_10_1_4?.sample_matrix?.[finding.id];
+  if (typeof matrixStatus !== "string" || !matrixStatus.startsWith("blocked-")) {
+    fail(`Missing source non-blocking unavailable boundary: ${finding.id}`);
   }
 }
 
@@ -286,6 +291,10 @@ if (artifactFiles.length !== expectedArtifactCount) {
 const revisionFiles = listFiles(resolve(packageRoot, "revisions"));
 if (revisionFiles.length !== 4) {
   fail(`Expected 4 frozen revision files, found ${revisionFiles.length}`);
+}
+const handoffFiles = listFiles(resolve(packageRoot, "handoff"));
+if (handoffFiles.length !== 1) {
+  fail(`Expected 1 final handoff file, found ${handoffFiles.length}`);
 }
 
 const upstreamIds = new Set();

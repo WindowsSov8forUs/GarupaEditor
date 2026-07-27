@@ -104,6 +104,35 @@ RUNS = {
                      "no_auto_live_boundary"],
         "music_score_key": "653_ikuoku_easy",
     },
+    "n14-ikuoku-live-affinity4-bucket2-trigger-run-081": {
+        "run_id": "ikuoku-cc08-run-081-bucket2-fallback",
+        "purpose": "bucket-2 history fallback at counter[2] 20 to 21 under bounded CPU controls",
+        "coverage": ["fallback_101_21_6", "fallback_counter2_21",
+                     "no_auto_live_boundary"],
+        "music_score_key": "653_ikuoku_easy",
+    },
+    "n14-ikuoku-live-affinity4-bucket2-trigger-run-083": {
+        "run_id": "ikuoku-cc08-run-083-bucket2-fallback-repeat",
+        "purpose": "independent repeat of the bucket-2 counter[2] 20 to 21 fallback",
+        "coverage": ["fallback_101_21_6", "fallback_counter2_21",
+                     "independent_repeat", "no_auto_live_boundary"],
+        "music_score_key": "653_ikuoku_easy",
+    },
+    "n14-ikuoku-live-target40-timescale075-bucket1-trigger-run-086": {
+        "run_id": "ikuoku-cc08-run-086-bucket1-fallback",
+        "purpose": "bucket-1 history fallback at counter[1] 100 to 101 using original Unity APIs",
+        "coverage": ["fallback_101_21_6", "fallback_counter1_101",
+                     "original_api_timing_control", "no_auto_live_boundary"],
+        "music_score_key": "653_ikuoku_easy",
+    },
+    "n14-ikuoku-live-target40-timescale075-bucket1-trigger-run-087": {
+        "run_id": "ikuoku-cc08-run-087-bucket1-fallback-repeat",
+        "purpose": "independent repeat of the bucket-1 counter[1] 100 to 101 fallback",
+        "coverage": ["fallback_101_21_6", "fallback_counter1_101",
+                     "original_api_timing_control", "independent_repeat",
+                     "no_auto_live_boundary"],
+        "music_score_key": "653_ikuoku_easy",
+    },
 }
 
 LIFECYCLE_EVENTS = {
@@ -117,6 +146,7 @@ LIFECYCLE_EVENTS = {
     "bpm_object_setup_enter", "bpm_object_setup_leave", "bpm_object_update_enter",
     "bpm_object_update_leave", "bpm_object_commit_enter", "bpm_object_commit_leave",
     "update_bpm_enter", "update_bpm_leave", "on_bpm_changed_enter", "on_bpm_changed_leave",
+    "target_frame_rate_invoked", "time_scale_invoked", "adaptive_trigger_sample",
 }
 
 
@@ -413,6 +443,93 @@ def build_reverse_index_summary() -> dict[str, Any]:
     }
 
 
+def build_adaptive_lower_bucket_summary() -> dict[str, Any]:
+    configurations = (
+        ("n14-ikuoku-live-affinity4-bucket2-trigger-run-081",
+         "ikuoku-cc08-run-081-bucket2-fallback", 2, 21, 3),
+        ("n14-ikuoku-live-affinity4-bucket2-trigger-run-083",
+         "ikuoku-cc08-run-083-bucket2-fallback-repeat", 2, 21, 3),
+        ("n14-ikuoku-live-target40-timescale075-bucket1-trigger-run-086",
+         "ikuoku-cc08-run-086-bucket1-fallback", 1, 101, 2),
+        ("n14-ikuoku-live-target40-timescale075-bucket1-trigger-run-087",
+         "ikuoku-cc08-run-087-bucket1-fallback-repeat", 1, 101, 2),
+    )
+    runs = []
+    for working, run_id, counter_index, threshold, tentative_substeps in configurations:
+        capture = CAPTURE_ROOT / working
+        metadata = json.loads((capture / "capture_metadata.json").read_text(encoding="utf-8"))
+        samples = [event for event in stream(capture / "runtime_trace.jsonl")
+                   if event.get("event") == "adaptive_trigger_sample"]
+        before = [event for event in samples
+                  if event["counters"][counter_index] == threshold - 1
+                  and event["substeps"] == tentative_substeps]
+        fallback = [event for event in samples
+                    if event.get("target_fallback") is True
+                    and event.get("target_fallback_counter") == counter_index
+                    and event["counters"][counter_index] == threshold]
+        if len(before) != 1 or len(fallback) != 1:
+            raise SystemExit(
+                f"{working}: expected one {threshold - 1}->{threshold} counter[{counter_index}] "
+                f"fallback, got before={len(before)} fallback={len(fallback)}"
+            )
+        if fallback[0]["substeps"] != 1:
+            raise SystemExit(f"{working}: target fallback did not collapse to one substep")
+        bms = capture / "runtime_consumed_bms_001.txt"
+        frozen = OUTPUT / "sources" / "653_ikuoku_easy.bms.txt"
+        runs.append({
+            "run_id": run_id,
+            "counter_index": counter_index,
+            "threshold": threshold,
+            "candidate_substeps": tentative_substeps,
+            "before_threshold": before[0],
+            "fallback_frame": fallback[0],
+            "collection_complete": metadata["collection_complete"],
+            "runtime_bms_count": metadata["runtime_bms_count"],
+            "runtime_bms_sha256": digest(bms),
+            "matches_frozen_bms": digest(bms) == digest(frozen),
+            "capture_config": {
+                "target_frame_rate_on_bms_leave": metadata["capture_config"].get(
+                    "target_frame_rate_on_bms_leave"),
+                "time_scale_on_bms_leave": metadata["capture_config"].get(
+                    "time_scale_on_bms_leave"),
+            },
+            "guardrails": metadata["guardrails"],
+            "process_cpu_affinity": {
+                "start": metadata["device"]["process_cpu_affinity_at_start"],
+                "stop": metadata["device"]["process_cpu_affinity_at_stop"],
+            },
+            "cpu_frequency_policies": {
+                "start": metadata["device"]["cpu_frequency_policies_at_start"],
+                "stop": metadata["device"]["cpu_frequency_policies_at_stop"],
+            },
+        })
+    return {
+        "schema_version": 1,
+        "package_version": "10.1.4",
+        "package_version_code": "230",
+        "runs": runs,
+        "confirmed_boundaries": {
+            "counter_1": {"before": 100, "after": 101,
+                          "candidate_substeps": 2, "fallback_substeps": 1,
+                          "independent_run_count": 2},
+            "counter_2": {"before": 20, "after": 21,
+                          "candidate_substeps": 3, "fallback_substeps": 1,
+                          "independent_run_count": 2},
+        },
+        "claim": (
+            "Two independent original-client lives confirm each lower history threshold: "
+            "counter[1] 100 to 101 collapses candidate 2 to 1 substep, and counter[2] 20 to 21 "
+            "collapses candidate 3 to 1 substep."
+        ),
+        "intervention_boundary": (
+            "Bucket 2 is reached with four-little-core affinity and minimum CPU frequencies. "
+            "Bucket 1 is reached by calling the original Application.set_targetFrameRate(40) "
+            "and Time.set_timeScale(0.75) APIs after BMS parsing; metadata and guardrails record "
+            "both calls. No process memory or return value is replaced."
+        ),
+    }
+
+
 def main() -> int:
     entries = []
     frame_rate: dict[str, Any] = {}
@@ -566,6 +683,12 @@ def main() -> int:
         encoding="utf-8",
     )
     print(f"wrote {reverse_summary_path.relative_to(OUTPUT)}")
+    adaptive_summary_path = OUTPUT / "summaries" / "adaptive_fallback_lower_buckets_10_1_4.json"
+    adaptive_summary_path.write_text(
+        json.dumps(build_adaptive_lower_bucket_summary(), ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    print(f"wrote {adaptive_summary_path.relative_to(OUTPUT)}")
     return 0
 
 

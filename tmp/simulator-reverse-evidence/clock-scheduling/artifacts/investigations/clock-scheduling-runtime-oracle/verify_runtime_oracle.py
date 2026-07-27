@@ -129,6 +129,55 @@ def verify_version_10_1_4(closure: dict) -> None:
     assert sample["main_active_updates"] == list(reversed(sample["active_members"]))
     assert sample["nested_updates"], sample
 
+    adaptive_lower = load_json("summaries/adaptive_fallback_lower_buckets_10_1_4.json")
+    assert adaptive_lower["package_version_code"] == "230"
+    assert adaptive_lower["confirmed_boundaries"] == {
+        "counter_1": {"before": 100, "after": 101,
+                      "candidate_substeps": 2, "fallback_substeps": 1,
+                      "independent_run_count": 2},
+        "counter_2": {"before": 20, "after": 21,
+                      "candidate_substeps": 3, "fallback_substeps": 1,
+                      "independent_run_count": 2},
+    }
+    lower_runs = adaptive_lower["runs"]
+    assert len(lower_runs) == 4
+    assert {run["run_id"] for run in lower_runs} <= set(runs)
+    assert all(run["collection_complete"] and run["runtime_bms_count"] == 1
+               and run["matches_frozen_bms"] for run in lower_runs)
+    assert len({run["fallback_frame"]["delta_time_before_division_bits"]
+                for run in lower_runs}) == 4
+    for run in lower_runs:
+        counter_index = run["counter_index"]
+        threshold = run["threshold"]
+        assert run["before_threshold"]["counters"][counter_index] == threshold - 1
+        assert run["before_threshold"]["substeps"] == run["candidate_substeps"]
+        assert run["fallback_frame"]["counters"][counter_index] == threshold
+        assert run["fallback_frame"]["substeps"] == 1
+        assert run["fallback_frame"]["target_fallback"] is True
+        assert run["fallback_frame"]["target_fallback_counter"] == counter_index
+        assert run["guardrails"]["patched_apk"] is False
+        assert run["guardrails"]["wrote_process_memory"] is False
+        assert run["guardrails"]["replaced_return_value"] is False
+        if counter_index == 1:
+            assert run["capture_config"] == {
+                "target_frame_rate_on_bms_leave": 40,
+                "time_scale_on_bms_leave": 0.75,
+            }
+            assert run["process_cpu_affinity"]["start"]["cpus_allowed"] == "ff"
+            assert run["process_cpu_affinity"]["stop"]["cpus_allowed"] == "ff"
+            assert run["guardrails"]["invoked_original_application_set_target_frame_rate"]
+            assert run["guardrails"]["invoked_original_time_set_time_scale"]
+        else:
+            assert run["capture_config"] == {
+                "target_frame_rate_on_bms_leave": None,
+                "time_scale_on_bms_leave": None,
+            }
+            assert run["process_cpu_affinity"]["start"]["cpus_allowed"] == "ff"
+            assert run["process_cpu_affinity"]["stop"]["cpus_allowed"] == "0f"
+            stop_frequencies = run["cpu_frequency_policies"]["stop"]
+            assert [policy["scaling_cur_freq"] for policy in stop_frequencies] == [
+                policy["cpuinfo_min_freq"] for policy in stop_frequencies]
+
     bpm_inventory = load_json("summaries/cached_bpm_candidates_10_1_4.json")
     assert bpm_inventory["scanned_bundles"] == 81
     assert bpm_inventory["bms_asset_count"] == 4176
@@ -165,8 +214,8 @@ def verify_version_10_1_4(closure: dict) -> None:
     assert section["findings"]["pause_during_bpm"]["status"] == "confirmed-split-capture"
     assert section["findings"]["judgement_offsets"]["status"] == "confirmed"
     assert section["findings"]["reverse_index_update"]["status"] == "confirmed"
-    assert (section["findings"]["adaptive_fallback_lower_buckets"]["status"]
-            == "blocked-runtime-reachability-under-observation")
+    assert section["sample_matrix"]["fallback_101_21_6"] == "confirmed"
+    assert section["findings"]["adaptive_fallback_lower_buckets"]["status"] == "confirmed"
     assert (section["findings"]["bpm_pool_cursor_wrap_reuse"]["status"]
             == "blocked-production-chart-unavailable")
     assert set(section["runs"]) == set(runs)
@@ -288,11 +337,11 @@ def verify_pass2() -> None:
         assert matrix[row] == "confirmed", row
     assert matrix["same_nonzero_120"] == "unresolved-on-10.1.3-confirmed-on-10.1.4"
     verify_version_10_1_4(closure)
-    # HABAHIRO is not a collection gap: the chart is event-exclusive and cannot be selected. It
-    # still blocks, and the reason must stay recorded so nobody substitutes another chart for it.
+    # HABAHIRO is not a collection gap: the chart is event-exclusive and cannot be selected. Its
+    # non-blocking fidelity boundary must stay recorded so nobody substitutes another chart.
     assert matrix["habahiro_zero_bpm_60"] == "blocked-chart-unavailable"
     assert "habahiro_zero_bpm_60" in closure["unavailable_samples"]
-    assert "habahiro_zero_bpm_60" in closure["blocking_findings"]
+    assert closure["blocking_findings"] == []
     assert closure["sections"]["R13_pause_resume"] == "confirmed"
     assert closure["pass2_findings"]["adaptive_fallback_counter_mapping"]["status"] == "confirmed"
 
@@ -363,11 +412,11 @@ def main() -> int:
     assert pool["conclusion"]["fast_acquire_reset"] == "excluded"
     assert pool["conclusion"]["cursor_wrap_reuse"] == "unresolved"
     closure = load_json("closure.json")
-    assert closure["overall_status"] == "unresolved"
-    assert closure["s02_gate"] == "blocked"
-    assert closure["blocking_findings"]
+    assert closure["overall_status"] == "confirmed-with-explicit-nonblocking-boundaries"
+    assert closure["s02_gate"] == "closed"
+    assert closure["blocking_findings"] == []
     verify_pass2()
-    print("clock scheduling runtime oracle: verified (10.1.3 passes + 10.1.4 runs); S02 remains blocked")
+    print("clock scheduling runtime oracle: verified (10.1.3 passes + 10.1.4 runs); S02 closed with explicit non-blocking fidelity boundaries")
     return 0
 
 

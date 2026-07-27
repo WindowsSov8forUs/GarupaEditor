@@ -6,8 +6,9 @@ turn it off and every live starts normally, with or without Frida attached.**
 The capture window without auto-play is ~75 s before the life gauge empties, which covers every
 row this investigation needs. The collector is proven on both 10.1.3 and the locked 10.1.4
 baseline, with a strict automatic version guard. Both judgement-offset rows and reverse-index
-ordering are closed. No ordinary capture task remains: the lower fallback thresholds are blocked
-by collector perturbation/runtime reachability, while two chart-specific rows are unavailable.
+ordering are closed. The lower fallback thresholds are also closed by two independent captures
+per bucket. No ordinary capture task remains; only the two explicitly accepted production-chart
+availability boundaries remain.
 
 ---
 
@@ -49,6 +50,8 @@ Runs 030 and 032–033 are in `build_runtime_oracle_10_1_4.py` → `version_10_1
 | `thesis-cc03-run-037-nonzero-60` | CC03 lifecycle on 10.1.4 |
 | `ikuoku-cc08-run-057-offset-plus5` + `run-059-offset-minus5` | both judgement-offset directions across the CC08 boundary |
 | `ikuoku-cc08-run-060-full-note-detail` | reverse-index Update order, 16/16 multi-member substeps |
+| `ikuoku-cc08-run-081-bucket2-fallback` + `run-083-bucket2-fallback-repeat` | `counter[2]` 20→21, candidate 3→fallback 1, two independent lives |
+| `ikuoku-cc08-run-086-bucket1-fallback` + `run-087-bucket1-fallback-repeat` | `counter[1]` 100→101, candidate 2→fallback 1, two independent lives |
 
 These runs are in `RUNS` in `build_runtime_oracle_10_1_4.py`; their raw, metadata and normalized
 artifacts are frozen under the investigation package.
@@ -81,7 +84,7 @@ requirements doc. The 10.1.3 verifier stage still asserts them.
 | `pause_after_bpm` | **confirmed** | run 033 |
 | `normal_zero_bpm_60` | **confirmed** | run 034 |
 | `slow_frame_2_3_4` | observed (collector-induced) | — |
-| `fallback_101_21_6` | partial (`counter[3]` confirmed) | runs 061–067 bound `counter[1]`/`counter[2]` as unreachable under required observation |
+| `fallback_101_21_6` | **confirmed** | counter 3 pass-2 evidence plus runs 081/083 and 086/087 for counters 2/1 |
 | `habahiro_zero_bpm_60` | **blocked** — chart unavailable | limited-time event, account can't select it |
 | `pause_during_bpm` | **confirmed (split capture)** | runs 035–036 |
 | `nonzero_cc03_60` | **confirmed** | run 037 on `087_thesis_easy` |
@@ -89,7 +92,7 @@ requirements doc. The 10.1.3 verifier stage still asserts them.
 | `negative_offset_cross_bpm_bar` | **confirmed** | run 059 crosses bar 16→15; all timed steps retain current 95.5 |
 | `same_batch_multiple_bpm` | static-only | frozen from decompiler, not a capture task |
 | `launcher_crosses_multiple_batches` | static-only | same |
-| `counter[1]`/`counter[2]` fallback | **blocked — observation perturbs reachability** | runs 061–067 bracket heavy and light hook sets; no configuration accumulates either threshold |
+| `counter[1]`/`counter[2]` fallback | **confirmed** | two independent lives per threshold; frozen summary records timing controls and guardrails |
 | reverse-index Update | **confirmed** | run 060: 16/16 multi-member substeps match reverse list order |
 | pool cursor-wrap | **blocked — production chart unavailable** | all 4,176 cached BMS scanned; maximum is 16 BPM commands, below the required 31 |
 
@@ -314,14 +317,21 @@ same `ライブ設定` tab.
 After excluding nested child updates whose pointers are absent from the manager list, all 16
 substeps update the main members in the exact reverse of list order.
 
-### H. Adaptive fallback — bounded by runs 061–067
+### H. Adaptive fallback — completed by runs 081/083 and 086/087
 
-All seven fallback-tuning runs used `--batch-flush-ms 25` and no autoplay or touch injection.
-The heavy minimal profile immediately perturbed frames into buckets 2/3 and reached `counter[3] =
-6`; progressively lighter profiles sustained bucket 0, with run 067 producing only two isolated
-bucket-2 frames. None produced a bucket-1 frame or enough bucket-2 frames to reach 21. The static
-threshold comparisons are confirmed, but dynamic `counter[1]`/`counter[2]` threshold samples are
-blocked by observation-induced perturbation/runtime reachability and remain fail-closed.
+Runs 061–067 remain useful tuning history, but no longer describe the final reachability boundary.
+Runs 081 and 083 each use four-little-core affinity plus minimum CPU frequencies and independently
+record `counter[2]` 20→21, with candidate 3 substeps collapsing to 1 on the threshold frame.
+
+Runs 086 and 087 each call the original `Application.set_targetFrameRate(40)` and
+`Time.set_timeScale(0.75)` APIs immediately after BMS parsing. On this fixed-60-Hz device that
+produces a stable scaled `deltaTime` near 24.8 ms, and each independent live records `counter[1]`
+100→101 with candidate 2 substeps collapsing to 1. Metadata and guardrails record both original
+API calls; no APK patch, process-memory write or return-value replacement is used.
+
+The frozen machine-readable proof is
+`summaries/adaptive_fallback_lower_buckets_10_1_4.json`. Together with the existing dynamic
+`counter[3] = 6` proof, all three `101 / 21 / 6` history thresholds are now dynamically confirmed.
 
 ### I. BPM pool cursor-wrap — production chart unavailable
 

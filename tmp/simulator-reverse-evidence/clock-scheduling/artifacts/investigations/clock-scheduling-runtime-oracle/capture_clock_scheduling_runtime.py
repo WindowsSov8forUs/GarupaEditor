@@ -35,6 +35,7 @@ RVAS = {
     "InGameManager.ExecUpdate": 0x32F8C64,
     "InGameManager.updatePlayState": 0x32F9BB0,
     "Application.set_targetFrameRate": 0x657AFCC,
+    "Time.set_timeScale": 0x65C7900,
     "NoteManager.Init": 0x377580C,
     "NoteManager.ExecUpdate": 0x37760C0,
     "NoteManager.SetupNotes": 0x3777098,
@@ -184,6 +185,7 @@ CONSTANT_RVAS = {
 
 RVAS_230 = {
     "Application.set_targetFrameRate": 0x657A588,
+    "Time.set_timeScale": 0x65C6EBC,
     "DeviceUtility.SetTargetFrameRate": 0x3B02DA0,
     "InGameDirector.Awake": 0x32F77AC,
     "InGameDirector.Update": 0x32F7D90,
@@ -319,6 +321,8 @@ PROFILES = {
     "bpm-lifecycle": {"adaptive_probes": True},
     "scheduling": {"adaptive_probes": True, "note_detail": True},
     "adaptive": {"adaptive_probes": True},
+    "adaptive-calibration": {"adaptive_probes": True, "adaptive_calibration_only": True},
+    "adaptive-trigger": {"adaptive_probes": True, "adaptive_trigger_only": True},
     "pause": {"adaptive_probes": True, "note_detail": True},
     "judge-offset": {"adaptive_probes": True, "judge_probes": True},
 }
@@ -387,6 +391,47 @@ def package_info(package: str) -> dict[str, str | None]:
             values["version_code"] = stripped.split("=", 1)[1].split()[0]
         elif stripped.startswith("primaryCpuAbi="):
             values["primary_cpu_abi"] = stripped.split("=", 1)[1]
+    return values
+
+
+def cpu_frequency_policies() -> list[dict[str, str | None]]:
+    try:
+        paths = adb(
+            "shell", "su", "-c",
+            "ls -d /sys/devices/system/cpu/cpufreq/policy* 2>/dev/null",
+        ).splitlines()
+    except subprocess.CalledProcessError:
+        return []
+    policies = []
+    for path in paths:
+        policy: dict[str, str | None] = {"path": path}
+        for name in (
+            "related_cpus", "cpuinfo_min_freq", "cpuinfo_max_freq",
+            "scaling_min_freq", "scaling_max_freq", "scaling_cur_freq",
+            "scaling_governor",
+        ):
+            try:
+                policy[name] = adb("shell", "su", "-c", f"cat {path}/{name}")
+            except subprocess.CalledProcessError:
+                policy[name] = None
+        policies.append(policy)
+    return policies
+
+
+def process_cpu_affinity(pid: int) -> dict[str, str | None]:
+    try:
+        status = adb("shell", "su", "-c", f"cat /proc/{pid}/status")
+    except subprocess.CalledProcessError:
+        return {"cpus_allowed": None, "cpus_allowed_list": None}
+    values: dict[str, str | None] = {"cpus_allowed": None, "cpus_allowed_list": None}
+    for line in status.splitlines():
+        key, separator, value = line.partition(":")
+        if not separator:
+            continue
+        if key == "Cpus_allowed":
+            values["cpus_allowed"] = value.strip()
+        elif key == "Cpus_allowed_list":
+            values["cpus_allowed_list"] = value.strip()
     return values
 
 
@@ -775,6 +820,11 @@ function emit(event, fields = {{}}) {{
 
 setInterval(flush, config.batch_flush_ms);
 rpc.exports.flush = function () {{ flush(); return sequence; }};
+
+recv('host_flush', function onHostFlush() {{
+  flush();
+  recv('host_flush', onHostFlush);
+}});
 
 // Liveness beacon. Without it an agent that stops delivering is indistinguishable from a
 // gameplay session that simply never reached the hooked code, and a truncated run can be
@@ -1328,7 +1378,7 @@ for (const [label, direction] of [['NoteManager.FastAbsolutePos', 'fast'], ['Not
   }});
 }}
 
-if (config.adaptive_probes) {{
+if (config.adaptive_probes && !config.adaptive_trigger_only && !config.adaptive_calibration_only) {{
   probe('ExecUpdate.deltaAndPreDivisionExecuteFrame', function () {{
     const manager = this.context.x19;
     emit('adaptive_delta_input', {{
@@ -1369,6 +1419,70 @@ if (config.adaptive_probes) {{
       execute_frame_before_division: registerFloat(this.context, 's0'),
       execute_frame_before_division_bits: registerBits(this.context, 'q0'),
       counters: readCounters(safeRead(() => this.context.x19.add(0x78).readPointer(), null)),
+    }});
+  }});
+}}
+
+if (config.adaptive_calibration_only) {{
+  let adaptiveCalibrationSequence = 0;
+  probe('ExecUpdate.deltaAndPreDivisionExecuteFrame', function () {{
+    adaptiveCalibrationSequence += 1;
+    if (adaptiveCalibrationSequence % 30 !== 0) return;
+    const manager = this.context.x19;
+    emit('adaptive_calibration_sample', {{
+      adaptive_sequence: adaptiveCalibrationSequence,
+      manager: pointerValue(manager),
+      delta_time: registerFloat(this.context, 's8'),
+      delta_time_bits: registerBits(this.context, 'q8'),
+      bpm_change_count: safeRead(() => manager.add(0x74).readS32()),
+      counters_before_frame: readCounters(safeRead(() => manager.add(0x78).readPointer(), null)),
+    }});
+  }});
+}}
+
+if (config.adaptive_trigger_only) {{
+  let adaptiveTriggerSequence = 0;
+  let previousTriggerCounters = null;
+  let counter1FallbackSeen = false;
+  let counter2FallbackSeen = false;
+  probe('ExecUpdate.substepDecision', function () {{
+    adaptiveTriggerSequence += 1;
+    const manager = this.context.x19;
+    const counters = readCounters(safeRead(() => manager.add(0x78).readPointer(), null));
+    const counter1 = counters === null ? null : counters[1];
+    const counter2 = counters === null ? null : counters[2];
+    const counter3 = counters === null ? null : counters[3];
+    const substeps = registerU32(this.context, 'x22');
+    const deltaTime = registerFloat(this.context, 's8');
+    const countersChanged = previousTriggerCounters === null || counters === null
+      || counters.some((value, index) => value !== previousTriggerCounters[index]);
+    const nearCounter1 = countersChanged && counter1 !== null && counter1 >= 95 && counter1 <= 102;
+    const nearCounter2 = countersChanged && counter2 !== null && counter2 >= 15 && counter2 <= 22;
+    const counter1Fallback = !counter1FallbackSeen && substeps === 1
+      && deltaTime >= 0.018 && deltaTime < 0.033
+      && counter1 !== null && counter1 >= 101;
+    const counter2Fallback = !counter2FallbackSeen && substeps === 1
+      && deltaTime >= 0.033 && deltaTime < 0.05
+      && counter2 !== null && counter2 >= 21;
+    const targetFallback = counter1Fallback || counter2Fallback;
+    previousTriggerCounters = counters;
+    if (counter1Fallback) counter1FallbackSeen = true;
+    if (counter2Fallback) counter2FallbackSeen = true;
+    if (!nearCounter1 && !nearCounter2 && !targetFallback && adaptiveTriggerSequence % 120 !== 0) return;
+    emit('adaptive_trigger_sample', {{
+      adaptive_sequence: adaptiveTriggerSequence,
+      manager: pointerValue(manager),
+      substeps,
+      delta_time_before_division: deltaTime,
+      delta_time_before_division_bits: registerBits(this.context, 'q8'),
+      execute_frame_before_division: registerFloat(this.context, 's0'),
+      execute_frame_before_division_bits: registerBits(this.context, 'q0'),
+      bpm_change_count: safeRead(() => manager.add(0x74).readS32()),
+      counters,
+      threshold_window: nearCounter1 ? 'counter_1' : (nearCounter2 ? 'counter_2' : null),
+      target_fallback: targetFallback,
+      target_fallback_counter: counter1Fallback ? 1 : (counter2Fallback ? 2 : null),
+      counter_3_already_saturated: counter3 !== null && counter3 >= 6,
     }});
   }});
 }}
@@ -1462,7 +1576,41 @@ hook('NoteManager.analyzeBMS', {{
     const text = readString(args[1], BMS_MAX_STRING_CHARS);
     emit('analyze_bms_enter', {{ runtime_bms_text: text }});
   }},
-  onLeave() {{ emit('analyze_bms_leave'); }},
+  onLeave() {{
+    emit('analyze_bms_leave');
+    if (config.target_frame_rate_on_bms_leave !== null) {{
+      try {{
+        const setter = new NativeFunction(
+          module.base.add(rvas['Application.set_targetFrameRate']),
+          'void',
+          ['int', 'pointer']
+        );
+        setter(config.target_frame_rate_on_bms_leave, ptr(0));
+        emit('target_frame_rate_invoked', {{ value: config.target_frame_rate_on_bms_leave }});
+      }} catch (error) {{
+        emit('target_frame_rate_invoke_error', {{
+          value: config.target_frame_rate_on_bms_leave,
+          error: String(error),
+        }});
+      }}
+    }}
+    if (config.time_scale_on_bms_leave !== null) {{
+      try {{
+        const setter = new NativeFunction(
+          module.base.add(rvas['Time.set_timeScale']),
+          'void',
+          ['float', 'pointer']
+        );
+        setter(config.time_scale_on_bms_leave, ptr(0));
+        emit('time_scale_invoked', {{ value: config.time_scale_on_bms_leave }});
+      }} catch (error) {{
+        emit('time_scale_invoke_error', {{
+          value: config.time_scale_on_bms_leave,
+          error: String(error),
+        }});
+      }}
+    }}
+  }},
 }});
 
 const constants = {{}};
@@ -1525,15 +1673,43 @@ class DeviceInput:
         self.process.stdin.flush()
 
     def close(self) -> None:
-        if self.process.stdin is not None:
+        stdin = self.process.stdin
+        if stdin is not None and self.process.poll() is None:
             try:
-                self.process.stdin.close()
+                stdin.write("exit\n")
+                stdin.flush()
             except OSError:
                 pass
         try:
-            self.process.wait(timeout=5)
+            self.process.wait(timeout=2)
         except subprocess.TimeoutExpired:
-            self.process.kill()
+            self.process.terminate()
+            try:
+                self.process.wait(timeout=2)
+            except subprocess.TimeoutExpired:
+                self.process.kill()
+                self.process.wait(timeout=2)
+        if stdin is not None:
+            try:
+                stdin.close()
+            except OSError:
+                pass
+
+
+def bounded_teardown_call(call: Any, timeout: float = 3.0) -> bool:
+    completed = threading.Event()
+
+    def run() -> None:
+        try:
+            call()
+        except frida.InvalidOperationError:
+            pass
+        finally:
+            completed.set()
+
+    thread = threading.Thread(target=run, name="frida-teardown", daemon=True)
+    thread.start()
+    return completed.wait(timeout)
 
 
 class TraceWriter(threading.Thread):
@@ -1720,6 +1896,8 @@ def main() -> int:
     parser.add_argument("--disable-label", action="append", default=[], metavar="LABEL",
                         help="skip one hook by label; use to shed per-frame snapshot cost")
     parser.add_argument("--profile", choices=sorted(PROFILES), default="bpm-lifecycle")
+    parser.add_argument("--target-frame-rate-on-bms-leave", type=int)
+    parser.add_argument("--time-scale-on-bms-leave", type=float)
     parser.add_argument("--no-instruction-probes", action="store_true",
                         help="install interceptor hooks only; skip the inline register probes")
     parser.add_argument("--note-detail-lead-frames", type=int, default=40)
@@ -1765,6 +1943,10 @@ def main() -> int:
 
     if args.duration < 0:
         raise ValueError("duration must be non-negative")
+    if args.target_frame_rate_on_bms_leave is not None and args.target_frame_rate_on_bms_leave <= 0:
+        raise ValueError("target frame rate must be positive")
+    if args.time_scale_on_bms_leave is not None and args.time_scale_on_bms_leave <= 0:
+        raise ValueError("time scale must be positive")
     args.output_dir.mkdir(parents=True, exist_ok=True)
     trace_path = args.output_dir / "runtime_trace.jsonl"
     metadata_path = args.output_dir / "capture_metadata.json"
@@ -1777,6 +1959,7 @@ def main() -> int:
     # interceptors to whatever happens to live at those addresses and produce a trace that looks
     # valid and means nothing.
     installed = package_info(args.package)
+    cpu_frequency_policies_at_start = cpu_frequency_policies()
     version_code = installed.get("version_code")
     if version_code not in VERSION_TABLES:
         proven = ", ".join(f"{table['version_name']} / {code}"
@@ -1791,6 +1974,11 @@ def main() -> int:
 
     profile = dict(PROFILES[args.profile])
     disabled_labels = set(MINIMAL_DISABLED) if args.minimal_runtime else set()
+    if profile.get("adaptive_trigger_only") or profile.get("adaptive_calibration_only"):
+        disabled_labels.update(
+            label for label in tables["rvas"]
+            if label != "NoteManager.analyzeBMS"
+        )
     unknown = [label for label in args.disable_label if label not in tables["rvas"]]
     if unknown:
         raise SystemExit(f"unknown hook labels: {sorted(unknown)}")
@@ -1798,6 +1986,8 @@ def main() -> int:
     config: dict[str, Any] = {
         "profile": args.profile,
         "adaptive_probes": bool(profile.get("adaptive_probes")) and not args.no_instruction_probes,
+        "adaptive_calibration_only": bool(profile.get("adaptive_calibration_only")) and not args.no_instruction_probes,
+        "adaptive_trigger_only": bool(profile.get("adaptive_trigger_only")) and not args.no_instruction_probes,
         "judge_probes": bool(profile.get("judge_probes")) and not args.no_instruction_probes,
         "note_detail": bool(profile.get("note_detail")),
         "note_detail_lead_frames": args.note_detail_lead_frames,
@@ -1807,6 +1997,8 @@ def main() -> int:
         "judge_step_budget": args.judge_step_budget,
         "batch_flush_ms": args.batch_flush_ms,
         "batch_max_events": args.batch_max_events,
+        "target_frame_rate_on_bms_leave": args.target_frame_rate_on_bms_leave,
+        "time_scale_on_bms_leave": args.time_scale_on_bms_leave,
         "disabled_labels": sorted(disabled_labels),
     }
 
@@ -1860,6 +2052,7 @@ def main() -> int:
         pid = applications.get(args.package) or None
     if not pid:
         raise RuntimeError(f"package process is not running: {args.package}")
+    cpu_affinity_at_start = process_cpu_affinity(pid)
 
     session = device.attach(pid)
     script = session.create_script(create_agent(config, tables))
@@ -1942,18 +2135,12 @@ def main() -> int:
         stopped_at = utc_now()
         shutdown_started.set()
         try:
-            script.exports_sync.flush()
-        except Exception:
+            script.post({"type": "host_flush"})
+        except frida.InvalidOperationError:
             pass
         time.sleep(0.3)
-        try:
-            script.unload()
-        except frida.InvalidOperationError:
-            pass
-        try:
-            session.detach()
-        except frida.InvalidOperationError:
-            pass
+        script_unloaded = bounded_teardown_call(script.unload)
+        session_detached = script_unloaded and bounded_teardown_call(session.detach)
         # Drain whatever the agent already handed over before closing the stream, otherwise a
         # clean shutdown silently truncates the tail of the trace.
         writer.stop()
@@ -1980,6 +2167,10 @@ def main() -> int:
             "cpu_abi": adb("shell", "getprop", "ro.product.cpu.abi"),
             "root_id": adb("shell", "su", "-c", "id"),
             "selinux": adb("shell", "getenforce"),
+            "cpu_frequency_policies_at_start": cpu_frequency_policies_at_start,
+            "cpu_frequency_policies_at_stop": cpu_frequency_policies(),
+            "process_cpu_affinity_at_start": cpu_affinity_at_start,
+            "process_cpu_affinity_at_stop": process_cpu_affinity(pid),
         },
         "sample": {"package": args.package, **installed},
         # Which proven address table this run used. A trace is only interpretable against
@@ -2012,6 +2203,10 @@ def main() -> int:
         "runtime_bms_count": runtime_bms_count,
         "script_errors": script_errors,
         "session_detached": detach_records,
+        "teardown": {
+            "script_unloaded": script_unloaded,
+            "session_detached": session_detached,
+        },
         "collection_complete": (
             not unexpected_detaches
             and writer_drained
@@ -2051,6 +2246,10 @@ def main() -> int:
             "replaced_return_value": False,
             "interceptor_observation_hooks": True,
             "instruction_probes_read_registers_only": True,
+            "invoked_original_application_set_target_frame_rate": (
+                args.target_frame_rate_on_bms_leave is not None
+            ),
+            "invoked_original_time_set_time_scale": args.time_scale_on_bms_leave is not None,
         },
     }
     metadata_path.write_text(json.dumps(metadata, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

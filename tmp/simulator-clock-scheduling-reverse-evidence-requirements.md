@@ -6,12 +6,12 @@
 - 适用阶段：`simulator-clock-scheduling-task.md` 的 S02–S10。
 - 唯一行为依据：`HOST________\VSCode\GirlsBandParty-Reverse` 中已经提交、可校验、可追溯的逆向产物。
 - 静态基线提交：`74ab76f6838847d98aae1a15741a5f024e3774ff`。
-- 当前冻结证据提交：`e96733cd96a5e7446d2b9adbc413bf77de0bcf98`。运行 oracle 文件内容延续 `f71f73fd2e408cfc888c5bbcce0a59c8eb73b18d` 的最终静态批次，后续提交补充并修正交接边界表述；S02 仍因第 27 节列出的明确可用性/观察可达性边界保持 fail-closed，因此这里不称其为“S02 解锁提交”。
+- 当前冻结证据提交：`2ba3bdbbab9be2de6fedb9b22f623bd80611c023`。运行 oracle 文件内容延续 `f71f73fd2e408cfc888c5bbcce0a59c8eb73b18d` 的最终静态批次，并新增 runs 081/083/086/087；`fallback_101_21_6` 已动态闭合，S02 门控解除。HABAHIRO 与 BPM pool cursor-wrap 仍按第 27 节保留为非阻断保真度例外。
 - 第一批运行时证据：`2aee4dbe486be1feda9fdf28cb94d14204058f42`；已冻结 60 模式 CC03/CC08、双时钟初始化、launcher lead、bundle/BMS 一致性和 `bpmChangeCount` 运行时修正。
 - 第二批运行时证据：`3051532a`（含 `da94ca43` 证据提交与 `864e7bc4` 采集稳定性文档）；新增七条完整采集，闭合零 BPM-change 60 模式、三类暂停/恢复、正 offset 跨 BPM，并修订自适应回退计数器映射。仍不是最终解锁提交。
 - 第三批运行时证据：`803ac909`；采集设备自动升级到 10.1.4 / 230，已完成时钟调度目标集的跨版本重建证明，并在 10.1.4 上闭合 120 模式请求。详见第 25 节。
 - **锁定版本：`10.1.4 / 230`**（第 26 节）。10.1.3 证据保持冻结，作为该版本自身的闭合样本与跨版本佐证，不与 10.1.4 合并。
-- 当前结论：E01–E26 静态证据、10.1.3 的 R01–R22 历史批次、10.1.4 重建与 runs 030–060 均已冻结；除明确边界项外无普通待采任务。S02 动态证据硬门仍未闭合，S03–S10 不得开始。
+- 当前结论：E01–E26 静态证据、10.1.3 的 R01–R22 历史批次、10.1.4 重建与 runs 030–060、081/083/086/087 均已冻结；除明确非阻断边界项外无普通待采任务。S02 动态证据硬门已闭合，可开始 S03–S10。
 - **E14 与 `music-bar-division-adaptive-substeps` 的哈希已因第 23 节的修订而变化**，这是第 2.3 节要求的“静态与动态冲突先在 Reverse 修订”的正常结果，不是篡改信号；引用方须按第 24 节刷新。
 
 本文档是独立证据需求书，不是采集脚本设计，不要求使用某一种注入、调试或记录工具。只要产物满足真实性、完整性、可复核性和提交冻结要求，即可采用对原作行为无修改的采集方式。
@@ -415,11 +415,11 @@ trace label 必须与原作字段名分栏存储。若某个字段只有 offset 
 - 锁定包版本为 `10.1.4 / 230`；`closure.json` 的 `version_10_1_4.sample_matrix` 是唯一 S02 门控矩阵，10.1.3 顶层矩阵仅作独立历史样本和跨版本佐证。
 - 60/120 请求、普通零 BPM、CC03/CC08、三类暂停、正负 offset、跨 bar command、反向索引 Update 均已闭合；旧批次中关于这些项目的 `unresolved`/`partial` 只保留为历史记录，不代表当前状态。
 - 慢帧 2/3/4 分支为 `observed-collector-induced`：可确认原作在被观测状态下的分支和守恒关系，但不能把采集器诱发的 delta 分布外推为未插桩客户端分布。
-- `counter[3]` 的 6-frame 回退已动态确认；`counter[1]`/`counter[2]` 的 101/21-frame 阈值静态比较已确认，动态样本受观察扰动/运行时可达性限制，保持 fail-closed。
+- `counter[3]` 的 6-frame 回退已动态确认；runs 086/087 独立确认 `counter[1]` 100→101 时 candidate 2→1，runs 081/083 独立确认 `counter[2]` 20→21 时 candidate 3→1，完整 `101/21/6` 回退边界已闭合。
 - HABAHIRO 行受限时活动谱面不可选择；30-slot BPM pool cursor-wrap 受当前生产谱面最多 16 条 BPM commands 限制。二者改列只读捕捉前提下无法明确的非阻断项：根据已有证据进行还原，无法依赖实体证据，不确保百分百还原。
 - UI owner、持久字段、60/120 read site 已闭合；radio 到 persisted field 的具体 callback 未端到端观察，只作为设置写入链的解释边界，不推翻帧率请求结论。
 - Reverse 未跟踪的 `runtime/tools/` 与 `runtime/captures/` 不属于证据链。后续不得用合成谱面、旧模拟器或未登记工具替代上述边界。
-- Reverse 校验器仍原样输出 `S02 remains blocked`；GarupaEditor 不修改该冻结结论，但本地门控只保留低 bucket 动态触发边界，HABAHIRO 与 BPM pool cursor-wrap 不再阻断。
+- Reverse 校验器输出 S02 已闭合并显式保留非阻断保真度边界；HABAHIRO 与 BPM pool cursor-wrap 不参与门控，也不得据此宣称百分百还原。
 
 ## 22. 已冻结中间运行时证据批次
 
@@ -478,7 +478,7 @@ trace label 必须与原作字段名分栏存储。若某个字段只有 offset 
 `README.md` = `583E2BE6DA4BB8F570F19B0DC3C2CA97EEC3E645960DFFD71A844BE57E004E53`，
 `SHA256SUMS` = `2DC2E0B98568D8A2AA9CE292D3FCDD5644DF251968BF93AF4045F0BCE10A7E2C`（69 条）。
 
-R22 离线输出 `clock scheduling runtime oracle: verified (pass 1 + pass 2); S02 remains blocked`，
+R22 当时离线输出 `clock scheduling runtime oracle: verified (pass 1 + pass 2); S02 remains blocked`；该历史输出已由本轮 runs 081/083/086/087 与新版 verifier 取代，不再表示当前门控状态。
 不依赖设备、网络、GarupaEditor 或未跟踪的 `runtime/tools/`。
 
 ### 23.4 本批闭合的结论
@@ -657,7 +657,7 @@ UI 属主为 `LiveEffectVolumeTabPage`，持久化经 `CE.LiveCoreSettingsProtoD
 | `negative_offset_cross_bpm_bar` | `confirmed` |
 | `reverse_index_update` | `confirmed` |
 | `slow_frame_2_3_4` | `observed-collector-induced` |
-| `fallback_101_21_6` | `partial-counter3-confirmed-counter1-counter2-runtime-unreachable` |
+| `fallback_101_21_6` | `confirmed`（runs 081/083 确认 counter 2；runs 086/087 确认 counter 1；既有 pass-2 runs 确认 counter 3） |
 | `habahiro_zero_bpm_60` | `blocked-chart-unavailable`（限时活动专属，账号上不可选） |
 | `bpm_pool_cursor_wrap_reuse` | `blocked-production-chart-unavailable` |
 
@@ -686,38 +686,43 @@ UI 属主为 `LiveEffectVolumeTabPage`，持久化经 `CE.LiveCoreSettingsProtoD
 | `ikuoku-cc08-run-057-offset-plus5` | `7934C7344AB194C09AFFAC319E59327A50D830203B16EA285FE32716A1ECDBFA` | 40,811 | `FastAbsolutePos(+5)` 跨 bar 15→16，并从 99.5 切换到 95.5 |
 | `ikuoku-cc08-run-059-offset-minus5` | `DC1D2DA15DF3323B7F8E747F9494DF80B05F290E6B9B28F4B85E51700CE451A0` | 38,253 | `SlowAbsolutePos(-5)` 跨 bar 16→15，全程保持已提交的 95.5 |
 | `ikuoku-cc08-run-060-full-note-detail` | `E9B671CE2AB7A67BE79A9BD9E814B4F8A4FFEF5758359BDD2D7BB827972E3103` | 22,854 | 16/16 多成员 substep 与主 active list 反序一致 |
+| `ikuoku-cc08-run-081-bucket2-fallback` | `8282F06876F79D79D6AE991F63D163D0D1B918CD20B9F0FFF650867251DCEDE8` | 85 | `counter[2]` 20→21，candidate 3→fallback 1 |
+| `ikuoku-cc08-run-083-bucket2-fallback-repeat` | `6A5840DF5C89811E6260BFD0090F42A0E75E4ADEDE230A5766D925B2BC88BA9D` | 138 | counter 2 边界独立复现 |
+| `ikuoku-cc08-run-086-bucket1-fallback` | `155AE91558AF5445F1F931D8FA3742A05AFEE0A0821D043039FF13D137AF9567` | 142 | `counter[1]` 100→101，candidate 2→fallback 1 |
+| `ikuoku-cc08-run-087-bucket1-fallback-repeat` | `DE0FD9A59C1E09400389EEF1475D6951AEE6FF4861F8314D3C1A12B6495C6289` | 132 | counter 1 边界独立复现 |
 
-runs 061–067 是 fallback 可达性调参样本：全部使用 25 ms batch flush，无 autoplay、无触摸注入。
+runs 061–067 是早期 fallback 可达性调参样本：全部使用 25 ms batch flush，无 autoplay、无触摸注入。
 重探针立即扰动到 bucket 2/3；轻探针持续处于 bucket 0，最轻配置仅出现两个孤立 bucket-2 frame，
-始终没有 bucket-1 frame，也无法累积 21 个 bucket-2 frame。因此它们冻结的是观察/运行时可达性边界，
-不是仍需继续试采的普通任务。
+始终没有 bucket-1 frame，也无法累积 21 个 bucket-2 frame。后续通过在 `analyzeBMS` 返回时自动调用
+原始 Unity API、以及受控 CPU affinity/frequency 条件解除触摸时差与分布扰动，runs 081/083/086/087
+完成动态闭合；runs 061–067 仅保留为早期诊断证据。
 
 ### 27.2 当前关键产物哈希
 
 | Reverse 相对路径 | SHA-256 |
 | --- | --- |
-| `artifacts/investigations/clock-scheduling-runtime-oracle/README.md` | `208AEE7F6CCCD105E992AC8470348410EFC4B162338CC145B5135D408B8F5DF7` |
-| `artifacts/investigations/clock-scheduling-runtime-oracle/closure.json` | `F6262F123FD0C65129CD63612B304F082E577C6A398A302A6633EC3A3AE29AE4` |
-| `artifacts/investigations/clock-scheduling-runtime-oracle/sample_manifest.json` | `6BC6B9F64F4DF5E8512A3D60B922D00FF4FDF29F99DA9CF86D72E2C8A8C5D224` |
+| `artifacts/investigations/clock-scheduling-runtime-oracle/README.md` | `6C424E17DB3BA07B7BA0044819AA8E86AD3745625E2A43220595F188A9709964` |
+| `artifacts/investigations/clock-scheduling-runtime-oracle/closure.json` | `442263A74CCCE65BC029C4C8A246D9563EEE32DD506AFF76798B045CF6622EDD` |
+| `artifacts/investigations/clock-scheduling-runtime-oracle/sample_manifest.json` | `CDC48D64F74456350CFB917D09DB927C74DB41ECAA7AF2EDF79EF9DF271CB91A` |
+| `artifacts/investigations/clock-scheduling-runtime-oracle/summaries/adaptive_fallback_lower_buckets_10_1_4.json` | `A63D6FBDF29CF6C4A6414218C0C9C605E5816A7C01FE79B1A17328EC5F808D16` |
 | `artifacts/investigations/clock-scheduling-runtime-oracle/summaries/judge_offset_10_1_4.json` | `72ECA19B327A87D354DDEEA05AE280508D25270E267F4BF549EDAF802B7087D4` |
 | `artifacts/investigations/clock-scheduling-runtime-oracle/summaries/reverse_index_update_10_1_4.json` | `E9FE9A8E1C2D4ED41C4FBA47AD986EEA268FC634AA7C979C11478C47C616BC9A` |
 | `artifacts/investigations/clock-scheduling-runtime-oracle/summaries/cached_bpm_candidates_10_1_4.json` | `D2D1DA63569E8DC09BAB1439A89F03E2D0F9A8D1900FE2614E8085C453874BBB` |
 | `artifacts/investigations/clock-scheduling-runtime-oracle/summaries/pause_during_bpm_10_1_4.json` | `A61535952FECCFFB935F671E2D44CC6B38AECC70BCAFF9FD62B90CEB8B1490E4` |
-| `artifacts/investigations/clock-scheduling-runtime-oracle/verify_runtime_oracle.py` | `FC03EAA8E6B3C3D5883AB1AA57CA1016146DD43C915C168CABBB0073E213B7F7` |
-| `artifacts/investigations/clock-scheduling-runtime-oracle/SHA256SUMS` | `AF04F94BA3BBA7EB59048DCD9409F6739D5C1186E6E69DDCEAF84AC54ED388C8`（108 条） |
+| `artifacts/investigations/clock-scheduling-runtime-oracle/verify_runtime_oracle.py` | `DABE82DF6AF77B7CCC7F56C7CD6C9D029F9626D438EC71B2EE1306B530BA387F` |
+| `artifacts/investigations/clock-scheduling-runtime-oracle/SHA256SUMS` | `B6A69C72FC45D594A65CAD886DBAAB4E884E60EC3539732DEEC01A673EA14F2F`（121 条） |
 
-`SHA256SUMS` 的 108 条记录是包内文件的权威逐文件清单；本节只列门控和结论所需的关键入口，
+`SHA256SUMS` 的 121 条记录是包内文件的权威逐文件清单；本节只列门控和结论所需的关键入口，
 避免重复一份容易再次滞后的完整 manifest。
 
 ### 27.3 当前门控与非阻断保真度例外
 
-1. `fallback_101_21_6` 是当前唯一阻断项：`counter[3]` 的 6-frame 分支动态 confirmed；`counter[1]`/`counter[2]` 的比较与阈值静态 confirmed，但动态触发受观察扰动/运行时可达性限制。
-2. runs 061–067 已确认具体原因：重探针立即把帧扰动到 bucket 2/3；轻探针持续落在 bucket 0，最多只有两个孤立 bucket-2 frame 且没有 bucket-1 frame。因此无法同时保留必要观测并累积 101 个 bucket-1 或 21 个 bucket-2 frame；这不是阈值或映射未知。
+1. `fallback_101_21_6` 已闭合：既有 pass-2 runs 确认 `counter[3] = 6`；runs 081/083 两次独立确认 `counter[2]` 20→21；runs 086/087 两次独立确认 `counter[1]` 100→101，阈值帧均从候选多步回退为单步。
+2. runs 081/083 在四小核 affinity 与最低 CPU 频率下取得 bucket 2；runs 086/087 在 `analyzeBMS` 返回时调用原始 `Application.set_targetFrameRate(40)` 与 `Time.set_timeScale(0.75)` 取得 bucket 1。所有控制均写入 metadata/guardrail，未替换返回值或写进程内存。
 3. `habahiro_zero_bpm_60` 为非阻断保真度例外：`786 miracle_april` SPECIAL 为限时活动谱面，当前账号不可选择；根据已有证据进行还原，无法依赖实体证据，不确保百分百还原。
 4. `bpm_pool_cursor_wrap_reuse` 为非阻断保真度例外：完整缓存扫描覆盖 81 个 musicscore bundles、4,176 个 BMS；单谱最大 16 条，不足以触发第 31 次 acquire；根据已有证据进行还原，无法依赖实体证据，不确保百分百还原。
 5. `slow_frame_2_3_4`：原作分支在采集器诱发慢帧下可复核，但该 delta 分布不能外推为未插桩客户端分布。
 6. 帧率 UI 写入链：60/120 read site、持久字段和 UI owner 已闭合；radio→persisted field 的具体 callback 未端到端观察，仅为解释边界。
 7. reverse-index 的主列表顺序已闭合；与主列表无指针对应关系的 nested child update 具体来源仍属解释边界，不改变 16/16 结论。
 
-除以上明确声明的边界外，没有剩余普通采集或文档回填任务。HABAHIRO 与 BPM pool cursor-wrap 不再参与门控；低 bucket 动态触发边界仍按第 20 节阻断，
-S02 仍保持 `blocked`，S03–S10 继续 fail-closed；不得把“普通任务已完成”误写成“动态证据全部闭合”。
+除以上明确声明的边界外，没有剩余普通采集或文档回填任务。低 bucket 动态触发边界已闭合，S02 状态为 `closed`，可开始 S03–S10。HABAHIRO 与 BPM pool cursor-wrap 不参与门控，但仍须明确标注无法依赖实体证据、不确保百分百还原。
