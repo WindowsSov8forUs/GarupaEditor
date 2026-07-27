@@ -12,7 +12,7 @@
 - 排除的逆向仓库内容：未跟踪的 `.claude/`、`runtime/tools/` 及任何未进入锁定提交的文件
 - 锁定游戏样本：`jp.co.craftegg.band` 10.1.4（version code 230，`arm64-v8a`）；10.1.3/229 仅作独立历史样本和跨版本佐证，不与 10.1.4 trace 合并
 - 阶段目标：把已完成的原作形状 `NoteBatchInformationList` 接入模拟器运行时，恢复原作托管层的帧率请求、双音乐时钟、BPM command、判定偏移、自适应子步、两阶段 Note 调度和暂停冻结语义。
-- 阶段状态：S01 静态证据冻结已完成；Reverse 运行 oracle 已同步至 `e96733cd96a5e7446d2b9adbc413bf77de0bcf98`，但其 `closure.json` 仍将 S02 标为 `blocked`，S03–S10 继续受硬门阻断。
+- 阶段状态：S01 静态证据冻结已完成；Reverse 运行 oracle 已同步至 `e96733cd96a5e7446d2b9adbc413bf77de0bcf98`。HABAHIRO 实体样本与 30 槽 BPM 池回绕改列只读捕捉不可得的非阻断保真度例外；S02 当前仅受低 bucket 历史回退动态边界阻断。
 
 本阶段继续维持 GarupaEditor 当前 TypeScript 技术栈，不因 Reverse 中的 Python 验证模型改变运行技术栈。Reverse 是唯一行为依据；旧 GarupaEditor 模拟器、通用节奏游戏实现、浏览器计时经验和方便实现的默认值均不得作为原作行为来源。
 
@@ -20,7 +20,8 @@
 
 - 判定偏移时钟属于本阶段；判定窗口、输入仲裁和 Note 结果不属于本阶段。
 - move-time、`InGameSnapshotData`、`ReturnTime`、对象池重建和最多 16 秒无输入回放后置，不进入本阶段。
-- 非零 CC03/CC08、初始双时钟、60/120、暂停和偏移的生产/实体证据已经取得；HABAHIRO 实体样本、低 bucket 历史回退动态边界和 30 槽 BPM 池回绕仍是 S02 硬门。
+- 非零 CC03/CC08、初始双时钟、60/120、暂停和偏移的生产/实体证据已经取得；低 bucket 历史回退动态边界仍是 S02 硬门。
+- HABAHIRO 实体样本与 30 槽 BPM 池回绕在只读捕捉前提下不可获得，统一标注为“根据已有证据进行还原，不阻断，无法依赖实体证据，不确保百分百还原”。
 - 60/120 FPS 只恢复 `InGameDirector.Awake` 的目标帧率选择和后端请求，不宣称浏览器、Android Surface、合成器或显示器实际达到对应 cadence。
 - 生产 Note 进入尚未恢复的具体 Move/Wait/Stop/OnUpdate/AfterUpdate 行为时必须返回 `evidence-required`；不得以 no-op 保持表面可运行。
 - `createSimulatorEngine` 接收已经构造完成的谱面结果，不解析 BMS，也不适配编辑器谱面、窗口协议或主程序入口。
@@ -30,7 +31,7 @@
 | 任务 | 状态 | 完成条件 |
 | --- | --- | --- |
 | S01 冻结时钟与调度静态证据 | 已完成 | E01–E26、上游 F01–F04 依赖、manifest、开放缺口和源/副本/Git 索引三方哈希校验器已落地并通过验证 |
-| S02 完成实体设备证据闭环 | 已同步、仍阻断 | R01–R11 已冻结；等待 HABAHIRO 实体样本、`counter[1]/[2]` 回退动态边界和 30 槽 BPM 池回绕进入新的 Reverse 闭合提交 |
+| S02 完成实体设备证据闭环 | 已同步、仍阻断 | R01–R11 已冻结；HABAHIRO 与 BPM 池回绕已列非阻断例外，当前只等待 `counter[1]/[2]` 回退动态边界决策 |
 | S03 接入谱面构造结果 | 等待 S02 | 生产运行时不再依赖 `FirstSlice*Fixture` 或调用者提供的时钟/BPM 派生值 |
 | S04 恢复 60/120 FPS 请求边界 | 等待 S02 | `InGameDirector.Awake` 只向记录型后端请求确认的 60/120 目标值 |
 | S05 恢复双音乐时钟 | 等待 S02 | 主/launcher 初始状态、Float32 推进和回调轨迹匹配实体证据 |
@@ -64,6 +65,15 @@
 - `OPEN_GAPS.md` 已按 R01 `closure.json` 重写；当前三个阻断族为 HABAHIRO 实体样本、`counter[1] > 100`/`counter[2] > 20` 动态边界和 30 槽 BPM 池游标回绕复用。
 - 本地证据校验已通过：普通模式输出 `static=26, runtime=109, revisions=10, upstream=4, runtimeGate=blocked-by-runtime-closure, index=skipped`；暂存后索引模式输出相同计数且 `index=checked`。
 - 本批只同步证据、校验器和任务书，不修改 `src/simulator`，不运行 TypeScript、模拟器测试、Vite/Tauri 或整体构建。
+
+#### 2026-07-27 第三批：调整只读证据边界分类
+
+- `habahiro_zero_bpm_60` 与 `bpm_pool_cursor_wrap_reuse` 改列“只读捕捉前提下无法明确项”，不再阻断 S02；实现时只允许根据已有冻结证据还原，并明确不确保百分百还原。
+- 两项仍保留在 Reverse 原始 `closure.json` 中，不修改冻结文件、不伪造实体闭合，也不用合成谱面替代生产运行证据。
+- runs 061–067 重新核对后确认：重探针把帧立即扰动到 bucket 2/3，轻探针稳定在 bucket 0；仅出现最多两个孤立 bucket-2 frame，且没有 bucket-1 frame。
+- `counter[1] = 101` 与 `counter[2] = 21` 无法动态触发的原因是必要只读观测本身改变时序，而减轻观测后目标 bucket 又不具运行时可达性；阈值、比较与计数器映射本身已有静态证据确认。
+- manifest 与校验器改为只让 `fallback_101_21_6_counter1_counter2_boundaries` 阻断 S03–S10，并强制登记两项非阻断保真度例外。
+- 工作树证据校验已通过，输出 `static=26, runtime=109, revisions=10, upstream=4, runtimeGate=blocked-by-adaptive-fallback-runtime-evidence, index=skipped`；暂存后索引校验输出相同计数且 `index=checked`，`git diff --cached --check` 通过。本批不修改 `src/simulator`，不运行 TypeScript、模拟器测试、Vite/Tauri 或整体构建。
 
 ## 2. 固定范围
 
@@ -250,20 +260,29 @@ Reverse `e96733cd96a5e7446d2b9adbc413bf77de0bcf98` 已提交并由 R01 完整冻
 7. Fast 正 offset 跨 BPM 的逐步 tempo 切换，以及 Slow 负 offset 跨 bar 时保留调用点 BPM。
 8. 进程持久的 `NoteManager +0x74` 累积语义，推翻“当前 chart 有效 change count”旧标签。
 
-### 6.3 仍阻断的问题
+### 6.3 只读捕捉不可得的非阻断保真度例外
 
-1. `786 miracle_april SPECIAL` HABAHIRO 零 BPM-change 60 模式实体样本当前不可选。
-2. `counter[1] > 100` 与 `counter[2] > 20` 两个低 bucket 历史回退边界无法在保留必要探针时动态累积。
-3. 当前 4176 个生产 BMS 中单谱面最多 16 个 BPM command，无法触发 30 槽 BPM pool 第 31 次 acquire、游标回绕和复用。
+1. `786 miracle_april SPECIAL` HABAHIRO 零 BPM-change 60 模式实体样本当前不可选；根据已有证据进行还原，不阻断，无法依赖实体证据，不确保百分百还原。
+2. 当前 4176 个生产 BMS 中单谱面最多 16 个 BPM command，无法触发 30 槽 BPM pool 第 31 次 acquire、游标回绕和复用；根据已有证据进行还原，不阻断，无法依赖实体证据，不确保百分百还原。
 
-### 6.4 硬停止条件
+### 6.4 仍阻断的问题
 
-- R01 `closure.json` 的 `s02_gate` 不是 `complete`。
-- 任一阻断项只能通过合成谱面、修改原作控制流或模拟器结果补齐。
+`counter[1] > 100` 与 `counter[2] > 20` 两个动态边界仍阻断 S02。静态反编译已经确认比较对象、严格阈值和先递增后比较顺序；动态缺口的具体原因如下：
+
+- runs 061–067 全部使用原作客户端、无 autoplay、无触摸注入，并从重到轻缩减只读探针。
+- 重探针配置的进程内逐帧快照成本立即把帧推入 bucket 2/3，无法连续累积 `counter[1]` 所需的 101 个 bucket-1 frame。
+- 轻探针配置使客户端维持约 16.5 ms、持续落入 bucket 0；最轻有效配置仅产生两个孤立 bucket-2 frame，且从未出现 bucket-1 frame，无法累积 `counter[2]` 所需的 21 个 bucket-2 frame。
+- 主机写盘背压已被排除，扰动来自 agent 在客户端进程内的观测成本；继续减探针会失去确认输入 bucket、计数器和输出步数所需的证据字段。
+- 因此这是“必要观测会改变目标时序，减轻观测后目标序列又不可达”的动态证据边界，不是算法阈值未知。
+
+### 6.5 硬停止条件
+
+- 第 6.4 节动态边界尚未取得新的证据或明确降级决策。
+- 第 6.4 节只能通过修改原作控制流、模拟器结果或不可审计的观测方式补齐。
 - 新 trace 未提交 Reverse、无完整 SHA-256、不可离线校验或跨版本混合。
 - 新证据与 R01/R07–R10 冲突且未先在 Reverse 修订结论。
 
-只有新的 Reverse 提交将第 6.3 节全部转为 confirmed，并同步更新 R 系列证据、manifest、`OPEN_GAPS.md` 和本任务书后，才允许 S03 开始。
+第 6.3 节不再参与解锁；只有第 6.4 节动态边界取得新证据或另行明确为可接受的非阻断保真度例外，并同步更新 manifest、`OPEN_GAPS.md` 和本任务书后，才允许 S03 开始。
 
 ## 7. 运行边界与接口决策
 
@@ -388,9 +407,8 @@ interface FrameRateBackend {
 3. 将原始数据、解析结果、版本重定位和校验器提交 Reverse。已完成至 `e96733cd96a5e7446d2b9adbc413bf77de0bcf98`。
 4. 复核静态证据与实体轨迹，修订 change-count、counter mapping 和 Slow offset 结论。已完成当前冲突。
 5. 冻结已提交产物并更新本任务书锁定提交、哈希和进度。已完成 R01–R11。
-6. 等待 HABAHIRO 实体谱面重新可用，取得第 6.3 节第 1 项。
+6. 将 HABAHIRO 与 30 槽池回绕登记为第 6.3 节非阻断保真度例外；实现只消费已有证据，不宣称实体闭合。已完成。
 7. 在不改变原作行为且不以探针扰动制造结果的条件下闭合两个低 bucket 回退边界；不可达则继续阻断。
-8. 仅使用原作生产可消费谱面闭合 30 槽池回绕；生产资源不可达时继续阻断。
 
 **原作证据**
 
@@ -407,7 +425,8 @@ interface FrameRateBackend {
 
 **未解决项**
 
-- 第 6.3 节三个阻断族。
+- 第 6.4 节低 bucket 动态触发边界。
+- 第 6.3 节两项行为只能按已有证据还原，不能宣称百分百复原。
 - 实际音频 transport 相对 BPM callback 的设备层时序不属于本阶段，除非实体证据同时静态闭合其 owner。
 
 **禁止越界项**
@@ -423,7 +442,7 @@ interface FrameRateBackend {
 
 **停止条件**
 
-- 第 6.4 节任一条件成立。
+- 第 6.5 节任一条件成立。
 
 ### S03 接入谱面构造结果
 
@@ -894,7 +913,7 @@ docs(simulator): 记录时钟与调度阶段任务与证据
 1. S01–S10 全部产物、证据、测试和停止条件逐项记录为完成。
 2. E01–E26、F01–F04 和 R 系列证据的源文件、冻结副本及 Git 索引哈希一致。
 3. 任务书记录最终 Reverse 锁定提交，且 Reverse 除明确排除的 `.claude/` 与 `runtime/tools/` 外无未登记依据。
-4. 最终 Reverse `closure.json` 将 S02 标为 complete；HABAHIRO 实体样本、低 bucket 回退动态边界和 30 槽 BPM 池回绕不再处于 blocking。
+4. 低 bucket 回退动态边界已闭合或另行明确降级；HABAHIRO 与 30 槽 BPM 池回绕持续登记为只读实体证据不可得的非阻断保真度例外，不宣称百分百还原。
 5. `createSimulatorEngine` 直接接收 `ChartConstructionResult`，生产路径不依赖第一切片 fixture 或调用者派生时钟值。
 6. 60/120 请求、双 Float32 时钟、BPM 字符串、单次 carry 和位置 callback 全部匹配证据。
 7. BPM command 只消费同批首个 ccNum 3/8，专用列表和到点移除顺序匹配实体 trace。

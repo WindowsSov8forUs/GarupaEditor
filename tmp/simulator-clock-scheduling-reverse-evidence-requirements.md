@@ -416,10 +416,10 @@ trace label 必须与原作字段名分栏存储。若某个字段只有 offset 
 - 60/120 请求、普通零 BPM、CC03/CC08、三类暂停、正负 offset、跨 bar command、反向索引 Update 均已闭合；旧批次中关于这些项目的 `unresolved`/`partial` 只保留为历史记录，不代表当前状态。
 - 慢帧 2/3/4 分支为 `observed-collector-induced`：可确认原作在被观测状态下的分支和守恒关系，但不能把采集器诱发的 delta 分布外推为未插桩客户端分布。
 - `counter[3]` 的 6-frame 回退已动态确认；`counter[1]`/`counter[2]` 的 101/21-frame 阈值静态比较已确认，动态样本受观察扰动/运行时可达性限制，保持 fail-closed。
-- HABAHIRO 行受限时活动谱面不可选择阻断；30-slot BPM pool cursor-wrap 受当前生产谱面最多 16 条 BPM commands 阻断。二者都是生产可用性边界，不是普通待采任务。
+- HABAHIRO 行受限时活动谱面不可选择；30-slot BPM pool cursor-wrap 受当前生产谱面最多 16 条 BPM commands 限制。二者改列只读捕捉前提下无法明确的非阻断项：根据已有证据进行还原，无法依赖实体证据，不确保百分百还原。
 - UI owner、持久字段、60/120 read site 已闭合；radio 到 persisted field 的具体 callback 未端到端观察，只作为设置写入链的解释边界，不推翻帧率请求结论。
 - Reverse 未跟踪的 `runtime/tools/` 与 `runtime/captures/` 不属于证据链。后续不得用合成谱面、旧模拟器或未登记工具替代上述边界。
-- 当前校验器输出为 `clock scheduling runtime oracle: verified (10.1.3 passes + 10.1.4 runs); S02 remains blocked`；因此 S02 仍为 `required-before-code`，S03–S10 继续阻断。
+- Reverse 校验器仍原样输出 `S02 remains blocked`；GarupaEditor 不修改该冻结结论，但本地门控只保留低 bucket 动态触发边界，HABAHIRO 与 BPM pool cursor-wrap 不再阻断。
 
 ## 22. 已冻结中间运行时证据批次
 
@@ -709,14 +709,15 @@ runs 061–067 是 fallback 可达性调参样本：全部使用 25 ms batch flu
 `SHA256SUMS` 的 108 条记录是包内文件的权威逐文件清单；本节只列门控和结论所需的关键入口，
 避免重复一份容易再次滞后的完整 manifest。
 
-### 27.3 当前唯一阻断边界
+### 27.3 当前门控与非阻断保真度例外
 
-1. `habahiro_zero_bpm_60`：`786 miracle_april` SPECIAL 为限时活动谱面，当前账号不可选择；不得以其他宽谱替代。
-2. `fallback_101_21_6`：`counter[3]` 的 6-frame 分支动态 confirmed；`counter[1]`/`counter[2]` 的比较与阈值静态 confirmed，但动态触发受观察扰动/运行时可达性限制。
-3. `bpm_pool_cursor_wrap_reuse`：完整缓存扫描覆盖 81 个 musicscore bundles、4,176 个 BMS；445 个含 BPM commands，单谱最大 16 条，不足以触发 30-slot pool 的第 31 次 acquire。
-4. `slow_frame_2_3_4`：原作分支在采集器诱发慢帧下可复核，但该 delta 分布不能外推为未插桩客户端分布。
-5. 帧率 UI 写入链：60/120 read site、持久字段和 UI owner 已闭合；radio→persisted field 的具体 callback 未端到端观察，仅为解释边界。
-6. reverse-index 的主列表顺序已闭合；与主列表无指针对应关系的 nested child update 具体来源仍属解释边界，不改变 16/16 结论。
+1. `fallback_101_21_6` 是当前唯一阻断项：`counter[3]` 的 6-frame 分支动态 confirmed；`counter[1]`/`counter[2]` 的比较与阈值静态 confirmed，但动态触发受观察扰动/运行时可达性限制。
+2. runs 061–067 已确认具体原因：重探针立即把帧扰动到 bucket 2/3；轻探针持续落在 bucket 0，最多只有两个孤立 bucket-2 frame 且没有 bucket-1 frame。因此无法同时保留必要观测并累积 101 个 bucket-1 或 21 个 bucket-2 frame；这不是阈值或映射未知。
+3. `habahiro_zero_bpm_60` 为非阻断保真度例外：`786 miracle_april` SPECIAL 为限时活动谱面，当前账号不可选择；根据已有证据进行还原，无法依赖实体证据，不确保百分百还原。
+4. `bpm_pool_cursor_wrap_reuse` 为非阻断保真度例外：完整缓存扫描覆盖 81 个 musicscore bundles、4,176 个 BMS；单谱最大 16 条，不足以触发第 31 次 acquire；根据已有证据进行还原，无法依赖实体证据，不确保百分百还原。
+5. `slow_frame_2_3_4`：原作分支在采集器诱发慢帧下可复核，但该 delta 分布不能外推为未插桩客户端分布。
+6. 帧率 UI 写入链：60/120 read site、持久字段和 UI owner 已闭合；radio→persisted field 的具体 callback 未端到端观察，仅为解释边界。
+7. reverse-index 的主列表顺序已闭合；与主列表无指针对应关系的 nested child update 具体来源仍属解释边界，不改变 16/16 结论。
 
-除以上明确声明的边界外，没有剩余普通采集或文档回填任务。由于第 20 节要求门控矩阵不存在阻断项，
+除以上明确声明的边界外，没有剩余普通采集或文档回填任务。HABAHIRO 与 BPM pool cursor-wrap 不再参与门控；低 bucket 动态触发边界仍按第 20 节阻断，
 S02 仍保持 `blocked`，S03–S10 继续 fail-closed；不得把“普通任务已完成”误写成“动态证据全部闭合”。

@@ -104,11 +104,39 @@ if (manifest.upstreamDependencies.length !== 4) {
 }
 
 const requiredTasks = ["S03", "S04", "S05", "S06", "S07", "S08", "S09", "S10"];
-if (manifest.runtimeEvidenceGate.status !== "blocked-by-runtime-closure") {
+if (manifest.runtimeEvidenceGate.status !== "blocked-by-adaptive-fallback-runtime-evidence") {
   fail(`Unexpected runtime gate status: ${manifest.runtimeEvidenceGate.status}`);
 }
-if (manifest.runtimeEvidenceGate.closureStatus !== "blocked") {
-  fail(`Unexpected runtime closure status: ${manifest.runtimeEvidenceGate.closureStatus}`);
+if (manifest.runtimeEvidenceGate.sourceClosureStatus !== "blocked") {
+  fail(`Unexpected source runtime closure status: ${manifest.runtimeEvidenceGate.sourceClosureStatus}`);
+}
+const expectedBlockingFindings = ["fallback_101_21_6_counter1_counter2_boundaries"];
+if (
+  manifest.runtimeEvidenceGate.blockingFindings.length !== expectedBlockingFindings.length ||
+  expectedBlockingFindings.some(
+    (finding) => !manifest.runtimeEvidenceGate.blockingFindings.includes(finding),
+  )
+) {
+  fail("Only the adaptive fallback dynamic boundary may block S03-S10");
+}
+const expectedNonBlockingFindings = [
+  "habahiro_zero_bpm_60",
+  "bpm_pool_cursor_wrap_reuse",
+];
+if (
+  manifest.runtimeEvidenceGate.nonBlockingUnverifiableFindings.length !==
+    expectedNonBlockingFindings.length ||
+  expectedNonBlockingFindings.some(
+    (finding) =>
+      !manifest.runtimeEvidenceGate.nonBlockingUnverifiableFindings.some(
+        (entry) =>
+          entry.id === finding &&
+          entry.disposition === "restore-from-existing-evidence" &&
+          entry.fidelity === "not-guaranteed-100-percent",
+      ),
+  )
+) {
+  fail("Read-only unavailable findings must remain explicit non-blocking fidelity exceptions");
 }
 if (
   requiredTasks.some((task) => !manifest.runtimeEvidenceGate.requiredBeforeTasks.includes(task)) ||
@@ -221,12 +249,17 @@ for (const path of runtimeFiles) {
 }
 
 const closure = JSON.parse(readFileSync(resolve(runtimeOraclePath, "closure.json"), "utf8"));
-if (closure.s02_gate !== manifest.runtimeEvidenceGate.closureStatus) {
+if (closure.s02_gate !== manifest.runtimeEvidenceGate.sourceClosureStatus) {
   fail(`Runtime closure gate mismatch: ${closure.s02_gate}`);
 }
 for (const finding of manifest.runtimeEvidenceGate.blockingFindings) {
   if (!closure.blocking_findings.includes(finding)) {
     fail(`Missing runtime blocking finding: ${finding}`);
+  }
+}
+for (const finding of manifest.runtimeEvidenceGate.nonBlockingUnverifiableFindings) {
+  if (!closure.blocking_findings.includes(finding.id)) {
+    fail(`Missing source non-blocking unavailable finding: ${finding.id}`);
   }
 }
 

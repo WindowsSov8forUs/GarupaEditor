@@ -11,13 +11,25 @@
     ]
   },
   "runtimeEvidenceGate": {
-    "status": "blocked-by-runtime-closure",
+    "status": "blocked-by-adaptive-fallback-runtime-evidence",
     "reversePath": "artifacts/investigations/clock-scheduling-runtime-oracle/",
-    "closureStatus": "blocked",
+    "sourceClosureStatus": "blocked",
     "blockingFindings": [
-      "habahiro_zero_bpm_60",
-      "fallback_101_21_6_counter1_counter2_boundaries",
-      "bpm_pool_cursor_wrap_reuse"
+      "fallback_101_21_6_counter1_counter2_boundaries"
+    ],
+    "nonBlockingUnverifiableFindings": [
+      {
+        "id": "habahiro_zero_bpm_60",
+        "disposition": "restore-from-existing-evidence",
+        "fidelity": "not-guaranteed-100-percent",
+        "reason": "The locked limited-time chart is unavailable to the capture account under read-only observation."
+      },
+      {
+        "id": "bpm_pool_cursor_wrap_reuse",
+        "disposition": "restore-from-existing-evidence",
+        "fidelity": "not-guaranteed-100-percent",
+        "reason": "The complete production inventory has at most 16 BPM commands per chart and cannot reach the 31st acquire under read-only observation."
+      }
     ],
     "requiredBeforeTasks": ["S03", "S04", "S05", "S06", "S07", "S08", "S09", "S10"]
   },
@@ -293,7 +305,7 @@
       "bytes": 44655679,
       "sha256Manifest": "SHA256SUMS",
       "sha256ManifestBytes": 12556,
-      "sha256ManifestHash": "18DB57C3BA54FFD0C4FA43D14A0EF9E25493A95A89150EBD4701A953C44BCE2D",
+      "sha256ManifestHash": "AF04F94BA3BBA7EB59048DCD9409F6739D5C1186E6E69DDCEAF84AC54ED388C8",
       "status": "verified-runtime-oracle-with-blocking-closure",
       "consumers": ["S02", "S03", "S04", "S05", "S06", "S07", "S08", "S09", "S10"]
     },
@@ -394,7 +406,7 @@
         "sourcePath": "docs/CLOCK_SCHEDULING_HANDOFF.md",
         "copiedPath": "handoff/e96733cd96a5e7446d2b9adbc413bf77de0bcf98/CLOCK_SCHEDULING_HANDOFF.md",
         "bytes": 25146,
-        "sha256": "DDF387C661ECE9C6D32D7A6ED29E42D0AF6D2D2B4ACFD338D51A9ECD3B94A470",
+        "sha256": "42AED247AB18D6C0B47F60E601C3696C41D18999E5401C281CF40993B826E5F0",
         "status": "current-runtime-handoff-boundaries",
         "consumers": ["S02", "S03", "S08", "S10"]
       }
