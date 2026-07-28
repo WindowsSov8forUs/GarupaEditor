@@ -89,9 +89,11 @@ export class InGameManager {
     if (updateResult.status !== "ok") {
       return updateResult;
     }
-    const reflectResult = this.oneFrameJudgementController.reflectOneFrameData();
-    if (reflectResult.status !== "ok") {
-      return reflectResult;
+    if (this.oneFrameJudgementController.existsOneFrameData()) {
+      const reflectResult = this.oneFrameJudgementController.reflectOneFrameData();
+      if (reflectResult.status !== "ok") {
+        return reflectResult;
+      }
     }
     return ok(undefined);
   }
@@ -132,6 +134,11 @@ export class InGameManager {
     if (this.lifecycleState === "disposed") {
       return ok(undefined);
     }
+    const noteDispose = this.noteManager.dispose();
+    if (noteDispose.status !== "ok") {
+      return noteDispose;
+    }
+    this.oneFrameJudgementController.dispose();
     this.lifecycleState = "disposed";
     this.currentGameStateValue = GameState.PlayingSound;
     this.pauseStateValue = PauseState.None;

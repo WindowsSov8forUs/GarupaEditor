@@ -233,6 +233,11 @@ export class NoteLong extends NoteFrontBase {
     this.autoLiveTraceValue.push({ kind: "long-linked-after-update" });
     return ok(undefined);
   }
+
+  protected override onResetForDispose(): void {
+    this.afterNoteValue = null;
+    this.autoLiveTraceValue.length = 0;
+  }
 }
 
 export class NoteSlide extends NoteFrontBase {
@@ -447,6 +452,12 @@ export class NoteSlide extends NoteFrontBase {
       ? this.changeState(NoteState.Deactive)
       : ok(undefined);
   }
+
+  protected override onResetForDispose(): void {
+    this.afterNotesValue = [];
+    this.currentAfterIndexValue = 0;
+    this.autoLiveTraceValue.length = 0;
+  }
 }
 
 export class NoteFlick extends NoteSingleBase {
@@ -475,6 +486,10 @@ export class NoteFlick extends NoteSingleBase {
       syntheticX: synthetic.value,
     });
     return this.submitHeadPerfect(this.forcePerfectJudgeNoteType);
+  }
+
+  protected override onResetForDispose(): void {
+    this.flickTraceValue.length = 0;
   }
 }
 

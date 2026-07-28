@@ -59,6 +59,12 @@ export class NoteBpmChange {
     return ok(true);
   }
 
+  resetForDispose(): void {
+    this.activeValue = false;
+    this.noteInformationValue = null;
+    this.onBpmChanged = null;
+  }
+
   snapshot(): NoteBpmChangeSnapshot {
     return {
       poolIndex: this.poolIndex,

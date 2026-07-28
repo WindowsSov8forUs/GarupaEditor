@@ -95,6 +95,16 @@ export class NoteBase {
     return ok(undefined);
   }
 
+  resetForDispose(): SimulatorResult<void> {
+    const deactivated = this.changeState(NoteState.Deactive);
+    if (deactivated.status !== "ok") {
+      return deactivated;
+    }
+    this.noteInformationValue = null;
+    this.onResetForDispose();
+    return ok(undefined);
+  }
+
   executeUpdate(deltaTimeSeconds: number): SimulatorResult<void> {
     if ((this.stateValue as NoteState) === NoteState.Deactive) {
       return ok(undefined);
@@ -145,6 +155,8 @@ export class NoteBase {
       "The original OnUpdate dispatch is confirmed; note-family behavior belongs to later slices.",
     );
   }
+
+  protected onResetForDispose(): void {}
 
   protected get autoLiveRuntime(): SimulatorResult<NoteAutoLiveRuntime> {
     if (this.autoLiveRuntimeValue === null) {

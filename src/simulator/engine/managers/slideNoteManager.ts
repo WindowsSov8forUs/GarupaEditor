@@ -11,4 +11,8 @@ export class SlideNoteManager {
   get isInitialized(): boolean {
     return this.initialized;
   }
+
+  dispose(): void {
+    this.initialized = false;
+  }
 }

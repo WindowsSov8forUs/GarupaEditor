@@ -53,8 +53,8 @@
 | A06 恢复 Long 分阶段完成 | 已完成 | head `>=`、tail `>`、父拥有 linked after、Wait/Stop 更新与失活顺序已恢复 |
 | A07 恢复 Slide 分阶段完成 | 已完成 | source-order after、每调用一个 selected、invisible skip、intermediate/terminal 与最终失活已恢复 |
 | A08 恢复 Auto Live OneFrame 填充与聚合 | 已完成 | 固定 5 槽、first-unused、原子 Setup、池序 projection、空帧/耗尽/清除语义已恢复 |
-| A09 接入调度、暂停与生命周期 | 可开始 | 反向根 Update、子节点顺序、外层帧 Reflect、暂停冻结和池复用无回归 |
-| A10 生产 oracle 与阶段验收 | 等待 A09 | 固定轨迹、生产 BMS、失败关闭、全部隔离回归和验收文档通过 |
+| A09 接入调度、暂停与生命周期 | 已完成 | 反向根/父子顺序沿用；Reflect 仅由外层 owner 执行；暂停、失败与 dispose 语义已接入 |
+| A10 生产 oracle 与阶段验收 | 可开始 | 固定轨迹、生产 BMS、失败关闭、全部隔离回归和验收文档通过 |
 
 ### 1.4 批次记录
 
@@ -110,6 +110,17 @@
 - payload 只包含 note identity/button types/note type/phase、raw/adjusted Perfect 4、addCombo 1、absolute position 与 JudgeTiming None 0；分数、Power、生命、Skill、Fever、音频、粒子、渲染和 HUD 字段在类型上缺席。
 - Reflect 只在 exists 成立时按固定池序建立 `OneFrameJudgementBatch` 投影并统一清槽；空帧返回 null 且不递增 batch index，第六条返回 `evidence-required` 并保留前五条。
 - 删除生产 `stageFixture`；第一切片容器测试改为走正式 Auto Live Setup，覆盖 5 槽占用、耗尽、池序收集与回收。
+- 模拟器隔离 TypeScript、第一切片 17 项与时钟调度 15 组回归通过。
+
+#### 2026-07-28 第七批：A09 调度、暂停与生命周期
+
+- 保持既有 NoteManager 的 BPM-before-root、根 active list 反序 Update、survivor AfterUpdate 和全部 adaptive 子步；父拥有 Long/Slide child 更新未进入根列表、未改变根 Count。
+- `InGameManager` 只在 NoteManager 整个子步循环成功返回且 OneFrame exists 时执行一次 Reflect；空外层帧不调用/不伪造 batch，多子步判定共享同一个 5 槽池。
+- 任一子步失败立即返回，不进入剩余子步或 Reflect；OneFrame 第六条失败时已提交的五条保持占用，供调用方审计原生边界。
+- PauseSound 继续在输入分派后、NoteManager 前返回，因此 music clock、Auto cursor、child 状态、OneFrame slots 和事件轨迹全部冻结；resume 不进行补步。
+- pool cursor 改为仅在 Note 激活成功后提交；Long/Slide 图验证失败不会消耗 cursor 或激活 root。
+- dispose 统一使 root/BPM 对象失活、清除绑定 Note/child runtime、归零 pool cursor、关闭 Slide manager 并清空未 Reflect 的 OneFrame payload，不产生判定或后端副作用；重复 dispose 仍幂等。
+- manager snapshot 增加最小 calculated-data 投影，可审计 manual/Auto Live 与 identity transform，但不暴露 mode14/debug flag。
 - 模拟器隔离 TypeScript、第一切片 17 项与时钟调度 15 组回归通过。
 
 ## 2. 固定范围

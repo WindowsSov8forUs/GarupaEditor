@@ -245,6 +245,13 @@ export class InGameOneFrameJudgementController {
       : cloneBatch(this.lastJudgementBatchValue);
   }
 
+  dispose(): void {
+    for (const container of this.containers) {
+      container.inUse = false;
+      container.payload = null;
+    }
+  }
+
   snapshot(): OneFrameJudgementControllerSnapshot {
     return {
       initialized: this.initializedValue,

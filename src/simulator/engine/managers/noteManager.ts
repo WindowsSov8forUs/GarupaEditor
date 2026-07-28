@@ -87,6 +87,7 @@ export interface NoteManagerSnapshot {
   readonly schedulerTrace: readonly NoteManagerTraceEntry[];
   readonly bpmChangeCount: number;
   readonly performanceLevelCounters: readonly number[];
+  readonly calculatedData: ReturnType<InGameCalculatedData["snapshot"]>;
 }
 
 export type PerformanceLevelCounters = [number, number, number, number];
@@ -95,6 +96,12 @@ interface NotePool {
   readonly family: NoteFamily;
   readonly objects: NoteBase[];
   cursor: number;
+}
+
+interface NotePoolAcquisition {
+  readonly note: NoteBase;
+  readonly pool: NotePool;
+  readonly nextCursor: number;
 }
 
 export class NoteManager {
@@ -331,7 +338,28 @@ export class NoteManager {
       schedulerTrace: [...this.schedulerTraceValue],
       bpmChangeCount: this.bpmChangeCount,
       performanceLevelCounters: [...this.performanceLevelCountersValue],
+      calculatedData: this.inGameCalculatedData.snapshot(),
     };
+  }
+
+  dispose(): SimulatorResult<void> {
+    for (const pool of this.notePoolsValue.values()) {
+      for (const note of pool.objects) {
+        const reset = note.resetForDispose();
+        if (reset.status !== "ok") {
+          return reset;
+        }
+      }
+      pool.cursor = 0;
+    }
+    for (const bpm of this.bpmPoolValue) {
+      bpm.resetForDispose();
+    }
+    this.activeNotesValue.length = 0;
+    this.activeBpmChangesValue.length = 0;
+    this.bpmPoolCursorValue = 0;
+    this.slideNoteManager.dispose();
+    return ok(undefined);
   }
 
   private activateCurrentBatch(substepIndex: number): SimulatorResult<void> {
@@ -379,15 +407,16 @@ export class NoteManager {
       if (noteResult.status !== "ok") {
         return noteResult;
       }
-      const activationResult = noteResult.value.activate(noteInformation);
+      const activationResult = noteResult.value.note.activate(noteInformation);
       if (activationResult.status !== "ok") {
         return activationResult;
       }
+      noteResult.value.pool.cursor = noteResult.value.nextCursor;
       this.schedulerTraceValue.push({
         kind: "note-activate",
         substepIndex,
         noteIndex: noteInformation.index,
-        poolObjectId: noteResult.value.poolObjectId,
+        poolObjectId: noteResult.value.note.poolObjectId,
       });
     }
 
@@ -419,7 +448,7 @@ export class NoteManager {
 
   private acquirePoolObject(
     noteInformation: NoteInformation,
-  ): SimulatorResult<NoteBase> {
+  ): SimulatorResult<NotePoolAcquisition> {
     const familyResult = noteFamily(noteInformation);
     if (familyResult.status !== "ok") {
       return familyResult;
@@ -440,8 +469,11 @@ export class NoteManager {
       if (note === undefined || note.state !== NoteState.Deactive) {
         continue;
       }
-      pool.cursor = (index + 1) % pool.objects.length;
-      return ok(note);
+      return ok({
+        note,
+        pool,
+        nextCursor: (index + 1) % pool.objects.length,
+      });
     }
 
     return evidenceRequired(

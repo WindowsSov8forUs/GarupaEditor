@@ -40,6 +40,12 @@ function validateClockScheduling() {
     selectSubstepCount,
   } = require(join(simulatorRoot, "engine", "managers", "noteManager.js"));
   const { SlideNoteManager } = require(join(simulatorRoot, "engine", "managers", "slideNoteManager.js"));
+  const { InGameCalculatedData } = require(join(
+    simulatorRoot,
+    "engine",
+    "data",
+    "inGameCalculatedData.js",
+  ));
   const { InGameOneFrameJudgementController } = require(join(
     simulatorRoot,
     "engine",
@@ -285,7 +291,9 @@ function validateClockScheduling() {
       controller,
       bpmChangeCount,
       judgeOffsetFrames,
+      new InGameCalculatedData({ kind: "manual" }),
       () => oneFrame.getUsableOneFrameData(),
+      () => ({ status: "evidence-required", capability: "unused", requiredEvidence: [], boundary: "unused" }),
     );
     assertEqual(manager.execAwakeEnd().status, "ok", "command manager initialize");
     return { controller, manager };
