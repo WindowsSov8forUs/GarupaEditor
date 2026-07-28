@@ -54,9 +54,9 @@
 | A05 恢复 Single/Flick Force Perfect | 已完成 | Multiple owner 遍历完整 playable source order；其他 family/equal button 断组，method fixture 精确通过 |
 | A06 恢复 Long 分阶段完成 | 已完成 | head/tail 第六槽保留 native Wait/linked order，并由 manager terminal fault 阻止重试 |
 | A07 恢复 Slide 分阶段完成 | **修复完成** | invisible 与 visible current 统一先过 E15 adjusted-position/finite gate；synthetic 与 production 首 invisible child before/equal 回归通过 |
-| A08 恢复 Auto Live OneFrame 填充与聚合 | **重新打开** | Setup只验证整数/有限值，未拒绝未闭合note type、phase/type/count/position组合 |
-| A09 接入调度、暂停与生命周期 | **重新打开** | disposed后resume/getAdjusted成功，dispose-before-initialize还会先产生frame-rate副作用 |
-| A10 生产 oracle 与阶段验收 | **重新打开** | AL18/AL22未枚举disposed公共API和非法OneFrame语义请求；旧绿色结论不足以关闭阶段 |
+| A08 恢复 Auto Live OneFrame 填充与聚合 | **修复完成，待 A10 重验收** | Setup按owner family/phase验证闭合note type、position、button与Multiple count组合，非法请求零写入 |
+| A09 接入调度、暂停与生命周期 | **修复完成，待 A10 重验收** | faulted/disposed在shortcut与Awake前服从manager生命周期；adjusted owner统一门控 |
+| A10 生产 oracle 与阶段验收 | **重验收中** | AL18/AL22新回归及定向TypeScript/first-slice/clock/Auto Live通过；尚待提交后完整A10 |
 
 ### 1.4 批次记录
 
@@ -371,6 +371,14 @@
 - AL22只覆盖foreign handle、duplicate Setup和sixth entry，没有覆盖未知note type、phase/type不匹配、count规则或来源/位置一致性；完成定义中的Setup和Multiple note type/count边界因此不能继续勾选。
 - 公共host dispose后，`resume()`因未暂停shortcut返回`ok`，`getAdjustedMusicPosition()`也返回`ok(0)`；若未initialize即dispose，再调用initialize会先执行Awake并记录60 FPS后端请求，随后才返回`host.initialize-after-dispose`。这违反A09的dispose确定性和portable host失败关闭边界。
 - 本轮只纠正文档完成度，不改生产代码。A08/A09/A10与阶段关闭结论撤销；A00–A07及既有exact/topology/fault/Slide/mode结论不受影响。下一批补闭合payload owner校验、disposed公共API优先级与AL18/AL22回归。
+
+#### 2026-07-29 第三十九批：A08/A09闭合payload与disposed生命周期修复
+
+- OneFrame Setup在结构检查之外，按生产owner语义验证请求：head由root family固定note type与source position；intermediate只接受可见Slide A/B child、note type 8与child position；tail按Long after type或Slide terminal game type固定note type与position。
+- button identity限制为非空且属于已确认playable button范围；Multiple Directional只允许head note type 10、source game type 10/11和正callback count，其他family必须count=0。未知note type、phase/type错配、空button、不一致position与count错配均在GetUsable/slot写入前返回同一`one-frame.invalid-auto-live-payload`。
+- `InGameManager`公开只读生命周期状态并拥有adjusted-position生命周期门；host initialize在faulted/disposed时不先Awake，step在非initialized时不先做director参数处理，resume在shortcut前检查生命周期，getAdjusted直接服从manager owner。
+- AL18新增dispose-before-initialize公共host矩阵：initialize、合法/NaN step、pause、resume、getAdjusted均失败关闭，snapshot与幂等dispose允许，backend trace保持空。AL22新增六类非法payload并逐次全对象比较controller snapshot零变化。
+- 第一切片槽测试改为source/absolute position一致的闭合请求，不再以测试侧不一致输入绕过生产门。隔离TypeScript、第一切片17项、时钟15组与Auto Live AL01–AL22通过；A10完整提交后重验收留给下一批。
 
 ## 2. 固定范围
 

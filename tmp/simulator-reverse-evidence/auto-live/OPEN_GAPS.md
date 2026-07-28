@@ -22,9 +22,9 @@ G01–G17 保持关闭。第三次审计的 G19/G20 由 Reverse `24706edcb02155f
 
 5. **已关闭：** `validatePlayMode` 现返回新建冻结的规范化判别联合，`InGameCalculatedData` 再复制冻结且getter不暴露可修改值。AL01覆盖合法Auto创建后Skill→mode14突变仍保持identity Auto与真实crossing、合法manual创建后改Auto仍保持manual，以及owner getter `Reflect.set`拒绝；AL22原有创建时非法值拒绝保持。完整A10、source/copy/index、Reverse verifier及提交后独立临时产物复现均通过。
 
-6. **开放，required-before-close：** OneFrame Setup只检查字段为整数/有限值，仍会接受`noteType=999`、任意Multiple callback count及与来源不一致的absolute position并占用slot。该项不要求新增Reverse行为默认值；必须只接受R02/R03已闭合的生产request语义，其他组合在任何写入前返回`evidence-required`，并补AL22原子回归。
+6. **实现已修复，待完整重验收：** OneFrame Setup现按root/child owner、phase、family、terminal/after type验证闭合note type、source/after position、playable buttons与Multiple callback count。AL22覆盖未知note type、phase/type错配、position错配、普通count非零、Multiple count为零和空button，全部在GetUsable/slot写入前返回`one-frame.invalid-auto-live-payload`且snapshot零变化。
 
-7. **开放，required-before-close：** 公共host在disposed后让`resume()`和`getAdjustedMusicPosition()`返回`ok`；创建后直接dispose再initialize还会先执行Awake并记录frame-rate请求。必须在所有shortcut/后端调用前统一检查disposed生命周期，只允许既有snapshot与幂等dispose，并补AL18公共API与backend trace回归。
+7. **实现已修复，待完整重验收：** manager现拥有adjusted-position生命周期门并公开只读state；host initialize/step/resume/getAdjusted在shortcut、director参数校验或Awake副作用前服从faulted/disposed状态。AL18覆盖dispose-before-initialize后initialize、合法/NaN step、pause、resume、getAdjusted失败，snapshot/幂等dispose允许且backend trace保持空。
 
 G22同时固定adaptive method fixture在一个setup outer frame后于full manager outer-frame index 1判定。GarupaEditor冻结包含`auto-live-actual-replay.json`与逐字节相同的`653_ikuoku_easy.bms.txt`；actual replay与公共fault边界均已完成第六次全量重验收，未被第七次Slide审计推翻。
 

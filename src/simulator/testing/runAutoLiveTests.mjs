@@ -1015,6 +1015,34 @@ function validateAutoLive() {
     assert.equal(disposedMultiplePool.objects.every(
       (object) => object.state === NoteState.Deactive), true);
     assert.equal(disposeMultiple.oneFrame.snapshot().trace.length, disposeTrace);
+
+    const disposedBackends = createRecordingSimulatorBackends();
+    const disposedHost = ok(createSimulatorEngine({
+      chart: fixture.chart([], 120),
+      runtime: {
+        highFrequencyMode: false,
+        judgeOffsetFrames: 0,
+        playMode: {
+          kind: "auto-live",
+          resultTransform: "identity-no-active-situation-skill",
+        },
+      },
+    }, disposedBackends), "dispose-before-initialize host create");
+    ok(disposedHost.dispose(), "dispose-before-initialize");
+    const disposedSnapshot = ok(disposedHost.snapshot(), "disposed host snapshot");
+    assert.deepEqual(disposedSnapshot.backendTrace, []);
+    evidence(disposedHost.initialize(), "host.initialize-after-dispose");
+    evidence(disposedHost.step(0), "ingame.update-outside-initialized-lifecycle");
+    evidence(disposedHost.step(Number.NaN),
+      "ingame.update-outside-initialized-lifecycle");
+    evidence(disposedHost.pause(), "ingame.pause-outside-initialized-lifecycle");
+    evidence(disposedHost.resume(), "ingame.resume-outside-initialized-lifecycle");
+    evidence(disposedHost.getAdjustedMusicPosition(),
+      "ingame.adjusted-position-outside-initialized-lifecycle");
+    assert.deepEqual(ok(disposedHost.snapshot(), "disposed host remains read-only"),
+      disposedSnapshot);
+    assert.deepEqual(disposedBackends.snapshot(), []);
+    ok(disposedHost.dispose(), "disposed host idempotent dispose");
   });
 
   test("AL19", "production BMS 六类 core root 与全部 Directional group 直接消费", () => {
@@ -1353,6 +1381,27 @@ function validateAutoLive() {
       afterNoteType: types.AfterNoteType.None,
       slideNoteList: [duplicate, duplicate],
     })), "auto-live.duplicate-or-missing-slide-node");
+
+    const invalidPayloadController = controller();
+    const payloadSource = normalInfo(5032);
+    const invalidPayloadBefore = invalidPayloadController.snapshot();
+    for (const invalidRequest of [
+      { ...request(payloadSource, "head"), noteType: 999 },
+      request(payloadSource, "tail"),
+      { ...request(payloadSource, "head"), absolutePosition: payloadSource.absolutePos + 1 },
+      { ...request(payloadSource, "head"), multipleDirectionalFlickNoteCount: 1 },
+      {
+        ...request(multipleInfo(
+          5033, 120, 0, types.GameNoteType.DirectionalFlickLeft,
+        ), "head", 10),
+        multipleDirectionalFlickNoteCount: 0,
+      },
+      request({ ...payloadSource, buttonTypesArray: [] }, "head"),
+    ]) {
+      evidence(invalidPayloadController.setupAutoLiveJudgement(invalidRequest),
+        "one-frame.invalid-auto-live-payload");
+      assert.deepEqual(invalidPayloadController.snapshot(), invalidPayloadBefore);
+    }
 
     const oneFrame = controller();
     evidence(oneFrame.setupAutoLiveJudgementData(

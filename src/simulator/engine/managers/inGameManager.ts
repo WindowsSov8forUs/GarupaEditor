@@ -39,6 +39,10 @@ export class InGameManager {
     readonly inputManager: InputManager,
   ) {}
 
+  get state(): EngineLifecycleState {
+    return this.lifecycleState;
+  }
+
   initialize(): SimulatorResult<void> {
     if (this.faultValue !== null) {
       return this.faultValue;
@@ -105,6 +109,20 @@ export class InGameManager {
       }
     }
     return ok(undefined);
+  }
+
+  getAdjustedMusicPosition(): SimulatorResult<number> {
+    if (this.faultValue !== null) {
+      return this.faultValue;
+    }
+    if (this.lifecycleState !== "initialized") {
+      return evidenceRequired(
+        "ingame.adjusted-position-outside-initialized-lifecycle",
+        [],
+        "The recovered adjusted-position owner is only available for an initialized live.",
+      );
+    }
+    return ok(this.noteManager.getAdjustedMusicPosition());
   }
 
   pause(): SimulatorResult<void> {

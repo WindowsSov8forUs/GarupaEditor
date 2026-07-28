@@ -36,6 +36,12 @@ class SimulatorEngineHost implements SimulatorEngine {
   ) {}
 
   initialize(): SimulatorResult<void> {
+    if (
+      this.inGameManager.state === "faulted" ||
+      this.inGameManager.state === "disposed"
+    ) {
+      return this.inGameManager.initialize();
+    }
     const awake = this.inGameDirector.awake();
     if (awake.status !== "ok") {
       return awake;
@@ -46,6 +52,9 @@ class SimulatorEngineHost implements SimulatorEngine {
   step(deltaTimeSeconds: number): SimulatorResult<void> {
     if (this.inGameManager.fault !== null) {
       return this.inGameManager.fault;
+    }
+    if (this.inGameManager.state !== "initialized") {
+      return this.inGameManager.execUpdate(deltaTimeSeconds);
     }
     return this.inGameDirector.update(deltaTimeSeconds);
   }
@@ -69,6 +78,9 @@ class SimulatorEngineHost implements SimulatorEngine {
     if (this.inGameManager.fault !== null) {
       return this.inGameManager.fault;
     }
+    if (this.inGameManager.state !== "initialized") {
+      return this.inGameManager.resume();
+    }
     if (!this.inGameManager.snapshot().paused) {
       return ok(undefined);
     }
@@ -81,10 +93,7 @@ class SimulatorEngineHost implements SimulatorEngine {
   }
 
   getAdjustedMusicPosition(): SimulatorResult<number> {
-    if (this.inGameManager.fault !== null) {
-      return this.inGameManager.fault;
-    }
-    return ok(this.inGameManager.noteManager.getAdjustedMusicPosition());
+    return this.inGameManager.getAdjustedMusicPosition();
   }
 
   snapshot(): SimulatorResult<SimulatorSnapshot> {

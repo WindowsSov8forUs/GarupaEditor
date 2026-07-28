@@ -1,3 +1,9 @@
+import {
+  AfterNoteType,
+  ButtonType,
+  FrontNoteType,
+  GameNoteType,
+} from "../chart/types";
 import type { AutoLiveJudgementRequest } from "../data/autoLiveJudgement";
 import type {
   AutoLiveJudgementData,
@@ -286,27 +292,130 @@ export class InGameOneFrameJudgementController {
 function validateAutoLiveJudgementRequest(
   request: AutoLiveJudgementRequest,
 ): SimulatorResult<void> {
+  if (!isClosedAutoLiveJudgementRequest(request)) {
+    return evidenceRequired(
+      "one-frame.invalid-auto-live-payload",
+      ["R02", "R03", "R04"],
+      "Auto Live Setup accepts only the closed owner-generated note identity, phase, note type, position and Multiple callback-count combinations before committing IsUse and payload state.",
+    );
+  }
+  return ok(undefined);
+}
+
+function isClosedAutoLiveJudgementRequest(
+  request: AutoLiveJudgementRequest,
+): boolean {
   if (
     request === null ||
     typeof request !== "object" ||
     request.noteInformation === null ||
     typeof request.noteInformation !== "object" ||
     !Number.isInteger(request.noteInformation.index) ||
+    request.noteInformation.index < 0 ||
+    request.noteInformation.isInvisible ||
+    request.noteInformation.buttonType < ButtonType.Button_00_BMS_1P_SC ||
+    request.noteInformation.buttonType > ButtonType.Button_15_BMS_2P_SC ||
     !Array.isArray(request.noteInformation.buttonTypesArray) ||
-    request.noteInformation.buttonTypesArray.some((button) => !Number.isInteger(button)) ||
+    request.noteInformation.buttonTypesArray.length === 0 ||
+    request.noteInformation.buttonTypesArray.some((button) =>
+      !Number.isInteger(button) ||
+      button < ButtonType.Button_00_BMS_1P_SC ||
+      button > ButtonType.Button_15_BMS_2P_SC) ||
     !Number.isInteger(request.noteType) ||
     !Number.isInteger(request.multipleDirectionalFlickNoteCount) ||
-    request.multipleDirectionalFlickNoteCount < 0 ||
-    !Number.isFinite(request.absolutePosition) ||
-    (request.phase !== "head" && request.phase !== "intermediate" && request.phase !== "tail")
+    !Number.isFinite(request.absolutePosition)
   ) {
-    return evidenceRequired(
-      "one-frame.invalid-auto-live-payload",
-      ["R02", "R03", "R04"],
-      "Auto Live Setup validates every represented payload field before committing IsUse and payload state.",
-    );
+    return false;
   }
-  return ok(undefined);
+
+  const source = request.noteInformation;
+  if (request.phase === "head") {
+    if (
+      request.absolutePosition !== source.absolutePos ||
+      (request.noteType === 10
+        ? request.multipleDirectionalFlickNoteCount < 1
+        : request.multipleDirectionalFlickNoteCount !== 0)
+    ) {
+      return false;
+    }
+    switch (source.fireNoteType) {
+      case FrontNoteType.Normal:
+      case FrontNoteType.Long:
+      case FrontNoteType.SlideA:
+      case FrontNoteType.SlideB:
+        return request.noteType === 0;
+      case FrontNoteType.Flick:
+        return request.noteType === 3;
+      case FrontNoteType.DirectionalFlick:
+        return request.noteType === 9 && isDirectionalGameNoteType(source.gameNoteType);
+      case FrontNoteType.MultipleDirectionalFlick:
+        return request.noteType === 10 && isDirectionalGameNoteType(source.gameNoteType);
+      default:
+        return false;
+    }
+  }
+
+  if (
+    request.phase === "intermediate" &&
+    request.multipleDirectionalFlickNoteCount === 0 &&
+    request.noteType === 8 &&
+    request.absolutePosition === source.absolutePos &&
+    !source.isSlideNoteHead &&
+    (source.gameNoteType === GameNoteType.SlideA ||
+      source.gameNoteType === GameNoteType.SlideB)
+  ) {
+    return true;
+  }
+
+  if (request.phase !== "tail" || request.multipleDirectionalFlickNoteCount !== 0) {
+    return false;
+  }
+  if (
+    source.fireNoteType === FrontNoteType.Long &&
+    request.absolutePosition === source.afterNoteAbsolutePos
+  ) {
+    switch (source.afterNoteType) {
+      case AfterNoteType.Normal:
+        return request.noteType === 1;
+      case AfterNoteType.Flick:
+        return request.noteType === 3;
+      case AfterNoteType.DirectionalFlickLeft:
+      case AfterNoteType.DirectionalFlickRight:
+      case AfterNoteType.MultipleDirectionalFlickLeft:
+      case AfterNoteType.MultipleDirectionalFlickRight:
+        return request.noteType === 9;
+      default:
+        return false;
+    }
+  }
+  if (request.absolutePosition !== source.absolutePos) {
+    return false;
+  }
+  switch (source.gameNoteType) {
+    case GameNoteType.SlideEndA:
+    case GameNoteType.SlideEndB:
+      return request.noteType === 8;
+    case GameNoteType.SlideEndFlickA:
+    case GameNoteType.SlideEndFlickB:
+      return request.noteType === 5;
+    case GameNoteType.SlideADirectionalFlickLeft:
+    case GameNoteType.SlideADirectionalFlickRight:
+    case GameNoteType.SlideBDirectionalFlickLeft:
+    case GameNoteType.SlideBDirectionalFlickRight:
+      return request.noteType === 6;
+    case GameNoteType.SlideADirectionalFlickLeftAdd:
+    case GameNoteType.SlideADirectionalFlickRightAdd:
+    case GameNoteType.SlideBDirectionalFlickLeftAdd:
+    case GameNoteType.SlideBDirectionalFlickRightAdd:
+      return request.noteType === 7;
+    default:
+      return false;
+  }
+}
+
+function isDirectionalGameNoteType(gameNoteType: number): boolean {
+  return gameNoteType === GameNoteType.DirectionalFlickLeft ||
+    gameNoteType === GameNoteType.DirectionalFlickRight;
 }
 
 function cloneBatch(batch: OneFrameJudgementBatch): OneFrameJudgementBatch {

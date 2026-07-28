@@ -326,11 +326,16 @@ test("OneFrame 容器统一获取 Reflect 与回收", () => {
   requireOk(controller.initialize(), "initialize");
   for (let index = 0; index < 5; index += 1) {
     const handle = requireOk(controller.getUsableOneFrameData(), `slot ${index}`);
+    const source = {
+      ...noteInformation(`one-frame-${index}`, index),
+      absolutePos: index,
+      storedAbsolutePos: index,
+    };
     requireOk(controller.setupAutoLiveJudgementData(handle, {
-      noteInformation: noteInformation(`one-frame-${index}`, index),
+      noteInformation: source,
       phase: "head",
       noteType: 0,
-      absolutePosition: index,
+      absolutePosition: source.absolutePos,
       multipleDirectionalFlickNoteCount: 0,
     }), `setup ${index}`);
   }
