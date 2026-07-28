@@ -10,8 +10,8 @@
 - 锁定原作样本：`jp.co.craftegg.band` 10.1.3（version code 229，`arm64-v8a`）。
 - 上游已验收阶段：第一切片、谱面构造、时钟与调度。
 - 上游时钟调度验收提交：GarupaEditor `78414bc`，关闭记录修订提交 `ca84258`。
-- 当前状态：**第六次审计发现的公共host `step` fault优先级已修复并通过定向回归；A00–A09与G01–G22保持有效。A10仍待提交后独立复核和全量阶段重验收，完成前禁止进入手动输入阶段。**
-- 待再次重建验收记录：`tmp/simulator-auto-live-acceptance.md`。
+- 当前状态：**第六次最终独立重验收已通过，A00–A10完成，Auto Live阶段关闭。公共host全部非允许API及合法/非法`step`输入均服从G19锁存故障；G21 topology、G22 actual replay、完整production与上游回归均已重新复核。下一阶段只能先建立“手动输入与判定”的独立Reverse证据硬门。**
+- 最终验收记录：`tmp/simulator-auto-live-acceptance.md`。
 - 已冻结证据包：`tmp/simulator-reverse-evidence/auto-live/`。
 
 ### 1.1 阶段目标
@@ -53,8 +53,8 @@
 | A06 恢复 Long 分阶段完成 | 已完成 | head/tail 第六槽保留 native Wait/linked order，并由 manager terminal fault 阻止重试 |
 | A07 恢复 Slide 分阶段完成 | 已完成 | head 第六槽状态与 terminal fault boundary 精确覆盖 |
 | A08 恢复 Auto Live OneFrame 填充与聚合 | 已完成 | 117/84 source-order run 的唯一 note type 10/count、混合 batch 与五槽行为通过独立固定 oracle |
-| A09 接入调度、暂停与生命周期 | 修复完成，待阶段重验收 | 公共step/pause/resume/getAdjusted/initialize均先服从fault；AL16覆盖合法与非法delta |
-| A10 生产 oracle 与阶段验收 | 重新打开 | G22与既有全量回归保留；待提交后静态复核与完整A10重跑 |
+| A09 接入调度、暂停与生命周期 | 已完成 | 公共step/pause/resume/getAdjusted/initialize均先服从fault；AL16覆盖合法与非法delta |
+| A10 生产 oracle 与阶段验收 | 已完成 | 提交后独立fault复现、G22、topology、全部A10与Reverse verifier通过 |
 
 ### 1.4 批次记录
 
@@ -306,6 +306,13 @@
 - `SimulatorEngineHost.step`现与pause/resume/getAdjusted一致，在进入director和任何delta验证前读取manager fault；无fault时NaN/Infinity/负delta仍沿用既有`director.invalid-delta-time`失败关闭，不改变正常调度输入边界。
 - AL16在真实host六root第五槽耗尽后，除合法`1/60`外新增NaN、正Infinity、负Infinity与有限负delta，全部要求与首次`one-frame.pool-exhausted`全对象相等。后续连续snapshot仍与fault瞬间全对象相等，因而同时锁定backend、scheduler、tempo trace与五槽状态不变；dispose继续允许。
 - 本修复直接消费G19，不增加Reverse证据、生产设置或测试hook。定向TypeScript/Auto Live/第一切片/时钟回归通过后提交；A10最终结论留给提交后的完整独立重验收。
+
+#### 2026-07-29 第三十一批：第六次最终独立重验收
+
+- 在已推送修复提交后使用临时编译产物独立复现公共host：fault前`step(NaN)`仍返回`director.invalid-delta-time`；制造五槽terminal fault后，`step(1/60)`、NaN、正负Infinity、负1、initialize、pause、resume和getAdjusted全部与首次`one-frame.pool-exhausted`全对象相等，snapshot全对象不变，dispose成功。
+- 完整A10重新通过：隔离TypeScript；第一切片17项；全部chart boundary/parsing/batches/graphs/multi-range/command/finalize/production；普通/HABAHIRO roots 825/598；时钟15组；Auto Live AL01–AL22；依赖边界；evidence worktree/index。
+- Reverse首版与supplement verifier重新通过`G11–G22, cases=14, replay=4`；独立production Multiple generator重新生成后与固定JSON逐字节一致。静态搜索仍不存在expected BPM输入、private BPM lookup、exact纯函数重放或outer-frame删除。
+- 第六次复核未发现新的required-before-close缺口。A09/A10与阶段完成勾选恢复；手动输入、分数/状态消费、表现层和主程序接入继续保持后置硬门。
 
 ## 2. 固定范围
 
@@ -990,7 +997,7 @@ A10 前不运行 Vite、Tauri 或 GarupaEditor 整体构建。
 
 只有以下条件全部满足，Auto Live 阶段才能关闭：
 
-- [x] Reverse G19–G21 补充证据提交已锁定；G18 明确 superseded，新 `auto_live_gate = closed` 且 `blocking_findings = []`。
+- [x] Reverse G19–G22 补充证据提交已锁定；G18 明确 superseded，新 `auto_live_gate = closed` 且 `blocking_findings = []`。
 - [x] E02/E05/E30 的内部哈希修订链已闭合，无 stale source profile。
 - [x] 补充后的固定事件轨迹覆盖 Multiple Directional、Stop、pause、BPM boundary 与精确 B±5 bits，并可在 Reverse 离线重复生成；GarupaEditor 不调用 Python。
 - [x] Auto Live 模式显式接入，manual/mode14/debug 路由没有混淆。
@@ -998,15 +1005,15 @@ A10 前不运行 Vite、Tauri 或 GarupaEditor 整体构建。
 - [x] Long 头/尾比较符号、父子顺序、状态、active pause 与回收匹配。
 - [x] Slide 头/中间/终端/Stop、current/selected cursor 和单次调用粒度匹配 frozen trace。
 - [x] Long/Slide after 子图保持构造共享身份并由父对象独占更新。
-- [ ] OneFrame 固定 5 槽、first-unused、Setup、Multiple note type/count 边界、池序 Reflect、清除与 Note-level exhaustion 失败状态匹配；manager匹配，但公共host非法delta仍绕过same-latched-failure。
+- [x] OneFrame 固定5槽、first-unused、Setup、Multiple note type/count边界、池序Reflect、清除与Note-level exhaustion失败状态匹配；manager与公共host全部step输入均匹配。
 - [x] unknown 分数/生命/技能/音频/粒子字段没有零值或 no-op 伪实现。
 - [x] 同位置、actual adaptive 多子步、Long/Slide/Multiple 暂停、空帧和失败关闭全部通过新 oracle；exact offset owner与adaptive full outer-frame均直接消费G22。
 - [x] 普通与 HABAHIRO production Normal/Flick/Directional/Multiple/Long/Slide 回归通过，并以独立 oracle 验证 production group，不由待测函数生成 expected。
-- [ ] 第一切片、谱面构造和时钟调度全部隔离回归通过，并补齐fault后全部公共`step`输入优先级回归。
+- [x] 第一切片、谱面构造和时钟调度全部隔离回归通过，并补齐fault后全部公共`step`输入优先级回归。
 - [x] `engine/` 依赖边界通过。
-- [ ] `tmp/simulator-auto-live-acceptance.md` 已按 G19–G22、actual production replay 与公共`step`修复后结果再次重建并通过。
+- [x] `tmp/simulator-auto-live-acceptance.md` 已按G19–G22、actual production replay与公共`step`修复后结果再次重建并通过。
 - [x] 未修改主程序入口、编辑器控制器、窗口协议、渲染或音频实现。
-- [ ] 新的公共host修复与最终验收提交已推送，远端与HEAD为`0 0`。
+- [x] 新的公共host修复已推送且远端与HEAD为`0 0`；最终验收文档按同一纪律提交推送。
 
 阶段关闭后，下一阶段只允许按整体计划进入“手动输入与判定”。如果 AL21 中任一手动输入分支仍无实体证据，则下一阶段必须先建立对应设备采证硬门，不能沿用 Auto Live 的 Force Perfect 结果绕过手动判定。
 

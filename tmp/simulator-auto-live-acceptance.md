@@ -1,6 +1,6 @@
 # 模拟器 Auto Live 阶段验收记录
 
-> **2026-07-29 第六次独立审计：第五次验收结论仍保持撤销。** 公共host `step` fault优先级现已修复并通过定向回归，A09修复完成；A10提交后全量重验收完成前，本文后续既有通过结果仍只作为历史记录。
+> **2026-07-29 第六次最终独立重验收：通过。** 公共host `step`现于director delta校验前服从G19 terminal fault；合法delta、NaN、±Infinity与负delta均返回同一锁存失败。G22 actual replay、adaptive full outer-frame、G21 topology及全部A10回归重新通过。
 
 ## 1. 验收身份
 
@@ -33,10 +33,12 @@
 - G22 最终证据冻结：Reverse `c2dc5c7f`；GarupaEditor `6f78d3f`、`031407b`
 - G22 production replay 消费：`2d40644`
 - 第五次最终重验收：`6b63b18`
-- 第六次审计重开：本文件所在提交
+- 第六次审计重开：`f6066b5`
+- 公共host step fault修复：`f0f496d`
+- 第六次最终重验收：本文件所在提交
 - 验收日期：2026-07-28
 - 最终验收日期：2026-07-29
-- 验收结论：**撤销。A00–A08保持完成；A09/A10重新打开，Auto Live阶段未关闭，当前不得进入手动输入阶段。**
+- 验收结论：**通过。A00–A10完成，Auto Live阶段关闭；手动输入阶段仍须先建立独立Reverse证据硬门。**
 
 ## 2. 证据硬门与冻结包
 
@@ -92,8 +94,8 @@ auto-live evidence verified: candidates=30, final=72, supplement=G11-G22, cases=
 | A06 Long | 通过 | head `>=`、tail `>`、linked finish→tail、active pause/resume、回收；head/tail 第六槽 native failure state 均冻结 |
 | A07 Slide | 通过 | source-order、terminal 8/5/6/7、Stop、Reset、单次粒度；head 第六槽 Wait 状态冻结 |
 | A08 OneFrame | 通过 | 固定 5 槽；117/84 个 production run 的唯一 callback count；visual helper 不判定 |
-| A09 调度生命周期 | 修复完成，待重验收 | 公共step现于director delta校验前检查fault；AL16覆盖合法、NaN、±Infinity与负delta |
-| A10 生产 oracle | **撤销** | exact/adaptive/topology保留；待提交后静态复核和完整A10回归 |
+| A09 调度生命周期 | 通过 | 公共step于director delta校验前检查fault；AL16覆盖合法、NaN、±Infinity与负delta，全部返回锁存失败 |
+| A10 生产 oracle | 通过 | exact/adaptive/topology及全部上游回归重新通过；提交后独立host复现、Reverse verifier与topology重生成通过 |
 
 ## 4. 已落地的生产边界
 
@@ -228,6 +230,7 @@ node tmp/simulator-reverse-evidence/auto-live/verify.mjs --index
 - 固定 oracle：首版11 case、补充14 case与G22 replay均被读取；exact offset与adaptive outer-frame已按production trace完整消费，该部分保持有效。
 - production topology oracle：独立生成器不导入/调用待测 `groupMultipleDirectionalInformationList`；固定 JSON 对两个 BMS 的 SHA-256、batch/position、source slot、note/button/game type 逐对象比较，离线再生成字节一致。
 - adaptive/offset：substep/state/slot/outer frame来自manager trace并全对象比较；exact三例逐frame重放committed delta，入口cursor、step BPM和result bits来自公共production owner。
+- terminal fault：fault前非法delta保留`director.invalid-delta-time`；fault后合法、NaN、±Infinity、负delta及其他非允许API均返回同一锁存失败，连续snapshot全对象不变、dispose允许。
 - 未运行 Vite、Tauri 或 GarupaEditor 整体构建，符合任务书限制。
 
 ## 7. 持续非阻断边界
@@ -241,7 +244,7 @@ node tmp/simulator-reverse-evidence/auto-live/verify.mjs --index
 
 ## 8. 下一阶段硬门
 
-Auto Live第六次审计已重新打开A09/A10；以下下一阶段硬门暂不得启动。
+Auto Live第六次最终重验收已通过；以下下一阶段硬门恢复适用。
 
 下一阶段只允许按整体计划进入“手动输入与判定”。开始生产实现前必须：
 
