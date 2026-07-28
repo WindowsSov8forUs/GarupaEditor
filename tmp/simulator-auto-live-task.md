@@ -49,14 +49,14 @@
 | A00 建立阶段任务书 | 已完成 | 范围、证据候选、硬门、实现批次和验收矩阵写入本文档 |
 | A01 晋升 Auto Live 静态证据 | 补充完成 | Reverse `cd84d2ce` 补齐 Multiple/visual ARM64，`7a0540dc` 补齐 committed offset cursor identity；冻结 R09–R16 |
 | A02 生成固定事件 oracle 并关闭缺口 | 第五次补充完成，代码门解除 | Reverse `c2dc5c7f` 以 G22 增加 committed exact delta/BMS replay与 adaptive full outer-frame identity |
-| A03 接入 Auto Live 模式与判定上下文 | **重新打开** | 已验证 `playMode` 仍保留调用者可变别名；创建后可绕过未知 transform/mode failure-closed 边界 |
+| A03 接入 Auto Live 模式与判定上下文 | **修复完成，待 A10 重验收** | 校验现返回规范化冻结值，owner再持有冻结副本；调用者与getter别名突变回归通过 |
 | A04 建立 Long/Slide 运行子图 | 修复完成 | 普通生产 Slide 由 terminal child + root after type 联合识别；父 Deactive 时按 R02 清 child graph/current，复用重建共享身份 |
 | A05 恢复 Single/Flick Force Perfect | 已完成 | Multiple owner 遍历完整 playable source order；其他 family/equal button 断组，method fixture 精确通过 |
 | A06 恢复 Long 分阶段完成 | 已完成 | head/tail 第六槽保留 native Wait/linked order，并由 manager terminal fault 阻止重试 |
 | A07 恢复 Slide 分阶段完成 | **修复完成** | invisible 与 visible current 统一先过 E15 adjusted-position/finite gate；synthetic 与 production 首 invisible child before/equal 回归通过 |
 | A08 恢复 Auto Live OneFrame 填充与聚合 | 已完成 | 117/84 source-order run 的唯一 note type 10/count、混合 batch 与五槽行为通过独立固定 oracle |
 | A09 接入调度、暂停与生命周期 | 已完成 | 公共step/pause/resume/getAdjusted/initialize均先服从fault；AL16覆盖合法与非法delta |
-| A10 生产 oracle 与阶段验收 | **重新打开** | AL22 仅覆盖创建时非法模式，缺合法创建后原对象突变的公共 host 回归与提交后全量重验收 |
+| A10 生产 oracle 与阶段验收 | **重验收中** | AL01 已覆盖manual/Auto/Skill/mode14创建后突变与owner getter；尚待提交后完整 A10 和文档重建 |
 
 ### 1.4 批次记录
 
@@ -347,6 +347,14 @@
 - 该路径违反 A03 第4/5项和 G06：unknown Skill transform 应失败关闭，不得在一次性校验后通过可变别名进入生产owner。相同根因还允许 manual→auto、auto→manual、mode14/未知 kind 在创建后改变路由。
 - AL22 当前只把初始非法对象传给 `createSimulatorEngine`，没有在合法创建后修改原对象；TypeScript `readonly` 与 `private readonly` 只固定类型/引用，不冻结对象内容，因此旧绿色结论无法承担生命周期模式身份。
 - 本轮只纠正文档完成度，不改生产代码。A03/A10 与阶段关闭结论撤销；G01–G22、A04–A09及既有 exact/topology/fault/Slide 结论不受影响。下一批在校验时生成规范化不可变模式值，并补公共host别名突变回归。
+
+#### 2026-07-29 第三十六批：A03 模式所有权修复
+
+- `validatePlayMode` 不再只返回 `void`；它读取并验证调用者输入后返回新建且冻结的规范化 `SimulatorPlayMode`，`createSimulatorEngine` 只把该值交给 `InGameCalculatedData`，不再传递原对象引用。
+- `InGameCalculatedData` 构造时再次浅复制并冻结平坦判别联合；`playMode` getter返回的内部值不可修改。该双层所有权同时保护公共host和直接owner构造，不依赖调用者遵守TypeScript `readonly`。
+- AL01 通过正式公共host覆盖：合法Auto对象创建后先改`resultTransform="skill"`、再改`kind="mode14"`，snapshot仍保持identity Auto且真实Normal crossing只产生一条Auto Perfect；合法manual对象创建后改为Auto，snapshot仍保持manual/none。
+- AL01同时对直接owner getter执行`Reflect.set`，冻结值拒绝修改且snapshot不变；AL22原有创建时undefined/mode14/Skill拒绝继续保留，形成创建前验证与创建后所有权双边界。
+- 定向隔离TypeScript与Auto Live AL01–AL22（含canonical、production、依赖边界）通过。A03实现缺口关闭；A10保持重验收中，完整上游套件、证据index和提交后独立复核留给下一批。
 
 ## 2. 固定范围
 

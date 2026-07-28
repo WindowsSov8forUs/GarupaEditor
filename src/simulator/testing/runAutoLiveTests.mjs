@@ -247,7 +247,7 @@ function validateAutoLive() {
     (entry) => entry.kind === kind,
   );
 
-  test("AL01", "显式 Auto Live 判别且 manual 不走 Force Perfect", () => {
+  test("AL01", "显式模式与已验证 owner 不受调用者别名突变", () => {
     const manualMode = new InGameCalculatedData({ kind: "manual" });
     const autoMode = new InGameCalculatedData({
       kind: "auto-live",
@@ -255,6 +255,67 @@ function validateAutoLive() {
     });
     assert.equal(manualMode.isAutoPlay, false);
     assert.equal(autoMode.isAutoPlay, true);
+    assert.equal(Object.isFrozen(autoMode.playMode), true);
+    assert.equal(Reflect.set(autoMode.playMode, "resultTransform", "skill"), false);
+    assert.deepEqual(autoMode.snapshot(), {
+      playMode: "auto-live",
+      isAutoPlay: true,
+      resultTransform: "identity-no-active-situation-skill",
+    });
+
+    const mutableAutoMode = {
+      kind: "auto-live",
+      resultTransform: "identity-no-active-situation-skill",
+    };
+    const autoHost = ok(createSimulatorEngine({
+      chart: fixture.chart([batch(2, [normalInfo(99, 2)])], 120),
+      runtime: {
+        highFrequencyMode: false,
+        judgeOffsetFrames: 0,
+        playMode: mutableAutoMode,
+      },
+    }, createRecordingSimulatorBackends()), "mutable Auto host create");
+    mutableAutoMode.resultTransform = "skill";
+    assert.deepEqual(ok(autoHost.snapshot(), "Auto host after transform mutation")
+      .managers.noteManager.calculatedData, {
+      playMode: "auto-live",
+      isAutoPlay: true,
+      resultTransform: "identity-no-active-situation-skill",
+    });
+    mutableAutoMode.kind = "mode14";
+    assert.deepEqual(ok(autoHost.snapshot(), "Auto host after kind mutation")
+      .managers.noteManager.calculatedData, {
+      playMode: "auto-live",
+      isAutoPlay: true,
+      resultTransform: "identity-no-active-situation-skill",
+    });
+    ok(autoHost.initialize(), "mutable Auto host initialize");
+    ok(autoHost.step(1 / 60), "mutable Auto host activate");
+    ok(autoHost.step(1 / 60), "mutable Auto host crossing");
+    const autoSnapshot = ok(autoHost.snapshot(), "mutable Auto host result");
+    assert.equal(autoSnapshot.managers.oneFrame.lastJudgementBatch.entryCount, 1);
+    assert.equal(autoSnapshot.managers.oneFrame.lastJudgementBatch.entries[0].noteIndex, 99);
+    ok(autoHost.dispose(), "mutable Auto host dispose");
+
+    const mutableManualMode = { kind: "manual" };
+    const manualHost = ok(createSimulatorEngine({
+      chart: fixture.chart([], 120),
+      runtime: {
+        highFrequencyMode: false,
+        judgeOffsetFrames: 0,
+        playMode: mutableManualMode,
+      },
+    }, createRecordingSimulatorBackends()), "mutable manual host create");
+    mutableManualMode.kind = "auto-live";
+    mutableManualMode.resultTransform = "identity-no-active-situation-skill";
+    assert.deepEqual(ok(manualHost.snapshot(), "manual host after alias mutation")
+      .managers.noteManager.calculatedData, {
+      playMode: "manual",
+      isAutoPlay: false,
+      resultTransform: "none",
+    });
+    ok(manualHost.dispose(), "mutable manual host dispose");
+
     const manual = bindNote(new notes.NoteNormal("manual"), normalInfo(101), {
       position: { value: 120 },
       isAuto: false,

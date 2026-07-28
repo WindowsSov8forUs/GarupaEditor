@@ -11,7 +11,10 @@ import {
   type SimulatorResult,
 } from "../engine/evidence";
 import { getConstructedChartRuntimeMetadata } from "../engine/runtime/chartRuntimeMetadata";
-import { InGameCalculatedData } from "../engine/data/inGameCalculatedData";
+import {
+  InGameCalculatedData,
+  type SimulatorPlayMode,
+} from "../engine/data/inGameCalculatedData";
 import { InGameDirector } from "../engine/managers/inGameDirector";
 import { InGameManager } from "../engine/managers/inGameManager";
 import { InGameMusicScoreController } from "../engine/managers/inGameMusicScoreController";
@@ -140,7 +143,7 @@ export function createSimulatorEngine(
     return playModeValidation;
   }
   const slideNoteManager = new SlideNoteManager();
-  const inGameCalculatedData = new InGameCalculatedData(input.runtime.playMode);
+  const inGameCalculatedData = new InGameCalculatedData(playModeValidation.value);
   const musicScoreController = new InGameMusicScoreController(input.chart);
   const oneFrameJudgementController = new InGameOneFrameJudgementController();
   const noteManager = new NoteManager(
@@ -171,7 +174,7 @@ export function createSimulatorEngine(
 
 function validatePlayMode(
   value: SimulatorEngineInput["runtime"]["playMode"],
-): SimulatorResult<void> {
+): SimulatorResult<SimulatorPlayMode> {
   if (value === null || typeof value !== "object") {
     return evidenceRequired(
       "runtime.invalid-play-mode",
@@ -179,14 +182,18 @@ function validatePlayMode(
       "The runtime requires an explicit manual or Auto Live play-mode object.",
     );
   }
-  if (value.kind === "manual") {
-    return ok(undefined);
+  const kind = value.kind;
+  if (kind === "manual") {
+    return ok(Object.freeze({ kind: "manual" }));
   }
   if (
-    value.kind === "auto-live" &&
+    kind === "auto-live" &&
     value.resultTransform === "identity-no-active-situation-skill"
   ) {
-    return ok(undefined);
+    return ok(Object.freeze({
+      kind: "auto-live",
+      resultTransform: "identity-no-active-situation-skill",
+    }));
   }
   return evidenceRequired(
     "runtime.unsupported-play-mode-or-result-transform",

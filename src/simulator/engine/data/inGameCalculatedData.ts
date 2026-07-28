@@ -12,7 +12,11 @@ export interface InGameCalculatedDataSnapshot {
 }
 
 export class InGameCalculatedData {
-  constructor(private readonly playModeValue: SimulatorPlayMode) {}
+  private readonly playModeValue: SimulatorPlayMode;
+
+  constructor(playMode: SimulatorPlayMode) {
+    this.playModeValue = Object.freeze({ ...playMode });
+  }
 
   get isAutoPlay(): boolean {
     return this.playModeValue.kind === "auto-live";

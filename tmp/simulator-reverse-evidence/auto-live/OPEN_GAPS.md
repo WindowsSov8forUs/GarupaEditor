@@ -20,7 +20,7 @@ G01–G17 保持关闭。第三次审计的 G19/G20 由 Reverse `24706edcb02155f
 
 4. **已关闭：** `NoteSlide.forcePerfectPendingAfter` 已按冻结 E15 对 invisible/visible current child统一先调用 adjusted-position owner、检查有限值并执行before返回，到点后才skip/judge。AL10覆盖root/child前一Float32与equal；AL19逐对象覆盖普通89个、HABAHIRO 27个首child为invisible的production Slide root；AL22覆盖non-finite原子失败。完整A10、source/copy/index、Reverse verifier及提交后独立临时产物复现均通过。
 
-5. **开放，required-before-close：** `createSimulatorEngine` 校验 `input.runtime.playMode` 后把同一对象引用交给 `InGameCalculatedData`；调用者可在创建后修改kind/resultTransform。已独立复现合法identity Auto创建后改为`skill`，snapshot出现未表示transform，`initialize/step`仍成功并产生Auto Perfect。该项不要求新增Reverse证据，但必须在校验时生成规范化不可变内部值、阻断getter内部别名，并补manual/Auto/Skill/mode14创建后突变的公共host回归。
+5. **实现已修复，待完整重验收：** `validatePlayMode` 现返回新建冻结的规范化判别联合，`InGameCalculatedData` 再复制冻结且getter不暴露可修改值。AL01覆盖合法Auto创建后Skill→mode14突变仍保持identity Auto与真实crossing、合法manual创建后改Auto仍保持manual，以及owner getter `Reflect.set`拒绝；AL22原有创建时非法值拒绝保持。定向TypeScript与AL01–AL22已通过，完整A10、index校验和提交后独立复核完成前仍保持required-before-close。
 
 G22同时固定adaptive method fixture在一个setup outer frame后于full manager outer-frame index 1判定。GarupaEditor冻结包含`auto-live-actual-replay.json`与逐字节相同的`653_ikuoku_easy.bms.txt`；actual replay与公共fault边界均已完成第六次全量重验收，未被第七次Slide审计推翻。
 
