@@ -10,7 +10,7 @@
 - 锁定原作样本：`jp.co.craftegg.band` 10.1.3（version code 229，`arm64-v8a`）。
 - 上游已验收阶段：第一切片、谱面构造、时钟与调度。
 - 上游时钟调度验收提交：GarupaEditor `78414bc`，关闭记录修订提交 `ca84258`。
-- 当前状态：**第十二次独立逐项重验收已通过，A00–A10完成，Auto Live阶段关闭。本次验收在三个生产修复提交`593d957`、`4f05e14`、`b07693c`推送后另起执行；重新确认A00–A10每项“任务要求→已提交原作证据/portable边界→生产路径→独立实际观察”，并运行完整A10、Reverse两套verifier、source/copy/index、独立topology及提交后临时产物。OneFrame对象handle/source/exact count owner、全部root/command preflight与失败前零mutation均已明确关闭。下一阶段仍只能先建立手动输入独立Reverse证据硬门。**
+- 当前状态：**第十三次独立审计未通过，Auto Live阶段重新打开。提交后全新编译产物确认三类required-before-close缺口：G19 terminal fault在`dispose()`时被清空，导致之后非允许API不再返回同一latch；Slide child运行角色、跨父共享身份、playable source identity/双button数组与具体pool family未被完整preflight，错误图可在head已Reflect后才fault；公共`step(3e38)`虽为有限Float32输入，却返回`ok`并把music/launcher position写为Infinity。A04/A05/A07/A08/A09/A10及相关完成项撤销；先关闭owner/graph/clock/lifecycle组合并补独立回归，禁止进入手动输入阶段。**
 - 最终验收记录：`tmp/simulator-auto-live-acceptance.md`。
 - 已冻结证据包：`tmp/simulator-reverse-evidence/auto-live/`。
 
@@ -54,13 +54,13 @@
 | A01 晋升 Auto Live 静态证据 | 补充完成 | Reverse `cd84d2ce` 补齐 Multiple/visual ARM64，`7a0540dc` 补齐 committed offset cursor identity；冻结 R09–R16 |
 | A02 生成固定事件 oracle 并关闭缺口 | 第五次补充完成，代码门解除 | Reverse `c2dc5c7f` 以 G22 增加 committed exact delta/BMS replay与 adaptive full outer-frame identity |
 | A03 接入 Auto Live 模式与判定上下文 | **修复完成** | 校验返回规范化冻结值，owner再持有冻结副本；调用者与getter别名突变回归通过 |
-| A04 建立 Long/Slide 运行子图 | 修复完成 | 普通生产 Slide 由 terminal child + root after type 联合识别；父 Deactive 时按 R02 清 child graph/current，复用重建共享身份 |
-| A05 恢复 Single/Flick Force Perfect | 已完成 | Multiple owner 遍历完整 playable source order；其他 family/equal button 断组，method fixture 精确通过 |
+| A04 建立 Long/Slide 运行子图 | **重新打开** | 仍须拒绝跨父/根-child共享身份及与list角色不符的Slide child，且必须在任何owner mutation前失败 |
+| A05 恢复 Single/Flick Force Perfect | **重新打开** | source内部shape已闭合，但具体pool Note仍可绑定另一合法family；须锁定receiver/source family owner |
 | A06 恢复 Long 分阶段完成 | 已完成 | head/tail 第六槽保留 native Wait/linked order，并由 manager terminal fault 阻止重试 |
-| A07 恢复 Slide 分阶段完成 | **修复完成** | invisible 与 visible current 统一先过 E15 adjusted-position/finite gate；synthetic 与 production 首 invisible child before/equal 回归通过 |
-| A08 恢复 Auto Live OneFrame 填充与聚合 | **已完成** | R02对象handle、NoteManager source owner、G12/G21 exact count与全部slot/Reflect边界逐项重验收通过 |
-| A09 接入调度、暂停与生命周期 | **已完成** | R04/U01/U03 preflight位于全部owner mutation前；G19 fault、pause/dispose与outer Reflect逐项重验收通过 |
-| A10 生产 oracle 与阶段验收 | **已完成** | 完整证据映射、production实际观察、独立临时产物与全量隔离验证均通过 |
+| A07 恢复 Slide 分阶段完成 | **重新打开** | E15成功路径有效，但错误intermediate/terminal child角色可延迟到运行期产生partial state |
+| A08 恢复 Auto Live OneFrame 填充与聚合 | **重新打开** | handle/source/count修复有效；source index/invisible/button双数组与父角色的完整provenance仍未preflight |
+| A09 接入调度、暂停与生命周期 | **重新打开** | G19 latch被dispose清空；有限Float32 delta可写入非有限clock state；preflight仍漏child owner/role |
+| A10 生产 oracle 与阶段验收 | **重新打开** | AL16未覆盖fault→dispose→API，AL22未覆盖上述graph/source/delta组合；旧全绿不能关闭 |
 
 ### 1.4 批次记录
 
@@ -434,6 +434,15 @@
 - A09逐项消费U03/U04/U05、R02/R03/R04、G19/G22：BPM-before-root、反序Update、parent child、adaptive一次Reflect、pause/resume、fault/dispose与生命周期优先级均确认；`CC08 + Normal + missing-after Long`在公共host于backend前拒绝，direct manager完整快照保持created、OneFrame/Slide未初始化、零active/trace。
 - A10重新执行隔离TypeScript、第一切片17项、全部chart suites、production roots 825/598、时钟15组、AL01–AL22、依赖边界、证据source/copy/index、Reverse两套verifier和独立Multiple topology逐字节比较，全部通过。静态搜索无expected BPM注入、private BPM lookup、exact纯函数替代、outer-frame删除、生产fixture/evidence ID或主程序依赖。
 - 本轮验收与最后生产修复提交分离，且在完整A10后又执行提交后独立产物与逐项静态审计；未发现新的required-before-close项。A08/A09/A10及完成定义恢复关闭，但手动输入、业务结果消费、表现层和主程序接入仍严格后置。
+
+#### 2026-07-29 第四十六批：第十三次独立审计与阶段重开
+
+- 不沿用第十二次“通过”结论，重新按`owner × consumer × lifecycle × failure point × prior mutation`枚举。全新临时编译产物复现G19 fault后调用`dispose()`成功，但manager把`faultValue`清为null；随后initialize/step/NaN step/pause/resume/getAdjusted分别返回disposed生命周期错误，而非冻结portable policy要求的同一`one-frame.pool-exhausted` latch。AL16只在dispose成功处停止。
+- Slide graph preflight仅检查terminal映射、button、position和单父列表内identity；没有验证非terminal child必须保持对应Slide A/B角色、child不得标head、child不得同时属于root/另一父，也没有全局root identity唯一性。注册chart中的首child使用terminal game type、末child合法时，create/initialize/head均成功，head已Reflect；到首child才返回`one-frame.invalid-auto-live-payload`并留下active Wait root和已推进clock。
+- 同一缺口扩展到judgement provenance：playable root负index或invisible、`buttonTypes`与`buttonTypesArray`不一致、具体Note pool对象绑定另一合法family均未在统一preflight拒绝；现有AL22只覆盖数组内部primary/duplicate与family三字段内部错配，不能外推owner绑定。
+- 公共host空chart以`step(3e38)`执行：该值及其Float32转换均有限，现返回`ok`，但`InGameMusicScoreController.advance`在写入前不检查结果，music/launcher beat与absolute position成为Infinity。该结果违反failure matrix `non-finite-position -> evidence-required/no state change`及第3节失败关闭规则；AL22只注入NaN adjusted callback，未走正式clock owner。
+- 两个冻结production BMS重新枚举：144个Slide root的所有nonterminal child均为同A/B fire/game角色且`isSlideNoteHead=false/after=None`，terminal均`fire=None/isSlideNoteHead=false/after=None`；跨父共享child和child/root身份交叉均为0。该U01实际观察可用于portable graph ownership校验，不引入新原作行为。
+- 本批只纠正文档状态，不修改生产代码。A04/A05/A07/A08/A09/A10与阶段完成勾选撤销；既有G01–G22、成功轨迹、117/84 topology、exact replay和E15 position gate结论保留。下一批先修统一纯preflight、有限clock结果和fault-dispose latch，再扩展AL16/AL22；修复批不得同批关闭。
 
 ## 2. 固定范围
 
@@ -1127,17 +1136,17 @@ A10 前不运行 Vite、Tauri 或 GarupaEditor 整体构建。
 - [x] Normal/Flick/standalone Directional/Multiple Directional 的 adjusted crossing、事件数、source-order run state 和顺序匹配。
 - [x] Long 头/尾比较符号、父子顺序、状态、active pause 与回收匹配。
 - [x] Slide 头/中间/终端/Stop、current/selected cursor 和单次调用粒度匹配 frozen trace；invisible/visible current均先执行E15 position gate。
-- [x] Long/Slide after 子图保持构造共享身份并由父对象独占更新。
-- [x] OneFrame固定5槽、对象handle/first-unused、NoteManager source owner、Multiple exact count、池序Reflect、清除与Note-level exhaustion全部匹配。
-- [x] faulted/disposed公共host在shortcut、director参数校验与Awake前失败关闭；snapshot/幂等dispose允许且不产生backend副作用。
+- [ ] Long/Slide after 子图须保持构造共享身份并由单一父对象独占更新；当前跨父/root-child共享与child角色未完整preflight。
+- [ ] OneFrame五槽/handle/exact count保持有效，但source index/invisible/button双数组、父角色与具体Note family provenance尚未全部闭合。
+- [ ] faulted/disposed公共host须在全部组合保持边界；当前fault→dispose会清除G19 latch，后续API不再返回同一失败。
 - [x] unknown 分数/生命/技能/音频/粒子字段没有零值或 no-op 伪实现。
-- [x] 同位置、actual adaptive多子步、Long/Slide/Multiple暂停、空帧、G19 fault及portable坏图mutation前preflight全部通过新oracle/独立观察。
+- [ ] 同位置/adaptive/pause/空帧成功路径有效；portable坏Slide角色及有限delta产生非有限clock state仍可在mutation后失败或错误返回ok。
 - [x] 普通与 HABAHIRO production Normal/Flick/Directional/Multiple/Long/Slide 回归通过，并以独立 oracle 验证 production group，不由待测函数生成 expected；首invisible Slide child crossing/cursor timing逐对象覆盖89/27个root。
 - [x] 第一切片、谱面构造和时钟调度全部隔离回归通过，并补齐fault后全部公共`step`输入优先级回归。
 - [x] `engine/` 依赖边界通过。
-- [x] `tmp/simulator-auto-live-acceptance.md` 已按新纪律加入A00–A10证据/生产/观察映射并重新通过。
+- [ ] `tmp/simulator-auto-live-acceptance.md` 须加入fault→dispose→API、完整graph/source ownership和正式clock非有限结果后重新通过。
 - [x] 未修改主程序入口、编辑器控制器、窗口协议、渲染或音频实现。
-- [x] 三个生产修复批与独立验收批分离提交推送，并确认远端与HEAD为`0 0`。
+- [ ] 第十三次审计状态纠正、生产修复和新的独立验收须继续分批提交推送并确认远端`0 0`。
 
 阶段关闭后，下一阶段只允许按整体计划进入“手动输入与判定”。如果 AL21 中任一手动输入分支仍无实体证据，则下一阶段必须先建立对应设备采证硬门，不能沿用 Auto Live 的 Force Perfect 结果绕过手动判定。
 

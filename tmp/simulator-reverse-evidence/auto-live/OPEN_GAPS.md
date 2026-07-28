@@ -12,7 +12,7 @@ blocking_findings = []
 
 G01–G17 保持关闭。第三次审计的 G19/G20 由 Reverse `24706edcb02155fca575c6fde6aa9c7f0fe131ba` 关闭；其中 G18 的 connected-component 解释随后被更完整调用者证据否定。Reverse `57c1e03be474eeb1006ff56c8fc3d5a9a117d573` 新增 focused `activateNoteAndConnectSyncLine` ARM64 并以 G21 修正：只比较 source activation order 中紧邻的 previous/current playable root；其他 playable root 会断开 Multiple run，equal button 也因非相邻而另起 run。G19 terminal fault latch 与 G20 actual observation 要求不变。
 
-第五至第十一次实现审计发现的required-before-close阻断均已关闭：
+第五至第十一次实现审计发现的既有阻断中，第1–10项修复结论仍有效；第十三次独立审计新增以下required-before-close实现阻断：
 
 1. **已关闭：** `SimulatorEngineHost.pause/resume` 现于 idempotent shortcut 前检查 fault；host 级全部非允许 API、只读 snapshot 与 dispose 均有测试。
 2. **已关闭：** Reverse `c2dc5c7f37718a170c9e9b93d5a86b42e9d1a2ab` 以 G22 冻结两个 normalized trace 的 frame 1–991/317 Float32 delta bits 与 committed CC08 BMS；生产测试经engine重放并调用`getAdjustedMusicPosition`，不使用expected BPM、private cursor/BPM lookup或删除outer frame。
@@ -30,7 +30,13 @@ G01–G17 保持关闭。第三次审计的 G19/G20 由 Reverse `24706edcb02155f
 
 9. **已关闭：** NoteManager登记playable root/Slide child source owner并为Multiple返回G21 runtime group精确count；未登记source、`0`、`999`与错配正count均拒绝。第十二次验收重新核对G12/G21、全部415 production member、117/84 group及非Multiple count0。
 
-10. **已关闭：** Long/Slide/Multiple图、note family、button identity及CC03/08约束形成纯preflight；host在backend前、InGameManager在OneFrame初始化前、NoteManager在Slide manager/pool/group/BPM/root mutation前调用，Note activate继续复用；公开父子图重绑入口与terminal默认note type已删除。第十二次独立复现和完整A10确认失败快照零mutation。
+10. **部分结论保留，重新打开扩展组合：** 已覆盖的Long/Slide/Multiple terminal、note family内部shape、button-array内部identity及CC03/08约束仍在纯preflight；但尚未覆盖跨父/root-child共享身份、Slide child list角色、playable source index/invisible、两个button数组一致性及具体pool receiver/source family。错误Slide角色可在head已提交后才fault。
+
+11. **required-before-close：** G19 fault后允许dispose，但当前dispose清空`faultValue`；之后initialize/step/NaN step/pause/resume/getAdjusted返回新的disposed错误，而非同一terminal latch。须保留cleanup能力与disposed snapshot，同时继续让全部非允许API返回原latch。
+
+12. **required-before-close：** 公共`step(3e38)`输入及Float32转换均有限，但正式clock owner返回`ok`并写入Infinity music/launcher position。须在scheduler/clock mutation前以portable `evidence-required`失败关闭，并扩展AL22正式host回归；不得猜测Unity delta上限。
+
+13. **required-before-close：** AL16/AL22须覆盖fault→dispose→全部API、root/source/receiver/parent owner组合、跨父共享child、错误intermediate/terminal角色、负index/invisible root、双button数组不一致及正式clock非有限结果；比较失败前后所有允许mutation，不能只看局部slot/cursor。
 
 G22同时固定adaptive method fixture在一个setup outer frame后于full manager outer-frame index 1判定。GarupaEditor冻结包含`auto-live-actual-replay.json`与逐字节相同的`653_ikuoku_easy.bms.txt`；actual replay与公共fault边界均已完成第六次全量重验收，未被第七次Slide审计推翻。
 
@@ -42,4 +48,4 @@ G22同时固定adaptive method fixture在一个setup outer frame后于full manag
 4. HABAHIRO Auto Live 运行仍只有静态生产谱面依据，不宣称已有实体运行样本或百分百保真。
 5. Multiple Directional 的真实 touch 阈值仍属于手动输入；AddLong/AddSlide visual helper 的 Sprite/BackLine/连接表现仍后置。
 
-这些边界不能用于扩张Auto Live阶段结论，也不阻断补充证据已确认的托管范围。当前无Auto Live required-before-close实现阻断；下一阶段手动输入仍须建立独立证据门。
+这些边界不能用于扩张Auto Live阶段结论，也不阻断补充证据已确认的托管范围。当前存在第11–13项Auto Live required-before-close实现阻断；关闭并独立重验收前不得进入手动输入阶段。

@@ -1,6 +1,6 @@
 # 模拟器 Auto Live 阶段验收记录
 
-> **2026-07-29 第十二次独立逐项重验收：通过。** 本次验收与`593d957`、`4f05e14`、`b07693c`三个生产修复批分离；重新确认A00–A10每项任务要求、已提交原作证据/portable边界、生产调用路径和独立实际观察。完整A10、Reverse、index、topology及提交后临时产物全部通过，当前无required-before-close项。
+> **2026-07-29 第十三次独立审计：未通过。** 第十二次结论已被新的生命周期、graph provenance与正式clock failure组合推翻。A04/A05/A07/A08/A09/A10重新打开；修复并完成另一批独立验收前，Auto Live不得视为完成。
 
 ## 1. 验收身份
 
@@ -49,10 +49,11 @@
 - handle/source/count与批preflight修复：`593d957`
 - 未证默认路径与初始化前preflight修复：`4f05e14`
 - root family/button/command preflight修复：`b07693c`
-- 第十二次独立逐项重验收：本文件所在提交
+- 第十二次独立逐项重验收：`73c9d9d`
+- 第十三次独立审计重开：本文件所在提交
 - 验收日期：2026-07-28
 - 最终验收日期：2026-07-29
-- 验收结论：**通过。A00–A10逐项明确验收，Auto Live阶段关闭；手动输入阶段仍须先建立独立Reverse证据硬门。**
+- 验收结论：**未通过。G19 fault-dispose latch、Slide/root/source owner preflight与有限delta非有限clock结果存在required-before-close缺口；禁止进入手动输入阶段。**
 
 ## 2. 证据硬门与冻结包
 
@@ -103,13 +104,13 @@ auto-live evidence verified: candidates=30, final=72, supplement=G11-G22, cases=
 | A01 | 只消费已提交静态证据并冻结三方哈希 | E01–E30、R01–R20、manifest | 无运行时读取 | Reverse `c2dc5c7f`/远端`0 0`；仅排除项未跟踪；source/copy/index通过 | 通过 |
 | A02 | G01–G22关闭且oracle可离线复算 | R01–R20；G18被G21 supersede；G22 replay | 测试只读冻结JSON/BMS | 两套Reverse verifier通过，首版11、supplement14、replay4确定 | 通过 |
 | A03 | 显式模式、identity transform、不可变owner | R01/R02/R04/R05 | `validatePlayMode`→`InGameCalculatedData`→Note callback | 公共host原mode改`mode14/skill`后snapshot仍为identity Auto | 通过 |
-| A04 | Long/Slide父拥有共享图且坏图零mutation拒绝 | U01/U02、R02/R03/R04 | host/manager preflight→Note activate→parent runtime | 87 Long/144 Slide共享图；family/button/terminal/identity/position坏图均在owner初始化前拒绝 | 通过 |
-| A05 | Normal/Flick/Directional/Multiple精确Force Perfect | R02/R03、R10–R16、G21 | adjusted owner→concrete Note→OneFrame Setup | 50 standalone Directional、415 Multiple member；117/84 source-order run与独立oracle一致 | 通过 |
+| A04 | Long/Slide父拥有共享图且坏图零mutation拒绝 | U01/U02、R02/R03/R04 | host/manager preflight→Note activate→parent runtime | terminal/position有效，但跨父/root-child identity和child运行角色未拒绝；错误图可在head提交后fault | **未通过** |
+| A05 | Normal/Flick/Directional/Multiple精确Force Perfect | R02/R03、R10–R16、G21 | adjusted owner→concrete Note→OneFrame Setup | 成功轨迹有效；具体Note receiver仍可绑定另一合法source family，owner组合未闭合 | **未通过** |
 | A06 | Long头尾符号、父子顺序、pause/回收/fault | E09–E13、R02/R03、G19 | `NoteLong` Move/OnUpdate/AfterUpdate→manager fault owner | canonical head/tail全对象相等；全部87 production Long与三类第六槽状态通过 | 通过 |
-| A07 | Slide头/中间/terminal/Stop/E15与单节点粒度 | E14–E20、R02/R03 | `NoteSlide` current owner→position gate→Setup/skip | 144 production Slide；首invisible 89/27 root逐对象before/equal；terminal 8/5/6/7通过 | 通过 |
-| A08 | 五槽对象、closed payload、source/count owner、Reflect | E24/E26、R02/R03/R04、G12/G21 | controller object handle/WeakMap→NoteManager source owner→Setup→Reflect | 未登记source、999 count、伪造/cross-owner同ID零mutation；owner count3成功；五槽/第六槽/复用通过 | 通过 |
-| A09 | 调度、outer Reflect、pause、fault/dispose、失败原子边界 | U03/U04/U05、R02/R03/R04、G19/G22 | host lifecycle→manager preflight→NoteManager→single Reflect | 坏批在backend/OneFrame/Slide/BPM/root/trace前拒绝；fault/disposed全部公共API矩阵通过 | 通过 |
-| A10 | production oracle、全部失败case、上游回归、边界披露 | A01–A09全部证据 | 公共engine与生产chart factory | 完整A10、独立topology、提交后临时产物、依赖/禁止模式静态搜索全部通过 | 通过 |
+| A07 | Slide头/中间/terminal/Stop/E15与单节点粒度 | E14–E20、R02/R03 | `NoteSlide` current owner→position gate→Setup/skip | production成功路径有效；错误intermediate角色到运行期才失败并保留Wait/head历史 | **未通过** |
+| A08 | 五槽对象、closed payload、source/count owner、Reflect | E24/E26、R02/R03/R04、G12/G21 | controller object handle/WeakMap→NoteManager source owner→Setup→Reflect | handle/count有效；负index、invisible root、双button数组不一致与父角色provenance未在preflight闭合 | **未通过** |
+| A09 | 调度、outer Reflect、pause、fault/dispose、失败原子边界 | U03/U04/U05、R02/R03/R04、G19/G22 | host lifecycle→manager preflight→NoteManager→single Reflect | fault→dispose清除latch；有限Float32 step可返回ok并写入Infinity；坏child图延迟失败 | **未通过** |
+| A10 | production oracle、全部失败case、上游回归、边界披露 | A01–A09全部证据 | 公共engine与生产chart factory | AL16/AL22未枚举上述组合；全量绿色不能证明完成 | **未通过** |
 
 ## 4. 已落地的生产边界
 
@@ -266,7 +267,7 @@ node tmp/simulator-reverse-evidence/auto-live/verify.mjs --index
 
 ## 8. 下一阶段硬门
 
-Auto Live第十二次独立逐项重验收已通过；以下下一阶段硬门恢复适用。
+Auto Live第十三次独立审计未通过；以下下一阶段硬门暂不开放。
 
 下一阶段只允许按整体计划进入“手动输入与判定”。开始生产实现前必须：
 

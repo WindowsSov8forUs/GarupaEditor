@@ -25,11 +25,11 @@
 
 时钟与调度验收记录位于 `tmp/simulator-clock-scheduling-acceptance.md`。S01–S10 已完成。
 
-Auto Live A00–A10已完成第十二次独立逐项重验收。本次验收与三个生产修复批分离，重新确认每项任务要求、已提交原作证据/portable边界、生产调用路径与独立实际观察；OneFrame对象handle/source/exact count owner及全部root/command mutation前preflight均已关闭。完整A10、Reverse、证据index、独立topology和提交后临时产物全部通过，见`tmp/simulator-auto-live-acceptance.md`。
+Auto Live第十三次独立审计未通过，A04/A05/A07/A08/A09/A10重新打开。当前required-before-close项为：G19 fault经dispose后丢失latch；Slide/root/source ownership与child角色preflight不完整；有限Float32公共step可写入非有限clock state。此前handle对象身份、Multiple exact count、成功轨迹与production topology结论仍有效，但不能据此宣布阶段完成，见`tmp/simulator-auto-live-acceptance.md`。
 
 OneFrame 容量现在由原作证据固定为 5，不再接受宿主或测试容量配置。公开的 `OneFrameJudgementBatch` 仅包含本阶段闭合的 Auto Live 判定字段，不是原作完整 `OneFrameTotalData`。分数、Power、生命、Skill/Fever、音频、粒子、渲染和 HUD 字段在类型上保持缺席，而不是填零。
 
-下一阶段是“手动输入与判定”，但生产实现前必须先建立并关闭独立Reverse证据硬门。真实触摸、Multiple Directional距离阈值、手指所有权、判定窗口、普通timeout Miss、释放和Hold行为继续`evidence-required`；BackLine/Sprite/音频/粒子仍后置。
+Auto Live上述阻断关闭并完成新的独立验收前不得进入下一阶段。之后的“手动输入与判定”仍必须先建立并关闭独立Reverse证据硬门；真实触摸、Multiple Directional距离阈值、手指所有权、判定窗口、普通timeout Miss、释放和Hold行为继续`evidence-required`。
 
 `src/simulator/engine` 不依赖 React、Pixi、Tauri、DOM、编辑器谱面类型或窗口协议。宿主 API 是 GarupaEditor 的可移植边界，不宣称属于原作接口。
 
