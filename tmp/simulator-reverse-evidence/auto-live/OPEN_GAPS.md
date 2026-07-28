@@ -10,7 +10,7 @@ auto_live_gate = closed
 blocking_findings = []
 ```
 
-G01–G10 均已由首版 contract、最小反编译/ARM64、失败关闭矩阵和确定性固定事件轨迹关闭。第二次复审新增的 G11–G15 也已由 Reverse 补充提交 `fe6e15f8108175182a52f0a6fd21c840da9db011` 关闭：核心 Multiple Directional Auto route、visual helper 分类、Slide Stop、active Long/Slide pause，以及精确 B±5/BPM boundary 已冻结。
+G01–G10 均已由首版 contract、最小反编译/ARM64、失败关闭矩阵和确定性固定事件轨迹关闭。第二次复审新增的 G11–G15 已由 Reverse `fe6e15f8108175182a52f0a6fd21c840da9db011` 关闭；后续实现前复核新增的 G16 又由 `cd84d2ce84243e8b864d08d7fe0fbeeb041eb79a` 关闭，补齐核心 Multiple Directional 相同 front/game type、相邻 button 分组以及递归 side-used/link cleanup。
 
 ## 持续非阻断边界
 

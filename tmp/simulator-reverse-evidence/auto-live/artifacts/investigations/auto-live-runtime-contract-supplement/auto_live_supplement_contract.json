@@ -19,6 +19,12 @@
     "judge_note_type": 10,
     "finish_order": ["judgeFrontNote", "changeSideNoteUsed", "finish/deactivate"],
     "group_count": "left-side count + right-side count + 1",
+    "group_construction": {
+      "same_group": "both FrontNoteType 6, same GameNoteType, and adjacent ButtonType",
+      "links": "NoteManager connects left/right neighbours through NoteMultipleDirectionalFlick.ConnectWithTheNextNote",
+      "claim": "the judged root recursively marks both side chains used and clears links",
+      "portable_owner": "NoteManager builds one runtime group per connected component without mutating frozen chart data"
+    },
     "stage": "auto-live",
     "manual_deferred": ["real touch positions", "directional distance threshold", "finger ownership", "lane arbitration"],
     "presentation_deferred": ["sprite", "back-line", "Z ordering", "animation", "audio", "particle"]

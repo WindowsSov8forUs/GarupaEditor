@@ -11,11 +11,17 @@ HERE = Path(__file__).resolve().parent
 SAMPLE = HERE.parents[2] / "samples/jp.co.craftegg.band/10.1.3_229/extracted/libil2cpp.so"
 EXPECTED_SHA256 = "66C9C666C50962B662DF8D894E851C7D18F07142DCA145CFAC3D30D063D1D9FA"
 SLICES = {
+    "03778da4__NoteManager__connectMultipleDirectionalFlick.arm64.tsv": (0x3778DA4, 0x3778EE8),
+    "0377a140__NoteManager__isMultipleDirectionalSameGroup.arm64.tsv": (0x377A140, 0x377A18C),
+    "0377a264__NoteManager__setupConnectMultipleDirectionalFlick.arm64.tsv": (0x377A264, 0x377A4A0),
     "030ed1b4__NoteMultipleDirectionalFlick__MoveState.arm64.tsv": (0x30ED1B4, 0x30ED1F0),
+    "030ed264__NoteMultipleDirectionalFlick__changeSideNoteUsed.arm64.tsv": (0x30ED264, 0x30ED340),
     "030ed578__NoteMultipleDirectionalFlick__ExecTouchBegan.arm64.tsv": (0x30ED578, 0x30ED5B4),
     "030ed6dc__NoteMultipleDirectionalFlick__ExecTouchMoved.arm64.tsv": (0x30ED6DC, 0x30ED8A4),
     "030ed910__NoteMultipleDirectionalFlick__getCount.arm64.tsv": (0x30ED910, 0x30ED948),
     "030ee62c__NoteMultipleDirectionalFlick__ctor.arm64.tsv": (0x30EE62C, 0x30EE630),
+    "030ee12c__NoteMultipleDirectionalFlick__ChangeLeftNoteUsed.arm64.tsv": (0x30EE12C, 0x30EE1D4),
+    "030ee1d4__NoteMultipleDirectionalFlick__ChangeRightNoteUsed.arm64.tsv": (0x30EE1D4, 0x30EE27C),
     "030e69ac__NoteAddLongMultipleDirectionalFlickVisual__MoveState.arm64.tsv": (0x30E69AC, 0x30E69B0),
     "030e6f5c__NoteAddLongMultipleDirectionalFlickVisual__forcePerfect.arm64.tsv": (0x30E6F5C, 0x30E6F60),
     "030e821c__NoteAddSlideMultipleDirectionalFlickVisual__MoveState.arm64.tsv": (0x30E821C, 0x30E8220),

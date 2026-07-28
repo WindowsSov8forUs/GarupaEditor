@@ -16,6 +16,13 @@ audio and particles remain presentation. AddLong/AddSlide Multiple Directional
 Visual helpers are separate classes whose `forcePerfect` methods are native
 `RET` stubs and must not be mapped to the core judgement class.
 
+Core production groups are not all same-position Directional notes. Native
+`isMultipleDirectionalFlickSameGroupNotes` requires both records to have front
+type 6, equal game-note type, and adjacent button type. NoteManager connects
+the resulting chain. The root that judges recursively marks both side chains
+used and clears the links; a portable immutable chart therefore needs a
+separate runtime group owner rather than mutating frozen `NoteInformation`.
+
 The supplemental fixed trace also closes omissions in the first trace: a Slide
 Stop method fixture, active Long/Slide pause composition, and exact B=-5/0/+5
 Float32 outputs including a committed positive cross-BPM device sample.

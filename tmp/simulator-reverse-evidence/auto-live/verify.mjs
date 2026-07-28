@@ -74,7 +74,7 @@ if (
 ) {
   fail("Auto Live evidence gate is not closed");
 }
-if (manifest.candidateEntries.length !== 30 || manifest.finalEntries.length !== 61) {
+if (manifest.candidateEntries.length !== 30 || manifest.finalEntries.length !== 67) {
   fail("Unexpected Auto Live evidence entry count");
 }
 
@@ -136,7 +136,7 @@ if (
   supplementClosure.overall_status !== "confirmed" ||
   supplementClosure.auto_live_gate !== "closed" ||
   supplementClosure.blocking_findings.length !== 0 ||
-  Object.keys(supplementClosure.supplement_gap_resolution).length !== 5
+  Object.keys(supplementClosure.supplement_gap_resolution).length !== 6
 ) {
   fail("Frozen Reverse supplement closure is not the closed G11-G15 contract");
 }
@@ -169,6 +169,6 @@ if (!existsSync(resolve(packageRoot, "OPEN_GAPS.md"))) {
 
 console.log(
   `auto-live evidence verified: candidates=${manifest.candidateEntries.length}, ` +
-    `final=${manifest.finalEntries.length}, supplement=G11-G15, ` +
+    `final=${manifest.finalEntries.length}, supplement=G11-G16, ` +
     `gate=closed, index=${validateIndex ? "checked" : "skipped"}`,
 );

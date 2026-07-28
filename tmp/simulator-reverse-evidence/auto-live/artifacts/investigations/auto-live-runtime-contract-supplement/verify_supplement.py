@@ -59,6 +59,17 @@ def main() -> None:
     assert "bl #0x30ed948" in count and "bl #0x30ed9cc" in count and "add w0, w8, #1" in count
     assert "ret" in decoded_slices["030e6f5c__NoteAddLongMultipleDirectionalFlickVisual__forcePerfect.arm64.tsv"]
     assert "ret" in decoded_slices["030e8870__NoteAddSlideMultipleDirectionalFlickVisual__forcePerfect.arm64.tsv"]
+    same_group = decoded_slices["0377a140__NoteManager__isMultipleDirectionalSameGroup.arm64.tsv"]
+    assert same_group.count("cmp w8, #6") == 2
+    assert "cmp w8, w9" in same_group and "b #0x377b770" in same_group
+    connect = decoded_slices["03778da4__NoteManager__connectMultipleDirectionalFlick.arm64.tsv"]
+    assert connect.count("#0x30eddd8") == 2
+    side = decoded_slices["030ed264__NoteMultipleDirectionalFlick__changeSideNoteUsed.arm64.tsv"]
+    assert "bl #0x30ee12c" in side and "bl #0x30ee1d4" in side
+    left = decoded_slices["030ee12c__NoteMultipleDirectionalFlick__ChangeLeftNoteUsed.arm64.tsv"]
+    right = decoded_slices["030ee1d4__NoteMultipleDirectionalFlick__ChangeRightNoteUsed.arm64.tsv"]
+    assert "strb w9, [x8, #0x14]" in left and "bl #0x30ee12c" in left
+    assert "strb w9, [x8, #0x14]" in right and "bl #0x30ee1d4" in right
 
     first = build()
     second = build()
@@ -76,8 +87,8 @@ def main() -> None:
     assert closure["overall_status"] == "confirmed"
     assert closure["auto_live_gate"] == "closed"
     assert closure["blocking_findings"] == []
-    assert sorted(closure["supplement_gap_resolution"]) == [f"G{index}" for index in range(11, 16)]
-    print("auto live supplement: verified; gaps=G11-G15, gate=closed, cases=8")
+    assert sorted(closure["supplement_gap_resolution"]) == [f"G{index}" for index in range(11, 17)]
+    print("auto live supplement: verified; gaps=G11-G16, gate=closed, cases=8")
 
 
 if __name__ == "__main__":

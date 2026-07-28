@@ -9,3 +9,6 @@ S07	upstream-clock-scheduling	InGameManager	PauseSound gate	No NoteManager entry
 S08	upstream-pass2-judge-offset	NoteManager	FastAbsolutePos/SlowAbsolutePos	Exact B±5 Float32 and BPM/bar boundary	Auto Live adjusted crossing
 S09	0x30E6F5C	NoteAddLongMultipleDirectionalFlickVisual	forcePerfect	ARM64 RET; no independent judgement	Rendering/connect helper
 S10	0x30E8870	NoteAddSlideMultipleDirectionalFlickVisual	forcePerfect	ARM64 RET; no independent judgement	Rendering/connect helper
+S11	0x377A140/0x377B770	NoteManager	isMultipleDirectionalFlickSameGroupNotes/isAdjacentTwoNotes	Front type 6 + same game type + adjacent button	Auto Live group construction
+S12	0x3778DA4	NoteManager	connectWithTheNextNoteForMultipleDirectionalFlick	Connect core left/right neighbour chain	Auto Live group construction
+S13	0x30ED264/0x30EE12C/0x30EE1D4	NoteMultipleDirectionalFlick	changeSideNoteUsed/ChangeLeft/ChangeRight	Recursively mark used and clear both side links	Auto Live group completion
