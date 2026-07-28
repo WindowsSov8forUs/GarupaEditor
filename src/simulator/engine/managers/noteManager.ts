@@ -6,6 +6,7 @@ import {
 } from "../chart/types";
 import type { NoteFamily } from "../data/noteData";
 import type { OneFrameDataHandle } from "../data/oneFrameData";
+import type { InGameCalculatedData } from "../data/inGameCalculatedData";
 import {
   evidenceRequired,
   ok,
@@ -118,6 +119,7 @@ export class NoteManager {
     private readonly musicScoreController: InGameMusicScoreController,
     private readonly bpmChangeCount: number,
     private readonly judgeOffsetFrames: number,
+    readonly inGameCalculatedData: InGameCalculatedData,
     private readonly getUsableOneFrameData: () => SimulatorResult<OneFrameDataHandle>,
     private readonly createPoolObject: NotePoolObjectFactory = createDefaultPoolObject,
   ) {}

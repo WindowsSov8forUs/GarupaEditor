@@ -11,6 +11,7 @@ import { ok, type SimulatorResult } from "../engine/evidence";
 import { InGameDirector } from "../engine/managers/inGameDirector";
 import { InGameManager } from "../engine/managers/inGameManager";
 import { InGameMusicScoreController } from "../engine/managers/inGameMusicScoreController";
+import { InGameCalculatedData } from "../engine/data/inGameCalculatedData";
 import { InGameOneFrameJudgementController } from "../engine/managers/inGameOneFrameJudgementController";
 import { GamePlayButton, InputManager } from "../engine/managers/inputBoundaries";
 import {
@@ -153,6 +154,7 @@ function createTestGraph(
     music,
     bpmChangeCount,
     0,
+    new InGameCalculatedData({ kind: "manual" }),
     () => controller.getUsableOneFrameData(),
     (_family, poolObjectId) => {
       const note = new TraceNote(poolObjectId, calls, deactivateOnUpdate);

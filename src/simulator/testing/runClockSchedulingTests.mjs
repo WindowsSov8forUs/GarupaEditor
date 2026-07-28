@@ -55,7 +55,7 @@ function validateClockScheduling() {
   };
   const inputFor = (chart, highFrequencyMode = false, judgeOffsetFrames = 0) => ({
     chart,
-    runtime: { highFrequencyMode, judgeOffsetFrames },
+    runtime: { highFrequencyMode, judgeOffsetFrames, playMode: { kind: "manual" } },
     oneFrameData,
   });
   const chartFixtures = join(

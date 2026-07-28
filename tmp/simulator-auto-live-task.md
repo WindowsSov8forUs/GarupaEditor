@@ -47,9 +47,9 @@
 | A00 建立阶段任务书 | 已完成 | 范围、证据候选、硬门、实现批次和验收矩阵写入本文档 |
 | A01 晋升 Auto Live 静态证据 | 已完成 | Reverse `a3f28d77` 提交 43 个最终 contract/切片文件；GarupaEditor 冻结 E01–E30 与 R01–R08/R05.D01–D35 |
 | A02 生成固定事件 oracle 并关闭缺口 | 已完成，硬门关闭 | G01–G10 closed；固定轨迹两次生成一致；5 槽、Flick 参数、Long/Slide 粒度与失败矩阵闭合 |
-| A03 接入 Auto Live 模式与判定上下文 | 可开始 | 宿主模式显式，`get_IsAutoPlay` Auto Live 路由可审计，manual/mode14 不冒充 |
-| A04 建立 Long/Slide 运行子图 | 等待 A03 | 构造共享身份映射到父拥有的 After 对象，更新/回收所有权匹配证据 |
-| A05 恢复 Single/Flick Force Perfect | 等待 A04 | Normal/Flick/Directional 在 adjusted crossing 同次 Update 产生一次确认的 Perfect 路由 |
+| A03 接入 Auto Live 模式与判定上下文 | 已完成 | 显式 `manual`/`auto-live` 判别联合、最小 `InGameCalculatedData` 与 identity result-transform 门已接入 |
+| A04 建立 Long/Slide 运行子图 | 已完成 | Long terminal 与 Slide source-order after runtime 由父 root 独占；缺图/重复身份在激活前失败关闭 |
+| A05 恢复 Single/Flick Force Perfect | 可开始 | Normal/Flick/Directional 在 adjusted crossing 同次 Update 产生一次确认的 Perfect 路由 |
 | A06 恢复 Long 分阶段完成 | 等待 A05 | 头、尾严格比较、状态转换、父/尾事件和失活顺序匹配 oracle |
 | A07 恢复 Slide 分阶段完成 | 等待 A06 | 头、中间、终端、Stop 路径及每次调用粒度匹配 oracle |
 | A08 恢复 Auto Live OneFrame 填充与聚合 | 等待 A07 | 原作 5 槽池、Setup 占用、池序收集、同帧聚合、清除和失败关闭匹配证据 |
@@ -75,6 +75,14 @@
 - Python 固定轨迹生成器两次输出一致；oracle 明确排除 score/life/skill/audio/particle/rendering，GarupaEditor 只冻结 JSON。
 - GarupaEditor 证据包冻结 30 个候选条目、43 个最终条目、2 个 fixture alias 与 2 个上游 manifest；工作树校验通过，暂存后执行 index 校验。
 - `OPEN_GAPS.md` 记录无阻断项和四类持续非阻断边界；A03–A10 代码硬门解除。
+
+#### 2026-07-28 第三批：A03/A04 模式与运行子图
+
+- 宿主 runtime settings 新增必填 `playMode`：只接受 `manual` 或带 `identity-no-active-situation-skill` 的 `auto-live`；mode14、debug Force Perfect、缺失模式和未知结果变换失败关闭。
+- 新增最小 `InGameCalculatedData` owner；`isAutoPlay` 只由显式 Auto Live 模式成立，未把宿主判别联合直接散布到 Note 类型。
+- Long 激活前验证 terminal 类型与严格后置位置，建立父拥有的 `LongAfterRuntime`；Slide 从冻结 `slideNoteList` 共享对象按源序建立 after runtime 列表并拒绝缺失/重复身份。
+- 子节点当前只建立所有权与判定状态载体，不加入根 active list，不提前实现 Force Perfect 或手动判定。
+- 全部现有宿主 fixture 显式选择 manual；模拟器 TypeScript、第一切片 17 项和时钟调度 15 组回归通过。
 
 ## 2. 固定范围
 

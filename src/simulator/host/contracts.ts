@@ -4,6 +4,7 @@ import type {
 } from "../backends/contracts";
 import type { ChartConstructionResult } from "../engine/chart/types";
 import type { OneFrameDataPoolProfile } from "../engine/data/oneFrameData";
+import type { SimulatorPlayMode } from "../engine/data/inGameCalculatedData";
 import type { SimulatorResult } from "../engine/evidence";
 import type { InGameDirectorSnapshot } from "../engine/managers/inGameDirector";
 import type { InGameManagerSnapshot } from "../engine/managers/inGameManager";
@@ -13,6 +14,7 @@ export interface SimulatorEngineInput {
   readonly runtime: {
     readonly highFrequencyMode: boolean;
     readonly judgeOffsetFrames: number;
+    readonly playMode: SimulatorPlayMode;
   };
   readonly oneFrameData: OneFrameDataPoolProfile;
 }

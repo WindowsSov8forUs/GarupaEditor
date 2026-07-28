@@ -128,6 +128,7 @@ export function engineInput(
     runtime: {
       highFrequencyMode: false,
       judgeOffsetFrames: 0,
+      playMode: { kind: "manual" },
     },
     oneFrameData: {
       capacity: bound(4, evidence("E08", "testing OneFrameData capacity")),

@@ -12,6 +12,7 @@ import {
   type SimulatorResult,
 } from "../engine/evidence";
 import { getConstructedChartRuntimeMetadata } from "../engine/runtime/chartRuntimeMetadata";
+import { InGameCalculatedData } from "../engine/data/inGameCalculatedData";
 import { InGameDirector } from "../engine/managers/inGameDirector";
 import { InGameManager } from "../engine/managers/inGameManager";
 import { InGameMusicScoreController } from "../engine/managers/inGameMusicScoreController";
@@ -122,6 +123,10 @@ export function createSimulatorEngine(
       "High Frequency must be boolean and the confirmed production judgement-offset range is the signed integer interval [-5, 5].",
     );
   }
+  const playModeValidation = validatePlayMode(input.runtime.playMode);
+  if (playModeValidation.status !== "ok") {
+    return playModeValidation;
+  }
   const oneFrameCapacity = readEvidenceBound(
     input.oneFrameData.capacity,
     "one-frame.pool-capacity",
@@ -133,6 +138,7 @@ export function createSimulatorEngine(
   }
 
   const slideNoteManager = new SlideNoteManager();
+  const inGameCalculatedData = new InGameCalculatedData(input.runtime.playMode);
   const musicScoreController = new InGameMusicScoreController(input.chart);
   const oneFrameJudgementController = new InGameOneFrameJudgementController(
     input.oneFrameData,
@@ -144,6 +150,7 @@ export function createSimulatorEngine(
     musicScoreController,
     runtimeMetadata.processBpmChangeCount,
     input.runtime.judgeOffsetFrames,
+    inGameCalculatedData,
     () => oneFrameJudgementController.getUsableOneFrameData(),
   );
   const inGameManager = new InGameManager(
@@ -159,6 +166,32 @@ export function createSimulatorEngine(
   );
 
   return ok(new SimulatorEngineHost(inGameDirector, inGameManager, backends));
+}
+
+function validatePlayMode(
+  value: SimulatorEngineInput["runtime"]["playMode"],
+): SimulatorResult<void> {
+  if (value === null || typeof value !== "object") {
+    return evidenceRequired(
+      "runtime.invalid-play-mode",
+      ["R01", "R02", "R04"],
+      "The runtime requires an explicit manual or Auto Live play-mode object.",
+    );
+  }
+  if (value.kind === "manual") {
+    return ok(undefined);
+  }
+  if (
+    value.kind === "auto-live" &&
+    value.resultTransform === "identity-no-active-situation-skill"
+  ) {
+    return ok(undefined);
+  }
+  return evidenceRequired(
+    "runtime.unsupported-play-mode-or-result-transform",
+    ["R01", "R02", "R04"],
+    "Mode 14, debug Force Perfect and active result-transform Skill contexts are outside the closed Auto Live contract.",
+  );
 }
 
 function validateChart(chart: ChartConstructionResult): SimulatorResult<void> {

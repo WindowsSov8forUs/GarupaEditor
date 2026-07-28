@@ -60,9 +60,12 @@ export type {
   EvidenceId,
   EvidenceReference,
   EvidenceRequired,
+  AutoLiveEvidenceId,
   FirstSliceEvidenceId,
   SimulatorResult,
+  SimulatorEvidenceId,
 } from "./engine/evidence";
+export type { SimulatorPlayMode } from "./engine/data/inGameCalculatedData";
 export { NoteBase, NoteState } from "./engine/notes/noteBase";
 export { NoteBpmChange } from "./engine/notes/noteBpmChange";
 export {
