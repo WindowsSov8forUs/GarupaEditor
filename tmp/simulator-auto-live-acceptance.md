@@ -1,6 +1,6 @@
 # 模拟器 Auto Live 阶段验收记录
 
-> **2026-07-29 第九次独立审计：未通过，A08/A09/A10重新打开。** OneFrame Setup会接收未闭合note type/count/position组合；公共host在disposed后仍允许resume/getAdjusted，并可能在initialize拒绝前产生frame-rate副作用。既有G01–G22、模式所有权、G19 fault、G21 topology、G22 replay和Slide E15保持有效。
+> **2026-07-29 第十次最终独立重验收：通过。** OneFrame Setup现按owner语义拒绝未闭合note type/phase/count/position/button组合且零写入；公共host在disposed/faulted时于shortcut、director参数校验与Awake前服从manager生命周期。完整A10、Reverse verifier、index、独立topology及提交后临时产物复现全部通过。
 
 ## 1. 验收身份
 
@@ -42,10 +42,12 @@
 - 第八次审计重开：`0aa15c6`
 - 模式所有权修复：`628f7b6`
 - 第八次最终重验收：`86fd416`
-- 第九次审计重开：本文件所在提交
+- 第九次审计重开：`8727129`
+- 闭合payload与disposed生命周期修复：`fc8a4c4`
+- 第十次最终重验收：本文件所在提交
 - 验收日期：2026-07-28
 - 最终验收日期：2026-07-29
-- 验收结论：**未通过。A08/A09/A10未完成，Auto Live阶段重新打开；闭合payload语义与disposed公共生命周期修复并全量重验收前不得进入手动输入阶段。**
+- 验收结论：**通过。A00–A10完成，Auto Live阶段关闭；手动输入阶段仍须先建立独立Reverse证据硬门。**
 
 ## 2. 证据硬门与冻结包
 
@@ -100,9 +102,9 @@ auto-live evidence verified: candidates=30, final=72, supplement=G11-G22, cases=
 | A05 Single/Flick | 通过 | Normal/Flick/standalone Directional 保持；Multiple 继承 ±500，并按完整 playable source-order run 提交唯一 note type 10 |
 | A06 Long | 通过 | head `>=`、tail `>`、linked finish→tail、active pause/resume、回收；head/tail 第六槽 native failure state 均冻结 |
 | A07 Slide | 通过 | terminal/Stop/Reset/第六槽保持；invisible/visible current统一先过E15 adjusted-position/finite gate，before/equal和单次粒度闭合 |
-| A08 OneFrame | **未通过** | 五槽/Reflect保持，但Setup只做结构校验，未知note type、任意count和不一致position仍可提交 |
-| A09 调度生命周期 | **未通过** | fault优先级保持，但disposed后resume/getAdjusted成功，dispose-before-initialize会产生frame-rate副作用 |
-| A10 生产 oracle | **未通过** | exact/adaptive/topology/Slide/mode保持；AL18/AL22缺上述公共失败关闭回归 |
+| A08 OneFrame | 通过 | 五槽/Reflect保持；Setup按owner family/phase闭合note type、position、button与Multiple count，非法请求零写入 |
+| A09 调度生命周期 | 通过 | faulted/disposed在shortcut、director参数校验和Awake前失败关闭；snapshot/幂等dispose保留 |
+| A10 生产 oracle | 通过 | exact/adaptive/topology/Slide/mode保持；AL18/AL22及提交后独立payload/lifecycle矩阵通过 |
 
 ## 4. 已落地的生产边界
 
@@ -150,8 +152,8 @@ type SimulatorPlayMode =
 生产容量不再由宿主或测试配置。控制器固定建立 5 个槽：
 
 - `GetUsableOneFrameData` 按槽 0→4 返回首个 `IsUse=false`，获取本身不占用。
-- Auto Live Setup 先完整验证已闭合字段，再一次提交不可变 payload 与 `IsUse`。
-- foreign handle、duplicate Setup、非法 payload 不修改槽位。
+- Auto Live Setup按root/child owner、phase、family、terminal/after type验证闭合note type、source/after position、playable button与Multiple callback count，再一次提交不可变payload与`IsUse`。
+- unknown note type、phase/type错配、position错配、普通/Multiple count错配、空button、foreign handle与duplicate Setup均不修改GetUsable trace或槽位。
 - 第六条 simultaneous entry 返回 `one-frame.pool-exhausted`，保留前五条，不扩容、不覆盖、不 clamp。
 - Reflect 只在 exists 时执行，按池序生成 `OneFrameJudgementBatch` 后统一清槽。
 - 空帧返回 null，不生成伪 batch，也不递增 batch index。
@@ -166,6 +168,7 @@ type SimulatorPlayMode =
 - 任一子步失败立即停止，不继续子步、不 Reflect；第六条边界留下已提交五槽供审计。
 - Long/Slide 在第六槽失败前已发生的 native 状态/linked trace 不回滚；portable manager 立即锁存同一 `evidence-required` terminal fault，进入 `faulted`，因此不存在重试或半完成状态继续推进。
 - direct manager与公共 host fault 后的非允许 API均返回同一失败；snapshot peek保持只读，dispose允许。该项修复完成，随A10统一重验收。
+- faulted/disposed生命周期在host shortcut、director参数校验和Awake前检查；disposed后initialize/step/pause/resume/getAdjusted均失败，snapshot与幂等dispose允许且无backend副作用。
 - PauseSound 在 NoteManager 前返回，冻结时钟、root/child state、cursor、slots 和 trace；resume 不补跑暂停时间。
 - dispose 失活并解绑 root/BPM、清 child runtime 和 pool cursor、关闭 Slide manager、清未 Reflect payload，不产生判定或后端副作用。
 
@@ -198,11 +201,11 @@ type SimulatorPlayMode =
 | AL15 | 通过 | 固定五槽、池序、清除和 slot 0 复用 |
 | AL16 | 通过 | Long/Slide head 与 Long tail 第六槽 native state/trace 精确；manager/host 锁存 terminal fault，前五槽保留，snapshot/dispose 可用 |
 | AL17 | 通过 | 空 Reflect 为 null，首次非空 batch index 仍为 0 |
-| AL18 | 通过 | Long/Slide/Multiple 暂停冻结、无补步；Slide/Multiple active dispose 无新事件 |
+| AL18 | 通过 | Long/Slide/Multiple暂停冻结；active dispose无新事件；dispose-before-initialize后非允许公共API全拒绝且backend零副作用 |
 | AL19 | 通过 | 两个 BMS 六类 core family；固定独立 topology 精确比较普通 117/HABAHIRO 84 组与全部 415 member；87 Long、144 Slide、50 standalone Directional；普通 656 batch 全谱完成 |
 | AL20 | 通过 | HABAHIRO 普通 Slide 静态消费；唯一 Multiple visual helper 独立失败关闭并保留 runtime 披露 |
 | AL21 | 通过 | 阶段外字段在类型/对象上 absent，业务 consumer 失败关闭；重复投影字节一致 |
-| AL22 | 通过 | 冻结 failure matrix、非法模式/图/位置/family/handle/Setup/触摸全部拒绝且关键状态原子 |
+| AL22 | 通过 | 冻结failure matrix保持；六类未闭合payload在GetUsable/slot写入前拒绝且controller snapshot零变化 |
 
 ## 6. 验证命令与结果
 
@@ -241,7 +244,9 @@ node tmp/simulator-reverse-evidence/auto-live/verify.mjs --index
 - terminal fault：fault前非法delta保留`director.invalid-delta-time`；fault后合法、NaN、±Infinity、负delta及其他非允许API均返回同一锁存失败，连续snapshot全对象不变、dispose允许。
 - Slide invisible：AL10覆盖root/child前一Float32与equal；AL19逐对象覆盖普通89、HABAHIRO 27个首child为invisible的Slide root；AL22覆盖non-finite原子失败。
 - 模式所有权：AL01经公共host覆盖Auto原对象Skill→mode14、manual→Auto和owner getter突变；创建后snapshot/crossing保持创建时规范化身份。
-- 提交后独立复现：Auto突变后仍为identity且产生一条判定，manual突变后仍为manual/none，getter冻结；Slide root/current child position gate复现结果保持有效。
+- 闭合payload：unknown note type、phase/type错配、position错配、普通/Multiple count错配与空button全部返回`one-frame.invalid-auto-live-payload`，每次controller全对象不变；合法payload正常占槽。
+- disposed生命周期：created直接dispose后initialize、合法/NaN step、pause、resume、getAdjusted全部失败关闭，snapshot全对象不变、backend trace为空、幂等dispose成功。
+- 提交后独立复现：payload与disposed矩阵全部匹配；既有mode、Slide root/current child position gate结果保持有效。
 - 未运行 Vite、Tauri 或 GarupaEditor 整体构建，符合任务书限制。
 
 ## 7. 持续非阻断边界
@@ -255,7 +260,7 @@ node tmp/simulator-reverse-evidence/auto-live/verify.mjs --index
 
 ## 8. 下一阶段硬门
 
-Auto Live第九次审计未通过；以下下一阶段硬门暂不开放。
+Auto Live第十次最终重验收已通过；以下下一阶段硬门恢复适用。
 
 下一阶段只允许按整体计划进入“手动输入与判定”。开始生产实现前必须：
 
