@@ -4,7 +4,7 @@
   "source": {
     "repository": "HOST___________________GirlsBandParty-Reverse",
     "staticBaselineCommit": "74ab76f6838847d98aae1a15741a5f024e3774ff",
-    "finalEvidenceCommit": "a3f28d77e71c5e7a62cab0de81f0cf668a5b745b",
+    "finalEvidenceCommit": "fe6e15f8108175182a52f0a6fd21c840da9db011",
     "excludedUntrackedPaths": [
       ".claude/",
       "runtime/tools/"
@@ -19,7 +19,8 @@
       "manual-input-and-timeout-miss",
       "score-life-skill-fever-audio-particle-rendering",
       "unity-playerloop-presentation",
-      "habahiro-runtime-static-only"
+      "habahiro-runtime-static-only",
+      "multiple-directional-visual-helper-presentation"
     ]
   },
   "candidateEntries": [
@@ -83,7 +84,7 @@
       "sourcePath": "artifacts/investigations/timeout-flick-paths/README.md",
       "copiedPath": "artifacts/investigations/timeout-flick-paths/README.md",
       "bytes": 7898,
-      "sha256": "3B2FE107F6DE1CC98EF375756A0FC9F6662BE6657FAA6B9DA1C6D2B46FDA6A75",
+      "sha256": "0305AD889AE001148302C68E620B2168FED6E32236FD52067964BBFEA7E0C575",
       "status": "candidate-source-audited-by-R01-R05"
     },
     {
@@ -209,7 +210,7 @@
       "sourcePath": "artifacts/investigations/judgement-result-pipeline/README.md",
       "copiedPath": "artifacts/investigations/judgement-result-pipeline/README.md",
       "bytes": 6706,
-      "sha256": "C19DEA87B7F39F1C89342F8635506B52EFBFA8A34F5625411BFE1719BF3AC627",
+      "sha256": "150A105CD75CFBB62D39F54CD57BC0D3A8A2ACDCD7BA3510350FE6C5CBC47DC7",
       "status": "candidate-source-audited-by-R01-R05"
     },
     {
@@ -328,7 +329,7 @@
       "sourcePath": "artifacts/investigations/auto-live-runtime-contract/auto_live_runtime_contract.json",
       "copiedPath": "artifacts/investigations/auto-live-runtime-contract/auto_live_runtime_contract.json",
       "bytes": 7536,
-      "sha256": "7B0C54B6B16581701D58310F704EDEAC1CFF1E1174ACC893F18DFCF08B24A6CF",
+      "sha256": "24B5736064666E085B217987F388840F24F644ABF5FBF3924EF2B8249D6D8D6A",
       "status": "confirmed-final"
     },
     {
@@ -337,7 +338,7 @@
       "sourcePath": "artifacts/investigations/auto-live-runtime-contract/closure.json",
       "copiedPath": "artifacts/investigations/auto-live-runtime-contract/closure.json",
       "bytes": 1905,
-      "sha256": "E6DD816256D6956ABDDA9E812DD537DEBF76549236BCE0396F417E2A892F2CAF",
+      "sha256": "8DEDEB72E4BD5E0FFCFAD1BA0B740D55D14B19182354EAAB6F116CE9C831B703",
       "status": "confirmed-final"
     },
     {
@@ -679,8 +680,170 @@
       "sourcePath": "artifacts/investigations/auto-live-runtime-contract/verify_auto_live_runtime_contract.py",
       "copiedPath": "artifacts/investigations/auto-live-runtime-contract/verify_auto_live_runtime_contract.py",
       "bytes": 4488,
-      "sha256": "FCDD27B0D3C46802D16A4470B46AACB51D9F6EF1431C59C3397BD4EB7058D53F",
+      "sha256": "FAB6C1864CE572375B08669BCA6B12D143D33031F5A33DB877A6C9CC5BE0232B",
       "status": "confirmed-final"
+    },
+    {
+      "id": "R09",
+      "sourceCommit": "fe6e15f8108175182a52f0a6fd21c840da9db011",
+      "sourcePath": "artifacts/investigations/auto-live-runtime-contract-supplement/README.md",
+      "copiedPath": "artifacts/investigations/auto-live-runtime-contract-supplement/README.md",
+      "bytes": 1756,
+      "sha256": "B164CB7AE7FA37F4D0D2D7CDDD9AE964CFD88C053DFC6C24DF7C1F2736130C6B",
+      "status": "confirmed-supplement-final"
+    },
+    {
+      "id": "R10",
+      "sourceCommit": "fe6e15f8108175182a52f0a6fd21c840da9db011",
+      "sourcePath": "artifacts/investigations/auto-live-runtime-contract-supplement/auto_live_supplement_contract.json",
+      "copiedPath": "artifacts/investigations/auto-live-runtime-contract-supplement/auto_live_supplement_contract.json",
+      "bytes": 2492,
+      "sha256": "EEB395BBC7706FACD08F200644001D6947FB014609D112402F00EDDE4EEE56C8",
+      "status": "confirmed-supplement-final"
+    },
+    {
+      "id": "R11",
+      "sourceCommit": "fe6e15f8108175182a52f0a6fd21c840da9db011",
+      "sourcePath": "artifacts/investigations/auto-live-runtime-contract-supplement/closure.json",
+      "copiedPath": "artifacts/investigations/auto-live-runtime-contract-supplement/closure.json",
+      "bytes": 1115,
+      "sha256": "74D7EE697B3991DE0FBA0F473EF254E9E39D546656139847E2A3B4F2206CD975",
+      "status": "confirmed-supplement-final"
+    },
+    {
+      "id": "R12",
+      "sourceCommit": "fe6e15f8108175182a52f0a6fd21c840da9db011",
+      "sourcePath": "artifacts/investigations/auto-live-runtime-contract-supplement/auto_live_supplement_fixed_event_trace.json",
+      "copiedPath": "artifacts/investigations/auto-live-runtime-contract-supplement/auto_live_supplement_fixed_event_trace.json",
+      "bytes": 9042,
+      "sha256": "FD97A474499C2B590FF3C6A3BCD422429832D62EDF791115E9A8D02EAFC11E84",
+      "status": "confirmed-supplement-final"
+    },
+    {
+      "id": "R13",
+      "sourceCommit": "fe6e15f8108175182a52f0a6fd21c840da9db011",
+      "sourcePath": "artifacts/investigations/auto-live-runtime-contract-supplement/targets.tsv",
+      "copiedPath": "artifacts/investigations/auto-live-runtime-contract-supplement/targets.tsv",
+      "bytes": 1280,
+      "sha256": "513F79CBF20C242504AB5565E416FAF3D483E377CEE72C5586B9E51B6D5E59BB",
+      "status": "confirmed-supplement-final"
+    },
+    {
+      "id": "R14",
+      "sourceCommit": "fe6e15f8108175182a52f0a6fd21c840da9db011",
+      "sourcePath": "artifacts/investigations/auto-live-runtime-contract-supplement/verify_supplement.py",
+      "copiedPath": "artifacts/investigations/auto-live-runtime-contract-supplement/verify_supplement.py",
+      "bytes": 4731,
+      "sha256": "6B2118906477E6D95921765B048AFD20ECD7A3B18F06D1DC220F385901D48EF6",
+      "status": "confirmed-supplement-final"
+    },
+    {
+      "id": "R15",
+      "sourceCommit": "fe6e15f8108175182a52f0a6fd21c840da9db011",
+      "sourcePath": "artifacts/investigations/auto-live-runtime-contract-supplement/generate_supplement.py",
+      "copiedPath": "artifacts/investigations/auto-live-runtime-contract-supplement/generate_supplement.py",
+      "bytes": 8471,
+      "sha256": "CF845336344AB321F9AB35A4A7AF07865F2CC0F715C78570BD5EB49BC533008F",
+      "status": "confirmed-supplement-final"
+    },
+    {
+      "id": "R16",
+      "sourceCommit": "fe6e15f8108175182a52f0a6fd21c840da9db011",
+      "sourcePath": "artifacts/investigations/auto-live-runtime-contract-supplement/extract_arm64_slices.py",
+      "copiedPath": "artifacts/investigations/auto-live-runtime-contract-supplement/extract_arm64_slices.py",
+      "bytes": 3734,
+      "sha256": "65B4AD3B98D20CF49FB83FA31178E3A5D0F1AEF38F76FDC55B4634BEE470BC55",
+      "status": "confirmed-supplement-final"
+    },
+    {
+      "id": "R16.D01",
+      "sourceCommit": "fe6e15f8108175182a52f0a6fd21c840da9db011",
+      "sourcePath": "artifacts/investigations/auto-live-runtime-contract-supplement/decompiled/030e69ac__NoteAddLongMultipleDirectionalFlickVisual__MoveState.arm64.tsv",
+      "copiedPath": "artifacts/investigations/auto-live-runtime-contract-supplement/decompiled/030e69ac__NoteAddLongMultipleDirectionalFlickVisual__MoveState.arm64.tsv",
+      "bytes": 58,
+      "sha256": "A79D4074648B35B6DB6E24EF3C45C1CA643419F10A7CD464BF2D61E8D0263752",
+      "status": "confirmed-supplement-final"
+    },
+    {
+      "id": "R16.D02",
+      "sourceCommit": "fe6e15f8108175182a52f0a6fd21c840da9db011",
+      "sourcePath": "artifacts/investigations/auto-live-runtime-contract-supplement/decompiled/030e6f5c__NoteAddLongMultipleDirectionalFlickVisual__forcePerfect.arm64.tsv",
+      "copiedPath": "artifacts/investigations/auto-live-runtime-contract-supplement/decompiled/030e6f5c__NoteAddLongMultipleDirectionalFlickVisual__forcePerfect.arm64.tsv",
+      "bytes": 49,
+      "sha256": "29B8E63A6D2732619564127E8AC612479AD16CB54D72A7E1B964378A7AAF2C44",
+      "status": "confirmed-supplement-final"
+    },
+    {
+      "id": "R16.D03",
+      "sourceCommit": "fe6e15f8108175182a52f0a6fd21c840da9db011",
+      "sourcePath": "artifacts/investigations/auto-live-runtime-contract-supplement/decompiled/030e821c__NoteAddSlideMultipleDirectionalFlickVisual__MoveState.arm64.tsv",
+      "copiedPath": "artifacts/investigations/auto-live-runtime-contract-supplement/decompiled/030e821c__NoteAddSlideMultipleDirectionalFlickVisual__MoveState.arm64.tsv",
+      "bytes": 58,
+      "sha256": "7D7174277A5A5F7A258574B321DDB90B86167C2BFBAD0570F5CC93E205763030",
+      "status": "confirmed-supplement-final"
+    },
+    {
+      "id": "R16.D04",
+      "sourceCommit": "fe6e15f8108175182a52f0a6fd21c840da9db011",
+      "sourcePath": "artifacts/investigations/auto-live-runtime-contract-supplement/decompiled/030e8870__NoteAddSlideMultipleDirectionalFlickVisual__forcePerfect.arm64.tsv",
+      "copiedPath": "artifacts/investigations/auto-live-runtime-contract-supplement/decompiled/030e8870__NoteAddSlideMultipleDirectionalFlickVisual__forcePerfect.arm64.tsv",
+      "bytes": 49,
+      "sha256": "937FBE8975B2532E0419727E01DD217F5EFF046CBFCBD362D85CF5C42F3125E5",
+      "status": "confirmed-supplement-final"
+    },
+    {
+      "id": "R16.D05",
+      "sourceCommit": "fe6e15f8108175182a52f0a6fd21c840da9db011",
+      "sourcePath": "artifacts/investigations/auto-live-runtime-contract-supplement/decompiled/030ed1b4__NoteMultipleDirectionalFlick__MoveState.arm64.tsv",
+      "copiedPath": "artifacts/investigations/auto-live-runtime-contract-supplement/decompiled/030ed1b4__NoteMultipleDirectionalFlick__MoveState.arm64.tsv",
+      "bytes": 575,
+      "sha256": "52EA7704AD5677FC5E3B36EC3682AD85C78DF6334CA331232653791ABBC2E414",
+      "status": "confirmed-supplement-final"
+    },
+    {
+      "id": "R16.D06",
+      "sourceCommit": "fe6e15f8108175182a52f0a6fd21c840da9db011",
+      "sourcePath": "artifacts/investigations/auto-live-runtime-contract-supplement/decompiled/030ed578__NoteMultipleDirectionalFlick__ExecTouchBegan.arm64.tsv",
+      "copiedPath": "artifacts/investigations/auto-live-runtime-contract-supplement/decompiled/030ed578__NoteMultipleDirectionalFlick__ExecTouchBegan.arm64.tsv",
+      "bytes": 548,
+      "sha256": "71C3C241ADFAB59D224000CF2A1558468A53A629F5D5C5F37F75DF5FA31322CA",
+      "status": "confirmed-supplement-final"
+    },
+    {
+      "id": "R16.D07",
+      "sourceCommit": "fe6e15f8108175182a52f0a6fd21c840da9db011",
+      "sourcePath": "artifacts/investigations/auto-live-runtime-contract-supplement/decompiled/030ed6dc__NoteMultipleDirectionalFlick__ExecTouchMoved.arm64.tsv",
+      "copiedPath": "artifacts/investigations/auto-live-runtime-contract-supplement/decompiled/030ed6dc__NoteMultipleDirectionalFlick__ExecTouchMoved.arm64.tsv",
+      "bytes": 4170,
+      "sha256": "FB78F60AEA076703BF6E868127068D25E6CBFC08AA2C7310059A270225C9AB34",
+      "status": "confirmed-supplement-final"
+    },
+    {
+      "id": "R16.D08",
+      "sourceCommit": "fe6e15f8108175182a52f0a6fd21c840da9db011",
+      "sourcePath": "artifacts/investigations/auto-live-runtime-contract-supplement/decompiled/030ed910__NoteMultipleDirectionalFlick__getCount.arm64.tsv",
+      "copiedPath": "artifacts/investigations/auto-live-runtime-contract-supplement/decompiled/030ed910__NoteMultipleDirectionalFlick__getCount.arm64.tsv",
+      "bytes": 530,
+      "sha256": "A35F9F572B4B7653D0C536C1FA1ABE51C98895A70C79A55F40B7E07D9E9DB8AE",
+      "status": "confirmed-supplement-final"
+    },
+    {
+      "id": "R16.D09",
+      "sourceCommit": "fe6e15f8108175182a52f0a6fd21c840da9db011",
+      "sourcePath": "artifacts/investigations/auto-live-runtime-contract-supplement/decompiled/030ee62c__NoteMultipleDirectionalFlick__ctor.arm64.tsv",
+      "copiedPath": "artifacts/investigations/auto-live-runtime-contract-supplement/decompiled/030ee62c__NoteMultipleDirectionalFlick__ctor.arm64.tsv",
+      "bytes": 58,
+      "sha256": "C1AD371BB63006A63DD376EF0346B2C7CD65BE6AC329A058173114D4BE8D3CF6",
+      "status": "confirmed-supplement-final"
+    },
+    {
+      "id": "R16.D10",
+      "sourceCommit": "fe6e15f8108175182a52f0a6fd21c840da9db011",
+      "sourcePath": "artifacts/investigations/auto-live-runtime-contract-supplement/decompiled/SHA256SUMS",
+      "copiedPath": "artifacts/investigations/auto-live-runtime-contract-supplement/decompiled/SHA256SUMS",
+      "bytes": 1198,
+      "sha256": "259DB86EE73946402E22A85C3784493F5DD7F892CF538175AFBA82F4EEEC3E4D",
+      "status": "confirmed-supplement-final"
     }
   ],
   "fixtureAliases": [
@@ -699,6 +862,14 @@
       "copiedPath": "fixtures/auto-live-failure-cases.json",
       "bytes": 1884,
       "sha256": "2EC743C8A33E3C73EBACBBA3F8C894803449AA6B174F004FEFC348AFEF208E6B"
+    },
+    {
+      "id": "F-auto-live-supplement-fixed-event-trace.json",
+      "sourceCommit": "fe6e15f8108175182a52f0a6fd21c840da9db011",
+      "sourcePath": "artifacts/investigations/auto-live-runtime-contract-supplement/auto_live_supplement_fixed_event_trace.json",
+      "copiedPath": "fixtures/auto-live-supplement-fixed-event-trace.json",
+      "bytes": 9042,
+      "sha256": "FD97A474499C2B590FF3C6A3BCD422429832D62EDF791115E9A8D02EAFC11E84"
     }
   ],
   "upstreamDependencies": [
@@ -706,13 +877,13 @@
       "id": "U-chart-construction.json",
       "copiedPath": "upstream/chart-construction.json",
       "bytes": 10689,
-      "sha256": "BEF383FD4083129BC348D0E2EF7FBCB9F1748CD9827EAB7963BADE54E798D627"
+      "sha256": "1E1EE2F24314BE7A7A593D15BC248B75E51B03F901ABA4234944C3BEB74CF13D"
     },
     {
       "id": "U-clock-scheduling.json",
       "copiedPath": "upstream/clock-scheduling.json",
       "bytes": 22124,
-      "sha256": "8DB70AAEEEEF050AB09986952279BC18E10A52586CF3A18D66BF627832DB7B8C"
+      "sha256": "4BB6C9C57E50F12A154B86146DE04142BDF1E7A088F9AE0F44C1BA59EEC29429"
     }
   ]
 }

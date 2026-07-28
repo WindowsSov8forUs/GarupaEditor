@@ -74,7 +74,7 @@ if (
 ) {
   fail("Auto Live evidence gate is not closed");
 }
-if (manifest.candidateEntries.length !== 30 || manifest.finalEntries.length !== 43) {
+if (manifest.candidateEntries.length !== 30 || manifest.finalEntries.length !== 61) {
   fail("Unexpected Auto Live evidence entry count");
 }
 
@@ -123,11 +123,52 @@ if (
   fail("Frozen fixed event trace has an unexpected scope");
 }
 
+const supplementClosure = JSON.parse(
+  readFileSync(
+    resolve(
+      packageRoot,
+      "artifacts/investigations/auto-live-runtime-contract-supplement/closure.json",
+    ),
+    "utf8",
+  ),
+);
+if (
+  supplementClosure.overall_status !== "confirmed" ||
+  supplementClosure.auto_live_gate !== "closed" ||
+  supplementClosure.blocking_findings.length !== 0 ||
+  Object.keys(supplementClosure.supplement_gap_resolution).length !== 5
+) {
+  fail("Frozen Reverse supplement closure is not the closed G11-G15 contract");
+}
+
+const supplementTrace = JSON.parse(
+  readFileSync(
+    resolve(packageRoot, "fixtures/auto-live-supplement-fixed-event-trace.json"),
+    "utf8",
+  ),
+);
+const supplementCaseIds = new Set(supplementTrace.cases.map((entry) => entry.case_id));
+for (const required of [
+  "multiple-directional-left-auto-group",
+  "multiple-directional-right-auto-group",
+  "slide-stop-selected-visible-intermediate",
+  "pause-active-long-freeze-resume",
+  "pause-active-slide-pending-slot-freeze",
+  "offset-plus5-cross-bpm-exact",
+  "offset-minus5-cross-bar-exact",
+  "offset-zero-identity-exact",
+]) {
+  if (!supplementCaseIds.has(required)) {
+    fail(`Frozen supplement trace is missing ${required}`);
+  }
+}
+
 if (!existsSync(resolve(packageRoot, "OPEN_GAPS.md"))) {
   fail("OPEN_GAPS.md is missing");
 }
 
 console.log(
   `auto-live evidence verified: candidates=${manifest.candidateEntries.length}, ` +
-    `final=${manifest.finalEntries.length}, gate=closed, index=${validateIndex ? "checked" : "skipped"}`,
+    `final=${manifest.finalEntries.length}, supplement=G11-G15, ` +
+    `gate=closed, index=${validateIndex ? "checked" : "skipped"}`,
 );

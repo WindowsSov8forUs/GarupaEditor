@@ -10,7 +10,7 @@
 - 锁定原作样本：`jp.co.craftegg.band` 10.1.3（version code 229，`arm64-v8a`）。
 - 上游已验收阶段：第一切片、谱面构造、时钟与调度。
 - 上游时钟调度验收提交：GarupaEditor `78414bc`，关闭记录修订提交 `ca84258`。
-- 当前状态：**2026-07-28 第二次关闭后复审已再次撤销阶段完成结论。普通 production Slide 修复保持有效，但冻结 R03 缺少任务书必需的 Stop、暂停、BPM 边界与精确 B±5 轨迹；原作又确认核心 `NoteMultipleDirectionalFlick` 的 synthetic Force Perfect 属于 Auto Live，而现实现对 415 个 production 核心 root 全部返回 `note.state.move`。A01/A02 证据硬门、A05/A06/A07/A08/A09/A10 已重新打开，修复与重新验收前禁止进入手动输入阶段。**
+- 当前状态：**A01/A02 补充证据硬门已由 Reverse `fe6e15f8108175182a52f0a6fd21c840da9db011` 关闭并冻结为 R09–R16/G11–G15；A03/A04 与既有普通 Slide 修复保留。当前进入 A05–A10 实现与重验收：415 个核心 production `NoteMultipleDirectionalFlick`、Stop/Long pause/精确 offset oracle 和 visual helper 分类尚未在 TypeScript 闭合，完成前禁止进入手动输入阶段。**
 - 待重建验收记录：`tmp/simulator-auto-live-acceptance.md`。
 - 已冻结证据包：`tmp/simulator-reverse-evidence/auto-live/`。
 
@@ -45,9 +45,9 @@
 | 任务 | 状态 | 完成标准 |
 | --- | --- | --- |
 | A00 建立阶段任务书 | 已完成 | 范围、证据候选、硬门、实现批次和验收矩阵写入本文档 |
-| A01 晋升 Auto Live 静态证据 | 重新打开 | 既有 43 条冻结证据有效，但须补 `NoteMultipleDirectionalFlick` 继承、Move/ForcePerfect、Began/Moved、note type 10、group count/side state 与 visual helper 边界 |
-| A02 生成固定事件 oracle 并关闭缺口 | 重新打开，代码硬门恢复 | 既有 closure 哈希有效但语义覆盖不足；须补 Multiple Directional、Stop、pause、BPM boundary、精确 B±5 bits 后生成新 closure |
-| A03 接入 Auto Live 模式与判定上下文 | 实现保留，等待新 A02 | 显式模式本身已完成；A02 新硬门关闭前不得继续扩展生产行为 |
+| A01 晋升 Auto Live 静态证据 | 补充完成 | Reverse `fe6e15f8` 新增 18 文件；Multiple 继承/Move/Began/Moved/note type 10/count 与 visual helper ARM64 已冻结 R09–R16 |
+| A02 生成固定事件 oracle 并关闭缺口 | 补充完成，代码硬门关闭 | G11–G15 closed；8 个补充 case 覆盖 Multiple、Stop、Long/Slide pause、B±5 exact bits 与 positive cross-BPM |
+| A03 接入 Auto Live 模式与判定上下文 | 已完成 | 显式模式本身不需改动；补充证据现可由 A05–A10 消费 |
 | A04 建立 Long/Slide 运行子图 | 修复完成 | 普通生产 Slide 由 terminal child + root after type 联合识别；父 Deactive 时按 R02 清 child graph/current，复用重建共享身份 |
 | A05 恢复 Single/Flick Force Perfect | 重新打开，等待 A02 | Normal/Flick/standalone Directional 保留；须恢复核心 Multiple Directional inherited Force Perfect、±500、note type 10 与一次结果 |
 | A06 恢复 Long 分阶段完成 | 重新打开，等待 A02 | 头尾与回池保留；任务书要求的 active Long pause/resume/dispose fixed oracle 尚缺 |
@@ -180,6 +180,14 @@
 - inherited Force Perfect 通过虚槽进入 Multiple 自有 `ExecTouchBegan @ 0x30ED578` / `ExecTouchMoved @ 0x30ED6DC`；成功分支以 judge note type 10 调 `NoteFrontBase.judgeFrontNote`，随后 `changeSideNoteUsed` 与 finish/deactivate。`getMultipleDirectionalFlickNoteCount @ 0x30ED910` 为 left+right+1。
 - 阶段归属据此锁定：synthetic Began/Moved、±500、note type 10、group count/side state/finish 属于 Auto Live；真实 touch、方向距离阈值与手指所有权属于下一阶段；BackLine/Sprite/Z/动画和 count 的音频/粒子消费属于表现阶段。
 - `NoteAddLongMultipleDirectionalFlickVisual.forcePerfect @ 0x30E6F5C` 与 `NoteAddSlideMultipleDirectionalFlickVisual.forcePerfect @ 0x30E8870` 均为 ARM64 `RET`，它们是 visual/connect 实体，不能与核心 `FrontNoteType.MultipleDirectionalFlick` 共用一个 judgement class。该新分析须先在 Reverse 晋升、提交、冻结并关闭新 gap，才能修改生产代码。
+
+#### 2026-07-28 第十四批：A01/A02 补充证据硬门关闭
+
+- Reverse 新建 `artifacts/investigations/auto-live-runtime-contract-supplement/`，从锁定 ELF 的 PT_LOAD 虚拟地址映射直接导出 9 份 ARM64 TSV，并校验样本完整 SHA-256；未把 RVA 当文件 offset，也未消费未提交反编译工作树。
+- verifier 锁定首版 Auto contract、method index、已提交 `note.c` 与时钟 pass-2 runtime oracle 的 Git blob profile；断言 Multiple ctor thunk、Move→Single、note type 10→judgeFrontNote→changeSide、left+right+1、两个 visual forcePerfect RET 和无 Multiple 自有 forcePerfect override。
+- 新 supplement fixed trace 8 case：Multiple 左/右 synthetic group、Slide Stop、active Long pause、active Slide+occupied slot pause、B=+5 cross-BPM exact、B=-5 cross-bar exact、B=0 identity；生成两次对象一致。
+- `closure.json` 以 G11–G15 和 `blocking_findings=[]` 关闭补充硬门；Reverse 提交 `fe6e15f8108175182a52f0a6fd21c840da9db011` 已推送并确认 main 远端 `0 0`。
+- GarupaEditor 字节保持冻结 18 个补充 final entry 与一个 fixture alias；manifest 最终条目由 43 增至 61，verifier 同时校验首版 G01–G10 与补充 G11–G15。A05–A10 代码门现解除。
 
 ## 2. 固定范围
 

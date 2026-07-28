@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "source_commit": "a3f28d77e71c5e7a62cab0de81f0cf668a5b745b",
+  "overall_status": "confirmed",
+  "auto_live_gate": "closed",
+  "blocking_findings": [],
+  "supplement_gap_resolution": {
+    "G11": "Multiple Directional inheritance and Auto Force Perfect dispatch are confirmed by ctor/MoveState/native virtual-call slices.",
+    "G12": "Multiple overrides synthetic Began/Moved, judges note type 10, updates side ownership and reports left+right+1 count.",
+    "G13": "Slide Stop selected-visible intermediate route is fixed as a separate method fixture and does not masquerade as terminal tail.",
+    "G14": "Active Long/Slide pause freezes NoteManager, graph/cursor and occupied slots; resume has no catch-up and is composed only from previously confirmed manager/family contracts.",
+    "G15": "B=-5/0/+5 exact Float32 outputs and a positive cross-BPM boundary are imported from the committed device runtime oracle rather than prose relations."
+  },
+  "implementation_gate": "GarupaEditor must freeze this supplement before changing Multiple Directional or the reopened oracle paths."
+}

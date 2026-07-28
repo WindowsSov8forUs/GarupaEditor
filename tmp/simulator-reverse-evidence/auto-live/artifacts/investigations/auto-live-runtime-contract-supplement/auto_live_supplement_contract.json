@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "version": "10.1.3",
+    "version_code": 229,
+    "abi": "arm64-v8a",
+    "libil2cpp_sha256": "66C9C666C50962B662DF8D894E851C7D18F07142DCA145CFAC3D30D063D1D9FA"
+  },
+  "source_commit": "a3f28d77e71c5e7a62cab0de81f0cf668a5b745b",
+  "status": "confirmed-auto-live-supplement-contract",
+  "multiple_directional": {
+    "inheritance": ["NoteSingleBase", "NoteFlickBase", "NoteDirectionalFlick", "NoteMultipleDirectionalFlick"],
+    "ctor_thunk": "0x30EE62C -> 0x30E7F10",
+    "move_state": "0x30ED1B4 calls NoteSingleBase.MoveState 0x30E1698 before group-side state handling",
+    "force_perfect": "inherits NoteFlickBase.forcePerfect 0x3A77768 and NoteDirectionalFlick synthetic-X getter 0x30EA108",
+    "synthetic_x": {"game_note_type_10": -500, "game_note_type_11": 500},
+    "overrides": {"exec_touch_began": "0x30ED578", "exec_touch_moved": "0x30ED6DC"},
+    "judge_note_type": 10,
+    "finish_order": ["judgeFrontNote", "changeSideNoteUsed", "finish/deactivate"],
+    "group_count": "left-side count + right-side count + 1",
+    "stage": "auto-live",
+    "manual_deferred": ["real touch positions", "directional distance threshold", "finger ownership", "lane arbitration"],
+    "presentation_deferred": ["sprite", "back-line", "Z ordering", "animation", "audio", "particle"]
+  },
+  "visual_helpers": {
+    "NoteAddLongMultipleDirectionalFlickVisual": {"force_perfect": "RET", "move_state": "branch to NotesCheck", "independent_judgement": false},
+    "NoteAddSlideMultipleDirectionalFlickVisual": {"force_perfect": "RET", "move_state": "branch to NotesCheck", "independent_judgement": false},
+    "stage": "visual/connect lifecycle; not the core Multiple Directional judgement family"
+  },
+  "supplemental_oracle": {
+    "required_cases": [
+      "multiple-directional-left-auto-group",
+      "multiple-directional-right-auto-group",
+      "slide-stop-selected-visible-intermediate",
+      "pause-active-long-freeze-resume",
+      "pause-active-slide-pending-slot-freeze",
+      "offset-plus5-cross-bpm-exact",
+      "offset-minus5-cross-bar-exact",
+      "offset-zero-identity-exact"
+    ]
+  },
+  "unresolved_nonblocking": [
+    "real manual touch and timeout Miss remain the manual-input stage",
+    "visual helper rendering and connection presentation remain the rendering stage",
+    "audio and particle consumption of the multiple count remain deferred",
+    "HABAHIRO runtime remains static-only"
+  ]
+}
