@@ -29,7 +29,7 @@ Auto Live A00–A10已完成第十四次提交后独立逐项重验收。验收�
 
 OneFrame 容量现在由原作证据固定为 5，不再接受宿主或测试容量配置。公开的 `OneFrameJudgementBatch` 仅包含本阶段闭合的 Auto Live 判定字段，不是原作完整 `OneFrameTotalData`。分数、Power、生命、Skill/Fever、音频、粒子、渲染和 HUD 字段在类型上保持缺席，而不是填零。
 
-当前阶段已切换到“手动输入与判定”，任务书位于`tmp/simulator-manual-input-judgement-task.md`。M00已建立；M01静态证据晋升与M02实体/固定事件oracle是生产代码硬门。真实触摸、Multiple Directional距离阈值、finger所有权、判定窗口、普通timeout Miss、释放和Hold在D01–D15全部关闭前继续`evidence-required`，当前没有手动输入生产实现。
+当前阶段已切换到“手动输入与判定”，锁定实机当前版本`jp.co.craftegg.band` 10.1.4（230），任务书位于`tmp/simulator-manual-input-judgement-task.md`。时钟阶段已在10.1.4重新取证并保持关闭；该证据不包含手动方法。M00已建立，V01手动输入10.1.4重基线、M01静态晋升与M02实体oracle是生产代码硬门；当前没有手动输入生产实现。
 
 `src/simulator/engine` 不依赖 React、Pixi、Tauri、DOM、编辑器谱面类型或窗口协议。宿主 API 是 GarupaEditor 的可移植边界，不宣称属于原作接口。
 
