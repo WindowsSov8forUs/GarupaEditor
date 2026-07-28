@@ -157,7 +157,15 @@ export class NoteManager {
     for (const batch of this.batches) {
       for (const noteInformation of batch.informationList) {
         if (isNonPlayableCommand(noteInformation)) {
+          const commandValidation = validateBpmCommand(noteInformation);
+          if (commandValidation.status !== "ok") {
+            return commandValidation;
+          }
           continue;
+        }
+        const familyValidation = noteFamily(noteInformation);
+        if (familyValidation.status !== "ok") {
+          return familyValidation;
         }
         const graphValidation = validateAutoLiveActivationGraph(noteInformation);
         if (graphValidation.status !== "ok") {
@@ -716,6 +724,29 @@ export function groupMultipleDirectionalInformationList(
 
 function isBpmCommand(noteInformation: NoteInformation): boolean {
   return noteInformation.ccNum === 3 || noteInformation.ccNum === 8;
+}
+
+function validateBpmCommand(
+  noteInformation: NoteInformation,
+): SimulatorResult<void> {
+  if (!isBpmCommand(noteInformation)) {
+    return ok(undefined);
+  }
+  const bpm = Math.fround(noteInformation.bpm);
+  if (
+    noteInformation.denominator === 0 ||
+    !Number.isFinite(noteInformation.bpm) ||
+    !Number.isFinite(bpm) ||
+    bpm <= 0 ||
+    noteInformation.bpmString.length === 0
+  ) {
+    return evidenceRequired(
+      "runtime.invalid-bpm-command",
+      ["E07", "E10", "U03"],
+      "CC03/CC08 commands require a nonzero denominator, positive finite BPM and original string before scheduler mutation.",
+    );
+  }
+  return ok(undefined);
 }
 
 function isNonPlayableCommand(noteInformation: NoteInformation): boolean {

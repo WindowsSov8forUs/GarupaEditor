@@ -28,9 +28,9 @@ G01–G17 保持关闭。第三次审计的 G19/G20 由 Reverse `24706edcb02155f
 
 8. **实现修复，待独立验收，仍required-before-close：** controller现为五槽建立冻结handle对象并以私有WeakMap校验身份；伪造同ID与cross-controller同ID均零mutation拒绝。尚须在独立验收批重新确认R02对象所有权、first-unused/复用及全部调用者。
 
-9. **实现修复，待独立验收，仍required-before-close：** NoteManager现登记playable root/Slide child source owner并为Multiple返回G21 runtime group精确count；未登记source、`0`、`999`与错配正count均拒绝。尚须重新核对G12/G21、全部production group及非Multiple source不携带count。
+9. **实现修复，待独立验收，仍required-before-close：** NoteManager现登记playable root/Slide child source owner并为Multiple返回G21 runtime group精确count；未登记source、`0`、`999`与错配正count均拒绝。U01/R02 root family shape与primary/button-array identity也已在manager/Note preflight和Setup双层验证。尚须重新核对G12/G21、全部production group及非Multiple source不携带count。
 
-10. **实现修复，待独立验收，仍required-before-close：** Long/Slide/Multiple图约束已提取为R04/U01绑定纯preflight，host在backend前、InGameManager在OneFrame初始化前、NoteManager在Slide manager/pool/group/BPM/root mutation前调用，Note activate继续复用；公开父子图重绑入口与terminal默认note type也已删除。组合回归为lifecycle created、OneFrame/Slide未初始化、零active root/BPM/scheduler trace；尚须独立枚举全部激活失败点并确认没有未preflight mutation。
+10. **实现修复，待独立验收，仍required-before-close：** Long/Slide/Multiple图、note family及CC03/08约束已形成纯preflight；host在backend前、InGameManager在OneFrame初始化前、NoteManager在Slide manager/pool/group/BPM/root mutation前调用，Note activate继续复用；公开父子图重绑入口与terminal默认note type也已删除。组合回归为lifecycle created、OneFrame/Slide未初始化、零active root/BPM/scheduler trace；尚须独立枚举全部激活失败点并确认没有未preflight mutation。
 
 G22同时固定adaptive method fixture在一个setup outer frame后于full manager outer-frame index 1判定。GarupaEditor冻结包含`auto-live-actual-replay.json`与逐字节相同的`653_ikuoku_easy.bms.txt`；actual replay与公共fault边界均已完成第六次全量重验收，未被第七次Slide审计推翻。
 

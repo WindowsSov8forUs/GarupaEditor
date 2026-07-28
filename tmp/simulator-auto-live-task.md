@@ -417,6 +417,14 @@
 - AL22新增无效judgement owner、non-finite Long root、invisible Slide terminal，并把direct manager坏图快照扩展为lifecycle created、OneFrame未初始化、Slide manager未初始化、零active/trace。定向TypeScript、AL01–AL22、第一切片17项和时钟15组通过。
 - 本批由独立验收检查触发，证明验收流程仍在继续而非修复后直接结束。A08/A09保持“实现修复，待独立验收”，A10继续打开；下一步继续审计A09/A10及A00–A07证据映射。
 
+#### 2026-07-29 第四十四批：root shape与command preflight补修
+
+- 重新枚举A04/A05所有生产root的`FrontNoteType/GameNoteType/AfterNoteType`组合，并从两个冻结BMS观察普通`0/0`、Long`1/1`、Flick`2/2`、SlideA`3/4`、SlideB`4/5`、Directional/Multiple`10/11`及visual helper`24/25`。此前除Long/Slide terminal与Directional外，其余错配shape可通过activation owner。
+- `validateAutoLiveActivationGraph`现先验证U01/R02/R10闭合family shape；`NoteSingleBase`与visual helper direct activate同样复用。playable button identity同时要求primary为0–15、array非空/含primary/去重/全成员可玩；Slide所有child也在父图preflight中验证，controller Setup保留第二道检查。
+- NoteManager `validateSetup`补齐`noteFamily`与CC03/CC08规则；unknown family、invalid BPM command、非法Directional source、family错配与button错配均在OneFrame/Slide/pool/group/BPM/root/scheduler mutation前失败。AL22加入对应direct Note/manager完整快照。
+- 两个冻结production BMS额外离线枚举确认全部playable root的primary均在button array内、无空/越界/重复，`buttonTypes`与`buttonTypesArray`一致；定向TypeScript、AL01–AL22、时钟15组与production roots 825/598通过。
+- 本批继续属于验收触发修复，不恢复A08/A09/A10或完成勾选。下一步从A00证据门开始逐项重新验收，并继续搜索组合/生命周期遗漏。
+
 ## 2. 固定范围
 
 ### 2.1 纳入范围

@@ -5,6 +5,7 @@ import {
 } from "../evidence";
 import {
   AfterNoteType,
+  ButtonType,
   FrontNoteType,
   GameNoteType,
   type AfterNoteTypeValue,
@@ -39,6 +40,13 @@ export interface FlickForcePerfectTraceEntry {
 }
 
 export abstract class NoteSingleBase extends NoteFrontBase {
+  override activate(noteInformation: NoteInformation): SimulatorResult<void> {
+    const graphValidation = validateAutoLiveActivationGraph(noteInformation);
+    return graphValidation.status === "ok"
+      ? super.activate(noteInformation)
+      : graphValidation;
+  }
+
   protected override moveState(_deltaTimeSeconds: number): SimulatorResult<void> {
     const noteInformation = this.noteInformation;
     if (noteInformation === null) {
@@ -642,6 +650,13 @@ export class NoteFlick extends NoteSingleBase {
 }
 
 export class NoteDirectionalFlick extends NoteFlick {
+  override activate(noteInformation: NoteInformation): SimulatorResult<void> {
+    const graphValidation = validateAutoLiveActivationGraph(noteInformation);
+    return graphValidation.status === "ok"
+      ? super.activate(noteInformation)
+      : graphValidation;
+  }
+
   protected override get forcePerfectSyntheticX(): SimulatorResult<number> {
     const sourceType = this.noteInformation?.gameNoteType;
     if (sourceType === 10) {
@@ -764,6 +779,13 @@ export class NoteMultipleDirectionalFlick extends NoteDirectionalFlick {
 }
 
 export class NoteMultipleDirectionalVisual extends NoteFrontBase {
+  override activate(noteInformation: NoteInformation): SimulatorResult<void> {
+    const graphValidation = validateAutoLiveActivationGraph(noteInformation);
+    return graphValidation.status === "ok"
+      ? super.activate(noteInformation)
+      : graphValidation;
+  }
+
   protected override moveState(): SimulatorResult<void> {
     return evidenceRequired(
       "auto-live.multiple-directional-visual-presentation",
@@ -886,6 +908,14 @@ export type MultipleDirectionalAutoLiveTraceEntry = {
 export function validateAutoLiveActivationGraph(
   noteInformation: NoteInformation,
 ): SimulatorResult<void> {
+  const buttonValidation = validatePlayableButtonIdentity(noteInformation);
+  if (buttonValidation.status !== "ok") {
+    return buttonValidation;
+  }
+  const familyShapeValidation = validateRootFamilyShape(noteInformation);
+  if (familyShapeValidation.status !== "ok") {
+    return familyShapeValidation;
+  }
   if (noteInformation.fireNoteType === FrontNoteType.Long) {
     if (
       !isInt32Position(noteInformation.absolutePos) ||
@@ -943,6 +973,10 @@ export function validateAutoLiveActivationGraph(
     const seen = new Set<NoteInformation>();
     let previousPosition = noteInformation.absolutePos;
     for (const source of noteInformation.slideNoteList) {
+      const childButtonValidation = validatePlayableButtonIdentity(source);
+      if (childButtonValidation.status !== "ok") {
+        return childButtonValidation;
+      }
       if (
         seen.has(source) ||
         !isInt32Position(source.absolutePos) ||
@@ -959,6 +993,19 @@ export function validateAutoLiveActivationGraph(
     }
     return ok(undefined);
   }
+  if (noteInformation.fireNoteType === FrontNoteType.DirectionalFlick) {
+    if (
+      noteInformation.gameNoteType !== GameNoteType.DirectionalFlickLeft &&
+      noteInformation.gameNoteType !== GameNoteType.DirectionalFlickRight
+    ) {
+      return evidenceRequired(
+        "auto-live.directional-flick-source-type",
+        ["R02", "R04", "R05"],
+        `Directional Force Perfect only confirms source note types 10 and 11, received ${String(noteInformation.gameNoteType)}.`,
+      );
+    }
+    return ok(undefined);
+  }
   if (noteInformation.fireNoteType === FrontNoteType.MultipleDirectionalFlick) {
     if (
       noteInformation.gameNoteType !== GameNoteType.DirectionalFlickLeft &&
@@ -972,6 +1019,79 @@ export function validateAutoLiveActivationGraph(
     }
   }
   return ok(undefined);
+}
+
+function validatePlayableButtonIdentity(
+  noteInformation: NoteInformation,
+): SimulatorResult<void> {
+  const buttons = noteInformation.buttonTypesArray;
+  if (
+    !Number.isInteger(noteInformation.buttonType) ||
+    noteInformation.buttonType < ButtonType.Button_00_BMS_1P_SC ||
+    noteInformation.buttonType > ButtonType.Button_15_BMS_2P_SC ||
+    !Array.isArray(buttons) ||
+    buttons.length === 0 ||
+    !buttons.includes(noteInformation.buttonType) ||
+    new Set(buttons).size !== buttons.length ||
+    buttons.some((button) =>
+      !Number.isInteger(button) ||
+      button < ButtonType.Button_00_BMS_1P_SC ||
+      button > ButtonType.Button_15_BMS_2P_SC)
+  ) {
+    return evidenceRequired(
+      "auto-live.invalid-note-button-identity",
+      ["R02", "R04", "U01"],
+      `Playable root ${noteInformation.index} has an unconfirmed primary/button-array identity.`,
+    );
+  }
+  return ok(undefined);
+}
+
+function validateRootFamilyShape(
+  noteInformation: NoteInformation,
+): SimulatorResult<void> {
+  let valid = true;
+  switch (noteInformation.fireNoteType) {
+    case FrontNoteType.Normal:
+      valid = noteInformation.gameNoteType === GameNoteType.Normal &&
+        noteInformation.afterNoteType === AfterNoteType.None;
+      break;
+    case FrontNoteType.Long:
+      valid = noteInformation.gameNoteType === GameNoteType.Long;
+      break;
+    case FrontNoteType.Flick:
+      valid = noteInformation.gameNoteType === GameNoteType.Flick &&
+        noteInformation.afterNoteType === AfterNoteType.None;
+      break;
+    case FrontNoteType.SlideA:
+      valid = noteInformation.gameNoteType === GameNoteType.SlideA;
+      break;
+    case FrontNoteType.SlideB:
+      valid = noteInformation.gameNoteType === GameNoteType.SlideB;
+      break;
+    case FrontNoteType.DirectionalFlick:
+    case FrontNoteType.MultipleDirectionalFlick:
+      valid = noteInformation.afterNoteType === AfterNoteType.None;
+      break;
+    case FrontNoteType.LongMultipleDirectionalFlickAdd:
+      valid = noteInformation.gameNoteType === GameNoteType.LongAddDirectionFlick &&
+        noteInformation.afterNoteType === AfterNoteType.None;
+      break;
+    case FrontNoteType.SlideAMultipleDirectionalFlickAdd:
+    case FrontNoteType.SlideBMultipleDirectionalFlickAdd:
+      valid = noteInformation.gameNoteType === GameNoteType.SlideAddDirectionalFlick &&
+        noteInformation.afterNoteType === AfterNoteType.None;
+      break;
+    default:
+      return ok(undefined);
+  }
+  return valid
+    ? ok(undefined)
+    : evidenceRequired(
+        "auto-live.invalid-note-family-shape",
+        ["R02", "R04", "R10", "U01"],
+        `Playable root ${noteInformation.index} has an unconfirmed front/game/after combination (${noteInformation.fireNoteType}/${noteInformation.gameNoteType}/${noteInformation.afterNoteType}).`,
+      );
 }
 
 function isInt32Position(value: number): boolean {

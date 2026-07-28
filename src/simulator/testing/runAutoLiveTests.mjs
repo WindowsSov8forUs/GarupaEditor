@@ -1357,16 +1357,12 @@ function validateAutoLive() {
     evidence(createSimulatorEngine(input({ kind: "auto-live", resultTransform: "skill" }), backends),
       "runtime.unsupported-play-mode-or-result-transform");
 
-    const invalidDirectional = bindNote(
-      new notes.NoteDirectionalFlick("bad-direction"),
-      normalInfo(500, 120, {
-        gameNoteType: 12,
-        fireNoteType: types.FrontNoteType.DirectionalFlick,
-      }),
-      { position: { value: 120 } },
-    );
-    evidence(invalidDirectional.note.executeUpdate(0), "auto-live.directional-flick-source-type");
-    assert.equal(invalidDirectional.oneFrame.existsOneFrameData(), false);
+    const invalidDirectional = new notes.NoteDirectionalFlick("bad-direction");
+    evidence(invalidDirectional.activate(normalInfo(500, 120, {
+      gameNoteType: 12,
+      fireNoteType: types.FrontNoteType.DirectionalFlick,
+    })), "auto-live.directional-flick-source-type");
+    assert.equal(invalidDirectional.state, NoteState.Deactive);
 
     const invalidLong = new notes.NoteLong("missing-long");
     evidence(invalidLong.activate(normalInfo(501, 120, {
@@ -1374,6 +1370,19 @@ function validateAutoLive() {
       fireNoteType: types.FrontNoteType.Long,
     })), "auto-live.invalid-long-after-graph");
     assert.equal(invalidLong.state, NoteState.Deactive);
+    const invalidButtonRoot = new notes.NoteNormal("invalid-button-root");
+    evidence(invalidButtonRoot.activate(normalInfo(5000, 120, {
+      buttonTypesArray: [types.ButtonType.Button_02_BMS_1P_02],
+    })), "auto-live.invalid-note-button-identity");
+    assert.equal(invalidButtonRoot.state, NoteState.Deactive);
+
+    const invalidFlickShape = new notes.NoteFlick("invalid-flick-shape");
+    evidence(invalidFlickShape.activate(normalInfo(5001, 120, {
+      fireNoteType: types.FrontNoteType.Flick,
+      gameNoteType: types.GameNoteType.Normal,
+    })), "auto-live.invalid-note-family-shape");
+    assert.equal(invalidFlickShape.state, NoteState.Deactive);
+
     const nonFiniteLong = new notes.NoteLong("non-finite-long-root");
     evidence(nonFiniteLong.activate(normalInfo(5010, Number.NaN, {
       gameNoteType: types.GameNoteType.Long,
@@ -1442,6 +1451,42 @@ function validateAutoLive() {
     assert.deepEqual(invalidBatchSnapshot.noteManager.activeBpmPoolIndices, []);
     assert.deepEqual(invalidBatchSnapshot.noteManager.schedulerTrace, []);
 
+    const invalidFamilyBatch = schedulerIntegration({
+      batches: [batch(100, [normalInfo(5014, 100, { fireNoteType: 99 })])],
+      bpmChangeCount: 0,
+      positions: [0, 100],
+      initializeOneFrame: false,
+    });
+    evidence(invalidFamilyBatch.manager.initialize(),
+      "note-manager.unrepresented-note-family");
+    const invalidFamilySnapshot = invalidFamilyBatch.manager.snapshot();
+    assert.equal(invalidFamilySnapshot.state, "created");
+    assert.equal(invalidFamilySnapshot.oneFrame.initialized, false);
+    assert.equal(invalidFamilySnapshot.noteManager.slideNoteManagerInitialized, false);
+    assert.deepEqual(invalidFamilySnapshot.noteManager.activeNotePoolObjectIds, []);
+    assert.deepEqual(invalidFamilySnapshot.noteManager.schedulerTrace, []);
+
+    const invalidBpmBatch = schedulerIntegration({
+      batches: [batch(100, [normalInfo(5015, 100, {
+        buttonType: types.ButtonType.None,
+        buttonTypes: [types.ButtonType.None],
+        buttonTypesArray: [types.ButtonType.None],
+        ccNum: 8,
+        bpm: Number.NaN,
+        bpmString: "NaN",
+      })])],
+      bpmChangeCount: 1,
+      positions: [0, 100],
+      initializeOneFrame: false,
+    });
+    evidence(invalidBpmBatch.manager.initialize(), "runtime.invalid-bpm-command");
+    const invalidBpmSnapshot = invalidBpmBatch.manager.snapshot();
+    assert.equal(invalidBpmSnapshot.state, "created");
+    assert.equal(invalidBpmSnapshot.oneFrame.initialized, false);
+    assert.equal(invalidBpmSnapshot.noteManager.slideNoteManagerInitialized, false);
+    assert.deepEqual(invalidBpmSnapshot.noteManager.activeBpmPoolIndices, []);
+    assert.deepEqual(invalidBpmSnapshot.noteManager.schedulerTrace, []);
+
     const missingSlide = new notes.NoteSlide("missing-slide");
     evidence(missingSlide.activate(normalInfo(502, 120, {
       gameNoteType: types.GameNoteType.SlideA,
@@ -1496,11 +1541,21 @@ function validateAutoLive() {
       ...payloadSource,
       buttonTypesArray: [],
     };
+    const mismatchedButtonPayloadSource = {
+      ...payloadSource,
+      buttonTypesArray: [types.ButtonType.Button_02_BMS_1P_02],
+    };
+    const duplicateButtonPayloadSource = {
+      ...payloadSource,
+      buttonTypesArray: [payloadSource.buttonType, payloadSource.buttonType],
+    };
     const multiplePayloadCounts = new WeakMap([[multiplePayloadSource, 3]]);
     const payloadSources = new WeakSet([
       payloadSource,
       multiplePayloadSource,
       emptyButtonPayloadSource,
+      mismatchedButtonPayloadSource,
+      duplicateButtonPayloadSource,
     ]);
     const invalidPayloadController = controller((information) => {
       if (!payloadSources.has(information)) {
@@ -1526,6 +1581,8 @@ function validateAutoLive() {
         multipleDirectionalFlickNoteCount: 999,
       },
       request(emptyButtonPayloadSource, "head"),
+      request(mismatchedButtonPayloadSource, "head"),
+      request(duplicateButtonPayloadSource, "head"),
       request(normalInfo(5034), "head"),
     ]) {
       evidence(invalidPayloadController.setupAutoLiveJudgement(invalidRequest),

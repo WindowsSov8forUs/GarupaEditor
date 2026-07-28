@@ -365,6 +365,11 @@ function isClosedAutoLiveJudgementRequest(
     request.noteInformation.buttonType > ButtonType.Button_15_BMS_2P_SC ||
     !Array.isArray(request.noteInformation.buttonTypesArray) ||
     request.noteInformation.buttonTypesArray.length === 0 ||
+    !request.noteInformation.buttonTypesArray.includes(
+      request.noteInformation.buttonType,
+    ) ||
+    new Set(request.noteInformation.buttonTypesArray).size !==
+      request.noteInformation.buttonTypesArray.length ||
     request.noteInformation.buttonTypesArray.some((button) =>
       !Number.isInteger(button) ||
       button < ButtonType.Button_00_BMS_1P_SC ||
