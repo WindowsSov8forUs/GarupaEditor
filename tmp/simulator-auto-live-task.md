@@ -10,8 +10,8 @@
 - 锁定原作样本：`jp.co.craftegg.band` 10.1.3（version code 229，`arm64-v8a`）。
 - 上游已验收阶段：第一切片、谱面构造、时钟与调度。
 - 上游时钟调度验收提交：GarupaEditor `78414bc`，关闭记录修订提交 `ca84258`。
-- 当前状态：**A00–A10 已完成。2026-07-28 关闭后复审曾重新打开 A04/A07/A09/A10；普通生产 Slide terminal、父回池 child Reset、terminal note type、production/reuse/pause/dispose oracle 已由修复提交 `a7ce464` 和后续重验收闭合。`auto_live_gate = closed`、`blocking_findings = []`，阶段重新关闭。**
-- 最终验收记录：`tmp/simulator-auto-live-acceptance.md`。
+- 当前状态：**2026-07-28 第二次关闭后复审已再次撤销阶段完成结论。普通 production Slide 修复保持有效，但冻结 R03 缺少任务书必需的 Stop、暂停、BPM 边界与精确 B±5 轨迹；原作又确认核心 `NoteMultipleDirectionalFlick` 的 synthetic Force Perfect 属于 Auto Live，而现实现对 415 个 production 核心 root 全部返回 `note.state.move`。A01/A02 证据硬门、A05/A06/A07/A08/A09/A10 已重新打开，修复与重新验收前禁止进入手动输入阶段。**
+- 待重建验收记录：`tmp/simulator-auto-live-acceptance.md`。
 - 已冻结证据包：`tmp/simulator-reverse-evidence/auto-live/`。
 
 ### 1.1 阶段目标
@@ -45,16 +45,16 @@
 | 任务 | 状态 | 完成标准 |
 | --- | --- | --- |
 | A00 建立阶段任务书 | 已完成 | 范围、证据候选、硬门、实现批次和验收矩阵写入本文档 |
-| A01 晋升 Auto Live 静态证据 | 已完成 | Reverse `a3f28d77` 提交 43 个最终 contract/切片文件；GarupaEditor 冻结 E01–E30 与 R01–R08/R05.D01–D35 |
-| A02 生成固定事件 oracle 并关闭缺口 | 已完成，硬门关闭 | G01–G10 closed；固定轨迹两次生成一致；5 槽、Flick 参数、Long/Slide 粒度与失败矩阵闭合 |
-| A03 接入 Auto Live 模式与判定上下文 | 已完成 | 显式 `manual`/`auto-live` 判别联合、最小 `InGameCalculatedData` 与 identity result-transform 门已接入 |
+| A01 晋升 Auto Live 静态证据 | 重新打开 | 既有 43 条冻结证据有效，但须补 `NoteMultipleDirectionalFlick` 继承、Move/ForcePerfect、Began/Moved、note type 10、group count/side state 与 visual helper 边界 |
+| A02 生成固定事件 oracle 并关闭缺口 | 重新打开，代码硬门恢复 | 既有 closure 哈希有效但语义覆盖不足；须补 Multiple Directional、Stop、pause、BPM boundary、精确 B±5 bits 后生成新 closure |
+| A03 接入 Auto Live 模式与判定上下文 | 实现保留，等待新 A02 | 显式模式本身已完成；A02 新硬门关闭前不得继续扩展生产行为 |
 | A04 建立 Long/Slide 运行子图 | 修复完成 | 普通生产 Slide 由 terminal child + root after type 联合识别；父 Deactive 时按 R02 清 child graph/current，复用重建共享身份 |
-| A05 恢复 Single/Flick Force Perfect | 已完成 | `NoteSingleBase` adjusted crossing、Normal 一次提交、Flick Began→synthetic Moved 与 Directional ±500 路由已恢复 |
-| A06 恢复 Long 分阶段完成 | 已完成 | head `>=`、tail `>`、父拥有 linked after、Wait/Stop 更新与失活顺序已恢复 |
-| A07 恢复 Slide 分阶段完成 | 修复完成 | terminal note type 8/5/6/7、Stop intermediate route、普通/特殊 terminal、deactivate/reset 与复用已恢复 |
-| A08 恢复 Auto Live OneFrame 填充与聚合 | 已完成 | 固定 5 槽、first-unused、原子 Setup、池序 projection、空帧/耗尽/清除语义已恢复 |
-| A09 接入调度、暂停与生命周期 | 重验收完成 | active Slide cursor/graph/slot/trace 暂停冻结、resume、父回池复用和 active dispose 已闭合 |
-| A10 生产 oracle 与阶段验收 | 重验收完成 | 普通/HABAHIRO 分别消费全部 93/51 个 production Slide root；AL19/AL20、全回归和验收文档通过 |
+| A05 恢复 Single/Flick Force Perfect | 重新打开，等待 A02 | Normal/Flick/standalone Directional 保留；须恢复核心 Multiple Directional inherited Force Perfect、±500、note type 10 与一次结果 |
+| A06 恢复 Long 分阶段完成 | 重新打开，等待 A02 | 头尾与回池保留；任务书要求的 active Long pause/resume/dispose fixed oracle 尚缺 |
+| A07 恢复 Slide 分阶段完成 | 重新打开，等待 A02 | 普通/特殊 terminal 与 Reset 保留；Stop 目前仅测试硬编码，缺 frozen event oracle 与复杂 selected/current case |
+| A08 恢复 Auto Live OneFrame 填充与聚合 | 重新打开，等待 A02 | 五槽实现保留；须确认 Multiple note type 10、group count callback 边界与 visual helper 不产生独立判定 |
+| A09 接入调度、暂停与生命周期 | 重新打开，等待 A05–A08 | 须补 Multiple group lifecycle、active Long/Slide pause、resume、dispose 与失败原子轨迹 |
+| A10 生产 oracle 与阶段验收 | 重新打开，等待 A09 | AL19 目前过滤全部 production Directional family；须逐 family 执行 production engine 并整体对照新 frozen trace |
 
 ### 1.4 批次记录
 
@@ -163,6 +163,23 @@
 - AL22 duplicate/missing Slide failure fixture 同步改为生产 terminal 形状，确保失败来自缺图/重复身份本身而非错误 after type。
 - 完整 A10 隔离验证重新通过：TypeScript、第一切片 17 项、全部谱面构造套件、production roots 825/598、时钟调度 15 组、Auto Live 22 组、依赖边界，以及 Auto Live 证据 source/copy/index 校验。
 - 最终复审未发现新的 required-before-code 或 blocking finding；A04/A07/A09/A10 和阶段完成勾选重新关闭，下一阶段仍须建立独立手动输入设备证据硬门。
+
+#### 2026-07-28 第十二批：第二次关闭后独立审计
+
+- 审计不以 AL01–AL22 通过代替任务书覆盖核验：冻结 R03 的 11 个 case 不含 Slide Stop、pause/resume 或 BPM change boundary；B=-5/0/+5 case 的 `adjusted_position` 三项均为 120/`0x42F00000`，只保留文字 relation，不能承担精确 offset crossing oracle。
+- AL11 Stop 通过测试侧直接 `changeState(Stop)` 和硬编码期望；AL18 只用 synthetic active Slide，未消费 frozen pause case，也未覆盖 A06 要求的 active Long pause；因此旧 A02/A06/A07/A09/A10 关闭结论无效。
+- AL19 的 production family 列表只有 Normal/Flick/Long/Slide，过滤了 standalone Directional 与 Multiple Directional；create engine 后也未执行到真实 crossing，违反 AL19“各家族真实 root/graph 路径与 fixed trace 一致”的完成定义。
+- 当前生产构造审计：普通谱面有 standalone Directional 38、核心 Multiple Directional 195；HABAHIRO 有 standalone Directional 12、核心 Multiple Directional 220，另有 1 个 AddSlide Multiple Directional visual。现 `NoteMultipleDirectionalFlick extends NoteFrontBase {}` 使 415/415 个核心 production root 首次 Move 全部返回 `note.state.move`。
+- 证据包 source/copy/index 校验和 Reverse `a3f28d77` 提交本身仍有效，但现有 closure 的覆盖范围不足以满足本文任务；在新 Reverse closure 提交前，任务书层面的 Auto Live 代码硬门恢复为 blocked。
+
+#### 2026-07-28 第十三批：Multiple Directional 原作阶段归属复核
+
+- 只读核对 Reverse 已提交 `a3f28d77` 的 method index、`artifacts/rhythm/decompiled_bundles/note.c` 与锁定 SHA-256 二进制；未消费 Reverse 未提交工作树。
+- `NoteMultipleDirectionalFlick..ctor @ 0x30EE62C` 直接分支到 `NoteDirectionalFlick..ctor @ 0x30E7F10`，后者进入 `NoteFlickBase..ctor @ 0x3A777F4`；原作职责链明确为 Single→FlickBase→Directional→Multiple，而非当前 TypeScript 的直接 `NoteFrontBase`。
+- `NoteMultipleDirectionalFlick.MoveState @ 0x30ED1B4` 先调用 `NoteSingleBase.MoveState @ 0x30E1698`；后者在 adjusted crossing 且 `get_IsAutoPlay` 成立时虚调用 inherited `NoteFlickBase.forcePerfect @ 0x3A77768`。Multiple 没有自有 forcePerfect/get-X override，故 Auto synthetic route 继承 Directional ±500。
+- inherited Force Perfect 通过虚槽进入 Multiple 自有 `ExecTouchBegan @ 0x30ED578` / `ExecTouchMoved @ 0x30ED6DC`；成功分支以 judge note type 10 调 `NoteFrontBase.judgeFrontNote`，随后 `changeSideNoteUsed` 与 finish/deactivate。`getMultipleDirectionalFlickNoteCount @ 0x30ED910` 为 left+right+1。
+- 阶段归属据此锁定：synthetic Began/Moved、±500、note type 10、group count/side state/finish 属于 Auto Live；真实 touch、方向距离阈值与手指所有权属于下一阶段；BackLine/Sprite/Z/动画和 count 的音频/粒子消费属于表现阶段。
+- `NoteAddLongMultipleDirectionalFlickVisual.forcePerfect @ 0x30E6F5C` 与 `NoteAddSlideMultipleDirectionalFlickVisual.forcePerfect @ 0x30E8870` 均为 ARM64 `RET`，它们是 visual/connect 实体，不能与核心 `FrontNoteType.MultipleDirectionalFlick` 共用一个 judgement class。该新分析须先在 Reverse 晋升、提交、冻结并关闭新 gap，才能修改生产代码。
 
 ## 2. 固定范围
 
@@ -847,23 +864,23 @@ A10 前不运行 Vite、Tauri 或 GarupaEditor 整体构建。
 
 只有以下条件全部满足，Auto Live 阶段才能关闭：
 
-- [x] Reverse Auto Live 最终证据提交已锁定，`auto_live_gate = closed` 且 `blocking_findings = []`。
+- [ ] Reverse Auto Live 补充证据提交已锁定，新 `auto_live_gate = closed` 且 `blocking_findings = []`。
 - [x] E02/E05/E30 的内部哈希修订链已闭合，无 stale source profile。
-- [x] 固定事件轨迹可在 Reverse 离线重复生成，GarupaEditor 不调用 Python。
+- [ ] 补充后的固定事件轨迹覆盖 Multiple Directional、Stop、pause、BPM boundary 与精确 B±5 bits，并可在 Reverse 离线重复生成；GarupaEditor 不调用 Python。
 - [x] Auto Live 模式显式接入，manual/mode14/debug 路由没有混淆。
-- [x] Normal/Flick/Directional 的 adjusted crossing、事件数和顺序匹配。
-- [x] Long 头/尾比较符号、父子顺序、状态和回收匹配。
-- [x] Slide 头/中间/终端/Stop、current cursor 和单次调用粒度匹配。
+- [ ] Normal/Flick/standalone Directional/Multiple Directional 的 adjusted crossing、事件数、group state 和顺序匹配。
+- [ ] Long 头/尾比较符号、父子顺序、状态、active pause 与回收匹配。
+- [ ] Slide 头/中间/终端/Stop、current/selected cursor 和单次调用粒度匹配 frozen trace。
 - [x] Long/Slide after 子图保持构造共享身份并由父对象独占更新。
-- [x] OneFrame 固定 5 槽、first-unused、Setup、池序 Reflect、清除与耗尽匹配。
+- [ ] OneFrame 固定 5 槽、first-unused、Setup、Multiple note type/count 边界、池序 Reflect、清除与耗尽匹配。
 - [x] unknown 分数/生命/技能/音频/粒子字段没有零值或 no-op 伪实现。
-- [x] 同位置、adaptive 多子步、暂停、空帧和失败关闭全部通过。
-- [x] 普通与 HABAHIRO 生产谱面回归通过，并保留 HABAHIRO 无实体运行样本披露。
+- [ ] 同位置、adaptive 多子步、Long/Slide/Multiple 暂停、空帧和失败关闭全部通过新 oracle。
+- [ ] 普通与 HABAHIRO production Normal/Flick/Directional/Multiple/Long/Slide 回归通过，并保留 HABAHIRO 无实体运行样本披露。
 - [x] 第一切片、谱面构造和时钟调度全部隔离回归通过。
 - [x] `engine/` 依赖边界通过。
-- [x] `tmp/simulator-auto-live-acceptance.md` 已按修复后结果重建并通过。
+- [ ] `tmp/simulator-auto-live-acceptance.md` 已按补充证据与修复后结果重建并通过。
 - [x] 未修改主程序入口、编辑器控制器、窗口协议、渲染或音频实现。
-- [x] 最终修复与重验收提交已推送，远端与 HEAD 为 `0 0`（最终提交后再次确认）。
+- [ ] 最终补证、修复与重验收提交已推送，远端与 HEAD 为 `0 0`。
 
 阶段关闭后，下一阶段只允许按整体计划进入“手动输入与判定”。如果 AL21 中任一手动输入分支仍无实体证据，则下一阶段必须先建立对应设备采证硬门，不能沿用 Auto Live 的 Force Perfect 结果绕过手动判定。
 

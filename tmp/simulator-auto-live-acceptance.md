@@ -1,6 +1,6 @@
 # 模拟器 Auto Live 阶段验收记录
 
-> **2026-07-28 关闭后复审修订：最终通过。** 复审发现的普通生产 Slide `afterNoteType=None` 拒绝、Slide 回池 child Reset、Directional terminal note type 和 AL19/AL20 绕过问题，已由重开提交 `23ac2f2`、实现修复提交 `a7ce464` 及本文件所在重验收提交闭合。本文以下内容已按修复后结果重建，不再沿用被撤销的旧结论。
+> **2026-07-28 第二次关闭后复审：验收结论再次撤销。** 普通 production Slide 修复仍有效；但现有 R03 缺少任务书必需的 Stop、pause、BPM boundary 与精确 B±5 轨迹，AL19 过滤 production Directional family，且原作已确认 415 个核心 production `NoteMultipleDirectionalFlick` 的 synthetic Force Perfect 属于 Auto Live、现实现却全部在 Move 返回 `note.state.move`。本文后续“通过”表格仅保留为被撤销的历史记录；补充 Reverse 证据、修复并重建验收前不得引用本文证明阶段完成。
 
 ## 1. 验收身份
 
@@ -19,7 +19,7 @@
 - 生产 Slide 与回池修复提交：`a7ce464`
 - 最终 production/lifecycle 重验收：本文件所在提交
 - 验收日期：2026-07-28
-- 验收结论：**通过。复审发现项已闭合，A00–A10 完成，Auto Live 阶段重新关闭；下一阶段如进入手动输入与判定，必须先建立独立设备证据硬门。**
+- 验收结论：**已撤销。A01/A02/A05/A06/A07/A08/A09/A10 重新打开，Auto Live 阶段当前未关闭，禁止进入手动输入与判定。**
 
 ## 2. 证据硬门与冻结包
 
@@ -208,6 +208,8 @@ node tmp/simulator-reverse-evidence/auto-live/verify.mjs --index
 6. **完整主程序仍未接入。** 本阶段未修改 `App.tsx`、编辑器控制器、窗口协议、Tauri 路由、渲染或音频后端。
 
 ## 8. 下一阶段硬门
+
+本节当前暂停适用：Auto Live 补充证据与实现尚未完成，不得开始下一阶段。以下要求只在 Auto Live 重新验收后继续生效。
 
 下一阶段只允许按整体计划进入“手动输入与判定”。开始生产实现前必须：
 
