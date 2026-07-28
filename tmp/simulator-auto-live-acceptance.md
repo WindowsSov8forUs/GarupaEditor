@@ -1,6 +1,6 @@
 # 模拟器 Auto Live 阶段验收记录
 
-> **2026-07-29 第十三次独立审计：未通过；生产修复已实现，待提交后独立重验收。** lifecycle、graph/source/receiver provenance与正式clock failure缺口已有定向回归，但A04/A05/A07/A08/A09/A10仍保持打开，不能在修复批恢复阶段完成。
+> **2026-07-29 第十四次提交后独立逐项重验收：通过。** 验收与生产修复`5526f55`分离；Reverse脏工作树全部排除，以纯`c2dc5c7f` clone和SHA-256锁定原始样本运行两套verifier。A00–A10、完整A10、独立topology与新组合探针全部通过，当前无required-before-close项。
 
 ## 1. 验收身份
 
@@ -50,10 +50,12 @@
 - 未证默认路径与初始化前preflight修复：`4f05e14`
 - root family/button/command preflight修复：`b07693c`
 - 第十二次独立逐项重验收：`73c9d9d`
-- 第十三次独立审计重开：本文件所在提交
+- 第十三次独立审计重开：`b0e9b59`
+- 组合owner/clock/fault修复：`5526f55`
+- 第十四次提交后独立逐项重验收：本文件所在提交
 - 验收日期：2026-07-28
 - 最终验收日期：2026-07-29
-- 验收结论：**未通过。G19 fault-dispose latch、Slide/root/source owner preflight与有限delta非有限clock结果存在required-before-close缺口；禁止进入手动输入阶段。**
+- 验收结论：**通过。A00–A10及第12节全部明确验收，Auto Live阶段关闭；手动输入仍须先建立独立Reverse证据硬门。**
 
 ## 2. 证据硬门与冻结包
 
@@ -101,16 +103,16 @@ auto-live evidence verified: candidates=30, final=72, supplement=G11-G22, cases=
 | 任务 | 任务要求 | 本轮证据依据 | 生产路径 | 本轮独立观察 | 结论 |
 | --- | --- | --- | --- | --- | --- |
 | A00 | 范围、硬门、矩阵、停止条件、验收纪律完整 | 本任务书第1–12节 | 文档/提交边界 | 完整重读1100余行；新增修复/验收分离与六维组合规则 | 通过 |
-| A01 | 只消费已提交静态证据并冻结三方哈希 | E01–E30、R01–R20、manifest | 无运行时读取 | Reverse `c2dc5c7f`/远端`0 0`；仅排除项未跟踪；source/copy/index通过 | 通过 |
+| A01 | 只消费已提交静态证据并冻结三方哈希 | E01–E30、R01–R20、manifest | 无运行时读取 | Reverse `c2dc5c7f`/远端`0 0`；当前脏工作树完全排除，纯clone及source/copy/index通过 | 通过 |
 | A02 | G01–G22关闭且oracle可离线复算 | R01–R20；G18被G21 supersede；G22 replay | 测试只读冻结JSON/BMS | 两套Reverse verifier通过，首版11、supplement14、replay4确定 | 通过 |
 | A03 | 显式模式、identity transform、不可变owner | R01/R02/R04/R05 | `validatePlayMode`→`InGameCalculatedData`→Note callback | 公共host原mode改`mode14/skill`后snapshot仍为identity Auto | 通过 |
-| A04 | Long/Slide父拥有共享图且坏图零mutation拒绝 | U01/U02、R02/R03/R04 | host/manager preflight→Note activate→parent runtime | 全局root/child identity、单父owner、child角色及失败重绑已有定向覆盖 | **实现修复，待验收** |
-| A05 | Normal/Flick/Directional/Multiple精确Force Perfect | R02/R03、R10–R16、G21 | adjusted owner→concrete Note→OneFrame Setup | 七类具体receiver/source family错配现于派生mutation前拒绝 | **实现修复，待验收** |
+| A04 | Long/Slide父拥有共享图且坏图零mutation拒绝 | U01/U02、R02/R03/R04 | host/manager preflight→Note activate→parent runtime | 全局root/child identity、单父owner、child角色、active/deactive失败重绑全对象通过 | 通过 |
+| A05 | Normal/Flick/Directional/Multiple精确Force Perfect | R02/R03、R10–R16、G21 | adjusted owner→concrete Note→OneFrame Setup | 七类receiver/source错配mutation前拒绝；50 Directional/415 Multiple成功轨迹保持 | 通过 |
 | A06 | Long头尾符号、父子顺序、pause/回收/fault | E09–E13、R02/R03、G19 | `NoteLong` Move/OnUpdate/AfterUpdate→manager fault owner | canonical head/tail全对象相等；全部87 production Long与三类第六槽状态通过 | 通过 |
-| A07 | Slide头/中间/terminal/Stop/E15与单节点粒度 | E14–E20、R02/R03 | `NoteSlide` current owner→position gate→Setup/skip | child role已提前到head前，synthetic terminal对齐U01 production形状 | **实现修复，待验收** |
-| A08 | 五槽对象、closed payload、source/count owner、Reflect | E24/E26、R02/R03/R04、G12/G21 | controller object handle/WeakMap→NoteManager source owner→Setup→Reflect | Setup二次闭合root/child角色、index/invisible与双button数组 | **实现修复，待验收** |
-| A09 | 调度、outer Reflect、pause、fault/dispose、失败原子边界 | U03/U04/U05、R02/R03/R04、G19/G22 | host lifecycle→manager preflight→NoteManager→single Reflect | latch跨dispose保留；clock序列于counter/trace/position前纯验证 | **实现修复，待验收** |
-| A10 | production oracle、全部失败case、上游回归、边界披露 | A01–A09全部证据 | 公共engine与生产chart factory | AL16/AL22已扩展；尚未执行提交后独立全项重验收 | **未通过** |
+| A07 | Slide头/中间/terminal/Stop/E15与单节点粒度 | E14–E20、R02/R03 | `NoteSlide` current owner→position gate→Setup/skip | 144 production Slide、89/27 invisible timing及坏child role create前拒绝通过 | 通过 |
+| A08 | 五槽对象、closed payload、source/count owner、Reflect | E24/E26、R02/R03/R04、G12/G21 | controller object handle/WeakMap→NoteManager source owner→Setup→Reflect | handle/count/slot保持；root/child角色、index/invisible、双button数组二次闭合通过 | 通过 |
+| A09 | 调度、outer Reflect、pause、fault/dispose、失败原子边界 | U03/U04/U05、R02/R03/R04、G19/G22 | host lifecycle→manager preflight→NoteManager→single Reflect | fault跨dispose同latch；有限clock非有限结果零domain mutation；pause/Reflect保持 | 通过 |
+| A10 | production oracle、全部失败case、上游回归、边界披露 | A01–A09全部证据 | 公共engine与生产chart factory | 完整A10、纯证据clone、独立topology与新临时组合探针全部通过 | 通过 |
 
 ## 4. 已落地的生产边界
 
@@ -253,7 +255,9 @@ node tmp/simulator-reverse-evidence/auto-live/verify.mjs --index
 - payload既有覆盖：unknown note type、phase/type错配、position错配、普通count非零、Multiple count为零与空button仍失败关闭；但该集合不能证明所有owner组合闭合。
 - 第十二次独立OneFrame复现：未登记source与合法Multiple source的`count=999`均返回`one-frame.invalid-auto-live-payload`且controller全对象不变；cross-controller同ID handle返回`one-frame.foreign-container`且全对象不变；对应owner count3正常占槽。
 - 第十二次独立preflight复现：公共host输入`CC08 + Normal + missing-after Long`在create阶段返回`auto-live.invalid-long-after-graph`，backend trace为空；direct manager AL22快照为created、OneFrame/Slide未初始化、零active root/BPM/scheduler trace。
-- disposed生命周期：created直接dispose后initialize、合法/NaN step、pause、resume、getAdjusted全部失败关闭，snapshot全对象不变、backend trace为空、幂等dispose成功；该既有结论保持。
+- 第十四次证据隔离：Reverse当前存在大量无关工作树修改，未被读取或恢复；Windows local shared clone以`core.autocrlf=false`检出纯`c2dc5c7f`，首版/supplement verifier均通过。补充verifier所需锁定二进制先校验SHA-256为`66C9C666...D1D9FA`。
+- 第十四次组合探针：mutable mode仍由owner冻结；坏child role与跨父共享child在create拒绝；active Long重入全snapshot不变；双button数组OneFrame零mutation拒绝；正式clock巨大有限delta零domain mutation失败关闭。
+- fault/disposed生命周期：G19 fault后dispose成功并保留原latch；随后initialize、合法/NaN/Infinity/负step、pause、resume、getAdjusted继续返回同一失败，snapshot稳定、幂等dispose成功。created直接dispose的普通生命周期错误与backend零副作用也保持。
 - 未运行 Vite、Tauri 或 GarupaEditor 整体构建，符合任务书限制。
 
 ## 7. 持续非阻断边界
@@ -267,7 +271,7 @@ node tmp/simulator-reverse-evidence/auto-live/verify.mjs --index
 
 ## 8. 下一阶段硬门
 
-Auto Live第十三次独立审计未通过；以下下一阶段硬门暂不开放。
+Auto Live第十四次提交后独立逐项重验收已通过；以下下一阶段硬门恢复适用。
 
 下一阶段只允许按整体计划进入“手动输入与判定”。开始生产实现前必须：
 
