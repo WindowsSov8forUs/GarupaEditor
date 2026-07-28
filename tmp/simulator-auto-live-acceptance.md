@@ -1,6 +1,6 @@
 # 模拟器 Auto Live 阶段验收记录
 
-> **2026-07-29 第十一次独立审计：未通过；生产修复已完成但尚未重验收。** OneFrame handle/source/exact count与批preflight已有定向回归，A08/A09仍只能标记“实现修复，待独立验收”；A10及阶段关闭继续撤销。下一次验收必须按任务书新纪律重新确认A00–A10全部证据与生产路径。
+> **2026-07-29 第十二次独立逐项重验收：通过。** 本次验收与`593d957`、`4f05e14`、`b07693c`三个生产修复批分离；重新确认A00–A10每项任务要求、已提交原作证据/portable边界、生产调用路径和独立实际观察。完整A10、Reverse、index、topology及提交后临时产物全部通过，当前无required-before-close项。
 
 ## 1. 验收身份
 
@@ -45,10 +45,14 @@
 - 第九次审计重开：`8727129`
 - 闭合payload与disposed生命周期修复：`fc8a4c4`
 - 第十次最终重验收：`d454c08`
-- 第十一次审计重开：本文件所在提交
+- 第十一次审计重开：`d78cd98`
+- handle/source/count与批preflight修复：`593d957`
+- 未证默认路径与初始化前preflight修复：`4f05e14`
+- root family/button/command preflight修复：`b07693c`
+- 第十二次独立逐项重验收：本文件所在提交
 - 验收日期：2026-07-28
 - 最终验收日期：2026-07-29
-- 验收结论：**未通过。A08/A09/A10未完成，Auto Live阶段重新打开；三项ownership/transactional-failure阻断关闭并全量重验收前不得进入手动输入阶段。**
+- 验收结论：**通过。A00–A10逐项明确验收，Auto Live阶段关闭；手动输入阶段仍须先建立独立Reverse证据硬门。**
 
 ## 2. 证据硬门与冻结包
 
@@ -93,19 +97,19 @@ auto-live evidence verified: candidates=30, final=72, supplement=G11-G22, cases=
 
 ## 3. A00–A10 逐项结论
 
-| 任务 | 结论 | 验收要点 |
-| --- | --- | --- |
-| A00 阶段任务书 | 通过 | 范围、硬门、证据候选、22 项测试矩阵、提交和完成定义完整 |
-| A01 静态证据晋升 | 通过 | 首版 43 条加补充 24 文件；`cd84d2ce` 关闭 Multiple，`7a0540dc` 从 committed pass-2 冻结 exact cursor identity |
-| A02 固定事件 oracle | 通过 | G01–G22 closed（G18被G21 supersede）；首版11、补充14 case及4个actual replay投影 |
-| A03 模式与上下文 | 通过 | 创建时拒绝非法值；校验与owner均持有规范化冻结副本，调用者/getter别名不能改变kind/transform |
-| A04 Long/Slide 运行图 | 通过 | 普通/特殊 terminal 联合验证；root 父拥有共享 child；缺 terminal、重复身份、非递增源序拒绝；父回池清 graph/current |
-| A05 Single/Flick | 通过 | Normal/Flick/standalone Directional 保持；Multiple 继承 ±500，并按完整 playable source-order run 提交唯一 note type 10 |
-| A06 Long | 通过 | head `>=`、tail `>`、linked finish→tail、active pause/resume、回收；head/tail 第六槽 native failure state 均冻结 |
-| A07 Slide | 通过 | terminal/Stop/Reset/第六槽保持；invisible/visible current统一先过E15 adjusted-position/finite gate，before/equal和单次粒度闭合 |
-| A08 OneFrame | **实现修复，未验收** | handle对象身份、judgement source owner及Multiple exact count已有定向覆盖，等待独立全项验收 |
-| A09 调度生命周期 | **实现修复，未验收** | host/manager已在mutation前preflight图约束，等待独立全项验收 |
-| A10 生产 oracle | **未通过** | 不得以修复后定向绿色关闭；须重新确认A00–A10全部证据与生产观察 |
+| 任务 | 任务要求 | 本轮证据依据 | 生产路径 | 本轮独立观察 | 结论 |
+| --- | --- | --- | --- | --- | --- |
+| A00 | 范围、硬门、矩阵、停止条件、验收纪律完整 | 本任务书第1–12节 | 文档/提交边界 | 完整重读1100余行；新增修复/验收分离与六维组合规则 | 通过 |
+| A01 | 只消费已提交静态证据并冻结三方哈希 | E01–E30、R01–R20、manifest | 无运行时读取 | Reverse `c2dc5c7f`/远端`0 0`；仅排除项未跟踪；source/copy/index通过 | 通过 |
+| A02 | G01–G22关闭且oracle可离线复算 | R01–R20；G18被G21 supersede；G22 replay | 测试只读冻结JSON/BMS | 两套Reverse verifier通过，首版11、supplement14、replay4确定 | 通过 |
+| A03 | 显式模式、identity transform、不可变owner | R01/R02/R04/R05 | `validatePlayMode`→`InGameCalculatedData`→Note callback | 公共host原mode改`mode14/skill`后snapshot仍为identity Auto | 通过 |
+| A04 | Long/Slide父拥有共享图且坏图零mutation拒绝 | U01/U02、R02/R03/R04 | host/manager preflight→Note activate→parent runtime | 87 Long/144 Slide共享图；family/button/terminal/identity/position坏图均在owner初始化前拒绝 | 通过 |
+| A05 | Normal/Flick/Directional/Multiple精确Force Perfect | R02/R03、R10–R16、G21 | adjusted owner→concrete Note→OneFrame Setup | 50 standalone Directional、415 Multiple member；117/84 source-order run与独立oracle一致 | 通过 |
+| A06 | Long头尾符号、父子顺序、pause/回收/fault | E09–E13、R02/R03、G19 | `NoteLong` Move/OnUpdate/AfterUpdate→manager fault owner | canonical head/tail全对象相等；全部87 production Long与三类第六槽状态通过 | 通过 |
+| A07 | Slide头/中间/terminal/Stop/E15与单节点粒度 | E14–E20、R02/R03 | `NoteSlide` current owner→position gate→Setup/skip | 144 production Slide；首invisible 89/27 root逐对象before/equal；terminal 8/5/6/7通过 | 通过 |
+| A08 | 五槽对象、closed payload、source/count owner、Reflect | E24/E26、R02/R03/R04、G12/G21 | controller object handle/WeakMap→NoteManager source owner→Setup→Reflect | 未登记source、999 count、伪造/cross-owner同ID零mutation；owner count3成功；五槽/第六槽/复用通过 | 通过 |
+| A09 | 调度、outer Reflect、pause、fault/dispose、失败原子边界 | U03/U04/U05、R02/R03/R04、G19/G22 | host lifecycle→manager preflight→NoteManager→single Reflect | 坏批在backend/OneFrame/Slide/BPM/root/trace前拒绝；fault/disposed全部公共API矩阵通过 | 通过 |
+| A10 | production oracle、全部失败case、上游回归、边界披露 | A01–A09全部证据 | 公共engine与生产chart factory | 完整A10、独立topology、提交后临时产物、依赖/禁止模式静态搜索全部通过 | 通过 |
 
 ## 4. 已落地的生产边界
 
@@ -246,8 +250,8 @@ node tmp/simulator-reverse-evidence/auto-live/verify.mjs --index
 - Slide invisible：AL10覆盖root/child前一Float32与equal；AL19逐对象覆盖普通89、HABAHIRO 27个首child为invisible的Slide root；AL22覆盖non-finite原子失败。
 - 模式所有权：AL01经公共host覆盖Auto原对象Skill→mode14、manual→Auto和owner getter突变；创建后snapshot/crossing保持创建时规范化身份。
 - payload既有覆盖：unknown note type、phase/type错配、position错配、普通count非零、Multiple count为零与空button仍失败关闭；但该集合不能证明所有owner组合闭合。
-- 第十一次审计原复现：合法Multiple source配`count=999`曾返回`ok`并占槽；controller A的`one-frame:0` handle曾可被controller B接收。当前修复定向回归已转为拒绝，但尚未完成独立重验收。
-- 第十一次审计原批激活复现：公共host同批`Normal + missing-after Long`曾在fault后保留`normal:0` active Move。当前host/direct manager preflight定向回归为零mutation，但尚未完成独立重验收。
+- 第十二次独立OneFrame复现：未登记source与合法Multiple source的`count=999`均返回`one-frame.invalid-auto-live-payload`且controller全对象不变；cross-controller同ID handle返回`one-frame.foreign-container`且全对象不变；对应owner count3正常占槽。
+- 第十二次独立preflight复现：公共host输入`CC08 + Normal + missing-after Long`在create阶段返回`auto-live.invalid-long-after-graph`，backend trace为空；direct manager AL22快照为created、OneFrame/Slide未初始化、零active root/BPM/scheduler trace。
 - disposed生命周期：created直接dispose后initialize、合法/NaN step、pause、resume、getAdjusted全部失败关闭，snapshot全对象不变、backend trace为空、幂等dispose成功；该既有结论保持。
 - 未运行 Vite、Tauri 或 GarupaEditor 整体构建，符合任务书限制。
 
@@ -262,7 +266,7 @@ node tmp/simulator-reverse-evidence/auto-live/verify.mjs --index
 
 ## 8. 下一阶段硬门
 
-Auto Live第十一次独立审计未通过；以下下一阶段硬门暂不开放。
+Auto Live第十二次独立逐项重验收已通过；以下下一阶段硬门恢复适用。
 
 下一阶段只允许按整体计划进入“手动输入与判定”。开始生产实现前必须：
 
