@@ -25,7 +25,7 @@
 
 时钟与调度验收记录位于 `tmp/simulator-clock-scheduling-acceptance.md`。S01–S10 已完成。
 
-Auto Live A00–A10 已在第二次关闭后复审补证与修复后重新完成。Reverse `cd84d2ce` 与冻结 R09–R16/G11–G16 补齐 Stop、Long/Slide pause、精确 B±5/BPM 和 Multiple Directional；普通 195、HABAHIRO 220 个核心 Multiple root 现按相邻 button group 各提交唯一 note type 10，50 个 standalone Directional、144 个 Slide root 与普通 production 656 batch 全谱均通过。HABAHIRO 唯一 Multiple visual helper 保持 presentation `evidence-required`，不冒充 core judgement。任务书与最终验收记录分别位于 `tmp/simulator-auto-live-task.md`、`tmp/simulator-auto-live-acceptance.md`。
+Auto Live A00–A10 已在第二次关闭后复审补证与修复后重新完成。Reverse `cd84d2ce` 关闭 Multiple/Stop/pause，`7a0540dc` 以 committed bar+beat bits 关闭 rounded absolute 无法还原 cursor 的 G17；冻结 R09–R16/G11–G17。首版 11 与补充 8 case 均以 actual canonical trace 完整 `deepEqual`。普通 195、HABAHIRO 220 个核心 Multiple、50 个 standalone Directional、144 个 Slide root 与普通 656 batch 全谱通过；HABAHIRO 唯一 visual helper 继续 presentation `evidence-required`，不冒充 core judgement。任务书与最终验收记录分别位于 `tmp/simulator-auto-live-task.md`、`tmp/simulator-auto-live-acceptance.md`。
 
 OneFrame 容量现在由原作证据固定为 5，不再接受宿主或测试容量配置。公开的 `OneFrameJudgementBatch` 仅包含本阶段闭合的 Auto Live 判定字段，不是原作完整 `OneFrameTotalData`。分数、Power、生命、Skill/Fever、音频、粒子、渲染和 HUD 字段在类型上保持缺席，而不是填零。
 

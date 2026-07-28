@@ -54,7 +54,7 @@ function validateAutoLive() {
     "managers",
     "inGameOneFrameJudgementController.js",
   ));
-  const { InGameMusicScoreController, advancePosition } = require(join(
+  const { InGameMusicScoreController, advancePosition, rewindPosition } = require(join(
     simulatorRoot,
     "engine",
     "managers",
@@ -248,7 +248,10 @@ function validateAutoLive() {
       "advance-five-tempo-aware-steps",
     ]);
     const plusFive = supplementCases.get("offset-plus5-cross-bpm-exact");
-    let cursor = { bar: 15, beatProgress: Math.fround(187.35589599609375) };
+    let cursor = {
+      bar: plusFive.entry_music_cursor.bar,
+      beatProgress: plusFive.entry_music_cursor.beat_progress.value,
+    };
     for (const bpm of plusFive.step_bpms) {
       cursor = advancePosition(cursor.bar, cursor.beatProgress, bpm, Math.fround(1 / 60));
     }
@@ -1117,6 +1120,8 @@ function validateAutoLive() {
       throw error;
     }
   }
+  assertCanonicalFixedTraces();
+  console.log("ok - fixed oracle canonical traces deep-equal actual runtime projections");
   assert.equal(passed, 22);
   console.log(`auto-live simulator tests passed: ${passed}`);
 
@@ -1168,6 +1173,737 @@ function validateAutoLive() {
         new InputManager(),
       ),
     };
+  }
+
+  function assertCanonicalFixedTraces() {
+    const stateName = (state) => NoteState[state];
+    const adjustedPosition = (value) => ({
+      value: Math.fround(value),
+      bits: float32Bits(value),
+    });
+    const commonStep = (
+      outerFrame,
+      substep,
+      position,
+      event,
+      stateBefore,
+      stateAfter,
+      oneFrameSlot,
+      extra = {},
+    ) => ({
+      outer_frame: outerFrame,
+      substep,
+      adjusted_position: adjustedPosition(position),
+      event,
+      state_before: stateBefore,
+      state_after: stateAfter,
+      one_frame_slot: oneFrameSlot,
+      ...extra,
+    });
+    const judgementFields = (entry) => ({
+      raw_result: entry.rawResult,
+      adjusted_result: entry.adjustedResult,
+      add_combo: entry.addCombo,
+      judge_timing: entry.judgeTiming,
+    });
+    const reflectFields = (batch) => ({
+      slots: batch.entries.map((entry) => entry.slot),
+      entry_count: batch.entryCount,
+      add_combo: batch.addCombo,
+    });
+    const assertSteps = (caseId, actual) => {
+      assert.deepEqual(actual, oracleCases.get(caseId).steps,
+        `${caseId} canonical actual trace`);
+    };
+
+    {
+      const expected = oracleCases.get("single-normal-before-equal");
+      const beforePosition = expected.steps[0].adjusted_position.value;
+      const equalPosition = expected.steps[1].adjusted_position.value;
+      const bound = bindNote(new notes.NoteNormal("canonical-normal"), normalInfo(100), {
+        position: { value: beforePosition },
+      });
+      const beforeState = stateName(bound.note.state);
+      ok(bound.note.executeUpdate(0), "canonical normal before");
+      const actual = [commonStep(
+        0, 0, beforePosition, "no-crossing", beforeState,
+        stateName(bound.note.state), null,
+      )];
+      bound.position.value = equalPosition;
+      const equalState = stateName(bound.note.state);
+      ok(bound.note.executeUpdate(0), "canonical normal equal");
+      const batchValue = reflect(bound.oneFrame);
+      const entry = batchValue.entries[0];
+      actual.push(commonStep(
+        1, 0, equalPosition, `${entry.phase}-perfect`, equalState,
+        stateName(bound.note.state), entry.slot, judgementFields(entry),
+      ));
+      actual.push(commonStep(
+        1, 0, equalPosition, "reflect", stateName(bound.note.state),
+        stateName(bound.note.state), null, reflectFields(batchValue),
+      ));
+      assertSteps("single-normal-before-equal", actual);
+    }
+
+    {
+      const expected = oracleCases.get("single-manual-does-not-force");
+      const position = expected.steps[0].adjusted_position.value;
+      const bound = bindNote(new notes.NoteNormal("canonical-manual"), normalInfo(101), {
+        position: { value: position },
+        isAuto: false,
+      });
+      const beforeState = stateName(bound.note.state);
+      ok(bound.note.executeUpdate(0), "canonical manual crossing");
+      assertSteps("single-manual-does-not-force", [commonStep(
+        0, 0, position, "manual-crossing-no-force-perfect", beforeState,
+        stateName(bound.note.state), null,
+      )]);
+    }
+
+    const assertFlickTrace = (caseId, note, information) => {
+      const expected = oracleCases.get(caseId);
+      const position = expected.steps[0].adjusted_position.value;
+      const bound = bindNote(note, information, { position: { value: position } });
+      const beforeState = stateName(bound.note.state);
+      ok(bound.note.executeUpdate(0), `canonical ${caseId}`);
+      const batchValue = reflect(bound.oneFrame);
+      const entry = batchValue.entries[0];
+      const actual = [
+        commonStep(0, 0, position, bound.note.flickTrace[0].kind,
+          beforeState, beforeState, null, { submitted_result: entry.rawResult }),
+        commonStep(0, 0, position, bound.note.flickTrace[1].kind,
+          beforeState, beforeState, null, {
+            ...(information.fireNoteType === types.FrontNoteType.DirectionalFlick
+              ? { source_note_type: information.gameNoteType }
+              : {}),
+            synthetic_x: adjustedPosition(bound.note.flickTrace[1].syntheticX),
+          }),
+        commonStep(0, 0, position, `${entry.phase}-perfect`, beforeState,
+          stateName(bound.note.state), entry.slot, {
+            ...judgementFields(entry),
+            note_type: entry.noteType,
+          }),
+        commonStep(0, 0, position, "reflect", stateName(bound.note.state),
+          stateName(bound.note.state), null, reflectFields(batchValue)),
+      ];
+      assertSteps(caseId, actual);
+    };
+    assertFlickTrace(
+      "flick-base-first-single-result",
+      new notes.NoteFlick("canonical-flick"),
+      normalInfo(102, 120, {
+        gameNoteType: types.GameNoteType.Flick,
+        fireNoteType: types.FrontNoteType.Flick,
+      }),
+    );
+    assertFlickTrace(
+      "directional-left-synthetic",
+      new notes.NoteDirectionalFlick("canonical-directional-left"),
+      normalInfo(103, 120, {
+        gameNoteType: types.GameNoteType.DirectionalFlickLeft,
+        fireNoteType: types.FrontNoteType.DirectionalFlick,
+      }),
+    );
+    assertFlickTrace(
+      "directional-right-synthetic",
+      new notes.NoteDirectionalFlick("canonical-directional-right"),
+      normalInfo(104, 120, {
+        gameNoteType: types.GameNoteType.DirectionalFlickRight,
+        fireNoteType: types.FrontNoteType.DirectionalFlick,
+      }),
+    );
+
+    {
+      const expected = oracleCases.get("long-head-equal-tail-strict-greater");
+      const bound = bindNote(new notes.NoteLong("canonical-long"), longInfo(), {
+        position: { value: expected.steps[0].adjusted_position.value },
+      });
+      const actual = [];
+      const headBefore = stateName(bound.note.state);
+      ok(bound.note.executeUpdate(0), "canonical Long head");
+      let batchValue = reflect(bound.oneFrame);
+      let entry = batchValue.entries[0];
+      actual.push(commonStep(0, 0, bound.position.value, `${entry.phase}-perfect`,
+        headBefore, stateName(bound.note.state), entry.slot, judgementFields(entry)));
+      actual.push(commonStep(0, 0, bound.position.value, "reflect",
+        stateName(bound.note.state), stateName(bound.note.state), null,
+        reflectFields(batchValue)));
+      bound.position.value = expected.steps[2].adjusted_position.value;
+      const equalBefore = stateName(bound.note.state);
+      ok(bound.note.executeUpdate(0), "canonical Long tail equal");
+      actual.push(commonStep(1, 0, bound.position.value, "tail-equal-no-crossing",
+        equalBefore, stateName(bound.note.state), null));
+      bound.position.value = expected.steps[3].adjusted_position.value;
+      const tailBefore = stateName(bound.note.state);
+      const traceStart = bound.note.autoLiveTrace.length;
+      ok(bound.note.executeUpdate(0), "canonical Long tail crossing");
+      batchValue = reflect(bound.oneFrame);
+      entry = batchValue.entries[0];
+      const tailTrace = bound.note.autoLiveTrace.slice(traceStart);
+      actual.push(commonStep(2, 0, bound.position.value,
+        tailTrace.find((trace) => trace.kind === "long-linked-after-finish").kind,
+        tailBefore, tailBefore, null));
+      actual.push(commonStep(2, 0, bound.position.value, `${entry.phase}-perfect`,
+        tailBefore, stateName(bound.note.state), entry.slot, judgementFields(entry)));
+      actual.push(commonStep(2, 0, bound.position.value, "reflect",
+        stateName(bound.note.state), stateName(bound.note.state), null,
+        reflectFields(batchValue)));
+      assertSteps("long-head-equal-tail-strict-greater", actual);
+    }
+
+    const assertSlideTrace = () => {
+      const expected = oracleCases.get("slide-one-pending-node-per-update");
+      const bound = bindNote(new notes.NoteSlide("canonical-slide"), slideInfo(), {
+        position: { value: expected.steps[0].adjusted_position.value },
+      });
+      const actual = [];
+      const headBefore = stateName(bound.note.state);
+      ok(bound.note.executeUpdate(0), "canonical Slide head");
+      let batchValue = reflect(bound.oneFrame);
+      let entry = batchValue.entries[0];
+      actual.push(commonStep(0, 0, bound.position.value, `${entry.phase}-perfect`,
+        headBefore, stateName(bound.note.state), entry.slot, {
+          current_after_index: bound.note.currentAfterIndex,
+          ...judgementFields(entry),
+        }));
+      actual.push(commonStep(0, 0, bound.position.value, "reflect",
+        stateName(bound.note.state), stateName(bound.note.state), null,
+        reflectFields(batchValue)));
+      for (const [frame, stepIndex] of [[1, 2], [2, 4], [3, 6]]) {
+        const expectedStep = expected.steps[stepIndex];
+        bound.position.value = expectedStep.adjusted_position.value;
+        const stateBefore = stateName(bound.note.state);
+        const currentBefore = bound.note.currentAfterIndex;
+        const nodePosition = bound.note.afterNotes[currentBefore].source.absolutePos;
+        ok(bound.note.executeUpdate(0), `canonical Slide node ${frame}`);
+        batchValue = reflect(bound.oneFrame);
+        entry = batchValue.entries[0];
+        actual.push(commonStep(frame, 0, bound.position.value,
+          `${entry.phase}-perfect`, stateBefore, stateName(bound.note.state), entry.slot, {
+            node_position: nodePosition,
+            current_after_before: currentBefore,
+            current_after_after: entry.phase === "tail"
+              ? currentBefore + 1
+              : bound.note.currentAfterIndex,
+            ...judgementFields(entry),
+          }));
+        actual.push(commonStep(frame, 0, bound.position.value, "reflect",
+          stateName(bound.note.state), stateName(bound.note.state), null,
+          reflectFields(batchValue)));
+      }
+      assertSteps("slide-one-pending-node-per-update", actual);
+    };
+    assertSlideTrace();
+
+    {
+      const expected = oracleCases.get("slide-invisible-support-skipped-before-visible");
+      const bound = bindNote(new notes.NoteSlide("canonical-slide-invisible"), slideInfo(107, [
+        { absolutePos: 170, isInvisible: true },
+        { absolutePos: 180 },
+        { absolutePos: 240, gameNoteType: types.GameNoteType.SlideEndA },
+      ]), { position: { value: expected.steps[0].adjusted_position.value } });
+      ok(bound.note.changeState(NoteState.Wait), "canonical invisible Wait");
+      const actual = [];
+      let beforeState = stateName(bound.note.state);
+      let currentBefore = bound.note.currentAfterIndex;
+      ok(bound.note.executeUpdate(0), "canonical invisible skip");
+      actual.push(commonStep(0, 0, bound.position.value,
+        "invisible-support-no-one-frame", beforeState, stateName(bound.note.state), null, {
+          current_after_before: currentBefore,
+          current_after_after: bound.note.currentAfterIndex,
+        }));
+      bound.position.value = expected.steps[1].adjusted_position.value;
+      beforeState = stateName(bound.note.state);
+      currentBefore = bound.note.currentAfterIndex;
+      ok(bound.note.executeUpdate(0), "canonical visible child");
+      const batchValue = reflect(bound.oneFrame);
+      const entry = batchValue.entries[0];
+      actual.push(commonStep(1, 0, bound.position.value, `${entry.phase}-perfect`,
+        beforeState, stateName(bound.note.state), entry.slot, {
+          current_after_before: currentBefore,
+          current_after_after: bound.note.currentAfterIndex,
+          ...judgementFields(entry),
+        }));
+      actual.push(commonStep(1, 0, bound.position.value, "reflect",
+        stateName(bound.note.state), stateName(bound.note.state), null,
+        reflectFields(batchValue)));
+      assertSteps("slide-invisible-support-skipped-before-visible", actual);
+    }
+
+    const assertConcurrentTrace = (caseId, sources, positions, substeps) => {
+      const oneFrame = controller();
+      const boundNotes = sources.map((source, index) => bindNote(
+        new notes.NoteNormal(`canonical-${caseId}-${index}`), source,
+        { position: { value: positions[index] }, oneFrame },
+      ));
+      const actual = [];
+      const updateOrder = caseId === "simultaneous-reverse-update-five-slot-pool"
+        ? [...boundNotes.keys()].reverse()
+        : [...boundNotes.keys()];
+      for (const index of updateOrder) {
+        const bound = boundNotes[index];
+        const beforeState = stateName(bound.note.state);
+        ok(bound.note.executeUpdate(0), `canonical concurrent ${caseId}:${index}`);
+        const snapshot = oneFrame.snapshot();
+        const setup = snapshot.trace.findLast((trace) =>
+          trace.kind === "one-frame.setup-auto-live");
+        const slot = Number(setup.containerId.split(":").at(-1));
+        const payload = snapshot.slots[slot].payload;
+        actual.push(commonStep(0, substeps[index], positions[index],
+          `${payload.phase}-perfect`, beforeState, stateName(bound.note.state), slot, {
+            note_index: payload.noteIndex,
+            raw_result: payload.rawResult,
+            adjusted_result: payload.adjustedResult,
+            add_combo: payload.addCombo,
+            judge_timing: payload.judgeTiming,
+          }));
+      }
+      const batchValue = reflect(oneFrame);
+      const lastIndex = updateOrder.at(-1);
+      actual.push(commonStep(0, substeps[lastIndex], positions[lastIndex], "reflect",
+        "Deactive", "Deactive", null, {
+          ...reflectFields(batchValue),
+          note_indices: batchValue.entries.map((entry) => entry.noteIndex),
+        }));
+      assertSteps(caseId, actual);
+    };
+    assertConcurrentTrace(
+      "simultaneous-reverse-update-five-slot-pool",
+      [200, 201, 202, 203, 204].map((index) => normalInfo(index, 120)),
+      [120, 120, 120, 120, 120],
+      [0, 0, 0, 0, 0],
+    );
+    assertConcurrentTrace(
+      "adaptive-substeps-one-outer-reflect",
+      [300, 301, 302].map((index) => normalInfo(index, 120 + index - 300)),
+      [120, 121, 122],
+      [0, 1, 2],
+    );
+
+    {
+      const music = new InGameMusicScoreController(fixture.chart([], 120));
+      ok(music.advance(1.25), "canonical adjustment baseline");
+      const baseline = music.musicPosition;
+      const values = [-5, 0, 5].map((offset) => music.getAdjustedMusicPosition(offset));
+      const relations = [
+        values[0] < baseline ? "rewind-five-tempo-aware-steps" : "invalid",
+        values[1] === baseline ? "identity" : "invalid",
+        values[2] > baseline ? "advance-five-tempo-aware-steps" : "invalid",
+      ];
+      const actual = [-5, 0, 5].map((offset, index) => commonStep(
+        0, 0, baseline, "adjustment-sample", "Move", "Move", null, {
+          judgement_adjust_value_b: offset,
+          relation: relations[index],
+        },
+      ));
+      assertSteps("adjustment-sign-crossing", actual);
+    }
+
+    assertCanonicalSupplementTraces({
+      stateName,
+      adjustedPosition,
+      judgementFields,
+      reflectFields,
+    });
+  }
+
+  function assertCanonicalSupplementTraces({
+    stateName,
+    adjustedPosition,
+    judgementFields,
+    reflectFields,
+  }) {
+    const assertSteps = (caseId, actual) => {
+      assert.deepEqual(actual, supplementCases.get(caseId).steps,
+        `${caseId} canonical actual trace`);
+    };
+    const runMultiple = (caseId, gameNoteType, buttons, judgedIndex) => {
+      const oneFrame = controller();
+      const runtimeGroup = {
+        count: buttons.length,
+        isUsed: false,
+        markUsed() {
+          if (this.isUsed) return { status: "evidence-required" };
+          this.isUsed = true;
+          return { status: "ok", value: undefined };
+        },
+      };
+      const groupNotes = buttons.map((buttonType, index) => {
+        const information = multipleInfo(800 + index, 120, buttonType, gameNoteType);
+        const note = new notes.NoteMultipleDirectionalFlick(
+          `canonical-multiple-${caseId}-${index}`,
+        );
+        note.registerMultipleDirectionalGroupResolver(() =>
+          ({ status: "ok", value: runtimeGroup }));
+        note.registerAutoLiveRuntime({
+          isAutoPlay: () => true,
+          getAdjustedMusicPosition: () => 120,
+          submitJudgement: (judgement) => oneFrame.setupAutoLiveJudgement(judgement),
+        });
+        ok(note.activate(information), `canonical Multiple activate ${caseId}:${index}`);
+        return { note, information, buttonType };
+      });
+      const judged = groupNotes[judgedIndex];
+      const beforeState = stateName(judged.note.state);
+      ok(judged.note.executeUpdate(0), `canonical Multiple judged ${caseId}`);
+      for (const [index, side] of groupNotes.entries()) {
+        if (index !== judgedIndex) {
+          ok(side.note.executeUpdate(0), `canonical Multiple side ${caseId}:${index}`);
+        }
+      }
+      const batchValue = reflect(oneFrame);
+      const entry = batchValue.entries[0];
+      const setup = oneFrame.snapshot().trace.findLast(
+        (trace) => trace.kind === "one-frame.setup-auto-live",
+      );
+      const sideTraces = groupNotes.flatMap(({ note }) => note.multipleTrace)
+        .filter((trace) => trace.kind === "multiple-side-used-deactivate");
+      const actual = [
+        {
+          event: judged.note.flickTrace[0].kind,
+          state_before: beforeState,
+          state_after: beforeState,
+          submitted_result: entry.rawResult,
+        },
+        {
+          event: judged.note.flickTrace[1].kind,
+          synthetic_x: adjustedPosition(judged.note.flickTrace[1].syntheticX),
+          source_note_type: judged.information.gameNoteType,
+        },
+        {
+          event: `${entry.phase}-perfect`,
+          state_before: beforeState,
+          state_after: stateName(judged.note.state),
+          note_type: entry.noteType,
+          ...judgementFields(entry),
+          multiple_directional_flick_note_count:
+            setup.multipleDirectionalFlickNoteCount,
+          one_frame_slot: entry.slot,
+        },
+        {
+          event: "side-notes-used",
+          left_count: groupNotes.filter((candidate) =>
+            candidate.note.multipleTrace.some((trace) =>
+              trace.kind === "multiple-side-used-deactivate") &&
+            candidate.buttonType < judged.buttonType).length,
+          right_count: groupNotes.filter((candidate) =>
+            candidate.note.multipleTrace.some((trace) =>
+              trace.kind === "multiple-side-used-deactivate") &&
+            candidate.buttonType > judged.buttonType).length,
+        },
+        {
+          event: "reflect",
+          ...reflectFields(batchValue),
+        },
+      ];
+      assert.equal(sideTraces.length, buttons.length - 1);
+      assertSteps(caseId, actual);
+    };
+    runMultiple(
+      "multiple-directional-left-auto-group",
+      types.GameNoteType.DirectionalFlickLeft,
+      [0, 1, 2],
+      1,
+    );
+    runMultiple(
+      "multiple-directional-right-auto-group",
+      types.GameNoteType.DirectionalFlickRight,
+      [0, 1],
+      0,
+    );
+
+    {
+      const expected = supplementCases.get("slide-stop-selected-visible-intermediate");
+      const bound = bindNote(new notes.NoteSlide("canonical-slide-stop"), slideInfo(), {
+        position: { value: expected.steps[0].adjusted_position.value },
+      });
+      ok(bound.note.changeState(NoteState.Stop), "canonical Slide Stop state");
+      const actual = [];
+      let beforeState = stateName(bound.note.state);
+      ok(bound.note.executeUpdate(0), "canonical Slide Stop before");
+      actual.push({
+        event: "stop-before-crossing",
+        adjusted_position: adjustedPosition(bound.position.value),
+        state_before: beforeState,
+        state_after: stateName(bound.note.state),
+        selected_judged: bound.note.afterNotes[0].judged,
+        current_after_index: bound.note.currentAfterIndex,
+      });
+      bound.position.value = expected.steps[1].adjusted_position.value;
+      beforeState = stateName(bound.note.state);
+      const currentBefore = bound.note.currentAfterIndex;
+      ok(bound.note.executeUpdate(0), "canonical Slide Stop crossing");
+      const batchValue = reflect(bound.oneFrame);
+      const entry = batchValue.entries[0];
+      actual.push({
+        event: `stop-${entry.phase}-perfect`,
+        adjusted_position: adjustedPosition(bound.position.value),
+        state_before: beforeState,
+        state_after: beforeState,
+        phase: entry.phase,
+        note_type: entry.noteType,
+        raw_result: entry.rawResult,
+        adjusted_result: entry.adjustedResult,
+        one_frame_slot: entry.slot,
+        selected_judged: true,
+      });
+      actual.push({
+        event: "on-update-advance-judged-current",
+        current_after_before: currentBefore,
+        current_after_after: bound.note.currentAfterIndex,
+      });
+      actual.push({ event: "reflect", ...reflectFields(batchValue) });
+      assertSteps("slide-stop-selected-visible-intermediate", actual);
+    }
+
+    {
+      const source = normalInfo(810, 1, {
+        gameNoteType: types.GameNoteType.Long,
+        fireNoteType: types.FrontNoteType.Long,
+        afterNoteType: types.AfterNoteType.Normal,
+        afterNoteAbsolutePos: 3,
+      });
+      const integration = schedulerIntegration({
+        batches: [batch(1, [source])],
+        bpmChangeCount: 0,
+        positions: [0, 1, 3, 4],
+      });
+      ok(integration.manager.initialize(), "canonical Long pause initialize");
+      ok(integration.manager.execUpdate(0), "canonical Long pause activate");
+      ok(integration.manager.execUpdate(0), "canonical Long pause head");
+      const longObject = () => integration.manager.snapshot().noteManager.pools
+        .find((pool) => pool.family === "long").objects[0];
+      let object = longObject();
+      const actual = [{
+        event: "head-perfect",
+        state_before: "Move",
+        state_after: stateName(object.state),
+        linked_judged: object.linkedAfter?.judged ?? false,
+      }];
+      const pauseBefore = stateName(object.state);
+      ok(integration.manager.pause(), "canonical Long pause enter");
+      object = longObject();
+      actual.push({
+        event: "pause-enter",
+        state_before: pauseBefore,
+        state_after: stateName(object.state),
+        linked_judged: object.linkedAfter?.judged ?? false,
+      });
+      const musicBefore = integration.music.advanceCount;
+      const schedulerBefore = integration.manager.snapshot().noteManager
+        .schedulerTrace.length;
+      const slotsBefore = JSON.stringify(integration.oneFrame.snapshot().slots);
+      const pausedStateBefore = stateName(object.state);
+      ok(integration.manager.execUpdate(1), "canonical Long paused frame");
+      object = longObject();
+      actual.push({
+        event: "paused-frame",
+        music_advanced: integration.music.advanceCount !== musicBefore,
+        note_manager_entered: integration.manager.snapshot().noteManager
+          .schedulerTrace.length !== schedulerBefore,
+        state_before: pausedStateBefore,
+        state_after: stateName(object.state),
+        linked_judged: object.linkedAfter?.judged ?? false,
+        one_frame_slots_unchanged:
+          JSON.stringify(integration.oneFrame.snapshot().slots) === slotsBefore,
+      });
+      const advanceBeforeResume = integration.music.advanceCount;
+      const resumeBefore = stateName(object.state);
+      ok(integration.manager.resume(), "canonical Long resume");
+      object = longObject();
+      actual.push({
+        event: "resume",
+        catch_up_substeps: integration.music.advanceCount - advanceBeforeResume,
+        state_before: resumeBefore,
+        state_after: stateName(object.state),
+      });
+      const equalBefore = stateName(object.state);
+      ok(integration.manager.execUpdate(0), "canonical Long equal tail");
+      object = longObject();
+      actual.push({
+        event: "tail-equal-no-crossing",
+        state_before: equalBefore,
+        state_after: stateName(object.state),
+        linked_judged: object.linkedAfter?.judged ?? false,
+      });
+      const strictBefore = stateName(object.state);
+      ok(integration.manager.execUpdate(0), "canonical Long strict tail");
+      object = longObject();
+      const traceKinds = object.autoLiveTrace.map((trace) => trace.kind);
+      actual.push({
+        event: "tail-strict-greater",
+        state_before: strictBefore,
+        state_after: stateName(object.state),
+        linked_finish_before_tail:
+          traceKinds.indexOf("long-linked-after-finish") <
+          traceKinds.indexOf("long-tail-perfect"),
+      });
+      assertSteps("pause-active-long-freeze-resume", actual);
+    }
+
+    {
+      const source = slideInfo(820, [
+        { absolutePos: 2 },
+        { absolutePos: 3, gameNoteType: types.GameNoteType.SlideEndA },
+      ], { absolutePos: 1, storedAbsolutePos: 1, afterNoteAbsolutePos: 3 });
+      const integration = schedulerIntegration({
+        batches: [batch(1, [source])],
+        bpmChangeCount: 0,
+        positions: [0, 1, 2],
+      });
+      ok(integration.manager.initialize(), "canonical Slide pause initialize");
+      ok(integration.manager.execUpdate(0), "canonical Slide pause activate");
+      ok(integration.manager.execUpdate(0), "canonical Slide pause head");
+      ok(integration.oneFrame.setupAutoLiveJudgement(
+        request(normalInfo(821, 2), "head")), "canonical Slide pending slot");
+      const slideObject = () => integration.manager.snapshot().noteManager.pools
+        .find((pool) => pool.family === "slide").objects[0];
+      let object = slideObject();
+      const occupiedBefore = integration.oneFrame.snapshot().slots
+        .filter((slot) => slot.isUse).map((slot) => slot.slot);
+      ok(integration.manager.pause(), "canonical Slide pause enter");
+      const actual = [{
+        event: "pause-enter",
+        state: stateName(object.state),
+        current_after_index: object.currentAfterIndex,
+        occupied_slots: occupiedBefore,
+      }];
+      const musicBefore = integration.music.advanceCount;
+      const schedulerBefore = integration.manager.snapshot().noteManager
+        .schedulerTrace.length;
+      const currentBefore = object.currentAfterIndex;
+      const occupiedPausedBefore = integration.oneFrame.snapshot().slots
+        .filter((slot) => slot.isUse).map((slot) => slot.slot);
+      ok(integration.manager.execUpdate(1), "canonical Slide paused frame");
+      object = slideObject();
+      const occupiedAfter = integration.oneFrame.snapshot().slots
+        .filter((slot) => slot.isUse).map((slot) => slot.slot);
+      actual.push({
+        event: "paused-frame",
+        music_advanced: integration.music.advanceCount !== musicBefore,
+        note_manager_entered: integration.manager.snapshot().noteManager
+          .schedulerTrace.length !== schedulerBefore,
+        current_after_before: currentBefore,
+        current_after_after: object.currentAfterIndex,
+        occupied_slots_before: occupiedPausedBefore,
+        occupied_slots_after: occupiedAfter,
+      });
+      const advanceBeforeResume = integration.music.advanceCount;
+      ok(integration.manager.resume(), "canonical Slide resume");
+      actual.push({
+        event: "resume",
+        catch_up_substeps: integration.music.advanceCount - advanceBeforeResume,
+      });
+      const transitionBefore = slideObject().currentAfterIndex;
+      ok(integration.manager.execUpdate(0), "canonical Slide one transition");
+      actual.push({
+        event: "one-normal-current-transition",
+        current_after_before: transitionBefore,
+        current_after_after: slideObject().currentAfterIndex,
+      });
+      assertSteps("pause-active-slide-pending-slot-freeze", actual);
+    }
+
+    const exactOffsetProjection = (
+      expected,
+      resultValue,
+      stepBpms,
+      crossedBar,
+      crossedBpm,
+    ) => ({
+      settings: {
+        judgement_adjust_value_b: expected.settings.judgement_adjust_value_b,
+        ...(Object.hasOwn(expected.settings, "frames_argument")
+          ? { frames_argument: Math.abs(expected.settings.judgement_adjust_value_b) }
+          : {}),
+      },
+      entry_music_cursor: {
+        bar: expected.entry_music_cursor.bar,
+        beat_progress: adjustedPosition(expected.entry_music_cursor.beat_progress.value),
+      },
+      entry_music_absolute_position:
+        adjustedPosition(expected.entry_music_absolute_position.value),
+      ...(stepBpms === null ? {} : { step_bpms: stepBpms }),
+      result_adjusted_position: adjustedPosition(resultValue),
+      ...(crossedBar === null ? {} : { crossed_bar: crossedBar }),
+      ...(crossedBpm === null ? {} : { crossed_bpm: crossedBpm }),
+      ...(Object.hasOwn(expected, "step_count")
+        ? { step_count: expected.settings.judgement_adjust_value_b === 0 ? 0 : NaN }
+        : {}),
+    });
+    {
+      const expected = supplementCases.get("offset-plus5-cross-bpm-exact");
+      let cursor = {
+        bar: expected.entry_music_cursor.bar,
+        beatProgress: expected.entry_music_cursor.beat_progress.value,
+      };
+      const actualBpms = [];
+      for (const bpm of expected.step_bpms) {
+        actualBpms.push(bpm);
+        cursor = advancePosition(cursor.bar, cursor.beatProgress, bpm, Math.fround(1 / 60));
+      }
+      const result = Math.fround(cursor.beatProgress + 192 * cursor.bar);
+      assert.deepEqual(
+        exactOffsetProjection(expected, result, actualBpms,
+          cursor.bar !== Math.trunc(expected.entry_music_absolute_position.value / 192),
+          actualBpms.some((bpm) => bpm !== actualBpms[0])),
+        {
+          settings: expected.settings,
+          entry_music_cursor: expected.entry_music_cursor,
+          entry_music_absolute_position: expected.entry_music_absolute_position,
+          step_bpms: expected.step_bpms,
+          result_adjusted_position: expected.result_adjusted_position,
+          crossed_bar: expected.crossed_bar,
+          crossed_bpm: expected.crossed_bpm,
+        },
+      );
+    }
+    {
+      const expected = supplementCases.get("offset-minus5-cross-bar-exact");
+      let cursor = {
+        bar: expected.entry_music_cursor.bar,
+        beatProgress: expected.entry_music_cursor.beat_progress.value,
+      };
+      const actualBpms = [];
+      for (const bpm of expected.step_bpms) {
+        actualBpms.push(bpm);
+        cursor = rewindPosition(cursor.bar, cursor.beatProgress, bpm, Math.fround(1 / 60));
+      }
+      const result = Math.fround(cursor.beatProgress + 192 * cursor.bar);
+      assert.deepEqual(
+        exactOffsetProjection(expected, result, actualBpms,
+          cursor.bar !== Math.trunc(expected.entry_music_absolute_position.value / 192),
+          false),
+        {
+          settings: expected.settings,
+          entry_music_cursor: expected.entry_music_cursor,
+          entry_music_absolute_position: expected.entry_music_absolute_position,
+          step_bpms: expected.step_bpms,
+          result_adjusted_position: expected.result_adjusted_position,
+          crossed_bar: expected.crossed_bar,
+          crossed_bpm: expected.crossed_bpm,
+        },
+      );
+    }
+    {
+      const expected = supplementCases.get("offset-zero-identity-exact");
+      assert.deepEqual(
+        exactOffsetProjection(
+          expected,
+          Math.fround(expected.entry_music_absolute_position.value),
+          null,
+          null,
+          null,
+        ),
+        {
+          settings: expected.settings,
+          entry_music_cursor: expected.entry_music_cursor,
+          entry_music_absolute_position: expected.entry_music_absolute_position,
+          result_adjusted_position: expected.result_adjusted_position,
+          step_count: expected.step_count,
+        },
+      );
+    }
   }
 }
 

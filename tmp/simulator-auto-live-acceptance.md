@@ -1,6 +1,6 @@
 # 模拟器 Auto Live 阶段验收记录
 
-> **2026-07-28 第二次关闭后复审修订：最终通过。** 复审发现的 Stop/pause/BPM/offset frozen oracle 缺口与 production Directional/Multiple Directional 盲区，已由 Reverse `cd84d2ce84243e8b864d08d7fe0fbeeb041eb79a`、GarupaEditor R09–R16 冻结包、Multiple 核心实现和本文件所在重验收提交闭合。本文以下结论已按补充证据重建。
+> **2026-07-28 第二次关闭后复审修订：最终通过。** Stop/pause/Multiple 缺口由 Reverse `cd84d2ce84243e8b864d08d7fe0fbeeb041eb79a` 关闭；canonical 复核发现的 rounded absolute 无法还原内部 cursor 问题又由 `7a0540dc867a759db929842ebe95ca9665a61b65` 的 G17 关闭。GarupaEditor R09–R16 冻结包、Multiple 核心实现和 19 case 完整 deep-equal 已共同重建本文结论。
 
 ## 1. 验收身份
 
@@ -22,6 +22,7 @@
 - Multiple/Stop/pause/offset 补充证据冻结：`926df36`、`60897ff`
 - Multiple Directional 核心实现：`8bfd4b5`
 - 第二次最终重验收：本文件所在提交
+- exact cursor G17 与 canonical 全轨迹重验收：本文件所在提交
 - 验收日期：2026-07-28
 - 验收结论：**通过。A00–A10 在补充证据与第二次修复后完成，Auto Live 阶段重新关闭；进入手动输入前仍须建立独立设备证据硬门。**
 
@@ -59,7 +60,7 @@ GarupaEditor 冻结包位于 `tmp/simulator-reverse-evidence/auto-live/`，包�
 补充后最终校验结果：
 
 ```text
-auto-live evidence verified: candidates=30, final=67, supplement=G11-G16, gate=closed, index=checked
+auto-live evidence verified: candidates=30, final=67, supplement=G11-G17, gate=closed, index=checked
 ```
 
 测试只读取 GarupaEditor 已冻结的 JSON 和生产 BMS，不访问 Reverse 工作树，不执行 Python，不联网。
@@ -69,8 +70,8 @@ auto-live evidence verified: candidates=30, final=67, supplement=G11-G16, gate=c
 | 任务 | 结论 | 验收要点 |
 | --- | --- | --- |
 | A00 阶段任务书 | 通过 | 范围、硬门、证据候选、22 项测试矩阵、提交和完成定义完整 |
-| A01 静态证据晋升 | 通过 | 首版 43 条加补充 24 文件；Reverse `cd84d2ce` 最终关闭 Multiple 继承/分组/side-used 与 visual helper 边界 |
-| A02 固定事件 oracle | 通过 | G01–G16 closed；首版 11 + 补充 8 case，覆盖 Stop、pause、B±5 exact 与 BPM boundary |
+| A01 静态证据晋升 | 通过 | 首版 43 条加补充 24 文件；`cd84d2ce` 关闭 Multiple，`7a0540dc` 从 committed pass-2 冻结 exact cursor identity |
+| A02 固定事件 oracle | 通过 | G01–G17 closed；首版 11 + 补充 8 case，覆盖 Stop、pause、B±5 exact cursor/bits 与 BPM boundary |
 | A03 模式与上下文 | 通过 | 宿主强制显式 `manual`/`auto-live`；mode14/debug/未知 transform 拒绝 |
 | A04 Long/Slide 运行图 | 通过 | 普通/特殊 terminal 联合验证；root 父拥有共享 child；缺 terminal、重复身份、非递增源序拒绝；父回池清 graph/current |
 | A05 Single/Flick | 通过 | Normal/Flick/standalone Directional 保持；Multiple 继承 ±500、相邻 group 唯一 note type 10 判定 |
@@ -78,7 +79,7 @@ auto-live evidence verified: candidates=30, final=67, supplement=G11-G16, gate=c
 | A07 Slide | 通过 | source-order、terminal 8/5/6/7、Stop frozen before/equal/current、Reset 与单次粒度匹配 |
 | A08 OneFrame | 通过 | 固定 5 槽；Multiple callback count 只进 Setup trace、不污染 OneFrame payload；visual helper 不判定 |
 | A09 调度生命周期 | 通过 | Long/Slide/Multiple pause、pending slot、无 catch-up、group side-used 与 active dispose 匹配 |
-| A10 生产 oracle | 通过 | AL01–AL22、144 Slide、50 standalone Directional、415 core Multiple、普通 production 全谱及全回归通过 |
+| A10 生产 oracle | 通过 | 19 case canonical actual trace 完整 deep-equal；AL01–AL22、144 Slide、50 standalone Directional、415 core Multiple、普通全谱及全回归通过 |
 
 ## 4. 已落地的生产边界
 
@@ -207,7 +208,8 @@ node tmp/simulator-reverse-evidence/auto-live/verify.mjs --index
 - 时钟与调度：15 组通过。
 - Auto Live：AL01–AL22 共 22 组通过。
 - 依赖边界：每个隔离测试入口后通过。
-- Auto Live 证据包：`candidates=30, final=67, supplement=G11-G16, gate=closed, index=checked`。
+- Auto Live 证据包：`candidates=30, final=67, supplement=G11-G17, gate=closed, index=checked`。
+- 固定 oracle：首版 11 case 与补充 8 case 的 canonical actual steps/projection 全对象 `deepEqual`；无排序、epsilon、缺字段补零或 expected-side 输入修正。
 - 未运行 Vite、Tauri 或 GarupaEditor 整体构建，符合任务书限制。
 
 ## 7. 持续非阻断边界

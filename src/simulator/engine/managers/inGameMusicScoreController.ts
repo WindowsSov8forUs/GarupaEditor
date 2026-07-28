@@ -223,7 +223,7 @@ export function advancePosition(
   return { bar: nextBar, beatProgress: nextProgress };
 }
 
-function rewindPosition(
+export function rewindPosition(
   bar: number,
   beatProgress: number,
   bpm: number,

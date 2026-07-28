@@ -257,6 +257,7 @@ export class NoteLong extends NoteFrontBase {
   override snapshot() {
     return {
       ...super.snapshot(),
+      autoLiveTrace: this.autoLiveTrace,
       linkedAfter: this.afterNoteValue === null
         ? null
         : {
