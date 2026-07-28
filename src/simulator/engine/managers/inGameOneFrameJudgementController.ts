@@ -23,6 +23,7 @@ export type OneFrameTraceEntry =
       readonly containerId: string;
       readonly noteIndex: number;
       readonly phase: "head" | "intermediate" | "tail";
+      readonly multipleDirectionalFlickNoteCount: number;
     }
   | {
       readonly kind: "one-frame.reflect";
@@ -159,6 +160,7 @@ export class InGameOneFrameJudgementController {
       containerId: container.containerId,
       noteIndex: payload.noteIndex,
       phase: payload.phase,
+      multipleDirectionalFlickNoteCount: request.multipleDirectionalFlickNoteCount,
     });
     return ok(undefined);
   }
@@ -293,6 +295,8 @@ function validateAutoLiveJudgementRequest(
     !Array.isArray(request.noteInformation.buttonTypesArray) ||
     request.noteInformation.buttonTypesArray.some((button) => !Number.isInteger(button)) ||
     !Number.isInteger(request.noteType) ||
+    !Number.isInteger(request.multipleDirectionalFlickNoteCount) ||
+    request.multipleDirectionalFlickNoteCount < 0 ||
     !Number.isFinite(request.absolutePosition) ||
     (request.phase !== "head" && request.phase !== "intermediate" && request.phase !== "tail")
   ) {

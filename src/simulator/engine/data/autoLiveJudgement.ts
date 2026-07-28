@@ -7,6 +7,13 @@ export interface AutoLiveJudgementRequest {
   readonly phase: AutoLiveJudgementPhase;
   readonly noteType: number;
   readonly absolutePosition: number;
+  readonly multipleDirectionalFlickNoteCount: number;
+}
+
+export interface MultipleDirectionalRuntimeGroup {
+  readonly count: number;
+  readonly isUsed: boolean;
+  markUsed(): import("../evidence").SimulatorResult<void>;
 }
 
 export interface NoteAutoLiveRuntime {

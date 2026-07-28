@@ -8,6 +8,7 @@ import type { NoteFamily } from "../data/noteData";
 import type { OneFrameDataHandle } from "../data/oneFrameData";
 import type { InGameCalculatedData } from "../data/inGameCalculatedData";
 import type { AutoLiveJudgementRequest } from "../data/autoLiveJudgement";
+import type { MultipleDirectionalRuntimeGroup } from "../data/autoLiveJudgement";
 import {
   evidenceRequired,
   ok,
@@ -20,6 +21,7 @@ import {
   NoteFlick,
   NoteLong,
   NoteMultipleDirectionalFlick,
+  NoteMultipleDirectionalVisual,
   NoteNormal,
   NoteSlide,
 } from "../notes/noteTypes";
@@ -119,6 +121,10 @@ export class NoteManager {
   private nextBatchIndexValue = 0;
   private bpmPoolCursorValue = 0;
   private setupComplete = false;
+  private readonly multipleDirectionalGroups = new WeakMap<
+    NoteInformation,
+    MultipleDirectionalGroupOwner
+  >();
 
   constructor(
     private readonly batches: readonly NoteBatchInformation[],
@@ -148,6 +154,7 @@ export class NoteManager {
       return ok(undefined);
     }
 
+    this.setupMultipleDirectionalGroups();
     const familyNotes = new Map<NoteFamily, NoteInformation[]>();
     for (const batch of this.batches) {
       for (const noteInformation of batch.informationList) {
@@ -178,6 +185,11 @@ export class NoteManager {
           getAdjustedMusicPosition: () => this.getAdjustedMusicPosition(),
           submitJudgement: this.submitAutoLiveJudgement,
         });
+        if (note instanceof NoteMultipleDirectionalFlick) {
+          note.registerMultipleDirectionalGroupResolver(
+            (information) => this.resolveMultipleDirectionalGroup(information),
+          );
+        }
         return note;
       });
       this.notePoolsValue.set(family, { family, objects, cursor: 0 });
@@ -360,6 +372,31 @@ export class NoteManager {
     this.bpmPoolCursorValue = 0;
     this.slideNoteManager.dispose();
     return ok(undefined);
+  }
+
+  private setupMultipleDirectionalGroups(): void {
+    for (const batch of this.batches) {
+      for (const group of groupMultipleDirectionalInformationList(batch.informationList)) {
+        const owner = new MultipleDirectionalGroupOwner(group.length);
+        for (const information of group) {
+          this.multipleDirectionalGroups.set(information, owner);
+        }
+      }
+    }
+  }
+
+  private resolveMultipleDirectionalGroup(
+    information: NoteInformation,
+  ): SimulatorResult<MultipleDirectionalRuntimeGroup> {
+    const group = this.multipleDirectionalGroups.get(information);
+    if (group === undefined) {
+      return evidenceRequired(
+        "auto-live.multiple-directional-group-missing",
+        ["R10", "R13", "R16"],
+        `Multiple Directional note ${information.index} has no confirmed adjacent-button runtime group.`,
+      );
+    }
+    return ok(group);
   }
 
   private activateCurrentBatch(substepIndex: number): SimulatorResult<void> {
@@ -553,10 +590,11 @@ export function noteFamily(
     case FrontNoteType.DirectionalFlick:
       return ok("directional-flick");
     case FrontNoteType.MultipleDirectionalFlick:
+      return ok("multiple-directional-flick");
     case FrontNoteType.LongMultipleDirectionalFlickAdd:
     case FrontNoteType.SlideAMultipleDirectionalFlickAdd:
     case FrontNoteType.SlideBMultipleDirectionalFlickAdd:
-      return ok("multiple-directional-flick");
+      return ok("multiple-directional-visual");
     default:
       return evidenceRequired(
         "note-manager.unrepresented-note-family",
@@ -564,6 +602,37 @@ export function noteFamily(
         `FrontNoteType ${noteInformation.fireNoteType} has no recovered playable-root pool mapping.`,
       );
   }
+}
+
+export function groupMultipleDirectionalInformationList(
+  informationList: readonly NoteInformation[],
+): readonly (readonly NoteInformation[])[] {
+  const candidates = informationList.filter(
+    (information) =>
+      !isNonPlayableCommand(information) &&
+      information.fireNoteType === FrontNoteType.MultipleDirectionalFlick,
+  );
+  const groups: NoteInformation[][] = [];
+  let currentGroup: NoteInformation[] = [];
+  for (const information of candidates) {
+    const previous = currentGroup[currentGroup.length - 1];
+    if (
+      previous !== undefined &&
+      previous.gameNoteType === information.gameNoteType &&
+      Math.abs(previous.buttonType - information.buttonType) === 1
+    ) {
+      currentGroup.push(information);
+      continue;
+    }
+    if (currentGroup.length > 0) {
+      groups.push(currentGroup);
+    }
+    currentGroup = [information];
+  }
+  if (currentGroup.length > 0) {
+    groups.push(currentGroup);
+  }
+  return groups;
 }
 
 function isBpmCommand(noteInformation: NoteInformation): boolean {
@@ -591,5 +660,29 @@ function createDefaultPoolObject(
       return new NoteDirectionalFlick(poolObjectId);
     case "multiple-directional-flick":
       return new NoteMultipleDirectionalFlick(poolObjectId);
+    case "multiple-directional-visual":
+      return new NoteMultipleDirectionalVisual(poolObjectId);
+  }
+}
+
+class MultipleDirectionalGroupOwner implements MultipleDirectionalRuntimeGroup {
+  private usedValue = false;
+
+  constructor(readonly count: number) {}
+
+  get isUsed(): boolean {
+    return this.usedValue;
+  }
+
+  markUsed(): SimulatorResult<void> {
+    if (this.usedValue) {
+      return evidenceRequired(
+        "auto-live.multiple-directional-group-already-used",
+        ["R10", "R12", "R16"],
+        "A connected Multiple Directional group produces one Auto Live judgement.",
+      );
+    }
+    this.usedValue = true;
+    return ok(undefined);
   }
 }

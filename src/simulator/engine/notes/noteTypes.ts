@@ -11,6 +11,7 @@ import {
 } from "../chart/types";
 import { NoteBase } from "./noteBase";
 import { NoteState } from "./noteBase";
+import type { MultipleDirectionalRuntimeGroup } from "../data/autoLiveJudgement";
 
 export class NoteFrontBase extends NoteBase {
   override executeAfterUpdate(_deltaTimeSeconds: number): SimulatorResult<void> {
@@ -88,6 +89,7 @@ export class NoteSingleBase extends NoteFrontBase {
       phase: "head",
       noteType,
       absolutePosition: noteInformation.absolutePos,
+      multipleDirectionalFlickNoteCount: 0,
     });
     if (submitted.status !== "ok") {
       return submitted;
@@ -182,6 +184,7 @@ export class NoteLong extends NoteFrontBase {
       phase: "head",
       noteType: 0,
       absolutePosition: noteInformation.absolutePos,
+      multipleDirectionalFlickNoteCount: 0,
     });
     if (submitted.status === "ok") {
       this.autoLiveTraceValue.push({ kind: "long-head-perfect" });
@@ -229,6 +232,7 @@ export class NoteLong extends NoteFrontBase {
       phase: "tail",
       noteType: longAfterJudgeNoteType(after.afterNoteType),
       absolutePosition: after.absolutePosition,
+      multipleDirectionalFlickNoteCount: 0,
     });
     if (submitted.status !== "ok") {
       return submitted;
@@ -397,6 +401,7 @@ export class NoteSlide extends NoteFrontBase {
       phase: "head",
       noteType: 0,
       absolutePosition: noteInformation.absolutePos,
+      multipleDirectionalFlickNoteCount: 0,
     });
     if (submitted.status === "ok") {
       this.autoLiveTraceValue.push({ kind: "slide-head-perfect" });
@@ -443,6 +448,7 @@ export class NoteSlide extends NoteFrontBase {
       phase: "intermediate",
       noteType: 8,
       absolutePosition: selected.source.absolutePos,
+      multipleDirectionalFlickNoteCount: 0,
     });
     if (submitted.status !== "ok") {
       return submitted;
@@ -541,6 +547,7 @@ export class NoteSlide extends NoteFrontBase {
         ? current.terminalJudgeNoteType ?? this.terminalJudgeNoteTypeValue ?? 8
         : 8,
       absolutePosition: current.source.absolutePos,
+      multipleDirectionalFlickNoteCount: 0,
     });
     if (submitted.status !== "ok") {
       return submitted;
@@ -596,7 +603,7 @@ export class NoteSlide extends NoteFrontBase {
 }
 
 export class NoteFlick extends NoteSingleBase {
-  private readonly flickTraceValue: FlickForcePerfectTraceEntry[] = [];
+  protected readonly flickTraceValue: FlickForcePerfectTraceEntry[] = [];
 
   get flickTrace(): readonly FlickForcePerfectTraceEntry[] {
     return this.flickTraceValue.map((entry) => ({ ...entry }));
@@ -649,7 +656,123 @@ export class NoteDirectionalFlick extends NoteFlick {
   }
 }
 
-export class NoteMultipleDirectionalFlick extends NoteFrontBase {}
+export class NoteMultipleDirectionalFlick extends NoteDirectionalFlick {
+  private groupResolverValue: ((
+    information: NoteInformation,
+  ) => SimulatorResult<MultipleDirectionalRuntimeGroup>) | null = null;
+  private groupValue: MultipleDirectionalRuntimeGroup | null = null;
+  private readonly multipleTraceValue: MultipleDirectionalAutoLiveTraceEntry[] = [];
+
+  registerMultipleDirectionalGroupResolver(
+    resolver: (
+      information: NoteInformation,
+    ) => SimulatorResult<MultipleDirectionalRuntimeGroup>,
+  ): void {
+    this.groupResolverValue = resolver;
+  }
+
+  get multipleTrace(): readonly MultipleDirectionalAutoLiveTraceEntry[] {
+    return this.multipleTraceValue.map((entry) => ({ ...entry }));
+  }
+
+  override activate(noteInformation: NoteInformation): SimulatorResult<void> {
+    this.groupValue = null;
+    this.multipleTraceValue.length = 0;
+    if (
+      noteInformation.fireNoteType !== 6 ||
+      (noteInformation.gameNoteType !== GameNoteType.DirectionalFlickLeft &&
+        noteInformation.gameNoteType !== GameNoteType.DirectionalFlickRight)
+    ) {
+      return evidenceRequired(
+        "auto-live.invalid-multiple-directional-root",
+        ["R10", "R16", "R16.D05", "R16.D08"],
+        `Core Multiple Directional requires front type 6 and source game type 10/11 (front=${noteInformation.fireNoteType}, game=${noteInformation.gameNoteType}).`,
+      );
+    }
+    if (this.groupResolverValue === null) {
+      return evidenceRequired(
+        "auto-live.multiple-directional-group-unregistered",
+        ["R10", "R13", "R16"],
+        "NoteManager must establish the adjacent-button runtime group before activation.",
+      );
+    }
+    const group = this.groupResolverValue(noteInformation);
+    if (group.status !== "ok") {
+      return group;
+    }
+    this.groupValue = group.value;
+    return super.activate(noteInformation);
+  }
+
+  protected override forcePerfect(): SimulatorResult<void> {
+    const noteInformation = this.noteInformation;
+    const runtime = this.autoLiveRuntime;
+    const group = this.groupValue;
+    if (noteInformation === null || runtime.status !== "ok" || group === null) {
+      return evidenceRequired(
+        "auto-live.multiple-directional-runtime-unavailable",
+        ["R10", "R12", "R16"],
+        "Multiple Directional Force Perfect requires its activated adjacent-button runtime group.",
+      );
+    }
+    if (group.isUsed) {
+      this.multipleTraceValue.push({ kind: "multiple-side-used-deactivate", groupCount: group.count });
+      return this.changeState(NoteState.Deactive);
+    }
+    const synthetic = this.forcePerfectSyntheticX;
+    if (synthetic.status !== "ok") {
+      return synthetic;
+    }
+    this.flickTraceValue.push({ kind: "flick-begin" });
+    this.flickTraceValue.push({ kind: "flick-synthetic-move", syntheticX: synthetic.value });
+    const submitted = runtime.value.submitJudgement({
+      noteInformation,
+      phase: "head",
+      noteType: 10,
+      absolutePosition: noteInformation.absolutePos,
+      multipleDirectionalFlickNoteCount: group.count,
+    });
+    if (submitted.status !== "ok") {
+      return submitted;
+    }
+    const used = group.markUsed();
+    if (used.status !== "ok") {
+      return used;
+    }
+    this.multipleTraceValue.push({ kind: "multiple-head-perfect", groupCount: group.count });
+    this.multipleTraceValue.push({ kind: "multiple-side-notes-used", groupCount: group.count });
+    return this.changeState(NoteState.Deactive);
+  }
+
+  override snapshot() {
+    return {
+      ...super.snapshot(),
+      multipleDirectionalGroupCount: this.groupValue?.count ?? null,
+      multipleDirectionalGroupUsed: this.groupValue?.isUsed ?? null,
+      multipleDirectionalTrace: this.multipleTrace,
+    };
+  }
+
+  protected override onDeactivated(): void {
+    this.groupValue = null;
+  }
+
+  protected override onResetForDispose(): void {
+    super.onResetForDispose();
+    this.groupValue = null;
+    this.multipleTraceValue.length = 0;
+  }
+}
+
+export class NoteMultipleDirectionalVisual extends NoteFrontBase {
+  protected override moveState(): SimulatorResult<void> {
+    return evidenceRequired(
+      "auto-live.multiple-directional-visual-presentation",
+      ["R10", "R13", "R16.D01", "R16.D03"],
+      "AddLong/AddSlide Multiple Directional Visual runs NotesCheck/connect presentation and has a native RET Force Perfect; presentation is outside Auto Live.",
+    );
+  }
+}
 
 export class NoteFlickAfter extends NoteAfterBase {}
 
@@ -752,6 +875,14 @@ export type SlideAutoLiveTraceEntry =
         | "slide-stop-perfect";
       readonly afterIndex: number;
     };
+
+export type MultipleDirectionalAutoLiveTraceEntry = {
+  readonly kind:
+    | "multiple-head-perfect"
+    | "multiple-side-notes-used"
+    | "multiple-side-used-deactivate";
+  readonly groupCount: number;
+};
 
 function longAfterJudgeNoteType(afterNoteType: AfterNoteTypeValue): number {
   switch (afterNoteType) {

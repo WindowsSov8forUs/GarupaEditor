@@ -331,6 +331,7 @@ test("OneFrame 容器统一获取 Reflect 与回收", () => {
       phase: "head",
       noteType: 0,
       absolutePosition: index,
+      multipleDirectionalFlickNoteCount: 0,
     }), `setup ${index}`);
   }
   assertEqual(controller.getUsableOneFrameData().status, "evidence-required", "pool exhaustion");

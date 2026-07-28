@@ -49,11 +49,11 @@
 | A02 生成固定事件 oracle 并关闭缺口 | 补充完成，代码硬门关闭 | G11–G16 closed；8 个补充 case 覆盖 Multiple、Stop、Long/Slide pause、B±5 exact bits 与 positive cross-BPM |
 | A03 接入 Auto Live 模式与判定上下文 | 已完成 | 显式模式本身不需改动；补充证据现可由 A05–A10 消费 |
 | A04 建立 Long/Slide 运行子图 | 修复完成 | 普通生产 Slide 由 terminal child + root after type 联合识别；父 Deactive 时按 R02 清 child graph/current，复用重建共享身份 |
-| A05 恢复 Single/Flick Force Perfect | 重新打开，等待 A02 | Normal/Flick/standalone Directional 保留；须恢复核心 Multiple Directional inherited Force Perfect、±500、note type 10 与一次结果 |
-| A06 恢复 Long 分阶段完成 | 重新打开，等待 A02 | 头尾与回池保留；任务书要求的 active Long pause/resume/dispose fixed oracle 尚缺 |
-| A07 恢复 Slide 分阶段完成 | 重新打开，等待 A02 | 普通/特殊 terminal 与 Reset 保留；Stop 目前仅测试硬编码，缺 frozen event oracle 与复杂 selected/current case |
-| A08 恢复 Auto Live OneFrame 填充与聚合 | 重新打开，等待 A02 | 五槽实现保留；须确认 Multiple note type 10、group count callback 边界与 visual helper 不产生独立判定 |
-| A09 接入调度、暂停与生命周期 | 重新打开，等待 A05–A08 | 须补 Multiple group lifecycle、active Long/Slide pause、resume、dispose 与失败原子轨迹 |
+| A05 恢复 Single/Flick Force Perfect | 补充实现完成 | 核心 Multiple 继承 Directional synthetic ±500，按相邻 button group 只提交一次 note type 10；side root 失活不重复判定 |
+| A06 恢复 Long 分阶段完成 | 可重新验收 | 头尾与回池实现保留，active Long pause fixed oracle 已冻结并进入修订测试 |
+| A07 恢复 Slide 分阶段完成 | 可重新验收 | 普通/特殊 terminal 与 Reset 保留，Stop exact before/equal/current case 已冻结并进入修订测试 |
+| A08 恢复 Auto Live OneFrame 填充与聚合 | 补充实现完成 | 五槽 payload 不伪造 count 字段；Setup trace 记录 confirmed Multiple callback count，visual helper 明确后置且不冒充 core judgement |
+| A09 接入调度、暂停与生命周期 | 可重新验收 | Multiple/Long/Slide pause、resume、active dispose 与 group side-used 测试已补，等待完整回归 |
 | A10 生产 oracle 与阶段验收 | 重新打开，等待 A09 | AL19 目前过滤全部 production Directional family；须逐 family 执行 production engine 并整体对照新 frozen trace |
 
 ### 1.4 批次记录
@@ -188,6 +188,15 @@
 - 新 supplement fixed trace 8 case：Multiple 左/右 synthetic group、Slide Stop、active Long pause、active Slide+occupied slot pause、B=+5 cross-BPM exact、B=-5 cross-bar exact、B=0 identity；生成两次对象一致。
 - `closure.json` 先以 G11–G15 关闭复审缺口；实现前再复核分组来源，新增 G16 并由 `isMultipleDirectionalFlickSameGroupNotes/isAdjacentTwoNotes`、core connect 和递归 ChangeLeft/Right ARM64 关闭：两节点仅在 front type 6、相同 game type、button 相邻时连接，judged root 递归标记 side used 并清 link。
 - Reverse 最终补充提交 `cd84d2ce84243e8b864d08d7fe0fbeeb041eb79a` 已推送并确认 main 远端 `0 0`。GarupaEditor 字节保持冻结最终 24 个补充文件与一个 fixture alias；manifest 最终条目由 43 增至 67，verifier 同时校验 G01–G10 与 G11–G16。A05–A10 代码门现解除。
+
+#### 2026-07-28 第十五批：A05/A08 Multiple Directional 核心实现
+
+- `NoteMultipleDirectionalFlick` 改为继承 `NoteDirectionalFlick` 职责，激活只接受 core front type 6 与 source game type 10/11；未安装 NoteManager group resolver 时失败关闭。
+- NoteManager 按每个 production batch 的原序建立 group：只连接连续的 front type 6、相同 game type、button 差绝对值 1 的节点；重复 button 或方向变化开启新 group，不把 HABAHIRO visual helper 混入。
+- group 由运行时 owner 持有，不修改 chart construction 深冻结 `NoteInformation`；反向 active Update 中第一个 crossing root 继承 ±500、提交唯一 note type 10 与 `left+right+1` count，成功后原子标记 group used，其余 side root 只失活。
+- `AutoLiveJudgementRequest` 增加 confirmed callback count；OneFrame payload 继续严格保持原八个阶段字段，不把 count 冒充原作 OneFrameData 字段，仅在 Setup trace 记录供 onJudge callback 边界审计。
+- Front type 7/8/9 改映射到独立 `multiple-directional-visual` family；其 Move 明确返回 presentation `evidence-required`，不再错误构造核心 judgement class，也不使用无证据 no-op。
+- production group 快照包含最小 count/used/trace；dispose 与 side-used 后全部 core root Deactive。隔离 TypeScript、第一切片 17 项、时钟 15 组和修订中的 Auto Live 22 组通过；完整 A10 回归与最终文档仍待下一批。
 
 ## 2. 固定范围
 

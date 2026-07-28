@@ -4,7 +4,8 @@ export type NoteFamily =
   | "slide"
   | "flick"
   | "directional-flick"
-  | "multiple-directional-flick";
+  | "multiple-directional-flick"
+  | "multiple-directional-visual";
 
 export interface MusicPosition {
   readonly bar: number;
