@@ -499,7 +499,7 @@ function validateAutoLive() {
     assert.equal(reflect(bound.oneFrame).entries[0].phase, "head");
   });
 
-  test("AL10", "Slide intermediate 依 source order 逐次提交", () => {
+  test("AL10", "Slide intermediate/invisible 均先服从 current position gate", () => {
     const expected = oracleCases.get("slide-one-pending-node-per-update");
     const bound = bindNote(new notes.NoteSlide("slide-intermediate"), slideInfo(), {
       position: { value: 120 },
@@ -515,19 +515,43 @@ function validateAutoLive() {
     ok(bound.note.executeUpdate(0), "second intermediate");
     assert.equal(bound.note.currentAfterIndex, 2);
     assert.equal(bound.note.currentAfterIndex, expected.steps[4].current_after_after);
+    const invisibleRootPosition = 120;
+    const invisibleChildPosition = 170;
     const invisible = bindNote(new notes.NoteSlide("slide-invisible"), slideInfo(107, [
-      { absolutePos: 170, isInvisible: true },
+      { absolutePos: invisibleChildPosition, isInvisible: true },
       { absolutePos: 180 },
       { absolutePos: 240, gameNoteType: types.GameNoteType.SlideEndA },
-    ]), { position: { value: 160 } });
-    ok(invisible.note.changeState(NoteState.Wait), "enter invisible Wait");
-    ok(invisible.note.executeUpdate(0), "skip one invisible support");
-    assert.equal(invisible.note.currentAfterIndex, 1);
+    ]), { position: { value: previousPositiveFloat32(invisibleRootPosition) } });
+    ok(invisible.note.executeUpdate(0), "invisible root before");
+    assert.equal(invisible.note.state, NoteState.Move);
+    assert.equal(invisible.note.currentAfterIndex, 0);
+    assert.equal(invisible.note.afterNotes[0].judged, false);
     assert.equal(invisible.oneFrame.existsOneFrameData(), false);
+    invisible.position.value = invisibleRootPosition;
+    ok(invisible.note.executeUpdate(0), "invisible root equal before child");
+    assert.equal(invisible.note.state, NoteState.Wait);
+    assert.equal(invisible.note.currentAfterIndex, 0);
+    assert.equal(invisible.note.afterNotes[0].judged, false);
+    assert.equal(reflect(invisible.oneFrame).entries[0].phase, "head");
+    invisible.position.value = previousPositiveFloat32(invisibleChildPosition);
+    ok(invisible.note.executeUpdate(0), "invisible child before");
+    assert.equal(invisible.note.currentAfterIndex, 0);
+    assert.equal(invisible.note.afterNotes[0].judged, false);
+    assert.equal(invisible.oneFrame.existsOneFrameData(), false);
+    assert.equal(invisible.note.autoLiveTrace.filter(
+      (entry) => entry.kind === "slide-invisible-support-skip").length, 0);
+    invisible.position.value = invisibleChildPosition;
+    ok(invisible.note.executeUpdate(0), "invisible child equal");
+    assert.equal(invisible.note.currentAfterIndex, 1);
+    assert.equal(invisible.note.afterNotes[0].judged, true);
+    assert.equal(invisible.oneFrame.existsOneFrameData(), false);
+    assert.equal(invisible.note.autoLiveTrace.filter(
+      (entry) => entry.kind === "slide-invisible-support-skip").length, 1);
     const invisibleExpected = oracleCases.get(
       "slide-invisible-support-skipped-before-visible",
     ).steps[0];
     assert.equal(invisibleExpected.event, "invisible-support-no-one-frame");
+    assert.equal(invisibleExpected.adjusted_position.value >= invisibleChildPosition, true);
     assert.equal(invisible.note.currentAfterIndex, invisibleExpected.current_after_after);
   });
 
@@ -1033,6 +1057,39 @@ function validateAutoLive() {
         ok(slide.activate(sourceNote), `production Slide graph ${chartIndex}:${rootIndex}`);
         assert.equal(slide.afterNotes.length, sourceNote.slideNoteList.length);
       }
+      const firstInvisibleSlideRoots = slideRoots.filter((candidate) =>
+        candidate.slideNoteList[0].isInvisible);
+      assert.equal(firstInvisibleSlideRoots.length, chartIndex === 0 ? 89 : 27,
+        `production first-invisible Slide count ${chartIndex}`);
+      for (const [rootIndex, sourceNote] of firstInvisibleSlideRoots.entries()) {
+        const child = sourceNote.slideNoteList[0];
+        const bound = bindNote(
+          new notes.NoteSlide(
+            `production-first-invisible-${chartIndex}-${rootIndex}`,
+          ),
+          sourceNote,
+          { position: { value: sourceNote.absolutePos } },
+        );
+        ok(bound.note.executeUpdate(0),
+          `production first-invisible root equal ${chartIndex}:${rootIndex}`);
+        assert.equal(reflect(bound.oneFrame).entries[0].phase, "head");
+        assert.equal(bound.note.currentAfterIndex, 0);
+        assert.equal(bound.note.afterNotes[0].judged, false);
+        bound.position.value = previousPositiveFloat32(child.absolutePos);
+        ok(bound.note.executeUpdate(0),
+          `production first-invisible child before ${chartIndex}:${rootIndex}`);
+        assert.equal(bound.note.currentAfterIndex, 0);
+        assert.equal(bound.note.afterNotes[0].judged, false);
+        assert.equal(bound.oneFrame.existsOneFrameData(), false);
+        bound.position.value = child.absolutePos;
+        ok(bound.note.executeUpdate(0),
+          `production first-invisible child equal ${chartIndex}:${rootIndex}`);
+        assert.equal(bound.note.currentAfterIndex, 1);
+        assert.equal(bound.note.afterNotes[0].judged, true);
+        assert.equal(bound.oneFrame.existsOneFrameData(), false);
+        assert.equal(bound.note.autoLiveTrace.filter(
+          (entry) => entry.kind === "slide-invisible-support-skip").length, 1);
+      }
       const fullSlide = roots.find((candidate) =>
         candidate.isSlideNoteHead &&
         candidate.afterNoteType === types.AfterNoteType.None &&
@@ -1259,6 +1316,23 @@ function validateAutoLive() {
     });
     evidence(finite.note.executeUpdate(0), "auto-live.non-finite-adjusted-position");
     assert.equal(finite.note.state, NoteState.Move);
+    const nonFiniteInvisible = bindNote(
+      new notes.NoteSlide("nonfinite-invisible"),
+      slideInfo(5131, [
+        { absolutePos: 170, isInvisible: true },
+        { absolutePos: 240, gameNoteType: types.GameNoteType.SlideEndA },
+      ]),
+      { position: { value: Number.NaN } },
+    );
+    ok(nonFiniteInvisible.note.changeState(NoteState.Wait),
+      "enter non-finite invisible Wait");
+    evidence(nonFiniteInvisible.note.executeUpdate(0),
+      "auto-live.non-finite-adjusted-position");
+    assert.equal(nonFiniteInvisible.note.currentAfterIndex, 0);
+    assert.equal(nonFiniteInvisible.note.afterNotes[0].judged, false);
+    assert.equal(nonFiniteInvisible.oneFrame.existsOneFrameData(), false);
+    assert.equal(nonFiniteInvisible.note.autoLiveTrace.some(
+      (entry) => entry.kind === "slide-invisible-support-skip"), false);
     evidence(new GamePlayButton().execTouchBegan(), "input.game-play-button.touch-began");
     evidence(oneFrame.setupBusinessData(), "one-frame.setup-business-data");
     evidence(noteFamily(normalInfo(514, 120, { fireNoteType: 99 })),
@@ -2256,6 +2330,15 @@ function float32FromBits(bits) {
   const buffer = new ArrayBuffer(4);
   new DataView(buffer).setUint32(0, Number.parseInt(bits.slice(2), 16), false);
   return new DataView(buffer).getFloat32(0, false);
+}
+
+function previousPositiveFloat32(value) {
+  const bits = float32Bits(value);
+  assert.match(bits, /^0x[0-9A-F]{8}$/);
+  const encoded = Number.parseInt(bits.slice(2), 16);
+  assert(encoded > 0 && encoded < 0x7F800000,
+    `expected positive finite Float32, received ${value}`);
+  return float32FromBits(`0x${(encoded - 1).toString(16).toUpperCase().padStart(8, "0")}`);
 }
 
 function ok(result, label) {

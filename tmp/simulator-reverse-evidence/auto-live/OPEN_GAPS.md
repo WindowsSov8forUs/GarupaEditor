@@ -18,7 +18,7 @@ G01–G17 保持关闭。第三次审计的 G19/G20 由 Reverse `24706edcb02155f
 2. **已关闭：** Reverse `c2dc5c7f37718a170c9e9b93d5a86b42e9d1a2ab` 以 G22 冻结两个 normalized trace 的 frame 1–991/317 Float32 delta bits 与 committed CC08 BMS；生产测试经engine重放并调用`getAdjustedMusicPosition`，不使用expected BPM、private cursor/BPM lookup或删除outer frame。
 3. **已关闭：** 公共`SimulatorEngineHost.step`现于`InGameDirector.update`前检查manager fault；AL16与提交后独立复现确认fault后合法delta、NaN、±Infinity与负delta均返回G19锁存失败。无fault时原有非法delta验证不变。
 
-4. **开放，required-before-close：** `NoteSlide.forcePerfectPendingAfter` 当前在读取 adjusted position前无条件处理 invisible current child；冻结 E15 却先调用 `NoteManager.GetAdjustMusicPos`，并在 `adjusted < child.absolutePos` 时返回。现有 AL10 以 adjusted=160、child=170 期待 cursor推进，且普通/HABAHIRO production分别有89/27个首child为invisible的Slide root。该项不要求新Reverse证据，但必须按E15修正position gate顺序，补synthetic before/equal与production cursor timing回归，再重跑完整A10。
+4. **实现已修复，待完整重验收：** `NoteSlide.forcePerfectPendingAfter` 已按冻结 E15 对 invisible/visible current child统一先调用 adjusted-position owner、检查有限值并执行before返回，到点后才skip/judge。AL10覆盖root/child前一Float32与equal；AL19逐对象覆盖普通89个、HABAHIRO 27个首child为invisible的production Slide root；AL22覆盖non-finite原子失败。定向TypeScript与AL01–AL22已通过，完整A10、index校验和提交后独立复核完成前仍保持required-before-close。
 
 G22同时固定adaptive method fixture在一个setup outer frame后于full manager outer-frame index 1判定。GarupaEditor冻结包含`auto-live-actual-replay.json`与逐字节相同的`653_ikuoku_easy.bms.txt`；actual replay与公共fault边界均已完成第六次全量重验收，未被第七次Slide审计推翻。
 

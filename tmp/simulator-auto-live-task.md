@@ -52,10 +52,10 @@
 | A04 建立 Long/Slide 运行子图 | 修复完成 | 普通生产 Slide 由 terminal child + root after type 联合识别；父 Deactive 时按 R02 清 child graph/current，复用重建共享身份 |
 | A05 恢复 Single/Flick Force Perfect | 已完成 | Multiple owner 遍历完整 playable source order；其他 family/equal button 断组，method fixture 精确通过 |
 | A06 恢复 Long 分阶段完成 | 已完成 | head/tail 第六槽保留 native Wait/linked order，并由 manager terminal fault 阻止重试 |
-| A07 恢复 Slide 分阶段完成 | **重新打开** | E15 current-child position gate 尚未作用于 invisible；须补齐 root-before/root-equal/child-before/child-equal 与 production 首 invisible child 回归 |
+| A07 恢复 Slide 分阶段完成 | **修复完成，待 A10 重验收** | invisible 与 visible current 现统一先过 E15 adjusted-position/finite gate；synthetic 与 production 首 invisible child before/equal 回归通过 |
 | A08 恢复 Auto Live OneFrame 填充与聚合 | 已完成 | 117/84 source-order run 的唯一 note type 10/count、混合 batch 与五槽行为通过独立固定 oracle |
 | A09 接入调度、暂停与生命周期 | 已完成 | 公共step/pause/resume/getAdjusted/initialize均先服从fault；AL16覆盖合法与非法delta |
-| A10 生产 oracle 与阶段验收 | **重新打开** | AL10 在 160<170 时错误期待 invisible cursor 前进；旧绿色套件未验证 production Slide cursor timing，须修订并全量重验收 |
+| A10 生产 oracle 与阶段验收 | **重验收中** | AL10 已纠正并覆盖 root-before/root-equal/child-before/child-equal；production 89/27 个首 invisible root 全量通过，尚待提交后完整 A10 与文档重建 |
 
 ### 1.4 批次记录
 
@@ -322,6 +322,14 @@
 - 临时编译产物复现：root=120、invisible child=170 时，adjusted 为 0/119/120/160/169 均错误把 `currentAfterIndex` 从 0 推到 1；root 未 crossing 时也会提前标记 child。现有 AL10 正以 adjusted=160、child=170 期待 cursor=1，而冻结 canonical positive case 使用 adjusted=180，因此 before 边界被测试盲区掩盖。
 - production 图直接复现：普通谱面 89 个、HABAHIRO 27 个 Slide root 的首 child 为 invisible；首例分别在 root=848/456、child=849/459 时，于 root equal 即提前推进。旧 AL19 只验证最终完成，不能证明 cursor timing。
 - 本轮只纠正文档完成度，不改生产代码。A07/A10 与阶段关闭结论撤销；G01–G22、A00–A06、A08/A09、G19 fault、G21 topology 和 G22 replay 不受影响。下一批按 E15 调整 position gate 顺序并补 synthetic/production crossing 回归。
+
+#### 2026-07-29 第三十三批：A07 Slide invisible position gate 修复
+
+- `NoteSlide.forcePerfectPendingAfter` 现对所有未 judged current child 先调用生产 adjusted-position owner，检查有限值并执行 `adjusted < child.absolutePos` 返回；到点后才区分 invisible skip 或 visible intermediate/terminal judgement，恢复 E15 的调用与比较顺序。
+- AL10 不再测试侧直接切 Wait 后以 160<170 期待 skip；现从真实 Move 开始覆盖 root 前一 Float32、root equal、invisible child 前一 Float32和child equal。前三个位置保持 cursor/judged/slot，child equal才单次推进且不产生 OneFrame。
+- AL19 对两个已冻结 production BMS 的全部首 child invisible Slide root逐对象验证：普通89个、HABAHIRO 27个，root equal和child before均保持cursor 0，child equal后只推进到1且无OneFrame；不再从最终Deactive外推中间时序。
+- AL22 增加 active Wait invisible child 的非有限adjusted失败原子性：返回既有`auto-live.non-finite-adjusted-position`，cursor/judged/slot/skip trace均不变。
+- 定向隔离TypeScript与Auto Live AL01–AL22（含canonical full-object trace、依赖边界）通过。A07实现缺口关闭；A10保持重验收中，完整上游套件、证据index和提交后复核留给下一批。
 
 ## 2. 固定范围
 

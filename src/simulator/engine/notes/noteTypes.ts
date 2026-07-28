@@ -517,6 +517,17 @@ export class NoteSlide extends NoteFrontBase {
       this.currentAfterIndexValue += 1;
       return ok(undefined);
     }
+    const adjusted = runtime.value.getAdjustedMusicPosition();
+    if (!Number.isFinite(adjusted)) {
+      return evidenceRequired(
+        "auto-live.non-finite-adjusted-position",
+        ["R02", "R04"],
+        "Slide after Force Perfect requires a finite adjusted position.",
+      );
+    }
+    if (adjusted < current.source.absolutePos) {
+      return ok(undefined);
+    }
     if (current.source.isInvisible) {
       const marked = current.markJudged();
       if (marked.status !== "ok") {
@@ -527,17 +538,6 @@ export class NoteSlide extends NoteFrontBase {
         afterIndex: current.sourceIndex,
       });
       this.currentAfterIndexValue += 1;
-      return ok(undefined);
-    }
-    const adjusted = runtime.value.getAdjustedMusicPosition();
-    if (!Number.isFinite(adjusted)) {
-      return evidenceRequired(
-        "auto-live.non-finite-adjusted-position",
-        ["R02", "R04"],
-        "Slide after Force Perfect requires a finite adjusted position.",
-      );
-    }
-    if (adjusted < current.source.absolutePos) {
       return ok(undefined);
     }
     const phase = current.isTerminal ? "tail" : "intermediate";
