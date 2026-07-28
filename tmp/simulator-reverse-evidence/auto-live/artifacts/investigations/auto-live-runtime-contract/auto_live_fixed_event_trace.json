@@ -1,0 +1,1021 @@
+{
+  "schema_version": 1,
+  "sample": "jp.co.craftegg.band 10.1.3 (229) arm64-v8a",
+  "status": "confirmed-static-contract-fixed-offline-oracle",
+  "generator": "generate_auto_live_fixed_event_trace.py",
+  "excluded_by_stage": [
+    "score",
+    "power",
+    "life",
+    "skill",
+    "fever",
+    "crescendo",
+    "audio",
+    "particle",
+    "rendering",
+    "hud"
+  ],
+  "cases": [
+    {
+      "case_id": "single-normal-before-equal",
+      "evidence": [
+        "R02:single",
+        "E01",
+        "E02",
+        "E03"
+      ],
+      "source_note": {
+        "chart": "method-fixture://auto-live/normal",
+        "note_index": 100,
+        "family": "normal",
+        "classification": "method-fixture-not-runtime-chart"
+      },
+      "settings": {
+        "is_auto_live": true,
+        "judgement_adjust_value_b": 0,
+        "result_transform": "identity-no-active-situation-skill"
+      },
+      "steps": [
+        {
+          "outer_frame": 0,
+          "substep": 0,
+          "adjusted_position": {
+            "value": 119.99999237060547,
+            "bits": "0x42EFFFFF"
+          },
+          "event": "no-crossing",
+          "state_before": "Move",
+          "state_after": "Move",
+          "one_frame_slot": null
+        },
+        {
+          "outer_frame": 1,
+          "substep": 0,
+          "adjusted_position": {
+            "value": 120.0,
+            "bits": "0x42F00000"
+          },
+          "event": "head-perfect",
+          "state_before": "Move",
+          "state_after": "Deactive",
+          "one_frame_slot": 0,
+          "raw_result": 4,
+          "adjusted_result": 4,
+          "add_combo": 1,
+          "judge_timing": 0
+        },
+        {
+          "outer_frame": 1,
+          "substep": 0,
+          "adjusted_position": {
+            "value": 120.0,
+            "bits": "0x42F00000"
+          },
+          "event": "reflect",
+          "state_before": "Deactive",
+          "state_after": "Deactive",
+          "one_frame_slot": null,
+          "slots": [
+            0
+          ],
+          "entry_count": 1,
+          "add_combo": 1
+        }
+      ]
+    },
+    {
+      "case_id": "single-manual-does-not-force",
+      "evidence": [
+        "R02:is-auto-play",
+        "E02",
+        "E03"
+      ],
+      "source_note": {
+        "chart": "method-fixture://auto-live/normal",
+        "note_index": 101,
+        "family": "normal",
+        "classification": "method-fixture-not-runtime-chart"
+      },
+      "settings": {
+        "is_auto_live": false,
+        "judgement_adjust_value_b": 0,
+        "result_transform": "identity-no-active-situation-skill"
+      },
+      "steps": [
+        {
+          "outer_frame": 0,
+          "substep": 0,
+          "adjusted_position": {
+            "value": 120.0,
+            "bits": "0x42F00000"
+          },
+          "event": "manual-crossing-no-force-perfect",
+          "state_before": "Move",
+          "state_after": "Move",
+          "one_frame_slot": null
+        }
+      ]
+    },
+    {
+      "case_id": "flick-base-first-single-result",
+      "evidence": [
+        "R02:flick",
+        "E06",
+        "R05:0x3A77768",
+        "R05:0x30EAD54"
+      ],
+      "source_note": {
+        "chart": "method-fixture://auto-live/flick",
+        "note_index": 102,
+        "family": "flick",
+        "classification": "method-fixture-not-runtime-chart"
+      },
+      "settings": {
+        "is_auto_live": true,
+        "judgement_adjust_value_b": 0,
+        "result_transform": "identity-no-active-situation-skill"
+      },
+      "steps": [
+        {
+          "outer_frame": 0,
+          "substep": 0,
+          "adjusted_position": {
+            "value": 120.0,
+            "bits": "0x42F00000"
+          },
+          "event": "flick-begin",
+          "state_before": "Move",
+          "state_after": "Move",
+          "one_frame_slot": null,
+          "submitted_result": 4
+        },
+        {
+          "outer_frame": 0,
+          "substep": 0,
+          "adjusted_position": {
+            "value": 120.0,
+            "bits": "0x42F00000"
+          },
+          "event": "flick-synthetic-move",
+          "state_before": "Move",
+          "state_after": "Move",
+          "one_frame_slot": null,
+          "synthetic_x": {
+            "value": -100.0,
+            "bits": "0xC2C80000"
+          }
+        },
+        {
+          "outer_frame": 0,
+          "substep": 0,
+          "adjusted_position": {
+            "value": 120.0,
+            "bits": "0x42F00000"
+          },
+          "event": "head-perfect",
+          "state_before": "Move",
+          "state_after": "Deactive",
+          "one_frame_slot": 0,
+          "raw_result": 4,
+          "adjusted_result": 4,
+          "note_type": 3,
+          "add_combo": 1,
+          "judge_timing": 0
+        },
+        {
+          "outer_frame": 0,
+          "substep": 0,
+          "adjusted_position": {
+            "value": 120.0,
+            "bits": "0x42F00000"
+          },
+          "event": "reflect",
+          "state_before": "Deactive",
+          "state_after": "Deactive",
+          "one_frame_slot": null,
+          "slots": [
+            0
+          ],
+          "entry_count": 1,
+          "add_combo": 1
+        }
+      ]
+    },
+    {
+      "case_id": "directional-left-synthetic",
+      "evidence": [
+        "R02:directional-flick",
+        "R05:0x30EA108"
+      ],
+      "source_note": {
+        "chart": "method-fixture://auto-live/directional-flick",
+        "note_index": 103,
+        "family": "directional-flick",
+        "classification": "method-fixture-not-runtime-chart"
+      },
+      "settings": {
+        "is_auto_live": true,
+        "judgement_adjust_value_b": 0,
+        "result_transform": "identity-no-active-situation-skill"
+      },
+      "steps": [
+        {
+          "outer_frame": 0,
+          "substep": 0,
+          "adjusted_position": {
+            "value": 120.0,
+            "bits": "0x42F00000"
+          },
+          "event": "flick-begin",
+          "state_before": "Move",
+          "state_after": "Move",
+          "one_frame_slot": null,
+          "submitted_result": 4
+        },
+        {
+          "outer_frame": 0,
+          "substep": 0,
+          "adjusted_position": {
+            "value": 120.0,
+            "bits": "0x42F00000"
+          },
+          "event": "flick-synthetic-move",
+          "state_before": "Move",
+          "state_after": "Move",
+          "one_frame_slot": null,
+          "source_note_type": 10,
+          "synthetic_x": {
+            "value": -500.0,
+            "bits": "0xC3FA0000"
+          }
+        },
+        {
+          "outer_frame": 0,
+          "substep": 0,
+          "adjusted_position": {
+            "value": 120.0,
+            "bits": "0x42F00000"
+          },
+          "event": "head-perfect",
+          "state_before": "Move",
+          "state_after": "Deactive",
+          "one_frame_slot": 0,
+          "raw_result": 4,
+          "adjusted_result": 4,
+          "note_type": 9,
+          "add_combo": 1,
+          "judge_timing": 0
+        },
+        {
+          "outer_frame": 0,
+          "substep": 0,
+          "adjusted_position": {
+            "value": 120.0,
+            "bits": "0x42F00000"
+          },
+          "event": "reflect",
+          "state_before": "Deactive",
+          "state_after": "Deactive",
+          "one_frame_slot": null,
+          "slots": [
+            0
+          ],
+          "entry_count": 1,
+          "add_combo": 1
+        }
+      ]
+    },
+    {
+      "case_id": "directional-right-synthetic",
+      "evidence": [
+        "R02:directional-flick",
+        "R05:0x30EA108"
+      ],
+      "source_note": {
+        "chart": "method-fixture://auto-live/directional-flick",
+        "note_index": 104,
+        "family": "directional-flick",
+        "classification": "method-fixture-not-runtime-chart"
+      },
+      "settings": {
+        "is_auto_live": true,
+        "judgement_adjust_value_b": 0,
+        "result_transform": "identity-no-active-situation-skill"
+      },
+      "steps": [
+        {
+          "outer_frame": 0,
+          "substep": 0,
+          "adjusted_position": {
+            "value": 120.0,
+            "bits": "0x42F00000"
+          },
+          "event": "flick-begin",
+          "state_before": "Move",
+          "state_after": "Move",
+          "one_frame_slot": null,
+          "submitted_result": 4
+        },
+        {
+          "outer_frame": 0,
+          "substep": 0,
+          "adjusted_position": {
+            "value": 120.0,
+            "bits": "0x42F00000"
+          },
+          "event": "flick-synthetic-move",
+          "state_before": "Move",
+          "state_after": "Move",
+          "one_frame_slot": null,
+          "source_note_type": 11,
+          "synthetic_x": {
+            "value": 500.0,
+            "bits": "0x43FA0000"
+          }
+        },
+        {
+          "outer_frame": 0,
+          "substep": 0,
+          "adjusted_position": {
+            "value": 120.0,
+            "bits": "0x42F00000"
+          },
+          "event": "head-perfect",
+          "state_before": "Move",
+          "state_after": "Deactive",
+          "one_frame_slot": 0,
+          "raw_result": 4,
+          "adjusted_result": 4,
+          "note_type": 9,
+          "add_combo": 1,
+          "judge_timing": 0
+        },
+        {
+          "outer_frame": 0,
+          "substep": 0,
+          "adjusted_position": {
+            "value": 120.0,
+            "bits": "0x42F00000"
+          },
+          "event": "reflect",
+          "state_before": "Deactive",
+          "state_after": "Deactive",
+          "one_frame_slot": null,
+          "slots": [
+            0
+          ],
+          "entry_count": 1,
+          "add_combo": 1
+        }
+      ]
+    },
+    {
+      "case_id": "long-head-equal-tail-strict-greater",
+      "evidence": [
+        "R02:long",
+        "E09",
+        "E10",
+        "E11",
+        "E12",
+        "E13"
+      ],
+      "source_note": {
+        "chart": "method-fixture://auto-live/long",
+        "note_index": 105,
+        "family": "long",
+        "classification": "method-fixture-not-runtime-chart"
+      },
+      "settings": {
+        "is_auto_live": true,
+        "judgement_adjust_value_b": 0,
+        "result_transform": "identity-no-active-situation-skill"
+      },
+      "steps": [
+        {
+          "outer_frame": 0,
+          "substep": 0,
+          "adjusted_position": {
+            "value": 120.0,
+            "bits": "0x42F00000"
+          },
+          "event": "head-perfect",
+          "state_before": "Move",
+          "state_after": "Wait",
+          "one_frame_slot": 0,
+          "raw_result": 4,
+          "adjusted_result": 4,
+          "add_combo": 1,
+          "judge_timing": 0
+        },
+        {
+          "outer_frame": 0,
+          "substep": 0,
+          "adjusted_position": {
+            "value": 120.0,
+            "bits": "0x42F00000"
+          },
+          "event": "reflect",
+          "state_before": "Wait",
+          "state_after": "Wait",
+          "one_frame_slot": null,
+          "slots": [
+            0
+          ],
+          "entry_count": 1,
+          "add_combo": 1
+        },
+        {
+          "outer_frame": 1,
+          "substep": 0,
+          "adjusted_position": {
+            "value": 240.0,
+            "bits": "0x43700000"
+          },
+          "event": "tail-equal-no-crossing",
+          "state_before": "Wait",
+          "state_after": "Wait",
+          "one_frame_slot": null
+        },
+        {
+          "outer_frame": 2,
+          "substep": 0,
+          "adjusted_position": {
+            "value": 240.00001525878906,
+            "bits": "0x43700001"
+          },
+          "event": "long-linked-after-finish",
+          "state_before": "Wait",
+          "state_after": "Wait",
+          "one_frame_slot": null
+        },
+        {
+          "outer_frame": 2,
+          "substep": 0,
+          "adjusted_position": {
+            "value": 240.00001525878906,
+            "bits": "0x43700001"
+          },
+          "event": "tail-perfect",
+          "state_before": "Wait",
+          "state_after": "Deactive",
+          "one_frame_slot": 0,
+          "raw_result": 4,
+          "adjusted_result": 4,
+          "add_combo": 1,
+          "judge_timing": 0
+        },
+        {
+          "outer_frame": 2,
+          "substep": 0,
+          "adjusted_position": {
+            "value": 240.00001525878906,
+            "bits": "0x43700001"
+          },
+          "event": "reflect",
+          "state_before": "Deactive",
+          "state_after": "Deactive",
+          "one_frame_slot": null,
+          "slots": [
+            0
+          ],
+          "entry_count": 1,
+          "add_combo": 1
+        }
+      ]
+    },
+    {
+      "case_id": "slide-one-pending-node-per-update",
+      "evidence": [
+        "R02:slide",
+        "E14",
+        "E15",
+        "E16",
+        "E17",
+        "E18",
+        "E19",
+        "E20"
+      ],
+      "source_note": {
+        "chart": "method-fixture://auto-live/slide",
+        "note_index": 106,
+        "family": "slide",
+        "classification": "method-fixture-not-runtime-chart"
+      },
+      "settings": {
+        "is_auto_live": true,
+        "judgement_adjust_value_b": 0,
+        "result_transform": "identity-no-active-situation-skill"
+      },
+      "steps": [
+        {
+          "outer_frame": 0,
+          "substep": 0,
+          "adjusted_position": {
+            "value": 120.0,
+            "bits": "0x42F00000"
+          },
+          "event": "head-perfect",
+          "state_before": "Move",
+          "state_after": "Wait",
+          "one_frame_slot": 0,
+          "current_after_index": 0,
+          "raw_result": 4,
+          "adjusted_result": 4,
+          "add_combo": 1,
+          "judge_timing": 0
+        },
+        {
+          "outer_frame": 0,
+          "substep": 0,
+          "adjusted_position": {
+            "value": 120.0,
+            "bits": "0x42F00000"
+          },
+          "event": "reflect",
+          "state_before": "Wait",
+          "state_after": "Wait",
+          "one_frame_slot": null,
+          "slots": [
+            0
+          ],
+          "entry_count": 1,
+          "add_combo": 1
+        },
+        {
+          "outer_frame": 1,
+          "substep": 0,
+          "adjusted_position": {
+            "value": 200.0,
+            "bits": "0x43480000"
+          },
+          "event": "intermediate-perfect",
+          "state_before": "Wait",
+          "state_after": "Wait",
+          "one_frame_slot": 0,
+          "node_position": 180,
+          "current_after_before": 0,
+          "current_after_after": 1,
+          "raw_result": 4,
+          "adjusted_result": 4,
+          "add_combo": 1,
+          "judge_timing": 0
+        },
+        {
+          "outer_frame": 1,
+          "substep": 0,
+          "adjusted_position": {
+            "value": 200.0,
+            "bits": "0x43480000"
+          },
+          "event": "reflect",
+          "state_before": "Wait",
+          "state_after": "Wait",
+          "one_frame_slot": null,
+          "slots": [
+            0
+          ],
+          "entry_count": 1,
+          "add_combo": 1
+        },
+        {
+          "outer_frame": 2,
+          "substep": 0,
+          "adjusted_position": {
+            "value": 200.0,
+            "bits": "0x43480000"
+          },
+          "event": "intermediate-perfect",
+          "state_before": "Wait",
+          "state_after": "Wait",
+          "one_frame_slot": 0,
+          "node_position": 181,
+          "current_after_before": 1,
+          "current_after_after": 2,
+          "raw_result": 4,
+          "adjusted_result": 4,
+          "add_combo": 1,
+          "judge_timing": 0
+        },
+        {
+          "outer_frame": 2,
+          "substep": 0,
+          "adjusted_position": {
+            "value": 200.0,
+            "bits": "0x43480000"
+          },
+          "event": "reflect",
+          "state_before": "Wait",
+          "state_after": "Wait",
+          "one_frame_slot": null,
+          "slots": [
+            0
+          ],
+          "entry_count": 1,
+          "add_combo": 1
+        },
+        {
+          "outer_frame": 3,
+          "substep": 0,
+          "adjusted_position": {
+            "value": 240.0,
+            "bits": "0x43700000"
+          },
+          "event": "tail-perfect",
+          "state_before": "Wait",
+          "state_after": "Deactive",
+          "one_frame_slot": 0,
+          "node_position": 240,
+          "current_after_before": 2,
+          "current_after_after": 3,
+          "raw_result": 4,
+          "adjusted_result": 4,
+          "add_combo": 1,
+          "judge_timing": 0
+        },
+        {
+          "outer_frame": 3,
+          "substep": 0,
+          "adjusted_position": {
+            "value": 240.0,
+            "bits": "0x43700000"
+          },
+          "event": "reflect",
+          "state_before": "Deactive",
+          "state_after": "Deactive",
+          "one_frame_slot": null,
+          "slots": [
+            0
+          ],
+          "entry_count": 1,
+          "add_combo": 1
+        }
+      ]
+    },
+    {
+      "case_id": "slide-invisible-support-skipped-before-visible",
+      "evidence": [
+        "R02:slide-invisible-selection",
+        "E14",
+        "E15",
+        "E18"
+      ],
+      "source_note": {
+        "chart": "method-fixture://auto-live/slide",
+        "note_index": 107,
+        "family": "slide",
+        "classification": "method-fixture-not-runtime-chart"
+      },
+      "settings": {
+        "is_auto_live": true,
+        "judgement_adjust_value_b": 0,
+        "result_transform": "identity-no-active-situation-skill"
+      },
+      "steps": [
+        {
+          "outer_frame": 0,
+          "substep": 0,
+          "adjusted_position": {
+            "value": 180.0,
+            "bits": "0x43340000"
+          },
+          "event": "invisible-support-no-one-frame",
+          "state_before": "Wait",
+          "state_after": "Wait",
+          "one_frame_slot": null,
+          "current_after_before": 0,
+          "current_after_after": 1
+        },
+        {
+          "outer_frame": 1,
+          "substep": 0,
+          "adjusted_position": {
+            "value": 192.0,
+            "bits": "0x43400000"
+          },
+          "event": "intermediate-perfect",
+          "state_before": "Wait",
+          "state_after": "Wait",
+          "one_frame_slot": 0,
+          "current_after_before": 1,
+          "current_after_after": 2,
+          "raw_result": 4,
+          "adjusted_result": 4,
+          "add_combo": 1,
+          "judge_timing": 0
+        },
+        {
+          "outer_frame": 1,
+          "substep": 0,
+          "adjusted_position": {
+            "value": 192.0,
+            "bits": "0x43400000"
+          },
+          "event": "reflect",
+          "state_before": "Wait",
+          "state_after": "Wait",
+          "one_frame_slot": null,
+          "slots": [
+            0
+          ],
+          "entry_count": 1,
+          "add_combo": 1
+        }
+      ]
+    },
+    {
+      "case_id": "simultaneous-reverse-update-five-slot-pool",
+      "evidence": [
+        "R02:one-frame",
+        "E24",
+        "E26",
+        "U03"
+      ],
+      "source_note": {
+        "chart": "method-fixture://auto-live/normal",
+        "note_index": 200,
+        "family": "normal",
+        "classification": "method-fixture-not-runtime-chart"
+      },
+      "settings": {
+        "is_auto_live": true,
+        "judgement_adjust_value_b": 0,
+        "result_transform": "identity-no-active-situation-skill"
+      },
+      "steps": [
+        {
+          "outer_frame": 0,
+          "substep": 0,
+          "adjusted_position": {
+            "value": 120.0,
+            "bits": "0x42F00000"
+          },
+          "event": "head-perfect",
+          "state_before": "Move",
+          "state_after": "Deactive",
+          "one_frame_slot": 0,
+          "note_index": 204,
+          "raw_result": 4,
+          "adjusted_result": 4,
+          "add_combo": 1,
+          "judge_timing": 0
+        },
+        {
+          "outer_frame": 0,
+          "substep": 0,
+          "adjusted_position": {
+            "value": 120.0,
+            "bits": "0x42F00000"
+          },
+          "event": "head-perfect",
+          "state_before": "Move",
+          "state_after": "Deactive",
+          "one_frame_slot": 1,
+          "note_index": 203,
+          "raw_result": 4,
+          "adjusted_result": 4,
+          "add_combo": 1,
+          "judge_timing": 0
+        },
+        {
+          "outer_frame": 0,
+          "substep": 0,
+          "adjusted_position": {
+            "value": 120.0,
+            "bits": "0x42F00000"
+          },
+          "event": "head-perfect",
+          "state_before": "Move",
+          "state_after": "Deactive",
+          "one_frame_slot": 2,
+          "note_index": 202,
+          "raw_result": 4,
+          "adjusted_result": 4,
+          "add_combo": 1,
+          "judge_timing": 0
+        },
+        {
+          "outer_frame": 0,
+          "substep": 0,
+          "adjusted_position": {
+            "value": 120.0,
+            "bits": "0x42F00000"
+          },
+          "event": "head-perfect",
+          "state_before": "Move",
+          "state_after": "Deactive",
+          "one_frame_slot": 3,
+          "note_index": 201,
+          "raw_result": 4,
+          "adjusted_result": 4,
+          "add_combo": 1,
+          "judge_timing": 0
+        },
+        {
+          "outer_frame": 0,
+          "substep": 0,
+          "adjusted_position": {
+            "value": 120.0,
+            "bits": "0x42F00000"
+          },
+          "event": "head-perfect",
+          "state_before": "Move",
+          "state_after": "Deactive",
+          "one_frame_slot": 4,
+          "note_index": 200,
+          "raw_result": 4,
+          "adjusted_result": 4,
+          "add_combo": 1,
+          "judge_timing": 0
+        },
+        {
+          "outer_frame": 0,
+          "substep": 0,
+          "adjusted_position": {
+            "value": 120.0,
+            "bits": "0x42F00000"
+          },
+          "event": "reflect",
+          "state_before": "Deactive",
+          "state_after": "Deactive",
+          "one_frame_slot": null,
+          "slots": [
+            0,
+            1,
+            2,
+            3,
+            4
+          ],
+          "entry_count": 5,
+          "add_combo": 5,
+          "note_indices": [
+            204,
+            203,
+            202,
+            201,
+            200
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "adaptive-substeps-one-outer-reflect",
+      "evidence": [
+        "R02:reflect-owner",
+        "E26",
+        "U03",
+        "U04"
+      ],
+      "source_note": {
+        "chart": "method-fixture://auto-live/normal",
+        "note_index": 300,
+        "family": "normal",
+        "classification": "method-fixture-not-runtime-chart"
+      },
+      "settings": {
+        "is_auto_live": true,
+        "judgement_adjust_value_b": 0,
+        "result_transform": "identity-no-active-situation-skill"
+      },
+      "steps": [
+        {
+          "outer_frame": 0,
+          "substep": 0,
+          "adjusted_position": {
+            "value": 120.0,
+            "bits": "0x42F00000"
+          },
+          "event": "head-perfect",
+          "state_before": "Move",
+          "state_after": "Deactive",
+          "one_frame_slot": 0,
+          "note_index": 300,
+          "raw_result": 4,
+          "adjusted_result": 4,
+          "add_combo": 1,
+          "judge_timing": 0
+        },
+        {
+          "outer_frame": 0,
+          "substep": 1,
+          "adjusted_position": {
+            "value": 121.0,
+            "bits": "0x42F20000"
+          },
+          "event": "head-perfect",
+          "state_before": "Move",
+          "state_after": "Deactive",
+          "one_frame_slot": 1,
+          "note_index": 301,
+          "raw_result": 4,
+          "adjusted_result": 4,
+          "add_combo": 1,
+          "judge_timing": 0
+        },
+        {
+          "outer_frame": 0,
+          "substep": 2,
+          "adjusted_position": {
+            "value": 122.0,
+            "bits": "0x42F40000"
+          },
+          "event": "head-perfect",
+          "state_before": "Move",
+          "state_after": "Deactive",
+          "one_frame_slot": 2,
+          "note_index": 302,
+          "raw_result": 4,
+          "adjusted_result": 4,
+          "add_combo": 1,
+          "judge_timing": 0
+        },
+        {
+          "outer_frame": 0,
+          "substep": 2,
+          "adjusted_position": {
+            "value": 122.0,
+            "bits": "0x42F40000"
+          },
+          "event": "reflect",
+          "state_before": "Deactive",
+          "state_after": "Deactive",
+          "one_frame_slot": null,
+          "slots": [
+            0,
+            1,
+            2
+          ],
+          "entry_count": 3,
+          "add_combo": 3,
+          "note_indices": [
+            300,
+            301,
+            302
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "adjustment-sign-crossing",
+      "evidence": [
+        "R02:adjusted-position",
+        "E02",
+        "E30",
+        "U03"
+      ],
+      "source_note": {
+        "chart": "method-fixture://auto-live/normal",
+        "note_index": 400,
+        "family": "normal",
+        "classification": "method-fixture-not-runtime-chart"
+      },
+      "settings": {
+        "is_auto_live": true,
+        "result_transform": "identity-no-active-situation-skill"
+      },
+      "steps": [
+        {
+          "outer_frame": 0,
+          "substep": 0,
+          "adjusted_position": {
+            "value": 120.0,
+            "bits": "0x42F00000"
+          },
+          "event": "adjustment-sample",
+          "state_before": "Move",
+          "state_after": "Move",
+          "one_frame_slot": null,
+          "judgement_adjust_value_b": -5,
+          "relation": "rewind-five-tempo-aware-steps"
+        },
+        {
+          "outer_frame": 0,
+          "substep": 0,
+          "adjusted_position": {
+            "value": 120.0,
+            "bits": "0x42F00000"
+          },
+          "event": "adjustment-sample",
+          "state_before": "Move",
+          "state_after": "Move",
+          "one_frame_slot": null,
+          "judgement_adjust_value_b": 0,
+          "relation": "identity"
+        },
+        {
+          "outer_frame": 0,
+          "substep": 0,
+          "adjusted_position": {
+            "value": 120.0,
+            "bits": "0x42F00000"
+          },
+          "event": "adjustment-sample",
+          "state_before": "Move",
+          "state_after": "Move",
+          "one_frame_slot": null,
+          "judgement_adjust_value_b": 5,
+          "relation": "advance-five-tempo-aware-steps"
+        }
+      ]
+    }
+  ]
+}

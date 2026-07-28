@@ -1,0 +1,243 @@
+{
+  "schemaVersion": 1,
+  "frozenAt": "2026-07-26",
+  "source": {
+    "repository": "HOST___________________GirlsBandParty-Reverse",
+    "commit": "74ab76f6838847d98aae1a15741a5f024e3774ff",
+    "sample": {
+      "package": "jp.co.craftegg.band",
+      "versionName": "10.1.3",
+      "versionCode": 229,
+      "abi": "arm64-v8a"
+    },
+    "excludedUntrackedPaths": [
+      "runtime/tools/"
+    ]
+  },
+  "entries": [
+    {
+      "id": "E01",
+      "sourceKind": "reverse-file",
+      "sourcePath": "artifacts/investigations/bms-note-batch/README.md",
+      "copiedPath": "artifacts/investigations/bms-note-batch/README.md",
+      "bytes": 7661,
+      "sha256": "37B64F06EDFBC7D8F92053F82CD18D672A47B8D8089B1C5B0DCFF4D35ACC1F22",
+      "status": "confirmed-static-with-explicit-inference",
+      "consumers": ["C02", "C04", "C05", "C06", "C07", "C09"]
+    },
+    {
+      "id": "E02",
+      "sourceKind": "reverse-file",
+      "sourcePath": "artifacts/investigations/bms-note-batch/targets.tsv",
+      "copiedPath": "artifacts/investigations/bms-note-batch/targets.tsv",
+      "bytes": 2149,
+      "sha256": "4E52CD056E2A15FF983006D3E97964C3EF523ADB02FBBF85753598878050F8ED",
+      "status": "confirmed-evidence-routing-index",
+      "consumers": ["C02", "C04", "C06", "C07"]
+    },
+    {
+      "id": "E03",
+      "sourceKind": "reverse-file",
+      "sourcePath": "artifacts/investigations/bms-note-batch/sound_value_map.tsv",
+      "copiedPath": "artifacts/investigations/bms-note-batch/sound_value_map.tsv",
+      "bytes": 1191,
+      "sha256": "5380165E2567BC4462E617D730F7E109364861734EA31673FB1BE9EC6D17659C",
+      "status": "confirmed-static-sound-value-map",
+      "consumers": ["C04", "C08"]
+    },
+    {
+      "id": "E04",
+      "sourceKind": "reverse-file",
+      "sourcePath": "artifacts/investigations/bms-note-batch/pipeline.pseudocode.cs",
+      "copiedPath": "artifacts/investigations/bms-note-batch/pipeline.pseudocode.cs",
+      "bytes": 3716,
+      "sha256": "E72AC980A0C9527530AFCC613A98D2C7DCB05BA81B6C892674FE2C09290D7708",
+      "status": "confirmed-arm64-bounded-pseudocode",
+      "consumers": ["C02", "C04", "C05", "C06", "C07", "C09"]
+    },
+    {
+      "id": "E05",
+      "sourceKind": "reverse-file",
+      "sourcePath": "artifacts/investigations/music-score-bezier/README.md",
+      "copiedPath": "artifacts/investigations/music-score-bezier/README.md",
+      "bytes": 6106,
+      "sha256": "ED4FBEB0214B63025688764CACDF1B8109A2EDEC92E5A40DE1F009BC1B74D0CE",
+      "status": "confirmed-static-production-closed",
+      "consumers": ["C02", "C03"]
+    },
+    {
+      "id": "E06",
+      "sourceKind": "reverse-file",
+      "sourcePath": "artifacts/investigations/music-score-bezier/targets.tsv",
+      "copiedPath": "artifacts/investigations/music-score-bezier/targets.tsv",
+      "bytes": 6369,
+      "sha256": "0EB4B0A4CB738CB98113B1D33756E9E8CF807BB30CD7822FA71AE2D403E453C3",
+      "status": "confirmed-evidence-routing-index",
+      "consumers": ["C02", "C03"]
+    },
+    {
+      "id": "E07",
+      "sourceKind": "reverse-file",
+      "sourcePath": "artifacts/investigations/runtime-integration-prototype/music_score_bezier_conversion.json",
+      "copiedPath": "artifacts/investigations/runtime-integration-prototype/music_score_bezier_conversion.json",
+      "bytes": 4402,
+      "sha256": "79EA7AEF383C32F1E6B35BA7CF50FC3FD93EDDF9FAD08D5890C7546C0C3F6799",
+      "status": "confirmed-static-no-unresolved",
+      "consumers": ["C03"]
+    },
+    {
+      "id": "E08",
+      "sourceKind": "reverse-file",
+      "sourcePath": "artifacts/investigations/runtime-integration-prototype/music_score_header_text_conversion.json",
+      "copiedPath": "artifacts/investigations/runtime-integration-prototype/music_score_header_text_conversion.json",
+      "bytes": 3874,
+      "sha256": "8BB7AB0C0A7F4DAE7A1C6046DD5B17D4C4628350A77F43A725C35091A200225A",
+      "status": "confirmed-static-no-unresolved",
+      "consumers": ["C03"]
+    },
+    {
+      "id": "E09",
+      "sourceKind": "reverse-file",
+      "sourcePath": "artifacts/investigations/runtime-integration-prototype/bms_note_information_adapter.json",
+      "copiedPath": "artifacts/investigations/runtime-integration-prototype/bms_note_information_adapter.json",
+      "bytes": 8874,
+      "sha256": "9989AD44706B64AEDF1AE0D21C639470DF2D4275D179C202A5E30FC8324CF46A",
+      "status": "confirmed-normal-and-habahiro-production-field-oracles-integrated",
+      "consumers": ["C02", "C06", "C07", "C08", "C09", "C10"]
+    },
+    {
+      "id": "E10",
+      "sourceKind": "reverse-file",
+      "sourcePath": "artifacts/investigations/runtime-integration-prototype/batch_finalize_and_front_sync.json",
+      "copiedPath": "artifacts/investigations/runtime-integration-prototype/batch_finalize_and_front_sync.json",
+      "bytes": 5581,
+      "sha256": "F9A07C6F3F7C2D905DF37121DBC514B6D796307DCD62789AE11F8865CD6745A9",
+      "status": "confirmed-static-endpoint-aware-sync-integration",
+      "consumers": ["C05", "C09", "C10"]
+    },
+    {
+      "id": "E11",
+      "sourceKind": "reverse-file",
+      "sourcePath": "artifacts/investigations/runtime-integration-prototype/production_bms_validation.json",
+      "copiedPath": "artifacts/investigations/runtime-integration-prototype/production_bms_validation.json",
+      "bytes": 4527,
+      "sha256": "081956FDB61263D84F6FDBC1DCDC5A93365B50F0032BE282EF8D42DD046BFF0A",
+      "status": "confirmed-production-field-oracle-integrated",
+      "consumers": ["C03", "C06", "C08", "C09", "C10"]
+    },
+    {
+      "id": "E12",
+      "sourceKind": "reverse-file",
+      "sourcePath": "artifacts/investigations/runtime-integration-prototype/production_habahiro_bms_validation.json",
+      "copiedPath": "artifacts/investigations/runtime-integration-prototype/production_habahiro_bms_validation.json",
+      "bytes": 4859,
+      "sha256": "ECBAF86B547FED5426CD0A59F1D8401AB8A1E1714B78BF8EED974A923BCEE951",
+      "status": "confirmed-production-habahiro-field-oracle-integrated",
+      "consumers": ["C03", "C06", "C07", "C09", "C10"]
+    },
+    {
+      "id": "E13",
+      "sourceKind": "reverse-file",
+      "sourcePath": "artifacts/investigations/runtime-integration-prototype/bpm_state_transition.json",
+      "copiedPath": "artifacts/investigations/runtime-integration-prototype/bpm_state_transition.json",
+      "bytes": 1682,
+      "sha256": "036DE13292B7D2E98852451564E3FB02DD7A7B5C83E349DAEBC4682F8DDB2376",
+      "status": "confirmed-static-consumer-integrated-with-production-gap",
+      "consumers": ["C04", "C08", "C10"]
+    },
+    {
+      "id": "E14",
+      "sourceKind": "reverse-file",
+      "sourcePath": "artifacts/investigations/runtime-integration-prototype/habahiro_lane_change.json",
+      "copiedPath": "artifacts/investigations/runtime-integration-prototype/habahiro_lane_change.json",
+      "bytes": 1681,
+      "sha256": "49A8A805822AF3C01B13594E73AE9C587E40DD96E4B3301FFC4DBE053BA18BED",
+      "status": "confirmed-two-stage-habahiro-lane-change-integrated",
+      "consumers": ["C07", "C08"]
+    },
+    {
+      "id": "E15",
+      "sourceKind": "reverse-file",
+      "sourcePath": "artifacts/investigations/runtime-integration-prototype/targets.tsv",
+      "copiedPath": "artifacts/investigations/runtime-integration-prototype/targets.tsv",
+      "bytes": 30986,
+      "sha256": "8BCB3052C44DEFB5884E717BD96A71A2CE698D6C0B47EDAB17AAC52B745F679D",
+      "status": "confirmed-evidence-routing-index",
+      "consumers": ["C01", "C10"]
+    },
+    {
+      "id": "E16",
+      "sourceKind": "reverse-file",
+      "sourcePath": "artifacts/investigations/equal-position-and-cross-note-mutation/README.md",
+      "copiedPath": "artifacts/investigations/equal-position-and-cross-note-mutation/README.md",
+      "bytes": 4489,
+      "sha256": "7ADA4FD567B8B5C142A98AE046BC2E5C5A300A97BB658A2D6C21C3E623D67E9E",
+      "status": "confirmed-static-closure-report",
+      "consumers": ["C04", "C05"]
+    },
+    {
+      "id": "E17",
+      "sourceKind": "reverse-file",
+      "sourcePath": "artifacts/investigations/equal-position-and-cross-note-mutation/closure.json",
+      "copiedPath": "artifacts/investigations/equal-position-and-cross-note-mutation/closure.json",
+      "bytes": 1686,
+      "sha256": "3DF63B02A1A7031635E5A23A685D39EC7596769F421562B9B2F8A8FDE4BA2992",
+      "status": "confirmed-static-closed-ordering-and-mutation",
+      "consumers": ["C04", "C05"]
+    },
+    {
+      "id": "E18",
+      "sourceKind": "reverse-file",
+      "sourcePath": "artifacts/investigations/equal-position-and-cross-note-mutation/targets.tsv",
+      "copiedPath": "artifacts/investigations/equal-position-and-cross-note-mutation/targets.tsv",
+      "bytes": 1323,
+      "sha256": "142DCCF7AFAF8981606D042484F64A753A8C48FB042ABFDC1D128D4445829457",
+      "status": "confirmed-evidence-routing-index",
+      "consumers": ["C04", "C05"]
+    },
+    {
+      "id": "F01",
+      "sourceKind": "registered-url",
+      "sourceUrl": "https://bestdori.com/assets/jp/musicscore/musicscore10_rip/poppin_shuffle_special.txt",
+      "registeredBy": "E11",
+      "copiedPath": "fixtures/poppin_shuffle_special.txt",
+      "bytes": 17882,
+      "sha256": "418DB7F5BFC6B5431AC0ABF2FB905120BDFA8C778C35AA42418A6FA43F4094DC",
+      "status": "confirmed-production-bms-fixture",
+      "consumers": ["C03", "C10"]
+    },
+    {
+      "id": "F02",
+      "sourceKind": "registered-url",
+      "sourceUrl": "https://bestdori.com/api/charts/3/special.json",
+      "registeredBy": "E11",
+      "copiedPath": "fixtures/poppin_shuffle_special.json",
+      "bytes": 50591,
+      "sha256": "FA636238280D384C3BAE42335B54522B02CDBE608C890516F2F38FB728DEA2FC",
+      "status": "confirmed-independent-chart-oracle-fixture",
+      "consumers": ["C10"]
+    },
+    {
+      "id": "F03",
+      "sourceKind": "registered-url",
+      "sourceUrl": "https://bestdori.com/assets/jp/musicscore/musicscore790_rip/786_miracle_april_habahiro_special.txt",
+      "registeredBy": "E12",
+      "copiedPath": "fixtures/786_miracle_april_habahiro_special.txt",
+      "bytes": 38700,
+      "sha256": "43148090C40ABBD951E8D7112200BDAE9B796A8A531A0793169E0AD70C3DC159",
+      "status": "confirmed-production-habahiro-bms-fixture",
+      "consumers": ["C03", "C10"]
+    },
+    {
+      "id": "F04",
+      "sourceKind": "registered-url",
+      "sourceUrl": "https://bestdori.com/api/charts/786/special.json",
+      "registeredBy": "E12",
+      "copiedPath": "fixtures/786_miracle_april_habahiro_special.json",
+      "bytes": 58170,
+      "sha256": "F30C0BC1AE5766D11394FBA02C8F14E463787B31A79E38E6C79F6E02B3493773",
+      "status": "confirmed-independent-habahiro-chart-oracle-fixture",
+      "consumers": ["C10"]
+    }
+  ]
+}

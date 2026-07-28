@@ -1,0 +1,123 @@
+{
+  "schema_version": 1,
+  "sample": "jp.co.craftegg.band 10.1.3 (229) formal-play Pixel_6 AVD account",
+  "status": "persisted-b-zero-confirmed-phase-gap-remains",
+  "sources": {
+    "live_core_ciphertext": {
+      "local_only_path": "runtime/captures/current-avd/lcs",
+      "size": 48,
+      "sha256": "5c5dd066e1736c8576a55b66dda9423b0856c1cbe9b004bba690a2e641145568"
+    },
+    "decoder": {
+      "path": "artifacts/investigations/live-core-settings-runtime-read/decode_live_core_settings.ps1",
+      "size": 10068,
+      "sha256": "614ddc0c342b99b4086860e776dddd9ff0f5b6c671c8b77be1fc410412dd1e95"
+    },
+    "decoder_contract": {
+      "path": "artifacts/investigations/live-core-settings-runtime-read/live_core_settings_runtime_read.json",
+      "size": 2790,
+      "sha256": "367cb6da1373c23d8b4d388968010a78d3d984df7db5fed56adccc62730ca800"
+    },
+    "phase_scan": {
+      "path": "artifacts/investigations/auto-live-perfect-phase-adjustment/auto_live_perfect_phase_adjustment.json",
+      "size": 12260,
+      "sha256": "04d3e490d8bc3965eaa4c953db0bd97ed798fae081566199fdab7810c2c0e6e9"
+    },
+    "persistence_chain": {
+      "path": "artifacts/investigations/runtime-integration-prototype/judge_timing_adjustment_persistence_and_secondary_consumers.json",
+      "size": 6587,
+      "sha256": "7ced568f056c39eec70c7820446fdbb4685694a1a7f8fcab05289bb756118707"
+    }
+  },
+  "runtime_file": {
+    "logical_data_type": "PersistentDataUtility.DataType.LiveCoreSettings",
+    "logical_data_type_value": 5,
+    "remote_path": "/data/user/0/jp.co.craftegg.band/files/settings/lcs",
+    "physical_file_name": "lcs",
+    "ciphertext_size": 48,
+    "ciphertext_sha256": "5c5dd066e1736c8576a55b66dda9423b0856c1cbe9b004bba690a2e641145568",
+    "plaintext_size": 41,
+    "plaintext_sha256": "61bd9ad2ab7f0faa016fbff523067d8179e48bd994f7ac8a87633439a325e47c",
+    "remote_mtime_epoch": 1783241899,
+    "remote_mtime_utc": "2026-07-05 08:58:19.030421454 +0000",
+    "pull_mode": "adb root plus adb pull; read-only package-data access"
+  },
+  "protobuf": {
+    "type": "CE.LiveCoreSettingsProtoData",
+    "field_numbers": [
+      5,
+      6,
+      7,
+      8,
+      10,
+      17,
+      20,
+      23,
+      26,
+      27,
+      28,
+      29,
+      33,
+      34
+    ],
+    "judgement_adjust_value_field_present": false,
+    "judgement_adjust_value": 0,
+    "judgement_adjust_value_b_field_present": false,
+    "judgement_adjust_value_b": 0,
+    "judgement_adjust_value_b_source": "protobuf default zero"
+  },
+  "phase_consequence": {
+    "persisted_adjustment_row": {
+      "judgement_adjust_value_b": 0,
+      "phase_shift_ms": 0.0,
+      "portable_peak_phase_ms_from_judgement": {
+        "minimum": 133.333333,
+        "p25": 133.333333,
+        "median": 141.666667,
+        "p75": 175.0,
+        "maximum": 183.333333
+      },
+      "portable_median_minus_real_median_ms": 64.930169,
+      "phase_ranges_overlap": false,
+      "portable_range_within_real_range": false
+    },
+    "previous_best_hypothesis_row": {
+      "judgement_adjust_value_b": 4,
+      "phase_shift_ms": -66.666667,
+      "portable_peak_phase_ms_from_judgement": {
+        "minimum": 66.666666,
+        "p25": 66.666666,
+        "median": 75.0,
+        "p75": 108.333333,
+        "maximum": 116.666666
+      },
+      "portable_median_minus_real_median_ms": -1.736498,
+      "phase_ranges_overlap": true,
+      "portable_range_within_real_range": true
+    },
+    "persisted_b_phase_ranges_overlap": false,
+    "portable_minimum_minus_real_maximum_ms": 16.289200000000008,
+    "conclusion": "B=4 is contradicted by the persisted settings; the B=0 portable phase gap remains"
+  },
+  "formal_sample_binding": {
+    "same_avd": true,
+    "settings_mtime_precedes_formal_capture": true,
+    "fresh_formal_play_completed_before_pull": true,
+    "binding": "persisted settings source used by the formal-play account",
+    "boundary": "no translated-arm live-object read sampled InGameCalculatedData +0x17C during an exact video frame"
+  },
+  "confirmed": [
+    "PersistentDataUtility DataType LiveCoreSettings (5) is physically stored as settings/lcs on the AVD, not settings/LiveCoreSettings.",
+    "The pulled 48-byte lcs decrypts as CE.LiveCoreSettingsProtoData and omits protobuf member 36, giving effective JudgementAdjustValueB zero.",
+    "The persisted B=0 row does not overlap the formal-play particle phase range, so the earlier B=4 phase explanation is rejected."
+  ],
+  "inference": [
+    "Because the same persisted lcs predates the formal capture and a fresh formal play completed before the pull, B=0 is the strongest evidence for the formal run's active adjustment value."
+  ],
+  "unresolved": [
+    "The remaining particle phase difference must be localized in lifecycle, update/render scheduling, random consumption, capture sampling, or another not-yet-modeled timing input.",
+    "Exact Unity PlayerLoop and GPU pixel parity remain unclaimed."
+  ],
+  "avd_used_for_source_capture": true,
+  "avd_used_by_verifier": false
+}

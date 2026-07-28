@@ -1,0 +1,612 @@
+{
+  "schemaVersion": 1,
+  "frozenAt": "2026-07-26",
+  "source": {
+    "repository": "HOST___________________GirlsBandParty-Reverse",
+    "staticBaselineCommit": "74ab76f6838847d98aae1a15741a5f024e3774ff",
+    "finalEvidenceCommit": "2ba3bdbbab9be2de6fedb9b22f623bd80611c023",
+    "excludedUntrackedPaths": [
+      ".claude/",
+      "runtime/tools/"
+    ]
+  },
+  "runtimeEvidenceGate": {
+    "status": "closed-with-explicit-nonblocking-fidelity-boundaries",
+    "reversePath": "artifacts/investigations/clock-scheduling-runtime-oracle/",
+    "sourceClosureStatus": "closed",
+    "blockingFindings": [],
+    "nonBlockingUnverifiableFindings": [
+      {
+        "id": "habahiro_zero_bpm_60",
+        "disposition": "restore-from-existing-evidence",
+        "fidelity": "not-guaranteed-100-percent",
+        "reason": "The locked limited-time chart is unavailable to the capture account under read-only observation."
+      },
+      {
+        "id": "bpm_pool_cursor_wrap_reuse",
+        "disposition": "restore-from-existing-evidence",
+        "fidelity": "not-guaranteed-100-percent",
+        "reason": "The complete production inventory has at most 16 BPM commands per chart and cannot reach the 31st acquire under read-only observation."
+      }
+    ],
+    "requiredBeforeTasks": []
+  },
+  "entries": [
+    {
+      "id": "E01",
+      "sourceKind": "reverse-file",
+      "sourcePath": "artifacts/investigations/note-scheduling-clock/README.md",
+      "copiedPath": "artifacts/investigations/note-scheduling-clock/README.md",
+      "bytes": 6543,
+      "sha256": "CB13700C9A3B8CA4DC66DE2AFCD923A7917868260385E731F5BE5262FF7CA946",
+      "status": "confirmed-static-with-runtime-gaps",
+      "consumers": [
+        "S05",
+        "S07",
+        "S09"
+      ]
+    },
+    {
+      "id": "E02",
+      "sourceKind": "reverse-file",
+      "sourcePath": "artifacts/investigations/note-scheduling-clock/targets.tsv",
+      "copiedPath": "artifacts/investigations/note-scheduling-clock/targets.tsv",
+      "bytes": 1952,
+      "sha256": "F019C5B9B6499CFB246AE013C42987ABE12BF0CCD8057A3D4845AADDFDEFFDF4",
+      "status": "confirmed-evidence-routing-index",
+      "consumers": [
+        "S01",
+        "S05",
+        "S07",
+        "S09"
+      ]
+    },
+    {
+      "id": "E03",
+      "sourceKind": "reverse-file",
+      "sourcePath": "artifacts/investigations/note-scheduling-clock/pipeline.pseudocode.cs",
+      "copiedPath": "artifacts/investigations/note-scheduling-clock/pipeline.pseudocode.cs",
+      "bytes": 2957,
+      "sha256": "814B2FB856B11BE11012E56321F1B140BF84B98A257672619D51F812F0543E75",
+      "status": "confirmed-static-pseudocode-with-runtime-gaps",
+      "consumers": [
+        "S05",
+        "S07",
+        "S09"
+      ]
+    },
+    {
+      "id": "E04",
+      "sourceKind": "reverse-file",
+      "sourcePath": "artifacts/investigations/music-bar-division-adaptive-substeps/README.md",
+      "copiedPath": "artifacts/investigations/music-bar-division-adaptive-substeps/README.md",
+      "bytes": 4102,
+      "sha256": "6720E2EDBD1470004B6437FF245402B30097DD93DCECC248E0DA7C0ABCEFE92B",
+      "status": "confirmed-static",
+      "consumers": [
+        "S05",
+        "S08",
+        "S09"
+      ]
+    },
+    {
+      "id": "E05",
+      "sourceKind": "reverse-file",
+      "sourcePath": "artifacts/investigations/music-bar-division-adaptive-substeps/closure.json",
+      "copiedPath": "artifacts/investigations/music-bar-division-adaptive-substeps/closure.json",
+      "bytes": 2336,
+      "sha256": "09A4B3639384887135D60CC296E2D590D550F12D647941C1C508B62610586C0E",
+      "status": "confirmed-static-closure",
+      "consumers": [
+        "S05",
+        "S08",
+        "S09"
+      ]
+    },
+    {
+      "id": "E06",
+      "sourceKind": "reverse-file",
+      "sourcePath": "artifacts/investigations/music-bar-division-adaptive-substeps/targets.tsv",
+      "copiedPath": "artifacts/investigations/music-bar-division-adaptive-substeps/targets.tsv",
+      "bytes": 1811,
+      "sha256": "F0972AD43B68999901B2406B368C070FD25FD6CF1F288745A6B0589EDCE181BF",
+      "status": "confirmed-evidence-routing-index",
+      "consumers": [
+        "S01",
+        "S05",
+        "S08"
+      ]
+    },
+    {
+      "id": "E07",
+      "sourceKind": "reverse-file",
+      "sourcePath": "artifacts/investigations/bpm-change-consumer/README.md",
+      "copiedPath": "artifacts/investigations/bpm-change-consumer/README.md",
+      "bytes": 3286,
+      "sha256": "42C57683697FC8BD26CFE138E5CF78D6301DF2BEB52E294873BCEA6B8875FFB5",
+      "status": "confirmed-static-with-required-runtime-oracle",
+      "consumers": [
+        "S02",
+        "S03",
+        "S05",
+        "S06"
+      ]
+    },
+    {
+      "id": "E08",
+      "sourceKind": "reverse-file",
+      "sourcePath": "artifacts/investigations/bpm-change-consumer/bpm_state_transition.json",
+      "copiedPath": "artifacts/investigations/bpm-change-consumer/bpm_state_transition.json",
+      "bytes": 1682,
+      "sha256": "036DE13292B7D2E98852451564E3FB02DD7A7B5C83E349DAEBC4682F8DDB2376",
+      "status": "confirmed-static-with-required-runtime-oracle",
+      "consumers": [
+        "S02",
+        "S05",
+        "S06",
+        "S10"
+      ]
+    },
+    {
+      "id": "E09",
+      "sourceKind": "reverse-file",
+      "sourcePath": "artifacts/investigations/bpm-change-consumer/targets.tsv",
+      "copiedPath": "artifacts/investigations/bpm-change-consumer/targets.tsv",
+      "bytes": 1111,
+      "sha256": "CF77D4EE5A840E55322A2D539EED0EEC53A916244330AB67EB7259FFE9FE2684",
+      "status": "confirmed-evidence-routing-index",
+      "consumers": [
+        "S01",
+        "S02",
+        "S06"
+      ]
+    },
+    {
+      "id": "E10",
+      "sourceKind": "reverse-file",
+      "sourcePath": "artifacts/investigations/bpm-change-consumer/arm64/bpm_change.s",
+      "copiedPath": "artifacts/investigations/bpm-change-consumer/arm64/bpm_change.s",
+      "bytes": 2566,
+      "sha256": "D27DAF82A10175D9626784D005C1A75BFF68AE6A776CB10438C6EF4DFC7B2E76",
+      "status": "confirmed-arm64-static-with-required-runtime-oracle",
+      "consumers": [
+        "S02",
+        "S05",
+        "S06"
+      ]
+    },
+    {
+      "id": "E11",
+      "sourceKind": "reverse-file",
+      "sourcePath": "artifacts/investigations/simultaneous-note-ordering/README.md",
+      "copiedPath": "artifacts/investigations/simultaneous-note-ordering/README.md",
+      "bytes": 6487,
+      "sha256": "A15D27EDD7FB1368760E196789A35D5486F804C856F42BAE40FDB5FB5FAD3E95",
+      "status": "confirmed-static",
+      "consumers": [
+        "S03",
+        "S09",
+        "S10"
+      ]
+    },
+    {
+      "id": "E12",
+      "sourceKind": "reverse-file",
+      "sourcePath": "artifacts/investigations/simultaneous-note-ordering/pipeline.pseudocode.cs",
+      "copiedPath": "artifacts/investigations/simultaneous-note-ordering/pipeline.pseudocode.cs",
+      "bytes": 1963,
+      "sha256": "C4DB58BD214CEA508310C574301A0276C592580E9A87C22BEA8B10657A73FB1C",
+      "status": "confirmed-static-pseudocode",
+      "consumers": [
+        "S09"
+      ]
+    },
+    {
+      "id": "E13",
+      "sourceKind": "reverse-file",
+      "sourcePath": "artifacts/investigations/runtime-integration-prototype/note_manager_two_phase_substep_order.json",
+      "copiedPath": "artifacts/investigations/runtime-integration-prototype/note_manager_two_phase_substep_order.json",
+      "bytes": 5554,
+      "sha256": "774C1C39644EE937E47FE64171E5715AF915A194E9EB8A59FDA44F1F664CB177",
+      "status": "confirmed-static-runtime-oracle",
+      "consumers": [
+        "S06",
+        "S09"
+      ]
+    },
+    {
+      "id": "E14",
+      "sourceKind": "reverse-file",
+      "sourcePath": "artifacts/investigations/runtime-integration-prototype/note_manager_adaptive_substeps.json",
+      "copiedPath": "artifacts/investigations/runtime-integration-prototype/note_manager_adaptive_substeps.json",
+      "bytes": 4367,
+      "sha256": "260ACB365EEAD55A0C1F8D9219F762CA9AC4CF656E597C892B459886388B4D05",
+      "status": "confirmed-static-runtime-oracle",
+      "consumers": [
+        "S08",
+        "S09"
+      ]
+    },
+    {
+      "id": "E15",
+      "sourceKind": "reverse-file",
+      "sourcePath": "artifacts/investigations/runtime-integration-prototype/note_manager_active_list_mutation.json",
+      "copiedPath": "artifacts/investigations/runtime-integration-prototype/note_manager_active_list_mutation.json",
+      "bytes": 4144,
+      "sha256": "E1B8E48695F0BD7EFC0C3750BC7ADAF113533326DC98A8FB685FC70B787E7BFD",
+      "status": "confirmed-static-runtime-oracle",
+      "consumers": [
+        "S09"
+      ]
+    },
+    {
+      "id": "E16",
+      "sourceKind": "reverse-file",
+      "sourcePath": "artifacts/investigations/runtime-integration-prototype/multiple_flick_active_list_order.json",
+      "copiedPath": "artifacts/investigations/runtime-integration-prototype/multiple_flick_active_list_order.json",
+      "bytes": 4565,
+      "sha256": "EC64154569BA4B30D644D27E839BEABA5357A6554FAAEA95080295B118ABB391",
+      "status": "confirmed-static-runtime-oracle",
+      "consumers": [
+        "S09"
+      ]
+    },
+    {
+      "id": "E17",
+      "sourceKind": "reverse-file",
+      "sourcePath": "artifacts/investigations/runtime-integration-prototype/slide_tail_execute_frame.json",
+      "copiedPath": "artifacts/investigations/runtime-integration-prototype/slide_tail_execute_frame.json",
+      "bytes": 4472,
+      "sha256": "4109E09E6D0D7CE3F8CD224A0C0C002CE9EEA61B33BA738CC3D24FC8FCF4CB99",
+      "status": "confirmed-static-runtime-oracle",
+      "consumers": [
+        "S08",
+        "S09"
+      ]
+    },
+    {
+      "id": "E18",
+      "sourceKind": "reverse-file",
+      "sourcePath": "artifacts/investigations/ingame-playerloop-pause-gates/closure.json",
+      "copiedPath": "artifacts/investigations/ingame-playerloop-pause-gates/closure.json",
+      "bytes": 4054,
+      "sha256": "6F0EFD625BB32C954CBAF6873CA118A8F2415CA43ECB739FC0F43604A4D9BC01",
+      "status": "confirmed-static-closure-with-playerloop-gap",
+      "consumers": [
+        "S04",
+        "S09",
+        "S10"
+      ]
+    },
+    {
+      "id": "E19",
+      "sourceKind": "reverse-file",
+      "sourcePath": "artifacts/investigations/frame-rate-control-flow/README.md",
+      "copiedPath": "artifacts/investigations/frame-rate-control-flow/README.md",
+      "bytes": 2896,
+      "sha256": "B94C93A5E908D26BCF0D56B4EA4333F9D86FB976C0694C5DFB265BC6D7580477",
+      "status": "confirmed-static-request-boundary",
+      "consumers": [
+        "S04",
+        "S10"
+      ]
+    },
+    {
+      "id": "E20",
+      "sourceKind": "reverse-file",
+      "sourcePath": "artifacts/investigations/frame-rate-control-flow/frame_rate_control.json",
+      "copiedPath": "artifacts/investigations/frame-rate-control-flow/frame_rate_control.json",
+      "bytes": 36177,
+      "sha256": "185798DCFDED803FEBC72268CFBFDF08EBF2BC130BE9945E94BA569D96E41FA3",
+      "status": "confirmed-static-request-boundary",
+      "consumers": [
+        "S04",
+        "S10"
+      ]
+    },
+    {
+      "id": "E21",
+      "sourceKind": "reverse-file",
+      "sourcePath": "artifacts/investigations/frame-rate-control-flow/targets.tsv",
+      "copiedPath": "artifacts/investigations/frame-rate-control-flow/targets.tsv",
+      "bytes": 1877,
+      "sha256": "46E47D23FB1AF51002329019A22804151928A8F5CF502998F231A25AEC8279FA",
+      "status": "confirmed-evidence-routing-index",
+      "consumers": [
+        "S01",
+        "S04"
+      ]
+    },
+    {
+      "id": "E22",
+      "sourceKind": "reverse-file",
+      "sourcePath": "artifacts/investigations/deterministic-engine-harness/README.md",
+      "copiedPath": "artifacts/investigations/deterministic-engine-harness/README.md",
+      "bytes": 4062,
+      "sha256": "1F93E9190ED6C70B086DE6BBAE4AD5C27454628C88C38909CD3D340D576298CF",
+      "status": "confirmed-static-harness-boundary",
+      "consumers": [
+        "S07",
+        "S08",
+        "S09",
+        "S10"
+      ]
+    },
+    {
+      "id": "E23",
+      "sourceKind": "reverse-file",
+      "sourcePath": "artifacts/investigations/deterministic-engine-harness/validation_results.json",
+      "copiedPath": "artifacts/investigations/deterministic-engine-harness/validation_results.json",
+      "bytes": 677,
+      "sha256": "A1A8938C93D010592F5964C064C9AF4FB32573CD0700E65C5DA92275C4E7E161",
+      "status": "confirmed-static-harness-validation",
+      "consumers": [
+        "S07",
+        "S08",
+        "S09",
+        "S10"
+      ]
+    },
+    {
+      "id": "E24",
+      "sourceKind": "reverse-file",
+      "sourcePath": "artifacts/investigations/deterministic-engine-harness/targets.tsv",
+      "copiedPath": "artifacts/investigations/deterministic-engine-harness/targets.tsv",
+      "bytes": 820,
+      "sha256": "CA586BB9CD5F34FEBF8E04C4D2DD86F4D7D6FF80FD73EFA7622E0F0531E6C833",
+      "status": "confirmed-evidence-routing-index",
+      "consumers": [
+        "S01",
+        "S10"
+      ]
+    },
+    {
+      "id": "E25",
+      "sourceKind": "reverse-file",
+      "sourcePath": "artifacts/investigations/runtime-integration-prototype/production_bms_validation.json",
+      "copiedPath": "artifacts/investigations/runtime-integration-prototype/production_bms_validation.json",
+      "bytes": 4527,
+      "sha256": "081956FDB61263D84F6FDBC1DCDC5A93365B50F0032BE282EF8D42DD046BFF0A",
+      "status": "confirmed-production-zero-bpm-change-oracle",
+      "consumers": [
+        "S03",
+        "S05",
+        "S10"
+      ]
+    },
+    {
+      "id": "E26",
+      "sourceKind": "reverse-file",
+      "sourcePath": "artifacts/investigations/runtime-integration-prototype/production_habahiro_bms_validation.json",
+      "copiedPath": "artifacts/investigations/runtime-integration-prototype/production_habahiro_bms_validation.json",
+      "bytes": 4859,
+      "sha256": "ECBAF86B547FED5426CD0A59F1D8401AB8A1E1714B78BF8EED974A923BCEE951",
+      "status": "confirmed-production-habahiro-zero-bpm-change-oracle",
+      "consumers": [
+        "S03",
+        "S05",
+        "S10"
+      ]
+    }
+  ],
+  "runtimeEvidence": {
+    "package": {
+      "id": "R01",
+      "sourceCommit": "2ba3bdbbab9be2de6fedb9b22f623bd80611c023",
+      "sourceRoot": "artifacts/investigations/clock-scheduling-runtime-oracle",
+      "copiedRoot": "artifacts/investigations/clock-scheduling-runtime-oracle",
+      "files": 122,
+      "bytes": 44838972,
+      "sha256Manifest": "SHA256SUMS",
+      "sha256ManifestBytes": 14391,
+      "sha256ManifestHash": "B6A69C72FC45D594A65CAD886DBAAB4E884E60EC3539732DEEC01A673EA14F2F",
+      "status": "verified-runtime-oracle-s02-closed-with-explicit-nonblocking-boundaries",
+      "consumers": [
+        "S02",
+        "S03",
+        "S04",
+        "S05",
+        "S06",
+        "S07",
+        "S08",
+        "S09",
+        "S10"
+      ]
+    },
+    "entries": [
+      {
+        "id": "R02",
+        "sourceCommit": "e96733cd96a5e7446d2b9adbc413bf77de0bcf98",
+        "sourcePath": "artifacts/investigations/package-version-rebaseline-10-1-4/README.md",
+        "copiedPath": "artifacts/investigations/package-version-rebaseline-10-1-4/README.md",
+        "bytes": 6163,
+        "sha256": "5E37640F8F9F0B24E10B016606FE46E9361F4005606BE82EBC00FF44761E09B5",
+        "status": "confirmed-10.1.4-rebaseline",
+        "consumers": [
+          "S02",
+          "S04",
+          "S05",
+          "S06",
+          "S07",
+          "S09",
+          "S10"
+        ]
+      },
+      {
+        "id": "R03",
+        "sourceCommit": "e96733cd96a5e7446d2b9adbc413bf77de0bcf98",
+        "sourcePath": "artifacts/investigations/package-version-rebaseline-10-1-4/extract_version_rebaseline.py",
+        "copiedPath": "artifacts/investigations/package-version-rebaseline-10-1-4/extract_version_rebaseline.py",
+        "bytes": 15662,
+        "sha256": "3DD7854E3120EA87967C7E86774465CC89FAA0F9ACED02BCF5CAE55CBC38376E",
+        "status": "confirmed-10.1.4-extractor",
+        "consumers": [
+          "S02"
+        ]
+      },
+      {
+        "id": "R04",
+        "sourceCommit": "e96733cd96a5e7446d2b9adbc413bf77de0bcf98",
+        "sourcePath": "artifacts/investigations/package-version-rebaseline-10-1-4/targets.tsv",
+        "copiedPath": "artifacts/investigations/package-version-rebaseline-10-1-4/targets.tsv",
+        "bytes": 6117,
+        "sha256": "2295CCD41B1660EB666613A8A36D354D7B763C9E2DFF83DE2C1B433011819019",
+        "status": "confirmed-10.1.4-target-map",
+        "consumers": [
+          "S02",
+          "S04",
+          "S05",
+          "S06",
+          "S07",
+          "S09"
+        ]
+      },
+      {
+        "id": "R05",
+        "sourceCommit": "e96733cd96a5e7446d2b9adbc413bf77de0bcf98",
+        "sourcePath": "artifacts/investigations/package-version-rebaseline-10-1-4/verify_version_rebaseline.py",
+        "copiedPath": "artifacts/investigations/package-version-rebaseline-10-1-4/verify_version_rebaseline.py",
+        "bytes": 4923,
+        "sha256": "516E366BBFABB59A9794A791EDBF53376DB50E23C6BC3BA4559DB1A745F8AFE2",
+        "status": "confirmed-10.1.4-verifier",
+        "consumers": [
+          "S02"
+        ]
+      },
+      {
+        "id": "R06",
+        "sourceCommit": "e96733cd96a5e7446d2b9adbc413bf77de0bcf98",
+        "sourcePath": "artifacts/investigations/package-version-rebaseline-10-1-4/version_map.json",
+        "copiedPath": "artifacts/investigations/package-version-rebaseline-10-1-4/version_map.json",
+        "bytes": 46879,
+        "sha256": "3F001E628649F206BC88231FC4AF5427A9858C566E207D8BD24519F43A6B971C",
+        "status": "confirmed-10.1.4-address-map",
+        "consumers": [
+          "S02",
+          "S04",
+          "S05",
+          "S06",
+          "S07",
+          "S09"
+        ]
+      },
+      {
+        "id": "R07",
+        "sourceCommit": "e96733cd96a5e7446d2b9adbc413bf77de0bcf98",
+        "sourcePath": "artifacts/investigations/music-bar-division-adaptive-substeps/README.md",
+        "copiedPath": "revisions/e96733cd96a5e7446d2b9adbc413bf77de0bcf98/artifacts/investigations/music-bar-division-adaptive-substeps/README.md",
+        "bytes": 4979,
+        "sha256": "1248714B2CBAB4A556F21A1E87FC39984E79C6F79E49CB6B48BF698049FFCC34",
+        "status": "runtime-corrected-counter-mapping",
+        "consumers": [
+          "S02",
+          "S08",
+          "S09"
+        ]
+      },
+      {
+        "id": "R08",
+        "sourceCommit": "e96733cd96a5e7446d2b9adbc413bf77de0bcf98",
+        "sourcePath": "artifacts/investigations/music-bar-division-adaptive-substeps/closure.json",
+        "copiedPath": "revisions/e96733cd96a5e7446d2b9adbc413bf77de0bcf98/artifacts/investigations/music-bar-division-adaptive-substeps/closure.json",
+        "bytes": 3476,
+        "sha256": "6323B886C8621EB94BFE9C47284D487179DD173CD9FA2C51A361B38EB12370F1",
+        "status": "runtime-corrected-counter-closure",
+        "consumers": [
+          "S02",
+          "S08",
+          "S09"
+        ]
+      },
+      {
+        "id": "R09",
+        "sourceCommit": "e96733cd96a5e7446d2b9adbc413bf77de0bcf98",
+        "sourcePath": "artifacts/investigations/bpm-change-consumer/README.md",
+        "copiedPath": "revisions/e96733cd96a5e7446d2b9adbc413bf77de0bcf98/artifacts/investigations/bpm-change-consumer/README.md",
+        "bytes": 3872,
+        "sha256": "4E0257BF3941387B40769CBC38481F71475A2CFF2D4147B4E9169A8DD4173DE8",
+        "status": "runtime-corrected-process-persistent-bpm-count",
+        "consumers": [
+          "S02",
+          "S03",
+          "S05",
+          "S06",
+          "S08"
+        ]
+      },
+      {
+        "id": "R10",
+        "sourceCommit": "e96733cd96a5e7446d2b9adbc413bf77de0bcf98",
+        "sourcePath": "artifacts/investigations/runtime-integration-prototype/note_manager_adaptive_substeps.json",
+        "copiedPath": "revisions/e96733cd96a5e7446d2b9adbc413bf77de0bcf98/artifacts/investigations/runtime-integration-prototype/note_manager_adaptive_substeps.json",
+        "bytes": 5653,
+        "sha256": "EC5C0CD7938828D50D5704B0FD0DAA492864F79DAC74F0FE34CDAA0723E39E71",
+        "status": "runtime-corrected-adaptive-oracle",
+        "consumers": [
+          "S02",
+          "S08",
+          "S09"
+        ]
+      },
+      {
+        "id": "R11",
+        "sourceCommit": "2ba3bdbbab9be2de6fedb9b22f623bd80611c023",
+        "sourcePath": "docs/CLOCK_SCHEDULING_HANDOFF.md",
+        "copiedPath": "handoff/2ba3bdbbab9be2de6fedb9b22f623bd80611c023/CLOCK_SCHEDULING_HANDOFF.md",
+        "bytes": 25826,
+        "sha256": "2FACE3473C0AFA9FD2DF3E9B55AFAFA8D49012B5E6DF65D7F8DB25343A25655A",
+        "status": "final-runtime-handoff-s02-closed",
+        "consumers": [
+          "S02",
+          "S03",
+          "S08",
+          "S10"
+        ]
+      }
+    ]
+  },
+  "upstreamDependencies": [
+    {
+      "id": "F01",
+      "frozenPath": "tmp/simulator-reverse-evidence/chart-construction/fixtures/poppin_shuffle_special.txt",
+      "bytes": 17882,
+      "sha256": "418DB7F5BFC6B5431AC0ABF2FB905120BDFA8C778C35AA42418A6FA43F4094DC",
+      "status": "verified-upstream-production-bms",
+      "consumers": [
+        "S03",
+        "S10"
+      ]
+    },
+    {
+      "id": "F02",
+      "frozenPath": "tmp/simulator-reverse-evidence/chart-construction/fixtures/poppin_shuffle_special.json",
+      "bytes": 50591,
+      "sha256": "FA636238280D384C3BAE42335B54522B02CDBE608C890516F2F38FB728DEA2FC",
+      "status": "verified-upstream-independent-chart-oracle",
+      "consumers": [
+        "S10"
+      ]
+    },
+    {
+      "id": "F03",
+      "frozenPath": "tmp/simulator-reverse-evidence/chart-construction/fixtures/786_miracle_april_habahiro_special.txt",
+      "bytes": 38700,
+      "sha256": "43148090C40ABBD951E8D7112200BDAE9B796A8A531A0793169E0AD70C3DC159",
+      "status": "verified-upstream-production-habahiro-bms",
+      "consumers": [
+        "S03",
+        "S10"
+      ]
+    },
+    {
+      "id": "F04",
+      "frozenPath": "tmp/simulator-reverse-evidence/chart-construction/fixtures/786_miracle_april_habahiro_special.json",
+      "bytes": 58170,
+      "sha256": "F30C0BC1AE5766D11394FBA02C8F14E463787B31A79E38E6C79F6E02B3493773",
+      "status": "verified-upstream-independent-habahiro-chart-oracle",
+      "consumers": [
+        "S10"
+      ]
+    }
+  ]
+}

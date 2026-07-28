@@ -1,0 +1,21 @@
+id	owner	method	rva	status	use
+AL01	InGameCalculatedData	get_IsAutoPlay	0x32F1E68	confirmed	auto flag OR IsAutoLive
+AL02	NoteSingleBase	MoveState	0x30E1698	confirmed	adjusted crossing and forcePerfect dispatch
+AL03	NoteSingleBase	forcePerfect	0x30E1838	confirmed	synthetic Began with Perfect 4
+AL04	NoteNormal	ExecTouchBegan	0x321AAA4	confirmed	one front judgement then Deactivate
+AL05	NoteFlickBase	forcePerfect	0x3A77768	confirmed	base Began then synthetic Moved
+AL06	NoteFlick	getForcePerfectFlickTouchPosX	0x30EAD54	confirmed	-100.0f
+AL07	NoteDirectionalFlick	getForcePerfectFlickTouchPosX	0x30EA108	confirmed	type 10 -500.0f; type 11 +500.0f
+AL08	NoteLong	forcePerfectMoveState	0x30EB97C	confirmed	head >= root and Wait
+AL09	NoteLong	forcePerfectOnUpdate	0x30EB7A0	confirmed	tail strict > and linked-after-first
+AL10	NoteSlide	forcePerfectMoveState	0x321C1CC	confirmed	head >= root and Wait
+AL11	NoteSlide	forcePerfectOnUpdate	0x321BD94	confirmed	one selected after node per call
+AL12	NoteSlide	forcePerfectStopState	0x321C810	confirmed	selected stopped after Perfect
+AL13	NoteSlide	intermediateNoteJudge	0x321E9E8	confirmed	one intermediate OneFrameData
+AL14	NoteSlide	afterNoteJudge	0x321F874	confirmed	one terminal OneFrameData
+AL15	OneFrameData	Setup	0x32F3888	confirmed	IsUse and field mapping
+AL16	InGameOneFrameJudgementController	InitOneFrameDataList	0x3304C40	confirmed	five slots
+AL17	InGameOneFrameJudgementController	GetUsableOneFrameData	0x3304D24	confirmed	first unused in pool order
+AL18	InGameOneFrameJudgementController	existsOneFrameData	0x3304E04	confirmed	any IsUse
+AL19	InGameOneFrameJudgementController	ReflectOneFrameData	0x3304EAC	confirmed	pool-order consume and clear
+AL20	InGameManager	updatePlayState	0x32F9BB0	confirmed	NoteManager before outer Reflect

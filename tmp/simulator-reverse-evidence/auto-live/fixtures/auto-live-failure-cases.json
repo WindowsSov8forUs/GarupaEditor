@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "status": "confirmed-failure-closed-matrix",
+  "cases": [
+    {
+      "id": "invalid-play-mode",
+      "expected": "evidence-required",
+      "atomic": "no state change"
+    },
+    {
+      "id": "mode14-or-debug-force-perfect",
+      "expected": "evidence-required",
+      "atomic": "no state change"
+    },
+    {
+      "id": "unknown-result-transform",
+      "expected": "evidence-required",
+      "atomic": "no state change"
+    },
+    {
+      "id": "directional-source-type-not-10-or-11",
+      "expected": "evidence-required",
+      "atomic": "no OneFrame Setup"
+    },
+    {
+      "id": "missing-long-after",
+      "expected": "evidence-required",
+      "atomic": "root not activated"
+    },
+    {
+      "id": "missing-slide-terminal",
+      "expected": "evidence-required",
+      "atomic": "root not activated"
+    },
+    {
+      "id": "duplicate-slide-node-identity",
+      "expected": "evidence-required",
+      "atomic": "root not activated"
+    },
+    {
+      "id": "foreign-one-frame-handle",
+      "expected": "evidence-required",
+      "atomic": "pool unchanged"
+    },
+    {
+      "id": "one-frame-duplicate-setup",
+      "expected": "evidence-required",
+      "atomic": "existing payload unchanged"
+    },
+    {
+      "id": "one-frame-sixth-entry",
+      "expected": "evidence-required",
+      "native_boundary": "exception after five IsUse slots",
+      "atomic": "five committed entries retained; no overwrite or resize"
+    },
+    {
+      "id": "non-finite-position",
+      "expected": "evidence-required",
+      "atomic": "no state change"
+    },
+    {
+      "id": "manual-touch",
+      "expected": "evidence-required",
+      "atomic": "Auto state unchanged"
+    },
+    {
+      "id": "score-life-skill-audio-particle-consumer",
+      "expected": "evidence-required",
+      "atomic": "judgement batch remains observation-only"
+    }
+  ]
+}

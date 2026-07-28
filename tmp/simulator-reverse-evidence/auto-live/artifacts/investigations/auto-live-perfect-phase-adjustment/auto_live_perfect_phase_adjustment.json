@@ -1,0 +1,310 @@
+{
+  "schema_version": 1,
+  "sample": "jp.co.craftegg.band 10.1.3 (229) Poppin' Shuffle Easy Auto Live",
+  "status": "static-auto-perfect-crossing-confirmed-live-b-unresolved",
+  "sources": {
+    "portable_particle_phase": {
+      "path": "artifacts/investigations/real-play-portable-particle-phase/real_play_portable_particle_phase.json",
+      "size": 8815,
+      "sha256": "01c812eb980a312a106cee893eb925d316f89d6a1e497d6fb6aa599fb1588cd7"
+    },
+    "real_particle_timing": {
+      "path": "artifacts/investigations/real-play-contact-particle-timing/real_play_contact_particle_timing.json",
+      "size": 24891,
+      "sha256": "57faae4b016c48e7046aef0be8cfe6bd026d8bef888568956d6f9a6899647372"
+    },
+    "real_judgement_cue_alignment": {
+      "path": "artifacts/investigations/real-play-judgement-cue-alignment/real_play_judgement_cue_alignment.json",
+      "size": 23497,
+      "sha256": "914f2fd48f8da2481f08a54a8ddf93ecbc46f3493d96f7eb4c36a3cf0a2b9046"
+    },
+    "judgement_adjustment_chain": {
+      "path": "artifacts/investigations/runtime-integration-prototype/judge_timing_adjustment_persistence_and_secondary_consumers.json",
+      "size": 6423,
+      "sha256": "828b35a91de01302988ec9d69e42a620fdfff5718bdabf7ccd29d127ab0a1eda"
+    },
+    "note_single_move_state_bundle": {
+      "path": "artifacts/rhythm/decompiled_bundles/note.c",
+      "size": 15857225,
+      "sha256": "d88fc2015d162a4d1c3369b943d0f109187c3e2190eca38520485eac99649db1"
+    },
+    "auto_play_accessor_bundle": {
+      "path": "artifacts/rhythm/decompiled_bundles/live.c",
+      "size": 65276252,
+      "sha256": "0f01c9d0735fa093abf10457ee34bd84d2e61c2d8396e4d8168a5a04ceb3f403"
+    },
+    "get_adjust_music_pos": {
+      "path": "artifacts/investigations/note-scheduling-clock/decompiled/03776a00__NoteManager__GetAdjustMusicPos.c",
+      "size": 560,
+      "sha256": "96eceabaa8d9e2e13133878449673df7c9c3463cbfd746bb114b1191d2193505"
+    },
+    "fast_absolute_pos": {
+      "path": "artifacts/investigations/note-scheduling-clock/decompiled/0377c7c8__NoteManager__FastAbsolutePos.c",
+      "size": 3880,
+      "sha256": "a4d3c6f3747e55ff9d22ee41a21bfccf5f78fac930a754dd282a351adad49cc1"
+    },
+    "slow_absolute_pos": {
+      "path": "artifacts/investigations/note-scheduling-clock/decompiled/0377ca28__NoteManager__SlowAbsolutePos.c",
+      "size": 2842,
+      "sha256": "5f0dd913948d46391c651c8d05906e24a728e405a31c50b3ab511cb90feecf93"
+    }
+  },
+  "static_control_flow": {
+    "note_single_move_state": {
+      "rva": "0x30E1698",
+      "adjusted_position_call": "0x30E16E8 -> NoteManager.GetAdjustMusicPos",
+      "note_absolute_position_offset": "NoteInformation +0x58",
+      "crossing_rule": "adjustedMusicPos - noteAbsolutePos >= 0",
+      "auto_play_check": "0x30E172C -> InGameCalculatedData.get_IsAutoPlay",
+      "auto_dispatch": "vtable +0x2C8 -> forcePerfect"
+    },
+    "force_perfect": {
+      "rva": "0x30E1838",
+      "submitted_note_result_type": 4,
+      "submitted_note_result_name": "Perfect"
+    },
+    "is_auto_play": {
+      "rva": "0x32F1E68",
+      "rule": "field +0xB8 || IsAutoLive(field +0x188)"
+    },
+    "adjusted_music_position": {
+      "rva": "0x3776A00",
+      "judgement_adjust_value_b_offset": "InGameCalculatedData +0x17C",
+      "positive_route": "FastAbsolutePos @ 0x377C7C8",
+      "negative_route": "SlowAbsolutePos @ 0x377CA28",
+      "frame_seconds": 0.016666666667,
+      "positive_effect": "advance adjusted score position by one 1/60-second score step per unit",
+      "negative_effect": "rewind adjusted score position by one 1/60-second score step per unit",
+      "tempo_boundary_behavior": "B=0 returns the current music score position; positive B advances by B engine-frame score steps; negative B rewinds by abs(B) steps. Both directions cross BPM-change boundaries using the active tempo segment."
+    }
+  },
+  "phase_model": {
+    "formula": "adjustedPortablePhaseMs = zeroBPortablePhaseMs - B * 1000 / 60",
+    "judgement_adjust_value_b_range": [
+      -5,
+      5
+    ],
+    "zero_b_portable_phases_ms": [
+      133.333333,
+      150.0,
+      133.333333,
+      183.333333,
+      133.333333,
+      183.333333
+    ],
+    "real_peak_phase_ms_from_judgement": {
+      "minimum": 33.769152,
+      "p25": 63.752825,
+      "median": 76.736498,
+      "p75": 86.283514,
+      "maximum": 117.044133
+    },
+    "scan": [
+      {
+        "judgement_adjust_value_b": -5,
+        "phase_shift_ms": 83.333333,
+        "portable_peak_phase_ms_from_judgement": {
+          "minimum": 216.666666,
+          "p25": 216.666666,
+          "median": 225.0,
+          "p75": 258.333333,
+          "maximum": 266.666666
+        },
+        "portable_median_minus_real_median_ms": 148.263502,
+        "phase_ranges_overlap": false,
+        "portable_range_within_real_range": false
+      },
+      {
+        "judgement_adjust_value_b": -4,
+        "phase_shift_ms": 66.666667,
+        "portable_peak_phase_ms_from_judgement": {
+          "minimum": 200.0,
+          "p25": 200.0,
+          "median": 208.333333,
+          "p75": 241.666666,
+          "maximum": 250.0
+        },
+        "portable_median_minus_real_median_ms": 131.596835,
+        "phase_ranges_overlap": false,
+        "portable_range_within_real_range": false
+      },
+      {
+        "judgement_adjust_value_b": -3,
+        "phase_shift_ms": 50.0,
+        "portable_peak_phase_ms_from_judgement": {
+          "minimum": 183.333333,
+          "p25": 183.333333,
+          "median": 191.666667,
+          "p75": 225.0,
+          "maximum": 233.333333
+        },
+        "portable_median_minus_real_median_ms": 114.930169,
+        "phase_ranges_overlap": false,
+        "portable_range_within_real_range": false
+      },
+      {
+        "judgement_adjust_value_b": -2,
+        "phase_shift_ms": 33.333333,
+        "portable_peak_phase_ms_from_judgement": {
+          "minimum": 166.666666,
+          "p25": 166.666666,
+          "median": 175.0,
+          "p75": 208.333333,
+          "maximum": 216.666666
+        },
+        "portable_median_minus_real_median_ms": 98.263502,
+        "phase_ranges_overlap": false,
+        "portable_range_within_real_range": false
+      },
+      {
+        "judgement_adjust_value_b": -1,
+        "phase_shift_ms": 16.666667,
+        "portable_peak_phase_ms_from_judgement": {
+          "minimum": 150.0,
+          "p25": 150.0,
+          "median": 158.333333,
+          "p75": 191.666666,
+          "maximum": 200.0
+        },
+        "portable_median_minus_real_median_ms": 81.596835,
+        "phase_ranges_overlap": false,
+        "portable_range_within_real_range": false
+      },
+      {
+        "judgement_adjust_value_b": 0,
+        "phase_shift_ms": 0.0,
+        "portable_peak_phase_ms_from_judgement": {
+          "minimum": 133.333333,
+          "p25": 133.333333,
+          "median": 141.666667,
+          "p75": 175.0,
+          "maximum": 183.333333
+        },
+        "portable_median_minus_real_median_ms": 64.930169,
+        "phase_ranges_overlap": false,
+        "portable_range_within_real_range": false
+      },
+      {
+        "judgement_adjust_value_b": 1,
+        "phase_shift_ms": -16.666667,
+        "portable_peak_phase_ms_from_judgement": {
+          "minimum": 116.666666,
+          "p25": 116.666666,
+          "median": 125.0,
+          "p75": 158.333333,
+          "maximum": 166.666666
+        },
+        "portable_median_minus_real_median_ms": 48.263502,
+        "phase_ranges_overlap": true,
+        "portable_range_within_real_range": false
+      },
+      {
+        "judgement_adjust_value_b": 2,
+        "phase_shift_ms": -33.333333,
+        "portable_peak_phase_ms_from_judgement": {
+          "minimum": 100.0,
+          "p25": 100.0,
+          "median": 108.333333,
+          "p75": 141.666666,
+          "maximum": 150.0
+        },
+        "portable_median_minus_real_median_ms": 31.596835,
+        "phase_ranges_overlap": true,
+        "portable_range_within_real_range": false
+      },
+      {
+        "judgement_adjust_value_b": 3,
+        "phase_shift_ms": -50.0,
+        "portable_peak_phase_ms_from_judgement": {
+          "minimum": 83.333333,
+          "p25": 83.333333,
+          "median": 91.666667,
+          "p75": 125.0,
+          "maximum": 133.333333
+        },
+        "portable_median_minus_real_median_ms": 14.930169,
+        "phase_ranges_overlap": true,
+        "portable_range_within_real_range": false
+      },
+      {
+        "judgement_adjust_value_b": 4,
+        "phase_shift_ms": -66.666667,
+        "portable_peak_phase_ms_from_judgement": {
+          "minimum": 66.666666,
+          "p25": 66.666666,
+          "median": 75.0,
+          "p75": 108.333333,
+          "maximum": 116.666666
+        },
+        "portable_median_minus_real_median_ms": -1.736498,
+        "phase_ranges_overlap": true,
+        "portable_range_within_real_range": true
+      },
+      {
+        "judgement_adjust_value_b": 5,
+        "phase_shift_ms": -83.333333,
+        "portable_peak_phase_ms_from_judgement": {
+          "minimum": 50.0,
+          "p25": 50.0,
+          "median": 58.333333,
+          "p75": 91.666666,
+          "maximum": 100.0
+        },
+        "portable_median_minus_real_median_ms": -18.403165,
+        "phase_ranges_overlap": true,
+        "portable_range_within_real_range": true
+      }
+    ],
+    "zero_b_result": {
+      "judgement_adjust_value_b": 0,
+      "phase_shift_ms": 0.0,
+      "portable_peak_phase_ms_from_judgement": {
+        "minimum": 133.333333,
+        "p25": 133.333333,
+        "median": 141.666667,
+        "p75": 175.0,
+        "maximum": 183.333333
+      },
+      "portable_median_minus_real_median_ms": 64.930169,
+      "phase_ranges_overlap": false,
+      "portable_range_within_real_range": false
+    },
+    "closest_median_result": {
+      "judgement_adjust_value_b": 4,
+      "phase_shift_ms": -66.666667,
+      "portable_peak_phase_ms_from_judgement": {
+        "minimum": 66.666666,
+        "p25": 66.666666,
+        "median": 75.0,
+        "p75": 108.333333,
+        "maximum": 116.666666
+      },
+      "portable_median_minus_real_median_ms": -1.736498,
+      "phase_ranges_overlap": true,
+      "portable_range_within_real_range": true
+    },
+    "source_cross_checks": {
+      "real_particle_peak_count": 71,
+      "real_high_confidence_cue_count": 71,
+      "paired_peak_count": 71
+    }
+  },
+  "confirmed": [
+    "NoteSingleBase.MoveState invokes NoteManager.GetAdjustMusicPos and only enters judgement after the adjusted score position reaches the note absolute position.",
+    "When InGameCalculatedData.get_IsAutoPlay is true, that crossing dispatches the note's forcePerfect virtual method in the same MoveState update.",
+    "NoteSingleBase.forcePerfect submits NoteResultType.Perfect (4).",
+    "JudgementAdjustValueB is restricted to -5 through 5 by the recovered settings UI, and each unit moves the adjusted score position by one tempo-aware 1/60-second step.",
+    "Under the explicit B=0 model, the portable 30 Hz particle peak range does not overlap the formal-play range."
+  ],
+  "inference": [
+    "B=4 is the closest discrete setting in the recovered range: it moves the portable median to within 1.736498 ms of the formal-play median and places the portable range inside the formal-play range.",
+    "A formal-play value of B=4 could therefore explain the previously measured phase mismatch without requiring a four-frame particle lifecycle correction."
+  ],
+  "unresolved": [
+    "The JudgementAdjustValueB value active during the formal recording has not been captured from LiveCoreSettings, so B=4 is not a confirmed runtime fact.",
+    "This scalar phase model does not establish Unity PlayerLoop, random-stream, ParticleSystem lifecycle, or GPU pixel parity.",
+    "Long and Slide Auto Live forcePerfect state paths require their own type-specific integration rather than inheriting the NoteSingleBase model wholesale."
+  ],
+  "avd_used_for_source_capture": true,
+  "avd_used_this_pass": false
+}

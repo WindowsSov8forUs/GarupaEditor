@@ -10,7 +10,7 @@
 - 锁定原作样本：`jp.co.craftegg.band` 10.1.3（version code 229，`arm64-v8a`）。
 - 上游已验收阶段：第一切片、谱面构造、时钟与调度。
 - 上游时钟调度验收提交：GarupaEditor `78414bc`，关闭记录修订提交 `ca84258`。
-- 当前状态：**A00 任务书已建立；A01 静态证据晋升与 A02 离线 oracle/缺口闭合尚未完成。A02 是硬门，在其关闭前禁止实施 A03–A10。**
+- 当前状态：**A00–A02 已完成；Reverse 最终证据提交 `a3f28d77e71c5e7a62cab0de81f0cf668a5b745b` 已关闭 G01–G10，`auto_live_gate = closed`、`blocking_findings = []`。A03–A10 前置硬门已解除。**
 - 计划验收记录：`tmp/simulator-auto-live-acceptance.md`。
 - 计划证据包：`tmp/simulator-reverse-evidence/auto-live/`。
 
@@ -45,16 +45,16 @@
 | 任务 | 状态 | 完成标准 |
 | --- | --- | --- |
 | A00 建立阶段任务书 | 已完成 | 范围、证据候选、硬门、实现批次和验收矩阵写入本文档 |
-| A01 晋升 Auto Live 静态证据 | 未开始 | Reverse 提交最小闭合证据；GarupaEditor 冻结包通过源/副本/index 三方校验 |
-| A02 生成固定事件 oracle 并关闭缺口 | **硬门，未开始** | Reverse closure 为 closed、无 blocking finding；固定轨迹可离线复算且不含推定分支 |
-| A03 接入 Auto Live 模式与判定上下文 | blocked-by-A02 | 宿主模式显式，`get_IsAutoPlay` Auto Live 路由可审计，manual/mode14 不冒充 |
-| A04 建立 Long/Slide 运行子图 | blocked-by-A02 | 构造共享身份映射到父拥有的 After 对象，更新/回收所有权匹配证据 |
-| A05 恢复 Single/Flick Force Perfect | blocked-by-A02 | Normal/Flick/Directional 在 adjusted crossing 同次 Update 产生一次确认的 Perfect 路由 |
-| A06 恢复 Long 分阶段完成 | blocked-by-A02 | 头、尾严格比较、状态转换、父/尾事件和失活顺序匹配 oracle |
-| A07 恢复 Slide 分阶段完成 | blocked-by-A02 | 头、中间、终端、Stop 路径及每次调用粒度匹配 oracle |
-| A08 恢复 Auto Live OneFrame 填充与聚合 | blocked-by-A02 | 原作 5 槽池、Setup 占用、池序收集、同帧聚合、清除和失败关闭匹配证据 |
-| A09 接入调度、暂停与生命周期 | blocked-by-A02 | 反向根 Update、子节点顺序、外层帧 Reflect、暂停冻结和池复用无回归 |
-| A10 生产 oracle 与阶段验收 | blocked-by-A02 | 固定轨迹、生产 BMS、失败关闭、全部隔离回归和验收文档通过 |
+| A01 晋升 Auto Live 静态证据 | 已完成 | Reverse `a3f28d77` 提交 43 个最终 contract/切片文件；GarupaEditor 冻结 E01–E30 与 R01–R08/R05.D01–D35 |
+| A02 生成固定事件 oracle 并关闭缺口 | 已完成，硬门关闭 | G01–G10 closed；固定轨迹两次生成一致；5 槽、Flick 参数、Long/Slide 粒度与失败矩阵闭合 |
+| A03 接入 Auto Live 模式与判定上下文 | 可开始 | 宿主模式显式，`get_IsAutoPlay` Auto Live 路由可审计，manual/mode14 不冒充 |
+| A04 建立 Long/Slide 运行子图 | 等待 A03 | 构造共享身份映射到父拥有的 After 对象，更新/回收所有权匹配证据 |
+| A05 恢复 Single/Flick Force Perfect | 等待 A04 | Normal/Flick/Directional 在 adjusted crossing 同次 Update 产生一次确认的 Perfect 路由 |
+| A06 恢复 Long 分阶段完成 | 等待 A05 | 头、尾严格比较、状态转换、父/尾事件和失活顺序匹配 oracle |
+| A07 恢复 Slide 分阶段完成 | 等待 A06 | 头、中间、终端、Stop 路径及每次调用粒度匹配 oracle |
+| A08 恢复 Auto Live OneFrame 填充与聚合 | 等待 A07 | 原作 5 槽池、Setup 占用、池序收集、同帧聚合、清除和失败关闭匹配证据 |
+| A09 接入调度、暂停与生命周期 | 等待 A08 | 反向根 Update、子节点顺序、外层帧 Reflect、暂停冻结和池复用无回归 |
+| A10 生产 oracle 与阶段验收 | 等待 A09 | 固定轨迹、生产 BMS、失败关闭、全部隔离回归和验收文档通过 |
 
 ### 1.4 批次记录
 
@@ -64,6 +64,17 @@
 - 确认现有证据已经覆盖 Single、Long、Slide、Flick 和 OneFrame 主调用链，但 Auto Live 汇总 JSON 存在内部源哈希陈旧，不能直接作为实施锁。
 - 将 A01/A02 设为代码硬门：先在 Reverse 晋升最小反编译切片并生成固定事件 oracle，再冻结到 GarupaEditor，最后实施 A03–A10。
 - 明确分数、生命、技能、Fever、音频、粒子和渲染继续后置；本阶段不使用零值或 no-op 冒充这些链路。
+
+#### 2026-07-28 第二批：A01/A02 证据晋升与硬门关闭
+
+- Reverse 新增 `artifacts/investigations/auto-live-runtime-contract/`，提交 `a3f28d77e71c5e7a62cab0de81f0cf668a5b745b` 并推送 main。
+- 最小证据覆盖 `get_IsAutoPlay`、Single/Flick/Directional、Long/Slide Force Perfect、OneFrame 5 槽与 `updatePlayState` outer Reflect owner。
+- Directional Flick 原始 ARM64 确认 source type 10→`-500.0f`、11→`+500.0f`；普通 Flick 为 `-100.0f`，Began→Moved 只产生一次判定。
+- Long 根 `>=`、尾严格 `>`；Slide 每次 `forcePerfectOnUpdate` 只处理一个 selected current after，均进入固定事件 oracle。
+- E02/E05/E30 陈旧内嵌 profile 通过最终 contract 的实际 Git blob profile 与修订链关闭；正式样本继续锁定 persisted B=0，不设全局默认。
+- Python 固定轨迹生成器两次输出一致；oracle 明确排除 score/life/skill/audio/particle/rendering，GarupaEditor 只冻结 JSON。
+- GarupaEditor 证据包冻结 30 个候选条目、43 个最终条目、2 个 fixture alias 与 2 个上游 manifest；工作树校验通过，暂存后执行 index 校验。
+- `OPEN_GAPS.md` 记录无阻断项和四类持续非阻断边界；A03–A10 代码硬门解除。
 
 ## 2. 固定范围
 

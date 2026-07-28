@@ -1,0 +1,56 @@
+start	0x30e9ec8
+end	0x30e9f9c
+
+0x30e9ec8	STP             D11, D10, [SP,#var_30]!
+0x30e9ecc	STP             D9, D8, [SP,#0x30+var_20]
+0x30e9ed0	STP             X30, X19, [SP,#0x30+var_10]
+0x30e9ed4	MOV             V10.16B, V3.16B
+0x30e9ed8	MOV             V8.16B, V2.16B
+0x30e9edc	MOV             V11.16B, V1.16B
+0x30e9ee0	MOV             V9.16B, V0.16B
+0x30e9ee4	MOV             X19, X0
+0x30e9ee8	BL              unk_30E0E90	refs=0x30e0e90=unk_30E0E90
+0x30e9eec	MOV             X0, X19
+0x30e9ef0	MOV             V0.16B, V9.16B
+0x30e9ef4	MOV             V1.16B, V11.16B
+0x30e9ef8	MOV             V2.16B, V8.16B
+0x30e9efc	MOV             V3.16B, V10.16B
+0x30e9f00	BL              NoteDirectionalFlick__shouldJudgeDirectionalFlick	refs=0x30e9f9c=NoteDirectionalFlick__shouldJudgeDirectionalFlick
+0x30e9f04	TBZ             W0, #0, loc_30E9F88	refs=0x30e9f88=loc_30E9F88
+0x30e9f08	FMOV            S1, WZR
+0x30e9f0c	FMOV            S3, WZR
+0x30e9f10	MOV             X0, X19
+0x30e9f14	MOV             V0.16B, V9.16B
+0x30e9f18	MOV             V2.16B, V8.16B
+0x30e9f1c	BL              unk_30E0E90	refs=0x30e0e90=unk_30E0E90
+0x30e9f20	ADRP            X8, #dword_1536940@PAGE
+0x30e9f24	LDR             S1, [X8,#dword_1536940@PAGEOFF]
+0x30e9f28	FCMP            S0, S1
+0x30e9f2c	B.LE            loc_30E9F88	refs=0x30e9f88=loc_30E9F88
+0x30e9f30	LDR             X8, [X19,#0x60]
+0x30e9f34	CBZ             X8, loc_30E9F98	refs=0x30e9f98=loc_30E9F98
+0x30e9f38	MOV             W9, #1
+0x30e9f3c	MOV             X0, X19
+0x30e9f40	MOV             X1, XZR
+0x30e9f44	STRB            W9, [X8,#0x14]
+0x30e9f48	BL              unk_3A769DC	refs=0x3a769dc=unk_3A769DC
+0x30e9f4c	LDR             W1, [X19,#0x18C]
+0x30e9f50	LDR             X3, [X19,#0x90]
+0x30e9f54	LDR             W5, [X19,#0x190]
+0x30e9f58	MOV             X4, X0
+0x30e9f5c	MOV             W2, #9
+0x30e9f60	MOV             X0, X19
+0x30e9f64	BL              NoteFrontBase__judgeFrontNote	refs=0x30e0fec=NoteFrontBase__judgeFrontNote
+0x30e9f68	LDR             X8, [X19]
+0x30e9f6c	MOV             X0, X19
+0x30e9f70	LDP             X30, X19, [SP,#0x30+var_10]
+0x30e9f74	LDP             D9, D8, [SP,#0x30+var_20]
+0x30e9f78	LDR             X2, [X8,#0x228]
+0x30e9f7c	LDR             X1, [X8,#0x230]
+0x30e9f80	LDP             D11, D10, [SP+0x30+var_30],#0x30
+0x30e9f84	BR              X2
+0x30e9f88	LDP             X30, X19, [SP,#0x30+var_10]
+0x30e9f8c	LDP             D9, D8, [SP,#0x30+var_20]
+0x30e9f90	LDP             D11, D10, [SP+0x30+var_30],#0x30
+0x30e9f94	RET
+0x30e9f98	BL              unk_2E1049C	refs=0x2e1049c=unk_2E1049C

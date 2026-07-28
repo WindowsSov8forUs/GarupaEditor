@@ -1,0 +1,10 @@
+kind	name	address_or_path	status	note
+code	NoteSingleBase.MoveState	0x30E1698	confirmed	adjusted-position crossing gates Auto Live forcePerfect dispatch
+code	NoteSingleBase.forcePerfect	0x30E1838	confirmed	submits Perfect (4)
+code	InGameCalculatedData.get_IsAutoPlay	0x32F1E68	confirmed	manual auto-play flag or Auto Live state
+code	NoteManager.GetAdjustMusicPos	0x3776A00	confirmed	reads JudgementAdjustValueB at InGameCalculatedData +0x17C
+code	NoteManager.FastAbsolutePos	0x377C7C8	confirmed	positive B advances one tempo-aware 1/60-second step per unit
+code	NoteManager.SlowAbsolutePos	0x377CA28	confirmed	negative B rewinds one tempo-aware 1/60-second step per unit
+model	JudgementAdjustValueB scan	-5..5	controlled	pure phase model over checked-in portable and formal-play distributions
+inference	closest phase median	B=4	unconfirmed-runtime	within 1.736498 ms; requires LiveCoreSettings capture
+follow-up	persisted JudgementAdjustValueB	../formal-play-live-core-settings/	confirmed-zero	B=4 explanation rejected by settings/lcs
