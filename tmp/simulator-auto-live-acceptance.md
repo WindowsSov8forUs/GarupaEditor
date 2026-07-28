@@ -1,6 +1,6 @@
 # 模拟器 Auto Live 阶段验收记录
 
-> **2026-07-28 复审状态：验收结论已撤销。** 普通生产 Slide 因 `afterNoteType=None` 被运行时错误拒绝，Slide 回池 child Reset 未按 R02 恢复，AL19/AL20 又绕过了对应 production graph。本文后续“通过/关闭”内容仅保留为被撤销的历史记录；A04/A07/A09/A10 修复并重新执行完整验收前不得引用本文证明阶段完成。
+> **2026-07-28 关闭后复审修订：最终通过。** 复审发现的普通生产 Slide `afterNoteType=None` 拒绝、Slide 回池 child Reset、Directional terminal note type 和 AL19/AL20 绕过问题，已由重开提交 `23ac2f2`、实现修复提交 `a7ce464` 及本文件所在重验收提交闭合。本文以下内容已按修复后结果重建，不再沿用被撤销的旧结论。
 
 ## 1. 验收身份
 
@@ -14,9 +14,12 @@
 - Long/Slide 状态机提交：`f5cc3d1`
 - OneFrame 聚合提交：`24c58a6`
 - 外层调度与生命周期提交：`848d245`
-- A10 测试与验收提交：`1fc5b7b`；最终 oracle 直接对照增强为本文件所在提交
+- A10 测试与验收提交：`1fc5b7b`；冻结 oracle 直接对照增强提交：`67c4e06`
+- 关闭后复审重开提交：`23ac2f2`
+- 生产 Slide 与回池修复提交：`a7ce464`
+- 最终 production/lifecycle 重验收：本文件所在提交
 - 验收日期：2026-07-28
-- 验收结论：**已撤销。A04/A07/A09/A10 重新打开，Auto Live 阶段当前未关闭，禁止进入下一阶段。**
+- 验收结论：**通过。复审发现项已闭合，A00–A10 完成，Auto Live 阶段重新关闭；下一阶段如进入手动输入与判定，必须先建立独立设备证据硬门。**
 
 ## 2. 证据硬门与冻结包
 
@@ -65,13 +68,13 @@ auto-live evidence verified: candidates=30, final=43, gate=closed, index=checked
 | A01 静态证据晋升 | 通过 | Reverse `a3f28d77` 晋升 43 个最终条目并修复 E02/E05/E30 陈旧 source profile |
 | A02 固定事件 oracle | 通过 | G01–G10 closed，双次离线生成一致，失败矩阵和持续边界冻结 |
 | A03 模式与上下文 | 通过 | 宿主强制显式 `manual`/`auto-live`；mode14/debug/未知 transform 拒绝 |
-| A04 Long/Slide 运行图 | 通过 | root 父拥有 child runtime；缺 terminal、重复身份、非递增源序在激活前拒绝 |
+| A04 Long/Slide 运行图 | 通过 | 普通/特殊 terminal 联合验证；root 父拥有共享 child；缺 terminal、重复身份、非递增源序拒绝；父回池清 graph/current |
 | A05 Single/Flick | 通过 | Normal `>=`；Flick Began→synthetic Moved→一次结果；Directional 参数和类型精确 |
 | A06 Long | 通过 | head `>=`、tail `>`、Move→Wait、linked finish→tail、最终 Deactive 匹配 |
-| A07 Slide | 通过 | source-order current、invisible、intermediate、terminal、Stop selected 和一次调用粒度匹配 |
+| A07 Slide | 通过 | source-order current、invisible、terminal 8/5/6/7、Stop intermediate、Deactive Reset 和一次调用粒度匹配 |
 | A08 OneFrame | 通过 | 固定 5 槽、first-unused、原子 Setup、部分投影、池序 Reflect、清除、空帧和第六条失败匹配 |
-| A09 调度生命周期 | 通过 | 反向 root、父子 AfterUpdate、adaptive 外层一次 Reflect、暂停冻结、失败停止、dispose 清理匹配 |
-| A10 生产 oracle | 通过 | AL01–AL22、普通/HABAHIRO 生产图、失败矩阵、全部隔离回归和依赖边界通过 |
+| A09 调度生命周期 | 通过 | 反向 root、父子 AfterUpdate、adaptive 外层一次 Reflect、active Slide/slot 暂停冻结、复用和 dispose 清理匹配 |
+| A10 生产 oracle | 通过 | AL01–AL22、普通 93/HABAHIRO 51 个 production Slide root、失败矩阵、全部隔离回归和依赖边界通过 |
 
 ## 4. 已落地的生产边界
 
@@ -106,11 +109,12 @@ type SimulatorPlayMode =
 - Long terminal runtime 只由 Long root 持有；激活要求 Long after family 且 terminal position 严格大于 root。
 - Long head 比较为 `>=`，状态切 Wait；tail 比较为严格 `>`，顺序为 linked child Update/finish、tail Perfect、父 Deactive。
 - Slide child runtime 直接引用生产 `slideNoteList` 的共享 `NoteInformation`，按源序持有；child 不进入 NoteManager 根 active list。
-- Slide 激活验证 completed terminal family、非空列表、对象身份唯一和严格递增 position。
+- Slide 激活联合验证 root after type 和最后共享 child game-note type：普通 `None + SlideEndA/B`、Flick、Directional、Multiple Directional；同时验证非空列表、对象身份唯一和严格递增 position。
 - head 使用 `>=`；pending visible 使用 `>=`。`forcePerfectOnUpdate` 不使用 while，每次只推进一个 current。
 - invisible support 每次只推进一个 cursor，不产生 OneFrame；intermediate、terminal 和 Stop selected 路由分离。
 - AfterUpdate 顺序为父 base 在先，再转发 Long linked 或 Slide current child。
-- dispose 和下一次激活均清除旧 child graph/cursor/trace，不把池复用状态泄漏到后续 root。
+- terminal Deactive/父回池时按 R02 遍历 reset child 并清 graph/current；dispose 幂等执行同一清理，下一次激活从生产共享身份重建，不泄漏 judged/cursor。
+- terminal judgement note type 精确为普通 8、Flick 5、Directional 6、Multiple Directional 7；Stop selected 固定走 intermediate note type 8，不冒充 terminal tail。
 
 ### 4.4 OneFrame 判定投影
 
@@ -148,16 +152,16 @@ type SimulatorPlayMode =
 | AL08 | 通过 | Long tail equal 不判，下一大于值 linked finish→tail→Deactive |
 | AL09 | 通过 | Slide head equal、Wait、current=0 |
 | AL10 | 通过 | intermediate 源序 cursor +1；invisible 不占槽 |
-| AL11 | 通过 | terminal tail/Deactive 与 Stop selected intermediate 路由分离 |
+| AL11 | 通过 | terminal 8/5/6/7、tail/Deactive cleanup、Long/Slide 复用与 Stop intermediate 路由分离 |
 | AL12 | 通过 | adjusted 大步时每次 OnUpdate 最多推进一个 current |
 | AL13 | 通过 | Long base→linked、Slide base→current AfterUpdate 顺序 |
 | AL14 | 通过 | 3 adaptive 子步产生 3 entry，外层只有一次 Reflect |
 | AL15 | 通过 | 固定五槽、池序、清除和 slot 0 复用 |
 | AL16 | 通过 | 第六条失败，前五槽逐字节状态不变并可池序 Reflect |
 | AL17 | 通过 | 空 Reflect 为 null，首次非空 batch index 仍为 0 |
-| AL18 | 通过 | 暂停不推进 trace/clock，恢复后正常 crossing |
-| AL19 | 通过 | 两个 production BMS 的真实 Normal/Flick/Long/Slide identity 进入 payload；宿主接受登记 chart |
-| AL20 | 通过 | HABAHIRO production graph 可静态消费，并检查持续 runtime 证据披露 |
+| AL18 | 通过 | active Slide graph/cursor/trace 与 occupied slot 暂停冻结；恢复单步；active dispose 清 graph/slot且无新事件 |
+| AL19 | 通过 | 两个 production BMS 分别覆盖四 family；全部 93/51 个 Slide root 激活；各完整跑通普通 Slide 并清 graph |
+| AL20 | 通过 | HABAHIRO 普通 Slide production graph 共享身份可静态消费，并检查持续 runtime 证据披露 |
 | AL21 | 通过 | 阶段外字段在类型/对象上 absent，业务 consumer 失败关闭；重复投影字节一致 |
 | AL22 | 通过 | 冻结 failure matrix、非法模式/图/位置/family/handle/Setup/触摸全部拒绝且关键状态原子 |
 

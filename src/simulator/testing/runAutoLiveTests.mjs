@@ -132,7 +132,7 @@ function validateAutoLive() {
     { absolutePos: 180 },
     { absolutePos: 181 },
     { absolutePos: 240, gameNoteType: types.GameNoteType.SlideEndA },
-  ]) => {
+  ], rootOverrides = {}) => {
     const children = nodeSpecs.map((spec, childIndex) => normalInfo(
       index * 10 + childIndex + 1,
       spec.absolutePos,
@@ -146,9 +146,10 @@ function validateAutoLive() {
       gameNoteType: types.GameNoteType.SlideA,
       fireNoteType: types.FrontNoteType.SlideA,
       isSlideNoteHead: true,
-      afterNoteType: types.AfterNoteType.SlideEnd,
+      afterNoteType: types.AfterNoteType.None,
       afterNoteAbsolutePos: children.at(-1).absolutePos,
       slideNoteList: children,
+      ...rootOverrides,
     });
   };
   const controller = () => {
@@ -316,12 +317,16 @@ function validateAutoLive() {
     ok(bound.note.executeUpdate(0), "tail strict greater");
     assert.equal(bound.note.state, NoteState.Deactive);
     assert.equal(reflect(bound.oneFrame).entries[0].phase, "tail");
+    assert.equal(bound.note.afterNote, null);
     assert.deepEqual(bound.note.autoLiveTrace.slice(-2).map((entry) =>
       entry.kind === "long-tail-perfect" ? "tail-perfect" : entry.kind), [
       expected.steps[3].event,
       expected.steps[4].event,
     ]);
     assert.equal(expected.steps[2].event, "tail-equal-no-crossing");
+    ok(bound.note.activate(longInfo(108)), "reuse Long pool object");
+    assert.equal(bound.note.afterNote.judged, false);
+    assert.equal(bound.note.afterNote.absolutePosition, 240);
   });
 
   test("AL13", "AfterUpdate 保持父 base→Long linked/Slide current", () => {
@@ -415,7 +420,7 @@ function validateAutoLive() {
     assert.equal(reflect(oneFrame).batchIndex, 0);
   });
 
-  test("AL11", "Slide terminal 与 Stop selected 路由分离", () => {
+  test("AL11", "Slide terminal 类型映射、回池 Reset 与 Stop selected 路由分离", () => {
     const bound = bindNote(new notes.NoteSlide("slide-terminal"), slideInfo(), {
       position: { value: 120 },
     });
@@ -429,8 +434,16 @@ function validateAutoLive() {
     ok(bound.note.executeUpdate(0), "terminal");
     const terminal = reflect(bound.oneFrame);
     assert.equal(terminal.entries[0].phase, "tail");
+    assert.equal(terminal.entries[0].noteType, 8);
     assert.equal(bound.note.state, NoteState.Deactive);
-    assert.equal(bound.note.currentAfterIndex, 3);
+    assert.equal(bound.note.currentAfterIndex, 0);
+    assert.equal(bound.note.afterNotes.length, 0);
+    const reusedInformation = slideInfo(109);
+    ok(bound.note.activate(reusedInformation), "reuse Slide pool object");
+    assert.equal(bound.note.currentAfterIndex, 0);
+    assert.equal(bound.note.afterNotes.length, reusedInformation.slideNoteList.length);
+    assert.equal(bound.note.afterNotes.every((after, index) =>
+      after.source === reusedInformation.slideNoteList[index] && !after.judged), true);
     const stopped = bindNote(new notes.NoteSlide("slide-stop"), slideInfo(), {
       position: { value: 1000 },
     });
@@ -440,6 +453,33 @@ function validateAutoLive() {
     assert.equal(reflect(stopped.oneFrame).entries[0].phase, "intermediate");
     assert.equal(stopped.note.autoLiveTrace.some(
       (entry) => entry.kind === "slide-stop-perfect"), true);
+
+    for (const [caseId, afterNoteType, terminalGameNoteType, expectedNoteType] of [
+      [110, types.AfterNoteType.SlideFlickEnd, types.GameNoteType.SlideEndFlickA, 5],
+      [111, types.AfterNoteType.SlideDirectionalFlickEndLeft,
+        types.GameNoteType.SlideADirectionalFlickLeft, 6],
+      [112, types.AfterNoteType.SlideMultipleDirectionalFlickLeft,
+        types.GameNoteType.SlideADirectionalFlickLeftAdd, 7],
+    ]) {
+      const information = slideInfo(caseId, [
+        { absolutePos: 180 },
+        { absolutePos: 240, gameNoteType: terminalGameNoteType },
+      ], { afterNoteType });
+      const terminalBound = bindNote(
+        new notes.NoteSlide(`slide-terminal-type-${caseId}`),
+        information,
+        { position: { value: 120 } },
+      );
+      ok(terminalBound.note.executeUpdate(0), `terminal type ${caseId} head`);
+      reflect(terminalBound.oneFrame);
+      terminalBound.position.value = 1000;
+      ok(terminalBound.note.executeUpdate(0), `terminal type ${caseId} intermediate`);
+      reflect(terminalBound.oneFrame);
+      ok(terminalBound.note.executeUpdate(0), `terminal type ${caseId} tail`);
+      const typedTerminal = reflect(terminalBound.oneFrame);
+      assert.equal(typedTerminal.entries[0].noteType, expectedNoteType);
+      assert.equal(terminalBound.note.state, NoteState.Deactive);
+    }
   });
 
   test("AL15", "OneFrame 固定五槽、first-unused、耗尽、池序清除复用", () => {
@@ -509,24 +549,44 @@ function validateAutoLive() {
     assert.equal(reflect(oneFrame).entryCount, 5);
   });
 
-  test("AL18", "暂停冻结 cursor/slot/trace，恢复后不补步只正常 crossing", () => {
+  test("AL18", "暂停冻结 Slide cursor/slot/trace，恢复与 active dispose 确定", () => {
+    const pausedSlide = slideInfo(400, [
+      { absolutePos: 2 },
+      { absolutePos: 3, gameNoteType: types.GameNoteType.SlideEndA },
+    ], { absolutePos: 1, storedAbsolutePos: 1, afterNoteAbsolutePos: 3 });
     const integration = schedulerIntegration({
-      batches: [batch(1, [normalInfo(400, 1)])],
+      batches: [batch(1, [pausedSlide])],
       bpmChangeCount: 0,
-      positions: [0, 2],
+      positions: [0, 1, 2],
     });
     ok(integration.manager.initialize(), "pause initialize");
     ok(integration.manager.execUpdate(0.001), "activate");
-    const frozen = JSON.stringify(integration.manager.snapshot());
+    ok(integration.manager.execUpdate(0.001), "Slide head before pause");
+    const frozenNoteManager = JSON.stringify(integration.manager.snapshot().noteManager);
     ok(integration.manager.pause(), "pause");
+    ok(integration.oneFrame.setupAutoLiveJudgement(
+      request(normalInfo(401, 2), "head")), "stage slot before paused frame");
+    const frozenOneFrame = JSON.stringify(integration.oneFrame.snapshot());
     ok(integration.manager.execUpdate(1), "paused frame");
     const paused = integration.manager.snapshot();
-    assert.equal(paused.noteManager.schedulerTrace.length,
-      JSON.parse(frozen).noteManager.schedulerTrace.length);
-    assert.equal(integration.music.advanceCount, 1);
+    assert.equal(JSON.stringify(paused.noteManager), frozenNoteManager);
+    assert.equal(JSON.stringify(paused.oneFrame), frozenOneFrame);
+    assert.equal(integration.music.advanceCount, 2);
     ok(integration.manager.resume(), "resume");
     ok(integration.manager.execUpdate(0.001), "resume crossing");
-    assert.equal(integration.oneFrame.getReflectOneFrameData().entries[0].noteIndex, 400);
+    assert.deepEqual(integration.oneFrame.getReflectOneFrameData().entries.map(
+      (entry) => entry.noteIndex), [401, pausedSlide.slideNoteList[0].index]);
+    const traceBeforeDispose = integration.oneFrame.snapshot().trace.length;
+    ok(integration.manager.dispose(), "dispose active Slide");
+    const disposed = integration.manager.snapshot();
+    assert.equal(disposed.state, "disposed");
+    assert.equal(disposed.oneFrame.inUseContainerIds.length, 0);
+    assert.equal(disposed.oneFrame.trace.length, traceBeforeDispose);
+    const slidePoolObject = disposed.noteManager.pools
+      .find((pool) => pool.family === "slide").objects[0];
+    assert.equal(slidePoolObject.state, NoteState.Deactive);
+    assert.equal(slidePoolObject.currentAfterIndex, 0);
+    assert.deepEqual(slidePoolObject.afterNodes, []);
   });
 
   test("AL19", "production BMS 图身份直接进入各 Auto family payload", () => {
@@ -541,47 +601,94 @@ function validateAutoLive() {
       .map((name) => ok(construction.createNoteBatchInformationList({
         musicScoreData: readFileSync(join(fixtureRoot, name), "utf8"),
       }), `production chart ${name}`));
-    const roots = charts.flatMap((chart) =>
-      chart.noteBatches.flatMap((entry) => entry.informationList));
-    const familyCandidates = [
-      [types.FrontNoteType.Normal, notes.NoteNormal, () => true],
-      [types.FrontNoteType.Flick, notes.NoteFlick, () => true],
-      [types.FrontNoteType.Long, notes.NoteLong, () => true],
-      [null, notes.NoteSlide, (candidate) =>
-        (candidate.fireNoteType === types.FrontNoteType.SlideA ||
-          candidate.fireNoteType === types.FrontNoteType.SlideB) &&
-        candidate.isSlideNoteHead &&
-        candidate.slideNoteList.length > 0 &&
-        candidate.afterNoteType >= types.AfterNoteType.SlideEnd],
-    ];
     const observed = [];
-    for (const [family, Constructor, predicate] of familyCandidates) {
-      const sourceNote = roots.find(
-        (candidate) => (family === null || candidate.fireNoteType === family) && predicate(candidate),
+    for (const [chartIndex, chart] of charts.entries()) {
+      const roots = chart.noteBatches.flatMap((entry) => entry.informationList);
+      const familyCandidates = [
+        [types.FrontNoteType.Normal, notes.NoteNormal, (candidate) =>
+          candidate.fireNoteType === types.FrontNoteType.Normal],
+        [types.FrontNoteType.Flick, notes.NoteFlick, (candidate) =>
+          candidate.fireNoteType === types.FrontNoteType.Flick],
+        [types.FrontNoteType.Long, notes.NoteLong, (candidate) =>
+          candidate.fireNoteType === types.FrontNoteType.Long],
+        ["slide", notes.NoteSlide, (candidate) =>
+          candidate.isSlideNoteHead && candidate.slideNoteList.length > 0],
+      ];
+      for (const [family, Constructor, predicate] of familyCandidates) {
+        const sourceNote = roots.find(predicate);
+        assert(sourceNote, `production chart ${chartIndex} missing family ${family}`);
+        const bound = bindNote(new Constructor(`production-${chartIndex}-${family}`), sourceNote, {
+          position: { value: sourceNote.absolutePos },
+        });
+        if (family === "slide") {
+          assert.equal(bound.note.afterNotes.every((after, index) =>
+            after.source === sourceNote.slideNoteList[index]), true);
+        }
+        ok(bound.note.executeUpdate(0), `production chart ${chartIndex} family ${family} head`);
+        const head = reflect(bound.oneFrame).entries[0];
+        assert.equal(head.noteIndex, sourceNote.index);
+        assert.deepEqual(head.buttonTypes, sourceNote.buttonTypesArray);
+        observed.push([chartIndex, sourceNote.fireNoteType, head.noteIndex]);
+      }
+      const slideRoots = roots.filter((candidate) =>
+        candidate.isSlideNoteHead && candidate.slideNoteList.length > 0);
+      for (const [rootIndex, sourceNote] of slideRoots.entries()) {
+        const slide = new notes.NoteSlide(`production-graph-${chartIndex}-${rootIndex}`);
+        slide.registerAutoLiveRuntime({
+          isAutoPlay: () => true,
+          getAdjustedMusicPosition: () => sourceNote.absolutePos,
+          submitJudgement: () => ({ status: "ok", value: undefined }),
+        });
+        ok(slide.activate(sourceNote), `production Slide graph ${chartIndex}:${rootIndex}`);
+        assert.equal(slide.afterNotes.length, sourceNote.slideNoteList.length);
+      }
+      const fullSlide = roots.find((candidate) =>
+        candidate.isSlideNoteHead &&
+        candidate.afterNoteType === types.AfterNoteType.None &&
+        candidate.slideNoteList.length > 0);
+      assert(fullSlide, `production chart ${chartIndex} missing ordinary Slide`);
+      const fullBound = bindNote(
+        new notes.NoteSlide(`production-full-slide-${chartIndex}`),
+        fullSlide,
+        { position: { value: fullSlide.absolutePos } },
       );
-      assert(sourceNote, `production fixture missing family ${family}`);
-      const bound = bindNote(new Constructor(`production-${family}`), sourceNote, {
-        position: { value: sourceNote.absolutePos },
-      });
-      ok(bound.note.executeUpdate(0), `production family ${family} head`);
-      const head = reflect(bound.oneFrame).entries[0];
-      assert.equal(head.noteIndex, sourceNote.index);
-      assert.deepEqual(head.buttonTypes, sourceNote.buttonTypesArray);
-      observed.push([sourceNote.fireNoteType, head.noteIndex]);
+      ok(fullBound.note.executeUpdate(0), `production Slide ${chartIndex} head`);
+      reflect(fullBound.oneFrame);
+      fullBound.position.value = Number.MAX_SAFE_INTEGER;
+      let childCallCount = 0;
+      while (fullBound.note.state !== NoteState.Deactive) {
+        const current = fullBound.note.afterNotes[fullBound.note.currentAfterIndex];
+        assert(current, `production Slide ${chartIndex} lost current child`);
+        const sourceNode = current.source;
+        ok(fullBound.note.executeUpdate(0),
+          `production Slide ${chartIndex} child call ${childCallCount}`);
+        if (sourceNode.isInvisible) {
+          assert.equal(fullBound.oneFrame.existsOneFrameData(), false);
+        } else {
+          reflect(fullBound.oneFrame);
+        }
+        childCallCount += 1;
+        assert(childCallCount <= fullSlide.slideNoteList.length,
+          `production Slide ${chartIndex} exceeded one transition per child`);
+      }
+      assert.equal(fullBound.note.state, NoteState.Deactive);
+      assert.equal(fullBound.note.afterNotes.length, 0);
     }
-    assert.equal(observed.length, 4);
-    const engine = createSimulatorEngine({
-      chart: charts[0],
-      runtime: {
-        highFrequencyMode: false,
-        judgeOffsetFrames: 0,
-        playMode: {
-          kind: "auto-live",
-          resultTransform: "identity-no-active-situation-skill",
+    assert.equal(observed.length, 8);
+    for (const chart of charts) {
+      const engine = createSimulatorEngine({
+        chart,
+        runtime: {
+          highFrequencyMode: false,
+          judgeOffsetFrames: 0,
+          playMode: {
+            kind: "auto-live",
+            resultTransform: "identity-no-active-situation-skill",
+          },
         },
-      },
-    }, createRecordingSimulatorBackends());
-    assert.equal(engine.status, "ok");
+      }, createRecordingSimulatorBackends());
+      assert.equal(engine.status, "ok");
+    }
   });
 
   test("AL22", "冻结 failure matrix 全部非法数据失败关闭且关键状态原子", () => {
@@ -629,15 +736,18 @@ function validateAutoLive() {
       gameNoteType: types.GameNoteType.SlideA,
       fireNoteType: types.FrontNoteType.SlideA,
       isSlideNoteHead: true,
-      afterNoteType: types.AfterNoteType.SlideEnd,
+      afterNoteType: types.AfterNoteType.None,
     })), "auto-live.invalid-slide-after-graph");
-    const duplicate = normalInfo(5031, 180);
+    const duplicate = normalInfo(5031, 180, {
+      gameNoteType: types.GameNoteType.SlideEndA,
+      fireNoteType: types.FrontNoteType.SlideA,
+    });
     const duplicateSlide = new notes.NoteSlide("duplicate-slide");
     evidence(duplicateSlide.activate(normalInfo(503, 120, {
       gameNoteType: types.GameNoteType.SlideA,
       fireNoteType: types.FrontNoteType.SlideA,
       isSlideNoteHead: true,
-      afterNoteType: types.AfterNoteType.SlideEnd,
+      afterNoteType: types.AfterNoteType.None,
       slideNoteList: [duplicate, duplicate],
     })), "auto-live.duplicate-or-missing-slide-node");
 
@@ -704,12 +814,16 @@ function validateAutoLive() {
       "HABAHIRO production construction");
     assert.equal(chart.habahiroChangeAbsolutePos >= 0, true);
     const playable = chart.noteBatches.flatMap((entry) => entry.informationList)
-      .find((entry) => entry.fireNoteType === types.FrontNoteType.Normal);
-    assert(playable, "HABAHIRO fixture must retain a production Normal identity");
-    const bound = bindNote(new notes.NoteNormal("habahiro-static"), playable, {
+      .find((entry) => entry.isSlideNoteHead &&
+        entry.afterNoteType === types.AfterNoteType.None &&
+        entry.slideNoteList.length > 0);
+    assert(playable, "HABAHIRO fixture must retain a production ordinary Slide graph");
+    const bound = bindNote(new notes.NoteSlide("habahiro-static-slide"), playable, {
       position: { value: playable.absolutePos },
     });
-    ok(bound.note.executeUpdate(0), "consume HABAHIRO static graph identity");
+    assert.equal(bound.note.afterNotes.every((after, index) =>
+      after.source === playable.slideNoteList[index]), true);
+    ok(bound.note.executeUpdate(0), "consume HABAHIRO static Slide graph identity");
     assert.equal(reflect(bound.oneFrame).entries[0].noteIndex, playable.index);
     const openGaps = readFileSync(join(
       repositoryRoot,
