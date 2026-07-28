@@ -4,7 +4,7 @@
   "source": {
     "repository": "HOST___________________GirlsBandParty-Reverse",
     "staticBaselineCommit": "74ab76f6838847d98aae1a15741a5f024e3774ff",
-    "finalEvidenceCommit": "97e31b774c49bf1613a59d5cfd0a9cf4c323fa86",
+    "finalEvidenceCommit": "c2dc5c7f37718a170c9e9b93d5a86b42e9d1a2ab",
     "excludedUntrackedPaths": [
       ".claude/",
       "runtime/tools/"
@@ -689,7 +689,7 @@
       "sourcePath": "artifacts/investigations/auto-live-runtime-contract-supplement/README.md",
       "copiedPath": "artifacts/investigations/auto-live-runtime-contract-supplement/README.md",
       "bytes": 4197,
-      "sha256": "3901BAD752D5FFAFAD92569C41E9D395BE94015BC1D68C7B0B0EA11A9917AE4E",
+      "sha256": "9F5D130FD163B71254F13B426983EE8562173CA685D6A9E2A9EF826CB2AEC887",
       "status": "confirmed-supplement-final"
     },
     {
@@ -698,7 +698,7 @@
       "sourcePath": "artifacts/investigations/auto-live-runtime-contract-supplement/auto_live_supplement_contract.json",
       "copiedPath": "artifacts/investigations/auto-live-runtime-contract-supplement/auto_live_supplement_contract.json",
       "bytes": 4839,
-      "sha256": "587499ABA609BD8B2C0525AE5C969B931F5FFD2C2A2CC79A4CCCBA14F1B00023",
+      "sha256": "3725D0EAD3A6DEC4B68E80AD85F789997E85057B3D19D7C9ADAF72A9C8A84BAC",
       "status": "confirmed-supplement-final"
     },
     {
@@ -707,7 +707,7 @@
       "sourcePath": "artifacts/investigations/auto-live-runtime-contract-supplement/closure.json",
       "copiedPath": "artifacts/investigations/auto-live-runtime-contract-supplement/closure.json",
       "bytes": 3128,
-      "sha256": "694A14AA71D3FB10A466D49C55716DB2DEF3E41B37285D6A9CA5C25FFBAA8DA6",
+      "sha256": "FEDE2D705EEC8F65703C814DC2A6E8AEF5B537E4260922DA39A379989F6498BE",
       "status": "confirmed-supplement-final"
     },
     {
@@ -734,7 +734,7 @@
       "sourcePath": "artifacts/investigations/auto-live-runtime-contract-supplement/verify_supplement.py",
       "copiedPath": "artifacts/investigations/auto-live-runtime-contract-supplement/verify_supplement.py",
       "bytes": 12433,
-      "sha256": "24964D3A0CAB5CD8A3D66B6E3809B8B81E43EA26A349B292A196FE0C413ED168",
+      "sha256": "5CB08B759BA90F4E36B74CC7DB9A1A069651500C88486D93798966E6C764526F",
       "status": "confirmed-supplement-final"
     },
     {
@@ -919,20 +919,20 @@
     },
     {
       "id": "R18",
-      "sourceCommit": "97e31b774c49bf1613a59d5cfd0a9cf4c323fa86",
+      "sourceCommit": "c2dc5c7f37718a170c9e9b93d5a86b42e9d1a2ab",
       "sourcePath": "artifacts/investigations/auto-live-runtime-contract-supplement/auto_live_actual_replay.json",
       "copiedPath": "artifacts/investigations/auto-live-runtime-contract-supplement/auto_live_actual_replay.json",
-      "bytes": 37626,
-      "sha256": "16943833EF3E2A3A81C5CC60C74EDA4BFD82912428AFBBC9D02E82555DFEC633",
+      "bytes": 37635,
+      "sha256": "226041C1A182641C79EB43882988B905F064524F83A6F7AED7256D15D2DA5BE7",
       "status": "confirmed-supplement-final"
     },
     {
       "id": "R19",
-      "sourceCommit": "97e31b774c49bf1613a59d5cfd0a9cf4c323fa86",
+      "sourceCommit": "c2dc5c7f37718a170c9e9b93d5a86b42e9d1a2ab",
       "sourcePath": "artifacts/investigations/auto-live-runtime-contract-supplement/generate_actual_replay.py",
       "copiedPath": "artifacts/investigations/auto-live-runtime-contract-supplement/generate_actual_replay.py",
-      "bytes": 3986,
-      "sha256": "9116C3B8EA497BA4E8C3351E17D5A81BBFA383D1B764167B7D82053D667A6A8F",
+      "bytes": 3995,
+      "sha256": "46DD4315B89BBB090AFB9ABEAEB9EDE888E369E3FCE5642EE8741A9743527A0B",
       "status": "confirmed-supplement-final"
     },
     {
@@ -972,11 +972,11 @@
     },
     {
       "id": "F-auto-live-actual-replay.json",
-      "sourceCommit": "97e31b774c49bf1613a59d5cfd0a9cf4c323fa86",
+      "sourceCommit": "c2dc5c7f37718a170c9e9b93d5a86b42e9d1a2ab",
       "sourcePath": "artifacts/investigations/auto-live-runtime-contract-supplement/auto_live_actual_replay.json",
       "copiedPath": "fixtures/auto-live-actual-replay.json",
-      "bytes": 37626,
-      "sha256": "16943833EF3E2A3A81C5CC60C74EDA4BFD82912428AFBBC9D02E82555DFEC633",
+      "bytes": 37635,
+      "sha256": "226041C1A182641C79EB43882988B905F064524F83A6F7AED7256D15D2DA5BE7",
       "status": "fixture-alias-byte-identical"
     },
     {

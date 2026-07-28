@@ -80,7 +80,7 @@ def build(plus_trace: bytes, minus_trace: bytes, chart: bytes) -> dict[str, obje
             "expected-step-bpms",
             "private-music-cursor-write",
             "private-bpm-lookup-call",
-            "test-authored-substep-index",
+            "test-authored-adaptive-substep-index",
             "outer-frame-field-removal",
         ],
         "production_owner": "InGameMusicScoreController.getAdjustedMusicPosition",

@@ -1690,7 +1690,7 @@
     "expected-step-bpms",
     "private-music-cursor-write",
     "private-bpm-lookup-call",
-    "test-authored-substep-index",
+    "test-authored-adaptive-substep-index",
     "outer-frame-field-removal"
   ],
   "production_owner": "InGameMusicScoreController.getAdjustedMusicPosition"
