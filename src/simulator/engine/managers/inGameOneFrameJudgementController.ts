@@ -9,6 +9,7 @@ import {
   type EvidenceReference,
   type SimulatorResult,
 } from "../evidence";
+import type { AutoLiveJudgementRequest } from "../data/autoLiveJudgement";
 
 export type OneFrameTraceEntry =
   | {
@@ -150,6 +151,16 @@ export class InGameOneFrameJudgementController {
       "one-frame.setup-business-data",
       ["E08", "E12", "E13"],
       "OneFrameData.Setup fields require judgement, score, power, combo, timing, and note behavior outside the first slice.",
+    );
+  }
+
+  setupAutoLiveJudgement(
+    _request: AutoLiveJudgementRequest,
+  ): SimulatorResult<void> {
+    return evidenceRequired(
+      "one-frame.auto-live-setup-pending",
+      ["R02", "R03", "R04"],
+      "A05 restores the note-family Force Perfect route; the confirmed five-slot Auto Live Setup/Reflect payload is implemented in A08.",
     );
   }
 

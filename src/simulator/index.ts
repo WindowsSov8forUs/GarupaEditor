@@ -79,6 +79,7 @@ export {
   NoteMultipleDirectionalFlick,
   NoteMultipleDirectionalFlickAfter,
   NoteNormal,
+  NoteSingleBase,
   NoteSlide,
   NoteSlideAfter,
   NoteSlideDirectionalFlickAfter,

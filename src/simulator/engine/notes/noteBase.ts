@@ -5,6 +5,7 @@ import {
 } from "../evidence";
 import type { NoteInformation } from "../chart/types";
 import type { OneFrameDataHandle } from "../data/oneFrameData";
+import type { NoteAutoLiveRuntime } from "../data/autoLiveJudgement";
 
 export enum NoteState {
   Move = 0,
@@ -29,6 +30,7 @@ export class NoteBase {
   private lifecycleCallbacks: NoteLifecycleCallbacks | null = null;
   private noteInformationValue: NoteInformation | null = null;
   private getUsableOneFrameData: (() => SimulatorResult<OneFrameDataHandle>) | null = null;
+  private autoLiveRuntimeValue: NoteAutoLiveRuntime | null = null;
 
   constructor(readonly poolObjectId: string) {}
 
@@ -48,6 +50,10 @@ export class NoteBase {
     callback: () => SimulatorResult<OneFrameDataHandle>,
   ): void {
     this.getUsableOneFrameData = callback;
+  }
+
+  registerAutoLiveRuntime(runtime: NoteAutoLiveRuntime): void {
+    this.autoLiveRuntimeValue = runtime;
   }
 
   requestUsableOneFrameData(): SimulatorResult<OneFrameDataHandle> {
@@ -90,13 +96,16 @@ export class NoteBase {
   }
 
   executeUpdate(deltaTimeSeconds: number): SimulatorResult<void> {
-    if (this.stateValue === NoteState.Deactive) {
+    if ((this.stateValue as NoteState) === NoteState.Deactive) {
       return ok(undefined);
     }
 
     const phaseResult = this.executeStatePhase(deltaTimeSeconds);
     if (phaseResult.status !== "ok") {
       return phaseResult;
+    }
+    if (this.stateValue === NoteState.Deactive) {
+      return ok(undefined);
     }
     return this.onUpdate(deltaTimeSeconds);
   }
@@ -135,6 +144,17 @@ export class NoteBase {
       ["E03", "E12", "E13"],
       "The original OnUpdate dispatch is confirmed; note-family behavior belongs to later slices.",
     );
+  }
+
+  protected get autoLiveRuntime(): SimulatorResult<NoteAutoLiveRuntime> {
+    if (this.autoLiveRuntimeValue === null) {
+      return evidenceRequired(
+        "auto-live.note-runtime-unregistered",
+        ["R01", "R02", "R04"],
+        "SetupNotes must install the shared Auto Live calculated-data and judgement callbacks.",
+      );
+    }
+    return ok(this.autoLiveRuntimeValue);
   }
 
   private executeStatePhase(deltaTimeSeconds: number): SimulatorResult<void> {

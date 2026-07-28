@@ -152,6 +152,7 @@ export function createSimulatorEngine(
     input.runtime.judgeOffsetFrames,
     inGameCalculatedData,
     () => oneFrameJudgementController.getUsableOneFrameData(),
+    (request) => oneFrameJudgementController.setupAutoLiveJudgement(request),
   );
   const inGameManager = new InGameManager(
     musicScoreController,

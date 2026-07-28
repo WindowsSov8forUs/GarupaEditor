@@ -9,12 +9,90 @@ import {
   type NoteInformation,
 } from "../chart/types";
 import { NoteBase } from "./noteBase";
+import { NoteState } from "./noteBase";
 
 export class NoteFrontBase extends NoteBase {}
 
 export class NoteAfterBase extends NoteBase {}
 
-export class NoteNormal extends NoteFrontBase {}
+export interface FlickForcePerfectTraceEntry {
+  readonly kind: "flick-begin" | "flick-synthetic-move";
+  readonly syntheticX?: number;
+}
+
+export class NoteSingleBase extends NoteFrontBase {
+  protected override moveState(_deltaTimeSeconds: number): SimulatorResult<void> {
+    const noteInformation = this.noteInformation;
+    if (noteInformation === null) {
+      return evidenceRequired(
+        "auto-live.single-without-note-information",
+        ["R02", "R04"],
+        "A pooled Single note must be activated before MoveState.",
+      );
+    }
+    const runtime = this.autoLiveRuntime;
+    if (runtime.status !== "ok") {
+      return runtime;
+    }
+    const adjustedPosition = runtime.value.getAdjustedMusicPosition();
+    if (!Number.isFinite(adjustedPosition)) {
+      return evidenceRequired(
+        "auto-live.non-finite-adjusted-position",
+        ["R02", "R04"],
+        "Force Perfect crossing requires a finite adjusted music position.",
+      );
+    }
+    if (adjustedPosition < noteInformation.absolutePos) {
+      return ok(undefined);
+    }
+    if (!runtime.value.isAutoPlay()) {
+      return evidenceRequired(
+        "manual-note-judgement",
+        ["R01", "R04"],
+        "Manual input and timing judgement are outside the Auto Live stage.",
+      );
+    }
+    return this.forcePerfect();
+  }
+
+  protected forcePerfect(): SimulatorResult<void> {
+    return this.submitHeadPerfect(this.noteInformation?.gameNoteType ?? 0);
+  }
+
+  protected submitHeadPerfect(noteType: number): SimulatorResult<void> {
+    const noteInformation = this.noteInformation;
+    const runtime = this.autoLiveRuntime;
+    if (noteInformation === null || runtime.status !== "ok") {
+      return runtime.status === "ok"
+        ? evidenceRequired(
+            "auto-live.single-without-note-information",
+            ["R02", "R04"],
+            "Force Perfect requires the activated NoteInformation.",
+          )
+        : runtime;
+    }
+    const submitted = runtime.value.submitJudgement({
+      noteInformation,
+      phase: "head",
+      noteType,
+      absolutePosition: noteInformation.absolutePos,
+    });
+    if (submitted.status !== "ok") {
+      return submitted;
+    }
+    return this.changeState(NoteState.Deactive);
+  }
+
+  protected override onUpdate(_deltaTimeSeconds: number): SimulatorResult<void> {
+    return ok(undefined);
+  }
+}
+
+export class NoteNormal extends NoteSingleBase {
+  protected override forcePerfect(): SimulatorResult<void> {
+    return this.submitHeadPerfect(0);
+  }
+}
 
 export class NoteLong extends NoteFrontBase {
   private afterNoteValue: LongAfterRuntime | null = null;
@@ -86,9 +164,55 @@ export class NoteSlide extends NoteFrontBase {
   }
 }
 
-export class NoteFlick extends NoteFrontBase {}
+export class NoteFlick extends NoteSingleBase {
+  private readonly flickTraceValue: FlickForcePerfectTraceEntry[] = [];
 
-export class NoteDirectionalFlick extends NoteFrontBase {}
+  get flickTrace(): readonly FlickForcePerfectTraceEntry[] {
+    return this.flickTraceValue.map((entry) => ({ ...entry }));
+  }
+
+  protected get forcePerfectSyntheticX(): SimulatorResult<number> {
+    return ok(Math.fround(-100));
+  }
+
+  protected get forcePerfectJudgeNoteType(): number {
+    return 3;
+  }
+
+  protected override forcePerfect(): SimulatorResult<void> {
+    const synthetic = this.forcePerfectSyntheticX;
+    if (synthetic.status !== "ok") {
+      return synthetic;
+    }
+    this.flickTraceValue.push({ kind: "flick-begin" });
+    this.flickTraceValue.push({
+      kind: "flick-synthetic-move",
+      syntheticX: synthetic.value,
+    });
+    return this.submitHeadPerfect(this.forcePerfectJudgeNoteType);
+  }
+}
+
+export class NoteDirectionalFlick extends NoteFlick {
+  protected override get forcePerfectSyntheticX(): SimulatorResult<number> {
+    const sourceType = this.noteInformation?.gameNoteType;
+    if (sourceType === 10) {
+      return ok(Math.fround(-500));
+    }
+    if (sourceType === 11) {
+      return ok(Math.fround(500));
+    }
+    return evidenceRequired(
+      "auto-live.directional-flick-source-type",
+      ["R02", "R04", "R05"],
+      `Directional Force Perfect only confirms source note types 10 and 11, received ${String(sourceType)}.`,
+    );
+  }
+
+  protected override get forcePerfectJudgeNoteType(): number {
+    return 9;
+  }
+}
 
 export class NoteMultipleDirectionalFlick extends NoteFrontBase {}
 

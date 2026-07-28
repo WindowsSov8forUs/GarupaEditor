@@ -7,6 +7,7 @@ import {
 import type { NoteFamily } from "../data/noteData";
 import type { OneFrameDataHandle } from "../data/oneFrameData";
 import type { InGameCalculatedData } from "../data/inGameCalculatedData";
+import type { AutoLiveJudgementRequest } from "../data/autoLiveJudgement";
 import {
   evidenceRequired,
   ok,
@@ -121,6 +122,9 @@ export class NoteManager {
     private readonly judgeOffsetFrames: number,
     readonly inGameCalculatedData: InGameCalculatedData,
     private readonly getUsableOneFrameData: () => SimulatorResult<OneFrameDataHandle>,
+    private readonly submitAutoLiveJudgement: (
+      request: AutoLiveJudgementRequest,
+    ) => SimulatorResult<void>,
     private readonly createPoolObject: NotePoolObjectFactory = createDefaultPoolObject,
   ) {}
 
@@ -162,6 +166,11 @@ export class NoteManager {
           onDeactivate: (inactiveNote) => this.removeActiveNote(inactiveNote),
         });
         note.registerCallbackGetUsableOneFrameData(this.getUsableOneFrameData);
+        note.registerAutoLiveRuntime({
+          isAutoPlay: () => this.inGameCalculatedData.isAutoPlay,
+          getAdjustedMusicPosition: () => this.getAdjustedMusicPosition(),
+          submitJudgement: this.submitAutoLiveJudgement,
+        });
         return note;
       });
       this.notePoolsValue.set(family, { family, objects, cursor: 0 });

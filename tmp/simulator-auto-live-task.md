@@ -49,8 +49,8 @@
 | A02 生成固定事件 oracle 并关闭缺口 | 已完成，硬门关闭 | G01–G10 closed；固定轨迹两次生成一致；5 槽、Flick 参数、Long/Slide 粒度与失败矩阵闭合 |
 | A03 接入 Auto Live 模式与判定上下文 | 已完成 | 显式 `manual`/`auto-live` 判别联合、最小 `InGameCalculatedData` 与 identity result-transform 门已接入 |
 | A04 建立 Long/Slide 运行子图 | 已完成 | Long terminal 与 Slide source-order after runtime 由父 root 独占；缺图/重复身份在激活前失败关闭 |
-| A05 恢复 Single/Flick Force Perfect | 可开始 | Normal/Flick/Directional 在 adjusted crossing 同次 Update 产生一次确认的 Perfect 路由 |
-| A06 恢复 Long 分阶段完成 | 等待 A05 | 头、尾严格比较、状态转换、父/尾事件和失活顺序匹配 oracle |
+| A05 恢复 Single/Flick Force Perfect | 已完成 | `NoteSingleBase` adjusted crossing、Normal 一次提交、Flick Began→synthetic Moved 与 Directional ±500 路由已恢复 |
+| A06 恢复 Long 分阶段完成 | 可开始 | 头、尾严格比较、状态转换、父/尾事件和失活顺序匹配 oracle |
 | A07 恢复 Slide 分阶段完成 | 等待 A06 | 头、中间、终端、Stop 路径及每次调用粒度匹配 oracle |
 | A08 恢复 Auto Live OneFrame 填充与聚合 | 等待 A07 | 原作 5 槽池、Setup 占用、池序收集、同帧聚合、清除和失败关闭匹配证据 |
 | A09 接入调度、暂停与生命周期 | 等待 A08 | 反向根 Update、子节点顺序、外层帧 Reflect、暂停冻结和池复用无回归 |
@@ -83,6 +83,15 @@
 - Long 激活前验证 terminal 类型与严格后置位置，建立父拥有的 `LongAfterRuntime`；Slide 从冻结 `slideNoteList` 共享对象按源序建立 after runtime 列表并拒绝缺失/重复身份。
 - 子节点当前只建立所有权与判定状态载体，不加入根 active list，不提前实现 Force Perfect 或手动判定。
 - 全部现有宿主 fixture 显式选择 manual；模拟器 TypeScript、第一切片 17 项和时钟调度 15 组回归通过。
+
+#### 2026-07-28 第四批：A05 Single/Flick Force Perfect
+
+- `NoteSingleBase.MoveState` 在每个原作调用点读取既有 adjusted music position；`adjusted < root` 保持 Move，crossing 后仅 Auto Live 进入 Force Perfect，manual 明确失败关闭。
+- Normal 使用 judge note type 0，成功提交一次 head 请求后 Deactive；`NoteBase.ExecuteUpdate` 在状态阶段失活后不再调用 OnUpdate，匹配原作二次状态检查。
+- Flick 按 R02 记录 Began→synthetic Moved，普通值为 Float32 `-100`、judge note type 3；Directional source type 10/11 分别为 `-500/+500`、judge note type 9，其他类型失败关闭。
+- 新增 Note 级共享 Auto Live runtime callback；SetupNotes 统一安装 `isAutoPlay`、adjusted position 与判定提交边界，不让 Note 持有 manager/controller。
+- A08 前生产 OneFrame Auto Setup 继续在明确的 `one-frame.auto-live-setup-pending` 门停止；本批只恢复到已确认提交边界，不以测试 staging 冒充业务数据。
+- 模拟器 TypeScript 与第一切片 17 项回归通过。
 
 ## 2. 固定范围
 

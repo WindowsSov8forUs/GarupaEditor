@@ -7,7 +7,7 @@ import {
   PauseState,
   type GameStateValue,
 } from "../engine/data/inGameState";
-import { ok, type SimulatorResult } from "../engine/evidence";
+import { evidenceRequired, ok, type SimulatorResult } from "../engine/evidence";
 import { InGameDirector } from "../engine/managers/inGameDirector";
 import { InGameManager } from "../engine/managers/inGameManager";
 import { InGameMusicScoreController } from "../engine/managers/inGameMusicScoreController";
@@ -156,6 +156,7 @@ function createTestGraph(
     0,
     new InGameCalculatedData({ kind: "manual" }),
     () => controller.getUsableOneFrameData(),
+    () => evidenceRequired("test.auto-live-not-used", ["R04"], "not used"),
     (_family, poolObjectId) => {
       const note = new TraceNote(poolObjectId, calls, deactivateOnUpdate);
       notes.push(note);
