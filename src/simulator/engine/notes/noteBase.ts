@@ -68,12 +68,9 @@ export class NoteBase {
   }
 
   activate(noteInformation: NoteInformation): SimulatorResult<void> {
-    if (this.stateValue !== NoteState.Deactive) {
-      return evidenceRequired(
-        "note-pool.activate-active-object",
-        ["E04", "E06"],
-        `Pool object ${this.poolObjectId} cannot bind note ${noteInformation.index} while active.`,
-      );
+    const activationValidation = this.validateCanActivate(noteInformation);
+    if (activationValidation.status !== "ok") {
+      return activationValidation;
     }
     this.noteInformationValue = noteInformation;
     return this.changeState(NoteState.Move);
@@ -160,6 +157,19 @@ export class NoteBase {
   protected onResetForDispose(): void {}
 
   protected onDeactivated(): void {}
+
+  protected validateCanActivate(
+    noteInformation: NoteInformation,
+  ): SimulatorResult<void> {
+    if (this.stateValue !== NoteState.Deactive) {
+      return evidenceRequired(
+        "note-pool.activate-active-object",
+        ["E04", "E06", "R04"],
+        `Pool object ${this.poolObjectId} cannot bind note ${noteInformation.index} while active.`,
+      );
+    }
+    return ok(undefined);
+  }
 
   protected get autoLiveRuntime(): SimulatorResult<NoteAutoLiveRuntime> {
     if (this.autoLiveRuntimeValue === null) {

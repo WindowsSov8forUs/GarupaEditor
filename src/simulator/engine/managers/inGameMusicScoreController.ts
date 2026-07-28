@@ -5,7 +5,7 @@ import type {
 } from "../chart/types";
 import { ButtonType } from "../chart/types";
 import type { MusicPosition } from "../data/noteData";
-import { ok, type SimulatorResult } from "../evidence";
+import { evidenceRequired, ok, type SimulatorResult } from "../evidence";
 
 export const MUSIC_BAR_DIVISION_COUNT = 192;
 const LAUNCHER_LEAD_SECONDS = Math.fround(0.8);
@@ -72,6 +72,62 @@ export class InGameMusicScoreController {
     });
   }
 
+  validateAdvanceSequence(
+    deltaTimeSeconds: number,
+    substepCount: number,
+  ): SimulatorResult<void> {
+    const delta = Math.fround(deltaTimeSeconds);
+    if (
+      !Number.isFinite(delta) ||
+      delta < 0 ||
+      !Number.isInteger(substepCount) ||
+      substepCount < 1 ||
+      substepCount > 4
+    ) {
+      return evidenceRequired(
+        "music-score.non-finite-advance",
+        ["U03", "U04", "R04"],
+        "The portable scheduler must reject an advance sequence that cannot retain finite recovered Float32 music positions.",
+      );
+    }
+    const fastestBpm = Math.max(
+      this.basicBpmValue,
+      this.currentBpmValue,
+      this.nextBpmValue,
+      ...this.tempoCommands.map((command) => Math.fround(command.bpm)),
+    );
+    let musicBar = this.musicBarProgressValue;
+    let musicBeat = this.musicBeatProgressValue;
+    let launcherBar = this.launcherMusicBarProgressValue;
+    let launcherBeat = this.launcherMusicBeatProgressValue;
+    for (let index = 0; index < substepCount; index += 1) {
+      const musicAdvance = advancePosition(musicBar, musicBeat, fastestBpm, delta);
+      const launcherAdvance = advancePosition(
+        launcherBar,
+        launcherBeat,
+        fastestBpm,
+        delta,
+      );
+      if (
+        !Number.isFinite(musicAdvance.beatProgress) ||
+        !Number.isFinite(launcherAdvance.beatProgress) ||
+        !Number.isFinite(absolutePosition(musicAdvance)) ||
+        !Number.isFinite(absolutePosition(launcherAdvance))
+      ) {
+        return evidenceRequired(
+          "music-score.non-finite-advance",
+          ["U03", "U04", "R04"],
+          "The portable scheduler must reject an advance sequence before it writes a non-finite recovered Float32 music position.",
+        );
+      }
+      musicBar = musicAdvance.bar;
+      musicBeat = musicAdvance.beatProgress;
+      launcherBar = launcherAdvance.bar;
+      launcherBeat = launcherAdvance.beatProgress;
+    }
+    return ok(undefined);
+  }
+
   setExecuteFrame(executeFrame: number): void {
     this.executeFrameValue = Math.fround(executeFrame);
   }
@@ -87,6 +143,10 @@ export class InGameMusicScoreController {
   }
 
   advance(deltaTimeSeconds: number): SimulatorResult<void> {
+    const validation = this.validateAdvanceSequence(deltaTimeSeconds, 1);
+    if (validation.status !== "ok") {
+      return validation;
+    }
     const delta = Math.fround(deltaTimeSeconds);
     const musicAdvance = advancePosition(
       this.musicBarProgressValue,

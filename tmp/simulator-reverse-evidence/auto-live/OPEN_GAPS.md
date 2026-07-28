@@ -32,11 +32,11 @@ G01–G17 保持关闭。第三次审计的 G19/G20 由 Reverse `24706edcb02155f
 
 10. **部分结论保留，重新打开扩展组合：** 已覆盖的Long/Slide/Multiple terminal、note family内部shape、button-array内部identity及CC03/08约束仍在纯preflight；但尚未覆盖跨父/root-child共享身份、Slide child list角色、playable source index/invisible、两个button数组一致性及具体pool receiver/source family。错误Slide角色可在head已提交后才fault。
 
-11. **required-before-close：** G19 fault后允许dispose，但当前dispose清空`faultValue`；之后initialize/step/NaN step/pause/resume/getAdjusted返回新的disposed错误，而非同一terminal latch。须保留cleanup能力与disposed snapshot，同时继续让全部非允许API返回原latch。
+11. **实现修复，待独立验收，仍required-before-close：** G19 fault经dispose cleanup后继续保留原latch；disposed snapshot保留fault，全部非允许API返回同一对象，snapshot/幂等dispose允许。
 
-12. **required-before-close：** 公共`step(3e38)`输入及Float32转换均有限，但正式clock owner返回`ok`并写入Infinity music/launcher position。须在scheduler/clock mutation前以portable `evidence-required`失败关闭，并扩展AL22正式host回归；不得猜测Unity delta上限。
+12. **实现修复，待独立验收，仍required-before-close：** 正式clock owner以纯序列预演在counter/ExecuteFrame/scheduler trace/position mutation前拒绝非有限结果；`step(3e38)`返回`music-score.non-finite-advance`且domain snapshot不变，未猜测Unity delta上限。
 
-13. **required-before-close：** AL16/AL22须覆盖fault→dispose→全部API、root/source/receiver/parent owner组合、跨父共享child、错误intermediate/terminal角色、负index/invisible root、双button数组不一致及正式clock非有限结果；比较失败前后所有允许mutation，不能只看局部slot/cursor。
+13. **测试已扩展，待独立验收，仍required-before-close：** AL16/AL22现覆盖fault→dispose→全部API、root/source/receiver/parent owner、active/deactive失败重绑、跨父/root-child共享、错误child角色、负index/invisible root、双button数组及正式clock非有限结果；仍须在提交后从A00–A10独立复核。
 
 G22同时固定adaptive method fixture在一个setup outer frame后于full manager outer-frame index 1判定。GarupaEditor冻结包含`auto-live-actual-replay.json`与逐字节相同的`653_ikuoku_easy.bms.txt`；actual replay与公共fault边界均已完成第六次全量重验收，未被第七次Slide审计推翻。
 

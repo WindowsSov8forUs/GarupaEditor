@@ -19,6 +19,7 @@ import {
   ok,
   type SimulatorResult,
 } from "../evidence";
+import { validateAutoLiveActivationGraph } from "../notes/noteTypes";
 
 const ONE_FRAME_CAPACITY = 5;
 
@@ -360,9 +361,11 @@ function isClosedAutoLiveJudgementRequest(
     typeof request.noteInformation !== "object" ||
     !Number.isInteger(request.noteInformation.index) ||
     request.noteInformation.index < 0 ||
+    request.noteInformation.index > 0x7fffffff ||
     request.noteInformation.isInvisible ||
     request.noteInformation.buttonType < ButtonType.Button_00_BMS_1P_SC ||
     request.noteInformation.buttonType > ButtonType.Button_15_BMS_2P_SC ||
+    !Array.isArray(request.noteInformation.buttonTypes) ||
     !Array.isArray(request.noteInformation.buttonTypesArray) ||
     request.noteInformation.buttonTypesArray.length === 0 ||
     !request.noteInformation.buttonTypesArray.includes(
@@ -370,6 +373,11 @@ function isClosedAutoLiveJudgementRequest(
     ) ||
     new Set(request.noteInformation.buttonTypesArray).size !==
       request.noteInformation.buttonTypesArray.length ||
+    request.noteInformation.buttonTypes.length !==
+      request.noteInformation.buttonTypesArray.length ||
+    request.noteInformation.buttonTypes.some(
+      (button, index) => button !== request.noteInformation.buttonTypesArray[index],
+    ) ||
     request.noteInformation.buttonTypesArray.some((button) =>
       !Number.isInteger(button) ||
       button < ButtonType.Button_00_BMS_1P_SC ||
@@ -386,6 +394,7 @@ function isClosedAutoLiveJudgementRequest(
     ownership.multipleDirectionalFlickNoteCount;
   if (request.phase === "head") {
     if (
+      validateAutoLiveActivationGraph(source).status !== "ok" ||
       request.absolutePosition !== source.absolutePos ||
       (request.noteType === 10
         ? expectedMultipleDirectionalCount === null ||
@@ -419,8 +428,11 @@ function isClosedAutoLiveJudgementRequest(
     request.noteType === 8 &&
     request.absolutePosition === source.absolutePos &&
     !source.isSlideNoteHead &&
-    (source.gameNoteType === GameNoteType.SlideA ||
-      source.gameNoteType === GameNoteType.SlideB)
+    source.afterNoteType === AfterNoteType.None &&
+    ((source.fireNoteType === FrontNoteType.SlideA &&
+      source.gameNoteType === GameNoteType.SlideA) ||
+      (source.fireNoteType === FrontNoteType.SlideB &&
+        source.gameNoteType === GameNoteType.SlideB))
   ) {
     return true;
   }
@@ -430,6 +442,7 @@ function isClosedAutoLiveJudgementRequest(
   }
   if (
     source.fireNoteType === FrontNoteType.Long &&
+    validateAutoLiveActivationGraph(source).status === "ok" &&
     request.absolutePosition === source.afterNoteAbsolutePos
   ) {
     switch (source.afterNoteType) {
@@ -446,7 +459,12 @@ function isClosedAutoLiveJudgementRequest(
         return false;
     }
   }
-  if (request.absolutePosition !== source.absolutePos) {
+  if (
+    request.absolutePosition !== source.absolutePos ||
+    source.isSlideNoteHead ||
+    source.fireNoteType !== FrontNoteType.None ||
+    source.afterNoteType !== AfterNoteType.None
+  ) {
     return false;
   }
   switch (source.gameNoteType) {

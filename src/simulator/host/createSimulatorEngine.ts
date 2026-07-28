@@ -22,7 +22,10 @@ import { InGameOneFrameJudgementController } from "../engine/managers/inGameOneF
 import { InputManager } from "../engine/managers/inputBoundaries";
 import { NoteManager } from "../engine/managers/noteManager";
 import { SlideNoteManager } from "../engine/managers/slideNoteManager";
-import { validateAutoLiveActivationGraph } from "../engine/notes/noteTypes";
+import {
+  validateAutoLiveActivationGraph,
+  validateAutoLiveChartOwnership,
+} from "../engine/notes/noteTypes";
 import type {
   SimulatorEngine,
   SimulatorEngineInput,
@@ -232,6 +235,11 @@ function validateChart(chart: ChartConstructionResult): SimulatorResult<void> {
       ["E07", "E08"],
       "The chart must preserve positive finite start/change BPM values and their original parallel strings.",
     );
+  }
+
+  const ownershipValidation = validateAutoLiveChartOwnership(chart.noteBatches);
+  if (ownershipValidation.status !== "ok") {
+    return ownershipValidation;
   }
 
   for (const batch of chart.noteBatches) {

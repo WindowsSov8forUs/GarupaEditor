@@ -177,7 +177,6 @@ export class InGameManager {
     }
     this.oneFrameJudgementController.dispose();
     this.lifecycleState = "disposed";
-    this.faultValue = null;
     this.currentGameStateValue = GameState.PlayingSound;
     this.pauseStateValue = PauseState.None;
     return ok(undefined);

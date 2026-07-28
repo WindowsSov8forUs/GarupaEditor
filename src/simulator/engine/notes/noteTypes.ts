@@ -9,6 +9,7 @@ import {
   FrontNoteType,
   GameNoteType,
   type AfterNoteTypeValue,
+  type NoteBatchInformation,
   type NoteInformation,
 } from "../chart/types";
 import { NoteBase } from "./noteBase";
@@ -40,7 +41,21 @@ export interface FlickForcePerfectTraceEntry {
 }
 
 export abstract class NoteSingleBase extends NoteFrontBase {
+  protected abstract acceptsFrontNoteType(frontNoteType: number): boolean;
+
   override activate(noteInformation: NoteInformation): SimulatorResult<void> {
+    const activationValidation = this.validateCanActivate(noteInformation);
+    if (activationValidation.status !== "ok") {
+      return activationValidation;
+    }
+    const ownerValidation = validateConcreteNoteOwner(
+      noteInformation,
+      this.acceptsFrontNoteType(noteInformation.fireNoteType),
+      this.poolObjectId,
+    );
+    if (ownerValidation.status !== "ok") {
+      return ownerValidation;
+    }
     const graphValidation = validateAutoLiveActivationGraph(noteInformation);
     return graphValidation.status === "ok"
       ? super.activate(noteInformation)
@@ -116,6 +131,10 @@ export abstract class NoteSingleBase extends NoteFrontBase {
 }
 
 export class NoteNormal extends NoteSingleBase {
+  protected override acceptsFrontNoteType(frontNoteType: number): boolean {
+    return frontNoteType === FrontNoteType.Normal;
+  }
+
   protected override forcePerfect(): SimulatorResult<void> {
     return this.submitHeadPerfect(0);
   }
@@ -134,18 +153,34 @@ export class NoteLong extends NoteFrontBase {
   }
 
   override activate(noteInformation: NoteInformation): SimulatorResult<void> {
-    this.afterNoteValue = null;
-    this.autoLiveTraceValue.length = 0;
+    const activationValidation = this.validateCanActivate(noteInformation);
+    if (activationValidation.status !== "ok") {
+      return activationValidation;
+    }
+    const ownerValidation = validateConcreteNoteOwner(
+      noteInformation,
+      noteInformation.fireNoteType === FrontNoteType.Long,
+      this.poolObjectId,
+    );
+    if (ownerValidation.status !== "ok") {
+      return ownerValidation;
+    }
     const graphValidation = validateAutoLiveActivationGraph(noteInformation);
     if (graphValidation.status !== "ok") {
       return graphValidation;
     }
-    this.afterNoteValue = new LongAfterRuntime(
+    const nextAfterNote = new LongAfterRuntime(
       noteInformation.afterNoteAbsolutePos,
       noteInformation.afterNoteType,
       noteInformation.afterNoteShortRhythmUnder8beat,
     );
-    return super.activate(noteInformation);
+    const activated = super.activate(noteInformation);
+    if (activated.status !== "ok") {
+      return activated;
+    }
+    this.afterNoteValue = nextAfterNote;
+    this.autoLiveTraceValue.length = 0;
+    return ok(undefined);
   }
 
   protected override moveState(_deltaTimeSeconds: number): SimulatorResult<void> {
@@ -309,10 +344,19 @@ export class NoteSlide extends NoteFrontBase {
   }
 
   override activate(noteInformation: NoteInformation): SimulatorResult<void> {
-    this.afterNotesValue = [];
-    this.currentAfterIndexValue = 0;
-    this.terminalJudgeNoteTypeValue = null;
-    this.autoLiveTraceValue.length = 0;
+    const activationValidation = this.validateCanActivate(noteInformation);
+    if (activationValidation.status !== "ok") {
+      return activationValidation;
+    }
+    const ownerValidation = validateConcreteNoteOwner(
+      noteInformation,
+      noteInformation.fireNoteType === FrontNoteType.SlideA ||
+        noteInformation.fireNoteType === FrontNoteType.SlideB,
+      this.poolObjectId,
+    );
+    if (ownerValidation.status !== "ok") {
+      return ownerValidation;
+    }
     const graphValidation = validateAutoLiveActivationGraph(noteInformation);
     if (graphValidation.status !== "ok") {
       return graphValidation;
@@ -360,10 +404,15 @@ export class NoteSlide extends NoteFrontBase {
         isTerminal ? terminalJudgeNoteType.value : null,
       ));
     }
+    const activated = super.activate(noteInformation);
+    if (activated.status !== "ok") {
+      return activated;
+    }
     this.afterNotesValue = afterNotes;
     this.currentAfterIndexValue = 0;
     this.terminalJudgeNoteTypeValue = terminalJudgeNoteType.value;
-    return super.activate(noteInformation);
+    this.autoLiveTraceValue.length = 0;
+    return ok(undefined);
   }
 
   protected override moveState(_deltaTimeSeconds: number): SimulatorResult<void> {
@@ -619,6 +668,10 @@ export class NoteSlide extends NoteFrontBase {
 export class NoteFlick extends NoteSingleBase {
   protected readonly flickTraceValue: FlickForcePerfectTraceEntry[] = [];
 
+  protected override acceptsFrontNoteType(frontNoteType: number): boolean {
+    return frontNoteType === FrontNoteType.Flick;
+  }
+
   get flickTrace(): readonly FlickForcePerfectTraceEntry[] {
     return this.flickTraceValue.map((entry) => ({ ...entry }));
   }
@@ -650,11 +703,8 @@ export class NoteFlick extends NoteSingleBase {
 }
 
 export class NoteDirectionalFlick extends NoteFlick {
-  override activate(noteInformation: NoteInformation): SimulatorResult<void> {
-    const graphValidation = validateAutoLiveActivationGraph(noteInformation);
-    return graphValidation.status === "ok"
-      ? super.activate(noteInformation)
-      : graphValidation;
+  protected override acceptsFrontNoteType(frontNoteType: number): boolean {
+    return frontNoteType === FrontNoteType.DirectionalFlick;
   }
 
   protected override get forcePerfectSyntheticX(): SimulatorResult<number> {
@@ -696,9 +746,23 @@ export class NoteMultipleDirectionalFlick extends NoteDirectionalFlick {
     return this.multipleTraceValue.map((entry) => ({ ...entry }));
   }
 
+  protected override acceptsFrontNoteType(frontNoteType: number): boolean {
+    return frontNoteType === FrontNoteType.MultipleDirectionalFlick;
+  }
+
   override activate(noteInformation: NoteInformation): SimulatorResult<void> {
-    this.groupValue = null;
-    this.multipleTraceValue.length = 0;
+    const activationValidation = this.validateCanActivate(noteInformation);
+    if (activationValidation.status !== "ok") {
+      return activationValidation;
+    }
+    const ownerValidation = validateConcreteNoteOwner(
+      noteInformation,
+      this.acceptsFrontNoteType(noteInformation.fireNoteType),
+      this.poolObjectId,
+    );
+    if (ownerValidation.status !== "ok") {
+      return ownerValidation;
+    }
     const graphValidation = validateAutoLiveActivationGraph(noteInformation);
     if (graphValidation.status !== "ok") {
       return graphValidation;
@@ -714,8 +778,13 @@ export class NoteMultipleDirectionalFlick extends NoteDirectionalFlick {
     if (group.status !== "ok") {
       return group;
     }
+    const activated = super.activate(noteInformation);
+    if (activated.status !== "ok") {
+      return activated;
+    }
     this.groupValue = group.value;
-    return super.activate(noteInformation);
+    this.multipleTraceValue.length = 0;
+    return ok(undefined);
   }
 
   protected override forcePerfect(): SimulatorResult<void> {
@@ -780,6 +849,20 @@ export class NoteMultipleDirectionalFlick extends NoteDirectionalFlick {
 
 export class NoteMultipleDirectionalVisual extends NoteFrontBase {
   override activate(noteInformation: NoteInformation): SimulatorResult<void> {
+    const activationValidation = this.validateCanActivate(noteInformation);
+    if (activationValidation.status !== "ok") {
+      return activationValidation;
+    }
+    const ownerValidation = validateConcreteNoteOwner(
+      noteInformation,
+      noteInformation.fireNoteType === FrontNoteType.LongMultipleDirectionalFlickAdd ||
+        noteInformation.fireNoteType === FrontNoteType.SlideAMultipleDirectionalFlickAdd ||
+        noteInformation.fireNoteType === FrontNoteType.SlideBMultipleDirectionalFlickAdd,
+      this.poolObjectId,
+    );
+    if (ownerValidation.status !== "ok") {
+      return ownerValidation;
+    }
     const graphValidation = validateAutoLiveActivationGraph(noteInformation);
     return graphValidation.status === "ok"
       ? super.activate(noteInformation)
@@ -908,6 +991,13 @@ export type MultipleDirectionalAutoLiveTraceEntry = {
 export function validateAutoLiveActivationGraph(
   noteInformation: NoteInformation,
 ): SimulatorResult<void> {
+  if (noteInformation.isInvisible) {
+    return evidenceRequired(
+      "auto-live.invalid-playable-root-identity",
+      ["R02", "R04", "U01"],
+      `Playable root ${noteInformation.index} cannot use an invisible support identity.`,
+    );
+  }
   const buttonValidation = validatePlayableButtonIdentity(noteInformation);
   if (buttonValidation.status !== "ok") {
     return buttonValidation;
@@ -972,10 +1062,26 @@ export function validateAutoLiveActivationGraph(
     }
     const seen = new Set<NoteInformation>();
     let previousPosition = noteInformation.absolutePos;
-    for (const source of noteInformation.slideNoteList) {
+    for (let index = 0; index < noteInformation.slideNoteList.length; index += 1) {
+      const source = noteInformation.slideNoteList[index];
+      if (source === undefined) {
+        return evidenceRequired(
+          "auto-live.duplicate-or-missing-slide-node",
+          ["R01", "R02", "R04", "U01"],
+          `Slide root ${noteInformation.index} contains a missing after-node identity.`,
+        );
+      }
       const childButtonValidation = validatePlayableButtonIdentity(source);
       if (childButtonValidation.status !== "ok") {
         return childButtonValidation;
+      }
+      const roleValidation = validateSlideChildRole(
+        noteInformation,
+        source,
+        index === noteInformation.slideNoteList.length - 1,
+      );
+      if (roleValidation.status !== "ok") {
+        return roleValidation;
       }
       if (
         seen.has(source) ||
@@ -1021,18 +1127,69 @@ export function validateAutoLiveActivationGraph(
   return ok(undefined);
 }
 
+export function validateAutoLiveChartOwnership(
+  batches: readonly NoteBatchInformation[],
+): SimulatorResult<void> {
+  const playableRoots = new WeakSet<NoteInformation>();
+  const roots: NoteInformation[] = [];
+  for (const batch of batches) {
+    for (const information of batch.informationList) {
+      if (information.buttonType === ButtonType.None) {
+        continue;
+      }
+      if (playableRoots.has(information)) {
+        return evidenceRequired(
+          "auto-live.duplicate-runtime-note-identity",
+          ["R02", "R04", "U01"],
+          `Playable root ${information.index} is bound more than once in the runtime chart.`,
+        );
+      }
+      playableRoots.add(information);
+      roots.push(information);
+    }
+  }
+
+  const childOwners = new WeakMap<NoteInformation, NoteInformation>();
+  for (const root of roots) {
+    if (
+      root.fireNoteType !== FrontNoteType.SlideA &&
+      root.fireNoteType !== FrontNoteType.SlideB
+    ) {
+      continue;
+    }
+    for (const child of root.slideNoteList) {
+      const existingOwner = childOwners.get(child);
+      if (playableRoots.has(child) || existingOwner !== undefined) {
+        return evidenceRequired(
+          "auto-live.shared-slide-child-owner",
+          ["R02", "R04", "U01"],
+          `Slide child ${child.index} must be owned by exactly one parent and remain outside the playable root list.`,
+        );
+      }
+      childOwners.set(child, root);
+    }
+  }
+  return ok(undefined);
+}
+
 function validatePlayableButtonIdentity(
   noteInformation: NoteInformation,
 ): SimulatorResult<void> {
   const buttons = noteInformation.buttonTypesArray;
   if (
+    !Number.isInteger(noteInformation.index) ||
+    noteInformation.index < 0 ||
+    noteInformation.index > 0x7fffffff ||
     !Number.isInteger(noteInformation.buttonType) ||
     noteInformation.buttonType < ButtonType.Button_00_BMS_1P_SC ||
     noteInformation.buttonType > ButtonType.Button_15_BMS_2P_SC ||
+    !Array.isArray(noteInformation.buttonTypes) ||
     !Array.isArray(buttons) ||
     buttons.length === 0 ||
     !buttons.includes(noteInformation.buttonType) ||
     new Set(buttons).size !== buttons.length ||
+    noteInformation.buttonTypes.length !== buttons.length ||
+    noteInformation.buttonTypes.some((button, index) => button !== buttons[index]) ||
     buttons.some((button) =>
       !Number.isInteger(button) ||
       button < ButtonType.Button_00_BMS_1P_SC ||
@@ -1083,7 +1240,11 @@ function validateRootFamilyShape(
         noteInformation.afterNoteType === AfterNoteType.None;
       break;
     default:
-      return ok(undefined);
+      return evidenceRequired(
+        "auto-live.invalid-note-family-shape",
+        ["R02", "R04", "R10", "U01"],
+        `Playable root ${noteInformation.index} has an unconfirmed front family ${noteInformation.fireNoteType}.`,
+      );
   }
   return valid
     ? ok(undefined)
@@ -1091,6 +1252,40 @@ function validateRootFamilyShape(
         "auto-live.invalid-note-family-shape",
         ["R02", "R04", "R10", "U01"],
         `Playable root ${noteInformation.index} has an unconfirmed front/game/after combination (${noteInformation.fireNoteType}/${noteInformation.gameNoteType}/${noteInformation.afterNoteType}).`,
+      );
+}
+
+function validateSlideChildRole(
+  root: NoteInformation,
+  source: NoteInformation,
+  isTerminal: boolean,
+): SimulatorResult<void> {
+  const validRole = !source.isSlideNoteHead &&
+    source.afterNoteType === AfterNoteType.None &&
+    (isTerminal
+      ? source.fireNoteType === FrontNoteType.None
+      : source.fireNoteType === root.fireNoteType &&
+        source.gameNoteType === root.gameNoteType);
+  return validRole
+    ? ok(undefined)
+    : evidenceRequired(
+        "auto-live.invalid-slide-child-role",
+        ["R02", "R04", "U01"],
+        `Slide child ${source.index} does not match its parent-owned ${isTerminal ? "terminal" : "intermediate"} role.`,
+      );
+}
+
+function validateConcreteNoteOwner(
+  noteInformation: NoteInformation,
+  accepted: boolean,
+  poolObjectId: string,
+): SimulatorResult<void> {
+  return accepted
+    ? ok(undefined)
+    : evidenceRequired(
+        "auto-live.note-family-owner-mismatch",
+        ["R02", "R04", "U01"],
+        `Pool object ${poolObjectId} cannot bind front family ${noteInformation.fireNoteType}.`,
       );
 }
 

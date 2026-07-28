@@ -25,7 +25,7 @@
 
 时钟与调度验收记录位于 `tmp/simulator-clock-scheduling-acceptance.md`。S01–S10 已完成。
 
-Auto Live第十三次独立审计未通过，A04/A05/A07/A08/A09/A10重新打开。当前required-before-close项为：G19 fault经dispose后丢失latch；Slide/root/source ownership与child角色preflight不完整；有限Float32公共step可写入非有限clock state。此前handle对象身份、Multiple exact count、成功轨迹与production topology结论仍有效，但不能据此宣布阶段完成，见`tmp/simulator-auto-live-acceptance.md`。
+Auto Live第十三次审计触发的生产修复已实现，但A04/A05/A07/A08/A09/A10继续等待提交后独立重验收。统一root/source/receiver/父ownership与Slide child角色preflight、有限clock序列纯验证、G19 latch跨dispose及失败重绑原子性已有定向覆盖；此前handle对象身份、Multiple exact count、成功轨迹与production topology结论保持。当前仍不能宣布阶段完成，见`tmp/simulator-auto-live-acceptance.md`。
 
 OneFrame 容量现在由原作证据固定为 5，不再接受宿主或测试容量配置。公开的 `OneFrameJudgementBatch` 仅包含本阶段闭合的 Auto Live 判定字段，不是原作完整 `OneFrameTotalData`。分数、Power、生命、Skill/Fever、音频、粒子、渲染和 HUD 字段在类型上保持缺席，而不是填零。
 

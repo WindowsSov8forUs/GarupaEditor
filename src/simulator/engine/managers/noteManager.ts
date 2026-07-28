@@ -28,6 +28,7 @@ import {
   NoteNormal,
   NoteSlide,
   validateAutoLiveActivationGraph,
+  validateAutoLiveChartOwnership,
 } from "../notes/noteTypes";
 import { SlideNoteManager } from "./slideNoteManager";
 import type { InGameMusicScoreController } from "./inGameMusicScoreController";
@@ -35,6 +36,10 @@ import type { InGameMusicScoreController } from "./inGameMusicScoreController";
 const BPM_POOL_LENGTH = 30;
 
 export interface NoteManagerClock {
+  validateAdvanceSequence(
+    deltaTimeSeconds: number,
+    substepCount: number,
+  ): SimulatorResult<void>;
   setExecuteFrame(executeFrame: number): void;
   advance(deltaTimeSeconds: number): SimulatorResult<void>;
   canActivateBatch(batch: NoteBatchInformation): SimulatorResult<boolean>;
@@ -154,6 +159,10 @@ export class NoteManager {
   ) {}
 
   validateSetup(): SimulatorResult<void> {
+    const ownershipValidation = validateAutoLiveChartOwnership(this.batches);
+    if (ownershipValidation.status !== "ok") {
+      return ownershipValidation;
+    }
     for (const batch of this.batches) {
       for (const noteInformation of batch.informationList) {
         if (isNonPlayableCommand(noteInformation)) {
@@ -280,12 +289,28 @@ export class NoteManager {
       );
     }
     const executeFrame = Math.min(Math.fround(frameDelta * 60), 1);
+    const prospectiveCounters: PerformanceLevelCounters = [
+      this.performanceLevelCountersValue[0],
+      this.performanceLevelCountersValue[1],
+      this.performanceLevelCountersValue[2],
+      this.performanceLevelCountersValue[3],
+    ];
     const substepCount = selectSubstepCount(
       frameDelta,
       this.bpmChangeCount,
-      this.performanceLevelCountersValue,
+      prospectiveCounters,
     );
     const substepDelta = Math.fround(frameDelta / substepCount);
+    const advanceValidation = this.clock.validateAdvanceSequence(
+      substepDelta,
+      substepCount,
+    );
+    if (advanceValidation.status !== "ok") {
+      return advanceValidation;
+    }
+    for (let index = 0; index < prospectiveCounters.length; index += 1) {
+      this.performanceLevelCountersValue[index] = prospectiveCounters[index];
+    }
     const substepExecuteFrame = Math.fround(executeFrame / substepCount);
     this.clock.setExecuteFrame(substepExecuteFrame);
     this.schedulerTraceValue.push({

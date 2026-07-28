@@ -65,6 +65,13 @@ class FakeClock implements NoteManagerClock {
   readonly executeFrames: number[] = [];
   activateBatch = true;
 
+  validateAdvanceSequence(
+    _deltaTimeSeconds: number,
+    _substepCount: number,
+  ): SimulatorResult<void> {
+    return ok(undefined);
+  }
+
   setExecuteFrame(executeFrame: number): void {
     this.executeFrames.push(executeFrame);
   }

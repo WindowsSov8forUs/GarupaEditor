@@ -207,7 +207,9 @@ function validateAutoLive() {
       spec.absolutePos,
       {
         gameNoteType: spec.gameNoteType ?? types.GameNoteType.SlideA,
-        fireNoteType: types.FrontNoteType.SlideA,
+        fireNoteType: childIndex === nodeSpecs.length - 1
+          ? types.FrontNoteType.None
+          : types.FrontNoteType.SlideA,
         isInvisible: spec.isInvisible ?? false,
       },
     ));
@@ -852,7 +854,19 @@ function validateAutoLive() {
     assert.deepEqual(faultIntegration.manager.pause(), firstFault);
     assert.deepEqual(faultIntegration.manager.resume(), firstFault);
     ok(faultIntegration.manager.dispose(), "fault latch dispose");
-    assert.equal(faultIntegration.manager.snapshot().state, "disposed");
+    const disposedFaultManagerSnapshot = faultIntegration.manager.snapshot();
+    assert.equal(disposedFaultManagerSnapshot.state, "disposed");
+    assert.deepEqual(disposedFaultManagerSnapshot.fault, firstFault);
+    for (const result of [
+      faultIntegration.manager.initialize(),
+      faultIntegration.manager.execUpdate(0.001),
+      faultIntegration.manager.execUpdate(Number.NaN),
+      faultIntegration.manager.pause(),
+      faultIntegration.manager.resume(),
+      faultIntegration.manager.getAdjustedMusicPosition(),
+    ]) assert.deepEqual(result, firstFault);
+    assert.deepEqual(faultIntegration.manager.snapshot(), disposedFaultManagerSnapshot);
+    ok(faultIntegration.manager.dispose(), "fault latch idempotent dispose");
 
     const hostResult = createSimulatorEngine({
       chart: fixture.chart([batch(2, [
@@ -903,6 +917,22 @@ function validateAutoLive() {
     const repeatedFaultSnapshot = ok(host.snapshot(), "fault snapshot remains read-only");
     assert.deepEqual(repeatedFaultSnapshot, hostSnapshot);
     ok(host.dispose(), "fault host dispose");
+    const disposedFaultHostSnapshot = ok(host.snapshot(), "fault host disposed snapshot");
+    assert.equal(disposedFaultHostSnapshot.managers.state, "disposed");
+    assert.deepEqual(disposedFaultHostSnapshot.managers.fault, hostFault);
+    for (const result of [
+      host.initialize(),
+      host.step(1 / 60),
+      host.step(Number.NaN),
+      host.step(Number.POSITIVE_INFINITY),
+      host.step(-1),
+      host.pause(),
+      host.resume(),
+      host.getAdjustedMusicPosition(),
+    ]) assert.deepEqual(result, hostFault);
+    assert.deepEqual(ok(host.snapshot(), "post-dispose fault snapshot"),
+      disposedFaultHostSnapshot);
+    ok(host.dispose(), "fault host idempotent dispose");
   });
 
   test("AL18", "暂停冻结 Long/Slide/Multiple graph/slot/trace 并确定 dispose", () => {
@@ -1383,6 +1413,113 @@ function validateAutoLive() {
     })), "auto-live.invalid-note-family-shape");
     assert.equal(invalidFlickShape.state, NoteState.Deactive);
 
+    const validFlickSource = normalInfo(5002, 120, {
+      fireNoteType: types.FrontNoteType.Flick,
+      gameNoteType: types.GameNoteType.Flick,
+    });
+    const validDirectionalSource = normalInfo(5003, 120, {
+      fireNoteType: types.FrontNoteType.DirectionalFlick,
+      gameNoteType: types.GameNoteType.DirectionalFlickLeft,
+    });
+    for (const [note, source] of [
+      [new notes.NoteNormal("owner-normal"), validFlickSource],
+      [new notes.NoteFlick("owner-flick"), normalInfo(5004)],
+      [new notes.NoteDirectionalFlick("owner-directional"), validFlickSource],
+      [new notes.NoteMultipleDirectionalFlick("owner-multiple"), validDirectionalSource],
+      [new notes.NoteLong("owner-long"), normalInfo(5005)],
+      [new notes.NoteSlide("owner-slide"), normalInfo(5006)],
+      [new notes.NoteMultipleDirectionalVisual("owner-visual"), normalInfo(5007)],
+    ]) {
+      evidence(note.activate(source), "auto-live.note-family-owner-mismatch");
+      assert.equal(note.state, NoteState.Deactive);
+    }
+
+    const activeLongOwner = new notes.NoteLong("active-long-owner");
+    ok(activeLongOwner.activate(longInfo(5008)), "active Long owner first activate");
+    const activeLongBefore = activeLongOwner.snapshot();
+    evidence(activeLongOwner.activate(longInfo(5009)), "note-pool.activate-active-object");
+    assert.deepEqual(activeLongOwner.snapshot(), activeLongBefore);
+
+    const activeSlideOwner = new notes.NoteSlide("active-slide-owner");
+    ok(activeSlideOwner.activate(slideInfo(5010)), "active Slide owner first activate");
+    const activeSlideBefore = activeSlideOwner.snapshot();
+    evidence(activeSlideOwner.activate(slideInfo(5011)), "note-pool.activate-active-object");
+    assert.deepEqual(activeSlideOwner.snapshot(), activeSlideBefore);
+
+    const activeMultipleOwner = new notes.NoteMultipleDirectionalFlick(
+      "active-multiple-owner",
+    );
+    const activeMultipleGroup = {
+      count: 1,
+      isUsed: false,
+      markUsed: () => ({ status: "ok", value: undefined }),
+    };
+    activeMultipleOwner.registerMultipleDirectionalGroupResolver(
+      () => ({ status: "ok", value: activeMultipleGroup }),
+    );
+    ok(activeMultipleOwner.activate(multipleInfo(
+      5012, 120, 0, types.GameNoteType.DirectionalFlickLeft,
+    )), "active Multiple owner first activate");
+    const activeMultipleBefore = activeMultipleOwner.snapshot();
+    evidence(activeMultipleOwner.activate(multipleInfo(
+      5013, 120, 1, types.GameNoteType.DirectionalFlickLeft,
+    )), "note-pool.activate-active-object");
+    assert.deepEqual(activeMultipleOwner.snapshot(), activeMultipleBefore);
+
+    const completedLongOwner = bindNote(
+      new notes.NoteLong("completed-long-owner"),
+      longInfo(5014),
+      { position: { value: 120 } },
+    );
+    ok(completedLongOwner.note.executeUpdate(0), "completed Long head");
+    reflect(completedLongOwner.oneFrame);
+    completedLongOwner.position.value = 241;
+    ok(completedLongOwner.note.executeUpdate(0), "completed Long tail");
+    reflect(completedLongOwner.oneFrame);
+    const completedLongBefore = completedLongOwner.note.snapshot();
+    evidence(completedLongOwner.note.activate(normalInfo(5015, 120, {
+      fireNoteType: types.FrontNoteType.Long,
+      gameNoteType: types.GameNoteType.Long,
+    })), "auto-live.invalid-long-after-graph");
+    assert.deepEqual(completedLongOwner.note.snapshot(), completedLongBefore);
+
+    const completedSlideOwner = bindNote(
+      new notes.NoteSlide("completed-slide-owner"),
+      slideInfo(5016, [
+        { absolutePos: 240, gameNoteType: types.GameNoteType.SlideEndA },
+      ]),
+      { position: { value: 120 } },
+    );
+    ok(completedSlideOwner.note.executeUpdate(0), "completed Slide head");
+    reflect(completedSlideOwner.oneFrame);
+    completedSlideOwner.position.value = 240;
+    ok(completedSlideOwner.note.executeUpdate(0), "completed Slide tail");
+    reflect(completedSlideOwner.oneFrame);
+    const completedSlideBefore = completedSlideOwner.note.snapshot();
+    evidence(completedSlideOwner.note.activate(normalInfo(5017, 120, {
+      fireNoteType: types.FrontNoteType.SlideA,
+      gameNoteType: types.GameNoteType.SlideA,
+      isSlideNoteHead: true,
+    })), "auto-live.invalid-slide-after-graph");
+    assert.deepEqual(completedSlideOwner.note.snapshot(), completedSlideBefore);
+
+    for (const invalidIdentity of [
+      normalInfo(-1),
+      normalInfo(5008, 120, { isInvisible: true }),
+      normalInfo(5009, 120, {
+        buttonTypes: [types.ButtonType.Button_02_BMS_1P_02],
+      }),
+    ]) {
+      const invalidIdentityNote = new notes.NoteNormal("invalid-source-identity");
+      const result = invalidIdentityNote.activate(invalidIdentity);
+      assert.equal(result.status, "evidence-required");
+      assert([
+        "auto-live.invalid-note-button-identity",
+        "auto-live.invalid-playable-root-identity",
+      ].includes(result.capability));
+      assert.equal(invalidIdentityNote.state, NoteState.Deactive);
+    }
+
     const nonFiniteLong = new notes.NoteLong("non-finite-long-root");
     evidence(nonFiniteLong.activate(normalInfo(5010, Number.NaN, {
       gameNoteType: types.GameNoteType.Long,
@@ -1434,6 +1571,109 @@ function validateAutoLive() {
       },
     }, invalidBatchBackends), "auto-live.invalid-long-after-graph");
     assert.deepEqual(invalidBatchBackends.snapshot(), []);
+
+    const invalidIntermediate = normalInfo(5016, 150, {
+      fireNoteType: types.FrontNoteType.None,
+      gameNoteType: types.GameNoteType.SlideEndA,
+    });
+    const validTerminal = normalInfo(5017, 200, {
+      fireNoteType: types.FrontNoteType.None,
+      gameNoteType: types.GameNoteType.SlideEndA,
+    });
+    const invalidChildRoleRoot = normalInfo(5018, 100, {
+      fireNoteType: types.FrontNoteType.SlideA,
+      gameNoteType: types.GameNoteType.SlideA,
+      isSlideNoteHead: true,
+      afterNoteType: types.AfterNoteType.None,
+      afterNoteAbsolutePos: 200,
+      slideNoteList: [invalidIntermediate, validTerminal],
+    });
+    const invalidChildRoleBackends = createRecordingSimulatorBackends();
+    evidence(createSimulatorEngine({
+      chart: fixture.chart([batch(100, [invalidChildRoleRoot])], 120),
+      runtime: {
+        highFrequencyMode: false,
+        judgeOffsetFrames: 0,
+        playMode: {
+          kind: "auto-live",
+          resultTransform: "identity-no-active-situation-skill",
+        },
+      },
+    }, invalidChildRoleBackends), "auto-live.invalid-slide-child-role");
+    assert.deepEqual(invalidChildRoleBackends.snapshot(), []);
+
+    const sharedChild = normalInfo(5019, 170, {
+      fireNoteType: types.FrontNoteType.SlideA,
+      gameNoteType: types.GameNoteType.SlideA,
+    });
+    const slideRootWith = (index, absolutePos, terminalIndex, terminalPos) =>
+      normalInfo(index, absolutePos, {
+        fireNoteType: types.FrontNoteType.SlideA,
+        gameNoteType: types.GameNoteType.SlideA,
+        isSlideNoteHead: true,
+        afterNoteType: types.AfterNoteType.None,
+        afterNoteAbsolutePos: terminalPos,
+        slideNoteList: [sharedChild, normalInfo(terminalIndex, terminalPos, {
+          fireNoteType: types.FrontNoteType.None,
+          gameNoteType: types.GameNoteType.SlideEndA,
+        })],
+      });
+    const sharedChildChart = fixture.chart([batch(100, [
+      slideRootWith(5020, 100, 5021, 210),
+      slideRootWith(5022, 110, 5023, 220),
+    ])], 120);
+    evidence(createSimulatorEngine({
+      chart: sharedChildChart,
+      runtime: {
+        highFrequencyMode: false,
+        judgeOffsetFrames: 0,
+        playMode: {
+          kind: "auto-live",
+          resultTransform: "identity-no-active-situation-skill",
+        },
+      },
+    }, createRecordingSimulatorBackends()), "auto-live.shared-slide-child-owner");
+
+    const duplicateRoot = normalInfo(5024, 100);
+    evidence(createSimulatorEngine({
+      chart: fixture.chart([batch(100, [duplicateRoot, duplicateRoot])], 120),
+      runtime: {
+        highFrequencyMode: false,
+        judgeOffsetFrames: 0,
+        playMode: {
+          kind: "auto-live",
+          resultTransform: "identity-no-active-situation-skill",
+        },
+      },
+    }, createRecordingSimulatorBackends()), "auto-live.duplicate-runtime-note-identity");
+
+    const rootChildIdentity = normalInfo(5025, 170, {
+      fireNoteType: types.FrontNoteType.SlideA,
+      gameNoteType: types.GameNoteType.SlideA,
+    });
+    const rootChildOwner = normalInfo(5026, 100, {
+      fireNoteType: types.FrontNoteType.SlideA,
+      gameNoteType: types.GameNoteType.SlideA,
+      isSlideNoteHead: true,
+      afterNoteType: types.AfterNoteType.None,
+      afterNoteAbsolutePos: 220,
+      slideNoteList: [rootChildIdentity, normalInfo(5027, 220, {
+        fireNoteType: types.FrontNoteType.None,
+        gameNoteType: types.GameNoteType.SlideEndA,
+      })],
+    });
+    evidence(createSimulatorEngine({
+      chart: fixture.chart([batch(100, [rootChildOwner, rootChildIdentity])], 120),
+      runtime: {
+        highFrequencyMode: false,
+        judgeOffsetFrames: 0,
+        playMode: {
+          kind: "auto-live",
+          resultTransform: "identity-no-active-situation-skill",
+        },
+      },
+    }, createRecordingSimulatorBackends()), "auto-live.shared-slide-child-owner");
+
     const invalidBatchManager = schedulerIntegration({
       batches: invalidBatchChart.noteBatches,
       bpmChangeCount: 0,
@@ -1496,7 +1736,7 @@ function validateAutoLive() {
     })), "auto-live.invalid-slide-after-graph");
     const invisibleTerminal = normalInfo(5030, 180, {
       gameNoteType: types.GameNoteType.SlideEndA,
-      fireNoteType: types.FrontNoteType.SlideA,
+      fireNoteType: types.FrontNoteType.None,
       isInvisible: true,
     });
     const invisibleTerminalSlide = new notes.NoteSlide("invisible-terminal-slide");
@@ -1511,8 +1751,12 @@ function validateAutoLive() {
     assert.equal(invisibleTerminalSlide.state, NoteState.Deactive);
 
     const duplicate = normalInfo(5031, 180, {
-      gameNoteType: types.GameNoteType.SlideEndA,
+      gameNoteType: types.GameNoteType.SlideA,
       fireNoteType: types.FrontNoteType.SlideA,
+    });
+    const duplicateTerminal = normalInfo(5032, 240, {
+      gameNoteType: types.GameNoteType.SlideEndA,
+      fireNoteType: types.FrontNoteType.None,
     });
     const duplicateSlide = new notes.NoteSlide("duplicate-slide");
     evidence(duplicateSlide.activate(normalInfo(503, 120, {
@@ -1520,7 +1764,7 @@ function validateAutoLive() {
       fireNoteType: types.FrontNoteType.SlideA,
       isSlideNoteHead: true,
       afterNoteType: types.AfterNoteType.None,
-      slideNoteList: [duplicate, duplicate],
+      slideNoteList: [duplicate, duplicate, duplicateTerminal],
     })), "auto-live.duplicate-or-missing-slide-node");
 
     const payloadSource = normalInfo(5032);
@@ -1549,6 +1793,10 @@ function validateAutoLive() {
       ...payloadSource,
       buttonTypesArray: [payloadSource.buttonType, payloadSource.buttonType],
     };
+    const divergentButtonPayloadSource = {
+      ...payloadSource,
+      buttonTypes: [types.ButtonType.Button_02_BMS_1P_02],
+    };
     const multiplePayloadCounts = new WeakMap([[multiplePayloadSource, 3]]);
     const payloadSources = new WeakSet([
       payloadSource,
@@ -1556,6 +1804,7 @@ function validateAutoLive() {
       emptyButtonPayloadSource,
       mismatchedButtonPayloadSource,
       duplicateButtonPayloadSource,
+      divergentButtonPayloadSource,
     ]);
     const invalidPayloadController = controller((information) => {
       if (!payloadSources.has(information)) {
@@ -1583,6 +1832,7 @@ function validateAutoLive() {
       request(emptyButtonPayloadSource, "head"),
       request(mismatchedButtonPayloadSource, "head"),
       request(duplicateButtonPayloadSource, "head"),
+      request(divergentButtonPayloadSource, "head"),
       request(normalInfo(5034), "head"),
     ]) {
       evidence(invalidPayloadController.setupAutoLiveJudgement(invalidRequest),
@@ -1626,6 +1876,39 @@ function validateAutoLive() {
     evidence(oneFrame.setupAutoLiveJudgement(request(normalInfo(512), "head")),
       "one-frame.pool-exhausted");
     assert.equal(oneFrame.snapshot().inUseContainerIds.length, 5);
+
+    const nonFiniteClockBackends = createRecordingSimulatorBackends();
+    const nonFiniteClockEngine = ok(createSimulatorEngine({
+      chart: fixture.chart([], 120),
+      runtime: {
+        highFrequencyMode: false,
+        judgeOffsetFrames: 0,
+        playMode: {
+          kind: "auto-live",
+          resultTransform: "identity-no-active-situation-skill",
+        },
+      },
+    }, nonFiniteClockBackends), "non-finite clock engine create");
+    ok(nonFiniteClockEngine.initialize(), "non-finite clock engine initialize");
+    const nonFiniteClockBefore = ok(nonFiniteClockEngine.snapshot(),
+      "non-finite clock before");
+    const nonFiniteClockFault = evidence(nonFiniteClockEngine.step(3e38),
+      "music-score.non-finite-advance");
+    const nonFiniteClockAfter = ok(nonFiniteClockEngine.snapshot(),
+      "non-finite clock after");
+    assert.equal(nonFiniteClockAfter.managers.state, "faulted");
+    assert.deepEqual(nonFiniteClockAfter.managers.fault, nonFiniteClockFault);
+    assert.deepEqual(nonFiniteClockAfter.managers.musicScore,
+      nonFiniteClockBefore.managers.musicScore);
+    assert.deepEqual(nonFiniteClockAfter.managers.noteManager,
+      nonFiniteClockBefore.managers.noteManager);
+    assert.deepEqual(nonFiniteClockAfter.managers.oneFrame,
+      nonFiniteClockBefore.managers.oneFrame);
+    assert.deepEqual(nonFiniteClockAfter.backendTrace,
+      nonFiniteClockBefore.backendTrace);
+    assert.deepEqual(nonFiniteClockEngine.step(0), nonFiniteClockFault);
+    ok(nonFiniteClockEngine.dispose(), "non-finite clock dispose");
+    assert.deepEqual(nonFiniteClockEngine.step(0), nonFiniteClockFault);
 
     const finite = bindNote(new notes.NoteNormal("nonfinite"), normalInfo(513), {
       position: { value: Number.NaN },
@@ -2621,6 +2904,10 @@ class FakeIntegrationMusic {
     this.position = 0;
     this.advanceCount = 0;
     this.executeFrame = 0;
+  }
+
+  validateAdvanceSequence() {
+    return { status: "ok", value: undefined };
   }
 
   setExecuteFrame(value) {

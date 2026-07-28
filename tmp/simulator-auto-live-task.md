@@ -10,7 +10,7 @@
 - 锁定原作样本：`jp.co.craftegg.band` 10.1.3（version code 229，`arm64-v8a`）。
 - 上游已验收阶段：第一切片、谱面构造、时钟与调度。
 - 上游时钟调度验收提交：GarupaEditor `78414bc`，关闭记录修订提交 `ca84258`。
-- 当前状态：**第十三次独立审计未通过，Auto Live阶段重新打开。提交后全新编译产物确认三类required-before-close缺口：G19 terminal fault在`dispose()`时被清空，导致之后非允许API不再返回同一latch；Slide child运行角色、跨父共享身份、playable source identity/双button数组与具体pool family未被完整preflight，错误图可在head已Reflect后才fault；公共`step(3e38)`虽为有限Float32输入，却返回`ok`并把music/launcher position写为Infinity。A04/A05/A07/A08/A09/A10及相关完成项撤销；先关闭owner/graph/clock/lifecycle组合并补独立回归，禁止进入手动输入阶段。**
+- 当前状态：**第十三次审计触发的生产修复已实现并通过定向隔离回归，但A04/A05/A07/A08/A09/A10继续保持打开，等待提交后的独立全项验收。统一preflight现覆盖root/source/receiver/父身份与Slide child角色；clock在scheduler mutation前纯验证完整子步序列的有限结果；G19 latch跨dispose保留。继续审计还补齐active reactivation与deactive失败重绑的全对象原子性。不得把本修复批绿色结果直接视为阶段完成。**
 - 最终验收记录：`tmp/simulator-auto-live-acceptance.md`。
 - 已冻结证据包：`tmp/simulator-reverse-evidence/auto-live/`。
 
@@ -54,13 +54,13 @@
 | A01 晋升 Auto Live 静态证据 | 补充完成 | Reverse `cd84d2ce` 补齐 Multiple/visual ARM64，`7a0540dc` 补齐 committed offset cursor identity；冻结 R09–R16 |
 | A02 生成固定事件 oracle 并关闭缺口 | 第五次补充完成，代码门解除 | Reverse `c2dc5c7f` 以 G22 增加 committed exact delta/BMS replay与 adaptive full outer-frame identity |
 | A03 接入 Auto Live 模式与判定上下文 | **修复完成** | 校验返回规范化冻结值，owner再持有冻结副本；调用者与getter别名突变回归通过 |
-| A04 建立 Long/Slide 运行子图 | **重新打开** | 仍须拒绝跨父/根-child共享身份及与list角色不符的Slide child，且必须在任何owner mutation前失败 |
-| A05 恢复 Single/Flick Force Perfect | **重新打开** | source内部shape已闭合，但具体pool Note仍可绑定另一合法family；须锁定receiver/source family owner |
+| A04 建立 Long/Slide 运行子图 | **实现修复，待独立验收** | 全局root/child identity与单父ownership、child list角色及失败重绑原子性已补齐 |
+| A05 恢复 Single/Flick Force Perfect | **实现修复，待独立验收** | 每个具体Note receiver在派生mutation前锁定允许的Front family |
 | A06 恢复 Long 分阶段完成 | 已完成 | head/tail 第六槽保留 native Wait/linked order，并由 manager terminal fault 阻止重试 |
-| A07 恢复 Slide 分阶段完成 | **重新打开** | E15成功路径有效，但错误intermediate/terminal child角色可延迟到运行期产生partial state |
-| A08 恢复 Auto Live OneFrame 填充与聚合 | **重新打开** | handle/source/count修复有效；source index/invisible/button双数组与父角色的完整provenance仍未preflight |
-| A09 接入调度、暂停与生命周期 | **重新打开** | G19 latch被dispose清空；有限Float32 delta可写入非有限clock state；preflight仍漏child owner/role |
-| A10 生产 oracle 与阶段验收 | **重新打开** | AL16未覆盖fault→dispose→API，AL22未覆盖上述graph/source/delta组合；旧全绿不能关闭 |
+| A07 恢复 Slide 分阶段完成 | **实现修复，待独立验收** | intermediate/terminal role现于head前preflight，synthetic terminal改用U01真实`fire=None`形状 |
+| A08 恢复 Auto Live OneFrame 填充与聚合 | **实现修复，待独立验收** | Setup复用head graph并闭合child role、index/invisible与双button数组一致性 |
+| A09 接入调度、暂停与生命周期 | **实现修复，待独立验收** | G19 latch跨dispose保留；有限clock sequence在counter/trace/position mutation前拒绝 |
+| A10 生产 oracle 与阶段验收 | **重新验收待执行** | AL16/AL22已扩展，但须提交后重新逐项审计及完整A10 |
 
 ### 1.4 批次记录
 
@@ -443,6 +443,16 @@
 - 公共host空chart以`step(3e38)`执行：该值及其Float32转换均有限，现返回`ok`，但`InGameMusicScoreController.advance`在写入前不检查结果，music/launcher beat与absolute position成为Infinity。该结果违反failure matrix `non-finite-position -> evidence-required/no state change`及第3节失败关闭规则；AL22只注入NaN adjusted callback，未走正式clock owner。
 - 两个冻结production BMS重新枚举：144个Slide root的所有nonterminal child均为同A/B fire/game角色且`isSlideNoteHead=false/after=None`，terminal均`fire=None/isSlideNoteHead=false/after=None`；跨父共享child和child/root身份交叉均为0。该U01实际观察可用于portable graph ownership校验，不引入新原作行为。
 - 本批只纠正文档状态，不修改生产代码。A04/A05/A07/A08/A09/A10与阶段完成勾选撤销；既有G01–G22、成功轨迹、117/84 topology、exact replay和E15 position gate结论保留。下一批先修统一纯preflight、有限clock结果和fault-dispose latch，再扩展AL16/AL22；修复批不得同批关闭。
+
+#### 2026-07-29 第四十七批：组合owner、clock与fault生命周期修复
+
+- 新增chart级纯ownership preflight：playable root对象身份全局唯一，Slide child不得同时为root或属于另一父。root/child index、invisible root、`buttonTypes`/`buttonTypesArray`逐项一致、Slide nonterminal同A/B角色、terminal `fire=None/isHead=false/after=None`均在host/backend及manager初始化前验证。
+- 每个具体Note receiver在任何派生mutation前验证允许的Front family；`NoteBase.validateCanActivate`提升到Long/Slide/Multiple图/group清理之前。继续审计发现deactive对象的失败重绑也会清旧trace，现所有新after/group先局部构造，base activation成功后才提交；active重入和deactive坏图均保持完整snapshot。
+- OneFrame Setup不只信任上游登记：head重新消费完整root graph，intermediate要求对应Slide A/B child角色，tail要求Long完整graph或`fire=None/isHead=false/after=None` terminal；index范围、invisible与双button数组同样二次验证。
+- `InGameMusicScoreController.validateAdvanceSequence`以当前chart所有已验证BPM做纯保守序列预演；NoteManager在复制performance counters上选择子步并于clock验证成功后才提交counter/ExecuteFrame/frame trace。`step(3e38)`现锁存`music-score.non-finite-advance`，music/launcher/counter/trace/OneFrame/backend保持失败前值。
+- `InGameManager.dispose`不再清除已有fault latch；fault cleanup后snapshot为disposed但保留原fault，initialize、任意step输入、pause/resume/getAdjusted继续返回同一G19失败，snapshot与幂等dispose允许。
+- AL16扩展direct manager/公共host的fault→dispose→全部API；AL22扩展七类receiver/source错配、active重入、deactive坏图、source identity/双数组、错误child角色、跨父/root-child共享、重复root与正式clock非有限结果。synthetic Slide terminal改为production `FrontNoteType.None`。
+- 定向隔离TypeScript、AL01–AL22、第一切片17项与时钟15组通过；全新编译后旧独立脚本确认原三项复现分别为latch保持、clock零mutation拒绝、create阶段child role拒绝。本批只标记实现修复，A10及阶段关闭继续等待另一验收批。
 
 ## 2. 固定范围
 
