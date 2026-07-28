@@ -23,7 +23,7 @@
 
 谱面构造阶段与时钟调度阶段现已完成隔离验收。生产宿主直接接收已登记的 `ChartConstructionResult`；60/120 请求、双 Float32 时钟、0.8 秒 launcher lead、CC03/CC08 专用生命周期、判定 offset、自适应 `counter[1]/[2]/[3]` 的 `101/21/6` 回退、BPM-before-Note、实时反序 Update、survivor AfterUpdate 和暂停冻结均已按最终 Reverse 证据恢复。
 
-时钟与调度验收记录位于 `tmp/simulator-clock-scheduling-acceptance.md`。S01–S10 已完成，下一阶段可进入 Auto Live；这不表示手动输入、完整判定、分数状态、渲染、音频或主程序接入已经恢复。
+时钟与调度验收记录位于 `tmp/simulator-clock-scheduling-acceptance.md`。S01–S10 已完成，当前已进入 Auto Live 规划阶段；任务书位于 `tmp/simulator-auto-live-task.md`。Auto Live 的静态证据晋升与固定事件 oracle 是代码硬门，在其关闭前不实施 Force Perfect、Long/Slide 分阶段完成或 OneFrame 业务填充。这不表示手动输入、完整判定、分数状态、渲染、音频或主程序接入已经恢复。
 
 OneFrame 容量仍必须由证据绑定的宿主配置显式提供；完整判定数据填充继续失败关闭。公开快照只服务隔离测试，不是主程序入口或窗口通信协议。
 
