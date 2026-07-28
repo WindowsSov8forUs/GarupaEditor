@@ -11,7 +11,22 @@ import {
 import { NoteBase } from "./noteBase";
 import { NoteState } from "./noteBase";
 
-export class NoteFrontBase extends NoteBase {}
+export class NoteFrontBase extends NoteBase {
+  override executeAfterUpdate(_deltaTimeSeconds: number): SimulatorResult<void> {
+    const runtime = this.autoLiveRuntime;
+    if (runtime.status !== "ok") {
+      return runtime;
+    }
+    if (!runtime.value.isAutoPlay()) {
+      return evidenceRequired(
+        "manual-note-after-update",
+        ["R01", "R04"],
+        "Manual Note AfterUpdate behavior is outside the Auto Live stage.",
+      );
+    }
+    return ok(undefined);
+  }
+}
 
 export class NoteAfterBase extends NoteBase {}
 
@@ -351,7 +366,57 @@ export class NoteSlide extends NoteFrontBase {
   }
 
   protected override stopState(_deltaTimeSeconds: number): SimulatorResult<void> {
-    return ok(undefined);
+    const noteInformation = this.noteInformation;
+    const runtime = this.autoLiveRuntime;
+    if (noteInformation === null || runtime.status !== "ok") {
+      return evidenceRequired(
+        "auto-live.slide-stop-runtime-unavailable",
+        ["R02", "R04"],
+        "Slide StopState requires the activated parent-owned after graph.",
+      );
+    }
+    if (!runtime.value.isAutoPlay()) {
+      return ok(undefined);
+    }
+    const selected = this.afterNotesValue.find(
+      (after) => !after.source.isInvisible && !after.judged,
+    );
+    if (selected === undefined) {
+      return ok(undefined);
+    }
+    const adjusted = runtime.value.getAdjustedMusicPosition();
+    if (!Number.isFinite(adjusted)) {
+      return evidenceRequired(
+        "auto-live.non-finite-adjusted-position",
+        ["R02", "R04"],
+        "Slide Stop Force Perfect requires a finite adjusted position.",
+      );
+    }
+    if (adjusted < selected.source.absolutePos) {
+      return ok(undefined);
+    }
+    const submitted = runtime.value.submitJudgement({
+      noteInformation: selected.source,
+      phase: selected.isTerminal ? "tail" : "intermediate",
+      noteType: selected.isTerminal
+        ? slideTerminalJudgeNoteType(noteInformation.afterNoteType)
+        : 8,
+      absolutePosition: selected.source.absolutePos,
+    });
+    if (submitted.status !== "ok") {
+      return submitted;
+    }
+    const marked = selected.markJudged();
+    if (marked.status !== "ok") {
+      return marked;
+    }
+    this.autoLiveTraceValue.push({
+      kind: "slide-stop-perfect",
+      afterIndex: selected.sourceIndex,
+    });
+    return selected.isTerminal
+      ? this.changeState(NoteState.Deactive)
+      : ok(undefined);
   }
 
   protected override onUpdate(_deltaTimeSeconds: number): SimulatorResult<void> {
@@ -401,6 +466,10 @@ export class NoteSlide extends NoteFrontBase {
         ["R02", "R04"],
         "An active Slide must retain one selected pending after node.",
       );
+    }
+    if (current.judged) {
+      this.currentAfterIndexValue += 1;
+      return ok(undefined);
     }
     if (current.source.isInvisible) {
       const marked = current.markJudged();
@@ -604,7 +673,8 @@ export type SlideAutoLiveTraceEntry =
         | "slide-current-after-update"
         | "slide-invisible-support-skip"
         | "slide-intermediate-perfect"
-        | "slide-tail-perfect";
+        | "slide-tail-perfect"
+        | "slide-stop-perfect";
       readonly afterIndex: number;
     };
 

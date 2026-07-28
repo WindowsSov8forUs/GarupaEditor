@@ -349,7 +349,7 @@ test("Note 只通过 SetupNotes 安装的回调请求 OneFrame 容器", () => {
     "evidence-required", "unregistered callback");
 });
 
-test("未登记 chart、越界 offset、触摸和具体 Note 行为失败关闭", () => {
+test("未登记 chart、越界 offset 与触摸失败关闭且 manual 不强制判定", () => {
   const valid = engineInput();
   const cloned = { ...valid, chart: { ...valid.chart } };
   assertEqual(createSimulatorEngine(cloned, createRecordingSimulatorBackends()).status,
@@ -363,7 +363,11 @@ test("未登记 chart、越界 offset、触摸和具体 Note 行为失败关闭"
     createRecordingSimulatorBackends()), "note engine");
   requireOk(noteEngine.initialize(), "initialize note engine");
   requireOk(noteEngine.step(0.01), "activation frame");
-  assertEqual(noteEngine.step(0.01).status, "evidence-required", "concrete Note behavior");
+  assertEqual(noteEngine.step(0.01).status, "evidence-required",
+    "manual AfterUpdate remains outside Auto Live");
+  const manualSnapshot = requireOk(noteEngine.snapshot(), "manual snapshot");
+  assertEqual(manualSnapshot.managers.oneFrame.inUseContainerIds.length, 0,
+    "manual creates no Auto Live OneFrame payload");
 });
 
 test("120 模式请求、快照与 dispose 保持确定", () => {

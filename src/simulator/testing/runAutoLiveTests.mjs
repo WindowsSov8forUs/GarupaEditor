@@ -1,0 +1,822 @@
+import assert from "node:assert/strict";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { dirname, join, resolve } from "node:path";
+import { spawnSync } from "node:child_process";
+import { createRequire } from "node:module";
+import { fileURLToPath } from "node:url";
+
+const testingRoot = dirname(fileURLToPath(import.meta.url));
+const repositoryRoot = resolve(testingRoot, "..", "..", "..");
+const outputRoot = mkdtempSync(join(tmpdir(), "garupa-auto-live-"));
+const require = createRequire(import.meta.url);
+const typeScriptCli = require.resolve("typescript/bin/tsc");
+const oraclePath = join(
+  repositoryRoot,
+  "tmp",
+  "simulator-reverse-evidence",
+  "auto-live",
+  "fixtures",
+  "auto-live-fixed-event-trace.json",
+);
+const failurePath = join(
+  repositoryRoot,
+  "tmp",
+  "simulator-reverse-evidence",
+  "auto-live",
+  "fixtures",
+  "auto-live-failure-cases.json",
+);
+
+function validateAutoLive() {
+  const simulatorRoot = join(outputRoot, "src", "simulator");
+  const types = require(join(simulatorRoot, "engine", "chart", "types.js"));
+  const construction = require(join(simulatorRoot, "engine", "chart", "construction.js"));
+  const notes = require(join(simulatorRoot, "engine", "notes", "noteTypes.js"));
+  const { NoteState } = require(join(simulatorRoot, "engine", "notes", "noteBase.js"));
+  const { InGameCalculatedData } = require(join(
+    simulatorRoot,
+    "engine",
+    "data",
+    "inGameCalculatedData.js",
+  ));
+  const { InGameOneFrameJudgementController } = require(join(
+    simulatorRoot,
+    "engine",
+    "managers",
+    "inGameOneFrameJudgementController.js",
+  ));
+  const { InGameMusicScoreController } = require(join(
+    simulatorRoot,
+    "engine",
+    "managers",
+    "inGameMusicScoreController.js",
+  ));
+  const { NoteManager, noteFamily } = require(join(
+    simulatorRoot,
+    "engine",
+    "managers",
+    "noteManager.js",
+  ));
+  const { SlideNoteManager } = require(join(
+    simulatorRoot,
+    "engine",
+    "managers",
+    "slideNoteManager.js",
+  ));
+  const { InGameManager } = require(join(
+    simulatorRoot,
+    "engine",
+    "managers",
+    "inGameManager.js",
+  ));
+  const { GamePlayButton, InputManager } = require(join(
+    simulatorRoot,
+    "engine",
+    "managers",
+    "inputBoundaries.js",
+  ));
+  const { createSimulatorEngine } = require(join(
+    simulatorRoot,
+    "host",
+    "createSimulatorEngine.js",
+  ));
+  const { createRecordingSimulatorBackends } = require(join(
+    simulatorRoot,
+    "backends",
+    "recordingBackend.js",
+  ));
+  const fixture = require(join(
+    simulatorRoot,
+    "testing",
+    "firstSliceFixtures.js",
+  ));
+
+  const oracle = JSON.parse(readFileSync(oraclePath, "utf8"));
+  const failureOracle = JSON.parse(readFileSync(failurePath, "utf8"));
+  assert.equal(oracle.status, "confirmed-static-contract-fixed-offline-oracle");
+  assert.equal(failureOracle.status, "confirmed-failure-closed-matrix");
+  const oracleCases = new Map(oracle.cases.map((entry) => [entry.case_id, entry]));
+  const tests = [];
+  const test = (id, name, execute) => tests.push({ id, name, execute });
+
+  const cloneInfo = (testingId, index, overrides = {}) => ({
+    ...fixture.noteInformation(testingId, index),
+    ...overrides,
+  });
+  const normalInfo = (index, absolutePos = 120, overrides = {}) => cloneInfo(
+    `normal-${index}`,
+    index,
+    { absolutePos, storedAbsolutePos: absolutePos, ...overrides },
+  );
+  const longInfo = (index = 105) => normalInfo(index, 120, {
+    gameNoteType: types.GameNoteType.Long,
+    fireNoteType: types.FrontNoteType.Long,
+    afterNoteType: types.AfterNoteType.Normal,
+    afterNoteAbsolutePos: 240,
+  });
+  const slideInfo = (index = 106, nodeSpecs = [
+    { absolutePos: 180 },
+    { absolutePos: 181 },
+    { absolutePos: 240, gameNoteType: types.GameNoteType.SlideEndA },
+  ]) => {
+    const children = nodeSpecs.map((spec, childIndex) => normalInfo(
+      index * 10 + childIndex + 1,
+      spec.absolutePos,
+      {
+        gameNoteType: spec.gameNoteType ?? types.GameNoteType.SlideA,
+        fireNoteType: types.FrontNoteType.SlideA,
+        isInvisible: spec.isInvisible ?? false,
+      },
+    ));
+    return normalInfo(index, 120, {
+      gameNoteType: types.GameNoteType.SlideA,
+      fireNoteType: types.FrontNoteType.SlideA,
+      isSlideNoteHead: true,
+      afterNoteType: types.AfterNoteType.SlideEnd,
+      afterNoteAbsolutePos: children.at(-1).absolutePos,
+      slideNoteList: children,
+    });
+  };
+  const controller = () => {
+    const value = new InGameOneFrameJudgementController();
+    ok(value.initialize(), "OneFrame initialize");
+    return value;
+  };
+  const bindNote = (note, information, options = {}) => {
+    const oneFrame = options.oneFrame ?? controller();
+    const position = options.position ?? { value: 0 };
+    const isAuto = options.isAuto ?? true;
+    note.registerAutoLiveRuntime({
+      isAutoPlay: () => isAuto,
+      getAdjustedMusicPosition: () => position.value,
+      submitJudgement: (request) => oneFrame.setupAutoLiveJudgement(request),
+    });
+    ok(note.activate(information), "note activate");
+    return { note, information, oneFrame, position };
+  };
+  const reflect = (oneFrame) => {
+    const result = ok(oneFrame.reflectOneFrameData(), "OneFrame reflect");
+    assert.notEqual(result, null, "expected a non-empty judgement batch");
+    return result;
+  };
+  const events = (oneFrame, kind) => oneFrame.snapshot().trace.filter(
+    (entry) => entry.kind === kind,
+  );
+
+  test("AL01", "显式 Auto Live 判别且 manual 不走 Force Perfect", () => {
+    const manualMode = new InGameCalculatedData({ kind: "manual" });
+    const autoMode = new InGameCalculatedData({
+      kind: "auto-live",
+      resultTransform: "identity-no-active-situation-skill",
+    });
+    assert.equal(manualMode.isAutoPlay, false);
+    assert.equal(autoMode.isAutoPlay, true);
+    const manual = bindNote(new notes.NoteNormal("manual"), normalInfo(101), {
+      position: { value: 120 },
+      isAuto: false,
+    });
+    ok(manual.note.executeUpdate(0), "manual crossing");
+    assert.equal(manual.note.state, NoteState.Move);
+    assert.equal(manual.oneFrame.existsOneFrameData(), false);
+    assert.equal(
+      oracleCases.get("single-manual-does-not-force").steps[0].event,
+      "manual-crossing-no-force-perfect",
+    );
+  });
+
+  test("AL02", "JudgementAdjustValueB 正负号沿用时钟闭合路径", () => {
+    const music = new InGameMusicScoreController(fixture.chart([], 120));
+    ok(music.advance(1.25), "advance music");
+    const negative = music.getAdjustedMusicPosition(-5);
+    const identity = music.getAdjustedMusicPosition(0);
+    const positive = music.getAdjustedMusicPosition(5);
+    assert(negative < identity && identity < positive);
+    const relations = oracleCases.get("adjustment-sign-crossing").steps.map(
+      (step) => step.relation,
+    );
+    assert.deepEqual(relations, [
+      "rewind-five-tempo-aware-steps",
+      "identity",
+      "advance-five-tempo-aware-steps",
+    ]);
+  });
+
+  test("AL03", "Normal 在 before 保持 Move、equal 同次 Update Perfect", () => {
+    const source = oracleCases.get("single-normal-before-equal");
+    const before = source.steps[0].adjusted_position;
+    const equal = source.steps[1].adjusted_position;
+    assert.equal(float32Bits(before.value), before.bits);
+    assert.equal(float32Bits(equal.value), equal.bits);
+    const bound = bindNote(new notes.NoteNormal("normal"), normalInfo(100), {
+      position: { value: before.value },
+    });
+    ok(bound.note.executeUpdate(0), "before crossing");
+    assert.equal(bound.note.state, NoteState.Move);
+    bound.position.value = equal.value;
+    ok(bound.note.executeUpdate(0), "equal crossing");
+    assert.equal(bound.note.state, NoteState.Deactive);
+    const batch = reflect(bound.oneFrame);
+    assert.deepEqual(projectBatch(batch), {
+      slots: [0], noteIndices: [100], entryCount: 1, addCombo: 1,
+    });
+    ok(bound.note.executeUpdate(0), "deactive update does not repeat");
+    assert.equal(bound.oneFrame.existsOneFrameData(), false);
+  });
+
+  test("AL05", "普通 Flick 严格 Began→-100 Moved→一次结果", () => {
+    const bound = bindNote(new notes.NoteFlick("flick"), normalInfo(102, 120, {
+      gameNoteType: types.GameNoteType.Flick,
+      fireNoteType: types.FrontNoteType.Flick,
+    }), { position: { value: 120 } });
+    ok(bound.note.executeUpdate(0), "flick force perfect");
+    assert.deepEqual(bound.note.flickTrace, [
+      { kind: "flick-begin" },
+      { kind: "flick-synthetic-move", syntheticX: -100 },
+    ]);
+    assert.equal(float32Bits(bound.note.flickTrace[1].syntheticX), "0xC2C80000");
+    const batch = reflect(bound.oneFrame);
+    assert.equal(batch.entries.length, 1);
+    assert.equal(batch.entries[0].noteType, 3);
+  });
+
+  test("AL06", "Directional type10/type11 固定 ±500 且 base result 在先", () => {
+    for (const [sourceType, expected, bits] of [
+      [10, -500, "0xC3FA0000"],
+      [11, 500, "0x43FA0000"],
+    ]) {
+      const bound = bindNote(
+        new notes.NoteDirectionalFlick(`directional-${sourceType}`),
+        normalInfo(93 + sourceType, 120, {
+          gameNoteType: sourceType,
+          fireNoteType: types.FrontNoteType.DirectionalFlick,
+        }),
+        { position: { value: 120 } },
+      );
+      ok(bound.note.executeUpdate(0), "directional force perfect");
+      assert.equal(bound.note.flickTrace[1].syntheticX, expected);
+      assert.equal(float32Bits(expected), bits);
+      assert.equal(reflect(bound.oneFrame).entries[0].noteType, 9);
+    }
+  });
+
+  test("AL07", "Long head equal 切 Wait 并独立提交 head", () => {
+    const bound = bindNote(new notes.NoteLong("long-head"), longInfo(), {
+      position: { value: 120 },
+    });
+    ok(bound.note.executeUpdate(0), "long head");
+    assert.equal(bound.note.state, NoteState.Wait);
+    const batch = reflect(bound.oneFrame);
+    assert.equal(batch.entries[0].phase, "head");
+    assert.equal(bound.note.afterNote.judged, false);
+  });
+
+  test("AL08", "Long tail strict greater 且 linked finish 在 root tail 之前", () => {
+    const bound = bindNote(new notes.NoteLong("long-tail"), longInfo(), {
+      position: { value: 120 },
+    });
+    ok(bound.note.executeUpdate(0), "long head");
+    reflect(bound.oneFrame);
+    bound.position.value = 240;
+    ok(bound.note.executeUpdate(0), "tail equal");
+    assert.equal(bound.note.state, NoteState.Wait);
+    assert.equal(bound.oneFrame.existsOneFrameData(), false);
+    bound.position.value = Math.fround(240.00001525878906);
+    ok(bound.note.executeUpdate(0), "tail strict greater");
+    assert.equal(bound.note.state, NoteState.Deactive);
+    assert.equal(reflect(bound.oneFrame).entries[0].phase, "tail");
+    assert.deepEqual(bound.note.autoLiveTrace.slice(-3).map((entry) => entry.kind), [
+      "long-after-update",
+      "long-linked-after-finish",
+      "long-tail-perfect",
+    ]);
+  });
+
+  test("AL13", "AfterUpdate 保持父 base→Long linked/Slide current", () => {
+    const bound = bindNote(new notes.NoteLong("long-after-update"), longInfo(), {
+      position: { value: 120 },
+    });
+    ok(bound.note.executeUpdate(0), "head");
+    reflect(bound.oneFrame);
+    ok(bound.note.executeAfterUpdate(0), "Long AfterUpdate");
+    assert.deepEqual(bound.note.autoLiveTrace.slice(-2).map((entry) => entry.kind), [
+      "long-base-after-update",
+      "long-linked-after-update",
+    ]);
+    const slide = bindNote(new notes.NoteSlide("slide-after-update"), slideInfo(), {
+      position: { value: 120 },
+    });
+    ok(slide.note.executeUpdate(0), "slide head");
+    reflect(slide.oneFrame);
+    ok(slide.note.executeAfterUpdate(0), "Slide AfterUpdate");
+    assert.deepEqual(slide.note.autoLiveTrace.slice(-2).map((entry) => entry.kind), [
+      "slide-base-after-update",
+      "slide-current-after-update",
+    ]);
+  });
+
+  test("AL09", "Slide head equal 切 Wait 且 current 保持 0", () => {
+    const bound = bindNote(new notes.NoteSlide("slide-head"), slideInfo(), {
+      position: { value: 120 },
+    });
+    ok(bound.note.executeUpdate(0), "slide head");
+    assert.equal(bound.note.state, NoteState.Wait);
+    assert.equal(bound.note.currentAfterIndex, 0);
+    assert.equal(reflect(bound.oneFrame).entries[0].phase, "head");
+  });
+
+  test("AL10", "Slide intermediate 依 source order 逐次提交", () => {
+    const bound = bindNote(new notes.NoteSlide("slide-intermediate"), slideInfo(), {
+      position: { value: 120 },
+    });
+    ok(bound.note.executeUpdate(0), "head");
+    reflect(bound.oneFrame);
+    bound.position.value = 180;
+    ok(bound.note.executeUpdate(0), "first intermediate");
+    assert.equal(bound.note.currentAfterIndex, 1);
+    assert.equal(reflect(bound.oneFrame).entries[0].phase, "intermediate");
+    bound.position.value = 181;
+    ok(bound.note.executeUpdate(0), "second intermediate");
+    assert.equal(bound.note.currentAfterIndex, 2);
+    const invisible = bindNote(new notes.NoteSlide("slide-invisible"), slideInfo(107, [
+      { absolutePos: 170, isInvisible: true },
+      { absolutePos: 180 },
+      { absolutePos: 240, gameNoteType: types.GameNoteType.SlideEndA },
+    ]), { position: { value: 160 } });
+    ok(invisible.note.changeState(NoteState.Wait), "enter invisible Wait");
+    ok(invisible.note.executeUpdate(0), "skip one invisible support");
+    assert.equal(invisible.note.currentAfterIndex, 1);
+    assert.equal(invisible.oneFrame.existsOneFrameData(), false);
+  });
+
+  test("AL12", "Slide 大步同一次调用最多推进一个 selected node", () => {
+    const bound = bindNote(new notes.NoteSlide("slide-large-step"), slideInfo(), {
+      position: { value: 120 },
+    });
+    ok(bound.note.executeUpdate(0), "head");
+    reflect(bound.oneFrame);
+    bound.position.value = 1000;
+    ok(bound.note.executeUpdate(0), "large step one");
+    assert.equal(bound.note.currentAfterIndex, 1);
+    assert.equal(reflect(bound.oneFrame).entryCount, 1);
+    ok(bound.note.executeUpdate(0), "large step two");
+    assert.equal(bound.note.currentAfterIndex, 2);
+  });
+
+  test("AL17", "空帧不产生 projection 且不消耗 batch index", () => {
+    const oneFrame = controller();
+    assert.equal(ok(oneFrame.reflectOneFrameData(), "empty reflect"), null);
+    assert.equal(events(oneFrame, "one-frame.reflect").length, 0);
+    ok(oneFrame.setupAutoLiveJudgement(request(normalInfo(170), "head")), "post-empty setup");
+    assert.equal(reflect(oneFrame).batchIndex, 0);
+  });
+
+  test("AL11", "Slide terminal 与 Stop selected 路由分离", () => {
+    const bound = bindNote(new notes.NoteSlide("slide-terminal"), slideInfo(), {
+      position: { value: 120 },
+    });
+    ok(bound.note.executeUpdate(0), "head");
+    reflect(bound.oneFrame);
+    bound.position.value = 1000;
+    for (let index = 0; index < 2; index += 1) {
+      ok(bound.note.executeUpdate(0), `intermediate ${index}`);
+      reflect(bound.oneFrame);
+    }
+    ok(bound.note.executeUpdate(0), "terminal");
+    const terminal = reflect(bound.oneFrame);
+    assert.equal(terminal.entries[0].phase, "tail");
+    assert.equal(bound.note.state, NoteState.Deactive);
+    assert.equal(bound.note.currentAfterIndex, 3);
+    const stopped = bindNote(new notes.NoteSlide("slide-stop"), slideInfo(), {
+      position: { value: 1000 },
+    });
+    ok(stopped.note.changeState(NoteState.Stop), "enter Stop");
+    ok(stopped.note.executeUpdate(0), "Stop force perfect");
+    assert.equal(stopped.note.currentAfterIndex, 1);
+    assert.equal(reflect(stopped.oneFrame).entries[0].phase, "intermediate");
+    assert.equal(stopped.note.autoLiveTrace.some(
+      (entry) => entry.kind === "slide-stop-perfect"), true);
+  });
+
+  test("AL15", "OneFrame 固定五槽、first-unused、耗尽、池序清除复用", () => {
+    const oneFrame = controller();
+    for (let index = 0; index < 5; index += 1) {
+      ok(oneFrame.setupAutoLiveJudgement(request(normalInfo(200 + index), "head")), `setup ${index}`);
+    }
+    const batch = reflect(oneFrame);
+    assert.deepEqual(batch.entries.map((entry) => entry.slot), [0, 1, 2, 3, 4]);
+    assert.equal(batch.addCombo, 5);
+    assert.equal(oneFrame.snapshot().slots.every((slot) => !slot.isUse), true);
+    ok(oneFrame.setupAutoLiveJudgement(request(normalInfo(206), "head")), "reuse");
+    assert.equal(reflect(oneFrame).entries[0].slot, 0);
+  });
+
+  test("AL04", "同批五 root 按 active list 反序占用 0→4", () => {
+    const integration = schedulerIntegration({
+      batches: [batch(1, [200, 201, 202, 203, 204].map((index) => normalInfo(index, 1)))],
+      bpmChangeCount: 0,
+      positions: [0, 2],
+    });
+    ok(integration.manager.initialize(), "integration initialize");
+    ok(integration.manager.execUpdate(0.001), "activation outer frame");
+    ok(integration.manager.execUpdate(0.001), "judgement outer frame");
+    const result = integration.oneFrame.getReflectOneFrameData();
+    assert.deepEqual(result.entries.map((entry) => entry.noteIndex), [204, 203, 202, 201, 200]);
+  });
+
+  test("AL14", "三个 adaptive 子步共享一次外层 Reflect", () => {
+    const integration = schedulerIntegration({
+      batches: [
+        batch(1, [normalInfo(300, 1)]),
+        batch(2, [normalInfo(301, 2)]),
+        batch(3, [normalInfo(302, 3)]),
+      ],
+      bpmChangeCount: 1,
+      positions: [0, 2, 3, 4],
+    });
+    ok(integration.manager.initialize(), "adaptive initialize");
+    ok(integration.manager.execUpdate(0.001), "pre-activate");
+    ok(integration.manager.execUpdate(0.04), "three-substep outer frame");
+    const reflected = integration.oneFrame.getReflectOneFrameData();
+    assert.deepEqual(reflected.entries.map((entry) => entry.noteIndex), [300, 301, 302]);
+    assert.equal(events(integration.oneFrame, "one-frame.reflect").length, 1);
+  });
+
+  test("AL16", "第六条判定失败关闭且保留前五条提交", () => {
+    const oneFrame = controller();
+    for (let index = 0; index < 5; index += 1) {
+      ok(oneFrame.setupAutoLiveJudgement(request(normalInfo(160 + index), "head")),
+        `fill ${index}`);
+    }
+    const before = JSON.stringify(oneFrame.snapshot().slots);
+    evidence(oneFrame.setupAutoLiveJudgement(request(normalInfo(166), "head")),
+      "one-frame.pool-exhausted");
+    assert.equal(JSON.stringify(oneFrame.snapshot().slots), before);
+    assert.equal(reflect(oneFrame).entryCount, 5);
+  });
+
+  test("AL18", "暂停冻结 cursor/slot/trace，恢复后不补步只正常 crossing", () => {
+    const integration = schedulerIntegration({
+      batches: [batch(1, [normalInfo(400, 1)])],
+      bpmChangeCount: 0,
+      positions: [0, 2],
+    });
+    ok(integration.manager.initialize(), "pause initialize");
+    ok(integration.manager.execUpdate(0.001), "activate");
+    const frozen = JSON.stringify(integration.manager.snapshot());
+    ok(integration.manager.pause(), "pause");
+    ok(integration.manager.execUpdate(1), "paused frame");
+    const paused = integration.manager.snapshot();
+    assert.equal(paused.noteManager.schedulerTrace.length,
+      JSON.parse(frozen).noteManager.schedulerTrace.length);
+    assert.equal(integration.music.advanceCount, 1);
+    ok(integration.manager.resume(), "resume");
+    ok(integration.manager.execUpdate(0.001), "resume crossing");
+    assert.equal(integration.oneFrame.getReflectOneFrameData().entries[0].noteIndex, 400);
+  });
+
+  test("AL19", "production BMS 图身份直接进入各 Auto family payload", () => {
+    const fixtureRoot = join(
+      repositoryRoot,
+      "tmp",
+      "simulator-reverse-evidence",
+      "chart-construction",
+      "fixtures",
+    );
+    const charts = ["poppin_shuffle_special.txt", "786_miracle_april_habahiro_special.txt"]
+      .map((name) => ok(construction.createNoteBatchInformationList({
+        musicScoreData: readFileSync(join(fixtureRoot, name), "utf8"),
+      }), `production chart ${name}`));
+    const roots = charts.flatMap((chart) =>
+      chart.noteBatches.flatMap((entry) => entry.informationList));
+    const familyCandidates = [
+      [types.FrontNoteType.Normal, notes.NoteNormal, () => true],
+      [types.FrontNoteType.Flick, notes.NoteFlick, () => true],
+      [types.FrontNoteType.Long, notes.NoteLong, () => true],
+      [null, notes.NoteSlide, (candidate) =>
+        (candidate.fireNoteType === types.FrontNoteType.SlideA ||
+          candidate.fireNoteType === types.FrontNoteType.SlideB) &&
+        candidate.isSlideNoteHead &&
+        candidate.slideNoteList.length > 0 &&
+        candidate.afterNoteType >= types.AfterNoteType.SlideEnd],
+    ];
+    const observed = [];
+    for (const [family, Constructor, predicate] of familyCandidates) {
+      const sourceNote = roots.find(
+        (candidate) => (family === null || candidate.fireNoteType === family) && predicate(candidate),
+      );
+      assert(sourceNote, `production fixture missing family ${family}`);
+      const bound = bindNote(new Constructor(`production-${family}`), sourceNote, {
+        position: { value: sourceNote.absolutePos },
+      });
+      ok(bound.note.executeUpdate(0), `production family ${family} head`);
+      const head = reflect(bound.oneFrame).entries[0];
+      assert.equal(head.noteIndex, sourceNote.index);
+      assert.deepEqual(head.buttonTypes, sourceNote.buttonTypesArray);
+      observed.push([sourceNote.fireNoteType, head.noteIndex]);
+    }
+    assert.equal(observed.length, 4);
+    const engine = createSimulatorEngine({
+      chart: charts[0],
+      runtime: {
+        highFrequencyMode: false,
+        judgeOffsetFrames: 0,
+        playMode: {
+          kind: "auto-live",
+          resultTransform: "identity-no-active-situation-skill",
+        },
+      },
+    }, createRecordingSimulatorBackends());
+    assert.equal(engine.status, "ok");
+  });
+
+  test("AL22", "冻结 failure matrix 全部非法数据失败关闭且关键状态原子", () => {
+    const knownFailureIds = new Set(failureOracle.cases.map((entry) => entry.id));
+    for (const expected of [
+      "invalid-play-mode", "mode14-or-debug-force-perfect", "unknown-result-transform",
+      "directional-source-type-not-10-or-11", "missing-long-after",
+      "missing-slide-terminal", "duplicate-slide-node-identity", "foreign-one-frame-handle",
+      "one-frame-duplicate-setup", "one-frame-sixth-entry", "non-finite-position",
+      "manual-touch", "score-life-skill-audio-particle-consumer",
+    ]) assert(knownFailureIds.has(expected), `missing frozen failure ${expected}`);
+
+    const chart = fixture.chart();
+    const backends = createRecordingSimulatorBackends();
+    const input = (playMode) => ({
+      chart,
+      runtime: { highFrequencyMode: false, judgeOffsetFrames: 0, playMode },
+    });
+    evidence(createSimulatorEngine(input(undefined), backends), "runtime.invalid-play-mode");
+    evidence(createSimulatorEngine(input({ kind: "mode14" }), backends),
+      "runtime.unsupported-play-mode-or-result-transform");
+    evidence(createSimulatorEngine(input({ kind: "auto-live", resultTransform: "skill" }), backends),
+      "runtime.unsupported-play-mode-or-result-transform");
+
+    const invalidDirectional = bindNote(
+      new notes.NoteDirectionalFlick("bad-direction"),
+      normalInfo(500, 120, {
+        gameNoteType: 12,
+        fireNoteType: types.FrontNoteType.DirectionalFlick,
+      }),
+      { position: { value: 120 } },
+    );
+    evidence(invalidDirectional.note.executeUpdate(0), "auto-live.directional-flick-source-type");
+    assert.equal(invalidDirectional.oneFrame.existsOneFrameData(), false);
+
+    const invalidLong = new notes.NoteLong("missing-long");
+    evidence(invalidLong.activate(normalInfo(501, 120, {
+      gameNoteType: types.GameNoteType.Long,
+      fireNoteType: types.FrontNoteType.Long,
+    })), "auto-live.invalid-long-after-graph");
+    assert.equal(invalidLong.state, NoteState.Deactive);
+
+    const missingSlide = new notes.NoteSlide("missing-slide");
+    evidence(missingSlide.activate(normalInfo(502, 120, {
+      gameNoteType: types.GameNoteType.SlideA,
+      fireNoteType: types.FrontNoteType.SlideA,
+      isSlideNoteHead: true,
+      afterNoteType: types.AfterNoteType.SlideEnd,
+    })), "auto-live.invalid-slide-after-graph");
+    const duplicate = normalInfo(5031, 180);
+    const duplicateSlide = new notes.NoteSlide("duplicate-slide");
+    evidence(duplicateSlide.activate(normalInfo(503, 120, {
+      gameNoteType: types.GameNoteType.SlideA,
+      fireNoteType: types.FrontNoteType.SlideA,
+      isSlideNoteHead: true,
+      afterNoteType: types.AfterNoteType.SlideEnd,
+      slideNoteList: [duplicate, duplicate],
+    })), "auto-live.duplicate-or-missing-slide-node");
+
+    const oneFrame = controller();
+    evidence(oneFrame.setupAutoLiveJudgementData(
+      { containerId: "foreign" }, request(normalInfo(504), "head")),
+    "one-frame.foreign-container");
+    const handle = ok(oneFrame.getUsableOneFrameData(), "owned handle");
+    const payload = request(normalInfo(505), "head");
+    ok(oneFrame.setupAutoLiveJudgementData(handle, payload), "first setup");
+    const before = JSON.stringify(oneFrame.snapshot().slots);
+    evidence(oneFrame.setupAutoLiveJudgementData(handle, request(normalInfo(506), "head")),
+      "one-frame.container-already-staged");
+    assert.equal(JSON.stringify(oneFrame.snapshot().slots), before);
+    for (let index = 1; index < 5; index += 1) {
+      ok(oneFrame.setupAutoLiveJudgement(request(normalInfo(506 + index), "head")), "fill pool");
+    }
+    evidence(oneFrame.setupAutoLiveJudgement(request(normalInfo(512), "head")),
+      "one-frame.pool-exhausted");
+    assert.equal(oneFrame.snapshot().inUseContainerIds.length, 5);
+
+    const finite = bindNote(new notes.NoteNormal("nonfinite"), normalInfo(513), {
+      position: { value: Number.NaN },
+    });
+    evidence(finite.note.executeUpdate(0), "auto-live.non-finite-adjusted-position");
+    assert.equal(finite.note.state, NoteState.Move);
+    evidence(new GamePlayButton().execTouchBegan(), "input.game-play-button.touch-began");
+    evidence(oneFrame.setupBusinessData(), "one-frame.setup-business-data");
+    evidence(noteFamily(normalInfo(514, 120, { fireNoteType: 99 })),
+      "note-manager.unrepresented-note-family");
+  });
+
+  test("AL21", "阶段外业务字段保持 absent，消费者明确 evidence-required", () => {
+    const oneFrame = controller();
+    ok(oneFrame.setupAutoLiveJudgement(request(normalInfo(600), "head")), "setup projection");
+    const entry = reflect(oneFrame).entries[0];
+    for (const key of [
+      "addScore", "addPower", "life", "skill", "fever", "crescendo",
+      "audio", "particle", "rendering", "hud",
+    ]) assert.equal(Object.hasOwn(entry, key), false, `${key} must remain absent`);
+    evidence(oneFrame.setupBusinessData(), "one-frame.setup-business-data");
+    const deterministicProjection = () => {
+      const repeated = controller();
+      ok(repeated.setupAutoLiveJudgement(request(normalInfo(601), "head")),
+        "deterministic setup");
+      return JSON.stringify({
+        batch: reflect(repeated),
+        snapshot: repeated.snapshot(),
+      });
+    };
+    assert.equal(deterministicProjection(), deterministicProjection());
+  });
+
+  test("AL20", "production HABAHIRO 只消费静态构造图并保留运行边界", () => {
+    const source = readFileSync(join(
+      repositoryRoot,
+      "tmp",
+      "simulator-reverse-evidence",
+      "chart-construction",
+      "fixtures",
+      "786_miracle_april_habahiro_special.txt",
+    ), "utf8");
+    const chart = ok(construction.createNoteBatchInformationList({ musicScoreData: source }),
+      "HABAHIRO production construction");
+    assert.equal(chart.habahiroChangeAbsolutePos >= 0, true);
+    const playable = chart.noteBatches.flatMap((entry) => entry.informationList)
+      .find((entry) => entry.fireNoteType === types.FrontNoteType.Normal);
+    assert(playable, "HABAHIRO fixture must retain a production Normal identity");
+    const bound = bindNote(new notes.NoteNormal("habahiro-static"), playable, {
+      position: { value: playable.absolutePos },
+    });
+    ok(bound.note.executeUpdate(0), "consume HABAHIRO static graph identity");
+    assert.equal(reflect(bound.oneFrame).entries[0].noteIndex, playable.index);
+    const openGaps = readFileSync(join(
+      repositoryRoot,
+      "tmp",
+      "simulator-reverse-evidence",
+      "auto-live",
+      "OPEN_GAPS.md",
+    ), "utf8");
+    assert.match(openGaps, /HABAHIRO.*runtime|HABAHIRO.*运行/i);
+  });
+
+  tests.sort((left, right) => left.id.localeCompare(right.id));
+  assert.deepEqual(tests.map((entry) => entry.id), Array.from(
+    { length: 22 }, (_, index) => `AL${String(index + 1).padStart(2, "0")}`,
+  ));
+  let passed = 0;
+  for (const testCase of tests) {
+    try {
+      testCase.execute();
+      passed += 1;
+      console.log(`ok ${passed} - ${testCase.id} ${testCase.name}`);
+    } catch (error) {
+      console.error(`not ok ${passed + 1} - ${testCase.id} ${testCase.name}`);
+      throw error;
+    }
+  }
+  assert.equal(passed, 22);
+  console.log(`auto-live simulator tests passed: ${passed}`);
+
+  function request(noteInformation, phase, noteType = 0) {
+    return {
+      noteInformation,
+      phase,
+      noteType,
+      absolutePosition: noteInformation.absolutePos,
+    };
+  }
+
+  function batch(absolutePos, informationList) {
+    return {
+      barIndex: Math.trunc(absolutePos / 192),
+      numerator: absolutePos % 192,
+      denominator: 192,
+      absolutePos,
+      informationList,
+    };
+  }
+
+  function schedulerIntegration({ batches, bpmChangeCount, positions }) {
+    const oneFrame = controller();
+    const music = new FakeIntegrationMusic(positions);
+    const noteManager = new NoteManager(
+      batches,
+      new SlideNoteManager(),
+      music,
+      music,
+      bpmChangeCount,
+      0,
+      new InGameCalculatedData({
+        kind: "auto-live",
+        resultTransform: "identity-no-active-situation-skill",
+      }),
+      () => oneFrame.getUsableOneFrameData(),
+      (judgement) => oneFrame.setupAutoLiveJudgement(judgement),
+    );
+    return {
+      oneFrame,
+      music,
+      manager: new InGameManager(
+        music,
+        noteManager,
+        oneFrame,
+        new InputManager(),
+      ),
+    };
+  }
+}
+
+class FakeIntegrationMusic {
+  constructor(positions) {
+    this.positions = [...positions];
+    this.position = 0;
+    this.advanceCount = 0;
+    this.executeFrame = 0;
+  }
+
+  setExecuteFrame(value) {
+    this.executeFrame = value;
+  }
+
+  advance() {
+    this.advanceCount += 1;
+    const next = this.positions.shift();
+    if (next !== undefined) this.position = next;
+    return { status: "ok", value: undefined };
+  }
+
+  canActivateBatch() {
+    return { status: "ok", value: true };
+  }
+
+  getAdjustedMusicPosition() {
+    return this.position;
+  }
+
+  snapshot() {
+    return {
+      executeFrame: this.executeFrame,
+      musicPosition: this.position,
+      advanceCount: this.advanceCount,
+    };
+  }
+}
+
+function projectBatch(batch) {
+  return {
+    slots: batch.entries.map((entry) => entry.slot),
+    noteIndices: batch.entries.map((entry) => entry.noteIndex),
+    entryCount: batch.entryCount,
+    addCombo: batch.addCombo,
+  };
+}
+
+function float32Bits(value) {
+  const buffer = new ArrayBuffer(4);
+  new DataView(buffer).setFloat32(0, value, false);
+  return `0x${new DataView(buffer).getUint32(0, false).toString(16).toUpperCase().padStart(8, "0")}`;
+}
+
+function ok(result, label) {
+  assert.equal(result.status, "ok", `${label}: ${JSON.stringify(result)}`);
+  return result.value;
+}
+
+function evidence(result, capability) {
+  assert.equal(result.status, "evidence-required", JSON.stringify(result));
+  assert.equal(result.capability, capability, JSON.stringify(result));
+  return result;
+}
+
+function run(command, args) {
+  const result = spawnSync(command, args, {
+    cwd: repositoryRoot,
+    encoding: "utf8",
+    stdio: "inherit",
+  });
+  if (result.status !== 0) {
+    throw new Error(`${command} ${args.join(" ")} failed with ${String(result.status)}`);
+  }
+}
+
+try {
+  run(process.execPath, [
+    typeScriptCli,
+    "-p",
+    join(testingRoot, "tsconfig.tests.json"),
+    "--outDir",
+    outputRoot,
+  ]);
+  validateAutoLive();
+  run(process.execPath, [join(testingRoot, "verifyDependencies.mjs")]);
+} finally {
+  rmSync(outputRoot, { recursive: true, force: true });
+}

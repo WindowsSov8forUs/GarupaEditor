@@ -54,7 +54,7 @@
 | A07 恢复 Slide 分阶段完成 | 已完成 | source-order after、每调用一个 selected、invisible skip、intermediate/terminal 与最终失活已恢复 |
 | A08 恢复 Auto Live OneFrame 填充与聚合 | 已完成 | 固定 5 槽、first-unused、原子 Setup、池序 projection、空帧/耗尽/清除语义已恢复 |
 | A09 接入调度、暂停与生命周期 | 已完成 | 反向根/父子顺序沿用；Reflect 仅由外层 owner 执行；暂停、失败与 dispose 语义已接入 |
-| A10 生产 oracle 与阶段验收 | 可开始 | 固定轨迹、生产 BMS、失败关闭、全部隔离回归和验收文档通过 |
+| A10 生产 oracle 与阶段验收 | 已完成 | AL01–AL22、普通/HABAHIRO production graph、失败矩阵、全部隔离回归和验收文档通过 |
 
 ### 1.4 批次记录
 
@@ -122,6 +122,16 @@
 - dispose 统一使 root/BPM 对象失活、清除绑定 Note/child runtime、归零 pool cursor、关闭 Slide manager 并清空未 Reflect 的 OneFrame payload，不产生判定或后端副作用；重复 dispose 仍幂等。
 - manager snapshot 增加最小 calculated-data 投影，可审计 manual/Auto Live 与 identity transform，但不暴露 mode14/debug flag。
 - 模拟器隔离 TypeScript、第一切片 17 项与时钟调度 15 组回归通过。
+
+#### 2026-07-28 第八批：A10 固定轨迹与阶段验收
+
+- 新增 `runAutoLiveTests.mjs` 与 `simulator:test:auto-live`；测试只读取冻结 JSON/BMS，编译 TypeScript 后调用生产类，不访问 Reverse、不执行 Python、不联网。
+- AL01–AL22 按第 9 节 ID 逐项通过：模式/offset/Float32 crossing、反向同批、Flick/Directional、Long、Slide current/invisible/terminal/Stop、AfterUpdate、adaptive outer Reflect、5 槽/第六条/空帧、暂停、production graph、HABAHIRO 披露、阶段外字段和失败矩阵。
+- 普通与 HABAHIRO production BMS 的真实 `NoteInformation`/共享 child identity 直接进入 Auto Live payload；HABAHIRO 只声明静态构造图可消费，未扩张为实体 runtime 结论。
+- 失败矩阵覆盖非法/缺失模式、mode14、未知 transform、Directional source、Long/Slide 坏图、重复 child、foreign/duplicate OneFrame、sixth entry、非有限位置、未知 family、手动 touch 与业务 consumer；关键状态保持任务书约定原子性。
+- 建立 `tmp/simulator-auto-live-acceptance.md`，README 更新为 Auto Live 已关闭，并把下一阶段限定为必须先建独立设备证据硬门的手动输入与判定。
+- 完整 A10 隔离命令通过：TypeScript；第一切片 17 项；全部谱面构造套件；production roots 825/598；时钟调度 15 组；Auto Live 22 组；依赖边界；证据包源/副本/index 校验。
+- 未运行 Vite、Tauri 或整体 GarupaEditor 构建；未修改主程序入口、编辑器控制器、窗口协议、渲染或音频实现。
 
 ## 2. 固定范围
 
@@ -806,23 +816,23 @@ A10 前不运行 Vite、Tauri 或 GarupaEditor 整体构建。
 
 只有以下条件全部满足，Auto Live 阶段才能关闭：
 
-- [ ] Reverse Auto Live 最终证据提交已锁定，`auto_live_gate = closed` 且 `blocking_findings = []`。
-- [ ] E02/E05/E30 的内部哈希修订链已闭合，无 stale source profile。
-- [ ] 固定事件轨迹可在 Reverse 离线重复生成，GarupaEditor 不调用 Python。
-- [ ] Auto Live 模式显式接入，manual/mode14/debug 路由没有混淆。
-- [ ] Normal/Flick/Directional 的 adjusted crossing、事件数和顺序匹配。
-- [ ] Long 头/尾比较符号、父子顺序、状态和回收匹配。
-- [ ] Slide 头/中间/终端/Stop、current cursor 和单次调用粒度匹配。
-- [ ] Long/Slide after 子图保持构造共享身份并由父对象独占更新。
-- [ ] OneFrame 固定 5 槽、first-unused、Setup、池序 Reflect、清除与耗尽匹配。
-- [ ] unknown 分数/生命/技能/音频/粒子字段没有零值或 no-op 伪实现。
-- [ ] 同位置、adaptive 多子步、暂停、空帧和失败关闭全部通过。
-- [ ] 普通与 HABAHIRO 生产谱面回归通过，并保留 HABAHIRO 无实体运行样本披露。
-- [ ] 第一切片、谱面构造和时钟调度全部隔离回归通过。
-- [ ] `engine/` 依赖边界通过。
-- [ ] `tmp/simulator-auto-live-acceptance.md` 已建立。
-- [ ] 未修改主程序入口、编辑器控制器、窗口协议、渲染或音频实现。
-- [ ] 提交已推送，远端与 HEAD 为 `0 0`。
+- [x] Reverse Auto Live 最终证据提交已锁定，`auto_live_gate = closed` 且 `blocking_findings = []`。
+- [x] E02/E05/E30 的内部哈希修订链已闭合，无 stale source profile。
+- [x] 固定事件轨迹可在 Reverse 离线重复生成，GarupaEditor 不调用 Python。
+- [x] Auto Live 模式显式接入，manual/mode14/debug 路由没有混淆。
+- [x] Normal/Flick/Directional 的 adjusted crossing、事件数和顺序匹配。
+- [x] Long 头/尾比较符号、父子顺序、状态和回收匹配。
+- [x] Slide 头/中间/终端/Stop、current cursor 和单次调用粒度匹配。
+- [x] Long/Slide after 子图保持构造共享身份并由父对象独占更新。
+- [x] OneFrame 固定 5 槽、first-unused、Setup、池序 Reflect、清除与耗尽匹配。
+- [x] unknown 分数/生命/技能/音频/粒子字段没有零值或 no-op 伪实现。
+- [x] 同位置、adaptive 多子步、暂停、空帧和失败关闭全部通过。
+- [x] 普通与 HABAHIRO 生产谱面回归通过，并保留 HABAHIRO 无实体运行样本披露。
+- [x] 第一切片、谱面构造和时钟调度全部隔离回归通过。
+- [x] `engine/` 依赖边界通过。
+- [x] `tmp/simulator-auto-live-acceptance.md` 已建立。
+- [x] 未修改主程序入口、编辑器控制器、窗口协议、渲染或音频实现。
+- [x] 提交已推送，远端与 HEAD 为 `0 0`（每批已确认；A10 最终提交后再次确认）。
 
 阶段关闭后，下一阶段只允许按整体计划进入“手动输入与判定”。如果 AL21 中任一手动输入分支仍无实体证据，则下一阶段必须先建立对应设备采证硬门，不能沿用 Auto Live 的 Force Perfect 结果绕过手动判定。
 

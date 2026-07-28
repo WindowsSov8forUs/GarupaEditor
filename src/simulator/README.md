@@ -23,9 +23,13 @@
 
 谱面构造阶段与时钟调度阶段现已完成隔离验收。生产宿主直接接收已登记的 `ChartConstructionResult`；60/120 请求、双 Float32 时钟、0.8 秒 launcher lead、CC03/CC08 专用生命周期、判定 offset、自适应 `counter[1]/[2]/[3]` 的 `101/21/6` 回退、BPM-before-Note、实时反序 Update、survivor AfterUpdate 和暂停冻结均已按最终 Reverse 证据恢复。
 
-时钟与调度验收记录位于 `tmp/simulator-clock-scheduling-acceptance.md`。S01–S10 已完成，当前已进入 Auto Live 规划阶段；任务书位于 `tmp/simulator-auto-live-task.md`。Auto Live 的静态证据晋升与固定事件 oracle 是代码硬门，在其关闭前不实施 Force Perfect、Long/Slide 分阶段完成或 OneFrame 业务填充。这不表示手动输入、完整判定、分数状态、渲染、音频或主程序接入已经恢复。
+时钟与调度验收记录位于 `tmp/simulator-clock-scheduling-acceptance.md`。S01–S10 已完成。
 
-OneFrame 容量仍必须由证据绑定的宿主配置显式提供；完整判定数据填充继续失败关闭。公开快照只服务隔离测试，不是主程序入口或窗口通信协议。
+Auto Live A00–A10 也已完成隔离验收：显式 `manual`/`auto-live` 模式、Normal/Flick/Directional Force Perfect、父拥有的 Long/Slide 分阶段 child runtime、固定五槽 OneFrame Auto Live Setup、部分判定投影、反向 root Update、adaptive 外层一次 Reflect、暂停冻结、失败关闭与 dispose 清理均已按最终 Reverse 证据恢复。任务书与验收记录分别位于 `tmp/simulator-auto-live-task.md`、`tmp/simulator-auto-live-acceptance.md`。
+
+OneFrame 容量现在由原作证据固定为 5，不再接受宿主或测试容量配置。公开的 `OneFrameJudgementBatch` 仅包含本阶段闭合的 Auto Live 判定字段，不是原作完整 `OneFrameTotalData`。分数、Power、生命、Skill/Fever、音频、粒子、渲染和 HUD 字段在类型上保持缺席，而不是填零。
+
+当前下一阶段边界是“手动输入与判定”。真实触摸、判定窗口、普通 timeout Miss、释放和 Hold 行为在建立并关闭独立设备证据硬门前继续 `evidence-required`。Auto Live 完成不表示完整判定、分数状态、表现层或主程序接入已经恢复。
 
 `src/simulator/engine` 不依赖 React、Pixi、Tauri、DOM、编辑器谱面类型或窗口协议。宿主 API 是 GarupaEditor 的可移植边界，不宣称属于原作接口。
 
