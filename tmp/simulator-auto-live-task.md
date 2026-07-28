@@ -50,9 +50,9 @@
 | A03 接入 Auto Live 模式与判定上下文 | 已完成 | 显式 `manual`/`auto-live` 判别联合、最小 `InGameCalculatedData` 与 identity result-transform 门已接入 |
 | A04 建立 Long/Slide 运行子图 | 已完成 | Long terminal 与 Slide source-order after runtime 由父 root 独占；缺图/重复身份在激活前失败关闭 |
 | A05 恢复 Single/Flick Force Perfect | 已完成 | `NoteSingleBase` adjusted crossing、Normal 一次提交、Flick Began→synthetic Moved 与 Directional ±500 路由已恢复 |
-| A06 恢复 Long 分阶段完成 | 可开始 | 头、尾严格比较、状态转换、父/尾事件和失活顺序匹配 oracle |
-| A07 恢复 Slide 分阶段完成 | 等待 A06 | 头、中间、终端、Stop 路径及每次调用粒度匹配 oracle |
-| A08 恢复 Auto Live OneFrame 填充与聚合 | 等待 A07 | 原作 5 槽池、Setup 占用、池序收集、同帧聚合、清除和失败关闭匹配证据 |
+| A06 恢复 Long 分阶段完成 | 已完成 | head `>=`、tail `>`、父拥有 linked after、Wait/Stop 更新与失活顺序已恢复 |
+| A07 恢复 Slide 分阶段完成 | 已完成 | source-order after、每调用一个 selected、invisible skip、intermediate/terminal 与最终失活已恢复 |
+| A08 恢复 Auto Live OneFrame 填充与聚合 | 可开始 | 原作 5 槽池、Setup 占用、池序收集、同帧聚合、清除和失败关闭匹配证据 |
 | A09 接入调度、暂停与生命周期 | 等待 A08 | 反向根 Update、子节点顺序、外层帧 Reflect、暂停冻结和池复用无回归 |
 | A10 生产 oracle 与阶段验收 | 等待 A09 | 固定轨迹、生产 BMS、失败关闭、全部隔离回归和验收文档通过 |
 
@@ -86,12 +86,22 @@
 
 #### 2026-07-28 第四批：A05 Single/Flick Force Perfect
 
-- `NoteSingleBase.MoveState` 在每个原作调用点读取既有 adjusted music position；`adjusted < root` 保持 Move，crossing 后仅 Auto Live 进入 Force Perfect，manual 明确失败关闭。
+- `NoteSingleBase.MoveState` 在每个原作调用点读取既有 adjusted music position；`adjusted < root` 保持 Move，crossing 后仅 Auto Live 进入 Force Perfect，manual 按 R02 保持 Move 且不提交。
 - Normal 使用 judge note type 0，成功提交一次 head 请求后 Deactive；`NoteBase.ExecuteUpdate` 在状态阶段失活后不再调用 OnUpdate，匹配原作二次状态检查。
 - Flick 按 R02 记录 Began→synthetic Moved，普通值为 Float32 `-100`、judge note type 3；Directional source type 10/11 分别为 `-500/+500`、judge note type 9，其他类型失败关闭。
 - 新增 Note 级共享 Auto Live runtime callback；SetupNotes 统一安装 `isAutoPlay`、adjusted position 与判定提交边界，不让 Note 持有 manager/controller。
 - A08 前生产 OneFrame Auto Setup 继续在明确的 `one-frame.auto-live-setup-pending` 门停止；本批只恢复到已确认提交边界，不以测试 staging 冒充业务数据。
 - 模拟器 TypeScript 与第一切片 17 项回归通过。
+
+#### 2026-07-28 第五批：A06/A07 Long 与 Slide
+
+- Long root 激活前清除旧子图并验证 terminal 仅属于 Long after family 且位置严格后置；head 使用 `adjusted >= root` 切 Wait 并提交一次 Perfect。
+- Long 父 OnUpdate 先驱动 linked after Update；tail 只在 `adjusted > terminal` 时依序执行 linked finish→tail Perfect→父 Deactive，等于 terminal 保持 Wait；AfterUpdate 保持 base→linked 顺序。
+- Slide root 激活前清除旧 cursor/trace，并验证 Slide terminal family、共享身份唯一和严格递增源序；子节点仍不加入 NoteManager 根 active list。
+- Slide head 使用 `>=` 切 Wait；每次 OnUpdate 只选择 current pending after，不使用 while。invisible support 单次跳过且不提交 OneFrame；visible intermediate/terminal 每调用最多推进一项，terminal 后 Deactive。
+- Slide OnUpdate/AfterUpdate 的父、after-list、selected child 顺序形成生产可审计轨迹；Wait/Stop 均只从共同 OnUpdate 进入一次 pending-node 路径，不重复推进。
+- 普通 Wait/Stop Miss、手动释放、Hold 音效和视觉移动继续不实现；非有限 adjusted position在状态变化与判定提交前失败关闭。
+- 模拟器隔离 TypeScript、第一切片 17 项与时钟调度 15 组回归通过。
 
 ## 2. 固定范围
 
