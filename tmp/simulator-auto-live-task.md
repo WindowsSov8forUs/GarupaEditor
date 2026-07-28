@@ -52,8 +52,8 @@
 | A05 恢复 Single/Flick Force Perfect | 已完成 | `NoteSingleBase` adjusted crossing、Normal 一次提交、Flick Began→synthetic Moved 与 Directional ±500 路由已恢复 |
 | A06 恢复 Long 分阶段完成 | 已完成 | head `>=`、tail `>`、父拥有 linked after、Wait/Stop 更新与失活顺序已恢复 |
 | A07 恢复 Slide 分阶段完成 | 已完成 | source-order after、每调用一个 selected、invisible skip、intermediate/terminal 与最终失活已恢复 |
-| A08 恢复 Auto Live OneFrame 填充与聚合 | 可开始 | 原作 5 槽池、Setup 占用、池序收集、同帧聚合、清除和失败关闭匹配证据 |
-| A09 接入调度、暂停与生命周期 | 等待 A08 | 反向根 Update、子节点顺序、外层帧 Reflect、暂停冻结和池复用无回归 |
+| A08 恢复 Auto Live OneFrame 填充与聚合 | 已完成 | 固定 5 槽、first-unused、原子 Setup、池序 projection、空帧/耗尽/清除语义已恢复 |
+| A09 接入调度、暂停与生命周期 | 可开始 | 反向根 Update、子节点顺序、外层帧 Reflect、暂停冻结和池复用无回归 |
 | A10 生产 oracle 与阶段验收 | 等待 A09 | 固定轨迹、生产 BMS、失败关闭、全部隔离回归和验收文档通过 |
 
 ### 1.4 批次记录
@@ -101,6 +101,15 @@
 - Slide head 使用 `>=` 切 Wait；每次 OnUpdate 只选择 current pending after，不使用 while。invisible support 单次跳过且不提交 OneFrame；visible intermediate/terminal 每调用最多推进一项，terminal 后 Deactive。
 - Slide OnUpdate/AfterUpdate 的父、after-list、selected child 顺序形成生产可审计轨迹；Wait/Stop 均只从共同 OnUpdate 进入一次 pending-node 路径，不重复推进。
 - 普通 Wait/Stop Miss、手动释放、Hold 音效和视觉移动继续不实现；非有限 adjusted position在状态变化与判定提交前失败关闭。
+- 模拟器隔离 TypeScript、第一切片 17 项与时钟调度 15 组回归通过。
+
+#### 2026-07-28 第六批：A08 OneFrame 填充与聚合
+
+- 删除生产 `OneFrameDataPoolProfile` 和宿主容量输入；控制器初始化固定创建 5 槽，`GetUsableOneFrameData` 每次按 0→4 返回首个 `IsUse=false`，获取本身不占用。
+- Auto Live Setup 在任何写入前验证 note identity、button types、phase、note type 与有限 absolute position；成功后一次提交已闭合 payload 与 `IsUse`，foreign handle 和 duplicate Setup 保持池不变。
+- payload 只包含 note identity/button types/note type/phase、raw/adjusted Perfect 4、addCombo 1、absolute position 与 JudgeTiming None 0；分数、Power、生命、Skill、Fever、音频、粒子、渲染和 HUD 字段在类型上缺席。
+- Reflect 只在 exists 成立时按固定池序建立 `OneFrameJudgementBatch` 投影并统一清槽；空帧返回 null 且不递增 batch index，第六条返回 `evidence-required` 并保留前五条。
+- 删除生产 `stageFixture`；第一切片容器测试改为走正式 Auto Live Setup，覆盖 5 槽占用、耗尽、池序收集与回收。
 - 模拟器隔离 TypeScript、第一切片 17 项与时钟调度 15 组回归通过。
 
 ## 2. 固定范围

@@ -52,8 +52,10 @@ export type {
   NoteFamily,
 } from "./engine/data/noteData";
 export type {
+  AutoLiveJudgementData,
   OneFrameDataHandle,
-  OneFrameDataPoolProfile,
+  OneFrameJudgementBatch,
+  OneFrameJudgementEntry,
 } from "./engine/data/oneFrameData";
 export type {
   EvidenceBound,

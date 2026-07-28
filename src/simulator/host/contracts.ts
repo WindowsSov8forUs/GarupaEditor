@@ -3,7 +3,6 @@ import type {
   SimulatorBackendTraceEvent,
 } from "../backends/contracts";
 import type { ChartConstructionResult } from "../engine/chart/types";
-import type { OneFrameDataPoolProfile } from "../engine/data/oneFrameData";
 import type { SimulatorPlayMode } from "../engine/data/inGameCalculatedData";
 import type { SimulatorResult } from "../engine/evidence";
 import type { InGameDirectorSnapshot } from "../engine/managers/inGameDirector";
@@ -16,7 +15,6 @@ export interface SimulatorEngineInput {
     readonly judgeOffsetFrames: number;
     readonly playMode: SimulatorPlayMode;
   };
-  readonly oneFrameData: OneFrameDataPoolProfile;
 }
 
 export interface SimulatorSnapshot {

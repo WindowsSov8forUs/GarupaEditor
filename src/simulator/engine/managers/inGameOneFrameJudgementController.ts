@@ -1,15 +1,17 @@
+import type { AutoLiveJudgementRequest } from "../data/autoLiveJudgement";
 import type {
+  AutoLiveJudgementData,
   OneFrameDataHandle,
-  OneFrameDataPoolProfile,
+  OneFrameJudgementBatch,
+  OneFrameJudgementEntry,
 } from "../data/oneFrameData";
 import {
   evidenceRequired,
   ok,
-  readEvidenceBound,
-  type EvidenceReference,
   type SimulatorResult,
 } from "../evidence";
-import type { AutoLiveJudgementRequest } from "../data/autoLiveJudgement";
+
+const ONE_FRAME_CAPACITY = 5;
 
 export type OneFrameTraceEntry =
   | {
@@ -17,40 +19,44 @@ export type OneFrameTraceEntry =
       readonly containerId: string;
     }
   | {
-      readonly kind: "one-frame.stage-fixture";
+      readonly kind: "one-frame.setup-auto-live";
       readonly containerId: string;
+      readonly noteIndex: number;
+      readonly phase: "head" | "intermediate" | "tail";
     }
   | {
       readonly kind: "one-frame.reflect";
       readonly batchIndex: number;
       readonly containerIds: readonly string[];
+      readonly noteIndices: readonly number[];
     };
-
-export interface OneFrameReflectBatch {
-  readonly batchIndex: number;
-  readonly containerIds: readonly string[];
-}
 
 export interface OneFrameJudgementControllerSnapshot {
   readonly initialized: boolean;
-  readonly capacity: number;
+  readonly capacity: 5;
+  readonly slots: readonly {
+    readonly slot: number;
+    readonly containerId: string;
+    readonly isUse: boolean;
+    readonly payload: AutoLiveJudgementData | null;
+  }[];
   readonly inUseContainerIds: readonly string[];
-  readonly lastReflectBatch: OneFrameReflectBatch | null;
+  readonly lastJudgementBatch: OneFrameJudgementBatch | null;
   readonly trace: readonly OneFrameTraceEntry[];
 }
 
 interface OneFrameDataContainer extends OneFrameDataHandle {
+  readonly slot: number;
   inUse: boolean;
+  payload: AutoLiveJudgementData | null;
 }
 
 export class InGameOneFrameJudgementController {
   private initializedValue = false;
   private readonly containers: OneFrameDataContainer[] = [];
   private readonly traceValue: OneFrameTraceEntry[] = [];
-  private lastReflectBatchValue: OneFrameReflectBatch | null = null;
+  private lastJudgementBatchValue: OneFrameJudgementBatch | null = null;
   private nextReflectBatchIndex = 0;
-
-  constructor(private readonly profile: OneFrameDataPoolProfile) {}
 
   get isInitialized(): boolean {
     return this.initializedValue;
@@ -60,27 +66,12 @@ export class InGameOneFrameJudgementController {
     if (this.initializedValue) {
       return ok(undefined);
     }
-    const capacityResult = readEvidenceBound(
-      this.profile.capacity,
-      "one-frame.pool-capacity",
-      ["E02", "E08"],
-      "The portable fixture must bind its OneFrameData pool capacity to evidence; the original capacity is not guessed.",
-    );
-    if (capacityResult.status !== "ok") {
-      return capacityResult;
-    }
-    if (!Number.isInteger(capacityResult.value) || capacityResult.value < 0) {
-      return evidenceRequired(
-        "one-frame.invalid-pool-capacity",
-        ["E02", "E08"],
-        "OneFrameData pool capacity must be a non-negative integer.",
-      );
-    }
-
-    for (let index = 0; index < capacityResult.value; index += 1) {
+    for (let index = 0; index < ONE_FRAME_CAPACITY; index += 1) {
       this.containers.push({
+        slot: index,
         containerId: `one-frame:${index}`,
         inUse: false,
+        payload: null,
       });
     }
     this.initializedValue = true;
@@ -91,16 +82,16 @@ export class InGameOneFrameJudgementController {
     if (!this.initializedValue) {
       return evidenceRequired(
         "one-frame.get-before-initialize",
-        ["E02", "E08"],
-        "InitOneFrameDataList must establish controller-owned containers before acquisition.",
+        ["R02", "R03"],
+        "InitOneFrameDataList must establish the fixed five controller-owned slots before acquisition.",
       );
     }
     const container = this.containers.find((candidate) => !candidate.inUse);
     if (container === undefined) {
       return evidenceRequired(
         "one-frame.pool-exhausted",
-        ["E08"],
-        "No unused OneFrameData container remains; the original overflow behavior is outside the frozen evidence.",
+        ["R02", "R03"],
+        "All five native OneFrameData slots are in use; the sixth entry cannot resize, overwrite, or clamp the pool.",
       );
     }
     this.traceValue.push({
@@ -110,16 +101,27 @@ export class InGameOneFrameJudgementController {
     return ok({ containerId: container.containerId });
   }
 
-  stageFixture(
-    handle: OneFrameDataHandle,
-    evidence: readonly EvidenceReference[],
+  setupAutoLiveJudgement(
+    request: AutoLiveJudgementRequest,
   ): SimulatorResult<void> {
-    if (evidence.length === 0) {
-      return evidenceRequired(
-        "one-frame.stage-fixture-evidence",
-        ["E08"],
-        "The test-only staging boundary requires an explicit OneFrameData evidence reference.",
-      );
+    const validation = validateAutoLiveJudgementRequest(request);
+    if (validation.status !== "ok") {
+      return validation;
+    }
+    const handle = this.getUsableOneFrameData();
+    if (handle.status !== "ok") {
+      return handle;
+    }
+    return this.setupAutoLiveJudgementData(handle.value, request);
+  }
+
+  setupAutoLiveJudgementData(
+    handle: OneFrameDataHandle,
+    request: AutoLiveJudgementRequest,
+  ): SimulatorResult<void> {
+    const validation = validateAutoLiveJudgementRequest(request);
+    if (validation.status !== "ok") {
+      return validation;
     }
     const container = this.containers.find(
       (candidate) => candidate.containerId === handle.containerId,
@@ -127,21 +129,36 @@ export class InGameOneFrameJudgementController {
     if (container === undefined) {
       return evidenceRequired(
         "one-frame.foreign-container",
-        ["E02", "E08"],
+        ["R02", "R03"],
         `Container ${handle.containerId} is not owned by this controller.`,
       );
     }
-    if (container.inUse) {
+    if (container.inUse || container.payload !== null) {
       return evidenceRequired(
         "one-frame.container-already-staged",
-        ["E08"],
-        `Container ${handle.containerId} is already staged for ReflectOneFrameData.`,
+        ["R02", "R03"],
+        `Container ${handle.containerId} already contains a committed OneFrameData payload.`,
       );
     }
+
+    const payload: AutoLiveJudgementData = Object.freeze({
+      noteIndex: request.noteInformation.index,
+      buttonTypes: Object.freeze([...request.noteInformation.buttonTypesArray]),
+      noteType: request.noteType,
+      phase: request.phase,
+      rawResult: 4,
+      adjustedResult: 4,
+      addCombo: 1,
+      absolutePosition: request.absolutePosition,
+      judgeTiming: 0,
+    });
+    container.payload = payload;
     container.inUse = true;
     this.traceValue.push({
-      kind: "one-frame.stage-fixture",
+      kind: "one-frame.setup-auto-live",
       containerId: container.containerId,
+      noteIndex: payload.noteIndex,
+      phase: payload.phase,
     });
     return ok(undefined);
   }
@@ -149,18 +166,8 @@ export class InGameOneFrameJudgementController {
   setupBusinessData(): SimulatorResult<void> {
     return evidenceRequired(
       "one-frame.setup-business-data",
-      ["E08", "E12", "E13"],
-      "OneFrameData.Setup fields require judgement, score, power, combo, timing, and note behavior outside the first slice.",
-    );
-  }
-
-  setupAutoLiveJudgement(
-    _request: AutoLiveJudgementRequest,
-  ): SimulatorResult<void> {
-    return evidenceRequired(
-      "one-frame.auto-live-setup-pending",
-      ["R02", "R03", "R04"],
-      "A05 restores the note-family Force Perfect route; the confirmed five-slot Auto Live Setup/Reflect payload is implemented in A08.",
+      ["E21", "E24", "R02"],
+      "Score, power, life, skill, Fever, audio, particle and HUD consumers are absent from the Auto Live judgement projection.",
     );
   }
 
@@ -174,59 +181,129 @@ export class InGameOneFrameJudgementController {
       .map((container) => ({ containerId: container.containerId }));
   }
 
-  reflectOneFrameData(): SimulatorResult<OneFrameReflectBatch> {
+  reflectOneFrameData(): SimulatorResult<OneFrameJudgementBatch | null> {
     if (!this.initializedValue) {
       return evidenceRequired(
         "one-frame.reflect-before-initialize",
-        ["E02", "E08"],
-        "ReflectOneFrameData requires an initialized controller-owned pool.",
+        ["R02", "R03"],
+        "ReflectOneFrameData requires the initialized fixed five-slot pool.",
       );
     }
-    const containerIds = this.containers
-      .filter((container) => container.inUse)
-      .map((container) => container.containerId);
+    if (!this.existsOneFrameData()) {
+      return ok(null);
+    }
+
+    const entries: OneFrameJudgementEntry[] = [];
+    for (const container of this.containers) {
+      if (!container.inUse) {
+        continue;
+      }
+      if (container.payload === null) {
+        return evidenceRequired(
+          "one-frame.in-use-without-payload",
+          ["R02", "R03"],
+          `Slot ${container.slot} is marked IsUse without a confirmed Setup payload.`,
+        );
+      }
+      entries.push(Object.freeze({
+        slot: container.slot,
+        containerId: container.containerId,
+        ...container.payload,
+        buttonTypes: Object.freeze([...container.payload.buttonTypes]),
+      }));
+    }
+
+    const batch: OneFrameJudgementBatch = Object.freeze({
+      batchIndex: this.nextReflectBatchIndex,
+      entries: Object.freeze(entries),
+      entryCount: entries.length,
+      addCombo: entries.reduce((sum, entry) => sum + entry.addCombo, 0),
+      rawResult: 4,
+      adjustedResult: 4,
+      judgeTiming: 0,
+    });
     for (const container of this.containers) {
       if (container.inUse) {
         container.inUse = false;
+        container.payload = null;
       }
     }
-    const batch: OneFrameReflectBatch = {
-      batchIndex: this.nextReflectBatchIndex,
-      containerIds,
-    };
     this.nextReflectBatchIndex += 1;
-    this.lastReflectBatchValue = batch;
+    this.lastJudgementBatchValue = batch;
     this.traceValue.push({
       kind: "one-frame.reflect",
       batchIndex: batch.batchIndex,
-      containerIds: [...containerIds],
+      containerIds: batch.entries.map((entry) => entry.containerId),
+      noteIndices: batch.entries.map((entry) => entry.noteIndex),
     });
-    return ok(batch);
+    return ok(cloneBatch(batch));
   }
 
-  getReflectOneFrameData(): OneFrameReflectBatch | null {
-    if (this.lastReflectBatchValue === null) {
-      return null;
-    }
-    return {
-      batchIndex: this.lastReflectBatchValue.batchIndex,
-      containerIds: [...this.lastReflectBatchValue.containerIds],
-    };
+  getReflectOneFrameData(): OneFrameJudgementBatch | null {
+    return this.lastJudgementBatchValue === null
+      ? null
+      : cloneBatch(this.lastJudgementBatchValue);
   }
 
   snapshot(): OneFrameJudgementControllerSnapshot {
     return {
       initialized: this.initializedValue,
-      capacity: this.containers.length,
+      capacity: 5,
+      slots: this.containers.map((container) => ({
+        slot: container.slot,
+        containerId: container.containerId,
+        isUse: container.inUse,
+        payload: container.payload === null
+          ? null
+          : { ...container.payload, buttonTypes: [...container.payload.buttonTypes] },
+      })),
       inUseContainerIds: this.collectOneFrameData().map(
         (container) => container.containerId,
       ),
-      lastReflectBatch: this.getReflectOneFrameData(),
+      lastJudgementBatch: this.getReflectOneFrameData(),
       trace: this.traceValue.map((entry) =>
         entry.kind === "one-frame.reflect"
-          ? { ...entry, containerIds: [...entry.containerIds] }
+          ? {
+              ...entry,
+              containerIds: [...entry.containerIds],
+              noteIndices: [...entry.noteIndices],
+            }
           : { ...entry },
       ),
     };
   }
+}
+
+function validateAutoLiveJudgementRequest(
+  request: AutoLiveJudgementRequest,
+): SimulatorResult<void> {
+  if (
+    request === null ||
+    typeof request !== "object" ||
+    request.noteInformation === null ||
+    typeof request.noteInformation !== "object" ||
+    !Number.isInteger(request.noteInformation.index) ||
+    !Array.isArray(request.noteInformation.buttonTypesArray) ||
+    request.noteInformation.buttonTypesArray.some((button) => !Number.isInteger(button)) ||
+    !Number.isInteger(request.noteType) ||
+    !Number.isFinite(request.absolutePosition) ||
+    (request.phase !== "head" && request.phase !== "intermediate" && request.phase !== "tail")
+  ) {
+    return evidenceRequired(
+      "one-frame.invalid-auto-live-payload",
+      ["R02", "R03", "R04"],
+      "Auto Live Setup validates every represented payload field before committing IsUse and payload state.",
+    );
+  }
+  return ok(undefined);
+}
+
+function cloneBatch(batch: OneFrameJudgementBatch): OneFrameJudgementBatch {
+  return {
+    ...batch,
+    entries: batch.entries.map((entry) => ({
+      ...entry,
+      buttonTypes: [...entry.buttonTypes],
+    })),
+  };
 }

@@ -23,11 +23,10 @@ import { SlideNoteManager } from "../engine/managers/slideNoteManager";
 import { NoteBase, NoteState } from "../engine/notes/noteBase";
 import { createSimulatorEngine } from "../host/createSimulatorEngine";
 import {
-  bound,
   chart,
   engineInput,
-  evidence,
   noteBatch,
+  noteInformation,
   testingNoteId,
 } from "./firstSliceFixtures";
 
@@ -143,9 +142,7 @@ function createTestGraph(
   const clock = new FakeClock();
   const runtimeChart = chart([]);
   const music = new InGameMusicScoreController(runtimeChart);
-  const controller = new InGameOneFrameJudgementController({
-    capacity: bound(4, evidence("E08", "test OneFrameData pool")),
-  });
+  const controller = new InGameOneFrameJudgementController();
   requireOk(controller.initialize(), "initialize OneFrameData controller");
   const manager = new NoteManager(
     [noteBatch(noteIds)],
@@ -325,16 +322,23 @@ test("PauseSound 保留输入分派但阻断 NoteManager", () => {
 });
 
 test("OneFrame 容器统一获取 Reflect 与回收", () => {
-  const reference = evidence("E08", "OneFrameData lifecycle");
-  const controller = new InGameOneFrameJudgementController({ capacity: bound(2, reference) });
+  const controller = new InGameOneFrameJudgementController();
   requireOk(controller.initialize(), "initialize");
-  const first = requireOk(controller.getUsableOneFrameData(), "first");
-  requireOk(controller.stageFixture(first, [reference]), "stage first");
-  const second = requireOk(controller.getUsableOneFrameData(), "second");
-  requireOk(controller.stageFixture(second, [reference]), "stage second");
+  for (let index = 0; index < 5; index += 1) {
+    const handle = requireOk(controller.getUsableOneFrameData(), `slot ${index}`);
+    requireOk(controller.setupAutoLiveJudgementData(handle, {
+      noteInformation: noteInformation(`one-frame-${index}`, index),
+      phase: "head",
+      noteType: 0,
+      absolutePosition: index,
+    }), `setup ${index}`);
+  }
   assertEqual(controller.getUsableOneFrameData().status, "evidence-required", "pool exhaustion");
-  assertDeepEqual(requireOk(controller.reflectOneFrameData(), "reflect").containerIds,
-    ["one-frame:0", "one-frame:1"], "reflect order");
+  const batch = requireOk(controller.reflectOneFrameData(), "reflect");
+  assert(batch !== null, "non-empty reflect batch");
+  assertDeepEqual(batch.entries.map((entry) => entry.containerId),
+    ["one-frame:0", "one-frame:1", "one-frame:2", "one-frame:3", "one-frame:4"],
+    "reflect order");
 });
 
 test("Note 只通过 SetupNotes 安装的回调请求 OneFrame 容器", () => {

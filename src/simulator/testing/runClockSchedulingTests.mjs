@@ -47,16 +47,9 @@ function validateClockScheduling() {
     "inGameOneFrameJudgementController.js",
   ));
 
-  const oneFrameData = {
-    capacity: {
-      value: 8,
-      evidence: [{ id: "E08", assertion: "clock scheduling test capacity" }],
-    },
-  };
   const inputFor = (chart, highFrequencyMode = false, judgeOffsetFrames = 0) => ({
     chart,
     runtime: { highFrequencyMode, judgeOffsetFrames, playMode: { kind: "manual" } },
-    oneFrameData,
   });
   const chartFixtures = join(
     repositoryRoot,
@@ -283,7 +276,7 @@ function validateClockScheduling() {
 
   function createManager(chart, batches, judgeOffsetFrames, bpmChangeCount) {
     const controller = new InGameMusicScoreController(chart);
-    const oneFrame = new InGameOneFrameJudgementController(oneFrameData);
+    const oneFrame = new InGameOneFrameJudgementController();
     assertEqual(oneFrame.initialize().status, "ok", "command manager OneFrame initialize");
     const manager = new NoteManager(
       batches,

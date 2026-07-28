@@ -8,7 +8,6 @@ import {
 import {
   evidenceRequired,
   ok,
-  readEvidenceBound,
   type SimulatorResult,
 } from "../engine/evidence";
 import { getConstructedChartRuntimeMetadata } from "../engine/runtime/chartRuntimeMetadata";
@@ -127,22 +126,10 @@ export function createSimulatorEngine(
   if (playModeValidation.status !== "ok") {
     return playModeValidation;
   }
-  const oneFrameCapacity = readEvidenceBound(
-    input.oneFrameData.capacity,
-    "one-frame.pool-capacity",
-    ["E02", "E08"],
-    "OneFrameData pool capacity must remain tied to the frozen controller evidence.",
-  );
-  if (oneFrameCapacity.status !== "ok") {
-    return oneFrameCapacity;
-  }
-
   const slideNoteManager = new SlideNoteManager();
   const inGameCalculatedData = new InGameCalculatedData(input.runtime.playMode);
   const musicScoreController = new InGameMusicScoreController(input.chart);
-  const oneFrameJudgementController = new InGameOneFrameJudgementController(
-    input.oneFrameData,
-  );
+  const oneFrameJudgementController = new InGameOneFrameJudgementController();
   const noteManager = new NoteManager(
     input.chart.noteBatches,
     slideNoteManager,
