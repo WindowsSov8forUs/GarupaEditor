@@ -10,7 +10,7 @@
 - 锁定原作样本：`jp.co.craftegg.band` 10.1.3（version code 229，`arm64-v8a`）。
 - 上游已验收阶段：第一切片、谱面构造、时钟与调度。
 - 上游时钟调度验收提交：GarupaEditor `78414bc`，关闭记录修订提交 `ca84258`。
-- 当前状态：**A00–A10 已完成第四次独立重验收，Auto Live 阶段关闭。G21 source-order、G19 terminal fault latch、G20 actual observation、snapshot 只读复核和独立 production topology oracle 全部通过；下一阶段只允许先建立“手动输入与判定”的 Reverse 证据硬门，不得直接实施手动行为。**
+- 当前状态：**第五次独立审计已撤销第四次关闭结论。A00–A08 与 G21 production topology 保留；A09 因公共 host `resume()` 可绕过 terminal fault 而重新打开，A10 因 exact B±5/0 仍未由 G20 指定的 `InGameMusicScoreController.getAdjustedMusicPosition` owner 实际执行、且 AL02 仍把 frozen `step_bpms` 输入算术而重新打开。adaptive canonical 还删除 `outer_frame` 后比较。修复完成前禁止进入手动输入阶段；若现有已提交证据不能提供 exact cursor 的可重放输入，须先关闭新增 G22 硬门。**
 - 待重建验收记录：`tmp/simulator-auto-live-acceptance.md`。
 - 已冻结证据包：`tmp/simulator-reverse-evidence/auto-live/`。
 
@@ -53,8 +53,8 @@
 | A06 恢复 Long 分阶段完成 | 已完成 | head/tail 第六槽保留 native Wait/linked order，并由 manager terminal fault 阻止重试 |
 | A07 恢复 Slide 分阶段完成 | 已完成 | head 第六槽状态与 terminal fault boundary 精确覆盖 |
 | A08 恢复 Auto Live OneFrame 填充与聚合 | 已完成 | 117/84 source-order run 的唯一 note type 10/count、混合 batch 与五槽行为通过独立固定 oracle |
-| A09 接入调度、暂停与生命周期 | 已完成 | 首次 runtime failure 锁存 `faulted`；step/pause/resume/adjusted query 返回同一失败，只允许只读 snapshot/dispose |
-| A10 生产 oracle 与阶段验收 | 已完成 | 独立 production topology、actual scheduler/tempo trace、snapshot purity 与全部隔离回归通过 |
+| A09 接入调度、暂停与生命周期 | 重新打开，G19 代码门已解除 | manager latch 正确；公共 host `resume()` 的未暂停 shortcut 仍可在 fault 后返回 `ok`，须验证全部 host API 与 backend trace |
+| A10 生产 oracle 与阶段验收 | 重新打开，exact replay 硬门待判定 | topology oracle 保留；须删除 expected BPM 输入，让 exact B±5/0 由 production owner 执行，并闭合 adaptive `outer_frame` 全字段比较 |
 
 ### 1.4 批次记录
 
@@ -261,6 +261,14 @@
 - 对已推送实现提交 `d5ca9dd` 复核时发现：新增 tempo-query observation 使原有 host `snapshot()` 间接调用带记录副作用的 adjusted-position 路径；同时 scheduler 为记录 adjusted position 在真实 Note 回调前额外查询一次，非零 offset 会产生重复 tempo observation。该问题不改变判定数值，但违反 snapshot 只读和 G20“观察真实调用”要求，因此最终验收继续保持撤销直至修复。
 - music score 将读路径拆为带记录的 `getAdjustedMusicPosition` 与无记录的 `peekAdjustedMusicPosition`；host snapshot 只使用 peek。NoteManager 不再预查询 adjusted position，而由每个池对象已安装的真实 Auto Live callback 把本次读取写入 WeakMap，Update trace 在调用后读取该实际值；未读取 adjusted position 的状态记录为 null。
 - AL02 新增非零 offset 的 controller peek 与连续 host snapshot 全对象相等断言，确认 snapshot 不追加 tempo trace；actual `getAdjustedMusicPosition(+5)` 跨 BPM case 仍精确记录五次生产查询。TypeScript、Auto Live 22 组、第一切片 17 项与时钟 15 组再次通过。
+
+#### 2026-07-29 第二十四批：第五次独立审计与阶段重开
+
+- 全部 A10 隔离命令、Auto Live 22 组与 evidence source/copy/index verifier 仍为绿色，但任务书逐项审计确认第四次关闭结论不成立。
+- 公共 `SimulatorEngineHost.resume()` 在调用 manager 前先检查 `snapshot().paused`；faulted manager 保持 `PlayingSound`，因此该 shortcut 返回 `ok`。隔离复现结果为：fault/step/pause/getAdjusted 均返回锁存 `one-frame.pool-exhausted`，唯独 `resume-after-fault -> ok`。现 AL16 只验证 direct manager resume，host case未覆盖 pause/resume。
+- G20 fixture 明确禁止 `expected-step-bpms` 并指定 exact 三例 owner 为 `InGameMusicScoreController.getAdjustedMusicPosition`；AL02 仍执行 `for (const bpm of plusFive.step_bpms)`，canonical exact block也只从 expected cursor 手工调用 private `bpmAtPosition` + `advancePosition/rewindPosition`，没有让 production owner 执行 exact B±5/0。另一个 actual +5 case只验证“跨过 BPM”，未对 exact device cursor/result bits。
+- adaptive actual projection虽读取 scheduler trace，却在 deep-equal 前从 actual/expected 同时删除 `outer_frame`，再测试侧硬编码实际值 1；因此“事件 case 全对象比较”仍为过度声明。须由已提交证据明确完整生命周期 index 或 case-relative projection，不得继续忽略字段。
+- A09/A10 与阶段完成勾选撤销；A00–A08、G19/G20/G21 证据本身、117/84 topology、87 Long/144 Slide/50 Directional/415 Multiple coverage保持有效。若 committed pass2 只有 entry cursor/steps 而无可重放的生产输入序列，则新增 G22：冻结 exact controller replay 输入与 adaptive outer-frame identity，Reverse 提交并冻结前禁止用 private 字段 seed 或测试 hook 绕过。
 
 ## 2. 固定范围
 
@@ -953,15 +961,15 @@ A10 前不运行 Vite、Tauri 或 GarupaEditor 整体构建。
 - [x] Long 头/尾比较符号、父子顺序、状态、active pause 与回收匹配。
 - [x] Slide 头/中间/终端/Stop、current/selected cursor 和单次调用粒度匹配 frozen trace。
 - [x] Long/Slide after 子图保持构造共享身份并由父对象独占更新。
-- [x] OneFrame 固定 5 槽、first-unused、Setup、Multiple note type/count 边界、池序 Reflect、清除与 Note-level exhaustion 失败状态匹配。
+- [ ] OneFrame 固定 5 槽、first-unused、Setup、Multiple note type/count 边界、池序 Reflect、清除与 Note-level exhaustion 失败状态匹配；manager 已匹配，但公共 host resume 仍绕过 fault。
 - [x] unknown 分数/生命/技能/音频/粒子字段没有零值或 no-op 伪实现。
-- [x] 同位置、actual adaptive 多子步、Long/Slide/Multiple 暂停、空帧和失败关闭全部通过新 oracle。
+- [ ] 同位置、actual adaptive 多子步、Long/Slide/Multiple 暂停、空帧和失败关闭全部通过新 oracle；exact offset owner 与 adaptive outer-frame 尚未闭合。
 - [x] 普通与 HABAHIRO production Normal/Flick/Directional/Multiple/Long/Slide 回归通过，并以独立 oracle 验证 production group，不由待测函数生成 expected。
 - [x] 第一切片、谱面构造和时钟调度全部隔离回归通过。
 - [x] `engine/` 依赖边界通过。
-- [x] `tmp/simulator-auto-live-acceptance.md` 已按 G19–G21、actual observation 与修复后结果重建并通过。
+- [ ] `tmp/simulator-auto-live-acceptance.md` 已按 G19–G21、actual observation 与修复后结果重建并通过。
 - [x] 未修改主程序入口、编辑器控制器、窗口协议、渲染或音频实现。
-- [x] 最终补证与生产修复提交已推送，远端与 HEAD 为 `0 0`；本验收文档提交按同一纪律推送。
+- [ ] 最终补证与生产修复提交已推送，远端与 HEAD 为 `0 0`；本验收文档提交按同一纪律推送。
 
 阶段关闭后，下一阶段只允许按整体计划进入“手动输入与判定”。如果 AL21 中任一手动输入分支仍无实体证据，则下一阶段必须先建立对应设备采证硬门，不能沿用 Auto Live 的 Force Perfect 结果绕过手动判定。
 

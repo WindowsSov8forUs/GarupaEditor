@@ -25,11 +25,11 @@
 
 时钟与调度验收记录位于 `tmp/simulator-clock-scheduling-acceptance.md`。S01–S10 已完成。
 
-Auto Live A00–A10 已完成第四次独立重验收：G21 的完整 playable source-order run 在普通/HABAHIRO production 精确得到 117/84 组，固定 oracle 不调用待测分组函数；G19 的 Note-level 第六槽状态由 portable terminal fault latch 锁存；G20 的 adaptive substep/adjusted state 与 tempo query 来自实际 manager/music trace，连续 snapshot 保持只读。验收记录位于 `tmp/simulator-auto-live-acceptance.md`。
+Auto Live 第五次独立审计已撤销第四次关闭结论。G21 的完整 playable source-order topology、manager fault latch、连续 snapshot只读及 production family coverage保留；但公共 host `resume()` 仍可绕过 fault，exact B±5/0 仍未由 G20 指定 production owner执行且 AL02仍注入 frozen step BPM，adaptive canonical也删除 outer frame后比较。A09/A10重新打开，修复或新增 G22 证据闭合前禁止进入手动输入阶段。
 
 OneFrame 容量现在由原作证据固定为 5，不再接受宿主或测试容量配置。公开的 `OneFrameJudgementBatch` 仅包含本阶段闭合的 Auto Live 判定字段，不是原作完整 `OneFrameTotalData`。分数、Power、生命、Skill/Fever、音频、粒子、渲染和 HUD 字段在类型上保持缺席，而不是填零。
 
-下一阶段是“手动输入与判定”，但开始实现前必须先建立并关闭独立 Reverse 证据硬门。真实触摸、Multiple Directional 距离阈值、手指所有权、判定窗口、普通 timeout Miss、释放和 Hold 行为继续 `evidence-required`；BackLine/Sprite/音频/粒子仍后置。
+当前仍停留在 Auto Live A09/A10 修复与补证阶段。真实触摸、Multiple Directional 距离阈值、手指所有权、判定窗口、普通 timeout Miss、释放和 Hold 行为继续 `evidence-required`；BackLine/Sprite/音频/粒子仍后置。
 
 `src/simulator/engine` 不依赖 React、Pixi、Tauri、DOM、编辑器谱面类型或窗口协议。宿主 API 是 GarupaEditor 的可移植边界，不宣称属于原作接口。
 

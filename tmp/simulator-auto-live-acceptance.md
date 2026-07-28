@@ -1,6 +1,6 @@
 # 模拟器 Auto Live 阶段验收记录
 
-> **2026-07-29 第四次重验收：通过。** 第三次审计揭示的 G18 过度解释已由 Reverse G21 与生产实现共同修正；G19 terminal fault latch、G20 actual scheduler/tempo observation、独立 production topology oracle 和提交后 snapshot 只读复核均已完成。此前两次被撤销的验收结论只作为历史保留，不再作为当前依据。
+> **2026-07-29 第五次独立审计：第四次验收结论已撤销。** G21 topology、manager fault latch 与 snapshot purity 保留，但公共 host `resume()` 可绕过 fault；exact offset仍使用 expected BPM/手工算术而未由 G20 指定 production owner执行；adaptive canonical删除 `outer_frame` 后比较。A09/A10重新打开，本文后续“通过”表格仅保留为被撤销历史，不能证明阶段完成。
 
 ## 1. 验收身份
 
@@ -30,7 +30,7 @@
 - 第四次最终重验收：本文件所在提交
 - 验收日期：2026-07-28
 - 最终验收日期：2026-07-29
-- 验收结论：**通过。A00–A10 完成；Auto Live 阶段关闭。下一阶段只能先建立“手动输入与判定”的独立 Reverse 证据硬门。**
+- 验收结论：**已撤销。A09/A10 未完成；Auto Live 阶段保持打开，禁止开始手动输入生产实现。**
 
 ## 2. 证据硬门与冻结包
 
@@ -42,7 +42,7 @@ auto_live_gate = closed
 blocking_findings = []
 ```
 
-G19/G20 由 `24706edc` 关闭；G21 又由 `57c1e03be474eeb1006ff56c8fc3d5a9a117d573` 修正 G18 的过度解释。G18 保留为 superseded 历史，不再消费其 connected-component 结论；当前有效规则是完整 playable source activation order 的 previous/current run。所有生产实现与重验收阻断均已关闭。
+G19/G20 由 `24706edc` 关闭；G21 又由 `57c1e03be474eeb1006ff56c8fc3d5a9a117d573` 修正 G18 的过度解释。G18 保留为 superseded 历史；证据门仍关闭，但 A09/A10 对 G19/G20 的消费不完整。若 exact production owner 无法从现有 committed runtime输入重放到冻结 cursor，必须先在 Reverse新增并关闭 G22，不能把证据 gate closed误写成实现已验收。
 
 G01–G10 已全部关闭：
 
@@ -86,8 +86,8 @@ auto-live evidence verified: candidates=30, final=68, supplement=G11-G21, cases=
 | A06 Long | 通过 | head `>=`、tail `>`、linked finish→tail、active pause/resume、回收；head/tail 第六槽 native failure state 均冻结 |
 | A07 Slide | 通过 | source-order、terminal 8/5/6/7、Stop、Reset、单次粒度；head 第六槽 Wait 状态冻结 |
 | A08 OneFrame | 通过 | 固定 5 槽；117/84 个 production run 的唯一 callback count；visual helper 不判定 |
-| A09 调度生命周期 | 通过 | 首次 runtime failure 锁存 manager `faulted`；后续操作返回同一失败，snapshot/dispose 例外且只读 |
-| A10 生产 oracle | 通过 | 固定事件/边界 case、actual scheduler/tempo trace、独立 201-group topology、87 Long、144 Slide、50 standalone Directional、415 Multiple member 与全部回归通过 |
+| A09 调度生命周期 | **撤销** | direct manager latch有效，但公共 host `resume()` 在 faulted/unpaused 时返回 `ok`，违反 snapshot/dispose-only policy |
+| A10 生产 oracle | **撤销** | topology与production family coverage保留；exact offset未由 production owner执行，AL02仍注入 expected BPM，adaptive比较删除 outer frame |
 
 ## 4. 已落地的生产边界
 
@@ -149,7 +149,7 @@ type SimulatorPlayMode =
 - adaptive 1–4 子步全部在 NoteManager 内完成；同一外层帧产生的判定共享五槽池，InGameManager 成功返回后只 Reflect 一次。
 - 任一子步失败立即停止，不继续子步、不 Reflect；第六条边界留下已提交五槽供审计。
 - Long/Slide 在第六槽失败前已发生的 native 状态/linked trace 不回滚；portable manager 立即锁存同一 `evidence-required` terminal fault，进入 `faulted`，因此不存在重试或半完成状态继续推进。
-- fault 后 `step`、`pause`、`resume` 与 adjusted-position query 返回同一失败；`snapshot` 与 `dispose` 保持允许。snapshot 使用无记录 peek，不推进时钟、不追加 tempo observation，连续快照全对象相等。
+- direct manager fault 后 `step`、`pause`、`resume` 返回同一失败，snapshot peek保持只读；**公共 host resume 当前仍有绕过缺口，本条整体结论撤销。**
 - PauseSound 在 NoteManager 前返回，冻结时钟、root/child state、cursor、slots 和 trace；resume 不补跑暂停时间。
 - dispose 失活并解绑 root/BPM、清 child runtime 和 pool cursor、关闭 Slide manager、清未 Reflect payload，不产生判定或后端副作用。
 
@@ -219,9 +219,9 @@ node tmp/simulator-reverse-evidence/auto-live/verify.mjs --index
 - Auto Live：AL01–AL22 共 22 组通过。
 - 依赖边界：每个隔离测试入口后通过。
 - Auto Live 证据包：`candidates=30, final=68, supplement=G11-G21, cases=14, gate=closed, index=checked`。
-- 固定 oracle：首版 11 case 与补充 14 case 全部消费；事件 case 的 canonical actual projection 全对象比较，G19/G20 boundary case 直接检查 fault/trace observation requirements。
+- 固定 oracle：首版 11 case 与补充 14 case均被读取，但 exact offset与 adaptive outer-frame尚未按 G20 完整消费，不能称为 canonical actual全对象比较。
 - production topology oracle：独立生成器不导入/调用待测 `groupMultipleDirectionalInformationList`；固定 JSON 对两个 BMS 的 SHA-256、batch/position、source slot、note/button/game type 逐对象比较，离线再生成字节一致。
-- adaptive/offset：substep、adjusted bits、state before/after、slot、outer-frame identity来自 `NoteManager.schedulerTrace` 与 OneFrame；正 offset BPM 来自实际 music tempo-query trace，不向生产调用注入 expected-side substep/BPM。
+- adaptive/offset：substep/state/slot大部分来自 runtime trace；但比较前删除 outer frame。exact AL02仍把 frozen `step_bpms` 输入计算，三个 exact case也没有调用指定 production owner，本条第四次验收结论撤销。
 - 未运行 Vite、Tauri 或 GarupaEditor 整体构建，符合任务书限制。
 
 ## 7. 持续非阻断边界
@@ -235,7 +235,7 @@ node tmp/simulator-reverse-evidence/auto-live/verify.mjs --index
 
 ## 8. 下一阶段硬门
 
-Auto Live 补充证据与实现已重新验收；以下下一阶段硬门恢复适用。
+Auto Live 当前重新打开；以下手动阶段硬门暂不得启动。
 
 下一阶段只允许按整体计划进入“手动输入与判定”。开始生产实现前必须：
 
