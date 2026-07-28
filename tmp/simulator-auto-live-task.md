@@ -10,8 +10,8 @@
 - 锁定原作样本：`jp.co.craftegg.band` 10.1.3（version code 229，`arm64-v8a`）。
 - 上游已验收阶段：第一切片、谱面构造、时钟与调度。
 - 上游时钟调度验收提交：GarupaEditor `78414bc`，关闭记录修订提交 `ca84258`。
-- 当前状态：**A01/A02 补充证据硬门已由 Reverse `cd84d2ce84243e8b864d08d7fe0fbeeb041eb79a` 最终关闭并冻结为 R09–R16/G11–G16；A03/A04 与既有普通 Slide 修复保留。当前进入 A05–A10 实现与重验收：415 个核心 production `NoteMultipleDirectionalFlick`、Stop/Long pause/精确 offset oracle 和 visual helper 分类尚未在 TypeScript 闭合，完成前禁止进入手动输入阶段。**
-- 待重建验收记录：`tmp/simulator-auto-live-acceptance.md`。
+- 当前状态：**A00–A10 已在第二次关闭后复审补证与修复后重新完成。Reverse `cd84d2ce84243e8b864d08d7fe0fbeeb041eb79a` 关闭 G11–G16，GarupaEditor 冻结 67 个 final entry；415 个核心 production Multiple Directional、Stop、Long/Slide/Multiple pause、精确 offset/BPM、普通 production 全谱运行和 visual helper 边界均已重验收。`auto_live_gate = closed`、`blocking_findings = []`，阶段重新关闭。**
+- 最终验收记录：`tmp/simulator-auto-live-acceptance.md`。
 - 已冻结证据包：`tmp/simulator-reverse-evidence/auto-live/`。
 
 ### 1.1 阶段目标
@@ -50,11 +50,11 @@
 | A03 接入 Auto Live 模式与判定上下文 | 已完成 | 显式模式本身不需改动；补充证据现可由 A05–A10 消费 |
 | A04 建立 Long/Slide 运行子图 | 修复完成 | 普通生产 Slide 由 terminal child + root after type 联合识别；父 Deactive 时按 R02 清 child graph/current，复用重建共享身份 |
 | A05 恢复 Single/Flick Force Perfect | 补充实现完成 | 核心 Multiple 继承 Directional synthetic ±500，按相邻 button group 只提交一次 note type 10；side root 失活不重复判定 |
-| A06 恢复 Long 分阶段完成 | 可重新验收 | 头尾与回池实现保留，active Long pause fixed oracle 已冻结并进入修订测试 |
-| A07 恢复 Slide 分阶段完成 | 可重新验收 | 普通/特殊 terminal 与 Reset 保留，Stop exact before/equal/current case 已冻结并进入修订测试 |
+| A06 恢复 Long 分阶段完成 | 重验收完成 | 头尾、回池、active Long pause/resume、equal/strict-greater 与 final Deactive 对照补充 oracle 通过 |
+| A07 恢复 Slide 分阶段完成 | 重验收完成 | 普通/特殊 terminal、Reset、Stop before/equal/current advance 对照补充 oracle 通过 |
 | A08 恢复 Auto Live OneFrame 填充与聚合 | 补充实现完成 | 五槽 payload 不伪造 count 字段；Setup trace 记录 confirmed Multiple callback count，visual helper 明确后置且不冒充 core judgement |
-| A09 接入调度、暂停与生命周期 | 可重新验收 | Multiple/Long/Slide pause、resume、active dispose 与 group side-used 测试已补，等待完整回归 |
-| A10 生产 oracle 与阶段验收 | 重新打开，等待 A09 | AL19 目前过滤全部 production Directional family；须逐 family 执行 production engine 并整体对照新 frozen trace |
+| A09 接入调度、暂停与生命周期 | 重验收完成 | Long/Slide/Multiple pause、resume 无补步、pending slot、active dispose、group side-used 与失败原子通过 |
+| A10 生产 oracle 与阶段验收 | 重验收完成 | 两个 BMS 六类 core family、50 standalone Directional、415 core Multiple、144 Slide root 通过；普通 production 全谱完成 |
 
 ### 1.4 批次记录
 
@@ -197,6 +197,16 @@
 - `AutoLiveJudgementRequest` 增加 confirmed callback count；OneFrame payload 继续严格保持原八个阶段字段，不把 count 冒充原作 OneFrameData 字段，仅在 Setup trace 记录供 onJudge callback 边界审计。
 - Front type 7/8/9 改映射到独立 `multiple-directional-visual` family；其 Move 明确返回 presentation `evidence-required`，不再错误构造核心 judgement class，也不使用无证据 no-op。
 - production group 快照包含最小 count/used/trace；dispose 与 side-used 后全部 core root Deactive。隔离 TypeScript、第一切片 17 项、时钟 15 组和修订中的 Auto Live 22 组通过；完整 A10 回归与最终文档仍待下一批。
+
+#### 2026-07-28 第十六批：A06/A07/A09/A10 补充轨迹与 production 重验收
+
+- Auto Live 测试同时读取首版 11 case 和补充 8 case；AL02 用生产 `advancePosition` 从冻结 cursor 跨 99.5→95.5 BPM 五步并逐 bits 对照 `0x45401EF9`，B=-5 cross-bar `0x446E7494` 与 B=0 identity 也直接消费冻结值。
+- AL06 墑补 standalone Directional 与三成员 Multiple group：反向 active Update 只让最后 root 提交一次 note type 10、count 3，另外两个 side root 失活；OneFrame payload 不出现 count，Setup callback trace 保留 count。
+- AL11 不再硬编码 Stop：直接消费 frozen before `0x4333FFFF`、equal `0x43340000`、intermediate note type 8 和 current 0→1。
+- AL18 同时覆盖 active Slide+occupied slot、active Long equal/strict-greater、active Multiple group 的 pause/resume 无补步，以及 Slide/Multiple active dispose 无新增判定事件。
+- AL19 每个 production chart 分别消费 Normal/Flick/Long/standalone Directional/Slide；按生产分组函数完整执行普通 195、HABAHIRO 220 个 core Multiple root，所有 group 各仅一个 judgement。普通谱面另通过正式 host `initialize + 8000×step(1/60)` 完成全部 656 batch 且 active root 归零。
+- AL20 对 HABAHIRO 的唯一 front type 8 visual helper 验证独立 `multiple-directional-visual` family 和 presentation `evidence-required`；不把该静态/视觉边界冒充 core Auto judgement，也不扩张 HABAHIRO 实体 runtime 声明。
+- 完整隔离验收通过：TypeScript、第一切片 17 项、全部 chart suites、production roots 825/598、时钟 15 组、Auto Live 22 组、依赖边界和证据 source/copy/index。阶段重新关闭，但真实 touch 与 visual/audio 消费仍后置。
 
 ## 2. 固定范围
 
@@ -881,23 +891,23 @@ A10 前不运行 Vite、Tauri 或 GarupaEditor 整体构建。
 
 只有以下条件全部满足，Auto Live 阶段才能关闭：
 
-- [ ] Reverse Auto Live 补充证据提交已锁定，新 `auto_live_gate = closed` 且 `blocking_findings = []`。
+- [x] Reverse Auto Live 补充证据提交已锁定，新 `auto_live_gate = closed` 且 `blocking_findings = []`。
 - [x] E02/E05/E30 的内部哈希修订链已闭合，无 stale source profile。
-- [ ] 补充后的固定事件轨迹覆盖 Multiple Directional、Stop、pause、BPM boundary 与精确 B±5 bits，并可在 Reverse 离线重复生成；GarupaEditor 不调用 Python。
+- [x] 补充后的固定事件轨迹覆盖 Multiple Directional、Stop、pause、BPM boundary 与精确 B±5 bits，并可在 Reverse 离线重复生成；GarupaEditor 不调用 Python。
 - [x] Auto Live 模式显式接入，manual/mode14/debug 路由没有混淆。
-- [ ] Normal/Flick/standalone Directional/Multiple Directional 的 adjusted crossing、事件数、group state 和顺序匹配。
-- [ ] Long 头/尾比较符号、父子顺序、状态、active pause 与回收匹配。
-- [ ] Slide 头/中间/终端/Stop、current/selected cursor 和单次调用粒度匹配 frozen trace。
+- [x] Normal/Flick/standalone Directional/Multiple Directional 的 adjusted crossing、事件数、group state 和顺序匹配。
+- [x] Long 头/尾比较符号、父子顺序、状态、active pause 与回收匹配。
+- [x] Slide 头/中间/终端/Stop、current/selected cursor 和单次调用粒度匹配 frozen trace。
 - [x] Long/Slide after 子图保持构造共享身份并由父对象独占更新。
-- [ ] OneFrame 固定 5 槽、first-unused、Setup、Multiple note type/count 边界、池序 Reflect、清除与耗尽匹配。
+- [x] OneFrame 固定 5 槽、first-unused、Setup、Multiple note type/count 边界、池序 Reflect、清除与耗尽匹配。
 - [x] unknown 分数/生命/技能/音频/粒子字段没有零值或 no-op 伪实现。
-- [ ] 同位置、adaptive 多子步、Long/Slide/Multiple 暂停、空帧和失败关闭全部通过新 oracle。
-- [ ] 普通与 HABAHIRO production Normal/Flick/Directional/Multiple/Long/Slide 回归通过，并保留 HABAHIRO 无实体运行样本披露。
+- [x] 同位置、adaptive 多子步、Long/Slide/Multiple 暂停、空帧和失败关闭全部通过新 oracle。
+- [x] 普通与 HABAHIRO production Normal/Flick/Directional/Multiple/Long/Slide 回归通过，并保留 HABAHIRO 无实体运行样本披露。
 - [x] 第一切片、谱面构造和时钟调度全部隔离回归通过。
 - [x] `engine/` 依赖边界通过。
-- [ ] `tmp/simulator-auto-live-acceptance.md` 已按补充证据与修复后结果重建并通过。
+- [x] `tmp/simulator-auto-live-acceptance.md` 已按补充证据与修复后结果重建并通过。
 - [x] 未修改主程序入口、编辑器控制器、窗口协议、渲染或音频实现。
-- [ ] 最终补证、修复与重验收提交已推送，远端与 HEAD 为 `0 0`。
+- [x] 最终补证、修复与重验收提交已推送，远端与 HEAD 为 `0 0`（最终提交后再次确认）。
 
 阶段关闭后，下一阶段只允许按整体计划进入“手动输入与判定”。如果 AL21 中任一手动输入分支仍无实体证据，则下一阶段必须先建立对应设备采证硬门，不能沿用 Auto Live 的 Force Perfect 结果绕过手动判定。
 

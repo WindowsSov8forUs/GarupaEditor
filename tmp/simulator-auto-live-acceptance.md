@@ -1,6 +1,6 @@
 # 模拟器 Auto Live 阶段验收记录
 
-> **2026-07-28 第二次关闭后复审：验收结论再次撤销。** 普通 production Slide 修复仍有效；但现有 R03 缺少任务书必需的 Stop、pause、BPM boundary 与精确 B±5 轨迹，AL19 过滤 production Directional family，且原作已确认 415 个核心 production `NoteMultipleDirectionalFlick` 的 synthetic Force Perfect 属于 Auto Live、现实现却全部在 Move 返回 `note.state.move`。本文后续“通过”表格仅保留为被撤销的历史记录；补充 Reverse 证据、修复并重建验收前不得引用本文证明阶段完成。
+> **2026-07-28 第二次关闭后复审修订：最终通过。** 复审发现的 Stop/pause/BPM/offset frozen oracle 缺口与 production Directional/Multiple Directional 盲区，已由 Reverse `cd84d2ce84243e8b864d08d7fe0fbeeb041eb79a`、GarupaEditor R09–R16 冻结包、Multiple 核心实现和本文件所在重验收提交闭合。本文以下结论已按补充证据重建。
 
 ## 1. 验收身份
 
@@ -18,8 +18,12 @@
 - 关闭后复审重开提交：`23ac2f2`
 - 生产 Slide 与回池修复提交：`a7ce464`
 - 最终 production/lifecycle 重验收：本文件所在提交
+- 第二次复审任务重开：`f72ad89`
+- Multiple/Stop/pause/offset 补充证据冻结：`926df36`、`60897ff`
+- Multiple Directional 核心实现：`8bfd4b5`
+- 第二次最终重验收：本文件所在提交
 - 验收日期：2026-07-28
-- 验收结论：**已撤销。A01/A02/A05/A06/A07/A08/A09/A10 重新打开，Auto Live 阶段当前未关闭，禁止进入手动输入与判定。**
+- 验收结论：**通过。A00–A10 在补充证据与第二次修复后完成，Auto Live 阶段重新关闭；进入手动输入前仍须建立独立设备证据硬门。**
 
 ## 2. 证据硬门与冻结包
 
@@ -52,10 +56,10 @@ GarupaEditor 冻结包位于 `tmp/simulator-reverse-evidence/auto-live/`，包�
 - `auto-live-failure-cases.json`；
 - `closure.json`、`OPEN_GAPS.md`、manifest 与源/副本/Git index 三方校验器。
 
-最终校验结果：
+补充后最终校验结果：
 
 ```text
-auto-live evidence verified: candidates=30, final=43, gate=closed, index=checked
+auto-live evidence verified: candidates=30, final=67, supplement=G11-G16, gate=closed, index=checked
 ```
 
 测试只读取 GarupaEditor 已冻结的 JSON 和生产 BMS，不访问 Reverse 工作树，不执行 Python，不联网。
@@ -65,16 +69,16 @@ auto-live evidence verified: candidates=30, final=43, gate=closed, index=checked
 | 任务 | 结论 | 验收要点 |
 | --- | --- | --- |
 | A00 阶段任务书 | 通过 | 范围、硬门、证据候选、22 项测试矩阵、提交和完成定义完整 |
-| A01 静态证据晋升 | 通过 | Reverse `a3f28d77` 晋升 43 个最终条目并修复 E02/E05/E30 陈旧 source profile |
-| A02 固定事件 oracle | 通过 | G01–G10 closed，双次离线生成一致，失败矩阵和持续边界冻结 |
+| A01 静态证据晋升 | 通过 | 首版 43 条加补充 24 文件；Reverse `cd84d2ce` 最终关闭 Multiple 继承/分组/side-used 与 visual helper 边界 |
+| A02 固定事件 oracle | 通过 | G01–G16 closed；首版 11 + 补充 8 case，覆盖 Stop、pause、B±5 exact 与 BPM boundary |
 | A03 模式与上下文 | 通过 | 宿主强制显式 `manual`/`auto-live`；mode14/debug/未知 transform 拒绝 |
 | A04 Long/Slide 运行图 | 通过 | 普通/特殊 terminal 联合验证；root 父拥有共享 child；缺 terminal、重复身份、非递增源序拒绝；父回池清 graph/current |
-| A05 Single/Flick | 通过 | Normal `>=`；Flick Began→synthetic Moved→一次结果；Directional 参数和类型精确 |
-| A06 Long | 通过 | head `>=`、tail `>`、Move→Wait、linked finish→tail、最终 Deactive 匹配 |
-| A07 Slide | 通过 | source-order current、invisible、terminal 8/5/6/7、Stop intermediate、Deactive Reset 和一次调用粒度匹配 |
-| A08 OneFrame | 通过 | 固定 5 槽、first-unused、原子 Setup、部分投影、池序 Reflect、清除、空帧和第六条失败匹配 |
-| A09 调度生命周期 | 通过 | 反向 root、父子 AfterUpdate、adaptive 外层一次 Reflect、active Slide/slot 暂停冻结、复用和 dispose 清理匹配 |
-| A10 生产 oracle | 通过 | AL01–AL22、普通 93/HABAHIRO 51 个 production Slide root、失败矩阵、全部隔离回归和依赖边界通过 |
+| A05 Single/Flick | 通过 | Normal/Flick/standalone Directional 保持；Multiple 继承 ±500、相邻 group 唯一 note type 10 判定 |
+| A06 Long | 通过 | head `>=`、tail `>`、linked finish→tail、active pause/resume、回收/Deactive 匹配 |
+| A07 Slide | 通过 | source-order、terminal 8/5/6/7、Stop frozen before/equal/current、Reset 与单次粒度匹配 |
+| A08 OneFrame | 通过 | 固定 5 槽；Multiple callback count 只进 Setup trace、不污染 OneFrame payload；visual helper 不判定 |
+| A09 调度生命周期 | 通过 | Long/Slide/Multiple pause、pending slot、无 catch-up、group side-used 与 active dispose 匹配 |
+| A10 生产 oracle | 通过 | AL01–AL22、144 Slide、50 standalone Directional、415 core Multiple、普通 production 全谱及全回归通过 |
 
 ## 4. 已落地的生产边界
 
@@ -138,16 +142,24 @@ type SimulatorPlayMode =
 - PauseSound 在 NoteManager 前返回，冻结时钟、root/child state、cursor、slots 和 trace；resume 不补跑暂停时间。
 - dispose 失活并解绑 root/BPM、清 child runtime 和 pool cursor、关闭 Slide manager、清未 Reflect payload，不产生判定或后端副作用。
 
+### 4.6 Multiple Directional 分阶段边界
+
+- 核心 `FrontNoteType.MultipleDirectionalFlick (6)` 按 production batch 原序分组；仅相同 game type 且相邻 button 的连续节点连接，重复 button/方向变化开启新 group。
+- group 是独立运行 owner，不修改深冻结 chart identity。反向 active Update 的首个 crossing root 继承 Directional `-500/+500`，提交唯一 note type 10 与 `left+right+1` callback count，成功后 side roots 仅失活。
+- callback count 不是 OneFrameData 字段；它只存在于 judgement request/Setup trace，`OneFrameJudgementEntry` 继续 absent。
+- front type 7/8/9 映射到独立 `multiple-directional-visual` family；native forcePerfect 为 RET，但 NotesCheck/Sprite/BackLine/连接表现未恢复，所以 Move 明确 `evidence-required`，不以 no-op 绕过。
+- 真实 touch position、distance threshold、finger ownership 仍属于手动阶段；count 的音频/粒子消费仍后置。
+
 ## 5. AL01–AL22 验收摘要
 
 | ID | 结果 | 核心断言 |
 | --- | --- | --- |
 | AL01 | 通过 | manual/Auto 判别明确，同 crossing 只有 Auto Force Perfect |
-| AL02 | 通过 | B=-5/0/+5 复用 tempo-aware 路径，关系为 rewind/identity/advance |
+| AL02 | 通过 | B=+5 exact cross-BPM `0x45401EF9`、B=-5 cross-bar `0x446E7494`、B=0 identity |
 | AL03 | 通过 | Normal before/equal、Float32 bits、同次 Deactive、后续不重复 |
 | AL04 | 通过 | 同批五 root 反序 Update，payload identity 为 204→200，slot 为 0→4 |
 | AL05 | 通过 | Flick Began→-100 Moved→一次 note type 3 判定 |
-| AL06 | 通过 | Directional 10/11、±500 bits、note type 9 精确 |
+| AL06 | 通过 | standalone Directional 10/11 note type 9；Multiple group ±500、note type 10、唯一 result/count 精确 |
 | AL07 | 通过 | Long head equal、Wait、独立 head payload |
 | AL08 | 通过 | Long tail equal 不判，下一大于值 linked finish→tail→Deactive |
 | AL09 | 通过 | Slide head equal、Wait、current=0 |
@@ -159,9 +171,9 @@ type SimulatorPlayMode =
 | AL15 | 通过 | 固定五槽、池序、清除和 slot 0 复用 |
 | AL16 | 通过 | 第六条失败，前五槽逐字节状态不变并可池序 Reflect |
 | AL17 | 通过 | 空 Reflect 为 null，首次非空 batch index 仍为 0 |
-| AL18 | 通过 | active Slide graph/cursor/trace 与 occupied slot 暂停冻结；恢复单步；active dispose 清 graph/slot且无新事件 |
-| AL19 | 通过 | 两个 production BMS 分别覆盖四 family；全部 93/51 个 Slide root 激活；各完整跑通普通 Slide 并清 graph |
-| AL20 | 通过 | HABAHIRO 普通 Slide production graph 共享身份可静态消费，并检查持续 runtime 证据披露 |
+| AL18 | 通过 | Long/Slide/Multiple 暂停冻结、无补步；Slide/Multiple active dispose 无新事件 |
+| AL19 | 通过 | 两个 BMS 六类 core family；50 standalone Directional、415 Multiple、144 Slide；普通 656 batch 全谱完成 |
+| AL20 | 通过 | HABAHIRO 普通 Slide 静态消费；唯一 Multiple visual helper 独立失败关闭并保留 runtime 披露 |
 | AL21 | 通过 | 阶段外字段在类型/对象上 absent，业务 consumer 失败关闭；重复投影字节一致 |
 | AL22 | 通过 | 冻结 failure matrix、非法模式/图/位置/family/handle/Setup/触摸全部拒绝且关键状态原子 |
 
@@ -195,7 +207,7 @@ node tmp/simulator-reverse-evidence/auto-live/verify.mjs --index
 - 时钟与调度：15 组通过。
 - Auto Live：AL01–AL22 共 22 组通过。
 - 依赖边界：每个隔离测试入口后通过。
-- Auto Live 证据包：`candidates=30, final=43, gate=closed, index=checked`。
+- Auto Live 证据包：`candidates=30, final=67, supplement=G11-G16, gate=closed, index=checked`。
 - 未运行 Vite、Tauri 或 GarupaEditor 整体构建，符合任务书限制。
 
 ## 7. 持续非阻断边界
@@ -209,7 +221,7 @@ node tmp/simulator-reverse-evidence/auto-live/verify.mjs --index
 
 ## 8. 下一阶段硬门
 
-本节当前暂停适用：Auto Live 补充证据与实现尚未完成，不得开始下一阶段。以下要求只在 Auto Live 重新验收后继续生效。
+Auto Live 补充证据与实现已重新验收；以下下一阶段硬门恢复适用。
 
 下一阶段只允许按整体计划进入“手动输入与判定”。开始生产实现前必须：
 

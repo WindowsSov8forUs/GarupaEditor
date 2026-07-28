@@ -25,11 +25,11 @@
 
 时钟与调度验收记录位于 `tmp/simulator-clock-scheduling-acceptance.md`。S01–S10 已完成。
 
-Auto Live 第二次关闭后复审已再次撤销阶段完成结论。普通 production Slide `afterNoteType=None`、parent Reset 与 terminal note type 修复保持有效；但现有 R03 缺少 Stop、pause、BPM boundary 与精确 B±5 固定轨迹，AL19 过滤 production Directional family，且原作确认核心 `NoteMultipleDirectionalFlick` 的 synthetic Force Perfect 属于 Auto Live，现实现对普通 195 个、HABAHIRO 220 个核心 root 全部返回 `note.state.move`。A01/A02 证据硬门及 A05–A10 相关任务已重新打开。任务书与已撤销验收记录分别位于 `tmp/simulator-auto-live-task.md`、`tmp/simulator-auto-live-acceptance.md`。
+Auto Live A00–A10 已在第二次关闭后复审补证与修复后重新完成。Reverse `cd84d2ce` 与冻结 R09–R16/G11–G16 补齐 Stop、Long/Slide pause、精确 B±5/BPM 和 Multiple Directional；普通 195、HABAHIRO 220 个核心 Multiple root 现按相邻 button group 各提交唯一 note type 10，50 个 standalone Directional、144 个 Slide root 与普通 production 656 batch 全谱均通过。HABAHIRO 唯一 Multiple visual helper 保持 presentation `evidence-required`，不冒充 core judgement。任务书与最终验收记录分别位于 `tmp/simulator-auto-live-task.md`、`tmp/simulator-auto-live-acceptance.md`。
 
 OneFrame 容量现在由原作证据固定为 5，不再接受宿主或测试容量配置。公开的 `OneFrameJudgementBatch` 仅包含本阶段闭合的 Auto Live 判定字段，不是原作完整 `OneFrameTotalData`。分数、Power、生命、Skill/Fever、音频、粒子、渲染和 HUD 字段在类型上保持缺席，而不是填零。
 
-当前仍处于 Auto Live 补充证据与修复阶段，禁止进入“手动输入与判定”。Multiple Directional 的 synthetic Began/Moved、±500、note type 10 与 group lifecycle 属于当前 Auto Live；真实触摸、方向距离阈值、判定窗口、普通 timeout Miss、释放和 Hold 行为继续属于下一阶段并保持 `evidence-required`。BackLine/Sprite/音频/粒子仍后置。
+当前下一阶段边界重新回到“手动输入与判定”。真实触摸、Multiple Directional 距离阈值、手指所有权、判定窗口、普通 timeout Miss、释放和 Hold 行为在独立设备证据硬门关闭前继续 `evidence-required`；BackLine/Sprite/音频/粒子仍后置，Auto Live 完成不表示这些能力或主程序接入已经恢复。
 
 `src/simulator/engine` 不依赖 React、Pixi、Tauri、DOM、编辑器谱面类型或窗口协议。宿主 API 是 GarupaEditor 的可移植边界，不宣称属于原作接口。
 

@@ -27,6 +27,14 @@ const failurePath = join(
   "fixtures",
   "auto-live-failure-cases.json",
 );
+const supplementOraclePath = join(
+  repositoryRoot,
+  "tmp",
+  "simulator-reverse-evidence",
+  "auto-live",
+  "fixtures",
+  "auto-live-supplement-fixed-event-trace.json",
+);
 
 function validateAutoLive() {
   const simulatorRoot = join(outputRoot, "src", "simulator");
@@ -46,13 +54,13 @@ function validateAutoLive() {
     "managers",
     "inGameOneFrameJudgementController.js",
   ));
-  const { InGameMusicScoreController } = require(join(
+  const { InGameMusicScoreController, advancePosition } = require(join(
     simulatorRoot,
     "engine",
     "managers",
     "inGameMusicScoreController.js",
   ));
-  const { NoteManager, noteFamily } = require(join(
+  const { NoteManager, noteFamily, groupMultipleDirectionalInformationList } = require(join(
     simulatorRoot,
     "engine",
     "managers",
@@ -94,9 +102,13 @@ function validateAutoLive() {
 
   const oracle = JSON.parse(readFileSync(oraclePath, "utf8"));
   const failureOracle = JSON.parse(readFileSync(failurePath, "utf8"));
+  const supplementOracle = JSON.parse(readFileSync(supplementOraclePath, "utf8"));
   assert.equal(oracle.status, "confirmed-static-contract-fixed-offline-oracle");
   assert.equal(failureOracle.status, "confirmed-failure-closed-matrix");
   const oracleCases = new Map(oracle.cases.map((entry) => [entry.case_id, entry]));
+  const supplementCases = new Map(
+    supplementOracle.cases.map((entry) => [entry.case_id, entry]),
+  );
   assert.deepEqual([...oracleCases.keys()], [
     "single-normal-before-equal",
     "single-manual-does-not-force",
@@ -109,6 +121,16 @@ function validateAutoLive() {
     "simultaneous-reverse-update-five-slot-pool",
     "adaptive-substeps-one-outer-reflect",
     "adjustment-sign-crossing",
+  ]);
+  assert.deepEqual([...supplementCases.keys()], [
+    "multiple-directional-left-auto-group",
+    "multiple-directional-right-auto-group",
+    "slide-stop-selected-visible-intermediate",
+    "pause-active-long-freeze-resume",
+    "pause-active-slide-pending-slot-freeze",
+    "offset-plus5-cross-bpm-exact",
+    "offset-minus5-cross-bar-exact",
+    "offset-zero-identity-exact",
   ]);
   const tests = [];
   const test = (id, name, execute) => tests.push({ id, name, execute });
@@ -128,6 +150,17 @@ function validateAutoLive() {
     afterNoteType: types.AfterNoteType.Normal,
     afterNoteAbsolutePos: 240,
   });
+  const multipleInfo = (index, absolutePos, buttonType, gameNoteType) => normalInfo(
+    index,
+    absolutePos,
+    {
+      buttonType,
+      buttonTypes: [buttonType],
+      buttonTypesArray: [buttonType],
+      gameNoteType,
+      fireNoteType: types.FrontNoteType.MultipleDirectionalFlick,
+    },
+  );
   const slideInfo = (index = 106, nodeSpecs = [
     { absolutePos: 180 },
     { absolutePos: 181 },
@@ -214,6 +247,22 @@ function validateAutoLive() {
       "identity",
       "advance-five-tempo-aware-steps",
     ]);
+    const plusFive = supplementCases.get("offset-plus5-cross-bpm-exact");
+    let cursor = { bar: 15, beatProgress: Math.fround(187.35589599609375) };
+    for (const bpm of plusFive.step_bpms) {
+      cursor = advancePosition(cursor.bar, cursor.beatProgress, bpm, Math.fround(1 / 60));
+    }
+    const crossedBpmResult = Math.fround(
+      Math.fround(cursor.beatProgress) + 192 * cursor.bar,
+    );
+    assert.equal(float32Bits(crossedBpmResult),
+      plusFive.result_adjusted_position.bits);
+    assert.equal(crossedBpmResult, plusFive.result_adjusted_position.value);
+    const minusFive = supplementCases.get("offset-minus5-cross-bar-exact");
+    const zero = supplementCases.get("offset-zero-identity-exact");
+    assert.equal(float32Bits(minusFive.result_adjusted_position.value), "0x446E7494");
+    assert.equal(float32Bits(zero.result_adjusted_position.value),
+      zero.entry_music_absolute_position.bits);
   });
 
   test("AL03", "Normal 在 before 保持 Move、equal 同次 Update Perfect", () => {
@@ -262,7 +311,7 @@ function validateAutoLive() {
     ]);
   });
 
-  test("AL06", "Directional type10/type11 固定 ±500 且 base result 在先", () => {
+  test("AL06", "Directional ±500 与 Multiple group note type10/唯一结果", () => {
     for (const [sourceType, expected, bits] of [
       [10, -500, "0xC3FA0000"],
       [11, 500, "0x43FA0000"],
@@ -287,6 +336,35 @@ function validateAutoLive() {
       assert.equal(reflect(bound.oneFrame).entries[0].noteType,
         oracleCase.steps[2].note_type);
     }
+
+    const grouped = [0, 1, 2].map((buttonType, index) =>
+      multipleInfo(700 + index, 1, buttonType, types.GameNoteType.DirectionalFlickLeft));
+    assert.deepEqual(groupMultipleDirectionalInformationList(grouped).map(
+      (group) => group.map((information) => information.index)), [[700, 701, 702]]);
+    const integration = schedulerIntegration({
+      batches: [batch(1, grouped)],
+      bpmChangeCount: 0,
+      positions: [0, 2],
+    });
+    ok(integration.manager.initialize(), "Multiple Directional initialize");
+    ok(integration.manager.execUpdate(0.001), "Multiple Directional activate");
+    ok(integration.manager.execUpdate(0.001), "Multiple Directional Auto crossing");
+    const multipleBatch = integration.oneFrame.getReflectOneFrameData();
+    const expectedMultiple = supplementCases.get("multiple-directional-left-auto-group");
+    assert.equal(multipleBatch.entryCount, 1);
+    assert.equal(multipleBatch.entries[0].noteIndex, 702);
+    assert.equal(multipleBatch.entries[0].noteType,
+      expectedMultiple.steps.find((step) => step.event === "head-perfect").note_type);
+    const setupTrace = integration.oneFrame.snapshot().trace.findLast(
+      (entry) => entry.kind === "one-frame.setup-auto-live");
+    assert.equal(setupTrace.multipleDirectionalFlickNoteCount, 3);
+    const pool = integration.manager.snapshot().noteManager.pools.find(
+      (entry) => entry.family === "multiple-directional-flick");
+    assert.equal(pool.objects.every((object) => object.state === NoteState.Deactive), true);
+    assert.equal(pool.objects.flatMap((object) => object.multipleDirectionalTrace)
+      .filter((entry) => entry.kind === "multiple-head-perfect").length, 1);
+    assert.equal(pool.objects.flatMap((object) => object.multipleDirectionalTrace)
+      .filter((entry) => entry.kind === "multiple-side-used-deactivate").length, 2);
   });
 
   test("AL07", "Long head equal 切 Wait 并独立提交 head", () => {
@@ -444,13 +522,22 @@ function validateAutoLive() {
     assert.equal(bound.note.afterNotes.length, reusedInformation.slideNoteList.length);
     assert.equal(bound.note.afterNotes.every((after, index) =>
       after.source === reusedInformation.slideNoteList[index] && !after.judged), true);
+    const stopExpected = supplementCases.get("slide-stop-selected-visible-intermediate");
     const stopped = bindNote(new notes.NoteSlide("slide-stop"), slideInfo(), {
-      position: { value: 1000 },
+      position: { value: stopExpected.steps[0].adjusted_position.value },
     });
     ok(stopped.note.changeState(NoteState.Stop), "enter Stop");
+    ok(stopped.note.executeUpdate(0), "Stop before crossing");
+    assert.equal(stopped.note.currentAfterIndex,
+      stopExpected.steps[0].current_after_index);
+    assert.equal(stopped.oneFrame.existsOneFrameData(), false);
+    stopped.position.value = stopExpected.steps[1].adjusted_position.value;
     ok(stopped.note.executeUpdate(0), "Stop force perfect");
-    assert.equal(stopped.note.currentAfterIndex, 1);
-    assert.equal(reflect(stopped.oneFrame).entries[0].phase, "intermediate");
+    assert.equal(stopped.note.currentAfterIndex,
+      stopExpected.steps[2].current_after_after);
+    const stopBatch = reflect(stopped.oneFrame);
+    assert.equal(stopBatch.entries[0].phase, stopExpected.steps[1].phase);
+    assert.equal(stopBatch.entries[0].noteType, stopExpected.steps[1].note_type);
     assert.equal(stopped.note.autoLiveTrace.some(
       (entry) => entry.kind === "slide-stop-perfect"), true);
 
@@ -549,7 +636,10 @@ function validateAutoLive() {
     assert.equal(reflect(oneFrame).entryCount, 5);
   });
 
-  test("AL18", "暂停冻结 Slide cursor/slot/trace，恢复与 active dispose 确定", () => {
+  test("AL18", "暂停冻结 Long/Slide/Multiple graph/slot/trace 并确定 dispose", () => {
+    const slidePauseExpected = supplementCases.get(
+      "pause-active-slide-pending-slot-freeze",
+    );
     const pausedSlide = slideInfo(400, [
       { absolutePos: 2 },
       { absolutePos: 3, gameNoteType: types.GameNoteType.SlideEndA },
@@ -571,6 +661,9 @@ function validateAutoLive() {
     const paused = integration.manager.snapshot();
     assert.equal(JSON.stringify(paused.noteManager), frozenNoteManager);
     assert.equal(JSON.stringify(paused.oneFrame), frozenOneFrame);
+    assert.equal(paused.noteManager.pools.find((pool) => pool.family === "slide")
+      .objects[0].currentAfterIndex,
+    slidePauseExpected.steps[1].current_after_after);
     assert.equal(integration.music.advanceCount, 2);
     ok(integration.manager.resume(), "resume");
     ok(integration.manager.execUpdate(0.001), "resume crossing");
@@ -587,9 +680,83 @@ function validateAutoLive() {
     assert.equal(slidePoolObject.state, NoteState.Deactive);
     assert.equal(slidePoolObject.currentAfterIndex, 0);
     assert.deepEqual(slidePoolObject.afterNodes, []);
+
+    const longPauseExpected = supplementCases.get("pause-active-long-freeze-resume");
+    const pausedLong = normalInfo(410, 1, {
+      gameNoteType: types.GameNoteType.Long,
+      fireNoteType: types.FrontNoteType.Long,
+      afterNoteType: types.AfterNoteType.Normal,
+      afterNoteAbsolutePos: 3,
+    });
+    const longIntegration = schedulerIntegration({
+      batches: [batch(1, [pausedLong])],
+      bpmChangeCount: 0,
+      positions: [0, 1, 3, 4],
+    });
+    ok(longIntegration.manager.initialize(), "Long pause initialize");
+    ok(longIntegration.manager.execUpdate(0.001), "Long activate");
+    ok(longIntegration.manager.execUpdate(0.001), "Long head");
+    assert.equal(longIntegration.oneFrame.getReflectOneFrameData().entries[0].phase, "head");
+    const frozenLong = JSON.stringify(longIntegration.manager.snapshot().noteManager);
+    ok(longIntegration.manager.pause(), "Long pause");
+    ok(longIntegration.manager.execUpdate(1), "Long paused frame");
+    assert.equal(JSON.stringify(longIntegration.manager.snapshot().noteManager), frozenLong);
+    assert.equal(longIntegration.music.advanceCount, 2);
+    ok(longIntegration.manager.resume(), "Long resume");
+    ok(longIntegration.manager.execUpdate(0.001), "Long tail equal");
+    assert.equal(longIntegration.oneFrame.existsOneFrameData(), false);
+    assert.equal(longIntegration.manager.snapshot().noteManager.pools
+      .find((pool) => pool.family === "long").objects[0].state, NoteState.Wait);
+    ok(longIntegration.manager.execUpdate(0.001), "Long tail strict greater");
+    assert.equal(longIntegration.oneFrame.getReflectOneFrameData().entries[0].phase, "tail");
+    assert.equal(longIntegration.manager.snapshot().noteManager.pools
+      .find((pool) => pool.family === "long").objects[0].state, NoteState.Deactive);
+    assert.deepEqual(longPauseExpected.steps.map((step) => step.event), [
+      "head-perfect", "pause-enter", "paused-frame", "resume",
+      "tail-equal-no-crossing", "tail-strict-greater",
+    ]);
+
+    const pausedMultipleGroup = [0, 1].map((buttonType, index) =>
+      multipleInfo(420 + index, 1, buttonType,
+        types.GameNoteType.DirectionalFlickRight));
+    const multipleIntegration = schedulerIntegration({
+      batches: [batch(1, pausedMultipleGroup)],
+      bpmChangeCount: 0,
+      positions: [0, 2],
+    });
+    ok(multipleIntegration.manager.initialize(), "Multiple pause initialize");
+    ok(multipleIntegration.manager.execUpdate(0.001), "Multiple activate");
+    const frozenMultiple = JSON.stringify(
+      multipleIntegration.manager.snapshot().noteManager);
+    ok(multipleIntegration.manager.pause(), "Multiple pause");
+    ok(multipleIntegration.manager.execUpdate(1), "Multiple paused frame");
+    assert.equal(JSON.stringify(multipleIntegration.manager.snapshot().noteManager),
+      frozenMultiple);
+    assert.equal(multipleIntegration.music.advanceCount, 1);
+    ok(multipleIntegration.manager.resume(), "Multiple resume");
+    ok(multipleIntegration.manager.execUpdate(0.001), "Multiple crossing after resume");
+    assert.equal(multipleIntegration.oneFrame.getReflectOneFrameData().entryCount, 1);
+    assert.equal(multipleIntegration.oneFrame.snapshot().trace.findLast(
+      (entry) => entry.kind === "one-frame.setup-auto-live")
+      .multipleDirectionalFlickNoteCount, 2);
+
+    const disposeMultiple = schedulerIntegration({
+      batches: [batch(1, pausedMultipleGroup)],
+      bpmChangeCount: 0,
+      positions: [0],
+    });
+    ok(disposeMultiple.manager.initialize(), "Multiple dispose initialize");
+    ok(disposeMultiple.manager.execUpdate(0.001), "Multiple dispose activate");
+    const disposeTrace = disposeMultiple.oneFrame.snapshot().trace.length;
+    ok(disposeMultiple.manager.dispose(), "Multiple active dispose");
+    const disposedMultiplePool = disposeMultiple.manager.snapshot().noteManager.pools
+      .find((pool) => pool.family === "multiple-directional-flick");
+    assert.equal(disposedMultiplePool.objects.every(
+      (object) => object.state === NoteState.Deactive), true);
+    assert.equal(disposeMultiple.oneFrame.snapshot().trace.length, disposeTrace);
   });
 
-  test("AL19", "production BMS 图身份直接进入各 Auto family payload", () => {
+  test("AL19", "production BMS 六类 core root 与全部 Directional group 直接消费", () => {
     const fixtureRoot = join(
       repositoryRoot,
       "tmp",
@@ -611,6 +778,8 @@ function validateAutoLive() {
           candidate.fireNoteType === types.FrontNoteType.Flick],
         [types.FrontNoteType.Long, notes.NoteLong, (candidate) =>
           candidate.fireNoteType === types.FrontNoteType.Long],
+        [types.FrontNoteType.DirectionalFlick, notes.NoteDirectionalFlick, (candidate) =>
+          candidate.fireNoteType === types.FrontNoteType.DirectionalFlick],
         ["slide", notes.NoteSlide, (candidate) =>
           candidate.isSlideNoteHead && candidate.slideNoteList.length > 0],
       ];
@@ -673,10 +842,54 @@ function validateAutoLive() {
       }
       assert.equal(fullBound.note.state, NoteState.Deactive);
       assert.equal(fullBound.note.afterNotes.length, 0);
+
+      const multipleGroups = chart.noteBatches.flatMap((entry) =>
+        groupMultipleDirectionalInformationList(entry.informationList));
+      const expectedMultipleRootCount = chartIndex === 0 ? 195 : 220;
+      assert.equal(multipleGroups.reduce((sum, group) => sum + group.length, 0),
+        expectedMultipleRootCount);
+      for (const [groupIndex, group] of multipleGroups.entries()) {
+        const oneFrame = controller();
+        const runtimeGroup = {
+          count: group.length,
+          isUsed: false,
+          markUsed() {
+            if (this.isUsed) return { status: "evidence-required" };
+            this.isUsed = true;
+            return { status: "ok", value: undefined };
+          },
+        };
+        const groupNotes = group.map((information, memberIndex) => {
+          const note = new notes.NoteMultipleDirectionalFlick(
+            `production-multiple-${chartIndex}-${groupIndex}-${memberIndex}`,
+          );
+          note.registerMultipleDirectionalGroupResolver(() =>
+            ({ status: "ok", value: runtimeGroup }));
+          note.registerAutoLiveRuntime({
+            isAutoPlay: () => true,
+            getAdjustedMusicPosition: () => information.absolutePos,
+            submitJudgement: (judgement) => oneFrame.setupAutoLiveJudgement(judgement),
+          });
+          ok(note.activate(information),
+            `production Multiple group ${chartIndex}:${groupIndex}:${memberIndex}`);
+          return note;
+        });
+        for (let index = groupNotes.length - 1; index >= 0; index -= 1) {
+          ok(groupNotes[index].executeUpdate(0),
+            `production Multiple update ${chartIndex}:${groupIndex}:${index}`);
+        }
+        const groupBatch = reflect(oneFrame);
+        assert.equal(groupBatch.entryCount, 1);
+        assert.equal(groupBatch.entries[0].noteType, 10);
+        const setup = oneFrame.snapshot().trace.findLast(
+          (entry) => entry.kind === "one-frame.setup-auto-live");
+        assert.equal(setup.multipleDirectionalFlickNoteCount, group.length);
+        assert.equal(groupNotes.every((note) => note.state === NoteState.Deactive), true);
+      }
     }
-    assert.equal(observed.length, 8);
-    for (const chart of charts) {
-      const engine = createSimulatorEngine({
+    assert.equal(observed.length, 10);
+    for (const [chartIndex, chart] of charts.entries()) {
+      const engineResult = createSimulatorEngine({
         chart,
         runtime: {
           highFrequencyMode: false,
@@ -687,7 +900,18 @@ function validateAutoLive() {
           },
         },
       }, createRecordingSimulatorBackends());
-      assert.equal(engine.status, "ok");
+      assert.equal(engineResult.status, "ok");
+      if (chartIndex === 0) {
+        const engine = engineResult.value;
+        ok(engine.initialize(), "production ordinary engine initialize");
+        for (let frame = 0; frame < 8000; frame += 1) {
+          ok(engine.step(1 / 60), `production ordinary full frame ${frame}`);
+        }
+        const snapshot = ok(engine.snapshot(), "production ordinary final snapshot");
+        assert.equal(snapshot.managers.noteManager.nextBatchIndex,
+          snapshot.managers.noteManager.batchCount);
+        assert.equal(snapshot.managers.noteManager.activeNotePoolObjectIds.length, 0);
+      }
     }
   });
 
@@ -730,6 +954,19 @@ function validateAutoLive() {
       fireNoteType: types.FrontNoteType.Long,
     })), "auto-live.invalid-long-after-graph");
     assert.equal(invalidLong.state, NoteState.Deactive);
+
+    const missingMultipleGroup = new notes.NoteMultipleDirectionalFlick(
+      "missing-multiple-group",
+    );
+    missingMultipleGroup.registerAutoLiveRuntime({
+      isAutoPlay: () => true,
+      getAdjustedMusicPosition: () => 120,
+      submitJudgement: () => ({ status: "ok", value: undefined }),
+    });
+    evidence(missingMultipleGroup.activate(multipleInfo(
+      5011, 120, 0, types.GameNoteType.DirectionalFlickLeft,
+    )), "auto-live.multiple-directional-group-unregistered");
+    assert.equal(missingMultipleGroup.state, NoteState.Deactive);
 
     const missingSlide = new notes.NoteSlide("missing-slide");
     evidence(missingSlide.activate(normalInfo(502, 120, {
@@ -787,6 +1024,7 @@ function validateAutoLive() {
     for (const key of [
       "addScore", "addPower", "life", "skill", "fever", "crescendo",
       "audio", "particle", "rendering", "hud",
+      "multipleDirectionalFlickNoteCount",
     ]) assert.equal(Object.hasOwn(entry, key), false, `${key} must remain absent`);
     evidence(oneFrame.setupBusinessData(), "one-frame.setup-business-data");
     const deterministicProjection = () => {
@@ -825,6 +1063,16 @@ function validateAutoLive() {
       after.source === playable.slideNoteList[index]), true);
     ok(bound.note.executeUpdate(0), "consume HABAHIRO static Slide graph identity");
     assert.equal(reflect(bound.oneFrame).entries[0].noteIndex, playable.index);
+    const visual = chart.noteBatches.flatMap((entry) => entry.informationList)
+      .find((entry) =>
+        entry.fireNoteType === types.FrontNoteType.SlideAMultipleDirectionalFlickAdd ||
+        entry.fireNoteType === types.FrontNoteType.SlideBMultipleDirectionalFlickAdd);
+    assert(visual, "HABAHIRO fixture must retain its Multiple Directional visual helper");
+    assert.equal(ok(noteFamily(visual), "visual family"), "multiple-directional-visual");
+    const visualNote = new notes.NoteMultipleDirectionalVisual("habahiro-visual-helper");
+    ok(visualNote.activate(visual), "visual helper activate");
+    evidence(visualNote.executeUpdate(0),
+      "auto-live.multiple-directional-visual-presentation");
     const openGaps = readFileSync(join(
       repositoryRoot,
       "tmp",
@@ -859,6 +1107,7 @@ function validateAutoLive() {
       phase,
       noteType,
       absolutePosition: noteInformation.absolutePos,
+      multipleDirectionalFlickNoteCount: 0,
     };
   }
 
@@ -892,6 +1141,7 @@ function validateAutoLive() {
     return {
       oneFrame,
       music,
+      noteManager,
       manager: new InGameManager(
         music,
         noteManager,
