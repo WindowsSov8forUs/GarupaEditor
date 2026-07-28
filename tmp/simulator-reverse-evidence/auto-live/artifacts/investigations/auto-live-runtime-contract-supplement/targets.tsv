@@ -13,3 +13,4 @@ S11	0x377A140/0x377B770	NoteManager	isMultipleDirectionalFlickSameGroupNotes/isA
 S12	0x3778DA4	NoteManager	connectWithTheNextNoteForMultipleDirectionalFlick	Connect core left/right neighbour chain	Auto Live group construction
 S13	0x30ED264/0x30EE12C/0x30EE1D4	NoteMultipleDirectionalFlick	changeSideNoteUsed/ChangeLeft/ChangeRight	Recursively mark used and clear both side links	Auto Live group completion
 S14	0x37795C4..0x3779A48	NoteManager	activateNoteAndConnectSyncLine focused loop	Compare only previous/current activated playable roots in source order; interleaved root breaks Multiple run	Auto Live group construction
+S15	upstream-pass2-normalized-delta+BMS	InGameMusicScoreController	production exact offset replay	Replay committed Float32 frame deltas to exact cursor; full adaptive manager outer index 1	Auto Live canonical acceptance

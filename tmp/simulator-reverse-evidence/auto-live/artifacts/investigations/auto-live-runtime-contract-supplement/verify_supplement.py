@@ -7,6 +7,7 @@ import subprocess
 
 from extract_arm64_slices import build_outputs
 from generate_supplement import build
+from generate_actual_replay import build as build_actual_replay
 
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -17,6 +18,9 @@ SOURCE_PROFILES = {
     "artifacts/rhythm/decompiled_bundles/note.c": (15488148, "34FFB644FED6A257D6E964A2996E733751B6C70F65C97EF2E812FC4A793ED933"),
     "artifacts/investigations/auto-live-runtime-contract/auto_live_runtime_contract.json": (7536, "24B5736064666E085B217987F388840F24F644ABF5FBF3924EF2B8249D6D8D6A"),
     "artifacts/investigations/clock-scheduling-runtime-oracle/summaries/pass2_judge_offset.json": (16320, "79FC58F54436031C6572D4DF7260C7B0336D03D4604691C3647A7511EA17AE92"),
+    "artifacts/investigations/clock-scheduling-runtime-oracle/traces/normalized/ikuoku-cc08-run-025-offset-plus5.adaptive.jsonl": (2772479, "15854E917438819C69A0CAABD8FF6C06AC8750C434F2904BF67D6FF69FE44D98"),
+    "artifacts/investigations/clock-scheduling-runtime-oracle/traces/normalized/ikuoku-cc08-run-026-offset-minus5.adaptive.jsonl": (2750956, "A186940EF7282D6001EB024389EB7E6A2E7EC88800630615707F310C2F83A682"),
+    "artifacts/investigations/clock-scheduling-runtime-oracle/sources/653_ikuoku_easy.bms.txt": (1688, "4C2F8D202DED5DFD9C4144C0FE000B1E3524E0F25D3FEAF4DD102413F6CD6325"),
     "artifacts/investigations/auto-live-runtime-contract/decompiled/030eb97c__NoteLong__forcePerfectMoveState.c": (1126, "18F64A4F7F52C46EF62E657AD0670B48B45D5F034CA884F9390F7B99AABF0A26"),
     "artifacts/investigations/auto-live-runtime-contract/decompiled/0321c1cc__NoteSlide__forcePerfectMoveState.c": (2100, "3AC65DB508F03FFEB7EEAA91F9E4BE537C6094DB546B0C30895E1FD5A22C120C"),
     "artifacts/investigations/auto-live-runtime-contract/decompiled/030eb7a0__NoteLong__forcePerfectOnUpdate.c": (2188, "95944BDCEC2DE63B300FDAC8E2AE88431192B1D00D0E23A566D60090E823B718"),
@@ -149,11 +153,48 @@ def main() -> None:
     assert cases["actual-offset-tempo-query-observation-requirements"]["forbidden_test_inputs"] == [
         "expected-step-bpms"
     ]
+    actual_replay = build_actual_replay(
+        committed_sources[
+            "artifacts/investigations/clock-scheduling-runtime-oracle/traces/normalized/ikuoku-cc08-run-025-offset-plus5.adaptive.jsonl"
+        ],
+        committed_sources[
+            "artifacts/investigations/clock-scheduling-runtime-oracle/traces/normalized/ikuoku-cc08-run-026-offset-minus5.adaptive.jsonl"
+        ],
+        committed_sources[
+            "artifacts/investigations/clock-scheduling-runtime-oracle/sources/653_ikuoku_easy.bms.txt"
+        ],
+    )
+    assert actual_replay == build_actual_replay(
+        committed_sources[
+            "artifacts/investigations/clock-scheduling-runtime-oracle/traces/normalized/ikuoku-cc08-run-025-offset-plus5.adaptive.jsonl"
+        ],
+        committed_sources[
+            "artifacts/investigations/clock-scheduling-runtime-oracle/traces/normalized/ikuoku-cc08-run-026-offset-minus5.adaptive.jsonl"
+        ],
+        committed_sources[
+            "artifacts/investigations/clock-scheduling-runtime-oracle/sources/653_ikuoku_easy.bms.txt"
+        ],
+    )
+    assert actual_replay == json.loads((HERE / "auto_live_actual_replay.json").read_text(encoding="utf-8"))
+    assert (HERE / "fixtures/653_ikuoku_easy.bms.txt").read_bytes() == committed_sources[
+        "artifacts/investigations/clock-scheduling-runtime-oracle/sources/653_ikuoku_easy.bms.txt"
+    ]
+    replay_cases = {case["case_id"]: case for case in actual_replay["offset_replays"]}
+    assert replay_cases["offset-plus5-cross-bpm-exact"]["target_frame_id"] == 991
+    assert len(replay_cases["offset-plus5-cross-bpm-exact"]["delta_time_bits"]) == 991
+    assert replay_cases["offset-minus5-cross-bar-exact"]["target_frame_id"] == 317
+    assert replay_cases["offset-zero-identity-exact"]["delta_time_bits"] == replay_cases[
+        "offset-minus5-cross-bar-exact"
+    ]["delta_time_bits"]
+    assert actual_replay["adaptive_method_replay"]["judgement_outer_frame_index"] == 1
+    assert actual_replay["adaptive_method_replay"]["expected_substep_indices"] == [0, 1, 2]
+    assert "expected-step-bpms" in actual_replay["forbidden_test_inputs"]
+    assert actual_replay["production_owner"] == "InGameMusicScoreController.getAdjustedMusicPosition"
     assert closure["overall_status"] == "confirmed"
     assert closure["auto_live_gate"] == "closed"
     assert closure["blocking_findings"] == []
-    assert sorted(closure["supplement_gap_resolution"]) == [f"G{index}" for index in range(11, 22)]
-    print("auto live supplement: verified; gaps=G11-G21, gate=closed, cases=14")
+    assert sorted(closure["supplement_gap_resolution"]) == [f"G{index}" for index in range(11, 23)]
+    print("auto live supplement: verified; gaps=G11-G22, gate=closed, cases=14, replay=4")
 
 
 if __name__ == "__main__":

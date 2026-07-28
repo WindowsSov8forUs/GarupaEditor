@@ -46,6 +46,16 @@ remaining substep/Reflect, with snapshot and dispose as the only valid calls.
 Finally, canonical acceptance must observe scheduler substeps and tempo queries
 from production traces rather than injecting expected substep labels or BPMs.
 
+The fifth completion audit found that the first G20 implementation still
+replayed expected BPM outputs and manually called the private tempo lookup.
+G22 freezes the missing production inputs instead: every committed Float32
+delta-time bit through the +5 frame 991 and the -5/0 frame 317, plus the exact
+committed CC08 BMS. Acceptance must feed those deltas through the production
+engine and invoke `InGameMusicScoreController.getAdjustedMusicPosition`; it
+must not write a private cursor, call the private BPM lookup, or remove the
+adaptive outer-frame field. The adaptive method fixture has one setup outer
+frame, so its full manager judgement outer-frame index is 1.
+
 ## Provenance
 
 - locked sample: `jp.co.craftegg.band` 10.1.3 (229), `arm64-v8a`;

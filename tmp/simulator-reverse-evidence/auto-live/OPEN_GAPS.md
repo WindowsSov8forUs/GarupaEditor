@@ -12,12 +12,12 @@ blocking_findings = []
 
 G01–G17 保持关闭。第三次审计的 G19/G20 由 Reverse `24706edcb02155fca575c6fde6aa9c7f0fe131ba` 关闭；其中 G18 的 connected-component 解释随后被更完整调用者证据否定。Reverse `57c1e03be474eeb1006ff56c8fc3d5a9a117d573` 新增 focused `activateNoteAndConnectSyncLine` ARM64 并以 G21 修正：只比较 source activation order 中紧邻的 previous/current playable root；其他 playable root 会断开 Multiple run，equal button 也因非相邻而另起 run。G19 terminal fault latch 与 G20 actual observation 要求不变。
 
-第五次实现审计发现两个 required-before-close 阻断；其中第 1 项现已由 GarupaEditor 生产修复关闭，第 2 项仍开放：
+第五次实现审计发现两个 required-before-close 阻断；第 1 项已由 GarupaEditor 生产修复关闭，第 2 项所需证据现由 G22 关闭，生产消费与重验收仍待完成：
 
 1. **已关闭：** `SimulatorEngineHost.pause/resume` 现于 idempotent shortcut 前检查 fault；host 级全部非允许 API、只读 snapshot 与 dispose 均有测试。
-2. G20 要求 exact B±5/0 由 `InGameMusicScoreController.getAdjustedMusicPosition` 实际执行并观察 entry cursor/per-step BPM/result bits；当前测试仍输入 expected `step_bpms` 或手工调用 private lookup + advance/rewind。committed pass2已冻结 entry cursor与输出步骤，但尚未证明有可让 production controller到达该 cursor 的确定性重放输入。
+2. **证据已关闭、实现待完成：** Reverse `97e31b774c49bf1613a59d5cfd0a9cf4c323fa86` 以 G22 冻结两个 normalized trace 的 frame 1–991/317 Float32 delta bits 与 committed CC08 BMS；只允许经 production engine重放并调用 `getAdjustedMusicPosition`，禁止 expected BPM、private cursor/BPM lookup与删除 outer frame。
 
-若第 2 项不能仅由现有已提交输入闭合，则新增 G22（`required-before-code`）：冻结 exact controller replay输入及 adaptive outer-frame identity；Reverse提交并冻结前不得用 production test hook、private字段写入或 expected BPM冒充 actual owner trace。
+G22 同时固定 adaptive method fixture在一个 setup outer frame后于 full manager outer-frame index 1 判定。GarupaEditor冻结包含 `auto-live-actual-replay.json` 与逐字节相同的 `653_ikuoku_easy.bms.txt`；A10代码门已解除，但 actual replay测试通过前阶段仍不能关闭。
 
 ## 持续非阻断边界
 

@@ -10,7 +10,7 @@
 - 锁定原作样本：`jp.co.craftegg.band` 10.1.3（version code 229，`arm64-v8a`）。
 - 上游已验收阶段：第一切片、谱面构造、时钟与调度。
 - 上游时钟调度验收提交：GarupaEditor `78414bc`，关闭记录修订提交 `ca84258`。
-- 当前状态：**第五次独立审计已撤销第四次关闭结论。A00–A08 与 G21 production topology 保留；A09 因公共 host `resume()` 可绕过 terminal fault 而重新打开，A10 因 exact B±5/0 仍未由 G20 指定的 `InGameMusicScoreController.getAdjustedMusicPosition` owner 实际执行、且 AL02 仍把 frozen `step_bpms` 输入算术而重新打开。adaptive canonical 还删除 `outer_frame` 后比较。修复完成前禁止进入手动输入阶段；若现有已提交证据不能提供 exact cursor 的可重放输入，须先关闭新增 G22 硬门。**
+- 当前状态：**第五次审计重开的 A09 已修复；Reverse `97e31b774c49bf1613a59d5cfd0a9cf4c323fa86` 以 G22 冻结 exact production replay 输入与 adaptive outer-frame identity，A10 代码门已解除但实际消费/重验收尚未完成。修复前禁止进入手动输入阶段。**
 - 待重建验收记录：`tmp/simulator-auto-live-acceptance.md`。
 - 已冻结证据包：`tmp/simulator-reverse-evidence/auto-live/`。
 
@@ -46,7 +46,7 @@
 | --- | --- | --- |
 | A00 建立阶段任务书 | 已完成 | 范围、证据候选、硬门、实现批次和验收矩阵写入本文档 |
 | A01 晋升 Auto Live 静态证据 | 补充完成 | Reverse `cd84d2ce` 补齐 Multiple/visual ARM64，`7a0540dc` 补齐 committed offset cursor identity；冻结 R09–R16 |
-| A02 生成固定事件 oracle 并关闭缺口 | 第四次补充完成，代码门解除 | Reverse `57c1e03b` 以 G21 修正 G18；supplement 14 case + focused source-order caller ARM64 冻结 run、terminal fault 与 actual observation |
+| A02 生成固定事件 oracle 并关闭缺口 | 第五次补充完成，代码门解除 | Reverse `97e31b77` 以 G22 增加 committed exact delta/BMS replay与 adaptive full outer-frame identity |
 | A03 接入 Auto Live 模式与判定上下文 | 已完成 | 显式模式本身不需改动；补充证据现可由 A05–A10 消费 |
 | A04 建立 Long/Slide 运行子图 | 修复完成 | 普通生产 Slide 由 terminal child + root after type 联合识别；父 Deactive 时按 R02 清 child graph/current，复用重建共享身份 |
 | A05 恢复 Single/Flick Force Perfect | 已完成 | Multiple owner 遍历完整 playable source order；其他 family/equal button 断组，method fixture 精确通过 |
@@ -54,7 +54,7 @@
 | A07 恢复 Slide 分阶段完成 | 已完成 | head 第六槽状态与 terminal fault boundary 精确覆盖 |
 | A08 恢复 Auto Live OneFrame 填充与聚合 | 已完成 | 117/84 source-order run 的唯一 note type 10/count、混合 batch 与五槽行为通过独立固定 oracle |
 | A09 接入调度、暂停与生命周期 | 修复完成，待阶段重验收 | 公共 host shortcut 已移到 fault 检查之后；全部非允许 API 返回锁存失败，snapshot只读、dispose允许 |
-| A10 生产 oracle 与阶段验收 | 重新打开，exact replay 硬门待判定 | topology oracle 保留；须删除 expected BPM 输入，让 exact B±5/0 由 production owner 执行，并闭合 adaptive `outer_frame` 全字段比较 |
+| A10 生产 oracle 与阶段验收 | 重新打开，G22代码门已解除 | topology oracle保留；须消费新 replay，删除 expected BPM/private lookup，让 exact owner与 adaptive全字段比较通过 |
 
 ### 1.4 批次记录
 
@@ -274,6 +274,12 @@
 
 - `SimulatorEngineHost.pause/resume` 在任何 paused idempotent shortcut 前先读取 manager fault；faulted 时直接返回锁存失败，不记录 paused/running backend lifecycle 事件。
 - AL16 的真实 host 第六槽场景新增全部公开边界：`initialize/step/pause/resume/getAdjustedMusicPosition` 均与首次 fault 全对象相等；连续 snapshot 全对象相等且 backend trace 不变；dispose仍成功。该修复直接消费 G19，不需要新增原作行为证据。
+
+#### 2026-07-29 第二十六批：G22 exact production replay 证据硬门关闭
+
+- 复核已提交 pass2 原始来源确认并非只有输出：run-025/run-026 normalized adaptive trace逐 frame保存 `delta_time_bits`，同目录还提交了原始 `653_ikuoku_easy.bms.txt`。只读实验用 frame 1–991 bits驱动当前 production engine，精确到达 `bar=15, beat=0x433B5B1C`，随后真实 `getAdjustedMusicPosition(+5)` 返回 `0x45401EF9` 与五步 `99.5×4→95.5`；因此无需 private seed或新设备采集。
+- Reverse supplement新增 `auto_live_actual_replay.json`、生成器与字节保持 BMS；G22锁定 +5 frame991、-5/0 frame317 的完整 Float32 delta序列，禁止 expected BPM、private cursor write/private BPM call。adaptive method fixture锁定一个 setup outer frame后 judgement full manager index为1，禁止删除 outer字段。
+- Reverse `97e31b774c49bf1613a59d5cfd0a9cf4c323fa86` 已推送 main `0 0`；GarupaEditor冻结新增 R17–R20 与两个 fixture alias，final entry由68增至72。A10代码门解除，生产测试尚待下一批消费。
 
 ## 2. 固定范围
 

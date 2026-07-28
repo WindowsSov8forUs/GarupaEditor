@@ -4,7 +4,7 @@
   "source": {
     "repository": "HOST___________________GirlsBandParty-Reverse",
     "staticBaselineCommit": "74ab76f6838847d98aae1a15741a5f024e3774ff",
-    "finalEvidenceCommit": "57c1e03be474eeb1006ff56c8fc3d5a9a117d573",
+    "finalEvidenceCommit": "97e31b774c49bf1613a59d5cfd0a9cf4c323fa86",
     "excludedUntrackedPaths": [
       ".claude/",
       "runtime/tools/"
@@ -685,29 +685,29 @@
     },
     {
       "id": "R09",
-      "sourceCommit": "57c1e03be474eeb1006ff56c8fc3d5a9a117d573",
+      "sourceCommit": "97e31b774c49bf1613a59d5cfd0a9cf4c323fa86",
       "sourcePath": "artifacts/investigations/auto-live-runtime-contract-supplement/README.md",
       "copiedPath": "artifacts/investigations/auto-live-runtime-contract-supplement/README.md",
-      "bytes": 3527,
-      "sha256": "78AE95C11D2D3D06E61FBDBFF3F39C73AC13B09A9E9258C3E6A19ABD57FF1F0A",
+      "bytes": 4197,
+      "sha256": "3901BAD752D5FFAFAD92569C41E9D395BE94015BC1D68C7B0B0EA11A9917AE4E",
       "status": "confirmed-supplement-final"
     },
     {
       "id": "R10",
-      "sourceCommit": "57c1e03be474eeb1006ff56c8fc3d5a9a117d573",
+      "sourceCommit": "97e31b774c49bf1613a59d5cfd0a9cf4c323fa86",
       "sourcePath": "artifacts/investigations/auto-live-runtime-contract-supplement/auto_live_supplement_contract.json",
       "copiedPath": "artifacts/investigations/auto-live-runtime-contract-supplement/auto_live_supplement_contract.json",
-      "bytes": 4359,
-      "sha256": "C0E2EB5A43C28EA7C6EC0081D629950C3B768827C0055DB68FC4CDE193CA8B83",
+      "bytes": 4839,
+      "sha256": "587499ABA609BD8B2C0525AE5C969B931F5FFD2C2A2CC79A4CCCBA14F1B00023",
       "status": "confirmed-supplement-final"
     },
     {
       "id": "R11",
-      "sourceCommit": "57c1e03be474eeb1006ff56c8fc3d5a9a117d573",
+      "sourceCommit": "97e31b774c49bf1613a59d5cfd0a9cf4c323fa86",
       "sourcePath": "artifacts/investigations/auto-live-runtime-contract-supplement/closure.json",
       "copiedPath": "artifacts/investigations/auto-live-runtime-contract-supplement/closure.json",
-      "bytes": 2573,
-      "sha256": "DE18F0B1DB723F1508E5C9E0E4D3151A07114008656F8F268986112D769B171D",
+      "bytes": 3128,
+      "sha256": "694A14AA71D3FB10A466D49C55716DB2DEF3E41B37285D6A9CA5C25FFBAA8DA6",
       "status": "confirmed-supplement-final"
     },
     {
@@ -721,20 +721,20 @@
     },
     {
       "id": "R13",
-      "sourceCommit": "57c1e03be474eeb1006ff56c8fc3d5a9a117d573",
+      "sourceCommit": "97e31b774c49bf1613a59d5cfd0a9cf4c323fa86",
       "sourcePath": "artifacts/investigations/auto-live-runtime-contract-supplement/targets.tsv",
       "copiedPath": "artifacts/investigations/auto-live-runtime-contract-supplement/targets.tsv",
-      "bytes": 1997,
-      "sha256": "EE91E75F9F03E7E39B4A2E4B79E7BC41608F14F38506A862F53DEA225FAC56F1",
+      "bytes": 2217,
+      "sha256": "F669ED704B7322899E58FC502D6EB862128B58BB621079A280C79A7E6DC2DBA6",
       "status": "confirmed-supplement-final"
     },
     {
       "id": "R14",
-      "sourceCommit": "57c1e03be474eeb1006ff56c8fc3d5a9a117d573",
+      "sourceCommit": "97e31b774c49bf1613a59d5cfd0a9cf4c323fa86",
       "sourcePath": "artifacts/investigations/auto-live-runtime-contract-supplement/verify_supplement.py",
       "copiedPath": "artifacts/investigations/auto-live-runtime-contract-supplement/verify_supplement.py",
-      "bytes": 9530,
-      "sha256": "660B6FB3D77BE2A89D7116701593A2D4545F0011B807485474749B2043A3F6B9",
+      "bytes": 12433,
+      "sha256": "24964D3A0CAB5CD8A3D66B6E3809B8B81E43EA26A349B292A196FE0C413ED168",
       "status": "confirmed-supplement-final"
     },
     {
@@ -907,6 +907,42 @@
       "bytes": 10498,
       "sha256": "DB5DB91B1F46094BAA70036F84F871A891A0E0233BB9EDA7BC5E2CFC1709B63F",
       "status": "confirmed-supplement-final"
+    },
+    {
+      "id": "R17",
+      "sourceCommit": "97e31b774c49bf1613a59d5cfd0a9cf4c323fa86",
+      "sourcePath": "artifacts/investigations/auto-live-runtime-contract-supplement/.gitattributes",
+      "copiedPath": "artifacts/investigations/auto-live-runtime-contract-supplement/.gitattributes",
+      "bytes": 40,
+      "sha256": "8463A3F53A594CD50E023C8F7F62786B2356957C42F335ED625DA9843911F258",
+      "status": "confirmed-supplement-final"
+    },
+    {
+      "id": "R18",
+      "sourceCommit": "97e31b774c49bf1613a59d5cfd0a9cf4c323fa86",
+      "sourcePath": "artifacts/investigations/auto-live-runtime-contract-supplement/auto_live_actual_replay.json",
+      "copiedPath": "artifacts/investigations/auto-live-runtime-contract-supplement/auto_live_actual_replay.json",
+      "bytes": 37626,
+      "sha256": "16943833EF3E2A3A81C5CC60C74EDA4BFD82912428AFBBC9D02E82555DFEC633",
+      "status": "confirmed-supplement-final"
+    },
+    {
+      "id": "R19",
+      "sourceCommit": "97e31b774c49bf1613a59d5cfd0a9cf4c323fa86",
+      "sourcePath": "artifacts/investigations/auto-live-runtime-contract-supplement/generate_actual_replay.py",
+      "copiedPath": "artifacts/investigations/auto-live-runtime-contract-supplement/generate_actual_replay.py",
+      "bytes": 3986,
+      "sha256": "9116C3B8EA497BA4E8C3351E17D5A81BBFA383D1B764167B7D82053D667A6A8F",
+      "status": "confirmed-supplement-final"
+    },
+    {
+      "id": "R20",
+      "sourceCommit": "97e31b774c49bf1613a59d5cfd0a9cf4c323fa86",
+      "sourcePath": "artifacts/investigations/auto-live-runtime-contract-supplement/fixtures/653_ikuoku_easy.bms.txt",
+      "copiedPath": "artifacts/investigations/auto-live-runtime-contract-supplement/fixtures/653_ikuoku_easy.bms.txt",
+      "bytes": 1688,
+      "sha256": "4C2F8D202DED5DFD9C4144C0FE000B1E3524E0F25D3FEAF4DD102413F6CD6325",
+      "status": "confirmed-supplement-final"
     }
   ],
   "fixtureAliases": [
@@ -933,6 +969,24 @@
       "copiedPath": "fixtures/auto-live-supplement-fixed-event-trace.json",
       "bytes": 14124,
       "sha256": "372A9AEC10FCACD5ECAD92C2B6D51E31AD8DD961F58A627C2DFE84EA59C17B78"
+    },
+    {
+      "id": "F-auto-live-actual-replay.json",
+      "sourceCommit": "97e31b774c49bf1613a59d5cfd0a9cf4c323fa86",
+      "sourcePath": "artifacts/investigations/auto-live-runtime-contract-supplement/auto_live_actual_replay.json",
+      "copiedPath": "fixtures/auto-live-actual-replay.json",
+      "bytes": 37626,
+      "sha256": "16943833EF3E2A3A81C5CC60C74EDA4BFD82912428AFBBC9D02E82555DFEC633",
+      "status": "fixture-alias-byte-identical"
+    },
+    {
+      "id": "F-auto-live-actual-replay-chart.txt",
+      "sourceCommit": "97e31b774c49bf1613a59d5cfd0a9cf4c323fa86",
+      "sourcePath": "artifacts/investigations/auto-live-runtime-contract-supplement/fixtures/653_ikuoku_easy.bms.txt",
+      "copiedPath": "fixtures/auto-live-actual-replay-chart.txt",
+      "bytes": 1688,
+      "sha256": "4C2F8D202DED5DFD9C4144C0FE000B1E3524E0F25D3FEAF4DD102413F6CD6325",
+      "status": "fixture-alias-byte-identical"
     }
   ],
   "upstreamDependencies": [

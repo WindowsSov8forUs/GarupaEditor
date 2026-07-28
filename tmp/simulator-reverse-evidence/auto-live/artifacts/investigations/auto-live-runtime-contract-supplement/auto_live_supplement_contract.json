@@ -61,6 +61,14 @@
     "native_basis": "the sixth OneFrame acquisition raises after five IsUse slots and original continuation is not represented",
     "rule": "after a substep returns this evidence-required boundary, latch the manager fault; do not retry or continue NoteManager/Reflect; allow snapshot and dispose only"
   },
+  "actual_replay": {
+    "evidence": "G22",
+    "fixture": "auto_live_actual_replay.json",
+    "chart": "fixtures/653_ikuoku_easy.bms.txt",
+    "production_owner": "InGameMusicScoreController.getAdjustedMusicPosition",
+    "rule": "replay committed delta_time_bits through the production engine; do not inject expected BPMs or private cursor state",
+    "adaptive_outer_frame": "one setup outer frame precedes the judged adaptive outer frame, so the full manager index is 1"
+  },
   "unresolved_nonblocking": [
     "real manual touch and timeout Miss remain the manual-input stage",
     "visual helper rendering and connection presentation remain the rendering stage",

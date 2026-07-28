@@ -74,7 +74,7 @@ if (
 ) {
   fail("Auto Live evidence gate is not closed");
 }
-if (manifest.candidateEntries.length !== 30 || manifest.finalEntries.length !== 68) {
+if (manifest.candidateEntries.length !== 30 || manifest.finalEntries.length !== 72) {
   fail("Unexpected Auto Live evidence entry count");
 }
 
@@ -136,9 +136,9 @@ if (
   supplementClosure.overall_status !== "confirmed" ||
   supplementClosure.auto_live_gate !== "closed" ||
   supplementClosure.blocking_findings.length !== 0 ||
-  Object.keys(supplementClosure.supplement_gap_resolution).length !== 11
+  Object.keys(supplementClosure.supplement_gap_resolution).length !== 12
 ) {
-  fail("Frozen Reverse supplement closure is not the closed G11-G21 contract");
+  fail("Frozen Reverse supplement closure is not the closed G11-G22 contract");
 }
 
 const supplementTrace = JSON.parse(
@@ -169,12 +169,35 @@ for (const required of [
   }
 }
 
+const actualReplay = JSON.parse(
+  readFileSync(resolve(packageRoot, "fixtures/auto-live-actual-replay.json"), "utf8"),
+);
+if (
+  actualReplay.status !== "confirmed-committed-production-replay-input" ||
+  actualReplay.production_owner !== "InGameMusicScoreController.getAdjustedMusicPosition" ||
+  actualReplay.offset_replays.length !== 3 ||
+  actualReplay.adaptive_method_replay.judgement_outer_frame_index !== 1 ||
+  !actualReplay.forbidden_test_inputs.includes("expected-step-bpms")
+) {
+  fail("Frozen G22 actual replay contract is incomplete");
+}
+const replayCases = new Map(
+  actualReplay.offset_replays.map((entry) => [entry.case_id, entry]),
+);
+if (
+  replayCases.get("offset-plus5-cross-bpm-exact")?.delta_time_bits.length !== 991 ||
+  replayCases.get("offset-minus5-cross-bar-exact")?.delta_time_bits.length !== 317 ||
+  replayCases.get("offset-zero-identity-exact")?.delta_time_bits.length !== 317
+) {
+  fail("Frozen G22 replay frame inputs are incomplete");
+}
+
 if (!existsSync(resolve(packageRoot, "OPEN_GAPS.md"))) {
   fail("OPEN_GAPS.md is missing");
 }
 
 console.log(
   `auto-live evidence verified: candidates=${manifest.candidateEntries.length}, ` +
-    `final=${manifest.finalEntries.length}, supplement=G11-G21, cases=14, ` +
+    `final=${manifest.finalEntries.length}, supplement=G11-G22, cases=14, replay=4, ` +
     `gate=closed, index=${validateIndex ? "checked" : "skipped"}`,
 );

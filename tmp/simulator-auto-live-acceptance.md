@@ -1,6 +1,6 @@
 # 模拟器 Auto Live 阶段验收记录
 
-> **2026-07-29 第五次独立审计：第四次验收结论已撤销。** G21 topology与 fault lifecycle保留，公共 host `resume()` 旁路已在后续批次修复；但 exact offset仍使用 expected BPM/手工算术而未由 G20 指定 production owner执行，adaptive canonical也删除 `outer_frame` 后比较。A10继续打开，本文后续“通过”表格仅保留为被撤销历史，不能证明阶段完成。
+> **2026-07-29 第五次独立审计：第四次验收结论已撤销。** G21 topology与A09 fault lifecycle保留；Reverse G22已冻结 exact production replay与adaptive outer-frame identity，但A10测试尚未消费。本文后续“通过”表格仅保留为被撤销历史。
 
 ## 1. 验收身份
 
@@ -8,7 +8,7 @@
 - 阶段任务书：`tmp/simulator-auto-live-task.md`
 - 锁定原作样本：`jp.co.craftegg.band` 10.1.3（version code 229），`arm64-v8a`
 - Auto Live Reverse 首版 contract 提交：`a3f28d77e71c5e7a62cab0de81f0cf668a5b745b`
-- Auto Live Reverse 最终补充证据提交：`57c1e03be474eeb1006ff56c8fc3d5a9a117d573`
+- Auto Live Reverse 最终补充证据提交：`97e31b774c49bf1613a59d5cfd0a9cf4c323fa86`
 - GarupaEditor 最终证据冻结提交：`76f39cb`
 - 模式与运行子图提交：`ac7b3d0`
 - Single/Flick Force Perfect 提交：`00cc5f6`
@@ -60,7 +60,7 @@ G01–G10 已全部关闭：
 GarupaEditor 冻结包位于 `tmp/simulator-reverse-evidence/auto-live/`，包含：
 
 - 30 个候选基线条目；
-- 68 个最终 evidence/contract/最小切片条目；
+- 72 个最终 evidence/contract/最小切片/actual replay条目；
 - `auto-live-fixed-event-trace.json`；
 - `auto-live-failure-cases.json`；
 - `closure.json`、`OPEN_GAPS.md`、manifest 与源/副本/Git index 三方校验器。
