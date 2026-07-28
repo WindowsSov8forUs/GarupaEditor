@@ -1,6 +1,6 @@
 # 模拟器 Auto Live 阶段验收记录
 
-> **2026-07-29 第五次独立审计：第四次验收结论已撤销。** G21 topology、manager fault latch 与 snapshot purity 保留，但公共 host `resume()` 可绕过 fault；exact offset仍使用 expected BPM/手工算术而未由 G20 指定 production owner执行；adaptive canonical删除 `outer_frame` 后比较。A09/A10重新打开，本文后续“通过”表格仅保留为被撤销历史，不能证明阶段完成。
+> **2026-07-29 第五次独立审计：第四次验收结论已撤销。** G21 topology与 fault lifecycle保留，公共 host `resume()` 旁路已在后续批次修复；但 exact offset仍使用 expected BPM/手工算术而未由 G20 指定 production owner执行，adaptive canonical也删除 `outer_frame` 后比较。A10继续打开，本文后续“通过”表格仅保留为被撤销历史，不能证明阶段完成。
 
 ## 1. 验收身份
 
@@ -30,7 +30,7 @@
 - 第四次最终重验收：本文件所在提交
 - 验收日期：2026-07-28
 - 最终验收日期：2026-07-29
-- 验收结论：**已撤销。A09/A10 未完成；Auto Live 阶段保持打开，禁止开始手动输入生产实现。**
+- 验收结论：**已撤销。A09修复完成但尚未随A10重验收；A10未完成，Auto Live阶段保持打开。**
 
 ## 2. 证据硬门与冻结包
 
@@ -86,7 +86,7 @@ auto-live evidence verified: candidates=30, final=68, supplement=G11-G21, cases=
 | A06 Long | 通过 | head `>=`、tail `>`、linked finish→tail、active pause/resume、回收；head/tail 第六槽 native failure state 均冻结 |
 | A07 Slide | 通过 | source-order、terminal 8/5/6/7、Stop、Reset、单次粒度；head 第六槽 Wait 状态冻结 |
 | A08 OneFrame | 通过 | 固定 5 槽；117/84 个 production run 的唯一 callback count；visual helper 不判定 |
-| A09 调度生命周期 | **撤销** | direct manager latch有效，但公共 host `resume()` 在 faulted/unpaused 时返回 `ok`，违反 snapshot/dispose-only policy |
+| A09 调度生命周期 | 修复完成，待重验收 | direct manager与公共 host均先检查 fault；非允许 API返回同一失败，snapshot连续只读、dispose允许 |
 | A10 生产 oracle | **撤销** | topology与production family coverage保留；exact offset未由 production owner执行，AL02仍注入 expected BPM，adaptive比较删除 outer frame |
 
 ## 4. 已落地的生产边界
@@ -149,7 +149,7 @@ type SimulatorPlayMode =
 - adaptive 1–4 子步全部在 NoteManager 内完成；同一外层帧产生的判定共享五槽池，InGameManager 成功返回后只 Reflect 一次。
 - 任一子步失败立即停止，不继续子步、不 Reflect；第六条边界留下已提交五槽供审计。
 - Long/Slide 在第六槽失败前已发生的 native 状态/linked trace 不回滚；portable manager 立即锁存同一 `evidence-required` terminal fault，进入 `faulted`，因此不存在重试或半完成状态继续推进。
-- direct manager fault 后 `step`、`pause`、`resume` 返回同一失败，snapshot peek保持只读；**公共 host resume 当前仍有绕过缺口，本条整体结论撤销。**
+- direct manager与公共 host fault 后的非允许 API均返回同一失败；snapshot peek保持只读，dispose允许。该项修复完成，随A10统一重验收。
 - PauseSound 在 NoteManager 前返回，冻结时钟、root/child state、cursor、slots 和 trace；resume 不补跑暂停时间。
 - dispose 失活并解绑 root/BPM、清 child runtime 和 pool cursor、关闭 Slide manager、清未 Reflect payload，不产生判定或后端副作用。
 

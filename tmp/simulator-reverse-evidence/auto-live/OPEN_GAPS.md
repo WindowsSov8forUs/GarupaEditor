@@ -12,9 +12,9 @@ blocking_findings = []
 
 G01–G17 保持关闭。第三次审计的 G19/G20 由 Reverse `24706edcb02155fca575c6fde6aa9c7f0fe131ba` 关闭；其中 G18 的 connected-component 解释随后被更完整调用者证据否定。Reverse `57c1e03be474eeb1006ff56c8fc3d5a9a117d573` 新增 focused `activateNoteAndConnectSyncLine` ARM64 并以 G21 修正：只比较 source activation order 中紧邻的 previous/current playable root；其他 playable root 会断开 Multiple run，equal button 也因非相邻而另起 run。G19 terminal fault latch 与 G20 actual observation 要求不变。
 
-第五次实现审计发现两个 required-before-close 阻断：
+第五次实现审计发现两个 required-before-close 阻断；其中第 1 项现已由 GarupaEditor 生产修复关闭，第 2 项仍开放：
 
-1. `SimulatorEngineHost.resume()` 可在 faulted/unpaused 时先走 idempotent shortcut 返回 `ok`，尚未完整消费 G19 snapshot/dispose-only policy。
+1. **已关闭：** `SimulatorEngineHost.pause/resume` 现于 idempotent shortcut 前检查 fault；host 级全部非允许 API、只读 snapshot 与 dispose 均有测试。
 2. G20 要求 exact B±5/0 由 `InGameMusicScoreController.getAdjustedMusicPosition` 实际执行并观察 entry cursor/per-step BPM/result bits；当前测试仍输入 expected `step_bpms` 或手工调用 private lookup + advance/rewind。committed pass2已冻结 entry cursor与输出步骤，但尚未证明有可让 production controller到达该 cursor 的确定性重放输入。
 
 若第 2 项不能仅由现有已提交输入闭合，则新增 G22（`required-before-code`）：冻结 exact controller replay输入及 adaptive outer-frame identity；Reverse提交并冻结前不得用 production test hook、private字段写入或 expected BPM冒充 actual owner trace。

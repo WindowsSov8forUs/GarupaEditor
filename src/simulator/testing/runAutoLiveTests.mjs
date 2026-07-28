@@ -788,8 +788,13 @@ function validateAutoLive() {
     ).objects[0];
     assert.equal(hostLong.state, NoteState.Wait);
     assert.equal(hostLong.linkedAfter.judged, false);
+    assert.deepEqual(host.initialize(), hostFault);
     assert.deepEqual(host.step(1 / 60), hostFault);
+    assert.deepEqual(host.pause(), hostFault);
+    assert.deepEqual(host.resume(), hostFault);
     assert.deepEqual(host.getAdjustedMusicPosition(), hostFault);
+    const repeatedFaultSnapshot = ok(host.snapshot(), "fault snapshot remains read-only");
+    assert.deepEqual(repeatedFaultSnapshot, hostSnapshot);
     ok(host.dispose(), "fault host dispose");
   });
 

@@ -53,7 +53,7 @@
 | A06 恢复 Long 分阶段完成 | 已完成 | head/tail 第六槽保留 native Wait/linked order，并由 manager terminal fault 阻止重试 |
 | A07 恢复 Slide 分阶段完成 | 已完成 | head 第六槽状态与 terminal fault boundary 精确覆盖 |
 | A08 恢复 Auto Live OneFrame 填充与聚合 | 已完成 | 117/84 source-order run 的唯一 note type 10/count、混合 batch 与五槽行为通过独立固定 oracle |
-| A09 接入调度、暂停与生命周期 | 重新打开，G19 代码门已解除 | manager latch 正确；公共 host `resume()` 的未暂停 shortcut 仍可在 fault 后返回 `ok`，须验证全部 host API 与 backend trace |
+| A09 接入调度、暂停与生命周期 | 修复完成，待阶段重验收 | 公共 host shortcut 已移到 fault 检查之后；全部非允许 API 返回锁存失败，snapshot只读、dispose允许 |
 | A10 生产 oracle 与阶段验收 | 重新打开，exact replay 硬门待判定 | topology oracle 保留；须删除 expected BPM 输入，让 exact B±5/0 由 production owner 执行，并闭合 adaptive `outer_frame` 全字段比较 |
 
 ### 1.4 批次记录
@@ -269,6 +269,11 @@
 - G20 fixture 明确禁止 `expected-step-bpms` 并指定 exact 三例 owner 为 `InGameMusicScoreController.getAdjustedMusicPosition`；AL02 仍执行 `for (const bpm of plusFive.step_bpms)`，canonical exact block也只从 expected cursor 手工调用 private `bpmAtPosition` + `advancePosition/rewindPosition`，没有让 production owner 执行 exact B±5/0。另一个 actual +5 case只验证“跨过 BPM”，未对 exact device cursor/result bits。
 - adaptive actual projection虽读取 scheduler trace，却在 deep-equal 前从 actual/expected 同时删除 `outer_frame`，再测试侧硬编码实际值 1；因此“事件 case 全对象比较”仍为过度声明。须由已提交证据明确完整生命周期 index 或 case-relative projection，不得继续忽略字段。
 - A09/A10 与阶段完成勾选撤销；A00–A08、G19/G20/G21 证据本身、117/84 topology、87 Long/144 Slide/50 Directional/415 Multiple coverage保持有效。若 committed pass2 只有 entry cursor/steps 而无可重放的生产输入序列，则新增 G22：冻结 exact controller replay 输入与 adaptive outer-frame identity，Reverse 提交并冻结前禁止用 private 字段 seed 或测试 hook 绕过。
+
+#### 2026-07-29 第二十五批：A09 公共宿主 fault 修复
+
+- `SimulatorEngineHost.pause/resume` 在任何 paused idempotent shortcut 前先读取 manager fault；faulted 时直接返回锁存失败，不记录 paused/running backend lifecycle 事件。
+- AL16 的真实 host 第六槽场景新增全部公开边界：`initialize/step/pause/resume/getAdjustedMusicPosition` 均与首次 fault 全对象相等；连续 snapshot 全对象相等且 backend trace 不变；dispose仍成功。该修复直接消费 G19，不需要新增原作行为证据。
 
 ## 2. 固定范围
 

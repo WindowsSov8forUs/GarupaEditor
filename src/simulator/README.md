@@ -25,7 +25,7 @@
 
 时钟与调度验收记录位于 `tmp/simulator-clock-scheduling-acceptance.md`。S01–S10 已完成。
 
-Auto Live 第五次独立审计已撤销第四次关闭结论。G21 的完整 playable source-order topology、manager fault latch、连续 snapshot只读及 production family coverage保留；但公共 host `resume()` 仍可绕过 fault，exact B±5/0 仍未由 G20 指定 production owner执行且 AL02仍注入 frozen step BPM，adaptive canonical也删除 outer frame后比较。A09/A10重新打开，修复或新增 G22 证据闭合前禁止进入手动输入阶段。
+Auto Live 第五次独立审计已撤销第四次关闭结论。G21 topology、fault lifecycle、snapshot只读及 production family coverage保留，公共 host `resume()` 旁路已修复；但 exact B±5/0 仍未由 G20 指定 production owner执行且 AL02仍注入 frozen step BPM，adaptive canonical也删除 outer frame后比较。A10继续打开，修复或新增 G22 证据闭合前禁止进入手动输入阶段。
 
 OneFrame 容量现在由原作证据固定为 5，不再接受宿主或测试容量配置。公开的 `OneFrameJudgementBatch` 仅包含本阶段闭合的 Auto Live 判定字段，不是原作完整 `OneFrameTotalData`。分数、Power、生命、Skill/Fever、音频、粒子、渲染和 HUD 字段在类型上保持缺席，而不是填零。
 

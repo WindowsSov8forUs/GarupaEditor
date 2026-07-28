@@ -45,6 +45,9 @@ class SimulatorEngineHost implements SimulatorEngine {
   }
 
   pause(): SimulatorResult<void> {
+    if (this.inGameManager.fault !== null) {
+      return this.inGameManager.fault;
+    }
     if (this.inGameManager.snapshot().paused) {
       return ok(undefined);
     }
@@ -57,6 +60,9 @@ class SimulatorEngineHost implements SimulatorEngine {
   }
 
   resume(): SimulatorResult<void> {
+    if (this.inGameManager.fault !== null) {
+      return this.inGameManager.fault;
+    }
     if (!this.inGameManager.snapshot().paused) {
       return ok(undefined);
     }
