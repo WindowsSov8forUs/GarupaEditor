@@ -10,9 +10,9 @@
 - 锁定原作样本：`jp.co.craftegg.band` 10.1.3（version code 229，`arm64-v8a`）。
 - 上游已验收阶段：第一切片、谱面构造、时钟与调度。
 - 上游时钟调度验收提交：GarupaEditor `78414bc`，关闭记录修订提交 `ca84258`。
-- 当前状态：**A00–A02 已完成；Reverse 最终证据提交 `a3f28d77e71c5e7a62cab0de81f0cf668a5b745b` 已关闭 G01–G10，`auto_live_gate = closed`、`blocking_findings = []`。A03–A10 前置硬门已解除。**
-- 计划验收记录：`tmp/simulator-auto-live-acceptance.md`。
-- 计划证据包：`tmp/simulator-reverse-evidence/auto-live/`。
+- 当前状态：**2026-07-28 关闭后复审已撤销阶段完成结论。A01/A02 证据硬门保持关闭，A03/A05/A06/A08 保持完成；A04/A07/A09/A10 因普通生产 Slide 被错误拒绝、父回池 child Reset 未恢复及 production oracle 覆盖绕过而重新打开。修复与重新验收前禁止进入下一阶段。**
+- 待修订验收记录：`tmp/simulator-auto-live-acceptance.md`。
+- 已冻结证据包：`tmp/simulator-reverse-evidence/auto-live/`。
 
 ### 1.1 阶段目标
 
@@ -48,13 +48,13 @@
 | A01 晋升 Auto Live 静态证据 | 已完成 | Reverse `a3f28d77` 提交 43 个最终 contract/切片文件；GarupaEditor 冻结 E01–E30 与 R01–R08/R05.D01–D35 |
 | A02 生成固定事件 oracle 并关闭缺口 | 已完成，硬门关闭 | G01–G10 closed；固定轨迹两次生成一致；5 槽、Flick 参数、Long/Slide 粒度与失败矩阵闭合 |
 | A03 接入 Auto Live 模式与判定上下文 | 已完成 | 显式 `manual`/`auto-live` 判别联合、最小 `InGameCalculatedData` 与 identity result-transform 门已接入 |
-| A04 建立 Long/Slide 运行子图 | 已完成 | Long terminal 与 Slide source-order after runtime 由父 root 独占；缺图/重复身份在激活前失败关闭 |
+| A04 建立 Long/Slide 运行子图 | 重新打开 | 普通生产 Slide 的 `afterNoteType=None` 必须由真实 terminal child 识别；父回池时须按 R02 deactivate/reset child graph |
 | A05 恢复 Single/Flick Force Perfect | 已完成 | `NoteSingleBase` adjusted crossing、Normal 一次提交、Flick Began→synthetic Moved 与 Directional ±500 路由已恢复 |
 | A06 恢复 Long 分阶段完成 | 已完成 | head `>=`、tail `>`、父拥有 linked after、Wait/Stop 更新与失活顺序已恢复 |
-| A07 恢复 Slide 分阶段完成 | 已完成 | source-order after、每调用一个 selected、invisible skip、intermediate/terminal 与最终失活已恢复 |
+| A07 恢复 Slide 分阶段完成 | 重新打开，等待 A04 修复 | 普通/Flick/Directional/Multiple terminal、Stop route、deactivate/reset 与复用轨迹必须直接匹配生产图和 R02 |
 | A08 恢复 Auto Live OneFrame 填充与聚合 | 已完成 | 固定 5 槽、first-unused、原子 Setup、池序 projection、空帧/耗尽/清除语义已恢复 |
-| A09 接入调度、暂停与生命周期 | 已完成 | 反向根/父子顺序沿用；Reflect 仅由外层 owner 执行；暂停、失败与 dispose 语义已接入 |
-| A10 生产 oracle 与阶段验收 | 已完成 | AL01–AL22、普通/HABAHIRO production graph、失败矩阵、全部隔离回归和验收文档通过 |
+| A09 接入调度、暂停与生命周期 | 重新打开，等待 A07 修复 | 需补 active Long/Slide 暂停、父回池 Reset、pool reuse 与 active graph dispose 验收 |
+| A10 生产 oracle 与阶段验收 | 重新打开，等待 A09 | AL19 不得合并谱面后过滤普通 Slide；AL20 必须消费 HABAHIRO Slide；旧验收结论已撤销 |
 
 ### 1.4 批次记录
 
@@ -133,6 +133,15 @@
 - 完整 A10 隔离命令通过：TypeScript；第一切片 17 项；全部谱面构造套件；production roots 825/598；时钟调度 15 组；Auto Live 22 组；依赖边界；证据包源/副本/index 校验。
 - 最终审计进一步把冻结 oracle 的 11 个 case ID、Flick/Directional Float32 bits、Long 事件、Slide cursor、同批 slot/note order 和 adaptive outer Reflect 直接作为测试期望消费，禁止测试仅靠重复硬编码结论通过。
 - 未运行 Vite、Tauri 或整体 GarupaEditor 构建；未修改主程序入口、编辑器控制器、窗口协议、渲染或音频实现。
+
+#### 2026-07-28 第九批：关闭后复审与阶段重开
+
+- 复审确认 chart construction 对普通 `SlideEndA/B` 生产 root 写入 `afterNoteType=None`，而 `NoteSlide.activate` 错误要求 `afterNoteType>=SlideEnd`：普通谱面 93/93 个 Slide root、HABAHIRO 48/51 个普通 Slide root 因而返回 `auto-live.invalid-slide-after-graph`。
+- AL01–AL18 的 synthetic `slideInfo` 人工写入生产构造不会产生的 `AfterNoteType.SlideEnd`；AL19 又以相同阈值过滤普通 Slide 并从合并的 HABAHIRO chart 选取特殊 terminal，违反第 8 节停止条件；AL20 只消费 HABAHIRO Normal，未消费 Slide graph。
+- R02 冻结的 `NoteSlide.deactivate @ 0x321EF80` 会遍历 child、执行 deactivate/reset 并清 current pointer；现实现仅在 dispose 或下一次 activate 清 graph，父进入 Deactive/回池时未恢复该职责，也没有 Note pool reuse 测试。
+- `NoteSlide.afterNoteJudge @ 0x321F874` 还确认 terminal note type 映射为普通 8、Flick 5、Directional 6、Multiple Directional 7；现实现把 Directional 错写为 7，须一并修正。
+- 旧 Auto Live 22 组与全部上游隔离测试仍通过，说明测试存在盲区而非问题不存在；阶段完成勾选和验收结论现已撤销。
+- 本轮只纠正文档完成度，不改生产代码；下一批先修 A04/A07，再补 A09/A10 production/reuse/pause/dispose oracle。
 
 ## 2. 固定范围
 
@@ -823,17 +832,17 @@ A10 前不运行 Vite、Tauri 或 GarupaEditor 整体构建。
 - [x] Auto Live 模式显式接入，manual/mode14/debug 路由没有混淆。
 - [x] Normal/Flick/Directional 的 adjusted crossing、事件数和顺序匹配。
 - [x] Long 头/尾比较符号、父子顺序、状态和回收匹配。
-- [x] Slide 头/中间/终端/Stop、current cursor 和单次调用粒度匹配。
-- [x] Long/Slide after 子图保持构造共享身份并由父对象独占更新。
+- [ ] Slide 头/中间/终端/Stop、current cursor 和单次调用粒度匹配。
+- [ ] Long/Slide after 子图保持构造共享身份并由父对象独占更新。
 - [x] OneFrame 固定 5 槽、first-unused、Setup、池序 Reflect、清除与耗尽匹配。
 - [x] unknown 分数/生命/技能/音频/粒子字段没有零值或 no-op 伪实现。
-- [x] 同位置、adaptive 多子步、暂停、空帧和失败关闭全部通过。
-- [x] 普通与 HABAHIRO 生产谱面回归通过，并保留 HABAHIRO 无实体运行样本披露。
+- [ ] 同位置、adaptive 多子步、暂停、空帧和失败关闭全部通过。
+- [ ] 普通与 HABAHIRO 生产谱面回归通过，并保留 HABAHIRO 无实体运行样本披露。
 - [x] 第一切片、谱面构造和时钟调度全部隔离回归通过。
 - [x] `engine/` 依赖边界通过。
-- [x] `tmp/simulator-auto-live-acceptance.md` 已建立。
+- [ ] `tmp/simulator-auto-live-acceptance.md` 已按修复后结果重建并通过。
 - [x] 未修改主程序入口、编辑器控制器、窗口协议、渲染或音频实现。
-- [x] 提交已推送，远端与 HEAD 为 `0 0`（每批已确认；A10 最终提交后再次确认）。
+- [ ] 最终修复与重验收提交已推送，远端与 HEAD 为 `0 0`。
 
 阶段关闭后，下一阶段只允许按整体计划进入“手动输入与判定”。如果 AL21 中任一手动输入分支仍无实体证据，则下一阶段必须先建立对应设备采证硬门，不能沿用 Auto Live 的 Force Perfect 结果绕过手动判定。
 

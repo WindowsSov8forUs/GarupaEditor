@@ -25,11 +25,11 @@
 
 时钟与调度验收记录位于 `tmp/simulator-clock-scheduling-acceptance.md`。S01–S10 已完成。
 
-Auto Live A00–A10 也已完成隔离验收：显式 `manual`/`auto-live` 模式、Normal/Flick/Directional Force Perfect、父拥有的 Long/Slide 分阶段 child runtime、固定五槽 OneFrame Auto Live Setup、部分判定投影、反向 root Update、adaptive 外层一次 Reflect、暂停冻结、失败关闭与 dispose 清理均已按最终 Reverse 证据恢复。任务书与验收记录分别位于 `tmp/simulator-auto-live-task.md`、`tmp/simulator-auto-live-acceptance.md`。
+Auto Live A01/A02 证据硬门已关闭，A03/A05/A06/A08 保持完成；2026-07-28 关闭后复审发现普通生产 Slide 的 `afterNoteType=None` 被运行时错误拒绝、父回池 child Reset 未按 R02 恢复，且旧 AL19/AL20 绕过对应 production graph，因此 A04/A07/A09/A10 已重新打开，旧阶段验收结论撤销。任务书与待修订验收记录分别位于 `tmp/simulator-auto-live-task.md`、`tmp/simulator-auto-live-acceptance.md`。
 
 OneFrame 容量现在由原作证据固定为 5，不再接受宿主或测试容量配置。公开的 `OneFrameJudgementBatch` 仅包含本阶段闭合的 Auto Live 判定字段，不是原作完整 `OneFrameTotalData`。分数、Power、生命、Skill/Fever、音频、粒子、渲染和 HUD 字段在类型上保持缺席，而不是填零。
 
-当前下一阶段边界是“手动输入与判定”。真实触摸、判定窗口、普通 timeout Miss、释放和 Hold 行为在建立并关闭独立设备证据硬门前继续 `evidence-required`。Auto Live 完成不表示完整判定、分数状态、表现层或主程序接入已经恢复。
+当前仍处于 Auto Live 修复与重新验收阶段，禁止进入“手动输入与判定”。真实触摸、判定窗口、普通 timeout Miss、释放和 Hold 行为继续 `evidence-required`；Auto Live 修复完成也不表示完整判定、分数状态、表现层或主程序接入已经恢复。
 
 `src/simulator/engine` 不依赖 React、Pixi、Tauri、DOM、编辑器谱面类型或窗口协议。宿主 API 是 GarupaEditor 的可移植边界，不宣称属于原作接口。
 
