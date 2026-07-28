@@ -30,9 +30,14 @@ The offset cases preserve the source cursor as separate bar and Float32 beat
 progress fields. The rounded absolute-position projection is not sufficient to
 reconstruct the same Float32 result near a bar/BPM boundary.
 
-The third completion audit closes three additional implementation gates. A
-Multiple Directional group is a connected component of equal-game-type notes
-joined by adjacent-button edges, not a run in source-list order. Long/Slide
+The third completion audit closes additional implementation gates. The first
+G18 interpretation incorrectly generalized the pair predicate into a global
+connected component. Focused `activateNoteAndConnectSyncLine` evidence in G21
+shows that only the immediately previous and current activated playable roots
+are compared in source order. An unrelated playable root breaks the run, and
+an equal-button duplicate starts a new run because it is not adjacent. A
+qualifying previous/current pair is then linked by the existing Multiple
+connector. Long/Slide
 head changes to Wait before judgement, Long tail calls linked finish before
 tail judgement, and native sixth-slot acquisition raises after five committed
 slots. Since native continuation after that exception is not represented, the

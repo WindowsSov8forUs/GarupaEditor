@@ -25,7 +25,7 @@
 
 时钟与调度验收记录位于 `tmp/simulator-clock-scheduling-acceptance.md`。S01–S10 已完成。
 
-Auto Live 第三次独立审计已撤销阶段完成结论。Reverse `24706edc` 已关闭 G18–G20：Multiple connected component、OneFrame exhaustion 后 terminal fault latch、actual scheduler/tempo-query observation。A05/A08/A09/A10 的生产修复与重验收尚未完成；当前仍禁止手动输入阶段。任务书与已撤销验收记录分别位于 `tmp/simulator-auto-live-task.md`、`tmp/simulator-auto-live-acceptance.md`。
+Auto Live 第三次独立审计已撤销阶段完成结论。Reverse `57c1e03b` 以 G21 修正 G18：Multiple 只按完整 playable source activation order 的 previous/current 相邻 pair 连成 run，其他 family 与 equal button 会断组；当前 TypeScript 先过滤 Multiple，普通 production 9 个 batch 少 9 条 judgement。G19 terminal fault latch 与 G20 actual observation 已补证但尚未实现；A05/A08/A09/A10 继续打开并禁止手动输入阶段。
 
 OneFrame 容量现在由原作证据固定为 5，不再接受宿主或测试容量配置。公开的 `OneFrameJudgementBatch` 仅包含本阶段闭合的 Auto Live 判定字段，不是原作完整 `OneFrameTotalData`。分数、Power、生命、Skill/Fever、音频、粒子、渲染和 HUD 字段在类型上保持缺席，而不是填零。
 

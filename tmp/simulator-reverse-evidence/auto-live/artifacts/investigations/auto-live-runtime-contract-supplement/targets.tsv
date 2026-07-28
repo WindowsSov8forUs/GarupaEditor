@@ -12,3 +12,4 @@ S10	0x30E8870	NoteAddSlideMultipleDirectionalFlickVisual	forcePerfect	ARM64 RET;
 S11	0x377A140/0x377B770	NoteManager	isMultipleDirectionalFlickSameGroupNotes/isAdjacentTwoNotes	Front type 6 + same game type + adjacent button	Auto Live group construction
 S12	0x3778DA4	NoteManager	connectWithTheNextNoteForMultipleDirectionalFlick	Connect core left/right neighbour chain	Auto Live group construction
 S13	0x30ED264/0x30EE12C/0x30EE1D4	NoteMultipleDirectionalFlick	changeSideNoteUsed/ChangeLeft/ChangeRight	Recursively mark used and clear both side links	Auto Live group completion
+S14	0x37795C4..0x3779A48	NoteManager	activateNoteAndConnectSyncLine focused loop	Compare only previous/current activated playable roots in source order; interleaved root breaks Multiple run	Auto Live group construction

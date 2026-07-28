@@ -74,7 +74,7 @@ if (
 ) {
   fail("Auto Live evidence gate is not closed");
 }
-if (manifest.candidateEntries.length !== 30 || manifest.finalEntries.length !== 67) {
+if (manifest.candidateEntries.length !== 30 || manifest.finalEntries.length !== 68) {
   fail("Unexpected Auto Live evidence entry count");
 }
 
@@ -136,9 +136,9 @@ if (
   supplementClosure.overall_status !== "confirmed" ||
   supplementClosure.auto_live_gate !== "closed" ||
   supplementClosure.blocking_findings.length !== 0 ||
-  Object.keys(supplementClosure.supplement_gap_resolution).length !== 10
+  Object.keys(supplementClosure.supplement_gap_resolution).length !== 11
 ) {
-  fail("Frozen Reverse supplement closure is not the closed G11-G20 contract");
+  fail("Frozen Reverse supplement closure is not the closed G11-G21 contract");
 }
 
 const supplementTrace = JSON.parse(
@@ -157,7 +157,7 @@ for (const required of [
   "offset-plus5-cross-bpm-exact",
   "offset-minus5-cross-bar-exact",
   "offset-zero-identity-exact",
-  "multiple-connected-component-non-source-order",
+  "multiple-source-order-interleaved-break",
   "one-frame-exhaustion-long-head-terminal-fault",
   "one-frame-exhaustion-slide-head-terminal-fault",
   "one-frame-exhaustion-long-tail-terminal-fault",
@@ -175,6 +175,6 @@ if (!existsSync(resolve(packageRoot, "OPEN_GAPS.md"))) {
 
 console.log(
   `auto-live evidence verified: candidates=${manifest.candidateEntries.length}, ` +
-    `final=${manifest.finalEntries.length}, supplement=G11-G20, cases=14, ` +
+    `final=${manifest.finalEntries.length}, supplement=G11-G21, cases=14, ` +
     `gate=closed, index=${validateIndex ? "checked" : "skipped"}`,
 );

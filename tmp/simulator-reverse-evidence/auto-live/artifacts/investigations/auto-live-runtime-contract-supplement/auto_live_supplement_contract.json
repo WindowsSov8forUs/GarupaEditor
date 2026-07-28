@@ -21,9 +21,12 @@
     "group_count": "left-side count + right-side count + 1",
     "group_construction": {
       "same_group": "both FrontNoteType 6, same GameNoteType, and adjacent ButtonType",
-      "links": "NoteManager connects left/right neighbours through NoteMultipleDirectionalFlick.ConnectWithTheNextNote",
+      "activation_order": "activateNoteAndConnectSyncLine compares only the immediately previous and current activated playable roots in source order",
+      "interleaved_root": "any unrelated playable root becomes the previous root and therefore breaks a later Multiple run even when filtered Multiple buttons would be adjacent",
+      "duplicate_button": "equal buttons are not adjacent; a duplicate starts a new run and may connect to a following adjacent button",
+      "links": "NoteManager connects a qualifying previous/current pair through NoteMultipleDirectionalFlick.ConnectWithTheNextNote",
       "claim": "the judged root recursively marks both side chains used and clears links",
-      "portable_owner": "NoteManager builds one runtime group per connected component without mutating frozen chart data"
+      "portable_owner": "NoteManager builds one runtime owner per source-order run without mutating frozen chart data"
     },
     "stage": "auto-live",
     "manual_deferred": ["real touch positions", "directional distance threshold", "finger ownership", "lane arbitration"],
@@ -45,7 +48,7 @@
       "offset-plus5-cross-bpm-exact",
       "offset-minus5-cross-bar-exact",
       "offset-zero-identity-exact",
-      "multiple-connected-component-non-source-order",
+      "multiple-source-order-interleaved-break",
       "one-frame-exhaustion-long-head-terminal-fault",
       "one-frame-exhaustion-slide-head-terminal-fault",
       "one-frame-exhaustion-long-tail-terminal-fault",

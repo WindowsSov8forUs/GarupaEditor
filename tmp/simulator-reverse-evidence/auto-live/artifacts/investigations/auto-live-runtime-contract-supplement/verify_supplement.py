@@ -73,6 +73,14 @@ def main() -> None:
     right = decoded_slices["030ee1d4__NoteMultipleDirectionalFlick__ChangeRightNoteUsed.arm64.tsv"]
     assert "strb w9, [x8, #0x14]" in left and "bl #0x30ee12c" in left
     assert "strb w9, [x8, #0x14]" in right and "bl #0x30ee1d4" in right
+    activation_loop = decoded_slices[
+        "037795c4__NoteManager__activateMultipleSourceOrderLoop.arm64.tsv"
+    ]
+    assert "bl #0x3779f74" in activation_loop
+    assert "bl #0x377a140" in activation_loop
+    assert "bl #0x3778da4" in activation_loop
+    assert activation_loop.index("bl #0x3779f74") < activation_loop.index("bl #0x377a140")
+    assert activation_loop.index("bl #0x377a140") < activation_loop.index("bl #0x3778da4")
 
     long_head = committed_sources[
         "artifacts/investigations/auto-live-runtime-contract/decompiled/030eb97c__NoteLong__forcePerfectMoveState.c"
@@ -123,11 +131,11 @@ def main() -> None:
     assert cases["offset-zero-identity-exact"]["entry_music_cursor"] == cases[
         "offset-minus5-cross-bar-exact"
     ]["entry_music_cursor"]
-    component = cases["multiple-connected-component-non-source-order"]
-    assert component["multiple_candidate_source_order"] == [1, 2, 0]
-    assert component["adjacent_edges"] == [[0, 1], [1, 2]]
-    assert component["connected_components"] == [[0, 1, 2]]
-    assert component["multiple_judgement_count"] == 1
+    source_run = cases["multiple-source-order-interleaved-break"]
+    assert source_run["multiple_candidate_source_order"] == [4, 5, 6]
+    assert source_run["source_order_runs"] == [[4, 5], [6]]
+    assert source_run["multiple_judgement_count"] == 2
+    assert source_run["multiple_directional_flick_note_counts"] == [1, 2]
     for case_id in [
         "one-frame-exhaustion-long-head-terminal-fault",
         "one-frame-exhaustion-slide-head-terminal-fault",
@@ -144,8 +152,8 @@ def main() -> None:
     assert closure["overall_status"] == "confirmed"
     assert closure["auto_live_gate"] == "closed"
     assert closure["blocking_findings"] == []
-    assert sorted(closure["supplement_gap_resolution"]) == [f"G{index}" for index in range(11, 21)]
-    print("auto live supplement: verified; gaps=G11-G20, gate=closed, cases=14")
+    assert sorted(closure["supplement_gap_resolution"]) == [f"G{index}" for index in range(11, 22)]
+    print("auto live supplement: verified; gaps=G11-G21, gate=closed, cases=14")
 
 
 if __name__ == "__main__":

@@ -395,11 +395,13 @@
       "step_count": 0
     },
     {
-      "case_id": "multiple-connected-component-non-source-order",
+      "case_id": "multiple-source-order-interleaved-break",
       "evidence": [
         "S11",
         "S12",
-        "G18"
+        "S14",
+        "G18",
+        "G21"
       ],
       "source_note": {
         "classification": "method-fixture-with-interleaved-playable-root",
@@ -409,59 +411,57 @@
         {
           "slot": 0,
           "front_note_type": 6,
-          "game_note_type": 10,
-          "button_type": 1
+          "game_note_type": 11,
+          "button_type": 4
         },
         {
           "slot": 1,
           "front_note_type": 6,
-          "game_note_type": 10,
-          "button_type": 2
+          "game_note_type": 11,
+          "button_type": 5
         },
         {
           "slot": 2,
-          "front_note_type": 4,
-          "game_note_type": 5,
-          "button_type": 5
+          "front_note_type": 3,
+          "game_note_type": 4,
+          "button_type": 0
         },
         {
           "slot": 3,
           "front_note_type": 6,
-          "game_note_type": 10,
-          "button_type": 0
+          "game_note_type": 11,
+          "button_type": 6
         }
       ],
       "multiple_candidate_source_order": [
-        1,
-        2,
-        0
+        4,
+        5,
+        6
       ],
-      "adjacent_edges": [
+      "source_order_runs": [
         [
-          0,
-          1
+          4,
+          5
         ],
         [
-          1,
-          2
-        ]
-      ],
-      "connected_components": [
-        [
-          0,
-          1,
-          2
+          6
         ]
       ],
       "reverse_playable_update_buttons": [
+        6,
         0,
         5,
-        2,
-        1
+        4
       ],
-      "judged_button": 0,
-      "multiple_judgement_count": 1,
-      "multiple_directional_flick_note_count": 3
+      "judged_buttons": [
+        6,
+        5
+      ],
+      "multiple_judgement_count": 2,
+      "multiple_directional_flick_note_counts": [
+        1,
+        2
+      ]
     },
     {
       "case_id": "one-frame-exhaustion-long-head-terminal-fault",

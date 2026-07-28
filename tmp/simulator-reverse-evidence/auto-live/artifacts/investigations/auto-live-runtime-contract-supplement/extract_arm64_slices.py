@@ -14,6 +14,7 @@ SLICES = {
     "03778da4__NoteManager__connectMultipleDirectionalFlick.arm64.tsv": (0x3778DA4, 0x3778EE8),
     "0377a140__NoteManager__isMultipleDirectionalSameGroup.arm64.tsv": (0x377A140, 0x377A18C),
     "0377a264__NoteManager__setupConnectMultipleDirectionalFlick.arm64.tsv": (0x377A264, 0x377A4A0),
+    "037795c4__NoteManager__activateMultipleSourceOrderLoop.arm64.tsv": (0x37795C4, 0x3779A48),
     "030ed1b4__NoteMultipleDirectionalFlick__MoveState.arm64.tsv": (0x30ED1B4, 0x30ED1F0),
     "030ed264__NoteMultipleDirectionalFlick__changeSideNoteUsed.arm64.tsv": (0x30ED264, 0x30ED340),
     "030ed578__NoteMultipleDirectionalFlick__ExecTouchBegan.arm64.tsv": (0x30ED578, 0x30ED5B4),

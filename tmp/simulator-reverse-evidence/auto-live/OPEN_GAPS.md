@@ -10,7 +10,7 @@ auto_live_gate = closed
 blocking_findings = []
 ```
 
-G01–G10 均已由首版 contract、最小反编译/ARM64、失败关闭矩阵和确定性固定事件轨迹关闭。G11–G16 关闭 Multiple/Stop/pause，G17 冻结 exact cursor。第三次审计新增的 G18–G20 由 Reverse `24706edcb02155fca575c6fde6aa9c7f0fe131ba` 关闭：Multiple 是不受 source order/插入 root 影响的 adjacent-button connected component；Long/Slide 第六槽遵循 native 先变状态/linked finish 后异常，并在 portable host 上锁存 terminal `evidence-required` fault；adaptive substep 和 per-step BPM 必须从 production runtime observation 产生，禁止测试注入 expected 标签/BPM。
+G01–G17 保持关闭。第三次审计的 G19/G20 由 Reverse `24706edcb02155fca575c6fde6aa9c7f0fe131ba` 关闭；其中 G18 的 connected-component 解释随后被更完整调用者证据否定。Reverse `57c1e03be474eeb1006ff56c8fc3d5a9a117d573` 新增 focused `activateNoteAndConnectSyncLine` ARM64 并以 G21 修正：只比较 source activation order 中紧邻的 previous/current playable root；其他 playable root 会断开 Multiple run，equal button 也因非相邻而另起 run。G19 terminal fault latch 与 G20 actual observation 要求不变。
 
 ## 持续非阻断边界
 

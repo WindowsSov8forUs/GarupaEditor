@@ -10,7 +10,7 @@
 - 锁定原作样本：`jp.co.craftegg.band` 10.1.3（version code 229，`arm64-v8a`）。
 - 上游已验收阶段：第一切片、谱面构造、时钟与调度。
 - 上游时钟调度验收提交：GarupaEditor `78414bc`，关闭记录修订提交 `ca84258`。
-- 当前状态：**第三次独立审计已撤销 A00–A10 完成结论。Reverse `24706edcb02155fca575c6fde6aa9c7f0fe131ba` 已关闭 G18–G20，GarupaEditor 冻结包 source/copy 校验通过，A05/A08/A09/A10 代码门已解除；这些实现与重验收仍未完成。A01–A04 保留，A06/A07 成功路径保留但失败状态待 A09 重验。禁止进入手动输入阶段。**
+- 当前状态：**第三次独立审计已撤销阶段完成结论。Reverse `57c1e03be474eeb1006ff56c8fc3d5a9a117d573` 以 G21 修正先前 G18 的过度 connected-component 解释：原作按 source activation order 比较紧邻 previous/current playable root，插入其他 root 或 equal button 会断组。当前 TypeScript 先过滤 Multiple，仍错误跨过普通 root 连接：普通 production 9 个 batch 少 9 个 judgement（108，证据应为 117）；HABAHIRO 84 组恰匹配。G19/G20 保持关闭，A05/A08/A09/A10 实现与重验收未完成。**
 - 待重建验收记录：`tmp/simulator-auto-live-acceptance.md`。
 - 已冻结证据包：`tmp/simulator-reverse-evidence/auto-live/`。
 
@@ -46,10 +46,10 @@
 | --- | --- | --- |
 | A00 建立阶段任务书 | 已完成 | 范围、证据候选、硬门、实现批次和验收矩阵写入本文档 |
 | A01 晋升 Auto Live 静态证据 | 补充完成 | Reverse `cd84d2ce` 补齐 Multiple/visual ARM64，`7a0540dc` 补齐 committed offset cursor identity；冻结 R09–R16 |
-| A02 生成固定事件 oracle 并关闭缺口 | 第三次补充完成，代码门解除 | Reverse `24706edc` 关闭 G18–G20；supplement 14 case 冻结 connected component、terminal fault policy 与 actual observation requirements |
+| A02 生成固定事件 oracle 并关闭缺口 | 第四次补充完成，代码门解除 | Reverse `57c1e03b` 以 G21 修正 G18；supplement 14 case + focused source-order caller ARM64 冻结 run、terminal fault 与 actual observation |
 | A03 接入 Auto Live 模式与判定上下文 | 已完成 | 显式模式本身不需改动；补充证据现可由 A05–A10 消费 |
 | A04 建立 Long/Slide 运行子图 | 修复完成 | 普通生产 Slide 由 terminal child + root after type 联合识别；父 Deactive 时按 R02 清 child graph/current，复用重建共享身份 |
-| A05 恢复 Single/Flick Force Perfect | 重新打开，等待 A02 | Normal/Flick/standalone Directional 保留；Multiple owner 必须由 source-order run 改为 confirmed connected component |
+| A05 恢复 Single/Flick Force Perfect | 重新打开，代码门已解除 | Normal/Flick/standalone Directional 保留；Multiple 分组须遍历完整 playable source order，其他 family/equal button 断开 run |
 | A06 恢复 Long 分阶段完成 | 成功路径保留，失败路径待重验 | head/tail/pause/reuse 保留；第六槽失败后的 Wait/linked trace 不能继续宣称原子 |
 | A07 恢复 Slide 分阶段完成 | 成功路径保留，失败路径待重验 | terminal/Stop/Reset 保留；head 第六槽失败后停在 Wait，须按 G19 边界处理 |
 | A08 恢复 Auto Live OneFrame 填充与聚合 | 重新打开，等待 A05 | 控制器五槽保留；须重验每个 physical component 唯一 note type 10/count 与混合 batch 槽序 |
@@ -238,6 +238,14 @@
 - G19 verifier 从锁定 `a3f28d77` 的 Long/Slide head 和 Long tail C 切片直接断言 ChangeState/linked finish 在 judgement 前；结合首版 failure matrix 的“five IsUse 后异常”，锁定 portable host policy：原作异常后 continuation 无证据，故 manager 锁存 terminal `evidence-required` fault，后续只允许 snapshot/dispose，不重试、不继续子步/Reflect。该 fault 是失败关闭宿主边界，不冒充原作 API。
 - G20 明确 canonical 验收字段必须来自 production runtime：outer/substep、adjusted bits、state、slot、Reflect，以及 entry cursor/per-step BPM/result bits；禁止把 expected substep/event order/step BPM 注入实际结果。
 - Reverse `24706edcb02155fca575c6fde6aa9c7f0fe131ba` 已推送并确认 main `0 0`；GarupaEditor 字节保持替换 R09/R10/R11/R12/R14/R15 与 fixture alias，final entry 数仍为 67。A05/A08/A09/A10 代码门解除，阶段仍保持未完成。
+
+#### 2026-07-29 第二十一批：G21 修正 G18 过度解释
+
+- 实施前用 HABAHIRO 发现同 button 重复 core Multiple：位置 3768 为 `[0,0,1]`。connected-component 算法会把三者合并，但 native Note 每侧只有单链接，原 G18 未覆盖 duplicate/source caller，故立即撤销未提交生产改动并重新失败关闭。
+- 锁定 IDB 与 committed binary 复核 `activateNoteAndConnectSyncLine @ 0x37793F8`：每个 playable source 依次 activate，随后只对 previous/current 的 NoteInformation 调 `isMultipleDirectionalFlickSameGroupNotes`，命中才调用 connector；循环末尾 current 成为下一 previous。其他 playable root 与 equal-button Multiple 均断开 run。
+- Reverse 新增 focused ARM64 `0x37795C4..0x3779A48`（R16.D17），G21 明确 supersede G18 的 connected-component 结论。新 method fixture 为 `[M4,M5,Other0,M6] → [[4,5],[6]]`、reverse order `[6,0,5,4]`、两条 judgement/count `[1,2]`。
+- 重新审计 production：普通当前“先过滤 Multiple”得到 108 组，证据 source-order run 为 117，9 个 interleaved batch 被错误桥接并少 9 条 judgement；HABAHIRO 当前/证据均为 84。此前“普通多 19 条”是 G18 过度解释产生的错误审计结论，不再作为修复依据。
+- Reverse `57c1e03be474eeb1006ff56c8fc3d5a9a117d573` 已推送 main `0 0`；GarupaEditor 冻结 final entry 由 67 增至 68。G19/G20 不变，A05/A08/A09/A10 继续未完成但代码门重新解除。
 
 ## 2. 固定范围
 

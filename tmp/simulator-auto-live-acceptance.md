@@ -1,6 +1,6 @@
 # 模拟器 Auto Live 阶段验收记录
 
-> **2026-07-29 第三次独立审计：验收结论仍撤销。** Reverse `24706edc` 已关闭 G18–G20 并解除代码门，但 connected-component、terminal fault latch 与 actual canonical 修复尚未完成。A05/A08/A09/A10 继续打开。本文后续“通过”表格仅保留为被撤销历史，不得用于证明阶段完成。
+> **2026-07-29 第三次独立审计：验收结论仍撤销。** Reverse `57c1e03b` 已以 G21 修正 G18：Multiple 是完整 playable source order 上的 previous/current run，不是全局 connected component。当前实现过滤其他 family，普通 production 9 个 batch 少 9 条 judgement。terminal fault latch 与 actual canonical 也尚未实现。A05/A08/A09/A10 继续打开。
 
 ## 1. 验收身份
 
@@ -36,7 +36,7 @@ auto_live_gate = closed
 blocking_findings = []
 ```
 
-第三次审计新增 G18–G20 已由 Reverse `24706edcb02155fca575c6fde6aa9c7f0fe131ba` 的 supplement closure 关闭；当前阻断已从“证据硬门”转为“生产实现与重验收未完成”。
+G19/G20 由 `24706edc` 关闭；G21 又由 `57c1e03be474eeb1006ff56c8fc3d5a9a117d573` 修正 G18 的过度解释。当前阻断是生产实现与重验收未完成。
 
 G01–G10 已全部关闭：
 
