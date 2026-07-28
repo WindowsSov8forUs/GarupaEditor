@@ -131,6 +131,7 @@
 - 失败矩阵覆盖非法/缺失模式、mode14、未知 transform、Directional source、Long/Slide 坏图、重复 child、foreign/duplicate OneFrame、sixth entry、非有限位置、未知 family、手动 touch 与业务 consumer；关键状态保持任务书约定原子性。
 - 建立 `tmp/simulator-auto-live-acceptance.md`，README 更新为 Auto Live 已关闭，并把下一阶段限定为必须先建独立设备证据硬门的手动输入与判定。
 - 完整 A10 隔离命令通过：TypeScript；第一切片 17 项；全部谱面构造套件；production roots 825/598；时钟调度 15 组；Auto Live 22 组；依赖边界；证据包源/副本/index 校验。
+- 最终审计进一步把冻结 oracle 的 11 个 case ID、Flick/Directional Float32 bits、Long 事件、Slide cursor、同批 slot/note order 和 adaptive outer Reflect 直接作为测试期望消费，禁止测试仅靠重复硬编码结论通过。
 - 未运行 Vite、Tauri 或整体 GarupaEditor 构建；未修改主程序入口、编辑器控制器、窗口协议、渲染或音频实现。
 
 ## 2. 固定范围

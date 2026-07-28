@@ -97,6 +97,19 @@ function validateAutoLive() {
   assert.equal(oracle.status, "confirmed-static-contract-fixed-offline-oracle");
   assert.equal(failureOracle.status, "confirmed-failure-closed-matrix");
   const oracleCases = new Map(oracle.cases.map((entry) => [entry.case_id, entry]));
+  assert.deepEqual([...oracleCases.keys()], [
+    "single-normal-before-equal",
+    "single-manual-does-not-force",
+    "flick-base-first-single-result",
+    "directional-left-synthetic",
+    "directional-right-synthetic",
+    "long-head-equal-tail-strict-greater",
+    "slide-one-pending-node-per-update",
+    "slide-invisible-support-skipped-before-visible",
+    "simultaneous-reverse-update-five-slot-pool",
+    "adaptive-substeps-one-outer-reflect",
+    "adjustment-sign-crossing",
+  ]);
   const tests = [];
   const test = (id, name, execute) => tests.push({ id, name, execute });
 
@@ -225,19 +238,27 @@ function validateAutoLive() {
   });
 
   test("AL05", "普通 Flick 严格 Began→-100 Moved→一次结果", () => {
+    const expected = oracleCases.get("flick-base-first-single-result");
     const bound = bindNote(new notes.NoteFlick("flick"), normalInfo(102, 120, {
       gameNoteType: types.GameNoteType.Flick,
       fireNoteType: types.FrontNoteType.Flick,
     }), { position: { value: 120 } });
     ok(bound.note.executeUpdate(0), "flick force perfect");
     assert.deepEqual(bound.note.flickTrace, [
-      { kind: "flick-begin" },
-      { kind: "flick-synthetic-move", syntheticX: -100 },
+      { kind: expected.steps[0].event },
+      {
+        kind: expected.steps[1].event,
+        syntheticX: expected.steps[1].synthetic_x.value,
+      },
     ]);
-    assert.equal(float32Bits(bound.note.flickTrace[1].syntheticX), "0xC2C80000");
+    assert.equal(float32Bits(bound.note.flickTrace[1].syntheticX),
+      expected.steps[1].synthetic_x.bits);
     const batch = reflect(bound.oneFrame);
     assert.equal(batch.entries.length, 1);
-    assert.equal(batch.entries[0].noteType, 3);
+    assert.equal(batch.entries[0].noteType, expected.steps[2].note_type);
+    assert.deepEqual(expected.steps.map((step) => step.event), [
+      "flick-begin", "flick-synthetic-move", "head-perfect", "reflect",
+    ]);
   });
 
   test("AL06", "Directional type10/type11 固定 ±500 且 base result 在先", () => {
@@ -254,17 +275,26 @@ function validateAutoLive() {
         { position: { value: 120 } },
       );
       ok(bound.note.executeUpdate(0), "directional force perfect");
+      const oracleCase = oracleCases.get(
+        sourceType === 10 ? "directional-left-synthetic" : "directional-right-synthetic",
+      );
+      assert.equal(bound.note.flickTrace[1].syntheticX,
+        oracleCase.steps[1].synthetic_x.value);
       assert.equal(bound.note.flickTrace[1].syntheticX, expected);
+      assert.equal(float32Bits(expected), oracleCase.steps[1].synthetic_x.bits);
       assert.equal(float32Bits(expected), bits);
-      assert.equal(reflect(bound.oneFrame).entries[0].noteType, 9);
+      assert.equal(reflect(bound.oneFrame).entries[0].noteType,
+        oracleCase.steps[2].note_type);
     }
   });
 
   test("AL07", "Long head equal 切 Wait 并独立提交 head", () => {
+    const expected = oracleCases.get("long-head-equal-tail-strict-greater").steps[0];
     const bound = bindNote(new notes.NoteLong("long-head"), longInfo(), {
       position: { value: 120 },
     });
     ok(bound.note.executeUpdate(0), "long head");
+    assert.equal(expected.state_after, "Wait");
     assert.equal(bound.note.state, NoteState.Wait);
     const batch = reflect(bound.oneFrame);
     assert.equal(batch.entries[0].phase, "head");
@@ -272,6 +302,7 @@ function validateAutoLive() {
   });
 
   test("AL08", "Long tail strict greater 且 linked finish 在 root tail 之前", () => {
+    const expected = oracleCases.get("long-head-equal-tail-strict-greater");
     const bound = bindNote(new notes.NoteLong("long-tail"), longInfo(), {
       position: { value: 120 },
     });
@@ -285,11 +316,12 @@ function validateAutoLive() {
     ok(bound.note.executeUpdate(0), "tail strict greater");
     assert.equal(bound.note.state, NoteState.Deactive);
     assert.equal(reflect(bound.oneFrame).entries[0].phase, "tail");
-    assert.deepEqual(bound.note.autoLiveTrace.slice(-3).map((entry) => entry.kind), [
-      "long-after-update",
-      "long-linked-after-finish",
-      "long-tail-perfect",
+    assert.deepEqual(bound.note.autoLiveTrace.slice(-2).map((entry) =>
+      entry.kind === "long-tail-perfect" ? "tail-perfect" : entry.kind), [
+      expected.steps[3].event,
+      expected.steps[4].event,
     ]);
+    assert.equal(expected.steps[2].event, "tail-equal-no-crossing");
   });
 
   test("AL13", "AfterUpdate 保持父 base→Long linked/Slide current", () => {
@@ -316,16 +348,19 @@ function validateAutoLive() {
   });
 
   test("AL09", "Slide head equal 切 Wait 且 current 保持 0", () => {
+    const expected = oracleCases.get("slide-one-pending-node-per-update").steps[0];
     const bound = bindNote(new notes.NoteSlide("slide-head"), slideInfo(), {
       position: { value: 120 },
     });
     ok(bound.note.executeUpdate(0), "slide head");
     assert.equal(bound.note.state, NoteState.Wait);
     assert.equal(bound.note.currentAfterIndex, 0);
+    assert.equal(expected.current_after_index, 0);
     assert.equal(reflect(bound.oneFrame).entries[0].phase, "head");
   });
 
   test("AL10", "Slide intermediate 依 source order 逐次提交", () => {
+    const expected = oracleCases.get("slide-one-pending-node-per-update");
     const bound = bindNote(new notes.NoteSlide("slide-intermediate"), slideInfo(), {
       position: { value: 120 },
     });
@@ -334,10 +369,12 @@ function validateAutoLive() {
     bound.position.value = 180;
     ok(bound.note.executeUpdate(0), "first intermediate");
     assert.equal(bound.note.currentAfterIndex, 1);
+    assert.equal(bound.note.currentAfterIndex, expected.steps[2].current_after_after);
     assert.equal(reflect(bound.oneFrame).entries[0].phase, "intermediate");
     bound.position.value = 181;
     ok(bound.note.executeUpdate(0), "second intermediate");
     assert.equal(bound.note.currentAfterIndex, 2);
+    assert.equal(bound.note.currentAfterIndex, expected.steps[4].current_after_after);
     const invisible = bindNote(new notes.NoteSlide("slide-invisible"), slideInfo(107, [
       { absolutePos: 170, isInvisible: true },
       { absolutePos: 180 },
@@ -347,9 +384,15 @@ function validateAutoLive() {
     ok(invisible.note.executeUpdate(0), "skip one invisible support");
     assert.equal(invisible.note.currentAfterIndex, 1);
     assert.equal(invisible.oneFrame.existsOneFrameData(), false);
+    const invisibleExpected = oracleCases.get(
+      "slide-invisible-support-skipped-before-visible",
+    ).steps[0];
+    assert.equal(invisibleExpected.event, "invisible-support-no-one-frame");
+    assert.equal(invisible.note.currentAfterIndex, invisibleExpected.current_after_after);
   });
 
   test("AL12", "Slide 大步同一次调用最多推进一个 selected node", () => {
+    const expected = oracleCases.get("slide-one-pending-node-per-update");
     const bound = bindNote(new notes.NoteSlide("slide-large-step"), slideInfo(), {
       position: { value: 120 },
     });
@@ -358,6 +401,7 @@ function validateAutoLive() {
     bound.position.value = 1000;
     ok(bound.note.executeUpdate(0), "large step one");
     assert.equal(bound.note.currentAfterIndex, 1);
+    assert.equal(bound.note.currentAfterIndex, expected.steps[2].current_after_after);
     assert.equal(reflect(bound.oneFrame).entryCount, 1);
     ok(bound.note.executeUpdate(0), "large step two");
     assert.equal(bound.note.currentAfterIndex, 2);
@@ -412,6 +456,7 @@ function validateAutoLive() {
   });
 
   test("AL04", "同批五 root 按 active list 反序占用 0→4", () => {
+    const expected = oracleCases.get("simultaneous-reverse-update-five-slot-pool");
     const integration = schedulerIntegration({
       batches: [batch(1, [200, 201, 202, 203, 204].map((index) => normalInfo(index, 1)))],
       bpmChangeCount: 0,
@@ -421,10 +466,16 @@ function validateAutoLive() {
     ok(integration.manager.execUpdate(0.001), "activation outer frame");
     ok(integration.manager.execUpdate(0.001), "judgement outer frame");
     const result = integration.oneFrame.getReflectOneFrameData();
-    assert.deepEqual(result.entries.map((entry) => entry.noteIndex), [204, 203, 202, 201, 200]);
+    assert.deepEqual(result.entries.map((entry) => entry.noteIndex),
+      expected.steps.filter((step) => step.event === "head-perfect")
+        .map((step) => step.note_index));
+    assert.deepEqual(result.entries.map((entry) => entry.slot),
+      expected.steps.filter((step) => step.event === "head-perfect")
+        .map((step) => step.one_frame_slot));
   });
 
   test("AL14", "三个 adaptive 子步共享一次外层 Reflect", () => {
+    const expected = oracleCases.get("adaptive-substeps-one-outer-reflect");
     const integration = schedulerIntegration({
       batches: [
         batch(1, [normalInfo(300, 1)]),
@@ -438,8 +489,11 @@ function validateAutoLive() {
     ok(integration.manager.execUpdate(0.001), "pre-activate");
     ok(integration.manager.execUpdate(0.04), "three-substep outer frame");
     const reflected = integration.oneFrame.getReflectOneFrameData();
-    assert.deepEqual(reflected.entries.map((entry) => entry.noteIndex), [300, 301, 302]);
+    assert.deepEqual(reflected.entries.map((entry) => entry.noteIndex),
+      expected.steps.filter((step) => step.event === "head-perfect")
+        .map((step) => step.note_index));
     assert.equal(events(integration.oneFrame, "one-frame.reflect").length, 1);
+    assert.equal(expected.steps.filter((step) => step.event === "reflect").length, 1);
   });
 
   test("AL16", "第六条判定失败关闭且保留前五条提交", () => {
