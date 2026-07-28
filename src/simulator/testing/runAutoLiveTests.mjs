@@ -795,6 +795,15 @@ function validateAutoLive() {
     assert.equal(hostLong.linkedAfter.judged, false);
     assert.deepEqual(host.initialize(), hostFault);
     assert.deepEqual(host.step(1 / 60), hostFault);
+    for (const [label, invalidDelta] of [
+      ["NaN", Number.NaN],
+      ["positive Infinity", Number.POSITIVE_INFINITY],
+      ["negative Infinity", Number.NEGATIVE_INFINITY],
+      ["negative finite", -1],
+    ]) {
+      assert.deepEqual(host.step(invalidDelta), hostFault,
+        `terminal fault must precede ${label} delta validation`);
+    }
     assert.deepEqual(host.pause(), hostFault);
     assert.deepEqual(host.resume(), hostFault);
     assert.deepEqual(host.getAdjustedMusicPosition(), hostFault);

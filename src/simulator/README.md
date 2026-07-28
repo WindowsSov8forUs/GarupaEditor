@@ -25,7 +25,7 @@
 
 时钟与调度验收记录位于 `tmp/simulator-clock-scheduling-acceptance.md`。S01–S10 已完成。
 
-Auto Live第五次关闭结论已由第六次独立审计撤销。A00–A08、G21 production topology与G22 exact/adaptive replay保持有效；A09公共host `step`仍可在terminal fault后让非法delta校验先返回不同失败，A09/A10重新打开。修复和重验收前禁止进入手动输入阶段；状态见`tmp/simulator-auto-live-task.md`。
+Auto Live第五次关闭结论已由第六次独立审计撤销。A00–A08、G21 production topology与G22 exact/adaptive replay保持有效；A09公共host `step` fault优先级现已修复并通过合法/非法delta定向回归。A10提交后全量重验收前仍禁止进入手动输入阶段；状态见`tmp/simulator-auto-live-task.md`。
 
 OneFrame 容量现在由原作证据固定为 5，不再接受宿主或测试容量配置。公开的 `OneFrameJudgementBatch` 仅包含本阶段闭合的 Auto Live 判定字段，不是原作完整 `OneFrameTotalData`。分数、Power、生命、Skill/Fever、音频、粒子、渲染和 HUD 字段在类型上保持缺席，而不是填零。
 

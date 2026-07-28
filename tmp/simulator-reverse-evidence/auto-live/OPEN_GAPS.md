@@ -16,7 +16,7 @@ G01–G17 保持关闭。第三次审计的 G19/G20 由 Reverse `24706edcb02155f
 
 1. **已关闭：** `SimulatorEngineHost.pause/resume` 现于 idempotent shortcut 前检查 fault；host 级全部非允许 API、只读 snapshot 与 dispose 均有测试。
 2. **已关闭：** Reverse `c2dc5c7f37718a170c9e9b93d5a86b42e9d1a2ab` 以 G22 冻结两个 normalized trace 的 frame 1–991/317 Float32 delta bits 与 committed CC08 BMS；生产测试经engine重放并调用`getAdjustedMusicPosition`，不使用expected BPM、private cursor/BPM lookup或删除outer frame。
-3. **实现阻断、无需补证：** 公共`SimulatorEngineHost.step`未在`InGameDirector.update`前检查manager fault；fault后NaN/±Infinity/负delta返回`director.invalid-delta-time`而非G19锁存失败。G19已明确`subsequent_step=same-latched-failure`，应修host并扩展AL16。
+3. **实现已修复、待阶段重验收：** 公共`SimulatorEngineHost.step`现于`InGameDirector.update`前检查manager fault；AL16要求fault后合法delta、NaN、±Infinity与负delta均返回G19锁存失败。无fault时原有非法delta验证不变。
 
 G22同时固定adaptive method fixture在一个setup outer frame后于full manager outer-frame index 1判定。GarupaEditor冻结包含`auto-live-actual-replay.json`与逐字节相同的`653_ikuoku_easy.bms.txt`；actual replay消费保持有效，但阶段须在公共step修复后重新验收。
 

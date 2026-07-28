@@ -10,7 +10,7 @@
 - 锁定原作样本：`jp.co.craftegg.band` 10.1.3（version code 229，`arm64-v8a`）。
 - 上游已验收阶段：第一切片、谱面构造、时钟与调度。
 - 上游时钟调度验收提交：GarupaEditor `78414bc`，关闭记录修订提交 `ca84258`。
-- 当前状态：**第六次独立审计已撤销第五次关闭结论。A00–A08、G01–G22、G21 topology与G22 actual replay保持有效；A09公共host `step`仍可在terminal fault后以非法delta返回新的`director.invalid-delta-time`，违反G19 same-latched-failure。A09/A10重新打开，修复和重验收前禁止进入手动输入阶段。**
+- 当前状态：**第六次审计发现的公共host `step` fault优先级已修复并通过定向回归；A00–A09与G01–G22保持有效。A10仍待提交后独立复核和全量阶段重验收，完成前禁止进入手动输入阶段。**
 - 待再次重建验收记录：`tmp/simulator-auto-live-acceptance.md`。
 - 已冻结证据包：`tmp/simulator-reverse-evidence/auto-live/`。
 
@@ -53,8 +53,8 @@
 | A06 恢复 Long 分阶段完成 | 已完成 | head/tail 第六槽保留 native Wait/linked order，并由 manager terminal fault 阻止重试 |
 | A07 恢复 Slide 分阶段完成 | 已完成 | head 第六槽状态与 terminal fault boundary 精确覆盖 |
 | A08 恢复 Auto Live OneFrame 填充与聚合 | 已完成 | 117/84 source-order run 的唯一 note type 10/count、混合 batch 与五槽行为通过独立固定 oracle |
-| A09 接入调度、暂停与生命周期 | 重新打开 | pause/resume已修；公共`step`仍在fault检查前执行director delta校验，非法delta返回不同失败 |
-| A10 生产 oracle 与阶段验收 | 重新打开 | G22与既有全量回归保留；AL16缺fault后NaN/±Infinity/负delta，最终验收结论撤销 |
+| A09 接入调度、暂停与生命周期 | 修复完成，待阶段重验收 | 公共step/pause/resume/getAdjusted/initialize均先服从fault；AL16覆盖合法与非法delta |
+| A10 生产 oracle 与阶段验收 | 重新打开 | G22与既有全量回归保留；待提交后静态复核与完整A10重跑 |
 
 ### 1.4 批次记录
 
@@ -300,6 +300,12 @@
 - 临时编译产物已复现：fault后valid step/pause/resume返回锁存失败，NaN与负delta返回不同失败。冻结G19三例均明确`subsequent_step=same-latched-failure`且仅允许snapshot/dispose，故这不是一般输入验证顺序，而是required-before-close公共边界缺口。
 - 现有AL16只覆盖fault后`step(1/60)`，未覆盖NaN、正负Infinity和负delta；A09/A10及阶段关闭结论撤销。G01–G22证据门、A00–A08、exact owner、adaptive outer-frame、117/84 topology和production family coverage不受影响，无需新增Reverse补证。
 - 文档同时发现历史残留：验收摘要仍写“待全量复核”，`OPEN_GAPS.md`末行仍写“须直接消费fixed trace”，最终证据冻结身份仍停在G21提交。状态文档先行纠正，生产修复与新AL16下一批实施。
+
+#### 2026-07-29 第三十批：公共 step terminal-fault优先级修复
+
+- `SimulatorEngineHost.step`现与pause/resume/getAdjusted一致，在进入director和任何delta验证前读取manager fault；无fault时NaN/Infinity/负delta仍沿用既有`director.invalid-delta-time`失败关闭，不改变正常调度输入边界。
+- AL16在真实host六root第五槽耗尽后，除合法`1/60`外新增NaN、正Infinity、负Infinity与有限负delta，全部要求与首次`one-frame.pool-exhausted`全对象相等。后续连续snapshot仍与fault瞬间全对象相等，因而同时锁定backend、scheduler、tempo trace与五槽状态不变；dispose继续允许。
+- 本修复直接消费G19，不增加Reverse证据、生产设置或测试hook。定向TypeScript/Auto Live/第一切片/时钟回归通过后提交；A10最终结论留给提交后的完整独立重验收。
 
 ## 2. 固定范围
 

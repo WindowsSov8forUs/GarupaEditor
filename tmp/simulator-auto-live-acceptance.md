@@ -1,6 +1,6 @@
 # 模拟器 Auto Live 阶段验收记录
 
-> **2026-07-29 第六次独立审计：第五次验收结论已撤销。** G21 topology、G22 actual replay与A00–A08保留；公共host `step`在terminal fault后仍可先返回非法delta错误，不满足G19 same-latched-failure。A09/A10重新打开，本文后续既有通过结果仅作为保留的历史验证记录。
+> **2026-07-29 第六次独立审计：第五次验收结论仍保持撤销。** 公共host `step` fault优先级现已修复并通过定向回归，A09修复完成；A10提交后全量重验收完成前，本文后续既有通过结果仍只作为历史记录。
 
 ## 1. 验收身份
 
@@ -92,8 +92,8 @@ auto-live evidence verified: candidates=30, final=72, supplement=G11-G22, cases=
 | A06 Long | 通过 | head `>=`、tail `>`、linked finish→tail、active pause/resume、回收；head/tail 第六槽 native failure state 均冻结 |
 | A07 Slide | 通过 | source-order、terminal 8/5/6/7、Stop、Reset、单次粒度；head 第六槽 Wait 状态冻结 |
 | A08 OneFrame | 通过 | 固定 5 槽；117/84 个 production run 的唯一 callback count；visual helper 不判定 |
-| A09 调度生命周期 | **撤销** | pause/resume已先检查fault；但公共step的director非法delta校验仍可先于manager fault |
-| A10 生产 oracle | **撤销** | exact/adaptive/topology保留；AL16缺fault后NaN/±Infinity/负delta，不能证明全部公共API一致 |
+| A09 调度生命周期 | 修复完成，待重验收 | 公共step现于director delta校验前检查fault；AL16覆盖合法、NaN、±Infinity与负delta |
+| A10 生产 oracle | **撤销** | exact/adaptive/topology保留；待提交后静态复核和完整A10回归 |
 
 ## 4. 已落地的生产边界
 

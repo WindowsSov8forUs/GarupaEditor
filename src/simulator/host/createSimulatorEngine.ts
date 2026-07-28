@@ -41,6 +41,9 @@ class SimulatorEngineHost implements SimulatorEngine {
   }
 
   step(deltaTimeSeconds: number): SimulatorResult<void> {
+    if (this.inGameManager.fault !== null) {
+      return this.inGameManager.fault;
+    }
     return this.inGameDirector.update(deltaTimeSeconds);
   }
 
