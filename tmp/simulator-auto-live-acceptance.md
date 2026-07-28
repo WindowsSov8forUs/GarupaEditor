@@ -1,14 +1,15 @@
 # 模拟器 Auto Live 阶段验收记录
 
-> **2026-07-29 第三次独立审计：验收结论仍撤销。** Reverse `57c1e03b` 已以 G21 修正 G18：Multiple 是完整 playable source order 上的 previous/current run，不是全局 connected component。当前实现过滤其他 family，普通 production 9 个 batch 少 9 条 judgement。terminal fault latch 与 actual canonical 也尚未实现。A05/A08/A09/A10 继续打开。
+> **2026-07-29 第四次重验收：通过。** 第三次审计揭示的 G18 过度解释已由 Reverse G21 与生产实现共同修正；G19 terminal fault latch、G20 actual scheduler/tempo observation、独立 production topology oracle 和提交后 snapshot 只读复核均已完成。此前两次被撤销的验收结论只作为历史保留，不再作为当前依据。
 
 ## 1. 验收身份
 
 - 目标分支：`codex/refactor-simulator-implementation`
 - 阶段任务书：`tmp/simulator-auto-live-task.md`
 - 锁定原作样本：`jp.co.craftegg.band` 10.1.3（version code 229），`arm64-v8a`
-- Auto Live Reverse 最终证据提交：`a3f28d77e71c5e7a62cab0de81f0cf668a5b745b`
-- GarupaEditor 证据冻结提交：`e003f0e`
+- Auto Live Reverse 首版 contract 提交：`a3f28d77e71c5e7a62cab0de81f0cf668a5b745b`
+- Auto Live Reverse 最终补充证据提交：`57c1e03be474eeb1006ff56c8fc3d5a9a117d573`
+- GarupaEditor 最终证据冻结提交：`76f39cb`
 - 模式与运行子图提交：`ac7b3d0`
 - Single/Flick Force Perfect 提交：`00cc5f6`
 - Long/Slide 状态机提交：`f5cc3d1`
@@ -23,8 +24,13 @@
 - Multiple Directional 核心实现：`8bfd4b5`
 - 第二次最终重验收：本文件所在提交
 - exact cursor G17 与 canonical 全轨迹重验收：本文件所在提交
+- G21 证据修正冻结：`76f39cb`
+- source-order/fault/actual observation 实现：`d5ca9dd`
+- 提交后 observation 只读修复：`5b36b02`
+- 第四次最终重验收：本文件所在提交
 - 验收日期：2026-07-28
-- 验收结论：**已撤销。Auto Live 阶段未完成，G18–G20、生产修复和重验收完成前禁止进入手动输入阶段。**
+- 最终验收日期：2026-07-29
+- 验收结论：**通过。A00–A10 完成；Auto Live 阶段关闭。下一阶段只能先建立“手动输入与判定”的独立 Reverse 证据硬门。**
 
 ## 2. 证据硬门与冻结包
 
@@ -36,7 +42,7 @@ auto_live_gate = closed
 blocking_findings = []
 ```
 
-G19/G20 由 `24706edc` 关闭；G21 又由 `57c1e03be474eeb1006ff56c8fc3d5a9a117d573` 修正 G18 的过度解释。当前阻断是生产实现与重验收未完成。
+G19/G20 由 `24706edc` 关闭；G21 又由 `57c1e03be474eeb1006ff56c8fc3d5a9a117d573` 修正 G18 的过度解释。G18 保留为 superseded 历史，不再消费其 connected-component 结论；当前有效规则是完整 playable source activation order 的 previous/current run。所有生产实现与重验收阻断均已关闭。
 
 G01–G10 已全部关闭：
 
@@ -54,7 +60,7 @@ G01–G10 已全部关闭：
 GarupaEditor 冻结包位于 `tmp/simulator-reverse-evidence/auto-live/`，包含：
 
 - 30 个候选基线条目；
-- 43 个最终 evidence/contract/最小切片条目；
+- 68 个最终 evidence/contract/最小切片条目；
 - `auto-live-fixed-event-trace.json`；
 - `auto-live-failure-cases.json`；
 - `closure.json`、`OPEN_GAPS.md`、manifest 与源/副本/Git index 三方校验器。
@@ -62,7 +68,7 @@ GarupaEditor 冻结包位于 `tmp/simulator-reverse-evidence/auto-live/`，包�
 补充后最终校验结果：
 
 ```text
-auto-live evidence verified: candidates=30, final=67, supplement=G11-G17, gate=closed, index=checked
+auto-live evidence verified: candidates=30, final=68, supplement=G11-G21, cases=14, gate=closed, index=checked
 ```
 
 测试只读取 GarupaEditor 已冻结的 JSON 和生产 BMS，不访问 Reverse 工作树，不执行 Python，不联网。
@@ -73,15 +79,15 @@ auto-live evidence verified: candidates=30, final=67, supplement=G11-G17, gate=c
 | --- | --- | --- |
 | A00 阶段任务书 | 通过 | 范围、硬门、证据候选、22 项测试矩阵、提交和完成定义完整 |
 | A01 静态证据晋升 | 通过 | 首版 43 条加补充 24 文件；`cd84d2ce` 关闭 Multiple，`7a0540dc` 从 committed pass-2 冻结 exact cursor identity |
-| A02 固定事件 oracle | 通过 | G01–G17 closed；首版 11 + 补充 8 case，覆盖 Stop、pause、B±5 exact cursor/bits 与 BPM boundary |
+| A02 固定事件 oracle | 通过 | G01–G21 closed（G18 被 G21 supersede）；首版 11 + 补充 14 case，覆盖 source-order、terminal fault 与 actual observation requirements |
 | A03 模式与上下文 | 通过 | 宿主强制显式 `manual`/`auto-live`；mode14/debug/未知 transform 拒绝 |
 | A04 Long/Slide 运行图 | 通过 | 普通/特殊 terminal 联合验证；root 父拥有共享 child；缺 terminal、重复身份、非递增源序拒绝；父回池清 graph/current |
-| A05 Single/Flick | 通过 | Normal/Flick/standalone Directional 保持；Multiple 继承 ±500、相邻 group 唯一 note type 10 判定 |
-| A06 Long | 通过 | head `>=`、tail `>`、linked finish→tail、active pause/resume、回收/Deactive 匹配 |
-| A07 Slide | 通过 | source-order、terminal 8/5/6/7、Stop frozen before/equal/current、Reset 与单次粒度匹配 |
-| A08 OneFrame | 通过 | 固定 5 槽；Multiple callback count 只进 Setup trace、不污染 OneFrame payload；visual helper 不判定 |
-| A09 调度生命周期 | 通过 | Long/Slide/Multiple pause、pending slot、无 catch-up、group side-used 与 active dispose 匹配 |
-| A10 生产 oracle | 通过 | 19 case canonical actual trace 完整 deep-equal；AL01–AL22、144 Slide、50 standalone Directional、415 core Multiple、普通全谱及全回归通过 |
+| A05 Single/Flick | 通过 | Normal/Flick/standalone Directional 保持；Multiple 继承 ±500，并按完整 playable source-order run 提交唯一 note type 10 |
+| A06 Long | 通过 | head `>=`、tail `>`、linked finish→tail、active pause/resume、回收；head/tail 第六槽 native failure state 均冻结 |
+| A07 Slide | 通过 | source-order、terminal 8/5/6/7、Stop、Reset、单次粒度；head 第六槽 Wait 状态冻结 |
+| A08 OneFrame | 通过 | 固定 5 槽；117/84 个 production run 的唯一 callback count；visual helper 不判定 |
+| A09 调度生命周期 | 通过 | 首次 runtime failure 锁存 manager `faulted`；后续操作返回同一失败，snapshot/dispose 例外且只读 |
+| A10 生产 oracle | 通过 | 固定事件/边界 case、actual scheduler/tempo trace、独立 201-group topology、87 Long、144 Slide、50 standalone Directional、415 Multiple member 与全部回归通过 |
 
 ## 4. 已落地的生产边界
 
@@ -142,12 +148,14 @@ type SimulatorPlayMode =
 - Long/Slide child 更新不改变根 active list Count。
 - adaptive 1–4 子步全部在 NoteManager 内完成；同一外层帧产生的判定共享五槽池，InGameManager 成功返回后只 Reflect 一次。
 - 任一子步失败立即停止，不继续子步、不 Reflect；第六条边界留下已提交五槽供审计。
+- Long/Slide 在第六槽失败前已发生的 native 状态/linked trace 不回滚；portable manager 立即锁存同一 `evidence-required` terminal fault，进入 `faulted`，因此不存在重试或半完成状态继续推进。
+- fault 后 `step`、`pause`、`resume` 与 adjusted-position query 返回同一失败；`snapshot` 与 `dispose` 保持允许。snapshot 使用无记录 peek，不推进时钟、不追加 tempo observation，连续快照全对象相等。
 - PauseSound 在 NoteManager 前返回，冻结时钟、root/child state、cursor、slots 和 trace；resume 不补跑暂停时间。
 - dispose 失活并解绑 root/BPM、清 child runtime 和 pool cursor、关闭 Slide manager、清未 Reflect payload，不产生判定或后端副作用。
 
 ### 4.6 Multiple Directional 分阶段边界
 
-- 核心 `FrontNoteType.MultipleDirectionalFlick (6)` 按 production batch 原序分组；仅相同 game type 且相邻 button 的连续节点连接，重复 button/方向变化开启新 group。
+- 核心 `FrontNoteType.MultipleDirectionalFlick (6)` 按 production batch 的**完整 playable source activation order**分组；只比较紧邻 previous/current playable root。仅双方都是 front type 6、game type 相同且 button 差绝对值为 1 时连接；其他 playable family、重复 button 或方向变化均开启新 run。button -1 command 不激活，因而不替换 previous root。
 - group 是独立运行 owner，不修改深冻结 chart identity。反向 active Update 的首个 crossing root 继承 Directional `-500/+500`，提交唯一 note type 10 与 `left+right+1` callback count，成功后 side roots 仅失活。
 - callback count 不是 OneFrameData 字段；它只存在于 judgement request/Setup trace，`OneFrameJudgementEntry` 继续 absent。
 - front type 7/8/9 映射到独立 `multiple-directional-visual` family；native forcePerfect 为 RET，但 NotesCheck/Sprite/BackLine/连接表现未恢复，所以 Move 明确 `evidence-required`，不以 no-op 绕过。
@@ -158,7 +166,7 @@ type SimulatorPlayMode =
 | ID | 结果 | 核心断言 |
 | --- | --- | --- |
 | AL01 | 通过 | manual/Auto 判别明确，同 crossing 只有 Auto Force Perfect |
-| AL02 | 通过 | B=+5 exact cross-BPM `0x45401EF9`、B=-5 cross-bar `0x446E7494`、B=0 identity |
+| AL02 | 通过 | B=+5 exact cross-BPM `0x45401EF9`、B=-5 cross-bar `0x446E7494`、B=0 identity；实际 +5 调用记录五次 tempo query，snapshot peek 不记录 |
 | AL03 | 通过 | Normal before/equal、Float32 bits、同次 Deactive、后续不重复 |
 | AL04 | 通过 | 同批五 root 反序 Update，payload identity 为 204→200，slot 为 0→4 |
 | AL05 | 通过 | Flick Began→-100 Moved→一次 note type 3 判定 |
@@ -172,10 +180,10 @@ type SimulatorPlayMode =
 | AL13 | 通过 | Long base→linked、Slide base→current AfterUpdate 顺序 |
 | AL14 | 通过 | 3 adaptive 子步产生 3 entry，外层只有一次 Reflect |
 | AL15 | 通过 | 固定五槽、池序、清除和 slot 0 复用 |
-| AL16 | 通过 | 第六条失败，前五槽逐字节状态不变并可池序 Reflect |
+| AL16 | 通过 | Long/Slide head 与 Long tail 第六槽 native state/trace 精确；manager/host 锁存 terminal fault，前五槽保留，snapshot/dispose 可用 |
 | AL17 | 通过 | 空 Reflect 为 null，首次非空 batch index 仍为 0 |
 | AL18 | 通过 | Long/Slide/Multiple 暂停冻结、无补步；Slide/Multiple active dispose 无新事件 |
-| AL19 | 通过 | 两个 BMS 六类 core family；50 standalone Directional、415 Multiple、144 Slide；普通 656 batch 全谱完成 |
+| AL19 | 通过 | 两个 BMS 六类 core family；固定独立 topology 精确比较普通 117/HABAHIRO 84 组与全部 415 member；87 Long、144 Slide、50 standalone Directional；普通 656 batch 全谱完成 |
 | AL20 | 通过 | HABAHIRO 普通 Slide 静态消费；唯一 Multiple visual helper 独立失败关闭并保留 runtime 披露 |
 | AL21 | 通过 | 阶段外字段在类型/对象上 absent，业务 consumer 失败关闭；重复投影字节一致 |
 | AL22 | 通过 | 冻结 failure matrix、非法模式/图/位置/family/handle/Setup/触摸全部拒绝且关键状态原子 |
@@ -210,8 +218,10 @@ node tmp/simulator-reverse-evidence/auto-live/verify.mjs --index
 - 时钟与调度：15 组通过。
 - Auto Live：AL01–AL22 共 22 组通过。
 - 依赖边界：每个隔离测试入口后通过。
-- Auto Live 证据包：`candidates=30, final=67, supplement=G11-G17, gate=closed, index=checked`。
-- 固定 oracle：首版 11 case 与补充 8 case 的 canonical actual steps/projection 全对象 `deepEqual`；无排序、epsilon、缺字段补零或 expected-side 输入修正。
+- Auto Live 证据包：`candidates=30, final=68, supplement=G11-G21, cases=14, gate=closed, index=checked`。
+- 固定 oracle：首版 11 case 与补充 14 case 全部消费；事件 case 的 canonical actual projection 全对象比较，G19/G20 boundary case 直接检查 fault/trace observation requirements。
+- production topology oracle：独立生成器不导入/调用待测 `groupMultipleDirectionalInformationList`；固定 JSON 对两个 BMS 的 SHA-256、batch/position、source slot、note/button/game type 逐对象比较，离线再生成字节一致。
+- adaptive/offset：substep、adjusted bits、state before/after、slot、outer-frame identity来自 `NoteManager.schedulerTrace` 与 OneFrame；正 offset BPM 来自实际 music tempo-query trace，不向生产调用注入 expected-side substep/BPM。
 - 未运行 Vite、Tauri 或 GarupaEditor 整体构建，符合任务书限制。
 
 ## 7. 持续非阻断边界
