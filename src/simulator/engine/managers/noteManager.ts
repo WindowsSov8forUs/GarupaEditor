@@ -47,6 +47,7 @@ export type NoteManagerTraceEntry =
       readonly deltaTimeSeconds: number;
       readonly executeFrame: number;
       readonly substepCount: number;
+      readonly outerFrameIndex: number;
     }
   | {
       readonly kind: "music-advance";
@@ -55,15 +56,19 @@ export type NoteManagerTraceEntry =
       readonly executeFrame: number;
     }
   | {
-      readonly kind:
-        | "bpm-update"
-        | "bpm-activate"
-        | "note-update"
-        | "note-after-update"
-        | "note-activate";
+      readonly kind: "bpm-update" | "bpm-activate" | "note-after-update" | "note-activate";
       readonly substepIndex: number;
       readonly noteIndex: number;
       readonly poolObjectId: string;
+    }
+  | {
+      readonly kind: "note-update";
+      readonly substepIndex: number;
+      readonly noteIndex: number;
+      readonly poolObjectId: string;
+      readonly adjustedPosition: number;
+      readonly stateBefore: NoteState;
+      readonly stateAfter: NoteState;
     }
   | {
       readonly kind: "group-activate";
@@ -120,6 +125,7 @@ export class NoteManager {
   ];
   private nextBatchIndexValue = 0;
   private bpmPoolCursorValue = 0;
+  private outerFrameIndexValue = 0;
   private setupComplete = false;
   private readonly multipleDirectionalGroups = new WeakMap<
     NoteInformation,
@@ -237,7 +243,9 @@ export class NoteManager {
       deltaTimeSeconds: frameDelta,
       executeFrame,
       substepCount,
+      outerFrameIndex: this.outerFrameIndexValue,
     });
+    this.outerFrameIndexValue += 1;
 
     for (let substepIndex = 0; substepIndex < substepCount; substepIndex += 1) {
       const advanceResult = this.clock.advance(substepDelta);
@@ -285,13 +293,18 @@ export class NoteManager {
           );
         }
         const noteIndex = note.noteInformation?.index ?? -1;
+        const adjustedPosition = this.getAdjustedMusicPosition();
+        const stateBefore = note.state;
+        const updateResult = note.executeUpdate(substepDelta);
         this.schedulerTraceValue.push({
           kind: "note-update",
           substepIndex,
           noteIndex,
           poolObjectId: note.poolObjectId,
+          adjustedPosition,
+          stateBefore,
+          stateAfter: note.state,
         });
-        const updateResult = note.executeUpdate(substepDelta);
         if (updateResult.status !== "ok") {
           return updateResult;
         }
@@ -370,6 +383,7 @@ export class NoteManager {
     this.activeNotesValue.length = 0;
     this.activeBpmChangesValue.length = 0;
     this.bpmPoolCursorValue = 0;
+    this.outerFrameIndexValue = 0;
     this.slideNoteManager.dispose();
     return ok(undefined);
   }
@@ -607,14 +621,19 @@ export function noteFamily(
 export function groupMultipleDirectionalInformationList(
   informationList: readonly NoteInformation[],
 ): readonly (readonly NoteInformation[])[] {
-  const candidates = informationList.filter(
-    (information) =>
-      !isNonPlayableCommand(information) &&
-      information.fireNoteType === FrontNoteType.MultipleDirectionalFlick,
-  );
   const groups: NoteInformation[][] = [];
   let currentGroup: NoteInformation[] = [];
-  for (const information of candidates) {
+  for (const information of informationList) {
+    if (isNonPlayableCommand(information)) {
+      continue;
+    }
+    if (information.fireNoteType !== FrontNoteType.MultipleDirectionalFlick) {
+      if (currentGroup.length > 0) {
+        groups.push(currentGroup);
+        currentGroup = [];
+      }
+      continue;
+    }
     const previous = currentGroup[currentGroup.length - 1];
     if (
       previous !== undefined &&

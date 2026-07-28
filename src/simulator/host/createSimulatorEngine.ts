@@ -69,15 +69,19 @@ class SimulatorEngineHost implements SimulatorEngine {
   }
 
   getAdjustedMusicPosition(): SimulatorResult<number> {
+    if (this.inGameManager.fault !== null) {
+      return this.inGameManager.fault;
+    }
     return ok(this.inGameManager.noteManager.getAdjustedMusicPosition());
   }
 
   snapshot(): SimulatorResult<SimulatorSnapshot> {
+    const adjustedMusicPosition =
+      this.inGameManager.noteManager.getAdjustedMusicPosition();
     return ok({
       director: this.inGameDirector.snapshot(),
       managers: this.inGameManager.snapshot(),
-      adjustedMusicPosition:
-        this.inGameManager.noteManager.getAdjustedMusicPosition(),
+      adjustedMusicPosition,
       backendTrace: this.backends.snapshot(),
     });
   }

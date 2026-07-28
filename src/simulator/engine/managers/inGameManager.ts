@@ -1,6 +1,7 @@
 import {
   evidenceRequired,
   ok,
+  type EvidenceRequired,
   type SimulatorResult,
 } from "../evidence";
 import {
@@ -17,6 +18,7 @@ import { InputManager } from "./inputBoundaries";
 import { NoteManager } from "./noteManager";
 
 export interface InGameManagerSnapshot extends EngineLifecycleSnapshot {
+  readonly fault: EvidenceRequired | null;
   readonly currentGameState: GameStateValue;
   readonly pauseState: PauseStateValue;
   readonly musicScore: ReturnType<InGameMusicScoreController["snapshot"]>;
@@ -28,6 +30,7 @@ export class InGameManager {
   private lifecycleState: EngineLifecycleState = "created";
   private currentGameStateValue: GameStateValue = GameState.PlayingSound;
   private pauseStateValue: PauseStateValue = PauseState.None;
+  private faultValue: EvidenceRequired | null = null;
 
   constructor(
     readonly musicScoreController: InGameMusicScoreController,
@@ -37,6 +40,9 @@ export class InGameManager {
   ) {}
 
   initialize(): SimulatorResult<void> {
+    if (this.faultValue !== null) {
+      return this.faultValue;
+    }
     if (this.lifecycleState === "disposed") {
       return evidenceRequired(
         "host.initialize-after-dispose",
@@ -61,6 +67,9 @@ export class InGameManager {
   }
 
   execUpdate(deltaTimeSeconds: number): SimulatorResult<void> {
+    if (this.faultValue !== null) {
+      return this.faultValue;
+    }
     if (this.lifecycleState !== "initialized") {
       return evidenceRequired(
         "ingame.update-outside-initialized-lifecycle",
@@ -87,18 +96,21 @@ export class InGameManager {
     }
     const updateResult = this.noteManager.execUpdate(deltaTimeSeconds);
     if (updateResult.status !== "ok") {
-      return updateResult;
+      return this.latchFault(updateResult);
     }
     if (this.oneFrameJudgementController.existsOneFrameData()) {
       const reflectResult = this.oneFrameJudgementController.reflectOneFrameData();
       if (reflectResult.status !== "ok") {
-        return reflectResult;
+        return this.latchFault(reflectResult);
       }
     }
     return ok(undefined);
   }
 
   pause(): SimulatorResult<void> {
+    if (this.faultValue !== null) {
+      return this.faultValue;
+    }
     if (this.lifecycleState !== "initialized") {
       return evidenceRequired(
         "ingame.pause-outside-initialized-lifecycle",
@@ -115,6 +127,9 @@ export class InGameManager {
   }
 
   resume(): SimulatorResult<void> {
+    if (this.faultValue !== null) {
+      return this.faultValue;
+    }
     if (this.lifecycleState !== "initialized") {
       return evidenceRequired(
         "ingame.resume-outside-initialized-lifecycle",
@@ -140,6 +155,7 @@ export class InGameManager {
     }
     this.oneFrameJudgementController.dispose();
     this.lifecycleState = "disposed";
+    this.faultValue = null;
     this.currentGameStateValue = GameState.PlayingSound;
     this.pauseStateValue = PauseState.None;
     return ok(undefined);
@@ -149,9 +165,26 @@ export class InGameManager {
     return isPausedState(this.currentGameStateValue, this.pauseStateValue);
   }
 
+  get fault(): EvidenceRequired | null {
+    return this.faultValue === null
+      ? null
+      : { ...this.faultValue, requiredEvidence: [...this.faultValue.requiredEvidence] };
+  }
+
+  private latchFault(fault: EvidenceRequired): EvidenceRequired {
+    const latched = {
+      ...fault,
+      requiredEvidence: [...fault.requiredEvidence],
+    };
+    this.faultValue = latched;
+    this.lifecycleState = "faulted";
+    return latched;
+  }
+
   snapshot(): InGameManagerSnapshot {
     return {
       state: this.lifecycleState,
+      fault: this.fault,
       paused: this.isPaused(),
       currentGameState: this.currentGameStateValue,
       pauseState: this.pauseStateValue,

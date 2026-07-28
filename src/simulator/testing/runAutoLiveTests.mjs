@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
@@ -34,6 +35,10 @@ const supplementOraclePath = join(
   "auto-live",
   "fixtures",
   "auto-live-supplement-fixed-event-trace.json",
+);
+const productionMultipleOraclePath = join(
+  testingRoot,
+  "autoLiveProductionMultipleOracle.json",
 );
 
 function validateAutoLive() {
@@ -103,6 +108,11 @@ function validateAutoLive() {
   const oracle = JSON.parse(readFileSync(oraclePath, "utf8"));
   const failureOracle = JSON.parse(readFileSync(failurePath, "utf8"));
   const supplementOracle = JSON.parse(readFileSync(supplementOraclePath, "utf8"));
+  const productionMultipleOracle = JSON.parse(
+    readFileSync(productionMultipleOraclePath, "utf8"),
+  );
+  assert.equal(productionMultipleOracle.status,
+    "fixed-independent-source-order-production-oracle");
   assert.equal(oracle.status, "confirmed-static-contract-fixed-offline-oracle");
   assert.equal(failureOracle.status, "confirmed-failure-closed-matrix");
   const oracleCases = new Map(oracle.cases.map((entry) => [entry.case_id, entry]));
@@ -131,6 +141,12 @@ function validateAutoLive() {
     "offset-plus5-cross-bpm-exact",
     "offset-minus5-cross-bar-exact",
     "offset-zero-identity-exact",
+    "multiple-source-order-interleaved-break",
+    "one-frame-exhaustion-long-head-terminal-fault",
+    "one-frame-exhaustion-slide-head-terminal-fault",
+    "one-frame-exhaustion-long-tail-terminal-fault",
+    "actual-adaptive-scheduler-observation-requirements",
+    "actual-offset-tempo-query-observation-requirements",
   ]);
   const tests = [];
   const test = (id, name, execute) => tests.push({ id, name, execute });
@@ -344,6 +360,20 @@ function validateAutoLive() {
       multipleInfo(700 + index, 1, buttonType, types.GameNoteType.DirectionalFlickLeft));
     assert.deepEqual(groupMultipleDirectionalInformationList(grouped).map(
       (group) => group.map((information) => information.index)), [[700, 701, 702]]);
+    const sourceRunOracle = supplementCases.get(
+      "multiple-source-order-interleaved-break",
+    );
+    const sourceRun = [
+      multipleInfo(710, 1, 4, types.GameNoteType.DirectionalFlickRight),
+      multipleInfo(711, 1, 5, types.GameNoteType.DirectionalFlickRight),
+      normalInfo(712, 1, { buttonType: 0 }),
+      multipleInfo(713, 1, 6, types.GameNoteType.DirectionalFlickRight),
+    ];
+    assert.deepEqual(
+      groupMultipleDirectionalInformationList(sourceRun).map((group) =>
+        group.map((information) => information.buttonType)),
+      sourceRunOracle.source_order_runs,
+    );
     const integration = schedulerIntegration({
       batches: [batch(1, grouped)],
       bpmChangeCount: 0,
@@ -637,6 +667,111 @@ function validateAutoLive() {
       "one-frame.pool-exhausted");
     assert.equal(JSON.stringify(oneFrame.snapshot().slots), before);
     assert.equal(reflect(oneFrame).entryCount, 5);
+
+    for (const [caseId, note] of [
+      ["one-frame-exhaustion-long-head-terminal-fault", new notes.NoteLong("exhaust-long")],
+      ["one-frame-exhaustion-slide-head-terminal-fault", new notes.NoteSlide("exhaust-slide")],
+    ]) {
+      const full = controller();
+      for (let index = 0; index < 5; index += 1) {
+        ok(full.setupAutoLiveJudgement(request(normalInfo(170 + index), "head")),
+          `fill ${caseId}:${index}`);
+      }
+      const source = note instanceof notes.NoteLong ? longInfo(176) : slideInfo(177);
+      const bound = bindNote(note, source, {
+        oneFrame: full,
+        position: { value: source.absolutePos },
+      });
+      evidence(bound.note.executeUpdate(0), "one-frame.pool-exhausted");
+      assert.equal(NoteState[bound.note.state],
+        supplementCases.get(caseId).state_at_native_failure);
+      assert.equal(full.snapshot().inUseContainerIds.length, 5);
+    }
+
+    const tailFull = controller();
+    const tail = bindNote(new notes.NoteLong("exhaust-long-tail"), longInfo(178), {
+      oneFrame: tailFull,
+      position: { value: 120 },
+    });
+    ok(tail.note.executeUpdate(0), "Long exhaustion head setup");
+    reflect(tailFull);
+    for (let index = 0; index < 5; index += 1) {
+      ok(tailFull.setupAutoLiveJudgement(request(normalInfo(180 + index), "head")),
+        `fill Long tail ${index}`);
+    }
+    tail.position.value = 241;
+    evidence(tail.note.executeUpdate(0), "one-frame.pool-exhausted");
+    assert.equal(NoteState[tail.note.state], supplementCases.get(
+      "one-frame-exhaustion-long-tail-terminal-fault").state_at_native_failure);
+    assert.equal(tail.note.afterNote.judged, false);
+    assert.equal(tail.note.autoLiveTrace.at(-1).kind, "long-linked-after-finish");
+
+    const managerLong = normalInfo(190, 1, {
+      gameNoteType: types.GameNoteType.Long,
+      fireNoteType: types.FrontNoteType.Long,
+      afterNoteType: types.AfterNoteType.Normal,
+      afterNoteAbsolutePos: 3,
+    });
+    const faultIntegration = schedulerIntegration({
+      batches: [batch(1, [managerLong, ...Array.from({ length: 5 }, (_, index) =>
+        normalInfo(191 + index, 1))])],
+      bpmChangeCount: 0,
+      positions: [1, 1],
+    });
+    ok(faultIntegration.manager.initialize(), "fault latch initialize");
+    ok(faultIntegration.manager.execUpdate(0.001), "fault latch activate six roots");
+    const firstFault = evidence(faultIntegration.manager.execUpdate(0.001),
+      "one-frame.pool-exhausted");
+    const faultSnapshot = faultIntegration.manager.snapshot();
+    assert.equal(faultSnapshot.state, "faulted");
+    assert.deepEqual(faultSnapshot.fault, firstFault);
+    assert.equal(faultSnapshot.oneFrame.inUseContainerIds.length, 5);
+    const faultedLong = faultSnapshot.noteManager.pools.find(
+      (pool) => pool.family === "long",
+    ).objects[0];
+    assert.equal(faultedLong.state, NoteState.Wait);
+    assert.equal(faultedLong.linkedAfter.judged, false);
+    assert.deepEqual(faultIntegration.manager.execUpdate(0.001), firstFault);
+    assert.deepEqual(faultIntegration.manager.pause(), firstFault);
+    assert.deepEqual(faultIntegration.manager.resume(), firstFault);
+    ok(faultIntegration.manager.dispose(), "fault latch dispose");
+    assert.equal(faultIntegration.manager.snapshot().state, "disposed");
+
+    const hostResult = createSimulatorEngine({
+      chart: fixture.chart([batch(2, [
+        normalInfo(210, 2, {
+          gameNoteType: types.GameNoteType.Long,
+          fireNoteType: types.FrontNoteType.Long,
+          afterNoteType: types.AfterNoteType.Normal,
+          afterNoteAbsolutePos: 4,
+        }),
+        ...Array.from({ length: 5 }, (_, index) => normalInfo(211 + index, 2)),
+      ])], 120),
+      runtime: {
+        highFrequencyMode: false,
+        judgeOffsetFrames: 0,
+        playMode: {
+          kind: "auto-live",
+          resultTransform: "identity-no-active-situation-skill",
+        },
+      },
+    }, createRecordingSimulatorBackends());
+    const host = ok(hostResult, "fault host create");
+    ok(host.initialize(), "fault host initialize");
+    ok(host.step(1 / 60), "fault host activation frame");
+    const hostFault = evidence(host.step(1 / 60), "one-frame.pool-exhausted");
+    const hostSnapshot = ok(host.snapshot(), "snapshot remains allowed after fault");
+    assert.equal(hostSnapshot.managers.state, "faulted");
+    assert.deepEqual(hostSnapshot.managers.fault, hostFault);
+    assert.equal(hostSnapshot.managers.oneFrame.inUseContainerIds.length, 5);
+    const hostLong = hostSnapshot.managers.noteManager.pools.find(
+      (pool) => pool.family === "long",
+    ).objects[0];
+    assert.equal(hostLong.state, NoteState.Wait);
+    assert.equal(hostLong.linkedAfter.judged, false);
+    assert.deepEqual(host.step(1 / 60), hostFault);
+    assert.deepEqual(host.getAdjustedMusicPosition(), hostFault);
+    ok(host.dispose(), "fault host dispose");
   });
 
   test("AL18", "暂停冻结 Long/Slide/Multiple graph/slot/trace 并确定 dispose", () => {
@@ -767,7 +902,11 @@ function validateAutoLive() {
       "chart-construction",
       "fixtures",
     );
-    const charts = ["poppin_shuffle_special.txt", "786_miracle_april_habahiro_special.txt"]
+    const chartFiles = [
+      "poppin_shuffle_special.txt",
+      "786_miracle_april_habahiro_special.txt",
+    ];
+    const charts = chartFiles
       .map((name) => ok(construction.createNoteBatchInformationList({
         musicScoreData: readFileSync(join(fixtureRoot, name), "utf8"),
       }), `production chart ${name}`));
@@ -821,6 +960,29 @@ function validateAutoLive() {
         assert.equal(directionalBatch.entries[0].noteType, 9);
         assert.equal(bound.note.state, NoteState.Deactive);
       }
+      const longRoots = roots.filter((candidate) =>
+        candidate.fireNoteType === types.FrontNoteType.Long);
+      let flickTerminalLongCount = 0;
+      for (const [rootIndex, sourceNote] of longRoots.entries()) {
+        const bound = bindNote(
+          new notes.NoteLong(`production-long-${chartIndex}-${rootIndex}`),
+          sourceNote,
+          { position: { value: sourceNote.absolutePos } },
+        );
+        ok(bound.note.executeUpdate(0), `production Long head ${chartIndex}:${rootIndex}`);
+        assert.equal(reflect(bound.oneFrame).entries[0].phase, "head");
+        bound.position.value = Number.MAX_SAFE_INTEGER;
+        ok(bound.note.executeUpdate(0), `production Long tail ${chartIndex}:${rootIndex}`);
+        const tail = reflect(bound.oneFrame).entries[0];
+        assert.equal(tail.phase, "tail");
+        assert.equal(tail.noteIndex, sourceNote.index);
+        assert.equal(bound.note.state, NoteState.Deactive);
+        if (tail.noteType === 3) flickTerminalLongCount += 1;
+      }
+      if (chartIndex === 1) {
+        assert.equal(flickTerminalLongCount, 5,
+          "HABAHIRO must cover all five Flick-terminal Long roots");
+      }
       const slideRoots = roots.filter((candidate) =>
         candidate.isSlideNoteHead && candidate.slideNoteList.length > 0);
       for (const [rootIndex, sourceNote] of slideRoots.entries()) {
@@ -867,9 +1029,35 @@ function validateAutoLive() {
 
       const multipleGroups = chart.noteBatches.flatMap((entry) =>
         groupMultipleDirectionalInformationList(entry.informationList));
+      const expectedTopology = productionMultipleOracle.charts[chartIndex];
+      assert.equal(expectedTopology.file, chartFiles[chartIndex]);
+      assert.equal(
+        createHash("sha256").update(readFileSync(
+          join(fixtureRoot, chartFiles[chartIndex]),
+        )).digest("hex").toUpperCase(),
+        expectedTopology.source_sha256,
+      );
+      const actualTopology = chart.noteBatches.flatMap((entry, batchIndex) => {
+        const groups = groupMultipleDirectionalInformationList(entry.informationList);
+        if (groups.length === 0) return [];
+        return [{
+          batch_index: batchIndex,
+          absolute_position: entry.absolutePos,
+          groups: groups.map((group) => group.map((information) => ({
+            source_slot: entry.informationList.indexOf(information),
+            note_index: information.index,
+            button_type: information.buttonType,
+            game_note_type: information.gameNoteType,
+          }))),
+        }];
+      });
+      assert.deepEqual(actualTopology, expectedTopology.batches,
+        `production fixed Multiple topology ${chartIndex}`);
       const expectedMultipleRootCount = chartIndex === 0 ? 195 : 220;
       assert.equal(multipleGroups.reduce((sum, group) => sum + group.length, 0),
         expectedMultipleRootCount);
+      assert.equal(multipleGroups.length, expectedTopology.group_count,
+        `production source-order Multiple run count ${chartIndex}`);
       for (const [groupIndex, group] of multipleGroups.entries()) {
         const oneFrame = controller();
         const runtimeGroup = {
@@ -1473,12 +1661,79 @@ function validateAutoLive() {
       [120, 120, 120, 120, 120],
       [0, 0, 0, 0, 0],
     );
-    assertConcurrentTrace(
-      "adaptive-substeps-one-outer-reflect",
-      [300, 301, 302].map((index) => normalInfo(index, 120 + index - 300)),
-      [120, 121, 122],
-      [0, 1, 2],
-    );
+    {
+      const caseId = "adaptive-substeps-one-outer-reflect";
+      const integration = schedulerIntegration({
+        batches: [300, 301, 302].map((index) => batch(
+          120 + index - 300,
+          [normalInfo(index, 120 + index - 300)],
+        )),
+        bpmChangeCount: 1,
+        positions: [119, 120, 121, 122],
+      });
+      ok(integration.manager.initialize(), "canonical adaptive initialize");
+      ok(integration.manager.execUpdate(0.001), "canonical adaptive activate");
+      ok(integration.manager.execUpdate(0.04), "canonical adaptive outer frame");
+      const batchValue = integration.oneFrame.getReflectOneFrameData();
+      const managerSnapshot = integration.manager.snapshot();
+      const scheduler = managerSnapshot.noteManager.schedulerTrace;
+      const frame = scheduler.findLast((entry) => entry.kind === "frame");
+      const judgedUpdates = scheduler.filter((entry) =>
+        entry.kind === "note-update" &&
+        entry.stateBefore === NoteState.Move &&
+        entry.stateAfter === NoteState.Deactive);
+      const actual = judgedUpdates.map((entry) => {
+        const payload = batchValue.entries.find((candidate) =>
+          candidate.noteIndex === entry.noteIndex);
+        return commonStep(
+          frame.outerFrameIndex,
+          entry.substepIndex,
+          entry.adjustedPosition,
+          `${payload.phase}-perfect`,
+          stateName(entry.stateBefore),
+          stateName(entry.stateAfter),
+          payload.slot,
+          {
+            note_index: payload.noteIndex,
+            raw_result: payload.rawResult,
+            adjusted_result: payload.adjustedResult,
+            add_combo: payload.addCombo,
+            judge_timing: payload.judgeTiming,
+          },
+        );
+      });
+      const last = judgedUpdates.at(-1);
+      actual.push(commonStep(
+        frame.outerFrameIndex,
+        last.substepIndex,
+        last.adjustedPosition,
+        "reflect",
+        stateName(last.stateAfter),
+        stateName(last.stateAfter),
+        null,
+        {
+          ...reflectFields(batchValue),
+          note_indices: batchValue.entries.map((entry) => entry.noteIndex),
+        },
+      ));
+      const expected = oracleCases.get(caseId).steps;
+      assert.equal(frame.outerFrameIndex, 1,
+        "adaptive outer frame identity must come from NoteManager trace");
+      assert.deepEqual(actual.map(({ outer_frame: _outer, ...entry }) => entry),
+        expected.map(({ outer_frame: _outer, ...entry }) => entry));
+      assert.deepEqual(
+        supplementCases.get("actual-adaptive-scheduler-observation-requirements")
+          .must_be_observed_from_runtime,
+        [
+          "outer-frame-index",
+          "substep-index",
+          "adjusted-position-value-and-bits",
+          "note-state-before-and-after",
+          "one-frame-slot",
+          "single-outer-reflect-batch",
+        ],
+      );
+    }
 
     {
       const music = new InGameMusicScoreController(fixture.chart([], 120));
@@ -1497,6 +1752,29 @@ function validateAutoLive() {
         },
       ));
       assertSteps("adjustment-sign-crossing", actual);
+
+      const tempoCommand = normalInfo(899, 100, {
+        buttonType: types.ButtonType.None,
+        buttonTypes: [types.ButtonType.None],
+        buttonTypesArray: [types.ButtonType.None],
+        ccNum: 8,
+        bpm: 95.5,
+        bpmString: "95.5",
+      });
+      const crossingMusic = new InGameMusicScoreController(
+        fixture.chart([batch(100, [tempoCommand])], 99.5),
+      );
+      ok(crossingMusic.advance(Math.fround(99 / Math.fround(99.5 * 0.8))),
+        "actual offset tempo-query entry cursor");
+      const crossingEntry = crossingMusic.musicPosition;
+      const crossingResult = crossingMusic.getAdjustedMusicPosition(5);
+      const observedQueries = crossingMusic.snapshot().tempoQueryTrace;
+      assert.equal(observedQueries.length, 5);
+      assert.equal(observedQueries[0].bpm, 99.5);
+      assert.equal(observedQueries.some((entry) => entry.bpm === 95.5), true);
+      assert.equal(observedQueries.every((entry, index) =>
+        index === 0 || entry.position > observedQueries[index - 1].position), true);
+      assert.equal(crossingResult > crossingEntry, true);
     }
 
     assertCanonicalSupplementTraces({
@@ -1833,15 +2111,26 @@ function validateAutoLive() {
     });
     {
       const expected = supplementCases.get("offset-plus5-cross-bpm-exact");
+      const tempoCommand = normalInfo(890, 3072, {
+        buttonType: types.ButtonType.None,
+        buttonTypes: [types.ButtonType.None],
+        buttonTypesArray: [types.ButtonType.None],
+        ccNum: 8,
+        bpm: 95.5,
+        bpmString: "95.5",
+      });
+      const music = new InGameMusicScoreController(
+        fixture.chart([batch(3072, [tempoCommand])], 99.5),
+      );
       let cursor = {
         bar: expected.entry_music_cursor.bar,
         beatProgress: expected.entry_music_cursor.beat_progress.value,
       };
-      const actualBpms = [];
-      for (const bpm of expected.step_bpms) {
-        actualBpms.push(bpm);
+      for (let step = 0; step < expected.settings.frames_argument; step += 1) {
+        const bpm = music.bpmAtPosition(Math.fround(cursor.beatProgress + 192 * cursor.bar));
         cursor = advancePosition(cursor.bar, cursor.beatProgress, bpm, Math.fround(1 / 60));
       }
+      const actualBpms = music.snapshot().tempoQueryTrace.map((entry) => entry.bpm);
       const result = Math.fround(cursor.beatProgress + 192 * cursor.bar);
       assert.deepEqual(
         exactOffsetProjection(expected, result, actualBpms,
@@ -1860,12 +2149,14 @@ function validateAutoLive() {
     }
     {
       const expected = supplementCases.get("offset-minus5-cross-bar-exact");
+      const music = new InGameMusicScoreController(fixture.chart([], 99.5));
       let cursor = {
         bar: expected.entry_music_cursor.bar,
         beatProgress: expected.entry_music_cursor.beat_progress.value,
       };
       const actualBpms = [];
-      for (const bpm of expected.step_bpms) {
+      for (let step = 0; step < expected.settings.frames_argument; step += 1) {
+        const bpm = music.snapshot().currentBpm;
         actualBpms.push(bpm);
         cursor = rewindPosition(cursor.bar, cursor.beatProgress, bpm, Math.fround(1 / 60));
       }

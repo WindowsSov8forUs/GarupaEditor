@@ -26,6 +26,13 @@ export interface MusicScoreControllerSnapshot {
   readonly musicPosition: number;
   readonly launcherMusicPosition: number;
   readonly musicPositionCallbackCount: number;
+  readonly tempoQueryTrace: readonly TempoQueryTraceEntry[];
+}
+
+export interface TempoQueryTraceEntry {
+  readonly queryIndex: number;
+  readonly position: number;
+  readonly bpm: number;
 }
 
 export class InGameMusicScoreController {
@@ -41,6 +48,7 @@ export class InGameMusicScoreController {
   private launcherMusicBarProgressValue = 0;
   private launcherMusicBeatProgressValue: number;
   private musicPositionCallbackCountValue = 0;
+  private readonly tempoQueryTraceValue: TempoQueryTraceEntry[] = [];
   private readonly tempoCommands: readonly NoteInformation[];
 
   constructor(chart: ChartConstructionResult) {
@@ -186,6 +194,7 @@ export class InGameMusicScoreController {
       musicPosition: this.musicPosition,
       launcherMusicPosition: this.launcherMusicPosition,
       musicPositionCallbackCount: this.musicPositionCallbackCountValue,
+      tempoQueryTrace: this.tempoQueryTraceValue.map((entry) => ({ ...entry })),
     };
   }
 
@@ -197,6 +206,11 @@ export class InGameMusicScoreController {
       }
       bpm = Math.fround(command.bpm);
     }
+    this.tempoQueryTraceValue.push({
+      queryIndex: this.tempoQueryTraceValue.length,
+      position,
+      bpm,
+    });
     return bpm;
   }
 }

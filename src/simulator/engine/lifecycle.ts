@@ -1,4 +1,4 @@
-export type EngineLifecycleState = "created" | "initialized" | "disposed";
+export type EngineLifecycleState = "created" | "initialized" | "faulted" | "disposed";
 
 export interface EngineLifecycleSnapshot {
   readonly state: EngineLifecycleState;

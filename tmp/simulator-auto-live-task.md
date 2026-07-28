@@ -10,7 +10,7 @@
 - 锁定原作样本：`jp.co.craftegg.band` 10.1.3（version code 229，`arm64-v8a`）。
 - 上游已验收阶段：第一切片、谱面构造、时钟与调度。
 - 上游时钟调度验收提交：GarupaEditor `78414bc`，关闭记录修订提交 `ca84258`。
-- 当前状态：**第三次独立审计已撤销阶段完成结论。Reverse `57c1e03be474eeb1006ff56c8fc3d5a9a117d573` 以 G21 修正先前 G18 的过度 connected-component 解释：原作按 source activation order 比较紧邻 previous/current playable root，插入其他 root 或 equal button 会断组。当前 TypeScript 先过滤 Multiple，仍错误跨过普通 root 连接：普通 production 9 个 batch 少 9 个 judgement（108，证据应为 117）；HABAHIRO 84 组恰匹配。G19/G20 保持关闭，A05/A08/A09/A10 实现与重验收未完成。**
+- 当前状态：**G21 source-order 修复、G19 terminal fault latch、G20 actual scheduler/tempo observation 与独立 production topology oracle 已实现；普通/HABAHIRO 分别精确匹配 117/84 个 run、195/220 个 member，87 个 production Long（含 HABAHIRO 5 个 Flick terminal）与 144 个 Slide 全覆盖通过。A05/A08/A09 代码修复完成，A10 全量隔离回归通过；阶段结论仍待本批提交后的独立复核与最终验收文档恢复，在此之前仍禁止进入手动输入阶段。**
 - 待重建验收记录：`tmp/simulator-auto-live-acceptance.md`。
 - 已冻结证据包：`tmp/simulator-reverse-evidence/auto-live/`。
 
@@ -49,12 +49,12 @@
 | A02 生成固定事件 oracle 并关闭缺口 | 第四次补充完成，代码门解除 | Reverse `57c1e03b` 以 G21 修正 G18；supplement 14 case + focused source-order caller ARM64 冻结 run、terminal fault 与 actual observation |
 | A03 接入 Auto Live 模式与判定上下文 | 已完成 | 显式模式本身不需改动；补充证据现可由 A05–A10 消费 |
 | A04 建立 Long/Slide 运行子图 | 修复完成 | 普通生产 Slide 由 terminal child + root after type 联合识别；父 Deactive 时按 R02 清 child graph/current，复用重建共享身份 |
-| A05 恢复 Single/Flick Force Perfect | 重新打开，代码门已解除 | Normal/Flick/standalone Directional 保留；Multiple 分组须遍历完整 playable source order，其他 family/equal button 断开 run |
-| A06 恢复 Long 分阶段完成 | 成功路径保留，失败路径待重验 | head/tail/pause/reuse 保留；第六槽失败后的 Wait/linked trace 不能继续宣称原子 |
-| A07 恢复 Slide 分阶段完成 | 成功路径保留，失败路径待重验 | terminal/Stop/Reset 保留；head 第六槽失败后停在 Wait，须按 G19 边界处理 |
-| A08 恢复 Auto Live OneFrame 填充与聚合 | 重新打开，等待 A05 | 控制器五槽保留；须重验每个 physical component 唯一 note type 10/count 与混合 batch 槽序 |
-| A09 接入调度、暂停与生命周期 | 重新打开，等待 A02/A08 | 须实现并测试 step fault latch/rollback、半激活 batch、Long/Slide/Multiple failure state |
-| A10 生产 oracle 与阶段验收 | 重新打开，等待 A09 | production group 测试当前与实现共用分组函数；adaptive substep 与 offset BPM 尚非 end-to-end actual trace |
+| A05 恢复 Single/Flick Force Perfect | 修复完成，待最终复核 | Multiple owner 遍历完整 playable source order；其他 family/equal button 断组，method fixture 精确通过 |
+| A06 恢复 Long 分阶段完成 | 修复完成，待最终复核 | 成功路径不变；head/tail 第六槽保留 native Wait/linked order，并由 manager terminal fault 阻止重试 |
+| A07 恢复 Slide 分阶段完成 | 修复完成，待最终复核 | 成功路径不变；head 第六槽状态与 terminal fault boundary 精确覆盖 |
+| A08 恢复 Auto Live OneFrame 填充与聚合 | 修复完成，待最终复核 | 117/84 source-order run 的唯一 note type 10/count、混合 batch 与五槽行为通过独立固定 oracle |
+| A09 接入调度、暂停与生命周期 | 修复完成，待最终复核 | 首次 runtime failure 锁存 `faulted`；step/pause/resume/adjusted query 返回同一失败，只允许 snapshot/dispose |
+| A10 生产 oracle 与阶段验收 | 全量验证通过，待最终文档恢复 | 固定 production topology 不调用待测分组函数生成 expected；actual scheduler/tempo trace 与全部隔离回归通过 |
 
 ### 1.4 批次记录
 
@@ -246,6 +246,15 @@
 - Reverse 新增 focused ARM64 `0x37795C4..0x3779A48`（R16.D17），G21 明确 supersede G18 的 connected-component 结论。新 method fixture 为 `[M4,M5,Other0,M6] → [[4,5],[6]]`、reverse order `[6,0,5,4]`、两条 judgement/count `[1,2]`。
 - 重新审计 production：普通当前“先过滤 Multiple”得到 108 组，证据 source-order run 为 117，9 个 interleaved batch 被错误桥接并少 9 条 judgement；HABAHIRO 当前/证据均为 84。此前“普通多 19 条”是 G18 过度解释产生的错误审计结论，不再作为修复依据。
 - Reverse `57c1e03be474eeb1006ff56c8fc3d5a9a117d573` 已推送 main `0 0`；GarupaEditor 冻结 final entry 由 67 增至 68。G19/G20 不变，A05/A08/A09/A10 继续未完成但代码门重新解除。
+
+#### 2026-07-29 第二十二批：G21/G19/G20 生产修复与独立 oracle
+
+- `groupMultipleDirectionalInformationList` 不再预过滤 Multiple；它遍历完整 `informationList`，跳过非 playable command，但让任意其他 playable root 与 equal button 结束当前 run。冻结 method case `[M4,M5,Other0,M6]` 精确得到 `[[4,5],[6]]`。
+- 新增独立离线生成器 `generateAutoLiveProductionMultipleOracle.mjs` 与固定 JSON；生成器按 G21 自行扫描 source order，不调用待测分组函数。AL19 对两个锁定 BMS 的 source SHA-256、batch index/position、每个 group 的 source slot/index/button/game type 全对象比较：普通 117 组/195 member，HABAHIRO 84 组/220 member。
+- production family 覆盖扩展为全部 87 个 Long（普通 29、HABAHIRO 58，其中 5 个 Flick terminal）、144 个 Slide、50 个 standalone Directional 与 415 个 core Multiple member；不再只抽一个代表 Long。
+- `InGameManager` 新增 portable terminal fault latch：Note/Reflect 首次 `evidence-required` 后进入 `faulted`，保留前五槽和 native Note 状态；后续 step/pause/resume/adjusted query 返回同一锁存对象，snapshot/dispose 保持允许。测试用 Long 作为第六个 reverse-update root，并分别锁定 Long head、Long tail、Slide head 的 native failure state/trace。
+- `NoteManager.schedulerTrace` 现在直接记录 outer-frame index、实际 substep、每次 Note Update 的 adjusted position 与 state before/after；music score snapshot 记录正 offset 的每步 tempo query。adaptive canonical projection 从实际 scheduler/OneFrame trace构造，offset 另有真实 `getAdjustedMusicPosition(+5)` 跨 BPM observation；不再把 expected substep/BPM 作为生产调用输入。
+- 模拟器隔离 TypeScript、第一切片 17 项、时钟 15 组、Auto Live AL01–AL22、全部 chart construction/production suites、依赖边界与 evidence worktree verifier 均通过；未运行 Vite/Tauri/整体构建。最终阶段结论留给提交后独立复核与验收文档恢复。
 
 ## 2. 固定范围
 
