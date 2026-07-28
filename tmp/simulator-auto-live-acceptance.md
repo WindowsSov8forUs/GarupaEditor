@@ -1,6 +1,6 @@
 # 模拟器 Auto Live 阶段验收记录
 
-> **2026-07-29 第七次独立审计：未通过，A07/A10 重新打开。** 冻结 E15 要求 Slide current child 先执行 adjusted-position gate；当前实现却在读取 adjusted position 前无条件跳过 invisible child。现有 AL10 又以 `160 < 170` 期待 cursor 前进，完整绿色套件未覆盖该 before 边界。G01–G22 证据门、G19 fault、G21 topology 与 G22 replay 保持有效。
+> **2026-07-29 第七次最终独立重验收：通过。** Slide invisible 与 visible current child 现统一先执行 E15 adjusted-position/finite gate；AL10覆盖root/child前一Float32与equal，AL19逐对象覆盖普通89个、HABAHIRO 27个首child为invisible的production Slide root。完整A10、Reverse verifier、index、独立topology及提交后临时产物复现全部通过。
 
 ## 1. 验收身份
 
@@ -36,10 +36,12 @@
 - 第六次审计重开：`f6066b5`
 - 公共host step fault修复：`f0f496d`
 - 第六次最终重验收：本文件所在提交
-- 第七次审计重开：本文件所在提交
+- 第七次审计重开：`49a8371`
+- Slide invisible position gate修复：`c6bc9c6`
+- 第七次最终重验收：本文件所在提交
 - 验收日期：2026-07-28
 - 最终验收日期：2026-07-29
-- 验收结论：**未通过。A07/A10 未完成，Auto Live 阶段重新打开；在 Slide invisible position gate 修复并全量重验收前不得进入手动输入阶段。**
+- 验收结论：**通过。A00–A10完成，Auto Live阶段关闭；手动输入阶段仍须先建立独立Reverse证据硬门。**
 
 ## 2. 证据硬门与冻结包
 
@@ -93,10 +95,10 @@ auto-live evidence verified: candidates=30, final=72, supplement=G11-G22, cases=
 | A04 Long/Slide 运行图 | 通过 | 普通/特殊 terminal 联合验证；root 父拥有共享 child；缺 terminal、重复身份、非递增源序拒绝；父回池清 graph/current |
 | A05 Single/Flick | 通过 | Normal/Flick/standalone Directional 保持；Multiple 继承 ±500，并按完整 playable source-order run 提交唯一 note type 10 |
 | A06 Long | 通过 | head `>=`、tail `>`、linked finish→tail、active pause/resume、回收；head/tail 第六槽 native failure state 均冻结 |
-| A07 Slide | **未通过** | terminal/Stop/Reset/第六槽仍有效，但 invisible current 在自身 absolute position 前提前推进，违反 E15 position gate |
+| A07 Slide | 通过 | terminal/Stop/Reset/第六槽保持；invisible/visible current统一先过E15 adjusted-position/finite gate，before/equal和单次粒度闭合 |
 | A08 OneFrame | 通过 | 固定 5 槽；117/84 个 production run 的唯一 callback count；visual helper 不判定 |
 | A09 调度生命周期 | 通过 | 公共step于director delta校验前检查fault；AL16覆盖合法、NaN、±Infinity与负delta，全部返回锁存失败 |
-| A10 生产 oracle | **未通过** | exact/adaptive/topology仍有效，但 AL10 固化 160<170 时提前推进；production全谱只证最终完成，未证 invisible cursor timing |
+| A10 生产 oracle | 通过 | exact/adaptive/topology保持；AL10纠正并覆盖before/equal，AL19全量覆盖普通89/HABAHIRO 27个首invisible root cursor timing |
 
 ## 4. 已落地的生产边界
 
@@ -133,7 +135,7 @@ type SimulatorPlayMode =
 - Slide child runtime 直接引用生产 `slideNoteList` 的共享 `NoteInformation`，按源序持有；child 不进入 NoteManager 根 active list。
 - Slide 激活联合验证 root after type 和最后共享 child game-note type：普通 `None + SlideEndA/B`、Flick、Directional、Multiple Directional；同时验证非空列表、对象身份唯一和严格递增 position。
 - head 使用 `>=`；pending visible 使用 `>=`。`forcePerfectOnUpdate` 不使用 while，每次只推进一个 current。
-- **开放缺口：** 当前 invisible support 在读取 adjusted position之前即被标记并推进。E15 要求 current child 先执行 `adjusted < child.absolutePos` 返回，因此 root 未 crossing、root equal 但 child 未到、child before 时都必须保持 cursor；只有 child equal/after 才可不产生 OneFrame并推进一个。
+- invisible 与 visible current child 均先独立读取 adjusted position、检查有限值并执行 `adjusted < child.absolutePos` 返回；root未crossing、root equal但child未到及child前一Float32均保持cursor。只有child equal/after，invisible才不产生OneFrame并推进一个。
 - AfterUpdate 顺序为父 base 在先，再转发 Long linked 或 Slide current child。
 - terminal Deactive/父回池时按 R02 遍历 reset child 并清 graph/current；dispose 幂等执行同一清理，下一次激活从生产共享身份重建，不泄漏 judged/cursor。
 - terminal judgement note type 精确为普通 8、Flick 5、Directional 6、Multiple Directional 7；Stop selected 固定走 intermediate note type 8，不冒充 terminal tail。
@@ -183,7 +185,7 @@ type SimulatorPlayMode =
 | AL07 | 通过 | Long head equal、Wait、独立 head payload |
 | AL08 | 通过 | Long tail equal 不判，下一大于值 linked finish→tail→Deactive |
 | AL09 | 通过 | Slide head equal、Wait、current=0 |
-| AL10 | **失败/用例错误** | intermediate 路由成立；invisible 用例以 adjusted=160、child=170 期待 cursor+1，违反 E15，需补 before/equal 与 production 回归 |
+| AL10 | 通过 | intermediate源序成立；invisible从真实Move覆盖root/child前一Float32与equal，到点前cursor/judged/slot不变，到点后单次skip且不占槽 |
 | AL11 | 通过 | terminal 8/5/6/7、tail/Deactive cleanup、Long/Slide 复用与 Stop intermediate 路由分离 |
 | AL12 | 通过 | adjusted 大步时每次 OnUpdate 最多推进一个 current |
 | AL13 | 通过 | Long base→linked、Slide base→current AfterUpdate 顺序 |
@@ -199,7 +201,7 @@ type SimulatorPlayMode =
 
 ## 6. 验证命令与结果
 
-以下 A10 隔离命令全部通过，但因为 AL10 的 expected 本身错误，**绿色结果不构成阶段通过**：
+以下 A10 隔离命令在修复提交后全部重新通过：
 
 ```powershell
 npx.cmd tsc -p src/simulator/tsconfig.json
@@ -232,7 +234,8 @@ node tmp/simulator-reverse-evidence/auto-live/verify.mjs --index
 - production topology oracle：独立生成器不导入/调用待测 `groupMultipleDirectionalInformationList`；固定 JSON 对两个 BMS 的 SHA-256、batch/position、source slot、note/button/game type 逐对象比较，离线再生成字节一致。
 - adaptive/offset：substep/state/slot/outer frame来自manager trace并全对象比较；exact三例逐frame重放committed delta，入口cursor、step BPM和result bits来自公共production owner。
 - terminal fault：fault前非法delta保留`director.invalid-delta-time`；fault后合法、NaN、±Infinity、负delta及其他非允许API均返回同一锁存失败，连续snapshot全对象不变、dispose允许。
-- Slide invisible 独立复现：root=120、child=170 时，adjusted=0/119/120/160/169 均错误把 cursor 从 0 推到 1；普通/HABAHIRO production分别有89/27个首child为invisible的Slide root，首例在root equal时即可复现提前推进。
+- Slide invisible：AL10覆盖root/child前一Float32与equal；AL19逐对象覆盖普通89、HABAHIRO 27个首child为invisible的Slide root；AL22覆盖non-finite原子失败。
+- 提交后独立复现：root=120、child=170时，adjusted=0/119保持Move+cursor0，120/160/169保持Wait+cursor0，170才cursor 0→1且仅一条skip；root/current child两个adjusted调用点均发生。
 - 未运行 Vite、Tauri 或 GarupaEditor 整体构建，符合任务书限制。
 
 ## 7. 持续非阻断边界
@@ -246,7 +249,7 @@ node tmp/simulator-reverse-evidence/auto-live/verify.mjs --index
 
 ## 8. 下一阶段硬门
 
-Auto Live 第七次审计未通过；**当前不得进入下一阶段。** 以下手动输入硬门只在 A07/A10 修复并重新关闭 Auto Live 后恢复适用。
+Auto Live第七次最终重验收已通过；以下下一阶段硬门恢复适用。
 
 下一阶段只允许按整体计划进入“手动输入与判定”。开始生产实现前必须：
 
