@@ -1,6 +1,6 @@
 # 模拟器 Auto Live 阶段验收记录
 
-> **2026-07-29 第七次最终独立重验收：通过。** Slide invisible 与 visible current child 现统一先执行 E15 adjusted-position/finite gate；AL10覆盖root/child前一Float32与equal，AL19逐对象覆盖普通89个、HABAHIRO 27个首child为invisible的production Slide root。完整A10、Reverse verifier、index、独立topology及提交后临时产物复现全部通过。
+> **2026-07-29 第八次独立审计：未通过，A03/A10 重新打开。** 公共host创建时虽拒绝非法模式，但 `InGameCalculatedData` 保存调用者 `playMode` 对象引用；合法创建后可把原对象改为 Skill/mode14/其他模式并改变生产路由。现有 AL22 只覆盖创建时非法值。G01–G22、G19 fault、G21 topology、G22 replay 与 Slide E15 修复保持有效。
 
 ## 1. 验收身份
 
@@ -38,10 +38,11 @@
 - 第六次最终重验收：本文件所在提交
 - 第七次审计重开：`49a8371`
 - Slide invisible position gate修复：`c6bc9c6`
-- 第七次最终重验收：本文件所在提交
+- 第七次最终重验收：`1007e4d`
+- 第八次审计重开：本文件所在提交
 - 验收日期：2026-07-28
 - 最终验收日期：2026-07-29
-- 验收结论：**通过。A00–A10完成，Auto Live阶段关闭；手动输入阶段仍须先建立独立Reverse证据硬门。**
+- 验收结论：**未通过。A03/A10 未完成，Auto Live 阶段重新打开；在模式所有权修复并全量重验收前不得进入手动输入阶段。**
 
 ## 2. 证据硬门与冻结包
 
@@ -91,14 +92,14 @@ auto-live evidence verified: candidates=30, final=72, supplement=G11-G22, cases=
 | A00 阶段任务书 | 通过 | 范围、硬门、证据候选、22 项测试矩阵、提交和完成定义完整 |
 | A01 静态证据晋升 | 通过 | 首版 43 条加补充 24 文件；`cd84d2ce` 关闭 Multiple，`7a0540dc` 从 committed pass-2 冻结 exact cursor identity |
 | A02 固定事件 oracle | 通过 | G01–G22 closed（G18被G21 supersede）；首版11、补充14 case及4个actual replay投影 |
-| A03 模式与上下文 | 通过 | 宿主强制显式 `manual`/`auto-live`；mode14/debug/未知 transform 拒绝 |
+| A03 模式与上下文 | **未通过** | 创建时校验有效，但owner保存调用者对象别名；创建后可切换kind/transform并绕过failure-closed边界 |
 | A04 Long/Slide 运行图 | 通过 | 普通/特殊 terminal 联合验证；root 父拥有共享 child；缺 terminal、重复身份、非递增源序拒绝；父回池清 graph/current |
 | A05 Single/Flick | 通过 | Normal/Flick/standalone Directional 保持；Multiple 继承 ±500，并按完整 playable source-order run 提交唯一 note type 10 |
 | A06 Long | 通过 | head `>=`、tail `>`、linked finish→tail、active pause/resume、回收；head/tail 第六槽 native failure state 均冻结 |
 | A07 Slide | 通过 | terminal/Stop/Reset/第六槽保持；invisible/visible current统一先过E15 adjusted-position/finite gate，before/equal和单次粒度闭合 |
 | A08 OneFrame | 通过 | 固定 5 槽；117/84 个 production run 的唯一 callback count；visual helper 不判定 |
 | A09 调度生命周期 | 通过 | 公共step于director delta校验前检查fault；AL16覆盖合法、NaN、±Infinity与负delta，全部返回锁存失败 |
-| A10 生产 oracle | 通过 | exact/adaptive/topology保持；AL10纠正并覆盖before/equal，AL19全量覆盖普通89/HABAHIRO 27个首invisible root cursor timing |
+| A10 生产 oracle | **未通过** | exact/adaptive/topology/Slide仍有效，但AL01/AL22缺公共host创建后模式别名突变回归 |
 
 ## 4. 已落地的生产边界
 
@@ -118,6 +119,7 @@ type SimulatorPlayMode =
 - 不存在隐式默认模式。
 - `InGameCalculatedData.isAutoPlay` 只在显式 Auto Live 分支为 true。
 - mode 14、debug Force Perfect、任意 `forcePerfect: boolean` 捷径和未知 result transform 均返回 `evidence-required`。
+- **开放缺口：** 上述校验只发生在创建时；owner保存调用者对象引用。创建后修改原对象会改变 `isAutoPlay`/snapshot/判定路由，未知 Skill transform 不再失败关闭。
 - manual crossing 不进入 Auto Force Perfect；真实触摸、手动窗口和普通 timeout Miss 仍失败关闭/后置。
 
 ### 4.2 Single、Flick 与 Directional

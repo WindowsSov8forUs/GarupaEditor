@@ -10,7 +10,7 @@
 - 锁定原作样本：`jp.co.craftegg.band` 10.1.3（version code 229，`arm64-v8a`）。
 - 上游已验收阶段：第一切片、谱面构造、时钟与调度。
 - 上游时钟调度验收提交：GarupaEditor `78414bc`，关闭记录修订提交 `ca84258`。
-- 当前状态：**第七次最终独立重验收已通过，A00–A10 完成，Auto Live 阶段关闭。Slide invisible 与 visible current child 现统一先执行 E15 adjusted-position/finite gate；AL10覆盖root/child前一Float32与equal，AL19逐对象覆盖普通89个、HABAHIRO 27个首child为invisible的production Slide root。完整A10、Reverse verifier、证据index、独立topology再生成和提交后临时产物复现均通过。下一阶段只能先建立“手动输入与判定”的独立Reverse证据硬门。**
+- 当前状态：**第八次独立审计已重新打开 A03/A10，Auto Live 阶段未关闭。`createSimulatorEngine` 只在创建时校验 `playMode`，随后 `InGameCalculatedData` 保存调用者对象引用；调用者可在创建后把合法 identity Auto Live 对象改为 `resultTransform="skill"`，生产 snapshot 直接出现未表示值，`initialize/step` 仍成功并产生 Auto Perfect。现有 AL22 只覆盖创建时非法值，未覆盖校验后别名突变。G01–G22、A04–A09、G19 fault、G21 topology、G22 replay 与 Slide E15 修复保持有效，但在规范化模式所有权并重建 A10 前禁止进入手动输入阶段。**
 - 最终验收记录：`tmp/simulator-auto-live-acceptance.md`。
 - 已冻结证据包：`tmp/simulator-reverse-evidence/auto-live/`。
 
@@ -40,6 +40,7 @@
 9. 可视粒子、判定音和 Flick 手指特效属于后续渲染/音频阶段。本阶段只恢复它们之前的 Flick 判定路由和可记录调用边界。
 10. A02 前发现的任何不一致均失败关闭；不得选择“更像正确”的一个 JSON、沿用 Python 原型默认值或以生产谱面恰好未触发来绕过硬门。
 11. E15 的 current-child position gate 位于 intermediate/terminal 处理之前；portable Slide runtime 必须对 invisible 与 visible current child 同样先执行有限值检查和 `adjusted < child.absolutePos` 返回。invisible 只表示到点后不提交 OneFrame 并单次推进 cursor，不表示可绕过 crossing。
+12. 宿主校验成功后的 `playMode` 必须由引擎持有规范化不可变副本；不得保存调用者对象引用，也不得通过 `InGameCalculatedData.playMode` 暴露可修改的内部状态。调用者在 `createSimulatorEngine` 返回后修改原对象不能改变 manual/Auto Live、mode14/debug 或 result-transform 路由。
 
 ### 1.3 执行进度
 
@@ -48,14 +49,14 @@
 | A00 建立阶段任务书 | 已完成 | 范围、证据候选、硬门、实现批次和验收矩阵写入本文档 |
 | A01 晋升 Auto Live 静态证据 | 补充完成 | Reverse `cd84d2ce` 补齐 Multiple/visual ARM64，`7a0540dc` 补齐 committed offset cursor identity；冻结 R09–R16 |
 | A02 生成固定事件 oracle 并关闭缺口 | 第五次补充完成，代码门解除 | Reverse `c2dc5c7f` 以 G22 增加 committed exact delta/BMS replay与 adaptive full outer-frame identity |
-| A03 接入 Auto Live 模式与判定上下文 | 已完成 | 显式模式本身不需改动；补充证据现可由 A05–A10 消费 |
+| A03 接入 Auto Live 模式与判定上下文 | **重新打开** | 已验证 `playMode` 仍保留调用者可变别名；创建后可绕过未知 transform/mode failure-closed 边界 |
 | A04 建立 Long/Slide 运行子图 | 修复完成 | 普通生产 Slide 由 terminal child + root after type 联合识别；父 Deactive 时按 R02 清 child graph/current，复用重建共享身份 |
 | A05 恢复 Single/Flick Force Perfect | 已完成 | Multiple owner 遍历完整 playable source order；其他 family/equal button 断组，method fixture 精确通过 |
 | A06 恢复 Long 分阶段完成 | 已完成 | head/tail 第六槽保留 native Wait/linked order，并由 manager terminal fault 阻止重试 |
 | A07 恢复 Slide 分阶段完成 | **修复完成** | invisible 与 visible current 统一先过 E15 adjusted-position/finite gate；synthetic 与 production 首 invisible child before/equal 回归通过 |
 | A08 恢复 Auto Live OneFrame 填充与聚合 | 已完成 | 117/84 source-order run 的唯一 note type 10/count、混合 batch 与五槽行为通过独立固定 oracle |
 | A09 接入调度、暂停与生命周期 | 已完成 | 公共step/pause/resume/getAdjusted/initialize均先服从fault；AL16覆盖合法与非法delta |
-| A10 生产 oracle 与阶段验收 | **已完成** | 提交后完整 A10、Reverse verifier/index、独立 topology 与 Slide position-gate 临时产物复现全部通过 |
+| A10 生产 oracle 与阶段验收 | **重新打开** | AL22 仅覆盖创建时非法模式，缺合法创建后原对象突变的公共 host 回归与提交后全量重验收 |
 
 ### 1.4 批次记录
 
@@ -338,6 +339,14 @@
 - 提交后临时编译产物独立驱动production `NoteSlide`：root=120、invisible child=170时，adjusted 0/119保持Move+cursor0，120/160/169保持Wait+cursor0，170才cursor 0→1/judged/单次skip；fresh Move→OnUpdate 调用同时恢复 root 与 current child 两个原作 adjusted 调用点。
 - AL19对普通89个、HABAHIRO 27个首child为invisible的production Slide逐对象验证root equal、child前一Float32、child equal；AL22锁定non-finite invisible原子失败。旧“最终全部Deactive”不再代替中间cursor时序。
 - 第七次复核未发现新的required-before-close缺口。A07/A10与阶段完成勾选恢复；手动输入、分数/状态消费、表现层和主程序接入继续保持后置硬门。
+
+#### 2026-07-29 第三十五批：第八次独立审计与模式所有权重开
+
+- 完整 A10、AL01–AL22、Reverse verifier、证据 source/copy/index 与独立 Multiple topology 再生成仍全部绿色，但公共宿主输入所有权审计发现：`validatePlayMode` 成功后把原 `input.runtime.playMode` 对象直接传入 `InGameCalculatedData`，后者长期保存并读取同一引用。
+- 临时编译产物通过正式 `createSimulatorEngine` 复现：以合法 `{kind:"auto-live", resultTransform:"identity-no-active-situation-skill"}` 创建后，把原对象改为 `resultTransform="skill"`；snapshot 随即报告 `isAutoPlay=true/resultTransform="skill"`，`initialize` 与两次 `step(1/60)` 均成功，Normal crossing 仍产生 Auto Perfect OneFrame。
+- 该路径违反 A03 第4/5项和 G06：unknown Skill transform 应失败关闭，不得在一次性校验后通过可变别名进入生产owner。相同根因还允许 manual→auto、auto→manual、mode14/未知 kind 在创建后改变路由。
+- AL22 当前只把初始非法对象传给 `createSimulatorEngine`，没有在合法创建后修改原对象；TypeScript `readonly` 与 `private readonly` 只固定类型/引用，不冻结对象内容，因此旧绿色结论无法承担生命周期模式身份。
+- 本轮只纠正文档完成度，不改生产代码。A03/A10 与阶段关闭结论撤销；G01–G22、A04–A09及既有 exact/topology/fault/Slide 结论不受影响。下一批在校验时生成规范化不可变模式值，并补公共host别名突变回归。
 
 ## 2. 固定范围
 
@@ -767,10 +776,11 @@ Reflect 只可输出：
 3. `getIsAutoPlay` 只开放 Auto Live 分支；manual 返回 false，mode14/debug 来源不表示。
 4. 绑定 G06 允许的 identity result-transform 上下文。
 5. 非法模式、缺字段、未知 transform 失败关闭。
+6. 校验成功后只把规范化不可变模式值交给 `InGameCalculatedData`；不保留调用者输入对象别名，getter 也不得暴露可修改内部引用。
 
 **证据**：E01–E06、R01–R05、U03。
 
-**验收**：manual 与 auto-live 使用同一 chart/clock，只有 auto-live 在 crossing 进入 Force Perfect；未触发真实输入。
+**验收**：manual 与 auto-live 使用同一 chart/clock，只有 auto-live 在 crossing 进入 Force Perfect；未触发真实输入。合法创建后修改原 `playMode` 对象或从 owner getter 取得的值，均不能改变已验证模式、transform、snapshot 或 crossing 路由。
 
 ### A04 建立 Long/Slide 运行子图
 
@@ -914,7 +924,7 @@ Reflect 只可输出：
 
 | ID | 场景 | 必须断言 | 证据 |
 | --- | --- | --- | --- |
-| AL01 | Manual vs Auto Live | 同 chart/clock 只有 Auto 在 crossing Force Perfect | E01–E06、R02/R03 |
+| AL01 | Manual vs Auto Live | 同 chart/clock 只有 Auto 在 crossing Force Perfect；校验后的模式身份不受调用者/owner getter别名突变影响 | E01–E06、R02/R03 |
 | AL02 | B=-5/0/+5 | adjusted crossing 复用 tempo-aware 1/60 路径 | E02–E05、E30、U03 |
 | AL03 | Normal before/equal/after | `<` 不判，`>=` 同次 MoveState Perfect，后续不重复 | E01–E03、R02 |
 | AL04 | 同位置 Normal | 反向根 Update 决定 Setup 请求顺序，池序 Reflect | U03、E24/E26、R03 |
@@ -1026,7 +1036,7 @@ A10 前不运行 Vite、Tauri 或 GarupaEditor 整体构建。
 - [x] Reverse G19–G22 补充证据提交已锁定；G18 明确 superseded，新 `auto_live_gate = closed` 且 `blocking_findings = []`。
 - [x] E02/E05/E30 的内部哈希修订链已闭合，无 stale source profile。
 - [x] 补充后的固定事件轨迹覆盖 Multiple Directional、Stop、pause、BPM boundary 与精确 B±5 bits，并可在 Reverse 离线重复生成；GarupaEditor 不调用 Python。
-- [x] Auto Live 模式显式接入，manual/mode14/debug 路由没有混淆。
+- [ ] Auto Live 模式显式接入，manual/mode14/debug 路由没有混淆；**当前调用者可在创建后修改原 `playMode` 对象并绕过 result-transform/mode 校验。**
 - [x] Normal/Flick/standalone Directional/Multiple Directional 的 adjusted crossing、事件数、source-order run state 和顺序匹配。
 - [x] Long 头/尾比较符号、父子顺序、状态、active pause 与回收匹配。
 - [x] Slide 头/中间/终端/Stop、current/selected cursor 和单次调用粒度匹配 frozen trace；invisible/visible current均先执行E15 position gate。
@@ -1037,9 +1047,9 @@ A10 前不运行 Vite、Tauri 或 GarupaEditor 整体构建。
 - [x] 普通与 HABAHIRO production Normal/Flick/Directional/Multiple/Long/Slide 回归通过，并以独立 oracle 验证 production group，不由待测函数生成 expected；首invisible Slide child crossing/cursor timing逐对象覆盖89/27个root。
 - [x] 第一切片、谱面构造和时钟调度全部隔离回归通过，并补齐fault后全部公共`step`输入优先级回归。
 - [x] `engine/` 依赖边界通过。
-- [x] `tmp/simulator-auto-live-acceptance.md` 已按 G19–G22、actual production replay、公共 `step` 修复与 Slide invisible position gate 结果再次重建并通过。
+- [ ] `tmp/simulator-auto-live-acceptance.md` 已按 G19–G22、actual production replay、公共 `step`、Slide invisible position gate 与模式所有权结果再次重建并通过。
 - [x] 未修改主程序入口、编辑器控制器、窗口协议、渲染或音频实现。
-- [x] 新的 Slide invisible position-gate 修复已推送；最终验收文档按同一纪律提交推送并确认远端与 HEAD 为 `0 0`。
+- [ ] 新的模式所有权修复与最终验收文档已按同一纪律提交推送并确认远端与 HEAD 为 `0 0`。
 
 阶段关闭后，下一阶段只允许按整体计划进入“手动输入与判定”。如果 AL21 中任一手动输入分支仍无实体证据，则下一阶段必须先建立对应设备采证硬门，不能沿用 Auto Live 的 Force Perfect 结果绕过手动判定。
 
