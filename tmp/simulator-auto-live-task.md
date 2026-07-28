@@ -48,12 +48,12 @@
 | A01 晋升 Auto Live 静态证据 | 已完成 | Reverse `a3f28d77` 提交 43 个最终 contract/切片文件；GarupaEditor 冻结 E01–E30 与 R01–R08/R05.D01–D35 |
 | A02 生成固定事件 oracle 并关闭缺口 | 已完成，硬门关闭 | G01–G10 closed；固定轨迹两次生成一致；5 槽、Flick 参数、Long/Slide 粒度与失败矩阵闭合 |
 | A03 接入 Auto Live 模式与判定上下文 | 已完成 | 显式 `manual`/`auto-live` 判别联合、最小 `InGameCalculatedData` 与 identity result-transform 门已接入 |
-| A04 建立 Long/Slide 运行子图 | 重新打开 | 普通生产 Slide 的 `afterNoteType=None` 必须由真实 terminal child 识别；父回池时须按 R02 deactivate/reset child graph |
+| A04 建立 Long/Slide 运行子图 | 修复完成 | 普通生产 Slide 由 terminal child + root after type 联合识别；父 Deactive 时按 R02 清 child graph/current，复用重建共享身份 |
 | A05 恢复 Single/Flick Force Perfect | 已完成 | `NoteSingleBase` adjusted crossing、Normal 一次提交、Flick Began→synthetic Moved 与 Directional ±500 路由已恢复 |
 | A06 恢复 Long 分阶段完成 | 已完成 | head `>=`、tail `>`、父拥有 linked after、Wait/Stop 更新与失活顺序已恢复 |
-| A07 恢复 Slide 分阶段完成 | 重新打开，等待 A04 修复 | 普通/Flick/Directional/Multiple terminal、Stop route、deactivate/reset 与复用轨迹必须直接匹配生产图和 R02 |
+| A07 恢复 Slide 分阶段完成 | 修复完成 | terminal note type 8/5/6/7、Stop intermediate route、普通/特殊 terminal、deactivate/reset 与复用已恢复 |
 | A08 恢复 Auto Live OneFrame 填充与聚合 | 已完成 | 固定 5 槽、first-unused、原子 Setup、池序 projection、空帧/耗尽/清除语义已恢复 |
-| A09 接入调度、暂停与生命周期 | 重新打开，等待 A07 修复 | 需补 active Long/Slide 暂停、父回池 Reset、pool reuse 与 active graph dispose 验收 |
+| A09 接入调度、暂停与生命周期 | 可重新验收 | 需以已修复运行图完成 active Slide 暂停、父回池 Reset、pool reuse 与 active graph dispose 验收 |
 | A10 生产 oracle 与阶段验收 | 重新打开，等待 A09 | AL19 不得合并谱面后过滤普通 Slide；AL20 必须消费 HABAHIRO Slide；旧验收结论已撤销 |
 
 ### 1.4 批次记录
@@ -142,6 +142,16 @@
 - `NoteSlide.afterNoteJudge @ 0x321F874` 还确认 terminal note type 映射为普通 8、Flick 5、Directional 6、Multiple Directional 7；现实现把 Directional 错写为 7，须一并修正。
 - 旧 Auto Live 22 组与全部上游隔离测试仍通过，说明测试存在盲区而非问题不存在；阶段完成勾选和验收结论现已撤销。
 - 本轮只纠正文档完成度，不改生产代码；下一批先修 A04/A07，再补 A09/A10 production/reuse/pause/dispose oracle。
+
+#### 2026-07-28 第十批：A04/A07 生产 Slide 与回池修复
+
+- `NoteSlide.activate` 不再把普通 terminal 的合法 `afterNoteType=None` 当成缺图；改为联合验证 root after type 与最后共享 child 的 `gameNoteType`：普通 A/B→note type 8、Flick A/B→5、Directional 左右→6、Multiple Directional 左右→7，非法组合继续失败关闭。
+- 普通 `SlideEndA/B`、Flick、Directional 和 Multiple Directional synthetic contract 均覆盖精确 terminal note type；修正了旧实现把 Directional terminal 错写为 7 的问题。
+- `NoteBase` 增加 derived deactivation hook；Long/Slide 父进入 Deactive/回池时先从根 active list 移除，再按 R02 清 linked/list child、judged 状态、current pointer 与 terminal mapping。dispose 仍执行同一清理且幂等。
+- Long/Slide snapshot 增加最小 child graph 投影，用于审计 parent ownership、shared source identity、current、terminal mapping、judged 与 Deactive cleanup；未加入 fixture/evidence/case ID。
+- Stop Force Perfect 按 `forcePerfectStopState` 的 intermediate judge 虚槽固定提交 phase intermediate、note type 8，不再把 selected terminal 错走 after-note tail route或提前使父失活。
+- 生产图审计确认普通谱面 93/93、HABAHIRO 51/51 个 Slide root 均可直接激活；两个 production chart 的普通 Slide 可逐 current 完成并在 terminal 后清 graph。
+- 模拟器隔离 TypeScript 与修订后的 Auto Live 22 组通过；A09/A10 仍需完成全部上游回归、证据 index 校验和最终文档重建。
 
 ## 2. 固定范围
 

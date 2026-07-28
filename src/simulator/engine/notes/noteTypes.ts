@@ -5,6 +5,7 @@ import {
 } from "../evidence";
 import {
   AfterNoteType,
+  GameNoteType,
   type AfterNoteTypeValue,
   type NoteInformation,
 } from "../chart/types";
@@ -249,6 +250,24 @@ export class NoteLong extends NoteFrontBase {
     return ok(undefined);
   }
 
+  override snapshot() {
+    return {
+      ...super.snapshot(),
+      linkedAfter: this.afterNoteValue === null
+        ? null
+        : {
+            absolutePosition: this.afterNoteValue.absolutePosition,
+            afterNoteType: this.afterNoteValue.afterNoteType,
+            judged: this.afterNoteValue.judged,
+          },
+    };
+  }
+
+  protected override onDeactivated(): void {
+    this.afterNoteValue?.resetForParentDeactivation();
+    this.afterNoteValue = null;
+  }
+
   protected override onResetForDispose(): void {
     this.afterNoteValue = null;
     this.autoLiveTraceValue.length = 0;
@@ -258,6 +277,7 @@ export class NoteLong extends NoteFrontBase {
 export class NoteSlide extends NoteFrontBase {
   private afterNotesValue: readonly SlideAfterRuntime[] = [];
   private currentAfterIndexValue = 0;
+  private terminalJudgeNoteTypeValue: 5 | 6 | 7 | 8 | null = null;
   private readonly autoLiveTraceValue: SlideAutoLiveTraceEntry[] = [];
 
   get afterNotes(): readonly SlideAfterRuntime[] {
@@ -279,10 +299,10 @@ export class NoteSlide extends NoteFrontBase {
   override activate(noteInformation: NoteInformation): SimulatorResult<void> {
     this.afterNotesValue = [];
     this.currentAfterIndexValue = 0;
+    this.terminalJudgeNoteTypeValue = null;
     this.autoLiveTraceValue.length = 0;
     if (
       !noteInformation.isSlideNoteHead ||
-      !isSlideTerminalAfterType(noteInformation.afterNoteType) ||
       noteInformation.slideNoteList.length === 0
     ) {
       return evidenceRequired(
@@ -293,6 +313,23 @@ export class NoteSlide extends NoteFrontBase {
     }
     const seen = new Set<NoteInformation>();
     const afterNotes: SlideAfterRuntime[] = [];
+    const terminalSource = noteInformation.slideNoteList[
+      noteInformation.slideNoteList.length - 1
+    ];
+    if (terminalSource === undefined) {
+      return evidenceRequired(
+        "auto-live.invalid-slide-after-graph",
+        ["R01", "R02", "R04", "U01"],
+        `Slide root ${noteInformation.index} has no terminal source node.`,
+      );
+    }
+    const terminalJudgeNoteType = resolveSlideTerminalJudgeNoteType(
+      noteInformation.afterNoteType,
+      terminalSource.gameNoteType,
+    );
+    if (terminalJudgeNoteType.status !== "ok") {
+      return terminalJudgeNoteType;
+    }
     let previousPosition = noteInformation.absolutePos;
     for (let index = 0; index < noteInformation.slideNoteList.length; index += 1) {
       const source = noteInformation.slideNoteList[index];
@@ -310,10 +347,16 @@ export class NoteSlide extends NoteFrontBase {
       seen.add(source);
       previousPosition = source.absolutePos;
       const isTerminal = index === noteInformation.slideNoteList.length - 1;
-      afterNotes.push(new SlideAfterRuntime(source, index, isTerminal));
+      afterNotes.push(new SlideAfterRuntime(
+        source,
+        index,
+        isTerminal,
+        isTerminal ? terminalJudgeNoteType.value : null,
+      ));
     }
     this.afterNotesValue = afterNotes;
     this.currentAfterIndexValue = 0;
+    this.terminalJudgeNoteTypeValue = terminalJudgeNoteType.value;
     return super.activate(noteInformation);
   }
 
@@ -397,10 +440,8 @@ export class NoteSlide extends NoteFrontBase {
     }
     const submitted = runtime.value.submitJudgement({
       noteInformation: selected.source,
-      phase: selected.isTerminal ? "tail" : "intermediate",
-      noteType: selected.isTerminal
-        ? slideTerminalJudgeNoteType(noteInformation.afterNoteType)
-        : 8,
+      phase: "intermediate",
+      noteType: 8,
       absolutePosition: selected.source.absolutePos,
     });
     if (submitted.status !== "ok") {
@@ -414,9 +455,7 @@ export class NoteSlide extends NoteFrontBase {
       kind: "slide-stop-perfect",
       afterIndex: selected.sourceIndex,
     });
-    return selected.isTerminal
-      ? this.changeState(NoteState.Deactive)
-      : ok(undefined);
+    return ok(undefined);
   }
 
   protected override onUpdate(_deltaTimeSeconds: number): SimulatorResult<void> {
@@ -499,7 +538,7 @@ export class NoteSlide extends NoteFrontBase {
       noteInformation: current.source,
       phase,
       noteType: current.isTerminal
-        ? slideTerminalJudgeNoteType(noteInformation.afterNoteType)
+        ? current.terminalJudgeNoteType ?? this.terminalJudgeNoteTypeValue ?? 8
         : 8,
       absolutePosition: current.source.absolutePos,
     });
@@ -525,7 +564,34 @@ export class NoteSlide extends NoteFrontBase {
   protected override onResetForDispose(): void {
     this.afterNotesValue = [];
     this.currentAfterIndexValue = 0;
+    this.terminalJudgeNoteTypeValue = null;
     this.autoLiveTraceValue.length = 0;
+  }
+
+  override snapshot() {
+    return {
+      ...super.snapshot(),
+      currentAfterIndex: this.currentAfterIndexValue,
+      terminalJudgeNoteType: this.terminalJudgeNoteTypeValue,
+      afterNodes: this.afterNotesValue.map((after) => ({
+        sourceIndex: after.sourceIndex,
+        noteIndex: after.source.index,
+        absolutePosition: after.source.absolutePos,
+        isInvisible: after.source.isInvisible,
+        isTerminal: after.isTerminal,
+        terminalJudgeNoteType: after.terminalJudgeNoteType,
+        judged: after.judged,
+      })),
+    };
+  }
+
+  protected override onDeactivated(): void {
+    for (const after of this.afterNotesValue) {
+      after.resetForParentDeactivation();
+    }
+    this.afterNotesValue = [];
+    this.currentAfterIndexValue = 0;
+    this.terminalJudgeNoteTypeValue = null;
   }
 }
 
@@ -623,6 +689,10 @@ export class LongAfterRuntime {
     this.judgedValue = true;
     return ok(undefined);
   }
+
+  resetForParentDeactivation(): void {
+    this.judgedValue = false;
+  }
 }
 
 export class SlideAfterRuntime {
@@ -632,6 +702,7 @@ export class SlideAfterRuntime {
     readonly source: NoteInformation,
     readonly sourceIndex: number,
     readonly isTerminal: boolean,
+    readonly terminalJudgeNoteType: 5 | 6 | 7 | 8 | null,
   ) {}
 
   get judged(): boolean {
@@ -648,6 +719,10 @@ export class SlideAfterRuntime {
     }
     this.judgedValue = true;
     return ok(undefined);
+  }
+
+  resetForParentDeactivation(): void {
+    this.judgedValue = false;
   }
 }
 
@@ -694,26 +769,60 @@ function longAfterJudgeNoteType(afterNoteType: AfterNoteTypeValue): number {
   }
 }
 
-function slideTerminalJudgeNoteType(afterNoteType: AfterNoteTypeValue): number {
-  switch (afterNoteType) {
-    case AfterNoteType.SlideFlickEnd:
-      return 5;
-    case AfterNoteType.SlideDirectionalFlickEndLeft:
-    case AfterNoteType.SlideDirectionalFlickEndRight:
-    case AfterNoteType.SlideMultipleDirectionalFlickLeft:
-    case AfterNoteType.SlideMultipleDirectionalFlickRight:
-      return 7;
-    default:
-      return 8;
-  }
-}
-
 function isLongAfterType(afterNoteType: AfterNoteTypeValue): boolean {
   return afterNoteType >= AfterNoteType.Normal
     && afterNoteType <= AfterNoteType.MultipleDirectionalFlickRight;
 }
 
-function isSlideTerminalAfterType(afterNoteType: AfterNoteTypeValue): boolean {
-  return afterNoteType >= AfterNoteType.SlideEnd
-    && afterNoteType <= AfterNoteType.SlideMultipleDirectionalFlickRight;
+function resolveSlideTerminalJudgeNoteType(
+  afterNoteType: AfterNoteTypeValue,
+  terminalGameNoteType: NoteInformation["gameNoteType"],
+): SimulatorResult<5 | 6 | 7 | 8> {
+  if (
+    afterNoteType === AfterNoteType.None &&
+    (terminalGameNoteType === GameNoteType.SlideEndA ||
+      terminalGameNoteType === GameNoteType.SlideEndB)
+  ) {
+    return ok(8);
+  }
+  if (
+    afterNoteType === AfterNoteType.SlideFlickEnd &&
+    (terminalGameNoteType === GameNoteType.SlideEndFlickA ||
+      terminalGameNoteType === GameNoteType.SlideEndFlickB)
+  ) {
+    return ok(5);
+  }
+  if (
+    afterNoteType === AfterNoteType.SlideDirectionalFlickEndLeft &&
+    (terminalGameNoteType === GameNoteType.SlideADirectionalFlickLeft ||
+      terminalGameNoteType === GameNoteType.SlideBDirectionalFlickLeft)
+  ) {
+    return ok(6);
+  }
+  if (
+    afterNoteType === AfterNoteType.SlideDirectionalFlickEndRight &&
+    (terminalGameNoteType === GameNoteType.SlideADirectionalFlickRight ||
+      terminalGameNoteType === GameNoteType.SlideBDirectionalFlickRight)
+  ) {
+    return ok(6);
+  }
+  if (
+    afterNoteType === AfterNoteType.SlideMultipleDirectionalFlickLeft &&
+    (terminalGameNoteType === GameNoteType.SlideADirectionalFlickLeftAdd ||
+      terminalGameNoteType === GameNoteType.SlideBDirectionalFlickLeftAdd)
+  ) {
+    return ok(7);
+  }
+  if (
+    afterNoteType === AfterNoteType.SlideMultipleDirectionalFlickRight &&
+    (terminalGameNoteType === GameNoteType.SlideADirectionalFlickRightAdd ||
+      terminalGameNoteType === GameNoteType.SlideBDirectionalFlickRightAdd)
+  ) {
+    return ok(7);
+  }
+  return evidenceRequired(
+    "auto-live.invalid-slide-terminal-graph",
+    ["R02", "R03", "R04", "U01"],
+    `Slide terminal mapping is not confirmed (afterNoteType=${afterNoteType}, terminalGameNoteType=${terminalGameNoteType}).`,
+  );
 }

@@ -90,6 +90,7 @@ export class NoteBase {
       this.lifecycleCallbacks?.onActivate(this);
     } else if (previousState !== NoteState.Deactive && nextState === NoteState.Deactive) {
       this.lifecycleCallbacks?.onDeactivate(this);
+      this.onDeactivated();
     }
 
     return ok(undefined);
@@ -157,6 +158,8 @@ export class NoteBase {
   }
 
   protected onResetForDispose(): void {}
+
+  protected onDeactivated(): void {}
 
   protected get autoLiveRuntime(): SimulatorResult<NoteAutoLiveRuntime> {
     if (this.autoLiveRuntimeValue === null) {
