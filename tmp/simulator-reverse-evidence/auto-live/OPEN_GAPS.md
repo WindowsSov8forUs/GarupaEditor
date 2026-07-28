@@ -15,7 +15,7 @@ G01–G17 保持关闭。第三次审计的 G19/G20 由 Reverse `24706edcb02155f
 第五次实现审计发现两个 required-before-close 阻断；第 1 项已由 GarupaEditor 生产修复关闭，第 2 项所需证据现由 G22 关闭，生产消费与重验收仍待完成：
 
 1. **已关闭：** `SimulatorEngineHost.pause/resume` 现于 idempotent shortcut 前检查 fault；host 级全部非允许 API、只读 snapshot 与 dispose 均有测试。
-2. **证据已关闭、实现待完成：** Reverse `97e31b774c49bf1613a59d5cfd0a9cf4c323fa86` 以 G22 冻结两个 normalized trace 的 frame 1–991/317 Float32 delta bits 与 committed CC08 BMS；只允许经 production engine重放并调用 `getAdjustedMusicPosition`，禁止 expected BPM、private cursor/BPM lookup与删除 outer frame。
+2. **证据已关闭、实现已消费、待阶段重验收：** Reverse `c2dc5c7f37718a170c9e9b93d5a86b42e9d1a2ab` 以 G22 冻结两个 normalized trace 的 frame 1–991/317 Float32 delta bits 与 committed CC08 BMS；生产测试现经 engine重放并调用 `getAdjustedMusicPosition`，不再使用 expected BPM、private cursor/BPM lookup或删除 outer frame。
 
 G22 同时固定 adaptive method fixture在一个 setup outer frame后于 full manager outer-frame index 1 判定。GarupaEditor冻结包含 `auto-live-actual-replay.json` 与逐字节相同的 `653_ikuoku_easy.bms.txt`；A10代码门已解除，但 actual replay测试通过前阶段仍不能关闭。
 

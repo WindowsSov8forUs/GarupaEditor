@@ -1,6 +1,6 @@
 # 模拟器 Auto Live 阶段验收记录
 
-> **2026-07-29 第五次独立审计：第四次验收结论已撤销。** G21 topology与A09 fault lifecycle保留；Reverse G22已冻结 exact production replay与adaptive outer-frame identity，但A10测试尚未消费。本文后续“通过”表格仅保留为被撤销历史。
+> **2026-07-29 第五次独立审计：第四次验收结论已撤销。** A09 host fault与A10 G22 actual replay修复现已通过定向测试；全量A10回归和最终独立复核完成前，本文仍保持撤销状态。
 
 ## 1. 验收身份
 
@@ -8,7 +8,7 @@
 - 阶段任务书：`tmp/simulator-auto-live-task.md`
 - 锁定原作样本：`jp.co.craftegg.band` 10.1.3（version code 229），`arm64-v8a`
 - Auto Live Reverse 首版 contract 提交：`a3f28d77e71c5e7a62cab0de81f0cf668a5b745b`
-- Auto Live Reverse 最终补充证据提交：`97e31b774c49bf1613a59d5cfd0a9cf4c323fa86`
+- Auto Live Reverse 最终补充证据提交：`c2dc5c7f37718a170c9e9b93d5a86b42e9d1a2ab`
 - GarupaEditor 最终证据冻结提交：`76f39cb`
 - 模式与运行子图提交：`ac7b3d0`
 - Single/Flick Force Perfect 提交：`00cc5f6`
@@ -87,7 +87,7 @@ auto-live evidence verified: candidates=30, final=68, supplement=G11-G21, cases=
 | A07 Slide | 通过 | source-order、terminal 8/5/6/7、Stop、Reset、单次粒度；head 第六槽 Wait 状态冻结 |
 | A08 OneFrame | 通过 | 固定 5 槽；117/84 个 production run 的唯一 callback count；visual helper 不判定 |
 | A09 调度生命周期 | 修复完成，待重验收 | direct manager与公共 host均先检查 fault；非允许 API返回同一失败，snapshot连续只读、dispose允许 |
-| A10 生产 oracle | **撤销** | topology与production family coverage保留；exact offset未由 production owner执行，AL02仍注入 expected BPM，adaptive比较删除 outer frame |
+| A10 生产 oracle | 修复完成，待重验收 | exact三例由committed delta/BMS驱动production engine并调用公共owner；adaptive保留outer frame全对象比较 |
 
 ## 4. 已落地的生产边界
 
@@ -219,9 +219,9 @@ node tmp/simulator-reverse-evidence/auto-live/verify.mjs --index
 - Auto Live：AL01–AL22 共 22 组通过。
 - 依赖边界：每个隔离测试入口后通过。
 - Auto Live 证据包：`candidates=30, final=68, supplement=G11-G21, cases=14, gate=closed, index=checked`。
-- 固定 oracle：首版 11 case 与补充 14 case均被读取，但 exact offset与 adaptive outer-frame尚未按 G20 完整消费，不能称为 canonical actual全对象比较。
+- 固定 oracle：首版11 case、补充14 case与G22 replay均被读取；exact offset与adaptive outer-frame现已按production trace完整消费，待全量复核后恢复结论。
 - production topology oracle：独立生成器不导入/调用待测 `groupMultipleDirectionalInformationList`；固定 JSON 对两个 BMS 的 SHA-256、batch/position、source slot、note/button/game type 逐对象比较，离线再生成字节一致。
-- adaptive/offset：substep/state/slot大部分来自 runtime trace；但比较前删除 outer frame。exact AL02仍把 frozen `step_bpms` 输入计算，三个 exact case也没有调用指定 production owner，本条第四次验收结论撤销。
+- adaptive/offset：substep/state/slot/outer frame来自manager trace并全对象比较；exact三例逐frame重放committed delta，入口cursor、step BPM和result bits来自公共production owner。
 - 未运行 Vite、Tauri 或 GarupaEditor 整体构建，符合任务书限制。
 
 ## 7. 持续非阻断边界

@@ -156,6 +156,13 @@ export class InGameMusicScoreController {
     } else {
       const committedBpm = this.currentBpmValue;
       for (let index = 0; index < -offsetFrames; index += 1) {
+        if (recordTempoQueries) {
+          this.tempoQueryTraceValue.push({
+            queryIndex: this.tempoQueryTraceValue.length,
+            position: absolutePosition(cursor),
+            bpm: committedBpm,
+          });
+        }
         cursor = rewindPosition(
           cursor.bar,
           cursor.beatProgress,

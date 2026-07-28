@@ -10,7 +10,7 @@
 - 锁定原作样本：`jp.co.craftegg.band` 10.1.3（version code 229，`arm64-v8a`）。
 - 上游已验收阶段：第一切片、谱面构造、时钟与调度。
 - 上游时钟调度验收提交：GarupaEditor `78414bc`，关闭记录修订提交 `ca84258`。
-- 当前状态：**第五次审计重开的 A09 已修复；Reverse `97e31b774c49bf1613a59d5cfd0a9cf4c323fa86` 以 G22 冻结 exact production replay 输入与 adaptive outer-frame identity，A10 代码门已解除但实际消费/重验收尚未完成。修复前禁止进入手动输入阶段。**
+- 当前状态：**第五次审计重开的 A09 已修复；Reverse `c2dc5c7f37718a170c9e9b93d5a86b42e9d1a2ab` 以 G22 冻结 exact production replay 输入与 adaptive outer-frame identity，A10 代码门已解除，生产消费已实现但全量重验收尚未完成。完成前禁止进入手动输入阶段。**
 - 待重建验收记录：`tmp/simulator-auto-live-acceptance.md`。
 - 已冻结证据包：`tmp/simulator-reverse-evidence/auto-live/`。
 
@@ -46,7 +46,7 @@
 | --- | --- | --- |
 | A00 建立阶段任务书 | 已完成 | 范围、证据候选、硬门、实现批次和验收矩阵写入本文档 |
 | A01 晋升 Auto Live 静态证据 | 补充完成 | Reverse `cd84d2ce` 补齐 Multiple/visual ARM64，`7a0540dc` 补齐 committed offset cursor identity；冻结 R09–R16 |
-| A02 生成固定事件 oracle 并关闭缺口 | 第五次补充完成，代码门解除 | Reverse `97e31b77` 以 G22 增加 committed exact delta/BMS replay与 adaptive full outer-frame identity |
+| A02 生成固定事件 oracle 并关闭缺口 | 第五次补充完成，代码门解除 | Reverse `c2dc5c7f` 以 G22 增加 committed exact delta/BMS replay与 adaptive full outer-frame identity |
 | A03 接入 Auto Live 模式与判定上下文 | 已完成 | 显式模式本身不需改动；补充证据现可由 A05–A10 消费 |
 | A04 建立 Long/Slide 运行子图 | 修复完成 | 普通生产 Slide 由 terminal child + root after type 联合识别；父 Deactive 时按 R02 清 child graph/current，复用重建共享身份 |
 | A05 恢复 Single/Flick Force Perfect | 已完成 | Multiple owner 遍历完整 playable source order；其他 family/equal button 断组，method fixture 精确通过 |
@@ -54,7 +54,7 @@
 | A07 恢复 Slide 分阶段完成 | 已完成 | head 第六槽状态与 terminal fault boundary 精确覆盖 |
 | A08 恢复 Auto Live OneFrame 填充与聚合 | 已完成 | 117/84 source-order run 的唯一 note type 10/count、混合 batch 与五槽行为通过独立固定 oracle |
 | A09 接入调度、暂停与生命周期 | 修复完成，待阶段重验收 | 公共 host shortcut 已移到 fault 检查之后；全部非允许 API 返回锁存失败，snapshot只读、dispose允许 |
-| A10 生产 oracle 与阶段验收 | 重新打开，G22代码门已解除 | topology oracle保留；须消费新 replay，删除 expected BPM/private lookup，让 exact owner与 adaptive全字段比较通过 |
+| A10 生产 oracle 与阶段验收 | 修复完成，待全量重验收 | G22 replay经production owner精确通过；expected BPM/private lookup与outer字段删除均已移除 |
 
 ### 1.4 批次记录
 
@@ -279,7 +279,13 @@
 
 - 复核已提交 pass2 原始来源确认并非只有输出：run-025/run-026 normalized adaptive trace逐 frame保存 `delta_time_bits`，同目录还提交了原始 `653_ikuoku_easy.bms.txt`。只读实验用 frame 1–991 bits驱动当前 production engine，精确到达 `bar=15, beat=0x433B5B1C`，随后真实 `getAdjustedMusicPosition(+5)` 返回 `0x45401EF9` 与五步 `99.5×4→95.5`；因此无需 private seed或新设备采集。
 - Reverse supplement新增 `auto_live_actual_replay.json`、生成器与字节保持 BMS；G22锁定 +5 frame991、-5/0 frame317 的完整 Float32 delta序列，禁止 expected BPM、private cursor write/private BPM call。adaptive method fixture锁定一个 setup outer frame后 judgement full manager index为1，禁止删除 outer字段。
-- Reverse `97e31b774c49bf1613a59d5cfd0a9cf4c323fa86` 已推送 main `0 0`；GarupaEditor冻结新增 R17–R20 与两个 fixture alias，final entry由68增至72。A10代码门解除，生产测试尚待下一批消费。
+- Reverse `97e31b77` 冻结主体，`c2dc5c7f37718a170c9e9b93d5a86b42e9d1a2ab` 将 substep 禁令精确限定为 adaptive case；最终提交已推送 main `0 0`。GarupaEditor冻结新增 R17–R20 与两个 fixture alias，final entry由68增至72。A10代码门解除。
+
+#### 2026-07-29 第二十七批：A10 actual owner 与完整 adaptive projection
+
+- AL02删除 `plusFive.step_bpms` 算术输入；canonical exact 三例现在读取 G22 delta bits与冻结 CC08 BMS，逐 frame调用正式 `engine.step`，从 production snapshot观察 entry bar/beat bits，再调用公共 `engine.getAdjustedMusicPosition`。+5 精确得到 `0x433B5B1C → [99.5,99.5,99.5,99.5,95.5] → 0x45401EF9`；-5精确得到 `0x3EE8E000 → 99.5×5 → 0x446E7494`；0返回identity且无step trace。
+- music score observation补充负 offset每步 committed BPM与cursor记录；该记录不改变 SlowAbsolutePos算术，peek仍不记录。测试不再调用 private `bpmAtPosition`，不再直接调用 `advancePosition/rewindPosition` 重放 exact expected。
+- adaptive canonical由 G22输入 delta/position驱动，substep来自 manager trace；frozen原轨迹只由 G22补充 full lifecycle `outer_frame=1`，actual/expected直接全对象 deep-equal，不再删除字段。
 
 ## 2. 固定范围
 
@@ -972,9 +978,9 @@ A10 前不运行 Vite、Tauri 或 GarupaEditor 整体构建。
 - [x] Long 头/尾比较符号、父子顺序、状态、active pause 与回收匹配。
 - [x] Slide 头/中间/终端/Stop、current/selected cursor 和单次调用粒度匹配 frozen trace。
 - [x] Long/Slide after 子图保持构造共享身份并由父对象独占更新。
-- [ ] OneFrame 固定 5 槽、first-unused、Setup、Multiple note type/count 边界、池序 Reflect、清除与 Note-level exhaustion 失败状态匹配；manager 已匹配，但公共 host resume 仍绕过 fault。
+- [x] OneFrame 固定 5 槽、first-unused、Setup、Multiple note type/count 边界、池序 Reflect、清除与 Note-level exhaustion 失败状态匹配；manager与公共host fault边界均匹配。
 - [x] unknown 分数/生命/技能/音频/粒子字段没有零值或 no-op 伪实现。
-- [ ] 同位置、actual adaptive 多子步、Long/Slide/Multiple 暂停、空帧和失败关闭全部通过新 oracle；exact offset owner 与 adaptive outer-frame 尚未闭合。
+- [x] 同位置、actual adaptive 多子步、Long/Slide/Multiple 暂停、空帧和失败关闭全部通过新 oracle；exact offset owner与adaptive full outer-frame均直接消费G22。
 - [x] 普通与 HABAHIRO production Normal/Flick/Directional/Multiple/Long/Slide 回归通过，并以独立 oracle 验证 production group，不由待测函数生成 expected。
 - [x] 第一切片、谱面构造和时钟调度全部隔离回归通过。
 - [x] `engine/` 依赖边界通过。

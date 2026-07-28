@@ -40,6 +40,22 @@ const productionMultipleOraclePath = join(
   testingRoot,
   "autoLiveProductionMultipleOracle.json",
 );
+const actualReplayPath = join(
+  repositoryRoot,
+  "tmp",
+  "simulator-reverse-evidence",
+  "auto-live",
+  "fixtures",
+  "auto-live-actual-replay.json",
+);
+const actualReplayChartPath = join(
+  repositoryRoot,
+  "tmp",
+  "simulator-reverse-evidence",
+  "auto-live",
+  "fixtures",
+  "auto-live-actual-replay-chart.txt",
+);
 
 function validateAutoLive() {
   const simulatorRoot = join(outputRoot, "src", "simulator");
@@ -59,7 +75,7 @@ function validateAutoLive() {
     "managers",
     "inGameOneFrameJudgementController.js",
   ));
-  const { InGameMusicScoreController, advancePosition, rewindPosition } = require(join(
+  const { InGameMusicScoreController } = require(join(
     simulatorRoot,
     "engine",
     "managers",
@@ -113,6 +129,10 @@ function validateAutoLive() {
   );
   assert.equal(productionMultipleOracle.status,
     "fixed-independent-source-order-production-oracle");
+  const actualReplay = JSON.parse(readFileSync(actualReplayPath, "utf8"));
+  assert.equal(actualReplay.status, "confirmed-committed-production-replay-input");
+  assert.equal(actualReplay.production_owner,
+    "InGameMusicScoreController.getAdjustedMusicPosition");
   assert.equal(oracle.status, "confirmed-static-contract-fixed-offline-oracle");
   assert.equal(failureOracle.status, "confirmed-failure-closed-matrix");
   const oracleCases = new Map(oracle.cases.map((entry) => [entry.case_id, entry]));
@@ -256,7 +276,9 @@ function validateAutoLive() {
     const positive = music.getAdjustedMusicPosition(5);
     assert(negative < identity && identity < positive);
     const traceBeforePeek = music.snapshot().tempoQueryTrace;
-    assert.equal(traceBeforePeek.length, 5);
+    assert.equal(traceBeforePeek.length, 10);
+    assert.equal(traceBeforePeek.slice(0, 5).every((entry) => entry.bpm === 120), true);
+    assert.equal(traceBeforePeek.slice(5).every((entry) => entry.bpm === 120), true);
     assert.equal(music.peekAdjustedMusicPosition(5), positive);
     assert.deepEqual(music.snapshot().tempoQueryTrace, traceBeforePeek,
       "read-only adjusted-position peek must not append observation entries");
@@ -282,25 +304,8 @@ function validateAutoLive() {
     assert.deepEqual(secondSnapshot, firstSnapshot);
     assert.equal(secondSnapshot.managers.musicScore.tempoQueryTrace.length, 0);
     ok(snapshotHost.dispose(), "snapshot purity host dispose");
-    const plusFive = supplementCases.get("offset-plus5-cross-bpm-exact");
-    let cursor = {
-      bar: plusFive.entry_music_cursor.bar,
-      beatProgress: plusFive.entry_music_cursor.beat_progress.value,
-    };
-    for (const bpm of plusFive.step_bpms) {
-      cursor = advancePosition(cursor.bar, cursor.beatProgress, bpm, Math.fround(1 / 60));
-    }
-    const crossedBpmResult = Math.fround(
-      Math.fround(cursor.beatProgress) + 192 * cursor.bar,
-    );
-    assert.equal(float32Bits(crossedBpmResult),
-      plusFive.result_adjusted_position.bits);
-    assert.equal(crossedBpmResult, plusFive.result_adjusted_position.value);
-    const minusFive = supplementCases.get("offset-minus5-cross-bar-exact");
-    const zero = supplementCases.get("offset-zero-identity-exact");
-    assert.equal(float32Bits(minusFive.result_adjusted_position.value), "0x446E7494");
-    assert.equal(float32Bits(zero.result_adjusted_position.value),
-      zero.entry_music_absolute_position.bits);
+    assert.equal(actualReplay.offset_replays.length, 3);
+    assert.equal(actualReplay.forbidden_test_inputs.includes("expected-step-bpms"), true);
   });
 
   test("AL03", "Normal 在 before 保持 Move、equal 同次 Update Perfect", () => {
@@ -1687,17 +1692,20 @@ function validateAutoLive() {
     );
     {
       const caseId = "adaptive-substeps-one-outer-reflect";
+      const replay = actualReplay.adaptive_method_replay;
       const integration = schedulerIntegration({
         batches: [300, 301, 302].map((index) => batch(
           120 + index - 300,
           [normalInfo(index, 120 + index - 300)],
         )),
         bpmChangeCount: 1,
-        positions: [119, 120, 121, 122],
+        positions: replay.input_adjusted_positions,
       });
       ok(integration.manager.initialize(), "canonical adaptive initialize");
-      ok(integration.manager.execUpdate(0.001), "canonical adaptive activate");
-      ok(integration.manager.execUpdate(0.04), "canonical adaptive outer frame");
+      ok(integration.manager.execUpdate(float32FromBits(replay.input_delta_time_bits[0])),
+        "canonical adaptive activate");
+      ok(integration.manager.execUpdate(float32FromBits(replay.input_delta_time_bits[1])),
+        "canonical adaptive outer frame");
       const batchValue = integration.oneFrame.getReflectOneFrameData();
       const managerSnapshot = integration.manager.snapshot();
       const scheduler = managerSnapshot.noteManager.schedulerTrace;
@@ -1740,11 +1748,15 @@ function validateAutoLive() {
           note_indices: batchValue.entries.map((entry) => entry.noteIndex),
         },
       ));
-      const expected = oracleCases.get(caseId).steps;
-      assert.equal(frame.outerFrameIndex, 1,
+      const expected = oracleCases.get(caseId).steps.map((entry) => ({
+        ...entry,
+        outer_frame: replay.judgement_outer_frame_index,
+      }));
+      assert.equal(frame.outerFrameIndex, replay.judgement_outer_frame_index,
         "adaptive outer frame identity must come from NoteManager trace");
-      assert.deepEqual(actual.map(({ outer_frame: _outer, ...entry }) => entry),
-        expected.map(({ outer_frame: _outer, ...entry }) => entry));
+      assert.deepEqual(judgedUpdates.map((entry) => entry.substepIndex),
+        replay.expected_substep_indices);
+      assert.deepEqual(actual, expected);
       assert.deepEqual(
         supplementCases.get("actual-adaptive-scheduler-observation-requirements")
           .must_be_observed_from_runtime,
@@ -2106,119 +2118,76 @@ function validateAutoLive() {
       assertSteps("pause-active-slide-pending-slot-freeze", actual);
     }
 
-    const exactOffsetProjection = (
-      expected,
-      resultValue,
-      stepBpms,
-      crossedBar,
-      crossedBpm,
-    ) => ({
-      settings: {
-        judgement_adjust_value_b: expected.settings.judgement_adjust_value_b,
-        ...(Object.hasOwn(expected.settings, "frames_argument")
-          ? { frames_argument: Math.abs(expected.settings.judgement_adjust_value_b) }
-          : {}),
-      },
-      entry_music_cursor: {
-        bar: expected.entry_music_cursor.bar,
-        beat_progress: adjustedPosition(expected.entry_music_cursor.beat_progress.value),
-      },
-      entry_music_absolute_position:
-        adjustedPosition(expected.entry_music_absolute_position.value),
-      ...(stepBpms === null ? {} : { step_bpms: stepBpms }),
-      result_adjusted_position: adjustedPosition(resultValue),
-      ...(crossedBar === null ? {} : { crossed_bar: crossedBar }),
-      ...(crossedBpm === null ? {} : { crossed_bpm: crossedBpm }),
-      ...(Object.hasOwn(expected, "step_count")
-        ? { step_count: expected.settings.judgement_adjust_value_b === 0 ? 0 : NaN }
-        : {}),
-    });
-    {
-      const expected = supplementCases.get("offset-plus5-cross-bpm-exact");
-      const tempoCommand = normalInfo(890, 3072, {
-        buttonType: types.ButtonType.None,
-        buttonTypes: [types.ButtonType.None],
-        buttonTypesArray: [types.ButtonType.None],
-        ccNum: 8,
-        bpm: 95.5,
-        bpmString: "95.5",
-      });
-      const music = new InGameMusicScoreController(
-        fixture.chart([batch(3072, [tempoCommand])], 99.5),
-      );
-      let cursor = {
-        bar: expected.entry_music_cursor.bar,
-        beatProgress: expected.entry_music_cursor.beat_progress.value,
-      };
-      for (let step = 0; step < expected.settings.frames_argument; step += 1) {
-        const bpm = music.bpmAtPosition(Math.fround(cursor.beatProgress + 192 * cursor.bar));
-        cursor = advancePosition(cursor.bar, cursor.beatProgress, bpm, Math.fround(1 / 60));
+    const replayExactOffset = (caseId) => {
+      const expected = supplementCases.get(caseId);
+      const replay = actualReplay.offset_replays.find((entry) =>
+        entry.case_id === caseId);
+      assert(replay, `missing G22 replay ${caseId}`);
+      assert.equal(replay.delta_time_bits.length, replay.target_frame_id);
+      const chart = ok(construction.createNoteBatchInformationList({
+        musicScoreData: readFileSync(actualReplayChartPath, "utf8"),
+      }), `G22 replay chart ${caseId}`);
+      const engine = ok(createSimulatorEngine({
+        chart,
+        runtime: {
+          highFrequencyMode: false,
+          judgeOffsetFrames: replay.judge_offset_frames,
+          playMode: {
+            kind: "auto-live",
+            resultTransform: "identity-no-active-situation-skill",
+          },
+        },
+      }, createRecordingSimulatorBackends()), `G22 replay engine ${caseId}`);
+      ok(engine.initialize(), `G22 replay initialize ${caseId}`);
+      for (const [frameIndex, deltaBits] of replay.delta_time_bits.entries()) {
+        ok(engine.step(float32FromBits(deltaBits)),
+          `G22 replay ${caseId} frame ${frameIndex + 1}`);
       }
-      const actualBpms = music.snapshot().tempoQueryTrace.map((entry) => entry.bpm);
-      const result = Math.fround(cursor.beatProgress + 192 * cursor.bar);
-      assert.deepEqual(
-        exactOffsetProjection(expected, result, actualBpms,
-          cursor.bar !== Math.trunc(expected.entry_music_absolute_position.value / 192),
-          actualBpms.some((bpm) => bpm !== actualBpms[0])),
-        {
-          settings: expected.settings,
-          entry_music_cursor: expected.entry_music_cursor,
-          entry_music_absolute_position: expected.entry_music_absolute_position,
-          step_bpms: expected.step_bpms,
-          result_adjusted_position: expected.result_adjusted_position,
-          crossed_bar: expected.crossed_bar,
-          crossed_bpm: expected.crossed_bpm,
+      const entry = ok(engine.snapshot(), `G22 replay entry ${caseId}`);
+      const traceStart = entry.managers.musicScore.tempoQueryTrace.length;
+      const result = ok(engine.getAdjustedMusicPosition(),
+        `G22 production owner ${caseId}`);
+      const after = ok(engine.snapshot(), `G22 replay result ${caseId}`);
+      const stepBpms = after.managers.musicScore.tempoQueryTrace
+        .slice(traceStart)
+        .map((trace) => trace.bpm);
+      const actual = {
+        settings: {
+          judgement_adjust_value_b: replay.judge_offset_frames,
+          ...(replay.judge_offset_frames === 0
+            ? {}
+            : { frames_argument: Math.abs(replay.judge_offset_frames) }),
         },
-      );
-    }
-    {
-      const expected = supplementCases.get("offset-minus5-cross-bar-exact");
-      const music = new InGameMusicScoreController(fixture.chart([], 99.5));
-      let cursor = {
-        bar: expected.entry_music_cursor.bar,
-        beatProgress: expected.entry_music_cursor.beat_progress.value,
+        entry_music_cursor: {
+          bar: entry.managers.musicScore.bar,
+          beat_progress: adjustedPosition(entry.managers.musicScore.beatProgress),
+        },
+        entry_music_absolute_position:
+          adjustedPosition(entry.managers.musicScore.musicPosition),
+        ...(replay.judge_offset_frames === 0 ? {} : { step_bpms: stepBpms }),
+        result_adjusted_position: adjustedPosition(result),
+        ...(replay.judge_offset_frames === 0
+          ? { step_count: stepBpms.length }
+          : {
+              crossed_bar:
+                Math.trunc(result / 192) !== entry.managers.musicScore.bar,
+              crossed_bpm:
+                stepBpms.some((bpm) => bpm !== stepBpms[0]),
+            }),
       };
-      const actualBpms = [];
-      for (let step = 0; step < expected.settings.frames_argument; step += 1) {
-        const bpm = music.snapshot().currentBpm;
-        actualBpms.push(bpm);
-        cursor = rewindPosition(cursor.bar, cursor.beatProgress, bpm, Math.fround(1 / 60));
-      }
-      const result = Math.fround(cursor.beatProgress + 192 * cursor.bar);
-      assert.deepEqual(
-        exactOffsetProjection(expected, result, actualBpms,
-          cursor.bar !== Math.trunc(expected.entry_music_absolute_position.value / 192),
-          false),
-        {
-          settings: expected.settings,
-          entry_music_cursor: expected.entry_music_cursor,
-          entry_music_absolute_position: expected.entry_music_absolute_position,
-          step_bpms: expected.step_bpms,
-          result_adjusted_position: expected.result_adjusted_position,
-          crossed_bar: expected.crossed_bar,
-          crossed_bpm: expected.crossed_bpm,
-        },
-      );
-    }
-    {
-      const expected = supplementCases.get("offset-zero-identity-exact");
-      assert.deepEqual(
-        exactOffsetProjection(
-          expected,
-          Math.fround(expected.entry_music_absolute_position.value),
-          null,
-          null,
-          null,
-        ),
-        {
-          settings: expected.settings,
-          entry_music_cursor: expected.entry_music_cursor,
-          entry_music_absolute_position: expected.entry_music_absolute_position,
-          result_adjusted_position: expected.result_adjusted_position,
-          step_count: expected.step_count,
-        },
-      );
-    }
+      const {
+        case_id: _caseId,
+        evidence: _evidence,
+        source_note: _sourceNote,
+        ...expectedProjection
+      } = expected;
+      assert.deepEqual(actual, expectedProjection,
+        `${caseId} production-owner exact trace`);
+      ok(engine.dispose(), `G22 replay dispose ${caseId}`);
+    };
+    replayExactOffset("offset-plus5-cross-bpm-exact");
+    replayExactOffset("offset-minus5-cross-bar-exact");
+    replayExactOffset("offset-zero-identity-exact");
   }
 }
 
@@ -2271,6 +2240,13 @@ function float32Bits(value) {
   const buffer = new ArrayBuffer(4);
   new DataView(buffer).setFloat32(0, value, false);
   return `0x${new DataView(buffer).getUint32(0, false).toString(16).toUpperCase().padStart(8, "0")}`;
+}
+
+function float32FromBits(bits) {
+  assert.match(bits, /^0x[0-9A-F]{8}$/);
+  const buffer = new ArrayBuffer(4);
+  new DataView(buffer).setUint32(0, Number.parseInt(bits.slice(2), 16), false);
+  return new DataView(buffer).getFloat32(0, false);
 }
 
 function ok(result, label) {
