@@ -1,6 +1,6 @@
 # 模拟器 Auto Live 阶段验收记录
 
-> **2026-07-28 第二次关闭后复审修订：最终通过。** Stop/pause/Multiple 缺口由 Reverse `cd84d2ce84243e8b864d08d7fe0fbeeb041eb79a` 关闭；canonical 复核发现的 rounded absolute 无法还原内部 cursor 问题又由 `7a0540dc867a759db929842ebe95ca9665a61b65` 的 G17 关闭。GarupaEditor R09–R16 冻结包、Multiple 核心实现和 19 case 完整 deep-equal 已共同重建本文结论。
+> **2026-07-29 第三次独立审计：验收结论撤销。** 当前 Multiple 以 source-order run 代替 frozen contract 的 connected component，普通 production 13 个 batch 多出 19 个 judgement；Long/Slide 第六槽失败留下半状态；adaptive/offset canonical 含测试侧 substep/BPM 输入。A02/A05/A08/A09/A10 重新打开。本文后续“通过”表格仅保留为被撤销历史，不得用于证明阶段完成。
 
 ## 1. 验收身份
 
@@ -24,17 +24,19 @@
 - 第二次最终重验收：本文件所在提交
 - exact cursor G17 与 canonical 全轨迹重验收：本文件所在提交
 - 验收日期：2026-07-28
-- 验收结论：**通过。A00–A10 在补充证据与第二次修复后完成，Auto Live 阶段重新关闭；进入手动输入前仍须建立独立设备证据硬门。**
+- 验收结论：**已撤销。Auto Live 阶段未完成，G18–G20、生产修复和重验收完成前禁止进入手动输入阶段。**
 
 ## 2. 证据硬门与冻结包
 
-Reverse 最终 `closure.json` 记录：
+现有 Reverse G01–G17 `closure.json` 历史记录仍为：
 
 ```text
 overall_status = confirmed
 auto_live_gate = closed
 blocking_findings = []
 ```
+
+但第三次审计新增 G18–G20 后，该历史 closure 不再满足当前任务书关闭条件；新补充 closure 提交前，GarupaEditor 任务门按 `required-before-code` 处理。
 
 G01–G10 已全部关闭：
 

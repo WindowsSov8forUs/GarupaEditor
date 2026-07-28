@@ -25,11 +25,11 @@
 
 时钟与调度验收记录位于 `tmp/simulator-clock-scheduling-acceptance.md`。S01–S10 已完成。
 
-Auto Live A00–A10 已在第二次关闭后复审补证与修复后重新完成。Reverse `cd84d2ce` 关闭 Multiple/Stop/pause，`7a0540dc` 以 committed bar+beat bits 关闭 rounded absolute 无法还原 cursor 的 G17；冻结 R09–R16/G11–G17。首版 11 与补充 8 case 均以 actual canonical trace 完整 `deepEqual`。普通 195、HABAHIRO 220 个核心 Multiple、50 个 standalone Directional、144 个 Slide root 与普通 656 batch 全谱通过；HABAHIRO 唯一 visual helper 继续 presentation `evidence-required`，不冒充 core judgement。任务书与最终验收记录分别位于 `tmp/simulator-auto-live-task.md`、`tmp/simulator-auto-live-acceptance.md`。
+Auto Live 第三次独立审计已撤销阶段完成结论。现 Multiple 分组按 source-order run，而冻结证据要求相邻 button 图的 connected component：普通 production 13 个 batch 多出 19 个 judgement；Long/Slide 在 OneFrame 第六槽失败后留下 Wait/伪 linked trace；adaptive/offset canonical 仍有测试侧 substep/BPM 输入。A02/A05/A08/A09/A10 已重新打开，G18–G20 关闭前禁止生产修复和手动输入阶段。任务书与已撤销验收记录分别位于 `tmp/simulator-auto-live-task.md`、`tmp/simulator-auto-live-acceptance.md`。
 
 OneFrame 容量现在由原作证据固定为 5，不再接受宿主或测试容量配置。公开的 `OneFrameJudgementBatch` 仅包含本阶段闭合的 Auto Live 判定字段，不是原作完整 `OneFrameTotalData`。分数、Power、生命、Skill/Fever、音频、粒子、渲染和 HUD 字段在类型上保持缺席，而不是填零。
 
-当前下一阶段边界重新回到“手动输入与判定”。真实触摸、Multiple Directional 距离阈值、手指所有权、判定窗口、普通 timeout Miss、释放和 Hold 行为在独立设备证据硬门关闭前继续 `evidence-required`；BackLine/Sprite/音频/粒子仍后置，Auto Live 完成不表示这些能力或主程序接入已经恢复。
+当前仍停留在 Auto Live 补证与修复阶段，尚不能进入“手动输入与判定”。真实触摸、Multiple Directional 距离阈值、手指所有权、判定窗口、普通 timeout Miss、释放和 Hold 行为继续 `evidence-required`；BackLine/Sprite/音频/粒子仍后置。
 
 `src/simulator/engine` 不依赖 React、Pixi、Tauri、DOM、编辑器谱面类型或窗口协议。宿主 API 是 GarupaEditor 的可移植边界，不宣称属于原作接口。
 

@@ -10,8 +10,8 @@
 - 锁定原作样本：`jp.co.craftegg.band` 10.1.3（version code 229，`arm64-v8a`）。
 - 上游已验收阶段：第一切片、谱面构造、时钟与调度。
 - 上游时钟调度验收提交：GarupaEditor `78414bc`，关闭记录修订提交 `ca84258`。
-- 当前状态：**A00–A10 已在第二次关闭后复审补证与修复后重新完成。Reverse `cd84d2ce84243e8b864d08d7fe0fbeeb041eb79a` 关闭 G11–G16，`7a0540dc867a759db929842ebe95ca9665a61b65` 又关闭 exact cursor identity 的 G17；GarupaEditor 冻结 67 个 final entry。首版 11 case 与补充 8 case 现均以 canonical actual trace `deepEqual`，415 个核心 Multiple、Stop、三类 active pause、精确 offset/BPM、普通 production 全谱和 visual helper 边界全部重验收。`auto_live_gate = closed`、`blocking_findings = []`。**
-- 最终验收记录：`tmp/simulator-auto-live-acceptance.md`。
+- 当前状态：**第三次独立审计已撤销 A00–A10 完成结论。A01/A03/A04 保留；A02、A05、A08、A09、A10 重新打开，A06/A07 的成功路径保留但失败原子性随 A09 重验。阻断项：production Multiple 必须按相邻 button 图的 connected component 分组，当前 source-order run 在普通谱面 13 个 batch 多产生 19 个 judgement；Long/Slide 在第六槽失败时留下 Wait/伪 trace；adaptive/offset canonical 仍混有测试侧 substep/BPM 输入。G18–G20 补证关闭前禁止继续生产修复，禁止进入手动输入阶段。**
+- 待重建验收记录：`tmp/simulator-auto-live-acceptance.md`。
 - 已冻结证据包：`tmp/simulator-reverse-evidence/auto-live/`。
 
 ### 1.1 阶段目标
@@ -46,15 +46,15 @@
 | --- | --- | --- |
 | A00 建立阶段任务书 | 已完成 | 范围、证据候选、硬门、实现批次和验收矩阵写入本文档 |
 | A01 晋升 Auto Live 静态证据 | 补充完成 | Reverse `cd84d2ce` 补齐 Multiple/visual ARM64，`7a0540dc` 补齐 committed offset cursor identity；冻结 R09–R16 |
-| A02 生成固定事件 oracle 并关闭缺口 | 补充完成，代码硬门关闭 | G11–G17 closed；8 个补充 case 覆盖 Multiple、Stop、Long/Slide pause、B±5 exact bits/cursor 与 positive cross-BPM |
+| A02 生成固定事件 oracle 并关闭缺口 | 重新打开，G18–G20 硬门 | 须冻结非 lane-order Multiple connected component、OneFrame exhaustion 后 Note/manager 失败状态、actual scheduler canonical trace |
 | A03 接入 Auto Live 模式与判定上下文 | 已完成 | 显式模式本身不需改动；补充证据现可由 A05–A10 消费 |
 | A04 建立 Long/Slide 运行子图 | 修复完成 | 普通生产 Slide 由 terminal child + root after type 联合识别；父 Deactive 时按 R02 清 child graph/current，复用重建共享身份 |
-| A05 恢复 Single/Flick Force Perfect | 补充实现完成 | 核心 Multiple 继承 Directional synthetic ±500，按相邻 button group 只提交一次 note type 10；side root 失活不重复判定 |
-| A06 恢复 Long 分阶段完成 | 重验收完成 | 头尾、回池、active Long pause/resume、equal/strict-greater 与 final Deactive 对照补充 oracle 通过 |
-| A07 恢复 Slide 分阶段完成 | 重验收完成 | 普通/特殊 terminal、Reset、Stop before/equal/current advance 对照补充 oracle 通过 |
-| A08 恢复 Auto Live OneFrame 填充与聚合 | 补充实现完成 | 五槽 payload 不伪造 count 字段；Setup trace 记录 confirmed Multiple callback count，visual helper 明确后置且不冒充 core judgement |
-| A09 接入调度、暂停与生命周期 | 重验收完成 | Long/Slide/Multiple pause、resume 无补步、pending slot、active dispose、group side-used 与失败原子通过 |
-| A10 生产 oracle 与阶段验收 | 重验收完成 | 两个 BMS 六类 core family、50 standalone Directional、415 core Multiple、144 Slide root 通过；普通 production 全谱完成 |
+| A05 恢复 Single/Flick Force Perfect | 重新打开，等待 A02 | Normal/Flick/standalone Directional 保留；Multiple owner 必须由 source-order run 改为 confirmed connected component |
+| A06 恢复 Long 分阶段完成 | 成功路径保留，失败路径待重验 | head/tail/pause/reuse 保留；第六槽失败后的 Wait/linked trace 不能继续宣称原子 |
+| A07 恢复 Slide 分阶段完成 | 成功路径保留，失败路径待重验 | terminal/Stop/Reset 保留；head 第六槽失败后停在 Wait，须按 G19 边界处理 |
+| A08 恢复 Auto Live OneFrame 填充与聚合 | 重新打开，等待 A05 | 控制器五槽保留；须重验每个 physical component 唯一 note type 10/count 与混合 batch 槽序 |
+| A09 接入调度、暂停与生命周期 | 重新打开，等待 A02/A08 | 须实现并测试 step fault latch/rollback、半激活 batch、Long/Slide/Multiple failure state |
+| A10 生产 oracle 与阶段验收 | 重新打开，等待 A09 | production group 测试当前与实现共用分组函数；adaptive substep 与 offset BPM 尚非 end-to-end actual trace |
 
 ### 1.4 批次记录
 
@@ -222,6 +222,14 @@
 - 测试新增独立 canonical recorder：首版 11 case 与补充 8 case 的全部 `steps`/offset projection 由实际 Note 状态、Flick/Long/Slide/Multiple trace、OneFrame slots/payload/Reflect、manager pause cursor 与生产 Float32 advance/rewind 生成后直接 `assert.deepEqual`；不从 expected 填缺失字段、不排序事件、不使用 epsilon。
 - canonical runner 同时暴露并修正测试覆盖问题：Slide terminal deactivation 后生产 Reset 会把公开 cursor 清零，因此判定前后 cursor 由本次实际 selected-node transition 记录，而不是拿回池快照冒充判定瞬间。生产行为未改；仅将 Long 已有 Auto trace纳入快照并公开既有纯函数 `rewindPosition` 供相同算法双向 bits 审计。
 - Auto Live 22 组末尾额外输出 `fixed oracle canonical traces deep-equal actual runtime projections`；A02/A10 在 G17 冻结与完整 deep-equal 通过后重新关闭。
+
+#### 2026-07-29 第十九批：第三次独立审计与阶段重开
+
+- 冻结 supplement contract 明确要求“相同 game type、相邻 button 建边后每个 connected component 一个 runtime owner”；当前 `groupMultipleDirectionalInformationList` 却按筛选后的 source order 只比较前一项。普通 production 位置 1424 的 `[1,2,0]` 被拆为 `[1,2] + [0]`，同帧实际产生两条 note type 10，而证据图应为 `[0,1,2]` 一组。
+- 全谱只读审计：普通 195 个 core Multiple 当前形成 108 个 judgement group，按 connected component 应为 89，13 个 batch 分组不一致并多出 19 个 judgement；HABAHIRO 220 个 root 的当前 84 组恰与 component 规则一致。AL19 使用待测分组函数生成 expected group，再注入测试 owner，因此无法发现普通谱面错误。
+- 五槽满时直接驱动真实 Note：Long/Slide head 均先 `Move→Wait` 再因 `one-frame.pool-exhausted` 返回，head payload 缺失且无法重试；Long tail 还会在提交失败前追加 `long-linked-after-finish`，但 linked judged 仍为 false。现 failure matrix 只验证控制器前五槽保留，未关闭 Note/step 后续状态。
+- canonical runner 的 simultaneous/adaptive case 直接调用独立 Note 并由测试传入 `substep=[0,1,2]`；真实 AL14 只比较 note index 和 Reflect 次数。offset case又把 `expected.step_bpms` 作为 `advancePosition/rewindPosition` 输入。故“19 case 全部 actual canonical、无 expected-side 输入”表述不成立。
+- A02/A05/A08/A09/A10 与阶段完成勾选撤销；A06/A07 仅保留成功路径。计划新增 G18（connected-component production topology）、G19（OneFrame exhaustion 后 portable terminal failure boundary）、G20（actual scheduler/tempo-query canonical trace）。G18–G20 Reverse 提交、冻结与 verifier 关闭前不改生产代码。
 
 ## 2. 固定范围
 
@@ -906,23 +914,23 @@ A10 前不运行 Vite、Tauri 或 GarupaEditor 整体构建。
 
 只有以下条件全部满足，Auto Live 阶段才能关闭：
 
-- [x] Reverse Auto Live 补充证据提交已锁定，新 `auto_live_gate = closed` 且 `blocking_findings = []`。
+- [ ] Reverse G18–G20 补充证据提交已锁定，新 `auto_live_gate = closed` 且 `blocking_findings = []`。
 - [x] E02/E05/E30 的内部哈希修订链已闭合，无 stale source profile。
 - [x] 补充后的固定事件轨迹覆盖 Multiple Directional、Stop、pause、BPM boundary 与精确 B±5 bits，并可在 Reverse 离线重复生成；GarupaEditor 不调用 Python。
 - [x] Auto Live 模式显式接入，manual/mode14/debug 路由没有混淆。
-- [x] Normal/Flick/standalone Directional/Multiple Directional 的 adjusted crossing、事件数、group state 和顺序匹配。
+- [ ] Normal/Flick/standalone Directional/Multiple Directional 的 adjusted crossing、事件数、connected-component group state 和顺序匹配。
 - [x] Long 头/尾比较符号、父子顺序、状态、active pause 与回收匹配。
 - [x] Slide 头/中间/终端/Stop、current/selected cursor 和单次调用粒度匹配 frozen trace。
 - [x] Long/Slide after 子图保持构造共享身份并由父对象独占更新。
-- [x] OneFrame 固定 5 槽、first-unused、Setup、Multiple note type/count 边界、池序 Reflect、清除与耗尽匹配。
+- [ ] OneFrame 固定 5 槽、first-unused、Setup、Multiple note type/count 边界、池序 Reflect、清除与 Note-level exhaustion 失败状态匹配。
 - [x] unknown 分数/生命/技能/音频/粒子字段没有零值或 no-op 伪实现。
-- [x] 同位置、adaptive 多子步、Long/Slide/Multiple 暂停、空帧和失败关闭全部通过新 oracle。
-- [x] 普通与 HABAHIRO production Normal/Flick/Directional/Multiple/Long/Slide 回归通过，并保留 HABAHIRO 无实体运行样本披露。
+- [ ] 同位置、actual adaptive 多子步、Long/Slide/Multiple 暂停、空帧和失败关闭全部通过新 oracle。
+- [ ] 普通与 HABAHIRO production Normal/Flick/Directional/Multiple/Long/Slide 回归通过，并以独立 oracle 验证 production group，不由待测函数生成 expected。
 - [x] 第一切片、谱面构造和时钟调度全部隔离回归通过。
 - [x] `engine/` 依赖边界通过。
-- [x] `tmp/simulator-auto-live-acceptance.md` 已按补充证据与修复后结果重建并通过。
+- [ ] `tmp/simulator-auto-live-acceptance.md` 已按 G18–G20 与修复后结果重建并通过。
 - [x] 未修改主程序入口、编辑器控制器、窗口协议、渲染或音频实现。
-- [x] 最终补证、修复与重验收提交已推送，远端与 HEAD 为 `0 0`（最终提交后再次确认）。
+- [ ] 最终补证、修复与重验收提交已推送，远端与 HEAD 为 `0 0`。
 
 阶段关闭后，下一阶段只允许按整体计划进入“手动输入与判定”。如果 AL21 中任一手动输入分支仍无实体证据，则下一阶段必须先建立对应设备采证硬门，不能沿用 Auto Live 的 Force Perfect 结果绕过手动判定。
 
