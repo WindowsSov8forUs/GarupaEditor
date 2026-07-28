@@ -77,7 +77,7 @@ class SimulatorEngineHost implements SimulatorEngine {
 
   snapshot(): SimulatorResult<SimulatorSnapshot> {
     const adjustedMusicPosition =
-      this.inGameManager.noteManager.getAdjustedMusicPosition();
+      this.inGameManager.noteManager.peekAdjustedMusicPosition();
     return ok({
       director: this.inGameDirector.snapshot(),
       managers: this.inGameManager.snapshot(),

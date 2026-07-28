@@ -126,6 +126,17 @@ export class InGameMusicScoreController {
   }
 
   getAdjustedMusicPosition(offsetFrames: number): number {
+    return this.calculateAdjustedMusicPosition(offsetFrames, true);
+  }
+
+  peekAdjustedMusicPosition(offsetFrames: number): number {
+    return this.calculateAdjustedMusicPosition(offsetFrames, false);
+  }
+
+  private calculateAdjustedMusicPosition(
+    offsetFrames: number,
+    recordTempoQueries: boolean,
+  ): number {
     if (offsetFrames === 0) {
       return this.musicPosition;
     }
@@ -138,7 +149,7 @@ export class InGameMusicScoreController {
         cursor = advancePosition(
           cursor.bar,
           cursor.beatProgress,
-          this.bpmAtPosition(absolutePosition(cursor)),
+          this.bpmAtPosition(absolutePosition(cursor), recordTempoQueries),
           JUDGE_OFFSET_STEP_SECONDS,
         );
       }
@@ -198,7 +209,7 @@ export class InGameMusicScoreController {
     };
   }
 
-  private bpmAtPosition(position: number): number {
+  private bpmAtPosition(position: number, recordQuery = true): number {
     let bpm = this.basicBpmValue;
     for (const command of this.tempoCommands) {
       if (command.absolutePos > position) {
@@ -206,11 +217,13 @@ export class InGameMusicScoreController {
       }
       bpm = Math.fround(command.bpm);
     }
-    this.tempoQueryTraceValue.push({
-      queryIndex: this.tempoQueryTraceValue.length,
-      position,
-      bpm,
-    });
+    if (recordQuery) {
+      this.tempoQueryTraceValue.push({
+        queryIndex: this.tempoQueryTraceValue.length,
+        position,
+        bpm,
+      });
+    }
     return bpm;
   }
 }

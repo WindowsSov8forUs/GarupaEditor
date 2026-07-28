@@ -255,6 +255,11 @@ function validateAutoLive() {
     const identity = music.getAdjustedMusicPosition(0);
     const positive = music.getAdjustedMusicPosition(5);
     assert(negative < identity && identity < positive);
+    const traceBeforePeek = music.snapshot().tempoQueryTrace;
+    assert.equal(traceBeforePeek.length, 5);
+    assert.equal(music.peekAdjustedMusicPosition(5), positive);
+    assert.deepEqual(music.snapshot().tempoQueryTrace, traceBeforePeek,
+      "read-only adjusted-position peek must not append observation entries");
     const relations = oracleCases.get("adjustment-sign-crossing").steps.map(
       (step) => step.relation,
     );
@@ -263,6 +268,20 @@ function validateAutoLive() {
       "identity",
       "advance-five-tempo-aware-steps",
     ]);
+    const snapshotHost = ok(createSimulatorEngine({
+      chart: fixture.chart([], 120),
+      runtime: {
+        highFrequencyMode: false,
+        judgeOffsetFrames: 5,
+        playMode: { kind: "manual" },
+      },
+    }, createRecordingSimulatorBackends()), "snapshot purity host create");
+    ok(snapshotHost.initialize(), "snapshot purity host initialize");
+    const firstSnapshot = ok(snapshotHost.snapshot(), "snapshot purity first");
+    const secondSnapshot = ok(snapshotHost.snapshot(), "snapshot purity second");
+    assert.deepEqual(secondSnapshot, firstSnapshot);
+    assert.equal(secondSnapshot.managers.musicScore.tempoQueryTrace.length, 0);
+    ok(snapshotHost.dispose(), "snapshot purity host dispose");
     const plusFive = supplementCases.get("offset-plus5-cross-bpm-exact");
     let cursor = {
       bar: plusFive.entry_music_cursor.bar,

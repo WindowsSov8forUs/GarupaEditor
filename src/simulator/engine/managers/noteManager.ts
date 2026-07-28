@@ -66,7 +66,7 @@ export type NoteManagerTraceEntry =
       readonly substepIndex: number;
       readonly noteIndex: number;
       readonly poolObjectId: string;
-      readonly adjustedPosition: number;
+      readonly adjustedPosition: number | null;
       readonly stateBefore: NoteState;
       readonly stateAfter: NoteState;
     }
@@ -120,6 +120,7 @@ export class NoteManager {
   );
   private readonly notePoolsValue = new Map<NoteFamily, NotePool>();
   private readonly schedulerTraceValue: NoteManagerTraceEntry[] = [];
+  private readonly observedAdjustedPositions = new WeakMap<NoteBase, number>();
   private readonly performanceLevelCountersValue: PerformanceLevelCounters = [
     0, 0, 0, 0,
   ];
@@ -188,7 +189,11 @@ export class NoteManager {
         note.registerCallbackGetUsableOneFrameData(this.getUsableOneFrameData);
         note.registerAutoLiveRuntime({
           isAutoPlay: () => this.inGameCalculatedData.isAutoPlay,
-          getAdjustedMusicPosition: () => this.getAdjustedMusicPosition(),
+          getAdjustedMusicPosition: () => {
+            const adjustedPosition = this.getAdjustedMusicPosition();
+            this.observedAdjustedPositions.set(note, adjustedPosition);
+            return adjustedPosition;
+          },
           submitJudgement: this.submitAutoLiveJudgement,
         });
         if (note instanceof NoteMultipleDirectionalFlick) {
@@ -293,15 +298,15 @@ export class NoteManager {
           );
         }
         const noteIndex = note.noteInformation?.index ?? -1;
-        const adjustedPosition = this.getAdjustedMusicPosition();
         const stateBefore = note.state;
+        this.observedAdjustedPositions.delete(note);
         const updateResult = note.executeUpdate(substepDelta);
         this.schedulerTraceValue.push({
           kind: "note-update",
           substepIndex,
           noteIndex,
           poolObjectId: note.poolObjectId,
-          adjustedPosition,
+          adjustedPosition: this.observedAdjustedPositions.get(note) ?? null,
           stateBefore,
           stateAfter: note.state,
         });
@@ -338,6 +343,12 @@ export class NoteManager {
 
   getAdjustedMusicPosition(): number {
     return this.musicScoreController.getAdjustedMusicPosition(
+      this.judgeOffsetFrames,
+    );
+  }
+
+  peekAdjustedMusicPosition(): number {
+    return this.musicScoreController.peekAdjustedMusicPosition(
       this.judgeOffsetFrames,
     );
   }

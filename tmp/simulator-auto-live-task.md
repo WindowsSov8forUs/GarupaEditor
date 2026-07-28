@@ -256,6 +256,12 @@
 - `NoteManager.schedulerTrace` 现在直接记录 outer-frame index、实际 substep、每次 Note Update 的 adjusted position 与 state before/after；music score snapshot 记录正 offset 的每步 tempo query。adaptive canonical projection 从实际 scheduler/OneFrame trace构造，offset 另有真实 `getAdjustedMusicPosition(+5)` 跨 BPM observation；不再把 expected substep/BPM 作为生产调用输入。
 - 模拟器隔离 TypeScript、第一切片 17 项、时钟 15 组、Auto Live AL01–AL22、全部 chart construction/production suites、依赖边界与 evidence worktree verifier 均通过；未运行 Vite/Tauri/整体构建。最终阶段结论留给提交后独立复核与验收文档恢复。
 
+#### 2026-07-29 第二十三批：提交后只读性复核
+
+- 对已推送实现提交 `d5ca9dd` 复核时发现：新增 tempo-query observation 使原有 host `snapshot()` 间接调用带记录副作用的 adjusted-position 路径；同时 scheduler 为记录 adjusted position 在真实 Note 回调前额外查询一次，非零 offset 会产生重复 tempo observation。该问题不改变判定数值，但违反 snapshot 只读和 G20“观察真实调用”要求，因此最终验收继续保持撤销直至修复。
+- music score 将读路径拆为带记录的 `getAdjustedMusicPosition` 与无记录的 `peekAdjustedMusicPosition`；host snapshot 只使用 peek。NoteManager 不再预查询 adjusted position，而由每个池对象已安装的真实 Auto Live callback 把本次读取写入 WeakMap，Update trace 在调用后读取该实际值；未读取 adjusted position 的状态记录为 null。
+- AL02 新增非零 offset 的 controller peek 与连续 host snapshot 全对象相等断言，确认 snapshot 不追加 tempo trace；actual `getAdjustedMusicPosition(+5)` 跨 BPM case 仍精确记录五次生产查询。TypeScript、Auto Live 22 组、第一切片 17 项与时钟 15 组再次通过。
+
 ## 2. 固定范围
 
 ### 2.1 纳入范围
