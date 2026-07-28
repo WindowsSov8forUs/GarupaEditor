@@ -1,6 +1,6 @@
 # 模拟器 Auto Live 阶段验收记录
 
-> **2026-07-29 第八次独立审计：未通过，A03/A10 重新打开。** 公共host创建时虽拒绝非法模式，但 `InGameCalculatedData` 保存调用者 `playMode` 对象引用；合法创建后可把原对象改为 Skill/mode14/其他模式并改变生产路由。现有 AL22 只覆盖创建时非法值。G01–G22、G19 fault、G21 topology、G22 replay 与 Slide E15 修复保持有效。
+> **2026-07-29 第八次最终独立重验收：通过。** `validatePlayMode`现返回规范化冻结值，`InGameCalculatedData`再复制冻结；公共host创建后Auto→Skill→mode14及manual→Auto原对象突变均不能改变owner，getter也拒绝修改。完整A10、Reverse verifier、index、独立topology及提交后临时产物复现全部通过。
 
 ## 1. 验收身份
 
@@ -39,10 +39,12 @@
 - 第七次审计重开：`49a8371`
 - Slide invisible position gate修复：`c6bc9c6`
 - 第七次最终重验收：`1007e4d`
-- 第八次审计重开：本文件所在提交
+- 第八次审计重开：`0aa15c6`
+- 模式所有权修复：`628f7b6`
+- 第八次最终重验收：本文件所在提交
 - 验收日期：2026-07-28
 - 最终验收日期：2026-07-29
-- 验收结论：**未通过。A03/A10 未完成，Auto Live 阶段重新打开；在模式所有权修复并全量重验收前不得进入手动输入阶段。**
+- 验收结论：**通过。A00–A10完成，Auto Live阶段关闭；手动输入阶段仍须先建立独立Reverse证据硬门。**
 
 ## 2. 证据硬门与冻结包
 
@@ -92,14 +94,14 @@ auto-live evidence verified: candidates=30, final=72, supplement=G11-G22, cases=
 | A00 阶段任务书 | 通过 | 范围、硬门、证据候选、22 项测试矩阵、提交和完成定义完整 |
 | A01 静态证据晋升 | 通过 | 首版 43 条加补充 24 文件；`cd84d2ce` 关闭 Multiple，`7a0540dc` 从 committed pass-2 冻结 exact cursor identity |
 | A02 固定事件 oracle | 通过 | G01–G22 closed（G18被G21 supersede）；首版11、补充14 case及4个actual replay投影 |
-| A03 模式与上下文 | **未通过** | 创建时校验有效，但owner保存调用者对象别名；创建后可切换kind/transform并绕过failure-closed边界 |
+| A03 模式与上下文 | 通过 | 创建时拒绝非法值；校验与owner均持有规范化冻结副本，调用者/getter别名不能改变kind/transform |
 | A04 Long/Slide 运行图 | 通过 | 普通/特殊 terminal 联合验证；root 父拥有共享 child；缺 terminal、重复身份、非递增源序拒绝；父回池清 graph/current |
 | A05 Single/Flick | 通过 | Normal/Flick/standalone Directional 保持；Multiple 继承 ±500，并按完整 playable source-order run 提交唯一 note type 10 |
 | A06 Long | 通过 | head `>=`、tail `>`、linked finish→tail、active pause/resume、回收；head/tail 第六槽 native failure state 均冻结 |
 | A07 Slide | 通过 | terminal/Stop/Reset/第六槽保持；invisible/visible current统一先过E15 adjusted-position/finite gate，before/equal和单次粒度闭合 |
 | A08 OneFrame | 通过 | 固定 5 槽；117/84 个 production run 的唯一 callback count；visual helper 不判定 |
 | A09 调度生命周期 | 通过 | 公共step于director delta校验前检查fault；AL16覆盖合法、NaN、±Infinity与负delta，全部返回锁存失败 |
-| A10 生产 oracle | **未通过** | exact/adaptive/topology/Slide仍有效，但AL01/AL22缺公共host创建后模式别名突变回归 |
+| A10 生产 oracle | 通过 | exact/adaptive/topology/Slide保持；AL01/AL22闭合创建前非法值与创建后模式别名突变，并完成提交后全量复核 |
 
 ## 4. 已落地的生产边界
 
@@ -119,7 +121,7 @@ type SimulatorPlayMode =
 - 不存在隐式默认模式。
 - `InGameCalculatedData.isAutoPlay` 只在显式 Auto Live 分支为 true。
 - mode 14、debug Force Perfect、任意 `forcePerfect: boolean` 捷径和未知 result transform 均返回 `evidence-required`。
-- **开放缺口：** 上述校验只发生在创建时；owner保存调用者对象引用。创建后修改原对象会改变 `isAutoPlay`/snapshot/判定路由，未知 Skill transform 不再失败关闭。
+- 校验成功后生成规范化冻结模式值，owner再次复制冻结；调用者在创建后修改原对象、或尝试修改owner getter返回值，都不能改变`isAutoPlay`、snapshot或crossing路由。
 - manual crossing 不进入 Auto Force Perfect；真实触摸、手动窗口和普通 timeout Miss 仍失败关闭/后置。
 
 ### 4.2 Single、Flick 与 Directional
@@ -178,7 +180,7 @@ type SimulatorPlayMode =
 
 | ID | 结果 | 核心断言 |
 | --- | --- | --- |
-| AL01 | 通过 | manual/Auto 判别明确，同 crossing 只有 Auto Force Perfect |
+| AL01 | 通过 | manual/Auto判别明确；Auto原对象Skill→mode14突变仍保持identity并判定，manual→Auto仍保持manual，owner getter冻结 |
 | AL02 | 通过 | B=+5 exact cross-BPM `0x45401EF9`、B=-5 cross-bar `0x446E7494`、B=0 identity；实际 +5 调用记录五次 tempo query，snapshot peek 不记录 |
 | AL03 | 通过 | Normal before/equal、Float32 bits、同次 Deactive、后续不重复 |
 | AL04 | 通过 | 同批五 root 反序 Update，payload identity 为 204→200，slot 为 0→4 |
@@ -237,7 +239,8 @@ node tmp/simulator-reverse-evidence/auto-live/verify.mjs --index
 - adaptive/offset：substep/state/slot/outer frame来自manager trace并全对象比较；exact三例逐frame重放committed delta，入口cursor、step BPM和result bits来自公共production owner。
 - terminal fault：fault前非法delta保留`director.invalid-delta-time`；fault后合法、NaN、±Infinity、负delta及其他非允许API均返回同一锁存失败，连续snapshot全对象不变、dispose允许。
 - Slide invisible：AL10覆盖root/child前一Float32与equal；AL19逐对象覆盖普通89、HABAHIRO 27个首child为invisible的Slide root；AL22覆盖non-finite原子失败。
-- 提交后独立复现：root=120、child=170时，adjusted=0/119保持Move+cursor0，120/160/169保持Wait+cursor0，170才cursor 0→1且仅一条skip；root/current child两个adjusted调用点均发生。
+- 模式所有权：AL01经公共host覆盖Auto原对象Skill→mode14、manual→Auto和owner getter突变；创建后snapshot/crossing保持创建时规范化身份。
+- 提交后独立复现：Auto突变后仍为identity且产生一条判定，manual突变后仍为manual/none，getter冻结；Slide root/current child position gate复现结果保持有效。
 - 未运行 Vite、Tauri 或 GarupaEditor 整体构建，符合任务书限制。
 
 ## 7. 持续非阻断边界
@@ -251,7 +254,7 @@ node tmp/simulator-reverse-evidence/auto-live/verify.mjs --index
 
 ## 8. 下一阶段硬门
 
-Auto Live第七次最终重验收已通过；以下下一阶段硬门恢复适用。
+Auto Live第八次最终重验收已通过；以下下一阶段硬门恢复适用。
 
 下一阶段只允许按整体计划进入“手动输入与判定”。开始生产实现前必须：
 
