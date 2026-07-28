@@ -1,6 +1,6 @@
 # 模拟器 Auto Live 阶段验收记录
 
-> **2026-07-29 第五次独立审计：第四次验收结论已撤销。** A09 host fault与A10 G22 actual replay修复现已通过定向测试；全量A10回归和最终独立复核完成前，本文仍保持撤销状态。
+> **2026-07-29 第五次独立重验收：通过。** 公共host fault旁路已修复；G22 committed delta/BMS经production engine重放，exact B±5/0由公共owner执行；adaptive保留outer-frame全字段比较。全部A10隔离回归与evidence index验证通过。
 
 ## 1. 验收身份
 
@@ -28,9 +28,14 @@
 - source-order/fault/actual observation 实现：`d5ca9dd`
 - 提交后 observation 只读修复：`5b36b02`
 - 第四次最终重验收：本文件所在提交
+- 第五次审计重开：`8c0963d`
+- 公共 host fault 修复：`08eb7b8`
+- G22 最终证据冻结：Reverse `c2dc5c7f`；GarupaEditor `6f78d3f`、`031407b`
+- G22 production replay 消费：`2d40644`
+- 第五次最终重验收：本文件所在提交
 - 验收日期：2026-07-28
 - 最终验收日期：2026-07-29
-- 验收结论：**已撤销。A09修复完成但尚未随A10重验收；A10未完成，Auto Live阶段保持打开。**
+- 验收结论：**通过。A00–A10完成；Auto Live阶段关闭。手动输入阶段开始前仍须建立独立Reverse证据硬门。**
 
 ## 2. 证据硬门与冻结包
 
@@ -42,7 +47,7 @@ auto_live_gate = closed
 blocking_findings = []
 ```
 
-G19/G20 由 `24706edc` 关闭；G21 又由 `57c1e03be474eeb1006ff56c8fc3d5a9a117d573` 修正 G18 的过度解释。G18 保留为 superseded 历史；证据门仍关闭，但 A09/A10 对 G19/G20 的消费不完整。若 exact production owner 无法从现有 committed runtime输入重放到冻结 cursor，必须先在 Reverse新增并关闭 G22，不能把证据 gate closed误写成实现已验收。
+G19/G20由`24706edc`关闭，G21由`57c1e03b`修正G18；G22由`c2dc5c7f37718a170c9e9b93d5a86b42e9d1a2ab`冻结production exact replay输入与adaptive full outer-frame。G18保留为superseded历史；G19–G22现均由生产实现和actual测试直接消费。
 
 G01–G10 已全部关闭：
 
@@ -68,7 +73,7 @@ GarupaEditor 冻结包位于 `tmp/simulator-reverse-evidence/auto-live/`，包�
 补充后最终校验结果：
 
 ```text
-auto-live evidence verified: candidates=30, final=68, supplement=G11-G21, cases=14, gate=closed, index=checked
+auto-live evidence verified: candidates=30, final=72, supplement=G11-G22, cases=14, replay=4, gate=closed, index=checked
 ```
 
 测试只读取 GarupaEditor 已冻结的 JSON 和生产 BMS，不访问 Reverse 工作树，不执行 Python，不联网。
@@ -79,15 +84,15 @@ auto-live evidence verified: candidates=30, final=68, supplement=G11-G21, cases=
 | --- | --- | --- |
 | A00 阶段任务书 | 通过 | 范围、硬门、证据候选、22 项测试矩阵、提交和完成定义完整 |
 | A01 静态证据晋升 | 通过 | 首版 43 条加补充 24 文件；`cd84d2ce` 关闭 Multiple，`7a0540dc` 从 committed pass-2 冻结 exact cursor identity |
-| A02 固定事件 oracle | 通过 | G01–G21 closed（G18 被 G21 supersede）；首版 11 + 补充 14 case，覆盖 source-order、terminal fault 与 actual observation requirements |
+| A02 固定事件 oracle | 通过 | G01–G22 closed（G18被G21 supersede）；首版11、补充14 case及4个actual replay投影 |
 | A03 模式与上下文 | 通过 | 宿主强制显式 `manual`/`auto-live`；mode14/debug/未知 transform 拒绝 |
 | A04 Long/Slide 运行图 | 通过 | 普通/特殊 terminal 联合验证；root 父拥有共享 child；缺 terminal、重复身份、非递增源序拒绝；父回池清 graph/current |
 | A05 Single/Flick | 通过 | Normal/Flick/standalone Directional 保持；Multiple 继承 ±500，并按完整 playable source-order run 提交唯一 note type 10 |
 | A06 Long | 通过 | head `>=`、tail `>`、linked finish→tail、active pause/resume、回收；head/tail 第六槽 native failure state 均冻结 |
 | A07 Slide | 通过 | source-order、terminal 8/5/6/7、Stop、Reset、单次粒度；head 第六槽 Wait 状态冻结 |
 | A08 OneFrame | 通过 | 固定 5 槽；117/84 个 production run 的唯一 callback count；visual helper 不判定 |
-| A09 调度生命周期 | 修复完成，待重验收 | direct manager与公共 host均先检查 fault；非允许 API返回同一失败，snapshot连续只读、dispose允许 |
-| A10 生产 oracle | 修复完成，待重验收 | exact三例由committed delta/BMS驱动production engine并调用公共owner；adaptive保留outer frame全对象比较 |
+| A09 调度生命周期 | 通过 | direct manager与公共host均先检查fault；非允许API返回同一失败，snapshot连续只读、dispose允许 |
+| A10 生产 oracle | 通过 | exact三例由committed delta/BMS驱动production engine并调用公共owner；adaptive保留outer frame全对象比较；全部回归通过 |
 
 ## 4. 已落地的生产边界
 
@@ -218,7 +223,7 @@ node tmp/simulator-reverse-evidence/auto-live/verify.mjs --index
 - 时钟与调度：15 组通过。
 - Auto Live：AL01–AL22 共 22 组通过。
 - 依赖边界：每个隔离测试入口后通过。
-- Auto Live 证据包：`candidates=30, final=68, supplement=G11-G21, cases=14, gate=closed, index=checked`。
+- Auto Live 证据包：`candidates=30, final=72, supplement=G11-G22, cases=14, replay=4, gate=closed, index=checked`。
 - 固定 oracle：首版11 case、补充14 case与G22 replay均被读取；exact offset与adaptive outer-frame现已按production trace完整消费，待全量复核后恢复结论。
 - production topology oracle：独立生成器不导入/调用待测 `groupMultipleDirectionalInformationList`；固定 JSON 对两个 BMS 的 SHA-256、batch/position、source slot、note/button/game type 逐对象比较，离线再生成字节一致。
 - adaptive/offset：substep/state/slot/outer frame来自manager trace并全对象比较；exact三例逐frame重放committed delta，入口cursor、step BPM和result bits来自公共production owner。
@@ -235,7 +240,7 @@ node tmp/simulator-reverse-evidence/auto-live/verify.mjs --index
 
 ## 8. 下一阶段硬门
 
-Auto Live 当前重新打开；以下手动阶段硬门暂不得启动。
+Auto Live第五次重验收已通过；以下下一阶段硬门恢复适用。
 
 下一阶段只允许按整体计划进入“手动输入与判定”。开始生产实现前必须：
 

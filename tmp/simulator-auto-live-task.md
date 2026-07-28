@@ -10,7 +10,7 @@
 - 锁定原作样本：`jp.co.craftegg.band` 10.1.3（version code 229，`arm64-v8a`）。
 - 上游已验收阶段：第一切片、谱面构造、时钟与调度。
 - 上游时钟调度验收提交：GarupaEditor `78414bc`，关闭记录修订提交 `ca84258`。
-- 当前状态：**第五次审计重开的 A09 已修复；Reverse `c2dc5c7f37718a170c9e9b93d5a86b42e9d1a2ab` 以 G22 冻结 exact production replay 输入与 adaptive outer-frame identity，A10 代码门已解除，生产消费已实现但全量重验收尚未完成。完成前禁止进入手动输入阶段。**
+- 当前状态：**第五次独立重验收已通过，A00–A10完成，Auto Live阶段关闭。A09公共host fault、G22 exact production replay、adaptive full outer-frame、G21 topology与全部production回归均已复核；下一阶段只允许先建立“手动输入与判定”的独立Reverse证据硬门。**
 - 待重建验收记录：`tmp/simulator-auto-live-acceptance.md`。
 - 已冻结证据包：`tmp/simulator-reverse-evidence/auto-live/`。
 
@@ -53,8 +53,8 @@
 | A06 恢复 Long 分阶段完成 | 已完成 | head/tail 第六槽保留 native Wait/linked order，并由 manager terminal fault 阻止重试 |
 | A07 恢复 Slide 分阶段完成 | 已完成 | head 第六槽状态与 terminal fault boundary 精确覆盖 |
 | A08 恢复 Auto Live OneFrame 填充与聚合 | 已完成 | 117/84 source-order run 的唯一 note type 10/count、混合 batch 与五槽行为通过独立固定 oracle |
-| A09 接入调度、暂停与生命周期 | 修复完成，待阶段重验收 | 公共 host shortcut 已移到 fault 检查之后；全部非允许 API 返回锁存失败，snapshot只读、dispose允许 |
-| A10 生产 oracle 与阶段验收 | 修复完成，待全量重验收 | G22 replay经production owner精确通过；expected BPM/private lookup与outer字段删除均已移除 |
+| A09 接入调度、暂停与生命周期 | 已完成 | 公共host shortcut已移到fault检查之后；全部非允许API返回锁存失败，snapshot只读、dispose允许 |
+| A10 生产 oracle 与阶段验收 | 已完成 | G22 replay经production owner精确通过；完整adaptive全字段比较与全部隔离回归通过 |
 
 ### 1.4 批次记录
 
@@ -286,6 +286,13 @@
 - AL02删除 `plusFive.step_bpms` 算术输入；canonical exact 三例现在读取 G22 delta bits与冻结 CC08 BMS，逐 frame调用正式 `engine.step`，从 production snapshot观察 entry bar/beat bits，再调用公共 `engine.getAdjustedMusicPosition`。+5 精确得到 `0x433B5B1C → [99.5,99.5,99.5,99.5,95.5] → 0x45401EF9`；-5精确得到 `0x3EE8E000 → 99.5×5 → 0x446E7494`；0返回identity且无step trace。
 - music score observation补充负 offset每步 committed BPM与cursor记录；该记录不改变 SlowAbsolutePos算术，peek仍不记录。测试不再调用 private `bpmAtPosition`，不再直接调用 `advancePosition/rewindPosition` 重放 exact expected。
 - adaptive canonical由 G22输入 delta/position驱动，substep来自 manager trace；frozen原轨迹只由 G22补充 full lifecycle `outer_frame=1`，actual/expected直接全对象 deep-equal，不再删除字段。
+
+#### 2026-07-29 第二十八批：第五次最终独立重验收
+
+- 提交后重新静态搜索确认 Auto Live 测试中不存在 `for (... expected.step_bpms)`、private `bpmAtPosition`、直接 exact `advancePosition/rewindPosition` 或删除 `outer_frame` 的 projection；host fault case覆盖 `initialize/step/pause/resume/getAdjusted/snapshot/dispose`。
+- 完整A10命令重新通过：隔离TypeScript；第一切片17项；全部chart boundary/parsing/batches/graphs/multi-range/command/finalize/production；production roots 825/598；时钟15组；Auto Live AL01–AL22；依赖边界；evidence worktree/index。
+- G22实际重放每次从冻结BMS重新构造已登记chart，不读取Reverse/Python/网络；+5/-5/0分别经991/317/317个committed Float32 delta驱动公共engine，actual entry/step BPM/result projection与device oracle直接deepEqual。
+- 第五次复核未发现新的required-before-close缺口。A09/A10及阶段完成勾选恢复；手动输入、分数/状态消费、表现层与主程序集成边界不变。
 
 ## 2. 固定范围
 
@@ -984,9 +991,9 @@ A10 前不运行 Vite、Tauri 或 GarupaEditor 整体构建。
 - [x] 普通与 HABAHIRO production Normal/Flick/Directional/Multiple/Long/Slide 回归通过，并以独立 oracle 验证 production group，不由待测函数生成 expected。
 - [x] 第一切片、谱面构造和时钟调度全部隔离回归通过。
 - [x] `engine/` 依赖边界通过。
-- [ ] `tmp/simulator-auto-live-acceptance.md` 已按 G19–G21、actual observation 与修复后结果重建并通过。
+- [x] `tmp/simulator-auto-live-acceptance.md` 已按 G19–G22、actual production replay 与修复后结果重建并通过。
 - [x] 未修改主程序入口、编辑器控制器、窗口协议、渲染或音频实现。
-- [ ] 最终补证与生产修复提交已推送，远端与 HEAD 为 `0 0`；本验收文档提交按同一纪律推送。
+- [x] 最终补证与生产修复提交已推送，远端与 HEAD 为 `0 0`；本验收文档提交按同一纪律推送。
 
 阶段关闭后，下一阶段只允许按整体计划进入“手动输入与判定”。如果 AL21 中任一手动输入分支仍无实体证据，则下一阶段必须先建立对应设备采证硬门，不能沿用 Auto Live 的 Force Perfect 结果绕过手动判定。
 
