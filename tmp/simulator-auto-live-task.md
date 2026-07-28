@@ -10,7 +10,7 @@
 - 锁定原作样本：`jp.co.craftegg.band` 10.1.3（version code 229，`arm64-v8a`）。
 - 上游已验收阶段：第一切片、谱面构造、时钟与调度。
 - 上游时钟调度验收提交：GarupaEditor `78414bc`，关闭记录修订提交 `ca84258`。
-- 当前状态：**第六次最终独立重验收已通过，A00–A10完成，Auto Live阶段关闭。公共host全部非允许API及合法/非法`step`输入均服从G19锁存故障；G21 topology、G22 actual replay、完整production与上游回归均已重新复核。下一阶段只能先建立“手动输入与判定”的独立Reverse证据硬门。**
+- 当前状态：**第七次独立审计已重新打开 A07/A10，Auto Live 阶段未关闭。冻结 E15 明确要求 `NoteSlide.forcePerfectOnUpdate` 对 current child 先读取 adjusted position，并在 `adjusted < child.absolutePos` 时返回；当前生产实现却在该位置门之前无条件跳过 invisible child。现有 AL10 又以 `adjusted=160 < child=170` 期待 cursor 前进，固化了错误行为；两个 production BMS 分别有 89/27 个 Slide root 的首 child 为 invisible。G01–G22 证据门、A00–A06、A08/A09、G21 topology、G22 actual replay 与 G19 公共 fault 边界保持有效，但在修正 A07 并重建 A10 前禁止进入手动输入阶段。**
 - 最终验收记录：`tmp/simulator-auto-live-acceptance.md`。
 - 已冻结证据包：`tmp/simulator-reverse-evidence/auto-live/`。
 
@@ -39,6 +39,7 @@
 8. Python 原型是离线 oracle 生成器，不是原作行为证据本身；所有被 oracle 固化的分支必须先由反编译、ARM64 或只读运行证据闭合。
 9. 可视粒子、判定音和 Flick 手指特效属于后续渲染/音频阶段。本阶段只恢复它们之前的 Flick 判定路由和可记录调用边界。
 10. A02 前发现的任何不一致均失败关闭；不得选择“更像正确”的一个 JSON、沿用 Python 原型默认值或以生产谱面恰好未触发来绕过硬门。
+11. E15 的 current-child position gate 位于 intermediate/terminal 处理之前；portable Slide runtime 必须对 invisible 与 visible current child 同样先执行有限值检查和 `adjusted < child.absolutePos` 返回。invisible 只表示到点后不提交 OneFrame 并单次推进 cursor，不表示可绕过 crossing。
 
 ### 1.3 执行进度
 
@@ -51,10 +52,10 @@
 | A04 建立 Long/Slide 运行子图 | 修复完成 | 普通生产 Slide 由 terminal child + root after type 联合识别；父 Deactive 时按 R02 清 child graph/current，复用重建共享身份 |
 | A05 恢复 Single/Flick Force Perfect | 已完成 | Multiple owner 遍历完整 playable source order；其他 family/equal button 断组，method fixture 精确通过 |
 | A06 恢复 Long 分阶段完成 | 已完成 | head/tail 第六槽保留 native Wait/linked order，并由 manager terminal fault 阻止重试 |
-| A07 恢复 Slide 分阶段完成 | 已完成 | head 第六槽状态与 terminal fault boundary 精确覆盖 |
+| A07 恢复 Slide 分阶段完成 | **重新打开** | E15 current-child position gate 尚未作用于 invisible；须补齐 root-before/root-equal/child-before/child-equal 与 production 首 invisible child 回归 |
 | A08 恢复 Auto Live OneFrame 填充与聚合 | 已完成 | 117/84 source-order run 的唯一 note type 10/count、混合 batch 与五槽行为通过独立固定 oracle |
 | A09 接入调度、暂停与生命周期 | 已完成 | 公共step/pause/resume/getAdjusted/initialize均先服从fault；AL16覆盖合法与非法delta |
-| A10 生产 oracle 与阶段验收 | 已完成 | 提交后独立fault复现、G22、topology、全部A10与Reverse verifier通过 |
+| A10 生产 oracle 与阶段验收 | **重新打开** | AL10 在 160<170 时错误期待 invisible cursor 前进；旧绿色套件未验证 production Slide cursor timing，须修订并全量重验收 |
 
 ### 1.4 批次记录
 
@@ -313,6 +314,14 @@
 - 完整A10重新通过：隔离TypeScript；第一切片17项；全部chart boundary/parsing/batches/graphs/multi-range/command/finalize/production；普通/HABAHIRO roots 825/598；时钟15组；Auto Live AL01–AL22；依赖边界；evidence worktree/index。
 - Reverse首版与supplement verifier重新通过`G11–G22, cases=14, replay=4`；独立production Multiple generator重新生成后与固定JSON逐字节一致。静态搜索仍不存在expected BPM输入、private BPM lookup、exact纯函数重放或outer-frame删除。
 - 第六次复核未发现新的required-before-close缺口。A09/A10与阶段完成勾选恢复；手动输入、分数/状态消费、表现层和主程序接入继续保持后置硬门。
+
+#### 2026-07-29 第三十二批：第七次独立审计与 Slide invisible 重开
+
+- 完整 A10、AL01–AL22、Reverse verifier、证据 source/copy/index 与独立 Multiple topology 再生成仍全部绿色，但逐调用点对照冻结 E15 发现生产 `NoteSlide.forcePerfectPendingAfter` 在读取 adjusted position 前先处理 `current.source.isInvisible`。
+- E15 `NoteSlide.forcePerfectOnUpdate @ 0x321BD94` 明确先取得 current child，调用 `NoteManager.GetAdjustMusicPos`，并在 `adjusted - child.absolutePos < 0` 时返回；该位置门位于后续 intermediate/terminal 路由之前。R02 的 invisible 结论只确认不产生 OneFrame、到点后选择推进，不支持提前跳过。
+- 临时编译产物复现：root=120、invisible child=170 时，adjusted 为 0/119/120/160/169 均错误把 `currentAfterIndex` 从 0 推到 1；root 未 crossing 时也会提前标记 child。现有 AL10 正以 adjusted=160、child=170 期待 cursor=1，而冻结 canonical positive case 使用 adjusted=180，因此 before 边界被测试盲区掩盖。
+- production 图直接复现：普通谱面 89 个、HABAHIRO 27 个 Slide root 的首 child 为 invisible；首例分别在 root=848/456、child=849/459 时，于 root equal 即提前推进。旧 AL19 只验证最终完成，不能证明 cursor timing。
+- 本轮只纠正文档完成度，不改生产代码。A07/A10 与阶段关闭结论撤销；G01–G22、A00–A06、A08/A09、G19 fault、G21 topology 和 G22 replay 不受影响。下一批按 E15 调整 position gate 顺序并补 synthetic/production crossing 回归。
 
 ## 2. 固定范围
 
@@ -816,14 +825,14 @@ Reflect 只可输出：
 2. `OnUpdate` 按证据先处理父更新/运动边界，再按列表顺序驱动 after Update，最后进入 Force Perfect。
 3. 每次 `forcePerfectOnUpdate` 只读取 current pending after；不得 while 扫过多个节点。
 4. current 是 intermediate 时走 intermediate Perfect 路由；terminal 时走 terminal 路由。
-5. invisible 节点是否自动跳过、何时推进 current 严格按 R02。
+5. 对 current child（包括 invisible）先按 E15 每次独立读取 adjusted position；非有限值失败关闭，`adjusted < current.absolutePos` 保持 cursor/judged/OneFrame 不变。只有到点后，invisible 才按 R02 不提交 OneFrame并单次推进 current。
 6. Stop state 扫描首个 pending visible 节点，到点后调用 `forcePerfectStopState`。
 7. `ExecuteAfterUpdate` 只转发 R02 指定的 current/selected after。
 8. 不实现手动释放、普通 Miss、move-time refresh 或视觉移动。
 
 **证据**：E14–E20、E21–E24、R02/R03。
 
-**验收**：head→intermediate(s)→tail 顺序、相邻节点大步、invisible、Stop、一次调用粒度和最终失活匹配。
+**验收**：head→intermediate(s)→tail 顺序、相邻节点大步、invisible、Stop、一次调用粒度和最终失活匹配；root crossing 前与 root equal 但 invisible child 未到时 cursor 均不提前推进，child equal 时只跳过该一个节点且不产生 OneFrame。
 
 ### A08 恢复 OneFrame 填充与聚合
 
@@ -878,9 +887,10 @@ Reflect 只可输出：
 1. 测试读取冻结 fixed trace，不调用 Reverse/Python/网络。
 2. 从 U02 普通和 HABAHIRO 生产谱面选取真实 Normal/Flick/Long/Slide 图。
 3. 比较逐步状态、事件顺序、Float32 bits、OneFrame slots 和 Reflect batches。
-4. 覆盖全部失败关闭 case。
-5. 运行第一切片、谱面构造、时钟调度回归。
-6. 建立验收记录，持续披露未恢复分数/输入/表现边界。
+4. 对两个 production BMS 的首 invisible Slide child 覆盖 root equal/child before/child equal cursor timing，不能只比较最终 Deactive。
+5. 覆盖全部失败关闭 case。
+6. 运行第一切片、谱面构造、时钟调度回归。
+7. 建立验收记录，持续披露未恢复分数/输入/表现边界。
 
 **停止条件**：任何 oracle 需要测试侧修正生产输入、排序事件或忽略未知字段，阶段不得关闭。
 
@@ -897,7 +907,7 @@ Reflect 只可输出：
 | AL07 | Long head | `>= root`、Move→Wait、front Perfect | E12/E13、R03 |
 | AL08 | Long tail | `> tail`、linked after→root、最终状态/回收 | E09–E11、R02/R03 |
 | AL09 | Slide head | `>= root`、Wait、front Perfect | E16/E17、R03 |
-| AL10 | Slide intermediate | current 节点、intermediate 路由、cursor +1 | E14/E15、R02/R03 |
+| AL10 | Slide intermediate/invisible | current 节点与 intermediate 路由；visible/invisible 均先过 E15 position gate；child before 保持 cursor，child equal 后 invisible 不占槽且 cursor +1 | E14/E15、R02/R03 |
 | AL11 | Slide terminal/Stop | terminal 与 stopped after 路由分离 | E15/E18/E19、R03 |
 | AL12 | 相邻 Slide 节点大步 | 单次调用最多处理 R02 确认数量 | R01–R03 |
 | AL13 | AfterUpdate | Long linked after；Slide current after；父 base 在先 | E09/E20、R03 |
@@ -1003,17 +1013,17 @@ A10 前不运行 Vite、Tauri 或 GarupaEditor 整体构建。
 - [x] Auto Live 模式显式接入，manual/mode14/debug 路由没有混淆。
 - [x] Normal/Flick/standalone Directional/Multiple Directional 的 adjusted crossing、事件数、source-order run state 和顺序匹配。
 - [x] Long 头/尾比较符号、父子顺序、状态、active pause 与回收匹配。
-- [x] Slide 头/中间/终端/Stop、current/selected cursor 和单次调用粒度匹配 frozen trace。
+- [ ] Slide 头/中间/终端/Stop、current/selected cursor 和单次调用粒度匹配 frozen trace；**当前 invisible child 在自身 crossing 前提前推进。**
 - [x] Long/Slide after 子图保持构造共享身份并由父对象独占更新。
 - [x] OneFrame 固定5槽、first-unused、Setup、Multiple note type/count边界、池序Reflect、清除与Note-level exhaustion失败状态匹配；manager与公共host全部step输入均匹配。
 - [x] unknown 分数/生命/技能/音频/粒子字段没有零值或 no-op 伪实现。
 - [x] 同位置、actual adaptive 多子步、Long/Slide/Multiple 暂停、空帧和失败关闭全部通过新 oracle；exact offset owner与adaptive full outer-frame均直接消费G22。
-- [x] 普通与 HABAHIRO production Normal/Flick/Directional/Multiple/Long/Slide 回归通过，并以独立 oracle 验证 production group，不由待测函数生成 expected。
+- [ ] 普通与 HABAHIRO production Normal/Flick/Directional/Multiple/Long/Slide 回归通过，并以独立 oracle 验证 production group，不由待测函数生成 expected；**现缺两个 production BMS 的首 invisible Slide child crossing/cursor timing 回归。**
 - [x] 第一切片、谱面构造和时钟调度全部隔离回归通过，并补齐fault后全部公共`step`输入优先级回归。
 - [x] `engine/` 依赖边界通过。
-- [x] `tmp/simulator-auto-live-acceptance.md` 已按G19–G22、actual production replay与公共`step`修复后结果再次重建并通过。
+- [ ] `tmp/simulator-auto-live-acceptance.md` 已按 G19–G22、actual production replay、公共 `step` 修复与 Slide invisible position gate 结果再次重建并通过。
 - [x] 未修改主程序入口、编辑器控制器、窗口协议、渲染或音频实现。
-- [x] 新的公共host修复已推送且远端与HEAD为`0 0`；最终验收文档按同一纪律提交推送。
+- [ ] 新的 Slide invisible position-gate 修复与最终验收文档已按同一纪律提交推送，远端与 HEAD 为 `0 0`。
 
 阶段关闭后，下一阶段只允许按整体计划进入“手动输入与判定”。如果 AL21 中任一手动输入分支仍无实体证据，则下一阶段必须先建立对应设备采证硬门，不能沿用 Auto Live 的 Force Perfect 结果绕过手动判定。
 

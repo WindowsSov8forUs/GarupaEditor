@@ -25,11 +25,11 @@
 
 时钟与调度验收记录位于 `tmp/simulator-clock-scheduling-acceptance.md`。S01–S10 已完成。
 
-Auto Live A00–A10已完成第六次最终独立重验收。G21 production topology、G22 exact/adaptive replay与A09公共host terminal fault均直接消费冻结证据；fault后合法、NaN、±Infinity和负delta的`step`及其他非允许API均返回同一锁存失败。全部隔离回归通过，验收见`tmp/simulator-auto-live-acceptance.md`。
+Auto Live 第七次独立审计已重新打开 A07/A10。G21 production topology、G22 exact/adaptive replay 与 A09 公共 host terminal fault仍保持通过；但冻结 E15 要求 Slide current child 先执行 adjusted-position gate，当前实现却在读取 adjusted position前无条件跳过 invisible child。现有 AL10 又以 `160 < child 170` 期待 cursor 前进，两个 production BMS 分别有89/27个首child为invisible的Slide root受到影响。完整隔离回归虽绿色，仍不能关闭阶段；状态见`tmp/simulator-auto-live-acceptance.md`。
 
 OneFrame 容量现在由原作证据固定为 5，不再接受宿主或测试容量配置。公开的 `OneFrameJudgementBatch` 仅包含本阶段闭合的 Auto Live 判定字段，不是原作完整 `OneFrameTotalData`。分数、Power、生命、Skill/Fever、音频、粒子、渲染和 HUD 字段在类型上保持缺席，而不是填零。
 
-下一阶段是“手动输入与判定”，但开始生产实现前必须先建立并关闭独立Reverse证据硬门。真实触摸、Multiple Directional距离阈值、手指所有权、判定窗口、普通timeout Miss、释放和Hold行为继续`evidence-required`；BackLine/Sprite/音频/粒子仍后置。
+Auto Live A07/A10 修复并重新完成全量验收前不得进入下一阶段。阶段关闭后，下一阶段仍是“手动输入与判定”，且开始生产实现前必须先建立并关闭独立Reverse证据硬门。真实触摸、Multiple Directional距离阈值、手指所有权、判定窗口、普通timeout Miss、释放和Hold行为继续`evidence-required`；BackLine/Sprite/音频/粒子仍后置。
 
 `src/simulator/engine` 不依赖 React、Pixi、Tauri、DOM、编辑器谱面类型或窗口协议。宿主 API 是 GarupaEditor 的可移植边界，不宣称属于原作接口。
 
