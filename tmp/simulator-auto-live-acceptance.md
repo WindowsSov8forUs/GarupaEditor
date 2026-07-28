@@ -1,6 +1,6 @@
 # 模拟器 Auto Live 阶段验收记录
 
-> **2026-07-29 第三次独立审计：验收结论撤销。** 当前 Multiple 以 source-order run 代替 frozen contract 的 connected component，普通 production 13 个 batch 多出 19 个 judgement；Long/Slide 第六槽失败留下半状态；adaptive/offset canonical 含测试侧 substep/BPM 输入。A02/A05/A08/A09/A10 重新打开。本文后续“通过”表格仅保留为被撤销历史，不得用于证明阶段完成。
+> **2026-07-29 第三次独立审计：验收结论仍撤销。** Reverse `24706edc` 已关闭 G18–G20 并解除代码门，但 connected-component、terminal fault latch 与 actual canonical 修复尚未完成。A05/A08/A09/A10 继续打开。本文后续“通过”表格仅保留为被撤销历史，不得用于证明阶段完成。
 
 ## 1. 验收身份
 
@@ -36,7 +36,7 @@ auto_live_gate = closed
 blocking_findings = []
 ```
 
-但第三次审计新增 G18–G20 后，该历史 closure 不再满足当前任务书关闭条件；新补充 closure 提交前，GarupaEditor 任务门按 `required-before-code` 处理。
+第三次审计新增 G18–G20 已由 Reverse `24706edcb02155fca575c6fde6aa9c7f0fe131ba` 的 supplement closure 关闭；当前阻断已从“证据硬门”转为“生产实现与重验收未完成”。
 
 G01–G10 已全部关闭：
 

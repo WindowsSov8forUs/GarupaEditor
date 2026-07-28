@@ -11,7 +11,10 @@
     "G14": "Active Long/Slide pause freezes NoteManager, graph/cursor and occupied slots; resume has no catch-up and is composed only from previously confirmed manager/family contracts.",
     "G15": "B=-5/0/+5 exact Float32 outputs and a positive cross-BPM boundary are imported from the committed device runtime oracle rather than prose relations.",
     "G16": "Multiple Directional production groups are connected only for FrontNoteType 6, equal GameNoteType and adjacent ButtonType; one judged root recursively marks and detaches both side chains.",
-    "G17": "Exact offset fixtures preserve the committed runtime cursor bar and Float32 beat progress; a rounded absolute-position projection alone is explicitly insufficient to reproduce per-step Float32 bits."
+    "G17": "Exact offset fixtures preserve the committed runtime cursor bar and Float32 beat progress; a rounded absolute-position projection alone is explicitly insufficient to reproduce per-step Float32 bits.",
+    "G18": "Multiple Directional grouping is a graph connected-component operation over equal game type and adjacent button edges; source-list adjacency and unrelated interleaved roots do not split a component.",
+    "G19": "Long/Slide head changes to Wait before judgement, Long tail invokes linked finish before tail judgement, and the sixth OneFrame acquisition raises after five slots. Because native continuation is absent, the portable host must latch a terminal evidence-required fault and permit snapshot/dispose only.",
+    "G20": "Canonical acceptance must observe adaptive substep identity and per-step tempo lookup from production runtime traces; tests may not inject substep labels, event order, or expected step BPM outputs."
   },
   "implementation_gate": "GarupaEditor must freeze this supplement before changing Multiple Directional or the reopened oracle paths."
 }

@@ -136,9 +136,9 @@ if (
   supplementClosure.overall_status !== "confirmed" ||
   supplementClosure.auto_live_gate !== "closed" ||
   supplementClosure.blocking_findings.length !== 0 ||
-  Object.keys(supplementClosure.supplement_gap_resolution).length !== 7
+  Object.keys(supplementClosure.supplement_gap_resolution).length !== 10
 ) {
-  fail("Frozen Reverse supplement closure is not the closed G11-G17 contract");
+  fail("Frozen Reverse supplement closure is not the closed G11-G20 contract");
 }
 
 const supplementTrace = JSON.parse(
@@ -157,6 +157,12 @@ for (const required of [
   "offset-plus5-cross-bpm-exact",
   "offset-minus5-cross-bar-exact",
   "offset-zero-identity-exact",
+  "multiple-connected-component-non-source-order",
+  "one-frame-exhaustion-long-head-terminal-fault",
+  "one-frame-exhaustion-slide-head-terminal-fault",
+  "one-frame-exhaustion-long-tail-terminal-fault",
+  "actual-adaptive-scheduler-observation-requirements",
+  "actual-offset-tempo-query-observation-requirements",
 ]) {
   if (!supplementCaseIds.has(required)) {
     fail(`Frozen supplement trace is missing ${required}`);
@@ -169,6 +175,6 @@ if (!existsSync(resolve(packageRoot, "OPEN_GAPS.md"))) {
 
 console.log(
   `auto-live evidence verified: candidates=${manifest.candidateEntries.length}, ` +
-    `final=${manifest.finalEntries.length}, supplement=G11-G17, ` +
+    `final=${manifest.finalEntries.length}, supplement=G11-G20, cases=14, ` +
     `gate=closed, index=${validateIndex ? "checked" : "skipped"}`,
 );

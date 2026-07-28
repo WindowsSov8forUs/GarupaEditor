@@ -10,7 +10,7 @@
 - 锁定原作样本：`jp.co.craftegg.band` 10.1.3（version code 229，`arm64-v8a`）。
 - 上游已验收阶段：第一切片、谱面构造、时钟与调度。
 - 上游时钟调度验收提交：GarupaEditor `78414bc`，关闭记录修订提交 `ca84258`。
-- 当前状态：**第三次独立审计已撤销 A00–A10 完成结论。A01/A03/A04 保留；A02、A05、A08、A09、A10 重新打开，A06/A07 的成功路径保留但失败原子性随 A09 重验。阻断项：production Multiple 必须按相邻 button 图的 connected component 分组，当前 source-order run 在普通谱面 13 个 batch 多产生 19 个 judgement；Long/Slide 在第六槽失败时留下 Wait/伪 trace；adaptive/offset canonical 仍混有测试侧 substep/BPM 输入。G18–G20 补证关闭前禁止继续生产修复，禁止进入手动输入阶段。**
+- 当前状态：**第三次独立审计已撤销 A00–A10 完成结论。Reverse `24706edcb02155fca575c6fde6aa9c7f0fe131ba` 已关闭 G18–G20，GarupaEditor 冻结包 source/copy 校验通过，A05/A08/A09/A10 代码门已解除；这些实现与重验收仍未完成。A01–A04 保留，A06/A07 成功路径保留但失败状态待 A09 重验。禁止进入手动输入阶段。**
 - 待重建验收记录：`tmp/simulator-auto-live-acceptance.md`。
 - 已冻结证据包：`tmp/simulator-reverse-evidence/auto-live/`。
 
@@ -46,7 +46,7 @@
 | --- | --- | --- |
 | A00 建立阶段任务书 | 已完成 | 范围、证据候选、硬门、实现批次和验收矩阵写入本文档 |
 | A01 晋升 Auto Live 静态证据 | 补充完成 | Reverse `cd84d2ce` 补齐 Multiple/visual ARM64，`7a0540dc` 补齐 committed offset cursor identity；冻结 R09–R16 |
-| A02 生成固定事件 oracle 并关闭缺口 | 重新打开，G18–G20 硬门 | 须冻结非 lane-order Multiple connected component、OneFrame exhaustion 后 Note/manager 失败状态、actual scheduler canonical trace |
+| A02 生成固定事件 oracle 并关闭缺口 | 第三次补充完成，代码门解除 | Reverse `24706edc` 关闭 G18–G20；supplement 14 case 冻结 connected component、terminal fault policy 与 actual observation requirements |
 | A03 接入 Auto Live 模式与判定上下文 | 已完成 | 显式模式本身不需改动；补充证据现可由 A05–A10 消费 |
 | A04 建立 Long/Slide 运行子图 | 修复完成 | 普通生产 Slide 由 terminal child + root after type 联合识别；父 Deactive 时按 R02 清 child graph/current，复用重建共享身份 |
 | A05 恢复 Single/Flick Force Perfect | 重新打开，等待 A02 | Normal/Flick/standalone Directional 保留；Multiple owner 必须由 source-order run 改为 confirmed connected component |
@@ -230,6 +230,14 @@
 - 五槽满时直接驱动真实 Note：Long/Slide head 均先 `Move→Wait` 再因 `one-frame.pool-exhausted` 返回，head payload 缺失且无法重试；Long tail 还会在提交失败前追加 `long-linked-after-finish`，但 linked judged 仍为 false。现 failure matrix 只验证控制器前五槽保留，未关闭 Note/step 后续状态。
 - canonical runner 的 simultaneous/adaptive case 直接调用独立 Note 并由测试传入 `substep=[0,1,2]`；真实 AL14 只比较 note index 和 Reflect 次数。offset case又把 `expected.step_bpms` 作为 `advancePosition/rewindPosition` 输入。故“19 case 全部 actual canonical、无 expected-side 输入”表述不成立。
 - A02/A05/A08/A09/A10 与阶段完成勾选撤销；A06/A07 仅保留成功路径。计划新增 G18（connected-component production topology）、G19（OneFrame exhaustion 后 portable terminal failure boundary）、G20（actual scheduler/tempo-query canonical trace）。G18–G20 Reverse 提交、冻结与 verifier 关闭前不改生产代码。
+
+#### 2026-07-29 第二十批：G18–G20 补充证据硬门关闭
+
+- Reverse supplement 新增 6 个 case，总数由 8 增至 14：非 source-order `[1,2,0]` 且夹有其他 playable root 的 Multiple component；Long head、Slide head、Long tail 三个 sixth-slot terminal fault；actual adaptive observation requirements；actual offset tempo-query requirements。
+- G18 直接绑定既有 S11/S12：相同 game type、相邻 button 建边后求 connected component，source list adjacency 与其他 family 插入不得拆组；fixture 固定 component `[0,1,2]`、reverse playable order `[0,5,2,1]`、judged button 0、唯一 judgement/count 3。
+- G19 verifier 从锁定 `a3f28d77` 的 Long/Slide head 和 Long tail C 切片直接断言 ChangeState/linked finish 在 judgement 前；结合首版 failure matrix 的“five IsUse 后异常”，锁定 portable host policy：原作异常后 continuation 无证据，故 manager 锁存 terminal `evidence-required` fault，后续只允许 snapshot/dispose，不重试、不继续子步/Reflect。该 fault 是失败关闭宿主边界，不冒充原作 API。
+- G20 明确 canonical 验收字段必须来自 production runtime：outer/substep、adjusted bits、state、slot、Reflect，以及 entry cursor/per-step BPM/result bits；禁止把 expected substep/event order/step BPM 注入实际结果。
+- Reverse `24706edcb02155fca575c6fde6aa9c7f0fe131ba` 已推送并确认 main `0 0`；GarupaEditor 字节保持替换 R09/R10/R11/R12/R14/R15 与 fixture alias，final entry 数仍为 67。A05/A08/A09/A10 代码门解除，阶段仍保持未完成。
 
 ## 2. 固定范围
 
@@ -914,7 +922,7 @@ A10 前不运行 Vite、Tauri 或 GarupaEditor 整体构建。
 
 只有以下条件全部满足，Auto Live 阶段才能关闭：
 
-- [ ] Reverse G18–G20 补充证据提交已锁定，新 `auto_live_gate = closed` 且 `blocking_findings = []`。
+- [x] Reverse G18–G20 补充证据提交已锁定，新 `auto_live_gate = closed` 且 `blocking_findings = []`。
 - [x] E02/E05/E30 的内部哈希修订链已闭合，无 stale source profile。
 - [x] 补充后的固定事件轨迹覆盖 Multiple Directional、Stop、pause、BPM boundary 与精确 B±5 bits，并可在 Reverse 离线重复生成；GarupaEditor 不调用 Python。
 - [x] Auto Live 模式显式接入，manual/mode14/debug 路由没有混淆。

@@ -44,8 +44,19 @@
       "pause-active-slide-pending-slot-freeze",
       "offset-plus5-cross-bpm-exact",
       "offset-minus5-cross-bar-exact",
-      "offset-zero-identity-exact"
+      "offset-zero-identity-exact",
+      "multiple-connected-component-non-source-order",
+      "one-frame-exhaustion-long-head-terminal-fault",
+      "one-frame-exhaustion-slide-head-terminal-fault",
+      "one-frame-exhaustion-long-tail-terminal-fault",
+      "actual-adaptive-scheduler-observation-requirements",
+      "actual-offset-tempo-query-observation-requirements"
     ]
+  },
+  "portable_failure_policy": {
+    "classification": "fail-closed host boundary, not an original-game API claim",
+    "native_basis": "the sixth OneFrame acquisition raises after five IsUse slots and original continuation is not represented",
+    "rule": "after a substep returns this evidence-required boundary, latch the manager fault; do not retry or continue NoteManager/Reflect; allow snapshot and dispose only"
   },
   "unresolved_nonblocking": [
     "real manual touch and timeout Miss remain the manual-input stage",

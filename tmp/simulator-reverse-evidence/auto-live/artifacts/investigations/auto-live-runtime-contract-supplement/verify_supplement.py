@@ -17,6 +17,9 @@ SOURCE_PROFILES = {
     "artifacts/rhythm/decompiled_bundles/note.c": (15488148, "34FFB644FED6A257D6E964A2996E733751B6C70F65C97EF2E812FC4A793ED933"),
     "artifacts/investigations/auto-live-runtime-contract/auto_live_runtime_contract.json": (7536, "24B5736064666E085B217987F388840F24F644ABF5FBF3924EF2B8249D6D8D6A"),
     "artifacts/investigations/clock-scheduling-runtime-oracle/summaries/pass2_judge_offset.json": (16320, "79FC58F54436031C6572D4DF7260C7B0336D03D4604691C3647A7511EA17AE92"),
+    "artifacts/investigations/auto-live-runtime-contract/decompiled/030eb97c__NoteLong__forcePerfectMoveState.c": (1126, "18F64A4F7F52C46EF62E657AD0670B48B45D5F034CA884F9390F7B99AABF0A26"),
+    "artifacts/investigations/auto-live-runtime-contract/decompiled/0321c1cc__NoteSlide__forcePerfectMoveState.c": (2100, "3AC65DB508F03FFEB7EEAA91F9E4BE537C6094DB546B0C30895E1FD5A22C120C"),
+    "artifacts/investigations/auto-live-runtime-contract/decompiled/030eb7a0__NoteLong__forcePerfectOnUpdate.c": (2188, "95944BDCEC2DE63B300FDAC8E2AE88431192B1D00D0E23A566D60090E823B718"),
 }
 
 
@@ -71,6 +74,19 @@ def main() -> None:
     assert "strb w9, [x8, #0x14]" in left and "bl #0x30ee12c" in left
     assert "strb w9, [x8, #0x14]" in right and "bl #0x30ee1d4" in right
 
+    long_head = committed_sources[
+        "artifacts/investigations/auto-live-runtime-contract/decompiled/030eb97c__NoteLong__forcePerfectMoveState.c"
+    ].decode("utf-8")
+    slide_head = committed_sources[
+        "artifacts/investigations/auto-live-runtime-contract/decompiled/0321c1cc__NoteSlide__forcePerfectMoveState.c"
+    ].decode("utf-8")
+    long_tail = committed_sources[
+        "artifacts/investigations/auto-live-runtime-contract/decompiled/030eb7a0__NoteLong__forcePerfectOnUpdate.c"
+    ].decode("utf-8")
+    assert long_head.index("NoteBase__ChangeState(a1, 1)") < long_head.index("*a1 + 616LL")
+    assert slide_head.index("NoteBase__ChangeState(a1, 1)") < slide_head.index("*a1 + 616LL")
+    assert long_tail.index("*(_QWORD *)v10 + 648LL") < long_tail.index("*(_QWORD *)a1 + 648LL")
+
     first = build()
     second = build()
     frozen = json.loads((HERE / "auto_live_supplement_fixed_event_trace.json").read_text(encoding="utf-8"))
@@ -107,11 +123,29 @@ def main() -> None:
     assert cases["offset-zero-identity-exact"]["entry_music_cursor"] == cases[
         "offset-minus5-cross-bar-exact"
     ]["entry_music_cursor"]
+    component = cases["multiple-connected-component-non-source-order"]
+    assert component["multiple_candidate_source_order"] == [1, 2, 0]
+    assert component["adjacent_edges"] == [[0, 1], [1, 2]]
+    assert component["connected_components"] == [[0, 1, 2]]
+    assert component["multiple_judgement_count"] == 1
+    for case_id in [
+        "one-frame-exhaustion-long-head-terminal-fault",
+        "one-frame-exhaustion-slide-head-terminal-fault",
+        "one-frame-exhaustion-long-tail-terminal-fault",
+    ]:
+        assert cases[case_id]["portable_boundary"]["manager_state"] == "faulted"
+        assert cases[case_id]["portable_boundary"]["subsequent_step"] == "same-latched-failure"
+    assert cases["actual-adaptive-scheduler-observation-requirements"]["forbidden_test_inputs"] == [
+        "substep-index", "event-order"
+    ]
+    assert cases["actual-offset-tempo-query-observation-requirements"]["forbidden_test_inputs"] == [
+        "expected-step-bpms"
+    ]
     assert closure["overall_status"] == "confirmed"
     assert closure["auto_live_gate"] == "closed"
     assert closure["blocking_findings"] == []
-    assert sorted(closure["supplement_gap_resolution"]) == [f"G{index}" for index in range(11, 18)]
-    print("auto live supplement: verified; gaps=G11-G17, gate=closed, cases=8")
+    assert sorted(closure["supplement_gap_resolution"]) == [f"G{index}" for index in range(11, 21)]
+    print("auto live supplement: verified; gaps=G11-G20, gate=closed, cases=14")
 
 
 if __name__ == "__main__":

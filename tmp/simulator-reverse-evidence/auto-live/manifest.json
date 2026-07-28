@@ -4,7 +4,7 @@
   "source": {
     "repository": "HOST___________________GirlsBandParty-Reverse",
     "staticBaselineCommit": "74ab76f6838847d98aae1a15741a5f024e3774ff",
-    "finalEvidenceCommit": "7a0540dc867a759db929842ebe95ca9665a61b65",
+    "finalEvidenceCommit": "24706edcb02155fca575c6fde6aa9c7f0fe131ba",
     "excludedUntrackedPaths": [
       ".claude/",
       "runtime/tools/"
@@ -685,38 +685,38 @@
     },
     {
       "id": "R09",
-      "sourceCommit": "7a0540dc867a759db929842ebe95ca9665a61b65",
+      "sourceCommit": "24706edcb02155fca575c6fde6aa9c7f0fe131ba",
       "sourcePath": "artifacts/investigations/auto-live-runtime-contract-supplement/README.md",
       "copiedPath": "artifacts/investigations/auto-live-runtime-contract-supplement/README.md",
-      "bytes": 2430,
-      "sha256": "37B889EA80798B10F62A9B9643E243A51207CD3208DA91DFE7B0E74E71230E17",
+      "bytes": 3201,
+      "sha256": "4ABD1E2C4DE8285121B1C1319A0C11932A3C40D3A9AEFCAE3A575A6BECEA9145",
       "status": "confirmed-supplement-final"
     },
     {
       "id": "R10",
-      "sourceCommit": "7a0540dc867a759db929842ebe95ca9665a61b65",
+      "sourceCommit": "24706edcb02155fca575c6fde6aa9c7f0fe131ba",
       "sourcePath": "artifacts/investigations/auto-live-runtime-contract-supplement/auto_live_supplement_contract.json",
       "copiedPath": "artifacts/investigations/auto-live-runtime-contract-supplement/auto_live_supplement_contract.json",
-      "bytes": 3124,
-      "sha256": "4B7FDEB13E6EA419D6A922EDDBA3FC005C316D5956A3D6F73C1F528C5AE6837F",
+      "bytes": 3887,
+      "sha256": "D7DA47AEA99A1A9FA5C52B58C11D55B2AAFE489CE918F132854DE4248BD4AB90",
       "status": "confirmed-supplement-final"
     },
     {
       "id": "R11",
-      "sourceCommit": "7a0540dc867a759db929842ebe95ca9665a61b65",
+      "sourceCommit": "24706edcb02155fca575c6fde6aa9c7f0fe131ba",
       "sourcePath": "artifacts/investigations/auto-live-runtime-contract-supplement/closure.json",
       "copiedPath": "artifacts/investigations/auto-live-runtime-contract-supplement/closure.json",
-      "bytes": 1530,
-      "sha256": "D3EE285EC97688C0AFC77E02B0F758519F0428D329D5BB6AF82F3A7FEAC5014E",
+      "bytes": 2271,
+      "sha256": "37AC774629D18C962F21F9B9EF4FED361F5B2B994B0A93845586F43DBB46C50C",
       "status": "confirmed-supplement-final"
     },
     {
       "id": "R12",
-      "sourceCommit": "7a0540dc867a759db929842ebe95ca9665a61b65",
+      "sourceCommit": "24706edcb02155fca575c6fde6aa9c7f0fe131ba",
       "sourcePath": "artifacts/investigations/auto-live-runtime-contract-supplement/auto_live_supplement_fixed_event_trace.json",
       "copiedPath": "artifacts/investigations/auto-live-runtime-contract-supplement/auto_live_supplement_fixed_event_trace.json",
-      "bytes": 9527,
-      "sha256": "6CEF6448CF7F4EF447D63EEF0319BA61B97D0DF7CC41F5B402E7DB7663B4806F",
+      "bytes": 14149,
+      "sha256": "DB26DE960633CB897E56471B855FF344800FF7ADB602A1CF6D593EA4C3EA7309",
       "status": "confirmed-supplement-final"
     },
     {
@@ -730,20 +730,20 @@
     },
     {
       "id": "R14",
-      "sourceCommit": "7a0540dc867a759db929842ebe95ca9665a61b65",
+      "sourceCommit": "24706edcb02155fca575c6fde6aa9c7f0fe131ba",
       "sourcePath": "artifacts/investigations/auto-live-runtime-contract-supplement/verify_supplement.py",
       "copiedPath": "artifacts/investigations/auto-live-runtime-contract-supplement/verify_supplement.py",
-      "bytes": 6730,
-      "sha256": "CD9521B743DC52E14BC39E3F67335EB0B226F935D704DE5F4BA7706BEE59BA11",
+      "bytes": 9079,
+      "sha256": "BECB21429AB41E10069B1740EEC907A48E59BA299C828FE16C640FBF0185B8BB",
       "status": "confirmed-supplement-final"
     },
     {
       "id": "R15",
-      "sourceCommit": "7a0540dc867a759db929842ebe95ca9665a61b65",
+      "sourceCommit": "24706edcb02155fca575c6fde6aa9c7f0fe131ba",
       "sourcePath": "artifacts/investigations/auto-live-runtime-contract-supplement/generate_supplement.py",
       "copiedPath": "artifacts/investigations/auto-live-runtime-contract-supplement/generate_supplement.py",
-      "bytes": 8932,
-      "sha256": "FB50303786D3F3CC5773EA3B5CC31BA404925813D41D3C03227A12CDBCC63B94",
+      "bytes": 13949,
+      "sha256": "6A7E3EC48D70EC5BBDCBC766BE953CE67B2F518FF781E0647915556BA4FFC87D",
       "status": "confirmed-supplement-final"
     },
     {
@@ -919,11 +919,11 @@
     },
     {
       "id": "F-auto-live-supplement-fixed-event-trace.json",
-      "sourceCommit": "7a0540dc867a759db929842ebe95ca9665a61b65",
+      "sourceCommit": "24706edcb02155fca575c6fde6aa9c7f0fe131ba",
       "sourcePath": "artifacts/investigations/auto-live-runtime-contract-supplement/auto_live_supplement_fixed_event_trace.json",
       "copiedPath": "fixtures/auto-live-supplement-fixed-event-trace.json",
-      "bytes": 9527,
-      "sha256": "6CEF6448CF7F4EF447D63EEF0319BA61B97D0DF7CC41F5B402E7DB7663B4806F"
+      "bytes": 14149,
+      "sha256": "DB26DE960633CB897E56471B855FF344800FF7ADB602A1CF6D593EA4C3EA7309"
     }
   ],
   "upstreamDependencies": [

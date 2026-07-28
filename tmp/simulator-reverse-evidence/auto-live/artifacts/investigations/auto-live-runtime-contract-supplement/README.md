@@ -30,6 +30,17 @@ The offset cases preserve the source cursor as separate bar and Float32 beat
 progress fields. The rounded absolute-position projection is not sufficient to
 reconstruct the same Float32 result near a bar/BPM boundary.
 
+The third completion audit closes three additional implementation gates. A
+Multiple Directional group is a connected component of equal-game-type notes
+joined by adjacent-button edges, not a run in source-list order. Long/Slide
+head changes to Wait before judgement, Long tail calls linked finish before
+tail judgement, and native sixth-slot acquisition raises after five committed
+slots. Since native continuation after that exception is not represented, the
+portable host policy is a terminal `evidence-required` fault: no retry or
+remaining substep/Reflect, with snapshot and dispose as the only valid calls.
+Finally, canonical acceptance must observe scheduler substeps and tempo queries
+from production traces rather than injecting expected substep labels or BPMs.
+
 ## Provenance
 
 - locked sample: `jp.co.craftegg.band` 10.1.3 (229), `arm64-v8a`;
