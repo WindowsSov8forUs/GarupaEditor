@@ -1,6 +1,6 @@
 # 模拟器 Auto Live 阶段验收记录
 
-> **2026-07-29 第五次独立重验收：通过。** 公共host fault旁路已修复；G22 committed delta/BMS经production engine重放，exact B±5/0由公共owner执行；adaptive保留outer-frame全字段比较。全部A10隔离回归与evidence index验证通过。
+> **2026-07-29 第六次独立审计：第五次验收结论已撤销。** G21 topology、G22 actual replay与A00–A08保留；公共host `step`在terminal fault后仍可先返回非法delta错误，不满足G19 same-latched-failure。A09/A10重新打开，本文后续既有通过结果仅作为保留的历史验证记录。
 
 ## 1. 验收身份
 
@@ -9,7 +9,7 @@
 - 锁定原作样本：`jp.co.craftegg.band` 10.1.3（version code 229），`arm64-v8a`
 - Auto Live Reverse 首版 contract 提交：`a3f28d77e71c5e7a62cab0de81f0cf668a5b745b`
 - Auto Live Reverse 最终补充证据提交：`c2dc5c7f37718a170c9e9b93d5a86b42e9d1a2ab`
-- GarupaEditor 最终证据冻结提交：`76f39cb`
+- GarupaEditor G21证据修正冻结：`76f39cb`
 - 模式与运行子图提交：`ac7b3d0`
 - Single/Flick Force Perfect 提交：`00cc5f6`
 - Long/Slide 状态机提交：`f5cc3d1`
@@ -32,10 +32,11 @@
 - 公共 host fault 修复：`08eb7b8`
 - G22 最终证据冻结：Reverse `c2dc5c7f`；GarupaEditor `6f78d3f`、`031407b`
 - G22 production replay 消费：`2d40644`
-- 第五次最终重验收：本文件所在提交
+- 第五次最终重验收：`6b63b18`
+- 第六次审计重开：本文件所在提交
 - 验收日期：2026-07-28
 - 最终验收日期：2026-07-29
-- 验收结论：**通过。A00–A10完成；Auto Live阶段关闭。手动输入阶段开始前仍须建立独立Reverse证据硬门。**
+- 验收结论：**撤销。A00–A08保持完成；A09/A10重新打开，Auto Live阶段未关闭，当前不得进入手动输入阶段。**
 
 ## 2. 证据硬门与冻结包
 
@@ -91,8 +92,8 @@ auto-live evidence verified: candidates=30, final=72, supplement=G11-G22, cases=
 | A06 Long | 通过 | head `>=`、tail `>`、linked finish→tail、active pause/resume、回收；head/tail 第六槽 native failure state 均冻结 |
 | A07 Slide | 通过 | source-order、terminal 8/5/6/7、Stop、Reset、单次粒度；head 第六槽 Wait 状态冻结 |
 | A08 OneFrame | 通过 | 固定 5 槽；117/84 个 production run 的唯一 callback count；visual helper 不判定 |
-| A09 调度生命周期 | 通过 | direct manager与公共host均先检查fault；非允许API返回同一失败，snapshot连续只读、dispose允许 |
-| A10 生产 oracle | 通过 | exact三例由committed delta/BMS驱动production engine并调用公共owner；adaptive保留outer frame全对象比较；全部回归通过 |
+| A09 调度生命周期 | **撤销** | pause/resume已先检查fault；但公共step的director非法delta校验仍可先于manager fault |
+| A10 生产 oracle | **撤销** | exact/adaptive/topology保留；AL16缺fault后NaN/±Infinity/负delta，不能证明全部公共API一致 |
 
 ## 4. 已落地的生产边界
 
@@ -224,7 +225,7 @@ node tmp/simulator-reverse-evidence/auto-live/verify.mjs --index
 - Auto Live：AL01–AL22 共 22 组通过。
 - 依赖边界：每个隔离测试入口后通过。
 - Auto Live 证据包：`candidates=30, final=72, supplement=G11-G22, cases=14, replay=4, gate=closed, index=checked`。
-- 固定 oracle：首版11 case、补充14 case与G22 replay均被读取；exact offset与adaptive outer-frame现已按production trace完整消费，待全量复核后恢复结论。
+- 固定 oracle：首版11 case、补充14 case与G22 replay均被读取；exact offset与adaptive outer-frame已按production trace完整消费，该部分保持有效。
 - production topology oracle：独立生成器不导入/调用待测 `groupMultipleDirectionalInformationList`；固定 JSON 对两个 BMS 的 SHA-256、batch/position、source slot、note/button/game type 逐对象比较，离线再生成字节一致。
 - adaptive/offset：substep/state/slot/outer frame来自manager trace并全对象比较；exact三例逐frame重放committed delta，入口cursor、step BPM和result bits来自公共production owner。
 - 未运行 Vite、Tauri 或 GarupaEditor 整体构建，符合任务书限制。
@@ -240,7 +241,7 @@ node tmp/simulator-reverse-evidence/auto-live/verify.mjs --index
 
 ## 8. 下一阶段硬门
 
-Auto Live第五次重验收已通过；以下下一阶段硬门恢复适用。
+Auto Live第六次审计已重新打开A09/A10；以下下一阶段硬门暂不得启动。
 
 下一阶段只允许按整体计划进入“手动输入与判定”。开始生产实现前必须：
 

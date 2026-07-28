@@ -25,11 +25,11 @@
 
 时钟与调度验收记录位于 `tmp/simulator-clock-scheduling-acceptance.md`。S01–S10 已完成。
 
-Auto Live A00–A10已完成第五次独立重验收。G21 production topology、A09公共host terminal fault、G22 exact B±5/0 production replay与adaptive full outer-frame均直接消费冻结证据；全部隔离回归通过。验收记录位于`tmp/simulator-auto-live-acceptance.md`。
+Auto Live第五次关闭结论已由第六次独立审计撤销。A00–A08、G21 production topology与G22 exact/adaptive replay保持有效；A09公共host `step`仍可在terminal fault后让非法delta校验先返回不同失败，A09/A10重新打开。修复和重验收前禁止进入手动输入阶段；状态见`tmp/simulator-auto-live-task.md`。
 
 OneFrame 容量现在由原作证据固定为 5，不再接受宿主或测试容量配置。公开的 `OneFrameJudgementBatch` 仅包含本阶段闭合的 Auto Live 判定字段，不是原作完整 `OneFrameTotalData`。分数、Power、生命、Skill/Fever、音频、粒子、渲染和 HUD 字段在类型上保持缺席，而不是填零。
 
-下一阶段是“手动输入与判定”，但开始生产实现前必须先建立并关闭独立Reverse证据硬门。真实触摸、Multiple Directional距离阈值、手指所有权、判定窗口、普通timeout Miss、释放和Hold行为继续`evidence-required`；BackLine/Sprite/音频/粒子仍后置。
+当前仍停留在Auto Live A09/A10修复与重验收。后续“手动输入与判定”开始生产实现前必须先建立并关闭独立Reverse证据硬门。真实触摸、Multiple Directional距离阈值、手指所有权、判定窗口、普通timeout Miss、释放和Hold行为继续`evidence-required`；BackLine/Sprite/音频/粒子仍后置。
 
 `src/simulator/engine` 不依赖 React、Pixi、Tauri、DOM、编辑器谱面类型或窗口协议。宿主 API 是 GarupaEditor 的可移植边界，不宣称属于原作接口。
 

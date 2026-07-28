@@ -10,8 +10,8 @@
 - 锁定原作样本：`jp.co.craftegg.band` 10.1.3（version code 229，`arm64-v8a`）。
 - 上游已验收阶段：第一切片、谱面构造、时钟与调度。
 - 上游时钟调度验收提交：GarupaEditor `78414bc`，关闭记录修订提交 `ca84258`。
-- 当前状态：**第五次独立重验收已通过，A00–A10完成，Auto Live阶段关闭。A09公共host fault、G22 exact production replay、adaptive full outer-frame、G21 topology与全部production回归均已复核；下一阶段只允许先建立“手动输入与判定”的独立Reverse证据硬门。**
-- 待重建验收记录：`tmp/simulator-auto-live-acceptance.md`。
+- 当前状态：**第六次独立审计已撤销第五次关闭结论。A00–A08、G01–G22、G21 topology与G22 actual replay保持有效；A09公共host `step`仍可在terminal fault后以非法delta返回新的`director.invalid-delta-time`，违反G19 same-latched-failure。A09/A10重新打开，修复和重验收前禁止进入手动输入阶段。**
+- 待再次重建验收记录：`tmp/simulator-auto-live-acceptance.md`。
 - 已冻结证据包：`tmp/simulator-reverse-evidence/auto-live/`。
 
 ### 1.1 阶段目标
@@ -53,8 +53,8 @@
 | A06 恢复 Long 分阶段完成 | 已完成 | head/tail 第六槽保留 native Wait/linked order，并由 manager terminal fault 阻止重试 |
 | A07 恢复 Slide 分阶段完成 | 已完成 | head 第六槽状态与 terminal fault boundary 精确覆盖 |
 | A08 恢复 Auto Live OneFrame 填充与聚合 | 已完成 | 117/84 source-order run 的唯一 note type 10/count、混合 batch 与五槽行为通过独立固定 oracle |
-| A09 接入调度、暂停与生命周期 | 已完成 | 公共host shortcut已移到fault检查之后；全部非允许API返回锁存失败，snapshot只读、dispose允许 |
-| A10 生产 oracle 与阶段验收 | 已完成 | G22 replay经production owner精确通过；完整adaptive全字段比较与全部隔离回归通过 |
+| A09 接入调度、暂停与生命周期 | 重新打开 | pause/resume已修；公共`step`仍在fault检查前执行director delta校验，非法delta返回不同失败 |
+| A10 生产 oracle 与阶段验收 | 重新打开 | G22与既有全量回归保留；AL16缺fault后NaN/±Infinity/负delta，最终验收结论撤销 |
 
 ### 1.4 批次记录
 
@@ -293,6 +293,13 @@
 - 完整A10命令重新通过：隔离TypeScript；第一切片17项；全部chart boundary/parsing/batches/graphs/multi-range/command/finalize/production；production roots 825/598；时钟15组；Auto Live AL01–AL22；依赖边界；evidence worktree/index。
 - G22实际重放每次从冻结BMS重新构造已登记chart，不读取Reverse/Python/网络；+5/-5/0分别经991/317/317个committed Float32 delta驱动公共engine，actual entry/step BPM/result projection与device oracle直接deepEqual。
 - 第五次复核未发现新的required-before-close缺口。A09/A10及阶段完成勾选恢复；手动输入、分数/状态消费、表现层与主程序集成边界不变。
+
+#### 2026-07-29 第二十九批：第六次独立审计与阶段重开
+
+- 不依赖AL01–AL22绿色结论，按G19重新枚举公共host所有调用路径。`SimulatorEngineHost.step`直接进入`InGameDirector.update`；director在manager之前验证delta，因此terminal fault后`step(NaN)`、`step(-1)`返回新的`director.invalid-delta-time`，而合法`step(1/60)`才返回锁存`one-frame.pool-exhausted`。
+- 临时编译产物已复现：fault后valid step/pause/resume返回锁存失败，NaN与负delta返回不同失败。冻结G19三例均明确`subsequent_step=same-latched-failure`且仅允许snapshot/dispose，故这不是一般输入验证顺序，而是required-before-close公共边界缺口。
+- 现有AL16只覆盖fault后`step(1/60)`，未覆盖NaN、正负Infinity和负delta；A09/A10及阶段关闭结论撤销。G01–G22证据门、A00–A08、exact owner、adaptive outer-frame、117/84 topology和production family coverage不受影响，无需新增Reverse补证。
+- 文档同时发现历史残留：验收摘要仍写“待全量复核”，`OPEN_GAPS.md`末行仍写“须直接消费fixed trace”，最终证据冻结身份仍停在G21提交。状态文档先行纠正，生产修复与新AL16下一批实施。
 
 ## 2. 固定范围
 
@@ -985,15 +992,15 @@ A10 前不运行 Vite、Tauri 或 GarupaEditor 整体构建。
 - [x] Long 头/尾比较符号、父子顺序、状态、active pause 与回收匹配。
 - [x] Slide 头/中间/终端/Stop、current/selected cursor 和单次调用粒度匹配 frozen trace。
 - [x] Long/Slide after 子图保持构造共享身份并由父对象独占更新。
-- [x] OneFrame 固定 5 槽、first-unused、Setup、Multiple note type/count 边界、池序 Reflect、清除与 Note-level exhaustion 失败状态匹配；manager与公共host fault边界均匹配。
+- [ ] OneFrame 固定 5 槽、first-unused、Setup、Multiple note type/count 边界、池序 Reflect、清除与 Note-level exhaustion 失败状态匹配；manager匹配，但公共host非法delta仍绕过same-latched-failure。
 - [x] unknown 分数/生命/技能/音频/粒子字段没有零值或 no-op 伪实现。
 - [x] 同位置、actual adaptive 多子步、Long/Slide/Multiple 暂停、空帧和失败关闭全部通过新 oracle；exact offset owner与adaptive full outer-frame均直接消费G22。
 - [x] 普通与 HABAHIRO production Normal/Flick/Directional/Multiple/Long/Slide 回归通过，并以独立 oracle 验证 production group，不由待测函数生成 expected。
-- [x] 第一切片、谱面构造和时钟调度全部隔离回归通过。
+- [ ] 第一切片、谱面构造和时钟调度全部隔离回归通过，并补齐fault后全部公共`step`输入优先级回归。
 - [x] `engine/` 依赖边界通过。
-- [x] `tmp/simulator-auto-live-acceptance.md` 已按 G19–G22、actual production replay 与修复后结果重建并通过。
+- [ ] `tmp/simulator-auto-live-acceptance.md` 已按 G19–G22、actual production replay 与公共`step`修复后结果再次重建并通过。
 - [x] 未修改主程序入口、编辑器控制器、窗口协议、渲染或音频实现。
-- [x] 最终补证与生产修复提交已推送，远端与 HEAD 为 `0 0`；本验收文档提交按同一纪律推送。
+- [ ] 新的公共host修复与最终验收提交已推送，远端与HEAD为`0 0`。
 
 阶段关闭后，下一阶段只允许按整体计划进入“手动输入与判定”。如果 AL21 中任一手动输入分支仍无实体证据，则下一阶段必须先建立对应设备采证硬门，不能沿用 Auto Live 的 Force Perfect 结果绕过手动判定。
 

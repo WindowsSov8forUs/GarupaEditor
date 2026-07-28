@@ -12,12 +12,13 @@ blocking_findings = []
 
 G01–G17 保持关闭。第三次审计的 G19/G20 由 Reverse `24706edcb02155fca575c6fde6aa9c7f0fe131ba` 关闭；其中 G18 的 connected-component 解释随后被更完整调用者证据否定。Reverse `57c1e03be474eeb1006ff56c8fc3d5a9a117d573` 新增 focused `activateNoteAndConnectSyncLine` ARM64 并以 G21 修正：只比较 source activation order 中紧邻的 previous/current playable root；其他 playable root 会断开 Multiple run，equal button 也因非相邻而另起 run。G19 terminal fault latch 与 G20 actual observation 要求不变。
 
-第五次实现审计发现的两个 required-before-close 阻断均已关闭：
+第五次实现审计发现的两个阻断已修复，但第六次审计发现新的required-before-close实现阻断：
 
 1. **已关闭：** `SimulatorEngineHost.pause/resume` 现于 idempotent shortcut 前检查 fault；host 级全部非允许 API、只读 snapshot 与 dispose 均有测试。
 2. **已关闭：** Reverse `c2dc5c7f37718a170c9e9b93d5a86b42e9d1a2ab` 以 G22 冻结两个 normalized trace 的 frame 1–991/317 Float32 delta bits 与 committed CC08 BMS；生产测试经engine重放并调用`getAdjustedMusicPosition`，不使用expected BPM、private cursor/BPM lookup或删除outer frame。
+3. **实现阻断、无需补证：** 公共`SimulatorEngineHost.step`未在`InGameDirector.update`前检查manager fault；fault后NaN/±Infinity/负delta返回`director.invalid-delta-time`而非G19锁存失败。G19已明确`subsequent_step=same-latched-failure`，应修host并扩展AL16。
 
-G22同时固定adaptive method fixture在一个setup outer frame后于full manager outer-frame index 1判定。GarupaEditor冻结包含`auto-live-actual-replay.json`与逐字节相同的`653_ikuoku_easy.bms.txt`；actual replay与全量A10验收均通过。
+G22同时固定adaptive method fixture在一个setup outer frame后于full manager outer-frame index 1判定。GarupaEditor冻结包含`auto-live-actual-replay.json`与逐字节相同的`653_ikuoku_easy.bms.txt`；actual replay消费保持有效，但阶段须在公共step修复后重新验收。
 
 ## 持续非阻断边界
 
@@ -27,4 +28,4 @@ G22同时固定adaptive method fixture在一个setup outer frame后于full manag
 4. HABAHIRO Auto Live 运行仍只有静态生产谱面依据，不宣称已有实体运行样本或百分百保真。
 5. Multiple Directional 的真实 touch 阈值仍属于手动输入；AddLong/AddSlide visual helper 的 Sprite/BackLine/连接表现仍后置。
 
-这些边界不能用于扩张 Auto Live 阶段结论，也不阻断补充证据已确认的托管范围。生产实现仍须直接消费补充 fixed trace 后才能重新验收。
+这些边界不能用于扩张Auto Live阶段结论，也不阻断补充证据已确认的托管范围。当前阻断来自G19既有证据的公共host消费不完整，不应新增Reverse假设或改写证据结论。
