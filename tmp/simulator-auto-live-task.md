@@ -409,6 +409,14 @@
 - AL22新增未注册judgement source、exact Multiple owner count、伪造同ID/cross-controller handle、host与direct manager批preflight全对象断言；AL18/canonical暂停占槽改用已登记但尚未激活的未来source，不再由测试向生产Setup注入无owner NoteInformation。
 - 定向隔离TypeScript、Auto Live AL01–AL22、第一切片17项与时钟15组通过。按第1.2节新纪律，本批只标记A08/A09实现修复，A10保持打开；提交后另起验收批从A00–A10逐项确认。
 
+#### 2026-07-29 第四十三批：验收触发的失败关闭补修
+
+- 按新验收矩阵审查A03–A08时发现，`NoteLong.bindAfterNote`与`NoteSlide.bindAfterNotes`允许绕过已验证父子图；Long未知after type默认note type 1，Slide terminal映射缺失时默认8。上述均无R02/R04依据，属于“理论不可达”被默认值掩盖。
+- 删除两个生产重绑入口；`NoteSingleBase`改为abstract且base Force Perfect明确`evidence-required`。Long terminal note type改为闭合集合`1|3|9|null`并在null时失败；Slide terminal必须与父验证映射全等，否则在Setup前失败，不再使用`?? 8`。
+- 图preflight补充root/after Int32位置与invisible terminal拒绝。继续审查A09时又确认direct manager坏图虽然零root/BPM，但旧顺序会先初始化OneFrame和Slide manager；现`InGameManager.initialize`与`NoteManager.execAwakeEnd`均在这些mutation前调用同一纯`validateSetup`。
+- AL22新增无效judgement owner、non-finite Long root、invisible Slide terminal，并把direct manager坏图快照扩展为lifecycle created、OneFrame未初始化、Slide manager未初始化、零active/trace。定向TypeScript、AL01–AL22、第一切片17项和时钟15组通过。
+- 本批由独立验收检查触发，证明验收流程仍在继续而非修复后直接结束。A08/A09保持“实现修复，待独立验收”，A10继续打开；下一步继续审计A09/A10及A00–A07证据映射。
+
 ## 2. 固定范围
 
 ### 2.1 纳入范围

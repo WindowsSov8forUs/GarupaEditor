@@ -38,7 +38,7 @@ export interface FlickForcePerfectTraceEntry {
   readonly syntheticX?: number;
 }
 
-export class NoteSingleBase extends NoteFrontBase {
+export abstract class NoteSingleBase extends NoteFrontBase {
   protected override moveState(_deltaTimeSeconds: number): SimulatorResult<void> {
     const noteInformation = this.noteInformation;
     if (noteInformation === null) {
@@ -70,7 +70,11 @@ export class NoteSingleBase extends NoteFrontBase {
   }
 
   protected forcePerfect(): SimulatorResult<void> {
-    return this.submitHeadPerfect(this.noteInformation?.gameNoteType ?? 0);
+    return evidenceRequired(
+      "auto-live.single-base-force-perfect-unrepresented",
+      ["R02", "R04"],
+      "Only recovered concrete Single/Flick/Directional owners may select an Auto Live judgement note type.",
+    );
   }
 
   protected submitHeadPerfect(noteType: number): SimulatorResult<void> {
@@ -115,10 +119,6 @@ export class NoteLong extends NoteFrontBase {
 
   get afterNote(): LongAfterRuntime | null {
     return this.afterNoteValue;
-  }
-
-  bindAfterNote(afterNote: LongAfterRuntime): void {
-    this.afterNoteValue = afterNote;
   }
 
   get autoLiveTrace(): readonly LongAutoLiveTraceEntry[] {
@@ -221,11 +221,19 @@ export class NoteLong extends NoteFrontBase {
     if (adjusted <= after.absolutePosition) {
       return ok(undefined);
     }
+    const noteType = longAfterJudgeNoteType(after.afterNoteType);
+    if (noteType === null) {
+      return evidenceRequired(
+        "auto-live.invalid-long-after-graph",
+        ["R01", "R02", "R04", "U01"],
+        `Long root ${noteInformation.index} retained an unconfirmed terminal type.`,
+      );
+    }
     this.autoLiveTraceValue.push({ kind: "long-linked-after-finish" });
     const submitted = runtime.value.submitJudgement({
       noteInformation,
       phase: "tail",
-      noteType: longAfterJudgeNoteType(after.afterNoteType),
+      noteType,
       absolutePosition: after.absolutePosition,
       multipleDirectionalFlickNoteCount: 0,
     });
@@ -282,10 +290,6 @@ export class NoteSlide extends NoteFrontBase {
 
   get afterNotes(): readonly SlideAfterRuntime[] {
     return this.afterNotesValue;
-  }
-
-  bindAfterNotes(afterNotes: readonly SlideAfterRuntime[]): void {
-    this.afterNotesValue = [...afterNotes];
   }
 
   get currentAfterIndex(): number {
@@ -530,12 +534,24 @@ export class NoteSlide extends NoteFrontBase {
       return ok(undefined);
     }
     const phase = current.isTerminal ? "tail" : "intermediate";
+    let noteType = 8;
+    if (current.isTerminal) {
+      if (
+        current.terminalJudgeNoteType === null ||
+        current.terminalJudgeNoteType !== this.terminalJudgeNoteTypeValue
+      ) {
+        return evidenceRequired(
+          "auto-live.invalid-slide-terminal-graph",
+          ["R02", "R03", "R04", "U01"],
+          "The selected Slide terminal must retain the validated parent-owned judgement mapping.",
+        );
+      }
+      noteType = current.terminalJudgeNoteType;
+    }
     const submitted = runtime.value.submitJudgement({
       noteInformation: current.source,
       phase,
-      noteType: current.isTerminal
-        ? current.terminalJudgeNoteType ?? this.terminalJudgeNoteTypeValue ?? 8
-        : 8,
+      noteType,
       absolutePosition: current.source.absolutePos,
       multipleDirectionalFlickNoteCount: 0,
     });
@@ -872,6 +888,7 @@ export function validateAutoLiveActivationGraph(
 ): SimulatorResult<void> {
   if (noteInformation.fireNoteType === FrontNoteType.Long) {
     if (
+      !isInt32Position(noteInformation.absolutePos) ||
       !isLongAfterType(noteInformation.afterNoteType) ||
       !isInt32Position(noteInformation.afterNoteAbsolutePos) ||
       noteInformation.afterNoteAbsolutePos <= noteInformation.absolutePos
@@ -889,6 +906,7 @@ export function validateAutoLiveActivationGraph(
     noteInformation.fireNoteType === FrontNoteType.SlideB
   ) {
     if (
+      !isInt32Position(noteInformation.absolutePos) ||
       !noteInformation.isSlideNoteHead ||
       noteInformation.slideNoteList.length === 0
     ) {
@@ -906,6 +924,13 @@ export function validateAutoLiveActivationGraph(
         "auto-live.invalid-slide-after-graph",
         ["R01", "R02", "R04", "U01"],
         `Slide root ${noteInformation.index} has no terminal source node.`,
+      );
+    }
+    if (terminalSource.isInvisible) {
+      return evidenceRequired(
+        "auto-live.invalid-slide-terminal-graph",
+        ["R02", "R03", "R04", "U01"],
+        `Slide root ${noteInformation.index} has an invisible terminal outside the confirmed graph.`,
       );
     }
     const terminalValidation = resolveSlideTerminalJudgeNoteType(
@@ -955,7 +980,7 @@ function isInt32Position(value: number): boolean {
     value <= 0x7fffffff;
 }
 
-function longAfterJudgeNoteType(afterNoteType: AfterNoteTypeValue): number {
+function longAfterJudgeNoteType(afterNoteType: AfterNoteTypeValue): 1 | 3 | 9 | null {
   switch (afterNoteType) {
     case AfterNoteType.Normal:
       return 1;
@@ -967,7 +992,7 @@ function longAfterJudgeNoteType(afterNoteType: AfterNoteTypeValue): number {
     case AfterNoteType.MultipleDirectionalFlickRight:
       return 9;
     default:
-      return 1;
+      return null;
   }
 }
 

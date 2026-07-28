@@ -153,7 +153,26 @@ export class NoteManager {
     private readonly createPoolObject: NotePoolObjectFactory = createDefaultPoolObject,
   ) {}
 
+  validateSetup(): SimulatorResult<void> {
+    for (const batch of this.batches) {
+      for (const noteInformation of batch.informationList) {
+        if (isNonPlayableCommand(noteInformation)) {
+          continue;
+        }
+        const graphValidation = validateAutoLiveActivationGraph(noteInformation);
+        if (graphValidation.status !== "ok") {
+          return graphValidation;
+        }
+      }
+    }
+    return ok(undefined);
+  }
+
   execAwakeEnd(): SimulatorResult<void> {
+    const setupValidation = this.validateSetup();
+    if (setupValidation.status !== "ok") {
+      return setupValidation;
+    }
     const slideInitialization = this.slideNoteManager.initialize();
     if (slideInitialization.status !== "ok") {
       return slideInitialization;
@@ -165,17 +184,9 @@ export class NoteManager {
     if (this.setupComplete) {
       return ok(undefined);
     }
-
-    for (const batch of this.batches) {
-      for (const noteInformation of batch.informationList) {
-        if (isNonPlayableCommand(noteInformation)) {
-          continue;
-        }
-        const graphValidation = validateAutoLiveActivationGraph(noteInformation);
-        if (graphValidation.status !== "ok") {
-          return graphValidation;
-        }
-      }
+    const setupValidation = this.validateSetup();
+    if (setupValidation.status !== "ok") {
+      return setupValidation;
     }
 
     this.setupMultipleDirectionalGroups();

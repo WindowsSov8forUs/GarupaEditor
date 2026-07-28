@@ -223,13 +223,15 @@ function validateAutoLive() {
   };
   const controller = (judgementOwner = () => ({
     multipleDirectionalFlickNoteCount: null,
-  })) => {
+  }), initialize = true) => {
     const value = new InGameOneFrameJudgementController();
     if (judgementOwner !== null) {
       ok(value.registerAutoLiveJudgementOwner(judgementOwner),
         "OneFrame judgement owner");
     }
-    ok(value.initialize(), "OneFrame initialize");
+    if (initialize) {
+      ok(value.initialize(), "OneFrame initialize");
+    }
     return value;
   };
   const bindNote = (note, information, options = {}) => {
@@ -1372,6 +1374,14 @@ function validateAutoLive() {
       fireNoteType: types.FrontNoteType.Long,
     })), "auto-live.invalid-long-after-graph");
     assert.equal(invalidLong.state, NoteState.Deactive);
+    const nonFiniteLong = new notes.NoteLong("non-finite-long-root");
+    evidence(nonFiniteLong.activate(normalInfo(5010, Number.NaN, {
+      gameNoteType: types.GameNoteType.Long,
+      fireNoteType: types.FrontNoteType.Long,
+      afterNoteType: types.AfterNoteType.Normal,
+      afterNoteAbsolutePos: 240,
+    })), "auto-live.invalid-long-after-graph");
+    assert.equal(nonFiniteLong.state, NoteState.Deactive);
 
     const missingMultipleGroup = new notes.NoteMultipleDirectionalFlick(
       "missing-multiple-group",
@@ -1419,10 +1429,14 @@ function validateAutoLive() {
       batches: invalidBatchChart.noteBatches,
       bpmChangeCount: 0,
       positions: [0, 100],
+      initializeOneFrame: false,
     });
     evidence(invalidBatchManager.manager.initialize(),
       "auto-live.invalid-long-after-graph");
     const invalidBatchSnapshot = invalidBatchManager.manager.snapshot();
+    assert.equal(invalidBatchSnapshot.state, "created");
+    assert.equal(invalidBatchSnapshot.oneFrame.initialized, false);
+    assert.equal(invalidBatchSnapshot.noteManager.slideNoteManagerInitialized, false);
     assert.equal(invalidBatchSnapshot.noteManager.nextBatchIndex, 0);
     assert.deepEqual(invalidBatchSnapshot.noteManager.activeNotePoolObjectIds, []);
     assert.deepEqual(invalidBatchSnapshot.noteManager.activeBpmPoolIndices, []);
@@ -1435,6 +1449,22 @@ function validateAutoLive() {
       isSlideNoteHead: true,
       afterNoteType: types.AfterNoteType.None,
     })), "auto-live.invalid-slide-after-graph");
+    const invisibleTerminal = normalInfo(5030, 180, {
+      gameNoteType: types.GameNoteType.SlideEndA,
+      fireNoteType: types.FrontNoteType.SlideA,
+      isInvisible: true,
+    });
+    const invisibleTerminalSlide = new notes.NoteSlide("invisible-terminal-slide");
+    evidence(invisibleTerminalSlide.activate(normalInfo(5021, 120, {
+      gameNoteType: types.GameNoteType.SlideA,
+      fireNoteType: types.FrontNoteType.SlideA,
+      isSlideNoteHead: true,
+      afterNoteType: types.AfterNoteType.None,
+      afterNoteAbsolutePos: 180,
+      slideNoteList: [invisibleTerminal],
+    })), "auto-live.invalid-slide-terminal-graph");
+    assert.equal(invisibleTerminalSlide.state, NoteState.Deactive);
+
     const duplicate = normalInfo(5031, 180, {
       gameNoteType: types.GameNoteType.SlideEndA,
       fireNoteType: types.FrontNoteType.SlideA,
@@ -1449,6 +1479,9 @@ function validateAutoLive() {
     })), "auto-live.duplicate-or-missing-slide-node");
 
     const payloadSource = normalInfo(5032);
+    const invalidOwnerController = new InGameOneFrameJudgementController();
+    evidence(invalidOwnerController.registerAutoLiveJudgementOwner(null),
+      "one-frame.invalid-judgement-owner");
     const unownedPayloadController = new InGameOneFrameJudgementController();
     ok(unownedPayloadController.initialize(), "unowned payload controller initialize");
     const unownedPayloadBefore = unownedPayloadController.snapshot();
@@ -1671,8 +1704,13 @@ function validateAutoLive() {
     };
   }
 
-  function schedulerIntegration({ batches, bpmChangeCount, positions }) {
-    const oneFrame = controller(null);
+  function schedulerIntegration({
+    batches,
+    bpmChangeCount,
+    positions,
+    initializeOneFrame = true,
+  }) {
+    const oneFrame = controller(null, initializeOneFrame);
     const music = new FakeIntegrationMusic(positions);
     const noteManager = new NoteManager(
       batches,

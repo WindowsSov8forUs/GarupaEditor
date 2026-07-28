@@ -58,6 +58,10 @@ export class InGameManager {
       return ok(undefined);
     }
 
+    const noteValidation = this.noteManager.validateSetup();
+    if (noteValidation.status !== "ok") {
+      return noteValidation;
+    }
     const oneFrameInitialization = this.oneFrameJudgementController.initialize();
     if (oneFrameInitialization.status !== "ok") {
       return oneFrameInitialization;

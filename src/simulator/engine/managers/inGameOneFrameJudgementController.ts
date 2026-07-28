@@ -125,6 +125,13 @@ export class InGameOneFrameJudgementController {
   registerAutoLiveJudgementOwner(
     owner: AutoLiveJudgementOwner,
   ): SimulatorResult<void> {
+    if (typeof owner !== "function") {
+      return evidenceRequired(
+        "one-frame.invalid-judgement-owner",
+        ["R02", "R03", "R10", "R12", "R16"],
+        "The judgement owner must be the NoteManager-owned source resolver.",
+      );
+    }
     if (this.autoLiveJudgementOwner !== null) {
       return evidenceRequired(
         "one-frame.judgement-owner-already-registered",
