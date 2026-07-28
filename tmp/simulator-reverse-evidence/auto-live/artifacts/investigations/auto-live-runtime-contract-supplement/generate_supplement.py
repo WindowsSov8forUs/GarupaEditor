@@ -123,6 +123,10 @@ def build() -> dict[str, object]:
                 "evidence": ["S08", "U03", "U04"],
                 "source_note": {"classification": "committed-device-runtime-oracle", "run_id": "ikuoku-cc08-run-025-offset-plus5"},
                 "settings": {"judgement_adjust_value_b": 5, "frames_argument": 5},
+                "entry_music_cursor": {
+                    "bar": 15,
+                    "beat_progress": position(187.35589599609375),
+                },
                 "entry_music_absolute_position": position(3067.35595703125),
                 "step_bpms": [99.5, 99.5, 99.5, 99.5, 95.5],
                 "result_adjusted_position": position(3073.935791015625),
@@ -134,6 +138,10 @@ def build() -> dict[str, object]:
                 "evidence": ["S08", "U03", "U04"],
                 "source_note": {"classification": "committed-device-runtime-oracle", "run_id": "ikuoku-cc08-run-026-offset-minus5"},
                 "settings": {"judgement_adjust_value_b": -5, "frames_argument": 5},
+                "entry_music_cursor": {
+                    "bar": 5,
+                    "beat_progress": position(0.454833984375),
+                },
                 "entry_music_absolute_position": position(960.454833984375),
                 "step_bpms": [99.5, 99.5, 99.5, 99.5, 99.5],
                 "result_adjusted_position": position(953.821533203125),
@@ -144,6 +152,10 @@ def build() -> dict[str, object]:
                 "case_id": "offset-zero-identity-exact",
                 "evidence": ["S08", "U03"],
                 "settings": {"judgement_adjust_value_b": 0},
+                "entry_music_cursor": {
+                    "bar": 5,
+                    "beat_progress": position(0.454833984375),
+                },
                 "entry_music_absolute_position": position(960.454833984375),
                 "result_adjusted_position": position(960.454833984375),
                 "step_count": 0,

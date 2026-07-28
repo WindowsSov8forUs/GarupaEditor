@@ -303,6 +303,13 @@
         "judgement_adjust_value_b": 5,
         "frames_argument": 5
       },
+      "entry_music_cursor": {
+        "bar": 15,
+        "beat_progress": {
+          "value": 187.35589599609375,
+          "bits": "0x433B5B1C"
+        }
+      },
       "entry_music_absolute_position": {
         "value": 3067.35595703125,
         "bits": "0x453FB5B2"
@@ -336,6 +343,13 @@
         "judgement_adjust_value_b": -5,
         "frames_argument": 5
       },
+      "entry_music_cursor": {
+        "bar": 5,
+        "beat_progress": {
+          "value": 0.454833984375,
+          "bits": "0x3EE8E000"
+        }
+      },
       "entry_music_absolute_position": {
         "value": 960.454833984375,
         "bits": "0x44701D1C"
@@ -362,6 +376,13 @@
       ],
       "settings": {
         "judgement_adjust_value_b": 0
+      },
+      "entry_music_cursor": {
+        "bar": 5,
+        "beat_progress": {
+          "value": 0.454833984375,
+          "bits": "0x3EE8E000"
+        }
       },
       "entry_music_absolute_position": {
         "value": 960.454833984375,

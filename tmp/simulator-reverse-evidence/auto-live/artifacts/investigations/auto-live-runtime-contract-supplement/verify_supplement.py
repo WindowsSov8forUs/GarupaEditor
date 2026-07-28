@@ -76,6 +76,12 @@ def main() -> None:
     frozen = json.loads((HERE / "auto_live_supplement_fixed_event_trace.json").read_text(encoding="utf-8"))
     assert first == second == frozen
     cases = {case["case_id"]: case for case in frozen["cases"]}
+    runtime = json.loads(committed_sources[
+        "artifacts/investigations/clock-scheduling-runtime-oracle/summaries/pass2_judge_offset.json"
+    ])
+    runs = {run["run_id"]: run for run in runtime["runs"]}
+    plus_clock = runs["ikuoku-cc08-run-025-offset-plus5"]["cross_bpm_sample"]["entry_clock"]
+    minus_clock = runs["ikuoku-cc08-run-026-offset-minus5"]["cross_bar_sample"]["entry_clock"]
     contract = json.loads((HERE / "auto_live_supplement_contract.json").read_text(encoding="utf-8"))
     closure = json.loads((HERE / "closure.json").read_text(encoding="utf-8"))
     assert set(cases) == set(contract["supplemental_oracle"]["required_cases"])
@@ -84,11 +90,28 @@ def main() -> None:
     assert cases["multiple-directional-right-auto-group"]["steps"][1]["synthetic_x"]["bits"] == "0x43FA0000"
     assert cases["offset-plus5-cross-bpm-exact"]["result_adjusted_position"]["bits"] == "0x45401EF9"
     assert cases["offset-minus5-cross-bar-exact"]["result_adjusted_position"]["bits"] == "0x446E7494"
+    assert cases["offset-plus5-cross-bpm-exact"]["entry_music_cursor"] == {
+        "bar": plus_clock["music_bar"],
+        "beat_progress": {
+            "value": plus_clock["music_beat"],
+            "bits": plus_clock["float_bits"]["music_beat"].upper().replace("0X", "0x"),
+        },
+    }
+    assert cases["offset-minus5-cross-bar-exact"]["entry_music_cursor"] == {
+        "bar": minus_clock["music_bar"],
+        "beat_progress": {
+            "value": minus_clock["music_beat"],
+            "bits": minus_clock["float_bits"]["music_beat"].upper().replace("0X", "0x"),
+        },
+    }
+    assert cases["offset-zero-identity-exact"]["entry_music_cursor"] == cases[
+        "offset-minus5-cross-bar-exact"
+    ]["entry_music_cursor"]
     assert closure["overall_status"] == "confirmed"
     assert closure["auto_live_gate"] == "closed"
     assert closure["blocking_findings"] == []
-    assert sorted(closure["supplement_gap_resolution"]) == [f"G{index}" for index in range(11, 17)]
-    print("auto live supplement: verified; gaps=G11-G16, gate=closed, cases=8")
+    assert sorted(closure["supplement_gap_resolution"]) == [f"G{index}" for index in range(11, 18)]
+    print("auto live supplement: verified; gaps=G11-G17, gate=closed, cases=8")
 
 
 if __name__ == "__main__":

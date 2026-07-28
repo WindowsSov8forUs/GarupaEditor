@@ -10,7 +10,7 @@
 - 锁定原作样本：`jp.co.craftegg.band` 10.1.3（version code 229，`arm64-v8a`）。
 - 上游已验收阶段：第一切片、谱面构造、时钟与调度。
 - 上游时钟调度验收提交：GarupaEditor `78414bc`，关闭记录修订提交 `ca84258`。
-- 当前状态：**A00–A10 已在第二次关闭后复审补证与修复后重新完成。Reverse `cd84d2ce84243e8b864d08d7fe0fbeeb041eb79a` 关闭 G11–G16，GarupaEditor 冻结 67 个 final entry；415 个核心 production Multiple Directional、Stop、Long/Slide/Multiple pause、精确 offset/BPM、普通 production 全谱运行和 visual helper 边界均已重验收。`auto_live_gate = closed`、`blocking_findings = []`，阶段重新关闭。**
+- 当前状态：**A00–A10 已在第二次关闭后复审补证与修复后重新完成。Reverse `cd84d2ce84243e8b864d08d7fe0fbeeb041eb79a` 关闭 G11–G16，`7a0540dc867a759db929842ebe95ca9665a61b65` 又关闭 exact cursor identity 的 G17；GarupaEditor 冻结 67 个 final entry。首版 11 case 与补充 8 case 现均以 canonical actual trace `deepEqual`，415 个核心 Multiple、Stop、三类 active pause、精确 offset/BPM、普通 production 全谱和 visual helper 边界全部重验收。`auto_live_gate = closed`、`blocking_findings = []`。**
 - 最终验收记录：`tmp/simulator-auto-live-acceptance.md`。
 - 已冻结证据包：`tmp/simulator-reverse-evidence/auto-live/`。
 
@@ -45,8 +45,8 @@
 | 任务 | 状态 | 完成标准 |
 | --- | --- | --- |
 | A00 建立阶段任务书 | 已完成 | 范围、证据候选、硬门、实现批次和验收矩阵写入本文档 |
-| A01 晋升 Auto Live 静态证据 | 补充完成 | Reverse `cd84d2ce` 最终补齐 Multiple 继承/Move/Began/Moved/note type 10/count、相邻 button group/side-used 与 visual helper ARM64，冻结 R09–R16 |
-| A02 生成固定事件 oracle 并关闭缺口 | 补充完成，代码硬门关闭 | G11–G16 closed；8 个补充 case 覆盖 Multiple、Stop、Long/Slide pause、B±5 exact bits 与 positive cross-BPM |
+| A01 晋升 Auto Live 静态证据 | 补充完成 | Reverse `cd84d2ce` 补齐 Multiple/visual ARM64，`7a0540dc` 补齐 committed offset cursor identity；冻结 R09–R16 |
+| A02 生成固定事件 oracle 并关闭缺口 | 补充完成，代码硬门关闭 | G11–G17 closed；8 个补充 case 覆盖 Multiple、Stop、Long/Slide pause、B±5 exact bits/cursor 与 positive cross-BPM |
 | A03 接入 Auto Live 模式与判定上下文 | 已完成 | 显式模式本身不需改动；补充证据现可由 A05–A10 消费 |
 | A04 建立 Long/Slide 运行子图 | 修复完成 | 普通生产 Slide 由 terminal child + root after type 联合识别；父 Deactive 时按 R02 清 child graph/current，复用重建共享身份 |
 | A05 恢复 Single/Flick Force Perfect | 补充实现完成 | 核心 Multiple 继承 Directional synthetic ±500，按相邻 button group 只提交一次 note type 10；side root 失活不重复判定 |
@@ -213,6 +213,15 @@
 - 独立复核发现 AL19 虽已由普通 production 全谱间接执行普通谱的 standalone Directional，且两个 fixture 都检查了 representative root，但“50 个 standalone Directional 全部直接消费”的验收表述还缺 HABAHIRO 其余 root 的逐实体断言。
 - AL19 现从未经筛改的两个 production `NoteInformation` root 集合分别取得 38/12 个 front type 5，逐 root 激活 `NoteDirectionalFlick`，核对唯一 OneFrame entry、source index、note type 9 与最终 Deactive；不以 representative 结果外推整族。
 - 该补强不改变生产代码、证据门或阶段边界；隔离 TypeScript 与 Auto Live 22 组重跑通过，最终提交后再次确认远端 `0 0`。
+
+#### 2026-07-28 第十八批：canonical 全轨迹与 exact cursor G17
+
+- 独立复核继续执行任务书 A10 第 3 项时确认：此前测试对 frozen trace 仍是分散字段断言，不足以证明整条状态/事件/slot/Reflect 轨迹；另外 positive offset fixture 只保留 rounded Float32 absolute projection，无法唯一还原原作内部 `bar + beatProgress`，直接以 absolute 拆分会产生 `0x45401EFA` 而非设备 `0x45401EF9`。A02/A10 在补证期间再次失败关闭。
+- Reverse 从锁定提交 `a3f28d77` 的 committed pass-2 runtime oracle 提取 `music_bar=15`、`music_beat=187.35589599609375 / 0x433B5B1C` 及负向 `bar=5`、`beat=0.454833984375 / 0x3EE8E000`，在 `7a0540dc867a759db929842ebe95ca9665a61b65` 增加 G17 与 `entry_music_cursor`；生成器双次一致、verifier 直接对 committed source 字段，未消费 Reverse 未提交工作树。
+- GarupaEditor 字节保持替换 R09/R10/R11/R12/R14/R15 与 supplement fixture alias，manifest 的 67 个 final entry 数量不变，source/copy/index 三方哈希现校验 G11–G17。
+- 测试新增独立 canonical recorder：首版 11 case 与补充 8 case 的全部 `steps`/offset projection 由实际 Note 状态、Flick/Long/Slide/Multiple trace、OneFrame slots/payload/Reflect、manager pause cursor 与生产 Float32 advance/rewind 生成后直接 `assert.deepEqual`；不从 expected 填缺失字段、不排序事件、不使用 epsilon。
+- canonical runner 同时暴露并修正测试覆盖问题：Slide terminal deactivation 后生产 Reset 会把公开 cursor 清零，因此判定前后 cursor 由本次实际 selected-node transition 记录，而不是拿回池快照冒充判定瞬间。生产行为未改；仅将 Long 已有 Auto trace纳入快照并公开既有纯函数 `rewindPosition` 供相同算法双向 bits 审计。
+- Auto Live 22 组末尾额外输出 `fixed oracle canonical traces deep-equal actual runtime projections`；A02/A10 在 G17 冻结与完整 deep-equal 通过后重新关闭。
 
 ## 2. 固定范围
 

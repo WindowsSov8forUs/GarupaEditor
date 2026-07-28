@@ -26,6 +26,9 @@ separate runtime group owner rather than mutating frozen `NoteInformation`.
 The supplemental fixed trace also closes omissions in the first trace: a Slide
 Stop method fixture, active Long/Slide pause composition, and exact B=-5/0/+5
 Float32 outputs including a committed positive cross-BPM device sample.
+The offset cases preserve the source cursor as separate bar and Float32 beat
+progress fields. The rounded absolute-position projection is not sufficient to
+reconstruct the same Float32 result near a bar/BPM boundary.
 
 ## Provenance
 

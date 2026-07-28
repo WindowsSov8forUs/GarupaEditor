@@ -10,7 +10,7 @@ auto_live_gate = closed
 blocking_findings = []
 ```
 
-G01–G10 均已由首版 contract、最小反编译/ARM64、失败关闭矩阵和确定性固定事件轨迹关闭。第二次复审新增的 G11–G15 已由 Reverse `fe6e15f8108175182a52f0a6fd21c840da9db011` 关闭；后续实现前复核新增的 G16 又由 `cd84d2ce84243e8b864d08d7fe0fbeeb041eb79a` 关闭，补齐核心 Multiple Directional 相同 front/game type、相邻 button 分组以及递归 side-used/link cleanup。
+G01–G10 均已由首版 contract、最小反编译/ARM64、失败关闭矩阵和确定性固定事件轨迹关闭。第二次复审新增的 G11–G15 已由 Reverse `fe6e15f8108175182a52f0a6fd21c840da9db011` 关闭；后续实现前复核新增的 G16 又由 `cd84d2ce84243e8b864d08d7fe0fbeeb041eb79a` 关闭，补齐核心 Multiple Directional 分组与 side-used。最终 canonical deep-equal 复核发现 absolute-position Float32 投影不能反推原始 bar/beat cursor；G17 由 `7a0540dc867a759db929842ebe95ca9665a61b65` 冻结 committed pass-2 的 cursor bar 与 beat bits 后关闭。
 
 ## 持续非阻断边界
 

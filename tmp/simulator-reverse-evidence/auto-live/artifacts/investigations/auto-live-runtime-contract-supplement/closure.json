@@ -10,7 +10,8 @@
     "G13": "Slide Stop selected-visible intermediate route is fixed as a separate method fixture and does not masquerade as terminal tail.",
     "G14": "Active Long/Slide pause freezes NoteManager, graph/cursor and occupied slots; resume has no catch-up and is composed only from previously confirmed manager/family contracts.",
     "G15": "B=-5/0/+5 exact Float32 outputs and a positive cross-BPM boundary are imported from the committed device runtime oracle rather than prose relations.",
-    "G16": "Multiple Directional production groups are connected only for FrontNoteType 6, equal GameNoteType and adjacent ButtonType; one judged root recursively marks and detaches both side chains."
+    "G16": "Multiple Directional production groups are connected only for FrontNoteType 6, equal GameNoteType and adjacent ButtonType; one judged root recursively marks and detaches both side chains.",
+    "G17": "Exact offset fixtures preserve the committed runtime cursor bar and Float32 beat progress; a rounded absolute-position projection alone is explicitly insufficient to reproduce per-step Float32 bits."
   },
   "implementation_gate": "GarupaEditor must freeze this supplement before changing Multiple Directional or the reopened oracle paths."
 }

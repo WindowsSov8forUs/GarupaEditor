@@ -136,9 +136,9 @@ if (
   supplementClosure.overall_status !== "confirmed" ||
   supplementClosure.auto_live_gate !== "closed" ||
   supplementClosure.blocking_findings.length !== 0 ||
-  Object.keys(supplementClosure.supplement_gap_resolution).length !== 6
+  Object.keys(supplementClosure.supplement_gap_resolution).length !== 7
 ) {
-  fail("Frozen Reverse supplement closure is not the closed G11-G15 contract");
+  fail("Frozen Reverse supplement closure is not the closed G11-G17 contract");
 }
 
 const supplementTrace = JSON.parse(
@@ -169,6 +169,6 @@ if (!existsSync(resolve(packageRoot, "OPEN_GAPS.md"))) {
 
 console.log(
   `auto-live evidence verified: candidates=${manifest.candidateEntries.length}, ` +
-    `final=${manifest.finalEntries.length}, supplement=G11-G16, ` +
+    `final=${manifest.finalEntries.length}, supplement=G11-G17, ` +
     `gate=closed, index=${validateIndex ? "checked" : "skipped"}`,
 );
