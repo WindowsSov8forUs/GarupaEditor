@@ -799,6 +799,25 @@ function validateAutoLive() {
         assert.deepEqual(head.buttonTypes, sourceNote.buttonTypesArray);
         observed.push([chartIndex, sourceNote.fireNoteType, head.noteIndex]);
       }
+      const directionalRoots = roots.filter((candidate) =>
+        candidate.fireNoteType === types.FrontNoteType.DirectionalFlick);
+      assert.equal(directionalRoots.length, chartIndex === 0 ? 38 : 12);
+      for (const [rootIndex, sourceNote] of directionalRoots.entries()) {
+        const bound = bindNote(
+          new notes.NoteDirectionalFlick(
+            `production-directional-${chartIndex}-${rootIndex}`,
+          ),
+          sourceNote,
+          { position: { value: sourceNote.absolutePos } },
+        );
+        ok(bound.note.executeUpdate(0),
+          `production Directional ${chartIndex}:${rootIndex}`);
+        const directionalBatch = reflect(bound.oneFrame);
+        assert.equal(directionalBatch.entryCount, 1);
+        assert.equal(directionalBatch.entries[0].noteIndex, sourceNote.index);
+        assert.equal(directionalBatch.entries[0].noteType, 9);
+        assert.equal(bound.note.state, NoteState.Deactive);
+      }
       const slideRoots = roots.filter((candidate) =>
         candidate.isSlideNoteHead && candidate.slideNoteList.length > 0);
       for (const [rootIndex, sourceNote] of slideRoots.entries()) {

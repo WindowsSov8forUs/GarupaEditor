@@ -208,6 +208,12 @@
 - AL20 对 HABAHIRO 的唯一 front type 8 visual helper 验证独立 `multiple-directional-visual` family 和 presentation `evidence-required`；不把该静态/视觉边界冒充 core Auto judgement，也不扩张 HABAHIRO 实体 runtime 声明。
 - 完整隔离验收通过：TypeScript、第一切片 17 项、全部 chart suites、production roots 825/598、时钟 15 组、Auto Live 22 组、依赖边界和证据 source/copy/index。阶段重新关闭，但真实 touch 与 visual/audio 消费仍后置。
 
+#### 2026-07-28 第十七批：关闭后独立 production 计数复核
+
+- 独立复核发现 AL19 虽已由普通 production 全谱间接执行普通谱的 standalone Directional，且两个 fixture 都检查了 representative root，但“50 个 standalone Directional 全部直接消费”的验收表述还缺 HABAHIRO 其余 root 的逐实体断言。
+- AL19 现从未经筛改的两个 production `NoteInformation` root 集合分别取得 38/12 个 front type 5，逐 root 激活 `NoteDirectionalFlick`，核对唯一 OneFrame entry、source index、note type 9 与最终 Deactive；不以 representative 结果外推整族。
+- 该补强不改变生产代码、证据门或阶段边界；隔离 TypeScript 与 Auto Live 22 组重跑通过，最终提交后再次确认远端 `0 0`。
+
 ## 2. 固定范围
 
 ### 2.1 纳入范围
