@@ -22,6 +22,7 @@ import { InGameOneFrameJudgementController } from "../engine/managers/inGameOneF
 import { InputManager } from "../engine/managers/inputBoundaries";
 import { NoteManager } from "../engine/managers/noteManager";
 import { SlideNoteManager } from "../engine/managers/slideNoteManager";
+import { validateAutoLiveActivationGraph } from "../engine/notes/noteTypes";
 import type {
   SimulatorEngine,
   SimulatorEngineInput,
@@ -166,6 +167,14 @@ export function createSimulatorEngine(
     () => oneFrameJudgementController.getUsableOneFrameData(),
     (request) => oneFrameJudgementController.setupAutoLiveJudgement(request),
   );
+  const judgementOwner =
+    oneFrameJudgementController.registerAutoLiveJudgementOwner(
+      (noteInformation) =>
+        noteManager.getAutoLiveJudgementOwnership(noteInformation),
+    );
+  if (judgementOwner.status !== "ok") {
+    return judgementOwner;
+  }
   const inGameManager = new InGameManager(
     musicScoreController,
     noteManager,
@@ -294,7 +303,7 @@ function validateNoteInformation(
       `A surviving non-BPM record must map to a confirmed playable root family (index=${noteInformation.index}, ccNum=${noteInformation.ccNum}, buttonType=${noteInformation.buttonType}, fireNoteType=${noteInformation.fireNoteType}).`,
     );
   }
-  return ok(undefined);
+  return validateAutoLiveActivationGraph(noteInformation);
 }
 
 function isValidBpm(value: number): boolean {

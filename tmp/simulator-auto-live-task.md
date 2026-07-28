@@ -10,7 +10,7 @@
 - 锁定原作样本：`jp.co.craftegg.band` 10.1.3（version code 229，`arm64-v8a`）。
 - 上游已验收阶段：第一切片、谱面构造、时钟与调度。
 - 上游时钟调度验收提交：GarupaEditor `78414bc`，关闭记录修订提交 `ca84258`。
-- 当前状态：**第十一次独立审计已撤销第十次关闭结论，A08/A09/A10重新打开，Auto Live阶段未完成。Reverse G01–G22、exact/adaptive replay、G21 topology、Slide E15、模式所有权与disposed公共生命周期结论保持；但OneFrame handle只按可预测`containerId`字符串判断所有权，跨controller同ID handle可被错误接收；Multiple callback count只验证正数，无法证明等于对应runtime group owner的`left+right+1`；同批激活遇到后续坏图时还会保留此前root/BPM mutation并锁存fault。上述三项均为required-before-close阻断，完整A10绿色不能替代缺失的ownership与transactional-failure覆盖。**
+- 当前状态：**第十一次审计的三项生产修复已实现并通过定向TypeScript、第一切片、时钟与Auto Live回归，但A08/A09/A10继续保持打开，阶段未完成。OneFrame handle现按controller对象身份校验，judgement source与Multiple exact count由NoteManager owner绑定；Long/Slide/Multiple图在host接受chart及NoteManager setup mutation前按既有R04/U01约束preflight。根据新增验收纪律，修复批不得同批宣布结束；下一批必须从A00–A10逐项重新建立“任务要求→原作证据→生产路径→独立观察”映射并继续审计，任何未明确项都要继续修复。**
 - 最终验收记录：`tmp/simulator-auto-live-acceptance.md`。
 - 已冻结证据包：`tmp/simulator-reverse-evidence/auto-live/`。
 
@@ -41,6 +41,10 @@
 10. A02 前发现的任何不一致均失败关闭；不得选择“更像正确”的一个 JSON、沿用 Python 原型默认值或以生产谱面恰好未触发来绕过硬门。
 11. E15 的 current-child position gate 位于 intermediate/terminal 处理之前；portable Slide runtime 必须对 invisible 与 visible current child 同样先执行有限值检查和 `adjusted < child.absolutePos` 返回。invisible 只表示到点后不提交 OneFrame 并单次推进 cursor，不表示可绕过 crossing。
 12. 宿主校验成功后的 `playMode` 必须由引擎持有规范化不可变副本；不得保存调用者对象引用，也不得通过 `InGameCalculatedData.playMode` 暴露可修改的内部状态。调用者在 `createSimulatorEngine` 返回后修改原对象不能改变 manual/Auto Live、mode14/debug 或 result-transform 路由。
+13. **修复批与验收批必须分离。** 任何生产修改及其定向测试通过后，只能标记“实现完成，待独立验收”；不得在同一批或紧随其后的同视角检查中恢复阶段完成。
+14. 每次验收必须重新遍历A00–A10与第12节全部完成项，为每项明确记录“任务要求→已提交原作证据ID/portable边界依据→生产调用路径→独立实际观察”；不得引用上一轮“保持有效”代替本轮确认。
+15. 验收必须枚举`producer × owner × consumer × lifecycle × failure point × mutation`组合；类别样例、结构类型检查、代表性production root或全量测试绿色均不能外推为整个类别闭合。
+16. 只有所有纳入范围均有明确证据和实际生产路径观察、所有失败路径均有证据允许的原子状态、且无开放required-before-close项时才能停止；否则必须保持阶段打开并继续修复。
 
 ### 1.3 执行进度
 
@@ -54,9 +58,9 @@
 | A05 恢复 Single/Flick Force Perfect | 已完成 | Multiple owner 遍历完整 playable source order；其他 family/equal button 断组，method fixture 精确通过 |
 | A06 恢复 Long 分阶段完成 | 已完成 | head/tail 第六槽保留 native Wait/linked order，并由 manager terminal fault 阻止重试 |
 | A07 恢复 Slide 分阶段完成 | **修复完成** | invisible 与 visible current 统一先过 E15 adjusted-position/finite gate；synthetic 与 production 首 invisible child before/equal 回归通过 |
-| A08 恢复 Auto Live OneFrame 填充与聚合 | **重新打开** | handle owner capability与Multiple exact group-count仍未闭合；当前可接收跨controller同ID handle及`count=999` |
-| A09 接入调度、暂停与生命周期 | **重新打开** | disposed/fault边界保持；同批后续坏图会留下此前root/BPM部分激活，失败原子边界未闭合 |
-| A10 生产 oracle 与阶段验收 | **重新打开** | 现有AL22未覆盖跨owner同ID、正数count错配及公共step同批部分激活；须补回归后全量重验收 |
+| A08 恢复 Auto Live OneFrame 填充与聚合 | **实现修复，待独立验收** | handle对象身份、chart source owner与Multiple exact group-count已绑定；定向AL22通过，不据此关闭 |
+| A09 接入调度、暂停与生命周期 | **实现修复，待独立验收** | host与manager均在BPM/root mutation前preflight已确认图约束；定向组合回归通过，不据此关闭 |
+| A10 生产 oracle 与阶段验收 | **重新验收待执行** | 必须按新纪律重新确认A00–A10全部任务与证据/生产观察，不能只重跑AL01–AL22 |
 
 ### 1.4 批次记录
 
@@ -396,6 +400,14 @@
 - 公共host同批`Normal + missing-after Long`在第3次`step(1/60)`返回`auto-live.invalid-long-after-graph`并进入faulted，但`nextBatchIndex`仍为0且`normal:0`已active Move；若批内含BPM command，同一循环还会先提交BPM owner。G19只确认OneFrame第六槽前的native mutation，不为portable坏图验证后的部分batch activation背书。A09第7项原子边界未关闭。
 - AL22只用不可匹配的`containerId="foreign"`、只测Multiple count 0、并直接调用单个坏Long/Slide的`activate()`；没有覆盖跨controller同ID、与owner不一致的正count或公共step批内后继失败。A10停止条件和“覆盖全部失败关闭case”不满足。
 - 本批只纠正文档完成度，不改生产代码。A08/A09/A10及阶段完成勾选撤销；A00–A07与上述既有证据结论保持。下一批必须先设计不可伪造owner capability、精确group-count绑定与整批preflight/有证据的失败状态，再补AL22/public-host回归。
+
+#### 2026-07-29 第四十二批：所有权与批preflight生产修复
+
+- `OneFrameDataHandle`不再按`containerId`反查；每个controller为五槽建立冻结handle对象并以私有WeakMap校验对象身份。直接伪造同ID及另一controller的同ID handle均在payload/slot mutation前返回`one-frame.foreign-container`。
+- OneFrame新增唯一NoteManager judgement owner。生产NoteManager在setup时登记全部playable root及Slide共享child身份；未登记source即使字段结构合法也拒绝。Multiple source同时从G21 runtime group owner取得精确count，`0`、`999`和任意非owner正数均拒绝，实际owner count正常提交。
+- 把Long/Slide/Multiple激活图验证提取为同一R04/U01绑定纯函数；host在创建任何manager/backend副作用前验证，NoteManager在setup创建pool、group、BPM/root mutation前再次验证，Note自身activate仍复用同一函数。`Normal + CC08 + missing-after Long`组合在host和direct manager入口均零active root、零active BPM、零scheduler trace。
+- AL22新增未注册judgement source、exact Multiple owner count、伪造同ID/cross-controller handle、host与direct manager批preflight全对象断言；AL18/canonical暂停占槽改用已登记但尚未激活的未来source，不再由测试向生产Setup注入无owner NoteInformation。
+- 定向隔离TypeScript、Auto Live AL01–AL22、第一切片17项与时钟15组通过。按第1.2节新纪律，本批只标记A08/A09实现修复，A10保持打开；提交后另起验收批从A00–A10逐项确认。
 
 ## 2. 固定范围
 

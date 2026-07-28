@@ -323,6 +323,9 @@ test("PauseSound 保留输入分派但阻断 NoteManager", () => {
 
 test("OneFrame 容器统一获取 Reflect 与回收", () => {
   const controller = new InGameOneFrameJudgementController();
+  requireOk(controller.registerAutoLiveJudgementOwner(() => ({
+    multipleDirectionalFlickNoteCount: null,
+  })), "register judgement owner");
   requireOk(controller.initialize(), "initialize");
   for (let index = 0; index < 5; index += 1) {
     const handle = requireOk(controller.getUsableOneFrameData(), `slot ${index}`);

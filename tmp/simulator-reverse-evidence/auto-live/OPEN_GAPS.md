@@ -26,11 +26,11 @@ G01–G17 保持关闭。第三次审计的 G19/G20 由 Reverse `24706edcb02155f
 
 7. **已关闭：** manager现拥有adjusted-position生命周期门并公开只读state；host initialize/step/resume/getAdjusted在shortcut、director参数校验或Awake副作用前服从faulted/disposed状态。AL18覆盖dispose-before-initialize后initialize、合法/NaN step、pause、resume、getAdjusted失败，snapshot/幂等dispose允许且backend trace保持空。完整A10与提交后独立临时产物复现通过。
 
-8. **开放，required-before-close：** `OneFrameDataHandle`只有可预测`containerId`；不同controller都会生成`one-frame:0`，Setup按字符串命中自身slot，因此foreign owner handle可被接收且pool发生写入。须改为不可跨owner伪造的capability，并覆盖同ID cross-controller与直接伪造handle。
+8. **实现修复，待独立验收，仍required-before-close：** controller现为五槽建立冻结handle对象并以私有WeakMap校验身份；伪造同ID与cross-controller同ID均零mutation拒绝。尚须在独立验收批重新确认R02对象所有权、first-unused/复用及全部调用者。
 
-9. **开放，required-before-close：** Setup对Multiple note type 10只要求callback count为正数，未验证它等于该source对应runtime group owner的`left+right+1`。合法Multiple source配`count=999`会提交。须绑定精确owner/count关系，不得以范围、clamp或生产样本最大值冒充。
+9. **实现修复，待独立验收，仍required-before-close：** NoteManager现登记playable root/Slide child source owner并为Multiple返回G21 runtime group精确count；未登记source、`0`、`999`与错配正count均拒绝。尚须重新核对G12/G21、全部production group及非Multiple source不携带count。
 
-10. **开放，required-before-close：** `activateCurrentBatch`按顺序先提交BPM与已验证root，后续坏Long/Slide图失败时不回滚；公共host锁存fault后可观察到`nextBatchIndex=0`但此前root active/BPM owner已变。G19只支持OneFrame第六槽前的native mutation，不支持portable图验证的部分batch activation。须在mutation前完成整批preflight，或先取得已提交Reverse证据锁定原作失败前状态。
+10. **实现修复，待独立验收，仍required-before-close：** Long/Slide/Multiple图约束已提取为R04/U01绑定纯preflight，host在backend前、NoteManager在pool/group/BPM/root mutation前调用，Note activate继续复用。组合回归为零active root/BPM/scheduler trace；尚须独立枚举全部激活失败点并确认没有未preflight mutation。
 
 G22同时固定adaptive method fixture在一个setup outer frame后于full manager outer-frame index 1判定。GarupaEditor冻结包含`auto-live-actual-replay.json`与逐字节相同的`653_ikuoku_easy.bms.txt`；actual replay与公共fault边界均已完成第六次全量重验收，未被第七次Slide审计推翻。
 

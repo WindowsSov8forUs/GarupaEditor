@@ -25,7 +25,7 @@
 
 时钟与调度验收记录位于 `tmp/simulator-clock-scheduling-acceptance.md`。S01–S10 已完成。
 
-Auto Live第十一次独立审计已重新打开A08/A09/A10。G01–G22、G19公共fault、G21 topology、G22 exact/adaptive replay、Slide E15 position gate、模式所有权和disposed公共生命周期保持有效；但OneFrame handle可按跨controller同ID伪造owner，Multiple正count未绑定实际runtime group，同批后继坏图失败也会留下此前root/BPM mutation。完整隔离回归虽绿色，仍不能关闭阶段；状态见`tmp/simulator-auto-live-acceptance.md`。
+Auto Live第十一次独立审计已重新打开A08/A09/A10。handle对象身份、judgement source与Multiple exact count owner绑定、Long/Slide/Multiple图preflight生产修复已经完成并通过定向回归，但按任务书新纪律不得在修复批同批关闭。A10仍须从A00–A10逐项重新确认原作证据、生产路径与独立实际观察；状态见`tmp/simulator-auto-live-acceptance.md`。
 
 OneFrame 容量现在由原作证据固定为 5，不再接受宿主或测试容量配置。公开的 `OneFrameJudgementBatch` 仅包含本阶段闭合的 Auto Live 判定字段，不是原作完整 `OneFrameTotalData`。分数、Power、生命、Skill/Fever、音频、粒子、渲染和 HUD 字段在类型上保持缺席，而不是填零。
 

@@ -10,6 +10,10 @@ export interface AutoLiveJudgementRequest {
   readonly multipleDirectionalFlickNoteCount: number;
 }
 
+export interface AutoLiveJudgementOwnership {
+  readonly multipleDirectionalFlickNoteCount: number | null;
+}
+
 export interface MultipleDirectionalRuntimeGroup {
   readonly count: number;
   readonly isUsed: boolean;

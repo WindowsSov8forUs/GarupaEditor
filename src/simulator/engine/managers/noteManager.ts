@@ -7,8 +7,11 @@ import {
 import type { NoteFamily } from "../data/noteData";
 import type { OneFrameDataHandle } from "../data/oneFrameData";
 import type { InGameCalculatedData } from "../data/inGameCalculatedData";
-import type { AutoLiveJudgementRequest } from "../data/autoLiveJudgement";
-import type { MultipleDirectionalRuntimeGroup } from "../data/autoLiveJudgement";
+import type {
+  AutoLiveJudgementOwnership,
+  AutoLiveJudgementRequest,
+  MultipleDirectionalRuntimeGroup,
+} from "../data/autoLiveJudgement";
 import {
   evidenceRequired,
   ok,
@@ -24,6 +27,7 @@ import {
   NoteMultipleDirectionalVisual,
   NoteNormal,
   NoteSlide,
+  validateAutoLiveActivationGraph,
 } from "../notes/noteTypes";
 import { SlideNoteManager } from "./slideNoteManager";
 import type { InGameMusicScoreController } from "./inGameMusicScoreController";
@@ -132,6 +136,7 @@ export class NoteManager {
     NoteInformation,
     MultipleDirectionalGroupOwner
   >();
+  private readonly autoLiveJudgementSources = new WeakSet<NoteInformation>();
 
   constructor(
     private readonly batches: readonly NoteBatchInformation[],
@@ -161,12 +166,33 @@ export class NoteManager {
       return ok(undefined);
     }
 
+    for (const batch of this.batches) {
+      for (const noteInformation of batch.informationList) {
+        if (isNonPlayableCommand(noteInformation)) {
+          continue;
+        }
+        const graphValidation = validateAutoLiveActivationGraph(noteInformation);
+        if (graphValidation.status !== "ok") {
+          return graphValidation;
+        }
+      }
+    }
+
     this.setupMultipleDirectionalGroups();
     const familyNotes = new Map<NoteFamily, NoteInformation[]>();
     for (const batch of this.batches) {
       for (const noteInformation of batch.informationList) {
         if (isNonPlayableCommand(noteInformation)) {
           continue;
+        }
+        this.autoLiveJudgementSources.add(noteInformation);
+        if (
+          noteInformation.fireNoteType === FrontNoteType.SlideA ||
+          noteInformation.fireNoteType === FrontNoteType.SlideB
+        ) {
+          for (const source of noteInformation.slideNoteList) {
+            this.autoLiveJudgementSources.add(source);
+          }
         }
         const familyResult = noteFamily(noteInformation);
         if (familyResult.status !== "ok") {
@@ -408,6 +434,18 @@ export class NoteManager {
         }
       }
     }
+  }
+
+  getAutoLiveJudgementOwnership(
+    information: NoteInformation,
+  ): AutoLiveJudgementOwnership | null {
+    if (!this.autoLiveJudgementSources.has(information)) {
+      return null;
+    }
+    return {
+      multipleDirectionalFlickNoteCount:
+        this.multipleDirectionalGroups.get(information)?.count ?? null,
+    };
   }
 
   private resolveMultipleDirectionalGroup(

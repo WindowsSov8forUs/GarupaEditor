@@ -4,7 +4,10 @@ import {
   FrontNoteType,
   GameNoteType,
 } from "../chart/types";
-import type { AutoLiveJudgementRequest } from "../data/autoLiveJudgement";
+import type {
+  AutoLiveJudgementOwnership,
+  AutoLiveJudgementRequest,
+} from "../data/autoLiveJudgement";
 import type {
   AutoLiveJudgementData,
   OneFrameDataHandle,
@@ -54,16 +57,23 @@ export interface OneFrameJudgementControllerSnapshot {
 
 interface OneFrameDataContainer extends OneFrameDataHandle {
   readonly slot: number;
+  readonly handle: OneFrameDataHandle;
   inUse: boolean;
   payload: AutoLiveJudgementData | null;
 }
 
+export type AutoLiveJudgementOwner = (
+  noteInformation: AutoLiveJudgementRequest["noteInformation"],
+) => AutoLiveJudgementOwnership | null;
+
 export class InGameOneFrameJudgementController {
   private initializedValue = false;
   private readonly containers: OneFrameDataContainer[] = [];
+  private readonly ownedHandles = new WeakMap<OneFrameDataHandle, OneFrameDataContainer>();
   private readonly traceValue: OneFrameTraceEntry[] = [];
   private lastJudgementBatchValue: OneFrameJudgementBatch | null = null;
   private nextReflectBatchIndex = 0;
+  private autoLiveJudgementOwner: AutoLiveJudgementOwner | null = null;
 
   get isInitialized(): boolean {
     return this.initializedValue;
@@ -74,12 +84,16 @@ export class InGameOneFrameJudgementController {
       return ok(undefined);
     }
     for (let index = 0; index < ONE_FRAME_CAPACITY; index += 1) {
-      this.containers.push({
+      const handle = Object.freeze({ containerId: `one-frame:${index}` });
+      const container: OneFrameDataContainer = {
         slot: index,
-        containerId: `one-frame:${index}`,
+        containerId: handle.containerId,
+        handle,
         inUse: false,
         payload: null,
-      });
+      };
+      this.containers.push(container);
+      this.ownedHandles.set(handle, container);
     }
     this.initializedValue = true;
     return ok(undefined);
@@ -105,13 +119,27 @@ export class InGameOneFrameJudgementController {
       kind: "one-frame.get-usable",
       containerId: container.containerId,
     });
-    return ok({ containerId: container.containerId });
+    return ok(container.handle);
+  }
+
+  registerAutoLiveJudgementOwner(
+    owner: AutoLiveJudgementOwner,
+  ): SimulatorResult<void> {
+    if (this.autoLiveJudgementOwner !== null) {
+      return evidenceRequired(
+        "one-frame.judgement-owner-already-registered",
+        ["R02", "R03", "R10", "R12", "R16"],
+        "The controller accepts one NoteManager-owned judgement source and Multiple count resolver.",
+      );
+    }
+    this.autoLiveJudgementOwner = owner;
+    return ok(undefined);
   }
 
   setupAutoLiveJudgement(
     request: AutoLiveJudgementRequest,
   ): SimulatorResult<void> {
-    const validation = validateAutoLiveJudgementRequest(request);
+    const validation = this.validateAutoLiveJudgementRequest(request);
     if (validation.status !== "ok") {
       return validation;
     }
@@ -126,18 +154,18 @@ export class InGameOneFrameJudgementController {
     handle: OneFrameDataHandle,
     request: AutoLiveJudgementRequest,
   ): SimulatorResult<void> {
-    const validation = validateAutoLiveJudgementRequest(request);
+    const validation = this.validateAutoLiveJudgementRequest(request);
     if (validation.status !== "ok") {
       return validation;
     }
-    const container = this.containers.find(
-      (candidate) => candidate.containerId === handle.containerId,
-    );
+    const container = handle !== null && typeof handle === "object"
+      ? this.ownedHandles.get(handle)
+      : undefined;
     if (container === undefined) {
       return evidenceRequired(
         "one-frame.foreign-container",
         ["R02", "R03"],
-        `Container ${handle.containerId} is not owned by this controller.`,
+        `Container ${String(handle?.containerId)} is not owned by this controller.`,
       );
     }
     if (container.inUse || container.payload !== null) {
@@ -186,7 +214,7 @@ export class InGameOneFrameJudgementController {
   collectOneFrameData(): readonly OneFrameDataHandle[] {
     return this.containers
       .filter((container) => container.inUse)
-      .map((container) => ({ containerId: container.containerId }));
+      .map((container) => container.handle);
   }
 
   reflectOneFrameData(): SimulatorResult<OneFrameJudgementBatch | null> {
@@ -287,12 +315,23 @@ export class InGameOneFrameJudgementController {
       ),
     };
   }
+
+  private validateAutoLiveJudgementRequest(
+    request: AutoLiveJudgementRequest,
+  ): SimulatorResult<void> {
+    const ownership =
+      request?.noteInformation !== undefined && this.autoLiveJudgementOwner !== null
+        ? this.autoLiveJudgementOwner(request.noteInformation)
+        : null;
+    return validateAutoLiveJudgementRequest(request, ownership);
+  }
 }
 
 function validateAutoLiveJudgementRequest(
   request: AutoLiveJudgementRequest,
+  ownership: AutoLiveJudgementOwnership | null,
 ): SimulatorResult<void> {
-  if (!isClosedAutoLiveJudgementRequest(request)) {
+  if (!isClosedAutoLiveJudgementRequest(request, ownership)) {
     return evidenceRequired(
       "one-frame.invalid-auto-live-payload",
       ["R02", "R03", "R04"],
@@ -304,8 +343,10 @@ function validateAutoLiveJudgementRequest(
 
 function isClosedAutoLiveJudgementRequest(
   request: AutoLiveJudgementRequest,
+  ownership: AutoLiveJudgementOwnership | null,
 ): boolean {
   if (
+    ownership === null ||
     request === null ||
     typeof request !== "object" ||
     request.noteInformation === null ||
@@ -329,11 +370,16 @@ function isClosedAutoLiveJudgementRequest(
   }
 
   const source = request.noteInformation;
+  const expectedMultipleDirectionalCount =
+    ownership.multipleDirectionalFlickNoteCount;
   if (request.phase === "head") {
     if (
       request.absolutePosition !== source.absolutePos ||
       (request.noteType === 10
-        ? request.multipleDirectionalFlickNoteCount < 1
+        ? expectedMultipleDirectionalCount === null ||
+          !Number.isInteger(expectedMultipleDirectionalCount) ||
+          expectedMultipleDirectionalCount < 1 ||
+          request.multipleDirectionalFlickNoteCount !== expectedMultipleDirectionalCount
         : request.multipleDirectionalFlickNoteCount !== 0)
     ) {
       return false;

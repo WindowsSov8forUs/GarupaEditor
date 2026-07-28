@@ -5,6 +5,7 @@ import {
 } from "../evidence";
 import {
   AfterNoteType,
+  FrontNoteType,
   GameNoteType,
   type AfterNoteTypeValue,
   type NoteInformation,
@@ -127,15 +128,9 @@ export class NoteLong extends NoteFrontBase {
   override activate(noteInformation: NoteInformation): SimulatorResult<void> {
     this.afterNoteValue = null;
     this.autoLiveTraceValue.length = 0;
-    if (
-      !isLongAfterType(noteInformation.afterNoteType) ||
-      noteInformation.afterNoteAbsolutePos <= noteInformation.absolutePos
-    ) {
-      return evidenceRequired(
-        "auto-live.invalid-long-after-graph",
-        ["R01", "R02", "R04", "U01"],
-        `Long root ${noteInformation.index} has no confirmed terminal after node.`,
-      );
+    const graphValidation = validateAutoLiveActivationGraph(noteInformation);
+    if (graphValidation.status !== "ok") {
+      return graphValidation;
     }
     this.afterNoteValue = new LongAfterRuntime(
       noteInformation.afterNoteAbsolutePos,
@@ -306,15 +301,9 @@ export class NoteSlide extends NoteFrontBase {
     this.currentAfterIndexValue = 0;
     this.terminalJudgeNoteTypeValue = null;
     this.autoLiveTraceValue.length = 0;
-    if (
-      !noteInformation.isSlideNoteHead ||
-      noteInformation.slideNoteList.length === 0
-    ) {
-      return evidenceRequired(
-        "auto-live.invalid-slide-after-graph",
-        ["R01", "R02", "R04", "U01"],
-        `Slide root ${noteInformation.index} has no confirmed after-node list.`,
-      );
+    const graphValidation = validateAutoLiveActivationGraph(noteInformation);
+    if (graphValidation.status !== "ok") {
+      return graphValidation;
     }
     const seen = new Set<NoteInformation>();
     const afterNotes: SlideAfterRuntime[] = [];
@@ -679,16 +668,9 @@ export class NoteMultipleDirectionalFlick extends NoteDirectionalFlick {
   override activate(noteInformation: NoteInformation): SimulatorResult<void> {
     this.groupValue = null;
     this.multipleTraceValue.length = 0;
-    if (
-      noteInformation.fireNoteType !== 6 ||
-      (noteInformation.gameNoteType !== GameNoteType.DirectionalFlickLeft &&
-        noteInformation.gameNoteType !== GameNoteType.DirectionalFlickRight)
-    ) {
-      return evidenceRequired(
-        "auto-live.invalid-multiple-directional-root",
-        ["R10", "R16", "R16.D05", "R16.D08"],
-        `Core Multiple Directional requires front type 6 and source game type 10/11 (front=${noteInformation.fireNoteType}, game=${noteInformation.gameNoteType}).`,
-      );
+    const graphValidation = validateAutoLiveActivationGraph(noteInformation);
+    if (graphValidation.status !== "ok") {
+      return graphValidation;
     }
     if (this.groupResolverValue === null) {
       return evidenceRequired(
@@ -884,6 +866,94 @@ export type MultipleDirectionalAutoLiveTraceEntry = {
     | "multiple-side-used-deactivate";
   readonly groupCount: number;
 };
+
+export function validateAutoLiveActivationGraph(
+  noteInformation: NoteInformation,
+): SimulatorResult<void> {
+  if (noteInformation.fireNoteType === FrontNoteType.Long) {
+    if (
+      !isLongAfterType(noteInformation.afterNoteType) ||
+      !isInt32Position(noteInformation.afterNoteAbsolutePos) ||
+      noteInformation.afterNoteAbsolutePos <= noteInformation.absolutePos
+    ) {
+      return evidenceRequired(
+        "auto-live.invalid-long-after-graph",
+        ["R01", "R02", "R04", "U01"],
+        `Long root ${noteInformation.index} has no confirmed terminal after node.`,
+      );
+    }
+    return ok(undefined);
+  }
+  if (
+    noteInformation.fireNoteType === FrontNoteType.SlideA ||
+    noteInformation.fireNoteType === FrontNoteType.SlideB
+  ) {
+    if (
+      !noteInformation.isSlideNoteHead ||
+      noteInformation.slideNoteList.length === 0
+    ) {
+      return evidenceRequired(
+        "auto-live.invalid-slide-after-graph",
+        ["R01", "R02", "R04", "U01"],
+        `Slide root ${noteInformation.index} has no confirmed after-node list.`,
+      );
+    }
+    const terminalSource = noteInformation.slideNoteList[
+      noteInformation.slideNoteList.length - 1
+    ];
+    if (terminalSource === undefined) {
+      return evidenceRequired(
+        "auto-live.invalid-slide-after-graph",
+        ["R01", "R02", "R04", "U01"],
+        `Slide root ${noteInformation.index} has no terminal source node.`,
+      );
+    }
+    const terminalValidation = resolveSlideTerminalJudgeNoteType(
+      noteInformation.afterNoteType,
+      terminalSource.gameNoteType,
+    );
+    if (terminalValidation.status !== "ok") {
+      return terminalValidation;
+    }
+    const seen = new Set<NoteInformation>();
+    let previousPosition = noteInformation.absolutePos;
+    for (const source of noteInformation.slideNoteList) {
+      if (
+        seen.has(source) ||
+        !isInt32Position(source.absolutePos) ||
+        source.absolutePos <= previousPosition
+      ) {
+        return evidenceRequired(
+          "auto-live.duplicate-or-missing-slide-node",
+          ["R01", "R02", "R04", "U01"],
+          `Slide root ${noteInformation.index} contains an invalid shared after-node identity.`,
+        );
+      }
+      seen.add(source);
+      previousPosition = source.absolutePos;
+    }
+    return ok(undefined);
+  }
+  if (noteInformation.fireNoteType === FrontNoteType.MultipleDirectionalFlick) {
+    if (
+      noteInformation.gameNoteType !== GameNoteType.DirectionalFlickLeft &&
+      noteInformation.gameNoteType !== GameNoteType.DirectionalFlickRight
+    ) {
+      return evidenceRequired(
+        "auto-live.invalid-multiple-directional-root",
+        ["R10", "R16", "R16.D05", "R16.D08"],
+        `Core Multiple Directional requires front type 6 and source game type 10/11 (front=${noteInformation.fireNoteType}, game=${noteInformation.gameNoteType}).`,
+      );
+    }
+  }
+  return ok(undefined);
+}
+
+function isInt32Position(value: number): boolean {
+  return Number.isInteger(value) &&
+    value >= -0x80000000 &&
+    value <= 0x7fffffff;
+}
 
 function longAfterJudgeNoteType(afterNoteType: AfterNoteTypeValue): number {
   switch (afterNoteType) {

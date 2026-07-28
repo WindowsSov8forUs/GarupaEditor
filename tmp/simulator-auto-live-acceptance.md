@@ -1,6 +1,6 @@
 # 模拟器 Auto Live 阶段验收记录
 
-> **2026-07-29 第十一次独立审计：未通过，A08/A09/A10重新打开。** OneFrame仍可接收跨controller同ID handle和未绑定实际group owner的正Multiple count；公共step在同批后继坏图失败时保留此前root/BPM mutation。既有G01–G22、exact/adaptive、topology、Slide E15、模式所有权和disposed生命周期保持有效。
+> **2026-07-29 第十一次独立审计：未通过；生产修复已完成但尚未重验收。** OneFrame handle/source/exact count与批preflight已有定向回归，A08/A09仍只能标记“实现修复，待独立验收”；A10及阶段关闭继续撤销。下一次验收必须按任务书新纪律重新确认A00–A10全部证据与生产路径。
 
 ## 1. 验收身份
 
@@ -103,9 +103,9 @@ auto-live evidence verified: candidates=30, final=72, supplement=G11-G22, cases=
 | A05 Single/Flick | 通过 | Normal/Flick/standalone Directional 保持；Multiple 继承 ±500，并按完整 playable source-order run 提交唯一 note type 10 |
 | A06 Long | 通过 | head `>=`、tail `>`、linked finish→tail、active pause/resume、回收；head/tail 第六槽 native failure state 均冻结 |
 | A07 Slide | 通过 | terminal/Stop/Reset/第六槽保持；invisible/visible current统一先过E15 adjusted-position/finite gate，before/equal和单次粒度闭合 |
-| A08 OneFrame | **未通过** | 五槽/Reflect保持；handle owner可按同ID伪造，Multiple正count未绑定实际group owner |
-| A09 调度生命周期 | **未通过** | faulted/disposed公共边界保持；同批后继坏图失败会留下此前root/BPM部分激活 |
-| A10 生产 oracle | **未通过** | exact/adaptive/topology/Slide/mode保持；AL22缺跨owner、exact count和批内失败组合覆盖 |
+| A08 OneFrame | **实现修复，未验收** | handle对象身份、judgement source owner及Multiple exact count已有定向覆盖，等待独立全项验收 |
+| A09 调度生命周期 | **实现修复，未验收** | host/manager已在mutation前preflight图约束，等待独立全项验收 |
+| A10 生产 oracle | **未通过** | 不得以修复后定向绿色关闭；须重新确认A00–A10全部证据与生产观察 |
 
 ## 4. 已落地的生产边界
 
@@ -246,8 +246,8 @@ node tmp/simulator-reverse-evidence/auto-live/verify.mjs --index
 - Slide invisible：AL10覆盖root/child前一Float32与equal；AL19逐对象覆盖普通89、HABAHIRO 27个首child为invisible的Slide root；AL22覆盖non-finite原子失败。
 - 模式所有权：AL01经公共host覆盖Auto原对象Skill→mode14、manual→Auto和owner getter突变；创建后snapshot/crossing保持创建时规范化身份。
 - payload既有覆盖：unknown note type、phase/type错配、position错配、普通count非零、Multiple count为零与空button仍失败关闭；但该集合不能证明所有owner组合闭合。
-- 第十一次独立复现：合法Multiple source配`count=999`返回`ok`并占槽；controller A的`one-frame:0` handle可被controller B接收并直接占用B的slot。
-- 批激活独立复现：公共host同批`Normal + missing-after Long`失败后manager为faulted、`nextBatchIndex=0`，但`normal:0`仍active Move；现有AL22没有经过该组合路径。
+- 第十一次审计原复现：合法Multiple source配`count=999`曾返回`ok`并占槽；controller A的`one-frame:0` handle曾可被controller B接收。当前修复定向回归已转为拒绝，但尚未完成独立重验收。
+- 第十一次审计原批激活复现：公共host同批`Normal + missing-after Long`曾在fault后保留`normal:0` active Move。当前host/direct manager preflight定向回归为零mutation，但尚未完成独立重验收。
 - disposed生命周期：created直接dispose后initialize、合法/NaN step、pause、resume、getAdjusted全部失败关闭，snapshot全对象不变、backend trace为空、幂等dispose成功；该既有结论保持。
 - 未运行 Vite、Tauri 或 GarupaEditor 整体构建，符合任务书限制。
 

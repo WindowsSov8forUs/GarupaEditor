@@ -221,8 +221,14 @@ function validateAutoLive() {
       ...rootOverrides,
     });
   };
-  const controller = () => {
+  const controller = (judgementOwner = () => ({
+    multipleDirectionalFlickNoteCount: null,
+  })) => {
     const value = new InGameOneFrameJudgementController();
+    if (judgementOwner !== null) {
+      ok(value.registerAutoLiveJudgementOwner(judgementOwner),
+        "OneFrame judgement owner");
+    }
     ok(value.initialize(), "OneFrame initialize");
     return value;
   };
@@ -905,8 +911,18 @@ function validateAutoLive() {
       { absolutePos: 2 },
       { absolutePos: 3, gameNoteType: types.GameNoteType.SlideEndA },
     ], { absolutePos: 1, storedAbsolutePos: 1, afterNoteAbsolutePos: 3 });
+    const pausedSlotSource = normalInfo(401, 3);
+    const pauseGapCommand = normalInfo(402, 2, {
+      buttonType: types.ButtonType.None,
+      buttonTypes: [types.ButtonType.None],
+      buttonTypesArray: [types.ButtonType.None],
+    });
     const integration = schedulerIntegration({
-      batches: [batch(1, [pausedSlide])],
+      batches: [
+        batch(1, [pausedSlide]),
+        batch(2, [pauseGapCommand]),
+        batch(3, [pausedSlotSource]),
+      ],
       bpmChangeCount: 0,
       positions: [0, 1, 2],
     });
@@ -916,7 +932,7 @@ function validateAutoLive() {
     const frozenNoteManager = JSON.stringify(integration.manager.snapshot().noteManager);
     ok(integration.manager.pause(), "pause");
     ok(integration.oneFrame.setupAutoLiveJudgement(
-      request(normalInfo(401, 2), "head")), "stage slot before paused frame");
+      request(pausedSlotSource, "head")), "stage slot before paused frame");
     const frozenOneFrame = JSON.stringify(integration.oneFrame.snapshot());
     ok(integration.manager.execUpdate(1), "paused frame");
     const paused = integration.manager.snapshot();
@@ -1243,7 +1259,15 @@ function validateAutoLive() {
       assert.equal(multipleGroups.length, expectedTopology.group_count,
         `production source-order Multiple run count ${chartIndex}`);
       for (const [groupIndex, group] of multipleGroups.entries()) {
-        const oneFrame = controller();
+        const groupCounts = new WeakMap(
+          group.map((information) => [information, group.length]),
+        );
+        const oneFrame = controller((information) => {
+          const count = groupCounts.get(information);
+          return count === undefined
+            ? null
+            : { multipleDirectionalFlickNoteCount: count };
+        });
         const runtimeGroup = {
           count: group.length,
           isUsed: false,
@@ -1309,7 +1333,7 @@ function validateAutoLive() {
     }
   });
 
-  test("AL22", "冻结 failure matrix 全部非法数据失败关闭且关键状态原子", () => {
+  test("AL22", "冻结 failure matrix 与所有权/批preflight失败关闭", () => {
     const knownFailureIds = new Set(failureOracle.cases.map((entry) => entry.id));
     for (const expected of [
       "invalid-play-mode", "mode14-or-debug-force-perfect", "unknown-result-transform",
@@ -1362,6 +1386,48 @@ function validateAutoLive() {
     )), "auto-live.multiple-directional-group-unregistered");
     assert.equal(missingMultipleGroup.state, NoteState.Deactive);
 
+    const invalidBatchBackends = createRecordingSimulatorBackends();
+    const invalidBatchBpm = normalInfo(5011, 100, {
+      buttonType: types.ButtonType.None,
+      buttonTypes: [types.ButtonType.None],
+      buttonTypesArray: [types.ButtonType.None],
+      ccNum: 8,
+      bpm: 95.5,
+      bpmString: "95.5",
+    });
+    const invalidBatchChart = fixture.chart([batch(100, [
+      invalidBatchBpm,
+      normalInfo(5012, 100),
+      normalInfo(5013, 100, {
+        gameNoteType: types.GameNoteType.Long,
+        fireNoteType: types.FrontNoteType.Long,
+      }),
+    ])], 120);
+    evidence(createSimulatorEngine({
+      chart: invalidBatchChart,
+      runtime: {
+        highFrequencyMode: false,
+        judgeOffsetFrames: 0,
+        playMode: {
+          kind: "auto-live",
+          resultTransform: "identity-no-active-situation-skill",
+        },
+      },
+    }, invalidBatchBackends), "auto-live.invalid-long-after-graph");
+    assert.deepEqual(invalidBatchBackends.snapshot(), []);
+    const invalidBatchManager = schedulerIntegration({
+      batches: invalidBatchChart.noteBatches,
+      bpmChangeCount: 0,
+      positions: [0, 100],
+    });
+    evidence(invalidBatchManager.manager.initialize(),
+      "auto-live.invalid-long-after-graph");
+    const invalidBatchSnapshot = invalidBatchManager.manager.snapshot();
+    assert.equal(invalidBatchSnapshot.noteManager.nextBatchIndex, 0);
+    assert.deepEqual(invalidBatchSnapshot.noteManager.activeNotePoolObjectIds, []);
+    assert.deepEqual(invalidBatchSnapshot.noteManager.activeBpmPoolIndices, []);
+    assert.deepEqual(invalidBatchSnapshot.noteManager.schedulerTrace, []);
+
     const missingSlide = new notes.NoteSlide("missing-slide");
     evidence(missingSlide.activate(normalInfo(502, 120, {
       gameNoteType: types.GameNoteType.SlideA,
@@ -1382,8 +1448,36 @@ function validateAutoLive() {
       slideNoteList: [duplicate, duplicate],
     })), "auto-live.duplicate-or-missing-slide-node");
 
-    const invalidPayloadController = controller();
     const payloadSource = normalInfo(5032);
+    const unownedPayloadController = new InGameOneFrameJudgementController();
+    ok(unownedPayloadController.initialize(), "unowned payload controller initialize");
+    const unownedPayloadBefore = unownedPayloadController.snapshot();
+    evidence(unownedPayloadController.setupAutoLiveJudgement(
+      request(payloadSource, "head")), "one-frame.invalid-auto-live-payload");
+    assert.deepEqual(unownedPayloadController.snapshot(), unownedPayloadBefore);
+
+    const multiplePayloadSource = multipleInfo(
+      5033, 120, 0, types.GameNoteType.DirectionalFlickLeft,
+    );
+    const emptyButtonPayloadSource = {
+      ...payloadSource,
+      buttonTypesArray: [],
+    };
+    const multiplePayloadCounts = new WeakMap([[multiplePayloadSource, 3]]);
+    const payloadSources = new WeakSet([
+      payloadSource,
+      multiplePayloadSource,
+      emptyButtonPayloadSource,
+    ]);
+    const invalidPayloadController = controller((information) => {
+      if (!payloadSources.has(information)) {
+        return null;
+      }
+      return {
+        multipleDirectionalFlickNoteCount:
+          multiplePayloadCounts.get(information) ?? null,
+      };
+    });
     const invalidPayloadBefore = invalidPayloadController.snapshot();
     for (const invalidRequest of [
       { ...request(payloadSource, "head"), noteType: 999 },
@@ -1391,22 +1485,44 @@ function validateAutoLive() {
       { ...request(payloadSource, "head"), absolutePosition: payloadSource.absolutePos + 1 },
       { ...request(payloadSource, "head"), multipleDirectionalFlickNoteCount: 1 },
       {
-        ...request(multipleInfo(
-          5033, 120, 0, types.GameNoteType.DirectionalFlickLeft,
-        ), "head", 10),
+        ...request(multiplePayloadSource, "head", 10),
         multipleDirectionalFlickNoteCount: 0,
       },
-      request({ ...payloadSource, buttonTypesArray: [] }, "head"),
+      {
+        ...request(multiplePayloadSource, "head", 10),
+        multipleDirectionalFlickNoteCount: 999,
+      },
+      request(emptyButtonPayloadSource, "head"),
+      request(normalInfo(5034), "head"),
     ]) {
       evidence(invalidPayloadController.setupAutoLiveJudgement(invalidRequest),
         "one-frame.invalid-auto-live-payload");
       assert.deepEqual(invalidPayloadController.snapshot(), invalidPayloadBefore);
     }
 
+    ok(invalidPayloadController.setupAutoLiveJudgement({
+      ...request(multiplePayloadSource, "head", 10),
+      multipleDirectionalFlickNoteCount: 3,
+    }), "exact Multiple owner count");
+    assert.equal(invalidPayloadController.snapshot().inUseContainerIds.length, 1);
+
     const oneFrame = controller();
-    evidence(oneFrame.setupAutoLiveJudgementData(
-      { containerId: "foreign" }, request(normalInfo(504), "head")),
-    "one-frame.foreign-container");
+    const foreignOwner = controller();
+    const foreignSameIdHandle = ok(
+      foreignOwner.getUsableOneFrameData(),
+      "foreign same-id handle",
+    );
+    const beforeForeignHandle = oneFrame.snapshot();
+    for (const foreignHandle of [
+      { containerId: "foreign" },
+      { containerId: "one-frame:0" },
+      foreignSameIdHandle,
+    ]) {
+      evidence(oneFrame.setupAutoLiveJudgementData(
+        foreignHandle, request(normalInfo(504), "head")),
+      "one-frame.foreign-container");
+      assert.deepEqual(oneFrame.snapshot(), beforeForeignHandle);
+    }
     const handle = ok(oneFrame.getUsableOneFrameData(), "owned handle");
     const payload = request(normalInfo(505), "head");
     ok(oneFrame.setupAutoLiveJudgementData(handle, payload), "first setup");
@@ -1556,7 +1672,7 @@ function validateAutoLive() {
   }
 
   function schedulerIntegration({ batches, bpmChangeCount, positions }) {
-    const oneFrame = controller();
+    const oneFrame = controller(null);
     const music = new FakeIntegrationMusic(positions);
     const noteManager = new NoteManager(
       batches,
@@ -1572,6 +1688,9 @@ function validateAutoLive() {
       () => oneFrame.getUsableOneFrameData(),
       (judgement) => oneFrame.setupAutoLiveJudgement(judgement),
     );
+    ok(oneFrame.registerAutoLiveJudgementOwner(
+      (information) => noteManager.getAutoLiveJudgementOwnership(information),
+    ), "scheduler judgement owner");
     return {
       oneFrame,
       music,
@@ -2025,7 +2144,13 @@ function validateAutoLive() {
         `${caseId} canonical actual trace`);
     };
     const runMultiple = (caseId, gameNoteType, buttons, judgedIndex) => {
-      const oneFrame = controller();
+      const groupCounts = new WeakMap();
+      const oneFrame = controller((information) => {
+        const count = groupCounts.get(information);
+        return count === undefined
+          ? null
+          : { multipleDirectionalFlickNoteCount: count };
+      });
       const runtimeGroup = {
         count: buttons.length,
         isUsed: false,
@@ -2037,6 +2162,7 @@ function validateAutoLive() {
       };
       const groupNotes = buttons.map((buttonType, index) => {
         const information = multipleInfo(800 + index, 120, buttonType, gameNoteType);
+        groupCounts.set(information, runtimeGroup.count);
         const note = new notes.NoteMultipleDirectionalFlick(
           `canonical-multiple-${caseId}-${index}`,
         );
@@ -2253,8 +2379,18 @@ function validateAutoLive() {
         { absolutePos: 2 },
         { absolutePos: 3, gameNoteType: types.GameNoteType.SlideEndA },
       ], { absolutePos: 1, storedAbsolutePos: 1, afterNoteAbsolutePos: 3 });
+      const pendingSlotSource = normalInfo(821, 3);
+      const pauseGapCommand = normalInfo(822, 2, {
+        buttonType: types.ButtonType.None,
+        buttonTypes: [types.ButtonType.None],
+        buttonTypesArray: [types.ButtonType.None],
+      });
       const integration = schedulerIntegration({
-        batches: [batch(1, [source])],
+        batches: [
+          batch(1, [source]),
+          batch(2, [pauseGapCommand]),
+          batch(3, [pendingSlotSource]),
+        ],
         bpmChangeCount: 0,
         positions: [0, 1, 2],
       });
@@ -2262,7 +2398,7 @@ function validateAutoLive() {
       ok(integration.manager.execUpdate(0), "canonical Slide pause activate");
       ok(integration.manager.execUpdate(0), "canonical Slide pause head");
       ok(integration.oneFrame.setupAutoLiveJudgement(
-        request(normalInfo(821, 2), "head")), "canonical Slide pending slot");
+        request(pendingSlotSource, "head")), "canonical Slide pending slot");
       const slideObject = () => integration.manager.snapshot().noteManager.pools
         .find((pool) => pool.family === "slide").objects[0];
       let object = slideObject();
