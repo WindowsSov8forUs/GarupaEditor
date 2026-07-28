@@ -30,7 +30,7 @@ G01–G17 保持关闭。第三次审计的 G19/G20 由 Reverse `24706edcb02155f
 
 9. **已关闭：** NoteManager登记playable root/Slide child source owner并为Multiple返回G21 runtime group精确count；未登记source、`0`、`999`与错配正count均拒绝。第十二次验收重新核对G12/G21、全部415 production member、117/84 group及非Multiple count0。
 
-10. **部分结论保留，重新打开扩展组合：** 已覆盖的Long/Slide/Multiple terminal、note family内部shape、button-array内部identity及CC03/08约束仍在纯preflight；但尚未覆盖跨父/root-child共享身份、Slide child list角色、playable source index/invisible、两个button数组一致性及具体pool receiver/source family。错误Slide角色可在head已提交后才fault。
+10. **已关闭：** Long/Slide/Multiple terminal、note family内部shape、双button数组、CC03/08、跨父/root-child身份、Slide child角色、playable source index/invisible及具体pool receiver/source family均在纯preflight/Setup二次门闭合；错误图在backend与owner mutation前拒绝。第十四次提交后独立探针通过。
 
 11. **已关闭：** G19 fault经dispose cleanup后继续保留原latch；disposed snapshot保留fault，全部非允许API返回同一失败，snapshot/幂等dispose允许。第十四次提交后独立探针通过。
 
