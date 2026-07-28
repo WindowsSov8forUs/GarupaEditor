@@ -1,6 +1,6 @@
 # 模拟器 Auto Live 阶段验收记录
 
-> **2026-07-29 第八次最终独立重验收：通过。** `validatePlayMode`现返回规范化冻结值，`InGameCalculatedData`再复制冻结；公共host创建后Auto→Skill→mode14及manual→Auto原对象突变均不能改变owner，getter也拒绝修改。完整A10、Reverse verifier、index、独立topology及提交后临时产物复现全部通过。
+> **2026-07-29 第九次独立审计：未通过，A08/A09/A10重新打开。** OneFrame Setup会接收未闭合note type/count/position组合；公共host在disposed后仍允许resume/getAdjusted，并可能在initialize拒绝前产生frame-rate副作用。既有G01–G22、模式所有权、G19 fault、G21 topology、G22 replay和Slide E15保持有效。
 
 ## 1. 验收身份
 
@@ -41,10 +41,11 @@
 - 第七次最终重验收：`1007e4d`
 - 第八次审计重开：`0aa15c6`
 - 模式所有权修复：`628f7b6`
-- 第八次最终重验收：本文件所在提交
+- 第八次最终重验收：`86fd416`
+- 第九次审计重开：本文件所在提交
 - 验收日期：2026-07-28
 - 最终验收日期：2026-07-29
-- 验收结论：**通过。A00–A10完成，Auto Live阶段关闭；手动输入阶段仍须先建立独立Reverse证据硬门。**
+- 验收结论：**未通过。A08/A09/A10未完成，Auto Live阶段重新打开；闭合payload语义与disposed公共生命周期修复并全量重验收前不得进入手动输入阶段。**
 
 ## 2. 证据硬门与冻结包
 
@@ -99,9 +100,9 @@ auto-live evidence verified: candidates=30, final=72, supplement=G11-G22, cases=
 | A05 Single/Flick | 通过 | Normal/Flick/standalone Directional 保持；Multiple 继承 ±500，并按完整 playable source-order run 提交唯一 note type 10 |
 | A06 Long | 通过 | head `>=`、tail `>`、linked finish→tail、active pause/resume、回收；head/tail 第六槽 native failure state 均冻结 |
 | A07 Slide | 通过 | terminal/Stop/Reset/第六槽保持；invisible/visible current统一先过E15 adjusted-position/finite gate，before/equal和单次粒度闭合 |
-| A08 OneFrame | 通过 | 固定 5 槽；117/84 个 production run 的唯一 callback count；visual helper 不判定 |
-| A09 调度生命周期 | 通过 | 公共step于director delta校验前检查fault；AL16覆盖合法、NaN、±Infinity与负delta，全部返回锁存失败 |
-| A10 生产 oracle | 通过 | exact/adaptive/topology/Slide保持；AL01/AL22闭合创建前非法值与创建后模式别名突变，并完成提交后全量复核 |
+| A08 OneFrame | **未通过** | 五槽/Reflect保持，但Setup只做结构校验，未知note type、任意count和不一致position仍可提交 |
+| A09 调度生命周期 | **未通过** | fault优先级保持，但disposed后resume/getAdjusted成功，dispose-before-initialize会产生frame-rate副作用 |
+| A10 生产 oracle | **未通过** | exact/adaptive/topology/Slide/mode保持；AL18/AL22缺上述公共失败关闭回归 |
 
 ## 4. 已落地的生产边界
 
@@ -254,7 +255,7 @@ node tmp/simulator-reverse-evidence/auto-live/verify.mjs --index
 
 ## 8. 下一阶段硬门
 
-Auto Live第八次最终重验收已通过；以下下一阶段硬门恢复适用。
+Auto Live第九次审计未通过；以下下一阶段硬门暂不开放。
 
 下一阶段只允许按整体计划进入“手动输入与判定”。开始生产实现前必须：
 

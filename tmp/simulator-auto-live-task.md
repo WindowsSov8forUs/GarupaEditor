@@ -10,7 +10,7 @@
 - 锁定原作样本：`jp.co.craftegg.band` 10.1.3（version code 229，`arm64-v8a`）。
 - 上游已验收阶段：第一切片、谱面构造、时钟与调度。
 - 上游时钟调度验收提交：GarupaEditor `78414bc`，关闭记录修订提交 `ca84258`。
-- 当前状态：**第八次最终独立重验收已通过，A00–A10 完成，Auto Live 阶段关闭。`validatePlayMode` 现返回规范化冻结模式值，`InGameCalculatedData` 再复制冻结；调用者在创建后执行 Auto identity→Skill→mode14 或 manual→Auto 突变均不能改变owner snapshot与crossing，getter也拒绝修改。完整A10、Reverse verifier、证据index、独立topology再生成和提交后临时产物复现均通过。下一阶段只能先建立“手动输入与判定”的独立Reverse证据硬门。**
+- 当前状态：**第九次独立审计已重新打开 A08/A09/A10，Auto Live 阶段未关闭。OneFrame Setup 目前只检查请求字段的结构类型，仍会接受未闭合的 `noteType=999`、任意 callback count 和与来源不一致的位置并占用槽位；公共host在 dispose 后又会让 `resume()` / `getAdjustedMusicPosition()` 返回 `ok`，且“创建→直接dispose→initialize”会在拒绝初始化前产生帧率后端请求。既有 G01–G22、A03模式所有权、G19 fault、G21 topology、G22 replay与Slide E15结论保持有效，但在补齐闭合payload语义和disposed生命周期门并重建A10前禁止进入手动输入阶段。**
 - 最终验收记录：`tmp/simulator-auto-live-acceptance.md`。
 - 已冻结证据包：`tmp/simulator-reverse-evidence/auto-live/`。
 
@@ -54,9 +54,9 @@
 | A05 恢复 Single/Flick Force Perfect | 已完成 | Multiple owner 遍历完整 playable source order；其他 family/equal button 断组，method fixture 精确通过 |
 | A06 恢复 Long 分阶段完成 | 已完成 | head/tail 第六槽保留 native Wait/linked order，并由 manager terminal fault 阻止重试 |
 | A07 恢复 Slide 分阶段完成 | **修复完成** | invisible 与 visible current 统一先过 E15 adjusted-position/finite gate；synthetic 与 production 首 invisible child before/equal 回归通过 |
-| A08 恢复 Auto Live OneFrame 填充与聚合 | 已完成 | 117/84 source-order run 的唯一 note type 10/count、混合 batch 与五槽行为通过独立固定 oracle |
-| A09 接入调度、暂停与生命周期 | 已完成 | 公共step/pause/resume/getAdjusted/initialize均先服从fault；AL16覆盖合法与非法delta |
-| A10 生产 oracle 与阶段验收 | **已完成** | 提交后完整 A10、Reverse verifier/index、独立 topology 与模式所有权临时产物复现全部通过 |
+| A08 恢复 Auto Live OneFrame 填充与聚合 | **重新打开** | Setup只验证整数/有限值，未拒绝未闭合note type、phase/type/count/position组合 |
+| A09 接入调度、暂停与生命周期 | **重新打开** | disposed后resume/getAdjusted成功，dispose-before-initialize还会先产生frame-rate副作用 |
+| A10 生产 oracle 与阶段验收 | **重新打开** | AL18/AL22未枚举disposed公共API和非法OneFrame语义请求；旧绿色结论不足以关闭阶段 |
 
 ### 1.4 批次记录
 
@@ -363,6 +363,14 @@
 - 提交后临时编译产物独立驱动公共host：合法Auto原对象改为`skill`和`mode14`后，owner仍为identity Auto并产生恰好一条Normal判定；合法manual原对象改为Auto后，owner仍为manual/none；直接owner getter已冻结。
 - 模式稳定性actual来自正式`createSimulatorEngine`、snapshot、initialize与step，不通过测试私有字段写入；创建时AL22非法输入拒绝与创建后AL01别名隔离共同闭合A03生命周期边界。
 - 第八次复核未发现新的required-before-close缺口。A03/A10与阶段完成勾选恢复；手动输入、分数/状态消费、表现层和主程序接入继续保持后置硬门。
+
+#### 2026-07-29 第三十八批：第九次独立审计与阶段重开
+
+- 完整A10、AL01–AL22、Reverse verifier、证据source/copy/index及独立Multiple topology再生成仍全部绿色，但逐项对照A08/A09与失败关闭总则发现两个未覆盖的公共生产边界。
+- `validateAutoLiveJudgementRequest`只要求note type/button/count为整数且position有限；临时编译产物以`phase="tail"`、`noteType=999`、`absolutePosition=999`、`multipleDirectionalFlickNoteCount=999`调用正式Setup，返回`ok`并把未闭合值写入slot，违反R02的`validate closed Auto payload`与本文第3节第10项。
+- AL22只覆盖foreign handle、duplicate Setup和sixth entry，没有覆盖未知note type、phase/type不匹配、count规则或来源/位置一致性；完成定义中的Setup和Multiple note type/count边界因此不能继续勾选。
+- 公共host dispose后，`resume()`因未暂停shortcut返回`ok`，`getAdjustedMusicPosition()`也返回`ok(0)`；若未initialize即dispose，再调用initialize会先执行Awake并记录60 FPS后端请求，随后才返回`host.initialize-after-dispose`。这违反A09的dispose确定性和portable host失败关闭边界。
+- 本轮只纠正文档完成度，不改生产代码。A08/A09/A10与阶段关闭结论撤销；A00–A07及既有exact/topology/fault/Slide/mode结论不受影响。下一批补闭合payload owner校验、disposed公共API优先级与AL18/AL22回归。
 
 ## 2. 固定范围
 
@@ -1057,15 +1065,15 @@ A10 前不运行 Vite、Tauri 或 GarupaEditor 整体构建。
 - [x] Long 头/尾比较符号、父子顺序、状态、active pause 与回收匹配。
 - [x] Slide 头/中间/终端/Stop、current/selected cursor 和单次调用粒度匹配 frozen trace；invisible/visible current均先执行E15 position gate。
 - [x] Long/Slide after 子图保持构造共享身份并由父对象独占更新。
-- [x] OneFrame 固定5槽、first-unused、Setup、Multiple note type/count边界、池序Reflect、清除与Note-level exhaustion失败状态匹配；manager与公共host全部step输入均匹配。
+- [ ] OneFrame 固定5槽、first-unused、池序Reflect、清除与Note-level exhaustion保持；**Setup仍接受未闭合note type/phase/count/position组合，Multiple count语义边界未失败关闭。**
 - [x] unknown 分数/生命/技能/音频/粒子字段没有零值或 no-op 伪实现。
 - [x] 同位置、actual adaptive 多子步、Long/Slide/Multiple 暂停、空帧和失败关闭全部通过新 oracle；exact offset owner与adaptive full outer-frame均直接消费G22。
 - [x] 普通与 HABAHIRO production Normal/Flick/Directional/Multiple/Long/Slide 回归通过，并以独立 oracle 验证 production group，不由待测函数生成 expected；首invisible Slide child crossing/cursor timing逐对象覆盖89/27个root。
 - [x] 第一切片、谱面构造和时钟调度全部隔离回归通过，并补齐fault后全部公共`step`输入优先级回归。
 - [x] `engine/` 依赖边界通过。
-- [x] `tmp/simulator-auto-live-acceptance.md` 已按 G19–G22、actual production replay、公共 `step`、Slide invisible position gate 与模式所有权结果再次重建并通过。
+- [ ] `tmp/simulator-auto-live-acceptance.md` 仍需加入闭合payload与disposed公共host结果并重新通过。
 - [x] 未修改主程序入口、编辑器控制器、窗口协议、渲染或音频实现。
-- [x] 新的模式所有权修复已推送；最终验收文档按同一纪律提交推送并确认远端与 HEAD 为 `0 0`。
+- [ ] OneFrame语义与disposed生命周期修复、最终验收文档尚未按批次提交推送并确认远端与 HEAD 为 `0 0`。
 
 阶段关闭后，下一阶段只允许按整体计划进入“手动输入与判定”。如果 AL21 中任一手动输入分支仍无实体证据，则下一阶段必须先建立对应设备采证硬门，不能沿用 Auto Live 的 Force Perfect 结果绕过手动判定。
 
