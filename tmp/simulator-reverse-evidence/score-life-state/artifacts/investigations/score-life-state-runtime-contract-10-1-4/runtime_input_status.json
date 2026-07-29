@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "status": "runtime-inputs-locked-business-gate-open",
+  "status": "runtime-inputs-and-r1-partial-locked-business-gate-open",
   "sample": {
     "package": "jp.co.craftegg.band",
     "version_name": "10.1.4",
@@ -27,32 +27,53 @@
       }
     ],
     "cache_provenance": "Two byte-preserving protobuf field-2 records link bundle names to device cache filenames, resource version, timing, checksum, and byte count; extracted bundle hashes and TextAsset hashes are locked.",
-    "capture_capability": "The R1 harness has 50 targets verified against the committed 10.1.4 static contract and contains Interceptor.attach only, with no replacement or memory-write primitive."
+    "capture_capability": "The R1 harness has 50 targets verified against the committed 10.1.4 static contract and contains Interceptor.attach only, with no replacement or memory-write primitive.",
+    "r1_no_input_life_game_over": {
+      "trace": "runtime/no-input-retry-life-gameover.trace.json.gz",
+      "trace_sha256": "4F1BBCCF8E9D9258235ED3FD52F3B74242F515362C5C4EE7F51B8126290E8A55",
+      "events": 1863,
+      "one_frame_setup": 11,
+      "reflect": 210,
+      "initial_life": [1000, 1000, 2000],
+      "final_life": 0,
+      "miss_count": 11,
+      "single_game_over": [0, 1],
+      "status": "confirmed-r1-observation-only"
+    }
   },
   "partial": {
+    "D18": {
+      "closed_subscope": "stable InGameRecord identity, Life initialization fields, inactive Skill manager state, OneFrame Setup and Reflect before/after snapshots in one no-input manual run",
+      "open_subscope": "positive judgement, active Skill, Fever, heal, guard, Never Die and special-mode identities"
+    },
+    "D22": {
+      "closed_subscope": "single-player lethal AddIPower nests updateGameOverState and flips is_single_game_over from 0 to 1 at current Life 0",
+      "open_subscope": "post-Game-Over manager gate, score decrease modes, reset, continue, seek and ReturnTime"
+    },
     "D23": {
       "closed_subscope": "ordinary and HABAHIRO production BMS bytes and connected-device cache provenance",
       "open_subscope": "score level, difficulty, deck/start-data, result/damage, Skill, Fever, event, Auto, Festival, Medley, and Garupa master rows"
     }
   },
   "runtime": {
-    "r1_trace_count": 0,
-    "operational_blocker": "The connected installation currently stops at the title account-data warning. Its OK path starts the game from the beginning and was not selected because that is a destructive account action.",
+    "r1_trace_count": 1,
+    "operational_blocker": "One no-input retry trace is closed. Additional non-destructive gameplay scenarios and deck/start-data/master provenance are still required before the business gate can close.",
     "synthetic_trace_allowed": false
   },
   "gates": {
-    "D18": "required-before-code",
+    "D18": "partial-required-before-code",
     "D19": "required-before-code",
     "D20": "required-before-code",
     "D21": "required-before-code",
-    "D22": "required-before-code",
+    "D22": "partial-required-before-code",
     "D23": "partial-required-before-code",
     "D24": "required-before-code"
   },
   "unknown_fields": [],
   "blocking_findings": [
-    "No R1 score/life/Skill/Fever trace is captured.",
+    "Positive judgement, active Skill, Fever, heal, guard, Never Die and special-mode R1 traces remain open.",
     "Deck/start-data/master provenance remains open.",
+    "D20/D21 and the remaining D22 lifecycle paths remain open.",
     "BS01-BS36 and final portable contract do not exist."
   ],
   "business_state_gate": "open",

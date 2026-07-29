@@ -274,6 +274,10 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--plan", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument(
+        "--device-address",
+        help="explicit forwarded frida-server address, for example 127.0.0.1:47913",
+    )
     args = parser.parse_args()
     plan_bytes = args.plan.read_bytes()
     script_bytes = Path(__file__).read_bytes()
@@ -282,7 +286,12 @@ def main() -> int:
     if "versionName=10.1.4" not in version or "versionCode=230" not in version:
         raise RuntimeError("device package is not locked to 10.1.4 / 230")
     pid = int(adb("shell", "pidof", PACKAGE))
-    device = frida.get_usb_device(timeout=10)
+    if args.device_address:
+        device = frida.get_device_manager().add_remote_device(args.device_address)
+        transport = {"kind": "explicit-remote", "address": args.device_address}
+    else:
+        device = frida.get_usb_device(timeout=10)
+        transport = {"kind": "usb-auto"}
     session = device.attach(pid)
     script = session.create_script(build_script())
     script.on("message", lambda message, data: print(json.dumps({"frida_message": message}, ensure_ascii=False)))
@@ -327,7 +336,7 @@ def main() -> int:
     output = {
         "schema_version": 1,
         "status": "confirmed-r1-observation-only" if rpc_error is None else "partial-r1-observation-process-ended",
-        "capability": {"level":"R1","return_replacement":False,"memory_writes":False,"apk_modification":False,"input_injection":"Android adb input only"},
+        "capability": {"level":"R1","return_replacement":False,"memory_writes":False,"apk_modification":False,"input_injection":"Android adb input only","transport":transport},
         "sample": {"package":PACKAGE,"version_name":"10.1.4","version_code":230,"abi":"arm64-v8a","libil2cpp_sha256":LIB_SHA256,"global_metadata_sha256":METADATA_SHA256,"pid":pid,"module":module_info},
         "scenario": {**plan, "plan_file": args.plan.name},
         "plan_sha256": hashlib.sha256(plan_bytes).hexdigest().upper(),

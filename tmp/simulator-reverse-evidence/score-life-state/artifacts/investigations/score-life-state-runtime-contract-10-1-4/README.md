@@ -45,11 +45,13 @@ These static conclusions do **not** authorize implementation. D18–D24, master/
 - `static_closure.json`: B01-only gate state.
 - `capture_score_life_state_runtime.py`: observation-only R1 hook harness with 50 statically verified targets.
 - `extract_score_life_runtime_input_provenance.py`: protobuf cache-record and BMS provenance extractor.
-- `verify_score_life_runtime_inputs.py`: fail-closed R0 input/capture-target verifier; `--require-r1` additionally rejects a missing R1 trace.
+- `verify_score_life_runtime_inputs.py`: fail-closed R0 input/capture-target verifier.
+- `verify_score_life_no_input_r1.py`: fail-closed verifier for the compressed no-input Life/Game Over R1 trace.
 - `runtime-inputs/bms/`: ordinary and HABAHIRO TextAssets extracted from connected-device 10.1.4 cache bundles.
 - `runtime-inputs/cache-index/`: byte-preserving `AssetBundleInfo` records and structured cache provenance; account identifiers are omitted.
-- `runtime_input_status.json`: D23 partial state and remaining runtime blockers.
-- `runtime/*-plan.json`: UI-only capture plans. No successful raw R1 trace is claimed yet.
+- `runtime_input_status.json`: D18/D22/D23 partial state and remaining runtime blockers.
+- `runtime/no-input-retry-plan.json`: UI-only Retry plan from an already visible Live Failed dialog.
+- `runtime/no-input-retry-life-gameover.trace.json.gz`: successful observation-only R1 trace with 1,863 contiguous events.
 - `SHA256SUMS`: complete hashes for all investigation files except the checksum file itself.
 
 ## Reproduce static extraction
@@ -82,6 +84,12 @@ Run:
 py -3.14 artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_runtime_inputs.py
 ```
 
-Expected open-gate summary currently ends with `R1=0 business_state_gate=open`. `--require-r1` must fail until a successful observation-only trace exists.
+The R0 verifier continues to validate the device cache, both BMS inputs and all 50 observation-only hook targets. Verify the independent compressed R1 trace with:
 
-The connected installation currently stops at the title account-data warning after a retry network failure. The warning's `OK` path starts the game from the beginning; that destructive account action was not selected. Therefore no stage-5 R1 trace is included or claimed. Deck/start-data/master rows, D18–D24, BS01–BS36, and final `closure.json` remain open instead of substituting static inference or a synthetic trace.
+```powershell
+py -3.14 artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_no_input_r1.py
+```
+
+The trace was captured through an explicit non-default loopback server forwarded by ADB, using `--device-address 127.0.0.1:47913`; the transport is embedded in the trace capability record. This changes only the Frida connection path and does not alter the observation agent or game state.
+
+The no-input retry trace directly fixes stable `InGameRecord` identity, Life initialization `1000/1000/2000`, 11 Miss projections, slot-order Life mutation to zero, inactive Skill state, and the nested single-player Game Over transition. It closes only subscopes of D18 and D22. Positive judgement, active Skill, Fever, heal/guard/Never Die, same-frame transitions, post-Game-Over lifecycle, deck/start-data/master rows, BS01–BS36 and final `closure.json` remain open. The business gate therefore stays open; this R1 trace must not be extrapolated into production authorization.

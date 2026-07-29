@@ -4,7 +4,8 @@
   "source": {
     "repository": "HOST___________________GirlsBandParty-Reverse",
     "staticEvidenceCommit": "6c902656c72f3983fb04386038dcfe38f0d53797",
-    "runtimeInputCommit": "1ee976ea1de24cb0567762a74e2d091ae4c78464"
+    "runtimeInputCommit": "1ee976ea1de24cb0567762a74e2d091ae4c78464",
+    "runtimeEvidenceCommit": "72aa279fb07041b04ca649df918fa35ab0490d91"
   },
   "sample": {
     "package": "jp.co.craftegg.band",
@@ -20,13 +21,14 @@
     "enums": 19,
     "arm64Slices": 326,
     "staticEntries": 335,
-    "r1Traces": 0,
+    "r1Traces": 1,
     "fixedEventCases": 0,
-    "totalEntries": 347,
+    "totalEntries": 349,
     "r0InputEntries": 12,
     "productionBms": 2,
     "cacheRecords": 2,
-    "captureTargets": 50
+    "captureTargets": 50,
+    "r1EvidenceEntries": 6
   },
   "versionRebaselineGate": {
     "status": "closed",
@@ -4972,16 +4974,17 @@
     },
     {
       "id": "SLS-B02-R0-001",
-      "sourceCommit": "1ee976ea1de24cb0567762a74e2d091ae4c78464",
+      "sourceCommit": "72aa279fb07041b04ca649df918fa35ab0490d91",
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/capture_score_life_state_runtime.py",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/capture_score_life_state_runtime.py",
-      "bytes": 22228,
-      "sha256": "42BE80EFEB4DD44D4C83A6D8B7833125444C7ED997A359BF026CBD04238480C9",
+      "bytes": 22640,
+      "sha256": "4908F31E13448F6AD55878C93FB60588B5C8334D105232C04AE9F16604AF32CE",
       "version": "10.1.4_230_arm64-v8a",
-      "status": "confirmed-r0-runtime-input-business-gate-open",
+      "status": "confirmed-r1-partial-business-gate-open",
       "consumedBy": [
         "B02",
-        "D23-partial"
+        "D18-partial",
+        "D22-partial"
       ]
     },
     {
@@ -5015,15 +5018,17 @@
     },
     {
       "id": "SLS-B01-329",
-      "sourceCommit": "1ee976ea1de24cb0567762a74e2d091ae4c78464",
+      "sourceCommit": "72aa279fb07041b04ca649df918fa35ab0490d91",
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/README.md",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/README.md",
-      "bytes": 5796,
-      "sha256": "7FCC9901F514B7EF81193834378E0E9D1E02B8B35ACE56D9EE373F16766E3E1E",
+      "bytes": 6574,
+      "sha256": "4A8E33C201FE0C6075A67871F46A2C53971DE3C06C7D48B6792A136DF0634BB1",
       "version": "10.1.4_230_arm64-v8a",
-      "status": "confirmed-r0-runtime-input-business-gate-open",
+      "status": "confirmed-r1-partial-business-gate-open",
       "consumedBy": [
         "B02",
+        "D18-partial",
+        "D22-partial",
         "D23-partial"
       ]
     },
@@ -5141,15 +5146,17 @@
     },
     {
       "id": "SLS-B02-R0-011",
-      "sourceCommit": "1ee976ea1de24cb0567762a74e2d091ae4c78464",
+      "sourceCommit": "72aa279fb07041b04ca649df918fa35ab0490d91",
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime_input_status.json",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime_input_status.json",
-      "bytes": 2546,
-      "sha256": "BDA77965DB34018C410219B8D256CBC14AD8C91F6B9446EB433ED0B9FC065A10",
+      "bytes": 3736,
+      "sha256": "E9F472153FBA4B3D034505E7896DE3593EA5EE4768DC6F9345FCD2A1A85EAADD",
       "version": "10.1.4_230_arm64-v8a",
-      "status": "confirmed-r0-runtime-input-business-gate-open",
+      "status": "confirmed-r1-partial-business-gate-open",
       "consumedBy": [
         "B02",
+        "D18-partial",
+        "D22-partial",
         "D23-partial"
       ]
     },
@@ -5185,15 +5192,17 @@
     },
     {
       "id": "SLS-B01-332",
-      "sourceCommit": "1ee976ea1de24cb0567762a74e2d091ae4c78464",
+      "sourceCommit": "72aa279fb07041b04ca649df918fa35ab0490d91",
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/SHA256SUMS",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/SHA256SUMS",
-      "bytes": 45900,
-      "sha256": "6151ABEF3E8343547702B20E172A1A0FCA3D4EE4533F3751CEE45602FE9145D1",
+      "bytes": 45770,
+      "sha256": "236F8862B0357A920054E47C8BA3EAAED7BC464FD43D8A44DA90436BF96598CB",
       "version": "10.1.4_230_arm64-v8a",
-      "status": "confirmed-r0-runtime-input-business-gate-open",
+      "status": "confirmed-r1-partial-business-gate-open",
       "consumedBy": [
         "B02",
+        "D18-partial",
+        "D22-partial",
         "D23-partial"
       ]
     },
@@ -5255,6 +5264,36 @@
         "V01",
         "D01-D17-static"
       ]
+    },
+    {
+      "id": "SLS-B02-R1-001",
+      "sourceCommit": "72aa279fb07041b04ca649df918fa35ab0490d91",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime/no-input-retry-life-gameover.trace.json.gz",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime/no-input-retry-life-gameover.trace.json.gz",
+      "bytes": 140797,
+      "sha256": "4F1BBCCF8E9D9258235ED3FD52F3B74242F515362C5C4EE7F51B8126290E8A55",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-r1-partial-business-gate-open",
+      "consumedBy": [
+        "B02",
+        "D18-partial",
+        "D22-partial"
+      ]
+    },
+    {
+      "id": "SLS-B02-R1-002",
+      "sourceCommit": "72aa279fb07041b04ca649df918fa35ab0490d91",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_no_input_r1.py",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_no_input_r1.py",
+      "bytes": 10207,
+      "sha256": "A2E2552B839CB1D80B2FB16FD81375BF1A60C931BEC6804298D900770D3AB4B4",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-r1-partial-business-gate-open",
+      "consumedBy": [
+        "B02",
+        "D18-partial",
+        "D22-partial"
+      ]
     }
   ],
   "runtimeInputGate": {
@@ -5263,21 +5302,24 @@
       "ordinary-production-bms",
       "habahiro-production-bms",
       "connected-device-cache-provenance",
-      "observation-only-capture-targets"
+      "observation-only-capture-targets",
+      "no-input-life-game-over-r1"
     ],
     "partialFindings": [
+      "D18",
+      "D22",
       "D23"
     ],
     "blockingFindings": [
-      "D18",
+      "D18-remaining",
       "D19",
       "D20",
       "D21",
-      "D22",
+      "D22-remaining",
       "D23-master-start-data",
       "D24"
     ],
-    "r1TraceCount": 0,
+    "r1TraceCount": 1,
     "productionAuthorization": false
   }
 }

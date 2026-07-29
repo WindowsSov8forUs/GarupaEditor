@@ -8,11 +8,11 @@
 - 锁定原作样本：`jp.co.craftegg.band` 10.1.4（version code 230，`arm64-v8a`）。
 - 锁定`libil2cpp.so` SHA-256：`815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F`。
 - 锁定`global-metadata.dat` SHA-256：`298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F`。
-- 当前Reverse提交：`ce5353fdc54a3ba8188f3dccd4accdc6c2ef4ce2`；只消费该提交及后续已推送、可校验提交，不消费当前Reverse工作树。
-- 当前状态：**B00任务书已建立。V01与D01–D24全部是`required-before-code`硬门；B02关闭前禁止实施B03–B12任何生产代码。**
+- 当前Reverse证据提交：`72aa279fb07041b04ca649df918fa35ab0490d91`；只消费该提交及其祖先中已推送、可校验对象，不消费当前Reverse工作树。
+- 当前状态：**B00/B01已完成，B02进行中。V01与D01-static已关闭；D18/D22各有一条无输入R1部分结论，但D18/D22剩余范围、D19–D21、D23剩余、D24及BS01–BS36仍是`required-before-code`硬门；B02关闭前禁止实施B03–B12任何生产代码。**
 - 当前10.1.4已提交依赖证据只直接覆盖`OneFrameData.Setup`、`InGameOneFrameJudgementController.ReflectOneFrameData`、`NoteBase.getAddCombo`以及若干判定生产者入口；它不足以宣称完整Score/Life/Skill/Fever链已在10.1.4确认。
 - 10.1.3的`base-score-construction`、`event-score-multipliers`、`skill-*`、`fever-*`及Life Heal实机调查仅作为历史迁移候选H01–H24，不能被B03–B12生产实现直接消费。
-- 计划证据包：`tmp/simulator-reverse-evidence/score-life-state/`；只在Reverse证据提交后建立。
+- 当前证据包：`tmp/simulator-reverse-evidence/score-life-state/`；已冻结B01、R0输入与无输入R1子批，只消费已提交Reverse对象。
 - 计划验收记录：`tmp/simulator-score-life-state-acceptance.md`；B12时创建。
 
 ### 1.1 阶段目标
@@ -57,8 +57,8 @@
 | 任务 | 状态 | 完成标准 |
 | --- | --- | --- |
 | B00 建立阶段任务书 | **已完成** | 范围、证据候选、硬门、oracle、任务顺序和完成定义写入本文档 |
-| B01 10.1.4静态证据晋升 | 未开始；**硬门** | 全方法/type/enum/constant/master-source契约逐项映射并提交Reverse |
-| B02 实体与固定事件oracle | 未开始；**硬门** | D01–D24关闭，raw trace和BS01–BS36固定case提交并冻结，`business_state_gate=closed` |
+| B01 10.1.4静态证据晋升 | **已完成静态重基线** | 326方法、25布局、19枚举及静态语义已提交Reverse并冻结；不单独关闭业务门 |
+| B02 实体与固定事件oracle | **进行中；硬门**：R0/BMS及1条无输入R1已冻结，D18/D22仅部分关闭 | D01–D24关闭，raw trace和BS01–BS36固定case提交并冻结，`business_state_gate=closed` |
 | B03 锁定配置、领域数据与owner | 阻塞于B02 | 输入profile、InGameRecord、OneFrameData/TotalData与manager owner不可伪造 |
 | B04 恢复基础分与最大Note数 | 阻塞于B02 | deck/chart/level/base score、result correction及初始化顺序匹配 |
 | B05 恢复单次判定业务投影 | 阻塞于B02 | adjusted result、damage、score、rate、guard和slot冻结顺序匹配 |
@@ -679,7 +679,9 @@ git rev-list --left-right --count origin/codex/refactor-simulator-implementation
 - 状态：`in-progress-required-before-code`。
 - Reverse R0输入提交：`1ee976ea1de24cb0567762a74e2d091ae4c78464`，已push，`origin/main...HEAD = 0 0`。
 - 已关闭子范围：连接设备10.1.4 `AssetBundleInfo`原始record、ordinary `poppin_shuffle_special`（`418DB7F...094DC`）与HABAHIRO `786_miracle_april_habahiro_special`（`4314809...159`）TextAsset；两者与既有production fixture字节哈希一致。
-- R1 harness：50个hook目标逐项匹配静态contract，verifier确认无`Interceptor.replace`、`retval.replace`、memory write或APK patch；当前`R1=0`，`--require-r1`按预期失败关闭。
-- 待关闭：D18–D22、D23剩余deck/start-data/master provenance、D24、R1 raw trace及BS01–BS36。
-- 当前设备在一次retry网络失败后停于标题账号数据警告；其`OK`路径会从头开始游戏，属于破坏性账号动作，未选择且不得作为自动取证步骤。
+- R1 harness：50个hook目标逐项匹配静态contract，verifier确认无`Interceptor.replace`、`retval.replace`、memory write或APK patch。
+- Reverse无输入R1提交：`72aa279fb07041b04ca649df918fa35ab0490d91`，已push且远端`0 0`；显式非默认loopback transport避免默认端口竞态，trace记录transport且agent逻辑不变。
+- 该R1含1863个连续事件：Life初始化参数/字段`1000/1000/2000`、稳定InGameRecord identity、11个Miss OneFrame、210次Reflect、slot-order Life `1000→0`及nested single Game Over `0→1`；独立verifier通过。
+- D18仅部分关闭：positive judgement、active Skill、Fever、heal、guard、Never Die和special mode仍缺R1；D22仅部分关闭：post-Game-Over gate、score decrease mode、reset/continue/seek/ReturnTime仍开放。
+- 待关闭：D18/D22剩余、D19–D21、D23剩余deck/start-data/master provenance、D24及BS01–BS36。
 - B02关闭前继续禁止B03–B12 production、测试脚本和package script实现。

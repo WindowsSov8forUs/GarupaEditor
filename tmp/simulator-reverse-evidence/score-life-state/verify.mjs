@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { readFileSync, readdirSync } from "node:fs";
 import { dirname, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
+import { gunzipSync } from "node:zlib";
 
 const packageRoot = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(packageRoot, "../../..");
@@ -42,10 +43,11 @@ function filesRecursively(root, current = root) {
   return files;
 }
 
-check(manifest.schemaVersion === 2 && manifest.entries.length === 347, "Unexpected evidence manifest shape");
+check(manifest.schemaVersion === 2 && manifest.entries.length === 349, "Unexpected evidence manifest shape");
 check(
   manifest.source.staticEvidenceCommit === "6c902656c72f3983fb04386038dcfe38f0d53797" &&
-    manifest.source.runtimeInputCommit === "1ee976ea1de24cb0567762a74e2d091ae4c78464",
+    manifest.source.runtimeInputCommit === "1ee976ea1de24cb0567762a74e2d091ae4c78464" &&
+    manifest.source.runtimeEvidenceCommit === "72aa279fb07041b04ca649df918fa35ab0490d91",
   "Unexpected Reverse evidence commits",
 );
 check(
@@ -65,12 +67,13 @@ check(
     manifest.counts.enums === 19 &&
     manifest.counts.arm64Slices === 326 &&
     manifest.counts.staticEntries === 335 &&
-    manifest.counts.totalEntries === 347 &&
+    manifest.counts.totalEntries === 349 &&
     manifest.counts.r0InputEntries === 12 &&
+    manifest.counts.r1EvidenceEntries === 6 &&
     manifest.counts.productionBms === 2 &&
     manifest.counts.cacheRecords === 2 &&
     manifest.counts.captureTargets === 50 &&
-    manifest.counts.r1Traces === 0 &&
+    manifest.counts.r1Traces === 1 &&
     manifest.counts.fixedEventCases === 0,
   "Evidence counts changed",
 );
@@ -95,15 +98,23 @@ const runtimeInputGate = manifest.runtimeInputGate;
 check(
   runtimeInputGate.status === "partial-required-before-code" &&
     runtimeInputGate.closedSubscope.join(",") ===
-      "ordinary-production-bms,habahiro-production-bms,connected-device-cache-provenance,observation-only-capture-targets" &&
-    runtimeInputGate.partialFindings.join(",") === "D23" &&
-    runtimeInputGate.r1TraceCount === 0 &&
+      "ordinary-production-bms,habahiro-production-bms,connected-device-cache-provenance,observation-only-capture-targets,no-input-life-game-over-r1" &&
+    runtimeInputGate.partialFindings.join(",") === "D18,D22,D23" &&
+    runtimeInputGate.blockingFindings.join(",") ===
+      "D18-remaining,D19,D20,D21,D22-remaining,D23-master-start-data,D24" &&
+    runtimeInputGate.r1TraceCount === 1 &&
     runtimeInputGate.productionAuthorization === false,
   "Runtime input gate was incorrectly closed",
 );
 
 git(["cat-file", "-e", `${manifest.source.staticEvidenceCommit}^{commit}`], sourceRoot);
 git(["cat-file", "-e", `${manifest.source.runtimeInputCommit}^{commit}`], sourceRoot);
+git(["cat-file", "-e", `${manifest.source.runtimeEvidenceCommit}^{commit}`], sourceRoot);
+const evidenceCommits = [
+  manifest.source.staticEvidenceCommit,
+  manifest.source.runtimeInputCommit,
+  manifest.source.runtimeEvidenceCommit,
+];
 const ids = new Set();
 const copiedPaths = new Set();
 for (const entry of manifest.entries) {
@@ -112,7 +123,7 @@ for (const entry of manifest.entries) {
   ids.add(entry.id);
   copiedPaths.add(entry.copiedPath);
   check(
-    [manifest.source.staticEvidenceCommit, manifest.source.runtimeInputCommit].includes(entry.sourceCommit) &&
+    evidenceCommits.includes(entry.sourceCommit) &&
       entry.sourcePath === entry.copiedPath &&
       !entry.sourcePath.startsWith("runtime/tools/") &&
       entry.sourcePath.startsWith(
@@ -260,13 +271,81 @@ check(
 );
 const runtimeStatus = json("runtime_input_status.json");
 check(
-  runtimeStatus.status === "runtime-inputs-locked-business-gate-open" &&
-    runtimeStatus.runtime.r1_trace_count === 0 &&
+  runtimeStatus.status === "runtime-inputs-and-r1-partial-locked-business-gate-open" &&
+    runtimeStatus.runtime.r1_trace_count === 1 &&
+    runtimeStatus.gates.D18 === "partial-required-before-code" &&
+    runtimeStatus.gates.D22 === "partial-required-before-code" &&
     runtimeStatus.gates.D23 === "partial-required-before-code" &&
+    runtimeStatus.closed.r1_no_input_life_game_over.events === 1863 &&
+    runtimeStatus.closed.r1_no_input_life_game_over.one_frame_setup === 11 &&
+    runtimeStatus.closed.r1_no_input_life_game_over.reflect === 210 &&
+    runtimeStatus.closed.r1_no_input_life_game_over.final_life === 0 &&
+    runtimeStatus.closed.r1_no_input_life_game_over.single_game_over.join(",") === "0,1" &&
     runtimeStatus.business_state_gate === "open" &&
     runtimeStatus.production_authorization === false &&
     runtimeStatus.blocking_findings.length > 0,
   "Frozen runtime input status overclaims closure",
+);
+
+const traceBytes = gunzipSync(
+  readFileSync(resolve(investigation, "runtime/no-input-retry-life-gameover.trace.json.gz")),
+);
+const trace = JSON.parse(traceBytes.toString("utf8"));
+check(
+  trace.schema_version === 1 &&
+    trace.status === "confirmed-r1-observation-only" &&
+    trace.capture_error === null &&
+    trace.events.length === 1863 &&
+    trace.events.every((event, index) => event.sequence === index) &&
+    trace.capability.level === "R1" &&
+    trace.capability.return_replacement === false &&
+    trace.capability.memory_writes === false &&
+    trace.capability.apk_modification === false &&
+    trace.capability.transport.kind === "explicit-remote" &&
+    trace.capability.transport.address === "127.0.0.1:47913" &&
+    trace.sample.package === "jp.co.craftegg.band" &&
+    trace.sample.version_name === "10.1.4" &&
+    trace.sample.version_code === 230 &&
+    trace.sample.abi === "arm64-v8a" &&
+    trace.capture_script_sha256 === sha256(readFileSync(resolve(investigation, "capture_score_life_state_runtime.py"))) &&
+    trace.plan_sha256 === sha256(readFileSync(resolve(investigation, "runtime/no-input-retry-plan.json"))) &&
+    trace.summary.queued === 0,
+  "Frozen no-input R1 identity, capability, or sequence changed",
+);
+const eventsOf = (kind) => trace.events.filter((event) => event.kind === kind);
+const initializeLife = eventsOf("InGameRecord.InitializeLife.leave");
+const setupFrames = eventsOf("OneFrameData.Setup.leave").map((event) => event.frame);
+const gameOverEnter = eventsOf("InGameRecord.updateGameOverState.enter");
+const gameOverLeave = eventsOf("InGameRecord.updateGameOverState.leave");
+check(
+  initializeLife.length === 1 &&
+    initializeLife[0].record.current_life === 1000 &&
+    initializeLife[0].record.displayed_or_skill_base_life === 1000 &&
+    initializeLife[0].record.business_life_upper_limit === 2000 &&
+    initializeLife[0].record.max_note_count === 540 &&
+    setupFrames.length === 11 &&
+    setupFrames.every(
+      (frame) =>
+        frame.is_using === 1 &&
+        frame.add_power === -100 &&
+        frame.add_combo === -1 &&
+        frame.result === 0 &&
+        frame.adjusted_result === 0 &&
+        frame.damage_guard_type === 0 &&
+        frame.judge_timing === 0,
+    ) &&
+    setupFrames.filter((frame) => frame.note_type === 0).length === 9 &&
+    setupFrames.filter((frame) => frame.note_type === 8).length === 2 &&
+    eventsOf("OneFrameController.Reflect.enter").length === 210 &&
+    gameOverEnter.length === 1 &&
+    gameOverLeave.length === 1 &&
+    gameOverEnter[0].before.current_life === 0 &&
+    gameOverEnter[0].before.miss_count === 11 &&
+    gameOverEnter[0].before.is_single_game_over === 0 &&
+    gameOverLeave[0].after.current_life === 0 &&
+    gameOverLeave[0].after.miss_count === 11 &&
+    gameOverLeave[0].after.is_single_game_over === 1,
+  "Frozen no-input R1 Life/OneFrame/Game Over trajectory changed",
 );
 
 const closure = json("static_closure.json");
@@ -297,7 +376,7 @@ for (const [path, fragment] of criticalText) {
 }
 
 console.log(
-  `score-life-state evidence verified: methods=326 layouts=25 enums=19 BMS=2 R1=0 ` +
+  `score-life-state evidence verified: methods=326 layouts=25 enums=19 BMS=2 R1=1(partial D18/D22) ` +
     `V01=closed business=blocked(D18-D24) entries=${manifest.entries.length} ` +
     `index=${validateIndex ? "checked" : "skipped"}`,
 );
