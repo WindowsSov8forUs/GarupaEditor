@@ -32,7 +32,7 @@ This investigation re-establishes the score, Life, Skill, Fever, OneFrame, and r
 - the structural explanation for historical `1500/1000` without promoting that 10.1.3 observation;
 - damage mapping, Never Die equality and Life `5`, fixed/rate once-heal formula, Skill `0.75f` finishing timer, Fever `2.0f`, and record counters.
 
-These static conclusions do **not** authorize implementation. D18–D24, production BMS/master provenance, R1 traces, and BS01–BS36 remain required before code.
+These static conclusions do **not** authorize implementation. D18–D24, master/start-data provenance, R1 traces, and BS01–BS36 remain required before code. The subsequent R0 input batch locks two production BMS files but does not close D23 as a whole.
 
 ## Files
 
@@ -43,7 +43,14 @@ These static conclusions do **not** authorize implementation. D18–D24, product
 - `arm64/*.arm64.tsv`: one current ELF range per mapped managed method.
 - `verify_score_life_state_static.py`: fail-closed verifier against the locked ELF, metadata identity, metadata-derived dump, TSV bytes, layouts, enums, rodata, and critical instruction fragments.
 - `static_closure.json`: B01-only gate state.
-- `SHA256SUMS`: complete hashes for the static investigation files except the checksum file itself.
+- `capture_score_life_state_runtime.py`: observation-only R1 hook harness with 50 statically verified targets.
+- `extract_score_life_runtime_input_provenance.py`: protobuf cache-record and BMS provenance extractor.
+- `verify_score_life_runtime_inputs.py`: fail-closed R0 input/capture-target verifier; `--require-r1` additionally rejects a missing R1 trace.
+- `runtime-inputs/bms/`: ordinary and HABAHIRO TextAssets extracted from connected-device 10.1.4 cache bundles.
+- `runtime-inputs/cache-index/`: byte-preserving `AssetBundleInfo` records and structured cache provenance; account identifiers are omitted.
+- `runtime_input_status.json`: D23 partial state and remaining runtime blockers.
+- `runtime/*-plan.json`: UI-only capture plans. No successful raw R1 trace is claimed yet.
+- `SHA256SUMS`: complete hashes for all investigation files except the checksum file itself.
 
 ## Reproduce static extraction
 
@@ -62,6 +69,19 @@ verified score/life/state static contract: methods=326 layouts=25 enums=19 versi
 
 The verifier fails closed for a sample hash mismatch, ambiguous or changed managed mapping, non-global method boundary, ELF/TSV byte difference, stale ARM64 slice, layout/enum/constant difference, rodata difference, missing critical instruction, or incorrectly closed business gate.
 
-## Runtime boundary
+## Runtime input status
 
-No stage-5 runtime trace is included or claimed by this B01 package. R1 plans, capture code, raw traces, runtime verifier, master/BMS provenance, BS01–BS36, and final `closure.json` belong to B02. `business_state_gate` remains open instead of substituting static inference or a synthetic trace.
+The R0 input batch directly pulled the app-owned external cache index and the two referenced Unity bundles from the connected 10.1.4 installation. Only the two resource-index records and extracted TextAssets are retained:
+
+- ordinary `poppin_shuffle_special`: `418DB7F5BFC6B5431AC0ABF2FB905120BDFA8C778C35AA42418A6FA43F4094DC`;
+- HABAHIRO `786_miracle_april_habahiro_special`: `43148090C40ABBD951E8D7112200BDAE9B796A8A531A0793169E0AD70C3DC159`.
+
+Run:
+
+```powershell
+py -3.14 artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_runtime_inputs.py
+```
+
+Expected open-gate summary currently ends with `R1=0 business_state_gate=open`. `--require-r1` must fail until a successful observation-only trace exists.
+
+The connected installation currently stops at the title account-data warning after a retry network failure. The warning's `OK` path starts the game from the beginning; that destructive account action was not selected. Therefore no stage-5 R1 trace is included or claimed. Deck/start-data/master rows, D18–D24, BS01–BS36, and final `closure.json` remain open instead of substituting static inference or a synthetic trace.

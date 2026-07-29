@@ -677,6 +677,9 @@ git rev-list --left-right --count origin/codex/refactor-simulator-implementation
 ### B02 实体与fixed-event oracle
 
 - 状态：`in-progress-required-before-code`。
-- 待关闭：D18–D24、生产普通/HABAHIRO BMS、deck/start-data/master provenance、R1 raw trace及BS01–BS36。
+- Reverse R0输入提交：`1ee976ea1de24cb0567762a74e2d091ae4c78464`，已push，`origin/main...HEAD = 0 0`。
+- 已关闭子范围：连接设备10.1.4 `AssetBundleInfo`原始record、ordinary `poppin_shuffle_special`（`418DB7F...094DC`）与HABAHIRO `786_miracle_april_habahiro_special`（`4314809...159`）TextAsset；两者与既有production fixture字节哈希一致。
+- R1 harness：50个hook目标逐项匹配静态contract，verifier确认无`Interceptor.replace`、`retval.replace`、memory write或APK patch；当前`R1=0`，`--require-r1`按预期失败关闭。
+- 待关闭：D18–D22、D23剩余deck/start-data/master provenance、D24、R1 raw trace及BS01–BS36。
 - 当前设备在一次retry网络失败后停于标题账号数据警告；其`OK`路径会从头开始游戏，属于破坏性账号动作，未选择且不得作为自动取证步骤。
 - B02关闭前继续禁止B03–B12 production、测试脚本和package script实现。

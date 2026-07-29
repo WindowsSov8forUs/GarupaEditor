@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "source": "connected-device-cached-unity-text-asset",
+  "bundle_name": "musicscore/musicscore790",
+  "bundle_file": "musicscore790-10.1.4.bundle",
+  "bundle_bytes": 3894743,
+  "bundle_sha256": "D9FBC108FE97752092B2480E6BFF87D75D4B5E84E0A2EF32C7704D2E04EEB398",
+  "unity_version_fallback": "2022.3.62f1",
+  "asset": {
+    "asset_name": "786_miracle_april_habahiro_special",
+    "bytes": 38700,
+    "sha256": "43148090C40ABBD951E8D7112200BDAE9B796A8A531A0793169E0AD70C3DC159",
+    "start_bpm": 180.0,
+    "start_bpm_string": "180",
+    "commands": []
+  }
+}

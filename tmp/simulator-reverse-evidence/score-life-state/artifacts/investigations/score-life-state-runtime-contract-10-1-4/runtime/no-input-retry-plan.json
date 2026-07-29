@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "scenario_id": "no-input-retry-life-gameover",
+  "precondition": "Live Failed dialog is visible after a no-input manual play.",
+  "actions": [
+    {
+      "kind": "tap",
+      "x": 800,
+      "y": 440,
+      "marker": "open-retry-confirmation"
+    },
+    {
+      "kind": "tap",
+      "x": 920,
+      "y": 440,
+      "delay_ms": 750,
+      "marker": "confirm-retry"
+    },
+    {
+      "kind": "wait",
+      "delay_ms": 30000,
+      "marker": "observe-no-input"
+    }
+  ],
+  "tail_seconds": 3
+}

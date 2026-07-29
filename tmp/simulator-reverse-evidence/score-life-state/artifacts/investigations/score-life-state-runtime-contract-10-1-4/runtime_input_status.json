@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "status": "runtime-inputs-locked-business-gate-open",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "version_name": "10.1.4",
+    "version_code": 230,
+    "abi": "arm64-v8a",
+    "libil2cpp_sha256": "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F",
+    "global_metadata_sha256": "298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F"
+  },
+  "closed": {
+    "production_bms_bytes": [
+      {
+        "kind": "ordinary",
+        "bundle": "musicscore/musicscore10",
+        "asset": "poppin_shuffle_special",
+        "bytes": 17882,
+        "sha256": "418DB7F5BFC6B5431AC0ABF2FB905120BDFA8C778C35AA42418A6FA43F4094DC"
+      },
+      {
+        "kind": "HABAHIRO",
+        "bundle": "musicscore/musicscore790",
+        "asset": "786_miracle_april_habahiro_special",
+        "bytes": 38700,
+        "sha256": "43148090C40ABBD951E8D7112200BDAE9B796A8A531A0793169E0AD70C3DC159"
+      }
+    ],
+    "cache_provenance": "Two byte-preserving protobuf field-2 records link bundle names to device cache filenames, resource version, timing, checksum, and byte count; extracted bundle hashes and TextAsset hashes are locked.",
+    "capture_capability": "The R1 harness has 50 targets verified against the committed 10.1.4 static contract and contains Interceptor.attach only, with no replacement or memory-write primitive."
+  },
+  "partial": {
+    "D23": {
+      "closed_subscope": "ordinary and HABAHIRO production BMS bytes and connected-device cache provenance",
+      "open_subscope": "score level, difficulty, deck/start-data, result/damage, Skill, Fever, event, Auto, Festival, Medley, and Garupa master rows"
+    }
+  },
+  "runtime": {
+    "r1_trace_count": 0,
+    "operational_blocker": "The connected installation currently stops at the title account-data warning. Its OK path starts the game from the beginning and was not selected because that is a destructive account action.",
+    "synthetic_trace_allowed": false
+  },
+  "gates": {
+    "D18": "required-before-code",
+    "D19": "required-before-code",
+    "D20": "required-before-code",
+    "D21": "required-before-code",
+    "D22": "required-before-code",
+    "D23": "partial-required-before-code",
+    "D24": "required-before-code"
+  },
+  "unknown_fields": [],
+  "blocking_findings": [
+    "No R1 score/life/Skill/Fever trace is captured.",
+    "Deck/start-data/master provenance remains open.",
+    "BS01-BS36 and final portable contract do not exist."
+  ],
+  "business_state_gate": "open",
+  "production_authorization": false
+}

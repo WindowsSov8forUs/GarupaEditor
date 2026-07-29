@@ -3,7 +3,8 @@
   "stage": "score-life-state",
   "source": {
     "repository": "HOST___________________GirlsBandParty-Reverse",
-    "staticEvidenceCommit": "6c902656c72f3983fb04386038dcfe38f0d53797"
+    "staticEvidenceCommit": "6c902656c72f3983fb04386038dcfe38f0d53797",
+    "runtimeInputCommit": "1ee976ea1de24cb0567762a74e2d091ae4c78464"
   },
   "sample": {
     "package": "jp.co.craftegg.band",
@@ -20,7 +21,12 @@
     "arm64Slices": 326,
     "staticEntries": 335,
     "r1Traces": 0,
-    "fixedEventCases": 0
+    "fixedEventCases": 0,
+    "totalEntries": 347,
+    "r0InputEntries": 12,
+    "productionBms": 2,
+    "cacheRecords": 2,
+    "captureTargets": 50
   },
   "versionRebaselineGate": {
     "status": "closed",
@@ -4965,6 +4971,34 @@
       ]
     },
     {
+      "id": "SLS-B02-R0-001",
+      "sourceCommit": "1ee976ea1de24cb0567762a74e2d091ae4c78464",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/capture_score_life_state_runtime.py",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/capture_score_life_state_runtime.py",
+      "bytes": 22228,
+      "sha256": "42BE80EFEB4DD44D4C83A6D8B7833125444C7ED997A359BF026CBD04238480C9",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-r0-runtime-input-business-gate-open",
+      "consumedBy": [
+        "B02",
+        "D23-partial"
+      ]
+    },
+    {
+      "id": "SLS-B02-R0-002",
+      "sourceCommit": "1ee976ea1de24cb0567762a74e2d091ae4c78464",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/extract_score_life_runtime_input_provenance.py",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/extract_score_life_runtime_input_provenance.py",
+      "bytes": 7522,
+      "sha256": "E4A31B97587BCEAFBAF03090ABA16475676914E73FC5A2151EDB92B5248C843A",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-r0-runtime-input-business-gate-open",
+      "consumedBy": [
+        "B02",
+        "D23-partial"
+      ]
+    },
+    {
       "id": "SLS-B01-328",
       "sourceCommit": "6c902656c72f3983fb04386038dcfe38f0d53797",
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/extract_score_life_state_contract.py",
@@ -4981,17 +5015,142 @@
     },
     {
       "id": "SLS-B01-329",
-      "sourceCommit": "6c902656c72f3983fb04386038dcfe38f0d53797",
+      "sourceCommit": "1ee976ea1de24cb0567762a74e2d091ae4c78464",
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/README.md",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/README.md",
-      "bytes": 4058,
-      "sha256": "F15285FA403FF1E7A3C466808E385AC202B6483409766BC80E5C6E7D767F9254",
+      "bytes": 5796,
+      "sha256": "7FCC9901F514B7EF81193834378E0E9D1E02B8B35ACE56D9EE373F16766E3E1E",
       "version": "10.1.4_230_arm64-v8a",
-      "status": "confirmed-static-version-rebaseline",
+      "status": "confirmed-r0-runtime-input-business-gate-open",
       "consumedBy": [
-        "B01",
-        "V01",
-        "D01-D17-static"
+        "B02",
+        "D23-partial"
+      ]
+    },
+    {
+      "id": "SLS-B02-R0-003",
+      "sourceCommit": "1ee976ea1de24cb0567762a74e2d091ae4c78464",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime/no-input-retry-plan.json",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime/no-input-retry-plan.json",
+      "bytes": 520,
+      "sha256": "54FC8B284FFF25CF70258A299B0B94AE0ADEA1FD8E38322D843A36EB5547945E",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-r0-runtime-input-business-gate-open",
+      "consumedBy": [
+        "B02",
+        "D23-partial"
+      ]
+    },
+    {
+      "id": "SLS-B02-R0-004",
+      "sourceCommit": "1ee976ea1de24cb0567762a74e2d091ae4c78464",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime-inputs/bms/786_miracle_april_habahiro_special.bms.txt",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime-inputs/bms/786_miracle_april_habahiro_special.bms.txt",
+      "bytes": 38700,
+      "sha256": "43148090C40ABBD951E8D7112200BDAE9B796A8A531A0793169E0AD70C3DC159",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-r0-runtime-input-business-gate-open",
+      "consumedBy": [
+        "B02",
+        "D23-partial"
+      ]
+    },
+    {
+      "id": "SLS-B02-R0-005",
+      "sourceCommit": "1ee976ea1de24cb0567762a74e2d091ae4c78464",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime-inputs/bms/786_miracle_april_habahiro_special.metadata.json",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime-inputs/bms/786_miracle_april_habahiro_special.metadata.json",
+      "bytes": 599,
+      "sha256": "AA81316DCF5971F2D58DF0C2850E820097AE1F4E3F06860A13FBD256B3AA277F",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-r0-runtime-input-business-gate-open",
+      "consumedBy": [
+        "B02",
+        "D23-partial"
+      ]
+    },
+    {
+      "id": "SLS-B02-R0-006",
+      "sourceCommit": "1ee976ea1de24cb0567762a74e2d091ae4c78464",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime-inputs/bms/poppin_shuffle_special.bms.txt",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime-inputs/bms/poppin_shuffle_special.bms.txt",
+      "bytes": 17882,
+      "sha256": "418DB7F5BFC6B5431AC0ABF2FB905120BDFA8C778C35AA42418A6FA43F4094DC",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-r0-runtime-input-business-gate-open",
+      "consumedBy": [
+        "B02",
+        "D23-partial"
+      ]
+    },
+    {
+      "id": "SLS-B02-R0-007",
+      "sourceCommit": "1ee976ea1de24cb0567762a74e2d091ae4c78464",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime-inputs/bms/poppin_shuffle_special.metadata.json",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime-inputs/bms/poppin_shuffle_special.metadata.json",
+      "bytes": 585,
+      "sha256": "991D00C3DD9C98955CFE4D076547524FEAA6848A3F771AA7764F788E302C8C48",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-r0-runtime-input-business-gate-open",
+      "consumedBy": [
+        "B02",
+        "D23-partial"
+      ]
+    },
+    {
+      "id": "SLS-B02-R0-008",
+      "sourceCommit": "1ee976ea1de24cb0567762a74e2d091ae4c78464",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime-inputs/cache-index/cache_index_provenance.json",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime-inputs/cache-index/cache_index_provenance.json",
+      "bytes": 2914,
+      "sha256": "958E4F0211AF8E71CA6CE84E3C9B5073FEA774E9D833B368A6CBBC95C1E988F1",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-r0-runtime-input-business-gate-open",
+      "consumedBy": [
+        "B02",
+        "D23-partial"
+      ]
+    },
+    {
+      "id": "SLS-B02-R0-009",
+      "sourceCommit": "1ee976ea1de24cb0567762a74e2d091ae4c78464",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime-inputs/cache-index/musicscore10.cache-record.pb",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime-inputs/cache-index/musicscore10.cache-record.pb",
+      "bytes": 154,
+      "sha256": "6572685340A2790105CFC9045D519DC884C3C65E81F92367D1683B6554D6D57F",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-r0-runtime-input-business-gate-open",
+      "consumedBy": [
+        "B02",
+        "D23-partial"
+      ]
+    },
+    {
+      "id": "SLS-B02-R0-010",
+      "sourceCommit": "1ee976ea1de24cb0567762a74e2d091ae4c78464",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime-inputs/cache-index/musicscore790.cache-record.pb",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime-inputs/cache-index/musicscore790.cache-record.pb",
+      "bytes": 156,
+      "sha256": "FE6746701A4F6FEEFB6EC684557CA4E42227D2EF45D36BCB67BFD259E112908D",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-r0-runtime-input-business-gate-open",
+      "consumedBy": [
+        "B02",
+        "D23-partial"
+      ]
+    },
+    {
+      "id": "SLS-B02-R0-011",
+      "sourceCommit": "1ee976ea1de24cb0567762a74e2d091ae4c78464",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime_input_status.json",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime_input_status.json",
+      "bytes": 2546,
+      "sha256": "BDA77965DB34018C410219B8D256CBC14AD8C91F6B9446EB433ED0B9FC065A10",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-r0-runtime-input-business-gate-open",
+      "consumedBy": [
+        "B02",
+        "D23-partial"
       ]
     },
     {
@@ -5026,17 +5185,16 @@
     },
     {
       "id": "SLS-B01-332",
-      "sourceCommit": "6c902656c72f3983fb04386038dcfe38f0d53797",
+      "sourceCommit": "1ee976ea1de24cb0567762a74e2d091ae4c78464",
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/SHA256SUMS",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/SHA256SUMS",
-      "bytes": 44514,
-      "sha256": "F80F00AB3E38EEB25C11ACEDC96ED2A83FCA200A691A91CEB076AB77E532DAB7",
+      "bytes": 45900,
+      "sha256": "6151ABEF3E8343547702B20E172A1A0FCA3D4EE4533F3751CEE45602FE9145D1",
       "version": "10.1.4_230_arm64-v8a",
-      "status": "confirmed-static-version-rebaseline",
+      "status": "confirmed-r0-runtime-input-business-gate-open",
       "consumedBy": [
-        "B01",
-        "V01",
-        "D01-D17-static"
+        "B02",
+        "D23-partial"
       ]
     },
     {
@@ -5070,6 +5228,20 @@
       ]
     },
     {
+      "id": "SLS-B02-R0-012",
+      "sourceCommit": "1ee976ea1de24cb0567762a74e2d091ae4c78464",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_runtime_inputs.py",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_runtime_inputs.py",
+      "bytes": 9880,
+      "sha256": "0FD1CB15B4C9F77B9344DAFE32D475F289504D96890E09637E4B372B039AF5C8",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-r0-runtime-input-business-gate-open",
+      "consumedBy": [
+        "B02",
+        "D23-partial"
+      ]
+    },
+    {
       "id": "SLS-B01-335",
       "sourceCommit": "6c902656c72f3983fb04386038dcfe38f0d53797",
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_state_static.py",
@@ -5084,5 +5256,28 @@
         "D01-D17-static"
       ]
     }
-  ]
+  ],
+  "runtimeInputGate": {
+    "status": "partial-required-before-code",
+    "closedSubscope": [
+      "ordinary-production-bms",
+      "habahiro-production-bms",
+      "connected-device-cache-provenance",
+      "observation-only-capture-targets"
+    ],
+    "partialFindings": [
+      "D23"
+    ],
+    "blockingFindings": [
+      "D18",
+      "D19",
+      "D20",
+      "D21",
+      "D22",
+      "D23-master-start-data",
+      "D24"
+    ],
+    "r1TraceCount": 0,
+    "productionAuthorization": false
+  }
 }
