@@ -8,7 +8,8 @@
     "runtimeEvidenceCommit": "72aa279fb07041b04ca649df918fa35ab0490d91",
     "capturePlanCommit": "e65f3411d1a91cfa5ecf0d7b29e99605b04e8a41",
     "capturePlanV2Commit": "3adf31f987830ce5b82aba0d92813b69fda3cec7",
-    "positiveEvidenceCommit": "5ce2a7ef325def61986a93053ad85c2f4973f25b"
+    "positiveEvidenceCommit": "5ce2a7ef325def61986a93053ad85c2f4973f25b",
+    "multitouchPlanCommit": "eb7aba5467569b577cd942957dd65bdce600bc9d"
   },
   "sample": {
     "package": "jp.co.craftegg.band",
@@ -26,14 +27,15 @@
     "staticEntries": 335,
     "r1Traces": 2,
     "fixedEventCases": 0,
-    "totalEntries": 353,
+    "totalEntries": 356,
     "r0InputEntries": 12,
     "productionBms": 2,
     "cacheRecords": 2,
     "captureTargets": 50,
     "r1EvidenceEntries": 6,
-    "capturePlanEntries": 2,
-    "positiveEvidenceEntries": 5
+    "capturePlanEntries": 3,
+    "positiveEvidenceEntries": 5,
+    "multitouchPlanBatchEntries": 6
   },
   "versionRebaselineGate": {
     "status": "closed",
@@ -5023,18 +5025,18 @@
     },
     {
       "id": "SLS-B01-329",
-      "sourceCommit": "5ce2a7ef325def61986a93053ad85c2f4973f25b",
+      "sourceCommit": "eb7aba5467569b577cd942957dd65bdce600bc9d",
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/README.md",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/README.md",
-      "bytes": 7961,
-      "sha256": "60AA73FD0F08F9CC4AE8CFFAFDC1DDDD54020B7BFBB25BA869DE3E9B9DCE86E3",
+      "bytes": 8967,
+      "sha256": "0A8D8E9DE9706A34724839215ED4443772CC239322C0D3BA2BA6578E163B7A62",
       "version": "10.1.4_230_arm64-v8a",
       "status": "confirmed-r1-partial-business-gate-open",
       "consumedBy": [
         "B02",
         "D18-positive-partial",
-        "D22-partial",
-        "D20-open"
+        "D18-active-skill-pending",
+        "D20-pending"
       ]
     },
     {
@@ -5151,18 +5153,18 @@
     },
     {
       "id": "SLS-B02-R0-011",
-      "sourceCommit": "5ce2a7ef325def61986a93053ad85c2f4973f25b",
+      "sourceCommit": "eb7aba5467569b577cd942957dd65bdce600bc9d",
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime_input_status.json",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime_input_status.json",
-      "bytes": 5173,
-      "sha256": "B7E76683C0461DCC1F29D1F5B7639EC38A4672DEF61DBA4A47104285447C7C9D",
+      "bytes": 5606,
+      "sha256": "0F70C930AE00D06457BBD05F2C95C329EB9257539E7658677F777DF76E5B0099",
       "version": "10.1.4_230_arm64-v8a",
       "status": "confirmed-r1-partial-business-gate-open",
       "consumedBy": [
         "B02",
         "D18-positive-partial",
-        "D22-partial",
-        "D20-open"
+        "D18-active-skill-pending",
+        "D20-pending"
       ]
     },
     {
@@ -5197,18 +5199,18 @@
     },
     {
       "id": "SLS-B01-332",
-      "sourceCommit": "5ce2a7ef325def61986a93053ad85c2f4973f25b",
+      "sourceCommit": "eb7aba5467569b577cd942957dd65bdce600bc9d",
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/SHA256SUMS",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/SHA256SUMS",
-      "bytes": 46218,
-      "sha256": "B2C1700FB94E9360EE72A7ABDC1674BEB10F2795EC6E43AB98854B89916D7AD8",
+      "bytes": 46549,
+      "sha256": "522D088D7AEBC0153E29AB980E7FB838586075EAAD6FF205CEFFB57476FE3AF7",
       "version": "10.1.4_230_arm64-v8a",
       "status": "confirmed-r1-partial-business-gate-open",
       "consumedBy": [
         "B02",
         "D18-positive-partial",
-        "D22-partial",
-        "D20-open"
+        "D18-active-skill-pending",
+        "D20-pending"
       ]
     },
     {
@@ -5362,6 +5364,51 @@
         "D22-partial",
         "D20-open"
       ]
+    },
+    {
+      "id": "SLS-B02-PLAN-003",
+      "sourceCommit": "eb7aba5467569b577cd942957dd65bdce600bc9d",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/capture_score_life_state_multitouch_runtime.py",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/capture_score_life_state_multitouch_runtime.py",
+      "bytes": 25176,
+      "sha256": "566134E8124198E5AA006FBD8B94F6B72EBA34A71F477A3A450ECD50C4ECDD4B",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-capture-plan-not-runtime-evidence",
+      "consumedBy": [
+        "B02",
+        "D18-active-skill-pending",
+        "D20-pending"
+      ]
+    },
+    {
+      "id": "SLS-B02-PLAN-004",
+      "sourceCommit": "eb7aba5467569b577cd942957dd65bdce600bc9d",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime/multitouch-seven-lane-skill-r1-plan.json",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime/multitouch-seven-lane-skill-r1-plan.json",
+      "bytes": 1874,
+      "sha256": "CDBEA6D5D7C36BD1B2EE240F5D376A347B4AA772F8D0AEB903BE0BE13847A9AF",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-capture-plan-not-runtime-evidence",
+      "consumedBy": [
+        "B02",
+        "D18-active-skill-pending",
+        "D20-pending"
+      ]
+    },
+    {
+      "id": "SLS-B02-PLAN-005",
+      "sourceCommit": "eb7aba5467569b577cd942957dd65bdce600bc9d",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_multitouch_plan.py",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_multitouch_plan.py",
+      "bytes": 5025,
+      "sha256": "4D9E51EC768095753D2A3E0303E35A35B6AF962580FA899076D8FDDC2D7497B9",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-capture-plan-not-runtime-evidence",
+      "consumedBy": [
+        "B02",
+        "D18-active-skill-pending",
+        "D20-pending"
+      ]
     }
   ],
   "runtimeInputGate": {
@@ -5390,7 +5437,9 @@
     ],
     "r1TraceCount": 2,
     "productionAuthorization": false,
-    "pendingPlans": [],
+    "pendingPlans": [
+      "multitouch-seven-lane-positive-skill-window"
+    ],
     "supersededPlans": [
       "positive-retry-all-lanes-score-skill"
     ],

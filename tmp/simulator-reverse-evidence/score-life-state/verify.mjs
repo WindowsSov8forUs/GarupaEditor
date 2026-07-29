@@ -43,14 +43,15 @@ function filesRecursively(root, current = root) {
   return files;
 }
 
-check(manifest.schemaVersion === 2 && manifest.entries.length === 353, "Unexpected evidence manifest shape");
+check(manifest.schemaVersion === 2 && manifest.entries.length === 356, "Unexpected evidence manifest shape");
 check(
   manifest.source.staticEvidenceCommit === "6c902656c72f3983fb04386038dcfe38f0d53797" &&
     manifest.source.runtimeInputCommit === "1ee976ea1de24cb0567762a74e2d091ae4c78464" &&
     manifest.source.runtimeEvidenceCommit === "72aa279fb07041b04ca649df918fa35ab0490d91" &&
     manifest.source.capturePlanCommit === "e65f3411d1a91cfa5ecf0d7b29e99605b04e8a41" &&
     manifest.source.capturePlanV2Commit === "3adf31f987830ce5b82aba0d92813b69fda3cec7" &&
-    manifest.source.positiveEvidenceCommit === "5ce2a7ef325def61986a93053ad85c2f4973f25b",
+    manifest.source.positiveEvidenceCommit === "5ce2a7ef325def61986a93053ad85c2f4973f25b" &&
+    manifest.source.multitouchPlanCommit === "eb7aba5467569b577cd942957dd65bdce600bc9d",
   "Unexpected Reverse evidence commits",
 );
 check(
@@ -70,11 +71,12 @@ check(
     manifest.counts.enums === 19 &&
     manifest.counts.arm64Slices === 326 &&
     manifest.counts.staticEntries === 335 &&
-    manifest.counts.totalEntries === 353 &&
+    manifest.counts.totalEntries === 356 &&
     manifest.counts.r0InputEntries === 12 &&
     manifest.counts.r1EvidenceEntries === 6 &&
-    manifest.counts.capturePlanEntries === 2 &&
+    manifest.counts.capturePlanEntries === 3 &&
     manifest.counts.positiveEvidenceEntries === 5 &&
+    manifest.counts.multitouchPlanBatchEntries === 6 &&
     manifest.counts.productionBms === 2 &&
     manifest.counts.cacheRecords === 2 &&
     manifest.counts.captureTargets === 50 &&
@@ -108,7 +110,7 @@ check(
     runtimeInputGate.blockingFindings.join(",") ===
       "D18-remaining,D19,D20,D21,D22-remaining,D23-master-start-data,D24" &&
     runtimeInputGate.r1TraceCount === 2 &&
-    runtimeInputGate.pendingPlans.length === 0 &&
+    runtimeInputGate.pendingPlans.join(",") === "multitouch-seven-lane-positive-skill-window" &&
     runtimeInputGate.executedPlans.join(",") === "positive-retry-all-lanes-early-score-skill-v2" &&
     runtimeInputGate.supersededPlans.join(",") === "positive-retry-all-lanes-score-skill" &&
     runtimeInputGate.productionAuthorization === false,
@@ -121,6 +123,7 @@ git(["cat-file", "-e", `${manifest.source.runtimeEvidenceCommit}^{commit}`], sou
 git(["cat-file", "-e", `${manifest.source.capturePlanCommit}^{commit}`], sourceRoot);
 git(["cat-file", "-e", `${manifest.source.capturePlanV2Commit}^{commit}`], sourceRoot);
 git(["cat-file", "-e", `${manifest.source.positiveEvidenceCommit}^{commit}`], sourceRoot);
+git(["cat-file", "-e", `${manifest.source.multitouchPlanCommit}^{commit}`], sourceRoot);
 const evidenceCommits = [
   manifest.source.staticEvidenceCommit,
   manifest.source.runtimeInputCommit,
@@ -128,6 +131,7 @@ const evidenceCommits = [
   manifest.source.capturePlanCommit,
   manifest.source.capturePlanV2Commit,
   manifest.source.positiveEvidenceCommit,
+  manifest.source.multitouchPlanCommit,
 ];
 const ids = new Set();
 const copiedPaths = new Set();
@@ -287,7 +291,7 @@ const runtimeStatus = json("runtime_input_status.json");
 check(
   runtimeStatus.status === "runtime-inputs-and-r1-partial-locked-business-gate-open" &&
     runtimeStatus.runtime.r1_trace_count === 2 &&
-    runtimeStatus.runtime.pending_capture_plans.length === 2 &&
+    runtimeStatus.runtime.pending_capture_plans.length === 3 &&
     runtimeStatus.runtime.pending_capture_plans[0].scenario_id ===
       "positive-retry-all-lanes-score-skill" &&
     runtimeStatus.runtime.pending_capture_plans[0].status ===
@@ -296,6 +300,10 @@ check(
       "positive-retry-all-lanes-early-score-skill-v2" &&
     runtimeStatus.runtime.pending_capture_plans[1].status ===
       "executed-confirmed-trace-promoted" &&
+    runtimeStatus.runtime.pending_capture_plans[2].scenario_id ===
+      "multitouch-seven-lane-positive-skill-window" &&
+    runtimeStatus.runtime.pending_capture_plans[2].status ===
+      "committed-plan-not-runtime-evidence" &&
     runtimeStatus.runtime.capture_fields_not_consumed.length === 5 &&
     runtimeStatus.gates.D18 === "partial-required-before-code" &&
     runtimeStatus.gates.D22 === "partial-required-before-code" &&
@@ -376,6 +384,53 @@ check(
     JSON.stringify(positiveEarlyPlan.actions) === JSON.stringify(expectedEarlyActions) &&
     positiveEarlyPlan.tail_seconds === 5,
   "Frozen early positive-input plan differs beyond the committed wait adjustment",
+);
+
+const multitouchCaptureSource = readFileSync(
+  resolve(investigation, "capture_score_life_state_multitouch_runtime.py"),
+  "utf8",
+);
+function targetLiteral(source) {
+  const start = source.indexOf("TARGETS = {");
+  const end = source.indexOf("\n}\n\n\ndef adb", start);
+  check(start >= 0 && end > start, "Capture TARGETS literal missing");
+  return source.slice(start, end + 2);
+}
+const multitouchPlan = json("runtime/multitouch-seven-lane-skill-r1-plan.json");
+check(
+  targetLiteral(multitouchCaptureSource) === targetLiteral(captureSource) &&
+    multitouchCaptureSource.includes('if kind == "multitap_burst":') &&
+    multitouchCaptureSource.includes('event_device != "/dev/input/event2"') &&
+    multitouchCaptureSource.includes('screen_xs != [380, 520, 660, 800, 940, 1080, 1220]') &&
+    multitouchCaptureSource.includes('sendevent {event_device} 3 47 {slot}') &&
+    multitouchCaptureSource.includes('sendevent {event_device} 3 57 {100 + slot}') &&
+    multitouchCaptureSource.includes('sendevent {event_device} 1 330 1') &&
+    multitouchCaptureSource.includes('sendevent {event_device} 1 330 0') &&
+    multitouchCaptureSource.includes('adb("shell", "su", "-c", "setenforce 0"') &&
+    multitouchCaptureSource.includes("finally:") &&
+    multitouchCaptureSource.includes('adb("shell", "su", "-c", "setenforce 1"') &&
+    !multitouchCaptureSource.includes("Interceptor.replace") &&
+    !multitouchCaptureSource.includes("retval.replace") &&
+    !multitouchCaptureSource.includes("Memory.patchCode") &&
+    multitouchPlan.schema_version === 1 &&
+    multitouchPlan.scenario_id === "multitouch-seven-lane-positive-skill-window" &&
+    multitouchPlan.control_provenance.source_script_sha256 ===
+      "31555FC51CAD1F98C65B443D3298D246EC08C57357202FB7F82DDB3DD4CF3089" &&
+    multitouchPlan.control_provenance.source_plan_sha256 ===
+      "70C0DABBBAA3549A385CD9248793750E1F0BC27485718659DBDE8CC083F3918E" &&
+    multitouchPlan.control_provenance.source_trace_sha256 ===
+      "DA0214D9C4B3005A44F059B0E3D276A8EA4C44A246F23DCC0FB8B0DCAC8C4D62" &&
+    multitouchPlan.actions.length === 4 &&
+    multitouchPlan.actions[3].kind === "multitap_burst" &&
+    multitouchPlan.actions[3].event_device === "/dev/input/event2" &&
+    multitouchPlan.actions[3].screen_height === 720 &&
+    multitouchPlan.actions[3].screen_y === 650 &&
+    multitouchPlan.actions[3].screen_xs.join(",") === "380,520,660,800,940,1080,1220" &&
+    multitouchPlan.actions[3].repeat === 250 &&
+    multitouchPlan.actions[3].interval_ms === 80 &&
+    multitouchPlan.actions[3].touch_ms === 20 &&
+    multitouchPlan.tail_seconds === 5,
+  "Frozen Linux MT capture, provenance, safety boundary, or plan changed",
 );
 
 const traceBytes = gunzipSync(
@@ -547,7 +602,7 @@ for (const [path, fragment] of criticalText) {
 }
 
 console.log(
-  `score-life-state evidence verified: methods=326 layouts=25 enums=19 BMS=2 R1=2(partial D18/D22) plans=2(executed=1) ` +
+  `score-life-state evidence verified: methods=326 layouts=25 enums=19 BMS=2 R1=2(partial D18/D22) plans=3(pending=1) ` +
     `V01=closed business=blocked(D18-D24) entries=${manifest.entries.length} ` +
     `index=${validateIndex ? "checked" : "skipped"}`,
 );

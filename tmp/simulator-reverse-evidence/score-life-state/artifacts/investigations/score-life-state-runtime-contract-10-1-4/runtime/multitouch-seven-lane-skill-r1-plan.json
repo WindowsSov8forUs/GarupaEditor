@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "scenario_id": "multitouch-seven-lane-positive-skill-window",
+  "precondition": "Live Failed dialog is visible; device input event2 and rotated 1600x720 geometry match the committed 10.1.4 manual multitouch evidence.",
+  "control_provenance": {
+    "source_commit": "5ce2a7ef325def61986a93053ad85c2f4973f25b",
+    "source_script_path": "artifacts/investigations/manual-input-runtime-contract-10-1-4/capture_manual_multitouch_runtime.py",
+    "source_script_sha256": "31555FC51CAD1F98C65B443D3298D246EC08C57357202FB7F82DDB3DD4CF3089",
+    "source_plan_path": "artifacts/investigations/manual-input-runtime-contract-10-1-4/runtime/ui-multitouch-plan.json",
+    "source_plan_sha256": "70C0DABBBAA3549A385CD9248793750E1F0BC27485718659DBDE8CC083F3918E",
+    "source_trace_path": "artifacts/investigations/manual-input-runtime-contract-10-1-4/runtime/ui-multitouch.json",
+    "source_trace_sha256": "DA0214D9C4B3005A44F059B0E3D276A8EA4C44A246F23DCC0FB8B0DCAC8C4D62",
+    "reuse": "event2 ABS_MT_SLOT/TRACKING_ID/POSITION_X/POSITION_Y, BTN_TOUCH, SYN_REPORT, rotated screen mapping, temporary Permissive bracket and mandatory Enforcing restoration"
+  },
+  "actions": [
+    {
+      "kind": "tap",
+      "x": 800,
+      "y": 440,
+      "marker": "multitouch-open-retry-confirmation"
+    },
+    {
+      "kind": "tap",
+      "x": 920,
+      "y": 440,
+      "delay_ms": 750,
+      "marker": "multitouch-confirm-retry"
+    },
+    {
+      "kind": "wait",
+      "delay_ms": 300,
+      "marker": "multitouch-pre-burst"
+    },
+    {
+      "kind": "multitap_burst",
+      "marker": "multitouch-seven-lane-burst",
+      "event_device": "/dev/input/event2",
+      "screen_height": 720,
+      "screen_y": 650,
+      "screen_xs": [380, 520, 660, 800, 940, 1080, 1220],
+      "repeat": 250,
+      "interval_ms": 80,
+      "touch_ms": 20
+    }
+  ],
+  "tail_seconds": 5
+}
