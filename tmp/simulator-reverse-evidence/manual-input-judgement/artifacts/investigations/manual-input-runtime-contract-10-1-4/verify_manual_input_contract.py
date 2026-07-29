@@ -35,8 +35,8 @@ def main() -> int:
         "libil2cpp_sha256": EXPECTED_BINARY,
         "global_metadata_sha256": EXPECTED_METADATA,
     }, "target identity changed")
-    require(contract["method_status_counts"] == {"mapped": 103}, "all 99 methods must map")
-    require(contract["layout_status_counts"] == {"unchanged": 12}, "all 12 layouts must match")
+    require(contract["method_status_counts"] == {"mapped": 104}, "all 104 methods must map")
+    require(contract["layout_status_counts"] == {"unchanged": 13}, "all 13 layouts must match")
     require(contract["enum_status_counts"] == {"unchanged": 13}, "all 8 enums must match")
 
     methods = method_index(contract)
@@ -74,6 +74,9 @@ def main() -> int:
     require(layouts["GamePlayButton"]["private Vector2[] touchBeganPosWithFingerIdArray"] == "0x60", "button touch origins")
     require(layouts["GamePlayButton"]["private NoteFrontBase[] touchBeganNoteWithFingerIdArray"] == "0x68", "button finger notes")
     require(layouts["NoteBase"]["private int fingerId"] == "0xC0", "note finger owner")
+    require(layouts["NoteFlickBase"]["private float frameCounter"] == "0x188", "Flick frame counter")
+    require(layouts["NoteFlickBase"]["protected NoteResultType cachedResult"] == "0x18C", "Flick cached result")
+    require(layouts["NoteFlickBase"]["protected JudgeTiming cachedJudgeTiming"] == "0x190", "Flick cached timing")
     require(layouts["NoteUtility"]["public static float MissSecondInterval"] == "0x0", "miss interval static field")
 
     enums = {row["enum"]: row["target"] for row in contract["enums"]}
@@ -88,6 +91,8 @@ def main() -> int:
     assert_line(methods, ("NoteSlide", ".ctor"), "str x1, [x19, #0x1f0]")
     assert_line(methods, ("NoteSlide", ".ctor"), "mov w8, #4")
     assert_line(methods, ("NoteSlide", ".ctor"), "mov w1, #5")
+    assert_line(methods, ("NoteFlickBase", "ExecTouchBegan"), "str w21, [x20, #0x18c]")
+    assert_line(methods, ("NoteFlickBase", "ExecTouchBegan"), "str w19, [x20, #0x190]")
     assert_line(methods, ("NoteFlick", "ExecTouchMoved"), "ldr s1, [x8, #0x460]")
     assert_line(methods, ("NoteFlick", "ExecTouchMoved"), "b.le")
     assert_line(methods, ("NoteDirectionalFlick", "judgeDirectionalFlickSucceeded"), "ldr s1, [x8, #0x580]")
@@ -118,10 +123,10 @@ def main() -> int:
 
     with (HERE / "targets.tsv").open(encoding="utf-8", newline="") as source:
         rows = list(csv.DictReader(source, delimiter="\t"))
-    require(len(rows) == 103, "targets row count")
+    require(len(rows) == 104, "targets row count")
     require(all(row["status"] == "mapped" for row in rows), "targets must all map")
     verify_sums()
-    print("manual input static contract verified: version=10.1.4 methods=103 layouts=12 enums=13 V01=closed D01=closed")
+    print("manual input static contract verified: version=10.1.4 methods=104 layouts=13 enums=13 V01=closed D01=closed")
     return 0
 
 

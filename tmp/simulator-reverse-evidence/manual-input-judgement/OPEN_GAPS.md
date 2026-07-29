@@ -2,7 +2,7 @@
 
 ## 已关闭
 
-Reverse `4bda0f3ad2fb84ef972bf352e78aac57dad44c8b`已关闭：
+Reverse `40dbc862d667679d05ef8375f35df5464ba1ce7b`已关闭：
 
 - V01：10.1.4/230完整版本重基线；
 - D01：Slide Wait/over-Wait独立边界；
@@ -11,7 +11,7 @@ Reverse `4bda0f3ad2fb84ef972bf352e78aac57dad44c8b`已关闭：
 - D04：ordinary/Slide/wide/tie的严格替换与owner scan顺序；
 - D05：1/60、窗口、Fast/Slow和Miss interval bits；
 - D06：finger 0/1两指全phase、枚举顺序及0..14 owner范围；
-- D07：Flick 0.04、Directional 0.01 exact strict阈值；
+- D07：Flick Began None早退/raw/timing缓存/Wait owner，以及Flick 0.04、Directional 0.01 exact strict阈值；
 - D08：Multiple count/side/group owner与两指raw producer；
 - D09：Long实体Good/Slow head、grace/move/release路径；
 - D10：Slide十组band、cursor/result owner及实体root/after身份；

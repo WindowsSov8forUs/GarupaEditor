@@ -1,8 +1,9 @@
 # 手动输入与判定冻结证据包
 
-本目录冻结Reverse最终证据提交`4bda0f3ad2fb84ef972bf352e78aac57dad44c8b`：
+本目录冻结Reverse最终证据提交`40dbc862d667679d05ef8375f35df5464ba1ce7b`：
 
-- 10.1.4/230的103个独立ARM64方法、12个owner type、13个enum；
+- 10.1.4/230的104个独立ARM64方法、13个owner type、13个enum；
+- 补齐`NoteFlickBase.ExecTouchBegan`的None早退、raw/timing缓存和Wait状态所有权；
 - 修正后的Slide Wait/over-Wait与Slide十组lane-band构造；
 - Easy/Hard/Expert song 653 `幾億光年`的5条正式R1 raw trace；
 - Long实体head/release、Long双timeout、Slide root/after timeout及两指0/1全phase；

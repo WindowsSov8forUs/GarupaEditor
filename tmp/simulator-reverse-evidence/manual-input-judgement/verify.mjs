@@ -33,10 +33,10 @@ function json(path) {
   return JSON.parse(readFileSync(resolve(investigation, path), "utf8"));
 }
 
-check(manifest.schemaVersion === 2 && manifest.entries.length === 126, "Unexpected manual manifest shape");
+check(manifest.schemaVersion === 2 && manifest.entries.length === 127, "Unexpected manual manifest shape");
 check(
   manifest.source.finalManualEvidenceCommit ===
-    "4bda0f3ad2fb84ef972bf352e78aac57dad44c8b",
+    "40dbc862d667679d05ef8375f35df5464ba1ce7b",
   "Unexpected final Reverse evidence commit",
 );
 check(
@@ -58,8 +58,8 @@ check(
   "Manual-input evidence gate is not closed",
 );
 check(
-  manifest.counts.methods === 103 &&
-    manifest.counts.layouts === 12 &&
+  manifest.counts.methods === 104 &&
+    manifest.counts.layouts === 13 &&
     manifest.counts.enums === 13 &&
     manifest.counts.r1Traces === 5 &&
     manifest.counts.fixedEventCases === 26,
@@ -94,8 +94,8 @@ for (const entry of manifest.entries) {
 
 const contract = json("manual_input_static_contract.json");
 check(
-  contract.method_status_counts.mapped === 103 &&
-    contract.layout_status_counts.unchanged === 12 &&
+  contract.method_status_counts.mapped === 104 &&
+    contract.layout_status_counts.unchanged === 13 &&
     contract.enum_status_counts.unchanged === 13,
   "Frozen static contract counts changed",
 );
@@ -119,6 +119,11 @@ check(
   "Frozen Slide Wait boundaries are not independent",
 );
 check(methods.get("NoteSlide..ctor")?.target_rva === "0x321F674", "Slide constructor evidence missing");
+check(
+  methods.get("NoteFlickBase.ExecTouchBegan")?.target_rva === "0x3A768C0" &&
+    methods.get("NoteFlickBase.ExecTouchBegan")?.target_end_rva === "0x3A76908",
+  "Flick Began cache-owner evidence missing",
+);
 
 const closure = json("closure.json");
 check(
@@ -212,7 +217,7 @@ check(
 );
 
 console.log(
-  `manual-input evidence verified: methods=103 layouts=12 enums=13 ` +
+  `manual-input evidence verified: methods=104 layouts=13 enums=13 ` +
     `R1=5 MJ=26 gaps=V01,D01-D15 gate=closed entries=${manifest.entries.length} ` +
     `index=${validateIndex ? "checked" : "skipped"}`,
 );

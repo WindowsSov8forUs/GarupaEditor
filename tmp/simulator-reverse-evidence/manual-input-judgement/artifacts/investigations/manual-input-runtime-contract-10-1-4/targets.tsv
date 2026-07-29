@@ -29,6 +29,7 @@ target_rva	target_end_rva	owner	method	signature_unchanged	target_size	differing
 0x30E91C8	0x30E924C	NoteDirectionalFlick	onFinishJudgeFrontNote	true	132	4	0	arm64/030e91c8__NoteDirectionalFlick__onFinishJudgeFrontNote.arm64.tsv	mapped
 0x30E90E0	0x30E91A0	NoteDirectionalFlick	shouldJudgeDirectionalFlick	true	192	14	6	arm64/030e90e0__NoteDirectionalFlick__shouldJudgeDirectionalFlick.arm64.tsv	mapped
 0x30E9E20	0x30E9E98	NoteFlick	ExecTouchMoved	true	120	4	1	arm64/030e9e20__NoteFlick__ExecTouchMoved.arm64.tsv	mapped
+0x3A768C0	0x3A76908	NoteFlickBase	ExecTouchBegan	true	72	0	0	arm64/03a768c0__NoteFlickBase__ExecTouchBegan.arm64.tsv	mapped
 0x30DFFD4	0x30E0130	NoteFrontBase	calculateScreenPosToWorldDistanceRate	true	348	18	8	arm64/030dffd4__NoteFrontBase__calculateScreenPosToWorldDistanceRate.arm64.tsv	mapped
 0x30E0130	0x30E05F0	NoteFrontBase	judgeFrontNote	true	1216	66	23	arm64/030e0130__NoteFrontBase__judgeFrontNote.arm64.tsv	mapped
 0x30EC1C0	0x30EC1C4	NoteLong	.ctor	true	4	0	0	arm64/030ec1c0__NoteLong___ctor.arm64.tsv	mapped

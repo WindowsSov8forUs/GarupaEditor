@@ -5,11 +5,12 @@
     "repository": "HOST___________________GirlsBandParty-Reverse",
     "staticBaselineCommit": "74ab76f6838847d98aae1a15741a5f024e3774ff",
     "manualStaticEvidenceCommit": "11b8250853ca12a2106c66245724467701d9eb23",
-    "finalManualEvidenceCommit": "4bda0f3ad2fb84ef972bf352e78aac57dad44c8b",
+    "finalManualEvidenceCommit": "40dbc862d667679d05ef8375f35df5464ba1ce7b",
     "excludedUntrackedPaths": [
       ".claude/",
       "runtime/tools/"
-    ]
+    ],
+    "manualStaticSupplementCommit": "40dbc862d667679d05ef8375f35df5464ba1ce7b"
   },
   "sample": {
     "package": "jp.co.craftegg.band",
@@ -48,8 +49,8 @@
     ]
   },
   "counts": {
-    "methods": 103,
-    "layouts": 12,
+    "methods": 104,
+    "layouts": 13,
     "enums": 13,
     "r1Traces": 5,
     "fixedEventCases": 26
@@ -66,20 +67,20 @@
     },
     {
       "id": "MR002",
-      "sourceCommit": "4bda0f3ad2fb84ef972bf352e78aac57dad44c8b",
+      "sourceCommit": "40dbc862",
       "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/README.md",
       "copiedPath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/README.md",
-      "bytes": 7937,
-      "sha256": "02FD75785C0878C26096EC6A0276D677D35CF53EA43B7F9EA9E59E8DB6EA2BD6",
+      "bytes": 8423,
+      "sha256": "ACEEDE80AD8FF0E5401733E092B3F5DF81773436DB44279D4D0700434A311829",
       "status": "confirmed-10.1.4-static-r1-oracle"
     },
     {
       "id": "MR003",
-      "sourceCommit": "4bda0f3ad2fb84ef972bf352e78aac57dad44c8b",
+      "sourceCommit": "40dbc862",
       "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/SHA256SUMS",
       "copiedPath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/SHA256SUMS",
-      "bytes": 14237,
-      "sha256": "ECC7CF7F553213BD90033E9CA7433AC5EEB35B274F564CE34BD0EBA7136E1EC8",
+      "bytes": 14359,
+      "sha256": "78B8FF19D04272EB8C771DCB559BC8DDBB187E2DDAFFF8B627DA15087D49CDA0",
       "status": "confirmed-10.1.4-static-r1-oracle"
     },
     {
@@ -1015,7 +1016,7 @@
       "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/build_manual_input_fixed_event_oracle.py",
       "copiedPath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/build_manual_input_fixed_event_oracle.py",
       "bytes": 15610,
-      "sha256": "C6D992DBA964B46550BC9B2CA99C5DC1CC05ED110E6680E56D610AE85EBDC7A4",
+      "sha256": "B60B168D341C20BC7E5CDE77F836EDA50C9159C59EA05463C88CDD49DCCD9900",
       "status": "confirmed-10.1.4-static-r1-oracle"
     },
     {
@@ -1024,7 +1025,7 @@
       "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/capture_manual_input_runtime.py",
       "copiedPath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/capture_manual_input_runtime.py",
       "bytes": 20086,
-      "sha256": "02FDD21BAB6FB74E40A141301A7F6501C643F3F269C1639F448E1793396B9315",
+      "sha256": "E489C232779AB295BF223A24FCE8F2B47D1A907460F239328F5C4BF911A9713D",
       "status": "confirmed-10.1.4-static-r1-oracle"
     },
     {
@@ -1033,25 +1034,25 @@
       "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/capture_manual_multitouch_runtime.py",
       "copiedPath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/capture_manual_multitouch_runtime.py",
       "bytes": 22172,
-      "sha256": "176B9A10EE34C9FB430D3D150BACAC0E8803627F4CF303DF0CC3F8403617FFF2",
+      "sha256": "31555FC51CAD1F98C65B443D3298D246EC08C57357202FB7F82DDB3DD4CF3089",
       "status": "confirmed-10.1.4-static-r1-oracle"
     },
     {
       "id": "MR110",
-      "sourceCommit": "4bda0f3ad2fb84ef972bf352e78aac57dad44c8b",
+      "sourceCommit": "40dbc862",
       "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/closure.json",
       "copiedPath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/closure.json",
-      "bytes": 3644,
-      "sha256": "9B739D697A45C4F8FB33ED40D816ADF0459BEF9AB785745447B2FF1BED97CE53",
+      "bytes": 3704,
+      "sha256": "5BE3EE67D3D9DB210303E006432095D0B187BCDFA2CB3B7BD369B038163A7612",
       "status": "confirmed-10.1.4-static-r1-oracle"
     },
     {
       "id": "MR111",
-      "sourceCommit": "4bda0f3ad2fb84ef972bf352e78aac57dad44c8b",
+      "sourceCommit": "40dbc862",
       "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/extract_manual_input_contract.py",
       "copiedPath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/extract_manual_input_contract.py",
-      "bytes": 16224,
-      "sha256": "016EC9F5A4524AEE8C644245FF54F7E5B95A7B8F6E4E3C61C094E7D91D6CAA49",
+      "bytes": 16286,
+      "sha256": "67E6BB4F951B038903CBBEA2514275CA72ADF6220A8DA518FFC9F37C59CB5A45",
       "status": "confirmed-10.1.4-static-r1-oracle"
     },
     {
@@ -1060,16 +1061,16 @@
       "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/manual_input_fixed_event_oracle.json",
       "copiedPath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/manual_input_fixed_event_oracle.json",
       "bytes": 31574,
-      "sha256": "346EB402A3905400879113B25F4944293F8F5652454D73ED397F1BF15E3D05EC",
+      "sha256": "C3C4CE2AD4CAAE4E1A1187C9D2A4B320C5095174E8C2C2FB4580F47E74D69215",
       "status": "confirmed-10.1.4-static-r1-oracle"
     },
     {
       "id": "MR113",
-      "sourceCommit": "4bda0f3ad2fb84ef972bf352e78aac57dad44c8b",
+      "sourceCommit": "40dbc862",
       "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/manual_input_static_contract.json",
       "copiedPath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/manual_input_static_contract.json",
-      "bytes": 552992,
-      "sha256": "DBFCEC828F7A78BC31CDB1DBFCEBBD164758420DF39B6C87E2B932D198CCE5CB",
+      "bytes": 554304,
+      "sha256": "63743AFDE62C55A8A0C11F748AE06DC3E31D739406E642FE807AD26D5C393BE0",
       "status": "confirmed-10.1.4-static-r1-oracle"
     },
     {
@@ -1087,7 +1088,7 @@
       "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/runtime/easy-play.json",
       "copiedPath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/runtime/easy-play.json",
       "bytes": 2490152,
-      "sha256": "F74A864283F0FFCE51E778EA95384A9DA12674D8D65B0263AFA46331E725FD95",
+      "sha256": "376D5A9A84F385F0631AA6D39690980E3BA14F60AAC78DE34F0B9C8CA4CDD123",
       "status": "confirmed-10.1.4-static-r1-oracle"
     },
     {
@@ -1105,7 +1106,7 @@
       "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/runtime/expert-timeout.json",
       "copiedPath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/runtime/expert-timeout.json",
       "bytes": 1623996,
-      "sha256": "07E4D684EA147658C98779F39DC002DA67124989A22378848F224CB6F2EF8AFD",
+      "sha256": "75FEF6B5D7C7C0719BB3F37C1867D67E4EF59E569AED7109F740F177D2E1413E",
       "status": "confirmed-10.1.4-static-r1-oracle"
     },
     {
@@ -1123,7 +1124,7 @@
       "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/runtime/hard-timeout.json",
       "copiedPath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/runtime/hard-timeout.json",
       "bytes": 1646725,
-      "sha256": "D577E1E237A696338F908315A58C0F4B6F6324F2806439F0AB8441388B87D141",
+      "sha256": "7D5839CDAD697D429AA83673F3435D224F793CC042840E9756D7F57919AC64A2",
       "status": "confirmed-10.1.4-static-r1-oracle"
     },
     {
@@ -1141,7 +1142,7 @@
       "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/runtime/hard-touch.json",
       "copiedPath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/runtime/hard-touch.json",
       "bytes": 4415127,
-      "sha256": "8C1C552F77A8953315B11AB2E5CDCDAD9E1533EB5FC3CCD4CB2BCC5DA461918E",
+      "sha256": "A1F6263132689DEB0CA254F7C29C2BF20C63F5CD2A14B5EC89E0714105D35E1D",
       "status": "confirmed-10.1.4-static-r1-oracle"
     },
     {
@@ -1159,25 +1160,25 @@
       "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/runtime/ui-multitouch.json",
       "copiedPath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/runtime/ui-multitouch.json",
       "bytes": 357522,
-      "sha256": "F942C698911966A322EE84946D3C0B0ED2EF13FBF336E7CDB7DD308DF6249CB0",
+      "sha256": "DA0214D9C4B3005A44F059B0E3D276A8EA4C44A246F23DCC0FB8B0DCAC8C4D62",
       "status": "confirmed-10.1.4-static-r1-oracle"
     },
     {
       "id": "MR124",
-      "sourceCommit": "4bda0f3ad2fb84ef972bf352e78aac57dad44c8b",
+      "sourceCommit": "40dbc862",
       "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/targets.tsv",
       "copiedPath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/targets.tsv",
-      "bytes": 13371,
-      "sha256": "7ACFCBB8F9DCF5276D51365569D0A4969CA18AFB8829D035AB3B3C70FBCC9423",
+      "bytes": 13495,
+      "sha256": "26FA8DF7F9F6AF0B10A5225EED37C3C7B4F02C19CEDDC5CD9F16766C9046531B",
       "status": "confirmed-10.1.4-static-r1-oracle"
     },
     {
       "id": "MR125",
-      "sourceCommit": "4bda0f3ad2fb84ef972bf352e78aac57dad44c8b",
+      "sourceCommit": "40dbc862",
       "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/verify_manual_input_contract.py",
       "copiedPath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/verify_manual_input_contract.py",
-      "bytes": 8608,
-      "sha256": "2188638DD5C03771C2EFB35A35CA568F6A480A560F6BE136682CE98895067702",
+      "bytes": 9115,
+      "sha256": "05753529BD2BC24687311E691A1800D65AC9A5F822D174385B151CA475111B4D",
       "status": "confirmed-10.1.4-static-r1-oracle"
     },
     {
@@ -1187,6 +1188,15 @@
       "copiedPath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/verify_manual_input_runtime_oracle.py",
       "bytes": 9111,
       "sha256": "021853DB879C07FF88CACFD75437A3EC926C4441E50A171EC927429D9ACB39AD",
+      "status": "confirmed-10.1.4-static-r1-oracle"
+    },
+    {
+      "id": "MR127",
+      "sourceCommit": "40dbc862",
+      "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/03a768c0__NoteFlickBase__ExecTouchBegan.arm64.tsv",
+      "copiedPath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/03a768c0__NoteFlickBase__ExecTouchBegan.arm64.tsv",
+      "bytes": 769,
+      "sha256": "FAFEE4CC23D778B9CB5E162707566F506CCA6C4F9D27009EA4CCDA3E91B0D29A",
       "status": "confirmed-10.1.4-static-r1-oracle"
     }
   ]

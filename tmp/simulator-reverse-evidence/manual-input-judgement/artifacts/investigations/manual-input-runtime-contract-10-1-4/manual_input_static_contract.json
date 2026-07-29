@@ -15,10 +15,10 @@
     "global_metadata_sha256": "298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F"
   },
   "method_status_counts": {
-    "mapped": 103
+    "mapped": 104
   },
   "layout_status_counts": {
-    "unchanged": 12
+    "unchanged": 13
   },
   "enum_status_counts": {
     "unchanged": 13
@@ -5165,6 +5165,26 @@
         }
       ],
       "evidence": "arm64/030e9e20__NoteFlick__ExecTouchMoved.arm64.tsv"
+    },
+    {
+      "owner": "NoteFlickBase",
+      "method": "ExecTouchBegan",
+      "dump_name": "NoteFlickBase$$ExecTouchBegan",
+      "status": "mapped",
+      "baseline_rva": "0x3A77718",
+      "baseline_end_rva": "0x3A77760",
+      "target_rva": "0x3A768C0",
+      "target_end_rva": "0x3A76908",
+      "rva_delta": -3672,
+      "baseline_size": 72,
+      "target_size": 72,
+      "signature_unchanged": true,
+      "baseline_sha256": "5A59F4685D9A8FFC9906163F04F43DA3A4416EEE73D555CC9F9586E7F755BCC5",
+      "target_sha256": "5A59F4685D9A8FFC9906163F04F43DA3A4416EEE73D555CC9F9586E7F755BCC5",
+      "differing_words": 0,
+      "non_pc_relative_differing_words": 0,
+      "differing_word_detail": [],
+      "evidence": "arm64/03a768c0__NoteFlickBase__ExecTouchBegan.arm64.tsv"
     },
     {
       "owner": "NoteFrontBase",
@@ -16788,6 +16808,23 @@
         "private Vector3 tempVectorA": "0x168",
         "private Vector3 tempVectorB": "0x174",
         "private bool isFailedScoreContinuedNoteJudge": "0x180"
+      },
+      "changed": {},
+      "added": [],
+      "removed": [],
+      "status": "unchanged"
+    },
+    {
+      "type": "NoteFlickBase",
+      "baseline_fields": {
+        "private float frameCounter": "0x188",
+        "protected NoteResultType cachedResult": "0x18C",
+        "protected JudgeTiming cachedJudgeTiming": "0x190"
+      },
+      "target_fields": {
+        "private float frameCounter": "0x188",
+        "protected NoteResultType cachedResult": "0x18C",
+        "protected JudgeTiming cachedJudgeTiming": "0x190"
       },
       "changed": {},
       "added": [],
