@@ -7,7 +7,10 @@ import {
 } from "../chart/types";
 import type { NoteFamily } from "../data/noteData";
 import type { OneFrameDataHandle } from "../data/oneFrameData";
-import type { ManualJudgementTransaction } from "../data/manualJudgement";
+import type {
+  ManualJudgementOwnership,
+  ManualJudgementTransaction,
+} from "../data/manualJudgement";
 import type { InGameCalculatedData } from "../data/inGameCalculatedData";
 import type {
   AutoLiveJudgementOwnership,
@@ -261,6 +264,7 @@ export class NoteManager {
           getAdjustedMusicPosition: () => this.getAdjustedMusicPosition(),
           getCurrentBpm: () => this.musicScoreController.currentBpm,
           geometry: this.manualInputGeometry,
+          beginJudgementTransaction: () => this.createManualJudgementTransaction(),
           submitJudgement: (request) => this.submitManualJudgement(request),
         });
         if (note instanceof NoteMultipleDirectionalFlick) {
@@ -454,8 +458,22 @@ export class NoteManager {
     return ok(undefined);
   }
 
+  getManualJudgementOwnership(
+    noteInformation: NoteInformation,
+  ): ManualJudgementOwnership | null {
+    if (!this.autoLiveJudgementSources.has(noteInformation)) {
+      return null;
+    }
+    return Object.freeze({
+      multipleDirectionalFlickNoteCount:
+        this.multipleDirectionalGroups.get(noteInformation)?.count ?? null,
+      multipleDirectionalFlickButtonTypes:
+        this.multipleDirectionalGroups.get(noteInformation)?.buttonTypes ?? null,
+    });
+  }
+
   ownsManualJudgementSource(noteInformation: NoteInformation): boolean {
-    return this.autoLiveJudgementSources.has(noteInformation);
+    return this.getManualJudgementOwnership(noteInformation) !== null;
   }
 
   selectManualCandidateBeforeJudgement(
@@ -544,7 +562,7 @@ export class NoteManager {
   private setupMultipleDirectionalGroups(): void {
     for (const batch of this.batches) {
       for (const group of groupMultipleDirectionalInformationList(batch.informationList)) {
-        const owner = new MultipleDirectionalGroupOwner(group.length);
+        const owner = new MultipleDirectionalGroupOwner(group);
         for (const information of group) {
           this.multipleDirectionalGroups.set(information, owner);
         }
@@ -912,19 +930,61 @@ function createDefaultPoolObject(
 
 class MultipleDirectionalGroupOwner implements MultipleDirectionalRuntimeGroup {
   private usedValue = false;
+  private activeManualFingerId = -1;
+  private readonly projectedManualFingers = new WeakMap<object, number>();
+  readonly count: number;
+  readonly buttonTypes: readonly ButtonTypeValue[];
 
-  constructor(readonly count: number) {}
+  constructor(group: readonly NoteInformation[]) {
+    this.count = group.length;
+    this.buttonTypes = Object.freeze(group.map((information) => information.buttonType));
+  }
 
   get isUsed(): boolean {
     return this.usedValue;
   }
 
+  preflightManualFinger(transaction: object, fingerId: number): SimulatorResult<void> {
+    const projectedFinger = this.projectedManualFingers.get(transaction) ?? -1;
+    if (
+      this.usedValue ||
+      (this.activeManualFingerId >= 0 && this.activeManualFingerId !== fingerId) ||
+      (projectedFinger >= 0 && projectedFinger !== fingerId)
+    ) {
+      return evidenceRequired(
+        "manual.multiple-directional-finger-owner-conflict",
+        ["D06", "D08", "D15", "MJ06", "MJ10", "MJ26"],
+        "A Multiple Directional group accepts one owner finger before side consumption.",
+      );
+    }
+    this.projectedManualFingers.set(transaction, fingerId);
+    return ok(undefined);
+  }
+
+  commitManualFinger(transaction: object, fingerId: number): void {
+    if (
+      this.projectedManualFingers.get(transaction) !== fingerId ||
+      (this.activeManualFingerId >= 0 && this.activeManualFingerId !== fingerId) ||
+      this.usedValue
+    ) {
+      throw new Error("Multiple Directional manual finger owner changed after preflight");
+    }
+    this.activeManualFingerId = fingerId;
+    this.projectedManualFingers.delete(transaction);
+  }
+
+  clearManualFinger(fingerId: number): void {
+    if (this.activeManualFingerId === fingerId) {
+      this.activeManualFingerId = -1;
+    }
+  }
+
   markUsed(): SimulatorResult<void> {
     if (this.usedValue) {
       return evidenceRequired(
-        "auto-live.multiple-directional-group-already-used",
-        ["R10", "R12", "R16"],
-        "A connected Multiple Directional group produces one Auto Live judgement.",
+        "multiple-directional.group-already-used",
+        ["R10", "R12", "R16", "D08", "MJ10"],
+        "A connected Multiple Directional group produces one judgement before its side owner is consumed.",
       );
     }
     this.usedValue = true;

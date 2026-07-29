@@ -901,6 +901,7 @@ export abstract class NoteFlickBase extends NoteSingleBase {
 
   protected reserveSuccessfulManualMove(
     input: ManualNoteTouchInput,
+    multipleDirectionalFlickNoteCount?: number,
   ): SimulatorResult<ManualNoteContinuationPlan> {
     const information = this.noteInformation;
     const judgement = this.cachedJudgementValue;
@@ -917,6 +918,9 @@ export abstract class NoteFlickBase extends NoteSingleBase {
       rawResult: judgement.result as Exclude<typeof judgement.result, -1>,
       rawTiming: judgement.timing,
       absolutePosition: information.absolutePos,
+      ...(multipleDirectionalFlickNoteCount === undefined
+        ? {}
+        : { multipleDirectionalFlickNoteCount }),
     });
     if (reserved.status !== "ok") {
       return reserved;
@@ -1102,24 +1106,139 @@ export class NoteMultipleDirectionalFlick extends NoteDirectionalFlick {
     return frontNoteType === FrontNoteType.MultipleDirectionalFlick;
   }
 
+  protected override get forcePerfectJudgeNoteType(): number {
+    return 10;
+  }
+
   override preflightManualTouchBegan(
-    _input: ManualNoteTouchInput,
+    input: ManualNoteTouchInput,
   ): SimulatorResult<ManualNoteBeganPlan> {
-    return evidenceRequired(
-      "manual.multiple-directional-began-unimplemented",
-      ["D08", "MJ10"],
-      "Multiple Directional Began ownership belongs to M06 and cannot reuse ordinary Directional state.",
+    const group = this.groupValue;
+    if (group?.isUsed) {
+      return evidenceRequired(
+        "manual.multiple-directional-group-already-used",
+        ["D08", "MJ10"],
+        "A consumed Multiple Directional side owner cannot accept another Began.",
+      );
+    }
+    const basePlan = super.preflightManualTouchBegan(input);
+    if (basePlan.status !== "ok" || basePlan.value.outcome === "none") {
+      return basePlan;
+    }
+    if (group === null) {
+      return evidenceRequired(
+        "manual.multiple-directional-runtime-unavailable",
+        ["D08", "MJ10"],
+        "Multiple Directional Began requires its registered group owner.",
+      );
+    }
+    const fingerOwner = group.preflightManualFinger(
+      input.judgementTransaction,
+      input.fingerId,
     );
+    return fingerOwner.status === "ok" ? basePlan : fingerOwner;
+  }
+
+  override commitManualTouchBegan(
+    input: ManualNoteTouchInput,
+    plan: ManualNoteBeganPlan,
+  ): void {
+    const group = this.groupValue;
+    if (group === null) {
+      throw new Error("Multiple Directional Began commit lost its group owner");
+    }
+    group.commitManualFinger(input.judgementTransaction, input.fingerId);
+    super.commitManualTouchBegan(input, plan);
   }
 
   override preflightManualTouchMoved(
-    _input: ManualNoteTouchInput,
+    input: ManualNoteTouchInput,
   ): SimulatorResult<ManualNoteContinuationPlan> {
-    return evidenceRequired(
-      "manual.multiple-directional-moved-unimplemented",
-      ["D08", "MJ10"],
-      "Multiple Directional movement must consume its registered group owner in M06.",
+    const information = this.noteInformation;
+    const runtime = this.manualRuntime;
+    const group = this.groupValue;
+    if (information === null || runtime.status !== "ok" || group === null) {
+      return runtime.status === "ok"
+        ? evidenceRequired(
+            "manual.multiple-directional-runtime-unavailable",
+            ["D07", "D08", "MJ10"],
+            "Multiple Directional movement requires its activated source and registered group owner.",
+          )
+        : runtime;
+    }
+    if (group.isUsed) {
+      return evidenceRequired(
+        "manual.multiple-directional-group-already-used",
+        ["D08", "MJ10"],
+        "A consumed Multiple Directional side owner cannot produce a duplicate movement judgement.",
+      );
+    }
+    const fullRate = getManualScreenDistanceRate(runtime.value.geometry, {
+      beganPosition: input.beganPosition,
+      currentPosition: input.currentPosition,
+      horizontalOnly: false,
+    });
+    if (fullRate.status !== "ok") {
+      return fullRate;
+    }
+    const correctDirection = information.gameNoteType === 10
+      ? input.beganPosition.x > input.currentPosition.x
+      : information.gameNoteType === 11
+      ? input.beganPosition.x < input.currentPosition.x
+      : false;
+    if (!correctDirection) {
+      return ok(Object.freeze({
+        judgementPlan: null,
+        familyData: Object.freeze({ complete: false, fullRate: fullRate.value }),
+      }));
+    }
+    const horizontalRate = getManualScreenDistanceRate(runtime.value.geometry, {
+      beganPosition: input.beganPosition,
+      currentPosition: input.currentPosition,
+      horizontalOnly: true,
+    });
+    if (horizontalRate.status !== "ok") {
+      return horizontalRate;
+    }
+    const unitRate = float32FromBits(0x3c23d70a);
+    const countThreshold = Math.fround(
+      Math.fround(Math.fround(group.count - 1) * unitRate) + unitRate,
     );
+    if (
+      horizontalRate.value <= unitRate ||
+      fullRate.value <= countThreshold
+    ) {
+      return ok(Object.freeze({
+        judgementPlan: null,
+        familyData: Object.freeze({
+          complete: false,
+          fullRate: fullRate.value,
+          horizontalRate: horizontalRate.value,
+          countThreshold,
+        }),
+      }));
+    }
+    return this.reserveSuccessfulManualMove(input, group.count);
+  }
+
+  override commitManualTouchMoved(
+    input: ManualNoteTouchInput,
+    plan: ManualNoteContinuationPlan,
+  ): void {
+    if (plan.judgementPlan === null) {
+      return;
+    }
+    const group = this.groupValue;
+    if (group === null || group.isUsed) {
+      throw new Error("Multiple Directional commit lost its preflight group owner");
+    }
+    const used = group.markUsed();
+    if (used.status !== "ok") {
+      throw new Error("Multiple Directional group use changed after preflight");
+    }
+    this.commitSuccessfulManualMove(input, plan);
+    this.multipleTraceValue.push({ kind: "multiple-head-manual", groupCount: group.count });
+    this.multipleTraceValue.push({ kind: "multiple-side-notes-used", groupCount: group.count });
   }
 
   override activate(noteInformation: NoteInformation): SimulatorResult<void> {
@@ -1159,14 +1278,23 @@ export class NoteMultipleDirectionalFlick extends NoteDirectionalFlick {
     return ok(undefined);
   }
 
+  protected override moveState(deltaTimeSeconds: number): SimulatorResult<void> {
+    const group = this.groupValue;
+    if (group?.isUsed) {
+      this.multipleTraceValue.push({ kind: "multiple-side-used-deactivate", groupCount: group.count });
+      return this.changeState(NoteState.Deactive);
+    }
+    return super.moveState(deltaTimeSeconds);
+  }
+
   protected override forcePerfect(): SimulatorResult<void> {
     const noteInformation = this.noteInformation;
     const runtime = this.autoLiveRuntime;
     const group = this.groupValue;
     if (noteInformation === null || runtime.status !== "ok" || group === null) {
       return evidenceRequired(
-        "auto-live.multiple-directional-runtime-unavailable",
-        ["R10", "R12", "R16"],
+        "multiple-directional-runtime-unavailable",
+        ["R10", "R12", "R16", "D08", "MJ10"],
         "Multiple Directional Force Perfect requires its activated adjacent-button runtime group.",
       );
     }
@@ -1180,19 +1308,46 @@ export class NoteMultipleDirectionalFlick extends NoteDirectionalFlick {
     }
     this.flickTraceValue.push({ kind: "flick-begin" });
     this.flickTraceValue.push({ kind: "flick-synthetic-move", syntheticX: synthetic.value });
-    const submitted = runtime.value.submitJudgement({
-      noteInformation,
-      phase: "head",
-      noteType: 10,
-      absolutePosition: noteInformation.absolutePos,
-      multipleDirectionalFlickNoteCount: group.count,
-    });
-    if (submitted.status !== "ok") {
-      return submitted;
-    }
-    const used = group.markUsed();
-    if (used.status !== "ok") {
-      return used;
+    if (runtime.value.isAutoPlay()) {
+      const submitted = runtime.value.submitJudgement({
+        noteInformation,
+        phase: "head",
+        noteType: 10,
+        absolutePosition: noteInformation.absolutePos,
+        multipleDirectionalFlickNoteCount: group.count,
+      });
+      if (submitted.status !== "ok") {
+        return submitted;
+      }
+      const used = group.markUsed();
+      if (used.status !== "ok") {
+        return used;
+      }
+    } else {
+      const manualRuntime = this.manualRuntime;
+      if (manualRuntime.status !== "ok") {
+        return manualRuntime;
+      }
+      const transaction = manualRuntime.value.beginJudgementTransaction();
+      const reserved = transaction.preflight({
+        noteInformation,
+        noteType: 10,
+        rawResult: NoteResultType.Perfect,
+        rawTiming: JudgeTiming.None,
+        absolutePosition: noteInformation.absolutePos,
+        multipleDirectionalFlickNoteCount: group.count,
+      });
+      if (reserved.status !== "ok") {
+        transaction.abort();
+        return reserved;
+      }
+      const used = group.markUsed();
+      if (used.status !== "ok") {
+        transaction.abort();
+        return used;
+      }
+      transaction.commit(reserved.value);
+      transaction.finish();
     }
     this.multipleTraceValue.push({ kind: "multiple-head-perfect", groupCount: group.count });
     this.multipleTraceValue.push({ kind: "multiple-side-notes-used", groupCount: group.count });
@@ -1209,7 +1364,10 @@ export class NoteMultipleDirectionalFlick extends NoteDirectionalFlick {
   }
 
   protected override onDeactivated(): void {
+    const group = this.groupValue;
+    const fingerId = this.fingerId;
     super.onDeactivated();
+    group?.clearManualFinger(fingerId);
     this.groupValue = null;
   }
 
@@ -1356,6 +1514,7 @@ export type SlideAutoLiveTraceEntry =
 export type MultipleDirectionalAutoLiveTraceEntry = {
   readonly kind:
     | "multiple-head-perfect"
+    | "multiple-head-manual"
     | "multiple-side-notes-used"
     | "multiple-side-used-deactivate";
   readonly groupCount: number;

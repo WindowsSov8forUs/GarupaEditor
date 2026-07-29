@@ -55,7 +55,7 @@
 | M03 锁定输入数据与宿主边界 | **已完成** | 显式不可变input frame、owner-issued button能力、生命周期和失败优先级闭合 |
 | M04 恢复输入分发与候选仲裁 | 进行中：phase/owner与ordinary scan生产/测试完成；M05过滤、Slide near-line待完成 | phase、finger/button/note owner、wide/ordinary/Slide/tie行为匹配 |
 | M05 恢复窗口与Single/Flick判定 | **已完成**：Normal/Flick/Directional、Single timeout、单manual OneFrame及定向测试通过 | GetResult/JudgeNote、Normal/Flick/Directional的边界bits与事件顺序匹配 |
-| M06 恢复Multiple手动判定 | 未开始 | 真实touch方向、count阈值、side owner、finish/deactivate匹配 |
+| M06 恢复Multiple手动判定 | 进行中：production完成，MJ10与production-group独立测试待提交 | 真实touch方向、count阈值、side owner、finish/deactivate匹配 |
 | M07 恢复Long手动状态机 | 未开始 | Began/Hold/Moved/Ended、合成release、grace、头尾与finger清理匹配 |
 | M08 恢复Slide手动状态机 | 未开始 | head/intermediate/end、band cursor、release/miss/invisible推进匹配 |
 | M09 恢复自然timeout Miss | 未开始 | Long start/end、Slide wait/stop及同帧Miss顺序匹配 |
@@ -251,6 +251,16 @@
 - 锁定Stationary不调用concrete note、Ended空virtual保留Wait、Began不发OneFrame、Wait第6帧不触发/第7帧synthetic Perfect。
 - 同步first-slice已过时的manual AfterUpdate拒绝断言与M04 Stationary-as-Moved断言；未改变production实现。
 - testing TypeScript、first-slice 17/17、M04 dispatch 5/5、Flick 6/6与Auto Live AL01–AL22通过；M05关闭，下一批进入M06 Multiple Directional。
+
+#### 2026-07-29 第二十四批：M06 Multiple Directional production实现
+
+- 复用已验收G21 source-order runtime group owner，不修改chart：owner现在同时持有count、source-order button list、used与单manual finger；OneFrame controller由owner解析count/buttons，request不能伪造group数据。
+- Multiple Began复用FlickBase的None早退和cached result/Wait，但non-None额外在outer-frame transaction-local WeakMap预留group finger；later同帧第二finger在任何resolution/finger/note/OneFrame commit前失败。
+- Moved严格保持ARM64顺序：检查used→full rate→左右方向→horizontal rate strict `>0.01`→`f32(f32((count-1)*0.01)+0.01)` full-rate strict `>`；未过阈值零reservation。
+- success commit先mark current/group used，再提交owner-derivedtype10 OneFrame，随后记录side-used并deactivate；siblings在同outer-frame随后的NoteManager Update观察group used后deactivate，不产生额外结果。
+- Multiple 7-frame synthetic在manual使用独立transaction先完整preflight，再mark group、commit type10 Perfect、finish；Auto Live原路径和G21 group count保持不变。
+- manual judgement ownership从布尔predicate升级为`source→{multiple count, button types}|null`；Normal/Flick/Directional要求两个Multiple字段均null，Multiple要求count正整数且与唯一owner button list长度一致。
+- production/testing TypeScript、Normal 4项、Flick 6项、M04 dispatch 5项、M06工作树6项及Auto Live AL01–AL22通过；测试接口适配与M06测试文件留到独立提交。
 
 ## 2. 固定范围
 

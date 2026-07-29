@@ -41,6 +41,7 @@ export interface ManualNoteRuntime {
   readonly getAdjustedMusicPosition: () => number;
   readonly getCurrentBpm: () => number;
   readonly geometry: SimulatorManualInputGeometryBackend;
+  readonly beginJudgementTransaction: () => ManualJudgementTransaction;
   readonly submitJudgement: (
     request: ManualJudgementRequest,
   ) => SimulatorResult<void>;

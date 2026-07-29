@@ -1,4 +1,4 @@
-import type { NoteInformation } from "../chart/types";
+import type { ButtonTypeValue, NoteInformation } from "../chart/types";
 
 export type AutoLiveJudgementPhase = "head" | "intermediate" | "tail";
 
@@ -16,7 +16,11 @@ export interface AutoLiveJudgementOwnership {
 
 export interface MultipleDirectionalRuntimeGroup {
   readonly count: number;
+  readonly buttonTypes: readonly ButtonTypeValue[];
   readonly isUsed: boolean;
+  preflightManualFinger(transaction: object, fingerId: number): import("../evidence").SimulatorResult<void>;
+  commitManualFinger(transaction: object, fingerId: number): void;
+  clearManualFinger(fingerId: number): void;
   markUsed(): import("../evidence").SimulatorResult<void>;
 }
 

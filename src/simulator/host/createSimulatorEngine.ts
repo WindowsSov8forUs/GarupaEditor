@@ -253,7 +253,7 @@ export function createSimulatorEngine(
   }
   const manualJudgementOwner =
     oneFrameJudgementController.registerManualJudgementOwner(
-      (noteInformation) => noteManager.ownsManualJudgementSource(noteInformation),
+      (noteInformation) => noteManager.getManualJudgementOwnership(noteInformation),
     );
   if (manualJudgementOwner.status !== "ok") {
     return manualJudgementOwner;

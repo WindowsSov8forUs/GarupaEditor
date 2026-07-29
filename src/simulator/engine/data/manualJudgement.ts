@@ -1,5 +1,5 @@
 import type { SimulatorManualInputGeometryBackend } from "../../backends/contracts";
-import type { NoteInformation } from "../chart/types";
+import type { ButtonTypeValue, NoteInformation } from "../chart/types";
 import type { ManualInputPosition } from "./manualInput";
 import { evidenceRequired, ok, type SimulatorResult } from "../evidence";
 
@@ -47,6 +47,12 @@ export interface ManualJudgementRequest {
   readonly rawResult: Exclude<NoteResultTypeValue, -1>;
   readonly rawTiming: JudgeTimingValue;
   readonly absolutePosition: number;
+  readonly multipleDirectionalFlickNoteCount?: number;
+}
+
+export interface ManualJudgementOwnership {
+  readonly multipleDirectionalFlickNoteCount: number | null;
+  readonly multipleDirectionalFlickButtonTypes: readonly ButtonTypeValue[] | null;
 }
 
 export interface ManualJudgementCommitPlan {

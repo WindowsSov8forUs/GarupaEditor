@@ -19,6 +19,7 @@ import {
   JudgeTiming,
   NoteResultType,
   type ManualJudgementCommitPlan,
+  type ManualJudgementOwnership,
   type ManualJudgementRequest,
   type ManualJudgementTransaction,
 } from "../data/manualJudgement";
@@ -49,6 +50,7 @@ export type OneFrameTraceEntry =
       readonly noteIndex: number;
       readonly noteType: number;
       readonly rawResult: 0 | 1 | 2 | 3 | 4;
+      readonly multipleDirectionalFlickNoteCount: number;
     }
   | {
       readonly kind: "one-frame.reflect";
@@ -84,7 +86,7 @@ export type AutoLiveJudgementOwner = (
 
 export type ManualJudgementOwner = (
   noteInformation: ManualJudgementRequest["noteInformation"],
-) => boolean;
+) => ManualJudgementOwnership | null;
 
 export class InGameOneFrameJudgementController {
   private initializedValue = false;
@@ -443,9 +445,15 @@ export class InGameOneFrameJudgementController {
       containerId: container.containerId,
     });
     const adjustedResult = request.rawResult;
+    const ownership = this.manualJudgementOwner?.(request.noteInformation) ?? null;
+    if (ownership === null) {
+      throw new Error("Manual OneFrame commit lost its source ownership");
+    }
+    const buttonTypes = ownership.multipleDirectionalFlickButtonTypes ??
+      request.noteInformation.buttonTypesArray;
     const payload: ManualJudgementData = Object.freeze({
       noteIndex: request.noteInformation.index,
-      buttonTypes: Object.freeze([...request.noteInformation.buttonTypesArray]),
+      buttonTypes: Object.freeze([...buttonTypes]),
       noteType: request.noteType,
       phase: "head",
       rawResult: request.rawResult,
@@ -465,6 +473,8 @@ export class InGameOneFrameJudgementController {
       noteIndex: payload.noteIndex,
       noteType: payload.noteType,
       rawResult: payload.rawResult,
+      multipleDirectionalFlickNoteCount:
+        request.multipleDirectionalFlickNoteCount ?? 0,
     });
   }
 
@@ -472,12 +482,21 @@ export class InGameOneFrameJudgementController {
     request: ManualJudgementRequest,
   ): SimulatorResult<void> {
     const source = request?.noteInformation;
+    const ownership =
+      source !== null && typeof source === "object" && this.manualJudgementOwner !== null
+        ? this.manualJudgementOwner(source)
+        : null;
     if (
-      this.manualJudgementOwner === null ||
+      ownership === null ||
       source === null ||
       typeof source !== "object" ||
-      !this.manualJudgementOwner(source) ||
-      !isClosedManualSingleNoteType(source.fireNoteType, request.noteType, request.rawResult) ||
+      !isClosedManualNoteType(
+        source.fireNoteType,
+        request.noteType,
+        request.rawResult,
+        request.multipleDirectionalFlickNoteCount,
+        ownership,
+      ) ||
       request.absolutePosition !== source.absolutePos ||
       !Number.isInteger(request.rawResult) ||
       request.rawResult < NoteResultType.Miss ||
@@ -493,9 +512,9 @@ export class InGameOneFrameJudgementController {
       source.buttonTypesArray.length === 0
     ) {
       return evidenceRequired(
-        "one-frame.invalid-manual-single-payload",
-        ["D05", "D07", "D14", "D15", "MJ02", "MJ08", "MJ09", "MJ26"],
-        "M05 manual Setup accepts only the NoteManager-owned Single source and its family-derived raw result, timing, note type and absolute position projection.",
+        "one-frame.invalid-manual-payload",
+        ["D05", "D07", "D08", "D14", "D15", "MJ02", "MJ08", "MJ09", "MJ10", "MJ26"],
+        "Manual Setup accepts only the NoteManager-owned source and its family-derived result, timing, note type, position and Multiple count projection.",
       );
     }
     return ok(undefined);
@@ -512,11 +531,36 @@ export class InGameOneFrameJudgementController {
   }
 }
 
-function isClosedManualSingleNoteType(
+function isClosedManualNoteType(
   frontNoteType: number,
   noteType: number,
   rawResult: number,
+  requestedMultipleCount: number | undefined,
+  ownership: ManualJudgementOwnership,
 ): boolean {
+  const expectedMultipleCount = ownership.multipleDirectionalFlickNoteCount;
+  const expectedMultipleButtons = ownership.multipleDirectionalFlickButtonTypes;
+  if (frontNoteType === FrontNoteType.MultipleDirectionalFlick) {
+    return noteType === 10 &&
+      rawResult !== NoteResultType.Miss &&
+      Number.isInteger(requestedMultipleCount) &&
+      requestedMultipleCount === expectedMultipleCount &&
+      requestedMultipleCount > 0 &&
+      Array.isArray(expectedMultipleButtons) &&
+      expectedMultipleButtons.length === expectedMultipleCount &&
+      new Set(expectedMultipleButtons).size === expectedMultipleButtons.length &&
+      expectedMultipleButtons.every((button) =>
+        Number.isInteger(button) &&
+        button >= ButtonType.Button_00_BMS_1P_SC &&
+        button <= ButtonType.Button_15_BMS_2P_SC);
+  }
+  if (
+    requestedMultipleCount !== undefined ||
+    expectedMultipleCount !== null ||
+    expectedMultipleButtons !== null
+  ) {
+    return false;
+  }
   if (rawResult === NoteResultType.Miss && noteType === 0) {
     return (
       frontNoteType === FrontNoteType.Normal ||
