@@ -111,18 +111,18 @@ class ManualDispatchNote extends NoteBase {
     this.committedPhases.push(input.phase);
   }
 
-  override preflightManualTouchMoved(input: ManualNoteTouchInput): SimulatorResult<void> {
+  override preflightManualTouchMoved(input: ManualNoteTouchInput) {
     this.preflightPhases.push(input.phase);
-    return ok(undefined);
+    return ok(Object.freeze({ judgementPlan: null, familyData: null }));
   }
 
   override commitManualTouchMoved(input: ManualNoteTouchInput): void {
     this.committedPhases.push(input.phase);
   }
 
-  override preflightManualTouchEnded(input: ManualNoteTouchInput): SimulatorResult<void> {
+  override preflightManualTouchEnded(input: ManualNoteTouchInput) {
     this.preflightPhases.push(input.phase);
-    return ok(undefined);
+    return ok(Object.freeze({ judgementPlan: null, familyData: null }));
   }
 
   override commitManualTouchEnded(input: ManualNoteTouchInput): void {
@@ -314,8 +314,8 @@ test("MJ07 Moved Stationary Ended复用Began button和note", () => {
       `prepare continuation ${phase}`);
     requireOk(graph.input.execInput(GameState.PlayingSound), `commit continuation ${phase}`);
   }
-  assertDeepEqual(graph.notes[0]?.committedPhases, [0, 1, 2, 3],
-    "virtual dispatch preserves raw phase while Stationary shares Moved method");
+  assertDeepEqual(graph.notes[0]?.committedPhases, [0, 1, 3],
+    "Stationary preserves ownership without calling the concrete Moved virtual");
   assertEqual(graph.notes[0]?.fingerId, -1, "Ended concrete owner clears note finger");
   assertDeepEqual(graph.dispatcher.snapshot().buttonWithFingerId.slice(0, 1), [1],
     "InputManager button owner is reused rather than rebound");

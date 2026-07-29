@@ -54,7 +54,7 @@
 | M02 建立实体/固定事件oracle | **已完成** | 5条R1、MJ01–MJ26、D03–D15、portable contract及141项source/copy verifier通过 |
 | M03 锁定输入数据与宿主边界 | **已完成** | 显式不可变input frame、owner-issued button能力、生命周期和失败优先级闭合 |
 | M04 恢复输入分发与候选仲裁 | 进行中：phase/owner与ordinary scan生产/测试完成；M05过滤、Slide near-line待完成 | phase、finger/button/note owner、wide/ordinary/Slide/tie行为匹配 |
-| M05 恢复窗口与Single/Flick判定 | 进行中：production已完成Normal/Flick/Directional、Single timeout与单manual OneFrame；定向测试提交待完成 | GetResult/JudgeNote、Normal/Flick/Directional的边界bits与事件顺序匹配 |
+| M05 恢复窗口与Single/Flick判定 | **已完成**：Normal/Flick/Directional、Single timeout、单manual OneFrame及定向测试通过 | GetResult/JudgeNote、Normal/Flick/Directional的边界bits与事件顺序匹配 |
 | M06 恢复Multiple手动判定 | 未开始 | 真实touch方向、count阈值、side owner、finish/deactivate匹配 |
 | M07 恢复Long手动状态机 | 未开始 | Began/Hold/Moved/Ended、合成release、grace、头尾与finger清理匹配 |
 | M08 恢复Slide手动状态机 | 未开始 | head/intermediate/end、band cursor、release/miss/invisible推进匹配 |
@@ -243,6 +243,14 @@
 - 修正M04 phase jump table：Stationary保留finger/button/note owner但不调用concrete Moved virtual；Moved/Ended继续消费Began owner。
 - `NoteSingleBase.MoveState`恢复strict `> MissSecondInterval`自然Miss；NoteBase AfterUpdate在缺席presentation sync-line时返回ok，不再错误阻断manual Single。
 - production/testing TypeScript、Auto Live AL01–AL22、Normal 4项及Flick工作树定向6项通过；M04测试预期修订和Flick测试文件留到独立测试提交。
+
+#### 2026-07-29 第二十三批：M05 Single/Flick独立测试
+
+- 新增production `NoteManager → GamePlayInputDispatcher → NoteFlick/NoteDirectionalFlick → InGameOneFrameJudgementController`图测试；测试只提供可信geometry backend的identity ScreenToWorld与owner scale 1，不注入result/timing/rate/slot。
+- 直接消费MJ08/MJ09冻结before/equal/after Float32 bits，验证Flick strict `>0.04`三行与Directional方向+horizontal strict `>0.01`；successful OneFrame分别为type3/type9且使用Began缓存结果。
+- 锁定Stationary不调用concrete note、Ended空virtual保留Wait、Began不发OneFrame、Wait第6帧不触发/第7帧synthetic Perfect。
+- 同步first-slice已过时的manual AfterUpdate拒绝断言与M04 Stationary-as-Moved断言；未改变production实现。
+- testing TypeScript、first-slice 17/17、M04 dispatch 5/5、Flick 6/6与Auto Live AL01–AL22通过；M05关闭，下一批进入M06 Multiple Directional。
 
 ## 2. 固定范围
 

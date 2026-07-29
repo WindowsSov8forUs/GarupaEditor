@@ -392,8 +392,8 @@ test("未登记 chart、越界 offset 与触摸失败关闭且 manual 不强制�
     createRecordingSimulatorBackends()), "note engine");
   requireOk(noteEngine.initialize(), "initialize note engine");
   requireOk(noteEngine.step(0.01, { touches: [] }), "activation frame");
-  assertEqual(noteEngine.step(0.01, { touches: [] }).status, "evidence-required",
-    "manual AfterUpdate remains outside Auto Live");
+  requireOk(noteEngine.step(0.01, { touches: [] }),
+    "manual base AfterUpdate returns when presentation sync-line is absent");
   const manualSnapshot = requireOk(noteEngine.snapshot(), "manual snapshot");
   assertEqual(manualSnapshot.managers.oneFrame.inUseContainerIds.length, 0,
     "manual creates no Auto Live OneFrame payload");

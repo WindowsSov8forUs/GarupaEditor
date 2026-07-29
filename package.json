@@ -22,6 +22,7 @@
     "simulator:test:manual-input-dispatch": "node src/simulator/testing/runManualInputDispatchTests.mjs",
     "simulator:test:manual-judgement": "node src/simulator/testing/runManualJudgementTests.mjs",
     "simulator:test:manual-normal": "node src/simulator/testing/runManualNormalJudgementTests.mjs",
+    "simulator:test:manual-flick": "node src/simulator/testing/runManualFlickJudgementTests.mjs",
     "tauri": "tauri",
     "desktop:dev": "tauri dev",
     "desktop:build": "tauri build",
