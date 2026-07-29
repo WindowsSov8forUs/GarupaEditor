@@ -54,7 +54,7 @@
 | M02 建立实体/固定事件oracle | **已完成** | 5条R1、MJ01–MJ26、D03–D15、portable contract及141项source/copy verifier通过 |
 | M03 锁定输入数据与宿主边界 | **已完成** | 显式不可变input frame、owner-issued button能力、生命周期和失败优先级闭合 |
 | M04 恢复输入分发与候选仲裁 | 进行中：phase/owner与ordinary scan生产/测试完成；M05过滤、Slide near-line待完成 | phase、finger/button/note owner、wide/ordinary/Slide/tie行为匹配 |
-| M05 恢复窗口与Single/Flick判定 | 进行中：Float32内核与Normal Began/单manual OneFrame完成；Flick/Directional/multi-frame待实现 | GetResult/JudgeNote、Normal/Flick/Directional的边界bits与事件顺序匹配 |
+| M05 恢复窗口与Single/Flick判定 | 进行中：production已完成Normal/Flick/Directional、Single timeout与单manual OneFrame；定向测试提交待完成 | GetResult/JudgeNote、Normal/Flick/Directional的边界bits与事件顺序匹配 |
 | M06 恢复Multiple手动判定 | 未开始 | 真实touch方向、count阈值、side owner、finish/deactivate匹配 |
 | M07 恢复Long手动状态机 | 未开始 | Began/Hold/Moved/Ended、合成release、grace、头尾与finger清理匹配 |
 | M08 恢复Slide手动状态机 | 未开始 | head/intermediate/end、band cursor、release/miss/invisible推进匹配 |
@@ -233,6 +233,16 @@
 - Reverse新增10.1.4 `NoteBase.ExecuteAfterUpdate 0x3A75A98–0x3A75B1C`：只在presentation-owned NoteSyncLine存在时调用其OnUpdate，缺席时直接返回，不产生gameplay mutation。
 - static contract升级为118方法/14布局/13 enum；Reverse提交`ce5353fdc54a3ba8188f3dccd4accdc6c2ef4ce2`与Garupa 141项冻结包均验证并推送。
 - 本批只补证据；production修复随M05 Flick批提交。
+
+#### 2026-07-29 第二十二批：M05 Single/Flick production实现
+
+- 新增可信geometry owner上的ARM64 Float32 distance-rate链：两次ScreenToWorld、XYZ平方/加法/sqrt、`1/cameraScale`乘法与gameplayScale除法逐操作`fround`；owner输出非exact/nonfinite/zero scale失败关闭。
+- `NoteFlickBase`按10.1.4恢复：Began None零mutation；非None缓存raw/timing、清frame counter并切Wait；Wait按`f32(delta*60)`累加且`>=7.0`走synthetic Perfect；Ended为确认空virtual。
+- Flick Moved严格`>0x3D23D70A`提交type3；Directional先计算full rate并检查10/11左右方向，再对Y=0投影严格`>0x3C23D70A`提交type9。阈值未过不预留OneFrame、不改变state。
+- continuation preflight现在携带owner-generated transaction plan；successful Moved在全帧preflight后才commit OneFrame并deactivate。OneFrame closed payload扩展为Normal/Flick/Directional family-noteType组合；Multiple继续M06明确失败关闭。
+- 修正M04 phase jump table：Stationary保留finger/button/note owner但不调用concrete Moved virtual；Moved/Ended继续消费Began owner。
+- `NoteSingleBase.MoveState`恢复strict `> MissSecondInterval`自然Miss；NoteBase AfterUpdate在缺席presentation sync-line时返回ok，不再错误阻断manual Single。
+- production/testing TypeScript、Auto Live AL01–AL22、Normal 4项及Flick工作树定向6项通过；M04测试预期修订和Flick测试文件留到独立测试提交。
 
 ## 2. 固定范围
 

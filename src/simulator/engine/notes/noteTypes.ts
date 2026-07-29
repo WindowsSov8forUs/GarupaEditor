@@ -16,31 +16,19 @@ import {
   NoteBase,
   NoteState,
   type ManualNoteBeganPlan,
+  type ManualNoteContinuationPlan,
   type ManualNoteTouchInput,
 } from "./noteBase";
 import {
+  JudgeTiming,
   NoteResultType,
+  getManualScreenDistanceRate,
   judgeManualNote,
   type ManualNoteJudgement,
 } from "../data/manualJudgement";
 import type { MultipleDirectionalRuntimeGroup } from "../data/autoLiveJudgement";
 
-export class NoteFrontBase extends NoteBase {
-  override executeAfterUpdate(_deltaTimeSeconds: number): SimulatorResult<void> {
-    const runtime = this.autoLiveRuntime;
-    if (runtime.status !== "ok") {
-      return runtime;
-    }
-    if (!runtime.value.isAutoPlay()) {
-      return evidenceRequired(
-        "manual-note-after-update",
-        ["R01", "R04"],
-        "Manual Note AfterUpdate behavior is outside the Auto Live stage.",
-      );
-    }
-    return ok(undefined);
-  }
-}
+export class NoteFrontBase extends NoteBase {}
 
 export class NoteAfterBase extends NoteBase {}
 
@@ -50,6 +38,8 @@ export interface FlickForcePerfectTraceEntry {
 }
 
 export abstract class NoteSingleBase extends NoteFrontBase {
+  private missSecondCounterValue = Math.fround(0);
+
   protected abstract acceptsFrontNoteType(frontNoteType: number): boolean;
 
   override activate(noteInformation: NoteInformation): SimulatorResult<void> {
@@ -71,34 +61,57 @@ export abstract class NoteSingleBase extends NoteFrontBase {
       : graphValidation;
   }
 
-  protected override moveState(_deltaTimeSeconds: number): SimulatorResult<void> {
+  protected override moveState(deltaTimeSeconds: number): SimulatorResult<void> {
     const noteInformation = this.noteInformation;
     if (noteInformation === null) {
       return evidenceRequired(
-        "auto-live.single-without-note-information",
-        ["R02", "R04"],
+        "single-without-note-information",
+        ["R02", "R04", "D05"],
         "A pooled Single note must be activated before MoveState.",
       );
     }
-    const runtime = this.autoLiveRuntime;
-    if (runtime.status !== "ok") {
-      return runtime;
+    const autoRuntime = this.autoLiveRuntime;
+    if (autoRuntime.status !== "ok") {
+      return autoRuntime;
     }
-    const adjustedPosition = runtime.value.getAdjustedMusicPosition();
+    const adjustedPosition = autoRuntime.value.getAdjustedMusicPosition();
     if (!Number.isFinite(adjustedPosition)) {
       return evidenceRequired(
-        "auto-live.non-finite-adjusted-position",
-        ["R02", "R04"],
-        "Force Perfect crossing requires a finite adjusted music position.",
+        autoRuntime.value.isAutoPlay()
+          ? "auto-live.non-finite-adjusted-position"
+          : "manual.single-non-finite-adjusted-position",
+        ["R02", "R04", "D05", "MJ02"],
+        "Single crossing and timeout require a finite adjusted music position.",
       );
     }
     if (adjustedPosition < noteInformation.absolutePos) {
+      this.missSecondCounterValue = Math.fround(0);
       return ok(undefined);
     }
-    if (!runtime.value.isAutoPlay()) {
+    if (autoRuntime.value.isAutoPlay()) {
+      return this.forcePerfect();
+    }
+    this.missSecondCounterValue = Math.fround(
+      this.missSecondCounterValue + Math.fround(deltaTimeSeconds),
+    );
+    if (this.missSecondCounterValue <= float32FromBits(0x3e5dddde)) {
       return ok(undefined);
     }
-    return this.forcePerfect();
+    const manualRuntime = this.manualRuntime;
+    if (manualRuntime.status !== "ok") {
+      return manualRuntime;
+    }
+    const missed = manualRuntime.value.submitJudgement({
+      noteInformation,
+      noteType: 0,
+      rawResult: NoteResultType.Miss,
+      rawTiming: JudgeTiming.None,
+      absolutePosition: noteInformation.absolutePos,
+    });
+    if (missed.status !== "ok") {
+      return missed;
+    }
+    return this.changeState(NoteState.Deactive);
   }
 
   protected forcePerfect(): SimulatorResult<void> {
@@ -136,6 +149,10 @@ export abstract class NoteSingleBase extends NoteFrontBase {
 
   protected override onUpdate(_deltaTimeSeconds: number): SimulatorResult<void> {
     return ok(undefined);
+  }
+
+  protected override onDeactivated(): void {
+    this.missSecondCounterValue = Math.fround(0);
   }
 }
 
@@ -760,23 +777,86 @@ export class NoteSlide extends NoteFrontBase {
   }
 }
 
-export class NoteFlick extends NoteSingleBase {
+export abstract class NoteFlickBase extends NoteSingleBase {
   protected readonly flickTraceValue: FlickForcePerfectTraceEntry[] = [];
-
-  protected override acceptsFrontNoteType(frontNoteType: number): boolean {
-    return frontNoteType === FrontNoteType.Flick;
-  }
+  private frameCounterValue = Math.fround(0);
+  private cachedJudgementValue: ManualNoteJudgement | null = null;
 
   get flickTrace(): readonly FlickForcePerfectTraceEntry[] {
     return this.flickTraceValue.map((entry) => ({ ...entry }));
   }
 
-  protected get forcePerfectSyntheticX(): SimulatorResult<number> {
-    return ok(Math.fround(-100));
+  protected abstract get forcePerfectSyntheticX(): SimulatorResult<number>;
+  protected abstract get forcePerfectJudgeNoteType(): number;
+
+  override preflightManualTouchBegan(
+    _input: ManualNoteTouchInput,
+  ): SimulatorResult<ManualNoteBeganPlan> {
+    const information = this.noteInformation;
+    const runtime = this.manualRuntime;
+    if (information === null || runtime.status !== "ok") {
+      return runtime.status === "ok"
+        ? evidenceRequired(
+            "manual.flick-without-note-information",
+            ["D05", "D07", "MJ02", "MJ08", "MJ09"],
+            "Flick Began requires its activated NoteInformation owner.",
+          )
+        : runtime;
+    }
+    const judgement = judgeManualNote(
+      0,
+      Math.fround(information.absolutePos),
+      runtime.value.getAdjustedMusicPosition(),
+      runtime.value.getCurrentBpm(),
+    );
+    if (judgement.status !== "ok") {
+      return judgement;
+    }
+    return ok(Object.freeze({
+      outcome: judgement.value.result === NoteResultType.None ? "none" : "bind",
+      judgementPlan: null,
+      familyData: judgement.value,
+    }));
   }
 
-  protected get forcePerfectJudgeNoteType(): number {
-    return 3;
+  override commitManualTouchBegan(
+    _input: ManualNoteTouchInput,
+    plan: ManualNoteBeganPlan,
+  ): void {
+    const judgement = plan.familyData as ManualNoteJudgement | null;
+    if (
+      plan.outcome !== "bind" ||
+      judgement === null ||
+      judgement.result === NoteResultType.None
+    ) {
+      throw new Error("Flick Began commit lost its owner-produced cached judgement");
+    }
+    this.frameCounterValue = Math.fround(0);
+    this.cachedJudgementValue = judgement;
+    const changed = this.changeState(NoteState.Wait);
+    if (changed.status !== "ok") {
+      throw new Error("Flick Began commit could not enter Wait state");
+    }
+  }
+
+  override preflightManualTouchEnded(
+    _input: ManualNoteTouchInput,
+  ): SimulatorResult<ManualNoteContinuationPlan> {
+    return ok(Object.freeze({ judgementPlan: null, familyData: null }));
+  }
+
+  override commitManualTouchEnded(
+    _input: ManualNoteTouchInput,
+    _plan: ManualNoteContinuationPlan,
+  ): void {}
+
+  protected override waitState(deltaTimeSeconds: number): SimulatorResult<void> {
+    const executeFrame = Math.fround(Math.fround(deltaTimeSeconds) * Math.fround(60));
+    const nextFrameCounter = Math.fround(this.frameCounterValue + executeFrame);
+    this.frameCounterValue = nextFrameCounter;
+    return nextFrameCounter < Math.fround(7)
+      ? ok(undefined)
+      : this.forcePerfect();
   }
 
   protected override forcePerfect(): SimulatorResult<void> {
@@ -789,15 +869,136 @@ export class NoteFlick extends NoteSingleBase {
       kind: "flick-synthetic-move",
       syntheticX: synthetic.value,
     });
-    return this.submitHeadPerfect(this.forcePerfectJudgeNoteType);
+    const autoRuntime = this.autoLiveRuntime;
+    if (autoRuntime.status !== "ok") {
+      return autoRuntime;
+    }
+    if (autoRuntime.value.isAutoPlay()) {
+      return this.submitHeadPerfect(this.forcePerfectJudgeNoteType);
+    }
+    const information = this.noteInformation;
+    const manualRuntime = this.manualRuntime;
+    if (information === null || manualRuntime.status !== "ok") {
+      return manualRuntime.status === "ok"
+        ? evidenceRequired(
+            "manual.flick-force-perfect-without-source",
+            ["R18", "D07", "MJ08", "MJ09"],
+            "The seven-frame Flick synthetic chain requires its activated source owner.",
+          )
+        : manualRuntime;
+    }
+    const submitted = manualRuntime.value.submitJudgement({
+      noteInformation: information,
+      noteType: this.forcePerfectJudgeNoteType,
+      rawResult: NoteResultType.Perfect,
+      rawTiming: JudgeTiming.None,
+      absolutePosition: information.absolutePos,
+    });
+    return submitted.status === "ok"
+      ? this.changeState(NoteState.Deactive)
+      : submitted;
+  }
+
+  protected reserveSuccessfulManualMove(
+    input: ManualNoteTouchInput,
+  ): SimulatorResult<ManualNoteContinuationPlan> {
+    const information = this.noteInformation;
+    const judgement = this.cachedJudgementValue;
+    if (information === null || judgement === null || this.state !== NoteState.Wait) {
+      return evidenceRequired(
+        "manual.flick-move-without-began-owner",
+        ["R18", "D06", "D07", "MJ07", "MJ08", "MJ09"],
+        "A Flick movement may consume only the non-None result/timing cached by its Began owner in Wait state.",
+      );
+    }
+    const reserved = input.judgementTransaction.preflight({
+      noteInformation: information,
+      noteType: this.forcePerfectJudgeNoteType,
+      rawResult: judgement.result as Exclude<typeof judgement.result, -1>,
+      rawTiming: judgement.timing,
+      absolutePosition: information.absolutePos,
+    });
+    if (reserved.status !== "ok") {
+      return reserved;
+    }
+    return ok(Object.freeze({
+      judgementPlan: reserved.value,
+      familyData: Object.freeze({ complete: true }),
+    }));
+  }
+
+  protected commitSuccessfulManualMove(
+    input: ManualNoteTouchInput,
+    plan: ManualNoteContinuationPlan,
+  ): void {
+    if (plan.judgementPlan === null) {
+      return;
+    }
+    input.judgementTransaction.commit(plan.judgementPlan);
+    const changed = this.changeState(NoteState.Deactive);
+    if (changed.status !== "ok") {
+      throw new Error("Flick Moved commit could not deactivate the judged note");
+    }
+  }
+
+  protected override onDeactivated(): void {
+    super.onDeactivated();
+    this.frameCounterValue = Math.fround(0);
+    this.cachedJudgementValue = null;
   }
 
   protected override onResetForDispose(): void {
     this.flickTraceValue.length = 0;
+    this.frameCounterValue = Math.fround(0);
+    this.cachedJudgementValue = null;
   }
 }
 
-export class NoteDirectionalFlick extends NoteFlick {
+export class NoteFlick extends NoteFlickBase {
+  protected override acceptsFrontNoteType(frontNoteType: number): boolean {
+    return frontNoteType === FrontNoteType.Flick;
+  }
+
+  protected get forcePerfectSyntheticX(): SimulatorResult<number> {
+    return ok(Math.fround(-100));
+  }
+
+  protected get forcePerfectJudgeNoteType(): number {
+    return 3;
+  }
+
+  override preflightManualTouchMoved(
+    input: ManualNoteTouchInput,
+  ): SimulatorResult<ManualNoteContinuationPlan> {
+    const runtime = this.manualRuntime;
+    if (runtime.status !== "ok") {
+      return runtime;
+    }
+    const rate = getManualScreenDistanceRate(runtime.value.geometry, {
+      beganPosition: input.beganPosition,
+      currentPosition: input.currentPosition,
+      horizontalOnly: false,
+    });
+    if (rate.status !== "ok") {
+      return rate;
+    }
+    return rate.value > float32FromBits(0x3d23d70a)
+      ? this.reserveSuccessfulManualMove(input)
+      : ok(Object.freeze({
+          judgementPlan: null,
+          familyData: Object.freeze({ complete: false, rate: rate.value }),
+        }));
+  }
+
+  override commitManualTouchMoved(
+    input: ManualNoteTouchInput,
+    plan: ManualNoteContinuationPlan,
+  ): void {
+    this.commitSuccessfulManualMove(input, plan);
+  }
+}
+
+export class NoteDirectionalFlick extends NoteFlickBase {
   protected override acceptsFrontNoteType(frontNoteType: number): boolean {
     return frontNoteType === FrontNoteType.DirectionalFlick;
   }
@@ -811,14 +1012,70 @@ export class NoteDirectionalFlick extends NoteFlick {
       return ok(Math.fround(500));
     }
     return evidenceRequired(
-      "auto-live.directional-flick-source-type",
-      ["R02", "R04", "R05"],
-      `Directional Force Perfect only confirms source note types 10 and 11, received ${String(sourceType)}.`,
+      "directional-flick-source-type",
+      ["R02", "R04", "R05", "D07"],
+      `Directional Flick only confirms source note types 10 and 11, received ${String(sourceType)}.`,
     );
   }
 
   protected override get forcePerfectJudgeNoteType(): number {
     return 9;
+  }
+
+  override preflightManualTouchMoved(
+    input: ManualNoteTouchInput,
+  ): SimulatorResult<ManualNoteContinuationPlan> {
+    const information = this.noteInformation;
+    const runtime = this.manualRuntime;
+    if (information === null || runtime.status !== "ok") {
+      return runtime.status === "ok"
+        ? evidenceRequired(
+            "manual.directional-without-source",
+            ["D07", "MJ09"],
+            "Directional movement requires its activated source owner.",
+          )
+        : runtime;
+    }
+    const fullRate = getManualScreenDistanceRate(runtime.value.geometry, {
+      beganPosition: input.beganPosition,
+      currentPosition: input.currentPosition,
+      horizontalOnly: false,
+    });
+    if (fullRate.status !== "ok") {
+      return fullRate;
+    }
+    const correctDirection = information.gameNoteType === 10
+      ? input.beganPosition.x > input.currentPosition.x
+      : information.gameNoteType === 11
+      ? input.beganPosition.x < input.currentPosition.x
+      : false;
+    if (!correctDirection) {
+      return ok(Object.freeze({
+        judgementPlan: null,
+        familyData: Object.freeze({ complete: false, rate: fullRate.value }),
+      }));
+    }
+    const horizontalRate = getManualScreenDistanceRate(runtime.value.geometry, {
+      beganPosition: input.beganPosition,
+      currentPosition: input.currentPosition,
+      horizontalOnly: true,
+    });
+    if (horizontalRate.status !== "ok") {
+      return horizontalRate;
+    }
+    return horizontalRate.value > float32FromBits(0x3c23d70a)
+      ? this.reserveSuccessfulManualMove(input)
+      : ok(Object.freeze({
+          judgementPlan: null,
+          familyData: Object.freeze({ complete: false, rate: horizontalRate.value }),
+        }));
+  }
+
+  override commitManualTouchMoved(
+    input: ManualNoteTouchInput,
+    plan: ManualNoteContinuationPlan,
+  ): void {
+    this.commitSuccessfulManualMove(input, plan);
   }
 }
 
@@ -843,6 +1100,26 @@ export class NoteMultipleDirectionalFlick extends NoteDirectionalFlick {
 
   protected override acceptsFrontNoteType(frontNoteType: number): boolean {
     return frontNoteType === FrontNoteType.MultipleDirectionalFlick;
+  }
+
+  override preflightManualTouchBegan(
+    _input: ManualNoteTouchInput,
+  ): SimulatorResult<ManualNoteBeganPlan> {
+    return evidenceRequired(
+      "manual.multiple-directional-began-unimplemented",
+      ["D08", "MJ10"],
+      "Multiple Directional Began ownership belongs to M06 and cannot reuse ordinary Directional state.",
+    );
+  }
+
+  override preflightManualTouchMoved(
+    _input: ManualNoteTouchInput,
+  ): SimulatorResult<ManualNoteContinuationPlan> {
+    return evidenceRequired(
+      "manual.multiple-directional-moved-unimplemented",
+      ["D08", "MJ10"],
+      "Multiple Directional movement must consume its registered group owner in M06.",
+    );
   }
 
   override activate(noteInformation: NoteInformation): SimulatorResult<void> {
@@ -932,6 +1209,7 @@ export class NoteMultipleDirectionalFlick extends NoteDirectionalFlick {
   }
 
   protected override onDeactivated(): void {
+    super.onDeactivated();
     this.groupValue = null;
   }
 
@@ -1404,6 +1682,13 @@ function longAfterJudgeNoteType(afterNoteType: AfterNoteTypeValue): 1 | 3 | 9 | 
     default:
       return null;
   }
+}
+
+function float32FromBits(bits: number): number {
+  const bytes = new ArrayBuffer(4);
+  const view = new DataView(bytes);
+  view.setUint32(0, bits, true);
+  return view.getFloat32(0, true);
 }
 
 function isLongAfterType(afterNoteType: AfterNoteTypeValue): boolean {

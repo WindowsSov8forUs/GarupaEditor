@@ -1,4 +1,6 @@
+import type { SimulatorManualInputGeometryBackend } from "../../backends/contracts";
 import type { NoteInformation } from "../chart/types";
+import type { ManualInputPosition } from "./manualInput";
 import { evidenceRequired, ok, type SimulatorResult } from "../evidence";
 
 const MUSIC_BAR_DIVISION_COUNT = 192;
@@ -33,6 +35,12 @@ export interface ManualNoteJudgement {
   readonly roundedFrame: number;
 }
 
+export interface ManualScreenDistanceRateRequest {
+  readonly beganPosition: ManualInputPosition;
+  readonly currentPosition: ManualInputPosition;
+  readonly horizontalOnly: boolean;
+}
+
 export interface ManualJudgementRequest {
   readonly noteInformation: NoteInformation;
   readonly noteType: number;
@@ -52,6 +60,70 @@ export interface ManualJudgementTransaction {
   commit(plan: ManualJudgementCommitPlan): void;
   abort(): void;
   finish(): void;
+}
+
+export function getManualScreenDistanceRate(
+  geometry: SimulatorManualInputGeometryBackend,
+  request: ManualScreenDistanceRateRequest,
+): SimulatorResult<number> {
+  const began = request.horizontalOnly
+    ? Object.freeze({ x: request.beganPosition.x, y: Math.fround(0) })
+    : request.beganPosition;
+  const current = request.horizontalOnly
+    ? Object.freeze({ x: request.currentPosition.x, y: Math.fround(0) })
+    : request.currentPosition;
+  const beganWorld = geometry.screenToWorld(began);
+  if (beganWorld.status !== "ok") {
+    return beganWorld;
+  }
+  const currentWorld = geometry.screenToWorld(current);
+  if (currentWorld.status !== "ok") {
+    return currentWorld;
+  }
+  const normalization = geometry.getDistanceNormalization();
+  if (normalization.status !== "ok") {
+    return normalization;
+  }
+  const coordinates = [
+    beganWorld.value.x,
+    beganWorld.value.y,
+    beganWorld.value.z,
+    currentWorld.value.x,
+    currentWorld.value.y,
+    currentWorld.value.z,
+    normalization.value.cameraScale,
+    normalization.value.gameplayScale,
+  ];
+  if (
+    coordinates.some((value) => !isExactFiniteFloat32(value)) ||
+    normalization.value.cameraScale === 0 ||
+    normalization.value.gameplayScale === 0
+  ) {
+    return evidenceRequired(
+      "manual-input.invalid-screen-to-world-owner-output",
+      ["D07", "D15", "MJ08", "MJ09", "MJ26"],
+      "Screen-to-world coordinates and both normalization scales must be exact finite nonzero Float32 owner values.",
+    );
+  }
+  const deltaX = Math.fround(beganWorld.value.x - currentWorld.value.x);
+  const deltaY = Math.fround(beganWorld.value.y - currentWorld.value.y);
+  const deltaZ = Math.fround(beganWorld.value.z - currentWorld.value.z);
+  const squaredX = Math.fround(deltaX * deltaX);
+  const squaredY = Math.fround(deltaY * deltaY);
+  const squaredZ = Math.fround(deltaZ * deltaZ);
+  const squaredXY = Math.fround(squaredX + squaredY);
+  const squaredDistance = Math.fround(squaredZ + squaredXY);
+  const distance = Math.fround(Math.sqrt(squaredDistance));
+  const inverseCameraScale = Math.fround(1 / normalization.value.cameraScale);
+  const cameraNormalized = Math.fround(distance * inverseCameraScale);
+  const rate = Math.fround(cameraNormalized / normalization.value.gameplayScale);
+  return Number.isFinite(rate)
+    ? ok(rate)
+    : evidenceRequired(
+        "manual-input.non-finite-screen-distance-rate",
+        ["D07", "D15", "MJ08", "MJ09", "MJ26"],
+        "The ARM64 Float32 screen-to-world distance chain must remain finite.",
+      );
 }
 
 export function getSecondsWithDistance(

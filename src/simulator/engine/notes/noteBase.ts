@@ -10,6 +10,7 @@ import type {
 } from "../data/manualInput";
 import type {
   ManualJudgementCommitPlan,
+  ManualJudgementRequest,
   ManualJudgementTransaction,
 } from "../data/manualJudgement";
 import type { OneFrameDataHandle } from "../data/oneFrameData";
@@ -40,6 +41,9 @@ export interface ManualNoteRuntime {
   readonly getAdjustedMusicPosition: () => number;
   readonly getCurrentBpm: () => number;
   readonly geometry: SimulatorManualInputGeometryBackend;
+  readonly submitJudgement: (
+    request: ManualJudgementRequest,
+  ) => SimulatorResult<void>;
 }
 
 export interface ManualNoteTouchInput {
@@ -52,6 +56,11 @@ export interface ManualNoteTouchInput {
 
 export interface ManualNoteBeganPlan {
   readonly outcome: "bind" | "none";
+  readonly judgementPlan: ManualJudgementCommitPlan | null;
+  readonly familyData: unknown;
+}
+
+export interface ManualNoteContinuationPlan {
   readonly judgementPlan: ManualJudgementCommitPlan | null;
   readonly familyData: unknown;
 }
@@ -171,11 +180,7 @@ export class NoteBase {
   }
 
   executeAfterUpdate(_deltaTimeSeconds: number): SimulatorResult<void> {
-    return evidenceRequired(
-      "note.execute-after-update",
-      ["E03", "E05"],
-      "The first slice confirms the dispatch boundary, not derived-note after-update behavior.",
-    );
+    return ok(undefined);
   }
 
   preflightManualTouchBegan(
@@ -202,7 +207,7 @@ export class NoteBase {
 
   preflightManualTouchMoved(
     _input: ManualNoteTouchInput,
-  ): SimulatorResult<void> {
+  ): SimulatorResult<ManualNoteContinuationPlan> {
     return evidenceRequired(
       "manual.note-touch-moved-unimplemented",
       ["D07", "D08", "D09", "D10", "MJ13", "MJ14", "MJ15"],
@@ -210,11 +215,14 @@ export class NoteBase {
     );
   }
 
-  commitManualTouchMoved(_input: ManualNoteTouchInput): void {}
+  commitManualTouchMoved(
+    _input: ManualNoteTouchInput,
+    _plan: ManualNoteContinuationPlan,
+  ): void {}
 
   preflightManualTouchEnded(
     _input: ManualNoteTouchInput,
-  ): SimulatorResult<void> {
+  ): SimulatorResult<ManualNoteContinuationPlan> {
     return evidenceRequired(
       "manual.note-touch-ended-unimplemented",
       ["D09", "D10", "D12", "MJ19", "MJ21"],
@@ -222,7 +230,10 @@ export class NoteBase {
     );
   }
 
-  commitManualTouchEnded(_input: ManualNoteTouchInput): void {}
+  commitManualTouchEnded(
+    _input: ManualNoteTouchInput,
+    _plan: ManualNoteContinuationPlan,
+  ): void {}
 
   snapshot(): NoteStateSnapshot {
     return {

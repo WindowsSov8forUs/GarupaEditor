@@ -477,8 +477,7 @@ export class InGameOneFrameJudgementController {
       source === null ||
       typeof source !== "object" ||
       !this.manualJudgementOwner(source) ||
-      source.fireNoteType !== FrontNoteType.Normal ||
-      request.noteType !== 0 ||
+      !isClosedManualSingleNoteType(source.fireNoteType, request.noteType, request.rawResult) ||
       request.absolutePosition !== source.absolutePos ||
       !Number.isInteger(request.rawResult) ||
       request.rawResult < NoteResultType.Miss ||
@@ -494,9 +493,9 @@ export class InGameOneFrameJudgementController {
       source.buttonTypesArray.length === 0
     ) {
       return evidenceRequired(
-        "one-frame.invalid-manual-normal-payload",
-        ["D05", "D14", "D15", "MJ02", "MJ11", "MJ26"],
-        "M05 manual Setup accepts only the NoteManager-owned Normal source and its closed raw result, timing, note type and absolute position projection.",
+        "one-frame.invalid-manual-single-payload",
+        ["D05", "D07", "D14", "D15", "MJ02", "MJ08", "MJ09", "MJ26"],
+        "M05 manual Setup accepts only the NoteManager-owned Single source and its family-derived raw result, timing, note type and absolute position projection.",
       );
     }
     return ok(undefined);
@@ -511,6 +510,25 @@ export class InGameOneFrameJudgementController {
         : null;
     return validateAutoLiveJudgementRequest(request, ownership);
   }
+}
+
+function isClosedManualSingleNoteType(
+  frontNoteType: number,
+  noteType: number,
+  rawResult: number,
+): boolean {
+  if (rawResult === NoteResultType.Miss && noteType === 0) {
+    return (
+      frontNoteType === FrontNoteType.Normal ||
+      frontNoteType === FrontNoteType.Flick ||
+      frontNoteType === FrontNoteType.DirectionalFlick
+    );
+  }
+  return (
+    (frontNoteType === FrontNoteType.Normal && noteType === 0) ||
+    (frontNoteType === FrontNoteType.Flick && noteType === 3) ||
+    (frontNoteType === FrontNoteType.DirectionalFlick && noteType === 9)
+  );
 }
 
 function validateAutoLiveJudgementRequest(

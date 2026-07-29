@@ -75,12 +75,14 @@ export {
   JudgeTiming,
   NoteResultType,
   getManualNoteResult,
+  getManualScreenDistanceRate,
   getSecondsWithDistance,
   judgeManualNote,
 } from "./engine/data/manualJudgement";
 export type {
   JudgeTimingValue,
   ManualNoteJudgement,
+  ManualScreenDistanceRateRequest,
   NoteResultTypeValue,
 } from "./engine/data/manualJudgement";
 export { ManualTouchPhase } from "./engine/data/manualInput";
@@ -103,6 +105,7 @@ export {
   NoteDirectionalFlickAfter,
   NoteFlick,
   NoteFlickAfter,
+  NoteFlickBase,
   NoteFrontBase,
   NoteLong,
   NoteMultipleDirectionalFlick,

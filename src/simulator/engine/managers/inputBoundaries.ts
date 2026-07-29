@@ -17,6 +17,7 @@ import {
   NoteBase,
   NoteState,
   type ManualNoteBeganPlan,
+  type ManualNoteContinuationPlan,
   type ManualNoteTouchInput,
 } from "../notes/noteBase";
 import type { NoteManager } from "./noteManager";
@@ -251,7 +252,7 @@ interface GamePlayButtonTouchPlan {
   readonly position: ManualInputPosition;
   readonly beganPosition: ManualInputPosition | null;
   readonly note: NoteBase | null;
-  readonly notePlan: ManualNoteBeganPlan | null;
+  readonly notePlan: ManualNoteBeganPlan | ManualNoteContinuationPlan | null;
   readonly judgementTransaction: ManualJudgementTransaction | null;
   readonly bindNote: boolean;
 }
@@ -522,6 +523,9 @@ export class GamePlayButton {
         touch,
       ));
     }
+    if (touch.phase === ManualTouchPhase.Stationary) {
+      return ok(noNotePlan("moved", touch));
+    }
     const phase = touch.phase === ManualTouchPhase.Ended ? "ended" : "moved";
     const input = manualNoteInput(
       touch,
@@ -542,7 +546,7 @@ export class GamePlayButton {
       position: touch.position,
       beganPosition,
       note,
-      notePlan: null,
+      notePlan: validation.value,
       judgementTransaction,
       bindNote: false,
     }));
@@ -571,18 +575,27 @@ export class GamePlayButton {
       if (plan.bindNote) {
         plan.note.setFingerId(plan.fingerId);
       }
-      plan.note.commitManualTouchBegan(input, plan.notePlan ?? {
-        outcome: "none",
-        judgementPlan: null,
-        familyData: null,
-      });
+      plan.note.commitManualTouchBegan(
+        input,
+        (plan.notePlan as ManualNoteBeganPlan | null) ?? {
+          outcome: "none",
+          judgementPlan: null,
+          familyData: null,
+        },
+      );
       return;
     }
     if (plan.phase === "ended") {
-      plan.note.commitManualTouchEnded(input);
+      plan.note.commitManualTouchEnded(
+        input,
+        plan.notePlan as ManualNoteContinuationPlan,
+      );
       return;
     }
-    plan.note.commitManualTouchMoved(input);
+    plan.note.commitManualTouchMoved(
+      input,
+      plan.notePlan as ManualNoteContinuationPlan,
+    );
   }
 
   execTouchBegan(): SimulatorResult<void> {

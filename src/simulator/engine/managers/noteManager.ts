@@ -261,6 +261,7 @@ export class NoteManager {
           getAdjustedMusicPosition: () => this.getAdjustedMusicPosition(),
           getCurrentBpm: () => this.musicScoreController.currentBpm,
           geometry: this.manualInputGeometry,
+          submitJudgement: (request) => this.submitManualJudgement(request),
         });
         if (note instanceof NoteMultipleDirectionalFlick) {
           note.registerMultipleDirectionalGroupResolver(
@@ -437,6 +438,20 @@ export class NoteManager {
 
   beginManualJudgementTransaction(): ManualJudgementTransaction {
     return this.createManualJudgementTransaction();
+  }
+
+  private submitManualJudgement(
+    request: Parameters<ManualJudgementTransaction["preflight"]>[0],
+  ): SimulatorResult<void> {
+    const transaction = this.createManualJudgementTransaction();
+    const planned = transaction.preflight(request);
+    if (planned.status !== "ok") {
+      transaction.abort();
+      return planned;
+    }
+    transaction.commit(planned.value);
+    transaction.finish();
+    return ok(undefined);
   }
 
   ownsManualJudgementSource(noteInformation: NoteInformation): boolean {
