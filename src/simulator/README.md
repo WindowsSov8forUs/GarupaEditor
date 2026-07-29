@@ -27,9 +27,11 @@
 
 Auto Live A00–A10已完成第十四次提交后独立逐项重验收。验收排除Reverse脏工作树，以纯`c2dc5c7f` clone和SHA-256锁定原始样本运行两套verifier；完整A10、证据index、独立topology及新组合探针通过。root/source/receiver/父ownership、Slide child角色、失败重绑、有限clock结果与G19 fault跨dispose边界均已关闭，见`tmp/simulator-auto-live-acceptance.md`。
 
-OneFrame 容量现在由原作证据固定为 5，不再接受宿主或测试容量配置。公开的 `OneFrameJudgementBatch` 仅包含本阶段闭合的 Auto Live 判定字段，不是原作完整 `OneFrameTotalData`。分数、Power、生命、Skill/Fever、音频、粒子、渲染和 HUD 字段在类型上保持缺席，而不是填零。
+OneFrame 容量现在由原作证据固定为 5，不再接受宿主或测试容量配置。公开的 `OneFrameJudgementBatch` 仅包含已闭合的 Auto Live/手动判定字段，不是原作完整 `OneFrameTotalData`。分数、Power、生命、Skill/Fever、音频、粒子、渲染和 HUD 字段在类型上保持缺席，而不是填零。
 
 “手动输入与判定”M00–M11已完成提交后独立验收，锁定实机版本`jp.co.craftegg.band` 10.1.4（230）及Reverse提交`ce5353fdc54a3ba8188f3dccd4accdc6c2ef4ce2`。V01、D01–D15、MJ01–MJ26全部关闭；manual outer-frame/capability、15-slot finger与16-button owner、ordinary/Slide candidate、Float32窗口、Normal/Flick/Directional/Multiple/Long/Slide、strict timeout、五槽聚合、pause/fault/dispose和cleanup均已通过总入口与全上游回归。任务书见`tmp/simulator-manual-input-judgement-task.md`，验收记录见`tmp/simulator-manual-input-judgement-acceptance.md`。可信geometry backend提供button、ScreenToWorld、scale与Slide raw geometry owner；默认backend继续失败关闭而不伪造lane/world/scale。应用输入adapter与主程序接入仍属后续阶段。
+
+当前阶段进入“分数、生命与状态”B00–B12，任务书位于`tmp/simulator-score-life-state-task.md`。B00已建立；V01与D01–D24均为`required-before-code`，B02关闭前禁止实施B03–B12。既有10.1.4证据只允许复用`OneFrameData.Setup`、`ReflectOneFrameData`、`getAddCombo`和判定生产者入口，10.1.3 Score/Skill/Fever/Life调查只作迁移候选；完整ScoreUtility、InGameRecord、Life、Skill、Fever、master profile及BS01–BS36 oracle必须先在10.1.4闭合。当前业务字段继续失败关闭，不以0、1、clamp或identity补齐。
 
 `src/simulator/engine` 不依赖 React、Pixi、Tauri、DOM、编辑器谱面类型或窗口协议。宿主 API 是 GarupaEditor 的可移植边界，不宣称属于原作接口。
 
