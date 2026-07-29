@@ -60,7 +60,7 @@ export interface PreparedManualInputTouch extends ManualInputTouchSnapshot {
 }
 
 export interface PreparedManualInputFrame {
-  readonly deltaTimeSeconds: number;
+  readonly deltaTimeSeconds: number | null;
   readonly touches: readonly PreparedManualInputTouch[];
   readonly buttonResolutions: readonly ManualInputButtonResolution[];
 }
@@ -139,8 +139,11 @@ export class ManualInputResolutionOwner {
     }
     const frameDeltaTime = typeof deltaTimeSeconds === "number"
       ? Math.fround(deltaTimeSeconds)
-      : Number.NaN;
-    if (!Number.isFinite(frameDeltaTime) || frameDeltaTime < 0) {
+      : null;
+    if (
+      frameDeltaTime !== null &&
+      (!Number.isFinite(frameDeltaTime) || frameDeltaTime < 0)
+    ) {
       return evidenceRequired(
         "input.invalid-owner-delta-time",
         ["D10", "D14", "D15", "MJ14", "MJ25", "MJ26"],

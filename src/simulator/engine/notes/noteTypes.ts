@@ -503,6 +503,13 @@ export class NoteLong extends NoteFrontBase {
         }),
       }));
     }
+    if (input.deltaTimeSeconds === null) {
+      return evidenceRequired(
+        "manual.long-owner-delta-unavailable",
+        ["D10", "D14", "D15", "MJ14", "MJ26"],
+        "Long movement grace requires the host-owned outer-frame Float32 delta.",
+      );
+    }
     const nextOrigin = judgement.value.result === NoteResultType.None
       ? input.currentPosition
       : origin;

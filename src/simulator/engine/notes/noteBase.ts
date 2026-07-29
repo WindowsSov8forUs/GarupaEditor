@@ -48,7 +48,7 @@ export interface ManualNoteRuntime {
 }
 
 export interface ManualNoteTouchInput {
-  readonly deltaTimeSeconds: number;
+  readonly deltaTimeSeconds: number | null;
   readonly fingerId: number;
   readonly phase: ManualTouchPhaseValue;
   readonly beganPosition: ManualInputPosition;

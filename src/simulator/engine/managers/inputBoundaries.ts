@@ -249,7 +249,7 @@ interface GamePlayButtonProjection {
 interface GamePlayButtonTouchPlan {
   readonly phase: "began" | "moved" | "ended" | "none";
   readonly touchPhase: ManualNoteTouchInput["phase"];
-  readonly deltaTimeSeconds: number;
+  readonly deltaTimeSeconds: number | null;
   readonly fingerId: number;
   readonly position: ManualInputPosition;
   readonly beganPosition: ManualInputPosition | null;
@@ -457,7 +457,7 @@ export class GamePlayButton {
     projection: GamePlayButtonProjection,
     projectedFingerOwners: Map<NoteBase, number>,
     judgementTransaction: ManualJudgementTransaction,
-    deltaTimeSeconds: number,
+    deltaTimeSeconds: number | null,
   ): SimulatorResult<GamePlayButtonTouchPlan> {
     if (this.noteManager === undefined) {
       return evidenceRequired(
@@ -521,7 +521,7 @@ export class GamePlayButton {
     touch: PreparedManualInputTouch,
     projection: GamePlayButtonProjection,
     judgementTransaction: ManualJudgementTransaction,
-    deltaTimeSeconds: number,
+    deltaTimeSeconds: number | null,
   ): SimulatorResult<GamePlayButtonTouchPlan> {
     const note = projection.touchNotes[touch.fingerId] ?? null;
     const beganPosition = projection.beganPositions[touch.fingerId] ?? null;
@@ -668,7 +668,7 @@ function manualNoteInput(
   beganPosition: ManualInputPosition,
   phase: ManualNoteTouchInput["phase"],
   judgementTransaction: ManualJudgementTransaction,
-  deltaTimeSeconds: number,
+  deltaTimeSeconds: number | null,
 ): ManualNoteTouchInput {
   return Object.freeze({
     deltaTimeSeconds,
@@ -683,7 +683,7 @@ function manualNoteInput(
 function noNotePlan(
   phase: GamePlayButtonTouchPlan["phase"],
   touch: PreparedManualInputTouch,
-  deltaTimeSeconds: number,
+  deltaTimeSeconds: number | null,
 ): GamePlayButtonTouchPlan {
   return Object.freeze({
     phase,

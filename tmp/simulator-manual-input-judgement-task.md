@@ -281,6 +281,12 @@
 - manual OneFrame ownership扩展Long head/tail absolute position、note type、button list与Multiple count；payload phase保留head/tail，Miss/Perfect timing继续owner清零。
 - Long no-touch crossing在manual只切Wait，不再沿Auto提交；Wait/Stop自然timeout仍留M09。production TypeScript、first-slice 17/17、M07工作树4项及Auto Live AL01–AL22通过；旧direct测试delta适配和M07测试文件留独立提交。
 
+#### 2026-07-29 第二十七批：M07 owner-delta fail-close修正
+
+- production host始终把validated outer delta传给InputManager并冻结为Float32；direct InputManager内部调用可省略该owner输入，但prepared plan显式保存`null`而不是0/default。
+- Normal/Flick/Directional/Multiple不消费delta，保持既有direct隔离图；Long non-Normal Moved在任何judgement reservation、grace或note mutation前要求非null owner delta，否则`manual.long-owner-delta-unavailable`。
+- 该修正避免为测试伪造0 delta，同时保持M03 host complete-preflight与M07 `f32(grace-delta)`证据边界；production TypeScript及M05/M06定向回归通过。
+
 ## 2. 固定范围
 
 ### 2.1 纳入范围
