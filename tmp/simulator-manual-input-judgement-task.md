@@ -166,6 +166,11 @@
 - 额外验证Perfect→None timing、note在current后方→Slow，以及非exact `0.1`、BPM0、NaN position三类失败关闭；dependency verifier通过。
 - production文件未在测试提交中修改。
 
+#### 2026-07-29 第十三批：阶段README状态同步
+
+- 修正`src/simulator/README.md`中“M04未实现”的过时描述：明确M04事务/phase/ordinary已完成、Slide near-line仍失败关闭，M05仅纯Float32窗口完成而family/OneFrame未实现。
+- 本批不修改生产行为或测试。
+
 ## 2. 固定范围
 
 ### 2.1 纳入范围
