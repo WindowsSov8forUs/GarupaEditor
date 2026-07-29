@@ -53,7 +53,7 @@
 | M01 晋升并修正静态证据 | **已完成** | 10.1.4的103方法/12 type/13 enum、独立Slide Wait与Slide band构造已提交并冻结 |
 | M02 建立实体/固定事件oracle | **已完成** | 5条R1、MJ01–MJ26、D03–D15、portable contract及126项source/copy verifier通过 |
 | M03 锁定输入数据与宿主边界 | **已完成** | 显式不可变input frame、owner-issued button能力、生命周期和失败优先级闭合 |
-| M04 恢复输入分发与候选仲裁 | 进行中：事务基础生产完成，分发/候选待实现 | phase、finger/button/note owner、wide/ordinary/Slide/tie行为匹配 |
+| M04 恢复输入分发与候选仲裁 | 进行中：phase/owner与ordinary scan生产完成；定向测试、M05过滤、Slide near-line待完成 | phase、finger/button/note owner、wide/ordinary/Slide/tie行为匹配 |
 | M05 恢复窗口与Single/Flick判定 | 未开始 | GetResult/JudgeNote、Normal/Flick/Directional的边界bits与事件顺序匹配 |
 | M06 恢复Multiple手动判定 | 未开始 | 真实touch方向、count阈值、side owner、finish/deactivate匹配 |
 | M07 恢复Long手动状态机 | 未开始 | Began/Hold/Moved/Ended、合成release、grace、头尾与finger清理匹配 |
@@ -130,6 +130,16 @@
 - 既有M03非空帧测试显式注册production形状的dispatcher，确认Began/Moved/Stationary/Ended每个外帧只commit一次；owner direct case改为断言pure preflight不消费、explicit commit才将count从0变1。
 - 新增无dispatcher与dispatcher漏项两条later-failure路径：已签发resolution在两类失败后均保持unused，pending/trace/owner snapshot全对象deep-equal；错误plan的commit函数若被误调用会直接抛错。
 - 定向测试现为6项，冻结MJ contract检查与dependency verifier继续通过；production文件未在测试提交中修改。
+
+#### 2026-07-29 第九批：M04 phase/owner与ordinary candidate生产实现
+
+- host为每个engine创建唯一`GamePlayInputDispatcher`并注册到InputManager；dispatcher固定15个finger owner槽和ButtonType 0..15的16个GamePlayButton，resolver只可取得dispatcher-own button对象。
+- preflight按caller touch原序在clone投影上执行：Began使用本帧resolution并投影finger→button，Moved/Stationary/Ended只复用已有/本帧先前owner；foreign GamePlayButton在任何commit前拒绝。commit严格重放已登记plan，不重新解析caller数据。
+- GamePlayButton固定15槽began-position与touch-note owner；Began按`NoteManager.activeNotes`正序、`NoteBase.IsContainsButton`和Float32 `abs(absolutePos-musicPos)`严格`<`选择ordinary首个更优候选。wide buttonTypes由chart owner读取；equal distance保留首个active。
+- note finger检查保持原作顺序：先执行concrete family pure judgement preflight，再检查投影finger `<0`；同帧后续竞争者不重绑。成功commit顺序为button mapping→began position→note finger→button touch-note→concrete virtual commit。
+- NoteBase新增finger owner、button containment和三类pure-preflight/void-commit虚边界；未恢复family统一失败关闭。snapshot仅暴露button type、finger、note index与position，不暴露对象/capability。
+- Slide候选遇到current-node/near-judge-line需求统一`manual.slide-candidate-position-unimplemented`，禁止用root `absolutePos`近似；ordinary最终None过滤仍等待M05 exact `CalcNoteResultType`。因此M04保持进行中。
+- isolated TypeScript、first-slice 17、Auto Live AL01–AL22与manual boundary 6项通过；M04 MJ03–MJ07定向测试留到独立测试提交。
 
 ## 2. 固定范围
 

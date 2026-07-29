@@ -23,7 +23,10 @@ import {
 import { InGameManager } from "../engine/managers/inGameManager";
 import { InGameMusicScoreController } from "../engine/managers/inGameMusicScoreController";
 import { InGameOneFrameJudgementController } from "../engine/managers/inGameOneFrameJudgementController";
-import { InputManager } from "../engine/managers/inputBoundaries";
+import {
+  GamePlayInputDispatcher,
+  InputManager,
+} from "../engine/managers/inputBoundaries";
 import { NoteManager } from "../engine/managers/noteManager";
 import { SlideNoteManager } from "../engine/managers/slideNoteManager";
 import {
@@ -197,11 +200,17 @@ export function createSimulatorEngine(
   if (judgementOwner.status !== "ok") {
     return judgementOwner;
   }
+  const inputManager = new InputManager(inGameCalculatedData.playMode);
+  const inputDispatcher = new GamePlayInputDispatcher(noteManager);
+  const inputDispatcherRegistration = inputManager.registerDispatcher(inputDispatcher);
+  if (inputDispatcherRegistration.status !== "ok") {
+    return inputDispatcherRegistration;
+  }
   const inGameManager = new InGameManager(
     musicScoreController,
     noteManager,
     oneFrameJudgementController,
-    new InputManager(inGameCalculatedData.playMode),
+    inputManager,
   );
   const inGameDirector = new InGameDirector(
     inGameManager,

@@ -1,6 +1,7 @@
 import {
   ButtonType,
   FrontNoteType,
+  type ButtonTypeValue,
   type NoteBatchInformation,
   type NoteInformation,
 } from "../chart/types";
@@ -421,6 +422,43 @@ export class NoteManager {
     return this.musicScoreController.peekAdjustedMusicPosition(
       this.judgeOffsetFrames,
     );
+  }
+
+  selectManualCandidateBeforeJudgement(
+    buttonType: ButtonTypeValue,
+  ): SimulatorResult<NoteBase | null> {
+    let ordinaryCandidate: NoteBase | null = null;
+    let ordinaryDistance = Number.POSITIVE_INFINITY;
+    const musicPosition = Math.fround(this.musicScoreController.musicPosition);
+
+    for (const note of this.activeNotesValue) {
+      if (!note.isContainsButton(buttonType)) {
+        continue;
+      }
+      if (note instanceof NoteSlide) {
+        return evidenceRequired(
+          "manual.slide-candidate-position-unimplemented",
+          ["D04", "D10", "MJ04", "MJ20"],
+          "Slide candidate arbitration requires its current-node and near-judge-line owner projection; absolute chart position cannot substitute for that owner state.",
+        );
+      }
+      const information = note.noteInformation;
+      if (information === null) {
+        return evidenceRequired(
+          "manual.active-candidate-without-information",
+          ["D04", "MJ03"],
+          "Every active candidate in the owner scan must retain its activated NoteInformation.",
+        );
+      }
+      const distance = Math.fround(Math.abs(
+        Math.fround(information.absolutePos) - musicPosition,
+      ));
+      if (distance < ordinaryDistance) {
+        ordinaryCandidate = note;
+        ordinaryDistance = distance;
+      }
+    }
+    return ok(ordinaryCandidate);
   }
 
   snapshot(): NoteManagerSnapshot {

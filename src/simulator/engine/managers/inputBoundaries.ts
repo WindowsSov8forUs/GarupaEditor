@@ -1,14 +1,22 @@
+import type { ButtonTypeValue } from "../chart/types";
 import type { SimulatorPlayMode } from "../data/inGameCalculatedData";
 import { GameState, type GameStateValue } from "../data/inGameState";
 import {
   ManualInputResolutionOwner,
+  ManualTouchPhase,
   type ManualInputButtonResolution,
   type ManualInputFrame,
   type ManualInputFrameSnapshot,
   type ManualInputPosition,
   type PreparedManualInputFrame,
+  type PreparedManualInputTouch,
 } from "../data/manualInput";
 import { evidenceRequired, ok, type SimulatorResult } from "../evidence";
+import { NoteBase, NoteState, type ManualNoteTouchInput } from "../notes/noteBase";
+import type { NoteManager } from "./noteManager";
+
+const FINGER_OWNER_CAPACITY = 15;
+const GAME_PLAY_BUTTON_COUNT = 16;
 
 export interface ManualInputDispatchPlan {
   readonly touchCount: number;
@@ -19,6 +27,8 @@ export interface ManualInputDispatcher {
     frame: PreparedManualInputFrame,
   ): SimulatorResult<ManualInputDispatchPlan>;
   commit(plan: ManualInputDispatchPlan): void;
+  snapshot?(): unknown;
+  dispose?(): void;
 }
 
 interface PendingManualInputFrame {
@@ -29,6 +39,7 @@ interface PendingManualInputFrame {
 export interface InputManagerSnapshot {
   readonly playMode: "manual" | "auto-live";
   readonly dispatcherRegistered: boolean;
+  readonly dispatchOwner: unknown;
   readonly pendingFrame: boolean;
   readonly consumedFrameCount: number;
   readonly lastFrame: ManualInputFrameSnapshot | null;
@@ -195,6 +206,7 @@ export class InputManager {
 
   dispose(): void {
     this.pendingFrameValue = null;
+    this.dispatcherValue?.dispose?.();
     this.resolutionOwner.dispose();
   }
 
@@ -202,6 +214,7 @@ export class InputManager {
     return Object.freeze({
       playMode: this.playMode.kind,
       dispatcherRegistered: this.dispatcherValue !== null,
+      dispatchOwner: this.dispatcherValue?.snapshot?.() ?? null,
       pendingFrame: this.pendingFrameValue !== null,
       consumedFrameCount: this.consumedFrameCountValue,
       lastFrame: copyFrameSnapshot(this.lastFrameValue),
@@ -213,14 +226,382 @@ export class InputManager {
   }
 }
 
+interface GamePlayButtonProjection {
+  readonly beganPositions: (ManualInputPosition | null)[];
+  readonly touchNotes: (NoteBase | null)[];
+}
+
+interface GamePlayButtonTouchPlan {
+  readonly phase: "began" | "moved" | "ended" | "none";
+  readonly touchPhase: ManualNoteTouchInput["phase"];
+  readonly fingerId: number;
+  readonly position: ManualInputPosition;
+  readonly beganPosition: ManualInputPosition | null;
+  readonly note: NoteBase | null;
+  readonly bindNote: boolean;
+}
+
+interface GamePlayInputOperation {
+  readonly inputButton: GamePlayButton | null;
+  readonly fingerId: number;
+  readonly buttonPlan: GamePlayButtonTouchPlan | null;
+}
+
+interface GamePlayInputPlan extends ManualInputDispatchPlan {
+  readonly operations: readonly GamePlayInputOperation[];
+}
+
+export interface GamePlayButtonSnapshot {
+  readonly buttonType: ButtonTypeValue;
+  readonly touchOwners: readonly {
+    readonly fingerId: number;
+    readonly beganPosition: ManualInputPosition | null;
+    readonly noteIndex: number | null;
+    readonly noteFingerId: number | null;
+  }[];
+}
+
+export interface GamePlayInputDispatcherSnapshot {
+  readonly buttonWithFingerId: readonly (ButtonTypeValue | null)[];
+  readonly buttons: readonly GamePlayButtonSnapshot[];
+}
+
+export class GamePlayInputDispatcher implements ManualInputDispatcher {
+  private readonly buttonsValue: readonly GamePlayButton[];
+  private readonly ownedButtons = new WeakSet<GamePlayButton>();
+  private readonly ownedPlans = new WeakSet<GamePlayInputPlan>();
+  private readonly buttonWithFingerId: (GamePlayButton | null)[] = Array.from(
+    { length: FINGER_OWNER_CAPACITY },
+    () => null,
+  );
+
+  constructor(noteManager: NoteManager) {
+    this.buttonsValue = Object.freeze(Array.from(
+      { length: GAME_PLAY_BUTTON_COUNT },
+      (_, buttonType) => new GamePlayButton(buttonType as ButtonTypeValue, noteManager),
+    ));
+    for (const button of this.buttonsValue) {
+      this.ownedButtons.add(button);
+    }
+  }
+
+  getButtonForResolver(buttonType: ButtonTypeValue): SimulatorResult<GamePlayButton> {
+    if (!Number.isInteger(buttonType) || buttonType < 0 || buttonType >= GAME_PLAY_BUTTON_COUNT) {
+      return evidenceRequired(
+        "input.resolver-button-outside-gameplay-domain",
+        ["D02", "D03", "D15", "MJ05", "MJ26"],
+        "The gameplay resolver owner can issue only one of the 16 ButtonType values 0..15.",
+      );
+    }
+    const button = this.buttonsValue[buttonType];
+    return button === undefined
+      ? evidenceRequired(
+          "input.resolver-button-owner-missing",
+          ["D02", "D03", "D15", "MJ05", "MJ26"],
+          "The requested gameplay button must exist in this dispatcher owner.",
+        )
+      : ok(button);
+  }
+
+  preflight(
+    frame: PreparedManualInputFrame,
+  ): SimulatorResult<ManualInputDispatchPlan> {
+    const projectedInputButtons = [...this.buttonWithFingerId];
+    const projections = new Map<GamePlayButton, GamePlayButtonProjection>();
+    const projectedFingerOwners = new Map<NoteBase, number>();
+    const operations: GamePlayInputOperation[] = [];
+
+    for (const touch of frame.touches) {
+      let inputButton: GamePlayButton | null = null;
+      let buttonPlan: GamePlayButtonTouchPlan | null = null;
+      if (touch.phase === ManualTouchPhase.Began) {
+        if (touch.buttonOwner !== null) {
+          if (!(touch.buttonOwner instanceof GamePlayButton) || !this.ownedButtons.has(touch.buttonOwner)) {
+            return evidenceRequired(
+              "input.foreign-game-play-button",
+              ["D03", "D15", "MJ05", "MJ26"],
+              "A resolved button must be the exact GamePlayButton owned by this engine dispatcher.",
+            );
+          }
+          inputButton = touch.buttonOwner;
+          projectedInputButtons[touch.fingerId] = inputButton;
+          const projection = projectionFor(inputButton, projections);
+          const planned = inputButton.preflightTouchBegan(
+            touch,
+            projection,
+            projectedFingerOwners,
+          );
+          if (planned.status !== "ok") {
+            return planned;
+          }
+          buttonPlan = planned.value;
+        }
+      } else {
+        inputButton = projectedInputButtons[touch.fingerId] ?? null;
+        if (inputButton !== null) {
+          const projection = projectionFor(inputButton, projections);
+          const planned = inputButton.preflightTouchContinuation(touch, projection);
+          if (planned.status !== "ok") {
+            return planned;
+          }
+          buttonPlan = planned.value;
+        }
+      }
+      operations.push(Object.freeze({
+        inputButton: touch.phase === ManualTouchPhase.Began ? inputButton : null,
+        fingerId: touch.fingerId,
+        buttonPlan,
+      }));
+    }
+
+    const plan: GamePlayInputPlan = Object.freeze({
+      touchCount: frame.touches.length,
+      operations: Object.freeze(operations),
+    });
+    this.ownedPlans.add(plan);
+    return ok(plan);
+  }
+
+  commit(plan: ManualInputDispatchPlan): void {
+    const ownedPlan = plan as GamePlayInputPlan;
+    if (!this.ownedPlans.has(ownedPlan)) {
+      throw new Error("GamePlayInputDispatcher received a foreign dispatch plan");
+    }
+    this.ownedPlans.delete(ownedPlan);
+    for (const operation of ownedPlan.operations) {
+      if (operation.inputButton !== null) {
+        this.buttonWithFingerId[operation.fingerId] = operation.inputButton;
+      }
+      if (operation.buttonPlan !== null) {
+        const button = operation.inputButton ??
+          this.buttonWithFingerId[operation.fingerId];
+        button?.commitTouch(operation.buttonPlan);
+      }
+    }
+  }
+
+  snapshot(): GamePlayInputDispatcherSnapshot {
+    return Object.freeze({
+      buttonWithFingerId: Object.freeze(
+        this.buttonWithFingerId.map((button) => button?.buttonType ?? null),
+      ),
+      buttons: Object.freeze(this.buttonsValue.map((button) => button.snapshot())),
+    });
+  }
+
+  dispose(): void {
+    this.buttonWithFingerId.fill(null);
+    for (const button of this.buttonsValue) {
+      button.dispose();
+    }
+  }
+}
+
 export class GamePlayButton {
+  private readonly beganPositions: (ManualInputPosition | null)[] = Array.from(
+    { length: FINGER_OWNER_CAPACITY },
+    () => null,
+  );
+  private readonly touchNotes: (NoteBase | null)[] = Array.from(
+    { length: FINGER_OWNER_CAPACITY },
+    () => null,
+  );
+
+  constructor(
+    readonly buttonType: ButtonTypeValue,
+    private readonly noteManager?: NoteManager,
+  ) {}
+
+  preflightTouchBegan(
+    touch: PreparedManualInputTouch,
+    projection: GamePlayButtonProjection,
+    projectedFingerOwners: Map<NoteBase, number>,
+  ): SimulatorResult<GamePlayButtonTouchPlan> {
+    if (this.noteManager === undefined) {
+      return evidenceRequired(
+        "input.game-play-button.owner-unregistered",
+        ["D03", "D04", "MJ03", "MJ05"],
+        "GamePlayButton must retain its engine NoteManager owner before touch arbitration.",
+      );
+    }
+    const selected = this.noteManager.selectManualCandidateBeforeJudgement(
+      this.buttonType,
+    );
+    if (selected.status !== "ok") {
+      return selected;
+    }
+    const candidate = selected.value;
+    if (candidate === null) {
+      projection.touchNotes[touch.fingerId] = null;
+      return ok(noNotePlan("began", touch));
+    }
+    const beganInput = manualNoteInput(
+      touch,
+      touch.position,
+      ManualTouchPhase.Began,
+    );
+    const judgement = candidate.preflightManualTouchBegan(beganInput);
+    if (judgement.status !== "ok") {
+      return judgement;
+    }
+    const projectedFinger = projectedFingerOwners.get(candidate) ?? candidate.fingerId;
+    if (judgement.value === "none" || projectedFinger >= 0) {
+      projection.touchNotes[touch.fingerId] = null;
+      return ok(noNotePlan("began", touch));
+    }
+    projection.beganPositions[touch.fingerId] = touch.position;
+    projection.touchNotes[touch.fingerId] = candidate;
+    projectedFingerOwners.set(candidate, touch.fingerId);
+    return ok(Object.freeze({
+      phase: "began",
+      touchPhase: touch.phase,
+      fingerId: touch.fingerId,
+      position: touch.position,
+      beganPosition: touch.position,
+      note: candidate,
+      bindNote: true,
+    }));
+  }
+
+  preflightTouchContinuation(
+    touch: PreparedManualInputTouch,
+    projection: GamePlayButtonProjection,
+  ): SimulatorResult<GamePlayButtonTouchPlan> {
+    const note = projection.touchNotes[touch.fingerId] ?? null;
+    const beganPosition = projection.beganPositions[touch.fingerId] ?? null;
+    if (note === null || beganPosition === null || note.state === NoteState.Deactive) {
+      return ok(noNotePlan(
+        touch.phase === ManualTouchPhase.Ended ? "ended" : "moved",
+        touch,
+      ));
+    }
+    const phase = touch.phase === ManualTouchPhase.Ended ? "ended" : "moved";
+    const input = manualNoteInput(touch, beganPosition, touch.phase);
+    const validation = phase === "ended"
+      ? note.preflightManualTouchEnded(input)
+      : note.preflightManualTouchMoved(input);
+    if (validation.status !== "ok") {
+      return validation;
+    }
+    return ok(Object.freeze({
+      phase,
+      touchPhase: touch.phase,
+      fingerId: touch.fingerId,
+      position: touch.position,
+      beganPosition,
+      note,
+      bindNote: false,
+    }));
+  }
+
+  commitTouch(plan: GamePlayButtonTouchPlan): void {
+    if (plan.phase === "none" || plan.note === null) {
+      if (plan.phase === "began") {
+        this.touchNotes[plan.fingerId] = null;
+      }
+      return;
+    }
+    const input: ManualNoteTouchInput = Object.freeze({
+      fingerId: plan.fingerId,
+      phase: plan.touchPhase,
+      beganPosition: plan.beganPosition ?? plan.position,
+      currentPosition: plan.position,
+    });
+    if (plan.phase === "began") {
+      this.beganPositions[plan.fingerId] = plan.beganPosition;
+      this.touchNotes[plan.fingerId] = plan.note;
+      if (plan.bindNote) {
+        plan.note.setFingerId(plan.fingerId);
+      }
+      plan.note.commitManualTouchBegan(input);
+      return;
+    }
+    if (plan.phase === "ended") {
+      plan.note.commitManualTouchEnded(input);
+      return;
+    }
+    plan.note.commitManualTouchMoved(input);
+  }
+
   execTouchBegan(): SimulatorResult<void> {
     return evidenceRequired(
       "input.game-play-button.touch-began",
-      ["E12", "E13"],
-      "GamePlayButton ownership is represented, but touch arbitration and judgement are excluded.",
+      ["D03", "D04", "D15", "MJ03", "MJ26"],
+      "GamePlayButton touch dispatch requires an owner-preflighted outer-frame plan and cannot be called as a public shortcut.",
     );
   }
+
+  snapshot(): GamePlayButtonSnapshot {
+    return Object.freeze({
+      buttonType: this.buttonType,
+      touchOwners: Object.freeze(this.touchNotes.flatMap((note, fingerId) => {
+        const beganPosition = this.beganPositions[fingerId] ?? null;
+        return note === null && beganPosition === null
+          ? []
+          : [Object.freeze({
+              fingerId,
+              beganPosition: beganPosition === null
+                ? null
+                : Object.freeze({ ...beganPosition }),
+              noteIndex: note?.noteInformation?.index ?? null,
+              noteFingerId: note?.fingerId ?? null,
+            })];
+      })),
+    });
+  }
+
+  dispose(): void {
+    this.beganPositions.fill(null);
+    this.touchNotes.fill(null);
+  }
+
+  createProjection(): GamePlayButtonProjection {
+    return {
+      beganPositions: [...this.beganPositions],
+      touchNotes: [...this.touchNotes],
+    };
+  }
+}
+
+function projectionFor(
+  button: GamePlayButton,
+  projections: Map<GamePlayButton, GamePlayButtonProjection>,
+): GamePlayButtonProjection {
+  const existing = projections.get(button);
+  if (existing !== undefined) {
+    return existing;
+  }
+  const created = button.createProjection();
+  projections.set(button, created);
+  return created;
+}
+
+function manualNoteInput(
+  touch: PreparedManualInputTouch,
+  beganPosition: ManualInputPosition,
+  phase: ManualNoteTouchInput["phase"],
+): ManualNoteTouchInput {
+  return Object.freeze({
+    fingerId: touch.fingerId,
+    phase,
+    beganPosition,
+    currentPosition: touch.position,
+  });
+}
+
+function noNotePlan(
+  phase: GamePlayButtonTouchPlan["phase"],
+  touch: PreparedManualInputTouch,
+): GamePlayButtonTouchPlan {
+  return Object.freeze({
+    phase,
+    touchPhase: touch.phase,
+    fingerId: touch.fingerId,
+    position: touch.position,
+    beganPosition: null,
+    note: null,
+    bindNote: false,
+  });
 }
 
 function copyFrameSnapshot(

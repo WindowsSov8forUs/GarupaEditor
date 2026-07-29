@@ -3,7 +3,11 @@ import {
   ok,
   type SimulatorResult,
 } from "../evidence";
-import type { NoteInformation } from "../chart/types";
+import type { ButtonTypeValue, NoteInformation } from "../chart/types";
+import type {
+  ManualInputPosition,
+  ManualTouchPhaseValue,
+} from "../data/manualInput";
 import type { OneFrameDataHandle } from "../data/oneFrameData";
 import type { NoteAutoLiveRuntime } from "../data/autoLiveJudgement";
 
@@ -23,6 +27,15 @@ export interface NoteStateSnapshot {
   readonly poolObjectId: string;
   readonly noteIndex: number | null;
   readonly state: NoteState;
+  readonly fingerId: number;
+  readonly buttonTypes: readonly ButtonTypeValue[];
+}
+
+export interface ManualNoteTouchInput {
+  readonly fingerId: number;
+  readonly phase: ManualTouchPhaseValue;
+  readonly beganPosition: ManualInputPosition;
+  readonly currentPosition: ManualInputPosition;
 }
 
 export class NoteBase {
@@ -31,6 +44,7 @@ export class NoteBase {
   private noteInformationValue: NoteInformation | null = null;
   private getUsableOneFrameData: (() => SimulatorResult<OneFrameDataHandle>) | null = null;
   private autoLiveRuntimeValue: NoteAutoLiveRuntime | null = null;
+  private fingerIdValue = -1;
 
   constructor(readonly poolObjectId: string) {}
 
@@ -40,6 +54,18 @@ export class NoteBase {
 
   get state(): NoteState {
     return this.stateValue;
+  }
+
+  get fingerId(): number {
+    return this.fingerIdValue;
+  }
+
+  isContainsButton(buttonType: ButtonTypeValue): boolean {
+    return this.noteInformationValue?.buttonTypes.includes(buttonType) ?? false;
+  }
+
+  setFingerId(fingerId: number): void {
+    this.fingerIdValue = fingerId;
   }
 
   setLifecycleCallbacks(callbacks: NoteLifecycleCallbacks): void {
@@ -73,6 +99,7 @@ export class NoteBase {
       return activationValidation;
     }
     this.noteInformationValue = noteInformation;
+    this.fingerIdValue = -1;
     return this.changeState(NoteState.Move);
   }
 
@@ -88,6 +115,7 @@ export class NoteBase {
     } else if (previousState !== NoteState.Deactive && nextState === NoteState.Deactive) {
       this.lifecycleCallbacks?.onDeactivate(this);
       this.onDeactivated();
+      this.fingerIdValue = -1;
     }
 
     return ok(undefined);
@@ -99,6 +127,7 @@ export class NoteBase {
       return deactivated;
     }
     this.noteInformationValue = null;
+    this.fingerIdValue = -1;
     this.onResetForDispose();
     return ok(undefined);
   }
@@ -126,11 +155,49 @@ export class NoteBase {
     );
   }
 
+  preflightManualTouchBegan(
+    _input: ManualNoteTouchInput,
+  ): SimulatorResult<"bind" | "none"> {
+    return evidenceRequired(
+      "manual.note-touch-began-unimplemented",
+      ["D04", "D05", "MJ03", "MJ08"],
+      "The InputManager/GamePlayButton owner path is represented, but the concrete note family must close its manual Began judgement before owner mutation.",
+    );
+  }
+
+  commitManualTouchBegan(_input: ManualNoteTouchInput): void {}
+
+  preflightManualTouchMoved(
+    _input: ManualNoteTouchInput,
+  ): SimulatorResult<void> {
+    return evidenceRequired(
+      "manual.note-touch-moved-unimplemented",
+      ["D07", "D08", "D09", "D10", "MJ13", "MJ14", "MJ15"],
+      "The concrete Flick, Multiple, Long or Slide owner must close movement judgement before owner mutation.",
+    );
+  }
+
+  commitManualTouchMoved(_input: ManualNoteTouchInput): void {}
+
+  preflightManualTouchEnded(
+    _input: ManualNoteTouchInput,
+  ): SimulatorResult<void> {
+    return evidenceRequired(
+      "manual.note-touch-ended-unimplemented",
+      ["D09", "D10", "D12", "MJ19", "MJ21"],
+      "The concrete Long or Slide owner must close release judgement before owner mutation.",
+    );
+  }
+
+  commitManualTouchEnded(_input: ManualNoteTouchInput): void {}
+
   snapshot(): NoteStateSnapshot {
     return {
       poolObjectId: this.poolObjectId,
       noteIndex: this.noteInformationValue?.index ?? null,
       state: this.stateValue,
+      fingerId: this.fingerIdValue,
+      buttonTypes: [...(this.noteInformationValue?.buttonTypes ?? [])],
     };
   }
 
