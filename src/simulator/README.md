@@ -29,7 +29,7 @@ Auto Live A00–A10已完成第十四次提交后独立逐项重验收。验收�
 
 OneFrame 容量现在由原作证据固定为 5，不再接受宿主或测试容量配置。公开的 `OneFrameJudgementBatch` 仅包含本阶段闭合的 Auto Live 判定字段，不是原作完整 `OneFrameTotalData`。分数、Power、生命、Skill/Fever、音频、粒子、渲染和 HUD 字段在类型上保持缺席，而不是填零。
 
-当前阶段是“手动输入与判定”，锁定实机版本`jp.co.craftegg.band` 10.1.4（230），任务书位于`tmp/simulator-manual-input-judgement-task.md`。Reverse最终证据提交`4bda0f3ad2fb84ef972bf352e78aac57dad44c8b`已关闭V01、D01–D15与MJ01–MJ26；M00–M02完成，M03生产实现硬门已解除。M03已完成显式manual outer-frame、Float32 raw position和owner-bound opaque button resolution边界。M04已建立整帧dispatch事务、15-slot finger owner、16个GamePlayButton、phase复用、wide containment及ordinary strict candidate scan，但Slide current/near-line仍失败关闭；M05仅完成Float32判定窗口纯内核，Normal/Flick/Directional与manual OneFrame尚未实现。局部完成不等于手动输入阶段验收关闭。
+当前阶段是“手动输入与判定”，锁定实机版本`jp.co.craftegg.band` 10.1.4（230），任务书位于`tmp/simulator-manual-input-judgement-task.md`。Reverse最终证据提交`4bda0f3ad2fb84ef972bf352e78aac57dad44c8b`已关闭V01、D01–D15与MJ01–MJ26；M00–M02完成，M03生产实现硬门已解除。M03已完成显式manual outer-frame、Float32 raw position和owner-bound opaque button resolution边界。M04已建立整帧dispatch事务、15-slot finger owner、16个GamePlayButton、phase复用、wide containment及ordinary strict candidate scan，但Slide current/near-line仍失败关闭。M05已完成Float32窗口、Normal Began和owner-bound单manual OneFrame事务；Flick/Directional仍因screen-to-world movement rate owner未接入而失败关闭，同帧多manual聚合留待M10。局部完成不等于手动输入阶段验收关闭。
 
 `src/simulator/engine` 不依赖 React、Pixi、Tauri、DOM、编辑器谱面类型或窗口协议。宿主 API 是 GarupaEditor 的可移植边界，不宣称属于原作接口。
 

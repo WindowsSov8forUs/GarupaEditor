@@ -190,6 +190,13 @@
 - 两个不同button的Perfect同帧验证第二reservation在preflight失败，两个resolution均未消费，dispatcher finger、NoteManager snapshot、OneFrame slot/trace全部零mutation。
 - 原M04测试桩只适配新的owner-produced Began plan接口；production文件未在测试提交中修改。Normal定向4项与dependency verifier通过。
 
+#### 2026-07-29 第十六批：Flick movement边界复核与README同步
+
+- 冻结10.1.4 `calculateScreenPosToWorldDistanceRate`确认raw screen position先经Camera ScreenToWorldPoint，再除全局scale与calculated-data scale；Flick/Directional严格阈值消费的是该rate，不是像素距离。
+- portable contract只允许raw Float32 screen position进入resolver并取得GamePlayButton capability，当前host没有证据允许的Camera/scale owner或movement-rate capability。因此Flick/Directional继续在concrete family preflight失败关闭，不以像素delta、固定屏高、clamp或epsilon替代。
+- 同步`src/simulator/README.md`：Normal/单manual OneFrame已实现；Flick/Directional、Slide near-line与M10 simultaneous aggregation仍未实现。
+- 本批不修改生产行为或测试。
+
 ## 2. 固定范围
 
 ### 2.1 纳入范围
