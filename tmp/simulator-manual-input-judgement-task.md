@@ -159,6 +159,13 @@
 - 所有非Int32 sweetFrame、非exact Float32、非有限位置、非正BPM在运算前失败关闭；本批不接Note family、不分配OneFrame、不写finger/state。
 - production TypeScript通过；工作树独立runner已逐项重放MJ02全部12行并验证3类非法输入，按提交纪律留到下一测试批。
 
+#### 2026-07-29 第十二批：M05判定纯内核定向测试
+
+- 新增`simulator:test:manual-judgement`，从冻结oracle直接读取MJ02并锁定algorithm原文、12个diff bits、rounded frame、raw result与JudgeTiming；不从TypeScript实现生成期望。
+- production `getManualNoteResult`逐行匹配12/12；以BPM120和独立distance反构造调用production `judgeManualNote`，逐行匹配raw/timing。
+- 额外验证Perfect→None timing、note在current后方→Slow，以及非exact `0.1`、BPM0、NaN position三类失败关闭；dependency verifier通过。
+- production文件未在测试提交中修改。
+
 ## 2. 固定范围
 
 ### 2.1 纳入范围
