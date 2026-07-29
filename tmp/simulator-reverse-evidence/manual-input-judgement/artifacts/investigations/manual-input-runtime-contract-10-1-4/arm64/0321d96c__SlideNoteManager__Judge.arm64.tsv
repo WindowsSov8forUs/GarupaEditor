@@ -1,0 +1,113 @@
+address	bytes	instruction	resolved_target
+0x321D96C	E923BB6D	stp d9, d8, [sp, #-0x50]!	-
+0x321D970	FE0B00F9	str x30, [sp, #0x10]	-
+0x321D974	F85F02A9	stp x24, x23, [sp, #0x20]	-
+0x321D978	F65703A9	stp x22, x21, [sp, #0x30]	-
+0x321D97C	F44F04A9	stp x20, x19, [sp, #0x40]	-
+0x321D980	B5010290	adrp x21, #0x7251000	-
+0x321D984	A83E5D39	ldrb w8, [x21, #0x74f]	-
+0x321D988	F30301AA	mov x19, x1	-
+0x321D98C	081CA04E	mov v8.16b, v0.16b	-
+0x321D990	F40300AA	mov x20, x0	-
+0x321D994	88010037	tbnz w8, #0, #0x321d9c4	-
+0x321D998	C0D30190	adrp x0, #0x6c95000	-
+0x321D99C	009447F9	ldr x0, [x0, #0xf28]	-
+0x321D9A0	2EC8EF97	bl #0x2e0fa58	-
+0x321D9A4	C0D30190	adrp x0, #0x6c95000	-
+0x321D9A8	009847F9	ldr x0, [x0, #0xf30]	-
+0x321D9AC	2BC8EF97	bl #0x2e0fa58	-
+0x321D9B0	C0D30190	adrp x0, #0x6c95000	-
+0x321D9B4	009C47F9	ldr x0, [x0, #0xf38]	-
+0x321D9B8	28C8EF97	bl #0x2e0fa58	-
+0x321D9BC	28008052	mov w8, #1	-
+0x321D9C0	A83E1D39	strb w8, [x21, #0x74f]	-
+0x321D9C4	881640F9	ldr x8, [x20, #0x28]	-
+0x321D9C8	080B00B4	cbz x8, #0x321db28	-
+0x321D9CC	801E40F9	ldr x0, [x20, #0x38]	-
+0x321D9D0	C00A00B4	cbz x0, #0x321db28	-
+0x321D9D4	C9D30190	adrp x9, #0x6c95000	-
+0x321D9D8	299547F9	ldr x9, [x9, #0xf28]	-
+0x321D9DC	011140F9	ldr x1, [x8, #0x20]	-
+0x321D9E0	220140F9	ldr x2, [x9]	-
+0x321D9E4	5C597C94	bl #0x5133f54	System.Collections.Generic.Dictionary<object, object>$$get_Item
+0x321D9E8	000A00B4	cbz x0, #0x321db28	-
+0x321D9EC	D7D30190	adrp x23, #0x6c95000	-
+0x321D9F0	F79E47F9	ldr x23, [x23, #0xf38]	-
+0x321D9F4	F40300AA	mov x20, x0	-
+0x321D9F8	35008052	mov w21, #1	-
+0x321D9FC	38008012	mov w24, #-2	-
+0x321DA00	881A40B9	ldr w8, [x20, #0x18]	-
+0x321DA04	B6060051	sub w22, w21, #1	-
+0x321DA08	1F010071	cmp w8, #0	-
+0x321DA0C	08A5881A	cinc w8, w8, lt	-
+0x321DA10	DF06886B	cmp w22, w8, asr #1	-
+0x321DA14	6A050054	b.ge #0x321dac0	-
+0x321DA18	E20240F9	ldr x2, [x23]	-
+0x321DA1C	E00314AA	mov x0, x20	-
+0x321DA20	E103162A	mov w1, w22	-
+0x321DA24	B3289594	bl #0x5767cf0	System.Collections.Generic.List<object>$$get_Item
+0x321DA28	000800B4	cbz x0, #0x321db28	-
+0x321DA2C	E20240F9	ldr x2, [x23]	-
+0x321DA30	091040BD	ldr s9, [x0, #0x10]	-
+0x321DA34	E00314AA	mov x0, x20	-
+0x321DA38	E103152A	mov w1, w21	-
+0x321DA3C	AD289594	bl #0x5767cf0	System.Collections.Generic.List<object>$$get_Item
+0x321DA40	400700B4	cbz x0, #0x321db28	-
+0x321DA44	2021281E	fcmp s9, s8	-
+0x321DA48	8B000054	b.lt #0x321da58	-
+0x321DA4C	001040BD	ldr s0, [x0, #0x10]	-
+0x321DA50	0020281E	fcmp s0, s8	-
+0x321DA54	C4030054	b.mi #0x321dacc	-
+0x321DA58	881A40B9	ldr w8, [x20, #0x18]	-
+0x321DA5C	E20240F9	ldr x2, [x23]	-
+0x321DA60	E00314AA	mov x0, x20	-
+0x321DA64	0803080B	add w8, w24, w8	-
+0x321DA68	01050011	add w1, w8, #1	-
+0x321DA6C	A1289594	bl #0x5767cf0	System.Collections.Generic.List<object>$$get_Item
+0x321DA70	C00500B4	cbz x0, #0x321db28	-
+0x321DA74	881A40B9	ldr w8, [x20, #0x18]	-
+0x321DA78	E20240F9	ldr x2, [x23]	-
+0x321DA7C	091040BD	ldr s9, [x0, #0x10]	-
+0x321DA80	E00314AA	mov x0, x20	-
+0x321DA84	0103080B	add w1, w24, w8	-
+0x321DA88	9A289594	bl #0x5767cf0	System.Collections.Generic.List<object>$$get_Item
+0x321DA8C	E00400B4	cbz x0, #0x321db28	-
+0x321DA90	B5060011	add w21, w21, #1	-
+0x321DA94	2021281E	fcmp s9, s8	-
+0x321DA98	18070051	sub w24, w24, #1	-
+0x321DA9C	28FBFF54	b.hi #0x321da00	-
+0x321DAA0	001040BD	ldr s0, [x0, #0x10]	-
+0x321DAA4	0020281E	fcmp s0, s8	-
+0x321DAA8	CDFAFF54	b.le #0x321da00	-
+0x321DAAC	881A40B9	ldr w8, [x20, #0x18]	-
+0x321DAB0	E20240F9	ldr x2, [x23]	-
+0x321DAB4	0801180B	add w8, w8, w24	-
+0x321DAB8	16090011	add w22, w8, #2	-
+0x321DABC	05000014	b #0x321dad0	-
+0x321DAC0	E8031F2A	mov w8, wzr	-
+0x321DAC4	00008012	mov w0, #-1	-
+0x321DAC8	11000014	b #0x321db0c	-
+0x321DACC	E20240F9	ldr x2, [x23]	-
+0x321DAD0	E00314AA	mov x0, x20	-
+0x321DAD4	E103162A	mov w1, w22	-
+0x321DAD8	86289594	bl #0x5767cf0	System.Collections.Generic.List<object>$$get_Item
+0x321DADC	600200B4	cbz x0, #0x321db28	-
+0x321DAE0	881A40B9	ldr w8, [x20, #0x18]	-
+0x321DAE4	001440B9	ldr w0, [x0, #0x14]	-
+0x321DAE8	7F0200B9	str wzr, [x19]	-
+0x321DAEC	1F010071	cmp w8, #0	-
+0x321DAF0	08A5881A	cinc w8, w8, lt	-
+0x321DAF4	1F040031	cmn w0, #1	-
+0x321DAF8	C0000054	b.eq #0x321db10	-
+0x321DAFC	087D0113	asr w8, w8, #1	-
+0x321DB00	0801166B	subs w8, w8, w22	-
+0x321DB04	E9C79F1A	cset w9, le	-
+0x321DB08	0801094B	sub w8, w8, w9	-
+0x321DB0C	680200B9	str w8, [x19]	-
+0x321DB10	F44F44A9	ldp x20, x19, [sp, #0x40]	-
+0x321DB14	F65743A9	ldp x22, x21, [sp, #0x30]	-
+0x321DB18	F85F42A9	ldp x24, x23, [sp, #0x20]	-
+0x321DB1C	FE0B40F9	ldr x30, [sp, #0x10]	-
+0x321DB20	E923C56C	ldp d9, d8, [sp], #0x50	-
+0x321DB24	C0035FD6	ret	-
+0x321DB28	6FC8EF97	bl #0x2e0fce4	-

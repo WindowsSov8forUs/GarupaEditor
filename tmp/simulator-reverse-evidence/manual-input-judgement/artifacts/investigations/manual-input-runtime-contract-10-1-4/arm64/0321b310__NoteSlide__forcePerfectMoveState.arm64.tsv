@@ -1,0 +1,66 @@
+address	bytes	instruction	resolved_target
+0x321B310	FE0F1EF8	str x30, [sp, #-0x20]!	-
+0x321B314	F44F01A9	stp x20, x19, [sp, #0x10]	-
+0x321B318	B40102D0	adrp x20, #0x7251000	-
+0x321B31C	886A5C39	ldrb w8, [x20, #0x71a]	-
+0x321B320	F30300AA	mov x19, x0	-
+0x321B324	C8000037	tbnz w8, #0, #0x321b33c	-
+0x321B328	80D301F0	adrp x0, #0x6c8e000	-
+0x321B32C	008040F9	ldr x0, [x0, #0x100]	-
+0x321B330	CAD1EF97	bl #0x2e0fa58	-
+0x321B334	28008052	mov w8, #1	-
+0x321B338	886A1C39	strb w8, [x20, #0x71a]	-
+0x321B33C	607E40F9	ldr x0, [x19, #0xf8]	-
+0x321B340	800600B4	cbz x0, #0x321b410	-
+0x321B344	E1031FAA	mov x1, xzr	-
+0x321B348	186A1594	bl #0x3775ba8	NoteManager$$GetAdjustMusicPos
+0x321B34C	683240F9	ldr x8, [x19, #0x60]	-
+0x321B350	080600B4	cbz x8, #0x321b410	-
+0x321B354	015940BD	ldr s1, [x8, #0x58]	-
+0x321B358	21D8215E	scvtf s1, s1	-
+0x321B35C	0038211E	fsub s0, s0, s1	-
+0x321B360	0820201E	fcmp s0, #0.0	-
+0x321B364	8A000054	b.ge #0x321b374	-
+0x321B368	F44F41A9	ldp x20, x19, [sp, #0x10]	-
+0x321B36C	FE0742F8	ldr x30, [sp], #0x20	-
+0x321B370	C0035FD6	ret	-
+0x321B374	21008052	mov w1, #1	-
+0x321B378	E00313AA	mov x0, x19	-
+0x321B37C	E2031FAA	mov x2, xzr	-
+0x321B380	21632194	bl #0x3a74004	NoteBase$$ChangeState
+0x321B384	94D301F0	adrp x20, #0x6c8e000	-
+0x321B388	948240F9	ldr x20, [x20, #0x100]	-
+0x321B38C	800240F9	ldr x0, [x20]	-
+0x321B390	08E040B9	ldr w8, [x0, #0xe0]	-
+0x321B394	68000035	cbnz w8, #0x321b3a0	-
+0x321B398	0DD2EF97	bl #0x2e0fbcc	-
+0x321B39C	800240F9	ldr x0, [x20]	-
+0x321B3A0	085C40F9	ldr x8, [x0, #0xb8]	-
+0x321B3A4	690240F9	ldr x9, [x19]	-
+0x321B3A8	81008052	mov w1, #4	-
+0x321B3AC	E00313AA	mov x0, x19	-
+0x321B3B0	0005402D	ldp s0, s1, [x8]	-
+0x321B3B4	283541F9	ldr x8, [x9, #0x268]	-
+0x321B3B8	233941F9	ldr x3, [x9, #0x270]	-
+0x321B3BC	E2031F2A	mov w2, wzr	-
+0x321B3C0	00013FD6	blr x8	-
+0x321B3C4	E00313AA	mov x0, x19	-
+0x321B3C8	E1031FAA	mov x1, xzr	-
+0x321B3CC	8914FB97	bl #0x30e05f0	NoteFrontBase$$repositionToJudgeLine
+0x321B3D0	60CE40F9	ldr x0, [x19, #0x198]	-
+0x321B3D4	E00100B4	cbz x0, #0x321b410	-
+0x321B3D8	E1031FAA	mov x1, xzr	-
+0x321B3DC	2E622194	bl #0x3a73c94	NoteBase$$get_TargetCenterButton
+0x321B3E0	800100B4	cbz x0, #0x321b410	-
+0x321B3E4	E1031FAA	mov x1, xzr	-
+0x321B3E8	94851994	bl #0x387ca38	GamePlayButton$$NoteLaneEffectOn
+0x321B3EC	60CE40F9	ldr x0, [x19, #0x198]	-
+0x321B3F0	000100B4	cbz x0, #0x321b410	-
+0x321B3F4	E1031FAA	mov x1, xzr	-
+0x321B3F8	27622194	bl #0x3a73c94	NoteBase$$get_TargetCenterButton
+0x321B3FC	A00000B4	cbz x0, #0x321b410	-
+0x321B400	F44F41A9	ldp x20, x19, [sp, #0x10]	-
+0x321B404	E1031FAA	mov x1, xzr	-
+0x321B408	FE0742F8	ldr x30, [sp], #0x20	-
+0x321B40C	B7851914	b #0x387cae8	GamePlayButton$$NoteLaneEffectOffReserve
+0x321B410	35D2EF97	bl #0x2e0fce4	-

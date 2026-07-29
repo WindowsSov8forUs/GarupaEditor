@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "version_name": "10.1.4",
+    "version_code": 230,
+    "abi": "arm64-v8a",
+    "libil2cpp_sha256": "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F",
+    "global_metadata_sha256": "298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F"
+  },
+  "capability": {
+    "static": "local-only binary and metadata reads",
+    "runtime": "R1 observation-only hooks and reads",
+    "memory_writes": false,
+    "return_replacement": false,
+    "apk_modification": false
+  },
+  "gates": {
+    "version_rebaseline": "closed",
+    "static_contract": "closed",
+    "slide_wait_boundary": "closed",
+    "type_layout_and_enums": "closed",
+    "runtime_oracle": "blocked",
+    "manual_input_gate": "blocked"
+  },
+  "static_counts": {
+    "methods_mapped": 99,
+    "layouts_unchanged": 12,
+    "enums_unchanged": 8
+  },
+  "closed_findings": [
+    "V01 target package, binary, metadata and all static method identities are version-matched to 10.1.4 / 230.",
+    "D01 Slide Wait and execOverWait are independent exact ARM64 ranges on 10.1.4.",
+    "D02 owner fields and enum numeric identities are independently present in the 10.1.4 dump."
+  ],
+  "blocking_findings": [
+    "D03-D15 require committed 10.1.4 runtime observations and fixed event traces."
+  ]
+}

@@ -1,0 +1,11 @@
+address	bytes	instruction	resolved_target
+0x30E91A0	FE0F1FF8	str x30, [sp, #-0x10]!	-
+0x30E91A4	E103271E	fmov s1, wzr	-
+0x30E91A8	E303271E	fmov s3, wzr	-
+0x30E91AC	8ADBFF97	bl #0x30dffd4	NoteFrontBase$$calculateScreenPosToWorldDistanceRate
+0x30E91B0	6822FFB0	adrp x8, #0x1536000	-
+0x30E91B4	018145BD	ldr s1, [x8, #0x580]	-
+0x30E91B8	0020211E	fcmp s0, s1	-
+0x30E91BC	E0D79F1A	cset w0, gt	-
+0x30E91C0	FE0741F8	ldr x30, [sp], #0x10	-
+0x30E91C4	C0035FD6	ret	-

@@ -1,0 +1,51 @@
+address	bytes	instruction	resolved_target
+0x30EAAC0	FE0F1EF8	str x30, [sp, #-0x20]!	-
+0x30EAAC4	F44F01A9	stp x20, x19, [sp, #0x10]	-
+0x30EAAC8	340B02D0	adrp x20, #0x7250000	-
+0x30EAACC	88827139	ldrb w8, [x20, #0xc60]	-
+0x30EAAD0	F30300AA	mov x19, x0	-
+0x30EAAD4	C8000037	tbnz w8, #0, #0x30eaaec	-
+0x30EAAD8	20DD0190	adrp x0, #0x6c8e000	-
+0x30EAADC	008040F9	ldr x0, [x0, #0x100]	-
+0x30EAAE0	DE93F497	bl #0x2e0fa58	-
+0x30EAAE4	28008052	mov w8, #1	-
+0x30EAAE8	88823139	strb w8, [x20, #0xc60]	-
+0x30EAAEC	607E40F9	ldr x0, [x19, #0xf8]	-
+0x30EAAF0	A00400B4	cbz x0, #0x30eab84	-
+0x30EAAF4	E1031FAA	mov x1, xzr	-
+0x30EAAF8	2C2C1A94	bl #0x3775ba8	NoteManager$$GetAdjustMusicPos
+0x30EAAFC	683240F9	ldr x8, [x19, #0x60]	-
+0x30EAB00	280400B4	cbz x8, #0x30eab84	-
+0x30EAB04	015940BD	ldr s1, [x8, #0x58]	-
+0x30EAB08	21D8215E	scvtf s1, s1	-
+0x30EAB0C	0038211E	fsub s0, s0, s1	-
+0x30EAB10	0820201E	fcmp s0, #0.0	-
+0x30EAB14	8A000054	b.ge #0x30eab24	-
+0x30EAB18	F44F41A9	ldp x20, x19, [sp, #0x10]	-
+0x30EAB1C	FE0742F8	ldr x30, [sp], #0x20	-
+0x30EAB20	C0035FD6	ret	-
+0x30EAB24	21008052	mov w1, #1	-
+0x30EAB28	E00313AA	mov x0, x19	-
+0x30EAB2C	E2031FAA	mov x2, xzr	-
+0x30EAB30	35252694	bl #0x3a74004	NoteBase$$ChangeState
+0x30EAB34	34DD0190	adrp x20, #0x6c8e000	-
+0x30EAB38	948240F9	ldr x20, [x20, #0x100]	-
+0x30EAB3C	800240F9	ldr x0, [x20]	-
+0x30EAB40	08E040B9	ldr w8, [x0, #0xe0]	-
+0x30EAB44	68000035	cbnz w8, #0x30eab50	-
+0x30EAB48	2194F497	bl #0x2e0fbcc	-
+0x30EAB4C	800240F9	ldr x0, [x20]	-
+0x30EAB50	085C40F9	ldr x8, [x0, #0xb8]	-
+0x30EAB54	690240F9	ldr x9, [x19]	-
+0x30EAB58	81008052	mov w1, #4	-
+0x30EAB5C	E00313AA	mov x0, x19	-
+0x30EAB60	0005402D	ldp s0, s1, [x8]	-
+0x30EAB64	283541F9	ldr x8, [x9, #0x268]	-
+0x30EAB68	233941F9	ldr x3, [x9, #0x270]	-
+0x30EAB6C	E2031F2A	mov w2, wzr	-
+0x30EAB70	00013FD6	blr x8	-
+0x30EAB74	E00313AA	mov x0, x19	-
+0x30EAB78	F44F41A9	ldp x20, x19, [sp, #0x10]	-
+0x30EAB7C	FE0742F8	ldr x30, [sp], #0x20	-
+0x30EAB80	9CD6FF17	b #0x30e05f0	NoteFrontBase$$repositionToJudgeLine
+0x30EAB84	5894F497	bl #0x2e0fce4	-

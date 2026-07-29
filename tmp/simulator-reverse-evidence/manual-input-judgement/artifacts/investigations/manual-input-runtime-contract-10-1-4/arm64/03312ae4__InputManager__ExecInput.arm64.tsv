@@ -1,0 +1,40 @@
+address	bytes	instruction	resolved_target
+0x3312AE4	FE0F1EF8	str x30, [sp, #-0x20]!	-
+0x3312AE8	F44F01A9	stp x20, x19, [sp, #0x10]	-
+0x3312AEC	F30300AA	mov x19, x0	-
+0x3312AF0	E0031FAA	mov x0, xzr	-
+0x3312AF4	F403012A	mov w20, w1	-
+0x3312AF8	4128CC94	bl #0x661cbfc	UnityEngine.Input$$get_touchCount
+0x3312AFC	1F040071	cmp w0, #1	-
+0x3312B00	2B020054	b.lt #0x3312b44	-
+0x3312B04	9F1A0071	cmp w20, #6	-
+0x3312B08	6D010054	b.le #0x3312b34	-
+0x3312B0C	9F1E0071	cmp w20, #7	-
+0x3312B10	00020054	b.eq #0x3312b50	-
+0x3312B14	9F3E0071	cmp w20, #0xf	-
+0x3312B18	40020054	b.eq #0x3312b60	-
+0x3312B1C	9F460071	cmp w20, #0x11	-
+0x3312B20	21010054	b.ne #0x3312b44	-
+0x3312B24	E00313AA	mov x0, x19	-
+0x3312B28	F44F41A9	ldp x20, x19, [sp, #0x10]	-
+0x3312B2C	FE0742F8	ldr x30, [sp], #0x20	-
+0x3312B30	7C000014	b #0x3312d20	InputManager$$inputPlaying
+0x3312B34	9F120071	cmp w20, #4	-
+0x3312B38	C0010054	b.eq #0x3312b70	-
+0x3312B3C	9F160071	cmp w20, #5	-
+0x3312B40	20FFFF54	b.eq #0x3312b24	-
+0x3312B44	F44F41A9	ldp x20, x19, [sp, #0x10]	-
+0x3312B48	FE0742F8	ldr x30, [sp], #0x20	-
+0x3312B4C	C0035FD6	ret	-
+0x3312B50	E00313AA	mov x0, x19	-
+0x3312B54	F44F41A9	ldp x20, x19, [sp, #0x10]	-
+0x3312B58	FE0742F8	ldr x30, [sp], #0x20	-
+0x3312B5C	4D010014	b #0x3313090	InputManager$$inputPause
+0x3312B60	E00313AA	mov x0, x19	-
+0x3312B64	F44F41A9	ldp x20, x19, [sp, #0x10]	-
+0x3312B68	FE0742F8	ldr x30, [sp], #0x20	-
+0x3312B6C	C0010014	b #0x331326c	InputManager$$inputMoveTimeWaitForPlay
+0x3312B70	E00313AA	mov x0, x19	-
+0x3312B74	F44F41A9	ldp x20, x19, [sp, #0x10]	-
+0x3312B78	FE0742F8	ldr x30, [sp], #0x20	-
+0x3312B7C	01000014	b #0x3312b80	InputManager$$inputPlayingNotContainSound

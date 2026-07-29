@@ -1,0 +1,33 @@
+address	bytes	instruction	resolved_target
+0x30EAA40	FE4FBFA9	stp x30, x19, [sp, #-0x10]!	-
+0x30EAA44	E1031FAA	mov x1, xzr	-
+0x30EAA48	F30300AA	mov x19, x0	-
+0x30EAA4C	DA242694	bl #0x3a73db4	NoteBase$$Move
+0x30EAA50	60AA40F9	ldr x0, [x19, #0x150]	-
+0x30EAA54	400300B4	cbz x0, #0x30eaabc	-
+0x30EAA58	E1031FAA	mov x1, xzr	-
+0x30EAA5C	54190894	bl #0x32f0fac	InGameCalculatedData$$get_IsAutoPlay
+0x30EAA60	20010037	tbnz w0, #0, #0x30eaa84	-
+0x30EAA64	687A40F9	ldr x8, [x19, #0xf0]	-
+0x30EAA68	A80200B4	cbz x8, #0x30eaabc	-
+0x30EAA6C	090D40F9	ldr x9, [x8, #0x18]	-
+0x30EAA70	002140F9	ldr x0, [x8, #0x40]	-
+0x30EAA74	011540F9	ldr x1, [x8, #0x28]	-
+0x30EAA78	20013FD6	blr x9	-
+0x30EAA7C	1F380071	cmp w0, #0xe	-
+0x30EAA80	81000054	b.ne #0x30eaa90	-
+0x30EAA84	E00313AA	mov x0, x19	-
+0x30EAA88	FE4FC1A8	ldp x30, x19, [sp], #0x10	-
+0x30EAA8C	0D000014	b #0x30eaac0	NoteLong$$forcePerfectMoveState
+0x30EAA90	E00313AA	mov x0, x19	-
+0x30EAA94	E1031FAA	mov x1, xzr	-
+0x30EAA98	8F2A2694	bl #0x3a754d4	NoteBase$$get_isProgressOverLine
+0x30EAA9C	C0000036	tbz w0, #0, #0x30eaab4	-
+0x30EAAA0	21008052	mov w1, #1	-
+0x30EAAA4	E00313AA	mov x0, x19	-
+0x30EAAA8	E2031FAA	mov x2, xzr	-
+0x30EAAAC	FE4FC1A8	ldp x30, x19, [sp], #0x10	-
+0x30EAAB0	55252614	b #0x3a74004	NoteBase$$ChangeState
+0x30EAAB4	FE4FC1A8	ldp x30, x19, [sp], #0x10	-
+0x30EAAB8	C0035FD6	ret	-
+0x30EAABC	8A94F497	bl #0x2e0fce4	-

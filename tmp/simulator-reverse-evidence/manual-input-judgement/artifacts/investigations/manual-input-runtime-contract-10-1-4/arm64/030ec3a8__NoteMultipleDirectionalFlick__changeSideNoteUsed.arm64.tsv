@@ -1,0 +1,56 @@
+address	bytes	instruction	resolved_target
+0x30EC3A8	FE57BEA9	stp x30, x21, [sp, #-0x20]!	-
+0x30EC3AC	F44F01A9	stp x20, x19, [sp, #0x10]	-
+0x30EC3B0	340B0290	adrp x20, #0x7250000	-
+0x30EC3B4	B5DC01D0	adrp x21, #0x6c82000	-
+0x30EC3B8	88B67139	ldrb w8, [x20, #0xc6d]	-
+0x30EC3BC	B52241F9	ldr x21, [x21, #0x240]	-
+0x30EC3C0	F30300AA	mov x19, x0	-
+0x30EC3C4	C8000037	tbnz w8, #0, #0x30ec3dc	-
+0x30EC3C8	A0DC01D0	adrp x0, #0x6c82000	-
+0x30EC3CC	002041F9	ldr x0, [x0, #0x240]	-
+0x30EC3D0	A28DF497	bl #0x2e0fa58	-
+0x30EC3D4	28008052	mov w8, #1	-
+0x30EC3D8	88B63139	strb w8, [x20, #0xc6d]	-
+0x30EC3DC	A00240F9	ldr x0, [x21]	-
+0x30EC3E0	74D640F9	ldr x20, [x19, #0x1a8]	-
+0x30EC3E4	08E040B9	ldr w8, [x0, #0xe0]	-
+0x30EC3E8	48000035	cbnz w8, #0x30ec3f0	-
+0x30EC3EC	F88DF497	bl #0x2e0fbcc	-
+0x30EC3F0	E00314AA	mov x0, x20	-
+0x30EC3F4	E1031FAA	mov x1, xzr	-
+0x30EC3F8	E2031FAA	mov x2, xzr	-
+0x30EC3FC	2A43D394	bl #0x65bd0a4	UnityEngine.Object$$op_Inequality
+0x30EC400	20010036	tbz w0, #0, #0x30ec424	-
+0x30EC404	74A20691	add x20, x19, #0x1a8	-
+0x30EC408	800240F9	ldr x0, [x20]	-
+0x30EC40C	A00300B4	cbz x0, #0x30ec480	-
+0x30EC410	98030094	bl #0x30ed270	NoteMultipleDirectionalFlick$$ChangeLeftNoteUsed
+0x30EC414	E00314AA	mov x0, x20	-
+0x30EC418	E1031FAA	mov x1, xzr	-
+0x30EC41C	9F0200F9	str xzr, [x20]	-
+0x30EC420	798DF497	bl #0x2e0fa04	-
+0x30EC424	A00240F9	ldr x0, [x21]	-
+0x30EC428	74DA40F9	ldr x20, [x19, #0x1b0]	-
+0x30EC42C	08E040B9	ldr w8, [x0, #0xe0]	-
+0x30EC430	48000035	cbnz w8, #0x30ec438	-
+0x30EC434	E68DF497	bl #0x2e0fbcc	-
+0x30EC438	E00314AA	mov x0, x20	-
+0x30EC43C	E1031FAA	mov x1, xzr	-
+0x30EC440	E2031FAA	mov x2, xzr	-
+0x30EC444	1843D394	bl #0x65bd0a4	UnityEngine.Object$$op_Inequality
+0x30EC448	60010036	tbz w0, #0, #0x30ec474	-
+0x30EC44C	73C20691	add x19, x19, #0x1b0	-
+0x30EC450	600240F9	ldr x0, [x19]	-
+0x30EC454	600100B4	cbz x0, #0x30ec480	-
+0x30EC458	B0030094	bl #0x30ed318	NoteMultipleDirectionalFlick$$ChangeRightNoteUsed
+0x30EC45C	7F0200F9	str xzr, [x19]	-
+0x30EC460	E00313AA	mov x0, x19	-
+0x30EC464	F44F41A9	ldp x20, x19, [sp, #0x10]	-
+0x30EC468	E1031FAA	mov x1, xzr	-
+0x30EC46C	FE57C2A8	ldp x30, x21, [sp], #0x20	-
+0x30EC470	658DF417	b #0x2e0fa04	-
+0x30EC474	F44F41A9	ldp x20, x19, [sp, #0x10]	-
+0x30EC478	FE57C2A8	ldp x30, x21, [sp], #0x20	-
+0x30EC47C	C0035FD6	ret	-
+0x30EC480	198EF497	bl #0x2e0fce4	-
