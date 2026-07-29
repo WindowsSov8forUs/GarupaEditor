@@ -6,8 +6,12 @@ import {
   type ManualInputButtonResolution,
   type ManualInputFrame,
 } from "../engine/data/manualInput";
-import type { SimulatorResult } from "../engine/evidence";
-import { InputManager } from "../engine/managers/inputBoundaries";
+import { ok, type SimulatorResult } from "../engine/evidence";
+import {
+  InputManager,
+  type ManualInputDispatchPlan,
+  type ManualInputDispatcher,
+} from "../engine/managers/inputBoundaries";
 import { createSimulatorEngine } from "../host/createSimulatorEngine";
 import { engineInput, noteBatch } from "./firstSliceFixtures";
 
@@ -20,6 +24,18 @@ const tests: TestCase[] = [];
 const manualPlayMode = { kind: "manual" } as const;
 const delta = Math.fround(1 / 60);
 const position = Object.freeze({ x: Math.fround(580), y: Math.fround(650) });
+
+class NoopManualInputDispatcher implements ManualInputDispatcher {
+  commitCount = 0;
+
+  preflight(frame: Parameters<ManualInputDispatcher["preflight"]>[0]) {
+    return ok(Object.freeze({ touchCount: frame.touches.length }));
+  }
+
+  commit(_plan: ManualInputDispatchPlan): void {
+    this.commitCount += 1;
+  }
+}
 
 function test(name: string, run: () => void): void {
   tests.push({ name, run });
@@ -89,6 +105,8 @@ test("MJ01 manual活动外帧要求显式空touch数组且只消费一次", () =
 test("MJ07 prepared copy冻结caller alias且Moved Stationary Ended不重绑", () => {
   const manager = new InputManager(manualPlayMode);
   requireOk(manager.initialize(), "initialize input manager");
+  const dispatcher = new NoopManualInputDispatcher();
+  requireOk(manager.registerDispatcher(dispatcher), "register input dispatcher");
   const mutablePosition = { x: Math.fround(580), y: Math.fround(650) };
   const beganResolution = requireOk(
     manager.issueButtonResolution(mutablePosition, {}),
@@ -109,6 +127,7 @@ test("MJ07 prepared copy冻结caller alias且Moved Stationary Ended不重绑", (
     requireOk(manager.execInput(GameState.PlayingSound), `consume ${phase}`);
   }
   const snapshot = manager.snapshot();
+  assertEqual(dispatcher.commitCount, 4, "one dispatch commit per non-empty frame");
   assertDeepEqual(snapshot.trace.map((frame) => frame.touches[0]?.phase), [0, 1, 2, 3],
     "phase trace preserves outer-frame order");
   assertDeepEqual(snapshot.trace[0]?.touches[0]?.position, position,
@@ -236,6 +255,8 @@ test("MJ26 malformed foreign forged和later-invalid整帧零mutation", () => {
   const prepared = requireOk(owner.preflight({ touches: [validTouch] }),
     "capability remains usable after rejected frames");
   assertEqual(prepared.touches[0]?.resolvedButton, true, "prepared owner projection");
+  assertDeepEqual(owner.snapshot(), ownerBefore, "pure preflight does not consume capability");
+  requireOk(owner.commit(prepared), "commit prepared owner frame");
   const afterConsume = owner.snapshot();
   assertEqual(afterConsume.consumedCount, 1, "valid frame consumes once");
   requireEvidence(owner.preflight({ touches: [validTouch] }),
@@ -257,9 +278,47 @@ test("MJ26 malformed foreign forged和later-invalid整帧零mutation", () => {
   }
 });
 
+test("dispatch preflight覆盖整帧后才消费resolution", () => {
+  const unregistered = new InputManager(manualPlayMode);
+  requireOk(unregistered.initialize(), "initialize unregistered dispatcher manager");
+  const unregisteredResolution = requireOk(
+    unregistered.issueButtonResolution(position, {}),
+    "issue unregistered dispatcher resolution",
+  );
+  const unregisteredBefore = unregistered.snapshot();
+  requireEvidence(unregistered.prepareOuterFrame({
+    touches: [touch(0, ManualTouchPhase.Began, unregisteredResolution)],
+  }), "input.manual-dispatcher-unregistered");
+  assertDeepEqual(unregistered.snapshot(), unregisteredBefore,
+    "unregistered dispatcher does not consume or stage");
+
+  const invalidPlan = new InputManager(manualPlayMode);
+  requireOk(invalidPlan.initialize(), "initialize invalid plan manager");
+  requireOk(invalidPlan.registerDispatcher({
+    preflight: () => ok(Object.freeze({ touchCount: 0 })),
+    commit: () => {
+      throw new Error("invalid plan must never commit");
+    },
+  }), "register invalid plan dispatcher");
+  const invalidPlanResolution = requireOk(
+    invalidPlan.issueButtonResolution(position, {}),
+    "issue invalid plan resolution",
+  );
+  const invalidPlanBefore = invalidPlan.snapshot();
+  requireEvidence(invalidPlan.prepareOuterFrame({
+    touches: [touch(0, ManualTouchPhase.Began, invalidPlanResolution)],
+  }), "input.invalid-dispatch-plan");
+  assertDeepEqual(invalidPlan.snapshot(), invalidPlanBefore,
+    "later invalid dispatch plan does not consume capability");
+});
+
 test("snapshot只读且不暴露capability或button owner", () => {
   const manager = new InputManager(manualPlayMode);
   requireOk(manager.initialize(), "initialize snapshot manager");
+  requireOk(
+    manager.registerDispatcher(new NoopManualInputDispatcher()),
+    "register snapshot dispatcher",
+  );
   const resolution = requireOk(manager.issueButtonResolution(position, {}), "issue snapshot cap");
   requireOk(manager.prepareOuterFrame({
     touches: [touch(0, ManualTouchPhase.Began, resolution)],

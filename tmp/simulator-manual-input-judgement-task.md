@@ -125,6 +125,12 @@
 - 本批只建立M04事务承载层，不宣称已恢复InputManager phase分发、GamePlayButton数组或NoteManager候选；这些仍处于M04后续批，禁止用no-op dispatcher进入production host。
 - production与testing TypeScript通过；M03定向兼容测试已在工作树扩展为6项，按生产/测试分离纪律留待下一提交。
 
+#### 2026-07-29 第八批：M04事务基础定向测试
+
+- 既有M03非空帧测试显式注册production形状的dispatcher，确认Began/Moved/Stationary/Ended每个外帧只commit一次；owner direct case改为断言pure preflight不消费、explicit commit才将count从0变1。
+- 新增无dispatcher与dispatcher漏项两条later-failure路径：已签发resolution在两类失败后均保持unused，pending/trace/owner snapshot全对象deep-equal；错误plan的commit函数若被误调用会直接抛错。
+- 定向测试现为6项，冻结MJ contract检查与dependency verifier继续通过；production文件未在测试提交中修改。
+
 ## 2. 固定范围
 
 ### 2.1 纳入范围
