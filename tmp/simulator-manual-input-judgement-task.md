@@ -56,7 +56,7 @@
 | M04 恢复输入分发与候选仲裁 | 进行中：phase/owner与ordinary scan生产/测试完成；M05过滤、Slide near-line待完成 | phase、finger/button/note owner、wide/ordinary/Slide/tie行为匹配 |
 | M05 恢复窗口与Single/Flick判定 | **已完成**：Normal/Flick/Directional、Single timeout、单manual OneFrame及定向测试通过 | GetResult/JudgeNote、Normal/Flick/Directional的边界bits与事件顺序匹配 |
 | M06 恢复Multiple手动判定 | **已完成**：真实touch、count/side/finger owner、type10、duplicate与production group测试通过 | 真实touch方向、count阈值、side owner、finish/deactivate匹配 |
-| M07 恢复Long手动状态机 | 未开始 | Began/Hold/Moved/Ended、合成release、grace、头尾与finger清理匹配 |
+| M07 恢复Long手动状态机 | 进行中：production完成，MJ11–MJ15独立测试提交待完成 | Began/Hold/Moved/Ended、合成release、grace、头尾与finger清理匹配 |
 | M08 恢复Slide手动状态机 | 未开始 | head/intermediate/end、band cursor、release/miss/invisible推进匹配 |
 | M09 恢复自然timeout Miss | 未开始 | Long start/end、Slide wait/stop及同帧Miss顺序匹配 |
 | M10 接入调度、OneFrame与原子边界 | 未开始 | 每外帧一次输入、adaptive/pause/fault/dispose、五槽与批原子性闭合 |
@@ -270,6 +270,16 @@
 - wrong direction、同帧第二finger与consumed-side duplicate分别验证零reservation/零全局mutation；7-frame synthetic验证manual type10 Perfect与side cleanup。
 - 测试批只适配Manual owner返回值和Auto Live direct runtime-group test double的新接口，不修改production；testing TypeScript、M06 6/6、Normal 4/4、Flick 6/6、M04 5/5及Auto Live AL01–AL22通过。
 - M06关闭，下一批进入M07 Long。
+
+#### 2026-07-29 第二十六批：M07 Long production实现
+
+- Long Began使用owner-adjusted position/BPM：None/Miss与重复Stop均不绑定；Good/Great/Perfect在whole-frame commit时提交type4 head、保存touch origin并切Stop。
+- owner delta由host作为Float32写入prepared frame并随opaque dispatch plan进入note；调用者仍不能提供delta。Long Moved containment内重置8.0，外部严格`f32(grace-delta)`且不clamp。
+- Flick after严格`>0.04`；Directional按after左右方向并严格horizontal `>0.01`；Multiple再要求full严格`>f32(f32((count-1)*0.01)+0.01)`。raw None先更新cached origin，result非None、movement success且grace>0才合成tail。
+- Long physical Ended：Normal按target containment保留raw或转Miss并提交type2；Flick/Directional/Multiple未成功move均转Miss，成功move已在同一Moved中合成type5/6/7并deactivate。
+- chart-construction已确认的directional endpoint/group关系直接导出给NoteManager；Long Multiple tail owner从root+LongAdd helper重建count/button list，缺helper失败关闭，禁止复用head button数组。
+- manual OneFrame ownership扩展Long head/tail absolute position、note type、button list与Multiple count；payload phase保留head/tail，Miss/Perfect timing继续owner清零。
+- Long no-touch crossing在manual只切Wait，不再沿Auto提交；Wait/Stop自然timeout仍留M09。production TypeScript、first-slice 17/17、M07工作树4项及Auto Live AL01–AL22通过；旧direct测试delta适配和M07测试文件留独立提交。
 
 ## 2. 固定范围
 

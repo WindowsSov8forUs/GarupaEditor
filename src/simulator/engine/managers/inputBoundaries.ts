@@ -102,6 +102,7 @@ export class InputManager {
 
   prepareOuterFrame(
     frame: ManualInputFrame | undefined,
+    deltaTimeSeconds?: number,
   ): SimulatorResult<void> {
     if (this.pendingFrameValue !== null) {
       return evidenceRequired(
@@ -137,7 +138,7 @@ export class InputManager {
         "Manual mode requires an explicit touch array for every consumed outer frame.",
       );
     }
-    const prepared = this.resolutionOwner.preflight(frame);
+    const prepared = this.resolutionOwner.preflight(frame, deltaTimeSeconds);
     if (prepared.status !== "ok") {
       return prepared;
     }
@@ -248,6 +249,7 @@ interface GamePlayButtonProjection {
 interface GamePlayButtonTouchPlan {
   readonly phase: "began" | "moved" | "ended" | "none";
   readonly touchPhase: ManualNoteTouchInput["phase"];
+  readonly deltaTimeSeconds: number;
   readonly fingerId: number;
   readonly position: ManualInputPosition;
   readonly beganPosition: ManualInputPosition | null;
@@ -360,6 +362,7 @@ export class GamePlayInputDispatcher implements ManualInputDispatcher {
             projection,
             projectedFingerOwners,
             judgementTransaction,
+            frame.deltaTimeSeconds,
           );
           if (planned.status !== "ok") {
             return planned;
@@ -374,6 +377,7 @@ export class GamePlayInputDispatcher implements ManualInputDispatcher {
             touch,
             projection,
             judgementTransaction,
+            frame.deltaTimeSeconds,
           );
           if (planned.status !== "ok") {
             return planned;
@@ -453,6 +457,7 @@ export class GamePlayButton {
     projection: GamePlayButtonProjection,
     projectedFingerOwners: Map<NoteBase, number>,
     judgementTransaction: ManualJudgementTransaction,
+    deltaTimeSeconds: number,
   ): SimulatorResult<GamePlayButtonTouchPlan> {
     if (this.noteManager === undefined) {
       return evidenceRequired(
@@ -470,13 +475,14 @@ export class GamePlayButton {
     const candidate = selected.value;
     if (candidate === null) {
       projection.touchNotes[touch.fingerId] = null;
-      return ok(noNotePlan("began", touch));
+      return ok(noNotePlan("began", touch, deltaTimeSeconds));
     }
     const beganInput = manualNoteInput(
       touch,
       touch.position,
       ManualTouchPhase.Began,
       judgementTransaction,
+      deltaTimeSeconds,
     );
     const judgement = candidate.preflightManualTouchBegan(beganInput);
     if (judgement.status !== "ok") {
@@ -485,7 +491,7 @@ export class GamePlayButton {
     const projectedFinger = projectedFingerOwners.get(candidate) ?? candidate.fingerId;
     if (judgement.value.outcome === "none" || projectedFinger >= 0) {
       projection.touchNotes[touch.fingerId] = null;
-      return ok(noNotePlan("began", touch));
+      return ok(noNotePlan("began", touch, deltaTimeSeconds));
     }
     const commitPreflight = candidate.preflightManualTouchBeganCommit(
       beganInput,
@@ -500,6 +506,7 @@ export class GamePlayButton {
     return ok(Object.freeze({
       phase: "began",
       touchPhase: touch.phase,
+      deltaTimeSeconds,
       fingerId: touch.fingerId,
       position: touch.position,
       beganPosition: touch.position,
@@ -514,6 +521,7 @@ export class GamePlayButton {
     touch: PreparedManualInputTouch,
     projection: GamePlayButtonProjection,
     judgementTransaction: ManualJudgementTransaction,
+    deltaTimeSeconds: number,
   ): SimulatorResult<GamePlayButtonTouchPlan> {
     const note = projection.touchNotes[touch.fingerId] ?? null;
     const beganPosition = projection.beganPositions[touch.fingerId] ?? null;
@@ -521,10 +529,11 @@ export class GamePlayButton {
       return ok(noNotePlan(
         touch.phase === ManualTouchPhase.Ended ? "ended" : "moved",
         touch,
+        deltaTimeSeconds,
       ));
     }
     if (touch.phase === ManualTouchPhase.Stationary) {
-      return ok(noNotePlan("moved", touch));
+      return ok(noNotePlan("moved", touch, deltaTimeSeconds));
     }
     const phase = touch.phase === ManualTouchPhase.Ended ? "ended" : "moved";
     const input = manualNoteInput(
@@ -532,6 +541,7 @@ export class GamePlayButton {
       beganPosition,
       touch.phase,
       judgementTransaction,
+      deltaTimeSeconds,
     );
     const validation = phase === "ended"
       ? note.preflightManualTouchEnded(input)
@@ -542,6 +552,7 @@ export class GamePlayButton {
     return ok(Object.freeze({
       phase,
       touchPhase: touch.phase,
+      deltaTimeSeconds,
       fingerId: touch.fingerId,
       position: touch.position,
       beganPosition,
@@ -563,6 +574,7 @@ export class GamePlayButton {
       throw new Error("Manual note commit lost its preflight transaction");
     }
     const input: ManualNoteTouchInput = Object.freeze({
+      deltaTimeSeconds: plan.deltaTimeSeconds,
       fingerId: plan.fingerId,
       phase: plan.touchPhase,
       beganPosition: plan.beganPosition ?? plan.position,
@@ -656,8 +668,10 @@ function manualNoteInput(
   beganPosition: ManualInputPosition,
   phase: ManualNoteTouchInput["phase"],
   judgementTransaction: ManualJudgementTransaction,
+  deltaTimeSeconds: number,
 ): ManualNoteTouchInput {
   return Object.freeze({
+    deltaTimeSeconds,
     fingerId: touch.fingerId,
     phase,
     beganPosition,
@@ -669,10 +683,12 @@ function manualNoteInput(
 function noNotePlan(
   phase: GamePlayButtonTouchPlan["phase"],
   touch: PreparedManualInputTouch,
+  deltaTimeSeconds: number,
 ): GamePlayButtonTouchPlan {
   return Object.freeze({
     phase,
     touchPhase: touch.phase,
+    deltaTimeSeconds,
     fingerId: touch.fingerId,
     position: touch.position,
     beganPosition: null,

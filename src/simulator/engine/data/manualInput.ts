@@ -60,6 +60,7 @@ export interface PreparedManualInputTouch extends ManualInputTouchSnapshot {
 }
 
 export interface PreparedManualInputFrame {
+  readonly deltaTimeSeconds: number;
   readonly touches: readonly PreparedManualInputTouch[];
   readonly buttonResolutions: readonly ManualInputButtonResolution[];
 }
@@ -125,12 +126,25 @@ export class ManualInputResolutionOwner {
     return ok(handle);
   }
 
-  preflight(frame: ManualInputFrame): SimulatorResult<PreparedManualInputFrame> {
+  preflight(
+    frame: ManualInputFrame,
+    deltaTimeSeconds?: number,
+  ): SimulatorResult<PreparedManualInputFrame> {
     if (!this.initializedValue || this.disposedValue) {
       return evidenceRequired(
         "input.frame.outside-initialized-session",
         ["D14", "MJ25"],
         "Manual input frames can only be prepared by their initialized, non-disposed engine owner.",
+      );
+    }
+    const frameDeltaTime = typeof deltaTimeSeconds === "number"
+      ? Math.fround(deltaTimeSeconds)
+      : Number.NaN;
+    if (!Number.isFinite(frameDeltaTime) || frameDeltaTime < 0) {
+      return evidenceRequired(
+        "input.invalid-owner-delta-time",
+        ["D10", "D14", "D15", "MJ14", "MJ25", "MJ26"],
+        "The owner-produced outer-frame delta must remain finite and non-negative after Float32 conversion.",
       );
     }
     if (frame === null || typeof frame !== "object" || !Array.isArray(frame.touches)) {
@@ -204,6 +218,7 @@ export class ManualInputResolutionOwner {
     }
 
     const prepared = Object.freeze({
+      deltaTimeSeconds: frameDeltaTime,
       touches: Object.freeze(touches),
       buttonResolutions: Object.freeze(buttonResolutions),
     });

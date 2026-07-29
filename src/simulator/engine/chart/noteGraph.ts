@@ -296,12 +296,12 @@ function isDirectionalFlick(note: NoteInformation): boolean {
   );
 }
 
-function directionalEndpointPosition(note: NoteInformation): number {
+export function directionalEndpointPosition(note: NoteInformation): number {
   const terminal = note.slideNoteList[note.slideNoteList.length - 1];
   return terminal?.absolutePos ?? note.afterNoteAbsolutePos;
 }
 
-function directionalEndpointButton(note: NoteInformation): number {
+export function directionalEndpointButton(note: NoteInformation): ButtonTypeValue {
   if (
     (note.fireNoteType === FrontNoteType.SlideA || note.fireNoteType === FrontNoteType.SlideB)
     && note.slideNoteList.length > 0
@@ -395,7 +395,7 @@ function matchesDirectionalKind(
     || (afterMatches && note.fireNoteType === kind.familyFireNoteType);
 }
 
-function isSameDirectionalGroup(
+export function isSameDirectionalGroup(
   source: NoteInformation,
   target: NoteInformation,
 ): boolean {

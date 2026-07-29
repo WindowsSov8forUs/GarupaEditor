@@ -43,6 +43,7 @@ export interface ManualScreenDistanceRateRequest {
 
 export interface ManualJudgementRequest {
   readonly noteInformation: NoteInformation;
+  readonly phase?: "head" | "tail";
   readonly noteType: number;
   readonly rawResult: Exclude<NoteResultTypeValue, -1>;
   readonly rawTiming: JudgeTimingValue;
@@ -53,6 +54,10 @@ export interface ManualJudgementRequest {
 export interface ManualJudgementOwnership {
   readonly multipleDirectionalFlickNoteCount: number | null;
   readonly multipleDirectionalFlickButtonTypes: readonly ButtonTypeValue[] | null;
+  readonly longAfterAbsolutePosition: number | null;
+  readonly longAfterNoteType: number | null;
+  readonly longAfterButtonTypes: readonly ButtonTypeValue[] | null;
+  readonly longAfterMultipleCount: number | null;
 }
 
 export interface ManualJudgementCommitPlan {

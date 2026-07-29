@@ -84,7 +84,7 @@ class SimulatorEngineHost implements SimulatorEngine {
       return deltaValidation;
     }
     const inputValidation =
-      this.inGameManager.inputManager.prepareOuterFrame(inputFrame);
+      this.inGameManager.inputManager.prepareOuterFrame(inputFrame, deltaTimeSeconds);
     if (inputValidation.status !== "ok") {
       return inputValidation;
     }

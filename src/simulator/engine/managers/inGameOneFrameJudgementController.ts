@@ -49,6 +49,7 @@ export type OneFrameTraceEntry =
       readonly containerId: string;
       readonly noteIndex: number;
       readonly noteType: number;
+      readonly phase: "head" | "tail";
       readonly rawResult: 0 | 1 | 2 | 3 | 4;
       readonly multipleDirectionalFlickNoteCount: number;
     }
@@ -449,13 +450,16 @@ export class InGameOneFrameJudgementController {
     if (ownership === null) {
       throw new Error("Manual OneFrame commit lost its source ownership");
     }
-    const buttonTypes = ownership.multipleDirectionalFlickButtonTypes ??
-      request.noteInformation.buttonTypesArray;
+    const phase = request.phase ?? "head";
+    const buttonTypes = phase === "tail"
+      ? ownership.longAfterButtonTypes ?? request.noteInformation.buttonTypesArray
+      : ownership.multipleDirectionalFlickButtonTypes ??
+        request.noteInformation.buttonTypesArray;
     const payload: ManualJudgementData = Object.freeze({
       noteIndex: request.noteInformation.index,
       buttonTypes: Object.freeze([...buttonTypes]),
       noteType: request.noteType,
-      phase: "head",
+      phase,
       rawResult: request.rawResult,
       adjustedResult,
       addCombo: adjustedResult >= NoteResultType.Great ? 1 : -1,
@@ -472,6 +476,7 @@ export class InGameOneFrameJudgementController {
       containerId: container.containerId,
       noteIndex: payload.noteIndex,
       noteType: payload.noteType,
+      phase: payload.phase,
       rawResult: payload.rawResult,
       multipleDirectionalFlickNoteCount:
         request.multipleDirectionalFlickNoteCount ?? 0,
@@ -490,14 +495,7 @@ export class InGameOneFrameJudgementController {
       ownership === null ||
       source === null ||
       typeof source !== "object" ||
-      !isClosedManualNoteType(
-        source.fireNoteType,
-        request.noteType,
-        request.rawResult,
-        request.multipleDirectionalFlickNoteCount,
-        ownership,
-      ) ||
-      request.absolutePosition !== source.absolutePos ||
+      !isClosedManualRequest(source, request, ownership) ||
       !Number.isInteger(request.rawResult) ||
       request.rawResult < NoteResultType.Miss ||
       request.rawResult > NoteResultType.Perfect ||
@@ -531,48 +529,92 @@ export class InGameOneFrameJudgementController {
   }
 }
 
-function isClosedManualNoteType(
-  frontNoteType: number,
-  noteType: number,
-  rawResult: number,
-  requestedMultipleCount: number | undefined,
+function isClosedManualRequest(
+  source: ManualJudgementRequest["noteInformation"],
+  request: ManualJudgementRequest,
   ownership: ManualJudgementOwnership,
 ): boolean {
+  const phase = request.phase ?? "head";
   const expectedMultipleCount = ownership.multipleDirectionalFlickNoteCount;
   const expectedMultipleButtons = ownership.multipleDirectionalFlickButtonTypes;
-  if (frontNoteType === FrontNoteType.MultipleDirectionalFlick) {
-    return noteType === 10 &&
-      rawResult !== NoteResultType.Miss &&
-      Number.isInteger(requestedMultipleCount) &&
-      requestedMultipleCount === expectedMultipleCount &&
-      requestedMultipleCount > 0 &&
-      Array.isArray(expectedMultipleButtons) &&
-      expectedMultipleButtons.length === expectedMultipleCount &&
-      new Set(expectedMultipleButtons).size === expectedMultipleButtons.length &&
-      expectedMultipleButtons.every((button) =>
-        Number.isInteger(button) &&
-        button >= ButtonType.Button_00_BMS_1P_SC &&
-        button <= ButtonType.Button_15_BMS_2P_SC);
+  if (source.fireNoteType === FrontNoteType.MultipleDirectionalFlick) {
+    return phase === "head" &&
+      request.noteType === 10 &&
+      request.rawResult !== NoteResultType.Miss &&
+      request.absolutePosition === source.absolutePos &&
+      isOwnedButtonGroup(
+        request.multipleDirectionalFlickNoteCount,
+        expectedMultipleCount,
+        expectedMultipleButtons,
+      );
+  }
+  if (source.fireNoteType === FrontNoteType.Long) {
+    if (expectedMultipleCount !== null || expectedMultipleButtons !== null) {
+      return false;
+    }
+    if (phase === "head") {
+      return request.noteType === 4 &&
+        request.rawResult !== NoteResultType.Miss &&
+        request.absolutePosition === source.absolutePos &&
+        request.multipleDirectionalFlickNoteCount === undefined;
+    }
+    const longButtons = ownership.longAfterButtonTypes;
+    const expectedLongCount = ownership.longAfterMultipleCount;
+    return request.noteType === ownership.longAfterNoteType &&
+      request.absolutePosition === ownership.longAfterAbsolutePosition &&
+      Array.isArray(longButtons) &&
+      longButtons.length > 0 &&
+      (request.noteType === 7
+        ? isOwnedButtonGroup(
+            request.multipleDirectionalFlickNoteCount,
+            expectedLongCount,
+            longButtons,
+          )
+        : request.multipleDirectionalFlickNoteCount === undefined &&
+          expectedLongCount === null);
   }
   if (
-    requestedMultipleCount !== undefined ||
+    phase !== "head" ||
+    request.multipleDirectionalFlickNoteCount !== undefined ||
     expectedMultipleCount !== null ||
-    expectedMultipleButtons !== null
+    expectedMultipleButtons !== null ||
+    ownership.longAfterAbsolutePosition !== null ||
+    ownership.longAfterNoteType !== null ||
+    ownership.longAfterButtonTypes !== null ||
+    ownership.longAfterMultipleCount !== null ||
+    request.absolutePosition !== source.absolutePos
   ) {
     return false;
   }
-  if (rawResult === NoteResultType.Miss && noteType === 0) {
+  if (request.rawResult === NoteResultType.Miss && request.noteType === 0) {
     return (
-      frontNoteType === FrontNoteType.Normal ||
-      frontNoteType === FrontNoteType.Flick ||
-      frontNoteType === FrontNoteType.DirectionalFlick
+      source.fireNoteType === FrontNoteType.Normal ||
+      source.fireNoteType === FrontNoteType.Flick ||
+      source.fireNoteType === FrontNoteType.DirectionalFlick
     );
   }
   return (
-    (frontNoteType === FrontNoteType.Normal && noteType === 0) ||
-    (frontNoteType === FrontNoteType.Flick && noteType === 3) ||
-    (frontNoteType === FrontNoteType.DirectionalFlick && noteType === 9)
+    (source.fireNoteType === FrontNoteType.Normal && request.noteType === 0) ||
+    (source.fireNoteType === FrontNoteType.Flick && request.noteType === 3) ||
+    (source.fireNoteType === FrontNoteType.DirectionalFlick && request.noteType === 9)
   );
+}
+
+function isOwnedButtonGroup(
+  requestedCount: number | undefined,
+  expectedCount: number | null,
+  expectedButtons: readonly number[] | null,
+): boolean {
+  return Number.isInteger(requestedCount) &&
+    requestedCount === expectedCount &&
+    requestedCount > 0 &&
+    Array.isArray(expectedButtons) &&
+    expectedButtons.length === expectedCount &&
+    new Set(expectedButtons).size === expectedButtons.length &&
+    expectedButtons.every((button) =>
+      Number.isInteger(button) &&
+      button >= ButtonType.Button_00_BMS_1P_SC &&
+      button <= ButtonType.Button_15_BMS_2P_SC);
 }
 
 function validateAutoLiveJudgementRequest(

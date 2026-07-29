@@ -24,8 +24,11 @@ import {
   NoteResultType,
   getManualScreenDistanceRate,
   judgeManualNote,
+  type JudgeTimingValue,
   type ManualNoteJudgement,
+  type NoteResultTypeValue,
 } from "../data/manualJudgement";
+import type { ManualInputPosition } from "../data/manualInput";
 import type { MultipleDirectionalRuntimeGroup } from "../data/autoLiveJudgement";
 
 export class NoteFrontBase extends NoteBase {}
@@ -254,7 +257,22 @@ export class NoteNormal extends NoteSingleBase {
 
 export class NoteLong extends NoteFrontBase {
   private afterNoteValue: LongAfterRuntime | null = null;
+  private longAfterMultipleGroupResolverValue: ((
+    information: NoteInformation,
+  ) => SimulatorResult<MultipleDirectionalRuntimeGroup | null>) | null = null;
+  private longAfterMultipleGroupValue: MultipleDirectionalRuntimeGroup | null = null;
+  private manualTouchOriginValue: ManualInputPosition | null = null;
+  private manualMoveSucceededValue = false;
+  private manualAfterMoveTimeValue = Math.fround(0);
   private readonly autoLiveTraceValue: LongAutoLiveTraceEntry[] = [];
+
+  registerLongAfterMultipleGroupResolver(
+    resolver: (
+      information: NoteInformation,
+    ) => SimulatorResult<MultipleDirectionalRuntimeGroup | null>,
+  ): void {
+    this.longAfterMultipleGroupResolverValue = resolver;
+  }
 
   get afterNote(): LongAfterRuntime | null {
     return this.afterNoteValue;
@@ -286,13 +304,366 @@ export class NoteLong extends NoteFrontBase {
       noteInformation.afterNoteType,
       noteInformation.afterNoteShortRhythmUnder8beat,
     );
+    const multipleGroup = this.longAfterMultipleGroupResolverValue?.(noteInformation) ??
+      ok<MultipleDirectionalRuntimeGroup | null>(null);
+    if (multipleGroup.status !== "ok") {
+      return multipleGroup;
+    }
     const activated = super.activate(noteInformation);
     if (activated.status !== "ok") {
       return activated;
     }
     this.afterNoteValue = nextAfterNote;
+    this.longAfterMultipleGroupValue = multipleGroup.value;
+    this.manualTouchOriginValue = null;
+    this.manualMoveSucceededValue = false;
+    this.manualAfterMoveTimeValue = Math.fround(0);
     this.autoLiveTraceValue.length = 0;
     return ok(undefined);
+  }
+
+  override preflightManualTouchBegan(
+    _input: ManualNoteTouchInput,
+  ): SimulatorResult<ManualNoteBeganPlan> {
+    const information = this.noteInformation;
+    const runtime = this.manualRuntime;
+    if (information === null || runtime.status !== "ok") {
+      return runtime.status === "ok"
+        ? evidenceRequired(
+            "manual.long-without-source",
+            ["D05", "D12", "MJ11"],
+            "Long Began requires its activated root and manual timing owner.",
+          )
+        : runtime;
+    }
+    const judgement = judgeManualNote(
+      0,
+      Math.fround(information.absolutePos),
+      runtime.value.getAdjustedMusicPosition(),
+      runtime.value.getCurrentBpm(),
+    );
+    if (judgement.status !== "ok") {
+      return judgement;
+    }
+    return ok(Object.freeze({
+      outcome:
+        judgement.value.result <= NoteResultType.Miss || this.state === NoteState.Stop
+          ? "none"
+          : "bind",
+      judgementPlan: null,
+      familyData: judgement.value,
+    }));
+  }
+
+  override preflightManualTouchBeganCommit(
+    input: ManualNoteTouchInput,
+    plan: ManualNoteBeganPlan,
+  ): SimulatorResult<ManualNoteBeganPlan> {
+    const information = this.noteInformation;
+    const judgement = plan.familyData as ManualNoteJudgement | null;
+    if (
+      plan.outcome !== "bind" ||
+      information === null ||
+      judgement === null ||
+      judgement.result <= NoteResultType.Miss
+    ) {
+      return evidenceRequired(
+        "manual.long-invalid-began-plan",
+        ["D05", "D12", "D14", "MJ11", "MJ26"],
+        "Only an owner-produced Good-or-better Long head may reserve type4.",
+      );
+    }
+    const reserved = input.judgementTransaction.preflight({
+      noteInformation: information,
+      phase: "head",
+      noteType: 4,
+      rawResult: judgement.result as Exclude<typeof judgement.result, -1>,
+      rawTiming: judgement.timing,
+      absolutePosition: information.absolutePos,
+    });
+    return reserved.status === "ok"
+      ? ok(Object.freeze({ ...plan, judgementPlan: reserved.value }))
+      : reserved;
+  }
+
+  override commitManualTouchBegan(
+    input: ManualNoteTouchInput,
+    plan: ManualNoteBeganPlan,
+  ): void {
+    if (plan.judgementPlan === null) {
+      throw new Error("Long Began commit lost its type4 reservation");
+    }
+    input.judgementTransaction.commit(plan.judgementPlan);
+    this.manualTouchOriginValue = input.currentPosition;
+    this.manualMoveSucceededValue = false;
+    this.manualAfterMoveTimeValue = Math.fround(0);
+    const changed = this.changeState(NoteState.Stop);
+    if (changed.status !== "ok") {
+      throw new Error("Long Began commit could not enter Stop state");
+    }
+  }
+
+  override preflightManualTouchMoved(
+    input: ManualNoteTouchInput,
+  ): SimulatorResult<ManualNoteContinuationPlan> {
+    return this.preflightManualLongAfter(input, true);
+  }
+
+  override commitManualTouchMoved(
+    input: ManualNoteTouchInput,
+    plan: ManualNoteContinuationPlan,
+  ): void {
+    this.commitManualLongAfter(input, plan);
+  }
+
+  override preflightManualTouchEnded(
+    input: ManualNoteTouchInput,
+  ): SimulatorResult<ManualNoteContinuationPlan> {
+    return this.preflightManualLongAfter(input, false);
+  }
+
+  override commitManualTouchEnded(
+    input: ManualNoteTouchInput,
+    plan: ManualNoteContinuationPlan,
+  ): void {
+    this.commitManualLongAfter(input, plan);
+  }
+
+  private preflightManualLongAfter(
+    input: ManualNoteTouchInput,
+    moved: boolean,
+  ): SimulatorResult<ManualNoteContinuationPlan> {
+    const information = this.noteInformation;
+    const after = this.afterNoteValue;
+    const runtime = this.manualRuntime;
+    const origin = this.manualTouchOriginValue;
+    if (
+      information === null || after === null || runtime.status !== "ok" || origin === null ||
+      this.state !== NoteState.Stop
+    ) {
+      return runtime.status === "ok"
+        ? evidenceRequired(
+            "manual.long-after-owner-unavailable",
+            ["D09", "D10", "D12", "MJ12", "MJ15"],
+            "Long continuation requires its Began origin, Stop state and parent-owned after node.",
+          )
+        : runtime;
+    }
+    const judgement = judgeManualNote(
+      0,
+      Math.fround(after.absolutePosition),
+      runtime.value.getAdjustedMusicPosition(),
+      runtime.value.getCurrentBpm(),
+    );
+    if (judgement.status !== "ok") {
+      return judgement;
+    }
+    const group = this.longAfterMultipleGroupValue;
+    const targetButtons = group?.buttonTypes ?? information.buttonTypesArray;
+    if (!moved) {
+      const normalAfter = after.afterNoteType === AfterNoteType.Normal;
+      let normalInside = false;
+      if (normalAfter) {
+        const inside = runtime.value.geometry.isInsideTargetButtons(
+          input.currentPosition,
+          targetButtons,
+        );
+        if (inside.status !== "ok") {
+          return inside;
+        }
+        normalInside = inside.value;
+      }
+      const finalResult = normalAfter
+        ? normalInside ? judgement.value.result : NoteResultType.Miss
+        : this.manualMoveSucceededValue
+        ? judgement.value.result
+        : NoteResultType.Miss;
+      return this.reserveManualLongTail(
+        input,
+        finalResult === NoteResultType.None ? NoteResultType.Miss : finalResult,
+        judgement.value.timing,
+        Object.freeze({
+          complete: true,
+          nextOrigin: origin,
+          nextAfterMoveTime: this.manualAfterMoveTimeValue,
+          moveSucceeded: this.manualMoveSucceededValue,
+          markMultipleUsed: false,
+        }),
+      );
+    }
+    if (after.afterNoteType === AfterNoteType.Normal) {
+      return ok(Object.freeze({
+        judgementPlan: null,
+        familyData: Object.freeze({
+          complete: false,
+          nextOrigin: origin,
+          nextAfterMoveTime: this.manualAfterMoveTimeValue,
+          moveSucceeded: false,
+          markMultipleUsed: false,
+        }),
+      }));
+    }
+    const nextOrigin = judgement.value.result === NoteResultType.None
+      ? input.currentPosition
+      : origin;
+    const inside = runtime.value.geometry.isInsideTargetButtons(
+      input.currentPosition,
+      targetButtons,
+    );
+    if (inside.status !== "ok") {
+      return inside;
+    }
+    const nextAfterMoveTime = inside.value
+      ? Math.fround(8)
+      : Math.fround(this.manualAfterMoveTimeValue - input.deltaTimeSeconds);
+    let movementSucceeded = false;
+    if (after.afterNoteType === AfterNoteType.Flick) {
+      const rate = getManualScreenDistanceRate(runtime.value.geometry, {
+        beganPosition: nextOrigin,
+        currentPosition: input.currentPosition,
+        horizontalOnly: false,
+      });
+      if (rate.status !== "ok") {
+        return rate;
+      }
+      movementSucceeded = rate.value > float32FromBits(0x3d23d70a);
+    } else {
+      const correctDirection =
+        (after.afterNoteType === AfterNoteType.DirectionalFlickLeft ||
+          after.afterNoteType === AfterNoteType.MultipleDirectionalFlickLeft)
+          ? nextOrigin.x > input.currentPosition.x
+          : nextOrigin.x < input.currentPosition.x;
+      if (correctDirection) {
+        const horizontalRate = getManualScreenDistanceRate(runtime.value.geometry, {
+          beganPosition: nextOrigin,
+          currentPosition: input.currentPosition,
+          horizontalOnly: true,
+        });
+        if (horizontalRate.status !== "ok") {
+          return horizontalRate;
+        }
+        movementSucceeded = horizontalRate.value > float32FromBits(0x3c23d70a);
+        if (
+          movementSucceeded &&
+          (after.afterNoteType === AfterNoteType.MultipleDirectionalFlickLeft ||
+            after.afterNoteType === AfterNoteType.MultipleDirectionalFlickRight)
+        ) {
+          if (group === null || group.isUsed) {
+            return evidenceRequired(
+              "manual.long-multiple-after-group-unavailable",
+              ["D08", "D12", "MJ13"],
+              "Long Multiple after movement requires its unused chart-owned group.",
+            );
+          }
+          const fullRate = getManualScreenDistanceRate(runtime.value.geometry, {
+            beganPosition: nextOrigin,
+            currentPosition: input.currentPosition,
+            horizontalOnly: false,
+          });
+          if (fullRate.status !== "ok") {
+            return fullRate;
+          }
+          const unitRate = float32FromBits(0x3c23d70a);
+          const threshold = Math.fround(
+            Math.fround(Math.fround(group.count - 1) * unitRate) + unitRate,
+          );
+          movementSucceeded = fullRate.value > threshold;
+        }
+      }
+    }
+    const complete = movementSucceeded &&
+      judgement.value.result !== NoteResultType.None &&
+      nextAfterMoveTime > Math.fround(0);
+    const familyData = Object.freeze({
+      complete,
+      nextOrigin,
+      nextAfterMoveTime,
+      moveSucceeded: complete,
+      markMultipleUsed: complete && group !== null,
+    });
+    return complete
+      ? this.reserveManualLongTail(
+          input,
+          judgement.value.result as Exclude<typeof judgement.value.result, -1>,
+          judgement.value.timing,
+          familyData,
+        )
+      : ok(Object.freeze({ judgementPlan: null, familyData }));
+  }
+
+  private reserveManualLongTail(
+    input: ManualNoteTouchInput,
+    rawResult: Exclude<NoteResultTypeValue, -1>,
+    rawTiming: JudgeTimingValue,
+    familyData: unknown,
+  ): SimulatorResult<ManualNoteContinuationPlan> {
+    const information = this.noteInformation;
+    const after = this.afterNoteValue;
+    if (information === null || after === null) {
+      return evidenceRequired(
+        "manual.long-tail-source-unavailable",
+        ["D12", "D14", "MJ15"],
+        "Long tail reservation requires its root and parent-owned after source.",
+      );
+    }
+    const noteType = manualLongAfterJudgeNoteType(after.afterNoteType);
+    if (noteType === null) {
+      return evidenceRequired(
+        "manual.long-after-type-unrepresented",
+        ["D12", "MJ15"],
+        `Long after type ${after.afterNoteType} has no confirmed manual note type.`,
+      );
+    }
+    const group = this.longAfterMultipleGroupValue;
+    const reserved = input.judgementTransaction.preflight({
+      noteInformation: information,
+      phase: "tail",
+      noteType,
+      rawResult,
+      rawTiming,
+      absolutePosition: after.absolutePosition,
+      ...(noteType === 7 && group !== null
+        ? { multipleDirectionalFlickNoteCount: group.count }
+        : {}),
+    });
+    return reserved.status === "ok"
+      ? ok(Object.freeze({ judgementPlan: reserved.value, familyData }))
+      : reserved;
+  }
+
+  private commitManualLongAfter(
+    input: ManualNoteTouchInput,
+    plan: ManualNoteContinuationPlan,
+  ): void {
+    const familyData = plan.familyData as {
+      readonly complete: boolean;
+      readonly nextOrigin: ManualInputPosition;
+      readonly nextAfterMoveTime: number;
+      readonly moveSucceeded: boolean;
+      readonly markMultipleUsed: boolean;
+    };
+    this.manualTouchOriginValue = familyData.nextOrigin;
+    this.manualAfterMoveTimeValue = familyData.nextAfterMoveTime;
+    this.manualMoveSucceededValue = familyData.moveSucceeded;
+    if (plan.judgementPlan === null) {
+      return;
+    }
+    const group = this.longAfterMultipleGroupValue;
+    if (familyData.markMultipleUsed) {
+      const used = group?.markUsed();
+      if (used?.status !== "ok") {
+        throw new Error("Long Multiple after group changed after preflight");
+      }
+    }
+    input.judgementTransaction.commit(plan.judgementPlan);
+    const marked = this.afterNoteValue?.markJudged();
+    if (marked?.status !== "ok") {
+      throw new Error("Long tail after owner changed after preflight");
+    }
+    const changed = this.changeState(NoteState.Deactive);
+    if (changed.status !== "ok") {
+      throw new Error("Long tail commit could not deactivate its parent");
+    }
   }
 
   protected override moveState(_deltaTimeSeconds: number): SimulatorResult<void> {
@@ -318,14 +689,10 @@ export class NoteLong extends NoteFrontBase {
     if (adjusted < noteInformation.absolutePos) {
       return ok(undefined);
     }
-    if (!runtime.value.isAutoPlay()) {
-      return evidenceRequired(
-        "manual-long-judgement",
-        ["R01", "R04"],
-        "Manual Long acquisition is outside the Auto Live stage.",
-      );
-    }
     const stateChange = this.changeState(NoteState.Wait);
+    if (!runtime.value.isAutoPlay()) {
+      return stateChange;
+    }
     if (stateChange.status !== "ok") {
       return stateChange;
     }
@@ -429,10 +796,18 @@ export class NoteLong extends NoteFrontBase {
   protected override onDeactivated(): void {
     this.afterNoteValue?.resetForParentDeactivation();
     this.afterNoteValue = null;
+    this.longAfterMultipleGroupValue = null;
+    this.manualTouchOriginValue = null;
+    this.manualMoveSucceededValue = false;
+    this.manualAfterMoveTimeValue = Math.fround(0);
   }
 
   protected override onResetForDispose(): void {
     this.afterNoteValue = null;
+    this.longAfterMultipleGroupValue = null;
+    this.manualTouchOriginValue = null;
+    this.manualMoveSucceededValue = false;
+    this.manualAfterMoveTimeValue = Math.fround(0);
     this.autoLiveTraceValue.length = 0;
   }
 }
@@ -1825,6 +2200,25 @@ function isInt32Position(value: number): boolean {
   return Number.isInteger(value) &&
     value >= -0x80000000 &&
     value <= 0x7fffffff;
+}
+
+function manualLongAfterJudgeNoteType(
+  afterNoteType: AfterNoteTypeValue,
+): 2 | 5 | 6 | 7 | null {
+  switch (afterNoteType) {
+    case AfterNoteType.Normal:
+      return 2;
+    case AfterNoteType.Flick:
+      return 5;
+    case AfterNoteType.DirectionalFlickLeft:
+    case AfterNoteType.DirectionalFlickRight:
+      return 6;
+    case AfterNoteType.MultipleDirectionalFlickLeft:
+    case AfterNoteType.MultipleDirectionalFlickRight:
+      return 7;
+    default:
+      return null;
+  }
 }
 
 function longAfterJudgeNoteType(afterNoteType: AfterNoteTypeValue): 1 | 3 | 9 | null {

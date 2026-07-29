@@ -1,10 +1,16 @@
 import {
+  AfterNoteType,
   ButtonType,
   FrontNoteType,
   type ButtonTypeValue,
   type NoteBatchInformation,
   type NoteInformation,
 } from "../chart/types";
+import {
+  directionalEndpointButton,
+  directionalEndpointPosition,
+  isSameDirectionalGroup,
+} from "../chart/noteGraph";
 import type { NoteFamily } from "../data/noteData";
 import type { OneFrameDataHandle } from "../data/oneFrameData";
 import type {
@@ -147,6 +153,10 @@ export class NoteManager {
     NoteInformation,
     MultipleDirectionalGroupOwner
   >();
+  private readonly longAfterMultipleGroups = new WeakMap<
+    NoteInformation,
+    MultipleDirectionalGroupOwner
+  >();
   private readonly autoLiveJudgementSources = new WeakSet<NoteInformation>();
 
   constructor(
@@ -217,6 +227,10 @@ export class NoteManager {
     }
 
     this.setupMultipleDirectionalGroups();
+    const longAfterGroups = this.setupLongAfterMultipleGroups();
+    if (longAfterGroups.status !== "ok") {
+      return longAfterGroups;
+    }
     const familyNotes = new Map<NoteFamily, NoteInformation[]>();
     for (const batch of this.batches) {
       for (const noteInformation of batch.informationList) {
@@ -270,6 +284,11 @@ export class NoteManager {
         if (note instanceof NoteMultipleDirectionalFlick) {
           note.registerMultipleDirectionalGroupResolver(
             (information) => this.resolveMultipleDirectionalGroup(information),
+          );
+        }
+        if (note instanceof NoteLong) {
+          note.registerLongAfterMultipleGroupResolver(
+            (information) => this.resolveLongAfterMultipleGroup(information),
           );
         }
         return note;
@@ -464,11 +483,25 @@ export class NoteManager {
     if (!this.autoLiveJudgementSources.has(noteInformation)) {
       return null;
     }
+    const longAfterGroup = this.longAfterMultipleGroups.get(noteInformation);
+    const isLong = noteInformation.fireNoteType === FrontNoteType.Long;
     return Object.freeze({
       multipleDirectionalFlickNoteCount:
         this.multipleDirectionalGroups.get(noteInformation)?.count ?? null,
       multipleDirectionalFlickButtonTypes:
         this.multipleDirectionalGroups.get(noteInformation)?.buttonTypes ?? null,
+      longAfterAbsolutePosition: isLong
+        ? noteInformation.afterNoteAbsolutePos
+        : null,
+      longAfterNoteType: isLong
+        ? manualLongAfterNoteType(noteInformation.afterNoteType)
+        : null,
+      longAfterButtonTypes: isLong
+        ? longAfterGroup?.buttonTypes ?? noteInformation.buttonTypesArray
+        : null,
+      longAfterMultipleCount: isLong
+        ? longAfterGroup?.count ?? null
+        : null,
     });
   }
 
@@ -570,6 +603,39 @@ export class NoteManager {
     }
   }
 
+  private setupLongAfterMultipleGroups(): SimulatorResult<void> {
+    const allInformation = this.batches.flatMap((batch) => batch.informationList);
+    for (const root of allInformation) {
+      if (
+        root.fireNoteType !== FrontNoteType.Long ||
+        (root.afterNoteType !== AfterNoteType.MultipleDirectionalFlickLeft &&
+          root.afterNoteType !== AfterNoteType.MultipleDirectionalFlickRight)
+      ) {
+        continue;
+      }
+      const members = [
+        root,
+        ...allInformation.filter((candidate) =>
+          candidate !== root &&
+          candidate.fireNoteType === FrontNoteType.LongMultipleDirectionalFlickAdd &&
+          directionalEndpointPosition(candidate) === root.afterNoteAbsolutePos &&
+          isSameDirectionalGroup(root, candidate)),
+      ];
+      if (members.length < 2) {
+        return evidenceRequired(
+          "manual.long-multiple-after-group-missing",
+          ["R16.D17", "D08", "D12", "MJ13"],
+          `Long root ${root.index} has a Multiple after type without its chart-owned side group.`,
+        );
+      }
+      this.longAfterMultipleGroups.set(
+        root,
+        new MultipleDirectionalGroupOwner(members, directionalEndpointButton),
+      );
+    }
+    return ok(undefined);
+  }
+
   getAutoLiveJudgementOwnership(
     information: NoteInformation,
   ): AutoLiveJudgementOwnership | null {
@@ -580,6 +646,12 @@ export class NoteManager {
       multipleDirectionalFlickNoteCount:
         this.multipleDirectionalGroups.get(information)?.count ?? null,
     };
+  }
+
+  private resolveLongAfterMultipleGroup(
+    information: NoteInformation,
+  ): SimulatorResult<MultipleDirectionalRuntimeGroup | null> {
+    return ok(this.longAfterMultipleGroups.get(information) ?? null);
   }
 
   private resolveMultipleDirectionalGroup(
@@ -928,6 +1000,23 @@ function createDefaultPoolObject(
   }
 }
 
+function manualLongAfterNoteType(afterNoteType: number): 2 | 5 | 6 | 7 | null {
+  switch (afterNoteType) {
+    case AfterNoteType.Normal:
+      return 2;
+    case AfterNoteType.Flick:
+      return 5;
+    case AfterNoteType.DirectionalFlickLeft:
+    case AfterNoteType.DirectionalFlickRight:
+      return 6;
+    case AfterNoteType.MultipleDirectionalFlickLeft:
+    case AfterNoteType.MultipleDirectionalFlickRight:
+      return 7;
+    default:
+      return null;
+  }
+}
+
 class MultipleDirectionalGroupOwner implements MultipleDirectionalRuntimeGroup {
   private usedValue = false;
   private activeManualFingerId = -1;
@@ -935,9 +1024,13 @@ class MultipleDirectionalGroupOwner implements MultipleDirectionalRuntimeGroup {
   readonly count: number;
   readonly buttonTypes: readonly ButtonTypeValue[];
 
-  constructor(group: readonly NoteInformation[]) {
+  constructor(
+    group: readonly NoteInformation[],
+    getButtonType: (information: NoteInformation) => ButtonTypeValue =
+      (information) => information.buttonType,
+  ) {
     this.count = group.length;
-    this.buttonTypes = Object.freeze(group.map((information) => information.buttonType));
+    this.buttonTypes = Object.freeze(group.map(getButtonType));
   }
 
   get isUsed(): boolean {
