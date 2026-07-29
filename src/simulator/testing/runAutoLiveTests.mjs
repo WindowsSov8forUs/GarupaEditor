@@ -2077,7 +2077,10 @@ function validateAutoLive() {
         music,
         noteManager,
         oneFrame,
-        new InputManager(),
+        new InputManager({
+          kind: "auto-live",
+          resultTransform: "identity-no-active-situation-skill",
+        }),
       ),
     };
   }

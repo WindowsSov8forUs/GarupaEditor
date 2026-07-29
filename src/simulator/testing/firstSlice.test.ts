@@ -36,6 +36,10 @@ interface TestCase {
 }
 
 const tests: TestCase[] = [];
+const autoPlayMode = {
+  kind: "auto-live",
+  resultTransform: "identity-no-active-situation-skill",
+} as const;
 
 function test(name: string, run: () => void): void {
   tests.push({ name, run });
@@ -173,7 +177,7 @@ function createTestGraph(
 
 test("管理器对象图保持单一所有者和原作帧入口", () => {
   const graph = createTestGraph(["A", "B"]);
-  const input = new InputManager();
+  const input = new InputManager(autoPlayMode);
   const inGame = new InGameManager(graph.music, graph.manager, graph.controller, input);
   const backends = createRecordingSimulatorBackends();
   const director = new InGameDirector(inGame, false, backends.frameRate);
@@ -296,7 +300,12 @@ test("Update 中 Deactive 对象即时移除且不进入 AfterUpdate", () => {
 
 test("暂停冻结调度状态并在恢复后原位续跑", () => {
   const graph = createTestGraph([]);
-  const inGame = new InGameManager(graph.music, graph.manager, graph.controller, new InputManager());
+  const inGame = new InGameManager(
+    graph.music,
+    graph.manager,
+    graph.controller,
+    new InputManager(autoPlayMode),
+  );
   requireOk(inGame.initialize(), "initialize");
   requireOk(inGame.execUpdate(0.01), "before pause");
   requireOk(inGame.pause(), "pause");
@@ -318,7 +327,7 @@ test("暂停门覆盖原作 GameState 与 PauseState 数值", () => {
 
 test("PauseSound 保留输入分派但阻断 NoteManager", () => {
   const graph = createTestGraph([]);
-  const input = new TraceInputManager();
+  const input = new TraceInputManager(autoPlayMode);
   const inGame = new InGameManager(graph.music, graph.manager, graph.controller, input);
   requireOk(inGame.initialize(), "initialize");
   requireOk(inGame.execUpdate(0.01), "playing");
@@ -378,8 +387,8 @@ test("未登记 chart、越界 offset 与触摸失败关闭且 manual 不强制�
   const noteEngine = requireOk(createSimulatorEngine(engineInput([noteBatch(["A"], 1)]),
     createRecordingSimulatorBackends()), "note engine");
   requireOk(noteEngine.initialize(), "initialize note engine");
-  requireOk(noteEngine.step(0.01), "activation frame");
-  assertEqual(noteEngine.step(0.01).status, "evidence-required",
+  requireOk(noteEngine.step(0.01, { touches: [] }), "activation frame");
+  assertEqual(noteEngine.step(0.01, { touches: [] }).status, "evidence-required",
     "manual AfterUpdate remains outside Auto Live");
   const manualSnapshot = requireOk(noteEngine.snapshot(), "manual snapshot");
   assertEqual(manualSnapshot.managers.oneFrame.inUseContainerIds.length, 0,

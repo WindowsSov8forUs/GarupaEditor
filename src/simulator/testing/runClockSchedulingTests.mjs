@@ -266,7 +266,7 @@ function validateClockScheduling() {
   assertEqual(productionNoteEngine.initialize().status, "ok", "production Note initialize");
   let failedClosed = false;
   for (let frame = 0; frame < 4000; frame += 1) {
-    const result = productionNoteEngine.step(Math.fround(1 / 60));
+    const result = productionNoteEngine.step(Math.fround(1 / 60), { touches: [] });
     if (result.status === "evidence-required") {
       failedClosed = true;
       break;

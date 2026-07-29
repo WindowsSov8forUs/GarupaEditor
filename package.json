@@ -18,6 +18,7 @@
     "simulator:test:chart-production": "node src/simulator/testing/runChartProductionAcceptanceTests.mjs",
     "simulator:test:clock-scheduling": "node src/simulator/testing/runClockSchedulingTests.mjs",
     "simulator:test:auto-live": "node src/simulator/testing/runAutoLiveTests.mjs",
+    "simulator:test:manual-input-boundary": "node src/simulator/testing/runManualInputBoundaryTests.mjs",
     "tauri": "tauri",
     "desktop:dev": "tauri dev",
     "desktop:build": "tauri build",
