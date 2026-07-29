@@ -53,7 +53,7 @@
 | M01 晋升并修正静态证据 | **已完成** | 10.1.4的103方法/12 type/13 enum、独立Slide Wait与Slide band构造已提交并冻结 |
 | M02 建立实体/固定事件oracle | **已完成** | 5条R1、MJ01–MJ26、D03–D15、portable contract及126项source/copy verifier通过 |
 | M03 锁定输入数据与宿主边界 | **已完成** | 显式不可变input frame、owner-issued button能力、生命周期和失败优先级闭合 |
-| M04 恢复输入分发与候选仲裁 | 进行中：phase/owner与ordinary scan生产完成；定向测试、M05过滤、Slide near-line待完成 | phase、finger/button/note owner、wide/ordinary/Slide/tie行为匹配 |
+| M04 恢复输入分发与候选仲裁 | 进行中：phase/owner与ordinary scan生产/测试完成；M05过滤、Slide near-line待完成 | phase、finger/button/note owner、wide/ordinary/Slide/tie行为匹配 |
 | M05 恢复窗口与Single/Flick判定 | 未开始 | GetResult/JudgeNote、Normal/Flick/Directional的边界bits与事件顺序匹配 |
 | M06 恢复Multiple手动判定 | 未开始 | 真实touch方向、count阈值、side owner、finish/deactivate匹配 |
 | M07 恢复Long手动状态机 | 未开始 | Began/Hold/Moved/Ended、合成release、grace、头尾与finger清理匹配 |
@@ -140,6 +140,15 @@
 - NoteBase新增finger owner、button containment和三类pure-preflight/void-commit虚边界；未恢复family统一失败关闭。snapshot仅暴露button type、finger、note index与position，不暴露对象/capability。
 - Slide候选遇到current-node/near-judge-line需求统一`manual.slide-candidate-position-unimplemented`，禁止用root `absolutePos`近似；ordinary最终None过滤仍等待M05 exact `CalcNoteResultType`。因此M04保持进行中。
 - isolated TypeScript、first-slice 17、Auto Live AL01–AL22与manual boundary 6项通过；M04 MJ03–MJ07定向测试留到独立测试提交。
+
+#### 2026-07-29 第十批：M04 phase/ordinary定向测试
+
+- 新增`simulator:test:manual-input-dispatch`，先从冻结oracle直接确认MJ03–MJ07无unknown、strict equal不替换、cross-family无synthetic tie-break、resolver-only provenance、首touch finger owner及后续phase不重绑。
+- 使用production NoteManager active list、GamePlayInputDispatcher和InputManager plan/commit路径；测试note只提供family pure judgement结果与commit记录，不传候选、expected distance或私有owner。
+- equal-distance双ordinary验证首个active；wide `[1,2]`同帧finger0/finger1竞争验证两个button owner均保留而note只绑定finger0，且两个pure judgement发生在finger检查前、只有一个commit。
+- Moved/Stationary/Ended验证复用Began button/note并向family保留raw phase 1/2/3；None结果不绑定note但保留resolved button owner。
+- later第二family拒绝与跨dispatcher foreign GamePlayButton均验证resolution未消费、finger/button/note/trace全域零mutation。定向5项与dependency verifier通过。
+- `firstSlice.test.ts`仅适配direct GamePlayButton构造必须显式ButtonType；production文件未在测试提交中修改。
 
 ## 2. 固定范围
 

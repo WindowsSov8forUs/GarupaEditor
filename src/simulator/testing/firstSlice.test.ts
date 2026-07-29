@@ -1,5 +1,5 @@
 import { createRecordingSimulatorBackends } from "../backends/recordingBackend";
-import type { NoteBatchInformation } from "../engine/chart/types";
+import { ButtonType, type NoteBatchInformation } from "../engine/chart/types";
 import type { OneFrameDataHandle } from "../engine/data/oneFrameData";
 import {
   GameState,
@@ -382,7 +382,11 @@ test("未登记 chart、越界 offset 与触摸失败关闭且 manual 不强制�
   const invalidOffset = { ...valid, runtime: { ...valid.runtime, judgeOffsetFrames: 6 } };
   assertEqual(createSimulatorEngine(invalidOffset, createRecordingSimulatorBackends()).status,
     "evidence-required", "offset range");
-  assertEqual(new GamePlayButton().execTouchBegan().status, "evidence-required", "touch boundary");
+  assertEqual(
+    new GamePlayButton(ButtonType.Button_01_BMS_1P_01).execTouchBegan().status,
+    "evidence-required",
+    "touch boundary",
+  );
 
   const noteEngine = requireOk(createSimulatorEngine(engineInput([noteBatch(["A"], 1)]),
     createRecordingSimulatorBackends()), "note engine");
