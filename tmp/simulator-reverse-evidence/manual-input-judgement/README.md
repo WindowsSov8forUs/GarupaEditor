@@ -1,15 +1,20 @@
 # 手动输入与判定冻结证据包
 
-本目录第一批冻结Reverse提交`11b8250853ca12a2106c66245724467701d9eb23`的
-10.1.4手动输入静态契约：99个独立ARM64方法范围、12个owner type字段、8个enum、
-逐word版本差异、修正后的Slide Wait/over-Wait边界及离线verifier。
+本目录冻结Reverse最终证据提交`4bda0f3ad2fb84ef972bf352e78aac57dad44c8b`：
 
-当前只关闭V01、D01、D02。D03–D15与MJ01–MJ26 runtime oracle仍是M02/M03生产代码
-硬门；不得因静态包绿色而实现手动输入。后续Reverse runtime证据提交后必须作为新批次追加，
-不得修改本批已冻结字节或从Reverse未提交工作树复制。
+- 10.1.4/230的103个独立ARM64方法、12个owner type、13个enum；
+- 修正后的Slide Wait/over-Wait与Slide十组lane-band构造；
+- Easy/Hard/Expert song 653 `幾億光年`的5条正式R1 raw trace；
+- Long实体head/release、Long双timeout、Slide root/after timeout及两指0/1全phase；
+- Float32 exact边界、portable输入契约和MJ01–MJ26固定事件oracle；
+- 两个Reverse离线verifier及完整SHA256SUMS。
+
+V01与D01–D15均已关闭，Reverse `manual_input_gate=closed`且
+`blocking_findings=[]`。这只解除后续M03生产实现硬门，不表示GarupaEditor已经实现或验收
+手动输入；生产、测试和独立验收仍必须分批。
 
 运行时代码不得读取本目录。模拟器TypeScript生产与测试不得执行其中Python、访问Reverse工作树
-或联网；Python仅保留为Reverse离线静态审计生成器。
+或联网；Python仅是已冻结的Reverse离线生成/校验源。Garupa `verify.mjs`不调用Python。
 
 验证：
 

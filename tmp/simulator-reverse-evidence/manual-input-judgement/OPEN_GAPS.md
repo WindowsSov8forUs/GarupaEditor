@@ -2,34 +2,35 @@
 
 ## 已关闭
 
-- V01：10.1.4/230手动目标重基线；99/99方法按managed identity重新解析。
-- D01：Slide `WaitState 0x321B414–0x321B628`与
-  `execOverWaitState 0x321B628–0x321B69C`为独立ARM64范围。
-- D02：12个owner type字段、8个enum numeric identity、finger/button字段及
-  `InputManager` finger数组长度15。
+Reverse `4bda0f3ad2fb84ef972bf352e78aac57dad44c8b`已关闭：
 
-## Required Before Code
-
-以下项仍为`required-before-code`，M03–M11禁止实施：
-
-- D03：portable坐标、lane resolver及button capability边界。
-- D04：ordinary/Slide/wide/tie/simultaneous候选顺序。
-- D05：窗口、rounding、Fast/Slow与tolerance实体bits。
-- D06：finger范围、无owner、Stationary/Canceled与multi-touch顺序。
-- D07：Flick/Directional exact movement边界与坐标转换。
-- D08：Multiple真实touch、side/count/group所有权。
-- D09：Long hold/move/grace/release完整实体轨迹。
-- D10：Slide paired band/cursor/VirtualPerfectLine/Great correction。
-- D11：Long/Slide timeout equal与同帧/invisible顺序。
-- D12：release映射、skip及finger/button清理顺序。
-- D13：manual producer到五槽OneFrame/第六槽/Reflect顺序。
-- D14：outer-frame/adaptive/pause/resume/fault/dispose组合。
-- D15：malformed/foreign/later-invalid whole-domain failure atomicity。
-- MJ01–MJ26：全部须来自10.1.4 committed raw input/fixed output轨迹。
-
-当前源`closure.json`正确保持：
+- V01：10.1.4/230完整版本重基线；
+- D01：Slide Wait/over-Wait独立边界；
+- D02：type、enum、finger/button及数组容量；
+- D03：bottom-left Float32坐标与owner-issued resolver capability；
+- D04：ordinary/Slide/wide/tie的严格替换与owner scan顺序；
+- D05：1/60、窗口、Fast/Slow和Miss interval bits；
+- D06：finger 0/1两指全phase、枚举顺序及0..14 owner范围；
+- D07：Flick 0.04、Directional 0.01 exact strict阈值；
+- D08：Multiple count/side/group owner与两指raw producer；
+- D09：Long实体Good/Slow head、grace/move/release路径；
+- D10：Slide十组band、cursor/result owner及实体root/after身份；
+- D11：Long双timeout及Slide root/after timeout顺序；
+- D12：Long physical None release→Miss与finger清理、Slide release路径；
+- D13：五槽、Long双slot单Reflect及第六槽terminal fault边界；
+- D14：outer-frame once-only、pause/adaptive/fault/dispose顺序；
+- D15：whole-frame preflight与malformed/foreign/later-invalid零mutation边界；
+- MJ01–MJ26：10.1.4固定事件oracle，无`unknown_fields`。
 
 ```text
-runtime_oracle = blocked
-manual_input_gate = blocked
+runtime_oracle = closed
+manual_input_gate = closed
+blocking_findings = []
 ```
+
+## 非阻断边界
+
+- Score/Life/Skill/Fever/audio/particle/rendering/HUD仍属后续阶段。
+- Unity PlayerLoop与OS采样延迟不作声明。
+- DOM/Tauri/Pixi/主程序输入适配与接入未实现。
+- 证据关闭只允许开始M03；不等于生产或最终验收关闭。

@@ -7,12 +7,14 @@ import csv
 import hashlib
 import json
 from pathlib import Path
+import struct
 
 
 HERE = Path(__file__).resolve().parent
 EXPECTED_BINARY = "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F"
 EXPECTED_METADATA = "298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F"
 IMM12_MASK = 0x003FFC00
+TARGET_BINARY = HERE.parents[2] / "samples/jp.co.craftegg.band/10.1.4_230/extracted/libil2cpp.so"
 
 
 def require(condition: bool, message: str) -> None:
@@ -33,9 +35,9 @@ def main() -> int:
         "libil2cpp_sha256": EXPECTED_BINARY,
         "global_metadata_sha256": EXPECTED_METADATA,
     }, "target identity changed")
-    require(contract["method_status_counts"] == {"mapped": 99}, "all 99 methods must map")
+    require(contract["method_status_counts"] == {"mapped": 103}, "all 99 methods must map")
     require(contract["layout_status_counts"] == {"unchanged": 12}, "all 12 layouts must match")
-    require(contract["enum_status_counts"] == {"unchanged": 8}, "all 8 enums must match")
+    require(contract["enum_status_counts"] == {"unchanged": 13}, "all 8 enums must match")
 
     methods = method_index(contract)
     for key, row in methods.items():
@@ -78,8 +80,14 @@ def main() -> int:
     require(enums["TouchPhase"] == {"Began": 0, "Moved": 1, "Stationary": 2, "Ended": 3, "Canceled": 4}, "TouchPhase identity")
     require(enums["NoteResultType"] == {"None": -1, "Miss": 0, "Bad": 1, "Good": 2, "Great": 3, "Perfect": 4}, "result identity")
     require(enums["JudgeTiming"] == {"None": 0, "Fast": 1, "Slow": 2}, "timing identity")
+    require(enums["ButtonType"]["None"] == -1 and enums["ButtonType"]["Button_00_BMS_1P_SC"] == 0 and enums["ButtonType"]["Button_07_BMS_1P_07"] == 7, "button identity")
+    require(enums["JudgeNoteType"]["Slide"] == 8 and enums["JudgeNoteType"]["DirectionalFlick"] == 9 and enums["JudgeNoteType"]["MultipleDirectionalFlick"] == 10, "judge note identity")
+    require(enums["GameNoteAdditionalType"]["BpmChange"] == 3 and enums["VirtualLaneDirection"]["Left"] == 1 and enums["DamageGuardType"]["NeverDieSkill"] == 2, "additional identity")
 
     assert_line(methods, ("InputManager", ".ctor"), "mov w1, #0xf")
+    assert_line(methods, ("NoteSlide", ".ctor"), "str x1, [x19, #0x1f0]")
+    assert_line(methods, ("NoteSlide", ".ctor"), "mov w8, #4")
+    assert_line(methods, ("NoteSlide", ".ctor"), "mov w1, #5")
     assert_line(methods, ("NoteFlick", "ExecTouchMoved"), "ldr s1, [x8, #0x460]")
     assert_line(methods, ("NoteFlick", "ExecTouchMoved"), "b.le")
     assert_line(methods, ("NoteDirectionalFlick", "judgeDirectionalFlickSucceeded"), "ldr s1, [x8, #0x580]")
@@ -89,6 +97,20 @@ def main() -> int:
     assert_line(methods, ("NoteUtility", ".cctor"), "mov w9, #0xddde")
     assert_line(methods, ("NoteUtility", ".cctor"), "movk w9, #0x3e5d, lsl #16")
 
+    binary = TARGET_BINARY.read_bytes()
+    phoff = struct.unpack_from("<Q", binary, 0x20)[0]
+    phentsize, phnum = struct.unpack_from("<HH", binary, 0x36)
+    constant_bytes = None
+    for index in range(phnum):
+        header = phoff + index * phentsize
+        if struct.unpack_from("<I", binary, header)[0] != 1:
+            continue
+        file_offset, virtual_address, _, file_size = struct.unpack_from("<QQQQ", binary, header + 8)
+        if virtual_address <= 0x15366A8 and 0x15366A8 + 4 <= virtual_address + file_size:
+            constant_bytes = binary[file_offset + 0x15366A8 - virtual_address:file_offset + 0x15366A8 - virtual_address + 4]
+            break
+    require(constant_bytes == struct.pack("<I", 0x3C888889), "GetResult frame-rate constant")
+
     get_result = (HERE / methods[("NoteUtility", "GetResult")]["evidence"]).read_text(encoding="utf-8")
     for immediate in ("add w9, w19, #3", "add w9, w19, #6", "add w9, w19, #7", "add w9, w19, #8"):
         require(immediate in get_result, f"missing exclusive window {immediate}")
@@ -96,10 +118,10 @@ def main() -> int:
 
     with (HERE / "targets.tsv").open(encoding="utf-8", newline="") as source:
         rows = list(csv.DictReader(source, delimiter="\t"))
-    require(len(rows) == 99, "targets row count")
+    require(len(rows) == 103, "targets row count")
     require(all(row["status"] == "mapped" for row in rows), "targets must all map")
     verify_sums()
-    print("manual input static contract verified: version=10.1.4 methods=99 layouts=12 enums=8 V01=closed D01=closed")
+    print("manual input static contract verified: version=10.1.4 methods=103 layouts=12 enums=13 V01=closed D01=closed")
     return 0
 
 

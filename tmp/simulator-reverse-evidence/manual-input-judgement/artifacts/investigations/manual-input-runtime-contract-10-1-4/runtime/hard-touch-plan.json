@@ -1,0 +1,1558 @@
+{
+  "scenario_id": "MJ11-MJ22-hard-manual-all-lanes",
+  "actions": [
+    {
+      "delay_ms": 200,
+      "marker": "hard-live-start",
+      "kind": "tap",
+      "x": 1240,
+      "y": 590
+    },
+    {
+      "delay_ms": 7000,
+      "marker": "hard-gameplay",
+      "kind": "wait"
+    },
+    {
+      "delay_ms": 120,
+      "marker": "hard-c0-l0",
+      "kind": "tap",
+      "x": 380,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c0-l1",
+      "kind": "tap",
+      "x": 520,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c0-l2",
+      "kind": "tap",
+      "x": 660,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c0-l3",
+      "kind": "tap",
+      "x": 800,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c0-l4",
+      "kind": "tap",
+      "x": 940,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c0-l5",
+      "kind": "tap",
+      "x": 1080,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c0-l6",
+      "kind": "tap",
+      "x": 1220,
+      "y": 650
+    },
+    {
+      "delay_ms": 120,
+      "marker": "hard-c1-l0",
+      "kind": "tap",
+      "x": 380,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c1-l1",
+      "kind": "tap",
+      "x": 520,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c1-l2",
+      "kind": "tap",
+      "x": 660,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c1-l3",
+      "kind": "tap",
+      "x": 800,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c1-l4",
+      "kind": "tap",
+      "x": 940,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c1-l5",
+      "kind": "tap",
+      "x": 1080,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c1-l6",
+      "kind": "tap",
+      "x": 1220,
+      "y": 650
+    },
+    {
+      "delay_ms": 120,
+      "marker": "hard-c2-l0",
+      "kind": "tap",
+      "x": 380,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c2-l1",
+      "kind": "tap",
+      "x": 520,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c2-l2",
+      "kind": "tap",
+      "x": 660,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c2-l3",
+      "kind": "tap",
+      "x": 800,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c2-l4",
+      "kind": "tap",
+      "x": 940,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c2-l5",
+      "kind": "tap",
+      "x": 1080,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c2-l6",
+      "kind": "tap",
+      "x": 1220,
+      "y": 650
+    },
+    {
+      "delay_ms": 120,
+      "marker": "hard-c3-l0",
+      "kind": "tap",
+      "x": 380,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c3-l1",
+      "kind": "tap",
+      "x": 520,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c3-l2",
+      "kind": "tap",
+      "x": 660,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c3-l3",
+      "kind": "tap",
+      "x": 800,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c3-l4",
+      "kind": "tap",
+      "x": 940,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c3-l5",
+      "kind": "tap",
+      "x": 1080,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c3-l6",
+      "kind": "tap",
+      "x": 1220,
+      "y": 650
+    },
+    {
+      "delay_ms": 120,
+      "marker": "hard-c4-l0",
+      "kind": "tap",
+      "x": 380,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c4-l1",
+      "kind": "tap",
+      "x": 520,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c4-l2",
+      "kind": "tap",
+      "x": 660,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c4-l3",
+      "kind": "tap",
+      "x": 800,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c4-l4",
+      "kind": "tap",
+      "x": 940,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c4-l5",
+      "kind": "tap",
+      "x": 1080,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c4-l6",
+      "kind": "tap",
+      "x": 1220,
+      "y": 650
+    },
+    {
+      "delay_ms": 120,
+      "marker": "hard-c5-l0",
+      "kind": "tap",
+      "x": 380,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c5-l1",
+      "kind": "tap",
+      "x": 520,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c5-l2",
+      "kind": "tap",
+      "x": 660,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c5-l3",
+      "kind": "tap",
+      "x": 800,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c5-l4",
+      "kind": "tap",
+      "x": 940,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c5-l5",
+      "kind": "tap",
+      "x": 1080,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c5-l6",
+      "kind": "tap",
+      "x": 1220,
+      "y": 650
+    },
+    {
+      "delay_ms": 120,
+      "marker": "hard-c6-l0",
+      "kind": "tap",
+      "x": 380,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c6-l1",
+      "kind": "tap",
+      "x": 520,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c6-l2",
+      "kind": "tap",
+      "x": 660,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c6-l3",
+      "kind": "tap",
+      "x": 800,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c6-l4",
+      "kind": "tap",
+      "x": 940,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c6-l5",
+      "kind": "tap",
+      "x": 1080,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c6-l6",
+      "kind": "tap",
+      "x": 1220,
+      "y": 650
+    },
+    {
+      "delay_ms": 120,
+      "marker": "hard-c7-l0",
+      "kind": "tap",
+      "x": 380,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c7-l1",
+      "kind": "tap",
+      "x": 520,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c7-l2",
+      "kind": "tap",
+      "x": 660,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c7-l3",
+      "kind": "tap",
+      "x": 800,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c7-l4",
+      "kind": "tap",
+      "x": 940,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c7-l5",
+      "kind": "tap",
+      "x": 1080,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c7-l6",
+      "kind": "tap",
+      "x": 1220,
+      "y": 650
+    },
+    {
+      "delay_ms": 120,
+      "marker": "hard-c8-l0",
+      "kind": "tap",
+      "x": 380,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c8-l1",
+      "kind": "tap",
+      "x": 520,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c8-l2",
+      "kind": "tap",
+      "x": 660,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c8-l3",
+      "kind": "tap",
+      "x": 800,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c8-l4",
+      "kind": "tap",
+      "x": 940,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c8-l5",
+      "kind": "tap",
+      "x": 1080,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c8-l6",
+      "kind": "tap",
+      "x": 1220,
+      "y": 650
+    },
+    {
+      "delay_ms": 120,
+      "marker": "hard-c9-l0",
+      "kind": "tap",
+      "x": 380,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c9-l1",
+      "kind": "tap",
+      "x": 520,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c9-l2",
+      "kind": "tap",
+      "x": 660,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c9-l3",
+      "kind": "tap",
+      "x": 800,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c9-l4",
+      "kind": "tap",
+      "x": 940,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c9-l5",
+      "kind": "tap",
+      "x": 1080,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c9-l6",
+      "kind": "tap",
+      "x": 1220,
+      "y": 650
+    },
+    {
+      "delay_ms": 120,
+      "marker": "hard-c10-l0",
+      "kind": "tap",
+      "x": 380,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c10-l1",
+      "kind": "tap",
+      "x": 520,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c10-l2",
+      "kind": "tap",
+      "x": 660,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c10-l3",
+      "kind": "tap",
+      "x": 800,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c10-l4",
+      "kind": "tap",
+      "x": 940,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c10-l5",
+      "kind": "tap",
+      "x": 1080,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c10-l6",
+      "kind": "tap",
+      "x": 1220,
+      "y": 650
+    },
+    {
+      "delay_ms": 120,
+      "marker": "hard-c11-l0",
+      "kind": "tap",
+      "x": 380,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c11-l1",
+      "kind": "tap",
+      "x": 520,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c11-l2",
+      "kind": "tap",
+      "x": 660,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c11-l3",
+      "kind": "tap",
+      "x": 800,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c11-l4",
+      "kind": "tap",
+      "x": 940,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c11-l5",
+      "kind": "tap",
+      "x": 1080,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c11-l6",
+      "kind": "tap",
+      "x": 1220,
+      "y": 650
+    },
+    {
+      "delay_ms": 120,
+      "marker": "hard-c12-l0",
+      "kind": "tap",
+      "x": 380,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c12-l1",
+      "kind": "tap",
+      "x": 520,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c12-l2",
+      "kind": "tap",
+      "x": 660,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c12-l3",
+      "kind": "tap",
+      "x": 800,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c12-l4",
+      "kind": "tap",
+      "x": 940,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c12-l5",
+      "kind": "tap",
+      "x": 1080,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c12-l6",
+      "kind": "tap",
+      "x": 1220,
+      "y": 650
+    },
+    {
+      "delay_ms": 120,
+      "marker": "hard-c13-l0",
+      "kind": "tap",
+      "x": 380,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c13-l1",
+      "kind": "tap",
+      "x": 520,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c13-l2",
+      "kind": "tap",
+      "x": 660,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c13-l3",
+      "kind": "tap",
+      "x": 800,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c13-l4",
+      "kind": "tap",
+      "x": 940,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c13-l5",
+      "kind": "tap",
+      "x": 1080,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c13-l6",
+      "kind": "tap",
+      "x": 1220,
+      "y": 650
+    },
+    {
+      "delay_ms": 120,
+      "marker": "hard-c14-l0",
+      "kind": "tap",
+      "x": 380,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c14-l1",
+      "kind": "tap",
+      "x": 520,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c14-l2",
+      "kind": "tap",
+      "x": 660,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c14-l3",
+      "kind": "tap",
+      "x": 800,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c14-l4",
+      "kind": "tap",
+      "x": 940,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c14-l5",
+      "kind": "tap",
+      "x": 1080,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c14-l6",
+      "kind": "tap",
+      "x": 1220,
+      "y": 650
+    },
+    {
+      "delay_ms": 120,
+      "marker": "hard-c15-l0",
+      "kind": "tap",
+      "x": 380,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c15-l1",
+      "kind": "tap",
+      "x": 520,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c15-l2",
+      "kind": "tap",
+      "x": 660,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c15-l3",
+      "kind": "tap",
+      "x": 800,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c15-l4",
+      "kind": "tap",
+      "x": 940,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c15-l5",
+      "kind": "tap",
+      "x": 1080,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c15-l6",
+      "kind": "tap",
+      "x": 1220,
+      "y": 650
+    },
+    {
+      "delay_ms": 120,
+      "marker": "hard-c16-l0",
+      "kind": "tap",
+      "x": 380,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c16-l1",
+      "kind": "tap",
+      "x": 520,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c16-l2",
+      "kind": "tap",
+      "x": 660,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c16-l3",
+      "kind": "tap",
+      "x": 800,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c16-l4",
+      "kind": "tap",
+      "x": 940,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c16-l5",
+      "kind": "tap",
+      "x": 1080,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c16-l6",
+      "kind": "tap",
+      "x": 1220,
+      "y": 650
+    },
+    {
+      "delay_ms": 120,
+      "marker": "hard-c17-l0",
+      "kind": "tap",
+      "x": 380,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c17-l1",
+      "kind": "tap",
+      "x": 520,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c17-l2",
+      "kind": "tap",
+      "x": 660,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c17-l3",
+      "kind": "tap",
+      "x": 800,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c17-l4",
+      "kind": "tap",
+      "x": 940,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c17-l5",
+      "kind": "tap",
+      "x": 1080,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c17-l6",
+      "kind": "tap",
+      "x": 1220,
+      "y": 650
+    },
+    {
+      "delay_ms": 120,
+      "marker": "hard-c18-l0",
+      "kind": "tap",
+      "x": 380,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c18-l1",
+      "kind": "tap",
+      "x": 520,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c18-l2",
+      "kind": "tap",
+      "x": 660,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c18-l3",
+      "kind": "tap",
+      "x": 800,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c18-l4",
+      "kind": "tap",
+      "x": 940,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c18-l5",
+      "kind": "tap",
+      "x": 1080,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c18-l6",
+      "kind": "tap",
+      "x": 1220,
+      "y": 650
+    },
+    {
+      "delay_ms": 120,
+      "marker": "hard-c19-l0",
+      "kind": "tap",
+      "x": 380,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c19-l1",
+      "kind": "tap",
+      "x": 520,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c19-l2",
+      "kind": "tap",
+      "x": 660,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c19-l3",
+      "kind": "tap",
+      "x": 800,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c19-l4",
+      "kind": "tap",
+      "x": 940,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c19-l5",
+      "kind": "tap",
+      "x": 1080,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c19-l6",
+      "kind": "tap",
+      "x": 1220,
+      "y": 650
+    },
+    {
+      "delay_ms": 120,
+      "marker": "hard-c20-l0",
+      "kind": "tap",
+      "x": 380,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c20-l1",
+      "kind": "tap",
+      "x": 520,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c20-l2",
+      "kind": "tap",
+      "x": 660,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c20-l3",
+      "kind": "tap",
+      "x": 800,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c20-l4",
+      "kind": "tap",
+      "x": 940,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c20-l5",
+      "kind": "tap",
+      "x": 1080,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c20-l6",
+      "kind": "tap",
+      "x": 1220,
+      "y": 650
+    },
+    {
+      "delay_ms": 120,
+      "marker": "hard-c21-l0",
+      "kind": "tap",
+      "x": 380,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c21-l1",
+      "kind": "tap",
+      "x": 520,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c21-l2",
+      "kind": "tap",
+      "x": 660,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c21-l3",
+      "kind": "tap",
+      "x": 800,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c21-l4",
+      "kind": "tap",
+      "x": 940,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c21-l5",
+      "kind": "tap",
+      "x": 1080,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c21-l6",
+      "kind": "tap",
+      "x": 1220,
+      "y": 650
+    },
+    {
+      "delay_ms": 120,
+      "marker": "hard-c22-l0",
+      "kind": "tap",
+      "x": 380,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c22-l1",
+      "kind": "tap",
+      "x": 520,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c22-l2",
+      "kind": "tap",
+      "x": 660,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c22-l3",
+      "kind": "tap",
+      "x": 800,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c22-l4",
+      "kind": "tap",
+      "x": 940,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c22-l5",
+      "kind": "tap",
+      "x": 1080,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c22-l6",
+      "kind": "tap",
+      "x": 1220,
+      "y": 650
+    },
+    {
+      "delay_ms": 120,
+      "marker": "hard-c23-l0",
+      "kind": "tap",
+      "x": 380,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c23-l1",
+      "kind": "tap",
+      "x": 520,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c23-l2",
+      "kind": "tap",
+      "x": 660,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c23-l3",
+      "kind": "tap",
+      "x": 800,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c23-l4",
+      "kind": "tap",
+      "x": 940,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c23-l5",
+      "kind": "tap",
+      "x": 1080,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c23-l6",
+      "kind": "tap",
+      "x": 1220,
+      "y": 650
+    },
+    {
+      "delay_ms": 120,
+      "marker": "hard-c24-l0",
+      "kind": "tap",
+      "x": 380,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c24-l1",
+      "kind": "tap",
+      "x": 520,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c24-l2",
+      "kind": "tap",
+      "x": 660,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c24-l3",
+      "kind": "tap",
+      "x": 800,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c24-l4",
+      "kind": "tap",
+      "x": 940,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c24-l5",
+      "kind": "tap",
+      "x": 1080,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c24-l6",
+      "kind": "tap",
+      "x": 1220,
+      "y": 650
+    },
+    {
+      "delay_ms": 120,
+      "marker": "hard-c25-l0",
+      "kind": "tap",
+      "x": 380,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c25-l1",
+      "kind": "tap",
+      "x": 520,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c25-l2",
+      "kind": "tap",
+      "x": 660,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c25-l3",
+      "kind": "tap",
+      "x": 800,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c25-l4",
+      "kind": "tap",
+      "x": 940,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c25-l5",
+      "kind": "tap",
+      "x": 1080,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c25-l6",
+      "kind": "tap",
+      "x": 1220,
+      "y": 650
+    },
+    {
+      "delay_ms": 120,
+      "marker": "hard-c26-l0",
+      "kind": "tap",
+      "x": 380,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c26-l1",
+      "kind": "tap",
+      "x": 520,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c26-l2",
+      "kind": "tap",
+      "x": 660,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c26-l3",
+      "kind": "tap",
+      "x": 800,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c26-l4",
+      "kind": "tap",
+      "x": 940,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c26-l5",
+      "kind": "tap",
+      "x": 1080,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c26-l6",
+      "kind": "tap",
+      "x": 1220,
+      "y": 650
+    },
+    {
+      "delay_ms": 120,
+      "marker": "hard-c27-l0",
+      "kind": "tap",
+      "x": 380,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c27-l1",
+      "kind": "tap",
+      "x": 520,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c27-l2",
+      "kind": "tap",
+      "x": 660,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c27-l3",
+      "kind": "tap",
+      "x": 800,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c27-l4",
+      "kind": "tap",
+      "x": 940,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c27-l5",
+      "kind": "tap",
+      "x": 1080,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c27-l6",
+      "kind": "tap",
+      "x": 1220,
+      "y": 650
+    },
+    {
+      "delay_ms": 120,
+      "marker": "hard-c28-l0",
+      "kind": "tap",
+      "x": 380,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c28-l1",
+      "kind": "tap",
+      "x": 520,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c28-l2",
+      "kind": "tap",
+      "x": 660,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c28-l3",
+      "kind": "tap",
+      "x": 800,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c28-l4",
+      "kind": "tap",
+      "x": 940,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c28-l5",
+      "kind": "tap",
+      "x": 1080,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c28-l6",
+      "kind": "tap",
+      "x": 1220,
+      "y": 650
+    },
+    {
+      "delay_ms": 120,
+      "marker": "hard-c29-l0",
+      "kind": "tap",
+      "x": 380,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c29-l1",
+      "kind": "tap",
+      "x": 520,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c29-l2",
+      "kind": "tap",
+      "x": 660,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c29-l3",
+      "kind": "tap",
+      "x": 800,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c29-l4",
+      "kind": "tap",
+      "x": 940,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c29-l5",
+      "kind": "tap",
+      "x": 1080,
+      "y": 650
+    },
+    {
+      "delay_ms": 0,
+      "marker": "hard-c29-l6",
+      "kind": "tap",
+      "x": 1220,
+      "y": 650
+    },
+    {
+      "delay_ms": 80,
+      "marker": "hard-hold-l0",
+      "kind": "swipe",
+      "x1": 380,
+      "y1": 650,
+      "x2": 380,
+      "y2": 650,
+      "duration_ms": 450
+    },
+    {
+      "delay_ms": 80,
+      "marker": "hard-hold-l1",
+      "kind": "swipe",
+      "x1": 520,
+      "y1": 650,
+      "x2": 520,
+      "y2": 650,
+      "duration_ms": 450
+    },
+    {
+      "delay_ms": 80,
+      "marker": "hard-hold-l2",
+      "kind": "swipe",
+      "x1": 660,
+      "y1": 650,
+      "x2": 660,
+      "y2": 650,
+      "duration_ms": 450
+    },
+    {
+      "delay_ms": 80,
+      "marker": "hard-hold-l3",
+      "kind": "swipe",
+      "x1": 800,
+      "y1": 650,
+      "x2": 800,
+      "y2": 650,
+      "duration_ms": 450
+    },
+    {
+      "delay_ms": 80,
+      "marker": "hard-hold-l4",
+      "kind": "swipe",
+      "x1": 940,
+      "y1": 650,
+      "x2": 940,
+      "y2": 650,
+      "duration_ms": 450
+    },
+    {
+      "delay_ms": 80,
+      "marker": "hard-hold-l5",
+      "kind": "swipe",
+      "x1": 1080,
+      "y1": 650,
+      "x2": 1080,
+      "y2": 650,
+      "duration_ms": 450
+    },
+    {
+      "delay_ms": 80,
+      "marker": "hard-hold-l6",
+      "kind": "swipe",
+      "x1": 1220,
+      "y1": 650,
+      "x2": 1220,
+      "y2": 650,
+      "duration_ms": 450
+    }
+  ],
+  "tail_seconds": 2
+}

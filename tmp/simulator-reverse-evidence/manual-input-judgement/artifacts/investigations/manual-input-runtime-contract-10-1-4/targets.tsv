@@ -4,6 +4,7 @@ target_rva	target_end_rva	owner	method	signature_unchanged	target_size	differing
 0x3883858	0x38839B4	ButtonManager	calcNearestButton	true	348	24	9	arm64/03883858__ButtonManager__calcNearestButton.arm64.tsv	mapped
 0x38839B4	0x3883B28	ButtonManager	calcSecondNearButton	true	372	24	9	arm64/038839b4__ButtonManager__calcSecondNearButton.arm64.tsv	mapped
 0x3883B28	0x3883CB0	ButtonManager	calcThirdNearButton	true	392	24	9	arm64/03883b28__ButtonManager__calcThirdNearButton.arm64.tsv	mapped
+0x387E7F0	0x387E9B8	GamePlayButton	.ctor	true	456	36	8	arm64/0387e7f0__GamePlayButton___ctor.arm64.tsv	mapped
 0x387D064	0x387D1C8	GamePlayButton	CalculateTouchEndedJudge	true	356	15	6	arm64/0387d064__GamePlayButton__CalculateTouchEndedJudge.arm64.tsv	mapped
 0x387C784	0x387CA38	GamePlayButton	ExecTouchBegan	true	692	35	14	arm64/0387c784__GamePlayButton__ExecTouchBegan.arm64.tsv	mapped
 0x387CEB0	0x387CFD4	GamePlayButton	ExecTouchEnded	true	292	11	4	arm64/0387ceb0__GamePlayButton__ExecTouchEnded.arm64.tsv	mapped
@@ -30,6 +31,7 @@ target_rva	target_end_rva	owner	method	signature_unchanged	target_size	differing
 0x30E9E20	0x30E9E98	NoteFlick	ExecTouchMoved	true	120	4	1	arm64/030e9e20__NoteFlick__ExecTouchMoved.arm64.tsv	mapped
 0x30DFFD4	0x30E0130	NoteFrontBase	calculateScreenPosToWorldDistanceRate	true	348	18	8	arm64/030dffd4__NoteFrontBase__calculateScreenPosToWorldDistanceRate.arm64.tsv	mapped
 0x30E0130	0x30E05F0	NoteFrontBase	judgeFrontNote	true	1216	66	23	arm64/030e0130__NoteFrontBase__judgeFrontNote.arm64.tsv	mapped
+0x30EC1C0	0x30EC1C4	NoteLong	.ctor	true	4	0	0	arm64/030ec1c0__NoteLong___ctor.arm64.tsv	mapped
 0x30EA690	0x30EA764	NoteLong	Deactivate	true	212	11	4	arm64/030ea690__NoteLong__Deactivate.arm64.tsv	mapped
 0x30EAEDC	0x30EB148	NoteLong	ExecTouchBegan	true	620	39	14	arm64/030eaedc__NoteLong__ExecTouchBegan.arm64.tsv	mapped
 0x30EB854	0x30EB8D0	NoteLong	ExecTouchEnded	true	124	4	0	arm64/030eb854__NoteLong__ExecTouchEnded.arm64.tsv	mapped
@@ -49,6 +51,7 @@ target_rva	target_end_rva	owner	method	signature_unchanged	target_size	differing
 0x30EC164	0x30EC1B4	NoteLong	onMiss	true	80	3	0	arm64/030ec164__NoteLong__onMiss.arm64.tsv	mapped
 0x30EB6EC	0x30EB800	NoteLong	shouldJudgeDirectionalFlick	true	276	24	9	arm64/030eb6ec__NoteLong__shouldJudgeDirectionalFlick.arm64.tsv	mapped
 0x377702C	0x3777408	NoteManager	GetMoveEndTimeNearestZeroNote	true	988	52	11	arm64/0377702c__NoteManager__GetMoveEndTimeNearestZeroNote.arm64.tsv	mapped
+0x30ED770	0x30ED774	NoteMultipleDirectionalFlick	.ctor	true	4	0	0	arm64/030ed770__NoteMultipleDirectionalFlick___ctor.arm64.tsv	mapped
 0x30ED270	0x30ED318	NoteMultipleDirectionalFlick	ChangeLeftNoteUsed	true	168	12	4	arm64/030ed270__NoteMultipleDirectionalFlick__ChangeLeftNoteUsed.arm64.tsv	mapped
 0x30ED318	0x30ED3C0	NoteMultipleDirectionalFlick	ChangeRightNoteUsed	true	168	12	4	arm64/030ed318__NoteMultipleDirectionalFlick__ChangeRightNoteUsed.arm64.tsv	mapped
 0x30EC6BC	0x30EC6F8	NoteMultipleDirectionalFlick	ExecTouchBegan	true	60	1	0	arm64/030ec6bc__NoteMultipleDirectionalFlick__ExecTouchBegan.arm64.tsv	mapped
@@ -56,6 +59,7 @@ target_rva	target_end_rva	owner	method	signature_unchanged	target_size	differing
 0x30EC3A8	0x30EC484	NoteMultipleDirectionalFlick	changeSideNoteUsed	true	220	14	4	arm64/030ec3a8__NoteMultipleDirectionalFlick__changeSideNoteUsed.arm64.tsv	mapped
 0x30ECA54	0x30ECA8C	NoteMultipleDirectionalFlick	getMultipleDirectionalFlickNoteCount	true	56	0	0	arm64/030eca54__NoteMultipleDirectionalFlick__getMultipleDirectionalFlickNoteCount.arm64.tsv	mapped
 0x3219BE8	0x3219C6C	NoteNormal	ExecTouchBegan	true	132	2	0	arm64/03219be8__NoteNormal__ExecTouchBegan.arm64.tsv	mapped
+0x321F674	0x321F9A0	NoteSlide	.ctor	true	812	66	22	arm64/0321f674__NoteSlide___ctor.arm64.tsv	mapped
 0x321BA8C	0x321C190	NoteSlide	ExecTouchBegan	true	1796	61	23	arm64/0321ba8c__NoteSlide__ExecTouchBegan.arm64.tsv	mapped
 0x321E3F4	0x321E90C	NoteSlide	ExecTouchEnded	true	1304	44	10	arm64/0321e3f4__NoteSlide__ExecTouchEnded.arm64.tsv	mapped
 0x321C664	0x321D8B0	NoteSlide	ExecTouchMoved	true	4684	130	46	arm64/0321c664__NoteSlide__ExecTouchMoved.arm64.tsv	mapped

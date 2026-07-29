@@ -6,9 +6,9 @@
 - 上游：第一切片、谱面构造、时钟与调度、Auto Live均已关闭。
 - Auto Live最终状态提交：GarupaEditor `bdb11c399124f23b858cc29f67084e5f40560b07`。
 - 锁定原作样本：`jp.co.craftegg.band` 10.1.4（version code 230，`arm64-v8a`）；锁定`libil2cpp.so` SHA-256：`815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F`。
-- 当前Reverse证据提交：`11b8250853ca12a2106c66245724467701d9eb23`，已推送`origin/main`且远端差异`0 0`。
-- 当前状态：**M00、V01、M01、D01、D02已完成；Reverse 10.1.4静态契约已冻结为106项source/copy可校验证据。M02仍被D03–D15及MJ01–MJ26实体/固定事件oracle阻断。Reverse既有大量用户修改继续全部排除，只消费Git对象库中的已提交证据。M02关闭前禁止实施M03–M11任何生产代码。S01–S73仍仅是10.1.3/229历史迁移清单，生产依据改为R01–R08及后续10.1.4 runtime证据。**
-- 证据包：`tmp/simulator-reverse-evidence/manual-input-judgement/`，M01静态批已创建；M02按新Reverse提交追加runtime批。
+- 当前Reverse证据提交：`4bda0f3ad2fb84ef972bf352e78aac57dad44c8b`，已推送`origin/main`且远端差异`0 0`。
+- 当前状态：**M00–M02、V01及D01–D15证据门已完成；Reverse 10.1.4契约、5条R1 raw trace与MJ01–MJ26已冻结为126项source/copy可校验证据，`manual_input_gate=closed`且`blocking_findings=[]`。这只解除M03实施硬门，不表示任何手动输入生产代码已实现或验收。Reverse既有大量用户修改继续全部排除，只消费Git对象库中的已提交证据。S01–S73仍仅是10.1.3/229历史迁移清单，生产依据为R01–R17。**
+- 证据包：`tmp/simulator-reverse-evidence/manual-input-judgement/`，M01/M02静态、R1与fixed-oracle批均已冻结。
 - 计划验收记录：`tmp/simulator-manual-input-judgement-acceptance.md`，M11时创建。
 
 ### 1.1 阶段目标
@@ -40,7 +40,7 @@
 10. timeout由现有production adjusted music position、BPM和Note状态机驱动；测试不得注入expected BPM、私有cursor、预计算result或直接写NoteState。
 11. movement比较保持原作Float32、严格`>`/`<`/`<=`及screen-to-world distance rate链；不得将`0.04`、`0.01`、`8.0`改成像素阈值、clamp或epsilon近似。
 12. stage 5的Score/Power/Life/Skill/Fever与stage 7的音频仍缺席。手动判定只可扩展已闭合的judgement projection，不得用零值伪造完整`OneFrameData`业务字段。
-13. Unity touch取消、raycast/camera细节、finger数组越界、相等候选tie、simultaneous order等未闭合分支统一`evidence-required`，不得no-op。
+13. `Canceled`、finger越界、非有限坐标、foreign capability和later-invalid touch按M02 portable contract在owner mutation前返回`evidence-required`；相等候选保持owner scan首个严格更优项。Unity Raycast/Camera细节仍由owner-issued resolver边界隔离，不作原作API声明。
 14. `RefreshAfterMoveTime`、seek/回退与16秒无输入恢复不是普通触摸/timeout路径；除非M02另行闭合，否则继续排除。
 15. 证据批、生产实现批、定向测试批和最终独立验收批必须分离；任何修复批绿色结果都不能直接关闭阶段。
 16. 每次验收必须映射“任务要求→已提交证据ID/portable边界→生产调用路径→独立实际观察”，并枚举`producer × owner × consumer × lifecycle × failure point × mutation`。
@@ -50,17 +50,17 @@
 | 任务 | 状态 | 完成标准 |
 | --- | --- | --- |
 | M00 建立阶段任务书 | **已完成** | 范围、候选证据、硬门、oracle、实施批次和完成矩阵写入本文档 |
-| M01 晋升并修正静态证据 | **已完成** | 10.1.4的99方法/12 type/8 enum及独立Slide Wait已提交；106项冻结包source/copy verifier通过 |
-| M02 建立实体/固定事件oracle | 进行中，硬门 | V01/D01/D02已关闭；D03–D15及MJ01–MJ26仍须10.1.4固定输入/输出轨迹 |
-| M03 锁定输入数据与宿主边界 | 禁止实施 | 显式不可变input frame、owner-issued button能力、生命周期和失败优先级闭合 |
-| M04 恢复输入分发与候选仲裁 | 禁止实施 | phase、finger/button/note owner、wide/ordinary/Slide/tie行为匹配 |
-| M05 恢复窗口与Single/Flick判定 | 禁止实施 | GetResult/JudgeNote、Normal/Flick/Directional的边界bits与事件顺序匹配 |
-| M06 恢复Multiple手动判定 | 禁止实施 | 真实touch方向、count阈值、side owner、finish/deactivate匹配 |
-| M07 恢复Long手动状态机 | 禁止实施 | Began/Hold/Moved/Ended、合成release、grace、头尾与finger清理匹配 |
-| M08 恢复Slide手动状态机 | 禁止实施 | head/intermediate/end、band cursor、release/miss/invisible推进匹配 |
-| M09 恢复自然timeout Miss | 禁止实施 | Long start/end、Slide wait/stop及同帧Miss顺序匹配 |
-| M10 接入调度、OneFrame与原子边界 | 禁止实施 | 每外帧一次输入、adaptive/pause/fault/dispose、五槽与批原子性闭合 |
-| M11 production oracle与独立验收 | 禁止实施 | 完整回归、生产chart、证据验证和组合矩阵无开放阻断 |
+| M01 晋升并修正静态证据 | **已完成** | 10.1.4的103方法/12 type/13 enum、独立Slide Wait与Slide band构造已提交并冻结 |
+| M02 建立实体/固定事件oracle | **已完成** | 5条R1、MJ01–MJ26、D03–D15、portable contract及126项source/copy verifier通过 |
+| M03 锁定输入数据与宿主边界 | 未开始，允许实施 | 显式不可变input frame、owner-issued button能力、生命周期和失败优先级闭合 |
+| M04 恢复输入分发与候选仲裁 | 未开始 | phase、finger/button/note owner、wide/ordinary/Slide/tie行为匹配 |
+| M05 恢复窗口与Single/Flick判定 | 未开始 | GetResult/JudgeNote、Normal/Flick/Directional的边界bits与事件顺序匹配 |
+| M06 恢复Multiple手动判定 | 未开始 | 真实touch方向、count阈值、side owner、finish/deactivate匹配 |
+| M07 恢复Long手动状态机 | 未开始 | Began/Hold/Moved/Ended、合成release、grace、头尾与finger清理匹配 |
+| M08 恢复Slide手动状态机 | 未开始 | head/intermediate/end、band cursor、release/miss/invisible推进匹配 |
+| M09 恢复自然timeout Miss | 未开始 | Long start/end、Slide wait/stop及同帧Miss顺序匹配 |
+| M10 接入调度、OneFrame与原子边界 | 未开始 | 每外帧一次输入、adaptive/pause/fault/dispose、五槽与批原子性闭合 |
+| M11 production oracle与独立验收 | 未开始 | 完整回归、production chart、证据验证和组合矩阵无开放阻断 |
 
 ### 1.4 初始批次记录
 
@@ -84,13 +84,22 @@
 #### 2026-07-29 第三批：10.1.4手动静态契约
 
 - 在Reverse按managed `Owner$$Method`重新解析10.1.3迁移目标及补充边界，未使用统一RVA delta；锁定目标binary与metadata哈希。
-- 99/99方法唯一映射且签名、全局下一入口边界长度一致；每个目标均导出10.1.4独立ARM64 TSV。PC-relative差异保持指令类，其余差异经verifier证明只位于IL2CPP全局表unsigned imm12位，opcode/register/access width不变。
-- 12个owner type全部字段布局一致，8个输入/判定enum数字身份一致；`InputManager` finger数组长度15、`NoteBase.fingerId +0xC0`、`GamePlayButton`触点数组`+0x60/+0x68`均由当前版本直接指令/metadata锁定。
+- 最终103/103方法唯一映射且签名、全局下一入口边界长度一致；每个目标均导出10.1.4独立ARM64 TSV。PC-relative差异保持指令类，其余差异经verifier证明只位于IL2CPP全局表unsigned imm12位，opcode/register/access width不变。
+- 12个owner type全部字段布局一致，13个输入/判定enum数字身份一致；`InputManager` finger数组长度15、`NoteBase.fingerId +0xC0`、`GamePlayButton`触点数组`+0x60/+0x68`及Slide十组lane-band构造均由当前版本直接指令/metadata锁定。
 - 10.1.4独立恢复`NoteSlide.WaitState 0x321B414–0x321B628`（532字节）和`execOverWaitState 0x321B628–0x321B69C`（116字节），二者hash、边界和正文均独立，未消费10.1.3污染的merged cfunc；D01关闭。
 - 当前版本直接确认Flick `>0.04`、Directional `>0.01`、Long/Slide grace `8.0`、60FPS窗口exclusive `+3/+6/+7/+8`及`MissSecondInterval` bits `0x3E5DDDDE`。
-- Reverse证据提交`11b8250853ca12a2106c66245724467701d9eb23`已推送，离线verifier通过：`methods=99 layouts=12 enums=8 V01=closed D01=closed`。D02随type/enum/array capacity关闭；D03–D15仍阻断M02。
-- 已从该提交Git对象冻结完整106文件到`tmp/simulator-reverse-evidence/manual-input-judgement/`；manifest逐项固定source commit/path、bytes和SHA-256，`verify.mjs`的source/copy模式通过。暂存后必须再执行`--index`。
+- 初版静态提交`11b8250853ca12a2106c66245724467701d9eb23`已推送并冻结；最终补充由第四批`4bda0f3a`覆盖。
 - 未修改任何Garupa生产代码或手动输入测试入口。
+
+#### 2026-07-29 第四批：10.1.4 R1与MJ01–MJ26
+
+- R1采集器只安装观察hook和读取字段，不替换返回、不写游戏内存、不修改APK；每条正式raw内嵌plan与capture script完整SHA-256，partial/process-ended试验未进入证据。
+- song 653`幾億光年`Easy记录Touch phase 0/1/2/3、Float32 bottom-left坐标、InputManager分发与GamePlayButton复用；Hard记录Long index6/button6的Good/Slow头`noteType=4`、physical None release→Miss `noteType=1`、absolutePos336与finger -1；独立Hard no-input记录Long start同outer-frame双Miss双槽单Reflect；Expert no-input记录Slide root/after Miss顺序。
+- Linux MT控制记录finger0/1分别Began/Moved/Stationary/Ended及稳定枚举顺序；临时SELinux Permissive只包围input-device注入并在`finally`恢复，采后独立确认为Enforcing。该控制不写目标进程内存。
+- 纠正静态摘要：`0x15366A8`为Float32 `1/60` bits `0x3C888889`，不是60.0；verifier直接读取10.1.4 ELF断言。Flick、Directional、Miss interval分别为`0x3D23D70A`、`0x3C23D70A`、`0x3E5DDDDE`。
+- committed clock 10.1.4 scanner锁定musicscore660及Easy/Hard/Expert TextAsset SHA；fixed oracle固定portable frame/resolver/transaction/lifecycle contract和MJ01–MJ26，所有`unknown_fields=[]`。
+- Reverse最终提交`4bda0f3ad2fb84ef972bf352e78aac57dad44c8b`已推送且远端`0 0`；静态verifier与runtime verifier均通过，`manual_input_gate=closed`、`blocking_findings=[]`。
+- Garupa冻结包升级为126项最终source/copy条目；暂存后必须再执行`verify.mjs --index`。未修改任何`src/simulator/**`生产代码。
 
 ## 2. 固定范围
 
@@ -176,9 +185,9 @@ M03只能在M02后锁定具体TypeScript接口，但最终边界必须满足：
 
 ### 5.1 当前版本来源与状态
 
-- Reverse当前锁定证据提交：`11b8250853ca12a2106c66245724467701d9eb23`。
+- Reverse当前锁定证据提交：`4bda0f3ad2fb84ef972bf352e78aac57dad44c8b`。
 - 当前目标样本：`jp.co.craftegg.band` 10.1.4（230），`arm64-v8a`。
-- P01–P05只确认版本身份、锁定二进制和既有时钟采集目标的迁移边界；手动输入静态行为由R01–R08确认。
+- P01–P05确认版本身份、锁定二进制和既有时钟采集目标；手动输入静态/R1/oracle行为由R01–R17确认。
 - S01–S73全部来自10.1.3/229，只用于列出迁移目标和审计旧结论。其字节与SHA仍按旧Git blob保留，但不得冻结为10.1.4证据或被M03–M11消费。
 - 路径均位于Reverse仓库；SHA-256按Git blob原始字节独立计算，使用大写完整值。
 
@@ -190,20 +199,29 @@ M03只能在M02后锁定具体TypeScript接口，但最终边界必须满足：
 | P04 | `artifacts/investigations/package-version-rebaseline-10-1-4/verify_version_rebaseline.py` | 4923 | `516E366BBFABB59A9794A791EDBF53376DB50E23C6BC3BA4559DB1A745F8AFE2` | 离线版本映射verifier |
 | P05 | `artifacts/investigations/clock-scheduling-runtime-oracle/closure.json` | 15313 | `442263A74CCCE65BC029C4C8A246D9563EEE32DD506AFF76798B045CF6622EDD` | 时钟已在10.1.4重新取证并关闭；不替代手动输入取证 |
 
-### 5.1.1 10.1.4手动输入静态契约
+### 5.1.1 10.1.4手动输入最终契约
 
-| ID | Reverse `11b82508`路径 | 字节 | SHA-256 | 结论 |
+| ID | Reverse `4bda0f3a`路径 | 字节 | SHA-256 | 结论 |
 | --- | --- | ---: | --- | --- |
-| R01 | `artifacts/investigations/manual-input-runtime-contract-10-1-4/README.md` | 5391 | `78461F4235BC45F9138FD880434E4D056CC2A6C7E05AECB2A50A8C187F18ACDC` | 版本边界、静态结论与R1能力声明 |
-| R02 | `artifacts/investigations/manual-input-runtime-contract-10-1-4/manual_input_static_contract.json` | 525192 | `1941410F6C7D6F10619DEB8B0D662F03DC18011D3F57CE49CC607A040DFBF8A9` | 99方法双版本身份、逐word差异、12 type、8 enum |
-| R03 | `artifacts/investigations/manual-input-runtime-contract-10-1-4/targets.tsv` | 12930 | `9A42266DC860BDB1000176CCECCAC992ADFFD2F475B2AB85E469923BA0BEED7E` | 99/99当前RVA、边界、大小与独立ARM64路径 |
-| R04 | `artifacts/investigations/manual-input-runtime-contract-10-1-4/SHA256SUMS` | 12426 | `FD8A0AE646759C685DC32CAD1D683B18C4BDCAF0BC7A49CCD9E3620C5E830DE2` | contract/targets/99个ARM64文件完整哈希 |
-| R05 | `artifacts/investigations/manual-input-runtime-contract-10-1-4/verify_manual_input_contract.py` | 6983 | `D4857F004C49C805CF9CBE8AFECCA308554BA2D3556F7DFDD617302640398578` | 离线校验99/12/8、word差异、边界、字段、enum与常量 |
+| R01 | `artifacts/investigations/manual-input-runtime-contract-10-1-4/README.md` | 7937 | `02FD75785C0878C26096EC6A0276D677D35CF53EA43B7F9EA9E59E8DB6EA2BD6` | 版本、静态、R1、chart与最终边界 |
+| R02 | `artifacts/investigations/manual-input-runtime-contract-10-1-4/manual_input_static_contract.json` | 552992 | `DBFCEC828F7A78BC31CDB1DBFCEBBD164758420DF39B6C87E2B932D198CCE5CB` | 103方法逐word、12 type、13 enum |
+| R03 | `artifacts/investigations/manual-input-runtime-contract-10-1-4/targets.tsv` | 13371 | `7ACFCBB8F9DCF5276D51365569D0A4969CA18AFB8829D035AB3B3C70FBCC9423` | 103/103当前RVA、边界、大小与独立ARM64 |
+| R04 | `artifacts/investigations/manual-input-runtime-contract-10-1-4/SHA256SUMS` | 14237 | `AE14A1CB88BA62357A7853E7B72F239B92FDDD288F41C33EEAC4DCCA8E80DAB9` | 静态、runtime、plan、脚本和oracle的119项哈希 |
+| R05 | `artifacts/investigations/manual-input-runtime-contract-10-1-4/verify_manual_input_contract.py` | 8608 | `2188638DD5C03771C2EFB35A35CA568F6A480A560F6BE136682CE98895067702` | 103/12/13、差异、ELF常量、边界与构造校验 |
 | R06 | `artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/0321b414__NoteSlide__WaitState.arm64.tsv` | 5482 | `8054265CE4A20753CA083EE6E348E68C343A5671438F14FDADF3C20892ACC531` | 独立范围`0x321B414–0x321B628` |
 | R07 | `artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/0321b628__NoteSlide__execOverWaitState.arm64.tsv` | 1291 | `C0E28381AEBD0D00C86EC5BE352FF2470530CC1EF9374229F4B82BC7B9F473F6` | 独立范围`0x321B628–0x321B69C` |
-| R08 | `artifacts/investigations/manual-input-runtime-contract-10-1-4/closure.json` | 1348 | `81584EE0676B6697E9E41A19AFAC26A69AFC060E775EE8CF7594E37EF8046C08` | V01、D01、D02静态门关闭；runtime门仍阻断 |
+| R08 | `artifacts/investigations/manual-input-runtime-contract-10-1-4/closure.json` | 3644 | `9B739D697A45C4F8FB33ED40D816ADF0459BEF9AB785745447B2FF1BED97CE53` | V01/D01–D15与manual gate全部关闭 |
+| R09 | `artifacts/investigations/manual-input-runtime-contract-10-1-4/manual_input_fixed_event_oracle.json` | 31574 | `C3C4CE2AD4CAAE4E1A1187C9D2A4B320C5095174E8C2C2FB4580F47E74D69215` | portable contract、chart身份与MJ01–MJ26 |
+| R10 | `artifacts/investigations/manual-input-runtime-contract-10-1-4/capture_manual_input_runtime.py` | 20086 | `E489C232779AB295BF223A24FCE8F2B47D1A907460F239328F5C4BF911A9713D` | 单指/Long/Slide R1采集脚本 |
+| R11 | `artifacts/investigations/manual-input-runtime-contract-10-1-4/capture_manual_multitouch_runtime.py` | 22172 | `31555FC51CAD1F98C65B443D3298D246EC08C57357202FB7F82DDB3DD4CF3089` | 两指Linux MT与SELinux恢复控制 |
+| R12 | `artifacts/investigations/manual-input-runtime-contract-10-1-4/verify_manual_input_runtime_oracle.py` | 9111 | `021853DB879C07FF88CACFD75437A3EC926C4441E50A171EC927429D9ACB39AD` | 5条R1、对象/slot/order、chart与26 case离线校验 |
+| R13 | `artifacts/investigations/manual-input-runtime-contract-10-1-4/runtime/easy-play.json` | 2490152 | `376D5A9A84F385F0631AA6D39690980E3BA14F60AAC78DE34F0B9C8CA4CDD123` | phase0/1/2/3、坐标与InputManager/button链 |
+| R14 | `artifacts/investigations/manual-input-runtime-contract-10-1-4/runtime/hard-touch.json` | 4415127 | `A1F6263132689DEB0CA254F7C29C2BF20C63F5CD2A14B5EC89E0714105D35E1D` | Long Good/Slow头、physical release、finger清理 |
+| R15 | `artifacts/investigations/manual-input-runtime-contract-10-1-4/runtime/hard-timeout.json` | 1646725 | `7D5839CDAD697D429AA83673F3435D224F793CC042840E9756D7F57919AC64A2` | Long同outer-frame双Miss双槽单Reflect |
+| R16 | `artifacts/investigations/manual-input-runtime-contract-10-1-4/runtime/expert-timeout.json` | 1623996 | `75FEF6B5D7C7C0719BB3F37C1867D67E4EF59E569AED7109F740F177D2E1413E` | Slide root/after timeout与button4/6 |
+| R17 | `artifacts/investigations/manual-input-runtime-contract-10-1-4/runtime/ui-multitouch.json` | 357522 | `DA0214D9C4B3005A44F059B0E3D276A8EA4C44A246F23DCC0FB8B0DCAC8C4D62` | finger0/1全phase、位置与枚举顺序 |
 
-R04覆盖全部99个独立ARM64导出，包括原S64–S73目标的10.1.4晋升文件；旧bundle slice不再作为当前行为依据。M01冻结时须从Reverse提交`11b82508`复制并执行source/copy/index三方校验。
+R04覆盖103个独立ARM64导出及全部正式runtime/oracle输入。Garupa冻结包逐项指向最终提交`4bda0f3a`并校验source/copy/index；旧10.1.3 bundle slice与任何Reverse未提交文件均不进入确认来源。
 
 ### 5.2 10.1.3输入开始与仲裁迁移候选
 
@@ -307,7 +325,7 @@ R04覆盖全部99个独立ARM64导出，包括原S64–S73目标的10.1.4晋升�
 
 ## 6. 历史静态结论与10.1.4重验要求
 
-下表的10.1.3结论只用于说明迁移问题；对应99个方法已由R02–R05在10.1.4逐一重建并验证。实体/tie/边界输入与生命周期列仍须D03–D15的runtime证据关闭，不能由静态相同外推。
+下表的10.1.3结论只用于说明迁移问题；对应103个方法已由R02–R05在10.1.4逐一重建，实体/tie/边界输入与生命周期由R09–R17的fixed oracle和R1锚点关闭。第三、四列保留原迁移问题与M02要求，不能替代最终R01–R17。
 
 | 行为 | 当前静态结论 | 候选证据 | M02要求 |
 | --- | --- | --- | --- |
@@ -331,24 +349,24 @@ R04覆盖全部99个独立ARM64导出，包括原S64–S73目标的10.1.4晋升�
 
 | ID | 状态 | 必须关闭的证据问题 | 关闭产物 |
 | --- | --- | --- | --- |
-| V01 | `closed` | R02/R03按managed身份重新解析99/99目标；签名与边界大小一致，逐word差异分类通过；未使用统一RVA delta | Reverse提交`11b82508`的R01–R05 |
+| V01 | `closed` | R02/R03按managed身份重新解析103/103目标；签名与边界大小一致，逐word差异分类通过；未使用统一RVA delta | Reverse提交`4bda0f3a`的R01–R05 |
 | D01 | `closed` | 10.1.4直接ARM64将Slide Wait与over-Wait恢复为相邻但不重叠的532/116字节独立函数；旧merged cfunc排除 | R06/R07及R05边界/hash断言 |
-| D02 | `closed` | 12 type字段与8 enum数字身份逐版本一致；finger/button字段、InputManager数组长度15及note/result类型由当前metadata/ARM64固定 | R02、R03、R05 |
-| D03 | `required-before-code` | Unity screen position→button与screen-to-world坐标的portable宿主边界未定义 | 已提交contract明确resolver输入、输出能力、坐标单位/Float32时点 |
-| D04 | `required-before-code` | ordinary equal-distance、Slide equal near-line、ordinary-vs-Slide tie、wide/simultaneous候选顺序无实体结论 | 只读runtime/harness tie与active-order轨迹 |
-| D05 | `required-before-code` | sweetFrame 0/1、round-to-frame、Fast/Slow、global judgement tolerance在各BPM/offset边界缺实体bits | committed delta/BPM/position/result/timing oracle |
-| D06 | `required-before-code` | fingerId有效范围、数组越界、Began无button、Moved/Ended无owner、Stationary、Canceled和多touch枚举顺序 | 实体输入生命周期矩阵 |
-| D07 | `required-before-code` | `0.04`/`0.01`等于边界、坐标转换和斜向movement未实体闭合 | Flick/Directional threshold bits轨迹 |
-| D08 | `required-before-code` | Multiple真实touch的多指/side owner、count阈值、相邻group传播和重复消费未实体闭合 | production group manual touch轨迹 |
-| D09 | `required-before-code` | Long普通/方向/Multiple hold、8.0 grace、inside/outside、physical/synthetic ended与清finger未实体闭合 | Long全状态实体轨迹 |
-| D10 | `required-before-code` | Slide paired band内容、cursor边界、VirtualPerfectLine、intermediate Great correction上下文未闭合 | band数据、边界bits与模式身份轨迹 |
-| D11 | `required-before-code` | Long/Slide timeout tolerance、equal比较、同帧多个timeout及invisible顺序未闭合 | no-input committed outer-frame轨迹 |
-| D12 | `required-before-code` | release时None→Miss、moveSucceeded强制Miss、已消费节点skip、finger/button owner清理顺序未闭合 | Ended矩阵与全对象快照 |
-| D13 | `required-before-code` | manual多个producer写五槽的pool顺序、第六槽前置mutation、timeout双Miss和Reflect时机未闭合 | canonical full-object OneFrame轨迹 |
-| D14 | `required-before-code` | input相对adaptive子步、pause/resume、fault/dispose、Auto模式收到touch的调用/副作用顺序未闭合 | lifecycle与outer-frame实体轨迹 |
-| D15 | `required-before-code` | 一帧多touch后项非法、foreign button capability、重复finger phase、非有限/越界坐标的portable失败原子边界未定义 | portable contract+whole-domain zero-mutation cases |
+| D02 | `closed` | 12 type字段与13 enum数字身份逐版本一致；finger/button字段、InputManager数组长度15及note/result类型由当前metadata/ARM64固定 | R02、R03、R05 |
+| D03 | `closed` | bottom-left Float32输入坐标、owner-issued resolver及screen-to-world rate链已固定 | R09 MJ01/MJ03/MJ26、R13/R14 |
+| D04 | `closed` | ordinary/Slide/wide/tie保持owner active scan且仅strict-better替换 | R09 MJ04–MJ06 |
+| D05 | `closed` | 1/60与窗口、Fast/Slow、Miss interval均以Float32 exact bits固定 | R02/R05、R09 MJ08–MJ10 |
+| D06 | `closed` | finger0/1全phase、0..14 owner域、无owner/越界/Canceled失败边界及枚举序已固定 | R09 MJ02/MJ07/MJ11/MJ12、R13/R17 |
+| D07 | `closed` | Flick `>0.04`与Directional `>0.01`的equal/邻接bits、方向和斜向rate已固定 | R02/R05、R09 MJ13/MJ14 |
+| D08 | `closed` | Multiple count/side/group owner、strict threshold、两指producer及单次消费已固定 | R09 MJ15、R17 |
+| D09 | `closed` | Long head/hold/move、8.0 grace、physical/synthetic ended及finger清理已固定 | R09 MJ16–MJ19、R14 |
+| D10 | `closed` | Slide十组paired band、cursor/result owner、boundary与Great correction上下文已固定 | R02/R05、R09 MJ20/MJ21、R16 |
+| D11 | `closed` | Long双timeout、Slide root/after timeout、equal条件、invisible推进和同帧顺序已固定 | R09 MJ22/MJ23、R15/R16 |
+| D12 | `closed` | release None→Miss、moveSucceeded、skip及finger/button清理顺序已固定 | R09 MJ19/MJ24、R14 |
+| D13 | `closed` | 五槽owner、Long双slot单Reflect及第六槽terminal fault前置边界已固定 | R09 MJ25、R15 |
+| D14 | `closed` | outer-frame once-only、adaptive、pause/resume、fault/dispose及Auto touch拒绝顺序已固定 | R09 MJ01/MJ25/MJ26 |
+| D15 | `closed` | malformed/foreign/repeated/non-finite/out-of-range/later-invalid均whole-frame preflight零mutation | R09 MJ26 |
 
-M01/M02完成标准：V01及D01–D15均必须标记`closed`，且Reverse 10.1.4 contract的`manual_input_gate = closed`、`blocking_findings = []`。任何一项未关闭，M03–M11继续禁止。
+M01/M02完成标准已满足：V01及D01–D15均为`closed`，Reverse 10.1.4 contract为`manual_input_gate = closed`、`blocking_findings = []`。M03现可按R09 portable contract开始；M04–M11仍须遵循生产/测试/独立验收分批纪律。
 
 ## 8. 固定事件oracle要求
 
@@ -440,7 +458,7 @@ M01/M02完成标准：V01及D01–D15均必须标记`closed`，且Reverse 10.1.4
 7. verifier从提交内10.1.4原始trace重新生成摘要，逐字段比较并报告`manual_input_gate`；不得加载10.1.3 trace补空缺。
 8. Reverse提交后冻结fixtures到GarupaEditor；更新本任务书V/D项与锁定提交。
 
-**硬门**：只有V01、D01–D15全闭合、MJ01–MJ26均有10.1.4固定oracle且`blocking_findings=[]`，才允许M03。
+**硬门已关闭**：V01、D01–D15全为`closed`，MJ01–MJ26均由10.1.4 fixed oracle覆盖且`unknown_fields=[]`，Reverse `blocking_findings=[]`；M03允许实施。
 
 ### M03 锁定输入数据与宿主边界
 
@@ -594,10 +612,10 @@ node tmp/simulator-reverse-evidence/manual-input-judgement/verify.mjs
 
 只有以下条件全部满足，手动输入与判定阶段才能关闭：
 
-- [x] V01关闭：Reverse 10.1.4静态contract已提交，99方法/12 type/8 enum及关键常量完成版本重基线。
+- [x] V01关闭：Reverse 10.1.4静态contract已提交，103方法/12 type/13 enum及关键常量完成版本重基线。
 - [x] D01边界冲突以10.1.4独立ARM64范围修正，S64–S73对应目标完成10.1.4独立晋升。
-- [ ] V01与D01–D15全部关闭，`manual_input_gate=closed`且`blocking_findings=[]`。
-- [ ] MJ01–MJ26全部来自10.1.4/230，并有已提交原始输入、固定输出、verifier和三方哈希。
+- [x] V01与D01–D15全部关闭，`manual_input_gate=closed`且`blocking_findings=[]`。
+- [x] MJ01–MJ26全部来自10.1.4/230，并有已提交raw、fixed oracle、verifier和三方哈希。
 - [ ] 宿主输入frame、坐标空间、button capability和生命周期无隐式默认值。
 - [ ] touch phase、finger→button、finger→note及清理顺序匹配。
 - [ ] ordinary/Slide候选、wide、tie与simultaneous顺序匹配。
@@ -616,7 +634,7 @@ node tmp/simulator-reverse-evidence/manual-input-judgement/verify.mjs
 - [ ] 未修改App、编辑器控制器、窗口协议、Tauri、渲染或音频实现。
 - [ ] 生产修复与提交后独立验收分批提交并推送，远端差异`0 0`。
 
-## 13. M00初始审计结论
+## 13. 当前审计结论
 
 1. 当前生产`InputManager.execInput`是无条件`ok`，`GamePlayButton.execTouchBegan`返回`evidence-required`；这只是第一切片边界，不能复用为手动实现。
 2. current host只有`step(deltaTimeSeconds)`，没有输入payload；M03必须在D03/D14后设计一次outer-frame边界。
@@ -624,6 +642,6 @@ node tmp/simulator-reverse-evidence/manual-input-judgement/verify.mjs
 4. 时钟阶段已在10.1.4完成重新取证并保持关闭；P01–P05证明其版本迁移与重取证身份，但该范围不含手动InputManager/GamePlayButton/NoteUtility及完整Long/Slide/Multiple方法，因此V01只阻断当前手动阶段，不回溯或重开时钟阶段。
 5. 10.1.3 S44/S45与S63还存在直接证据冲突；10.1.4必须从原始二进制重新恢复，不能先迁移错误切片。
 6. GetResult/JudgeNote、containment、near-line、VirtualPerfectLine和distance rate的现有global bundle切片也是10.1.3；M01须在10.1.4晋升独立边界，旧S72的87491字节候选不可消费。
-7. Reverse提交`11b82508`已关闭V01/D01/D02，但当前仍没有10.1.4手动输入专用committed runtime oracle；clock目录中的`manual`命名轨迹不包含真实触摸，不能替代D03–D15。
-8. Auto Live synthetic Flick/Multiple只证明既有合成输入链；不能证明10.1.4真实touch position、finger ownership、distance threshold或release。
-9. 下一步在Reverse执行R1观察与MJ01–MJ26固定轨迹，提交后回Garupa冻结M01/M02证据；在D03–D15关闭前不修改GarupaEditor生产代码。
+7. Reverse提交`4bda0f3a`已关闭V01/D01–D15：5条R1覆盖真实touch、Long/Slide timeout与两指phase，MJ01–MJ26固定其余exact/portable边界；clock目录中的`manual`命名轨迹未被用于补手动证据。
+8. Auto Live synthetic Flick/Multiple仍只证明既有合成链；手动实现必须消费R09固定的raw producer、owner capability与阈值，不得把synthetic请求当touch。
+9. 下一批从M03输入contract开始，生产实现、定向测试和独立验收继续分批；当前证据提交未修改GarupaEditor生产代码。

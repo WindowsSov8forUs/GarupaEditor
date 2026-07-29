@@ -32,6 +32,10 @@ EXTRA_METHODS = (
     ("NoteBase", "get_FingerId"),
     ("NoteBase", "SetFingerId"),
     ("NoteBase", "Deactivate"),
+    ("GamePlayButton", ".ctor"),
+    ("NoteLong", ".ctor"),
+    ("NoteSlide", ".ctor"),
+    ("NoteMultipleDirectionalFlick", ".ctor"),
     ("NoteFrontBase", "calculateScreenPosToWorldDistanceRate"),
     ("NoteUtility", "GetResult"),
     ("NoteUtility", "JudgeNote"),
@@ -91,6 +95,11 @@ ENUM_TYPES = (
     "FrontNoteType",
     "NoteState",
     "GameState",
+    "ButtonType",
+    "JudgeNoteType",
+    "GameNoteAdditionalType",
+    "VirtualLaneDirection",
+    "DamageGuardType",
 )
 
 

@@ -1,0 +1,1243 @@
+{
+  "schema_version": 1,
+  "status": "confirmed-10.1.4-fixed-event-oracle-static-plus-r1",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "version_name": "10.1.4",
+    "version_code": 230,
+    "abi": "arm64-v8a",
+    "libil2cpp_sha256": "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F"
+  },
+  "reverse_commit": "11b8250853ca12a2106c66245724467701d9eb23",
+  "generator": "build_manual_input_fixed_event_oracle.py",
+  "input_facts": {
+    "frame_rate_bits": "0x3C888889",
+    "miss_interval_bits": "0x3E5DDDDE",
+    "flick_threshold_bits": "0x3D23D70A",
+    "directional_threshold_bits": "0x3C23D70A"
+  },
+  "portable_input_contract": {
+    "frame": "explicit immutable per-step input frame; touch array required in manual mode",
+    "touch_order": "preserve caller enumeration; never sort by finger/lane/phase",
+    "finger_id": {
+      "minimum": 0,
+      "maximum": 14,
+      "basis": "InputManager owner array length 15"
+    },
+    "phase": {
+      "accepted": {
+        "Began": 0,
+        "Moved": 1,
+        "Stationary": 2,
+        "Ended": 3
+      },
+      "rejected": {
+        "Canceled": 4,
+        "reason": "10.1.4 inputButton dispatch has no virtual branch above 3"
+      }
+    },
+    "position": {
+      "space": "Unity Touch.position bottom-left origin",
+      "observation": "ADB screen y=650 was observed as Unity y=70 on 720px display",
+      "representation": "Float32 bits preserved",
+      "non_finite": "evidence-required-before-owner-mutation"
+    },
+    "resolver": {
+      "input": "raw Float32 screen position",
+      "output": "owner-issued GamePlayButton capability",
+      "forbidden": [
+        "caller-authored button type",
+        "note",
+        "result",
+        "timing",
+        "Slide cursor"
+      ]
+    },
+    "ownership": "capability is bound to engine, initialized session and resolver owner; aliases/foreign/forged values fail",
+    "transaction": "preflight entire frame before clock/scheduler/finger/note/OneFrame/backend mutation",
+    "lifecycle": "faulted/disposed terminal failure precedes shape and resolver; pause does not consume; adaptive substeps consume once per outer frame"
+  },
+  "chart_samples": {
+    "song_id": 653,
+    "song_name": "幾億光年",
+    "bundle_path": "musicscore/musicscore660",
+    "bundle_cache_key": "732902106be3618450695e273c48219a2d915e6f6c118b87c45586395fa85c42",
+    "bundle_bytes": 5420525,
+    "bundle_sha256": "14172F64733E58E275EF7665F8A451236386B3FE1FD45C83342C23457EAC8029",
+    "difficulties": {
+      "easy": {
+        "asset_name": "653_ikuoku_easy",
+        "text_asset_bytes": 1691,
+        "text_asset_sha256": "C09736F52128AAF27360D0E980A3513C47A8A6770BF30057E15B5EA966E1634A",
+        "runtime_bms_bytes": 1688,
+        "runtime_bms_sha256": "4C2F8D202DED5DFD9C4144C0FE000B1E3524E0F25D3FEAF4DD102413F6CD6325"
+      },
+      "hard": {
+        "asset_name": "653_ikuoku_hard",
+        "text_asset_bytes": 7111,
+        "text_asset_sha256": "86382CF8C16B8992A72EA93FBE7409022FA8590E284C65F3796668E4DD3FEB0F"
+      },
+      "expert": {
+        "asset_name": "653_ikuoku_expert",
+        "text_asset_bytes": 7933,
+        "text_asset_sha256": "CC4C38FA4DE47767CF1C1605C716D8DD8868D4FBD86844D375B134F34BB02740"
+      }
+    },
+    "identity_source": "committed clock-scheduling 10.1.4 cached bundle scanner"
+  },
+  "runtime_observations": [
+    {
+      "path": "runtime/easy-play.json",
+      "bytes": 2490152,
+      "sha256": "F74A864283F0FFCE51E778EA95384A9DA12674D8D65B0263AFA46331E725FD95"
+    },
+    {
+      "path": "runtime/expert-timeout.json",
+      "bytes": 1623996,
+      "sha256": "07E4D684EA147658C98779F39DC002DA67124989A22378848F224CB6F2EF8AFD"
+    },
+    {
+      "path": "runtime/hard-touch.json",
+      "bytes": 4415127,
+      "sha256": "8C1C552F77A8953315B11AB2E5CDCDAD9E1533EB5FC3CCD4CB2BCC5DA461918E"
+    },
+    {
+      "path": "runtime/hard-timeout.json",
+      "bytes": 1646725,
+      "sha256": "D577E1E237A696338F908315A58C0F4B6F6324F2806439F0AB8441388B87D141"
+    },
+    {
+      "path": "runtime/ui-multitouch.json",
+      "bytes": 357522,
+      "sha256": "F942C698911966A322EE84946D3C0B0ED2EF13FBF336E7CDB7DD308DF6249CB0"
+    }
+  ],
+  "excluded_by_stage": [
+    "score",
+    "power",
+    "life",
+    "skill",
+    "fever",
+    "audio",
+    "particle",
+    "rendering",
+    "hud",
+    "unity_player_loop_presentation"
+  ],
+  "cases": [
+    {
+      "case_id": "MJ01",
+      "source_kind": "portable-contract",
+      "evidence": [
+        "R02",
+        "R05"
+      ],
+      "steps": [
+        {
+          "outer_frame": 0,
+          "delta_time_bits": "0x3C888889",
+          "touches": []
+        }
+      ],
+      "output": {
+        "input_manager_calls": 1,
+        "touch_consumed": 0,
+        "input_mutation": "none",
+        "note_update": "continues",
+        "manual_empty_frame": "explicit-touch-array"
+      },
+      "unknown_fields": []
+    },
+    {
+      "case_id": "MJ02",
+      "source_kind": "arm64-independent",
+      "evidence": [
+        "R02",
+        "R05",
+        "10.1.4:NoteUtility.GetResult"
+      ],
+      "steps": [
+        {
+          "sweet_frame": 0,
+          "diff_second": {
+            "value": 0.03333333507180214,
+            "bits": "0x3D088889"
+          },
+          "rounded_frame": 2,
+          "raw_result": 4,
+          "judge_timing": 0
+        },
+        {
+          "sweet_frame": 0,
+          "diff_second": {
+            "value": 0.05000000074505806,
+            "bits": "0x3D4CCCCD"
+          },
+          "rounded_frame": 3,
+          "raw_result": 3,
+          "judge_timing": 1
+        },
+        {
+          "sweet_frame": 0,
+          "diff_second": {
+            "value": 0.06666667014360428,
+            "bits": "0x3D888889"
+          },
+          "rounded_frame": 4,
+          "raw_result": 3,
+          "judge_timing": 1
+        },
+        {
+          "sweet_frame": 0,
+          "diff_second": {
+            "value": 0.0833333358168602,
+            "bits": "0x3DAAAAAB"
+          },
+          "rounded_frame": 5,
+          "raw_result": 3,
+          "judge_timing": 1
+        },
+        {
+          "sweet_frame": 0,
+          "diff_second": {
+            "value": 0.10000000149011612,
+            "bits": "0x3DCCCCCD"
+          },
+          "rounded_frame": 6,
+          "raw_result": 2,
+          "judge_timing": 1
+        },
+        {
+          "sweet_frame": 0,
+          "diff_second": {
+            "value": 0.11666666716337204,
+            "bits": "0x3DEEEEEF"
+          },
+          "rounded_frame": 7,
+          "raw_result": 1,
+          "judge_timing": 1
+        },
+        {
+          "sweet_frame": 0,
+          "diff_second": {
+            "value": 0.10000000149011612,
+            "bits": "0x3DCCCCCD"
+          },
+          "rounded_frame": 6,
+          "raw_result": 2,
+          "judge_timing": 1
+        },
+        {
+          "sweet_frame": 0,
+          "diff_second": {
+            "value": 0.11666666716337204,
+            "bits": "0x3DEEEEEF"
+          },
+          "rounded_frame": 7,
+          "raw_result": 1,
+          "judge_timing": 1
+        },
+        {
+          "sweet_frame": 0,
+          "diff_second": {
+            "value": 0.13333334028720856,
+            "bits": "0x3E088889"
+          },
+          "rounded_frame": 8,
+          "raw_result": -1,
+          "judge_timing": 1
+        },
+        {
+          "sweet_frame": 0,
+          "diff_second": {
+            "value": 0.11666666716337204,
+            "bits": "0x3DEEEEEF"
+          },
+          "rounded_frame": 7,
+          "raw_result": 1,
+          "judge_timing": 1
+        },
+        {
+          "sweet_frame": 0,
+          "diff_second": {
+            "value": 0.13333334028720856,
+            "bits": "0x3E088889"
+          },
+          "rounded_frame": 8,
+          "raw_result": -1,
+          "judge_timing": 1
+        },
+        {
+          "sweet_frame": 0,
+          "diff_second": {
+            "value": 0.15000000596046448,
+            "bits": "0x3E19999A"
+          },
+          "rounded_frame": 9,
+          "raw_result": -1,
+          "judge_timing": 1
+        }
+      ],
+      "output": {
+        "algorithm": "Float32 diff / Float32(1/60), ARM Math.Round tie-away-from-zero, exclusive +3/+6/+7/+8",
+        "results": [
+          -1,
+          1,
+          2,
+          3,
+          4
+        ]
+      },
+      "unknown_fields": []
+    },
+    {
+      "case_id": "MJ03",
+      "source_kind": "arm64-independent",
+      "evidence": [
+        "R02",
+        "R05"
+      ],
+      "steps": [
+        {
+          "active_order": [
+            "root-A",
+            "root-B"
+          ],
+          "distance_bits": [
+            "0x3F800000",
+            "0x3F800000"
+          ]
+        }
+      ],
+      "output": {
+        "candidate": "first-active-on-strict-less-only",
+        "equal_distance_replacement": false
+      },
+      "unknown_fields": []
+    },
+    {
+      "case_id": "MJ04",
+      "source_kind": "arm64-independent",
+      "evidence": [
+        "R02",
+        "R05",
+        "R06",
+        "R07"
+      ],
+      "steps": [
+        {
+          "candidate_domains": [
+            "ordinary",
+            "slide-current",
+            "slide-near-line"
+          ],
+          "equal_position": true
+        }
+      ],
+      "output": {
+        "candidate": "owner-scan-order",
+        "cross_family": "no synthetic tie-break"
+      },
+      "unknown_fields": []
+    },
+    {
+      "case_id": "MJ05",
+      "source_kind": "arm64-independent",
+      "evidence": [
+        "R02",
+        "R05"
+      ],
+      "steps": [
+        {
+          "button_types": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "wide_button_array": "metadata-owned"
+        }
+      ],
+      "output": {
+        "containment": "NoteBase.IsContainsButton owner method",
+        "button_provenance": "resolver-capability-only"
+      },
+      "unknown_fields": []
+    },
+    {
+      "case_id": "MJ06",
+      "source_kind": "arm64-plus-portable-contract",
+      "evidence": [
+        "R02",
+        "R05",
+        "D06"
+      ],
+      "steps": [
+        {
+          "outer_frame": 0,
+          "delta_time": {
+            "value": 0.01666666753590107,
+            "bits": "0x3C888889"
+          },
+          "finger_id": 0,
+          "phase": 0,
+          "position": {
+            "x": {
+              "value": 800.0,
+              "bits": "0x44480000"
+            },
+            "y": {
+              "value": 650.0,
+              "bits": "0x44228000"
+            }
+          },
+          "resolver": "owner-issued-button-capability-required"
+        },
+        {
+          "outer_frame": 0,
+          "delta_time": {
+            "value": 0.01666666753590107,
+            "bits": "0x3C888889"
+          },
+          "finger_id": 1,
+          "phase": 0,
+          "position": {
+            "x": {
+              "value": 940.0,
+              "bits": "0x446B0000"
+            },
+            "y": {
+              "value": 650.0,
+              "bits": "0x44228000"
+            }
+          },
+          "resolver": "owner-issued-button-capability-required"
+        }
+      ],
+      "output": {
+        "finger_owner": "one owner per finger",
+        "same_note_competition": "first touch that observes NoteBase.fingerId < 0 binds; later contenders do not rebind",
+        "touch_order": "finger 0 then finger 1 in every observed two-touch Unity array frame",
+        "observed_phases": {
+          "finger_0": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "finger_1": [
+            0,
+            1,
+            2,
+            3
+          ]
+        },
+        "observed_positions": {
+          "finger_0": [
+            "0x44110000",
+            "0x442F0000"
+          ],
+          "finger_1": [
+            "0x447A0000",
+            "0x44610000"
+          ],
+          "y": "0x428C0000"
+        },
+        "selinux_after_capture": "Enforcing",
+        "observations": {
+          "path": "runtime/ui-multitouch.json",
+          "bytes": 357522,
+          "sha256": "F942C698911966A322EE84946D3C0B0ED2EF13FBF336E7CDB7DD308DF6249CB0"
+        }
+      },
+      "unknown_fields": []
+    },
+    {
+      "case_id": "MJ07",
+      "source_kind": "observed-r1",
+      "evidence": [
+        "R05",
+        "runtime/easy-play.json"
+      ],
+      "steps": [
+        {
+          "outer_frame": 1,
+          "delta_time": {
+            "value": 0.01666666753590107,
+            "bits": "0x3C888889"
+          },
+          "finger_id": 0,
+          "phase": 1,
+          "position": {
+            "x": {
+              "value": 580.0,
+              "bits": "0x44110000"
+            },
+            "y": {
+              "value": 650.0,
+              "bits": "0x44228000"
+            }
+          },
+          "resolver": "owner-issued-button-capability-required"
+        },
+        {
+          "outer_frame": 2,
+          "delta_time": {
+            "value": 0.01666666753590107,
+            "bits": "0x3C888889"
+          },
+          "finger_id": 0,
+          "phase": 2,
+          "position": {
+            "x": {
+              "value": 580.0,
+              "bits": "0x44110000"
+            },
+            "y": {
+              "value": 650.0,
+              "bits": "0x44228000"
+            }
+          },
+          "resolver": "owner-issued-button-capability-required"
+        },
+        {
+          "outer_frame": 3,
+          "delta_time": {
+            "value": 0.01666666753590107,
+            "bits": "0x3C888889"
+          },
+          "finger_id": 0,
+          "phase": 3,
+          "position": {
+            "x": {
+              "value": 580.0,
+              "bits": "0x44110000"
+            },
+            "y": {
+              "value": 650.0,
+              "bits": "0x44228000"
+            }
+          },
+          "resolver": "owner-issued-button-capability-required"
+        }
+      ],
+      "output": {
+        "observed": "Moved/Stationary/Ended reached InputManager.inputButton with existing button identity",
+        "finger_id": 0,
+        "button_rebind": false,
+        "observations": {
+          "path": "runtime/easy-play.json",
+          "bytes": 2490152,
+          "sha256": "F74A864283F0FFCE51E778EA95384A9DA12674D8D65B0263AFA46331E725FD95"
+        }
+      },
+      "unknown_fields": []
+    },
+    {
+      "case_id": "MJ08",
+      "source_kind": "arm64-independent",
+      "evidence": [
+        "R02",
+        "R05"
+      ],
+      "steps": [
+        {
+          "rate_bits": [
+            "0x3D23D709",
+            "0x3D23D70A",
+            "0x3D23D70B"
+          ],
+          "comparison": ">",
+          "threshold_bits": "0x3D23D70A"
+        }
+      ],
+      "output": {
+        "success": [
+          false,
+          false,
+          true
+        ],
+        "source": "NoteFlick.ExecTouchMoved"
+      },
+      "unknown_fields": []
+    },
+    {
+      "case_id": "MJ09",
+      "source_kind": "arm64-independent",
+      "evidence": [
+        "R02",
+        "R05"
+      ],
+      "steps": [
+        {
+          "rate_bits": [
+            "0x3C23D709",
+            "0x3C23D70A",
+            "0x3C23D70B"
+          ],
+          "comparison": ">",
+          "threshold_bits": "0x3C23D70A"
+        }
+      ],
+      "output": {
+        "success": [
+          false,
+          false,
+          true
+        ],
+        "source": "NoteDirectionalFlick.judgeDirectionalFlickSucceeded"
+      },
+      "unknown_fields": []
+    },
+    {
+      "case_id": "MJ10",
+      "source_kind": "arm64-independent",
+      "evidence": [
+        "R02",
+        "R05",
+        "R06"
+      ],
+      "steps": [
+        {
+          "count": 1,
+          "left_side": true,
+          "right_side": true,
+          "button_types": [
+            0,
+            1
+          ]
+        },
+        {
+          "count": 2,
+          "left_side": true,
+          "right_side": true,
+          "button_types": [
+            0,
+            1,
+            2
+          ]
+        },
+        {
+          "count": 3,
+          "left_side": true,
+          "right_side": true,
+          "button_types": [
+            0,
+            1,
+            2,
+            3
+          ]
+        }
+      ],
+      "output": {
+        "note_type": 10,
+        "count_owner": "registered-group",
+        "duplicate_consumption": false
+      },
+      "unknown_fields": []
+    },
+    {
+      "case_id": "MJ11",
+      "source_kind": "arm64-plus-observed-r1",
+      "evidence": [
+        "R02",
+        "R05",
+        "runtime/hard-touch.json"
+      ],
+      "steps": [
+        {
+          "result": -1,
+          "repeat_began": true
+        },
+        {
+          "result": 0,
+          "repeat_began": true
+        },
+        {
+          "result": 1,
+          "repeat_began": false
+        },
+        {
+          "result": 2,
+          "repeat_began": false
+        },
+        {
+          "result": 3,
+          "repeat_began": false
+        },
+        {
+          "result": 4,
+          "repeat_began": false
+        }
+      ],
+      "output": {
+        "began_owner": "concrete-note",
+        "none_and_miss": "separate branches",
+        "observed_long": {
+          "index": 6,
+          "button_types": [
+            6
+          ],
+          "game_note_type": 1,
+          "result": 2,
+          "judge_timing": 2,
+          "note_type": 4,
+          "absolute_pos": 276,
+          "state_after": 2,
+          "finger_id": 0
+        },
+        "observations": {
+          "path": "runtime/hard-touch.json",
+          "bytes": 4415127,
+          "sha256": "8C1C552F77A8953315B11AB2E5CDCDAD9E1533EB5FC3CCD4CB2BCC5DA461918E"
+        }
+      },
+      "unknown_fields": []
+    },
+    {
+      "case_id": "MJ12",
+      "source_kind": "arm64-independent",
+      "evidence": [
+        "R02",
+        "R05"
+      ],
+      "steps": [
+        {
+          "rate_bits": [
+            "0x3D23D709",
+            "0x3D23D70A",
+            "0x3D23D70B"
+          ],
+          "grace_reset": 8.0
+        }
+      ],
+      "output": {
+        "ordinary_move": "strict-threshold",
+        "none": "origin-update-required"
+      },
+      "unknown_fields": []
+    },
+    {
+      "case_id": "MJ13",
+      "source_kind": "arm64-independent",
+      "evidence": [
+        "R02",
+        "R05"
+      ],
+      "steps": [
+        {
+          "count": 1,
+          "rate_bits": [
+            "0x3C23D709",
+            "0x3C23D70A",
+            "0x3C23D70B"
+          ]
+        },
+        {
+          "count": 2,
+          "rate_bits": [
+            "0x3C23D709",
+            "0x3C23D70A",
+            "0x3C23D70B"
+          ]
+        },
+        {
+          "count": 3,
+          "rate_bits": [
+            "0x3C23D709",
+            "0x3C23D70A",
+            "0x3C23D70B"
+          ]
+        }
+      ],
+      "output": {
+        "directional": "strict-threshold",
+        "multiple": "group-count-owned"
+      },
+      "unknown_fields": []
+    },
+    {
+      "case_id": "MJ14",
+      "source_kind": "arm64-independent",
+      "evidence": [
+        "R02",
+        "R05"
+      ],
+      "steps": [
+        {
+          "inside": true,
+          "grace_before": 0.0,
+          "grace_after": 8.0
+        },
+        {
+          "inside": true,
+          "grace_before": 1.0,
+          "grace_after": 8.0
+        },
+        {
+          "inside": true,
+          "grace_before": 8.0,
+          "grace_after": 8.0
+        }
+      ],
+      "output": {
+        "inside": "reset-to-8.0",
+        "outside": "subtract-Float32-delta",
+        "reentry": "owner-state-dependent"
+      },
+      "unknown_fields": []
+    },
+    {
+      "case_id": "MJ15",
+      "source_kind": "arm64-plus-observed-r1",
+      "evidence": [
+        "R02",
+        "R05",
+        "runtime/hard-touch.json"
+      ],
+      "steps": [
+        {
+          "outer_frame": 0,
+          "delta_time": {
+            "value": 0.01666666753590107,
+            "bits": "0x3C888889"
+          },
+          "finger_id": 0,
+          "phase": 0,
+          "position": {
+            "x": {
+              "value": 800.0,
+              "bits": "0x44480000"
+            },
+            "y": {
+              "value": 650.0,
+              "bits": "0x44228000"
+            }
+          },
+          "resolver": "owner-issued-button-capability-required"
+        },
+        {
+          "outer_frame": 1,
+          "delta_time": {
+            "value": 0.01666666753590107,
+            "bits": "0x3C888889"
+          },
+          "finger_id": 0,
+          "phase": 3,
+          "position": {
+            "x": {
+              "value": 800.0,
+              "bits": "0x44480000"
+            },
+            "y": {
+              "value": 650.0,
+              "bits": "0x44228000"
+            }
+          },
+          "resolver": "owner-issued-button-capability-required"
+        }
+      ],
+      "output": {
+        "ended": "physical-release",
+        "observed_input_result": -1,
+        "observed_input_timing": 1,
+        "projected_result": 0,
+        "projected_note_type": 1,
+        "absolute_pos": 336,
+        "state_after": 3,
+        "finger_after": -1,
+        "none_result": "converted-to-Miss-by-concrete-release-branch",
+        "finger_clear": "concrete-note-deactivation-path",
+        "observations": {
+          "path": "runtime/hard-touch.json",
+          "bytes": 4415127,
+          "sha256": "8C1C552F77A8953315B11AB2E5CDCDAD9E1533EB5FC3CCD4CB2BCC5DA461918E"
+        }
+      },
+      "unknown_fields": []
+    },
+    {
+      "case_id": "MJ16",
+      "source_kind": "observed-r1",
+      "evidence": [
+        "R05",
+        "runtime/hard-timeout.json"
+      ],
+      "steps": [],
+      "output": {
+        "equal_deadline": "no-timeout-because-comparison-is-strict-greater",
+        "next_float": "timeout",
+        "observed": "NoteLong index 6 start timeout called onMiss twice in one outer frame",
+        "slots": [
+          {
+            "slot": 0,
+            "note_type": 1,
+            "result": 0,
+            "button_types": [
+              6
+            ],
+            "add_power": -50
+          },
+          {
+            "slot": 1,
+            "note_type": 1,
+            "result": 0,
+            "button_types": [
+              6
+            ],
+            "add_power": -50
+          }
+        ],
+        "reflect_once": true,
+        "observations": {
+          "path": "runtime/hard-timeout.json",
+          "bytes": 1646725,
+          "sha256": "D577E1E237A696338F908315A58C0F4B6F6324F2806439F0AB8441388B87D141"
+        }
+      },
+      "unknown_fields": []
+    },
+    {
+      "case_id": "MJ17",
+      "source_kind": "arm64-independent",
+      "evidence": [
+        "R02",
+        "R05"
+      ],
+      "steps": [
+        {
+          "deadline": "equal"
+        },
+        {
+          "deadline": "next-Float32"
+        }
+      ],
+      "output": {
+        "equal_deadline": "no-timeout",
+        "next_float": "single-tail-Miss",
+        "note_type": "LongEnd-family",
+        "cleanup": "parent-owned-deactivate"
+      },
+      "unknown_fields": []
+    },
+    {
+      "case_id": "MJ18",
+      "source_kind": "observed-r1",
+      "evidence": [
+        "R02",
+        "runtime/expert-timeout.json"
+      ],
+      "steps": [],
+      "output": {
+        "observed_note_type": 8,
+        "observed_button_type": 4,
+        "observed_root_family": "NoteSlide",
+        "observations": {
+          "path": "runtime/expert-timeout.json",
+          "bytes": 1623996,
+          "sha256": "07E4D684EA147658C98779F39DC002DA67124989A22378848F224CB6F2EF8AFD"
+        }
+      },
+      "unknown_fields": []
+    },
+    {
+      "case_id": "MJ19",
+      "source_kind": "arm64-independent",
+      "evidence": [
+        "R02",
+        "R05"
+      ],
+      "steps": [
+        {
+          "paired_band_arrays": [
+            "laneSize1",
+            "laneSize2Left",
+            "laneSize2Right",
+            "laneSize3",
+            "laneSize4Left",
+            "laneSize4Right",
+            "laneSize5",
+            "laneSize6Left",
+            "laneSize6Right",
+            "laneSize7"
+          ],
+          "field_offsets": [
+            "0x1F0",
+            "0x1F8",
+            "0x200",
+            "0x208",
+            "0x210",
+            "0x218",
+            "0x220",
+            "0x228",
+            "0x230",
+            "0x238"
+          ]
+        }
+      ],
+      "output": {
+        "cursor": "SlideNoteManager-owned",
+        "band_source": "NoteSlide constructor direct ARM64"
+      },
+      "unknown_fields": []
+    },
+    {
+      "case_id": "MJ20",
+      "source_kind": "arm64-independent",
+      "evidence": [
+        "R02",
+        "R05"
+      ],
+      "steps": [
+        {
+          "result": 0,
+          "cursor_before": 0
+        },
+        {
+          "result": 2,
+          "cursor_before": 0
+        },
+        {
+          "result": 3,
+          "cursor_before": 0
+        },
+        {
+          "result": 4,
+          "cursor_before": 0
+        }
+      ],
+      "output": {
+        "intermediate": "NoteSlide.intermediateNoteJudge",
+        "great_correction": "SlideNoteManager.Judge returns stored band result and computes signed cursor from selected pair; no caller-authored correction"
+      },
+      "unknown_fields": []
+    },
+    {
+      "case_id": "MJ21",
+      "source_kind": "arm64-independent",
+      "evidence": [
+        "R02",
+        "R05"
+      ],
+      "steps": [
+        {
+          "game_note_type": 4,
+          "judge_note_type": 8
+        },
+        {
+          "game_note_type": 5,
+          "judge_note_type": 8
+        },
+        {
+          "game_note_type": 6,
+          "judge_note_type": 8
+        },
+        {
+          "game_note_type": 7,
+          "judge_note_type": 8
+        },
+        {
+          "game_note_type": 8,
+          "judge_note_type": 8
+        },
+        {
+          "game_note_type": 9,
+          "judge_note_type": 9
+        },
+        {
+          "game_note_type": 10,
+          "judge_note_type": 10
+        },
+        {
+          "game_note_type": 11,
+          "judge_note_type": 10
+        },
+        {
+          "game_note_type": 12,
+          "judge_note_type": 10
+        }
+      ],
+      "output": {
+        "slide_line": "VirtualPerfectLine owner getter",
+        "movement": "strict-Float32-threshold"
+      },
+      "unknown_fields": []
+    },
+    {
+      "case_id": "MJ22",
+      "source_kind": "arm64-independent",
+      "evidence": [
+        "R02",
+        "R05"
+      ],
+      "steps": [
+        {
+          "outer_frame": 0,
+          "delta_time": {
+            "value": 0.01666666753590107,
+            "bits": "0x3C888889"
+          },
+          "finger_id": 0,
+          "phase": 0,
+          "position": {
+            "x": {
+              "value": 800.0,
+              "bits": "0x44480000"
+            },
+            "y": {
+              "value": 650.0,
+              "bits": "0x44228000"
+            }
+          },
+          "resolver": "owner-issued-button-capability-required"
+        },
+        {
+          "outer_frame": 1,
+          "delta_time": {
+            "value": 0.01666666753590107,
+            "bits": "0x3C888889"
+          },
+          "finger_id": 0,
+          "phase": 3,
+          "position": {
+            "x": {
+              "value": 800.0,
+              "bits": "0x44480000"
+            },
+            "y": {
+              "value": 650.0,
+              "bits": "0x44228000"
+            }
+          },
+          "resolver": "owner-issued-button-capability-required"
+        }
+      ],
+      "output": {
+        "release": "ExecTouchEnded",
+        "consumed_child": "skip-before-next-visible",
+        "finger_clear": "deactivate-owner"
+      },
+      "unknown_fields": []
+    },
+    {
+      "case_id": "MJ23",
+      "source_kind": "observed-r1",
+      "evidence": [
+        "R05",
+        "runtime/expert-timeout.json"
+      ],
+      "steps": [],
+      "output": {
+        "observed": "two NoteSlide onMiss outputs and one onMissAfterNote output; OneFrame noteType 8 slots reflected",
+        "observations": {
+          "path": "runtime/expert-timeout.json",
+          "bytes": 1623996,
+          "sha256": "07E4D684EA147658C98779F39DC002DA67124989A22378848F224CB6F2EF8AFD"
+        }
+      },
+      "unknown_fields": []
+    },
+    {
+      "case_id": "MJ24",
+      "source_kind": "static-contract-boundary",
+      "evidence": [
+        "R02",
+        "R05"
+      ],
+      "steps": [
+        {
+          "slot_count": 1,
+          "producer": "manual-or-timeout"
+        },
+        {
+          "slot_count": 5,
+          "producer": "manual-or-timeout"
+        },
+        {
+          "slot_count": 6,
+          "producer": "manual-or-timeout"
+        }
+      ],
+      "output": {
+        "five_slots": "fixed",
+        "sixth": "terminal-fault-required",
+        "no_retry": true
+      },
+      "unknown_fields": []
+    },
+    {
+      "case_id": "MJ25",
+      "source_kind": "static-contract-boundary",
+      "evidence": [
+        "R02",
+        "R05"
+      ],
+      "steps": [
+        {
+          "lifecycle": "pause",
+          "input_frame_consumption": "at-most-once"
+        },
+        {
+          "lifecycle": "resume",
+          "input_frame_consumption": "at-most-once"
+        },
+        {
+          "lifecycle": "fault",
+          "input_frame_consumption": "at-most-once"
+        },
+        {
+          "lifecycle": "dispose",
+          "input_frame_consumption": "at-most-once"
+        },
+        {
+          "lifecycle": "auto-live",
+          "input_frame_consumption": "at-most-once"
+        }
+      ],
+      "output": {
+        "terminal": "fault/dispose-priority",
+        "snapshot": "read-only"
+      },
+      "unknown_fields": []
+    },
+    {
+      "case_id": "MJ26",
+      "source_kind": "portable-contract",
+      "evidence": [
+        "R02",
+        "R05"
+      ],
+      "steps": [
+        {
+          "invalid": "non-finite-coordinate",
+          "mutation": "none"
+        },
+        {
+          "invalid": "foreign-button",
+          "mutation": "none"
+        },
+        {
+          "invalid": "duplicate-finger-phase",
+          "mutation": "none"
+        },
+        {
+          "invalid": "later-invalid-touch",
+          "mutation": "none"
+        },
+        {
+          "invalid": "out-of-range-finger",
+          "mutation": "none"
+        }
+      ],
+      "output": {
+        "failure": "evidence-required",
+        "whole_domain_atomic": true
+      },
+      "unknown_fields": []
+    }
+  ]
+}

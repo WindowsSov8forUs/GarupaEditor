@@ -15,13 +15,13 @@
     "global_metadata_sha256": "298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F"
   },
   "method_status_counts": {
-    "mapped": 99
+    "mapped": 103
   },
   "layout_status_counts": {
     "unchanged": 12
   },
   "enum_status_counts": {
-    "unchanged": 8
+    "unchanged": 13
   },
   "methods": [
     {
@@ -870,6 +870,279 @@
         }
       ],
       "evidence": "arm64/03883b28__ButtonManager__calcThirdNearButton.arm64.tsv"
+    },
+    {
+      "owner": "GamePlayButton",
+      "method": ".ctor",
+      "dump_name": "GamePlayButton$$.ctor",
+      "status": "mapped",
+      "baseline_rva": "0x387F648",
+      "baseline_end_rva": "0x387F810",
+      "target_rva": "0x387E7F0",
+      "target_end_rva": "0x387E9B8",
+      "rva_delta": -3672,
+      "baseline_size": 456,
+      "target_size": 456,
+      "signature_unchanged": true,
+      "baseline_sha256": "60E5AE6DD1F1B3B029BF29F6C344117B7968A6F8D5FEC259D875D8DED6E74013",
+      "target_sha256": "EFF4AE9B7F492A190CC583CADE4B8B6CCE1DEAC2B06D98B89DB0212E8DF24C47",
+      "differing_words": 36,
+      "non_pc_relative_differing_words": 8,
+      "differing_word_detail": [
+        {
+          "offset": "0x1C",
+          "baseline_word": "0x39506EC8",
+          "target_word": "0x3962EEC8",
+          "baseline_pc_relative": null,
+          "target_pc_relative": null
+        },
+        {
+          "offset": "0x20",
+          "baseline_word": "0xF942AAF7",
+          "target_word": "0xF9462EF7",
+          "baseline_pc_relative": null,
+          "target_pc_relative": null
+        },
+        {
+          "offset": "0x24",
+          "baseline_word": "0xF9417EB5",
+          "target_word": "0xF944F2B5",
+          "baseline_pc_relative": null,
+          "target_pc_relative": null
+        },
+        {
+          "offset": "0x28",
+          "baseline_word": "0xF942C294",
+          "target_word": "0xF9462A94",
+          "baseline_pc_relative": null,
+          "target_pc_relative": null
+        },
+        {
+          "offset": "0x38",
+          "baseline_word": "0xF9417C00",
+          "target_word": "0xF944F000",
+          "baseline_pc_relative": null,
+          "target_pc_relative": null
+        },
+        {
+          "offset": "0x3C",
+          "baseline_word": "0x97D642E3",
+          "target_word": "0x97D6448B",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x44",
+          "baseline_word": "0xF942C000",
+          "target_word": "0xF9462800",
+          "baseline_pc_relative": null,
+          "target_pc_relative": null
+        },
+        {
+          "offset": "0x48",
+          "baseline_word": "0x97D642E0",
+          "target_word": "0x97D64488",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x50",
+          "baseline_word": "0xF942A800",
+          "target_word": "0xF9462C00",
+          "baseline_pc_relative": null,
+          "target_pc_relative": null
+        },
+        {
+          "offset": "0x54",
+          "baseline_word": "0x97D642DD",
+          "target_word": "0x97D64485",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x5C",
+          "baseline_word": "0x39106EC8",
+          "target_word": "0x3922EEC8",
+          "baseline_pc_relative": null,
+          "target_pc_relative": null
+        },
+        {
+          "offset": "0x68",
+          "baseline_word": "0x97D64311",
+          "target_word": "0x97D644B9",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x78",
+          "baseline_word": "0x97D642BF",
+          "target_word": "0x97D64467",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x84",
+          "baseline_word": "0x97D6430A",
+          "target_word": "0x97D644B2",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x94",
+          "baseline_word": "0x97D642B8",
+          "target_word": "0x97D64460",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0xA0",
+          "baseline_word": "0x97D64303",
+          "target_word": "0x97D644AB",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0xB0",
+          "baseline_word": "0x97D642B1",
+          "target_word": "0x97D64459",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0xBC",
+          "baseline_word": "0x97D642FC",
+          "target_word": "0x97D644A4",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0xCC",
+          "baseline_word": "0x97D642AA",
+          "target_word": "0x97D64452",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0xD8",
+          "baseline_word": "0x97D642F5",
+          "target_word": "0x97D6449D",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0xE8",
+          "baseline_word": "0x97D642A3",
+          "target_word": "0x97D6444B",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0xF4",
+          "baseline_word": "0x97D642EE",
+          "target_word": "0x97D64496",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x104",
+          "baseline_word": "0x97D6429C",
+          "target_word": "0x97D64444",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x110",
+          "baseline_word": "0x97D642E7",
+          "target_word": "0x97D6448F",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x120",
+          "baseline_word": "0x97D64295",
+          "target_word": "0x97D6443D",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x12C",
+          "baseline_word": "0x97D642E0",
+          "target_word": "0x97D64488",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x13C",
+          "baseline_word": "0x97D6428E",
+          "target_word": "0x97D64436",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x148",
+          "baseline_word": "0x97D642D9",
+          "target_word": "0x97D64481",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x158",
+          "baseline_word": "0x97D64287",
+          "target_word": "0x97D6442F",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x164",
+          "baseline_word": "0x97D642D2",
+          "target_word": "0x97D6447A",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x174",
+          "baseline_word": "0x97D64280",
+          "target_word": "0x97D64428",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x180",
+          "baseline_word": "0x97D642CB",
+          "target_word": "0x97D64473",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x190",
+          "baseline_word": "0x97D64279",
+          "target_word": "0x97D64421",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x19C",
+          "baseline_word": "0x97D642C4",
+          "target_word": "0x97D6446C",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x1AC",
+          "baseline_word": "0x97D64272",
+          "target_word": "0x97D6441A",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x1C4",
+          "baseline_word": "0x14B4FF6A",
+          "target_word": "0x14B5006F",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        }
+      ],
+      "evidence": "arm64/0387e7f0__GamePlayButton___ctor.arm64.tsv"
     },
     {
       "owner": "GamePlayButton",
@@ -5525,6 +5798,26 @@
     },
     {
       "owner": "NoteLong",
+      "method": ".ctor",
+      "dump_name": "NoteLong$$.ctor",
+      "status": "mapped",
+      "baseline_rva": "0x30ED07C",
+      "baseline_end_rva": "0x30ED080",
+      "target_rva": "0x30EC1C0",
+      "target_end_rva": "0x30EC1C4",
+      "rva_delta": -3772,
+      "baseline_size": 4,
+      "target_size": 4,
+      "signature_unchanged": true,
+      "baseline_sha256": "FCD2477603428489FE7D735A155A8487956A55D71B51F24E69EB5F19E27C970B",
+      "target_sha256": "FCD2477603428489FE7D735A155A8487956A55D71B51F24E69EB5F19E27C970B",
+      "differing_words": 0,
+      "non_pc_relative_differing_words": 0,
+      "differing_word_detail": [],
+      "evidence": "arm64/030ec1c0__NoteLong___ctor.arm64.tsv"
+    },
+    {
+      "owner": "NoteLong",
       "method": "Deactivate",
       "dump_name": "NoteLong$$Deactivate",
       "status": "mapped",
@@ -8205,6 +8498,26 @@
     },
     {
       "owner": "NoteMultipleDirectionalFlick",
+      "method": ".ctor",
+      "dump_name": "NoteMultipleDirectionalFlick$$.ctor",
+      "status": "mapped",
+      "baseline_rva": "0x30EE62C",
+      "baseline_end_rva": "0x30EE630",
+      "target_rva": "0x30ED770",
+      "target_end_rva": "0x30ED774",
+      "rva_delta": -3772,
+      "baseline_size": 4,
+      "target_size": 4,
+      "signature_unchanged": true,
+      "baseline_sha256": "603699003A76EC6484CD2DF8ACDCDA7C6A31A3C07987AA7A32A7C2597DFB5497",
+      "target_sha256": "603699003A76EC6484CD2DF8ACDCDA7C6A31A3C07987AA7A32A7C2597DFB5497",
+      "differing_words": 0,
+      "non_pc_relative_differing_words": 0,
+      "differing_word_detail": [],
+      "evidence": "arm64/030ed770__NoteMultipleDirectionalFlick___ctor.arm64.tsv"
+    },
+    {
+      "owner": "NoteMultipleDirectionalFlick",
       "method": "ChangeLeftNoteUsed",
       "dump_name": "NoteMultipleDirectionalFlick$$ChangeLeftNoteUsed",
       "status": "mapped",
@@ -8747,6 +9060,489 @@
         }
       ],
       "evidence": "arm64/03219be8__NoteNormal__ExecTouchBegan.arm64.tsv"
+    },
+    {
+      "owner": "NoteSlide",
+      "method": ".ctor",
+      "dump_name": "NoteSlide$$.ctor",
+      "status": "mapped",
+      "baseline_rva": "0x3220530",
+      "baseline_end_rva": "0x322085C",
+      "target_rva": "0x321F674",
+      "target_end_rva": "0x321F9A0",
+      "rva_delta": -3772,
+      "baseline_size": 812,
+      "target_size": 812,
+      "signature_unchanged": true,
+      "baseline_sha256": "0B831E54C9CB54222FC93445D5EDA33A55F88A8469CF72AFE1CE7AADB461E27C",
+      "target_sha256": "E71B4EF090D5A7507B7D47B7301758ABC7C813175A71E758EBA63F9BADBFE895",
+      "differing_words": 66,
+      "non_pc_relative_differing_words": 22,
+      "differing_word_detail": [
+        {
+          "offset": "0x20",
+          "baseline_word": "0xD001D375",
+          "target_word": "0xF001D375",
+          "baseline_pc_relative": "ADR/ADRP",
+          "target_pc_relative": "ADR/ADRP"
+        },
+        {
+          "offset": "0x24",
+          "baseline_word": "0x3949EEE8",
+          "target_word": "0x395C72E8",
+          "baseline_pc_relative": null,
+          "target_pc_relative": null
+        },
+        {
+          "offset": "0x28",
+          "baseline_word": "0xF94466D6",
+          "target_word": "0xF947CED6",
+          "baseline_pc_relative": null,
+          "target_pc_relative": null
+        },
+        {
+          "offset": "0x2C",
+          "baseline_word": "0xF9446A94",
+          "target_word": "0xF947D294",
+          "baseline_pc_relative": null,
+          "target_pc_relative": null
+        },
+        {
+          "offset": "0x30",
+          "baseline_word": "0xF94576B5",
+          "target_word": "0xF940DEB5",
+          "baseline_pc_relative": null,
+          "target_pc_relative": null
+        },
+        {
+          "offset": "0x3C",
+          "baseline_word": "0xD001D360",
+          "target_word": "0xF001D360",
+          "baseline_pc_relative": "ADR/ADRP",
+          "target_pc_relative": "ADR/ADRP"
+        },
+        {
+          "offset": "0x40",
+          "baseline_word": "0xF9457400",
+          "target_word": "0xF940DC00",
+          "baseline_pc_relative": null,
+          "target_pc_relative": null
+        },
+        {
+          "offset": "0x44",
+          "baseline_word": "0x97EFBF27",
+          "target_word": "0x97EFC0E8",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x4C",
+          "baseline_word": "0xF9446800",
+          "target_word": "0xF947D000",
+          "baseline_pc_relative": null,
+          "target_pc_relative": null
+        },
+        {
+          "offset": "0x50",
+          "baseline_word": "0x97EFBF24",
+          "target_word": "0x97EFC0E5",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x58",
+          "baseline_word": "0xF9446400",
+          "target_word": "0xF947CC00",
+          "baseline_pc_relative": null,
+          "target_pc_relative": null
+        },
+        {
+          "offset": "0x5C",
+          "baseline_word": "0x97EFBF21",
+          "target_word": "0x97EFC0E2",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x64",
+          "baseline_word": "0xF9446C00",
+          "target_word": "0xF947D400",
+          "baseline_pc_relative": null,
+          "target_pc_relative": null
+        },
+        {
+          "offset": "0x68",
+          "baseline_word": "0x97EFBF1E",
+          "target_word": "0x97EFC0DF",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x70",
+          "baseline_word": "0xF9447000",
+          "target_word": "0xF947D800",
+          "baseline_pc_relative": null,
+          "target_pc_relative": null
+        },
+        {
+          "offset": "0x74",
+          "baseline_word": "0x97EFBF1B",
+          "target_word": "0x97EFC0DC",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x7C",
+          "baseline_word": "0xF9447400",
+          "target_word": "0xF947DC00",
+          "baseline_pc_relative": null,
+          "target_pc_relative": null
+        },
+        {
+          "offset": "0x80",
+          "baseline_word": "0x97EFBF18",
+          "target_word": "0x97EFC0D9",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x88",
+          "baseline_word": "0xF9447800",
+          "target_word": "0xF947E000",
+          "baseline_pc_relative": null,
+          "target_pc_relative": null
+        },
+        {
+          "offset": "0x8C",
+          "baseline_word": "0x97EFBF15",
+          "target_word": "0x97EFC0D6",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x94",
+          "baseline_word": "0xF9447C00",
+          "target_word": "0xF947E400",
+          "baseline_pc_relative": null,
+          "target_pc_relative": null
+        },
+        {
+          "offset": "0x98",
+          "baseline_word": "0x97EFBF12",
+          "target_word": "0x97EFC0D3",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0xA0",
+          "baseline_word": "0xF9448000",
+          "target_word": "0xF947E800",
+          "baseline_pc_relative": null,
+          "target_pc_relative": null
+        },
+        {
+          "offset": "0xA4",
+          "baseline_word": "0x97EFBF0F",
+          "target_word": "0x97EFC0D0",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0xAC",
+          "baseline_word": "0xF9448400",
+          "target_word": "0xF947EC00",
+          "baseline_pc_relative": null,
+          "target_pc_relative": null
+        },
+        {
+          "offset": "0xB0",
+          "baseline_word": "0x97EFBF0C",
+          "target_word": "0x97EFC0CD",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0xB8",
+          "baseline_word": "0x3909EEE8",
+          "target_word": "0x391C72E8",
+          "baseline_pc_relative": null,
+          "target_pc_relative": null
+        },
+        {
+          "offset": "0xC8",
+          "baseline_word": "0x97EFBFA8",
+          "target_word": "0x97EFC169",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0xD4",
+          "baseline_word": "0x94951EF3",
+          "target_word": "0x94952011",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0xE4",
+          "baseline_word": "0x97EFBEEA",
+          "target_word": "0x97EFC0AB",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0xF0",
+          "baseline_word": "0x97EFBF35",
+          "target_word": "0x97EFC0F6",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x114",
+          "baseline_word": "0x97EFBEDE",
+          "target_word": "0x97EFC09F",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x120",
+          "baseline_word": "0x97EFBF29",
+          "target_word": "0x97EFC0EA",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x154",
+          "baseline_word": "0x97EFBECE",
+          "target_word": "0x97EFC08F",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x160",
+          "baseline_word": "0x97EFBF19",
+          "target_word": "0x97EFC0DA",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x1A0",
+          "baseline_word": "0xF9447A94",
+          "target_word": "0xF947E294",
+          "baseline_pc_relative": null,
+          "target_pc_relative": null
+        },
+        {
+          "offset": "0x1A4",
+          "baseline_word": "0xF944837B",
+          "target_word": "0xF947EB7B",
+          "baseline_pc_relative": null,
+          "target_pc_relative": null
+        },
+        {
+          "offset": "0x1A8",
+          "baseline_word": "0xF944735A",
+          "target_word": "0xF947DB5A",
+          "baseline_pc_relative": null,
+          "target_pc_relative": null
+        },
+        {
+          "offset": "0x1AC",
+          "baseline_word": "0xF9446F39",
+          "target_word": "0xF947D739",
+          "baseline_pc_relative": null,
+          "target_pc_relative": null
+        },
+        {
+          "offset": "0x1B0",
+          "baseline_word": "0xF9447F18",
+          "target_word": "0xF947E718",
+          "baseline_pc_relative": null,
+          "target_pc_relative": null
+        },
+        {
+          "offset": "0x1B4",
+          "baseline_word": "0xF94476F7",
+          "target_word": "0xF947DEF7",
+          "baseline_pc_relative": null,
+          "target_pc_relative": null
+        },
+        {
+          "offset": "0x1B8",
+          "baseline_word": "0xF94486D6",
+          "target_word": "0xF947EED6",
+          "baseline_pc_relative": null,
+          "target_pc_relative": null
+        },
+        {
+          "offset": "0x1CC",
+          "baseline_word": "0x97EFBEB0",
+          "target_word": "0x97EFC071",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x1D8",
+          "baseline_word": "0x97EFBEFB",
+          "target_word": "0x97EFC0BC",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x1E8",
+          "baseline_word": "0x949E6B47",
+          "target_word": "0x949E6C65",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x1F8",
+          "baseline_word": "0x97EFBEA5",
+          "target_word": "0x97EFC066",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x204",
+          "baseline_word": "0x97EFBEF0",
+          "target_word": "0x97EFC0B1",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x214",
+          "baseline_word": "0x949E6B3C",
+          "target_word": "0x949E6C5A",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x224",
+          "baseline_word": "0x97EFBE9A",
+          "target_word": "0x97EFC05B",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x230",
+          "baseline_word": "0x97EFBEE5",
+          "target_word": "0x97EFC0A6",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x240",
+          "baseline_word": "0x949E6B31",
+          "target_word": "0x949E6C4F",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x250",
+          "baseline_word": "0x97EFBE8F",
+          "target_word": "0x97EFC050",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x25C",
+          "baseline_word": "0x97EFBEDA",
+          "target_word": "0x97EFC09B",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x26C",
+          "baseline_word": "0x949E6B26",
+          "target_word": "0x949E6C44",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x27C",
+          "baseline_word": "0x97EFBE84",
+          "target_word": "0x97EFC045",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x288",
+          "baseline_word": "0x97EFBECF",
+          "target_word": "0x97EFC090",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x298",
+          "baseline_word": "0x949E6B1B",
+          "target_word": "0x949E6C39",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x2A8",
+          "baseline_word": "0x97EFBE79",
+          "target_word": "0x97EFC03A",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x2B4",
+          "baseline_word": "0x97EFBEC4",
+          "target_word": "0x97EFC085",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x2C4",
+          "baseline_word": "0x949E6B10",
+          "target_word": "0x949E6C2E",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x2D4",
+          "baseline_word": "0x97EFBE6E",
+          "target_word": "0x97EFC02F",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x2E0",
+          "baseline_word": "0x97EFBEB9",
+          "target_word": "0x97EFC07A",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x2F0",
+          "baseline_word": "0x949E6B05",
+          "target_word": "0x949E6C23",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x300",
+          "baseline_word": "0x97EFBE63",
+          "target_word": "0x97EFC024",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x324",
+          "baseline_word": "0x97EFBF14",
+          "target_word": "0x97EFC0D5",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x328",
+          "baseline_word": "0x97EFBF11",
+          "target_word": "0x97EFC0D2",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        }
+      ],
+      "evidence": "arm64/0321f674__NoteSlide___ctor.arm64.tsv"
     },
     {
       "owner": "NoteSlide",
@@ -16570,6 +17366,142 @@
         "Pause": 2,
         "Over": 3,
         "End": 4
+      },
+      "status": "unchanged"
+    },
+    {
+      "enum": "ButtonType",
+      "baseline": {
+        "None": -1,
+        "Button_00_BMS_1P_SC": 0,
+        "Button_01_BMS_1P_01": 1,
+        "Button_02_BMS_1P_02": 2,
+        "Button_03_BMS_1P_03": 3,
+        "Button_04_BMS_1P_04": 4,
+        "Button_05_BMS_1P_05": 5,
+        "Button_06_BMS_1P_06": 6,
+        "Button_07_BMS_1P_07": 7,
+        "Button_08_BMS_2P_01": 8,
+        "Button_09_BMS_2P_02": 9,
+        "Button_10_BMS_2P_03": 10,
+        "Button_11_BMS_2P_04": 11,
+        "Button_12_BMS_2P_05": 12,
+        "Button_13_BMS_2P_06": 13,
+        "Button_14_BMS_2P_07": 14,
+        "Button_15_BMS_2P_SC": 15,
+        "Pause": 16,
+        "AdvanceTime5Sec": 17,
+        "ReturnTime5Sec": 18,
+        "PremiumPassFirstPriority": 0,
+        "PremiumPassSecondPriority": 1,
+        "Star": 2,
+        "LiveBoost": 3,
+        "Max": 4
+      },
+      "target": {
+        "None": -1,
+        "Button_00_BMS_1P_SC": 0,
+        "Button_01_BMS_1P_01": 1,
+        "Button_02_BMS_1P_02": 2,
+        "Button_03_BMS_1P_03": 3,
+        "Button_04_BMS_1P_04": 4,
+        "Button_05_BMS_1P_05": 5,
+        "Button_06_BMS_1P_06": 6,
+        "Button_07_BMS_1P_07": 7,
+        "Button_08_BMS_2P_01": 8,
+        "Button_09_BMS_2P_02": 9,
+        "Button_10_BMS_2P_03": 10,
+        "Button_11_BMS_2P_04": 11,
+        "Button_12_BMS_2P_05": 12,
+        "Button_13_BMS_2P_06": 13,
+        "Button_14_BMS_2P_07": 14,
+        "Button_15_BMS_2P_SC": 15,
+        "Pause": 16,
+        "AdvanceTime5Sec": 17,
+        "ReturnTime5Sec": 18,
+        "PremiumPassFirstPriority": 0,
+        "PremiumPassSecondPriority": 1,
+        "Star": 2,
+        "LiveBoost": 3,
+        "Max": 4
+      },
+      "status": "unchanged"
+    },
+    {
+      "enum": "JudgeNoteType",
+      "baseline": {
+        "None": -1,
+        "Normal": 0,
+        "LongMiss": 1,
+        "LongEnd": 2,
+        "Flick": 3,
+        "LongFront": 4,
+        "LongEndFlick": 5,
+        "LongEndDirectionalFlick": 6,
+        "LongEndMultipleDirectionalFlick": 7,
+        "Slide": 8,
+        "DirectionalFlick": 9,
+        "MultipleDirectionalFlick": 10
+      },
+      "target": {
+        "None": -1,
+        "Normal": 0,
+        "LongMiss": 1,
+        "LongEnd": 2,
+        "Flick": 3,
+        "LongFront": 4,
+        "LongEndFlick": 5,
+        "LongEndDirectionalFlick": 6,
+        "LongEndMultipleDirectionalFlick": 7,
+        "Slide": 8,
+        "DirectionalFlick": 9,
+        "MultipleDirectionalFlick": 10
+      },
+      "status": "unchanged"
+    },
+    {
+      "enum": "GameNoteAdditionalType",
+      "baseline": {
+        "None": 0,
+        "Fever": 1,
+        "Skill": 2,
+        "BpmChange": 3,
+        "LaneChange": 4
+      },
+      "target": {
+        "None": 0,
+        "Fever": 1,
+        "Skill": 2,
+        "BpmChange": 3,
+        "LaneChange": 4
+      },
+      "status": "unchanged"
+    },
+    {
+      "enum": "VirtualLaneDirection",
+      "baseline": {
+        "None": 0,
+        "Left": 1,
+        "Right": 2
+      },
+      "target": {
+        "None": 0,
+        "Left": 1,
+        "Right": 2
+      },
+      "status": "unchanged"
+    },
+    {
+      "enum": "DamageGuardType",
+      "baseline": {
+        "None": 0,
+        "DamageGuardSkill": 1,
+        "NeverDieSkill": 2
+      },
+      "target": {
+        "None": 0,
+        "DamageGuardSkill": 1,
+        "NeverDieSkill": 2
       },
       "status": "unchanged"
     }

@@ -1,0 +1,8 @@
+{
+  "scenario_id": "MJ13-MJ18-expert-no-input-timeout",
+  "actions": [
+    {"delay_ms": 200, "marker": "expert-live-start", "kind": "tap", "x": 1240, "y": 590},
+    {"delay_ms": 28000, "marker": "expert-no-input-tail", "kind": "wait"}
+  ],
+  "tail_seconds": 3
+}
