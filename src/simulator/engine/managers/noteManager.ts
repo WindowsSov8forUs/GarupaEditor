@@ -173,6 +173,7 @@ export class NoteManager {
     ManualSlideSourceOwnership
   >();
   private readonly autoLiveJudgementSources = new WeakSet<NoteInformation>();
+  private manualNoteDeactivatedOwner: ((note: NoteBase) => void) | null = null;
 
   constructor(
     private readonly batches: readonly NoteBatchInformation[],
@@ -306,7 +307,10 @@ export class NoteManager {
         const note = this.createPoolObject(family, `${family}:${index}`);
         note.setLifecycleCallbacks({
           onActivate: (activeNote) => this.appendActiveNote(activeNote),
-          onDeactivate: (inactiveNote) => this.removeActiveNote(inactiveNote),
+          onDeactivate: (inactiveNote) => {
+            this.removeActiveNote(inactiveNote);
+            this.manualNoteDeactivatedOwner?.(inactiveNote);
+          },
         });
         note.registerCallbackGetUsableOneFrameData(this.getUsableOneFrameData);
         note.registerAutoLiveRuntime({
@@ -564,6 +568,20 @@ export class NoteManager {
 
   ownsManualJudgementSource(noteInformation: NoteInformation): boolean {
     return this.getManualJudgementOwnership(noteInformation) !== null;
+  }
+
+  registerManualNoteDeactivatedOwner(
+    owner: (note: NoteBase) => void,
+  ): SimulatorResult<void> {
+    if (typeof owner !== "function" || this.manualNoteDeactivatedOwner !== null) {
+      return evidenceRequired(
+        "manual.note-deactivation-owner-invalid-or-duplicate",
+        ["D12", "D14", "MJ15", "MJ22", "MJ25"],
+        "NoteManager accepts exactly one dispatcher-owned manual finger cleanup callback.",
+      );
+    }
+    this.manualNoteDeactivatedOwner = owner;
+    return ok(undefined);
   }
 
   selectManualCandidateBeforeJudgement(

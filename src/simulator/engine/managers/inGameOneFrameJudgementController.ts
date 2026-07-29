@@ -203,13 +203,6 @@ export class InGameOneFrameJudgementController {
         if (validation.status !== "ok") {
           return validation;
         }
-        if (plans.size !== 0) {
-          return evidenceRequired(
-            "one-frame.multiple-manual-judgements-unimplemented",
-            ["D11", "D14", "D15", "MJ10", "MJ18", "MJ26"],
-            "M05 represents one manual judgement per outer frame; simultaneous manual OneFrame aggregation remains owned by M10.",
-          );
-        }
         const container = available[plans.size];
         if (container === undefined) {
           return evidenceRequired(
@@ -565,8 +558,10 @@ function isClosedManualRequest(
       return false;
     }
     if (phase === "head") {
-      return request.noteType === 4 &&
-        request.rawResult !== NoteResultType.Miss &&
+      return (
+        (request.noteType === 4 && request.rawResult !== NoteResultType.Miss) ||
+        (request.noteType === 1 && request.rawResult === NoteResultType.Miss)
+      ) &&
         request.absolutePosition === source.absolutePos &&
         request.multipleDirectionalFlickNoteCount === undefined;
     }

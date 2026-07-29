@@ -24,6 +24,7 @@ import {
   JudgeTiming,
   NoteResultType,
   getManualScreenDistanceRate,
+  getSecondsWithDistance,
   judgeManualNote,
   type JudgeTimingValue,
   type ManualNoteJudgement,
@@ -718,11 +719,112 @@ export class NoteLong extends NoteFrontBase {
   }
 
   protected override waitState(_deltaTimeSeconds: number): SimulatorResult<void> {
-    return ok(undefined);
+    const information = this.noteInformation;
+    const autoRuntime = this.autoLiveRuntime;
+    if (information === null || autoRuntime.status !== "ok") {
+      return autoRuntime.status === "ok"
+        ? evidenceRequired(
+            "manual.long-start-timeout-owner-unavailable",
+            ["D11", "MJ16"],
+            "Long Wait timeout requires its activated root and adjusted-position owner.",
+          )
+        : autoRuntime;
+    }
+    if (autoRuntime.value.isAutoPlay()) {
+      return ok(undefined);
+    }
+    const runtime = this.manualRuntime;
+    if (runtime.status !== "ok") {
+      return runtime;
+    }
+    const over = isManualTimeoutOver(
+      information.absolutePos,
+      runtime.value.getAdjustedMusicPosition(),
+      runtime.value.getCurrentBpm(),
+    );
+    if (over.status !== "ok" || !over.value) {
+      return over.status === "ok" ? ok(undefined) : over;
+    }
+    const transaction = runtime.value.beginJudgementTransaction();
+    const request = Object.freeze({
+      noteInformation: information,
+      phase: "head" as const,
+      noteType: 1,
+      rawResult: NoteResultType.Miss,
+      rawTiming: JudgeTiming.None,
+      absolutePosition: information.absolutePos,
+    });
+    const first = transaction.preflight(request);
+    if (first.status !== "ok") {
+      transaction.abort();
+      return first;
+    }
+    const second = transaction.preflight(request);
+    if (second.status !== "ok") {
+      transaction.abort();
+      return second;
+    }
+    transaction.commit(first.value);
+    transaction.commit(second.value);
+    transaction.finish();
+    return this.changeState(NoteState.Deactive);
   }
 
   protected override stopState(_deltaTimeSeconds: number): SimulatorResult<void> {
-    return ok(undefined);
+    const after = this.afterNoteValue;
+    const information = this.noteInformation;
+    const autoRuntime = this.autoLiveRuntime;
+    if (after === null || information === null || autoRuntime.status !== "ok") {
+      return autoRuntime.status === "ok"
+        ? evidenceRequired(
+            "manual.long-end-timeout-owner-unavailable",
+            ["D11", "MJ17"],
+            "Long Stop timeout requires its parent-owned tail and adjusted-position owner.",
+          )
+        : autoRuntime;
+    }
+    if (autoRuntime.value.isAutoPlay()) {
+      return ok(undefined);
+    }
+    const runtime = this.manualRuntime;
+    if (runtime.status !== "ok") {
+      return runtime;
+    }
+    const over = isManualTimeoutOver(
+      after.absolutePosition,
+      runtime.value.getAdjustedMusicPosition(),
+      runtime.value.getCurrentBpm(),
+    );
+    if (over.status !== "ok" || !over.value) {
+      return over.status === "ok" ? ok(undefined) : over;
+    }
+    const noteType = manualLongAfterJudgeNoteType(after.afterNoteType);
+    if (noteType === null) {
+      return evidenceRequired(
+        "manual.long-timeout-after-type-unrepresented",
+        ["D11", "MJ17"],
+        `Long timeout after type ${after.afterNoteType} has no confirmed note type.`,
+      );
+    }
+    const submitted = runtime.value.submitJudgement({
+      noteInformation: information,
+      phase: "tail",
+      noteType,
+      rawResult: NoteResultType.Miss,
+      rawTiming: JudgeTiming.None,
+      absolutePosition: after.absolutePosition,
+      ...(noteType === 7 && this.longAfterMultipleGroupValue !== null
+        ? { multipleDirectionalFlickNoteCount: this.longAfterMultipleGroupValue.count }
+        : {}),
+    });
+    if (submitted.status !== "ok") {
+      return submitted;
+    }
+    const marked = after.markJudged();
+    if (marked.status !== "ok") {
+      return marked;
+    }
+    return this.changeState(NoteState.Deactive);
   }
 
   protected override onUpdate(_deltaTimeSeconds: number): SimulatorResult<void> {
@@ -1339,11 +1441,7 @@ export class NoteSlide extends NoteFrontBase {
       return ok(undefined);
     }
     if (!runtime.value.isAutoPlay()) {
-      return evidenceRequired(
-        "manual-slide-judgement",
-        ["R01", "R04"],
-        "Manual Slide acquisition is outside the Auto Live stage.",
-      );
+      return this.changeState(NoteState.Wait);
     }
     const changed = this.changeState(NoteState.Wait);
     if (changed.status !== "ok") {
@@ -1363,7 +1461,61 @@ export class NoteSlide extends NoteFrontBase {
   }
 
   protected override waitState(_deltaTimeSeconds: number): SimulatorResult<void> {
-    return ok(undefined);
+    const information = this.noteInformation;
+    const autoRuntime = this.autoLiveRuntime;
+    if (information === null || autoRuntime.status !== "ok") {
+      return autoRuntime.status === "ok"
+        ? evidenceRequired(
+            "manual.slide-front-timeout-owner-unavailable",
+            ["D11", "MJ23"],
+            "Slide Wait timeout requires its root and pending-node graph.",
+          )
+        : autoRuntime;
+    }
+    if (autoRuntime.value.isAutoPlay()) {
+      return ok(undefined);
+    }
+    const runtime = this.manualRuntime;
+    if (runtime.status !== "ok") {
+      return runtime;
+    }
+    const adjusted = runtime.value.getAdjustedMusicPosition();
+    const frontOver = isManualTimeoutOver(
+      information.absolutePos,
+      adjusted,
+      runtime.value.getCurrentBpm(),
+    );
+    if (frontOver.status !== "ok") {
+      return frontOver;
+    }
+    const nextVisible = this.afterNotesValue.find(
+      (after, index) => index >= this.currentAfterIndexValue &&
+        !after.judged &&
+        !after.source.isInvisible,
+    );
+    const midpointOver = nextVisible !== undefined &&
+      Math.fround(nextVisible.source.absolutePos - adjusted) > Math.fround(0) &&
+      Math.fround(adjusted - information.absolutePos) >
+        Math.fround(nextVisible.source.absolutePos - adjusted);
+    if (!frontOver.value && !midpointOver) {
+      return ok(undefined);
+    }
+    const submitted = runtime.value.submitJudgement({
+      noteInformation: information,
+      phase: "head",
+      noteType: 8,
+      rawResult: NoteResultType.Miss,
+      rawTiming: JudgeTiming.None,
+      absolutePosition: information.absolutePos,
+    });
+    if (submitted.status !== "ok") {
+      return submitted;
+    }
+    this.manualHeadJudgedValue = true;
+    this.skipManualInvisibleAfterNodes();
+    return this.currentAfterIndexValue >= this.afterNotesValue.length
+      ? this.changeState(NoteState.Deactive)
+      : this.changeState(NoteState.Stop);
   }
 
   protected override stopState(_deltaTimeSeconds: number): SimulatorResult<void> {
@@ -1377,7 +1529,7 @@ export class NoteSlide extends NoteFrontBase {
       );
     }
     if (!runtime.value.isAutoPlay()) {
-      return ok(undefined);
+      return this.executeManualSlideCurrentTimeout();
     }
     const selected = this.afterNotesValue.find(
       (after) => !after.source.isInvisible && !after.judged,
@@ -1442,6 +1594,75 @@ export class NoteSlide extends NoteFrontBase {
       });
     }
     return ok(undefined);
+  }
+
+  private executeManualSlideCurrentTimeout(): SimulatorResult<void> {
+    const runtime = this.manualRuntime;
+    if (runtime.status !== "ok") {
+      return runtime;
+    }
+    const adjusted = runtime.value.getAdjustedMusicPosition();
+    if (!Number.isFinite(adjusted)) {
+      return evidenceRequired(
+        "manual.slide-timeout-non-finite-adjusted-position",
+        ["D11", "MJ23"],
+        "Slide current timeout requires a finite adjusted position.",
+      );
+    }
+    this.skipManualInvisibleAfterNodes(adjusted);
+    const current = this.afterNotesValue[this.currentAfterIndexValue];
+    if (current === undefined) {
+      return this.changeState(NoteState.Deactive);
+    }
+    const over = isManualTimeoutOver(
+      current.source.absolutePos,
+      adjusted,
+      runtime.value.getCurrentBpm(),
+    );
+    if (over.status !== "ok" || !over.value) {
+      return over.status === "ok" ? ok(undefined) : over;
+    }
+    const submitted = runtime.value.submitJudgement({
+      noteInformation: current.source,
+      phase: current.isTerminal ? "tail" : "intermediate",
+      noteType: 8,
+      rawResult: NoteResultType.Miss,
+      rawTiming: JudgeTiming.None,
+      absolutePosition: current.source.absolutePos,
+    });
+    if (submitted.status !== "ok") {
+      return submitted;
+    }
+    const marked = current.markJudged();
+    if (marked.status !== "ok") {
+      return marked;
+    }
+    this.currentAfterIndexValue += 1;
+    this.skipManualInvisibleAfterNodes();
+    return current.isTerminal || this.currentAfterIndexValue >= this.afterNotesValue.length
+      ? this.changeState(NoteState.Deactive)
+      : ok(undefined);
+  }
+
+  private skipManualInvisibleAfterNodes(
+    adjustedMusicPosition?: number,
+  ): void {
+    while (true) {
+      const current = this.afterNotesValue[this.currentAfterIndexValue];
+      if (
+        current === undefined ||
+        !current.source.isInvisible ||
+        (adjustedMusicPosition !== undefined &&
+          adjustedMusicPosition < current.source.absolutePos)
+      ) {
+        return;
+      }
+      const marked = current.markJudged();
+      if (marked.status !== "ok") {
+        throw new Error("Slide invisible current changed during parent-owned timeout cleanup");
+      }
+      this.currentAfterIndexValue += 1;
+    }
   }
 
   private forcePerfectPendingAfter(): SimulatorResult<void> {
@@ -2623,6 +2844,32 @@ function isInt32Position(value: number): boolean {
   return Number.isInteger(value) &&
     value >= -0x80000000 &&
     value <= 0x7fffffff;
+}
+
+function isManualTimeoutOver(
+  absolutePosition: number,
+  adjustedMusicPosition: number,
+  bpm: number,
+): SimulatorResult<boolean> {
+  if (
+    !Number.isFinite(absolutePosition) ||
+    !Number.isFinite(adjustedMusicPosition) ||
+    !Number.isFinite(bpm) ||
+    bpm <= 0
+  ) {
+    return evidenceRequired(
+      "manual.timeout-owner-value-invalid",
+      ["D11", "MJ16", "MJ17", "MJ23"],
+      "Manual timeout requires finite production positions and a positive finite BPM.",
+    );
+  }
+  const distance = Math.fround(
+    Math.fround(adjustedMusicPosition) - Math.fround(absolutePosition),
+  );
+  const seconds = getSecondsWithDistance(distance, bpm);
+  return seconds.status === "ok"
+    ? ok(seconds.value > float32FromBits(0x3e5dddde))
+    : seconds;
 }
 
 function manualSlideFinalJudgeNoteType(

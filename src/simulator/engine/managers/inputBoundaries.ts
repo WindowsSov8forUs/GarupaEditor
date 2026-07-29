@@ -302,6 +302,22 @@ export class GamePlayInputDispatcher implements ManualInputDispatcher {
     for (const button of this.buttonsValue) {
       this.ownedButtons.add(button);
     }
+    const registered = this.noteManager.registerManualNoteDeactivatedOwner(
+      (note) => this.clearDeactivatedNote(note),
+    );
+    if (registered.status !== "ok") {
+      throw new Error("GamePlayInputDispatcher could not register its note cleanup owner");
+    }
+  }
+
+  private clearDeactivatedNote(note: NoteBase): void {
+    for (const button of this.buttonsValue) {
+      for (const fingerId of button.clearDeactivatedNote(note)) {
+        if (this.buttonWithFingerId[fingerId] === button) {
+          this.buttonWithFingerId[fingerId] = null;
+        }
+      }
+    }
   }
 
   getButtonForResolver(buttonType: ButtonTypeValue): SimulatorResult<GamePlayButton> {
@@ -635,6 +651,18 @@ export class GamePlayButton {
             })];
       })),
     });
+  }
+
+  clearDeactivatedNote(note: NoteBase): readonly number[] {
+    const cleared: number[] = [];
+    for (let fingerId = 0; fingerId < FINGER_OWNER_CAPACITY; fingerId += 1) {
+      if (this.touchNotes[fingerId] === note) {
+        this.touchNotes[fingerId] = null;
+        this.beganPositions[fingerId] = null;
+        cleared.push(fingerId);
+      }
+    }
+    return cleared;
   }
 
   dispose(): void {

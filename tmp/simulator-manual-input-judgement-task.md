@@ -58,8 +58,8 @@
 | M06 恢复Multiple手动判定 | **已完成**：真实touch、count/side/finger owner、type10、duplicate与production group测试通过 | 真实touch方向、count阈值、side owner、finish/deactivate匹配 |
 | M07 恢复Long手动状态机 | **已完成**：Began/hold/move/release/grace/type2/4/5/6/7及MJ11–MJ15测试通过 | Began/Hold/Moved/Ended、合成release、grace、头尾与finger清理匹配 |
 | M08 恢复Slide手动状态机 | **已完成**：head/intermediate/end、band/cursor/near-line、invisible/release及MJ18–MJ22通过 | head/intermediate/end、band cursor、release/miss/invisible推进匹配 |
-| M09 恢复自然timeout Miss | 未开始 | Long start/end、Slide wait/stop及同帧Miss顺序匹配 |
-| M10 接入调度、OneFrame与原子边界 | 未开始 | 每外帧一次输入、adaptive/pause/fault/dispose、五槽与批原子性闭合 |
+| M09 恢复自然timeout Miss | 进行中：production完成，MJ16/MJ17/MJ23/MJ24独立测试提交待完成 | Long start/end、Slide wait/stop及同帧Miss顺序匹配 |
+| M10 接入调度、OneFrame与原子边界 | 进行中：manual多reservation与deactivation cleanup owner已接入，系统矩阵待完成 | 每外帧一次输入、adaptive/pause/fault/dispose、五槽与批原子性闭合 |
 | M11 production oracle与独立验收 | 未开始 | 完整回归、production chart、证据验证和组合矩阵无开放阻断 |
 
 ### 1.4 初始批次记录
@@ -313,6 +313,17 @@
 - invisible intermediate在containment=false时仍走band；raw Great位于signed negative correction且owner judgeOffset非零时promotion Perfect，锁定Great correction路径。
 - terminal Flick equal `0x3D23D70A`不判、next判定；early physical release在non-terminal current提交type8 Miss、timing清零并parent cleanup。
 - M08 4/4、M07 4/4、first-slice 17/17、Auto Live AL01–AL22与testing TypeScript通过；M08及M04关闭，下一批进入M09 timeout。
+
+#### 2026-07-29 第三十一批：M09 timeout与M10 aggregation production
+
+- Long manual Move crossing继续只切Wait；Wait按`GetSecWithDistance(f32(adjusted-root), bpm) > 0x3E5DDDDE`严格触发，单一transaction先完整预留两个owner-validated type1 Miss，再按slot顺序commit并deactivate。equal不触发。
+- Long Stop按tail absolute position相同strict规则，映射Normal/Flick/Directional/Multiple type2/5/6/7单Miss；Multiple count/buttons仍由chart group owner闭合，mark/deactivate在成功提交后。
+- Slide manual Move不再保留旧`manual-slide-judgement`缺口而切Wait；Wait同时消费front strict deadline与首pending visible midpoint条件，front timeout提交root type8 Miss后进入Stop。
+- Slide Stop按current child strict timeout提交type8 Miss；连续invisible child由parent cursor按原序mark/skip且不提交OneFrame；terminal或cursor结束后parent deactivation。
+- M10移除旧`one-frame.multiple-manual-judgements-unimplemented`：一个outer-frame transaction最多预留五个独立owner plan，所有preflight保持local，commit按caller顺序占first-unused；第六个在任何domain mutation前`one-frame.pool-exhausted`。
+- Long timeout两个Miss共享同一transaction，确保只剩一槽时不会只提交第一个；跨producer已提交slot仍保持原作fixed pool exhaustion行为。
+- NoteManager新增单一dispatcher-owned deactivation callback；GamePlayButton按note identity清除touchNotes/beganPosition，dispatcher同步清finger→button owner，Normal/movement/timeout的deactivate不遗留stale owner。
+- production/testing TypeScript、M09 4项、M10双Normal aggregation、manual boundary 7/7、dispatch 5/5、M07 4/4、M08 4/4、first-slice 17/17与Auto Live AL01–AL22通过；测试文件留独立提交。
 
 ## 2. 固定范围
 
