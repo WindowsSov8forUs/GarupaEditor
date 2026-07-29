@@ -69,6 +69,18 @@ export type {
   SimulatorEvidenceId,
 } from "./engine/evidence";
 export type { SimulatorPlayMode } from "./engine/data/inGameCalculatedData";
+export {
+  JudgeTiming,
+  NoteResultType,
+  getManualNoteResult,
+  getSecondsWithDistance,
+  judgeManualNote,
+} from "./engine/data/manualJudgement";
+export type {
+  JudgeTimingValue,
+  ManualNoteJudgement,
+  NoteResultTypeValue,
+} from "./engine/data/manualJudgement";
 export { ManualTouchPhase } from "./engine/data/manualInput";
 export type {
   ManualInputButtonResolution,

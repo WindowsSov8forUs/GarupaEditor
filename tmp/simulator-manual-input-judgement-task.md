@@ -54,7 +54,7 @@
 | M02 建立实体/固定事件oracle | **已完成** | 5条R1、MJ01–MJ26、D03–D15、portable contract及126项source/copy verifier通过 |
 | M03 锁定输入数据与宿主边界 | **已完成** | 显式不可变input frame、owner-issued button能力、生命周期和失败优先级闭合 |
 | M04 恢复输入分发与候选仲裁 | 进行中：phase/owner与ordinary scan生产/测试完成；M05过滤、Slide near-line待完成 | phase、finger/button/note owner、wide/ordinary/Slide/tie行为匹配 |
-| M05 恢复窗口与Single/Flick判定 | 未开始 | GetResult/JudgeNote、Normal/Flick/Directional的边界bits与事件顺序匹配 |
+| M05 恢复窗口与Single/Flick判定 | 进行中：GetSecWithDistance/GetResult/JudgeNote纯内核完成；family/OneFrame待实现 | GetResult/JudgeNote、Normal/Flick/Directional的边界bits与事件顺序匹配 |
 | M06 恢复Multiple手动判定 | 未开始 | 真实touch方向、count阈值、side owner、finish/deactivate匹配 |
 | M07 恢复Long手动状态机 | 未开始 | Began/Hold/Moved/Ended、合成release、grace、头尾与finger清理匹配 |
 | M08 恢复Slide手动状态机 | 未开始 | head/intermediate/end、band cursor、release/miss/invisible推进匹配 |
@@ -149,6 +149,15 @@
 - Moved/Stationary/Ended验证复用Began button/note并向family保留raw phase 1/2/3；None结果不绑定note但保留resolved button owner。
 - later第二family拒绝与跨dispatcher foreign GamePlayButton均验证resolution未消费、finger/button/note/trace全域零mutation。定向5项与dependency verifier通过。
 - `firstSlice.test.ts`仅适配direct GamePlayButton构造必须显式ButtonType；production文件未在测试提交中修改。
+
+#### 2026-07-29 第十一批：M05 Float32判定纯内核
+
+- 新增DOM/Note对象无关的`manualJudgement.ts`，固定NoteResultType `-1..4`与JudgeTiming `0..2`数字身份。
+- `GetSecWithDistance`严格按ARM64 Float32顺序执行`f32(f32(f32(240 / bpm) * distance) / 192)`；distance/BPM必须是exact finite Float32且BPM>0。
+- `GetResult`使用bits `0x3C888889`的Float32 `1/60`相除，执行away-from-zero midpoint rounding，再按strict exclusive `< sweet+3/+6/+7/+8`映射Perfect/Great/Good/Bad/None。
+- `JudgeNote`先以Float32 `abs(notePos-currentPos)`换秒；仅Perfect timing=None，其余结果按`notePos-currentPos > 0`为Fast，否则Slow，与MJ02 raw None仍为Fast的实体oracle一致。
+- 所有非Int32 sweetFrame、非exact Float32、非有限位置、非正BPM在运算前失败关闭；本批不接Note family、不分配OneFrame、不写finger/state。
+- production TypeScript通过；工作树独立runner已逐项重放MJ02全部12行并验证3类非法输入，按提交纪律留到下一测试批。
 
 ## 2. 固定范围
 
