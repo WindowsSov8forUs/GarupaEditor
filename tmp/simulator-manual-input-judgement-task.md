@@ -205,6 +205,13 @@
 - NoteManager把同一geometry owner登记到每个concrete note manual runtime，为Flick/Long/Slide后续screen-to-world rate和containment提供owner；direct manager和recording backend不设置默认lane/scale，统一evidence-required。
 - production/testing TypeScript、first-slice 17、Auto Live AL01–AL22及manual boundary 6项通过；public resolver定向测试留到独立测试提交。
 
+#### 2026-07-29 第十八批：public geometry owner定向测试
+
+- manual boundary扩为7项：created/paused/disposed与Auto模式在geometry callback前拒绝，NaN在callback前拒绝，recording backend明确unavailable。
+- owner backend只从raw position返回lane；host验证0..15并取得当前dispatcher canonical button，再由InputManager签发capability。null不签发，越界lane不增加issued count。
+- 测试geometry的movement/normalization/containment方法若被button resolver误调用会抛错，证明lane签发未混入下游判定或movement事实。
+- production文件未在测试提交中修改；manual boundary 7项与dependency verifier通过。
+
 ## 2. 固定范围
 
 ### 2.1 纳入范围

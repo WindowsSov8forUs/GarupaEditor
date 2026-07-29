@@ -1,4 +1,6 @@
+import type { SimulatorManualInputGeometryBackend } from "../backends/contracts";
 import { createRecordingSimulatorBackends } from "../backends/recordingBackend";
+import { ButtonType, type ButtonTypeValue } from "../engine/chart/types";
 import { GameState } from "../engine/data/inGameState";
 import {
   ManualInputResolutionOwner,
@@ -310,6 +312,69 @@ test("dispatch preflight覆盖整帧后才消费resolution", () => {
   }), "input.invalid-dispatch-plan");
   assertDeepEqual(invalidPlan.snapshot(), invalidPlanBefore,
     "later invalid dispatch plan does not consume capability");
+});
+
+test("public geometry owner只消费raw position并签发当前session capability", () => {
+  let resolverCalls = 0;
+  let resolvedButton: ButtonTypeValue | null = ButtonType.Button_01_BMS_1P_01;
+  const geometry: SimulatorManualInputGeometryBackend = {
+    resolveButton: () => {
+      resolverCalls += 1;
+      return ok(resolvedButton);
+    },
+    screenToWorld: () => {
+      throw new Error("button resolution must not request movement projection");
+    },
+    getDistanceNormalization: () => {
+      throw new Error("button resolution must not request movement normalization");
+    },
+    isInsideTargetButtons: () => {
+      throw new Error("button resolution must not request note containment");
+    },
+  };
+  const backends = createRecordingSimulatorBackends();
+  Object.defineProperty(backends, "manualInputGeometry", { value: geometry });
+  const engine = requireOk(createSimulatorEngine(engineInput(), backends),
+    "create public resolver engine");
+  requireEvidence(engine.resolveManualInputButton(position),
+    "manual-input.resolve-outside-active-session");
+  assertEqual(resolverCalls, 0, "created lifecycle precedes geometry owner");
+  requireOk(engine.initialize(), "initialize public resolver engine");
+  requireEvidence(engine.resolveManualInputButton({ x: Number.NaN, y: 0 }),
+    "input.invalid-float32-position");
+  assertEqual(resolverCalls, 0, "shape validation precedes geometry owner");
+  const capability = requireOk(engine.resolveManualInputButton(position),
+    "resolve canonical gameplay button");
+  assert(capability !== null, "resolved lane issues opaque capability");
+  assertEqual(resolverCalls, 1, "geometry owner called once");
+  assertEqual(requireOk(engine.snapshot(), "resolver snapshot").managers.inputManager
+    .resolutionOwner.issuedCount, 1, "current InputManager owns issued capability");
+
+  resolvedButton = null;
+  assertEqual(requireOk(engine.resolveManualInputButton(position), "resolve no lane"), null,
+    "explicit no-lane result issues no capability");
+  resolvedButton = 16 as ButtonTypeValue;
+  requireEvidence(engine.resolveManualInputButton(position),
+    "input.resolver-button-outside-gameplay-domain");
+  assertEqual(requireOk(engine.snapshot(), "invalid lane snapshot").managers.inputManager
+    .resolutionOwner.issuedCount, 1, "out-of-domain backend lane issues nothing");
+
+  requireOk(engine.pause(), "pause public resolver engine");
+  const callsBeforePause = resolverCalls;
+  requireEvidence(engine.resolveManualInputButton(position),
+    "manual-input.resolve-outside-active-session");
+  assertEqual(resolverCalls, callsBeforePause, "pause precedes geometry owner");
+  requireOk(engine.dispose(), "dispose public resolver engine");
+  requireEvidence(engine.resolveManualInputButton(position),
+    "manual-input.resolve-outside-active-session");
+
+  const unavailable = requireOk(
+    createSimulatorEngine(engineInput(), createRecordingSimulatorBackends()),
+    "create unavailable geometry engine",
+  );
+  requireOk(unavailable.initialize(), "initialize unavailable geometry engine");
+  requireEvidence(unavailable.resolveManualInputButton(position),
+    "manual-input.geometry-resolver-unavailable");
 });
 
 test("snapshot只读且不暴露capability或button owner", () => {
