@@ -60,7 +60,7 @@
 | M08 恢复Slide手动状态机 | **已完成**：head/intermediate/end、band/cursor/near-line、invisible/release及MJ18–MJ22通过 | head/intermediate/end、band cursor、release/miss/invisible推进匹配 |
 | M09 恢复自然timeout Miss | **已完成**：Long start/end、Slide front/current/invisible及MJ16/MJ17/MJ23/MJ24通过 | Long start/end、Slide wait/stop及同帧Miss顺序匹配 |
 | M10 接入调度、OneFrame与原子边界 | **已完成**：多manual预留、五槽、deactivation cleanup及pause/fault/原子矩阵通过 | 每外帧一次输入、adaptive/pause/fault/dispose、五槽与批原子性闭合 |
-| M11 production oracle与独立验收 | 未开始 | 完整回归、production chart、证据验证和组合矩阵无开放阻断 |
+| M11 production oracle与独立验收 | 进行中：总入口首次全量通过，提交后独立复验与acceptance文档待完成 | 完整回归、production chart、证据验证和组合矩阵无开放阻断 |
 
 ### 1.4 初始批次记录
 
@@ -334,6 +334,14 @@
 - M10更新M05旧断言：双Normal同outer frame完整preflight不写slot，commit按caller顺序占slot0/1并一次Reflect；immediate deactivation同步清dispatcher owner。
 - Long生产图补充Stop timeout集成：绑定finger/button后自然tail Miss，NoteManager deactivation callback同步清finger→button与button→note identity。
 - M09 4/4、M07 Long 5/5、M10 Normal 4/4、manual boundary 7/7、dispatch 5/5、M08 4/4、first-slice 17/17、Auto Live AL01–AL22及production/testing TypeScript通过；M09/M10关闭，进入M11。
+
+#### 2026-07-29 第三十三批：M11总验收入口
+
+- 新增`simulator:test:manual-input`唯一总入口；先逐字校验10.1.4 package/version/ABI及libil2cpp/global metadata hash、118/14/13、R1=5、blocking=[]、V01+D01–D15和manual gate closed。
+- 总入口要求oracle case顺序严格为MJ01–MJ26且每项`unknown_fields=[]`，随后运行boundary、dispatch、arithmetic、Normal、Flick、Multiple、Long、Slide、timeout九个manual runner。
+- 同一入口继续运行first-slice、chart boundary/parsing/batches/graphs/multi-range/command/finalize/production、clock与Auto Live；production普通/HABAHIRO覆盖沿已提交构造fixture与AL19/AL20 direct topology消费复验。
+- 最后运行Garupa manual evidence verifier；整个入口不执行Python、不读Reverse工作树、不联网。
+- 首次全量运行通过：manual 7/5/MJ02-12+3/4/6/6/5/4/4，上游17/4/8/6/6/6/7/7/2charts/15/22，evidence entries=141；先提交入口，再从提交后全新产物独立复验并写acceptance。
 
 ## 2. 固定范围
 
