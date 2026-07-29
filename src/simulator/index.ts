@@ -64,10 +64,22 @@ export type {
   EvidenceRequired,
   AutoLiveEvidenceId,
   FirstSliceEvidenceId,
+  ManualInputEvidenceId,
   SimulatorResult,
   SimulatorEvidenceId,
 } from "./engine/evidence";
 export type { SimulatorPlayMode } from "./engine/data/inGameCalculatedData";
+export { ManualTouchPhase } from "./engine/data/manualInput";
+export type {
+  ManualInputButtonResolution,
+  ManualInputFrame,
+  ManualInputFrameSnapshot,
+  ManualInputPosition,
+  ManualInputResolutionOwnerSnapshot,
+  ManualInputTouch,
+  ManualInputTouchSnapshot,
+  ManualTouchPhaseValue,
+} from "./engine/data/manualInput";
 export { NoteBase, NoteState } from "./engine/notes/noteBase";
 export { NoteBpmChange } from "./engine/notes/noteBpmChange";
 export {

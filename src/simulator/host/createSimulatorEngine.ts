@@ -15,7 +15,11 @@ import {
   InGameCalculatedData,
   type SimulatorPlayMode,
 } from "../engine/data/inGameCalculatedData";
-import { InGameDirector } from "../engine/managers/inGameDirector";
+import type { ManualInputFrame } from "../engine/data/manualInput";
+import {
+  InGameDirector,
+  validateDirectorDeltaTime,
+} from "../engine/managers/inGameDirector";
 import { InGameManager } from "../engine/managers/inGameManager";
 import { InGameMusicScoreController } from "../engine/managers/inGameMusicScoreController";
 import { InGameOneFrameJudgementController } from "../engine/managers/inGameOneFrameJudgementController";
@@ -53,12 +57,27 @@ class SimulatorEngineHost implements SimulatorEngine {
     return this.inGameManager.initialize();
   }
 
-  step(deltaTimeSeconds: number): SimulatorResult<void> {
+  step(
+    deltaTimeSeconds: number,
+    inputFrame?: ManualInputFrame,
+  ): SimulatorResult<void> {
     if (this.inGameManager.fault !== null) {
       return this.inGameManager.fault;
     }
     if (this.inGameManager.state !== "initialized") {
       return this.inGameManager.execUpdate(deltaTimeSeconds);
+    }
+    if (this.inGameManager.snapshot().paused) {
+      return this.inGameDirector.update(deltaTimeSeconds);
+    }
+    const deltaValidation = validateDirectorDeltaTime(deltaTimeSeconds);
+    if (deltaValidation.status !== "ok") {
+      return deltaValidation;
+    }
+    const inputValidation =
+      this.inGameManager.inputManager.prepareOuterFrame(inputFrame);
+    if (inputValidation.status !== "ok") {
+      return inputValidation;
     }
     return this.inGameDirector.update(deltaTimeSeconds);
   }
@@ -182,7 +201,7 @@ export function createSimulatorEngine(
     musicScoreController,
     noteManager,
     oneFrameJudgementController,
-    new InputManager(),
+    new InputManager(inGameCalculatedData.playMode),
   );
   const inGameDirector = new InGameDirector(
     inGameManager,

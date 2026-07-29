@@ -33,12 +33,9 @@ export class InGameDirector {
   }
 
   update(deltaTimeSeconds: number): SimulatorResult<void> {
-    if (!Number.isFinite(deltaTimeSeconds) || deltaTimeSeconds < 0) {
-      return evidenceRequired(
-        "director.invalid-delta-time",
-        ["E22", "E25"],
-        "The portable frame trigger must provide a finite non-negative delta to the recovered InGameDirector.Update boundary.",
-      );
+    const validation = validateDirectorDeltaTime(deltaTimeSeconds);
+    if (validation.status !== "ok") {
+      return validation;
     }
     return this.inGameManager.execUpdate(deltaTimeSeconds);
   }
@@ -52,4 +49,17 @@ export class InGameDirector {
       requestedTargetFrameRate: this.requestedTargetFrameRateValue,
     };
   }
+}
+
+export function validateDirectorDeltaTime(
+  deltaTimeSeconds: number,
+): SimulatorResult<void> {
+  if (!Number.isFinite(deltaTimeSeconds) || deltaTimeSeconds < 0) {
+    return evidenceRequired(
+      "director.invalid-delta-time",
+      ["E22", "E25"],
+      "The portable frame trigger must provide a finite non-negative delta to the recovered InGameDirector.Update boundary.",
+    );
+  }
+  return ok(undefined);
 }

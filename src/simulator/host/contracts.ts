@@ -4,6 +4,7 @@ import type {
 } from "../backends/contracts";
 import type { ChartConstructionResult } from "../engine/chart/types";
 import type { SimulatorPlayMode } from "../engine/data/inGameCalculatedData";
+import type { ManualInputFrame } from "../engine/data/manualInput";
 import type { SimulatorResult } from "../engine/evidence";
 import type { InGameDirectorSnapshot } from "../engine/managers/inGameDirector";
 import type { InGameManagerSnapshot } from "../engine/managers/inGameManager";
@@ -26,7 +27,10 @@ export interface SimulatorSnapshot {
 
 export interface SimulatorEngine {
   initialize(): SimulatorResult<void>;
-  step(deltaTimeSeconds: number): SimulatorResult<void>;
+  step(
+    deltaTimeSeconds: number,
+    inputFrame?: ManualInputFrame,
+  ): SimulatorResult<void>;
   pause(): SimulatorResult<void>;
   resume(): SimulatorResult<void>;
   getAdjustedMusicPosition(): SimulatorResult<number>;

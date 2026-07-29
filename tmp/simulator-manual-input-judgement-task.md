@@ -52,7 +52,7 @@
 | M00 建立阶段任务书 | **已完成** | 范围、候选证据、硬门、oracle、实施批次和完成矩阵写入本文档 |
 | M01 晋升并修正静态证据 | **已完成** | 10.1.4的103方法/12 type/13 enum、独立Slide Wait与Slide band构造已提交并冻结 |
 | M02 建立实体/固定事件oracle | **已完成** | 5条R1、MJ01–MJ26、D03–D15、portable contract及126项source/copy verifier通过 |
-| M03 锁定输入数据与宿主边界 | 未开始，允许实施 | 显式不可变input frame、owner-issued button能力、生命周期和失败优先级闭合 |
+| M03 锁定输入数据与宿主边界 | 生产实现已完成，定向测试批待提交 | 显式不可变input frame、owner-issued button能力、生命周期和失败优先级闭合 |
 | M04 恢复输入分发与候选仲裁 | 未开始 | phase、finger/button/note owner、wide/ordinary/Slide/tie行为匹配 |
 | M05 恢复窗口与Single/Flick判定 | 未开始 | GetResult/JudgeNote、Normal/Flick/Directional的边界bits与事件顺序匹配 |
 | M06 恢复Multiple手动判定 | 未开始 | 真实touch方向、count阈值、side owner、finish/deactivate匹配 |
@@ -100,6 +100,14 @@
 - committed clock 10.1.4 scanner锁定musicscore660及Easy/Hard/Expert TextAsset SHA；fixed oracle固定portable frame/resolver/transaction/lifecycle contract和MJ01–MJ26，所有`unknown_fields=[]`。
 - Reverse最终提交`4bda0f3ad2fb84ef972bf352e78aac57dad44c8b`已推送且远端`0 0`；静态verifier与runtime verifier均通过，`manual_input_gate=closed`、`blocking_findings=[]`。
 - Garupa冻结包升级为126项最终source/copy条目；暂存后必须再执行`verify.mjs --index`。未修改任何`src/simulator/**`生产代码。
+
+#### 2026-07-29 第五批：M03输入数据与宿主边界生产实现
+
+- 新增DOM/Pixi/Tauri无关的`ManualInputFrame`、phase 0–3、bottom-left exact Float32 position及opaque button resolution类型；manual活动外帧必须显式传`touches`，Auto Live保持可省略。
+- 每个`InputManager`私有`WeakMap` owner签发位置绑定的空handle；跨engine、plain object、位置不匹配、同帧alias和跨帧重复消费均失败关闭。整帧全部touch验证后才一次标记resolution已消费并stage immutable copy。
+- finger限制0..14，Canceled/非有限或非Float32坐标、重复finger-phase、非Began重绑、later-invalid均在clock/scheduler/finger/note/OneFrame/backend之前拒绝；snapshot仅输出raw trace、resolved布尔投影与owner计数，不暴露capability/button对象。
+- `step(delta, inputFrame?)`先返回latched fault/非initialized生命周期；pause不preflight、不stage、不消费。活动帧先复用纯delta校验，再prepare input，InputManager每outer-frame至多消费一次，adaptive子步不重复。
+- isolated production TypeScript与testing TypeScript均通过；兼容工作树上first-slice 17、clock 15、Auto Live AL01–AL22回归通过。定向MJ01/MJ07/MJ25/MJ26测试按提交纪律留到独立测试批。
 
 ## 2. 固定范围
 

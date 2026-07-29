@@ -23,6 +23,7 @@ export interface InGameManagerSnapshot extends EngineLifecycleSnapshot {
   readonly pauseState: PauseStateValue;
   readonly musicScore: ReturnType<InGameMusicScoreController["snapshot"]>;
   readonly noteManager: ReturnType<NoteManager["snapshot"]>;
+  readonly inputManager: ReturnType<InputManager["snapshot"]>;
   readonly oneFrame: ReturnType<InGameOneFrameJudgementController["snapshot"]>;
 }
 
@@ -61,6 +62,10 @@ export class InGameManager {
     const noteValidation = this.noteManager.validateSetup();
     if (noteValidation.status !== "ok") {
       return noteValidation;
+    }
+    const inputInitialization = this.inputManager.initialize();
+    if (inputInitialization.status !== "ok") {
+      return inputInitialization;
     }
     const oneFrameInitialization = this.oneFrameJudgementController.initialize();
     if (oneFrameInitialization.status !== "ok") {
@@ -176,6 +181,7 @@ export class InGameManager {
       return noteDispose;
     }
     this.oneFrameJudgementController.dispose();
+    this.inputManager.dispose();
     this.lifecycleState = "disposed";
     this.currentGameStateValue = GameState.PlayingSound;
     this.pauseStateValue = PauseState.None;
@@ -211,6 +217,7 @@ export class InGameManager {
       pauseState: this.pauseStateValue,
       musicScore: this.musicScoreController.snapshot(),
       noteManager: this.noteManager.snapshot(),
+      inputManager: this.inputManager.snapshot(),
       oneFrame: this.oneFrameJudgementController.snapshot(),
     };
   }
