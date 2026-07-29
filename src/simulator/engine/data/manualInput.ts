@@ -104,7 +104,7 @@ export class ManualInputResolutionOwner {
         "Button resolutions are bound to one initialized, non-disposed engine session.",
       );
     }
-    const positionValidation = copyFloat32Position(position);
+    const positionValidation = copyManualInputPosition(position);
     if (positionValidation.status !== "ok") {
       return positionValidation;
     }
@@ -156,7 +156,7 @@ export class ManualInputResolutionOwner {
       if (!isManualTouchPhase(touch.phase)) {
         return invalidTouch("Only Began, Moved, Stationary and Ended phases 0..3 are represented.");
       }
-      const positionValidation = copyFloat32Position(touch.position);
+      const positionValidation = copyManualInputPosition(touch.position);
       if (positionValidation.status !== "ok") {
         return positionValidation;
       }
@@ -268,7 +268,7 @@ function invalidTouch(boundary: string) {
   );
 }
 
-function copyFloat32Position(
+export function copyManualInputPosition(
   position: ManualInputPosition,
 ): SimulatorResult<ManualInputPosition> {
   if (

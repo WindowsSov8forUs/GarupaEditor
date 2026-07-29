@@ -71,6 +71,13 @@ export class InputManager {
     position: ManualInputPosition,
     buttonOwner: object,
   ): SimulatorResult<ManualInputButtonResolution> {
+    if (this.playMode.kind !== "manual") {
+      return evidenceRequired(
+        "input.resolution-in-auto-live",
+        ["D03", "D14", "MJ25"],
+        "The real-touch geometry owner cannot issue gameplay button capabilities in Auto Live.",
+      );
+    }
     return this.resolutionOwner.issue(position, buttonOwner);
   }
 

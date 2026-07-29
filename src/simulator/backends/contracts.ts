@@ -1,3 +1,7 @@
+import type { ButtonTypeValue } from "../engine/chart/types";
+import type { ManualInputPosition } from "../engine/data/manualInput";
+import type { SimulatorResult } from "../engine/evidence";
+
 export interface SimulatorBackendPort {
   readonly id: string;
   record(request: SimulatorBackendRequest): void;
@@ -25,6 +29,29 @@ export interface SimulatorFrameRateBackend {
   requestTargetFrameRate(value: 60 | 120): void;
 }
 
+export interface ManualInputWorldPosition {
+  readonly x: number;
+  readonly y: number;
+  readonly z: number;
+}
+
+export interface SimulatorManualInputGeometryBackend {
+  resolveButton(
+    position: ManualInputPosition,
+  ): SimulatorResult<ButtonTypeValue | null>;
+  screenToWorld(
+    position: ManualInputPosition,
+  ): SimulatorResult<ManualInputWorldPosition>;
+  getDistanceNormalization(): SimulatorResult<{
+    readonly cameraScale: number;
+    readonly gameplayScale: number;
+  }>;
+  isInsideTargetButtons(
+    position: ManualInputPosition,
+    buttonTypes: readonly ButtonTypeValue[],
+  ): SimulatorResult<boolean>;
+}
+
 export interface SimulatorBackends {
   readonly renderer: SimulatorBackendPort;
   readonly audio: SimulatorBackendPort;
@@ -32,5 +59,6 @@ export interface SimulatorBackends {
   readonly resources: SimulatorBackendPort;
   readonly lifecycle: SimulatorLifecycleBackend;
   readonly frameRate: SimulatorFrameRateBackend;
+  readonly manualInputGeometry: SimulatorManualInputGeometryBackend;
   snapshot(): readonly SimulatorBackendTraceEvent[];
 }

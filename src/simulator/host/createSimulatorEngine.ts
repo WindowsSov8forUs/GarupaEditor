@@ -15,7 +15,12 @@ import {
   InGameCalculatedData,
   type SimulatorPlayMode,
 } from "../engine/data/inGameCalculatedData";
-import type { ManualInputFrame } from "../engine/data/manualInput";
+import {
+  copyManualInputPosition,
+  type ManualInputButtonResolution,
+  type ManualInputFrame,
+  type ManualInputPosition,
+} from "../engine/data/manualInput";
 import {
   InGameDirector,
   validateDirectorDeltaTime,
@@ -43,6 +48,7 @@ class SimulatorEngineHost implements SimulatorEngine {
   constructor(
     private readonly inGameDirector: InGameDirector,
     private readonly inGameManager: InGameManager,
+    private readonly inputDispatcher: GamePlayInputDispatcher,
     readonly backends: SimulatorBackends,
   ) {}
 
@@ -83,6 +89,48 @@ class SimulatorEngineHost implements SimulatorEngine {
       return inputValidation;
     }
     return this.inGameDirector.update(deltaTimeSeconds);
+  }
+
+  resolveManualInputButton(
+    position: ManualInputPosition,
+  ): SimulatorResult<ManualInputButtonResolution | null> {
+    if (this.inGameManager.fault !== null) {
+      return this.inGameManager.fault;
+    }
+    const managerSnapshot = this.inGameManager.snapshot();
+    if (this.inGameManager.state !== "initialized" || managerSnapshot.paused) {
+      return evidenceRequired(
+        "manual-input.resolve-outside-active-session",
+        ["D03", "D14", "MJ25"],
+        "Raw input geometry can be resolved only by an initialized, running manual engine session.",
+      );
+    }
+    if (managerSnapshot.noteManager.calculatedData.playMode !== "manual") {
+      return evidenceRequired(
+        "manual-input.resolve-in-auto-live",
+        ["D03", "D14", "MJ25"],
+        "Real-touch button capabilities are unavailable in Auto Live.",
+      );
+    }
+    const copied = copyManualInputPosition(position);
+    if (copied.status !== "ok") {
+      return copied;
+    }
+    const resolved = this.backends.manualInputGeometry.resolveButton(copied.value);
+    if (resolved.status !== "ok") {
+      return resolved;
+    }
+    if (resolved.value === null) {
+      return ok(null);
+    }
+    const button = this.inputDispatcher.getButtonForResolver(resolved.value);
+    if (button.status !== "ok") {
+      return button;
+    }
+    return this.inGameManager.inputManager.issueButtonResolution(
+      copied.value,
+      button.value,
+    );
   }
 
   pause(): SimulatorResult<void> {
@@ -193,6 +241,7 @@ export function createSimulatorEngine(
     (request) => oneFrameJudgementController.setupAutoLiveJudgement(request),
     undefined,
     () => oneFrameJudgementController.createManualJudgementTransaction(),
+    backends.manualInputGeometry,
   );
   const judgementOwner =
     oneFrameJudgementController.registerAutoLiveJudgementOwner(
@@ -227,7 +276,12 @@ export function createSimulatorEngine(
     backends.frameRate,
   );
 
-  return ok(new SimulatorEngineHost(inGameDirector, inGameManager, backends));
+  return ok(new SimulatorEngineHost(
+    inGameDirector,
+    inGameManager,
+    inputDispatcher,
+    backends,
+  ));
 }
 
 function validatePlayMode(

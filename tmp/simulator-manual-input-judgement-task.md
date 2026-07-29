@@ -197,6 +197,14 @@
 - 同步`src/simulator/README.md`：Normal/单manual OneFrame已实现；Flick/Directional、Slide near-line与M10 simultaneous aggregation仍未实现。
 - 本批不修改生产行为或测试。
 
+#### 2026-07-29 第十七批：M03/M05 portable geometry owner生产边界
+
+- 修复public host无法签发manual button capability的根边界：`SimulatorEngine.resolveManualInputButton(rawPosition)`只接收exact finite Float32 raw screen position；生命周期/fault/pause/manual-mode验证先于geometry backend。
+- 新增`SimulatorManualInputGeometryBackend`可信宿主端口，分别拥有raw position→ButtonType、ScreenToWorld、camera/gameplay normalization与target containment；caller仍不能提供button type、world rate、note、result、timing或Slide cursor。
+- geometry解析成功后，host从当前dispatcher取得canonical GamePlayButton，再由当前InputManager session签发位置绑定opaque capability；null lane保持显式null。Auto Live、foreign/out-of-domain lane及recording backend均失败关闭。
+- NoteManager把同一geometry owner登记到每个concrete note manual runtime，为Flick/Long/Slide后续screen-to-world rate和containment提供owner；direct manager和recording backend不设置默认lane/scale，统一evidence-required。
+- production/testing TypeScript、first-slice 17、Auto Live AL01–AL22及manual boundary 6项通过；public resolver定向测试留到独立测试提交。
+
 ## 2. 固定范围
 
 ### 2.1 纳入范围

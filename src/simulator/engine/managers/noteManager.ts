@@ -34,6 +34,7 @@ import {
 } from "../notes/noteTypes";
 import { SlideNoteManager } from "./slideNoteManager";
 import type { InGameMusicScoreController } from "./inGameMusicScoreController";
+import type { SimulatorManualInputGeometryBackend } from "../../backends/contracts";
 
 const BPM_POOL_LENGTH = 30;
 
@@ -160,6 +161,8 @@ export class NoteManager {
     private readonly createPoolObject: NotePoolObjectFactory = createDefaultPoolObject,
     private readonly createManualJudgementTransaction: () => ManualJudgementTransaction =
       createUnavailableManualJudgementTransaction,
+    private readonly manualInputGeometry: SimulatorManualInputGeometryBackend =
+      unavailableManualInputGeometry,
   ) {}
 
   validateSetup(): SimulatorResult<void> {
@@ -257,6 +260,7 @@ export class NoteManager {
         note.registerManualRuntime({
           getAdjustedMusicPosition: () => this.getAdjustedMusicPosition(),
           getCurrentBpm: () => this.musicScoreController.currentBpm,
+          geometry: this.manualInputGeometry,
         });
         if (note instanceof NoteMultipleDirectionalFlick) {
           note.registerMultipleDirectionalGroupResolver(
@@ -830,6 +834,29 @@ function validateBpmCommand(
 function isNonPlayableCommand(noteInformation: NoteInformation): boolean {
   return noteInformation.buttonType === ButtonType.None;
 }
+
+const unavailableManualInputGeometry: SimulatorManualInputGeometryBackend = {
+  resolveButton: () => evidenceRequired(
+    "manual-input.geometry-resolver-unavailable",
+    ["D03", "D04", "D15", "MJ03", "MJ26"],
+    "A direct NoteManager without a host geometry owner cannot resolve screen input.",
+  ),
+  screenToWorld: () => evidenceRequired(
+    "manual-input.screen-to-world-unavailable",
+    ["D07", "MJ08", "MJ09"],
+    "A direct NoteManager without a host geometry owner cannot project screen positions.",
+  ),
+  getDistanceNormalization: () => evidenceRequired(
+    "manual-input.distance-normalization-unavailable",
+    ["D07", "MJ08", "MJ09"],
+    "A direct NoteManager without a host geometry owner cannot provide native distance scales.",
+  ),
+  isInsideTargetButtons: () => evidenceRequired(
+    "manual-input.target-containment-unavailable",
+    ["D09", "D10", "MJ14", "MJ20"],
+    "A direct NoteManager without a host geometry owner cannot test target containment.",
+  ),
+};
 
 function createUnavailableManualJudgementTransaction(): ManualJudgementTransaction {
   return {

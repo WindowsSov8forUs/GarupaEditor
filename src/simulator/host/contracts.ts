@@ -4,7 +4,11 @@ import type {
 } from "../backends/contracts";
 import type { ChartConstructionResult } from "../engine/chart/types";
 import type { SimulatorPlayMode } from "../engine/data/inGameCalculatedData";
-import type { ManualInputFrame } from "../engine/data/manualInput";
+import type {
+  ManualInputButtonResolution,
+  ManualInputFrame,
+  ManualInputPosition,
+} from "../engine/data/manualInput";
 import type { SimulatorResult } from "../engine/evidence";
 import type { InGameDirectorSnapshot } from "../engine/managers/inGameDirector";
 import type { InGameManagerSnapshot } from "../engine/managers/inGameManager";
@@ -31,6 +35,9 @@ export interface SimulatorEngine {
     deltaTimeSeconds: number,
     inputFrame?: ManualInputFrame,
   ): SimulatorResult<void>;
+  resolveManualInputButton(
+    position: ManualInputPosition,
+  ): SimulatorResult<ManualInputButtonResolution | null>;
   pause(): SimulatorResult<void>;
   resume(): SimulatorResult<void>;
   getAdjustedMusicPosition(): SimulatorResult<number>;

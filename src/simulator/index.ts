@@ -6,6 +6,8 @@ export type {
   SimulatorLifecycleBackend,
   SimulatorLifecycleBackendState,
   SimulatorFrameRateBackend,
+  SimulatorManualInputGeometryBackend,
+  ManualInputWorldPosition,
 } from "./backends/contracts";
 export {
   createRecordingSimulatorBackends,
@@ -92,6 +94,7 @@ export type {
   ManualInputTouchSnapshot,
   ManualTouchPhaseValue,
 } from "./engine/data/manualInput";
+export { copyManualInputPosition } from "./engine/data/manualInput";
 export { NoteBase, NoteState } from "./engine/notes/noteBase";
 export { NoteBpmChange } from "./engine/notes/noteBpmChange";
 export {

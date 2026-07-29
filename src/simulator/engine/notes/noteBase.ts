@@ -14,6 +14,7 @@ import type {
 } from "../data/manualJudgement";
 import type { OneFrameDataHandle } from "../data/oneFrameData";
 import type { NoteAutoLiveRuntime } from "../data/autoLiveJudgement";
+import type { SimulatorManualInputGeometryBackend } from "../../backends/contracts";
 
 export enum NoteState {
   Move = 0,
@@ -38,6 +39,7 @@ export interface NoteStateSnapshot {
 export interface ManualNoteRuntime {
   readonly getAdjustedMusicPosition: () => number;
   readonly getCurrentBpm: () => number;
+  readonly geometry: SimulatorManualInputGeometryBackend;
 }
 
 export interface ManualNoteTouchInput {
