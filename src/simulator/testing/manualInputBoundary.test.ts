@@ -1,6 +1,12 @@
 import type { SimulatorManualInputGeometryBackend } from "../backends/contracts";
 import { createRecordingSimulatorBackends } from "../backends/recordingBackend";
-import { ButtonType, type ButtonTypeValue } from "../engine/chart/types";
+import {
+  AfterNoteType,
+  ButtonType,
+  FrontNoteType,
+  GameNoteType,
+  type ButtonTypeValue,
+} from "../engine/chart/types";
 import { GameState } from "../engine/data/inGameState";
 import {
   ManualInputResolutionOwner,
@@ -198,9 +204,21 @@ test("MJ25 pause不解析输入且fault dispose优先于delta和shape", () => {
     "ingame.update-outside-initialized-lifecycle",
   );
 
+  const faultSourceBatch = noteBatch(["manual-fault"], 1);
+  const faultSource = faultSourceBatch.informationList[0];
+  assert(faultSource !== undefined, "fault visual source exists");
+  const faultBatch = {
+    ...faultSourceBatch,
+    informationList: [{
+      ...faultSource,
+      fireNoteType: FrontNoteType.LongMultipleDirectionalFlickAdd,
+      gameNoteType: GameNoteType.LongAddDirectionFlick,
+      afterNoteType: AfterNoteType.None,
+    }],
+  };
   const faultedEngine = requireOk(
     createSimulatorEngine(
-      engineInput([noteBatch(["manual-fault"], 1)]),
+      engineInput([faultBatch]),
       createRecordingSimulatorBackends(),
     ),
     "create fault engine",

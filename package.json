@@ -24,6 +24,7 @@
     "simulator:test:manual-normal": "node src/simulator/testing/runManualNormalJudgementTests.mjs",
     "simulator:test:manual-flick": "node src/simulator/testing/runManualFlickJudgementTests.mjs",
     "simulator:test:manual-multiple": "node src/simulator/testing/runManualMultipleDirectionalJudgementTests.mjs",
+    "simulator:test:manual-long": "node src/simulator/testing/runManualLongJudgementTests.mjs",
     "tauri": "tauri",
     "desktop:dev": "tauri dev",
     "desktop:build": "tauri build",

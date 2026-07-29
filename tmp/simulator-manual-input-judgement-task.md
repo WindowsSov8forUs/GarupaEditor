@@ -56,7 +56,7 @@
 | M04 恢复输入分发与候选仲裁 | 进行中：phase/owner与ordinary scan生产/测试完成；M05过滤、Slide near-line待完成 | phase、finger/button/note owner、wide/ordinary/Slide/tie行为匹配 |
 | M05 恢复窗口与Single/Flick判定 | **已完成**：Normal/Flick/Directional、Single timeout、单manual OneFrame及定向测试通过 | GetResult/JudgeNote、Normal/Flick/Directional的边界bits与事件顺序匹配 |
 | M06 恢复Multiple手动判定 | **已完成**：真实touch、count/side/finger owner、type10、duplicate与production group测试通过 | 真实touch方向、count阈值、side owner、finish/deactivate匹配 |
-| M07 恢复Long手动状态机 | 进行中：production完成，MJ11–MJ15独立测试提交待完成 | Began/Hold/Moved/Ended、合成release、grace、头尾与finger清理匹配 |
+| M07 恢复Long手动状态机 | **已完成**：Began/hold/move/release/grace/type2/4/5/6/7及MJ11–MJ15测试通过 | Began/Hold/Moved/Ended、合成release、grace、头尾与finger清理匹配 |
 | M08 恢复Slide手动状态机 | 未开始 | head/intermediate/end、band cursor、release/miss/invisible推进匹配 |
 | M09 恢复自然timeout Miss | 未开始 | Long start/end、Slide wait/stop及同帧Miss顺序匹配 |
 | M10 接入调度、OneFrame与原子边界 | 未开始 | 每外帧一次输入、adaptive/pause/fault/dispose、五槽与批原子性闭合 |
@@ -286,6 +286,14 @@
 - production host始终把validated outer delta传给InputManager并冻结为Float32；direct InputManager内部调用可省略该owner输入，但prepared plan显式保存`null`而不是0/default。
 - Normal/Flick/Directional/Multiple不消费delta，保持既有direct隔离图；Long non-Normal Moved在任何judgement reservation、grace或note mutation前要求非null owner delta，否则`manual.long-owner-delta-unavailable`。
 - 该修正避免为测试伪造0 delta，同时保持M03 host complete-preflight与M07 `f32(grace-delta)`证据边界；production TypeScript及M05/M06定向回归通过。
+
+#### 2026-07-29 第二十八批：M07 Long独立测试
+
+- 新增Long production图并直接读取MJ11–MJ15及Began/Moved/judgeAfter ARM64；测试只提交raw touch、identity ScreenToWorld、containment owner和host delta，不注入result/timing/note type/count/grace。
+- 验证head type4→Stop、Normal physical Ended inside type2/outside Miss、Flick strict equal/next→type5 synthetic、Directional type6、Multiple count2 next threshold→type7及owner button `[2,1]`。
+- grace从inside重置8.0；outside以delta8严格减到0时即使movement超过阈值也不成功，后续physical Flick release转换Miss并清timing。
+- 修订M03 fault-priority测试：旧的manual base AfterUpdate故障已被R19关闭，改用确认presentation-unimplemented的Multiple visual active update产生terminal latch，不修改production。
+- M07 4/4、manual boundary 7/7、M04 5/5、M05 Normal4/Flick6、M06 6项、first-slice 17/17、Auto Live AL01–AL22与testing TypeScript通过；M07关闭，下一批进入M08 Slide。
 
 ## 2. 固定范围
 
