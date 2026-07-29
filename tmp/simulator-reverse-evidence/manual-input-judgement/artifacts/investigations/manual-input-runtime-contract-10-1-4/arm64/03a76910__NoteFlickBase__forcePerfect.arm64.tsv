@@ -1,0 +1,32 @@
+address	bytes	instruction	resolved_target
+0x3A76910	FE4FBFA9	stp x30, x19, [sp, #-0x10]!	-
+0x3A76914	E1031FAA	mov x1, xzr	-
+0x3A76918	F30300AA	mov x19, x0	-
+0x3A7691C	18A8D997	bl #0x30e097c	NoteSingleBase$$forcePerfect
+0x3A76920	680240F9	ldr x8, [x19]	-
+0x3A76924	E00313AA	mov x0, x19	-
+0x3A76928	096D41F9	ldr x9, [x8, #0x2d8]	-
+0x3A7692C	017141F9	ldr x1, [x8, #0x2e0]	-
+0x3A76930	20013FD6	blr x9	-
+0x3A76934	684A40F9	ldr x8, [x19, #0x90]	-
+0x3A76938	021CA04E	mov v2.16b, v0.16b	-
+0x3A7693C	080100B4	cbz x8, #0x3a7695c	-
+0x3A76940	69BA80B9	ldrsw x9, [x19, #0xb8]	-
+0x3A76944	0A1940B9	ldr w10, [x8, #0x18]	-
+0x3A76948	3F010A6B	cmp w9, w10	-
+0x3A7694C	E2010054	b.hs #0x3a76988	-
+0x3A76950	080D098B	add x8, x8, x9, lsl #3	-
+0x3A76954	021140F9	ldr x2, [x8, #0x20]	-
+0x3A76958	02000014	b #0x3a76960	-
+0x3A7695C	E2031FAA	mov x2, xzr	-
+0x3A76960	680240F9	ldr x8, [x19]	-
+0x3A76964	E003271E	fmov s0, wzr	-
+0x3A76968	E103271E	fmov s1, wzr	-
+0x3A7696C	E303271E	fmov s3, wzr	-
+0x3A76970	043D41F9	ldr x4, [x8, #0x278]	-
+0x3A76974	034141F9	ldr x3, [x8, #0x280]	-
+0x3A76978	81008052	mov w1, #4	-
+0x3A7697C	E00313AA	mov x0, x19	-
+0x3A76980	FE4FC1A8	ldp x30, x19, [sp], #0x10	-
+0x3A76984	80001FD6	br x4	-
+0x3A76988	D964CE97	bl #0x2e0fcec	-

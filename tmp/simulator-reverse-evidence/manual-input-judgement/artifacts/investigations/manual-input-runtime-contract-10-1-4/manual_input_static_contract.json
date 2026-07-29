@@ -15,10 +15,10 @@
     "global_metadata_sha256": "298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F"
   },
   "method_status_counts": {
-    "mapped": 104
+    "mapped": 117
   },
   "layout_status_counts": {
-    "unchanged": 13
+    "unchanged": 14
   },
   "enum_status_counts": {
     "unchanged": 13
@@ -4916,6 +4916,181 @@
     },
     {
       "owner": "NoteDirectionalFlick",
+      "method": "getForcePerfectFlickTouchPosX",
+      "dump_name": "NoteDirectionalFlick$$getForcePerfectFlickTouchPosX",
+      "status": "mapped",
+      "baseline_rva": "0x30EA108",
+      "baseline_end_rva": "0x30EA1F4",
+      "target_rva": "0x30E924C",
+      "target_end_rva": "0x30E9338",
+      "rva_delta": -3772,
+      "baseline_size": 236,
+      "target_size": 236,
+      "signature_unchanged": true,
+      "baseline_sha256": "1909E848CA9B623B2E5210E5A140C960445D76A1F8CB8F68AF00A02AC80216EC",
+      "target_sha256": "3417C783193C4786B2B6D24DCB6C7A290942F74194C6E41C291B7DA5A48008E4",
+      "differing_words": 22,
+      "non_pc_relative_differing_words": 8,
+      "differing_word_detail": [
+        {
+          "offset": "0xC",
+          "baseline_word": "0x395E8A88",
+          "target_word": "0x39710E88",
+          "baseline_pc_relative": null,
+          "target_pc_relative": null
+        },
+        {
+          "offset": "0x18",
+          "baseline_word": "0xB001DD00",
+          "target_word": "0xD001DD00",
+          "baseline_pc_relative": "ADR/ADRP",
+          "target_pc_relative": "ADR/ADRP"
+        },
+        {
+          "offset": "0x1C",
+          "baseline_word": "0xF946F800",
+          "target_word": "0xF9426000",
+          "baseline_pc_relative": null,
+          "target_pc_relative": null
+        },
+        {
+          "offset": "0x20",
+          "baseline_word": "0x97F4983A",
+          "target_word": "0x97F499FB",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x24",
+          "baseline_word": "0x9001DD20",
+          "target_word": "0xB001DD20",
+          "baseline_pc_relative": "ADR/ADRP",
+          "target_pc_relative": "ADR/ADRP"
+        },
+        {
+          "offset": "0x28",
+          "baseline_word": "0xF9456000",
+          "target_word": "0xF940C800",
+          "baseline_pc_relative": null,
+          "target_pc_relative": null
+        },
+        {
+          "offset": "0x2C",
+          "baseline_word": "0x97F49837",
+          "target_word": "0x97F499F8",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x30",
+          "baseline_word": "0x9001DD20",
+          "target_word": "0xB001DD20",
+          "baseline_pc_relative": "ADR/ADRP",
+          "target_pc_relative": "ADR/ADRP"
+        },
+        {
+          "offset": "0x34",
+          "baseline_word": "0xF9456400",
+          "target_word": "0xF940CC00",
+          "baseline_pc_relative": null,
+          "target_pc_relative": null
+        },
+        {
+          "offset": "0x38",
+          "baseline_word": "0x97F49834",
+          "target_word": "0x97F499F5",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x40",
+          "baseline_word": "0x391E8A88",
+          "target_word": "0x39310E88",
+          "baseline_pc_relative": null,
+          "target_pc_relative": null
+        },
+        {
+          "offset": "0x74",
+          "baseline_word": "0x9001DD29",
+          "target_word": "0xB001DD29",
+          "baseline_pc_relative": "ADR/ADRP",
+          "target_pc_relative": "ADR/ADRP"
+        },
+        {
+          "offset": "0x78",
+          "baseline_word": "0xF9456129",
+          "target_word": "0xF940C929",
+          "baseline_pc_relative": null,
+          "target_pc_relative": null
+        },
+        {
+          "offset": "0x88",
+          "baseline_word": "0x97F4987F",
+          "target_word": "0x97F49A40",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x8C",
+          "baseline_word": "0x9001DD28",
+          "target_word": "0xB001DD28",
+          "baseline_pc_relative": "ADR/ADRP",
+          "target_pc_relative": "ADR/ADRP"
+        },
+        {
+          "offset": "0x90",
+          "baseline_word": "0xF9456508",
+          "target_word": "0xF940CD08",
+          "baseline_pc_relative": null,
+          "target_pc_relative": null
+        },
+        {
+          "offset": "0xA4",
+          "baseline_word": "0x94A05611",
+          "target_word": "0x94A0572F",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0xA8",
+          "baseline_word": "0xB001DD08",
+          "target_word": "0xD001DD08",
+          "baseline_pc_relative": "ADR/ADRP",
+          "target_pc_relative": "ADR/ADRP"
+        },
+        {
+          "offset": "0xAC",
+          "baseline_word": "0xF946F908",
+          "target_word": "0xF9426108",
+          "baseline_pc_relative": null,
+          "target_pc_relative": null
+        },
+        {
+          "offset": "0xC4",
+          "baseline_word": "0x97F4986E",
+          "target_word": "0x97F49A2F",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0xD4",
+          "baseline_word": "0x9427302E",
+          "target_word": "0x94273047",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0xE8",
+          "baseline_word": "0x97F498AB",
+          "target_word": "0x97F49A6C",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        }
+      ],
+      "evidence": "arm64/030e924c__NoteDirectionalFlick__getForcePerfectFlickTouchPosX.arm64.tsv"
+    },
+    {
+      "owner": "NoteDirectionalFlick",
       "method": "judgeDirectionalFlickSucceeded",
       "dump_name": "NoteDirectionalFlick$$judgeDirectionalFlickSucceeded",
       "status": "mapped",
@@ -5167,6 +5342,54 @@
       "evidence": "arm64/030e9e20__NoteFlick__ExecTouchMoved.arm64.tsv"
     },
     {
+      "owner": "NoteFlick",
+      "method": "getForcePerfectFlickTouchPosX",
+      "dump_name": "NoteFlick$$getForcePerfectFlickTouchPosX",
+      "status": "mapped",
+      "baseline_rva": "0x30EAD54",
+      "baseline_end_rva": "0x30EAD60",
+      "target_rva": "0x30E9E98",
+      "target_end_rva": "0x30E9EA4",
+      "rva_delta": -3772,
+      "baseline_size": 12,
+      "target_size": 12,
+      "signature_unchanged": true,
+      "baseline_sha256": "14B6B2B571A2CF8CB5CD3E9771736FD668CC0D93C1F1E1DF1B4F7EAB88A35D9A",
+      "target_sha256": "14B6B2B571A2CF8CB5CD3E9771736FD668CC0D93C1F1E1DF1B4F7EAB88A35D9A",
+      "differing_words": 0,
+      "non_pc_relative_differing_words": 0,
+      "differing_word_detail": [],
+      "evidence": "arm64/030e9e98__NoteFlick__getForcePerfectFlickTouchPosX.arm64.tsv"
+    },
+    {
+      "owner": "NoteFlickBase",
+      "method": ".ctor",
+      "dump_name": "NoteFlickBase$$.ctor",
+      "status": "mapped",
+      "baseline_rva": "0x3A777F4",
+      "baseline_end_rva": "0x3A777FC",
+      "target_rva": "0x3A7699C",
+      "target_end_rva": "0x3A769A4",
+      "rva_delta": -3672,
+      "baseline_size": 8,
+      "target_size": 8,
+      "signature_unchanged": true,
+      "baseline_sha256": "A41B8E07F12FDB2A35035BA6C18F9B14E236CFB0B9F07BBD3F298A0B143AD767",
+      "target_sha256": "C7FFBE1DE89C9F2DCCCFBFDF15B1431CC9C0178241BE33BD0D1FB57C900A6F51",
+      "differing_words": 1,
+      "non_pc_relative_differing_words": 0,
+      "differing_word_detail": [
+        {
+          "offset": "0x4",
+          "baseline_word": "0x17D9A82D",
+          "target_word": "0x17D9A814",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        }
+      ],
+      "evidence": "arm64/03a7699c__NoteFlickBase___ctor.arm64.tsv"
+    },
+    {
       "owner": "NoteFlickBase",
       "method": "ExecTouchBegan",
       "dump_name": "NoteFlickBase$$ExecTouchBegan",
@@ -5185,6 +5408,149 @@
       "non_pc_relative_differing_words": 0,
       "differing_word_detail": [],
       "evidence": "arm64/03a768c0__NoteFlickBase__ExecTouchBegan.arm64.tsv"
+    },
+    {
+      "owner": "NoteFlickBase",
+      "method": "ExecTouchEnded",
+      "dump_name": "NoteFlickBase$$ExecTouchEnded",
+      "status": "mapped",
+      "baseline_rva": "0x3A77764",
+      "baseline_end_rva": "0x3A77768",
+      "target_rva": "0x3A7690C",
+      "target_end_rva": "0x3A76910",
+      "rva_delta": -3672,
+      "baseline_size": 4,
+      "target_size": 4,
+      "signature_unchanged": true,
+      "baseline_sha256": "110F46B5B35C069160560C6AD6786F647DD44E8760A52A46FC22DBBCD7630B91",
+      "target_sha256": "110F46B5B35C069160560C6AD6786F647DD44E8760A52A46FC22DBBCD7630B91",
+      "differing_words": 0,
+      "non_pc_relative_differing_words": 0,
+      "differing_word_detail": [],
+      "evidence": "arm64/03a7690c__NoteFlickBase__ExecTouchEnded.arm64.tsv"
+    },
+    {
+      "owner": "NoteFlickBase",
+      "method": "ExecTouchMoved",
+      "dump_name": "NoteFlickBase$$ExecTouchMoved",
+      "status": "mapped",
+      "baseline_rva": "0x3A77760",
+      "baseline_end_rva": "0x3A77764",
+      "target_rva": "0x3A76908",
+      "target_end_rva": "0x3A7690C",
+      "rva_delta": -3672,
+      "baseline_size": 4,
+      "target_size": 4,
+      "signature_unchanged": true,
+      "baseline_sha256": "110F46B5B35C069160560C6AD6786F647DD44E8760A52A46FC22DBBCD7630B91",
+      "target_sha256": "110F46B5B35C069160560C6AD6786F647DD44E8760A52A46FC22DBBCD7630B91",
+      "differing_words": 0,
+      "non_pc_relative_differing_words": 0,
+      "differing_word_detail": [],
+      "evidence": "arm64/03a76908__NoteFlickBase__ExecTouchMoved.arm64.tsv"
+    },
+    {
+      "owner": "NoteFlickBase",
+      "method": "WaitState",
+      "dump_name": "NoteFlickBase$$WaitState",
+      "status": "mapped",
+      "baseline_rva": "0x3A776D0",
+      "baseline_end_rva": "0x3A77718",
+      "target_rva": "0x3A76878",
+      "target_end_rva": "0x3A768C0",
+      "rva_delta": -3672,
+      "baseline_size": 72,
+      "target_size": 72,
+      "signature_unchanged": true,
+      "baseline_sha256": "099881679DAA295C5C9D4766D42BF1CF09B5496E06F40C5921A6F18566D7DCF3",
+      "target_sha256": "E4CDDD4578F690216A57A49A738A547C392AD6A796B7B76B8D517C42AF7948A1",
+      "differing_words": 1,
+      "non_pc_relative_differing_words": 0,
+      "differing_word_detail": [
+        {
+          "offset": "0x44",
+          "baseline_word": "0x97CE6362",
+          "target_word": "0x97CE650A",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        }
+      ],
+      "evidence": "arm64/03a76878__NoteFlickBase__WaitState.arm64.tsv"
+    },
+    {
+      "owner": "NoteFlickBase",
+      "method": "forcePerfect",
+      "dump_name": "NoteFlickBase$$forcePerfect",
+      "status": "mapped",
+      "baseline_rva": "0x3A77768",
+      "baseline_end_rva": "0x3A777E4",
+      "target_rva": "0x3A76910",
+      "target_end_rva": "0x3A7698C",
+      "rva_delta": -3672,
+      "baseline_size": 124,
+      "target_size": 124,
+      "signature_unchanged": true,
+      "baseline_sha256": "9A0A7FA48E33B1F9C4F0A20F44C31DACC027830AFD886B9AB13032CC3B345E31",
+      "target_sha256": "DA86F80E1E4146B70DC49241D10FF2EAE1F6A740F856FBF856C42412604957BA",
+      "differing_words": 2,
+      "non_pc_relative_differing_words": 0,
+      "differing_word_detail": [
+        {
+          "offset": "0xC",
+          "baseline_word": "0x97D9A831",
+          "target_word": "0x97D9A818",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x78",
+          "baseline_word": "0x97CE6331",
+          "target_word": "0x97CE64D9",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        }
+      ],
+      "evidence": "arm64/03a76910__NoteFlickBase__forcePerfect.arm64.tsv"
+    },
+    {
+      "owner": "NoteFlickBase",
+      "method": "getForcePerfectFlickTouchPosX",
+      "dump_name": "NoteFlickBase$$getForcePerfectFlickTouchPosX",
+      "status": "mapped",
+      "baseline_rva": "0x3A777EC",
+      "baseline_end_rva": "0x3A777F4",
+      "target_rva": "0x3A76994",
+      "target_end_rva": "0x3A7699C",
+      "rva_delta": -3672,
+      "baseline_size": 8,
+      "target_size": 8,
+      "signature_unchanged": true,
+      "baseline_sha256": "E577A2852093E63B4A8E4ED730F8118EE2399C9FAD8A1B1E01B507AB0C6D1524",
+      "target_sha256": "E577A2852093E63B4A8E4ED730F8118EE2399C9FAD8A1B1E01B507AB0C6D1524",
+      "differing_words": 0,
+      "non_pc_relative_differing_words": 0,
+      "differing_word_detail": [],
+      "evidence": "arm64/03a76994__NoteFlickBase__getForcePerfectFlickTouchPosX.arm64.tsv"
+    },
+    {
+      "owner": "NoteFlickBase",
+      "method": "resetFrameCounter",
+      "dump_name": "NoteFlickBase$$resetFrameCounter",
+      "status": "mapped",
+      "baseline_rva": "0x3A777E4",
+      "baseline_end_rva": "0x3A777EC",
+      "target_rva": "0x3A7698C",
+      "target_end_rva": "0x3A76994",
+      "rva_delta": -3672,
+      "baseline_size": 8,
+      "target_size": 8,
+      "signature_unchanged": true,
+      "baseline_sha256": "4962E62B179F2E22E78371E92EDEF4A3A4B5F3E0A1AB634500EA117483B39ECC",
+      "target_sha256": "4962E62B179F2E22E78371E92EDEF4A3A4B5F3E0A1AB634500EA117483B39ECC",
+      "differing_words": 0,
+      "non_pc_relative_differing_words": 0,
+      "differing_word_detail": [],
+      "evidence": "arm64/03a7698c__NoteFlickBase__resetFrameCounter.arm64.tsv"
     },
     {
       "owner": "NoteFrontBase",
@@ -9080,6 +9446,243 @@
         }
       ],
       "evidence": "arm64/03219be8__NoteNormal__ExecTouchBegan.arm64.tsv"
+    },
+    {
+      "owner": "NoteSingleBase",
+      "method": ".ctor",
+      "dump_name": "NoteSingleBase$$.ctor",
+      "status": "mapped",
+      "baseline_rva": "0x30E18AC",
+      "baseline_end_rva": "0x30E18B0",
+      "target_rva": "0x30E09F0",
+      "target_end_rva": "0x30E09F4",
+      "rva_delta": -3772,
+      "baseline_size": 4,
+      "target_size": 4,
+      "signature_unchanged": true,
+      "baseline_sha256": "CEF4BC4350D89896B608A953271C37423F9CD40569CAB3708FE940AD24CBCA16",
+      "target_sha256": "CEF4BC4350D89896B608A953271C37423F9CD40569CAB3708FE940AD24CBCA16",
+      "differing_words": 0,
+      "non_pc_relative_differing_words": 0,
+      "differing_word_detail": [],
+      "evidence": "arm64/030e09f0__NoteSingleBase___ctor.arm64.tsv"
+    },
+    {
+      "owner": "NoteSingleBase",
+      "method": "MoveState",
+      "dump_name": "NoteSingleBase$$MoveState",
+      "status": "mapped",
+      "baseline_rva": "0x30E1698",
+      "baseline_end_rva": "0x30E17C8",
+      "target_rva": "0x30E07DC",
+      "target_end_rva": "0x30E090C",
+      "rva_delta": -3772,
+      "baseline_size": 304,
+      "target_size": 304,
+      "signature_unchanged": true,
+      "baseline_sha256": "486AD4D122634171D6A0FC81D8306B3C87C4CE7010D16E8E320DD4924D49369D",
+      "target_sha256": "2F4A40559D01EB79A15A748B6292F8C27AAB49F9574E035A6534394A0704AE96",
+      "differing_words": 11,
+      "non_pc_relative_differing_words": 4,
+      "differing_word_detail": [
+        {
+          "offset": "0x10",
+          "baseline_word": "0x395D8A88",
+          "target_word": "0x39700E88",
+          "baseline_pc_relative": null,
+          "target_pc_relative": null
+        },
+        {
+          "offset": "0x20",
+          "baseline_word": "0xB001DD60",
+          "target_word": "0xD001DD60",
+          "baseline_pc_relative": "ADR/ADRP",
+          "target_pc_relative": "ADR/ADRP"
+        },
+        {
+          "offset": "0x24",
+          "baseline_word": "0xF9451400",
+          "target_word": "0xF9407C00",
+          "baseline_pc_relative": null,
+          "target_pc_relative": null
+        },
+        {
+          "offset": "0x28",
+          "baseline_word": "0x97F4BAD4",
+          "target_word": "0x97F4BC95",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x30",
+          "baseline_word": "0x391D8A88",
+          "target_word": "0x39300E88",
+          "baseline_pc_relative": null,
+          "target_pc_relative": null
+        },
+        {
+          "offset": "0x40",
+          "baseline_word": "0x94264D4D",
+          "target_word": "0x94264D66",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x50",
+          "baseline_word": "0x941A54C6",
+          "target_word": "0x941A54DF",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0xD0",
+          "baseline_word": "0xB001DD74",
+          "target_word": "0xD001DD74",
+          "baseline_pc_relative": "ADR/ADRP",
+          "target_pc_relative": "ADR/ADRP"
+        },
+        {
+          "offset": "0xD4",
+          "baseline_word": "0xF9451694",
+          "target_word": "0xF9407E94",
+          "baseline_pc_relative": null,
+          "target_pc_relative": null
+        },
+        {
+          "offset": "0xE4",
+          "baseline_word": "0x97F4BB02",
+          "target_word": "0x97F4BCC3",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x12C",
+          "baseline_word": "0x97F4BB36",
+          "target_word": "0x97F4BCF7",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        }
+      ],
+      "evidence": "arm64/030e07dc__NoteSingleBase__MoveState.arm64.tsv"
+    },
+    {
+      "owner": "NoteSingleBase",
+      "method": "forcePerfect",
+      "dump_name": "NoteSingleBase$$forcePerfect",
+      "status": "mapped",
+      "baseline_rva": "0x30E1838",
+      "baseline_end_rva": "0x30E18AC",
+      "target_rva": "0x30E097C",
+      "target_end_rva": "0x30E09F0",
+      "rva_delta": -3772,
+      "baseline_size": 116,
+      "target_size": 116,
+      "signature_unchanged": true,
+      "baseline_sha256": "9282507FE33AE52E99C3E6CE81771290BCA9F8A16B5B91AA5F3D82DC7B0F4B86",
+      "target_sha256": "1DB6654D3690EF6FB11BEA06C2CD7068590B27B5CD5A82C00F246FDF5D3EFE6C",
+      "differing_words": 8,
+      "non_pc_relative_differing_words": 4,
+      "differing_word_detail": [
+        {
+          "offset": "0xC",
+          "baseline_word": "0xB001DD74",
+          "target_word": "0xD001DD74",
+          "baseline_pc_relative": "ADR/ADRP",
+          "target_pc_relative": "ADR/ADRP"
+        },
+        {
+          "offset": "0x10",
+          "baseline_word": "0x395D8EA8",
+          "target_word": "0x397012A8",
+          "baseline_pc_relative": null,
+          "target_pc_relative": null
+        },
+        {
+          "offset": "0x14",
+          "baseline_word": "0xF9451A94",
+          "target_word": "0xF9408294",
+          "baseline_pc_relative": null,
+          "target_pc_relative": null
+        },
+        {
+          "offset": "0x20",
+          "baseline_word": "0xB001DD60",
+          "target_word": "0xD001DD60",
+          "baseline_pc_relative": "ADR/ADRP",
+          "target_pc_relative": "ADR/ADRP"
+        },
+        {
+          "offset": "0x24",
+          "baseline_word": "0xF9451800",
+          "target_word": "0xF9408000",
+          "baseline_pc_relative": null,
+          "target_pc_relative": null
+        },
+        {
+          "offset": "0x28",
+          "baseline_word": "0x97F4BA6C",
+          "target_word": "0x97F4BC2D",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x30",
+          "baseline_word": "0x391D8EA8",
+          "target_word": "0x393012A8",
+          "baseline_pc_relative": null,
+          "target_pc_relative": null
+        },
+        {
+          "offset": "0x40",
+          "baseline_word": "0x97F4BAC3",
+          "target_word": "0x97F4BC84",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        }
+      ],
+      "evidence": "arm64/030e097c__NoteSingleBase__forcePerfect.arm64.tsv"
+    },
+    {
+      "owner": "NoteSingleBase",
+      "method": "onMiss",
+      "dump_name": "NoteSingleBase$$onMiss",
+      "status": "mapped",
+      "baseline_rva": "0x30E17C8",
+      "baseline_end_rva": "0x30E1838",
+      "target_rva": "0x30E090C",
+      "target_end_rva": "0x30E097C",
+      "rva_delta": -3772,
+      "baseline_size": 112,
+      "target_size": 112,
+      "signature_unchanged": true,
+      "baseline_sha256": "AC0CF68F680C5BE1F39C3B74DC2C1148DCFCDD12714AADB25BF08BACCECF65F9",
+      "target_sha256": "ED19909FF28FDF61AB5B23440C78B19B3A002F16BCE91933CA5354D623F55A75",
+      "differing_words": 3,
+      "non_pc_relative_differing_words": 0,
+      "differing_word_detail": [
+        {
+          "offset": "0x10",
+          "baseline_word": "0x94265653",
+          "target_word": "0x9426566C",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x4C",
+          "baseline_word": "0x942654EC",
+          "target_word": "0x94265505",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x6C",
+          "baseline_word": "0x97F4BB1A",
+          "target_word": "0x97F4BCDB",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        }
+      ],
+      "evidence": "arm64/030e090c__NoteSingleBase__onMiss.arm64.tsv"
     },
     {
       "owner": "NoteSlide",
@@ -16808,6 +17411,21 @@
         "private Vector3 tempVectorA": "0x168",
         "private Vector3 tempVectorB": "0x174",
         "private bool isFailedScoreContinuedNoteJudge": "0x180"
+      },
+      "changed": {},
+      "added": [],
+      "removed": [],
+      "status": "unchanged"
+    },
+    {
+      "type": "NoteSingleBase",
+      "baseline_fields": {
+        "private float missSecondCounter": "0x184",
+        "public int value__": "0x0"
+      },
+      "target_fields": {
+        "private float missSecondCounter": "0x184",
+        "public int value__": "0x0"
       },
       "changed": {},
       "added": [],

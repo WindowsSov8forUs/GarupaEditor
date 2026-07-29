@@ -30,16 +30,16 @@ version migration does not substitute for this manual-input target set.
 
 The static gate is closed:
 
-- 104/104 bounded methods resolve uniquely on both versions;
+- 117/117 bounded methods resolve uniquely on both versions;
 - every managed signature is unchanged;
 - every 10.1.4 range has the same byte length as its 10.1.3 counterpart;
 - all changed branch/ADR words retain their ARM64 PC-relative instruction class;
 - every remaining changed word differs only in the unsigned 12-bit displacement used for
   IL2CPP per-version global tables; register, opcode and access width remain identical;
-- all fields of 13 input/judgement owner types are unchanged;
+- all fields of 14 input/judgement owner types are unchanged;
 - all members of 13 input/judgement enums are unchanged, including ButtonType/JudgeNoteType and Multiple/Slide emitted identities.
 - `NoteLong`, `NoteSlide`, `NoteMultipleDirectionalFlick` and `GamePlayButton` constructors are included as independent current-version ranges for field/array initialization ownership.
-- `NoteFlickBase.ExecTouchBegan` is independently bounded at `0x3A768C0–0x3A76908`: input None returns before mutation; a non-None result resets `frameCounter +0x188`, stores result/timing at `+0x18C/+0x190`, and changes state to Wait. The corresponding `NoteFlickBase` field layout is unchanged from 10.1.3.
+- the complete directly consumed Single/Flick base owner is included: `NoteSingleBase.MoveState/onMiss/forcePerfect`, all `NoteFlickBase` methods, and the two concrete synthetic-X getters. `NoteFlickBase.ExecTouchBegan @ 0x3A768C0–0x3A76908` returns on None; otherwise it resets `frameCounter +0x188`, stores result/timing at `+0x18C/+0x190`, and changes state to Wait. `WaitState` adds the owner execute-frame value and invokes forcePerfect at `>=7.0`; base Moved/Ended are confirmed empty returns.
 
 This is stronger than address translation: `arm64/` contains the current-version instruction
 range for every target, and `manual_input_static_contract.json` records both exact function hashes
@@ -69,7 +69,8 @@ The current 10.1.4 ARM64 directly fixes these values and comparisons:
 - `JudgeTiming` is None 0, Fast 1, Slow 2.
 - `NoteBase.fingerId` remains at `+0xC0`; `InputManager.buttonWithFingerIdArray` remains at
   `+0x20`; `GamePlayButton` touch-origin/note arrays remain at `+0x60/+0x68`.
-- `NoteFlickBase.ExecTouchBegan` rejects result None before mutation, otherwise caches the owner-produced raw result/timing and changes to Wait before any movement judgement.
+- `NoteSingleBase.MoveState` resets its `missSecondCounter +0x184` before the note line, accumulates Float32 delta after crossing, and invokes `onMiss` only when the counter is strictly greater than `MissSecondInterval`; Auto Live/mode14 route to forcePerfect separately.
+- `NoteFlickBase.ExecTouchBegan` rejects result None before mutation, otherwise caches the owner-produced raw result/timing and changes to Wait before any movement judgement; Wait uses a `>=7.0` execute-frame threshold for the confirmed synthetic forcePerfect chain.
 - `NoteFlick.ExecTouchMoved` loads Float32 `0.04` from target RVA `0x1536460` and rejects
   `<=`, therefore success is strict `> 0.04`.
 - Directional Flick loads Float32 `0.01` from target RVA `0x1536580` and uses `gt`.

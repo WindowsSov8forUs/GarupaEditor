@@ -26,8 +26,8 @@
     "manual_input_gate": "closed"
   },
   "static_counts": {
-    "methods_mapped": 104,
-    "layouts_unchanged": 13,
+    "methods_mapped": 117,
+    "layouts_unchanged": 14,
     "enums_unchanged": 13
   },
   "runtime_counts": {
@@ -40,7 +40,7 @@
     "two_finger_ids": [0, 1]
   },
   "gap_resolution": {
-    "V01": "104 managed methods, 13 owner layouts and 13 enums re-resolved on 10.1.4 without uniform RVA translation; NoteFlickBase Began/cache ownership is explicitly included.",
+    "V01": "117 managed methods, 14 owner layouts and 13 enums re-resolved on 10.1.4 without uniform RVA translation; complete Single/Flick base timeout, cache and synthetic ownership is explicitly included.",
     "D01": "Slide Wait and execOverWait are independent exact 10.1.4 ARM64 ranges.",
     "D02": "Owner fields, array capacity, ButtonType/JudgeNoteType and note-state identities are version matched.",
     "D03": "Portable bottom-left Float32 screen position and owner-issued resolver capability contract is fixed.",
