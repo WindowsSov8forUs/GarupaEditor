@@ -682,6 +682,8 @@ git rev-list --left-right --count origin/codex/refactor-simulator-implementation
 - R1 harness：50个hook目标逐项匹配静态contract，verifier确认无`Interceptor.replace`、`retval.replace`、memory write或APK patch。
 - Reverse无输入R1提交：`72aa279fb07041b04ca649df918fa35ab0490d91`，已push且远端`0 0`；显式非默认loopback transport避免默认端口竞态，trace记录transport且agent逻辑不变。
 - 该R1含1863个连续事件：Life初始化参数/字段`1000/1000/2000`、稳定InGameRecord identity、11个Miss OneFrame、210次Reflect、slot-order Life `1000→0`及nested single Game Over `0→1`；独立verifier通过。
+- 正判定/Skill采集计划提交：Reverse `e65f3411d1a91cfa5ecf0d7b29e99605b04e8a41`已push且远端`0 0`；从已提交手动`hard-touch-plan`保留七lane坐标、30轮120ms全lane循环及7个hold控制，前置Live Failed Retry，合计220动作。
+- 该计划在Garupa冻结后才允许执行；当前明确标记`committed-plan-not-runtime-evidence`，不得按预期场景名宣称已观察正判定、active Skill或D20冻结时点。
 - D18仅部分关闭：positive judgement、active Skill、Fever、heal、guard、Never Die和special mode仍缺R1；D22仅部分关闭：post-Game-Over gate、score decrease mode、reset/continue/seek/ReturnTime仍开放。
 - 待关闭：D18/D22剩余、D19–D21、D23剩余deck/start-data/master provenance、D24及BS01–BS36。
 - B02关闭前继续禁止B03–B12 production、测试脚本和package script实现。

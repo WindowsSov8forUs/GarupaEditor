@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fail-closed verifier for the 10.1.4 no-input Life/Game Over R1 trace."""
+"""Fail-closed verifier for the 10.1.4 no-input R1 and next positive-input plan."""
 
 from __future__ import annotations
 
@@ -15,6 +15,7 @@ ROOT = Path(__file__).resolve().parent
 TRACE = ROOT / "runtime" / "no-input-retry-life-gameover.trace.json.gz"
 PLAN = ROOT / "runtime" / "no-input-retry-plan.json"
 CAPTURE = ROOT / "capture_score_life_state_runtime.py"
+POSITIVE_PLAN = ROOT / "runtime" / "positive-retry-all-lanes-r1-plan.json"
 LIB_SHA256 = "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F"
 METADATA_SHA256 = "298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F"
 EXPECTED_COUNTS = {
@@ -80,7 +81,62 @@ def record_snapshots(value: Any) -> list[dict[str, Any]]:
 
 
 def main() -> int:
-    require(TRACE.is_file() and PLAN.is_file() and CAPTURE.is_file(), "R1 input file missing")
+    require(TRACE.is_file() and PLAN.is_file() and CAPTURE.is_file() and POSITIVE_PLAN.is_file(), "R1 input file missing")
+    positive_plan = json.loads(POSITIVE_PLAN.read_text(encoding="utf-8"))
+    require(positive_plan["schema_version"] == 1, "positive plan schema differs")
+    require(positive_plan["scenario_id"] == "positive-retry-all-lanes-score-skill", "positive scenario differs")
+    require(
+        positive_plan["control_provenance"]
+        == {
+            "source_commit": "72aa279fb07041b04ca649df918fa35ab0490d91",
+            "source_path": "artifacts/investigations/manual-input-runtime-contract-10-1-4/runtime/hard-touch-plan.json",
+            "source_sha256": "E5B48E6D9D46CDD600CB0A8B024D9B10CFF437D0555526AE8E93D9EB0F74EADD",
+            "reuse": "actions after the committed hard-live-start and hard-gameplay controls; lane coordinates, 120 ms all-lane cycles, and seven hold swipes are byte-value preserving except marker prefix",
+        },
+        "positive plan provenance differs",
+    )
+    positive_actions = positive_plan["actions"]
+    require(len(positive_actions) == 220 and positive_plan["tail_seconds"] == 5, "positive plan size differs")
+    require(
+        positive_actions[:3]
+        == [
+            {"kind": "tap", "x": 800, "y": 440, "marker": "positive-open-retry-confirmation"},
+            {"kind": "tap", "x": 920, "y": 440, "delay_ms": 750, "marker": "positive-confirm-retry"},
+            {"kind": "wait", "delay_ms": 7000, "marker": "positive-gameplay-window"},
+        ],
+        "positive Retry prefix differs",
+    )
+    lane_x = [380, 520, 660, 800, 940, 1080, 1220]
+    cycle_actions = positive_actions[3:213]
+    require(
+        all(
+            action["kind"] == "tap"
+            and action["x"] == lane_x[index % 7]
+            and action["y"] == 650
+            and action["delay_ms"] == (120 if index % 7 == 0 else 0)
+            and action["marker"] == f"positive-c{index // 7}-l{index % 7}"
+            for index, action in enumerate(cycle_actions)
+        ),
+        "positive all-lane cycles differ",
+    )
+    hold_actions = positive_actions[213:]
+    require(
+        all(
+            action
+            == {
+                "delay_ms": 80,
+                "marker": f"positive-hold-l{index}",
+                "kind": "swipe",
+                "x1": lane_x[index],
+                "y1": 650,
+                "x2": lane_x[index],
+                "y2": 650,
+                "duration_ms": 450,
+            }
+            for index, action in enumerate(hold_actions)
+        ),
+        "positive hold controls differ",
+    )
     with gzip.open(TRACE, "rt", encoding="utf-8") as stream:
         trace = json.load(stream)
     plan = json.loads(PLAN.read_text(encoding="utf-8"))

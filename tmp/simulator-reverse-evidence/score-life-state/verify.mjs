@@ -43,11 +43,12 @@ function filesRecursively(root, current = root) {
   return files;
 }
 
-check(manifest.schemaVersion === 2 && manifest.entries.length === 349, "Unexpected evidence manifest shape");
+check(manifest.schemaVersion === 2 && manifest.entries.length === 350, "Unexpected evidence manifest shape");
 check(
   manifest.source.staticEvidenceCommit === "6c902656c72f3983fb04386038dcfe38f0d53797" &&
     manifest.source.runtimeInputCommit === "1ee976ea1de24cb0567762a74e2d091ae4c78464" &&
-    manifest.source.runtimeEvidenceCommit === "72aa279fb07041b04ca649df918fa35ab0490d91",
+    manifest.source.runtimeEvidenceCommit === "72aa279fb07041b04ca649df918fa35ab0490d91" &&
+    manifest.source.capturePlanCommit === "e65f3411d1a91cfa5ecf0d7b29e99605b04e8a41",
   "Unexpected Reverse evidence commits",
 );
 check(
@@ -67,9 +68,10 @@ check(
     manifest.counts.enums === 19 &&
     manifest.counts.arm64Slices === 326 &&
     manifest.counts.staticEntries === 335 &&
-    manifest.counts.totalEntries === 349 &&
+    manifest.counts.totalEntries === 350 &&
     manifest.counts.r0InputEntries === 12 &&
     manifest.counts.r1EvidenceEntries === 6 &&
+    manifest.counts.capturePlanEntries === 1 &&
     manifest.counts.productionBms === 2 &&
     manifest.counts.cacheRecords === 2 &&
     manifest.counts.captureTargets === 50 &&
@@ -103,6 +105,7 @@ check(
     runtimeInputGate.blockingFindings.join(",") ===
       "D18-remaining,D19,D20,D21,D22-remaining,D23-master-start-data,D24" &&
     runtimeInputGate.r1TraceCount === 1 &&
+    runtimeInputGate.pendingPlans.join(",") === "positive-retry-all-lanes-score-skill" &&
     runtimeInputGate.productionAuthorization === false,
   "Runtime input gate was incorrectly closed",
 );
@@ -110,10 +113,12 @@ check(
 git(["cat-file", "-e", `${manifest.source.staticEvidenceCommit}^{commit}`], sourceRoot);
 git(["cat-file", "-e", `${manifest.source.runtimeInputCommit}^{commit}`], sourceRoot);
 git(["cat-file", "-e", `${manifest.source.runtimeEvidenceCommit}^{commit}`], sourceRoot);
+git(["cat-file", "-e", `${manifest.source.capturePlanCommit}^{commit}`], sourceRoot);
 const evidenceCommits = [
   manifest.source.staticEvidenceCommit,
   manifest.source.runtimeInputCommit,
   manifest.source.runtimeEvidenceCommit,
+  manifest.source.capturePlanCommit,
 ];
 const ids = new Set();
 const copiedPaths = new Set();
@@ -273,6 +278,11 @@ const runtimeStatus = json("runtime_input_status.json");
 check(
   runtimeStatus.status === "runtime-inputs-and-r1-partial-locked-business-gate-open" &&
     runtimeStatus.runtime.r1_trace_count === 1 &&
+    runtimeStatus.runtime.pending_capture_plans.length === 1 &&
+    runtimeStatus.runtime.pending_capture_plans[0].scenario_id ===
+      "positive-retry-all-lanes-score-skill" &&
+    runtimeStatus.runtime.pending_capture_plans[0].status ===
+      "committed-plan-not-runtime-evidence" &&
     runtimeStatus.gates.D18 === "partial-required-before-code" &&
     runtimeStatus.gates.D22 === "partial-required-before-code" &&
     runtimeStatus.gates.D23 === "partial-required-before-code" &&
@@ -285,6 +295,48 @@ check(
     runtimeStatus.production_authorization === false &&
     runtimeStatus.blocking_findings.length > 0,
   "Frozen runtime input status overclaims closure",
+);
+
+const positivePlan = json("runtime/positive-retry-all-lanes-r1-plan.json");
+const positiveActions = positivePlan.actions;
+const laneX = [380, 520, 660, 800, 940, 1080, 1220];
+check(
+  positivePlan.schema_version === 1 &&
+    positivePlan.scenario_id === "positive-retry-all-lanes-score-skill" &&
+    positivePlan.control_provenance.source_commit ===
+      "72aa279fb07041b04ca649df918fa35ab0490d91" &&
+    positivePlan.control_provenance.source_path ===
+      "artifacts/investigations/manual-input-runtime-contract-10-1-4/runtime/hard-touch-plan.json" &&
+    positivePlan.control_provenance.source_sha256 ===
+      "E5B48E6D9D46CDD600CB0A8B024D9B10CFF437D0555526AE8E93D9EB0F74EADD" &&
+    positiveActions.length === 220 &&
+    positivePlan.tail_seconds === 5 &&
+    positiveActions[0].kind === "tap" &&
+    positiveActions[0].x === 800 &&
+    positiveActions[0].y === 440 &&
+    positiveActions[1].kind === "tap" &&
+    positiveActions[1].x === 920 &&
+    positiveActions[1].y === 440 &&
+    positiveActions[1].delay_ms === 750 &&
+    positiveActions[2].kind === "wait" &&
+    positiveActions[2].delay_ms === 7000 &&
+    positiveActions.slice(3, 213).every(
+      (action, index) =>
+        action.kind === "tap" &&
+        action.x === laneX[index % 7] &&
+        action.y === 650 &&
+        action.delay_ms === (index % 7 === 0 ? 120 : 0),
+    ) &&
+    positiveActions.slice(213).every(
+      (action, index) =>
+        action.kind === "swipe" &&
+        action.x1 === laneX[index] &&
+        action.x2 === laneX[index] &&
+        action.y1 === 650 &&
+        action.y2 === 650 &&
+        action.duration_ms === 450,
+    ),
+  "Frozen positive-input plan or committed control provenance changed",
 );
 
 const traceBytes = gunzipSync(
@@ -376,7 +428,7 @@ for (const [path, fragment] of criticalText) {
 }
 
 console.log(
-  `score-life-state evidence verified: methods=326 layouts=25 enums=19 BMS=2 R1=1(partial D18/D22) ` +
+  `score-life-state evidence verified: methods=326 layouts=25 enums=19 BMS=2 R1=1(partial D18/D22) plan=1(pending) ` +
     `V01=closed business=blocked(D18-D24) entries=${manifest.entries.length} ` +
     `index=${validateIndex ? "checked" : "skipped"}`,
 );

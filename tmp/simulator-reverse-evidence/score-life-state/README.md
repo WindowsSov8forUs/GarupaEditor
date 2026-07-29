@@ -1,6 +1,6 @@
 # 分数、生命与状态证据包
 
-本目录冻结 Reverse 静态提交 `6c902656c72f3983fb04386038dcfe38f0d53797`、R0输入提交 `1ee976ea1de24cb0567762a74e2d091ae4c78464` 与R1子批提交 `72aa279fb07041b04ca649df918fa35ab0490d91`。
+本目录冻结 Reverse 静态提交 `6c902656c72f3983fb04386038dcfe38f0d53797`、R0输入提交 `1ee976ea1de24cb0567762a74e2d091ae4c78464`、R1子批提交 `72aa279fb07041b04ca649df918fa35ab0490d91` 与正判定采集计划提交 `e65f3411d1a91cfa5ecf0d7b29e99605b04e8a41`。
 
 B01/V01静态门已关闭，B02仅部分推进：
 
@@ -11,7 +11,8 @@ B01/V01静态门已关闭，B02仅部分推进：
 - ordinary/HABAHIRO production BMS 由连接设备10.1.4 cache直接提取并锁定；
 - capture harness的50个地址均匹配静态contract，且只含观察型attach；
 - 一条无输入Retry R1冻结1863个连续事件：Life初始化`1000/1000/2000`、11个Miss、210次Reflect与single Game Over `0→1`；
-- 该轨迹只部分关闭D18/D22，`R1=1`但`business_state_gate=open`，不得实施B03–B12 production。
+- 该轨迹只部分关闭D18/D22，`R1=1`但`business_state_gate=open`，不得实施B03–B12 production；
+- 一条220动作正判定/Skill采集计划已冻结并标记`committed-plan-not-runtime-evidence`，执行成功前不关闭任何新结论。
 
 B02仍必须补齐D18/D22剩余范围、D19–D21、D23剩余deck/start-data/master provenance、D24及BS01–BS36；不得把单条无输入轨迹外推为Skill/Fever/heal/guard/Never Die或完整生命周期oracle。
 
@@ -22,4 +23,4 @@ node tmp/simulator-reverse-evidence/score-life-state/verify.mjs
 node tmp/simulator-reverse-evidence/score-life-state/verify.mjs --index
 ```
 
-`verify.mjs` 校验三个Reverse commit、source/copy/index三方字节、manifest、冻结SHA256SUMS、静态contract/findings/closure、BMS/cache record、R1压缩raw trace、观察型capture约束和业务门状态。
+`verify.mjs` 校验四个Reverse commit、source/copy/index三方字节、manifest、冻结SHA256SUMS、静态contract/findings/closure、BMS/cache record、R1压缩raw trace、正判定计划来源/动作、观察型capture约束和业务门状态。

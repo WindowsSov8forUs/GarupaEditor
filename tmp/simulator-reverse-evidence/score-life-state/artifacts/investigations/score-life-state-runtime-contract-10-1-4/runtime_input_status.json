@@ -57,7 +57,15 @@
   },
   "runtime": {
     "r1_trace_count": 1,
-    "operational_blocker": "One no-input retry trace is closed. Additional non-destructive gameplay scenarios and deck/start-data/master provenance are still required before the business gate can close.",
+    "pending_capture_plans": [
+      {
+        "path": "runtime/positive-retry-all-lanes-r1-plan.json",
+        "scenario_id": "positive-retry-all-lanes-score-skill",
+        "status": "committed-plan-not-runtime-evidence",
+        "intended_scope": ["D18-positive-judgement", "D18-active-skill", "D20-freeze-observation"]
+      }
+    ],
+    "operational_blocker": "One no-input retry trace is closed. The positive-input plan must be committed and frozen before execution; its future trace cannot close active Skill or same-frame findings unless those events are actually observed.",
     "synthetic_trace_allowed": false
   },
   "gates": {

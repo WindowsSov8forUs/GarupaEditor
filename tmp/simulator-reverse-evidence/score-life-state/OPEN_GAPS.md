@@ -8,6 +8,7 @@
 - `D23-BMS`：ordinary `poppin_shuffle_special`与HABAHIRO `786_miracle_april_habahiro_special`的10.1.4设备cache provenance及TextAsset字节。
 - R1 capture tooling：50个目标与静态contract一致；仅`Interceptor.attach`，无return replacement/memory write。
 - `D18/D22-partial`：无输入Retry R1锁定稳定InGameRecord identity、Life `1000/1000/2000`、11个Miss、slot-order Life归零及single Game Over `0→1`。
+- 正判定/Skill计划：220动作及既有手动七lane控制来源已冻结；状态为`pending`，不是R1结论。
 
 ## required-before-code
 
@@ -30,6 +31,7 @@ unknown_layouts=[]
 unknown_fields=[]
 r1_traces=1
 production_bms=2
+pending_capture_plans=1
 blocking_findings=[D18-remaining,D19,D20,D21,D22-remaining,D23-remaining,D24]
 ```
 
