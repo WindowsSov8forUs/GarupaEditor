@@ -60,7 +60,7 @@
 | M08 恢复Slide手动状态机 | **已完成**：head/intermediate/end、band/cursor/near-line、invisible/release及MJ18–MJ22通过 | head/intermediate/end、band cursor、release/miss/invisible推进匹配 |
 | M09 恢复自然timeout Miss | **已完成**：Long start/end、Slide front/current/invisible及MJ16/MJ17/MJ23/MJ24通过 | Long start/end、Slide wait/stop及同帧Miss顺序匹配 |
 | M10 接入调度、OneFrame与原子边界 | **已完成**：多manual预留、五槽、deactivation cleanup及pause/fault/原子矩阵通过 | 每外帧一次输入、adaptive/pause/fault/dispose、五槽与批原子性闭合 |
-| M11 production oracle与独立验收 | 进行中：总入口首次全量通过，提交后独立复验与acceptance文档待完成 | 完整回归、production chart、证据验证和组合矩阵无开放阻断 |
+| M11 production oracle与独立验收 | **已完成**：提交后总入口、全上游、两套Reverse verifier、index校验及acceptance通过 | 完整回归、production chart、证据验证和组合矩阵无开放阻断 |
 
 ### 1.4 初始批次记录
 
@@ -342,6 +342,16 @@
 - 同一入口继续运行first-slice、chart boundary/parsing/batches/graphs/multi-range/command/finalize/production、clock与Auto Live；production普通/HABAHIRO覆盖沿已提交构造fixture与AL19/AL20 direct topology消费复验。
 - 最后运行Garupa manual evidence verifier；整个入口不执行Python、不读Reverse工作树、不联网。
 - 首次全量运行通过：manual 7/5/MJ02-12+3/4/6/6/5/4/4，上游17/4/8/6/6/6/7/7/2charts/15/22，evidence entries=141；先提交入口，再从提交后全新产物独立复验并写acceptance。
+
+#### 2026-07-29 第三十四批：M11提交后独立验收关闭
+
+- 从已推送`4124b3b`后的全新临时编译产物第二次运行`simulator:test:manual-input`，九个manual runner、first/chart/clock/Auto全部再次通过。
+- production TypeScript单独通过；Garupa manual verifier普通与`--index`均为118/14/13、R1=5、MJ=26、V01+D01–D15、gate closed、entries=141。
+- Reverse HEAD固定`ce5353fdc54a3ba8188f3dccd4accdc6c2ef4ce2`且远端`0 0`；静态verifier和runtime verifier分别通过，无读取未提交证据。
+- 静态反审确认engine无React/Pixi/Tauri/DOM依赖，production不读取tmp/Reverse/runtime-tools/Python/network；旧Slide candidate/manual Slide/多manual unimplemented capability已消失，geometry不返回result/correction/cursor。
+- 新建`tmp/simulator-manual-input-judgement-acceptance.md`逐项映射M00–M11、MJ01–MJ26、生产边界、验证命令和非阻断排除范围。
+- 当前目标路径diff/cached check通过；全仓diff-check仅被大量既有非模拟器用户修改的行尾/尾随空格阻断，这些文件未触碰、未暂存、未参与验收。
+- M00–M11全部完成，manual input gate无blocking finding，手动输入与判定阶段关闭。
 
 ## 2. 固定范围
 
