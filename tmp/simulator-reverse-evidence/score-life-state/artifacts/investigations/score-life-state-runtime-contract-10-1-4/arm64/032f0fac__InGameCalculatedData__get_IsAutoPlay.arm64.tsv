@@ -1,0 +1,9 @@
+address	bytes	instruction	resolved_target
+0x32F0FAC	08E04239	ldrb w8, [x0, #0xb8]	-
+0x32F0FB0	68000034	cbz w8, #0x32f0fbc	-
+0x32F0FB4	20008052	mov w0, #1	-
+0x32F0FB8	C0035FD6	ret	-
+0x32F0FBC	08204639	ldrb w8, [x0, #0x188]	-
+0x32F0FC0	1F010071	cmp w8, #0	-
+0x32F0FC4	E0079F1A	cset w0, ne	-
+0x32F0FC8	C0035FD6	ret	-

@@ -1,0 +1,58 @@
+address	bytes	instruction	resolved_target
+0x33227F4	FE57BEA9	stp x30, x21, [sp, #-0x20]!	-
+0x33227F8	F44F01A9	stp x20, x19, [sp, #0x10]	-
+0x33227FC	94F90190	adrp x20, #0x7252000	-
+0x3322800	88F64439	ldrb w8, [x20, #0x13d]	-
+0x3322804	F30300AA	mov x19, x0	-
+0x3322808	28010037	tbnz w8, #0, #0x332282c	-
+0x332280C	E0CB01B0	adrp x0, #0x6c9f000	-
+0x3322810	007C42F9	ldr x0, [x0, #0x4f8]	-
+0x3322814	91B4EB97	bl #0x2e0fa58	-
+0x3322818	E0CB01B0	adrp x0, #0x6c9f000	-
+0x332281C	005842F9	ldr x0, [x0, #0x4b0]	-
+0x3322820	8EB4EB97	bl #0x2e0fa58	-
+0x3322824	28008052	mov w8, #1	-
+0x3322828	88F60439	strb w8, [x20, #0x13d]	-
+0x332282C	683240F9	ldr x8, [x19, #0x60]	-
+0x3322830	7F8A00B9	str wzr, [x19, #0x88]	-
+0x3322834	A80000B4	cbz x8, #0x3322848	-
+0x3322838	090D40F9	ldr x9, [x8, #0x18]	-
+0x332283C	002140F9	ldr x0, [x8, #0x40]	-
+0x3322840	011540F9	ldr x1, [x8, #0x28]	-
+0x3322844	20013FD6	blr x9	-
+0x3322848	682640F9	ldr x8, [x19, #0x48]	-
+0x332284C	480400B4	cbz x8, #0x33228d4	-
+0x3322850	603A40F9	ldr x0, [x19, #0x70]	-
+0x3322854	000400B4	cbz x0, #0x33228d4	-
+0x3322858	F5CB01B0	adrp x21, #0x6c9f000	-
+0x332285C	B55A42F9	ldr x21, [x21, #0x4b0]	-
+0x3322860	144940F9	ldr x20, [x8, #0x90]	-
+0x3322864	E1031F2A	mov w1, wzr	-
+0x3322868	A20240F9	ldr x2, [x21]	-
+0x332286C	21159194	bl #0x5767cf0	System.Collections.Generic.List<object>$$get_Item
+0x3322870	E10300AA	mov x1, x0	-
+0x3322874	E00314AA	mov x0, x20	-
+0x3322878	50F1FF97	bl #0x331edb8	SkillNotesInfoUtility$$RegisterNotesInfoData
+0x332287C	603A40F9	ldr x0, [x19, #0x70]	-
+0x3322880	A00200B4	cbz x0, #0x33228d4	-
+0x3322884	A20240F9	ldr x2, [x21]	-
+0x3322888	E1031F2A	mov w1, wzr	-
+0x332288C	19159194	bl #0x5767cf0	System.Collections.Generic.List<object>$$get_Item
+0x3322890	200200B4	cbz x0, #0x33228d4	-
+0x3322894	1F8C01F8	str xzr, [x0, #0x18]!	-
+0x3322898	E1031FAA	mov x1, xzr	-
+0x332289C	5AB4EB97	bl #0x2e0fa04	-
+0x33228A0	603A40F9	ldr x0, [x19, #0x70]	-
+0x33228A4	800100B4	cbz x0, #0x33228d4	-
+0x33228A8	E8CB01B0	adrp x8, #0x6c9f000	-
+0x33228AC	087D42F9	ldr x8, [x8, #0x4f8]	-
+0x33228B0	E1031F2A	mov w1, wzr	-
+0x33228B4	020140F9	ldr x2, [x8]	-
+0x33228B8	DF1B9194	bl #0x5769834	System.Collections.Generic.List<object>$$RemoveAt
+0x33228BC	7F0E08F8	str xzr, [x19, #0x80]!	-
+0x33228C0	E00313AA	mov x0, x19	-
+0x33228C4	F44F41A9	ldp x20, x19, [sp, #0x10]	-
+0x33228C8	E1031FAA	mov x1, xzr	-
+0x33228CC	FE57C2A8	ldp x30, x21, [sp], #0x20	-
+0x33228D0	4DB4EB17	b #0x2e0fa04	-
+0x33228D4	04B5EB97	bl #0x2e0fce4	-

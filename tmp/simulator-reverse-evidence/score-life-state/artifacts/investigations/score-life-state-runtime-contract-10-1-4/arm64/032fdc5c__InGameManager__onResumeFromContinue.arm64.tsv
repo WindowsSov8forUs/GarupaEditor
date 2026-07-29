@@ -1,0 +1,21 @@
+address	bytes	instruction	resolved_target
+0x32FDC5C	FE4FBFA9	stp x30, x19, [sp, #-0x10]!	-
+0x32FDC60	F30300AA	mov x19, x0	-
+0x32FDC64	8AF7FF97	bl #0x32fba8c	InGameManager$$resumeGame
+0x32FDC68	682A40F9	ldr x8, [x19, #0x50]	-
+0x32FDC6C	E80100B4	cbz x8, #0x32fdca8	-
+0x32FDC70	012540B9	ldr w1, [x8, #0x24]	-
+0x32FDC74	012100B9	str w1, [x8, #0x20]	-
+0x32FDC78	687E40F9	ldr x8, [x19, #0xf8]	-
+0x32FDC7C	680100B4	cbz x8, #0x32fdca8	-
+0x32FDC80	603240F9	ldr x0, [x19, #0x60]	-
+0x32FDC84	200100B4	cbz x0, #0x32fdca8	-
+0x32FDC88	641640F9	ldr x4, [x19, #0x28]	-
+0x32FDC8C	636240F9	ldr x3, [x19, #0xc0]	-
+0x32FDC90	021140B9	ldr w2, [x8, #0x10]	-
+0x32FDC94	E5031FAA	mov x5, xzr	-
+0x32FDC98	50210094	bl #0x33061d8	InGamePlayDisplay$$UpdateLifeGauge
+0x32FDC9C	E00313AA	mov x0, x19	-
+0x32FDCA0	FE4FC1A8	ldp x30, x19, [sp], #0x10	-
+0x32FDCA4	4FF6FF17	b #0x32fb5e0	InGameManager$$resumeGameWithImmortalityTime
+0x32FDCA8	0F48EC97	bl #0x2e0fce4	-

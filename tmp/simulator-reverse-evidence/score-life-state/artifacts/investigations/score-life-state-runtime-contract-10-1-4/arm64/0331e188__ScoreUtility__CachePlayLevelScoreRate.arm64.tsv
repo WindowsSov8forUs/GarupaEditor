@@ -1,0 +1,36 @@
+address	bytes	instruction	resolved_target
+0x331E188	FE0F1EF8	str x30, [sp, #-0x20]!	-
+0x331E18C	F44F01A9	stp x20, x19, [sp, #0x10]	-
+0x331E190	B3F90190	adrp x19, #0x7252000	-
+0x331E194	74CB01D0	adrp x20, #0x6c8c000	-
+0x331E198	68564439	ldrb w8, [x19, #0x115]	-
+0x331E19C	948642F9	ldr x20, [x20, #0x508]	-
+0x331E1A0	28010037	tbnz w8, #0, #0x331e1c4	-
+0x331E1A4	80CB0190	adrp x0, #0x6c8e000	-
+0x331E1A8	007440F9	ldr x0, [x0, #0xe8]	-
+0x331E1AC	2BC6EB97	bl #0x2e0fa58	-
+0x331E1B0	60CB01D0	adrp x0, #0x6c8c000	-
+0x331E1B4	008442F9	ldr x0, [x0, #0x508]	-
+0x331E1B8	28C6EB97	bl #0x2e0fa58	-
+0x331E1BC	28008052	mov w8, #1	-
+0x331E1C0	68560439	strb w8, [x19, #0x115]	-
+0x331E1C4	800240F9	ldr x0, [x20]	-
+0x331E1C8	4B755994	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x331E1CC	200200B4	cbz x0, #0x331e210	-
+0x331E1D0	88CB0190	adrp x8, #0x6c8e000	-
+0x331E1D4	087540F9	ldr x8, [x8, #0xe8]	-
+0x331E1D8	097040B9	ldr w9, [x0, #0x70]	-
+0x331E1DC	CA10FF90	adrp x10, #0x1536000	-
+0x331E1E0	408145BD	ldr s0, [x10, #0x580]	-
+0x331E1E4	080140F9	ldr x8, [x8]	-
+0x331E1E8	29150051	sub w9, w9, #5	-
+0x331E1EC	2101221E	scvtf s1, w9	-
+0x331E1F0	F44F41A9	ldp x20, x19, [sp, #0x10]	-
+0x331E1F4	085D40F9	ldr x8, [x8, #0xb8]	-
+0x331E1F8	2008201E	fmul s0, s1, s0	-
+0x331E1FC	01102E1E	fmov s1, #1.00000000	-
+0x331E200	0028211E	fadd s0, s0, s1	-
+0x331E204	000500BD	str s0, [x8, #4]	-
+0x331E208	FE0742F8	ldr x30, [sp], #0x20	-
+0x331E20C	C0035FD6	ret	-
+0x331E210	B5C6EB97	bl #0x2e0fce4	-

@@ -1,0 +1,20 @@
+address	bytes	instruction	resolved_target
+0x333C0AC	FE57BEA9	stp x30, x21, [sp, #-0x20]!	-
+0x333C0B0	F44F01A9	stp x20, x19, [sp, #0x10]	-
+0x333C0B4	F40301AA	mov x20, x1	-
+0x333C0B8	E1031FAA	mov x1, xzr	-
+0x333C0BC	F30302AA	mov x19, x2	-
+0x333C0C0	F50300AA	mov x21, x0	-
+0x333C0C4	38799E94	bl #0x5ada5a4	System.Object$$.ctor
+0x333C0C8	E00315AA	mov x0, x21	-
+0x333C0CC	148C04F8	str x20, [x0, #0x48]!	-
+0x333C0D0	E10314AA	mov x1, x20	-
+0x333C0D4	4C4EEB97	bl #0x2e0fa04	-
+0x333C0D8	E0031FAA	mov x0, xzr	-
+0x333C0DC	9DF30094	bl #0x3378f50	AreaItemUtility$$GetPutAreaItemModels
+0x333C0E0	E10313AA	mov x1, x19	-
+0x333C0E4	F44F41A9	ldp x20, x19, [sp, #0x10]	-
+0x333C0E8	E20300AA	mov x2, x0	-
+0x333C0EC	E00315AA	mov x0, x21	-
+0x333C0F0	FE57C2A8	ldp x30, x21, [sp], #0x20	-
+0x333C0F4	86FEFF17	b #0x333bb0c	DeckParamDetail$$calcDeckParam

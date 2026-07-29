@@ -1,0 +1,3 @@
+address	bytes	instruction	resolved_target
+0x32F2780	1F3400B9	str wzr, [x0, #0x34]	-
+0x32F2784	C0035FD6	ret	-

@@ -1,0 +1,44 @@
+address	bytes	instruction	resolved_target
+0x35116D8	E923BD6D	stp d9, d8, [sp, #-0x30]!	-
+0x35116DC	FE5701A9	stp x30, x21, [sp, #0x10]	-
+0x35116E0	F44F02A9	stp x20, x19, [sp, #0x20]	-
+0x35116E4	081C40F9	ldr x8, [x0, #0x38]	-
+0x35116E8	F30300AA	mov x19, x0	-
+0x35116EC	F40301AA	mov x20, x1	-
+0x35116F0	680000B4	cbz x8, #0x35116fc	-
+0x35116F4	001940BD	ldr s0, [x8, #0x18]	-
+0x35116F8	02000014	b #0x3511700	-
+0x35116FC	E003271E	fmov s0, wzr	-
+0x3511700	E00313AA	mov x0, x19	-
+0x3511704	E10314AA	mov x1, x20	-
+0x3511708	1F000094	bl #0x3511784	EventBuffData$$getCharacterAndAttributeBuffPercent
+0x351170C	B40300B4	cbz x20, #0x3511780	-
+0x3511710	E00314AA	mov x0, x20	-
+0x3511714	E1031FAA	mov x1, xzr	-
+0x3511718	081CA04E	mov v8.16b, v0.16b	-
+0x351171C	3E851794	bl #0x3af2c14	UserSituationModel$$get_SituationId
+0x3511720	E103002A	mov w1, w0	-
+0x3511724	E00313AA	mov x0, x19	-
+0x3511728	7BFFFF97	bl #0x3511514	EventBuffData$$getSituationMatchBuff
+0x351172C	E00314AA	mov x0, x20	-
+0x3511730	E1031FAA	mov x1, xzr	-
+0x3511734	091CA04E	mov v9.16b, v0.16b	-
+0x3511738	10851794	bl #0x3af2b78	UserSituationModel$$get_CharacterSituation
+0x351173C	200200B4	cbz x0, #0x3511780	-
+0x3511740	E1031FAA	mov x1, xzr	-
+0x3511744	607D1794	bl #0x3af0cc4	CharacterSituationModel$$get_Rarity
+0x3511748	F503002A	mov w21, w0	-
+0x351174C	E00314AA	mov x0, x20	-
+0x3511750	E1031FAA	mov x1, xzr	-
+0x3511754	B0851794	bl #0x3af2e14	UserSituationModel$$get_LimitBreakRank
+0x3511758	E203002A	mov w2, w0	-
+0x351175C	E00313AA	mov x0, x19	-
+0x3511760	E103152A	mov w1, w21	-
+0x3511764	8DFFFF97	bl #0x3511598	EventBuffData$$getLimitBreakBuff
+0x3511768	F44F42A9	ldp x20, x19, [sp, #0x20]	-
+0x351176C	FE5741A9	ldp x30, x21, [sp, #0x10]	-
+0x3511770	0129291E	fadd s1, s8, s9	-
+0x3511774	2028201E	fadd s0, s1, s0	-
+0x3511778	E923C36C	ldp d9, d8, [sp], #0x30	-
+0x351177C	C0035FD6	ret	-
+0x3511780	59F9E397	bl #0x2e0fce4	-

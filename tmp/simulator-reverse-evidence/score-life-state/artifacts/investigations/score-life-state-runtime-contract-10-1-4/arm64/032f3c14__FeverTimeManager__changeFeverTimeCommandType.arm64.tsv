@@ -1,0 +1,66 @@
+address	bytes	instruction	resolved_target
+0x32F3C14	FE5FBDA9	stp x30, x23, [sp, #-0x30]!	-
+0x32F3C18	F65701A9	stp x22, x21, [sp, #0x10]	-
+0x32F3C1C	F44F02A9	stp x20, x19, [sp, #0x20]	-
+0x32F3C20	F6FA01D0	adrp x22, #0x7251000	-
+0x32F3C24	C8467E39	ldrb w8, [x22, #0xf91]	-
+0x32F3C28	F503022A	mov w21, w2	-
+0x32F3C2C	F403012A	mov w20, w1	-
+0x32F3C30	F30300AA	mov x19, x0	-
+0x32F3C34	28010037	tbnz w8, #0, #0x32f3c58	-
+0x32F3C38	E0CC01F0	adrp x0, #0x6c92000	-
+0x32F3C3C	00D447F9	ldr x0, [x0, #0xfa8]	-
+0x32F3C40	866FEC97	bl #0x2e0fa58	-
+0x32F3C44	A0CC01D0	adrp x0, #0x6c89000	-
+0x32F3C48	003443F9	ldr x0, [x0, #0x668]	-
+0x32F3C4C	836FEC97	bl #0x2e0fa58	-
+0x32F3C50	28008052	mov w8, #1	-
+0x32F3C54	C8463E39	strb w8, [x22, #0xf91]	-
+0x32F3C58	681A40F9	ldr x8, [x19, #0x30]	-
+0x32F3C5C	480500B4	cbz x8, #0x32f3d04	-
+0x32F3C60	764E40B9	ldr w22, [x19, #0x4c]	-
+0x32F3C64	E00313AA	mov x0, x19	-
+0x32F3C68	745200B9	str w20, [x19, #0x50]	-
+0x32F3C6C	58010094	bl #0x32f41cc	FeverTimeManager$$execFeverCommandChanged
+0x32F3C70	681A40F9	ldr x8, [x19, #0x30]	-
+0x32F3C74	080500B4	cbz x8, #0x32f3d14	-
+0x32F3C78	774E40B9	ldr w23, [x19, #0x4c]	-
+0x32F3C7C	090D40F9	ldr x9, [x8, #0x18]	-
+0x32F3C80	002140F9	ldr x0, [x8, #0x40]	-
+0x32F3C84	041540F9	ldr x4, [x8, #0x28]	-
+0x32F3C88	E103142A	mov w1, w20	-
+0x32F3C8C	E203162A	mov w2, w22	-
+0x32F3C90	E303172A	mov w3, w23	-
+0x32F3C94	20013FD6	blr x9	-
+0x32F3C98	A8060011	add w8, w21, #1	-
+0x32F3C9C	9F060071	cmp w20, #1	-
+0x32F3CA0	68520829	stp w8, w20, [x19, #0x40]	-
+0x32F3CA4	774A00B9	str w23, [x19, #0x48]	-
+0x32F3CA8	E1020054	b.ne #0x32f3d04	-
+0x32F3CAC	D6020035	cbnz w22, #0x32f3d04	-
+0x32F3CB0	601240F9	ldr x0, [x19, #0x20]	-
+0x32F3CB4	000300B4	cbz x0, #0x32f3d14	-
+0x32F3CB8	E8CC01F0	adrp x8, #0x6c92000	-
+0x32F3CBC	613640F9	ldr x1, [x19, #0x68]	-
+0x32F3CC0	08D547F9	ldr x8, [x8, #0xfa8]	-
+0x32F3CC4	020140F9	ldr x2, [x8]	-
+0x32F3CC8	EEDD7894	bl #0x512b480	System.Collections.Generic.Dictionary<object, int>$$ContainsKey
+0x32F3CCC	C0010036	tbz w0, #0, #0x32f3d04	-
+0x32F3CD0	601240F9	ldr x0, [x19, #0x20]	-
+0x32F3CD4	000200B4	cbz x0, #0x32f3d14	-
+0x32F3CD8	A8CC01D0	adrp x8, #0x6c89000	-
+0x32F3CDC	613640F9	ldr x1, [x19, #0x68]	-
+0x32F3CE0	083543F9	ldr x8, [x8, #0x668]	-
+0x32F3CE4	020140F9	ldr x2, [x8]	-
+0x32F3CE8	49DD7894	bl #0x512b20c	System.Collections.Generic.Dictionary<object, int>$$get_Item
+0x32F3CEC	E103002A	mov w1, w0	-
+0x32F3CF0	E00313AA	mov x0, x19	-
+0x32F3CF4	F44F42A9	ldp x20, x19, [sp, #0x20]	-
+0x32F3CF8	F65741A9	ldp x22, x21, [sp, #0x10]	-
+0x32F3CFC	FE5FC3A8	ldp x30, x23, [sp], #0x30	-
+0x32F3D00	64000014	b #0x32f3e90	FeverTimeManager$$checkFeverPointProgressChange
+0x32F3D04	F44F42A9	ldp x20, x19, [sp, #0x20]	-
+0x32F3D08	F65741A9	ldp x22, x21, [sp, #0x10]	-
+0x32F3D0C	FE5FC3A8	ldp x30, x23, [sp], #0x30	-
+0x32F3D10	C0035FD6	ret	-
+0x32F3D14	F46FEC97	bl #0x2e0fce4	-

@@ -1,0 +1,5 @@
+address	bytes	instruction	resolved_target
+0x32F2770	083440B9	ldr w8, [x0, #0x34]	-
+0x32F2774	0801010B	add w8, w8, w1	-
+0x32F2778	08200629	stp w8, w8, [x0, #0x30]	-
+0x32F277C	C0035FD6	ret	-

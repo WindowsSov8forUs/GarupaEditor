@@ -1,0 +1,149 @@
+address	bytes	instruction	resolved_target
+0x33A2C80	EA0F1CFC	str d10, [sp, #-0x40]!	-
+0x33A2C84	E9A3006D	stp d9, d8, [sp, #8]	-
+0x33A2C88	FE0F00F9	str x30, [sp, #0x18]	-
+0x33A2C8C	F65702A9	stp x22, x21, [sp, #0x20]	-
+0x33A2C90	F44F03A9	stp x20, x19, [sp, #0x30]	-
+0x33A2C94	95F50190	adrp x21, #0x7252000	-
+0x33A2C98	A85E5D39	ldrb w8, [x21, #0x757]	-
+0x33A2C9C	F40301AA	mov x20, x1	-
+0x33A2CA0	F30300AA	mov x19, x0	-
+0x33A2CA4	E8010037	tbnz w8, #0, #0x33a2ce0	-
+0x33A2CA8	40C701B0	adrp x0, #0x6c8b000	-
+0x33A2CAC	006042F9	ldr x0, [x0, #0x4c0]	-
+0x33A2CB0	6AB3E997	bl #0x2e0fa58	-
+0x33A2CB4	40C701B0	adrp x0, #0x6c8b000	-
+0x33A2CB8	00C441F9	ldr x0, [x0, #0x388]	-
+0x33A2CBC	67B3E997	bl #0x2e0fa58	-
+0x33A2CC0	40C701D0	adrp x0, #0x6c8c000	-
+0x33A2CC4	008442F9	ldr x0, [x0, #0x508]	-
+0x33A2CC8	64B3E997	bl #0x2e0fa58	-
+0x33A2CCC	00C801D0	adrp x0, #0x6ca4000	-
+0x33A2CD0	00BC40F9	ldr x0, [x0, #0x178]	-
+0x33A2CD4	61B3E997	bl #0x2e0fa58	-
+0x33A2CD8	28008052	mov w8, #1	-
+0x33A2CDC	A85E1D39	strb w8, [x21, #0x757]	-
+0x33A2CE0	730F00B4	cbz x19, #0x33a2ecc	-
+0x33A2CE4	68C24039	ldrb w8, [x19, #0x30]	-
+0x33A2CE8	E803271E	fmov s8, wzr	-
+0x33A2CEC	280E0034	cbz w8, #0x33a2eb0	-
+0x33A2CF0	F40E00B4	cbz x20, #0x33a2ecc	-
+0x33A2CF4	E00314AA	mov x0, x20	-
+0x33A2CF8	E1031FAA	mov x1, xzr	-
+0x33A2CFC	9F3F1D94	bl #0x3af2b78	UserSituationModel$$get_CharacterSituation
+0x33A2D00	600E00B4	cbz x0, #0x33a2ecc	-
+0x33A2D04	013040B9	ldr w1, [x0, #0x30]	-
+0x33A2D08	E00313AA	mov x0, x19	-
+0x33A2D0C	E2031FAA	mov x2, xzr	-
+0x33A2D10	E9B80594	bl #0x35110b4	EventBuffData$$IsBuffAttribute
+0x33A2D14	E00C0036	tbz w0, #0, #0x33a2eb0	-
+0x33A2D18	E00314AA	mov x0, x20	-
+0x33A2D1C	E1031FAA	mov x1, xzr	-
+0x33A2D20	963F1D94	bl #0x3af2b78	UserSituationModel$$get_CharacterSituation
+0x33A2D24	400D00B4	cbz x0, #0x33a2ecc	-
+0x33A2D28	080040F9	ldr x8, [x0]	-
+0x33A2D2C	098557A9	ldp x9, x1, [x8, #0x178]	-
+0x33A2D30	20013FD6	blr x9	-
+0x33A2D34	E103002A	mov w1, w0	-
+0x33A2D38	E00313AA	mov x0, x19	-
+0x33A2D3C	E2031FAA	mov x2, xzr	-
+0x33A2D40	E3B80594	bl #0x35110cc	EventBuffData$$IsBuffCharacter
+0x33A2D44	600B0036	tbz w0, #0, #0x33a2eb0	-
+0x33A2D48	62000094	bl #0x33a2ed0	EventUtility$$GetPlayableEvent
+0x33A2D4C	F50300AA	mov x21, x0	-
+0x33A2D50	600600B4	cbz x0, #0x33a2e1c	-
+0x33A2D54	601640F9	ldr x0, [x19, #0x28]	-
+0x33A2D58	A00B00B4	cbz x0, #0x33a2ecc	-
+0x33A2D5C	E1031FAA	mov x1, xzr	-
+0x33A2D60	66D81C94	bl #0x3ad8ef8	EventCharacterParameterBonusModel$$get_EventId
+0x33A2D64	A81240B9	ldr w8, [x21, #0x10]	-
+0x33A2D68	1F00086B	cmp w0, w8	-
+0x33A2D6C	210A0054	b.ne #0x33a2eb0	-
+0x33A2D70	E00314AA	mov x0, x20	-
+0x33A2D74	E1031FAA	mov x1, xzr	-
+0x33A2D78	D3401D94	bl #0x3af30c4	UserSituationModel$$get_Performance
+0x33A2D7C	681640F9	ldr x8, [x19, #0x28]	-
+0x33A2D80	680A00B4	cbz x8, #0x33a2ecc	-
+0x33A2D84	F503002A	mov w21, w0	-
+0x33A2D88	E00308AA	mov x0, x8	-
+0x33A2D8C	E1031FAA	mov x1, xzr	-
+0x33A2D90	61D81C94	bl #0x3ad8f14	EventCharacterParameterBonusModel$$get_Performance
+0x33A2D94	E00314AA	mov x0, x20	-
+0x33A2D98	E1031FAA	mov x1, xzr	-
+0x33A2D9C	081CA04E	mov v8.16b, v0.16b	-
+0x33A2DA0	DB401D94	bl #0x3af310c	UserSituationModel$$get_Technique
+0x33A2DA4	681640F9	ldr x8, [x19, #0x28]	-
+0x33A2DA8	280900B4	cbz x8, #0x33a2ecc	-
+0x33A2DAC	F603002A	mov w22, w0	-
+0x33A2DB0	E00308AA	mov x0, x8	-
+0x33A2DB4	E1031FAA	mov x1, xzr	-
+0x33A2DB8	5ED81C94	bl #0x3ad8f30	EventCharacterParameterBonusModel$$get_Technique
+0x33A2DBC	E00314AA	mov x0, x20	-
+0x33A2DC0	E1031FAA	mov x1, xzr	-
+0x33A2DC4	091CA04E	mov v9.16b, v0.16b	-
+0x33A2DC8	E3401D94	bl #0x3af3154	UserSituationModel$$get_Visual
+0x33A2DCC	681640F9	ldr x8, [x19, #0x28]	-
+0x33A2DD0	E80700B4	cbz x8, #0x33a2ecc	-
+0x33A2DD4	C002231E	ucvtf s0, w22	-
+0x33A2DD8	0959A852	mov w9, #0x42c80000	-
+0x33A2DDC	F303002A	mov w19, w0	-
+0x33A2DE0	2009201E	fmul s0, s9, s0	-
+0x33A2DE4	2901271E	fmov s9, w9	-
+0x33A2DE8	E00308AA	mov x0, x8	-
+0x33A2DEC	E1031FAA	mov x1, xzr	-
+0x33A2DF0	0A18291E	fdiv s10, s0, s9	-
+0x33A2DF4	56D81C94	bl #0x3ad8f4c	EventCharacterParameterBonusModel$$get_Visual
+0x33A2DF8	6102231E	ucvtf s1, w19	-
+0x33A2DFC	A202231E	ucvtf s2, w21	-
+0x33A2E00	0008211E	fmul s0, s0, s1	-
+0x33A2E04	0109221E	fmul s1, s8, s2	-
+0x33A2E08	2118291E	fdiv s1, s1, s9	-
+0x33A2E0C	0018291E	fdiv s0, s0, s9	-
+0x33A2E10	21282A1E	fadd s1, s1, s10	-
+0x33A2E14	2828201E	fadd s8, s1, s0	-
+0x33A2E18	26000014	b #0x33a2eb0	-
+0x33A2E1C	601640F9	ldr x0, [x19, #0x28]	-
+0x33A2E20	600500B4	cbz x0, #0x33a2ecc	-
+0x33A2E24	E1031FAA	mov x1, xzr	-
+0x33A2E28	34D81C94	bl #0x3ad8ef8	EventCharacterParameterBonusModel$$get_EventId
+0x33A2E2C	C1008052	mov w1, #6	-
+0x33A2E30	C1000094	bl #0x33a3134	EventUtility$$IsSpecifiedEventType
+0x33A2E34	60020036	tbz w0, #0, #0x33a2e80	-
+0x33A2E38	48C701B0	adrp x8, #0x6c8b000	-
+0x33A2E3C	08C541F9	ldr x8, [x8, #0x388]	-
+0x33A2E40	000140F9	ldr x0, [x8]	-
+0x33A2E44	2C625794	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x33A2E48	48C701D0	adrp x8, #0x6c8c000	-
+0x33A2E4C	088542F9	ldr x8, [x8, #0x508]	-
+0x33A2E50	F50300AA	mov x21, x0	-
+0x33A2E54	080140F9	ldr x8, [x8]	-
+0x33A2E58	E00308AA	mov x0, x8	-
+0x33A2E5C	26625794	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x33A2E60	600300B4	cbz x0, #0x33a2ecc	-
+0x33A2E64	550300B4	cbz x21, #0x33a2ecc	-
+0x33A2E68	011C41B9	ldr w1, [x0, #0x11c]	-
+0x33A2E6C	E00315AA	mov x0, x21	-
+0x33A2E70	E2031FAA	mov x2, xzr	-
+0x33A2E74	FEABFB97	bl #0x328de6c	CE.MasterDataManager$$GetMasterEvent
+0x33A2E78	F50300AA	mov x21, x0	-
+0x33A2E7C	C0F6FFB5	cbnz x0, #0x33a2d54	-
+0x33A2E80	48C701B0	adrp x8, #0x6c8b000	-
+0x33A2E84	086142F9	ldr x8, [x8, #0x4c0]	-
+0x33A2E88	000140F9	ldr x0, [x8]	-
+0x33A2E8C	08E040B9	ldr w8, [x0, #0xe0]	-
+0x33A2E90	48000035	cbnz w8, #0x33a2e98	-
+0x33A2E94	4EB3E997	bl #0x2e0fbcc	-
+0x33A2E98	08C801D0	adrp x8, #0x6ca4000	-
+0x33A2E9C	08BD40F9	ldr x8, [x8, #0x178]	-
+0x33A2EA0	E1031FAA	mov x1, xzr	-
+0x33A2EA4	E2031FAA	mov x2, xzr	-
+0x33A2EA8	000140F9	ldr x0, [x8]	-
+0x33A2EAC	64491C94	bl #0x3ab543c	-
+0x33A2EB0	001DA84E	mov v0.16b, v8.16b	-
+0x33A2EB4	F44F43A9	ldp x20, x19, [sp, #0x30]	-
+0x33A2EB8	F65742A9	ldp x22, x21, [sp, #0x20]	-
+0x33A2EBC	FE0F40F9	ldr x30, [sp, #0x18]	-
+0x33A2EC0	E9A3406D	ldp d9, d8, [sp, #8]	-
+0x33A2EC4	EA0744FC	ldr d10, [sp], #0x40	-
+0x33A2EC8	C0035FD6	ret	-
+0x33A2ECC	86B3E997	bl #0x2e0fce4	-

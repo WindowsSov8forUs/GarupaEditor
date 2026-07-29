@@ -1,0 +1,294 @@
+{
+  "schema_version": 1,
+  "status": "confirmed-static-10.1.4-business-gate-open",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "version_name": "10.1.4",
+    "version_code": 230,
+    "abi": "arm64-v8a",
+    "libil2cpp_sha256": "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F",
+    "global_metadata_sha256": "298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F"
+  },
+  "unknown_fields": [],
+  "scope": {
+    "mapped_methods": 326,
+    "unchanged_layouts": 25,
+    "unchanged_enums": 19,
+    "mapping_rule": "Each target is resolved independently by exact managed owner, method, and baseline signature; target end is the global next managed entry.",
+    "unknown_methods": [],
+    "unknown_layouts": [],
+    "unknown_fields": []
+  },
+  "findings": [
+    {
+      "id": "SLS-S01",
+      "topic": "OneFrameData ABI",
+      "status": "confirmed-static",
+      "evidence": [
+        "score_life_state_static_contract.json#field_layout:OneFrameData",
+        "arm64/032f29cc__OneFrameData__Setup.arm64.tsv"
+      ],
+      "conclusion": {
+        "setup_parameters": [
+          "index:int32",
+          "buttonTypes:ButtonType[]",
+          "addScore:float32",
+          "freeLiveEventBonusAppliedAddScore:float32",
+          "addPower:int32",
+          "addCombo:int32",
+          "noteType:JudgeNoteType",
+          "result:NoteResultType",
+          "adjustedResult:NoteResultType",
+          "feverScoreUpRate:float32",
+          "skillScoreUpRate:float32",
+          "crescendoSkillScoreUpRate:float32",
+          "scoreUpType:ScoreUpType",
+          "absolutePos:int32",
+          "damageGuardType:DamageGuardType",
+          "judgeTiming:JudgeTiming"
+        ],
+        "fields": {
+          "isUsing": "0x10:bool",
+          "index": "0x14:int32",
+          "buttonTypes": "0x18:managed-reference",
+          "addScore": "0x20:float32",
+          "addPower": "0x24:int32",
+          "addCombo": "0x28:int32",
+          "noteType": "0x2C:int32-enum",
+          "result": "0x30:int32-enum",
+          "adjustedResult": "0x34:int32-enum",
+          "feverScoreUpRate": "0x38:float32",
+          "skillScoreUpRate": "0x3C:float32",
+          "crescendoSkillScoreUpRate": "0x40:float32",
+          "scoreUpType": "0x44:int32-enum",
+          "absolutePos": "0x48:int32",
+          "damageGuardType": "0x4C:int32-enum",
+          "judgeTiming": "0x50:int32-enum",
+          "freeLiveEventBonusAppliedAddScore": "0x54:float32",
+          "scoreUpRate": "0x58:float32"
+        },
+        "score_up_rate_storage": "Setup multiplies Fever, Skill, and Crescendo rates in ARM64 Float32 order and stores the product at +0x58."
+      }
+    },
+    {
+      "id": "SLS-S02",
+      "topic": "Reflect ordering and truncation",
+      "status": "confirmed-static",
+      "evidence": [
+        "arm64/03303ff0__InGameOneFrameJudgementController__ReflectOneFrameData.arm64.tsv",
+        "arm64/033044fc__InGameOneFrameJudgementController__getComboCorrectionRate.arm64.tsv",
+        "arm64/032f2b00__OneFrameTotalData__Setup.arm64.tsv"
+      ],
+      "conclusion": {
+        "slot_scan": "The managed five-entry list is scanned by ascending list index.",
+        "clear_point": "Each in-use entry has isUsing cleared before Combo, score, Life, counters, callbacks, and total aggregation mutate.",
+        "representative": "A strictly greater raw result replaces the representative; equal raw result retains the first entry.",
+        "mutation_order": [
+          "AddCombo",
+          "select Combo correction from updated current Combo",
+          "truncate addScore * comboRate toward zero to int32",
+          "multiply truncated value by stored ScoreUpRate",
+          "truncate toward zero to int32",
+          "apply ordinary and bonus score",
+          "apply Life/Power and record mutations",
+          "increment result and Fast/Slow counters",
+          "aggregate OneFrameTotalData"
+        ],
+        "integer_semantics": "Score additions are uint32 modulo-2^32; Combo and Life arithmetic use int32 ARM64 operations."
+      }
+    },
+    {
+      "id": "SLS-S03",
+      "topic": "standard result correction",
+      "status": "confirmed-static",
+      "evidence": [
+        "arm64/0331e91c__ScoreUtility__GetResultTypeCorrectionRate.arm64.tsv",
+        "locked ELF VA 0x1581A14"
+      ],
+      "conclusion": {
+        "Miss": { "value": 0.0, "bits_le": "00000000" },
+        "Bad": { "value": 0.0, "bits_le": "00000000" },
+        "Good": { "value": 0.5, "bits_le": "0000003F" },
+        "Great": { "value": 0.8, "bits_le": "CDCC4C3F" },
+        "Perfect": { "value": 1.1, "bits_le": "CDCC8C3F" },
+        "unknown_result": "Values outside 0..4 follow the original exception/report path and return 0 only after that path; portable input must reject them before mutation."
+      }
+    },
+    {
+      "id": "SLS-S04",
+      "topic": "standard Combo correction",
+      "status": "confirmed-static",
+      "evidence": [
+        "arm64/0331ea00__ScoreUtility__GetComboCorrectionRate.arm64.tsv",
+        "locked ELF VA 0x1533250"
+      ],
+      "conclusion": [
+        { "range": "combo < 21", "value": 1.0, "bits_le": "0000803F" },
+        { "range": "21 <= combo < 51", "value": 1.01, "bits_le": "AE47813F" },
+        { "range": "51 <= combo < 101", "value": 1.02, "bits_le": "5C8F823F" },
+        { "range": "101 <= combo < 151", "value": 1.03, "bits_le": "0AD7833F" },
+        { "range": "151 <= combo < 201", "value": 1.04, "bits_le": "B81E853F" },
+        { "range": "201 <= combo < 251", "value": 1.05, "bits_le": "6666863F" },
+        { "range": "251 <= combo < 301", "value": 1.06, "bits_le": "14AE873F" },
+        { "range": "301 <= combo < 401", "value": 1.07, "bits_le": "C3F5883F" },
+        { "range": "401 <= combo < 501", "value": 1.08, "bits_le": "713D8A3F" },
+        { "range": "501 <= combo < 601", "value": 1.09, "bits_le": "1F858B3F" },
+        { "range": "601 <= combo <= 700", "value": 1.1, "bits_le": "CDCC8C3F" },
+        { "range": "combo > 700", "value": 1.11, "bits_le": "7B148E3F" }
+      ]
+    },
+    {
+      "id": "SLS-S05",
+      "topic": "base score initialization",
+      "status": "confirmed-static-runtime-source-pending",
+      "evidence": [
+        "arm64/0331e660__ScoreUtility__InitBaseScore.arm64.tsv"
+      ],
+      "conclusion": {
+        "score_level_rate": "Float32(Float32(scoreLevel - 5) * Float32(0.01)) + Float32(1.0)",
+        "ordinary_base": "Float32(Float32(Float32(totalParameter) * scoreLevelRate) / Float32(maxNoteCount)) * Float32(3.0)",
+        "bonus_base": "The event-bonus parameter uses the same divide-then-multiply-by-3 order when not approximately zero.",
+        "approximately_zero": "Uses the Unity Mathf approximately-zero comparison visible in ARM64; no portable epsilon may be substituted.",
+        "failure": "When score verification is unavailable, both cached bases are set to Float32 zero after the original report path.",
+        "runtime_pending": "Production maxNoteCount, scoreLevel, totalParameter, event parameter, and their master/start-data provenance remain B02 requirements."
+      }
+    },
+    {
+      "id": "SLS-S06",
+      "topic": "Life storage and bounds",
+      "status": "confirmed-static-runtime-identity-pending",
+      "evidence": [
+        "score_life_state_static_contract.json#field_layout:InGameRecord",
+        "arm64/032f25b8__InGameRecord__InitializeLife.arm64.tsv",
+        "arm64/032f262c__InGameRecord__AddIPower.arm64.tsv"
+      ],
+      "conclusion": {
+        "initialize": {
+          "current_life": "+0x20 receives InitializeLife argument 3",
+          "display_or_skill_base_life": "+0x24 receives InitializeLife argument 1",
+          "business_upper_limit": "+0x28 receives InitializeLife argument 2"
+        },
+        "positive_delta": "Rejected with return 0 once either single- or multi-game-over flag is set.",
+        "negative_delta": "Replaced with zero while immortalityTimer at +0x60 is greater than Float32 zero.",
+        "clamp": "The int32 sum is clamped to [0, value at +0x28].",
+        "game_over": "A resulting value <= 0 is stored as zero and updateGameOverState is called immediately.",
+        "historical_1500_over_1000": "The historical display is structurally possible without violating the business bound: current Life +0x20 may be 1500 while +0x24 remains 1000 and +0x28 is 2000. Runtime capture must still prove which UI field rendered the denominator."
+      }
+    },
+    {
+      "id": "SLS-S07",
+      "topic": "damage producer",
+      "status": "confirmed-static",
+      "evidence": [
+        "arm64/0331acf4__DamageUtility__CalcBasePowerPoint.arm64.tsv",
+        "arm64/030dfa98__NoteFrontBase__calcAddDamage.arm64.tsv"
+      ],
+      "conclusion": {
+        "Miss": "Returns InGameCalculatedData.MissDamage at +0xA8.",
+        "Bad": "Returns InGameCalculatedData.BadDamage at +0xAC.",
+        "Good_Great_Perfect": "Return zero base damage.",
+        "skill_order": "NoteFrontBase applies ordered active damage effects after selecting base damage and before OneFrameData Setup."
+      }
+    },
+    {
+      "id": "SLS-S08",
+      "topic": "Never Die",
+      "status": "confirmed-static",
+      "evidence": [
+        "arm64/033dadcc__SkillUtility__shouldActivateNeverDieSkillEffect.arm64.tsv",
+        "arm64/033daddc__SkillUtility__CalcAddDamageWithNeverDieSkill.arm64.tsv",
+        "arm64/033dadf4__SkillUtility__GetDamageGuardTypeWithNeverDieSkill.arm64.tsv"
+      ],
+      "conclusion": {
+        "lethal_predicate": "-signedDamage >= currentLife; equality is lethal.",
+        "replacement_delta": "For lethal damage, return 5 - currentLife; otherwise preserve signedDamage.",
+        "resulting_life": 5,
+        "guard_type": "The Never Die path selects DamageGuardType 2."
+      }
+    },
+    {
+      "id": "SLS-S09",
+      "topic": "once Life effects",
+      "status": "confirmed-static-master-rows-pending",
+      "evidence": [
+        "arm64/0332269c__SituationSkillManager__playOnceEffectSkill.arm64.tsv",
+        "arm64/032f262c__InGameRecord__AddIPower.arm64.tsv"
+      ],
+      "conclusion": {
+        "eligibility": "Only once-effect type 1 enters Life mutation; condition type 1 suppresses the effect when current Life is greater than or equal to the condition value.",
+        "fixed": "Truncate the Float32 effect value toward zero to int32 and pass it to AddIPower.",
+        "percentage": "Compute int32(+0x24) * truncFloatToInt(effectValue), then signed-divide by 100 using the compiler strength-reduced sequence, and pass the result to AddIPower.",
+        "upper_limit": "AddIPower clamps the resulting current Life to +0x28, not +0x24.",
+        "callback": "The registered heal callback runs after AddIPower or after the no-operation once-effect branch."
+      }
+    },
+    {
+      "id": "SLS-S10",
+      "topic": "Skill playback timers",
+      "status": "confirmed-static-runtime-order-pending",
+      "evidence": [
+        "arm64/03321934__SituationSkillManager__executeBeginSkillProcess.arm64.tsv",
+        "arm64/03321a08__SituationSkillManager__executePlayingSkillProcess.arm64.tsv",
+        "arm64/03321a68__SituationSkillManager__executeFinishingSkillProcess.arm64.tsv",
+        "arm64/033227f4__SituationSkillManager__processOfSkillFinished.arm64.tsv"
+      ],
+      "conclusion": {
+        "states": "The mapped enum is None=0, Begin=1, Playing=2, Finishing=3.",
+        "playing_timer": "+0x88 is reduced by the engine delta except in game states 7 and 8.",
+        "transition": "At +0x88 <= 0, processOfSkillFinished runs and +0x8C is initialized from exact bits 0x3F400000 (0.75f).",
+        "finishing_timer": "+0x8C is reduced by the engine delta and transitions to the next queued state at expiry.",
+        "runtime_pending": "Same-frame callbacks, reservation frame identity, pause/Game Over observations, and queue object identity remain R1 requirements."
+      }
+    },
+    {
+      "id": "SLS-S11",
+      "topic": "Fever score rate",
+      "status": "confirmed-static-runtime-state-pending",
+      "evidence": [
+        "arm64/032f3bf8__FeverTimeManager__GetFeverTimeScoreRate.arm64.tsv",
+        "score_life_state_static_contract.json#named_constants:FeverTimeManager"
+      ],
+      "conclusion": {
+        "state_test": "Return 2.0f only when Fever state at +0x4C equals 1; otherwise return 1.0f.",
+        "normal_bits_le": "0000803F",
+        "level_1_bits_le": "00000040",
+        "pass_point_constant": 80,
+        "runtime_pending": "Difficulty point rows, own-team identity, command/callback/reservation order, and same-frame freezing remain B02 requirements."
+      }
+    },
+    {
+      "id": "SLS-S12",
+      "topic": "record counters",
+      "status": "confirmed-static",
+      "evidence": [
+        "arm64/032f272c__InGameRecord__AddCombo.arm64.tsv",
+        "arm64/032f27a0__InGameRecord__IncrementJudgeCount.arm64.tsv",
+        "arm64/032f28c8__InGameRecord__IncrementJudgeTimingCount.arm64.tsv"
+      ],
+      "conclusion": {
+        "combo": "Positive addCombo updates current/max and live current/max using strict greater for maxima; negative addCombo resets current and live current to zero; zero is a no-op.",
+        "results": "Miss/Bad/Good/Great each reset perfectCombo and increment their counter; Perfect increments both perfectCombo and perfectCount.",
+        "timing": "JudgeTiming 1 increments Fast and JudgeTiming 2 increments Slow; all other values are no-op."
+      }
+    }
+  ],
+  "historical_migration_review": {
+    "H01_H10": "Current result/Combo tables, Float32 score order, OneFrame fields, slot scan, tie policy, and two-stage truncation are re-established by 10.1.4 ARM64 and rodata.",
+    "H11_H19": "Current Skill/Fever owners, enums, timers, once-effect formulas, Never Die helpers, constants, and score-rate branch are re-established statically; runtime identity and same-frame order remain open.",
+    "H20_H21": "The 1500/1000 observation is explained by distinct +0x20/+0x24/+0x28 fields but is not promoted as a 10.1.4 runtime observation.",
+    "H22_H24": "Current Free Live/special-mode/producer entries are mapped, but production master rows and R1 business traces remain required."
+  },
+  "runtime_required_before_code": [
+    "D18 R1 OneFrameData, controller, InGameRecord, Skill, and Fever object identities with before/after fields",
+    "Production ordinary and HABAHIRO BMS identities and chart-derived maxNoteCount",
+    "Deck, score-level, difficulty, start-data, Skill, Fever, event, Auto, Festival, Medley, and Garupa master-row provenance",
+    "UI denominator identity and a 10.1.4 heal/overheal observation",
+    "Skill/Fever same-frame start/end freezing and callback/reservation ordering",
+    "Game Over, pause, stop, reset, continue, fault, and dispose boundaries",
+    "BS01-BS36 fixed-event oracle with unknown_fields=[] and blocking_findings=[]"
+  ],
+  "blocking_findings": [
+    "No production implementation is authorized by this static package alone.",
+    "business_state_gate remains open until D18-D24 and BS01-BS36 close from committed R1/master/BMS evidence."
+  ]
+}

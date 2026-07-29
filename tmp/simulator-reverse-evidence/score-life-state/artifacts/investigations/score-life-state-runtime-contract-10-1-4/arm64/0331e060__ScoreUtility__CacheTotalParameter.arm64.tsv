@@ -1,0 +1,20 @@
+address	bytes	instruction	resolved_target
+0x331E060	FE0F1EF8	str x30, [sp, #-0x20]!	-
+0x331E064	F44F01A9	stp x20, x19, [sp, #0x10]	-
+0x331E068	B4F90190	adrp x20, #0x7252000	-
+0x331E06C	93CB0190	adrp x19, #0x6c8e000	-
+0x331E070	88524439	ldrb w8, [x20, #0x114]	-
+0x331E074	737640F9	ldr x19, [x19, #0xe8]	-
+0x331E078	C8000037	tbnz w8, #0, #0x331e090	-
+0x331E07C	80CB0190	adrp x0, #0x6c8e000	-
+0x331E080	007440F9	ldr x0, [x0, #0xe8]	-
+0x331E084	75C6EB97	bl #0x2e0fa58	-
+0x331E088	28008052	mov w8, #1	-
+0x331E08C	88520439	strb w8, [x20, #0x114]	-
+0x331E090	07000094	bl #0x331e0ac	ScoreUtility$$calcTotalParameter
+0x331E094	680240F9	ldr x8, [x19]	-
+0x331E098	F44F41A9	ldp x20, x19, [sp, #0x10]	-
+0x331E09C	085D40F9	ldr x8, [x8, #0xb8]	-
+0x331E0A0	000100BD	str s0, [x8]	-
+0x331E0A4	FE0742F8	ldr x30, [sp], #0x20	-
+0x331E0A8	C0035FD6	ret	-

@@ -1,0 +1,26 @@
+address	bytes	instruction	resolved_target
+0x3A6BFF8	FE0F1EF8	str x30, [sp, #-0x20]!	-
+0x3A6BFFC	F44F01A9	stp x20, x19, [sp, #0x10]	-
+0x3A6C000	C10200B4	cbz x1, #0x3a6c058	-
+0x3A6C004	F30301AA	mov x19, x1	-
+0x3A6C008	F40300AA	mov x20, x0	-
+0x3A6C00C	E00301AA	mov x0, x1	-
+0x3A6C010	E1031FAA	mov x1, xzr	-
+0x3A6C014	0AC30194	bl #0x3adcc3c	TeamLiveFestivalLifeRateModel$$get_FromCondition
+0x3A6C018	880A40F9	ldr x8, [x20, #0x10]	-
+0x3A6C01C	E80100B4	cbz x8, #0x3a6c058	-
+0x3A6C020	142180B9	ldrsw x20, [x8, #0x20]	-
+0x3A6C024	E803002A	mov w8, w0	-
+0x3A6C028	1F0114EB	cmp x8, x20	-
+0x3A6C02C	6D000054	b.le #0x3a6c038	-
+0x3A6C030	E0031F2A	mov w0, wzr	-
+0x3A6C034	06000014	b #0x3a6c04c	-
+0x3A6C038	E00313AA	mov x0, x19	-
+0x3A6C03C	E1031FAA	mov x1, xzr	-
+0x3A6C040	06C30194	bl #0x3adcc58	TeamLiveFestivalLifeRateModel$$get_ToCondition
+0x3A6C044	9F4220EB	cmp x20, w0, uxtw	-
+0x3A6C048	E0C79F1A	cset w0, le	-
+0x3A6C04C	F44F41A9	ldp x20, x19, [sp, #0x10]	-
+0x3A6C050	FE0742F8	ldr x30, [sp], #0x20	-
+0x3A6C054	C0035FD6	ret	-
+0x3A6C058	238FCE97	bl #0x2e0fce4	-

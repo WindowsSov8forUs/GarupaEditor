@@ -1,0 +1,7 @@
+address	bytes	instruction	resolved_target
+0x331E84C	0008211E	fmul s0, s0, s1	-
+0x331E850	0100221E	scvtf s1, w0	-
+0x331E854	0018211E	fdiv s0, s0, s1	-
+0x331E858	0110211E	fmov s1, #3.00000000	-
+0x331E85C	0008211E	fmul s0, s0, s1	-
+0x331E860	C0035FD6	ret	-

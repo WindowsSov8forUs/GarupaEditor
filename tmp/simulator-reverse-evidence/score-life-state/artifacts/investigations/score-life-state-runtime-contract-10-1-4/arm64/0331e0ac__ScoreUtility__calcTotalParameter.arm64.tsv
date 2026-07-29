@@ -1,0 +1,56 @@
+address	bytes	instruction	resolved_target
+0x331E0AC	EA0F1DFC	str d10, [sp, #-0x30]!	-
+0x331E0B0	E9A3006D	stp d9, d8, [sp, #8]	-
+0x331E0B4	FE0F00F9	str x30, [sp, #0x18]	-
+0x331E0B8	F44F02A9	stp x20, x19, [sp, #0x20]	-
+0x331E0BC	B4F90190	adrp x20, #0x7252000	-
+0x331E0C0	73CB01D0	adrp x19, #0x6c8c000	-
+0x331E0C4	887A4439	ldrb w8, [x20, #0x11e]	-
+0x331E0C8	738642F9	ldr x19, [x19, #0x508]	-
+0x331E0CC	C8000037	tbnz w8, #0, #0x331e0e4	-
+0x331E0D0	60CB01D0	adrp x0, #0x6c8c000	-
+0x331E0D4	008442F9	ldr x0, [x0, #0x508]	-
+0x331E0D8	60C6EB97	bl #0x2e0fa58	-
+0x331E0DC	28008052	mov w8, #1	-
+0x331E0E0	887A0439	strb w8, [x20, #0x11e]	-
+0x331E0E4	600240F9	ldr x0, [x19]	-
+0x331E0E8	83755994	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x331E0EC	C00300B4	cbz x0, #0x331e164	-
+0x331E0F0	F4031FAA	mov x20, xzr	-
+0x331E0F4	E803271E	fmov s8, wzr	-
+0x331E0F8	E903271E	fmov s9, wzr	-
+0x331E0FC	EA03271E	fmov s10, wzr	-
+0x331E100	084040F9	ldr x8, [x0, #0x80]	-
+0x331E104	080300B4	cbz x8, #0x331e164	-
+0x331E108	081940B9	ldr w8, [x8, #0x18]	-
+0x331E10C	9F02086B	cmp w20, w8	-
+0x331E110	CA020054	b.ge #0x331e168	-
+0x331E114	600240F9	ldr x0, [x19]	-
+0x331E118	77755994	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x331E11C	400200B4	cbz x0, #0x331e164	-
+0x331E120	084040F9	ldr x8, [x0, #0x80]	-
+0x331E124	080200B4	cbz x8, #0x331e164	-
+0x331E128	091940B9	ldr w9, [x8, #0x18]	-
+0x331E12C	9F02096B	cmp w20, w9	-
+0x331E130	A2020054	b.hs #0x331e184	-
+0x331E134	080D148B	add x8, x8, x20, lsl #3	-
+0x331E138	081140F9	ldr x8, [x8, #0x20]	-
+0x331E13C	480100B4	cbz x8, #0x331e164	-
+0x331E140	0201462D	ldp s2, s0, [x8, #0x30]	-
+0x331E144	012D40BD	ldr s1, [x8, #0x2c]	-
+0x331E148	600240F9	ldr x0, [x19]	-
+0x331E14C	0829201E	fadd s8, s8, s0	-
+0x331E150	2929211E	fadd s9, s9, s1	-
+0x331E154	4A29221E	fadd s10, s10, s2	-
+0x331E158	67755994	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x331E15C	94060091	add x20, x20, #1	-
+0x331E160	00FDFFB5	cbnz x0, #0x331e100	-
+0x331E164	E0C6EB97	bl #0x2e0fce4	-
+0x331E168	2029281E	fadd s0, s9, s8	-
+0x331E16C	F44F42A9	ldp x20, x19, [sp, #0x20]	-
+0x331E170	FE0F40F9	ldr x30, [sp, #0x18]	-
+0x331E174	E9A3406D	ldp d9, d8, [sp, #8]	-
+0x331E178	4029201E	fadd s0, s10, s0	-
+0x331E17C	EA0743FC	ldr d10, [sp], #0x30	-
+0x331E180	C0035FD6	ret	-
+0x331E184	DAC6EB97	bl #0x2e0fcec	-

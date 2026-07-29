@@ -1,0 +1,7 @@
+address	bytes	instruction	resolved_target
+0x32F1C34	007441BD	ldr s0, [x0, #0x174]	-
+0x32F1C38	0859A852	mov w8, #0x42c80000	-
+0x32F1C3C	0101271E	fmov s1, w8	-
+0x32F1C40	00D8215E	scvtf s0, s0	-
+0x32F1C44	0018211E	fdiv s0, s0, s1	-
+0x32F1C48	C0035FD6	ret	-

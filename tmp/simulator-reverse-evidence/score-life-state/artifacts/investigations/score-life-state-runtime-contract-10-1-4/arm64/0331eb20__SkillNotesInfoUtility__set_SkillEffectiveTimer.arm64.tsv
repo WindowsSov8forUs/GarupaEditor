@@ -1,0 +1,22 @@
+address	bytes	instruction	resolved_target
+0x331EB20	E80F1EFC	str d8, [sp, #-0x20]!	-
+0x331EB24	FE0700F9	str x30, [sp, #8]	-
+0x331EB28	F44F01A9	stp x20, x19, [sp, #0x10]	-
+0x331EB2C	B3F90190	adrp x19, #0x7252000	-
+0x331EB30	14CC01B0	adrp x20, #0x6c9f000	-
+0x331EB34	68824439	ldrb w8, [x19, #0x120]	-
+0x331EB38	946A41F9	ldr x20, [x20, #0x2d0]	-
+0x331EB3C	081CA04E	mov v8.16b, v0.16b	-
+0x331EB40	C8000037	tbnz w8, #0, #0x331eb58	-
+0x331EB44	00CC01B0	adrp x0, #0x6c9f000	-
+0x331EB48	006841F9	ldr x0, [x0, #0x2d0]	-
+0x331EB4C	C3C3EB97	bl #0x2e0fa58	-
+0x331EB50	28008052	mov w8, #1	-
+0x331EB54	68820439	strb w8, [x19, #0x120]	-
+0x331EB58	880240F9	ldr x8, [x20]	-
+0x331EB5C	F44F41A9	ldp x20, x19, [sp, #0x10]	-
+0x331EB60	FE0740F9	ldr x30, [sp, #8]	-
+0x331EB64	085D40F9	ldr x8, [x8, #0xb8]	-
+0x331EB68	080100BD	str s8, [x8]	-
+0x331EB6C	E80742FC	ldr d8, [sp], #0x20	-
+0x331EB70	C0035FD6	ret	-

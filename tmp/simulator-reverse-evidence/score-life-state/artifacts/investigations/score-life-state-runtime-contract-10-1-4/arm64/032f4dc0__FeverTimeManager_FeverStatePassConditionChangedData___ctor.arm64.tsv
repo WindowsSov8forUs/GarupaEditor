@@ -1,0 +1,3 @@
+address	bytes	instruction	resolved_target
+0x32F4DC0	E1031FAA	mov x1, xzr	-
+0x32F4DC4	F8959F14	b #0x5ada5a4	System.Object$$.ctor

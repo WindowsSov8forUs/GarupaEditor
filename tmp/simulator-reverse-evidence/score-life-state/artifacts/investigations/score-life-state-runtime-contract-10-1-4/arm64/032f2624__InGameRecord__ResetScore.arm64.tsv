@@ -1,0 +1,3 @@
+address	bytes	instruction	resolved_target
+0x32F2624	1FFC0229	stp wzr, wzr, [x0, #0x14]	-
+0x32F2628	C0035FD6	ret	-

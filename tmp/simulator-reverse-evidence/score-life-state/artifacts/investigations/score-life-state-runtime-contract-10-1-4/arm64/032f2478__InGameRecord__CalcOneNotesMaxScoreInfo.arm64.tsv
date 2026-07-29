@@ -1,0 +1,15 @@
+address	bytes	instruction	resolved_target
+0x32F2478	FE0F1FF8	str x30, [sp, #-0x10]!	-
+0x32F247C	083C40F9	ldr x8, [x0, #0x78]	-
+0x32F2480	680100B4	cbz x8, #0x32f24ac	-
+0x32F2484	091140B9	ldr w9, [x8, #0x10]	-
+0x32F2488	E30302AA	mov x3, x2	-
+0x32F248C	E203012A	mov w2, w1	-
+0x32F2490	3F01016B	cmp w9, w1	-
+0x32F2494	82000054	b.hs #0x32f24a4	-
+0x32F2498	E10308AA	mov x1, x8	-
+0x32F249C	FE0741F8	ldr x30, [sp], #0x10	-
+0x32F24A0	04000014	b #0x32f24b0	InGameRecord$$updateOneNotesMaxScoreInfo
+0x32F24A4	FE0741F8	ldr x30, [sp], #0x10	-
+0x32F24A8	C0035FD6	ret	-
+0x32F24AC	0E76EC97	bl #0x2e0fce4	-

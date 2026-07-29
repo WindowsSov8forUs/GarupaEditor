@@ -1,0 +1,9 @@
+address	bytes	instruction	resolved_target
+0x32F501C	3F040031	cmn w1, #1	-
+0x32F5020	C0000054	b.eq #0x32f5038	-
+0x32F5024	3F0C0071	cmp w1, #3	-
+0x32F5028	8C000054	b.gt #0x32f5038	-
+0x32F502C	081040B9	ldr w8, [x0, #0x10]	-
+0x32F5030	48000034	cbz w8, #0x32f5038	-
+0x32F5034	1F1000B9	str wzr, [x0, #0x10]	-
+0x32F5038	C0035FD6	ret	-

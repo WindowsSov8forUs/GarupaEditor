@@ -1,0 +1,3 @@
+address	bytes	instruction	resolved_target
+0x33202B8	002440B9	ldr w0, [x0, #0x24]	-
+0x33202BC	C0035FD6	ret	-

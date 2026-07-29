@@ -1,0 +1,5 @@
+address	bytes	instruction	resolved_target
+0x33DADCC	E803014B	neg w8, w1	-
+0x33DADD0	1F01006B	cmp w8, w0	-
+0x33DADD4	E0B79F1A	cset w0, ge	-
+0x33DADD8	C0035FD6	ret	-

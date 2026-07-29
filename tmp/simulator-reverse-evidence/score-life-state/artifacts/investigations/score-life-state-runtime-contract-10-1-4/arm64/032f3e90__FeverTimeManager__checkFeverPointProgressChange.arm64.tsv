@@ -1,0 +1,70 @@
+address	bytes	instruction	resolved_target
+0x32F3E90	E923BC6D	stp d9, d8, [sp, #-0x40]!	-
+0x32F3E94	FE0B00F9	str x30, [sp, #0x10]	-
+0x32F3E98	F65702A9	stp x22, x21, [sp, #0x20]	-
+0x32F3E9C	F44F03A9	stp x20, x19, [sp, #0x30]	-
+0x32F3EA0	F40300AA	mov x20, x0	-
+0x32F3EA4	001C40F9	ldr x0, [x0, #0x38]	-
+0x32F3EA8	A00700B4	cbz x0, #0x32f3f9c	-
+0x32F3EAC	F503012A	mov w21, w1	-
+0x32F3EB0	E1031FAA	mov x1, xzr	-
+0x32F3EB4	B9370094	bl #0x3301d98	MultiPlayInGameNetworkManager$$get_GetMyDisplayIndex
+0x32F3EB8	885640B9	ldr w8, [x20, #0x54]	-
+0x32F3EBC	F6FA0190	adrp x22, #0x724f000	-
+0x32F3EC0	C9DA7739	ldrb w9, [x22, #0xdf6]	-
+0x32F3EC4	0A0A8052	mov w10, #0x50	-
+0x32F3EC8	4801084B	sub w8, w10, w8	-
+0x32F3ECC	F303002A	mov w19, w0	-
+0x32F3ED0	0801221E	scvtf s8, w8	-
+0x32F3ED4	A902221E	scvtf s9, w21	-
+0x32F3ED8	C9000035	cbnz w9, #0x32f3ef0	-
+0x32F3EDC	80CC0190	adrp x0, #0x6c83000	-
+0x32F3EE0	00C845F9	ldr x0, [x0, #0xb90]	-
+0x32F3EE4	DD6EEC97	bl #0x2e0fa58	-
+0x32F3EE8	28008052	mov w8, #1	-
+0x32F3EEC	C8DA3739	strb w8, [x22, #0xdf6]	-
+0x32F3EF0	88CC0190	adrp x8, #0x6c83000	-
+0x32F3EF4	08C945F9	ldr x8, [x8, #0xb90]	-
+0x32F3EF8	0819291E	fdiv s8, s8, s9	-
+0x32F3EFC	000140F9	ldr x0, [x8]	-
+0x32F3F00	08E040B9	ldr w8, [x0, #0xe0]	-
+0x32F3F04	48000035	cbnz w8, #0x32f3f0c	-
+0x32F3F08	316FEC97	bl #0x2e0fbcc	-
+0x32F3F0C	09F0AF52	mov w9, #0x7f800000	-
+0x32F3F10	883E40F9	ldr x8, [x20, #0x78]	-
+0x32F3F14	00C1241E	frintp s0, s8	-
+0x32F3F18	2101271E	fmov s1, w9	-
+0x32F3F1C	0A01281E	fcvtps w10, s8	-
+0x32F3F20	0020211E	fcmp s0, s1	-
+0x32F3F24	0900B052	mov w9, #-0xffffffff80000000	-
+0x32F3F28	29018A1A	csel w9, w9, w10, eq	-
+0x32F3F2C	880300B4	cbz x8, #0x32f3f9c	-
+0x32F3F30	0A1940B9	ldr w10, [x8, #0x18]	-
+0x32F3F34	7F020A6B	cmp w19, w10	-
+0x32F3F38	42030054	b.hs #0x32f3fa0	-
+0x32F3F3C	811640F9	ldr x1, [x20, #0x28]	-
+0x32F3F40	E10200B4	cbz x1, #0x32f3f9c	-
+0x32F3F44	08C9338B	add x8, x8, w19, sxtw #2	-
+0x32F3F48	0B2140B9	ldr w11, [x8, #0x20]	-
+0x32F3F4C	281040F9	ldr x8, [x1, #0x20]	-
+0x32F3F50	297DA90A	bic w9, w9, w9, asr #31	-
+0x32F3F54	2A008052	mov w10, #1	-
+0x32F3F58	2BA40229	stp w11, w9, [x1, #0x14]	-
+0x32F3F5C	331000B9	str w19, [x1, #0x10]	-
+0x32F3F60	2A700039	strb w10, [x1, #0x1c]	-
+0x32F3F64	280100B4	cbz x8, #0x32f3f88	-
+0x32F3F68	030D40F9	ldr x3, [x8, #0x18]	-
+0x32F3F6C	002140F9	ldr x0, [x8, #0x40]	-
+0x32F3F70	021540F9	ldr x2, [x8, #0x28]	-
+0x32F3F74	F44F43A9	ldp x20, x19, [sp, #0x30]	-
+0x32F3F78	F65742A9	ldp x22, x21, [sp, #0x20]	-
+0x32F3F7C	FE0B40F9	ldr x30, [sp, #0x10]	-
+0x32F3F80	E923C46C	ldp d9, d8, [sp], #0x40	-
+0x32F3F84	60001FD6	br x3	-
+0x32F3F88	F44F43A9	ldp x20, x19, [sp, #0x30]	-
+0x32F3F8C	F65742A9	ldp x22, x21, [sp, #0x20]	-
+0x32F3F90	FE0B40F9	ldr x30, [sp, #0x10]	-
+0x32F3F94	E923C46C	ldp d9, d8, [sp], #0x40	-
+0x32F3F98	C0035FD6	ret	-
+0x32F3F9C	526FEC97	bl #0x2e0fce4	-
+0x32F3FA0	536FEC97	bl #0x2e0fcec	-

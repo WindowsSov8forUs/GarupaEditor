@@ -1,0 +1,7 @@
+address	bytes	instruction	resolved_target
+0x32F1ED4	0040C43C	ldur q0, [x0, #0x44]	-
+0x32F1ED8	085440B9	ldr w8, [x0, #0x54]	-
+0x32F1EDC	00B8B14E	addv s0, v0.4s	-
+0x32F1EE0	0900261E	fmov w9, s0	-
+0x32F1EE4	2001080B	add w0, w9, w8	-
+0x32F1EE8	C0035FD6	ret	-

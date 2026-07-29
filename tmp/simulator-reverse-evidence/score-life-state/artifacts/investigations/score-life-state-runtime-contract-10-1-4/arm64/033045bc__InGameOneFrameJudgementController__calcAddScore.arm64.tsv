@@ -1,0 +1,18 @@
+address	bytes	instruction	resolved_target
+0x33045BC	FE0F1FF8	str x30, [sp, #-0x10]!	-
+0x33045C0	E10100B4	cbz x1, #0x33045fc	-
+0x33045C4	225840BD	ldr s2, [x1, #0x58]	-
+0x33045C8	0008211E	fmul s0, s0, s1	-
+0x33045CC	0800381E	fcvtzs w8, s0	-
+0x33045D0	0900391E	fcvtzu w9, s0	-
+0x33045D4	0820201E	fcmp s0, #0.0	-
+0x33045D8	0841891A	csel w8, w8, w9, mi	-
+0x33045DC	0001231E	ucvtf s0, w8	-
+0x33045E0	4008201E	fmul s0, s2, s0	-
+0x33045E4	0800381E	fcvtzs w8, s0	-
+0x33045E8	0900391E	fcvtzu w9, s0	-
+0x33045EC	0820201E	fcmp s0, #0.0	-
+0x33045F0	0041891A	csel w0, w8, w9, mi	-
+0x33045F4	FE0741F8	ldr x30, [sp], #0x10	-
+0x33045F8	C0035FD6	ret	-
+0x33045FC	BA2DEC97	bl #0x2e0fce4	-

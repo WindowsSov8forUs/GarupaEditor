@@ -1,0 +1,38 @@
+address	bytes	instruction	resolved_target
+0x32F2118	FE0F1EF8	str x30, [sp, #-0x20]!	-
+0x32F211C	F44F01A9	stp x20, x19, [sp, #0x10]	-
+0x32F2120	F40301AA	mov x20, x1	-
+0x32F2124	F30300AA	mov x19, x0	-
+0x32F2128	7AFFFF97	bl #0x32f1f10	-
+0x32F212C	F40300B4	cbz x20, #0x32f21a8	-
+0x32F2130	881640B9	ldr w8, [x20, #0x14]	-
+0x32F2134	68FE0229	stp w8, wzr, [x19, #0x14]	-
+0x32F2138	881A40B9	ldr w8, [x20, #0x18]	-
+0x32F213C	682200B9	str w8, [x19, #0x20]	-
+0x32F2140	881E40B9	ldr w8, [x20, #0x1c]	-
+0x32F2144	682E00B9	str w8, [x19, #0x2c]	-
+0x32F2148	804242FC	ldur d0, [x20, #0x24]	-
+0x32F214C	603E00BD	str s0, [x19, #0x3c]	-
+0x32F2150	601A00FD	str d0, [x19, #0x30]	-
+0x32F2154	8A724139	ldrb w10, [x20, #0x5c]	-
+0x32F2158	5F010071	cmp w10, #0	-
+0x32F215C	68029F9A	csel x8, x19, xzr, eq	-
+0x32F2160	E903939A	csel x9, xzr, x19, eq	-
+0x32F2164	EA000034	cbz w10, #0x32f2180	-
+0x32F2168	090200B4	cbz x9, #0x32f21a8	-
+0x32F216C	E8031F2A	mov w8, wzr	-
+0x32F2170	3F4500B9	str wzr, [x9, #0x44]	-
+0x32F2174	7F2600F9	str xzr, [x19, #0x48]	-
+0x32F2178	7F5200B9	str wzr, [x19, #0x50]	-
+0x32F217C	05000014	b #0x32f2190	-
+0x32F2180	480100B4	cbz x8, #0x32f21a8	-
+0x32F2184	80C2C23C	ldur q0, [x20, #0x2c]	-
+0x32F2188	0041843C	stur q0, [x8, #0x44]	-
+0x32F218C	883E40B9	ldr w8, [x20, #0x3c]	-
+0x32F2190	685600B9	str w8, [x19, #0x54]	-
+0x32F2194	802240FD	ldr d0, [x20, #0x40]	-
+0x32F2198	60C209FC	stur d0, [x19, #0x9c]	-
+0x32F219C	F44F41A9	ldp x20, x19, [sp, #0x10]	-
+0x32F21A0	FE0742F8	ldr x30, [sp], #0x20	-
+0x32F21A4	C0035FD6	ret	-
+0x32F21A8	CF76EC97	bl #0x2e0fce4	-

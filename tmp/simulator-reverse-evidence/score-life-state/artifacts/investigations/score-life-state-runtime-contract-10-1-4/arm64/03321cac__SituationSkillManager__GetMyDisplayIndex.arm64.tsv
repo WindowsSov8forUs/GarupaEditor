@@ -1,0 +1,8 @@
+address	bytes	instruction	resolved_target
+0x3321CAC	FE0F1FF8	str x30, [sp, #-0x10]!	-
+0x3321CB0	001040F9	ldr x0, [x0, #0x20]	-
+0x3321CB4	800000B4	cbz x0, #0x3321cc4	-
+0x3321CB8	E1031FAA	mov x1, xzr	-
+0x3321CBC	FE0741F8	ldr x30, [sp], #0x10	-
+0x3321CC0	BBBEFF17	b #0x33117ac	SituationSkillNetworkManager$$GetMyDisplayIndex
+0x3321CC4	08B8EB97	bl #0x2e0fce4	-

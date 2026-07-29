@@ -1,0 +1,69 @@
+address	bytes	instruction	resolved_target
+0x3A3CA08	FE57BEA9	stp x30, x21, [sp, #-0x20]!	-
+0x3A3CA0C	F44F01A9	stp x20, x19, [sp, #0x10]	-
+0x3A3CA10	D4C001D0	adrp x20, #0x7256000	-
+0x3A3CA14	88B26D39	ldrb w8, [x20, #0xb6c]	-
+0x3A3CA18	F30301AA	mov x19, x1	-
+0x3A3CA1C	88010037	tbnz w8, #0, #0x3a3ca4c	-
+0x3A3CA20	40930190	adrp x0, #0x6ca4000	-
+0x3A3CA24	005041F9	ldr x0, [x0, #0x2a0]	-
+0x3A3CA28	0C4CCF97	bl #0x2e0fa58	-
+0x3A3CA2C	A09201F0	adrp x0, #0x6c93000	-
+0x3A3CA30	008841F9	ldr x0, [x0, #0x310]	-
+0x3A3CA34	094CCF97	bl #0x2e0fa58	-
+0x3A3CA38	80920190	adrp x0, #0x6c8c000	-
+0x3A3CA3C	008442F9	ldr x0, [x0, #0x508]	-
+0x3A3CA40	064CCF97	bl #0x2e0fa58	-
+0x3A3CA44	28008052	mov w8, #1	-
+0x3A3CA48	88B22D39	strb w8, [x20, #0xb6c]	-
+0x3A3CA4C	E0031FAA	mov x0, xzr	-
+0x3A3CA50	2099E597	bl #0x33a2ed0	EventUtility$$GetPlayableEvent
+0x3A3CA54	A00500B4	cbz x0, #0x3a3cb08	-
+0x3A3CA58	A89201F0	adrp x8, #0x6c93000	-
+0x3A3CA5C	088941F9	ldr x8, [x8, #0x310]	-
+0x3A3CA60	F50300AA	mov x21, x0	-
+0x3A3CA64	000140F9	ldr x0, [x8]	-
+0x3A3CA68	9E4CCF97	bl #0x2e0fce0	-
+0x3A3CA6C	E10315AA	mov x1, x21	-
+0x3A3CA70	E2031FAA	mov x2, xzr	-
+0x3A3CA74	F40300AA	mov x20, x0	-
+0x3A3CA78	D5730294	bl #0x3ad99cc	-
+0x3A3CA7C	D40400B4	cbz x20, #0x3a3cb14	-
+0x3A3CA80	881A40B9	ldr w8, [x20, #0x18]	-
+0x3A3CA84	1F150071	cmp w8, #5	-
+0x3A3CA88	60000054	b.eq #0x3a3ca94	-
+0x3A3CA8C	1F090071	cmp w8, #2	-
+0x3A3CA90	C1030054	b.ne #0x3a3cb08	-
+0x3A3CA94	E10314AA	mov x1, x20	-
+0x3A3CA98	20000094	bl #0x3a3cb18	ScreenLayerSoloLiveDeckSelectBase$$createEventBuffData
+0x3A3CA9C	D30300B4	cbz x19, #0x3a3cb14	-
+0x3A3CAA0	48930190	adrp x8, #0x6ca4000	-
+0x3A3CAA4	750A40F9	ldr x21, [x19, #0x10]	-
+0x3A3CAA8	085141F9	ldr x8, [x8, #0x2a0]	-
+0x3A3CAAC	F40300AA	mov x20, x0	-
+0x3A3CAB0	000140F9	ldr x0, [x8]	-
+0x3A3CAB4	8B4CCF97	bl #0x2e0fce0	-
+0x3A3CAB8	E10315AA	mov x1, x21	-
+0x3A3CABC	E20314AA	mov x2, x20	-
+0x3A3CAC0	E3031FAA	mov x3, xzr	-
+0x3A3CAC4	F30300AA	mov x19, x0	-
+0x3A3CAC8	79FDE397	bl #0x333c0ac	-
+0x3A3CACC	88920190	adrp x8, #0x6c8c000	-
+0x3A3CAD0	088542F9	ldr x8, [x8, #0x508]	-
+0x3A3CAD4	000140F9	ldr x0, [x8]	-
+0x3A3CAD8	07FB3C94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x3A3CADC	D30100B4	cbz x19, #0x3a3cb14	-
+0x3A3CAE0	F40300AA	mov x20, x0	-
+0x3A3CAE4	E00313AA	mov x0, x19	-
+0x3A3CAE8	E1031FAA	mov x1, xzr	-
+0x3A3CAEC	ABFBE397	bl #0x333b998	DeckParamDetail$$get_TotalParameterIncludeAreaItemAndEventBuff
+0x3A3CAF0	340100B4	cbz x20, #0x3a3cb14	-
+0x3A3CAF4	E00314AA	mov x0, x20	-
+0x3A3CAF8	F44F41A9	ldp x20, x19, [sp, #0x10]	-
+0x3A3CAFC	E1031FAA	mov x1, xzr	-
+0x3A3CB00	FE57C2A8	ldp x30, x21, [sp], #0x20	-
+0x3A3CB04	1F4EE717	b #0x3410380	RhythmGameStartData$$SetFreeLiveEventBonusAppliedDeckTotalParameter
+0x3A3CB08	F44F41A9	ldp x20, x19, [sp, #0x10]	-
+0x3A3CB0C	FE57C2A8	ldp x30, x21, [sp], #0x20	-
+0x3A3CB10	C0035FD6	ret	-
+0x3A3CB14	744CCF97	bl #0x2e0fce4	-

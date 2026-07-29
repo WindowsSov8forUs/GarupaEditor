@@ -1,0 +1,13 @@
+address	bytes	instruction	resolved_target
+0x32F0CC0	084440B9	ldr w8, [x0, #0x44]	-
+0x32F0CC4	092C40B9	ldr w9, [x0, #0x2c]	-
+0x32F0CC8	1F01096B	cmp w8, w9	-
+0x32F0CCC	61000054	b.ne #0x32f0cd8	-
+0x32F0CD0	60008052	mov w0, #3	-
+0x32F0CD4	C0035FD6	ret	-
+0x32F0CD8	0A4840B9	ldr w10, [x0, #0x48]	-
+0x32F0CDC	4801080B	add w8, w10, w8	-
+0x32F0CE0	1F01096B	cmp w8, w9	-
+0x32F0CE4	28008052	mov w8, #1	-
+0x32F0CE8	0015881A	cinc w0, w8, eq	-
+0x32F0CEC	C0035FD6	ret	-

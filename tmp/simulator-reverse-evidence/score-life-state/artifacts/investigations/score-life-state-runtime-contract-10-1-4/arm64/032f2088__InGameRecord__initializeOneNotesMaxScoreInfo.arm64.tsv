@@ -1,0 +1,37 @@
+address	bytes	instruction	resolved_target
+0x32F2088	FF0301D1	sub sp, sp, #0x40	-
+0x32F208C	FE1300F9	str x30, [sp, #0x20]	-
+0x32F2090	F44F03A9	stp x20, x19, [sp, #0x30]	-
+0x32F2094	F4FA01F0	adrp x20, #0x7251000	-
+0x32F2098	880E7E39	ldrb w8, [x20, #0xf83]	-
+0x32F209C	F30301AA	mov x19, x1	-
+0x32F20A0	C8000037	tbnz w8, #0, #0x32f20b8	-
+0x32F20A4	40CD01F0	adrp x0, #0x6c9d000	-
+0x32F20A8	004C46F9	ldr x0, [x0, #0xc98]	-
+0x32F20AC	6B76EC97	bl #0x2e0fa58	-
+0x32F20B0	28008052	mov w8, #1	-
+0x32F20B4	880E3E39	strb w8, [x20, #0xf83]	-
+0x32F20B8	F30200B4	cbz x19, #0x32f2114	-
+0x32F20BC	48CD01F0	adrp x8, #0x6c9d000	-
+0x32F20C0	084D46F9	ldr x8, [x8, #0xc98]	-
+0x32F20C4	7F1600B9	str wzr, [x19, #0x14]	-
+0x32F20C8	7FA20039	strb wzr, [x19, #0x28]	-
+0x32F20CC	09008092	mov x9, #-1	-
+0x32F20D0	080140F9	ldr x8, [x8]	-
+0x32F20D4	0A008012	mov w10, #-1	-
+0x32F20D8	E0230091	add x0, sp, #8	-
+0x32F20DC	E1031FAA	mov x1, xzr	-
+0x32F20E0	E8A700A9	stp x8, x9, [sp, #8]	-
+0x32F20E4	EA1B00B9	str w10, [sp, #0x18]	-
+0x32F20E8	876D9F94	bl #0x5acd704	-
+0x32F20EC	600E02F8	str x0, [x19, #0x20]!	-
+0x32F20F0	E10300AA	mov x1, x0	-
+0x32F20F4	E00313AA	mov x0, x19	-
+0x32F20F8	4376EC97	bl #0x2e0fa04	-
+0x32F20FC	7F021FB8	stur wzr, [x19, #-0x10]	-
+0x32F2100	7F821FB8	stur wzr, [x19, #-8]	-
+0x32F2104	F44F43A9	ldp x20, x19, [sp, #0x30]	-
+0x32F2108	FE1340F9	ldr x30, [sp, #0x20]	-
+0x32F210C	FF030191	add sp, sp, #0x40	-
+0x32F2110	C0035FD6	ret	-
+0x32F2114	F476EC97	bl #0x2e0fce4	-

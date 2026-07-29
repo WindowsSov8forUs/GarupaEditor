@@ -1,0 +1,4 @@
+address	bytes	instruction	resolved_target
+0x33214F0	0800B012	mov w8, #0x7fffffff	-
+0x33214F4	080000B9	str w8, [x0]	-
+0x33214F8	C0035FD6	ret	-

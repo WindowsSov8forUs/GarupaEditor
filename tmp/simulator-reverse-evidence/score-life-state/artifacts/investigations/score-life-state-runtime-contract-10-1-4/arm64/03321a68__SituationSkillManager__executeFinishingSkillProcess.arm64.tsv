@@ -1,0 +1,41 @@
+address	bytes	instruction	resolved_target
+0x3321A68	E80F1EFC	str d8, [sp, #-0x20]!	-
+0x3321A6C	FE0700F9	str x30, [sp, #8]	-
+0x3321A70	F44F01A9	stp x20, x19, [sp, #0x10]	-
+0x3321A74	94F901B0	adrp x20, #0x7252000	-
+0x3321A78	88FE4439	ldrb w8, [x20, #0x13f]	-
+0x3321A7C	F30300AA	mov x19, x0	-
+0x3321A80	C8000037	tbnz w8, #0, #0x3321a98	-
+0x3321A84	E0CB01D0	adrp x0, #0x6c9f000	-
+0x3321A88	005442F9	ldr x0, [x0, #0x4a8]	-
+0x3321A8C	F3B7EB97	bl #0x2e0fa58	-
+0x3321A90	28008052	mov w8, #1	-
+0x3321A94	88FE0439	strb w8, [x20, #0x13f]	-
+0x3321A98	688E40BD	ldr s8, [x19, #0x8c]	-
+0x3321A9C	0821201E	fcmp s8, #0.0	-
+0x3321AA0	CD000054	b.le #0x3321ab8	-
+0x3321AA4	E0031FAA	mov x0, xzr	-
+0x3321AA8	2A49CA94	bl #0x65b3f50	UnityEngine.Time$$get_deltaTime
+0x3321AAC	0039201E	fsub s0, s8, s0	-
+0x3321AB0	608E00BD	str s0, [x19, #0x8c]	-
+0x3321AB4	09000014	b #0x3321ad8	-
+0x3321AB8	683A40F9	ldr x8, [x19, #0x70]	-
+0x3321ABC	7F9200B9	str wzr, [x19, #0x90]	-
+0x3321AC0	280200B4	cbz x8, #0x3321b04	-
+0x3321AC4	081940B9	ldr w8, [x8, #0x18]	-
+0x3321AC8	1F050071	cmp w8, #1	-
+0x3321ACC	EB000054	b.lt #0x3321ae8	-
+0x3321AD0	28008052	mov w8, #1	-
+0x3321AD4	689200B9	str w8, [x19, #0x90]	-
+0x3321AD8	F44F41A9	ldp x20, x19, [sp, #0x10]	-
+0x3321ADC	FE0740F9	ldr x30, [sp, #8]	-
+0x3321AE0	E80742FC	ldr d8, [sp], #0x20	-
+0x3321AE4	C0035FD6	ret	-
+0x3321AE8	7F0E08F8	str xzr, [x19, #0x80]!	-
+0x3321AEC	E00313AA	mov x0, x19	-
+0x3321AF0	F44F41A9	ldp x20, x19, [sp, #0x10]	-
+0x3321AF4	FE0740F9	ldr x30, [sp, #8]	-
+0x3321AF8	E1031FAA	mov x1, xzr	-
+0x3321AFC	E80742FC	ldr d8, [sp], #0x20	-
+0x3321B00	C1B7EB17	b #0x2e0fa04	-
+0x3321B04	78B8EB97	bl #0x2e0fce4	-

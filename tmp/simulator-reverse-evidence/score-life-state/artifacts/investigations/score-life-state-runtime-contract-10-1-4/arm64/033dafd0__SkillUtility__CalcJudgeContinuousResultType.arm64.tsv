@@ -1,0 +1,8 @@
+address	bytes	instruction	resolved_target
+0x33DAFD0	C00000B4	cbz x0, #0x33dafe8	-
+0x33DAFD4	082C40B9	ldr w8, [x0, #0x2c]	-
+0x33DAFD8	1F01016B	cmp w8, w1	-
+0x33DAFDC	6D000054	b.le #0x33dafe8	-
+0x33DAFE0	E2031FAA	mov x2, xzr	-
+0x33DAFE4	C114FD17	b #0x33202e8	SituationSkillData$$set_SetJudgeContinuousResultType
+0x33DAFE8	C0035FD6	ret	-

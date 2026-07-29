@@ -1,0 +1,15 @@
+address	bytes	instruction	resolved_target
+0x3322484	FE4FBFA9	stp x30, x19, [sp, #-0x10]!	-
+0x3322488	E80300AA	mov x8, x0	-
+0x332248C	001040F9	ldr x0, [x0, #0x20]	-
+0x3322490	400100B4	cbz x0, #0x33224b8	-
+0x3322494	131540F9	ldr x19, [x8, #0x28]	-
+0x3322498	E1031FAA	mov x1, xzr	-
+0x332249C	C4BCFF97	bl #0x33117ac	SituationSkillNetworkManager$$GetMyDisplayIndex
+0x33224A0	D30000B4	cbz x19, #0x33224b8	-
+0x33224A4	E103002A	mov w1, w0	-
+0x33224A8	E00313AA	mov x0, x19	-
+0x33224AC	E2031FAA	mov x2, xzr	-
+0x33224B0	FE4FC1A8	ldp x30, x19, [sp], #0x10	-
+0x33224B4	9B92FF17	b #0x3306f20	InGameSkillNoteController$$OnDisconnectPhotonForMultiPlay
+0x33224B8	0BB6EB97	bl #0x2e0fce4	-

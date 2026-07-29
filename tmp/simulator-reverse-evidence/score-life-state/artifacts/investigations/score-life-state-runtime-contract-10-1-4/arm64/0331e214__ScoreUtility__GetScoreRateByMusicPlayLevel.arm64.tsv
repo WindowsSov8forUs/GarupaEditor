@@ -1,0 +1,9 @@
+address	bytes	instruction	resolved_target
+0x331E214	C810FF90	adrp x8, #0x1536000	-
+0x331E218	008145BD	ldr s0, [x8, #0x580]	-
+0x331E21C	08140051	sub w8, w0, #5	-
+0x331E220	0101221E	scvtf s1, w8	-
+0x331E224	2008201E	fmul s0, s1, s0	-
+0x331E228	01102E1E	fmov s1, #1.00000000	-
+0x331E22C	0028211E	fadd s0, s0, s1	-
+0x331E230	C0035FD6	ret	-

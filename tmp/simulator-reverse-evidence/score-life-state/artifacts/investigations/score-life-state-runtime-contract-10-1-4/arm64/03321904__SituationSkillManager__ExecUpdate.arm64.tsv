@@ -1,0 +1,13 @@
+address	bytes	instruction	resolved_target
+0x3321904	089040B9	ldr w8, [x0, #0x90]	-
+0x3321908	1F0D0071	cmp w8, #3	-
+0x332190C	C0000054	b.eq #0x3321924	-
+0x3321910	1F090071	cmp w8, #2	-
+0x3321914	A0000054	b.eq #0x3321928	-
+0x3321918	1F050071	cmp w8, #1	-
+0x332191C	A1000054	b.ne #0x3321930	-
+0x3321920	05000014	b #0x3321934	SituationSkillManager$$executeBeginSkillProcess
+0x3321924	51000014	b #0x3321a68	SituationSkillManager$$executeFinishingSkillProcess
+0x3321928	E103022A	mov w1, w2	-
+0x332192C	37000014	b #0x3321a08	SituationSkillManager$$executePlayingSkillProcess
+0x3321930	C0035FD6	ret	-

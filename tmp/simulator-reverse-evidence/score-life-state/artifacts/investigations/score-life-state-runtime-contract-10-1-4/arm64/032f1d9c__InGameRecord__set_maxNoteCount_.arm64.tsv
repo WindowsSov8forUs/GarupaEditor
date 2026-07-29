@@ -1,0 +1,3 @@
+address	bytes	instruction	resolved_target
+0x32F1D9C	012C00B9	str w1, [x0, #0x2c]	-
+0x32F1DA0	C0035FD6	ret	-

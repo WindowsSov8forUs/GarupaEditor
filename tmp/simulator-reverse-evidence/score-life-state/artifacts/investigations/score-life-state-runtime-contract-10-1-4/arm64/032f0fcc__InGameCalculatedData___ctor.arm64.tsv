@@ -1,0 +1,545 @@
+address	bytes	instruction	resolved_target
+0x32F0FCC	E923BC6D	stp d9, d8, [sp, #-0x40]!	-
+0x32F0FD0	FE0B00F9	str x30, [sp, #0x10]	-
+0x32F0FD4	F65702A9	stp x22, x21, [sp, #0x20]	-
+0x32F0FD8	F44F03A9	stp x20, x19, [sp, #0x30]	-
+0x32F0FDC	14FB01B0	adrp x20, #0x7251000	-
+0x32F0FE0	F5CC0190	adrp x21, #0x6c8c000	-
+0x32F0FE4	88DE7D39	ldrb w8, [x20, #0xf77]	-
+0x32F0FE8	B58642F9	ldr x21, [x21, #0x508]	-
+0x32F0FEC	281CA14E	mov v8.16b, v1.16b	-
+0x32F0FF0	091CA04E	mov v9.16b, v0.16b	-
+0x32F0FF4	F30300AA	mov x19, x0	-
+0x32F0FF8	E8010037	tbnz w8, #0, #0x32f1034	-
+0x32F0FFC	20CD01D0	adrp x0, #0x6c96000	-
+0x32F1000	00EC41F9	ldr x0, [x0, #0x3d8]	-
+0x32F1004	957AEC97	bl #0x2e0fa58	-
+0x32F1008	60CD0190	adrp x0, #0x6c9d000	-
+0x32F100C	001C46F9	ldr x0, [x0, #0xc38]	-
+0x32F1010	927AEC97	bl #0x2e0fa58	-
+0x32F1014	40CD01B0	adrp x0, #0x6c9a000	-
+0x32F1018	00D045F9	ldr x0, [x0, #0xba0]	-
+0x32F101C	8F7AEC97	bl #0x2e0fa58	-
+0x32F1020	C0CC01F0	adrp x0, #0x6c8c000	-
+0x32F1024	008442F9	ldr x0, [x0, #0x508]	-
+0x32F1028	8C7AEC97	bl #0x2e0fa58	-
+0x32F102C	28008052	mov w8, #1	-
+0x32F1030	88DE3D39	strb w8, [x20, #0xf77]	-
+0x32F1034	E00313AA	mov x0, x19	-
+0x32F1038	E1031FAA	mov x1, xzr	-
+0x32F103C	5AA59F94	bl #0x5ada5a4	System.Object$$.ctor
+0x32F1040	A00240F9	ldr x0, [x21]	-
+0x32F1044	AC295A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F1048	004000B4	cbz x0, #0x32f1848	-
+0x32F104C	74CD0190	adrp x20, #0x6c9d000	-
+0x32F1050	941E46F9	ldr x20, [x20, #0xc38]	-
+0x32F1054	E1031FAA	mov x1, xzr	-
+0x32F1058	CE7C0494	bl #0x3410390	RhythmGameStartData$$GetInGameMode
+0x32F105C	601200B9	str w0, [x19, #0x10]	-
+0x32F1060	69A2022D	stp s9, s8, [x19, #0x14]	-
+0x32F1064	800240F9	ldr x0, [x20]	-
+0x32F1068	6C275A94	bl #0x497ae18	SingletonBase<object>$$get_Instance
+0x32F106C	E03E00B4	cbz x0, #0x32f1848	-
+0x32F1070	002040B9	ldr w0, [x0, #0x20]	-
+0x32F1074	56CD01B0	adrp x22, #0x6c9a000	-
+0x32F1078	D6D245F9	ldr x22, [x22, #0xba0]	-
+0x32F107C	E1031FAA	mov x1, xzr	-
+0x32F1080	5EE81F94	bl #0x3aeb1f8	MultiLiveDifficultyModel$$Create
+0x32F1084	E10300AA	mov x1, x0	-
+0x32F1088	E00313AA	mov x0, x19	-
+0x32F108C	010C02F8	str x1, [x0, #0x20]!	-
+0x32F1090	5D7AEC97	bl #0x2e0fa04	-
+0x32F1094	C00240F9	ldr x0, [x22]	-
+0x32F1098	97295A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F109C	603D00B4	cbz x0, #0x32f1848	-
+0x32F10A0	081040F9	ldr x8, [x0, #0x20]	-
+0x32F10A4	283D00B4	cbz x8, #0x32f1848	-
+0x32F10A8	08D54039	ldrb w8, [x8, #0x35]	-
+0x32F10AC	68020139	strb w8, [x19, #0x40]	-
+0x32F10B0	A00240F9	ldr x0, [x21]	-
+0x32F10B4	90295A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F10B8	803C00B4	cbz x0, #0x32f1848	-
+0x32F10BC	082040B9	ldr w8, [x0, #0x20]	-
+0x32F10C0	684600B9	str w8, [x19, #0x44]	-
+0x32F10C4	A00240F9	ldr x0, [x21]	-
+0x32F10C8	8B295A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F10CC	E03B00B4	cbz x0, #0x32f1848	-
+0x32F10D0	016C40F9	ldr x1, [x0, #0xd8]	-
+0x32F10D4	E00313AA	mov x0, x19	-
+0x32F10D8	018C04F8	str x1, [x0, #0x48]!	-
+0x32F10DC	4A7AEC97	bl #0x2e0fa04	-
+0x32F10E0	A00240F9	ldr x0, [x21]	-
+0x32F10E4	84295A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F10E8	003B00B4	cbz x0, #0x32f1848	-
+0x32F10EC	013440F9	ldr x1, [x0, #0x68]	-
+0x32F10F0	E00313AA	mov x0, x19	-
+0x32F10F4	010C05F8	str x1, [x0, #0x50]!	-
+0x32F10F8	437AEC97	bl #0x2e0fa04	-
+0x32F10FC	A00240F9	ldr x0, [x21]	-
+0x32F1100	7D295A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F1104	203A00B4	cbz x0, #0x32f1848	-
+0x32F1108	011840F9	ldr x1, [x0, #0x30]	-
+0x32F110C	E00313AA	mov x0, x19	-
+0x32F1110	018C05F8	str x1, [x0, #0x58]!	-
+0x32F1114	3C7AEC97	bl #0x2e0fa04	-
+0x32F1118	A00240F9	ldr x0, [x21]	-
+0x32F111C	76295A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F1120	403900B4	cbz x0, #0x32f1848	-
+0x32F1124	012040F9	ldr x1, [x0, #0x40]	-
+0x32F1128	E00313AA	mov x0, x19	-
+0x32F112C	010C06F8	str x1, [x0, #0x60]!	-
+0x32F1130	357AEC97	bl #0x2e0fa04	-
+0x32F1134	A00240F9	ldr x0, [x21]	-
+0x32F1138	6F295A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F113C	603800B4	cbz x0, #0x32f1848	-
+0x32F1140	012440F9	ldr x1, [x0, #0x48]	-
+0x32F1144	E00313AA	mov x0, x19	-
+0x32F1148	018C06F8	str x1, [x0, #0x68]!	-
+0x32F114C	2E7AEC97	bl #0x2e0fa04	-
+0x32F1150	A00240F9	ldr x0, [x21]	-
+0x32F1154	68295A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F1158	803700B4	cbz x0, #0x32f1848	-
+0x32F115C	012840F9	ldr x1, [x0, #0x50]	-
+0x32F1160	E00313AA	mov x0, x19	-
+0x32F1164	010C07F8	str x1, [x0, #0x70]!	-
+0x32F1168	277AEC97	bl #0x2e0fa04	-
+0x32F116C	A00240F9	ldr x0, [x21]	-
+0x32F1170	61295A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F1174	A03600B4	cbz x0, #0x32f1848	-
+0x32F1178	08AC40B9	ldr w8, [x0, #0xac]	-
+0x32F117C	687A00B9	str w8, [x19, #0x78]	-
+0x32F1180	C00240F9	ldr x0, [x22]	-
+0x32F1184	5C295A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F1188	003600B4	cbz x0, #0x32f1848	-
+0x32F118C	081040F9	ldr x8, [x0, #0x20]	-
+0x32F1190	C83500B4	cbz x8, #0x32f1848	-
+0x32F1194	081940B9	ldr w8, [x8, #0x18]	-
+0x32F1198	687E00B9	str w8, [x19, #0x7c]	-
+0x32F119C	A00240F9	ldr x0, [x21]	-
+0x32F11A0	55295A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F11A4	203500B4	cbz x0, #0x32f1848	-
+0x32F11A8	E1031FAA	mov x1, xzr	-
+0x32F11AC	9C7D0494	bl #0x341081c	RhythmGameStartData$$get_IsEnablePractice
+0x32F11B0	08000012	and w8, w0, #1	-
+0x32F11B4	68020239	strb w8, [x19, #0x80]	-
+0x32F11B8	C00240F9	ldr x0, [x22]	-
+0x32F11BC	4E295A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F11C0	403400B4	cbz x0, #0x32f1848	-
+0x32F11C4	081440F9	ldr x8, [x0, #0x28]	-
+0x32F11C8	083400B4	cbz x8, #0x32f1848	-
+0x32F11CC	081140B9	ldr w8, [x8, #0x10]	-
+0x32F11D0	688600B9	str w8, [x19, #0x84]	-
+0x32F11D4	A00240F9	ldr x0, [x21]	-
+0x32F11D8	47295A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F11DC	603300B4	cbz x0, #0x32f1848	-
+0x32F11E0	012C40F9	ldr x1, [x0, #0x58]	-
+0x32F11E4	E00313AA	mov x0, x19	-
+0x32F11E8	018C08F8	str x1, [x0, #0x88]!	-
+0x32F11EC	067AEC97	bl #0x2e0fa04	-
+0x32F11F0	A00240F9	ldr x0, [x21]	-
+0x32F11F4	40295A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F11F8	803200B4	cbz x0, #0x32f1848	-
+0x32F11FC	013040F9	ldr x1, [x0, #0x60]	-
+0x32F1200	E00313AA	mov x0, x19	-
+0x32F1204	010C09F8	str x1, [x0, #0x90]!	-
+0x32F1208	FF79EC97	bl #0x2e0fa04	-
+0x32F120C	C00240F9	ldr x0, [x22]	-
+0x32F1210	39295A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F1214	A03100B4	cbz x0, #0x32f1848	-
+0x32F1218	081040F9	ldr x8, [x0, #0x20]	-
+0x32F121C	683100B4	cbz x8, #0x32f1848	-
+0x32F1220	001140BD	ldr s0, [x8, #0x10]	-
+0x32F1224	609A00BD	str s0, [x19, #0x98]	-
+0x32F1228	A00240F9	ldr x0, [x21]	-
+0x32F122C	32295A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F1230	C03000B4	cbz x0, #0x32f1848	-
+0x32F1234	E1031FAA	mov x1, xzr	-
+0x32F1238	5A7D0494	bl #0x34107a0	RhythmGameStartData$$InitializeInGameGraphics
+0x32F123C	A00240F9	ldr x0, [x21]	-
+0x32F1240	2D295A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F1244	203000B4	cbz x0, #0x32f1848	-
+0x32F1248	E1031FAA	mov x1, xzr	-
+0x32F124C	137D0494	bl #0x3410698	RhythmGameStartData$$GetCalculatedInGameGraphics
+0x32F1250	609E00B9	str w0, [x19, #0x9c]	-
+0x32F1254	A00240F9	ldr x0, [x21]	-
+0x32F1258	27295A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F125C	602F00B4	cbz x0, #0x32f1848	-
+0x32F1260	089440B9	ldr w8, [x0, #0x94]	-
+0x32F1264	68A200B9	str w8, [x19, #0xa0]	-
+0x32F1268	A00240F9	ldr x0, [x21]	-
+0x32F126C	22295A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F1270	C02E00B4	cbz x0, #0x32f1848	-
+0x32F1274	082041B9	ldr w8, [x0, #0x120]	-
+0x32F1278	604640B9	ldr w0, [x19, #0x44]	-
+0x32F127C	E1031FAA	mov x1, xzr	-
+0x32F1280	68A600B9	str w8, [x19, #0xa4]	-
+0x32F1284	AAA60094	bl #0x331ad2c	DamageUtility$$CalcDamage
+0x32F1288	A00240F9	ldr x0, [x21]	-
+0x32F128C	1A295A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F1290	C02D00B4	cbz x0, #0x32f1848	-
+0x32F1294	08A040B9	ldr w8, [x0, #0xa0]	-
+0x32F1298	68AA00B9	str w8, [x19, #0xa8]	-
+0x32F129C	A00240F9	ldr x0, [x21]	-
+0x32F12A0	15295A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F12A4	202D00B4	cbz x0, #0x32f1848	-
+0x32F12A8	08A440B9	ldr w8, [x0, #0xa4]	-
+0x32F12AC	68AE00B9	str w8, [x19, #0xac]	-
+0x32F12B0	C00240F9	ldr x0, [x22]	-
+0x32F12B4	10295A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F12B8	802C00B4	cbz x0, #0x32f1848	-
+0x32F12BC	081040F9	ldr x8, [x0, #0x20]	-
+0x32F12C0	482C00B4	cbz x8, #0x32f1848	-
+0x32F12C4	084140B9	ldr w8, [x8, #0x40]	-
+0x32F12C8	68B200B9	str w8, [x19, #0xb0]	-
+0x32F12CC	C00240F9	ldr x0, [x22]	-
+0x32F12D0	09295A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F12D4	A02B00B4	cbz x0, #0x32f1848	-
+0x32F12D8	081440F9	ldr x8, [x0, #0x28]	-
+0x32F12DC	682B00B4	cbz x8, #0x32f1848	-
+0x32F12E0	081540B9	ldr w8, [x8, #0x14]	-
+0x32F12E4	68B600B9	str w8, [x19, #0xb4]	-
+0x32F12E8	A00240F9	ldr x0, [x21]	-
+0x32F12EC	02295A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F12F0	C02A00B4	cbz x0, #0x32f1848	-
+0x32F12F4	08904439	ldrb w8, [x0, #0x124]	-
+0x32F12F8	68E20239	strb w8, [x19, #0xb8]	-
+0x32F12FC	C00240F9	ldr x0, [x22]	-
+0x32F1300	FD285A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F1304	202A00B4	cbz x0, #0x32f1848	-
+0x32F1308	081040F9	ldr x8, [x0, #0x20]	-
+0x32F130C	E82900B4	cbz x8, #0x32f1848	-
+0x32F1310	08D14039	ldrb w8, [x8, #0x34]	-
+0x32F1314	68E60239	strb w8, [x19, #0xb9]	-
+0x32F1318	A00240F9	ldr x0, [x21]	-
+0x32F131C	F6285A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F1320	402900B4	cbz x0, #0x32f1848	-
+0x32F1324	011440F9	ldr x1, [x0, #0x28]	-
+0x32F1328	E00313AA	mov x0, x19	-
+0x32F132C	010C0CF8	str x1, [x0, #0xc0]!	-
+0x32F1330	B579EC97	bl #0x2e0fa04	-
+0x32F1334	C00240F9	ldr x0, [x22]	-
+0x32F1338	EF285A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F133C	602800B4	cbz x0, #0x32f1848	-
+0x32F1340	081040F9	ldr x8, [x0, #0x20]	-
+0x32F1344	282800B4	cbz x8, #0x32f1848	-
+0x32F1348	083D40B9	ldr w8, [x8, #0x3c]	-
+0x32F134C	68CA00B9	str w8, [x19, #0xc8]	-
+0x32F1350	C00240F9	ldr x0, [x22]	-
+0x32F1354	E8285A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F1358	802700B4	cbz x0, #0x32f1848	-
+0x32F135C	081040F9	ldr x8, [x0, #0x20]	-
+0x32F1360	482700B4	cbz x8, #0x32f1848	-
+0x32F1364	001540BD	ldr s0, [x8, #0x14]	-
+0x32F1368	00D8215E	scvtf s0, s0	-
+0x32F136C	60CE00BD	str s0, [x19, #0xcc]	-
+0x32F1370	A00240F9	ldr x0, [x21]	-
+0x32F1374	E0285A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F1378	802600B4	cbz x0, #0x32f1848	-
+0x32F137C	016840F9	ldr x1, [x0, #0xd0]	-
+0x32F1380	E00313AA	mov x0, x19	-
+0x32F1384	010C0DF8	str x1, [x0, #0xd0]!	-
+0x32F1388	9F79EC97	bl #0x2e0fa04	-
+0x32F138C	C00240F9	ldr x0, [x22]	-
+0x32F1390	D9285A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F1394	A02500B4	cbz x0, #0x32f1848	-
+0x32F1398	081040F9	ldr x8, [x0, #0x20]	-
+0x32F139C	682500B4	cbz x8, #0x32f1848	-
+0x32F13A0	083940B9	ldr w8, [x8, #0x38]	-
+0x32F13A4	68DA00B9	str w8, [x19, #0xd8]	-
+0x32F13A8	C00240F9	ldr x0, [x22]	-
+0x32F13AC	D2285A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F13B0	C02400B4	cbz x0, #0x32f1848	-
+0x32F13B4	081040F9	ldr x8, [x0, #0x20]	-
+0x32F13B8	882400B4	cbz x8, #0x32f1848	-
+0x32F13BC	084540B9	ldr w8, [x8, #0x44]	-
+0x32F13C0	68DE00B9	str w8, [x19, #0xdc]	-
+0x32F13C4	C00240F9	ldr x0, [x22]	-
+0x32F13C8	CB285A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F13CC	E02300B4	cbz x0, #0x32f1848	-
+0x32F13D0	081040F9	ldr x8, [x0, #0x20]	-
+0x32F13D4	A82300B4	cbz x8, #0x32f1848	-
+0x32F13D8	08B54039	ldrb w8, [x8, #0x2d]	-
+0x32F13DC	68820339	strb w8, [x19, #0xe0]	-
+0x32F13E0	C00240F9	ldr x0, [x22]	-
+0x32F13E4	C4285A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F13E8	002300B4	cbz x0, #0x32f1848	-
+0x32F13EC	081040F9	ldr x8, [x0, #0x20]	-
+0x32F13F0	C82200B4	cbz x8, #0x32f1848	-
+0x32F13F4	08254139	ldrb w8, [x8, #0x49]	-
+0x32F13F8	68860339	strb w8, [x19, #0xe1]	-
+0x32F13FC	C00240F9	ldr x0, [x22]	-
+0x32F1400	BD285A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F1404	202200B4	cbz x0, #0x32f1848	-
+0x32F1408	28CD01B0	adrp x8, #0x6c96000	-
+0x32F140C	08ED41F9	ldr x8, [x8, #0x3d8]	-
+0x32F1410	141040F9	ldr x20, [x0, #0x20]	-
+0x32F1414	080140F9	ldr x8, [x8]	-
+0x32F1418	09E140B9	ldr w9, [x8, #0xe0]	-
+0x32F141C	69000035	cbnz w9, #0x32f1428	-
+0x32F1420	E00308AA	mov x0, x8	-
+0x32F1424	EA79EC97	bl #0x2e0fbcc	-
+0x32F1428	E00314AA	mov x0, x20	-
+0x32F142C	E1031FAA	mov x1, xzr	-
+0x32F1430	CBAC0094	bl #0x331c75c	InGameUtility$$GetDisplayComboPosition
+0x32F1434	60E600B9	str w0, [x19, #0xe4]	-
+0x32F1438	A00240F9	ldr x0, [x21]	-
+0x32F143C	AE285A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F1440	402000B4	cbz x0, #0x32f1848	-
+0x32F1444	014040F9	ldr x1, [x0, #0x80]	-
+0x32F1448	E00313AA	mov x0, x19	-
+0x32F144C	018C0EF8	str x1, [x0, #0xe8]!	-
+0x32F1450	6D79EC97	bl #0x2e0fa04	-
+0x32F1454	E00313AA	mov x0, x19	-
+0x32F1458	FD000094	bl #0x32f184c	InGameCalculatedData$$createDeckCharacterInfoModels
+0x32F145C	E10300AA	mov x1, x0	-
+0x32F1460	E00313AA	mov x0, x19	-
+0x32F1464	010C0FF8	str x1, [x0, #0xf0]!	-
+0x32F1468	6779EC97	bl #0x2e0fa04	-
+0x32F146C	A00240F9	ldr x0, [x21]	-
+0x32F1470	A1285A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F1474	A01E00B4	cbz x0, #0x32f1848	-
+0x32F1478	E1031FAA	mov x1, xzr	-
+0x32F147C	187D0494	bl #0x34108dc	RhythmGameStartData$$get_BackgroundModuleType
+0x32F1480	60FA00B9	str w0, [x19, #0xf8]	-
+0x32F1484	59010094	bl #0x32f19e8	InGameCalculatedData$$isEnableSpecialSkin
+0x32F1488	A80240F9	ldr x8, [x21]	-
+0x32F148C	F403002A	mov w20, w0	-
+0x32F1490	E00308AA	mov x0, x8	-
+0x32F1494	98285A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F1498	801D00B4	cbz x0, #0x32f1848	-
+0x32F149C	E1031FAA	mov x1, xzr	-
+0x32F14A0	677D0494	bl #0x3410a3c	RhythmGameStartData$$get_CutInModuleType
+0x32F14A4	691240B9	ldr w9, [x19, #0x10]	-
+0x32F14A8	1F0C0071	cmp w0, #3	-
+0x32F14AC	EA079F1A	cset w10, ne	-
+0x32F14B0	68008052	mov w8, #3	-
+0x32F14B4	9F020A6A	tst w20, w10	-
+0x32F14B8	0811801A	csel w8, w8, w0, ne	-
+0x32F14BC	3F190071	cmp w9, #6	-
+0x32F14C0	E9079F1A	cset w9, ne	-
+0x32F14C4	1F010071	cmp w8, #0	-
+0x32F14C8	680201B9	str w8, [x19, #0x100]	-
+0x32F14CC	8802090A	and w8, w20, w9	-
+0x32F14D0	E9079F1A	cset w9, ne	-
+0x32F14D4	2801082A	orr w8, w9, w8	-
+0x32F14D8	68F20339	strb w8, [x19, #0xfc]	-
+0x32F14DC	7C010094	bl #0x32f1acc	InGameCalculatedData$$isNeedFever
+0x32F14E0	E0000036	tbz w0, #0, #0x32f14fc	-
+0x32F14E4	A00240F9	ldr x0, [x21]	-
+0x32F14E8	83285A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F14EC	E01A00B4	cbz x0, #0x32f1848	-
+0x32F14F0	E1031FAA	mov x1, xzr	-
+0x32F14F4	C67D0494	bl #0x3410c0c	RhythmGameStartData$$get_CutInFeverType
+0x32F14F8	02000014	b #0x32f1500	-
+0x32F14FC	E0031F2A	mov w0, wzr	-
+0x32F1500	600601B9	str w0, [x19, #0x104]	-
+0x32F1504	C00240F9	ldr x0, [x22]	-
+0x32F1508	7B285A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F150C	E01900B4	cbz x0, #0x32f1848	-
+0x32F1510	081440F9	ldr x8, [x0, #0x28]	-
+0x32F1514	A81900B4	cbz x8, #0x32f1848	-
+0x32F1518	087940B9	ldr w8, [x8, #0x78]	-
+0x32F151C	680A01B9	str w8, [x19, #0x108]	-
+0x32F1520	C00240F9	ldr x0, [x22]	-
+0x32F1524	74285A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F1528	001900B4	cbz x0, #0x32f1848	-
+0x32F152C	081440F9	ldr x8, [x0, #0x28]	-
+0x32F1530	C81800B4	cbz x8, #0x32f1848	-
+0x32F1534	088540B9	ldr w8, [x8, #0x84]	-
+0x32F1538	680E01B9	str w8, [x19, #0x10c]	-
+0x32F153C	C00240F9	ldr x0, [x22]	-
+0x32F1540	6D285A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F1544	201800B4	cbz x0, #0x32f1848	-
+0x32F1548	081440F9	ldr x8, [x0, #0x28]	-
+0x32F154C	E81700B4	cbz x8, #0x32f1848	-
+0x32F1550	08A140B9	ldr w8, [x8, #0xa0]	-
+0x32F1554	681201B9	str w8, [x19, #0x110]	-
+0x32F1558	A00240F9	ldr x0, [x21]	-
+0x32F155C	66285A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F1560	401700B4	cbz x0, #0x32f1848	-
+0x32F1564	08644239	ldrb w8, [x0, #0x99]	-
+0x32F1568	68520439	strb w8, [x19, #0x114]	-
+0x32F156C	A00240F9	ldr x0, [x21]	-
+0x32F1570	61285A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F1574	A01600B4	cbz x0, #0x32f1848	-
+0x32F1578	089C40B9	ldr w8, [x0, #0x9c]	-
+0x32F157C	681A01B9	str w8, [x19, #0x118]	-
+0x32F1580	A00240F9	ldr x0, [x21]	-
+0x32F1584	5C285A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F1588	001600B4	cbz x0, #0x32f1848	-
+0x32F158C	081C41B9	ldr w8, [x0, #0x11c]	-
+0x32F1590	681E01B9	str w8, [x19, #0x11c]	-
+0x32F1594	C00240F9	ldr x0, [x22]	-
+0x32F1598	57285A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F159C	601500B4	cbz x0, #0x32f1848	-
+0x32F15A0	081040F9	ldr x8, [x0, #0x20]	-
+0x32F15A4	281500B4	cbz x8, #0x32f1848	-
+0x32F15A8	08914039	ldrb w8, [x8, #0x24]	-
+0x32F15AC	68820439	strb w8, [x19, #0x120]	-
+0x32F15B0	C00240F9	ldr x0, [x22]	-
+0x32F15B4	50285A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F15B8	801400B4	cbz x0, #0x32f1848	-
+0x32F15BC	081040F9	ldr x8, [x0, #0x20]	-
+0x32F15C0	481400B4	cbz x8, #0x32f1848	-
+0x32F15C4	08714039	ldrb w8, [x8, #0x1c]	-
+0x32F15C8	68860439	strb w8, [x19, #0x121]	-
+0x32F15CC	C00240F9	ldr x0, [x22]	-
+0x32F15D0	49285A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F15D4	A01300B4	cbz x0, #0x32f1848	-
+0x32F15D8	081040F9	ldr x8, [x0, #0x20]	-
+0x32F15DC	681300B4	cbz x8, #0x32f1848	-
+0x32F15E0	083140B9	ldr w8, [x8, #0x30]	-
+0x32F15E4	682601B9	str w8, [x19, #0x124]	-
+0x32F15E8	C00240F9	ldr x0, [x22]	-
+0x32F15EC	42285A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F15F0	C01200B4	cbz x0, #0x32f1848	-
+0x32F15F4	081040F9	ldr x8, [x0, #0x20]	-
+0x32F15F8	881200B4	cbz x8, #0x32f1848	-
+0x32F15FC	082940B9	ldr w8, [x8, #0x28]	-
+0x32F1600	607640F9	ldr x0, [x19, #0xe8]	-
+0x32F1604	E1031FAA	mov x1, xzr	-
+0x32F1608	682A01B9	str w8, [x19, #0x128]	-
+0x32F160C	4DCD0294	bl #0x33a4b40	DeckUtility$$GetDeckUnificationBandIdName
+0x32F1610	687640F9	ldr x8, [x19, #0xe8]	-
+0x32F1614	602E01B9	str w0, [x19, #0x12c]	-
+0x32F1618	E1031FAA	mov x1, xzr	-
+0x32F161C	E00308AA	mov x0, x8	-
+0x32F1620	71CD0294	bl #0x33a4be4	DeckUtility$$GetDeckUnificationSituationAttribute
+0x32F1624	603201B9	str w0, [x19, #0x130]	-
+0x32F1628	C00240F9	ldr x0, [x22]	-
+0x32F162C	32285A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F1630	C01000B4	cbz x0, #0x32f1848	-
+0x32F1634	081040F9	ldr x8, [x0, #0x20]	-
+0x32F1638	881000B4	cbz x8, #0x32f1848	-
+0x32F163C	08B14039	ldrb w8, [x8, #0x2c]	-
+0x32F1640	68D20439	strb w8, [x19, #0x134]	-
+0x32F1644	C00240F9	ldr x0, [x22]	-
+0x32F1648	2B285A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F164C	E00F00B4	cbz x0, #0x32f1848	-
+0x32F1650	081440F9	ldr x8, [x0, #0x28]	-
+0x32F1654	A80F00B4	cbz x8, #0x32f1848	-
+0x32F1658	085540B9	ldr w8, [x8, #0x54]	-
+0x32F165C	683A01B9	str w8, [x19, #0x138]	-
+0x32F1660	A00240F9	ldr x0, [x21]	-
+0x32F1664	24285A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F1668	000F00B4	cbz x0, #0x32f1848	-
+0x32F166C	011C40F9	ldr x1, [x0, #0x38]	-
+0x32F1670	60020591	add x0, x19, #0x140	-
+0x32F1674	61A200F9	str x1, [x19, #0x140]	-
+0x32F1678	E378EC97	bl #0x2e0fa04	-
+0x32F167C	C00240F9	ldr x0, [x22]	-
+0x32F1680	1D285A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F1684	200E00B4	cbz x0, #0x32f1848	-
+0x32F1688	081040F9	ldr x8, [x0, #0x20]	-
+0x32F168C	E80D00B4	cbz x8, #0x32f1848	-
+0x32F1690	082140B9	ldr w8, [x8, #0x20]	-
+0x32F1694	684A01B9	str w8, [x19, #0x148]	-
+0x32F1698	C00240F9	ldr x0, [x22]	-
+0x32F169C	16285A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F16A0	400D00B4	cbz x0, #0x32f1848	-
+0x32F16A4	081440F9	ldr x8, [x0, #0x28]	-
+0x32F16A8	080D00B4	cbz x8, #0x32f1848	-
+0x32F16AC	081940B9	ldr w8, [x8, #0x18]	-
+0x32F16B0	684E01B9	str w8, [x19, #0x14c]	-
+0x32F16B4	A00240F9	ldr x0, [x21]	-
+0x32F16B8	0F285A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F16BC	600C00B4	cbz x0, #0x32f1848	-
+0x32F16C0	08B840B9	ldr w8, [x0, #0xb8]	-
+0x32F16C4	685201B9	str w8, [x19, #0x150]	-
+0x32F16C8	A00240F9	ldr x0, [x21]	-
+0x32F16CC	0A285A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F16D0	C00B00B4	cbz x0, #0x32f1848	-
+0x32F16D4	019440F9	ldr x1, [x0, #0x128]	-
+0x32F16D8	60620591	add x0, x19, #0x158	-
+0x32F16DC	61AE00F9	str x1, [x19, #0x158]	-
+0x32F16E0	C978EC97	bl #0x2e0fa04	-
+0x32F16E4	C00240F9	ldr x0, [x22]	-
+0x32F16E8	03285A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F16EC	E00A00B4	cbz x0, #0x32f1848	-
+0x32F16F0	081440F9	ldr x8, [x0, #0x28]	-
+0x32F16F4	A80A00B4	cbz x8, #0x32f1848	-
+0x32F16F8	08014139	ldrb w8, [x8, #0x40]	-
+0x32F16FC	68820539	strb w8, [x19, #0x160]	-
+0x32F1700	A00240F9	ldr x0, [x21]	-
+0x32F1704	FC275A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F1708	000A00B4	cbz x0, #0x32f1848	-
+0x32F170C	01A040F9	ldr x1, [x0, #0x140]	-
+0x32F1710	60A20591	add x0, x19, #0x168	-
+0x32F1714	61B600F9	str x1, [x19, #0x168]	-
+0x32F1718	BB78EC97	bl #0x2e0fa04	-
+0x32F171C	691240B9	ldr w9, [x19, #0x10]	-
+0x32F1720	F40313AA	mov x20, x19	-
+0x32F1724	3F090071	cmp w9, #2	-
+0x32F1728	E803939A	csel x8, xzr, x19, eq	-
+0x32F172C	E0000054	b.eq #0x32f1748	-
+0x32F1730	3F110071	cmp w9, #4	-
+0x32F1734	F40313AA	mov x20, x19	-
+0x32F1738	80000054	b.eq #0x32f1748	-
+0x32F173C	F40308AA	mov x20, x8	-
+0x32F1740	3F150071	cmp w9, #5	-
+0x32F1744	81010054	b.ne #0x32f1774	-
+0x32F1748	A00240F9	ldr x0, [x21]	-
+0x32F174C	EA275A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F1750	C00700B4	cbz x0, #0x32f1848	-
+0x32F1754	088C40B9	ldr w8, [x0, #0x8c]	-
+0x32F1758	1F050071	cmp w8, #1	-
+0x32F175C	C1000054	b.ne #0x32f1774	-
+0x32F1760	604640B9	ldr w0, [x19, #0x44]	-
+0x32F1764	615241B9	ldr w1, [x19, #0x150]	-
+0x32F1768	E2031FAA	mov x2, xzr	-
+0x32F176C	99440394	bl #0x33c29d0	MusicVideoUtility$$GetMultiNormalMVLiveModeQuality
+0x32F1770	07000014	b #0x32f178c	-
+0x32F1774	C00240F9	ldr x0, [x22]	-
+0x32F1778	DF275A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F177C	600600B4	cbz x0, #0x32f1848	-
+0x32F1780	081440F9	ldr x8, [x0, #0x28]	-
+0x32F1784	280600B4	cbz x8, #0x32f1848	-
+0x32F1788	003540B9	ldr w0, [x8, #0x34]	-
+0x32F178C	F40500B4	cbz x20, #0x32f1848	-
+0x32F1790	807201B9	str w0, [x20, #0x170]	-
+0x32F1794	C00240F9	ldr x0, [x22]	-
+0x32F1798	D7275A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F179C	600500B4	cbz x0, #0x32f1848	-
+0x32F17A0	081440F9	ldr x8, [x0, #0x28]	-
+0x32F17A4	280500B4	cbz x8, #0x32f1848	-
+0x32F17A8	086140B9	ldr w8, [x8, #0x60]	-
+0x32F17AC	688601B9	str w8, [x19, #0x184]	-
+0x32F17B0	C00240F9	ldr x0, [x22]	-
+0x32F17B4	D0275A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F17B8	800400B4	cbz x0, #0x32f1848	-
+0x32F17BC	081440F9	ldr x8, [x0, #0x28]	-
+0x32F17C0	480400B4	cbz x8, #0x32f1848	-
+0x32F17C4	08A14239	ldrb w8, [x8, #0xa8]	-
+0x32F17C8	68020639	strb w8, [x19, #0x180]	-
+0x32F17CC	A00240F9	ldr x0, [x21]	-
+0x32F17D0	C9275A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F17D4	A00300B4	cbz x0, #0x32f1848	-
+0x32F17D8	08C04239	ldrb w8, [x0, #0xb0]	-
+0x32F17DC	68220639	strb w8, [x19, #0x188]	-
+0x32F17E0	C00240F9	ldr x0, [x22]	-
+0x32F17E4	C4275A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F17E8	000300B4	cbz x0, #0x32f1848	-
+0x32F17EC	081040F9	ldr x8, [x0, #0x20]	-
+0x32F17F0	C80200B4	cbz x8, #0x32f1848	-
+0x32F17F4	085540B9	ldr w8, [x8, #0x54]	-
+0x32F17F8	687601B9	str w8, [x19, #0x174]	-
+0x32F17FC	C00240F9	ldr x0, [x22]	-
+0x32F1800	BD275A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F1804	200200B4	cbz x0, #0x32f1848	-
+0x32F1808	081040F9	ldr x8, [x0, #0x20]	-
+0x32F180C	E80100B4	cbz x8, #0x32f1848	-
+0x32F1810	08614139	ldrb w8, [x8, #0x58]	-
+0x32F1814	68E20539	strb w8, [x19, #0x178]	-
+0x32F1818	C00240F9	ldr x0, [x22]	-
+0x32F181C	B6275A94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x32F1820	400100B4	cbz x0, #0x32f1848	-
+0x32F1824	081440F9	ldr x8, [x0, #0x28]	-
+0x32F1828	080100B4	cbz x8, #0x32f1848	-
+0x32F182C	081D40B9	ldr w8, [x8, #0x1c]	-
+0x32F1830	F65742A9	ldp x22, x21, [sp, #0x20]	-
+0x32F1834	FE0B40F9	ldr x30, [sp, #0x10]	-
+0x32F1838	687E01B9	str w8, [x19, #0x17c]	-
+0x32F183C	F44F43A9	ldp x20, x19, [sp, #0x30]	-
+0x32F1840	E923C46C	ldp d9, d8, [sp], #0x40	-
+0x32F1844	C0035FD6	ret	-
+0x32F1848	2779EC97	bl #0x2e0fce4	-

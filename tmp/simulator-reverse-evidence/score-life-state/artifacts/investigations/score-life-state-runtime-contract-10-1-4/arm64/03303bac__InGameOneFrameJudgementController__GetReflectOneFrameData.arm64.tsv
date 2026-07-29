@@ -1,0 +1,7 @@
+address	bytes	instruction	resolved_target
+0x3303BAC	094440F9	ldr x9, [x0, #0x88]	-
+0x3303BB0	0080C73C	ldur q0, [x0, #0x78]	-
+0x3303BB4	0180C63C	ldur q1, [x0, #0x68]	-
+0x3303BB8	091100F9	str x9, [x8, #0x20]	-
+0x3303BBC	010100AD	stp q1, q0, [x8]	-
+0x3303BC0	C0035FD6	ret	-

@@ -1,0 +1,25 @@
+address	bytes	instruction	resolved_target
+0x32F25C4	FE57BEA9	stp x30, x21, [sp, #-0x20]!	-
+0x32F25C8	F44F01A9	stp x20, x19, [sp, #0x10]	-
+0x32F25CC	F40300AA	mov x20, x0	-
+0x32F25D0	003440F9	ldr x0, [x0, #0x68]	-
+0x32F25D4	600200B4	cbz x0, #0x32f2620	-
+0x32F25D8	F503012A	mov w21, w1	-
+0x32F25DC	811640B9	ldr w1, [x20, #0x14]	-
+0x32F25E0	F303022A	mov w19, w2	-
+0x32F25E4	E2031FAA	mov x2, xzr	-
+0x32F25E8	919E0094	bl #0x331a02c	CheatChecker$$Verify
+0x32F25EC	881640B9	ldr w8, [x20, #0x14]	-
+0x32F25F0	803640F9	ldr x0, [x20, #0x68]	-
+0x32F25F4	0101150B	add w1, w8, w21	-
+0x32F25F8	811600B9	str w1, [x20, #0x14]	-
+0x32F25FC	200100B4	cbz x0, #0x32f2620	-
+0x32F2600	E2031FAA	mov x2, xzr	-
+0x32F2604	869E0094	bl #0x331a01c	CheatChecker$$SetHash
+0x32F2608	881A40B9	ldr w8, [x20, #0x18]	-
+0x32F260C	0801130B	add w8, w8, w19	-
+0x32F2610	881A00B9	str w8, [x20, #0x18]	-
+0x32F2614	F44F41A9	ldp x20, x19, [sp, #0x10]	-
+0x32F2618	FE57C2A8	ldp x30, x21, [sp], #0x20	-
+0x32F261C	C0035FD6	ret	-
+0x32F2620	B175EC97	bl #0x2e0fce4	-

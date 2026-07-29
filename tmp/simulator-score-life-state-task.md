@@ -655,3 +655,28 @@ git rev-list --left-right --count origin/codex/refactor-simulator-implementation
 - Reverse已有高价值历史候选和少量10.1.4入口字节，但没有达到stage-5生产证据完整度。
 - 最大阻断是10.1.4全方法/布局/常量重基线、master provenance、Life上下界冲突、Skill/Fever same-frame冻结及实体业务轨迹。
 - 因此当前只允许B00/B01/B02证据工作；**禁止开始B03生产实现。**
+
+## 15. 执行进度
+
+### B00 任务书
+
+- 状态：`completed`。
+- 提交：`a321524f98aa4750a2f3af2220b98a1fa4445afa`。
+
+### B01 10.1.4静态证据晋升
+
+- 状态：`completed-static-business-gate-open`。
+- Reverse提交：`6c902656c72f3983fb04386038dcfe38f0d53797`，已push，`origin/main...HEAD = 0 0`。
+- 映射结果：`methods=326 mapped`、`layouts=25 unchanged`、`enums=19 unchanged`、`unknown_methods=[]`、`unknown_layouts=[]`。
+- 静态结论：完整OneFrame ABI、Reflect槽位/清理/代表项/两阶段截断、result/Combo表、base score Float32顺序、Life `+0x20/+0x24/+0x28`边界、Damage/Never Die/once heal、Skill `0.75f`与Fever `2.0f`已由10.1.4直接证据固化。
+- Life冲突：`+0x20`为current Life，`+0x24`为显示/技能百分比基准，`+0x28`为业务上限；因此历史`1500/1000`在布局上可解释，但UI denominator identity仍要求10.1.4 R1。
+- 冻结包：`tmp/simulator-reverse-evidence/score-life-state/`，manifest静态条目`335`，Reverse source commit统一为`6c902656c72f3983fb04386038dcfe38f0d53797`。
+- 验证：`verify_score_life_state_static.py`通过；冻结`verify.mjs`结果为`V01=closed business=blocked(D18-D24) entries=335`。
+- 门状态：`version_rebaseline=closed`、`business_state_gate=open`、`production_authorization=false`。
+
+### B02 实体与fixed-event oracle
+
+- 状态：`in-progress-required-before-code`。
+- 待关闭：D18–D24、生产普通/HABAHIRO BMS、deck/start-data/master provenance、R1 raw trace及BS01–BS36。
+- 当前设备在一次retry网络失败后停于标题账号数据警告；其`OK`路径会从头开始游戏，属于破坏性账号动作，未选择且不得作为自动取证步骤。
+- B02关闭前继续禁止B03–B12 production、测试脚本和package script实现。

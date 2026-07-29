@@ -1,0 +1,4 @@
+address	bytes	instruction	resolved_target
+0x32F3BEC	1F0C02F8	str xzr, [x0, #0x20]!	-
+0x32F3BF0	E1031FAA	mov x1, xzr	-
+0x32F3BF4	846FEC17	b #0x2e0fa04	-
