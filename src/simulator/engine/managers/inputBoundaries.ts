@@ -10,8 +10,25 @@ import {
 } from "../data/manualInput";
 import { evidenceRequired, ok, type SimulatorResult } from "../evidence";
 
+export interface ManualInputDispatchPlan {
+  readonly touchCount: number;
+}
+
+export interface ManualInputDispatcher {
+  preflight(
+    frame: PreparedManualInputFrame,
+  ): SimulatorResult<ManualInputDispatchPlan>;
+  commit(plan: ManualInputDispatchPlan): void;
+}
+
+interface PendingManualInputFrame {
+  readonly frame: PreparedManualInputFrame;
+  readonly dispatchPlan: ManualInputDispatchPlan | null;
+}
+
 export interface InputManagerSnapshot {
   readonly playMode: "manual" | "auto-live";
+  readonly dispatcherRegistered: boolean;
   readonly pendingFrame: boolean;
   readonly consumedFrameCount: number;
   readonly lastFrame: ManualInputFrameSnapshot | null;
@@ -21,7 +38,8 @@ export interface InputManagerSnapshot {
 
 export class InputManager {
   private readonly resolutionOwner = new ManualInputResolutionOwner();
-  private pendingFrameValue: PreparedManualInputFrame | null = null;
+  private pendingFrameValue: PendingManualInputFrame | null = null;
+  private dispatcherValue: ManualInputDispatcher | null = null;
   private consumedFrameCountValue = 0;
   private lastFrameValue: ManualInputFrameSnapshot | null = null;
   private readonly traceValue: ManualInputFrameSnapshot[] = [];
@@ -37,6 +55,24 @@ export class InputManager {
     buttonOwner: object,
   ): SimulatorResult<ManualInputButtonResolution> {
     return this.resolutionOwner.issue(position, buttonOwner);
+  }
+
+  registerDispatcher(dispatcher: ManualInputDispatcher): SimulatorResult<void> {
+    if (
+      this.dispatcherValue !== null ||
+      dispatcher === null ||
+      typeof dispatcher !== "object" ||
+      typeof dispatcher.preflight !== "function" ||
+      typeof dispatcher.commit !== "function"
+    ) {
+      return evidenceRequired(
+        "input.invalid-or-duplicate-dispatcher",
+        ["D03", "D14", "D15", "MJ25", "MJ26"],
+        "InputManager accepts exactly one engine-owned manual dispatcher for its initialized session.",
+      );
+    }
+    this.dispatcherValue = dispatcher;
+    return ok(undefined);
   }
 
   prepareOuterFrame(
@@ -80,7 +116,36 @@ export class InputManager {
     if (prepared.status !== "ok") {
       return prepared;
     }
-    this.pendingFrameValue = prepared.value;
+    let dispatchPlan: ManualInputDispatchPlan | null = null;
+    if (prepared.value.touches.length > 0) {
+      if (this.dispatcherValue === null) {
+        return evidenceRequired(
+          "input.manual-dispatcher-unregistered",
+          ["D03", "D14", "D15", "MJ25", "MJ26"],
+          "A non-empty manual frame requires the single engine-owned dispatcher before any resolver capability is consumed.",
+        );
+      }
+      const preflight = this.dispatcherValue.preflight(prepared.value);
+      if (preflight.status !== "ok") {
+        return preflight;
+      }
+      dispatchPlan = preflight.value;
+      if (dispatchPlan.touchCount !== prepared.value.touches.length) {
+        return evidenceRequired(
+          "input.invalid-dispatch-plan",
+          ["D14", "D15", "MJ25", "MJ26"],
+          "The dispatcher plan must cover every touch in caller enumeration order.",
+        );
+      }
+    }
+    const committed = this.resolutionOwner.commit(prepared.value);
+    if (committed.status !== "ok") {
+      return committed;
+    }
+    this.pendingFrameValue = Object.freeze({
+      frame: prepared.value,
+      dispatchPlan,
+    });
     return ok(undefined);
   }
 
@@ -94,18 +159,28 @@ export class InputManager {
     ) {
       return ok(undefined);
     }
-    const frame = this.pendingFrameValue;
-    if (frame === null) {
+    const pending = this.pendingFrameValue;
+    if (pending === null) {
       return evidenceRequired(
         "input.manual-frame-not-staged",
         ["D14", "MJ01", "MJ25"],
         "InputManager consumes exactly one explicitly staged manual frame per active outer update.",
       );
     }
+    if (pending.dispatchPlan !== null) {
+      if (this.dispatcherValue === null) {
+        return evidenceRequired(
+          "input.manual-dispatcher-lost",
+          ["D14", "D15", "MJ25", "MJ26"],
+          "The owner that preflighted a non-empty frame must remain registered until the same outer-frame input dispatch.",
+        );
+      }
+      this.dispatcherValue.commit(pending.dispatchPlan);
+    }
     this.pendingFrameValue = null;
     const snapshot = Object.freeze({
       frameIndex: this.consumedFrameCountValue,
-      touches: Object.freeze(frame.touches.map((touch) => Object.freeze({
+      touches: Object.freeze(pending.frame.touches.map((touch) => Object.freeze({
         fingerId: touch.fingerId,
         phase: touch.phase,
         position: Object.freeze({ ...touch.position }),
@@ -126,6 +201,7 @@ export class InputManager {
   snapshot(): InputManagerSnapshot {
     return Object.freeze({
       playMode: this.playMode.kind,
+      dispatcherRegistered: this.dispatcherValue !== null,
       pendingFrame: this.pendingFrameValue !== null,
       consumedFrameCount: this.consumedFrameCountValue,
       lastFrame: copyFrameSnapshot(this.lastFrameValue),

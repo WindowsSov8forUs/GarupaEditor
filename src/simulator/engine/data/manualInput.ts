@@ -61,6 +61,7 @@ export interface PreparedManualInputTouch extends ManualInputTouchSnapshot {
 
 export interface PreparedManualInputFrame {
   readonly touches: readonly PreparedManualInputTouch[];
+  readonly buttonResolutions: readonly ManualInputButtonResolution[];
 }
 
 interface OwnedButtonResolution {
@@ -74,6 +75,7 @@ export class ManualInputResolutionOwner {
     ManualInputButtonResolution,
     OwnedButtonResolution
   >();
+  private readonly ownedPreparedFrames = new WeakSet<PreparedManualInputFrame>();
   private initializedValue = false;
   private disposedValue = false;
   private issuedCountValue = 0;
@@ -141,7 +143,7 @@ export class ManualInputResolutionOwner {
 
     const seenFingerPhases = new Set<string>();
     const seenResolutions = new Set<ManualInputButtonResolution>();
-    const resolutionsToConsume: OwnedButtonResolution[] = [];
+    const buttonResolutions: ManualInputButtonResolution[] = [];
     const touches: PreparedManualInputTouch[] = [];
 
     for (const touch of frame.touches) {
@@ -188,7 +190,7 @@ export class ManualInputResolutionOwner {
           );
         }
         seenResolutions.add(touch.buttonResolution);
-        resolutionsToConsume.push(owned);
+        buttonResolutions.push(touch.buttonResolution);
         buttonOwner = owned.buttonOwner;
       }
 
@@ -201,11 +203,47 @@ export class ManualInputResolutionOwner {
       }));
     }
 
-    for (const resolution of resolutionsToConsume) {
+    const prepared = Object.freeze({
+      touches: Object.freeze(touches),
+      buttonResolutions: Object.freeze(buttonResolutions),
+    });
+    this.ownedPreparedFrames.add(prepared);
+    return ok(prepared);
+  }
+
+  commit(prepared: PreparedManualInputFrame): SimulatorResult<void> {
+    if (!this.initializedValue || this.disposedValue) {
+      return evidenceRequired(
+        "input.frame.commit-outside-initialized-session",
+        ["D14", "MJ25"],
+        "A prepared frame cannot consume capabilities outside its initialized engine session.",
+      );
+    }
+    if (!this.ownedPreparedFrames.has(prepared)) {
+      return evidenceRequired(
+        "input.foreign-prepared-frame",
+        ["D03", "D15", "MJ26"],
+        "Only the exact immutable frame prepared by this resolver owner can consume its capabilities.",
+      );
+    }
+    const owned: OwnedButtonResolution[] = [];
+    for (const handle of prepared.buttonResolutions) {
+      const resolution = this.ownedResolutions.get(handle);
+      if (resolution === undefined || resolution.consumed) {
+        return evidenceRequired(
+          "input.foreign-or-invalid-button-resolution",
+          ["D03", "D15", "MJ26"],
+          "Every prepared button resolution must remain owned and unused until whole-frame dispatch preflight succeeds.",
+        );
+      }
+      owned.push(resolution);
+    }
+    for (const resolution of owned) {
       resolution.consumed = true;
       this.consumedCountValue += 1;
     }
-    return ok(Object.freeze({ touches: Object.freeze(touches) }));
+    this.ownedPreparedFrames.delete(prepared);
+    return ok(undefined);
   }
 
   dispose(): void {

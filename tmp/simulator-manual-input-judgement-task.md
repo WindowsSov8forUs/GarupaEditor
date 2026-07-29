@@ -53,7 +53,7 @@
 | M01 晋升并修正静态证据 | **已完成** | 10.1.4的103方法/12 type/13 enum、独立Slide Wait与Slide band构造已提交并冻结 |
 | M02 建立实体/固定事件oracle | **已完成** | 5条R1、MJ01–MJ26、D03–D15、portable contract及126项source/copy verifier通过 |
 | M03 锁定输入数据与宿主边界 | **已完成** | 显式不可变input frame、owner-issued button能力、生命周期和失败优先级闭合 |
-| M04 恢复输入分发与候选仲裁 | 未开始 | phase、finger/button/note owner、wide/ordinary/Slide/tie行为匹配 |
+| M04 恢复输入分发与候选仲裁 | 进行中：事务基础生产完成，分发/候选待实现 | phase、finger/button/note owner、wide/ordinary/Slide/tie行为匹配 |
 | M05 恢复窗口与Single/Flick判定 | 未开始 | GetResult/JudgeNote、Normal/Flick/Directional的边界bits与事件顺序匹配 |
 | M06 恢复Multiple手动判定 | 未开始 | 真实touch方向、count阈值、side owner、finish/deactivate匹配 |
 | M07 恢复Long手动状态机 | 未开始 | Began/Hold/Moved/Ended、合成release、grace、头尾与finger清理匹配 |
@@ -116,6 +116,14 @@
 - MJ25验证pause不解析malformed frame，resume恢复显式帧门，Auto Live real touch零mutation拒绝，disposed及latched fault优先于NaN delta和malformed shape。
 - MJ26验证host forged capability全域零mutation，以及direct owner的cross-owner、plain/alias、重复finger-phase、later-invalid、位置不匹配、跨帧重复消费、finger越界、Canceled、NaN和非exact-Float32。
 - snapshot连续读取deep-equal且序列化结果不含capability/button owner。定向5项、dependency verifier、first-slice 17、clock 15、Auto Live AL01–AL22均通过。
+
+#### 2026-07-29 第七批：M04整帧dispatch事务基础
+
+- 将resolution owner的pure `preflight`与`commit`拆分：preflight生成owner登记的immutable prepared-frame且不消费handle；只有同owner、initialized、未dispose的exact prepared identity可commit。
+- `InputManager`增加单一engine-owned dispatcher注册边界。非空manual frame先完成raw/capability preflight，再要求dispatcher对caller原序全部touch生成等长plan，最后才统一消费resolution并stage；缺dispatcher、plan漏项或后项失败均零消费、零pending、零trace。
+- `execInput`只提交已preflight plan，随后记录不含capability/button对象的trace；dispatcher commit不允许返回可失败结果，避免输入开始后再引入portable validation。
+- 本批只建立M04事务承载层，不宣称已恢复InputManager phase分发、GamePlayButton数组或NoteManager候选；这些仍处于M04后续批，禁止用no-op dispatcher进入production host。
+- production与testing TypeScript通过；M03定向兼容测试已在工作树扩展为6项，按生产/测试分离纪律留待下一提交。
 
 ## 2. 固定范围
 
