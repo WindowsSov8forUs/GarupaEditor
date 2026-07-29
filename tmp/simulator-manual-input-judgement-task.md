@@ -181,6 +181,15 @@
 - Normal commit顺序为button/finger owner→owner-bound OneFrame setup→Note Deactive/finger清理；score/power/life/skill/audio/render字段继续在类型上缺席。
 - isolated testing TypeScript、first-slice 17、Auto Live AL01–AL22及manual dispatch 5项通过；测试桩接口适配与Normal定向测试留到独立测试提交。
 
+#### 2026-07-29 第十五批：M05 Normal定向测试
+
+- 新增`simulator:test:manual-normal`，先直接读取冻结R14/MJ11：确认Long Good实体`raw=adjusted=2`、`addCombo=-1`、Slow，以及Miss实体`raw=adjusted=0`、timing清零；不由production实现生成期望。
+- production图使用真实BPM120/music position0和chart absolutePos生成判定：position2→Perfect、10→Good、13→None；测试不注入result/timing/slot/note owner。
+- Perfect验证preflight无controller mutation、commit严格get-usable→setup-manual、slot0闭合字段、active removal与finger清理；Good验证raw/adjusted identity、Fast、combo -1及单entry aggregate。
+- None验证只保留Began finger→button，不绑定touch-note、不预留OneFrame且note继续active。
+- 两个不同button的Perfect同帧验证第二reservation在preflight失败，两个resolution均未消费，dispatcher finger、NoteManager snapshot、OneFrame slot/trace全部零mutation。
+- 原M04测试桩只适配新的owner-produced Began plan接口；production文件未在测试提交中修改。Normal定向4项与dependency verifier通过。
+
 ## 2. 固定范围
 
 ### 2.1 纳入范围

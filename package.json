@@ -21,6 +21,7 @@
     "simulator:test:manual-input-boundary": "node src/simulator/testing/runManualInputBoundaryTests.mjs",
     "simulator:test:manual-input-dispatch": "node src/simulator/testing/runManualInputDispatchTests.mjs",
     "simulator:test:manual-judgement": "node src/simulator/testing/runManualJudgementTests.mjs",
+    "simulator:test:manual-normal": "node src/simulator/testing/runManualNormalJudgementTests.mjs",
     "tauri": "tauri",
     "desktop:dev": "tauri dev",
     "desktop:build": "tauri build",

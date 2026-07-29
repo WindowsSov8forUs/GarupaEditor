@@ -92,9 +92,7 @@ class ManualDispatchNote extends NoteBase {
     super(poolObjectId);
   }
 
-  override preflightManualTouchBegan(
-    input: ManualNoteTouchInput,
-  ): SimulatorResult<"bind" | "none"> {
+  override preflightManualTouchBegan(input: ManualNoteTouchInput) {
     this.preflightPhases.push(input.phase);
     return this.beganDecision === "reject"
       ? evidenceRequired(
@@ -102,7 +100,11 @@ class ManualDispatchNote extends NoteBase {
           ["D15", "MJ26"],
           "later family rejection",
         )
-      : ok(this.beganDecision);
+      : ok(Object.freeze({
+          outcome: this.beganDecision,
+          judgementPlan: null,
+          familyData: null,
+        }));
   }
 
   override commitManualTouchBegan(input: ManualNoteTouchInput): void {
