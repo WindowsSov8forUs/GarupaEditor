@@ -28,6 +28,7 @@ interface Graph {
   readonly manager: NoteManager;
   readonly oneFrame: InGameOneFrameJudgementController;
   readonly geometry: Geometry;
+  readonly music: InGameMusicScoreController;
 }
 interface TestCase { readonly name: string; readonly run: () => void }
 const tests: TestCase[] = [];
@@ -128,7 +129,7 @@ function createGraph(afterNoteType: AfterNoteTypeValue): Graph {
   const dispatcher = new GamePlayInputDispatcher(manager);
   requireOk(input.registerDispatcher(dispatcher), "register dispatcher");
   requireOk(input.initialize(), "initialize input");
-  return { input, dispatcher, manager, oneFrame, geometry };
+  return { input, dispatcher, manager, oneFrame, geometry, music };
 }
 function longState(value: Graph): NoteState {
   const pool = value.manager.snapshot().pools.find((candidate) => candidate.family === "long");
@@ -215,6 +216,20 @@ test("MJ14 grace不clamp且physical Flick无move success转Miss", () => {
   const tail = reflectTail(value);
   deep([tail.noteType, tail.rawResult, tail.judgeTiming], [5, NoteResultType.Miss, 0],
     "physical Flick without success converts to Miss and clears timing");
+});
+
+test("M09 Long timeout deactivation同步清理button与finger owner", () => {
+  const value = createGraph(AfterNoteType.Normal); begin(value, ButtonType.Button_01_BMS_1P_01);
+  deep(value.dispatcher.snapshot().buttonWithFingerId.slice(0, 1), [1],
+    "Long Stop retains finger button before timeout");
+  requireOk(value.music.advance(Math.fround(100 / 96)), "advance beyond Long tail timeout");
+  requireOk(value.manager.execUpdate(0), "execute Long tail timeout");
+  const tail = reflectTail(value);
+  deep([tail.noteType, tail.rawResult], [2, NoteResultType.Miss], "Long timeout tail Miss");
+  deep(value.dispatcher.snapshot().buttonWithFingerId.slice(0, 1), [null],
+    "timeout clears dispatcher finger owner");
+  equal(value.dispatcher.snapshot().buttons[1]?.touchOwners.length, 0,
+    "timeout clears GamePlayButton note owner");
 });
 
 let passed = 0;

@@ -58,11 +58,6 @@ function requireOk<T>(result: SimulatorResult<T>, message: string): T {
   return result.value;
 }
 
-function requireEvidence<T>(result: SimulatorResult<T>, capability: string): void {
-  assert(result.status === "evidence-required", `${capability}: ${result.status}`);
-  assertEqual(result.capability, capability, "failure capability");
-}
-
 class NormalClock implements NoteManagerClock {
   validateAdvanceSequence(): SimulatorResult<void> {
     return ok(undefined);
@@ -231,28 +226,25 @@ test("Normal None只保留button owner且不绑定note或OneFrame", () => {
     "None does not bind button touch-note owner");
 });
 
-test("同帧第二manual judgement在全域commit前失败关闭", () => {
+test("M10同帧两个manual judgement完整preflight后按caller顺序commit", () => {
   const graph = createNormalGraph([
     normalSource("first", 3, ButtonType.Button_01_BMS_1P_01, 2),
     normalSource("second", 4, ButtonType.Button_02_BMS_1P_02, 2),
   ]);
   const first = resolution(graph, ButtonType.Button_01_BMS_1P_01);
   const second = resolution(graph, ButtonType.Button_02_BMS_1P_02);
-  const inputBefore = graph.input.snapshot();
-  const managerBefore = graph.manager.snapshot();
-  requireEvidence(graph.input.prepareOuterFrame({
+  requireOk(graph.input.prepareOuterFrame({
     touches: [began(0, first), began(1, second)],
-  }), "one-frame.multiple-manual-judgements-unimplemented");
-  assertDeepEqual(graph.input.snapshot(), inputBefore,
-    "failed second judgement consumes no resolution");
-  assertDeepEqual(graph.manager.snapshot(), managerBefore,
-    "failed second judgement writes no note state");
-  assertDeepEqual(graph.dispatcher.snapshot().buttonWithFingerId.slice(0, 2), [null, null],
-    "failed second judgement writes no finger owner");
+  }), "preflight two manual judgements");
   assertEqual(graph.oneFrame.snapshot().inUseContainerIds.length, 0,
-    "failed local reservations commit no OneFrame slot");
-  assertDeepEqual(graph.oneFrame.snapshot().trace, [],
-    "failed local reservations append no OneFrame trace");
+    "full-frame preflight keeps both reservations local");
+  requireOk(graph.input.execInput(GameState.PlayingSound), "commit two manual judgements");
+  const reflected = requireOk(graph.oneFrame.reflectOneFrameData(), "reflect two manual judgements");
+  assert(reflected !== null, "two manual judgements reflect once");
+  assertDeepEqual(reflected.entries.map((entry) => [entry.noteIndex, entry.noteType]),
+    [[3, 0], [4, 0]], "caller-order reservations commit to first-unused slots");
+  assertDeepEqual(graph.dispatcher.snapshot().buttonWithFingerId.slice(0, 2), [null, null],
+    "immediate Normal deactivation clears dispatcher finger owners");
 });
 
 let passed = 0;

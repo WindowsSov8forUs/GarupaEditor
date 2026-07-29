@@ -26,6 +26,7 @@
     "simulator:test:manual-multiple": "node src/simulator/testing/runManualMultipleDirectionalJudgementTests.mjs",
     "simulator:test:manual-long": "node src/simulator/testing/runManualLongJudgementTests.mjs",
     "simulator:test:manual-slide": "node src/simulator/testing/runManualSlideJudgementTests.mjs",
+    "simulator:test:manual-timeout": "node src/simulator/testing/runManualTimeoutJudgementTests.mjs",
     "tauri": "tauri",
     "desktop:dev": "tauri dev",
     "desktop:build": "tauri build",

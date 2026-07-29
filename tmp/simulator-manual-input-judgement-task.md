@@ -58,8 +58,8 @@
 | M06 恢复Multiple手动判定 | **已完成**：真实touch、count/side/finger owner、type10、duplicate与production group测试通过 | 真实touch方向、count阈值、side owner、finish/deactivate匹配 |
 | M07 恢复Long手动状态机 | **已完成**：Began/hold/move/release/grace/type2/4/5/6/7及MJ11–MJ15测试通过 | Began/Hold/Moved/Ended、合成release、grace、头尾与finger清理匹配 |
 | M08 恢复Slide手动状态机 | **已完成**：head/intermediate/end、band/cursor/near-line、invisible/release及MJ18–MJ22通过 | head/intermediate/end、band cursor、release/miss/invisible推进匹配 |
-| M09 恢复自然timeout Miss | 进行中：production完成，MJ16/MJ17/MJ23/MJ24独立测试提交待完成 | Long start/end、Slide wait/stop及同帧Miss顺序匹配 |
-| M10 接入调度、OneFrame与原子边界 | 进行中：manual多reservation与deactivation cleanup owner已接入，系统矩阵待完成 | 每外帧一次输入、adaptive/pause/fault/dispose、五槽与批原子性闭合 |
+| M09 恢复自然timeout Miss | **已完成**：Long start/end、Slide front/current/invisible及MJ16/MJ17/MJ23/MJ24通过 | Long start/end、Slide wait/stop及同帧Miss顺序匹配 |
+| M10 接入调度、OneFrame与原子边界 | **已完成**：多manual预留、五槽、deactivation cleanup及pause/fault/原子矩阵通过 | 每外帧一次输入、adaptive/pause/fault/dispose、五槽与批原子性闭合 |
 | M11 production oracle与独立验收 | 未开始 | 完整回归、production chart、证据验证和组合矩阵无开放阻断 |
 
 ### 1.4 初始批次记录
@@ -324,6 +324,16 @@
 - Long timeout两个Miss共享同一transaction，确保只剩一槽时不会只提交第一个；跨producer已提交slot仍保持原作fixed pool exhaustion行为。
 - NoteManager新增单一dispatcher-owned deactivation callback；GamePlayButton按note identity清除touchNotes/beganPosition，dispatcher同步清finger→button owner，Normal/movement/timeout的deactivate不遗留stale owner。
 - production/testing TypeScript、M09 4项、M10双Normal aggregation、manual boundary 7/7、dispatch 5/5、M07 4/4、M08 4/4、first-slice 17/17与Auto Live AL01–AL22通过；测试文件留独立提交。
+
+#### 2026-07-29 第三十二批：M09/M10独立测试
+
+- 新增MJ16/MJ17/MJ23/MJ24 runner，直接校验Long Wait/Stop/execOver、Slide Wait/Stop/OnUpdate/onMiss/onMissAfter/killInvisible冻结ARM64与oracle unknown_fields=[]。
+- 固定deadline distance bits `0x41A66666`及next Float32 `0x41A66667`，不调用production工具反算输入；Long start equal无输出、next一次Reflect严格得到两个type1 Miss，tail严格得到单type2 Miss。
+- Slide front equal无输出、next提交root type8 Miss并Stop；parent连续跳过两个invisible cursor至terminal，terminal strict timeout提交tail type8 Miss并deactivate。
+- MJ24直接以六个独立owner source预留：前五个保持transaction-local且zero OneFrame mutation，第六个固定`one-frame.pool-exhausted`，abort后无partial slot。
+- M10更新M05旧断言：双Normal同outer frame完整preflight不写slot，commit按caller顺序占slot0/1并一次Reflect；immediate deactivation同步清dispatcher owner。
+- Long生产图补充Stop timeout集成：绑定finger/button后自然tail Miss，NoteManager deactivation callback同步清finger→button与button→note identity。
+- M09 4/4、M07 Long 5/5、M10 Normal 4/4、manual boundary 7/7、dispatch 5/5、M08 4/4、first-slice 17/17、Auto Live AL01–AL22及production/testing TypeScript通过；M09/M10关闭，进入M11。
 
 ## 2. 固定范围
 
