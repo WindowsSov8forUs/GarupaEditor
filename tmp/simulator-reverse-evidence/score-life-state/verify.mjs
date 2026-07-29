@@ -43,12 +43,13 @@ function filesRecursively(root, current = root) {
   return files;
 }
 
-check(manifest.schemaVersion === 2 && manifest.entries.length === 350, "Unexpected evidence manifest shape");
+check(manifest.schemaVersion === 2 && manifest.entries.length === 351, "Unexpected evidence manifest shape");
 check(
   manifest.source.staticEvidenceCommit === "6c902656c72f3983fb04386038dcfe38f0d53797" &&
     manifest.source.runtimeInputCommit === "1ee976ea1de24cb0567762a74e2d091ae4c78464" &&
     manifest.source.runtimeEvidenceCommit === "72aa279fb07041b04ca649df918fa35ab0490d91" &&
-    manifest.source.capturePlanCommit === "e65f3411d1a91cfa5ecf0d7b29e99605b04e8a41",
+    manifest.source.capturePlanCommit === "e65f3411d1a91cfa5ecf0d7b29e99605b04e8a41" &&
+    manifest.source.capturePlanV2Commit === "3adf31f987830ce5b82aba0d92813b69fda3cec7",
   "Unexpected Reverse evidence commits",
 );
 check(
@@ -68,10 +69,10 @@ check(
     manifest.counts.enums === 19 &&
     manifest.counts.arm64Slices === 326 &&
     manifest.counts.staticEntries === 335 &&
-    manifest.counts.totalEntries === 350 &&
+    manifest.counts.totalEntries === 351 &&
     manifest.counts.r0InputEntries === 12 &&
     manifest.counts.r1EvidenceEntries === 6 &&
-    manifest.counts.capturePlanEntries === 1 &&
+    manifest.counts.capturePlanEntries === 2 &&
     manifest.counts.productionBms === 2 &&
     manifest.counts.cacheRecords === 2 &&
     manifest.counts.captureTargets === 50 &&
@@ -105,7 +106,8 @@ check(
     runtimeInputGate.blockingFindings.join(",") ===
       "D18-remaining,D19,D20,D21,D22-remaining,D23-master-start-data,D24" &&
     runtimeInputGate.r1TraceCount === 1 &&
-    runtimeInputGate.pendingPlans.join(",") === "positive-retry-all-lanes-score-skill" &&
+    runtimeInputGate.pendingPlans.join(",") === "positive-retry-all-lanes-early-score-skill-v2" &&
+    runtimeInputGate.supersededPlans.join(",") === "positive-retry-all-lanes-score-skill" &&
     runtimeInputGate.productionAuthorization === false,
   "Runtime input gate was incorrectly closed",
 );
@@ -114,11 +116,13 @@ git(["cat-file", "-e", `${manifest.source.staticEvidenceCommit}^{commit}`], sour
 git(["cat-file", "-e", `${manifest.source.runtimeInputCommit}^{commit}`], sourceRoot);
 git(["cat-file", "-e", `${manifest.source.runtimeEvidenceCommit}^{commit}`], sourceRoot);
 git(["cat-file", "-e", `${manifest.source.capturePlanCommit}^{commit}`], sourceRoot);
+git(["cat-file", "-e", `${manifest.source.capturePlanV2Commit}^{commit}`], sourceRoot);
 const evidenceCommits = [
   manifest.source.staticEvidenceCommit,
   manifest.source.runtimeInputCommit,
   manifest.source.runtimeEvidenceCommit,
   manifest.source.capturePlanCommit,
+  manifest.source.capturePlanV2Commit,
 ];
 const ids = new Set();
 const copiedPaths = new Set();
@@ -278,10 +282,14 @@ const runtimeStatus = json("runtime_input_status.json");
 check(
   runtimeStatus.status === "runtime-inputs-and-r1-partial-locked-business-gate-open" &&
     runtimeStatus.runtime.r1_trace_count === 1 &&
-    runtimeStatus.runtime.pending_capture_plans.length === 1 &&
+    runtimeStatus.runtime.pending_capture_plans.length === 2 &&
     runtimeStatus.runtime.pending_capture_plans[0].scenario_id ===
       "positive-retry-all-lanes-score-skill" &&
     runtimeStatus.runtime.pending_capture_plans[0].status ===
+      "superseded-control-plan-no-trace-promoted" &&
+    runtimeStatus.runtime.pending_capture_plans[1].scenario_id ===
+      "positive-retry-all-lanes-early-score-skill-v2" &&
+    runtimeStatus.runtime.pending_capture_plans[1].status ===
       "committed-plan-not-runtime-evidence" &&
     runtimeStatus.gates.D18 === "partial-required-before-code" &&
     runtimeStatus.gates.D22 === "partial-required-before-code" &&
@@ -337,6 +345,24 @@ check(
         action.duration_ms === 450,
     ),
   "Frozen positive-input plan or committed control provenance changed",
+);
+
+const positiveEarlyPlan = json("runtime/positive-retry-all-lanes-early-r1-plan.json");
+const expectedEarlyActions = structuredClone(positiveActions);
+expectedEarlyActions[2].delay_ms = 500;
+expectedEarlyActions[2].marker = "positive-v2-early-gameplay-window";
+check(
+  positiveEarlyPlan.schema_version === 1 &&
+    positiveEarlyPlan.scenario_id === "positive-retry-all-lanes-early-score-skill-v2" &&
+    positiveEarlyPlan.control_provenance.source_commit ===
+      "e65f3411d1a91cfa5ecf0d7b29e99605b04e8a41" &&
+    positiveEarlyPlan.control_provenance.source_path ===
+      "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime/positive-retry-all-lanes-r1-plan.json" &&
+    positiveEarlyPlan.control_provenance.source_sha256 ===
+      "2EBB8033430D2A343EAB163DDDB176D5F182634C59EC5EF21AEBBE908D68C228" &&
+    JSON.stringify(positiveEarlyPlan.actions) === JSON.stringify(expectedEarlyActions) &&
+    positiveEarlyPlan.tail_seconds === 5,
+  "Frozen early positive-input plan differs beyond the committed wait adjustment",
 );
 
 const traceBytes = gunzipSync(
@@ -428,7 +454,7 @@ for (const [path, fragment] of criticalText) {
 }
 
 console.log(
-  `score-life-state evidence verified: methods=326 layouts=25 enums=19 BMS=2 R1=1(partial D18/D22) plan=1(pending) ` +
+  `score-life-state evidence verified: methods=326 layouts=25 enums=19 BMS=2 R1=1(partial D18/D22) plans=2(pending=1) ` +
     `V01=closed business=blocked(D18-D24) entries=${manifest.entries.length} ` +
     `index=${validateIndex ? "checked" : "skipped"}`,
 );

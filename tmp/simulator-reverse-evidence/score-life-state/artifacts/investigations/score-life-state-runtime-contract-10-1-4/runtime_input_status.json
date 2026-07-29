@@ -61,11 +61,16 @@
       {
         "path": "runtime/positive-retry-all-lanes-r1-plan.json",
         "scenario_id": "positive-retry-all-lanes-score-skill",
+        "status": "superseded-control-plan-no-trace-promoted"
+      },
+      {
+        "path": "runtime/positive-retry-all-lanes-early-r1-plan.json",
+        "scenario_id": "positive-retry-all-lanes-early-score-skill-v2",
         "status": "committed-plan-not-runtime-evidence",
         "intended_scope": ["D18-positive-judgement", "D18-active-skill", "D20-freeze-observation"]
       }
     ],
-    "operational_blocker": "One no-input retry trace is closed. The positive-input plan must be committed and frozen before execution; its future trace cannot close active Skill or same-frame findings unless those events are actually observed.",
+    "operational_blocker": "One no-input retry trace is closed. The v2 positive-input plan must be committed and frozen before execution; its future trace cannot close active Skill or same-frame findings unless those events are actually observed.",
     "synthetic_trace_allowed": false
   },
   "gates": {

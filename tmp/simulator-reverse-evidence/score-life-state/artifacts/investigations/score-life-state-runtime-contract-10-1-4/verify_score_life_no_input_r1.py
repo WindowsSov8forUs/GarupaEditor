@@ -16,6 +16,7 @@ TRACE = ROOT / "runtime" / "no-input-retry-life-gameover.trace.json.gz"
 PLAN = ROOT / "runtime" / "no-input-retry-plan.json"
 CAPTURE = ROOT / "capture_score_life_state_runtime.py"
 POSITIVE_PLAN = ROOT / "runtime" / "positive-retry-all-lanes-r1-plan.json"
+POSITIVE_EARLY_PLAN = ROOT / "runtime" / "positive-retry-all-lanes-early-r1-plan.json"
 LIB_SHA256 = "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F"
 METADATA_SHA256 = "298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F"
 EXPECTED_COUNTS = {
@@ -81,7 +82,14 @@ def record_snapshots(value: Any) -> list[dict[str, Any]]:
 
 
 def main() -> int:
-    require(TRACE.is_file() and PLAN.is_file() and CAPTURE.is_file() and POSITIVE_PLAN.is_file(), "R1 input file missing")
+    require(
+        TRACE.is_file()
+        and PLAN.is_file()
+        and CAPTURE.is_file()
+        and POSITIVE_PLAN.is_file()
+        and POSITIVE_EARLY_PLAN.is_file(),
+        "R1 input file missing",
+    )
     positive_plan = json.loads(POSITIVE_PLAN.read_text(encoding="utf-8"))
     require(positive_plan["schema_version"] == 1, "positive plan schema differs")
     require(positive_plan["scenario_id"] == "positive-retry-all-lanes-score-skill", "positive scenario differs")
@@ -137,6 +145,24 @@ def main() -> int:
         ),
         "positive hold controls differ",
     )
+    early_plan = json.loads(POSITIVE_EARLY_PLAN.read_text(encoding="utf-8"))
+    require(early_plan["schema_version"] == 1, "early positive plan schema differs")
+    require(early_plan["scenario_id"] == "positive-retry-all-lanes-early-score-skill-v2", "early positive scenario differs")
+    require(
+        early_plan["control_provenance"]
+        == {
+            "source_commit": "e65f3411d1a91cfa5ecf0d7b29e99605b04e8a41",
+            "source_path": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime/positive-retry-all-lanes-r1-plan.json",
+            "source_sha256": "2EBB8033430D2A343EAB163DDDB176D5F182634C59EC5EF21AEBBE908D68C228",
+            "change": "only actions[2].delay_ms changes from 7000 to 500 and its marker becomes positive-v2-early-gameplay-window; all 217 lane/hold controls are unchanged",
+        },
+        "early positive plan provenance differs",
+    )
+    expected_early_actions = json.loads(json.dumps(positive_actions))
+    expected_early_actions[2]["delay_ms"] = 500
+    expected_early_actions[2]["marker"] = "positive-v2-early-gameplay-window"
+    require(early_plan["actions"] == expected_early_actions, "early positive controls differ beyond the wait")
+    require(early_plan["tail_seconds"] == 5, "early positive tail differs")
     with gzip.open(TRACE, "rt", encoding="utf-8") as stream:
         trace = json.load(stream)
     plan = json.loads(PLAN.read_text(encoding="utf-8"))

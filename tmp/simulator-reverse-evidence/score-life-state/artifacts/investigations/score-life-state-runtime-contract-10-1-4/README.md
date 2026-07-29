@@ -52,7 +52,8 @@ These static conclusions do **not** authorize implementation. D18–D24, master/
 - `runtime_input_status.json`: D18/D22/D23 partial state and remaining runtime blockers.
 - `runtime/no-input-retry-plan.json`: UI-only Retry plan from an already visible Live Failed dialog.
 - `runtime/no-input-retry-life-gameover.trace.json.gz`: successful observation-only R1 trace with 1,863 contiguous events.
-- `runtime/positive-retry-all-lanes-r1-plan.json`: pending positive judgement/Skill observation plan, derived from the committed manual-stage seven-lane control sequence; it is not a trace and closes no finding.
+- `runtime/positive-retry-all-lanes-r1-plan.json`: superseded 7-second control plan, derived from the committed manual-stage seven-lane sequence; no trace from it is promoted.
+- `runtime/positive-retry-all-lanes-early-r1-plan.json`: pending v2 positive judgement/Skill plan; only the pre-input wait is reduced from 7,000ms to 500ms and all 217 lane/hold controls remain unchanged.
 - `SHA256SUMS`: complete hashes for all investigation files except the checksum file itself.
 
 ## Reproduce static extraction
@@ -93,4 +94,4 @@ py -3.14 artifacts/investigations/score-life-state-runtime-contract-10-1-4/verif
 
 The trace was captured through an explicit non-default loopback server forwarded by ADB, using `--device-address 127.0.0.1:47913`; the transport is embedded in the trace capability record. This changes only the Frida connection path and does not alter the observation agent or game state.
 
-The no-input retry trace directly fixes stable `InGameRecord` identity, Life initialization `1000/1000/2000`, 11 Miss projections, slot-order Life mutation to zero, inactive Skill state, and the nested single-player Game Over transition. It closes only subscopes of D18 and D22. The positive-input plan is committed separately before execution and reuses only the already committed lane coordinates/cycle controls; until a resulting raw trace is independently verified and committed it is not evidence. Positive judgement, active Skill, Fever, heal/guard/Never Die, same-frame transitions, post-Game-Over lifecycle, deck/start-data/master rows, BS01–BS36 and final `closure.json` remain open. The business gate therefore stays open; this R1 trace must not be extrapolated into production authorization.
+The no-input retry trace directly fixes stable `InGameRecord` identity, Life initialization `1000/1000/2000`, 11 Miss projections, slot-order Life mutation to zero, inactive Skill state, and the nested single-player Game Over transition. It closes only subscopes of D18 and D22. The first positive-input control plan is retained only as superseded provenance and has no promoted trace. Its v2 changes only the pre-input wait to 500ms; until a resulting raw trace is independently verified and committed it is not evidence. Positive judgement, active Skill, Fever, heal/guard/Never Die, same-frame transitions, post-Game-Over lifecycle, deck/start-data/master rows, BS01–BS36 and final `closure.json` remain open. The business gate therefore stays open; this R1 trace must not be extrapolated into production authorization.
