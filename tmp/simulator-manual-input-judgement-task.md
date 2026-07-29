@@ -57,7 +57,7 @@
 | M05 恢复窗口与Single/Flick判定 | **已完成**：Normal/Flick/Directional、Single timeout、单manual OneFrame及定向测试通过 | GetResult/JudgeNote、Normal/Flick/Directional的边界bits与事件顺序匹配 |
 | M06 恢复Multiple手动判定 | **已完成**：真实touch、count/side/finger owner、type10、duplicate与production group测试通过 | 真实touch方向、count阈值、side owner、finish/deactivate匹配 |
 | M07 恢复Long手动状态机 | **已完成**：Began/hold/move/release/grace/type2/4/5/6/7及MJ11–MJ15测试通过 | Began/Hold/Moved/Ended、合成release、grace、头尾与finger清理匹配 |
-| M08 恢复Slide手动状态机 | 进行中：production完成，MJ18–MJ22独立测试提交待完成 | head/intermediate/end、band cursor、release/miss/invisible推进匹配 |
+| M08 恢复Slide手动状态机 | **已完成**：head/intermediate/end、band/cursor/near-line、invisible/release及MJ18–MJ22通过 | head/intermediate/end、band cursor、release/miss/invisible推进匹配 |
 | M09 恢复自然timeout Miss | 未开始 | Long start/end、Slide wait/stop及同帧Miss顺序匹配 |
 | M10 接入调度、OneFrame与原子边界 | 未开始 | 每外帧一次输入、adaptive/pause/fault/dispose、五槽与批原子性闭合 |
 | M11 production oracle与独立验收 | 未开始 | 完整回归、production chart、证据验证和组合矩阵无开放阻断 |
@@ -304,6 +304,15 @@
 - terminal game type4..7沿band type8；type8严格`>0.04`，9/10按方向严格`>0.01`，11/12再检查group count full threshold；grace沿用owner delta不clamp。physical early release对current intermediate提交type8 Miss并deactivate。
 - Slide root/child各自注册manual ownership（phase、allowed note types、absolute position、buttons）；Multiple terminal沿chart endpoint+Add helper重建group buttons/count，缺helper失败关闭，不开放caller cursor/result。
 - production/testing TypeScript、M08工作树4项、M07 4项、first-slice 17/17与Auto Live AL01–AL22通过；M04 Slide gap关闭，测试文件留独立提交。
+
+#### 2026-07-29 第三十批：M08 Slide独立测试
+
+- 新增production Slide图并直接读取MJ18–MJ22、Judge/Began/Moved/GetNear ARM64；backend只返回current/button local X及judge position/virtual-line原始几何，不返回result/correction/cursor。
+- near-line组合同时激活ordinary与Slide且相同root distance，backend current X使Slide更靠近button3；实际Began绑定Slide→Stop而Normal保持Move，证明不再用root absolutePos替代。
+- 验证head→visible intermediate→terminal每次只推进一个cursor并分别type8；parent deactivation回收child和cursor。
+- invisible intermediate在containment=false时仍走band；raw Great位于signed negative correction且owner judgeOffset非零时promotion Perfect，锁定Great correction路径。
+- terminal Flick equal `0x3D23D70A`不判、next判定；early physical release在non-terminal current提交type8 Miss、timing清零并parent cleanup。
+- M08 4/4、M07 4/4、first-slice 17/17、Auto Live AL01–AL22与testing TypeScript通过；M08及M04关闭，下一批进入M09 timeout。
 
 ## 2. 固定范围
 
