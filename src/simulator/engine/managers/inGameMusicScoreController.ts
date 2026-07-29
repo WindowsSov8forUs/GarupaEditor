@@ -234,6 +234,10 @@ export class InGameMusicScoreController {
     return absolutePosition(cursor);
   }
 
+  get currentBpm(): number {
+    return this.currentBpmValue;
+  }
+
   get currentBar(): number {
     return this.musicBarProgressValue;
   }

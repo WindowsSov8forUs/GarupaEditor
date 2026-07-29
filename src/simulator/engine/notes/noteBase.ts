@@ -8,6 +8,10 @@ import type {
   ManualInputPosition,
   ManualTouchPhaseValue,
 } from "../data/manualInput";
+import type {
+  ManualJudgementCommitPlan,
+  ManualJudgementTransaction,
+} from "../data/manualJudgement";
 import type { OneFrameDataHandle } from "../data/oneFrameData";
 import type { NoteAutoLiveRuntime } from "../data/autoLiveJudgement";
 
@@ -31,11 +35,23 @@ export interface NoteStateSnapshot {
   readonly buttonTypes: readonly ButtonTypeValue[];
 }
 
+export interface ManualNoteRuntime {
+  readonly getAdjustedMusicPosition: () => number;
+  readonly getCurrentBpm: () => number;
+}
+
 export interface ManualNoteTouchInput {
   readonly fingerId: number;
   readonly phase: ManualTouchPhaseValue;
   readonly beganPosition: ManualInputPosition;
   readonly currentPosition: ManualInputPosition;
+  readonly judgementTransaction: ManualJudgementTransaction;
+}
+
+export interface ManualNoteBeganPlan {
+  readonly outcome: "bind" | "none";
+  readonly judgementPlan: ManualJudgementCommitPlan | null;
+  readonly familyData: unknown;
 }
 
 export class NoteBase {
@@ -44,6 +60,7 @@ export class NoteBase {
   private noteInformationValue: NoteInformation | null = null;
   private getUsableOneFrameData: (() => SimulatorResult<OneFrameDataHandle>) | null = null;
   private autoLiveRuntimeValue: NoteAutoLiveRuntime | null = null;
+  private manualRuntimeValue: ManualNoteRuntime | null = null;
   private fingerIdValue = -1;
 
   constructor(readonly poolObjectId: string) {}
@@ -80,6 +97,10 @@ export class NoteBase {
 
   registerAutoLiveRuntime(runtime: NoteAutoLiveRuntime): void {
     this.autoLiveRuntimeValue = runtime;
+  }
+
+  registerManualRuntime(runtime: ManualNoteRuntime): void {
+    this.manualRuntimeValue = runtime;
   }
 
   requestUsableOneFrameData(): SimulatorResult<OneFrameDataHandle> {
@@ -157,7 +178,7 @@ export class NoteBase {
 
   preflightManualTouchBegan(
     _input: ManualNoteTouchInput,
-  ): SimulatorResult<"bind" | "none"> {
+  ): SimulatorResult<ManualNoteBeganPlan> {
     return evidenceRequired(
       "manual.note-touch-began-unimplemented",
       ["D04", "D05", "MJ03", "MJ08"],
@@ -165,7 +186,17 @@ export class NoteBase {
     );
   }
 
-  commitManualTouchBegan(_input: ManualNoteTouchInput): void {}
+  preflightManualTouchBeganCommit(
+    _input: ManualNoteTouchInput,
+    plan: ManualNoteBeganPlan,
+  ): SimulatorResult<ManualNoteBeganPlan> {
+    return ok(plan);
+  }
+
+  commitManualTouchBegan(
+    _input: ManualNoteTouchInput,
+    _plan: ManualNoteBeganPlan,
+  ): void {}
 
   preflightManualTouchMoved(
     _input: ManualNoteTouchInput,
@@ -236,6 +267,17 @@ export class NoteBase {
       );
     }
     return ok(undefined);
+  }
+
+  protected get manualRuntime(): SimulatorResult<ManualNoteRuntime> {
+    if (this.manualRuntimeValue === null) {
+      return evidenceRequired(
+        "manual.note-runtime-unregistered",
+        ["D05", "D14", "MJ02", "MJ26"],
+        "SetupNotes must install the adjusted-position and current-BPM manual judgement owner.",
+      );
+    }
+    return ok(this.manualRuntimeValue);
   }
 
   protected get autoLiveRuntime(): SimulatorResult<NoteAutoLiveRuntime> {

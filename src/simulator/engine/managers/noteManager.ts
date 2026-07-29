@@ -7,6 +7,7 @@ import {
 } from "../chart/types";
 import type { NoteFamily } from "../data/noteData";
 import type { OneFrameDataHandle } from "../data/oneFrameData";
+import type { ManualJudgementTransaction } from "../data/manualJudgement";
 import type { InGameCalculatedData } from "../data/inGameCalculatedData";
 import type {
   AutoLiveJudgementOwnership,
@@ -157,6 +158,8 @@ export class NoteManager {
       request: AutoLiveJudgementRequest,
     ) => SimulatorResult<void>,
     private readonly createPoolObject: NotePoolObjectFactory = createDefaultPoolObject,
+    private readonly createManualJudgementTransaction: () => ManualJudgementTransaction =
+      createUnavailableManualJudgementTransaction,
   ) {}
 
   validateSetup(): SimulatorResult<void> {
@@ -250,6 +253,10 @@ export class NoteManager {
             return adjustedPosition;
           },
           submitJudgement: this.submitAutoLiveJudgement,
+        });
+        note.registerManualRuntime({
+          getAdjustedMusicPosition: () => this.getAdjustedMusicPosition(),
+          getCurrentBpm: () => this.musicScoreController.currentBpm,
         });
         if (note instanceof NoteMultipleDirectionalFlick) {
           note.registerMultipleDirectionalGroupResolver(
@@ -422,6 +429,14 @@ export class NoteManager {
     return this.musicScoreController.peekAdjustedMusicPosition(
       this.judgeOffsetFrames,
     );
+  }
+
+  beginManualJudgementTransaction(): ManualJudgementTransaction {
+    return this.createManualJudgementTransaction();
+  }
+
+  ownsManualJudgementSource(noteInformation: NoteInformation): boolean {
+    return this.autoLiveJudgementSources.has(noteInformation);
   }
 
   selectManualCandidateBeforeJudgement(
@@ -814,6 +829,21 @@ function validateBpmCommand(
 
 function isNonPlayableCommand(noteInformation: NoteInformation): boolean {
   return noteInformation.buttonType === ButtonType.None;
+}
+
+function createUnavailableManualJudgementTransaction(): ManualJudgementTransaction {
+  return {
+    preflight: () => evidenceRequired(
+      "one-frame.manual-transaction-owner-unregistered",
+      ["D05", "D14", "D15", "MJ26"],
+      "Production manual judgement requires the engine OneFrame controller transaction owner.",
+    ),
+    commit: () => {
+      throw new Error("Unavailable manual judgement transaction cannot commit");
+    },
+    abort: () => {},
+    finish: () => {},
+  };
 }
 
 function createDefaultPoolObject(

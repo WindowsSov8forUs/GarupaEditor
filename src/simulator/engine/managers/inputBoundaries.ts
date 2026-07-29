@@ -12,7 +12,13 @@ import {
   type PreparedManualInputTouch,
 } from "../data/manualInput";
 import { evidenceRequired, ok, type SimulatorResult } from "../evidence";
-import { NoteBase, NoteState, type ManualNoteTouchInput } from "../notes/noteBase";
+import type { ManualJudgementTransaction } from "../data/manualJudgement";
+import {
+  NoteBase,
+  NoteState,
+  type ManualNoteBeganPlan,
+  type ManualNoteTouchInput,
+} from "../notes/noteBase";
 import type { NoteManager } from "./noteManager";
 
 const FINGER_OWNER_CAPACITY = 15;
@@ -238,6 +244,8 @@ interface GamePlayButtonTouchPlan {
   readonly position: ManualInputPosition;
   readonly beganPosition: ManualInputPosition | null;
   readonly note: NoteBase | null;
+  readonly notePlan: ManualNoteBeganPlan | null;
+  readonly judgementTransaction: ManualJudgementTransaction | null;
   readonly bindNote: boolean;
 }
 
@@ -249,6 +257,7 @@ interface GamePlayInputOperation {
 
 interface GamePlayInputPlan extends ManualInputDispatchPlan {
   readonly operations: readonly GamePlayInputOperation[];
+  readonly judgementTransaction: ManualJudgementTransaction;
 }
 
 export interface GamePlayButtonSnapshot {
@@ -275,7 +284,7 @@ export class GamePlayInputDispatcher implements ManualInputDispatcher {
     () => null,
   );
 
-  constructor(noteManager: NoteManager) {
+  constructor(private readonly noteManager: NoteManager) {
     this.buttonsValue = Object.freeze(Array.from(
       { length: GAME_PLAY_BUTTON_COUNT },
       (_, buttonType) => new GamePlayButton(buttonType as ButtonTypeValue, noteManager),
@@ -306,6 +315,18 @@ export class GamePlayInputDispatcher implements ManualInputDispatcher {
   preflight(
     frame: PreparedManualInputFrame,
   ): SimulatorResult<ManualInputDispatchPlan> {
+    const judgementTransaction = this.noteManager.beginManualJudgementTransaction();
+    const preflight = this.preflightWithTransaction(frame, judgementTransaction);
+    if (preflight.status !== "ok") {
+      judgementTransaction.abort();
+    }
+    return preflight;
+  }
+
+  private preflightWithTransaction(
+    frame: PreparedManualInputFrame,
+    judgementTransaction: ManualJudgementTransaction,
+  ): SimulatorResult<ManualInputDispatchPlan> {
     const projectedInputButtons = [...this.buttonWithFingerId];
     const projections = new Map<GamePlayButton, GamePlayButtonProjection>();
     const projectedFingerOwners = new Map<NoteBase, number>();
@@ -330,6 +351,7 @@ export class GamePlayInputDispatcher implements ManualInputDispatcher {
             touch,
             projection,
             projectedFingerOwners,
+            judgementTransaction,
           );
           if (planned.status !== "ok") {
             return planned;
@@ -340,7 +362,11 @@ export class GamePlayInputDispatcher implements ManualInputDispatcher {
         inputButton = projectedInputButtons[touch.fingerId] ?? null;
         if (inputButton !== null) {
           const projection = projectionFor(inputButton, projections);
-          const planned = inputButton.preflightTouchContinuation(touch, projection);
+          const planned = inputButton.preflightTouchContinuation(
+            touch,
+            projection,
+            judgementTransaction,
+          );
           if (planned.status !== "ok") {
             return planned;
           }
@@ -357,6 +383,7 @@ export class GamePlayInputDispatcher implements ManualInputDispatcher {
     const plan: GamePlayInputPlan = Object.freeze({
       touchCount: frame.touches.length,
       operations: Object.freeze(operations),
+      judgementTransaction,
     });
     this.ownedPlans.add(plan);
     return ok(plan);
@@ -378,6 +405,7 @@ export class GamePlayInputDispatcher implements ManualInputDispatcher {
         button?.commitTouch(operation.buttonPlan);
       }
     }
+    ownedPlan.judgementTransaction.finish();
   }
 
   snapshot(): GamePlayInputDispatcherSnapshot {
@@ -416,6 +444,7 @@ export class GamePlayButton {
     touch: PreparedManualInputTouch,
     projection: GamePlayButtonProjection,
     projectedFingerOwners: Map<NoteBase, number>,
+    judgementTransaction: ManualJudgementTransaction,
   ): SimulatorResult<GamePlayButtonTouchPlan> {
     if (this.noteManager === undefined) {
       return evidenceRequired(
@@ -439,15 +468,23 @@ export class GamePlayButton {
       touch,
       touch.position,
       ManualTouchPhase.Began,
+      judgementTransaction,
     );
     const judgement = candidate.preflightManualTouchBegan(beganInput);
     if (judgement.status !== "ok") {
       return judgement;
     }
     const projectedFinger = projectedFingerOwners.get(candidate) ?? candidate.fingerId;
-    if (judgement.value === "none" || projectedFinger >= 0) {
+    if (judgement.value.outcome === "none" || projectedFinger >= 0) {
       projection.touchNotes[touch.fingerId] = null;
       return ok(noNotePlan("began", touch));
+    }
+    const commitPreflight = candidate.preflightManualTouchBeganCommit(
+      beganInput,
+      judgement.value,
+    );
+    if (commitPreflight.status !== "ok") {
+      return commitPreflight;
     }
     projection.beganPositions[touch.fingerId] = touch.position;
     projection.touchNotes[touch.fingerId] = candidate;
@@ -459,6 +496,8 @@ export class GamePlayButton {
       position: touch.position,
       beganPosition: touch.position,
       note: candidate,
+      notePlan: commitPreflight.value,
+      judgementTransaction,
       bindNote: true,
     }));
   }
@@ -466,6 +505,7 @@ export class GamePlayButton {
   preflightTouchContinuation(
     touch: PreparedManualInputTouch,
     projection: GamePlayButtonProjection,
+    judgementTransaction: ManualJudgementTransaction,
   ): SimulatorResult<GamePlayButtonTouchPlan> {
     const note = projection.touchNotes[touch.fingerId] ?? null;
     const beganPosition = projection.beganPositions[touch.fingerId] ?? null;
@@ -476,7 +516,12 @@ export class GamePlayButton {
       ));
     }
     const phase = touch.phase === ManualTouchPhase.Ended ? "ended" : "moved";
-    const input = manualNoteInput(touch, beganPosition, touch.phase);
+    const input = manualNoteInput(
+      touch,
+      beganPosition,
+      touch.phase,
+      judgementTransaction,
+    );
     const validation = phase === "ended"
       ? note.preflightManualTouchEnded(input)
       : note.preflightManualTouchMoved(input);
@@ -490,6 +535,8 @@ export class GamePlayButton {
       position: touch.position,
       beganPosition,
       note,
+      notePlan: null,
+      judgementTransaction,
       bindNote: false,
     }));
   }
@@ -501,11 +548,15 @@ export class GamePlayButton {
       }
       return;
     }
+    if (plan.judgementTransaction === null) {
+      throw new Error("Manual note commit lost its preflight transaction");
+    }
     const input: ManualNoteTouchInput = Object.freeze({
       fingerId: plan.fingerId,
       phase: plan.touchPhase,
       beganPosition: plan.beganPosition ?? plan.position,
       currentPosition: plan.position,
+      judgementTransaction: plan.judgementTransaction,
     });
     if (plan.phase === "began") {
       this.beganPositions[plan.fingerId] = plan.beganPosition;
@@ -513,7 +564,11 @@ export class GamePlayButton {
       if (plan.bindNote) {
         plan.note.setFingerId(plan.fingerId);
       }
-      plan.note.commitManualTouchBegan(input);
+      plan.note.commitManualTouchBegan(input, plan.notePlan ?? {
+        outcome: "none",
+        judgementPlan: null,
+        familyData: null,
+      });
       return;
     }
     if (plan.phase === "ended") {
@@ -580,12 +635,14 @@ function manualNoteInput(
   touch: PreparedManualInputTouch,
   beganPosition: ManualInputPosition,
   phase: ManualNoteTouchInput["phase"],
+  judgementTransaction: ManualJudgementTransaction,
 ): ManualNoteTouchInput {
   return Object.freeze({
     fingerId: touch.fingerId,
     phase,
     beganPosition,
     currentPosition: touch.position,
+    judgementTransaction,
   });
 }
 
@@ -600,6 +657,8 @@ function noNotePlan(
     position: touch.position,
     beganPosition: null,
     note: null,
+    notePlan: null,
+    judgementTransaction: null,
     bindNote: false,
   });
 }

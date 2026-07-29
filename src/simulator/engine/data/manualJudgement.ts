@@ -1,3 +1,4 @@
+import type { NoteInformation } from "../chart/types";
 import { evidenceRequired, ok, type SimulatorResult } from "../evidence";
 
 const MUSIC_BAR_DIVISION_COUNT = 192;
@@ -30,6 +31,27 @@ export interface ManualNoteJudgement {
   readonly timing: JudgeTimingValue;
   readonly differenceSeconds: number;
   readonly roundedFrame: number;
+}
+
+export interface ManualJudgementRequest {
+  readonly noteInformation: NoteInformation;
+  readonly noteType: number;
+  readonly rawResult: Exclude<NoteResultTypeValue, -1>;
+  readonly rawTiming: JudgeTimingValue;
+  readonly absolutePosition: number;
+}
+
+export interface ManualJudgementCommitPlan {
+  readonly manualJudgementPlan: true;
+}
+
+export interface ManualJudgementTransaction {
+  preflight(
+    request: ManualJudgementRequest,
+  ): SimulatorResult<ManualJudgementCommitPlan>;
+  commit(plan: ManualJudgementCommitPlan): void;
+  abort(): void;
+  finish(): void;
 }
 
 export function getSecondsWithDistance(

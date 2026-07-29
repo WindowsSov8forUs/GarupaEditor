@@ -54,7 +54,7 @@
 | M02 建立实体/固定事件oracle | **已完成** | 5条R1、MJ01–MJ26、D03–D15、portable contract及126项source/copy verifier通过 |
 | M03 锁定输入数据与宿主边界 | **已完成** | 显式不可变input frame、owner-issued button能力、生命周期和失败优先级闭合 |
 | M04 恢复输入分发与候选仲裁 | 进行中：phase/owner与ordinary scan生产/测试完成；M05过滤、Slide near-line待完成 | phase、finger/button/note owner、wide/ordinary/Slide/tie行为匹配 |
-| M05 恢复窗口与Single/Flick判定 | 进行中：GetSecWithDistance/GetResult/JudgeNote纯内核完成；family/OneFrame待实现 | GetResult/JudgeNote、Normal/Flick/Directional的边界bits与事件顺序匹配 |
+| M05 恢复窗口与Single/Flick判定 | 进行中：Float32内核与Normal Began/单manual OneFrame完成；Flick/Directional/multi-frame待实现 | GetResult/JudgeNote、Normal/Flick/Directional的边界bits与事件顺序匹配 |
 | M06 恢复Multiple手动判定 | 未开始 | 真实touch方向、count阈值、side owner、finish/deactivate匹配 |
 | M07 恢复Long手动状态机 | 未开始 | Began/Hold/Moved/Ended、合成release、grace、头尾与finger清理匹配 |
 | M08 恢复Slide手动状态机 | 未开始 | head/intermediate/end、band cursor、release/miss/invisible推进匹配 |
@@ -170,6 +170,16 @@
 
 - 修正`src/simulator/README.md`中“M04未实现”的过时描述：明确M04事务/phase/ordinary已完成、Slide near-line仍失败关闭，M05仅纯Float32窗口完成而family/OneFrame未实现。
 - 本批不修改生产行为或测试。
+
+#### 2026-07-29 第十四批：M05 Normal Began与manual OneFrame生产实现
+
+- `NoteManager`为每个pooled note登记manual runtime，只暴露owner-adjusted music position与current BPM；production host将同一NoteManager source identity登记为OneFrame manual owner。
+- NoteNormal pure preflight调用M05 Float32 `JudgeNote(sweetFrame=0)`；raw None只返回候选拒绝，不预留slot、不写finger/state。raw Bad/Good/Great/Perfect在GamePlayButton完成projected finger `<0`检查后才预留OneFrame，保持“concrete judgement先于finger检查、OneFrame晚于owner竞争”的证据顺序。
+- dispatcher为每个non-empty outer frame创建局部manual judgement transaction；后项失败调用abort并丢弃全部局部reservation。commit plan只能由原transaction单次消费，全部touch commit后finish；resolution消费、button/finger/note与OneFrame仍由同一整帧preflight覆盖。
+- OneFrame controller从owner source/raw result/raw timing派生buttonTypes、note type0、adjusted identity、`Great/Perfect +1`、其余`-1`及Miss/Perfect timing清零；R14实体Good/Slow与Miss均确认raw=adjusted，当前类型中不存在active situation-skill transform owner。
+- 本批只接受Normal source；Flick/Directional仍保留family evidence-required。为不提前冒充M10 simultaneous aggregation，同一outer frame第二个manual OneFrame reservation在任何commit前`one-frame.multiple-manual-judgements-unimplemented`失败关闭。
+- Normal commit顺序为button/finger owner→owner-bound OneFrame setup→Note Deactive/finger清理；score/power/life/skill/audio/render字段继续在类型上缺席。
+- isolated testing TypeScript、first-slice 17、Auto Live AL01–AL22及manual dispatch 5项通过；测试桩接口适配与Normal定向测试留到独立测试提交。
 
 ## 2. 固定范围
 

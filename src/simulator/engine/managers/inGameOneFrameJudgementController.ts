@@ -9,11 +9,19 @@ import type {
   AutoLiveJudgementRequest,
 } from "../data/autoLiveJudgement";
 import type {
-  AutoLiveJudgementData,
+  ManualJudgementData,
   OneFrameDataHandle,
   OneFrameJudgementBatch,
+  OneFrameJudgementData,
   OneFrameJudgementEntry,
 } from "../data/oneFrameData";
+import {
+  JudgeTiming,
+  NoteResultType,
+  type ManualJudgementCommitPlan,
+  type ManualJudgementRequest,
+  type ManualJudgementTransaction,
+} from "../data/manualJudgement";
 import {
   evidenceRequired,
   ok,
@@ -36,6 +44,13 @@ export type OneFrameTraceEntry =
       readonly multipleDirectionalFlickNoteCount: number;
     }
   | {
+      readonly kind: "one-frame.setup-manual";
+      readonly containerId: string;
+      readonly noteIndex: number;
+      readonly noteType: number;
+      readonly rawResult: 0 | 1 | 2 | 3 | 4;
+    }
+  | {
       readonly kind: "one-frame.reflect";
       readonly batchIndex: number;
       readonly containerIds: readonly string[];
@@ -49,7 +64,7 @@ export interface OneFrameJudgementControllerSnapshot {
     readonly slot: number;
     readonly containerId: string;
     readonly isUse: boolean;
-    readonly payload: AutoLiveJudgementData | null;
+    readonly payload: OneFrameJudgementData | null;
   }[];
   readonly inUseContainerIds: readonly string[];
   readonly lastJudgementBatch: OneFrameJudgementBatch | null;
@@ -60,12 +75,16 @@ interface OneFrameDataContainer extends OneFrameDataHandle {
   readonly slot: number;
   readonly handle: OneFrameDataHandle;
   inUse: boolean;
-  payload: AutoLiveJudgementData | null;
+  payload: OneFrameJudgementData | null;
 }
 
 export type AutoLiveJudgementOwner = (
   noteInformation: AutoLiveJudgementRequest["noteInformation"],
 ) => AutoLiveJudgementOwnership | null;
+
+export type ManualJudgementOwner = (
+  noteInformation: ManualJudgementRequest["noteInformation"],
+) => boolean;
 
 export class InGameOneFrameJudgementController {
   private initializedValue = false;
@@ -75,6 +94,7 @@ export class InGameOneFrameJudgementController {
   private lastJudgementBatchValue: OneFrameJudgementBatch | null = null;
   private nextReflectBatchIndex = 0;
   private autoLiveJudgementOwner: AutoLiveJudgementOwner | null = null;
+  private manualJudgementOwner: ManualJudgementOwner | null = null;
 
   get isInitialized(): boolean {
     return this.initializedValue;
@@ -144,6 +164,85 @@ export class InGameOneFrameJudgementController {
     return ok(undefined);
   }
 
+  registerManualJudgementOwner(
+    owner: ManualJudgementOwner,
+  ): SimulatorResult<void> {
+    if (typeof owner !== "function" || this.manualJudgementOwner !== null) {
+      return evidenceRequired(
+        "one-frame.invalid-or-duplicate-manual-owner",
+        ["D05", "D14", "D15", "MJ02", "MJ26"],
+        "The controller accepts exactly one NoteManager-owned manual judgement source resolver.",
+      );
+    }
+    this.manualJudgementOwner = owner;
+    return ok(undefined);
+  }
+
+  createManualJudgementTransaction(): ManualJudgementTransaction {
+    const available = this.containers.filter((container) => !container.inUse);
+    const plans = new Map<ManualJudgementCommitPlan, {
+      readonly container: OneFrameDataContainer;
+      readonly request: ManualJudgementRequest;
+      committed: boolean;
+    }>();
+    let aborted = false;
+    let finished = false;
+    return {
+      preflight: (request) => {
+        if (aborted || finished) {
+          return evidenceRequired(
+            "one-frame.manual-transaction-closed",
+            ["D14", "D15", "MJ25", "MJ26"],
+            "A manual OneFrame preflight transaction cannot be reused after abort or finish.",
+          );
+        }
+        const validation = this.validateManualJudgementRequest(request);
+        if (validation.status !== "ok") {
+          return validation;
+        }
+        if (plans.size !== 0) {
+          return evidenceRequired(
+            "one-frame.multiple-manual-judgements-unimplemented",
+            ["D11", "D14", "D15", "MJ10", "MJ18", "MJ26"],
+            "M05 represents one manual judgement per outer frame; simultaneous manual OneFrame aggregation remains owned by M10.",
+          );
+        }
+        const container = available[plans.size];
+        if (container === undefined) {
+          return evidenceRequired(
+            "one-frame.pool-exhausted",
+            ["R02", "R03", "D15"],
+            "Manual preflight cannot reserve beyond the fixed five native OneFrameData slots.",
+          );
+        }
+        const plan: ManualJudgementCommitPlan = Object.freeze({
+          manualJudgementPlan: true,
+        });
+        plans.set(plan, { container, request, committed: false });
+        return ok(plan);
+      },
+      commit: (plan) => {
+        const owned = plans.get(plan);
+        if (aborted || finished || owned === undefined || owned.committed) {
+          throw new Error("Manual OneFrame transaction received a foreign or repeated plan");
+        }
+        owned.committed = true;
+        this.commitManualJudgementData(owned.container, owned.request);
+      },
+      abort: () => {
+        aborted = true;
+        plans.clear();
+      },
+      finish: () => {
+        if (aborted || finished || [...plans.values()].some((entry) => !entry.committed)) {
+          throw new Error("Manual OneFrame transaction finished before every reserved plan committed");
+        }
+        finished = true;
+        plans.clear();
+      },
+    };
+  }
+
   setupAutoLiveJudgement(
     request: AutoLiveJudgementRequest,
   ): SimulatorResult<void> {
@@ -184,7 +283,7 @@ export class InGameOneFrameJudgementController {
       );
     }
 
-    const payload: AutoLiveJudgementData = Object.freeze({
+    const payload = Object.freeze({
       noteIndex: request.noteInformation.index,
       buttonTypes: Object.freeze([...request.noteInformation.buttonTypesArray]),
       noteType: request.noteType,
@@ -257,14 +356,22 @@ export class InGameOneFrameJudgementController {
       }));
     }
 
+    const firstEntry = entries[0];
+    if (firstEntry === undefined) {
+      return evidenceRequired(
+        "one-frame.exists-without-entry",
+        ["R02", "R03", "D15"],
+        "ExistsOneFrameData cannot be true without at least one committed payload.",
+      );
+    }
     const batch: OneFrameJudgementBatch = Object.freeze({
       batchIndex: this.nextReflectBatchIndex,
       entries: Object.freeze(entries),
       entryCount: entries.length,
       addCombo: entries.reduce((sum, entry) => sum + entry.addCombo, 0),
-      rawResult: 4,
-      adjustedResult: 4,
-      judgeTiming: 0,
+      rawResult: firstEntry.rawResult,
+      adjustedResult: firstEntry.adjustedResult,
+      judgeTiming: firstEntry.judgeTiming,
     });
     for (const container of this.containers) {
       if (container.inUse) {
@@ -322,6 +429,77 @@ export class InGameOneFrameJudgementController {
           : { ...entry },
       ),
     };
+  }
+
+  private commitManualJudgementData(
+    container: OneFrameDataContainer,
+    request: ManualJudgementRequest,
+  ): void {
+    if (container.inUse || container.payload !== null) {
+      throw new Error("Manual OneFrame preflight reservation changed before commit");
+    }
+    this.traceValue.push({
+      kind: "one-frame.get-usable",
+      containerId: container.containerId,
+    });
+    const adjustedResult = request.rawResult;
+    const payload: ManualJudgementData = Object.freeze({
+      noteIndex: request.noteInformation.index,
+      buttonTypes: Object.freeze([...request.noteInformation.buttonTypesArray]),
+      noteType: request.noteType,
+      phase: "head",
+      rawResult: request.rawResult,
+      adjustedResult,
+      addCombo: adjustedResult >= NoteResultType.Great ? 1 : -1,
+      absolutePosition: request.absolutePosition,
+      judgeTiming:
+        adjustedResult === NoteResultType.Miss || adjustedResult === NoteResultType.Perfect
+          ? JudgeTiming.None
+          : request.rawTiming,
+    });
+    container.payload = payload;
+    container.inUse = true;
+    this.traceValue.push({
+      kind: "one-frame.setup-manual",
+      containerId: container.containerId,
+      noteIndex: payload.noteIndex,
+      noteType: payload.noteType,
+      rawResult: payload.rawResult,
+    });
+  }
+
+  private validateManualJudgementRequest(
+    request: ManualJudgementRequest,
+  ): SimulatorResult<void> {
+    const source = request?.noteInformation;
+    if (
+      this.manualJudgementOwner === null ||
+      source === null ||
+      typeof source !== "object" ||
+      !this.manualJudgementOwner(source) ||
+      source.fireNoteType !== FrontNoteType.Normal ||
+      request.noteType !== 0 ||
+      request.absolutePosition !== source.absolutePos ||
+      !Number.isInteger(request.rawResult) ||
+      request.rawResult < NoteResultType.Miss ||
+      request.rawResult > NoteResultType.Perfect ||
+      !Number.isInteger(request.rawTiming) ||
+      request.rawTiming < JudgeTiming.None ||
+      request.rawTiming > JudgeTiming.Slow ||
+      (request.rawResult === NoteResultType.Perfect && request.rawTiming !== JudgeTiming.None) ||
+      (request.rawResult >= NoteResultType.Bad &&
+        request.rawResult <= NoteResultType.Great &&
+        request.rawTiming === JudgeTiming.None) ||
+      !Array.isArray(source.buttonTypesArray) ||
+      source.buttonTypesArray.length === 0
+    ) {
+      return evidenceRequired(
+        "one-frame.invalid-manual-normal-payload",
+        ["D05", "D14", "D15", "MJ02", "MJ11", "MJ26"],
+        "M05 manual Setup accepts only the NoteManager-owned Normal source and its closed raw result, timing, note type and absolute position projection.",
+      );
+    }
+    return ok(undefined);
   }
 
   private validateAutoLiveJudgementRequest(

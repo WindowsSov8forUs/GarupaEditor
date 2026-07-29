@@ -12,8 +12,17 @@ import {
   type NoteBatchInformation,
   type NoteInformation,
 } from "../chart/types";
-import { NoteBase } from "./noteBase";
-import { NoteState } from "./noteBase";
+import {
+  NoteBase,
+  NoteState,
+  type ManualNoteBeganPlan,
+  type ManualNoteTouchInput,
+} from "./noteBase";
+import {
+  NoteResultType,
+  judgeManualNote,
+  type ManualNoteJudgement,
+} from "../data/manualJudgement";
 import type { MultipleDirectionalRuntimeGroup } from "../data/autoLiveJudgement";
 
 export class NoteFrontBase extends NoteBase {
@@ -133,6 +142,92 @@ export abstract class NoteSingleBase extends NoteFrontBase {
 export class NoteNormal extends NoteSingleBase {
   protected override acceptsFrontNoteType(frontNoteType: number): boolean {
     return frontNoteType === FrontNoteType.Normal;
+  }
+
+  override preflightManualTouchBegan(
+    _input: ManualNoteTouchInput,
+  ): SimulatorResult<ManualNoteBeganPlan> {
+    const information = this.noteInformation;
+    const runtime = this.manualRuntime;
+    if (information === null || runtime.status !== "ok") {
+      return runtime.status === "ok"
+        ? evidenceRequired(
+            "manual.normal-without-note-information",
+            ["D05", "MJ02", "MJ11"],
+            "Normal Began judgement requires its activated NoteInformation owner.",
+          )
+        : runtime;
+    }
+    const judgement = judgeManualNote(
+      0,
+      Math.fround(information.absolutePos),
+      runtime.value.getAdjustedMusicPosition(),
+      runtime.value.getCurrentBpm(),
+    );
+    if (judgement.status !== "ok") {
+      return judgement;
+    }
+    if (judgement.value.result === NoteResultType.None) {
+      return ok(Object.freeze({
+        outcome: "none",
+        judgementPlan: null,
+        familyData: judgement.value,
+      }));
+    }
+    return ok(Object.freeze({
+      outcome: "bind",
+      judgementPlan: null,
+      familyData: judgement.value,
+    }));
+  }
+
+  override preflightManualTouchBeganCommit(
+    input: ManualNoteTouchInput,
+    plan: ManualNoteBeganPlan,
+  ): SimulatorResult<ManualNoteBeganPlan> {
+    const information = this.noteInformation;
+    const judgement = plan.familyData as ManualNoteJudgement | null;
+    if (
+      plan.outcome !== "bind" ||
+      information === null ||
+      judgement === null ||
+      typeof judgement !== "object" ||
+      judgement.result === NoteResultType.None
+    ) {
+      return evidenceRequired(
+        "manual.normal-invalid-began-plan",
+        ["D05", "D14", "D15", "MJ02", "MJ26"],
+        "Only the owner-produced non-None Normal timing projection can reserve a manual OneFrame slot.",
+      );
+    }
+    const reserved = input.judgementTransaction.preflight({
+      noteInformation: information,
+      noteType: 0,
+      rawResult: judgement.result,
+      rawTiming: judgement.timing,
+      absolutePosition: information.absolutePos,
+    });
+    if (reserved.status !== "ok") {
+      return reserved;
+    }
+    return ok(Object.freeze({
+      ...plan,
+      judgementPlan: reserved.value,
+    }));
+  }
+
+  override commitManualTouchBegan(
+    input: ManualNoteTouchInput,
+    plan: ManualNoteBeganPlan,
+  ): void {
+    if (plan.outcome !== "bind" || plan.judgementPlan === null) {
+      throw new Error("Normal Began commit lost its owner-produced judgement plan");
+    }
+    input.judgementTransaction.commit(plan.judgementPlan);
+    const deactivated = this.changeState(NoteState.Deactive);
+    if (deactivated.status !== "ok") {
+      throw new Error("Normal Began commit could not deactivate the judged note");
+    }
   }
 
   protected override forcePerfect(): SimulatorResult<void> {

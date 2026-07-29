@@ -191,6 +191,8 @@ export function createSimulatorEngine(
     inGameCalculatedData,
     () => oneFrameJudgementController.getUsableOneFrameData(),
     (request) => oneFrameJudgementController.setupAutoLiveJudgement(request),
+    undefined,
+    () => oneFrameJudgementController.createManualJudgementTransaction(),
   );
   const judgementOwner =
     oneFrameJudgementController.registerAutoLiveJudgementOwner(
@@ -199,6 +201,13 @@ export function createSimulatorEngine(
     );
   if (judgementOwner.status !== "ok") {
     return judgementOwner;
+  }
+  const manualJudgementOwner =
+    oneFrameJudgementController.registerManualJudgementOwner(
+      (noteInformation) => noteManager.ownsManualJudgementSource(noteInformation),
+    );
+  if (manualJudgementOwner.status !== "ok") {
+    return manualJudgementOwner;
   }
   const inputManager = new InputManager(inGameCalculatedData.playMode);
   const inputDispatcher = new GamePlayInputDispatcher(noteManager);
