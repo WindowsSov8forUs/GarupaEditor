@@ -126,6 +126,13 @@ interface NotePool {
   cursor: number;
 }
 
+interface ManualSlideSourceOwnership {
+  readonly phase: "head" | "intermediate" | "tail";
+  readonly allowedNoteTypes: readonly number[];
+  readonly absolutePosition: number;
+  readonly buttonTypes: readonly ButtonTypeValue[];
+}
+
 interface NotePoolAcquisition {
   readonly note: NoteBase;
   readonly pool: NotePool;
@@ -156,6 +163,14 @@ export class NoteManager {
   private readonly longAfterMultipleGroups = new WeakMap<
     NoteInformation,
     MultipleDirectionalGroupOwner
+  >();
+  private readonly slideAfterMultipleGroups = new WeakMap<
+    NoteInformation,
+    MultipleDirectionalGroupOwner
+  >();
+  private readonly manualSlideSources = new WeakMap<
+    NoteInformation,
+    ManualSlideSourceOwnership
   >();
   private readonly autoLiveJudgementSources = new WeakSet<NoteInformation>();
 
@@ -210,7 +225,7 @@ export class NoteManager {
     if (setupValidation.status !== "ok") {
       return setupValidation;
     }
-    const slideInitialization = this.slideNoteManager.initialize();
+    const slideInitialization = this.slideNoteManager.initialize(this.manualInputGeometry);
     if (slideInitialization.status !== "ok") {
       return slideInitialization;
     }
@@ -231,6 +246,10 @@ export class NoteManager {
     if (longAfterGroups.status !== "ok") {
       return longAfterGroups;
     }
+    const slideAfterGroups = this.setupSlideAfterMultipleGroups();
+    if (slideAfterGroups.status !== "ok") {
+      return slideAfterGroups;
+    }
     const familyNotes = new Map<NoteFamily, NoteInformation[]>();
     for (const batch of this.batches) {
       for (const noteInformation of batch.informationList) {
@@ -242,8 +261,33 @@ export class NoteManager {
           noteInformation.fireNoteType === FrontNoteType.SlideA ||
           noteInformation.fireNoteType === FrontNoteType.SlideB
         ) {
-          for (const source of noteInformation.slideNoteList) {
+          const slideAfterGroup = this.slideAfterMultipleGroups.get(noteInformation);
+          this.manualSlideSources.set(noteInformation, Object.freeze({
+            phase: "head",
+            allowedNoteTypes: Object.freeze([8]),
+            absolutePosition: noteInformation.absolutePos,
+            buttonTypes: Object.freeze([...noteInformation.buttonTypesArray]),
+          }));
+          for (let slideIndex = 0; slideIndex < noteInformation.slideNoteList.length; slideIndex += 1) {
+            const source = noteInformation.slideNoteList[slideIndex];
+            if (source === undefined) {
+              continue;
+            }
             this.autoLiveJudgementSources.add(source);
+            const terminal = slideIndex === noteInformation.slideNoteList.length - 1;
+            const allowedNoteTypes = terminal
+              ? manualSlideTerminalNoteTypes(noteInformation.afterNoteType, source.gameNoteType)
+              : [8];
+            this.manualSlideSources.set(source, Object.freeze({
+              phase: terminal ? "tail" : "intermediate",
+              allowedNoteTypes: Object.freeze(allowedNoteTypes),
+              absolutePosition: source.absolutePos,
+              buttonTypes: Object.freeze([
+                ...(terminal && slideAfterGroup !== undefined
+                  ? slideAfterGroup.buttonTypes
+                  : source.buttonTypesArray),
+              ]),
+            }));
           }
         }
         const familyResult = noteFamily(noteInformation);
@@ -277,6 +321,9 @@ export class NoteManager {
         note.registerManualRuntime({
           getAdjustedMusicPosition: () => this.getAdjustedMusicPosition(),
           getCurrentBpm: () => this.musicScoreController.currentBpm,
+          getJudgeOffsetFrames: () => this.judgeOffsetFrames,
+          judgeSlide: (source, adjustedMusicPosition) =>
+            this.slideNoteManager.judge(source, adjustedMusicPosition),
           geometry: this.manualInputGeometry,
           beginJudgementTransaction: () => this.createManualJudgementTransaction(),
           submitJudgement: (request) => this.submitManualJudgement(request),
@@ -289,6 +336,11 @@ export class NoteManager {
         if (note instanceof NoteLong) {
           note.registerLongAfterMultipleGroupResolver(
             (information) => this.resolveLongAfterMultipleGroup(information),
+          );
+        }
+        if (note instanceof NoteSlide) {
+          note.registerSlideAfterMultipleGroupResolver(
+            (information) => this.resolveSlideAfterMultipleGroup(information),
           );
         }
         return note;
@@ -484,6 +536,7 @@ export class NoteManager {
       return null;
     }
     const longAfterGroup = this.longAfterMultipleGroups.get(noteInformation);
+    const slideSource = this.manualSlideSources.get(noteInformation);
     const isLong = noteInformation.fireNoteType === FrontNoteType.Long;
     return Object.freeze({
       multipleDirectionalFlickNoteCount:
@@ -502,6 +555,10 @@ export class NoteManager {
       longAfterMultipleCount: isLong
         ? longAfterGroup?.count ?? null
         : null,
+      slidePhase: slideSource?.phase ?? null,
+      slideAllowedNoteTypes: slideSource?.allowedNoteTypes ?? null,
+      slideAbsolutePosition: slideSource?.absolutePosition ?? null,
+      slideButtonTypes: slideSource?.buttonTypes ?? null,
     });
   }
 
@@ -514,6 +571,8 @@ export class NoteManager {
   ): SimulatorResult<NoteBase | null> {
     let ordinaryCandidate: NoteBase | null = null;
     let ordinaryDistance = Number.POSITIVE_INFINITY;
+    let slideCandidate: NoteSlide | null = null;
+    let slideDistance = Number.POSITIVE_INFINITY;
     const musicPosition = Math.fround(this.musicScoreController.musicPosition);
 
     for (const note of this.activeNotesValue) {
@@ -521,11 +580,18 @@ export class NoteManager {
         continue;
       }
       if (note instanceof NoteSlide) {
-        return evidenceRequired(
-          "manual.slide-candidate-position-unimplemented",
-          ["D04", "D10", "MJ04", "MJ20"],
-          "Slide candidate arbitration requires its current-node and near-judge-line owner projection; absolute chart position cannot substitute for that owner state.",
-        );
+        const source = note.manualCandidateSource;
+        if (source === null) {
+          continue;
+        }
+        const distance = Math.fround(Math.abs(
+          Math.fround(source.absolutePos) - musicPosition,
+        ));
+        if (distance < slideDistance) {
+          slideCandidate = note;
+          slideDistance = distance;
+        }
+        continue;
       }
       const information = note.noteInformation;
       if (information === null) {
@@ -543,7 +609,30 @@ export class NoteManager {
         ordinaryDistance = distance;
       }
     }
-    return ok(ordinaryCandidate);
+    if (ordinaryCandidate === null) {
+      return ok(slideCandidate);
+    }
+    if (slideCandidate === null) {
+      return ok(ordinaryCandidate);
+    }
+    const ordinarySource = ordinaryCandidate.noteInformation;
+    const slideSource = slideCandidate.manualCandidateSource;
+    if (ordinarySource === null || slideSource === null) {
+      return evidenceRequired(
+        "manual.candidate-button-owner-unavailable",
+        ["D04", "D10", "MJ04"],
+        "Near-line arbitration requires both candidates' owner-derived current buttons.",
+      );
+    }
+    const near = this.slideNoteManager.selectNearJudgeLineSource(
+      ordinarySource,
+      slideSource,
+      this.getAdjustedMusicPosition(),
+    );
+    if (near.status !== "ok") {
+      return near;
+    }
+    return ok(near.value === "first" ? ordinaryCandidate : slideCandidate);
   }
 
   snapshot(): NoteManagerSnapshot {
@@ -636,6 +725,42 @@ export class NoteManager {
     return ok(undefined);
   }
 
+  private setupSlideAfterMultipleGroups(): SimulatorResult<void> {
+    const allInformation = this.batches.flatMap((batch) => batch.informationList);
+    for (const root of allInformation) {
+      if (
+        (root.fireNoteType !== FrontNoteType.SlideA && root.fireNoteType !== FrontNoteType.SlideB) ||
+        (root.afterNoteType !== AfterNoteType.SlideMultipleDirectionalFlickLeft &&
+          root.afterNoteType !== AfterNoteType.SlideMultipleDirectionalFlickRight)
+      ) {
+        continue;
+      }
+      const visualType = root.fireNoteType === FrontNoteType.SlideA
+        ? FrontNoteType.SlideAMultipleDirectionalFlickAdd
+        : FrontNoteType.SlideBMultipleDirectionalFlickAdd;
+      const members = [
+        root,
+        ...allInformation.filter((candidate) =>
+          candidate !== root &&
+          candidate.fireNoteType === visualType &&
+          directionalEndpointPosition(candidate) === directionalEndpointPosition(root) &&
+          isSameDirectionalGroup(root, candidate)),
+      ];
+      if (members.length < 2) {
+        return evidenceRequired(
+          "manual.slide-multiple-after-group-missing",
+          ["R16.D17", "D08", "D12", "MJ21"],
+          `Slide root ${root.index} has a Multiple terminal without its chart-owned side group.`,
+        );
+      }
+      this.slideAfterMultipleGroups.set(
+        root,
+        new MultipleDirectionalGroupOwner(members, directionalEndpointButton),
+      );
+    }
+    return ok(undefined);
+  }
+
   getAutoLiveJudgementOwnership(
     information: NoteInformation,
   ): AutoLiveJudgementOwnership | null {
@@ -652,6 +777,12 @@ export class NoteManager {
     information: NoteInformation,
   ): SimulatorResult<MultipleDirectionalRuntimeGroup | null> {
     return ok(this.longAfterMultipleGroups.get(information) ?? null);
+  }
+
+  private resolveSlideAfterMultipleGroup(
+    information: NoteInformation,
+  ): SimulatorResult<MultipleDirectionalRuntimeGroup | null> {
+    return ok(this.slideAfterMultipleGroups.get(information) ?? null);
   }
 
   private resolveMultipleDirectionalGroup(
@@ -998,6 +1129,31 @@ function createDefaultPoolObject(
     case "multiple-directional-visual":
       return new NoteMultipleDirectionalVisual(poolObjectId);
   }
+}
+
+function manualSlideTerminalNoteTypes(
+  afterNoteType: number,
+  gameNoteType: number,
+): readonly number[] {
+  const movementType = gameNoteType >= 4 && gameNoteType <= 8
+    ? 8
+    : gameNoteType === 9 || gameNoteType === 10
+    ? 9
+    : gameNoteType === 11 || gameNoteType === 12
+    ? 10
+    : 8;
+  const finalType = afterNoteType === AfterNoteType.SlideFlickEnd
+    ? 6
+    : afterNoteType === AfterNoteType.SlideDirectionalFlickEndLeft ||
+      afterNoteType === AfterNoteType.SlideDirectionalFlickEndRight
+    ? 7
+    : afterNoteType === AfterNoteType.SlideMultipleDirectionalFlickLeft ||
+      afterNoteType === AfterNoteType.SlideMultipleDirectionalFlickRight
+    ? 8
+    : 5;
+  return movementType === finalType
+    ? [movementType]
+    : [movementType, finalType];
 }
 
 function manualLongAfterNoteType(afterNoteType: number): 2 | 5 | 6 | 7 | null {

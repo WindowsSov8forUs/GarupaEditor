@@ -40,6 +40,11 @@ export interface NoteStateSnapshot {
 export interface ManualNoteRuntime {
   readonly getAdjustedMusicPosition: () => number;
   readonly getCurrentBpm: () => number;
+  readonly getJudgeOffsetFrames: () => number;
+  readonly judgeSlide: (
+    source: NoteInformation,
+    adjustedMusicPosition: number,
+  ) => SimulatorResult<import("../managers/slideNoteManager").SlideJudgeDecision>;
   readonly geometry: SimulatorManualInputGeometryBackend;
   readonly beginJudgementTransaction: () => ManualJudgementTransaction;
   readonly submitJudgement: (

@@ -53,11 +53,11 @@
 | M01 晋升并修正静态证据 | **已完成** | 10.1.4的118方法/14 type/13 enum、独立Slide Wait/Flick Began与Slide band构造已提交并冻结 |
 | M02 建立实体/固定事件oracle | **已完成** | 5条R1、MJ01–MJ26、D03–D15、portable contract及141项source/copy verifier通过 |
 | M03 锁定输入数据与宿主边界 | **已完成** | 显式不可变input frame、owner-issued button能力、生命周期和失败优先级闭合 |
-| M04 恢复输入分发与候选仲裁 | 进行中：phase/owner与ordinary scan生产/测试完成；M05过滤、Slide near-line待完成 | phase、finger/button/note owner、wide/ordinary/Slide/tie行为匹配 |
+| M04 恢复输入分发与候选仲裁 | **已完成**：phase/owner、ordinary strict scan与Slide current/near-line owner测试通过 | phase、finger/button/note owner、wide/ordinary/Slide/tie行为匹配 |
 | M05 恢复窗口与Single/Flick判定 | **已完成**：Normal/Flick/Directional、Single timeout、单manual OneFrame及定向测试通过 | GetResult/JudgeNote、Normal/Flick/Directional的边界bits与事件顺序匹配 |
 | M06 恢复Multiple手动判定 | **已完成**：真实touch、count/side/finger owner、type10、duplicate与production group测试通过 | 真实touch方向、count阈值、side owner、finish/deactivate匹配 |
 | M07 恢复Long手动状态机 | **已完成**：Began/hold/move/release/grace/type2/4/5/6/7及MJ11–MJ15测试通过 | Began/Hold/Moved/Ended、合成release、grace、头尾与finger清理匹配 |
-| M08 恢复Slide手动状态机 | 未开始 | head/intermediate/end、band cursor、release/miss/invisible推进匹配 |
+| M08 恢复Slide手动状态机 | 进行中：production完成，MJ18–MJ22独立测试提交待完成 | head/intermediate/end、band cursor、release/miss/invisible推进匹配 |
 | M09 恢复自然timeout Miss | 未开始 | Long start/end、Slide wait/stop及同帧Miss顺序匹配 |
 | M10 接入调度、OneFrame与原子边界 | 未开始 | 每外帧一次输入、adaptive/pause/fault/dispose、五槽与批原子性闭合 |
 | M11 production oracle与独立验收 | 未开始 | 完整回归、production chart、证据验证和组合矩阵无开放阻断 |
@@ -294,6 +294,16 @@
 - grace从inside重置8.0；outside以delta8严格减到0时即使movement超过阈值也不成功，后续physical Flick release转换Miss并清timing。
 - 修订M03 fault-priority测试：旧的manual base AfterUpdate故障已被R19关闭，改用确认presentation-unimplemented的Multiple visual active update产生terminal latch，不修改production。
 - M07 4/4、manual boundary 7/7、M04 5/5、M05 Normal4/Flick6、M06 6项、first-slice 17/17、Auto Live AL01–AL22与testing TypeScript通过；M07关闭，下一批进入M08 Slide。
+
+#### 2026-07-29 第二十九批：M08 Slide production实现
+
+- Slide candidate不再读取root absolutePos：NoteSlide暴露parent-owned current source/button，NoteManager分别strict scan ordinary/current Slide，再由SlideNoteManager消费backend gameplay-local current X与button3 X执行原作`fabs`/`<=` near-line选择。
+- geometry backend新增可选Slide raw owner：current gameplay-local X、button local X及strict-increasing judge positions/virtual line；backend不返回result/correction/cursor，recording/default仍缺席并失败关闭。
+- SlideNoteManager按10.1.4 `setupPositionJudgeDataList`距离0..7映射`4,4,4,3,3,3,2,1`，以virtual-line overed index和upper interval计算raw result/signed correction；所有几何必须exact finite Float32。
+- Slide head非None（含Miss）在commit提交type8并切Stop；current cursor留在parent。visible intermediate先containment，invisible跳过；band Perfect或nonzero judgeOffset owner下Great promotion且signed correction<=1时提交type8、mark并只推进一次。
+- terminal game type4..7沿band type8；type8严格`>0.04`，9/10按方向严格`>0.01`，11/12再检查group count full threshold；grace沿用owner delta不clamp。physical early release对current intermediate提交type8 Miss并deactivate。
+- Slide root/child各自注册manual ownership（phase、allowed note types、absolute position、buttons）；Multiple terminal沿chart endpoint+Add helper重建group buttons/count，缺helper失败关闭，不开放caller cursor/result。
+- production/testing TypeScript、M08工作树4项、M07 4项、first-slice 17/17与Auto Live AL01–AL22通过；M04 Slide gap关闭，测试文件留独立提交。
 
 ## 2. 固定范围
 

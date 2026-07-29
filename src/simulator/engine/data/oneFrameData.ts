@@ -18,7 +18,7 @@ export interface ManualJudgementData {
   readonly noteIndex: number;
   readonly buttonTypes: readonly number[];
   readonly noteType: number;
-  readonly phase: "head" | "tail";
+  readonly phase: "head" | "intermediate" | "tail";
   readonly rawResult: 0 | 1 | 2 | 3 | 4;
   readonly adjustedResult: 0 | 1 | 2 | 3 | 4;
   readonly addCombo: -1 | 1;

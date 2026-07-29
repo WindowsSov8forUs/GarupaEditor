@@ -49,7 +49,7 @@ export type OneFrameTraceEntry =
       readonly containerId: string;
       readonly noteIndex: number;
       readonly noteType: number;
-      readonly phase: "head" | "tail";
+      readonly phase: "head" | "intermediate" | "tail";
       readonly rawResult: 0 | 1 | 2 | 3 | 4;
       readonly multipleDirectionalFlickNoteCount: number;
     }
@@ -451,10 +451,11 @@ export class InGameOneFrameJudgementController {
       throw new Error("Manual OneFrame commit lost its source ownership");
     }
     const phase = request.phase ?? "head";
-    const buttonTypes = phase === "tail"
-      ? ownership.longAfterButtonTypes ?? request.noteInformation.buttonTypesArray
-      : ownership.multipleDirectionalFlickButtonTypes ??
-        request.noteInformation.buttonTypesArray;
+    const buttonTypes = ownership.slideButtonTypes ??
+      (phase === "tail"
+        ? ownership.longAfterButtonTypes ?? request.noteInformation.buttonTypesArray
+        : ownership.multipleDirectionalFlickButtonTypes ??
+          request.noteInformation.buttonTypesArray);
     const payload: ManualJudgementData = Object.freeze({
       noteIndex: request.noteInformation.index,
       buttonTypes: Object.freeze([...buttonTypes]),
@@ -548,6 +549,17 @@ function isClosedManualRequest(
         expectedMultipleButtons,
       );
   }
+  if (ownership.slidePhase !== null) {
+    const allowedTypes = ownership.slideAllowedNoteTypes;
+    const buttons = ownership.slideButtonTypes;
+    return phase === ownership.slidePhase &&
+      Array.isArray(allowedTypes) &&
+      allowedTypes.includes(request.noteType) &&
+      request.absolutePosition === ownership.slideAbsolutePosition &&
+      Array.isArray(buttons) &&
+      buttons.length > 0 &&
+      request.multipleDirectionalFlickNoteCount === undefined;
+  }
   if (source.fireNoteType === FrontNoteType.Long) {
     if (expectedMultipleCount !== null || expectedMultipleButtons !== null) {
       return false;
@@ -582,6 +594,10 @@ function isClosedManualRequest(
     ownership.longAfterNoteType !== null ||
     ownership.longAfterButtonTypes !== null ||
     ownership.longAfterMultipleCount !== null ||
+    ownership.slidePhase !== null ||
+    ownership.slideAllowedNoteTypes !== null ||
+    ownership.slideAbsolutePosition !== null ||
+    ownership.slideButtonTypes !== null ||
     request.absolutePosition !== source.absolutePos
   ) {
     return false;

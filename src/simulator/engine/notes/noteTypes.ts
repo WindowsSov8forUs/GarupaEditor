@@ -9,6 +9,7 @@ import {
   FrontNoteType,
   GameNoteType,
   type AfterNoteTypeValue,
+  type ButtonTypeValue,
   type NoteBatchInformation,
   type NoteInformation,
 } from "../chart/types";
@@ -822,8 +823,23 @@ export class NoteLong extends NoteFrontBase {
 export class NoteSlide extends NoteFrontBase {
   private afterNotesValue: readonly SlideAfterRuntime[] = [];
   private currentAfterIndexValue = 0;
+  private manualHeadJudgedValue = false;
+  private slideAfterMultipleGroupResolverValue: ((
+    information: NoteInformation,
+  ) => SimulatorResult<MultipleDirectionalRuntimeGroup | null>) | null = null;
+  private slideAfterMultipleGroupValue: MultipleDirectionalRuntimeGroup | null = null;
+  private manualTouchOriginValue: ManualInputPosition | null = null;
+  private manualAfterMoveTimeValue = Math.fround(0);
   private terminalJudgeNoteTypeValue: 5 | 6 | 7 | 8 | null = null;
   private readonly autoLiveTraceValue: SlideAutoLiveTraceEntry[] = [];
+
+  registerSlideAfterMultipleGroupResolver(
+    resolver: (
+      information: NoteInformation,
+    ) => SimulatorResult<MultipleDirectionalRuntimeGroup | null>,
+  ): void {
+    this.slideAfterMultipleGroupResolverValue = resolver;
+  }
 
   get afterNotes(): readonly SlideAfterRuntime[] {
     return this.afterNotesValue;
@@ -835,6 +851,17 @@ export class NoteSlide extends NoteFrontBase {
 
   get autoLiveTrace(): readonly SlideAutoLiveTraceEntry[] {
     return this.autoLiveTraceValue.map((entry) => ({ ...entry }));
+  }
+
+  get manualCandidateSource(): NoteInformation | null {
+    if (!this.manualHeadJudgedValue) {
+      return this.noteInformation;
+    }
+    return this.afterNotesValue[this.currentAfterIndexValue]?.source ?? null;
+  }
+
+  override isContainsButton(buttonType: ButtonTypeValue): boolean {
+    return this.manualCandidateSource?.buttonTypes.includes(buttonType) ?? false;
   }
 
   override activate(noteInformation: NoteInformation): SimulatorResult<void> {
@@ -898,15 +925,396 @@ export class NoteSlide extends NoteFrontBase {
         isTerminal ? terminalJudgeNoteType.value : null,
       ));
     }
+    const multipleGroup = this.slideAfterMultipleGroupResolverValue?.(noteInformation) ??
+      ok<MultipleDirectionalRuntimeGroup | null>(null);
+    if (multipleGroup.status !== "ok") {
+      return multipleGroup;
+    }
     const activated = super.activate(noteInformation);
     if (activated.status !== "ok") {
       return activated;
     }
     this.afterNotesValue = afterNotes;
     this.currentAfterIndexValue = 0;
+    this.manualHeadJudgedValue = false;
+    this.slideAfterMultipleGroupValue = multipleGroup.value;
+    this.manualTouchOriginValue = null;
+    this.manualAfterMoveTimeValue = Math.fround(0);
     this.terminalJudgeNoteTypeValue = terminalJudgeNoteType.value;
     this.autoLiveTraceValue.length = 0;
     return ok(undefined);
+  }
+
+  override preflightManualTouchBegan(
+    input: ManualNoteTouchInput,
+  ): SimulatorResult<ManualNoteBeganPlan> {
+    const source = this.noteInformation;
+    const runtime = this.manualRuntime;
+    if (source === null || runtime.status !== "ok" || this.manualHeadJudgedValue) {
+      return runtime.status === "ok"
+        ? evidenceRequired(
+            "manual.slide-head-owner-unavailable",
+            ["D10", "D12", "MJ18", "MJ20"],
+            "Slide Began requires its unconsumed parent-owned head.",
+          )
+        : runtime;
+    }
+    const judgement = judgeManualNote(
+      0,
+      Math.fround(source.absolutePos),
+      runtime.value.getAdjustedMusicPosition(),
+      runtime.value.getCurrentBpm(),
+    );
+    if (judgement.status !== "ok") {
+      return judgement;
+    }
+    if (judgement.value.result === NoteResultType.None) {
+      return ok(Object.freeze({
+        outcome: "none",
+        judgementPlan: null,
+        familyData: judgement.value,
+      }));
+    }
+    const reserved = input.judgementTransaction.preflight({
+      noteInformation: source,
+      phase: "head",
+      noteType: 8,
+      rawResult: judgement.value.result,
+      rawTiming: judgement.value.timing,
+      absolutePosition: source.absolutePos,
+    });
+    return reserved.status === "ok"
+      ? ok(Object.freeze({
+          outcome: "bind",
+          judgementPlan: reserved.value,
+          familyData: judgement.value,
+        }))
+      : reserved;
+  }
+
+  override commitManualTouchBegan(
+    input: ManualNoteTouchInput,
+    plan: ManualNoteBeganPlan,
+  ): void {
+    if (plan.judgementPlan === null) {
+      throw new Error("Slide head commit lost its type8 reservation");
+    }
+    input.judgementTransaction.commit(plan.judgementPlan);
+    this.manualHeadJudgedValue = true;
+    this.manualTouchOriginValue = input.currentPosition;
+    this.manualAfterMoveTimeValue = Math.fround(0);
+    const changed = this.changeState(NoteState.Stop);
+    if (changed.status !== "ok") {
+      throw new Error("Slide head commit could not enter Stop state");
+    }
+  }
+
+  override preflightManualTouchMoved(
+    input: ManualNoteTouchInput,
+  ): SimulatorResult<ManualNoteContinuationPlan> {
+    const current = this.afterNotesValue[this.currentAfterIndexValue];
+    const runtime = this.manualRuntime;
+    if (
+      current === undefined ||
+      runtime.status !== "ok" ||
+      !this.manualHeadJudgedValue ||
+      this.state !== NoteState.Stop
+    ) {
+      return runtime.status === "ok"
+        ? evidenceRequired(
+            "manual.slide-current-owner-unavailable",
+            ["D10", "D12", "MJ19", "MJ20"],
+            "Slide Moved requires its parent-owned current node in Stop state.",
+          )
+        : runtime;
+    }
+    const adjusted = runtime.value.getAdjustedMusicPosition();
+    if (!current.isTerminal || current.source.gameNoteType <= 7) {
+      if (!current.source.isInvisible) {
+        const inside = runtime.value.geometry.isInsideTargetButtons(
+          input.currentPosition,
+          current.source.buttonTypesArray,
+        );
+        if (inside.status !== "ok") {
+          return inside;
+        }
+        if (!inside.value) {
+          return ok(this.noManualSlideJudgementPlan());
+        }
+      }
+      const slideDecision = runtime.value.judgeSlide(current.source, adjusted);
+      if (slideDecision.status !== "ok") {
+        return slideDecision;
+      }
+      const result =
+        slideDecision.value.result === NoteResultType.Great &&
+          runtime.value.getJudgeOffsetFrames() !== 0
+          ? NoteResultType.Perfect
+          : slideDecision.value.result;
+      if (slideDecision.value.correction > 1 || result !== NoteResultType.Perfect) {
+        return ok(this.noManualSlideJudgementPlan());
+      }
+      return this.reserveManualSlideNode(
+        input,
+        current,
+        8,
+        result,
+        JudgeTiming.None,
+        false,
+      );
+    }
+    if (input.deltaTimeSeconds === null) {
+      return evidenceRequired(
+        "manual.slide-owner-delta-unavailable",
+        ["D10", "D14", "D15", "MJ21", "MJ26"],
+        "Slide terminal movement grace requires the host-owned outer-frame delta.",
+      );
+    }
+    const judgement = judgeManualNote(
+      0,
+      Math.fround(current.source.absolutePos),
+      adjusted,
+      runtime.value.getCurrentBpm(),
+    );
+    if (judgement.status !== "ok") {
+      return judgement;
+    }
+    const group = this.slideAfterMultipleGroupValue;
+    const targetButtons = group?.buttonTypes ?? current.source.buttonTypesArray;
+    const inside = runtime.value.geometry.isInsideTargetButtons(
+      input.currentPosition,
+      targetButtons,
+    );
+    if (inside.status !== "ok") {
+      return inside;
+    }
+    const nextGrace = inside.value
+      ? Math.fround(8)
+      : Math.fround(this.manualAfterMoveTimeValue - input.deltaTimeSeconds);
+    const origin = judgement.value.result === NoteResultType.None
+      ? input.currentPosition
+      : this.manualTouchOriginValue;
+    if (origin === null) {
+      return evidenceRequired(
+        "manual.slide-touch-origin-unavailable",
+        ["D09", "D10", "MJ21"],
+        "Slide terminal movement requires its cached Began origin.",
+      );
+    }
+    let movementSucceeded = false;
+    const gameNoteType = current.source.gameNoteType;
+    if (gameNoteType === 8) {
+      const rate = getManualScreenDistanceRate(runtime.value.geometry, {
+        beganPosition: origin,
+        currentPosition: input.currentPosition,
+        horizontalOnly: false,
+      });
+      if (rate.status !== "ok") {
+        return rate;
+      }
+      movementSucceeded = rate.value > float32FromBits(0x3d23d70a);
+    } else {
+      const correctDirection = gameNoteType === 9 || gameNoteType === 11
+        ? origin.x > input.currentPosition.x
+        : origin.x < input.currentPosition.x;
+      if (correctDirection) {
+        const horizontalRate = getManualScreenDistanceRate(runtime.value.geometry, {
+          beganPosition: origin,
+          currentPosition: input.currentPosition,
+          horizontalOnly: true,
+        });
+        if (horizontalRate.status !== "ok") {
+          return horizontalRate;
+        }
+        movementSucceeded = horizontalRate.value > float32FromBits(0x3c23d70a);
+        if (movementSucceeded && (gameNoteType === 11 || gameNoteType === 12)) {
+          if (group === null || group.isUsed) {
+            return evidenceRequired(
+              "manual.slide-multiple-terminal-group-unavailable",
+              ["D08", "D12", "MJ21"],
+              "Slide Multiple terminal requires its unused chart-owned group.",
+            );
+          }
+          const fullRate = getManualScreenDistanceRate(runtime.value.geometry, {
+            beganPosition: origin,
+            currentPosition: input.currentPosition,
+            horizontalOnly: false,
+          });
+          if (fullRate.status !== "ok") {
+            return fullRate;
+          }
+          const unitRate = float32FromBits(0x3c23d70a);
+          const threshold = Math.fround(
+            Math.fround(Math.fround(group.count - 1) * unitRate) + unitRate,
+          );
+          movementSucceeded = fullRate.value > threshold;
+        }
+      }
+    }
+    if (
+      !movementSucceeded ||
+      judgement.value.result === NoteResultType.None ||
+      nextGrace <= Math.fround(0)
+    ) {
+      return ok(this.noManualSlideJudgementPlan(origin, nextGrace));
+    }
+    const noteType = gameNoteType === 8 ? 8 : gameNoteType <= 10 ? 9 : 10;
+    return this.reserveManualSlideNode(
+      input,
+      current,
+      noteType,
+      judgement.value.result as Exclude<typeof judgement.value.result, -1>,
+      judgement.value.timing,
+      group !== null,
+      origin,
+      nextGrace,
+    );
+  }
+
+  override commitManualTouchMoved(
+    input: ManualNoteTouchInput,
+    plan: ManualNoteContinuationPlan,
+  ): void {
+    this.commitManualSlideNode(input, plan);
+  }
+
+  override preflightManualTouchEnded(
+    input: ManualNoteTouchInput,
+  ): SimulatorResult<ManualNoteContinuationPlan> {
+    const current = this.afterNotesValue[this.currentAfterIndexValue];
+    const root = this.noteInformation;
+    const runtime = this.manualRuntime;
+    if (current === undefined || root === null || runtime.status !== "ok") {
+      return runtime.status === "ok"
+        ? evidenceRequired(
+            "manual.slide-ended-owner-unavailable",
+            ["D12", "MJ22"],
+            "Slide Ended requires its current parent-owned node.",
+          )
+        : runtime;
+    }
+    const judgement = judgeManualNote(
+      0,
+      Math.fround(current.source.absolutePos),
+      runtime.value.getAdjustedMusicPosition(),
+      runtime.value.getCurrentBpm(),
+    );
+    if (judgement.status !== "ok") {
+      return judgement;
+    }
+    const noteType = current.isTerminal
+      ? manualSlideFinalJudgeNoteType(root.afterNoteType)
+      : 8;
+    if (noteType === null) {
+      return evidenceRequired(
+        "manual.slide-final-type-unrepresented",
+        ["D12", "MJ22"],
+        `Slide after type ${root.afterNoteType} has no confirmed final note type.`,
+      );
+    }
+    return this.reserveManualSlideNode(
+      input,
+      current,
+      noteType,
+      !current.isTerminal || judgement.value.result === NoteResultType.None
+        ? NoteResultType.Miss
+        : judgement.value.result,
+      judgement.value.timing,
+      false,
+    );
+  }
+
+  override commitManualTouchEnded(
+    input: ManualNoteTouchInput,
+    plan: ManualNoteContinuationPlan,
+  ): void {
+    this.commitManualSlideNode(input, plan, true);
+  }
+
+  private noManualSlideJudgementPlan(
+    nextOrigin: ManualInputPosition | null = this.manualTouchOriginValue,
+    nextGrace = this.manualAfterMoveTimeValue,
+  ): ManualNoteContinuationPlan {
+    return Object.freeze({
+      judgementPlan: null,
+      familyData: Object.freeze({
+        currentIndex: this.currentAfterIndexValue,
+        markMultipleUsed: false,
+        nextOrigin,
+        nextGrace,
+      }),
+    });
+  }
+
+  private reserveManualSlideNode(
+    input: ManualNoteTouchInput,
+    current: SlideAfterRuntime,
+    noteType: number,
+    rawResult: Exclude<NoteResultTypeValue, -1>,
+    rawTiming: JudgeTimingValue,
+    markMultipleUsed: boolean,
+    nextOrigin: ManualInputPosition | null = this.manualTouchOriginValue,
+    nextGrace = this.manualAfterMoveTimeValue,
+  ): SimulatorResult<ManualNoteContinuationPlan> {
+    const reserved = input.judgementTransaction.preflight({
+      noteInformation: current.source,
+      phase: current.isTerminal ? "tail" : "intermediate",
+      noteType,
+      rawResult,
+      rawTiming,
+      absolutePosition: current.source.absolutePos,
+    });
+    return reserved.status === "ok"
+      ? ok(Object.freeze({
+          judgementPlan: reserved.value,
+          familyData: Object.freeze({
+            currentIndex: this.currentAfterIndexValue,
+            markMultipleUsed,
+            nextOrigin,
+            nextGrace,
+          }),
+        }))
+      : reserved;
+  }
+
+  private commitManualSlideNode(
+    input: ManualNoteTouchInput,
+    plan: ManualNoteContinuationPlan,
+    release = false,
+  ): void {
+    const data = plan.familyData as {
+      readonly currentIndex: number;
+      readonly markMultipleUsed: boolean;
+      readonly nextOrigin: ManualInputPosition | null;
+      readonly nextGrace: number;
+    };
+    this.manualTouchOriginValue = data.nextOrigin;
+    this.manualAfterMoveTimeValue = data.nextGrace;
+    if (plan.judgementPlan === null) {
+      return;
+    }
+    if (data.currentIndex !== this.currentAfterIndexValue) {
+      throw new Error("Slide current cursor changed after preflight");
+    }
+    if (data.markMultipleUsed) {
+      const used = this.slideAfterMultipleGroupValue?.markUsed();
+      if (used?.status !== "ok") {
+        throw new Error("Slide Multiple group changed after preflight");
+      }
+    }
+    input.judgementTransaction.commit(plan.judgementPlan);
+    const current = this.afterNotesValue[this.currentAfterIndexValue];
+    const marked = current?.markJudged();
+    if (marked?.status !== "ok") {
+      throw new Error("Slide current node changed after preflight");
+    }
+    this.currentAfterIndexValue += 1;
+    if (release || current?.isTerminal) {
+      const changed = this.changeState(NoteState.Deactive);
+      if (changed.status !== "ok") {
+        throw new Error("Slide completion could not deactivate parent");
+      }
+    }
   }
 
   protected override moveState(_deltaTimeSeconds: number): SimulatorResult<void> {
@@ -1128,6 +1536,10 @@ export class NoteSlide extends NoteFrontBase {
   protected override onResetForDispose(): void {
     this.afterNotesValue = [];
     this.currentAfterIndexValue = 0;
+    this.manualHeadJudgedValue = false;
+    this.slideAfterMultipleGroupValue = null;
+    this.manualTouchOriginValue = null;
+    this.manualAfterMoveTimeValue = Math.fround(0);
     this.terminalJudgeNoteTypeValue = null;
     this.autoLiveTraceValue.length = 0;
   }
@@ -1155,6 +1567,10 @@ export class NoteSlide extends NoteFrontBase {
     }
     this.afterNotesValue = [];
     this.currentAfterIndexValue = 0;
+    this.manualHeadJudgedValue = false;
+    this.slideAfterMultipleGroupValue = null;
+    this.manualTouchOriginValue = null;
+    this.manualAfterMoveTimeValue = Math.fround(0);
     this.terminalJudgeNoteTypeValue = null;
   }
 }
@@ -2207,6 +2623,26 @@ function isInt32Position(value: number): boolean {
   return Number.isInteger(value) &&
     value >= -0x80000000 &&
     value <= 0x7fffffff;
+}
+
+function manualSlideFinalJudgeNoteType(
+  afterNoteType: AfterNoteTypeValue,
+): 5 | 6 | 7 | 8 | null {
+  switch (afterNoteType) {
+    case AfterNoteType.SlideAfter:
+    case AfterNoteType.SlideEnd:
+      return 5;
+    case AfterNoteType.SlideFlickEnd:
+      return 6;
+    case AfterNoteType.SlideDirectionalFlickEndLeft:
+    case AfterNoteType.SlideDirectionalFlickEndRight:
+      return 7;
+    case AfterNoteType.SlideMultipleDirectionalFlickLeft:
+    case AfterNoteType.SlideMultipleDirectionalFlickRight:
+      return 8;
+    default:
+      return null;
+  }
 }
 
 function manualLongAfterJudgeNoteType(
