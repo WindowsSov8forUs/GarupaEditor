@@ -43,13 +43,14 @@ function filesRecursively(root, current = root) {
   return files;
 }
 
-check(manifest.schemaVersion === 2 && manifest.entries.length === 351, "Unexpected evidence manifest shape");
+check(manifest.schemaVersion === 2 && manifest.entries.length === 353, "Unexpected evidence manifest shape");
 check(
   manifest.source.staticEvidenceCommit === "6c902656c72f3983fb04386038dcfe38f0d53797" &&
     manifest.source.runtimeInputCommit === "1ee976ea1de24cb0567762a74e2d091ae4c78464" &&
     manifest.source.runtimeEvidenceCommit === "72aa279fb07041b04ca649df918fa35ab0490d91" &&
     manifest.source.capturePlanCommit === "e65f3411d1a91cfa5ecf0d7b29e99605b04e8a41" &&
-    manifest.source.capturePlanV2Commit === "3adf31f987830ce5b82aba0d92813b69fda3cec7",
+    manifest.source.capturePlanV2Commit === "3adf31f987830ce5b82aba0d92813b69fda3cec7" &&
+    manifest.source.positiveEvidenceCommit === "5ce2a7ef325def61986a93053ad85c2f4973f25b",
   "Unexpected Reverse evidence commits",
 );
 check(
@@ -69,14 +70,15 @@ check(
     manifest.counts.enums === 19 &&
     manifest.counts.arm64Slices === 326 &&
     manifest.counts.staticEntries === 335 &&
-    manifest.counts.totalEntries === 351 &&
+    manifest.counts.totalEntries === 353 &&
     manifest.counts.r0InputEntries === 12 &&
     manifest.counts.r1EvidenceEntries === 6 &&
     manifest.counts.capturePlanEntries === 2 &&
+    manifest.counts.positiveEvidenceEntries === 5 &&
     manifest.counts.productionBms === 2 &&
     manifest.counts.cacheRecords === 2 &&
     manifest.counts.captureTargets === 50 &&
-    manifest.counts.r1Traces === 1 &&
+    manifest.counts.r1Traces === 2 &&
     manifest.counts.fixedEventCases === 0,
   "Evidence counts changed",
 );
@@ -101,12 +103,13 @@ const runtimeInputGate = manifest.runtimeInputGate;
 check(
   runtimeInputGate.status === "partial-required-before-code" &&
     runtimeInputGate.closedSubscope.join(",") ===
-      "ordinary-production-bms,habahiro-production-bms,connected-device-cache-provenance,observation-only-capture-targets,no-input-life-game-over-r1" &&
+      "ordinary-production-bms,habahiro-production-bms,connected-device-cache-provenance,observation-only-capture-targets,no-input-life-game-over-r1,positive-perfect-score-r1" &&
     runtimeInputGate.partialFindings.join(",") === "D18,D22,D23" &&
     runtimeInputGate.blockingFindings.join(",") ===
       "D18-remaining,D19,D20,D21,D22-remaining,D23-master-start-data,D24" &&
-    runtimeInputGate.r1TraceCount === 1 &&
-    runtimeInputGate.pendingPlans.join(",") === "positive-retry-all-lanes-early-score-skill-v2" &&
+    runtimeInputGate.r1TraceCount === 2 &&
+    runtimeInputGate.pendingPlans.length === 0 &&
+    runtimeInputGate.executedPlans.join(",") === "positive-retry-all-lanes-early-score-skill-v2" &&
     runtimeInputGate.supersededPlans.join(",") === "positive-retry-all-lanes-score-skill" &&
     runtimeInputGate.productionAuthorization === false,
   "Runtime input gate was incorrectly closed",
@@ -117,12 +120,14 @@ git(["cat-file", "-e", `${manifest.source.runtimeInputCommit}^{commit}`], source
 git(["cat-file", "-e", `${manifest.source.runtimeEvidenceCommit}^{commit}`], sourceRoot);
 git(["cat-file", "-e", `${manifest.source.capturePlanCommit}^{commit}`], sourceRoot);
 git(["cat-file", "-e", `${manifest.source.capturePlanV2Commit}^{commit}`], sourceRoot);
+git(["cat-file", "-e", `${manifest.source.positiveEvidenceCommit}^{commit}`], sourceRoot);
 const evidenceCommits = [
   manifest.source.staticEvidenceCommit,
   manifest.source.runtimeInputCommit,
   manifest.source.runtimeEvidenceCommit,
   manifest.source.capturePlanCommit,
   manifest.source.capturePlanV2Commit,
+  manifest.source.positiveEvidenceCommit,
 ];
 const ids = new Set();
 const copiedPaths = new Set();
@@ -281,7 +286,7 @@ check(
 const runtimeStatus = json("runtime_input_status.json");
 check(
   runtimeStatus.status === "runtime-inputs-and-r1-partial-locked-business-gate-open" &&
-    runtimeStatus.runtime.r1_trace_count === 1 &&
+    runtimeStatus.runtime.r1_trace_count === 2 &&
     runtimeStatus.runtime.pending_capture_plans.length === 2 &&
     runtimeStatus.runtime.pending_capture_plans[0].scenario_id ===
       "positive-retry-all-lanes-score-skill" &&
@@ -290,7 +295,8 @@ check(
     runtimeStatus.runtime.pending_capture_plans[1].scenario_id ===
       "positive-retry-all-lanes-early-score-skill-v2" &&
     runtimeStatus.runtime.pending_capture_plans[1].status ===
-      "committed-plan-not-runtime-evidence" &&
+      "executed-confirmed-trace-promoted" &&
+    runtimeStatus.runtime.capture_fields_not_consumed.length === 5 &&
     runtimeStatus.gates.D18 === "partial-required-before-code" &&
     runtimeStatus.gates.D22 === "partial-required-before-code" &&
     runtimeStatus.gates.D23 === "partial-required-before-code" &&
@@ -299,6 +305,13 @@ check(
     runtimeStatus.closed.r1_no_input_life_game_over.reflect === 210 &&
     runtimeStatus.closed.r1_no_input_life_game_over.final_life === 0 &&
     runtimeStatus.closed.r1_no_input_life_game_over.single_game_over.join(",") === "0,1" &&
+    runtimeStatus.closed.r1_positive_judgement_score.events === 2166 &&
+    runtimeStatus.closed.r1_positive_judgement_score.perfect === 1 &&
+    runtimeStatus.closed.r1_positive_judgement_score.miss === 10 &&
+    runtimeStatus.closed.r1_positive_judgement_score.add_score_float_bits === "0x44AF8052" &&
+    runtimeStatus.closed.r1_positive_judgement_score.reflected_score === 1404 &&
+    runtimeStatus.closed.r1_positive_judgement_score.max_combo === 1 &&
+    runtimeStatus.closed.r1_positive_judgement_score.active_skill_observed === false &&
     runtimeStatus.business_state_gate === "open" &&
     runtimeStatus.production_authorization === false &&
     runtimeStatus.blocking_findings.length > 0,
@@ -426,6 +439,86 @@ check(
   "Frozen no-input R1 Life/OneFrame/Game Over trajectory changed",
 );
 
+const positiveTraceBytes = gunzipSync(
+  readFileSync(resolve(investigation, "runtime/positive-retry-all-lanes-early.trace.json.gz")),
+);
+const positiveTrace = JSON.parse(positiveTraceBytes.toString("utf8"));
+const positiveEventsOf = (kind) =>
+  positiveTrace.events.filter((event) => event.kind === kind);
+const positiveSetups = positiveEventsOf("OneFrameData.Setup.leave").map(
+  (event) => event.frame,
+);
+const positiveEntries = positiveSetups.filter((frame) => frame.result !== 0);
+const positiveScoreAdds = positiveEventsOf("InGameRecord.AddScore.enter").filter(
+  (event) => event.arg1 !== 0,
+);
+const positiveGameOverEnter = positiveEventsOf("InGameRecord.updateGameOverState.enter");
+const positiveGameOverLeave = positiveEventsOf("InGameRecord.updateGameOverState.leave");
+const positiveSkillUpdates = positiveEventsOf("SituationSkillManager.ExecUpdate.enter");
+check(
+  positiveTrace.schema_version === 1 &&
+    positiveTrace.status === "confirmed-r1-observation-only" &&
+    positiveTrace.capture_error === null &&
+    positiveTrace.events.length === 2166 &&
+    positiveTrace.events.every((event, index) => event.sequence === index) &&
+    positiveTrace.capability.level === "R1" &&
+    positiveTrace.capability.return_replacement === false &&
+    positiveTrace.capability.memory_writes === false &&
+    positiveTrace.capability.apk_modification === false &&
+    positiveTrace.capability.transport.kind === "explicit-remote" &&
+    positiveTrace.capture_script_sha256 ===
+      sha256(readFileSync(resolve(investigation, "capture_score_life_state_runtime.py"))) &&
+    positiveTrace.plan_sha256 ===
+      sha256(readFileSync(resolve(investigation, "runtime/positive-retry-all-lanes-early-r1-plan.json"))) &&
+    positiveTrace.summary.queued === 0 &&
+    positiveSetups.length === 11 &&
+    positiveEntries.length === 1 &&
+    positiveEntries[0].index === 6 &&
+    positiveEntries[0].add_score.bits === "0x44AF8052" &&
+    positiveEntries[0].add_power === 0 &&
+    positiveEntries[0].add_combo === 1 &&
+    positiveEntries[0].note_type === 0 &&
+    positiveEntries[0].result === 4 &&
+    positiveEntries[0].adjusted_result === 4 &&
+    positiveEntries[0].fever_rate.bits === "0x3F800000" &&
+    positiveEntries[0].skill_rate.bits === "0x3F800000" &&
+    positiveEntries[0].score_up_rate.bits === "0x3F800000" &&
+    positiveSetups.filter((frame) => frame.result === 0).length === 10 &&
+    positiveScoreAdds.length === 1 &&
+    positiveScoreAdds[0].arg1 === 1404 &&
+    positiveGameOverEnter.length === 1 &&
+    positiveGameOverEnter[0].before.score === 1404 &&
+    positiveGameOverEnter[0].before.current_life === 0 &&
+    positiveGameOverEnter[0].before.max_combo === 1 &&
+    positiveGameOverEnter[0].before.perfect_count === 1 &&
+    positiveGameOverEnter[0].before.miss_count === 10 &&
+    positiveGameOverEnter[0].before.is_single_game_over === 0 &&
+    positiveGameOverLeave.length === 1 &&
+    positiveGameOverLeave[0].after.is_single_game_over === 1 &&
+    positiveSkillUpdates.length === 220 &&
+    positiveSkillUpdates.every(
+      (event) =>
+        event.skill.state === 0 &&
+        event.skill.current === null &&
+        event.skill.playlist.size === 0,
+    ) &&
+    positiveEventsOf("SituationSkillManager.AddSituationSkillToPlayList.enter").length === 0 &&
+    positiveEventsOf("SituationSkillManager.executeBeginSkillProcess.enter").length === 0,
+  "Frozen positive R1 Perfect/Score/Life trajectory changed or overclaims active Skill",
+);
+const unconsumedCaptureFields = [
+  "ScoreUtility.GetResultTypeCorrectionRate.rate_bits",
+  "FeverTimeManager.GetFeverTimeScoreRate.result_bits",
+  "NoteFrontBase.calcSkillScoreUpRate.returned",
+  "NoteFrontBase.judgeFrontNote.note_type",
+  "NoteFrontBase.judgeFrontNote.absolute_pos",
+];
+check(
+  runtimeStatus.runtime.capture_fields_not_consumed.join(",") ===
+    unconsumedCaptureFields.join(","),
+  "ABI-unsafe positive R1 fields were not excluded",
+);
+
 const closure = json("static_closure.json");
 check(
   closure.version_rebaseline === "closed" &&
@@ -454,7 +547,7 @@ for (const [path, fragment] of criticalText) {
 }
 
 console.log(
-  `score-life-state evidence verified: methods=326 layouts=25 enums=19 BMS=2 R1=1(partial D18/D22) plans=2(pending=1) ` +
+  `score-life-state evidence verified: methods=326 layouts=25 enums=19 BMS=2 R1=2(partial D18/D22) plans=2(executed=1) ` +
     `V01=closed business=blocked(D18-D24) entries=${manifest.entries.length} ` +
     `index=${validateIndex ? "checked" : "skipped"}`,
 );

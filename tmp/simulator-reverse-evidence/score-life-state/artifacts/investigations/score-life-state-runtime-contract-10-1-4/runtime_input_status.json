@@ -39,11 +39,25 @@
       "miss_count": 11,
       "single_game_over": [0, 1],
       "status": "confirmed-r1-observation-only"
+    },
+    "r1_positive_judgement_score": {
+      "trace": "runtime/positive-retry-all-lanes-early.trace.json.gz",
+      "trace_sha256": "F91140EB5A1B1A8858495B6CFFB9112C4CB295F20D4CDEEED184A1F5CCDB44A9",
+      "events": 2166,
+      "one_frame_setup": 11,
+      "perfect": 1,
+      "miss": 10,
+      "add_score_float_bits": "0x44AF8052",
+      "reflected_score": 1404,
+      "max_combo": 1,
+      "active_skill_observed": false,
+      "single_game_over": [0, 1],
+      "status": "confirmed-r1-observation-only"
     }
   },
   "partial": {
     "D18": {
-      "closed_subscope": "stable InGameRecord identity, Life initialization fields, inactive Skill manager state, OneFrame Setup and Reflect before/after snapshots in one no-input manual run",
+      "closed_subscope": "stable InGameRecord identity, Life initialization fields, inactive Skill manager state, no-input and one Perfect OneFrame/Reflect/Score before-after snapshots",
       "open_subscope": "positive judgement, active Skill, Fever, heal, guard, Never Die and special-mode identities"
     },
     "D22": {
@@ -56,7 +70,7 @@
     }
   },
   "runtime": {
-    "r1_trace_count": 1,
+    "r1_trace_count": 2,
     "pending_capture_plans": [
       {
         "path": "runtime/positive-retry-all-lanes-r1-plan.json",
@@ -66,11 +80,19 @@
       {
         "path": "runtime/positive-retry-all-lanes-early-r1-plan.json",
         "scenario_id": "positive-retry-all-lanes-early-score-skill-v2",
-        "status": "committed-plan-not-runtime-evidence",
-        "intended_scope": ["D18-positive-judgement", "D18-active-skill", "D20-freeze-observation"]
+        "status": "executed-confirmed-trace-promoted",
+        "observed_scope": ["D18-positive-judgement-score"],
+        "not_observed": ["D18-active-skill", "D20-same-frame-freeze"]
       }
     ],
-    "operational_blocker": "One no-input retry trace is closed. The v2 positive-input plan must be committed and frozen before execution; its future trace cannot close active Skill or same-frame findings unless those events are actually observed.",
+    "capture_fields_not_consumed": [
+      "ScoreUtility.GetResultTypeCorrectionRate.rate_bits",
+      "FeverTimeManager.GetFeverTimeScoreRate.result_bits",
+      "NoteFrontBase.calcSkillScoreUpRate.returned",
+      "NoteFrontBase.judgeFrontNote.note_type",
+      "NoteFrontBase.judgeFrontNote.absolute_pos"
+    ],
+    "operational_blocker": "Two R1 traces are closed. Positive judgement/Score is observed, but active Skill and same-frame switching are absent; five ABI-unsafe capture fields are explicitly excluded.",
     "synthetic_trace_allowed": false
   },
   "gates": {
@@ -84,7 +106,7 @@
   },
   "unknown_fields": [],
   "blocking_findings": [
-    "Positive judgement, active Skill, Fever, heal, guard, Never Die and special-mode R1 traces remain open.",
+    "Active Skill, Fever, heal, guard, Never Die and special-mode R1 traces remain open; the positive trace observed no Skill activation.",
     "Deck/start-data/master provenance remains open.",
     "D20/D21 and the remaining D22 lifecycle paths remain open.",
     "BS01-BS36 and final portable contract do not exist."

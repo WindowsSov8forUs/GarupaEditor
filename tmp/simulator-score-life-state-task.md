@@ -684,7 +684,9 @@ git rev-list --left-right --count origin/codex/refactor-simulator-implementation
 - 该R1含1863个连续事件：Life初始化参数/字段`1000/1000/2000`、稳定InGameRecord identity、11个Miss OneFrame、210次Reflect、slot-order Life `1000→0`及nested single Game Over `0→1`；独立verifier通过。
 - 正判定/Skill采集计划提交：Reverse `e65f3411d1a91cfa5ecf0d7b29e99605b04e8a41`已push且远端`0 0`；从已提交手动`hard-touch-plan`保留七lane坐标、30轮120ms全lane循环及7个hold控制，前置Live Failed Retry，合计220动作。
 - v1计划已冻结后执行但未晋升raw trace；其7秒输入前等待只作为superseded控制来源，不形成业务结论。
-- v2计划提交：Reverse `3adf31f987830ce5b82aba0d92813b69fda3cec7`已push且远端`0 0`；只把输入前等待由7000ms改为500ms，其他217个lane/hold动作逐项保持。v2在Garupa冻结后才允许执行，当前仍为`committed-plan-not-runtime-evidence`。
+- v2计划提交：Reverse `3adf31f987830ce5b82aba0d92813b69fda3cec7`已push且远端`0 0`；只把输入前等待由7000ms改为500ms，其他217个lane/hold动作逐项保持。
+- Reverse正判定R1提交：`5ce2a7ef325def61986a93053ad85c2f4973f25b`已push且远端`0 0`；2166事件连续，实际观察1个Perfect、完整OneFrame `addScore=0x44AF8052`、identity Fever/Skill/ScoreUp rate、Reflect整数Score 1404、Combo/Perfect计数、10 Miss及Game Over保留Score。
+- active Skill在220次manager update中始终缺席，因此D18 active-Skill与D20 same-frame冻结继续开放。float返回hook误读`x0`及两个未闭合trailing参数共5字段由verifier明确不消费，不用错误raw补证据。
 - D18仅部分关闭：positive judgement、active Skill、Fever、heal、guard、Never Die和special mode仍缺R1；D22仅部分关闭：post-Game-Over gate、score decrease mode、reset/continue/seek/ReturnTime仍开放。
 - 待关闭：D18/D22剩余、D19–D21、D23剩余deck/start-data/master provenance、D24及BS01–BS36。
 - B02关闭前继续禁止B03–B12 production、测试脚本和package script实现。
