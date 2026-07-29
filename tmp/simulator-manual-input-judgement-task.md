@@ -55,7 +55,7 @@
 | M03 锁定输入数据与宿主边界 | **已完成** | 显式不可变input frame、owner-issued button能力、生命周期和失败优先级闭合 |
 | M04 恢复输入分发与候选仲裁 | 进行中：phase/owner与ordinary scan生产/测试完成；M05过滤、Slide near-line待完成 | phase、finger/button/note owner、wide/ordinary/Slide/tie行为匹配 |
 | M05 恢复窗口与Single/Flick判定 | **已完成**：Normal/Flick/Directional、Single timeout、单manual OneFrame及定向测试通过 | GetResult/JudgeNote、Normal/Flick/Directional的边界bits与事件顺序匹配 |
-| M06 恢复Multiple手动判定 | 进行中：production完成，MJ10与production-group独立测试待提交 | 真实touch方向、count阈值、side owner、finish/deactivate匹配 |
+| M06 恢复Multiple手动判定 | **已完成**：真实touch、count/side/finger owner、type10、duplicate与production group测试通过 | 真实touch方向、count阈值、side owner、finish/deactivate匹配 |
 | M07 恢复Long手动状态机 | 未开始 | Began/Hold/Moved/Ended、合成release、grace、头尾与finger清理匹配 |
 | M08 恢复Slide手动状态机 | 未开始 | head/intermediate/end、band cursor、release/miss/invisible推进匹配 |
 | M09 恢复自然timeout Miss | 未开始 | Long start/end、Slide wait/stop及同帧Miss顺序匹配 |
@@ -261,6 +261,15 @@
 - Multiple 7-frame synthetic在manual使用独立transaction先完整preflight，再mark group、commit type10 Perfect、finish；Auto Live原路径和G21 group count保持不变。
 - manual judgement ownership从布尔predicate升级为`source→{multiple count, button types}|null`；Normal/Flick/Directional要求两个Multiple字段均null，Multiple要求count正整数且与唯一owner button list长度一致。
 - production/testing TypeScript、Normal 4项、Flick 6项、M04 dispatch 5项、M06工作树6项及Auto Live AL01–AL22通过；测试接口适配与M06测试文件留到独立提交。
+
+#### 2026-07-29 第二十五批：M06 Multiple Directional独立测试
+
+- 新增count 1/2/3 production `NoteManager→dispatcher→Multiple→OneFrame`图；identity geometry只提供ScreenToWorld/scale owner，测试不注入rate/result/count/button projection。
+- runner先直接验证MJ10与10.1.4 Moved/count ARM64操作顺序；测试用独立hardcoded threshold bits `0x3C23D70A/0x3CA3D70A/0x3CF5C28F`及其next Float32，逐count锁定equal不判、next判定。
+- 每个success验证type10、Began cached result、owner group button list/count；随后同frame NoteManager update只deactivate side siblings，不增OneFrame。
+- wrong direction、同帧第二finger与consumed-side duplicate分别验证零reservation/零全局mutation；7-frame synthetic验证manual type10 Perfect与side cleanup。
+- 测试批只适配Manual owner返回值和Auto Live direct runtime-group test double的新接口，不修改production；testing TypeScript、M06 6/6、Normal 4/4、Flick 6/6、M04 5/5及Auto Live AL01–AL22通过。
+- M06关闭，下一批进入M07 Long。
 
 ## 2. 固定范围
 

@@ -1302,7 +1302,11 @@ function validateAutoLive() {
         });
         const runtimeGroup = {
           count: group.length,
+          buttonTypes: group.map((information) => information.buttonType),
           isUsed: false,
+          preflightManualFinger() { return { status: "ok", value: undefined }; },
+          commitManualFinger() {},
+          clearManualFinger() {},
           markUsed() {
             if (this.isUsed) return { status: "evidence-required" };
             this.isUsed = true;
@@ -2534,7 +2538,11 @@ function validateAutoLive() {
       });
       const runtimeGroup = {
         count: buttons.length,
+        buttonTypes: [...buttons],
         isUsed: false,
+        preflightManualFinger() { return { status: "ok", value: undefined }; },
+        commitManualFinger() {},
+        clearManualFinger() {},
         markUsed() {
           if (this.isUsed) return { status: "evidence-required" };
           this.isUsed = true;

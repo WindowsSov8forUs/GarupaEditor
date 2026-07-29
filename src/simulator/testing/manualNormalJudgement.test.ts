@@ -122,7 +122,7 @@ function createNormalGraph(sources: readonly NoteInformation[]): NormalGraph {
     () => oneFrame.createManualJudgementTransaction(),
   );
   requireOk(oneFrame.registerManualJudgementOwner(
-    (information) => manager.ownsManualJudgementSource(information),
+    (information) => manager.getManualJudgementOwnership(information),
   ), "register manual judgement owner");
   requireOk(manager.execAwakeEnd(), "setup Normal NoteManager");
   requireOk(manager.execUpdate(0), "activate Normal notes");

@@ -103,7 +103,7 @@ function graph(information: NoteInformation): FlickGraph {
     geometry,
   );
   requireOk(oneFrame.registerManualJudgementOwner(
-    (candidate) => manager.ownsManualJudgementSource(candidate),
+    (candidate) => manager.getManualJudgementOwnership(candidate),
   ), "register manual owner");
   requireOk(manager.execAwakeEnd(), "setup manager");
   requireOk(manager.execUpdate(0), "activate Flick");
