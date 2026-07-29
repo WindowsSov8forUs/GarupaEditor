@@ -20,6 +20,7 @@ target_rva	target_end_rva	owner	method	signature_unchanged	target_size	differing
 0x3313370	0x3313460	InputManager	inputButton	true	240	13	5	arm64/03313370__InputManager__inputButton.arm64.tsv	mapped
 0x3312D20	0x3313090	InputManager	inputPlaying	true	880	44	7	arm64/03312d20__InputManager__inputPlaying.arm64.tsv	mapped
 0x3A74CBC	0x3A74F1C	NoteBase	Deactivate	true	608	38	18	arm64/03a74cbc__NoteBase__Deactivate.arm64.tsv	mapped
+0x3A75A98	0x3A75B1C	NoteBase	ExecuteAfterUpdate	true	132	11	4	arm64/03a75a98__NoteBase__ExecuteAfterUpdate.arm64.tsv	mapped
 0x3A75B1C	0x3A75B84	NoteBase	IsContainsButton	true	104	2	0	arm64/03a75b1c__NoteBase__IsContainsButton.arm64.tsv	mapped
 0x3A754B8	0x3A754C0	NoteBase	SetFingerId	true	8	0	0	arm64/03a754b8__NoteBase__SetFingerId.arm64.tsv	mapped
 0x3A75F70	0x3A75F80	NoteBase	getAddCombo	true	16	0	0	arm64/03a75f70__NoteBase__getAddCombo.arm64.tsv	mapped

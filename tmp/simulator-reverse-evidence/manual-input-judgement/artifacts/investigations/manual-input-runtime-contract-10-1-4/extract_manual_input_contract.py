@@ -32,6 +32,7 @@ EXTRA_METHODS = (
     ("NoteBase", "get_FingerId"),
     ("NoteBase", "SetFingerId"),
     ("NoteBase", "Deactivate"),
+    ("NoteBase", "ExecuteAfterUpdate"),
     ("GamePlayButton", ".ctor"),
     ("NoteLong", ".ctor"),
     ("NoteSlide", ".ctor"),

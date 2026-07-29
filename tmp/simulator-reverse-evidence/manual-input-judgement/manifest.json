@@ -5,12 +5,12 @@
     "repository": "HOST___________________GirlsBandParty-Reverse",
     "staticBaselineCommit": "74ab76f6838847d98aae1a15741a5f024e3774ff",
     "manualStaticEvidenceCommit": "11b8250853ca12a2106c66245724467701d9eb23",
-    "finalManualEvidenceCommit": "1432b7def25faafee4cc713423305d2c1fb7def4",
+    "finalManualEvidenceCommit": "ce5353fdc54a3ba8188f3dccd4accdc6c2ef4ce2",
     "excludedUntrackedPaths": [
       ".claude/",
       "runtime/tools/"
     ],
-    "manualStaticSupplementCommit": "1432b7def25faafee4cc713423305d2c1fb7def4"
+    "manualStaticSupplementCommit": "ce5353fdc54a3ba8188f3dccd4accdc6c2ef4ce2"
   },
   "sample": {
     "package": "jp.co.craftegg.band",
@@ -49,7 +49,7 @@
     ]
   },
   "counts": {
-    "methods": 117,
+    "methods": 118,
     "layouts": 14,
     "enums": 13,
     "r1Traces": 5,
@@ -67,20 +67,20 @@
     },
     {
       "id": "MR002",
-      "sourceCommit": "1432b7def25faafee4cc713423305d2c1fb7def4",
+      "sourceCommit": "ce5353fdc54a3ba8188f3dccd4accdc6c2ef4ce2",
       "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/README.md",
       "copiedPath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/README.md",
-      "bytes": 8978,
-      "sha256": "D697AFC0370AFFEB49F9E3D6F4CE4944EA5388A8BD9C1ECB555DA44C67DEA1C8",
+      "bytes": 9171,
+      "sha256": "0A886CEBA1DDDA668CDA0AA00476FE093727716D6D00DB84272D4123CED07565",
       "status": "confirmed-10.1.4-static-r1-oracle"
     },
     {
       "id": "MR003",
-      "sourceCommit": "1432b7def25faafee4cc713423305d2c1fb7def4",
+      "sourceCommit": "ce5353fdc54a3ba8188f3dccd4accdc6c2ef4ce2",
       "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/SHA256SUMS",
       "copiedPath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/SHA256SUMS",
-      "bytes": 15960,
-      "sha256": "CA788A29B50C97C807E18A502CC6FC3DD0496DDACCAA8BC8E9F2F26180FF3E9B",
+      "bytes": 16081,
+      "sha256": "1E8428DD569D3494134A3F64E5FDA02E33577623B9C888D6221DA708190B769A",
       "status": "confirmed-10.1.4-static-r1-oracle"
     },
     {
@@ -1039,20 +1039,20 @@
     },
     {
       "id": "MR110",
-      "sourceCommit": "1432b7def25faafee4cc713423305d2c1fb7def4",
+      "sourceCommit": "ce5353fdc54a3ba8188f3dccd4accdc6c2ef4ce2",
       "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/closure.json",
       "copiedPath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/closure.json",
       "bytes": 3734,
-      "sha256": "B4B433DC4AB83CCF7571DE46C862722B76A15EDABD8E85A277379F01E55F01C6",
+      "sha256": "5663C186B67F62E6BEEFB62E67983DE878FD5FEB68590154C7596A4FC3FD5DC2",
       "status": "confirmed-10.1.4-static-r1-oracle"
     },
     {
       "id": "MR111",
-      "sourceCommit": "1432b7def25faafee4cc713423305d2c1fb7def4",
+      "sourceCommit": "ce5353fdc54a3ba8188f3dccd4accdc6c2ef4ce2",
       "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/extract_manual_input_contract.py",
       "copiedPath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/extract_manual_input_contract.py",
-      "bytes": 16856,
-      "sha256": "0A4375C6DCF8E4AE4E091D1F3160549A1F65E38622066883D873394BF7492958",
+      "bytes": 16896,
+      "sha256": "DE3712441791ADA418874949F497F24B6A20AB89DF9E3218916827C400A2A7A5",
       "status": "confirmed-10.1.4-static-r1-oracle"
     },
     {
@@ -1066,11 +1066,11 @@
     },
     {
       "id": "MR113",
-      "sourceCommit": "1432b7def25faafee4cc713423305d2c1fb7def4",
+      "sourceCommit": "ce5353fdc54a3ba8188f3dccd4accdc6c2ef4ce2",
       "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/manual_input_static_contract.json",
       "copiedPath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/manual_input_static_contract.json",
-      "bytes": 575017,
-      "sha256": "578B768466DEE545B80095B54D720DB644839C439E461D928CDE3BF985257059",
+      "bytes": 578113,
+      "sha256": "14626F571BECF45EBA9D4045F5C2EE3F991387A6562BD4BAF351E87A88EA973C",
       "status": "confirmed-10.1.4-static-r1-oracle"
     },
     {
@@ -1165,20 +1165,20 @@
     },
     {
       "id": "MR124",
-      "sourceCommit": "1432b7def25faafee4cc713423305d2c1fb7def4",
+      "sourceCommit": "ce5353fdc54a3ba8188f3dccd4accdc6c2ef4ce2",
       "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/targets.tsv",
       "copiedPath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/targets.tsv",
-      "bytes": 15138,
-      "sha256": "644B0F487EDD14B8C6E307202BFD7A46BEBB2656446C046F32FD4ABD9B4606B4",
+      "bytes": 15262,
+      "sha256": "C5227E804D088740CE1457B1CCB40513A6A04DF315DDC23E19CFDBFDD1C679B9",
       "status": "confirmed-10.1.4-static-r1-oracle"
     },
     {
       "id": "MR125",
-      "sourceCommit": "1432b7def25faafee4cc713423305d2c1fb7def4",
+      "sourceCommit": "ce5353fdc54a3ba8188f3dccd4accdc6c2ef4ce2",
       "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/verify_manual_input_contract.py",
       "copiedPath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/verify_manual_input_contract.py",
-      "bytes": 9444,
-      "sha256": "18661633564C8EEAF372445469B8A086A1A8565D6BBB86EC3E35D2B95BB1E46F",
+      "bytes": 9522,
+      "sha256": "7C829343276C1B1B6AF66AEFDC4E02B5FDEA26E380D9132AF0AF00DAE168AF44",
       "status": "confirmed-10.1.4-static-r1-oracle"
     },
     {
@@ -1314,6 +1314,15 @@
       "copiedPath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/03a7699c__NoteFlickBase___ctor.arm64.tsv",
       "bytes": 129,
       "sha256": "5E958F92408D1C1FB84B3F43BC4835633C0B39504EE5C9332A94BF62B6737BF9",
+      "status": "confirmed-10.1.4-static-r1-oracle"
+    },
+    {
+      "id": "MR141",
+      "sourceCommit": "ce5353fdc54a3ba8188f3dccd4accdc6c2ef4ce2",
+      "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/03a75a98__NoteBase__ExecuteAfterUpdate.arm64.tsv",
+      "copiedPath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/03a75a98__NoteBase__ExecuteAfterUpdate.arm64.tsv",
+      "bytes": 1405,
+      "sha256": "203F72AF3B7C2C759B66EBA06B0BB837B75F90F7F308A204BE1BD88D5C4B959E",
       "status": "confirmed-10.1.4-static-r1-oracle"
     }
   ]

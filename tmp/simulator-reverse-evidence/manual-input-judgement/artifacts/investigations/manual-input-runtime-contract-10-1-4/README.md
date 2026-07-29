@@ -30,7 +30,7 @@ version migration does not substitute for this manual-input target set.
 
 The static gate is closed:
 
-- 117/117 bounded methods resolve uniquely on both versions;
+- 118/118 bounded methods resolve uniquely on both versions;
 - every managed signature is unchanged;
 - every 10.1.4 range has the same byte length as its 10.1.3 counterpart;
 - all changed branch/ADR words retain their ARM64 PC-relative instruction class;
@@ -39,6 +39,7 @@ The static gate is closed:
 - all fields of 14 input/judgement owner types are unchanged;
 - all members of 13 input/judgement enums are unchanged, including ButtonType/JudgeNoteType and Multiple/Slide emitted identities.
 - `NoteLong`, `NoteSlide`, `NoteMultipleDirectionalFlick` and `GamePlayButton` constructors are included as independent current-version ranges for field/array initialization ownership.
+- `NoteBase.ExecuteAfterUpdate` is independently included: it only updates an existing Unity `NoteSyncLine`; with the presentation-owned sync line absent, it returns without gameplay mutation.
 - the complete directly consumed Single/Flick base owner is included: `NoteSingleBase.MoveState/onMiss/forcePerfect`, all `NoteFlickBase` methods, and the two concrete synthetic-X getters. `NoteFlickBase.ExecTouchBegan @ 0x3A768C0–0x3A76908` returns on None; otherwise it resets `frameCounter +0x188`, stores result/timing at `+0x18C/+0x190`, and changes state to Wait. `WaitState` adds the owner execute-frame value and invokes forcePerfect at `>=7.0`; base Moved/Ended are confirmed empty returns.
 
 This is stronger than address translation: `arm64/` contains the current-version instruction

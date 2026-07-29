@@ -15,7 +15,7 @@
     "global_metadata_sha256": "298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F"
   },
   "method_status_counts": {
-    "mapped": 117
+    "mapped": 118
   },
   "layout_status_counts": {
     "unchanged": 14
@@ -4776,6 +4776,104 @@
         }
       ],
       "evidence": "arm64/03a74cbc__NoteBase__Deactivate.arm64.tsv"
+    },
+    {
+      "owner": "NoteBase",
+      "method": "ExecuteAfterUpdate",
+      "dump_name": "NoteBase$$ExecuteAfterUpdate",
+      "status": "mapped",
+      "baseline_rva": "0x3A768F0",
+      "baseline_end_rva": "0x3A76974",
+      "target_rva": "0x3A75A98",
+      "target_end_rva": "0x3A75B1C",
+      "rva_delta": -3672,
+      "baseline_size": 132,
+      "target_size": 132,
+      "signature_unchanged": true,
+      "baseline_sha256": "543701DFD035367033824E5EC720657795A5C61BA68DC5D67043DD4B2BE9C6EA",
+      "target_sha256": "A454D12E3E826ADEDEB0753F2D143A7D30C3EEC27AF523462D6087810045D07D",
+      "differing_words": 11,
+      "non_pc_relative_differing_words": 4,
+      "differing_word_detail": [
+        {
+          "offset": "0xC",
+          "baseline_word": "0x90019074",
+          "target_word": "0xB0019074",
+          "baseline_pc_relative": "ADR/ADRP",
+          "target_pc_relative": "ADR/ADRP"
+        },
+        {
+          "offset": "0x10",
+          "baseline_word": "0x3964BAA8",
+          "target_word": "0x39773AA8",
+          "baseline_pc_relative": null,
+          "target_pc_relative": null
+        },
+        {
+          "offset": "0x14",
+          "baseline_word": "0xF945EE94",
+          "target_word": "0xF9412294",
+          "baseline_pc_relative": null,
+          "target_pc_relative": null
+        },
+        {
+          "offset": "0x20",
+          "baseline_word": "0x90019060",
+          "target_word": "0xB0019060",
+          "baseline_pc_relative": "ADR/ADRP",
+          "target_pc_relative": "ADR/ADRP"
+        },
+        {
+          "offset": "0x24",
+          "baseline_word": "0xF945EC00",
+          "target_word": "0xF9412000",
+          "baseline_pc_relative": null,
+          "target_pc_relative": null
+        },
+        {
+          "offset": "0x28",
+          "baseline_word": "0x97CE663E",
+          "target_word": "0x97CE67E6",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x30",
+          "baseline_word": "0x3924BAA8",
+          "target_word": "0x39373AA8",
+          "baseline_pc_relative": null,
+          "target_pc_relative": null
+        },
+        {
+          "offset": "0x44",
+          "baseline_word": "0x97CE6694",
+          "target_word": "0x97CE683C",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x54",
+          "baseline_word": "0x94AD1C69",
+          "target_word": "0x94AD1D6E",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x70",
+          "baseline_word": "0x17DEBD94",
+          "target_word": "0x17DEBD7B",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        },
+        {
+          "offset": "0x80",
+          "baseline_word": "0x97CE66CB",
+          "target_word": "0x97CE6873",
+          "baseline_pc_relative": "B/BL",
+          "target_pc_relative": "B/BL"
+        }
+      ],
+      "evidence": "arm64/03a75a98__NoteBase__ExecuteAfterUpdate.arm64.tsv"
     },
     {
       "owner": "NoteBase",

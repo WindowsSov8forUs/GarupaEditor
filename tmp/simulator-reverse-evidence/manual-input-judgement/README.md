@@ -1,9 +1,9 @@
 # 手动输入与判定冻结证据包
 
-本目录冻结Reverse最终证据提交`1432b7def25faafee4cc713423305d2c1fb7def4`：
+本目录冻结Reverse最终证据提交`ce5353fdc54a3ba8188f3dccd4accdc6c2ef4ce2`：
 
-- 10.1.4/230的117个独立ARM64方法、14个owner type、13个enum；
-- 闭合`NoteSingleBase` timeout/forcePerfect与完整`NoteFlickBase` Began/Wait/空Ended/合成move所有权；
+- 10.1.4/230的118个独立ARM64方法、14个owner type、13个enum；
+- 闭合`NoteBase.ExecuteAfterUpdate`缺席sync-line分支、`NoteSingleBase` timeout/forcePerfect与完整`NoteFlickBase`所有权；
 - 修正后的Slide Wait/over-Wait与Slide十组lane-band构造；
 - Easy/Hard/Expert song 653 `幾億光年`的5条正式R1 raw trace；
 - Long实体head/release、Long双timeout、Slide root/after timeout及两指0/1全phase；

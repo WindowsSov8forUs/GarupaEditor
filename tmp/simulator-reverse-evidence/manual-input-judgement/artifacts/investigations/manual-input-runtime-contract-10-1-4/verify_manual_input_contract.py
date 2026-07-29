@@ -35,7 +35,7 @@ def main() -> int:
         "libil2cpp_sha256": EXPECTED_BINARY,
         "global_metadata_sha256": EXPECTED_METADATA,
     }, "target identity changed")
-    require(contract["method_status_counts"] == {"mapped": 117}, "all 117 methods must map")
+    require(contract["method_status_counts"] == {"mapped": 118}, "all 118 methods must map")
     require(contract["layout_status_counts"] == {"unchanged": 14}, "all 14 layouts must match")
     require(contract["enum_status_counts"] == {"unchanged": 13}, "all 8 enums must match")
 
@@ -92,6 +92,7 @@ def main() -> int:
     assert_line(methods, ("NoteSlide", ".ctor"), "str x1, [x19, #0x1f0]")
     assert_line(methods, ("NoteSlide", ".ctor"), "mov w8, #4")
     assert_line(methods, ("NoteSlide", ".ctor"), "mov w1, #5")
+    assert_line(methods, ("NoteBase", "ExecuteAfterUpdate"), "bl #0x65bd0a4")
     assert_line(methods, ("NoteSingleBase", "MoveState"), "ldr s0, [x8]")
     assert_line(methods, ("NoteSingleBase", "MoveState"), "b.le")
     assert_line(methods, ("NoteFlickBase", "WaitState"), "fmov s1, #7.00000000")
@@ -127,10 +128,10 @@ def main() -> int:
 
     with (HERE / "targets.tsv").open(encoding="utf-8", newline="") as source:
         rows = list(csv.DictReader(source, delimiter="\t"))
-    require(len(rows) == 117, "targets row count")
+    require(len(rows) == 118, "targets row count")
     require(all(row["status"] == "mapped" for row in rows), "targets must all map")
     verify_sums()
-    print("manual input static contract verified: version=10.1.4 methods=117 layouts=14 enums=13 V01=closed D01=closed")
+    print("manual input static contract verified: version=10.1.4 methods=118 layouts=14 enums=13 V01=closed D01=closed")
     return 0
 
 

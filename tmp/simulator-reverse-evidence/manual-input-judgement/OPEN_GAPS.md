@@ -2,7 +2,7 @@
 
 ## 已关闭
 
-Reverse `1432b7def25faafee4cc713423305d2c1fb7def4`已关闭：
+Reverse `ce5353fdc54a3ba8188f3dccd4accdc6c2ef4ce2`已关闭：
 
 - V01：10.1.4/230完整版本重基线；
 - D01：Slide Wait/over-Wait独立边界；
