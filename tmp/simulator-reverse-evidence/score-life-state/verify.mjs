@@ -43,7 +43,7 @@ function filesRecursively(root, current = root) {
   return files;
 }
 
-check(manifest.schemaVersion === 2 && manifest.entries.length === 364, "Unexpected evidence manifest shape");
+check(manifest.schemaVersion === 2 && manifest.entries.length === 366, "Unexpected evidence manifest shape");
 check(
   manifest.source.staticEvidenceCommit === "6c902656c72f3983fb04386038dcfe38f0d53797" &&
     manifest.source.runtimeInputCommit === "1ee976ea1de24cb0567762a74e2d091ae4c78464" &&
@@ -54,7 +54,8 @@ check(
     manifest.source.multitouchPlanCommit === "eb7aba5467569b577cd942957dd65bdce600bc9d" &&
     manifest.source.nativeMultitouchPlanCommit === "445ac26856e597fb6c12c708e7a31ecf995d06e1" &&
     manifest.source.skillEvidenceCommit === "4ac4ea186efade9091c6f4377ab7ad7dc852a2c5" &&
-    manifest.source.retryLifecyclePlanCommit === "38cee0b409246323b46099e291331a78a267bcec",
+    manifest.source.retryLifecyclePlanCommit === "38cee0b409246323b46099e291331a78a267bcec" &&
+    manifest.source.retryLifecycleEvidenceCommit === "4f0ce1a02a83747db617695cde69ad47ac8ae78f",
   "Unexpected Reverse evidence commits",
 );
 check(
@@ -74,7 +75,7 @@ check(
     manifest.counts.enums === 19 &&
     manifest.counts.arm64Slices === 326 &&
     manifest.counts.staticEntries === 335 &&
-    manifest.counts.totalEntries === 364 &&
+    manifest.counts.totalEntries === 366 &&
     manifest.counts.r0InputEntries === 12 &&
     manifest.counts.r1EvidenceEntries === 6 &&
     manifest.counts.capturePlanEntries === 4 &&
@@ -83,10 +84,11 @@ check(
     manifest.counts.nativeMultitouchBatchEntries === 9 &&
     manifest.counts.skillEvidenceEntries === 5 &&
     manifest.counts.retryLifecyclePlanEntries === 5 &&
+    manifest.counts.retryLifecycleEvidenceEntries === 5 &&
     manifest.counts.productionBms === 2 &&
     manifest.counts.cacheRecords === 2 &&
     manifest.counts.captureTargets === 50 &&
-    manifest.counts.r1Traces === 3 &&
+    manifest.counts.r1Traces === 4 &&
     manifest.counts.fixedEventCases === 0,
   "Evidence counts changed",
 );
@@ -111,16 +113,15 @@ const runtimeInputGate = manifest.runtimeInputGate;
 check(
   runtimeInputGate.status === "partial-required-before-code" &&
     runtimeInputGate.closedSubscope.join(",") ===
-      "ordinary-production-bms,habahiro-production-bms,connected-device-cache-provenance,observation-only-capture-targets,no-input-life-game-over-r1,positive-perfect-score-r1,active-skill-lifecycle-r1,skill-same-frame-freeze-r1,once-heal-r1" &&
+      "ordinary-production-bms,habahiro-production-bms,connected-device-cache-provenance,observation-only-capture-targets,no-input-life-game-over-r1,positive-perfect-score-r1,active-skill-lifecycle-r1,skill-same-frame-freeze-r1,once-heal-r1,post-game-over-manager-gate-r1,retry-reset-r1" &&
     runtimeInputGate.partialFindings.join(",") === "D18,D20,D22,D23" &&
     runtimeInputGate.blockingFindings.join(",") ===
       "D18-remaining,D19,D20-remaining,D21,D22-remaining,D23-master-start-data,D24" &&
-    runtimeInputGate.r1TraceCount === 3 &&
-    runtimeInputGate.pendingPlans.join(",") ===
-      "multitouch-seven-lane-post-gameover-retry-lifecycle-v3" &&
+    runtimeInputGate.r1TraceCount === 4 &&
+    runtimeInputGate.pendingPlans.length === 0 &&
     runtimeInputGate.abortedPlans.join(",") === "multitouch-seven-lane-positive-skill-window" &&
     runtimeInputGate.executedPlans.join(",") ===
-      "positive-retry-all-lanes-early-score-skill-v2,multitouch-seven-lane-native-positive-skill-window-v2" &&
+      "positive-retry-all-lanes-early-score-skill-v2,multitouch-seven-lane-native-positive-skill-window-v2,multitouch-seven-lane-post-gameover-retry-lifecycle-v3" &&
     runtimeInputGate.supersededPlans.join(",") === "positive-retry-all-lanes-score-skill" &&
     runtimeInputGate.productionAuthorization === false,
   "Runtime input gate was incorrectly closed",
@@ -136,6 +137,7 @@ git(["cat-file", "-e", `${manifest.source.multitouchPlanCommit}^{commit}`], sour
 git(["cat-file", "-e", `${manifest.source.nativeMultitouchPlanCommit}^{commit}`], sourceRoot);
 git(["cat-file", "-e", `${manifest.source.skillEvidenceCommit}^{commit}`], sourceRoot);
 git(["cat-file", "-e", `${manifest.source.retryLifecyclePlanCommit}^{commit}`], sourceRoot);
+git(["cat-file", "-e", `${manifest.source.retryLifecycleEvidenceCommit}^{commit}`], sourceRoot);
 const evidenceCommits = [
   manifest.source.staticEvidenceCommit,
   manifest.source.runtimeInputCommit,
@@ -147,6 +149,7 @@ const evidenceCommits = [
   manifest.source.nativeMultitouchPlanCommit,
   manifest.source.skillEvidenceCommit,
   manifest.source.retryLifecyclePlanCommit,
+  manifest.source.retryLifecycleEvidenceCommit,
 ];
 const ids = new Set();
 const copiedPaths = new Set();
@@ -305,7 +308,7 @@ check(
 const runtimeStatus = json("runtime_input_status.json");
 check(
   runtimeStatus.status === "runtime-inputs-and-r1-partial-locked-business-gate-open" &&
-    runtimeStatus.runtime.r1_trace_count === 3 &&
+    runtimeStatus.runtime.r1_trace_count === 4 &&
     runtimeStatus.runtime.pending_capture_plans.length === 5 &&
     runtimeStatus.runtime.pending_capture_plans[0].scenario_id ===
       "positive-retry-all-lanes-score-skill" &&
@@ -328,8 +331,8 @@ check(
     runtimeStatus.runtime.pending_capture_plans[4].scenario_id ===
       "multitouch-seven-lane-post-gameover-retry-lifecycle-v3" &&
     runtimeStatus.runtime.pending_capture_plans[4].status ===
-      "committed-plan-not-runtime-evidence" &&
-    runtimeStatus.runtime.pending_capture_plans[4].intended_scope.join(",") ===
+      "executed-confirmed-trace-promoted" &&
+    runtimeStatus.runtime.pending_capture_plans[4].observed_scope.join(",") ===
       "D22-post-Game-Over-manager-gate,D22-Retry-reset" &&
     runtimeStatus.runtime.capture_fields_not_consumed.length === 5 &&
     runtimeStatus.gates.D18 === "partial-required-before-code" &&
@@ -361,6 +364,16 @@ check(
     runtimeStatus.closed.r1_active_skill_lifecycle.same_frame_pre_begin_entries.join(",") === "13,14" &&
     runtimeStatus.closed.r1_active_skill_lifecycle.same_frame_pre_begin_rate_bits === "0x3F800000" &&
     runtimeStatus.closed.r1_active_skill_lifecycle.final_score === 38358 &&
+    runtimeStatus.closed.r1_post_gameover_retry_reset.events === 6375 &&
+    runtimeStatus.closed.r1_post_gameover_retry_reset.post_gameover_observation_ms === 11875 &&
+    runtimeStatus.closed.r1_post_gameover_retry_reset.hooked_business_events_during_observation === 0 &&
+    runtimeStatus.closed.r1_post_gameover_retry_reset.record_identity === "stable" &&
+    runtimeStatus.closed.r1_post_gameover_retry_reset.game_over.join(",") === "0,1" &&
+    runtimeStatus.closed.r1_post_gameover_retry_reset.retry_reset_game_over.join(",") === "1,0" &&
+    runtimeStatus.closed.r1_post_gameover_retry_reset.retry_reset_score.join(",") === "44403,0" &&
+    runtimeStatus.closed.r1_post_gameover_retry_reset.retry_reset_life.join(",") === "0,1000" &&
+    runtimeStatus.closed.r1_post_gameover_retry_reset.retry_reset_max_combo.join(",") === "6,0" &&
+    runtimeStatus.closed.r1_post_gameover_retry_reset.retry_reset_max_note_count === 540 &&
     runtimeStatus.business_state_gate === "open" &&
     runtimeStatus.production_authorization === false &&
     runtimeStatus.blocking_findings.length > 0,
@@ -822,6 +835,122 @@ check(
   "Frozen active-Skill R1 lifecycle, same-frame rate freeze, heal, or final record changed",
 );
 
+const retryTraceBytes = gunzipSync(
+  readFileSync(resolve(
+    investigation,
+    "runtime/multitouch-seven-lane-post-gameover-retry.trace.json.gz",
+  )),
+);
+const retryTrace = JSON.parse(retryTraceBytes.toString("utf8"));
+const retryEventsOf = (kind) => retryTrace.events.filter((event) => event.kind === kind);
+const retryMarkers = retryEventsOf("capture.marker");
+const retryInitializeEnter = retryEventsOf("InGameRecord.InitializeLife.enter");
+const retryInitializeLeave = retryEventsOf("InGameRecord.InitializeLife.leave");
+const retryBaseScore = retryEventsOf("ScoreUtility.InitBaseScore.enter");
+const retryGameOverEnter = retryEventsOf("InGameRecord.updateGameOverState.enter");
+const retryGameOverLeave = retryEventsOf("InGameRecord.updateGameOverState.leave");
+const retryInitializedKeys = [
+  "is_multi_game_over",
+  "is_single_game_over",
+  "score",
+  "free_live_bonus_score",
+  "reserve_total_score",
+  "current_life",
+  "displayed_or_skill_base_life",
+  "business_life_upper_limit",
+  "max_note_count",
+  "max_combo",
+  "current_combo",
+  "current_live_combo",
+  "current_live_max_combo",
+  "perfect_combo",
+  "perfect_count",
+  "great_count",
+  "good_count",
+  "bad_count",
+  "miss_count",
+  "tap_count",
+  "cached_life_when_skill_played",
+  "fast_count",
+  "slow_count",
+];
+const retryInitializedProjection = [
+  0, 0, 0, 0, 0, 1000, 1000, 2000, 540, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0,
+];
+const projectRetryRecord = (record) => retryInitializedKeys.map((key) => record[key]);
+check(
+  retryTrace.schema_version === 1 &&
+    retryTrace.status === "confirmed-r1-observation-only" &&
+    retryTrace.capture_error === null &&
+    retryTrace.scenario.scenario_id ===
+      "multitouch-seven-lane-post-gameover-retry-lifecycle-v3" &&
+    JSON.stringify(retryTrace.scenario.actions) === JSON.stringify(retryLifecyclePlan.actions) &&
+    retryTrace.events.length === 6375 &&
+    retryTrace.events.every((event, index) => event.sequence === index) &&
+    retryTrace.capability.level === "R1" &&
+    retryTrace.capability.return_replacement === false &&
+    retryTrace.capability.memory_writes === false &&
+    retryTrace.capability.apk_modification === false &&
+    retryTrace.capability.temporary_selinux_permissive === true &&
+    retryTrace.capability.selinux_restore_required === true &&
+    retryTrace.sample.package === "jp.co.craftegg.band" &&
+    retryTrace.sample.version_name === "10.1.4" &&
+    retryTrace.sample.version_code === 230 &&
+    retryTrace.sample.abi === "arm64-v8a" &&
+    retryTrace.capture_script_sha256 === sha256(readFileSync(
+      resolve(investigation, "capture_score_life_state_multitouch_runtime.py"),
+    )) &&
+    retryTrace.plan_sha256 === sha256(readFileSync(
+      resolve(investigation, "runtime/multitouch-seven-lane-post-gameover-retry-r1-plan.json"),
+    )) &&
+    retryTrace.summary.queued === 0 &&
+    retryTrace.summary.marker === "post-retry-reset-observation" &&
+    retryEventsOf("SituationSkillManager.ExecUpdate.enter").length === 590 &&
+    retryEventsOf("OneFrameController.Reflect.enter").length === 590 &&
+    retryEventsOf("OneFrameData.Setup.leave").length === 47 &&
+    retryMarkers.map((event) => event.sequence).join(",") ===
+      "0,1,2,3,4,6368,6369,6370,6371" &&
+    retryMarkers.map((event) => event.value).join(",") ===
+      "multitouch-seven-lane-post-gameover-retry-lifecycle-v3,multitouch-open-retry-confirmation,multitouch-confirm-retry,multitouch-pre-burst,multitouch-native-seven-lane-burst,post-game-over-observation-window,post-game-over-open-retry-confirmation,post-game-over-confirm-retry,post-retry-reset-observation" &&
+    retryInitializeEnter.map((event) => event.sequence).join(",") === "5,6372" &&
+    retryInitializeLeave.map((event) => event.sequence).join(",") === "6,6373" &&
+    retryBaseScore.map((event) => event.sequence).join(",") === "7,6374" &&
+    retryInitializeEnter.every(
+      (event) =>
+        event.default_life === 1000 &&
+        event.max_life === 2000 &&
+        event.initial_life === 1000,
+    ) &&
+    retryBaseScore.every((event) => event.max_note_count === 540) &&
+    retryInitializeEnter[0].self === retryInitializeEnter[1].self &&
+    retryInitializeEnter[0].self === retryInitializeLeave[0].record.pointer &&
+    retryInitializeEnter[0].self === retryInitializeLeave[1].record.pointer &&
+    JSON.stringify(projectRetryRecord(retryInitializeLeave[0].record)) ===
+      JSON.stringify(retryInitializedProjection) &&
+    JSON.stringify(projectRetryRecord(retryInitializeLeave[1].record)) ===
+      JSON.stringify(retryInitializedProjection) &&
+    retryGameOverEnter.length === 1 &&
+    retryGameOverEnter[0].sequence === 6365 &&
+    retryGameOverEnter[0].before.is_single_game_over === 0 &&
+    retryGameOverEnter[0].before.score === 44403 &&
+    retryGameOverEnter[0].before.current_life === 0 &&
+    retryGameOverEnter[0].before.max_combo === 6 &&
+    retryGameOverLeave.length === 1 &&
+    retryGameOverLeave[0].sequence === 6366 &&
+    retryGameOverLeave[0].after.is_single_game_over === 1 &&
+    retryGameOverLeave[0].after.pointer === retryInitializeLeave[1].record.pointer &&
+    retryTrace.events[6367].kind === "InGameRecord.AddIPower.leave" &&
+    retryTrace.events[6367].after.is_single_game_over === 1 &&
+    retryMarkers[5].timestamp_ms - retryGameOverLeave[0].timestamp_ms === 11875 &&
+    retryTrace.events.slice(6368, 6372).every((event) => event.kind === "capture.marker") &&
+    retryInitializeLeave[1].record.is_single_game_over === 0 &&
+    retryInitializeLeave[1].record.score === 0 &&
+    retryInitializeLeave[1].record.current_life === 1000 &&
+    retryInitializeLeave[1].record.max_combo === 0,
+  "Frozen post-Game-Over gate or in-place Retry/reset R1 trajectory changed",
+);
+
 const unconsumedCaptureFields = [
   "ScoreUtility.GetResultTypeCorrectionRate.rate_bits",
   "FeverTimeManager.GetFeverTimeScoreRate.result_bits",
@@ -863,7 +992,7 @@ for (const [path, fragment] of criticalText) {
 }
 
 console.log(
-  `score-life-state evidence verified: methods=326 layouts=25 enums=19 BMS=2 R1=3(partial D18/D20/D22) plans=5(pending-retry=1) ` +
+  `score-life-state evidence verified: methods=326 layouts=25 enums=19 BMS=2 R1=4(partial D18/D20/D22) plans=5(pending=0) ` +
     `V01=closed business=blocked(D18-D24) entries=${manifest.entries.length} ` +
     `index=${validateIndex ? "checked" : "skipped"}`,
 );

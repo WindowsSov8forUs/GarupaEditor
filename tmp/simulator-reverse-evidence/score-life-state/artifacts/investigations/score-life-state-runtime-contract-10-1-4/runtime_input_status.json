@@ -69,6 +69,23 @@
       "same_frame_pre_begin_rate_bits": "0x3F800000",
       "final_score": 38358,
       "status": "confirmed-r1-observation-only"
+    },
+    "r1_post_gameover_retry_reset": {
+      "trace": "runtime/multitouch-seven-lane-post-gameover-retry.trace.json.gz",
+      "trace_sha256": "D4BFF770EC545C037A0592F4BF3E4B796565EA12668C5AF6BC81E9C60A6F10AE",
+      "events": 6375,
+      "post_gameover_observation_ms": 11875,
+      "hooked_business_events_during_observation": 0,
+      "record_identity": "stable",
+      "game_over": [0, 1],
+      "retry_reset_game_over": [1, 0],
+      "retry_reset_score": [44403, 0],
+      "retry_reset_life": [0, 1000],
+      "retry_reset_displayed_base": 1000,
+      "retry_reset_business_upper_limit": 2000,
+      "retry_reset_max_combo": [6, 0],
+      "retry_reset_max_note_count": 540,
+      "status": "confirmed-r1-observation-only"
     }
   },
   "partial": {
@@ -77,8 +94,8 @@
       "open_subscope": "Fever, guard, Never Die, multiple/overlapping Skill and special-mode identities"
     },
     "D22": {
-      "closed_subscope": "single-player lethal AddIPower nests updateGameOverState and flips is_single_game_over from 0 to 1 at current Life 0",
-      "open_subscope": "post-Game-Over manager gate, score decrease modes, reset, continue, seek and ReturnTime"
+      "closed_subscope": "single-player lethal AddIPower nests Game Over; no hooked manager/business call occurs for 11.875 seconds after Game Over; non-destructive Retry reuses and resets InGameRecord, Life, Score, Combo and counters before InitBaseScore",
+      "open_subscope": "score decrease modes, Continue (not permitted for capture), seek and ReturnTime"
     },
     "D23": {
       "closed_subscope": "ordinary and HABAHIRO production BMS bytes and connected-device cache provenance",
@@ -86,7 +103,7 @@
     }
   },
   "runtime": {
-    "r1_trace_count": 3,
+    "r1_trace_count": 4,
     "pending_capture_plans": [
       {
         "path": "runtime/positive-retry-all-lanes-r1-plan.json",
@@ -116,8 +133,9 @@
       {
         "path": "runtime/multitouch-seven-lane-post-gameover-retry-r1-plan.json",
         "scenario_id": "multitouch-seven-lane-post-gameover-retry-lifecycle-v3",
-        "status": "committed-plan-not-runtime-evidence",
-        "intended_scope": ["D22-post-Game-Over-manager-gate", "D22-Retry-reset"],
+        "status": "executed-confirmed-trace-promoted",
+        "observed_scope": ["D22-post-Game-Over-manager-gate", "D22-Retry-reset"],
+        "not_observed": ["D22-score-decrease", "D22-Continue", "D22-seek", "D22-ReturnTime"],
         "safety": "Retry only; Continue/premium-currency actions forbidden; 12-second post-Game-Over observation before Retry"
       }
     ],
@@ -128,7 +146,7 @@
       "NoteFrontBase.judgeFrontNote.note_type",
       "NoteFrontBase.judgeFrontNote.absolute_pos"
     ],
-    "operational_blocker": "Three R1 traces are closed. A non-destructive post-Game-Over Retry/reset plan is pending execution after commit/freeze. Fever transitions, multiple-Skill overlap, remaining lifecycle and master provenance remain open. Five ABI-unsafe fields stay excluded.",
+    "operational_blocker": "Four R1 traces are closed, including non-destructive post-Game-Over gate and Retry/reset. Fever transitions, multiple-Skill overlap, score-decrease/seek/ReturnTime lifecycle and master provenance remain open. Continue remains unobserved because premium-currency actions are forbidden. Five ABI-unsafe fields stay excluded.",
     "synthetic_trace_allowed": false
   },
   "gates": {
@@ -144,7 +162,7 @@
   "blocking_findings": [
     "Fever, guard, Never Die, multiple/overlapping Skill and special-mode R1 traces remain open.",
     "Deck/start-data/master provenance remains open.",
-    "D20 Fever/multiple-entry remainder, D21 and the remaining D22 lifecycle paths remain open.",
+    "D20 Fever/multiple-entry remainder, D21 and D22 score-decrease/Continue/seek/ReturnTime remain open.",
     "BS01-BS36 and final portable contract do not exist."
   ],
   "business_state_gate": "open",

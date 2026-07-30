@@ -691,7 +691,8 @@ git rev-list --left-right --count origin/codex/refactor-simulator-implementation
 - 原生多指v2提交：Reverse `445ac26856e597fb6c12c708e7a31ecf995d06e1`已push且远端`0 0`；NDK27.2固定构建6304字节ELF64 AArch64控制器，只写event2 `input_event`并`nanosleep`，采集器先验SHA后push，`finally`恢复Enforcing并删除设备副本。7 slots/250轮/80ms/20ms值保持。
 - Reverse active-Skill R1提交：`4ac4ea186efade9091c6f4377ab7ad7dc852a2c5`已push且远端`0 0`；7122事件连续，实际观察Skill Add→Begin→Playing→Finishing→None（`0→1→2→3→0`）、5.0s timer、0.75s finishing及once-heal `800+300=1100`（显示基准1000、业务上限2000）。
 - D20单Skill切换子范围：Begin前生成的两个entry冻结Skill/ScoreUp rate 1.0，Skill已Playing后的Reflect仍消费该冻结值；后续18个entry冻结1.2/ScoreUpType1，finish后的首个entry恢复1.0。Fever与多个/重叠Skill交错未观察，不外推。
-- post-Game-Over Retry v3计划提交：Reverse `38cee0b409246323b46099e291331a78a267bcec`已push；逐字保留已执行native run，增加12秒Game Over后观察、Retry与确认、reset观察。`retry_only=true`、`continue_allowed=false`且premium-currency动作列表为空；当前仅为pending plan，不形成D22结论。
-- D18仅部分关闭：Fever、guard、Never Die、多个/重叠Skill和special mode仍缺R1；D20仅单Skillstart/end冻结子范围部分关闭；D22仅部分关闭：post-Game-Over gate、score decrease mode、reset/continue/seek/ReturnTime仍开放。
+- post-Game-Over Retry v3计划提交：Reverse `38cee0b409246323b46099e291331a78a267bcec`已push；逐字保留已执行native run，增加12秒Game Over后观察、Retry与确认、reset观察。`retry_only=true`、`continue_allowed=false`且premium-currency动作列表为空。
+- Reverse Retry生命周期R1提交：`4f0ce1a02a83747db617695cde69ad47ac8ae78f`已push且远端`0 0`；6375事件连续，Game Over leave与nested AddIPower leave后11.875秒无已hook manager/business调用。Retry复用同一InGameRecord，InitializeLife将Game Over `1→0`、Score/reserve `44403→0`、Life `0→1000`、max Combo `6→0`、判定/输入计数及cached Skill Life清零，保持显示基准1000、业务上限2000、max Note 540，再进入InitBaseScore。
+- D18仅部分关闭：Fever、guard、Never Die、多个/重叠Skill和special mode仍缺R1；D20仅单Skillstart/end冻结子范围部分关闭；D22仅部分关闭：score decrease mode、Continue（采集禁止）、seek/ReturnTime仍开放。
 - 待关闭：D18/D20/D22剩余、D19、D21、D23剩余deck/start-data/master provenance、D24及BS01–BS36。
 - B02关闭前继续禁止B03–B12 production、测试脚本和package script实现。

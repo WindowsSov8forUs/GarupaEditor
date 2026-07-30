@@ -51,7 +51,8 @@ These static conclusions do **not** authorize implementation. D18–D24, master/
 - `verify_score_life_positive_r1.py`: fail-closed verifier for the positive Perfect/Score R1 trace and its explicit unconsumed ABI fields.
 - `verify_score_life_multitouch_plan.py`: fail-closed verifier for hook identity, superseded shell control, native plan, ARM64 ELF/build provenance and SELinux restoration boundary.
 - `verify_score_life_skill_r1.py`: fail-closed verifier for the active-Skill lifecycle, same-frame frozen rates, once-heal and final record trace.
-- `verify_score_life_retry_lifecycle_plan.py`: fail-closed verifier for the pending non-destructive post-Game-Over Retry/reset plan.
+- `verify_score_life_retry_lifecycle_plan.py`: fail-closed verifier for the non-destructive post-Game-Over Retry/reset plan.
+- `verify_score_life_retry_lifecycle_r1.py`: fail-closed verifier for the post-Game-Over gate and in-place Retry reset trace.
 - `runtime-inputs/bms/`: ordinary and HABAHIRO TextAssets extracted from connected-device 10.1.4 cache bundles.
 - `runtime-inputs/cache-index/`: byte-preserving `AssetBundleInfo` records and structured cache provenance; account identifiers are omitted.
 - `runtime_input_status.json`: D18/D22/D23 partial state and remaining runtime blockers.
@@ -63,7 +64,8 @@ These static conclusions do **not** authorize implementation. D18–D24, master/
 - `runtime/multitouch-seven-lane-skill-r1-plan.json`: aborted shell-sendevent control; it exceeded the time bound, produced no trace and is retained only as provenance.
 - `runtime/multitouch-seven-lane-native-skill-r1-plan.json`: executed native 20-second seven-lane plan (`250 × 80ms`).
 - `runtime/multitouch-seven-lane-native-skill.trace.json.gz`: successful 7,122-event R1 trace covering active Skill and same-frame entry freezing.
-- `runtime/multitouch-seven-lane-post-gameover-retry-r1-plan.json`: pending v3 plan preserving the native run, then observing 12 seconds after Game Over before a Retry-only reset sequence; Continue is forbidden.
+- `runtime/multitouch-seven-lane-post-gameover-retry-r1-plan.json`: executed v3 plan preserving the native run, then observing 12 seconds after Game Over before a Retry-only reset sequence; Continue is forbidden.
+- `runtime/multitouch-seven-lane-post-gameover-retry.trace.json.gz`: successful 6,375-event R1 trace covering the post-Game-Over gate and in-place Retry reset.
 - `runtime-control/multitouch_seven_lane_control.c`: fixed input-device-only control source.
 - `runtime-control/multitouch_seven_lane_control.arm64`: 6,304-byte stripped ELF64 AArch64 PIE, SHA-256 `AB39066A...9C249`.
 - `runtime-control/multitouch_seven_lane_control.build.json`: NDK 27.2 / Android 24 deterministic build and capability record.
@@ -106,6 +108,7 @@ py -3.14 artifacts/investigations/score-life-state-runtime-contract-10-1-4/verif
 py -3.14 artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_positive_r1.py
 py -3.14 artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_skill_r1.py
 py -3.14 artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_retry_lifecycle_plan.py
+py -3.14 artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_retry_lifecycle_r1.py
 ```
 
 The trace was captured through an explicit non-default loopback server forwarded by ADB, using `--device-address 127.0.0.1:47913`; the transport is embedded in the trace capability record. This changes only the Frida connection path and does not alter the observation agent or game state.
@@ -118,4 +121,6 @@ The first Linux MT shell control was aborted after exceeding its execution time 
 
 The resulting 7,122-event trace observes Skill Add→Begin→Playing→Finishing→None (`0→1→2→3→0`), 5.0s effective timer, 0.75s finishing timer, and fixed once-heal `800 + 300 = 1100` while the displayed base remains 1000 and the business upper limit 2000. Two entries created after Skill enqueue but before Begin froze rate 1.0 and were Reflect-consumed after state became Playing; 18 later entries froze rate 1.2/ScoreUpType1, and the first post-finish entry returned to 1.0. This partially closes D18, D14 and the Skill start/end part of D20.
 
-The pending v3 plan changes no part of the committed native run. It adds a 12-second observation window after the previously observed Game Over, then only the same Retry and confirmation coordinates followed by reset observation. Its safety object forbids Continue and premium-currency actions. It is plan/tooling only and closes no D22 scope until a complete trace is independently verified. Fever transitions, multiple/overlapping Skill, guard/Never Die, remaining lifecycle, deck/start-data/master rows, BS01–BS36 and final `closure.json` remain open. The five ABI-unsafe fields stay unconsumed. The business gate remains open and no trace authorizes production implementation.
+The v3 plan changes no part of the committed native run. It adds a 12-second observation window after Game Over, then only the same Retry and confirmation coordinates followed by reset observation. Its safety object forbids Continue and premium-currency actions.
+
+The resulting 6,375-event trace observes Game Over leave followed only by the nested `AddIPower.leave`, then no hooked manager/business call for 11,875ms. Retry reuses the same `InGameRecord`; `InitializeLife` resets single Game Over `1→0`, Score/reserve `44403→0`, Life `0→1000`, max Combo `6→0`, judgement/tap/timing counts and cached Skill Life to zero while preserving displayed base 1000, business upper limit 2000 and max Note count 540 before `InitBaseScore`. This partially closes the post-Game-Over gate and Retry/reset part of D22. Score-decrease modes, seek and ReturnTime remain open; Continue remains intentionally unobserved because it consumes premium currency. Fever transitions, multiple/overlapping Skill, guard/Never Die, deck/start-data/master rows, BS01–BS36 and final `closure.json` also remain open. The five ABI-unsafe fields stay unconsumed. The business gate remains open and no trace authorizes production implementation.
