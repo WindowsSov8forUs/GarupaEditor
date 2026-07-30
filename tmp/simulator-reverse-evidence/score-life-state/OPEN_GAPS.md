@@ -12,13 +12,13 @@
 - `D14/D18/D20-Skill-partial`：原生七lane R1锁定Skill `0→1→2→3→0`、5.0s/0.75s timer、once-heal `800+300=1100`、Begin前两个entry冻结1.0且在Playing后Reflect仍消费1.0、Playing后18个entry冻结1.2/ScoreUpType1、finish后恢复1.0。
 - 正判定/Skill计划：v1保留为superseded；v2与原生ARM64七lane v2均已晋升raw；shell七lane控制因超时aborted且无raw。
 - `D22-Retry-partial`：v3 R1锁定Game Over后11.875秒无已hook manager/business调用；非破坏性Retry复用同一InGameRecord并重置Game Over、Score、Life、Combo、判定/输入计数与cached Skill Life，再以max Note 540进入InitBaseScore。Continue与星石动作显式禁止且未观察。
-- `D19-partial`：BS01–BS36 partial oracle已生成并独立校验；BS05/BS06/BS11为静态confirmed，19个case为partial，14个case blocked；`unknown_fields=155`、`blocking_findings=92`，因此D19仍required-before-code。
-- `D03/D19/D23-chart-count-partial`：production chart count独立oracle按10.1.4 ARM64规则固定ordinary `979`与HABAHIRO `731`；固定事件oracle尚未重建，因此case计数暂不变化。
+- `D19-partial`：BS01–BS36 partial oracle已生成并独立校验；BS05/BS06/BS11为静态confirmed，20个case为partial，13个case blocked；`unknown_fields=151`、`blocking_findings=91`，因此D19仍required-before-code。
+- `D03/D19/D23-chart-count-partial`：production chart count独立oracle按10.1.4 ARM64规则固定ordinary `979`与HABAHIRO `731`；已移除BS01/BS02的4个chart unknown并将BS02推进为partial，base-score与初始化顺序仍开放。
 
 ## required-before-code
 
 - `D18`剩余：Fever、guard、Never Die、多个/重叠Skill及special-mode对象identity与before/after字段。
-- `D19`剩余：BS01–BS36尚有155个unknown fields与92个blocking findings，必须补齐master/R1/failure证据后才能全部`unknown_fields=[]`。
+- `D19`剩余：BS01–BS36尚有151个unknown fields与91个blocking findings，必须补齐master/R1/failure证据后才能全部`unknown_fields=[]`。
 - `D20`剩余：Fever切换、多个/重叠Skill及Skill/Fever/Life/Combo/五槽交错；单Skill start/end冻结子范围已锁定。
 - `D21`：生命周期与 failure atomicity。
 - `D22`剩余：score decrease mode、Continue（采集禁止）、seek与ReturnTime边界。
@@ -41,10 +41,10 @@ executed_capture_plans=3
 pending_capture_plans=0
 fixed_event_cases=36
 fixed_event_confirmed=3
-fixed_event_partial=19
-fixed_event_blocked=14
-fixed_event_unknown_fields=155
-fixed_event_blocking_findings=92
+fixed_event_partial=20
+fixed_event_blocked=13
+fixed_event_unknown_fields=151
+fixed_event_blocking_findings=91
 production_chart_counts=979,731
 chart_count_unknown_fields=0
 aborted_capture_plans=1

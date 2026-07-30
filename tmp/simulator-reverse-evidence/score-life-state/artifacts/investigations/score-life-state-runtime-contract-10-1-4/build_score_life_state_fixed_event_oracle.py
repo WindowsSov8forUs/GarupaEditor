@@ -13,7 +13,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parent
 LIB_SHA256 = "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F"
 METADATA_SHA256 = "298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F"
-SOURCE_COMMIT = "4f0ce1a02a83747db617695cde69ad47ac8ae78f"
+SOURCE_COMMIT = "c7dbaba81699adec896796167074cb85cdc94e2e"
 SOURCES = {
     "static_contract": "score_life_state_static_contract.json",
     "static_findings": "score_life_state_static_findings.json",
@@ -23,6 +23,7 @@ SOURCES = {
     "positive_r1": "runtime/positive-retry-all-lanes-early.trace.json.gz",
     "skill_r1": "runtime/multitouch-seven-lane-native-skill.trace.json.gz",
     "retry_r1": "runtime/multitouch-seven-lane-post-gameover-retry.trace.json.gz",
+    "chart_count": "score_life_state_chart_count_oracle.json",
 }
 REQUIREMENTS = {
     "BS01": "ordinary production chart family maxNoteCount and base-score initialization",
@@ -144,6 +145,7 @@ def main() -> int:
     positive = load_trace(SOURCES["positive_r1"])
     skill = load_trace(SOURCES["skill_r1"])
     retry = load_trace(SOURCES["retry_r1"])
+    chart_count = load_json(SOURCES["chart_count"])
 
     require(static_contract["target"]["libil2cpp_sha256"] == LIB_SHA256, "static target differs")
     require(static_findings["sample"]["global_metadata_sha256"] == METADATA_SHA256, "metadata differs")
@@ -152,6 +154,14 @@ def main() -> int:
         require(trace["capture_error"] is None, "trace capture error")
         require(trace["sample"]["version_name"] == "10.1.4" and trace["sample"]["version_code"] == 230, "trace version differs")
         require(trace["sample"]["abi"] == "arm64-v8a" and trace["sample"]["libil2cpp_sha256"] == LIB_SHA256, "trace binary differs")
+    require(
+        chart_count["status"] == "confirmed-production-chart-max-note-count-10.1.4-rule"
+        and chart_count["sample"]["version_name"] == "10.1.4"
+        and chart_count["sample"]["version_code"] == 230
+        and chart_count["unknown_fields"] == []
+        and chart_count["blocking_findings"] == [],
+        "chart count oracle differs",
+    )
 
     result_rates = finding["SLS-S03"]["conclusion"]
     combo_rates = finding["SLS-S04"]["conclusion"]
@@ -171,10 +181,57 @@ def main() -> int:
     retry_game_over = events(retry, "InGameRecord.updateGameOverState.leave")[0]
     retry_init = events(retry, "InGameRecord.InitializeLife.leave")[-1]
     retry_markers = events(retry, "capture.marker")
+    ordinary_chart_count = chart_count["charts"]["ordinary"]
+    habahiro_chart_count = chart_count["charts"]["habahiro"]
 
     cases: list[dict[str, Any]] = []
-    cases.append(case("BS01", "partial", ["SLS-S05", "SLS-R1-001", "SLS-BMS-ORDINARY"], ["ordinary_bms", "no_input_r1"], ["static:SLS-S05", "no_input_r1#InitializeLife.leave:0"], {"production_bms_sha256": digest(ROOT / SOURCES["ordinary_bms"]), "observed_max_note_count": no_input_init["max_note_count"], "observed_life_fields": [no_input_init["current_life"], no_input_init["displayed_or_skill_base_life"], no_input_init["business_life_upper_limit"]], "base_formula": finding["SLS-S05"]["conclusion"]}, ["initialization.total_parameter", "initialization.score_level", "initialization.event_parameter", "initialization.base_score_bits", "initialization.bonus_base_score_bits", "chart.family_counts"], ["D03", "D06", "D23-master-start-data"]))
-    cases.append(case("BS02", "blocked", ["SLS-BMS-HABAHIRO"], ["habahiro_bms"], ["habahiro_bms#bytes"], {}, ["chart.visible_slide_count", "chart.invisible_slide_count", "chart.max_note_count", "initialization.base_score_bits"], ["D03", "D23-master-start-data"]))
+    cases.append(case(
+        "BS01",
+        "partial",
+        ["SLS-S05", "SLS-R1-001", "SLS-BMS-ORDINARY", "SLS-CHART-COUNT-ORDINARY"],
+        ["ordinary_bms", "no_input_r1", "chart_count"],
+        ["static:SLS-S05", "no_input_r1#InitializeLife.leave:0", "chart_count#charts.ordinary"],
+        {
+            "production_bms_sha256": digest(ROOT / SOURCES["ordinary_bms"]),
+            "production_chart_count": {
+                "inputs": ordinary_chart_count["inputs"],
+                "derived": ordinary_chart_count["derived"],
+                "formula": ordinary_chart_count["formula"],
+            },
+            "observed_max_note_count": no_input_init["max_note_count"],
+            "observed_life_fields": [
+                no_input_init["current_life"],
+                no_input_init["displayed_or_skill_base_life"],
+                no_input_init["business_life_upper_limit"],
+            ],
+            "base_formula": finding["SLS-S05"]["conclusion"],
+        },
+        [
+            "initialization.total_parameter",
+            "initialization.score_level",
+            "initialization.event_parameter",
+            "initialization.base_score_bits",
+            "initialization.bonus_base_score_bits",
+        ],
+        ["D03", "D06", "D23-master-start-data"],
+    ))
+    cases.append(case(
+        "BS02",
+        "partial",
+        ["SLS-BMS-HABAHIRO", "SLS-CHART-COUNT-HABAHIRO"],
+        ["habahiro_bms", "chart_count"],
+        ["habahiro_bms#bytes", "chart_count#charts.habahiro"],
+        {
+            "production_bms_sha256": digest(ROOT / SOURCES["habahiro_bms"]),
+            "production_chart_count": {
+                "inputs": habahiro_chart_count["inputs"],
+                "derived": habahiro_chart_count["derived"],
+                "formula": habahiro_chart_count["formula"],
+            },
+        },
+        ["initialization.base_score_bits"],
+        ["D23-master-start-data"],
+    ))
     cases.append(case("BS03", "partial", ["SLS-S05"], ["static_findings"], ["static:SLS-S05"], {"score_level_rate_formula": finding["SLS-S05"]["conclusion"]["score_level_rate"], "ordinary_base_formula": finding["SLS-S05"]["conclusion"]["ordinary_base"]}, ["profile.deck_members", "profile.member_parameters", "profile.score_level", "expected.float32_accumulation_bits", "expected.base_score_bits"], ["D06", "D23-master-start-data"]))
     cases.append(case("BS04", "blocked", ["D06-static"], ["static_contract"], ["static_contract#mapped Free Live methods"], {}, ["profile.event_parameter", "expected.zero_construction", "expected.nonzero_construction", "expected.cache", "expected.clear", "trace.callback_domain_order"], ["D06", "D21", "D23-master-start-data"]))
     cases.append(case("BS05", "confirmed-static", ["SLS-S03"], ["static_findings"], ["static:SLS-S03", "locked ELF VA 0x1581A14"], {"result_correction": result_rates}, [], []))

@@ -56,7 +56,7 @@ check(
     manifest.source.skillEvidenceCommit === "4ac4ea186efade9091c6f4377ab7ad7dc852a2c5" &&
     manifest.source.retryLifecyclePlanCommit === "38cee0b409246323b46099e291331a78a267bcec" &&
     manifest.source.retryLifecycleEvidenceCommit === "4f0ce1a02a83747db617695cde69ad47ac8ae78f" &&
-    manifest.source.fixedEventOracleCommit === "659292c85e474e89d817c46c6cdd830ba7de07f5" &&
+    manifest.source.fixedEventOracleCommit === "f9f15b446f2c7f5b24f5f2ba380b543419383df1" &&
     manifest.source.chartCountOracleCommit === "c7dbaba81699adec896796167074cb85cdc94e2e",
   "Unexpected Reverse evidence commits",
 );
@@ -89,10 +89,10 @@ check(
     manifest.counts.retryLifecycleEvidenceEntries === 5 &&
     manifest.counts.fixedEventOracleEntries === 6 &&
     manifest.counts.fixedEventConfirmedCases === 3 &&
-    manifest.counts.fixedEventPartialCases === 19 &&
-    manifest.counts.fixedEventBlockedCases === 14 &&
-    manifest.counts.fixedEventUnknownFields === 155 &&
-    manifest.counts.fixedEventBlockingFindings === 92 &&
+    manifest.counts.fixedEventPartialCases === 20 &&
+    manifest.counts.fixedEventBlockedCases === 13 &&
+    manifest.counts.fixedEventUnknownFields === 151 &&
+    manifest.counts.fixedEventBlockingFindings === 91 &&
     manifest.counts.chartCountOracleEntries === 7 &&
     manifest.counts.ordinaryMaxNoteCount === 979 &&
     manifest.counts.habahiroMaxNoteCount === 731 &&
@@ -137,10 +137,10 @@ check(
     runtimeInputGate.fixedEventOracle.status === "partial-business-gate-open" &&
     runtimeInputGate.fixedEventOracle.totalCases === 36 &&
     runtimeInputGate.fixedEventOracle.confirmedCases.join(",") === "BS05,BS06,BS11" &&
-    runtimeInputGate.fixedEventOracle.partialCases === 19 &&
-    runtimeInputGate.fixedEventOracle.blockedCases === 14 &&
-    runtimeInputGate.fixedEventOracle.unknownFields === 155 &&
-    runtimeInputGate.fixedEventOracle.blockingFindings === 92 &&
+    runtimeInputGate.fixedEventOracle.partialCases === 20 &&
+    runtimeInputGate.fixedEventOracle.blockedCases === 13 &&
+    runtimeInputGate.fixedEventOracle.unknownFields === 151 &&
+    runtimeInputGate.fixedEventOracle.blockingFindings === 91 &&
     runtimeInputGate.productionAuthorization === false,
   "Runtime input gate was incorrectly closed",
 );
@@ -399,10 +399,12 @@ check(
     runtimeStatus.closed.r1_post_gameover_retry_reset.retry_reset_max_note_count === 540 &&
     runtimeStatus.runtime.fixed_event_oracle.cases === 36 &&
     runtimeStatus.runtime.fixed_event_oracle.confirmed_cases.join(",") === "BS05,BS06,BS11" &&
-    runtimeStatus.runtime.fixed_event_oracle.partial_cases.length === 19 &&
-    runtimeStatus.runtime.fixed_event_oracle.blocked_cases.length === 14 &&
-    runtimeStatus.runtime.fixed_event_oracle.unknown_fields === 155 &&
-    runtimeStatus.runtime.fixed_event_oracle.blocking_findings === 92 &&
+    runtimeStatus.runtime.fixed_event_oracle.partial_cases.length === 20 &&
+    runtimeStatus.runtime.fixed_event_oracle.partial_cases.includes("BS02") &&
+    runtimeStatus.runtime.fixed_event_oracle.blocked_cases.length === 13 &&
+    !runtimeStatus.runtime.fixed_event_oracle.blocked_cases.includes("BS02") &&
+    runtimeStatus.runtime.fixed_event_oracle.unknown_fields === 151 &&
+    runtimeStatus.runtime.fixed_event_oracle.blocking_findings === 91 &&
     runtimeStatus.runtime.fixed_event_oracle.status === "partial-business-gate-open" &&
     runtimeStatus.business_state_gate === "open" &&
     runtimeStatus.production_authorization === false &&
@@ -1034,12 +1036,12 @@ const blockedFixedCases = fixedEventCases
   .filter((entry) => entry.status === "blocked")
   .map((entry) => entry.case_id);
 const expectedPartialFixedCases = [
-  "BS01", "BS03", "BS07", "BS10", "BS12", "BS13", "BS15", "BS16", "BS18",
+  "BS01", "BS02", "BS03", "BS07", "BS10", "BS12", "BS13", "BS15", "BS16", "BS18",
   "BS19", "BS20", "BS21", "BS22", "BS24", "BS27", "BS29", "BS30", "BS32",
   "BS36",
 ];
 const expectedBlockedFixedCases = [
-  "BS02", "BS04", "BS08", "BS09", "BS14", "BS17", "BS23", "BS25", "BS26",
+  "BS04", "BS08", "BS09", "BS14", "BS17", "BS23", "BS25", "BS26",
   "BS28", "BS31", "BS33", "BS34", "BS35",
 ];
 const fixedEventEvidencePaths = new Map([
@@ -1051,11 +1053,12 @@ const fixedEventEvidencePaths = new Map([
   ["positive_r1", "runtime/positive-retry-all-lanes-early.trace.json.gz"],
   ["skill_r1", "runtime/multitouch-seven-lane-native-skill.trace.json.gz"],
   ["retry_r1", "runtime/multitouch-seven-lane-post-gameover-retry.trace.json.gz"],
+  ["chart_count", "score_life_state_chart_count_oracle.json"],
 ]);
 check(
   fixedEventOracle.schema_version === 1 &&
     fixedEventOracle.status === "partial-10.1.4-fixed-event-oracle-business-gate-open" &&
-    fixedEventOracle.source_commit === "4f0ce1a02a83747db617695cde69ad47ac8ae78f" &&
+    fixedEventOracle.source_commit === "c7dbaba81699adec896796167074cb85cdc94e2e" &&
     fixedEventOracle.generator === "build_score_life_state_fixed_event_oracle.py" &&
     fixedEventOracle.sample.package === "jp.co.craftegg.band" &&
     fixedEventOracle.sample.version_name === "10.1.4" &&
@@ -1071,8 +1074,8 @@ check(
     confirmedFixedCases.join(",") === "BS05,BS06,BS11" &&
     partialFixedCases.join(",") === expectedPartialFixedCases.join(",") &&
     blockedFixedCases.join(",") === expectedBlockedFixedCases.join(",") &&
-    fixedEventOracle.coverage.unknown_field_count === 155 &&
-    fixedEventOracle.coverage.blocking_finding_count === 92 &&
+    fixedEventOracle.coverage.unknown_field_count === 151 &&
+    fixedEventOracle.coverage.blocking_finding_count === 91 &&
     fixedEventCases.every((entry) =>
       entry.requirement &&
       entry.evidence_ids.length > 0 &&
@@ -1096,7 +1099,7 @@ check(
       return source.path === path &&
         source.bytes === bytes.length &&
         source.sha256 === sha256(bytes) &&
-        source.source_commit === "4f0ce1a02a83747db617695cde69ad47ac8ae78f";
+        source.source_commit === "c7dbaba81699adec896796167074cb85cdc94e2e";
     }),
   "Frozen BS01-BS36 partial oracle identity, provenance, or fail-closed coverage changed",
 );
@@ -1108,6 +1111,12 @@ check(
     fixedEventById.get("BS11").expected_projection.slot_capacity === 5 &&
     fixedEventById.get("BS11").expected_projection.representative ===
       findingById.get("SLS-S02").conclusion.representative &&
+    fixedEventById.get("BS01").expected_projection.production_chart_count.derived.max_note_count === 979 &&
+    !fixedEventById.get("BS01").unknown_fields.includes("chart.family_counts") &&
+    fixedEventById.get("BS02").status === "partial" &&
+    fixedEventById.get("BS02").expected_projection.production_chart_count.derived.max_note_count === 731 &&
+    fixedEventById.get("BS02").unknown_fields.join(",") === "initialization.base_score_bits" &&
+    fixedEventById.get("BS02").blocking_findings.join(",") === "D23-master-start-data" &&
     fixedEventById.get("BS07").expected_projection.frame.index === 6 &&
     fixedEventById.get("BS07").expected_projection.frame.add_score.bits === "0x44AF8052" &&
     fixedEventById.get("BS07").expected_projection.reflected_add_score === 1404 &&
@@ -1169,7 +1178,7 @@ for (const [path, fragment] of criticalText) {
 }
 
 console.log(
-  `score-life-state evidence verified: methods=326 layouts=25 enums=19 BMS=2 counts=979/731 R1=4(partial D18/D20/D22) BS=36(3/19/14) plans=5(pending=0) ` +
+  `score-life-state evidence verified: methods=326 layouts=25 enums=19 BMS=2 counts=979/731 R1=4(partial D18/D20/D22) BS=36(3/20/13,unknown=151,blockers=91) plans=5(pending=0) ` +
     `V01=closed business=blocked(D18-D24) entries=${manifest.entries.length} ` +
     `index=${validateIndex ? "checked" : "skipped"}`,
 );

@@ -14,14 +14,14 @@ ROOT = Path(__file__).resolve().parent
 ORACLE = ROOT / "score_life_state_fixed_event_oracle.json"
 LIB_SHA256 = "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F"
 METADATA_SHA256 = "298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F"
-SOURCE_COMMIT = "4f0ce1a02a83747db617695cde69ad47ac8ae78f"
+SOURCE_COMMIT = "c7dbaba81699adec896796167074cb85cdc94e2e"
 EXPECTED_CONFIRMED = ["BS05", "BS06", "BS11"]
 EXPECTED_PARTIAL = [
-    "BS01", "BS03", "BS07", "BS10", "BS12", "BS13", "BS15", "BS16", "BS18",
+    "BS01", "BS02", "BS03", "BS07", "BS10", "BS12", "BS13", "BS15", "BS16", "BS18",
     "BS19", "BS20", "BS21", "BS22", "BS24", "BS27", "BS29", "BS30", "BS32", "BS36",
 ]
 EXPECTED_BLOCKED = [
-    "BS02", "BS04", "BS08", "BS09", "BS14", "BS17", "BS23", "BS25", "BS26",
+    "BS04", "BS08", "BS09", "BS14", "BS17", "BS23", "BS25", "BS26",
     "BS28", "BS31", "BS33", "BS34", "BS35",
 ]
 EXPECTED_SOURCES = {
@@ -33,6 +33,7 @@ EXPECTED_SOURCES = {
     "positive_r1": "runtime/positive-retry-all-lanes-early.trace.json.gz",
     "skill_r1": "runtime/multitouch-seven-lane-native-skill.trace.json.gz",
     "retry_r1": "runtime/multitouch-seven-lane-post-gameover-retry.trace.json.gz",
+    "chart_count": "score_life_state_chart_count_oracle.json",
 }
 EXPECTED_OUTPUT_FIELDS = [
     "initialization.base_score_and_profile",
@@ -78,6 +79,7 @@ def main() -> int:
     positive = load_trace(EXPECTED_SOURCES["positive_r1"])
     skill = load_trace(EXPECTED_SOURCES["skill_r1"])
     retry = load_trace(EXPECTED_SOURCES["retry_r1"])
+    chart_count = load_json(ROOT / EXPECTED_SOURCES["chart_count"])
 
     require(oracle["schema_version"] == 1, "oracle schema differs")
     require(oracle["status"] == "partial-10.1.4-fixed-event-oracle-business-gate-open", "oracle status differs")
@@ -146,10 +148,37 @@ def main() -> int:
             "confirmed_cases": EXPECTED_CONFIRMED,
             "partial_cases": EXPECTED_PARTIAL,
             "blocked_cases": EXPECTED_BLOCKED,
-            "unknown_field_count": 155,
-            "blocking_finding_count": 92,
+            "unknown_field_count": 151,
+            "blocking_finding_count": 91,
         },
         "coverage summary differs",
+    )
+
+    require(
+        by_id["BS01"]["expected_projection"]["production_chart_count"]
+        == {
+            "inputs": chart_count["charts"]["ordinary"]["inputs"],
+            "derived": chart_count["charts"]["ordinary"]["derived"],
+            "formula": chart_count["charts"]["ordinary"]["formula"],
+        }
+        and "chart.family_counts" not in by_id["BS01"]["unknown_fields"]
+        and chart_count["charts"]["ordinary"]["derived"]["max_note_count"] == 979,
+        "BS01 production chart count projection differs",
+    )
+    require(
+        by_id["BS02"]["expected_projection"]
+        == {
+            "production_bms_sha256": "43148090C40ABBD951E8D7112200BDAE9B796A8A531A0793169E0AD70C3DC159",
+            "production_chart_count": {
+                "inputs": chart_count["charts"]["habahiro"]["inputs"],
+                "derived": chart_count["charts"]["habahiro"]["derived"],
+                "formula": chart_count["charts"]["habahiro"]["formula"],
+            },
+        }
+        and by_id["BS02"]["unknown_fields"] == ["initialization.base_score_bits"]
+        and by_id["BS02"]["blocking_findings"] == ["D23-master-start-data"]
+        and chart_count["charts"]["habahiro"]["derived"]["max_note_count"] == 731,
+        "BS02 HABAHIRO chart count projection differs",
     )
 
     require(by_id["BS05"]["expected_projection"]["result_correction"] == finding["SLS-S03"]["conclusion"], "BS05 result table differs")
@@ -257,8 +286,8 @@ def main() -> int:
     require(serialized.count('"case_id": "BS') == 36, "serialized BS case count differs")
 
     print(
-        "verified score/life fixed-event oracle: BS=36 confirmed=3 partial=19 blocked=14 "
-        "unknown_fields=155 blockers=92 R1=4 gate=open production=false"
+        "verified score/life fixed-event oracle: BS=36 confirmed=3 partial=20 blocked=13 "
+        "unknown_fields=151 blockers=91 R1=4 gate=open production=false"
     )
     return 0
 

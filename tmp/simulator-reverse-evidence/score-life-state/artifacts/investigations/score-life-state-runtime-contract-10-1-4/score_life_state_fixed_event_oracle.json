@@ -9,56 +9,62 @@
     "libil2cpp_sha256": "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F",
     "global_metadata_sha256": "298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F"
   },
-  "source_commit": "4f0ce1a02a83747db617695cde69ad47ac8ae78f",
+  "source_commit": "c7dbaba81699adec896796167074cb85cdc94e2e",
   "generator": "build_score_life_state_fixed_event_oracle.py",
   "evidence_catalog": {
     "static_contract": {
       "path": "score_life_state_static_contract.json",
       "bytes": 1107943,
       "sha256": "932AE569D6B2AD8620D1D8CECD44EB812B6AFDB16E18590140D7DA56998566C2",
-      "source_commit": "4f0ce1a02a83747db617695cde69ad47ac8ae78f"
+      "source_commit": "c7dbaba81699adec896796167074cb85cdc94e2e"
     },
     "static_findings": {
       "path": "score_life_state_static_findings.json",
       "bytes": 15061,
       "sha256": "B626E6318BD8462BC94C8C9FEEB27AF00FC89751F210CB8D6F3C34EA1F17FAC2",
-      "source_commit": "4f0ce1a02a83747db617695cde69ad47ac8ae78f"
+      "source_commit": "c7dbaba81699adec896796167074cb85cdc94e2e"
     },
     "ordinary_bms": {
       "path": "runtime-inputs/bms/poppin_shuffle_special.bms.txt",
       "bytes": 17882,
       "sha256": "418DB7F5BFC6B5431AC0ABF2FB905120BDFA8C778C35AA42418A6FA43F4094DC",
-      "source_commit": "4f0ce1a02a83747db617695cde69ad47ac8ae78f"
+      "source_commit": "c7dbaba81699adec896796167074cb85cdc94e2e"
     },
     "habahiro_bms": {
       "path": "runtime-inputs/bms/786_miracle_april_habahiro_special.bms.txt",
       "bytes": 38700,
       "sha256": "43148090C40ABBD951E8D7112200BDAE9B796A8A531A0793169E0AD70C3DC159",
-      "source_commit": "4f0ce1a02a83747db617695cde69ad47ac8ae78f"
+      "source_commit": "c7dbaba81699adec896796167074cb85cdc94e2e"
     },
     "no_input_r1": {
       "path": "runtime/no-input-retry-life-gameover.trace.json.gz",
       "bytes": 140797,
       "sha256": "4F1BBCCF8E9D9258235ED3FD52F3B74242F515362C5C4EE7F51B8126290E8A55",
-      "source_commit": "4f0ce1a02a83747db617695cde69ad47ac8ae78f"
+      "source_commit": "c7dbaba81699adec896796167074cb85cdc94e2e"
     },
     "positive_r1": {
       "path": "runtime/positive-retry-all-lanes-early.trace.json.gz",
       "bytes": 153597,
       "sha256": "F91140EB5A1B1A8858495B6CFFB9112C4CB295F20D4CDEEED184A1F5CCDB44A9",
-      "source_commit": "4f0ce1a02a83747db617695cde69ad47ac8ae78f"
+      "source_commit": "c7dbaba81699adec896796167074cb85cdc94e2e"
     },
     "skill_r1": {
       "path": "runtime/multitouch-seven-lane-native-skill.trace.json.gz",
       "bytes": 746972,
       "sha256": "0DB8FF447030750008B001A285480FE280A770EEB9723369C1935107B1DA5FDD",
-      "source_commit": "4f0ce1a02a83747db617695cde69ad47ac8ae78f"
+      "source_commit": "c7dbaba81699adec896796167074cb85cdc94e2e"
     },
     "retry_r1": {
       "path": "runtime/multitouch-seven-lane-post-gameover-retry.trace.json.gz",
       "bytes": 696375,
       "sha256": "D4BFF770EC545C037A0592F4BF3E4B796565EA12668C5AF6BC81E9C60A6F10AE",
-      "source_commit": "4f0ce1a02a83747db617695cde69ad47ac8ae78f"
+      "source_commit": "c7dbaba81699adec896796167074cb85cdc94e2e"
+    },
+    "chart_count": {
+      "path": "score_life_state_chart_count_oracle.json",
+      "bytes": 4144,
+      "sha256": "66CBA99B638A0EB078C8C9D2B2B8FB06663EE8E2B74DBC68249986EEA152E12C",
+      "source_commit": "c7dbaba81699adec896796167074cb85cdc94e2e"
     }
   },
   "required_output_fields": [
@@ -81,6 +87,7 @@
     ],
     "partial_cases": [
       "BS01",
+      "BS02",
       "BS03",
       "BS07",
       "BS10",
@@ -101,7 +108,6 @@
       "BS36"
     ],
     "blocked_cases": [
-      "BS02",
       "BS04",
       "BS08",
       "BS09",
@@ -116,8 +122,8 @@
       "BS34",
       "BS35"
     ],
-    "unknown_field_count": 155,
-    "blocking_finding_count": 92
+    "unknown_field_count": 151,
+    "blocking_finding_count": 91
   },
   "business_state_gate": "open",
   "production_authorization": false,
@@ -129,18 +135,37 @@
       "evidence_ids": [
         "SLS-S05",
         "SLS-R1-001",
-        "SLS-BMS-ORDINARY"
+        "SLS-BMS-ORDINARY",
+        "SLS-CHART-COUNT-ORDINARY"
       ],
       "input_provenance": [
         "ordinary_bms",
-        "no_input_r1"
+        "no_input_r1",
+        "chart_count"
       ],
       "expected_source": [
         "static:SLS-S05",
-        "no_input_r1#InitializeLife.leave:0"
+        "no_input_r1#InitializeLife.leave:0",
+        "chart_count#charts.ordinary"
       ],
       "expected_projection": {
         "production_bms_sha256": "418DB7F5BFC6B5431AC0ABF2FB905120BDFA8C778C35AA42418A6FA43F4094DC",
+        "production_chart_count": {
+          "inputs": {
+            "playable_roots": 825,
+            "long_roots": 29,
+            "slide_roots": 93,
+            "source_slide_nodes_including_roots": 298,
+            "source_hidden_slide_nodes": 80
+          },
+          "derived": {
+            "playable_root_entries": 825,
+            "long_tail_entries": 29,
+            "visible_slide_after_entries": 125,
+            "max_note_count": 979
+          },
+          "formula": "playable_roots + long_roots + (source_slide_nodes_including_roots - source_hidden_slide_nodes - slide_roots)"
+        },
         "observed_max_note_count": 540,
         "observed_life_fields": [
           1000,
@@ -161,8 +186,7 @@
         "initialization.score_level",
         "initialization.event_parameter",
         "initialization.base_score_bits",
-        "initialization.bonus_base_score_bits",
-        "chart.family_counts"
+        "initialization.bonus_base_score_bits"
       ],
       "blocking_findings": [
         "D03",
@@ -173,25 +197,42 @@
     {
       "case_id": "BS02",
       "requirement": "HABAHIRO visible/invisible Slide maxNoteCount",
-      "status": "blocked",
+      "status": "partial",
       "evidence_ids": [
-        "SLS-BMS-HABAHIRO"
+        "SLS-BMS-HABAHIRO",
+        "SLS-CHART-COUNT-HABAHIRO"
       ],
       "input_provenance": [
-        "habahiro_bms"
+        "habahiro_bms",
+        "chart_count"
       ],
       "expected_source": [
-        "habahiro_bms#bytes"
+        "habahiro_bms#bytes",
+        "chart_count#charts.habahiro"
       ],
-      "expected_projection": {},
+      "expected_projection": {
+        "production_bms_sha256": "43148090C40ABBD951E8D7112200BDAE9B796A8A531A0793169E0AD70C3DC159",
+        "production_chart_count": {
+          "inputs": {
+            "playable_roots": 598,
+            "long_roots": 58,
+            "slide_roots": 51,
+            "source_slide_nodes_including_roots": 141,
+            "source_hidden_slide_nodes": 15
+          },
+          "derived": {
+            "playable_root_entries": 598,
+            "long_tail_entries": 58,
+            "visible_slide_after_entries": 75,
+            "max_note_count": 731
+          },
+          "formula": "playable_roots + long_roots + (source_slide_nodes_including_roots - source_hidden_slide_nodes - slide_roots)"
+        }
+      },
       "unknown_fields": [
-        "chart.visible_slide_count",
-        "chart.invisible_slide_count",
-        "chart.max_note_count",
         "initialization.base_score_bits"
       ],
       "blocking_findings": [
-        "D03",
         "D23-master-start-data"
       ]
     },
