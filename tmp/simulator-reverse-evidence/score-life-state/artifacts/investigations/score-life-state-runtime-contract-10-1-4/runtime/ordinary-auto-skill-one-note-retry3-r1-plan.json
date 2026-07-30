@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "scenario_id": "ordinary-auto-skill-one-note-retry3-r1",
+  "status": "ready-for-observation",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "version_name": "10.1.4",
+    "version_code": 230,
+    "abi": "arm64-v8a",
+    "music_fixture_id": "poppin_shuffle_special",
+    "music_title_omitted": true,
+    "difficulty": "SPECIAL",
+    "score_level": 27,
+    "max_note_count": 979,
+    "mode": "Free Live Auto Live"
+  },
+  "preconditions": [
+    "The app is foregrounded on the locked chart's band-confirmation screen.",
+    "Auto Live is visibly ON with eight remaining Auto Live uses after Retry-1 completed but exited after business completion and Retry-2 transport exited before initialization.",
+    "The rank-up restored three Live Boost and the display visibly shows 12 -> 11 for Retry-3.",
+    "Deck 1 is selected and no member, card, skill, account, or display identity is exported.",
+    "SELinux is Enforcing and Frida uses explicit 127.0.0.1:47913 forwarding."
+  ],
+  "actions": [
+    {
+      "kind": "tap",
+      "marker": "start-locked-ordinary-auto-live-retry3",
+      "x": 1240,
+      "y": 590,
+      "delay_ms": 1000
+    },
+    {
+      "kind": "wait_until_capture_complete",
+      "marker": "observe-complete-auto-live-retry3",
+      "timeout_ms": 180000,
+      "required_one_note_leave_count": 979,
+      "required_skill_finished_leave_count": 6
+    }
+  ],
+  "tail_seconds": 5,
+  "declared_account_resource_effects": {
+    "auto_live_uses": -1,
+    "live_boost": -1,
+    "premium_currency": 0,
+    "continue": false
+  },
+  "observation_contract": {
+    "observation_only": true,
+    "return_replacement": false,
+    "memory_writes": false,
+    "apk_modification": false,
+    "managed_invocation": false,
+    "continue_operation": false,
+    "input_injection": "one predeclared Android adb tap followed by passive wait-until-complete only"
+  },
+  "privacy_contract": {
+    "allowed": [
+      "anonymous first-seen skill aliases",
+      "numeric skill duration, once-effect, trigger-condition, and active-effect rows",
+      "anonymous skill queue state and Float32 timer bits",
+      "one-note max score/combo/skill-factor/fever fields",
+      "judgement, score, life, and correction numeric values",
+      "event sequence and thread id"
+    ],
+    "forbidden": [
+      "user or account identifiers",
+      "room fields",
+      "deck or member identities",
+      "member slots or character indices",
+      "card, situation-skill, or skill identifiers",
+      "raw managed pointers",
+      "music, member, card, or skill display strings",
+      "deck element contents"
+    ]
+  },
+  "promotion_requirements": [
+    "The capture has no error and sequence numbers are contiguous.",
+    "Initialization observes maxNoteCount 979 and Auto Live mode.",
+    "At least two anonymous skill aliases initialize and at least two skill transitions complete.",
+    "Every exported skill profile excludes forbidden identity fields and raw pointers.",
+    "One-note max observations contain no notesType strings and demonstrate at least one positive-score update.",
+    "No return replacement, memory write, managed invocation, APK modification, Continue, or premium-currency operation occurs."
+  ]
+}

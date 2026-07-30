@@ -13,7 +13,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parent
 LIB_SHA256 = "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F"
 METADATA_SHA256 = "298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F"
-SOURCE_COMMIT = "3c95190f4b6326da97e21c8e590f625a7582dc22"
+SOURCE_COMMIT = "6ee113568b2b06abce524beff4a57d83290c9f8d"
 SOURCES = {
     "static_contract": "score_life_state_static_contract.json",
     "static_findings": "score_life_state_static_findings.json",
@@ -25,6 +25,9 @@ SOURCES = {
     "retry_r1": "runtime/multitouch-seven-lane-post-gameover-retry.trace.json.gz",
     "chart_count": "score_life_state_chart_count_oracle.json",
     "initialization_profile": "score_life_initialization_profile_oracle.json",
+    "deck_aggregate_profile": "score_life_deck_aggregate_profile_oracle.json",
+    "master_music_786_profile": "score_life_master_music_786_profile_oracle.json",
+    "ordinary_auto_skill_one_note": "score_life_ordinary_auto_skill_one_note_oracle.json",
 }
 REQUIREMENTS = {
     "BS01": "ordinary production chart family maxNoteCount and base-score initialization",
@@ -122,7 +125,7 @@ def case(
     unknown_fields: list[str],
     blocking_findings: list[str],
 ) -> dict[str, Any]:
-    require(status in {"confirmed-static", "partial", "blocked"}, f"invalid status {case_id}")
+    require(status in {"confirmed-static", "confirmed-r1", "partial", "blocked"}, f"invalid status {case_id}")
     require(bool(expected_projection) or status == "blocked", f"missing projection {case_id}")
     require((not unknown_fields and not blocking_findings) == status.startswith("confirmed"), f"gate mismatch {case_id}")
     return {
@@ -148,6 +151,9 @@ def main() -> int:
     retry = load_trace(SOURCES["retry_r1"])
     chart_count = load_json(SOURCES["chart_count"])
     initialization_profile = load_json(SOURCES["initialization_profile"])
+    deck_aggregate_profile = load_json(SOURCES["deck_aggregate_profile"])
+    master_music_786_profile = load_json(SOURCES["master_music_786_profile"])
+    ordinary_auto_skill_one_note = load_json(SOURCES["ordinary_auto_skill_one_note"])
 
     require(static_contract["target"]["libil2cpp_sha256"] == LIB_SHA256, "static target differs")
     require(static_findings["sample"]["global_metadata_sha256"] == METADATA_SHA256, "metadata differs")
@@ -175,6 +181,34 @@ def main() -> int:
         and initialization_profile["business_state_gate"] == "open",
         "initialization profile oracle differs",
     )
+    require(
+        deck_aggregate_profile["status"] == "confirmed-r1-ordinary-deck-aggregate-partial-member-rows"
+        and deck_aggregate_profile["sample"]["version_name"] == "10.1.4"
+        and deck_aggregate_profile["sample"]["version_code"] == 230
+        and deck_aggregate_profile["deck_aggregate"]["array_identity"]["length"] == 5
+        and deck_aggregate_profile["deck_aggregate"]["total_parameter"]["bits"] == "0x483C8A31"
+        and deck_aggregate_profile["unknown_fields"] == ["deck.member_rows"]
+        and deck_aggregate_profile["business_state_gate"] == "open",
+        "deck aggregate profile oracle differs",
+    )
+    require(
+        master_music_786_profile["status"] == "confirmed-r1-master-music-786-profile-partial-runtime-availability"
+        and master_music_786_profile["music"]["target"]["music_id"] == 786
+        and master_music_786_profile["difficulty_profile"]["special"]["difficulty"] == "special"
+        and master_music_786_profile["free_live_score_level"]["resolved_score_level"] == 26
+        and master_music_786_profile["blocking_findings"] == ["D23-HABAHIRO-runtime-availability"]
+        and master_music_786_profile["business_state_gate"] == "open",
+        "master music 786 profile oracle differs",
+    )
+    require(
+        ordinary_auto_skill_one_note["status"] == "confirmed-r1-observation-only"
+        and ordinary_auto_skill_one_note["continuity"] == {"capture_error": None, "event_count": 5501, "first_sequence": 0, "last_sequence": 5500, "contiguous": True}
+        and ordinary_auto_skill_one_note["one_note"]["call_count"] == 979
+        and len(ordinary_auto_skill_one_note["skill_lifecycles"]) == 6
+        and ordinary_auto_skill_one_note["anonymous_skill_count"] == 5
+        and ordinary_auto_skill_one_note["privacy"]["member_identity_included"] is False,
+        "ordinary Auto Skill/one-note oracle differs",
+    )
 
     result_rates = finding["SLS-S03"]["conclusion"]
     combo_rates = finding["SLS-S04"]["conclusion"]
@@ -190,19 +224,30 @@ def main() -> int:
     heal_enter = next(event for event in events(skill, "InGameRecord.AddIPower.enter") if event["arg1"] == 300)
     heal_leave = next(event for event in events(skill, "InGameRecord.AddIPower.leave") if event["arg1"] == 300)
     active_frames = [event["frame"] for event in events(skill, "OneFrameData.Setup.leave") if event["frame"]["skill_rate"]["bits"] == "0x3F99999A"]
+    observed_base_damage = {
+        str(result): sorted({event["returned"] for event in events(skill, "DamageUtility.CalcBasePowerPoint") if event["result"] == result})
+        for result in range(5)
+    }
+    observed_one_frame_power = {
+        str(result): sorted({event["frame"]["add_power"] for event in events(skill, "OneFrameData.Setup.leave") if event["frame"]["result"] == result})
+        for result in range(5)
+    }
     retry_game_over = events(retry, "InGameRecord.updateGameOverState.leave")[0]
     retry_init = events(retry, "InGameRecord.InitializeLife.leave")[-1]
     retry_markers = events(retry, "capture.marker")
     ordinary_chart_count = chart_count["charts"]["ordinary"]
     habahiro_chart_count = chart_count["charts"]["habahiro"]
+    auto_one_note = ordinary_auto_skill_one_note["one_note"]
+    auto_skill_lifecycles = ordinary_auto_skill_one_note["skill_lifecycles"]
+    auto_overheal = ordinary_auto_skill_one_note["overheal"]
 
     cases: list[dict[str, Any]] = []
     cases.append(case(
         "BS01",
-        "partial",
-        ["SLS-S05", "SLS-R1-008", "SLS-BMS-ORDINARY", "SLS-CHART-COUNT-ORDINARY"],
-        ["ordinary_bms", "chart_count", "initialization_profile"],
-        ["static:SLS-S05", "chart_count#charts.ordinary", "initialization_profile#ordinary"],
+        "confirmed-r1",
+        ["SLS-S05", "SLS-R1-008", "SLS-R1-009", "SLS-BMS-ORDINARY", "SLS-CHART-COUNT-ORDINARY"],
+        ["ordinary_bms", "chart_count", "initialization_profile", "deck_aggregate_profile"],
+        ["static:SLS-S05", "chart_count#charts.ordinary", "initialization_profile#ordinary", "deck_aggregate_profile#ordinary"],
         {
             "production_bms_sha256": digest(ROOT / SOURCES["ordinary_bms"]),
             "production_chart_count": {
@@ -219,17 +264,18 @@ def main() -> int:
                 "mode_and_damage": initialization_profile["mode_and_damage"],
                 "object_identity": initialization_profile["object_identity"],
             },
+            "deck_aggregate": deck_aggregate_profile["deck_aggregate"],
             "base_formula": finding["SLS-S05"]["conclusion"],
         },
         [],
-        ["D23-master-start-data"],
+        [],
     ))
     cases.append(case(
         "BS02",
         "partial",
-        ["SLS-BMS-HABAHIRO", "SLS-CHART-COUNT-HABAHIRO"],
-        ["habahiro_bms", "chart_count"],
-        ["habahiro_bms#bytes", "chart_count#charts.habahiro"],
+        ["SLS-BMS-HABAHIRO", "SLS-CHART-COUNT-HABAHIRO", "SLS-R1-010"],
+        ["habahiro_bms", "chart_count", "master_music_786_profile"],
+        ["habahiro_bms#bytes", "chart_count#charts.habahiro", "master_music_786_profile#music/difficulty/score-level"],
         {
             "production_bms_sha256": digest(ROOT / SOURCES["habahiro_bms"]),
             "production_chart_count": {
@@ -237,11 +283,16 @@ def main() -> int:
                 "derived": habahiro_chart_count["derived"],
                 "formula": habahiro_chart_count["formula"],
             },
+            "master_music_profile": {
+                "music": master_music_786_profile["music"],
+                "special": master_music_786_profile["difficulty_profile"]["special"],
+                "free_live_score_level": master_music_786_profile["free_live_score_level"],
+            },
         },
-        ["initialization.base_score_bits"],
-        ["D23-master-start-data"],
+        ["initialization.start_data_runtime", "initialization.event_parameter", "initialization.base_score_bits"],
+        ["D23-HABAHIRO-runtime-availability"],
     ))
-    cases.append(case("BS03", "partial", ["SLS-S05"], ["static_findings"], ["static:SLS-S05"], {"score_level_rate_formula": finding["SLS-S05"]["conclusion"]["score_level_rate"], "ordinary_base_formula": finding["SLS-S05"]["conclusion"]["ordinary_base"]}, ["profile.deck_members", "profile.member_parameters", "profile.score_level", "expected.float32_accumulation_bits", "expected.base_score_bits"], ["D06", "D23-master-start-data"]))
+    cases.append(case("BS03", "partial", ["SLS-S05", "SLS-R1-009"], ["static_findings", "deck_aggregate_profile"], ["static:SLS-S05", "deck_aggregate_profile#deck_aggregate"], {"score_level_rate_formula": finding["SLS-S05"]["conclusion"]["score_level_rate"], "ordinary_base_formula": finding["SLS-S05"]["conclusion"]["ordinary_base"], "observed_deck_aggregate": deck_aggregate_profile["deck_aggregate"], "observed_initialization_correlation": deck_aggregate_profile["initialization_correlation"]}, ["profile.member_rows"], ["D23-deck-member-rows-privacy"]))
     cases.append(case("BS04", "blocked", ["D06-static"], ["static_contract"], ["static_contract#mapped Free Live methods"], {}, ["profile.event_parameter", "expected.zero_construction", "expected.nonzero_construction", "expected.cache", "expected.clear", "trace.callback_domain_order"], ["D06", "D21", "D23-master-start-data"]))
     cases.append(case("BS05", "confirmed-static", ["SLS-S03"], ["static_findings"], ["static:SLS-S03", "locked ELF VA 0x1581A14"], {"result_correction": result_rates}, [], []))
     cases.append(case("BS06", "confirmed-static", ["SLS-S04"], ["static_findings"], ["static:SLS-S04", "locked ELF VA 0x1533250"], {"combo_correction_ranges": combo_rates}, [], []))
@@ -251,16 +302,16 @@ def main() -> int:
     cases.append(case("BS10", "partial", ["SLS-S02", "SLS-R1-005"], ["static_findings", "skill_r1"], ["static:SLS-S02", "skill_r1#events:2189,2199,2210"], {"reflect_mutation_prefix": finding["SLS-S02"]["conclusion"]["mutation_order"][:2], "same_frame_frozen_entries": [{"sequence": sequence, "skill_rate_bits": next(event["frame"]["skill_rate"]["bits"] for event in events(skill, "OneFrameData.Setup.leave") if event["sequence"] == sequence)} for sequence in (2189, 2199)], "reflect_after_skill_begin_sequence": 2210}, ["same_frame.two_entry_combo_values", "same_frame.per_entry_combo_rate_bits", "same_frame.score_results"], ["D20-remaining", "D23-master-start-data"]))
     cases.append(case("BS11", "confirmed-static", ["SLS-S01", "SLS-S02"], ["static_findings"], ["static:SLS-S01", "static:SLS-S02"], {"slot_capacity": 5, "slot_scan": finding["SLS-S02"]["conclusion"]["slot_scan"], "clear_point": finding["SLS-S02"]["conclusion"]["clear_point"], "representative": finding["SLS-S02"]["conclusion"]["representative"]}, [], []))
     cases.append(case("BS12", "partial", ["SLS-S01"], ["static_findings"], ["static:SLS-S01"], {"slot_capacity": 5}, ["failure.sixth_slot_exception_identity", "failure.before_snapshot", "failure.after_snapshot", "failure.backend_trace", "failure.domain_mutation_boundary"], ["D20-remaining", "D21"]))
-    cases.append(case("BS13", "partial", ["SLS-S12", "SLS-R1-003", "SLS-R1-007"], ["static_findings", "positive_r1", "retry_r1"], ["static:SLS-S12", "positive_r1#GameOver.leave", "retry_r1#GameOver.leave/InitializeLife.leave"], {"counter_rules": finding["SLS-S12"]["conclusion"], "positive_projection": {key: positive_game_over[key] for key in ("max_combo", "perfect_count", "great_count", "good_count", "bad_count", "miss_count", "fast_count", "slow_count")}, "retry_reset_projection": {key: retry_init["record"][key] for key in ("max_combo", "perfect_count", "great_count", "good_count", "bad_count", "miss_count", "fast_count", "slow_count")}}, ["record.all_perfect_status", "record.one_note_max_identity", "record.equal_max_retention"], ["D10", "D19"]))
-    cases.append(case("BS14", "blocked", ["D10-static"], ["static_contract"], ["static_contract#CalcOneNotesMaxScoreInfo"], {}, ["record.ordinary_strict_max", "record.bonus_strict_max", "record.equal_retention", "record.callback_identity"], ["D10", "D18-remaining"]))
-    cases.append(case("BS15", "partial", ["SLS-S07"], ["static_findings"], ["static:SLS-S07"], {"damage_mapping": finding["SLS-S07"]["conclusion"]}, ["profile.miss_damage", "profile.bad_damage", "one_frame.family_damage_values", "one_frame.power_values", "active_damage_effect_rows"], ["D07", "D13", "D23-master-start-data"]))
-    cases.append(case("BS16", "partial", ["SLS-S02", "SLS-S06", "SLS-R1-001"], ["static_findings", "no_input_r1"], ["static:SLS-S02", "static:SLS-S06", "no_input_r1#GameOver.leave"], {"life_rule": finding["SLS-S06"]["conclusion"], "observed_single_path": {"one_frame_misses": len(events(no_input, "OneFrameData.Setup.leave")), "reflect_count": len(events(no_input, "OneFrameController.Reflect.enter")), "final_life": no_input_game_over["current_life"], "miss_count": no_input_game_over["miss_count"], "single_game_over": no_input_game_over["is_single_game_over"]}}, ["same_frame.multi_damage_entries", "same_frame.life_after_each_entry", "same_frame.game_over_call_boundary"], ["D18-remaining", "D20-remaining"]))
+    cases.append(case("BS13", "partial", ["SLS-S12", "SLS-R1-003", "SLS-R1-007", "SLS-R1-011"], ["static_findings", "positive_r1", "retry_r1", "ordinary_auto_skill_one_note"], ["static:SLS-S12", "positive_r1#GameOver.leave", "retry_r1#GameOver.leave/InitializeLife.leave", "ordinary_auto_skill_one_note#one_note"], {"counter_rules": finding["SLS-S12"]["conclusion"], "positive_projection": {key: positive_game_over[key] for key in ("max_combo", "perfect_count", "great_count", "good_count", "bad_count", "miss_count", "fast_count", "slow_count")}, "retry_reset_projection": {key: retry_init["record"][key] for key in ("max_combo", "perfect_count", "great_count", "good_count", "bad_count", "miss_count", "fast_count", "slow_count")}, "observed_one_note_max": {"transitions": auto_one_note["transitions"], "equal_score_retention_witnesses": auto_one_note["equal_score_retention_witnesses"]}}, ["record.all_perfect_status"], ["D19"]))
+    cases.append(case("BS14", "partial", ["D10-static", "SLS-R1-011"], ["static_contract", "ordinary_auto_skill_one_note"], ["static_contract#CalcOneNotesMaxScoreInfo", "ordinary_auto_skill_one_note#one_note/event_bonus_one_note"], {"ordinary": auto_one_note, "zero_event_bonus": ordinary_auto_skill_one_note["event_bonus_one_note"]}, ["record.bonus_strict_max", "record.callback_identity"], ["D10-remaining", "D18-remaining"]))
+    cases.append(case("BS15", "partial", ["SLS-S07", "SLS-R1-005", "SLS-R1-008"], ["static_findings", "skill_r1", "initialization_profile"], ["static:SLS-S07", "skill_r1#all-result-base-damage", "initialization_profile#mode_and_damage"], {"damage_mapping": finding["SLS-S07"]["conclusion"], "observed_profile": {"miss_damage": initialization_profile["mode_and_damage"]["miss_damage"], "bad_damage": initialization_profile["mode_and_damage"]["bad_damage"]}, "observed_base_damage_by_result": observed_base_damage, "observed_one_frame_power_by_result": observed_one_frame_power}, ["one_frame.family_damage_values", "one_frame.power_values", "active_damage_effect_rows"], ["D07", "D13"]))
+    cases.append(case("BS16", "partial", ["SLS-S02", "SLS-S06", "SLS-R1-001", "SLS-R1-011"], ["static_findings", "no_input_r1", "ordinary_auto_skill_one_note"], ["static:SLS-S02", "static:SLS-S06", "no_input_r1#GameOver.leave", "ordinary_auto_skill_one_note#overheal"], {"life_rule": finding["SLS-S06"]["conclusion"], "observed_single_path": {"one_frame_misses": len(events(no_input, "OneFrameData.Setup.leave")), "reflect_count": len(events(no_input, "OneFrameController.Reflect.enter")), "final_life": no_input_game_over["current_life"], "miss_count": no_input_game_over["miss_count"], "single_game_over": no_input_game_over["is_single_game_over"]}, "observed_auto_overheal_state": auto_overheal}, ["same_frame.multi_damage_entries", "same_frame.life_after_each_entry", "same_frame.game_over_call_boundary"], ["D18-remaining", "D20-remaining"]))
     cases.append(case("BS17", "blocked", ["SLS-S08"], ["static_findings"], ["static:SLS-S08"], {}, ["profile.fixed_guard_row", "profile.rate_guard_row", "one_frame.fixed_guard_type", "one_frame.rate_guard_type", "same_frame.freeze"], ["D13", "D18-remaining", "D23-master-start-data"]))
     cases.append(case("BS18", "partial", ["SLS-S08"], ["static_findings"], ["static:SLS-S08"], {"never_die": finding["SLS-S08"]["conclusion"]}, ["profile.never_die_row", "manager.effect_eligibility", "runtime.nonlethal", "runtime.lethal", "runtime.equal_boundary", "same_frame.freeze"], ["D13", "D18-remaining", "D20-remaining", "D23-master-start-data"]))
     cases.append(case("BS19", "partial", ["SLS-S09", "SLS-R1-005"], ["static_findings", "skill_r1"], ["static:SLS-S09", "skill_r1#AddIPower:arg1=300"], {"fixed_formula": finding["SLS-S09"]["conclusion"]["fixed"], "condition_rule": finding["SLS-S09"]["conclusion"]["eligibility"], "observed_heal": {"sequence": [heal_enter["sequence"], heal_leave["sequence"]], "before": heal_enter["before"]["current_life"], "delta": heal_enter["arg1"], "after": heal_leave["after"]["current_life"], "displayed_base": heal_leave["after"]["displayed_or_skill_base_life"], "upper_limit": heal_leave["after"]["business_life_upper_limit"]}}, ["profile.once_effect_row", "runtime.condition_equal_boundary", "runtime.heal_callback_identity"], ["D14", "D23-master-start-data"]))
-    cases.append(case("BS20", "partial", ["SLS-S06", "SLS-S09"], ["static_findings"], ["static:SLS-S06", "static:SLS-S09"], {"percentage_formula": finding["SLS-S09"]["conclusion"]["percentage"], "upper_limit_rule": finding["SLS-S09"]["conclusion"]["upper_limit"], "add_life_clamp": finding["SLS-S06"]["conclusion"]["clamp"]}, ["profile.percentage_effect_row", "runtime.percentage_heal", "runtime.overheal", "runtime.upper_limit_equal_boundary", "runtime.callback_identity"], ["D14", "D18-remaining", "D23-master-start-data"]))
-    cases.append(case("BS21", "partial", ["SLS-R1-005", "D11-static"], ["skill_r1", "static_contract"], ["skill_r1#AddSituationSkillToPlayList.leave:2187"], {"observed_enqueue": {"sequence": skill_add["sequence"], "state": skill_add["skill"]["state"], "playlist_size": skill_add["skill"]["playlist"]["size"]}}, ["profile.mode_eligibility", "profile.skill_chara_list", "runtime.success", "runtime.failure", "runtime.move_time", "runtime.multi_normal_identity", "runtime.duplicate_reserve"], ["D11", "D18-remaining", "D23-master-start-data"]))
-    cases.append(case("BS22", "partial", ["SLS-S10", "SLS-R1-005"], ["static_findings", "skill_r1"], ["static:SLS-S10", "skill_r1#Skill lifecycle events"], {"states": {"none": 0, "begin": skill_add["skill"]["state"], "playing": skill_begin["skill"]["state"], "finishing": skill_finishing["skill"]["state"], "final_none": skill_none["skill"]["state"]}, "playing_timer_bits": skill_begin["skill"]["skill_timer"]["bits"], "finish_input_timer_bits": skill_finish["skill"]["skill_timer"]["bits"], "finishing_timer_bits": skill_finishing["skill"]["finishing_timer"]["bits"], "current_identity": {"chara_index": skill_begin["skill"]["current"]["chara_index"], "skill_note_index": skill_begin["skill"]["current"]["skill_note_index"], "absolute_pos": skill_begin["skill"]["current"]["absolute_pos"]}}, ["skill.callback_identity", "skill.reservation_frame", "skill.delta_source_identity"], ["D12", "D18-remaining"]))
+    cases.append(case("BS20", "partial", ["SLS-S06", "SLS-S09", "SLS-R1-011"], ["static_findings", "ordinary_auto_skill_one_note"], ["static:SLS-S06", "static:SLS-S09", "ordinary_auto_skill_one_note#overheal"], {"percentage_formula": finding["SLS-S09"]["conclusion"]["percentage"], "upper_limit_rule": finding["SLS-S09"]["conclusion"]["upper_limit"], "add_life_clamp": finding["SLS-S06"]["conclusion"]["clamp"], "observed_overheal": auto_overheal}, ["profile.percentage_effect_row", "runtime.percentage_heal", "runtime.upper_limit_equal_boundary", "runtime.callback_identity"], ["D14", "D18-remaining", "D23-master-start-data"]))
+    cases.append(case("BS21", "partial", ["SLS-R1-005", "SLS-R1-011", "D11-static"], ["skill_r1", "ordinary_auto_skill_one_note", "static_contract"], ["skill_r1#AddSituationSkillToPlayList.leave:2187", "ordinary_auto_skill_one_note#skill_lifecycles"], {"observed_enqueue": {"sequence": skill_add["sequence"], "state": skill_add["skill"]["state"], "playlist_size": skill_add["skill"]["playlist"]["size"]}, "observed_successful_auto_lifecycles": [{"alias": row["alias"], "skill_note_index": row["skill_note_index"], "trigger_sequence": row["trigger_sequence"], "finish_leave_sequence": row["finish_leave_sequence"]} for row in auto_skill_lifecycles]}, ["profile.mode_eligibility", "profile.skill_chara_list", "runtime.failure", "runtime.move_time", "runtime.multi_normal_identity", "runtime.duplicate_reserve"], ["D11", "D18-remaining", "D23-master-start-data"]))
+    cases.append(case("BS22", "partial", ["SLS-S10", "SLS-R1-005", "SLS-R1-011"], ["static_findings", "skill_r1", "ordinary_auto_skill_one_note"], ["static:SLS-S10", "skill_r1#Skill lifecycle events", "ordinary_auto_skill_one_note#skill_lifecycles"], {"states": {"none": 0, "begin": skill_add["skill"]["state"], "playing": skill_begin["skill"]["state"], "finishing": skill_finishing["skill"]["state"], "final_none": skill_none["skill"]["state"]}, "playing_timer_bits": skill_begin["skill"]["skill_timer"]["bits"], "finish_input_timer_bits": skill_finish["skill"]["skill_timer"]["bits"], "finishing_timer_bits": skill_finishing["skill"]["finishing_timer"]["bits"], "current_identity": {"chara_index": skill_begin["skill"]["current"]["chara_index"], "skill_note_index": skill_begin["skill"]["current"]["skill_note_index"], "absolute_pos": skill_begin["skill"]["current"]["absolute_pos"]}, "observed_auto_lifecycles": auto_skill_lifecycles}, ["skill.callback_identity", "skill.delta_source_identity"], ["D12", "D18-remaining"]))
     cases.append(case("BS23", "blocked", ["SLS-S10"], ["static_findings"], ["static:SLS-S10"], {}, ["runtime.pause_freeze", "runtime.game_over_playing_freeze", "runtime.stop_drain", "runtime.multiple_queue", "runtime.callback_order"], ["D12", "D18-remaining", "D21", "D23-master-start-data"]))
     cases.append(case("BS24", "partial", ["SLS-R1-005", "D13-static"], ["skill_r1", "static_contract"], ["skill_r1#active OneFrameData.Setup.leave"], {"observed_active_entries": len(active_frames), "active_skill_rate_bits": active_frames[0]["skill_rate"]["bits"], "active_score_up_type": active_frames[0]["score_up_type"]}, ["profile.ordered_effect_rows", "runtime.judge_correction", "runtime.first_eligible_effect", "runtime.ineligible_predecessor"], ["D13", "D18-remaining", "D23-master-start-data"]))
     cases.append(case("BS25", "blocked", ["D13-static"], ["static_contract"], ["static_contract#active damage and score methods"], {}, ["profile.over_life_damage_effect", "profile.under_life_damage_effect", "profile.over_life_score_effect", "profile.under_life_score_effect", "runtime.condition_boundaries"], ["D13", "D18-remaining", "D23-master-start-data"]))

@@ -104,11 +104,56 @@
       "bad_damage": -50,
       "account_fields_included": false,
       "status": "confirmed-r1-observation-only"
+    },
+    "r1_ordinary_deck_aggregate_profile": {
+      "trace": "runtime/deck-aggregate-profile-retry.trace.json.gz",
+      "trace_sha256": "5653E2010DC4385E47B9DE7248FA953FE3413B13235A2CC75ACC35F5F149333C",
+      "events": 31,
+      "member_count": 5,
+      "invocations": 2,
+      "component_2c_bits": "0x47617330",
+      "component_30_bits": "0x478A9AE2",
+      "component_34_bits": "0x477B7FCF",
+      "first_addition_bits": "0x47FB547A",
+      "total_parameter_bits": "0x483C8A31",
+      "member_rows_omitted": true,
+      "account_fields_included": false,
+      "status": "confirmed-r1-observation-only-partial-member-rows"
+    },
+    "r1_master_music_786_profile": {
+      "trace": "runtime/master-music-786-ui-list.trace.json.gz",
+      "trace_sha256": "A166AE480FF8CA0C06623BEB8C6B539C46EC2CA9D1D0D7A2E1A29948E6B1C4F8",
+      "events": 7,
+      "master_music_list_size": 796,
+      "music_id": 786,
+      "band_id": 107,
+      "difficulty_rows": 5,
+      "special_play_level": 26,
+      "special_enable_special_notes": true,
+      "nullable_score_level_raw_bits": "0x0000000000000000",
+      "resolved_free_live_score_level": 26,
+      "published_at_utc": "2026-03-31T15:00:00.000Z",
+      "closed_at_utc": "2026-04-07T05:59:59.000Z",
+      "account_fields_included": false,
+      "status": "confirmed-r1-observation-only-partial-runtime-availability"
+    },
+    "r1_ordinary_auto_skill_one_note": {
+      "trace": "runtime/ordinary-auto-skill-one-note-retry4-r1.trace.json.gz",
+      "trace_sha256": "9E3C21A272A5E76991B2AE03DCA21F17B2021D1798DB8AEE52F227F1A963A41D",
+      "events": 5501,
+      "one_note_calls": 979,
+      "skill_lifecycles": 6,
+      "anonymous_skill_count": 5,
+      "one_note_max_scores": [541, 703, 1136],
+      "overheal_life_values": [1000, 1200, 1500],
+      "account_fields_included": false,
+      "member_identity_included": false,
+      "status": "confirmed-r1-observation-only"
     }
   },
   "partial": {
     "D18": {
-      "closed_subscope": "stable InGameRecord identity, Life initialization, positive judgement/Score, active Skill 0-1-2-3-0, once-heal and Skill-rate before-after snapshots",
+      "closed_subscope": "stable InGameRecord identity, Life initialization, positive judgement/Score, six ordered anonymous Skill lifecycles, Skill 0-1-2-3-0, once-heal/overheal, ordinary one-note strict maxima/equal retention and Skill-rate before-after snapshots",
       "open_subscope": "Fever, guard, Never Die, multiple/overlapping Skill and special-mode identities"
     },
     "D22": {
@@ -116,12 +161,12 @@
       "open_subscope": "score decrease modes, Continue (not permitted for capture), seek and ReturnTime"
     },
     "D23": {
-      "closed_subscope": "ordinary and HABAHIRO production BMS bytes and connected-device cache provenance; ordinary poppin_shuffle_special score level 27, special difficulty, start/calculated object identity, damage -100/-50, maxNote 979, total/rate/base Float32 bits and zero event parameter",
-      "open_subscope": "HABAHIRO initialization profile; deck member rows and Float32 accumulation; Skill, Fever, nonzero event, Auto, Festival, Medley, and Garupa master rows"
+      "closed_subscope": "ordinary and HABAHIRO production BMS bytes and connected-device cache provenance; ordinary poppin_shuffle_special initialization; privacy-safe deck aggregates; music 786 master availability, five difficulty rows and Free Live score-level fallback resolving SPECIAL to 26",
+      "open_subscope": "HABAHIRO runtime start-data/base/event parameter while the chart is unavailable; privacy-excluded deck member rows; Skill, Fever, nonzero event, Auto, Festival, Medley, and Garupa master rows"
     }
   },
   "runtime": {
-    "r1_trace_count": 5,
+    "r1_trace_count": 8,
     "pending_capture_plans": [
       {
         "path": "runtime/positive-retry-all-lanes-r1-plan.json",
@@ -163,6 +208,45 @@
         "observed_scope": ["D03-ordinary-max-note", "D06-ordinary-base-score", "D18-initialization-identity", "D23-ordinary-start-data-partial"],
         "not_observed": ["D23-deck-member-rows", "D23-HABAHIRO-initialization", "D23-nonzero-event-parameter"],
         "safety": "Retry only; account identifiers, room fields and deck element contents omitted; Continue/premium-currency actions forbidden"
+      },
+      {
+        "path": "runtime/deck-aggregate-profile-retry-r1-plan.json",
+        "scenario_id": "production-deck-aggregate-profile-retry-r1",
+        "status": "executed-confirmed-trace-promoted-partial-member-rows",
+        "observed_scope": ["D06-ordinary-total-parameter-aggregates", "D18-deck-array-identity", "D23-deck-aggregate-provenance"],
+        "not_observed": ["D23-deck-member-rows", "D23-HABAHIRO-initialization", "D23-nonzero-event-parameter"],
+        "safety": "Retry only; member pointers, member rows, account identifiers and room fields omitted; Continue/premium-currency actions forbidden"
+      },
+      {
+        "path": "runtime/master-music-786-ui-list-r1-plan.json",
+        "scenario_id": "master-music-786-natural-ui-list-r1",
+        "status": "executed-confirmed-trace-promoted-partial-runtime-availability",
+        "observed_scope": ["D23-HABAHIRO-master-music", "D23-HABAHIRO-difficulty", "D23-HABAHIRO-score-level-fallback"],
+        "not_observed": ["D23-HABAHIRO-runtime-start-data", "D23-HABAHIRO-base-score", "D23-HABAHIRO-event-parameter"],
+        "safety": "Natural UI list calls only; no managed invocation; title, account, room, deck and non-target master rows omitted"
+      },
+      {
+        "path": "runtime/ordinary-auto-skill-one-note-r1-plan.json",
+        "scenario_id": "ordinary-auto-skill-one-note-r1",
+        "status": "executed-business-complete-transport-exited-no-trace-promoted"
+      },
+      {
+        "path": "runtime/ordinary-auto-skill-one-note-retry2-r1-plan.json",
+        "scenario_id": "ordinary-auto-skill-one-note-retry2-r1",
+        "status": "executed-transport-exited-before-initialization-no-trace-promoted"
+      },
+      {
+        "path": "runtime/ordinary-auto-skill-one-note-retry3-r1-plan.json",
+        "scenario_id": "ordinary-auto-skill-one-note-retry3-r1",
+        "status": "executed-business-complete-result-tail-transport-exited-no-trace-promoted"
+      },
+      {
+        "path": "runtime/ordinary-auto-skill-one-note-retry4-r1-plan.json",
+        "scenario_id": "ordinary-auto-skill-one-note-retry4-r1",
+        "status": "executed-confirmed-trace-promoted",
+        "observed_scope": ["D10-ordinary-one-note-max", "D12-six-Skill-lifecycles", "D14-overheal", "D18-multi-Skill-object-state"],
+        "not_observed": ["D10-nonzero-event-bonus-max", "D13-skill-master-effect-rows", "D20-overlapping-Skill", "D20-Fever"],
+        "safety": "Auto Live uses anonymous Skill aliases; account/member/card/skill IDs, pointers and display strings omitted; Continue/premium-currency actions forbidden"
       }
     ],
     "capture_fields_not_consumed": [
@@ -177,14 +261,14 @@
       "generator": "build_score_life_state_fixed_event_oracle.py",
       "verifier": "verify_score_life_state_fixed_event_oracle.py",
       "cases": 36,
-      "confirmed_cases": ["BS05", "BS06", "BS11"],
-      "partial_cases": ["BS01", "BS02", "BS03", "BS07", "BS10", "BS12", "BS13", "BS15", "BS16", "BS18", "BS19", "BS20", "BS21", "BS22", "BS24", "BS27", "BS29", "BS30", "BS32", "BS36"],
-      "blocked_cases": ["BS04", "BS08", "BS09", "BS14", "BS17", "BS23", "BS25", "BS26", "BS28", "BS31", "BS33", "BS34", "BS35"],
-      "unknown_fields": 146,
-      "blocking_findings": 89,
+      "confirmed_cases": ["BS01", "BS05", "BS06", "BS11"],
+      "partial_cases": ["BS02", "BS03", "BS07", "BS10", "BS12", "BS13", "BS14", "BS15", "BS16", "BS18", "BS19", "BS20", "BS21", "BS22", "BS24", "BS27", "BS29", "BS30", "BS32", "BS36"],
+      "blocked_cases": ["BS04", "BS08", "BS09", "BS17", "BS23", "BS25", "BS26", "BS28", "BS31", "BS33", "BS34", "BS35"],
+      "unknown_fields": 135,
+      "blocking_findings": 85,
       "status": "partial-business-gate-open"
     },
-    "operational_blocker": "Five R1 traces are closed, including non-destructive post-Game-Over gate, Retry/reset and the privacy-minimized ordinary initialization profile. Ordinary poppin_shuffle_special fixes score level 27, total/rate/base bits and zero event parameter; BS01 now has no unknown fields but retains the deck-row D23 blocker. The fixed-event oracle has 146 unknown fields and 89 blockers overall. HABAHIRO initialization, deck member accumulation, nonzero event profiles, Fever transitions, multiple-Skill overlap, score-decrease/seek/ReturnTime lifecycle and remaining master provenance remain open. Continue remains unobserved because premium-currency actions are forbidden. Five ABI-unsafe fields stay excluded.",
+    "operational_blocker": "Eight R1 traces are closed, including ordinary initialization, privacy-minimized deck aggregates, target-only music-786 master rows and a complete ordinary Auto Live with six anonymous Skill lifecycles. BS01 is confirmed-r1; BS02 retains unavailable runtime start-data/event/base values; BS03 retains privacy-excluded member rows. Ordinary one-note strict max/equal retention and overheal are now observed. The fixed-event oracle has 135 unknown fields and 85 blockers overall. Nonzero event profiles, Fever transitions, overlapping Skill, score-decrease/seek/ReturnTime lifecycle and remaining master provenance remain open. Continue remains unobserved because premium-currency actions are forbidden. Five ABI-unsafe fields stay excluded.",
     "synthetic_trace_allowed": false
   },
   "gates": {
@@ -201,7 +285,7 @@
     "Fever, guard, Never Die, multiple/overlapping Skill and special-mode R1 traces remain open.",
     "Deck/start-data/master provenance remains open.",
     "D20 Fever/multiple-entry remainder, D21 and D22 score-decrease/Continue/seek/ReturnTime remain open.",
-    "BS01-BS36 partial oracle retains 146 unknown fields and 89 blocking findings; final portable contract does not exist."
+    "BS01-BS36 partial oracle retains 135 unknown fields and 85 blocking findings; final portable contract does not exist."
   ],
   "business_state_gate": "open",
   "production_authorization": false

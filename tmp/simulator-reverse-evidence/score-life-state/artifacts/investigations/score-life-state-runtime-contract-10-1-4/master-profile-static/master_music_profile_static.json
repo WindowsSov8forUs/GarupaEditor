@@ -1,0 +1,178 @@
+{
+  "schema_version": 1,
+  "status": "confirmed-static-10.1.4-master-music-profile-observation-targets",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "version_name": "10.1.4",
+    "version_code": 230,
+    "abi": "arm64-v8a",
+    "libil2cpp_sha256": "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F",
+    "global_metadata_sha256": "298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F"
+  },
+  "source": {
+    "script_sha256": "826C592717ED07974F8DCD435AF92B8DCE7A6406E0706AC43A85102FE8567D91",
+    "dump_cs_sha256": "4AC4ACC5981D0010B3D6A69482C37C1175339458246BC4A5878CF30F694E884B"
+  },
+  "methods": {
+    "GetMasterMusic": {
+      "name": "CE.MasterDataManager$$GetMasterMusic",
+      "signature": "CE_MasterMusicGetResponse_o* CE_MasterDataManager__GetMasterMusic (CE_MasterDataManager_o* __this, uint32_t musicId, const MethodInfo* method);",
+      "rva": "0x3290F94",
+      "end_rva": "0x32910BC",
+      "size": 296,
+      "sha256": "F16D9D6893ED5A37274C277A8C61D2C0797A821B54BE3AB44D423EB982F7DDFE",
+      "evidence": "master-profile-static/arm64/GetMasterMusic.arm64.tsv"
+    },
+    "GetMasterMusicList": {
+      "name": "CE.MasterDataManager$$GetMasterMusicList",
+      "signature": "CE_MasterMusicGetResponse_array* CE_MasterDataManager__GetMasterMusicList (CE_MasterDataManager_o* __this, const MethodInfo* method);",
+      "rva": "0x32910BC",
+      "end_rva": "0x3291158",
+      "size": 156,
+      "sha256": "F23B9C15C49C2CAF2142C64130DAFE55EC39C2B06D8341A712C49F7E8E499736",
+      "evidence": "master-profile-static/arm64/GetMasterMusicList.arm64.tsv"
+    },
+    "GetMasterMusicDifficultyList.all": {
+      "name": "CE.MasterDataManager$$GetMasterMusicDifficultyList",
+      "signature": "CE_MasterMusicDifficultyListGetResponse_o* CE_MasterDataManager__GetMasterMusicDifficultyList (CE_MasterDataManager_o* __this, const MethodInfo* method);",
+      "rva": "0x328B610",
+      "end_rva": "0x328B634",
+      "size": 36,
+      "sha256": "20E26DBA9EBA41B4FE1B847511BC0E3258B690DA5A0D89EC9BEF1B80F0341E52",
+      "evidence": "master-profile-static/arm64/GetMasterMusicDifficultyList_all.arm64.tsv"
+    },
+    "GetMasterMusicDifficultyList.byId": {
+      "name": "CE.MasterDataManager$$GetMasterMusicDifficultyList",
+      "signature": "System_Collections_Generic_List_MasterMusicDifficultyGetResponse__o* CE_MasterDataManager__GetMasterMusicDifficultyList (CE_MasterDataManager_o* __this, uint32_t musicId, const MethodInfo* method);",
+      "rva": "0x328B634",
+      "end_rva": "0x328B6C8",
+      "size": 148,
+      "sha256": "CD2D7F41DB3DB5DFB7B8AE947BC1110A6C97F669A573CE4FD88E109DA121350D",
+      "evidence": "master-profile-static/arm64/GetMasterMusicDifficultyList_byId.arm64.tsv"
+    },
+    "MusicData.GetPlayLevel": {
+      "name": "MusicData$$GetPlayLevel",
+      "signature": "uint32_t MusicData__GetPlayLevel (MusicData_o* __this, int32_t difficultyType, const MethodInfo* method);",
+      "rva": "0x340C764",
+      "end_rva": "0x340C8B8",
+      "size": 340,
+      "sha256": "6217FFBE97C6D8E9DC3C0E40DA91A69689D40368F77C9796F1A5258FD7F74D67",
+      "evidence": "master-profile-static/arm64/MusicData_GetPlayLevel.arm64.tsv"
+    },
+    "MusicData.GetScoreLevel": {
+      "name": "MusicData$$GetScoreLevel",
+      "signature": "uint32_t MusicData__GetScoreLevel (MusicData_o* __this, int32_t difficultyType, const MethodInfo* method);",
+      "rva": "0x340CAB0",
+      "end_rva": "0x340CC64",
+      "size": 436,
+      "sha256": "39BC6EFFE2CB4255D748B165D561BDCEA21290182FCCF6FF496A42A855577D7F",
+      "evidence": "master-profile-static/arm64/MusicData_GetScoreLevel.arm64.tsv"
+    },
+    "ScreenLayerMusicSelect.onClickMusicSelectButton": {
+      "name": "ScreenLayerMusicSelect$$onClickMusicSelectButton",
+      "signature": "void ScreenLayerMusicSelect__onClickMusicSelectButton (ScreenLayerMusicSelect_o* __this, const MethodInfo* method);",
+      "rva": "0x3A1C83C",
+      "end_rva": "0x3A1CD0C",
+      "size": 1232,
+      "sha256": "69023CE74DB2D5215BFDFDB6FD8989167377BD432613BA8C6AB71A228F389E6C",
+      "evidence": "master-profile-static/arm64/ScreenLayerMusicSelect_onClickMusicSelectButton.arm64.tsv"
+    }
+  },
+  "layouts": {
+    "CE.MasterMusicGetResponse": {
+      "musicId": "0x10",
+      "bandId": "0x60",
+      "seq": "0x80",
+      "publishedAt": "0x88",
+      "closedAt": "0x90",
+      "categorySetId": "0xB8"
+    },
+    "CE.MasterMusicDifficultyGetResponse": {
+      "musicId": "0x10",
+      "difficulty": "0x18",
+      "playLevel": "0x20",
+      "multiLiveScoreMap": "0x28",
+      "notesQuantity": "0x30",
+      "scoreS": "0x34",
+      "scoreA": "0x38",
+      "scoreB": "0x3C",
+      "scoreC": "0x40",
+      "scoreSS": "0x44",
+      "publishedAt": "0x48",
+      "enableSpecialNotes": "0x50",
+      "scoreLevel": "0x54"
+    },
+    "CE.MasterMusicDifficultyListGetResponse": {
+      "entries": "0x10"
+    },
+    "MusicData": {
+      "difficultyDictionary": "0x30"
+    }
+  },
+  "accessors": {
+    "MasterMusicGetResponse.get_musicId": {
+      "rva": "0x58BD648",
+      "bytes": "001040B9C0035FD6",
+      "instruction": "ldr w0, [x0, #0x10]",
+      "semantic": "ldr w0, [x0, #0x10]"
+    },
+    "MasterMusicDifficultyGetResponse.get_difficulty": {
+      "rva": "0x58BD8A8",
+      "bytes": "000C40F9C0035FD6",
+      "instruction": "ldr x0, [x0, #0x18]",
+      "semantic": "ldr x0, [x0, #0x18]"
+    },
+    "MasterMusicDifficultyGetResponse.get_playLevel": {
+      "rva": "0x58BD8B8",
+      "bytes": "002040B9C0035FD6",
+      "instruction": "ldr w0, [x0, #0x20]",
+      "semantic": "ldr w0, [x0, #0x20]"
+    },
+    "MasterMusicDifficultyGetResponse.get_enableSpecialNotes": {
+      "rva": "0x58BD948",
+      "bytes": "00404139C0035FD6",
+      "instruction": "ldrb w0, [x0, #0x50]",
+      "semantic": "ldrb w0, [x0, #0x50]"
+    },
+    "MasterMusicDifficultyGetResponse.get_scoreLevel": {
+      "rva": "0x58BD95C",
+      "bytes": "004045F8C0035FD6",
+      "instruction": "ldur x0, [x0, #0x54]",
+      "semantic": "ldur x0, [x0, #0x54]"
+    }
+  },
+  "score_level_fallback": {
+    "source": "MusicData.GetScoreLevel @ 0x340CAB0",
+    "nullable_read": "LDUR X8, [row,#0x54] @ 0x340CB88",
+    "has_value_test": "TST W8,#0xFF @ 0x340CB8C",
+    "value_test": "LSR X8,#32 then CBZ @ 0x340CB98..0x340CB9C",
+    "fallback": "MusicData.GetPlayLevel @ 0x340C764 when nullable is absent or zero",
+    "play_level_read": "LDR W0,[row,#0x20] @ 0x340C818",
+    "free_live_start_data_call": "BL MusicData.GetScoreLevel @ 0x3A1CA54",
+    "free_live_start_data_store": "STR W0,[RhythmGameStartData,#0x70] @ 0x3A1CA5C"
+  },
+  "privacy_projection": {
+    "allowed": [
+      "musicId",
+      "bandId",
+      "seq",
+      "publishedAt",
+      "closedAt",
+      "categorySetId",
+      "difficulty",
+      "playLevel",
+      "notesQuantity",
+      "score thresholds",
+      "enableSpecialNotes",
+      "scoreLevel raw bits"
+    ],
+    "forbidden": [
+      "musicTitle",
+      "user identifiers",
+      "room fields",
+      "deck contents"
+    ]
+  },
+  "business_state_gate": "open",
+  "production_authorization": false
+}

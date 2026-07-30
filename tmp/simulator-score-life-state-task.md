@@ -8,8 +8,8 @@
 - 锁定原作样本：`jp.co.craftegg.band` 10.1.4（version code 230，`arm64-v8a`）。
 - 锁定`libil2cpp.so` SHA-256：`815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F`。
 - 锁定`global-metadata.dat` SHA-256：`298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F`。
-- 当前Reverse证据提交：`9eb9ac0ff97e191908099a53ce505cef057d26e4`；只消费该提交及其祖先中已推送、可校验对象，不消费当前Reverse工作树。
-- 当前状态：**B00/B01已完成，B02进行中。V01与D01-static已关闭；5条R1部分推进D03/D06/D14/D18/D20/D22/D23；production chart count已固定ordinary 979与HABAHIRO 731，ordinary `poppin_shuffle_special`初始化profile已锁定并纳入BS01；BS01–BS36 partial oracle现为3个confirmed、20个partial、13个blocked，保留146个unknown fields与89个blocking findings。D18–D24剩余范围仍是`required-before-code`硬门；B02关闭前禁止实施B03–B12任何生产代码。**
+- 当前Reverse证据提交：`77fea929e1f99c1051b5211aa28836fd57c45117`；只消费该提交及其祖先中已推送、可校验对象，不消费当前Reverse工作树。
+- 当前状态：**B00/B01已完成，B02进行中。V01与D01-static已关闭；8条R1部分推进D03/D06/D10/D12/D14/D18/D20/D22/D23；production chart count固定ordinary 979/HABAHIRO 731，ordinary初始化、deck aggregate、music-786 score-level与ordinary Auto 979 one-note/六Skill/overheal已锁定。BS01–BS36 partial oracle现为4个confirmed、20个partial、12个blocked，保留135个unknown fields与85个blocking findings。D18–D24剩余范围仍是`required-before-code`硬门；B02关闭前禁止实施B03–B12任何生产代码。**
 - 当前10.1.4已提交依赖证据只直接覆盖`OneFrameData.Setup`、`InGameOneFrameJudgementController.ReflectOneFrameData`、`NoteBase.getAddCombo`以及若干判定生产者入口；它不足以宣称完整Score/Life/Skill/Fever链已在10.1.4确认。
 - 10.1.3的`base-score-construction`、`event-score-multipliers`、`skill-*`、`fever-*`及Life Heal实机调查仅作为历史迁移候选H01–H24，不能被B03–B12生产实现直接消费。
 - 当前证据包：`tmp/simulator-reverse-evidence/score-life-state/`；已冻结B01、R0输入与无输入R1子批，只消费已提交Reverse对象。
@@ -700,5 +700,10 @@ git rev-list --left-right --count origin/codex/refactor-simulator-implementation
 - Reverse ordinary初始化计划提交：`bb46a11f22d50ae8740b09ecc72548df564b58de`建立privacy-minimized观察器；`a032f8fe82d045b6d3b5c8853cb923803e0c5435`将前置校正为锁定`poppin_shuffle_special` ordinary-family SPECIAL Lv.27，计划/脚本verifier通过且均已push。
 - Reverse ordinary初始化R1提交：`3c95190f4b6326da97e21c8e590f625a7582dc22`已push；11事件连续且无capture error，锁定start/calculated/record/ScoreUtility identity、score level 27、difficulty special、Life `1000/1000/2000`、Miss/Bad `-100/-50`、maxNote 979、total/rate/base `0x483C8A31/0x3F9C28F6/0x4434718E`及zero event/bonus base；账号、房间、display string及deck element内容显式排除，独立Float32重算通过。
 - Reverse fixed-event初始化整合提交：`9eb9ac0ff97e191908099a53ce505cef057d26e4`已push且远端`0 0`；BS01的5个初始化unknown清零，D03/D06 blocker移除，但`D23-master-start-data`继续保留以等待deck member rows；全局变为3 confirmed/20 partial/13 blocked、146 unknown fields/89 blocking findings，不能解除B02。
-- 待关闭：D18/D20/D22剩余、D19的146个unknown fields与89个blocking findings、D21、D23剩余HABAHIRO初始化、deck member/非零event/Skill/Fever/special-mode master provenance及D24。
+- Reverse deck aggregate计划/证据提交：`0bdb5cd59494076d92d3d5d6596608af476fec3e` / `b9b1a6deb334edf921a6f563ec0c270d49f0476f`；五成员数组、三分量、Float32首加与total `0x483C8A31`重复一致，member rows因隐私边界不导出；BS01晋升confirmed-r1，BS03只保留`profile.member_rows`。
+- Reverse music-786计划/证据提交：`8b5d7dfb1a4b26a686b7e0a9cfcf093cb37e5386` / `287cd8689a6d498fbd45c35b82d16a96c97916c1`；自然UI 7事件锁定796行列表、五难度、SPECIAL Lv.26与`GetScoreLevel` fallback；限时关闭使HABAHIRO runtime initialization继续失败关闭。
+- Reverse五判定伤害整合提交：`ee7e03b0afcd65143d59f87c885ade454db52513`；BS15消费Miss/Bad `-100/-50`及五result实际base damage/OneFrame Power，oracle收窄至142/86。
+- Reverse ordinary Auto计划依次预提交；最终零tail计划 `6ee113568b2b06abce524beff4a57d83290c9f8d`，证据/oracle提交 `77fea929e1f99c1051b5211aa28836fd57c45117`。成功R1含5501连续事件、979个one-note leave、6个完整Skill lifecycle/5个匿名alias；strict maxima `541@1→703@82→1136@219`、equal retention及Life `1000→1200→1500` overheal独立验证通过。前三次transport失败trace均移入Reverse `runtime/tools/`未晋升。
+- fixed-event重建后为4 confirmed/20 partial/12 blocked、135 unknown fields/85 blocking findings；BS14从blocked晋升partial，BS13/BS20/BS21/BS22收窄，业务门仍open。
+- 待关闭：D18/D20/D22剩余、D19的135个unknown fields与85个blocking findings、D21、D23剩余HABAHIRO runtime initialization、deck member/非零event/Skill effect/Fever/special-mode master provenance及D24。
 - B02关闭前继续禁止B03–B12 production、测试脚本和package script实现。

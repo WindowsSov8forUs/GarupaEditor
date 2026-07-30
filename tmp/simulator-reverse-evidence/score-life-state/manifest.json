@@ -14,10 +14,19 @@
     "skillEvidenceCommit": "4ac4ea186efade9091c6f4377ab7ad7dc852a2c5",
     "retryLifecyclePlanCommit": "38cee0b409246323b46099e291331a78a267bcec",
     "retryLifecycleEvidenceCommit": "4f0ce1a02a83747db617695cde69ad47ac8ae78f",
-    "fixedEventOracleCommit": "9eb9ac0ff97e191908099a53ce505cef057d26e4",
+    "fixedEventOracleCommit": "77fea929e1f99c1051b5211aa28836fd57c45117",
     "chartCountOracleCommit": "c7dbaba81699adec896796167074cb85cdc94e2e",
     "initializationProfilePlanCommit": "a032f8fe82d045b6d3b5c8853cb923803e0c5435",
-    "initializationProfileEvidenceCommit": "3c95190f4b6326da97e21c8e590f625a7582dc22"
+    "initializationProfileEvidenceCommit": "3c95190f4b6326da97e21c8e590f625a7582dc22",
+    "deckAggregatePlanCommit": "0bdb5cd59494076d92d3d5d6596608af476fec3e",
+    "deckAggregateEvidenceCommit": "b9b1a6deb334edf921a6f563ec0c270d49f0476f",
+    "masterMusicPlanCommit": "8b5d7dfb1a4b26a686b7e0a9cfcf093cb37e5386",
+    "masterMusicEvidenceCommit": "287cd8689a6d498fbd45c35b82d16a96c97916c1",
+    "ordinaryAutoPlanCommit": "3de6ba1bd192d606b742231ceb08fd1087a9974c",
+    "ordinaryAutoRetry2Commit": "0ff7b641049992840a53de7fd591020e1a26d276",
+    "ordinaryAutoRetry3Commit": "0779603e490d67310ccc4866623e37c3291b0ee3",
+    "ordinaryAutoRetry4Commit": "6ee113568b2b06abce524beff4a57d83290c9f8d",
+    "ordinaryAutoEvidenceCommit": "77fea929e1f99c1051b5211aa28836fd57c45117"
   },
   "sample": {
     "package": "jp.co.craftegg.band",
@@ -33,9 +42,9 @@
     "enums": 19,
     "arm64Slices": 326,
     "staticEntries": 335,
-    "r1Traces": 5,
+    "r1Traces": 8,
     "fixedEventCases": 36,
-    "totalEntries": 381,
+    "totalEntries": 417,
     "r0InputEntries": 12,
     "productionBms": 2,
     "cacheRecords": 2,
@@ -48,17 +57,23 @@
     "skillEvidenceEntries": 5,
     "retryLifecyclePlanEntries": 5,
     "retryLifecycleEvidenceEntries": 5,
-    "fixedEventConfirmedCases": 3,
+    "fixedEventConfirmedCases": 4,
     "fixedEventPartialCases": 20,
-    "fixedEventBlockedCases": 13,
-    "fixedEventUnknownFields": 146,
-    "fixedEventBlockingFindings": 89,
+    "fixedEventBlockedCases": 12,
+    "fixedEventUnknownFields": 135,
+    "fixedEventBlockingFindings": 85,
     "fixedEventOracleEntries": 6,
     "initializationProfilePlanEntries": 3,
     "initializationProfileEvidenceEntries": 4,
     "chartCountOracleEntries": 7,
     "ordinaryMaxNoteCount": 979,
-    "habahiroMaxNoteCount": 731
+    "habahiroMaxNoteCount": 731,
+    "deckAggregatePlanEntries": 3,
+    "deckAggregateEvidenceEntries": 4,
+    "masterMusicPlanEntries": 12,
+    "masterMusicEvidenceEntries": 4,
+    "ordinaryAutoPlanEntries": 9,
+    "ordinaryAutoEvidenceEntries": 4
   },
   "versionRebaselineGate": {
     "status": "closed",
@@ -5048,11 +5063,11 @@
     },
     {
       "id": "SLS-B01-329",
-      "sourceCommit": "9eb9ac0ff97e191908099a53ce505cef057d26e4",
+      "sourceCommit": "77fea929e1f99c1051b5211aa28836fd57c45117",
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/README.md",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/README.md",
-      "bytes": 18585,
-      "sha256": "7E78F9178DB47943C05679D7712F407BE4C9F7129FAA2E961806949554C6E4C4",
+      "bytes": 26097,
+      "sha256": "5FE4498184FD921D18E523D6FBB1ED460A8B6A886FC8FC2FB57907E9CBA941D6",
       "version": "10.1.4_230_arm64-v8a",
       "status": "partial-chart-count-integrated-fixed-event-oracle-business-gate-open",
       "consumedBy": [
@@ -5176,11 +5191,11 @@
     },
     {
       "id": "SLS-B02-R0-011",
-      "sourceCommit": "9eb9ac0ff97e191908099a53ce505cef057d26e4",
+      "sourceCommit": "77fea929e1f99c1051b5211aa28836fd57c45117",
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime_input_status.json",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime_input_status.json",
-      "bytes": 10891,
-      "sha256": "11FFDDD39BC1652363D6960762FB6BBC49B309858569642E15F15B09B8AC5434",
+      "bytes": 15575,
+      "sha256": "0046A0840C2C1201D7E6A1E6CFAD5FE6AF45849ED6B1C0FDAB5C7402FE957F7D",
       "version": "10.1.4_230_arm64-v8a",
       "status": "partial-fixed-event-oracle-business-gate-open",
       "consumedBy": [
@@ -5221,11 +5236,11 @@
     },
     {
       "id": "SLS-B01-332",
-      "sourceCommit": "9eb9ac0ff97e191908099a53ce505cef057d26e4",
+      "sourceCommit": "77fea929e1f99c1051b5211aa28836fd57c45117",
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/SHA256SUMS",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/SHA256SUMS",
-      "bytes": 49413,
-      "sha256": "2F0F9E7D7A6B50BB60622A92BF94E5BC45817136C80C23D5B646D12C39965DFB",
+      "bytes": 53753,
+      "sha256": "CDA1AAEBB02F367E54C736B930085B95B9D0A9061B4E4F59E6BCF2AA15D2AEA1",
       "version": "10.1.4_230_arm64-v8a",
       "status": "partial-chart-count-integrated-fixed-event-oracle-business-gate-open",
       "consumedBy": [
@@ -5584,11 +5599,11 @@
     },
     {
       "id": "SLS-B02-ORACLE-001",
-      "sourceCommit": "9eb9ac0ff97e191908099a53ce505cef057d26e4",
+      "sourceCommit": "77fea929e1f99c1051b5211aa28836fd57c45117",
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/build_score_life_state_fixed_event_oracle.py",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/build_score_life_state_fixed_event_oracle.py",
-      "bytes": 29259,
-      "sha256": "B2779393847C2723E2FBF58CE1017F8A5A932F43A8CB11D5AF7D291896CAE85A",
+      "bytes": 34379,
+      "sha256": "DDDD58503022ED6E48E4784D184B784869863E9493F5FE1686C659B6C40A94D9",
       "version": "10.1.4_230_arm64-v8a",
       "status": "partial-fixed-event-oracle-business-gate-open",
       "consumedBy": [
@@ -5599,11 +5614,11 @@
     },
     {
       "id": "SLS-B02-ORACLE-002",
-      "sourceCommit": "9eb9ac0ff97e191908099a53ce505cef057d26e4",
+      "sourceCommit": "77fea929e1f99c1051b5211aa28836fd57c45117",
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/score_life_state_fixed_event_oracle.json",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/score_life_state_fixed_event_oracle.json",
-      "bytes": 44019,
-      "sha256": "34FC222793FC41390950E9E258389AF535EC936DB0695A4F538A41829DED2226",
+      "bytes": 66607,
+      "sha256": "D6135BFC832ED35C511FB4D8B29C2B8E36C4A17552CA037BA20E87D03FD87E01",
       "version": "10.1.4_230_arm64-v8a",
       "status": "partial-fixed-event-oracle-business-gate-open",
       "consumedBy": [
@@ -5614,11 +5629,11 @@
     },
     {
       "id": "SLS-B02-ORACLE-003",
-      "sourceCommit": "9eb9ac0ff97e191908099a53ce505cef057d26e4",
+      "sourceCommit": "77fea929e1f99c1051b5211aa28836fd57c45117",
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_state_fixed_event_oracle.py",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_state_fixed_event_oracle.py",
-      "bytes": 15555,
-      "sha256": "40DDB27B5525A7EBAA08DFF461CE9AFFDDED8B7B57687F9FE242D5E70E3B3198",
+      "bytes": 20975,
+      "sha256": "07750D36BBB290883A33482307CA3C75FF366169DA173FE6BFDBE5C9442C3260",
       "version": "10.1.4_230_arm64-v8a",
       "status": "partial-fixed-event-oracle-business-gate-open",
       "consumedBy": [
@@ -5636,7 +5651,12 @@
       "sha256": "6060907E66D4B27AA389F7ED73C49AD702343FB296C9C9E35664DC5D2DF3B948",
       "version": "10.1.4_230_arm64-v8a",
       "status": "confirmed-production-chart-count-partial-business-gate-open",
-      "consumedBy": ["B02", "D03-production-count", "D19-BS01-BS02-partial", "D23-production-chart-count"]
+      "consumedBy": [
+        "B02",
+        "D03-production-count",
+        "D19-BS01-BS02-partial",
+        "D23-production-chart-count"
+      ]
     },
     {
       "id": "SLS-B02-CHART-002",
@@ -5647,7 +5667,12 @@
       "sha256": "081956FDB61263D84F6FDBC1DCDC5A93365B50F0032BE282EF8D42DD046BFF0A",
       "version": "10.1.4_230_arm64-v8a",
       "status": "confirmed-production-chart-count-partial-business-gate-open",
-      "consumedBy": ["B02", "D03-production-count", "D19-BS01-partial", "D23-production-chart-count"]
+      "consumedBy": [
+        "B02",
+        "D03-production-count",
+        "D19-BS01-partial",
+        "D23-production-chart-count"
+      ]
     },
     {
       "id": "SLS-B02-CHART-003",
@@ -5658,7 +5683,12 @@
       "sha256": "ECBAF86B547FED5426CD0A59F1D8401AB8A1E1714B78BF8EED974A923BCEE951",
       "version": "10.1.4_230_arm64-v8a",
       "status": "confirmed-production-chart-count-partial-business-gate-open",
-      "consumedBy": ["B02", "D03-production-count", "D19-BS02-partial", "D23-production-chart-count"]
+      "consumedBy": [
+        "B02",
+        "D03-production-count",
+        "D19-BS02-partial",
+        "D23-production-chart-count"
+      ]
     },
     {
       "id": "SLS-B02-CHART-004",
@@ -5669,7 +5699,12 @@
       "sha256": "318D7E61A95735E8471C21A4E6BA978A1428BDCD324A61CC70DC7C9E5088FD78",
       "version": "10.1.4_230_arm64-v8a",
       "status": "confirmed-production-chart-count-partial-business-gate-open",
-      "consumedBy": ["B02", "D03-production-count", "D19-BS01-BS02-partial", "D23-production-chart-count"]
+      "consumedBy": [
+        "B02",
+        "D03-production-count",
+        "D19-BS01-BS02-partial",
+        "D23-production-chart-count"
+      ]
     },
     {
       "id": "SLS-B02-CHART-005",
@@ -5680,7 +5715,12 @@
       "sha256": "296AE53DE510AB527FF143022235C12FF57462BC2C6288BF12327BE8C9FAEFF5",
       "version": "10.1.4_230_arm64-v8a",
       "status": "confirmed-production-chart-count-partial-business-gate-open",
-      "consumedBy": ["B02", "D03-production-count", "D19-BS01-BS02-partial", "D23-production-chart-count"]
+      "consumedBy": [
+        "B02",
+        "D03-production-count",
+        "D19-BS01-BS02-partial",
+        "D23-production-chart-count"
+      ]
     },
     {
       "id": "SLS-B02-INIT-PLAN-001",
@@ -5688,10 +5728,15 @@
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/capture_score_life_state_initialization_profile.py",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/capture_score_life_state_initialization_profile.py",
       "bytes": 12398,
-      "sha256": "3D977BA5F7FEBD718B2D2A19953F2CD5000D085F31EAEE565A25245ECC9BFD98",
+      "sha256": "F809457F9501C29A7AD9BBF54A6715E6D5D7BB3273FCBF066DE100DEA0208968",
       "version": "10.1.4_230_arm64-v8a",
       "status": "confirmed-observation-only-initialization-plan",
-      "consumedBy": ["B02", "D18-initialization-identity", "D23-ordinary-start-data-partial", "BS01-partial"]
+      "consumedBy": [
+        "B02",
+        "D18-initialization-identity",
+        "D23-ordinary-start-data-partial",
+        "BS01-partial"
+      ]
     },
     {
       "id": "SLS-B02-INIT-PLAN-002",
@@ -5702,7 +5747,12 @@
       "sha256": "4D08F25A7A0B0497F4915A71605A142E4BA5C1580EDE9BE2003EDE7D5A76F9B2",
       "version": "10.1.4_230_arm64-v8a",
       "status": "confirmed-observation-only-initialization-plan",
-      "consumedBy": ["B02", "D18-initialization-identity", "D23-ordinary-start-data-partial", "BS01-partial"]
+      "consumedBy": [
+        "B02",
+        "D18-initialization-identity",
+        "D23-ordinary-start-data-partial",
+        "BS01-partial"
+      ]
     },
     {
       "id": "SLS-B02-INIT-PLAN-003",
@@ -5713,7 +5763,12 @@
       "sha256": "AEFC0984881E4A779868E3389CF57891AF5A8D1A8458BECC4F0328D10156A2EB",
       "version": "10.1.4_230_arm64-v8a",
       "status": "confirmed-observation-only-initialization-plan",
-      "consumedBy": ["B02", "D18-initialization-identity", "D23-ordinary-start-data-partial", "BS01-partial"]
+      "consumedBy": [
+        "B02",
+        "D18-initialization-identity",
+        "D23-ordinary-start-data-partial",
+        "BS01-partial"
+      ]
     },
     {
       "id": "SLS-B02-INIT-R1-001",
@@ -5721,10 +5776,17 @@
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/build_score_life_initialization_profile_oracle.py",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/build_score_life_initialization_profile_oracle.py",
       "bytes": 6014,
-      "sha256": "4293F3E0387AFA7921CAB266510510528050D8FAE53F49476F9832608902EC01",
+      "sha256": "494F9BAB915754D4E3A299CB039EEAEFEBF8FC357E175DAA1E1983C4D53537A5",
       "version": "10.1.4_230_arm64-v8a",
       "status": "confirmed-r1-ordinary-initialization-partial-D23",
-      "consumedBy": ["B02", "D03-ordinary-max-note", "D06-ordinary-base", "D18-initialization-identity", "D23-ordinary-start-data-partial", "BS01-partial"]
+      "consumedBy": [
+        "B02",
+        "D03-ordinary-max-note",
+        "D06-ordinary-base",
+        "D18-initialization-identity",
+        "D23-ordinary-start-data-partial",
+        "BS01-partial"
+      ]
     },
     {
       "id": "SLS-B02-INIT-R1-002",
@@ -5735,7 +5797,14 @@
       "sha256": "81E335AE1CB0686EB8806B3284FA0AE14F411D0A2F91C8CC4C93BB2683A6C302",
       "version": "10.1.4_230_arm64-v8a",
       "status": "confirmed-r1-ordinary-initialization-partial-D23",
-      "consumedBy": ["B02", "D03-ordinary-max-note", "D06-ordinary-base", "D18-initialization-identity", "D23-ordinary-start-data-partial", "BS01-partial"]
+      "consumedBy": [
+        "B02",
+        "D03-ordinary-max-note",
+        "D06-ordinary-base",
+        "D18-initialization-identity",
+        "D23-ordinary-start-data-partial",
+        "BS01-partial"
+      ]
     },
     {
       "id": "SLS-B02-INIT-R1-003",
@@ -5743,10 +5812,17 @@
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/score_life_initialization_profile_oracle.json",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/score_life_initialization_profile_oracle.json",
       "bytes": 5388,
-      "sha256": "53D07B2DA7456C2B7AFDFE37293E352DC9471E31A0F13556553185EC20364E9B",
+      "sha256": "E55E4F725DB8877D928AE850EC130617AF5DBA9DF8151DA29431276E0C6C7E39",
       "version": "10.1.4_230_arm64-v8a",
       "status": "confirmed-r1-ordinary-initialization-partial-D23",
-      "consumedBy": ["B02", "D03-ordinary-max-note", "D06-ordinary-base", "D18-initialization-identity", "D23-ordinary-start-data-partial", "BS01-partial"]
+      "consumedBy": [
+        "B02",
+        "D03-ordinary-max-note",
+        "D06-ordinary-base",
+        "D18-initialization-identity",
+        "D23-ordinary-start-data-partial",
+        "BS01-partial"
+      ]
     },
     {
       "id": "SLS-B02-INIT-R1-004",
@@ -5754,10 +5830,698 @@
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_initialization_profile_r1.py",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_initialization_profile_r1.py",
       "bytes": 8627,
-      "sha256": "9226189AAE2430AB669961BF587BBF3AAFE323F67194AFFBF8ABA175E44AC54B",
+      "sha256": "D803C114CC5811B2711ACB1DC0B4330E7A6C7B77EDBA810878EA4EAC4F5EC54C",
       "version": "10.1.4_230_arm64-v8a",
       "status": "confirmed-r1-ordinary-initialization-partial-D23",
-      "consumedBy": ["B02", "D03-ordinary-max-note", "D06-ordinary-base", "D18-initialization-identity", "D23-ordinary-start-data-partial", "BS01-partial"]
+      "consumedBy": [
+        "B02",
+        "D03-ordinary-max-note",
+        "D06-ordinary-base",
+        "D18-initialization-identity",
+        "D23-ordinary-start-data-partial",
+        "BS01-partial"
+      ]
+    },
+    {
+      "id": "SLS-B02-DECK-001",
+      "sourceCommit": "b9b1a6deb334edf921a6f563ec0c270d49f0476f",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/build_score_life_deck_aggregate_profile_oracle.py",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/build_score_life_deck_aggregate_profile_oracle.py",
+      "bytes": 6301,
+      "sha256": "DDCCDB285A7177DCD02076BD71EF32C49965CA049A6A3ABE8053E092A7B6D882",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-r1-deck-aggregate-partial-member-rows",
+      "consumedBy": [
+        "B02",
+        "D06-ordinary-total-parameter",
+        "D18-deck-array-identity",
+        "D23-deck-aggregate-provenance",
+        "BS01",
+        "BS03"
+      ]
+    },
+    {
+      "id": "SLS-B02-MUSIC-001",
+      "sourceCommit": "287cd8689a6d498fbd45c35b82d16a96c97916c1",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/build_score_life_master_music_profile_oracle.py",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/build_score_life_master_music_profile_oracle.py",
+      "bytes": 4674,
+      "sha256": "65BC8E9F966895F5B8FACEBED777916A1C58E6446522AA4785DC274DB6F7BB64",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-r1-master-music-786-partial-runtime-availability",
+      "consumedBy": [
+        "B02",
+        "D23-HABAHIRO-master-music",
+        "D23-HABAHIRO-score-level-fallback",
+        "BS02"
+      ]
+    },
+    {
+      "id": "SLS-B02-AUTO-001",
+      "sourceCommit": "77fea929e1f99c1051b5211aa28836fd57c45117",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/build_score_life_ordinary_auto_skill_one_note_oracle.py",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/build_score_life_ordinary_auto_skill_one_note_oracle.py",
+      "bytes": 7485,
+      "sha256": "3BAE481586C391B0F7A80E7E9725CCCD9A21DA4D516239DF12EF78030BE43ED6",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-r1-ordinary-auto-skill-one-note-partial-business-gate-open",
+      "consumedBy": [
+        "B02",
+        "D10-ordinary-one-note-max",
+        "D12-skill-lifecycle",
+        "D14-overheal",
+        "D18-multi-skill-identity",
+        "BS13",
+        "BS14",
+        "BS16",
+        "BS20",
+        "BS21",
+        "BS22"
+      ]
+    },
+    {
+      "id": "SLS-B02-DECK-002",
+      "sourceCommit": "0bdb5cd59494076d92d3d5d6596608af476fec3e",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/capture_score_life_deck_aggregate_profile.py",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/capture_score_life_deck_aggregate_profile.py",
+      "bytes": 13999,
+      "sha256": "D9AD50540400D66F72AB3E3D347B8768AFC34BAB23977CBDFB499239F0973F67",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-observation-only-deck-aggregate-plan",
+      "consumedBy": [
+        "B02",
+        "D06-ordinary-total-parameter",
+        "D18-deck-array-identity",
+        "D23-deck-aggregate-provenance",
+        "BS01",
+        "BS03"
+      ]
+    },
+    {
+      "id": "SLS-B02-MUSIC-002",
+      "sourceCommit": "8b5d7dfb1a4b26a686b7e0a9cfcf093cb37e5386",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/capture_score_life_master_music_profile.py",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/capture_score_life_master_music_profile.py",
+      "bytes": 10684,
+      "sha256": "F6CDC1BC79BC4C0F17397863851B369E617A8E000A842B28DC7DDBF15E69856D",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-observation-only-master-music-786-plan",
+      "consumedBy": [
+        "B02",
+        "D23-HABAHIRO-master-music",
+        "D23-HABAHIRO-score-level-fallback",
+        "BS02"
+      ]
+    },
+    {
+      "id": "SLS-B02-AUTO-002",
+      "sourceCommit": "0ff7b641049992840a53de7fd591020e1a26d276",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/capture_score_life_ordinary_auto_skill_one_note.py",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/capture_score_life_ordinary_auto_skill_one_note.py",
+      "bytes": 13418,
+      "sha256": "24FA8D9734A069DCEC4273C61399549554547D6982062CE4305E38C873EAD4BA",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-observation-only-ordinary-auto-skill-one-note-plan",
+      "consumedBy": [
+        "B02",
+        "D10-ordinary-one-note-max",
+        "D12-skill-lifecycle",
+        "D14-overheal",
+        "D18-multi-skill-identity",
+        "BS13",
+        "BS14",
+        "BS16",
+        "BS20",
+        "BS21",
+        "BS22"
+      ]
+    },
+    {
+      "id": "SLS-B02-MUSIC-003",
+      "sourceCommit": "287cd8689a6d498fbd45c35b82d16a96c97916c1",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/extract_score_life_master_music_profile_static.py",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/extract_score_life_master_music_profile_static.py",
+      "bytes": 9430,
+      "sha256": "569625B9D42FFA5A081883824CBC673D13E3E7D400FC4FA2F888F89A39DE0BFC",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-observation-only-master-music-786-plan",
+      "consumedBy": [
+        "B02",
+        "D23-HABAHIRO-master-music",
+        "D23-HABAHIRO-score-level-fallback",
+        "BS02"
+      ]
+    },
+    {
+      "id": "SLS-B02-MUSIC-004",
+      "sourceCommit": "8b5d7dfb1a4b26a686b7e0a9cfcf093cb37e5386",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/master-profile-static/arm64/GetMasterMusic.arm64.tsv",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/master-profile-static/arm64/GetMasterMusic.arm64.tsv",
+      "bytes": 2798,
+      "sha256": "B22BD4F1504E9448821A80B1ECA1EE5FB8BB080173C50F0C1737328780290913",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-observation-only-master-music-786-plan",
+      "consumedBy": [
+        "B02",
+        "D23-HABAHIRO-master-music",
+        "D23-HABAHIRO-score-level-fallback",
+        "BS02"
+      ]
+    },
+    {
+      "id": "SLS-B02-MUSIC-005",
+      "sourceCommit": "8b5d7dfb1a4b26a686b7e0a9cfcf093cb37e5386",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/master-profile-static/arm64/GetMasterMusicDifficultyList_all.arm64.tsv",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/master-profile-static/arm64/GetMasterMusicDifficultyList_all.arm64.tsv",
+      "bytes": 365,
+      "sha256": "2B81EFFE78DBFE2BA46FC76D1A7914C2607BDCE727DA4352A48205A2E85B7461",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-observation-only-master-music-786-plan",
+      "consumedBy": [
+        "B02",
+        "D23-HABAHIRO-master-music",
+        "D23-HABAHIRO-score-level-fallback",
+        "BS02"
+      ]
+    },
+    {
+      "id": "SLS-B02-MUSIC-006",
+      "sourceCommit": "8b5d7dfb1a4b26a686b7e0a9cfcf093cb37e5386",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/master-profile-static/arm64/GetMasterMusicDifficultyList_byId.arm64.tsv",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/master-profile-static/arm64/GetMasterMusicDifficultyList_byId.arm64.tsv",
+      "bytes": 1453,
+      "sha256": "CE55BDA18322DC210B3D97FBC3A031DAB04388A2DDF4C62AA52809120DAA0A32",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-observation-only-master-music-786-plan",
+      "consumedBy": [
+        "B02",
+        "D23-HABAHIRO-master-music",
+        "D23-HABAHIRO-score-level-fallback",
+        "BS02"
+      ]
+    },
+    {
+      "id": "SLS-B02-MUSIC-007",
+      "sourceCommit": "8b5d7dfb1a4b26a686b7e0a9cfcf093cb37e5386",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/master-profile-static/arm64/GetMasterMusicList.arm64.tsv",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/master-profile-static/arm64/GetMasterMusicList.arm64.tsv",
+      "bytes": 1506,
+      "sha256": "CACFFE82C8EEC07F044988EC223F26436A6C92AF9799BE977DC062C51ABA154F",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-observation-only-master-music-786-plan",
+      "consumedBy": [
+        "B02",
+        "D23-HABAHIRO-master-music",
+        "D23-HABAHIRO-score-level-fallback",
+        "BS02"
+      ]
+    },
+    {
+      "id": "SLS-B02-MUSIC-008",
+      "sourceCommit": "287cd8689a6d498fbd45c35b82d16a96c97916c1",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/master-profile-static/arm64/MusicData_GetPlayLevel.arm64.tsv",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/master-profile-static/arm64/MusicData_GetPlayLevel.arm64.tsv",
+      "bytes": 3182,
+      "sha256": "902CA6C038EC74A0B5C0ED02BB98C1386D291CBB9CF131726B325F104C5539EC",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-observation-only-master-music-786-plan",
+      "consumedBy": [
+        "B02",
+        "D23-HABAHIRO-master-music",
+        "D23-HABAHIRO-score-level-fallback",
+        "BS02"
+      ]
+    },
+    {
+      "id": "SLS-B02-MUSIC-009",
+      "sourceCommit": "287cd8689a6d498fbd45c35b82d16a96c97916c1",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/master-profile-static/arm64/MusicData_GetScoreLevel.arm64.tsv",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/master-profile-static/arm64/MusicData_GetScoreLevel.arm64.tsv",
+      "bytes": 4062,
+      "sha256": "7A1074D3F3EB7D5C0763827119CA9D4A8032FF7F8F5DE4515DE5AFF7A6BFDB3E",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-observation-only-master-music-786-plan",
+      "consumedBy": [
+        "B02",
+        "D23-HABAHIRO-master-music",
+        "D23-HABAHIRO-score-level-fallback",
+        "BS02"
+      ]
+    },
+    {
+      "id": "SLS-B02-MUSIC-010",
+      "sourceCommit": "287cd8689a6d498fbd45c35b82d16a96c97916c1",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/master-profile-static/arm64/ScreenLayerMusicSelect_onClickMusicSelectButton.arm64.tsv",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/master-profile-static/arm64/ScreenLayerMusicSelect_onClickMusicSelectButton.arm64.tsv",
+      "bytes": 11087,
+      "sha256": "A485612F02CE62072C9A6C68532083AD00EA1ACEDEF50AAE242C93E69BB38FAB",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-observation-only-master-music-786-plan",
+      "consumedBy": [
+        "B02",
+        "D23-HABAHIRO-master-music",
+        "D23-HABAHIRO-score-level-fallback",
+        "BS02"
+      ]
+    },
+    {
+      "id": "SLS-B02-MUSIC-011",
+      "sourceCommit": "287cd8689a6d498fbd45c35b82d16a96c97916c1",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/master-profile-static/master_music_profile_static.json",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/master-profile-static/master_music_profile_static.json",
+      "bytes": 7241,
+      "sha256": "26235C664C478FC38C00127626B7627636EDC8D5EAF824923470259CE00BA912",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-observation-only-master-music-786-plan",
+      "consumedBy": [
+        "B02",
+        "D23-HABAHIRO-master-music",
+        "D23-HABAHIRO-score-level-fallback",
+        "BS02"
+      ]
+    },
+    {
+      "id": "SLS-B02-DECK-003",
+      "sourceCommit": "0bdb5cd59494076d92d3d5d6596608af476fec3e",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime/deck-aggregate-profile-retry-r1-plan.json",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime/deck-aggregate-profile-retry-r1-plan.json",
+      "bytes": 1653,
+      "sha256": "B6733F0C49A9F2BF811B26047F3D10269946871951E1D018D5EE23EAC51FB104",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-observation-only-deck-aggregate-plan",
+      "consumedBy": [
+        "B02",
+        "D06-ordinary-total-parameter",
+        "D18-deck-array-identity",
+        "D23-deck-aggregate-provenance",
+        "BS01",
+        "BS03"
+      ]
+    },
+    {
+      "id": "SLS-B02-DECK-004",
+      "sourceCommit": "b9b1a6deb334edf921a6f563ec0c270d49f0476f",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime/deck-aggregate-profile-retry.trace.json.gz",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime/deck-aggregate-profile-retry.trace.json.gz",
+      "bytes": 2750,
+      "sha256": "5653E2010DC4385E47B9DE7248FA953FE3413B13235A2CC75ACC35F5F149333C",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-r1-deck-aggregate-partial-member-rows",
+      "consumedBy": [
+        "B02",
+        "D06-ordinary-total-parameter",
+        "D18-deck-array-identity",
+        "D23-deck-aggregate-provenance",
+        "BS01",
+        "BS03"
+      ]
+    },
+    {
+      "id": "SLS-B02-MUSIC-012",
+      "sourceCommit": "8b5d7dfb1a4b26a686b7e0a9cfcf093cb37e5386",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime/master-music-786-ui-list-r1-plan.json",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime/master-music-786-ui-list-r1-plan.json",
+      "bytes": 1762,
+      "sha256": "C1D3AEE655C1E7801CA0D3BBF2771726553F25A7C2F08C85923B7FBB7E1C5A69",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-observation-only-master-music-786-plan",
+      "consumedBy": [
+        "B02",
+        "D23-HABAHIRO-master-music",
+        "D23-HABAHIRO-score-level-fallback",
+        "BS02"
+      ]
+    },
+    {
+      "id": "SLS-B02-MUSIC-013",
+      "sourceCommit": "287cd8689a6d498fbd45c35b82d16a96c97916c1",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime/master-music-786-ui-list.trace.json.gz",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime/master-music-786-ui-list.trace.json.gz",
+      "bytes": 2122,
+      "sha256": "A166AE480FF8CA0C06623BEB8C6B539C46EC2CA9D1D0D7A2E1A29948E6B1C4F8",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-r1-master-music-786-partial-runtime-availability",
+      "consumedBy": [
+        "B02",
+        "D23-HABAHIRO-master-music",
+        "D23-HABAHIRO-score-level-fallback",
+        "BS02"
+      ]
+    },
+    {
+      "id": "SLS-B02-AUTO-003",
+      "sourceCommit": "3de6ba1bd192d606b742231ceb08fd1087a9974c",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime/ordinary-auto-skill-one-note-r1-plan.json",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime/ordinary-auto-skill-one-note-r1-plan.json",
+      "bytes": 2914,
+      "sha256": "6856A66229BBC422EEE4DC4BA1D79D3FB3B8FD53B55DB38419FD111EDA204600",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-observation-only-ordinary-auto-skill-one-note-plan",
+      "consumedBy": [
+        "B02",
+        "D10-ordinary-one-note-max",
+        "D12-skill-lifecycle",
+        "D14-overheal",
+        "D18-multi-skill-identity",
+        "BS13",
+        "BS14",
+        "BS16",
+        "BS20",
+        "BS21",
+        "BS22"
+      ]
+    },
+    {
+      "id": "SLS-B02-AUTO-004",
+      "sourceCommit": "0ff7b641049992840a53de7fd591020e1a26d276",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime/ordinary-auto-skill-one-note-retry2-r1-plan.json",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime/ordinary-auto-skill-one-note-retry2-r1-plan.json",
+      "bytes": 3200,
+      "sha256": "67988CF5BFDE3EC7ACEE9FA0E1A03F5FF9AF5E7508F92AC8191D93B8ED72A4BC",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-observation-only-ordinary-auto-skill-one-note-plan",
+      "consumedBy": [
+        "B02",
+        "D10-ordinary-one-note-max",
+        "D12-skill-lifecycle",
+        "D14-overheal",
+        "D18-multi-skill-identity",
+        "BS13",
+        "BS14",
+        "BS16",
+        "BS20",
+        "BS21",
+        "BS22"
+      ]
+    },
+    {
+      "id": "SLS-B02-AUTO-005",
+      "sourceCommit": "0779603e490d67310ccc4866623e37c3291b0ee3",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime/ordinary-auto-skill-one-note-retry3-r1-plan.json",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime/ordinary-auto-skill-one-note-retry3-r1-plan.json",
+      "bytes": 3233,
+      "sha256": "727CE930DC223654D75E21C5147AF985984E2656A967788AA062A58CEBCA5674",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-observation-only-ordinary-auto-skill-one-note-plan",
+      "consumedBy": [
+        "B02",
+        "D10-ordinary-one-note-max",
+        "D12-skill-lifecycle",
+        "D14-overheal",
+        "D18-multi-skill-identity",
+        "BS13",
+        "BS14",
+        "BS16",
+        "BS20",
+        "BS21",
+        "BS22"
+      ]
+    },
+    {
+      "id": "SLS-B02-AUTO-006",
+      "sourceCommit": "6ee113568b2b06abce524beff4a57d83290c9f8d",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime/ordinary-auto-skill-one-note-retry4-r1-plan.json",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime/ordinary-auto-skill-one-note-retry4-r1-plan.json",
+      "bytes": 3239,
+      "sha256": "471A61FED94719DBF7CD0C11E57C0C6DEF3C68CAC13E36B192B6FB1CC1724E4F",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-observation-only-ordinary-auto-skill-one-note-plan",
+      "consumedBy": [
+        "B02",
+        "D10-ordinary-one-note-max",
+        "D12-skill-lifecycle",
+        "D14-overheal",
+        "D18-multi-skill-identity",
+        "BS13",
+        "BS14",
+        "BS16",
+        "BS20",
+        "BS21",
+        "BS22"
+      ]
+    },
+    {
+      "id": "SLS-B02-AUTO-007",
+      "sourceCommit": "77fea929e1f99c1051b5211aa28836fd57c45117",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime/ordinary-auto-skill-one-note-retry4-r1.trace.json.gz",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime/ordinary-auto-skill-one-note-retry4-r1.trace.json.gz",
+      "bytes": 101599,
+      "sha256": "9E3C21A272A5E76991B2AE03DCA21F17B2021D1798DB8AEE52F227F1A963A41D",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-r1-ordinary-auto-skill-one-note-partial-business-gate-open",
+      "consumedBy": [
+        "B02",
+        "D10-ordinary-one-note-max",
+        "D12-skill-lifecycle",
+        "D14-overheal",
+        "D18-multi-skill-identity",
+        "BS13",
+        "BS14",
+        "BS16",
+        "BS20",
+        "BS21",
+        "BS22"
+      ]
+    },
+    {
+      "id": "SLS-B02-DECK-005",
+      "sourceCommit": "b9b1a6deb334edf921a6f563ec0c270d49f0476f",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/score_life_deck_aggregate_profile_oracle.json",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/score_life_deck_aggregate_profile_oracle.json",
+      "bytes": 3507,
+      "sha256": "8265C5A6144E8FB0B9C8084C5B562B2061A0C05EAE8DE58D81682C6EEFADDA68",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-r1-deck-aggregate-partial-member-rows",
+      "consumedBy": [
+        "B02",
+        "D06-ordinary-total-parameter",
+        "D18-deck-array-identity",
+        "D23-deck-aggregate-provenance",
+        "BS01",
+        "BS03"
+      ]
+    },
+    {
+      "id": "SLS-B02-MUSIC-014",
+      "sourceCommit": "287cd8689a6d498fbd45c35b82d16a96c97916c1",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/score_life_master_music_786_profile_oracle.json",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/score_life_master_music_786_profile_oracle.json",
+      "bytes": 6664,
+      "sha256": "B8E23249B79618CFDAB773CE64709C46DD422ABB473A5B63998C6D988F3D8529",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-r1-master-music-786-partial-runtime-availability",
+      "consumedBy": [
+        "B02",
+        "D23-HABAHIRO-master-music",
+        "D23-HABAHIRO-score-level-fallback",
+        "BS02"
+      ]
+    },
+    {
+      "id": "SLS-B02-AUTO-008",
+      "sourceCommit": "77fea929e1f99c1051b5211aa28836fd57c45117",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/score_life_ordinary_auto_skill_one_note_oracle.json",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/score_life_ordinary_auto_skill_one_note_oracle.json",
+      "bytes": 13233,
+      "sha256": "33EB823625B4857A0D9BDB253BC3A2DA5CB64C1F501EDBADEF8FF21B8DCB446D",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-r1-ordinary-auto-skill-one-note-partial-business-gate-open",
+      "consumedBy": [
+        "B02",
+        "D10-ordinary-one-note-max",
+        "D12-skill-lifecycle",
+        "D14-overheal",
+        "D18-multi-skill-identity",
+        "BS13",
+        "BS14",
+        "BS16",
+        "BS20",
+        "BS21",
+        "BS22"
+      ]
+    },
+    {
+      "id": "SLS-B02-DECK-006",
+      "sourceCommit": "0bdb5cd59494076d92d3d5d6596608af476fec3e",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_deck_aggregate_profile_plan.py",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_deck_aggregate_profile_plan.py",
+      "bytes": 6525,
+      "sha256": "645D046B8AB84B37760D4714A521E3784CA3E062055420CEE7F52A3AAA247892",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-observation-only-deck-aggregate-plan",
+      "consumedBy": [
+        "B02",
+        "D06-ordinary-total-parameter",
+        "D18-deck-array-identity",
+        "D23-deck-aggregate-provenance",
+        "BS01",
+        "BS03"
+      ]
+    },
+    {
+      "id": "SLS-B02-DECK-007",
+      "sourceCommit": "b9b1a6deb334edf921a6f563ec0c270d49f0476f",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_deck_aggregate_profile_r1.py",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_deck_aggregate_profile_r1.py",
+      "bytes": 6250,
+      "sha256": "B2438B723C265EE625669A86EF1794A363C4CDFD370D0B1C8CE3F90E55BD6A07",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-r1-deck-aggregate-partial-member-rows",
+      "consumedBy": [
+        "B02",
+        "D06-ordinary-total-parameter",
+        "D18-deck-array-identity",
+        "D23-deck-aggregate-provenance",
+        "BS01",
+        "BS03"
+      ]
+    },
+    {
+      "id": "SLS-B02-MUSIC-015",
+      "sourceCommit": "287cd8689a6d498fbd45c35b82d16a96c97916c1",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_master_music_profile_plan.py",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_master_music_profile_plan.py",
+      "bytes": 6628,
+      "sha256": "E8691E8731BA62CAF2C3185FA3459DB5DD598E466EA83CD0E66DB3B4BD08917A",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-observation-only-master-music-786-plan",
+      "consumedBy": [
+        "B02",
+        "D23-HABAHIRO-master-music",
+        "D23-HABAHIRO-score-level-fallback",
+        "BS02"
+      ]
+    },
+    {
+      "id": "SLS-B02-MUSIC-016",
+      "sourceCommit": "287cd8689a6d498fbd45c35b82d16a96c97916c1",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_master_music_profile_r1.py",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_master_music_profile_r1.py",
+      "bytes": 6135,
+      "sha256": "8F14F4F05508500F4A07FE3F90B59ABD9D760C00E3AC8F65E76130E7C9DDD32B",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-r1-master-music-786-partial-runtime-availability",
+      "consumedBy": [
+        "B02",
+        "D23-HABAHIRO-master-music",
+        "D23-HABAHIRO-score-level-fallback",
+        "BS02"
+      ]
+    },
+    {
+      "id": "SLS-B02-AUTO-009",
+      "sourceCommit": "3de6ba1bd192d606b742231ceb08fd1087a9974c",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_ordinary_auto_skill_one_note_plan.py",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_ordinary_auto_skill_one_note_plan.py",
+      "bytes": 3030,
+      "sha256": "181715EDDE382306D845BACE3F0860C4020DD8B572A6C5FC0190BEF5015CC00F",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-observation-only-ordinary-auto-skill-one-note-plan",
+      "consumedBy": [
+        "B02",
+        "D10-ordinary-one-note-max",
+        "D12-skill-lifecycle",
+        "D14-overheal",
+        "D18-multi-skill-identity",
+        "BS13",
+        "BS14",
+        "BS16",
+        "BS20",
+        "BS21",
+        "BS22"
+      ]
+    },
+    {
+      "id": "SLS-B02-AUTO-010",
+      "sourceCommit": "77fea929e1f99c1051b5211aa28836fd57c45117",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_ordinary_auto_skill_one_note_r1.py",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_ordinary_auto_skill_one_note_r1.py",
+      "bytes": 6999,
+      "sha256": "FFB6DEB7886B77A217E44566D68BFFEE1BF7CC919D5BF6F45DCEE4A42314917A",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-r1-ordinary-auto-skill-one-note-partial-business-gate-open",
+      "consumedBy": [
+        "B02",
+        "D10-ordinary-one-note-max",
+        "D12-skill-lifecycle",
+        "D14-overheal",
+        "D18-multi-skill-identity",
+        "BS13",
+        "BS14",
+        "BS16",
+        "BS20",
+        "BS21",
+        "BS22"
+      ]
+    },
+    {
+      "id": "SLS-B02-AUTO-011",
+      "sourceCommit": "0ff7b641049992840a53de7fd591020e1a26d276",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_ordinary_auto_skill_one_note_retry2_plan.py",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_ordinary_auto_skill_one_note_retry2_plan.py",
+      "bytes": 2576,
+      "sha256": "E0D750AFDC6B6499F65BBD5F863B294B65EF89FDB135C713073CADC8643E914A",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-observation-only-ordinary-auto-skill-one-note-plan",
+      "consumedBy": [
+        "B02",
+        "D10-ordinary-one-note-max",
+        "D12-skill-lifecycle",
+        "D14-overheal",
+        "D18-multi-skill-identity",
+        "BS13",
+        "BS14",
+        "BS16",
+        "BS20",
+        "BS21",
+        "BS22"
+      ]
+    },
+    {
+      "id": "SLS-B02-AUTO-012",
+      "sourceCommit": "0779603e490d67310ccc4866623e37c3291b0ee3",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_ordinary_auto_skill_one_note_retry3_plan.py",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_ordinary_auto_skill_one_note_retry3_plan.py",
+      "bytes": 2691,
+      "sha256": "4E5BC686725A201E00A9DFC7387D7AFE158D2D02C095A03447C9F9E12B370E15",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-observation-only-ordinary-auto-skill-one-note-plan",
+      "consumedBy": [
+        "B02",
+        "D10-ordinary-one-note-max",
+        "D12-skill-lifecycle",
+        "D14-overheal",
+        "D18-multi-skill-identity",
+        "BS13",
+        "BS14",
+        "BS16",
+        "BS20",
+        "BS21",
+        "BS22"
+      ]
+    },
+    {
+      "id": "SLS-B02-AUTO-013",
+      "sourceCommit": "6ee113568b2b06abce524beff4a57d83290c9f8d",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_ordinary_auto_skill_one_note_retry4_plan.py",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_ordinary_auto_skill_one_note_retry4_plan.py",
+      "bytes": 2711,
+      "sha256": "81EE8AF40B09D2EC014BF84C6B5B585165F1C25D8700A4521AF34D2544E02F14",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-observation-only-ordinary-auto-skill-one-note-plan",
+      "consumedBy": [
+        "B02",
+        "D10-ordinary-one-note-max",
+        "D12-skill-lifecycle",
+        "D14-overheal",
+        "D18-multi-skill-identity",
+        "BS13",
+        "BS14",
+        "BS16",
+        "BS20",
+        "BS21",
+        "BS22"
+      ]
     }
   ],
   "runtimeInputGate": {
@@ -5775,7 +6539,12 @@
       "post-game-over-manager-gate-r1",
       "retry-reset-r1",
       "production-chart-count-oracle",
-      "ordinary-initialization-profile-r1"
+      "ordinary-initialization-profile-r1",
+      "ordinary-deck-aggregate-r1",
+      "master-music-786-profile-r1",
+      "ordinary-auto-one-note-max-r1",
+      "ordinary-auto-six-skill-lifecycles-r1",
+      "ordinary-overheal-r1"
     ],
     "partialFindings": [
       "D18",
@@ -5793,7 +6562,7 @@
       "D23-master-start-data",
       "D24"
     ],
-    "r1TraceCount": 5,
+    "r1TraceCount": 8,
     "productionAuthorization": false,
     "pendingPlans": [],
     "supersededPlans": [
@@ -5803,7 +6572,13 @@
       "positive-retry-all-lanes-early-score-skill-v2",
       "multitouch-seven-lane-native-positive-skill-window-v2",
       "multitouch-seven-lane-post-gameover-retry-lifecycle-v3",
-      "production-initialization-profile-retry-r1"
+      "production-initialization-profile-retry-r1",
+      "production-deck-aggregate-profile-retry-r1",
+      "master-music-786-natural-ui-list-r1",
+      "ordinary-auto-skill-one-note-r1",
+      "ordinary-auto-skill-one-note-retry2-r1",
+      "ordinary-auto-skill-one-note-retry3-r1",
+      "ordinary-auto-skill-one-note-retry4-r1"
     ],
     "abortedPlans": [
       "multitouch-seven-lane-positive-skill-window"
@@ -5812,14 +6587,15 @@
       "status": "partial-business-gate-open",
       "totalCases": 36,
       "confirmedCases": [
+        "BS01",
         "BS05",
         "BS06",
         "BS11"
       ],
       "partialCases": 20,
-      "blockedCases": 13,
-      "unknownFields": 146,
-      "blockingFindings": 89
+      "blockedCases": 12,
+      "unknownFields": 135,
+      "blockingFindings": 85
     }
   }
 }

@@ -1,0 +1,119 @@
+{
+  "schema_version": 1,
+  "status": "confirmed-r1-ordinary-deck-aggregate-partial-member-rows",
+  "source_commit": "0bdb5cd59494076d92d3d5d6596608af476fec3e",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "version_name": "10.1.4",
+    "version_code": 230,
+    "abi": "arm64-v8a",
+    "libil2cpp_sha256": "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F",
+    "global_metadata_sha256": "298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F",
+    "pid": 28262,
+    "module": {
+      "base": "0x6cd829e000",
+      "size": 122183680,
+      "path": "/data/app/~~B1EA-JtTroRCXT375dD5Tg==/jp.co.craftegg.band-Oiz3EolE2fd86DJVZ50Q2Q==/lib/arm64/libil2cpp.so"
+    }
+  },
+  "sources": [
+    {
+      "path": "runtime/deck-aggregate-profile-retry.trace.json.gz",
+      "bytes": 2750,
+      "sha256": "5653E2010DC4385E47B9DE7248FA953FE3413B13235A2CC75ACC35F5F149333C"
+    },
+    {
+      "path": "runtime/deck-aggregate-profile-retry-r1-plan.json",
+      "bytes": 1653,
+      "sha256": "B6733F0C49A9F2BF811B26047F3D10269946871951E1D018D5EE23EAC51FB104"
+    },
+    {
+      "path": "capture_score_life_deck_aggregate_profile.py",
+      "bytes": 13999,
+      "sha256": "D9AD50540400D66F72AB3E3D347B8768AFC34BAB23977CBDFB499239F0973F67"
+    },
+    {
+      "path": "score_life_state_static_contract.json",
+      "bytes": 1107943,
+      "sha256": "932AE569D6B2AD8620D1D8CECD44EB812B6AFDB16E18590140D7DA56998566C2"
+    },
+    {
+      "path": "arm64/0331e0ac__ScoreUtility__calcTotalParameter.arm64.tsv",
+      "bytes": 2315,
+      "sha256": "24C2D834F8A43D357D81D30054FE5ECBAAAC2B5307FE6CF4B7A6BA04EEC4D758"
+    }
+  ],
+  "production_chart": {
+    "asset": "poppin_shuffle_special",
+    "difficulty": "special",
+    "score_level": 27,
+    "bms_sha256": "418DB7F5BFC6B5431AC0ABF2FB905120BDFA8C778C35AA42418A6FA43F4094DC"
+  },
+  "privacy": {
+    "account_fields_included": false,
+    "omitted": [
+      "user_id",
+      "room_id",
+      "room_name",
+      "user_deck_contents",
+      "deck_element_contents",
+      "deck_member_pointers",
+      "deck_member_rows",
+      "display_strings"
+    ]
+  },
+  "deck_aggregate": {
+    "array_identity": {
+      "pointer": "0x6cf0d75dc0",
+      "length": 5,
+      "elements_omitted": true
+    },
+    "invocations": 2,
+    "loop_observations": 12,
+    "component_2c": {
+      "value": 57715.1875,
+      "bits": "0x47617330"
+    },
+    "component_30": {
+      "value": 70965.765625,
+      "bits": "0x478A9AE2"
+    },
+    "component_34": {
+      "value": 64383.80859375,
+      "bits": "0x477B7FCF"
+    },
+    "first_addition": {
+      "value": 128680.953125,
+      "bits": "0x47FB547A"
+    },
+    "total_parameter": {
+      "value": 193064.765625,
+      "bits": "0x483C8A31"
+    },
+    "operation_order": "Float32(component_2c + component_30), then Float32(component_34 + prior)",
+    "repeat_invocations_identical": true
+  },
+  "initialization_correlation": {
+    "score_level": 27,
+    "score_level_rate": {
+      "value": 1.2200000286102295,
+      "bits": "0x3F9C28F6"
+    },
+    "base_score": {
+      "value": 721.7742919921875,
+      "bits": "0x4434718E"
+    },
+    "bonus_base_score": {
+      "value": 0,
+      "bits": "0x00000000"
+    }
+  },
+  "unknown_fields": [
+    "deck.member_rows"
+  ],
+  "blocking_findings": [
+    "D23-deck-member-rows-privacy"
+  ],
+  "business_state_gate": "open",
+  "production_authorization": false
+}

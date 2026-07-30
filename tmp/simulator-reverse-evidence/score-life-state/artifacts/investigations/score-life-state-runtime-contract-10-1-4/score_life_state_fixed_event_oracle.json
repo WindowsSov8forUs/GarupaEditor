@@ -9,68 +9,86 @@
     "libil2cpp_sha256": "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F",
     "global_metadata_sha256": "298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F"
   },
-  "source_commit": "3c95190f4b6326da97e21c8e590f625a7582dc22",
+  "source_commit": "6ee113568b2b06abce524beff4a57d83290c9f8d",
   "generator": "build_score_life_state_fixed_event_oracle.py",
   "evidence_catalog": {
     "static_contract": {
       "path": "score_life_state_static_contract.json",
       "bytes": 1107943,
       "sha256": "932AE569D6B2AD8620D1D8CECD44EB812B6AFDB16E18590140D7DA56998566C2",
-      "source_commit": "3c95190f4b6326da97e21c8e590f625a7582dc22"
+      "source_commit": "6ee113568b2b06abce524beff4a57d83290c9f8d"
     },
     "static_findings": {
       "path": "score_life_state_static_findings.json",
       "bytes": 15061,
       "sha256": "B626E6318BD8462BC94C8C9FEEB27AF00FC89751F210CB8D6F3C34EA1F17FAC2",
-      "source_commit": "3c95190f4b6326da97e21c8e590f625a7582dc22"
+      "source_commit": "6ee113568b2b06abce524beff4a57d83290c9f8d"
     },
     "ordinary_bms": {
       "path": "runtime-inputs/bms/poppin_shuffle_special.bms.txt",
       "bytes": 17882,
       "sha256": "418DB7F5BFC6B5431AC0ABF2FB905120BDFA8C778C35AA42418A6FA43F4094DC",
-      "source_commit": "3c95190f4b6326da97e21c8e590f625a7582dc22"
+      "source_commit": "6ee113568b2b06abce524beff4a57d83290c9f8d"
     },
     "habahiro_bms": {
       "path": "runtime-inputs/bms/786_miracle_april_habahiro_special.bms.txt",
       "bytes": 38700,
       "sha256": "43148090C40ABBD951E8D7112200BDAE9B796A8A531A0793169E0AD70C3DC159",
-      "source_commit": "3c95190f4b6326da97e21c8e590f625a7582dc22"
+      "source_commit": "6ee113568b2b06abce524beff4a57d83290c9f8d"
     },
     "no_input_r1": {
       "path": "runtime/no-input-retry-life-gameover.trace.json.gz",
       "bytes": 140797,
       "sha256": "4F1BBCCF8E9D9258235ED3FD52F3B74242F515362C5C4EE7F51B8126290E8A55",
-      "source_commit": "3c95190f4b6326da97e21c8e590f625a7582dc22"
+      "source_commit": "6ee113568b2b06abce524beff4a57d83290c9f8d"
     },
     "positive_r1": {
       "path": "runtime/positive-retry-all-lanes-early.trace.json.gz",
       "bytes": 153597,
       "sha256": "F91140EB5A1B1A8858495B6CFFB9112C4CB295F20D4CDEEED184A1F5CCDB44A9",
-      "source_commit": "3c95190f4b6326da97e21c8e590f625a7582dc22"
+      "source_commit": "6ee113568b2b06abce524beff4a57d83290c9f8d"
     },
     "skill_r1": {
       "path": "runtime/multitouch-seven-lane-native-skill.trace.json.gz",
       "bytes": 746972,
       "sha256": "0DB8FF447030750008B001A285480FE280A770EEB9723369C1935107B1DA5FDD",
-      "source_commit": "3c95190f4b6326da97e21c8e590f625a7582dc22"
+      "source_commit": "6ee113568b2b06abce524beff4a57d83290c9f8d"
     },
     "retry_r1": {
       "path": "runtime/multitouch-seven-lane-post-gameover-retry.trace.json.gz",
       "bytes": 696375,
       "sha256": "D4BFF770EC545C037A0592F4BF3E4B796565EA12668C5AF6BC81E9C60A6F10AE",
-      "source_commit": "3c95190f4b6326da97e21c8e590f625a7582dc22"
+      "source_commit": "6ee113568b2b06abce524beff4a57d83290c9f8d"
     },
     "chart_count": {
       "path": "score_life_state_chart_count_oracle.json",
       "bytes": 4144,
       "sha256": "66CBA99B638A0EB078C8C9D2B2B8FB06663EE8E2B74DBC68249986EEA152E12C",
-      "source_commit": "3c95190f4b6326da97e21c8e590f625a7582dc22"
+      "source_commit": "6ee113568b2b06abce524beff4a57d83290c9f8d"
     },
     "initialization_profile": {
       "path": "score_life_initialization_profile_oracle.json",
       "bytes": 5388,
       "sha256": "53D07B2DA7456C2B7AFDFE37293E352DC9471E31A0F13556553185EC20364E9B",
-      "source_commit": "3c95190f4b6326da97e21c8e590f625a7582dc22"
+      "source_commit": "6ee113568b2b06abce524beff4a57d83290c9f8d"
+    },
+    "deck_aggregate_profile": {
+      "path": "score_life_deck_aggregate_profile_oracle.json",
+      "bytes": 3507,
+      "sha256": "8265C5A6144E8FB0B9C8084C5B562B2061A0C05EAE8DE58D81682C6EEFADDA68",
+      "source_commit": "6ee113568b2b06abce524beff4a57d83290c9f8d"
+    },
+    "master_music_786_profile": {
+      "path": "score_life_master_music_786_profile_oracle.json",
+      "bytes": 6664,
+      "sha256": "B8E23249B79618CFDAB773CE64709C46DD422ABB473A5B63998C6D988F3D8529",
+      "source_commit": "6ee113568b2b06abce524beff4a57d83290c9f8d"
+    },
+    "ordinary_auto_skill_one_note": {
+      "path": "score_life_ordinary_auto_skill_one_note_oracle.json",
+      "bytes": 13233,
+      "sha256": "33EB823625B4857A0D9BDB253BC3A2DA5CB64C1F501EDBADEF8FF21B8DCB446D",
+      "source_commit": "6ee113568b2b06abce524beff4a57d83290c9f8d"
     }
   },
   "required_output_fields": [
@@ -87,18 +105,19 @@
   "coverage": {
     "total_cases": 36,
     "confirmed_cases": [
+      "BS01",
       "BS05",
       "BS06",
       "BS11"
     ],
     "partial_cases": [
-      "BS01",
       "BS02",
       "BS03",
       "BS07",
       "BS10",
       "BS12",
       "BS13",
+      "BS14",
       "BS15",
       "BS16",
       "BS18",
@@ -117,7 +136,6 @@
       "BS04",
       "BS08",
       "BS09",
-      "BS14",
       "BS17",
       "BS23",
       "BS25",
@@ -128,8 +146,8 @@
       "BS34",
       "BS35"
     ],
-    "unknown_field_count": 146,
-    "blocking_finding_count": 89
+    "unknown_field_count": 135,
+    "blocking_finding_count": 85
   },
   "business_state_gate": "open",
   "production_authorization": false,
@@ -137,22 +155,25 @@
     {
       "case_id": "BS01",
       "requirement": "ordinary production chart family maxNoteCount and base-score initialization",
-      "status": "partial",
+      "status": "confirmed-r1",
       "evidence_ids": [
         "SLS-S05",
         "SLS-R1-008",
+        "SLS-R1-009",
         "SLS-BMS-ORDINARY",
         "SLS-CHART-COUNT-ORDINARY"
       ],
       "input_provenance": [
         "ordinary_bms",
         "chart_count",
-        "initialization_profile"
+        "initialization_profile",
+        "deck_aggregate_profile"
       ],
       "expected_source": [
         "static:SLS-S05",
         "chart_count#charts.ordinary",
-        "initialization_profile#ordinary"
+        "initialization_profile#ordinary",
+        "deck_aggregate_profile#ordinary"
       ],
       "expected_projection": {
         "production_bms_sha256": "418DB7F5BFC6B5431AC0ABF2FB905120BDFA8C778C35AA42418A6FA43F4094DC",
@@ -247,6 +268,37 @@
             "score_utility_static_fields": "0x6b4ef72b70"
           }
         },
+        "deck_aggregate": {
+          "array_identity": {
+            "pointer": "0x6cf0d75dc0",
+            "length": 5,
+            "elements_omitted": true
+          },
+          "invocations": 2,
+          "loop_observations": 12,
+          "component_2c": {
+            "value": 57715.1875,
+            "bits": "0x47617330"
+          },
+          "component_30": {
+            "value": 70965.765625,
+            "bits": "0x478A9AE2"
+          },
+          "component_34": {
+            "value": 64383.80859375,
+            "bits": "0x477B7FCF"
+          },
+          "first_addition": {
+            "value": 128680.953125,
+            "bits": "0x47FB547A"
+          },
+          "total_parameter": {
+            "value": 193064.765625,
+            "bits": "0x483C8A31"
+          },
+          "operation_order": "Float32(component_2c + component_30), then Float32(component_34 + prior)",
+          "repeat_invocations_identical": true
+        },
         "base_formula": {
           "score_level_rate": "Float32(Float32(scoreLevel - 5) * Float32(0.01)) + Float32(1.0)",
           "ordinary_base": "Float32(Float32(Float32(totalParameter) * scoreLevelRate) / Float32(maxNoteCount)) * Float32(3.0)",
@@ -257,9 +309,7 @@
         }
       },
       "unknown_fields": [],
-      "blocking_findings": [
-        "D23-master-start-data"
-      ]
+      "blocking_findings": []
     },
     {
       "case_id": "BS02",
@@ -267,15 +317,18 @@
       "status": "partial",
       "evidence_ids": [
         "SLS-BMS-HABAHIRO",
-        "SLS-CHART-COUNT-HABAHIRO"
+        "SLS-CHART-COUNT-HABAHIRO",
+        "SLS-R1-010"
       ],
       "input_provenance": [
         "habahiro_bms",
-        "chart_count"
+        "chart_count",
+        "master_music_786_profile"
       ],
       "expected_source": [
         "habahiro_bms#bytes",
-        "chart_count#charts.habahiro"
+        "chart_count#charts.habahiro",
+        "master_music_786_profile#music/difficulty/score-level"
       ],
       "expected_projection": {
         "production_bms_sha256": "43148090C40ABBD951E8D7112200BDAE9B796A8A531A0793169E0AD70C3DC159",
@@ -294,13 +347,67 @@
             "max_note_count": 731
           },
           "formula": "playable_roots + long_roots + (source_slide_nodes_including_roots - source_hidden_slide_nodes - slide_roots)"
+        },
+        "master_music_profile": {
+          "music": {
+            "list_length": 796,
+            "target": {
+              "pointer": "0x6b71eeeea0",
+              "music_id": 786,
+              "band_id": 107,
+              "seq": 9993,
+              "published_at_bits": "0x0000019D44689D80",
+              "closed_at_bits": "0x0000019D6686BB18",
+              "category_set_id": 0,
+              "strings_omitted": true
+            },
+            "published_at_utc": "2026-03-31T15:00:00.000Z",
+            "closed_at_utc": "2026-04-07T05:59:59.000Z",
+            "selectable_at_capture": false,
+            "availability_reason": "limited-time chart is not selectable on this account outside its event window"
+          },
+          "special": {
+            "pointer": "0x6b723729a0",
+            "music_id": 786,
+            "difficulty": "special",
+            "play_level": 26,
+            "notes_quantity": 1000,
+            "score_s": 648000,
+            "score_a": 432000,
+            "score_b": 216000,
+            "score_c": 36000,
+            "score_ss": 864000,
+            "published_at_bits": "0x0000000000000000",
+            "enable_special_notes": 1,
+            "score_level_raw_bits": "0x0000000000000000",
+            "strings_omitted_except_difficulty": true
+          },
+          "free_live_score_level": {
+            "difficulty": "special",
+            "nullable_score_level_raw_bits": "0x0000000000000000",
+            "nullable_has_value": false,
+            "fallback_play_level": 26,
+            "resolved_score_level": 26,
+            "static_rule": {
+              "source": "MusicData.GetScoreLevel @ 0x340CAB0",
+              "nullable_read": "LDUR X8, [row,#0x54] @ 0x340CB88",
+              "has_value_test": "TST W8,#0xFF @ 0x340CB8C",
+              "value_test": "LSR X8,#32 then CBZ @ 0x340CB98..0x340CB9C",
+              "fallback": "MusicData.GetPlayLevel @ 0x340C764 when nullable is absent or zero",
+              "play_level_read": "LDR W0,[row,#0x20] @ 0x340C818",
+              "free_live_start_data_call": "BL MusicData.GetScoreLevel @ 0x3A1CA54",
+              "free_live_start_data_store": "STR W0,[RhythmGameStartData,#0x70] @ 0x3A1CA5C"
+            }
+          }
         }
       },
       "unknown_fields": [
+        "initialization.start_data_runtime",
+        "initialization.event_parameter",
         "initialization.base_score_bits"
       ],
       "blocking_findings": [
-        "D23-master-start-data"
+        "D23-HABAHIRO-runtime-availability"
       ]
     },
     {
@@ -308,28 +415,72 @@
       "requirement": "deck three-parameter member Float32 accumulation and score-level rate",
       "status": "partial",
       "evidence_ids": [
-        "SLS-S05"
+        "SLS-S05",
+        "SLS-R1-009"
       ],
       "input_provenance": [
-        "static_findings"
+        "static_findings",
+        "deck_aggregate_profile"
       ],
       "expected_source": [
-        "static:SLS-S05"
+        "static:SLS-S05",
+        "deck_aggregate_profile#deck_aggregate"
       ],
       "expected_projection": {
         "score_level_rate_formula": "Float32(Float32(scoreLevel - 5) * Float32(0.01)) + Float32(1.0)",
-        "ordinary_base_formula": "Float32(Float32(Float32(totalParameter) * scoreLevelRate) / Float32(maxNoteCount)) * Float32(3.0)"
+        "ordinary_base_formula": "Float32(Float32(Float32(totalParameter) * scoreLevelRate) / Float32(maxNoteCount)) * Float32(3.0)",
+        "observed_deck_aggregate": {
+          "array_identity": {
+            "pointer": "0x6cf0d75dc0",
+            "length": 5,
+            "elements_omitted": true
+          },
+          "invocations": 2,
+          "loop_observations": 12,
+          "component_2c": {
+            "value": 57715.1875,
+            "bits": "0x47617330"
+          },
+          "component_30": {
+            "value": 70965.765625,
+            "bits": "0x478A9AE2"
+          },
+          "component_34": {
+            "value": 64383.80859375,
+            "bits": "0x477B7FCF"
+          },
+          "first_addition": {
+            "value": 128680.953125,
+            "bits": "0x47FB547A"
+          },
+          "total_parameter": {
+            "value": 193064.765625,
+            "bits": "0x483C8A31"
+          },
+          "operation_order": "Float32(component_2c + component_30), then Float32(component_34 + prior)",
+          "repeat_invocations_identical": true
+        },
+        "observed_initialization_correlation": {
+          "score_level": 27,
+          "score_level_rate": {
+            "value": 1.2200000286102295,
+            "bits": "0x3F9C28F6"
+          },
+          "base_score": {
+            "value": 721.7742919921875,
+            "bits": "0x4434718E"
+          },
+          "bonus_base_score": {
+            "value": 0,
+            "bits": "0x00000000"
+          }
+        }
       },
       "unknown_fields": [
-        "profile.deck_members",
-        "profile.member_parameters",
-        "profile.score_level",
-        "expected.float32_accumulation_bits",
-        "expected.base_score_bits"
+        "profile.member_rows"
       ],
       "blocking_findings": [
-        "D06",
-        "D23-master-start-data"
+        "D23-deck-member-rows-privacy"
       ]
     },
     {
@@ -720,17 +871,20 @@
       "evidence_ids": [
         "SLS-S12",
         "SLS-R1-003",
-        "SLS-R1-007"
+        "SLS-R1-007",
+        "SLS-R1-011"
       ],
       "input_provenance": [
         "static_findings",
         "positive_r1",
-        "retry_r1"
+        "retry_r1",
+        "ordinary_auto_skill_one_note"
       ],
       "expected_source": [
         "static:SLS-S12",
         "positive_r1#GameOver.leave",
-        "retry_r1#GameOver.leave/InitializeLife.leave"
+        "retry_r1#GameOver.leave/InitializeLife.leave",
+        "ordinary_auto_skill_one_note#one_note"
       ],
       "expected_projection": {
         "counter_rules": {
@@ -757,40 +911,263 @@
           "miss_count": 0,
           "fast_count": 0,
           "slow_count": 0
+        },
+        "observed_one_note_max": {
+          "transitions": [
+            {
+              "note_index": 1,
+              "add_score": 541,
+              "record_combo": 1,
+              "value": {
+                "score": 541,
+                "combo": 1,
+                "skill_factor": {
+                  "value": 1,
+                  "bits": "0x3F800000"
+                },
+                "is_fever": 0,
+                "notes_type_omitted": true
+              }
+            },
+            {
+              "note_index": 82,
+              "add_score": 703,
+              "record_combo": 82,
+              "value": {
+                "score": 703,
+                "combo": 82,
+                "skill_factor": {
+                  "value": 1.2999999523162842,
+                  "bits": "0x3FA66666"
+                },
+                "is_fever": 0,
+                "notes_type_omitted": true
+              }
+            },
+            {
+              "note_index": 219,
+              "add_score": 1136,
+              "record_combo": 219,
+              "value": {
+                "score": 1136,
+                "combo": 219,
+                "skill_factor": {
+                  "value": 2.0999999046325684,
+                  "bits": "0x40066666"
+                },
+                "is_fever": 0,
+                "notes_type_omitted": true
+              }
+            }
+          ],
+          "equal_score_retention_witnesses": [
+            {
+              "prior_note_index": 1,
+              "current_note_index": 2,
+              "equal_add_score": 541,
+              "retained": {
+                "score": 541,
+                "combo": 1,
+                "skill_factor": {
+                  "value": 1,
+                  "bits": "0x3F800000"
+                },
+                "is_fever": 0,
+                "notes_type_omitted": true
+              },
+              "current_record_combo": 2
+            },
+            {
+              "prior_note_index": 2,
+              "current_note_index": 3,
+              "equal_add_score": 541,
+              "retained": {
+                "score": 541,
+                "combo": 1,
+                "skill_factor": {
+                  "value": 1,
+                  "bits": "0x3F800000"
+                },
+                "is_fever": 0,
+                "notes_type_omitted": true
+              },
+              "current_record_combo": 3
+            },
+            {
+              "prior_note_index": 3,
+              "current_note_index": 4,
+              "equal_add_score": 541,
+              "retained": {
+                "score": 541,
+                "combo": 1,
+                "skill_factor": {
+                  "value": 1,
+                  "bits": "0x3F800000"
+                },
+                "is_fever": 0,
+                "notes_type_omitted": true
+              },
+              "current_record_combo": 4
+            }
+          ]
         }
       },
       "unknown_fields": [
-        "record.all_perfect_status",
-        "record.one_note_max_identity",
-        "record.equal_max_retention"
+        "record.all_perfect_status"
       ],
       "blocking_findings": [
-        "D10",
         "D19"
       ]
     },
     {
       "case_id": "BS14",
       "requirement": "ordinary/bonus one-note strict maximum and equal retention",
-      "status": "blocked",
+      "status": "partial",
       "evidence_ids": [
-        "D10-static"
+        "D10-static",
+        "SLS-R1-011"
       ],
       "input_provenance": [
-        "static_contract"
+        "static_contract",
+        "ordinary_auto_skill_one_note"
       ],
       "expected_source": [
-        "static_contract#CalcOneNotesMaxScoreInfo"
+        "static_contract#CalcOneNotesMaxScoreInfo",
+        "ordinary_auto_skill_one_note#one_note/event_bonus_one_note"
       ],
-      "expected_projection": {},
+      "expected_projection": {
+        "ordinary": {
+          "call_count": 979,
+          "transitions": [
+            {
+              "note_index": 1,
+              "add_score": 541,
+              "record_combo": 1,
+              "value": {
+                "score": 541,
+                "combo": 1,
+                "skill_factor": {
+                  "value": 1,
+                  "bits": "0x3F800000"
+                },
+                "is_fever": 0,
+                "notes_type_omitted": true
+              }
+            },
+            {
+              "note_index": 82,
+              "add_score": 703,
+              "record_combo": 82,
+              "value": {
+                "score": 703,
+                "combo": 82,
+                "skill_factor": {
+                  "value": 1.2999999523162842,
+                  "bits": "0x3FA66666"
+                },
+                "is_fever": 0,
+                "notes_type_omitted": true
+              }
+            },
+            {
+              "note_index": 219,
+              "add_score": 1136,
+              "record_combo": 219,
+              "value": {
+                "score": 1136,
+                "combo": 219,
+                "skill_factor": {
+                  "value": 2.0999999046325684,
+                  "bits": "0x40066666"
+                },
+                "is_fever": 0,
+                "notes_type_omitted": true
+              }
+            }
+          ],
+          "equal_score_retention_witnesses": [
+            {
+              "prior_note_index": 1,
+              "current_note_index": 2,
+              "equal_add_score": 541,
+              "retained": {
+                "score": 541,
+                "combo": 1,
+                "skill_factor": {
+                  "value": 1,
+                  "bits": "0x3F800000"
+                },
+                "is_fever": 0,
+                "notes_type_omitted": true
+              },
+              "current_record_combo": 2
+            },
+            {
+              "prior_note_index": 2,
+              "current_note_index": 3,
+              "equal_add_score": 541,
+              "retained": {
+                "score": 541,
+                "combo": 1,
+                "skill_factor": {
+                  "value": 1,
+                  "bits": "0x3F800000"
+                },
+                "is_fever": 0,
+                "notes_type_omitted": true
+              },
+              "current_record_combo": 3
+            },
+            {
+              "prior_note_index": 3,
+              "current_note_index": 4,
+              "equal_add_score": 541,
+              "retained": {
+                "score": 541,
+                "combo": 1,
+                "skill_factor": {
+                  "value": 1,
+                  "bits": "0x3F800000"
+                },
+                "is_fever": 0,
+                "notes_type_omitted": true
+              },
+              "current_record_combo": 4
+            }
+          ],
+          "final": {
+            "score": 1136,
+            "combo": 219,
+            "skill_factor": {
+              "value": 2.0999999046325684,
+              "bits": "0x40066666"
+            },
+            "is_fever": 0,
+            "notes_type_omitted": true
+          }
+        },
+        "zero_event_bonus": {
+          "call_count": 979,
+          "unique_values": [
+            {
+              "score": 0,
+              "combo": 0,
+              "skill_factor": {
+                "value": 0,
+                "bits": "0x00000000"
+              },
+              "is_fever": 0,
+              "notes_type_omitted": true
+            }
+          ]
+        }
+      },
       "unknown_fields": [
-        "record.ordinary_strict_max",
         "record.bonus_strict_max",
-        "record.equal_retention",
         "record.callback_identity"
       ],
       "blocking_findings": [
-        "D10",
+        "D10-remaining",
         "D18-remaining"
       ]
     },
@@ -799,13 +1176,19 @@
       "requirement": "Miss/Bad/Good/Great/Perfect damage and Power mapping",
       "status": "partial",
       "evidence_ids": [
-        "SLS-S07"
+        "SLS-S07",
+        "SLS-R1-005",
+        "SLS-R1-008"
       ],
       "input_provenance": [
-        "static_findings"
+        "static_findings",
+        "skill_r1",
+        "initialization_profile"
       ],
       "expected_source": [
-        "static:SLS-S07"
+        "static:SLS-S07",
+        "skill_r1#all-result-base-damage",
+        "initialization_profile#mode_and_damage"
       ],
       "expected_projection": {
         "damage_mapping": {
@@ -813,19 +1196,54 @@
           "Bad": "Returns InGameCalculatedData.BadDamage at +0xAC.",
           "Good_Great_Perfect": "Return zero base damage.",
           "skill_order": "NoteFrontBase applies ordered active damage effects after selecting base damage and before OneFrameData Setup."
+        },
+        "observed_profile": {
+          "miss_damage": -100,
+          "bad_damage": -50
+        },
+        "observed_base_damage_by_result": {
+          "0": [
+            -100
+          ],
+          "1": [
+            -50
+          ],
+          "2": [
+            0
+          ],
+          "3": [
+            0
+          ],
+          "4": [
+            0
+          ]
+        },
+        "observed_one_frame_power_by_result": {
+          "0": [
+            -100
+          ],
+          "1": [
+            -50
+          ],
+          "2": [
+            0
+          ],
+          "3": [
+            0
+          ],
+          "4": [
+            0
+          ]
         }
       },
       "unknown_fields": [
-        "profile.miss_damage",
-        "profile.bad_damage",
         "one_frame.family_damage_values",
         "one_frame.power_values",
         "active_damage_effect_rows"
       ],
       "blocking_findings": [
         "D07",
-        "D13",
-        "D23-master-start-data"
+        "D13"
       ]
     },
     {
@@ -835,16 +1253,19 @@
       "evidence_ids": [
         "SLS-S02",
         "SLS-S06",
-        "SLS-R1-001"
+        "SLS-R1-001",
+        "SLS-R1-011"
       ],
       "input_provenance": [
         "static_findings",
-        "no_input_r1"
+        "no_input_r1",
+        "ordinary_auto_skill_one_note"
       ],
       "expected_source": [
         "static:SLS-S02",
         "static:SLS-S06",
-        "no_input_r1#GameOver.leave"
+        "no_input_r1#GameOver.leave",
+        "ordinary_auto_skill_one_note#overheal"
       ],
       "expected_projection": {
         "life_rule": {
@@ -865,6 +1286,26 @@
           "final_life": 0,
           "miss_count": 11,
           "single_game_over": 1
+        },
+        "observed_auto_overheal_state": {
+          "player_max_life": 1000,
+          "observed_life_values": [
+            1000,
+            1200,
+            1500
+          ],
+          "positive_once_effect_transitions": [
+            {
+              "alias": "skill-01",
+              "before": 1000,
+              "after": 1200
+            },
+            {
+              "alias": "skill-03",
+              "before": 1200,
+              "after": 1500
+            }
+          ]
         }
       },
       "unknown_fields": [
@@ -987,24 +1428,46 @@
       "status": "partial",
       "evidence_ids": [
         "SLS-S06",
-        "SLS-S09"
+        "SLS-S09",
+        "SLS-R1-011"
       ],
       "input_provenance": [
-        "static_findings"
+        "static_findings",
+        "ordinary_auto_skill_one_note"
       ],
       "expected_source": [
         "static:SLS-S06",
-        "static:SLS-S09"
+        "static:SLS-S09",
+        "ordinary_auto_skill_one_note#overheal"
       ],
       "expected_projection": {
         "percentage_formula": "Compute int32(+0x24) * truncFloatToInt(effectValue), then signed-divide by 100 using the compiler strength-reduced sequence, and pass the result to AddIPower.",
         "upper_limit_rule": "AddIPower clamps the resulting current Life to +0x28, not +0x24.",
-        "add_life_clamp": "The int32 sum is clamped to [0, value at +0x28]."
+        "add_life_clamp": "The int32 sum is clamped to [0, value at +0x28].",
+        "observed_overheal": {
+          "player_max_life": 1000,
+          "observed_life_values": [
+            1000,
+            1200,
+            1500
+          ],
+          "positive_once_effect_transitions": [
+            {
+              "alias": "skill-01",
+              "before": 1000,
+              "after": 1200
+            },
+            {
+              "alias": "skill-03",
+              "before": 1200,
+              "after": 1500
+            }
+          ]
+        }
       },
       "unknown_fields": [
         "profile.percentage_effect_row",
         "runtime.percentage_heal",
-        "runtime.overheal",
         "runtime.upper_limit_equal_boundary",
         "runtime.callback_identity"
       ],
@@ -1020,26 +1483,66 @@
       "status": "partial",
       "evidence_ids": [
         "SLS-R1-005",
+        "SLS-R1-011",
         "D11-static"
       ],
       "input_provenance": [
         "skill_r1",
+        "ordinary_auto_skill_one_note",
         "static_contract"
       ],
       "expected_source": [
-        "skill_r1#AddSituationSkillToPlayList.leave:2187"
+        "skill_r1#AddSituationSkillToPlayList.leave:2187",
+        "ordinary_auto_skill_one_note#skill_lifecycles"
       ],
       "expected_projection": {
         "observed_enqueue": {
           "sequence": 2187,
           "state": 1,
           "playlist_size": 1
-        }
+        },
+        "observed_successful_auto_lifecycles": [
+          {
+            "alias": "skill-01",
+            "skill_note_index": 1,
+            "trigger_sequence": 404,
+            "finish_leave_sequence": 588
+          },
+          {
+            "alias": "skill-02",
+            "skill_note_index": 2,
+            "trigger_sequence": 1190,
+            "finish_leave_sequence": 1384
+          },
+          {
+            "alias": "skill-03",
+            "skill_note_index": 3,
+            "trigger_sequence": 1608,
+            "finish_leave_sequence": 1767
+          },
+          {
+            "alias": "skill-04",
+            "skill_note_index": 4,
+            "trigger_sequence": 2870,
+            "finish_leave_sequence": 3065
+          },
+          {
+            "alias": "skill-05",
+            "skill_note_index": 5,
+            "trigger_sequence": 3651,
+            "finish_leave_sequence": 3871
+          },
+          {
+            "alias": "skill-04",
+            "skill_note_index": 6,
+            "trigger_sequence": 4559,
+            "finish_leave_sequence": 4764
+          }
+        ]
       },
       "unknown_fields": [
         "profile.mode_eligibility",
         "profile.skill_chara_list",
-        "runtime.success",
         "runtime.failure",
         "runtime.move_time",
         "runtime.multi_normal_identity",
@@ -1057,15 +1560,18 @@
       "status": "partial",
       "evidence_ids": [
         "SLS-S10",
-        "SLS-R1-005"
+        "SLS-R1-005",
+        "SLS-R1-011"
       ],
       "input_provenance": [
         "static_findings",
-        "skill_r1"
+        "skill_r1",
+        "ordinary_auto_skill_one_note"
       ],
       "expected_source": [
         "static:SLS-S10",
-        "skill_r1#Skill lifecycle events"
+        "skill_r1#Skill lifecycle events",
+        "ordinary_auto_skill_one_note#skill_lifecycles"
       ],
       "expected_projection": {
         "states": {
@@ -1082,11 +1588,234 @@
           "chara_index": 4,
           "skill_note_index": 1,
           "absolute_pos": 384
-        }
+        },
+        "observed_auto_lifecycles": [
+          {
+            "ordinal": 1,
+            "alias": "skill-01",
+            "skill_note_index": 1,
+            "absolute_pos": 2256,
+            "trigger_sequence": 404,
+            "trigger_state": 1,
+            "trigger_life": 1000,
+            "reservation_frame": 2147483647,
+            "reservation_alias": null,
+            "once_sequence": [
+              405,
+              406
+            ],
+            "once_life": [
+              1000,
+              1200
+            ],
+            "finish_enter_sequence": 587,
+            "finish_enter_state": 2,
+            "finish_enter_current": {
+              "master_alias": "skill-01",
+              "skill_note_index": 1,
+              "absolute_pos": 2256,
+              "continuous_result": 4,
+              "crescendo_rate": {
+                "value": 0,
+                "bits": "0x00000000"
+              },
+              "member_identity_omitted": true
+            },
+            "finish_enter_skill_timer_bits": "0xBBAE4140",
+            "finish_leave_sequence": 588,
+            "finish_leave_state": 2,
+            "finish_leave_current": null,
+            "finish_leave_skill_timer_bits": "0x00000000"
+          },
+          {
+            "ordinal": 2,
+            "alias": "skill-02",
+            "skill_note_index": 2,
+            "absolute_pos": 5376,
+            "trigger_sequence": 1190,
+            "trigger_state": 1,
+            "trigger_life": 1200,
+            "reservation_frame": 775,
+            "reservation_alias": "skill-02",
+            "once_sequence": [
+              1191,
+              1192
+            ],
+            "once_life": [
+              1200,
+              1200
+            ],
+            "finish_enter_sequence": 1383,
+            "finish_enter_state": 2,
+            "finish_enter_current": {
+              "master_alias": "skill-02",
+              "skill_note_index": 2,
+              "absolute_pos": 5376,
+              "continuous_result": 4,
+              "crescendo_rate": {
+                "value": 0,
+                "bits": "0x00000000"
+              },
+              "member_identity_omitted": true
+            },
+            "finish_enter_skill_timer_bits": "0xBBAF1F50",
+            "finish_leave_sequence": 1384,
+            "finish_leave_state": 2,
+            "finish_leave_current": null,
+            "finish_leave_skill_timer_bits": "0x00000000"
+          },
+          {
+            "ordinal": 3,
+            "alias": "skill-03",
+            "skill_note_index": 3,
+            "absolute_pos": 6912,
+            "trigger_sequence": 1608,
+            "trigger_state": 1,
+            "trigger_life": 1200,
+            "reservation_frame": 1839,
+            "reservation_alias": "skill-03",
+            "once_sequence": [
+              1609,
+              1610
+            ],
+            "once_life": [
+              1200,
+              1500
+            ],
+            "finish_enter_sequence": 1766,
+            "finish_enter_state": 2,
+            "finish_enter_current": {
+              "master_alias": "skill-03",
+              "skill_note_index": 3,
+              "absolute_pos": 6912,
+              "continuous_result": 4,
+              "crescendo_rate": {
+                "value": 0,
+                "bits": "0x00000000"
+              },
+              "member_identity_omitted": true
+            },
+            "finish_enter_skill_timer_bits": "0xBBA984B8",
+            "finish_leave_sequence": 1767,
+            "finish_leave_state": 2,
+            "finish_leave_current": null,
+            "finish_leave_skill_timer_bits": "0x00000000"
+          },
+          {
+            "ordinal": 4,
+            "alias": "skill-04",
+            "skill_note_index": 4,
+            "absolute_pos": 12624,
+            "trigger_sequence": 2870,
+            "trigger_state": 1,
+            "trigger_life": 1500,
+            "reservation_frame": 2361,
+            "reservation_alias": "skill-04",
+            "once_sequence": [
+              2871,
+              2872
+            ],
+            "once_life": [
+              1500,
+              1500
+            ],
+            "finish_enter_sequence": 3064,
+            "finish_enter_state": 2,
+            "finish_enter_current": {
+              "master_alias": "skill-04",
+              "skill_note_index": 4,
+              "absolute_pos": 12624,
+              "continuous_result": 4,
+              "crescendo_rate": {
+                "value": 0,
+                "bits": "0x00000000"
+              },
+              "member_identity_omitted": true
+            },
+            "finish_enter_skill_timer_bits": "0xBBB2DA48",
+            "finish_leave_sequence": 3065,
+            "finish_leave_state": 2,
+            "finish_leave_current": null,
+            "finish_leave_skill_timer_bits": "0x00000000"
+          },
+          {
+            "ordinal": 5,
+            "alias": "skill-05",
+            "skill_note_index": 5,
+            "absolute_pos": 15744,
+            "trigger_sequence": 3651,
+            "trigger_state": 1,
+            "trigger_life": 1500,
+            "reservation_frame": 4319,
+            "reservation_alias": "skill-05",
+            "once_sequence": [
+              3652,
+              3653
+            ],
+            "once_life": [
+              1500,
+              1500
+            ],
+            "finish_enter_sequence": 3870,
+            "finish_enter_state": 2,
+            "finish_enter_current": {
+              "master_alias": "skill-05",
+              "skill_note_index": 5,
+              "absolute_pos": 15744,
+              "continuous_result": 4,
+              "crescendo_rate": {
+                "value": 0,
+                "bits": "0x00000000"
+              },
+              "member_identity_omitted": true
+            },
+            "finish_enter_skill_timer_bits": "0xBBB4AB94",
+            "finish_leave_sequence": 3871,
+            "finish_leave_state": 2,
+            "finish_leave_current": null,
+            "finish_leave_skill_timer_bits": "0x00000000"
+          },
+          {
+            "ordinal": 6,
+            "alias": "skill-04",
+            "skill_note_index": 6,
+            "absolute_pos": 19248,
+            "trigger_sequence": 4559,
+            "trigger_state": 1,
+            "trigger_life": 1500,
+            "reservation_frame": 5388,
+            "reservation_alias": "skill-04",
+            "once_sequence": [
+              4560,
+              4561
+            ],
+            "once_life": [
+              1500,
+              1500
+            ],
+            "finish_enter_sequence": 4763,
+            "finish_enter_state": 2,
+            "finish_enter_current": {
+              "master_alias": "skill-04",
+              "skill_note_index": 6,
+              "absolute_pos": 19248,
+              "continuous_result": 4,
+              "crescendo_rate": {
+                "value": 0,
+                "bits": "0x00000000"
+              },
+              "member_identity_omitted": true
+            },
+            "finish_enter_skill_timer_bits": "0xBBA9DEC4",
+            "finish_leave_sequence": 4764,
+            "finish_leave_state": 2,
+            "finish_leave_current": null,
+            "finish_leave_skill_timer_bits": "0x00000000"
+          }
+        ]
       },
       "unknown_fields": [
         "skill.callback_identity",
-        "skill.reservation_frame",
         "skill.delta_source_identity"
       ],
       "blocking_findings": [
