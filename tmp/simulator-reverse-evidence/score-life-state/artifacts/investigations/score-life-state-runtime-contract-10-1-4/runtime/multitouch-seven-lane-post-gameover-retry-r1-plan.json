@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "scenario_id": "multitouch-seven-lane-post-gameover-retry-lifecycle-v3",
+  "precondition": "Live Failed dialog is visible; SELinux is Enforcing; only the non-destructive Retry path may be selected.",
+  "control_provenance": {
+    "source_commit": "4ac4ea186efade9091c6f4377ab7ad7dc852a2c5",
+    "source_plan_path": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime/multitouch-seven-lane-native-skill-r1-plan.json",
+    "source_plan_sha256": "0A345C27D75B83047CD2FE4771B1426DD6772155DD1F9D495A06FC9722B114D4",
+    "change": "preserve the committed native seven-lane run exactly, then add a 12-second post-Game-Over observation window and one non-destructive Retry/confirm/reset observation sequence",
+    "control_binary_path": "runtime-control/multitouch_seven_lane_control.arm64",
+    "control_binary_sha256": "AB39066A205A1E4B4CA9B335D43204064712A850CF041C86684B5E2E4B59C249"
+  },
+  "safety": {
+    "retry_only": true,
+    "continue_allowed": false,
+    "premium_currency_actions": [],
+    "target_process_memory_writes": false,
+    "return_replacement": false,
+    "apk_modification": false,
+    "selinux_restore_required": true
+  },
+  "actions": [
+    {
+      "kind": "tap",
+      "x": 800,
+      "y": 440,
+      "marker": "multitouch-open-retry-confirmation"
+    },
+    {
+      "kind": "tap",
+      "x": 920,
+      "y": 440,
+      "delay_ms": 750,
+      "marker": "multitouch-confirm-retry"
+    },
+    {
+      "kind": "wait",
+      "delay_ms": 300,
+      "marker": "multitouch-pre-burst"
+    },
+    {
+      "kind": "multitap_native",
+      "marker": "multitouch-native-seven-lane-burst",
+      "event_device": "/dev/input/event2",
+      "screen_height": 720,
+      "screen_y": 650,
+      "screen_xs": [380, 520, 660, 800, 940, 1080, 1220],
+      "repeat": 250,
+      "interval_ms": 80,
+      "touch_ms": 20,
+      "control_binary_sha256": "AB39066A205A1E4B4CA9B335D43204064712A850CF041C86684B5E2E4B59C249"
+    },
+    {
+      "kind": "wait",
+      "delay_ms": 12000,
+      "marker": "post-game-over-observation-window"
+    },
+    {
+      "kind": "tap",
+      "x": 800,
+      "y": 440,
+      "marker": "post-game-over-open-retry-confirmation"
+    },
+    {
+      "kind": "tap",
+      "x": 920,
+      "y": 440,
+      "delay_ms": 750,
+      "marker": "post-game-over-confirm-retry"
+    },
+    {
+      "kind": "wait",
+      "delay_ms": 1500,
+      "marker": "post-retry-reset-observation"
+    }
+  ],
+  "tail_seconds": 5
+}

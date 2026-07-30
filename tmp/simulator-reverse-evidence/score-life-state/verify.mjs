@@ -43,7 +43,7 @@ function filesRecursively(root, current = root) {
   return files;
 }
 
-check(manifest.schemaVersion === 2 && manifest.entries.length === 362, "Unexpected evidence manifest shape");
+check(manifest.schemaVersion === 2 && manifest.entries.length === 364, "Unexpected evidence manifest shape");
 check(
   manifest.source.staticEvidenceCommit === "6c902656c72f3983fb04386038dcfe38f0d53797" &&
     manifest.source.runtimeInputCommit === "1ee976ea1de24cb0567762a74e2d091ae4c78464" &&
@@ -53,7 +53,8 @@ check(
     manifest.source.positiveEvidenceCommit === "5ce2a7ef325def61986a93053ad85c2f4973f25b" &&
     manifest.source.multitouchPlanCommit === "eb7aba5467569b577cd942957dd65bdce600bc9d" &&
     manifest.source.nativeMultitouchPlanCommit === "445ac26856e597fb6c12c708e7a31ecf995d06e1" &&
-    manifest.source.skillEvidenceCommit === "4ac4ea186efade9091c6f4377ab7ad7dc852a2c5",
+    manifest.source.skillEvidenceCommit === "4ac4ea186efade9091c6f4377ab7ad7dc852a2c5" &&
+    manifest.source.retryLifecyclePlanCommit === "38cee0b409246323b46099e291331a78a267bcec",
   "Unexpected Reverse evidence commits",
 );
 check(
@@ -73,7 +74,7 @@ check(
     manifest.counts.enums === 19 &&
     manifest.counts.arm64Slices === 326 &&
     manifest.counts.staticEntries === 335 &&
-    manifest.counts.totalEntries === 362 &&
+    manifest.counts.totalEntries === 364 &&
     manifest.counts.r0InputEntries === 12 &&
     manifest.counts.r1EvidenceEntries === 6 &&
     manifest.counts.capturePlanEntries === 4 &&
@@ -81,6 +82,7 @@ check(
     manifest.counts.multitouchPlanBatchEntries === 6 &&
     manifest.counts.nativeMultitouchBatchEntries === 9 &&
     manifest.counts.skillEvidenceEntries === 5 &&
+    manifest.counts.retryLifecyclePlanEntries === 5 &&
     manifest.counts.productionBms === 2 &&
     manifest.counts.cacheRecords === 2 &&
     manifest.counts.captureTargets === 50 &&
@@ -114,7 +116,8 @@ check(
     runtimeInputGate.blockingFindings.join(",") ===
       "D18-remaining,D19,D20-remaining,D21,D22-remaining,D23-master-start-data,D24" &&
     runtimeInputGate.r1TraceCount === 3 &&
-    runtimeInputGate.pendingPlans.length === 0 &&
+    runtimeInputGate.pendingPlans.join(",") ===
+      "multitouch-seven-lane-post-gameover-retry-lifecycle-v3" &&
     runtimeInputGate.abortedPlans.join(",") === "multitouch-seven-lane-positive-skill-window" &&
     runtimeInputGate.executedPlans.join(",") ===
       "positive-retry-all-lanes-early-score-skill-v2,multitouch-seven-lane-native-positive-skill-window-v2" &&
@@ -132,6 +135,7 @@ git(["cat-file", "-e", `${manifest.source.positiveEvidenceCommit}^{commit}`], so
 git(["cat-file", "-e", `${manifest.source.multitouchPlanCommit}^{commit}`], sourceRoot);
 git(["cat-file", "-e", `${manifest.source.nativeMultitouchPlanCommit}^{commit}`], sourceRoot);
 git(["cat-file", "-e", `${manifest.source.skillEvidenceCommit}^{commit}`], sourceRoot);
+git(["cat-file", "-e", `${manifest.source.retryLifecyclePlanCommit}^{commit}`], sourceRoot);
 const evidenceCommits = [
   manifest.source.staticEvidenceCommit,
   manifest.source.runtimeInputCommit,
@@ -142,6 +146,7 @@ const evidenceCommits = [
   manifest.source.multitouchPlanCommit,
   manifest.source.nativeMultitouchPlanCommit,
   manifest.source.skillEvidenceCommit,
+  manifest.source.retryLifecyclePlanCommit,
 ];
 const ids = new Set();
 const copiedPaths = new Set();
@@ -301,7 +306,7 @@ const runtimeStatus = json("runtime_input_status.json");
 check(
   runtimeStatus.status === "runtime-inputs-and-r1-partial-locked-business-gate-open" &&
     runtimeStatus.runtime.r1_trace_count === 3 &&
-    runtimeStatus.runtime.pending_capture_plans.length === 4 &&
+    runtimeStatus.runtime.pending_capture_plans.length === 5 &&
     runtimeStatus.runtime.pending_capture_plans[0].scenario_id ===
       "positive-retry-all-lanes-score-skill" &&
     runtimeStatus.runtime.pending_capture_plans[0].status ===
@@ -320,6 +325,12 @@ check(
       "executed-confirmed-trace-promoted" &&
     runtimeStatus.runtime.pending_capture_plans[3].observed_scope.join(",") ===
       "D18-active-skill,D20-skill-start-end-freeze,D14-once-heal" &&
+    runtimeStatus.runtime.pending_capture_plans[4].scenario_id ===
+      "multitouch-seven-lane-post-gameover-retry-lifecycle-v3" &&
+    runtimeStatus.runtime.pending_capture_plans[4].status ===
+      "committed-plan-not-runtime-evidence" &&
+    runtimeStatus.runtime.pending_capture_plans[4].intended_scope.join(",") ===
+      "D22-post-Game-Over-manager-gate,D22-Retry-reset" &&
     runtimeStatus.runtime.capture_fields_not_consumed.length === 5 &&
     runtimeStatus.gates.D18 === "partial-required-before-code" &&
     runtimeStatus.gates.D20 === "partial-required-before-code" &&
@@ -494,6 +505,62 @@ check(
     nativeMultitouchPlan.actions[3].touch_ms === 20 &&
     nativeMultitouchPlan.tail_seconds === 5,
   "Frozen native Linux MT capture, ELF/build provenance, safety boundary, or plan changed",
+);
+
+const retryLifecyclePlan = json(
+  "runtime/multitouch-seven-lane-post-gameover-retry-r1-plan.json",
+);
+const retryActions = retryLifecyclePlan.actions;
+check(
+  retryLifecyclePlan.schema_version === 1 &&
+    retryLifecyclePlan.scenario_id ===
+      "multitouch-seven-lane-post-gameover-retry-lifecycle-v3" &&
+    retryLifecyclePlan.control_provenance.source_commit ===
+      "4ac4ea186efade9091c6f4377ab7ad7dc852a2c5" &&
+    retryLifecyclePlan.control_provenance.source_plan_sha256 ===
+      "0A345C27D75B83047CD2FE4771B1426DD6772155DD1F9D495A06FC9722B114D4" &&
+    retryLifecyclePlan.control_provenance.control_binary_sha256 ===
+      "AB39066A205A1E4B4CA9B335D43204064712A850CF041C86684B5E2E4B59C249" &&
+    retryLifecyclePlan.safety.retry_only === true &&
+    retryLifecyclePlan.safety.continue_allowed === false &&
+    retryLifecyclePlan.safety.premium_currency_actions.length === 0 &&
+    retryLifecyclePlan.safety.target_process_memory_writes === false &&
+    retryLifecyclePlan.safety.return_replacement === false &&
+    retryLifecyclePlan.safety.apk_modification === false &&
+    retryLifecyclePlan.safety.selinux_restore_required === true &&
+    retryActions.length === 8 &&
+    JSON.stringify(retryActions.slice(0, 4)) ===
+      JSON.stringify(nativeMultitouchPlan.actions) &&
+    JSON.stringify(retryActions[4]) ===
+      JSON.stringify({
+        kind: "wait",
+        delay_ms: 12000,
+        marker: "post-game-over-observation-window",
+      }) &&
+    JSON.stringify(retryActions[5]) ===
+      JSON.stringify({
+        kind: "tap",
+        x: 800,
+        y: 440,
+        marker: "post-game-over-open-retry-confirmation",
+      }) &&
+    JSON.stringify(retryActions[6]) ===
+      JSON.stringify({
+        kind: "tap",
+        x: 920,
+        y: 440,
+        delay_ms: 750,
+        marker: "post-game-over-confirm-retry",
+      }) &&
+    JSON.stringify(retryActions[7]) ===
+      JSON.stringify({
+        kind: "wait",
+        delay_ms: 1500,
+        marker: "post-retry-reset-observation",
+      }) &&
+    retryLifecyclePlan.tail_seconds === 5 &&
+    retryActions.every((action) => ["wait", "tap", "multitap_native"].includes(action.kind)),
+  "Frozen post-Game-Over Retry-only lifecycle plan or safety boundary changed",
 );
 
 const traceBytes = gunzipSync(
@@ -796,7 +863,7 @@ for (const [path, fragment] of criticalText) {
 }
 
 console.log(
-  `score-life-state evidence verified: methods=326 layouts=25 enums=19 BMS=2 R1=3(partial D18/D20/D22) plans=4(pending=0) ` +
+  `score-life-state evidence verified: methods=326 layouts=25 enums=19 BMS=2 R1=3(partial D18/D20/D22) plans=5(pending-retry=1) ` +
     `V01=closed business=blocked(D18-D24) entries=${manifest.entries.length} ` +
     `index=${validateIndex ? "checked" : "skipped"}`,
 );

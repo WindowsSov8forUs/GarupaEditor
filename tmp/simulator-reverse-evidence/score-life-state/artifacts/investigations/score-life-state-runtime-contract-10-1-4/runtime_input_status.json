@@ -112,6 +112,13 @@
         "status": "executed-confirmed-trace-promoted",
         "observed_scope": ["D18-active-skill", "D20-skill-start-end-freeze", "D14-once-heal"],
         "not_observed": ["D20-Fever-transition", "D20-multiple-Skill-overlap"]
+      },
+      {
+        "path": "runtime/multitouch-seven-lane-post-gameover-retry-r1-plan.json",
+        "scenario_id": "multitouch-seven-lane-post-gameover-retry-lifecycle-v3",
+        "status": "committed-plan-not-runtime-evidence",
+        "intended_scope": ["D22-post-Game-Over-manager-gate", "D22-Retry-reset"],
+        "safety": "Retry only; Continue/premium-currency actions forbidden; 12-second post-Game-Over observation before Retry"
       }
     ],
     "capture_fields_not_consumed": [
@@ -121,7 +128,7 @@
       "NoteFrontBase.judgeFrontNote.note_type",
       "NoteFrontBase.judgeFrontNote.absolute_pos"
     ],
-    "operational_blocker": "Three R1 traces are closed. Active Skill start/Playing/Finishing, once-heal and Skill-rate freezing are observed; Fever transitions, multiple-Skill overlap, remaining lifecycle and master provenance remain open. Five ABI-unsafe fields stay excluded.",
+    "operational_blocker": "Three R1 traces are closed. A non-destructive post-Game-Over Retry/reset plan is pending execution after commit/freeze. Fever transitions, multiple-Skill overlap, remaining lifecycle and master provenance remain open. Five ABI-unsafe fields stay excluded.",
     "synthetic_trace_allowed": false
   },
   "gates": {

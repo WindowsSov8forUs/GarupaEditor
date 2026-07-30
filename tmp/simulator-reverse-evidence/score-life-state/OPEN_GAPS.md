@@ -11,6 +11,7 @@
 - `D18-positive-partial`：v2 R1锁定1个Perfect业务OneFrame、Score 1404、Combo/Perfect计数与10个Miss。
 - `D14/D18/D20-Skill-partial`：原生七lane R1锁定Skill `0→1→2→3→0`、5.0s/0.75s timer、once-heal `800+300=1100`、Begin前两个entry冻结1.0且在Playing后Reflect仍消费1.0、Playing后18个entry冻结1.2/ScoreUpType1、finish后恢复1.0。
 - 正判定/Skill计划：v1保留为superseded；v2与原生ARM64七lane v2均已晋升raw；shell七lane控制因超时aborted且无raw。
+- post-Game-Over Retry v3计划已提交并冻结：保留原生run，Game Over后观察12秒，只执行非破坏性Retry/确认；Continue与星石动作显式禁止。尚未执行，不形成D22结论。
 
 ## required-before-code
 
@@ -33,9 +34,9 @@ unknown_layouts=[]
 unknown_fields=[]
 r1_traces=3
 production_bms=2
-capture_plans=4
+capture_plans=5
 executed_capture_plans=2
-pending_capture_plans=0
+pending_capture_plans=1
 aborted_capture_plans=1
 superseded_capture_plans=1
 excluded_raw_fields=5

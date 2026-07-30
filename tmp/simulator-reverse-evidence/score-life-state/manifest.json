@@ -11,7 +11,8 @@
     "positiveEvidenceCommit": "5ce2a7ef325def61986a93053ad85c2f4973f25b",
     "multitouchPlanCommit": "eb7aba5467569b577cd942957dd65bdce600bc9d",
     "nativeMultitouchPlanCommit": "445ac26856e597fb6c12c708e7a31ecf995d06e1",
-    "skillEvidenceCommit": "4ac4ea186efade9091c6f4377ab7ad7dc852a2c5"
+    "skillEvidenceCommit": "4ac4ea186efade9091c6f4377ab7ad7dc852a2c5",
+    "retryLifecyclePlanCommit": "38cee0b409246323b46099e291331a78a267bcec"
   },
   "sample": {
     "package": "jp.co.craftegg.band",
@@ -29,7 +30,7 @@
     "staticEntries": 335,
     "r1Traces": 3,
     "fixedEventCases": 0,
-    "totalEntries": 362,
+    "totalEntries": 364,
     "r0InputEntries": 12,
     "productionBms": 2,
     "cacheRecords": 2,
@@ -39,7 +40,8 @@
     "positiveEvidenceEntries": 5,
     "multitouchPlanBatchEntries": 6,
     "nativeMultitouchBatchEntries": 9,
-    "skillEvidenceEntries": 5
+    "skillEvidenceEntries": 5,
+    "retryLifecyclePlanEntries": 5
   },
   "versionRebaselineGate": {
     "status": "closed",
@@ -5029,18 +5031,16 @@
     },
     {
       "id": "SLS-B01-329",
-      "sourceCommit": "4ac4ea186efade9091c6f4377ab7ad7dc852a2c5",
+      "sourceCommit": "38cee0b409246323b46099e291331a78a267bcec",
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/README.md",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/README.md",
-      "bytes": 10547,
-      "sha256": "BDC95AB9DF1705FEBE47A7019450F3D510EF13029D5A10CE66DEC6D580286FA4",
+      "bytes": 11403,
+      "sha256": "A3357A88A623BAB968427298EE8E0A72588A8E2341F8B3E93CEB87AB0BB27A78",
       "version": "10.1.4_230_arm64-v8a",
-      "status": "confirmed-r1-partial-business-gate-open",
+      "status": "committed-plan-not-runtime-evidence",
       "consumedBy": [
         "B02",
-        "D18-active-skill-partial",
-        "D20-skill-freeze-partial",
-        "D14-once-heal-partial"
+        "D22-retry-lifecycle-plan"
       ]
     },
     {
@@ -5157,18 +5157,16 @@
     },
     {
       "id": "SLS-B02-R0-011",
-      "sourceCommit": "4ac4ea186efade9091c6f4377ab7ad7dc852a2c5",
+      "sourceCommit": "38cee0b409246323b46099e291331a78a267bcec",
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime_input_status.json",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime_input_status.json",
-      "bytes": 6722,
-      "sha256": "2D4B2500EF892BD0E8CAF8FCFF2172A4E7650823339C15CA67EE25DF234E2C4A",
+      "bytes": 7174,
+      "sha256": "EC226867FC9E4AFB07A6E2FA02D5DF7BC785F85C5A85AC4060265544F6499D63",
       "version": "10.1.4_230_arm64-v8a",
-      "status": "confirmed-r1-partial-business-gate-open",
+      "status": "committed-plan-not-runtime-evidence",
       "consumedBy": [
         "B02",
-        "D18-active-skill-partial",
-        "D20-skill-freeze-partial",
-        "D14-once-heal-partial"
+        "D22-retry-lifecycle-plan"
       ]
     },
     {
@@ -5203,18 +5201,16 @@
     },
     {
       "id": "SLS-B01-332",
-      "sourceCommit": "4ac4ea186efade9091c6f4377ab7ad7dc852a2c5",
+      "sourceCommit": "38cee0b409246323b46099e291331a78a267bcec",
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/SHA256SUMS",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/SHA256SUMS",
-      "bytes": 47245,
-      "sha256": "D67D7F1FA657784F5B78AEAD82C6D5F0D307C68296D9936D6D13FC3AA67680BE",
+      "bytes": 47482,
+      "sha256": "DB7F4A81DEC9B1930FB89562EBBC242687501FBADE8DA3D593CAAF89AFC5A2A1",
       "version": "10.1.4_230_arm64-v8a",
-      "status": "confirmed-r1-partial-business-gate-open",
+      "status": "committed-plan-not-runtime-evidence",
       "consumedBy": [
         "B02",
-        "D18-active-skill-partial",
-        "D20-skill-freeze-partial",
-        "D14-once-heal-partial"
+        "D22-retry-lifecycle-plan"
       ]
     },
     {
@@ -5505,6 +5501,34 @@
         "D20-skill-freeze-partial",
         "D14-once-heal-partial"
       ]
+    },
+    {
+      "id": "SLS-B02-PLAN-010",
+      "sourceCommit": "38cee0b409246323b46099e291331a78a267bcec",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime/multitouch-seven-lane-post-gameover-retry-r1-plan.json",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime/multitouch-seven-lane-post-gameover-retry-r1-plan.json",
+      "bytes": 2473,
+      "sha256": "631ECC107355B3B28CF014146A5F22DF962DC15E25006033FB925EEACBAD2AE0",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "committed-plan-not-runtime-evidence",
+      "consumedBy": [
+        "B02",
+        "D22-retry-lifecycle-plan"
+      ]
+    },
+    {
+      "id": "SLS-B02-PLAN-011",
+      "sourceCommit": "38cee0b409246323b46099e291331a78a267bcec",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_retry_lifecycle_plan.py",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_retry_lifecycle_plan.py",
+      "bytes": 4643,
+      "sha256": "51CC05A7856D5D203C36C2C8B9C667C02562FFECA0F19B3907ECE081484A975E",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "committed-plan-not-runtime-evidence",
+      "consumedBy": [
+        "B02",
+        "D22-retry-lifecycle-plan"
+      ]
     }
   ],
   "runtimeInputGate": {
@@ -5537,7 +5561,9 @@
     ],
     "r1TraceCount": 3,
     "productionAuthorization": false,
-    "pendingPlans": [],
+    "pendingPlans": [
+      "multitouch-seven-lane-post-gameover-retry-lifecycle-v3"
+    ],
     "supersededPlans": [
       "positive-retry-all-lanes-score-skill"
     ],

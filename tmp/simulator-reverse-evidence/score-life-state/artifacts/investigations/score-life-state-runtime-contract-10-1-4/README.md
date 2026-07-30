@@ -51,6 +51,7 @@ These static conclusions do **not** authorize implementation. D18–D24, master/
 - `verify_score_life_positive_r1.py`: fail-closed verifier for the positive Perfect/Score R1 trace and its explicit unconsumed ABI fields.
 - `verify_score_life_multitouch_plan.py`: fail-closed verifier for hook identity, superseded shell control, native plan, ARM64 ELF/build provenance and SELinux restoration boundary.
 - `verify_score_life_skill_r1.py`: fail-closed verifier for the active-Skill lifecycle, same-frame frozen rates, once-heal and final record trace.
+- `verify_score_life_retry_lifecycle_plan.py`: fail-closed verifier for the pending non-destructive post-Game-Over Retry/reset plan.
 - `runtime-inputs/bms/`: ordinary and HABAHIRO TextAssets extracted from connected-device 10.1.4 cache bundles.
 - `runtime-inputs/cache-index/`: byte-preserving `AssetBundleInfo` records and structured cache provenance; account identifiers are omitted.
 - `runtime_input_status.json`: D18/D22/D23 partial state and remaining runtime blockers.
@@ -62,6 +63,7 @@ These static conclusions do **not** authorize implementation. D18–D24, master/
 - `runtime/multitouch-seven-lane-skill-r1-plan.json`: aborted shell-sendevent control; it exceeded the time bound, produced no trace and is retained only as provenance.
 - `runtime/multitouch-seven-lane-native-skill-r1-plan.json`: executed native 20-second seven-lane plan (`250 × 80ms`).
 - `runtime/multitouch-seven-lane-native-skill.trace.json.gz`: successful 7,122-event R1 trace covering active Skill and same-frame entry freezing.
+- `runtime/multitouch-seven-lane-post-gameover-retry-r1-plan.json`: pending v3 plan preserving the native run, then observing 12 seconds after Game Over before a Retry-only reset sequence; Continue is forbidden.
 - `runtime-control/multitouch_seven_lane_control.c`: fixed input-device-only control source.
 - `runtime-control/multitouch_seven_lane_control.arm64`: 6,304-byte stripped ELF64 AArch64 PIE, SHA-256 `AB39066A...9C249`.
 - `runtime-control/multitouch_seven_lane_control.build.json`: NDK 27.2 / Android 24 deterministic build and capability record.
@@ -103,6 +105,7 @@ The R0 verifier continues to validate the device cache, both BMS inputs and all 
 py -3.14 artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_no_input_r1.py
 py -3.14 artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_positive_r1.py
 py -3.14 artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_skill_r1.py
+py -3.14 artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_retry_lifecycle_plan.py
 ```
 
 The trace was captured through an explicit non-default loopback server forwarded by ADB, using `--device-address 127.0.0.1:47913`; the transport is embedded in the trace capability record. This changes only the Frida connection path and does not alter the observation agent or game state.
@@ -113,4 +116,6 @@ Five raw fields are explicitly not consumed: float-return hooks read generic `x0
 
 The first Linux MT shell control was aborted after exceeding its execution time bound; no output trace was produced, no result is promoted, and SELinux was independently restored to Enforcing. Its replacement is a committed 6,304-byte ARM64 helper that writes only `struct input_event` records to `event2` and uses `nanosleep` for 20ms press/60ms release timing. The capture script verified the helper SHA before push, bracketed execution with temporary SELinux Permissive, restored Enforcing in `finally`, and deleted the device copy.
 
-The resulting 7,122-event trace observes Skill Add→Begin→Playing→Finishing→None (`0→1→2→3→0`), 5.0s effective timer, 0.75s finishing timer, and fixed once-heal `800 + 300 = 1100` while the displayed base remains 1000 and the business upper limit 2000. Two entries created after Skill enqueue but before Begin froze rate 1.0 and were Reflect-consumed after state became Playing; 18 later entries froze rate 1.2/ScoreUpType1, and the first post-finish entry returned to 1.0. This partially closes D18, D14 and the Skill start/end part of D20. Fever transitions, multiple/overlapping Skill, guard/Never Die, remaining lifecycle, deck/start-data/master rows, BS01–BS36 and final `closure.json` remain open. The five ABI-unsafe fields stay unconsumed. The business gate remains open and no trace authorizes production implementation.
+The resulting 7,122-event trace observes Skill Add→Begin→Playing→Finishing→None (`0→1→2→3→0`), 5.0s effective timer, 0.75s finishing timer, and fixed once-heal `800 + 300 = 1100` while the displayed base remains 1000 and the business upper limit 2000. Two entries created after Skill enqueue but before Begin froze rate 1.0 and were Reflect-consumed after state became Playing; 18 later entries froze rate 1.2/ScoreUpType1, and the first post-finish entry returned to 1.0. This partially closes D18, D14 and the Skill start/end part of D20.
+
+The pending v3 plan changes no part of the committed native run. It adds a 12-second observation window after the previously observed Game Over, then only the same Retry and confirmation coordinates followed by reset observation. Its safety object forbids Continue and premium-currency actions. It is plan/tooling only and closes no D22 scope until a complete trace is independently verified. Fever transitions, multiple/overlapping Skill, guard/Never Die, remaining lifecycle, deck/start-data/master rows, BS01–BS36 and final `closure.json` remain open. The five ABI-unsafe fields stay unconsumed. The business gate remains open and no trace authorizes production implementation.
