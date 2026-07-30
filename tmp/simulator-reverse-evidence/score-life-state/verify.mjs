@@ -43,7 +43,7 @@ function filesRecursively(root, current = root) {
   return files;
 }
 
-check(manifest.schemaVersion === 2 && manifest.entries.length === 360, "Unexpected evidence manifest shape");
+check(manifest.schemaVersion === 2 && manifest.entries.length === 362, "Unexpected evidence manifest shape");
 check(
   manifest.source.staticEvidenceCommit === "6c902656c72f3983fb04386038dcfe38f0d53797" &&
     manifest.source.runtimeInputCommit === "1ee976ea1de24cb0567762a74e2d091ae4c78464" &&
@@ -52,7 +52,8 @@ check(
     manifest.source.capturePlanV2Commit === "3adf31f987830ce5b82aba0d92813b69fda3cec7" &&
     manifest.source.positiveEvidenceCommit === "5ce2a7ef325def61986a93053ad85c2f4973f25b" &&
     manifest.source.multitouchPlanCommit === "eb7aba5467569b577cd942957dd65bdce600bc9d" &&
-    manifest.source.nativeMultitouchPlanCommit === "445ac26856e597fb6c12c708e7a31ecf995d06e1",
+    manifest.source.nativeMultitouchPlanCommit === "445ac26856e597fb6c12c708e7a31ecf995d06e1" &&
+    manifest.source.skillEvidenceCommit === "4ac4ea186efade9091c6f4377ab7ad7dc852a2c5",
   "Unexpected Reverse evidence commits",
 );
 check(
@@ -72,17 +73,18 @@ check(
     manifest.counts.enums === 19 &&
     manifest.counts.arm64Slices === 326 &&
     manifest.counts.staticEntries === 335 &&
-    manifest.counts.totalEntries === 360 &&
+    manifest.counts.totalEntries === 362 &&
     manifest.counts.r0InputEntries === 12 &&
     manifest.counts.r1EvidenceEntries === 6 &&
     manifest.counts.capturePlanEntries === 4 &&
     manifest.counts.positiveEvidenceEntries === 5 &&
     manifest.counts.multitouchPlanBatchEntries === 6 &&
     manifest.counts.nativeMultitouchBatchEntries === 9 &&
+    manifest.counts.skillEvidenceEntries === 5 &&
     manifest.counts.productionBms === 2 &&
     manifest.counts.cacheRecords === 2 &&
     manifest.counts.captureTargets === 50 &&
-    manifest.counts.r1Traces === 2 &&
+    manifest.counts.r1Traces === 3 &&
     manifest.counts.fixedEventCases === 0,
   "Evidence counts changed",
 );
@@ -107,14 +109,15 @@ const runtimeInputGate = manifest.runtimeInputGate;
 check(
   runtimeInputGate.status === "partial-required-before-code" &&
     runtimeInputGate.closedSubscope.join(",") ===
-      "ordinary-production-bms,habahiro-production-bms,connected-device-cache-provenance,observation-only-capture-targets,no-input-life-game-over-r1,positive-perfect-score-r1" &&
-    runtimeInputGate.partialFindings.join(",") === "D18,D22,D23" &&
+      "ordinary-production-bms,habahiro-production-bms,connected-device-cache-provenance,observation-only-capture-targets,no-input-life-game-over-r1,positive-perfect-score-r1,active-skill-lifecycle-r1,skill-same-frame-freeze-r1,once-heal-r1" &&
+    runtimeInputGate.partialFindings.join(",") === "D18,D20,D22,D23" &&
     runtimeInputGate.blockingFindings.join(",") ===
-      "D18-remaining,D19,D20,D21,D22-remaining,D23-master-start-data,D24" &&
-    runtimeInputGate.r1TraceCount === 2 &&
-    runtimeInputGate.pendingPlans.join(",") === "multitouch-seven-lane-native-positive-skill-window-v2" &&
+      "D18-remaining,D19,D20-remaining,D21,D22-remaining,D23-master-start-data,D24" &&
+    runtimeInputGate.r1TraceCount === 3 &&
+    runtimeInputGate.pendingPlans.length === 0 &&
     runtimeInputGate.abortedPlans.join(",") === "multitouch-seven-lane-positive-skill-window" &&
-    runtimeInputGate.executedPlans.join(",") === "positive-retry-all-lanes-early-score-skill-v2" &&
+    runtimeInputGate.executedPlans.join(",") ===
+      "positive-retry-all-lanes-early-score-skill-v2,multitouch-seven-lane-native-positive-skill-window-v2" &&
     runtimeInputGate.supersededPlans.join(",") === "positive-retry-all-lanes-score-skill" &&
     runtimeInputGate.productionAuthorization === false,
   "Runtime input gate was incorrectly closed",
@@ -128,6 +131,7 @@ git(["cat-file", "-e", `${manifest.source.capturePlanV2Commit}^{commit}`], sourc
 git(["cat-file", "-e", `${manifest.source.positiveEvidenceCommit}^{commit}`], sourceRoot);
 git(["cat-file", "-e", `${manifest.source.multitouchPlanCommit}^{commit}`], sourceRoot);
 git(["cat-file", "-e", `${manifest.source.nativeMultitouchPlanCommit}^{commit}`], sourceRoot);
+git(["cat-file", "-e", `${manifest.source.skillEvidenceCommit}^{commit}`], sourceRoot);
 const evidenceCommits = [
   manifest.source.staticEvidenceCommit,
   manifest.source.runtimeInputCommit,
@@ -137,6 +141,7 @@ const evidenceCommits = [
   manifest.source.positiveEvidenceCommit,
   manifest.source.multitouchPlanCommit,
   manifest.source.nativeMultitouchPlanCommit,
+  manifest.source.skillEvidenceCommit,
 ];
 const ids = new Set();
 const copiedPaths = new Set();
@@ -295,7 +300,7 @@ check(
 const runtimeStatus = json("runtime_input_status.json");
 check(
   runtimeStatus.status === "runtime-inputs-and-r1-partial-locked-business-gate-open" &&
-    runtimeStatus.runtime.r1_trace_count === 2 &&
+    runtimeStatus.runtime.r1_trace_count === 3 &&
     runtimeStatus.runtime.pending_capture_plans.length === 4 &&
     runtimeStatus.runtime.pending_capture_plans[0].scenario_id ===
       "positive-retry-all-lanes-score-skill" &&
@@ -312,9 +317,12 @@ check(
     runtimeStatus.runtime.pending_capture_plans[3].scenario_id ===
       "multitouch-seven-lane-native-positive-skill-window-v2" &&
     runtimeStatus.runtime.pending_capture_plans[3].status ===
-      "committed-plan-not-runtime-evidence" &&
+      "executed-confirmed-trace-promoted" &&
+    runtimeStatus.runtime.pending_capture_plans[3].observed_scope.join(",") ===
+      "D18-active-skill,D20-skill-start-end-freeze,D14-once-heal" &&
     runtimeStatus.runtime.capture_fields_not_consumed.length === 5 &&
     runtimeStatus.gates.D18 === "partial-required-before-code" &&
+    runtimeStatus.gates.D20 === "partial-required-before-code" &&
     runtimeStatus.gates.D22 === "partial-required-before-code" &&
     runtimeStatus.gates.D23 === "partial-required-before-code" &&
     runtimeStatus.closed.r1_no_input_life_game_over.events === 1863 &&
@@ -329,6 +337,19 @@ check(
     runtimeStatus.closed.r1_positive_judgement_score.reflected_score === 1404 &&
     runtimeStatus.closed.r1_positive_judgement_score.max_combo === 1 &&
     runtimeStatus.closed.r1_positive_judgement_score.active_skill_observed === false &&
+    runtimeStatus.closed.r1_active_skill_lifecycle.events === 7122 &&
+    runtimeStatus.closed.r1_active_skill_lifecycle.one_frame_setup === 53 &&
+    runtimeStatus.closed.r1_active_skill_lifecycle.skill_states.join(",") === "0,1,2,3,0" &&
+    runtimeStatus.closed.r1_active_skill_lifecycle.skill_timer_bits === "0x40A00000" &&
+    runtimeStatus.closed.r1_active_skill_lifecycle.finishing_timer_bits === "0x3F400000" &&
+    runtimeStatus.closed.r1_active_skill_lifecycle.once_heal.before === 800 &&
+    runtimeStatus.closed.r1_active_skill_lifecycle.once_heal.add === 300 &&
+    runtimeStatus.closed.r1_active_skill_lifecycle.once_heal.after === 1100 &&
+    runtimeStatus.closed.r1_active_skill_lifecycle.active_skill_rate_bits === "0x3F99999A" &&
+    runtimeStatus.closed.r1_active_skill_lifecycle.active_skill_entries === 18 &&
+    runtimeStatus.closed.r1_active_skill_lifecycle.same_frame_pre_begin_entries.join(",") === "13,14" &&
+    runtimeStatus.closed.r1_active_skill_lifecycle.same_frame_pre_begin_rate_bits === "0x3F800000" &&
+    runtimeStatus.closed.r1_active_skill_lifecycle.final_score === 38358 &&
     runtimeStatus.business_state_gate === "open" &&
     runtimeStatus.production_authorization === false &&
     runtimeStatus.blocking_findings.length > 0,
@@ -603,6 +624,137 @@ check(
     positiveEventsOf("SituationSkillManager.executeBeginSkillProcess.enter").length === 0,
   "Frozen positive R1 Perfect/Score/Life trajectory changed or overclaims active Skill",
 );
+const skillTraceBytes = gunzipSync(
+  readFileSync(resolve(investigation, "runtime/multitouch-seven-lane-native-skill.trace.json.gz")),
+);
+const skillTrace = JSON.parse(skillTraceBytes.toString("utf8"));
+const skillEventsOf = (kind) => skillTrace.events.filter((event) => event.kind === kind);
+const skillSetups = skillEventsOf("OneFrameData.Setup.leave");
+const skillSetupBySequence = new Map(skillSetups.map((event) => [event.sequence, event.frame]));
+const activeRateEntries = skillSetups.filter(
+  (event) => event.frame.skill_rate.bits === "0x3F99999A",
+);
+const skillAddEnter = skillEventsOf("SituationSkillManager.AddSituationSkillToPlayList.enter");
+const skillAddLeave = skillEventsOf("SituationSkillManager.AddSituationSkillToPlayList.leave");
+const skillBeginEnter = skillEventsOf("SituationSkillManager.executeBeginSkillProcess.enter");
+const skillBeginLeave = skillEventsOf("SituationSkillManager.executeBeginSkillProcess.leave");
+const skillFinishedEnter = skillEventsOf("SituationSkillManager.processOfSkillFinished.enter");
+const skillFinishedLeave = skillEventsOf("SituationSkillManager.processOfSkillFinished.leave");
+const skillFinishingEnter = skillEventsOf(
+  "SituationSkillManager.executeFinishingSkillProcess.enter",
+);
+const skillFinishingLeave = skillEventsOf(
+  "SituationSkillManager.executeFinishingSkillProcess.leave",
+);
+const healEnter = skillEventsOf("InGameRecord.AddIPower.enter").find(
+  (event) => event.arg1 === 300,
+);
+const healLeave = skillEventsOf("InGameRecord.AddIPower.leave").find(
+  (event) => event.arg1 === 300,
+);
+const frozenReflect = skillTrace.events[2210];
+const frozenReflectFrames = frozenReflect.controller.slots.values.filter(
+  (frame) => frame.is_using,
+);
+const skillGameOver = skillEventsOf("InGameRecord.updateGameOverState.leave");
+check(
+  skillTrace.schema_version === 1 &&
+    skillTrace.status === "confirmed-r1-observation-only" &&
+    skillTrace.capture_error === null &&
+    skillTrace.scenario.scenario_id ===
+      "multitouch-seven-lane-native-positive-skill-window-v2" &&
+    skillTrace.events.length === 7122 &&
+    skillTrace.events.every((event, index) => event.sequence === index) &&
+    skillTrace.capability.level === "R1" &&
+    skillTrace.capability.return_replacement === false &&
+    skillTrace.capability.memory_writes === false &&
+    skillTrace.capability.apk_modification === false &&
+    skillTrace.capability.temporary_selinux_permissive === true &&
+    skillTrace.capability.selinux_restore_required === true &&
+    skillTrace.sample.package === "jp.co.craftegg.band" &&
+    skillTrace.sample.version_name === "10.1.4" &&
+    skillTrace.sample.version_code === 230 &&
+    skillTrace.sample.abi === "arm64-v8a" &&
+    skillTrace.capture_script_sha256 === sha256(readFileSync(
+      resolve(investigation, "capture_score_life_state_multitouch_runtime.py"),
+    )) &&
+    skillTrace.plan_sha256 === sha256(readFileSync(
+      resolve(investigation, "runtime/multitouch-seven-lane-native-skill-r1-plan.json"),
+    )) &&
+    skillTrace.summary.queued === 0 &&
+    skillSetups.length === 53 &&
+    skillAddEnter.length === 1 &&
+    skillAddEnter[0].sequence === 2186 &&
+    skillAddEnter[0].skill.state === 0 &&
+    skillAddEnter[0].skill.playlist.size === 0 &&
+    skillAddLeave.length === 1 &&
+    skillAddLeave[0].sequence === 2187 &&
+    skillAddLeave[0].skill.state === 1 &&
+    skillAddLeave[0].skill.playlist.size === 1 &&
+    skillBeginEnter.length === 1 &&
+    skillBeginEnter[0].sequence === 2201 &&
+    skillBeginEnter[0].skill.state === 1 &&
+    skillBeginEnter[0].skill.current === null &&
+    skillBeginLeave.length === 1 &&
+    skillBeginLeave[0].sequence === 2208 &&
+    skillBeginLeave[0].skill.state === 2 &&
+    skillBeginLeave[0].skill.skill_timer.bits === "0x40A00000" &&
+    skillBeginLeave[0].skill.current.chara_index === 4 &&
+    skillBeginLeave[0].skill.current.skill_note_index === 1 &&
+    skillBeginLeave[0].skill.current.absolute_pos === 384 &&
+    skillSetupBySequence.get(2189).skill_rate.bits === "0x3F800000" &&
+    skillSetupBySequence.get(2189).score_up_type === 0 &&
+    skillSetupBySequence.get(2199).skill_rate.bits === "0x3F800000" &&
+    skillSetupBySequence.get(2199).score_up_type === 0 &&
+    frozenReflect.kind === "OneFrameController.Reflect.enter" &&
+    frozenReflect.controller.skill.state === 2 &&
+    frozenReflectFrames.map((frame) => frame.index).join(",") === "13,14" &&
+    frozenReflectFrames.every((frame) => frame.skill_rate.bits === "0x3F800000") &&
+    healEnter.sequence === 2204 &&
+    healEnter.before.current_life === 800 &&
+    healEnter.before.displayed_or_skill_base_life === 1000 &&
+    healEnter.before.business_life_upper_limit === 2000 &&
+    healEnter.before.cached_life_when_skill_played === 800 &&
+    healLeave.sequence === 2205 &&
+    healLeave.after.current_life === 1100 &&
+    healLeave.after.displayed_or_skill_base_life === 1000 &&
+    healLeave.after.business_life_upper_limit === 2000 &&
+    activeRateEntries.length === 18 &&
+    activeRateEntries[0].sequence === 2682 &&
+    activeRateEntries.at(-1).sequence === 5247 &&
+    activeRateEntries.every(
+      (event) =>
+        event.frame.score_up_rate.bits === "0x3F99999A" &&
+        event.frame.score_up_type === 1,
+    ) &&
+    skillFinishedEnter.length === 1 &&
+    skillFinishedEnter[0].sequence === 5302 &&
+    skillFinishedEnter[0].skill.state === 2 &&
+    skillFinishedEnter[0].skill.skill_timer.bits === "0xBBA60800" &&
+    skillFinishedLeave.length === 1 &&
+    skillFinishedLeave[0].sequence === 5303 &&
+    skillFinishedLeave[0].skill.current === null &&
+    skillFinishedLeave[0].skill.playlist.size === 0 &&
+    skillSetupBySequence.get(5341).skill_rate.bits === "0x3F800000" &&
+    skillSetupBySequence.get(5341).score_up_type === 0 &&
+    skillFinishingEnter.length === 44 &&
+    skillFinishingEnter[0].skill.finishing_timer.bits === "0x3F400000" &&
+    skillFinishingLeave.length === 44 &&
+    skillFinishingLeave.at(-1).skill.state === 0 &&
+    skillGameOver.length === 1 &&
+    skillGameOver[0].after.score === 38358 &&
+    skillGameOver[0].after.current_life === 0 &&
+    skillGameOver[0].after.max_combo === 5 &&
+    skillGameOver[0].after.perfect_count === 3 &&
+    skillGameOver[0].after.great_count === 25 &&
+    skillGameOver[0].after.good_count === 8 &&
+    skillGameOver[0].after.bad_count === 7 &&
+    skillGameOver[0].after.miss_count === 10 &&
+    skillGameOver[0].after.cached_life_when_skill_played === 800 &&
+    skillGameOver[0].after.is_single_game_over === 1,
+  "Frozen active-Skill R1 lifecycle, same-frame rate freeze, heal, or final record changed",
+);
+
 const unconsumedCaptureFields = [
   "ScoreUtility.GetResultTypeCorrectionRate.rate_bits",
   "FeverTimeManager.GetFeverTimeScoreRate.result_bits",
@@ -644,7 +796,7 @@ for (const [path, fragment] of criticalText) {
 }
 
 console.log(
-  `score-life-state evidence verified: methods=326 layouts=25 enums=19 BMS=2 R1=2(partial D18/D22) plans=4(pending-native=1) ` +
+  `score-life-state evidence verified: methods=326 layouts=25 enums=19 BMS=2 R1=3(partial D18/D20/D22) plans=4(pending=0) ` +
     `V01=closed business=blocked(D18-D24) entries=${manifest.entries.length} ` +
     `index=${validateIndex ? "checked" : "skipped"}`,
 );

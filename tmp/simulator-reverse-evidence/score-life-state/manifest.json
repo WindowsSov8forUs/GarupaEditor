@@ -10,7 +10,8 @@
     "capturePlanV2Commit": "3adf31f987830ce5b82aba0d92813b69fda3cec7",
     "positiveEvidenceCommit": "5ce2a7ef325def61986a93053ad85c2f4973f25b",
     "multitouchPlanCommit": "eb7aba5467569b577cd942957dd65bdce600bc9d",
-    "nativeMultitouchPlanCommit": "445ac26856e597fb6c12c708e7a31ecf995d06e1"
+    "nativeMultitouchPlanCommit": "445ac26856e597fb6c12c708e7a31ecf995d06e1",
+    "skillEvidenceCommit": "4ac4ea186efade9091c6f4377ab7ad7dc852a2c5"
   },
   "sample": {
     "package": "jp.co.craftegg.band",
@@ -26,9 +27,9 @@
     "enums": 19,
     "arm64Slices": 326,
     "staticEntries": 335,
-    "r1Traces": 2,
+    "r1Traces": 3,
     "fixedEventCases": 0,
-    "totalEntries": 360,
+    "totalEntries": 362,
     "r0InputEntries": 12,
     "productionBms": 2,
     "cacheRecords": 2,
@@ -37,7 +38,8 @@
     "capturePlanEntries": 4,
     "positiveEvidenceEntries": 5,
     "multitouchPlanBatchEntries": 6,
-    "nativeMultitouchBatchEntries": 9
+    "nativeMultitouchBatchEntries": 9,
+    "skillEvidenceEntries": 5
   },
   "versionRebaselineGate": {
     "status": "closed",
@@ -5027,17 +5029,18 @@
     },
     {
       "id": "SLS-B01-329",
-      "sourceCommit": "445ac26856e597fb6c12c708e7a31ecf995d06e1",
+      "sourceCommit": "4ac4ea186efade9091c6f4377ab7ad7dc852a2c5",
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/README.md",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/README.md",
-      "bytes": 9731,
-      "sha256": "FA02D46EDEF91796CF4BC316EE621C21F59E1836E542004D9334AA17EE7875B3",
+      "bytes": 10547,
+      "sha256": "BDC95AB9DF1705FEBE47A7019450F3D510EF13029D5A10CE66DEC6D580286FA4",
       "version": "10.1.4_230_arm64-v8a",
-      "status": "confirmed-capture-plan-not-runtime-evidence",
+      "status": "confirmed-r1-partial-business-gate-open",
       "consumedBy": [
         "B02",
-        "D18-active-skill-pending",
-        "D20-pending"
+        "D18-active-skill-partial",
+        "D20-skill-freeze-partial",
+        "D14-once-heal-partial"
       ]
     },
     {
@@ -5154,17 +5157,18 @@
     },
     {
       "id": "SLS-B02-R0-011",
-      "sourceCommit": "445ac26856e597fb6c12c708e7a31ecf995d06e1",
+      "sourceCommit": "4ac4ea186efade9091c6f4377ab7ad7dc852a2c5",
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime_input_status.json",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime_input_status.json",
-      "bytes": 6076,
-      "sha256": "8B9A40702678EAA8D4910627FFF283A33B2BBF3E5C73623FDF0A02DFEA7D79C9",
+      "bytes": 6722,
+      "sha256": "2D4B2500EF892BD0E8CAF8FCFF2172A4E7650823339C15CA67EE25DF234E2C4A",
       "version": "10.1.4_230_arm64-v8a",
-      "status": "confirmed-capture-plan-not-runtime-evidence",
+      "status": "confirmed-r1-partial-business-gate-open",
       "consumedBy": [
         "B02",
-        "D18-active-skill-pending",
-        "D20-pending"
+        "D18-active-skill-partial",
+        "D20-skill-freeze-partial",
+        "D14-once-heal-partial"
       ]
     },
     {
@@ -5199,17 +5203,18 @@
     },
     {
       "id": "SLS-B01-332",
-      "sourceCommit": "445ac26856e597fb6c12c708e7a31ecf995d06e1",
+      "sourceCommit": "4ac4ea186efade9091c6f4377ab7ad7dc852a2c5",
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/SHA256SUMS",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/SHA256SUMS",
-      "bytes": 47026,
-      "sha256": "8642C9C01D88DE29E9ED5948032C4AE114C19E34691AF62BDF8F5AF902D9B8CC",
+      "bytes": 47245,
+      "sha256": "D67D7F1FA657784F5B78AEAD82C6D5F0D307C68296D9936D6D13FC3AA67680BE",
       "version": "10.1.4_230_arm64-v8a",
-      "status": "confirmed-capture-plan-not-runtime-evidence",
+      "status": "confirmed-r1-partial-business-gate-open",
       "consumedBy": [
         "B02",
-        "D18-active-skill-pending",
-        "D20-pending"
+        "D18-active-skill-partial",
+        "D20-skill-freeze-partial",
+        "D14-once-heal-partial"
       ]
     },
     {
@@ -5370,7 +5375,7 @@
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/capture_score_life_state_multitouch_runtime.py",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/capture_score_life_state_multitouch_runtime.py",
       "bytes": 24660,
-      "sha256": "334848ED0A288F7A4DC2A864D789D204F9976A97D6B49AA3D330BC628AB37FB9",
+      "sha256": "FF064C6F0A12BD29BA9C39D1A0A97733B364A8BC4404ED7C9D30AE574EA57ADF",
       "version": "10.1.4_230_arm64-v8a",
       "status": "confirmed-capture-plan-not-runtime-evidence",
       "consumedBy": [
@@ -5400,7 +5405,7 @@
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_multitouch_plan.py",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_multitouch_plan.py",
       "bytes": 8383,
-      "sha256": "C7CB4B9C10369CFE7B2AEFB02AC75426857E39A29B5F336F42802177A3DD3B03",
+      "sha256": "A3835D4A6BCF2EF879BD20A692BA9AD2C054B122381EABAA4171AE8BD04A8A00",
       "version": "10.1.4_230_arm64-v8a",
       "status": "confirmed-capture-plan-not-runtime-evidence",
       "consumedBy": [
@@ -5415,7 +5420,7 @@
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime/multitouch-seven-lane-native-skill-r1-plan.json",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime/multitouch-seven-lane-native-skill-r1-plan.json",
       "bytes": 2042,
-      "sha256": "B3223B1452AA967255D917E2D329B6EBC54B0EC2FBC1791DDBAEDF1BB6A691F3",
+      "sha256": "0A345C27D75B83047CD2FE4771B1426DD6772155DD1F9D495A06FC9722B114D4",
       "version": "10.1.4_230_arm64-v8a",
       "status": "confirmed-capture-plan-not-runtime-evidence",
       "consumedBy": [
@@ -5468,6 +5473,38 @@
         "D18-active-skill-pending",
         "D20-pending"
       ]
+    },
+    {
+      "id": "SLS-B02-R1-005",
+      "sourceCommit": "4ac4ea186efade9091c6f4377ab7ad7dc852a2c5",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime/multitouch-seven-lane-native-skill.trace.json.gz",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime/multitouch-seven-lane-native-skill.trace.json.gz",
+      "bytes": 746972,
+      "sha256": "0DB8FF447030750008B001A285480FE280A770EEB9723369C1935107B1DA5FDD",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-r1-partial-business-gate-open",
+      "consumedBy": [
+        "B02",
+        "D18-active-skill-partial",
+        "D20-skill-freeze-partial",
+        "D14-once-heal-partial"
+      ]
+    },
+    {
+      "id": "SLS-B02-R1-006",
+      "sourceCommit": "4ac4ea186efade9091c6f4377ab7ad7dc852a2c5",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_skill_r1.py",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_skill_r1.py",
+      "bytes": 13923,
+      "sha256": "1FFAF912A1E280BE215DD7033BE5CA222AAC7BA2847FE2DC14358DC442372AB7",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-r1-partial-business-gate-open",
+      "consumedBy": [
+        "B02",
+        "D18-active-skill-partial",
+        "D20-skill-freeze-partial",
+        "D14-once-heal-partial"
+      ]
     }
   ],
   "runtimeInputGate": {
@@ -5478,32 +5515,35 @@
       "connected-device-cache-provenance",
       "observation-only-capture-targets",
       "no-input-life-game-over-r1",
-      "positive-perfect-score-r1"
+      "positive-perfect-score-r1",
+      "active-skill-lifecycle-r1",
+      "skill-same-frame-freeze-r1",
+      "once-heal-r1"
     ],
     "partialFindings": [
       "D18",
+      "D20",
       "D22",
       "D23"
     ],
     "blockingFindings": [
       "D18-remaining",
       "D19",
-      "D20",
+      "D20-remaining",
       "D21",
       "D22-remaining",
       "D23-master-start-data",
       "D24"
     ],
-    "r1TraceCount": 2,
+    "r1TraceCount": 3,
     "productionAuthorization": false,
-    "pendingPlans": [
-      "multitouch-seven-lane-native-positive-skill-window-v2"
-    ],
+    "pendingPlans": [],
     "supersededPlans": [
       "positive-retry-all-lanes-score-skill"
     ],
     "executedPlans": [
-      "positive-retry-all-lanes-early-score-skill-v2"
+      "positive-retry-all-lanes-early-score-skill-v2",
+      "multitouch-seven-lane-native-positive-skill-window-v2"
     ],
     "abortedPlans": [
       "multitouch-seven-lane-positive-skill-window"

@@ -53,12 +53,28 @@
       "active_skill_observed": false,
       "single_game_over": [0, 1],
       "status": "confirmed-r1-observation-only"
+    },
+    "r1_active_skill_lifecycle": {
+      "trace": "runtime/multitouch-seven-lane-native-skill.trace.json.gz",
+      "trace_sha256": "0DB8FF447030750008B001A285480FE280A770EEB9723369C1935107B1DA5FDD",
+      "events": 7122,
+      "one_frame_setup": 53,
+      "skill_states": [0, 1, 2, 3, 0],
+      "skill_timer_bits": "0x40A00000",
+      "finishing_timer_bits": "0x3F400000",
+      "once_heal": {"before": 800, "add": 300, "after": 1100, "displayed_base": 1000, "business_upper_limit": 2000},
+      "active_skill_rate_bits": "0x3F99999A",
+      "active_skill_entries": 18,
+      "same_frame_pre_begin_entries": [13, 14],
+      "same_frame_pre_begin_rate_bits": "0x3F800000",
+      "final_score": 38358,
+      "status": "confirmed-r1-observation-only"
     }
   },
   "partial": {
     "D18": {
-      "closed_subscope": "stable InGameRecord identity, Life initialization fields, inactive Skill manager state, no-input and one Perfect OneFrame/Reflect/Score before-after snapshots",
-      "open_subscope": "positive judgement, active Skill, Fever, heal, guard, Never Die and special-mode identities"
+      "closed_subscope": "stable InGameRecord identity, Life initialization, positive judgement/Score, active Skill 0-1-2-3-0, once-heal and Skill-rate before-after snapshots",
+      "open_subscope": "Fever, guard, Never Die, multiple/overlapping Skill and special-mode identities"
     },
     "D22": {
       "closed_subscope": "single-player lethal AddIPower nests updateGameOverState and flips is_single_game_over from 0 to 1 at current Life 0",
@@ -70,7 +86,7 @@
     }
   },
   "runtime": {
-    "r1_trace_count": 2,
+    "r1_trace_count": 3,
     "pending_capture_plans": [
       {
         "path": "runtime/positive-retry-all-lanes-r1-plan.json",
@@ -93,9 +109,9 @@
       {
         "path": "runtime/multitouch-seven-lane-native-skill-r1-plan.json",
         "scenario_id": "multitouch-seven-lane-native-positive-skill-window-v2",
-        "status": "committed-plan-not-runtime-evidence",
-        "intended_scope": ["D18-active-skill", "D20-same-frame-freeze"],
-        "control": "committed ELF64 AArch64 input-device writer, 7 slots, 250 cycles, 80ms interval, SELinux restoration and device-binary deletion required"
+        "status": "executed-confirmed-trace-promoted",
+        "observed_scope": ["D18-active-skill", "D20-skill-start-end-freeze", "D14-once-heal"],
+        "not_observed": ["D20-Fever-transition", "D20-multiple-Skill-overlap"]
       }
     ],
     "capture_fields_not_consumed": [
@@ -105,13 +121,13 @@
       "NoteFrontBase.judgeFrontNote.note_type",
       "NoteFrontBase.judgeFrontNote.absolute_pos"
     ],
-    "operational_blocker": "Two R1 traces are closed. The shell Linux MT control was aborted without a trace; a deterministic committed ARM64 input-device writer replaces it and must be frozen before execution. Active Skill and same-frame switching remain absent, and five ABI-unsafe fields stay excluded.",
+    "operational_blocker": "Three R1 traces are closed. Active Skill start/Playing/Finishing, once-heal and Skill-rate freezing are observed; Fever transitions, multiple-Skill overlap, remaining lifecycle and master provenance remain open. Five ABI-unsafe fields stay excluded.",
     "synthetic_trace_allowed": false
   },
   "gates": {
     "D18": "partial-required-before-code",
     "D19": "required-before-code",
-    "D20": "required-before-code",
+    "D20": "partial-required-before-code",
     "D21": "required-before-code",
     "D22": "partial-required-before-code",
     "D23": "partial-required-before-code",
@@ -119,9 +135,9 @@
   },
   "unknown_fields": [],
   "blocking_findings": [
-    "Active Skill, Fever, heal, guard, Never Die and special-mode R1 traces remain open; the positive trace observed no Skill activation.",
+    "Fever, guard, Never Die, multiple/overlapping Skill and special-mode R1 traces remain open.",
     "Deck/start-data/master provenance remains open.",
-    "D20/D21 and the remaining D22 lifecycle paths remain open.",
+    "D20 Fever/multiple-entry remainder, D21 and the remaining D22 lifecycle paths remain open.",
     "BS01-BS36 and final portable contract do not exist."
   ],
   "business_state_gate": "open",

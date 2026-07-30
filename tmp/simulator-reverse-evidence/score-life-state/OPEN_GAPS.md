@@ -8,14 +8,15 @@
 - `D23-BMS`：ordinary `poppin_shuffle_special`与HABAHIRO `786_miracle_april_habahiro_special`的10.1.4设备cache provenance及TextAsset字节。
 - R1 capture tooling：50个目标与静态contract一致；仅`Interceptor.attach`，无return replacement/memory write。
 - `D18/D22-partial`：无输入Retry R1锁定稳定InGameRecord identity、Life `1000/1000/2000`、11个Miss、slot-order Life归零及single Game Over `0→1`。
-- `D18-positive-partial`：v2 R1锁定1个Perfect业务OneFrame、Score 1404、Combo/Perfect计数与10个Miss；active Skill未出现，D20未关闭。
-- 正判定/Skill计划：v1保留为superseded；v2已晋升raw；shell七lane控制因超时aborted且无raw，原生ARM64七lane v2已冻结但仍pending，不是R1结论。
+- `D18-positive-partial`：v2 R1锁定1个Perfect业务OneFrame、Score 1404、Combo/Perfect计数与10个Miss。
+- `D14/D18/D20-Skill-partial`：原生七lane R1锁定Skill `0→1→2→3→0`、5.0s/0.75s timer、once-heal `800+300=1100`、Begin前两个entry冻结1.0且在Playing后Reflect仍消费1.0、Playing后18个entry冻结1.2/ScoreUpType1、finish后恢复1.0。
+- 正判定/Skill计划：v1保留为superseded；v2与原生ARM64七lane v2均已晋升raw；shell七lane控制因超时aborted且无raw。
 
 ## required-before-code
 
-- `D18`剩余：positive judgement、active Skill、Fever、heal、guard、Never Die及special-mode对象identity与before/after字段。
+- `D18`剩余：Fever、guard、Never Die、多个/重叠Skill及special-mode对象identity与before/after字段。
 - `D19`：BS01–BS36 fixed-event oracle，全部 `unknown_fields=[]`。
-- `D20`：同帧 Skill/Fever/Life/Combo/五槽冻结时点。
+- `D20`剩余：Fever切换、多个/重叠Skill及Skill/Fever/Life/Combo/五槽交错；单Skill start/end冻结子范围已锁定。
 - `D21`：生命周期与 failure atomicity。
 - `D22`剩余：post-Game-Over manager gate、score decrease mode、reset、continue、seek与ReturnTime边界。
 - `D23`剩余：score level、difficulty、deck/start-data及result/damage/Skill/Fever/event/Auto/Festival/Medley/Garupa master rows provenance。
@@ -30,15 +31,15 @@ production_authorization=false
 unknown_methods=[]
 unknown_layouts=[]
 unknown_fields=[]
-r1_traces=2
+r1_traces=3
 production_bms=2
 capture_plans=4
-executed_capture_plans=1
-pending_capture_plans=1
+executed_capture_plans=2
+pending_capture_plans=0
 aborted_capture_plans=1
 superseded_capture_plans=1
 excluded_raw_fields=5
-blocking_findings=[D18-remaining,D19,D20,D21,D22-remaining,D23-remaining,D24]
+blocking_findings=[D18-remaining,D19,D20-remaining,D21,D22-remaining,D23-remaining,D24]
 ```
 
 B02 关闭前，B03–B12 production 继续禁止。

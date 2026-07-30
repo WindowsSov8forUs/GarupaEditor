@@ -58,7 +58,7 @@
 | --- | --- | --- |
 | B00 建立阶段任务书 | **已完成** | 范围、证据候选、硬门、oracle、任务顺序和完成定义写入本文档 |
 | B01 10.1.4静态证据晋升 | **已完成静态重基线** | 326方法、25布局、19枚举及静态语义已提交Reverse并冻结；不单独关闭业务门 |
-| B02 实体与固定事件oracle | **进行中；硬门**：R0/BMS及1条无输入R1已冻结，D18/D22仅部分关闭 | D01–D24关闭，raw trace和BS01–BS36固定case提交并冻结，`business_state_gate=closed` |
+| B02 实体与固定事件oracle | **进行中；硬门**：R0/BMS及3条R1已冻结，D14/D18/D20/D22仅部分推进 | D01–D24关闭，raw trace和BS01–BS36固定case提交并冻结，`business_state_gate=closed` |
 | B03 锁定配置、领域数据与owner | 阻塞于B02 | 输入profile、InGameRecord、OneFrameData/TotalData与manager owner不可伪造 |
 | B04 恢复基础分与最大Note数 | 阻塞于B02 | deck/chart/level/base score、result correction及初始化顺序匹配 |
 | B05 恢复单次判定业务投影 | 阻塞于B02 | adjusted result、damage、score、rate、guard和slot冻结顺序匹配 |
@@ -686,9 +686,11 @@ git rev-list --left-right --count origin/codex/refactor-simulator-implementation
 - v1计划已冻结后执行但未晋升raw trace；其7秒输入前等待只作为superseded控制来源，不形成业务结论。
 - v2计划提交：Reverse `3adf31f987830ce5b82aba0d92813b69fda3cec7`已push且远端`0 0`；只把输入前等待由7000ms改为500ms，其他217个lane/hold动作逐项保持。
 - Reverse正判定R1提交：`5ce2a7ef325def61986a93053ad85c2f4973f25b`已push且远端`0 0`；2166事件连续，实际观察1个Perfect、完整OneFrame `addScore=0x44AF8052`、identity Fever/Skill/ScoreUp rate、Reflect整数Score 1404、Combo/Perfect计数、10 Miss及Game Over保留Score。
-- active Skill在220次manager update中始终缺席，因此D18 active-Skill与D20 same-frame冻结继续开放。float返回hook误读`x0`及两个未闭合trailing参数共5字段由verifier明确不消费，不用错误raw补证据。
+- 正判定R1的220次manager update中active Skill始终缺席；float返回hook误读`x0`及两个未闭合trailing参数共5字段由verifier明确不消费，不用错误raw补证据。
 - 七lane shell计划提交：Reverse `eb7aba5467569b577cd942957dd65bdce600bc9d`已push；执行因逐事件进程启动超过120秒时间界限而aborted，无raw生成/晋升，采集进程与设备控制无残留，SELinux已独立强制恢复Enforcing。
-- 原生多指v2提交：Reverse `445ac26856e597fb6c12c708e7a31ecf995d06e1`已push且远端`0 0`；NDK27.2固定构建6304字节ELF64 AArch64控制器，只写event2 `input_event`并`nanosleep`，采集器先验SHA后push，`finally`恢复Enforcing并删除设备副本。7 slots/250轮/80ms/20ms值保持，当前仍为pending plan/tooling。
-- D18仅部分关闭：positive judgement、active Skill、Fever、heal、guard、Never Die和special mode仍缺R1；D22仅部分关闭：post-Game-Over gate、score decrease mode、reset/continue/seek/ReturnTime仍开放。
-- 待关闭：D18/D22剩余、D19–D21、D23剩余deck/start-data/master provenance、D24及BS01–BS36。
+- 原生多指v2提交：Reverse `445ac26856e597fb6c12c708e7a31ecf995d06e1`已push且远端`0 0`；NDK27.2固定构建6304字节ELF64 AArch64控制器，只写event2 `input_event`并`nanosleep`，采集器先验SHA后push，`finally`恢复Enforcing并删除设备副本。7 slots/250轮/80ms/20ms值保持。
+- Reverse active-Skill R1提交：`4ac4ea186efade9091c6f4377ab7ad7dc852a2c5`已push且远端`0 0`；7122事件连续，实际观察Skill Add→Begin→Playing→Finishing→None（`0→1→2→3→0`）、5.0s timer、0.75s finishing及once-heal `800+300=1100`（显示基准1000、业务上限2000）。
+- D20单Skill切换子范围：Begin前生成的两个entry冻结Skill/ScoreUp rate 1.0，Skill已Playing后的Reflect仍消费该冻结值；后续18个entry冻结1.2/ScoreUpType1，finish后的首个entry恢复1.0。Fever与多个/重叠Skill交错未观察，不外推。
+- D18仅部分关闭：Fever、guard、Never Die、多个/重叠Skill和special mode仍缺R1；D20仅单Skillstart/end冻结子范围部分关闭；D22仅部分关闭：post-Game-Over gate、score decrease mode、reset/continue/seek/ReturnTime仍开放。
+- 待关闭：D18/D20/D22剩余、D19、D21、D23剩余deck/start-data/master provenance、D24及BS01–BS36。
 - B02关闭前继续禁止B03–B12 production、测试脚本和package script实现。
