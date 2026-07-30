@@ -8,8 +8,8 @@
 - 锁定原作样本：`jp.co.craftegg.band` 10.1.4（version code 230，`arm64-v8a`）。
 - 锁定`libil2cpp.so` SHA-256：`815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F`。
 - 锁定`global-metadata.dat` SHA-256：`298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F`。
-- 当前Reverse证据提交：`f9f15b446f2c7f5b24f5f2ba380b543419383df1`；只消费该提交及其祖先中已推送、可校验对象，不消费当前Reverse工作树。
-- 当前状态：**B00/B01已完成，B02进行中。V01与D01-static已关闭；4条R1部分推进D14/D18/D20/D22；production chart count已固定ordinary 979与HABAHIRO 731并纳入BS01/BS02；BS01–BS36 partial oracle现为3个confirmed、20个partial、13个blocked，保留151个unknown fields与91个blocking findings。D18–D24剩余范围仍是`required-before-code`硬门；B02关闭前禁止实施B03–B12任何生产代码。**
+- 当前Reverse证据提交：`9eb9ac0ff97e191908099a53ce505cef057d26e4`；只消费该提交及其祖先中已推送、可校验对象，不消费当前Reverse工作树。
+- 当前状态：**B00/B01已完成，B02进行中。V01与D01-static已关闭；5条R1部分推进D03/D06/D14/D18/D20/D22/D23；production chart count已固定ordinary 979与HABAHIRO 731，ordinary `poppin_shuffle_special`初始化profile已锁定并纳入BS01；BS01–BS36 partial oracle现为3个confirmed、20个partial、13个blocked，保留146个unknown fields与89个blocking findings。D18–D24剩余范围仍是`required-before-code`硬门；B02关闭前禁止实施B03–B12任何生产代码。**
 - 当前10.1.4已提交依赖证据只直接覆盖`OneFrameData.Setup`、`InGameOneFrameJudgementController.ReflectOneFrameData`、`NoteBase.getAddCombo`以及若干判定生产者入口；它不足以宣称完整Score/Life/Skill/Fever链已在10.1.4确认。
 - 10.1.3的`base-score-construction`、`event-score-multipliers`、`skill-*`、`fever-*`及Life Heal实机调查仅作为历史迁移候选H01–H24，不能被B03–B12生产实现直接消费。
 - 当前证据包：`tmp/simulator-reverse-evidence/score-life-state/`；已冻结B01、R0输入与无输入R1子批，只消费已提交Reverse对象。
@@ -696,6 +696,9 @@ git rev-list --left-right --count origin/codex/refactor-simulator-implementation
 - D18仅部分关闭：Fever、guard、Never Die、多个/重叠Skill和special mode仍缺R1；D20仅单Skillstart/end冻结子范围部分关闭；D22仅部分关闭：score decrease mode、Continue（采集禁止）、seek/ReturnTime仍开放。
 - Reverse fixed-event partial oracle提交：`659292c85e474e89d817c46c6cdd830ba7de07f5`已push且远端`0 0`；BS01–BS36全部case identity已落位，BS05/BS06/BS11由10.1.4静态证据confirmed，19个case仅保留直接静态/R1投影，14个case blocked；155个unknown fields与92个blocking findings显式保留，D19/D24不关闭。
 - Reverse production chart count提交：`25c053326d9b2eb3f3c6f13d8f02206b78b42074`已push；从已锁定BMS、字节相同的chart-construction结构事实与10.1.4 `NoteManager.analyzeBMS` ARM64规则独立得到ordinary `825+29+125=979`、HABAHIRO `598+58+75=731`，两项`unknown_fields=[]`；哈希大小写约定由后续`c7dbaba81699adec896796167074cb85cdc94e2e`关闭并push。
-- Reverse fixed-event chart-count整合提交：`f9f15b446f2c7f5b24f5f2ba380b543419383df1`已push且远端`0 0`；BS01移除`chart.family_counts`未知项，BS02写入HABAHIRO `598+58+75=731`并从blocked推进partial，只保留`initialization.base_score_bits`与`D23-master-start-data`；总计变为3 confirmed/20 partial/13 blocked、151 unknown fields/91 blocking findings。该收窄只部分推进D03/D19/BS01/BS02与D23，不能解除B02。
-- 待关闭：D18/D20/D22剩余、D19的151个unknown fields与91个blocking findings、D21、D23剩余score level/difficulty/deck/start-data/master provenance及D24。
+- Reverse fixed-event chart-count整合提交：`f9f15b446f2c7f5b24f5f2ba380b543419383df1`已push且远端`0 0`；BS01移除`chart.family_counts`未知项，BS02写入HABAHIRO `598+58+75=731`并从blocked推进partial，只保留`initialization.base_score_bits`与`D23-master-start-data`；总计变为3 confirmed/20 partial/13 blocked、151 unknown fields/91 blocking findings。
+- Reverse ordinary初始化计划提交：`bb46a11f22d50ae8740b09ecc72548df564b58de`建立privacy-minimized观察器；`a032f8fe82d045b6d3b5c8853cb923803e0c5435`将前置校正为锁定`poppin_shuffle_special` ordinary-family SPECIAL Lv.27，计划/脚本verifier通过且均已push。
+- Reverse ordinary初始化R1提交：`3c95190f4b6326da97e21c8e590f625a7582dc22`已push；11事件连续且无capture error，锁定start/calculated/record/ScoreUtility identity、score level 27、difficulty special、Life `1000/1000/2000`、Miss/Bad `-100/-50`、maxNote 979、total/rate/base `0x483C8A31/0x3F9C28F6/0x4434718E`及zero event/bonus base；账号、房间、display string及deck element内容显式排除，独立Float32重算通过。
+- Reverse fixed-event初始化整合提交：`9eb9ac0ff97e191908099a53ce505cef057d26e4`已push且远端`0 0`；BS01的5个初始化unknown清零，D03/D06 blocker移除，但`D23-master-start-data`继续保留以等待deck member rows；全局变为3 confirmed/20 partial/13 blocked、146 unknown fields/89 blocking findings，不能解除B02。
+- 待关闭：D18/D20/D22剩余、D19的146个unknown fields与89个blocking findings、D21、D23剩余HABAHIRO初始化、deck member/非零event/Skill/Fever/special-mode master provenance及D24。
 - B02关闭前继续禁止B03–B12 production、测试脚本和package script实现。

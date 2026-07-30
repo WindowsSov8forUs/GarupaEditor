@@ -14,8 +14,10 @@
     "skillEvidenceCommit": "4ac4ea186efade9091c6f4377ab7ad7dc852a2c5",
     "retryLifecyclePlanCommit": "38cee0b409246323b46099e291331a78a267bcec",
     "retryLifecycleEvidenceCommit": "4f0ce1a02a83747db617695cde69ad47ac8ae78f",
-    "fixedEventOracleCommit": "f9f15b446f2c7f5b24f5f2ba380b543419383df1",
-    "chartCountOracleCommit": "c7dbaba81699adec896796167074cb85cdc94e2e"
+    "fixedEventOracleCommit": "9eb9ac0ff97e191908099a53ce505cef057d26e4",
+    "chartCountOracleCommit": "c7dbaba81699adec896796167074cb85cdc94e2e",
+    "initializationProfilePlanCommit": "a032f8fe82d045b6d3b5c8853cb923803e0c5435",
+    "initializationProfileEvidenceCommit": "3c95190f4b6326da97e21c8e590f625a7582dc22"
   },
   "sample": {
     "package": "jp.co.craftegg.band",
@@ -31,9 +33,9 @@
     "enums": 19,
     "arm64Slices": 326,
     "staticEntries": 335,
-    "r1Traces": 4,
+    "r1Traces": 5,
     "fixedEventCases": 36,
-    "totalEntries": 374,
+    "totalEntries": 381,
     "r0InputEntries": 12,
     "productionBms": 2,
     "cacheRecords": 2,
@@ -49,9 +51,11 @@
     "fixedEventConfirmedCases": 3,
     "fixedEventPartialCases": 20,
     "fixedEventBlockedCases": 13,
-    "fixedEventUnknownFields": 151,
-    "fixedEventBlockingFindings": 91,
+    "fixedEventUnknownFields": 146,
+    "fixedEventBlockingFindings": 89,
     "fixedEventOracleEntries": 6,
+    "initializationProfilePlanEntries": 3,
+    "initializationProfileEvidenceEntries": 4,
     "chartCountOracleEntries": 7,
     "ordinaryMaxNoteCount": 979,
     "habahiroMaxNoteCount": 731
@@ -5044,11 +5048,11 @@
     },
     {
       "id": "SLS-B01-329",
-      "sourceCommit": "f9f15b446f2c7f5b24f5f2ba380b543419383df1",
+      "sourceCommit": "9eb9ac0ff97e191908099a53ce505cef057d26e4",
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/README.md",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/README.md",
-      "bytes": 15922,
-      "sha256": "80AFE7CC871A74BD4AFFF53B1D48E63722CE312CE2E0FAAFCB750BA4D26A1181",
+      "bytes": 18585,
+      "sha256": "7E78F9178DB47943C05679D7712F407BE4C9F7129FAA2E961806949554C6E4C4",
       "version": "10.1.4_230_arm64-v8a",
       "status": "partial-chart-count-integrated-fixed-event-oracle-business-gate-open",
       "consumedBy": [
@@ -5172,11 +5176,11 @@
     },
     {
       "id": "SLS-B02-R0-011",
-      "sourceCommit": "f9f15b446f2c7f5b24f5f2ba380b543419383df1",
+      "sourceCommit": "9eb9ac0ff97e191908099a53ce505cef057d26e4",
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime_input_status.json",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime_input_status.json",
-      "bytes": 9250,
-      "sha256": "F17C90C6995D467E7E58E8AF496987CF47D73284AF97285CA04231FC29CD3651",
+      "bytes": 10891,
+      "sha256": "11FFDDD39BC1652363D6960762FB6BBC49B309858569642E15F15B09B8AC5434",
       "version": "10.1.4_230_arm64-v8a",
       "status": "partial-fixed-event-oracle-business-gate-open",
       "consumedBy": [
@@ -5217,11 +5221,11 @@
     },
     {
       "id": "SLS-B01-332",
-      "sourceCommit": "f9f15b446f2c7f5b24f5f2ba380b543419383df1",
+      "sourceCommit": "9eb9ac0ff97e191908099a53ce505cef057d26e4",
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/SHA256SUMS",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/SHA256SUMS",
-      "bytes": 48607,
-      "sha256": "BADA59E4E7432150FBB7CB8F4F5A2886172FCE40A56DDFA00BCFE20372EE566A",
+      "bytes": 49413,
+      "sha256": "2F0F9E7D7A6B50BB60622A92BF94E5BC45817136C80C23D5B646D12C39965DFB",
       "version": "10.1.4_230_arm64-v8a",
       "status": "partial-chart-count-integrated-fixed-event-oracle-business-gate-open",
       "consumedBy": [
@@ -5580,11 +5584,11 @@
     },
     {
       "id": "SLS-B02-ORACLE-001",
-      "sourceCommit": "f9f15b446f2c7f5b24f5f2ba380b543419383df1",
+      "sourceCommit": "9eb9ac0ff97e191908099a53ce505cef057d26e4",
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/build_score_life_state_fixed_event_oracle.py",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/build_score_life_state_fixed_event_oracle.py",
-      "bytes": 28381,
-      "sha256": "0FDCC0693B78517B4A30C8EEF545C9AAE370A452B14CF6365F24DC2EEBD656A6",
+      "bytes": 29259,
+      "sha256": "B2779393847C2723E2FBF58CE1017F8A5A932F43A8CB11D5AF7D291896CAE85A",
       "version": "10.1.4_230_arm64-v8a",
       "status": "partial-fixed-event-oracle-business-gate-open",
       "consumedBy": [
@@ -5595,11 +5599,11 @@
     },
     {
       "id": "SLS-B02-ORACLE-002",
-      "sourceCommit": "f9f15b446f2c7f5b24f5f2ba380b543419383df1",
+      "sourceCommit": "9eb9ac0ff97e191908099a53ce505cef057d26e4",
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/score_life_state_fixed_event_oracle.json",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/score_life_state_fixed_event_oracle.json",
-      "bytes": 41498,
-      "sha256": "CB0A3EBD1D5C16395E6B46FB6E6D6C49CB1AD94A5878EF40FE0E0AD501D6277E",
+      "bytes": 44019,
+      "sha256": "34FC222793FC41390950E9E258389AF535EC936DB0695A4F538A41829DED2226",
       "version": "10.1.4_230_arm64-v8a",
       "status": "partial-fixed-event-oracle-business-gate-open",
       "consumedBy": [
@@ -5610,11 +5614,11 @@
     },
     {
       "id": "SLS-B02-ORACLE-003",
-      "sourceCommit": "f9f15b446f2c7f5b24f5f2ba380b543419383df1",
+      "sourceCommit": "9eb9ac0ff97e191908099a53ce505cef057d26e4",
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_state_fixed_event_oracle.py",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_state_fixed_event_oracle.py",
-      "bytes": 14328,
-      "sha256": "678FCAE8F501C774E9BBDBFB1EB94F3F47C14D12D6B1001E09D9CC3505808917",
+      "bytes": 15555,
+      "sha256": "40DDB27B5525A7EBAA08DFF461CE9AFFDDED8B7B57687F9FE242D5E70E3B3198",
       "version": "10.1.4_230_arm64-v8a",
       "status": "partial-fixed-event-oracle-business-gate-open",
       "consumedBy": [
@@ -5677,6 +5681,83 @@
       "version": "10.1.4_230_arm64-v8a",
       "status": "confirmed-production-chart-count-partial-business-gate-open",
       "consumedBy": ["B02", "D03-production-count", "D19-BS01-BS02-partial", "D23-production-chart-count"]
+    },
+    {
+      "id": "SLS-B02-INIT-PLAN-001",
+      "sourceCommit": "a032f8fe82d045b6d3b5c8853cb923803e0c5435",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/capture_score_life_state_initialization_profile.py",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/capture_score_life_state_initialization_profile.py",
+      "bytes": 12398,
+      "sha256": "3D977BA5F7FEBD718B2D2A19953F2CD5000D085F31EAEE565A25245ECC9BFD98",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-observation-only-initialization-plan",
+      "consumedBy": ["B02", "D18-initialization-identity", "D23-ordinary-start-data-partial", "BS01-partial"]
+    },
+    {
+      "id": "SLS-B02-INIT-PLAN-002",
+      "sourceCommit": "a032f8fe82d045b6d3b5c8853cb923803e0c5435",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime/initialization-profile-retry-r1-plan.json",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime/initialization-profile-retry-r1-plan.json",
+      "bytes": 1648,
+      "sha256": "4D08F25A7A0B0497F4915A71605A142E4BA5C1580EDE9BE2003EDE7D5A76F9B2",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-observation-only-initialization-plan",
+      "consumedBy": ["B02", "D18-initialization-identity", "D23-ordinary-start-data-partial", "BS01-partial"]
+    },
+    {
+      "id": "SLS-B02-INIT-PLAN-003",
+      "sourceCommit": "a032f8fe82d045b6d3b5c8853cb923803e0c5435",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_initialization_profile_plan.py",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_initialization_profile_plan.py",
+      "bytes": 5168,
+      "sha256": "AEFC0984881E4A779868E3389CF57891AF5A8D1A8458BECC4F0328D10156A2EB",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-observation-only-initialization-plan",
+      "consumedBy": ["B02", "D18-initialization-identity", "D23-ordinary-start-data-partial", "BS01-partial"]
+    },
+    {
+      "id": "SLS-B02-INIT-R1-001",
+      "sourceCommit": "3c95190f4b6326da97e21c8e590f625a7582dc22",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/build_score_life_initialization_profile_oracle.py",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/build_score_life_initialization_profile_oracle.py",
+      "bytes": 6014,
+      "sha256": "4293F3E0387AFA7921CAB266510510528050D8FAE53F49476F9832608902EC01",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-r1-ordinary-initialization-partial-D23",
+      "consumedBy": ["B02", "D03-ordinary-max-note", "D06-ordinary-base", "D18-initialization-identity", "D23-ordinary-start-data-partial", "BS01-partial"]
+    },
+    {
+      "id": "SLS-B02-INIT-R1-002",
+      "sourceCommit": "3c95190f4b6326da97e21c8e590f625a7582dc22",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime/initialization-profile-retry.trace.json.gz",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime/initialization-profile-retry.trace.json.gz",
+      "bytes": 2390,
+      "sha256": "81E335AE1CB0686EB8806B3284FA0AE14F411D0A2F91C8CC4C93BB2683A6C302",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-r1-ordinary-initialization-partial-D23",
+      "consumedBy": ["B02", "D03-ordinary-max-note", "D06-ordinary-base", "D18-initialization-identity", "D23-ordinary-start-data-partial", "BS01-partial"]
+    },
+    {
+      "id": "SLS-B02-INIT-R1-003",
+      "sourceCommit": "3c95190f4b6326da97e21c8e590f625a7582dc22",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/score_life_initialization_profile_oracle.json",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/score_life_initialization_profile_oracle.json",
+      "bytes": 5388,
+      "sha256": "53D07B2DA7456C2B7AFDFE37293E352DC9471E31A0F13556553185EC20364E9B",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-r1-ordinary-initialization-partial-D23",
+      "consumedBy": ["B02", "D03-ordinary-max-note", "D06-ordinary-base", "D18-initialization-identity", "D23-ordinary-start-data-partial", "BS01-partial"]
+    },
+    {
+      "id": "SLS-B02-INIT-R1-004",
+      "sourceCommit": "3c95190f4b6326da97e21c8e590f625a7582dc22",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_initialization_profile_r1.py",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_initialization_profile_r1.py",
+      "bytes": 8627,
+      "sha256": "9226189AAE2430AB669961BF587BBF3AAFE323F67194AFFBF8ABA175E44AC54B",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-r1-ordinary-initialization-partial-D23",
+      "consumedBy": ["B02", "D03-ordinary-max-note", "D06-ordinary-base", "D18-initialization-identity", "D23-ordinary-start-data-partial", "BS01-partial"]
     }
   ],
   "runtimeInputGate": {
@@ -5693,7 +5774,8 @@
       "once-heal-r1",
       "post-game-over-manager-gate-r1",
       "retry-reset-r1",
-      "production-chart-count-oracle"
+      "production-chart-count-oracle",
+      "ordinary-initialization-profile-r1"
     ],
     "partialFindings": [
       "D18",
@@ -5711,7 +5793,7 @@
       "D23-master-start-data",
       "D24"
     ],
-    "r1TraceCount": 4,
+    "r1TraceCount": 5,
     "productionAuthorization": false,
     "pendingPlans": [],
     "supersededPlans": [
@@ -5720,7 +5802,8 @@
     "executedPlans": [
       "positive-retry-all-lanes-early-score-skill-v2",
       "multitouch-seven-lane-native-positive-skill-window-v2",
-      "multitouch-seven-lane-post-gameover-retry-lifecycle-v3"
+      "multitouch-seven-lane-post-gameover-retry-lifecycle-v3",
+      "production-initialization-profile-retry-r1"
     ],
     "abortedPlans": [
       "multitouch-seven-lane-positive-skill-window"
@@ -5735,8 +5818,8 @@
       ],
       "partialCases": 20,
       "blockedCases": 13,
-      "unknownFields": 151,
-      "blockingFindings": 91
+      "unknownFields": 146,
+      "blockingFindings": 89
     }
   }
 }

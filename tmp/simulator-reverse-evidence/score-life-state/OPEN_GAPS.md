@@ -12,17 +12,18 @@
 - `D14/D18/D20-Skill-partial`：原生七lane R1锁定Skill `0→1→2→3→0`、5.0s/0.75s timer、once-heal `800+300=1100`、Begin前两个entry冻结1.0且在Playing后Reflect仍消费1.0、Playing后18个entry冻结1.2/ScoreUpType1、finish后恢复1.0。
 - 正判定/Skill计划：v1保留为superseded；v2与原生ARM64七lane v2均已晋升raw；shell七lane控制因超时aborted且无raw。
 - `D22-Retry-partial`：v3 R1锁定Game Over后11.875秒无已hook manager/business调用；非破坏性Retry复用同一InGameRecord并重置Game Over、Score、Life、Combo、判定/输入计数与cached Skill Life，再以max Note 540进入InitBaseScore。Continue与星石动作显式禁止且未观察。
-- `D19-partial`：BS01–BS36 partial oracle已生成并独立校验；BS05/BS06/BS11为静态confirmed，20个case为partial，13个case blocked；`unknown_fields=151`、`blocking_findings=91`，因此D19仍required-before-code。
-- `D03/D19/D23-chart-count-partial`：production chart count独立oracle按10.1.4 ARM64规则固定ordinary `979`与HABAHIRO `731`；已移除BS01/BS02的4个chart unknown并将BS02推进为partial，base-score与初始化顺序仍开放。
+- `D19-partial`：BS01–BS36 partial oracle已生成并独立校验；BS05/BS06/BS11为静态confirmed，20个case为partial，13个case blocked；`unknown_fields=146`、`blocking_findings=89`，因此D19仍required-before-code。
+- `D03/D19/D23-chart-count-partial`：production chart count独立oracle按10.1.4 ARM64规则固定ordinary `979`与HABAHIRO `731`；已移除BS01/BS02的4个chart unknown并将BS02推进为partial。
+- `D03/D06/D18/D23-ordinary-initialization-partial`：11事件privacy-minimized R1锁定`poppin_shuffle_special` SPECIAL Lv.27、start/calculated/record identity、Life `1000/1000/2000`、Miss/Bad `-100/-50`、total/rate/base bits `0x483C8A31/0x3F9C28F6/0x4434718E`及zero event/bonus base；BS01的5个初始化unknown已清零，但deck member rows仍阻塞。
 
 ## required-before-code
 
 - `D18`剩余：Fever、guard、Never Die、多个/重叠Skill及special-mode对象identity与before/after字段。
-- `D19`剩余：BS01–BS36尚有151个unknown fields与91个blocking findings，必须补齐master/R1/failure证据后才能全部`unknown_fields=[]`。
+- `D19`剩余：BS01–BS36尚有146个unknown fields与89个blocking findings，必须补齐master/R1/failure证据后才能全部`unknown_fields=[]`。
 - `D20`剩余：Fever切换、多个/重叠Skill及Skill/Fever/Life/Combo/五槽交错；单Skill start/end冻结子范围已锁定。
 - `D21`：生命周期与 failure atomicity。
 - `D22`剩余：score decrease mode、Continue（采集禁止）、seek与ReturnTime边界。
-- `D23`剩余：score level、difficulty、deck/start-data及result/damage/Skill/Fever/event/Auto/Festival/Medley/Garupa master rows provenance。
+- `D23`剩余：HABAHIRO initialization、deck member rows/Float32 accumulation、nonzero event及Skill/Fever/Auto/Festival/Medley/Garupa master rows provenance；ordinary score level/difficulty/damage/base初始化子范围已锁定。
 - `D24`：最终 closure 与 portable contract。
 
 ## 门状态
@@ -34,17 +35,17 @@ production_authorization=false
 unknown_methods=[]
 unknown_layouts=[]
 unknown_fields=[]
-r1_traces=4
+r1_traces=5
 production_bms=2
-capture_plans=5
-executed_capture_plans=3
+capture_plans=6
+executed_capture_plans=4
 pending_capture_plans=0
 fixed_event_cases=36
 fixed_event_confirmed=3
 fixed_event_partial=20
 fixed_event_blocked=13
-fixed_event_unknown_fields=151
-fixed_event_blocking_findings=91
+fixed_event_unknown_fields=146
+fixed_event_blocking_findings=89
 production_chart_counts=979,731
 chart_count_unknown_fields=0
 aborted_capture_plans=1

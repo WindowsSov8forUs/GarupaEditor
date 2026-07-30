@@ -9,62 +9,68 @@
     "libil2cpp_sha256": "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F",
     "global_metadata_sha256": "298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F"
   },
-  "source_commit": "c7dbaba81699adec896796167074cb85cdc94e2e",
+  "source_commit": "3c95190f4b6326da97e21c8e590f625a7582dc22",
   "generator": "build_score_life_state_fixed_event_oracle.py",
   "evidence_catalog": {
     "static_contract": {
       "path": "score_life_state_static_contract.json",
       "bytes": 1107943,
       "sha256": "932AE569D6B2AD8620D1D8CECD44EB812B6AFDB16E18590140D7DA56998566C2",
-      "source_commit": "c7dbaba81699adec896796167074cb85cdc94e2e"
+      "source_commit": "3c95190f4b6326da97e21c8e590f625a7582dc22"
     },
     "static_findings": {
       "path": "score_life_state_static_findings.json",
       "bytes": 15061,
       "sha256": "B626E6318BD8462BC94C8C9FEEB27AF00FC89751F210CB8D6F3C34EA1F17FAC2",
-      "source_commit": "c7dbaba81699adec896796167074cb85cdc94e2e"
+      "source_commit": "3c95190f4b6326da97e21c8e590f625a7582dc22"
     },
     "ordinary_bms": {
       "path": "runtime-inputs/bms/poppin_shuffle_special.bms.txt",
       "bytes": 17882,
       "sha256": "418DB7F5BFC6B5431AC0ABF2FB905120BDFA8C778C35AA42418A6FA43F4094DC",
-      "source_commit": "c7dbaba81699adec896796167074cb85cdc94e2e"
+      "source_commit": "3c95190f4b6326da97e21c8e590f625a7582dc22"
     },
     "habahiro_bms": {
       "path": "runtime-inputs/bms/786_miracle_april_habahiro_special.bms.txt",
       "bytes": 38700,
       "sha256": "43148090C40ABBD951E8D7112200BDAE9B796A8A531A0793169E0AD70C3DC159",
-      "source_commit": "c7dbaba81699adec896796167074cb85cdc94e2e"
+      "source_commit": "3c95190f4b6326da97e21c8e590f625a7582dc22"
     },
     "no_input_r1": {
       "path": "runtime/no-input-retry-life-gameover.trace.json.gz",
       "bytes": 140797,
       "sha256": "4F1BBCCF8E9D9258235ED3FD52F3B74242F515362C5C4EE7F51B8126290E8A55",
-      "source_commit": "c7dbaba81699adec896796167074cb85cdc94e2e"
+      "source_commit": "3c95190f4b6326da97e21c8e590f625a7582dc22"
     },
     "positive_r1": {
       "path": "runtime/positive-retry-all-lanes-early.trace.json.gz",
       "bytes": 153597,
       "sha256": "F91140EB5A1B1A8858495B6CFFB9112C4CB295F20D4CDEEED184A1F5CCDB44A9",
-      "source_commit": "c7dbaba81699adec896796167074cb85cdc94e2e"
+      "source_commit": "3c95190f4b6326da97e21c8e590f625a7582dc22"
     },
     "skill_r1": {
       "path": "runtime/multitouch-seven-lane-native-skill.trace.json.gz",
       "bytes": 746972,
       "sha256": "0DB8FF447030750008B001A285480FE280A770EEB9723369C1935107B1DA5FDD",
-      "source_commit": "c7dbaba81699adec896796167074cb85cdc94e2e"
+      "source_commit": "3c95190f4b6326da97e21c8e590f625a7582dc22"
     },
     "retry_r1": {
       "path": "runtime/multitouch-seven-lane-post-gameover-retry.trace.json.gz",
       "bytes": 696375,
       "sha256": "D4BFF770EC545C037A0592F4BF3E4B796565EA12668C5AF6BC81E9C60A6F10AE",
-      "source_commit": "c7dbaba81699adec896796167074cb85cdc94e2e"
+      "source_commit": "3c95190f4b6326da97e21c8e590f625a7582dc22"
     },
     "chart_count": {
       "path": "score_life_state_chart_count_oracle.json",
       "bytes": 4144,
       "sha256": "66CBA99B638A0EB078C8C9D2B2B8FB06663EE8E2B74DBC68249986EEA152E12C",
-      "source_commit": "c7dbaba81699adec896796167074cb85cdc94e2e"
+      "source_commit": "3c95190f4b6326da97e21c8e590f625a7582dc22"
+    },
+    "initialization_profile": {
+      "path": "score_life_initialization_profile_oracle.json",
+      "bytes": 5388,
+      "sha256": "53D07B2DA7456C2B7AFDFE37293E352DC9471E31A0F13556553185EC20364E9B",
+      "source_commit": "3c95190f4b6326da97e21c8e590f625a7582dc22"
     }
   },
   "required_output_fields": [
@@ -122,8 +128,8 @@
       "BS34",
       "BS35"
     ],
-    "unknown_field_count": 151,
-    "blocking_finding_count": 91
+    "unknown_field_count": 146,
+    "blocking_finding_count": 89
   },
   "business_state_gate": "open",
   "production_authorization": false,
@@ -134,19 +140,19 @@
       "status": "partial",
       "evidence_ids": [
         "SLS-S05",
-        "SLS-R1-001",
+        "SLS-R1-008",
         "SLS-BMS-ORDINARY",
         "SLS-CHART-COUNT-ORDINARY"
       ],
       "input_provenance": [
         "ordinary_bms",
-        "no_input_r1",
-        "chart_count"
+        "chart_count",
+        "initialization_profile"
       ],
       "expected_source": [
         "static:SLS-S05",
-        "no_input_r1#InitializeLife.leave:0",
-        "chart_count#charts.ordinary"
+        "chart_count#charts.ordinary",
+        "initialization_profile#ordinary"
       ],
       "expected_projection": {
         "production_bms_sha256": "418DB7F5BFC6B5431AC0ABF2FB905120BDFA8C778C35AA42418A6FA43F4094DC",
@@ -166,12 +172,81 @@
           },
           "formula": "playable_roots + long_roots + (source_slide_nodes_including_roots - source_hidden_slide_nodes - slide_roots)"
         },
-        "observed_max_note_count": 540,
-        "observed_life_fields": [
-          1000,
-          1000,
-          2000
-        ],
+        "observed_initialization_profile": {
+          "difficulty": "special",
+          "score_level": 27,
+          "max_note_count": 979,
+          "life": {
+            "arguments": {
+              "default_life": 1000,
+              "max_life": 2000,
+              "initial_life": 1000
+            },
+            "record": {
+              "current_life": 1000,
+              "displayed_or_skill_base_life": 1000,
+              "business_life_upper_limit": 2000,
+              "max_note_count": 979
+            }
+          },
+          "score": {
+            "total_parameter": {
+              "value": 193064.765625,
+              "bits": "0x483C8A31"
+            },
+            "score_level_rate": {
+              "value": 1.2200000286102295,
+              "bits": "0x3F9C28F6"
+            },
+            "event_parameter": {
+              "value": 0,
+              "bits": "0x00000000"
+            },
+            "base_score": {
+              "value": 721.7742919921875,
+              "bits": "0x4434718E"
+            },
+            "bonus_base_score": {
+              "value": 0,
+              "bits": "0x00000000"
+            },
+            "formula": {
+              "score_level_rate": "Float32(Float32(scoreLevel - 5) * Float32(0.01)) + Float32(1.0)",
+              "ordinary_base": "Float32(Float32(Float32(totalParameter) * scoreLevelRate) / Float32(maxNoteCount)) * Float32(3.0)",
+              "bonus_base": "The event-bonus parameter uses the same divide-then-multiply-by-3 order when not approximately zero."
+            },
+            "before_after_identical": true
+          },
+          "mode_and_damage": {
+            "play_mode": 0,
+            "event_play_mode": 0,
+            "in_game_mode": 1,
+            "is_auto_live": 0,
+            "is_enable_practice": 0,
+            "is_demo_play_mode": 0,
+            "miss_damage": -100,
+            "bad_damage": -50
+          },
+          "object_identity": {
+            "start_data": "0x6cdf7ead20",
+            "calculated_data": "0x6b6f5dfa80",
+            "record": "0x6cf0f6b620",
+            "user_deck": "0x6b480736e0",
+            "deck_user_situation_array": {
+              "pointer": "0x6cf0d75dc0",
+              "length": 5,
+              "elements_omitted": true
+            },
+            "deck_character_info_models": {
+              "pointer": "0x6cf0d75af0",
+              "length": 5,
+              "elements_omitted": true
+            },
+            "score_utility_type_slot": "0x6cdf191ba0",
+            "score_utility_class": "0x6ca286f260",
+            "score_utility_static_fields": "0x6b4ef72b70"
+          }
+        },
         "base_formula": {
           "score_level_rate": "Float32(Float32(scoreLevel - 5) * Float32(0.01)) + Float32(1.0)",
           "ordinary_base": "Float32(Float32(Float32(totalParameter) * scoreLevelRate) / Float32(maxNoteCount)) * Float32(3.0)",
@@ -181,16 +256,8 @@
           "runtime_pending": "Production maxNoteCount, scoreLevel, totalParameter, event parameter, and their master/start-data provenance remain B02 requirements."
         }
       },
-      "unknown_fields": [
-        "initialization.total_parameter",
-        "initialization.score_level",
-        "initialization.event_parameter",
-        "initialization.base_score_bits",
-        "initialization.bonus_base_score_bits"
-      ],
+      "unknown_fields": [],
       "blocking_findings": [
-        "D03",
-        "D06",
         "D23-master-start-data"
       ]
     },

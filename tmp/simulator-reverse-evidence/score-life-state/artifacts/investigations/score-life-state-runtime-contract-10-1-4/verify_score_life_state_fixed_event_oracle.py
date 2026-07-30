@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parent
 ORACLE = ROOT / "score_life_state_fixed_event_oracle.json"
 LIB_SHA256 = "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F"
 METADATA_SHA256 = "298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F"
-SOURCE_COMMIT = "c7dbaba81699adec896796167074cb85cdc94e2e"
+SOURCE_COMMIT = "3c95190f4b6326da97e21c8e590f625a7582dc22"
 EXPECTED_CONFIRMED = ["BS05", "BS06", "BS11"]
 EXPECTED_PARTIAL = [
     "BS01", "BS02", "BS03", "BS07", "BS10", "BS12", "BS13", "BS15", "BS16", "BS18",
@@ -34,6 +34,7 @@ EXPECTED_SOURCES = {
     "skill_r1": "runtime/multitouch-seven-lane-native-skill.trace.json.gz",
     "retry_r1": "runtime/multitouch-seven-lane-post-gameover-retry.trace.json.gz",
     "chart_count": "score_life_state_chart_count_oracle.json",
+    "initialization_profile": "score_life_initialization_profile_oracle.json",
 }
 EXPECTED_OUTPUT_FIELDS = [
     "initialization.base_score_and_profile",
@@ -80,6 +81,7 @@ def main() -> int:
     skill = load_trace(EXPECTED_SOURCES["skill_r1"])
     retry = load_trace(EXPECTED_SOURCES["retry_r1"])
     chart_count = load_json(ROOT / EXPECTED_SOURCES["chart_count"])
+    initialization_profile = load_json(ROOT / EXPECTED_SOURCES["initialization_profile"])
 
     require(oracle["schema_version"] == 1, "oracle schema differs")
     require(oracle["status"] == "partial-10.1.4-fixed-event-oracle-business-gate-open", "oracle status differs")
@@ -136,7 +138,7 @@ def main() -> int:
             require(entry["unknown_fields"] == [] and entry["blocking_findings"] == [], f"confirmed case has blockers: {entry['case_id']}")
             require(entry["expected_projection"], f"confirmed case has no projection: {entry['case_id']}")
         elif entry["status"] == "partial":
-            require(entry["unknown_fields"] and entry["blocking_findings"] and entry["expected_projection"], f"partial case is not fail-closed: {entry['case_id']}")
+            require((entry["unknown_fields"] or entry["blocking_findings"]) and entry["expected_projection"], f"partial case is not fail-closed: {entry['case_id']}")
         else:
             require(entry["unknown_fields"] and entry["blocking_findings"] and entry["expected_projection"] == {}, f"blocked case overclaims projection: {entry['case_id']}")
 
@@ -148,8 +150,8 @@ def main() -> int:
             "confirmed_cases": EXPECTED_CONFIRMED,
             "partial_cases": EXPECTED_PARTIAL,
             "blocked_cases": EXPECTED_BLOCKED,
-            "unknown_field_count": 151,
-            "blocking_finding_count": 91,
+            "unknown_field_count": 146,
+            "blocking_finding_count": 89,
         },
         "coverage summary differs",
     )
@@ -161,9 +163,25 @@ def main() -> int:
             "derived": chart_count["charts"]["ordinary"]["derived"],
             "formula": chart_count["charts"]["ordinary"]["formula"],
         }
-        and "chart.family_counts" not in by_id["BS01"]["unknown_fields"]
+        and by_id["BS01"]["unknown_fields"] == []
+        and by_id["BS01"]["blocking_findings"] == ["D23-master-start-data"]
+        and by_id["BS01"]["expected_projection"]["observed_initialization_profile"]
+        == {
+            "difficulty": "special",
+            "score_level": 27,
+            "max_note_count": 979,
+            "life": initialization_profile["life_initialization"],
+            "score": initialization_profile["score_initialization"],
+            "mode_and_damage": initialization_profile["mode_and_damage"],
+            "object_identity": initialization_profile["object_identity"],
+        }
+        and initialization_profile["score_initialization"]["total_parameter"]["bits"] == "0x483C8A31"
+        and initialization_profile["score_initialization"]["score_level_rate"]["bits"] == "0x3F9C28F6"
+        and initialization_profile["score_initialization"]["event_parameter"]["bits"] == "0x00000000"
+        and initialization_profile["score_initialization"]["base_score"]["bits"] == "0x4434718E"
+        and initialization_profile["score_initialization"]["bonus_base_score"]["bits"] == "0x00000000"
         and chart_count["charts"]["ordinary"]["derived"]["max_note_count"] == 979,
-        "BS01 production chart count projection differs",
+        "BS01 production initialization projection differs",
     )
     require(
         by_id["BS02"]["expected_projection"]
@@ -287,7 +305,7 @@ def main() -> int:
 
     print(
         "verified score/life fixed-event oracle: BS=36 confirmed=3 partial=20 blocked=13 "
-        "unknown_fields=151 blockers=91 R1=4 gate=open production=false"
+        "unknown_fields=146 blockers=89 R1=5 gate=open production=false"
     )
     return 0
 

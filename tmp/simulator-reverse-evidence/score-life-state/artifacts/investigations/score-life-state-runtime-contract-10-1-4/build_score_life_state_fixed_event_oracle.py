@@ -13,7 +13,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parent
 LIB_SHA256 = "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F"
 METADATA_SHA256 = "298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F"
-SOURCE_COMMIT = "c7dbaba81699adec896796167074cb85cdc94e2e"
+SOURCE_COMMIT = "3c95190f4b6326da97e21c8e590f625a7582dc22"
 SOURCES = {
     "static_contract": "score_life_state_static_contract.json",
     "static_findings": "score_life_state_static_findings.json",
@@ -24,6 +24,7 @@ SOURCES = {
     "skill_r1": "runtime/multitouch-seven-lane-native-skill.trace.json.gz",
     "retry_r1": "runtime/multitouch-seven-lane-post-gameover-retry.trace.json.gz",
     "chart_count": "score_life_state_chart_count_oracle.json",
+    "initialization_profile": "score_life_initialization_profile_oracle.json",
 }
 REQUIREMENTS = {
     "BS01": "ordinary production chart family maxNoteCount and base-score initialization",
@@ -146,6 +147,7 @@ def main() -> int:
     skill = load_trace(SOURCES["skill_r1"])
     retry = load_trace(SOURCES["retry_r1"])
     chart_count = load_json(SOURCES["chart_count"])
+    initialization_profile = load_json(SOURCES["initialization_profile"])
 
     require(static_contract["target"]["libil2cpp_sha256"] == LIB_SHA256, "static target differs")
     require(static_findings["sample"]["global_metadata_sha256"] == METADATA_SHA256, "metadata differs")
@@ -162,13 +164,23 @@ def main() -> int:
         and chart_count["blocking_findings"] == [],
         "chart count oracle differs",
     )
+    require(
+        initialization_profile["status"] == "confirmed-r1-ordinary-initialization-profile-partial-D23"
+        and initialization_profile["sample"]["version_name"] == "10.1.4"
+        and initialization_profile["sample"]["version_code"] == 230
+        and initialization_profile["privacy"]["account_fields_included"] is False
+        and initialization_profile["production_chart"]["max_note_count"] == 979
+        and initialization_profile["production_chart"]["score_level"] == 27
+        and initialization_profile["score_initialization"]["base_score"]["bits"] == "0x4434718E"
+        and initialization_profile["business_state_gate"] == "open",
+        "initialization profile oracle differs",
+    )
 
     result_rates = finding["SLS-S03"]["conclusion"]
     combo_rates = finding["SLS-S04"]["conclusion"]
     positive_frame = next(event["frame"] for event in events(positive, "OneFrameData.Setup.leave") if event["frame"]["result"] != 0)
     positive_score = next(event for event in events(positive, "InGameRecord.AddScore.enter") if event["arg1"] != 0)
     positive_game_over = events(positive, "InGameRecord.updateGameOverState.leave")[0]["after"]
-    no_input_init = events(no_input, "InGameRecord.InitializeLife.leave")[0]["record"]
     no_input_game_over = events(no_input, "InGameRecord.updateGameOverState.leave")[0]["after"]
     skill_add = events(skill, "SituationSkillManager.AddSituationSkillToPlayList.leave")[0]
     skill_begin = events(skill, "SituationSkillManager.executeBeginSkillProcess.leave")[0]
@@ -188,9 +200,9 @@ def main() -> int:
     cases.append(case(
         "BS01",
         "partial",
-        ["SLS-S05", "SLS-R1-001", "SLS-BMS-ORDINARY", "SLS-CHART-COUNT-ORDINARY"],
-        ["ordinary_bms", "no_input_r1", "chart_count"],
-        ["static:SLS-S05", "no_input_r1#InitializeLife.leave:0", "chart_count#charts.ordinary"],
+        ["SLS-S05", "SLS-R1-008", "SLS-BMS-ORDINARY", "SLS-CHART-COUNT-ORDINARY"],
+        ["ordinary_bms", "chart_count", "initialization_profile"],
+        ["static:SLS-S05", "chart_count#charts.ordinary", "initialization_profile#ordinary"],
         {
             "production_bms_sha256": digest(ROOT / SOURCES["ordinary_bms"]),
             "production_chart_count": {
@@ -198,22 +210,19 @@ def main() -> int:
                 "derived": ordinary_chart_count["derived"],
                 "formula": ordinary_chart_count["formula"],
             },
-            "observed_max_note_count": no_input_init["max_note_count"],
-            "observed_life_fields": [
-                no_input_init["current_life"],
-                no_input_init["displayed_or_skill_base_life"],
-                no_input_init["business_life_upper_limit"],
-            ],
+            "observed_initialization_profile": {
+                "difficulty": initialization_profile["production_chart"]["difficulty"],
+                "score_level": initialization_profile["production_chart"]["score_level"],
+                "max_note_count": initialization_profile["production_chart"]["max_note_count"],
+                "life": initialization_profile["life_initialization"],
+                "score": initialization_profile["score_initialization"],
+                "mode_and_damage": initialization_profile["mode_and_damage"],
+                "object_identity": initialization_profile["object_identity"],
+            },
             "base_formula": finding["SLS-S05"]["conclusion"],
         },
-        [
-            "initialization.total_parameter",
-            "initialization.score_level",
-            "initialization.event_parameter",
-            "initialization.base_score_bits",
-            "initialization.bonus_base_score_bits",
-        ],
-        ["D03", "D06", "D23-master-start-data"],
+        [],
+        ["D23-master-start-data"],
     ))
     cases.append(case(
         "BS02",

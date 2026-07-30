@@ -43,7 +43,7 @@ function filesRecursively(root, current = root) {
   return files;
 }
 
-check(manifest.schemaVersion === 2 && manifest.entries.length === 374, "Unexpected evidence manifest shape");
+check(manifest.schemaVersion === 2 && manifest.entries.length === 381, "Unexpected evidence manifest shape");
 check(
   manifest.source.staticEvidenceCommit === "6c902656c72f3983fb04386038dcfe38f0d53797" &&
     manifest.source.runtimeInputCommit === "1ee976ea1de24cb0567762a74e2d091ae4c78464" &&
@@ -56,8 +56,10 @@ check(
     manifest.source.skillEvidenceCommit === "4ac4ea186efade9091c6f4377ab7ad7dc852a2c5" &&
     manifest.source.retryLifecyclePlanCommit === "38cee0b409246323b46099e291331a78a267bcec" &&
     manifest.source.retryLifecycleEvidenceCommit === "4f0ce1a02a83747db617695cde69ad47ac8ae78f" &&
-    manifest.source.fixedEventOracleCommit === "f9f15b446f2c7f5b24f5f2ba380b543419383df1" &&
-    manifest.source.chartCountOracleCommit === "c7dbaba81699adec896796167074cb85cdc94e2e",
+    manifest.source.fixedEventOracleCommit === "9eb9ac0ff97e191908099a53ce505cef057d26e4" &&
+    manifest.source.chartCountOracleCommit === "c7dbaba81699adec896796167074cb85cdc94e2e" &&
+    manifest.source.initializationProfilePlanCommit === "a032f8fe82d045b6d3b5c8853cb923803e0c5435" &&
+    manifest.source.initializationProfileEvidenceCommit === "3c95190f4b6326da97e21c8e590f625a7582dc22",
   "Unexpected Reverse evidence commits",
 );
 check(
@@ -77,7 +79,7 @@ check(
     manifest.counts.enums === 19 &&
     manifest.counts.arm64Slices === 326 &&
     manifest.counts.staticEntries === 335 &&
-    manifest.counts.totalEntries === 374 &&
+    manifest.counts.totalEntries === 381 &&
     manifest.counts.r0InputEntries === 12 &&
     manifest.counts.r1EvidenceEntries === 6 &&
     manifest.counts.capturePlanEntries === 4 &&
@@ -88,18 +90,20 @@ check(
     manifest.counts.retryLifecyclePlanEntries === 5 &&
     manifest.counts.retryLifecycleEvidenceEntries === 5 &&
     manifest.counts.fixedEventOracleEntries === 6 &&
+    manifest.counts.initializationProfilePlanEntries === 3 &&
+    manifest.counts.initializationProfileEvidenceEntries === 4 &&
     manifest.counts.fixedEventConfirmedCases === 3 &&
     manifest.counts.fixedEventPartialCases === 20 &&
     manifest.counts.fixedEventBlockedCases === 13 &&
-    manifest.counts.fixedEventUnknownFields === 151 &&
-    manifest.counts.fixedEventBlockingFindings === 91 &&
+    manifest.counts.fixedEventUnknownFields === 146 &&
+    manifest.counts.fixedEventBlockingFindings === 89 &&
     manifest.counts.chartCountOracleEntries === 7 &&
     manifest.counts.ordinaryMaxNoteCount === 979 &&
     manifest.counts.habahiroMaxNoteCount === 731 &&
     manifest.counts.productionBms === 2 &&
     manifest.counts.cacheRecords === 2 &&
     manifest.counts.captureTargets === 50 &&
-    manifest.counts.r1Traces === 4 &&
+    manifest.counts.r1Traces === 5 &&
     manifest.counts.fixedEventCases === 36,
   "Evidence counts changed",
 );
@@ -124,23 +128,23 @@ const runtimeInputGate = manifest.runtimeInputGate;
 check(
   runtimeInputGate.status === "partial-required-before-code" &&
     runtimeInputGate.closedSubscope.join(",") ===
-      "ordinary-production-bms,habahiro-production-bms,connected-device-cache-provenance,observation-only-capture-targets,no-input-life-game-over-r1,positive-perfect-score-r1,active-skill-lifecycle-r1,skill-same-frame-freeze-r1,once-heal-r1,post-game-over-manager-gate-r1,retry-reset-r1,production-chart-count-oracle" &&
+      "ordinary-production-bms,habahiro-production-bms,connected-device-cache-provenance,observation-only-capture-targets,no-input-life-game-over-r1,positive-perfect-score-r1,active-skill-lifecycle-r1,skill-same-frame-freeze-r1,once-heal-r1,post-game-over-manager-gate-r1,retry-reset-r1,production-chart-count-oracle,ordinary-initialization-profile-r1" &&
     runtimeInputGate.partialFindings.join(",") === "D18,D19,D20,D22,D23" &&
     runtimeInputGate.blockingFindings.join(",") ===
       "D18-remaining,D19-remaining,D20-remaining,D21,D22-remaining,D23-master-start-data,D24" &&
-    runtimeInputGate.r1TraceCount === 4 &&
+    runtimeInputGate.r1TraceCount === 5 &&
     runtimeInputGate.pendingPlans.length === 0 &&
     runtimeInputGate.abortedPlans.join(",") === "multitouch-seven-lane-positive-skill-window" &&
     runtimeInputGate.executedPlans.join(",") ===
-      "positive-retry-all-lanes-early-score-skill-v2,multitouch-seven-lane-native-positive-skill-window-v2,multitouch-seven-lane-post-gameover-retry-lifecycle-v3" &&
+      "positive-retry-all-lanes-early-score-skill-v2,multitouch-seven-lane-native-positive-skill-window-v2,multitouch-seven-lane-post-gameover-retry-lifecycle-v3,production-initialization-profile-retry-r1" &&
     runtimeInputGate.supersededPlans.join(",") === "positive-retry-all-lanes-score-skill" &&
     runtimeInputGate.fixedEventOracle.status === "partial-business-gate-open" &&
     runtimeInputGate.fixedEventOracle.totalCases === 36 &&
     runtimeInputGate.fixedEventOracle.confirmedCases.join(",") === "BS05,BS06,BS11" &&
     runtimeInputGate.fixedEventOracle.partialCases === 20 &&
     runtimeInputGate.fixedEventOracle.blockedCases === 13 &&
-    runtimeInputGate.fixedEventOracle.unknownFields === 151 &&
-    runtimeInputGate.fixedEventOracle.blockingFindings === 91 &&
+    runtimeInputGate.fixedEventOracle.unknownFields === 146 &&
+    runtimeInputGate.fixedEventOracle.blockingFindings === 89 &&
     runtimeInputGate.productionAuthorization === false,
   "Runtime input gate was incorrectly closed",
 );
@@ -158,6 +162,8 @@ git(["cat-file", "-e", `${manifest.source.retryLifecyclePlanCommit}^{commit}`], 
 git(["cat-file", "-e", `${manifest.source.retryLifecycleEvidenceCommit}^{commit}`], sourceRoot);
 git(["cat-file", "-e", `${manifest.source.fixedEventOracleCommit}^{commit}`], sourceRoot);
 git(["cat-file", "-e", `${manifest.source.chartCountOracleCommit}^{commit}`], sourceRoot);
+git(["cat-file", "-e", `${manifest.source.initializationProfilePlanCommit}^{commit}`], sourceRoot);
+git(["cat-file", "-e", `${manifest.source.initializationProfileEvidenceCommit}^{commit}`], sourceRoot);
 const evidenceCommits = [
   manifest.source.staticEvidenceCommit,
   manifest.source.runtimeInputCommit,
@@ -172,6 +178,8 @@ const evidenceCommits = [
   manifest.source.retryLifecycleEvidenceCommit,
   manifest.source.fixedEventOracleCommit,
   manifest.source.chartCountOracleCommit,
+  manifest.source.initializationProfilePlanCommit,
+  manifest.source.initializationProfileEvidenceCommit,
 ];
 const ids = new Set();
 const copiedPaths = new Set();
@@ -330,8 +338,8 @@ check(
 const runtimeStatus = json("runtime_input_status.json");
 check(
   runtimeStatus.status === "runtime-inputs-and-r1-partial-locked-business-gate-open" &&
-    runtimeStatus.runtime.r1_trace_count === 4 &&
-    runtimeStatus.runtime.pending_capture_plans.length === 5 &&
+    runtimeStatus.runtime.r1_trace_count === 5 &&
+    runtimeStatus.runtime.pending_capture_plans.length === 6 &&
     runtimeStatus.runtime.pending_capture_plans[0].scenario_id ===
       "positive-retry-all-lanes-score-skill" &&
     runtimeStatus.runtime.pending_capture_plans[0].status ===
@@ -356,6 +364,12 @@ check(
       "executed-confirmed-trace-promoted" &&
     runtimeStatus.runtime.pending_capture_plans[4].observed_scope.join(",") ===
       "D22-post-Game-Over-manager-gate,D22-Retry-reset" &&
+    runtimeStatus.runtime.pending_capture_plans[5].scenario_id ===
+      "production-initialization-profile-retry-r1" &&
+    runtimeStatus.runtime.pending_capture_plans[5].status ===
+      "executed-confirmed-trace-promoted" &&
+    runtimeStatus.runtime.pending_capture_plans[5].observed_scope.join(",") ===
+      "D03-ordinary-max-note,D06-ordinary-base-score,D18-initialization-identity,D23-ordinary-start-data-partial" &&
     runtimeStatus.runtime.capture_fields_not_consumed.length === 5 &&
     runtimeStatus.gates.D18 === "partial-required-before-code" &&
     runtimeStatus.gates.D19 === "partial-required-before-code" &&
@@ -397,14 +411,25 @@ check(
     runtimeStatus.closed.r1_post_gameover_retry_reset.retry_reset_life.join(",") === "0,1000" &&
     runtimeStatus.closed.r1_post_gameover_retry_reset.retry_reset_max_combo.join(",") === "6,0" &&
     runtimeStatus.closed.r1_post_gameover_retry_reset.retry_reset_max_note_count === 540 &&
+    runtimeStatus.closed.r1_ordinary_initialization_profile.events === 11 &&
+    runtimeStatus.closed.r1_ordinary_initialization_profile.asset === "poppin_shuffle_special" &&
+    runtimeStatus.closed.r1_ordinary_initialization_profile.difficulty === "special" &&
+    runtimeStatus.closed.r1_ordinary_initialization_profile.score_level === 27 &&
+    runtimeStatus.closed.r1_ordinary_initialization_profile.max_note_count === 979 &&
+    runtimeStatus.closed.r1_ordinary_initialization_profile.total_parameter_bits === "0x483C8A31" &&
+    runtimeStatus.closed.r1_ordinary_initialization_profile.score_level_rate_bits === "0x3F9C28F6" &&
+    runtimeStatus.closed.r1_ordinary_initialization_profile.event_parameter_bits === "0x00000000" &&
+    runtimeStatus.closed.r1_ordinary_initialization_profile.base_score_bits === "0x4434718E" &&
+    runtimeStatus.closed.r1_ordinary_initialization_profile.bonus_base_score_bits === "0x00000000" &&
+    runtimeStatus.closed.r1_ordinary_initialization_profile.account_fields_included === false &&
     runtimeStatus.runtime.fixed_event_oracle.cases === 36 &&
     runtimeStatus.runtime.fixed_event_oracle.confirmed_cases.join(",") === "BS05,BS06,BS11" &&
     runtimeStatus.runtime.fixed_event_oracle.partial_cases.length === 20 &&
     runtimeStatus.runtime.fixed_event_oracle.partial_cases.includes("BS02") &&
     runtimeStatus.runtime.fixed_event_oracle.blocked_cases.length === 13 &&
     !runtimeStatus.runtime.fixed_event_oracle.blocked_cases.includes("BS02") &&
-    runtimeStatus.runtime.fixed_event_oracle.unknown_fields === 151 &&
-    runtimeStatus.runtime.fixed_event_oracle.blocking_findings === 91 &&
+    runtimeStatus.runtime.fixed_event_oracle.unknown_fields === 146 &&
+    runtimeStatus.runtime.fixed_event_oracle.blocking_findings === 89 &&
     runtimeStatus.runtime.fixed_event_oracle.status === "partial-business-gate-open" &&
     runtimeStatus.business_state_gate === "open" &&
     runtimeStatus.production_authorization === false &&
@@ -1023,6 +1048,52 @@ check(
   "Frozen production chart count oracle changed",
 );
 
+const initializationProfilePlan = json("runtime/initialization-profile-retry-r1-plan.json");
+const initializationProfileOracle = json("score_life_initialization_profile_oracle.json");
+const initializationProfileTrace = JSON.parse(
+  gunzipSync(readFileSync(resolve(investigation, "runtime/initialization-profile-retry.trace.json.gz"))).toString("utf8"),
+);
+const initializationEvents = new Map(
+  initializationProfileTrace.events.map((entry) => [entry.kind, entry]),
+);
+check(
+  initializationProfilePlan.production_chart.asset === "poppin_shuffle_special" &&
+    initializationProfilePlan.production_chart.difficulty === "special" &&
+    initializationProfilePlan.production_chart.score_level === 27 &&
+    initializationProfilePlan.production_chart.bms_sha256 ===
+      "418DB7F5BFC6B5431AC0ABF2FB905120BDFA8C778C35AA42418A6FA43F4094DC" &&
+    initializationProfilePlan.safety.continue_allowed === false &&
+    initializationProfilePlan.safety.premium_currency_actions.length === 0 &&
+    initializationProfilePlan.privacy.account_fields_allowed === false &&
+    initializationProfileTrace.status === "confirmed-r1-observation-only" &&
+    initializationProfileTrace.capture_error === null &&
+    initializationProfileTrace.events.length === 11 &&
+    initializationProfileTrace.events.every((entry, index) => entry.sequence === index) &&
+    initializationProfileTrace.privacy.account_fields_included === false &&
+    initializationEvents.get("InGameCalculatedData.ctor.leave").calculated.bms_file_name ===
+      "poppin_shuffle_special.bms" &&
+    initializationEvents.get("InGameCalculatedData.ctor.leave").calculated.difficulty === "special" &&
+    initializationEvents.get("InGameRecord.InitializeLife.leave").record.max_note_count === 979 &&
+    initializationEvents.get("ScoreUtility.InitBaseScore.start_data").start_data.score_level === 27 &&
+    initializationEvents.get("ScoreUtility.InitBaseScore.start_data").score_utility.total_parameter.bits ===
+      "0x483C8A31" &&
+    initializationEvents.get("ScoreUtility.InitBaseScore.start_data").score_utility.score_level_rate.bits ===
+      "0x3F9C28F6" &&
+    initializationEvents.get("ScoreUtility.InitBaseScore.leave").score_utility.base_score.bits ===
+      "0x4434718E" &&
+    initializationProfileOracle.status === "confirmed-r1-ordinary-initialization-profile-partial-D23" &&
+    initializationProfileOracle.privacy.account_fields_included === false &&
+    initializationProfileOracle.production_chart.max_note_count === 979 &&
+    initializationProfileOracle.production_chart.score_level === 27 &&
+    initializationProfileOracle.score_initialization.event_parameter.bits === "0x00000000" &&
+    initializationProfileOracle.score_initialization.bonus_base_score.bits === "0x00000000" &&
+    initializationProfileOracle.unknown_fields.join(",") ===
+      "deck.member_rows,deck.member_parameter_accumulation,HABAHIRO.initialization_profile,event.master_parameter" &&
+    initializationProfileOracle.business_state_gate === "open" &&
+    initializationProfileOracle.production_authorization === false,
+  "Frozen ordinary initialization profile R1 or privacy boundary changed",
+);
+
 const fixedEventOracle = json("score_life_state_fixed_event_oracle.json");
 const fixedEventCases = fixedEventOracle.cases;
 const fixedEventById = new Map(fixedEventCases.map((entry) => [entry.case_id, entry]));
@@ -1054,11 +1125,12 @@ const fixedEventEvidencePaths = new Map([
   ["skill_r1", "runtime/multitouch-seven-lane-native-skill.trace.json.gz"],
   ["retry_r1", "runtime/multitouch-seven-lane-post-gameover-retry.trace.json.gz"],
   ["chart_count", "score_life_state_chart_count_oracle.json"],
+  ["initialization_profile", "score_life_initialization_profile_oracle.json"],
 ]);
 check(
   fixedEventOracle.schema_version === 1 &&
     fixedEventOracle.status === "partial-10.1.4-fixed-event-oracle-business-gate-open" &&
-    fixedEventOracle.source_commit === "c7dbaba81699adec896796167074cb85cdc94e2e" &&
+    fixedEventOracle.source_commit === "3c95190f4b6326da97e21c8e590f625a7582dc22" &&
     fixedEventOracle.generator === "build_score_life_state_fixed_event_oracle.py" &&
     fixedEventOracle.sample.package === "jp.co.craftegg.band" &&
     fixedEventOracle.sample.version_name === "10.1.4" &&
@@ -1074,8 +1146,8 @@ check(
     confirmedFixedCases.join(",") === "BS05,BS06,BS11" &&
     partialFixedCases.join(",") === expectedPartialFixedCases.join(",") &&
     blockedFixedCases.join(",") === expectedBlockedFixedCases.join(",") &&
-    fixedEventOracle.coverage.unknown_field_count === 151 &&
-    fixedEventOracle.coverage.blocking_finding_count === 91 &&
+    fixedEventOracle.coverage.unknown_field_count === 146 &&
+    fixedEventOracle.coverage.blocking_finding_count === 89 &&
     fixedEventCases.every((entry) =>
       entry.requirement &&
       entry.evidence_ids.length > 0 &&
@@ -1086,8 +1158,7 @@ check(
           entry.blocking_findings.length === 0 &&
           Object.keys(entry.expected_projection).length > 0
         : entry.status === "partial"
-          ? entry.unknown_fields.length > 0 &&
-            entry.blocking_findings.length > 0 &&
+          ? (entry.unknown_fields.length > 0 || entry.blocking_findings.length > 0) &&
             Object.keys(entry.expected_projection).length > 0
           : entry.unknown_fields.length > 0 &&
             entry.blocking_findings.length > 0 &&
@@ -1099,7 +1170,7 @@ check(
       return source.path === path &&
         source.bytes === bytes.length &&
         source.sha256 === sha256(bytes) &&
-        source.source_commit === "c7dbaba81699adec896796167074cb85cdc94e2e";
+        source.source_commit === "3c95190f4b6326da97e21c8e590f625a7582dc22";
     }),
   "Frozen BS01-BS36 partial oracle identity, provenance, or fail-closed coverage changed",
 );
@@ -1112,7 +1183,14 @@ check(
     fixedEventById.get("BS11").expected_projection.representative ===
       findingById.get("SLS-S02").conclusion.representative &&
     fixedEventById.get("BS01").expected_projection.production_chart_count.derived.max_note_count === 979 &&
-    !fixedEventById.get("BS01").unknown_fields.includes("chart.family_counts") &&
+    fixedEventById.get("BS01").unknown_fields.length === 0 &&
+    fixedEventById.get("BS01").blocking_findings.join(",") === "D23-master-start-data" &&
+    fixedEventById.get("BS01").expected_projection.observed_initialization_profile.score_level === 27 &&
+    fixedEventById.get("BS01").expected_projection.observed_initialization_profile.max_note_count === 979 &&
+    fixedEventById.get("BS01").expected_projection.observed_initialization_profile.score.total_parameter.bits ===
+      "0x483C8A31" &&
+    fixedEventById.get("BS01").expected_projection.observed_initialization_profile.score.base_score.bits ===
+      "0x4434718E" &&
     fixedEventById.get("BS02").status === "partial" &&
     fixedEventById.get("BS02").expected_projection.production_chart_count.derived.max_note_count === 731 &&
     fixedEventById.get("BS02").unknown_fields.join(",") === "initialization.base_score_bits" &&
@@ -1178,7 +1256,7 @@ for (const [path, fragment] of criticalText) {
 }
 
 console.log(
-  `score-life-state evidence verified: methods=326 layouts=25 enums=19 BMS=2 counts=979/731 R1=4(partial D18/D20/D22) BS=36(3/20/13,unknown=151,blockers=91) plans=5(pending=0) ` +
+  `score-life-state evidence verified: methods=326 layouts=25 enums=19 BMS=2 counts=979/731 R1=5(partial D18/D20/D22/D23) BS=36(3/20/13,unknown=146,blockers=89) plans=6(pending=0) ` +
     `V01=closed business=blocked(D18-D24) entries=${manifest.entries.length} ` +
     `index=${validateIndex ? "checked" : "skipped"}`,
 );

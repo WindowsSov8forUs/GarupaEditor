@@ -86,6 +86,24 @@
       "retry_reset_max_combo": [6, 0],
       "retry_reset_max_note_count": 540,
       "status": "confirmed-r1-observation-only"
+    },
+    "r1_ordinary_initialization_profile": {
+      "trace": "runtime/initialization-profile-retry.trace.json.gz",
+      "trace_sha256": "81E335AE1CB0686EB8806B3284FA0AE14F411D0A2F91C8CC4C93BB2683A6C302",
+      "events": 11,
+      "asset": "poppin_shuffle_special",
+      "difficulty": "special",
+      "score_level": 27,
+      "max_note_count": 979,
+      "total_parameter_bits": "0x483C8A31",
+      "score_level_rate_bits": "0x3F9C28F6",
+      "event_parameter_bits": "0x00000000",
+      "base_score_bits": "0x4434718E",
+      "bonus_base_score_bits": "0x00000000",
+      "miss_damage": -100,
+      "bad_damage": -50,
+      "account_fields_included": false,
+      "status": "confirmed-r1-observation-only"
     }
   },
   "partial": {
@@ -98,12 +116,12 @@
       "open_subscope": "score decrease modes, Continue (not permitted for capture), seek and ReturnTime"
     },
     "D23": {
-      "closed_subscope": "ordinary and HABAHIRO production BMS bytes and connected-device cache provenance",
-      "open_subscope": "score level, difficulty, deck/start-data, result/damage, Skill, Fever, event, Auto, Festival, Medley, and Garupa master rows"
+      "closed_subscope": "ordinary and HABAHIRO production BMS bytes and connected-device cache provenance; ordinary poppin_shuffle_special score level 27, special difficulty, start/calculated object identity, damage -100/-50, maxNote 979, total/rate/base Float32 bits and zero event parameter",
+      "open_subscope": "HABAHIRO initialization profile; deck member rows and Float32 accumulation; Skill, Fever, nonzero event, Auto, Festival, Medley, and Garupa master rows"
     }
   },
   "runtime": {
-    "r1_trace_count": 4,
+    "r1_trace_count": 5,
     "pending_capture_plans": [
       {
         "path": "runtime/positive-retry-all-lanes-r1-plan.json",
@@ -137,6 +155,14 @@
         "observed_scope": ["D22-post-Game-Over-manager-gate", "D22-Retry-reset"],
         "not_observed": ["D22-score-decrease", "D22-Continue", "D22-seek", "D22-ReturnTime"],
         "safety": "Retry only; Continue/premium-currency actions forbidden; 12-second post-Game-Over observation before Retry"
+      },
+      {
+        "path": "runtime/initialization-profile-retry-r1-plan.json",
+        "scenario_id": "production-initialization-profile-retry-r1",
+        "status": "executed-confirmed-trace-promoted",
+        "observed_scope": ["D03-ordinary-max-note", "D06-ordinary-base-score", "D18-initialization-identity", "D23-ordinary-start-data-partial"],
+        "not_observed": ["D23-deck-member-rows", "D23-HABAHIRO-initialization", "D23-nonzero-event-parameter"],
+        "safety": "Retry only; account identifiers, room fields and deck element contents omitted; Continue/premium-currency actions forbidden"
       }
     ],
     "capture_fields_not_consumed": [
@@ -154,11 +180,11 @@
       "confirmed_cases": ["BS05", "BS06", "BS11"],
       "partial_cases": ["BS01", "BS02", "BS03", "BS07", "BS10", "BS12", "BS13", "BS15", "BS16", "BS18", "BS19", "BS20", "BS21", "BS22", "BS24", "BS27", "BS29", "BS30", "BS32", "BS36"],
       "blocked_cases": ["BS04", "BS08", "BS09", "BS14", "BS17", "BS23", "BS25", "BS26", "BS28", "BS31", "BS33", "BS34", "BS35"],
-      "unknown_fields": 151,
-      "blocking_findings": 91,
+      "unknown_fields": 146,
+      "blocking_findings": 89,
       "status": "partial-business-gate-open"
     },
-    "operational_blocker": "Four R1 traces are closed, including non-destructive post-Game-Over gate and Retry/reset. BS01-BS36 now have a fail-closed partial oracle: only BS05/BS06/BS11 are fully static-confirmed; 20 cases retain observed projections with unknown fields and 13 remain blocked. Production ordinary/HABAHIRO chart counts are fixed at 979/731, but base-score inputs remain unknown. Fever transitions, multiple-Skill overlap, score-decrease/seek/ReturnTime lifecycle and master provenance remain open. Continue remains unobserved because premium-currency actions are forbidden. Five ABI-unsafe fields stay excluded.",
+    "operational_blocker": "Five R1 traces are closed, including non-destructive post-Game-Over gate, Retry/reset and the privacy-minimized ordinary initialization profile. Ordinary poppin_shuffle_special fixes score level 27, total/rate/base bits and zero event parameter; BS01 now has no unknown fields but retains the deck-row D23 blocker. The fixed-event oracle has 146 unknown fields and 89 blockers overall. HABAHIRO initialization, deck member accumulation, nonzero event profiles, Fever transitions, multiple-Skill overlap, score-decrease/seek/ReturnTime lifecycle and remaining master provenance remain open. Continue remains unobserved because premium-currency actions are forbidden. Five ABI-unsafe fields stay excluded.",
     "synthetic_trace_allowed": false
   },
   "gates": {
@@ -175,7 +201,7 @@
     "Fever, guard, Never Die, multiple/overlapping Skill and special-mode R1 traces remain open.",
     "Deck/start-data/master provenance remains open.",
     "D20 Fever/multiple-entry remainder, D21 and D22 score-decrease/Continue/seek/ReturnTime remain open.",
-    "BS01-BS36 partial oracle retains 151 unknown fields and 91 blocking findings; final portable contract does not exist."
+    "BS01-BS36 partial oracle retains 146 unknown fields and 89 blocking findings; final portable contract does not exist."
   ],
   "business_state_gate": "open",
   "production_authorization": false
