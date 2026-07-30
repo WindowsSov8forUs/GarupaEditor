@@ -22,6 +22,7 @@ This investigation re-establishes the score, Life, Skill, Fever, OneFrame, and r
 - `business_state_gate=open`;
 - production authorization: `false`;
 - `BS01–BS36` partial oracle: 3 static-confirmed, 19 partial, 14 blocked; `unknown_fields=155`, `blocking_findings=92`.
+- production chart count oracle: ordinary `979`, HABAHIRO `731`, independently derived from committed chart-structure facts under the 10.1.4 `NoteManager.analyzeBMS` ARM64 rule.
 
 `score_life_state_static_findings.json` records the current direct conclusions, including:
 
@@ -54,6 +55,10 @@ These static conclusions and the partial BS01–BS36 oracle do **not** authorize
 - `verify_score_life_skill_r1.py`: fail-closed verifier for the active-Skill lifecycle, same-frame frozen rates, once-heal and final record trace.
 - `verify_score_life_retry_lifecycle_plan.py`: fail-closed verifier for the non-destructive post-Game-Over Retry/reset plan.
 - `verify_score_life_retry_lifecycle_r1.py`: fail-closed verifier for the post-Game-Over gate and in-place Retry reset trace.
+- `build_score_life_state_chart_count_oracle.py`: deterministic derivation of ordinary/HABAHIRO production `maxNoteCount` from frozen chart structure and the 10.1.4 ARM64 count rule.
+- `score_life_state_chart_count_oracle.json`: exact family decomposition yielding ordinary `825 + 29 + 125 = 979` and HABAHIRO `598 + 58 + 75 = 731`.
+- `verify_score_life_state_chart_count_oracle.py`: independent structure/hash/ARM64 verifier that does not trust the earlier prototype `max_note_count` field.
+- `chart-inputs/`: byte-preserving copies of the chart-construction facts committed at `74ab76f6838847d98aae1a15741a5f024e3774ff`.
 - `build_score_life_state_fixed_event_oracle.py`: deterministic builder for the fail-closed BS01–BS36 partial oracle from committed static/R1/BMS inputs.
 - `score_life_state_fixed_event_oracle.json`: all 36 required case identities with evidence projections, unknown fields, and blocking findings.
 - `verify_score_life_state_fixed_event_oracle.py`: independent verifier for source hashes, case coverage, critical static tables, R1 projections, and the still-open business gate.
@@ -114,6 +119,8 @@ py -3.14 artifacts/investigations/score-life-state-runtime-contract-10-1-4/verif
 py -3.14 artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_skill_r1.py
 py -3.14 artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_retry_lifecycle_plan.py
 py -3.14 artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_retry_lifecycle_r1.py
+py -3.14 artifacts/investigations/score-life-state-runtime-contract-10-1-4/build_score_life_state_chart_count_oracle.py
+py -3.14 artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_state_chart_count_oracle.py
 py -3.14 artifacts/investigations/score-life-state-runtime-contract-10-1-4/build_score_life_state_fixed_event_oracle.py
 py -3.14 artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_state_fixed_event_oracle.py
 ```
@@ -132,4 +139,6 @@ The v3 plan changes no part of the committed native run. It adds a 12-second obs
 
 The resulting 6,375-event trace observes Game Over leave followed only by the nested `AddIPower.leave`, then no hooked manager/business call for 11,875ms. Retry reuses the same `InGameRecord`; `InitializeLife` resets single Game Over `1→0`, Score/reserve `44403→0`, Life `0→1000`, max Combo `6→0`, judgement/tap/timing counts and cached Skill Life to zero while preserving displayed base 1000, business upper limit 2000 and max Note count 540 before `InitBaseScore`. This partially closes the post-Game-Over gate and Retry/reset part of D22. Score-decrease modes, seek and ReturnTime remain open; Continue remains intentionally unobserved because it consumes premium currency.
 
-The first BS01–BS36 oracle baseline is now materialized without pretending closure: BS05, BS06 and BS11 are fully confirmed from direct 10.1.4 static evidence; 19 cases contain only directly supported static/R1 projections plus explicit unknown fields; 14 cases remain blocked with no expected projection. The oracle currently records 155 unknown fields and 92 blocking findings, so D19 and D24 remain required-before-code. Fever transitions, multiple/overlapping Skill, guard/Never Die, deck/start-data/master rows and final `closure.json` remain open. The five ABI-unsafe fields stay unconsumed. The business gate remains open and no trace or partial oracle authorizes production implementation.
+The chart-count batch consumes the two production BMS bytes already pulled from the connected 10.1.4 installation and byte-preserving chart-structure facts from the committed chart-construction investigation. The latter investigation was versioned 10.1.3, so it is used only as a parser-independent description of the identical BMS bytes: playable roots, Long roots, Slide roots, source Slide nodes, and hidden source nodes. No 10.1.3 gameplay rule or earlier prototype `max_note_count` result is consumed. The current 10.1.4 ARM64 directly supplies the count rule: retained root once, one extra Long tail, every non-hidden Slide child, directional adjacent-group sharing, then store to `InGameRecord.maxNoteCount +0x2C`. The independent verifier derives ordinary `825 + 29 + (298 - 80 - 93) = 979` and HABAHIRO `598 + 58 + (141 - 15 - 51) = 731`.
+
+The first BS01–BS36 oracle baseline is now materialized without pretending closure: BS05, BS06 and BS11 are fully confirmed from direct 10.1.4 static evidence; 19 cases contain only directly supported static/R1 projections plus explicit unknown fields; 14 cases remain blocked with no expected projection. The separate chart-count oracle does not yet alter those case states in this commit. The fixed-event oracle currently records 155 unknown fields and 92 blocking findings, so D19 and D24 remain required-before-code. Fever transitions, multiple/overlapping Skill, guard/Never Die, deck/start-data/master rows and final `closure.json` remain open. The five ABI-unsafe fields stay unconsumed. The business gate remains open and no trace or partial oracle authorizes production implementation.

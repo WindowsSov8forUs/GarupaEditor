@@ -13,6 +13,7 @@
 - 正判定/Skill计划：v1保留为superseded；v2与原生ARM64七lane v2均已晋升raw；shell七lane控制因超时aborted且无raw。
 - `D22-Retry-partial`：v3 R1锁定Game Over后11.875秒无已hook manager/business调用；非破坏性Retry复用同一InGameRecord并重置Game Over、Score、Life、Combo、判定/输入计数与cached Skill Life，再以max Note 540进入InitBaseScore。Continue与星石动作显式禁止且未观察。
 - `D19-partial`：BS01–BS36 partial oracle已生成并独立校验；BS05/BS06/BS11为静态confirmed，19个case为partial，14个case blocked；`unknown_fields=155`、`blocking_findings=92`，因此D19仍required-before-code。
+- `D03/D19/D23-chart-count-partial`：production chart count独立oracle按10.1.4 ARM64规则固定ordinary `979`与HABAHIRO `731`；固定事件oracle尚未重建，因此case计数暂不变化。
 
 ## required-before-code
 
@@ -44,6 +45,8 @@ fixed_event_partial=19
 fixed_event_blocked=14
 fixed_event_unknown_fields=155
 fixed_event_blocking_findings=92
+production_chart_counts=979,731
+chart_count_unknown_fields=0
 aborted_capture_plans=1
 superseded_capture_plans=1
 excluded_raw_fields=5
