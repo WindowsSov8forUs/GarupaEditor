@@ -43,7 +43,7 @@ function filesRecursively(root, current = root) {
   return files;
 }
 
-check(manifest.schemaVersion === 2 && manifest.entries.length === 366, "Unexpected evidence manifest shape");
+check(manifest.schemaVersion === 2 && manifest.entries.length === 369, "Unexpected evidence manifest shape");
 check(
   manifest.source.staticEvidenceCommit === "6c902656c72f3983fb04386038dcfe38f0d53797" &&
     manifest.source.runtimeInputCommit === "1ee976ea1de24cb0567762a74e2d091ae4c78464" &&
@@ -55,7 +55,8 @@ check(
     manifest.source.nativeMultitouchPlanCommit === "445ac26856e597fb6c12c708e7a31ecf995d06e1" &&
     manifest.source.skillEvidenceCommit === "4ac4ea186efade9091c6f4377ab7ad7dc852a2c5" &&
     manifest.source.retryLifecyclePlanCommit === "38cee0b409246323b46099e291331a78a267bcec" &&
-    manifest.source.retryLifecycleEvidenceCommit === "4f0ce1a02a83747db617695cde69ad47ac8ae78f",
+    manifest.source.retryLifecycleEvidenceCommit === "4f0ce1a02a83747db617695cde69ad47ac8ae78f" &&
+    manifest.source.fixedEventOracleCommit === "659292c85e474e89d817c46c6cdd830ba7de07f5",
   "Unexpected Reverse evidence commits",
 );
 check(
@@ -75,7 +76,7 @@ check(
     manifest.counts.enums === 19 &&
     manifest.counts.arm64Slices === 326 &&
     manifest.counts.staticEntries === 335 &&
-    manifest.counts.totalEntries === 366 &&
+    manifest.counts.totalEntries === 369 &&
     manifest.counts.r0InputEntries === 12 &&
     manifest.counts.r1EvidenceEntries === 6 &&
     manifest.counts.capturePlanEntries === 4 &&
@@ -85,11 +86,17 @@ check(
     manifest.counts.skillEvidenceEntries === 5 &&
     manifest.counts.retryLifecyclePlanEntries === 5 &&
     manifest.counts.retryLifecycleEvidenceEntries === 5 &&
+    manifest.counts.fixedEventOracleEntries === 6 &&
+    manifest.counts.fixedEventConfirmedCases === 3 &&
+    manifest.counts.fixedEventPartialCases === 19 &&
+    manifest.counts.fixedEventBlockedCases === 14 &&
+    manifest.counts.fixedEventUnknownFields === 155 &&
+    manifest.counts.fixedEventBlockingFindings === 92 &&
     manifest.counts.productionBms === 2 &&
     manifest.counts.cacheRecords === 2 &&
     manifest.counts.captureTargets === 50 &&
     manifest.counts.r1Traces === 4 &&
-    manifest.counts.fixedEventCases === 0,
+    manifest.counts.fixedEventCases === 36,
   "Evidence counts changed",
 );
 const versionGate = manifest.versionRebaselineGate;
@@ -114,15 +121,22 @@ check(
   runtimeInputGate.status === "partial-required-before-code" &&
     runtimeInputGate.closedSubscope.join(",") ===
       "ordinary-production-bms,habahiro-production-bms,connected-device-cache-provenance,observation-only-capture-targets,no-input-life-game-over-r1,positive-perfect-score-r1,active-skill-lifecycle-r1,skill-same-frame-freeze-r1,once-heal-r1,post-game-over-manager-gate-r1,retry-reset-r1" &&
-    runtimeInputGate.partialFindings.join(",") === "D18,D20,D22,D23" &&
+    runtimeInputGate.partialFindings.join(",") === "D18,D19,D20,D22,D23" &&
     runtimeInputGate.blockingFindings.join(",") ===
-      "D18-remaining,D19,D20-remaining,D21,D22-remaining,D23-master-start-data,D24" &&
+      "D18-remaining,D19-remaining,D20-remaining,D21,D22-remaining,D23-master-start-data,D24" &&
     runtimeInputGate.r1TraceCount === 4 &&
     runtimeInputGate.pendingPlans.length === 0 &&
     runtimeInputGate.abortedPlans.join(",") === "multitouch-seven-lane-positive-skill-window" &&
     runtimeInputGate.executedPlans.join(",") ===
       "positive-retry-all-lanes-early-score-skill-v2,multitouch-seven-lane-native-positive-skill-window-v2,multitouch-seven-lane-post-gameover-retry-lifecycle-v3" &&
     runtimeInputGate.supersededPlans.join(",") === "positive-retry-all-lanes-score-skill" &&
+    runtimeInputGate.fixedEventOracle.status === "partial-business-gate-open" &&
+    runtimeInputGate.fixedEventOracle.totalCases === 36 &&
+    runtimeInputGate.fixedEventOracle.confirmedCases.join(",") === "BS05,BS06,BS11" &&
+    runtimeInputGate.fixedEventOracle.partialCases === 19 &&
+    runtimeInputGate.fixedEventOracle.blockedCases === 14 &&
+    runtimeInputGate.fixedEventOracle.unknownFields === 155 &&
+    runtimeInputGate.fixedEventOracle.blockingFindings === 92 &&
     runtimeInputGate.productionAuthorization === false,
   "Runtime input gate was incorrectly closed",
 );
@@ -138,6 +152,7 @@ git(["cat-file", "-e", `${manifest.source.nativeMultitouchPlanCommit}^{commit}`]
 git(["cat-file", "-e", `${manifest.source.skillEvidenceCommit}^{commit}`], sourceRoot);
 git(["cat-file", "-e", `${manifest.source.retryLifecyclePlanCommit}^{commit}`], sourceRoot);
 git(["cat-file", "-e", `${manifest.source.retryLifecycleEvidenceCommit}^{commit}`], sourceRoot);
+git(["cat-file", "-e", `${manifest.source.fixedEventOracleCommit}^{commit}`], sourceRoot);
 const evidenceCommits = [
   manifest.source.staticEvidenceCommit,
   manifest.source.runtimeInputCommit,
@@ -150,6 +165,7 @@ const evidenceCommits = [
   manifest.source.skillEvidenceCommit,
   manifest.source.retryLifecyclePlanCommit,
   manifest.source.retryLifecycleEvidenceCommit,
+  manifest.source.fixedEventOracleCommit,
 ];
 const ids = new Set();
 const copiedPaths = new Set();
@@ -336,6 +352,7 @@ check(
       "D22-post-Game-Over-manager-gate,D22-Retry-reset" &&
     runtimeStatus.runtime.capture_fields_not_consumed.length === 5 &&
     runtimeStatus.gates.D18 === "partial-required-before-code" &&
+    runtimeStatus.gates.D19 === "partial-required-before-code" &&
     runtimeStatus.gates.D20 === "partial-required-before-code" &&
     runtimeStatus.gates.D22 === "partial-required-before-code" &&
     runtimeStatus.gates.D23 === "partial-required-before-code" &&
@@ -374,6 +391,13 @@ check(
     runtimeStatus.closed.r1_post_gameover_retry_reset.retry_reset_life.join(",") === "0,1000" &&
     runtimeStatus.closed.r1_post_gameover_retry_reset.retry_reset_max_combo.join(",") === "6,0" &&
     runtimeStatus.closed.r1_post_gameover_retry_reset.retry_reset_max_note_count === 540 &&
+    runtimeStatus.runtime.fixed_event_oracle.cases === 36 &&
+    runtimeStatus.runtime.fixed_event_oracle.confirmed_cases.join(",") === "BS05,BS06,BS11" &&
+    runtimeStatus.runtime.fixed_event_oracle.partial_cases.length === 19 &&
+    runtimeStatus.runtime.fixed_event_oracle.blocked_cases.length === 14 &&
+    runtimeStatus.runtime.fixed_event_oracle.unknown_fields === 155 &&
+    runtimeStatus.runtime.fixed_event_oracle.blocking_findings === 92 &&
+    runtimeStatus.runtime.fixed_event_oracle.status === "partial-business-gate-open" &&
     runtimeStatus.business_state_gate === "open" &&
     runtimeStatus.production_authorization === false &&
     runtimeStatus.blocking_findings.length > 0,
@@ -951,6 +975,113 @@ check(
   "Frozen post-Game-Over gate or in-place Retry/reset R1 trajectory changed",
 );
 
+const fixedEventOracle = json("score_life_state_fixed_event_oracle.json");
+const fixedEventCases = fixedEventOracle.cases;
+const fixedEventById = new Map(fixedEventCases.map((entry) => [entry.case_id, entry]));
+const confirmedFixedCases = fixedEventCases
+  .filter((entry) => entry.status === "confirmed-static")
+  .map((entry) => entry.case_id);
+const partialFixedCases = fixedEventCases
+  .filter((entry) => entry.status === "partial")
+  .map((entry) => entry.case_id);
+const blockedFixedCases = fixedEventCases
+  .filter((entry) => entry.status === "blocked")
+  .map((entry) => entry.case_id);
+const expectedPartialFixedCases = [
+  "BS01", "BS03", "BS07", "BS10", "BS12", "BS13", "BS15", "BS16", "BS18",
+  "BS19", "BS20", "BS21", "BS22", "BS24", "BS27", "BS29", "BS30", "BS32",
+  "BS36",
+];
+const expectedBlockedFixedCases = [
+  "BS02", "BS04", "BS08", "BS09", "BS14", "BS17", "BS23", "BS25", "BS26",
+  "BS28", "BS31", "BS33", "BS34", "BS35",
+];
+const fixedEventEvidencePaths = new Map([
+  ["static_contract", "score_life_state_static_contract.json"],
+  ["static_findings", "score_life_state_static_findings.json"],
+  ["ordinary_bms", "runtime-inputs/bms/poppin_shuffle_special.bms.txt"],
+  ["habahiro_bms", "runtime-inputs/bms/786_miracle_april_habahiro_special.bms.txt"],
+  ["no_input_r1", "runtime/no-input-retry-life-gameover.trace.json.gz"],
+  ["positive_r1", "runtime/positive-retry-all-lanes-early.trace.json.gz"],
+  ["skill_r1", "runtime/multitouch-seven-lane-native-skill.trace.json.gz"],
+  ["retry_r1", "runtime/multitouch-seven-lane-post-gameover-retry.trace.json.gz"],
+]);
+check(
+  fixedEventOracle.schema_version === 1 &&
+    fixedEventOracle.status === "partial-10.1.4-fixed-event-oracle-business-gate-open" &&
+    fixedEventOracle.source_commit === "4f0ce1a02a83747db617695cde69ad47ac8ae78f" &&
+    fixedEventOracle.generator === "build_score_life_state_fixed_event_oracle.py" &&
+    fixedEventOracle.sample.package === "jp.co.craftegg.band" &&
+    fixedEventOracle.sample.version_name === "10.1.4" &&
+    fixedEventOracle.sample.version_code === 230 &&
+    fixedEventOracle.sample.abi === "arm64-v8a" &&
+    fixedEventOracle.sample.libil2cpp_sha256 ===
+      "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F" &&
+    fixedEventOracle.business_state_gate === "open" &&
+    fixedEventOracle.production_authorization === false &&
+    fixedEventCases.length === 36 &&
+    fixedEventCases.map((entry) => entry.case_id).join(",") ===
+      Array.from({ length: 36 }, (_, index) => `BS${String(index + 1).padStart(2, "0")}`).join(",") &&
+    confirmedFixedCases.join(",") === "BS05,BS06,BS11" &&
+    partialFixedCases.join(",") === expectedPartialFixedCases.join(",") &&
+    blockedFixedCases.join(",") === expectedBlockedFixedCases.join(",") &&
+    fixedEventOracle.coverage.unknown_field_count === 155 &&
+    fixedEventOracle.coverage.blocking_finding_count === 92 &&
+    fixedEventCases.every((entry) =>
+      entry.requirement &&
+      entry.evidence_ids.length > 0 &&
+      entry.input_provenance.length > 0 &&
+      entry.expected_source.length > 0 &&
+      (entry.status === "confirmed-static"
+        ? entry.unknown_fields.length === 0 &&
+          entry.blocking_findings.length === 0 &&
+          Object.keys(entry.expected_projection).length > 0
+        : entry.status === "partial"
+          ? entry.unknown_fields.length > 0 &&
+            entry.blocking_findings.length > 0 &&
+            Object.keys(entry.expected_projection).length > 0
+          : entry.unknown_fields.length > 0 &&
+            entry.blocking_findings.length > 0 &&
+            Object.keys(entry.expected_projection).length === 0),
+    ) &&
+    [...fixedEventEvidencePaths].every(([sourceId, path]) => {
+      const bytes = readFileSync(resolve(investigation, path));
+      const source = fixedEventOracle.evidence_catalog[sourceId];
+      return source.path === path &&
+        source.bytes === bytes.length &&
+        source.sha256 === sha256(bytes) &&
+        source.source_commit === "4f0ce1a02a83747db617695cde69ad47ac8ae78f";
+    }),
+  "Frozen BS01-BS36 partial oracle identity, provenance, or fail-closed coverage changed",
+);
+check(
+  JSON.stringify(fixedEventById.get("BS05").expected_projection.result_correction) ===
+    JSON.stringify(findingById.get("SLS-S03").conclusion) &&
+    JSON.stringify(fixedEventById.get("BS06").expected_projection.combo_correction_ranges) ===
+      JSON.stringify(findingById.get("SLS-S04").conclusion) &&
+    fixedEventById.get("BS11").expected_projection.slot_capacity === 5 &&
+    fixedEventById.get("BS11").expected_projection.representative ===
+      findingById.get("SLS-S02").conclusion.representative &&
+    fixedEventById.get("BS07").expected_projection.frame.index === 6 &&
+    fixedEventById.get("BS07").expected_projection.frame.add_score.bits === "0x44AF8052" &&
+    fixedEventById.get("BS07").expected_projection.reflected_add_score === 1404 &&
+    fixedEventById.get("BS19").expected_projection.observed_heal.before === 800 &&
+    fixedEventById.get("BS19").expected_projection.observed_heal.delta === 300 &&
+    fixedEventById.get("BS19").expected_projection.observed_heal.after === 1100 &&
+    fixedEventById.get("BS22").expected_projection.states.none === 0 &&
+    fixedEventById.get("BS22").expected_projection.states.begin === 1 &&
+    fixedEventById.get("BS22").expected_projection.states.playing === 2 &&
+    fixedEventById.get("BS22").expected_projection.states.finishing === 3 &&
+    fixedEventById.get("BS22").expected_projection.states.final_none === 0 &&
+    fixedEventById.get("BS22").expected_projection.playing_timer_bits === "0x40A00000" &&
+    fixedEventById.get("BS22").expected_projection.finishing_timer_bits === "0x3F400000" &&
+    fixedEventById.get("BS36").expected_projection.post_game_over_hook_quiet_ms === 11875 &&
+    fixedEventById.get("BS36").expected_projection.record_identity_stable === true &&
+    fixedEventById.get("BS36").expected_projection.retry_reset.score.join(",") === "44403,0" &&
+    fixedEventById.get("BS36").expected_projection.retry_reset.life.join(",") === "0,1000",
+  "Frozen BS05/BS06/BS07/BS11/BS19/BS22/BS36 direct projections changed",
+);
+
 const unconsumedCaptureFields = [
   "ScoreUtility.GetResultTypeCorrectionRate.rate_bits",
   "FeverTimeManager.GetFeverTimeScoreRate.result_bits",
@@ -992,7 +1123,7 @@ for (const [path, fragment] of criticalText) {
 }
 
 console.log(
-  `score-life-state evidence verified: methods=326 layouts=25 enums=19 BMS=2 R1=4(partial D18/D20/D22) plans=5(pending=0) ` +
+  `score-life-state evidence verified: methods=326 layouts=25 enums=19 BMS=2 R1=4(partial D18/D20/D22) BS=36(3/19/14) plans=5(pending=0) ` +
     `V01=closed business=blocked(D18-D24) entries=${manifest.entries.length} ` +
     `index=${validateIndex ? "checked" : "skipped"}`,
 );

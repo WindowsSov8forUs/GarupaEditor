@@ -13,7 +13,8 @@
     "nativeMultitouchPlanCommit": "445ac26856e597fb6c12c708e7a31ecf995d06e1",
     "skillEvidenceCommit": "4ac4ea186efade9091c6f4377ab7ad7dc852a2c5",
     "retryLifecyclePlanCommit": "38cee0b409246323b46099e291331a78a267bcec",
-    "retryLifecycleEvidenceCommit": "4f0ce1a02a83747db617695cde69ad47ac8ae78f"
+    "retryLifecycleEvidenceCommit": "4f0ce1a02a83747db617695cde69ad47ac8ae78f",
+    "fixedEventOracleCommit": "659292c85e474e89d817c46c6cdd830ba7de07f5"
   },
   "sample": {
     "package": "jp.co.craftegg.band",
@@ -30,8 +31,8 @@
     "arm64Slices": 326,
     "staticEntries": 335,
     "r1Traces": 4,
-    "fixedEventCases": 0,
-    "totalEntries": 366,
+    "fixedEventCases": 36,
+    "totalEntries": 369,
     "r0InputEntries": 12,
     "productionBms": 2,
     "cacheRecords": 2,
@@ -43,7 +44,13 @@
     "nativeMultitouchBatchEntries": 9,
     "skillEvidenceEntries": 5,
     "retryLifecyclePlanEntries": 5,
-    "retryLifecycleEvidenceEntries": 5
+    "retryLifecycleEvidenceEntries": 5,
+    "fixedEventConfirmedCases": 3,
+    "fixedEventPartialCases": 19,
+    "fixedEventBlockedCases": 14,
+    "fixedEventUnknownFields": 155,
+    "fixedEventBlockingFindings": 92,
+    "fixedEventOracleEntries": 6
   },
   "versionRebaselineGate": {
     "status": "closed",
@@ -5033,17 +5040,17 @@
     },
     {
       "id": "SLS-B01-329",
-      "sourceCommit": "4f0ce1a02a83747db617695cde69ad47ac8ae78f",
+      "sourceCommit": "659292c85e474e89d817c46c6cdd830ba7de07f5",
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/README.md",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/README.md",
-      "bytes": 12337,
-      "sha256": "BC8DD13E43E3A788B9F9446B7C1C607E6AFF9DD90A0FEC302860E5969ADC22DE",
+      "bytes": 13835,
+      "sha256": "44D77114CD90113C0EC247C3C075F2F8E0E131E317D16E3F3E3968D2584108C8",
       "version": "10.1.4_230_arm64-v8a",
-      "status": "confirmed-r1-partial-business-gate-open",
+      "status": "partial-fixed-event-oracle-business-gate-open",
       "consumedBy": [
         "B02",
-        "D22-post-game-over-gate-partial",
-        "D22-retry-reset-partial"
+        "D19-partial",
+        "BS01-BS36-partial"
       ]
     },
     {
@@ -5160,17 +5167,17 @@
     },
     {
       "id": "SLS-B02-R0-011",
-      "sourceCommit": "4f0ce1a02a83747db617695cde69ad47ac8ae78f",
+      "sourceCommit": "659292c85e474e89d817c46c6cdd830ba7de07f5",
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime_input_status.json",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime_input_status.json",
-      "bytes": 8181,
-      "sha256": "A8FE15D0ECA5E6417C9FB12DEEF859F672C22A8D6DB343A924E05387F36A7631",
+      "bytes": 9148,
+      "sha256": "A295475F8D6A7A2AE4CEE2AA9AD30D16D9D38E202093FB43B7EB0A9341923910",
       "version": "10.1.4_230_arm64-v8a",
-      "status": "confirmed-r1-partial-business-gate-open",
+      "status": "partial-fixed-event-oracle-business-gate-open",
       "consumedBy": [
         "B02",
-        "D22-post-game-over-gate-partial",
-        "D22-retry-reset-partial"
+        "D19-partial",
+        "BS01-BS36-partial"
       ]
     },
     {
@@ -5205,17 +5212,17 @@
     },
     {
       "id": "SLS-B01-332",
-      "sourceCommit": "4f0ce1a02a83747db617695cde69ad47ac8ae78f",
+      "sourceCommit": "659292c85e474e89d817c46c6cdd830ba7de07f5",
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/SHA256SUMS",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/SHA256SUMS",
-      "bytes": 47718,
-      "sha256": "18837B35BBB2B9AC8EC3F88FAF70AC2926DAB8AE728B87F1B990720E78AC72F1",
+      "bytes": 48048,
+      "sha256": "A74D1609856AC06E078B3680C52F0461650200AC00F4E9053F5DED76298411FE",
       "version": "10.1.4_230_arm64-v8a",
-      "status": "confirmed-r1-partial-business-gate-open",
+      "status": "partial-fixed-event-oracle-business-gate-open",
       "consumedBy": [
         "B02",
-        "D22-post-game-over-gate-partial",
-        "D22-retry-reset-partial"
+        "D19-partial",
+        "BS01-BS36-partial"
       ]
     },
     {
@@ -5564,6 +5571,51 @@
         "D22-post-game-over-gate-partial",
         "D22-retry-reset-partial"
       ]
+    },
+    {
+      "id": "SLS-B02-ORACLE-001",
+      "sourceCommit": "659292c85e474e89d817c46c6cdd830ba7de07f5",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/build_score_life_state_fixed_event_oracle.py",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/build_score_life_state_fixed_event_oracle.py",
+      "bytes": 26858,
+      "sha256": "32E63A78F3884A63BCC15C390EB47977A76B14A073FFEF180FA42978C4A73F62",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "partial-fixed-event-oracle-business-gate-open",
+      "consumedBy": [
+        "B02",
+        "D19-partial",
+        "BS01-BS36-partial"
+      ]
+    },
+    {
+      "id": "SLS-B02-ORACLE-002",
+      "sourceCommit": "659292c85e474e89d817c46c6cdd830ba7de07f5",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/score_life_state_fixed_event_oracle.json",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/score_life_state_fixed_event_oracle.json",
+      "bytes": 39881,
+      "sha256": "9566906927B2A5447DB58D58CE4A726505F97010BFD2C5E6DCD24249556B2BC3",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "partial-fixed-event-oracle-business-gate-open",
+      "consumedBy": [
+        "B02",
+        "D19-partial",
+        "BS01-BS36-partial"
+      ]
+    },
+    {
+      "id": "SLS-B02-ORACLE-003",
+      "sourceCommit": "659292c85e474e89d817c46c6cdd830ba7de07f5",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_state_fixed_event_oracle.py",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_state_fixed_event_oracle.py",
+      "bytes": 12903,
+      "sha256": "245F82D3712F99769A173B8DB9AFDD31108B0FAE1ED9AF61D7B1889A4DD07FDB",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "partial-fixed-event-oracle-business-gate-open",
+      "consumedBy": [
+        "B02",
+        "D19-partial",
+        "BS01-BS36-partial"
+      ]
     }
   ],
   "runtimeInputGate": {
@@ -5583,13 +5635,14 @@
     ],
     "partialFindings": [
       "D18",
+      "D19",
       "D20",
       "D22",
       "D23"
     ],
     "blockingFindings": [
       "D18-remaining",
-      "D19",
+      "D19-remaining",
       "D20-remaining",
       "D21",
       "D22-remaining",
@@ -5609,6 +5662,19 @@
     ],
     "abortedPlans": [
       "multitouch-seven-lane-positive-skill-window"
-    ]
+    ],
+    "fixedEventOracle": {
+      "status": "partial-business-gate-open",
+      "totalCases": 36,
+      "confirmedCases": [
+        "BS05",
+        "BS06",
+        "BS11"
+      ],
+      "partialCases": 19,
+      "blockedCases": 14,
+      "unknownFields": 155,
+      "blockingFindings": 92
+    }
   }
 }

@@ -1,6 +1,6 @@
 # 分数、生命与状态证据包
 
-本目录冻结 Reverse 静态提交 `6c902656c72f3983fb04386038dcfe38f0d53797`、R0输入提交 `1ee976ea1de24cb0567762a74e2d091ae4c78464`、R1子批提交 `72aa279fb07041b04ca649df918fa35ab0490d91`、正判定采集计划提交 `e65f3411d1a91cfa5ecf0d7b29e99605b04e8a41`、提前输入v2计划提交 `3adf31f987830ce5b82aba0d92813b69fda3cec7`、正判定R1提交 `5ce2a7ef325def61986a93053ad85c2f4973f25b`、七lane shell计划提交 `eb7aba5467569b577cd942957dd65bdce600bc9d`、原生控制v2提交 `445ac26856e597fb6c12c708e7a31ecf995d06e1`、active-Skill R1提交 `4ac4ea186efade9091c6f4377ab7ad7dc852a2c5`、Retry生命周期计划提交 `38cee0b409246323b46099e291331a78a267bcec` 与Retry生命周期R1提交 `4f0ce1a02a83747db617695cde69ad47ac8ae78f`。
+本目录冻结 Reverse 静态提交 `6c902656c72f3983fb04386038dcfe38f0d53797`、R0输入提交 `1ee976ea1de24cb0567762a74e2d091ae4c78464`、R1子批提交 `72aa279fb07041b04ca649df918fa35ab0490d91`、正判定采集计划提交 `e65f3411d1a91cfa5ecf0d7b29e99605b04e8a41`、提前输入v2计划提交 `3adf31f987830ce5b82aba0d92813b69fda3cec7`、正判定R1提交 `5ce2a7ef325def61986a93053ad85c2f4973f25b`、七lane shell计划提交 `eb7aba5467569b577cd942957dd65bdce600bc9d`、原生控制v2提交 `445ac26856e597fb6c12c708e7a31ecf995d06e1`、active-Skill R1提交 `4ac4ea186efade9091c6f4377ab7ad7dc852a2c5`、Retry生命周期计划提交 `38cee0b409246323b46099e291331a78a267bcec`、Retry生命周期R1提交 `4f0ce1a02a83747db617695cde69ad47ac8ae78f` 与fixed-event partial oracle提交 `659292c85e474e89d817c46c6cdd830ba7de07f5`。
 
 B01/V01静态门已关闭，B02仅部分推进：
 
@@ -19,9 +19,10 @@ B01/V01静态门已关闭，B02仅部分推进：
 - active-Skill R1观察`0→1→2→3→0`、5.0s Skill timer、0.75s finishing、once-heal `800→1100`、Begin前entry冻结1.0并在Playing后Reflect消费、Playing后18个entry冻结1.2/ScoreUpType1、finish后entry恢复1.0；D14/D18及D20单Skill start/end子范围仅部分推进；
 - post-Game-Over Retry v3完整保留native run，增加12秒Game Over后观察和一次Retry/确认/reset观察；Continue与星石动作禁止；
 - v3实际观察Game Over后11.875秒无已hook业务调用，Retry复用同一InGameRecord并把Game Over `1→0`、Score `44403→0`、Life `0→1000`、max Combo `6→0`及计数清零，再以max Note 540进入InitBaseScore；
+- `BS01–BS36` partial oracle已冻结：BS05/BS06/BS11为静态confirmed，19个case为partial，14个case blocked；`unknown_fields=155`、`blocking_findings=92`；D19/D24仍未关闭；
 - `R1=4`且`business_state_gate=open`，不得实施B03–B12 production。
 
-B02仍必须补齐D18/D20剩余范围、D19、D21、D22的score-decrease/Continue/seek/ReturnTime、D23剩余deck/start-data/master provenance、D24及BS01–BS36；不得把单Skill或Retry轨迹外推为Fever、guard、Never Die、多/重叠Skill或完整生命周期oracle。
+B02仍必须补齐D18/D20剩余范围、D19的155个unknown fields与92个blocking findings、D21、D22的score-decrease/Continue/seek/ReturnTime、D23剩余deck/start-data/master provenance及D24；不得把单Skill或Retry轨迹外推为Fever、guard、Never Die、多/重叠Skill或完整生命周期oracle。
 
 验证：
 
@@ -30,4 +31,4 @@ node tmp/simulator-reverse-evidence/score-life-state/verify.mjs
 node tmp/simulator-reverse-evidence/score-life-state/verify.mjs --index
 ```
 
-`verify.mjs` 校验十一个Reverse commit、source/copy/index三方字节、manifest、冻结SHA256SUMS、静态contract/findings/closure、BMS/cache record、四条R1压缩raw trace、计划来源/动作、Skill生命周期/同帧冻结/once-heal、Retry-only安全边界与reset轨迹、观察型capture约束和业务门状态。
+`verify.mjs` 校验十二个Reverse commit、source/copy/index三方字节、manifest、冻结SHA256SUMS、静态contract/findings/closure、BMS/cache record、四条R1压缩raw trace、计划来源/动作、Skill生命周期/同帧冻结/once-heal、Retry-only安全边界与reset轨迹、BS01–BS36 partial oracle、观察型capture约束和业务门状态。

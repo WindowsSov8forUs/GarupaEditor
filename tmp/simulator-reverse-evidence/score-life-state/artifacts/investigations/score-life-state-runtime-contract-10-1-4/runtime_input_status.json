@@ -146,12 +146,24 @@
       "NoteFrontBase.judgeFrontNote.note_type",
       "NoteFrontBase.judgeFrontNote.absolute_pos"
     ],
-    "operational_blocker": "Four R1 traces are closed, including non-destructive post-Game-Over gate and Retry/reset. Fever transitions, multiple-Skill overlap, score-decrease/seek/ReturnTime lifecycle and master provenance remain open. Continue remains unobserved because premium-currency actions are forbidden. Five ABI-unsafe fields stay excluded.",
+    "fixed_event_oracle": {
+      "path": "score_life_state_fixed_event_oracle.json",
+      "generator": "build_score_life_state_fixed_event_oracle.py",
+      "verifier": "verify_score_life_state_fixed_event_oracle.py",
+      "cases": 36,
+      "confirmed_cases": ["BS05", "BS06", "BS11"],
+      "partial_cases": ["BS01", "BS03", "BS07", "BS10", "BS12", "BS13", "BS15", "BS16", "BS18", "BS19", "BS20", "BS21", "BS22", "BS24", "BS27", "BS29", "BS30", "BS32", "BS36"],
+      "blocked_cases": ["BS02", "BS04", "BS08", "BS09", "BS14", "BS17", "BS23", "BS25", "BS26", "BS28", "BS31", "BS33", "BS34", "BS35"],
+      "unknown_fields": 155,
+      "blocking_findings": 92,
+      "status": "partial-business-gate-open"
+    },
+    "operational_blocker": "Four R1 traces are closed, including non-destructive post-Game-Over gate and Retry/reset. BS01-BS36 now have a fail-closed partial oracle: only BS05/BS06/BS11 are fully static-confirmed; 19 cases retain observed projections with unknown fields and 14 remain blocked. Fever transitions, multiple-Skill overlap, score-decrease/seek/ReturnTime lifecycle and master provenance remain open. Continue remains unobserved because premium-currency actions are forbidden. Five ABI-unsafe fields stay excluded.",
     "synthetic_trace_allowed": false
   },
   "gates": {
     "D18": "partial-required-before-code",
-    "D19": "required-before-code",
+    "D19": "partial-required-before-code",
     "D20": "partial-required-before-code",
     "D21": "required-before-code",
     "D22": "partial-required-before-code",
@@ -163,7 +175,7 @@
     "Fever, guard, Never Die, multiple/overlapping Skill and special-mode R1 traces remain open.",
     "Deck/start-data/master provenance remains open.",
     "D20 Fever/multiple-entry remainder, D21 and D22 score-decrease/Continue/seek/ReturnTime remain open.",
-    "BS01-BS36 and final portable contract do not exist."
+    "BS01-BS36 partial oracle retains 155 unknown fields and 92 blocking findings; final portable contract does not exist."
   ],
   "business_state_gate": "open",
   "production_authorization": false

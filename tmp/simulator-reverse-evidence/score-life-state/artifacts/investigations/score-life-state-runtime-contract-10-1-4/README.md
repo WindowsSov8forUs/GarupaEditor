@@ -20,7 +20,8 @@ This investigation re-establishes the score, Life, Skill, Fever, OneFrame, and r
 - enums: `19 unchanged`, `0 unknown`;
 - `version_rebaseline=closed`;
 - `business_state_gate=open`;
-- production authorization: `false`.
+- production authorization: `false`;
+- `BS01–BS36` partial oracle: 3 static-confirmed, 19 partial, 14 blocked; `unknown_fields=155`, `blocking_findings=92`.
 
 `score_life_state_static_findings.json` records the current direct conclusions, including:
 
@@ -32,7 +33,7 @@ This investigation re-establishes the score, Life, Skill, Fever, OneFrame, and r
 - the structural explanation for historical `1500/1000` without promoting that 10.1.3 observation;
 - damage mapping, Never Die equality and Life `5`, fixed/rate once-heal formula, Skill `0.75f` finishing timer, Fever `2.0f`, and record counters.
 
-These static conclusions do **not** authorize implementation. D18–D24, master/start-data provenance, R1 traces, and BS01–BS36 remain required before code. The subsequent R0 input batch locks two production BMS files but does not close D23 as a whole.
+These static conclusions and the partial BS01–BS36 oracle do **not** authorize implementation. D18–D24, master/start-data provenance, and every oracle case with unknown fields or blocking findings remain required before code. The subsequent R0 input batch locks two production BMS files but does not close D23 as a whole.
 
 ## Files
 
@@ -53,6 +54,9 @@ These static conclusions do **not** authorize implementation. D18–D24, master/
 - `verify_score_life_skill_r1.py`: fail-closed verifier for the active-Skill lifecycle, same-frame frozen rates, once-heal and final record trace.
 - `verify_score_life_retry_lifecycle_plan.py`: fail-closed verifier for the non-destructive post-Game-Over Retry/reset plan.
 - `verify_score_life_retry_lifecycle_r1.py`: fail-closed verifier for the post-Game-Over gate and in-place Retry reset trace.
+- `build_score_life_state_fixed_event_oracle.py`: deterministic builder for the fail-closed BS01–BS36 partial oracle from committed static/R1/BMS inputs.
+- `score_life_state_fixed_event_oracle.json`: all 36 required case identities with evidence projections, unknown fields, and blocking findings.
+- `verify_score_life_state_fixed_event_oracle.py`: independent verifier for source hashes, case coverage, critical static tables, R1 projections, and the still-open business gate.
 - `runtime-inputs/bms/`: ordinary and HABAHIRO TextAssets extracted from connected-device 10.1.4 cache bundles.
 - `runtime-inputs/cache-index/`: byte-preserving `AssetBundleInfo` records and structured cache provenance; account identifiers are omitted.
 - `runtime_input_status.json`: D18/D22/D23 partial state and remaining runtime blockers.
@@ -66,6 +70,7 @@ These static conclusions do **not** authorize implementation. D18–D24, master/
 - `runtime/multitouch-seven-lane-native-skill.trace.json.gz`: successful 7,122-event R1 trace covering active Skill and same-frame entry freezing.
 - `runtime/multitouch-seven-lane-post-gameover-retry-r1-plan.json`: executed v3 plan preserving the native run, then observing 12 seconds after Game Over before a Retry-only reset sequence; Continue is forbidden.
 - `runtime/multitouch-seven-lane-post-gameover-retry.trace.json.gz`: successful 6,375-event R1 trace covering the post-Game-Over gate and in-place Retry reset.
+- `score_life_state_fixed_event_oracle.json`: complete BS01–BS36 case matrix with only directly supported projections promoted.
 - `runtime-control/multitouch_seven_lane_control.c`: fixed input-device-only control source.
 - `runtime-control/multitouch_seven_lane_control.arm64`: 6,304-byte stripped ELF64 AArch64 PIE, SHA-256 `AB39066A...9C249`.
 - `runtime-control/multitouch_seven_lane_control.build.json`: NDK 27.2 / Android 24 deterministic build and capability record.
@@ -86,7 +91,7 @@ Expected verifier summary:
 verified score/life/state static contract: methods=326 layouts=25 enums=19 version_rebaseline=closed business_state_gate=open
 ```
 
-The verifier fails closed for a sample hash mismatch, ambiguous or changed managed mapping, non-global method boundary, ELF/TSV byte difference, stale ARM64 slice, layout/enum/constant difference, rodata difference, missing critical instruction, or incorrectly closed business gate.
+The verifier fails closed for a sample hash mismatch, ambiguous or changed managed mapping, non-global method boundary, ELF/TSV byte difference, stale ARM64 slice, layout/enum/constant difference, rodata difference, missing critical instruction, stale partial-oracle case, or incorrectly closed business gate.
 
 ## Runtime input status
 
@@ -109,6 +114,8 @@ py -3.14 artifacts/investigations/score-life-state-runtime-contract-10-1-4/verif
 py -3.14 artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_skill_r1.py
 py -3.14 artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_retry_lifecycle_plan.py
 py -3.14 artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_retry_lifecycle_r1.py
+py -3.14 artifacts/investigations/score-life-state-runtime-contract-10-1-4/build_score_life_state_fixed_event_oracle.py
+py -3.14 artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_state_fixed_event_oracle.py
 ```
 
 The trace was captured through an explicit non-default loopback server forwarded by ADB, using `--device-address 127.0.0.1:47913`; the transport is embedded in the trace capability record. This changes only the Frida connection path and does not alter the observation agent or game state.
@@ -123,4 +130,6 @@ The resulting 7,122-event trace observes Skill Add→Begin→Playing→Finishing
 
 The v3 plan changes no part of the committed native run. It adds a 12-second observation window after Game Over, then only the same Retry and confirmation coordinates followed by reset observation. Its safety object forbids Continue and premium-currency actions.
 
-The resulting 6,375-event trace observes Game Over leave followed only by the nested `AddIPower.leave`, then no hooked manager/business call for 11,875ms. Retry reuses the same `InGameRecord`; `InitializeLife` resets single Game Over `1→0`, Score/reserve `44403→0`, Life `0→1000`, max Combo `6→0`, judgement/tap/timing counts and cached Skill Life to zero while preserving displayed base 1000, business upper limit 2000 and max Note count 540 before `InitBaseScore`. This partially closes the post-Game-Over gate and Retry/reset part of D22. Score-decrease modes, seek and ReturnTime remain open; Continue remains intentionally unobserved because it consumes premium currency. Fever transitions, multiple/overlapping Skill, guard/Never Die, deck/start-data/master rows, BS01–BS36 and final `closure.json` also remain open. The five ABI-unsafe fields stay unconsumed. The business gate remains open and no trace authorizes production implementation.
+The resulting 6,375-event trace observes Game Over leave followed only by the nested `AddIPower.leave`, then no hooked manager/business call for 11,875ms. Retry reuses the same `InGameRecord`; `InitializeLife` resets single Game Over `1→0`, Score/reserve `44403→0`, Life `0→1000`, max Combo `6→0`, judgement/tap/timing counts and cached Skill Life to zero while preserving displayed base 1000, business upper limit 2000 and max Note count 540 before `InitBaseScore`. This partially closes the post-Game-Over gate and Retry/reset part of D22. Score-decrease modes, seek and ReturnTime remain open; Continue remains intentionally unobserved because it consumes premium currency.
+
+The first BS01–BS36 oracle baseline is now materialized without pretending closure: BS05, BS06 and BS11 are fully confirmed from direct 10.1.4 static evidence; 19 cases contain only directly supported static/R1 projections plus explicit unknown fields; 14 cases remain blocked with no expected projection. The oracle currently records 155 unknown fields and 92 blocking findings, so D19 and D24 remain required-before-code. Fever transitions, multiple/overlapping Skill, guard/Never Die, deck/start-data/master rows and final `closure.json` remain open. The five ABI-unsafe fields stay unconsumed. The business gate remains open and no trace or partial oracle authorizes production implementation.
