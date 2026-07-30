@@ -9,7 +9,8 @@
     "capturePlanCommit": "e65f3411d1a91cfa5ecf0d7b29e99605b04e8a41",
     "capturePlanV2Commit": "3adf31f987830ce5b82aba0d92813b69fda3cec7",
     "positiveEvidenceCommit": "5ce2a7ef325def61986a93053ad85c2f4973f25b",
-    "multitouchPlanCommit": "eb7aba5467569b577cd942957dd65bdce600bc9d"
+    "multitouchPlanCommit": "eb7aba5467569b577cd942957dd65bdce600bc9d",
+    "nativeMultitouchPlanCommit": "445ac26856e597fb6c12c708e7a31ecf995d06e1"
   },
   "sample": {
     "package": "jp.co.craftegg.band",
@@ -27,15 +28,16 @@
     "staticEntries": 335,
     "r1Traces": 2,
     "fixedEventCases": 0,
-    "totalEntries": 356,
+    "totalEntries": 360,
     "r0InputEntries": 12,
     "productionBms": 2,
     "cacheRecords": 2,
     "captureTargets": 50,
     "r1EvidenceEntries": 6,
-    "capturePlanEntries": 3,
+    "capturePlanEntries": 4,
     "positiveEvidenceEntries": 5,
-    "multitouchPlanBatchEntries": 6
+    "multitouchPlanBatchEntries": 6,
+    "nativeMultitouchBatchEntries": 9
   },
   "versionRebaselineGate": {
     "status": "closed",
@@ -5025,16 +5027,15 @@
     },
     {
       "id": "SLS-B01-329",
-      "sourceCommit": "eb7aba5467569b577cd942957dd65bdce600bc9d",
+      "sourceCommit": "445ac26856e597fb6c12c708e7a31ecf995d06e1",
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/README.md",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/README.md",
-      "bytes": 8967,
-      "sha256": "0A8D8E9DE9706A34724839215ED4443772CC239322C0D3BA2BA6578E163B7A62",
+      "bytes": 9731,
+      "sha256": "FA02D46EDEF91796CF4BC316EE621C21F59E1836E542004D9334AA17EE7875B3",
       "version": "10.1.4_230_arm64-v8a",
-      "status": "confirmed-r1-partial-business-gate-open",
+      "status": "confirmed-capture-plan-not-runtime-evidence",
       "consumedBy": [
         "B02",
-        "D18-positive-partial",
         "D18-active-skill-pending",
         "D20-pending"
       ]
@@ -5153,16 +5154,15 @@
     },
     {
       "id": "SLS-B02-R0-011",
-      "sourceCommit": "eb7aba5467569b577cd942957dd65bdce600bc9d",
+      "sourceCommit": "445ac26856e597fb6c12c708e7a31ecf995d06e1",
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime_input_status.json",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime_input_status.json",
-      "bytes": 5606,
-      "sha256": "0F70C930AE00D06457BBD05F2C95C329EB9257539E7658677F777DF76E5B0099",
+      "bytes": 6076,
+      "sha256": "8B9A40702678EAA8D4910627FFF283A33B2BBF3E5C73623FDF0A02DFEA7D79C9",
       "version": "10.1.4_230_arm64-v8a",
-      "status": "confirmed-r1-partial-business-gate-open",
+      "status": "confirmed-capture-plan-not-runtime-evidence",
       "consumedBy": [
         "B02",
-        "D18-positive-partial",
         "D18-active-skill-pending",
         "D20-pending"
       ]
@@ -5199,16 +5199,15 @@
     },
     {
       "id": "SLS-B01-332",
-      "sourceCommit": "eb7aba5467569b577cd942957dd65bdce600bc9d",
+      "sourceCommit": "445ac26856e597fb6c12c708e7a31ecf995d06e1",
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/SHA256SUMS",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/SHA256SUMS",
-      "bytes": 46549,
-      "sha256": "522D088D7AEBC0153E29AB980E7FB838586075EAAD6FF205CEFFB57476FE3AF7",
+      "bytes": 47026,
+      "sha256": "8642C9C01D88DE29E9ED5948032C4AE114C19E34691AF62BDF8F5AF902D9B8CC",
       "version": "10.1.4_230_arm64-v8a",
-      "status": "confirmed-r1-partial-business-gate-open",
+      "status": "confirmed-capture-plan-not-runtime-evidence",
       "consumedBy": [
         "B02",
-        "D18-positive-partial",
         "D18-active-skill-pending",
         "D20-pending"
       ]
@@ -5367,11 +5366,11 @@
     },
     {
       "id": "SLS-B02-PLAN-003",
-      "sourceCommit": "eb7aba5467569b577cd942957dd65bdce600bc9d",
+      "sourceCommit": "445ac26856e597fb6c12c708e7a31ecf995d06e1",
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/capture_score_life_state_multitouch_runtime.py",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/capture_score_life_state_multitouch_runtime.py",
-      "bytes": 25176,
-      "sha256": "566134E8124198E5AA006FBD8B94F6B72EBA34A71F477A3A450ECD50C4ECDD4B",
+      "bytes": 24660,
+      "sha256": "334848ED0A288F7A4DC2A864D789D204F9976A97D6B49AA3D330BC628AB37FB9",
       "version": "10.1.4_230_arm64-v8a",
       "status": "confirmed-capture-plan-not-runtime-evidence",
       "consumedBy": [
@@ -5386,7 +5385,7 @@
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime/multitouch-seven-lane-skill-r1-plan.json",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime/multitouch-seven-lane-skill-r1-plan.json",
       "bytes": 1874,
-      "sha256": "CDBEA6D5D7C36BD1B2EE240F5D376A347B4AA772F8D0AEB903BE0BE13847A9AF",
+      "sha256": "AC9D59776EBE4913E27993DE6FBC5964BD91B7200EC0F7F5379DC5EF4E6A4D5E",
       "version": "10.1.4_230_arm64-v8a",
       "status": "confirmed-capture-plan-not-runtime-evidence",
       "consumedBy": [
@@ -5397,11 +5396,71 @@
     },
     {
       "id": "SLS-B02-PLAN-005",
-      "sourceCommit": "eb7aba5467569b577cd942957dd65bdce600bc9d",
+      "sourceCommit": "445ac26856e597fb6c12c708e7a31ecf995d06e1",
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_multitouch_plan.py",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_multitouch_plan.py",
-      "bytes": 5025,
-      "sha256": "4D9E51EC768095753D2A3E0303E35A35B6AF962580FA899076D8FDDC2D7497B9",
+      "bytes": 8383,
+      "sha256": "C7CB4B9C10369CFE7B2AEFB02AC75426857E39A29B5F336F42802177A3DD3B03",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-capture-plan-not-runtime-evidence",
+      "consumedBy": [
+        "B02",
+        "D18-active-skill-pending",
+        "D20-pending"
+      ]
+    },
+    {
+      "id": "SLS-B02-PLAN-006",
+      "sourceCommit": "445ac26856e597fb6c12c708e7a31ecf995d06e1",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime/multitouch-seven-lane-native-skill-r1-plan.json",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime/multitouch-seven-lane-native-skill-r1-plan.json",
+      "bytes": 2042,
+      "sha256": "B3223B1452AA967255D917E2D329B6EBC54B0EC2FBC1791DDBAEDF1BB6A691F3",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-capture-plan-not-runtime-evidence",
+      "consumedBy": [
+        "B02",
+        "D18-active-skill-pending",
+        "D20-pending"
+      ]
+    },
+    {
+      "id": "SLS-B02-PLAN-007",
+      "sourceCommit": "445ac26856e597fb6c12c708e7a31ecf995d06e1",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime-control/multitouch_seven_lane_control.c",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime-control/multitouch_seven_lane_control.c",
+      "bytes": 2937,
+      "sha256": "4845E1F487782E9A167AC03D8F1B133AC557643B39EF08BC5A1E7620117FBC60",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-capture-plan-not-runtime-evidence",
+      "consumedBy": [
+        "B02",
+        "D18-active-skill-pending",
+        "D20-pending"
+      ]
+    },
+    {
+      "id": "SLS-B02-PLAN-008",
+      "sourceCommit": "445ac26856e597fb6c12c708e7a31ecf995d06e1",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime-control/multitouch_seven_lane_control.arm64",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime-control/multitouch_seven_lane_control.arm64",
+      "bytes": 6304,
+      "sha256": "AB39066A205A1E4B4CA9B335D43204064712A850CF041C86684B5E2E4B59C249",
+      "version": "10.1.4_230_arm64-v8a",
+      "status": "confirmed-capture-plan-not-runtime-evidence",
+      "consumedBy": [
+        "B02",
+        "D18-active-skill-pending",
+        "D20-pending"
+      ]
+    },
+    {
+      "id": "SLS-B02-PLAN-009",
+      "sourceCommit": "445ac26856e597fb6c12c708e7a31ecf995d06e1",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime-control/multitouch_seven_lane_control.build.json",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime-control/multitouch_seven_lane_control.build.json",
+      "bytes": 1520,
+      "sha256": "CBE8B454E3EE9276F38D060AB50DFDF19499EF6CAFD9784B0AE3C8C413851114",
       "version": "10.1.4_230_arm64-v8a",
       "status": "confirmed-capture-plan-not-runtime-evidence",
       "consumedBy": [
@@ -5438,13 +5497,16 @@
     "r1TraceCount": 2,
     "productionAuthorization": false,
     "pendingPlans": [
-      "multitouch-seven-lane-positive-skill-window"
+      "multitouch-seven-lane-native-positive-skill-window-v2"
     ],
     "supersededPlans": [
       "positive-retry-all-lanes-score-skill"
     ],
     "executedPlans": [
       "positive-retry-all-lanes-early-score-skill-v2"
+    ],
+    "abortedPlans": [
+      "multitouch-seven-lane-positive-skill-window"
     ]
   }
 }

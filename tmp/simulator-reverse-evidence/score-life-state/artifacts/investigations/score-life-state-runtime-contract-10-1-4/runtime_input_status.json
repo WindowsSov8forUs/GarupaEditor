@@ -87,9 +87,15 @@
       {
         "path": "runtime/multitouch-seven-lane-skill-r1-plan.json",
         "scenario_id": "multitouch-seven-lane-positive-skill-window",
+        "status": "aborted-time-bound-no-trace-promoted",
+        "control": "shell sendevent process startup exceeded the time bound; SELinux was independently restored to Enforcing"
+      },
+      {
+        "path": "runtime/multitouch-seven-lane-native-skill-r1-plan.json",
+        "scenario_id": "multitouch-seven-lane-native-positive-skill-window-v2",
         "status": "committed-plan-not-runtime-evidence",
         "intended_scope": ["D18-active-skill", "D20-same-frame-freeze"],
-        "control": "7 Linux MT slots, 250 cycles, 80ms interval, SELinux restoration required"
+        "control": "committed ELF64 AArch64 input-device writer, 7 slots, 250 cycles, 80ms interval, SELinux restoration and device-binary deletion required"
       }
     ],
     "capture_fields_not_consumed": [
@@ -99,7 +105,7 @@
       "NoteFrontBase.judgeFrontNote.note_type",
       "NoteFrontBase.judgeFrontNote.absolute_pos"
     ],
-    "operational_blocker": "Two R1 traces are closed. A separately versioned seven-lane Linux MT plan is pending and must be committed/frozen before execution; active Skill and same-frame switching remain absent, and five ABI-unsafe fields stay excluded.",
+    "operational_blocker": "Two R1 traces are closed. The shell Linux MT control was aborted without a trace; a deterministic committed ARM64 input-device writer replaces it and must be frozen before execution. Active Skill and same-frame switching remain absent, and five ABI-unsafe fields stay excluded.",
     "synthetic_trace_allowed": false
   },
   "gates": {

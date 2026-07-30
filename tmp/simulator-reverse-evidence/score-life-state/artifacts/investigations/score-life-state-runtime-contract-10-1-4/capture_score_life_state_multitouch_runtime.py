@@ -20,6 +20,9 @@ PACKAGE = "jp.co.craftegg.band"
 ADB = r"HOST___________\scrcpy\adb.exe"
 LIB_SHA256 = "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F"
 METADATA_SHA256 = "298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F"
+CONTROL_BINARY = Path(__file__).resolve().parent / "runtime-control" / "multitouch_seven_lane_control.arm64"
+CONTROL_BINARY_SHA256 = "AB39066A205A1E4B4CA9B335D43204064712A850CF041C86684B5E2E4B59C249"
+CONTROL_REMOTE_PATH = "/data/local/tmp/score-life-multitouch-control"
 TARGETS = {
     "InGameRecord.CalcOneNotesMaxScoreInfo": 0x32F2478,
     "InGameRecord.CalcFreeLiveEventBonusAppliedOneNotesMaxScoreInfo": 0x32F2570,
@@ -267,60 +270,36 @@ def execute_action(script: Any, action: dict[str, Any]) -> None:
     if kind == "keyevent":
         adb("shell", "input", "keyevent", str(action["keycode"]), capture=False)
         return
-    if kind == "multitap_burst":
-        event_device = str(action.get("event_device", "/dev/input/event2"))
-        screen_height = int(action.get("screen_height", 720))
-        screen_y = int(action["screen_y"])
-        screen_xs = [int(value) for value in action["screen_xs"]]
-        repeat = int(action["repeat"])
-        interval_ms = int(action["interval_ms"])
-        touch_ms = int(action["touch_ms"])
-        if (
-            event_device != "/dev/input/event2"
-            or screen_height != 720
-            or screen_y != 650
-            or screen_xs != [380, 520, 660, 800, 940, 1080, 1220]
-            or repeat < 1
-            or repeat > 500
-            or touch_ms < 1
-            or interval_ms <= touch_ms
-        ):
-            raise ValueError("multitap_burst control is outside the committed Linux MT boundary")
-        raw_x = screen_height - screen_y
-        press: list[str] = []
-        release: list[str] = []
-        for slot, raw_y in enumerate(screen_xs):
-            press.extend([
-                f"sendevent {event_device} 3 47 {slot}",
-                f"sendevent {event_device} 3 57 {100 + slot}",
-                f"sendevent {event_device} 3 53 {raw_x}",
-                f"sendevent {event_device} 3 54 {raw_y}",
-            ])
-            release.extend([
-                f"sendevent {event_device} 3 47 {slot}",
-                f"sendevent {event_device} 3 57 -1",
-            ])
-        command = "\n".join([
-            "i=0",
-            f"while [ \"$i\" -lt {repeat} ]; do",
-            *press,
-            f"sendevent {event_device} 1 330 1",
-            f"sendevent {event_device} 0 0 0",
-            f"sleep {touch_ms / 1000:.3f}",
-            *release,
-            f"sendevent {event_device} 1 330 0",
-            f"sendevent {event_device} 0 0 0",
-            f"sleep {(interval_ms - touch_ms) / 1000:.3f}",
-            "i=$((i+1))",
-            "done",
-        ])
+    if kind == "multitap_native":
+        expected = {
+            "kind": "multitap_native",
+            "marker": "multitouch-native-seven-lane-burst",
+            "event_device": "/dev/input/event2",
+            "screen_height": 720,
+            "screen_y": 650,
+            "screen_xs": [380, 520, 660, 800, 940, 1080, 1220],
+            "repeat": 250,
+            "interval_ms": 80,
+            "touch_ms": 20,
+            "control_binary_sha256": CONTROL_BINARY_SHA256,
+        }
+        if action != expected:
+            raise ValueError("multitap_native control differs from the committed binary boundary")
+        control_bytes = CONTROL_BINARY.read_bytes()
+        if hashlib.sha256(control_bytes).hexdigest().upper() != CONTROL_BINARY_SHA256:
+            raise RuntimeError("Linux MT control binary hash mismatch")
         if adb("shell", "getenforce") != "Enforcing":
             raise RuntimeError("SELinux must be Enforcing before Linux MT control")
+        adb("push", str(CONTROL_BINARY), CONTROL_REMOTE_PATH, capture=False)
+        adb("shell", "su", "-c", f"chmod 755 {CONTROL_REMOTE_PATH}", capture=False)
         adb("shell", "su", "-c", "setenforce 0", capture=False)
         try:
-            adb("shell", "su", "-c", command, capture=False)
+            adb("shell", "su", "-c", CONTROL_REMOTE_PATH, capture=False)
         finally:
-            adb("shell", "su", "-c", "setenforce 1", capture=False)
+            try:
+                adb("shell", "su", "-c", "setenforce 1", capture=False)
+            finally:
+                adb("shell", "su", "-c", f"rm -f {CONTROL_REMOTE_PATH}", capture=False)
             if adb("shell", "getenforce") != "Enforcing":
                 raise RuntimeError("SELinux was not restored to Enforcing")
         return
@@ -393,7 +372,7 @@ def main() -> int:
     output = {
         "schema_version": 1,
         "status": "confirmed-r1-observation-only" if rpc_error is None else "partial-r1-observation-process-ended",
-        "capability": {"level":"R1","return_replacement":False,"memory_writes":False,"apk_modification":False,"input_injection":"Android adb input plus committed Linux MT sendevent control","temporary_selinux_permissive":True,"selinux_restore_required":True,"transport":transport},
+        "capability": {"level":"R1","return_replacement":False,"memory_writes":False,"apk_modification":False,"input_injection":"Android adb input plus committed native Linux MT control","temporary_selinux_permissive":True,"selinux_restore_required":True,"transport":transport},
         "sample": {"package":PACKAGE,"version_name":"10.1.4","version_code":230,"abi":"arm64-v8a","libil2cpp_sha256":LIB_SHA256,"global_metadata_sha256":METADATA_SHA256,"pid":pid,"module":module_info},
         "scenario": {**plan, "plan_file": args.plan.name},
         "plan_sha256": hashlib.sha256(plan_bytes).hexdigest().upper(),

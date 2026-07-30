@@ -9,7 +9,7 @@
 - R1 capture tooling：50个目标与静态contract一致；仅`Interceptor.attach`，无return replacement/memory write。
 - `D18/D22-partial`：无输入Retry R1锁定稳定InGameRecord identity、Life `1000/1000/2000`、11个Miss、slot-order Life归零及single Game Over `0→1`。
 - `D18-positive-partial`：v2 R1锁定1个Perfect业务OneFrame、Score 1404、Combo/Perfect计数与10个Miss；active Skill未出现，D20未关闭。
-- 正判定/Skill计划：v1保留为superseded控制且无trace晋升；v2已执行并晋升raw/verifier；七lane Linux MT计划已冻结但仍pending，不是R1结论。
+- 正判定/Skill计划：v1保留为superseded；v2已晋升raw；shell七lane控制因超时aborted且无raw，原生ARM64七lane v2已冻结但仍pending，不是R1结论。
 
 ## required-before-code
 
@@ -32,9 +32,10 @@ unknown_layouts=[]
 unknown_fields=[]
 r1_traces=2
 production_bms=2
-capture_plans=3
+capture_plans=4
 executed_capture_plans=1
 pending_capture_plans=1
+aborted_capture_plans=1
 superseded_capture_plans=1
 excluded_raw_fields=5
 blocking_findings=[D18-remaining,D19,D20,D21,D22-remaining,D23-remaining,D24]

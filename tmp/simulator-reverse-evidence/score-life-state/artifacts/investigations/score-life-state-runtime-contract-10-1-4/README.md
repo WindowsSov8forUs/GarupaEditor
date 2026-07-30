@@ -44,12 +44,12 @@ These static conclusions do **not** authorize implementation. D18–D24, master/
 - `verify_score_life_state_static.py`: fail-closed verifier against the locked ELF, metadata identity, metadata-derived dump, TSV bytes, layouts, enums, rodata, and critical instruction fragments.
 - `static_closure.json`: B01-only gate state.
 - `capture_score_life_state_runtime.py`: observation-only R1 hook harness with 50 statically verified targets.
-- `capture_score_life_state_multitouch_runtime.py`: independently versioned copy of the same 50 hooks plus fail-closed seven-slot Linux MT control; old trace script hashes remain untouched.
+- `capture_score_life_state_multitouch_runtime.py`: independently versioned copy of the same 50 hooks; it hash-checks, pushes, executes and deletes the committed native seven-slot control while preserving old trace script hashes.
 - `extract_score_life_runtime_input_provenance.py`: protobuf cache-record and BMS provenance extractor.
 - `verify_score_life_runtime_inputs.py`: fail-closed R0 input/capture-target verifier.
 - `verify_score_life_no_input_r1.py`: fail-closed verifier for the compressed no-input Life/Game Over R1 trace and committed capture plans.
 - `verify_score_life_positive_r1.py`: fail-closed verifier for the positive Perfect/Score R1 trace and its explicit unconsumed ABI fields.
-- `verify_score_life_multitouch_plan.py`: fail-closed verifier for the pending seven-lane burst plan, hook identity, manual R17 provenance and SELinux restoration boundary.
+- `verify_score_life_multitouch_plan.py`: fail-closed verifier for hook identity, superseded shell control, native plan, ARM64 ELF/build provenance and SELinux restoration boundary.
 - `runtime-inputs/bms/`: ordinary and HABAHIRO TextAssets extracted from connected-device 10.1.4 cache bundles.
 - `runtime-inputs/cache-index/`: byte-preserving `AssetBundleInfo` records and structured cache provenance; account identifiers are omitted.
 - `runtime_input_status.json`: D18/D22/D23 partial state and remaining runtime blockers.
@@ -58,7 +58,11 @@ These static conclusions do **not** authorize implementation. D18–D24, master/
 - `runtime/positive-retry-all-lanes-r1-plan.json`: superseded 7-second control plan, derived from the committed manual-stage seven-lane sequence; no trace from it is promoted.
 - `runtime/positive-retry-all-lanes-early-r1-plan.json`: executed v2 positive judgement plan; only the pre-input wait is reduced from 7,000ms to 500ms and all 217 lane/hold controls remain unchanged.
 - `runtime/positive-retry-all-lanes-early.trace.json.gz`: successful observation-only R1 trace with 2,166 contiguous events, one Perfect and reflected Score 1,404; active Skill was not observed.
-- `runtime/multitouch-seven-lane-skill-r1-plan.json`: pending 20-second seven-lane Linux MT plan (`250 × 80ms`); no trace is claimed yet.
+- `runtime/multitouch-seven-lane-skill-r1-plan.json`: aborted shell-sendevent control; it exceeded the time bound, produced no trace and is retained only as provenance.
+- `runtime/multitouch-seven-lane-native-skill-r1-plan.json`: pending native 20-second seven-lane plan (`250 × 80ms`); no trace is claimed yet.
+- `runtime-control/multitouch_seven_lane_control.c`: fixed input-device-only control source.
+- `runtime-control/multitouch_seven_lane_control.arm64`: 6,304-byte stripped ELF64 AArch64 PIE, SHA-256 `AB39066A...9C249`.
+- `runtime-control/multitouch_seven_lane_control.build.json`: NDK 27.2 / Android 24 deterministic build and capability record.
 - `SHA256SUMS`: complete hashes for all investigation files except the checksum file itself.
 
 ## Reproduce static extraction
@@ -104,4 +108,4 @@ The no-input retry trace directly fixes stable `InGameRecord` identity, Life ini
 
 Five raw fields are explicitly not consumed: float-return hooks read generic `x0` rather than ARM64 `s0`, and two trailing `judgeFrontNote` parameters lack an independently closed hook ABI. The raw bytes are retained, but `verify_score_life_positive_r1.py` never uses those values.
 
-The next pending control uses the already committed manual R17 `event2`/rotated-coordinate Linux MT protocol to press all seven lanes every 80ms for 20 seconds. It brackets `sendevent` with temporary SELinux Permissive and mandatory Enforcing restoration in `finally`; this is input control, not target-process memory mutation. The new capture script is versioned separately so prior raw hashes stay valid. Until its plan/tooling commit is frozen and a trace is independently verified, it closes no finding. Fever, heal/guard/Never Die, same-frame transitions, post-Game-Over lifecycle, deck/start-data/master rows, BS01–BS36 and final `closure.json` remain open. The business gate stays open and no trace authorizes production implementation.
+The first Linux MT shell control was aborted after exceeding its execution time bound; no output trace was produced, no result is promoted, and SELinux was independently restored to Enforcing. Its replacement is a committed 6,304-byte ARM64 helper that writes only `struct input_event` records to `event2` and uses `nanosleep` for 20ms press/60ms release timing. The capture script verifies the helper SHA before push, brackets execution with temporary SELinux Permissive, and in `finally` restores Enforcing and deletes the device copy. This is input control, not target-process memory mutation. Until the native plan/tooling commit is frozen and a trace is independently verified, it closes no finding. Fever, heal/guard/Never Die, same-frame transitions, post-Game-Over lifecycle, deck/start-data/master rows, BS01–BS36 and final `closure.json` remain open. The business gate stays open and no trace authorizes production implementation.

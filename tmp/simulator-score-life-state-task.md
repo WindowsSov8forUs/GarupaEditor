@@ -687,7 +687,8 @@ git rev-list --left-right --count origin/codex/refactor-simulator-implementation
 - v2计划提交：Reverse `3adf31f987830ce5b82aba0d92813b69fda3cec7`已push且远端`0 0`；只把输入前等待由7000ms改为500ms，其他217个lane/hold动作逐项保持。
 - Reverse正判定R1提交：`5ce2a7ef325def61986a93053ad85c2f4973f25b`已push且远端`0 0`；2166事件连续，实际观察1个Perfect、完整OneFrame `addScore=0x44AF8052`、identity Fever/Skill/ScoreUp rate、Reflect整数Score 1404、Combo/Perfect计数、10 Miss及Game Over保留Score。
 - active Skill在220次manager update中始终缺席，因此D18 active-Skill与D20 same-frame冻结继续开放。float返回hook误读`x0`及两个未闭合trailing参数共5字段由verifier明确不消费，不用错误raw补证据。
-- 七lane多指计划提交：Reverse `eb7aba5467569b577cd942957dd65bdce600bc9d`已push且远端`0 0`；独立版本采集器保持原50 hooks，复用手动R17的event2/旋转坐标/slot协议，以7 slots、250轮、80ms周期覆盖20秒，并在`finally`强制恢复SELinux Enforcing。当前只为pending plan/tooling，不是active Skill证据。
+- 七lane shell计划提交：Reverse `eb7aba5467569b577cd942957dd65bdce600bc9d`已push；执行因逐事件进程启动超过120秒时间界限而aborted，无raw生成/晋升，采集进程与设备控制无残留，SELinux已独立强制恢复Enforcing。
+- 原生多指v2提交：Reverse `445ac26856e597fb6c12c708e7a31ecf995d06e1`已push且远端`0 0`；NDK27.2固定构建6304字节ELF64 AArch64控制器，只写event2 `input_event`并`nanosleep`，采集器先验SHA后push，`finally`恢复Enforcing并删除设备副本。7 slots/250轮/80ms/20ms值保持，当前仍为pending plan/tooling。
 - D18仅部分关闭：positive judgement、active Skill、Fever、heal、guard、Never Die和special mode仍缺R1；D22仅部分关闭：post-Game-Over gate、score decrease mode、reset/continue/seek/ReturnTime仍开放。
 - 待关闭：D18/D22剩余、D19–D21、D23剩余deck/start-data/master provenance、D24及BS01–BS36。
 - B02关闭前继续禁止B03–B12 production、测试脚本和package script实现。

@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "status": "confirmed-capture-control-not-runtime-evidence",
+  "ndk_revision": "27.2.12479018",
+  "clang_version": "Android clang 18.0.3 r522817c d8003a456d14a3deb8054cdaa529ffbf02d9b262",
+  "target": "aarch64-unknown-linux-android24",
+  "command": [
+    "aarch64-linux-android24-clang.cmd",
+    "-O2",
+    "-fPIE",
+    "-pie",
+    "-Wl,--build-id=none",
+    "-s",
+    "-o",
+    "runtime-control/multitouch_seven_lane_control.arm64",
+    "runtime-control/multitouch_seven_lane_control.c"
+  ],
+  "source": {
+    "path": "runtime-control/multitouch_seven_lane_control.c",
+    "bytes": 2937,
+    "sha256": "4845E1F487782E9A167AC03D8F1B133AC557643B39EF08BC5A1E7620117FBC60"
+  },
+  "binary": {
+    "path": "runtime-control/multitouch_seven_lane_control.arm64",
+    "bytes": 6304,
+    "sha256": "AB39066A205A1E4B4CA9B335D43204064712A850CF041C86684B5E2E4B59C249",
+    "format": "ELF64 AArch64 PIE, dynamically linked /system/bin/linker64, stripped"
+  },
+  "fixed_control": {
+    "event_device": "/dev/input/event2",
+    "slots": 7,
+    "tracking_ids": [100, 101, 102, 103, 104, 105, 106],
+    "raw_x": 70,
+    "raw_y": [380, 520, 660, 800, 940, 1080, 1220],
+    "repeat": 250,
+    "touch_nanoseconds": 20000000,
+    "release_nanoseconds": 60000000
+  },
+  "capability": {
+    "target_process_memory_writes": false,
+    "return_replacement": false,
+    "apk_modification": false,
+    "input_device_writes_only": true,
+    "temporary_selinux_permissive": true,
+    "selinux_restore_required": true
+  }
+}

@@ -43,7 +43,7 @@ function filesRecursively(root, current = root) {
   return files;
 }
 
-check(manifest.schemaVersion === 2 && manifest.entries.length === 356, "Unexpected evidence manifest shape");
+check(manifest.schemaVersion === 2 && manifest.entries.length === 360, "Unexpected evidence manifest shape");
 check(
   manifest.source.staticEvidenceCommit === "6c902656c72f3983fb04386038dcfe38f0d53797" &&
     manifest.source.runtimeInputCommit === "1ee976ea1de24cb0567762a74e2d091ae4c78464" &&
@@ -51,7 +51,8 @@ check(
     manifest.source.capturePlanCommit === "e65f3411d1a91cfa5ecf0d7b29e99605b04e8a41" &&
     manifest.source.capturePlanV2Commit === "3adf31f987830ce5b82aba0d92813b69fda3cec7" &&
     manifest.source.positiveEvidenceCommit === "5ce2a7ef325def61986a93053ad85c2f4973f25b" &&
-    manifest.source.multitouchPlanCommit === "eb7aba5467569b577cd942957dd65bdce600bc9d",
+    manifest.source.multitouchPlanCommit === "eb7aba5467569b577cd942957dd65bdce600bc9d" &&
+    manifest.source.nativeMultitouchPlanCommit === "445ac26856e597fb6c12c708e7a31ecf995d06e1",
   "Unexpected Reverse evidence commits",
 );
 check(
@@ -71,12 +72,13 @@ check(
     manifest.counts.enums === 19 &&
     manifest.counts.arm64Slices === 326 &&
     manifest.counts.staticEntries === 335 &&
-    manifest.counts.totalEntries === 356 &&
+    manifest.counts.totalEntries === 360 &&
     manifest.counts.r0InputEntries === 12 &&
     manifest.counts.r1EvidenceEntries === 6 &&
-    manifest.counts.capturePlanEntries === 3 &&
+    manifest.counts.capturePlanEntries === 4 &&
     manifest.counts.positiveEvidenceEntries === 5 &&
     manifest.counts.multitouchPlanBatchEntries === 6 &&
+    manifest.counts.nativeMultitouchBatchEntries === 9 &&
     manifest.counts.productionBms === 2 &&
     manifest.counts.cacheRecords === 2 &&
     manifest.counts.captureTargets === 50 &&
@@ -110,7 +112,8 @@ check(
     runtimeInputGate.blockingFindings.join(",") ===
       "D18-remaining,D19,D20,D21,D22-remaining,D23-master-start-data,D24" &&
     runtimeInputGate.r1TraceCount === 2 &&
-    runtimeInputGate.pendingPlans.join(",") === "multitouch-seven-lane-positive-skill-window" &&
+    runtimeInputGate.pendingPlans.join(",") === "multitouch-seven-lane-native-positive-skill-window-v2" &&
+    runtimeInputGate.abortedPlans.join(",") === "multitouch-seven-lane-positive-skill-window" &&
     runtimeInputGate.executedPlans.join(",") === "positive-retry-all-lanes-early-score-skill-v2" &&
     runtimeInputGate.supersededPlans.join(",") === "positive-retry-all-lanes-score-skill" &&
     runtimeInputGate.productionAuthorization === false,
@@ -124,6 +127,7 @@ git(["cat-file", "-e", `${manifest.source.capturePlanCommit}^{commit}`], sourceR
 git(["cat-file", "-e", `${manifest.source.capturePlanV2Commit}^{commit}`], sourceRoot);
 git(["cat-file", "-e", `${manifest.source.positiveEvidenceCommit}^{commit}`], sourceRoot);
 git(["cat-file", "-e", `${manifest.source.multitouchPlanCommit}^{commit}`], sourceRoot);
+git(["cat-file", "-e", `${manifest.source.nativeMultitouchPlanCommit}^{commit}`], sourceRoot);
 const evidenceCommits = [
   manifest.source.staticEvidenceCommit,
   manifest.source.runtimeInputCommit,
@@ -132,6 +136,7 @@ const evidenceCommits = [
   manifest.source.capturePlanV2Commit,
   manifest.source.positiveEvidenceCommit,
   manifest.source.multitouchPlanCommit,
+  manifest.source.nativeMultitouchPlanCommit,
 ];
 const ids = new Set();
 const copiedPaths = new Set();
@@ -291,7 +296,7 @@ const runtimeStatus = json("runtime_input_status.json");
 check(
   runtimeStatus.status === "runtime-inputs-and-r1-partial-locked-business-gate-open" &&
     runtimeStatus.runtime.r1_trace_count === 2 &&
-    runtimeStatus.runtime.pending_capture_plans.length === 3 &&
+    runtimeStatus.runtime.pending_capture_plans.length === 4 &&
     runtimeStatus.runtime.pending_capture_plans[0].scenario_id ===
       "positive-retry-all-lanes-score-skill" &&
     runtimeStatus.runtime.pending_capture_plans[0].status ===
@@ -303,6 +308,10 @@ check(
     runtimeStatus.runtime.pending_capture_plans[2].scenario_id ===
       "multitouch-seven-lane-positive-skill-window" &&
     runtimeStatus.runtime.pending_capture_plans[2].status ===
+      "aborted-time-bound-no-trace-promoted" &&
+    runtimeStatus.runtime.pending_capture_plans[3].scenario_id ===
+      "multitouch-seven-lane-native-positive-skill-window-v2" &&
+    runtimeStatus.runtime.pending_capture_plans[3].status ===
       "committed-plan-not-runtime-evidence" &&
     runtimeStatus.runtime.capture_fields_not_consumed.length === 5 &&
     runtimeStatus.gates.D18 === "partial-required-before-code" &&
@@ -396,41 +405,74 @@ function targetLiteral(source) {
   check(start >= 0 && end > start, "Capture TARGETS literal missing");
   return source.slice(start, end + 2);
 }
-const multitouchPlan = json("runtime/multitouch-seven-lane-skill-r1-plan.json");
+const shellMultitouchPlan = json("runtime/multitouch-seven-lane-skill-r1-plan.json");
+const nativeMultitouchPlan = json("runtime/multitouch-seven-lane-native-skill-r1-plan.json");
+const controlSourceBytes = readFileSync(
+  resolve(investigation, "runtime-control/multitouch_seven_lane_control.c"),
+);
+const controlSource = controlSourceBytes.toString("utf8");
+const controlBinary = readFileSync(
+  resolve(investigation, "runtime-control/multitouch_seven_lane_control.arm64"),
+);
+const controlBuild = json("runtime-control/multitouch_seven_lane_control.build.json");
 check(
   targetLiteral(multitouchCaptureSource) === targetLiteral(captureSource) &&
-    multitouchCaptureSource.includes('if kind == "multitap_burst":') &&
-    multitouchCaptureSource.includes('event_device != "/dev/input/event2"') &&
-    multitouchCaptureSource.includes('screen_xs != [380, 520, 660, 800, 940, 1080, 1220]') &&
-    multitouchCaptureSource.includes('sendevent {event_device} 3 47 {slot}') &&
-    multitouchCaptureSource.includes('sendevent {event_device} 3 57 {100 + slot}') &&
-    multitouchCaptureSource.includes('sendevent {event_device} 1 330 1') &&
-    multitouchCaptureSource.includes('sendevent {event_device} 1 330 0') &&
+    multitouchCaptureSource.includes(
+      'CONTROL_BINARY_SHA256 = "AB39066A205A1E4B4CA9B335D43204064712A850CF041C86684B5E2E4B59C249"',
+    ) &&
+    multitouchCaptureSource.includes('if kind == "multitap_native":') &&
+    multitouchCaptureSource.includes('adb("push", str(CONTROL_BINARY), CONTROL_REMOTE_PATH') &&
     multitouchCaptureSource.includes('adb("shell", "su", "-c", "setenforce 0"') &&
     multitouchCaptureSource.includes("finally:") &&
     multitouchCaptureSource.includes('adb("shell", "su", "-c", "setenforce 1"') &&
+    multitouchCaptureSource.includes(
+      'adb("shell", "su", "-c", f"rm -f {CONTROL_REMOTE_PATH}"',
+    ) &&
     !multitouchCaptureSource.includes("Interceptor.replace") &&
     !multitouchCaptureSource.includes("retval.replace") &&
     !multitouchCaptureSource.includes("Memory.patchCode") &&
-    multitouchPlan.schema_version === 1 &&
-    multitouchPlan.scenario_id === "multitouch-seven-lane-positive-skill-window" &&
-    multitouchPlan.control_provenance.source_script_sha256 ===
-      "31555FC51CAD1F98C65B443D3298D246EC08C57357202FB7F82DDB3DD4CF3089" &&
-    multitouchPlan.control_provenance.source_plan_sha256 ===
-      "70C0DABBBAA3549A385CD9248793750E1F0BC27485718659DBDE8CC083F3918E" &&
-    multitouchPlan.control_provenance.source_trace_sha256 ===
-      "DA0214D9C4B3005A44F059B0E3D276A8EA4C44A246F23DCC0FB8B0DCAC8C4D62" &&
-    multitouchPlan.actions.length === 4 &&
-    multitouchPlan.actions[3].kind === "multitap_burst" &&
-    multitouchPlan.actions[3].event_device === "/dev/input/event2" &&
-    multitouchPlan.actions[3].screen_height === 720 &&
-    multitouchPlan.actions[3].screen_y === 650 &&
-    multitouchPlan.actions[3].screen_xs.join(",") === "380,520,660,800,940,1080,1220" &&
-    multitouchPlan.actions[3].repeat === 250 &&
-    multitouchPlan.actions[3].interval_ms === 80 &&
-    multitouchPlan.actions[3].touch_ms === 20 &&
-    multitouchPlan.tail_seconds === 5,
-  "Frozen Linux MT capture, provenance, safety boundary, or plan changed",
+    shellMultitouchPlan.scenario_id === "multitouch-seven-lane-positive-skill-window" &&
+    shellMultitouchPlan.actions[3].kind === "multitap_burst" &&
+    sha256(readFileSync(resolve(investigation, "runtime/multitouch-seven-lane-skill-r1-plan.json"))) ===
+      "AC9D59776EBE4913E27993DE6FBC5964BD91B7200EC0F7F5379DC5EF4E6A4D5E" &&
+    controlSourceBytes.length === 2937 &&
+    sha256(controlSourceBytes) ===
+      "4845E1F487782E9A167AC03D8F1B133AC557643B39EF08BC5A1E7620117FBC60" &&
+    controlSource.includes('kEventDevice = "/dev/input/event2"') &&
+    controlSource.includes("kRawY[7] = {380, 520, 660, 800, 940, 1080, 1220}") &&
+    controlSource.includes("kRepeat = 250") &&
+    controlSource.includes("kTouchNanoseconds = 20000000L") &&
+    controlSource.includes("kReleaseNanoseconds = 60000000L") &&
+    !controlSource.includes("ptrace") &&
+    !controlSource.includes("process_vm_writev") &&
+    controlBinary.length === 6304 &&
+    sha256(controlBinary) ===
+      "AB39066A205A1E4B4CA9B335D43204064712A850CF041C86684B5E2E4B59C249" &&
+    controlBinary.subarray(0, 6).toString("hex") === "7f454c460201" &&
+    controlBinary.readUInt16LE(18) === 183 &&
+    controlBuild.status === "confirmed-capture-control-not-runtime-evidence" &&
+    controlBuild.ndk_revision === "27.2.12479018" &&
+    controlBuild.target === "aarch64-unknown-linux-android24" &&
+    controlBuild.capability.target_process_memory_writes === false &&
+    controlBuild.capability.input_device_writes_only === true &&
+    nativeMultitouchPlan.schema_version === 1 &&
+    nativeMultitouchPlan.scenario_id ===
+      "multitouch-seven-lane-native-positive-skill-window-v2" &&
+    nativeMultitouchPlan.control_provenance.source_commit ===
+      "eb7aba5467569b577cd942957dd65bdce600bc9d" &&
+    nativeMultitouchPlan.control_provenance.source_plan_sha256 ===
+      "AC9D59776EBE4913E27993DE6FBC5964BD91B7200EC0F7F5379DC5EF4E6A4D5E" &&
+    nativeMultitouchPlan.control_provenance.control_binary_sha256 ===
+      "AB39066A205A1E4B4CA9B335D43204064712A850CF041C86684B5E2E4B59C249" &&
+    nativeMultitouchPlan.actions.length === 4 &&
+    nativeMultitouchPlan.actions[3].kind === "multitap_native" &&
+    nativeMultitouchPlan.actions[3].screen_xs.join(",") ===
+      "380,520,660,800,940,1080,1220" &&
+    nativeMultitouchPlan.actions[3].repeat === 250 &&
+    nativeMultitouchPlan.actions[3].interval_ms === 80 &&
+    nativeMultitouchPlan.actions[3].touch_ms === 20 &&
+    nativeMultitouchPlan.tail_seconds === 5,
+  "Frozen native Linux MT capture, ELF/build provenance, safety boundary, or plan changed",
 );
 
 const traceBytes = gunzipSync(
@@ -602,7 +644,7 @@ for (const [path, fragment] of criticalText) {
 }
 
 console.log(
-  `score-life-state evidence verified: methods=326 layouts=25 enums=19 BMS=2 R1=2(partial D18/D22) plans=3(pending=1) ` +
+  `score-life-state evidence verified: methods=326 layouts=25 enums=19 BMS=2 R1=2(partial D18/D22) plans=4(pending-native=1) ` +
     `V01=closed business=blocked(D18-D24) entries=${manifest.entries.length} ` +
     `index=${validateIndex ? "checked" : "skipped"}`,
 );
