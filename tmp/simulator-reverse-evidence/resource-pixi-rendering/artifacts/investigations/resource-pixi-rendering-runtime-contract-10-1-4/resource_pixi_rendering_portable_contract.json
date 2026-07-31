@@ -42,6 +42,21 @@
       "path": "resource_pixi_rendering_score_up_profile.json",
       "bytes": 37165,
       "sha256": "62937484F0BBDF1FC4CBFBBCC5598407852A177AF5EDDC6C1A4A262B354B5058"
+    },
+    "F08": {
+      "path": "resource_pixi_rendering_runtime_hook_targets.json",
+      "bytes": 45798,
+      "sha256": "C0ECCED2E03D18B71A9687BDDA54ADEF43D4AFCD2A573D95864FAC51BCC78990"
+    },
+    "F09": {
+      "path": "runtime/resource-pixi-rendering-r1-plan.json",
+      "bytes": 5698,
+      "sha256": "69F5568F9F0974A55E056E2B0FD9D4E923A34EBEE525C81B1D6590D5498C8E16"
+    },
+    "F10": {
+      "path": "runtime/resource-pixi-rendering-frame-plan.json",
+      "bytes": 1900,
+      "sha256": "F2B2D5B111F0498C867F2C9A19B5692B22ECF1B453744B68C3577B98458692D1"
     }
   },
   "resource_profile": {

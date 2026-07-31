@@ -18,6 +18,7 @@
   "unknown_enums": [],
   "version_rebaseline": "partial-server-resource-and-runtime-gate",
   "offline_work_gate": "closed",
+  "offline_plan_gate": "closed",
   "rendering_gate": "open",
   "production_authorization": false,
   "open_static_work": [],
@@ -29,6 +30,12 @@
     "skill_animation_clips": 4,
     "note_animation_clips": 4,
     "score_up_routes": 5
+  },
+  "runtime_capture_plan": {
+    "hook_target_count": 55,
+    "r1_scenarios": 2,
+    "physical_frame_anchors": 13,
+    "status": "confirmed-observation-only-plan-game-server-required"
   },
   "runtime_required_before_code": [
     "current HABAHIRO bundle bytes from the game resource service or a proven current cache",

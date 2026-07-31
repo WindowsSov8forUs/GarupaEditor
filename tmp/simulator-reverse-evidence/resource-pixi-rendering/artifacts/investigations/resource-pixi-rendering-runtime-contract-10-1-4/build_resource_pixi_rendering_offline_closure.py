@@ -17,6 +17,9 @@ HUD = HERE / "resource_pixi_rendering_hud_asset_profiles.json"
 SKILL = HERE / "resource_pixi_rendering_skill_animation_profiles.json"
 NOTE_ANIMATION = HERE / "resource_pixi_rendering_note_animation_profiles.json"
 SCORE_UP = HERE / "resource_pixi_rendering_score_up_profile.json"
+RUNTIME_TARGETS = HERE / "resource_pixi_rendering_runtime_hook_targets.json"
+RUNTIME_PLAN = HERE / "runtime/resource-pixi-rendering-r1-plan.json"
+FRAME_PLAN = HERE / "runtime/resource-pixi-rendering-frame-plan.json"
 
 
 def digest(path: Path) -> str:
@@ -32,6 +35,9 @@ def evidence() -> dict[str, dict[str, Any]]:
         "F05": SKILL,
         "F06": NOTE_ANIMATION,
         "F07": SCORE_UP,
+        "F08": RUNTIME_TARGETS,
+        "F09": RUNTIME_PLAN,
+        "F10": FRAME_PLAN,
     }
     return {
         evidence_id: {
@@ -321,10 +327,18 @@ def build_offline_closure() -> dict[str, Any]:
         "evidence": evidence(),
         "version_rebaseline": "partial-server-resource-and-runtime-gate",
         "offline_work_gate": "closed",
+        "offline_plan_gate": "closed",
         "rendering_gate": "open",
         "production_authorization": False,
         "historical_candidate_status": h_status,
         "decision_status": d_status,
+        "runtime_capture_plan": {
+            "status": "confirmed-observation-only-plan-game-server-required",
+            "hook_target_count": 55,
+            "r1_scenarios": ["ordinary-rendering-r1", "habahiro-rendering-r1"],
+            "physical_frame_anchors": 13,
+            "evidence_ids": ["F08", "F09", "F10"],
+        },
         "remaining_blockers": remaining,
         "remaining_blockers_all_require_game_server": all(row["requires_game_server"] for row in remaining),
         "unknown_static_work": [],

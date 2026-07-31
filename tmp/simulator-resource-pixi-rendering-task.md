@@ -11,8 +11,8 @@
 - 锁定原作样本：`jp.co.craftegg.band` 10.1.4（version code 230，`arm64-v8a`）。
 - 锁定`libil2cpp.so` SHA-256：`815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F`。
 - 锁定`global-metadata.dat` SHA-256：`298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F`。
-- 当前Reverse基线提交：`b8a749bb3fff2106237336e011a8e976a58ef94d`；只消费该提交及其祖先中已提交、已push、可校验对象。
-- 当前状态：**RP00已完成；RP01全部可离线工作已关闭，阻塞于当前HABAHIRO bundle必须通过游戏资源服务或已证明的当前缓存取得；RP02阻塞于自然进入ordinary/HABAHIRO Live后的R1与实体frame。`offline_work_gate=closed`、`rendering_gate=open`、`production_authorization=false`。RP02关闭前禁止修改`src/simulator/**`生产实现、增加Pixi backend、加入阶段测试脚本或引入资源二进制。**
+- 当前Reverse基线提交：`e2e66f7a15b532600a3fc53f392a4c0fa2493f22`；只消费该提交及其祖先中已提交、已push、可校验对象。
+- 当前状态：**RP00已完成；RP01全部可离线工作已关闭，阻塞于当前HABAHIRO bundle必须通过游戏资源服务或已证明的当前缓存取得；RP02阻塞于自然进入ordinary/HABAHIRO Live后的R1与实体frame。55个current hook target、2个R1场景与13个frame anchor已锁定，`offline_work_gate=closed`、`offline_plan_gate=closed`、`rendering_gate=open`、`production_authorization=false`。RP02关闭前禁止修改`src/simulator/**`生产实现、增加Pixi backend、加入阶段测试脚本或引入资源二进制。**
 - 计划证据包：`tmp/simulator-reverse-evidence/resource-pixi-rendering/`，只在Reverse新证据提交并push后创建。
 - 计划验收记录：`tmp/simulator-resource-pixi-rendering-acceptance.md`，RP14时创建。
 
@@ -112,6 +112,14 @@
 - 一次诊断性历史extractor复跑触及外部HTTP，其输出已丢弃且未晋升；最终extractor/verifier只接受锁定APK与设备cache字节，并拒绝URL/Bestdori/GitHub/CDN来源。游戏服务器始终未连接，游戏未启动，Frida/managed invocation/内存写/APK修改均未发生。
 - extract/build全链幂等通过；static/resource/offline三个fail-closed verifier分别确认`methods=673 layouts=32 enums=19`、`cache=11026 ingameskin=57 base_resources=100 hud_profiles=8 skill_clips=4 note_clips=4 score_up=5`和`H=28 D=18 PR=40 remaining=S01,S02,S03 production=false`。
 - 冻结预检发现Python曾将12个Unity正无穷写为非标准JSON `Infinity`；Reverse `b8a749bb3fff2106237336e011a8e976a58ef94d`在extractor根源改为显式`float_special=positive-infinity`与Float32位模式`7F800000`，并令verifier拒绝NaN/Infinity token后重新通过全链。
+
+### 1.7 2026-08-01 RP02离线采集计划闭合批
+
+- Reverse `e2e66f7a15b532600a3fc53f392a4c0fa2493f22`从current static contract唯一派生55个observation-only hook target，覆盖resource、Note Sprite、mesh、line、multiple-directional、field、HUD与HUD animation；每项锁定signature、RVA/end、ARM64 SHA与允许payload字段。
+- 锁定ordinary/HABAHIRO两个natural-Live R1场景与13个physical frame anchor；trace只允许连续sequence、匿名thread/object/pool/resource/controller/state alias、Float32位模式和technical resource key，禁止账号/room/member/card/Skill身份、display string与raw pointer。
+- 新增plan、future trace与frame manifest verifier，以及仅在S01当前HABAHIRO profile、S02两条R1、S03全部frame均存在并通过时才输出candidate oracle的builder；缺trace、缺frame、缺S01 profile三条路径均实测失败关闭。
+- `offline_plan_gate=closed`，`runtime_input_status`不包含confirmed trace/frame；S01–S03仍全部`game-server-required`，`rendering_gate=open`、`production_authorization=false`。
+- Garupa冻结包`tmp/simulator-reverse-evidence/resource-pixi-rendering/`包含709个Reverse来源文件及manifest/README/OPEN_GAPS/verifier；不包含APK、bundle、dump、IDA、设备隐私数据或`runtime/tools/`。
 
 ## 2. 固定范围
 
@@ -680,5 +688,5 @@ git rev-list --left-right --count origin/codex/refactor-simulator-implementation
 - 当前上游领域状态足以成为renderer/HUD source，但不能证明任何可见表现。
 - 当前Reverse已将H01–H28全部迁移为10.1.4逐项状态；历史调查不直接解除生产门，最终证据只引用current F/R系列。
 - 全部可离线资源、scene、animation、method、portable mapping和PR分类已关闭；最大硬门现为当前HABAHIRO bundle、自然Live resource/object/caller/lifecycle和实体frame。
-- 当前阶段下一动作是提交RP02 observation-only采集plan/verifier；随后在不连接游戏服务器的前提下停止，不直接编写Pixi代码。
+- RP02 observation-only采集plan/verifier已提交；在不连接游戏服务器的前提下已触及硬门，下一动作只能是服务器恢复后执行S01–S03，不直接编写Pixi代码。
 - 所有未确认路径继续返回`evidence-required`，不得以placeholder、Pixi默认值或“视觉接近”填补。

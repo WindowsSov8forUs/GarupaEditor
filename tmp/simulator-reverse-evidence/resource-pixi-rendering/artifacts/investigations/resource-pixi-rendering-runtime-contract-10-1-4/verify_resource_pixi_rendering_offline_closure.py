@@ -60,6 +60,14 @@ def main() -> int:
 
     require(closure["status"] == "offline-work-gate-closed-server-required-gate-open", "offline closure status mismatch")
     require(closure["offline_work_gate"] == "closed", "offline work gate is not closed")
+    require(closure["offline_plan_gate"] == "closed", "offline runtime plan gate is not closed")
+    require(closure["runtime_capture_plan"] == {
+        "status": "confirmed-observation-only-plan-game-server-required",
+        "hook_target_count": 55,
+        "r1_scenarios": ["ordinary-rendering-r1", "habahiro-rendering-r1"],
+        "physical_frame_anchors": 13,
+        "evidence_ids": ["F08", "F09", "F10"],
+    }, "runtime capture plan summary mismatch")
     require(closure["rendering_gate"] == "open", "rendering gate closed without runtime evidence")
     require(closure["production_authorization"] is False, "offline evidence must not authorize production")
     require(len(closure["historical_candidate_status"]) == 28, "H candidate count mismatch")
@@ -70,7 +78,7 @@ def main() -> int:
     require(closure["remaining_blockers_all_require_game_server"] is True, "non-server blocker remains after offline closure")
     require([row["id"] for row in closure["remaining_blockers"]] == ["S01", "S02", "S03"], "remaining blocker IDs mismatch")
     require(all(row["requires_game_server"] is True for row in closure["remaining_blockers"]), "remaining blocker is not server-bound")
-    print("verified rendering offline closure: H=28 D=18 PR=40 remaining=S01,S02,S03 production=false")
+    print("verified rendering offline closure: H=28 D=18 PR=40 plans=55/2/13 remaining=S01,S02,S03 production=false")
     return 0
 
 

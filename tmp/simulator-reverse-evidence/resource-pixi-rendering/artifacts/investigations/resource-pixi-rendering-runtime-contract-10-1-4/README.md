@@ -35,6 +35,10 @@ The locked package files observed on the connected device are byte-identical to 
 - `resource_pixi_rendering_instruction_migration.json` conservatively compares all 673 methods while preserving instruction order, registers, instance offsets, arithmetic constants and internal branch shape.
 - `resource_pixi_rendering_portable_contract.json` records the backend-neutral resource/identity/command/component mapping draft without authorizing production.
 - `resource_pixi_rendering_fixed_case_status.json` classifies PR01-PR40 from current evidence.
+- `resource_pixi_rendering_runtime_hook_targets.json` derives 55 minimal observation-only hooks directly from the current static contract.
+- `runtime/resource-pixi-rendering-r1-plan.json` and `runtime/resource-pixi-rendering-frame-plan.json` lock two natural-Live scenarios, trace privacy/completion rules and 13 physical-frame anchors.
+- `verify_resource_pixi_rendering_runtime_trace.py` and `verify_resource_pixi_rendering_frame_manifest.py` reject absent, partial, non-contiguous, mutation-capable or privacy-invalid future evidence.
+- `build_resource_pixi_rendering_runtime_oracle.py` refuses to emit an oracle until S01-S03 all exist and pass their verifiers.
 - `offline_closure.json` classifies H01-H28 and D01-D18 and proves that every remaining blocker requires game-server-backed resource or natural Live access.
 - `resource_inventory.tsv` is the compact current resource/hash index; the HABAHIRO row remains explicitly `evidence-required`.
 - `targets.tsv` is the compact 10.1.4 managed target index.
@@ -57,7 +61,7 @@ The source target set is derived from the bounded H01-H24 investigations named i
 - The current APK contributes 100 selected Note/HUD resource rows and eight current HUD scene/atlas/font/animation profiles; original binary assets remain local-only.
 - The current managed route still maps multi-range notes through `_habahiro`, but the current cache index contains zero HABAHIRO bundle records. Its bytes therefore remain fail-closed rather than inherited from the historical Bestdori export.
 - Conservative instruction normalization classifies 652 methods as relocation-only equivalent and 21 as current-review-required; dedicated current profiles close the required ScoreUp/resource surfaces without upgrading normalization into a behavioral claim.
-- H01-H28, D01-D18 and PR01-PR40 are fully classified with no unknown static work. `offline_work_gate=closed`, while `rendering_gate=open` and `production_authorization=false`.
+- H01-H28, D01-D18 and PR01-PR40 are fully classified with no unknown static work. 55 hook targets、2个R1场景与13个frame anchors也已离线锁定；`offline_work_gate=closed`、`offline_plan_gate=closed`，while `rendering_gate=open` and `production_authorization=false`.
 
 ## Boundary
 
@@ -75,7 +79,7 @@ The offline-work gate is closed. Only three blockers remain:
 2. naturally enter ordinary and HABAHIRO Live scenes and capture R1 object/resource/caller/lifecycle traces;
 3. capture privacy-safe 10.1.4 physical frame anchors at fixed viewport and event points.
 
-All three require game-server-backed resource or natural Live access. They remain explicit in `offline_closure.json`; none may be replaced by historical bytes, synthetic events or production defaults.
+All three require game-server-backed resource or natural Live access. Their execution plans and fail-closed verifiers are committed; none may be replaced by historical bytes, synthetic events or production defaults.
 
 ## Reproduction
 
@@ -89,9 +93,11 @@ py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-
 py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\extract_resource_pixi_rendering_note_animation_profiles.py
 py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\extract_resource_pixi_rendering_score_up_profile.py
 py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\build_resource_pixi_rendering_instruction_migration.py
+py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\build_resource_pixi_rendering_runtime_plans.py
 py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\build_resource_pixi_rendering_offline_closure.py
 py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\verify_resource_pixi_rendering_static_contract.py
 py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\verify_resource_pixi_rendering_resource_contract.py
+py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\verify_resource_pixi_rendering_runtime_plans.py
 py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\verify_resource_pixi_rendering_offline_closure.py
 ```
 

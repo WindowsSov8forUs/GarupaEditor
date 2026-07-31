@@ -4,6 +4,7 @@
 
 ```text
 offline_work_gate=closed
+offline_plan_gate=closed
 rendering_gate=open
 production_authorization=false
 unknown_static_work=[]
@@ -21,6 +22,9 @@ score_up_routes=5
 historical_candidates=28
 decisions=18
 fixed_cases=40
+runtime_hook_targets=55
+r1_scenarios=2
+frame_anchors=13
 remaining_blockers=S01,S02,S03
 ```
 
@@ -32,6 +36,7 @@ remaining_blockers=S01,S02,S03
 - 100 个当前 APK Note/HUD resource、8 组 HUD profile、Skill/Note clip/controller 及 current ScoreUp route。
 - H01–H28、D01–D18 和 PR01–PR40 的离线状态分类、portable preflight/rejection/ownership 草案。
 - 所有仍可在不进入 Live、不请求游戏资源服务的条件下完成的工作；`unknown_static_work=[]`。
+- 55个current hook target、2个natural-Live R1场景、13个实体frame anchor，以及trace/frame/runtime-oracle fail-closed verifier；缺失输入时验证入口已确认拒绝。
 
 ## 必须连接游戏服务器
 

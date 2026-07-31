@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "status": "runtime-and-frame-evidence-required-game-server",
+  "offline_plan_gate": "closed",
+  "rendering_gate": "open",
+  "production_authorization": false,
+  "required": [
+    {
+      "id": "S01",
+      "status": "game-server-required",
+      "artifact": "current HABAHIRO resource profile"
+    },
+    {
+      "id": "S02",
+      "status": "game-server-required",
+      "artifact": "ordinary and HABAHIRO confirmed R1 traces"
+    },
+    {
+      "id": "S03",
+      "status": "game-server-required",
+      "artifact": "ordinary and HABAHIRO fixed frame manifest"
+    }
+  ],
+  "confirmed_traces": [],
+  "confirmed_frames": [],
+  "unknown_offline_work": []
+}
