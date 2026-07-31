@@ -59,15 +59,15 @@
 | B00 建立阶段任务书 | **已完成** | 范围、证据候选、硬门、oracle、任务顺序和完成定义写入本文档 |
 | B01 10.1.4静态证据晋升 | **已完成静态重基线** | 326方法、25布局、19枚举及静态语义已提交Reverse并冻结；不单独关闭业务门 |
 | B02 实体与固定事件oracle | **已完成**：12条R1、production count 979/731、8簇/48方法当前ARM64迁移、portable contract、BS01–BS36及closure均已冻结 | D01–D24关闭，raw trace和BS01–BS36固定case提交并冻结，`business_state_gate=closed` |
-| B03 锁定配置、领域数据与owner | **生产实现完成；定向测试待提交** | 输入profile、InGameRecord、OneFrameData/TotalData与manager owner不可伪造 |
-| B04 恢复基础分与最大Note数 | **生产实现完成；定向测试待提交** | deck/chart/level/base score、result correction及初始化顺序匹配 |
-| B05 恢复单次判定业务投影 | **生产实现完成；定向测试待提交** | adjusted result、damage、score、rate、guard和slot冻结顺序匹配 |
-| B06 恢复Reflect、Combo、Score与Record | **生产实现完成；定向测试待提交** | 五槽顺序、逐阶段截断、代表项、计数和最高分记录匹配 |
-| B07 恢复Life、Damage Guard、Never Die与Game Over | **生产实现完成；定向测试待提交** | damage/heal/上下界/lethal/lifecycle顺序匹配 |
-| B08 恢复Skill Note与playlist状态机 | **生产实现完成；定向测试待提交** | eligibility、queue、Begin/Playing/Finishing、once effect和pause匹配 |
-| B09 恢复active Skill与Crescendo | **生产实现完成；定向测试待提交** | judge/damage/score/continuous/crescendo按entry冻结并匹配 |
-| B10 恢复Fever状态机 | **生产实现完成；定向测试待提交** | Note积分、pass、command、state、rate及reset匹配 |
-| B11 恢复special mode/event与组合生命周期 | **生产实现完成；定向测试待提交** | Auto/Festival/Medley/Garupa/Event、reset/fault/同帧切换矩阵匹配 |
+| B03 锁定配置、领域数据与owner | **已完成** | 输入profile、InGameRecord、OneFrameData/TotalData与manager owner不可伪造 |
+| B04 恢复基础分与最大Note数 | **已完成** | deck/chart/level/base score、result correction及初始化顺序匹配 |
+| B05 恢复单次判定业务投影 | **已完成** | adjusted result、damage、score、rate、guard和slot冻结顺序匹配 |
+| B06 恢复Reflect、Combo、Score与Record | **已完成** | 五槽顺序、逐阶段截断、代表项、计数和最高分记录匹配 |
+| B07 恢复Life、Damage Guard、Never Die与Game Over | **已完成** | damage/heal/上下界/lethal/lifecycle顺序匹配 |
+| B08 恢复Skill Note与playlist状态机 | **已完成** | eligibility、queue、Begin/Playing/Finishing、once effect和pause匹配 |
+| B09 恢复active Skill与Crescendo | **已完成** | judge/damage/score/continuous/crescendo按entry冻结并匹配 |
+| B10 恢复Fever状态机 | **已完成** | Note积分、pass、command、state、rate及reset匹配 |
+| B11 恢复special mode/event与组合生命周期 | **已完成** | Auto/Festival/Medley/Garupa/Event、reset/fault/同帧切换矩阵匹配 |
 | B12 production oracle与独立验收 | **进行中** | 完整回归、证据index、静态反审和验收文档通过 |
 
 ### 1.4 初始批次记录
@@ -718,4 +718,5 @@ git rev-list --left-right --count origin/codex/refactor-simulator-implementation
 - `closure.json`逐项关闭V01/D01–D24；Continue保持premium-currency安全排除，缺失profile及未观察fault/dispose/duplicate partial mutation均在领域mutation前失败关闭，不伪造native行为。
 - B02已解除B03–B12生产实现硬门。
 - B03–B11生产批：新增owner/session-bound `ScoreLifeStateProfile`、`ScoreUtility`、`InGameRecord`、`SituationSkillManager`、`FeverTimeManager`与聚合`ScoreLifeStateManager`；OneFrame在Setup冻结完整业务字段、Reflect按五槽提交。普通/HABAHIRO production图由parent-owned graph分别得到`979/731`。
-- 生产批覆盖base/result/Combo、Score/record、Life/guard/Never Die/Game Over、Skill queue/once/active/continuous/Crescendo、Fever point/pass/command/state/reservation、Auto/Festival/Medley/Garupa/event路由；Continue和active-heal无consumer保持`evidence-required`。隔离TypeScript检查与定向runner已先行通过，测试文件留待独立测试提交。
+- 生产批覆盖base/result/Combo、Score/record、Life/guard/Never Die/Game Over、Skill queue/once/active/continuous/Crescendo、Fever point/pass/command/state/reservation、Auto/Festival/Medley/Garupa/event路由；Continue和active-heal无consumer保持`evidence-required`。隔离TypeScript检查与定向runner已先行通过。
+- B03–B11生产提交：GarupaEditor `9726880`已push且远端`0 0`。独立测试批新增集中runner与package入口，覆盖BS01–BS36关键边界、全部effect 0–10处置、Fever success/failure/duplicate、same-frame Combo及production BMS `979/731`。
