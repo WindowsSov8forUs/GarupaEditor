@@ -1,6 +1,6 @@
 # 分数、生命与状态证据包
 
-本目录冻结 Reverse 静态/R0及既有R1基线，并向前冻结 ordinary 初始化 `3c95190f4b6326da97e21c8e590f625a7582dc22`、deck aggregate计划/证据 `0bdb5cd59494076d92d3d5d6596608af476fec3e` / `b9b1a6deb334edf921a6f563ec0c270d49f0476f`、music-786计划/证据 `8b5d7dfb1a4b26a686b7e0a9cfcf093cb37e5386` / `287cd8689a6d498fbd45c35b82d16a96c97916c1`、ordinary Auto零tail计划 `6ee113568b2b06abce524beff4a57d83290c9f8d` 与最终R1/oracle提交 `77fea929e1f99c1051b5211aa28836fd57c45117`。完整逐文件commit/hash见`manifest.json`。
+本目录冻结 Reverse 静态/R0及既有R1基线，并向前冻结 ordinary 初始化 `3c95190f4b6326da97e21c8e590f625a7582dc22`、deck aggregate计划/证据 `0bdb5cd59494076d92d3d5d6596608af476fec3e` / `b9b1a6deb334edf921a6f563ec0c270d49f0476f`、music-786计划/证据 `8b5d7dfb1a4b26a686b7e0a9cfcf093cb37e5386` / `287cd8689a6d498fbd45c35b82d16a96c97916c1`、ordinary Auto零tail计划 `6ee113568b2b06abce524beff4a57d83290c9f8d` 与one-note R1/oracle提交 `77fea929e1f99c1051b5211aa28836fd57c45117`，以及匿名Skill effect profile计划/证据 `9e217703c028e2f09be7fa2b30d791b6f7a4a338` / `a3c56662b979e1682340a7a47fa8553a8a95ee67`。完整逐文件commit/hash见`manifest.json`。
 
 B01/V01静态门已关闭，B02仅部分推进：
 
@@ -23,11 +23,12 @@ B01/V01静态门已关闭，B02仅部分推进：
 - deck aggregate R1锁定五元素数组、三分量`0x47617330/0x478A9AE2/0x477B7FCF`、首加`0x47FB547A`与total `0x483C8A31`；成员行继续因隐私边界失败关闭；
 - music-786自然UI R1锁定796行列表、五难度与SPECIAL score level 26 fallback，但限时关闭使HABAHIRO runtime initialization继续不可用；
 - ordinary Auto零tail R1含5501个连续事件、979个one-note leave、6个Skill lifecycle/5个匿名alias；strict maxima为`541@1→703@82→1136@219`，equal score保留早先对象；Life直接`1000→1200→1500`且player max为1000；
-- `BS01–BS36` partial oracle已冻结：BS01/BS05/BS06/BS11共4个confirmed，20个case partial，12个case blocked，总计`unknown_fields=135`、`blocking_findings=85`；D19/D24仍未关闭；
+- 第9条R1含5497个连续事件，锁定5个匿名numeric Skill profile、6次trigger/finish、7个ordered active rows、under-Life 600 heal400在Life1000抑制，以及heal300/heal200产生`1000→1300→1500`；不含账号/member/card/skill ID、pointer或display string；
+- `BS01–BS36` partial oracle已冻结：BS01/BS05/BS06/BS11共4个confirmed，22个case partial，10个case blocked，总计`unknown_fields=131`、`blocking_findings=82`；D19/D24仍未关闭；
 - production chart count独立oracle按10.1.4 `NoteManager.analyzeBMS`规则固定ordinary `979`与HABAHIRO `731`，已写入BS01/BS02，移除4个chart unknown并将BS02从blocked推进为partial；
-- `R1=8`且`business_state_gate=open`，不得实施B03–B12 production。
+- `R1=9`且`business_state_gate=open`，不得实施B03–B12 production。
 
-B02仍必须补齐D18/D20剩余范围、D19的135个unknown fields与85个blocking findings、D21、D22的score-decrease/Continue/seek/ReturnTime、D23剩余HABAHIRO初始化、deck member/nonzero event/Skill effect/Fever/special-mode master provenance及D24；不得把六个顺序Skill外推为重叠Skill、Fever、guard或Never Die。
+B02仍必须补齐D18/D20剩余范围、D19的131个unknown fields与82个blocking findings、D21、D22的score-decrease/Continue/seek/ReturnTime、D23剩余HABAHIRO初始化、deck member/nonzero event、未观察guard/Never Die/percentage-heal/special-effect Skill、Fever/special-mode master provenance及D24；不得把六个顺序Skill外推为重叠Skill或Fever。
 
 验证：
 
@@ -36,4 +37,4 @@ node tmp/simulator-reverse-evidence/score-life-state/verify.mjs
 node tmp/simulator-reverse-evidence/score-life-state/verify.mjs --index
 ```
 
-`verify.mjs` 校验全部Reverse证据节点、source/copy/index三方字节、manifest、冻结SHA256SUMS、静态contract/findings/closure、BMS/cache record、production chart count `979/731`、八条R1压缩raw trace、deck aggregate、music-786、ordinary Auto Skill/one-note/overheal、计划来源/动作、Retry-only安全边界与reset轨迹、BS01–BS36 partial oracle、观察型capture约束和业务门状态。
+`verify.mjs` 校验全部Reverse证据节点、source/copy/index三方字节、manifest、冻结SHA256SUMS、静态contract/findings/closure、BMS/cache record、production chart count `979/731`、九条R1压缩raw trace、deck aggregate、music-786、ordinary Auto Skill/one-note/overheal/effect profile、计划来源/动作、Retry-only安全边界与reset轨迹、BS01–BS36 partial oracle、观察型capture约束和业务门状态。

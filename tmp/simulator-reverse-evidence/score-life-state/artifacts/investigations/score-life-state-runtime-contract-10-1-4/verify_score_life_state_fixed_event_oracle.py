@@ -14,15 +14,14 @@ ROOT = Path(__file__).resolve().parent
 ORACLE = ROOT / "score_life_state_fixed_event_oracle.json"
 LIB_SHA256 = "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F"
 METADATA_SHA256 = "298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F"
-SOURCE_COMMIT = "6ee113568b2b06abce524beff4a57d83290c9f8d"
+SOURCE_COMMIT = "9e217703c028e2f09be7fa2b30d791b6f7a4a338"
 EXPECTED_CONFIRMED = ["BS01", "BS05", "BS06", "BS11"]
 EXPECTED_PARTIAL = [
     "BS02", "BS03", "BS07", "BS10", "BS12", "BS13", "BS14", "BS15", "BS16", "BS18",
-    "BS19", "BS20", "BS21", "BS22", "BS24", "BS27", "BS29", "BS30", "BS32", "BS36",
+    "BS19", "BS20", "BS21", "BS22", "BS24", "BS25", "BS26", "BS27", "BS29", "BS30", "BS32", "BS36",
 ]
 EXPECTED_BLOCKED = [
-    "BS04", "BS08", "BS09", "BS17", "BS23", "BS25", "BS26",
-    "BS28", "BS31", "BS33", "BS34", "BS35",
+    "BS04", "BS08", "BS09", "BS17", "BS23", "BS28", "BS31", "BS33", "BS34", "BS35",
 ]
 EXPECTED_SOURCES = {
     "static_contract": "score_life_state_static_contract.json",
@@ -38,6 +37,7 @@ EXPECTED_SOURCES = {
     "deck_aggregate_profile": "score_life_deck_aggregate_profile_oracle.json",
     "master_music_786_profile": "score_life_master_music_786_profile_oracle.json",
     "ordinary_auto_skill_one_note": "score_life_ordinary_auto_skill_one_note_oracle.json",
+    "ordinary_auto_skill_effect_profile": "score_life_ordinary_auto_skill_effect_profile_oracle.json",
 }
 EXPECTED_OUTPUT_FIELDS = [
     "initialization.base_score_and_profile",
@@ -88,6 +88,7 @@ def main() -> int:
     deck_aggregate_profile = load_json(ROOT / EXPECTED_SOURCES["deck_aggregate_profile"])
     master_music_786_profile = load_json(ROOT / EXPECTED_SOURCES["master_music_786_profile"])
     ordinary_auto_skill_one_note = load_json(ROOT / EXPECTED_SOURCES["ordinary_auto_skill_one_note"])
+    ordinary_auto_skill_effect_profile = load_json(ROOT / EXPECTED_SOURCES["ordinary_auto_skill_effect_profile"])
 
     require(oracle["schema_version"] == 1, "oracle schema differs")
     require(oracle["status"] == "partial-10.1.4-fixed-event-oracle-business-gate-open", "oracle status differs")
@@ -156,8 +157,8 @@ def main() -> int:
             "confirmed_cases": EXPECTED_CONFIRMED,
             "partial_cases": EXPECTED_PARTIAL,
             "blocked_cases": EXPECTED_BLOCKED,
-            "unknown_field_count": 135,
-            "blocking_finding_count": 85,
+            "unknown_field_count": 131,
+            "blocking_finding_count": 82,
         },
         "coverage summary differs",
     )
@@ -307,7 +308,8 @@ def main() -> int:
             "upper_limit": heal_leave["after"]["business_life_upper_limit"],
         }
         and (heal_enter["before"]["current_life"], heal_leave["after"]["current_life"])
-        == (800, 1100),
+        == (800, 1100)
+        and by_id["BS19"]["expected_projection"]["observed_once_effect_profiles"] == ordinary_auto_skill_effect_profile["once_effect_observations"],
         "BS19 fixed-heal projection differs",
     )
 
@@ -334,9 +336,14 @@ def main() -> int:
     active_frames = [event["frame"] for event in events(skill, "OneFrameData.Setup.leave") if event["frame"]["skill_rate"]["bits"] == "0x3F99999A"]
     require(
         len(active_frames) == 18
-        and by_id["BS24"]["expected_projection"] == {"observed_active_entries": 18, "active_skill_rate_bits": "0x3F99999A", "active_score_up_type": 1}
+        and by_id["BS24"]["expected_projection"]["observed_active_entries"] == 18
+        and by_id["BS24"]["expected_projection"]["active_skill_rate_bits"] == "0x3F99999A"
+        and by_id["BS24"]["expected_projection"]["active_score_up_type"] == 1
+        and by_id["BS24"]["expected_projection"]["observed_ordered_effect_rows"] == [{"alias": profile["alias"], "values": profile["active_effects"]["values"]} for profile in ordinary_auto_skill_effect_profile["profiles"]]
+        and by_id["BS25"]["expected_projection"]["observed_over_life_score_effect"] == ordinary_auto_skill_effect_profile["profiles"][1]["active_effects"]["values"][0]
+        and by_id["BS26"]["expected_projection"]["observed_continuous_effect"] == ordinary_auto_skill_effect_profile["profiles"][2]["active_effects"]["values"][0]
         and by_id["BS27"]["expected_projection"] == {"observed_score_up_type": 1, "observed_rate_bits": "0x3F99999A", "active_entry_count": 18},
-        "BS24/BS27 active Skill projection differs",
+        "BS24-BS27 active Skill projection differs",
     )
 
     retry_game_over = events(retry, "InGameRecord.updateGameOverState.leave")[0]
@@ -364,13 +371,13 @@ def main() -> int:
     serialized = ORACLE.read_text(encoding="utf-8")
     require(not any(claim in oracle["status"] for claim in forbidden_closure_claims), "oracle status overclaims closure")
     require(runtime_status["business_state_gate"] == "open" and runtime_status["production_authorization"] is False, "runtime status gate differs")
-    require(runtime_status["runtime"]["r1_trace_count"] == 8 and runtime_status["runtime"]["fixed_event_oracle"]["unknown_fields"] == 135 and runtime_status["runtime"]["fixed_event_oracle"]["blocking_findings"] == 85, "runtime status coverage differs")
+    require(runtime_status["runtime"]["r1_trace_count"] == 9 and runtime_status["runtime"]["fixed_event_oracle"]["unknown_fields"] == 131 and runtime_status["runtime"]["fixed_event_oracle"]["blocking_findings"] == 82, "runtime status coverage differs")
     require("capture_fields_not_consumed" in runtime_status["runtime"], "ABI-unsafe field exclusion missing")
     require(serialized.count('"case_id": "BS') == 36, "serialized BS case count differs")
 
     print(
-        "verified score/life fixed-event oracle: BS=36 confirmed=4 partial=20 blocked=12 "
-        "unknown_fields=135 blockers=85 R1=8 gate=open production=false"
+        "verified score/life fixed-event oracle: BS=36 confirmed=4 partial=22 blocked=10 "
+        "unknown_fields=131 blockers=82 R1=9 gate=open production=false"
     )
     return 0
 

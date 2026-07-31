@@ -8,8 +8,8 @@
 - 锁定原作样本：`jp.co.craftegg.band` 10.1.4（version code 230，`arm64-v8a`）。
 - 锁定`libil2cpp.so` SHA-256：`815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F`。
 - 锁定`global-metadata.dat` SHA-256：`298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F`。
-- 当前Reverse证据提交：`77fea929e1f99c1051b5211aa28836fd57c45117`；只消费该提交及其祖先中已推送、可校验对象，不消费当前Reverse工作树。
-- 当前状态：**B00/B01已完成，B02进行中。V01与D01-static已关闭；8条R1部分推进D03/D06/D10/D12/D14/D18/D20/D22/D23；production chart count固定ordinary 979/HABAHIRO 731，ordinary初始化、deck aggregate、music-786 score-level与ordinary Auto 979 one-note/六Skill/overheal已锁定。BS01–BS36 partial oracle现为4个confirmed、20个partial、12个blocked，保留135个unknown fields与85个blocking findings。D18–D24剩余范围仍是`required-before-code`硬门；B02关闭前禁止实施B03–B12任何生产代码。**
+- 当前Reverse证据提交：`a3c56662b979e1682340a7a47fa8553a8a95ee67`；只消费该提交及其祖先中已推送、可校验对象，不消费当前Reverse工作树。
+- 当前状态：**B00/B01已完成，B02进行中。V01与D01-static已关闭；9条R1部分推进D03/D06/D10/D12/D13/D14/D18/D20/D22/D23；production chart count固定ordinary 979/HABAHIRO 731，ordinary初始化、deck aggregate、music-786 score-level、ordinary Auto 979 one-note/六Skill/overheal及5个匿名numeric Skill effect profile已锁定。BS01–BS36 partial oracle现为4个confirmed、22个partial、10个blocked，保留131个unknown fields与82个blocking findings。D18–D24剩余范围仍是`required-before-code`硬门；B02关闭前禁止实施B03–B12任何生产代码。**
 - 当前10.1.4已提交依赖证据只直接覆盖`OneFrameData.Setup`、`InGameOneFrameJudgementController.ReflectOneFrameData`、`NoteBase.getAddCombo`以及若干判定生产者入口；它不足以宣称完整Score/Life/Skill/Fever链已在10.1.4确认。
 - 10.1.3的`base-score-construction`、`event-score-multipliers`、`skill-*`、`fever-*`及Life Heal实机调查仅作为历史迁移候选H01–H24，不能被B03–B12生产实现直接消费。
 - 当前证据包：`tmp/simulator-reverse-evidence/score-life-state/`；已冻结B01、R0输入与无输入R1子批，只消费已提交Reverse对象。
@@ -58,7 +58,7 @@
 | --- | --- | --- |
 | B00 建立阶段任务书 | **已完成** | 范围、证据候选、硬门、oracle、任务顺序和完成定义写入本文档 |
 | B01 10.1.4静态证据晋升 | **已完成静态重基线** | 326方法、25布局、19枚举及静态语义已提交Reverse并冻结；不单独关闭业务门 |
-| B02 实体与固定事件oracle | **进行中；硬门**：R0/BMS、production count 979/731、4条R1及BS01–BS36 partial oracle已冻结；D03/D14/D18/D19/D20/D22/D23仅部分推进 | D01–D24关闭，raw trace和BS01–BS36固定case提交并冻结，`business_state_gate=closed` |
+| B02 实体与固定事件oracle | **进行中；硬门**：R0/BMS、production count 979/731、9条R1及BS01–BS36 partial oracle已冻结；D03/D14/D18/D19/D20/D22/D23仅部分推进 | D01–D24关闭，raw trace和BS01–BS36固定case提交并冻结，`business_state_gate=closed` |
 | B03 锁定配置、领域数据与owner | 阻塞于B02 | 输入profile、InGameRecord、OneFrameData/TotalData与manager owner不可伪造 |
 | B04 恢复基础分与最大Note数 | 阻塞于B02 | deck/chart/level/base score、result correction及初始化顺序匹配 |
 | B05 恢复单次判定业务投影 | 阻塞于B02 | adjusted result、damage、score、rate、guard和slot冻结顺序匹配 |
@@ -705,5 +705,7 @@ git rev-list --left-right --count origin/codex/refactor-simulator-implementation
 - Reverse五判定伤害整合提交：`ee7e03b0afcd65143d59f87c885ade454db52513`；BS15消费Miss/Bad `-100/-50`及五result实际base damage/OneFrame Power，oracle收窄至142/86。
 - Reverse ordinary Auto计划依次预提交；最终零tail计划 `6ee113568b2b06abce524beff4a57d83290c9f8d`，证据/oracle提交 `77fea929e1f99c1051b5211aa28836fd57c45117`。成功R1含5501连续事件、979个one-note leave、6个完整Skill lifecycle/5个匿名alias；strict maxima `541@1→703@82→1136@219`、equal retention及Life `1000→1200→1500` overheal独立验证通过。前三次transport失败trace均移入Reverse `runtime/tools/`未晋升。
 - fixed-event重建后为4 confirmed/20 partial/12 blocked、135 unknown fields/85 blocking findings；BS14从blocked晋升partial，BS13/BS20/BS21/BS22收窄，业务门仍open。
-- 待关闭：D18/D20/D22剩余、D19的135个unknown fields与85个blocking findings、D21、D23剩余HABAHIRO runtime initialization、deck member/非零event/Skill effect/Fever/special-mode master provenance及D24。
+- Reverse匿名Skill effect profile计划/证据提交：`9e217703c028e2f09be7fa2b30d791b6f7a4a338` / `a3c56662b979e1682340a7a47fa8553a8a95ee67`。5497事件零tail R1含5个匿名numeric profile、6次trigger/finish、7个ordered active rows；heal400 under-Life 600在Life1000抑制，heal300/heal200产生`1000→1300→1500`。账号/member/card/skill ID、pointer和display string均未导出。
+- fixed-event重建后为4 confirmed/22 partial/10 blocked、131 unknown fields/82 blocking findings；BS19移除profile/D23未知，BS24移除ordered rows/D23，BS25与BS26从blocked晋升partial；业务门仍open。
+- 待关闭：D18/D20/D22剩余、D19的131个unknown fields与82个blocking findings、D21、D23剩余HABAHIRO runtime initialization、deck member/非零event、未观察guard/Never Die/percentage-heal/special-effect Skill、Fever/special-mode master provenance及D24。
 - B02关闭前继续禁止B03–B12 production、测试脚本和package script实现。

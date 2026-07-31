@@ -149,11 +149,25 @@
       "account_fields_included": false,
       "member_identity_included": false,
       "status": "confirmed-r1-observation-only"
+    },
+    "r1_ordinary_auto_skill_effect_profile": {
+      "trace": "runtime/ordinary-auto-skill-effect-profile-r1.trace.json.gz",
+      "trace_sha256": "06A17DB9BBB594FBFA127694F207860BE016FF3CB111DBCE2A01883B3BB53E4D",
+      "events": 5497,
+      "skill_lifecycles": 6,
+      "anonymous_skill_count": 5,
+      "active_effect_rows": 7,
+      "once_heal_rows": [400, 300, 200],
+      "once_life_transitions": [[1000, 1000], [1000, 1300], [1300, 1500]],
+      "account_fields_included": false,
+      "member_identity_included": false,
+      "skill_master_ids_included": false,
+      "status": "confirmed-r1-observation-only"
     }
   },
   "partial": {
     "D18": {
-      "closed_subscope": "stable InGameRecord identity, Life initialization, positive judgement/Score, six ordered anonymous Skill lifecycles, Skill 0-1-2-3-0, once-heal/overheal, ordinary one-note strict maxima/equal retention and Skill-rate before-after snapshots",
+      "closed_subscope": "stable InGameRecord identity, Life initialization, positive judgement/Score, six ordered anonymous Skill lifecycles, Skill 0-1-2-3-0, once-heal/overheal, ordinary one-note strict maxima/equal retention, Skill-rate before-after snapshots and five anonymous numeric Skill effect profiles",
       "open_subscope": "Fever, guard, Never Die, multiple/overlapping Skill and special-mode identities"
     },
     "D22": {
@@ -161,12 +175,12 @@
       "open_subscope": "score decrease modes, Continue (not permitted for capture), seek and ReturnTime"
     },
     "D23": {
-      "closed_subscope": "ordinary and HABAHIRO production BMS bytes and connected-device cache provenance; ordinary poppin_shuffle_special initialization; privacy-safe deck aggregates; music 786 master availability, five difficulty rows and Free Live score-level fallback resolving SPECIAL to 26",
-      "open_subscope": "HABAHIRO runtime start-data/base/event parameter while the chart is unavailable; privacy-excluded deck member rows; Skill, Fever, nonzero event, Auto, Festival, Medley, and Garupa master rows"
+      "closed_subscope": "ordinary and HABAHIRO production BMS bytes and connected-device cache provenance; ordinary poppin_shuffle_special initialization; privacy-safe deck aggregates; music 786 master availability, five difficulty rows and Free Live score-level fallback resolving SPECIAL to 26; five anonymous ordinary Skill duration/once-condition/ordered active-effect rows",
+      "open_subscope": "HABAHIRO runtime start-data/base/event parameter while the chart is unavailable; privacy-excluded deck member rows; unobserved guard/Never Die/percentage-heal/special-effect Skill rows, Fever, nonzero event, Auto, Festival, Medley, and Garupa master rows"
     }
   },
   "runtime": {
-    "r1_trace_count": 8,
+    "r1_trace_count": 9,
     "pending_capture_plans": [
       {
         "path": "runtime/positive-retry-all-lanes-r1-plan.json",
@@ -247,6 +261,14 @@
         "observed_scope": ["D10-ordinary-one-note-max", "D12-six-Skill-lifecycles", "D14-overheal", "D18-multi-Skill-object-state"],
         "not_observed": ["D10-nonzero-event-bonus-max", "D13-skill-master-effect-rows", "D20-overlapping-Skill", "D20-Fever"],
         "safety": "Auto Live uses anonymous Skill aliases; account/member/card/skill IDs, pointers and display strings omitted; Continue/premium-currency actions forbidden"
+      },
+      {
+        "path": "runtime/ordinary-auto-skill-effect-profile-r1-plan.json",
+        "scenario_id": "ordinary-auto-skill-effect-profile-r1",
+        "status": "executed-confirmed-trace-promoted",
+        "observed_scope": ["D13-ordinary-ordered-active-effect-rows", "D14-once-heal-conditions", "D18-Skill-profile-correlation", "D23-ordinary-anonymous-Skill-master-rows"],
+        "not_observed": ["D13-guard-Never-Die-percentage-heal-special-effect-rows", "D14-condition-equality", "D20-overlapping-Skill", "D20-Fever"],
+        "safety": "Trigger-time numeric profiles use anonymous aliases; account/member/card/skill IDs, pointers and display strings omitted; Continue/premium-currency actions forbidden"
       }
     ],
     "capture_fields_not_consumed": [
@@ -262,13 +284,13 @@
       "verifier": "verify_score_life_state_fixed_event_oracle.py",
       "cases": 36,
       "confirmed_cases": ["BS01", "BS05", "BS06", "BS11"],
-      "partial_cases": ["BS02", "BS03", "BS07", "BS10", "BS12", "BS13", "BS14", "BS15", "BS16", "BS18", "BS19", "BS20", "BS21", "BS22", "BS24", "BS27", "BS29", "BS30", "BS32", "BS36"],
-      "blocked_cases": ["BS04", "BS08", "BS09", "BS17", "BS23", "BS25", "BS26", "BS28", "BS31", "BS33", "BS34", "BS35"],
-      "unknown_fields": 135,
-      "blocking_findings": 85,
+      "partial_cases": ["BS02", "BS03", "BS07", "BS10", "BS12", "BS13", "BS14", "BS15", "BS16", "BS18", "BS19", "BS20", "BS21", "BS22", "BS24", "BS25", "BS26", "BS27", "BS29", "BS30", "BS32", "BS36"],
+      "blocked_cases": ["BS04", "BS08", "BS09", "BS17", "BS23", "BS28", "BS31", "BS33", "BS34", "BS35"],
+      "unknown_fields": 131,
+      "blocking_findings": 82,
       "status": "partial-business-gate-open"
     },
-    "operational_blocker": "Eight R1 traces are closed, including ordinary initialization, privacy-minimized deck aggregates, target-only music-786 master rows and a complete ordinary Auto Live with six anonymous Skill lifecycles. BS01 is confirmed-r1; BS02 retains unavailable runtime start-data/event/base values; BS03 retains privacy-excluded member rows. Ordinary one-note strict max/equal retention and overheal are now observed. The fixed-event oracle has 135 unknown fields and 85 blockers overall. Nonzero event profiles, Fever transitions, overlapping Skill, score-decrease/seek/ReturnTime lifecycle and remaining master provenance remain open. Continue remains unobserved because premium-currency actions are forbidden. Five ABI-unsafe fields stay excluded.",
+    "operational_blocker": "Nine R1 traces are closed, including ordinary initialization, privacy-minimized deck aggregates, target-only music-786 master rows, complete ordinary Auto Skill lifecycles/one-note maxima and five anonymous numeric Skill effect profiles. BS01 is confirmed-r1; BS02 retains unavailable runtime start-data/event/base values; BS03 retains privacy-excluded member rows. Fixed heal rows, an over-Life score row, a continuous-score row and ordered active rows are now observed. The fixed-event oracle has 131 unknown fields and 82 blockers overall. Nonzero event profiles, Fever transitions, overlapping Skill, guard/Never Die/special-effect rows, score-decrease/seek/ReturnTime lifecycle and remaining master provenance remain open. Continue remains unobserved because premium-currency actions are forbidden. Five ABI-unsafe fields stay excluded.",
     "synthetic_trace_allowed": false
   },
   "gates": {
@@ -285,7 +307,7 @@
     "Fever, guard, Never Die, multiple/overlapping Skill and special-mode R1 traces remain open.",
     "Deck/start-data/master provenance remains open.",
     "D20 Fever/multiple-entry remainder, D21 and D22 score-decrease/Continue/seek/ReturnTime remain open.",
-    "BS01-BS36 partial oracle retains 135 unknown fields and 85 blocking findings; final portable contract does not exist."
+    "BS01-BS36 partial oracle retains 131 unknown fields and 82 blocking findings; final portable contract does not exist."
   ],
   "business_state_gate": "open",
   "production_authorization": false

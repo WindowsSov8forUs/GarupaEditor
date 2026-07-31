@@ -9,86 +9,92 @@
     "libil2cpp_sha256": "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F",
     "global_metadata_sha256": "298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F"
   },
-  "source_commit": "6ee113568b2b06abce524beff4a57d83290c9f8d",
+  "source_commit": "9e217703c028e2f09be7fa2b30d791b6f7a4a338",
   "generator": "build_score_life_state_fixed_event_oracle.py",
   "evidence_catalog": {
     "static_contract": {
       "path": "score_life_state_static_contract.json",
       "bytes": 1107943,
       "sha256": "932AE569D6B2AD8620D1D8CECD44EB812B6AFDB16E18590140D7DA56998566C2",
-      "source_commit": "6ee113568b2b06abce524beff4a57d83290c9f8d"
+      "source_commit": "9e217703c028e2f09be7fa2b30d791b6f7a4a338"
     },
     "static_findings": {
       "path": "score_life_state_static_findings.json",
       "bytes": 15061,
       "sha256": "B626E6318BD8462BC94C8C9FEEB27AF00FC89751F210CB8D6F3C34EA1F17FAC2",
-      "source_commit": "6ee113568b2b06abce524beff4a57d83290c9f8d"
+      "source_commit": "9e217703c028e2f09be7fa2b30d791b6f7a4a338"
     },
     "ordinary_bms": {
       "path": "runtime-inputs/bms/poppin_shuffle_special.bms.txt",
       "bytes": 17882,
       "sha256": "418DB7F5BFC6B5431AC0ABF2FB905120BDFA8C778C35AA42418A6FA43F4094DC",
-      "source_commit": "6ee113568b2b06abce524beff4a57d83290c9f8d"
+      "source_commit": "9e217703c028e2f09be7fa2b30d791b6f7a4a338"
     },
     "habahiro_bms": {
       "path": "runtime-inputs/bms/786_miracle_april_habahiro_special.bms.txt",
       "bytes": 38700,
       "sha256": "43148090C40ABBD951E8D7112200BDAE9B796A8A531A0793169E0AD70C3DC159",
-      "source_commit": "6ee113568b2b06abce524beff4a57d83290c9f8d"
+      "source_commit": "9e217703c028e2f09be7fa2b30d791b6f7a4a338"
     },
     "no_input_r1": {
       "path": "runtime/no-input-retry-life-gameover.trace.json.gz",
       "bytes": 140797,
       "sha256": "4F1BBCCF8E9D9258235ED3FD52F3B74242F515362C5C4EE7F51B8126290E8A55",
-      "source_commit": "6ee113568b2b06abce524beff4a57d83290c9f8d"
+      "source_commit": "9e217703c028e2f09be7fa2b30d791b6f7a4a338"
     },
     "positive_r1": {
       "path": "runtime/positive-retry-all-lanes-early.trace.json.gz",
       "bytes": 153597,
       "sha256": "F91140EB5A1B1A8858495B6CFFB9112C4CB295F20D4CDEEED184A1F5CCDB44A9",
-      "source_commit": "6ee113568b2b06abce524beff4a57d83290c9f8d"
+      "source_commit": "9e217703c028e2f09be7fa2b30d791b6f7a4a338"
     },
     "skill_r1": {
       "path": "runtime/multitouch-seven-lane-native-skill.trace.json.gz",
       "bytes": 746972,
       "sha256": "0DB8FF447030750008B001A285480FE280A770EEB9723369C1935107B1DA5FDD",
-      "source_commit": "6ee113568b2b06abce524beff4a57d83290c9f8d"
+      "source_commit": "9e217703c028e2f09be7fa2b30d791b6f7a4a338"
     },
     "retry_r1": {
       "path": "runtime/multitouch-seven-lane-post-gameover-retry.trace.json.gz",
       "bytes": 696375,
       "sha256": "D4BFF770EC545C037A0592F4BF3E4B796565EA12668C5AF6BC81E9C60A6F10AE",
-      "source_commit": "6ee113568b2b06abce524beff4a57d83290c9f8d"
+      "source_commit": "9e217703c028e2f09be7fa2b30d791b6f7a4a338"
     },
     "chart_count": {
       "path": "score_life_state_chart_count_oracle.json",
       "bytes": 4144,
       "sha256": "66CBA99B638A0EB078C8C9D2B2B8FB06663EE8E2B74DBC68249986EEA152E12C",
-      "source_commit": "6ee113568b2b06abce524beff4a57d83290c9f8d"
+      "source_commit": "9e217703c028e2f09be7fa2b30d791b6f7a4a338"
     },
     "initialization_profile": {
       "path": "score_life_initialization_profile_oracle.json",
       "bytes": 5388,
       "sha256": "53D07B2DA7456C2B7AFDFE37293E352DC9471E31A0F13556553185EC20364E9B",
-      "source_commit": "6ee113568b2b06abce524beff4a57d83290c9f8d"
+      "source_commit": "9e217703c028e2f09be7fa2b30d791b6f7a4a338"
     },
     "deck_aggregate_profile": {
       "path": "score_life_deck_aggregate_profile_oracle.json",
       "bytes": 3507,
       "sha256": "8265C5A6144E8FB0B9C8084C5B562B2061A0C05EAE8DE58D81682C6EEFADDA68",
-      "source_commit": "6ee113568b2b06abce524beff4a57d83290c9f8d"
+      "source_commit": "9e217703c028e2f09be7fa2b30d791b6f7a4a338"
     },
     "master_music_786_profile": {
       "path": "score_life_master_music_786_profile_oracle.json",
       "bytes": 6664,
       "sha256": "B8E23249B79618CFDAB773CE64709C46DD422ABB473A5B63998C6D988F3D8529",
-      "source_commit": "6ee113568b2b06abce524beff4a57d83290c9f8d"
+      "source_commit": "9e217703c028e2f09be7fa2b30d791b6f7a4a338"
     },
     "ordinary_auto_skill_one_note": {
       "path": "score_life_ordinary_auto_skill_one_note_oracle.json",
       "bytes": 13233,
       "sha256": "33EB823625B4857A0D9BDB253BC3A2DA5CB64C1F501EDBADEF8FF21B8DCB446D",
-      "source_commit": "6ee113568b2b06abce524beff4a57d83290c9f8d"
+      "source_commit": "9e217703c028e2f09be7fa2b30d791b6f7a4a338"
+    },
+    "ordinary_auto_skill_effect_profile": {
+      "path": "score_life_ordinary_auto_skill_effect_profile_oracle.json",
+      "bytes": 12733,
+      "sha256": "85DAADB89CECC31485F7E2EE27FCC938FD1235624EECF76FA4A6384A9672FBB4",
+      "source_commit": "9e217703c028e2f09be7fa2b30d791b6f7a4a338"
     }
   },
   "required_output_fields": [
@@ -126,6 +132,8 @@
       "BS21",
       "BS22",
       "BS24",
+      "BS25",
+      "BS26",
       "BS27",
       "BS29",
       "BS30",
@@ -138,16 +146,14 @@
       "BS09",
       "BS17",
       "BS23",
-      "BS25",
-      "BS26",
       "BS28",
       "BS31",
       "BS33",
       "BS34",
       "BS35"
     ],
-    "unknown_field_count": 135,
-    "blocking_finding_count": 85
+    "unknown_field_count": 131,
+    "blocking_finding_count": 82
   },
   "business_state_gate": "open",
   "production_authorization": false,
@@ -1387,15 +1393,18 @@
       "status": "partial",
       "evidence_ids": [
         "SLS-S09",
-        "SLS-R1-005"
+        "SLS-R1-005",
+        "SLS-R1-012"
       ],
       "input_provenance": [
         "static_findings",
-        "skill_r1"
+        "skill_r1",
+        "ordinary_auto_skill_effect_profile"
       ],
       "expected_source": [
         "static:SLS-S09",
-        "skill_r1#AddIPower:arg1=300"
+        "skill_r1#AddIPower:arg1=300",
+        "ordinary_auto_skill_effect_profile#profiles/once_effect_observations"
       ],
       "expected_projection": {
         "fixed_formula": "Truncate the Float32 effect value toward zero to int32 and pass it to AddIPower.",
@@ -1410,16 +1419,100 @@
           "after": 1100,
           "displayed_base": 1000,
           "upper_limit": 2000
-        }
+        },
+        "observed_once_effect_profiles": [
+          {
+            "alias": "skill-01",
+            "once_effect": {
+              "type": 0,
+              "value_type": 0,
+              "value": 0
+            },
+            "once_condition": {
+              "life_type": 0,
+              "life": 0
+            },
+            "before": 1000,
+            "after": 1000
+          },
+          {
+            "alias": "skill-02",
+            "once_effect": {
+              "type": 1,
+              "value_type": 1,
+              "value": 400
+            },
+            "once_condition": {
+              "life_type": 1,
+              "life": 600
+            },
+            "before": 1000,
+            "after": 1000
+          },
+          {
+            "alias": "skill-03",
+            "once_effect": {
+              "type": 0,
+              "value_type": 0,
+              "value": 0
+            },
+            "once_condition": {
+              "life_type": 0,
+              "life": 0
+            },
+            "before": 1000,
+            "after": 1000
+          },
+          {
+            "alias": "skill-04",
+            "once_effect": {
+              "type": 1,
+              "value_type": 1,
+              "value": 300
+            },
+            "once_condition": {
+              "life_type": 0,
+              "life": 0
+            },
+            "before": 1000,
+            "after": 1300
+          },
+          {
+            "alias": "skill-05",
+            "once_effect": {
+              "type": 1,
+              "value_type": 1,
+              "value": 200
+            },
+            "once_condition": {
+              "life_type": 0,
+              "life": 0
+            },
+            "before": 1300,
+            "after": 1500
+          },
+          {
+            "alias": "skill-03",
+            "once_effect": {
+              "type": 0,
+              "value_type": 0,
+              "value": 0
+            },
+            "once_condition": {
+              "life_type": 0,
+              "life": 0
+            },
+            "before": 1500,
+            "after": 1500
+          }
+        ]
       },
       "unknown_fields": [
-        "profile.once_effect_row",
         "runtime.condition_equal_boundary",
         "runtime.heal_callback_identity"
       ],
       "blocking_findings": [
-        "D14",
-        "D23-master-start-data"
+        "D14"
       ]
     },
     {
@@ -1857,50 +1950,233 @@
       "status": "partial",
       "evidence_ids": [
         "SLS-R1-005",
+        "SLS-R1-012",
         "D13-static"
       ],
       "input_provenance": [
         "skill_r1",
+        "ordinary_auto_skill_effect_profile",
         "static_contract"
       ],
       "expected_source": [
-        "skill_r1#active OneFrameData.Setup.leave"
+        "skill_r1#active OneFrameData.Setup.leave",
+        "ordinary_auto_skill_effect_profile#profiles.active_effects"
       ],
       "expected_projection": {
         "observed_active_entries": 18,
         "active_skill_rate_bits": "0x3F99999A",
-        "active_score_up_type": 1
+        "active_score_up_type": 1,
+        "observed_ordered_effect_rows": [
+          {
+            "alias": "skill-01",
+            "values": [
+              {
+                "type": 0,
+                "value_type": 2,
+                "condition": 2,
+                "value": {
+                  "value": 110,
+                  "bits": "0x42DC0000"
+                },
+                "condition_life": 0,
+                "unification_value": 0,
+                "unification_type": -1,
+                "unification_band": 0,
+                "unification_satisfied": 0,
+                "stack_value": {
+                  "value": 0,
+                  "bits": "0x00000000"
+                },
+                "max_value": 0
+              },
+              {
+                "type": 3,
+                "value_type": 1,
+                "condition": 1,
+                "value": {
+                  "value": 0,
+                  "bits": "0x00000000"
+                },
+                "condition_life": 0,
+                "unification_value": 0,
+                "unification_type": -1,
+                "unification_band": 0,
+                "unification_satisfied": 0,
+                "stack_value": {
+                  "value": 0,
+                  "bits": "0x00000000"
+                },
+                "max_value": 0
+              }
+            ]
+          },
+          {
+            "alias": "skill-02",
+            "values": [
+              {
+                "type": 4,
+                "value_type": 2,
+                "condition": 2,
+                "value": {
+                  "value": 80,
+                  "bits": "0x42A00000"
+                },
+                "condition_life": 600,
+                "unification_value": 0,
+                "unification_type": -1,
+                "unification_band": 0,
+                "unification_satisfied": 0,
+                "stack_value": {
+                  "value": 0,
+                  "bits": "0x00000000"
+                },
+                "max_value": 0
+              }
+            ]
+          },
+          {
+            "alias": "skill-03",
+            "values": [
+              {
+                "type": 6,
+                "value_type": 2,
+                "condition": 4,
+                "value": {
+                  "value": 95,
+                  "bits": "0x42BE0000"
+                },
+                "condition_life": 0,
+                "unification_value": 115,
+                "unification_type": 2,
+                "unification_band": 0,
+                "unification_satisfied": 0,
+                "stack_value": {
+                  "value": 0,
+                  "bits": "0x00000000"
+                },
+                "max_value": 0
+              },
+              {
+                "type": 0,
+                "value_type": 2,
+                "condition": 2,
+                "value": {
+                  "value": 80,
+                  "bits": "0x42A00000"
+                },
+                "condition_life": 0,
+                "unification_value": 115,
+                "unification_type": 2,
+                "unification_band": 0,
+                "unification_satisfied": 0,
+                "stack_value": {
+                  "value": 0,
+                  "bits": "0x00000000"
+                },
+                "max_value": 0
+              }
+            ]
+          },
+          {
+            "alias": "skill-04",
+            "values": [
+              {
+                "type": 0,
+                "value_type": 2,
+                "condition": 2,
+                "value": {
+                  "value": 20,
+                  "bits": "0x41A00000"
+                },
+                "condition_life": 0,
+                "unification_value": 0,
+                "unification_type": -1,
+                "unification_band": 0,
+                "unification_satisfied": 0,
+                "stack_value": {
+                  "value": 0,
+                  "bits": "0x00000000"
+                },
+                "max_value": 0
+              }
+            ]
+          },
+          {
+            "alias": "skill-05",
+            "values": [
+              {
+                "type": 0,
+                "value_type": 2,
+                "condition": 2,
+                "value": {
+                  "value": 30,
+                  "bits": "0x41F00000"
+                },
+                "condition_life": 0,
+                "unification_value": 0,
+                "unification_type": -1,
+                "unification_band": 0,
+                "unification_satisfied": 0,
+                "stack_value": {
+                  "value": 0,
+                  "bits": "0x00000000"
+                },
+                "max_value": 0
+              }
+            ]
+          }
+        ]
       },
       "unknown_fields": [
-        "profile.ordered_effect_rows",
         "runtime.judge_correction",
         "runtime.first_eligible_effect",
         "runtime.ineligible_predecessor"
       ],
       "blocking_findings": [
         "D13",
-        "D18-remaining",
-        "D23-master-start-data"
+        "D18-remaining"
       ]
     },
     {
       "case_id": "BS25",
       "requirement": "damage/score over-life and under-life active effects",
-      "status": "blocked",
+      "status": "partial",
       "evidence_ids": [
+        "SLS-R1-012",
         "D13-static"
       ],
       "input_provenance": [
-        "static_contract"
+        "static_contract",
+        "ordinary_auto_skill_effect_profile"
       ],
       "expected_source": [
-        "static_contract#active damage and score methods"
+        "static_contract#active damage and score methods",
+        "ordinary_auto_skill_effect_profile#profiles:skill-02"
       ],
-      "expected_projection": {},
+      "expected_projection": {
+        "observed_over_life_score_effect": {
+          "type": 4,
+          "value_type": 2,
+          "condition": 2,
+          "value": {
+            "value": 80,
+            "bits": "0x42A00000"
+          },
+          "condition_life": 600,
+          "unification_value": 0,
+          "unification_type": -1,
+          "unification_band": 0,
+          "unification_satisfied": 0,
+          "stack_value": {
+            "value": 0,
+            "bits": "0x00000000"
+          },
+          "max_value": 0
+        }
+      },
       "unknown_fields": [
         "profile.over_life_damage_effect",
         "profile.under_life_damage_effect",
-        "profile.over_life_score_effect",
         "profile.under_life_score_effect",
         "runtime.condition_boundaries"
       ],
@@ -1913,19 +2189,41 @@
     {
       "case_id": "BS26",
       "requirement": "continuous worst-result, condition, and same-frame freeze",
-      "status": "blocked",
+      "status": "partial",
       "evidence_ids": [
+        "SLS-R1-012",
         "D13-static"
       ],
       "input_provenance": [
-        "static_contract"
+        "static_contract",
+        "ordinary_auto_skill_effect_profile"
       ],
       "expected_source": [
-        "static_contract#continuous Skill methods"
+        "static_contract#continuous Skill methods",
+        "ordinary_auto_skill_effect_profile#profiles:skill-03"
       ],
-      "expected_projection": {},
+      "expected_projection": {
+        "observed_continuous_effect": {
+          "type": 6,
+          "value_type": 2,
+          "condition": 4,
+          "value": {
+            "value": 95,
+            "bits": "0x42BE0000"
+          },
+          "condition_life": 0,
+          "unification_value": 115,
+          "unification_type": 2,
+          "unification_band": 0,
+          "unification_satisfied": 0,
+          "stack_value": {
+            "value": 0,
+            "bits": "0x00000000"
+          },
+          "max_value": 0
+        }
+      },
       "unknown_fields": [
-        "profile.continuous_effect",
         "runtime.worst_result",
         "runtime.condition_boundary",
         "runtime.same_frame_freeze"
@@ -1933,8 +2231,7 @@
       "blocking_findings": [
         "D13",
         "D18-remaining",
-        "D20-remaining",
-        "D23-master-start-data"
+        "D20-remaining"
       ]
     },
     {

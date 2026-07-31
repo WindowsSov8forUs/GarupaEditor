@@ -21,7 +21,7 @@ This investigation re-establishes the score, Life, Skill, Fever, OneFrame, and r
 - `version_rebaseline=closed`;
 - `business_state_gate=open`;
 - production authorization: `false`;
-- `BS01–BS36` partial oracle: 4 confirmed, 20 partial, 12 blocked; `unknown_fields=135`, `blocking_findings=85`.
+- `BS01–BS36` partial oracle: 4 confirmed, 22 partial, 10 blocked; `unknown_fields=131`, `blocking_findings=82`.
 - production chart count oracle: ordinary `979`, HABAHIRO `731`, independently derived from committed chart-structure facts under the 10.1.4 `NoteManager.analyzeBMS` ARM64 rule.
 
 `score_life_state_static_findings.json` records the current direct conclusions, including:
@@ -64,6 +64,9 @@ These static conclusions and the partial BS01–BS36 oracle do **not** authorize
 - `capture_score_life_ordinary_auto_skill_one_note.py`: privacy-minimized Auto Live collector for anonymous Skill queue/lifecycle state, one-note maxima, damage profile and Life; member/card/skill IDs, raw managed pointers and display strings are omitted.
 - `build_score_life_ordinary_auto_skill_one_note_oracle.py` and `score_life_ordinary_auto_skill_one_note_oracle.json`: deterministic projection of 979 one-note calls, six Skill lifecycles, strict/equal max retention and overheal.
 - `verify_score_life_ordinary_auto_skill_one_note_r1.py`: independent plan/script hash, sequence, privacy, Skill ordering, one-note maximum and overheal verifier.
+- `capture_score_life_ordinary_auto_skill_effect_profile.py`: zero-tail observation-only collector that adds only trigger-time anonymous numeric duration/once-condition/ordered active-effect projections.
+- `build_score_life_ordinary_auto_skill_effect_profile_oracle.py` and `score_life_ordinary_auto_skill_effect_profile_oracle.json`: deterministic five-profile/six-lifecycle projection including fixed heals, over-Life score and continued-note-judge rows.
+- `verify_score_life_ordinary_auto_skill_effect_profile_r1.py`: independent 5,497-event continuity/hash/privacy/profile/Life-transition verifier.
 - `extract_score_life_runtime_input_provenance.py`: protobuf cache-record and BMS provenance extractor.
 - `verify_score_life_runtime_inputs.py`: fail-closed R0 input/capture-target verifier.
 - `verify_score_life_no_input_r1.py`: fail-closed verifier for the compressed no-input Life/Game Over R1 trace and committed capture plans.
@@ -101,6 +104,7 @@ These static conclusions and the partial BS01–BS36 oracle do **not** authorize
 - `runtime/ordinary-auto-skill-one-note-r1-plan.json` and Retry-2/Retry-3 plans: executed but not promoted because Frida transport exited after business completion or before initialization.
 - `runtime/ordinary-auto-skill-one-note-retry4-r1-plan.json`: zero-tail plan that ends at 979 ordinary one-note leaves and six Skill finishes.
 - `runtime/ordinary-auto-skill-one-note-retry4-r1.trace.json.gz`: successful 5,501-event R1 trace with five anonymous Skill aliases, six complete lifecycles and no account/member/card/skill identity fields.
+- `runtime/ordinary-auto-skill-effect-profile-r1-plan.json` and `.trace.json.gz`: successful 5,497-event zero-tail R1 with five anonymous numeric master profiles, six complete lifecycles, seven ordered active rows and no identity fields.
 - `score_life_state_fixed_event_oracle.json`: complete BS01–BS36 case matrix with only directly supported projections promoted.
 - `runtime-control/multitouch_seven_lane_control.c`: fixed input-device-only control source.
 - `runtime-control/multitouch_seven_lane_control.arm64`: 6,304-byte stripped ELF64 AArch64 PIE, SHA-256 `AB39066A...9C249`.
@@ -156,6 +160,9 @@ py -3.14 artifacts/investigations/score-life-state-runtime-contract-10-1-4/verif
 py -3.14 artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_ordinary_auto_skill_one_note_retry4_plan.py
 py -3.14 artifacts/investigations/score-life-state-runtime-contract-10-1-4/build_score_life_ordinary_auto_skill_one_note_oracle.py
 py -3.14 artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_ordinary_auto_skill_one_note_r1.py
+py -3.14 artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_ordinary_auto_skill_effect_profile_plan.py
+py -3.14 artifacts/investigations/score-life-state-runtime-contract-10-1-4/build_score_life_ordinary_auto_skill_effect_profile_oracle.py
+py -3.14 artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_ordinary_auto_skill_effect_profile_r1.py
 py -3.14 artifacts/investigations/score-life-state-runtime-contract-10-1-4/build_score_life_initialization_profile_oracle.py
 py -3.14 artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_initialization_profile_r1.py
 py -3.14 artifacts/investigations/score-life-state-runtime-contract-10-1-4/build_score_life_state_chart_count_oracle.py

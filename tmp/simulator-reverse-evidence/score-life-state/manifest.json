@@ -14,7 +14,7 @@
     "skillEvidenceCommit": "4ac4ea186efade9091c6f4377ab7ad7dc852a2c5",
     "retryLifecyclePlanCommit": "38cee0b409246323b46099e291331a78a267bcec",
     "retryLifecycleEvidenceCommit": "4f0ce1a02a83747db617695cde69ad47ac8ae78f",
-    "fixedEventOracleCommit": "77fea929e1f99c1051b5211aa28836fd57c45117",
+    "fixedEventOracleCommit": "a3c56662b979e1682340a7a47fa8553a8a95ee67",
     "chartCountOracleCommit": "c7dbaba81699adec896796167074cb85cdc94e2e",
     "initializationProfilePlanCommit": "a032f8fe82d045b6d3b5c8853cb923803e0c5435",
     "initializationProfileEvidenceCommit": "3c95190f4b6326da97e21c8e590f625a7582dc22",
@@ -26,7 +26,9 @@
     "ordinaryAutoRetry2Commit": "0ff7b641049992840a53de7fd591020e1a26d276",
     "ordinaryAutoRetry3Commit": "0779603e490d67310ccc4866623e37c3291b0ee3",
     "ordinaryAutoRetry4Commit": "6ee113568b2b06abce524beff4a57d83290c9f8d",
-    "ordinaryAutoEvidenceCommit": "77fea929e1f99c1051b5211aa28836fd57c45117"
+    "ordinaryAutoEvidenceCommit": "77fea929e1f99c1051b5211aa28836fd57c45117",
+    "ordinaryAutoSkillEffectPlanCommit": "9e217703c028e2f09be7fa2b30d791b6f7a4a338",
+    "ordinaryAutoSkillEffectEvidenceCommit": "a3c56662b979e1682340a7a47fa8553a8a95ee67"
   },
   "sample": {
     "package": "jp.co.craftegg.band",
@@ -42,9 +44,9 @@
     "enums": 19,
     "arm64Slices": 326,
     "staticEntries": 335,
-    "r1Traces": 8,
+    "r1Traces": 9,
     "fixedEventCases": 36,
-    "totalEntries": 417,
+    "totalEntries": 424,
     "r0InputEntries": 12,
     "productionBms": 2,
     "cacheRecords": 2,
@@ -58,10 +60,10 @@
     "retryLifecyclePlanEntries": 5,
     "retryLifecycleEvidenceEntries": 5,
     "fixedEventConfirmedCases": 4,
-    "fixedEventPartialCases": 20,
-    "fixedEventBlockedCases": 12,
-    "fixedEventUnknownFields": 135,
-    "fixedEventBlockingFindings": 85,
+    "fixedEventPartialCases": 22,
+    "fixedEventBlockedCases": 10,
+    "fixedEventUnknownFields": 131,
+    "fixedEventBlockingFindings": 82,
     "fixedEventOracleEntries": 6,
     "initializationProfilePlanEntries": 3,
     "initializationProfileEvidenceEntries": 4,
@@ -72,8 +74,8 @@
     "deckAggregateEvidenceEntries": 4,
     "masterMusicPlanEntries": 12,
     "masterMusicEvidenceEntries": 4,
-    "ordinaryAutoPlanEntries": 9,
-    "ordinaryAutoEvidenceEntries": 4
+    "ordinaryAutoPlanEntries": 12,
+    "ordinaryAutoEvidenceEntries": 8
   },
   "versionRebaselineGate": {
     "status": "closed",
@@ -5063,11 +5065,11 @@
     },
     {
       "id": "SLS-B01-329",
-      "sourceCommit": "77fea929e1f99c1051b5211aa28836fd57c45117",
+      "sourceCommit": "a3c56662b979e1682340a7a47fa8553a8a95ee67",
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/README.md",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/README.md",
-      "bytes": 26097,
-      "sha256": "5FE4498184FD921D18E523D6FBB1ED460A8B6A886FC8FC2FB57907E9CBA941D6",
+      "bytes": 27345,
+      "sha256": "8F522C9EB3CFD18BC0B747FA2C6E284A71D4E239C2CE46D20AAEDA96A399336B",
       "version": "10.1.4_230_arm64-v8a",
       "status": "partial-chart-count-integrated-fixed-event-oracle-business-gate-open",
       "consumedBy": [
@@ -5191,11 +5193,11 @@
     },
     {
       "id": "SLS-B02-R0-011",
-      "sourceCommit": "77fea929e1f99c1051b5211aa28836fd57c45117",
+      "sourceCommit": "a3c56662b979e1682340a7a47fa8553a8a95ee67",
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime_input_status.json",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime_input_status.json",
-      "bytes": 15575,
-      "sha256": "0046A0840C2C1201D7E6A1E6CFAD5FE6AF45849ED6B1C0FDAB5C7402FE957F7D",
+      "bytes": 17215,
+      "sha256": "A26762974B7EF9DF6729086F146BEC9868706E160C0B4A2A14A3A1B29FCF9F3F",
       "version": "10.1.4_230_arm64-v8a",
       "status": "partial-fixed-event-oracle-business-gate-open",
       "consumedBy": [
@@ -5236,11 +5238,11 @@
     },
     {
       "id": "SLS-B01-332",
-      "sourceCommit": "77fea929e1f99c1051b5211aa28836fd57c45117",
+      "sourceCommit": "a3c56662b979e1682340a7a47fa8553a8a95ee67",
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/SHA256SUMS",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/SHA256SUMS",
-      "bytes": 53753,
-      "sha256": "CDA1AAEBB02F367E54C736B930085B95B9D0A9061B4E4F59E6BCF2AA15D2AEA1",
+      "bytes": 54628,
+      "sha256": "537DF23592C1804416C49C86432E572B375A874C3526C2EBEE84CA2CF9C24A72",
       "version": "10.1.4_230_arm64-v8a",
       "status": "partial-chart-count-integrated-fixed-event-oracle-business-gate-open",
       "consumedBy": [
@@ -5599,11 +5601,11 @@
     },
     {
       "id": "SLS-B02-ORACLE-001",
-      "sourceCommit": "77fea929e1f99c1051b5211aa28836fd57c45117",
+      "sourceCommit": "a3c56662b979e1682340a7a47fa8553a8a95ee67",
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/build_score_life_state_fixed_event_oracle.py",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/build_score_life_state_fixed_event_oracle.py",
-      "bytes": 34379,
-      "sha256": "DDDD58503022ED6E48E4784D184B784869863E9493F5FE1686C659B6C40A94D9",
+      "bytes": 36111,
+      "sha256": "4EC0C211EB76728A7A3EE18A599D0D3F17FD23B26BB822A2DDB2700200649CC9",
       "version": "10.1.4_230_arm64-v8a",
       "status": "partial-fixed-event-oracle-business-gate-open",
       "consumedBy": [
@@ -5614,11 +5616,11 @@
     },
     {
       "id": "SLS-B02-ORACLE-002",
-      "sourceCommit": "77fea929e1f99c1051b5211aa28836fd57c45117",
+      "sourceCommit": "a3c56662b979e1682340a7a47fa8553a8a95ee67",
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/score_life_state_fixed_event_oracle.json",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/score_life_state_fixed_event_oracle.json",
-      "bytes": 66607,
-      "sha256": "D6135BFC832ED35C511FB4D8B29C2B8E36C4A17552CA037BA20E87D03FD87E01",
+      "bytes": 75012,
+      "sha256": "492320B9B2CC967D128002503DD3500EFAAFDAE83660383F49ABC18B83C5909C",
       "version": "10.1.4_230_arm64-v8a",
       "status": "partial-fixed-event-oracle-business-gate-open",
       "consumedBy": [
@@ -5629,11 +5631,11 @@
     },
     {
       "id": "SLS-B02-ORACLE-003",
-      "sourceCommit": "77fea929e1f99c1051b5211aa28836fd57c45117",
+      "sourceCommit": "a3c56662b979e1682340a7a47fa8553a8a95ee67",
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_state_fixed_event_oracle.py",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_state_fixed_event_oracle.py",
-      "bytes": 20975,
-      "sha256": "07750D36BBB290883A33482307CA3C75FF366169DA173FE6BFDBE5C9442C3260",
+      "bytes": 21990,
+      "sha256": "40780C504C18AED19536A7A878BA7389DC268418D1631A5E53F38084168EAE5D",
       "version": "10.1.4_230_arm64-v8a",
       "status": "partial-fixed-event-oracle-business-gate-open",
       "consumedBy": [
@@ -5848,7 +5850,7 @@
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/build_score_life_deck_aggregate_profile_oracle.py",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/build_score_life_deck_aggregate_profile_oracle.py",
       "bytes": 6301,
-      "sha256": "DDCCDB285A7177DCD02076BD71EF32C49965CA049A6A3ABE8053E092A7B6D882",
+      "sha256": "48D52031868650E3867A47945095977B19D3D6CA62DEDCA38BB496329AE4B2D7",
       "version": "10.1.4_230_arm64-v8a",
       "status": "confirmed-r1-deck-aggregate-partial-member-rows",
       "consumedBy": [
@@ -5866,7 +5868,7 @@
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/build_score_life_master_music_profile_oracle.py",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/build_score_life_master_music_profile_oracle.py",
       "bytes": 4674,
-      "sha256": "65BC8E9F966895F5B8FACEBED777916A1C58E6446522AA4785DC274DB6F7BB64",
+      "sha256": "0FFC4742C577E3991F4ACC455F8D3FAEB61F5C235F03ABE79945378737883561",
       "version": "10.1.4_230_arm64-v8a",
       "status": "confirmed-r1-master-music-786-partial-runtime-availability",
       "consumedBy": [
@@ -5882,7 +5884,7 @@
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/build_score_life_ordinary_auto_skill_one_note_oracle.py",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/build_score_life_ordinary_auto_skill_one_note_oracle.py",
       "bytes": 7485,
-      "sha256": "3BAE481586C391B0F7A80E7E9725CCCD9A21DA4D516239DF12EF78030BE43ED6",
+      "sha256": "0A71E8033843720BD82F4848E0125BDF45A7BC16AB4F5B8C2301DEB9EEBE525D",
       "version": "10.1.4_230_arm64-v8a",
       "status": "confirmed-r1-ordinary-auto-skill-one-note-partial-business-gate-open",
       "consumedBy": [
@@ -5905,7 +5907,7 @@
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/capture_score_life_deck_aggregate_profile.py",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/capture_score_life_deck_aggregate_profile.py",
       "bytes": 13999,
-      "sha256": "D9AD50540400D66F72AB3E3D347B8768AFC34BAB23977CBDFB499239F0973F67",
+      "sha256": "1AD62627A6CD74478BD3F42639D205413E4FE9D19584DFCF97349E758340DE92",
       "version": "10.1.4_230_arm64-v8a",
       "status": "confirmed-observation-only-deck-aggregate-plan",
       "consumedBy": [
@@ -5923,7 +5925,7 @@
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/capture_score_life_master_music_profile.py",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/capture_score_life_master_music_profile.py",
       "bytes": 10684,
-      "sha256": "F6CDC1BC79BC4C0F17397863851B369E617A8E000A842B28DC7DDBF15E69856D",
+      "sha256": "59D89BF4BED32A24CE7633FD88E63431F98476AD2579B632F675D0FC7D7B42C4",
       "version": "10.1.4_230_arm64-v8a",
       "status": "confirmed-observation-only-master-music-786-plan",
       "consumedBy": [
@@ -5939,7 +5941,7 @@
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/capture_score_life_ordinary_auto_skill_one_note.py",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/capture_score_life_ordinary_auto_skill_one_note.py",
       "bytes": 13418,
-      "sha256": "24FA8D9734A069DCEC4273C61399549554547D6982062CE4305E38C873EAD4BA",
+      "sha256": "1FDC42740DBD3B401E43BB28CC0D340F1CAF6E5243CC5E7A2895EE837F758707",
       "version": "10.1.4_230_arm64-v8a",
       "status": "confirmed-observation-only-ordinary-auto-skill-one-note-plan",
       "consumedBy": [
@@ -6289,7 +6291,7 @@
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/score_life_deck_aggregate_profile_oracle.json",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/score_life_deck_aggregate_profile_oracle.json",
       "bytes": 3507,
-      "sha256": "8265C5A6144E8FB0B9C8084C5B562B2061A0C05EAE8DE58D81682C6EEFADDA68",
+      "sha256": "20D156FA22FA1841DCF505FB7AC4E96226501050BAC351A586A1BEB085126BD3",
       "version": "10.1.4_230_arm64-v8a",
       "status": "confirmed-r1-deck-aggregate-partial-member-rows",
       "consumedBy": [
@@ -6307,7 +6309,7 @@
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/score_life_master_music_786_profile_oracle.json",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/score_life_master_music_786_profile_oracle.json",
       "bytes": 6664,
-      "sha256": "B8E23249B79618CFDAB773CE64709C46DD422ABB473A5B63998C6D988F3D8529",
+      "sha256": "387360A99A8DE6400E2F673D322B9DBC9E8B7C0903420A488CF655D7BCD9FA5E",
       "version": "10.1.4_230_arm64-v8a",
       "status": "confirmed-r1-master-music-786-partial-runtime-availability",
       "consumedBy": [
@@ -6323,7 +6325,7 @@
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/score_life_ordinary_auto_skill_one_note_oracle.json",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/score_life_ordinary_auto_skill_one_note_oracle.json",
       "bytes": 13233,
-      "sha256": "33EB823625B4857A0D9BDB253BC3A2DA5CB64C1F501EDBADEF8FF21B8DCB446D",
+      "sha256": "8C1011E7FB44E50642AFB006CE2D3335D419155B711E7F70C7F04581B474C84B",
       "version": "10.1.4_230_arm64-v8a",
       "status": "confirmed-r1-ordinary-auto-skill-one-note-partial-business-gate-open",
       "consumedBy": [
@@ -6364,7 +6366,7 @@
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_deck_aggregate_profile_r1.py",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_deck_aggregate_profile_r1.py",
       "bytes": 6250,
-      "sha256": "B2438B723C265EE625669A86EF1794A363C4CDFD370D0B1C8CE3F90E55BD6A07",
+      "sha256": "23C0FAF672E323215A3C16F62990F84669898AC63859ED88893C053D29CF4442",
       "version": "10.1.4_230_arm64-v8a",
       "status": "confirmed-r1-deck-aggregate-partial-member-rows",
       "consumedBy": [
@@ -6398,7 +6400,7 @@
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_master_music_profile_r1.py",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_master_music_profile_r1.py",
       "bytes": 6135,
-      "sha256": "8F14F4F05508500F4A07FE3F90B59ABD9D760C00E3AC8F65E76130E7C9DDD32B",
+      "sha256": "C3F383B380CF7C308DC876FAA0A26620AF93EFA0260E9B44BE56CBFB70B10CEB",
       "version": "10.1.4_230_arm64-v8a",
       "status": "confirmed-r1-master-music-786-partial-runtime-availability",
       "consumedBy": [
@@ -6522,6 +6524,69 @@
         "BS21",
         "BS22"
       ]
+    },
+    {
+      "id": "SLS-B02-AUTO-014",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/capture_score_life_ordinary_auto_skill_effect_profile.py",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/capture_score_life_ordinary_auto_skill_effect_profile.py",
+      "bytes": 13536,
+      "sha256": "3F41A048C3107FA562FDCA78083CE60B780AF62A370BD34DF0E04CDD4789DC67",
+      "sourceCommit": "9e217703c028e2f09be7fa2b30d791b6f7a4a338",
+      "status": "confirmed-observation-only-ordinary-auto-skill-effect-profile-plan"
+    },
+    {
+      "id": "SLS-B02-AUTO-015",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime/ordinary-auto-skill-effect-profile-r1-plan.json",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime/ordinary-auto-skill-effect-profile-r1-plan.json",
+      "bytes": 3240,
+      "sha256": "99FCF56DA8F90D8A5A94E1AF8E0232447D0C5763A568269410D4AB379A680485",
+      "sourceCommit": "9e217703c028e2f09be7fa2b30d791b6f7a4a338",
+      "status": "confirmed-observation-only-ordinary-auto-skill-effect-profile-plan"
+    },
+    {
+      "id": "SLS-B02-AUTO-016",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_ordinary_auto_skill_effect_profile_plan.py",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_ordinary_auto_skill_effect_profile_plan.py",
+      "bytes": 2586,
+      "sha256": "8BC8DDBA8801EF0014B39264C440794E1A4231A289D64AAE671307412D5700C2",
+      "sourceCommit": "9e217703c028e2f09be7fa2b30d791b6f7a4a338",
+      "status": "confirmed-observation-only-ordinary-auto-skill-effect-profile-plan"
+    },
+    {
+      "id": "SLS-B02-AUTO-017",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/build_score_life_ordinary_auto_skill_effect_profile_oracle.py",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/build_score_life_ordinary_auto_skill_effect_profile_oracle.py",
+      "bytes": 4867,
+      "sha256": "16C3FC7130715E2424A4BB83E4B0D3C1F01917F450878362DB5F12F48201F736",
+      "sourceCommit": "a3c56662b979e1682340a7a47fa8553a8a95ee67",
+      "status": "confirmed-r1-ordinary-auto-skill-effect-profile-partial-business-gate-open"
+    },
+    {
+      "id": "SLS-B02-AUTO-018",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime/ordinary-auto-skill-effect-profile-r1.trace.json.gz",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime/ordinary-auto-skill-effect-profile-r1.trace.json.gz",
+      "bytes": 103556,
+      "sha256": "06A17DB9BBB594FBFA127694F207860BE016FF3CB111DBCE2A01883B3BB53E4D",
+      "sourceCommit": "a3c56662b979e1682340a7a47fa8553a8a95ee67",
+      "status": "confirmed-r1-ordinary-auto-skill-effect-profile-partial-business-gate-open"
+    },
+    {
+      "id": "SLS-B02-AUTO-019",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/score_life_ordinary_auto_skill_effect_profile_oracle.json",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/score_life_ordinary_auto_skill_effect_profile_oracle.json",
+      "bytes": 12733,
+      "sha256": "85DAADB89CECC31485F7E2EE27FCC938FD1235624EECF76FA4A6384A9672FBB4",
+      "sourceCommit": "a3c56662b979e1682340a7a47fa8553a8a95ee67",
+      "status": "confirmed-r1-ordinary-auto-skill-effect-profile-partial-business-gate-open"
+    },
+    {
+      "id": "SLS-B02-AUTO-020",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_ordinary_auto_skill_effect_profile_r1.py",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_ordinary_auto_skill_effect_profile_r1.py",
+      "bytes": 5055,
+      "sha256": "EFF8589E7D8D93D6D78E1E234A70D964113E0907DE80E90957612ADC1D81EE8A",
+      "sourceCommit": "a3c56662b979e1682340a7a47fa8553a8a95ee67",
+      "status": "confirmed-r1-ordinary-auto-skill-effect-profile-partial-business-gate-open"
     }
   ],
   "runtimeInputGate": {
@@ -6544,7 +6609,8 @@
       "master-music-786-profile-r1",
       "ordinary-auto-one-note-max-r1",
       "ordinary-auto-six-skill-lifecycles-r1",
-      "ordinary-overheal-r1"
+      "ordinary-overheal-r1",
+      "ordinary-auto-anonymous-skill-effect-profile-r1"
     ],
     "partialFindings": [
       "D18",
@@ -6562,7 +6628,7 @@
       "D23-master-start-data",
       "D24"
     ],
-    "r1TraceCount": 8,
+    "r1TraceCount": 9,
     "productionAuthorization": false,
     "pendingPlans": [],
     "supersededPlans": [
@@ -6578,7 +6644,8 @@
       "ordinary-auto-skill-one-note-r1",
       "ordinary-auto-skill-one-note-retry2-r1",
       "ordinary-auto-skill-one-note-retry3-r1",
-      "ordinary-auto-skill-one-note-retry4-r1"
+      "ordinary-auto-skill-one-note-retry4-r1",
+      "ordinary-auto-skill-effect-profile-r1"
     ],
     "abortedPlans": [
       "multitouch-seven-lane-positive-skill-window"
@@ -6592,10 +6659,10 @@
         "BS06",
         "BS11"
       ],
-      "partialCases": 20,
-      "blockedCases": 12,
-      "unknownFields": 135,
-      "blockingFindings": 85
+      "partialCases": 22,
+      "blockedCases": 10,
+      "unknownFields": 131,
+      "blockingFindings": 82
     }
   }
 }

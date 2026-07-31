@@ -1,0 +1,538 @@
+{
+  "schema_version": 1,
+  "status": "confirmed-r1-observation-only",
+  "source_commit": "9e217703c028e2f09be7fa2b30d791b6f7a4a338",
+  "trace_file": "runtime/ordinary-auto-skill-effect-profile-r1.trace.json.gz",
+  "plan_file": "ordinary-auto-skill-effect-profile-r1-plan.json",
+  "plan_sha256": "99FCF56DA8F90D8A5A94E1AF8E0232447D0C5763A568269410D4AB379A680485",
+  "capture_script_sha256": "3F41A048C3107FA562FDCA78083CE60B780AF62A370BD34DF0E04CDD4789DC67",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "version_name": "10.1.4",
+    "version_code": 230,
+    "abi": "arm64-v8a",
+    "libil2cpp_sha256": "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F",
+    "global_metadata_sha256": "298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F",
+    "pid": 28262,
+    "module": {
+      "base": "0x6cd829e000",
+      "size": 122183680,
+      "path": "/data/app/~~B1EA-JtTroRCXT375dD5Tg==/jp.co.craftegg.band-Oiz3EolE2fd86DJVZ50Q2Q==/lib/arm64/libil2cpp.so"
+    }
+  },
+  "continuity": {
+    "capture_error": null,
+    "event_count": 5497,
+    "first_sequence": 0,
+    "last_sequence": 5496,
+    "contiguous": true
+  },
+  "enum_projection": {
+    "value_type": {
+      "none": 0,
+      "real_value": 1,
+      "rate": 2
+    },
+    "once_effect_type": {
+      "none": 0,
+      "life": 1
+    },
+    "once_life_condition": {
+      "none": 0,
+      "under_life": 1
+    },
+    "activate_effect_type": {
+      "score": 0,
+      "damage": 1,
+      "heal": 2,
+      "judge": 3,
+      "score_over_life": 4,
+      "score_under_life": 5,
+      "score_continued_note_judge": 6,
+      "score_rate_up_with_perfect": 7,
+      "score_only_perfect": 8,
+      "never_die": 9,
+      "score_under_great_half": 10
+    }
+  },
+  "profiles": [
+    {
+      "alias": "skill-01",
+      "duration": {
+        "value": 5,
+        "bits": "0x40A00000"
+      },
+      "once_effect": {
+        "type": 0,
+        "value_type": 0,
+        "value": 0
+      },
+      "once_condition": {
+        "life_type": 0,
+        "life": 0
+      },
+      "trigger": null,
+      "active_effects": {
+        "size": 2,
+        "values": [
+          {
+            "type": 0,
+            "value_type": 2,
+            "condition": 2,
+            "value": {
+              "value": 110,
+              "bits": "0x42DC0000"
+            },
+            "condition_life": 0,
+            "unification_value": 0,
+            "unification_type": -1,
+            "unification_band": 0,
+            "unification_satisfied": 0,
+            "stack_value": {
+              "value": 0,
+              "bits": "0x00000000"
+            },
+            "max_value": 0
+          },
+          {
+            "type": 3,
+            "value_type": 1,
+            "condition": 1,
+            "value": {
+              "value": 0,
+              "bits": "0x00000000"
+            },
+            "condition_life": 0,
+            "unification_value": 0,
+            "unification_type": -1,
+            "unification_band": 0,
+            "unification_satisfied": 0,
+            "stack_value": {
+              "value": 0,
+              "bits": "0x00000000"
+            },
+            "max_value": 0
+          }
+        ]
+      },
+      "identities_omitted": true
+    },
+    {
+      "alias": "skill-02",
+      "duration": {
+        "value": 5,
+        "bits": "0x40A00000"
+      },
+      "once_effect": {
+        "type": 1,
+        "value_type": 1,
+        "value": 400
+      },
+      "once_condition": {
+        "life_type": 1,
+        "life": 600
+      },
+      "trigger": null,
+      "active_effects": {
+        "size": 1,
+        "values": [
+          {
+            "type": 4,
+            "value_type": 2,
+            "condition": 2,
+            "value": {
+              "value": 80,
+              "bits": "0x42A00000"
+            },
+            "condition_life": 600,
+            "unification_value": 0,
+            "unification_type": -1,
+            "unification_band": 0,
+            "unification_satisfied": 0,
+            "stack_value": {
+              "value": 0,
+              "bits": "0x00000000"
+            },
+            "max_value": 0
+          }
+        ]
+      },
+      "identities_omitted": true
+    },
+    {
+      "alias": "skill-03",
+      "duration": {
+        "value": 5,
+        "bits": "0x40A00000"
+      },
+      "once_effect": {
+        "type": 0,
+        "value_type": 0,
+        "value": 0
+      },
+      "once_condition": {
+        "life_type": 0,
+        "life": 0
+      },
+      "trigger": null,
+      "active_effects": {
+        "size": 2,
+        "values": [
+          {
+            "type": 6,
+            "value_type": 2,
+            "condition": 4,
+            "value": {
+              "value": 95,
+              "bits": "0x42BE0000"
+            },
+            "condition_life": 0,
+            "unification_value": 115,
+            "unification_type": 2,
+            "unification_band": 0,
+            "unification_satisfied": 0,
+            "stack_value": {
+              "value": 0,
+              "bits": "0x00000000"
+            },
+            "max_value": 0
+          },
+          {
+            "type": 0,
+            "value_type": 2,
+            "condition": 2,
+            "value": {
+              "value": 80,
+              "bits": "0x42A00000"
+            },
+            "condition_life": 0,
+            "unification_value": 115,
+            "unification_type": 2,
+            "unification_band": 0,
+            "unification_satisfied": 0,
+            "stack_value": {
+              "value": 0,
+              "bits": "0x00000000"
+            },
+            "max_value": 0
+          }
+        ]
+      },
+      "identities_omitted": true
+    },
+    {
+      "alias": "skill-04",
+      "duration": {
+        "value": 5,
+        "bits": "0x40A00000"
+      },
+      "once_effect": {
+        "type": 1,
+        "value_type": 1,
+        "value": 300
+      },
+      "once_condition": {
+        "life_type": 0,
+        "life": 0
+      },
+      "trigger": null,
+      "active_effects": {
+        "size": 1,
+        "values": [
+          {
+            "type": 0,
+            "value_type": 2,
+            "condition": 2,
+            "value": {
+              "value": 20,
+              "bits": "0x41A00000"
+            },
+            "condition_life": 0,
+            "unification_value": 0,
+            "unification_type": -1,
+            "unification_band": 0,
+            "unification_satisfied": 0,
+            "stack_value": {
+              "value": 0,
+              "bits": "0x00000000"
+            },
+            "max_value": 0
+          }
+        ]
+      },
+      "identities_omitted": true
+    },
+    {
+      "alias": "skill-05",
+      "duration": {
+        "value": 5,
+        "bits": "0x40A00000"
+      },
+      "once_effect": {
+        "type": 1,
+        "value_type": 1,
+        "value": 200
+      },
+      "once_condition": {
+        "life_type": 0,
+        "life": 0
+      },
+      "trigger": null,
+      "active_effects": {
+        "size": 1,
+        "values": [
+          {
+            "type": 0,
+            "value_type": 2,
+            "condition": 2,
+            "value": {
+              "value": 30,
+              "bits": "0x41F00000"
+            },
+            "condition_life": 0,
+            "unification_value": 0,
+            "unification_type": -1,
+            "unification_band": 0,
+            "unification_satisfied": 0,
+            "stack_value": {
+              "value": 0,
+              "bits": "0x00000000"
+            },
+            "max_value": 0
+          }
+        ]
+      },
+      "identities_omitted": true
+    }
+  ],
+  "profile_alias_sequence": [
+    "skill-01",
+    "skill-02",
+    "skill-03",
+    "skill-04",
+    "skill-05",
+    "skill-03"
+  ],
+  "skill_lifecycles": [
+    {
+      "ordinal": 1,
+      "alias": "skill-01",
+      "skill_note_index": 1,
+      "trigger_sequence": 405,
+      "once_sequence": [
+        406,
+        407
+      ],
+      "once_life": [
+        1000,
+        1000
+      ],
+      "finish_leave_sequence": 589,
+      "finish_current": null
+    },
+    {
+      "ordinal": 2,
+      "alias": "skill-02",
+      "skill_note_index": 2,
+      "trigger_sequence": 1194,
+      "once_sequence": [
+        1195,
+        1196
+      ],
+      "once_life": [
+        1000,
+        1000
+      ],
+      "finish_leave_sequence": 1386,
+      "finish_current": null
+    },
+    {
+      "ordinal": 3,
+      "alias": "skill-03",
+      "skill_note_index": 3,
+      "trigger_sequence": 1612,
+      "once_sequence": [
+        1613,
+        1614
+      ],
+      "once_life": [
+        1000,
+        1000
+      ],
+      "finish_leave_sequence": 1771,
+      "finish_current": null
+    },
+    {
+      "ordinal": 4,
+      "alias": "skill-04",
+      "skill_note_index": 4,
+      "trigger_sequence": 2874,
+      "once_sequence": [
+        2875,
+        2876
+      ],
+      "once_life": [
+        1000,
+        1300
+      ],
+      "finish_leave_sequence": 3070,
+      "finish_current": null
+    },
+    {
+      "ordinal": 5,
+      "alias": "skill-05",
+      "skill_note_index": 5,
+      "trigger_sequence": 3656,
+      "once_sequence": [
+        3657,
+        3658
+      ],
+      "once_life": [
+        1300,
+        1500
+      ],
+      "finish_leave_sequence": 3876,
+      "finish_current": null
+    },
+    {
+      "ordinal": 6,
+      "alias": "skill-03",
+      "skill_note_index": 6,
+      "trigger_sequence": 4561,
+      "once_sequence": [
+        4562,
+        4563
+      ],
+      "once_life": [
+        1500,
+        1500
+      ],
+      "finish_leave_sequence": 4765,
+      "finish_current": null
+    }
+  ],
+  "once_effect_observations": [
+    {
+      "alias": "skill-01",
+      "once_effect": {
+        "type": 0,
+        "value_type": 0,
+        "value": 0
+      },
+      "once_condition": {
+        "life_type": 0,
+        "life": 0
+      },
+      "before": 1000,
+      "after": 1000
+    },
+    {
+      "alias": "skill-02",
+      "once_effect": {
+        "type": 1,
+        "value_type": 1,
+        "value": 400
+      },
+      "once_condition": {
+        "life_type": 1,
+        "life": 600
+      },
+      "before": 1000,
+      "after": 1000
+    },
+    {
+      "alias": "skill-03",
+      "once_effect": {
+        "type": 0,
+        "value_type": 0,
+        "value": 0
+      },
+      "once_condition": {
+        "life_type": 0,
+        "life": 0
+      },
+      "before": 1000,
+      "after": 1000
+    },
+    {
+      "alias": "skill-04",
+      "once_effect": {
+        "type": 1,
+        "value_type": 1,
+        "value": 300
+      },
+      "once_condition": {
+        "life_type": 0,
+        "life": 0
+      },
+      "before": 1000,
+      "after": 1300
+    },
+    {
+      "alias": "skill-05",
+      "once_effect": {
+        "type": 1,
+        "value_type": 1,
+        "value": 200
+      },
+      "once_condition": {
+        "life_type": 0,
+        "life": 0
+      },
+      "before": 1300,
+      "after": 1500
+    },
+    {
+      "alias": "skill-03",
+      "once_effect": {
+        "type": 0,
+        "value_type": 0,
+        "value": 0
+      },
+      "once_condition": {
+        "life_type": 0,
+        "life": 0
+      },
+      "before": 1500,
+      "after": 1500
+    }
+  ],
+  "active_effect_type_counts": {
+    "0": 4,
+    "1": 0,
+    "2": 0,
+    "3": 1,
+    "4": 1,
+    "5": 0,
+    "6": 1,
+    "7": 0,
+    "8": 0,
+    "9": 0,
+    "10": 0
+  },
+  "privacy": {
+    "account_fields_included": false,
+    "raw_pointers_included": false,
+    "display_strings_included": false,
+    "skill_master_ids_included": false,
+    "member_identity_included": false,
+    "notes_type_omitted": true
+  },
+  "business_scope": {
+    "confirmed": [
+      "five anonymous numeric Skill profiles and six trigger/finish lifecycles",
+      "duration, once-effect, once-life-condition and ordered active-effect rows",
+      "under-Life 600 real-value heal 400 is suppressed at current Life 1000",
+      "real-value heal 300 and 200 apply in order and produce Life 1000->1300->1500",
+      "one score-over-Life row and one continued-note-judge score row exist in the locked ordinary profile"
+    ],
+    "not_confirmed": [
+      "Skill/card/member IDs or slots",
+      "condition equality at Life 600",
+      "percentage heal",
+      "damage guard or Never Die",
+      "overlapping Skill",
+      "Fever"
+    ]
+  }
+}
