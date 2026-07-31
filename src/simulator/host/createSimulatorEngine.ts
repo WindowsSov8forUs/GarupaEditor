@@ -28,6 +28,8 @@ import {
 import { InGameManager } from "../engine/managers/inGameManager";
 import { InGameMusicScoreController } from "../engine/managers/inGameMusicScoreController";
 import { InGameOneFrameJudgementController } from "../engine/managers/inGameOneFrameJudgementController";
+import { ScoreLifeStateManager } from "../engine/managers/scoreLifeStateManager";
+import type { FeverTimeCommandName } from "../engine/managers/feverTimeManager";
 import {
   GamePlayInputDispatcher,
   InputManager,
@@ -166,6 +168,22 @@ class SimulatorEngineHost implements SimulatorEngine {
     return ok(undefined);
   }
 
+  updateFeverMemberPoint(
+    displayIndex: number,
+    point: number,
+    isOwnTeam: boolean,
+  ): SimulatorResult<void> {
+    return this.inGameManager.updateFeverMemberPoint(displayIndex, point, isOwnTeam);
+  }
+
+  changeFeverCommand(command: FeverTimeCommandName): SimulatorResult<void> {
+    return this.inGameManager.changeFeverCommand(command);
+  }
+
+  continueLive(): SimulatorResult<void> {
+    return this.inGameManager.continueLive();
+  }
+
   getAdjustedMusicPosition(): SimulatorResult<number> {
     return this.inGameManager.getAdjustedMusicPosition();
   }
@@ -227,8 +245,23 @@ export function createSimulatorEngine(
   }
   const slideNoteManager = new SlideNoteManager();
   const inGameCalculatedData = new InGameCalculatedData(playModeValidation.value);
+  const scoreLifeStateResult = input.scoreLifeState === undefined
+    ? ok<ScoreLifeStateManager | null>(null)
+    : ScoreLifeStateManager.create(
+        input.scoreLifeState,
+        input.chart,
+        playModeValidation.value.kind,
+      );
+  if (scoreLifeStateResult.status !== "ok") return scoreLifeStateResult;
+  const scoreLifeStateManager = scoreLifeStateResult.value;
   const musicScoreController = new InGameMusicScoreController(input.chart);
   const oneFrameJudgementController = new InGameOneFrameJudgementController();
+  if (scoreLifeStateManager !== null) {
+    const businessOwner = oneFrameJudgementController.registerBusinessOwner(
+      (judgement) => scoreLifeStateManager.freezeOneFrame(judgement),
+    );
+    if (businessOwner.status !== "ok") return businessOwner;
+  }
   const noteManager = new NoteManager(
     input.chart.noteBatches,
     slideNoteManager,
@@ -269,6 +302,7 @@ export function createSimulatorEngine(
     noteManager,
     oneFrameJudgementController,
     inputManager,
+    scoreLifeStateManager,
   );
   const inGameDirector = new InGameDirector(
     inGameManager,

@@ -55,6 +55,7 @@ export type {
 } from "./engine/data/noteData";
 export type {
   AutoLiveJudgementData,
+  OneFrameBusinessData,
   OneFrameDataHandle,
   OneFrameJudgementBatch,
   OneFrameJudgementEntry,
@@ -67,10 +68,32 @@ export type {
   AutoLiveEvidenceId,
   FirstSliceEvidenceId,
   ManualInputEvidenceId,
+  ScoreLifeStateEvidenceId,
   SimulatorResult,
   SimulatorEvidenceId,
 } from "./engine/evidence";
 export type { SimulatorPlayMode } from "./engine/data/inGameCalculatedData";
+export {
+  ScoreLifeMode,
+  SkillActivateEffectType,
+} from "./engine/data/scoreLifeState";
+export type {
+  FeverDifficulty,
+  InclusiveRateRange,
+  ScoreLifeModeValue,
+  ScoreLifeSpecialModeProfile,
+  ScoreLifeStateProfile,
+  SituationSkillProfile,
+  SkillActivateEffectProfile,
+  SkillOnceEffectProfile,
+} from "./engine/data/scoreLifeState";
+export {
+  FeverTimeCommand,
+  FeverTimeState,
+} from "./engine/managers/feverTimeManager";
+export type { FeverTimeCommandName } from "./engine/managers/feverTimeManager";
+export { SituationSkillPlayState } from "./engine/managers/situationSkillManager";
+export { countMaximumNotes } from "./engine/managers/scoreLifeStateManager";
 export {
   JudgeTiming,
   NoteResultType,

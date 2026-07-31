@@ -14,6 +14,8 @@ import {
 import type { EngineLifecycleSnapshot, EngineLifecycleState } from "../lifecycle";
 import { InGameMusicScoreController } from "./inGameMusicScoreController";
 import { InGameOneFrameJudgementController } from "./inGameOneFrameJudgementController";
+import { ScoreLifeStateManager } from "./scoreLifeStateManager";
+import type { FeverTimeCommandName } from "./feverTimeManager";
 import { InputManager } from "./inputBoundaries";
 import { NoteManager } from "./noteManager";
 
@@ -25,6 +27,7 @@ export interface InGameManagerSnapshot extends EngineLifecycleSnapshot {
   readonly noteManager: ReturnType<NoteManager["snapshot"]>;
   readonly inputManager: ReturnType<InputManager["snapshot"]>;
   readonly oneFrame: ReturnType<InGameOneFrameJudgementController["snapshot"]>;
+  readonly scoreLifeState: ReturnType<ScoreLifeStateManager["snapshot"]> | null;
 }
 
 export class InGameManager {
@@ -38,6 +41,7 @@ export class InGameManager {
     readonly noteManager: NoteManager,
     readonly oneFrameJudgementController: InGameOneFrameJudgementController,
     readonly inputManager: InputManager,
+    readonly scoreLifeStateManager: ScoreLifeStateManager | null = null,
   ) {}
 
   get state(): EngineLifecycleState {
@@ -107,6 +111,7 @@ export class InGameManager {
         "PlayingNone requires the original OneFrame input-inspection list, which is outside the first slice.",
       );
     }
+    this.scoreLifeStateManager?.update(deltaTimeSeconds);
     const updateResult = this.noteManager.execUpdate(deltaTimeSeconds);
     if (updateResult.status !== "ok") {
       return this.latchFault(updateResult);
@@ -116,8 +121,52 @@ export class InGameManager {
       if (reflectResult.status !== "ok") {
         return this.latchFault(reflectResult);
       }
+      if (reflectResult.value !== null && this.scoreLifeStateManager !== null) {
+        const businessReflect = this.scoreLifeStateManager.reflect(reflectResult.value);
+        if (businessReflect.status !== "ok") return this.latchFault(businessReflect);
+      }
     }
     return ok(undefined);
+  }
+
+  updateFeverMemberPoint(
+    displayIndex: number,
+    point: number,
+    isOwnTeam: boolean,
+  ): SimulatorResult<void> {
+    if (this.faultValue !== null) return this.faultValue;
+    if (this.lifecycleState !== "initialized" || this.scoreLifeStateManager === null) {
+      return evidenceRequired(
+        "score-life.fever-adapter-without-active-profile",
+        ["SLS-D16", "SLS-D24"],
+        "Fever adapter updates require an initialized Score/Life session profile.",
+      );
+    }
+    return this.scoreLifeStateManager.updateFeverMemberPoint(displayIndex, point, isOwnTeam);
+  }
+
+  changeFeverCommand(command: FeverTimeCommandName): SimulatorResult<void> {
+    if (this.faultValue !== null) return this.faultValue;
+    if (this.lifecycleState !== "initialized" || this.scoreLifeStateManager === null) {
+      return evidenceRequired(
+        "score-life.fever-command-without-active-profile",
+        ["SLS-D16", "SLS-D24"],
+        "Fever commands require an initialized Score/Life session profile.",
+      );
+    }
+    return this.scoreLifeStateManager.changeFeverCommand(command);
+  }
+
+  continueLive(): SimulatorResult<void> {
+    if (this.faultValue !== null) return this.faultValue;
+    if (this.scoreLifeStateManager === null) {
+      return evidenceRequired(
+        "score-life.continue-without-profile",
+        ["SLS-D22", "SLS-D24", "BS36"],
+        "Continue is unavailable without a Score/Life session and remains excluded with one.",
+      );
+    }
+    return this.scoreLifeStateManager.continueLive();
   }
 
   getAdjustedMusicPosition(): SimulatorResult<number> {
@@ -219,6 +268,7 @@ export class InGameManager {
       noteManager: this.noteManager.snapshot(),
       inputManager: this.inputManager.snapshot(),
       oneFrame: this.oneFrameJudgementController.snapshot(),
+      scoreLifeState: this.scoreLifeStateManager?.snapshot() ?? null,
     };
   }
 }

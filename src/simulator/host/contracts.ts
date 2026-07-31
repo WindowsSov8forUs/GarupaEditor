@@ -9,7 +9,9 @@ import type {
   ManualInputFrame,
   ManualInputPosition,
 } from "../engine/data/manualInput";
+import type { ScoreLifeStateProfile } from "../engine/data/scoreLifeState";
 import type { SimulatorResult } from "../engine/evidence";
+import type { FeverTimeCommandName } from "../engine/managers/feverTimeManager";
 import type { InGameDirectorSnapshot } from "../engine/managers/inGameDirector";
 import type { InGameManagerSnapshot } from "../engine/managers/inGameManager";
 
@@ -20,6 +22,7 @@ export interface SimulatorEngineInput {
     readonly judgeOffsetFrames: number;
     readonly playMode: SimulatorPlayMode;
   };
+  readonly scoreLifeState?: ScoreLifeStateProfile;
 }
 
 export interface SimulatorSnapshot {
@@ -40,6 +43,13 @@ export interface SimulatorEngine {
   ): SimulatorResult<ManualInputButtonResolution | null>;
   pause(): SimulatorResult<void>;
   resume(): SimulatorResult<void>;
+  updateFeverMemberPoint(
+    displayIndex: number,
+    point: number,
+    isOwnTeam: boolean,
+  ): SimulatorResult<void>;
+  changeFeverCommand(command: FeverTimeCommandName): SimulatorResult<void>;
+  continueLive(): SimulatorResult<void>;
   getAdjustedMusicPosition(): SimulatorResult<number>;
   snapshot(): SimulatorResult<SimulatorSnapshot>;
   dispose(): SimulatorResult<void>;

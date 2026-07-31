@@ -11,6 +11,8 @@ import type {
 import type {
   ManualJudgementData,
   OneFrameDataHandle,
+  OneFrameDataPayload,
+  OneFrameBusinessData,
   OneFrameJudgementBatch,
   OneFrameJudgementData,
   OneFrameJudgementEntry,
@@ -67,7 +69,7 @@ export interface OneFrameJudgementControllerSnapshot {
     readonly slot: number;
     readonly containerId: string;
     readonly isUse: boolean;
-    readonly payload: OneFrameJudgementData | null;
+    readonly payload: OneFrameDataPayload | null;
   }[];
   readonly inUseContainerIds: readonly string[];
   readonly lastJudgementBatch: OneFrameJudgementBatch | null;
@@ -78,7 +80,7 @@ interface OneFrameDataContainer extends OneFrameDataHandle {
   readonly slot: number;
   readonly handle: OneFrameDataHandle;
   inUse: boolean;
-  payload: OneFrameJudgementData | null;
+  payload: OneFrameDataPayload | null;
 }
 
 export type AutoLiveJudgementOwner = (
@@ -89,6 +91,10 @@ export type ManualJudgementOwner = (
   noteInformation: ManualJudgementRequest["noteInformation"],
 ) => ManualJudgementOwnership | null;
 
+export type OneFrameBusinessOwner = (
+  judgement: OneFrameJudgementData,
+) => OneFrameBusinessData;
+
 export class InGameOneFrameJudgementController {
   private initializedValue = false;
   private readonly containers: OneFrameDataContainer[] = [];
@@ -98,6 +104,7 @@ export class InGameOneFrameJudgementController {
   private nextReflectBatchIndex = 0;
   private autoLiveJudgementOwner: AutoLiveJudgementOwner | null = null;
   private manualJudgementOwner: ManualJudgementOwner | null = null;
+  private businessOwner: OneFrameBusinessOwner | null = null;
 
   get isInitialized(): boolean {
     return this.initializedValue;
@@ -178,6 +185,18 @@ export class InGameOneFrameJudgementController {
       );
     }
     this.manualJudgementOwner = owner;
+    return ok(undefined);
+  }
+
+  registerBusinessOwner(owner: OneFrameBusinessOwner): SimulatorResult<void> {
+    if (typeof owner !== "function" || this.businessOwner !== null) {
+      return evidenceRequired(
+        "one-frame.invalid-or-duplicate-business-owner",
+        ["SLS-D02", "SLS-D18"],
+        "The controller accepts one session-bound Score/Life business projection owner.",
+      );
+    }
+    this.businessOwner = owner;
     return ok(undefined);
   }
 
@@ -279,7 +298,7 @@ export class InGameOneFrameJudgementController {
       );
     }
 
-    const payload = Object.freeze({
+    const judgement: OneFrameJudgementData = Object.freeze({
       noteIndex: request.noteInformation.index,
       buttonTypes: Object.freeze([...request.noteInformation.buttonTypesArray]),
       noteType: request.noteType,
@@ -289,6 +308,13 @@ export class InGameOneFrameJudgementController {
       addCombo: 1,
       absolutePosition: request.absolutePosition,
       judgeTiming: 0,
+    });
+    const business = this.businessOwner?.(judgement);
+    const payload: OneFrameDataPayload = Object.freeze({
+      ...judgement,
+      adjustedResult: business?.adjustedResult ?? judgement.adjustedResult,
+      addCombo: (business?.adjustedResult ?? judgement.adjustedResult) >= NoteResultType.Great ? 1 : -1,
+      business,
     });
     container.payload = payload;
     container.inUse = true;
@@ -449,7 +475,7 @@ export class InGameOneFrameJudgementController {
         ? ownership.longAfterButtonTypes ?? request.noteInformation.buttonTypesArray
         : ownership.multipleDirectionalFlickButtonTypes ??
           request.noteInformation.buttonTypesArray);
-    const payload: ManualJudgementData = Object.freeze({
+    const judgement: ManualJudgementData = Object.freeze({
       noteIndex: request.noteInformation.index,
       buttonTypes: Object.freeze([...buttonTypes]),
       noteType: request.noteType,
@@ -462,6 +488,13 @@ export class InGameOneFrameJudgementController {
         adjustedResult === NoteResultType.Miss || adjustedResult === NoteResultType.Perfect
           ? JudgeTiming.None
           : request.rawTiming,
+    });
+    const business = this.businessOwner?.(judgement);
+    const payload: OneFrameDataPayload = Object.freeze({
+      ...judgement,
+      adjustedResult: business?.adjustedResult ?? judgement.adjustedResult,
+      addCombo: (business?.adjustedResult ?? judgement.adjustedResult) >= NoteResultType.Great ? 1 : -1,
+      business,
     });
     container.payload = payload;
     container.inUse = true;
