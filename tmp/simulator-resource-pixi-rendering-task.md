@@ -11,8 +11,8 @@
 - 锁定原作样本：`jp.co.craftegg.band` 10.1.4（version code 230，`arm64-v8a`）。
 - 锁定`libil2cpp.so` SHA-256：`815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F`。
 - 锁定`global-metadata.dat` SHA-256：`298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F`。
-- 当前Reverse基线提交：`8fa320847271a4e13ff76ffd5932634b82a5935d`；只消费该提交及其祖先中已提交、已push、可校验对象。
-- 当前状态：**RP00已完成；RP01进行中，10.1.4方法/布局/枚举子门已关闭，资源/scene/constant与portable静态子门仍开放；RP02资源实体/运行时/固定场景oracle仍是生产硬门。RP02关闭前禁止修改`src/simulator/**`生产实现、增加Pixi backend、加入阶段测试脚本或引入资源二进制。**
+- 当前Reverse基线提交：`f5a6d7a7b74c7f2855bb8a87f0cfbcd09120af7f`；只消费该提交及其祖先中已提交、已push、可校验对象。
+- 当前状态：**RP00已完成；RP01全部可离线工作已关闭，阻塞于当前HABAHIRO bundle必须通过游戏资源服务或已证明的当前缓存取得；RP02阻塞于自然进入ordinary/HABAHIRO Live后的R1与实体frame。`offline_work_gate=closed`、`rendering_gate=open`、`production_authorization=false`。RP02关闭前禁止修改`src/simulator/**`生产实现、增加Pixi backend、加入阶段测试脚本或引入资源二进制。**
 - 计划证据包：`tmp/simulator-reverse-evidence/resource-pixi-rendering/`，只在Reverse新证据提交并push后创建。
 - 计划验收记录：`tmp/simulator-resource-pixi-rendering-acceptance.md`，RP14时创建。
 
@@ -65,8 +65,8 @@
 | 任务 | 状态 | 完成标准 |
 | --- | --- | --- |
 | RP00 建立阶段任务书 | **已完成** | 范围、证据候选、硬门、owner、oracle、批次与完成定义写入本文档 |
-| RP01 10.1.4静态与资源重基线 | **进行中** | 方法/布局/枚举子门已关闭；V01及D01–D15资源/constant/scene/portable静态部分继续推进 |
-| RP02 实体/运行时与固定scene oracle | 阻塞于RP01 | D01–D18全部关闭，PR01–PR40无unknown/blocker，`rendering_gate=closed` |
+| RP01 10.1.4静态与资源重基线 | **阻塞于服务器资源** | 全部可离线方法/资源/scene/animation/portable工作已关闭；S01当前HABAHIRO bundle不在cache index |
+| RP02 实体/运行时与固定scene oracle | **阻塞于服务器Live** | S02自然Live R1与S03实体frame完成后关闭D01–D18、PR01–PR40及`rendering_gate` |
 | RP03 锁定render/resource contracts | 阻塞于RP02 | immutable profile、provider、command、identity、session与preflight边界闭合 |
 | RP04 接入engine渲染producer | 阻塞于RP03 | Note/manager/HUD只生产证据确认的typed commands，不依赖Pixi |
 | RP05 恢复Note Sprite与field | 阻塞于RP04 | atlas route、exact lookup、transform、flick icon、field/judge line匹配 |
@@ -101,6 +101,16 @@
 - verifier从锁定APK/ELF/metadata/dump重算身份、全局managed边界、方法字节、TSV重建、layout、enum及677项目录SHA；extract→verify幂等通过。
 - 本批只关闭V01/D01的方法、布局与枚举子门；不以signature或地址映射外推方法体语义。resource strings、rodata、cache/atlas、scene/prefab/material/clip、portable mapping和所有runtime/frame门继续开放。
 - 采集能力为`R0-local-static`：未启动游戏、未连接服务器、未启Frida、未执行hook/managed invocation、未写内存或修改APK；Garupa production/test/package scripts未修改。
+
+### 1.6 2026-08-01 RP01离线资源与静态边界闭合批
+
+- Reverse `f5a6d7a7b74c7f2855bb8a87f0cfbcd09120af7f`将managed目标扩展为673个方法，并增加全部当前方法的保守逐指令迁移oracle：652个仅有规范化重定位差异，21个保留为当前专用语义形状，不以统一RVA或signature外推行为。
+- 从锁定`AssetBundleInfo`验证11,026条记录并只读取57个当前`ingameskin/*`缓存bundle；确认ordinary Note atlas各45个Sprite、Directional各16个、Judge默认8行、Field默认2个line Sprite。当前cache index无任何HABAHIRO bundle记录，相关字节保持`evidence-required-current-bundle-absent-from-cache-index`。
+- 从当前APK枚举100个Note/HUD base resource，重跑并冻结8组纯当前HUD scene/atlas/font profile、3个Skill controller/4个clip、2个Note controller/4个clip，以及`CE.Result.changeSprite @ 0x32AC010`五路current ScoreUp分派。Life scene的runtime controller assignment保持开放。
+- 建立portable resource/identity/command/component mapping草案并分类H01–H28、D01–D18、PR01–PR40；`unknown_static_work=[]`，`offline_work_gate=closed`、`rendering_gate=open`、`production_authorization=false`。
+- 剩余S01–S03仅为：当前HABAHIRO资源、自然ordinary/HABAHIRO Live R1、固定实体frame；三者全部要求游戏服务器资源或自然Live入口，禁止以历史Bestdori字节、合成事件或默认值替代。
+- 一次诊断性历史extractor复跑触及外部HTTP，其输出已丢弃且未晋升；最终extractor/verifier只接受锁定APK与设备cache字节，并拒绝URL/Bestdori/GitHub/CDN来源。游戏服务器始终未连接，游戏未启动，Frida/managed invocation/内存写/APK修改均未发生。
+- extract/build全链幂等通过；static/resource/offline三个fail-closed verifier分别确认`methods=673 layouts=32 enums=19`、`cache=11026 ingameskin=57 base_resources=100 hud_profiles=8 skill_clips=4 note_clips=4 score_up=5`和`H=28 D=18 PR=40 remaining=S01,S02,S03 production=false`。
 
 ## 2. 固定范围
 
@@ -667,7 +677,7 @@ git rev-list --left-right --count origin/codex/refactor-simulator-implementation
 ## 14. 当前审计结论
 
 - 当前上游领域状态足以成为renderer/HUD source，但不能证明任何可见表现。
-- 当前Reverse历史渲染调查覆盖面高，适合批量生成10.1.4 target set；它们仍是H系列，不能解除生产门。
-- 最大硬门不是Pixi API，而是10.1.4 resource/scene identity、坐标/排序/mask映射、runtime command时点和资源分发边界。
-- 当前阶段下一动作是RP01：先在Reverse创建并提交10.1.4 render/resource静态重基线；不是直接编写Pixi代码。
+- 当前Reverse已将H01–H28全部迁移为10.1.4逐项状态；历史调查不直接解除生产门，最终证据只引用current F/R系列。
+- 全部可离线资源、scene、animation、method、portable mapping和PR分类已关闭；最大硬门现为当前HABAHIRO bundle、自然Live resource/object/caller/lifecycle和实体frame。
+- 当前阶段下一动作是提交RP02 observation-only采集plan/verifier；随后在不连接游戏服务器的前提下停止，不直接编写Pixi代码。
 - 所有未确认路径继续返回`evidence-required`，不得以placeholder、Pixi默认值或“视觉接近”填补。
