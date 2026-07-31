@@ -1,0 +1,23 @@
+address	bytes	instruction	resolved_target
+0x32253A0	FE57BEA9	stp x30, x21, [sp, #-0x20]!	-
+0x32253A4	F44F01A9	stp x20, x19, [sp, #0x10]	-
+0x32253A8	74010290	adrp x20, #0x7251000	-
+0x32253AC	55D301B0	adrp x21, #0x6c8e000	-
+0x32253B0	889A5D39	ldrb w8, [x20, #0x766]	-
+0x32253B4	B5A240F9	ldr x21, [x21, #0x140]	-
+0x32253B8	F30300AA	mov x19, x0	-
+0x32253BC	C8000037	tbnz w8, #0, #0x32253d4	-
+0x32253C0	40D301B0	adrp x0, #0x6c8e000	-
+0x32253C4	00A040F9	ldr x0, [x0, #0x140]	-
+0x32253C8	A4A9EF97	bl #0x2e0fa58	-
+0x32253CC	28008052	mov w8, #1	-
+0x32253D0	889A1D39	strb w8, [x20, #0x766]	-
+0x32253D4	A00240F9	ldr x0, [x21]	-
+0x32253D8	E1031FAA	mov x1, xzr	-
+0x32253DC	1F9ECD94	bl #0x658cc58	UnityEngine.Shader$$PropertyToID
+0x32253E0	605200B9	str w0, [x19, #0x50]	-
+0x32253E4	E00313AA	mov x0, x19	-
+0x32253E8	F44F41A9	ldp x20, x19, [sp, #0x10]	-
+0x32253EC	E1031FAA	mov x1, xzr	-
+0x32253F0	FE57C2A8	ldp x30, x21, [sp], #0x20	-
+0x32253F4	DF65CE14	b #0x65beb70	UnityEngine.MonoBehaviour$$.ctor

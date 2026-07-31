@@ -1,0 +1,407 @@
+{
+  "schema_version": 1,
+  "status": "confirmed-offline-case-classification-server-gate-open",
+  "evidence": {
+    "F01": {
+      "path": "resource_pixi_rendering_static_contract.json",
+      "bytes": 2615204,
+      "sha256": "213F64E0ACBD1D8B6E0773DD6107A392CF3BA70DD0D575269DE2661CE5163389"
+    },
+    "F02": {
+      "path": "resource_pixi_rendering_instruction_migration.json",
+      "bytes": 348093,
+      "sha256": "E0FB0346291E9E14ADDC77F5F95479ED0CE84145E6C7F24F969C03835265B527"
+    },
+    "F03": {
+      "path": "resource_pixi_rendering_resource_contract.json",
+      "bytes": 2111866,
+      "sha256": "F389AB0950156FAAA6B1B6407BA4D47AD66C9472DB9631D604460E39BC9F15A3"
+    },
+    "F04": {
+      "path": "resource_pixi_rendering_hud_asset_profiles.json",
+      "bytes": 432616,
+      "sha256": "0D36B7FD2E50EEE9F4528CB8D508D972EA2E3314863DD47CFE3617B314C5A05D"
+    },
+    "F05": {
+      "path": "resource_pixi_rendering_skill_animation_profiles.json",
+      "bytes": 21366,
+      "sha256": "527F1A49EFA9663CD7009BA7FA525776C0C8BF00733772AA09E7626429A4126E"
+    },
+    "F06": {
+      "path": "resource_pixi_rendering_note_animation_profiles.json",
+      "bytes": 19172,
+      "sha256": "3D72AEEC898E6346F21664BDFB61271CC6E8FDE2863BC9A6B78A1D2ADCCFF9AB"
+    },
+    "F07": {
+      "path": "resource_pixi_rendering_score_up_profile.json",
+      "bytes": 37165,
+      "sha256": "62937484F0BBDF1FC4CBFBBCC5598407852A177AF5EDDC6C1A4A262B354B5058"
+    }
+  },
+  "cases": [
+    {
+      "case": "PR01",
+      "status": "partial-current-static",
+      "evidence_ids": [
+        "F03"
+      ],
+      "blocker": "current HABAHIRO resource record and bytes are absent"
+    },
+    {
+      "case": "PR02",
+      "status": "confirmed-current-static",
+      "evidence_ids": [
+        "F03"
+      ]
+    },
+    {
+      "case": "PR03",
+      "status": "confirmed-current-static",
+      "evidence_ids": [
+        "F03"
+      ]
+    },
+    {
+      "case": "PR04",
+      "status": "server-resource-required",
+      "evidence_ids": [
+        "F01",
+        "F03"
+      ],
+      "blocker": "current HABAHIRO bundle must be obtained from the game resource service or a proven current cache"
+    },
+    {
+      "case": "PR05",
+      "status": "partial-current-static",
+      "evidence_ids": [
+        "F01",
+        "F02",
+        "F03"
+      ],
+      "blocker": "runtime missing-resource mutation and duplicate behavior remain unobserved"
+    },
+    {
+      "case": "PR06",
+      "status": "partial-current-static",
+      "evidence_ids": [
+        "F01",
+        "F02",
+        "F03"
+      ],
+      "blocker": "natural selected skin and bind order remain unobserved"
+    },
+    {
+      "case": "PR07",
+      "status": "partial-current-static",
+      "evidence_ids": [
+        "F01",
+        "F02",
+        "F03"
+      ],
+      "blocker": "runtime intermediate visibility and width bind remain unobserved"
+    },
+    {
+      "case": "PR08",
+      "status": "partial-current-static",
+      "evidence_ids": [
+        "F01",
+        "F03",
+        "F06"
+      ],
+      "blocker": "Animator pool phase and restart remain unobserved"
+    },
+    {
+      "case": "PR09",
+      "status": "partial-current-static",
+      "evidence_ids": [
+        "F01",
+        "F02",
+        "F03"
+      ],
+      "blocker": "side object identity and visibility order remain unobserved"
+    },
+    {
+      "case": "PR10",
+      "status": "runtime-live-required",
+      "evidence_ids": [
+        "F01",
+        "F02"
+      ],
+      "blocker": "target/launcher/safe-area values require a natural Live scene"
+    },
+    {
+      "case": "PR11",
+      "status": "partial-current-static",
+      "evidence_ids": [
+        "F01",
+        "F02",
+        "F03"
+      ],
+      "blocker": "runtime generated vertices remain unobserved"
+    },
+    {
+      "case": "PR12",
+      "status": "runtime-live-required",
+      "evidence_ids": [
+        "F01",
+        "F02"
+      ],
+      "blocker": "segment object ownership requires natural chart construction and activation"
+    },
+    {
+      "case": "PR13",
+      "status": "runtime-live-required",
+      "evidence_ids": [
+        "F01",
+        "F02"
+      ],
+      "blocker": "runtime UV/color/width values require natural Note updates"
+    },
+    {
+      "case": "PR14",
+      "status": "partial-current-static",
+      "evidence_ids": [
+        "F01",
+        "F03"
+      ],
+      "blocker": "runtime material instance and threshold writes remain unobserved"
+    },
+    {
+      "case": "PR15",
+      "status": "runtime-live-required",
+      "evidence_ids": [
+        "F01",
+        "F02"
+      ],
+      "blocker": "mesh pool identity and lifecycle require natural Live"
+    },
+    {
+      "case": "PR16",
+      "status": "runtime-live-required",
+      "evidence_ids": [
+        "F01",
+        "F02",
+        "F03"
+      ],
+      "blocker": "sync-line identity, endpoints and hide/release order require natural Live"
+    },
+    {
+      "case": "PR17",
+      "status": "runtime-live-required",
+      "evidence_ids": [
+        "F01",
+        "F02",
+        "F03"
+      ],
+      "blocker": "multiple back-line complete XYZ requires natural Live"
+    },
+    {
+      "case": "PR18",
+      "status": "runtime-live-required",
+      "evidence_ids": [
+        "F01",
+        "F03",
+        "F04"
+      ],
+      "blocker": "cross-component mask and ordering require natural Live"
+    },
+    {
+      "case": "PR19",
+      "status": "runtime-live-required",
+      "evidence_ids": [
+        "F01",
+        "F03"
+      ],
+      "blocker": "HABAHIRO flash Animation event and resource swap require natural Live and current bundle"
+    },
+    {
+      "case": "PR20",
+      "status": "runtime-live-required",
+      "evidence_ids": [
+        "F01",
+        "F02"
+      ],
+      "blocker": "pool traversal and reuse identity require natural Live"
+    },
+    {
+      "case": "PR21",
+      "status": "runtime-live-required",
+      "evidence_ids": [
+        "F05",
+        "F06"
+      ],
+      "blocker": "pause/resume phase requires natural Live"
+    },
+    {
+      "case": "PR22",
+      "status": "partial-current-static",
+      "evidence_ids": [
+        "F01",
+        "F02",
+        "F04"
+      ],
+      "blocker": "runtime update call and unchanged-value timing remain unobserved"
+    },
+    {
+      "case": "PR23",
+      "status": "confirmed-current-static-layout",
+      "evidence_ids": [
+        "F01",
+        "F02",
+        "F04"
+      ]
+    },
+    {
+      "case": "PR24",
+      "status": "partial-current-static",
+      "evidence_ids": [
+        "F04"
+      ],
+      "blocker": "runtime animation restart/hide phase remains unobserved"
+    },
+    {
+      "case": "PR25",
+      "status": "partial-current-static",
+      "evidence_ids": [
+        "F01",
+        "F02",
+        "F04"
+      ],
+      "blocker": "runtime Score update order remains unobserved"
+    },
+    {
+      "case": "PR26",
+      "status": "partial-current-static",
+      "evidence_ids": [
+        "F01",
+        "F02",
+        "F04"
+      ],
+      "blocker": "pool object identity and start time require natural Live"
+    },
+    {
+      "case": "PR27",
+      "status": "partial-current-static",
+      "evidence_ids": [
+        "F01",
+        "F02",
+        "F04"
+      ],
+      "blocker": "runtime lifetime start point requires natural Live"
+    },
+    {
+      "case": "PR28",
+      "status": "confirmed-current-static",
+      "evidence_ids": [
+        "F01",
+        "F03",
+        "F04",
+        "F07"
+      ]
+    },
+    {
+      "case": "PR29",
+      "status": "partial-current-static",
+      "evidence_ids": [
+        "F01",
+        "F02",
+        "F04"
+      ],
+      "blocker": "same-frame Life update order requires natural Live"
+    },
+    {
+      "case": "PR30",
+      "status": "partial-current-static",
+      "evidence_ids": [
+        "F01",
+        "F02",
+        "F04"
+      ],
+      "blocker": "runtime warning suppression order requires natural Live"
+    },
+    {
+      "case": "PR31",
+      "status": "partial-current-static",
+      "evidence_ids": [
+        "F01",
+        "F04",
+        "F05"
+      ],
+      "blocker": "active Life Animator controller assignment and later-wins order require natural Live"
+    },
+    {
+      "case": "PR32",
+      "status": "partial-current-static",
+      "evidence_ids": [
+        "F01",
+        "F04",
+        "F05"
+      ],
+      "blocker": "play/stop caller order and phase require natural Live"
+    },
+    {
+      "case": "PR33",
+      "status": "runtime-live-required",
+      "evidence_ids": [
+        "F01"
+      ],
+      "blocker": "same-frame Reflect renderer command order requires natural Live"
+    },
+    {
+      "case": "PR34",
+      "status": "runtime-live-required",
+      "evidence_ids": [
+        "F01"
+      ],
+      "blocker": "Skill/Fever/GameOver renderer order requires natural Live"
+    },
+    {
+      "case": "PR35",
+      "status": "runtime-live-required",
+      "evidence_ids": [
+        "F03"
+      ],
+      "blocker": "original partial-mutation behavior requires natural loader observation"
+    },
+    {
+      "case": "PR36",
+      "status": "runtime-live-required",
+      "evidence_ids": [],
+      "blocker": "backend reject/context-loss precedence has no original runtime observation"
+    },
+    {
+      "case": "PR37",
+      "status": "runtime-live-required",
+      "evidence_ids": [],
+      "blocker": "fault/dispose release order requires runtime observation"
+    },
+    {
+      "case": "PR38",
+      "status": "runtime-live-required",
+      "evidence_ids": [],
+      "blocker": "duplicate lifecycle and cross-session behavior require runtime observation"
+    },
+    {
+      "case": "PR39",
+      "status": "runtime-live-and-frame-required",
+      "evidence_ids": [],
+      "blocker": "ordinary production command/scene/frame anchors require natural Live"
+    },
+    {
+      "case": "PR40",
+      "status": "runtime-live-and-frame-required",
+      "evidence_ids": [],
+      "blocker": "HABAHIRO production command/scene/frame anchors require natural Live and current bundle"
+    }
+  ],
+  "status_counts": {
+    "confirmed-current-static": 3,
+    "confirmed-current-static-layout": 1,
+    "partial-current-static": 17,
+    "runtime-live-and-frame-required": 2,
+    "runtime-live-required": 16,
+    "server-resource-required": 1
+  },
+  "unknown_cases": [],
+  "production_authorization": false
+}

@@ -1,0 +1,121 @@
+{
+  "schema_version": 1,
+  "status": "offline-work-gate-closed-server-required-gate-open",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "version_name": "10.1.4",
+    "version_code": 230,
+    "abi": "arm64-v8a"
+  },
+  "evidence": {
+    "F01": {
+      "path": "resource_pixi_rendering_static_contract.json",
+      "bytes": 2615204,
+      "sha256": "213F64E0ACBD1D8B6E0773DD6107A392CF3BA70DD0D575269DE2661CE5163389"
+    },
+    "F02": {
+      "path": "resource_pixi_rendering_instruction_migration.json",
+      "bytes": 348093,
+      "sha256": "E0FB0346291E9E14ADDC77F5F95479ED0CE84145E6C7F24F969C03835265B527"
+    },
+    "F03": {
+      "path": "resource_pixi_rendering_resource_contract.json",
+      "bytes": 2111866,
+      "sha256": "F389AB0950156FAAA6B1B6407BA4D47AD66C9472DB9631D604460E39BC9F15A3"
+    },
+    "F04": {
+      "path": "resource_pixi_rendering_hud_asset_profiles.json",
+      "bytes": 432616,
+      "sha256": "0D36B7FD2E50EEE9F4528CB8D508D972EA2E3314863DD47CFE3617B314C5A05D"
+    },
+    "F05": {
+      "path": "resource_pixi_rendering_skill_animation_profiles.json",
+      "bytes": 21366,
+      "sha256": "527F1A49EFA9663CD7009BA7FA525776C0C8BF00733772AA09E7626429A4126E"
+    },
+    "F06": {
+      "path": "resource_pixi_rendering_note_animation_profiles.json",
+      "bytes": 19172,
+      "sha256": "3D72AEEC898E6346F21664BDFB61271CC6E8FDE2863BC9A6B78A1D2ADCCFF9AB"
+    },
+    "F07": {
+      "path": "resource_pixi_rendering_score_up_profile.json",
+      "bytes": 37165,
+      "sha256": "62937484F0BBDF1FC4CBFBBCC5598407852A177AF5EDDC6C1A4A262B354B5058"
+    }
+  },
+  "version_rebaseline": "partial-server-resource-and-runtime-gate",
+  "offline_work_gate": "closed",
+  "rendering_gate": "open",
+  "production_authorization": false,
+  "historical_candidate_status": {
+    "H01": "confirmed-current-static-resource",
+    "H02": "confirmed-current-static-resource",
+    "H03": "server-resource-required",
+    "H04": "server-resource-required",
+    "H05": "confirmed-current-static-asset-and-method-runtime-phase-open",
+    "H06": "confirmed-current-static-prefab-and-method-runtime-identity-open",
+    "H07": "confirmed-current-static-method-and-resource-runtime-bind-open",
+    "H08": "confirmed-current-static-method-and-material-runtime-geometry-open",
+    "H09": "confirmed-current-static-method-runtime-values-open",
+    "H10": "confirmed-current-static-material-runtime-instance-open",
+    "H11": "confirmed-current-static-prefab-and-method-runtime-values-open",
+    "H12": "confirmed-current-static-method-and-resource-runtime-visibility-open",
+    "H13": "confirmed-current-static-method-and-prefab-runtime-ownership-open",
+    "H14": "confirmed-current-static-method-and-scene-runtime-event-open",
+    "H15": "confirmed-current-static-scene-atlas-and-method-runtime-order-open",
+    "H16": "confirmed-current-static-clip-and-method-runtime-phase-open",
+    "H17": "confirmed-current-static-local-cache-atlas",
+    "H18": "confirmed-current-static-method-and-sprite-route-runtime-order-open",
+    "H19": "confirmed-current-static-scene-atlas-font-and-method-runtime-order-open",
+    "H20": "confirmed-current-static-scene-font-prefab-and-method-runtime-order-open",
+    "H21": "confirmed-current-static-scene-atlas-and-current-score-up-route",
+    "H22": "confirmed-current-static-scene-atlas-curves-runtime-controller-and-order-open",
+    "H23": "confirmed-current-static-scene-controller-clip-runtime-phase-open",
+    "H24": "confirmed-current-static-scene-field-controller-clip-runtime-phase-open",
+    "H25": "runtime-live-and-frame-required",
+    "H26": "runtime-live-and-frame-required",
+    "H27": "runtime-live-required",
+    "H28": "runtime-live-required"
+  },
+  "decision_status": {
+    "D01": "confirmed-current-static-runtime-call-order-open",
+    "D02": "partial-current-static-server-resource-required",
+    "D03": "partial-current-static-runtime-selected-profile-required",
+    "D04": "partial-current-static-runtime-object-state-required",
+    "D05": "partial-current-static-runtime-coordinate-values-required",
+    "D06": "partial-current-static-runtime-generated-geometry-required",
+    "D07": "partial-current-static-runtime-line-values-required",
+    "D08": "partial-current-static-runtime-mask-and-habahiro-event-required",
+    "D09": "runtime-live-required",
+    "D10": "partial-current-static-runtime-update-order-required",
+    "D11": "partial-current-static-runtime-update-order-and-controller-required",
+    "D12": "partial-current-static-curves-confirmed-runtime-phase-required",
+    "D13": "runtime-live-required",
+    "D14": "portable-draft-confirmed-runtime-command-order-required",
+    "D15": "partial-portable-mapping-runtime-order-and-shader-required",
+    "D16": "runtime-live-and-frame-required",
+    "D17": "runtime-live-required",
+    "D18": "open-server-runtime-gate"
+  },
+  "remaining_blockers": [
+    {
+      "id": "S01",
+      "requirement": "obtain and hash the current ingameskin/noteskin/habahiro bundle through the game resource service or a proven current cache",
+      "requires_game_server": true
+    },
+    {
+      "id": "S02",
+      "requirement": "naturally enter ordinary and HABAHIRO Live scenes and capture R1 object/resource/caller/lifecycle traces",
+      "requires_game_server": true
+    },
+    {
+      "id": "S03",
+      "requirement": "capture privacy-safe 10.1.4 physical frame anchors at fixed viewport and event points",
+      "requires_game_server": true
+    }
+  ],
+  "remaining_blockers_all_require_game_server": true,
+  "unknown_static_work": [],
+  "unknown_fields": []
+}

@@ -1,0 +1,27 @@
+address	bytes	instruction	resolved_target
+0x3224CC8	FE0F1EF8	str x30, [sp, #-0x20]!	-
+0x3224CCC	F44F01A9	stp x20, x19, [sp, #0x10]	-
+0x3224CD0	F30300AA	mov x19, x0	-
+0x3224CD4	1F8C02F8	str xzr, [x0, #0x28]!	-
+0x3224CD8	E1031FAA	mov x1, xzr	-
+0x3224CDC	4AABEF97	bl #0x2e0fa04	-
+0x3224CE0	F40313AA	mov x20, x19	-
+0x3224CE4	9F0E03F8	str xzr, [x20, #0x30]!	-
+0x3224CE8	E00314AA	mov x0, x20	-
+0x3224CEC	E1031FAA	mov x1, xzr	-
+0x3224CF0	45ABEF97	bl #0x2e0fa04	-
+0x3224CF4	80025FF8	ldur x0, [x20, #-0x10]	-
+0x3224CF8	A00100B4	cbz x0, #0x3224d2c	-
+0x3224CFC	E1031F2A	mov w1, wzr	-
+0x3224D00	E2031FAA	mov x2, xzr	-
+0x3224D04	6CA3CD94	bl #0x658dab4	UnityEngine.Renderer$$set_enabled
+0x3224D08	E00313AA	mov x0, x19	-
+0x3224D0C	E1031FAA	mov x1, xzr	-
+0x3224D10	7356CE94	bl #0x65ba6dc	UnityEngine.Component$$get_gameObject
+0x3224D14	C00000B4	cbz x0, #0x3224d2c	-
+0x3224D18	F44F41A9	ldp x20, x19, [sp, #0x10]	-
+0x3224D1C	E1031F2A	mov w1, wzr	-
+0x3224D20	E2031FAA	mov x2, xzr	-
+0x3224D24	FE0742F8	ldr x30, [sp], #0x20	-
+0x3224D28	BB61CE14	b #0x65bd414	UnityEngine.GameObject$$SetActive
+0x3224D2C	EEABEF97	bl #0x2e0fce4	-

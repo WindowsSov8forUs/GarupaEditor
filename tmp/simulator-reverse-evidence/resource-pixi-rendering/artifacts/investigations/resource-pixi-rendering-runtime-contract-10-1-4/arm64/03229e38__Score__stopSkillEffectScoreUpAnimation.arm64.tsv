@@ -1,0 +1,14 @@
+address	bytes	instruction	resolved_target
+0x3229E38	FE4FBFA9	stp x30, x19, [sp, #-0x10]!	-
+0x3229E3C	F30300AA	mov x19, x0	-
+0x3229E40	003440F9	ldr x0, [x0, #0x68]	-
+0x3229E44	200100B4	cbz x0, #0x3229e68	-
+0x3229E48	E1031F2A	mov w1, wzr	-
+0x3229E4C	E2031FAA	mov x2, xzr	-
+0x3229E50	573FCE94	bl #0x65b9bac	UnityEngine.Behaviour$$set_enabled
+0x3229E54	602E40F9	ldr x0, [x19, #0x58]	-
+0x3229E58	800000B4	cbz x0, #0x3229e68	-
+0x3229E5C	E1031FAA	mov x1, xzr	-
+0x3229E60	FE4FC1A8	ldp x30, x19, [sp], #0x10	-
+0x3229E64	FFDD0214	b #0x32e1660	ScoreGaugeEffect$$Off
+0x3229E68	9F97EF97	bl #0x2e0fce4	-

@@ -1,0 +1,40 @@
+address	bytes	instruction	resolved_target
+0x30E76E4	E80F1EFC	str d8, [sp, #-0x20]!	-
+0x30E76E8	FE4F01A9	stp x30, x19, [sp, #0x10]	-
+0x30E76EC	F30300AA	mov x19, x0	-
+0x30E76F0	61010036	tbz w1, #0, #0x30e771c	-
+0x30E76F4	E00313AA	mov x0, x19	-
+0x30E76F8	34E0FF97	bl #0x30df7c8	NoteFrontBase$$StopState
+0x30E76FC	60DA40F9	ldr x0, [x19, #0x1b0]	-
+0x30E7700	400000B4	cbz x0, #0x30e7708	-
+0x30E7704	31E0FF97	bl #0x30df7c8	NoteFrontBase$$StopState
+0x30E7708	60D640F9	ldr x0, [x19, #0x1a8]	-
+0x30E770C	400300B4	cbz x0, #0x30e7774	-
+0x30E7710	FE4F41A9	ldp x30, x19, [sp, #0x10]	-
+0x30E7714	E80742FC	ldr d8, [sp], #0x20	-
+0x30E7718	2CE0FF17	b #0x30df7c8	NoteFrontBase$$StopState
+0x30E771C	680240F9	ldr x8, [x19]	-
+0x30E7720	E00313AA	mov x0, x19	-
+0x30E7724	081CA04E	mov v8.16b, v0.16b	-
+0x30E7728	090541F9	ldr x9, [x8, #0x208]	-
+0x30E772C	010941F9	ldr x1, [x8, #0x210]	-
+0x30E7730	20013FD6	blr x9	-
+0x30E7734	60DA40F9	ldr x0, [x19, #0x1b0]	-
+0x30E7738	C00000B4	cbz x0, #0x30e7750	-
+0x30E773C	080040F9	ldr x8, [x0]	-
+0x30E7740	001DA84E	mov v0.16b, v8.16b	-
+0x30E7744	090541F9	ldr x9, [x8, #0x208]	-
+0x30E7748	010941F9	ldr x1, [x8, #0x210]	-
+0x30E774C	20013FD6	blr x9	-
+0x30E7750	60D640F9	ldr x0, [x19, #0x1a8]	-
+0x30E7754	000100B4	cbz x0, #0x30e7774	-
+0x30E7758	080040F9	ldr x8, [x0]	-
+0x30E775C	FE4F41A9	ldp x30, x19, [sp, #0x10]	-
+0x30E7760	001DA84E	mov v0.16b, v8.16b	-
+0x30E7764	020541F9	ldr x2, [x8, #0x208]	-
+0x30E7768	010941F9	ldr x1, [x8, #0x210]	-
+0x30E776C	E80742FC	ldr d8, [sp], #0x20	-
+0x30E7770	40001FD6	br x2	-
+0x30E7774	FE4F41A9	ldp x30, x19, [sp, #0x10]	-
+0x30E7778	E80742FC	ldr d8, [sp], #0x20	-
+0x30E777C	C0035FD6	ret	-

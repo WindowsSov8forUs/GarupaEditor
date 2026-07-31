@@ -1,0 +1,41 @@
+address	bytes	instruction	resolved_target
+0x330A318	FE0F1DF8	str x30, [sp, #-0x30]!	-
+0x330A31C	F65701A9	stp x22, x21, [sp, #0x10]	-
+0x330A320	F44F02A9	stp x20, x19, [sp, #0x20]	-
+0x330A324	54FA0190	adrp x20, #0x7252000	-
+0x330A328	B5CC0190	adrp x21, #0x6c9e000	-
+0x330A32C	B6CC0190	adrp x22, #0x6c9e000	-
+0x330A330	887E4139	ldrb w8, [x20, #0x5f]	-
+0x330A334	B57645F9	ldr x21, [x21, #0xae8]	-
+0x330A338	D67A45F9	ldr x22, [x22, #0xaf0]	-
+0x330A33C	F30300AA	mov x19, x0	-
+0x330A340	28010037	tbnz w8, #0, #0x330a364	-
+0x330A344	A0CC0190	adrp x0, #0x6c9e000	-
+0x330A348	007845F9	ldr x0, [x0, #0xaf0]	-
+0x330A34C	C315EC97	bl #0x2e0fa58	-
+0x330A350	A0CC0190	adrp x0, #0x6c9e000	-
+0x330A354	007445F9	ldr x0, [x0, #0xae8]	-
+0x330A358	C015EC97	bl #0x2e0fa58	-
+0x330A35C	28008052	mov w8, #1	-
+0x330A360	887E0139	strb w8, [x20, #0x5f]	-
+0x330A364	A00240F9	ldr x0, [x21]	-
+0x330A368	C10240F9	ldr x1, [x22]	-
+0x330A36C	F8E34094	bl #0x434334c	UnityEngine.Resources$$Load<object>
+0x330A370	600E01F8	str x0, [x19, #0x10]!	-
+0x330A374	E10300AA	mov x1, x0	-
+0x330A378	E00313AA	mov x0, x19	-
+0x330A37C	A215EC97	bl #0x2e0fa04	-
+0x330A380	601A40F9	ldr x0, [x19, #0x30]	-
+0x330A384	800100B4	cbz x0, #0x330a3b4	-
+0x330A388	730240F9	ldr x19, [x19]	-
+0x330A38C	E1031FAA	mov x1, xzr	-
+0x330A390	210DCB94	bl #0x65cd814	UnityEngine.Sprite$$get_texture
+0x330A394	130100B4	cbz x19, #0x330a3b4	-
+0x330A398	E10300AA	mov x1, x0	-
+0x330A39C	E00313AA	mov x0, x19	-
+0x330A3A0	F44F42A9	ldp x20, x19, [sp, #0x20]	-
+0x330A3A4	F65741A9	ldp x22, x21, [sp, #0x10]	-
+0x330A3A8	E2031FAA	mov x2, xzr	-
+0x330A3AC	FE0743F8	ldr x30, [sp], #0x30	-
+0x330A3B0	A922CA14	b #0x6592e54	UnityEngine.Material$$set_mainTexture
+0x330A3B4	4C16EC97	bl #0x2e0fce4	-

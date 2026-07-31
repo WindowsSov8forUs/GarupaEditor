@@ -1,0 +1,46 @@
+address	bytes	instruction	resolved_target
+0x30E2038	FE0F1EF8	str x30, [sp, #-0x20]!	-
+0x30E203C	F44F01A9	stp x20, x19, [sp, #0x10]	-
+0x30E2040	740B02D0	adrp x20, #0x7250000	-
+0x30E2044	883A7039	ldrb w8, [x20, #0xc0e]	-
+0x30E2048	F303012A	mov w19, w1	-
+0x30E204C	C8000037	tbnz w8, #0, #0x30e2064	-
+0x30E2050	60DD0190	adrp x0, #0x6c8e000	-
+0x30E2054	005440F9	ldr x0, [x0, #0xa8]	-
+0x30E2058	80B6F497	bl #0x2e0fa58	-
+0x30E205C	28008052	mov w8, #1	-
+0x30E2060	883A3039	strb w8, [x20, #0xc0e]	-
+0x30E2064	E0031FAA	mov x0, xzr	-
+0x30E2068	522E1A94	bl #0x376d9b0	NoteBatchInformationListFactory$$get_Instance_
+0x30E206C	E00300B4	cbz x0, #0x30e20e8	-
+0x30E2070	E1031FAA	mov x1, xzr	-
+0x30E2074	D32E1A94	bl #0x376dbc0	NoteBatchInformationListFactory$$get_IsMultiRangeNotes
+0x30E2078	00102E1E	fmov s0, #1.00000000	-
+0x30E207C	80020036	tbz w0, #0, #0x30e20cc	-
+0x30E2080	680E0051	sub w8, w19, #3	-
+0x30E2084	1F150071	cmp w8, #5	-
+0x30E2088	B422FF90	adrp x20, #0x1536000	-
+0x30E208C	62020054	b.hs #0x30e20d8	-
+0x30E2090	68DD0190	adrp x8, #0x6c8e000	-
+0x30E2094	085540F9	ldr x8, [x8, #0xa8]	-
+0x30E2098	000140F9	ldr x0, [x8]	-
+0x30E209C	96656294	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x30E20A0	400200B4	cbz x0, #0x30e20e8	-
+0x30E20A4	008440BD	ldr s0, [x0, #0x84]	-
+0x30E20A8	A822FF90	adrp x8, #0x1536000	-
+0x30E20AC	015D44BD	ldr s1, [x8, #0x45c]	-
+0x30E20B0	821243BD	ldr s2, [x20, #0x310]	-
+0x30E20B4	03102E1E	fmov s3, #1.00000000	-
+0x30E20B8	0358231E	fmin s3, s0, s3	-
+0x30E20BC	6108211E	fmul s1, s3, s1	-
+0x30E20C0	2128221E	fadd s1, s1, s2	-
+0x30E20C4	0820201E	fcmp s0, #0.0	-
+0x30E20C8	205C221E	fcsel s0, s1, s2, pl	-
+0x30E20CC	F44F41A9	ldp x20, x19, [sp, #0x10]	-
+0x30E20D0	FE0742F8	ldr x30, [sp], #0x20	-
+0x30E20D4	C0035FD6	ret	-
+0x30E20D8	7F0A0071	cmp w19, #2	-
+0x30E20DC	81FFFF54	b.ne #0x30e20cc	-
+0x30E20E0	801243BD	ldr s0, [x20, #0x310]	-
+0x30E20E4	FAFFFF17	b #0x30e20cc	-
+0x30E20E8	FFB6F497	bl #0x2e0fce4	-

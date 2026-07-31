@@ -1,0 +1,30 @@
+address	bytes	instruction	resolved_target
+0x30E1850	FE4FBFA9	stp x30, x19, [sp, #-0x10]!	-
+0x30E1854	0B3C40F9	ldr x11, [x0, #0x78]	-
+0x30E1858	4B0300B4	cbz x11, #0x30e18c0	-
+0x30E185C	681940B9	ldr w8, [x11, #0x18]	-
+0x30E1860	F30300AA	mov x19, x0	-
+0x30E1864	097D60D3	lsl x9, x8, #0x20	-
+0x30E1868	3F0500F1	cmp x9, #1	-
+0x30E186C	6B010054	b.lt #0x30e1898	-
+0x30E1870	E9031FAA	mov x9, xzr	-
+0x30E1874	0A7D4093	sxtw x10, w8	-
+0x30E1878	6BA10091	add x11, x11, #0x28	-
+0x30E187C	3F0108EB	cmp x9, x8	-
+0x30E1880	E2010054	b.hs #0x30e18bc	-
+0x30E1884	29050091	add x9, x9, #1	-
+0x30E1888	60053F2D	stp s0, s1, [x11, #-8]	-
+0x30E188C	620501BC	str s2, [x11], #0x10	-
+0x30E1890	3F010AEB	cmp x9, x10	-
+0x30E1894	4BFFFF54	b.lt #0x30e187c	-
+0x30E1898	602A40F9	ldr x0, [x19, #0x50]	-
+0x30E189C	200100B4	cbz x0, #0x30e18c0	-
+0x30E18A0	E1031FAA	mov x1, xzr	-
+0x30E18A4	E9E4D294	bl #0x659ac48	UnityEngine.MeshFilter$$get_mesh
+0x30E18A8	C00000B4	cbz x0, #0x30e18c0	-
+0x30E18AC	613E40F9	ldr x1, [x19, #0x78]	-
+0x30E18B0	E2031FAA	mov x2, xzr	-
+0x30E18B4	FE4FC1A8	ldp x30, x19, [sp], #0x10	-
+0x30E18B8	40EED214	b #0x659d1b8	UnityEngine.Mesh$$set_colors
+0x30E18BC	0CB9F497	bl #0x2e0fcec	-
+0x30E18C0	09B9F497	bl #0x2e0fce4	-

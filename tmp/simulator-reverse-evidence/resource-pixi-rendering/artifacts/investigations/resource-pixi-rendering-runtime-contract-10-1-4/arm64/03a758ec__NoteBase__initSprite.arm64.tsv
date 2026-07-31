@@ -1,0 +1,51 @@
+address	bytes	instruction	resolved_target
+0x3A758EC	FE0F1DF8	str x30, [sp, #-0x30]!	-
+0x3A758F0	F65701A9	stp x22, x21, [sp, #0x10]	-
+0x3A758F4	F44F02A9	stp x20, x19, [sp, #0x20]	-
+0x3A758F8	14BF01B0	adrp x20, #0x7256000	-
+0x3A758FC	769001B0	adrp x22, #0x6c82000	-
+0x3A75900	88467739	ldrb w8, [x20, #0xdd1]	-
+0x3A75904	D62241F9	ldr x22, [x22, #0x240]	-
+0x3A75908	F30300AA	mov x19, x0	-
+0x3A7590C	28010037	tbnz w8, #0, #0x3a75930	-
+0x3A75910	609001F0	adrp x0, #0x6c84000	-
+0x3A75914	001045F9	ldr x0, [x0, #0xa20]	-
+0x3A75918	5068CE97	bl #0x2e0fa58	-
+0x3A7591C	609001B0	adrp x0, #0x6c82000	-
+0x3A75920	002041F9	ldr x0, [x0, #0x240]	-
+0x3A75924	4D68CE97	bl #0x2e0fa58	-
+0x3A75928	28008052	mov w8, #1	-
+0x3A7592C	88463739	strb w8, [x20, #0xdd1]	-
+0x3A75930	F40313AA	mov x20, x19	-
+0x3A75934	958E45F8	ldr x21, [x20, #0x58]!	-
+0x3A75938	C00240F9	ldr x0, [x22]	-
+0x3A7593C	08E040B9	ldr w8, [x0, #0xe0]	-
+0x3A75940	48000035	cbnz w8, #0x3a75948	-
+0x3A75944	A268CE97	bl #0x2e0fbcc	-
+0x3A75948	E00315AA	mov x0, x21	-
+0x3A7594C	E1031FAA	mov x1, xzr	-
+0x3A75950	E2031FAA	mov x2, xzr	-
+0x3A75954	8D21AD94	bl #0x65bdf88	UnityEngine.Object$$op_Equality
+0x3A75958	40020036	tbz w0, #0, #0x3a759a0	-
+0x3A7595C	689001F0	adrp x8, #0x6c84000	-
+0x3A75960	081145F9	ldr x8, [x8, #0xa20]	-
+0x3A75964	E00313AA	mov x0, x19	-
+0x3A75968	010140F9	ldr x1, [x8]	-
+0x3A7596C	B26F1E94	bl #0x4211834	UnityEngine.Component$$GetComponent<object>
+0x3A75970	E10300AA	mov x1, x0	-
+0x3A75974	602E00F9	str x0, [x19, #0x58]	-
+0x3A75978	E00314AA	mov x0, x20	-
+0x3A7597C	2268CE97	bl #0x2e0fa04	-
+0x3A75980	602E40F9	ldr x0, [x19, #0x58]	-
+0x3A75984	600100B4	cbz x0, #0x3a759b0	-
+0x3A75988	F44F42A9	ldp x20, x19, [sp, #0x20]	-
+0x3A7598C	F65741A9	ldp x22, x21, [sp, #0x10]	-
+0x3A75990	E1031FAA	mov x1, xzr	-
+0x3A75994	E2031FAA	mov x2, xzr	-
+0x3A75998	FE0743F8	ldr x30, [sp], #0x30	-
+0x3A7599C	195DAD14	b #0x65cce00	UnityEngine.SpriteRenderer$$set_sprite
+0x3A759A0	F44F42A9	ldp x20, x19, [sp, #0x20]	-
+0x3A759A4	F65741A9	ldp x22, x21, [sp, #0x10]	-
+0x3A759A8	FE0743F8	ldr x30, [sp], #0x30	-
+0x3A759AC	C0035FD6	ret	-
+0x3A759B0	CD68CE97	bl #0x2e0fce4	-

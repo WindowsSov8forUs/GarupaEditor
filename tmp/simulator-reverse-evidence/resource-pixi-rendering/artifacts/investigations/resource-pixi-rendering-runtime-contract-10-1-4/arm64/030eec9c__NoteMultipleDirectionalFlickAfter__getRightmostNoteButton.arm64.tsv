@@ -1,0 +1,54 @@
+address	bytes	instruction	resolved_target
+0x30EEC9C	FE0F1CF8	str x30, [sp, #-0x40]!	-
+0x30EECA0	F85F01A9	stp x24, x23, [sp, #0x10]	-
+0x30EECA4	F65702A9	stp x22, x21, [sp, #0x20]	-
+0x30EECA8	F44F03A9	stp x20, x19, [sp, #0x30]	-
+0x30EECAC	B5DC0190	adrp x21, #0x6c82000	-
+0x30EECB0	B52241F9	ldr x21, [x21, #0x240]	-
+0x30EECB4	F30301AA	mov x19, x1	-
+0x30EECB8	F40300AA	mov x20, x0	-
+0x30EECBC	170B02D0	adrp x23, #0x7250000	-
+0x30EECC0	38008052	mov w24, #1	-
+0x30EECC4	E81E7239	ldrb w8, [x23, #0xc87]	-
+0x30EECC8	88000037	tbnz w8, #0, #0x30eecd8	-
+0x30EECCC	E00315AA	mov x0, x21	-
+0x30EECD0	6283F497	bl #0x2e0fa58	-
+0x30EECD4	F81E3239	strb w24, [x23, #0xc87]	-
+0x30EECD8	B30400B4	cbz x19, #0x30eed6c	-
+0x30EECDC	A00240F9	ldr x0, [x21]	-
+0x30EECE0	76DA40F9	ldr x22, [x19, #0x1b0]	-
+0x30EECE4	08E040B9	ldr w8, [x0, #0xe0]	-
+0x30EECE8	48000035	cbnz w8, #0x30eecf0	-
+0x30EECEC	B883F497	bl #0x2e0fbcc	-
+0x30EECF0	E00316AA	mov x0, x22	-
+0x30EECF4	E1031FAA	mov x1, xzr	-
+0x30EECF8	E2031FAA	mov x2, xzr	-
+0x30EECFC	EA38D394	bl #0x65bd0a4	UnityEngine.Object$$op_Inequality
+0x30EED00	60000036	tbz w0, #0, #0x30eed0c	-
+0x30EED04	73DA40F9	ldr x19, [x19, #0x1b0]	-
+0x30EED08	EFFFFF17	b #0x30eecc4	-
+0x30EED0C	A00240F9	ldr x0, [x21]	-
+0x30EED10	75E240F9	ldr x21, [x19, #0x1c0]	-
+0x30EED14	08E040B9	ldr w8, [x0, #0xe0]	-
+0x30EED18	48000035	cbnz w8, #0x30eed20	-
+0x30EED1C	AC83F497	bl #0x2e0fbcc	-
+0x30EED20	E00315AA	mov x0, x21	-
+0x30EED24	E1031FAA	mov x1, xzr	-
+0x30EED28	E2031FAA	mov x2, xzr	-
+0x30EED2C	DE38D394	bl #0x65bd0a4	UnityEngine.Object$$op_Inequality
+0x30EED30	00010036	tbz w0, #0, #0x30eed50	-
+0x30EED34	61E240F9	ldr x1, [x19, #0x1c0]	-
+0x30EED38	E00314AA	mov x0, x20	-
+0x30EED3C	F44F43A9	ldp x20, x19, [sp, #0x30]	-
+0x30EED40	F65742A9	ldp x22, x21, [sp, #0x20]	-
+0x30EED44	F85F41A9	ldp x24, x23, [sp, #0x10]	-
+0x30EED48	FE0744F8	ldr x30, [sp], #0x40	-
+0x30EED4C	8CFFFF17	b #0x30eeb7c	-
+0x30EED50	E00313AA	mov x0, x19	-
+0x30EED54	F44F43A9	ldp x20, x19, [sp, #0x30]	-
+0x30EED58	F65742A9	ldp x22, x21, [sp, #0x20]	-
+0x30EED5C	F85F41A9	ldp x24, x23, [sp, #0x10]	-
+0x30EED60	E1031FAA	mov x1, xzr	-
+0x30EED64	FE0744F8	ldr x30, [sp], #0x40	-
+0x30EED68	CB132614	b #0x3a73c94	NoteBase$$get_TargetCenterButton
+0x30EED6C	DE83F497	bl #0x2e0fce4	-

@@ -1,0 +1,73 @@
+address	bytes	instruction	resolved_target
+0x3222798	FE0F1CF8	str x30, [sp, #-0x40]!	-
+0x322279C	F85F01A9	stp x24, x23, [sp, #0x10]	-
+0x32227A0	F65702A9	stp x22, x21, [sp, #0x20]	-
+0x32227A4	F44F03A9	stp x20, x19, [sp, #0x30]	-
+0x32227A8	F30300AA	mov x19, x0	-
+0x32227AC	018C02F8	str x1, [x0, #0x28]!	-
+0x32227B0	F40304AA	mov x20, x4	-
+0x32227B4	F50303AA	mov x21, x3	-
+0x32227B8	F60302AA	mov x22, x2	-
+0x32227BC	F80301AA	mov x24, x1	-
+0x32227C0	91B4EF97	bl #0x2e0fa04	-
+0x32227C4	F70313AA	mov x23, x19	-
+0x32227C8	F60E03F8	str x22, [x23, #0x30]!	-
+0x32227CC	E00317AA	mov x0, x23	-
+0x32227D0	E10316AA	mov x1, x22	-
+0x32227D4	8CB4EF97	bl #0x2e0fa04	-
+0x32227D8	F80600B4	cbz x24, #0x32228b4	-
+0x32227DC	F7025FF8	ldur x23, [x23, #-0x10]	-
+0x32227E0	E00318AA	mov x0, x24	-
+0x32227E4	E1031FAA	mov x1, xzr	-
+0x32227E8	AE5FCE94	bl #0x65ba6a0	UnityEngine.Component$$get_transform
+0x32227EC	400600B4	cbz x0, #0x32228b4	-
+0x32227F0	E1031FAA	mov x1, xzr	-
+0x32227F4	C59BCE94	bl #0x65c9708	UnityEngine.Transform$$get_position
+0x32227F8	F70500B4	cbz x23, #0x32228b4	-
+0x32227FC	E00317AA	mov x0, x23	-
+0x3222800	E1031F2A	mov w1, wzr	-
+0x3222804	E2031FAA	mov x2, xzr	-
+0x3222808	93A5CD94	bl #0x658be54	UnityEngine.LineRenderer$$SetPosition
+0x322280C	560500B4	cbz x22, #0x32228b4	-
+0x3222810	771240F9	ldr x23, [x19, #0x20]	-
+0x3222814	E00316AA	mov x0, x22	-
+0x3222818	E1031FAA	mov x1, xzr	-
+0x322281C	A15FCE94	bl #0x65ba6a0	UnityEngine.Component$$get_transform
+0x3222820	A00400B4	cbz x0, #0x32228b4	-
+0x3222824	E1031FAA	mov x1, xzr	-
+0x3222828	B89BCE94	bl #0x65c9708	UnityEngine.Transform$$get_position
+0x322282C	570400B4	cbz x23, #0x32228b4	-
+0x3222830	21008052	mov w1, #1	-
+0x3222834	E00317AA	mov x0, x23	-
+0x3222838	E2031FAA	mov x2, xzr	-
+0x322283C	86A5CD94	bl #0x658be54	UnityEngine.LineRenderer$$SetPosition
+0x3222840	E003271E	fmov s0, wzr	-
+0x3222844	E00313AA	mov x0, x19	-
+0x3222848	A5060094	bl #0x32242dc	NoteMultipleDirectionalFlickBackLine$$setLineWidth
+0x322284C	E00313AA	mov x0, x19	-
+0x3222850	E10315AA	mov x1, x21	-
+0x3222854	E20314AA	mov x2, x20	-
+0x3222858	A9060094	bl #0x32242fc	NoteMultipleDirectionalFlickBackLine$$setupMaterial
+0x322285C	601240F9	ldr x0, [x19, #0x20]	-
+0x3222860	A00200B4	cbz x0, #0x32228b4	-
+0x3222864	E1031FAA	mov x1, xzr	-
+0x3222868	4EAECD94	bl #0x658e1a0	UnityEngine.Renderer$$get_sharedMaterial
+0x322286C	682240F9	ldr x8, [x19, #0x40]	-
+0x3222870	280200B4	cbz x8, #0x32228b4	-
+0x3222874	F40300AA	mov x20, x0	-
+0x3222878	601E40F9	ldr x0, [x19, #0x38]	-
+0x322287C	C00100B4	cbz x0, #0x32228b4	-
+0x3222880	002140BD	ldr s0, [x8, #0x20]	-
+0x3222884	734A40B9	ldr w19, [x19, #0x48]	-
+0x3222888	E1031FAA	mov x1, xzr	-
+0x322288C	A43C0394	bl #0x32f1b1c	InGameCalculatedData$$GetSuddenPos
+0x3222890	340100B4	cbz x20, #0x32228b4	-
+0x3222894	E00314AA	mov x0, x20	-
+0x3222898	E103132A	mov w1, w19	-
+0x322289C	F44F43A9	ldp x20, x19, [sp, #0x30]	-
+0x32228A0	F65742A9	ldp x22, x21, [sp, #0x20]	-
+0x32228A4	F85F41A9	ldp x24, x23, [sp, #0x10]	-
+0x32228A8	E2031FAA	mov x2, xzr	-
+0x32228AC	FE0744F8	ldr x30, [sp], #0x40	-
+0x32228B0	75CFCD14	b #0x6596684	-
+0x32228B4	0CB5EF97	bl #0x2e0fce4	-

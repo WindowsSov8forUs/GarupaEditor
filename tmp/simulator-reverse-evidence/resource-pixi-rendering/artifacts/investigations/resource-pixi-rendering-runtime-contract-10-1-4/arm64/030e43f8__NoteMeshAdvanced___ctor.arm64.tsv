@@ -1,0 +1,25 @@
+address	bytes	instruction	resolved_target
+0x30E43F8	FE57BEA9	stp x30, x21, [sp, #-0x20]!	-
+0x30E43FC	F44F01A9	stp x20, x19, [sp, #0x10]	-
+0x30E4400	740B0290	adrp x20, #0x7250000	-
+0x30E4404	15DD01B0	adrp x21, #0x6c85000	-
+0x30E4408	884E7039	ldrb w8, [x20, #0xc13]	-
+0x30E440C	B5E641F9	ldr x21, [x21, #0x3c8]	-
+0x30E4410	F30300AA	mov x19, x0	-
+0x30E4414	C8000037	tbnz w8, #0, #0x30e442c	-
+0x30E4418	00DD01B0	adrp x0, #0x6c85000	-
+0x30E441C	00E441F9	ldr x0, [x0, #0x3c8]	-
+0x30E4420	8EADF497	bl #0x2e0fa58	-
+0x30E4424	28008052	mov w8, #1	-
+0x30E4428	884E3039	strb w8, [x20, #0xc13]	-
+0x30E442C	A00240F9	ldr x0, [x21]	-
+0x30E4430	41058052	mov w1, #0x2a	-
+0x30E4434	C2ADF497	bl #0x2e0fb3c	-
+0x30E4438	E10300AA	mov x1, x0	-
+0x30E443C	E00313AA	mov x0, x19	-
+0x30E4440	010C0AF8	str x1, [x0, #0xa0]!	-
+0x30E4444	70ADF497	bl #0x2e0fa04	-
+0x30E4448	E00313AA	mov x0, x19	-
+0x30E444C	F44F41A9	ldp x20, x19, [sp, #0x10]	-
+0x30E4450	FE57C2A8	ldp x30, x21, [sp], #0x20	-
+0x30E4454	28F8FF17	b #0x30e24f4	NoteMesh$$.ctor

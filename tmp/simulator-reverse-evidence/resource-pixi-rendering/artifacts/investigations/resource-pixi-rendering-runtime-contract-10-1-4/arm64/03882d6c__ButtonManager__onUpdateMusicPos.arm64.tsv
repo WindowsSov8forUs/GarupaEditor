@@ -1,0 +1,32 @@
+address	bytes	instruction	resolved_target
+0x3882D6C	E80F1EFC	str d8, [sp, #-0x20]!	-
+0x3882D70	FE4F01A9	stp x30, x19, [sp, #0x10]	-
+0x3882D74	F30300AA	mov x19, x0	-
+0x3882D78	E0031FAA	mov x0, xzr	-
+0x3882D7C	081CA04E	mov v8.16b, v0.16b	-
+0x3882D80	0CABFB97	bl #0x376d9b0	NoteBatchInformationListFactory$$get_Instance_
+0x3882D84	000300B4	cbz x0, #0x3882de4	-
+0x3882D88	E1031FAA	mov x1, xzr	-
+0x3882D8C	94ABFB97	bl #0x376dbdc	NoteBatchInformationListFactory$$IsEnableHabahiroChangeFlash
+0x3882D90	40010036	tbz w0, #0, #0x3882db8	-
+0x3882D94	68824339	ldrb w8, [x19, #0xe0]	-
+0x3882D98	08010035	cbnz w8, #0x3882db8	-
+0x3882D9C	E0031FAA	mov x0, xzr	-
+0x3882DA0	04ABFB97	bl #0x376d9b0	NoteBatchInformationListFactory$$get_Instance_
+0x3882DA4	000200B4	cbz x0, #0x3882de4	-
+0x3882DA8	002040BD	ldr s0, [x0, #0x20]	-
+0x3882DAC	00D8215E	scvtf s0, s0	-
+0x3882DB0	0020281E	fcmp s0, s8	-
+0x3882DB4	8D000054	b.le #0x3882dc4	-
+0x3882DB8	FE4F41A9	ldp x30, x19, [sp, #0x10]	-
+0x3882DBC	E80742FC	ldr d8, [sp], #0x20	-
+0x3882DC0	C0035FD6	ret	-
+0x3882DC4	607640F9	ldr x0, [x19, #0xe8]	-
+0x3882DC8	28008052	mov w8, #1	-
+0x3882DCC	68820339	strb w8, [x19, #0xe0]	-
+0x3882DD0	A00000B4	cbz x0, #0x3882de4	-
+0x3882DD4	FE4F41A9	ldp x30, x19, [sp, #0x10]	-
+0x3882DD8	E1031FAA	mov x1, xzr	-
+0x3882DDC	E80742FC	ldr d8, [sp], #0x20	-
+0x3882DE0	4D94B314	b #0x6567f14	-
+0x3882DE4	C033D697	bl #0x2e0fce4	-

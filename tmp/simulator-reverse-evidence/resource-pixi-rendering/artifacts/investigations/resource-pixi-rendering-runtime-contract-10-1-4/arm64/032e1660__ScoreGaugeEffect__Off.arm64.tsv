@@ -1,0 +1,15 @@
+address	bytes	instruction	resolved_target
+0x32E1660	FE4FBFA9	stp x30, x19, [sp, #-0x10]!	-
+0x32E1664	F30300AA	mov x19, x0	-
+0x32E1668	001040F9	ldr x0, [x0, #0x20]	-
+0x32E166C	400100B4	cbz x0, #0x32e1694	-
+0x32E1670	E1031F2A	mov w1, wzr	-
+0x32E1674	E2031FAA	mov x2, xzr	-
+0x32E1678	4D61CB94	bl #0x65b9bac	UnityEngine.Behaviour$$set_enabled
+0x32E167C	601640F9	ldr x0, [x19, #0x28]	-
+0x32E1680	A00000B4	cbz x0, #0x32e1694	-
+0x32E1684	E1031F2A	mov w1, wzr	-
+0x32E1688	E2031FAA	mov x2, xzr	-
+0x32E168C	FE4FC1A8	ldp x30, x19, [sp], #0x10	-
+0x32E1690	4761CB14	b #0x65b9bac	UnityEngine.Behaviour$$set_enabled
+0x32E1694	94B9EC97	bl #0x2e0fce4	-

@@ -1,0 +1,71 @@
+address	bytes	instruction	resolved_target
+0x30E23DC	EC0F1CFC	str d12, [sp, #-0x40]!	-
+0x30E23E0	EBAB006D	stp d11, d10, [sp, #8]	-
+0x30E23E4	E9A3016D	stp d9, d8, [sp, #0x18]	-
+0x30E23E8	FE1700F9	str x30, [sp, #0x28]	-
+0x30E23EC	F44F03A9	stp x20, x19, [sp, #0x30]	-
+0x30E23F0	740B02D0	adrp x20, #0x7250000	-
+0x30E23F4	88367039	ldrb w8, [x20, #0xc0d]	-
+0x30E23F8	081CA04E	mov v8.16b, v0.16b	-
+0x30E23FC	F30300AA	mov x19, x0	-
+0x30E2400	C8000037	tbnz w8, #0, #0x30e2418	-
+0x30E2404	60DD0190	adrp x0, #0x6c8e000	-
+0x30E2408	005440F9	ldr x0, [x0, #0xa8]	-
+0x30E240C	93B5F497	bl #0x2e0fa58	-
+0x30E2410	28008052	mov w8, #1	-
+0x30E2414	88363039	strb w8, [x20, #0xc0d]	-
+0x30E2418	684640F9	ldr x8, [x19, #0x88]	-
+0x30E241C	A80600B4	cbz x8, #0x30e24f0	-
+0x30E2420	002D40F9	ldr x0, [x8, #0x58]	-
+0x30E2424	600600B4	cbz x0, #0x30e24f0	-
+0x30E2428	E1031FAA	mov x1, xzr	-
+0x30E242C	9D60D394	bl #0x65ba6a0	UnityEngine.Component$$get_transform
+0x30E2430	000600B4	cbz x0, #0x30e24f0	-
+0x30E2434	74DD0190	adrp x20, #0x6c8e000	-
+0x30E2438	945640F9	ldr x20, [x20, #0xa8]	-
+0x30E243C	E1031FAA	mov x1, xzr	-
+0x30E2440	E399D394	bl #0x65c8bcc	UnityEngine.Transform$$get_localPosition
+0x30E2444	800240F9	ldr x0, [x20]	-
+0x30E2448	291CA14E	mov v9.16b, v1.16b	-
+0x30E244C	AA646294	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x30E2450	000500B4	cbz x0, #0x30e24f0	-
+0x30E2454	E1031FAA	mov x1, xzr	-
+0x30E2458	2E6C2194	bl #0x393d510	StarUIManager$$get_SafeAreaToScreenRatio
+0x30E245C	601640F9	ldr x0, [x19, #0x28]	-
+0x30E2460	800400B4	cbz x0, #0x30e24f0	-
+0x30E2464	E1031FAA	mov x1, xzr	-
+0x30E2468	0A1CA04E	mov v10.16b, v0.16b	-
+0x30E246C	0A462694	bl #0x3a73c94	NoteBase$$get_TargetCenterButton
+0x30E2470	000400B4	cbz x0, #0x30e24f0	-
+0x30E2474	E1031FAA	mov x1, xzr	-
+0x30E2478	8A60D394	bl #0x65ba6a0	UnityEngine.Component$$get_transform
+0x30E247C	A00300B4	cbz x0, #0x30e24f0	-
+0x30E2480	E1031FAA	mov x1, xzr	-
+0x30E2484	A19CD394	bl #0x65c9708	UnityEngine.Transform$$get_position
+0x30E2488	800240F9	ldr x0, [x20]	-
+0x30E248C	2B1CA14E	mov v11.16b, v1.16b	-
+0x30E2490	99646294	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x30E2494	E00200B4	cbz x0, #0x30e24f0	-
+0x30E2498	E1031FAA	mov x1, xzr	-
+0x30E249C	1D6C2194	bl #0x393d510	StarUIManager$$get_SafeAreaToScreenRatio
+0x30E24A0	601A40F9	ldr x0, [x19, #0x30]	-
+0x30E24A4	600200B4	cbz x0, #0x30e24f0	-
+0x30E24A8	E1031FAA	mov x1, xzr	-
+0x30E24AC	0C1CA04E	mov v12.16b, v0.16b	-
+0x30E24B0	7C60D394	bl #0x65ba6a0	UnityEngine.Component$$get_transform
+0x30E24B4	E00100B4	cbz x0, #0x30e24f0	-
+0x30E24B8	29092A1E	fmul s9, s9, s10	-
+0x30E24BC	60092C1E	fmul s0, s11, s12	-
+0x30E24C0	E1031FAA	mov x1, xzr	-
+0x30E24C4	2AD5A07E	fabd s10, s9, s0	-
+0x30E24C8	C199D394	bl #0x65c8bcc	UnityEngine.Transform$$get_localPosition
+0x30E24CC	20D5A17E	fabd s0, s9, s1	-
+0x30E24D0	0008281E	fmul s0, s0, s8	-
+0x30E24D4	00182A1E	fdiv s0, s0, s10	-
+0x30E24D8	F44F43A9	ldp x20, x19, [sp, #0x30]	-
+0x30E24DC	FE1740F9	ldr x30, [sp, #0x28]	-
+0x30E24E0	E9A3416D	ldp d9, d8, [sp, #0x18]	-
+0x30E24E4	EBAB406D	ldp d11, d10, [sp, #8]	-
+0x30E24E8	EC0744FC	ldr d12, [sp], #0x40	-
+0x30E24EC	C0035FD6	ret	-
+0x30E24F0	FDB5F497	bl #0x2e0fce4	-

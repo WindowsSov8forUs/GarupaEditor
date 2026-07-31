@@ -1,0 +1,15 @@
+address	bytes	instruction	resolved_target
+0x3A6EAA8	FE0F1FF8	str x30, [sp, #-0x10]!	-
+0x3A6EAAC	0820201E	fcmp s0, #0.0	-
+0x3A6EAB0	69000054	b.ls #0x3a6eabc	-
+0x3A6EAB4	FE0741F8	ldr x30, [sp], #0x10	-
+0x3A6EAB8	C0035FD6	ret	-
+0x3A6EABC	081040F9	ldr x8, [x0, #0x20]	-
+0x3A6EAC0	E80000B4	cbz x8, #0x3a6eadc	-
+0x3A6EAC4	020C562D	ldp s2, s3, [x0, #0xb0]	-
+0x3A6EAC8	0004552D	ldp s0, s1, [x0, #0xa8]	-
+0x3A6EACC	E00308AA	mov x0, x8	-
+0x3A6EAD0	E1031FAA	mov x1, xzr	-
+0x3A6EAD4	FE0741F8	ldr x30, [sp], #0x10	-
+0x3A6EAD8	6872D717	b #0x304b478	UIWidget$$set_color
+0x3A6EADC	8284CE97	bl #0x2e0fce4	-

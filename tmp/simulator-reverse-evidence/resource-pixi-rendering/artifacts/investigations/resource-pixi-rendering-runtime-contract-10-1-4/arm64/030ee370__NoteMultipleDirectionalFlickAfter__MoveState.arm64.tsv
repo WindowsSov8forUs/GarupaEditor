@@ -1,0 +1,72 @@
+address	bytes	instruction	resolved_target
+0x30EE370	E80F1DFC	str d8, [sp, #-0x30]!	-
+0x30EE374	FE5701A9	stp x30, x21, [sp, #0x10]	-
+0x30EE378	F44F02A9	stp x20, x19, [sp, #0x20]	-
+0x30EE37C	140B02D0	adrp x20, #0x7250000	-
+0x30EE380	B5DC0190	adrp x21, #0x6c82000	-
+0x30EE384	88F67139	ldrb w8, [x20, #0xc7d]	-
+0x30EE388	B52241F9	ldr x21, [x21, #0x240]	-
+0x30EE38C	081CA04E	mov v8.16b, v0.16b	-
+0x30EE390	F30300AA	mov x19, x0	-
+0x30EE394	C8000037	tbnz w8, #0, #0x30ee3ac	-
+0x30EE398	A0DC0190	adrp x0, #0x6c82000	-
+0x30EE39C	002041F9	ldr x0, [x0, #0x240]	-
+0x30EE3A0	AE85F497	bl #0x2e0fa58	-
+0x30EE3A4	28008052	mov w8, #1	-
+0x30EE3A8	88F63139	strb w8, [x20, #0xc7d]	-
+0x30EE3AC	E00313AA	mov x0, x19	-
+0x30EE3B0	001DA84E	mov v0.16b, v8.16b	-
+0x30EE3B4	E1031FAA	mov x1, xzr	-
+0x30EE3B8	6C162694	bl #0x3a73d68	NoteAfterBase$$MoveState
+0x30EE3BC	A00240F9	ldr x0, [x21]	-
+0x30EE3C0	74DA40F9	ldr x20, [x19, #0x1b0]	-
+0x30EE3C4	08E040B9	ldr w8, [x0, #0xe0]	-
+0x30EE3C8	48000035	cbnz w8, #0x30ee3d0	-
+0x30EE3CC	0086F497	bl #0x2e0fbcc	-
+0x30EE3D0	E00314AA	mov x0, x20	-
+0x30EE3D4	E1031FAA	mov x1, xzr	-
+0x30EE3D8	E2031FAA	mov x2, xzr	-
+0x30EE3DC	323BD394	bl #0x65bd0a4	UnityEngine.Object$$op_Inequality
+0x30EE3E0	C0000036	tbz w0, #0, #0x30ee3f8	-
+0x30EE3E4	60DA40F9	ldr x0, [x19, #0x1b0]	-
+0x30EE3E8	000500B4	cbz x0, #0x30ee488	-
+0x30EE3EC	610641BD	ldr s1, [x19, #0x104]	-
+0x30EE3F0	001DA84E	mov v0.16b, v8.16b	-
+0x30EE3F4	A0DEFF97	bl #0x30e5e74	NoteAddLongMultipleDirectionalFlickVisual$$Move
+0x30EE3F8	A00240F9	ldr x0, [x21]	-
+0x30EE3FC	74D640F9	ldr x20, [x19, #0x1a8]	-
+0x30EE400	08E040B9	ldr w8, [x0, #0xe0]	-
+0x30EE404	48000035	cbnz w8, #0x30ee40c	-
+0x30EE408	F185F497	bl #0x2e0fbcc	-
+0x30EE40C	E00314AA	mov x0, x20	-
+0x30EE410	E1031FAA	mov x1, xzr	-
+0x30EE414	E2031FAA	mov x2, xzr	-
+0x30EE418	233BD394	bl #0x65bd0a4	UnityEngine.Object$$op_Inequality
+0x30EE41C	C0000036	tbz w0, #0, #0x30ee434	-
+0x30EE420	60D640F9	ldr x0, [x19, #0x1a8]	-
+0x30EE424	200300B4	cbz x0, #0x30ee488	-
+0x30EE428	610641BD	ldr s1, [x19, #0x104]	-
+0x30EE42C	001DA84E	mov v0.16b, v8.16b	-
+0x30EE430	91DEFF97	bl #0x30e5e74	NoteAddLongMultipleDirectionalFlickVisual$$Move
+0x30EE434	A00240F9	ldr x0, [x21]	-
+0x30EE438	74DE40F9	ldr x20, [x19, #0x1b8]	-
+0x30EE43C	08E040B9	ldr w8, [x0, #0xe0]	-
+0x30EE440	48000035	cbnz w8, #0x30ee448	-
+0x30EE444	E285F497	bl #0x2e0fbcc	-
+0x30EE448	E00314AA	mov x0, x20	-
+0x30EE44C	E1031FAA	mov x1, xzr	-
+0x30EE450	E2031FAA	mov x2, xzr	-
+0x30EE454	143BD394	bl #0x65bd0a4	UnityEngine.Object$$op_Inequality
+0x30EE458	00010036	tbz w0, #0, #0x30ee478	-
+0x30EE45C	60DE40F9	ldr x0, [x19, #0x1b8]	-
+0x30EE460	400100B4	cbz x0, #0x30ee488	-
+0x30EE464	F44F42A9	ldp x20, x19, [sp, #0x20]	-
+0x30EE468	FE5741A9	ldp x30, x21, [sp, #0x10]	-
+0x30EE46C	E1031FAA	mov x1, xzr	-
+0x30EE470	E80743FC	ldr d8, [sp], #0x30	-
+0x30EE474	6CCF0414	b #0x3222224	NoteMultipleDirectionalFlickBackLine$$OnUpdate
+0x30EE478	F44F42A9	ldp x20, x19, [sp, #0x20]	-
+0x30EE47C	FE5741A9	ldp x30, x21, [sp, #0x10]	-
+0x30EE480	E80743FC	ldr d8, [sp], #0x30	-
+0x30EE484	C0035FD6	ret	-
+0x30EE488	1786F497	bl #0x2e0fce4	-

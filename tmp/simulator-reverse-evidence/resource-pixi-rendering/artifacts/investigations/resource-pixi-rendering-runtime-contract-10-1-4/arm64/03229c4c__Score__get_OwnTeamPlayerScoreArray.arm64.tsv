@@ -1,0 +1,7 @@
+address	bytes	instruction	resolved_target
+0x3229C4C	085040F9	ldr x8, [x0, #0xa0]	-
+0x3229C50	680000B4	cbz x8, #0x3229c5c	-
+0x3229C54	000940F9	ldr x0, [x8, #0x10]	-
+0x3229C58	C0035FD6	ret	-
+0x3229C5C	E0031FAA	mov x0, xzr	-
+0x3229C60	C0035FD6	ret	-

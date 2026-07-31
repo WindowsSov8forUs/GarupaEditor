@@ -1,0 +1,38 @@
+address	bytes	instruction	resolved_target
+0x30EE018	FE5FBDA9	stp x30, x23, [sp, #-0x30]!	-
+0x30EE01C	F65701A9	stp x22, x21, [sp, #0x10]	-
+0x30EE020	F44F02A9	stp x20, x19, [sp, #0x20]	-
+0x30EE024	B4DC0190	adrp x20, #0x6c82000	-
+0x30EE028	942241F9	ldr x20, [x20, #0x240]	-
+0x30EE02C	F30302AA	mov x19, x2	-
+0x30EE030	160B02D0	adrp x22, #0x7250000	-
+0x30EE034	35000012	and w21, w1, #1	-
+0x30EE038	37008052	mov w23, #1	-
+0x30EE03C	C8367239	ldrb w8, [x22, #0xc8d]	-
+0x30EE040	88000037	tbnz w8, #0, #0x30ee050	-
+0x30EE044	E00314AA	mov x0, x20	-
+0x30EE048	8486F497	bl #0x2e0fa58	-
+0x30EE04C	D7363239	strb w23, [x22, #0xc8d]	-
+0x30EE050	800240F9	ldr x0, [x20]	-
+0x30EE054	08E040B9	ldr w8, [x0, #0xe0]	-
+0x30EE058	48000035	cbnz w8, #0x30ee060	-
+0x30EE05C	DC86F497	bl #0x2e0fbcc	-
+0x30EE060	E00313AA	mov x0, x19	-
+0x30EE064	E1031FAA	mov x1, xzr	-
+0x30EE068	E2031FAA	mov x2, xzr	-
+0x30EE06C	C73FD394	bl #0x65bdf88	UnityEngine.Object$$op_Equality
+0x30EE070	40010037	tbnz w0, #0, #0x30ee098	-
+0x30EE074	B30100B4	cbz x19, #0x30ee0a8	-
+0x30EE078	E00313AA	mov x0, x19	-
+0x30EE07C	E103152A	mov w1, w21	-
+0x30EE080	E2031FAA	mov x2, xzr	-
+0x30EE084	41182694	bl #0x3a74188	NoteBase$$SetSpriteEnabled
+0x30EE088	E00313AA	mov x0, x19	-
+0x30EE08C	27DFFF97	bl #0x30e5d28	NoteAddLongMultipleDirectionalFlickVisual$$DeactivateBackLine
+0x30EE090	73DA40F9	ldr x19, [x19, #0x1b0]	-
+0x30EE094	EAFFFF17	b #0x30ee03c	-
+0x30EE098	F44F42A9	ldp x20, x19, [sp, #0x20]	-
+0x30EE09C	F65741A9	ldp x22, x21, [sp, #0x10]	-
+0x30EE0A0	FE5FC3A8	ldp x30, x23, [sp], #0x30	-
+0x30EE0A4	C0035FD6	ret	-
+0x30EE0A8	0F87F497	bl #0x2e0fce4	-

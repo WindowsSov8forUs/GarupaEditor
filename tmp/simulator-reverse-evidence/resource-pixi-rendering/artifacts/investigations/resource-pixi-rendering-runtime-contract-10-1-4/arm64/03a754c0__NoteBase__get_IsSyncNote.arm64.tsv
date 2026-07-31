@@ -1,0 +1,3 @@
+address	bytes	instruction	resolved_target
+0x3A754C0	00104339	ldrb w0, [x0, #0xc4]	-
+0x3A754C4	C0035FD6	ret	-

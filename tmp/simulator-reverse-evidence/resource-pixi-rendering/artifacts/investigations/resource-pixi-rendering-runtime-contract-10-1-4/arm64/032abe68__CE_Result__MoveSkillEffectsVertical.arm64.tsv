@@ -1,0 +1,18 @@
+address	bytes	instruction	resolved_target
+0x32ABE68	E80F1EFC	str d8, [sp, #-0x20]!	-
+0x32ABE6C	FE4F01A9	stp x30, x19, [sp, #0x10]	-
+0x32ABE70	F30300AA	mov x19, x0	-
+0x32ABE74	001040F9	ldr x0, [x0, #0x20]	-
+0x32ABE78	800100B4	cbz x0, #0x32abea8	-
+0x32ABE7C	E1031FAA	mov x1, xzr	-
+0x32ABE80	081CA04E	mov v8.16b, v0.16b	-
+0x32ABE84	5273CC94	bl #0x65c8bcc	UnityEngine.Transform$$get_localPosition
+0x32ABE88	601240F9	ldr x0, [x19, #0x20]	-
+0x32ABE8C	E00000B4	cbz x0, #0x32abea8	-
+0x32ABE90	615A40BD	ldr s1, [x19, #0x58]	-
+0x32ABE94	FE4F41A9	ldp x30, x19, [sp, #0x10]	-
+0x32ABE98	E1031FAA	mov x1, xzr	-
+0x32ABE9C	2128281E	fadd s1, s1, s8	-
+0x32ABEA0	E80742FC	ldr d8, [sp], #0x20	-
+0x32ABEA4	6D73CC14	b #0x65c8c58	UnityEngine.Transform$$set_localPosition
+0x32ABEA8	8F8FED97	bl #0x2e0fce4	-

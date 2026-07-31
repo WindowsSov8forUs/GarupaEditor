@@ -1,0 +1,194 @@
+address	bytes	instruction	resolved_target
+0x387A260	E80F1EFC	str d8, [sp, #-0x20]!	-
+0x387A264	FE0700F9	str x30, [sp, #8]	-
+0x387A268	F44F01A9	stp x20, x19, [sp, #0x10]	-
+0x387A26C	081040B9	ldr w8, [x0, #0x10]	-
+0x387A270	1F0D0071	cmp w8, #3	-
+0x387A274	C8160054	b.hi #0x387a54c	-
+0x387A278	141040F9	ldr x20, [x0, #0x20]	-
+0x387A27C	49E8FE90	adrp x9, #0x1582000	-
+0x387A280	29411791	add x9, x9, #0x5d0	-
+0x387A284	AA000010	adr x10, #0x387a298	-
+0x387A288	2B696838	ldrb w11, [x9, x8]	-
+0x387A28C	4A090B8B	add x10, x10, x11, lsl #2	-
+0x387A290	F30300AA	mov x19, x0	-
+0x387A294	40011FD6	br x10	-
+0x387A298	C8E5FEB0	adrp x8, #0x1533000	-
+0x387A29C	004541FD	ldr d0, [x8, #0x288]	-
+0x387A2A0	08008012	mov w8, #-1	-
+0x387A2A4	E803271E	fmov s8, wzr	-
+0x387A2A8	681200B9	str w8, [x19, #0x10]	-
+0x387A2AC	601600FD	str d0, [x19, #0x28]	-
+0x387A2B0	06000014	b #0x387a2c8	-
+0x387A2B4	6022452D	ldp s0, s8, [x19, #0x28]	-
+0x387A2B8	08008012	mov w8, #-1	-
+0x387A2BC	681200B9	str w8, [x19, #0x10]	-
+0x387A2C0	0021201E	fcmp s8, s0	-
+0x387A2C4	650D0054	b.pl #0x387a470	-
+0x387A2C8	E0031FAA	mov x0, xzr	-
+0x387A2CC	21E7B494	bl #0x65b3f50	UnityEngine.Time$$get_deltaTime
+0x387A2D0	0029201E	fadd s0, s8, s0	-
+0x387A2D4	602E00BD	str s0, [x19, #0x2c]	-
+0x387A2D8	541400B4	cbz x20, #0x387a560	-
+0x387A2DC	883A40BD	ldr s8, [x20, #0x38]	-
+0x387A2E0	E0031FAA	mov x0, xzr	-
+0x387A2E4	1BE7B494	bl #0x65b3f50	UnityEngine.Time$$get_deltaTime
+0x387A2E8	801A40F9	ldr x0, [x20, #0x30]	-
+0x387A2EC	0029201E	fadd s0, s8, s0	-
+0x387A2F0	803A00BD	str s0, [x20, #0x38]	-
+0x387A2F4	601300B4	cbz x0, #0x387a560	-
+0x387A2F8	E8E5FE90	adrp x8, #0x1536000	-
+0x387A2FC	090040F9	ldr x9, [x0]	-
+0x387A300	6102452D	ldp s1, s0, [x19, #0x28]	-
+0x387A304	026941BD	ldr s2, [x8, #0x168]	-
+0x387A308	EAE5FE90	adrp x10, #0x1536000	-
+0x387A30C	43C945BD	ldr s3, [x10, #0x5c8]	-
+0x387A310	28855BA9	ldp x8, x1, [x9, #0x1b8]	-
+0x387A314	0008221E	fmul s0, s0, s2	-
+0x387A318	0018211E	fdiv s0, s0, s1	-
+0x387A31C	0028231E	fadd s0, s0, s3	-
+0x387A320	00013FD6	blr x8	-
+0x387A324	E00314AA	mov x0, x20	-
+0x387A328	E1031FAA	mov x1, xzr	-
+0x387A32C	DD00B594	bl #0x65ba6a0	UnityEngine.Component$$get_transform
+0x387A330	801100B4	cbz x0, #0x387a560	-
+0x387A334	E1031FAA	mov x1, xzr	-
+0x387A338	253AB594	bl #0x65c8bcc	UnityEngine.Transform$$get_localPosition
+0x387A33C	E00314AA	mov x0, x20	-
+0x387A340	E1031FAA	mov x1, xzr	-
+0x387A344	081CA04E	mov v8.16b, v0.16b	-
+0x387A348	D600B594	bl #0x65ba6a0	UnityEngine.Component$$get_transform
+0x387A34C	A01000B4	cbz x0, #0x387a560	-
+0x387A350	E1031FAA	mov x1, xzr	-
+0x387A354	1E3AB594	bl #0x65c8bcc	UnityEngine.Transform$$get_localPosition
+0x387A358	0010241E	fmov s0, #8.00000000	-
+0x387A35C	0029201E	fadd s0, s8, s0	-
+0x387A360	E00314AA	mov x0, x20	-
+0x387A364	E1031FAA	mov x1, xzr	-
+0x387A368	562C0A94	bl #0x3b054c0	-
+0x387A36C	7F8E01F8	str xzr, [x19, #0x18]!	-
+0x387A370	E00313AA	mov x0, x19	-
+0x387A374	E1031FAA	mov x1, xzr	-
+0x387A378	A355D697	bl #0x2e0fa04	-
+0x387A37C	20008052	mov w0, #1	-
+0x387A380	60821FB8	stur w0, [x19, #-8]	-
+0x387A384	73000014	b #0x387a550	-
+0x387A388	6022452D	ldp s0, s8, [x19, #0x28]	-
+0x387A38C	08008012	mov w8, #-1	-
+0x387A390	681200B9	str w8, [x19, #0x10]	-
+0x387A394	0021201E	fcmp s8, s0	-
+0x387A398	24080054	b.mi #0x387a49c	-
+0x387A39C	C8E5FEB0	adrp x8, #0x1533000	-
+0x387A3A0	004541FD	ldr d0, [x8, #0x288]	-
+0x387A3A4	E803271E	fmov s8, wzr	-
+0x387A3A8	601600FD	str d0, [x19, #0x28]	-
+0x387A3AC	06000014	b #0x387a3c4	-
+0x387A3B0	6022452D	ldp s0, s8, [x19, #0x28]	-
+0x387A3B4	08008012	mov w8, #-1	-
+0x387A3B8	681200B9	str w8, [x19, #0x10]	-
+0x387A3BC	0021201E	fcmp s8, s0	-
+0x387A3C0	650B0054	b.pl #0x387a52c	-
+0x387A3C4	E0031FAA	mov x0, xzr	-
+0x387A3C8	E2E6B494	bl #0x65b3f50	UnityEngine.Time$$get_deltaTime
+0x387A3CC	0029201E	fadd s0, s8, s0	-
+0x387A3D0	602E00BD	str s0, [x19, #0x2c]	-
+0x387A3D4	740C00B4	cbz x20, #0x387a560	-
+0x387A3D8	883A40BD	ldr s8, [x20, #0x38]	-
+0x387A3DC	E0031FAA	mov x0, xzr	-
+0x387A3E0	DCE6B494	bl #0x65b3f50	UnityEngine.Time$$get_deltaTime
+0x387A3E4	801A40F9	ldr x0, [x20, #0x30]	-
+0x387A3E8	0029201E	fadd s0, s8, s0	-
+0x387A3EC	803A00BD	str s0, [x20, #0x38]	-
+0x387A3F0	800B00B4	cbz x0, #0x387a560	-
+0x387A3F4	080040F9	ldr x8, [x0]	-
+0x387A3F8	6102452D	ldp s1, s0, [x19, #0x28]	-
+0x387A3FC	09855BA9	ldp x9, x1, [x8, #0x1b8]	-
+0x387A400	0018211E	fdiv s0, s0, s1	-
+0x387A404	01102E1E	fmov s1, #1.00000000	-
+0x387A408	2038201E	fsub s0, s1, s0	-
+0x387A40C	20013FD6	blr x9	-
+0x387A410	E00314AA	mov x0, x20	-
+0x387A414	E1031FAA	mov x1, xzr	-
+0x387A418	A200B594	bl #0x65ba6a0	UnityEngine.Component$$get_transform
+0x387A41C	200A00B4	cbz x0, #0x387a560	-
+0x387A420	E1031FAA	mov x1, xzr	-
+0x387A424	EA39B594	bl #0x65c8bcc	UnityEngine.Transform$$get_localPosition
+0x387A428	E00314AA	mov x0, x20	-
+0x387A42C	E1031FAA	mov x1, xzr	-
+0x387A430	081CA04E	mov v8.16b, v0.16b	-
+0x387A434	9B00B594	bl #0x65ba6a0	UnityEngine.Component$$get_transform
+0x387A438	400900B4	cbz x0, #0x387a560	-
+0x387A43C	E1031FAA	mov x1, xzr	-
+0x387A440	E339B594	bl #0x65c8bcc	UnityEngine.Transform$$get_localPosition
+0x387A444	00102E1E	fmov s0, #1.00000000	-
+0x387A448	0029201E	fadd s0, s8, s0	-
+0x387A44C	E00314AA	mov x0, x20	-
+0x387A450	E1031FAA	mov x1, xzr	-
+0x387A454	1B2C0A94	bl #0x3b054c0	-
+0x387A458	7F8E01F8	str xzr, [x19, #0x18]!	-
+0x387A45C	E00313AA	mov x0, x19	-
+0x387A460	E1031FAA	mov x1, xzr	-
+0x387A464	6855D697	bl #0x2e0fa04	-
+0x387A468	68008052	mov w8, #3	-
+0x387A46C	2D000014	b #0x387a520	-
+0x387A470	940700B4	cbz x20, #0x387a560	-
+0x387A474	801A40F9	ldr x0, [x20, #0x30]	-
+0x387A478	400700B4	cbz x0, #0x387a560	-
+0x387A47C	080040F9	ldr x8, [x0]	-
+0x387A480	00102E1E	fmov s0, #1.00000000	-
+0x387A484	09855BA9	ldp x9, x1, [x8, #0x1b8]	-
+0x387A488	20013FD6	blr x9	-
+0x387A48C	C8E5FEB0	adrp x8, #0x1533000	-
+0x387A490	004541FD	ldr d0, [x8, #0x288]	-
+0x387A494	E803271E	fmov s8, wzr	-
+0x387A498	601600FD	str d0, [x19, #0x28]	-
+0x387A49C	E0031FAA	mov x0, xzr	-
+0x387A4A0	ACE6B494	bl #0x65b3f50	UnityEngine.Time$$get_deltaTime
+0x387A4A4	0029201E	fadd s0, s8, s0	-
+0x387A4A8	602E00BD	str s0, [x19, #0x2c]	-
+0x387A4AC	B40500B4	cbz x20, #0x387a560	-
+0x387A4B0	883A40BD	ldr s8, [x20, #0x38]	-
+0x387A4B4	E0031FAA	mov x0, xzr	-
+0x387A4B8	A6E6B494	bl #0x65b3f50	UnityEngine.Time$$get_deltaTime
+0x387A4BC	0029201E	fadd s0, s8, s0	-
+0x387A4C0	E00314AA	mov x0, x20	-
+0x387A4C4	E1031FAA	mov x1, xzr	-
+0x387A4C8	803A00BD	str s0, [x20, #0x38]	-
+0x387A4CC	7500B594	bl #0x65ba6a0	UnityEngine.Component$$get_transform
+0x387A4D0	800400B4	cbz x0, #0x387a560	-
+0x387A4D4	E1031FAA	mov x1, xzr	-
+0x387A4D8	BD39B594	bl #0x65c8bcc	UnityEngine.Transform$$get_localPosition
+0x387A4DC	E00314AA	mov x0, x20	-
+0x387A4E0	E1031FAA	mov x1, xzr	-
+0x387A4E4	081CA04E	mov v8.16b, v0.16b	-
+0x387A4E8	6E00B594	bl #0x65ba6a0	UnityEngine.Component$$get_transform
+0x387A4EC	A00300B4	cbz x0, #0x387a560	-
+0x387A4F0	E1031FAA	mov x1, xzr	-
+0x387A4F4	B639B594	bl #0x65c8bcc	UnityEngine.Transform$$get_localPosition
+0x387A4F8	00102E1E	fmov s0, #1.00000000	-
+0x387A4FC	0029201E	fadd s0, s8, s0	-
+0x387A500	E00314AA	mov x0, x20	-
+0x387A504	E1031FAA	mov x1, xzr	-
+0x387A508	EE2B0A94	bl #0x3b054c0	-
+0x387A50C	7F8E01F8	str xzr, [x19, #0x18]!	-
+0x387A510	E00313AA	mov x0, x19	-
+0x387A514	E1031FAA	mov x1, xzr	-
+0x387A518	3B55D697	bl #0x2e0fa04	-
+0x387A51C	48008052	mov w8, #2	-
+0x387A520	68821FB8	stur w8, [x19, #-8]	-
+0x387A524	20008052	mov w0, #1	-
+0x387A528	0A000014	b #0x387a550	-
+0x387A52C	B40100B4	cbz x20, #0x387a560	-
+0x387A530	801A40F9	ldr x0, [x20, #0x30]	-
+0x387A534	9F3A00B9	str wzr, [x20, #0x38]	-
+0x387A538	400100B4	cbz x0, #0x387a560	-
+0x387A53C	080040F9	ldr x8, [x0]	-
+0x387A540	E003271E	fmov s0, wzr	-
+0x387A544	09855BA9	ldp x9, x1, [x8, #0x1b8]	-
+0x387A548	20013FD6	blr x9	-
+0x387A54C	E0031F2A	mov w0, wzr	-
+0x387A550	F44F41A9	ldp x20, x19, [sp, #0x10]	-
+0x387A554	FE0740F9	ldr x30, [sp, #8]	-
+0x387A558	E80742FC	ldr d8, [sp], #0x20	-
+0x387A55C	C0035FD6	ret	-
+0x387A560	E155D697	bl #0x2e0fce4	-

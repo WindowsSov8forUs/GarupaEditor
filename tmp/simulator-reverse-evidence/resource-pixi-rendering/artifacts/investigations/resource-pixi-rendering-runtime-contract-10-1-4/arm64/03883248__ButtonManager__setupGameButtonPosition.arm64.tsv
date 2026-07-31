@@ -1,0 +1,150 @@
+address	bytes	instruction	resolved_target
+0x3883248	ED33BA6D	stp d13, d12, [sp, #-0x60]!	-
+0x388324C	EB2B016D	stp d11, d10, [sp, #0x10]	-
+0x3883250	E923026D	stp d9, d8, [sp, #0x20]	-
+0x3883254	FE5F03A9	stp x30, x23, [sp, #0x30]	-
+0x3883258	F65704A9	stp x22, x21, [sp, #0x40]	-
+0x388325C	F44F05A9	stp x20, x19, [sp, #0x50]	-
+0x3883260	94CE01D0	adrp x20, #0x7255000	-
+0x3883264	88826339	ldrb w8, [x20, #0x8e0]	-
+0x3883268	081CA04E	mov v8.16b, v0.16b	-
+0x388326C	F30300AA	mov x19, x0	-
+0x3883270	28010037	tbnz w8, #0, #0x3883294	-
+0x3883274	C0A001F0	adrp x0, #0x6c9e000	-
+0x3883278	00A843F9	ldr x0, [x0, #0x750]	-
+0x388327C	F731D697	bl #0x2e0fa58	-
+0x3883280	40A001F0	adrp x0, #0x6c8e000	-
+0x3883284	00BC41F9	ldr x0, [x0, #0x378]	-
+0x3883288	F431D697	bl #0x2e0fa58	-
+0x388328C	28008052	mov w8, #1	-
+0x3883290	88822339	strb w8, [x20, #0x8e0]	-
+0x3883294	685A40F9	ldr x8, [x19, #0xb0]	-
+0x3883298	081000B4	cbz x8, #0x3883498	-
+0x388329C	57A001F0	adrp x23, #0x6c8e000	-
+0x38832A0	F7BE41F9	ldr x23, [x23, #0x378]	-
+0x38832A4	F4031F2A	mov w20, wzr	-
+0x38832A8	0D102C1E	fmov s13, #0.50000000	-
+0x38832AC	000D40F9	ldr x0, [x8, #0x18]	-
+0x38832B0	400F00B4	cbz x0, #0x3883498	-
+0x38832B4	081840B9	ldr w8, [x0, #0x18]	-
+0x38832B8	9F02086B	cmp w20, w8	-
+0x38832BC	4A080054	b.ge #0x38833c4	-
+0x38832C0	E20240F9	ldr x2, [x23]	-
+0x38832C4	E103142A	mov w1, w20	-
+0x38832C8	8A927B94	bl #0x5767cf0	System.Collections.Generic.List<object>$$get_Item
+0x38832CC	600E00B4	cbz x0, #0x3883498	-
+0x38832D0	E1031FAA	mov x1, xzr	-
+0x38832D4	F50300AA	mov x21, x0	-
+0x38832D8	F2DCB494	bl #0x65ba6a0	UnityEngine.Component$$get_transform
+0x38832DC	E00D00B4	cbz x0, #0x3883498	-
+0x38832E0	E1031FAA	mov x1, xzr	-
+0x38832E4	3A16B594	bl #0x65c8bcc	UnityEngine.Transform$$get_localPosition
+0x38832E8	E00315AA	mov x0, x21	-
+0x38832EC	E1031FAA	mov x1, xzr	-
+0x38832F0	0A1CA04E	mov v10.16b, v0.16b	-
+0x38832F4	2C1CA14E	mov v12.16b, v1.16b	-
+0x38832F8	491CA24E	mov v9.16b, v2.16b	-
+0x38832FC	E9DCB494	bl #0x65ba6a0	UnityEngine.Component$$get_transform
+0x3883300	C00C00B4	cbz x0, #0x3883498	-
+0x3883304	4B09281E	fmul s11, s10, s8	-
+0x3883308	8A09281E	fmul s10, s12, s8	-
+0x388330C	601DAB4E	mov v0.16b, v11.16b	-
+0x3883310	411DAA4E	mov v1.16b, v10.16b	-
+0x3883314	221DA94E	mov v2.16b, v9.16b	-
+0x3883318	E1031FAA	mov x1, xzr	-
+0x388331C	4F16B594	bl #0x65c8c58	UnityEngine.Transform$$set_localPosition
+0x3883320	B4040034	cbz w20, #0x38833b4	-
+0x3883324	685A40F9	ldr x8, [x19, #0xb0]	-
+0x3883328	880B00B4	cbz x8, #0x3883498	-
+0x388332C	000D40F9	ldr x0, [x8, #0x18]	-
+0x3883330	400B00B4	cbz x0, #0x3883498	-
+0x3883334	E20240F9	ldr x2, [x23]	-
+0x3883338	95060051	sub w21, w20, #1	-
+0x388333C	E103152A	mov w1, w21	-
+0x3883340	6C927B94	bl #0x5767cf0	System.Collections.Generic.List<object>$$get_Item
+0x3883344	685A40F9	ldr x8, [x19, #0xb0]	-
+0x3883348	880A00B4	cbz x8, #0x3883498	-
+0x388334C	F60300AA	mov x22, x0	-
+0x3883350	001140F9	ldr x0, [x8, #0x20]	-
+0x3883354	200A00B4	cbz x0, #0x3883498	-
+0x3883358	E20240F9	ldr x2, [x23]	-
+0x388335C	E103152A	mov w1, w21	-
+0x3883360	64927B94	bl #0x5767cf0	System.Collections.Generic.List<object>$$get_Item
+0x3883364	B60900B4	cbz x22, #0x3883498	-
+0x3883368	F50300AA	mov x21, x0	-
+0x388336C	E00316AA	mov x0, x22	-
+0x3883370	E1031FAA	mov x1, xzr	-
+0x3883374	CBDCB494	bl #0x65ba6a0	UnityEngine.Component$$get_transform
+0x3883378	000900B4	cbz x0, #0x3883498	-
+0x388337C	E1031FAA	mov x1, xzr	-
+0x3883380	1316B594	bl #0x65c8bcc	UnityEngine.Transform$$get_localPosition
+0x3883384	B50800B4	cbz x21, #0x3883498	-
+0x3883388	E00315AA	mov x0, x21	-
+0x388338C	E1031FAA	mov x1, xzr	-
+0x3883390	0C1CA04E	mov v12.16b, v0.16b	-
+0x3883394	C3DCB494	bl #0x65ba6a0	UnityEngine.Component$$get_transform
+0x3883398	000800B4	cbz x0, #0x3883498	-
+0x388339C	60292C1E	fadd s0, s11, s12	-
+0x38833A0	00082D1E	fmul s0, s0, s13	-
+0x38833A4	411DAA4E	mov v1.16b, v10.16b	-
+0x38833A8	221DA94E	mov v2.16b, v9.16b	-
+0x38833AC	E1031FAA	mov x1, xzr	-
+0x38833B0	2A16B594	bl #0x65c8c58	UnityEngine.Transform$$set_localPosition
+0x38833B4	685A40F9	ldr x8, [x19, #0xb0]	-
+0x38833B8	94060011	add w20, w20, #1	-
+0x38833BC	88F7FFB5	cbnz x8, #0x38832ac	-
+0x38833C0	36000014	b #0x3883498	-
+0x38833C4	602240F9	ldr x0, [x19, #0x40]	-
+0x38833C8	800600B4	cbz x0, #0x3883498	-
+0x38833CC	E1031FAA	mov x1, xzr	-
+0x38833D0	B4DCB494	bl #0x65ba6a0	UnityEngine.Component$$get_transform
+0x38833D4	200600B4	cbz x0, #0x3883498	-
+0x38833D8	E1031FAA	mov x1, xzr	-
+0x38833DC	5F1BB594	bl #0x65ca158	UnityEngine.Transform$$get_localScale
+0x38833E0	602240F9	ldr x0, [x19, #0x40]	-
+0x38833E4	0008281E	fmul s0, s0, s8	-
+0x38833E8	011CA04E	mov v1.16b, v0.16b	-
+0x38833EC	E1031FAA	mov x1, xzr	-
+0x38833F0	F6060A94	bl #0x3b04fc8	-
+0x38833F4	685A40F9	ldr x8, [x19, #0xb0]	-
+0x38833F8	080500B4	cbz x8, #0x3883498	-
+0x38833FC	000D40F9	ldr x0, [x8, #0x18]	-
+0x3883400	C00400B4	cbz x0, #0x3883498	-
+0x3883404	E20240F9	ldr x2, [x23]	-
+0x3883408	21008052	mov w1, #1	-
+0x388340C	39927B94	bl #0x5767cf0	System.Collections.Generic.List<object>$$get_Item
+0x3883410	400400B4	cbz x0, #0x3883498	-
+0x3883414	E1031FAA	mov x1, xzr	-
+0x3883418	A2DCB494	bl #0x65ba6a0	UnityEngine.Component$$get_transform
+0x388341C	E00300B4	cbz x0, #0x3883498	-
+0x3883420	E1031FAA	mov x1, xzr	-
+0x3883424	B918B594	bl #0x65c9708	UnityEngine.Transform$$get_position
+0x3883428	685A40F9	ldr x8, [x19, #0xb0]	-
+0x388342C	680300B4	cbz x8, #0x3883498	-
+0x3883430	000D40F9	ldr x0, [x8, #0x18]	-
+0x3883434	200300B4	cbz x0, #0x3883498	-
+0x3883438	E20240F9	ldr x2, [x23]	-
+0x388343C	E1031F2A	mov w1, wzr	-
+0x3883440	081CA04E	mov v8.16b, v0.16b	-
+0x3883444	2B927B94	bl #0x5767cf0	System.Collections.Generic.List<object>$$get_Item
+0x3883448	800200B4	cbz x0, #0x3883498	-
+0x388344C	E1031FAA	mov x1, xzr	-
+0x3883450	94DCB494	bl #0x65ba6a0	UnityEngine.Component$$get_transform
+0x3883454	200200B4	cbz x0, #0x3883498	-
+0x3883458	E1031FAA	mov x1, xzr	-
+0x388345C	AB18B594	bl #0x65c9708	UnityEngine.Transform$$get_position
+0x3883460	605E40F9	ldr x0, [x19, #0xb8]	-
+0x3883464	A00100B4	cbz x0, #0x3883498	-
+0x3883468	0039201E	fsub s0, s8, s0	-
+0x388346C	F44F45A9	ldp x20, x19, [sp, #0x50]	-
+0x3883470	F65744A9	ldp x22, x21, [sp, #0x40]	-
+0x3883474	FE5F43A9	ldp x30, x23, [sp, #0x30]	-
+0x3883478	E923426D	ldp d9, d8, [sp, #0x20]	-
+0x388347C	EB2B416D	ldp d11, d10, [sp, #0x10]	-
+0x3883480	0859A852	mov w8, #0x42c80000	-
+0x3883484	0101271E	fmov s1, w8	-
+0x3883488	0018211E	fdiv s0, s0, s1	-
+0x388348C	E1031FAA	mov x1, xzr	-
+0x3883490	ED33C66C	ldp d13, d12, [sp], #0x60	-
+0x3883494	3B10EA17	b #0x3307580	InGameVirtualLaneController$$SetNoteEndPosVirtualLaneDistanceDeltaX
+0x3883498	1332D697	bl #0x2e0fce4	-

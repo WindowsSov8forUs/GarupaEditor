@@ -1,0 +1,22 @@
+address	bytes	instruction	resolved_target
+0x3882920	FE4FBFA9	stp x30, x19, [sp, #-0x10]!	-
+0x3882924	610200B4	cbz x1, #0x3882970	-
+0x3882928	281040B9	ldr w8, [x1, #0x10]	-
+0x388292C	F30301AA	mov x19, x1	-
+0x3882930	1F090071	cmp w8, #2	-
+0x3882934	61010054	b.ne #0x3882960	-
+0x3882938	606A40F9	ldr x0, [x19, #0xd0]	-
+0x388293C	200100B4	cbz x0, #0x3882960	-
+0x3882940	E1031FAA	mov x1, xzr	-
+0x3882944	679F0994	bl #0x3aea6e0	MultiBandRoomModel$$get_BandId
+0x3882948	C0000034	cbz w0, #0x3882960	-
+0x388294C	606A40F9	ldr x0, [x19, #0xd0]	-
+0x3882950	000100B4	cbz x0, #0x3882970	-
+0x3882954	E1031FAA	mov x1, xzr	-
+0x3882958	FE4FC1A8	ldp x30, x19, [sp], #0x10	-
+0x388295C	689F0914	b #0x3aea6fc	MultiBandRoomModel$$get_SkinLaneId
+0x3882960	68DA40B9	ldr w8, [x19, #0xd8]	-
+0x3882964	00050011	add w0, w8, #1	-
+0x3882968	FE4FC1A8	ldp x30, x19, [sp], #0x10	-
+0x388296C	C0035FD6	ret	-
+0x3882970	DD34D697	bl #0x2e0fce4	-

@@ -1,0 +1,13 @@
+address	bytes	instruction	resolved_target
+0x30EDFE8	FE4FBFA9	stp x30, x19, [sp, #-0x10]!	-
+0x30EDFEC	F30300AA	mov x19, x0	-
+0x30EDFF0	79FEFF97	bl #0x30ed9d4	NoteMultipleDirectionalFlickAfter$$DeactivateBackLine
+0x30EDFF4	62DA40F9	ldr x2, [x19, #0x1b0]	-
+0x30EDFF8	E00313AA	mov x0, x19	-
+0x30EDFFC	E1031F2A	mov w1, wzr	-
+0x30EE000	06000094	bl #0x30ee018	NoteMultipleDirectionalFlickAfter$$setSpriteEnabledForRightSideNotes
+0x30EE004	62D640F9	ldr x2, [x19, #0x1a8]	-
+0x30EE008	E00313AA	mov x0, x19	-
+0x30EE00C	E1031F2A	mov w1, wzr	-
+0x30EE010	FE4FC1A8	ldp x30, x19, [sp], #0x10	-
+0x30EE014	26000014	b #0x30ee0ac	NoteMultipleDirectionalFlickAfter$$setSpriteEnabledForLeftSideNotes

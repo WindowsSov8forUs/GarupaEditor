@@ -1,0 +1,8 @@
+address	bytes	instruction	resolved_target
+0x32ABD04	FE0F1FF8	str x30, [sp, #-0x10]!	-
+0x32ABD08	002040F9	ldr x0, [x0, #0x40]	-
+0x32ABD0C	800000B4	cbz x0, #0x32abd1c	-
+0x32ABD10	E1031FAA	mov x1, xzr	-
+0x32ABD14	FE0741F8	ldr x30, [sp], #0x10	-
+0x32ABD18	06DC0014	b #0x32e2d30	SkillEffectChangeableTextObject$$Initialize
+0x32ABD1C	F28FED97	bl #0x2e0fce4	-

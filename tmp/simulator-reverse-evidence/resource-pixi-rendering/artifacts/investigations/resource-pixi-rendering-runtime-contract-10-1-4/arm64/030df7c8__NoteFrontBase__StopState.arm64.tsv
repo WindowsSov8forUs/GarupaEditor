@@ -1,0 +1,48 @@
+address	bytes	instruction	resolved_target
+0x30DF7C8	EA0F1DFC	str d10, [sp, #-0x30]!	-
+0x30DF7CC	E9A3006D	stp d9, d8, [sp, #8]	-
+0x30DF7D0	FE0F00F9	str x30, [sp, #0x18]	-
+0x30DF7D4	F44F02A9	stp x20, x19, [sp, #0x20]	-
+0x30DF7D8	E1031FAA	mov x1, xzr	-
+0x30DF7DC	F30300AA	mov x19, x0	-
+0x30DF7E0	B06BD394	bl #0x65ba6a0	UnityEngine.Component$$get_transform
+0x30DF7E4	E00400B4	cbz x0, #0x30df880	-
+0x30DF7E8	E1031FAA	mov x1, xzr	-
+0x30DF7EC	C7A7D394	bl #0x65c9708	UnityEngine.Transform$$get_position
+0x30DF7F0	692A4F2D	ldp s9, s10, [x19, #0x78]	-
+0x30DF7F4	E00313AA	mov x0, x19	-
+0x30DF7F8	E1031FAA	mov x1, xzr	-
+0x30DF7FC	481CA24E	mov v8.16b, v2.16b	-
+0x30DF800	A86BD394	bl #0x65ba6a0	UnityEngine.Component$$get_transform
+0x30DF804	E00300B4	cbz x0, #0x30df880	-
+0x30DF808	201DA94E	mov v0.16b, v9.16b	-
+0x30DF80C	411DAA4E	mov v1.16b, v10.16b	-
+0x30DF810	021DA84E	mov v2.16b, v8.16b	-
+0x30DF814	E1031FAA	mov x1, xzr	-
+0x30DF818	E4A7D394	bl #0x65c97a8	UnityEngine.Transform$$set_position
+0x30DF81C	E00313AA	mov x0, x19	-
+0x30DF820	E1031FAA	mov x1, xzr	-
+0x30DF824	9F6BD394	bl #0x65ba6a0	UnityEngine.Component$$get_transform
+0x30DF828	F40300AA	mov x20, x0	-
+0x30DF82C	E00313AA	mov x0, x19	-
+0x30DF830	E1031FAA	mov x1, xzr	-
+0x30DF834	18512694	bl #0x3a73c94	NoteBase$$get_TargetCenterButton
+0x30DF838	400200B4	cbz x0, #0x30df880	-
+0x30DF83C	E1031FAA	mov x1, xzr	-
+0x30DF840	986BD394	bl #0x65ba6a0	UnityEngine.Component$$get_transform
+0x30DF844	E00100B4	cbz x0, #0x30df880	-
+0x30DF848	E1031FAA	mov x1, xzr	-
+0x30DF84C	43AAD394	bl #0x65ca158	UnityEngine.Transform$$get_localScale
+0x30DF850	940100B4	cbz x20, #0x30df880	-
+0x30DF854	630E41BD	ldr s3, [x19, #0x10c]	-
+0x30DF858	E00314AA	mov x0, x20	-
+0x30DF85C	F44F42A9	ldp x20, x19, [sp, #0x20]	-
+0x30DF860	FE0F40F9	ldr x30, [sp, #0x18]	-
+0x30DF864	E9A3406D	ldp d9, d8, [sp, #8]	-
+0x30DF868	4208231E	fmul s2, s2, s3	-
+0x30DF86C	2108231E	fmul s1, s1, s3	-
+0x30DF870	0008231E	fmul s0, s0, s3	-
+0x30DF874	E1031FAA	mov x1, xzr	-
+0x30DF878	EA0743FC	ldr d10, [sp], #0x30	-
+0x30DF87C	5FAAD314	b #0x65ca1f8	UnityEngine.Transform$$set_localScale
+0x30DF880	19C1F497	bl #0x2e0fce4	-

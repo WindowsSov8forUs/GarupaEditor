@@ -1,0 +1,5 @@
+address	bytes	instruction	resolved_target
+0x3A75660	08200591	add x8, x0, #0x148	-
+0x3A75664	01A400F9	str x1, [x0, #0x148]	-
+0x3A75668	E00308AA	mov x0, x8	-
+0x3A7566C	E668CE17	b #0x2e0fa04	-

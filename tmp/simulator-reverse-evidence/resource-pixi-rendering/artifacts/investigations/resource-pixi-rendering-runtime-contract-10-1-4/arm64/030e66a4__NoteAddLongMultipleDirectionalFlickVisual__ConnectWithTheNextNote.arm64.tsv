@@ -1,0 +1,51 @@
+address	bytes	instruction	resolved_target
+0x30E66A4	FE67BCA9	stp x30, x25, [sp, #-0x40]!	-
+0x30E66A8	F85F01A9	stp x24, x23, [sp, #0x10]	-
+0x30E66AC	F65702A9	stp x22, x21, [sp, #0x20]	-
+0x30E66B0	F44F03A9	stp x20, x19, [sp, #0x30]	-
+0x30E66B4	580B02D0	adrp x24, #0x7250000	-
+0x30E66B8	F9DC0190	adrp x25, #0x6c82000	-
+0x30E66BC	088B7039	ldrb w8, [x24, #0xc22]	-
+0x30E66C0	392341F9	ldr x25, [x25, #0x240]	-
+0x30E66C4	F50304AA	mov x21, x4	-
+0x30E66C8	F60303AA	mov x22, x3	-
+0x30E66CC	F70302AA	mov x23, x2	-
+0x30E66D0	F40301AA	mov x20, x1	-
+0x30E66D4	F30300AA	mov x19, x0	-
+0x30E66D8	C8000037	tbnz w8, #0, #0x30e66f0	-
+0x30E66DC	E0DC0190	adrp x0, #0x6c82000	-
+0x30E66E0	002041F9	ldr x0, [x0, #0x240]	-
+0x30E66E4	DDA4F497	bl #0x2e0fa58	-
+0x30E66E8	28008052	mov w8, #1	-
+0x30E66EC	088B3039	strb w8, [x24, #0xc22]	-
+0x30E66F0	200340F9	ldr x0, [x25]	-
+0x30E66F4	08E040B9	ldr w8, [x0, #0xe0]	-
+0x30E66F8	48000035	cbnz w8, #0x30e6700	-
+0x30E66FC	34A5F497	bl #0x2e0fbcc	-
+0x30E6700	E00317AA	mov x0, x23	-
+0x30E6704	E1031FAA	mov x1, xzr	-
+0x30E6708	E2031FAA	mov x2, xzr	-
+0x30E670C	665AD394	bl #0x65bd0a4	UnityEngine.Object$$op_Inequality
+0x30E6710	A0010036	tbz w0, #0, #0x30e6744	-
+0x30E6714	60620791	add x0, x19, #0x1d8	-
+0x30E6718	E10317AA	mov x1, x23	-
+0x30E671C	77EE00F9	str x23, [x19, #0x1d8]	-
+0x30E6720	B9A4F497	bl #0x2e0fa04	-
+0x30E6724	60EE40F9	ldr x0, [x19, #0x1d8]	-
+0x30E6728	000200B4	cbz x0, #0x30e6768	-
+0x30E672C	E10313AA	mov x1, x19	-
+0x30E6730	E20314AA	mov x2, x20	-
+0x30E6734	E30316AA	mov x3, x22	-
+0x30E6738	E40315AA	mov x4, x21	-
+0x30E673C	E5031FAA	mov x5, xzr	-
+0x30E6740	16F00494	bl #0x3222798	NoteMultipleDirectionalFlickBackLine$$Setup
+0x30E6744	E00313AA	mov x0, x19	-
+0x30E6748	E10314AA	mov x1, x20	-
+0x30E674C	08000094	bl #0x30e676c	-
+0x30E6750	E00313AA	mov x0, x19	-
+0x30E6754	F44F43A9	ldp x20, x19, [sp, #0x30]	-
+0x30E6758	F65742A9	ldp x22, x21, [sp, #0x20]	-
+0x30E675C	F85F41A9	ldp x24, x23, [sp, #0x10]	-
+0x30E6760	FE67C4A8	ldp x30, x25, [sp], #0x40	-
+0x30E6764	8B000014	b #0x30e6990	NoteAddLongMultipleDirectionalFlickVisual$$setupFlickAnimationIconVisibility
+0x30E6768	5FA5F497	bl #0x2e0fce4	-

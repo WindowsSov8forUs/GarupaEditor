@@ -1,0 +1,5 @@
+address	bytes	instruction	resolved_target
+0x3A756B0	085040B9	ldr w8, [x0, #0x50]	-
+0x3A756B4	1F0D0071	cmp w8, #3	-
+0x3A756B8	E0179F1A	cset w0, eq	-
+0x3A756BC	C0035FD6	ret	-

@@ -1,0 +1,14 @@
+address	bytes	instruction	resolved_target
+0x3881E78	FE4FBFA9	stp x30, x19, [sp, #-0x10]!	-
+0x3881E7C	F30300AA	mov x19, x0	-
+0x3881E80	8B020094	bl #0x38828ac	ButtonManager$$fadeOutTestObject
+0x3881E84	E10300AA	mov x1, x0	-
+0x3881E88	E00313AA	mov x0, x19	-
+0x3881E8C	E2031FAA	mov x2, xzr	-
+0x3881E90	EBF1B494	bl #0x65be63c	-
+0x3881E94	605A40F9	ldr x0, [x19, #0xb0]	-
+0x3881E98	800000B4	cbz x0, #0x3881ea8	-
+0x3881E9C	E1031FAA	mov x1, xzr	-
+0x3881EA0	FE4FC1A8	ldp x30, x19, [sp], #0x10	-
+0x3881EA4	F60CEA17	b #0x330527c	InGamePlayButtonController$$TurnOffAllNoteLaneEffect
+0x3881EA8	8F37D697	bl #0x2e0fce4	-

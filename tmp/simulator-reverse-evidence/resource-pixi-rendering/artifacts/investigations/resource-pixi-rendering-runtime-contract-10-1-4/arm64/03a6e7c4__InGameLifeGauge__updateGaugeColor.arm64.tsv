@@ -1,0 +1,15 @@
+address	bytes	instruction	resolved_target
+0x3A6E7C4	FE0F1EF8	str x30, [sp, #-0x20]!	-
+0x3A6E7C8	F44F01A9	stp x20, x19, [sp, #0x10]	-
+0x3A6E7CC	F40300AA	mov x20, x0	-
+0x3A6E7D0	A2FEFF97	bl #0x3a6e258	InGameLifeGauge$$get_FrontGauge_
+0x3A6E7D4	F30300AA	mov x19, x0	-
+0x3A6E7D8	E00314AA	mov x0, x20	-
+0x3A6E7DC	F2000094	bl #0x3a6eba4	InGameLifeGauge$$GetGaugeColor
+0x3A6E7E0	D30000B4	cbz x19, #0x3a6e7f8	-
+0x3A6E7E4	E00313AA	mov x0, x19	-
+0x3A6E7E8	F44F41A9	ldp x20, x19, [sp, #0x10]	-
+0x3A6E7EC	E1031FAA	mov x1, xzr	-
+0x3A6E7F0	FE0742F8	ldr x30, [sp], #0x20	-
+0x3A6E7F4	2173D717	b #0x304b478	UIWidget$$set_color
+0x3A6E7F8	3B85CE97	bl #0x2e0fce4	-

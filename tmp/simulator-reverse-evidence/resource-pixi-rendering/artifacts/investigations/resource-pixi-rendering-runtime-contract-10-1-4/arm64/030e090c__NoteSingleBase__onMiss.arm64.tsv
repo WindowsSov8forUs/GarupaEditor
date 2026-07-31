@@ -1,0 +1,29 @@
+address	bytes	instruction	resolved_target
+0x30E090C	FF8300D1	sub sp, sp, #0x20	-
+0x30E0910	FE4F01A9	stp x30, x19, [sp, #0x10]	-
+0x30E0914	E1031FAA	mov x1, xzr	-
+0x30E0918	F30300AA	mov x19, x0	-
+0x30E091C	6C562694	bl #0x3a762cc	NoteBase$$onMiss
+0x30E0920	E2330091	add x2, sp, #0xc	-
+0x30E0924	E00313AA	mov x0, x19	-
+0x30E0928	E1031F2A	mov w1, wzr	-
+0x30E092C	FF0F00B9	str wzr, [sp, #0xc]	-
+0x30E0930	5AFCFF97	bl #0x30dfa98	NoteFrontBase$$calcAddDamage
+0x30E0934	683240F9	ldr x8, [x19, #0x60]	-
+0x30E0938	080200B4	cbz x8, #0x30e0978	-
+0x30E093C	031540F9	ldr x3, [x8, #0x28]	-
+0x30E0940	041140B9	ldr w4, [x8, #0x10]	-
+0x30E0944	E50F40B9	ldr w5, [sp, #0xc]	-
+0x30E0948	E203002A	mov w2, w0	-
+0x30E094C	E00313AA	mov x0, x19	-
+0x30E0950	E1031F2A	mov w1, wzr	-
+0x30E0954	E6031FAA	mov x6, xzr	-
+0x30E0958	05552694	bl #0x3a75d6c	NoteBase$$Miss
+0x30E095C	680240F9	ldr x8, [x19]	-
+0x30E0960	E00313AA	mov x0, x19	-
+0x30E0964	FE4F41A9	ldp x30, x19, [sp, #0x10]	-
+0x30E0968	021541F9	ldr x2, [x8, #0x228]	-
+0x30E096C	011941F9	ldr x1, [x8, #0x230]	-
+0x30E0970	FF830091	add sp, sp, #0x20	-
+0x30E0974	40001FD6	br x2	-
+0x30E0978	DBBCF497	bl #0x2e0fce4	-

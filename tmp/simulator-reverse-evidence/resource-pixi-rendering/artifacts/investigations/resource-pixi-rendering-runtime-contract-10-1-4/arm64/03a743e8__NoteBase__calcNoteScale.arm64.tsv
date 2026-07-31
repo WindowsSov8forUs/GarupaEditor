@@ -1,0 +1,88 @@
+address	bytes	instruction	resolved_target
+0x3A743E8	EC0F1CFC	str d12, [sp, #-0x40]!	-
+0x3A743EC	EBAB006D	stp d11, d10, [sp, #8]	-
+0x3A743F0	E9A3016D	stp d9, d8, [sp, #0x18]	-
+0x3A743F4	FE1700F9	str x30, [sp, #0x28]	-
+0x3A743F8	F44F03A9	stp x20, x19, [sp, #0x30]	-
+0x3A743FC	14BF01D0	adrp x20, #0x7256000	-
+0x3A74400	88627739	ldrb w8, [x20, #0xdd8]	-
+0x3A74404	081CA04E	mov v8.16b, v0.16b	-
+0x3A74408	F30300AA	mov x19, x0	-
+0x3A7440C	28010037	tbnz w8, #0, #0x3a74430	-
+0x3A74410	C09001D0	adrp x0, #0x6c8e000	-
+0x3A74414	007840F9	ldr x0, [x0, #0xf0]	-
+0x3A74418	906DCE97	bl #0x2e0fa58	-
+0x3A7441C	C09001D0	adrp x0, #0x6c8e000	-
+0x3A74420	005440F9	ldr x0, [x0, #0xa8]	-
+0x3A74424	8D6DCE97	bl #0x2e0fa58	-
+0x3A74428	28008052	mov w8, #1	-
+0x3A7442C	88623739	strb w8, [x20, #0xdd8]	-
+0x3A74430	E00313AA	mov x0, x19	-
+0x3A74434	E1031FAA	mov x1, xzr	-
+0x3A74438	9A18AD94	bl #0x65ba6a0	UnityEngine.Component$$get_transform
+0x3A7443C	000800B4	cbz x0, #0x3a7453c	-
+0x3A74440	E1031FAA	mov x1, xzr	-
+0x3A74444	4557AD94	bl #0x65ca158	UnityEngine.Transform$$get_localScale
+0x3A74448	609640F9	ldr x0, [x19, #0x128]	-
+0x3A7444C	800700B4	cbz x0, #0x3a7453c	-
+0x3A74450	E1031FAA	mov x1, xzr	-
+0x3A74454	9318AD94	bl #0x65ba6a0	UnityEngine.Component$$get_transform
+0x3A74458	200700B4	cbz x0, #0x3a7453c	-
+0x3A7445C	D49001D0	adrp x20, #0x6c8e000	-
+0x3A74460	947A40F9	ldr x20, [x20, #0xf0]	-
+0x3A74464	E1031FAA	mov x1, xzr	-
+0x3A74468	D951AD94	bl #0x65c8bcc	UnityEngine.Transform$$get_localPosition
+0x3A7446C	800240F9	ldr x0, [x20]	-
+0x3A74470	6B7E40BD	ldr s11, [x19, #0x7c]	-
+0x3A74474	6A0E41BD	ldr s10, [x19, #0x10c]	-
+0x3A74478	291CA14E	mov v9.16b, v1.16b	-
+0x3A7447C	08E040B9	ldr w8, [x0, #0xe0]	-
+0x3A74480	68000035	cbnz w8, #0x3a7448c	-
+0x3A74484	D26DCE97	bl #0x2e0fbcc	-
+0x3A74488	800240F9	ldr x0, [x20]	-
+0x3A7448C	695A40F9	ldr x9, [x19, #0xb0]	-
+0x3A74490	690500B4	cbz x9, #0x3a7453c	-
+0x3A74494	085C40F9	ldr x8, [x0, #0xb8]	-
+0x3A74498	080140F9	ldr x8, [x8]	-
+0x3A7449C	080500B4	cbz x8, #0x3a7453c	-
+0x3A744A0	291940B9	ldr w9, [x9, #0x18]	-
+0x3A744A4	0A1940B9	ldr w10, [x8, #0x18]	-
+0x3A744A8	29050051	sub w9, w9, #1	-
+0x3A744AC	3F010A6B	cmp w9, w10	-
+0x3A744B0	82040054	b.hs #0x3a74540	-
+0x3A744B4	CA9001D0	adrp x10, #0x6c8e000	-
+0x3A744B8	4A5540F9	ldr x10, [x10, #0xa8]	-
+0x3A744BC	08C9298B	add x8, x8, w9, sxtw #2	-
+0x3A744C0	0C2140BD	ldr s12, [x8, #0x20]	-
+0x3A744C4	400140F9	ldr x0, [x10]	-
+0x3A744C8	8B1C3C94	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x3A744CC	800300B4	cbz x0, #0x3a7453c	-
+0x3A744D0	028440BD	ldr s2, [x0, #0x84]	-
+0x3A744D4	08D6FED0	adrp x8, #0x1536000	-
+0x3A744D8	20D5A87E	fabd s0, s9, s8	-
+0x3A744DC	054140BD	ldr s5, [x8, #0x40]	-
+0x3A744E0	21D5AB7E	fabd s1, s9, s11	-
+0x3A744E4	4009201E	fmul s0, s10, s0	-
+0x3A744E8	08D6FED0	adrp x8, #0x1536000	-
+0x3A744EC	03102E1E	fmov s3, #1.00000000	-
+0x3A744F0	0018211E	fdiv s0, s0, s1	-
+0x3A744F4	018943BD	ldr s1, [x8, #0x388]	-
+0x3A744F8	E403271E	fmov s4, wzr	-
+0x3A744FC	4820201E	fcmp s2, #0.0	-
+0x3A74500	4258231E	fmin s2, s2, s3	-
+0x3A74504	425C241E	fcsel s2, s2, s4, pl	-
+0x3A74508	8429251E	fadd s4, s12, s5	-
+0x3A7450C	8208221E	fmul s2, s4, s2	-
+0x3A74510	4128211E	fadd s1, s2, s1	-
+0x3A74514	F44F43A9	ldp x20, x19, [sp, #0x30]	-
+0x3A74518	FE1740F9	ldr x30, [sp, #0x28]	-
+0x3A7451C	E9A3416D	ldp d9, d8, [sp, #0x18]	-
+0x3A74520	EBAB406D	ldp d11, d10, [sp, #8]	-
+0x3A74524	0008211E	fmul s0, s0, s1	-
+0x3A74528	6138211E	fsub s1, s3, s1	-
+0x3A7452C	0028211E	fadd s0, s0, s1	-
+0x3A74530	011CA04E	mov v1.16b, v0.16b	-
+0x3A74534	EC0744FC	ldr d12, [sp], #0x40	-
+0x3A74538	C0035FD6	ret	-
+0x3A7453C	EA6DCE97	bl #0x2e0fce4	-
+0x3A74540	EB6DCE97	bl #0x2e0fcec	-

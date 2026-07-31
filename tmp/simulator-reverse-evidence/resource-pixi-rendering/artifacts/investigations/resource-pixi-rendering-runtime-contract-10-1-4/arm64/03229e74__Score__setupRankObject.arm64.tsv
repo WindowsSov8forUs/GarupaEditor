@@ -1,0 +1,2 @@
+address	bytes	instruction	resolved_target
+0x3229E74	B0040014	b #0x322b134	Score$$SetupRankObject

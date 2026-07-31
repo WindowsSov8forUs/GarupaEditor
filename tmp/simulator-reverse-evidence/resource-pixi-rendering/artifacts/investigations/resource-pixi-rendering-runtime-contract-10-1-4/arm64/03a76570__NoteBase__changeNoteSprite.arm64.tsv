@@ -1,0 +1,16 @@
+address	bytes	instruction	resolved_target
+0x3A76570	FE4FBFA9	stp x30, x19, [sp, #-0x10]!	-
+0x3A76574	E80300AA	mov x8, x0	-
+0x3A76578	009840F9	ldr x0, [x0, #0x130]	-
+0x3A7657C	600100B4	cbz x0, #0x3a765a8	-
+0x3A76580	132D40F9	ldr x19, [x8, #0x58]	-
+0x3A76584	63000012	and w3, w3, #1	-
+0x3A76588	E4031FAA	mov x4, xzr	-
+0x3A7658C	6050E297	bl #0x330a70c	NoteImageController$$GetNoteSprite
+0x3A76590	D30000B4	cbz x19, #0x3a765a8	-
+0x3A76594	E10300AA	mov x1, x0	-
+0x3A76598	E00313AA	mov x0, x19	-
+0x3A7659C	E2031FAA	mov x2, xzr	-
+0x3A765A0	FE4FC1A8	ldp x30, x19, [sp], #0x10	-
+0x3A765A4	175AAD14	b #0x65cce00	UnityEngine.SpriteRenderer$$set_sprite
+0x3A765A8	CF65CE97	bl #0x2e0fce4	-

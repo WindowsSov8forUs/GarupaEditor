@@ -1,0 +1,59 @@
+address	bytes	instruction	resolved_target
+0x30E7788	E923BD6D	stp d9, d8, [sp, #-0x30]!	-
+0x30E778C	FE5701A9	stp x30, x21, [sp, #0x10]	-
+0x30E7790	F44F02A9	stp x20, x19, [sp, #0x20]	-
+0x30E7794	540B02B0	adrp x20, #0x7250000	-
+0x30E7798	D5DC01F0	adrp x21, #0x6c82000	-
+0x30E779C	88C67039	ldrb w8, [x20, #0xc31]	-
+0x30E77A0	B52241F9	ldr x21, [x21, #0x240]	-
+0x30E77A4	291CA14E	mov v9.16b, v1.16b	-
+0x30E77A8	081CA04E	mov v8.16b, v0.16b	-
+0x30E77AC	F30300AA	mov x19, x0	-
+0x30E77B0	C8000037	tbnz w8, #0, #0x30e77c8	-
+0x30E77B4	C0DC01F0	adrp x0, #0x6c82000	-
+0x30E77B8	002041F9	ldr x0, [x0, #0x240]	-
+0x30E77BC	A7A0F497	bl #0x2e0fa58	-
+0x30E77C0	28008052	mov w8, #1	-
+0x30E77C4	88C63039	strb w8, [x20, #0xc31]	-
+0x30E77C8	E00313AA	mov x0, x19	-
+0x30E77CC	001DA84E	mov v0.16b, v8.16b	-
+0x30E77D0	690601BD	str s9, [x19, #0x104]	-
+0x30E77D4	02E4FF97	bl #0x30e07dc	NoteSingleBase$$MoveState
+0x30E77D8	A00240F9	ldr x0, [x21]	-
+0x30E77DC	74DA40F9	ldr x20, [x19, #0x1b0]	-
+0x30E77E0	08E040B9	ldr w8, [x0, #0xe0]	-
+0x30E77E4	48000035	cbnz w8, #0x30e77ec	-
+0x30E77E8	F9A0F497	bl #0x2e0fbcc	-
+0x30E77EC	E00314AA	mov x0, x20	-
+0x30E77F0	E1031FAA	mov x1, xzr	-
+0x30E77F4	E2031FAA	mov x2, xzr	-
+0x30E77F8	2B56D394	bl #0x65bd0a4	UnityEngine.Object$$op_Inequality
+0x30E77FC	C0000036	tbz w0, #0, #0x30e7814	-
+0x30E7800	60DA40F9	ldr x0, [x19, #0x1b0]	-
+0x30E7804	400300B4	cbz x0, #0x30e786c	-
+0x30E7808	001DA84E	mov v0.16b, v8.16b	-
+0x30E780C	E1031FAA	mov x1, xzr	-
+0x30E7810	69312694	bl #0x3a73db4	NoteBase$$Move
+0x30E7814	A00240F9	ldr x0, [x21]	-
+0x30E7818	74D640F9	ldr x20, [x19, #0x1a8]	-
+0x30E781C	08E040B9	ldr w8, [x0, #0xe0]	-
+0x30E7820	48000035	cbnz w8, #0x30e7828	-
+0x30E7824	EAA0F497	bl #0x2e0fbcc	-
+0x30E7828	E00314AA	mov x0, x20	-
+0x30E782C	E1031FAA	mov x1, xzr	-
+0x30E7830	E2031FAA	mov x2, xzr	-
+0x30E7834	1C56D394	bl #0x65bd0a4	UnityEngine.Object$$op_Inequality
+0x30E7838	20010036	tbz w0, #0, #0x30e785c	-
+0x30E783C	60D640F9	ldr x0, [x19, #0x1a8]	-
+0x30E7840	600100B4	cbz x0, #0x30e786c	-
+0x30E7844	F44F42A9	ldp x20, x19, [sp, #0x20]	-
+0x30E7848	FE5741A9	ldp x30, x21, [sp, #0x10]	-
+0x30E784C	001DA84E	mov v0.16b, v8.16b	-
+0x30E7850	E1031FAA	mov x1, xzr	-
+0x30E7854	E923C36C	ldp d9, d8, [sp], #0x30	-
+0x30E7858	57312614	b #0x3a73db4	NoteBase$$Move
+0x30E785C	F44F42A9	ldp x20, x19, [sp, #0x20]	-
+0x30E7860	FE5741A9	ldp x30, x21, [sp, #0x10]	-
+0x30E7864	E923C36C	ldp d9, d8, [sp], #0x30	-
+0x30E7868	C0035FD6	ret	-
+0x30E786C	1EA1F497	bl #0x2e0fce4	-

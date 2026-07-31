@@ -1,0 +1,36 @@
+address	bytes	instruction	resolved_target
+0x30EE2E4	FE57BEA9	stp x30, x21, [sp, #-0x20]!	-
+0x30EE2E8	F44F01A9	stp x20, x19, [sp, #0x10]	-
+0x30EE2EC	150B02D0	adrp x21, #0x7250000	-
+0x30EE2F0	B4DC0190	adrp x20, #0x6c82000	-
+0x30EE2F4	A8F27139	ldrb w8, [x21, #0xc7c]	-
+0x30EE2F8	942241F9	ldr x20, [x20, #0x240]	-
+0x30EE2FC	F30300AA	mov x19, x0	-
+0x30EE300	C8000037	tbnz w8, #0, #0x30ee318	-
+0x30EE304	A0DC0190	adrp x0, #0x6c82000	-
+0x30EE308	002041F9	ldr x0, [x0, #0x240]	-
+0x30EE30C	D385F497	bl #0x2e0fa58	-
+0x30EE310	28008052	mov w8, #1	-
+0x30EE314	A8F23139	strb w8, [x21, #0xc7c]	-
+0x30EE318	800240F9	ldr x0, [x20]	-
+0x30EE31C	74D640F9	ldr x20, [x19, #0x1a8]	-
+0x30EE320	08E040B9	ldr w8, [x0, #0xe0]	-
+0x30EE324	48000035	cbnz w8, #0x30ee32c	-
+0x30EE328	2986F497	bl #0x2e0fbcc	-
+0x30EE32C	E00314AA	mov x0, x20	-
+0x30EE330	E1031FAA	mov x1, xzr	-
+0x30EE334	E2031FAA	mov x2, xzr	-
+0x30EE338	5B3BD394	bl #0x65bd0a4	UnityEngine.Object$$op_Inequality
+0x30EE33C	00010036	tbz w0, #0, #0x30ee35c	-
+0x30EE340	60D640F9	ldr x0, [x19, #0x1a8]	-
+0x30EE344	400100B4	cbz x0, #0x30ee36c	-
+0x30EE348	080040F9	ldr x8, [x0]	-
+0x30EE34C	F44F41A9	ldp x20, x19, [sp, #0x10]	-
+0x30EE350	02855DA9	ldp x2, x1, [x8, #0x1d8]	-
+0x30EE354	FE57C2A8	ldp x30, x21, [sp], #0x20	-
+0x30EE358	40001FD6	br x2	-
+0x30EE35C	E00313AA	mov x0, x19	-
+0x30EE360	F44F41A9	ldp x20, x19, [sp, #0x10]	-
+0x30EE364	FE57C2A8	ldp x30, x21, [sp], #0x20	-
+0x30EE368	C0035FD6	ret	-
+0x30EE36C	5E86F497	bl #0x2e0fce4	-

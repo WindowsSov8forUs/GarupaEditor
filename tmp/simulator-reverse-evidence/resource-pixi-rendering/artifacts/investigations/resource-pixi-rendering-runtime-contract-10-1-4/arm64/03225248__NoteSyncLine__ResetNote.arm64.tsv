@@ -1,0 +1,11 @@
+address	bytes	instruction	resolved_target
+0x3225248	FE0F1EF8	str x30, [sp, #-0x20]!	-
+0x322524C	F44F01A9	stp x20, x19, [sp, #0x10]	-
+0x3225250	F30301AA	mov x19, x1	-
+0x3225254	F40300AA	mov x20, x0	-
+0x3225258	9CFEFF97	bl #0x3224cc8	NoteSyncLine$$Deactivate
+0x322525C	E00314AA	mov x0, x20	-
+0x3225260	E10313AA	mov x1, x19	-
+0x3225264	F44F41A9	ldp x20, x19, [sp, #0x10]	-
+0x3225268	FE0742F8	ldr x30, [sp], #0x20	-
+0x322526C	84FDFF17	b #0x322487c	NoteSyncLine$$AwakeEnd

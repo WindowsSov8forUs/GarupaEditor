@@ -1,0 +1,3 @@
+address	bytes	instruction	resolved_target
+0x30E5F64	E0031F2A	mov w0, wzr	-
+0x30E5F68	C0035FD6	ret	-

@@ -1,0 +1,8 @@
+address	bytes	instruction	resolved_target
+0x3882704	FE0F1FF8	str x30, [sp, #-0x10]!	-
+0x3882708	005840F9	ldr x0, [x0, #0xb0]	-
+0x388270C	800000B4	cbz x0, #0x388271c	-
+0x3882710	E1031FAA	mov x1, xzr	-
+0x3882714	FE0741F8	ldr x30, [sp], #0x10	-
+0x3882718	0C0BEA17	b #0x3305348	InGamePlayButtonController$$StopAllTapKeepAnimation
+0x388271C	7235D697	bl #0x2e0fce4	-

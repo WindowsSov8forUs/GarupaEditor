@@ -1,0 +1,11 @@
+address	bytes	instruction	resolved_target
+0x396CBB4	FE4FBFA9	stp x30, x19, [sp, #-0x10]!	-
+0x396CBB8	F30300AA	mov x19, x0	-
+0x396CBBC	618E03F8	str x1, [x19, #0x38]!	-
+0x396CBC0	E00313AA	mov x0, x19	-
+0x396CBC4	908BD297	bl #0x2e0fa04	-
+0x396CBC8	60825EF8	ldur x0, [x19, #-0x18]	-
+0x396CBCC	600000B4	cbz x0, #0x396cbd8	-
+0x396CBD0	FE4FC1A8	ldp x30, x19, [sp], #0x10	-
+0x396CBD4	09000014	b #0x396cbf8	ComboNumber$$Hide
+0x396CBD8	438CD297	bl #0x2e0fce4	-

@@ -1,0 +1,21 @@
+address	bytes	instruction	resolved_target
+0x32ABAC4	FE0F1EF8	str x30, [sp, #-0x20]!	-
+0x32ABAC8	F44F01A9	stp x20, x19, [sp, #0x10]	-
+0x32ABACC	34FD01D0	adrp x20, #0x7251000	-
+0x32ABAD0	88BA7139	ldrb w8, [x20, #0xc6e]	-
+0x32ABAD4	F30300AA	mov x19, x0	-
+0x32ABAD8	C8000037	tbnz w8, #0, #0x32abaf0	-
+0x32ABADC	60CF01F0	adrp x0, #0x6c9a000	-
+0x32ABAE0	00C045F9	ldr x0, [x0, #0xb80]	-
+0x32ABAE4	DD8FED97	bl #0x2e0fa58	-
+0x32ABAE8	28008052	mov w8, #1	-
+0x32ABAEC	88BA3139	strb w8, [x20, #0xc6e]	-
+0x32ABAF0	601A40F9	ldr x0, [x19, #0x30]	-
+0x32ABAF4	E00000B4	cbz x0, #0x32abb10	-
+0x32ABAF8	68CF01F0	adrp x8, #0x6c9a000	-
+0x32ABAFC	08C145F9	ldr x8, [x8, #0xb80]	-
+0x32ABB00	F44F41A9	ldp x20, x19, [sp, #0x10]	-
+0x32ABB04	010140F9	ldr x1, [x8]	-
+0x32ABB08	FE0742F8	ldr x30, [sp], #0x20	-
+0x32ABB0C	4A973D14	b #0x4211834	UnityEngine.Component$$GetComponent<object>
+0x32ABB10	7590ED97	bl #0x2e0fce4	-

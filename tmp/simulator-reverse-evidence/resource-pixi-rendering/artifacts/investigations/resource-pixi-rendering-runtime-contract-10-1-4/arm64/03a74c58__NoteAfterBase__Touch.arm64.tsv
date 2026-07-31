@@ -1,0 +1,11 @@
+address	bytes	instruction	resolved_target
+0x3A74C58	E80300AA	mov x8, x0	-
+0x3A74C5C	00B840F9	ldr x0, [x0, #0x170]	-
+0x3A74C60	E00000B4	cbz x0, #0x3a74c7c	-
+0x3A74C64	039541BD	ldr s3, [x8, #0x194]	-
+0x3A74C68	029141BD	ldr s2, [x8, #0x190]	-
+0x3A74C6C	018D41BD	ldr s1, [x8, #0x18c]	-
+0x3A74C70	008941BD	ldr s0, [x8, #0x188]	-
+0x3A74C74	E1031FAA	mov x1, xzr	-
+0x3A74C78	F6B2D917	b #0x30e1850	NoteMesh$$SetupMeshColor
+0x3A74C7C	C0035FD6	ret	-

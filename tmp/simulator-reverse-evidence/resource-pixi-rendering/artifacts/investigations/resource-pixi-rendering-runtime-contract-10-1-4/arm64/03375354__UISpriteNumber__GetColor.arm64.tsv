@@ -1,0 +1,30 @@
+address	bytes	instruction	resolved_target
+0x3375354	FE0F1EF8	str x30, [sp, #-0x20]!	-
+0x3375358	F44F01A9	stp x20, x19, [sp, #0x10]	-
+0x337535C	F4F601B0	adrp x20, #0x7252000	-
+0x3375360	88225539	ldrb w8, [x20, #0x548]	-
+0x3375364	F30300AA	mov x19, x0	-
+0x3375368	C8000037	tbnz w8, #0, #0x3375380	-
+0x337536C	A0C801B0	adrp x0, #0x6c8a000	-
+0x3375370	00D440F9	ldr x0, [x0, #0x1a8]	-
+0x3375374	B969EA97	bl #0x2e0fa58	-
+0x3375378	28008052	mov w8, #1	-
+0x337537C	88221539	strb w8, [x20, #0x548]	-
+0x3375380	682A40F9	ldr x8, [x19, #0x50]	-
+0x3375384	E80100B4	cbz x8, #0x33753c0	-
+0x3375388	091940B9	ldr w9, [x8, #0x18]	-
+0x337538C	C9010034	cbz w9, #0x33753c4	-
+0x3375390	001140F9	ldr x0, [x8, #0x20]	-
+0x3375394	600100B4	cbz x0, #0x33753c0	-
+0x3375398	A8C801B0	adrp x8, #0x6c8a000	-
+0x337539C	08D540F9	ldr x8, [x8, #0x1a8]	-
+0x33753A0	010140F9	ldr x1, [x8]	-
+0x33753A4	24713A94	bl #0x4211834	UnityEngine.Component$$GetComponent<object>
+0x33753A8	C00000B4	cbz x0, #0x33753c0	-
+0x33753AC	0004532D	ldp s0, s1, [x0, #0x98]	-
+0x33753B0	020C542D	ldp s2, s3, [x0, #0xa0]	-
+0x33753B4	F44F41A9	ldp x20, x19, [sp, #0x10]	-
+0x33753B8	FE0742F8	ldr x30, [sp], #0x20	-
+0x33753BC	C0035FD6	ret	-
+0x33753C0	496AEA97	bl #0x2e0fce4	-
+0x33753C4	4A6AEA97	bl #0x2e0fcec	-

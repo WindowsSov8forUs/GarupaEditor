@@ -1,0 +1,10 @@
+address	bytes	instruction	resolved_target
+0x3A75D48	FE4FBFA9	stp x30, x19, [sp, #-0x10]!	-
+0x3A75D4C	080040F9	ldr x8, [x0]	-
+0x3A75D50	F30300AA	mov x19, x0	-
+0x3A75D54	091541F9	ldr x9, [x8, #0x228]	-
+0x3A75D58	011941F9	ldr x1, [x8, #0x230]	-
+0x3A75D5C	20013FD6	blr x9	-
+0x3A75D60	E00313AA	mov x0, x19	-
+0x3A75D64	FE4FC1A8	ldp x30, x19, [sp], #0x10	-
+0x3A75D68	13FFFF17	b #0x3a759b4	NoteBase$$AwakeEnd

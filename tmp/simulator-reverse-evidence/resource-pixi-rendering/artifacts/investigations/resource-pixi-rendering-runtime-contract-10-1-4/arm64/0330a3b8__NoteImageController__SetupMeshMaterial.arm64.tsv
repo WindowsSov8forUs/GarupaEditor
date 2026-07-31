@@ -1,0 +1,55 @@
+address	bytes	instruction	resolved_target
+0x330A3B8	FE0F1DF8	str x30, [sp, #-0x30]!	-
+0x330A3BC	F65701A9	stp x22, x21, [sp, #0x10]	-
+0x330A3C0	F44F02A9	stp x20, x19, [sp, #0x20]	-
+0x330A3C4	54FA0190	adrp x20, #0x7252000	-
+0x330A3C8	B6CC0190	adrp x22, #0x6c9e000	-
+0x330A3CC	B5CC0190	adrp x21, #0x6c9e000	-
+0x330A3D0	88824139	ldrb w8, [x20, #0x60]	-
+0x330A3D4	D67E45F9	ldr x22, [x22, #0xaf8]	-
+0x330A3D8	B57A45F9	ldr x21, [x21, #0xaf0]	-
+0x330A3DC	F30300AA	mov x19, x0	-
+0x330A3E0	88010037	tbnz w8, #0, #0x330a410	-
+0x330A3E4	A0CC0190	adrp x0, #0x6c9e000	-
+0x330A3E8	007845F9	ldr x0, [x0, #0xaf0]	-
+0x330A3EC	9B15EC97	bl #0x2e0fa58	-
+0x330A3F0	A0CC0190	adrp x0, #0x6c9e000	-
+0x330A3F4	007C45F9	ldr x0, [x0, #0xaf8]	-
+0x330A3F8	9815EC97	bl #0x2e0fa58	-
+0x330A3FC	A0CC0190	adrp x0, #0x6c9e000	-
+0x330A400	008045F9	ldr x0, [x0, #0xb00]	-
+0x330A404	9515EC97	bl #0x2e0fa58	-
+0x330A408	28008052	mov w8, #1	-
+0x330A40C	88820139	strb w8, [x20, #0x60]	-
+0x330A410	C00240F9	ldr x0, [x22]	-
+0x330A414	A10240F9	ldr x1, [x21]	-
+0x330A418	CDE34094	bl #0x434334c	UnityEngine.Resources$$Load<object>
+0x330A41C	F40313AA	mov x20, x19	-
+0x330A420	800E03F8	str x0, [x20, #0x30]!	-
+0x330A424	E10300AA	mov x1, x0	-
+0x330A428	E00314AA	mov x0, x20	-
+0x330A42C	7615EC97	bl #0x2e0fa04	-
+0x330A430	800240F9	ldr x0, [x20]	-
+0x330A434	C00200B4	cbz x0, #0x330a48c	-
+0x330A438	610E40F9	ldr x1, [x19, #0x18]	-
+0x330A43C	B4CC0190	adrp x20, #0x6c9e000	-
+0x330A440	948245F9	ldr x20, [x20, #0xb00]	-
+0x330A444	E2031FAA	mov x2, xzr	-
+0x330A448	8322CA94	bl #0x6592e54	UnityEngine.Material$$set_mainTexture
+0x330A44C	800240F9	ldr x0, [x20]	-
+0x330A450	A10240F9	ldr x1, [x21]	-
+0x330A454	BEE34094	bl #0x434334c	UnityEngine.Resources$$Load<object>
+0x330A458	F40313AA	mov x20, x19	-
+0x330A45C	808E03F8	str x0, [x20, #0x38]!	-
+0x330A460	E10300AA	mov x1, x0	-
+0x330A464	E00314AA	mov x0, x20	-
+0x330A468	6715EC97	bl #0x2e0fa04	-
+0x330A46C	800240F9	ldr x0, [x20]	-
+0x330A470	E00000B4	cbz x0, #0x330a48c	-
+0x330A474	611240F9	ldr x1, [x19, #0x20]	-
+0x330A478	F44F42A9	ldp x20, x19, [sp, #0x20]	-
+0x330A47C	F65741A9	ldp x22, x21, [sp, #0x10]	-
+0x330A480	E2031FAA	mov x2, xzr	-
+0x330A484	FE0743F8	ldr x30, [sp], #0x30	-
+0x330A488	7322CA14	b #0x6592e54	UnityEngine.Material$$set_mainTexture
+0x330A48C	1616EC97	bl #0x2e0fce4	-

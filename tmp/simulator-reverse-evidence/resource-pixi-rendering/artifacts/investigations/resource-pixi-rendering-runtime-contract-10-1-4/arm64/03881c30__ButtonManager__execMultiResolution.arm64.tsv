@@ -1,0 +1,54 @@
+address	bytes	instruction	resolved_target
+0x3881C30	EB2BBD6D	stp d11, d10, [sp, #-0x30]!	-
+0x3881C34	E923016D	stp d9, d8, [sp, #0x10]	-
+0x3881C38	FE4F02A9	stp x30, x19, [sp, #0x20]	-
+0x3881C3C	F30300AA	mov x19, x0	-
+0x3881C40	004C40F9	ldr x0, [x0, #0x98]	-
+0x3881C44	E00500B4	cbz x0, #0x3881d00	-
+0x3881C48	E1031FAA	mov x1, xzr	-
+0x3881C4C	081CA04E	mov v8.16b, v0.16b	-
+0x3881C50	94E2B494	bl #0x65ba6a0	UnityEngine.Component$$get_transform
+0x3881C54	600500B4	cbz x0, #0x3881d00	-
+0x3881C58	E1031FAA	mov x1, xzr	-
+0x3881C5C	AB1EB594	bl #0x65c9708	UnityEngine.Transform$$get_position
+0x3881C60	604E40F9	ldr x0, [x19, #0x98]	-
+0x3881C64	E00400B4	cbz x0, #0x3881d00	-
+0x3881C68	E1031FAA	mov x1, xzr	-
+0x3881C6C	291CA14E	mov v9.16b, v1.16b	-
+0x3881C70	8CE2B494	bl #0x65ba6a0	UnityEngine.Component$$get_transform
+0x3881C74	600400B4	cbz x0, #0x3881d00	-
+0x3881C78	E1031FAA	mov x1, xzr	-
+0x3881C7C	D41BB594	bl #0x65c8bcc	UnityEngine.Transform$$get_localPosition
+0x3881C80	604E40F9	ldr x0, [x19, #0x98]	-
+0x3881C84	E00300B4	cbz x0, #0x3881d00	-
+0x3881C88	E1031FAA	mov x1, xzr	-
+0x3881C8C	0A1CA04E	mov v10.16b, v0.16b	-
+0x3881C90	4B1CA24E	mov v11.16b, v2.16b	-
+0x3881C94	83E2B494	bl #0x65ba6a0	UnityEngine.Component$$get_transform
+0x3881C98	400300B4	cbz x0, #0x3881d00	-
+0x3881C9C	A8E5FEB0	adrp x8, #0x1536000	-
+0x3881CA0	000544BD	ldr s0, [x8, #0x404]	-
+0x3881CA4	621DAB4E	mov v2.16b, v11.16b	-
+0x3881CA8	E1031FAA	mov x1, xzr	-
+0x3881CAC	0819201E	fdiv s8, s8, s0	-
+0x3881CB0	0109291E	fmul s1, s8, s9	-
+0x3881CB4	401DAA4E	mov v0.16b, v10.16b	-
+0x3881CB8	E81BB594	bl #0x65c8c58	UnityEngine.Transform$$set_localPosition
+0x3881CBC	E00313AA	mov x0, x19	-
+0x3881CC0	66040094	bl #0x3882e58	ButtonManager$$initLauncher
+0x3881CC4	E00313AA	mov x0, x19	-
+0x3881CC8	001DA84E	mov v0.16b, v8.16b	-
+0x3881CCC	EA040094	bl #0x3883074	ButtonManager$$initButtonScale
+0x3881CD0	E00313AA	mov x0, x19	-
+0x3881CD4	001DA84E	mov v0.16b, v8.16b	-
+0x3881CD8	5C050094	bl #0x3883248	ButtonManager$$setupGameButtonPosition
+0x3881CDC	E00313AA	mov x0, x19	-
+0x3881CE0	EF050094	bl #0x388349c	ButtonManager$$setupLauncherPosition
+0x3881CE4	605A40F9	ldr x0, [x19, #0xb0]	-
+0x3881CE8	C00000B4	cbz x0, #0x3881d00	-
+0x3881CEC	FE4F42A9	ldp x30, x19, [sp, #0x20]	-
+0x3881CF0	E923416D	ldp d9, d8, [sp, #0x10]	-
+0x3881CF4	E1031FAA	mov x1, xzr	-
+0x3881CF8	EB2BC36C	ldp d11, d10, [sp], #0x30	-
+0x3881CFC	AC0CEA17	b #0x3304fac	InGamePlayButtonController$$CalcCollisionDistanceSquared
+0x3881D00	F937D697	bl #0x2e0fce4	-

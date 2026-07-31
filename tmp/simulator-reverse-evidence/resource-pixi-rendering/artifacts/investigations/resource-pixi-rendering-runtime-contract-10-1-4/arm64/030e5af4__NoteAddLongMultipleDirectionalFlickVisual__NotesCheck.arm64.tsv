@@ -1,0 +1,136 @@
+address	bytes	instruction	resolved_target
+0x30E5AF4	FE57BEA9	stp x30, x21, [sp, #-0x20]!	-
+0x30E5AF8	F44F01A9	stp x20, x19, [sp, #0x10]	-
+0x30E5AFC	540B02F0	adrp x20, #0x7250000	-
+0x30E5B00	F5DC01B0	adrp x21, #0x6c82000	-
+0x30E5B04	88767039	ldrb w8, [x20, #0xc1d]	-
+0x30E5B08	B52241F9	ldr x21, [x21, #0x240]	-
+0x30E5B0C	F30300AA	mov x19, x0	-
+0x30E5B10	C8000037	tbnz w8, #0, #0x30e5b28	-
+0x30E5B14	E0DC01B0	adrp x0, #0x6c82000	-
+0x30E5B18	002041F9	ldr x0, [x0, #0x240]	-
+0x30E5B1C	CFA7F497	bl #0x2e0fa58	-
+0x30E5B20	28008052	mov w8, #1	-
+0x30E5B24	88763039	strb w8, [x20, #0xc1d]	-
+0x30E5B28	A00240F9	ldr x0, [x21]	-
+0x30E5B2C	74E640F9	ldr x20, [x19, #0x1c8]	-
+0x30E5B30	08E040B9	ldr w8, [x0, #0xe0]	-
+0x30E5B34	48000035	cbnz w8, #0x30e5b3c	-
+0x30E5B38	25A8F497	bl #0x2e0fbcc	-
+0x30E5B3C	E00314AA	mov x0, x20	-
+0x30E5B40	E1031FAA	mov x1, xzr	-
+0x30E5B44	E2031FAA	mov x2, xzr	-
+0x30E5B48	575DD394	bl #0x65bd0a4	UnityEngine.Object$$op_Inequality
+0x30E5B4C	A0040036	tbz w0, #0, #0x30e5be0	-
+0x30E5B50	68E640F9	ldr x8, [x19, #0x1c8]	-
+0x30E5B54	E80500B4	cbz x8, #0x30e5c10	-
+0x30E5B58	085140B9	ldr w8, [x8, #0x50]	-
+0x30E5B5C	1F0D0071	cmp w8, #3	-
+0x30E5B60	210D0054	b.ne #0x30e5d04	-
+0x30E5B64	683240F9	ldr x8, [x19, #0x60]	-
+0x30E5B68	680000B4	cbz x8, #0x30e5b74	-
+0x30E5B6C	29008052	mov w9, #1	-
+0x30E5B70	09510039	strb w9, [x8, #0x14]	-
+0x30E5B74	60A20691	add x0, x19, #0x1a8	-
+0x30E5B78	E1031FAA	mov x1, xzr	-
+0x30E5B7C	7FD600F9	str xzr, [x19, #0x1a8]	-
+0x30E5B80	A1A7F497	bl #0x2e0fa04	-
+0x30E5B84	60C20691	add x0, x19, #0x1b0	-
+0x30E5B88	E1031FAA	mov x1, xzr	-
+0x30E5B8C	7FDA00F9	str xzr, [x19, #0x1b0]	-
+0x30E5B90	9DA7F497	bl #0x2e0fa04	-
+0x30E5B94	60E20691	add x0, x19, #0x1b8	-
+0x30E5B98	E1031FAA	mov x1, xzr	-
+0x30E5B9C	7FDE00F9	str xzr, [x19, #0x1b8]	-
+0x30E5BA0	99A7F497	bl #0x2e0fa04	-
+0x30E5BA4	60020791	add x0, x19, #0x1c0	-
+0x30E5BA8	E1031FAA	mov x1, xzr	-
+0x30E5BAC	7FE200F9	str xzr, [x19, #0x1c0]	-
+0x30E5BB0	95A7F497	bl #0x2e0fa04	-
+0x30E5BB4	680240F9	ldr x8, [x19]	-
+0x30E5BB8	E00313AA	mov x0, x19	-
+0x30E5BBC	091541F9	ldr x9, [x8, #0x228]	-
+0x30E5BC0	011941F9	ldr x1, [x8, #0x230]	-
+0x30E5BC4	20013FD6	blr x9	-
+0x30E5BC8	E00313AA	mov x0, x19	-
+0x30E5BCC	2EE7FF97	bl #0x30df884	NoteFrontBase$$Deactivate
+0x30E5BD0	E00313AA	mov x0, x19	-
+0x30E5BD4	F44F41A9	ldp x20, x19, [sp, #0x10]	-
+0x30E5BD8	FE57C2A8	ldp x30, x21, [sp], #0x20	-
+0x30E5BDC	53000014	b #0x30e5d28	NoteAddLongMultipleDirectionalFlickVisual$$DeactivateBackLine
+0x30E5BE0	A00240F9	ldr x0, [x21]	-
+0x30E5BE4	74EA40F9	ldr x20, [x19, #0x1d0]	-
+0x30E5BE8	08E040B9	ldr w8, [x0, #0xe0]	-
+0x30E5BEC	48000035	cbnz w8, #0x30e5bf4	-
+0x30E5BF0	F7A7F497	bl #0x2e0fbcc	-
+0x30E5BF4	E00314AA	mov x0, x20	-
+0x30E5BF8	E1031FAA	mov x1, xzr	-
+0x30E5BFC	E2031FAA	mov x2, xzr	-
+0x30E5C00	295DD394	bl #0x65bd0a4	UnityEngine.Object$$op_Inequality
+0x30E5C04	80000036	tbz w0, #0, #0x30e5c14	-
+0x30E5C08	68EA40F9	ldr x8, [x19, #0x1d0]	-
+0x30E5C0C	68FAFFB5	cbnz x8, #0x30e5b58	-
+0x30E5C10	35A8F497	bl #0x2e0fce4	-
+0x30E5C14	A00240F9	ldr x0, [x21]	-
+0x30E5C18	74D640F9	ldr x20, [x19, #0x1a8]	-
+0x30E5C1C	08E040B9	ldr w8, [x0, #0xe0]	-
+0x30E5C20	48000035	cbnz w8, #0x30e5c28	-
+0x30E5C24	EAA7F497	bl #0x2e0fbcc	-
+0x30E5C28	E00314AA	mov x0, x20	-
+0x30E5C2C	E1031FAA	mov x1, xzr	-
+0x30E5C30	E2031FAA	mov x2, xzr	-
+0x30E5C34	D560D394	bl #0x65bdf88	UnityEngine.Object$$op_Equality
+0x30E5C38	E0030036	tbz w0, #0, #0x30e5cb4	-
+0x30E5C3C	A00240F9	ldr x0, [x21]	-
+0x30E5C40	74DA40F9	ldr x20, [x19, #0x1b0]	-
+0x30E5C44	08E040B9	ldr w8, [x0, #0xe0]	-
+0x30E5C48	48000035	cbnz w8, #0x30e5c50	-
+0x30E5C4C	E0A7F497	bl #0x2e0fbcc	-
+0x30E5C50	E00314AA	mov x0, x20	-
+0x30E5C54	E1031FAA	mov x1, xzr	-
+0x30E5C58	E2031FAA	mov x2, xzr	-
+0x30E5C5C	CB60D394	bl #0x65bdf88	UnityEngine.Object$$op_Equality
+0x30E5C60	A0020036	tbz w0, #0, #0x30e5cb4	-
+0x30E5C64	A00240F9	ldr x0, [x21]	-
+0x30E5C68	74DE40F9	ldr x20, [x19, #0x1b8]	-
+0x30E5C6C	08E040B9	ldr w8, [x0, #0xe0]	-
+0x30E5C70	48000035	cbnz w8, #0x30e5c78	-
+0x30E5C74	D6A7F497	bl #0x2e0fbcc	-
+0x30E5C78	E00314AA	mov x0, x20	-
+0x30E5C7C	E1031FAA	mov x1, xzr	-
+0x30E5C80	E2031FAA	mov x2, xzr	-
+0x30E5C84	C160D394	bl #0x65bdf88	UnityEngine.Object$$op_Equality
+0x30E5C88	60010036	tbz w0, #0, #0x30e5cb4	-
+0x30E5C8C	A00240F9	ldr x0, [x21]	-
+0x30E5C90	74E240F9	ldr x20, [x19, #0x1c0]	-
+0x30E5C94	08E040B9	ldr w8, [x0, #0xe0]	-
+0x30E5C98	48000035	cbnz w8, #0x30e5ca0	-
+0x30E5C9C	CCA7F497	bl #0x2e0fbcc	-
+0x30E5CA0	E00314AA	mov x0, x20	-
+0x30E5CA4	E1031FAA	mov x1, xzr	-
+0x30E5CA8	E2031FAA	mov x2, xzr	-
+0x30E5CAC	B760D394	bl #0x65bdf88	UnityEngine.Object$$op_Equality
+0x30E5CB0	A0F50737	tbnz w0, #0, #0x30e5b64	-
+0x30E5CB4	A00240F9	ldr x0, [x21]	-
+0x30E5CB8	74E640F9	ldr x20, [x19, #0x1c8]	-
+0x30E5CBC	08E040B9	ldr w8, [x0, #0xe0]	-
+0x30E5CC0	48000035	cbnz w8, #0x30e5cc8	-
+0x30E5CC4	C2A7F497	bl #0x2e0fbcc	-
+0x30E5CC8	E00314AA	mov x0, x20	-
+0x30E5CCC	E1031FAA	mov x1, xzr	-
+0x30E5CD0	E2031FAA	mov x2, xzr	-
+0x30E5CD4	AD60D394	bl #0x65bdf88	UnityEngine.Object$$op_Equality
+0x30E5CD8	60010036	tbz w0, #0, #0x30e5d04	-
+0x30E5CDC	A00240F9	ldr x0, [x21]	-
+0x30E5CE0	74EA40F9	ldr x20, [x19, #0x1d0]	-
+0x30E5CE4	08E040B9	ldr w8, [x0, #0xe0]	-
+0x30E5CE8	48000035	cbnz w8, #0x30e5cf0	-
+0x30E5CEC	B8A7F497	bl #0x2e0fbcc	-
+0x30E5CF0	E00314AA	mov x0, x20	-
+0x30E5CF4	E1031FAA	mov x1, xzr	-
+0x30E5CF8	E2031FAA	mov x2, xzr	-
+0x30E5CFC	A360D394	bl #0x65bdf88	UnityEngine.Object$$op_Equality
+0x30E5D00	20F30737	tbnz w0, #0, #0x30e5b64	-
+0x30E5D04	F44F41A9	ldp x20, x19, [sp, #0x10]	-
+0x30E5D08	FE57C2A8	ldp x30, x21, [sp], #0x20	-
+0x30E5D0C	C0035FD6	ret	-

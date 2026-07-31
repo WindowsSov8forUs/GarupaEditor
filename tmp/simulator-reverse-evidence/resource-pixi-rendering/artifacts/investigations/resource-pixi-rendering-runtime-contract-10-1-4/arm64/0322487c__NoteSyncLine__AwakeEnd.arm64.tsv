@@ -1,0 +1,14 @@
+address	bytes	instruction	resolved_target
+0x322487C	FE4FBFA9	stp x30, x19, [sp, #-0x10]!	-
+0x3224880	F30300AA	mov x19, x0	-
+0x3224884	001040F9	ldr x0, [x0, #0x20]	-
+0x3224888	200100B4	cbz x0, #0x32248ac	-
+0x322488C	E2031FAA	mov x2, xzr	-
+0x3224890	33A6CD94	bl #0x658e15c	UnityEngine.Renderer$$set_material
+0x3224894	601240F9	ldr x0, [x19, #0x20]	-
+0x3224898	A00000B4	cbz x0, #0x32248ac	-
+0x322489C	A1088052	mov w1, #0x45	-
+0x32248A0	E2031FAA	mov x2, xzr	-
+0x32248A4	FE4FC1A8	ldp x30, x19, [sp], #0x10	-
+0x32248A8	81A5CD14	b #0x658deac	UnityEngine.Renderer$$set_sortingOrder
+0x32248AC	0EADEF97	bl #0x2e0fce4	-

@@ -1,0 +1,8 @@
+address	bytes	instruction	resolved_target
+0x3881DEC	FE0F1FF8	str x30, [sp, #-0x10]!	-
+0x3881DF0	003040F9	ldr x0, [x0, #0x60]	-
+0x3881DF4	800000B4	cbz x0, #0x3881e04	-
+0x3881DF8	010C0AF8	str x1, [x0, #0xa0]!	-
+0x3881DFC	FE0741F8	ldr x30, [sp], #0x10	-
+0x3881E00	0137D617	b #0x2e0fa04	-
+0x3881E04	B837D697	bl #0x2e0fce4	-

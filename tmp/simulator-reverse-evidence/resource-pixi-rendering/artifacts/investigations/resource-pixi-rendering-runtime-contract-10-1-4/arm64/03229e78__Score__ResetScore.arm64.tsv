@@ -1,0 +1,21 @@
+address	bytes	instruction	resolved_target
+0x3229E78	FE0F1EF8	str x30, [sp, #-0x20]!	-
+0x3229E7C	F44F01A9	stp x20, x19, [sp, #0x10]	-
+0x3229E80	F40300AA	mov x20, x0	-
+0x3229E84	001840F9	ldr x0, [x0, #0x30]	-
+0x3229E88	E00100B4	cbz x0, #0x3229ec4	-
+0x3229E8C	F30301AA	mov x19, x1	-
+0x3229E90	E1031FAA	mov x1, xzr	-
+0x3229E94	1242CE94	bl #0x65ba6dc	UnityEngine.Component$$get_gameObject
+0x3229E98	600100B4	cbz x0, #0x3229ec4	-
+0x3229E9C	E1031F2A	mov w1, wzr	-
+0x3229EA0	E2031FAA	mov x2, xzr	-
+0x3229EA4	5C4DCE94	bl #0x65bd414	UnityEngine.GameObject$$SetActive
+0x3229EA8	9F8A00B9	str wzr, [x20, #0x88]	-
+0x3229EAC	E00314AA	mov x0, x20	-
+0x3229EB0	E20313AA	mov x2, x19	-
+0x3229EB4	F44F41A9	ldp x20, x19, [sp, #0x10]	-
+0x3229EB8	E1031F2A	mov w1, wzr	-
+0x3229EBC	FE0742F8	ldr x30, [sp], #0x20	-
+0x3229EC0	89000014	b #0x322a0e4	Score$$UpdateTotalScore
+0x3229EC4	8897EF97	bl #0x2e0fce4	-

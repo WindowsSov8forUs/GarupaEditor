@@ -1,0 +1,37 @@
+address	bytes	instruction	resolved_target
+0x30EEC0C	FE57BEA9	stp x30, x21, [sp, #-0x20]!	-
+0x30EEC10	F44F01A9	stp x20, x19, [sp, #0x10]	-
+0x30EEC14	150B02D0	adrp x21, #0x7250000	-
+0x30EEC18	A81A7239	ldrb w8, [x21, #0xc86]	-
+0x30EEC1C	F30301AA	mov x19, x1	-
+0x30EEC20	F40300AA	mov x20, x0	-
+0x30EEC24	C8000037	tbnz w8, #0, #0x30eec3c	-
+0x30EEC28	A0DC0190	adrp x0, #0x6c82000	-
+0x30EEC2C	002041F9	ldr x0, [x0, #0x240]	-
+0x30EEC30	8A83F497	bl #0x2e0fa58	-
+0x30EEC34	28008052	mov w8, #1	-
+0x30EEC38	A81A3239	strb w8, [x21, #0xc86]	-
+0x30EEC3C	F30200B4	cbz x19, #0x30eec98	-
+0x30EEC40	A8DC0190	adrp x8, #0x6c82000	-
+0x30EEC44	082141F9	ldr x8, [x8, #0x240]	-
+0x30EEC48	75D640F9	ldr x21, [x19, #0x1a8]	-
+0x30EEC4C	000140F9	ldr x0, [x8]	-
+0x30EEC50	08E040B9	ldr w8, [x0, #0xe0]	-
+0x30EEC54	48000035	cbnz w8, #0x30eec5c	-
+0x30EEC58	DD83F497	bl #0x2e0fbcc	-
+0x30EEC5C	E00315AA	mov x0, x21	-
+0x30EEC60	E1031FAA	mov x1, xzr	-
+0x30EEC64	E2031FAA	mov x2, xzr	-
+0x30EEC68	C83CD394	bl #0x65bdf88	UnityEngine.Object$$op_Equality
+0x30EEC6C	C0000036	tbz w0, #0, #0x30eec84	-
+0x30EEC70	E00313AA	mov x0, x19	-
+0x30EEC74	F44F41A9	ldp x20, x19, [sp, #0x10]	-
+0x30EEC78	E1031FAA	mov x1, xzr	-
+0x30EEC7C	FE57C2A8	ldp x30, x21, [sp], #0x20	-
+0x30EEC80	05142614	b #0x3a73c94	NoteBase$$get_TargetCenterButton
+0x30EEC84	61D640F9	ldr x1, [x19, #0x1a8]	-
+0x30EEC88	E00314AA	mov x0, x20	-
+0x30EEC8C	F44F41A9	ldp x20, x19, [sp, #0x10]	-
+0x30EEC90	FE57C2A8	ldp x30, x21, [sp], #0x20	-
+0x30EEC94	37000014	b #0x30eed70	-
+0x30EEC98	1384F497	bl #0x2e0fce4	-

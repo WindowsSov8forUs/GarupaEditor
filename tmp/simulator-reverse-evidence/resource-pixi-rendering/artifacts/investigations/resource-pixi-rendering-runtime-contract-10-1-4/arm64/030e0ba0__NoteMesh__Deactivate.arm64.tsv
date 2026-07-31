@@ -1,0 +1,68 @@
+address	bytes	instruction	resolved_target
+0x30E0BA0	FE57BEA9	stp x30, x21, [sp, #-0x20]!	-
+0x30E0BA4	F44F01A9	stp x20, x19, [sp, #0x10]	-
+0x30E0BA8	940B0290	adrp x20, #0x7250000	-
+0x30E0BAC	88327039	ldrb w8, [x20, #0xc0c]	-
+0x30E0BB0	F30300AA	mov x19, x0	-
+0x30E0BB4	C8000037	tbnz w8, #0, #0x30e0bcc	-
+0x30E0BB8	60DD01D0	adrp x0, #0x6c8e000	-
+0x30E0BBC	008040F9	ldr x0, [x0, #0x100]	-
+0x30E0BC0	A6BBF497	bl #0x2e0fa58	-
+0x30E0BC4	28008052	mov w8, #1	-
+0x30E0BC8	88323039	strb w8, [x20, #0xc0c]	-
+0x30E0BCC	680240F9	ldr x8, [x19]	-
+0x30E0BD0	E00313AA	mov x0, x19	-
+0x30E0BD4	098558A9	ldp x9, x1, [x8, #0x188]	-
+0x30E0BD8	20013FD6	blr x9	-
+0x30E0BDC	0849A852	mov w8, #0x42480000	-
+0x30E0BE0	000D040E	dup v0.2s, w8	-
+0x30E0BE4	E00313AA	mov x0, x19	-
+0x30E0BE8	603200FD	str d0, [x19, #0x60]	-
+0x30E0BEC	ACFFFF97	bl #0x30e0a9c	NoteMesh$$get_CachedTransform_
+0x30E0BF0	C00500B4	cbz x0, #0x30e0ca8	-
+0x30E0BF4	E1031FAA	mov x1, xzr	-
+0x30E0BF8	C4A2D394	bl #0x65c9708	UnityEngine.Transform$$get_position
+0x30E0BFC	E00313AA	mov x0, x19	-
+0x30E0C00	626A00BD	str s2, [x19, #0x68]	-
+0x30E0C04	A6FFFF97	bl #0x30e0a9c	NoteMesh$$get_CachedTransform_
+0x30E0C08	000500B4	cbz x0, #0x30e0ca8	-
+0x30E0C0C	618A4C2D	ldp s1, s2, [x19, #0x64]	-
+0x30E0C10	606240BD	ldr s0, [x19, #0x60]	-
+0x30E0C14	75DD01D0	adrp x21, #0x6c8e000	-
+0x30E0C18	B58240F9	ldr x21, [x21, #0x100]	-
+0x30E0C1C	E1031FAA	mov x1, xzr	-
+0x30E0C20	E2A2D394	bl #0x65c97a8	UnityEngine.Transform$$set_position
+0x30E0C24	E00313AA	mov x0, x19	-
+0x30E0C28	9DFFFF97	bl #0x30e0a9c	NoteMesh$$get_CachedTransform_
+0x30E0C2C	A80240F9	ldr x8, [x21]	-
+0x30E0C30	F40300AA	mov x20, x0	-
+0x30E0C34	09E140B9	ldr w9, [x8, #0xe0]	-
+0x30E0C38	89000035	cbnz w9, #0x30e0c48	-
+0x30E0C3C	E00308AA	mov x0, x8	-
+0x30E0C40	E3BBF497	bl #0x2e0fbcc	-
+0x30E0C44	A80240F9	ldr x8, [x21]	-
+0x30E0C48	140300B4	cbz x20, #0x30e0ca8	-
+0x30E0C4C	085D40F9	ldr x8, [x8, #0xb8]	-
+0x30E0C50	E00314AA	mov x0, x20	-
+0x30E0C54	E1031FAA	mov x1, xzr	-
+0x30E0C58	0109442D	ldp s1, s2, [x8, #0x20]	-
+0x30E0C5C	001D40BD	ldr s0, [x8, #0x1c]	-
+0x30E0C60	66A5D394	bl #0x65ca1f8	UnityEngine.Transform$$set_localScale
+0x30E0C64	E00313AA	mov x0, x19	-
+0x30E0C68	1F8C02F8	str xzr, [x0, #0x28]!	-
+0x30E0C6C	E1031FAA	mov x1, xzr	-
+0x30E0C70	65BBF497	bl #0x2e0fa04	-
+0x30E0C74	7F0E03F8	str xzr, [x19, #0x30]!	-
+0x30E0C78	E00313AA	mov x0, x19	-
+0x30E0C7C	E1031FAA	mov x1, xzr	-
+0x30E0C80	61BBF497	bl #0x2e0fa04	-
+0x30E0C84	600E40F9	ldr x0, [x19, #0x18]	-
+0x30E0C88	28008052	mov w8, #1	-
+0x30E0C8C	685200B9	str w8, [x19, #0x50]	-
+0x30E0C90	C00000B4	cbz x0, #0x30e0ca8	-
+0x30E0C94	F44F41A9	ldp x20, x19, [sp, #0x10]	-
+0x30E0C98	E1031F2A	mov w1, wzr	-
+0x30E0C9C	E2031FAA	mov x2, xzr	-
+0x30E0CA0	FE57C2A8	ldp x30, x21, [sp], #0x20	-
+0x30E0CA4	84B3D214	b #0x658dab4	UnityEngine.Renderer$$set_enabled
+0x30E0CA8	0FBCF497	bl #0x2e0fce4	-

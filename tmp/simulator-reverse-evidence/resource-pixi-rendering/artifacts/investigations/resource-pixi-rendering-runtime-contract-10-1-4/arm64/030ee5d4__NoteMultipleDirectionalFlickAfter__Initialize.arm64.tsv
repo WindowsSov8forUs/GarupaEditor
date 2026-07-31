@@ -1,0 +1,16 @@
+address	bytes	instruction	resolved_target
+0x30EE5D4	FE4FBFA9	stp x30, x19, [sp, #-0x10]!	-
+0x30EE5D8	F30300AA	mov x19, x0	-
+0x30EE5DC	00A00691	add x0, x0, #0x1a8	-
+0x30EE5E0	E1031FAA	mov x1, xzr	-
+0x30EE5E4	7FD600F9	str xzr, [x19, #0x1a8]	-
+0x30EE5E8	0785F497	bl #0x2e0fa04	-
+0x30EE5EC	60C20691	add x0, x19, #0x1b0	-
+0x30EE5F0	E1031FAA	mov x1, xzr	-
+0x30EE5F4	7FDA00F9	str xzr, [x19, #0x1b0]	-
+0x30EE5F8	0385F497	bl #0x2e0fa04	-
+0x30EE5FC	60E20691	add x0, x19, #0x1b8	-
+0x30EE600	7FDE00F9	str xzr, [x19, #0x1b8]	-
+0x30EE604	E1031FAA	mov x1, xzr	-
+0x30EE608	FE4FC1A8	ldp x30, x19, [sp], #0x10	-
+0x30EE60C	FE84F417	b #0x2e0fa04	-

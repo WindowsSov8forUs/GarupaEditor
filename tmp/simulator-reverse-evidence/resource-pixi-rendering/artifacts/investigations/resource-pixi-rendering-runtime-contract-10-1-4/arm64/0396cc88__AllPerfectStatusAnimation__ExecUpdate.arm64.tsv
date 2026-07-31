@@ -1,0 +1,26 @@
+address	bytes	instruction	resolved_target
+0x396CC88	FE4FBFA9	stp x30, x19, [sp, #-0x10]!	-
+0x396CC8C	3F000071	cmp w1, #0	-
+0x396CC90	F30300AA	mov x19, x0	-
+0x396CC94	ED010054	b.le #0x396ccd0	-
+0x396CC98	681E40F9	ldr x8, [x19, #0x38]	-
+0x396CC9C	680200B4	cbz x8, #0x396cce8	-
+0x396CCA0	601240F9	ldr x0, [x19, #0x20]	-
+0x396CCA4	200200B4	cbz x0, #0x396cce8	-
+0x396CCA8	081140B9	ldr w8, [x8, #0x10]	-
+0x396CCAC	1F050071	cmp w8, #1	-
+0x396CCB0	81010054	b.ne #0x396cce0	-
+0x396CCB4	0E000094	bl #0x396ccec	ComboNumber$$Show
+0x396CCB8	601640F9	ldr x0, [x19, #0x28]	-
+0x396CCBC	600100B4	cbz x0, #0x396cce8	-
+0x396CCC0	613240B9	ldr w1, [x19, #0x30]	-
+0x396CCC4	E2031FAA	mov x2, xzr	-
+0x396CCC8	FE4FC1A8	ldp x30, x19, [sp], #0x10	-
+0x396CCCC	5C01B014	b #0x656d23c	-
+0x396CCD0	E00313AA	mov x0, x19	-
+0x396CCD4	DDFFFF97	bl #0x396cc48	AllPerfectStatusAnimation$$ResetComboNumber
+0x396CCD8	601240F9	ldr x0, [x19, #0x20]	-
+0x396CCDC	600000B4	cbz x0, #0x396cce8	-
+0x396CCE0	FE4FC1A8	ldp x30, x19, [sp], #0x10	-
+0x396CCE4	C5FFFF17	b #0x396cbf8	ComboNumber$$Hide
+0x396CCE8	FF8BD297	bl #0x2e0fce4	-

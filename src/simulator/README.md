@@ -33,7 +33,7 @@ OneFrame 容量现在由原作证据固定为 5，不再接受宿主或测试容
 
 “分数、生命与状态”B00–B12已完成独立隔离验收，记录位于`tmp/simulator-score-life-state-acceptance.md`。冻结包含326方法、25布局、19枚举、ordinary/HABAHIRO `979/731`、12条R1、8个当前ARM64语义簇/48方法、125项portable处置与36个closed BS case；Reverse `44d2f20bf4cf19eb4c91e5b025101ec154f31e60`关闭V01/D01–D24。Production `9726880`恢复Score/Combo/Record、Life/guard/Never Die/Game Over、Skill/active effect/Crescendo、Fever和special-mode领域链；测试`9d382f2`通过Score/Life总入口、production BMS、dependency/evidence index及first-slice/chart/clock/Auto/manual全回归。Continue、active-heal无consumer、缺失profile及未观察fault/dispose/duplicate partial mutation继续在领域mutation前返回`evidence-required`；不导出账号、room、deck/member/card/Skill身份或raw pointer。
 
-当前阶段为“资源与Pixi渲染”，任务书见`tmp/simulator-resource-pixi-rendering-task.md`。Reverse `f5a6d7a7b74c7f2855bb8a87f0cfbcd09120af7f`已关闭全部可离线10.1.4 method/resource/scene/animation/portable工作并分类H01–H28、D01–D18、PR01–PR40；`offline_work_gate=closed`，但当前HABAHIRO bundle、自然ordinary/HABAHIRO Live R1及实体frame必须连接游戏服务器，故`rendering_gate=open`、`production_authorization=false`。RP02关闭前禁止修改模拟器production、增加Pixi backend、package scripts或资源二进制。
+当前阶段为“资源与Pixi渲染”，任务书见`tmp/simulator-resource-pixi-rendering-task.md`。Reverse `b8a749bb3fff2106237336e011a8e976a58ef94d`已关闭全部可离线10.1.4 method/resource/scene/animation/portable工作并分类H01–H28、D01–D18、PR01–PR40；`offline_work_gate=closed`，但当前HABAHIRO bundle、自然ordinary/HABAHIRO Live R1及实体frame必须连接游戏服务器，故`rendering_gate=open`、`production_authorization=false`。RP02关闭前禁止修改模拟器production、增加Pixi backend、package scripts或资源二进制。
 
 `src/simulator/engine` 不依赖 React、Pixi、Tauri、DOM、编辑器谱面类型或窗口协议。宿主 API 是 GarupaEditor 的可移植边界，不宣称属于原作接口。
 

@@ -1,0 +1,21 @@
+address	bytes	instruction	resolved_target
+0x322482C	FE0F1EF8	str x30, [sp, #-0x20]!	-
+0x3224830	F44F01A9	stp x20, x19, [sp, #0x10]	-
+0x3224834	F40300AA	mov x20, x0	-
+0x3224838	010C04F8	str x1, [x0, #0x40]!	-
+0x322483C	F30302AA	mov x19, x2	-
+0x3224840	71ACEF97	bl #0x2e0fa04	-
+0x3224844	E00314AA	mov x0, x20	-
+0x3224848	138C04F8	str x19, [x0, #0x48]!	-
+0x322484C	E10313AA	mov x1, x19	-
+0x3224850	6DACEF97	bl #0x2e0fa04	-
+0x3224854	E00314AA	mov x0, x20	-
+0x3224858	E1031FAA	mov x1, xzr	-
+0x322485C	A057CE94	bl #0x65ba6dc	UnityEngine.Component$$get_gameObject
+0x3224860	C00000B4	cbz x0, #0x3224878	-
+0x3224864	F44F41A9	ldp x20, x19, [sp, #0x10]	-
+0x3224868	E1031F2A	mov w1, wzr	-
+0x322486C	E2031FAA	mov x2, xzr	-
+0x3224870	FE0742F8	ldr x30, [sp], #0x20	-
+0x3224874	E862CE14	b #0x65bd414	UnityEngine.GameObject$$SetActive
+0x3224878	1BADEF97	bl #0x2e0fce4	-

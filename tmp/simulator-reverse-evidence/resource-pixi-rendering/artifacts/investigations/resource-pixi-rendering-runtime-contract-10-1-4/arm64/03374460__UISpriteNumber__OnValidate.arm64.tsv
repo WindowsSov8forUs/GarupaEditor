@@ -1,0 +1,2 @@
+address	bytes	instruction	resolved_target
+0x3374460	D0FEFF17	b #0x3373fa0	UISpriteNumber$$Initialize

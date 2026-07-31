@@ -1,0 +1,50 @@
+address	bytes	instruction	resolved_target
+0x3229F74	FE57BEA9	stp x30, x21, [sp, #-0x20]!	-
+0x3229F78	F44F01A9	stp x20, x19, [sp, #0x10]	-
+0x3229F7C	55010290	adrp x21, #0x7251000	-
+0x3229F80	D4D201B0	adrp x20, #0x6c82000	-
+0x3229F84	A84A5E39	ldrb w8, [x21, #0x792]	-
+0x3229F88	942241F9	ldr x20, [x20, #0x240]	-
+0x3229F8C	F30300AA	mov x19, x0	-
+0x3229F90	C8000037	tbnz w8, #0, #0x3229fa8	-
+0x3229F94	C0D201B0	adrp x0, #0x6c82000	-
+0x3229F98	002041F9	ldr x0, [x0, #0x240]	-
+0x3229F9C	AF96EF97	bl #0x2e0fa58	-
+0x3229FA0	28008052	mov w8, #1	-
+0x3229FA4	A84A1E39	strb w8, [x21, #0x792]	-
+0x3229FA8	800240F9	ldr x0, [x20]	-
+0x3229FAC	745A40F9	ldr x20, [x19, #0xb0]	-
+0x3229FB0	08E040B9	ldr w8, [x0, #0xe0]	-
+0x3229FB4	48000035	cbnz w8, #0x3229fbc	-
+0x3229FB8	0597EF97	bl #0x2e0fbcc	-
+0x3229FBC	E00314AA	mov x0, x20	-
+0x3229FC0	E1031FAA	mov x1, xzr	-
+0x3229FC4	E2031FAA	mov x2, xzr	-
+0x3229FC8	F04FCE94	bl #0x65bdf88	UnityEngine.Object$$op_Equality
+0x3229FCC	C0000037	tbnz w0, #0, #0x3229fe4	-
+0x3229FD0	605A40F9	ldr x0, [x19, #0xb0]	-
+0x3229FD4	000300B4	cbz x0, #0x322a034	-
+0x3229FD8	E1031FAA	mov x1, xzr	-
+0x3229FDC	79D50294	bl #0x32df5c0	ScoreCountStop$$get_ActiveSelf
+0x3229FE0	80000036	tbz w0, #0, #0x3229ff0	-
+0x3229FE4	F44F41A9	ldp x20, x19, [sp, #0x10]	-
+0x3229FE8	FE57C2A8	ldp x30, x21, [sp], #0x20	-
+0x3229FEC	C0035FD6	ret	-
+0x3229FF0	602240F9	ldr x0, [x19, #0x40]	-
+0x3229FF4	000200B4	cbz x0, #0x322a034	-
+0x3229FF8	E1031F2A	mov w1, wzr	-
+0x3229FFC	E2031FAA	mov x2, xzr	-
+0x322A000	054DCE94	bl #0x65bd414	UnityEngine.GameObject$$SetActive
+0x322A004	602640F9	ldr x0, [x19, #0x48]	-
+0x322A008	600100B4	cbz x0, #0x322a034	-
+0x322A00C	E1031F2A	mov w1, wzr	-
+0x322A010	E2031FAA	mov x2, xzr	-
+0x322A014	004DCE94	bl #0x65bd414	UnityEngine.GameObject$$SetActive
+0x322A018	605A40F9	ldr x0, [x19, #0xb0]	-
+0x322A01C	C00000B4	cbz x0, #0x322a034	-
+0x322A020	F44F41A9	ldp x20, x19, [sp, #0x10]	-
+0x322A024	21008052	mov w1, #1	-
+0x322A028	E2031FAA	mov x2, xzr	-
+0x322A02C	FE57C2A8	ldp x30, x21, [sp], #0x20	-
+0x322A030	5AD50214	b #0x32df598	ScoreCountStop$$SetActivate
+0x322A034	2C97EF97	bl #0x2e0fce4	-

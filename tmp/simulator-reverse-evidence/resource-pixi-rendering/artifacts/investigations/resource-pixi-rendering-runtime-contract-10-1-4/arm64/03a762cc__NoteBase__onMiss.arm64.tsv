@@ -1,0 +1,14 @@
+address	bytes	instruction	resolved_target
+0x3A762CC	FE0F1FF8	str x30, [sp, #-0x10]!	-
+0x3A762D0	08544139	ldrb w8, [x0, #0x55]	-
+0x3A762D4	08010034	cbz w8, #0x3a762f4	-
+0x3A762D8	08B040F9	ldr x8, [x0, #0x160]	-
+0x3A762DC	1F540139	strb wzr, [x0, #0x55]	-
+0x3A762E0	E80000B4	cbz x8, #0x3a762fc	-
+0x3A762E4	E00308AA	mov x0, x8	-
+0x3A762E8	E1031FAA	mov x1, xzr	-
+0x3A762EC	FE0741F8	ldr x30, [sp], #0x10	-
+0x3A762F0	76AEE217	b #0x3321cc8	SituationSkillManager$$SkillNoteFailed
+0x3A762F4	FE0741F8	ldr x30, [sp], #0x10	-
+0x3A762F8	C0035FD6	ret	-
+0x3A762FC	7A66CE97	bl #0x2e0fce4	-

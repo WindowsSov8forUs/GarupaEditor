@@ -1,0 +1,37 @@
+address	bytes	instruction	resolved_target
+0x331B680	FE57BEA9	stp x30, x21, [sp, #-0x20]!	-
+0x331B684	F44F01A9	stp x20, x19, [sp, #0x10]	-
+0x331B688	B4F901F0	adrp x20, #0x7252000	-
+0x331B68C	95CB01B0	adrp x21, #0x6c8c000	-
+0x331B690	88CE4339	ldrb w8, [x20, #0xf3]	-
+0x331B694	B58642F9	ldr x21, [x21, #0x508]	-
+0x331B698	F30300AA	mov x19, x0	-
+0x331B69C	28010037	tbnz w8, #0, #0x331b6c0	-
+0x331B6A0	C0CB01F0	adrp x0, #0x6c96000	-
+0x331B6A4	00EC41F9	ldr x0, [x0, #0x3d8]	-
+0x331B6A8	ECD0EB97	bl #0x2e0fa58	-
+0x331B6AC	80CB01B0	adrp x0, #0x6c8c000	-
+0x331B6B0	008442F9	ldr x0, [x0, #0x508]	-
+0x331B6B4	E9D0EB97	bl #0x2e0fa58	-
+0x331B6B8	28008052	mov w8, #1	-
+0x331B6BC	88CE0339	strb w8, [x20, #0xf3]	-
+0x331B6C0	A00240F9	ldr x0, [x21]	-
+0x331B6C4	0C805994	bl #0x497b6f4	SingletonMonoBehaviour<object>$$get_Instance
+0x331B6C8	200200B4	cbz x0, #0x331b70c	-
+0x331B6CC	C8CB01F0	adrp x8, #0x6c96000	-
+0x331B6D0	08ED41F9	ldr x8, [x8, #0x3d8]	-
+0x331B6D4	14C04239	ldrb w20, [x0, #0xb0]	-
+0x331B6D8	080140F9	ldr x8, [x8]	-
+0x331B6DC	09E140B9	ldr w9, [x8, #0xe0]	-
+0x331B6E0	69000035	cbnz w9, #0x331b6ec	-
+0x331B6E4	E00308AA	mov x0, x8	-
+0x331B6E8	39D1EB97	bl #0x2e0fbcc	-
+0x331B6EC	9F020071	cmp w20, #0	-
+0x331B6F0	E0079F1A	cset w0, ne	-
+0x331B6F4	07000094	bl #0x331b710	InGameUtility$$shouldLoadSpecialSkin
+0x331B6F8	01000012	and w1, w0, #1	-
+0x331B6FC	E00313AA	mov x0, x19	-
+0x331B700	F44F41A9	ldp x20, x19, [sp, #0x10]	-
+0x331B704	FE57C2A8	ldp x30, x21, [sp], #0x20	-
+0x331B708	67000014	b #0x331b8a4	InGameUtility$$loadJudgeAtlas
+0x331B70C	76D1EB97	bl #0x2e0fce4	-

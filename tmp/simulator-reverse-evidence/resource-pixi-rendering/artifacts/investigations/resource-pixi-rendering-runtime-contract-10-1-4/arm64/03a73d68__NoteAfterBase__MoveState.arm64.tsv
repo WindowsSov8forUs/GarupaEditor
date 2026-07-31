@@ -1,0 +1,20 @@
+address	bytes	instruction	resolved_target
+0x3A73D68	FE4FBFA9	stp x30, x19, [sp, #-0x10]!	-
+0x3A73D6C	F30300AA	mov x19, x0	-
+0x3A73D70	11000094	bl #0x3a73db4	NoteBase$$Move
+0x3A73D74	607E40F9	ldr x0, [x19, #0xf8]	-
+0x3A73D78	C00100B4	cbz x0, #0x3a73db0	-
+0x3A73D7C	E1031FAA	mov x1, xzr	-
+0x3A73D80	8A07F497	bl #0x3775ba8	NoteManager$$GetAdjustMusicPos
+0x3A73D84	617640BD	ldr s1, [x19, #0x74]	-
+0x3A73D88	21D8215E	scvtf s1, s1	-
+0x3A73D8C	0038211E	fsub s0, s0, s1	-
+0x3A73D90	0820201E	fcmp s0, #0.0	-
+0x3A73D94	6A000054	b.ge #0x3a73da0	-
+0x3A73D98	FE4FC1A8	ldp x30, x19, [sp], #0x10	-
+0x3A73D9C	C0035FD6	ret	-
+0x3A73DA0	41008052	mov w1, #2	-
+0x3A73DA4	E00313AA	mov x0, x19	-
+0x3A73DA8	FE4FC1A8	ldp x30, x19, [sp], #0x10	-
+0x3A73DAC	96000014	b #0x3a74004	NoteBase$$ChangeState
+0x3A73DB0	CD6FCE97	bl #0x2e0fce4	-

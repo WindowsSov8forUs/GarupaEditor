@@ -1,0 +1,47 @@
+address	bytes	instruction	resolved_target
+0x3A74FEC	FE57BEA9	stp x30, x21, [sp, #-0x20]!	-
+0x3A74FF0	F44F01A9	stp x20, x19, [sp, #0x10]	-
+0x3A74FF4	15BF01D0	adrp x21, #0x7256000	-
+0x3A74FF8	749001D0	adrp x20, #0x6c82000	-
+0x3A74FFC	A8227739	ldrb w8, [x21, #0xdc8]	-
+0x3A75000	1F04B814	b #0x687607c	-
+0x3A75004	F30300AA	mov x19, x0	-
+0x3A75008	C8000037	tbnz w8, #0, #0x3a75020	-
+0x3A7500C	609001B0	adrp x0, #0x6c82000	-
+0x3A75010	002041F9	ldr x0, [x0, #0x240]	-
+0x3A75014	916ACE97	bl #0x2e0fa58	-
+0x3A75018	28008052	mov w8, #1	-
+0x3A7501C	A8223739	strb w8, [x21, #0xdc8]	-
+0x3A75020	800240F9	ldr x0, [x20]	-
+0x3A75024	74BA40F9	ldr x20, [x19, #0x170]	-
+0x3A75028	08E040B9	ldr w8, [x0, #0xe0]	-
+0x3A7502C	48000035	cbnz w8, #0x3a75034	-
+0x3A75030	E76ACE97	bl #0x2e0fbcc	-
+0x3A75034	E00314AA	mov x0, x20	-
+0x3A75038	E1031FAA	mov x1, xzr	-
+0x3A7503C	E2031FAA	mov x2, xzr	-
+0x3A75040	1920AD94	bl #0x65bd0a4	UnityEngine.Object$$op_Inequality
+0x3A75044	80020036	tbz w0, #0, #0x3a75094	-
+0x3A75048	73C20591	add x19, x19, #0x170	-
+0x3A7504C	600240F9	ldr x0, [x19]	-
+0x3A75050	800200B4	cbz x0, #0x3a750a0	-
+0x3A75054	E1031FAA	mov x1, xzr	-
+0x3A75058	D2AED997	bl #0x30e0ba0	NoteMesh$$Deactivate
+0x3A7505C	600240F9	ldr x0, [x19]	-
+0x3A75060	000200B4	cbz x0, #0x3a750a0	-
+0x3A75064	E1031FAA	mov x1, xzr	-
+0x3A75068	9D15AD94	bl #0x65ba6dc	UnityEngine.Component$$get_gameObject
+0x3A7506C	A00100B4	cbz x0, #0x3a750a0	-
+0x3A75070	E1031F2A	mov w1, wzr	-
+0x3A75074	E2031FAA	mov x2, xzr	-
+0x3A75078	E720AD94	bl #0x65bd414	UnityEngine.GameObject$$SetActive
+0x3A7507C	7F0200F9	str xzr, [x19]	-
+0x3A75080	E00313AA	mov x0, x19	-
+0x3A75084	F44F41A9	ldp x20, x19, [sp, #0x10]	-
+0x3A75088	E1031FAA	mov x1, xzr	-
+0x3A7508C	FE57C2A8	ldp x30, x21, [sp], #0x20	-
+0x3A75090	5D6ACE17	b #0x2e0fa04	-
+0x3A75094	F44F41A9	ldp x20, x19, [sp, #0x10]	-
+0x3A75098	FE57C2A8	ldp x30, x21, [sp], #0x20	-
+0x3A7509C	C0035FD6	ret	-
+0x3A750A0	116BCE97	bl #0x2e0fce4	-

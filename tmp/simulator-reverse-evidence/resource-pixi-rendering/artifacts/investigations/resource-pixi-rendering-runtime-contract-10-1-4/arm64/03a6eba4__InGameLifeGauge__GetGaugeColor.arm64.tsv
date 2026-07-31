@@ -1,0 +1,58 @@
+address	bytes	instruction	resolved_target
+0x3A6EBA4	E80F1DFC	str d8, [sp, #-0x30]!	-
+0x3A6EBA8	FE5701A9	stp x30, x21, [sp, #0x10]	-
+0x3A6EBAC	F44F02A9	stp x20, x19, [sp, #0x20]	-
+0x3A6EBB0	55BF0190	adrp x21, #0x7256000	-
+0x3A6EBB4	B4900190	adrp x20, #0x6c82000	-
+0x3A6EBB8	A8627639	ldrb w8, [x21, #0xd98]	-
+0x3A6EBBC	942241F9	ldr x20, [x20, #0x240]	-
+0x3A6EBC0	F30300AA	mov x19, x0	-
+0x3A6EBC4	28010037	tbnz w8, #0, #0x3a6ebe8	-
+0x3A6EBC8	40910190	adrp x0, #0x6c96000	-
+0x3A6EBCC	00EC41F9	ldr x0, [x0, #0x3d8]	-
+0x3A6EBD0	A283CE97	bl #0x2e0fa58	-
+0x3A6EBD4	A0900190	adrp x0, #0x6c82000	-
+0x3A6EBD8	002041F9	ldr x0, [x0, #0x240]	-
+0x3A6EBDC	9F83CE97	bl #0x2e0fa58	-
+0x3A6EBE0	28008052	mov w8, #1	-
+0x3A6EBE4	A8623639	strb w8, [x21, #0xd98]	-
+0x3A6EBE8	800240F9	ldr x0, [x20]	-
+0x3A6EBEC	742A40F9	ldr x20, [x19, #0x50]	-
+0x3A6EBF0	08E040B9	ldr w8, [x0, #0xe0]	-
+0x3A6EBF4	48000035	cbnz w8, #0x3a6ebfc	-
+0x3A6EBF8	F583CE97	bl #0x2e0fbcc	-
+0x3A6EBFC	E00314AA	mov x0, x20	-
+0x3A6EC00	E1031FAA	mov x1, xzr	-
+0x3A6EC04	E2031FAA	mov x2, xzr	-
+0x3A6EC08	E03CAD94	bl #0x65bdf88	UnityEngine.Object$$op_Equality
+0x3A6EC0C	80010036	tbz w0, #0, #0x3a6ec3c	-
+0x3A6EC10	53910190	adrp x19, #0x6c96000	-
+0x3A6EC14	73EE41F9	ldr x19, [x19, #0x3d8]	-
+0x3A6EC18	600240F9	ldr x0, [x19]	-
+0x3A6EC1C	08E040B9	ldr w8, [x0, #0xe0]	-
+0x3A6EC20	68000035	cbnz w8, #0x3a6ec2c	-
+0x3A6EC24	EA83CE97	bl #0x2e0fbcc	-
+0x3A6EC28	600240F9	ldr x0, [x19]	-
+0x3A6EC2C	085C40F9	ldr x8, [x0, #0xb8]	-
+0x3A6EC30	0005402D	ldp s0, s1, [x8]	-
+0x3A6EC34	020D412D	ldp s2, s3, [x8, #8]	-
+0x3A6EC38	0F000014	b #0x3a6ec74	-
+0x3A6EC3C	602A40F9	ldr x0, [x19, #0x50]	-
+0x3A6EC40	200200B4	cbz x0, #0x3a6ec84	-
+0x3A6EC44	E1031FAA	mov x1, xzr	-
+0x3A6EC48	D267D697	bl #0x3008b90	UIProgressBar$$get_value
+0x3A6EC4C	48910190	adrp x8, #0x6c96000	-
+0x3A6EC50	08ED41F9	ldr x8, [x8, #0x3d8]	-
+0x3A6EC54	081CA04E	mov v8.16b, v0.16b	-
+0x3A6EC58	000140F9	ldr x0, [x8]	-
+0x3A6EC5C	08E040B9	ldr w8, [x0, #0xe0]	-
+0x3A6EC60	48000035	cbnz w8, #0x3a6ec68	-
+0x3A6EC64	DA83CE97	bl #0x2e0fbcc	-
+0x3A6EC68	001DA84E	mov v0.16b, v8.16b	-
+0x3A6EC6C	E0031FAA	mov x0, xzr	-
+0x3A6EC70	A3B4E297	bl #0x331befc	InGameUtility$$GetLifeGaugeColor
+0x3A6EC74	F44F42A9	ldp x20, x19, [sp, #0x20]	-
+0x3A6EC78	FE5741A9	ldp x30, x21, [sp, #0x10]	-
+0x3A6EC7C	E80743FC	ldr d8, [sp], #0x30	-
+0x3A6EC80	C0035FD6	ret	-
+0x3A6EC84	1884CE97	bl #0x2e0fce4	-

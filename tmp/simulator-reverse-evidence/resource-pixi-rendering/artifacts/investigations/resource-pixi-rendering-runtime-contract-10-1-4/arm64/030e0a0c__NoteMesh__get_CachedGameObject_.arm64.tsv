@@ -1,0 +1,37 @@
+address	bytes	instruction	resolved_target
+0x30E0A0C	FE0F1DF8	str x30, [sp, #-0x30]!	-
+0x30E0A10	F65701A9	stp x22, x21, [sp, #0x10]	-
+0x30E0A14	F44F02A9	stp x20, x19, [sp, #0x20]	-
+0x30E0A18	940B0290	adrp x20, #0x7250000	-
+0x30E0A1C	16DD01D0	adrp x22, #0x6c82000	-
+0x30E0A20	88167039	ldrb w8, [x20, #0xc05]	-
+0x30E0A24	D62241F9	ldr x22, [x22, #0x240]	-
+0x30E0A28	F30300AA	mov x19, x0	-
+0x30E0A2C	C8000037	tbnz w8, #0, #0x30e0a44	-
+0x30E0A30	00DD01D0	adrp x0, #0x6c82000	-
+0x30E0A34	002041F9	ldr x0, [x0, #0x240]	-
+0x30E0A38	08BCF497	bl #0x2e0fa58	-
+0x30E0A3C	28008052	mov w8, #1	-
+0x30E0A40	88163039	strb w8, [x20, #0xc05]	-
+0x30E0A44	F40313AA	mov x20, x19	-
+0x30E0A48	958E43F8	ldr x21, [x20, #0x38]!	-
+0x30E0A4C	C00240F9	ldr x0, [x22]	-
+0x30E0A50	08E040B9	ldr w8, [x0, #0xe0]	-
+0x30E0A54	48000035	cbnz w8, #0x30e0a5c	-
+0x30E0A58	5DBCF497	bl #0x2e0fbcc	-
+0x30E0A5C	E00315AA	mov x0, x21	-
+0x30E0A60	E1031FAA	mov x1, xzr	-
+0x30E0A64	F680D394	bl #0x65c0e3c	UnityEngine.Object$$op_Implicit
+0x30E0A68	00010037	tbnz w0, #0, #0x30e0a88	-
+0x30E0A6C	E00313AA	mov x0, x19	-
+0x30E0A70	E1031FAA	mov x1, xzr	-
+0x30E0A74	1A67D394	bl #0x65ba6dc	UnityEngine.Component$$get_gameObject
+0x30E0A78	E10300AA	mov x1, x0	-
+0x30E0A7C	601E00F9	str x0, [x19, #0x38]	-
+0x30E0A80	E00314AA	mov x0, x20	-
+0x30E0A84	E0BBF497	bl #0x2e0fa04	-
+0x30E0A88	800240F9	ldr x0, [x20]	-
+0x30E0A8C	F44F42A9	ldp x20, x19, [sp, #0x20]	-
+0x30E0A90	F65741A9	ldp x22, x21, [sp, #0x10]	-
+0x30E0A94	FE0743F8	ldr x30, [sp], #0x30	-
+0x30E0A98	C0035FD6	ret	-

@@ -1,0 +1,51 @@
+address	bytes	instruction	resolved_target
+0x30EDA6C	FE67BCA9	stp x30, x25, [sp, #-0x40]!	-
+0x30EDA70	F85F01A9	stp x24, x23, [sp, #0x10]	-
+0x30EDA74	F65702A9	stp x22, x21, [sp, #0x20]	-
+0x30EDA78	F44F03A9	stp x20, x19, [sp, #0x30]	-
+0x30EDA7C	180B02F0	adrp x24, #0x7250000	-
+0x30EDA80	B9DC01B0	adrp x25, #0x6c82000	-
+0x30EDA84	08E77139	ldrb w8, [x24, #0xc79]	-
+0x30EDA88	392341F9	ldr x25, [x25, #0x240]	-
+0x30EDA8C	F50304AA	mov x21, x4	-
+0x30EDA90	F60303AA	mov x22, x3	-
+0x30EDA94	F70302AA	mov x23, x2	-
+0x30EDA98	F40301AA	mov x20, x1	-
+0x30EDA9C	F30300AA	mov x19, x0	-
+0x30EDAA0	C8000037	tbnz w8, #0, #0x30edab8	-
+0x30EDAA4	A0DC01B0	adrp x0, #0x6c82000	-
+0x30EDAA8	002041F9	ldr x0, [x0, #0x240]	-
+0x30EDAAC	EB87F497	bl #0x2e0fa58	-
+0x30EDAB0	28008052	mov w8, #1	-
+0x30EDAB4	08E73139	strb w8, [x24, #0xc79]	-
+0x30EDAB8	200340F9	ldr x0, [x25]	-
+0x30EDABC	08E040B9	ldr w8, [x0, #0xe0]	-
+0x30EDAC0	48000035	cbnz w8, #0x30edac8	-
+0x30EDAC4	4288F497	bl #0x2e0fbcc	-
+0x30EDAC8	E00317AA	mov x0, x23	-
+0x30EDACC	E1031FAA	mov x1, xzr	-
+0x30EDAD0	E2031FAA	mov x2, xzr	-
+0x30EDAD4	743DD394	bl #0x65bd0a4	UnityEngine.Object$$op_Inequality
+0x30EDAD8	A0010036	tbz w0, #0, #0x30edb0c	-
+0x30EDADC	60E20691	add x0, x19, #0x1b8	-
+0x30EDAE0	E10317AA	mov x1, x23	-
+0x30EDAE4	77DE00F9	str x23, [x19, #0x1b8]	-
+0x30EDAE8	C787F497	bl #0x2e0fa04	-
+0x30EDAEC	60DE40F9	ldr x0, [x19, #0x1b8]	-
+0x30EDAF0	000200B4	cbz x0, #0x30edb30	-
+0x30EDAF4	E10313AA	mov x1, x19	-
+0x30EDAF8	E20314AA	mov x2, x20	-
+0x30EDAFC	E30316AA	mov x3, x22	-
+0x30EDB00	E40315AA	mov x4, x21	-
+0x30EDB04	E5031FAA	mov x5, xzr	-
+0x30EDB08	24D30494	bl #0x3222798	NoteMultipleDirectionalFlickBackLine$$Setup
+0x30EDB0C	E00313AA	mov x0, x19	-
+0x30EDB10	E10314AA	mov x1, x20	-
+0x30EDB14	08000094	bl #0x30edb34	NoteMultipleDirectionalFlickAfter$$storeTheNextNote
+0x30EDB18	E00313AA	mov x0, x19	-
+0x30EDB1C	F44F43A9	ldp x20, x19, [sp, #0x30]	-
+0x30EDB20	F65742A9	ldp x22, x21, [sp, #0x20]	-
+0x30EDB24	F85F41A9	ldp x24, x23, [sp, #0x10]	-
+0x30EDB28	FE67C4A8	ldp x30, x25, [sp], #0x40	-
+0x30EDB2C	66000014	b #0x30edcc4	NoteMultipleDirectionalFlickAfter$$setupFlickAnimationIconVisibility
+0x30EDB30	6D88F497	bl #0x2e0fce4	-

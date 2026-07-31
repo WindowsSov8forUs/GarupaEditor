@@ -1,0 +1,47 @@
+address	bytes	instruction	resolved_target
+0x3883CB0	EB2BBC6D	stp d11, d10, [sp, #-0x40]!	-
+0x3883CB4	E923016D	stp d9, d8, [sp, #0x10]	-
+0x3883CB8	FE1300F9	str x30, [sp, #0x20]	-
+0x3883CBC	F44F03A9	stp x20, x19, [sp, #0x30]	-
+0x3883CC0	94CE01D0	adrp x20, #0x7255000	-
+0x3883CC4	886E6339	ldrb w8, [x20, #0x8db]	-
+0x3883CC8	F30301AA	mov x19, x1	-
+0x3883CCC	281CA14E	mov v8.16b, v1.16b	-
+0x3883CD0	091CA04E	mov v9.16b, v0.16b	-
+0x3883CD4	C8000037	tbnz w8, #0, #0x3883cec	-
+0x3883CD8	E0A00190	adrp x0, #0x6c9f000	-
+0x3883CDC	00EC40F9	ldr x0, [x0, #0x1d8]	-
+0x3883CE0	5E2FD697	bl #0x2e0fa58	-
+0x3883CE4	28008052	mov w8, #1	-
+0x3883CE8	886E2339	strb w8, [x20, #0x8db]	-
+0x3883CEC	D30300B4	cbz x19, #0x3883d64	-
+0x3883CF0	E00313AA	mov x0, x19	-
+0x3883CF4	E1031FAA	mov x1, xzr	-
+0x3883CF8	6ADAB494	bl #0x65ba6a0	UnityEngine.Component$$get_transform
+0x3883CFC	400300B4	cbz x0, #0x3883d64	-
+0x3883D00	F4A00190	adrp x20, #0x6c9f000	-
+0x3883D04	94EE40F9	ldr x20, [x20, #0x1d8]	-
+0x3883D08	E1031FAA	mov x1, xzr	-
+0x3883D0C	7F16B594	bl #0x65c9708	UnityEngine.Transform$$get_position
+0x3883D10	800240F9	ldr x0, [x20]	-
+0x3883D14	0A1CA04E	mov v10.16b, v0.16b	-
+0x3883D18	2B1CA14E	mov v11.16b, v1.16b	-
+0x3883D1C	08E040B9	ldr w8, [x0, #0xe0]	-
+0x3883D20	48000035	cbnz w8, #0x3883d28	-
+0x3883D24	AA2FD697	bl #0x2e0fbcc	-
+0x3883D28	201DA94E	mov v0.16b, v9.16b	-
+0x3883D2C	011DA84E	mov v1.16b, v8.16b	-
+0x3883D30	421DAA4E	mov v2.16b, v10.16b	-
+0x3883D34	631DAB4E	mov v3.16b, v11.16b	-
+0x3883D38	E0031FAA	mov x0, xzr	-
+0x3883D3C	DB63EA97	bl #0x331cca8	MathUtility$$CalcDistanceSquared
+0x3883D40	612240BD	ldr s1, [x19, #0x20]	-
+0x3883D44	FE1340F9	ldr x30, [sp, #0x20]	-
+0x3883D48	E923416D	ldp d9, d8, [sp, #0x10]	-
+0x3883D4C	2108211E	fmul s1, s1, s1	-
+0x3883D50	0020211E	fcmp s0, s1	-
+0x3883D54	E083939A	csel x0, xzr, x19, hi	-
+0x3883D58	F44F43A9	ldp x20, x19, [sp, #0x30]	-
+0x3883D5C	EB2BC46C	ldp d11, d10, [sp], #0x40	-
+0x3883D60	C0035FD6	ret	-
+0x3883D64	E02FD697	bl #0x2e0fce4	-

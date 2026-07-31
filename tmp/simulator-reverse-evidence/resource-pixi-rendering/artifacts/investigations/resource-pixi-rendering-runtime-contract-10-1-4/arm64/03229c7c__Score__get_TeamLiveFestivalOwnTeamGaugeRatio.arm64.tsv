@@ -1,0 +1,8 @@
+address	bytes	instruction	resolved_target
+0x3229C7C	FE0F1FF8	str x30, [sp, #-0x10]!	-
+0x3229C80	004C40F9	ldr x0, [x0, #0x98]	-
+0x3229C84	800000B4	cbz x0, #0x3229c94	-
+0x3229C88	E1031FAA	mov x1, xzr	-
+0x3229C8C	FE0741F8	ldr x30, [sp], #0x10	-
+0x3229C90	09DD0214	b #0x32e10b4	TeamLiveFestivalScoreGauge$$get_OwnTeamGaugeRatio
+0x3229C94	1498EF97	bl #0x2e0fce4	-

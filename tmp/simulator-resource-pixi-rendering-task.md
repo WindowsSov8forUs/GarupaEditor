@@ -11,7 +11,7 @@
 - 锁定原作样本：`jp.co.craftegg.band` 10.1.4（version code 230，`arm64-v8a`）。
 - 锁定`libil2cpp.so` SHA-256：`815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F`。
 - 锁定`global-metadata.dat` SHA-256：`298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F`。
-- 当前Reverse基线提交：`f5a6d7a7b74c7f2855bb8a87f0cfbcd09120af7f`；只消费该提交及其祖先中已提交、已push、可校验对象。
+- 当前Reverse基线提交：`b8a749bb3fff2106237336e011a8e976a58ef94d`；只消费该提交及其祖先中已提交、已push、可校验对象。
 - 当前状态：**RP00已完成；RP01全部可离线工作已关闭，阻塞于当前HABAHIRO bundle必须通过游戏资源服务或已证明的当前缓存取得；RP02阻塞于自然进入ordinary/HABAHIRO Live后的R1与实体frame。`offline_work_gate=closed`、`rendering_gate=open`、`production_authorization=false`。RP02关闭前禁止修改`src/simulator/**`生产实现、增加Pixi backend、加入阶段测试脚本或引入资源二进制。**
 - 计划证据包：`tmp/simulator-reverse-evidence/resource-pixi-rendering/`，只在Reverse新证据提交并push后创建。
 - 计划验收记录：`tmp/simulator-resource-pixi-rendering-acceptance.md`，RP14时创建。
@@ -111,6 +111,7 @@
 - 剩余S01–S03仅为：当前HABAHIRO资源、自然ordinary/HABAHIRO Live R1、固定实体frame；三者全部要求游戏服务器资源或自然Live入口，禁止以历史Bestdori字节、合成事件或默认值替代。
 - 一次诊断性历史extractor复跑触及外部HTTP，其输出已丢弃且未晋升；最终extractor/verifier只接受锁定APK与设备cache字节，并拒绝URL/Bestdori/GitHub/CDN来源。游戏服务器始终未连接，游戏未启动，Frida/managed invocation/内存写/APK修改均未发生。
 - extract/build全链幂等通过；static/resource/offline三个fail-closed verifier分别确认`methods=673 layouts=32 enums=19`、`cache=11026 ingameskin=57 base_resources=100 hud_profiles=8 skill_clips=4 note_clips=4 score_up=5`和`H=28 D=18 PR=40 remaining=S01,S02,S03 production=false`。
+- 冻结预检发现Python曾将12个Unity正无穷写为非标准JSON `Infinity`；Reverse `b8a749bb3fff2106237336e011a8e976a58ef94d`在extractor根源改为显式`float_special=positive-infinity`与Float32位模式`7F800000`，并令verifier拒绝NaN/Infinity token后重新通过全链。
 
 ## 2. 固定范围
 

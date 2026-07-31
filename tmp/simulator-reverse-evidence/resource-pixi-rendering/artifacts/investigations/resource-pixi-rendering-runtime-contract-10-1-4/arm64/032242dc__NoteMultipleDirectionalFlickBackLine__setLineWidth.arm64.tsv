@@ -1,0 +1,9 @@
+address	bytes	instruction	resolved_target
+0x32242DC	FE0F1FF8	str x30, [sp, #-0x10]!	-
+0x32242E0	001040F9	ldr x0, [x0, #0x20]	-
+0x32242E4	A00000B4	cbz x0, #0x32242f8	-
+0x32242E8	011CA04E	mov v1.16b, v0.16b	-
+0x32242EC	E1031FAA	mov x1, xzr	-
+0x32242F0	FE0741F8	ldr x30, [sp], #0x10	-
+0x32242F4	249ECD14	b #0x658bb84	UnityEngine.LineRenderer$$SetWidth
+0x32242F8	7BAEEF97	bl #0x2e0fce4	-

@@ -1,0 +1,326 @@
+{
+  "schema_version": 1,
+  "status": "confirmed-offline-portable-draft-runtime-order-gate-open",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "version_name": "10.1.4",
+    "version_code": 230,
+    "abi": "arm64-v8a"
+  },
+  "evidence": {
+    "F01": {
+      "path": "resource_pixi_rendering_static_contract.json",
+      "bytes": 2615204,
+      "sha256": "213F64E0ACBD1D8B6E0773DD6107A392CF3BA70DD0D575269DE2661CE5163389"
+    },
+    "F02": {
+      "path": "resource_pixi_rendering_instruction_migration.json",
+      "bytes": 348093,
+      "sha256": "E0FB0346291E9E14ADDC77F5F95479ED0CE84145E6C7F24F969C03835265B527"
+    },
+    "F03": {
+      "path": "resource_pixi_rendering_resource_contract.json",
+      "bytes": 2111866,
+      "sha256": "F389AB0950156FAAA6B1B6407BA4D47AD66C9472DB9631D604460E39BC9F15A3"
+    },
+    "F04": {
+      "path": "resource_pixi_rendering_hud_asset_profiles.json",
+      "bytes": 432616,
+      "sha256": "0D36B7FD2E50EEE9F4528CB8D508D972EA2E3314863DD47CFE3617B314C5A05D"
+    },
+    "F05": {
+      "path": "resource_pixi_rendering_skill_animation_profiles.json",
+      "bytes": 21366,
+      "sha256": "527F1A49EFA9663CD7009BA7FA525776C0C8BF00733772AA09E7626429A4126E"
+    },
+    "F06": {
+      "path": "resource_pixi_rendering_note_animation_profiles.json",
+      "bytes": 19172,
+      "sha256": "3D72AEEC898E6346F21664BDFB61271CC6E8FDE2863BC9A6B78A1D2ADCCFF9AB"
+    },
+    "F07": {
+      "path": "resource_pixi_rendering_score_up_profile.json",
+      "bytes": 37165,
+      "sha256": "62937484F0BBDF1FC4CBFBBCC5598407852A177AF5EDDC6C1A4A262B354B5058"
+    }
+  },
+  "resource_profile": {
+    "ownership": "prepared renderer backend only; engine receives logical immutable identifiers",
+    "required_fields": [
+      "schema_version",
+      "sample",
+      "pack_identity",
+      "logical_asset_id",
+      "role",
+      "byte_length",
+      "sha256",
+      "mime",
+      "dimensions",
+      "texture_settings",
+      "atlas_rows",
+      "material_role",
+      "animation_role"
+    ],
+    "preflight_order": [
+      "validate complete profile shape",
+      "reject duplicate logical IDs and exact keys",
+      "read all declared bytes without creating renderer objects",
+      "validate byte length and SHA-256",
+      "decode dimensions and validate atlas rectangles",
+      "validate all cross references and supported component mappings",
+      "create backend objects atomically and enter ready"
+    ],
+    "network_allowed": false,
+    "unityfs_parsing_in_engine": false,
+    "fallback_alias_allowed": false,
+    "placeholder_allowed": false,
+    "habahiro_status": "evidence-required-current-bundle-absent-from-cache-index",
+    "evidence_ids": [
+      "F03",
+      "F04",
+      "F05",
+      "F06",
+      "F07"
+    ]
+  },
+  "render_identity": {
+    "fields": [
+      "session_id",
+      "sequence",
+      "render_object_id",
+      "pool_family",
+      "role"
+    ],
+    "rules": [
+      "identity is authored by the engine owner and never inferred from Sprite name or array position",
+      "identity cannot cross renderer sessions",
+      "duplicate create/acquire is rejected before scene mutation",
+      "release removes the identity only after evidence-ordered child/resource release"
+    ],
+    "runtime_order_status": "evidence-required"
+  },
+  "command_families": [
+    {
+      "name": "object-lifecycle",
+      "operations": [
+        "create",
+        "acquire",
+        "activate",
+        "hide",
+        "deactivate",
+        "release"
+      ],
+      "status": "schema-confirmed-order-runtime-required"
+    },
+    {
+      "name": "resource-binding",
+      "operations": [
+        "bind-sprite",
+        "bind-material",
+        "bind-animation"
+      ],
+      "status": "schema-confirmed-selected-profile-runtime-required"
+    },
+    {
+      "name": "transform",
+      "operations": [
+        "set-position",
+        "set-scale",
+        "set-color",
+        "set-alpha",
+        "set-ordering",
+        "set-mask"
+      ],
+      "status": "schema-confirmed-values-runtime-required"
+    },
+    {
+      "name": "geometry",
+      "operations": [
+        "set-mesh",
+        "set-line",
+        "set-threshold"
+      ],
+      "status": "schema-confirmed-values-runtime-required"
+    },
+    {
+      "name": "hud",
+      "operations": [
+        "set-score",
+        "set-combo",
+        "set-result",
+        "set-life",
+        "set-overlay",
+        "play-animation",
+        "stop-animation"
+      ],
+      "status": "schema-confirmed-order-runtime-required"
+    }
+  ],
+  "component_mapping": [
+    {
+      "source": "Unity SpriteRenderer",
+      "portable": "sprite node",
+      "exact_fields": [
+        "Sprite key",
+        "rect",
+        "pivot",
+        "pixels-per-unit",
+        "transform",
+        "color",
+        "enabled",
+        "sorting tuple",
+        "mask interaction"
+      ],
+      "status": "portable-equivalent-static-fields-confirmed-runtime-values-open",
+      "evidence_ids": [
+        "F01",
+        "F03",
+        "F06"
+      ]
+    },
+    {
+      "source": "NGUI UISprite/UIAtlas",
+      "portable": "atlas sprite node",
+      "exact_fields": [
+        "Sprite name",
+        "rect",
+        "border",
+        "padding",
+        "depth",
+        "color",
+        "width",
+        "height"
+      ],
+      "status": "portable-equivalent-static-fields-confirmed-runtime-values-open",
+      "evidence_ids": [
+        "F03",
+        "F04",
+        "F07"
+      ]
+    },
+    {
+      "source": "MeshRenderer/MeshFilter",
+      "portable": "indexed textured mesh",
+      "exact_fields": [
+        "vertices",
+        "indices",
+        "UV",
+        "vertex color",
+        "material role",
+        "threshold",
+        "ordering"
+      ],
+      "status": "schema-confirmed-runtime-geometry-values-open",
+      "evidence_ids": [
+        "F01",
+        "F02",
+        "F03"
+      ]
+    },
+    {
+      "source": "LineRenderer",
+      "portable": "line or generated quad mesh",
+      "exact_fields": [
+        "endpoints",
+        "width",
+        "color",
+        "material role",
+        "threshold",
+        "ordering"
+      ],
+      "status": "schema-confirmed-runtime-endpoints-open",
+      "evidence_ids": [
+        "F01",
+        "F02",
+        "F03"
+      ]
+    },
+    {
+      "source": "SpriteMask/VisibleInsideMask",
+      "portable": "explicit mask node",
+      "exact_fields": [
+        "mask identity",
+        "inside/outside mode",
+        "ordering boundaries"
+      ],
+      "status": "schema-confirmed-runtime-ordering-open",
+      "evidence_ids": [
+        "F01",
+        "F03",
+        "F04"
+      ]
+    },
+    {
+      "source": "NGUI UILabel/UISpriteNumber/UISlider",
+      "portable": "bitmap/dynamic text, digit run and clipped fill",
+      "exact_fields": [
+        "glyph or Sprite sequence",
+        "LSF order",
+        "padding",
+        "alignment",
+        "color",
+        "depth",
+        "fill ratio"
+      ],
+      "status": "portable-equivalent-static-fields-confirmed-runtime-update-order-open",
+      "evidence_ids": [
+        "F01",
+        "F04",
+        "F07"
+      ]
+    },
+    {
+      "source": "Animator/AnimationClip",
+      "portable": "named deterministic animation clock",
+      "exact_fields": [
+        "state",
+        "sample rate",
+        "duration",
+        "loop",
+        "streamed coefficients",
+        "constant channels",
+        "events"
+      ],
+      "status": "portable-equivalent-static-curves-confirmed-runtime-phase-open",
+      "evidence_ids": [
+        "F04",
+        "F05",
+        "F06"
+      ]
+    }
+  ],
+  "ordering": {
+    "portable_tuple": [
+      "domain_layer",
+      "source_depth_or_sorting_order",
+      "source_z",
+      "creation_sequence"
+    ],
+    "status": "draft-static-sources-confirmed-runtime-cross-component-order-open",
+    "pixi_zindex_default_allowed": false
+  },
+  "float_policy": {
+    "engine_values": "Float32 bits are frozen at the evidence-confirmed owner write",
+    "backend_values": "the backend may widen to JavaScript number only after preserving the Float32 value",
+    "implicit_clamp_allowed": false
+  },
+  "rejections": [
+    "missing or duplicate profile",
+    "unknown logical role or exact key",
+    "byte length or SHA-256 mismatch",
+    "decode failure or dimension mismatch",
+    "atlas rectangle outside texture",
+    "unsupported texture, material, mask, animation or component mapping",
+    "renderer not prepared",
+    "duplicate or cross-session render identity",
+    "out-of-order or unknown command",
+    "HABAHIRO chart without a current confirmed HABAHIRO resource profile"
+  ],
+  "production_authorization": false,
+  "unknown_fields": [],
+  "blocking_findings": [
+    "D13 runtime command freeze/order is not observed",
+    "D15 cross-component runtime ordering and shader equivalence are not observed",
+    "current HABAHIRO resource bytes are unavailable"
+  ]
+}

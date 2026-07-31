@@ -1,0 +1,14 @@
+address	bytes	instruction	resolved_target
+0x30E7880	FE0F1EF8	str x30, [sp, #-0x20]!	-
+0x30E7884	F44F01A9	stp x20, x19, [sp, #0x10]	-
+0x30E7888	02D840F9	ldr x2, [x0, #0x1b0]	-
+0x30E788C	F30300AA	mov x19, x0	-
+0x30E7890	F403012A	mov w20, w1	-
+0x30E7894	015000B9	str w1, [x0, #0x50]	-
+0x30E7898	07000094	bl #0x30e78b4	NoteAddSlideMultipleDirectionalFlickVisual$$setNoteStateForRightSideNotes
+0x30E789C	62D640F9	ldr x2, [x19, #0x1a8]	-
+0x30E78A0	E00313AA	mov x0, x19	-
+0x30E78A4	E103142A	mov w1, w20	-
+0x30E78A8	F44F41A9	ldp x20, x19, [sp, #0x10]	-
+0x30E78AC	FE0742F8	ldr x30, [sp], #0x20	-
+0x30E78B0	21000014	b #0x30e7934	NoteAddSlideMultipleDirectionalFlickVisual$$setNoteStateForLeftSideNotes

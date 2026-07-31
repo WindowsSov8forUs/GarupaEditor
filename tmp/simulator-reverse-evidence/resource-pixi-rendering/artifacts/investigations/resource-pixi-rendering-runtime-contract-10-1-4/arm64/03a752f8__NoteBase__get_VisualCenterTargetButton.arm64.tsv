@@ -1,0 +1,14 @@
+address	bytes	instruction	resolved_target
+0x3A752F8	FE0F1FF8	str x30, [sp, #-0x10]!	-
+0x3A752FC	084C40F9	ldr x8, [x0, #0x98]	-
+0x3A75300	280100B4	cbz x8, #0x3a75324	-
+0x3A75304	09BC80B9	ldrsw x9, [x0, #0xbc]	-
+0x3A75308	0A1940B9	ldr w10, [x8, #0x18]	-
+0x3A7530C	3F010A6B	cmp w9, w10	-
+0x3A75310	C2000054	b.hs #0x3a75328	-
+0x3A75314	080D098B	add x8, x8, x9, lsl #3	-
+0x3A75318	001140F9	ldr x0, [x8, #0x20]	-
+0x3A7531C	FE0741F8	ldr x30, [sp], #0x10	-
+0x3A75320	C0035FD6	ret	-
+0x3A75324	706ACE97	bl #0x2e0fce4	-
+0x3A75328	716ACE97	bl #0x2e0fcec	-

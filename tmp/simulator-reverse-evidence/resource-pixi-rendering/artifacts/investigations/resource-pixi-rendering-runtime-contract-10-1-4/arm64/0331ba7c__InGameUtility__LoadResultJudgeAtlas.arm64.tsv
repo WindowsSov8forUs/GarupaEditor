@@ -1,0 +1,25 @@
+address	bytes	instruction	resolved_target
+0x331BA7C	FE57BEA9	stp x30, x21, [sp, #-0x20]!	-
+0x331BA80	F44F01A9	stp x20, x19, [sp, #0x10]	-
+0x331BA84	B4F901F0	adrp x20, #0x7252000	-
+0x331BA88	D5CB01F0	adrp x21, #0x6c96000	-
+0x331BA8C	88D24339	ldrb w8, [x20, #0xf4]	-
+0x331BA90	B5EE41F9	ldr x21, [x21, #0x3d8]	-
+0x331BA94	F30300AA	mov x19, x0	-
+0x331BA98	C8000037	tbnz w8, #0, #0x331bab0	-
+0x331BA9C	C0CB01F0	adrp x0, #0x6c96000	-
+0x331BAA0	00EC41F9	ldr x0, [x0, #0x3d8]	-
+0x331BAA4	EDCFEB97	bl #0x2e0fa58	-
+0x331BAA8	28008052	mov w8, #1	-
+0x331BAAC	88D20339	strb w8, [x20, #0xf4]	-
+0x331BAB0	A00240F9	ldr x0, [x21]	-
+0x331BAB4	08E040B9	ldr w8, [x0, #0xe0]	-
+0x331BAB8	48000035	cbnz w8, #0x331bac0	-
+0x331BABC	44D0EB97	bl #0x2e0fbcc	-
+0x331BAC0	E0031F2A	mov w0, wzr	-
+0x331BAC4	13FFFF97	bl #0x331b710	InGameUtility$$shouldLoadSpecialSkin
+0x331BAC8	01000012	and w1, w0, #1	-
+0x331BACC	E00313AA	mov x0, x19	-
+0x331BAD0	F44F41A9	ldp x20, x19, [sp, #0x10]	-
+0x331BAD4	FE57C2A8	ldp x30, x21, [sp], #0x20	-
+0x331BAD8	73FFFF17	b #0x331b8a4	InGameUtility$$loadJudgeAtlas

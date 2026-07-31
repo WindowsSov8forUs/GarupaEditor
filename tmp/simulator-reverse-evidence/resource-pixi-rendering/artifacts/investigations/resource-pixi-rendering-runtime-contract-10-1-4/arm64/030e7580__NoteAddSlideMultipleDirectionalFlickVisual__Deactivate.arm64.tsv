@@ -1,0 +1,7 @@
+address	bytes	instruction	resolved_target
+0x30E7580	FE4FBFA9	stp x30, x19, [sp, #-0x10]!	-
+0x30E7584	F30300AA	mov x19, x0	-
+0x30E7588	BFE0FF97	bl #0x30df884	NoteFrontBase$$Deactivate
+0x30E758C	E00313AA	mov x0, x19	-
+0x30E7590	FE4FC1A8	ldp x30, x19, [sp], #0x10	-
+0x30E7594	01000014	b #0x30e7598	NoteAddSlideMultipleDirectionalFlickVisual$$DeactivateBackLine

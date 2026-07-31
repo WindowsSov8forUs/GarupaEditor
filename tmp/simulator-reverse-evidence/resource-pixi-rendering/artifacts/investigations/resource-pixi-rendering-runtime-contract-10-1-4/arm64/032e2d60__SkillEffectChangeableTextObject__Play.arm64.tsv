@@ -1,0 +1,49 @@
+address	bytes	instruction	resolved_target
+0x32E2D60	E80F1EFC	str d8, [sp, #-0x20]!	-
+0x32E2D64	FE0700F9	str x30, [sp, #8]	-
+0x32E2D68	F44F01A9	stp x20, x19, [sp, #0x10]	-
+0x32E2D6C	F30300AA	mov x19, x0	-
+0x32E2D70	001040F9	ldr x0, [x0, #0x20]	-
+0x32E2D74	400500B4	cbz x0, #0x32e2e1c	-
+0x32E2D78	0190241E	fmov s1, #10.00000000	-
+0x32E2D7C	08F0AF52	mov w8, #0x7f800000	-
+0x32E2D80	0008211E	fmul s0, s0, s1	-
+0x32E2D84	0101271E	fmov s1, w8	-
+0x32E2D88	0800381E	fcvtzs w8, s0	-
+0x32E2D8C	0020211E	fcmp s0, s1	-
+0x32E2D90	0900B052	mov w9, #-0xffffffff80000000	-
+0x32E2D94	2101881A	csel w1, w9, w8, eq	-
+0x32E2D98	E003271E	fmov s0, wzr	-
+0x32E2D9C	E2031F2A	mov w2, wzr	-
+0x32E2DA0	E3031F2A	mov w3, wzr	-
+0x32E2DA4	E4031FAA	mov x4, xzr	-
+0x32E2DA8	CB480294	bl #0x33750d4	UISpriteNumber$$SetNumber
+0x32E2DAC	601240F9	ldr x0, [x19, #0x20]	-
+0x32E2DB0	600300B4	cbz x0, #0x32e2e1c	-
+0x32E2DB4	E1068052	mov w1, #0x37	-
+0x32E2DB8	E2031FAA	mov x2, xzr	-
+0x32E2DBC	A7480294	bl #0x3375058	UISpriteNumber$$SetDepth
+0x32E2DC0	601A40F9	ldr x0, [x19, #0x30]	-
+0x32E2DC4	C00200B4	cbz x0, #0x32e2e1c	-
+0x32E2DC8	E1031FAA	mov x1, xzr	-
+0x32E2DCC	355ECB94	bl #0x65ba6a0	UnityEngine.Component$$get_transform
+0x32E2DD0	681640F9	ldr x8, [x19, #0x28]	-
+0x32E2DD4	480200B4	cbz x8, #0x32e2e1c	-
+0x32E2DD8	F40300AA	mov x20, x0	-
+0x32E2DDC	E00308AA	mov x0, x8	-
+0x32E2DE0	E1031FAA	mov x1, xzr	-
+0x32E2DE4	7A97CB94	bl #0x65c8bcc	UnityEngine.Transform$$get_localPosition
+0x32E2DE8	601A40F9	ldr x0, [x19, #0x30]	-
+0x32E2DEC	800100B4	cbz x0, #0x32e2e1c	-
+0x32E2DF0	E1031FAA	mov x1, xzr	-
+0x32E2DF4	081CA04E	mov v8.16b, v0.16b	-
+0x32E2DF8	7597CB94	bl #0x65c8bcc	UnityEngine.Transform$$get_localPosition
+0x32E2DFC	E00314AA	mov x0, x20	-
+0x32E2E00	F44F41A9	ldp x20, x19, [sp, #0x10]	-
+0x32E2E04	FE0740F9	ldr x30, [sp, #8]	-
+0x32E2E08	0010221E	fmov s0, #4.00000000	-
+0x32E2E0C	0029201E	fadd s0, s8, s0	-
+0x32E2E10	E1031FAA	mov x1, xzr	-
+0x32E2E14	E80742FC	ldr d8, [sp], #0x20	-
+0x32E2E18	AA892014	b #0x3b054c0	-
+0x32E2E1C	B2B3EC97	bl #0x2e0fce4	-

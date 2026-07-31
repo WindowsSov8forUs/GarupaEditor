@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "version_name": "10.1.4",
+    "version_code": 230,
+    "abi": "arm64-v8a"
+  },
+  "status": "confirmed-static-method-layout-enum-subgate-closed",
+  "method_layout_rebaseline": "closed",
+  "counts": {
+    "methods": 673,
+    "field_layouts": 32,
+    "enums": 19
+  },
+  "unknown_methods": [],
+  "unknown_layouts": [],
+  "unknown_enums": [],
+  "version_rebaseline": "partial-server-resource-and-runtime-gate",
+  "offline_work_gate": "closed",
+  "rendering_gate": "open",
+  "production_authorization": false,
+  "open_static_work": [],
+  "offline_resource_counts": {
+    "asset_bundle_info_records": 11026,
+    "ingameskin_bundles": 57,
+    "selected_base_resource_rows": 100,
+    "hud_asset_profiles": 8,
+    "skill_animation_clips": 4,
+    "note_animation_clips": 4,
+    "score_up_routes": 5
+  },
+  "runtime_required_before_code": [
+    "current HABAHIRO bundle bytes from the game resource service or a proven current cache",
+    "renderer and pool object identity in a natural Live scene",
+    "resource binding and visible-state caller order",
+    "same-frame engine-to-renderer command order",
+    "pause, resume, reset, Game Over and disposal observations",
+    "10.1.4 ordinary and HABAHIRO physical frame anchors",
+    "runtime failure and context-loss ownership boundaries"
+  ],
+  "capability": {
+    "level": "R0-local-static",
+    "game_process_started": false,
+    "server_contacted": false,
+    "frida_used": false,
+    "memory_writes": false,
+    "apk_modification": false,
+    "managed_invocation": false
+  },
+  "unknown_fields": [],
+  "blocking_findings": [
+    "version_rebaseline remains partial because the current HABAHIRO resource is absent from the cache index",
+    "rendering_gate remains open until natural Live runtime and physical-frame evidence is captured"
+  ]
+}

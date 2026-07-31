@@ -1,0 +1,7 @@
+address	bytes	instruction	resolved_target
+0x3882158	FE0F1FF8	str x30, [sp, #-0x10]!	-
+0x388215C	003040F9	ldr x0, [x0, #0x60]	-
+0x3882160	600000B4	cbz x0, #0x388216c	-
+0x3882164	FE0741F8	ldr x30, [sp], #0x10	-
+0x3882168	52F2FF17	b #0x387eab0	PauseButton$$EnableButton
+0x388216C	DE36D697	bl #0x2e0fce4	-

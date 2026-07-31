@@ -1,0 +1,76 @@
+address	bytes	instruction	resolved_target
+0x3A6ED74	FE57BEA9	stp x30, x21, [sp, #-0x20]!	-
+0x3A6ED78	F44F01A9	stp x20, x19, [sp, #0x10]	-
+0x3A6ED7C	54BF0190	adrp x20, #0x7256000	-
+0x3A6ED80	886A7639	ldrb w8, [x20, #0xd9a]	-
+0x3A6ED84	F30300AA	mov x19, x0	-
+0x3A6ED88	28010037	tbnz w8, #0, #0x3a6edac	-
+0x3A6ED8C	009101F0	adrp x0, #0x6c91000	-
+0x3A6ED90	004847F9	ldr x0, [x0, #0xe90]	-
+0x3A6ED94	3183CE97	bl #0x2e0fa58	-
+0x3A6ED98	A0900190	adrp x0, #0x6c82000	-
+0x3A6ED9C	00B445F9	ldr x0, [x0, #0xb68]	-
+0x3A6EDA0	2E83CE97	bl #0x2e0fa58	-
+0x3A6EDA4	28008052	mov w8, #1	-
+0x3A6EDA8	886A3639	strb w8, [x20, #0xd9a]	-
+0x3A6EDAC	601E40F9	ldr x0, [x19, #0x38]	-
+0x3A6EDB0	600700B4	cbz x0, #0x3a6ee9c	-
+0x3A6EDB4	614A40F9	ldr x1, [x19, #0x90]	-
+0x3A6EDB8	E2031FAA	mov x2, xzr	-
+0x3A6EDBC	6862D897	bl #0x308775c	UISprite$$set_spriteName
+0x3A6EDC0	602240F9	ldr x0, [x19, #0x40]	-
+0x3A6EDC4	C00600B4	cbz x0, #0x3a6ee9c	-
+0x3A6EDC8	A8900190	adrp x8, #0x6c82000	-
+0x3A6EDCC	08B545F9	ldr x8, [x8, #0xb68]	-
+0x3A6EDD0	159101F0	adrp x21, #0x6c91000	-
+0x3A6EDD4	E2031FAA	mov x2, xzr	-
+0x3A6EDD8	010140F9	ldr x1, [x8]	-
+0x3A6EDDC	B54A47F9	ldr x21, [x21, #0xe90]	-
+0x3A6EDE0	5F62D897	bl #0x308775c	UISprite$$set_spriteName
+0x3A6EDE4	A00240F9	ldr x0, [x21]	-
+0x3A6EDE8	742240F9	ldr x20, [x19, #0x40]	-
+0x3A6EDEC	08E040B9	ldr w8, [x0, #0xe0]	-
+0x3A6EDF0	68000035	cbnz w8, #0x3a6edfc	-
+0x3A6EDF4	7683CE97	bl #0x2e0fbcc	-
+0x3A6EDF8	A00240F9	ldr x0, [x21]	-
+0x3A6EDFC	140500B4	cbz x20, #0x3a6ee9c	-
+0x3A6EE00	085C40F9	ldr x8, [x0, #0xb8]	-
+0x3A6EE04	E00314AA	mov x0, x20	-
+0x3A6EE08	E1031FAA	mov x1, xzr	-
+0x3A6EE0C	020D462D	ldp s2, s3, [x8, #0x30]	-
+0x3A6EE10	0005452D	ldp s0, s1, [x8, #0x28]	-
+0x3A6EE14	9971D797	bl #0x304b478	UIWidget$$set_color
+0x3A6EE18	601A40F9	ldr x0, [x19, #0x30]	-
+0x3A6EE1C	000400B4	cbz x0, #0x3a6ee9c	-
+0x3A6EE20	E1031FAA	mov x1, xzr	-
+0x3A6EE24	2E2EAD94	bl #0x65ba6dc	UnityEngine.Component$$get_gameObject
+0x3A6EE28	A00300B4	cbz x0, #0x3a6ee9c	-
+0x3A6EE2C	21008052	mov w1, #1	-
+0x3A6EE30	E2031FAA	mov x2, xzr	-
+0x3A6EE34	7839AD94	bl #0x65bd414	UnityEngine.GameObject$$SetActive
+0x3A6EE38	601A40F9	ldr x0, [x19, #0x30]	-
+0x3A6EE3C	000300B4	cbz x0, #0x3a6ee9c	-
+0x3A6EE40	21008052	mov w1, #1	-
+0x3A6EE44	E2031FAA	mov x2, xzr	-
+0x3A6EE48	34008052	mov w20, #1	-
+0x3A6EE4C	582BAD94	bl #0x65b9bac	UnityEngine.Behaviour$$set_enabled
+0x3A6EE50	601A40F9	ldr x0, [x19, #0x30]	-
+0x3A6EE54	400200B4	cbz x0, #0x3a6ee9c	-
+0x3A6EE58	618240B9	ldr w1, [x19, #0x80]	-
+0x3A6EE5C	E003271E	fmov s0, wzr	-
+0x3A6EE60	E2031F2A	mov w2, wzr	-
+0x3A6EE64	E3031FAA	mov x3, xzr	-
+0x3A6EE68	6FF6AB94	bl #0x656c824	-
+0x3A6EE6C	685E40F9	ldr x8, [x19, #0xb8]	-
+0x3A6EE70	74C20139	strb w20, [x19, #0x70]	-
+0x3A6EE74	480100B4	cbz x8, #0x3a6ee9c	-
+0x3A6EE78	002140BD	ldr s0, [x8, #0x20]	-
+0x3A6EE7C	E00313AA	mov x0, x19	-
+0x3A6EE80	F44F41A9	ldp x20, x19, [sp, #0x10]	-
+0x3A6EE84	488FA852	mov w8, #0x447a0000	-
+0x3A6EE88	00D8215E	scvtf s0, s0	-
+0x3A6EE8C	0101271E	fmov s1, w8	-
+0x3A6EE90	0018211E	fdiv s0, s0, s1	-
+0x3A6EE94	FE57C2A8	ldp x30, x21, [sp], #0x20	-
+0x3A6EE98	12FFFF17	b #0x3a6eae0	InGameLifeGauge$$updateWarningGaugeBlink
+0x3A6EE9C	9283CE97	bl #0x2e0fce4	-

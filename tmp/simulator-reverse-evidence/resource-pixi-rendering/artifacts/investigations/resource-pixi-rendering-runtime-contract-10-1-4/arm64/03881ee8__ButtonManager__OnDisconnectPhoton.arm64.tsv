@@ -1,0 +1,33 @@
+address	bytes	instruction	resolved_target
+0x3881EE8	FE57BEA9	stp x30, x21, [sp, #-0x20]!	-
+0x3881EEC	F44F01A9	stp x20, x19, [sp, #0x10]	-
+0x3881EF0	B5CE0190	adrp x21, #0x7255000	-
+0x3881EF4	14A001B0	adrp x20, #0x6c82000	-
+0x3881EF8	A8266339	ldrb w8, [x21, #0x8c9]	-
+0x3881EFC	942241F9	ldr x20, [x20, #0x240]	-
+0x3881F00	F30300AA	mov x19, x0	-
+0x3881F04	C8000037	tbnz w8, #0, #0x3881f1c	-
+0x3881F08	00A001B0	adrp x0, #0x6c82000	-
+0x3881F0C	002041F9	ldr x0, [x0, #0x240]	-
+0x3881F10	D236D697	bl #0x2e0fa58	-
+0x3881F14	28008052	mov w8, #1	-
+0x3881F18	A8262339	strb w8, [x21, #0x8c9]	-
+0x3881F1C	800240F9	ldr x0, [x20]	-
+0x3881F20	743240F9	ldr x20, [x19, #0x60]	-
+0x3881F24	08E040B9	ldr w8, [x0, #0xe0]	-
+0x3881F28	48000035	cbnz w8, #0x3881f30	-
+0x3881F2C	2837D697	bl #0x2e0fbcc	-
+0x3881F30	E00314AA	mov x0, x20	-
+0x3881F34	E1031FAA	mov x1, xzr	-
+0x3881F38	E2031FAA	mov x2, xzr	-
+0x3881F3C	5AECB494	bl #0x65bd0a4	UnityEngine.Object$$op_Inequality
+0x3881F40	C0000036	tbz w0, #0, #0x3881f58	-
+0x3881F44	603240F9	ldr x0, [x19, #0x60]	-
+0x3881F48	E00000B4	cbz x0, #0x3881f64	-
+0x3881F4C	F44F41A9	ldp x20, x19, [sp, #0x10]	-
+0x3881F50	FE57C2A8	ldp x30, x21, [sp], #0x20	-
+0x3881F54	D7F2FF17	b #0x387eab0	PauseButton$$EnableButton
+0x3881F58	F44F41A9	ldp x20, x19, [sp, #0x10]	-
+0x3881F5C	FE57C2A8	ldp x30, x21, [sp], #0x20	-
+0x3881F60	C0035FD6	ret	-
+0x3881F64	6037D697	bl #0x2e0fce4	-

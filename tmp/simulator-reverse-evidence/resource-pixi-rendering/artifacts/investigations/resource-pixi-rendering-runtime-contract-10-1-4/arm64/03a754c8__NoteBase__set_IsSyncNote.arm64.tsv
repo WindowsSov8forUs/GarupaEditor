@@ -1,0 +1,4 @@
+address	bytes	instruction	resolved_target
+0x3A754C8	28000012	and w8, w1, #1	-
+0x3A754CC	08100339	strb w8, [x0, #0xc4]	-
+0x3A754D0	C0035FD6	ret	-

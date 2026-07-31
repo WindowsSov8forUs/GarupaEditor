@@ -1,0 +1,45 @@
+address	bytes	instruction	resolved_target
+0x331C210	FE57BEA9	stp x30, x21, [sp, #-0x20]!	-
+0x331C214	F44F01A9	stp x20, x19, [sp, #0x10]	-
+0x331C218	B5F901D0	adrp x21, #0x7252000	-
+0x331C21C	A8F24339	ldrb w8, [x21, #0xfc]	-
+0x331C220	F40301AA	mov x20, x1	-
+0x331C224	F30300AA	mov x19, x0	-
+0x331C228	C8000037	tbnz w8, #0, #0x331c240	-
+0x331C22C	C0CB01D0	adrp x0, #0x6c96000	-
+0x331C230	00EC41F9	ldr x0, [x0, #0x3d8]	-
+0x331C234	09CEEB97	bl #0x2e0fa58	-
+0x331C238	28008052	mov w8, #1	-
+0x331C23C	A8F20339	strb w8, [x21, #0xfc]	-
+0x331C240	F30300B4	cbz x19, #0x331c2bc	-
+0x331C244	681240B9	ldr w8, [x19, #0x10]	-
+0x331C248	1F150071	cmp w8, #5	-
+0x331C24C	A0010054	b.eq #0x331c280	-
+0x331C250	1F110071	cmp w8, #4	-
+0x331C254	C1020054	b.ne #0x331c2ac	-
+0x331C258	C8CB01D0	adrp x8, #0x6c96000	-
+0x331C25C	08ED41F9	ldr x8, [x8, #0x3d8]	-
+0x331C260	000140F9	ldr x0, [x8]	-
+0x331C264	08E040B9	ldr w8, [x0, #0xe0]	-
+0x331C268	48000035	cbnz w8, #0x331c270	-
+0x331C26C	58CEEB97	bl #0x2e0fbcc	-
+0x331C270	E00313AA	mov x0, x19	-
+0x331C274	F44F41A9	ldp x20, x19, [sp, #0x10]	-
+0x331C278	FE57C2A8	ldp x30, x21, [sp], #0x20	-
+0x331C27C	11000014	b #0x331c2c0	InGameUtility$$ShouldShowVersusLiveSDCharaSilhouette
+0x331C280	C8CB01D0	adrp x8, #0x6c96000	-
+0x331C284	08ED41F9	ldr x8, [x8, #0x3d8]	-
+0x331C288	000140F9	ldr x0, [x8]	-
+0x331C28C	08E040B9	ldr w8, [x0, #0xe0]	-
+0x331C290	48000035	cbnz w8, #0x331c298	-
+0x331C294	4ECEEB97	bl #0x2e0fbcc	-
+0x331C298	E00313AA	mov x0, x19	-
+0x331C29C	E10314AA	mov x1, x20	-
+0x331C2A0	F44F41A9	ldp x20, x19, [sp, #0x10]	-
+0x331C2A4	FE57C2A8	ldp x30, x21, [sp], #0x20	-
+0x331C2A8	2B000014	b #0x331c354	InGameUtility$$ShouldShowTeamLiveFestivalLiveSDCharaSilhouette
+0x331C2AC	F44F41A9	ldp x20, x19, [sp, #0x10]	-
+0x331C2B0	E0031F2A	mov w0, wzr	-
+0x331C2B4	FE57C2A8	ldp x30, x21, [sp], #0x20	-
+0x331C2B8	C0035FD6	ret	-
+0x331C2BC	8ACEEB97	bl #0x2e0fce4	-

@@ -1,0 +1,8 @@
+address	bytes	instruction	resolved_target
+0x386FA80	081440F9	ldr x8, [x0, #0x28]	-
+0x386FA84	A80000B4	cbz x8, #0x386fa98	-
+0x386FA88	020D40F9	ldr x2, [x8, #0x18]	-
+0x386FA8C	002140F9	ldr x0, [x8, #0x40]	-
+0x386FA90	011540F9	ldr x1, [x8, #0x28]	-
+0x386FA94	40001FD6	br x2	-
+0x386FA98	C0035FD6	ret	-
