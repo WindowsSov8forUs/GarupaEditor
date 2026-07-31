@@ -11,8 +11,8 @@
 - 锁定原作样本：`jp.co.craftegg.band` 10.1.4（version code 230，`arm64-v8a`）。
 - 锁定`libil2cpp.so` SHA-256：`815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F`。
 - 锁定`global-metadata.dat` SHA-256：`298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F`。
-- 当前Reverse基线提交：`44d2f20bf4cf19eb4c91e5b025101ec154f31e60`；只消费该提交及其祖先中已提交、已push、可校验对象。
-- 当前状态：**RP00任务书已完成；RP01 10.1.4渲染重基线、RP02资源实体/运行时/固定场景oracle是生产硬门。RP02关闭前禁止修改`src/simulator/**`生产实现、增加Pixi backend、加入阶段测试脚本或引入资源二进制。**
+- 当前Reverse基线提交：`8fa320847271a4e13ff76ffd5932634b82a5935d`；只消费该提交及其祖先中已提交、已push、可校验对象。
+- 当前状态：**RP00已完成；RP01进行中，10.1.4方法/布局/枚举子门已关闭，资源/scene/constant与portable静态子门仍开放；RP02资源实体/运行时/固定场景oracle仍是生产硬门。RP02关闭前禁止修改`src/simulator/**`生产实现、增加Pixi backend、加入阶段测试脚本或引入资源二进制。**
 - 计划证据包：`tmp/simulator-reverse-evidence/resource-pixi-rendering/`，只在Reverse新证据提交并push后创建。
 - 计划验收记录：`tmp/simulator-resource-pixi-rendering-acceptance.md`，RP14时创建。
 
@@ -65,7 +65,7 @@
 | 任务 | 状态 | 完成标准 |
 | --- | --- | --- |
 | RP00 建立阶段任务书 | **已完成** | 范围、证据候选、硬门、owner、oracle、批次与完成定义写入本文档 |
-| RP01 10.1.4静态与资源重基线 | 阻塞 | V01、D01–D15静态部分关闭；方法/布局/资源/asset对象均来自当前样本提交证据 |
+| RP01 10.1.4静态与资源重基线 | **进行中** | 方法/布局/枚举子门已关闭；V01及D01–D15资源/constant/scene/portable静态部分继续推进 |
 | RP02 实体/运行时与固定scene oracle | 阻塞于RP01 | D01–D18全部关闭，PR01–PR40无unknown/blocker，`rendering_gate=closed` |
 | RP03 锁定render/resource contracts | 阻塞于RP02 | immutable profile、provider、command、identity、session与preflight边界闭合 |
 | RP04 接入engine渲染producer | 阻塞于RP03 | Note/manager/HUD只生产证据确认的typed commands，不依赖Pixi |
@@ -92,6 +92,15 @@
 - P01–P04和H01–H28均从Reverse Git对象重新计算字节数/SHA-256并核对最新来源提交；未读取未提交资源作为结论。
 - 文档反审确认RP00–RP14共15项、D01–D18共18门、PR01–PR40共40个case且编号无缺失；Garupa/Reverse远端差异均为`0 0`。
 - 本批只创建任务书并同步阶段状态，不创建证据包，不修改production/test/package scripts，不运行Vite/Tauri或整体构建；`git diff --check`通过。
+
+### 1.5 2026-08-01 RP01方法/布局/枚举重基线批
+
+- ADB只读预检确认设备`device`、SELinux `Enforcing`、安装样本10.1.4/230；设备`base.apk`和`split_config.arm64_v8a.apk`与Reverse local-only样本逐字节一致。
+- Reverse `8fa320847271a4e13ff76ffd5932634b82a5935d`新增`resource-pixi-rendering-runtime-contract-10-1-4`调查，按H01–H24 bounded targets和完整visible-state owner slices逐managed owner/method/signature重解析当前版本。
+- 670个managed方法全部唯一映射并逐方法冻结ARM64 TSV；32个实例布局和19个枚举与10.1.3迁移目标逐字段一致，`method_layout_rebaseline=closed`，无unknown method/layout/enum。
+- verifier从锁定APK/ELF/metadata/dump重算身份、全局managed边界、方法字节、TSV重建、layout、enum及677项目录SHA；extract→verify幂等通过。
+- 本批只关闭V01/D01的方法、布局与枚举子门；不以signature或地址映射外推方法体语义。resource strings、rodata、cache/atlas、scene/prefab/material/clip、portable mapping和所有runtime/frame门继续开放。
+- 采集能力为`R0-local-static`：未启动游戏、未连接服务器、未启Frida、未执行hook/managed invocation、未写内存或修改APK；Garupa production/test/package scripts未修改。
 
 ## 2. 固定范围
 
