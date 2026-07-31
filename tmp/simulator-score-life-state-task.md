@@ -9,7 +9,7 @@
 - 锁定`libil2cpp.so` SHA-256：`815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F`。
 - 锁定`global-metadata.dat` SHA-256：`298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F`。
 - 当前Reverse证据提交：`44d2f20bf4cf19eb4c91e5b025101ec154f31e60`；只消费该提交及其祖先中已推送、可校验对象，不消费当前Reverse工作树。
-- 当前状态：**B00–B02已完成。12条R1、8个当前ARM64语义簇/48方法、caller-required profile与显式`evidence-required`边界已闭合V01/D01–D24；BS01–BS36均为`confirmed-portable`，unknown/blocker为0，`business_state_gate=closed`、`production_authorization=true`。B03生产实现已解除硬门。**
+- 当前状态：**B00–B12已完成并通过独立隔离验收。V01/D01–D24、BS01–BS36、12条R1、production `979/731`、B03–B11领域实现与全上游回归均已关闭；验收记录见`tmp/simulator-score-life-state-acceptance.md`。**
 - 当前10.1.4已提交依赖证据只直接覆盖`OneFrameData.Setup`、`InGameOneFrameJudgementController.ReflectOneFrameData`、`NoteBase.getAddCombo`以及若干判定生产者入口；它不足以宣称完整Score/Life/Skill/Fever链已在10.1.4确认。
 - 10.1.3的`base-score-construction`、`event-score-multipliers`、`skill-*`、`fever-*`及Life Heal实机调查仅作为历史迁移候选H01–H24，不能被B03–B12生产实现直接消费。
 - 当前证据包：`tmp/simulator-reverse-evidence/score-life-state/`；已冻结B01、R0输入与无输入R1子批，只消费已提交Reverse对象。
@@ -68,7 +68,7 @@
 | B09 恢复active Skill与Crescendo | **已完成** | judge/damage/score/continuous/crescendo按entry冻结并匹配 |
 | B10 恢复Fever状态机 | **已完成** | Note积分、pass、command、state、rate及reset匹配 |
 | B11 恢复special mode/event与组合生命周期 | **已完成** | Auto/Festival/Medley/Garupa/Event、reset/fault/同帧切换矩阵匹配 |
-| B12 production oracle与独立验收 | **进行中** | 完整回归、证据index、静态反审和验收文档通过 |
+| B12 production oracle与独立验收 | **已完成** | 完整回归、证据index、静态反审和验收文档通过 |
 
 ### 1.4 初始批次记录
 
@@ -720,3 +720,5 @@ git rev-list --left-right --count origin/codex/refactor-simulator-implementation
 - B03–B11生产批：新增owner/session-bound `ScoreLifeStateProfile`、`ScoreUtility`、`InGameRecord`、`SituationSkillManager`、`FeverTimeManager`与聚合`ScoreLifeStateManager`；OneFrame在Setup冻结完整业务字段、Reflect按五槽提交。普通/HABAHIRO production图由parent-owned graph分别得到`979/731`。
 - 生产批覆盖base/result/Combo、Score/record、Life/guard/Never Die/Game Over、Skill queue/once/active/continuous/Crescendo、Fever point/pass/command/state/reservation、Auto/Festival/Medley/Garupa/event路由；Continue和active-heal无consumer保持`evidence-required`。隔离TypeScript检查与定向runner已先行通过。
 - B03–B11生产提交：GarupaEditor `9726880`已push且远端`0 0`。独立测试批新增集中runner与package入口，覆盖BS01–BS36关键边界、全部effect 0–10处置、Fever success/failure/duplicate、same-frame Combo及production BMS `979/731`。
+- 测试提交：GarupaEditor `9d382f23aa0c56d720eeb45abb812a4862a96cc0`已push且远端`0 0`。`simulator:test:score-life-state`、隔离TypeScript、证据`--index`全部通过。
+- B12全回归：`simulator:test:manual-input`通过，并递归通过first-slice、全部chart、clock、Auto Live与全部manual suites；dependency反审通过。验收记录创建于`tmp/simulator-score-life-state-acceptance.md`，B00–B12全部closed。
