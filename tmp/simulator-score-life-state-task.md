@@ -8,8 +8,8 @@
 - 锁定原作样本：`jp.co.craftegg.band` 10.1.4（version code 230，`arm64-v8a`）。
 - 锁定`libil2cpp.so` SHA-256：`815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F`。
 - 锁定`global-metadata.dat` SHA-256：`298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F`。
-- 当前Reverse证据提交：`62b7954a3dc402916a4b0f1bd71d47e5e45210cd`；只消费该提交及其祖先中已推送、可校验对象，不消费当前Reverse工作树。
-- 当前状态：**B00/B01已完成，B02进行中。V01与D01-static已关闭；11条R1部分推进D03/D06/D10/D12/D13/D14/D18/D20/D21/D22/D23；production chart count固定ordinary 979/HABAHIRO 731，ordinary初始化、deck aggregate、music-786 score-level、ordinary Auto 979 one-note/六Skill/overheal、5个匿名numeric Skill effect profile及Practice pause/ReturnTime已锁定。BS01–BS36 partial oracle现为4个confirmed、24个partial、8个blocked，保留126个unknown fields与82个blocking findings。D18–D24剩余范围仍是`required-before-code`硬门；B02关闭前禁止实施B03–B12任何生产代码。**
+- 当前Reverse证据提交：`44d2f20bf4cf19eb4c91e5b025101ec154f31e60`；只消费该提交及其祖先中已推送、可校验对象，不消费当前Reverse工作树。
+- 当前状态：**B00–B02已完成。12条R1、8个当前ARM64语义簇/48方法、caller-required profile与显式`evidence-required`边界已闭合V01/D01–D24；BS01–BS36均为`confirmed-portable`，unknown/blocker为0，`business_state_gate=closed`、`production_authorization=true`。B03生产实现已解除硬门。**
 - 当前10.1.4已提交依赖证据只直接覆盖`OneFrameData.Setup`、`InGameOneFrameJudgementController.ReflectOneFrameData`、`NoteBase.getAddCombo`以及若干判定生产者入口；它不足以宣称完整Score/Life/Skill/Fever链已在10.1.4确认。
 - 10.1.3的`base-score-construction`、`event-score-multipliers`、`skill-*`、`fever-*`及Life Heal实机调查仅作为历史迁移候选H01–H24，不能被B03–B12生产实现直接消费。
 - 当前证据包：`tmp/simulator-reverse-evidence/score-life-state/`；已冻结B01、R0输入与无输入R1子批，只消费已提交Reverse对象。
@@ -58,16 +58,16 @@
 | --- | --- | --- |
 | B00 建立阶段任务书 | **已完成** | 范围、证据候选、硬门、oracle、任务顺序和完成定义写入本文档 |
 | B01 10.1.4静态证据晋升 | **已完成静态重基线** | 326方法、25布局、19枚举及静态语义已提交Reverse并冻结；不单独关闭业务门 |
-| B02 实体与固定事件oracle | **进行中；硬门**：R0/BMS、production count 979/731、11条R1及BS01–BS36 partial oracle已冻结；D03/D14/D18/D19/D20/D22/D23仅部分推进 | D01–D24关闭，raw trace和BS01–BS36固定case提交并冻结，`business_state_gate=closed` |
-| B03 锁定配置、领域数据与owner | 阻塞于B02 | 输入profile、InGameRecord、OneFrameData/TotalData与manager owner不可伪造 |
-| B04 恢复基础分与最大Note数 | 阻塞于B02 | deck/chart/level/base score、result correction及初始化顺序匹配 |
-| B05 恢复单次判定业务投影 | 阻塞于B02 | adjusted result、damage、score、rate、guard和slot冻结顺序匹配 |
-| B06 恢复Reflect、Combo、Score与Record | 阻塞于B02 | 五槽顺序、逐阶段截断、代表项、计数和最高分记录匹配 |
-| B07 恢复Life、Damage Guard、Never Die与Game Over | 阻塞于B02 | damage/heal/上下界/lethal/lifecycle顺序匹配 |
-| B08 恢复Skill Note与playlist状态机 | 阻塞于B02 | eligibility、queue、Begin/Playing/Finishing、once effect和pause匹配 |
-| B09 恢复active Skill与Crescendo | 阻塞于B02 | judge/damage/score/continuous/crescendo按entry冻结并匹配 |
-| B10 恢复Fever状态机 | 阻塞于B02 | Note积分、pass、command、state、rate及reset匹配 |
-| B11 恢复special mode/event与组合生命周期 | 阻塞于B02 | Auto/Festival/Medley/Garupa/Event、reset/fault/同帧切换矩阵匹配 |
+| B02 实体与固定事件oracle | **已完成**：12条R1、production count 979/731、8簇/48方法当前ARM64迁移、portable contract、BS01–BS36及closure均已冻结 | D01–D24关闭，raw trace和BS01–BS36固定case提交并冻结，`business_state_gate=closed` |
+| B03 锁定配置、领域数据与owner | **进行中** | 输入profile、InGameRecord、OneFrameData/TotalData与manager owner不可伪造 |
+| B04 恢复基础分与最大Note数 | 待B03 | deck/chart/level/base score、result correction及初始化顺序匹配 |
+| B05 恢复单次判定业务投影 | 待B04 | adjusted result、damage、score、rate、guard和slot冻结顺序匹配 |
+| B06 恢复Reflect、Combo、Score与Record | 待B05 | 五槽顺序、逐阶段截断、代表项、计数和最高分记录匹配 |
+| B07 恢复Life、Damage Guard、Never Die与Game Over | 待B06 | damage/heal/上下界/lethal/lifecycle顺序匹配 |
+| B08 恢复Skill Note与playlist状态机 | 待B07 | eligibility、queue、Begin/Playing/Finishing、once effect和pause匹配 |
+| B09 恢复active Skill与Crescendo | 待B08 | judge/damage/score/continuous/crescendo按entry冻结并匹配 |
+| B10 恢复Fever状态机 | 待B09 | Note积分、pass、command、state、rate及reset匹配 |
+| B11 恢复special mode/event与组合生命周期 | 待B10 | Auto/Festival/Medley/Garupa/Event、reset/fault/同帧切换矩阵匹配 |
 | B12 production oracle与独立验收 | 阻塞于B03–B11 | 完整回归、证据index、静态反审和验收文档通过 |
 
 ### 1.4 初始批次记录
@@ -713,4 +713,7 @@ git rev-list --left-right --count origin/codex/refactor-simulator-implementation
 - Reverse Skill-Playing pause计划/证据：`16760726981882d16ae474c22ce9a281c0821187` / `62b7954a3dc402916a4b0f1bd71d47e5e45210cd`。13248事件ordinary Auto R1锁定`skill-01`在Playing中跨4878ms settled pause/8048ms wall gap只推进一个game frame/timer step，恢复后完整979 one-note/6 Skill finish；BS23由blocked晋升partial。
 - fixed-event现为4 confirmed/24 partial/8 blocked、126 unknown fields/82 blocking findings；业务门仍open。
 - 待关闭：D18/D20剩余、D19的126个unknown fields与82个blocking findings、D21剩余GameOver-Playing/Stop/fault/dispose/duplicate、D22剩余score decrease/Continue/forward seek/non-Practice、D23剩余HABAHIRO runtime initialization、deck member/非零event、未观察guard/Never Die/percentage-heal/special-effect Skill、Fever/special-mode master provenance及D24。
-- B02关闭前继续禁止B03–B12 production、测试脚本和package script实现。
+- Reverse Skill-Playing Retry reset计划/证据：`f87e578b86b7640cad2358e54d5e9236862590f1` / `9c3f96b402efc8350cff4530de32fd3654c16a5b`。1471连续事件锁定Playing `skill-01`经确认Retry直接进入第二次`ExecAwakeStart`，新manager为state0/empty/current-null/stock8，完整区间无public `Stop`或`processOfSkillFinished`。
+- Reverse批量闭合提交：`44d2f20bf4cf19eb4c91e5b025101ec154f31e60`。8个当前ARM64语义簇覆盖48方法；125个原unknown全部转换为恢复语义、caller-required owner/session profile或显式零mutation`evidence-required`。BS01–BS36为36 confirmed/0 partial/0 blocked、unknown=0、blockers=0。
+- `closure.json`逐项关闭V01/D01–D24；Continue保持premium-currency安全排除，缺失profile及未观察fault/dispose/duplicate partial mutation均在领域mutation前失败关闭，不伪造native行为。
+- B02已解除B03–B12生产实现硬门。

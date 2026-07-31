@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "scenario_id": "ordinary-auto-skill-playing-retry-reset-r1",
+  "status": "ready-for-observation",
+  "supersedes_execution": "ordinary-auto-skill-playing-stop-retry4-r1-no-public-Stop-before-manager-restart",
+  "sample": {"package":"jp.co.craftegg.band","version_name":"10.1.4","version_code":230,"abi":"arm64-v8a","libil2cpp_sha256":"815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F","music_fixture_id":"poppin_shuffle_special","difficulty":"special","score_level":27,"max_note_count":979},
+  "preconditions": [
+    "The normal Free Live band-confirmation screen visibly shows poppin_shuffle_special SPECIAL Lv.27, Band 1, Auto Live ON, seven remaining Auto Live uses, and Live Boost 9 -> 8.",
+    "The prior confirmed-Retry diagnostic reached a second InitBaseScore without a public Stop event; it was not promoted because Stop was an incorrect completion boundary.",
+    "This plan does not claim public Stop. It observes both SituationSkillManager.ExecAwakeStart lifecycles and completes only after the second leave.",
+    "The first anonymous Skill begins about 25 seconds after start; pause opens at 27 seconds, followed by natural Retry and explicit confirmation.",
+    "After capture detaches, the naturally restarted Auto Live is allowed to complete without further injected input.",
+    "SELinux is Enforcing and the explicit Frida supervisor/forward transport is healthy."
+  ],
+  "actions": [
+    {"kind":"tap","marker":"start-locked-ordinary-auto-skill-playing-retry-reset","x":1240,"y":590,"delay_ms":1000},
+    {"kind":"wait","marker":"approach-first-skill-playing-retry-reset-window","delay_ms":27000},
+    {"kind":"tap","marker":"pause-during-first-skill-playing-before-retry-reset","x":1483,"y":48,"delay_ms":0},
+    {"kind":"wait","marker":"pause-overlay-settled-before-retry-reset","delay_ms":1000},
+    {"kind":"tap","marker":"natural-retry-during-skill-playing-reset","x":800,"y":440,"delay_ms":0},
+    {"kind":"wait","marker":"retry-confirmation-settled-reset","delay_ms":750},
+    {"kind":"tap","marker":"confirm-natural-retry-during-skill-playing-reset","x":915,"y":440,"delay_ms":0},
+    {"kind":"wait_until_capture_complete","marker":"observe-complete-after-second-exec-awake-start","timeout_ms":30000,"required_exec_awake_start_leave_count":2}
+  ],
+  "tail_seconds": 1,
+  "declared_account_resource_effects": {"auto_live_uses":-1,"live_boost":-1,"premium_currency":0,"continue":false,"live_rewards":"one naturally restarted completed Auto Live only"},
+  "observation_contract": {"observation_only":true,"return_replacement":false,"memory_writes":false,"apk_modification":false,"managed_invocation":false,"continue_operation":false},
+  "allowed_projection": ["anonymous Skill queue/state/timer and numeric effect profiles","ExecAwakeStart enter/leave and ExecUpdate game frame/current game state","aggregate Score/Life/Combo/judge/one-note state","optional public Stop and nested Skill lifecycle order","natural pause/Retry/confirmation markers and timestamps"],
+  "forbidden_projection": ["account, user, room or social fields","deck/member/card/character/Skill IDs or slots","raw pointers, managed/display strings or note type","premium currency or Continue"],
+  "promotion_requirements": [
+    "capture_error is null and event sequence is contiguous",
+    "The snapshot immediately before confirmed Retry has manager state Playing with a non-null anonymous current Skill",
+    "The ordered interval from confirmation through the second ExecAwakeStart is complete, including whether public Stop or processOfSkillFinished occurs before reset",
+    "The second ExecAwakeStart leave projects the fresh manager queue/current/state without identity fields",
+    "The naturally restarted Auto Live completes without further injected input; Auto Live and Boost reconcile to -1/-1 with premium currency and Continue zero",
+    "No forbidden identity, pointer or string field is exported"
+  ]
+}

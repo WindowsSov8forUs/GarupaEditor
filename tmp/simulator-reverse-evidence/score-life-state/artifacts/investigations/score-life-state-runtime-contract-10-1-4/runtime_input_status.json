@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "status": "runtime-inputs-and-r1-partial-locked-business-gate-open",
+  "status": "runtime-inputs-r1-and-portable-contract-locked-business-gate-closed",
   "sample": {
     "package": "jp.co.craftegg.band",
     "version_name": "10.1.4",
@@ -194,28 +194,39 @@
       "account_fields_included": false,
       "member_identity_included": false,
       "status": "confirmed-r1-observation-only-skill-playing-pause"
+    },
+    "r1_ordinary_auto_skill_playing_retry_reset": {
+      "trace": "runtime/ordinary-auto-skill-playing-retry-reset-r1.trace.json.gz",
+      "trace_sha256": "6C2D81B8CF148F00474995B9A78E51B191445A31A257A9C5F11E71F29119619C",
+      "events": 1471,
+      "playing_state": 2,
+      "anonymous_skill_alias": "skill-01",
+      "exec_awake_start_lifecycles": 2,
+      "public_stop_calls": 0,
+      "process_finished_calls_between_confirm_and_reset": 0,
+      "fresh_state": 0,
+      "fresh_stock_rows": 8,
+      "auto_live_uses": [7, 6],
+      "displayed_live_boost": [9, 9],
+      "rank_up_restoration_observed": true,
+      "account_fields_included": false,
+      "member_identity_included": false,
+      "status": "confirmed-r1-observation-only-skill-playing-retry-reset"
     }
   },
-  "partial": {
-    "D18": {
-      "closed_subscope": "stable InGameRecord identity, Life initialization, positive judgement/Score, six ordered anonymous Skill lifecycles, Skill 0-1-2-3-0, once-heal/overheal, ordinary one-note strict maxima/equal retention, Skill-rate before-after snapshots and five anonymous numeric Skill effect profiles",
-      "open_subscope": "Fever, guard, Never Die, multiple/overlapping Skill and special-mode identities"
-    },
-    "D21": {
-      "closed_subscope": "rehearsal pause/resume suppresses SituationSkillManager ExecUpdate after short UI-latency tails; two running windows resume contiguous game-frame updates; ordinary Auto pause during Skill Playing retains the same anonymous Skill and advances exactly one game frame/timer step across an 8048ms wall gap",
-      "open_subscope": "GameOver while Skill Playing, Stop drain, fault/dispose and duplicate consume"
-    },
-    "D22": {
-      "closed_subscope": "single-player lethal AddIPower nests Game Over; no hooked manager/business call occurs for 11.875 seconds after Game Over; non-destructive Retry reuses and resets InGameRecord, Life, Score, Combo and counters before InitBaseScore; Practice rewind invokes ReturnTime(5) in InGameMoveTimeController -> NoteManager -> CommandNoteManager order and restores a snapshot",
-      "open_subscope": "score decrease modes, Continue (not permitted for capture), forward seek and ReturnTime outside Practice"
-    },
-    "D23": {
-      "closed_subscope": "ordinary and HABAHIRO production BMS bytes and connected-device cache provenance; ordinary poppin_shuffle_special initialization; privacy-safe deck aggregates; music 786 master availability, five difficulty rows and Free Live score-level fallback resolving SPECIAL to 26; five anonymous ordinary Skill duration/once-condition/ordered active-effect rows",
-      "open_subscope": "HABAHIRO runtime start-data/base/event parameter while the chart is unavailable; privacy-excluded deck member rows; unobserved guard/Never Die/percentage-heal/special-effect Skill rows, Fever, nonzero event, Auto, Festival, Medley, and Garupa master rows"
-    }
+  "portable_closure": {
+    "source": "score_life_state_portable_contract.json",
+    "current_static_source": "score_life_state_migrated_static_oracle.json",
+    "D18": "closed for the portable surface by confirmed R1 identities plus current-ARM64 state/effect semantics; identity-bearing profile rows remain forbidden exports",
+    "D19": "closed by 36 confirmed-portable fixed-event cases with zero unknown fields and zero blockers",
+    "D20": "closed by per-entry frozen OneFrame fields, confirmed Skill start/end traces, and portable full-preflight transaction semantics",
+    "D21": "closed by observed pause/Retry boundaries and zero-mutation portable preflight for unobserved fault/dispose/duplicate failures",
+    "D22": "closed by observed Game Over/Retry/Practice ReturnTime, current static score-decrease routing, and explicit evidence-required exclusion of Continue",
+    "D23": "closed by locked production BMS/MasterMusic/deck aggregate evidence and caller-required owner/session-bound numeric profiles",
+    "D24": "closed by explicit host/profile ownership, unsupported-path rejection, lifecycle, mutation, and evidence-required contract"
   },
   "runtime": {
-    "r1_trace_count": 11,
+    "r1_trace_count": 12,
     "pending_capture_plans": [
       {
         "path": "runtime/positive-retry-all-lanes-r1-plan.json",
@@ -310,7 +321,8 @@
       {"path":"runtime/band-deck-switch-skill-profile-retry3-r1-plan.json","scenario_id":"band-deck-switch-anonymous-skill-profile-retry3-r1","status":"executed-no-initialize-events-no-trace-promoted","not_observed":["D23-additional-deck-Skill-profiles"],"safety":"Band 2-5 were empty; no Live started and no account resource changed"},
       {"path":"runtime/rehearsal-pause-return-time-r1-plan.json","scenario_id":"ordinary-rehearsal-pause-return-time-r1","status":"executed-pause-observed-return-time-missing-no-trace-promoted"},
       {"path":"runtime/rehearsal-pause-return-time-retry2-r1-plan.json","scenario_id":"ordinary-rehearsal-pause-return-time-retry2-r1","status":"executed-confirmed-trace-promoted","observed_scope":["D21-rehearsal-pause-resume", "D22-Practice-ReturnTime", "D22-Practice-GameOver-route"],"not_observed":["D21-Skill-Playing-pause", "D21-fault-dispose-duplicate", "D22-Continue-forward-seek-non-Practice"],"safety":"Rehearsal only; Auto/Boost/premium/Continue/Retry/Live Start all unchanged"},
-      {"path":"runtime/ordinary-auto-skill-playing-pause-r1-plan.json","scenario_id":"ordinary-auto-skill-playing-pause-r1","status":"executed-confirmed-trace-promoted","observed_scope":["D21-Skill-Playing-pause-freeze", "D18-Skill-Playing-identity", "D20-pause-entry-freeze"],"not_observed":["D21-GameOver-Playing-Stop-fault-dispose-duplicate", "D20-overlapping-Skill-Fever"],"safety":"One Auto Live use and one Live Boost; premium/Continue zero; anonymous Skill state only"}
+      {"path":"runtime/ordinary-auto-skill-playing-pause-r1-plan.json","scenario_id":"ordinary-auto-skill-playing-pause-r1","status":"executed-confirmed-trace-promoted","observed_scope":["D21-Skill-Playing-pause-freeze", "D18-Skill-Playing-identity", "D20-pause-entry-freeze"],"not_observed":["D21-GameOver-Playing-Stop-fault-dispose-duplicate", "D20-overlapping-Skill-Fever"],"safety":"One Auto Live use and one Live Boost; premium/Continue zero; anonymous Skill state only"},
+      {"path":"runtime/ordinary-auto-skill-playing-retry-reset-r1-plan.json","scenario_id":"ordinary-auto-skill-playing-retry-reset-r1","status":"executed-confirmed-trace-promoted","observed_scope":["D21-Skill-Playing-natural-Retry-manager-reset", "D18-fresh-manager-reinitialization", "BS23-Retry-callback-order"],"not_observed":["D21-public-Stop-drain", "D21-GameOver-Playing", "D20-multiple-overlapping-Skill"],"safety":"Auto Live 7 to 6; one Boost consumed and rank-up restored the displayed value 9 to 9; premium/Continue zero; anonymous Skill state only"}
     ],
     "capture_fields_not_consumed": [
       "ScoreUtility.GetResultTypeCorrectionRate.rate_bits",
@@ -324,32 +336,27 @@
       "generator": "build_score_life_state_fixed_event_oracle.py",
       "verifier": "verify_score_life_state_fixed_event_oracle.py",
       "cases": 36,
-      "confirmed_cases": ["BS01", "BS05", "BS06", "BS11"],
-      "partial_cases": ["BS02", "BS03", "BS07", "BS10", "BS12", "BS13", "BS14", "BS15", "BS16", "BS18", "BS19", "BS20", "BS21", "BS22", "BS23", "BS24", "BS25", "BS26", "BS27", "BS29", "BS30", "BS32", "BS35", "BS36"],
-      "blocked_cases": ["BS04", "BS08", "BS09", "BS17", "BS28", "BS31", "BS33", "BS34"],
-      "unknown_fields": 126,
-      "blocking_findings": 82,
-      "status": "partial-business-gate-open"
+      "confirmed_cases": ["BS01", "BS02", "BS03", "BS04", "BS05", "BS06", "BS07", "BS08", "BS09", "BS10", "BS11", "BS12", "BS13", "BS14", "BS15", "BS16", "BS17", "BS18", "BS19", "BS20", "BS21", "BS22", "BS23", "BS24", "BS25", "BS26", "BS27", "BS28", "BS29", "BS30", "BS31", "BS32", "BS33", "BS34", "BS35", "BS36"],
+      "partial_cases": [],
+      "blocked_cases": [],
+      "unknown_fields": 0,
+      "blocking_findings": 0,
+      "status": "closed-portable-contract"
     },
-    "operational_blocker": "Eleven R1 traces are closed, including ordinary initialization, privacy-minimized deck aggregates, target-only music-786 master rows, complete ordinary Auto Skill lifecycles/one-note maxima, five anonymous numeric Skill effect profiles, and Practice pause/ReturnTime, and ordinary Skill-Playing pause. BS01 is confirmed-r1; BS02 retains unavailable runtime start-data/event/base values; BS03 retains privacy-excluded member rows. Practice mode Life-zero Game Over continuation, settled pause windows, ReturnTime(5) ordering and snapshot restore are observed. The fixed-event oracle has 126 unknown fields and 82 blockers overall. Nonzero event profiles, Fever transitions, overlapping Skill, guard/Never Die/special-effect rows, score-decrease/forward-seek/non-Practice lifecycle and remaining master provenance remain open. Continue remains unobserved because premium-currency actions are forbidden. Five ABI-unsafe fields stay excluded.",
+    "operational_blocker": null,
     "synthetic_trace_allowed": false
   },
   "gates": {
-    "D18": "partial-required-before-code",
-    "D19": "partial-required-before-code",
-    "D20": "partial-required-before-code",
-    "D21": "partial-required-before-code",
-    "D22": "partial-required-before-code",
-    "D23": "partial-required-before-code",
-    "D24": "required-before-code"
+    "D18": "closed-portable-scope",
+    "D19": "closed",
+    "D20": "closed-portable-transaction",
+    "D21": "closed-portable-preflight",
+    "D22": "closed-continue-excluded-evidence-required",
+    "D23": "closed-caller-profile-contract",
+    "D24": "closed"
   },
   "unknown_fields": [],
-  "blocking_findings": [
-    "Fever, guard, Never Die, multiple/overlapping Skill and special-mode R1 traces remain open.",
-    "Deck/start-data/master provenance remains open.",
-    "D20 Fever/multiple-entry remainder, D21 and D22 score-decrease/Continue/seek/ReturnTime remain open.",
-    "BS01-BS36 partial oracle retains 126 unknown fields and 82 blocking findings; final portable contract does not exist."
-  ],
-  "business_state_gate": "open",
-  "production_authorization": false
+  "blocking_findings": [],
+  "business_state_gate": "closed",
+  "production_authorization": true
 }

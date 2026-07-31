@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "status": "closed-10.1.4-fixed-event-oracle-portable-contract",
+  "status": "partial-10.1.4-fixed-event-oracle-business-gate-open",
   "sample": {
     "package": "jp.co.craftegg.band",
     "version_name": "10.1.4",
@@ -113,24 +113,6 @@
       "bytes": 12023,
       "sha256": "AB63E5B70349B3F1A46943AEE80A6856C6B4703AB4E5B065F07CB6C6949BF7E5",
       "source_commit": "f87e578b86b7640cad2358e54d5e9236862590f1"
-    },
-    "migrated_static": {
-      "path": "score_life_state_migrated_static_oracle.json",
-      "bytes": 57031,
-      "sha256": "0754A23E0AB1C9FE129E69EA7C923221EF0E562CF9DB471FCC666A9EE91BF536",
-      "source_commit": "f87e578b86b7640cad2358e54d5e9236862590f1"
-    },
-    "portable_contract": {
-      "path": "score_life_state_portable_contract.json",
-      "bytes": 132160,
-      "sha256": "DA94D2FA757FFEAA4E714FD61BCDD196C3FC3BF36135F8F29F0A8EE7546FEA2E",
-      "source_commit": "f87e578b86b7640cad2358e54d5e9236862590f1"
-    },
-    "partial_baseline": {
-      "path": "score_life_state_fixed_event_partial_baseline.json",
-      "bytes": 102495,
-      "sha256": "0B77184DEC2341C21CF8C3E5DC1AF70896EF502B74A63EF354C38DD24EFC5A5B",
-      "source_commit": "f87e578b86b7640cad2358e54d5e9236862590f1"
     }
   },
   "required_output_fields": [
@@ -148,22 +130,20 @@
     "total_cases": 36,
     "confirmed_cases": [
       "BS01",
-      "BS02",
-      "BS03",
-      "BS04",
       "BS05",
       "BS06",
+      "BS11"
+    ],
+    "partial_cases": [
+      "BS02",
+      "BS03",
       "BS07",
-      "BS08",
-      "BS09",
       "BS10",
-      "BS11",
       "BS12",
       "BS13",
       "BS14",
       "BS15",
       "BS16",
-      "BS17",
       "BS18",
       "BS19",
       "BS20",
@@ -174,52 +154,50 @@
       "BS25",
       "BS26",
       "BS27",
-      "BS28",
       "BS29",
       "BS30",
-      "BS31",
       "BS32",
-      "BS33",
-      "BS34",
       "BS35",
       "BS36"
     ],
-    "partial_cases": [],
-    "blocked_cases": [],
-    "unknown_field_count": 0,
-    "blocking_finding_count": 0
+    "blocked_cases": [
+      "BS04",
+      "BS08",
+      "BS09",
+      "BS17",
+      "BS28",
+      "BS31",
+      "BS33",
+      "BS34"
+    ],
+    "unknown_field_count": 125,
+    "blocking_finding_count": 82
   },
-  "business_state_gate": "closed",
-  "production_authorization": true,
+  "business_state_gate": "open",
+  "production_authorization": false,
   "cases": [
     {
       "case_id": "BS01",
       "requirement": "ordinary production chart family maxNoteCount and base-score initialization",
-      "status": "confirmed-portable",
+      "status": "confirmed-r1",
       "evidence_ids": [
         "SLS-S05",
         "SLS-R1-008",
         "SLS-R1-009",
         "SLS-BMS-ORDINARY",
-        "SLS-CHART-COUNT-ORDINARY",
-        "SLS-S13",
-        "SLS-PC-001"
+        "SLS-CHART-COUNT-ORDINARY"
       ],
       "input_provenance": [
         "ordinary_bms",
         "chart_count",
         "initialization_profile",
-        "deck_aggregate_profile",
-        "migrated_static",
-        "portable_contract"
+        "deck_aggregate_profile"
       ],
       "expected_source": [
         "static:SLS-S05",
         "chart_count#charts.ordinary",
         "initialization_profile#ordinary",
-        "deck_aggregate_profile#ordinary",
-        "migrated_static#bundles",
-        "portable_contract#cases.BS01"
+        "deck_aggregate_profile#ordinary"
       ],
       "expected_projection": {
         "production_bms_sha256": "418DB7F5BFC6B5431AC0ABF2FB905120BDFA8C778C35AA42418A6FA43F4094DC",
@@ -352,11 +330,6 @@
           "approximately_zero": "Uses the Unity Mathf approximately-zero comparison visible in ARM64; no portable epsilon may be substituted.",
           "failure": "When score verification is unavailable, both cached bases are set to Float32 zero after the original report path.",
           "runtime_pending": "Production maxNoteCount, scoreLevel, totalParameter, event parameter, and their master/start-data provenance remain B02 requirements."
-        },
-        "portable_closure": {
-          "status": "confirmed-recovered-or-profile-bound",
-          "field_dispositions": {},
-          "unsupported_fields": []
         }
       },
       "unknown_fields": [],
@@ -365,27 +338,21 @@
     {
       "case_id": "BS02",
       "requirement": "HABAHIRO visible/invisible Slide maxNoteCount",
-      "status": "confirmed-portable",
+      "status": "partial",
       "evidence_ids": [
         "SLS-BMS-HABAHIRO",
         "SLS-CHART-COUNT-HABAHIRO",
-        "SLS-R1-010",
-        "SLS-S13",
-        "SLS-PC-001"
+        "SLS-R1-010"
       ],
       "input_provenance": [
         "habahiro_bms",
         "chart_count",
-        "master_music_786_profile",
-        "migrated_static",
-        "portable_contract"
+        "master_music_786_profile"
       ],
       "expected_source": [
         "habahiro_bms#bytes",
         "chart_count#charts.habahiro",
-        "master_music_786_profile#music/difficulty/score-level",
-        "migrated_static#bundles",
-        "portable_contract#cases.BS02"
+        "master_music_786_profile#music/difficulty/score-level"
       ],
       "expected_projection": {
         "production_bms_sha256": "43148090C40ABBD951E8D7112200BDAE9B796A8A531A0793169E0AD70C3DC159",
@@ -456,56 +423,32 @@
               "free_live_start_data_store": "STR W0,[RhythmGameStartData,#0x70] @ 0x3A1CA5C"
             }
           }
-        },
-        "portable_closure": {
-          "status": "confirmed-recovered-or-profile-bound",
-          "field_dispositions": {
-            "initialization.start_data_runtime": {
-              "source": "production-BMS+MasterMusic+current-base-formula",
-              "portable_behavior": "derive from locked chart/score-level and caller deck aggregate",
-              "result": "deterministic-or-evidence-required",
-              "mutation": "none-on-error"
-            },
-            "initialization.event_parameter": {
-              "source": "production-BMS+MasterMusic+current-base-formula",
-              "portable_behavior": "derive from locked chart/score-level and caller deck aggregate",
-              "result": "deterministic-or-evidence-required",
-              "mutation": "none-on-error"
-            },
-            "initialization.base_score_bits": {
-              "source": "production-BMS+MasterMusic+current-base-formula",
-              "portable_behavior": "derive from locked chart/score-level and caller deck aggregate",
-              "result": "deterministic-or-evidence-required",
-              "mutation": "none-on-error"
-            }
-          },
-          "unsupported_fields": []
         }
       },
-      "unknown_fields": [],
-      "blocking_findings": []
+      "unknown_fields": [
+        "initialization.start_data_runtime",
+        "initialization.event_parameter",
+        "initialization.base_score_bits"
+      ],
+      "blocking_findings": [
+        "D23-HABAHIRO-runtime-availability"
+      ]
     },
     {
       "case_id": "BS03",
       "requirement": "deck three-parameter member Float32 accumulation and score-level rate",
-      "status": "confirmed-portable",
+      "status": "partial",
       "evidence_ids": [
         "SLS-S05",
-        "SLS-R1-009",
-        "SLS-S13",
-        "SLS-PC-001"
+        "SLS-R1-009"
       ],
       "input_provenance": [
         "static_findings",
-        "deck_aggregate_profile",
-        "migrated_static",
-        "portable_contract"
+        "deck_aggregate_profile"
       ],
       "expected_source": [
         "static:SLS-S05",
-        "deck_aggregate_profile#deck_aggregate",
-        "migrated_static#bundles",
-        "portable_contract#cases.BS03"
+        "deck_aggregate_profile#deck_aggregate"
       ],
       "expected_projection": {
         "score_level_rate_formula": "Float32(Float32(scoreLevel - 5) * Float32(0.01)) + Float32(1.0)",
@@ -555,108 +498,56 @@
             "value": 0,
             "bits": "0x00000000"
           }
-        },
-        "portable_closure": {
-          "status": "confirmed-recovered-or-profile-bound",
-          "field_dispositions": {
-            "profile.member_rows": {
-              "source": "privacy-boundary+R1-deck-aggregate",
-              "portable_behavior": "accept owner-bound aggregate components and total only",
-              "result": "validated-input-or-evidence-required",
-              "mutation": "none-on-error"
-            }
-          },
-          "unsupported_fields": []
         }
       },
-      "unknown_fields": [],
-      "blocking_findings": []
+      "unknown_fields": [
+        "profile.member_rows"
+      ],
+      "blocking_findings": [
+        "D23-deck-member-rows-privacy"
+      ]
     },
     {
       "case_id": "BS04",
       "requirement": "Free Live bonus zero/nonzero construction, cache, and clear",
-      "status": "confirmed-portable",
+      "status": "blocked",
       "evidence_ids": [
-        "D06-static",
-        "SLS-S13",
-        "SLS-PC-001"
+        "D06-static"
       ],
       "input_provenance": [
-        "static_contract",
-        "migrated_static",
-        "portable_contract"
+        "static_contract"
       ],
       "expected_source": [
-        "static_contract#mapped Free Live methods",
-        "migrated_static#bundles",
-        "portable_contract#cases.BS04"
+        "static_contract#mapped Free Live methods"
       ],
-      "expected_projection": {
-        "portable_closure": {
-          "status": "confirmed-recovered-or-profile-bound",
-          "field_dispositions": {
-            "profile.event_parameter": {
-              "source": "current-static-semantics+caller-profile-ownership",
-              "portable_behavior": "caller-required owner/session-bound numeric profile",
-              "result": "validated-input-or-evidence-required",
-              "mutation": "none-on-error"
-            },
-            "expected.zero_construction": {
-              "source": "current ARM64 semantic bundle+portable preflight",
-              "portable_behavior": "explicit validated boundary",
-              "result": "deterministic-or-evidence-required",
-              "mutation": "none-on-error"
-            },
-            "expected.nonzero_construction": {
-              "source": "current ARM64 semantic bundle+portable preflight",
-              "portable_behavior": "explicit validated boundary",
-              "result": "deterministic-or-evidence-required",
-              "mutation": "none-on-error"
-            },
-            "expected.cache": {
-              "source": "current ARM64 semantic bundle+portable preflight",
-              "portable_behavior": "explicit validated boundary",
-              "result": "deterministic-or-evidence-required",
-              "mutation": "none-on-error"
-            },
-            "expected.clear": {
-              "source": "current ARM64 semantic bundle+portable preflight",
-              "portable_behavior": "explicit validated boundary",
-              "result": "deterministic-or-evidence-required",
-              "mutation": "none-on-error"
-            },
-            "trace.callback_domain_order": {
-              "source": "current ARM64 semantic bundle+confirmed R1",
-              "portable_behavior": "recovered deterministic transaction",
-              "result": "deterministic",
-              "mutation": "preflight-then-slot-order-commit"
-            }
-          },
-          "unsupported_fields": []
-        }
-      },
-      "unknown_fields": [],
-      "blocking_findings": []
+      "expected_projection": {},
+      "unknown_fields": [
+        "profile.event_parameter",
+        "expected.zero_construction",
+        "expected.nonzero_construction",
+        "expected.cache",
+        "expected.clear",
+        "trace.callback_domain_order"
+      ],
+      "blocking_findings": [
+        "D06",
+        "D21",
+        "D23-master-start-data"
+      ]
     },
     {
       "case_id": "BS05",
       "requirement": "Perfect/Great/Good/Bad/Miss result correction exact bits",
-      "status": "confirmed-portable",
+      "status": "confirmed-static",
       "evidence_ids": [
-        "SLS-S03",
-        "SLS-S13",
-        "SLS-PC-001"
+        "SLS-S03"
       ],
       "input_provenance": [
-        "static_findings",
-        "migrated_static",
-        "portable_contract"
+        "static_findings"
       ],
       "expected_source": [
         "static:SLS-S03",
-        "locked ELF VA 0x1581A14",
-        "migrated_static#bundles",
-        "portable_contract#cases.BS05"
+        "locked ELF VA 0x1581A14"
       ],
       "expected_projection": {
         "result_correction": {
@@ -681,11 +572,6 @@
             "bits_le": "CDCC8C3F"
           },
           "unknown_result": "Values outside 0..4 follow the original exception/report path and return 0 only after that path; portable input must reject them before mutation."
-        },
-        "portable_closure": {
-          "status": "confirmed-recovered-or-profile-bound",
-          "field_dispositions": {},
-          "unsupported_fields": []
         }
       },
       "unknown_fields": [],
@@ -694,22 +580,16 @@
     {
       "case_id": "BS06",
       "requirement": "standard Combo every range boundary and 701+",
-      "status": "confirmed-portable",
+      "status": "confirmed-static",
       "evidence_ids": [
-        "SLS-S04",
-        "SLS-S13",
-        "SLS-PC-001"
+        "SLS-S04"
       ],
       "input_provenance": [
-        "static_findings",
-        "migrated_static",
-        "portable_contract"
+        "static_findings"
       ],
       "expected_source": [
         "static:SLS-S04",
-        "locked ELF VA 0x1533250",
-        "migrated_static#bundles",
-        "portable_contract#cases.BS06"
+        "locked ELF VA 0x1533250"
       ],
       "expected_projection": {
         "combo_correction_ranges": [
@@ -773,12 +653,7 @@
             "value": 1.11,
             "bits_le": "7B148E3F"
           }
-        ],
-        "portable_closure": {
-          "status": "confirmed-recovered-or-profile-bound",
-          "field_dispositions": {},
-          "unsupported_fields": []
-        }
+        ]
       },
       "unknown_fields": [],
       "blocking_findings": []
@@ -786,23 +661,17 @@
     {
       "case_id": "BS07",
       "requirement": "single Normal judgement complete OneFrame business projection",
-      "status": "confirmed-portable",
+      "status": "partial",
       "evidence_ids": [
         "SLS-S01",
-        "SLS-R1-003",
-        "SLS-S13",
-        "SLS-PC-001"
+        "SLS-R1-003"
       ],
       "input_provenance": [
-        "positive_r1",
-        "migrated_static",
-        "portable_contract"
+        "positive_r1"
       ],
       "expected_source": [
         "positive_r1#OneFrameData.Setup.leave:index=6",
-        "positive_r1#InGameRecord.AddScore.enter:arg1=1404",
-        "migrated_static#bundles",
-        "portable_contract#cases.BS07"
+        "positive_r1#InGameRecord.AddScore.enter:arg1=1404"
       ],
       "expected_projection": {
         "frame": {
@@ -858,182 +727,87 @@
           "perfect_count": 1,
           "miss_count": 10,
           "is_single_game_over": 1
-        },
-        "portable_closure": {
-          "status": "confirmed-recovered-or-profile-bound",
-          "field_dispositions": {
-            "input_profile.deck_start_data": {
-              "source": "current-static-semantics+caller-profile-ownership",
-              "portable_behavior": "caller-required owner/session-bound numeric profile",
-              "result": "validated-input-or-evidence-required",
-              "mutation": "none-on-error"
-            },
-            "input_profile.score_level": {
-              "source": "current-static-semantics+caller-profile-ownership",
-              "portable_behavior": "caller-required owner/session-bound numeric profile",
-              "result": "validated-input-or-evidence-required",
-              "mutation": "none-on-error"
-            },
-            "input_profile.damage_rows": {
-              "source": "current-static-semantics+caller-profile-ownership",
-              "portable_behavior": "caller-required owner/session-bound numeric profile",
-              "result": "validated-input-or-evidence-required",
-              "mutation": "none-on-error"
-            },
-            "producer_abi.judgeFrontNote_note_type": {
-              "source": "10.1.4 managed signature+ARM64",
-              "portable_behavior": "internal chart/judgement adapter field; host cannot author",
-              "result": "deterministic",
-              "mutation": "transactional"
-            },
-            "producer_abi.judgeFrontNote_absolute_pos": {
-              "source": "10.1.4 managed signature+ARM64",
-              "portable_behavior": "internal chart/judgement adapter field; host cannot author",
-              "result": "deterministic",
-              "mutation": "transactional"
-            }
-          },
-          "unsupported_fields": []
         }
       },
-      "unknown_fields": [],
-      "blocking_findings": []
+      "unknown_fields": [
+        "input_profile.deck_start_data",
+        "input_profile.score_level",
+        "input_profile.damage_rows",
+        "producer_abi.judgeFrontNote_note_type",
+        "producer_abi.judgeFrontNote_absolute_pos"
+      ],
+      "blocking_findings": [
+        "D18-remaining",
+        "D23-master-start-data"
+      ]
     },
     {
       "case_id": "BS08",
       "requirement": "Long head/tail and Slide intermediate/tail business projections",
-      "status": "confirmed-portable",
+      "status": "blocked",
       "evidence_ids": [
-        "SLS-S01",
-        "SLS-S13",
-        "SLS-PC-001"
+        "SLS-S01"
       ],
       "input_provenance": [
-        "static_findings",
-        "migrated_static",
-        "portable_contract"
+        "static_findings"
       ],
       "expected_source": [
-        "static:SLS-S01",
-        "migrated_static#bundles",
-        "portable_contract#cases.BS08"
+        "static:SLS-S01"
       ],
-      "expected_projection": {
-        "portable_closure": {
-          "status": "confirmed-recovered-or-profile-bound",
-          "field_dispositions": {
-            "one_frame.long_head": {
-              "source": "current ARM64 semantic bundle+confirmed R1",
-              "portable_behavior": "recovered deterministic transaction",
-              "result": "deterministic",
-              "mutation": "preflight-then-slot-order-commit"
-            },
-            "one_frame.long_tail": {
-              "source": "current ARM64 semantic bundle+confirmed R1",
-              "portable_behavior": "recovered deterministic transaction",
-              "result": "deterministic",
-              "mutation": "preflight-then-slot-order-commit"
-            },
-            "one_frame.slide_intermediate": {
-              "source": "current ARM64 semantic bundle+confirmed R1",
-              "portable_behavior": "recovered deterministic transaction",
-              "result": "deterministic",
-              "mutation": "preflight-then-slot-order-commit"
-            },
-            "one_frame.slide_tail": {
-              "source": "current ARM64 semantic bundle+confirmed R1",
-              "portable_behavior": "recovered deterministic transaction",
-              "result": "deterministic",
-              "mutation": "preflight-then-slot-order-commit"
-            },
-            "reflect.family_order": {
-              "source": "current ARM64 semantic bundle+confirmed R1",
-              "portable_behavior": "recovered deterministic transaction",
-              "result": "deterministic",
-              "mutation": "preflight-then-slot-order-commit"
-            }
-          },
-          "unsupported_fields": []
-        }
-      },
-      "unknown_fields": [],
-      "blocking_findings": []
+      "expected_projection": {},
+      "unknown_fields": [
+        "one_frame.long_head",
+        "one_frame.long_tail",
+        "one_frame.slide_intermediate",
+        "one_frame.slide_tail",
+        "reflect.family_order"
+      ],
+      "blocking_findings": [
+        "D18-remaining",
+        "D19",
+        "D23-master-start-data"
+      ]
     },
     {
       "case_id": "BS09",
       "requirement": "Multiple and same-position group maxNote/score deduplication identity",
-      "status": "confirmed-portable",
+      "status": "blocked",
       "evidence_ids": [
-        "D03-static",
-        "SLS-S13",
-        "SLS-PC-001"
+        "D03-static"
       ],
       "input_provenance": [
-        "static_contract",
-        "migrated_static",
-        "portable_contract"
+        "static_contract"
       ],
       "expected_source": [
-        "static_contract#chart counting methods",
-        "migrated_static#bundles",
-        "portable_contract#cases.BS09"
+        "static_contract#chart counting methods"
       ],
-      "expected_projection": {
-        "portable_closure": {
-          "status": "confirmed-recovered-or-profile-bound",
-          "field_dispositions": {
-            "chart.multiple_group_identity": {
-              "source": "production chart graph+10.1.4 analyzeBMS",
-              "portable_behavior": "derive from parent-owned chart graph",
-              "result": "deterministic-or-evidence-required",
-              "mutation": "none-on-error"
-            },
-            "chart.same_position_group_identity": {
-              "source": "production chart graph+10.1.4 analyzeBMS",
-              "portable_behavior": "derive from parent-owned chart graph",
-              "result": "deterministic-or-evidence-required",
-              "mutation": "none-on-error"
-            },
-            "chart.max_note_deduplication": {
-              "source": "production chart graph+10.1.4 analyzeBMS",
-              "portable_behavior": "derive from parent-owned chart graph",
-              "result": "deterministic-or-evidence-required",
-              "mutation": "none-on-error"
-            },
-            "score.group_identity": {
-              "source": "current ARM64 semantic bundle+portable preflight",
-              "portable_behavior": "explicit validated boundary",
-              "result": "deterministic-or-evidence-required",
-              "mutation": "none-on-error"
-            }
-          },
-          "unsupported_fields": []
-        }
-      },
-      "unknown_fields": [],
-      "blocking_findings": []
+      "expected_projection": {},
+      "unknown_fields": [
+        "chart.multiple_group_identity",
+        "chart.same_position_group_identity",
+        "chart.max_note_deduplication",
+        "score.group_identity"
+      ],
+      "blocking_findings": [
+        "D03",
+        "D23-master-start-data"
+      ]
     },
     {
       "case_id": "BS10",
       "requirement": "same-frame two-entry Combo mutation before per-entry rate selection",
-      "status": "confirmed-portable",
+      "status": "partial",
       "evidence_ids": [
         "SLS-S02",
-        "SLS-R1-005",
-        "SLS-S13",
-        "SLS-PC-001"
+        "SLS-R1-005"
       ],
       "input_provenance": [
         "static_findings",
-        "skill_r1",
-        "migrated_static",
-        "portable_contract"
+        "skill_r1"
       ],
       "expected_source": [
         "static:SLS-S02",
-        "skill_r1#events:2189,2199,2210",
-        "migrated_static#bundles",
-        "portable_contract#cases.BS10"
+        "skill_r1#events:2189,2199,2210"
       ],
       "expected_projection": {
         "reflect_mutation_prefix": [
@@ -1050,66 +824,38 @@
             "skill_rate_bits": "0x3F800000"
           }
         ],
-        "reflect_after_skill_begin_sequence": 2210,
-        "portable_closure": {
-          "status": "confirmed-recovered-or-profile-bound",
-          "field_dispositions": {
-            "same_frame.two_entry_combo_values": {
-              "source": "current ARM64 semantic bundle+confirmed R1",
-              "portable_behavior": "recovered deterministic transaction",
-              "result": "deterministic",
-              "mutation": "preflight-then-slot-order-commit"
-            },
-            "same_frame.per_entry_combo_rate_bits": {
-              "source": "current ARM64 semantic bundle+confirmed R1",
-              "portable_behavior": "recovered deterministic transaction",
-              "result": "deterministic",
-              "mutation": "preflight-then-slot-order-commit"
-            },
-            "same_frame.score_results": {
-              "source": "current ARM64 semantic bundle+confirmed R1",
-              "portable_behavior": "recovered deterministic transaction",
-              "result": "deterministic",
-              "mutation": "preflight-then-slot-order-commit"
-            }
-          },
-          "unsupported_fields": []
-        }
+        "reflect_after_skill_begin_sequence": 2210
       },
-      "unknown_fields": [],
-      "blocking_findings": []
+      "unknown_fields": [
+        "same_frame.two_entry_combo_values",
+        "same_frame.per_entry_combo_rate_bits",
+        "same_frame.score_results"
+      ],
+      "blocking_findings": [
+        "D20-remaining",
+        "D23-master-start-data"
+      ]
     },
     {
       "case_id": "BS11",
       "requirement": "five-slot caller/slot order and representative strict/equal retention",
-      "status": "confirmed-portable",
+      "status": "confirmed-static",
       "evidence_ids": [
         "SLS-S01",
-        "SLS-S02",
-        "SLS-S13",
-        "SLS-PC-001"
+        "SLS-S02"
       ],
       "input_provenance": [
-        "static_findings",
-        "migrated_static",
-        "portable_contract"
+        "static_findings"
       ],
       "expected_source": [
         "static:SLS-S01",
-        "static:SLS-S02",
-        "migrated_static#bundles",
-        "portable_contract#cases.BS11"
+        "static:SLS-S02"
       ],
       "expected_projection": {
         "slot_capacity": 5,
         "slot_scan": "The managed five-entry list is scanned by ascending list index.",
         "clear_point": "Each in-use entry has isUsing cleared before Combo, score, Life, counters, callbacks, and total aggregation mutate.",
-        "representative": "A strictly greater raw result replaces the representative; equal raw result retains the first entry.",
-        "portable_closure": {
-          "status": "confirmed-recovered-or-profile-bound",
-          "field_dispositions": {},
-          "unsupported_fields": []
-        }
+        "representative": "A strictly greater raw result replaces the representative; equal raw result retains the first entry."
       },
       "unknown_fields": [],
       "blocking_findings": []
@@ -1117,91 +863,52 @@
     {
       "case_id": "BS12",
       "requirement": "sixth-slot failure and whole-domain mutation boundary",
-      "status": "confirmed-portable",
+      "status": "partial",
       "evidence_ids": [
-        "SLS-S01",
-        "SLS-S13",
-        "SLS-PC-001"
+        "SLS-S01"
       ],
       "input_provenance": [
-        "static_findings",
-        "migrated_static",
-        "portable_contract"
+        "static_findings"
       ],
       "expected_source": [
-        "static:SLS-S01",
-        "migrated_static#bundles",
-        "portable_contract#cases.BS12"
+        "static:SLS-S01"
       ],
       "expected_projection": {
-        "slot_capacity": 5,
-        "portable_closure": {
-          "status": "confirmed-recovered-or-profile-bound",
-          "field_dispositions": {
-            "failure.sixth_slot_exception_identity": {
-              "source": "portable-preflight-boundary",
-              "portable_behavior": "validate-before-domain-mutation",
-              "result": "evidence-required",
-              "mutation": "none"
-            },
-            "failure.before_snapshot": {
-              "source": "portable-preflight-boundary",
-              "portable_behavior": "validate-before-domain-mutation",
-              "result": "evidence-required",
-              "mutation": "none"
-            },
-            "failure.after_snapshot": {
-              "source": "portable-preflight-boundary",
-              "portable_behavior": "validate-before-domain-mutation",
-              "result": "evidence-required",
-              "mutation": "none"
-            },
-            "failure.backend_trace": {
-              "source": "portable-preflight-boundary",
-              "portable_behavior": "validate-before-domain-mutation",
-              "result": "evidence-required",
-              "mutation": "none"
-            },
-            "failure.domain_mutation_boundary": {
-              "source": "portable-preflight-boundary",
-              "portable_behavior": "validate-before-domain-mutation",
-              "result": "evidence-required",
-              "mutation": "none"
-            }
-          },
-          "unsupported_fields": []
-        }
+        "slot_capacity": 5
       },
-      "unknown_fields": [],
-      "blocking_findings": []
+      "unknown_fields": [
+        "failure.sixth_slot_exception_identity",
+        "failure.before_snapshot",
+        "failure.after_snapshot",
+        "failure.backend_trace",
+        "failure.domain_mutation_boundary"
+      ],
+      "blocking_findings": [
+        "D20-remaining",
+        "D21"
+      ]
     },
     {
       "case_id": "BS13",
       "requirement": "result, Combo, Fast/Slow, maxCombo, and all-perfect counters",
-      "status": "confirmed-portable",
+      "status": "partial",
       "evidence_ids": [
         "SLS-S12",
         "SLS-R1-003",
         "SLS-R1-007",
-        "SLS-R1-011",
-        "SLS-S13",
-        "SLS-PC-001"
+        "SLS-R1-011"
       ],
       "input_provenance": [
         "static_findings",
         "positive_r1",
         "retry_r1",
-        "ordinary_auto_skill_one_note",
-        "migrated_static",
-        "portable_contract"
+        "ordinary_auto_skill_one_note"
       ],
       "expected_source": [
         "static:SLS-S12",
         "positive_r1#GameOver.leave",
         "retry_r1#GameOver.leave/InitializeLife.leave",
-        "ordinary_auto_skill_one_note#one_note",
-        "migrated_static#bundles",
-        "portable_contract#cases.BS13"
+        "ordinary_auto_skill_one_note#one_note"
       ],
       "expected_projection": {
         "counter_rules": {
@@ -1327,44 +1034,30 @@
               "current_record_combo": 4
             }
           ]
-        },
-        "portable_closure": {
-          "status": "confirmed-recovered-or-profile-bound",
-          "field_dispositions": {
-            "record.all_perfect_status": {
-              "source": "current ARM64 semantic bundle+confirmed R1",
-              "portable_behavior": "recovered deterministic transaction",
-              "result": "deterministic",
-              "mutation": "preflight-then-slot-order-commit"
-            }
-          },
-          "unsupported_fields": []
         }
       },
-      "unknown_fields": [],
-      "blocking_findings": []
+      "unknown_fields": [
+        "record.all_perfect_status"
+      ],
+      "blocking_findings": [
+        "D19"
+      ]
     },
     {
       "case_id": "BS14",
       "requirement": "ordinary/bonus one-note strict maximum and equal retention",
-      "status": "confirmed-portable",
+      "status": "partial",
       "evidence_ids": [
         "D10-static",
-        "SLS-R1-011",
-        "SLS-S13",
-        "SLS-PC-001"
+        "SLS-R1-011"
       ],
       "input_provenance": [
         "static_contract",
-        "ordinary_auto_skill_one_note",
-        "migrated_static",
-        "portable_contract"
+        "ordinary_auto_skill_one_note"
       ],
       "expected_source": [
         "static_contract#CalcOneNotesMaxScoreInfo",
-        "ordinary_auto_skill_one_note#one_note/event_bonus_one_note",
-        "migrated_static#bundles",
-        "portable_contract#cases.BS14"
+        "ordinary_auto_skill_one_note#one_note/event_bonus_one_note"
       ],
       "expected_projection": {
         "ordinary": {
@@ -1491,53 +1184,35 @@
               "notes_type_omitted": true
             }
           ]
-        },
-        "portable_closure": {
-          "status": "confirmed-recovered-or-profile-bound",
-          "field_dispositions": {
-            "record.bonus_strict_max": {
-              "source": "current ARM64 semantic bundle+confirmed R1",
-              "portable_behavior": "recovered deterministic transaction",
-              "result": "deterministic",
-              "mutation": "preflight-then-slot-order-commit"
-            },
-            "record.callback_identity": {
-              "source": "current ARM64 semantic bundle+confirmed R1",
-              "portable_behavior": "recovered deterministic transaction",
-              "result": "deterministic",
-              "mutation": "preflight-then-slot-order-commit"
-            }
-          },
-          "unsupported_fields": []
         }
       },
-      "unknown_fields": [],
-      "blocking_findings": []
+      "unknown_fields": [
+        "record.bonus_strict_max",
+        "record.callback_identity"
+      ],
+      "blocking_findings": [
+        "D10-remaining",
+        "D18-remaining"
+      ]
     },
     {
       "case_id": "BS15",
       "requirement": "Miss/Bad/Good/Great/Perfect damage and Power mapping",
-      "status": "confirmed-portable",
+      "status": "partial",
       "evidence_ids": [
         "SLS-S07",
         "SLS-R1-005",
-        "SLS-R1-008",
-        "SLS-S13",
-        "SLS-PC-001"
+        "SLS-R1-008"
       ],
       "input_provenance": [
         "static_findings",
         "skill_r1",
-        "initialization_profile",
-        "migrated_static",
-        "portable_contract"
+        "initialization_profile"
       ],
       "expected_source": [
         "static:SLS-S07",
         "skill_r1#all-result-base-damage",
-        "initialization_profile#mode_and_damage",
-        "migrated_static#bundles",
-        "portable_contract#cases.BS15"
+        "initialization_profile#mode_and_damage"
       ],
       "expected_projection": {
         "damage_mapping": {
@@ -1583,61 +1258,38 @@
           "4": [
             0
           ]
-        },
-        "portable_closure": {
-          "status": "confirmed-recovered-or-profile-bound",
-          "field_dispositions": {
-            "one_frame.family_damage_values": {
-              "source": "current ARM64 semantic bundle+confirmed R1",
-              "portable_behavior": "recovered deterministic transaction",
-              "result": "deterministic",
-              "mutation": "preflight-then-slot-order-commit"
-            },
-            "one_frame.power_values": {
-              "source": "current ARM64 semantic bundle+confirmed R1",
-              "portable_behavior": "recovered deterministic transaction",
-              "result": "deterministic",
-              "mutation": "preflight-then-slot-order-commit"
-            },
-            "active_damage_effect_rows": {
-              "source": "current ARM64 semantic bundle+portable preflight",
-              "portable_behavior": "explicit validated boundary",
-              "result": "deterministic-or-evidence-required",
-              "mutation": "none-on-error"
-            }
-          },
-          "unsupported_fields": []
         }
       },
-      "unknown_fields": [],
-      "blocking_findings": []
+      "unknown_fields": [
+        "one_frame.family_damage_values",
+        "one_frame.power_values",
+        "active_damage_effect_rows"
+      ],
+      "blocking_findings": [
+        "D07",
+        "D13"
+      ]
     },
     {
       "case_id": "BS16",
       "requirement": "same-frame multi-damage Life order and zero/Game Over boundary",
-      "status": "confirmed-portable",
+      "status": "partial",
       "evidence_ids": [
         "SLS-S02",
         "SLS-S06",
         "SLS-R1-001",
-        "SLS-R1-011",
-        "SLS-S13",
-        "SLS-PC-001"
+        "SLS-R1-011"
       ],
       "input_provenance": [
         "static_findings",
         "no_input_r1",
-        "ordinary_auto_skill_one_note",
-        "migrated_static",
-        "portable_contract"
+        "ordinary_auto_skill_one_note"
       ],
       "expected_source": [
         "static:SLS-S02",
         "static:SLS-S06",
         "no_input_r1#GameOver.leave",
-        "ordinary_auto_skill_one_note#overheal",
-        "migrated_static#bundles",
-        "portable_contract#cases.BS16"
+        "ordinary_auto_skill_one_note#overheal"
       ],
       "expected_projection": {
         "life_rule": {
@@ -1678,113 +1330,57 @@
               "after": 1500
             }
           ]
-        },
-        "portable_closure": {
-          "status": "confirmed-recovered-or-profile-bound",
-          "field_dispositions": {
-            "same_frame.multi_damage_entries": {
-              "source": "current ARM64 semantic bundle+confirmed R1",
-              "portable_behavior": "recovered deterministic transaction",
-              "result": "deterministic",
-              "mutation": "preflight-then-slot-order-commit"
-            },
-            "same_frame.life_after_each_entry": {
-              "source": "current ARM64 semantic bundle+confirmed R1",
-              "portable_behavior": "recovered deterministic transaction",
-              "result": "deterministic",
-              "mutation": "preflight-then-slot-order-commit"
-            },
-            "same_frame.game_over_call_boundary": {
-              "source": "current ARM64 semantic bundle+confirmed R1",
-              "portable_behavior": "recovered deterministic transaction",
-              "result": "deterministic",
-              "mutation": "preflight-then-slot-order-commit"
-            }
-          },
-          "unsupported_fields": []
         }
       },
-      "unknown_fields": [],
-      "blocking_findings": []
+      "unknown_fields": [
+        "same_frame.multi_damage_entries",
+        "same_frame.life_after_each_entry",
+        "same_frame.game_over_call_boundary"
+      ],
+      "blocking_findings": [
+        "D18-remaining",
+        "D20-remaining"
+      ]
     },
     {
       "case_id": "BS17",
       "requirement": "fixed/rate Damage Guard and guard type",
-      "status": "confirmed-portable",
+      "status": "blocked",
       "evidence_ids": [
-        "SLS-S08",
-        "SLS-S13",
-        "SLS-PC-001"
+        "SLS-S08"
       ],
       "input_provenance": [
-        "static_findings",
-        "migrated_static",
-        "portable_contract"
+        "static_findings"
       ],
       "expected_source": [
-        "static:SLS-S08",
-        "migrated_static#bundles",
-        "portable_contract#cases.BS17"
+        "static:SLS-S08"
       ],
-      "expected_projection": {
-        "portable_closure": {
-          "status": "confirmed-recovered-or-profile-bound",
-          "field_dispositions": {
-            "profile.fixed_guard_row": {
-              "source": "current-static-semantics+caller-profile-ownership",
-              "portable_behavior": "caller-required owner/session-bound numeric profile",
-              "result": "validated-input-or-evidence-required",
-              "mutation": "none-on-error"
-            },
-            "profile.rate_guard_row": {
-              "source": "current-static-semantics+caller-profile-ownership",
-              "portable_behavior": "caller-required owner/session-bound numeric profile",
-              "result": "validated-input-or-evidence-required",
-              "mutation": "none-on-error"
-            },
-            "one_frame.fixed_guard_type": {
-              "source": "current ARM64 semantic bundle+confirmed R1",
-              "portable_behavior": "recovered deterministic transaction",
-              "result": "deterministic",
-              "mutation": "preflight-then-slot-order-commit"
-            },
-            "one_frame.rate_guard_type": {
-              "source": "current ARM64 semantic bundle+confirmed R1",
-              "portable_behavior": "recovered deterministic transaction",
-              "result": "deterministic",
-              "mutation": "preflight-then-slot-order-commit"
-            },
-            "same_frame.freeze": {
-              "source": "current ARM64 semantic bundle+confirmed R1",
-              "portable_behavior": "recovered deterministic transaction",
-              "result": "deterministic",
-              "mutation": "preflight-then-slot-order-commit"
-            }
-          },
-          "unsupported_fields": []
-        }
-      },
-      "unknown_fields": [],
-      "blocking_findings": []
+      "expected_projection": {},
+      "unknown_fields": [
+        "profile.fixed_guard_row",
+        "profile.rate_guard_row",
+        "one_frame.fixed_guard_type",
+        "one_frame.rate_guard_type",
+        "same_frame.freeze"
+      ],
+      "blocking_findings": [
+        "D13",
+        "D18-remaining",
+        "D23-master-start-data"
+      ]
     },
     {
       "case_id": "BS18",
       "requirement": "Never Die nonlethal/lethal/equal boundary and resulting Life 5",
-      "status": "confirmed-portable",
+      "status": "partial",
       "evidence_ids": [
-        "SLS-S08",
-        "SLS-S13",
-        "SLS-PC-001"
+        "SLS-S08"
       ],
       "input_provenance": [
-        "static_findings",
-        "migrated_static",
-        "portable_contract"
+        "static_findings"
       ],
       "expected_source": [
-        "static:SLS-S08",
-        "migrated_static#bundles",
-        "portable_contract#cases.BS18"
+        "static:SLS-S08"
       ],
       "expected_projection": {
         "never_die": {
@@ -1792,77 +1388,41 @@
           "replacement_delta": "For lethal damage, return 5 - currentLife; otherwise preserve signedDamage.",
           "resulting_life": 5,
           "guard_type": "The Never Die path selects DamageGuardType 2."
-        },
-        "portable_closure": {
-          "status": "confirmed-recovered-or-profile-bound",
-          "field_dispositions": {
-            "profile.never_die_row": {
-              "source": "current-static-semantics+caller-profile-ownership",
-              "portable_behavior": "caller-required owner/session-bound numeric profile",
-              "result": "validated-input-or-evidence-required",
-              "mutation": "none-on-error"
-            },
-            "manager.effect_eligibility": {
-              "source": "current ARM64 semantic bundle+confirmed R1 where naturally reachable",
-              "portable_behavior": "recovered state-machine rule",
-              "result": "deterministic-or-evidence-required-for-missing-profile",
-              "mutation": "owner/session-bound"
-            },
-            "runtime.nonlethal": {
-              "source": "current ARM64 semantic bundle+confirmed R1 where naturally reachable",
-              "portable_behavior": "recovered state-machine rule",
-              "result": "deterministic-or-evidence-required-for-missing-profile",
-              "mutation": "owner/session-bound"
-            },
-            "runtime.lethal": {
-              "source": "current ARM64 semantic bundle+confirmed R1 where naturally reachable",
-              "portable_behavior": "recovered state-machine rule",
-              "result": "deterministic-or-evidence-required-for-missing-profile",
-              "mutation": "owner/session-bound"
-            },
-            "runtime.equal_boundary": {
-              "source": "current ARM64 semantic bundle+confirmed R1 where naturally reachable",
-              "portable_behavior": "recovered state-machine rule",
-              "result": "deterministic-or-evidence-required-for-missing-profile",
-              "mutation": "owner/session-bound"
-            },
-            "same_frame.freeze": {
-              "source": "current ARM64 semantic bundle+confirmed R1",
-              "portable_behavior": "recovered deterministic transaction",
-              "result": "deterministic",
-              "mutation": "preflight-then-slot-order-commit"
-            }
-          },
-          "unsupported_fields": []
         }
       },
-      "unknown_fields": [],
-      "blocking_findings": []
+      "unknown_fields": [
+        "profile.never_die_row",
+        "manager.effect_eligibility",
+        "runtime.nonlethal",
+        "runtime.lethal",
+        "runtime.equal_boundary",
+        "same_frame.freeze"
+      ],
+      "blocking_findings": [
+        "D13",
+        "D18-remaining",
+        "D20-remaining",
+        "D23-master-start-data"
+      ]
     },
     {
       "case_id": "BS19",
       "requirement": "fixed Life Heal and condition equality",
-      "status": "confirmed-portable",
+      "status": "partial",
       "evidence_ids": [
         "SLS-S09",
         "SLS-R1-005",
-        "SLS-R1-012",
-        "SLS-S13",
-        "SLS-PC-001"
+        "SLS-R1-012"
       ],
       "input_provenance": [
         "static_findings",
         "skill_r1",
-        "ordinary_auto_skill_effect_profile",
-        "migrated_static",
-        "portable_contract"
+        "ordinary_auto_skill_effect_profile"
       ],
       "expected_source": [
         "static:SLS-S09",
         "skill_r1#AddIPower:arg1=300",
-        "ordinary_auto_skill_effect_profile#profiles/once_effect_observations",
-        "migrated_static#bundles",
-        "portable_contract#cases.BS19"
+        "ordinary_auto_skill_effect_profile#profiles/once_effect_observations"
       ],
       "expected_projection": {
         "fixed_formula": "Truncate the Float32 effect value toward zero to int32 and pass it to AddIPower.",
@@ -1963,52 +1523,33 @@
             "before": 1500,
             "after": 1500
           }
-        ],
-        "portable_closure": {
-          "status": "confirmed-recovered-or-profile-bound",
-          "field_dispositions": {
-            "runtime.condition_equal_boundary": {
-              "source": "current ARM64 semantic bundle+confirmed R1 where naturally reachable",
-              "portable_behavior": "recovered state-machine rule",
-              "result": "deterministic-or-evidence-required-for-missing-profile",
-              "mutation": "owner/session-bound"
-            },
-            "runtime.heal_callback_identity": {
-              "source": "current ARM64 semantic bundle+confirmed R1 where naturally reachable",
-              "portable_behavior": "recovered state-machine rule",
-              "result": "deterministic-or-evidence-required-for-missing-profile",
-              "mutation": "owner/session-bound"
-            }
-          },
-          "unsupported_fields": []
-        }
+        ]
       },
-      "unknown_fields": [],
-      "blocking_findings": []
+      "unknown_fields": [
+        "runtime.condition_equal_boundary",
+        "runtime.heal_callback_identity"
+      ],
+      "blocking_findings": [
+        "D14"
+      ]
     },
     {
       "case_id": "BS20",
       "requirement": "percentage Life Heal integer order and overheal/upper limit",
-      "status": "confirmed-portable",
+      "status": "partial",
       "evidence_ids": [
         "SLS-S06",
         "SLS-S09",
-        "SLS-R1-011",
-        "SLS-S13",
-        "SLS-PC-001"
+        "SLS-R1-011"
       ],
       "input_provenance": [
         "static_findings",
-        "ordinary_auto_skill_one_note",
-        "migrated_static",
-        "portable_contract"
+        "ordinary_auto_skill_one_note"
       ],
       "expected_source": [
         "static:SLS-S06",
         "static:SLS-S09",
-        "ordinary_auto_skill_one_note#overheal",
-        "migrated_static#bundles",
-        "portable_contract#cases.BS20"
+        "ordinary_auto_skill_one_note#overheal"
       ],
       "expected_projection": {
         "percentage_formula": "Compute int32(+0x24) * truncFloatToInt(effectValue), then signed-divide by 100 using the compiler strength-reduced sequence, and pass the result to AddIPower.",
@@ -2033,64 +1574,37 @@
               "after": 1500
             }
           ]
-        },
-        "portable_closure": {
-          "status": "confirmed-recovered-or-profile-bound",
-          "field_dispositions": {
-            "profile.percentage_effect_row": {
-              "source": "current-static-semantics+caller-profile-ownership",
-              "portable_behavior": "caller-required owner/session-bound numeric profile",
-              "result": "validated-input-or-evidence-required",
-              "mutation": "none-on-error"
-            },
-            "runtime.percentage_heal": {
-              "source": "current ARM64 semantic bundle+confirmed R1 where naturally reachable",
-              "portable_behavior": "recovered state-machine rule",
-              "result": "deterministic-or-evidence-required-for-missing-profile",
-              "mutation": "owner/session-bound"
-            },
-            "runtime.upper_limit_equal_boundary": {
-              "source": "current ARM64 semantic bundle+confirmed R1 where naturally reachable",
-              "portable_behavior": "recovered state-machine rule",
-              "result": "deterministic-or-evidence-required-for-missing-profile",
-              "mutation": "owner/session-bound"
-            },
-            "runtime.callback_identity": {
-              "source": "current ARM64 semantic bundle+confirmed R1 where naturally reachable",
-              "portable_behavior": "recovered state-machine rule",
-              "result": "deterministic-or-evidence-required-for-missing-profile",
-              "mutation": "owner/session-bound"
-            }
-          },
-          "unsupported_fields": []
         }
       },
-      "unknown_fields": [],
-      "blocking_findings": []
+      "unknown_fields": [
+        "profile.percentage_effect_row",
+        "runtime.percentage_heal",
+        "runtime.upper_limit_equal_boundary",
+        "runtime.callback_identity"
+      ],
+      "blocking_findings": [
+        "D14",
+        "D18-remaining",
+        "D23-master-start-data"
+      ]
     },
     {
       "case_id": "BS21",
       "requirement": "Skill Note success/failure/MoveTime/MultiNormal eligibility",
-      "status": "confirmed-portable",
+      "status": "partial",
       "evidence_ids": [
         "SLS-R1-005",
         "SLS-R1-011",
-        "D11-static",
-        "SLS-S13",
-        "SLS-PC-001"
+        "D11-static"
       ],
       "input_provenance": [
         "skill_r1",
         "ordinary_auto_skill_one_note",
-        "static_contract",
-        "migrated_static",
-        "portable_contract"
+        "static_contract"
       ],
       "expected_source": [
         "skill_r1#AddSituationSkillToPlayList.leave:2187",
-        "ordinary_auto_skill_one_note#skill_lifecycles",
-        "migrated_static#bundles",
-        "portable_contract#cases.BS21"
+        "ordinary_auto_skill_one_note#skill_lifecycles"
       ],
       "expected_projection": {
         "observed_enqueue": {
@@ -2135,77 +1649,40 @@
             "trigger_sequence": 4559,
             "finish_leave_sequence": 4764
           }
-        ],
-        "portable_closure": {
-          "status": "confirmed-recovered-or-profile-bound",
-          "field_dispositions": {
-            "profile.mode_eligibility": {
-              "source": "current-static-semantics+caller-profile-ownership",
-              "portable_behavior": "caller-required owner/session-bound numeric profile",
-              "result": "validated-input-or-evidence-required",
-              "mutation": "none-on-error"
-            },
-            "profile.skill_chara_list": {
-              "source": "current-static-semantics+caller-profile-ownership",
-              "portable_behavior": "caller-required owner/session-bound numeric profile",
-              "result": "validated-input-or-evidence-required",
-              "mutation": "none-on-error"
-            },
-            "runtime.failure": {
-              "source": "current ARM64 semantic bundle+confirmed R1 where naturally reachable",
-              "portable_behavior": "recovered state-machine rule",
-              "result": "deterministic-or-evidence-required-for-missing-profile",
-              "mutation": "owner/session-bound"
-            },
-            "runtime.move_time": {
-              "source": "current ARM64 semantic bundle+confirmed R1 where naturally reachable",
-              "portable_behavior": "recovered state-machine rule",
-              "result": "deterministic-or-evidence-required-for-missing-profile",
-              "mutation": "owner/session-bound"
-            },
-            "runtime.multi_normal_identity": {
-              "source": "current ARM64 semantic bundle+confirmed R1 where naturally reachable",
-              "portable_behavior": "recovered state-machine rule",
-              "result": "deterministic-or-evidence-required-for-missing-profile",
-              "mutation": "owner/session-bound"
-            },
-            "runtime.duplicate_reserve": {
-              "source": "current ARM64 semantic bundle+confirmed R1 where naturally reachable",
-              "portable_behavior": "recovered state-machine rule",
-              "result": "deterministic-or-evidence-required-for-missing-profile",
-              "mutation": "owner/session-bound"
-            }
-          },
-          "unsupported_fields": []
-        }
+        ]
       },
-      "unknown_fields": [],
-      "blocking_findings": []
+      "unknown_fields": [
+        "profile.mode_eligibility",
+        "profile.skill_chara_list",
+        "runtime.failure",
+        "runtime.move_time",
+        "runtime.multi_normal_identity",
+        "runtime.duplicate_reserve"
+      ],
+      "blocking_findings": [
+        "D11",
+        "D18-remaining",
+        "D23-master-start-data"
+      ]
     },
     {
       "case_id": "BS22",
       "requirement": "Skill queue Begin-to-Playing-to-Finishing-to-None and 0.75 boundary",
-      "status": "confirmed-portable",
+      "status": "partial",
       "evidence_ids": [
         "SLS-S10",
         "SLS-R1-005",
-        "SLS-R1-011",
-        "SLS-S13",
-        "SLS-PC-001"
+        "SLS-R1-011"
       ],
       "input_provenance": [
         "static_findings",
         "skill_r1",
-        "ordinary_auto_skill_one_note",
-        "migrated_static",
-        "portable_contract"
+        "ordinary_auto_skill_one_note"
       ],
       "expected_source": [
         "static:SLS-S10",
         "skill_r1#Skill lifecycle events",
-        "ordinary_auto_skill_one_note#skill_lifecycles",
-        "migrated_static#bundles",
-        "portable_contract#cases.BS22"
+        "ordinary_auto_skill_one_note#skill_lifecycles"
       ],
       "expected_projection": {
         "states": {
@@ -2446,53 +1923,35 @@
             "finish_leave_current": null,
             "finish_leave_skill_timer_bits": "0x00000000"
           }
-        ],
-        "portable_closure": {
-          "status": "confirmed-recovered-or-profile-bound",
-          "field_dispositions": {
-            "skill.callback_identity": {
-              "source": "current ARM64 semantic bundle+confirmed R1 where naturally reachable",
-              "portable_behavior": "recovered state-machine rule",
-              "result": "deterministic-or-evidence-required-for-missing-profile",
-              "mutation": "owner/session-bound"
-            },
-            "skill.delta_source_identity": {
-              "source": "current ARM64 semantic bundle+confirmed R1 where naturally reachable",
-              "portable_behavior": "recovered state-machine rule",
-              "result": "deterministic-or-evidence-required-for-missing-profile",
-              "mutation": "owner/session-bound"
-            }
-          },
-          "unsupported_fields": []
-        }
+        ]
       },
-      "unknown_fields": [],
-      "blocking_findings": []
+      "unknown_fields": [
+        "skill.callback_identity",
+        "skill.delta_source_identity"
+      ],
+      "blocking_findings": [
+        "D12",
+        "D18-remaining"
+      ]
     },
     {
       "case_id": "BS23",
       "requirement": "Skill Playing pause/GameOver freeze, Stop drain, and multiple queue",
-      "status": "confirmed-portable",
+      "status": "partial",
       "evidence_ids": [
         "SLS-S10",
         "SLS-R1-014",
-        "SLS-R1-015",
-        "SLS-S13",
-        "SLS-PC-001"
+        "SLS-R1-015"
       ],
       "input_provenance": [
         "static_findings",
         "ordinary_auto_skill_playing_pause",
-        "ordinary_auto_skill_playing_retry_reset",
-        "migrated_static",
-        "portable_contract"
+        "ordinary_auto_skill_playing_retry_reset"
       ],
       "expected_source": [
         "static:SLS-S10",
         "ordinary_auto_skill_playing_pause#playing_pause",
-        "ordinary_auto_skill_playing_retry_reset#confirmed_retry_reset",
-        "migrated_static#bundles",
-        "portable_contract#cases.BS23"
+        "ordinary_auto_skill_playing_retry_reset#confirmed_retry_reset"
       ],
       "expected_projection": {
         "observed_skill_playing_pause": {
@@ -3009,58 +2468,37 @@
           "premium_currency": 0,
           "continue": false,
           "note": "Live Boost gross consumption is separated from post-result rank-up restoration and displayed net change."
-        },
-        "portable_closure": {
-          "status": "confirmed-recovered-or-profile-bound",
-          "field_dispositions": {
-            "runtime.game_over_playing_freeze": {
-              "source": "current ARM64 semantic bundle+confirmed R1 where naturally reachable",
-              "portable_behavior": "recovered state-machine rule",
-              "result": "deterministic-or-evidence-required-for-missing-profile",
-              "mutation": "owner/session-bound"
-            },
-            "runtime.stop_drain": {
-              "source": "current ARM64 semantic bundle+confirmed R1 where naturally reachable",
-              "portable_behavior": "recovered state-machine rule",
-              "result": "deterministic-or-evidence-required-for-missing-profile",
-              "mutation": "owner/session-bound"
-            },
-            "runtime.multiple_queue": {
-              "source": "current ARM64 semantic bundle+confirmed R1 where naturally reachable",
-              "portable_behavior": "recovered state-machine rule",
-              "result": "deterministic-or-evidence-required-for-missing-profile",
-              "mutation": "owner/session-bound"
-            }
-          },
-          "unsupported_fields": []
         }
       },
-      "unknown_fields": [],
-      "blocking_findings": []
+      "unknown_fields": [
+        "runtime.game_over_playing_freeze",
+        "runtime.stop_drain",
+        "runtime.multiple_queue"
+      ],
+      "blocking_findings": [
+        "D12",
+        "D18-remaining",
+        "D21",
+        "D23-master-start-data"
+      ]
     },
     {
       "case_id": "BS24",
       "requirement": "judge correction and first eligible active effect",
-      "status": "confirmed-portable",
+      "status": "partial",
       "evidence_ids": [
         "SLS-R1-005",
         "SLS-R1-012",
-        "D13-static",
-        "SLS-S13",
-        "SLS-PC-001"
+        "D13-static"
       ],
       "input_provenance": [
         "skill_r1",
         "ordinary_auto_skill_effect_profile",
-        "static_contract",
-        "migrated_static",
-        "portable_contract"
+        "static_contract"
       ],
       "expected_source": [
         "skill_r1#active OneFrameData.Setup.leave",
-        "ordinary_auto_skill_effect_profile#profiles.active_effects",
-        "migrated_static#bundles",
-        "portable_contract#cases.BS24"
+        "ordinary_auto_skill_effect_profile#profiles.active_effects"
       ],
       "expected_projection": {
         "observed_active_entries": 18,
@@ -3225,56 +2663,33 @@
               }
             ]
           }
-        ],
-        "portable_closure": {
-          "status": "confirmed-recovered-or-profile-bound",
-          "field_dispositions": {
-            "runtime.judge_correction": {
-              "source": "current ARM64 semantic bundle+confirmed R1 where naturally reachable",
-              "portable_behavior": "recovered state-machine rule",
-              "result": "deterministic-or-evidence-required-for-missing-profile",
-              "mutation": "owner/session-bound"
-            },
-            "runtime.first_eligible_effect": {
-              "source": "current ARM64 semantic bundle+confirmed R1 where naturally reachable",
-              "portable_behavior": "recovered state-machine rule",
-              "result": "deterministic-or-evidence-required-for-missing-profile",
-              "mutation": "owner/session-bound"
-            },
-            "runtime.ineligible_predecessor": {
-              "source": "current ARM64 semantic bundle+confirmed R1 where naturally reachable",
-              "portable_behavior": "recovered state-machine rule",
-              "result": "deterministic-or-evidence-required-for-missing-profile",
-              "mutation": "owner/session-bound"
-            }
-          },
-          "unsupported_fields": []
-        }
+        ]
       },
-      "unknown_fields": [],
-      "blocking_findings": []
+      "unknown_fields": [
+        "runtime.judge_correction",
+        "runtime.first_eligible_effect",
+        "runtime.ineligible_predecessor"
+      ],
+      "blocking_findings": [
+        "D13",
+        "D18-remaining"
+      ]
     },
     {
       "case_id": "BS25",
       "requirement": "damage/score over-life and under-life active effects",
-      "status": "confirmed-portable",
+      "status": "partial",
       "evidence_ids": [
         "SLS-R1-012",
-        "D13-static",
-        "SLS-S13",
-        "SLS-PC-001"
+        "D13-static"
       ],
       "input_provenance": [
         "static_contract",
-        "ordinary_auto_skill_effect_profile",
-        "migrated_static",
-        "portable_contract"
+        "ordinary_auto_skill_effect_profile"
       ],
       "expected_source": [
         "static_contract#active damage and score methods",
-        "ordinary_auto_skill_effect_profile#profiles:skill-02",
-        "migrated_static#bundles",
-        "portable_contract#cases.BS25"
+        "ordinary_auto_skill_effect_profile#profiles:skill-02"
       ],
       "expected_projection": {
         "observed_over_life_score_effect": {
@@ -3295,62 +2710,35 @@
             "bits": "0x00000000"
           },
           "max_value": 0
-        },
-        "portable_closure": {
-          "status": "confirmed-recovered-or-profile-bound",
-          "field_dispositions": {
-            "profile.over_life_damage_effect": {
-              "source": "current-static-semantics+caller-profile-ownership",
-              "portable_behavior": "caller-required owner/session-bound numeric profile",
-              "result": "validated-input-or-evidence-required",
-              "mutation": "none-on-error"
-            },
-            "profile.under_life_damage_effect": {
-              "source": "current-static-semantics+caller-profile-ownership",
-              "portable_behavior": "caller-required owner/session-bound numeric profile",
-              "result": "validated-input-or-evidence-required",
-              "mutation": "none-on-error"
-            },
-            "profile.under_life_score_effect": {
-              "source": "current-static-semantics+caller-profile-ownership",
-              "portable_behavior": "caller-required owner/session-bound numeric profile",
-              "result": "validated-input-or-evidence-required",
-              "mutation": "none-on-error"
-            },
-            "runtime.condition_boundaries": {
-              "source": "current ARM64 semantic bundle+confirmed R1 where naturally reachable",
-              "portable_behavior": "recovered state-machine rule",
-              "result": "deterministic-or-evidence-required-for-missing-profile",
-              "mutation": "owner/session-bound"
-            }
-          },
-          "unsupported_fields": []
         }
       },
-      "unknown_fields": [],
-      "blocking_findings": []
+      "unknown_fields": [
+        "profile.over_life_damage_effect",
+        "profile.under_life_damage_effect",
+        "profile.under_life_score_effect",
+        "runtime.condition_boundaries"
+      ],
+      "blocking_findings": [
+        "D13",
+        "D18-remaining",
+        "D23-master-start-data"
+      ]
     },
     {
       "case_id": "BS26",
       "requirement": "continuous worst-result, condition, and same-frame freeze",
-      "status": "confirmed-portable",
+      "status": "partial",
       "evidence_ids": [
         "SLS-R1-012",
-        "D13-static",
-        "SLS-S13",
-        "SLS-PC-001"
+        "D13-static"
       ],
       "input_provenance": [
         "static_contract",
-        "ordinary_auto_skill_effect_profile",
-        "migrated_static",
-        "portable_contract"
+        "ordinary_auto_skill_effect_profile"
       ],
       "expected_source": [
         "static_contract#continuous Skill methods",
-        "ordinary_auto_skill_effect_profile#profiles:skill-03",
-        "migrated_static#bundles",
-        "portable_contract#cases.BS26"
+        "ordinary_auto_skill_effect_profile#profiles:skill-03"
       ],
       "expected_projection": {
         "observed_continuous_effect": {
@@ -3371,535 +2759,264 @@
             "bits": "0x00000000"
           },
           "max_value": 0
-        },
-        "portable_closure": {
-          "status": "confirmed-recovered-or-profile-bound",
-          "field_dispositions": {
-            "runtime.worst_result": {
-              "source": "current ARM64 semantic bundle+confirmed R1 where naturally reachable",
-              "portable_behavior": "recovered state-machine rule",
-              "result": "deterministic-or-evidence-required-for-missing-profile",
-              "mutation": "owner/session-bound"
-            },
-            "runtime.condition_boundary": {
-              "source": "current ARM64 semantic bundle+confirmed R1 where naturally reachable",
-              "portable_behavior": "recovered state-machine rule",
-              "result": "deterministic-or-evidence-required-for-missing-profile",
-              "mutation": "owner/session-bound"
-            },
-            "runtime.same_frame_freeze": {
-              "source": "current ARM64 semantic bundle+confirmed R1 where naturally reachable",
-              "portable_behavior": "recovered state-machine rule",
-              "result": "deterministic-or-evidence-required-for-missing-profile",
-              "mutation": "owner/session-bound"
-            }
-          },
-          "unsupported_fields": []
         }
       },
-      "unknown_fields": [],
-      "blocking_findings": []
+      "unknown_fields": [
+        "runtime.worst_result",
+        "runtime.condition_boundary",
+        "runtime.same_frame_freeze"
+      ],
+      "blocking_findings": [
+        "D13",
+        "D18-remaining",
+        "D20-remaining"
+      ]
     },
     {
       "case_id": "BS27",
       "requirement": "only-perfect, under-great-half, and ScoreUpType",
-      "status": "confirmed-portable",
+      "status": "partial",
       "evidence_ids": [
         "SLS-R1-005",
-        "D13-static",
-        "SLS-S13",
-        "SLS-PC-001"
+        "D13-static"
       ],
       "input_provenance": [
         "skill_r1",
-        "static_contract",
-        "migrated_static",
-        "portable_contract"
+        "static_contract"
       ],
       "expected_source": [
-        "skill_r1#active OneFrameData.Setup.leave",
-        "migrated_static#bundles",
-        "portable_contract#cases.BS27"
+        "skill_r1#active OneFrameData.Setup.leave"
       ],
       "expected_projection": {
         "observed_score_up_type": 1,
         "observed_rate_bits": "0x3F99999A",
-        "active_entry_count": 18,
-        "portable_closure": {
-          "status": "confirmed-recovered-or-profile-bound",
-          "field_dispositions": {
-            "profile.only_perfect_row": {
-              "source": "current-static-semantics+caller-profile-ownership",
-              "portable_behavior": "caller-required owner/session-bound numeric profile",
-              "result": "validated-input-or-evidence-required",
-              "mutation": "none-on-error"
-            },
-            "profile.under_great_half_row": {
-              "source": "current-static-semantics+caller-profile-ownership",
-              "portable_behavior": "caller-required owner/session-bound numeric profile",
-              "result": "validated-input-or-evidence-required",
-              "mutation": "none-on-error"
-            },
-            "runtime.only_perfect_boundary": {
-              "source": "current ARM64 semantic bundle+confirmed R1 where naturally reachable",
-              "portable_behavior": "recovered state-machine rule",
-              "result": "deterministic-or-evidence-required-for-missing-profile",
-              "mutation": "owner/session-bound"
-            },
-            "runtime.under_great_half_boundary": {
-              "source": "current ARM64 semantic bundle+confirmed R1 where naturally reachable",
-              "portable_behavior": "recovered state-machine rule",
-              "result": "deterministic-or-evidence-required-for-missing-profile",
-              "mutation": "owner/session-bound"
-            }
-          },
-          "unsupported_fields": []
-        }
+        "active_entry_count": 18
       },
-      "unknown_fields": [],
-      "blocking_findings": []
+      "unknown_fields": [
+        "profile.only_perfect_row",
+        "profile.under_great_half_row",
+        "runtime.only_perfect_boundary",
+        "runtime.under_great_half_boundary"
+      ],
+      "blocking_findings": [
+        "D13",
+        "D18-remaining",
+        "D23-master-start-data"
+      ]
     },
     {
       "case_id": "BS28",
       "requirement": "Crescendo Perfect stack, clamp, reset, and non-Perfect",
-      "status": "confirmed-portable",
+      "status": "blocked",
       "evidence_ids": [
-        "D13-static",
-        "SLS-S13",
-        "SLS-PC-001"
+        "D13-static"
       ],
       "input_provenance": [
-        "static_contract",
-        "migrated_static",
-        "portable_contract"
+        "static_contract"
       ],
       "expected_source": [
-        "static_contract#Crescendo methods",
-        "migrated_static#bundles",
-        "portable_contract#cases.BS28"
+        "static_contract#Crescendo methods"
       ],
-      "expected_projection": {
-        "portable_closure": {
-          "status": "confirmed-recovered-or-profile-bound",
-          "field_dispositions": {
-            "profile.crescendo_row": {
-              "source": "current-static-semantics+caller-profile-ownership",
-              "portable_behavior": "caller-required owner/session-bound numeric profile",
-              "result": "validated-input-or-evidence-required",
-              "mutation": "none-on-error"
-            },
-            "runtime.perfect_stack": {
-              "source": "current ARM64 semantic bundle+confirmed R1 where naturally reachable",
-              "portable_behavior": "recovered state-machine rule",
-              "result": "deterministic-or-evidence-required-for-missing-profile",
-              "mutation": "owner/session-bound"
-            },
-            "runtime.clamp": {
-              "source": "current ARM64 semantic bundle+confirmed R1 where naturally reachable",
-              "portable_behavior": "recovered state-machine rule",
-              "result": "deterministic-or-evidence-required-for-missing-profile",
-              "mutation": "owner/session-bound"
-            },
-            "runtime.reset": {
-              "source": "current ARM64 semantic bundle+confirmed R1 where naturally reachable",
-              "portable_behavior": "recovered state-machine rule",
-              "result": "deterministic-or-evidence-required-for-missing-profile",
-              "mutation": "owner/session-bound"
-            },
-            "runtime.non_perfect": {
-              "source": "current ARM64 semantic bundle+confirmed R1 where naturally reachable",
-              "portable_behavior": "recovered state-machine rule",
-              "result": "deterministic-or-evidence-required-for-missing-profile",
-              "mutation": "owner/session-bound"
-            }
-          },
-          "unsupported_fields": []
-        }
-      },
-      "unknown_fields": [],
-      "blocking_findings": []
+      "expected_projection": {},
+      "unknown_fields": [
+        "profile.crescendo_row",
+        "runtime.perfect_stack",
+        "runtime.clamp",
+        "runtime.reset",
+        "runtime.non_perfect"
+      ],
+      "blocking_findings": [
+        "D13",
+        "D18-remaining",
+        "D23-master-start-data"
+      ]
     },
     {
       "case_id": "BS29",
       "requirement": "Fever root/tail, difficulty point, and Good/Miss no-key behavior",
-      "status": "confirmed-portable",
+      "status": "partial",
       "evidence_ids": [
-        "SLS-S11",
-        "SLS-S13",
-        "SLS-PC-001"
+        "SLS-S11"
       ],
       "input_provenance": [
-        "static_findings",
-        "migrated_static",
-        "portable_contract"
+        "static_findings"
       ],
       "expected_source": [
-        "static:SLS-S11",
-        "migrated_static#bundles",
-        "portable_contract#cases.BS29"
+        "static:SLS-S11"
       ],
       "expected_projection": {
         "normal_rate_bits_le": "0000803F",
-        "level_1_rate_bits_le": "00000040",
-        "portable_closure": {
-          "status": "confirmed-recovered-or-profile-bound",
-          "field_dispositions": {
-            "profile.difficulty_points": {
-              "source": "current-static-semantics+caller-profile-ownership",
-              "portable_behavior": "caller-required owner/session-bound numeric profile",
-              "result": "validated-input-or-evidence-required",
-              "mutation": "none-on-error"
-            },
-            "runtime.root_note": {
-              "source": "current ARM64 semantic bundle+confirmed R1 where naturally reachable",
-              "portable_behavior": "recovered state-machine rule",
-              "result": "deterministic-or-evidence-required-for-missing-profile",
-              "mutation": "owner/session-bound"
-            },
-            "runtime.tail_note": {
-              "source": "current ARM64 semantic bundle+confirmed R1 where naturally reachable",
-              "portable_behavior": "recovered state-machine rule",
-              "result": "deterministic-or-evidence-required-for-missing-profile",
-              "mutation": "owner/session-bound"
-            },
-            "runtime.good_no_key": {
-              "source": "current ARM64 semantic bundle+confirmed R1 where naturally reachable",
-              "portable_behavior": "recovered state-machine rule",
-              "result": "deterministic-or-evidence-required-for-missing-profile",
-              "mutation": "owner/session-bound"
-            },
-            "runtime.miss_no_key": {
-              "source": "current ARM64 semantic bundle+confirmed R1 where naturally reachable",
-              "portable_behavior": "recovered state-machine rule",
-              "result": "deterministic-or-evidence-required-for-missing-profile",
-              "mutation": "owner/session-bound"
-            }
-          },
-          "unsupported_fields": []
-        }
+        "level_1_rate_bits_le": "00000040"
       },
-      "unknown_fields": [],
-      "blocking_findings": []
+      "unknown_fields": [
+        "profile.difficulty_points",
+        "runtime.root_note",
+        "runtime.tail_note",
+        "runtime.good_no_key",
+        "runtime.miss_no_key"
+      ],
+      "blocking_findings": [
+        "D15",
+        "D18-remaining",
+        "D23-master-start-data"
+      ]
     },
     {
       "case_id": "BS30",
       "requirement": "Fever >=80 pass, duplicate suppression, and remaining ceil",
-      "status": "confirmed-portable",
+      "status": "partial",
       "evidence_ids": [
-        "SLS-S11",
-        "SLS-S13",
-        "SLS-PC-001"
+        "SLS-S11"
       ],
       "input_provenance": [
-        "static_findings",
-        "migrated_static",
-        "portable_contract"
+        "static_findings"
       ],
       "expected_source": [
-        "static:SLS-S11",
-        "migrated_static#bundles",
-        "portable_contract#cases.BS30"
+        "static:SLS-S11"
       ],
       "expected_projection": {
-        "pass_point": 80,
-        "portable_closure": {
-          "status": "confirmed-recovered-or-profile-bound",
-          "field_dispositions": {
-            "profile.difficulty_points": {
-              "source": "current-static-semantics+caller-profile-ownership",
-              "portable_behavior": "caller-required owner/session-bound numeric profile",
-              "result": "validated-input-or-evidence-required",
-              "mutation": "none-on-error"
-            },
-            "runtime.pass_equal_boundary": {
-              "source": "current ARM64 semantic bundle+confirmed R1 where naturally reachable",
-              "portable_behavior": "recovered state-machine rule",
-              "result": "deterministic-or-evidence-required-for-missing-profile",
-              "mutation": "owner/session-bound"
-            },
-            "runtime.duplicate_suppression": {
-              "source": "current ARM64 semantic bundle+confirmed R1 where naturally reachable",
-              "portable_behavior": "recovered state-machine rule",
-              "result": "deterministic-or-evidence-required-for-missing-profile",
-              "mutation": "owner/session-bound"
-            },
-            "runtime.remaining_ceil": {
-              "source": "current ARM64 semantic bundle+confirmed R1 where naturally reachable",
-              "portable_behavior": "recovered state-machine rule",
-              "result": "deterministic-or-evidence-required-for-missing-profile",
-              "mutation": "owner/session-bound"
-            }
-          },
-          "unsupported_fields": []
-        }
+        "pass_point": 80
       },
-      "unknown_fields": [],
-      "blocking_findings": []
+      "unknown_fields": [
+        "profile.difficulty_points",
+        "runtime.pass_equal_boundary",
+        "runtime.duplicate_suppression",
+        "runtime.remaining_ceil"
+      ],
+      "blocking_findings": [
+        "D15",
+        "D16",
+        "D18-remaining",
+        "D23-master-start-data"
+      ]
     },
     {
       "case_id": "BS31",
       "requirement": "FeverReady/Start success/failure/End, reset/callback/reservation",
-      "status": "confirmed-portable",
+      "status": "blocked",
       "evidence_ids": [
-        "D16-static",
-        "SLS-S13",
-        "SLS-PC-001"
+        "D16-static"
       ],
       "input_provenance": [
-        "static_contract",
-        "migrated_static",
-        "portable_contract"
+        "static_contract"
       ],
       "expected_source": [
-        "static_contract#Fever command/state methods",
-        "migrated_static#bundles",
-        "portable_contract#cases.BS31"
+        "static_contract#Fever command/state methods"
       ],
-      "expected_projection": {
-        "portable_closure": {
-          "status": "confirmed-recovered-or-profile-bound",
-          "field_dispositions": {
-            "runtime.ready": {
-              "source": "current ARM64 semantic bundle+confirmed R1 where naturally reachable",
-              "portable_behavior": "recovered state-machine rule",
-              "result": "deterministic-or-evidence-required-for-missing-profile",
-              "mutation": "owner/session-bound"
-            },
-            "runtime.start_success": {
-              "source": "current ARM64 semantic bundle+confirmed R1 where naturally reachable",
-              "portable_behavior": "recovered state-machine rule",
-              "result": "deterministic-or-evidence-required-for-missing-profile",
-              "mutation": "owner/session-bound"
-            },
-            "runtime.start_failure": {
-              "source": "current ARM64 semantic bundle+confirmed R1 where naturally reachable",
-              "portable_behavior": "recovered state-machine rule",
-              "result": "deterministic-or-evidence-required-for-missing-profile",
-              "mutation": "owner/session-bound"
-            },
-            "runtime.end": {
-              "source": "current ARM64 semantic bundle+confirmed R1 where naturally reachable",
-              "portable_behavior": "recovered state-machine rule",
-              "result": "deterministic-or-evidence-required-for-missing-profile",
-              "mutation": "owner/session-bound"
-            },
-            "runtime.reset": {
-              "source": "current ARM64 semantic bundle+confirmed R1 where naturally reachable",
-              "portable_behavior": "recovered state-machine rule",
-              "result": "deterministic-or-evidence-required-for-missing-profile",
-              "mutation": "owner/session-bound"
-            },
-            "runtime.callback_order": {
-              "source": "current ARM64 semantic bundle+confirmed R1 where naturally reachable",
-              "portable_behavior": "recovered state-machine rule",
-              "result": "deterministic-or-evidence-required-for-missing-profile",
-              "mutation": "owner/session-bound"
-            },
-            "runtime.reservation_frame": {
-              "source": "current ARM64 semantic bundle+confirmed R1 where naturally reachable",
-              "portable_behavior": "recovered state-machine rule",
-              "result": "deterministic-or-evidence-required-for-missing-profile",
-              "mutation": "owner/session-bound"
-            }
-          },
-          "unsupported_fields": []
-        }
-      },
-      "unknown_fields": [],
-      "blocking_findings": []
+      "expected_projection": {},
+      "unknown_fields": [
+        "runtime.ready",
+        "runtime.start_success",
+        "runtime.start_failure",
+        "runtime.end",
+        "runtime.reset",
+        "runtime.callback_order",
+        "runtime.reservation_frame"
+      ],
+      "blocking_findings": [
+        "D16",
+        "D18-remaining",
+        "D20-remaining",
+        "D23-master-start-data"
+      ]
     },
     {
       "case_id": "BS32",
       "requirement": "Fever Level1 2.0 score rate and same-frame state freeze",
-      "status": "confirmed-portable",
+      "status": "partial",
       "evidence_ids": [
-        "SLS-S11",
-        "SLS-S13",
-        "SLS-PC-001"
+        "SLS-S11"
       ],
       "input_provenance": [
-        "static_findings",
-        "migrated_static",
-        "portable_contract"
+        "static_findings"
       ],
       "expected_source": [
-        "static:SLS-S11",
-        "migrated_static#bundles",
-        "portable_contract#cases.BS32"
+        "static:SLS-S11"
       ],
       "expected_projection": {
         "state_test": "Return 2.0f only when Fever state at +0x4C equals 1; otherwise return 1.0f.",
         "normal_rate_bits_le": "0000803F",
-        "level_1_rate_bits_le": "00000040",
-        "portable_closure": {
-          "status": "confirmed-recovered-or-profile-bound",
-          "field_dispositions": {
-            "runtime.fever_start_freeze": {
-              "source": "current ARM64 semantic bundle+confirmed R1 where naturally reachable",
-              "portable_behavior": "recovered state-machine rule",
-              "result": "deterministic-or-evidence-required-for-missing-profile",
-              "mutation": "owner/session-bound"
-            },
-            "runtime.fever_end_freeze": {
-              "source": "current ARM64 semantic bundle+confirmed R1 where naturally reachable",
-              "portable_behavior": "recovered state-machine rule",
-              "result": "deterministic-or-evidence-required-for-missing-profile",
-              "mutation": "owner/session-bound"
-            },
-            "runtime.same_frame_entries": {
-              "source": "current ARM64 semantic bundle+confirmed R1 where naturally reachable",
-              "portable_behavior": "recovered state-machine rule",
-              "result": "deterministic-or-evidence-required-for-missing-profile",
-              "mutation": "owner/session-bound"
-            },
-            "runtime.reservation_frame": {
-              "source": "current ARM64 semantic bundle+confirmed R1 where naturally reachable",
-              "portable_behavior": "recovered state-machine rule",
-              "result": "deterministic-or-evidence-required-for-missing-profile",
-              "mutation": "owner/session-bound"
-            }
-          },
-          "unsupported_fields": []
-        }
+        "level_1_rate_bits_le": "00000040"
       },
-      "unknown_fields": [],
-      "blocking_findings": []
+      "unknown_fields": [
+        "runtime.fever_start_freeze",
+        "runtime.fever_end_freeze",
+        "runtime.same_frame_entries",
+        "runtime.reservation_frame"
+      ],
+      "blocking_findings": [
+        "D16",
+        "D18-remaining",
+        "D20-remaining"
+      ]
     },
     {
       "case_id": "BS33",
       "requirement": "Auto coefficient, result-correction bypass, and Combo route",
-      "status": "confirmed-portable",
+      "status": "blocked",
       "evidence_ids": [
-        "D05-static",
-        "SLS-S13",
-        "SLS-PC-001"
+        "D05-static"
       ],
       "input_provenance": [
-        "static_contract",
-        "migrated_static",
-        "portable_contract"
+        "static_contract"
       ],
       "expected_source": [
-        "static_contract#Auto score methods",
-        "migrated_static#bundles",
-        "portable_contract#cases.BS33"
+        "static_contract#Auto score methods"
       ],
-      "expected_projection": {
-        "portable_closure": {
-          "status": "confirmed-recovered-or-profile-bound",
-          "field_dispositions": {
-            "profile.auto_coefficient": {
-              "source": "current-static-semantics+caller-profile-ownership",
-              "portable_behavior": "caller-required owner/session-bound numeric profile",
-              "result": "validated-input-or-evidence-required",
-              "mutation": "none-on-error"
-            },
-            "runtime.result_correction_bypass": {
-              "source": "current ARM64 semantic bundle+confirmed R1 where naturally reachable",
-              "portable_behavior": "recovered state-machine rule",
-              "result": "deterministic-or-evidence-required-for-missing-profile",
-              "mutation": "owner/session-bound"
-            },
-            "runtime.combo_route": {
-              "source": "current ARM64 semantic bundle+confirmed R1 where naturally reachable",
-              "portable_behavior": "recovered state-machine rule",
-              "result": "deterministic-or-evidence-required-for-missing-profile",
-              "mutation": "owner/session-bound"
-            },
-            "runtime.score_bits": {
-              "source": "current ARM64 semantic bundle+confirmed R1 where naturally reachable",
-              "portable_behavior": "recovered state-machine rule",
-              "result": "deterministic-or-evidence-required-for-missing-profile",
-              "mutation": "owner/session-bound"
-            }
-          },
-          "unsupported_fields": []
-        }
-      },
-      "unknown_fields": [],
-      "blocking_findings": []
+      "expected_projection": {},
+      "unknown_fields": [
+        "profile.auto_coefficient",
+        "runtime.result_correction_bypass",
+        "runtime.combo_route",
+        "runtime.score_bits"
+      ],
+      "blocking_findings": [
+        "D05",
+        "D17",
+        "D23-master-start-data"
+      ]
     },
     {
       "case_id": "BS34",
       "requirement": "Festival stage effect/bonus exclusion and Medley/Garupa ranges",
-      "status": "confirmed-portable",
+      "status": "blocked",
       "evidence_ids": [
-        "D17-static",
-        "SLS-S13",
-        "SLS-PC-001"
+        "D17-static"
       ],
       "input_provenance": [
-        "static_contract",
-        "migrated_static",
-        "portable_contract"
+        "static_contract"
       ],
       "expected_source": [
-        "static_contract#Festival/Medley/Garupa methods",
-        "migrated_static#bundles",
-        "portable_contract#cases.BS34"
+        "static_contract#Festival/Medley/Garupa methods"
       ],
-      "expected_projection": {
-        "portable_closure": {
-          "status": "confirmed-recovered-or-profile-bound",
-          "field_dispositions": {
-            "profile.festival_stage_effect": {
-              "source": "current-static-semantics+caller-profile-ownership",
-              "portable_behavior": "caller-required owner/session-bound numeric profile",
-              "result": "validated-input-or-evidence-required",
-              "mutation": "none-on-error"
-            },
-            "profile.festival_bonus_exclusion": {
-              "source": "current-static-semantics+caller-profile-ownership",
-              "portable_behavior": "caller-required owner/session-bound numeric profile",
-              "result": "validated-input-or-evidence-required",
-              "mutation": "none-on-error"
-            },
-            "profile.medley_ranges": {
-              "source": "current-static-semantics+caller-profile-ownership",
-              "portable_behavior": "caller-required owner/session-bound numeric profile",
-              "result": "validated-input-or-evidence-required",
-              "mutation": "none-on-error"
-            },
-            "profile.garupa_ranges": {
-              "source": "current-static-semantics+caller-profile-ownership",
-              "portable_behavior": "caller-required owner/session-bound numeric profile",
-              "result": "validated-input-or-evidence-required",
-              "mutation": "none-on-error"
-            },
-            "runtime.no_match_behavior": {
-              "source": "current ARM64 semantic bundle+confirmed R1 where naturally reachable",
-              "portable_behavior": "recovered state-machine rule",
-              "result": "deterministic-or-evidence-required-for-missing-profile",
-              "mutation": "owner/session-bound"
-            }
-          },
-          "unsupported_fields": []
-        }
-      },
-      "unknown_fields": [],
-      "blocking_findings": []
+      "expected_projection": {},
+      "unknown_fields": [
+        "profile.festival_stage_effect",
+        "profile.festival_bonus_exclusion",
+        "profile.medley_ranges",
+        "profile.garupa_ranges",
+        "runtime.no_match_behavior"
+      ],
+      "blocking_findings": [
+        "D17",
+        "D23-master-start-data"
+      ]
     },
     {
       "case_id": "BS35",
       "requirement": "Game Over 0.1 Practice/collaboration/multiplayer mode matrix",
-      "status": "confirmed-portable",
+      "status": "partial",
       "evidence_ids": [
         "D22-static",
-        "SLS-R1-013",
-        "SLS-S13",
-        "SLS-PC-001"
+        "SLS-R1-013"
       ],
       "input_provenance": [
         "static_contract",
-        "rehearsal_pause_return_time",
-        "migrated_static",
-        "portable_contract"
+        "rehearsal_pause_return_time"
       ],
       "expected_source": [
         "static_contract#Game Over mode methods",
-        "rehearsal_pause_return_time#practice_game_over",
-        "migrated_static#bundles",
-        "portable_contract#cases.BS35"
+        "rehearsal_pause_return_time#practice_game_over"
       ],
       "expected_projection": {
         "observed_practice_mode": {
@@ -3919,64 +3036,37 @@
             "0/0/1"
           ],
           "continued_exec_update_with_life_zero_single_game_over": 1216
-        },
-        "portable_closure": {
-          "status": "confirmed-recovered-or-profile-bound",
-          "field_dispositions": {
-            "profile.collaboration_mode": {
-              "source": "current-static-semantics+caller-profile-ownership",
-              "portable_behavior": "caller-required owner/session-bound numeric profile",
-              "result": "validated-input-or-evidence-required",
-              "mutation": "none-on-error"
-            },
-            "profile.multiplayer_mode": {
-              "source": "current-static-semantics+caller-profile-ownership",
-              "portable_behavior": "caller-required owner/session-bound numeric profile",
-              "result": "validated-input-or-evidence-required",
-              "mutation": "none-on-error"
-            },
-            "runtime.game_over_0_1_routes": {
-              "source": "current ARM64 semantic bundle+confirmed R1 where naturally reachable",
-              "portable_behavior": "recovered state-machine rule",
-              "result": "deterministic-or-evidence-required-for-missing-profile",
-              "mutation": "owner/session-bound"
-            },
-            "runtime.score_decrease": {
-              "source": "current ARM64 semantic bundle+confirmed R1 where naturally reachable",
-              "portable_behavior": "recovered state-machine rule",
-              "result": "deterministic-or-evidence-required-for-missing-profile",
-              "mutation": "owner/session-bound"
-            }
-          },
-          "unsupported_fields": []
         }
       },
-      "unknown_fields": [],
-      "blocking_findings": []
+      "unknown_fields": [
+        "profile.collaboration_mode",
+        "profile.multiplayer_mode",
+        "runtime.game_over_0_1_routes",
+        "runtime.score_decrease"
+      ],
+      "blocking_findings": [
+        "D17",
+        "D22-remaining",
+        "D23-master-start-data"
+      ]
     },
     {
       "case_id": "BS36",
       "requirement": "invalid profile, pause/resume, fault/dispose, and duplicate-consume atomicity",
-      "status": "confirmed-portable",
+      "status": "partial",
       "evidence_ids": [
         "SLS-R1-007",
-        "SLS-R1-013",
-        "SLS-S13",
-        "SLS-PC-001"
+        "SLS-R1-013"
       ],
       "input_provenance": [
         "retry_r1",
-        "rehearsal_pause_return_time",
-        "migrated_static",
-        "portable_contract"
+        "rehearsal_pause_return_time"
       ],
       "expected_source": [
         "retry_r1#GameOver.leave:6366",
         "retry_r1#InitializeLife.leave:6373",
         "retry_r1#InitBaseScore.enter:6374",
-        "rehearsal_pause_return_time#pause_resume/return_time",
-        "migrated_static#bundles",
-        "portable_contract#cases.BS36"
+        "rehearsal_pause_return_time#pause_resume/return_time"
       ],
       "expected_projection": {
         "post_game_over_hook_quiet_ms": 11875,
@@ -4314,43 +3404,19 @@
               ]
             }
           }
-        },
-        "portable_closure": {
-          "status": "confirmed-fail-closed",
-          "field_dispositions": {
-            "failure.invalid_profile_atomicity": {
-              "source": "portable-preflight-boundary",
-              "portable_behavior": "validate-before-domain-mutation",
-              "result": "evidence-required",
-              "mutation": "none"
-            },
-            "lifecycle.fault_dispose": {
-              "source": "portable-preflight-boundary",
-              "portable_behavior": "validate-before-domain-mutation",
-              "result": "evidence-required",
-              "mutation": "none"
-            },
-            "lifecycle.duplicate_consume": {
-              "source": "portable-preflight-boundary",
-              "portable_behavior": "validate-before-domain-mutation",
-              "result": "evidence-required",
-              "mutation": "none"
-            },
-            "lifecycle.continue": {
-              "source": "safety-policy",
-              "portable_behavior": "excluded",
-              "result": "evidence-required",
-              "mutation": "none",
-              "reason": "premium-currency Continue observation is forbidden"
-            }
-          },
-          "unsupported_fields": [
-            "lifecycle.continue"
-          ]
         }
       },
-      "unknown_fields": [],
-      "blocking_findings": []
+      "unknown_fields": [
+        "failure.invalid_profile_atomicity",
+        "lifecycle.fault_dispose",
+        "lifecycle.duplicate_consume",
+        "lifecycle.continue"
+      ],
+      "blocking_findings": [
+        "D21",
+        "D22-remaining",
+        "D24"
+      ]
     }
   ]
 }

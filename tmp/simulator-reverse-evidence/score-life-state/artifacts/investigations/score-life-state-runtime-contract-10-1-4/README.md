@@ -73,6 +73,9 @@ These static conclusions and the partial BS01–BS36 oracle do **not** authorize
 - `capture_score_life_ordinary_auto_skill_playing_pause.py`: ordinary Auto observer that adds `SituationSkillManager.ExecUpdate` to the established anonymous Skill/one-note projection.
 - `build_score_life_ordinary_auto_skill_playing_pause_oracle.py` and `score_life_ordinary_auto_skill_playing_pause_oracle.json`: deterministic Skill-Playing settled-pause and one-frame resume projection.
 - `verify_score_life_ordinary_auto_skill_playing_pause_r1.py`: independent 13,248-event continuity/hash/privacy/pause/timer/completion verifier.
+- `capture_score_life_ordinary_auto_skill_playing_retry_reset.py`: observation-only natural-Retry collector that brackets two `SituationSkillManager.ExecAwakeStart` lifecycles while retaining the public `Stop` hook only as a negative observation.
+- `build_score_life_ordinary_auto_skill_playing_retry_reset_oracle.py` and `score_life_ordinary_auto_skill_playing_retry_reset_oracle.json`: deterministic Playing-to-fresh-manager reset/callback-order projection.
+- `verify_score_life_ordinary_auto_skill_playing_retry_reset_r1.py`: independent 1,471-event continuity/hash/privacy/reset-order/resource verifier.
 - `extract_score_life_runtime_input_provenance.py`: protobuf cache-record and BMS provenance extractor.
 - `verify_score_life_runtime_inputs.py`: fail-closed R0 input/capture-target verifier.
 - `verify_score_life_no_input_r1.py`: fail-closed verifier for the compressed no-input Life/Game Over R1 trace and committed capture plans.
@@ -87,7 +90,10 @@ These static conclusions and the partial BS01–BS36 oracle do **not** authorize
 - `chart-inputs/`: byte-preserving copies of the chart-construction facts committed at `74ab76f6838847d98aae1a15741a5f024e3774ff`.
 - `build_score_life_state_fixed_event_oracle.py`: deterministic builder for the fail-closed BS01–BS36 partial oracle from committed static/R1/BMS inputs.
 - `score_life_state_fixed_event_oracle.json`: all 36 required case identities with evidence projections, unknown fields, and blocking findings.
-- `verify_score_life_state_fixed_event_oracle.py`: independent verifier for source hashes, case coverage, critical static tables, R1 projections, and the still-open business gate.
+- `build_score_life_state_migrated_static_oracle.py`, `score_life_state_migrated_static_oracle.json`, and `verify_score_life_state_migrated_static_oracle.py`: eight current-ARM64 semantic bundles covering 48 base/event/special/Skill/Fever methods; historical 10.1.3 artifacts are hash-locked guides, never direct production evidence.
+- `build_score_life_state_portable_contract.py`, `score_life_state_portable_contract.json`, and `verify_score_life_state_portable_contract.py`: exhaustive disposition of all former unknown fields into recovered semantics, caller-required validated profiles, or explicit zero-mutation `evidence-required` rejection.
+- `verify_score_life_state_fixed_event_oracle.py`: independent verifier for source hashes, all 36 confirmed-portable cases, critical static/R1 projections, and the closed business gate.
+- `build_score_life_state_closure.py`, `closure.json`, and `verify_score_life_state_closure.py`: final V01/D01–D24, BS01–BS36, ownership, lifecycle, mutation and unsupported-path closure.
 - `runtime-inputs/bms/`: ordinary and HABAHIRO TextAssets extracted from connected-device 10.1.4 cache bundles.
 - `runtime-inputs/cache-index/`: byte-preserving `AssetBundleInfo` records and structured cache provenance; account identifiers are omitted.
 - `runtime_input_status.json`: D18/D22/D23 partial state and remaining runtime blockers.
@@ -115,6 +121,7 @@ These static conclusions and the partial BS01–BS36 oracle do **not** authorize
 - `runtime/rehearsal-pause-return-time-r1-plan.json`: first zero-resource plan retained as unpromoted because no ReturnTime hook fired.
 - `runtime/rehearsal-pause-return-time-retry2-r1-plan.json` and `.trace.json.gz`: successful 6,826-event Practice R1 with settled pause suppression, continued Life-zero Game Over state and nested ReturnTime(5).
 - `runtime/ordinary-auto-skill-playing-pause-r1-plan.json` and `.trace.json.gz`: successful 13,248-event ordinary Auto R1; Skill-01 remains Playing across 4,878ms settled pause and an 8,048ms wall gap advances exactly one game frame/timer step.
+- `runtime/ordinary-auto-skill-playing-retry-reset-r1-plan.json` and `.trace.json.gz`: successful 1,471-event ordinary Auto R1; confirmed Retry replaces a Playing anonymous Skill manager through a second `ExecAwakeStart`, with no public `Stop` or `processOfSkillFinished` callback in the complete reset interval.
 - `score_life_state_fixed_event_oracle.json`: complete BS01–BS36 case matrix with only directly supported projections promoted.
 - `runtime-control/multitouch_seven_lane_control.c`: fixed input-device-only control source.
 - `runtime-control/multitouch_seven_lane_control.arm64`: 6,304-byte stripped ELF64 AArch64 PIE, SHA-256 `AB39066A...9C249`.
@@ -179,12 +186,21 @@ py -3.14 artifacts/investigations/score-life-state-runtime-contract-10-1-4/verif
 py -3.14 artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_ordinary_auto_skill_playing_pause_plan.py
 py -3.14 artifacts/investigations/score-life-state-runtime-contract-10-1-4/build_score_life_ordinary_auto_skill_playing_pause_oracle.py
 py -3.14 artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_ordinary_auto_skill_playing_pause_r1.py
+py -3.14 artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_ordinary_auto_skill_playing_retry_reset_plan.py
+py -3.14 artifacts/investigations/score-life-state-runtime-contract-10-1-4/build_score_life_ordinary_auto_skill_playing_retry_reset_oracle.py
+py -3.14 artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_ordinary_auto_skill_playing_retry_reset_r1.py
 py -3.14 artifacts/investigations/score-life-state-runtime-contract-10-1-4/build_score_life_initialization_profile_oracle.py
 py -3.14 artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_initialization_profile_r1.py
 py -3.14 artifacts/investigations/score-life-state-runtime-contract-10-1-4/build_score_life_state_chart_count_oracle.py
 py -3.14 artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_state_chart_count_oracle.py
+py -3.14 artifacts/investigations/score-life-state-runtime-contract-10-1-4/build_score_life_state_migrated_static_oracle.py
+py -3.14 artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_state_migrated_static_oracle.py
+py -3.14 artifacts/investigations/score-life-state-runtime-contract-10-1-4/build_score_life_state_portable_contract.py
+py -3.14 artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_state_portable_contract.py
 py -3.14 artifacts/investigations/score-life-state-runtime-contract-10-1-4/build_score_life_state_fixed_event_oracle.py
 py -3.14 artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_state_fixed_event_oracle.py
+py -3.14 artifacts/investigations/score-life-state-runtime-contract-10-1-4/build_score_life_state_closure.py
+py -3.14 artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_state_closure.py
 ```
 
 The traces are captured through an explicit non-default loopback server forwarded by ADB, using `--device-address 127.0.0.1:47913`; the transport is embedded in each trace capability record. This changes only the Frida connection path and does not alter the observation agent or game state. Initialization, deck-aggregate and master-music plans are committed before execution and do not themselves promote any runtime value or change the open business gate. The deck-aggregate profile may close only aggregate provenance; BS03 member-row values remain fail-closed under the privacy boundary. Music ID 786 is unavailable for selection outside its limited-time window, so the master-music plan observes only list calls naturally made while reopening Free Live and never invokes a managed getter itself.
@@ -209,4 +225,4 @@ The initialization-profile Retry trace is privacy-minimized and contains 11 cont
 
 The successful zero-tail Auto trace contains 5,501 contiguous events and no capture error. It observes all 979 ordinary one-note callbacks and six ordered Skill lifecycles using five anonymous aliases, with the fourth alias recurring for the sixth Skill note. Ordinary one-note maxima progress `541@combo1 -> 703@combo82 -> 1136@combo219`; equal scores retain the earlier object and combo identity. The event-bonus one-note object remains zero under the already locked zero event parameter. Once effects directly move Life `1000 -> 1200` and `1200 -> 1500` while `playerMaxLife` remains 1000, proving ordinary overheal without exporting master/member identity. Nonzero event bonus, Skill effect master rows, overlapping Skill and Fever remain unobserved.
 
-The BS01–BS36 oracle remains fail-closed without pretending closure: BS01 is confirmed-r1 from chart count, initialization and repeated aggregate evidence; BS05, BS06 and BS11 remain confirmed-static. Twenty cases contain only directly supported static/R1/chart projections plus explicit unknown fields or blockers; 12 cases remain blocked with no expected projection. BS03 retains exactly `profile.member_rows` and `D23-deck-member-rows-privacy`; BS02 retains unavailable runtime start-data, event parameter and base bits. BS13/BS14 now consume ordinary strict/equal one-note maxima, BS20 consumes direct overheal, and BS21/BS22 consume six successful anonymous Skill lifecycles and reservation frames. The fixed-event oracle records 135 unknown fields and 85 blocking findings overall. Fever transitions, overlapping Skill, guard/Never Die, HABAHIRO/nonzero-event/special-mode master rows and final `closure.json` remain open. The five ABI-unsafe fields stay unconsumed. The business gate remains open and no partial oracle authorizes production implementation.
+The final closure does not reinterpret an unobserved native path as observed. Eight current-ARM64 semantic bundles promote 48 reviewed methods; the portable contract then assigns every formerly open field to recovered semantics, caller-required owner/session-bound numeric profiles, or explicit zero-mutation `evidence-required` rejection. Continue remains excluded, identity-bearing profile rows remain forbidden exports, and unproven backend fault/dispose/duplicate partial-mutation semantics are replaced only by portable preflight rejection. The rebuilt BS01–BS36 oracle has 36 confirmed-portable cases, zero unknown fields and zero blockers. `closure.json` closes V01/D01–D24 and authorizes production implementation within that exact portable surface.

@@ -1,0 +1,462 @@
+{
+  "schema_version": 1,
+  "status": "confirmed-r1-observation-only-skill-playing-retry-reset-partial-business-gate-open",
+  "source_commit": "f87e578b86b7640cad2358e54d5e9236862590f1",
+  "trace_file": "runtime/ordinary-auto-skill-playing-retry-reset-r1.trace.json.gz",
+  "plan_file": "ordinary-auto-skill-playing-retry-reset-r1-plan.json",
+  "plan_sha256": "531B0FAAF5012853AB1B3CA6A91157AFCCC4469B6EA8AFF94B8104BA64A4D501",
+  "capture_script_sha256": "B39C971084026DB1D73CAA84E21ECC71F3DBEE3AEDB8DBEC063E10DB2ED94EF9",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "version_name": "10.1.4",
+    "version_code": 230,
+    "abi": "arm64-v8a",
+    "libil2cpp_sha256": "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F",
+    "global_metadata_sha256": "298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F",
+    "pid": 28262,
+    "module": {
+      "base": "0x6cd829e000",
+      "size": 122183680,
+      "path": "/data/app/~~B1EA-JtTroRCXT375dD5Tg==/jp.co.craftegg.band-Oiz3EolE2fd86DJVZ50Q2Q==/lib/arm64/libil2cpp.so"
+    }
+  },
+  "continuity": {
+    "capture_error": null,
+    "event_count": 1471,
+    "first_sequence": 0,
+    "last_sequence": 1470,
+    "contiguous": true,
+    "queued": 0
+  },
+  "playing_before_retry": {
+    "sequence": 1463,
+    "timestamp_ms": 1785471211517,
+    "game_frame_counter": 949,
+    "current_game_state": 5,
+    "skill": {
+      "record": {
+        "score": 62308,
+        "reserve_score": 62308,
+        "life": 1000,
+        "max_life": 1000,
+        "max_note_count": 979,
+        "combo": 100,
+        "one_note": {
+          "score": 973,
+          "combo": 82,
+          "skill_factor": {
+            "value": 1.7999999523162842,
+            "bits": "0x3FE66666"
+          },
+          "is_fever": 0,
+          "notes_type_omitted": true
+        },
+        "event_one_note": {
+          "score": 0,
+          "combo": 0,
+          "skill_factor": {
+            "value": 0,
+            "bits": "0x00000000"
+          },
+          "is_fever": 0,
+          "notes_type_omitted": true
+        },
+        "judge_counts": [
+          100,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "playlist": {
+        "size": 1,
+        "values": [
+          {
+            "master_alias": "skill-01",
+            "skill_note_index": 1,
+            "absolute_pos": 2256,
+            "continuous_result": 4,
+            "crescendo_rate": {
+              "value": 0,
+              "bits": "0x00000000"
+            },
+            "member_identity_omitted": true
+          }
+        ]
+      },
+      "stock_size": 8,
+      "current": {
+        "master_alias": "skill-01",
+        "skill_note_index": 1,
+        "absolute_pos": 2256,
+        "continuous_result": 4,
+        "crescendo_rate": {
+          "value": 0,
+          "bits": "0x00000000"
+        },
+        "member_identity_omitted": true
+      },
+      "skill_timer": {
+        "value": 2.066640853881836,
+        "bits": "0x400443D8"
+      },
+      "finishing_timer": {
+        "value": 0,
+        "bits": "0x00000000"
+      },
+      "state": 2,
+      "reservation_frame": 776,
+      "reservation": {
+        "master_alias": "skill-01",
+        "skill_note_index": 1,
+        "absolute_pos": 2256,
+        "continuous_result": 4,
+        "crescendo_rate": {
+          "value": 0,
+          "bits": "0x00000000"
+        },
+        "member_identity_omitted": true
+      },
+      "reservation_encore": 0
+    }
+  },
+  "confirmed_retry_reset": {
+    "confirm_marker": {
+      "sequence": 1467,
+      "timestamp_ms": 1785471213269
+    },
+    "second_exec_awake_start_enter": {
+      "sequence": 1469,
+      "timestamp_ms": 1785471215756,
+      "skill": {
+        "record": null,
+        "playlist": {
+          "size": null,
+          "values": []
+        },
+        "stock_size": null,
+        "current": null,
+        "skill_timer": {
+          "value": 0,
+          "bits": "0x00000000"
+        },
+        "finishing_timer": {
+          "value": 0,
+          "bits": "0x00000000"
+        },
+        "state": 0,
+        "reservation_frame": 2147483647,
+        "reservation": null,
+        "reservation_encore": 0
+      },
+      "record": {
+        "score": 0,
+        "reserve_score": 0,
+        "life": 0,
+        "max_life": 0,
+        "max_note_count": 0,
+        "combo": 0,
+        "one_note": {
+          "score": 0,
+          "combo": 0,
+          "skill_factor": {
+            "value": 0,
+            "bits": "0x00000000"
+          },
+          "is_fever": 0,
+          "notes_type_omitted": true
+        },
+        "event_one_note": {
+          "score": 0,
+          "combo": 0,
+          "skill_factor": {
+            "value": 0,
+            "bits": "0x00000000"
+          },
+          "is_fever": 0,
+          "notes_type_omitted": true
+        },
+        "judge_counts": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "calculated": {
+        "mode": 1,
+        "miss_damage": -100,
+        "bad_damage": -50,
+        "is_auto_live": 1
+      }
+    },
+    "second_exec_awake_start_leave": {
+      "sequence": 1470,
+      "timestamp_ms": 1785471215758,
+      "skill": {
+        "record": {
+          "score": 0,
+          "reserve_score": 0,
+          "life": 0,
+          "max_life": 0,
+          "max_note_count": 0,
+          "combo": 0,
+          "one_note": {
+            "score": 0,
+            "combo": 0,
+            "skill_factor": {
+              "value": 0,
+              "bits": "0x00000000"
+            },
+            "is_fever": 0,
+            "notes_type_omitted": true
+          },
+          "event_one_note": {
+            "score": 0,
+            "combo": 0,
+            "skill_factor": {
+              "value": 0,
+              "bits": "0x00000000"
+            },
+            "is_fever": 0,
+            "notes_type_omitted": true
+          },
+          "judge_counts": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "playlist": {
+          "size": 0,
+          "values": []
+        },
+        "stock_size": 8,
+        "current": null,
+        "skill_timer": {
+          "value": 0,
+          "bits": "0x00000000"
+        },
+        "finishing_timer": {
+          "value": 0,
+          "bits": "0x00000000"
+        },
+        "state": 0,
+        "reservation_frame": 2147483647,
+        "reservation": null,
+        "reservation_encore": 0
+      }
+    },
+    "confirm_to_enter_ms": 2487,
+    "ordered_interval_kinds": [
+      "capture.marker",
+      "SituationSkillManager.ExecAwakeStart.enter",
+      "SituationSkillManager.ExecAwakeStart.leave"
+    ],
+    "manager_callback_kinds_between_confirm_and_reset_leave": [],
+    "public_stop_count": 0,
+    "process_finished_count": 0
+  },
+  "manager_initialization": {
+    "first_enter": {
+      "record": null,
+      "playlist": {
+        "size": null,
+        "values": []
+      },
+      "stock_size": null,
+      "current": null,
+      "skill_timer": {
+        "value": 0,
+        "bits": "0x00000000"
+      },
+      "finishing_timer": {
+        "value": 0,
+        "bits": "0x00000000"
+      },
+      "state": 0,
+      "reservation_frame": 2147483647,
+      "reservation": null,
+      "reservation_encore": 0
+    },
+    "first_leave": {
+      "record": {
+        "score": 0,
+        "reserve_score": 0,
+        "life": 0,
+        "max_life": 0,
+        "max_note_count": 0,
+        "combo": 0,
+        "one_note": {
+          "score": 0,
+          "combo": 0,
+          "skill_factor": {
+            "value": 0,
+            "bits": "0x00000000"
+          },
+          "is_fever": 0,
+          "notes_type_omitted": true
+        },
+        "event_one_note": {
+          "score": 0,
+          "combo": 0,
+          "skill_factor": {
+            "value": 0,
+            "bits": "0x00000000"
+          },
+          "is_fever": 0,
+          "notes_type_omitted": true
+        },
+        "judge_counts": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "playlist": {
+        "size": 0,
+        "values": []
+      },
+      "stock_size": 8,
+      "current": null,
+      "skill_timer": {
+        "value": 0,
+        "bits": "0x00000000"
+      },
+      "finishing_timer": {
+        "value": 0,
+        "bits": "0x00000000"
+      },
+      "state": 0,
+      "reservation_frame": 2147483647,
+      "reservation": null,
+      "reservation_encore": 0
+    },
+    "second_enter": {
+      "record": null,
+      "playlist": {
+        "size": null,
+        "values": []
+      },
+      "stock_size": null,
+      "current": null,
+      "skill_timer": {
+        "value": 0,
+        "bits": "0x00000000"
+      },
+      "finishing_timer": {
+        "value": 0,
+        "bits": "0x00000000"
+      },
+      "state": 0,
+      "reservation_frame": 2147483647,
+      "reservation": null,
+      "reservation_encore": 0
+    },
+    "second_leave": {
+      "record": {
+        "score": 0,
+        "reserve_score": 0,
+        "life": 0,
+        "max_life": 0,
+        "max_note_count": 0,
+        "combo": 0,
+        "one_note": {
+          "score": 0,
+          "combo": 0,
+          "skill_factor": {
+            "value": 0,
+            "bits": "0x00000000"
+          },
+          "is_fever": 0,
+          "notes_type_omitted": true
+        },
+        "event_one_note": {
+          "score": 0,
+          "combo": 0,
+          "skill_factor": {
+            "value": 0,
+            "bits": "0x00000000"
+          },
+          "is_fever": 0,
+          "notes_type_omitted": true
+        },
+        "judge_counts": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "playlist": {
+        "size": 0,
+        "values": []
+      },
+      "stock_size": 8,
+      "current": null,
+      "skill_timer": {
+        "value": 0,
+        "bits": "0x00000000"
+      },
+      "finishing_timer": {
+        "value": 0,
+        "bits": "0x00000000"
+      },
+      "state": 0,
+      "reservation_frame": 2147483647,
+      "reservation": null,
+      "reservation_encore": 0
+    },
+    "leave_projection_equal": true
+  },
+  "pre_reset_progress": {
+    "one_note_leave_count": 100,
+    "damage_base_count": 100,
+    "skill_trigger_count": 1
+  },
+  "resource_reconciliation": {
+    "displayed_auto_live_uses": [
+      7,
+      6
+    ],
+    "live_boost_consumption": -1,
+    "displayed_live_boost": [
+      9,
+      9
+    ],
+    "rank_up_restoration_observed": true,
+    "premium_currency": 0,
+    "continue": false,
+    "note": "Live Boost gross consumption is separated from post-result rank-up restoration and displayed net change."
+  },
+  "privacy": {
+    "account_fields_included": false,
+    "raw_pointers_included": false,
+    "display_strings_included": false,
+    "skill_master_ids_included": false,
+    "member_identity_included": false,
+    "notes_type_omitted": true
+  },
+  "business_scope": {
+    "confirmed": [
+      "confirmed Retry begins from anonymous skill-01 Playing state",
+      "second ExecAwakeStart replaces the active manager lifecycle without public Stop or processOfSkillFinished in the complete ordered reset interval",
+      "fresh manager leaves ExecAwakeStart in state 0 with empty playlist, null current, eight stock rows and reset timers/reservation",
+      "Auto Live use reconciles 7 to 6; one Boost is consumed while rank-up restoration makes displayed Boost net 9 to 9"
+    ],
+    "not_confirmed": [
+      "public Stop drain",
+      "GameOver while Skill Playing",
+      "multiple or overlapping Skill queue",
+      "fault/dispose or duplicate consume",
+      "Continue"
+    ]
+  }
+}

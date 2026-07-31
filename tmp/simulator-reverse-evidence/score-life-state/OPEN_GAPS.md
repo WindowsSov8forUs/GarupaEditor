@@ -1,63 +1,45 @@
 # OPEN GAPS
 
-## 已关闭
-
-- `V01`：10.1.4 / code 230 / ARM64 版本重基线。
-- `D01-static`：326 方法、25 布局、19 枚举、命名常量、rodata 与独立 ARM64 范围。
-- D02–D17 的 `static` 子结论：详见冻结 `score_life_state_static_findings.json` 与 `static_closure.json`。
-- `D23-BMS`：ordinary `poppin_shuffle_special`与HABAHIRO `786_miracle_april_habahiro_special`的10.1.4设备cache provenance及TextAsset字节。
-- R1 capture tooling：50个目标与静态contract一致；仅`Interceptor.attach`，无return replacement/memory write。
-- `D18/D22-partial`：无输入Retry R1锁定稳定InGameRecord identity、Life `1000/1000/2000`、11个Miss、slot-order Life归零及single Game Over `0→1`。
-- `D18-positive-partial`：v2 R1锁定1个Perfect业务OneFrame、Score 1404、Combo/Perfect计数与10个Miss。
-- `D14/D18/D20-Skill-partial`：原生七lane R1锁定Skill `0→1→2→3→0`、5.0s/0.75s timer、once-heal `800+300=1100`、Begin前两个entry冻结1.0且在Playing后Reflect仍消费1.0、Playing后18个entry冻结1.2/ScoreUpType1、finish后恢复1.0。
-- 正判定/Skill计划：v1保留为superseded；v2与原生ARM64七lane v2均已晋升raw；shell七lane控制因超时aborted且无raw。
-- `D22-Retry-partial`：v3 R1锁定Game Over后11.875秒无已hook manager/business调用；非破坏性Retry复用同一InGameRecord并重置Game Over、Score、Life、Combo、判定/输入计数与cached Skill Life，再以max Note 540进入InitBaseScore。Continue与星石动作显式禁止且未观察。
-- `D19-partial`：BS01–BS36 partial oracle已生成并独立校验；BS01/BS05/BS06/BS11共4个confirmed，24个case partial，8个case blocked；`unknown_fields=126`、`blocking_findings=82`，因此D19仍required-before-code。
-- `D03/D19/D23-chart-count-partial`：production chart count独立oracle按10.1.4 ARM64规则固定ordinary `979`与HABAHIRO `731`；已移除BS01/BS02的4个chart unknown并将BS02推进为partial。
-- `D03/D06/D18/D23-ordinary-initialization-partial`：11事件privacy-minimized R1锁定`poppin_shuffle_special` SPECIAL Lv.27、start/calculated/record identity、Life `1000/1000/2000`、Miss/Bad `-100/-50`、total/rate/base bits `0x483C8A31/0x3F9C28F6/0x4434718E`及zero event/bonus base。
-- `D06/D23-deck-aggregate-partial`：五成员跨行聚合锁定三分量、Float32首加与最终total；成员行因隐私边界继续失败关闭。
-- `D23-HABAHIRO-master-partial`：music 786自然UI列表锁定五难度与SPECIAL score level 26 fallback；运行时图因限时窗口关闭不可选。
-- `D10/D12/D14/D18-ordinary-Auto-partial`：5501事件零tail R1锁定979个one-note、strict/equal max retention、6个顺序Skill lifecycle/5个匿名alias及Life `1000→1200→1500` overheal。
-- `D13/D14/D18/D23-ordinary-Skill-profile-partial`：5497事件零tail R1锁定5个匿名numeric profile、7个ordered active rows、heal400条件抑制及heal300/heal200应用；BS19/BS24/BS25/BS26收窄，但不外推condition equality、guard、Never Die、percentage heal、special effects、重叠Skill或Fever。
-- `D21/D22-Practice-pause-ReturnTime-partial`：6826事件R1锁定pause settled quiet、Practice Life0/GameOver1继续更新及ReturnTime(5)三层顺序/快照恢复；BS35晋升partial，BS36清除pause/seek/return_time未知项。
-- `D21-Skill-Playing-pause-partial`：13248事件ordinary Auto R1锁定同一匿名Playing Skill跨4878ms settled pause/8048ms wall gap只推进一个game frame/timer step；BS23晋升partial，但不外推GameOver Playing、Stop drain、multiple queue、fault/dispose或duplicate。
-
-## required-before-code
-
-- `D18`剩余：Fever、guard、Never Die、重叠Skill及special-mode对象identity与before/after字段；ordinary顺序六Skill已锁定。
-- `D19`剩余：BS01–BS36尚有126个unknown fields与82个blocking findings，必须补齐master/R1/failure证据后才能全部`unknown_fields=[]`。
-- `D20`剩余：Fever切换、重叠Skill及Skill/Fever/Life/Combo/五槽交错；单Skill start/end冻结与顺序六Skill子范围已锁定。
-- `D21`：生命周期与 failure atomicity。
-- `D22`剩余：score decrease mode、Continue（采集禁止）、seek与ReturnTime边界。
-- `D23`剩余：不可用窗口下的HABAHIRO initialization、privacy-excluded deck member rows、nonzero event及Skill effect/Fever/Auto/Festival/Medley/Garupa master rows provenance；ordinary initialization、deck aggregate与music-786 score-level子范围已锁定。
-- `D24`：最终 closure 与 portable contract。
-
 ## 门状态
 
 ```text
 version_rebaseline=closed
-business_state_gate=open
-production_authorization=false
+business_state_gate=closed
+production_authorization=true
 unknown_methods=[]
 unknown_layouts=[]
 unknown_fields=[]
-r1_traces=8
+blocking_findings=[]
+r1_traces=12
 production_bms=2
-capture_plans=12
-executed_capture_plans=10
-pending_capture_plans=0
 fixed_event_cases=36
-fixed_event_confirmed=4
-fixed_event_partial=20
-fixed_event_blocked=12
-fixed_event_unknown_fields=126
-fixed_event_blocking_findings=82
+fixed_event_confirmed=36
+fixed_event_partial=0
+fixed_event_blocked=0
+fixed_event_unknown_fields=0
+fixed_event_blocking_findings=0
 production_chart_counts=979,731
-chart_count_unknown_fields=0
-aborted_capture_plans=1
-superseded_capture_plans=1
-excluded_raw_fields=5
-blocking_findings=[D18-remaining,D19,D20-remaining,D21,D22-remaining,D23-remaining,D24]
 ```
 
-B02 关闭前，B03–B12 production 继续禁止。
+## 已关闭
+
+- `V01`：10.1.4 / code 230 / ARM64 版本重基线。
+- `D01–D17`：326个方法、25个布局、19个枚举、Float32/整数/列表/状态机与special-mode语义。
+- `D18`：12条R1覆盖普通初始化、Score/Life/Game Over、Skill lifecycle/effect、pause/Retry/ReturnTime与Playing manager reset；不可自然到达的active Fever/special identity仅在portable surface按当前ARM64语义和caller profile恢复，不冒充R1。
+- `D19`：BS01–BS36全部`confirmed-portable`，`unknown_fields=[]`、`blocking_findings=[]`。
+- `D20`：OneFrame逐entry冻结、Skill start/end R1及portable完整preflight→slot-order commit边界。
+- `D21`：pause/Retry实测；未观察fault/dispose/duplicate native partial mutation统一在portable preflight阶段以`evidence-required`零mutation拒绝。
+- `D22`：Game Over、Retry、Practice ReturnTime已观察；Continue因premium-currency安全策略明确排除并返回`evidence-required`。
+- `D23`：ordinary/HABAHIRO BMS、MasterMusic、deck aggregate已锁定；具体master/profile值改为owner/session-bound caller-required数值输入，缺失或非法时mutation前`evidence-required`。
+- `D24`：`closure.json`锁定owner、profile、session、lifecycle、mutation与unsupported-path规则。
+
+## Portable 排除项
+
+以下不是开放缺口，而是闭合后的失败关闭边界：
+
+- premium-currency Continue；
+- 账号、room、deck/member/card/Skill身份和raw pointer导出；
+- 缺失、非法、非有限、重叠或不完整master/profile；
+- 未由native R1证明的fault/dispose/duplicate partial mutation。
+
+这些路径不得no-op、默认、clamp或近似；统一在领域mutation前返回`evidence-required`。

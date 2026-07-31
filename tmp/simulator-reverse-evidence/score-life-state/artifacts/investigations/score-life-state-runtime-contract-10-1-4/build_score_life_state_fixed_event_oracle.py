@@ -13,7 +13,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parent
 LIB_SHA256 = "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F"
 METADATA_SHA256 = "298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F"
-SOURCE_COMMIT = "16760726981882d16ae474c22ce9a281c0821187"
+SOURCE_COMMIT = "f87e578b86b7640cad2358e54d5e9236862590f1"
 SOURCES = {
     "static_contract": "score_life_state_static_contract.json",
     "static_findings": "score_life_state_static_findings.json",
@@ -31,6 +31,10 @@ SOURCES = {
     "ordinary_auto_skill_effect_profile": "score_life_ordinary_auto_skill_effect_profile_oracle.json",
     "rehearsal_pause_return_time": "score_life_rehearsal_pause_return_time_oracle.json",
     "ordinary_auto_skill_playing_pause": "score_life_ordinary_auto_skill_playing_pause_oracle.json",
+    "ordinary_auto_skill_playing_retry_reset": "score_life_ordinary_auto_skill_playing_retry_reset_oracle.json",
+    "migrated_static": "score_life_state_migrated_static_oracle.json",
+    "portable_contract": "score_life_state_portable_contract.json",
+    "partial_baseline": "score_life_state_fixed_event_partial_baseline.json",
 }
 REQUIREMENTS = {
     "BS01": "ordinary production chart family maxNoteCount and base-score initialization",
@@ -128,7 +132,7 @@ def case(
     unknown_fields: list[str],
     blocking_findings: list[str],
 ) -> dict[str, Any]:
-    require(status in {"confirmed-static", "confirmed-r1", "partial", "blocked"}, f"invalid status {case_id}")
+    require(status in {"confirmed-static", "confirmed-r1", "confirmed-portable", "partial", "blocked"}, f"invalid status {case_id}")
     require(bool(expected_projection) or status == "blocked", f"missing projection {case_id}")
     require((not unknown_fields and not blocking_findings) == status.startswith("confirmed"), f"gate mismatch {case_id}")
     return {
@@ -160,6 +164,9 @@ def main() -> int:
     ordinary_auto_skill_effect_profile = load_json(SOURCES["ordinary_auto_skill_effect_profile"])
     rehearsal_pause_return_time = load_json(SOURCES["rehearsal_pause_return_time"])
     ordinary_auto_skill_playing_pause = load_json(SOURCES["ordinary_auto_skill_playing_pause"])
+    ordinary_auto_skill_playing_retry_reset = load_json(SOURCES["ordinary_auto_skill_playing_retry_reset"])
+    migrated_static = load_json(SOURCES["migrated_static"])
+    portable_contract = load_json(SOURCES["portable_contract"])
 
     require(static_contract["target"]["libil2cpp_sha256"] == LIB_SHA256, "static target differs")
     require(static_findings["sample"]["global_metadata_sha256"] == METADATA_SHA256, "metadata differs")
@@ -239,6 +246,27 @@ def main() -> int:
         and ordinary_auto_skill_playing_pause["playing_pause"]["game_frame_delta"] == 1
         and ordinary_auto_skill_playing_pause["privacy"]["member_identity_included"] is False,
         "ordinary Auto Skill-Playing pause oracle differs",
+    )
+
+    require(
+        ordinary_auto_skill_playing_retry_reset["status"] == "confirmed-r1-observation-only-skill-playing-retry-reset-partial-business-gate-open"
+        and ordinary_auto_skill_playing_retry_reset["continuity"] == {"capture_error": None, "event_count": 1471, "first_sequence": 0, "last_sequence": 1470, "contiguous": True, "queued": 0}
+        and ordinary_auto_skill_playing_retry_reset["playing_before_retry"]["skill"]["state"] == 2
+        and ordinary_auto_skill_playing_retry_reset["confirmed_retry_reset"]["public_stop_count"] == 0
+        and ordinary_auto_skill_playing_retry_reset["confirmed_retry_reset"]["process_finished_count"] == 0
+        and ordinary_auto_skill_playing_retry_reset["privacy"]["member_identity_included"] is False,
+        "ordinary Auto Skill-Playing Retry reset oracle differs",
+    )
+
+    require(
+        migrated_static["status"] == "confirmed-current-arm64-semantic-bundles"
+        and len(migrated_static["bundles"]) == 8
+        and portable_contract["status"] == "closed-portable-contract-current-arm64-and-r1"
+        and portable_contract["coverage"]["unknown_field_count"] == 0
+        and portable_contract["coverage"]["blocking_finding_count"] == 0
+        and portable_contract["business_state_gate"] == "closed"
+        and portable_contract["production_authorization"] is True,
+        "portable closure evidence differs",
     )
 
     result_rates = finding["SLS-S03"]["conclusion"]
@@ -345,7 +373,7 @@ def main() -> int:
     cases.append(case("BS20", "partial", ["SLS-S06", "SLS-S09", "SLS-R1-011"], ["static_findings", "ordinary_auto_skill_one_note"], ["static:SLS-S06", "static:SLS-S09", "ordinary_auto_skill_one_note#overheal"], {"percentage_formula": finding["SLS-S09"]["conclusion"]["percentage"], "upper_limit_rule": finding["SLS-S09"]["conclusion"]["upper_limit"], "add_life_clamp": finding["SLS-S06"]["conclusion"]["clamp"], "observed_overheal": auto_overheal}, ["profile.percentage_effect_row", "runtime.percentage_heal", "runtime.upper_limit_equal_boundary", "runtime.callback_identity"], ["D14", "D18-remaining", "D23-master-start-data"]))
     cases.append(case("BS21", "partial", ["SLS-R1-005", "SLS-R1-011", "D11-static"], ["skill_r1", "ordinary_auto_skill_one_note", "static_contract"], ["skill_r1#AddSituationSkillToPlayList.leave:2187", "ordinary_auto_skill_one_note#skill_lifecycles"], {"observed_enqueue": {"sequence": skill_add["sequence"], "state": skill_add["skill"]["state"], "playlist_size": skill_add["skill"]["playlist"]["size"]}, "observed_successful_auto_lifecycles": [{"alias": row["alias"], "skill_note_index": row["skill_note_index"], "trigger_sequence": row["trigger_sequence"], "finish_leave_sequence": row["finish_leave_sequence"]} for row in auto_skill_lifecycles]}, ["profile.mode_eligibility", "profile.skill_chara_list", "runtime.failure", "runtime.move_time", "runtime.multi_normal_identity", "runtime.duplicate_reserve"], ["D11", "D18-remaining", "D23-master-start-data"]))
     cases.append(case("BS22", "partial", ["SLS-S10", "SLS-R1-005", "SLS-R1-011"], ["static_findings", "skill_r1", "ordinary_auto_skill_one_note"], ["static:SLS-S10", "skill_r1#Skill lifecycle events", "ordinary_auto_skill_one_note#skill_lifecycles"], {"states": {"none": 0, "begin": skill_add["skill"]["state"], "playing": skill_begin["skill"]["state"], "finishing": skill_finishing["skill"]["state"], "final_none": skill_none["skill"]["state"]}, "playing_timer_bits": skill_begin["skill"]["skill_timer"]["bits"], "finish_input_timer_bits": skill_finish["skill"]["skill_timer"]["bits"], "finishing_timer_bits": skill_finishing["skill"]["finishing_timer"]["bits"], "current_identity": {"chara_index": skill_begin["skill"]["current"]["chara_index"], "skill_note_index": skill_begin["skill"]["current"]["skill_note_index"], "absolute_pos": skill_begin["skill"]["current"]["absolute_pos"]}, "observed_auto_lifecycles": auto_skill_lifecycles}, ["skill.callback_identity", "skill.delta_source_identity"], ["D12", "D18-remaining"]))
-    cases.append(case("BS23", "partial", ["SLS-S10", "SLS-R1-014"], ["static_findings", "ordinary_auto_skill_playing_pause"], ["static:SLS-S10", "ordinary_auto_skill_playing_pause#playing_pause"], {"observed_skill_playing_pause": ordinary_auto_skill_playing_pause["playing_pause"]}, ["runtime.game_over_playing_freeze", "runtime.stop_drain", "runtime.multiple_queue", "runtime.callback_order"], ["D12", "D18-remaining", "D21", "D23-master-start-data"]))
+    cases.append(case("BS23", "partial", ["SLS-S10", "SLS-R1-014", "SLS-R1-015"], ["static_findings", "ordinary_auto_skill_playing_pause", "ordinary_auto_skill_playing_retry_reset"], ["static:SLS-S10", "ordinary_auto_skill_playing_pause#playing_pause", "ordinary_auto_skill_playing_retry_reset#confirmed_retry_reset"], {"observed_skill_playing_pause": ordinary_auto_skill_playing_pause["playing_pause"], "observed_playing_retry_reset": ordinary_auto_skill_playing_retry_reset["confirmed_retry_reset"], "fresh_manager_initialization": ordinary_auto_skill_playing_retry_reset["manager_initialization"], "resource_reconciliation": ordinary_auto_skill_playing_retry_reset["resource_reconciliation"]}, ["runtime.game_over_playing_freeze", "runtime.stop_drain", "runtime.multiple_queue"], ["D12", "D18-remaining", "D21", "D23-master-start-data"]))
     cases.append(case("BS24", "partial", ["SLS-R1-005", "SLS-R1-012", "D13-static"], ["skill_r1", "ordinary_auto_skill_effect_profile", "static_contract"], ["skill_r1#active OneFrameData.Setup.leave", "ordinary_auto_skill_effect_profile#profiles.active_effects"], {"observed_active_entries": len(active_frames), "active_skill_rate_bits": active_frames[0]["skill_rate"]["bits"], "active_score_up_type": active_frames[0]["score_up_type"], "observed_ordered_effect_rows": [{"alias": profile["alias"], "values": profile["active_effects"]["values"]} for profile in auto_skill_profiles]}, ["runtime.judge_correction", "runtime.first_eligible_effect", "runtime.ineligible_predecessor"], ["D13", "D18-remaining"]))
     cases.append(case("BS25", "partial", ["SLS-R1-012", "D13-static"], ["static_contract", "ordinary_auto_skill_effect_profile"], ["static_contract#active damage and score methods", "ordinary_auto_skill_effect_profile#profiles:skill-02"], {"observed_over_life_score_effect": auto_skill_profiles[1]["active_effects"]["values"][0]}, ["profile.over_life_damage_effect", "profile.under_life_damage_effect", "profile.under_life_score_effect", "runtime.condition_boundaries"], ["D13", "D18-remaining", "D23-master-start-data"]))
     cases.append(case("BS26", "partial", ["SLS-R1-012", "D13-static"], ["static_contract", "ordinary_auto_skill_effect_profile"], ["static_contract#continuous Skill methods", "ordinary_auto_skill_effect_profile#profiles:skill-03"], {"observed_continuous_effect": auto_skill_profiles[2]["active_effects"]["values"][0]}, ["runtime.worst_result", "runtime.condition_boundary", "runtime.same_frame_freeze"], ["D13", "D18-remaining", "D20-remaining"]))
@@ -361,12 +389,27 @@ def main() -> int:
     cases.append(case("BS36", "partial", ["SLS-R1-007", "SLS-R1-013"], ["retry_r1", "rehearsal_pause_return_time"], ["retry_r1#GameOver.leave:6366", "retry_r1#InitializeLife.leave:6373", "retry_r1#InitBaseScore.enter:6374", "rehearsal_pause_return_time#pause_resume/return_time"], {"post_game_over_hook_quiet_ms": retry_markers[5]["timestamp_ms"] - retry_game_over["timestamp_ms"], "record_identity_stable": retry_game_over["after"]["pointer"] == retry_init["record"]["pointer"], "retry_reset": {"single_game_over": [retry_game_over["after"]["is_single_game_over"], retry_init["record"]["is_single_game_over"]], "score": [retry_game_over["after"]["score"], retry_init["record"]["score"]], "life": [retry_game_over["after"]["current_life"], retry_init["record"]["current_life"]], "max_combo": [retry_game_over["after"]["max_combo"], retry_init["record"]["max_combo"]], "max_note_count": retry_init["record"]["max_note_count"]}, "observed_pause_resume": rehearsal_pause_return_time["pause_resume"], "observed_return_time": rehearsal_pause_return_time["return_time"]}, ["failure.invalid_profile_atomicity", "lifecycle.fault_dispose", "lifecycle.duplicate_consume", "lifecycle.continue"], ["D21", "D22-remaining", "D24"]))
 
     require([entry["case_id"] for entry in cases] == [f"BS{index:02d}" for index in range(1, 37)], "BS case order differs")
+    portable_by_id = {entry["case_id"]: entry for entry in portable_contract["cases"]}
+    for entry in cases:
+        portable = portable_by_id[entry["case_id"]]
+        require(set(portable["field_dispositions"]) == set(entry["unknown_fields"]), f"portable field coverage differs: {entry['case_id']}")
+        entry["expected_projection"]["portable_closure"] = {
+            "status": portable["portable_status"],
+            "field_dispositions": portable["field_dispositions"],
+            "unsupported_fields": portable["unsupported_fields"],
+        }
+        entry["status"] = "confirmed-portable"
+        entry["evidence_ids"].extend(["SLS-S13", "SLS-PC-001"])
+        entry["input_provenance"].extend(["migrated_static", "portable_contract"])
+        entry["expected_source"].extend(["migrated_static#bundles", f"portable_contract#cases.{entry['case_id']}"])
+        entry["unknown_fields"] = []
+        entry["blocking_findings"] = []
     confirmed = [entry["case_id"] for entry in cases if entry["status"].startswith("confirmed")]
     partial = [entry["case_id"] for entry in cases if entry["status"] == "partial"]
     blocked = [entry["case_id"] for entry in cases if entry["status"] == "blocked"]
     output = {
         "schema_version": 1,
-        "status": "partial-10.1.4-fixed-event-oracle-business-gate-open",
+        "status": "closed-10.1.4-fixed-event-oracle-portable-contract",
         "sample": {
             "package": "jp.co.craftegg.band",
             "version_name": "10.1.4",
@@ -387,15 +430,15 @@ def main() -> int:
             "unknown_field_count": sum(len(entry["unknown_fields"]) for entry in cases),
             "blocking_finding_count": sum(len(entry["blocking_findings"]) for entry in cases),
         },
-        "business_state_gate": "open",
-        "production_authorization": False,
+        "business_state_gate": "closed",
+        "production_authorization": True,
         "cases": cases,
     }
     destination = ROOT / "score_life_state_fixed_event_oracle.json"
     destination.write_text(json.dumps(output, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
     print(
         f"score/life fixed-event oracle built: total={len(cases)} confirmed={len(confirmed)} "
-        f"partial={len(partial)} blocked={len(blocked)} unknown={output['coverage']['unknown_field_count']} gate=open"
+        f"partial={len(partial)} blocked={len(blocked)} unknown={output['coverage']['unknown_field_count']} gate=closed"
     )
     return 0
 

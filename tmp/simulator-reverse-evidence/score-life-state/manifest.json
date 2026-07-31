@@ -14,7 +14,7 @@
     "skillEvidenceCommit": "4ac4ea186efade9091c6f4377ab7ad7dc852a2c5",
     "retryLifecyclePlanCommit": "38cee0b409246323b46099e291331a78a267bcec",
     "retryLifecycleEvidenceCommit": "4f0ce1a02a83747db617695cde69ad47ac8ae78f",
-    "fixedEventOracleCommit": "62b7954a3dc402916a4b0f1bd71d47e5e45210cd",
+    "fixedEventOracleCommit": "44d2f20bf4cf19eb4c91e5b025101ec154f31e60",
     "chartCountOracleCommit": "c7dbaba81699adec896796167074cb85cdc94e2e",
     "initializationProfilePlanCommit": "a032f8fe82d045b6d3b5c8853cb923803e0c5435",
     "initializationProfileEvidenceCommit": "3c95190f4b6326da97e21c8e590f625a7582dc22",
@@ -36,7 +36,10 @@
     "rehearsalRetry2Commit": "645375cd3b52a5bca4ff8b1a715e5a663eff6872",
     "rehearsalEvidenceCommit": "4bbfaa9bacc6c6db5a5097bcf4e173a532e5cd0d",
     "skillPlayingPausePlanCommit": "16760726981882d16ae474c22ce9a281c0821187",
-    "skillPlayingPauseEvidenceCommit": "62b7954a3dc402916a4b0f1bd71d47e5e45210cd"
+    "skillPlayingPauseEvidenceCommit": "62b7954a3dc402916a4b0f1bd71d47e5e45210cd",
+    "skillPlayingRetryResetPlanCommit": "f87e578b86b7640cad2358e54d5e9236862590f1",
+    "skillPlayingRetryResetEvidenceCommit": "9c3f96b402efc8350cff4530de32fd3654c16a5b",
+    "portableClosureCommit": "44d2f20bf4cf19eb4c91e5b025101ec154f31e60"
   },
   "sample": {
     "package": "jp.co.craftegg.band",
@@ -52,9 +55,9 @@
     "enums": 19,
     "arm64Slices": 326,
     "staticEntries": 335,
-    "r1Traces": 11,
+    "r1Traces": 12,
     "fixedEventCases": 36,
-    "totalEntries": 447,
+    "totalEntries": 464,
     "r0InputEntries": 12,
     "productionBms": 2,
     "cacheRecords": 2,
@@ -67,11 +70,11 @@
     "skillEvidenceEntries": 5,
     "retryLifecyclePlanEntries": 5,
     "retryLifecycleEvidenceEntries": 5,
-    "fixedEventConfirmedCases": 4,
-    "fixedEventPartialCases": 24,
-    "fixedEventBlockedCases": 8,
-    "fixedEventUnknownFields": 126,
-    "fixedEventBlockingFindings": 82,
+    "fixedEventConfirmedCases": 36,
+    "fixedEventPartialCases": 0,
+    "fixedEventBlockedCases": 0,
+    "fixedEventUnknownFields": 0,
+    "fixedEventBlockingFindings": 0,
     "fixedEventOracleEntries": 6,
     "initializationProfilePlanEntries": 3,
     "initializationProfileEvidenceEntries": 4,
@@ -88,7 +91,10 @@
     "rehearsalPlanEntries": 6,
     "rehearsalEvidenceEntries": 4,
     "skillPlayingPausePlanEntries": 3,
-    "skillPlayingPauseEvidenceEntries": 4
+    "skillPlayingPauseEvidenceEntries": 4,
+    "retryResetPlanEntries": 3,
+    "retryResetEvidenceEntries": 4,
+    "portableClosureEntries": 10
   },
   "versionRebaselineGate": {
     "status": "closed",
@@ -101,30 +107,10 @@
     "unknownFields": []
   },
   "businessStateGate": {
-    "status": "open",
-    "blockingFindings": [
-      "D18",
-      "D19",
-      "D20",
-      "D21",
-      "D22",
-      "D23",
-      "D24"
-    ],
-    "requiredBeforeTasks": [
-      "B02",
-      "B03",
-      "B04",
-      "B05",
-      "B06",
-      "B07",
-      "B08",
-      "B09",
-      "B10",
-      "B11",
-      "B12"
-    ],
-    "productionAuthorization": false
+    "status": "closed",
+    "blockingFindings": [],
+    "requiredBeforeTasks": [],
+    "productionAuthorization": true
   },
   "entries": [
     {
@@ -5078,13 +5064,13 @@
     },
     {
       "id": "SLS-B01-329",
-      "sourceCommit": "62b7954a3dc402916a4b0f1bd71d47e5e45210cd",
+      "sourceCommit": "44d2f20bf4cf19eb4c91e5b025101ec154f31e60",
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/README.md",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/README.md",
-      "bytes": 30048,
-      "sha256": "4EB1614F26B1939CA915A5D613AC1F34976903D9BB97CE0895B5DCD2F64082E7",
+      "bytes": 32641,
+      "sha256": "47EF1BC6115E9FB81957F60394C214FD41998745D05EE21A7B1B314A0F10F239",
       "version": "10.1.4_230_arm64-v8a",
-      "status": "partial-chart-count-integrated-fixed-event-oracle-business-gate-open",
+      "status": "confirmed-portable-business-gate-closed",
       "consumedBy": [
         "B02",
         "D03-production-count",
@@ -5206,13 +5192,13 @@
     },
     {
       "id": "SLS-B02-R0-011",
-      "sourceCommit": "62b7954a3dc402916a4b0f1bd71d47e5e45210cd",
+      "sourceCommit": "44d2f20bf4cf19eb4c91e5b025101ec154f31e60",
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime_input_status.json",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime_input_status.json",
-      "bytes": 21307,
-      "sha256": "17773FC70C4C28CACDFBDF43875C83F07343CF8B5438E121A921E04942401B14",
+      "bytes": 20329,
+      "sha256": "FE8F9C089F80C645E8299AD5EE5BC53BA65BB75B065A647FED6864DF8351253F",
       "version": "10.1.4_230_arm64-v8a",
-      "status": "partial-fixed-event-oracle-business-gate-open",
+      "status": "confirmed-portable-business-gate-closed",
       "consumedBy": [
         "B02",
         "D19-partial",
@@ -5251,13 +5237,13 @@
     },
     {
       "id": "SLS-B01-332",
-      "sourceCommit": "62b7954a3dc402916a4b0f1bd71d47e5e45210cd",
+      "sourceCommit": "44d2f20bf4cf19eb4c91e5b025101ec154f31e60",
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/SHA256SUMS",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/SHA256SUMS",
-      "bytes": 57452,
-      "sha256": "34DDEC0DD954E8637718E8A125BFC197990B5B4126C8A33712F3EEAD4C5D2CB8",
+      "bytes": 60955,
+      "sha256": "CAF0D05C1D11ED822CBCF4C09613A908B31EF0EDB2EDBDFFDC947DBB4C5E4A0E",
       "version": "10.1.4_230_arm64-v8a",
-      "status": "partial-chart-count-integrated-fixed-event-oracle-business-gate-open",
+      "status": "confirmed-portable-business-gate-closed",
       "consumedBy": [
         "B02",
         "D03-production-count",
@@ -5614,13 +5600,13 @@
     },
     {
       "id": "SLS-B02-ORACLE-001",
-      "sourceCommit": "62b7954a3dc402916a4b0f1bd71d47e5e45210cd",
+      "sourceCommit": "44d2f20bf4cf19eb4c91e5b025101ec154f31e60",
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/build_score_life_state_fixed_event_oracle.py",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/build_score_life_state_fixed_event_oracle.py",
-      "bytes": 38345,
-      "sha256": "2574DB2E264DE7A19D7DB90BFE1740879B81F212B98867F11BB2A2EDE78C49DE",
+      "bytes": 41657,
+      "sha256": "AA23261789DD5D83A32E441C3A4DF7946D1ADB73C9F73580326D1B4D34E8B1C8",
       "version": "10.1.4_230_arm64-v8a",
-      "status": "partial-fixed-event-oracle-business-gate-open",
+      "status": "confirmed-portable-business-gate-closed",
       "consumedBy": [
         "B02",
         "D19-partial",
@@ -5629,13 +5615,13 @@
     },
     {
       "id": "SLS-B02-ORACLE-002",
-      "sourceCommit": "62b7954a3dc402916a4b0f1bd71d47e5e45210cd",
+      "sourceCommit": "44d2f20bf4cf19eb4c91e5b025101ec154f31e60",
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/score_life_state_fixed_event_oracle.json",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/score_life_state_fixed_event_oracle.json",
-      "bytes": 93197,
-      "sha256": "D4209DD8F6545F9FBB477F78270B8DB62A3D1D00A3556377DFD6643266D1F3BA",
+      "bytes": 150524,
+      "sha256": "8A5520C9E2F196382A6076E4FA9FFAC20C7C54306F465DD1B830E70D4C940792",
       "version": "10.1.4_230_arm64-v8a",
-      "status": "partial-fixed-event-oracle-business-gate-open",
+      "status": "confirmed-portable-business-gate-closed",
       "consumedBy": [
         "B02",
         "D19-partial",
@@ -5644,13 +5630,13 @@
     },
     {
       "id": "SLS-B02-ORACLE-003",
-      "sourceCommit": "62b7954a3dc402916a4b0f1bd71d47e5e45210cd",
+      "sourceCommit": "44d2f20bf4cf19eb4c91e5b025101ec154f31e60",
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_state_fixed_event_oracle.py",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_state_fixed_event_oracle.py",
-      "bytes": 23384,
-      "sha256": "847BA5D3603B20318BDE3F8B1D683120B26E943C925DFB5CCA2ECC54D4828E49",
+      "bytes": 7039,
+      "sha256": "4E05F8A23B167436B0753C6C6CE6717C9F24234A83251B0299839CBCC368583D",
       "version": "10.1.4_230_arm64-v8a",
-      "status": "partial-fixed-event-oracle-business-gate-open",
+      "status": "confirmed-portable-business-gate-closed",
       "consumedBy": [
         "B02",
         "D19-partial",
@@ -6750,7 +6736,7 @@
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/capture_score_life_ordinary_auto_skill_playing_pause.py",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/capture_score_life_ordinary_auto_skill_playing_pause.py",
       "bytes": 13785,
-      "sha256": "952554AA301BD787F94946B33A69143BEA8774752EC2B9F708E5A352038E1936",
+      "sha256": "B3E8D2BAE1023D0A6B34696E619C4FDC9A8F2B03BFA4213544CAB66A4EF44879",
       "sourceCommit": "16760726981882d16ae474c22ce9a281c0821187",
       "status": "confirmed-observation-only-skill-playing-pause-plan"
     },
@@ -6777,7 +6763,7 @@
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/build_score_life_ordinary_auto_skill_playing_pause_oracle.py",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/build_score_life_ordinary_auto_skill_playing_pause_oracle.py",
       "bytes": 4379,
-      "sha256": "9E2784EE25FF3A10D3835C23F8AEEE3A6E27CCE0AB734CF47CCFA04CB279DCB2",
+      "sha256": "16B4EA222BAABF85BCE8F1EF67A538B7705AB1EC09B272DA2092E2A8D095C878",
       "sourceCommit": "62b7954a3dc402916a4b0f1bd71d47e5e45210cd",
       "status": "confirmed-r1-skill-playing-pause-partial-business-gate-open"
     },
@@ -6795,7 +6781,7 @@
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/score_life_ordinary_auto_skill_playing_pause_oracle.json",
       "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/score_life_ordinary_auto_skill_playing_pause_oracle.json",
       "bytes": 7990,
-      "sha256": "E616C8C6EB732CA1A25C35D5BCBBDA41CD693CBF25357A5CFEBEE0D077BE8154",
+      "sha256": "0D36D2A81BD43B5CB374E1225C5487571BEF03C140FEFF7CDF1E35BE7B91A77A",
       "sourceCommit": "62b7954a3dc402916a4b0f1bd71d47e5e45210cd",
       "status": "confirmed-r1-skill-playing-pause-partial-business-gate-open"
     },
@@ -6807,10 +6793,163 @@
       "sha256": "BADF69A8CA8C1957D0406AFB619BFA644D7C6B7F653FE98A09E2628433743071",
       "sourceCommit": "62b7954a3dc402916a4b0f1bd71d47e5e45210cd",
       "status": "confirmed-r1-skill-playing-pause-partial-business-gate-open"
+    },
+    {
+      "id": "SLS-B02-CLOSURE-007",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/build_score_life_state_closure.py",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/build_score_life_state_closure.py",
+      "bytes": 3694,
+      "sha256": "482237ABBF0545996991095F812D7082072D92FC50AEE022C1CEA9FCBD808397",
+      "sourceCommit": "44d2f20bf4cf19eb4c91e5b025101ec154f31e60",
+      "status": "confirmed-portable-business-gate-closed"
+    },
+    {
+      "id": "SLS-B02-CLOSURE-008",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/build_score_life_state_migrated_static_oracle.py",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/build_score_life_state_migrated_static_oracle.py",
+      "bytes": 7727,
+      "sha256": "41DD6E07C0CF2F327BBE7ED9E13C32C66DF0585E8119B0946DA441618A25C8CD",
+      "sourceCommit": "44d2f20bf4cf19eb4c91e5b025101ec154f31e60",
+      "status": "confirmed-portable-business-gate-closed"
+    },
+    {
+      "id": "SLS-B02-CLOSURE-009",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/build_score_life_state_portable_contract.py",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/build_score_life_state_portable_contract.py",
+      "bytes": 6245,
+      "sha256": "641A49FDA6E3E4E5624C8A1EB4CEBB279E4BBE5FDABF06C1985EA247AAB775AD",
+      "sourceCommit": "44d2f20bf4cf19eb4c91e5b025101ec154f31e60",
+      "status": "confirmed-portable-business-gate-closed"
+    },
+    {
+      "id": "SLS-B02-CLOSURE-010",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/closure.json",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/closure.json",
+      "bytes": 5555,
+      "sha256": "4844EDF52AA1899F83CE9C5C3D108B7B843699E40577ED558BE270BC4C89E04B",
+      "sourceCommit": "44d2f20bf4cf19eb4c91e5b025101ec154f31e60",
+      "status": "confirmed-portable-business-gate-closed"
+    },
+    {
+      "id": "SLS-B02-CLOSURE-011",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/score_life_state_fixed_event_partial_baseline.json",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/score_life_state_fixed_event_partial_baseline.json",
+      "bytes": 102495,
+      "sha256": "0B77184DEC2341C21CF8C3E5DC1AF70896EF502B74A63EF354C38DD24EFC5A5B",
+      "sourceCommit": "44d2f20bf4cf19eb4c91e5b025101ec154f31e60",
+      "status": "confirmed-partial-baseline-input"
+    },
+    {
+      "id": "SLS-B02-CLOSURE-012",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/score_life_state_migrated_static_oracle.json",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/score_life_state_migrated_static_oracle.json",
+      "bytes": 57031,
+      "sha256": "0754A23E0AB1C9FE129E69EA7C923221EF0E562CF9DB471FCC666A9EE91BF536",
+      "sourceCommit": "44d2f20bf4cf19eb4c91e5b025101ec154f31e60",
+      "status": "confirmed-current-arm64-semantic-bundles"
+    },
+    {
+      "id": "SLS-B02-CLOSURE-013",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/score_life_state_portable_contract.json",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/score_life_state_portable_contract.json",
+      "bytes": 132160,
+      "sha256": "DA94D2FA757FFEAA4E714FD61BCDD196C3FC3BF36135F8F29F0A8EE7546FEA2E",
+      "sourceCommit": "44d2f20bf4cf19eb4c91e5b025101ec154f31e60",
+      "status": "confirmed-portable-business-gate-closed"
+    },
+    {
+      "id": "SLS-B02-CLOSURE-014",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_state_closure.py",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_state_closure.py",
+      "bytes": 1732,
+      "sha256": "854DDAC03718B1ADBAC849DAC7BA674ABCA79338F8268C03DC40324976CF96E9",
+      "sourceCommit": "44d2f20bf4cf19eb4c91e5b025101ec154f31e60",
+      "status": "confirmed-portable-business-gate-closed"
+    },
+    {
+      "id": "SLS-B02-CLOSURE-015",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_state_migrated_static_oracle.py",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_state_migrated_static_oracle.py",
+      "bytes": 3635,
+      "sha256": "1EEDD0AFB5C24CA7442D1B664A9F0E919802E98592C3A59F4FC40988E3954000",
+      "sourceCommit": "44d2f20bf4cf19eb4c91e5b025101ec154f31e60",
+      "status": "confirmed-current-arm64-semantic-bundles"
+    },
+    {
+      "id": "SLS-B02-CLOSURE-016",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_state_portable_contract.py",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_state_portable_contract.py",
+      "bytes": 2946,
+      "sha256": "EE3B52C31C8279ECC74288F5B7A4EB133DFA3F95DC18C2896298F9D62A74F8B2",
+      "sourceCommit": "44d2f20bf4cf19eb4c91e5b025101ec154f31e60",
+      "status": "confirmed-portable-business-gate-closed"
+    },
+    {
+      "id": "SLS-B02-RETRY-001",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/capture_score_life_ordinary_auto_skill_playing_retry_reset.py",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/capture_score_life_ordinary_auto_skill_playing_retry_reset.py",
+      "bytes": 14262,
+      "sha256": "B39C971084026DB1D73CAA84E21ECC71F3DBEE3AEDB8DBEC063E10DB2ED94EF9",
+      "sourceCommit": "f87e578b86b7640cad2358e54d5e9236862590f1",
+      "status": "confirmed-observation-only-skill-playing-retry-reset-plan"
+    },
+    {
+      "id": "SLS-B02-RETRY-002",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime/ordinary-auto-skill-playing-retry-reset-r1-plan.json",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime/ordinary-auto-skill-playing-retry-reset-r1-plan.json",
+      "bytes": 3956,
+      "sha256": "531B0FAAF5012853AB1B3CA6A91157AFCCC4469B6EA8AFF94B8104BA64A4D501",
+      "sourceCommit": "f87e578b86b7640cad2358e54d5e9236862590f1",
+      "status": "confirmed-observation-only-skill-playing-retry-reset-plan"
+    },
+    {
+      "id": "SLS-B02-RETRY-003",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_ordinary_auto_skill_playing_retry_reset_plan.py",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_ordinary_auto_skill_playing_retry_reset_plan.py",
+      "bytes": 2968,
+      "sha256": "CA3F20EFB030F2532DCE097DD991469A99FC65D8A77AA28497FD0A2B405D327D",
+      "sourceCommit": "f87e578b86b7640cad2358e54d5e9236862590f1",
+      "status": "confirmed-observation-only-skill-playing-retry-reset-plan"
+    },
+    {
+      "id": "SLS-B02-RETRY-004",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/build_score_life_ordinary_auto_skill_playing_retry_reset_oracle.py",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/build_score_life_ordinary_auto_skill_playing_retry_reset_oracle.py",
+      "bytes": 4922,
+      "sha256": "6462AB48F69BE79CCD34B64FDE665EDAEC7DA3B584D66A435A318E43E429F757",
+      "sourceCommit": "9c3f96b402efc8350cff4530de32fd3654c16a5b",
+      "status": "confirmed-r1-skill-playing-retry-reset"
+    },
+    {
+      "id": "SLS-B02-RETRY-005",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime/ordinary-auto-skill-playing-retry-reset-r1.trace.json.gz",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime/ordinary-auto-skill-playing-retry-reset-r1.trace.json.gz",
+      "bytes": 38933,
+      "sha256": "6C2D81B8CF148F00474995B9A78E51B191445A31A257A9C5F11E71F29119619C",
+      "sourceCommit": "9c3f96b402efc8350cff4530de32fd3654c16a5b",
+      "status": "confirmed-r1-skill-playing-retry-reset"
+    },
+    {
+      "id": "SLS-B02-RETRY-006",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/score_life_ordinary_auto_skill_playing_retry_reset_oracle.json",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/score_life_ordinary_auto_skill_playing_retry_reset_oracle.json",
+      "bytes": 12023,
+      "sha256": "AB63E5B70349B3F1A46943AEE80A6856C6B4703AB4E5B065F07CB6C6949BF7E5",
+      "sourceCommit": "9c3f96b402efc8350cff4530de32fd3654c16a5b",
+      "status": "confirmed-r1-skill-playing-retry-reset"
+    },
+    {
+      "id": "SLS-B02-RETRY-007",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_ordinary_auto_skill_playing_retry_reset_r1.py",
+      "copiedPath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/verify_score_life_ordinary_auto_skill_playing_retry_reset_r1.py",
+      "bytes": 4609,
+      "sha256": "1FAFA7A854FEC7297937DFD5EECCE66EF25A6A8CDEB9173FB0FFE6551A1D3EE3",
+      "sourceCommit": "9c3f96b402efc8350cff4530de32fd3654c16a5b",
+      "status": "confirmed-r1-skill-playing-retry-reset"
     }
   ],
   "runtimeInputGate": {
-    "status": "partial-required-before-code",
+    "status": "closed-portable-contract",
     "closedSubscope": [
       "ordinary-production-bms",
       "habahiro-production-bms",
@@ -6832,26 +6971,17 @@
       "ordinary-overheal-r1",
       "ordinary-auto-anonymous-skill-effect-profile-r1",
       "practice-pause-return-time-r1",
-      "ordinary-auto-skill-playing-pause-r1"
+      "ordinary-auto-skill-playing-pause-r1",
+      "ordinary-auto-skill-playing-retry-reset-r1",
+      "current-arm64-semantic-bundles",
+      "portable-profile-and-failure-contract",
+      "BS01-BS36-closed",
+      "V01-D01-D24-closure"
     ],
-    "partialFindings": [
-      "D18",
-      "D19",
-      "D20",
-      "D22",
-      "D23"
-    ],
-    "blockingFindings": [
-      "D18-remaining",
-      "D19-remaining",
-      "D20-remaining",
-      "D21",
-      "D22-remaining",
-      "D23-master-start-data",
-      "D24"
-    ],
-    "r1TraceCount": 11,
-    "productionAuthorization": false,
+    "partialFindings": [],
+    "blockingFindings": [],
+    "r1TraceCount": 12,
+    "productionAuthorization": true,
     "pendingPlans": [],
     "supersededPlans": [
       "positive-retry-all-lanes-score-skill"
@@ -6873,24 +7003,57 @@
       "band-deck-switch-anonymous-skill-profile-retry3-r1",
       "ordinary-rehearsal-pause-return-time-r1",
       "ordinary-rehearsal-pause-return-time-retry2-r1",
-      "ordinary-auto-skill-playing-pause-r1"
+      "ordinary-auto-skill-playing-pause-r1",
+      "ordinary-auto-skill-playing-retry-reset-r1"
     ],
     "abortedPlans": [
       "multitouch-seven-lane-positive-skill-window"
     ],
     "fixedEventOracle": {
-      "status": "partial-business-gate-open",
+      "status": "closed-portable-contract",
       "totalCases": 36,
       "confirmedCases": [
         "BS01",
+        "BS02",
+        "BS03",
+        "BS04",
         "BS05",
         "BS06",
-        "BS11"
+        "BS07",
+        "BS08",
+        "BS09",
+        "BS10",
+        "BS11",
+        "BS12",
+        "BS13",
+        "BS14",
+        "BS15",
+        "BS16",
+        "BS17",
+        "BS18",
+        "BS19",
+        "BS20",
+        "BS21",
+        "BS22",
+        "BS23",
+        "BS24",
+        "BS25",
+        "BS26",
+        "BS27",
+        "BS28",
+        "BS29",
+        "BS30",
+        "BS31",
+        "BS32",
+        "BS33",
+        "BS34",
+        "BS35",
+        "BS36"
       ],
-      "partialCases": 24,
-      "blockedCases": 8,
-      "unknownFields": 126,
-      "blockingFindings": 82
+      "partialCases": 0,
+      "blockedCases": 0,
+      "unknownFields": 0,
+      "blockingFindings": 0
     }
   }
 }

@@ -1,42 +1,38 @@
 # 分数、生命与状态证据包
 
-本目录冻结 Reverse 静态/R0及既有R1基线，并向前冻结 ordinary 初始化 `3c95190f4b6326da97e21c8e590f625a7582dc22`、deck aggregate计划/证据 `0bdb5cd59494076d92d3d5d6596608af476fec3e` / `b9b1a6deb334edf921a6f563ec0c270d49f0476f`、music-786计划/证据 `8b5d7dfb1a4b26a686b7e0a9cfcf093cb37e5386` / `287cd8689a6d498fbd45c35b82d16a96c97916c1`、ordinary Auto零tail计划 `6ee113568b2b06abce524beff4a57d83290c9f8d` 与one-note R1/oracle提交 `77fea929e1f99c1051b5211aa28836fd57c45117`，以及匿名Skill effect profile计划/证据 `9e217703c028e2f09be7fa2b30d791b6f7a4a338` / `a3c56662b979e1682340a7a47fa8553a8a95ee67`、演练pause/ReturnTime Retry-2计划/证据 `645375cd3b52a5bca4ff8b1a715e5a663eff6872` / `4bbfaa9bacc6c6db5a5097bcf4e173a532e5cd0d`，以及Skill-Playing pause计划/证据 `16760726981882d16ae474c22ce9a281c0821187` / `62b7954a3dc402916a4b0f1bd71d47e5e45210cd`。完整逐文件commit/hash见`manifest.json`。
+本目录冻结 `jp.co.craftegg.band` 10.1.4（code 230，`arm64-v8a`）分数、生命、Skill、Fever与special-mode阶段的静态、production输入、R1、fixed-event和portable contract证据。最终Reverse闭合提交为`44d2f20bf4cf19eb4c91e5b025101ec154f31e60`；逐文件commit、字节数和SHA-256见`manifest.json`。
 
-B01/V01静态门已关闭，B02仅部分推进：
+## 闭合结果
 
-- `326` 个方法全部按 managed owner/method/signature 独立映射；
-- `25` 个布局、`19` 个枚举无未知项；
-- ARM64 TSV 与锁定 ELF 字节一致；
-- OneFrame、Score、Life、Skill、Fever 的已确认静态语义记录在冻结 findings 中；
-- ordinary/HABAHIRO production BMS 由连接设备10.1.4 cache直接提取并锁定；
-- capture harness的50个地址均匹配静态contract，且只含观察型attach；
-- 一条无输入Retry R1冻结1863个连续事件：Life初始化`1000/1000/2000`、11个Miss、210次Reflect与single Game Over `0→1`；
-- 该轨迹只部分关闭D18/D22，不能外推其他业务路径；
-- v1 220动作计划保留为superseded控制来源且无trace晋升；v2只把输入前等待由7000ms改为500ms并已产生2166事件R1；
-- v2实际观察1个Perfect、`addScore` bits `0x44AF8052`、Reflect后Score 1404、Combo 1与10个Miss；5个ABI不安全raw字段明确排除；
-- shell多指控制因超出时间界限被aborted，无raw晋升且SELinux已独立恢复；
-- 原生v2保持同一50 hooks，以6304字节ARM64 input-event控制器执行固定7 slots/250×80ms计划，已晋升7122事件R1；
-- active-Skill R1观察`0→1→2→3→0`、5.0s Skill timer、0.75s finishing、once-heal `800→1100`、Begin前entry冻结1.0并在Playing后Reflect消费、Playing后18个entry冻结1.2/ScoreUpType1、finish后entry恢复1.0；D14/D18及D20单Skill start/end子范围仅部分推进；
-- post-Game-Over Retry v3完整保留native run，增加12秒Game Over后观察和一次Retry/确认/reset观察；Continue与星石动作禁止；
-- v3实际观察Game Over后11.875秒无已hook业务调用，Retry复用同一InGameRecord并把Game Over `1→0`、Score `44403→0`、Life `0→1000`、max Combo `6→0`及计数清零，再以max Note 540进入InitBaseScore；
-- privacy-minimized ordinary初始化R1冻结11个连续事件：`poppin_shuffle_special` SPECIAL Lv.27、Life `1000/1000/2000`、Miss/Bad `-100/-50`、total/rate/base bits `0x483C8A31/0x3F9C28F6/0x4434718E`，账号、房间与deck element内容均不进入证据；
-- deck aggregate R1锁定五元素数组、三分量`0x47617330/0x478A9AE2/0x477B7FCF`、首加`0x47FB547A`与total `0x483C8A31`；成员行继续因隐私边界失败关闭；
-- music-786自然UI R1锁定796行列表、五难度与SPECIAL score level 26 fallback，但限时关闭使HABAHIRO runtime initialization继续不可用；
-- ordinary Auto零tail R1含5501个连续事件、979个one-note leave、6个Skill lifecycle/5个匿名alias；strict maxima为`541@1→703@82→1136@219`，equal score保留早先对象；Life直接`1000→1200→1500`且player max为1000；
-- 第9条R1含5497个连续事件，锁定5个匿名numeric Skill profile、6次trigger/finish、7个ordered active rows、under-Life 600 heal400在Life1000抑制，以及heal300/heal200产生`1000→1300→1500`；不含账号/member/card/skill ID、pointer或display string；
-- 第10条R1含6826个连续事件：Practice mode 10在Life0/single-game-over1时仍持续1216次ExecUpdate；pause settled quiet为5016ms/4878ms；rewind长按调用`InGameMoveTimeController.returnTime(5)→NoteManager→CommandNoteManager`并把快照从Life0/GameOver1恢复到Life1000/GameOver0；
-- 第11条R1含13248个连续事件；pause时`skill-01`处于Playing，4878ms settled quiet与8048ms wall gap仅推进一个game frame/timer step，恢复后完成979个one-note与6个Skill finish；
-- `BS01–BS36` partial oracle已冻结：BS01/BS05/BS06/BS11共4个confirmed，24个case partial，8个case blocked，总计`unknown_fields=126`、`blocking_findings=82`；D19/D24仍未关闭；
-- production chart count独立oracle按10.1.4 `NoteManager.analyzeBMS`规则固定ordinary `979`与HABAHIRO `731`，已写入BS01/BS02，移除4个chart unknown并将BS02从blocked推进为partial；
-- `R1=11`且`business_state_gate=open`，不得实施B03–B12 production。
+- 静态基线：326方法、25布局、19枚举、326个独立ARM64 TSV。
+- Production输入：ordinary/HABAHIRO BMS及设备cache provenance；maxNoteCount固定`979/731`。
+- R1：12条confirmed observation-only轨迹，覆盖Life/Game Over、正判定Score、Skill四态/once effect/active rows、one-note maxima/overheal、pause/ReturnTime、Skill-Playing pause和Playing Retry manager reset。
+- 当前ARM64迁移：8个语义簇、48个当前方法；10.1.3文件仅作为哈希锁定的阅读指南，结论由10.1.4 target slice承载。
+- Portable contract：125个原unknown全部转为恢复语义、caller-required owner/session profile，或显式零mutation `evidence-required`。
+- Fixed event：BS01–BS36全部`confirmed-portable`，partial/blocked/unknown/blocker均为0。
+- Closure：V01与D01–D24全部closed，`business_state_gate=closed`、`production_authorization=true`。
 
-B02仍必须补齐D18/D20剩余范围、D19的126个unknown fields与82个blocking findings、D21剩余GameOver-Playing/Stop/fault/dispose/duplicate、D22的score-decrease/Continue/forward-seek/non-Practice ReturnTime、D23剩余HABAHIRO初始化、deck member/nonzero event、未观察guard/Never Die/percentage-heal/special-effect Skill、Fever/special-mode master provenance及D24；不得把六个顺序Skill外推为重叠Skill或Fever。
+## 关键边界
 
-验证：
+- Continue因premium-currency安全策略不采集、不实现近似，固定返回`evidence-required`且零mutation。
+- 缺失、非法、非有限、重叠或不完整profile在领域mutation前返回`evidence-required`。
+- 账号、room、deck/member/card/Skill身份、raw pointer和display string不进入portable输入、trace或生产类型。
+- 未观察的fault/dispose/duplicate native partial mutation不被猜测；portable surface采用完整preflight零mutation拒绝。
+- HABAHIRO限时runtime initialization不可自然到达；portable fixture由锁定BMS、MasterMusic score level 26、base公式和caller deck aggregate确定，不冒充实体R1。
+
+## 新增闭合证据
+
+- `runtime/ordinary-auto-skill-playing-retry-reset-r1.trace.json.gz`：1471连续事件；Retry前`skill-01`为Playing，确认后第二次`ExecAwakeStart`创建state0/empty/current-null/stock8 manager，完整区间无public `Stop`或`processOfSkillFinished`。
+- `score_life_state_migrated_static_oracle.json`：base/event/special/Skill/Fever八簇当前ARM64语义。
+- `score_life_state_portable_contract.json`：每个原unknown的实现、caller profile或拒绝处置。
+- `score_life_state_fixed_event_oracle.json`：36个闭合case及其portable closure投影。
+- `closure.json`：V01/D01–D24最终门状态。
+
+## 验证
 
 ```powershell
 node tmp/simulator-reverse-evidence/score-life-state/verify.mjs
 node tmp/simulator-reverse-evidence/score-life-state/verify.mjs --index
 ```
 
-`verify.mjs` 校验全部Reverse证据节点、source/copy/index三方字节、manifest、冻结SHA256SUMS、静态contract/findings/closure、BMS/cache record、production chart count `979/731`、十一条R1压缩raw trace、deck aggregate、music-786、ordinary Auto Skill/one-note/overheal/effect profile及Practice pause/ReturnTime、计划来源/动作、Retry-only安全边界与reset轨迹、BS01–BS36 partial oracle、观察型capture约束和业务门状态。
+`verify.mjs`校验464个冻结文件的Reverse提交对象/source working tree/copy/index四方字节、逐文件SHA-256、提交祖先关系、12条R1、8簇/48方法迁移、125项portable处置、BS01–BS36和V01/D01–D24闭合状态。
