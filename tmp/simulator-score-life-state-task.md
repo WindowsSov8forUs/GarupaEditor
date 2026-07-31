@@ -8,8 +8,8 @@
 - 锁定原作样本：`jp.co.craftegg.band` 10.1.4（version code 230，`arm64-v8a`）。
 - 锁定`libil2cpp.so` SHA-256：`815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F`。
 - 锁定`global-metadata.dat` SHA-256：`298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F`。
-- 当前Reverse证据提交：`a3c56662b979e1682340a7a47fa8553a8a95ee67`；只消费该提交及其祖先中已推送、可校验对象，不消费当前Reverse工作树。
-- 当前状态：**B00/B01已完成，B02进行中。V01与D01-static已关闭；9条R1部分推进D03/D06/D10/D12/D13/D14/D18/D20/D22/D23；production chart count固定ordinary 979/HABAHIRO 731，ordinary初始化、deck aggregate、music-786 score-level、ordinary Auto 979 one-note/六Skill/overheal及5个匿名numeric Skill effect profile已锁定。BS01–BS36 partial oracle现为4个confirmed、22个partial、10个blocked，保留131个unknown fields与82个blocking findings。D18–D24剩余范围仍是`required-before-code`硬门；B02关闭前禁止实施B03–B12任何生产代码。**
+- 当前Reverse证据提交：`4bbfaa9bacc6c6db5a5097bcf4e173a532e5cd0d`；只消费该提交及其祖先中已推送、可校验对象，不消费当前Reverse工作树。
+- 当前状态：**B00/B01已完成，B02进行中。V01与D01-static已关闭；10条R1部分推进D03/D06/D10/D12/D13/D14/D18/D20/D21/D22/D23；production chart count固定ordinary 979/HABAHIRO 731，ordinary初始化、deck aggregate、music-786 score-level、ordinary Auto 979 one-note/六Skill/overheal、5个匿名numeric Skill effect profile及Practice pause/ReturnTime已锁定。BS01–BS36 partial oracle现为4个confirmed、23个partial、9个blocked，保留127个unknown fields与82个blocking findings。D18–D24剩余范围仍是`required-before-code`硬门；B02关闭前禁止实施B03–B12任何生产代码。**
 - 当前10.1.4已提交依赖证据只直接覆盖`OneFrameData.Setup`、`InGameOneFrameJudgementController.ReflectOneFrameData`、`NoteBase.getAddCombo`以及若干判定生产者入口；它不足以宣称完整Score/Life/Skill/Fever链已在10.1.4确认。
 - 10.1.3的`base-score-construction`、`event-score-multipliers`、`skill-*`、`fever-*`及Life Heal实机调查仅作为历史迁移候选H01–H24，不能被B03–B12生产实现直接消费。
 - 当前证据包：`tmp/simulator-reverse-evidence/score-life-state/`；已冻结B01、R0输入与无输入R1子批，只消费已提交Reverse对象。
@@ -58,7 +58,7 @@
 | --- | --- | --- |
 | B00 建立阶段任务书 | **已完成** | 范围、证据候选、硬门、oracle、任务顺序和完成定义写入本文档 |
 | B01 10.1.4静态证据晋升 | **已完成静态重基线** | 326方法、25布局、19枚举及静态语义已提交Reverse并冻结；不单独关闭业务门 |
-| B02 实体与固定事件oracle | **进行中；硬门**：R0/BMS、production count 979/731、9条R1及BS01–BS36 partial oracle已冻结；D03/D14/D18/D19/D20/D22/D23仅部分推进 | D01–D24关闭，raw trace和BS01–BS36固定case提交并冻结，`business_state_gate=closed` |
+| B02 实体与固定事件oracle | **进行中；硬门**：R0/BMS、production count 979/731、10条R1及BS01–BS36 partial oracle已冻结；D03/D14/D18/D19/D20/D22/D23仅部分推进 | D01–D24关闭，raw trace和BS01–BS36固定case提交并冻结，`business_state_gate=closed` |
 | B03 锁定配置、领域数据与owner | 阻塞于B02 | 输入profile、InGameRecord、OneFrameData/TotalData与manager owner不可伪造 |
 | B04 恢复基础分与最大Note数 | 阻塞于B02 | deck/chart/level/base score、result correction及初始化顺序匹配 |
 | B05 恢复单次判定业务投影 | 阻塞于B02 | adjusted result、damage、score、rate、guard和slot冻结顺序匹配 |
@@ -707,5 +707,8 @@ git rev-list --left-right --count origin/codex/refactor-simulator-implementation
 - fixed-event重建后为4 confirmed/20 partial/12 blocked、135 unknown fields/85 blocking findings；BS14从blocked晋升partial，BS13/BS20/BS21/BS22收窄，业务门仍open。
 - Reverse匿名Skill effect profile计划/证据提交：`9e217703c028e2f09be7fa2b30d791b6f7a4a338` / `a3c56662b979e1682340a7a47fa8553a8a95ee67`。5497事件零tail R1含5个匿名numeric profile、6次trigger/finish、7个ordered active rows；heal400 under-Life 600在Life1000抑制，heal300/heal200产生`1000→1300→1500`。账号/member/card/skill ID、pointer和display string均未导出。
 - fixed-event重建后为4 confirmed/22 partial/10 blocked、131 unknown fields/82 blocking findings；BS19移除profile/D23未知，BS24移除ordered rows/D23，BS25与BS26从blocked晋升partial；业务门仍open。
-- 待关闭：D18/D20/D22剩余、D19的131个unknown fields与82个blocking findings、D21、D23剩余HABAHIRO runtime initialization、deck member/非零event、未观察guard/Never Die/percentage-heal/special-effect Skill、Fever/special-mode master provenance及D24。
+- Reverse deck-switch三计划 `247473b2f34e4717920e13d1289e8b18955ee749` / `a004e665d4fc4e59cfa37c59ebfd9bf1d1a04e28` / `bbbc22d5ad48166cfa17abe651a768c1c0d1c533` 均零资源失败关闭：前两次导航未到目标，第三次确认Band2–5为空且无`SituationSkillData.Initialize`，trace不晋升。
+- Reverse演练pause/ReturnTime计划/Retry-2/证据：`23b61c8b1c38e6e341e0b25504a035bb1afef586` / `645375cd3b52a5bca4ff8b1a715e5a663eff6872` / `4bbfaa9bacc6c6db5a5097bcf4e173a532e5cd0d`。首计划因ReturnTime缺失不晋升；Retry-2 6826事件锁定pause settled quiet `5016/4878ms`、Practice mode10在Life0/GameOver1继续1216次更新、ReturnTime(5)三层顺序及Life/GameOver快照`0/1→1000/0`。
+- fixed-event重建后为4 confirmed/23 partial/9 blocked、127 unknown fields/82 blocking findings；BS35由blocked晋升partial，BS36移除pause/seek/return_time三项未知；业务门仍open。
+- 待关闭：D18/D20剩余、D19的127个unknown fields与82个blocking findings、D21剩余Skill-Playing pause/fault/dispose/duplicate、D22剩余score decrease/Continue/forward seek/non-Practice、D23剩余HABAHIRO runtime initialization、deck member/非零event、未观察guard/Never Die/percentage-heal/special-effect Skill、Fever/special-mode master provenance及D24。
 - B02关闭前继续禁止B03–B12 production、测试脚本和package script实现。

@@ -13,7 +13,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parent
 LIB_SHA256 = "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F"
 METADATA_SHA256 = "298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F"
-SOURCE_COMMIT = "9e217703c028e2f09be7fa2b30d791b6f7a4a338"
+SOURCE_COMMIT = "645375cd3b52a5bca4ff8b1a715e5a663eff6872"
 SOURCES = {
     "static_contract": "score_life_state_static_contract.json",
     "static_findings": "score_life_state_static_findings.json",
@@ -29,6 +29,7 @@ SOURCES = {
     "master_music_786_profile": "score_life_master_music_786_profile_oracle.json",
     "ordinary_auto_skill_one_note": "score_life_ordinary_auto_skill_one_note_oracle.json",
     "ordinary_auto_skill_effect_profile": "score_life_ordinary_auto_skill_effect_profile_oracle.json",
+    "rehearsal_pause_return_time": "score_life_rehearsal_pause_return_time_oracle.json",
 }
 REQUIREMENTS = {
     "BS01": "ordinary production chart family maxNoteCount and base-score initialization",
@@ -156,6 +157,7 @@ def main() -> int:
     master_music_786_profile = load_json(SOURCES["master_music_786_profile"])
     ordinary_auto_skill_one_note = load_json(SOURCES["ordinary_auto_skill_one_note"])
     ordinary_auto_skill_effect_profile = load_json(SOURCES["ordinary_auto_skill_effect_profile"])
+    rehearsal_pause_return_time = load_json(SOURCES["rehearsal_pause_return_time"])
 
     require(static_contract["target"]["libil2cpp_sha256"] == LIB_SHA256, "static target differs")
     require(static_findings["sample"]["global_metadata_sha256"] == METADATA_SHA256, "metadata differs")
@@ -218,6 +220,15 @@ def main() -> int:
         and len(ordinary_auto_skill_effect_profile["skill_lifecycles"]) == 6
         and ordinary_auto_skill_effect_profile["privacy"]["skill_master_ids_included"] is False,
         "ordinary Auto Skill effect profile oracle differs",
+    )
+    require(
+        rehearsal_pause_return_time["status"] == "confirmed-r1-observation-only-partial-return-time-practice"
+        and rehearsal_pause_return_time["continuity"] == {"capture_error": None, "event_count": 6826, "first_sequence": 0, "last_sequence": 6825, "contiguous": True}
+        and rehearsal_pause_return_time["pause_resume"]["exec_update_count"] == 1223
+        and rehearsal_pause_return_time["practice_game_over"]["in_game_mode"] == 10
+        and rehearsal_pause_return_time["return_time"]["back_second"] == 5
+        and rehearsal_pause_return_time["privacy"]["member_identity_included"] is False,
+        "rehearsal pause/ReturnTime oracle differs",
     )
 
     result_rates = finding["SLS-S03"]["conclusion"]
@@ -336,8 +347,8 @@ def main() -> int:
     cases.append(case("BS32", "partial", ["SLS-S11"], ["static_findings"], ["static:SLS-S11"], {"state_test": finding["SLS-S11"]["conclusion"]["state_test"], "normal_rate_bits_le": finding["SLS-S11"]["conclusion"]["normal_bits_le"], "level_1_rate_bits_le": finding["SLS-S11"]["conclusion"]["level_1_bits_le"]}, ["runtime.fever_start_freeze", "runtime.fever_end_freeze", "runtime.same_frame_entries", "runtime.reservation_frame"], ["D16", "D18-remaining", "D20-remaining"]))
     cases.append(case("BS33", "blocked", ["D05-static"], ["static_contract"], ["static_contract#Auto score methods"], {}, ["profile.auto_coefficient", "runtime.result_correction_bypass", "runtime.combo_route", "runtime.score_bits"], ["D05", "D17", "D23-master-start-data"]))
     cases.append(case("BS34", "blocked", ["D17-static"], ["static_contract"], ["static_contract#Festival/Medley/Garupa methods"], {}, ["profile.festival_stage_effect", "profile.festival_bonus_exclusion", "profile.medley_ranges", "profile.garupa_ranges", "runtime.no_match_behavior"], ["D17", "D23-master-start-data"]))
-    cases.append(case("BS35", "blocked", ["D22-static"], ["static_contract"], ["static_contract#Game Over mode methods"], {}, ["profile.practice_mode", "profile.collaboration_mode", "profile.multiplayer_mode", "runtime.game_over_0_1_routes", "runtime.score_decrease"], ["D17", "D22-remaining", "D23-master-start-data"]))
-    cases.append(case("BS36", "partial", ["SLS-R1-007"], ["retry_r1"], ["retry_r1#GameOver.leave:6366", "retry_r1#InitializeLife.leave:6373", "retry_r1#InitBaseScore.enter:6374"], {"post_game_over_hook_quiet_ms": retry_markers[5]["timestamp_ms"] - retry_game_over["timestamp_ms"], "record_identity_stable": retry_game_over["after"]["pointer"] == retry_init["record"]["pointer"], "retry_reset": {"single_game_over": [retry_game_over["after"]["is_single_game_over"], retry_init["record"]["is_single_game_over"]], "score": [retry_game_over["after"]["score"], retry_init["record"]["score"]], "life": [retry_game_over["after"]["current_life"], retry_init["record"]["current_life"]], "max_combo": [retry_game_over["after"]["max_combo"], retry_init["record"]["max_combo"]], "max_note_count": retry_init["record"]["max_note_count"]}}, ["failure.invalid_profile_atomicity", "lifecycle.pause_resume", "lifecycle.fault_dispose", "lifecycle.duplicate_consume", "lifecycle.seek", "lifecycle.return_time", "lifecycle.continue"], ["D21", "D22-remaining", "D24"]))
+    cases.append(case("BS35", "partial", ["D22-static", "SLS-R1-013"], ["static_contract", "rehearsal_pause_return_time"], ["static_contract#Game Over mode methods", "rehearsal_pause_return_time#practice_game_over"], {"observed_practice_mode": rehearsal_pause_return_time["practice_game_over"]}, ["profile.collaboration_mode", "profile.multiplayer_mode", "runtime.game_over_0_1_routes", "runtime.score_decrease"], ["D17", "D22-remaining", "D23-master-start-data"]))
+    cases.append(case("BS36", "partial", ["SLS-R1-007", "SLS-R1-013"], ["retry_r1", "rehearsal_pause_return_time"], ["retry_r1#GameOver.leave:6366", "retry_r1#InitializeLife.leave:6373", "retry_r1#InitBaseScore.enter:6374", "rehearsal_pause_return_time#pause_resume/return_time"], {"post_game_over_hook_quiet_ms": retry_markers[5]["timestamp_ms"] - retry_game_over["timestamp_ms"], "record_identity_stable": retry_game_over["after"]["pointer"] == retry_init["record"]["pointer"], "retry_reset": {"single_game_over": [retry_game_over["after"]["is_single_game_over"], retry_init["record"]["is_single_game_over"]], "score": [retry_game_over["after"]["score"], retry_init["record"]["score"]], "life": [retry_game_over["after"]["current_life"], retry_init["record"]["current_life"]], "max_combo": [retry_game_over["after"]["max_combo"], retry_init["record"]["max_combo"]], "max_note_count": retry_init["record"]["max_note_count"]}, "observed_pause_resume": rehearsal_pause_return_time["pause_resume"], "observed_return_time": rehearsal_pause_return_time["return_time"]}, ["failure.invalid_profile_atomicity", "lifecycle.fault_dispose", "lifecycle.duplicate_consume", "lifecycle.continue"], ["D21", "D22-remaining", "D24"]))
 
     require([entry["case_id"] for entry in cases] == [f"BS{index:02d}" for index in range(1, 37)], "BS case order differs")
     confirmed = [entry["case_id"] for entry in cases if entry["status"].startswith("confirmed")]

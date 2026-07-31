@@ -43,7 +43,7 @@ function filesRecursively(root, current = root) {
   return files;
 }
 
-check(manifest.schemaVersion === 2 && manifest.entries.length === 424, "Unexpected evidence manifest shape");
+check(manifest.schemaVersion === 2 && manifest.entries.length === 440, "Unexpected evidence manifest shape");
 check(
   manifest.source.staticEvidenceCommit === "6c902656c72f3983fb04386038dcfe38f0d53797" &&
     manifest.source.runtimeInputCommit === "1ee976ea1de24cb0567762a74e2d091ae4c78464" &&
@@ -56,7 +56,7 @@ check(
     manifest.source.skillEvidenceCommit === "4ac4ea186efade9091c6f4377ab7ad7dc852a2c5" &&
     manifest.source.retryLifecyclePlanCommit === "38cee0b409246323b46099e291331a78a267bcec" &&
     manifest.source.retryLifecycleEvidenceCommit === "4f0ce1a02a83747db617695cde69ad47ac8ae78f" &&
-    manifest.source.fixedEventOracleCommit === "a3c56662b979e1682340a7a47fa8553a8a95ee67" &&
+    manifest.source.fixedEventOracleCommit === "4bbfaa9bacc6c6db5a5097bcf4e173a532e5cd0d" &&
     manifest.source.chartCountOracleCommit === "c7dbaba81699adec896796167074cb85cdc94e2e" &&
     manifest.source.initializationProfilePlanCommit === "a032f8fe82d045b6d3b5c8853cb923803e0c5435" &&
     manifest.source.initializationProfileEvidenceCommit === "3c95190f4b6326da97e21c8e590f625a7582dc22" &&
@@ -70,7 +70,13 @@ check(
     manifest.source.ordinaryAutoRetry4Commit === "6ee113568b2b06abce524beff4a57d83290c9f8d" &&
     manifest.source.ordinaryAutoEvidenceCommit === "77fea929e1f99c1051b5211aa28836fd57c45117" &&
     manifest.source.ordinaryAutoSkillEffectPlanCommit === "9e217703c028e2f09be7fa2b30d791b6f7a4a338" &&
-    manifest.source.ordinaryAutoSkillEffectEvidenceCommit === "a3c56662b979e1682340a7a47fa8553a8a95ee67",
+    manifest.source.ordinaryAutoSkillEffectEvidenceCommit === "a3c56662b979e1682340a7a47fa8553a8a95ee67" &&
+    manifest.source.deckSwitchPlanCommit === "247473b2f34e4717920e13d1289e8b18955ee749" &&
+    manifest.source.deckSwitchRetry2Commit === "a004e665d4fc4e59cfa37c59ebfd9bf1d1a04e28" &&
+    manifest.source.deckSwitchRetry3Commit === "bbbc22d5ad48166cfa17abe651a768c1c0d1c533" &&
+    manifest.source.rehearsalPlanCommit === "23b61c8b1c38e6e341e0b25504a035bb1afef586" &&
+    manifest.source.rehearsalRetry2Commit === "645375cd3b52a5bca4ff8b1a715e5a663eff6872" &&
+    manifest.source.rehearsalEvidenceCommit === "4bbfaa9bacc6c6db5a5097bcf4e173a532e5cd0d",
   "Unexpected Reverse evidence commits",
 );
 check(
@@ -90,7 +96,7 @@ check(
     manifest.counts.enums === 19 &&
     manifest.counts.arm64Slices === 326 &&
     manifest.counts.staticEntries === 335 &&
-    manifest.counts.totalEntries === 424 &&
+    manifest.counts.totalEntries === 440 &&
     manifest.counts.r0InputEntries === 12 &&
     manifest.counts.r1EvidenceEntries === 6 &&
     manifest.counts.capturePlanEntries === 4 &&
@@ -104,9 +110,9 @@ check(
     manifest.counts.initializationProfilePlanEntries === 3 &&
     manifest.counts.initializationProfileEvidenceEntries === 4 &&
     manifest.counts.fixedEventConfirmedCases === 4 &&
-    manifest.counts.fixedEventPartialCases === 22 &&
-    manifest.counts.fixedEventBlockedCases === 10 &&
-    manifest.counts.fixedEventUnknownFields === 131 &&
+    manifest.counts.fixedEventPartialCases === 23 &&
+    manifest.counts.fixedEventBlockedCases === 9 &&
+    manifest.counts.fixedEventUnknownFields === 127 &&
     manifest.counts.fixedEventBlockingFindings === 82 &&
     manifest.counts.deckAggregatePlanEntries === 3 &&
     manifest.counts.deckAggregateEvidenceEntries === 4 &&
@@ -114,13 +120,16 @@ check(
     manifest.counts.masterMusicEvidenceEntries === 4 &&
     manifest.counts.ordinaryAutoPlanEntries === 12 &&
     manifest.counts.ordinaryAutoEvidenceEntries === 8 &&
+    manifest.counts.deckSwitchPlanEntries === 6 &&
+    manifest.counts.rehearsalPlanEntries === 6 &&
+    manifest.counts.rehearsalEvidenceEntries === 4 &&
     manifest.counts.chartCountOracleEntries === 7 &&
     manifest.counts.ordinaryMaxNoteCount === 979 &&
     manifest.counts.habahiroMaxNoteCount === 731 &&
     manifest.counts.productionBms === 2 &&
     manifest.counts.cacheRecords === 2 &&
     manifest.counts.captureTargets === 50 &&
-    manifest.counts.r1Traces === 9 &&
+    manifest.counts.r1Traces === 10 &&
     manifest.counts.fixedEventCases === 36,
   "Evidence counts changed",
 );
@@ -145,22 +154,22 @@ const runtimeInputGate = manifest.runtimeInputGate;
 check(
   runtimeInputGate.status === "partial-required-before-code" &&
     runtimeInputGate.closedSubscope.join(",") ===
-      "ordinary-production-bms,habahiro-production-bms,connected-device-cache-provenance,observation-only-capture-targets,no-input-life-game-over-r1,positive-perfect-score-r1,active-skill-lifecycle-r1,skill-same-frame-freeze-r1,once-heal-r1,post-game-over-manager-gate-r1,retry-reset-r1,production-chart-count-oracle,ordinary-initialization-profile-r1,ordinary-deck-aggregate-r1,master-music-786-profile-r1,ordinary-auto-one-note-max-r1,ordinary-auto-six-skill-lifecycles-r1,ordinary-overheal-r1,ordinary-auto-anonymous-skill-effect-profile-r1" &&
+      "ordinary-production-bms,habahiro-production-bms,connected-device-cache-provenance,observation-only-capture-targets,no-input-life-game-over-r1,positive-perfect-score-r1,active-skill-lifecycle-r1,skill-same-frame-freeze-r1,once-heal-r1,post-game-over-manager-gate-r1,retry-reset-r1,production-chart-count-oracle,ordinary-initialization-profile-r1,ordinary-deck-aggregate-r1,master-music-786-profile-r1,ordinary-auto-one-note-max-r1,ordinary-auto-six-skill-lifecycles-r1,ordinary-overheal-r1,ordinary-auto-anonymous-skill-effect-profile-r1,practice-pause-return-time-r1" &&
     runtimeInputGate.partialFindings.join(",") === "D18,D19,D20,D22,D23" &&
     runtimeInputGate.blockingFindings.join(",") ===
       "D18-remaining,D19-remaining,D20-remaining,D21,D22-remaining,D23-master-start-data,D24" &&
-    runtimeInputGate.r1TraceCount === 9 &&
+    runtimeInputGate.r1TraceCount === 10 &&
     runtimeInputGate.pendingPlans.length === 0 &&
     runtimeInputGate.abortedPlans.join(",") === "multitouch-seven-lane-positive-skill-window" &&
     runtimeInputGate.executedPlans.join(",") ===
-      "positive-retry-all-lanes-early-score-skill-v2,multitouch-seven-lane-native-positive-skill-window-v2,multitouch-seven-lane-post-gameover-retry-lifecycle-v3,production-initialization-profile-retry-r1,production-deck-aggregate-profile-retry-r1,master-music-786-natural-ui-list-r1,ordinary-auto-skill-one-note-r1,ordinary-auto-skill-one-note-retry2-r1,ordinary-auto-skill-one-note-retry3-r1,ordinary-auto-skill-one-note-retry4-r1,ordinary-auto-skill-effect-profile-r1" &&
+      "positive-retry-all-lanes-early-score-skill-v2,multitouch-seven-lane-native-positive-skill-window-v2,multitouch-seven-lane-post-gameover-retry-lifecycle-v3,production-initialization-profile-retry-r1,production-deck-aggregate-profile-retry-r1,master-music-786-natural-ui-list-r1,ordinary-auto-skill-one-note-r1,ordinary-auto-skill-one-note-retry2-r1,ordinary-auto-skill-one-note-retry3-r1,ordinary-auto-skill-one-note-retry4-r1,ordinary-auto-skill-effect-profile-r1,band-deck-switch-anonymous-skill-profile-r1,band-deck-switch-anonymous-skill-profile-retry2-r1,band-deck-switch-anonymous-skill-profile-retry3-r1,ordinary-rehearsal-pause-return-time-r1,ordinary-rehearsal-pause-return-time-retry2-r1" &&
     runtimeInputGate.supersededPlans.join(",") === "positive-retry-all-lanes-score-skill" &&
     runtimeInputGate.fixedEventOracle.status === "partial-business-gate-open" &&
     runtimeInputGate.fixedEventOracle.totalCases === 36 &&
     runtimeInputGate.fixedEventOracle.confirmedCases.join(",") === "BS01,BS05,BS06,BS11" &&
-    runtimeInputGate.fixedEventOracle.partialCases === 22 &&
-    runtimeInputGate.fixedEventOracle.blockedCases === 10 &&
-    runtimeInputGate.fixedEventOracle.unknownFields === 131 &&
+    runtimeInputGate.fixedEventOracle.partialCases === 23 &&
+    runtimeInputGate.fixedEventOracle.blockedCases === 9 &&
+    runtimeInputGate.fixedEventOracle.unknownFields === 127 &&
     runtimeInputGate.fixedEventOracle.blockingFindings === 82 &&
     runtimeInputGate.productionAuthorization === false,
   "Runtime input gate was incorrectly closed",
@@ -192,6 +201,12 @@ git(["cat-file", "-e", `${manifest.source.ordinaryAutoRetry4Commit}^{commit}`], 
 git(["cat-file", "-e", `${manifest.source.ordinaryAutoEvidenceCommit}^{commit}`], sourceRoot);
 git(["cat-file", "-e", `${manifest.source.ordinaryAutoSkillEffectPlanCommit}^{commit}`], sourceRoot);
 git(["cat-file", "-e", `${manifest.source.ordinaryAutoSkillEffectEvidenceCommit}^{commit}`], sourceRoot);
+git(["cat-file", "-e", `${manifest.source.deckSwitchPlanCommit}^{commit}`], sourceRoot);
+git(["cat-file", "-e", `${manifest.source.deckSwitchRetry2Commit}^{commit}`], sourceRoot);
+git(["cat-file", "-e", `${manifest.source.deckSwitchRetry3Commit}^{commit}`], sourceRoot);
+git(["cat-file", "-e", `${manifest.source.rehearsalPlanCommit}^{commit}`], sourceRoot);
+git(["cat-file", "-e", `${manifest.source.rehearsalRetry2Commit}^{commit}`], sourceRoot);
+git(["cat-file", "-e", `${manifest.source.rehearsalEvidenceCommit}^{commit}`], sourceRoot);
 const evidenceCommits = [
   manifest.source.staticEvidenceCommit,
   manifest.source.runtimeInputCommit,
@@ -219,6 +234,12 @@ const evidenceCommits = [
   manifest.source.ordinaryAutoEvidenceCommit,
   manifest.source.ordinaryAutoSkillEffectPlanCommit,
   manifest.source.ordinaryAutoSkillEffectEvidenceCommit,
+  manifest.source.deckSwitchPlanCommit,
+  manifest.source.deckSwitchRetry2Commit,
+  manifest.source.deckSwitchRetry3Commit,
+  manifest.source.rehearsalPlanCommit,
+  manifest.source.rehearsalRetry2Commit,
+  manifest.source.rehearsalEvidenceCommit,
 ];
 const ids = new Set();
 const copiedPaths = new Set();
@@ -377,8 +398,8 @@ check(
 const runtimeStatus = json("runtime_input_status.json");
 check(
   runtimeStatus.status === "runtime-inputs-and-r1-partial-locked-business-gate-open" &&
-    runtimeStatus.runtime.r1_trace_count === 9 &&
-    runtimeStatus.runtime.pending_capture_plans.length === 13 &&
+    runtimeStatus.runtime.r1_trace_count === 10 &&
+    runtimeStatus.runtime.pending_capture_plans.length === 18 &&
     runtimeStatus.runtime.pending_capture_plans[0].scenario_id ===
       "positive-retry-all-lanes-score-skill" &&
     runtimeStatus.runtime.pending_capture_plans[0].status ===
@@ -415,10 +436,17 @@ check(
     runtimeStatus.runtime.pending_capture_plans[11].status === "executed-confirmed-trace-promoted" &&
     runtimeStatus.runtime.pending_capture_plans[12].scenario_id === "ordinary-auto-skill-effect-profile-r1" &&
     runtimeStatus.runtime.pending_capture_plans[12].status === "executed-confirmed-trace-promoted" &&
+    runtimeStatus.runtime.pending_capture_plans[15].scenario_id === "band-deck-switch-anonymous-skill-profile-retry3-r1" &&
+    runtimeStatus.runtime.pending_capture_plans[15].status === "executed-no-initialize-events-no-trace-promoted" &&
+    runtimeStatus.runtime.pending_capture_plans[16].scenario_id === "ordinary-rehearsal-pause-return-time-r1" &&
+    runtimeStatus.runtime.pending_capture_plans[16].status === "executed-pause-observed-return-time-missing-no-trace-promoted" &&
+    runtimeStatus.runtime.pending_capture_plans[17].scenario_id === "ordinary-rehearsal-pause-return-time-retry2-r1" &&
+    runtimeStatus.runtime.pending_capture_plans[17].status === "executed-confirmed-trace-promoted" &&
     runtimeStatus.runtime.capture_fields_not_consumed.length === 5 &&
     runtimeStatus.gates.D18 === "partial-required-before-code" &&
     runtimeStatus.gates.D19 === "partial-required-before-code" &&
     runtimeStatus.gates.D20 === "partial-required-before-code" &&
+    runtimeStatus.gates.D21 === "partial-required-before-code" &&
     runtimeStatus.gates.D22 === "partial-required-before-code" &&
     runtimeStatus.gates.D23 === "partial-required-before-code" &&
     runtimeStatus.closed.r1_no_input_life_game_over.events === 1863 &&
@@ -486,15 +514,23 @@ check(
     runtimeStatus.closed.r1_ordinary_auto_skill_effect_profile.active_effect_rows === 7 &&
     runtimeStatus.closed.r1_ordinary_auto_skill_effect_profile.once_heal_rows.join(",") === "400,300,200" &&
     runtimeStatus.closed.r1_ordinary_auto_skill_effect_profile.skill_master_ids_included === false &&
-    runtimeStatus.runtime.r1_trace_count === 9 &&
+    runtimeStatus.closed.r1_rehearsal_pause_return_time.events === 6826 &&
+    runtimeStatus.closed.r1_rehearsal_pause_return_time.exec_updates === 1223 &&
+    runtimeStatus.closed.r1_rehearsal_pause_return_time.initial_paused_quiet_ms === 5016 &&
+    runtimeStatus.closed.r1_rehearsal_pause_return_time.second_paused_settled_quiet_ms === 4878 &&
+    runtimeStatus.closed.r1_rehearsal_pause_return_time.practice_mode === 10 &&
+    runtimeStatus.closed.r1_rehearsal_pause_return_time.life_zero_game_over_one_continued_updates === 1216 &&
+    runtimeStatus.closed.r1_rehearsal_pause_return_time.return_time_back_second === 5 &&
+    runtimeStatus.closed.r1_rehearsal_pause_return_time.member_identity_included === false &&
+    runtimeStatus.runtime.r1_trace_count === 10 &&
     runtimeStatus.runtime.fixed_event_oracle.cases === 36 &&
     runtimeStatus.runtime.fixed_event_oracle.confirmed_cases.join(",") === "BS01,BS05,BS06,BS11" &&
-    runtimeStatus.runtime.fixed_event_oracle.partial_cases.length === 22 &&
+    runtimeStatus.runtime.fixed_event_oracle.partial_cases.length === 23 &&
     runtimeStatus.runtime.fixed_event_oracle.partial_cases.includes("BS02") &&
-    runtimeStatus.runtime.fixed_event_oracle.blocked_cases.length === 10 &&
+    runtimeStatus.runtime.fixed_event_oracle.blocked_cases.length === 9 &&
     !runtimeStatus.runtime.fixed_event_oracle.blocked_cases.includes("BS02") &&
     !runtimeStatus.runtime.fixed_event_oracle.blocked_cases.includes("BS14") &&
-    runtimeStatus.runtime.fixed_event_oracle.unknown_fields === 131 &&
+    runtimeStatus.runtime.fixed_event_oracle.unknown_fields === 127 &&
     runtimeStatus.runtime.fixed_event_oracle.blocking_findings === 82 &&
     runtimeStatus.runtime.fixed_event_oracle.status === "partial-business-gate-open" &&
     runtimeStatus.business_state_gate === "open" &&
@@ -1255,6 +1291,42 @@ check(
   "Frozen anonymous Skill effect profile R1 or privacy boundary changed",
 );
 
+const rehearsalPlan = json("runtime/rehearsal-pause-return-time-retry2-r1-plan.json");
+const rehearsalOracle = json("score_life_rehearsal_pause_return_time_oracle.json");
+const rehearsalTrace = JSON.parse(
+  gunzipSync(readFileSync(resolve(investigation, "runtime/rehearsal-pause-return-time-retry2-r1.trace.json.gz"))),
+);
+const rehearsalReturnKinds = rehearsalTrace.events.filter((event) => /returntime/i.test(event.kind)).map((event) => event.kind);
+check(
+  rehearsalPlan.scenario_id === "ordinary-rehearsal-pause-return-time-retry2-r1" &&
+    rehearsalPlan.sample.mode === "rehearsal" &&
+    rehearsalPlan.declared_account_resource_effects.auto_live_uses === 0 &&
+    rehearsalPlan.declared_account_resource_effects.live_boost === 0 &&
+    rehearsalPlan.declared_account_resource_effects.premium_currency === 0 &&
+    rehearsalPlan.declared_account_resource_effects.continue === false &&
+    rehearsalTrace.status === "confirmed-r1-observation-only" &&
+    rehearsalTrace.capture_error === null &&
+    rehearsalTrace.events.length === 6826 &&
+    rehearsalTrace.events.every((event, index) => event.sequence === index) &&
+    rehearsalTrace.privacy.member_identity_included === false &&
+    rehearsalReturnKinds.join(",") === "InGameMoveTimeController.returnTime.enter,NoteManager.ReturnTime.enter,NoteManager.ReturnTime.leave,CommandNoteManager.ReturnTime.enter,CommandNoteManager.ReturnTime.leave,InGameMoveTimeController.returnTime.leave" &&
+    rehearsalOracle.continuity.event_count === 6826 &&
+    rehearsalOracle.pause_resume.exec_update_count === 1223 &&
+    rehearsalOracle.pause_resume.initial_paused_window.exec_update_count === 0 &&
+    rehearsalOracle.pause_resume.initial_paused_window.settled_quiet_ms === 5016 &&
+    rehearsalOracle.pause_resume.second_pause_window.settled_quiet_ms === 4878 &&
+    rehearsalOracle.practice_game_over.in_game_mode === 10 &&
+    rehearsalOracle.practice_game_over.game_over_leave_states.join(",") === "0/0/1" &&
+    rehearsalOracle.practice_game_over.continued_exec_update_with_life_zero_single_game_over === 1216 &&
+    rehearsalOracle.return_time.back_second === 5 &&
+    rehearsalOracle.return_time.pre_update.record.life === 0 &&
+    rehearsalOracle.return_time.pre_update.record.is_single_game_over === 1 &&
+    rehearsalOracle.return_time.post_update.record.life === 1000 &&
+    rehearsalOracle.return_time.post_update.record.is_single_game_over === 0 &&
+    rehearsalOracle.privacy.member_identity_included === false,
+  "Frozen rehearsal pause/Practice/ReturnTime R1 or privacy boundary changed",
+);
+
 const fixedEventOracle = json("score_life_state_fixed_event_oracle.json");
 const fixedEventCases = fixedEventOracle.cases;
 const fixedEventById = new Map(fixedEventCases.map((entry) => [entry.case_id, entry]));
@@ -1270,10 +1342,10 @@ const blockedFixedCases = fixedEventCases
 const expectedPartialFixedCases = [
   "BS02", "BS03", "BS07", "BS10", "BS12", "BS13", "BS14", "BS15", "BS16", "BS18",
   "BS19", "BS20", "BS21", "BS22", "BS24", "BS25", "BS26", "BS27", "BS29", "BS30", "BS32",
-  "BS36",
+  "BS35", "BS36",
 ];
 const expectedBlockedFixedCases = [
-  "BS04", "BS08", "BS09", "BS17", "BS23", "BS28", "BS31", "BS33", "BS34", "BS35",
+  "BS04", "BS08", "BS09", "BS17", "BS23", "BS28", "BS31", "BS33", "BS34",
 ];
 const fixedEventEvidencePaths = new Map([
   ["static_contract", "score_life_state_static_contract.json"],
@@ -1290,11 +1362,12 @@ const fixedEventEvidencePaths = new Map([
   ["master_music_786_profile", "score_life_master_music_786_profile_oracle.json"],
   ["ordinary_auto_skill_one_note", "score_life_ordinary_auto_skill_one_note_oracle.json"],
   ["ordinary_auto_skill_effect_profile", "score_life_ordinary_auto_skill_effect_profile_oracle.json"],
+  ["rehearsal_pause_return_time", "score_life_rehearsal_pause_return_time_oracle.json"],
 ]);
 check(
   fixedEventOracle.schema_version === 1 &&
     fixedEventOracle.status === "partial-10.1.4-fixed-event-oracle-business-gate-open" &&
-    fixedEventOracle.source_commit === "9e217703c028e2f09be7fa2b30d791b6f7a4a338" &&
+    fixedEventOracle.source_commit === "645375cd3b52a5bca4ff8b1a715e5a663eff6872" &&
     fixedEventOracle.generator === "build_score_life_state_fixed_event_oracle.py" &&
     fixedEventOracle.sample.package === "jp.co.craftegg.band" &&
     fixedEventOracle.sample.version_name === "10.1.4" &&
@@ -1310,7 +1383,7 @@ check(
     confirmedFixedCases.join(",") === "BS01,BS05,BS06,BS11" &&
     partialFixedCases.join(",") === expectedPartialFixedCases.join(",") &&
     blockedFixedCases.join(",") === expectedBlockedFixedCases.join(",") &&
-    fixedEventOracle.coverage.unknown_field_count === 131 &&
+    fixedEventOracle.coverage.unknown_field_count === 127 &&
     fixedEventOracle.coverage.blocking_finding_count === 82 &&
     fixedEventCases.every((entry) =>
       entry.requirement &&
@@ -1334,7 +1407,7 @@ check(
       return source.path === path &&
         source.bytes === bytes.length &&
         source.sha256 === sha256(bytes) &&
-        source.source_commit === "9e217703c028e2f09be7fa2b30d791b6f7a4a338";
+        source.source_commit === "645375cd3b52a5bca4ff8b1a715e5a663eff6872";
     }),
   "Frozen BS01-BS36 partial oracle identity, provenance, or fail-closed coverage changed",
 );
@@ -1391,7 +1464,13 @@ check(
     fixedEventById.get("BS36").expected_projection.post_game_over_hook_quiet_ms === 11875 &&
     fixedEventById.get("BS36").expected_projection.record_identity_stable === true &&
     fixedEventById.get("BS36").expected_projection.retry_reset.score.join(",") === "44403,0" &&
-    fixedEventById.get("BS36").expected_projection.retry_reset.life.join(",") === "0,1000",
+    fixedEventById.get("BS35").status === "partial" &&
+    fixedEventById.get("BS35").expected_projection.observed_practice_mode.in_game_mode === 10 &&
+    fixedEventById.get("BS35").expected_projection.observed_practice_mode.continued_exec_update_with_life_zero_single_game_over === 1216 &&
+    fixedEventById.get("BS36").expected_projection.retry_reset.life.join(",") === "0,1000" &&
+    fixedEventById.get("BS36").expected_projection.observed_pause_resume.exec_update_count === 1223 &&
+    fixedEventById.get("BS36").expected_projection.observed_return_time.back_second === 5 &&
+    fixedEventById.get("BS36").unknown_fields.join(",") === "failure.invalid_profile_atomicity,lifecycle.fault_dispose,lifecycle.duplicate_consume,lifecycle.continue",
   "Frozen BS01/BS02/BS05/BS06/BS07/BS11/BS13/BS14/BS19-BS22/BS36 direct projections changed",
 );
 
@@ -1436,7 +1515,7 @@ for (const [path, fragment] of criticalText) {
 }
 
 console.log(
-  `score-life-state evidence verified: methods=326 layouts=25 enums=19 BMS=2 counts=979/731 R1=9(partial D18/D19/D20/D22/D23) BS=36(4/22/10,unknown=131,blockers=82) plans=13(pending=0) ` +
+  `score-life-state evidence verified: methods=326 layouts=25 enums=19 BMS=2 counts=979/731 R1=10(partial D18/D19/D20/D21/D22/D23) BS=36(4/23/9,unknown=127,blockers=82) plans=18(pending=0) ` +
     `V01=closed business=blocked(D18-D24) entries=${manifest.entries.length} ` +
     `index=${validateIndex ? "checked" : "skipped"}`,
 );

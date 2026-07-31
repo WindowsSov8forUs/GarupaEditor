@@ -9,92 +9,98 @@
     "libil2cpp_sha256": "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F",
     "global_metadata_sha256": "298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F"
   },
-  "source_commit": "9e217703c028e2f09be7fa2b30d791b6f7a4a338",
+  "source_commit": "645375cd3b52a5bca4ff8b1a715e5a663eff6872",
   "generator": "build_score_life_state_fixed_event_oracle.py",
   "evidence_catalog": {
     "static_contract": {
       "path": "score_life_state_static_contract.json",
       "bytes": 1107943,
       "sha256": "932AE569D6B2AD8620D1D8CECD44EB812B6AFDB16E18590140D7DA56998566C2",
-      "source_commit": "9e217703c028e2f09be7fa2b30d791b6f7a4a338"
+      "source_commit": "645375cd3b52a5bca4ff8b1a715e5a663eff6872"
     },
     "static_findings": {
       "path": "score_life_state_static_findings.json",
       "bytes": 15061,
       "sha256": "B626E6318BD8462BC94C8C9FEEB27AF00FC89751F210CB8D6F3C34EA1F17FAC2",
-      "source_commit": "9e217703c028e2f09be7fa2b30d791b6f7a4a338"
+      "source_commit": "645375cd3b52a5bca4ff8b1a715e5a663eff6872"
     },
     "ordinary_bms": {
       "path": "runtime-inputs/bms/poppin_shuffle_special.bms.txt",
       "bytes": 17882,
       "sha256": "418DB7F5BFC6B5431AC0ABF2FB905120BDFA8C778C35AA42418A6FA43F4094DC",
-      "source_commit": "9e217703c028e2f09be7fa2b30d791b6f7a4a338"
+      "source_commit": "645375cd3b52a5bca4ff8b1a715e5a663eff6872"
     },
     "habahiro_bms": {
       "path": "runtime-inputs/bms/786_miracle_april_habahiro_special.bms.txt",
       "bytes": 38700,
       "sha256": "43148090C40ABBD951E8D7112200BDAE9B796A8A531A0793169E0AD70C3DC159",
-      "source_commit": "9e217703c028e2f09be7fa2b30d791b6f7a4a338"
+      "source_commit": "645375cd3b52a5bca4ff8b1a715e5a663eff6872"
     },
     "no_input_r1": {
       "path": "runtime/no-input-retry-life-gameover.trace.json.gz",
       "bytes": 140797,
       "sha256": "4F1BBCCF8E9D9258235ED3FD52F3B74242F515362C5C4EE7F51B8126290E8A55",
-      "source_commit": "9e217703c028e2f09be7fa2b30d791b6f7a4a338"
+      "source_commit": "645375cd3b52a5bca4ff8b1a715e5a663eff6872"
     },
     "positive_r1": {
       "path": "runtime/positive-retry-all-lanes-early.trace.json.gz",
       "bytes": 153597,
       "sha256": "F91140EB5A1B1A8858495B6CFFB9112C4CB295F20D4CDEEED184A1F5CCDB44A9",
-      "source_commit": "9e217703c028e2f09be7fa2b30d791b6f7a4a338"
+      "source_commit": "645375cd3b52a5bca4ff8b1a715e5a663eff6872"
     },
     "skill_r1": {
       "path": "runtime/multitouch-seven-lane-native-skill.trace.json.gz",
       "bytes": 746972,
       "sha256": "0DB8FF447030750008B001A285480FE280A770EEB9723369C1935107B1DA5FDD",
-      "source_commit": "9e217703c028e2f09be7fa2b30d791b6f7a4a338"
+      "source_commit": "645375cd3b52a5bca4ff8b1a715e5a663eff6872"
     },
     "retry_r1": {
       "path": "runtime/multitouch-seven-lane-post-gameover-retry.trace.json.gz",
       "bytes": 696375,
       "sha256": "D4BFF770EC545C037A0592F4BF3E4B796565EA12668C5AF6BC81E9C60A6F10AE",
-      "source_commit": "9e217703c028e2f09be7fa2b30d791b6f7a4a338"
+      "source_commit": "645375cd3b52a5bca4ff8b1a715e5a663eff6872"
     },
     "chart_count": {
       "path": "score_life_state_chart_count_oracle.json",
       "bytes": 4144,
       "sha256": "66CBA99B638A0EB078C8C9D2B2B8FB06663EE8E2B74DBC68249986EEA152E12C",
-      "source_commit": "9e217703c028e2f09be7fa2b30d791b6f7a4a338"
+      "source_commit": "645375cd3b52a5bca4ff8b1a715e5a663eff6872"
     },
     "initialization_profile": {
       "path": "score_life_initialization_profile_oracle.json",
       "bytes": 5388,
       "sha256": "53D07B2DA7456C2B7AFDFE37293E352DC9471E31A0F13556553185EC20364E9B",
-      "source_commit": "9e217703c028e2f09be7fa2b30d791b6f7a4a338"
+      "source_commit": "645375cd3b52a5bca4ff8b1a715e5a663eff6872"
     },
     "deck_aggregate_profile": {
       "path": "score_life_deck_aggregate_profile_oracle.json",
       "bytes": 3507,
       "sha256": "8265C5A6144E8FB0B9C8084C5B562B2061A0C05EAE8DE58D81682C6EEFADDA68",
-      "source_commit": "9e217703c028e2f09be7fa2b30d791b6f7a4a338"
+      "source_commit": "645375cd3b52a5bca4ff8b1a715e5a663eff6872"
     },
     "master_music_786_profile": {
       "path": "score_life_master_music_786_profile_oracle.json",
       "bytes": 6664,
       "sha256": "B8E23249B79618CFDAB773CE64709C46DD422ABB473A5B63998C6D988F3D8529",
-      "source_commit": "9e217703c028e2f09be7fa2b30d791b6f7a4a338"
+      "source_commit": "645375cd3b52a5bca4ff8b1a715e5a663eff6872"
     },
     "ordinary_auto_skill_one_note": {
       "path": "score_life_ordinary_auto_skill_one_note_oracle.json",
       "bytes": 13233,
       "sha256": "33EB823625B4857A0D9BDB253BC3A2DA5CB64C1F501EDBADEF8FF21B8DCB446D",
-      "source_commit": "9e217703c028e2f09be7fa2b30d791b6f7a4a338"
+      "source_commit": "645375cd3b52a5bca4ff8b1a715e5a663eff6872"
     },
     "ordinary_auto_skill_effect_profile": {
       "path": "score_life_ordinary_auto_skill_effect_profile_oracle.json",
       "bytes": 12733,
       "sha256": "85DAADB89CECC31485F7E2EE27FCC938FD1235624EECF76FA4A6384A9672FBB4",
-      "source_commit": "9e217703c028e2f09be7fa2b30d791b6f7a4a338"
+      "source_commit": "645375cd3b52a5bca4ff8b1a715e5a663eff6872"
+    },
+    "rehearsal_pause_return_time": {
+      "path": "score_life_rehearsal_pause_return_time_oracle.json",
+      "bytes": 11546,
+      "sha256": "B83C67AF53CBDF604D35BAD23F1951C1C4410C026B8A145F879489EE87BD7C50",
+      "source_commit": "645375cd3b52a5bca4ff8b1a715e5a663eff6872"
     }
   },
   "required_output_fields": [
@@ -138,6 +144,7 @@
       "BS29",
       "BS30",
       "BS32",
+      "BS35",
       "BS36"
     ],
     "blocked_cases": [
@@ -149,10 +156,9 @@
       "BS28",
       "BS31",
       "BS33",
-      "BS34",
-      "BS35"
+      "BS34"
     ],
-    "unknown_field_count": 131,
+    "unknown_field_count": 127,
     "blocking_finding_count": 82
   },
   "business_state_gate": "open",
@@ -2467,19 +2473,40 @@
     {
       "case_id": "BS35",
       "requirement": "Game Over 0.1 Practice/collaboration/multiplayer mode matrix",
-      "status": "blocked",
+      "status": "partial",
       "evidence_ids": [
-        "D22-static"
+        "D22-static",
+        "SLS-R1-013"
       ],
       "input_provenance": [
-        "static_contract"
+        "static_contract",
+        "rehearsal_pause_return_time"
       ],
       "expected_source": [
-        "static_contract#Game Over mode methods"
+        "static_contract#Game Over mode methods",
+        "rehearsal_pause_return_time#practice_game_over"
       ],
-      "expected_projection": {},
+      "expected_projection": {
+        "observed_practice_mode": {
+          "in_game_mode": 10,
+          "in_game_mode_name": "Practice",
+          "damage_result_mode_return_counts": {
+            "0/10/-100": 37,
+            "4/10/0": 104
+          },
+          "add_i_power_counts": {
+            "-200": 7,
+            "-100": 18,
+            "0": 1198
+          },
+          "game_over_check_count": 1216,
+          "game_over_leave_states": [
+            "0/0/1"
+          ],
+          "continued_exec_update_with_life_zero_single_game_over": 1216
+        }
+      },
       "unknown_fields": [
-        "profile.practice_mode",
         "profile.collaboration_mode",
         "profile.multiplayer_mode",
         "runtime.game_over_0_1_routes",
@@ -2496,15 +2523,18 @@
       "requirement": "invalid profile, pause/resume, fault/dispose, and duplicate-consume atomicity",
       "status": "partial",
       "evidence_ids": [
-        "SLS-R1-007"
+        "SLS-R1-007",
+        "SLS-R1-013"
       ],
       "input_provenance": [
-        "retry_r1"
+        "retry_r1",
+        "rehearsal_pause_return_time"
       ],
       "expected_source": [
         "retry_r1#GameOver.leave:6366",
         "retry_r1#InitializeLife.leave:6373",
-        "retry_r1#InitBaseScore.enter:6374"
+        "retry_r1#InitBaseScore.enter:6374",
+        "rehearsal_pause_return_time#pause_resume/return_time"
       ],
       "expected_projection": {
         "post_game_over_hook_quiet_ms": 11875,
@@ -2527,15 +2557,327 @@
             0
           ],
           "max_note_count": 540
+        },
+        "observed_pause_resume": {
+          "windows": [
+            {
+              "start_marker": "ordinary-rehearsal-pause-return-time-retry2-r1",
+              "end_marker": "paused-initial-window-complete",
+              "duration_ms": 5016,
+              "exec_update_count": 0,
+              "first_game_frame": null,
+              "last_game_frame": null,
+              "settled_quiet_ms": 5016
+            },
+            {
+              "start_marker": "paused-initial-window-complete",
+              "end_marker": "resume-first",
+              "duration_ms": 15,
+              "exec_update_count": 0,
+              "first_game_frame": null,
+              "last_game_frame": null,
+              "settled_quiet_ms": 15
+            },
+            {
+              "start_marker": "resume-first",
+              "end_marker": "running-first-window-complete",
+              "duration_ms": 5106,
+              "exec_update_count": 126,
+              "first_game_frame": 2724,
+              "last_game_frame": 2849,
+              "settled_quiet_ms": 10
+            },
+            {
+              "start_marker": "running-first-window-complete",
+              "end_marker": "pause-second",
+              "duration_ms": 9,
+              "exec_update_count": 2,
+              "first_game_frame": 2850,
+              "last_game_frame": 2851,
+              "settled_quiet_ms": 0
+            },
+            {
+              "start_marker": "pause-second",
+              "end_marker": "paused-second-window-complete",
+              "duration_ms": 5134,
+              "exec_update_count": 6,
+              "first_game_frame": 2852,
+              "last_game_frame": 2857,
+              "settled_quiet_ms": 4878
+            },
+            {
+              "start_marker": "paused-second-window-complete",
+              "end_marker": "resume-second",
+              "duration_ms": 11,
+              "exec_update_count": 0,
+              "first_game_frame": null,
+              "last_game_frame": null,
+              "settled_quiet_ms": 11
+            },
+            {
+              "start_marker": "resume-second",
+              "end_marker": "running-second-window-complete",
+              "duration_ms": 5123,
+              "exec_update_count": 116,
+              "first_game_frame": 2858,
+              "last_game_frame": 2973,
+              "settled_quiet_ms": 11
+            },
+            {
+              "start_marker": "running-second-window-complete",
+              "end_marker": "rehearsal-rewind-hold",
+              "duration_ms": 12,
+              "exec_update_count": 1,
+              "first_game_frame": 2974,
+              "last_game_frame": 2974,
+              "settled_quiet_ms": 5
+            },
+            {
+              "start_marker": "rehearsal-rewind-hold",
+              "end_marker": "post-rewind-window-complete",
+              "duration_ms": 3136,
+              "exec_update_count": 966,
+              "first_game_frame": 2975,
+              "last_game_frame": 3940,
+              "settled_quiet_ms": 1441
+            },
+            {
+              "start_marker": "post-rewind-window-complete",
+              "end_marker": "pause-final",
+              "duration_ms": 10,
+              "exec_update_count": 0,
+              "first_game_frame": null,
+              "last_game_frame": null,
+              "settled_quiet_ms": 10
+            },
+            {
+              "start_marker": "pause-final",
+              "end_marker": "final-pause-window-complete",
+              "duration_ms": 1119,
+              "exec_update_count": 6,
+              "first_game_frame": 3941,
+              "last_game_frame": 3947,
+              "settled_quiet_ms": 831
+            },
+            {
+              "start_marker": "final-pause-window-complete",
+              "end_marker": "abort-rehearsal",
+              "duration_ms": 12,
+              "exec_update_count": 0,
+              "first_game_frame": null,
+              "last_game_frame": null,
+              "settled_quiet_ms": 12
+            },
+            {
+              "start_marker": "abort-rehearsal",
+              "end_marker": "post-abort-tail",
+              "duration_ms": 3114,
+              "exec_update_count": 0,
+              "first_game_frame": null,
+              "last_game_frame": null,
+              "settled_quiet_ms": 3114
+            }
+          ],
+          "initial_paused_window": {
+            "start_marker": "ordinary-rehearsal-pause-return-time-retry2-r1",
+            "end_marker": "paused-initial-window-complete",
+            "duration_ms": 5016,
+            "exec_update_count": 0,
+            "first_game_frame": null,
+            "last_game_frame": null,
+            "settled_quiet_ms": 5016
+          },
+          "second_pause_window": {
+            "start_marker": "pause-second",
+            "end_marker": "paused-second-window-complete",
+            "duration_ms": 5134,
+            "exec_update_count": 6,
+            "first_game_frame": 2852,
+            "last_game_frame": 2857,
+            "settled_quiet_ms": 4878
+          },
+          "final_pause_window": {
+            "start_marker": "pause-final",
+            "end_marker": "final-pause-window-complete",
+            "duration_ms": 1119,
+            "exec_update_count": 6,
+            "first_game_frame": 3941,
+            "last_game_frame": 3947,
+            "settled_quiet_ms": 831
+          },
+          "running_windows": [
+            {
+              "start_marker": "resume-first",
+              "end_marker": "running-first-window-complete",
+              "duration_ms": 5106,
+              "exec_update_count": 126,
+              "first_game_frame": 2724,
+              "last_game_frame": 2849,
+              "settled_quiet_ms": 10
+            },
+            {
+              "start_marker": "resume-second",
+              "end_marker": "running-second-window-complete",
+              "duration_ms": 5123,
+              "exec_update_count": 116,
+              "first_game_frame": 2858,
+              "last_game_frame": 2973,
+              "settled_quiet_ms": 11
+            }
+          ],
+          "exec_update_count": 1223,
+          "game_frame_range": [
+            2724,
+            3947
+          ],
+          "current_game_states": [
+            5,
+            14,
+            15
+          ],
+          "current_game_state_counts": {
+            "5": 262,
+            "14": 960,
+            "15": 1
+          }
+        },
+        "observed_return_time": {
+          "ordered_events": [
+            {
+              "sequence": 1469,
+              "kind": "InGameMoveTimeController.returnTime.enter",
+              "timestamp_ms": 1785458533245,
+              "marker": "rehearsal-rewind-hold",
+              "back_second": 5
+            },
+            {
+              "sequence": 1470,
+              "kind": "NoteManager.ReturnTime.enter",
+              "timestamp_ms": 1785458533245,
+              "marker": "rehearsal-rewind-hold",
+              "snapshot_present": true
+            },
+            {
+              "sequence": 1471,
+              "kind": "NoteManager.ReturnTime.leave",
+              "timestamp_ms": 1785458533260,
+              "marker": "rehearsal-rewind-hold"
+            },
+            {
+              "sequence": 1472,
+              "kind": "CommandNoteManager.ReturnTime.enter",
+              "timestamp_ms": 1785458533260,
+              "marker": "rehearsal-rewind-hold",
+              "snapshot_present": true
+            },
+            {
+              "sequence": 1473,
+              "kind": "CommandNoteManager.ReturnTime.leave",
+              "timestamp_ms": 1785458533260,
+              "marker": "rehearsal-rewind-hold"
+            },
+            {
+              "sequence": 6799,
+              "kind": "InGameMoveTimeController.returnTime.leave",
+              "timestamp_ms": 1785458534832,
+              "marker": "rehearsal-rewind-hold",
+              "back_second": 5
+            }
+          ],
+          "back_second": 5,
+          "outer_sequence": [
+            1469,
+            6799
+          ],
+          "outer_duration_ms": 1587,
+          "pre_update": {
+            "sequence": 1464,
+            "game_frame_counter": 2979,
+            "record": {
+              "is_multi_game_over": 0,
+              "is_single_game_over": 1,
+              "score": 0,
+              "reserve_score": 0,
+              "life": 0,
+              "max_life": 1000,
+              "max_note_count": 979,
+              "combo": 0,
+              "one_note": {
+                "score": 0,
+                "combo": 0,
+                "skill_factor": {
+                  "value": 0,
+                  "bits": "0x00000000"
+                },
+                "is_fever": 0,
+                "notes_type_omitted": true
+              },
+              "event_one_note": {
+                "score": 0,
+                "combo": 0,
+                "skill_factor": {
+                  "value": 0,
+                  "bits": "0x00000000"
+                },
+                "is_fever": 0,
+                "notes_type_omitted": true
+              },
+              "judge_counts": [
+                0,
+                0,
+                0,
+                0,
+                349
+              ]
+            }
+          },
+          "post_update": {
+            "sequence": 6800,
+            "game_frame_counter": 3940,
+            "record": {
+              "is_multi_game_over": 0,
+              "is_single_game_over": 0,
+              "score": 8304,
+              "reserve_score": 0,
+              "life": 1000,
+              "max_life": 1000,
+              "max_note_count": 979,
+              "combo": 0,
+              "one_note": {
+                "score": 81,
+                "combo": 101,
+                "skill_factor": {
+                  "value": 1,
+                  "bits": "0x3F800000"
+                },
+                "is_fever": 0,
+                "notes_type_omitted": true
+              },
+              "event_one_note": {
+                "score": 0,
+                "combo": 0,
+                "skill_factor": {
+                  "value": 0,
+                  "bits": "0x00000000"
+                },
+                "is_fever": 0,
+                "notes_type_omitted": true
+              },
+              "judge_counts": [
+                104,
+                0,
+                0,
+                0,
+                349
+              ]
+            }
+          }
         }
       },
       "unknown_fields": [
         "failure.invalid_profile_atomicity",
-        "lifecycle.pause_resume",
         "lifecycle.fault_dispose",
         "lifecycle.duplicate_consume",
-        "lifecycle.seek",
-        "lifecycle.return_time",
         "lifecycle.continue"
       ],
       "blocking_findings": [

@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "scenario_id": "band-deck-switch-anonymous-skill-profile-retry3-r1",
+  "status": "ready-for-observation",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "version_name": "10.1.4",
+    "version_code": 230,
+    "abi": "arm64-v8a",
+    "libil2cpp_sha256": "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F",
+    "music_fixture_id": "poppin_shuffle_special",
+    "difficulty": "special",
+    "score_level": 27,
+    "max_note_count": 979
+  },
+  "preconditions": [
+    "The locked poppin_shuffle_special SPECIAL Lv.27 song-selection screen is visibly open before attach after the Retry-2 navigation reached its EXP page but did not activate the once-more-Live button in time.",
+    "The first two deck-switch plans produced no Initialize event and consumed no Auto Live use or Live Boost; no action in this retry starts a Live.",
+    "SELinux is Enforcing and the explicit Frida supervisor/forward transport is healthy.",
+    "Band 1 remains selected when the band-confirmation screen opens; Band 2 through Band 5 are local deck tabs only."
+  ],
+  "actions": [
+    {"kind":"tap","marker":"open-band-confirmation-from-locked-song-selection","x":1330,"y":620,"delay_ms":1000},
+    {"kind":"tap","marker":"select-band-2","x":940,"y":170,"delay_ms":4000},
+    {"kind":"tap","marker":"select-band-3","x":1020,"y":170,"delay_ms":2500},
+    {"kind":"tap","marker":"select-band-4","x":1105,"y":170,"delay_ms":2500},
+    {"kind":"tap","marker":"select-band-5","x":1190,"y":170,"delay_ms":2500},
+    {"kind":"wait","marker":"observe-deck-switch-initialization-tail","delay_ms":3000}
+  ],
+  "tail_seconds": 0,
+  "declared_account_resource_effects": {"auto_live_uses":0,"live_boost":0,"premium_currency":0,"continue":false},
+  "observation_contract": {"observation_only":true,"return_replacement":false,"memory_writes":false,"apk_modification":false,"managed_invocation":false,"continue_operation":false},
+  "allowed_projection": [
+    "anonymous first-seen Skill aliases",
+    "numeric duration, once-effect, once-life-condition, trigger-condition and ordered active-effect rows",
+    "Skill note index and absolute position only when naturally initialized"
+  ],
+  "forbidden_projection": [
+    "account, user, room or social fields",
+    "deck element contents, member/card/character/Skill master IDs or slots",
+    "raw pointers, managed/display strings or note type",
+    "premium currency, Continue or any Live start"
+  ],
+  "promotion_requirements": [
+    "capture_error is null and event sequence is contiguous",
+    "At least one SituationSkillData.Initialize enter/leave pair exposes a non-null anonymous numeric profile",
+    "No forbidden identity, pointer or string field is exported",
+    "The final screenshot remains on band confirmation and resource counters are unchanged"
+  ]
+}

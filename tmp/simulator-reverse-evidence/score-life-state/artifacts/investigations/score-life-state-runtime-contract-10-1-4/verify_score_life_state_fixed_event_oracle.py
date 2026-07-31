@@ -14,14 +14,14 @@ ROOT = Path(__file__).resolve().parent
 ORACLE = ROOT / "score_life_state_fixed_event_oracle.json"
 LIB_SHA256 = "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F"
 METADATA_SHA256 = "298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F"
-SOURCE_COMMIT = "9e217703c028e2f09be7fa2b30d791b6f7a4a338"
+SOURCE_COMMIT = "645375cd3b52a5bca4ff8b1a715e5a663eff6872"
 EXPECTED_CONFIRMED = ["BS01", "BS05", "BS06", "BS11"]
 EXPECTED_PARTIAL = [
     "BS02", "BS03", "BS07", "BS10", "BS12", "BS13", "BS14", "BS15", "BS16", "BS18",
-    "BS19", "BS20", "BS21", "BS22", "BS24", "BS25", "BS26", "BS27", "BS29", "BS30", "BS32", "BS36",
+    "BS19", "BS20", "BS21", "BS22", "BS24", "BS25", "BS26", "BS27", "BS29", "BS30", "BS32", "BS35", "BS36",
 ]
 EXPECTED_BLOCKED = [
-    "BS04", "BS08", "BS09", "BS17", "BS23", "BS28", "BS31", "BS33", "BS34", "BS35",
+    "BS04", "BS08", "BS09", "BS17", "BS23", "BS28", "BS31", "BS33", "BS34",
 ]
 EXPECTED_SOURCES = {
     "static_contract": "score_life_state_static_contract.json",
@@ -38,6 +38,7 @@ EXPECTED_SOURCES = {
     "master_music_786_profile": "score_life_master_music_786_profile_oracle.json",
     "ordinary_auto_skill_one_note": "score_life_ordinary_auto_skill_one_note_oracle.json",
     "ordinary_auto_skill_effect_profile": "score_life_ordinary_auto_skill_effect_profile_oracle.json",
+    "rehearsal_pause_return_time": "score_life_rehearsal_pause_return_time_oracle.json",
 }
 EXPECTED_OUTPUT_FIELDS = [
     "initialization.base_score_and_profile",
@@ -89,6 +90,7 @@ def main() -> int:
     master_music_786_profile = load_json(ROOT / EXPECTED_SOURCES["master_music_786_profile"])
     ordinary_auto_skill_one_note = load_json(ROOT / EXPECTED_SOURCES["ordinary_auto_skill_one_note"])
     ordinary_auto_skill_effect_profile = load_json(ROOT / EXPECTED_SOURCES["ordinary_auto_skill_effect_profile"])
+    rehearsal_pause_return_time = load_json(ROOT / EXPECTED_SOURCES["rehearsal_pause_return_time"])
 
     require(oracle["schema_version"] == 1, "oracle schema differs")
     require(oracle["status"] == "partial-10.1.4-fixed-event-oracle-business-gate-open", "oracle status differs")
@@ -157,7 +159,7 @@ def main() -> int:
             "confirmed_cases": EXPECTED_CONFIRMED,
             "partial_cases": EXPECTED_PARTIAL,
             "blocked_cases": EXPECTED_BLOCKED,
-            "unknown_field_count": 131,
+            "unknown_field_count": 127,
             "blocking_finding_count": 82,
         },
         "coverage summary differs",
@@ -350,34 +352,33 @@ def main() -> int:
     retry_init = events(retry, "InGameRecord.InitializeLife.leave")[-1]
     retry_markers = events(retry, "capture.marker")
     require(
-        by_id["BS36"]["expected_projection"]
-        == {
-            "post_game_over_hook_quiet_ms": retry_markers[5]["timestamp_ms"] - retry_game_over["timestamp_ms"],
-            "record_identity_stable": True,
-            "retry_reset": {
-                "single_game_over": [1, 0],
-                "score": [44403, 0],
-                "life": [0, 1000],
-                "max_combo": [6, 0],
-                "max_note_count": 540,
-            },
+        by_id["BS36"]["expected_projection"]["post_game_over_hook_quiet_ms"] == retry_markers[5]["timestamp_ms"] - retry_game_over["timestamp_ms"]
+        and by_id["BS36"]["expected_projection"]["record_identity_stable"] is True
+        and by_id["BS36"]["expected_projection"]["retry_reset"] == {
+            "single_game_over": [1, 0], "score": [44403, 0], "life": [0, 1000],
+            "max_combo": [6, 0], "max_note_count": 540,
         }
+        and by_id["BS36"]["expected_projection"]["observed_pause_resume"] == rehearsal_pause_return_time["pause_resume"]
+        and by_id["BS36"]["expected_projection"]["observed_return_time"] == rehearsal_pause_return_time["return_time"]
+        and by_id["BS36"]["unknown_fields"] == ["failure.invalid_profile_atomicity","lifecycle.fault_dispose","lifecycle.duplicate_consume","lifecycle.continue"]
+        and by_id["BS35"]["expected_projection"]["observed_practice_mode"] == rehearsal_pause_return_time["practice_game_over"]
+        and by_id["BS35"]["unknown_fields"] == ["profile.collaboration_mode","profile.multiplayer_mode","runtime.game_over_0_1_routes","runtime.score_decrease"]
         and retry_game_over["after"]["pointer"] == retry_init["record"]["pointer"]
         and retry_markers[5]["timestamp_ms"] - retry_game_over["timestamp_ms"] == 11875,
-        "BS36 Retry/reset projection differs",
+        "BS35/BS36 Practice/pause/ReturnTime/Retry projection differs",
     )
 
     forbidden_closure_claims = {"closed", "complete", "production-authorized", "unknown_fields=[]"}
     serialized = ORACLE.read_text(encoding="utf-8")
     require(not any(claim in oracle["status"] for claim in forbidden_closure_claims), "oracle status overclaims closure")
     require(runtime_status["business_state_gate"] == "open" and runtime_status["production_authorization"] is False, "runtime status gate differs")
-    require(runtime_status["runtime"]["r1_trace_count"] == 9 and runtime_status["runtime"]["fixed_event_oracle"]["unknown_fields"] == 131 and runtime_status["runtime"]["fixed_event_oracle"]["blocking_findings"] == 82, "runtime status coverage differs")
+    require(runtime_status["runtime"]["r1_trace_count"] == 10 and runtime_status["runtime"]["fixed_event_oracle"]["unknown_fields"] == 127 and runtime_status["runtime"]["fixed_event_oracle"]["blocking_findings"] == 82, "runtime status coverage differs")
     require("capture_fields_not_consumed" in runtime_status["runtime"], "ABI-unsafe field exclusion missing")
     require(serialized.count('"case_id": "BS') == 36, "serialized BS case count differs")
 
     print(
-        "verified score/life fixed-event oracle: BS=36 confirmed=4 partial=22 blocked=10 "
-        "unknown_fields=131 blockers=82 R1=9 gate=open production=false"
+        "verified score/life fixed-event oracle: BS=36 confirmed=4 partial=23 blocked=9 "
+        "unknown_fields=127 blockers=82 R1=10 gate=open production=false"
     )
     return 0
 
