@@ -1,0 +1,282 @@
+{
+  "schema_version": 1,
+  "status": "confirmed-r1-observation-only-skill-playing-pause-partial-business-gate-open",
+  "source_commit": "16760726981882d16ae474c22ce9a281c0821187",
+  "trace_file": "runtime/ordinary-auto-skill-playing-pause-r1.trace.json.gz",
+  "plan_file": "ordinary-auto-skill-playing-pause-r1-plan.json",
+  "plan_sha256": "5260AD07ECCD58825AB9B0B64679148C97582DDE411B3133B9A040B98FD3913A",
+  "capture_script_sha256": "952554AA301BD787F94946B33A69143BEA8774752EC2B9F708E5A352038E1936",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "version_name": "10.1.4",
+    "version_code": 230,
+    "abi": "arm64-v8a",
+    "libil2cpp_sha256": "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F",
+    "global_metadata_sha256": "298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F",
+    "pid": 28262,
+    "module": {
+      "base": "0x6cd829e000",
+      "size": 122183680,
+      "path": "/data/app/~~B1EA-JtTroRCXT375dD5Tg==/jp.co.craftegg.band-Oiz3EolE2fd86DJVZ50Q2Q==/lib/arm64/libil2cpp.so"
+    }
+  },
+  "continuity": {
+    "capture_error": null,
+    "event_count": 13248,
+    "first_sequence": 0,
+    "last_sequence": 13247,
+    "contiguous": true,
+    "summary_queued_exec_update_tail": 2
+  },
+  "business_completion": {
+    "one_note_leave_count": 979,
+    "skill_finished_leave_count": 6,
+    "anonymous_skill_count": 5,
+    "trigger_aliases": [
+      "skill-01",
+      "skill-02",
+      "skill-03",
+      "skill-04",
+      "skill-05",
+      "skill-05"
+    ]
+  },
+  "playing_pause": {
+    "pause_marker": {
+      "sequence": 1417,
+      "timestamp_ms": 1785461522161
+    },
+    "settled_marker": {
+      "sequence": 1425,
+      "timestamp_ms": 1785461527266
+    },
+    "resume_marker": {
+      "sequence": 1426,
+      "timestamp_ms": 1785461527279
+    },
+    "pause_window_ms": 5105,
+    "ui_latency_exec_updates": 7,
+    "settled_quiet_ms": 4878,
+    "before": {
+      "sequence": 1424,
+      "timestamp_ms": 1785461522388,
+      "game_frame_counter": 927,
+      "current_game_state": 5,
+      "skill": {
+        "record": {
+          "score": 55069,
+          "reserve_score": 55069,
+          "life": 1200,
+          "max_life": 1000,
+          "max_note_count": 979,
+          "combo": 97,
+          "one_note": {
+            "score": 703,
+            "combo": 82,
+            "skill_factor": {
+              "value": 1.2999999523162842,
+              "bits": "0x3FA66666"
+            },
+            "is_fever": 0,
+            "notes_type_omitted": true
+          },
+          "event_one_note": {
+            "score": 0,
+            "combo": 0,
+            "skill_factor": {
+              "value": 0,
+              "bits": "0x00000000"
+            },
+            "is_fever": 0,
+            "notes_type_omitted": true
+          },
+          "judge_counts": [
+            97,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "playlist": {
+          "size": 1,
+          "values": [
+            {
+              "master_alias": "skill-01",
+              "skill_note_index": 1,
+              "absolute_pos": 2256,
+              "continuous_result": 4,
+              "crescendo_rate": {
+                "value": 0,
+                "bits": "0x00000000"
+              },
+              "member_identity_omitted": true
+            }
+          ]
+        },
+        "stock_size": 8,
+        "current": {
+          "master_alias": "skill-01",
+          "skill_note_index": 1,
+          "absolute_pos": 2256,
+          "continuous_result": 4,
+          "crescendo_rate": {
+            "value": 0,
+            "bits": "0x00000000"
+          },
+          "member_identity_omitted": true
+        },
+        "skill_timer": {
+          "value": 2.414283514022827,
+          "bits": "0x401A839F"
+        },
+        "finishing_timer": {
+          "value": 0,
+          "bits": "0x00000000"
+        },
+        "state": 2,
+        "reservation_frame": 775,
+        "reservation": {
+          "master_alias": "skill-01",
+          "skill_note_index": 1,
+          "absolute_pos": 2256,
+          "continuous_result": 4,
+          "crescendo_rate": {
+            "value": 0,
+            "bits": "0x00000000"
+          },
+          "member_identity_omitted": true
+        },
+        "reservation_encore": 0
+      }
+    },
+    "after": {
+      "sequence": 1428,
+      "timestamp_ms": 1785461530436,
+      "game_frame_counter": 928,
+      "current_game_state": 5,
+      "skill": {
+        "record": {
+          "score": 55069,
+          "reserve_score": 55069,
+          "life": 1200,
+          "max_life": 1000,
+          "max_note_count": 979,
+          "combo": 97,
+          "one_note": {
+            "score": 703,
+            "combo": 82,
+            "skill_factor": {
+              "value": 1.2999999523162842,
+              "bits": "0x3FA66666"
+            },
+            "is_fever": 0,
+            "notes_type_omitted": true
+          },
+          "event_one_note": {
+            "score": 0,
+            "combo": 0,
+            "skill_factor": {
+              "value": 0,
+              "bits": "0x00000000"
+            },
+            "is_fever": 0,
+            "notes_type_omitted": true
+          },
+          "judge_counts": [
+            97,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "playlist": {
+          "size": 1,
+          "values": [
+            {
+              "master_alias": "skill-01",
+              "skill_note_index": 1,
+              "absolute_pos": 2256,
+              "continuous_result": 4,
+              "crescendo_rate": {
+                "value": 0,
+                "bits": "0x00000000"
+              },
+              "member_identity_omitted": true
+            }
+          ]
+        },
+        "stock_size": 8,
+        "current": {
+          "master_alias": "skill-01",
+          "skill_note_index": 1,
+          "absolute_pos": 2256,
+          "continuous_result": 4,
+          "crescendo_rate": {
+            "value": 0,
+            "bits": "0x00000000"
+          },
+          "member_identity_omitted": true
+        },
+        "skill_timer": {
+          "value": 2.3976802825927734,
+          "bits": "0x40197398"
+        },
+        "finishing_timer": {
+          "value": 0,
+          "bits": "0x00000000"
+        },
+        "state": 2,
+        "reservation_frame": 775,
+        "reservation": {
+          "master_alias": "skill-01",
+          "skill_note_index": 1,
+          "absolute_pos": 2256,
+          "continuous_result": 4,
+          "crescendo_rate": {
+            "value": 0,
+            "bits": "0x00000000"
+          },
+          "member_identity_omitted": true
+        },
+        "reservation_encore": 0
+      }
+    },
+    "wall_gap_ms": 8048,
+    "game_frame_delta": 1
+  },
+  "exec_update": {
+    "trace_count": 7766,
+    "summary_count": 7768,
+    "state_counts": {
+      "0": 5763,
+      "1": 6,
+      "2": 1751,
+      "3": 246
+    }
+  },
+  "privacy": {
+    "account_fields_included": false,
+    "raw_pointers_included": false,
+    "display_strings_included": false,
+    "skill_master_ids_included": false,
+    "member_identity_included": false,
+    "notes_type_omitted": true
+  },
+  "business_scope": {
+    "confirmed": [
+      "pause occurs while anonymous skill-01 is Playing",
+      "after a short UI-latency tail, ExecUpdate is quiet for 4878 ms",
+      "first resumed ExecUpdate retains skill-01 and advances exactly one game frame/timer step after an 8048 ms wall gap",
+      "979 one-note leaves and six Skill finishes complete"
+    ],
+    "not_confirmed": [
+      "GameOver while Skill Playing",
+      "Stop drain",
+      "multiple or overlapping Skill",
+      "callback identity",
+      "fault/dispose/duplicate consume"
+    ]
+  }
+}

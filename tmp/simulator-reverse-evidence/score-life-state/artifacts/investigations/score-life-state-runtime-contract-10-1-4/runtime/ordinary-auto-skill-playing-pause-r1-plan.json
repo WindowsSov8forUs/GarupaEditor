@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "scenario_id": "ordinary-auto-skill-playing-pause-r1",
+  "status": "ready-for-observation",
+  "sample": {"package":"jp.co.craftegg.band","version_name":"10.1.4","version_code":230,"abi":"arm64-v8a","libil2cpp_sha256":"815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F","music_fixture_id":"poppin_shuffle_special","difficulty":"special","score_level":27,"max_note_count":979},
+  "preconditions": [
+    "The normal Free Live band-confirmation screen visibly shows poppin_shuffle_special SPECIAL Lv.27, Band 1, Auto Live ON, ten remaining Auto Live uses, and Live Boost 10 -> 9.",
+    "The first anonymous Skill trigger in the locked sample previously began about 25 seconds after the start tap and has a five-second Playing duration; this plan pauses at 27 seconds without changing the game clock or result.",
+    "SELinux is Enforcing and the explicit Frida supervisor/forward transport is healthy."
+  ],
+  "actions": [
+    {"kind":"tap","marker":"start-locked-ordinary-auto-skill-playing-pause","x":1240,"y":590,"delay_ms":1000},
+    {"kind":"wait","marker":"approach-first-skill-playing-window","delay_ms":27000},
+    {"kind":"tap","marker":"pause-during-first-skill-playing","x":1483,"y":48,"delay_ms":0},
+    {"kind":"wait","marker":"paused-playing-window-complete","delay_ms":5000},
+    {"kind":"tap","marker":"resume-first-skill-playing","x":1034,"y":440,"delay_ms":0},
+    {"kind":"wait_until_capture_complete","marker":"observe-complete-after-playing-pause","timeout_ms":180000,"required_one_note_leave_count":979,"required_skill_finished_leave_count":6}
+  ],
+  "tail_seconds": 0,
+  "declared_account_resource_effects": {"auto_live_uses":-1,"live_boost":-1,"premium_currency":0,"continue":false},
+  "observation_contract": {"observation_only":true,"return_replacement":false,"memory_writes":false,"apk_modification":false,"managed_invocation":false,"continue_operation":false},
+  "allowed_projection": ["anonymous Skill queue/state/timer and numeric effect profiles","ExecUpdate game frame/current game state","aggregate Score/Life/Combo/judge/one-note state","pause/resume markers and timestamps"],
+  "forbidden_projection": ["account, user, room or social fields","deck/member/card/character/Skill IDs or slots","raw pointers, managed/display strings or note type","premium currency or Continue"],
+  "promotion_requirements": [
+    "capture_error is null and event sequence is contiguous",
+    "The pause tap occurs while manager state is Playing with a non-null anonymous current Skill",
+    "After the UI-latency tail, no ExecUpdate occurs in a settled paused interval and the first resumed Playing snapshot retains the same anonymous current Skill and timer bits",
+    "All 979 one-note leaves and six Skill finishes complete after resume",
+    "No forbidden identity, pointer or string field is exported"
+  ]
+}

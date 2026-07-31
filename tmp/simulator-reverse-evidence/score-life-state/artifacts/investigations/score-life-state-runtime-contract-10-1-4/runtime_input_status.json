@@ -178,6 +178,22 @@
       "account_fields_included": false,
       "member_identity_included": false,
       "status": "confirmed-r1-observation-only-partial-return-time-practice"
+    },
+    "r1_ordinary_auto_skill_playing_pause": {
+      "trace": "runtime/ordinary-auto-skill-playing-pause-r1.trace.json.gz",
+      "trace_sha256": "ACD0091AC2F3D135E39829055864F1AB1EB88E325D84D575096993A8EDCEF2C6",
+      "events": 13248,
+      "one_note_calls": 979,
+      "skill_lifecycles": 6,
+      "pause_state": 2,
+      "anonymous_skill_alias": "skill-01",
+      "settled_pause_quiet_ms": 4878,
+      "wall_gap_ms": 8048,
+      "game_frame_delta": 1,
+      "timer_bits": ["0x401A839F", "0x40197398"],
+      "account_fields_included": false,
+      "member_identity_included": false,
+      "status": "confirmed-r1-observation-only-skill-playing-pause"
     }
   },
   "partial": {
@@ -186,8 +202,8 @@
       "open_subscope": "Fever, guard, Never Die, multiple/overlapping Skill and special-mode identities"
     },
     "D21": {
-      "closed_subscope": "rehearsal pause/resume suppresses SituationSkillManager ExecUpdate after short UI-latency tails; two running windows resume contiguous game-frame updates",
-      "open_subscope": "Skill-Playing pause freeze, fault/dispose and duplicate consume"
+      "closed_subscope": "rehearsal pause/resume suppresses SituationSkillManager ExecUpdate after short UI-latency tails; two running windows resume contiguous game-frame updates; ordinary Auto pause during Skill Playing retains the same anonymous Skill and advances exactly one game frame/timer step across an 8048ms wall gap",
+      "open_subscope": "GameOver while Skill Playing, Stop drain, fault/dispose and duplicate consume"
     },
     "D22": {
       "closed_subscope": "single-player lethal AddIPower nests Game Over; no hooked manager/business call occurs for 11.875 seconds after Game Over; non-destructive Retry reuses and resets InGameRecord, Life, Score, Combo and counters before InitBaseScore; Practice rewind invokes ReturnTime(5) in InGameMoveTimeController -> NoteManager -> CommandNoteManager order and restores a snapshot",
@@ -199,7 +215,7 @@
     }
   },
   "runtime": {
-    "r1_trace_count": 10,
+    "r1_trace_count": 11,
     "pending_capture_plans": [
       {
         "path": "runtime/positive-retry-all-lanes-r1-plan.json",
@@ -293,7 +309,8 @@
       {"path":"runtime/band-deck-switch-skill-profile-retry2-r1-plan.json","scenario_id":"band-deck-switch-anonymous-skill-profile-retry2-r1","status":"executed-navigation-timeout-no-trace-promoted"},
       {"path":"runtime/band-deck-switch-skill-profile-retry3-r1-plan.json","scenario_id":"band-deck-switch-anonymous-skill-profile-retry3-r1","status":"executed-no-initialize-events-no-trace-promoted","not_observed":["D23-additional-deck-Skill-profiles"],"safety":"Band 2-5 were empty; no Live started and no account resource changed"},
       {"path":"runtime/rehearsal-pause-return-time-r1-plan.json","scenario_id":"ordinary-rehearsal-pause-return-time-r1","status":"executed-pause-observed-return-time-missing-no-trace-promoted"},
-      {"path":"runtime/rehearsal-pause-return-time-retry2-r1-plan.json","scenario_id":"ordinary-rehearsal-pause-return-time-retry2-r1","status":"executed-confirmed-trace-promoted","observed_scope":["D21-rehearsal-pause-resume", "D22-Practice-ReturnTime", "D22-Practice-GameOver-route"],"not_observed":["D21-Skill-Playing-pause", "D21-fault-dispose-duplicate", "D22-Continue-forward-seek-non-Practice"],"safety":"Rehearsal only; Auto/Boost/premium/Continue/Retry/Live Start all unchanged"}
+      {"path":"runtime/rehearsal-pause-return-time-retry2-r1-plan.json","scenario_id":"ordinary-rehearsal-pause-return-time-retry2-r1","status":"executed-confirmed-trace-promoted","observed_scope":["D21-rehearsal-pause-resume", "D22-Practice-ReturnTime", "D22-Practice-GameOver-route"],"not_observed":["D21-Skill-Playing-pause", "D21-fault-dispose-duplicate", "D22-Continue-forward-seek-non-Practice"],"safety":"Rehearsal only; Auto/Boost/premium/Continue/Retry/Live Start all unchanged"},
+      {"path":"runtime/ordinary-auto-skill-playing-pause-r1-plan.json","scenario_id":"ordinary-auto-skill-playing-pause-r1","status":"executed-confirmed-trace-promoted","observed_scope":["D21-Skill-Playing-pause-freeze", "D18-Skill-Playing-identity", "D20-pause-entry-freeze"],"not_observed":["D21-GameOver-Playing-Stop-fault-dispose-duplicate", "D20-overlapping-Skill-Fever"],"safety":"One Auto Live use and one Live Boost; premium/Continue zero; anonymous Skill state only"}
     ],
     "capture_fields_not_consumed": [
       "ScoreUtility.GetResultTypeCorrectionRate.rate_bits",
@@ -308,13 +325,13 @@
       "verifier": "verify_score_life_state_fixed_event_oracle.py",
       "cases": 36,
       "confirmed_cases": ["BS01", "BS05", "BS06", "BS11"],
-      "partial_cases": ["BS02", "BS03", "BS07", "BS10", "BS12", "BS13", "BS14", "BS15", "BS16", "BS18", "BS19", "BS20", "BS21", "BS22", "BS24", "BS25", "BS26", "BS27", "BS29", "BS30", "BS32", "BS35", "BS36"],
-      "blocked_cases": ["BS04", "BS08", "BS09", "BS17", "BS23", "BS28", "BS31", "BS33", "BS34"],
-      "unknown_fields": 127,
+      "partial_cases": ["BS02", "BS03", "BS07", "BS10", "BS12", "BS13", "BS14", "BS15", "BS16", "BS18", "BS19", "BS20", "BS21", "BS22", "BS23", "BS24", "BS25", "BS26", "BS27", "BS29", "BS30", "BS32", "BS35", "BS36"],
+      "blocked_cases": ["BS04", "BS08", "BS09", "BS17", "BS28", "BS31", "BS33", "BS34"],
+      "unknown_fields": 126,
       "blocking_findings": 82,
       "status": "partial-business-gate-open"
     },
-    "operational_blocker": "Ten R1 traces are closed, including ordinary initialization, privacy-minimized deck aggregates, target-only music-786 master rows, complete ordinary Auto Skill lifecycles/one-note maxima, five anonymous numeric Skill effect profiles, and Practice pause/ReturnTime. BS01 is confirmed-r1; BS02 retains unavailable runtime start-data/event/base values; BS03 retains privacy-excluded member rows. Practice mode Life-zero Game Over continuation, settled pause windows, ReturnTime(5) ordering and snapshot restore are observed. The fixed-event oracle has 127 unknown fields and 82 blockers overall. Nonzero event profiles, Fever transitions, overlapping Skill, guard/Never Die/special-effect rows, score-decrease/forward-seek/non-Practice lifecycle and remaining master provenance remain open. Continue remains unobserved because premium-currency actions are forbidden. Five ABI-unsafe fields stay excluded.",
+    "operational_blocker": "Eleven R1 traces are closed, including ordinary initialization, privacy-minimized deck aggregates, target-only music-786 master rows, complete ordinary Auto Skill lifecycles/one-note maxima, five anonymous numeric Skill effect profiles, and Practice pause/ReturnTime, and ordinary Skill-Playing pause. BS01 is confirmed-r1; BS02 retains unavailable runtime start-data/event/base values; BS03 retains privacy-excluded member rows. Practice mode Life-zero Game Over continuation, settled pause windows, ReturnTime(5) ordering and snapshot restore are observed. The fixed-event oracle has 126 unknown fields and 82 blockers overall. Nonzero event profiles, Fever transitions, overlapping Skill, guard/Never Die/special-effect rows, score-decrease/forward-seek/non-Practice lifecycle and remaining master provenance remain open. Continue remains unobserved because premium-currency actions are forbidden. Five ABI-unsafe fields stay excluded.",
     "synthetic_trace_allowed": false
   },
   "gates": {
@@ -331,7 +348,7 @@
     "Fever, guard, Never Die, multiple/overlapping Skill and special-mode R1 traces remain open.",
     "Deck/start-data/master provenance remains open.",
     "D20 Fever/multiple-entry remainder, D21 and D22 score-decrease/Continue/seek/ReturnTime remain open.",
-    "BS01-BS36 partial oracle retains 127 unknown fields and 82 blocking findings; final portable contract does not exist."
+    "BS01-BS36 partial oracle retains 126 unknown fields and 82 blocking findings; final portable contract does not exist."
   ],
   "business_state_gate": "open",
   "production_authorization": false

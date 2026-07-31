@@ -13,7 +13,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parent
 LIB_SHA256 = "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F"
 METADATA_SHA256 = "298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F"
-SOURCE_COMMIT = "645375cd3b52a5bca4ff8b1a715e5a663eff6872"
+SOURCE_COMMIT = "16760726981882d16ae474c22ce9a281c0821187"
 SOURCES = {
     "static_contract": "score_life_state_static_contract.json",
     "static_findings": "score_life_state_static_findings.json",
@@ -30,6 +30,7 @@ SOURCES = {
     "ordinary_auto_skill_one_note": "score_life_ordinary_auto_skill_one_note_oracle.json",
     "ordinary_auto_skill_effect_profile": "score_life_ordinary_auto_skill_effect_profile_oracle.json",
     "rehearsal_pause_return_time": "score_life_rehearsal_pause_return_time_oracle.json",
+    "ordinary_auto_skill_playing_pause": "score_life_ordinary_auto_skill_playing_pause_oracle.json",
 }
 REQUIREMENTS = {
     "BS01": "ordinary production chart family maxNoteCount and base-score initialization",
@@ -158,6 +159,7 @@ def main() -> int:
     ordinary_auto_skill_one_note = load_json(SOURCES["ordinary_auto_skill_one_note"])
     ordinary_auto_skill_effect_profile = load_json(SOURCES["ordinary_auto_skill_effect_profile"])
     rehearsal_pause_return_time = load_json(SOURCES["rehearsal_pause_return_time"])
+    ordinary_auto_skill_playing_pause = load_json(SOURCES["ordinary_auto_skill_playing_pause"])
 
     require(static_contract["target"]["libil2cpp_sha256"] == LIB_SHA256, "static target differs")
     require(static_findings["sample"]["global_metadata_sha256"] == METADATA_SHA256, "metadata differs")
@@ -229,6 +231,14 @@ def main() -> int:
         and rehearsal_pause_return_time["return_time"]["back_second"] == 5
         and rehearsal_pause_return_time["privacy"]["member_identity_included"] is False,
         "rehearsal pause/ReturnTime oracle differs",
+    )
+    require(
+        ordinary_auto_skill_playing_pause["status"] == "confirmed-r1-observation-only-skill-playing-pause-partial-business-gate-open"
+        and ordinary_auto_skill_playing_pause["continuity"] == {"capture_error": None, "event_count": 13248, "first_sequence": 0, "last_sequence": 13247, "contiguous": True, "summary_queued_exec_update_tail": 2}
+        and ordinary_auto_skill_playing_pause["business_completion"]["one_note_leave_count"] == 979
+        and ordinary_auto_skill_playing_pause["playing_pause"]["game_frame_delta"] == 1
+        and ordinary_auto_skill_playing_pause["privacy"]["member_identity_included"] is False,
+        "ordinary Auto Skill-Playing pause oracle differs",
     )
 
     result_rates = finding["SLS-S03"]["conclusion"]
@@ -335,7 +345,7 @@ def main() -> int:
     cases.append(case("BS20", "partial", ["SLS-S06", "SLS-S09", "SLS-R1-011"], ["static_findings", "ordinary_auto_skill_one_note"], ["static:SLS-S06", "static:SLS-S09", "ordinary_auto_skill_one_note#overheal"], {"percentage_formula": finding["SLS-S09"]["conclusion"]["percentage"], "upper_limit_rule": finding["SLS-S09"]["conclusion"]["upper_limit"], "add_life_clamp": finding["SLS-S06"]["conclusion"]["clamp"], "observed_overheal": auto_overheal}, ["profile.percentage_effect_row", "runtime.percentage_heal", "runtime.upper_limit_equal_boundary", "runtime.callback_identity"], ["D14", "D18-remaining", "D23-master-start-data"]))
     cases.append(case("BS21", "partial", ["SLS-R1-005", "SLS-R1-011", "D11-static"], ["skill_r1", "ordinary_auto_skill_one_note", "static_contract"], ["skill_r1#AddSituationSkillToPlayList.leave:2187", "ordinary_auto_skill_one_note#skill_lifecycles"], {"observed_enqueue": {"sequence": skill_add["sequence"], "state": skill_add["skill"]["state"], "playlist_size": skill_add["skill"]["playlist"]["size"]}, "observed_successful_auto_lifecycles": [{"alias": row["alias"], "skill_note_index": row["skill_note_index"], "trigger_sequence": row["trigger_sequence"], "finish_leave_sequence": row["finish_leave_sequence"]} for row in auto_skill_lifecycles]}, ["profile.mode_eligibility", "profile.skill_chara_list", "runtime.failure", "runtime.move_time", "runtime.multi_normal_identity", "runtime.duplicate_reserve"], ["D11", "D18-remaining", "D23-master-start-data"]))
     cases.append(case("BS22", "partial", ["SLS-S10", "SLS-R1-005", "SLS-R1-011"], ["static_findings", "skill_r1", "ordinary_auto_skill_one_note"], ["static:SLS-S10", "skill_r1#Skill lifecycle events", "ordinary_auto_skill_one_note#skill_lifecycles"], {"states": {"none": 0, "begin": skill_add["skill"]["state"], "playing": skill_begin["skill"]["state"], "finishing": skill_finishing["skill"]["state"], "final_none": skill_none["skill"]["state"]}, "playing_timer_bits": skill_begin["skill"]["skill_timer"]["bits"], "finish_input_timer_bits": skill_finish["skill"]["skill_timer"]["bits"], "finishing_timer_bits": skill_finishing["skill"]["finishing_timer"]["bits"], "current_identity": {"chara_index": skill_begin["skill"]["current"]["chara_index"], "skill_note_index": skill_begin["skill"]["current"]["skill_note_index"], "absolute_pos": skill_begin["skill"]["current"]["absolute_pos"]}, "observed_auto_lifecycles": auto_skill_lifecycles}, ["skill.callback_identity", "skill.delta_source_identity"], ["D12", "D18-remaining"]))
-    cases.append(case("BS23", "blocked", ["SLS-S10"], ["static_findings"], ["static:SLS-S10"], {}, ["runtime.pause_freeze", "runtime.game_over_playing_freeze", "runtime.stop_drain", "runtime.multiple_queue", "runtime.callback_order"], ["D12", "D18-remaining", "D21", "D23-master-start-data"]))
+    cases.append(case("BS23", "partial", ["SLS-S10", "SLS-R1-014"], ["static_findings", "ordinary_auto_skill_playing_pause"], ["static:SLS-S10", "ordinary_auto_skill_playing_pause#playing_pause"], {"observed_skill_playing_pause": ordinary_auto_skill_playing_pause["playing_pause"]}, ["runtime.game_over_playing_freeze", "runtime.stop_drain", "runtime.multiple_queue", "runtime.callback_order"], ["D12", "D18-remaining", "D21", "D23-master-start-data"]))
     cases.append(case("BS24", "partial", ["SLS-R1-005", "SLS-R1-012", "D13-static"], ["skill_r1", "ordinary_auto_skill_effect_profile", "static_contract"], ["skill_r1#active OneFrameData.Setup.leave", "ordinary_auto_skill_effect_profile#profiles.active_effects"], {"observed_active_entries": len(active_frames), "active_skill_rate_bits": active_frames[0]["skill_rate"]["bits"], "active_score_up_type": active_frames[0]["score_up_type"], "observed_ordered_effect_rows": [{"alias": profile["alias"], "values": profile["active_effects"]["values"]} for profile in auto_skill_profiles]}, ["runtime.judge_correction", "runtime.first_eligible_effect", "runtime.ineligible_predecessor"], ["D13", "D18-remaining"]))
     cases.append(case("BS25", "partial", ["SLS-R1-012", "D13-static"], ["static_contract", "ordinary_auto_skill_effect_profile"], ["static_contract#active damage and score methods", "ordinary_auto_skill_effect_profile#profiles:skill-02"], {"observed_over_life_score_effect": auto_skill_profiles[1]["active_effects"]["values"][0]}, ["profile.over_life_damage_effect", "profile.under_life_damage_effect", "profile.under_life_score_effect", "runtime.condition_boundaries"], ["D13", "D18-remaining", "D23-master-start-data"]))
     cases.append(case("BS26", "partial", ["SLS-R1-012", "D13-static"], ["static_contract", "ordinary_auto_skill_effect_profile"], ["static_contract#continuous Skill methods", "ordinary_auto_skill_effect_profile#profiles:skill-03"], {"observed_continuous_effect": auto_skill_profiles[2]["active_effects"]["values"][0]}, ["runtime.worst_result", "runtime.condition_boundary", "runtime.same_frame_freeze"], ["D13", "D18-remaining", "D20-remaining"]))
