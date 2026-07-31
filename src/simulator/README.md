@@ -33,6 +33,8 @@ OneFrame 容量现在由原作证据固定为 5，不再接受宿主或测试容
 
 “分数、生命与状态”B00–B12已完成独立隔离验收，记录位于`tmp/simulator-score-life-state-acceptance.md`。冻结包含326方法、25布局、19枚举、ordinary/HABAHIRO `979/731`、12条R1、8个当前ARM64语义簇/48方法、125项portable处置与36个closed BS case；Reverse `44d2f20bf4cf19eb4c91e5b025101ec154f31e60`关闭V01/D01–D24。Production `9726880`恢复Score/Combo/Record、Life/guard/Never Die/Game Over、Skill/active effect/Crescendo、Fever和special-mode领域链；测试`9d382f2`通过Score/Life总入口、production BMS、dependency/evidence index及first-slice/chart/clock/Auto/manual全回归。Continue、active-heal无consumer、缺失profile及未观察fault/dispose/duplicate partial mutation继续在领域mutation前返回`evidence-required`；不导出账号、room、deck/member/card/Skill身份或raw pointer。
 
+当前阶段已切换到“资源与Pixi渲染”，任务书见`tmp/simulator-resource-pixi-rendering-task.md`。RP00只建立范围、10.1.4重基线目标、资源provenance、typed render command/Pixi backend边界、PR01–PR40 oracle和RP00–RP14批次；RP01静态/资源重基线及RP02实体scene/frame oracle关闭前，禁止修改模拟器production、增加Pixi backend、package scripts或资源二进制。现有10.1.3 Note/HUD/mesh调查仅为H系列迁移候选，不能直接授权实现。
+
 `src/simulator/engine` 不依赖 React、Pixi、Tauri、DOM、编辑器谱面类型或窗口协议。宿主 API 是 GarupaEditor 的可移植边界，不宣称属于原作接口。
 
 在达到需要整体联调的重构节点前，不要求中间提交能够构建、启动或保持既有模拟器行为；外部编辑器入口与接入点仍可能引用尚未重建的模块。
