@@ -375,6 +375,13 @@
 - HUD producer在life `set-hud`前插入`play-animation(life-heal,restart=true)`，保持R1 caller顺序并与整个Reflect batch共用原子preflight/commit；profile缺exact animation role时由backend失败关闭。
 - Pixi尚无可采样的portable animation-channel profile输入，继续拒绝animation command而非no-op；本批只关闭engine semantic producer，不冒充可见动画已落地。`tsc`、Score/Life与render-contract回归通过。
 
+### 1.40 2026-08-01 RP08/RP09 life-heal semantic test子批
+
+- Score/Life suite验证once-heal实际加血后pending visual event=true，commit后=false，确保事件one-use且不是damage/life snapshot推断。
+- render-contract suite使用显式声明`life-heal`的exact local profile，断言Reflect八命令中第7条为`play-animation(life-heal,restart=true)`、第8条才是life `set-hud`，锁定R1先动画后UpdateView顺序。
+- profile若不声明对应animation role仍由recording backend terminal fail-closed；现有无heal Reflect仍保持7命令，不插入合成animation。
+- `tsc`、Score/Life与render-contract suites通过；两个runner内dependency/evidence verifier通过，未运行Vite/Tauri整体构建。
+
 ## 2. 固定范围
 
 ### 2.1 纳入范围

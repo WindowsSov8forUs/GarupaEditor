@@ -124,6 +124,9 @@ equal(skillManager.snapshot().state, SituationSkillPlayState.Begin, "BS22 Begin"
 skillManager.update(Math.fround(1 / 60));
 equal(skillManager.snapshot().state, SituationSkillPlayState.Playing, "BS22 Playing");
 equal(skillRecord.snapshot().currentLife, 1300, "BS19 once heal");
+equal(skillManager.hasPendingLifeHealAnimation, true, "R1 applied once-heal exposes pending visual event");
+skillManager.commitPendingLifeHealAnimation();
+equal(skillManager.hasPendingLifeHealAnimation, false, "committed heal visual event is one-use");
 equal(bits(skillManager.projectScore(4).rate), "0x3F99999A", "BS24 score active effect");
 const neverDie = skillManager.projectDamage(-2000);
 equal(neverDie.damageGuardType, 2, "BS18 Never Die guard type");

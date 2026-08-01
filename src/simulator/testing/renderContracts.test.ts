@@ -19,6 +19,8 @@ import {
 } from "../backends/renderingValidation";
 import type { ScoreLifeStateProfile } from "../engine/data/scoreLifeState";
 import { evidenceRequired, ok, type SimulatorResult } from "../engine/evidence";
+import { InGameRecord } from "../engine/managers/inGameRecord";
+import { RenderCommandProducer } from "../engine/rendering/renderCommandProducer";
 import { createSimulatorEngine } from "../host/createSimulatorEngine";
 import { engineInput, noteBatch } from "./firstSliceFixtures";
 
@@ -556,7 +558,41 @@ async function testHudReflectAtomic(): Promise<void> {
     command.kind === "set-hud" &&
     Object.prototype.hasOwnProperty.call(command.state, "addScore")), false,
   "rejected HUD batch has zero scene mutation");
-  console.log("ok 5 - Score/Life plan commits HUD in R1 order and rejects atomically");
+  const healRenderer = new RecordingSimulatorRendererBackend();
+  const baseProfile = profile();
+  const healProfile: RenderResourceProfile = {
+    ...baseProfile,
+    assets: baseProfile.assets.map((asset) => ({ ...asset, animationRole: "life-heal" as const })),
+  };
+  requireOk(await healRenderer.prepare(SESSION, healProfile, new LocalProvider(), preflight()),
+    "life-heal renderer prepare");
+  const producer = new RenderCommandProducer(SESSION, healRenderer, RESOURCES);
+  const healRecord = new InGameRecord(1000, 1000, 2000);
+  const hudSetup = requireOk(producer.preflightHudSetup(healRecord.snapshot()), "life-heal HUD setup");
+  requireOk(hudSetup.commit(), "commit life-heal HUD setup");
+  const healReflect = requireOk(producer.preflightHudReflect({
+    batchIndex: 0,
+    entryCount: 1,
+    lifeHealAnimation: true,
+    reflect: {
+      batchIndex: 0,
+      entries: [{ slot: 0, ordinaryScore: 100, freeLiveEventBonusScore: 0, lifeDelta: 300, comboAfter: 1, stageEffectLevel: 0 }],
+      totalOrdinaryScore: 100,
+      totalFreeLiveEventBonusScore: 0,
+      representativeSlot: 0,
+      representativeRawResult: 4,
+    },
+    record: healRecord.snapshot(),
+  }), "preflight life-heal HUD reflect");
+  requireOk(healReflect.commit(), "commit life-heal HUD reflect");
+  const healCommands = healRenderer.commandSnapshot().slice(-8);
+  equal(healCommands[6]?.kind, "play-animation", "life-heal plays before Life UpdateView");
+  if (healCommands[6]?.kind !== "play-animation") throw new Error("missing life-heal command");
+  equal(healCommands[6].animationRole, "life-heal", "life-heal exact animation role");
+  equal(healCommands[6].restart, true, "life-heal restarts current non-loop clip");
+  equal(healCommands[7]?.kind, "set-hud", "Life UpdateView follows heal animation");
+  requireOk(healRenderer.dispose(), "dispose life-heal renderer");
+  console.log("ok 5 - Score/Life plan commits HUD/life-heal in R1 order and rejects atomically");
 }
 
 async function testHostReadyGate(): Promise<void> {
