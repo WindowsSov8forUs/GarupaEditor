@@ -390,6 +390,13 @@
 - 仅授权basic score/combo/result/life semantic和observed life-heal-before-life-update；未出现的AP、damage guard、Never Die、score/judge skill及mask runtime ordering、Pixi curve sampling均false，不把static asset存在外推为runtime route。
 - byte-idempotent builder/verifier重算trace、hook、HUD profile和Skill profile hash；Garupa冻结包更新为743项，未复制raw trace、资源bytes、实体PNG或IDA数据库。
 
+### 1.42 2026-08-01 RP12 terminal Pixi reset production子批
+
+- 修复Pixi在recording preflight因missing/duplicate/cross-session/overlap而进入terminal fault时仍保留live scene的问题：检测terminal state后立即逆序清空object/geometry/reference与全部detached reservation，并同步清空recording identities。
+- foreign/used commit或discard capability现在先锁定首个structured fault，再执行同一terminal reset；不得保留可复用scene handle或pending reservation。
+- context loss同样先锁定首错，再清空live scene与pending reservation；不自动reload texture/profile，base texture保持backend ownership直到显式dispose。
+- terminal cleanup逐对象best-effort继续，清理异常不得覆盖首个fault；已有scene-mutation catch复用同一集中路径。隔离`tsc`与Pixi suite通过。
+
 ## 2. 固定范围
 
 ### 2.1 纳入范围

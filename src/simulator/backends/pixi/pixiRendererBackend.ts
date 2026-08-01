@@ -183,7 +183,13 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
 
   preflight(commands: readonly RenderCommand[]): SimulatorResult<RenderCommandBatch> {
     const recordingBatch = this.recording.preflight(commands);
-    if (recordingBatch.status !== "ok") return recordingBatch;
+    if (recordingBatch.status !== "ok") {
+      if (this.recording.snapshot().state === "faulted") {
+        this.resetSceneAfterTerminalMutation();
+        this.recording.resetObjectsAfterTerminalRendererMutation();
+      }
+      return recordingBatch;
+    }
     const supported = this.validatePixiBatch(commands);
     if (supported.status !== "ok") {
       this.recording.discard(recordingBatch.value);
@@ -243,10 +249,13 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
   commit(batch: RenderCommandBatch): SimulatorResult<void> {
     const pending = this.pending.get(batch);
     if (pending === undefined) {
-      return this.recording.recordTerminalFault(
+      const fault = this.recording.recordTerminalFault(
         "render.pixi.invalid-batch-capability",
         "Pixi accepts only its own one-use preflight capability.",
       );
+      this.resetSceneAfterTerminalMutation();
+      this.recording.resetObjectsAfterTerminalRendererMutation();
+      return fault;
     }
     try {
       for (const command of pending.commands) {
@@ -270,10 +279,13 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
   discard(batch: RenderCommandBatch): SimulatorResult<void> {
     const pending = this.pending.get(batch);
     if (pending === undefined) {
-      return this.recording.recordTerminalFault(
+      const fault = this.recording.recordTerminalFault(
         "render.pixi.invalid-discard-capability",
         "Pixi discards only its exact pending batch capability.",
       );
+      this.resetSceneAfterTerminalMutation();
+      this.recording.resetObjectsAfterTerminalRendererMutation();
+      return fault;
     }
     this.pending.delete(batch);
     this.destroyUnownedReservations(pending.reservedNodes, pending.reservedGeometry);
@@ -297,15 +309,13 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         "Context-loss notification is valid only for an active or already faulted Pixi session.",
       );
     }
-    for (const pending of this.pending.values()) {
-      this.destroyUnownedReservations(pending.reservedNodes, pending.reservedGeometry);
-      this.recording.discard(pending.recordingBatch);
-    }
-    this.pending.clear();
-    return this.recording.recordTerminalFault(
+    const fault = this.recording.recordTerminalFault(
       "render.pixi.context-lost",
       "WebGL/WebGPU context loss is terminal for the current renderer session and never auto-reloads resources.",
     );
+    this.resetSceneAfterTerminalMutation();
+    this.recording.resetObjectsAfterTerminalRendererMutation();
+    return fault;
   }
 
   resourceSnapshot(): readonly {
@@ -668,7 +678,11 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     }
   }
 
-  private resetSceneAfterTerminalMutation(pending: PendingPixiBatch): void {
+  private resetSceneAfterTerminalMutation(pending?: PendingPixiBatch): void {
+    const pendingValues = pending === undefined
+      ? [...this.pending.values()]
+      : [pending, ...[...this.pending.values()].filter((value) => value !== pending)];
+    this.pending.clear();
     const records = [...this.objects.values()].reverse();
     this.objects.clear();
     this.spriteReferenceCounts.clear();
@@ -694,22 +708,24 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         }
       }
     }
-    for (const mesh of pending.reservedGeometry.values()) {
-      if (!mesh.destroyed) {
-        try {
-          destroyMesh(mesh);
-        } catch {
-          // Terminal cleanup is best effort after scene mutation has already failed.
+    for (const pendingValue of pendingValues) {
+      for (const mesh of pendingValue.reservedGeometry.values()) {
+        if (!mesh.destroyed) {
+          try {
+            destroyMesh(mesh);
+          } catch {
+            // Terminal cleanup is best effort after scene mutation has already failed.
+          }
         }
       }
-    }
-    for (const node of pending.reservedNodes.values()) {
-      if (!node.destroyed) {
-        try {
-          node.removeFromParent();
-          node.destroy({ children: true } as DestroyOptions);
-        } catch {
-          // The terminal renderer does not retain this reservation.
+      for (const node of pendingValue.reservedNodes.values()) {
+        if (!node.destroyed) {
+          try {
+            node.removeFromParent();
+            node.destroy({ children: true } as DestroyOptions);
+          } catch {
+            // The terminal renderer does not retain this reservation.
+          }
         }
       }
     }
