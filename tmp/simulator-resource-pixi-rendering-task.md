@@ -11,8 +11,8 @@
 - 锁定原作样本：`jp.co.craftegg.band` 10.1.4（version code 230，`arm64-v8a`）。
 - 锁定`libil2cpp.so` SHA-256：`815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F`。
 - 锁定`global-metadata.dat` SHA-256：`298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F`。
-- 当前Reverse基线提交：`e06940fb8f1e0519e49db3951cf5ed587e6edc2c`；只消费该提交及其祖先中已提交、已push、可校验对象。
-- 当前状态：**RP00–RP03已关闭；RP04/RP07/RP08的已证实producer子集与RP10本地provider已落地，当前实施RP10/RP11 Pixi v8后端。已闭合本地bytes browser decode、Texture/subtexture cache、Sprite bind、基础transform/portable ordering、引用计数与release；新增natural ordinary geometry R2已关闭mesh topology/vertices/UV/color/threshold、line endpoint/equal width与field/mesh transform载荷缺口，下一批可实施对应producer与Pixi mapping。mask、HUD可见布局、animation及RP12剩余矩阵继续失败关闭。原始HAB UnityFS、natural HAB R1与原始HAB frame保持`habahiro_exact_parity_gate=open-not-claimed`。`production_authorization=true`仅授权显式fidelity选择；必须显示`Approximate HABAHIRO`、禁止静默fallback、production/test联网、资源二进制入库与原作parity宣称。**
+- 当前Reverse基线提交：`6191b424412df955ce0a7d9e85716ee94d1ed3dc`；只消费该提交及其祖先中已提交、已push、可校验对象。
+- 当前状态：**RP00–RP03已关闭；RP04/RP07/RP08的已证实producer子集与RP10本地provider已落地，当前实施RP04–RP12剩余链。已闭合本地bytes browser decode、Texture/subtexture cache、Sprite bind、基础transform/portable ordering、引用计数与release；natural ordinary geometry R2已关闭mesh topology/vertices/UV/color/threshold、line endpoint/equal width与field/mesh transform载荷，current NoteSyncLine profile已关闭quad轮廓，新增ordinary projection profile关闭1600×720 world→Pixi endpoint/width映射。下一批直接落projection、producer与Pixi mapping；mask、HUD可见布局、animation及RP12剩余矩阵继续失败关闭并按批量缺口取证推进。原始HAB UnityFS、natural HAB R1与原始HAB frame保持`habahiro_exact_parity_gate=open-not-claimed`。`production_authorization=true`仅授权显式fidelity选择；必须显示`Approximate HABAHIRO`、禁止静默fallback、production/test联网、资源二进制入库与原作parity宣称。**
 - 计划证据包：`tmp/simulator-reverse-evidence/resource-pixi-rendering/`，只在Reverse新证据提交并push后创建。
 - 计划验收记录：`tmp/simulator-resource-pixi-rendering-acceptance.md`，RP14时创建。
 
@@ -293,6 +293,13 @@
 - Pixi suite用注入object factory建立已visible且持有exact Sprite texture reference的live parent，再令其`addChild`于下一批commit抛出JavaScript异常；allocation本身仍在preflight成功，故精确命中scene mutation terminal路径。
 - 断言first fault capability、`state=faulted`、recording objectCount=0、Pixi scene identity=0、stage child=0及resource reference=0；随后显式dispose释放两项base Texture并归零resourceCount。
 - 该case与既有decode/allocation/discard/context/duplicate prepare/repeated dispose组合运行，隔离Pixi suite和dependency verifier通过。
+
+### 1.29 2026-08-01 ordinary 1600×720正交投影取证批
+
+- Reverse `6191b424412df955ce0a7d9e85716ee94d1ed3dc`已提交并push；从锁定10.1.4 base APK的build index 3重新解析`Assets/star/Scenes/RhythmGame.unity`，锁定`GameCamera` orthographic size 1、position `(0,0,-15)`、无旋转/缩放与full normalized viewport。
+- 结合7个实体frame共同确认的1600×720 viewport，portable mapping固定为`pixelsPerWorldUnit=360`、`pixiX=800+worldX*360`、`pixiY=360-worldY*360`、`pixiWidth=worldWidth*360`；Float32 source先冻结再widen，不clamp。
+- verifier重算`RhythmGame.unity`/`globalgamemanagers`身份，并将R2全部24,470个endpoint与12,235个width写入投影；所有endpoint均在viewport/clip范围，投影width范围为0–25.190730392932892 pixel。
+- 该profile只授权ordinary固定1600×720 scene，不外推HABAHIRO、任意viewport适配、threshold clipping或Unity GPU raster parity；冻结包更新为737项，下一production批必须通过显式scene profile消费而非硬用Pixi raw world值。
 
 ## 2. 固定范围
 

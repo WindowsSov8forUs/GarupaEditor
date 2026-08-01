@@ -1,0 +1,94 @@
+{
+  "schema_version": 1,
+  "status": "confirmed-current-ordinary-rhythmgame-orthographic-projection",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "version_name": "10.1.4",
+    "version_code": 230,
+    "abi": "arm64-v8a"
+  },
+  "source": {
+    "base_apk_sha256": "D3A6005BB1F7341E39016521390DCEB987E56A0E5D16B6BA73568837A3026413",
+    "level3_sha256": "445FCF60C32222942D368D98B158F484D7E8E260B6237A6F595AE0C361DB75A8",
+    "globalgamemanagers_sha256": "4FAF6F639C552E93D62A5925C271299C2B17C0A293F4A03DBEEF02EA1C0C97FF",
+    "geometry_r2_path": "runtime/ordinary-rendering-geometry-r2.trace.json.gz",
+    "geometry_r2_sha256": "858AF1C08B50ED2047A3E3B7FACEEF97066F64F5FCB05D29A38244318A0E2E1E"
+  },
+  "scene": {
+    "build_index": 3,
+    "path": "Assets/star/Scenes/RhythmGame.unity",
+    "camera_game_object": "GameCamera",
+    "camera_path_id": 868,
+    "transform_path_id": 577,
+    "parent_game_object": "GamePlay",
+    "parent_transform_path_id": 544
+  },
+  "camera": {
+    "orthographic": true,
+    "orthographic_size": 1.0,
+    "near_clip": 0.0,
+    "far_clip": 25.0,
+    "position": [
+      0.0,
+      0.0,
+      -15.0
+    ],
+    "rotation": [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ],
+    "lossy_scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "normalized_viewport": [
+      0.0,
+      0.0,
+      1.0,
+      1.0
+    ]
+  },
+  "portable_viewport": {
+    "width": 1600,
+    "height": 720,
+    "pixi_origin": "top-left"
+  },
+  "mapping": {
+    "pixels_per_world_unit": 360.0,
+    "pixi_x": "800 + world_x * 360",
+    "pixi_y": "360 - world_y * 360",
+    "camera_depth": "world_z + 15",
+    "pixi_width": "world_width * 360",
+    "float_policy": "consume source Float32 value then widen for projection; no clamp"
+  },
+  "r2_validation": {
+    "endpoint_writes": 24470,
+    "width_writes": 12235,
+    "projected_x_range": [
+      377.3793888092041,
+      1223.086371421814
+    ],
+    "projected_y_range": [
+      28.570997714996338,
+      569.049825668335
+    ],
+    "camera_depth_range": [
+      1.0528173446655273,
+      1.8548221588134766
+    ],
+    "projected_width_range": [
+      0.0,
+      25.190730392932892
+    ],
+    "outside_view_or_clip_count": 0
+  },
+  "limits": [
+    "profile is fixed to ordinary 1600x720 physical-frame oracle",
+    "HABAHIRO projection is not implied",
+    "Unity GPU raster and threshold clipping are not implied"
+  ],
+  "unknown_fields": []
+}

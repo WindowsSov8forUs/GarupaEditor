@@ -43,6 +43,7 @@ The locked package files observed on the connected device are byte-identical to 
 - `runtime/ordinary-rendering-geometry-r2.trace.json.gz` adds 87,037 privacy-minimal setter events across 636 relative frames without return replacement, memory writes or managed invocation. It preserves exact Float32 bits for 22-vertex mesh arrays, indices, UV, colors, material threshold, line endpoints/equal widths and owner-scoped transforms.
 - `resource_pixi_rendering_geometry_oracle.json` rebuilds a compact exact oracle from R2: 510 mesh lifecycle owners, 80 line owners, invariant init topology and selected lifecycle/line/field trajectories. The full R2 remains the authoritative trajectory source.
 - `resource_pixi_rendering_line_profile.json` reparses the current APK NoteSyncLine prefab and SyncNoteLine material, then joins them only with the current R2 setter trajectory. It closes the portable single-segment textured-quad inputs: two world-space endpoints, equal width, View alignment, Stretch UV, zero cap/corner vertices, white color, no mask interaction and explicit non-parity raster boundary.
+- `resource_pixi_rendering_projection_profile.json` binds APK build index 3 to `RhythmGame.unity`, reparses its orthographic `GameCamera`/`GamePlay` hierarchy, and validates all 24,470 R2 line endpoints against the fixed 1600x720 physical-frame viewport. It closes the ordinary world-XY/width to Pixi top-left projection without extending the profile to HABAHIRO.
 - `runtime/resource-pixi-rendering-delivery-frame-manifest.json` locks seven privacy-reviewed physical-device ordinary PNG anchors at the observed 1600×720 viewport. Crops exclude identity-bearing Skill/pause text; no generated HABAHIRO frame is represented as original.
 - `habahiro_current_external_resource_profile.json` records the user-authorized Bestdori fallback: 12 live explorer/export assets, 179 Sprite rows and hashes whose 2026-03-31 release timestamps align with MasterMusic 786. Production remains offline and consumes only host-local hash-verified bytes.
 - `resource_pixi_rendering_delivery_oracle.json` and `delivery_closure.json` close the explicit `ordinary-exact-habahiro-degraded` delivery gate while retaining original HABAHIRO bundle/runtime/frame parity as open and unclaimed.
@@ -118,6 +119,7 @@ py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-
 py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\build_resource_pixi_rendering_setter_targets.py
 py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\build_resource_pixi_rendering_geometry_oracle.py
 py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\build_resource_pixi_rendering_line_profile.py
+py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\build_resource_pixi_rendering_projection_profile.py
 py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\build_resource_pixi_rendering_offline_closure.py
 py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\verify_resource_pixi_rendering_static_contract.py
 py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\verify_resource_pixi_rendering_resource_contract.py
@@ -129,6 +131,7 @@ py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-
 py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\verify_resource_pixi_rendering_delivery_oracle.py
 py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\verify_resource_pixi_rendering_geometry_runtime.py
 py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\verify_resource_pixi_rendering_line_profile.py
+py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\verify_resource_pixi_rendering_projection_profile.py
 py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\verify_resource_pixi_rendering_offline_closure.py
 ```
 
