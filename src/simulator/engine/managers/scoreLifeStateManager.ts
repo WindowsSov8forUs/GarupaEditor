@@ -265,7 +265,7 @@ export class ScoreLifeStateManager {
       entryCount: batch.entryCount,
       reflect,
       record: freezeRecordSnapshot(stagedRecord.snapshot()),
-      lifeHealAnimation: projections.some((entry) => entry.lifeDelta > 0),
+      lifeHealAnimation: this.skillManager.hasPendingLifeHealAnimation,
     });
     this.pendingReflect = Object.freeze({ plan, stagedRecord });
     return ok(plan);
@@ -281,6 +281,7 @@ export class ScoreLifeStateManager {
     }
     this.record.commitFromPreflight(this.pendingReflect.stagedRecord);
     this.lastReflectBatchValue = plan.reflect;
+    if (plan.lifeHealAnimation) this.skillManager.commitPendingLifeHealAnimation();
     this.traceValue.push(`reflect:${plan.batchIndex}:${plan.entryCount}`);
     this.pendingReflect = null;
     return ok(undefined);

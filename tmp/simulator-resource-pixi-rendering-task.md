@@ -371,7 +371,7 @@
 ### 1.39 2026-08-01 RP08/RP09 life-heal animation semantic production子批
 
 - natural ordinary R1在两次实体heal轨迹均观察到`InGameLifeGauge.playSkillEffectLifeHealAnimation`先于`UpdateView/updateLifeText`；current static profile锁定`LifeHealGauge` controller、1秒non-loop clip及曲线。
-- `ScoreLifeReflectPlan`新增owner-derived `lifeHealAnimation`，仅在本次Reflect至少一个实际`lifeDelta>0`时为true；不从最终life总值猜heal，也不扩展到R1未出现的damage-guard/Never Die。
+- `SituationSkillManager`在once-heal实际应用正值后设置one-use pending visual event；`ScoreLifeReflectPlan`只读取该owner event，commit Reflect后清除，discard保留。不得从最终life总值或damage `lifeDelta`猜heal，也不扩展到R1未出现的damage-guard/Never Die。
 - HUD producer在life `set-hud`前插入`play-animation(life-heal,restart=true)`，保持R1 caller顺序并与整个Reflect batch共用原子preflight/commit；profile缺exact animation role时由backend失败关闭。
 - Pixi尚无可采样的portable animation-channel profile输入，继续拒绝animation command而非no-op；本批只关闭engine semantic producer，不冒充可见动画已落地。`tsc`、Score/Life与render-contract回归通过。
 

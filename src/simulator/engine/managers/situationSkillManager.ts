@@ -50,6 +50,7 @@ export class SituationSkillManager {
   private reservationEncoreValue = false;
   private continuousWorstResultValue: Exclude<NoteResultTypeValue, -1> = 4;
   private crescendoRateValue = Math.fround(1);
+  private pendingLifeHealAnimationValue = false;
   private readonly playedSkillNoteIndices = new Set<number>();
   private readonly traceValue: string[] = [];
 
@@ -57,6 +58,14 @@ export class SituationSkillManager {
     private readonly profiles: ReadonlyMap<number, SituationSkillProfile>,
     private readonly record: InGameRecord,
   ) {}
+
+  get hasPendingLifeHealAnimation(): boolean {
+    return this.pendingLifeHealAnimationValue;
+  }
+
+  commitPendingLifeHealAnimation(): void {
+    this.pendingLifeHealAnimationValue = false;
+  }
 
   enqueue(skillNoteIndex: number, gameFrameCounter: number): boolean {
     const profile = this.profiles.get(skillNoteIndex);
@@ -246,7 +255,8 @@ export class SituationSkillManager {
     const amount = effect.valueType === "real-value"
       ? Math.trunc(effect.value)
       : Math.trunc((this.record.playerMaxLife * Math.trunc(effect.value)) / 100);
-    this.record.addLife(amount);
+    const applied = this.record.addLife(amount);
+    if (applied > 0) this.pendingLifeHealAnimationValue = true;
     this.traceValue.push(`heal:${amount}`);
   }
 
