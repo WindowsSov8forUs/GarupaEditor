@@ -142,6 +142,45 @@ export class InGameRecord {
     }
   }
 
+  cloneForPreflight(): InGameRecord {
+    const clone = new InGameRecord(
+      this.currentLifeValue,
+      this.playerMaxLife,
+      this.lifeUpperLimit,
+    );
+    clone.commitFromPreflight(this);
+    return clone;
+  }
+
+  commitFromPreflight(staged: InGameRecord): void {
+    if (
+      staged.playerMaxLife !== this.playerMaxLife ||
+      staged.lifeUpperLimit !== this.lifeUpperLimit
+    ) {
+      throw new Error("InGameRecord preflight profile identity changed");
+    }
+    this.scoreValue = staged.scoreValue;
+    this.freeLiveEventBonusScoreValue = staged.freeLiveEventBonusScoreValue;
+    this.reserveTotalScoreValue = staged.reserveTotalScoreValue;
+    this.currentLifeValue = staged.currentLifeValue;
+    this.currentComboValue = staged.currentComboValue;
+    this.maxComboValue = staged.maxComboValue;
+    this.currentLiveComboValue = staged.currentLiveComboValue;
+    this.currentLiveMaxComboValue = staged.currentLiveMaxComboValue;
+    this.perfectComboValue = staged.perfectComboValue;
+    for (let index = 0; index < this.resultCountsValue.length; index += 1) {
+      this.resultCountsValue[index] = staged.resultCountsValue[index]!;
+    }
+    this.fastCountValue = staged.fastCountValue;
+    this.slowCountValue = staged.slowCountValue;
+    this.allPerfectValue = staged.allPerfectValue;
+    this.oneNoteMaxValue = Object.freeze({ ...staged.oneNoteMaxValue });
+    this.freeLiveEventBonusOneNoteMaxValue = Object.freeze({
+      ...staged.freeLiveEventBonusOneNoteMaxValue,
+    });
+    this.singleGameOverValue = staged.singleGameOverValue;
+  }
+
   snapshot(): InGameRecordSnapshot {
     return {
       score: this.scoreValue,

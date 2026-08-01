@@ -16,6 +16,8 @@ import {
   type SimulatorResult,
 } from "../evidence";
 import type { NoteFamily } from "../data/noteData";
+import type { InGameRecordSnapshot } from "../managers/inGameRecord";
+import type { ScoreLifeReflectPlan } from "../managers/scoreLifeStateManager";
 
 export interface RenderEngineResourceBindings {
   readonly noteAtlasLogicalAssetId: string;
@@ -57,6 +59,16 @@ export class RenderOwnerTransaction {
     return discarded;
   }
 }
+
+const HUD_OBJECTS = Object.freeze({
+  addScore: "render:hud:add-score",
+  combo: "render:hud:combo",
+  result: "render:hud:result",
+  score: "render:hud:score",
+  life: "render:hud:life",
+  overlay: "render:hud:overlay",
+  fidelity: "render:hud:fidelity-label",
+});
 
 export class RenderCommandProducer {
   private frame = 0;
@@ -111,6 +123,125 @@ export class RenderCommandProducer {
     }
     this.substep = substep;
     return ok(undefined);
+  }
+
+  preflightHudSetup(
+    record: InGameRecordSnapshot,
+  ): SimulatorResult<RenderOwnerTransaction> {
+    const validation = this.validate();
+    if (validation.status !== "ok") return validation;
+    const base = this.commandBase(0);
+    const commands: RenderCommand[] = [];
+    const create = (
+      renderObjectId: string,
+      role: "hud-score" | "hud-combo" | "hud-result" | "hud-life" | "hud-overlay" | "fidelity-label",
+    ) => commands.push({
+      ...base(commands.length),
+      kind: "create-object",
+      renderObjectId,
+      poolFamily: role,
+      role,
+      parentObjectId: null,
+    });
+    create(HUD_OBJECTS.addScore, "hud-overlay");
+    create(HUD_OBJECTS.combo, "hud-combo");
+    commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: HUD_OBJECTS.combo });
+    create(HUD_OBJECTS.result, "hud-result");
+    commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: HUD_OBJECTS.result });
+    create(HUD_OBJECTS.score, "hud-score");
+    commands.push({
+      ...base(commands.length),
+      kind: "set-hud",
+      renderObjectId: HUD_OBJECTS.score,
+      hudRole: "score",
+      state: Object.freeze({ score: record.score }),
+    });
+    create(HUD_OBJECTS.life, "hud-life");
+    commands.push({
+      ...base(commands.length),
+      kind: "set-hud",
+      renderObjectId: HUD_OBJECTS.life,
+      hudRole: "life",
+      state: lifeHudState(record),
+    });
+    create(HUD_OBJECTS.overlay, "hud-overlay");
+    commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: HUD_OBJECTS.overlay });
+    const fidelity = this.renderer.snapshot().fidelity;
+    if (fidelity?.mode === "habahiro" && fidelity.fidelity === "degraded") {
+      create(HUD_OBJECTS.fidelity, "fidelity-label");
+      commands.push({
+        ...base(commands.length),
+        kind: "set-hud",
+        renderObjectId: HUD_OBJECTS.fidelity,
+        hudRole: "fidelity-label",
+        state: Object.freeze({ label: fidelity.visibleLabel, visible: true }),
+      });
+    }
+    return this.preflight(commands);
+  }
+
+  preflightHudReflect(
+    plan: ScoreLifeReflectPlan,
+  ): SimulatorResult<RenderOwnerTransaction> {
+    const validation = this.validate();
+    if (validation.status !== "ok") return validation;
+    const base = this.commandBase(this.substep);
+    const commands: RenderCommand[] = [];
+    commands.push({
+      ...base(commands.length),
+      kind: "set-hud",
+      renderObjectId: HUD_OBJECTS.addScore,
+      hudRole: "overlay",
+      state: Object.freeze({
+        addScore: plan.reflect.totalOrdinaryScore,
+        freeLiveEventBonusAddScore: plan.reflect.totalFreeLiveEventBonusScore,
+      }),
+    });
+    commands.push({
+      ...base(commands.length),
+      kind: "set-hud",
+      renderObjectId: HUD_OBJECTS.combo,
+      hudRole: "combo",
+      state: Object.freeze({
+        combo: plan.record.currentCombo,
+        allPerfect: plan.record.allPerfect,
+      }),
+    });
+    commands.push({
+      ...base(commands.length),
+      kind: plan.record.currentCombo > 0 ? "activate-object" : "hide-object",
+      renderObjectId: HUD_OBJECTS.combo,
+    });
+    commands.push({
+      ...base(commands.length),
+      kind: "activate-object",
+      renderObjectId: HUD_OBJECTS.result,
+    });
+    commands.push({
+      ...base(commands.length),
+      kind: "set-hud",
+      renderObjectId: HUD_OBJECTS.result,
+      hudRole: "result",
+      state: Object.freeze({
+        representativeSlot: plan.reflect.representativeSlot,
+        representativeResult: plan.reflect.representativeRawResult,
+      }),
+    });
+    commands.push({
+      ...base(commands.length),
+      kind: "set-hud",
+      renderObjectId: HUD_OBJECTS.score,
+      hudRole: "score",
+      state: Object.freeze({ score: plan.record.score }),
+    });
+    commands.push({
+      ...base(commands.length),
+      kind: "set-hud",
+      renderObjectId: HUD_OBJECTS.life,
+      hudRole: "life",
+      state: lifeHudState(plan.record),
+    });
+    return this.preflight(commands);
   }
 
   preflightPoolSetup(
@@ -326,6 +457,17 @@ function resolveLaneSuffix(
     );
   }
   return ok(lanes.join("_"));
+}
+
+function lifeHudState(
+  record: InGameRecordSnapshot,
+): Readonly<Record<string, string | number | boolean | null>> {
+  return Object.freeze({
+    currentLife: record.currentLife,
+    playerMaxLife: record.playerMaxLife,
+    lifeUpperLimit: record.lifeUpperLimit,
+    singleGameOver: record.singleGameOver,
+  });
 }
 
 function transactionRejected(

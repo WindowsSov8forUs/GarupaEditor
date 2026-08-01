@@ -42,6 +42,18 @@ export interface ScoreLifeReflectBatch {
   readonly representativeRawResult: 0 | 1 | 2 | 3 | 4;
 }
 
+export interface ScoreLifeReflectPlan {
+  readonly batchIndex: number;
+  readonly entryCount: number;
+  readonly reflect: ScoreLifeReflectBatch;
+  readonly record: InGameRecordSnapshot;
+}
+
+interface PendingScoreLifeReflect {
+  readonly plan: ScoreLifeReflectPlan;
+  readonly stagedRecord: InGameRecord;
+}
+
 export interface ScoreLifeStateSnapshot {
   readonly initialization: ScoreLifeInitializationSnapshot;
   readonly record: InGameRecordSnapshot;
@@ -61,6 +73,7 @@ export class ScoreLifeStateManager {
   private readonly notesByIndex = new Map<number, NoteInformation>();
   private gameFrameCounterValue = 0;
   private lastReflectBatchValue: ScoreLifeReflectBatch | null = null;
+  private pendingReflect: PendingScoreLifeReflect | null = null;
   private readonly traceValue: string[] = [];
 
   private constructor(
@@ -169,7 +182,17 @@ export class ScoreLifeStateManager {
     return business;
   }
 
-  reflect(batch: OneFrameJudgementBatch): SimulatorResult<void> {
+  preflightReflect(
+    batch: OneFrameJudgementBatch,
+  ): SimulatorResult<ScoreLifeReflectPlan> {
+    if (this.pendingReflect !== null || batch.entries.length === 0) {
+      return evidenceRequired(
+        "score-life.reflect-plan-overlap-or-empty",
+        ["SLS-D02", "SLS-D20", "BS10", "RPR-D13", "PR33"],
+        "Exactly one non-empty owner Reflect batch may be planned without mutation.",
+      );
+    }
+    const stagedRecord = this.record.cloneForPreflight();
     const projections: ScoreLifeReflectEntry[] = [];
     let totalOrdinaryScore = 0;
     let totalBonusScore = 0;
@@ -183,9 +206,9 @@ export class ScoreLifeStateManager {
           "A configured Score/Life session cannot Reflect an entry that was not frozen by its business owner at Setup.",
         );
       }
-      this.record.addCombo(entry.addCombo);
+      stagedRecord.addCombo(entry.addCombo);
       const comboRate = this.scoreUtility.getComboCorrectionRate(
-        this.record.currentCombo,
+        stagedRecord.currentCombo,
         this.profile.mode,
         entry.buttonTypes,
       );
@@ -197,21 +220,21 @@ export class ScoreLifeStateManager {
       );
       const festival = this.getFestivalStageProjection(
         business.adjustedResult,
-        this.record.currentCombo,
-        this.record.currentLife,
+        stagedRecord.currentCombo,
+        stagedRecord.currentLife,
         business.addScore,
       );
       ordinaryScore = Math.trunc(Math.fround(ordinaryScore * festival.rate));
-      this.record.addScore(ordinaryScore);
-      this.record.addFreeLiveEventBonusScore(bonusScore);
-      const lifeDelta = this.record.addLife(business.addPower);
-      this.record.incrementResult(business.adjustedResult, entry.judgeTiming);
-      this.record.updateOneNoteMax(
+      stagedRecord.addScore(ordinaryScore);
+      stagedRecord.addFreeLiveEventBonusScore(bonusScore);
+      const lifeDelta = stagedRecord.addLife(business.addPower);
+      stagedRecord.incrementResult(business.adjustedResult, entry.judgeTiming);
+      stagedRecord.updateOneNoteMax(
         ordinaryScore,
         business.skillScoreUpRate,
         business.feverScoreUpRate > 1,
       );
-      this.record.updateFreeLiveEventBonusOneNoteMax(
+      stagedRecord.updateFreeLiveEventBonusOneNoteMax(
         bonusScore,
         business.skillScoreUpRate,
         business.feverScoreUpRate > 1,
@@ -224,11 +247,11 @@ export class ScoreLifeStateManager {
         ordinaryScore,
         freeLiveEventBonusScore: bonusScore,
         lifeDelta,
-        comboAfter: this.record.currentCombo,
+        comboAfter: stagedRecord.currentCombo,
         stageEffectLevel: festival.level,
       }));
     }
-    this.lastReflectBatchValue = Object.freeze({
+    const reflect = Object.freeze({
       batchIndex: batch.batchIndex,
       entries: Object.freeze(projections),
       totalOrdinaryScore,
@@ -236,8 +259,46 @@ export class ScoreLifeStateManager {
       representativeSlot: representative.slot,
       representativeRawResult: representative.rawResult,
     });
-    this.traceValue.push(`reflect:${batch.batchIndex}:${batch.entryCount}`);
+    const plan = Object.freeze({
+      batchIndex: batch.batchIndex,
+      entryCount: batch.entryCount,
+      reflect,
+      record: freezeRecordSnapshot(stagedRecord.snapshot()),
+    });
+    this.pendingReflect = Object.freeze({ plan, stagedRecord });
+    return ok(plan);
+  }
+
+  commitReflect(plan: ScoreLifeReflectPlan): SimulatorResult<void> {
+    if (this.pendingReflect?.plan !== plan) {
+      return evidenceRequired(
+        "score-life.invalid-reflect-plan",
+        ["SLS-D20", "BS10", "RPR-D13", "PR33", "PR38"],
+        "Only the exact one-use Score/Life Reflect plan may commit owner state.",
+      );
+    }
+    this.record.commitFromPreflight(this.pendingReflect.stagedRecord);
+    this.lastReflectBatchValue = plan.reflect;
+    this.traceValue.push(`reflect:${plan.batchIndex}:${plan.entryCount}`);
+    this.pendingReflect = null;
     return ok(undefined);
+  }
+
+  discardReflect(plan: ScoreLifeReflectPlan): SimulatorResult<void> {
+    if (this.pendingReflect?.plan !== plan) {
+      return evidenceRequired(
+        "score-life.invalid-reflect-discard",
+        ["SLS-D20", "BS10", "RPR-D13", "PR33", "PR38"],
+        "Only the exact pending Reflect plan may be discarded before owner mutation.",
+      );
+    }
+    this.pendingReflect = null;
+    return ok(undefined);
+  }
+
+  reflect(batch: OneFrameJudgementBatch): SimulatorResult<void> {
+    const planned = this.preflightReflect(batch);
+    return planned.status === "ok" ? this.commitReflect(planned.value) : planned;
   }
 
   updateFeverMemberPoint(
@@ -463,6 +524,19 @@ function validFever(fever: ScoreLifeStateProfile["fever"]): boolean {
   return fever !== null && typeof fever === "object" &&
     ["easy", "normal", "hard", "expert", "special"].includes(fever.difficulty) &&
     isInt32(fever.ownTeamMemberCount) && fever.ownTeamMemberCount > 0;
+}
+
+function freezeRecordSnapshot(
+  snapshot: InGameRecordSnapshot,
+): InGameRecordSnapshot {
+  return Object.freeze({
+    ...snapshot,
+    resultCounts: Object.freeze([...snapshot.resultCounts]) as InGameRecordSnapshot["resultCounts"],
+    oneNoteMax: Object.freeze({ ...snapshot.oneNoteMax }),
+    freeLiveEventBonusOneNoteMax: Object.freeze({
+      ...snapshot.freeLiveEventBonusOneNoteMax,
+    }),
+  });
 }
 
 function correctedScore(source: number, comboRate: number, scoreUpRate: number): number {

@@ -320,6 +320,7 @@ export function createSimulatorEngine(
     oneFrameJudgementController,
     inputManager,
     scoreLifeStateManager,
+    renderProducer,
   );
   const inGameDirector = new InGameDirector(
     inGameManager,

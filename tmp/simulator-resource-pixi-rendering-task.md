@@ -12,7 +12,7 @@
 - 锁定`libil2cpp.so` SHA-256：`815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F`。
 - 锁定`global-metadata.dat` SHA-256：`298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F`。
 - 当前Reverse基线提交：`60410ae02f69b9d78cc554717b3dd04b941cd0c2`；只消费该提交及其祖先中已提交、已push、可校验对象。
-- 当前状态：**RP00–RP03已关闭；RP04正在实施。Note pool setup与front Sprite activation producer已用两阶段batch接入，下一子批为deactivate/update、mesh/line与HUD Reflect producer。原始HAB UnityFS、natural HAB R1与原始HAB frame保持`habahiro_exact_parity_gate=open-not-claimed`。`production_authorization=true`仅授权显式fidelity选择；必须显示`Approximate HABAHIRO`、禁止静默fallback、production/test联网、资源二进制入库与原作parity宣称。**
+- 当前状态：**RP00–RP03已关闭；RP04正在实施。Note root setup/activate/deactivate与基础Score/Combo/Result/Life HUD Reflect producer已接入；下一子批为Note transform、mesh/line/mask及Skill/HUD animation。原始HAB UnityFS、natural HAB R1与原始HAB frame保持`habahiro_exact_parity_gate=open-not-claimed`。`production_authorization=true`仅授权显式fidelity选择；必须显示`Approximate HABAHIRO`、禁止静默fallback、production/test联网、资源二进制入库与原作parity宣称。**
 - 计划证据包：`tmp/simulator-reverse-evidence/resource-pixi-rendering/`，只在Reverse新证据提交并push后创建。
 - 计划验收记录：`tmp/simulator-resource-pixi-rendering-acceptance.md`，RP14时创建。
 
@@ -167,6 +167,15 @@
 - ordinary key严格使用lane 0–6：Normal/short-rhythm/Skill/Long/Slide/Flick分别路由`note_normal`/`note_normal_16`/`note_skill`/`note_long`/`note_flick`；Directional使用独立atlas的`note_flick_l|r_<lane>`。HAB只接受升序连续range并生成完整`_<lane...>`后缀；ordinary multi-lane、未知方向、Multiple专用visual与未闭合front family失败关闭，不用alias。
 - host rendering input新增不可缺失的Note/Directional logical asset bindings；producer在chart/domain owner创建前验证非空binding与prepared fidelity session。backend仍逐命令验证logical ID/exact key，因此宿主不能借binding绕过profile。
 - 本子批不发送transform、mesh、line、mask或HUD命令；这些保持后续RP04–RP09工作，不用默认值/no-op补齐。隔离`tsc`、dependency、17项first-slice与render-contract回归通过；production host test确认`create→hide→activate→exact bind→hide→deactivate`六命令顺序。
+
+### 1.12 2026-08-01 RP04/RP08基础HUD production子批
+
+- `InGameRecord.cloneForPreflight()`复制全部Score/Life/Combo/result/max/game-over状态；`commitFromPreflight()`只接受相同max/upper profile identity并一次覆盖，不在planning阶段修改live owner。
+- `ScoreLifeStateManager`将原`reflect()`拆为一次性`preflightReflect→commitReflect/discardReflect`：全部entry在clone上执行原顺序与Float32/Int32计算，冻结future record、per-entry projection及representative result；旧`reflect()`仍用同一两阶段路径保持上游API兼容。
+- 有Score/Life profile时，`InGameManager.initialize()`在Note pool前建立AddScore、Combo、Result、Score、Life与overlay稳定HUD identity，冻结初始Score/Life，Combo/Result/overlay初始隐藏；HAB degraded额外创建并持续显示`Approximate HABAHIRO` fidelity label。
+- OneFrame Reflect后先生成Score plan，再按ordinary R1首判定顺序preflight七命令：`AddScore state→Combo state→Combo Show/Hide→Result Show→Result state→Score state→Life state`。renderer拒绝会discard Score plan并在Record mutation前fault；通过后先commit领域plan再提交已验证renderer capability。
+- HUD state只消费owner已冻结的score/combo/allPerfect/result/current/max/upper/game-over与batch totals，不让backend重算Score/Life/representative result。本批不实现digit layout、颜色、fill geometry、clip clock或Skill overlay，留给RP08/RP09专批。
+- `tsc`、score-life-state全回归、render-contract与dependency通过；host测试确认future HUD score等于commit后的Record且七命令顺序匹配R1。
 
 ## 2. 固定范围
 

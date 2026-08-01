@@ -133,6 +133,12 @@ export {
 export type { FeverTimeCommandName } from "./engine/managers/feverTimeManager";
 export { SituationSkillPlayState } from "./engine/managers/situationSkillManager";
 export { countMaximumNotes } from "./engine/managers/scoreLifeStateManager";
+export type {
+  ScoreLifeReflectBatch,
+  ScoreLifeReflectEntry,
+  ScoreLifeReflectPlan,
+  ScoreLifeStateSnapshot,
+} from "./engine/managers/scoreLifeStateManager";
 export {
   JudgeTiming,
   NoteResultType,

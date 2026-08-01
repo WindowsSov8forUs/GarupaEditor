@@ -18,6 +18,7 @@ import { ScoreLifeStateManager } from "./scoreLifeStateManager";
 import type { FeverTimeCommandName } from "./feverTimeManager";
 import { InputManager } from "./inputBoundaries";
 import { NoteManager } from "./noteManager";
+import type { RenderCommandProducer } from "../rendering/renderCommandProducer";
 
 export interface InGameManagerSnapshot extends EngineLifecycleSnapshot {
   readonly fault: EvidenceRequired | null;
@@ -42,6 +43,7 @@ export class InGameManager {
     readonly oneFrameJudgementController: InGameOneFrameJudgementController,
     readonly inputManager: InputManager,
     readonly scoreLifeStateManager: ScoreLifeStateManager | null = null,
+    private readonly renderProducer: RenderCommandProducer | null = null,
   ) {}
 
   get state(): EngineLifecycleState {
@@ -66,6 +68,14 @@ export class InGameManager {
     const noteValidation = this.noteManager.validateSetup();
     if (noteValidation.status !== "ok") {
       return noteValidation;
+    }
+    const hudSetup = this.scoreLifeStateManager !== null && this.renderProducer !== null
+      ? this.renderProducer.preflightHudSetup(this.scoreLifeStateManager.record.snapshot())
+      : null;
+    if (hudSetup?.status === "evidence-required") return hudSetup;
+    if (hudSetup?.status === "ok") {
+      const committed = hudSetup.value.commit();
+      if (committed.status !== "ok") return committed;
     }
     const inputInitialization = this.inputManager.initialize();
     if (inputInitialization.status !== "ok") {
@@ -122,8 +132,22 @@ export class InGameManager {
         return this.latchFault(reflectResult);
       }
       if (reflectResult.value !== null && this.scoreLifeStateManager !== null) {
-        const businessReflect = this.scoreLifeStateManager.reflect(reflectResult.value);
-        if (businessReflect.status !== "ok") return this.latchFault(businessReflect);
+        const businessPlan = this.scoreLifeStateManager.preflightReflect(reflectResult.value);
+        if (businessPlan.status !== "ok") return this.latchFault(businessPlan);
+        const renderPlan = this.renderProducer?.preflightHudReflect(businessPlan.value) ?? null;
+        if (renderPlan?.status === "evidence-required") {
+          this.scoreLifeStateManager.discardReflect(businessPlan.value);
+          return this.latchFault(renderPlan);
+        }
+        const businessReflect = this.scoreLifeStateManager.commitReflect(businessPlan.value);
+        if (businessReflect.status !== "ok") {
+          if (renderPlan?.status === "ok") renderPlan.value.discard();
+          return this.latchFault(businessReflect);
+        }
+        if (renderPlan?.status === "ok") {
+          const committed = renderPlan.value.commit();
+          if (committed.status !== "ok") return this.latchFault(committed);
+        }
       }
     }
     return ok(undefined);
