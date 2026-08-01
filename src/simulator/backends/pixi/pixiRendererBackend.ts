@@ -50,12 +50,14 @@ interface PixiObjectRecord {
   hudState: Readonly<Record<string, string | number | boolean | null>> | null;
   spriteBindingKey: string | null;
   spriteContent: Sprite | null;
+  materialTexture: Texture | null;
   geometryContent: Mesh | null;
 }
 
 interface PixiShadowObject {
   readonly role: string;
   readonly parentObjectId: string | null;
+  readonly materialBound: boolean;
 }
 
 export class PixiRendererBackend implements SimulatorRendererBackend {
@@ -209,6 +211,8 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           reservedNodes.set(command.sequence, node);
         } else if (command.kind === "set-mesh") {
           reservedGeometry.set(command.sequence, createEvidenceMesh(command));
+        } else if (command.kind === "set-line") {
+          reservedGeometry.set(command.sequence, createEvidenceLine(command));
         }
       }
     } catch {
@@ -379,11 +383,22 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       case "set-hud":
         return false;
       case "bind-resource":
-        return command.binding === "sprite" && command.exactKey !== null &&
-          this.spriteTextures.has(spriteKey(command.logicalAssetId, command.exactKey));
+        if (command.binding === "sprite") {
+          return command.exactKey !== null &&
+            this.spriteTextures.has(spriteKey(command.logicalAssetId, command.exactKey));
+        }
+        if (command.binding === "material" && command.exactKey === null) {
+          const asset = this.profile?.assets.find(
+            (candidate) => candidate.logicalAssetId === command.logicalAssetId,
+          );
+          return asset?.materialRole === "sync-line" &&
+            this.baseTextures.has(command.logicalAssetId);
+        }
+        return false;
       case "set-mesh":
         return command.materialRole === "long-note" || command.materialRole === "curve-note";
       case "set-line":
+        return command.materialRole === "sync-line";
       case "set-threshold":
       case "play-animation":
       case "stop-animation":
@@ -402,6 +417,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         parentObjectId: value.node.parent === this.stage
           ? null
           : nodeIds.get(value.node.parent as Container) ?? null,
+        materialBound: value.materialTexture !== null,
       });
     }
     for (const command of commands) {
@@ -417,6 +433,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           shadow.set(command.renderObjectId, {
             role: command.role,
             parentObjectId: command.parentObjectId,
+            materialBound: false,
           });
           break;
         case "release-object":
@@ -430,14 +447,25 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           }
           shadow.delete(command.renderObjectId);
           break;
-        case "bind-resource":
-          if (!spriteRole(shadow.get(command.renderObjectId)!.role)) {
+        case "bind-resource": {
+          const role = shadow.get(command.renderObjectId)!.role;
+          if (
+            (command.binding === "sprite" && !spriteRole(role)) ||
+            (command.binding === "material" && role !== "sync-line")
+          ) {
             return reject(
-              "render.pixi.sprite-binding-role-mismatch",
-              "A Sprite resource binding requires an engine-authored Sprite-compatible object role.",
+              "render.pixi.resource-binding-role-mismatch",
+              "Sprite and sync-line material bindings require their exact engine-authored object roles.",
             );
           }
+          if (command.binding === "material") {
+            shadow.set(command.renderObjectId, {
+              ...shadow.get(command.renderObjectId)!,
+              materialBound: true,
+            });
+          }
           break;
+        }
         case "activate-object":
         case "hide-object":
         case "deactivate-object":
@@ -454,8 +482,19 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
             );
           }
           break;
-        case "set-hud":
         case "set-line":
+          if (
+            shadow.get(command.renderObjectId)!.role !== "sync-line" ||
+            !shadow.get(command.renderObjectId)!.materialBound ||
+            !isEvidenceLine(command)
+          ) {
+            return reject(
+              "render.pixi.line-outside-r2-profile",
+              "Pixi accepts only a positive-width non-degenerate ordinary R2 sync-line segment.",
+            );
+          }
+          break;
+        case "set-hud":
         case "set-threshold":
         case "play-animation":
         case "stop-animation":
@@ -488,6 +527,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           hudState: null,
           spriteBindingKey: null,
           spriteContent: spriteChild(node),
+          materialTexture: null,
           geometryContent: null,
         });
         return;
@@ -510,14 +550,25 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       }
       case "bind-resource": {
         const object = this.objects.get(command.renderObjectId)!;
-        const node = object.spriteContent!;
-        const bindingKey = spriteKey(command.logicalAssetId, command.exactKey!);
-        node.texture = this.spriteTextures.get(bindingKey)!;
-        node.anchor.copyFrom(node.texture.defaultAnchor ?? { x: 0, y: 0 });
         const asset = this.profile!.assets.find(
           (candidate) => candidate.logicalAssetId === command.logicalAssetId,
         )!;
-        node.blendMode = asset.textureSettings!.blendMode;
+        const bindingKey = command.binding === "sprite"
+          ? spriteKey(command.logicalAssetId, command.exactKey!)
+          : materialKey(command.logicalAssetId);
+        if (command.binding === "sprite") {
+          const node = object.spriteContent!;
+          node.texture = this.spriteTextures.get(bindingKey)!;
+          node.anchor.copyFrom(node.texture.defaultAnchor ?? { x: 0, y: 0 });
+          node.blendMode = asset.textureSettings!.blendMode;
+        } else {
+          const texture = this.baseTextures.get(command.logicalAssetId)!;
+          object.materialTexture = texture;
+          if (object.geometryContent !== null) {
+            object.geometryContent.texture = texture;
+            object.geometryContent.blendMode = asset.textureSettings!.blendMode;
+          }
+        }
         if (object.spriteBindingKey !== bindingKey) {
           if (object.spriteBindingKey !== null) {
             this.decrementSpriteReference(object.spriteBindingKey);
@@ -558,7 +609,21 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         object.geometryContent = mesh;
         return;
       }
-      case "set-line":
+      case "set-line": {
+        const object = this.objects.get(command.renderObjectId)!;
+        if (object.geometryContent !== null) destroyMesh(object.geometryContent);
+        const mesh = reservedGeometry.get(command.sequence)!;
+        if (object.materialTexture !== null) {
+          mesh.texture = object.materialTexture;
+          const asset = this.profile!.assets.find(
+            (candidate) => this.baseTextures.get(candidate.logicalAssetId) === object.materialTexture,
+          )!;
+          mesh.blendMode = asset.textureSettings!.blendMode;
+        }
+        object.node.addChild(mesh);
+        object.geometryContent = mesh;
+        return;
+      }
       case "set-threshold":
       case "play-animation":
       case "stop-animation":
@@ -630,6 +695,39 @@ class CachingProvider implements SimulatorResourceProvider {
 }
 
 type SetMeshCommand = Extract<RenderCommand, { readonly kind: "set-mesh" }>;
+type SetLineCommand = Extract<RenderCommand, { readonly kind: "set-line" }>;
+
+function isEvidenceLine(command: SetLineCommand): boolean {
+  return command.materialRole === "sync-line" &&
+    command.width.value > 0 &&
+    Math.hypot(
+      command.end.x.value - command.start.x.value,
+      command.end.y.value - command.start.y.value,
+    ) > 0;
+}
+
+function createEvidenceLine(command: SetLineCommand): Mesh {
+  if (!isEvidenceLine(command)) throw new Error("line outside R2 profile");
+  const dx = command.end.x.value - command.start.x.value;
+  const dy = command.end.y.value - command.start.y.value;
+  const length = Math.hypot(dx, dy);
+  const halfWidth = command.width.value / 2;
+  const nx = -dy / length * halfWidth;
+  const ny = dx / length * halfWidth;
+  const geometry = new MeshGeometry({
+    positions: new Float32Array([
+      command.start.x.value + nx, command.start.y.value + ny,
+      command.end.x.value + nx, command.end.y.value + ny,
+      command.end.x.value - nx, command.end.y.value - ny,
+      command.start.x.value - nx, command.start.y.value - ny,
+    ]),
+    uvs: new Float32Array([0, 0, 1, 0, 1, 1, 0, 1]),
+    indices: new Uint32Array([0, 1, 2, 0, 2, 3]),
+    topology: "triangle-list",
+    shrinkBuffersToFit: true,
+  });
+  return new Mesh({ geometry, texture: Texture.EMPTY, roundPixels: false });
+}
 
 function isEvidenceMesh(command: SetMeshCommand): boolean {
   if (
@@ -724,6 +822,10 @@ function spriteKey(logicalAssetId: string, exactKey: string): string {
   return `${logicalAssetId}\u0000${exactKey}`;
 }
 
+function materialKey(logicalAssetId: string): string {
+  return `${logicalAssetId}\u0000`;
+}
+
 function rgbTint(red: number, green: number, blue: number): number {
   const byte = (value: number) => Math.round(value * 255);
   return (byte(red) << 16) | (byte(green) << 8) | byte(blue);
@@ -760,6 +862,22 @@ function copyPixiCommand(command: RenderCommand): RenderCommand {
         blue: Object.freeze({ ...value.blue }),
         alpha: Object.freeze({ ...value.alpha }),
       }))),
+    });
+  }
+  if (command.kind === "set-line") {
+    return Object.freeze({
+      ...command,
+      start: Object.freeze({
+        x: Object.freeze({ ...command.start.x }),
+        y: Object.freeze({ ...command.start.y }),
+        z: Object.freeze({ ...command.start.z }),
+      }),
+      end: Object.freeze({
+        x: Object.freeze({ ...command.end.x }),
+        y: Object.freeze({ ...command.end.y }),
+        z: Object.freeze({ ...command.end.z }),
+      }),
+      width: Object.freeze({ ...command.width }),
     });
   }
   if (command.kind === "set-hud") {

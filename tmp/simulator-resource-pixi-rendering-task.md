@@ -267,6 +267,14 @@
 - portable mapping锁定为camera-facing textured quad、butt cap、single segment无join、UV `(0,0)(1,0)(1,1)(0,1)`及indices `0,1,2,0,2,3`；width直接消费R2 typed equal width。它明确不宣称half-texel、Shader LOD或GPU raster parity。
 - builder/verifier重读current APK并要求byte-idempotent输出，同时重锁R2 source hash；Garupa冻结包更新为734项。该批关闭Line primitive mapping输入，不关闭`_Threshold` shader clip。
 
+### 1.25 2026-08-01 RP11 ordinary NoteSyncLine Pixi mapping生产子批
+
+- Pixi capability现只为`sync-line` role接受`binding=material`、`exactKey=null`且profile `materialRole=sync-line`的已hash/decode本地PNG；line object在material bind前收到`set-line`会于scene mutation前失败关闭，禁止Texture.EMPTY或白纹理fallback。
+- `set-line`只接受positive Float32 width与typed endpoint在portable XY平面上的非退化segment，preflight预留4-vertex/6-index `MeshGeometry`：vertices按半宽法线生成，UV与indices逐项使用current profile固定值，texture mode消费exact base Texture。
+- Z Float32仍保留于typed command/evidence但不被二维quad几何隐式改写；camera/scene projection尚无current contract，故该mapping只消费producer提供的portable XY endpoint，不宣称raw Unity world-space到1600×720 pixel parity。
+- Material bind与Sprite bind共用显式resource引用计数；bind-before-geometry及geometry replacement均复用同一base Texture，release/dispose销毁owned Geometry但不误销毁prepare-owned Texture。
+- Line Geometry与object一样在preflight detached reservation；allocation throw、discard、context loss及terminal dispose归零reservation。`_Threshold`、half-texel及Unity GPU raster继续失败关闭。
+
 ## 2. 固定范围
 
 ### 2.1 纳入范围
