@@ -12,7 +12,7 @@
 - 锁定`libil2cpp.so` SHA-256：`815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F`。
 - 锁定`global-metadata.dat` SHA-256：`298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F`。
 - 当前Reverse基线提交：`dd61e432202d2f1cc651b755cd69e09e73083947`；只消费该提交及其祖先中已提交、已push、可校验对象。
-- 当前状态：**RP00–RP03、RP10、RP12、RP13已关闭；RP04–RP09与RP11仅关闭任务书1.31–1.47记录的已证实子集。RP14独立验收已执行但不通过，详见`tmp/simulator-resource-pixi-rendering-acceptance.md`：ordinary Normal root scene/motion与simultaneous Normal sync-line lifecycle已接线；after/icon/mesh、非Normal sync与Multiple child owner、advanced/threshold/mask、Pixi可见HUD/slider/animation及degraded visible label仍失败关闭。ordinary projection、typed Note motion、22/60 base mesh、sync-line、field explicit plan、basic HUD/life-heal semantic与terminal fault矩阵已落地；743项证据verifier与render production回归通过。原始HAB UnityFS、natural HAB R1与原始HAB frame保持`habahiro_exact_parity_gate=open-not-claimed`。`production_authorization=true`只授权显式fidelity profile，不等于production surface已全部实现；禁止静默fallback、production/test联网、资源二进制入库与原作parity宣称。**
+- 当前状态：**RP00–RP03、RP10、RP12、RP13已关闭；RP04–RP09与RP11仅关闭任务书1.31–1.47记录的已证实子集。RP14独立验收已执行但不通过，详见`tmp/simulator-resource-pixi-rendering-acceptance.md`：ordinary Normal root scene/motion与simultaneous Normal sync-line lifecycle已接线；after/icon/mesh、非Normal sync与Multiple child owner、advanced/threshold/mask、Pixi可见HUD/slider/animation及degraded visible label仍失败关闭。ordinary projection、typed Note motion、22/60 base mesh、sync-line、field explicit plan、basic HUD/life-heal semantic与terminal fault矩阵已落地；759项证据verifier与render production回归通过。原始HAB UnityFS、natural HAB R1与原始HAB frame保持`habahiro_exact_parity_gate=open-not-claimed`。`production_authorization=true`只授权显式fidelity profile，不等于production surface已全部实现；禁止静默fallback、production/test联网、资源二进制入库与原作parity宣称。**
 - 计划证据包：`tmp/simulator-reverse-evidence/resource-pixi-rendering/`，只在Reverse新证据提交并push后创建。
 - 计划验收记录：`tmp/simulator-resource-pixi-rendering-acceptance.md`，RP14时创建。
 
@@ -437,7 +437,15 @@
 - geometry继续只调用已冻结ordinary producer：普通target的edge margin乘lossyScaleX后沿X内收，width取target A localScaleX×`0.2800000011920929`，完整XYZ保留；同lane不连接，degenerate和缺owner state继续`evidence-required`。
 - 任一endpoint进入Deactive时，其root与所有关联line在同一renderer preflight中执行hide/deactivate；domain回调只回收一次共享槽，另一endpoint之后不会重复deactivate。session release仍逆creation order释放全部80槽与root。
 - activation前新增整批front-family预检，含Flick/Directional/Long/Slide/Multiple的batch不会先提交前置Normal再失败；本批不外推到非Normal sync、after/icon/mesh或Multiple back line。
-- render-contract新增实际host oracle，冻结2 roots+80 slots、244条setup命令、global parent、exact material、首槽取得、initial width bits、逐substep update与单次shared teardown；隔离TypeScript、render-contract、render-production、actual Pixi/failure及14-stage总回归全部通过，evidence verifier仍为743项。
+- render-contract新增实际host oracle，冻结2 roots+80 slots、244条setup命令、global parent、exact material、首槽取得、initial width bits、逐substep update与单次shared teardown；隔离TypeScript、render-contract、render-production、actual Pixi/failure及14-stage总回归全部通过，当时evidence verifier为743项。
+
+### 1.48 2026-08-02 RP04–RP07 Long normal-tail child lifecycle evidence子批
+
+- Reverse `626bf78bb9101117a1ae3f71a93420e4a882d58e`新增独立child profile，不改既有673-method static contract及其source hash；13个current `NoteLong`/`NoteManager`方法放入隔离`note-child-arm64/`，另连接17个既有NoteAfterBase/NoteBase/NoteMesh方法。
+- profile锁定front Activate→after Activate→mesh SetMaterial/Activate→setupNoteType→Wait，after在Launcher start position等待，`LauncherMusicPos >= after absolute position`切Move并复用既有Float32 `activateAdjust`/Move，Long deactivate回收mesh owner。
+- current授权严格限于fixed ordinary 1600×720、FrontNoteType.Long、AfterNoteType.Normal、单非virtual lane与base 22/60 mesh；Flick/Directional tail icon、Slide child chain、非Normal sync reconnect、Multiple、advanced/threshold/HAB exact全部显式false。
+- Reverse主verifier继续通过`methods=673 layouts=32 enums=19`，child verifier通过`methods=30 mesh_owners=510`；Reverse已先提交push并确认`0 0`，随后Garupa冻结包升为759项与`child=1/13`。
+- 本批仅关闭后续production实施授权门，不把证据闭合冒充Long可见production已完成；生产接线与oracle必须另批提交。
 
 ## 2. 固定范围
 
