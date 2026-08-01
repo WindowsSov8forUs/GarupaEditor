@@ -1,12 +1,27 @@
-import type { RenderColor, RenderFloat32, RenderVector2, RenderVector3 } from "../backends/renderingContracts";
+import type {
+  RenderColor,
+  RenderCommand,
+  RenderCommandBatch,
+  RenderFloat32,
+  RenderResourcePreflightAdapter,
+  RenderResourceProfile,
+  RenderVector2,
+  RenderVector3,
+  SimulatorRendererBackend,
+  SimulatorResourceProvider,
+} from "../backends/renderingContracts";
 import { createRenderFloat32 } from "../backends/renderingValidation";
-import type { SimulatorResult } from "../engine/evidence";
+import { evidenceRequired, ok, type SimulatorResult } from "../engine/evidence";
 import {
+  advanceOrdinaryNoteMotion,
   buildOrdinaryBaseNoteMesh,
   buildOrdinarySyncLine,
+  getOrdinaryNoteArrivalSeconds,
   type OrdinaryBaseNoteMeshOwnerState,
+  type OrdinaryNoteMotionState,
   type OrdinarySyncLineTargetState,
 } from "../engine/rendering/ordinaryNoteGeometry";
+import { RenderCommandProducer } from "../engine/rendering/renderCommandProducer";
 
 function equal<T>(actual: T, expected: T, message: string): void {
   if (!Object.is(actual, expected)) throw new Error(`${message}: ${String(actual)} !== ${String(expected)}`);
@@ -48,6 +63,61 @@ function target(
   });
 }
 
+class CapturingRenderer implements SimulatorRendererBackend {
+  readonly id = "geometry-capture-renderer";
+  readonly commands: RenderCommand[] = [];
+  nextSequence = 0;
+  rejectNext = false;
+  private pending: RenderCommandBatch | null = null;
+
+  async prepare(
+    _sessionId: string,
+    _profile: RenderResourceProfile,
+    _provider: SimulatorResourceProvider,
+    _preflight: RenderResourcePreflightAdapter,
+  ): Promise<SimulatorResult<void>> { return ok(undefined); }
+  preflight(commands: readonly RenderCommand[]): SimulatorResult<RenderCommandBatch> {
+    if (this.rejectNext) {
+      this.rejectNext = false;
+      return evidenceRequired("test.renderer-rejection", ["PR39"], "Synthetic producer rejection.");
+    }
+    this.commands.push(...commands);
+    this.pending = Object.freeze({
+      sessionId: "geometry-session",
+      firstSequence: this.nextSequence,
+      commandCount: commands.length,
+    });
+    return ok(this.pending);
+  }
+  commit(batch: RenderCommandBatch): SimulatorResult<void> {
+    if (batch !== this.pending) return evidenceRequired("test.invalid-batch", ["PR39"], "Unexpected batch.");
+    this.nextSequence += batch.commandCount;
+    this.pending = null;
+    return ok(undefined);
+  }
+  discard(batch: RenderCommandBatch): SimulatorResult<void> {
+    if (batch !== this.pending) return evidenceRequired("test.invalid-batch", ["PR39"], "Unexpected batch.");
+    this.pending = null;
+    return ok(undefined);
+  }
+  execute(command: RenderCommand): SimulatorResult<void> {
+    const batch = this.preflight([command]);
+    return batch.status === "ok" ? this.commit(batch.value) : batch;
+  }
+  snapshot() {
+    return Object.freeze({
+      state: "ready" as const,
+      sessionId: "geometry-session",
+      fidelity: { mode: "ordinary" as const, fidelity: "exact-current" as const },
+      nextSequence: this.nextSequence,
+      objectCount: 0,
+      resourceCount: 0,
+      fault: null,
+    });
+  }
+  dispose(): SimulatorResult<void> { return ok(undefined); }
+}
+
 const meshState: OrdinaryBaseNoteMeshOwnerState = Object.freeze({
   front: Object.freeze({ position: vector2(-1, 0.5), localScaleX: f32(0.25), buttonCount: 1 }),
   after: Object.freeze({ position: vector2(1, 2.5), localScaleX: f32(0.5), buttonCount: 2 }),
@@ -77,6 +147,92 @@ const expectedIndices = [
 ];
 
 function main(): void {
+  equal(floatBytes(requireOk(getOrdinaryNoteArrivalSeconds(f32(1)), "arrival speed 1")), "0000B040", "slow arrival branch");
+  equal(floatBytes(requireOk(getOrdinaryNoteArrivalSeconds(f32(11)), "arrival speed 11")), "0000003F", "fast edge arrival branch");
+  equal(floatBytes(requireOk(getOrdinaryNoteArrivalSeconds(f32(12)), "arrival speed 12")), "CDCCCC3E", "speed greater than 11.01 branch");
+  equal(getOrdinaryNoteArrivalSeconds(f32(16)).status, "evidence-required", "non-positive arrival fails closed");
+
+  const motionState: OrdinaryNoteMotionState = Object.freeze({
+    progressRate: f32(0),
+    specificSpeed: f32(11),
+    deltaTime: f32(0.1),
+    realMoveSecond: f32(0.25),
+    goalPosition: vector2(2, -3.450000047683716),
+    noteStartPosition: vector2(0.1, 4.976500511169434),
+    currentPositionZ: f32(-13.5),
+    noteSettingScale: f32(0.8),
+    launcherY: f32(5.420000076293945),
+    targetCenterY: f32(-3.450000047683716),
+    highAspectRatio: f32(0.75),
+    buttonCount: 1,
+    virtualLaneControllerPresent: false,
+  });
+  const motion = requireOk(advanceOrdinaryNoteMotion(motionState), "first ordinary Note Move");
+  equal(floatBytes(motion.progressRate), "0000003F", "zero progress uses realMoveSecond branch");
+  equal(floatBytes(motion.position.x), "49FC8C3E", "X uses current powf curve");
+  equal(floatBytes(motion.position.y), "505C8640", "Y uses start minus absolute powf distance");
+  equal(floatBytes(motion.position.z), "000058C1", "Move preserves current transform Z");
+  equal(floatBytes(motion.localScale.x), "47BCFE3D", "perspective/aspect scale Float32 pipeline");
+  equal(floatBytes(motion.localScale.y), "47BCFE3D", "perspective scale is uniform XY");
+  equal(floatBytes(motion.localScale.z), "00000000", "current Move writes local scale Z zero");
+  const nextMotion = requireOk(advanceOrdinaryNoteMotion({
+    ...motionState,
+    progressRate: motion.progressRate,
+  }), "next ordinary Note Move");
+  equal(floatBytes(nextMotion.progressRate), "3333333F", "nonzero progress uses deltaTime branch");
+  equal(advanceOrdinaryNoteMotion({ ...motionState, virtualLaneControllerPresent: true }).status, "evidence-required", "virtual-lane branch stays closed");
+  equal(advanceOrdinaryNoteMotion({ ...motionState, targetCenterY: motionState.launcherY }).status, "evidence-required", "degenerate scale range fails closed");
+
+  const renderer = new CapturingRenderer();
+  const producer = new RenderCommandProducer("geometry-session", renderer, {
+    noteAtlasLogicalAssetId: "asset.note",
+    directionalAtlasLogicalAssetId: "asset.directional",
+  });
+  requireOk(producer.beginOuterFrame(4), "begin transform frame");
+  requireOk(producer.beginSubstep(2), "begin transform substep");
+  const poolSetup = requireOk(producer.preflightPoolSetup([{ poolObjectId: "normal:0", family: "normal" }]), "preflight transform pool");
+  requireOk(poolSetup.commit(), "commit transform pool");
+  const prepared = requireOk(producer.preflightOrdinaryNoteMotion(
+    "normal:0",
+    motionState,
+    {
+      color: color(1, 1, 1, 1),
+      ordering: {
+        domainLayer: 3,
+        sourceDepthOrSortingOrder: 70,
+        sourceZ: f32(-13.5),
+        creationSequence: 9,
+      },
+      maskObjectId: null,
+    },
+  ), "preflight ordinary Note transform");
+  equal(renderer.nextSequence, 2, "motion preflight does not consume renderer sequence");
+  equal(floatBytes(prepared.motion.progressRate), "0000003F", "prepared transaction returns owner progress");
+  const transform = renderer.commands[renderer.commands.length - 1];
+  equal(transform?.kind, "set-transform", "motion producer emits one root transform");
+  if (transform?.kind !== "set-transform") throw new Error("missing set-transform command");
+  equal(transform.renderObjectId, "render:normal:0:root", "motion targets pool root identity");
+  equal(transform.frame, 4, "motion preserves outer frame");
+  equal(transform.substep, 2, "motion preserves adaptive substep");
+  equal(floatBytes(transform.position.x), "49FC8C3E", "command preserves motion X bits");
+  equal(floatBytes(transform.scale.x), "47BCFE3D", "command preserves scale bits");
+  equal(transform.ordering.sourceDepthOrSortingOrder, 70, "command preserves explicit source sorting order");
+  requireOk(prepared.transaction.commit(), "commit ordinary Note transform");
+  equal(renderer.nextSequence, 3, "motion commit consumes exactly one sequence");
+  equal(prepared.transaction.commit().status, "evidence-required", "motion transaction is one-use");
+  renderer.rejectNext = true;
+  const rejectedMotion = producer.preflightOrdinaryNoteMotion(
+    "normal:0",
+    { ...motionState, progressRate: motion.progressRate },
+    {
+      color: color(1, 1, 1, 1),
+      ordering: { domainLayer: 3, sourceDepthOrSortingOrder: 70, sourceZ: f32(-13.5), creationSequence: 9 },
+      maskObjectId: null,
+    },
+  );
+  equal(rejectedMotion.status, "evidence-required", "renderer rejection returns before owner can advance progress");
+  equal(renderer.nextSequence, 3, "renderer rejection consumes no sequence");
+
   const mesh = requireOk(buildOrdinaryBaseNoteMesh(meshState), "build ordinary base mesh");
   equal(mesh.vertices.length, 22, "base mesh vertex count");
   equal(mesh.indices.length, 60, "base mesh index count");
@@ -147,7 +303,7 @@ function main(): void {
   });
   equal(malformed.status, "evidence-required", "non-Float32 owner value fails closed");
 
-  console.log("ordinary Note geometry producer tests passed: mesh=22/60 line=margin/width failures=closed");
+  console.log("ordinary Note geometry producer tests passed: motion=powf/scale mesh=22/60 line=margin/width failures=closed");
 }
 
 main();

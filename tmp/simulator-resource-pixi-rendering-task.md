@@ -347,6 +347,13 @@
 - virtual-lane controller、non-positive arrival、缺字段/非法Float32、button count越界与degenerate scale denominator失败关闭；无speed/progress clamp，无默认scene值。
 - 本批只建立可事务化motion producer；NoteManager尚未拥有完整scene/motion初始化字段，因此未用不完整默认值强接生命周期。隔离`tsc`及现有render contract/geometry/Pixi suite通过。
 
+### 1.36 2026-08-01 RP04 ordinary Note motion/transform test子批
+
+- producer suite新增冻结Float32 oracle：arrival speed两分支、首次`realMoveSecond`与后续`deltaTime` progress分支、powf curve X/Y、保留Z、7项aspect scale与local-scale Z=0均逐bits断言。
+- 新增capturing renderer事务测试：pool setup后motion只预检一个root `set-transform`，保留frame/substep、显式sorting/color/null mask与motion bits；preflight不消费sequence、commit恰消费1、重复commit失败关闭。
+- renderer rejection反例确认不消费sequence且没有可提交motion transaction；virtual lane、non-positive arrival与degenerate scale range继续失败关闭。
+- `simulator:test:render-note-geometry`、render-contract与Pixi suites通过；runner内dependency/evidence verifier通过，未运行Vite/Tauri整体构建。
+
 ## 2. 固定范围
 
 ### 2.1 纳入范围
