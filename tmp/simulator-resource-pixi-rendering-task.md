@@ -354,6 +354,13 @@
 - renderer rejection反例确认不消费sequence且没有可提交motion transaction；virtual lane、non-positive arrival与degenerate scale range继续失败关闭。
 - `simulator:test:render-note-geometry`、render-contract与Pixi suites通过；runner内dependency/evidence verifier通过，未运行Vite/Tauri整体构建。
 
+### 1.37 2026-08-01 RP05/RP07 field setup与release production子批
+
+- `RenderCommandProducer.preflightFieldSetup`新增显式field owner边界；每个plan必须给出unique render identity、`field-line`/`judge-line`角色、local logical asset/exact key、完整Float32 transform/color/ordering与ordinary null mask，不从文件名或backend状态猜值。
+- 每个field对象严格产生`create → bind sprite → set-transform → activate`四命令原子事务；只有commit后才加入session-owned release列表，renderer拒绝或discard不泄漏identity。
+- field与既有pool/HUD共享`preflightSessionRelease`逆创建顺序释放；Pixi已有field/judge Sprite role mapping和typed transform/resource gate，无新增backend猜测。
+- R2只授权已观察的field transform payload；本批不硬编码221次单位transform为所有field默认，不声称sudden/mask/HAB lane-change或field animation已关闭。隔离`tsc`与producer suite通过。
+
 ## 2. 固定范围
 
 ### 2.1 纳入范围

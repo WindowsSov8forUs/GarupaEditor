@@ -2,7 +2,10 @@ import type {
   RenderColor,
   RenderCommand,
   RenderCommandBatch,
+  RenderFloat32,
   RenderOrderingKey,
+  RenderVector2,
+  RenderVector3,
   SimulatorRendererBackend,
 } from "../../backends/renderingContracts";
 import { createRenderFloat32 } from "../../backends/renderingValidation";
@@ -46,6 +49,19 @@ export interface OrdinaryNoteTransformVisualState {
 export interface PreparedOrdinaryNoteMotion {
   readonly motion: OrdinaryNoteMotionResult;
   readonly transaction: RenderOwnerTransaction;
+}
+
+export interface RenderFieldObjectPlan {
+  readonly renderObjectId: string;
+  readonly role: "field-line" | "judge-line";
+  readonly logicalAssetId: string;
+  readonly exactKey: string;
+  readonly position: RenderVector3;
+  readonly scale: RenderVector2;
+  readonly rotationDegrees: RenderFloat32;
+  readonly color: RenderColor;
+  readonly ordering: RenderOrderingKey;
+  readonly maskObjectId: null;
 }
 
 export class RenderOwnerTransaction {
@@ -270,6 +286,69 @@ export class RenderCommandProducer {
       state: lifeHudState(plan.record),
     });
     return this.preflight(commands);
+  }
+
+  preflightFieldSetup(
+    plans: readonly RenderFieldObjectPlan[],
+  ): SimulatorResult<RenderOwnerTransaction> {
+    const validation = this.validate();
+    if (validation.status !== "ok") return validation;
+    if (
+      plans.length === 0 ||
+      plans.some((plan) =>
+        !isNonEmpty(plan.renderObjectId) ||
+        !isNonEmpty(plan.logicalAssetId) ||
+        !isNonEmpty(plan.exactKey) ||
+        (plan.role !== "field-line" && plan.role !== "judge-line") ||
+        plan.maskObjectId !== null
+      ) ||
+      new Set(plans.map((plan) => plan.renderObjectId)).size !== plans.length
+    ) {
+      return evidenceRequired(
+        "render.producer.invalid-field-plan",
+        ["RPR-D08", "RPR-D13", "PR18", "PR39"],
+        "Field setup requires non-empty unique identities, exact local resource/key routes and the confirmed unmasked field/judge roles.",
+      );
+    }
+    const base = this.commandBase(0);
+    const commands: RenderCommand[] = [];
+    const created: string[] = [];
+    for (const plan of plans) {
+      created.push(plan.renderObjectId);
+      commands.push({
+        ...base(commands.length),
+        kind: "create-object",
+        renderObjectId: plan.renderObjectId,
+        poolFamily: "field",
+        role: plan.role,
+        parentObjectId: null,
+      });
+      commands.push({
+        ...base(commands.length),
+        kind: "bind-resource",
+        renderObjectId: plan.renderObjectId,
+        binding: "sprite",
+        logicalAssetId: plan.logicalAssetId,
+        exactKey: plan.exactKey,
+      });
+      commands.push({
+        ...base(commands.length),
+        kind: "set-transform",
+        renderObjectId: plan.renderObjectId,
+        position: plan.position,
+        scale: plan.scale,
+        rotationDegrees: plan.rotationDegrees,
+        color: plan.color,
+        ordering: plan.ordering,
+        maskObjectId: null,
+      });
+      commands.push({
+        ...base(commands.length),
+        kind: "activate-object",
+        renderObjectId: plan.renderObjectId,
+      });
+    }
+    return this.preflight(commands, () => this.createdObjectIds.push(...created));
   }
 
   preflightPoolSetup(

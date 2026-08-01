@@ -191,6 +191,7 @@ export type {
   OrdinaryNoteTransformVisualState,
   PreparedOrdinaryNoteMotion,
   RenderEngineResourceBindings,
+  RenderFieldObjectPlan,
   RenderPoolIdentityPlan,
 } from "./engine/rendering/renderCommandProducer";
 export {
