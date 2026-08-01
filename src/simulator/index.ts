@@ -192,6 +192,18 @@ export type {
   RenderPoolIdentityPlan,
 } from "./engine/rendering/renderCommandProducer";
 export {
+  buildOrdinaryBaseNoteMesh,
+  buildOrdinarySyncLine,
+} from "./engine/rendering/ordinaryNoteGeometry";
+export type {
+  OrdinaryBaseNoteMeshGeometry,
+  OrdinaryBaseNoteMeshOwnerState,
+  OrdinaryNoteMeshEndpoint,
+  OrdinarySyncLineGeometry,
+  OrdinarySyncLineOwnerState,
+  OrdinarySyncLineTargetState,
+} from "./engine/rendering/ordinaryNoteGeometry";
+export {
   NoteAfterBase,
   NoteDirectionalFlick,
   NoteDirectionalFlickAfter,

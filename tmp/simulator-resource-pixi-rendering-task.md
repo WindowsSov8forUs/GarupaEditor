@@ -323,6 +323,14 @@
 - 本批授权`ordinary_fixed_1600x720_note_motion`、`ordinary_base_note_mesh_producer`与`ordinary_sync_line_producer`；advanced 42-vertex mesh、Multiple back line、threshold shader与HAB exact显式false，后续仍失败关闭。
 - Garupa冻结包更新为740项；未复制APK、资源二进制、实体PNG、IDA数据库或`runtime/tools/`。下一production批直接实现该consolidated子集，不再为其中每条公式单独停顿。
 
+### 1.33 2026-08-01 RP04/RP06 ordinary base geometry producer production子批
+
+- 新增engine-owned `ordinaryNoteGeometry.ts`，只消费typed Float32 owner state，不读取profile文件、资源bytes、Pixi、DOM或测试identity；输出可直接进入既有`set-mesh`/`set-line`合同的不可变semantic geometry。
+- base NoteMesh严格生成11组左右边界、22个Z=0 vertex、60个固定index、Float32 `V=section/10` UV与逐vertex uniform copied color；half-width按`localScaleX*buttonCount*screenToSafeAreaRatio*widthRate`逐次Float32计算，button count只接受1–7。
+- sync-line按target A/B完整XYZ保留Z，ordinary `GameNoteType 10..19`逐target排除edge margin，其余margin乘lossyScaleX后沿X向内；width固定为target A localScaleX×Float32 0.28，degenerate XY或非positive width失败关闭。
+- 所有输入Float32 bits、range与完整owner字段先验证；无clamp（除证据profile后续显式width-rate计算）、无默认颜色/scale/margin、无advanced mesh/Multiple/threshold/HAB路径。
+- 新helper与types经`src/simulator/index.ts`作为portable production surface导出；本批只恢复几何authoring，不伪称NoteManager lifecycle接线已完成。隔离`tsc`、现有Pixi与render-contract回归通过。
+
 ## 2. 固定范围
 
 ### 2.1 纳入范围
