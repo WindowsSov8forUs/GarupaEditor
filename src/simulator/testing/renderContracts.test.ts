@@ -13,11 +13,15 @@ import {
 } from "../backends/renderingValidation";
 import { evidenceRequired, ok, type SimulatorResult } from "../engine/evidence";
 import { createSimulatorEngine } from "../host/createSimulatorEngine";
-import { engineInput } from "./firstSliceFixtures";
+import { engineInput, noteBatch } from "./firstSliceFixtures";
 
 const HASH_A = "A".repeat(64);
 const HASH_B = "B".repeat(64);
 const SESSION = "render-contract-session";
+const RESOURCES = Object.freeze({
+  noteAtlasLogicalAssetId: "asset.note",
+  directionalAtlasLogicalAssetId: "asset.directional",
+});
 const BYTES = Uint8Array.from([1, 2, 3, 4]);
 
 function assert(condition: unknown, message: string): asserts condition {
@@ -108,7 +112,7 @@ function profile(
         blendMode: "normal",
       },
       atlasRows: [{
-        exactKey: "note_normal",
+        exactKey: "note_normal_0",
         x: 0,
         y: 0,
         width: 4,
@@ -313,7 +317,7 @@ async function testCommandsAndTerminalFault(): Promise<void> {
     renderObjectId: "object.root",
     binding: "sprite",
     logicalAssetId: "asset.note",
-    exactKey: "note_normal",
+    exactKey: "note_normal_0",
   }), "bind exact Sprite");
   requireOk(renderer.execute({
     kind: "set-transform",
@@ -374,17 +378,40 @@ async function testCommandsAndTerminalFault(): Promise<void> {
 async function testHostReadyGate(): Promise<void> {
   const unprepared = new RecordingSimulatorRendererBackend();
   const backends = createRecordingSimulatorBackends(unprepared);
-  const input = { ...engineInput(), rendering: { sessionId: SESSION } };
+  const baseInput = engineInput([noteBatch(["render-normal"], 96)]);
+  const input = {
+    ...baseInput,
+    runtime: {
+      ...baseInput.runtime,
+      playMode: {
+        kind: "auto-live" as const,
+        resultTransform: "identity-no-active-situation-skill" as const,
+      },
+    },
+    rendering: { sessionId: SESSION, resources: RESOURCES },
+  };
   equal(createSimulatorEngine(input, backends).status, "evidence-required", "unprepared host rejected");
   equal(backends.snapshot().length, 0, "host rejection precedes backend/domain mutation");
 
   requireOk(await unprepared.prepare(SESSION, profile(), new LocalProvider(), preflight()), "host renderer prepare");
   const engine = requireOk(createSimulatorEngine(input, backends), "prepared host create");
   requireOk(engine.initialize(), "prepared host initialize");
+  equal(unprepared.snapshot().objectCount, 1, "pool setup creates stable render root");
+  equal(unprepared.snapshot().nextSequence, 2, "pool setup create then hide order");
+  requireOk(engine.step(0), "rendered note activation frame");
+  equal(unprepared.snapshot().nextSequence, 4, "activation then exact bind order");
+  const produced = unprepared.commandSnapshot();
+  equal(produced[0]?.kind, "create-object", "setup create command");
+  equal(produced[1]?.kind, "hide-object", "setup hide command");
+  equal(produced[2]?.kind, "activate-object", "activation command");
+  equal(produced[3]?.kind, "bind-resource", "exact bind command");
+  if (produced[3]?.kind === "bind-resource") {
+    equal(produced[3].exactKey, "note_normal_0", "owner-authored exact Sprite key");
+  }
   requireOk(engine.dispose(), "prepared host dispose");
 
   const mismatch = createSimulatorEngine(
-    { ...engineInput(), rendering: { sessionId: "foreign" } },
+    { ...engineInput(), rendering: { sessionId: "foreign", resources: RESOURCES } },
     createRecordingSimulatorBackends(unprepared),
   );
   equal(mismatch.status, "evidence-required", "cross-session host rejected");
