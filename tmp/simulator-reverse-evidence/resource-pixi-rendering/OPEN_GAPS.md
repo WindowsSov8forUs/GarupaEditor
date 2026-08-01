@@ -36,6 +36,12 @@ habahiro_degraded_sprite_keys=179
 ordinary_runtime_events=87364
 ordinary_runtime_categories=8
 ordinary_runtime_anchors=8
+render_setter_targets=10
+ordinary_geometry_runtime_events=87037
+ordinary_geometry_runtime_frames=636
+ordinary_geometry_mesh_owners=510
+ordinary_geometry_line_owners=80
+ordinary_geometry_payload_gate=closed
 ordinary_physical_frames=7
 habahiro_current_external_assets=12
 remaining_exact_blockers=original-current-HABAHIRO-UnityFS-bytes,natural-HABAHIRO-runtime-R1,original-HABAHIRO-physical-frames
@@ -65,7 +71,8 @@ remaining_exact_blockers=original-current-HABAHIRO-UnityFS-bytes,natural-HABAHIR
 
 ## 已关闭的交付证据
 
-- ordinary natural Auto Live冻结87,364个连续observation-only事件，覆盖8类render/HUD事件与8个required anchor；静态4-byte `NoteBase.OnStart` no-op明确记为不可hook，生命周期由510组真实同alias mesh Activate→Deactivate对覆盖。
+- ordinary natural Auto Live冻结87,364个连续observation-only R1事件，覆盖8类render/HUD事件与8个required anchor；静态4-byte `NoteBase.OnStart` no-op明确记为不可hook，生命周期由510组真实同alias mesh Activate→Deactivate对覆盖。
+- 后续natural ordinary R2冻结10个byte-pinned Unity setter与87,037个setter事件：闭合510个mesh owner的22-vertex/60-index/22-UV/22-color topology及运行时vertices/threshold，80个line owner的endpoint/equal width，以及field/mesh transform Float32载荷。它不外推Graphics cap/join、SpriteMask、NGUI glyph布局、动画clock或Unity shader/raster parity。
 - 7个ordinary physical-device frame anchor锁定1600×720 viewport与隐私裁剪；PNG只保留在Reverse提交，Garupa冻结manifest中的尺寸/hash。
 - 12项Bestdori current external portable asset与179个Sprite row/hash关闭HAB资源交付子门；production/test必须使用host本地hash provider，禁止联网，且不宣称原始UnityFS一致。
 - `delivery_closure.json`按交付profile关闭V01、D01–D18与PR01–PR40；PR01/PR04/PR19/PR40继续标记degraded disclosure，HA-D01–HA-D12仍为强制差异。

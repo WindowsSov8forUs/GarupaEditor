@@ -1,0 +1,122 @@
+{
+  "schema_version": 1,
+  "status": "confirmed-10.1.4-render-setter-targets",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "version_name": "10.1.4",
+    "version_code": 230,
+    "abi": "arm64-v8a"
+  },
+  "libil2cpp_sha256": "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F",
+  "source_script_json_sha256": "826C592717ED07974F8DCD435AF92B8DCE7A6406E0706AC43A85102FE8567D91",
+  "observation_policy": {
+    "intercept_enter_only": true,
+    "return_replacement": false,
+    "memory_writes": false,
+    "managed_invocation": false,
+    "raw_pointer_export": false
+  },
+  "targets": [
+    {
+      "setter_id": "RPS-001",
+      "managed_name": "UnityEngine.Mesh$$set_vertices",
+      "signature": "void UnityEngine_Mesh__set_vertices (UnityEngine_Mesh_o* __this, UnityEngine_Vector3_array* value, const MethodInfo* method);",
+      "kind": "vector3-array",
+      "rva": "0x659CE48",
+      "end_rva": "0x659CEA8",
+      "bytes": 96,
+      "arm64_sha256": "A6A07E3E31A9DB04145CFFF4EDC854290E25EBB443A57B1D72F1E9FD4D92AEC0"
+    },
+    {
+      "setter_id": "RPS-002",
+      "managed_name": "UnityEngine.Mesh$$set_uv",
+      "signature": "void UnityEngine_Mesh__set_uv (UnityEngine_Mesh_o* __this, UnityEngine_Vector2_array* value, const MethodInfo* method);",
+      "kind": "vector2-array",
+      "rva": "0x659D04C",
+      "end_rva": "0x659D0AC",
+      "bytes": 96,
+      "arm64_sha256": "C45123349EF60E172BE51A3240AA48775DFFAD5894FE19C175E5A60521DFF5EC"
+    },
+    {
+      "setter_id": "RPS-003",
+      "managed_name": "UnityEngine.Mesh$$set_colors",
+      "signature": "void UnityEngine_Mesh__set_colors (UnityEngine_Mesh_o* __this, UnityEngine_Color_array* value, const MethodInfo* method);",
+      "kind": "color-array",
+      "rva": "0x659D1B8",
+      "end_rva": "0x659D218",
+      "bytes": 96,
+      "arm64_sha256": "4FF631157AA0E165240E047C49E241DDB78496380909BDC1EE15F87B0F7E6BB6"
+    },
+    {
+      "setter_id": "RPS-004",
+      "managed_name": "UnityEngine.Mesh$$set_triangles",
+      "signature": "void UnityEngine_Mesh__set_triangles (UnityEngine_Mesh_o* __this, System_Int32_array* value, const MethodInfo* method);",
+      "kind": "int32-array",
+      "rva": "0x659DF00",
+      "end_rva": "0x659DFA8",
+      "bytes": 168,
+      "arm64_sha256": "48896B68085615409FE9A9781313FC169E77596230AD559ED6BD89277CC84CE7"
+    },
+    {
+      "setter_id": "RPS-005",
+      "managed_name": "UnityEngine.Material$$SetFloat",
+      "signature": "void UnityEngine_Material__SetFloat (UnityEngine_Material_o* __this, int32_t nameID, float value, const MethodInfo* method);",
+      "kind": "material-float",
+      "rva": "0x6596684",
+      "end_rva": "0x65966D8",
+      "bytes": 84,
+      "arm64_sha256": "33C8093979F723B024177E4710F38FDBEA45278B0984D10B0AF68DAA9C20CA67"
+    },
+    {
+      "setter_id": "RPS-006",
+      "managed_name": "UnityEngine.LineRenderer$$SetPosition",
+      "signature": "void UnityEngine_LineRenderer__SetPosition (UnityEngine_LineRenderer_o* __this, int32_t index, UnityEngine_Vector3_o position, const MethodInfo* method);",
+      "kind": "line-position",
+      "rva": "0x658BE54",
+      "end_rva": "0x658BEB0",
+      "bytes": 92,
+      "arm64_sha256": "A21BA83C19963D96A2EDA8B229DC5378AB9BBC69AAD31D34DC4A69A48EAEF226"
+    },
+    {
+      "setter_id": "RPS-007",
+      "managed_name": "UnityEngine.LineRenderer$$SetWidth",
+      "signature": "void UnityEngine_LineRenderer__SetWidth (UnityEngine_LineRenderer_o* __this, float start, float end, const MethodInfo* method);",
+      "kind": "line-width",
+      "rva": "0x658BB84",
+      "end_rva": "0x658BC00",
+      "bytes": 124,
+      "arm64_sha256": "030457AD24BD0C0FEB9EEF58F8FC7E711C91744731B9E853CB4ECBE8151A8632"
+    },
+    {
+      "setter_id": "RPS-008",
+      "managed_name": "UnityEngine.Transform$$set_position",
+      "signature": "void UnityEngine_Transform__set_position (UnityEngine_Transform_o* __this, UnityEngine_Vector3_o value, const MethodInfo* method);",
+      "kind": "vector3-value",
+      "rva": "0x65C97A8",
+      "end_rva": "0x65C97FC",
+      "bytes": 84,
+      "arm64_sha256": "7B19E7F6184A0E87E1DBCBE017F4527A31BD2DD0920D1F907E8DF6036552EED8"
+    },
+    {
+      "setter_id": "RPS-009",
+      "managed_name": "UnityEngine.Transform$$set_localPosition",
+      "signature": "void UnityEngine_Transform__set_localPosition (UnityEngine_Transform_o* __this, UnityEngine_Vector3_o value, const MethodInfo* method);",
+      "kind": "vector3-value",
+      "rva": "0x65C8C58",
+      "end_rva": "0x65C8CAC",
+      "bytes": 84,
+      "arm64_sha256": "D2EAFA1996B49A17C079F1FD615FC10AA5A52992566D24856089E3F4D50A5DE4"
+    },
+    {
+      "setter_id": "RPS-010",
+      "managed_name": "UnityEngine.Transform$$set_localScale",
+      "signature": "void UnityEngine_Transform__set_localScale (UnityEngine_Transform_o* __this, UnityEngine_Vector3_o value, const MethodInfo* method);",
+      "kind": "vector3-value",
+      "rva": "0x65CA1F8",
+      "end_rva": "0x65CA24C",
+      "bytes": 84,
+      "arm64_sha256": "907EF5301C80F8A8A896281501BB4D0E0EC041F47976ECD1AB1F95B8DD2B4C7B"
+    }
+  ],
+  "unknown_targets": []
+}

@@ -11,8 +11,8 @@
 - 锁定原作样本：`jp.co.craftegg.band` 10.1.4（version code 230，`arm64-v8a`）。
 - 锁定`libil2cpp.so` SHA-256：`815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F`。
 - 锁定`global-metadata.dat` SHA-256：`298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F`。
-- 当前Reverse基线提交：`60410ae02f69b9d78cc554717b3dd04b941cd0c2`；只消费该提交及其祖先中已提交、已push、可校验对象。
-- 当前状态：**RP00–RP03已关闭；RP04/RP07/RP08的已证实producer子集与RP10本地provider已落地，当前实施RP10/RP11 Pixi v8后端。已闭合本地bytes browser decode、Texture/subtexture cache、Sprite bind、基础transform/portable ordering、引用计数与release；mesh/line/mask/HUD可见映射、animation及RP12完整failure矩阵继续失败关闭。原始HAB UnityFS、natural HAB R1与原始HAB frame保持`habahiro_exact_parity_gate=open-not-claimed`。`production_authorization=true`仅授权显式fidelity选择；必须显示`Approximate HABAHIRO`、禁止静默fallback、production/test联网、资源二进制入库与原作parity宣称。**
+- 当前Reverse基线提交：`85fd890ca25d85422ecf9659bc21d4edd0b452d2`；只消费该提交及其祖先中已提交、已push、可校验对象。
+- 当前状态：**RP00–RP03已关闭；RP04/RP07/RP08的已证实producer子集与RP10本地provider已落地，当前实施RP10/RP11 Pixi v8后端。已闭合本地bytes browser decode、Texture/subtexture cache、Sprite bind、基础transform/portable ordering、引用计数与release；新增natural ordinary geometry R2已关闭mesh topology/vertices/UV/color/threshold、line endpoint/equal width与field/mesh transform载荷缺口，下一批可实施对应producer与Pixi mapping。mask、HUD可见布局、animation及RP12剩余矩阵继续失败关闭。原始HAB UnityFS、natural HAB R1与原始HAB frame保持`habahiro_exact_parity_gate=open-not-claimed`。`production_authorization=true`仅授权显式fidelity选择；必须显示`Approximate HABAHIRO`、禁止静默fallback、production/test联网、资源二进制入库与原作parity宣称。**
 - 计划证据包：`tmp/simulator-reverse-evidence/resource-pixi-rendering/`，只在Reverse新证据提交并push后创建。
 - 计划验收记录：`tmp/simulator-resource-pixi-rendering-acceptance.md`，RP14时创建。
 
@@ -234,6 +234,16 @@
 - Pixi suite注入第二次create时throw的factory，验证首个detached reservation被销毁、scene/stage保持空、sequence保持0且renderer继续ready。
 - 另一路显式preflight单个create后discard，验证capability pending期间节点detached/live、discard后节点destroyed且不消费sequence。
 - 隔离`tsc`、Pixi suite、render-contract 6组与dependency verifier通过。
+
+### 1.21 2026-08-01 ordinary geometry R2补充取证批
+
+- 用户明确要求遇证据阻断即继续取证。Reverse `85fd890ca25d85422ecf9659bc21d4edd0b452d2`已提交并push；取证锁定同一10.1.4/230/ARM64样本、SELinux Enforcing与loopback Frida transport。
+- 新增10个exact managed setter target：`Mesh.set_vertices/set_uv/set_colors/set_triangles`、`Material.SetFloat(int,float)`、`LineRenderer.SetPosition/SetWidth`及`Transform.set_position/set_localPosition/set_localScale`；逐项锁定managed identity、RVA/end、完整ARM64 SHA，不以统一delta外推。
+- natural ordinary Demo Live R2冻结87,037个连续setter事件、636个相对frame、510个mesh owner及80个line owner；全程无return replacement、memory write、managed invocation、APK patch或synthetic event，且只导出匿名owner/component alias与technical Float32 bits。
+- R2逐字段确认全部510次mesh初始化共享22 vertices、60 indices、22 UV及22 colors；运行时mesh vertices固定22项且Z bits=`00000000`，Material property ID固定3453并记录threshold bits；12,235次line width的start/end逐次相等，endpoint和field/mesh transform保留完整轨迹。
+- Reverse compact oracle从完整R2确定性重建init topology、selected mesh lifecycle、selected line pair/nonzero width及field transform histogram；verifier重算10个setter ARM64、87,037事件schema/隐私/Float32与oracle source hash。
+- Garupa冻结包晋升至731项，新增7项R2来源并将全部source commit重锁到`85fd890c...`；实体frame PNG、资源二进制、IDA数据库及`runtime/tools/`仍未复制。
+- 本批只关闭ordinary geometry/line/owner transform载荷缺口，不外推Graphics cap/join、SpriteMask inside/outside、NGUI glyph布局、animation clock或Unity shader/raster parity；后者继续失败关闭并按需另行取证。
 
 ## 2. 固定范围
 
