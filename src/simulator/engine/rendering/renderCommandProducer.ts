@@ -472,6 +472,13 @@ export class RenderCommandProducer {
         "Note activation commands require the engine-owned non-negative adaptive substep.",
       );
     }
+    if (information.fireNoteType !== FrontNoteType.Normal) {
+      return evidenceRequired(
+        "render.note.ordinary-child-lifecycle-unimplemented",
+        ["RPR-D04", "RPR-D05", "RPR-D06", "RPR-D07", "PR06", "PR09", "PR10"],
+        "Only the current ordinary Normal root lifecycle is connected; Flick icons, Directional side visuals, Long/Slide after+mesh and Multiple back-line owners remain fail-closed.",
+      );
+    }
     const lane = resolveOrdinaryLaneIndex(information);
     if (lane.status !== "ok") return lane;
     const binding = resolveFrontSpriteBinding(information, false, this.resources);

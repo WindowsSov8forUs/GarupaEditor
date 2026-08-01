@@ -274,15 +274,23 @@ function main(): void {
   equal(activationRenderer.nextSequence, 2, "activation preflight consumes no sequence");
   requireOk(preparedActivation.transaction.commit(), "commit ordinary activation");
   equal(activationRenderer.nextSequence, 8, "activation commits all six ordered commands");
-  const multipleRejected = activationProducer.preflightOrdinaryNoteActivation(
-    "normal:0",
-    { ...activationInformation, fireNoteType: FrontNoteType.MultipleDirectionalFlick },
-    f32(120),
-    f32(97),
-    fixedScene,
-    1,
-  );
-  equal(multipleRejected.status, "evidence-required", "Multiple visual route remains fail-closed");
+  for (const unsupportedFront of [
+    FrontNoteType.Flick,
+    FrontNoteType.DirectionalFlick,
+    FrontNoteType.Long,
+    FrontNoteType.SlideA,
+    FrontNoteType.MultipleDirectionalFlick,
+  ]) {
+    const childRejected = activationProducer.preflightOrdinaryNoteActivation(
+      "normal:0",
+      { ...activationInformation, fireNoteType: unsupportedFront },
+      f32(120),
+      f32(97),
+      fixedScene,
+      1,
+    );
+    equal(childRejected.status, "evidence-required", `front family ${unsupportedFront} child route remains fail-closed`);
+  }
   const virtualRejected = activationProducer.preflightOrdinaryNoteActivation(
     "normal:0",
     { ...activationInformation, virtualLaneDirection: VirtualLaneDirection.Left },
