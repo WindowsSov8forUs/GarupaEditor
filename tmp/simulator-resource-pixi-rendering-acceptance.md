@@ -62,13 +62,13 @@
 
 ## 5. PR01–PR40 production 状态
 
-证据 case 均已闭合，但 production 验收按实际实现分组：
+证据 case 均已闭合，但 production 验收必须按任务书原编号和实际实现分组：
 
-- **通过**：PR01–PR06、PR11、PR13、PR33–PR39 的当前已声明子路径。
-- **部分**：PR07、PR09–PR10、PR15、PR18–PR20、PR22–PR30。
-- **未实现/失败关闭**：PR08 flick icon animation、PR12 advanced mesh、PR14 Multiple back line、PR16 threshold、PR17 mask、PR21 pause animation clock、PR31–PR32 animation sampling、PR40 可见 degraded fidelity label。
+- **已通过当前声明子路径**：PR01–PR06 resource/Sprite、PR10 ordinary root motion、PR11 base 22/60 mesh、PR13 base geometry、PR16 simultaneous Normal sync、PR20 root与sync pool identity，以及PR33–PR39事务/故障/离线边界。
+- **部分**：PR07、PR10–PR11、PR13、PR15–PR16、PR18、PR20、PR22–PR30；其中pure producer或semantic command存在不等于可见child/HUD lifecycle已接。
+- **未实现/失败关闭**：PR08 Flick icon hierarchy/animation、PR09 Multiple side visual、PR12 Slide segments、PR14 material/threshold、PR15 mesh lifecycle、PR17 Multiple back line、PR18 mask runtime、PR19 HAB lane change、PR21 animation clock、PR22–PR32可见HUD/slider/animation剩余项、PR40可见degraded fidelity label。
 
-这份分组不回写或降低 frozen PR evidence status；它只记录 production 消费完成度。
+这份分组不回写或降低 frozen PR evidence status；它只记录 production 消费完成度，尤其不得再把PR16 sync、PR17 Multiple back line和PR18 mask错位。
 
 ## 6. 验证结果
 
@@ -114,3 +114,9 @@ production static audit确认：production 无网络 API/remote URL/Bestdori、�
 3. production acceptance：补 PR remaining oracle、degraded visible label，再重跑 RP13/RP14。
 
 在这三个批次关闭前，本阶段状态必须保持“进行中”。
+
+## 9. 2026-08-02 增量复验
+
+- local commit `4c35028`新增ordinary simultaneous Normal sync production lifecycle与host oracle；`simulator:test:resource-pixi-rendering`从该commit工作树串行通过14 stages，resource/Pixi production、actual Pixi/failure、上游manual与Score/Life/State均绿色。
+- RP14结论仍为**不通过**：after/icon/mesh、非Normal sync、Multiple、mask、visible HUD/slider/animation与degraded label缺口未关闭。
+- 本次不能替换第2节“已推送HEAD”锁定值：GitHub 443连接失败，`4c35028`尚未push，远端仍为`d60a7ab`且本地ahead 1；最终独立验收必须在网络恢复、push成功并确认远端`0 0`后重新执行。
