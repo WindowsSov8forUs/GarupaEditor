@@ -447,6 +447,15 @@
 - Reverse主verifier继续通过`methods=673 layouts=32 enums=19`，child verifier通过`methods=30 mesh_owners=510`；Reverse已先提交push并确认`0 0`，随后Garupa冻结包升为759项与`child=1/13`。
 - 本批仅关闭后续production实施授权门，不把证据闭合冒充Long可见production已完成；生产接线与oracle必须另批提交。
 
+### 1.49 2026-08-02 RP04/RP06 Long normal-tail pure state/mesh production/test子批
+
+- 新增backend/manager无关`ordinaryLongChildLifecycle` typed helper，只消费Float32 motion owner、after absolute position、BPM与Launcher/Music双时钟；不读取profile、Pixi、DOM、chart testing identity或资源bytes。
+- activation强制重置after progress/RealMoveSecond并以launcher start position、unit scale进入Wait；`LauncherMusicPos < afterPos`保持同一冻结owner，equal切Move并执行`activateAdjust`，不把equal伪造为overshoot。
+- Move逐次复用既有Float32 NoteBase producer，再按`MusicPos-afterPos >= 0`进入Stop；oracle确认equal切Move当次不执行MoveState，下一次Move先按RealMoveSecond=0写progress 0，再进入Stop。
+- base mesh adapter只把front/after最后已commit position/localScale与显式button count、safe-area ratio、width rate、color投给既有22/60 producer；不复制或近似mesh公式。
+- dedicated oracle覆盖Wait strict/equal、Move→Stop顺序、Float32 position/progress bits、22/60 mesh，以及virtual lane/负afterPos失败关闭；`simulator:test:render-note-geometry`与759项evidence verifier通过。
+- 本批仍未建立render object identity或NoteManager command transaction，因此Long可见production继续未闭合；后续必须接after Sprite、mesh object及deactivate ownership后才能更新RP14状态。
+
 ## 2. 固定范围
 
 ### 2.1 纳入范围

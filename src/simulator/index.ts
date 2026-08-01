@@ -204,6 +204,17 @@ export {
   buildOrdinarySyncLine,
   getOrdinaryNoteArrivalSeconds,
 } from "./engine/rendering/ordinaryNoteGeometry";
+export {
+  advanceOrdinaryLongNormalChild,
+  buildOrdinaryLongNormalMesh,
+  createOrdinaryLongNormalChildState,
+} from "./engine/rendering/ordinaryLongChildLifecycle";
+export type {
+  OrdinaryLongAfterPhase,
+  OrdinaryLongNormalChildFrameInput,
+  OrdinaryLongNormalChildState,
+  OrdinaryLongNormalMeshInput,
+} from "./engine/rendering/ordinaryLongChildLifecycle";
 export type {
   OrdinaryBaseNoteMeshGeometry,
   OrdinaryBaseNoteMeshOwnerState,

@@ -26,6 +26,11 @@ import {
   RenderCommandProducer,
   validateOrdinaryFixedNoteSceneInput,
 } from "../engine/rendering/renderCommandProducer";
+import {
+  advanceOrdinaryLongNormalChild,
+  buildOrdinaryLongNormalMesh,
+  createOrdinaryLongNormalChildState,
+} from "../engine/rendering/ordinaryLongChildLifecycle";
 import { FrontNoteType, VirtualLaneDirection } from "../engine/chart/types";
 import { noteInformation } from "./firstSliceFixtures";
 
@@ -494,7 +499,52 @@ function main(): void {
   });
   equal(malformed.status, "evidence-required", "non-Float32 owner value fails closed");
 
-  console.log("ordinary Note geometry producer tests passed: motion=powf/scale mesh=22/60 line=margin/width failures=closed");
+  const longChild = requireOk(createOrdinaryLongNormalChildState(
+    { ...motionState, progressRate: f32(0.75), realMoveSecond: f32(0.25) },
+    96,
+    f32(120),
+  ), "create ordinary Long normal child");
+  equal(longChild.phase, "wait", "Long after activates in Wait");
+  equal(floatBytes(longChild.renderedTransform.position.y), "7E3F9F40", "Long after waits at launcher start Y");
+  equal(floatBytes(longChild.motionState.progressRate), "00000000", "Long after activation resets inherited progress");
+  const beforeTailLaunch = requireOk(advanceOrdinaryLongNormalChild(longChild, {
+    deltaTime: f32(1 / 60),
+    launcherMusicPosition: f32(95.999),
+    musicPosition: f32(0),
+  }), "Long after before launch");
+  equal(beforeTailLaunch, longChild, "strict-before LauncherMusicPos preserves exact Wait owner");
+  const equalTailLaunch = requireOk(advanceOrdinaryLongNormalChild(longChild, {
+    deltaTime: f32(1 / 60),
+    launcherMusicPosition: f32(96),
+    musicPosition: f32(96),
+  }), "Long after equal launch");
+  equal(equalTailLaunch.phase, "move", "LauncherMusicPos equality changes Wait to Move");
+  equal(floatBytes(equalTailLaunch.renderedTransform.position.y), "7E3F9F40", "equal launch does not synthesize an overshoot Move");
+  const stopFrame = requireOk(advanceOrdinaryLongNormalChild(equalTailLaunch, {
+    deltaTime: f32(1 / 60),
+    launcherMusicPosition: f32(97),
+    musicPosition: f32(96),
+  }), "Long after stop frame");
+  equal(stopFrame.phase, "stop", "Move executes once before non-negative MusicPos tail stop");
+  equal(floatBytes(stopFrame.motionState.progressRate), "00000000", "first Move uses zero RealMoveSecond before entering Stop");
+  const longMesh = requireOk(buildOrdinaryLongNormalMesh({
+    front: motion,
+    after: stopFrame.renderedTransform,
+    frontButtonCount: 1,
+    afterButtonCount: 1,
+    screenToSafeAreaRatio: f32(1),
+    widthRate: f32(1),
+    color: color(0.8, 0.8, 0.8, 0.6),
+  }), "build ordinary Long normal mesh");
+  equal(longMesh.vertices.length, 22, "Long child base mesh keeps 22 vertices");
+  equal(longMesh.indices.length, 60, "Long child base mesh keeps 60 indices");
+  equal(createOrdinaryLongNormalChildState(
+    { ...motionState, virtualLaneControllerPresent: true }, 96, f32(120),
+  ).status, "evidence-required", "Long child virtual lane remains fail-closed");
+  equal(createOrdinaryLongNormalChildState(motionState, -1, f32(120)).status,
+    "evidence-required", "Long child invalid tail position remains fail-closed");
+
+  console.log("ordinary Note geometry producer tests passed: motion=powf/scale mesh=22/60 line=margin/width long=wait/move/stop failures=closed");
 }
 
 main();
