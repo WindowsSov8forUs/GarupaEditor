@@ -1,6 +1,11 @@
 import { createRecordingSimulatorBackends } from "../backends/recordingBackend";
 import { RecordingSimulatorRendererBackend } from "../backends/recordingRendererBackend";
 import {
+  ImmutableLocalRenderResourceProvider,
+  PortableRenderResourcePreflightAdapter,
+} from "../backends/resources/localResourceProvider";
+import { sha256UpperHex } from "../backends/resources/sha256";
+import {
   RenderFidelityLabel,
   type RenderCommand,
   type RenderCommandBatch,
@@ -236,6 +241,51 @@ function createObject(sequence: number, objectId = "object.root"): RenderCommand
   };
 }
 
+async function testPortableLocalResources(): Promise<void> {
+  const original = Uint8Array.from([0x61, 0x62, 0x63]);
+  const provider = requireOk(ImmutableLocalRenderResourceProvider.create([
+    { logicalAssetId: "local.abc", bytes: original },
+  ]), "create immutable local provider");
+  original[0] = 0;
+  const first = requireOk(await provider.read("local.abc"), "read copied local bytes");
+  equal(first[0], 0x61, "constructor detaches caller bytes");
+  first[1] = 0;
+  const second = requireOk(await provider.read("local.abc"), "read second byte copy");
+  equal(second[1], 0x62, "each read returns detached bytes");
+  equal((await provider.read("missing")).status, "evidence-required", "unknown local ID rejected");
+  equal(ImmutableLocalRenderResourceProvider.create([
+    { logicalAssetId: "duplicate", bytes: BYTES },
+    { logicalAssetId: "duplicate", bytes: BYTES },
+  ]).status, "evidence-required", "duplicate local ID rejected");
+  equal(sha256UpperHex(Uint8Array.from([0x61, 0x62, 0x63])),
+    "BA7816BF8F01CFEA414140DE5DAE2223B00361A396177A9CB410FF61F20015AD",
+    "portable SHA-256 abc vector");
+
+  const png = new Uint8Array(24);
+  png.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  png.set([0, 0, 0, 13, 0x49, 0x48, 0x44, 0x52], 8);
+  png.set([0, 0, 0, 4, 0, 0, 0, 4], 16);
+  const adapter = new PortableRenderResourcePreflightAdapter();
+  const metadata = requireOk(await adapter.inspect(png, "image/png"), "inspect PNG IHDR");
+  assert(metadata !== null, "PNG metadata present");
+  equal(metadata.width, 4, "PNG width");
+  equal(metadata.height, 4, "PNG height");
+  equal((await adapter.inspect(Uint8Array.from([1]), "image/png")).status,
+    "evidence-required", "invalid PNG rejected");
+
+  const actualProfile = cloneProfile(profile());
+  (actualProfile.assets[0] as { byteLength: number }).byteLength = png.byteLength;
+  (actualProfile.assets[0] as { sha256: string }).sha256 = sha256UpperHex(png);
+  const pngProvider = requireOk(ImmutableLocalRenderResourceProvider.create([
+    { logicalAssetId: "asset.note", bytes: png },
+  ]), "create PNG provider");
+  const renderer = new RecordingSimulatorRendererBackend();
+  requireOk(await renderer.prepare(SESSION, actualProfile, pngProvider, adapter),
+    "prepare with portable provider and adapter");
+  equal(renderer.snapshot().state, "ready", "portable resource stack ready");
+  console.log("ok 1 - immutable local bytes, SHA-256 and strict PNG preflight");
+}
+
 async function testProfileValidationAndAliases(): Promise<void> {
   const mutable = profile();
   const frozen = requireOk(validateAndFreezeRenderProfile(mutable), "valid profile");
@@ -269,7 +319,7 @@ async function testProfileValidationAndAliases(): Promise<void> {
     visibleLabel: "wrong" as typeof RenderFidelityLabel,
   }, "current-external-portable");
   equal(validateAndFreezeRenderProfile(badLabel).status, "evidence-required", "degraded label rejected");
-  console.log("ok 1 - profile shape, deep freeze and fidelity gates");
+  console.log("ok 2 - profile shape, deep freeze and fidelity gates");
 }
 
 async function testAtomicPrepare(): Promise<void> {
@@ -320,7 +370,7 @@ async function testAtomicPrepare(): Promise<void> {
     preflight(),
   ), "explicit degraded prepare");
   equal(degraded.snapshot().fidelity?.mode, "habahiro", "degraded fidelity exposed");
-  console.log("ok 2 - atomic resource preflight and provenance gates");
+  console.log("ok 3 - atomic resource preflight and provenance gates");
 }
 
 async function testCommandsAndTerminalFault(): Promise<void> {
@@ -409,7 +459,7 @@ async function testCommandsAndTerminalFault(): Promise<void> {
     exactKey: "missing",
   }).status, "evidence-required", "missing exact key rejected");
   equal(unknown.snapshot().state, "faulted", "binding fault terminal");
-  console.log("ok 3 - session, sequence, identity, exact resource and terminal fault");
+  console.log("ok 4 - session, sequence, identity, exact resource and terminal fault");
 }
 
 async function testHudReflectAtomic(): Promise<void> {
@@ -482,7 +532,7 @@ async function testHudReflectAtomic(): Promise<void> {
     command.kind === "set-hud" &&
     Object.prototype.hasOwnProperty.call(command.state, "addScore")), false,
   "rejected HUD batch has zero scene mutation");
-  console.log("ok 4 - Score/Life plan commits HUD in R1 order and rejects atomically");
+  console.log("ok 5 - Score/Life plan commits HUD in R1 order and rejects atomically");
 }
 
 async function testHostReadyGate(): Promise<void> {
@@ -543,16 +593,17 @@ async function testHostReadyGate(): Promise<void> {
   equal(mismatch.status, "evidence-required", "cross-session host rejected");
   equal(createSimulatorEngine(engineInput(), createRecordingSimulatorBackends(unprepared)).status,
     "evidence-required", "typed backend requires explicit host session");
-  console.log("ok 5 - host ready and exact-session gate precedes owner mutation");
+  console.log("ok 6 - host ready and exact-session gate precedes owner mutation");
 }
 
 async function main(): Promise<void> {
+  await testPortableLocalResources();
   await testProfileValidationAndAliases();
   await testAtomicPrepare();
   await testCommandsAndTerminalFault();
   await testHudReflectAtomic();
   await testHostReadyGate();
-  console.log("render contract tests passed: 5");
+  console.log("render contract tests passed: 6");
 }
 
 void main().catch((error: unknown) => {
