@@ -45,6 +45,7 @@ The locked package files observed on the connected device are byte-identical to 
 - `resource_pixi_rendering_line_profile.json` reparses the current APK NoteSyncLine prefab and SyncNoteLine material, then joins them only with the current R2 setter trajectory. It closes the portable single-segment textured-quad inputs: two world-space endpoints, equal width, View alignment, Stretch UV, zero cap/corner vertices, white color, no mask interaction and explicit non-parity raster boundary.
 - `resource_pixi_rendering_projection_profile.json` binds APK build index 3 to `RhythmGame.unity`, reparses its orthographic `GameCamera`/`GamePlay` hierarchy, and validates all 24,470 R2 line endpoints against the fixed 1600x720 physical-frame viewport. It closes the ordinary world-XY/width to Pixi top-left projection without extending the profile to HABAHIRO.
 - `resource_pixi_rendering_note_geometry_profile.json` consolidates the next producer implementation wave from current evidence: 17 exact current methods, all 13 authored button transforms plus Launcher, fixed ordinary motion/scale formulas, the R2 22/60 base mesh, sync-line margin/update lifecycle and the 1600x720 projection. `NoteMesh.GetMeshWidthRate` remains current-specific at its changed static-field offset rather than being mislabeled relocation-only.
+- `resource_pixi_rendering_hud_runtime_profile.json` compacts the committed ordinary R1 into a producer-facing HUD/animation boundary: all 23 HUD targets, 14,084 HUD and 1,452 HUD-animation caller entries, first-judged AddScore→Combo→Show→Result order, and both observed life-heal calls before Life UpdateView/updateLifeText. Five static-only routes remain explicitly unauthorized rather than inferred.
 - `runtime/resource-pixi-rendering-delivery-frame-manifest.json` locks seven privacy-reviewed physical-device ordinary PNG anchors at the observed 1600×720 viewport. Crops exclude identity-bearing Skill/pause text; no generated HABAHIRO frame is represented as original.
 - `habahiro_current_external_resource_profile.json` records the user-authorized Bestdori fallback: 12 live explorer/export assets, 179 Sprite rows and hashes whose 2026-03-31 release timestamps align with MasterMusic 786. Production remains offline and consumes only host-local hash-verified bytes.
 - `resource_pixi_rendering_delivery_oracle.json` and `delivery_closure.json` close the explicit `ordinary-exact-habahiro-degraded` delivery gate while retaining original HABAHIRO bundle/runtime/frame parity as open and unclaimed.
@@ -125,6 +126,7 @@ py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-
 py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\build_resource_pixi_rendering_line_profile.py
 py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\build_resource_pixi_rendering_projection_profile.py
 py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\build_resource_pixi_rendering_note_geometry_profile.py
+py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\build_resource_pixi_rendering_hud_runtime_profile.py
 py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\build_resource_pixi_rendering_offline_closure.py
 py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\verify_resource_pixi_rendering_static_contract.py
 py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\verify_resource_pixi_rendering_resource_contract.py
@@ -138,6 +140,7 @@ py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-
 py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\verify_resource_pixi_rendering_line_profile.py
 py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\verify_resource_pixi_rendering_projection_profile.py
 py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\verify_resource_pixi_rendering_note_geometry_profile.py
+py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\verify_resource_pixi_rendering_hud_runtime_profile.py
 py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\verify_resource_pixi_rendering_offline_closure.py
 ```
 

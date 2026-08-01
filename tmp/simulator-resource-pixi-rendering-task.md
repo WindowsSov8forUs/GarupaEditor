@@ -11,7 +11,7 @@
 - 锁定原作样本：`jp.co.craftegg.band` 10.1.4（version code 230，`arm64-v8a`）。
 - 锁定`libil2cpp.so` SHA-256：`815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F`。
 - 锁定`global-metadata.dat` SHA-256：`298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F`。
-- 当前Reverse基线提交：`35323566e65f22153825d7f37f461799fd3d7a31`；只消费该提交及其祖先中已提交、已push、可校验对象。
+- 当前Reverse基线提交：`dd61e432202d2f1cc651b755cd69e09e73083947`；只消费该提交及其祖先中已提交、已push、可校验对象。
 - 当前状态：**RP00–RP03已关闭；RP04/RP07/RP08的已证实producer子集与RP10本地provider已落地，当前实施RP04–RP12剩余链。已闭合本地bytes browser decode、Texture/subtexture cache、Sprite bind、基础transform/portable ordering、引用计数与release；natural ordinary geometry R2已关闭mesh topology/vertices/UV/color/threshold、line endpoint/equal width与field/mesh transform载荷，current NoteSyncLine profile已关闭quad轮廓，新增ordinary projection profile关闭1600×720 world→Pixi endpoint/width映射。projection已落地，consolidated ordinary producer profile已一次关闭Note motion/base mesh/sync-line公式，下一批直接落engine producer与Pixi mapping；mask、HUD可见布局、animation及RP12剩余矩阵继续失败关闭并按批量缺口取证推进。原始HAB UnityFS、natural HAB R1与原始HAB frame保持`habahiro_exact_parity_gate=open-not-claimed`。`production_authorization=true`仅授权显式fidelity选择；必须显示`Approximate HABAHIRO`、禁止静默fallback、production/test联网、资源二进制入库与原作parity宣称。**
 - 计划证据包：`tmp/simulator-reverse-evidence/resource-pixi-rendering/`，只在Reverse新证据提交并push后创建。
 - 计划验收记录：`tmp/simulator-resource-pixi-rendering-acceptance.md`，RP14时创建。
@@ -381,6 +381,14 @@
 - render-contract suite使用显式声明`life-heal`的exact local profile，断言Reflect八命令中第7条为`play-animation(life-heal,restart=true)`、第8条才是life `set-hud`，锁定R1先动画后UpdateView顺序。
 - profile若不声明对应animation role仍由recording backend terminal fail-closed；现有无heal Reflect仍保持7命令，不插入合成animation。
 - `tsc`、Score/Life与render-contract suites通过；两个runner内dependency/evidence verifier通过，未运行Vite/Tauri整体构建。
+
+### 1.41 2026-08-01 ordinary HUD runtime semantic consolidated取证批
+
+- 为避免继续从大trace逐route人工摘取，Reverse `dd61e432202d2f1cc651b755cd69e09e73083947`一次重算已提交87364-event ordinary R1、55-target contract及current HUD/Skill animation profiles，输出producer-facing compact profile并已push。
+- profile覆盖HUD target RPH-033–055共23项、14,084个HUD caller与1,452个HUD-animation caller；逐target锁定enter/leave count、首次sequence/frame及observed状态。
+- 首次判定锁定`AddScore.Play → Combo.ExecUpdate → ComboNumber.Show → Result.changeSprite`；两次实体heal分别锁定frame 129的`44520<44522<44523`与frame 277的`64524<64526<64527`。
+- 仅授权basic score/combo/result/life semantic和observed life-heal-before-life-update；未出现的AP、damage guard、Never Die、score/judge skill及mask runtime ordering、Pixi curve sampling均false，不把static asset存在外推为runtime route。
+- byte-idempotent builder/verifier重算trace、hook、HUD profile和Skill profile hash；Garupa冻结包更新为743项，未复制raw trace、资源bytes、实体PNG或IDA数据库。
 
 ## 2. 固定范围
 

@@ -45,6 +45,7 @@ ordinary_geometry_payload_gate=closed
 current_sync_line_portable_profile=closed
 current_ordinary_projection_profile=closed-1600x720
 current_ordinary_note_geometry_producer_profile=closed-base-mesh-sync-line
+current_ordinary_hud_runtime_semantic_profile=closed-observed-subset
 ordinary_physical_frames=7
 habahiro_current_external_assets=12
 remaining_exact_blockers=original-current-HABAHIRO-UnityFS-bytes,natural-HABAHIRO-runtime-R1,original-HABAHIRO-physical-frames
@@ -79,6 +80,7 @@ remaining_exact_blockers=original-current-HABAHIRO-UnityFS-bytes,natural-HABAHIR
 - current 10.1.4 APK补充解析NoteSyncLine prefab与material：确认两点world-space、View/Stretch、opaque white、零cap/corner/mask和R2 equal width，授权camera-facing textured quad portable mapping；GPU half-texel、Shader LOD与raster parity继续排除。
 - current `RhythmGame.unity`的build index 3、正交`GameCamera` size 1与1600×720实体viewport关闭ordinary world→Pixi投影：`x=800+worldX*360`、`y=360-worldY*360`、`width=worldWidth*360`，全部R2 line写入均在viewport/clip内且禁止clamp；不外推HAB。
 - consolidated producer profile将17个current ARM64方法、13个button与Launcher scene transform、Note motion/scale、R2 base mesh和sync-line update/margin一次闭合；仅授权ordinary fixed 1600×720 base subset，advanced/Multiple/threshold/HAB exact不在授权内。
+- ordinary HUD runtime profile从R1聚合23个target与14,084/1,452个HUD/animation caller entry；授权首次判定semantic顺序与两次observed life-heal先于life update，5条未出现route、mask ordering和Pixi curve sampling继续false。
 - 7个ordinary physical-device frame anchor锁定1600×720 viewport与隐私裁剪；PNG只保留在Reverse提交，Garupa冻结manifest中的尺寸/hash。
 - 12项Bestdori current external portable asset与179个Sprite row/hash关闭HAB资源交付子门；production/test必须使用host本地hash provider，禁止联网，且不宣称原始UnityFS一致。
 - `delivery_closure.json`按交付profile关闭V01、D01–D18与PR01–PR40；PR01/PR04/PR19/PR40继续标记degraded disclosure，HA-D01–HA-D12仍为强制差异。
