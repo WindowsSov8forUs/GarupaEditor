@@ -99,6 +99,12 @@ export interface OrdinaryNoteMotionResult {
   readonly localScale: RenderVector3;
 }
 
+export interface OrdinaryNoteActivationAdjustmentResult {
+  readonly motions: readonly OrdinaryNoteMotionResult[];
+  readonly progressRate: RenderFloat32;
+  readonly realMoveSecond: RenderFloat32;
+}
+
 export function getOrdinaryNoteArrivalSeconds(
   specificSpeed: RenderFloat32,
 ): SimulatorResult<RenderFloat32> {
@@ -192,6 +198,94 @@ export function advanceOrdinaryNoteMotion(
     progressRate: progress.value,
     position: position.value,
     localScale: scale.value,
+  }));
+}
+
+export function advanceOrdinaryNoteActivationAdjustment(
+  state: OrdinaryNoteMotionState,
+  launcherMusicPosition: RenderFloat32,
+  noteAbsolutePosition: number,
+  noteBpm: RenderFloat32,
+): SimulatorResult<OrdinaryNoteActivationAdjustmentResult> {
+  if (
+    !validateRenderFloat32(launcherMusicPosition) ||
+    !Number.isSafeInteger(noteAbsolutePosition) ||
+    !validateRenderFloat32(noteBpm) ||
+    noteBpm.value <= 0
+  ) {
+    return reject(
+      "render.geometry.invalid-activation-adjustment-owner-state",
+      "activateAdjust requires one Float32 LauncherMusicPos, one Int32 note position and one positive Float32 note BPM.",
+    );
+  }
+  const arrival = getOrdinaryNoteArrivalSeconds(state.specificSpeed);
+  if (arrival.status !== "ok") return arrival;
+  if (launcherMusicPosition.value <= noteAbsolutePosition) {
+    return ok(Object.freeze({
+      motions: Object.freeze([]),
+      progressRate: state.progressRate,
+      realMoveSecond: state.realMoveSecond,
+    }));
+  }
+  const arrivalPositionSpan = Math.fround(
+    Math.fround(
+      Math.fround(arrival.value.value * noteBpm.value) / Math.fround(240),
+    ) * Math.fround(192),
+  );
+  if (arrivalPositionSpan <= 0) {
+    return reject(
+      "render.geometry.invalid-activation-arrival-span",
+      "activateAdjust requires a positive Float32 arrival span in music-position units.",
+    );
+  }
+  const targetProgress = Math.fround(
+    Math.fround(launcherMusicPosition.value - noteAbsolutePosition) /
+      arrivalPositionSpan,
+  );
+  const stepDenominator = Math.fround(
+    Math.fround(
+      Math.fround(
+        Math.fround(noteBpm.value * Math.fround(192)) / Math.fround(14400),
+      ) * Math.fround(60),
+    ) + Math.fround(120),
+  );
+  const stepValue = Math.fround(Math.fround(1) / stepDenominator);
+  const step = createRenderFloat32(stepValue);
+  if (step.status !== "ok" || step.value.value <= 0) {
+    return reject(
+      "render.geometry.invalid-activation-adjustment-step",
+      "activateAdjust requires its recovered positive Float32 synthetic Move step.",
+    );
+  }
+  let progress = state.progressRate;
+  let realMoveSecond = state.realMoveSecond;
+  const motions: OrdinaryNoteMotionResult[] = [];
+  while (targetProgress > progress.value) {
+    const nextRealMoveSecond = createRenderFloat32(Math.fround(
+      realMoveSecond.value + step.value.value,
+    ));
+    if (nextRealMoveSecond.status !== "ok") return nextRealMoveSecond;
+    const motion = advanceOrdinaryNoteMotion({
+      ...state,
+      progressRate: progress,
+      deltaTime: step.value,
+      realMoveSecond: nextRealMoveSecond.value,
+    });
+    if (motion.status !== "ok") return motion;
+    if (motion.value.progressRate.value <= progress.value) {
+      return reject(
+        "render.geometry.non-progressing-activation-adjustment",
+        "activateAdjust must advance progress on every recovered synthetic Move iteration.",
+      );
+    }
+    motions.push(motion.value);
+    progress = motion.value.progressRate;
+    realMoveSecond = nextRealMoveSecond.value;
+  }
+  return ok(Object.freeze({
+    motions: Object.freeze(motions),
+    progressRate: progress,
+    realMoveSecond,
   }));
 }
 

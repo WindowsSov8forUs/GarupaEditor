@@ -36,7 +36,10 @@ import {
 } from "../engine/managers/inputBoundaries";
 import { NoteManager } from "../engine/managers/noteManager";
 import { SlideNoteManager } from "../engine/managers/slideNoteManager";
-import { RenderCommandProducer } from "../engine/rendering/renderCommandProducer";
+import {
+  RenderCommandProducer,
+  validateOrdinaryFixedNoteSceneInput,
+} from "../engine/rendering/renderCommandProducer";
 import {
   validateAutoLiveActivationGraph,
   validateAutoLiveChartOwnership,
@@ -234,6 +237,19 @@ export function createSimulatorEngine(
   const renderingSessionId = input.rendering?.sessionId ?? null;
   const rendererValidation = validateRendererSession(renderingSessionId, backends);
   if (rendererValidation.status !== "ok") return rendererValidation;
+  if (input.rendering !== undefined && backends.rendering !== undefined) {
+    if (backends.rendering.snapshot().fidelity?.mode !== "ordinary") {
+      return evidenceRequired(
+        "render.note.non-ordinary-scene-lifecycle-unimplemented",
+        ["RPR-D05", "RPR-D13", "PR04", "PR39", "HA-D04"],
+        "The connected Note scene/motion lifecycle is authorized only for the fixed ordinary 10.1.4 profile.",
+      );
+    }
+    const sceneValidation = validateOrdinaryFixedNoteSceneInput(
+      input.rendering.ordinaryNoteScene,
+    );
+    if (sceneValidation.status !== "ok") return sceneValidation;
+  }
   const renderProducer = input.rendering !== undefined && backends.rendering !== undefined
     ? new RenderCommandProducer(
         input.rendering.sessionId,
@@ -311,6 +327,7 @@ export function createSimulatorEngine(
     () => oneFrameJudgementController.createManualJudgementTransaction(),
     backends.manualInputGeometry,
     renderProducer,
+    input.rendering?.ordinaryNoteScene ?? null,
   );
   const judgementOwner =
     oneFrameJudgementController.registerAutoLiveJudgementOwner(

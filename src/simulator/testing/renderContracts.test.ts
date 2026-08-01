@@ -225,6 +225,56 @@ function f32(value: number) {
   return requireOk(createRenderFloat32(Math.fround(value)), "create Float32");
 }
 
+function vector3(x: number, y: number, z: number) {
+  return Object.freeze({ x: f32(x), y: f32(y), z: f32(z) });
+}
+
+const ORDINARY_NOTE_SCENE = Object.freeze({
+  specificSpeed: f32(11),
+  noteSettingScale: f32(1),
+  launcherY: f32(5.420000076293945),
+  targetCenterY: f32(-3.450000047683716),
+  highAspectRatio: f32(1),
+  noteStartPositions: Object.freeze(Array.from(
+    { length: 7 },
+    (_, lane) => vector3(Math.fround((lane - 3) * 0.11), 4.976500511169434, -13.5),
+  )),
+  goalPositions: Object.freeze(Array.from(
+    { length: 7 },
+    (_, lane) => vector3(Math.fround((lane - 3) * 2.2), -3.450000047683716, -13.5),
+  )),
+  noteColor: Object.freeze({
+    red: f32(1),
+    green: f32(1),
+    blue: f32(1),
+    alpha: f32(1),
+  }),
+  noteDomainLayer: 3,
+});
+
+const RENDERING = Object.freeze({
+  sessionId: SESSION,
+  resources: RESOURCES,
+  ordinaryNoteScene: ORDINARY_NOTE_SCENE,
+});
+
+function renderedNoteBatch(testingId: string, absolutePos: number) {
+  const batch = noteBatch([testingId], absolutePos);
+  return Object.freeze({
+    ...batch,
+    informationList: Object.freeze(batch.informationList.map((information) => Object.freeze({
+      ...information,
+      barIndex: Math.trunc(absolutePos / 192),
+      numerator: absolutePos % 192,
+      denominator: 192,
+      absolutePos,
+      storedAbsolutePos: absolutePos,
+      bpm: 120,
+      bpmString: "120",
+    }))),
+  });
+}
+
 function scoreProfile(): ScoreLifeStateProfile {
   return {
     schemaVersion: 1,
@@ -491,7 +541,7 @@ async function testCommandsAndTerminalFault(): Promise<void> {
 async function testHudReflectAtomic(): Promise<void> {
   const renderer = new RecordingSimulatorRendererBackend();
   requireOk(await renderer.prepare(SESSION, profile(), new LocalProvider(), preflight()), "HUD renderer prepare");
-  const baseInput = engineInput([noteBatch(["hud-normal"], 96)]);
+  const baseInput = engineInput([renderedNoteBatch("hud-normal", 96)]);
   const input = {
     ...baseInput,
     runtime: {
@@ -502,7 +552,7 @@ async function testHudReflectAtomic(): Promise<void> {
       },
     },
     scoreLifeState: scoreProfile(),
-    rendering: { sessionId: SESSION, resources: RESOURCES },
+    rendering: RENDERING,
   };
   const engine = requireOk(
     createSimulatorEngine(input, createRecordingSimulatorBackends(renderer)),
@@ -598,7 +648,7 @@ async function testHudReflectAtomic(): Promise<void> {
 async function testHostReadyGate(): Promise<void> {
   const unprepared = new RecordingSimulatorRendererBackend();
   const backends = createRecordingSimulatorBackends(unprepared);
-  const baseInput = engineInput([noteBatch(["render-normal"], 96)]);
+  const baseInput = engineInput([renderedNoteBatch("render-normal", 96)]);
   const input = {
     ...baseInput,
     runtime: {
@@ -608,7 +658,7 @@ async function testHostReadyGate(): Promise<void> {
         resultTransform: "identity-no-active-situation-skill" as const,
       },
     },
-    rendering: { sessionId: SESSION, resources: RESOURCES },
+    rendering: RENDERING,
   };
   equal(createSimulatorEngine(input, backends).status, "evidence-required", "unprepared host rejected");
   equal(backends.snapshot().length, 0, "host rejection precedes backend/domain mutation");
@@ -619,22 +669,33 @@ async function testHostReadyGate(): Promise<void> {
   equal(unprepared.snapshot().objectCount, 1, "pool setup creates stable render root");
   equal(unprepared.snapshot().nextSequence, 2, "pool setup create then hide order");
   requireOk(engine.step(0), "rendered note activation frame");
-  equal(unprepared.snapshot().nextSequence, 4, "activation then exact bind order");
+  equal(unprepared.snapshot().nextSequence, 5, "initial transform, activation and exact bind order");
   const produced = unprepared.commandSnapshot();
   equal(produced[0]?.kind, "create-object", "setup create command");
   equal(produced[1]?.kind, "hide-object", "setup hide command");
-  equal(produced[2]?.kind, "activate-object", "activation command");
-  equal(produced[3]?.kind, "bind-resource", "exact bind command");
-  if (produced[3]?.kind === "bind-resource") {
-    equal(produced[3].exactKey, "note_normal_0", "owner-authored exact Sprite key");
+  equal(produced[2]?.kind, "set-transform", "current Activate writes initial transform first");
+  equal(produced[3]?.kind, "activate-object", "SetSpriteEnabled follows initial transform");
+  equal(produced[4]?.kind, "bind-resource", "setupNoteType binds after visibility");
+  if (produced[2]?.kind === "set-transform") {
+    equal(produced[2].ordering.sourceDepthOrSortingOrder, 70, "current Note root sorting order");
+    equal(produced[2].position.z.bits, f32(-13.5).bits, "initial transform preserves typed scene Z");
   }
-  for (let frame = 0; frame < 120 && unprepared.snapshot().nextSequence === 4; frame += 1) {
+  if (produced[4]?.kind === "bind-resource") {
+    equal(produced[4].exactKey, "note_normal_0", "owner-authored exact Sprite key");
+  }
+  for (let frame = 0; frame < 120; frame += 1) {
+    if (unprepared.commandSnapshot().some((command) => command.kind === "deactivate-object")) break;
     requireOk(engine.step(1 / 60), `rendered note lifecycle frame ${frame}`);
   }
-  equal(unprepared.snapshot().nextSequence, 6, "deactivation hide then deactivate order");
   const lifecycle = unprepared.commandSnapshot();
-  equal(lifecycle[4]?.kind, "hide-object", "deactivation hide command");
-  equal(lifecycle[5]?.kind, "deactivate-object", "deactivation state command");
+  const deactivationIndex = lifecycle.findIndex((command) => command.kind === "deactivate-object");
+  assert(deactivationIndex > 0, "rendered note reaches deactivation");
+  equal(lifecycle[deactivationIndex - 1]?.kind, "hide-object", "deactivation hide command");
+  equal(lifecycle[deactivationIndex]?.kind, "deactivate-object", "deactivation state command");
+  assert(
+    lifecycle.slice(5, deactivationIndex - 1).every((command) => command.kind === "set-transform"),
+    "every active Move substep emits one typed transform before judgement",
+  );
   requireOk(engine.dispose(), "prepared host dispose");
   equal(unprepared.snapshot().state, "disposed", "typed renderer disposed with host");
   equal(unprepared.snapshot().objectCount, 0, "host dispose releases render objects");
@@ -680,7 +741,7 @@ async function testHostReadyGate(): Promise<void> {
   );
 
   const mismatch = createSimulatorEngine(
-    { ...engineInput(), rendering: { sessionId: "foreign", resources: RESOURCES } },
+    { ...engineInput(), rendering: { ...RENDERING, sessionId: "foreign" } },
     createRecordingSimulatorBackends(unprepared),
   );
   equal(mismatch.status, "evidence-required", "cross-session host rejected");

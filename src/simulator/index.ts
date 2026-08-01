@@ -186,15 +186,19 @@ export {
   RenderOwnerTransaction,
   resolveFrontSpriteBinding,
   rootRenderObjectId,
+  validateOrdinaryFixedNoteSceneInput,
 } from "./engine/rendering/renderCommandProducer";
 export type {
+  OrdinaryFixedNoteSceneInput,
   OrdinaryNoteTransformVisualState,
+  PreparedOrdinaryNoteActivation,
   PreparedOrdinaryNoteMotion,
   RenderEngineResourceBindings,
   RenderFieldObjectPlan,
   RenderPoolIdentityPlan,
 } from "./engine/rendering/renderCommandProducer";
 export {
+  advanceOrdinaryNoteActivationAdjustment,
   advanceOrdinaryNoteMotion,
   buildOrdinaryBaseNoteMesh,
   buildOrdinarySyncLine,
@@ -203,6 +207,7 @@ export {
 export type {
   OrdinaryBaseNoteMeshGeometry,
   OrdinaryBaseNoteMeshOwnerState,
+  OrdinaryNoteActivationAdjustmentResult,
   OrdinaryNoteMeshEndpoint,
   OrdinaryNoteMotionResult,
   OrdinaryNoteMotionState,

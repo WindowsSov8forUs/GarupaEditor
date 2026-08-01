@@ -12,7 +12,7 @@
 - 锁定`libil2cpp.so` SHA-256：`815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F`。
 - 锁定`global-metadata.dat` SHA-256：`298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F`。
 - 当前Reverse基线提交：`dd61e432202d2f1cc651b755cd69e09e73083947`；只消费该提交及其祖先中已提交、已push、可校验对象。
-- 当前状态：**RP00–RP03、RP10、RP12、RP13已关闭；RP04–RP09与RP11仅关闭任务书1.31–1.43记录的已证实子集。RP14独立验收已执行但不通过，详见`tmp/simulator-resource-pixi-rendering-acceptance.md`：Note motion lifecycle/child graph、advanced/Multiple/threshold/mask、Pixi可见HUD/slider/animation及degraded visible label仍失败关闭。ordinary projection、typed Note motion、22/60 base mesh、sync-line、field explicit plan、basic HUD/life-heal semantic与terminal fault矩阵已落地；743项证据verifier、render production与14-stage全回归通过。原始HAB UnityFS、natural HAB R1与原始HAB frame保持`habahiro_exact_parity_gate=open-not-claimed`。`production_authorization=true`只授权显式fidelity profile，不等于production surface已全部实现；禁止静默fallback、production/test联网、资源二进制入库与原作parity宣称。**
+- 当前状态：**RP00–RP03、RP10、RP12、RP13已关闭；RP04–RP09与RP11仅关闭任务书1.31–1.46记录的已证实子集。RP14独立验收已执行但不通过，详见`tmp/simulator-resource-pixi-rendering-acceptance.md`：ordinary root scene/motion lifecycle已接线；after/icon/mesh/sync与Multiple child owner、advanced/threshold/mask、Pixi可见HUD/slider/animation及degraded visible label仍失败关闭。ordinary projection、typed Note motion、22/60 base mesh、sync-line、field explicit plan、basic HUD/life-heal semantic与terminal fault矩阵已落地；743项证据verifier与render production回归通过。原始HAB UnityFS、natural HAB R1与原始HAB frame保持`habahiro_exact_parity_gate=open-not-claimed`。`production_authorization=true`只授权显式fidelity profile，不等于production surface已全部实现；禁止静默fallback、production/test联网、资源二进制入库与原作parity宣称。**
 - 计划证据包：`tmp/simulator-reverse-evidence/resource-pixi-rendering/`，只在Reverse新证据提交并push后创建。
 - 计划验收记录：`tmp/simulator-resource-pixi-rendering-acceptance.md`，RP14时创建。
 
@@ -74,7 +74,7 @@
 | RP01 10.1.4静态与资源重基线 | **交付profile已关闭 / exact HAB部分开放** | 当前方法/资源/scene/animation/portable与12项current external HAB profile已关闭；原始HAB UnityFS仍只阻塞exact parity |
 | RP02 实体/运行时与固定scene oracle | **交付profile已关闭** | ordinary 87,364-event R1与7个实体frame已关闭；HAB exact R1/frame开放但不阻塞显式degraded交付 |
 | RP03 锁定render/resource contracts | **已完成** | immutable profile、provider、command、identity、session、preflight与独立failure矩阵已关闭 |
-| RP04 接入engine渲染producer | **进行中：pool/setup/front activation已完成** | Note/manager/HUD只生产证据确认的typed commands，不依赖Pixi |
+| RP04 接入engine渲染producer | **进行中：pool/setup/front activation/root motion已完成** | Note/manager/HUD只生产证据确认的typed commands，不依赖Pixi |
 | RP05 恢复Note Sprite与field | 阻塞于RP04 | atlas route、exact lookup、transform、flick icon、field/judge line匹配 |
 | RP06 恢复mesh、sync line与mask | 阻塞于RP05 | Long/Slide topology/material/threshold、line、mask和ordering匹配 |
 | RP07 恢复render pool与生命周期 | 阻塞于RP06 | acquire/reuse/release、pause/reset/fault/dispose顺序匹配 |
@@ -419,6 +419,15 @@
 - 再次串行执行`simulator:test:resource-pixi-rendering`，14 stages全部通过；evidence、static audit、isolated tsc、actual Pixi、RP12及全部上游回归绿色。
 - 独立逐项区分evidence closure与production consumption后，RP14**不通过**：RP04–RP09/RP11存在motion lifecycle/child graph、advanced/Multiple/threshold/mask、visible HUD/slider/animation与degraded label缺口。
 - 新建`tmp/simulator-resource-pixi-rendering-acceptance.md`记录RP00–RP14、PR01–PR40 production分组、验证、双仓状态与后续硬门。不得更新阶段为完成或宣称parity。
+
+### 1.46 2026-08-02 RP04 ordinary root scene/motion lifecycle production/test子批
+
+- `SimulatorRenderingSessionInput`新增必填`ordinaryNoteScene`，只接受current fixed ordinary profile需要的typed Float32 speed、note-setting scale、launcher/target Y、high-aspect、七条start/goal Vector3、显式RGBA与portable domain layer；缺字段、非Float32、非七lane或非ordinary fidelity在chart/domain owner创建前失败关闭。
+- `RenderCommandProducer`按current ARM64 `NoteFrontBase.Activate`顺序原子预检`initial set-transform → activate → exact bind`；root sorting order固定为current `AwakeStart`写入的70，creation sequence来自已commit pool identity，不由host或backend猜测。
+- 新增current `NoteBase.activateAdjust` Float32复原：`LauncherMusicPos`越过Note位置时按arrival-position span计算目标progress，以`1 / (noteBpm*192/14400*60+120)`逐步同时推进RealMoveSecond并重复生成Move transform；等于/早于Note位置不生成synthetic Move，不合并同帧写入。
+- `NoteManager`只在activation renderer batch已完整preflight后绑定Note，commit后保存future motion state；每个Move adaptive substep先提交一个root transform再进入现有判定状态机，renderer拒绝不会推进progress。Deactivate仍保持`hide→deactivate`并清除motion owner state。
+- dedicated oracle冻结一position overshoot的三次progress/RealMoveSecond bits、六命令activation序列、70-order、typed Z、one-use transaction、七lane scene validation，以及virtual-lane与Multiple visual零sequence失败关闭；render-contract、actual Pixi、render-production和743项evidence verifier通过。
+- 本批只关闭ordinary front root scene/motion。after/icon/mesh/sync child identity与连接、Multiple side/back-line、advanced mesh、threshold/mask和HAB scene motion未获本批授权，继续`evidence-required`；不得用空child、static icon或base mesh helper存在冒充lifecycle接线。
 
 ## 2. 固定范围
 

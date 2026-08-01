@@ -8,7 +8,10 @@ import type {
   RenderVector3,
   SimulatorRendererBackend,
 } from "../../backends/renderingContracts";
-import { createRenderFloat32 } from "../../backends/renderingValidation";
+import {
+  createRenderFloat32,
+  validateRenderFloat32,
+} from "../../backends/renderingValidation";
 import {
   ButtonType,
   FrontNoteType,
@@ -25,6 +28,7 @@ import type { NoteFamily } from "../data/noteData";
 import type { InGameRecordSnapshot } from "../managers/inGameRecord";
 import type { ScoreLifeReflectPlan } from "../managers/scoreLifeStateManager";
 import {
+  advanceOrdinaryNoteActivationAdjustment,
   advanceOrdinaryNoteMotion,
   type OrdinaryNoteMotionResult,
   type OrdinaryNoteMotionState,
@@ -48,6 +52,23 @@ export interface OrdinaryNoteTransformVisualState {
 
 export interface PreparedOrdinaryNoteMotion {
   readonly motion: OrdinaryNoteMotionResult;
+  readonly transaction: RenderOwnerTransaction;
+}
+
+export interface OrdinaryFixedNoteSceneInput {
+  readonly specificSpeed: RenderFloat32;
+  readonly noteSettingScale: RenderFloat32;
+  readonly launcherY: RenderFloat32;
+  readonly targetCenterY: RenderFloat32;
+  readonly highAspectRatio: RenderFloat32;
+  readonly noteStartPositions: readonly RenderVector3[];
+  readonly goalPositions: readonly RenderVector3[];
+  readonly noteColor: RenderColor;
+  readonly noteDomainLayer: number;
+}
+
+export interface PreparedOrdinaryNoteActivation {
+  readonly motionState: OrdinaryNoteMotionState;
   readonly transaction: RenderOwnerTransaction;
 }
 
@@ -113,6 +134,7 @@ export class RenderCommandProducer {
   private frame = 0;
   private substep = 0;
   private readonly createdObjectIds: string[] = [];
+  private readonly creationSequenceByObjectId = new Map<string, number>();
 
   constructor(
     readonly sessionId: string,
@@ -221,7 +243,7 @@ export class RenderCommandProducer {
         state: Object.freeze({ label: fidelity.visibleLabel, visible: true }),
       });
     }
-    return this.preflight(commands, () => this.createdObjectIds.push(...created));
+    return this.preflight(commands, () => this.recordCreatedObjects(created));
   }
 
   preflightHudReflect(
@@ -357,7 +379,7 @@ export class RenderCommandProducer {
         renderObjectId: plan.renderObjectId,
       });
     }
-    return this.preflight(commands, () => this.createdObjectIds.push(...created));
+    return this.preflight(commands, () => this.recordCreatedObjects(created));
   }
 
   preflightPoolSetup(
@@ -388,7 +410,7 @@ export class RenderCommandProducer {
         renderObjectId,
       });
     }
-    return this.preflight(commands, () => this.createdObjectIds.push(...created));
+    return this.preflight(commands, () => this.recordCreatedObjects(created));
   }
 
   preflightNoteActivation(
@@ -429,6 +451,148 @@ export class RenderCommandProducer {
       },
     ];
     return this.preflight(commands);
+  }
+
+  preflightOrdinaryNoteActivation(
+    poolObjectId: string,
+    information: NoteInformation,
+    noteBpm: RenderFloat32,
+    launcherMusicPosition: RenderFloat32,
+    scene: OrdinaryFixedNoteSceneInput,
+    substep: number,
+  ): SimulatorResult<PreparedOrdinaryNoteActivation> {
+    const validation = this.validate();
+    if (validation.status !== "ok") return validation;
+    const sceneValidation = validateOrdinaryFixedNoteSceneInput(scene);
+    if (sceneValidation.status !== "ok") return sceneValidation;
+    if (!Number.isSafeInteger(substep) || substep < 0) {
+      return evidenceRequired(
+        "render.producer.invalid-substep",
+        ["RPR-D13", "PR33", "PR39"],
+        "Note activation commands require the engine-owned non-negative adaptive substep.",
+      );
+    }
+    const lane = resolveOrdinaryLaneIndex(information);
+    if (lane.status !== "ok") return lane;
+    const binding = resolveFrontSpriteBinding(information, false, this.resources);
+    if (binding.status !== "ok") return binding;
+    const renderObjectId = rootRenderObjectId(poolObjectId);
+    const creationSequence = this.creationSequenceByObjectId.get(renderObjectId);
+    if (creationSequence === undefined) {
+      return evidenceRequired(
+        "render.producer.note-root-not-created",
+        ["RPR-D13", "RPR-D14", "PR05", "PR39"],
+        "Ordinary activation requires its committed engine-authored pool root identity.",
+      );
+    }
+    const start = scene.noteStartPositions[lane.value]!;
+    const goal = scene.goalPositions[lane.value]!;
+    const zero = createRenderFloat32(Math.fround(0));
+    const one = createRenderFloat32(Math.fround(1));
+    if (zero.status !== "ok") return zero;
+    if (one.status !== "ok") return one;
+    const motionState: OrdinaryNoteMotionState = Object.freeze({
+      progressRate: zero.value,
+      specificSpeed: scene.specificSpeed,
+      deltaTime: zero.value,
+      realMoveSecond: zero.value,
+      goalPosition: Object.freeze({ x: goal.x, y: goal.y }),
+      noteStartPosition: Object.freeze({ x: start.x, y: start.y }),
+      currentPositionZ: start.z,
+      noteSettingScale: scene.noteSettingScale,
+      launcherY: scene.launcherY,
+      targetCenterY: scene.targetCenterY,
+      highAspectRatio: scene.highAspectRatio,
+      buttonCount: information.buttonTypesArray.length || information.buttonTypes.length || 1,
+      virtualLaneControllerPresent: information.virtualLaneDirection !== 0,
+    });
+    const adjustment = advanceOrdinaryNoteActivationAdjustment(
+      motionState,
+      launcherMusicPosition,
+      information.absolutePos,
+      noteBpm,
+    );
+    if (adjustment.status !== "ok") return adjustment;
+    const ordering: RenderOrderingKey = Object.freeze({
+      domainLayer: scene.noteDomainLayer,
+      sourceDepthOrSortingOrder: 70,
+      sourceZ: start.z,
+      creationSequence,
+    });
+    const base = this.commandBase(substep);
+    const commands: RenderCommand[] = [{
+      ...base(0),
+      kind: "set-transform",
+      renderObjectId,
+      position: start,
+      scale: Object.freeze({ x: one.value, y: one.value }),
+      rotationDegrees: zero.value,
+      color: scene.noteColor,
+      ordering,
+      maskObjectId: null,
+    }, {
+      ...base(1),
+      kind: "activate-object",
+      renderObjectId,
+    }, {
+      ...base(2),
+      kind: "bind-resource",
+      renderObjectId,
+      binding: "sprite",
+      logicalAssetId: binding.value.logicalAssetId,
+      exactKey: binding.value.exactKey,
+    }];
+    for (const motion of adjustment.value.motions) {
+      commands.push({
+        ...base(commands.length),
+        kind: "set-transform",
+        renderObjectId,
+        position: motion.position,
+        scale: Object.freeze({ x: motion.localScale.x, y: motion.localScale.y }),
+        rotationDegrees: zero.value,
+        color: scene.noteColor,
+        ordering,
+        maskObjectId: null,
+      });
+    }
+    const transaction = this.preflight(commands);
+    if (transaction.status !== "ok") return transaction;
+    return ok(Object.freeze({
+      motionState: Object.freeze({
+        ...motionState,
+        progressRate: adjustment.value.progressRate,
+        realMoveSecond: adjustment.value.realMoveSecond,
+      }),
+      transaction: transaction.value,
+    }));
+  }
+
+  preflightOrdinaryNoteSceneMotion(
+    poolObjectId: string,
+    motionState: OrdinaryNoteMotionState,
+    scene: OrdinaryFixedNoteSceneInput,
+  ): SimulatorResult<PreparedOrdinaryNoteMotion> {
+    const sceneValidation = validateOrdinaryFixedNoteSceneInput(scene);
+    if (sceneValidation.status !== "ok") return sceneValidation;
+    const renderObjectId = rootRenderObjectId(poolObjectId);
+    const creationSequence = this.creationSequenceByObjectId.get(renderObjectId);
+    if (creationSequence === undefined) {
+      return evidenceRequired(
+        "render.producer.note-root-not-created",
+        ["RPR-D13", "RPR-D14", "PR05", "PR39"],
+        "Ordinary Move requires its committed engine-authored pool root identity.",
+      );
+    }
+    return this.preflightOrdinaryNoteMotion(poolObjectId, motionState, {
+      color: scene.noteColor,
+      ordering: Object.freeze({
+        domainLayer: scene.noteDomainLayer,
+        sourceDepthOrSortingOrder: 70,
+        sourceZ: motionState.currentPositionZ,
+        creationSequence,
+      }),
+      maskObjectId: null,
+    });
   }
 
   preflightOrdinaryNoteMotion(
@@ -505,7 +669,20 @@ export class RenderCommandProducer {
         kind: "release-object" as const,
         renderObjectId,
       }));
-    return this.preflight(commands, () => { this.createdObjectIds.length = 0; });
+    return this.preflight(commands, () => {
+      this.createdObjectIds.length = 0;
+      this.creationSequenceByObjectId.clear();
+    });
+  }
+
+  private recordCreatedObjects(renderObjectIds: readonly string[]): void {
+    for (const renderObjectId of renderObjectIds) {
+      this.creationSequenceByObjectId.set(
+        renderObjectId,
+        this.creationSequenceByObjectId.size,
+      );
+      this.createdObjectIds.push(renderObjectId);
+    }
   }
 
   private preflight(
@@ -527,6 +704,32 @@ export class RenderCommandProducer {
       substep,
     });
   }
+}
+
+export function validateOrdinaryFixedNoteSceneInput(
+  scene: OrdinaryFixedNoteSceneInput,
+): SimulatorResult<void> {
+  const vectors = [...scene.noteStartPositions, ...scene.goalPositions];
+  if (
+    !validateRenderFloat32(scene.specificSpeed) ||
+    !validateRenderFloat32(scene.noteSettingScale) ||
+    scene.noteSettingScale.value < 0 ||
+    !validateRenderFloat32(scene.launcherY) ||
+    !validateRenderFloat32(scene.targetCenterY) ||
+    !validateRenderFloat32(scene.highAspectRatio) ||
+    scene.noteStartPositions.length !== 7 ||
+    scene.goalPositions.length !== 7 ||
+    vectors.some((value) => !validateVector3(value)) ||
+    !validateColor(scene.noteColor) ||
+    !Number.isSafeInteger(scene.noteDomainLayer)
+  ) {
+    return evidenceRequired(
+      "render.producer.invalid-ordinary-fixed-note-scene",
+      ["RPR-D05", "RPR-D13", "PR10", "PR39"],
+      "The fixed ordinary Note scene requires exact speed/scale/aspect values, seven typed start/goal transforms, one color and one portable domain layer.",
+    );
+  }
+  return ok(undefined);
 }
 
 export function rootRenderObjectId(poolObjectId: string): string {
@@ -658,4 +861,44 @@ function transactionRejected(
 
 function isNonEmpty(value: unknown): value is string {
   return typeof value === "string" && value.length > 0;
+}
+
+function resolveOrdinaryLaneIndex(
+  information: NoteInformation,
+): SimulatorResult<number> {
+  const buttons = information.buttonTypesArray.length > 0
+    ? information.buttonTypesArray
+    : information.buttonTypes.length > 0
+    ? information.buttonTypes
+    : [information.buttonType];
+  if (buttons.length !== 1) {
+    return evidenceRequired(
+      "render.note.ordinary-motion-multi-lane-unavailable",
+      ["RPR-D05", "PR04", "PR10"],
+      "The fixed ordinary motion profile accepts exactly one authored lane per front Note.",
+    );
+  }
+  const lane = buttons[0]! - ButtonType.Button_01_BMS_1P_01;
+  return Number.isInteger(lane) && lane >= 0 && lane < 7
+    ? ok(lane)
+    : evidenceRequired(
+        "render.note.ordinary-motion-invalid-lane",
+        ["RPR-D05", "PR05", "PR10"],
+        "The fixed ordinary motion profile requires one lane in the current 0..6 playfield.",
+      );
+}
+
+function validateVector3(value: RenderVector3): boolean {
+  return value !== null && typeof value === "object" &&
+    validateRenderFloat32(value.x) &&
+    validateRenderFloat32(value.y) &&
+    validateRenderFloat32(value.z);
+}
+
+function validateColor(value: RenderColor): boolean {
+  return value !== null && typeof value === "object" &&
+    validateRenderFloat32(value.red) &&
+    validateRenderFloat32(value.green) &&
+    validateRenderFloat32(value.blue) &&
+    validateRenderFloat32(value.alpha);
 }

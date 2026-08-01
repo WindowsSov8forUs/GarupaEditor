@@ -44,7 +44,13 @@ import {
 import { SlideNoteManager } from "./slideNoteManager";
 import type { InGameMusicScoreController } from "./inGameMusicScoreController";
 import type { SimulatorManualInputGeometryBackend } from "../../backends/contracts";
-import type { RenderCommandProducer } from "../rendering/renderCommandProducer";
+import type {
+  OrdinaryFixedNoteSceneInput,
+  RenderCommandProducer,
+  RenderOwnerTransaction,
+} from "../rendering/renderCommandProducer";
+import type { OrdinaryNoteMotionState } from "../rendering/ordinaryNoteGeometry";
+import { createRenderFloat32 } from "../../backends/renderingValidation";
 
 const BPM_POOL_LENGTH = 30;
 
@@ -175,6 +181,10 @@ export class NoteManager {
   >();
   private readonly autoLiveJudgementSources = new WeakSet<NoteInformation>();
   private manualNoteDeactivatedOwner: ((note: NoteBase) => void) | null = null;
+  private readonly ordinaryRenderMotionStates = new WeakMap<
+    NoteBase,
+    OrdinaryNoteMotionState
+  >();
 
   constructor(
     private readonly batches: readonly NoteBatchInformation[],
@@ -194,6 +204,7 @@ export class NoteManager {
     private readonly manualInputGeometry: SimulatorManualInputGeometryBackend =
       unavailableManualInputGeometry,
     private readonly renderProducer: RenderCommandProducer | null = null,
+    private readonly ordinaryNoteScene: OrdinaryFixedNoteSceneInput | null = null,
   ) {}
 
   validateSetup(): SimulatorResult<void> {
@@ -320,6 +331,7 @@ export class NoteManager {
           onActivate: (activeNote) => this.appendActiveNote(activeNote),
           onDeactivate: (inactiveNote) => {
             this.removeActiveNote(inactiveNote);
+            this.ordinaryRenderMotionStates.delete(inactiveNote);
             this.manualNoteDeactivatedOwner?.(inactiveNote);
           },
         });
@@ -346,6 +358,8 @@ export class NoteManager {
         if (this.renderProducer !== null) {
           note.registerRenderDeactivationOwner(() =>
             this.renderProducer!.preflightNoteDeactivation(note.poolObjectId));
+          note.registerRenderMotionOwner((deltaTimeSeconds) =>
+            this.advanceOrdinaryRenderMotion(note, deltaTimeSeconds));
         }
         if (note instanceof NoteMultipleDirectionalFlick) {
           note.registerMultipleDirectionalGroupResolver(
@@ -852,6 +866,46 @@ export class NoteManager {
     return ok(group);
   }
 
+  private advanceOrdinaryRenderMotion(
+    note: NoteBase,
+    deltaTimeSeconds: number,
+  ): SimulatorResult<void> {
+    if (this.renderProducer === null || this.ordinaryNoteScene === null) {
+      return evidenceRequired(
+        "render.note.ordinary-scene-unavailable",
+        ["RPR-D05", "RPR-D13", "PR10", "PR39"],
+        "A rendered ordinary Note Move requires its producer and explicit typed fixed-scene input.",
+      );
+    }
+    const current = this.ordinaryRenderMotionStates.get(note);
+    if (current === undefined) {
+      return evidenceRequired(
+        "render.note.motion-state-unavailable",
+        ["RPR-D05", "RPR-D13", "PR10", "PR39"],
+        "Every active rendered Note must retain the motion state committed by its activation owner.",
+      );
+    }
+    const deltaTime = createRenderFloat32(Math.fround(deltaTimeSeconds));
+    if (deltaTime.status !== "ok") return deltaTime;
+    const prepared = this.renderProducer.preflightOrdinaryNoteSceneMotion(
+      note.poolObjectId,
+      Object.freeze({
+        ...current,
+        deltaTime: deltaTime.value,
+      }),
+      this.ordinaryNoteScene,
+    );
+    if (prepared.status !== "ok") return prepared;
+    const committed = prepared.value.transaction.commit();
+    if (committed.status !== "ok") return committed;
+    this.ordinaryRenderMotionStates.set(note, Object.freeze({
+      ...current,
+      deltaTime: deltaTime.value,
+      progressRate: prepared.value.motion.progressRate,
+    }));
+    return ok(undefined);
+  }
+
   private activateCurrentBatch(substepIndex: number): SimulatorResult<void> {
     const batch = this.batches[this.nextBatchIndexValue];
     if (batch === undefined) {
@@ -897,21 +951,48 @@ export class NoteManager {
       if (noteResult.status !== "ok") {
         return noteResult;
       }
-      const renderActivation = this.renderProducer?.preflightNoteActivation(
-        noteResult.value.note.poolObjectId,
-        noteInformation,
-        substepIndex,
-      ) ?? null;
-      if (renderActivation?.status === "evidence-required") return renderActivation;
+      let renderActivation: RenderOwnerTransaction | null = null;
+      let renderMotionState: OrdinaryNoteMotionState | null = null;
+      if (this.renderProducer !== null) {
+        if (this.ordinaryNoteScene === null) {
+          return evidenceRequired(
+            "render.note.ordinary-scene-unavailable",
+            ["RPR-D05", "RPR-D13", "PR10", "PR39"],
+            "A rendered ordinary Note cannot activate without its explicit typed fixed-scene input.",
+          );
+        }
+        const noteBpm = createRenderFloat32(Math.fround(
+          this.musicScoreController.currentBpm,
+        ));
+        if (noteBpm.status !== "ok") return noteBpm;
+        const launcherMusicPosition = createRenderFloat32(Math.fround(
+          this.musicScoreController.launcherMusicPosition,
+        ));
+        if (launcherMusicPosition.status !== "ok") return launcherMusicPosition;
+        const prepared = this.renderProducer.preflightOrdinaryNoteActivation(
+          noteResult.value.note.poolObjectId,
+          noteInformation,
+          noteBpm.value,
+          launcherMusicPosition.value,
+          this.ordinaryNoteScene,
+          substepIndex,
+        );
+        if (prepared.status !== "ok") return prepared;
+        renderActivation = prepared.value.transaction;
+        renderMotionState = prepared.value.motionState;
+      }
       const activationResult = noteResult.value.note.activate(noteInformation);
       if (activationResult.status !== "ok") {
-        if (renderActivation?.status === "ok") renderActivation.value.discard();
+        renderActivation?.discard();
         return activationResult;
       }
       noteResult.value.pool.cursor = noteResult.value.nextCursor;
-      if (renderActivation?.status === "ok") {
-        const committed = renderActivation.value.commit();
+      if (renderActivation !== null) {
+        const committed = renderActivation.commit();
         if (committed.status !== "ok") return committed;
+      }
+      if (renderMotionState !== null) {
+        this.ordinaryRenderMotionStates.set(noteResult.value.note, renderMotionState);
       }
       this.schedulerTraceValue.push({
         kind: "note-activate",

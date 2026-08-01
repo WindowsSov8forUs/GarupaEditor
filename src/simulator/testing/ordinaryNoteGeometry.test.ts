@@ -13,6 +13,7 @@ import type {
 import { createRenderFloat32 } from "../backends/renderingValidation";
 import { evidenceRequired, ok, type SimulatorResult } from "../engine/evidence";
 import {
+  advanceOrdinaryNoteActivationAdjustment,
   advanceOrdinaryNoteMotion,
   buildOrdinaryBaseNoteMesh,
   buildOrdinarySyncLine,
@@ -21,7 +22,12 @@ import {
   type OrdinaryNoteMotionState,
   type OrdinarySyncLineTargetState,
 } from "../engine/rendering/ordinaryNoteGeometry";
-import { RenderCommandProducer } from "../engine/rendering/renderCommandProducer";
+import {
+  RenderCommandProducer,
+  validateOrdinaryFixedNoteSceneInput,
+} from "../engine/rendering/renderCommandProducer";
+import { FrontNoteType, VirtualLaneDirection } from "../engine/chart/types";
+import { noteInformation } from "./firstSliceFixtures";
 
 function equal<T>(actual: T, expected: T, message: string): void {
   if (!Object.is(actual, expected)) throw new Error(`${message}: ${String(actual)} !== ${String(expected)}`);
@@ -180,8 +186,113 @@ function main(): void {
     progressRate: motion.progressRate,
   }), "next ordinary Note Move");
   equal(floatBytes(nextMotion.progressRate), "3333333F", "nonzero progress uses deltaTime branch");
+  const adjustmentState: OrdinaryNoteMotionState = Object.freeze({
+    ...motionState,
+    progressRate: f32(0),
+    realMoveSecond: f32(0),
+  });
+  const adjustment = requireOk(advanceOrdinaryNoteActivationAdjustment(
+    adjustmentState,
+    f32(97),
+    96,
+    f32(120),
+  ), "ordinary ActivateAdjust");
+  equal(adjustment.motions.length, 3, "one-position launcher overshoot takes three synthetic Move steps");
+  equal(floatBytes(adjustment.motions[0]!.progressRate), "26B4173C", "first adjustment uses accumulated RealMoveSecond");
+  equal(floatBytes(adjustment.motions[1]!.progressRate), "26B4973C", "second adjustment uses deltaTime branch");
+  equal(floatBytes(adjustment.progressRate), "398EE33C", "adjustment stops after first progress at or beyond target");
+  equal(floatBytes(adjustment.realMoveSecond), "398E633C", "synthetic Move step accumulates in RealMoveSecond");
+  equal(
+    requireOk(advanceOrdinaryNoteActivationAdjustment(
+      adjustmentState,
+      f32(96),
+      96,
+      f32(120),
+    ), "no activation adjustment").motions.length,
+    0,
+    "equal LauncherMusicPos performs no synthetic Move",
+  );
   equal(advanceOrdinaryNoteMotion({ ...motionState, virtualLaneControllerPresent: true }).status, "evidence-required", "virtual-lane branch stays closed");
   equal(advanceOrdinaryNoteMotion({ ...motionState, targetCenterY: motionState.launcherY }).status, "evidence-required", "degenerate scale range fails closed");
+
+  const fixedScene = Object.freeze({
+    specificSpeed: f32(11),
+    noteSettingScale: f32(0.8),
+    launcherY: motionState.launcherY,
+    targetCenterY: motionState.targetCenterY,
+    highAspectRatio: motionState.highAspectRatio,
+    noteStartPositions: Object.freeze(Array.from(
+      { length: 7 },
+      (_, lane) => vector3(Math.fround((lane - 3) * 0.11), 4.976500511169434, -13.5),
+    )),
+    goalPositions: Object.freeze(Array.from(
+      { length: 7 },
+      (_, lane) => vector3(Math.fround((lane - 3) * 2.2), -3.450000047683716, -13.5),
+    )),
+    noteColor: color(1, 1, 1, 1),
+    noteDomainLayer: 3,
+  });
+  requireOk(validateOrdinaryFixedNoteSceneInput(fixedScene), "validate fixed ordinary scene");
+  equal(
+    validateOrdinaryFixedNoteSceneInput({ ...fixedScene, goalPositions: fixedScene.goalPositions.slice(0, 6) }).status,
+    "evidence-required",
+    "fixed ordinary scene requires all seven goal transforms",
+  );
+  const activationRenderer = new CapturingRenderer();
+  const activationProducer = new RenderCommandProducer("geometry-session", activationRenderer, {
+    noteAtlasLogicalAssetId: "asset.note",
+    directionalAtlasLogicalAssetId: "asset.directional",
+  });
+  requireOk(activationProducer.beginOuterFrame(8), "begin activation frame");
+  requireOk(activationProducer.beginSubstep(1), "begin activation substep");
+  const activationPool = requireOk(
+    activationProducer.preflightPoolSetup([{ poolObjectId: "normal:0", family: "normal" }]),
+    "preflight activation pool",
+  );
+  requireOk(activationPool.commit(), "commit activation pool");
+  const activationInformation = Object.freeze({
+    ...noteInformation("activation-normal", 0),
+    absolutePos: 96,
+    storedAbsolutePos: 96,
+    bpm: 120,
+    bpmString: "120",
+  });
+  const preparedActivation = requireOk(activationProducer.preflightOrdinaryNoteActivation(
+    "normal:0",
+    activationInformation,
+    f32(120),
+    f32(97),
+    fixedScene,
+    1,
+  ), "preflight ordinary activation");
+  equal(
+    activationRenderer.commands.slice(-6).map((command) => command.kind).join(","),
+    "set-transform,activate-object,bind-resource,set-transform,set-transform,set-transform",
+    "Activate preserves initial transform, visibility, setupNoteType and three adjustment writes",
+  );
+  equal(floatBytes(preparedActivation.motionState.progressRate), "398EE33C", "activation returns committed future progress");
+  equal(activationRenderer.nextSequence, 2, "activation preflight consumes no sequence");
+  requireOk(preparedActivation.transaction.commit(), "commit ordinary activation");
+  equal(activationRenderer.nextSequence, 8, "activation commits all six ordered commands");
+  const multipleRejected = activationProducer.preflightOrdinaryNoteActivation(
+    "normal:0",
+    { ...activationInformation, fireNoteType: FrontNoteType.MultipleDirectionalFlick },
+    f32(120),
+    f32(97),
+    fixedScene,
+    1,
+  );
+  equal(multipleRejected.status, "evidence-required", "Multiple visual route remains fail-closed");
+  const virtualRejected = activationProducer.preflightOrdinaryNoteActivation(
+    "normal:0",
+    { ...activationInformation, virtualLaneDirection: VirtualLaneDirection.Left },
+    f32(120),
+    f32(97),
+    fixedScene,
+    1,
+  );
+  equal(virtualRejected.status, "evidence-required", "virtual-lane activation remains fail-closed");
+  equal(activationRenderer.nextSequence, 8, "unsupported activation routes consume no sequence");
 
   const renderer = new CapturingRenderer();
   const producer = new RenderCommandProducer("geometry-session", renderer, {

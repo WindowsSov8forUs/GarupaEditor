@@ -81,6 +81,7 @@ export class NoteBase {
   private autoLiveRuntimeValue: NoteAutoLiveRuntime | null = null;
   private manualRuntimeValue: ManualNoteRuntime | null = null;
   private preflightRenderDeactivation: (() => SimulatorResult<RenderOwnerTransaction>) | null = null;
+  private advanceRenderMotion: ((deltaTimeSeconds: number) => SimulatorResult<void>) | null = null;
   private fingerIdValue = -1;
 
   constructor(readonly poolObjectId: string) {}
@@ -127,6 +128,12 @@ export class NoteBase {
     owner: () => SimulatorResult<RenderOwnerTransaction>,
   ): void {
     this.preflightRenderDeactivation = owner;
+  }
+
+  registerRenderMotionOwner(
+    owner: (deltaTimeSeconds: number) => SimulatorResult<void>,
+  ): void {
+    this.advanceRenderMotion = owner;
   }
 
   requestUsableOneFrameData(): SimulatorResult<OneFrameDataHandle> {
@@ -207,6 +214,13 @@ export class NoteBase {
   executeUpdate(deltaTimeSeconds: number): SimulatorResult<void> {
     if ((this.stateValue as NoteState) === NoteState.Deactive) {
       return ok(undefined);
+    }
+
+    if (this.stateValue === NoteState.Move && this.advanceRenderMotion !== null) {
+      const renderMotion = this.advanceRenderMotion(deltaTimeSeconds);
+      if (renderMotion.status !== "ok") {
+        return renderMotion;
+      }
     }
 
     const phaseResult = this.executeStatePhase(deltaTimeSeconds);
