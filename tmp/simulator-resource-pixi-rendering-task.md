@@ -12,7 +12,7 @@
 - 锁定`libil2cpp.so` SHA-256：`815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F`。
 - 锁定`global-metadata.dat` SHA-256：`298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F`。
 - 当前Reverse基线提交：`dd61e432202d2f1cc651b755cd69e09e73083947`；只消费该提交及其祖先中已提交、已push、可校验对象。
-- 当前状态：**RP00–RP03已关闭；RP04/RP07/RP08的已证实producer子集与RP10本地provider已落地，当前实施RP04–RP12剩余链。已闭合本地bytes browser decode、Texture/subtexture cache、Sprite bind、基础transform/portable ordering、引用计数与release；natural ordinary geometry R2已关闭mesh topology/vertices/UV/color/threshold、line endpoint/equal width与field/mesh transform载荷，current NoteSyncLine profile已关闭quad轮廓，新增ordinary projection profile关闭1600×720 world→Pixi endpoint/width映射。projection已落地，consolidated ordinary producer profile已一次关闭Note motion/base mesh/sync-line公式，下一批直接落engine producer与Pixi mapping；mask、HUD可见布局、animation及RP12剩余矩阵继续失败关闭并按批量缺口取证推进。原始HAB UnityFS、natural HAB R1与原始HAB frame保持`habahiro_exact_parity_gate=open-not-claimed`。`production_authorization=true`仅授权显式fidelity选择；必须显示`Approximate HABAHIRO`、禁止静默fallback、production/test联网、资源二进制入库与原作parity宣称。**
+- 当前状态：**RP00–RP03、RP10、RP12、RP13已关闭；RP04–RP09与RP11仅关闭任务书1.31–1.43记录的已证实子集。RP14独立验收已执行但不通过，详见`tmp/simulator-resource-pixi-rendering-acceptance.md`：Note motion lifecycle/child graph、advanced/Multiple/threshold/mask、Pixi可见HUD/slider/animation及degraded visible label仍失败关闭。ordinary projection、typed Note motion、22/60 base mesh、sync-line、field explicit plan、basic HUD/life-heal semantic与terminal fault矩阵已落地；743项证据verifier、render production与14-stage全回归通过。原始HAB UnityFS、natural HAB R1与原始HAB frame保持`habahiro_exact_parity_gate=open-not-claimed`。`production_authorization=true`只授权显式fidelity profile，不等于production surface已全部实现；禁止静默fallback、production/test联网、资源二进制入库与原作parity宣称。**
 - 计划证据包：`tmp/simulator-reverse-evidence/resource-pixi-rendering/`，只在Reverse新证据提交并push后创建。
 - 计划验收记录：`tmp/simulator-resource-pixi-rendering-acceptance.md`，RP14时创建。
 
@@ -412,6 +412,13 @@
 - 新增总入口`simulator:test:resource-pixi-rendering`，串行运行render production及first-slice、全部chart子套件、clock、Auto、manual acceptance、Score/Life/State共14 stage；禁止并发复验掩盖资源/临时目录问题。
 - render production与总入口均通过：evidence `entries=743`、geometry `87037`、HUD runtime `14084/1452`，实际Pixi semantic/failure矩阵绿色；上游first-slice 17、Auto 22、manual MJ01–MJ26、Score BS01–BS36及ordinary/HAB production chart全部绿色。
 - 总入口全程未联网、未调用Python、未读取Reverse工作树，未运行Vite/Tauri整体构建。PR01–PR40的证据closure由冻结verifier先行确认；unsupported mask/HUD visible/animation sampling继续以明确false/evidence-required纳入，而非假通过。
+
+### 1.45 2026-08-01 RP14独立验收
+
+- 从已推送Garupa `ac315e4445c6341fd8cd083b08e67729eafb5e4f`与Reverse `dd61e432202d2f1cc651b755cd69e09e73083947`执行；验收前双仓远端差异均`0 0`，无关未跟踪文件保持隔离。
+- 再次串行执行`simulator:test:resource-pixi-rendering`，14 stages全部通过；evidence、static audit、isolated tsc、actual Pixi、RP12及全部上游回归绿色。
+- 独立逐项区分evidence closure与production consumption后，RP14**不通过**：RP04–RP09/RP11存在motion lifecycle/child graph、advanced/Multiple/threshold/mask、visible HUD/slider/animation与degraded label缺口。
+- 新建`tmp/simulator-resource-pixi-rendering-acceptance.md`记录RP00–RP14、PR01–PR40 production分组、验证、双仓状态与后续硬门。不得更新阶段为完成或宣称parity。
 
 ## 2. 固定范围
 
