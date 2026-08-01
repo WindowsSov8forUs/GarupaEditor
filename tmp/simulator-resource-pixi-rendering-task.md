@@ -309,6 +309,12 @@
 - Pixi scene snapshot新增backend-owned geometry position副本用于portable scene审计，不暴露Mesh/Geometry对象；Mesh local geometry路径保持原样，避免把line world projection误施加到NoteMesh局部顶点。
 - 隔离`tsc`、render-contract与Pixi suite通过；对应projection坐标/宽度exact断言留在独立test子批。
 
+### 1.31 2026-08-01 RP11 ordinary正交projection test子批
+
+- render-contract suite确认projection对象、caller alias与完整profile均深冻结，并以错误PPU反例验证resource read前失败关闭；ordinary/degraded mode与projection identity必须一致。
+- Pixi suite将line输入换为viewport内current ordinary world值，逐项断言冻结expected 8个Float32 projected quad position，覆盖Y轴翻转、360 PPU width与top-left中心偏移，不由待测helper生成expected。
+- 隔离`tsc`、render-contract 6组、Pixi suite与各runner内dependency/evidence verifier通过；package无独立`simulator:test:dependency`脚本，dependency由两条runner自身执行。
+
 ## 2. 固定范围
 
 ### 2.1 纳入范围

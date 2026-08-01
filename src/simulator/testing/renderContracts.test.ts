@@ -168,6 +168,21 @@ function profile(
         ],
         pixiDefaultZIndexAllowed: false,
       },
+      projection: {
+        mode: fidelity.mode === "ordinary"
+          ? "current-ordinary-rhythmgame-orthographic"
+          : "degraded-habahiro-ordinary-projection-proxy",
+        viewportWidth: 1600,
+        viewportHeight: 720,
+        pixiOrigin: "top-left",
+        worldCenterX: 0,
+        worldCenterY: 0,
+        cameraPositionZ: -15,
+        nearClip: 0,
+        farClip: 25,
+        pixelsPerWorldUnit: 360,
+        clampAllowed: false,
+      },
       roundPixels: false,
       resolution: 1,
       antialias: false,
@@ -199,6 +214,7 @@ function cloneProfile(value: RenderResourceProfile): RenderResourceProfile {
         ],
         pixiDefaultZIndexAllowed: false,
       },
+      projection: { ...value.scene.projection },
     },
   };
 }
@@ -292,10 +308,13 @@ async function testProfileValidationAndAliases(): Promise<void> {
   assert(Object.isFrozen(frozen), "profile frozen");
   assert(Object.isFrozen(frozen.assets), "asset list frozen");
   assert(Object.isFrozen(frozen.assets[0].atlasRows[0]), "atlas row frozen");
+  assert(Object.isFrozen(frozen.scene.projection), "projection profile frozen");
   (mutable.assets[0] as { logicalAssetId: string }).logicalAssetId = "mutated";
   (mutable.scene.components[0] as { component: string }).component = "mutated";
+  (mutable.scene.projection as { pixelsPerWorldUnit: number }).pixelsPerWorldUnit = 1;
   equal(frozen.assets[0].logicalAssetId, "asset.note", "asset alias detached");
   equal(frozen.scene.components[0].component, "sprite", "scene alias detached");
+  equal(frozen.scene.projection.pixelsPerWorldUnit, 360, "projection alias detached");
 
   const duplicate = cloneProfile(profile());
   (duplicate.assets as unknown as RenderResourceProfile["assets"][number][]).push({
@@ -311,6 +330,11 @@ async function testProfileValidationAndAliases(): Promise<void> {
   const incomplete = cloneProfile(profile());
   (incomplete.scene.components as unknown as { component: string; support: string }[]).pop();
   equal(validateAndFreezeRenderProfile(incomplete).status, "evidence-required", "component omission rejected");
+
+  const implicitProjection = cloneProfile(profile());
+  (implicitProjection.scene.projection as { pixelsPerWorldUnit: number }).pixelsPerWorldUnit = 1;
+  equal(validateAndFreezeRenderProfile(implicitProjection).status, "evidence-required",
+    "implicit or mismatched projection rejected before resource reads");
 
   const badLabel = profile({
     mode: "habahiro",

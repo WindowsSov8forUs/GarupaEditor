@@ -127,6 +127,19 @@ function profile(): RenderResourceProfile {
         ],
         pixiDefaultZIndexAllowed: false,
       },
+      projection: {
+        mode: "current-ordinary-rhythmgame-orthographic",
+        viewportWidth: 1600,
+        viewportHeight: 720,
+        pixiOrigin: "top-left",
+        worldCenterX: 0,
+        worldCenterY: 0,
+        cameraPositionZ: -15,
+        nearClip: 0,
+        farClip: 25,
+        pixelsPerWorldUnit: 360,
+        clampAllowed: false,
+      },
       roundPixels: false,
       resolution: 1,
       antialias: false,
@@ -286,9 +299,9 @@ async function main(): Promise<void> {
     },
     {
       ...base(7), kind: "set-line", renderObjectId: "note.sync-line",
-      start: { x: f32(2), y: f32(3), z: f32(-14) },
-      end: { x: f32(12), y: f32(8), z: f32(-13) },
-      width: f32(0.28), materialRole: "sync-line",
+      start: { x: f32(-1), y: f32(0.5), z: f32(-14) },
+      end: { x: f32(1), y: f32(-0.5), z: f32(-13) },
+      width: f32(0.028), materialRole: "sync-line",
     },
   ]);
   equal(missingMaterialLine.status, "evidence-required", "line requires exact material texture binding");
@@ -305,9 +318,9 @@ async function main(): Promise<void> {
     },
     {
       ...base(8), kind: "set-line", renderObjectId: "note.sync-line",
-      start: { x: f32(2), y: f32(3), z: f32(-14) },
-      end: { x: f32(12), y: f32(8), z: f32(-13) },
-      width: f32(0.28), materialRole: "sync-line",
+      start: { x: f32(-1), y: f32(0.5), z: f32(-14) },
+      end: { x: f32(1), y: f32(-0.5), z: f32(-13) },
+      width: f32(0.028), materialRole: "sync-line",
     },
     { ...base(9), kind: "activate-object", renderObjectId: "note.sync-line" },
   ]), "preflight R2 sync-line batch");
@@ -316,6 +329,17 @@ async function main(): Promise<void> {
   const lineScene = renderer.sceneSnapshot().find((row) => row.renderObjectId === "note.sync-line");
   equal(lineScene?.geometryVertexCount, 4, "sync-line quad has four vertices");
   equal(lineScene?.geometryIndexCount, 6, "sync-line quad has six indices");
+  const expectedProjectedLine = [
+    437.74603271484375, 184.50791931152344,
+    1157.74609375, 544.5079345703125,
+    1162.25390625, 535.4920654296875,
+    442.25396728515625, 175.49208068847656,
+  ];
+  equal(
+    JSON.stringify(lineScene?.geometryPositions),
+    JSON.stringify(expectedProjectedLine),
+    "sync-line applies the frozen 1600x720 orthographic endpoint and width projection",
+  );
   equal(lineScene?.visible, true, "sync-line is visible after activation");
   equal(renderer.resourceSnapshot()[1]?.spriteReferenceCount, 1, "sync-line material is reference counted");
 
