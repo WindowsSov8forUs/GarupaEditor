@@ -77,7 +77,7 @@ def main() -> int:
     require(r1_plan["production_authorization"] is False, "R1 plan must not authorize production")
 
     require(frame_plan["status"] == "confirmed-frame-plan-game-server-required", "frame plan status mismatch")
-    require(frame_plan["viewport"] == {"orientation": "landscape", "width": 2400, "height": 1080, "pixel_format": "RGBA8", "device_scale": 1}, "frame viewport mismatch")
+    require(frame_plan["viewport"] == {"orientation": "landscape", "width": 1600, "height": 720, "pixel_format": "RGBA8", "device_scale": 1}, "frame viewport mismatch")
     require(sum(len(rows) for rows in frame_plan["scenarios"].values()) == 13, "frame anchor count mismatch")
     require(frame_plan["capture"]["source"] == "physical-device-screencap" and frame_plan["capture"]["lossy_reencode"] is False, "frame source/encoding mismatch")
     require(frame_plan["capture"]["account_room_member_card_skill_identity_visible"] is False and frame_plan["capture"]["display_strings_visible"] is False and frame_plan["capture"]["raw_pointer_metadata"] is False, "frame privacy mismatch")
@@ -101,9 +101,20 @@ def main() -> int:
         "automatic_fallback": False,
         "generated_frames_are_golden": False,
     }, "degraded HABAHIRO runtime disposition mismatch")
-    require(status["confirmed_traces"] == [] and status["confirmed_frames"] == [] and status["unknown_offline_work"] == [], "runtime status invents evidence or retains offline work")
-    require(status["production_authorization"] is False, "runtime plans must not authorize production")
-    print("verified rendering runtime plans: targets=55 scenarios=2 frame_anchors=13 exact=S01-S03-open habahiro-degraded=authorized production=false")
+    require(status["confirmed_traces"] == ["runtime/ordinary-rendering-r1.trace.json.gz"], "runtime trace status differs")
+    require(status["confirmed_frames"] == ["runtime/resource-pixi-rendering-delivery-frame-manifest.json"], "runtime frame status differs")
+    require(status["confirmed_external_resources"] == ["habahiro_current_external_resource_profile.json"] and status["unknown_offline_work"] == [], "external resource or offline work status differs")
+    require(status["delivery_status"] == {
+        "profile": "ordinary-exact-habahiro-degraded",
+        "ordinary_runtime_gate": "closed",
+        "ordinary_frame_gate": "closed",
+        "habahiro_portable_resource_gate": "closed-current-external-fallback",
+        "habahiro_exact_parity_gate": "open-not-claimed",
+        "rendering_delivery_gate": "closed",
+        "production_authorization": True,
+    }, "delivery status differs")
+    require(status["production_authorization"] is False, "exact runtime plans must not authorize production")
+    print("verified rendering runtime plans: targets=55 scenarios=2 frame_anchors=13 exact-HAB=open delivery=closed production=true-in-delivery-profile")
     return 0
 
 

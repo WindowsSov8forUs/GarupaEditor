@@ -1,31 +1,34 @@
-# 资源与 Pixi 渲染离线证据包
+# 资源与 Pixi 渲染交付证据包
 
-本目录冻结 `jp.co.craftegg.band` 10.1.4（code 230，`arm64-v8a`）资源与渲染阶段截至服务器硬门前的全部可离线证据。Reverse 来源提交为 `d88188f5fcea2ade712577f1c64e44002fe77d48`；逐文件字节数和 SHA-256 见 `manifest.json`。
+本目录冻结 `jp.co.craftegg.band` 10.1.4（code 230，`arm64-v8a`）资源与渲染阶段的静态、资源、ordinary运行时、实体frame manifest与显式HAB降级交付证据。Reverse 来源提交为 `60410ae02f69b9d78cc554717b3dd04b941cd0c2`；逐文件字节数和 SHA-256 见 `manifest.json`。
 
-## 离线闭合结果
+## 交付闭合结果
 
 - 静态基线：673 个 managed 方法、32 个实例布局、19 个枚举、673 个独立 ARM64 TSV。
 - 指令迁移：652 个方法仅有保守规范化后的重定位差异；21 个方法保持 current 专用语义形状，不以地址或 signature 外推行为。
 - 当前资源：11,026 条 `AssetBundleInfo` 记录、57 个已缓存 `ingameskin/*` bundle、100 个当前 APK Note/HUD resource。
 - 可见资产：8 组 HUD scene/atlas/font profile、4 个 Skill clip、4 个 Note clip、5 路 current ScoreUp route；12个Unity正无穷值以显式Float32位模式`7F800000`严格JSON编码。
 - 离线分类：H01–H28、D01–D18、PR01–PR40 均已逐项分类，`unknown_static_work=[]`。
-- RP02计划：55个current hook target、ordinary/HABAHIRO 2个R1场景、13个实体frame anchor及缺证据必失败的trace/frame/oracle verifier。
+- RP02计划：55个current hook target、ordinary/HABAHIRO 2个exact R1场景、13个exact实体frame anchor及缺证据必失败的trace/frame/oracle verifier。
+- ordinary运行时：自然Auto Live冻结87,364个连续匿名事件、8类render/HUD事件、8个required anchor、632个相对frame epoch及510组同alias mesh生命周期。
+- ordinary实体frame：7个1600×720 physical-device anchor通过隐私审查；PNG只保留于Reverse提交，Garupa仅冻结manifest中的尺寸与SHA-256。
+- HAB资源：12项current external portable asset与179个Sprite row/hash已锁定；production/test只能消费host本地hash匹配字节，禁止联网。
 - HAB降级：2个显式profile、HA-D01–HA-D12共12项差异、179个diagnostic Sprite key；maxNoteCount 731、multiple pool 60，generated frame永不作为原作golden。
-- 门状态：`offline_work_gate=closed`、`offline_plan_gate=closed`、`habahiro_exact_parity_gate=open`、`habahiro_degraded_delivery_gate=closed-authorized-by-explicit-user-request`、`rendering_gate=open`、`production_authorization=false`。
+- 门状态：`rendering_delivery_gate=closed`、`production_authorization=true`、`habahiro_exact_parity_gate=open-not-claimed`；授权范围仅为显式`ordinary-exact-habahiro-degraded` fidelity下的typed renderer与Pixi backend。
 
 ## 双轨门限
 
-- Exact S01：当前 `ingameskin/noteskin/habahiro` bundle 不在 cache index；可通过游戏资源服务直接只读取得，或使用已证明的当前缓存关闭。
-- Exact S02/S03：HAB natural Live对象/顺序/phase和原始frame无法由静态或合成执行等价替代，继续保持开放。
-- Degraded：允许显式选择`historical-atlas-proxy`或`current-ordinary-stretch-proxy`；必须显示`Approximate HABAHIRO`，禁止从exact静默fallback，并排除于parity tests。
-- Overall：ordinary natural Live R1/frame及剩余render contracts仍阻塞整体`rendering_gate`，本决策不授权production。
+- Delivery ordinary：natural Live R1与7个physical frame已关闭，使用当前10.1.4 ordinary资源与scene/command合同。
+- Delivery HAB：首选`current-external-portable-atlas`；兼容已披露的`historical-atlas-proxy`或`current-ordinary-stretch-proxy`。所有路径必须显示`Approximate HABAHIRO`、禁止exact静默fallback并排除于原作parity tests。
+- Exact HAB：原始current UnityFS、natural HAB对象/顺序/phase与原始frame仍不可达，保持开放且不宣称一致。
+- Overall：显式delivery profile已解除RP03生产硬门；profile外路径、缺资源、hash mismatch或未确认配置仍须在任何renderer mutation前失败关闭。
 
 ## 边界
 
-- 冻结目录不包含 APK、AssetBundle 二进制、`libil2cpp.so`、metadata、dump、IDA 数据库、设备账户数据或 `runtime/tools/`。
-- 设备只读 cache 与锁定 APK 只用于 Reverse 离线提取；本包只提交最小结构化 JSON/TSV/Python/verifier 文本证据。
-- Portable contract 只是待 runtime 顺序闭合的 backend-neutral 草案，不授权 RP03–RP14 production。
-- Garupa production/test/package scripts 仍不得读取本证据目录或调用 Python。
+- 冻结目录不包含 APK、AssetBundle、7张实体frame PNG、Bestdori下载字节、`libil2cpp.so`、metadata、dump、IDA 数据库、设备账户数据或 `runtime/tools/`。
+- 设备只读 cache、锁定 APK、实体PNG和外部资源字节只用于 Reverse 取证；本包仅提交最小结构化证据与匿名压缩R1。
+- Portable contract已由delivery closure授权作为RP03输入，但production/test仍不得读取本证据目录、调用Python或请求网络。
+- 原始HAB exact parity继续开放；`production_authorization=true`不得被解释为UnityFS、natural HAB runtime或原始HAB raster一致性。
 
 ## 验证
 
@@ -34,4 +37,4 @@ node tmp/simulator-reverse-evidence/resource-pixi-rendering/verify.mjs
 node tmp/simulator-reverse-evidence/resource-pixi-rendering/verify.mjs --index
 ```
 
-`verify.mjs`校验 713 个冻结文件的 Reverse commit/source working tree/copy/index 四方字节、逐文件 SHA-256、目录文件集、样本身份、673/32/19 静态计数、资源/HUD/动画/ScoreUp计数、H/D/PR分类、55/2/13采集计划、2/12/179降级HAB决策及exact/degraded双轨门限。
+`verify.mjs`校验724个冻结文件的Reverse commit/source working tree/copy/index四方字节、逐文件SHA-256、目录文件集、样本身份、673/32/19静态计数、资源/HUD/动画/ScoreUp计数、87,364-event ordinary R1、7个physical frame manifest、12项current external HAB资源、H/D/PR closure、55/2/13 exact计划、2/12/179降级HAB决策及delivery/exact双轨门限。

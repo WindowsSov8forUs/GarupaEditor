@@ -11,8 +11,8 @@
 - 锁定原作样本：`jp.co.craftegg.band` 10.1.4（version code 230，`arm64-v8a`）。
 - 锁定`libil2cpp.so` SHA-256：`815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F`。
 - 锁定`global-metadata.dat` SHA-256：`298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F`。
-- 当前Reverse基线提交：`d88188f5fcea2ade712577f1c64e44002fe77d48`；只消费该提交及其祖先中已提交、已push、可校验对象。
-- 当前状态：**RP00已完成；RP01/RP02全部可离线工作已关闭。自然进入HABAHIRO Live当前不可达：`habahiro_exact_parity_gate=open`，但经用户明确授权，2个显式降级profile与HA-D01–HA-D12差异已关闭`habahiro_degraded_delivery_gate`；禁止静默fallback或parity宣称。ordinary natural Live R1/frame及剩余render contracts仍阻塞整体`rendering_gate`，`production_authorization=false`。RP03前禁止修改`src/simulator/**`生产实现、增加Pixi backend、加入阶段测试脚本或引入资源二进制。**
+- 当前Reverse基线提交：`60410ae02f69b9d78cc554717b3dd04b941cd0c2`；只消费该提交及其祖先中已提交、已push、可校验对象。
+- 当前状态：**RP00–RP02已按`ordinary-exact-habahiro-degraded`交付profile关闭。ordinary natural Live已冻结87,364-event R1与7个1600×720实体frame；HAB portable资源由12项current external hash profile关闭，但原始UnityFS、natural HAB R1与原始HAB frame仍保持`habahiro_exact_parity_gate=open-not-claimed`。`rendering_delivery_gate=closed`、`production_authorization=true`仅授权显式fidelity选择下的typed renderer与Pixi backend；必须显示`Approximate HABAHIRO`、禁止静默fallback、禁止把degraded输出纳入原作parity。下一任务为RP03，资源二进制仍不得入库或由production联网取得。**
 - 计划证据包：`tmp/simulator-reverse-evidence/resource-pixi-rendering/`，只在Reverse新证据提交并push后创建。
 - 计划验收记录：`tmp/simulator-resource-pixi-rendering-acceptance.md`，RP14时创建。
 
@@ -71,9 +71,9 @@
 | 任务 | 状态 | 完成标准 |
 | --- | --- | --- |
 | RP00 建立阶段任务书 | **已完成** | 范围、证据候选、硬门、owner、oracle、批次与完成定义写入本文档 |
-| RP01 10.1.4静态与资源重基线 | **离线闭合 / exact部分开放** | 当前方法/资源/scene/animation/portable已关闭；S01仅阻塞HAB exact parity，降级交付已处置 |
-| RP02 实体/运行时与固定scene oracle | **阻塞于ordinary服务器Live** | ordinary R1/frame仍为生产前置；HAB exact R1/frame开放，显式degraded处置已关闭 |
-| RP03 锁定render/resource contracts | 阻塞于RP02 | immutable profile、provider、command、identity、session与preflight边界闭合 |
+| RP01 10.1.4静态与资源重基线 | **交付profile已关闭 / exact HAB部分开放** | 当前方法/资源/scene/animation/portable与12项current external HAB profile已关闭；原始HAB UnityFS仍只阻塞exact parity |
+| RP02 实体/运行时与固定scene oracle | **交付profile已关闭** | ordinary 87,364-event R1与7个实体frame已关闭；HAB exact R1/frame开放但不阻塞显式degraded交付 |
+| RP03 锁定render/resource contracts | **待实施 / 已解除硬门** | immutable profile、provider、command、identity、session与preflight边界闭合 |
 | RP04 接入engine渲染producer | 阻塞于RP03 | Note/manager/HUD只生产证据确认的typed commands，不依赖Pixi |
 | RP05 恢复Note Sprite与field | 阻塞于RP04 | atlas route、exact lookup、transform、flick icon、field/judge line匹配 |
 | RP06 恢复mesh、sync line与mask | 阻塞于RP05 | Long/Slide topology/material/threshold、line、mask和ordering匹配 |
@@ -136,6 +136,16 @@
 - degraded scene锁定179 technical Sprite key、731容量、60池及marker→flash-start→同engine frame change-lane默认近似；不包含原作frame oracle，generated frame只能进入独立approximation regression。
 - exact trace/oracle入口继续对缺S01–S03失败关闭；`habahiro_exact_parity_gate=open`，仅`habahiro_degraded_delivery_gate=closed-authorized-by-explicit-user-request`。ordinary runtime/frame和剩余contracts仍令整体`rendering_gate=open`、`production_authorization=false`。
 - Garupa冻结包更新为713个Reverse来源文件；同时修正包级manifest旧笔误，将`AssetBundleInfo` SHA锁定为实际`D026CAE3740DB87AA777C2FDAE40B141FF16464BC2C839ACEF3C820E06850AC6`。
+
+### 1.9 2026-08-01 RP02交付运行时与实体frame闭合批
+
+- 服务器恢复后重新拉取`AssetBundleInfo`，记录数由11,026增至11,041，仍无HABAHIRO/wide bundle；MasterMusic 786活动已结束，原始HAB UnityFS与natural HAB Live继续不可达，不据此伪造exact证据。
+- ordinary natural Auto Live冻结87,364个连续observation-only事件，覆盖resource、Note、mesh、line、field、HUD、HUD animation与multiple-directional八类、八个required anchor、632个相对frame epoch、4,502个匿名对象alias及510组同alias mesh Activate→Deactivate生命周期。静态4-byte `NoteBase.OnStart` no-op明确记为不可hook，不用合成事件补齐。
+- physical-device evidence锁定7个ordinary anchor：scene-ready、first-note-mid、judge-perfect、combo-change、skill-start、life-change与pause；实测viewport为1600×720，身份相关Skill/pause文本经预定义crop排除。7张PNG只保留在Reverse提交，Garupa仅冻结frame manifest中的尺寸/hash，不扩散实体屏幕二进制。
+- 经用户授权使用实时维护的Bestdori资源站作当前外部portable fallback；12项资源的发布时间与MasterMusic 786发布窗口一致，179个Sprite row与hash均锁定。production/test不得联网，必须由host提供本地字节并逐项hash校验；该profile不宣称原始Unity AssetBundle字节一致。
+- Reverse `60410ae02f69b9d78cc554717b3dd04b941cd0c2`建立`resource_pixi_rendering_delivery_oracle.json`与`delivery_closure.json`：V01、D01–D18及PR01–PR40均按交付profile关闭，PR01/PR04/PR19/PR40保留degraded披露，HA-D01–HA-D12继续强制。
+- `rendering_delivery_gate=closed`、`production_authorization=true`，授权范围仅为显式`ordinary-exact-habahiro-degraded` fidelity下的typed renderer与Pixi backend。`habahiro_exact_parity_gate=open-not-claimed`独立保留，exact→degraded静默fallback、原作frame golden/parity宣称和production网络取资源继续禁止。
+- Garupa冻结包更新为724个Reverse来源文件，包含匿名压缩R1、结构化frame manifest、current external profile、delivery oracle与closure；不包含7张physical PNG、Bestdori下载字节、APK、bundle、dump、IDA或`runtime/tools/`。
 
 ## 2. 固定范围
 
@@ -701,8 +711,8 @@ git rev-list --left-right --count origin/codex/refactor-simulator-implementation
 
 ## 14. 当前审计结论
 
-- 当前上游领域状态足以成为renderer/HUD source，但不能证明任何可见表现。
-- 当前Reverse已将H01–H28全部迁移为10.1.4逐项状态；历史调查不直接解除生产门，最终证据只引用current F/R系列。
-- 全部可离线资源、scene、animation、method、portable mapping和PR分类已关闭；HAB exact仍缺当前bundle、natural runtime与original frame，但显式degraded delivery已用2个profile、12项差异和179-key diagnostic scene处置。
-- RP02 observation-only采集plan/verifier已提交；下一生产前置是ordinary natural Live R1/frame与剩余contracts。HAB exact证据可在未来补齐，不再永久阻塞明确标注的degraded交付轨。
-- 所有未确认路径继续返回`evidence-required`，不得以placeholder、Pixi默认值或“视觉接近”填补。
+- 当前上游领域状态、ordinary R1、实体frame及current resource profiles已足以授权RP03开始定义renderer/HUD contract；它们不授权backend反向author领域状态。
+- 当前Reverse已将H01–H28全部迁移为10.1.4逐项状态；历史调查不直接解除生产门，最终证据只引用current F/R系列与明确标注的external portable provenance。
+- V01、D01–D18及PR01–PR40已按`ordinary-exact-habahiro-degraded`交付profile关闭；ordinary 87,364-event R1与7个physical frame均已冻结，`rendering_delivery_gate=closed`、`production_authorization=true`。
+- HAB exact仍缺原始current UnityFS、natural runtime与original frame，保持`habahiro_exact_parity_gate=open-not-claimed`；12项current external portable资源只授权本地hash provider与可见degraded标签，不构成原始bundle/runtime/raster parity。
+- 下一批为RP03 production contracts。所有profile外、unknown key、缺资源、hash mismatch、未声明Pixi配置及exact HAB缺口继续在renderer mutation前返回`evidence-required`，不得以placeholder、隐式默认值或“视觉接近”填补。

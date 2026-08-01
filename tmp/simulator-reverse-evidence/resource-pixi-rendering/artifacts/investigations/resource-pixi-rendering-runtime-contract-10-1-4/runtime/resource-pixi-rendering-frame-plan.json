@@ -24,8 +24,8 @@
   },
   "viewport": {
     "orientation": "landscape",
-    "width": 2400,
-    "height": 1080,
+    "width": 1600,
+    "height": 720,
     "pixel_format": "RGBA8",
     "device_scale": 1
   },
@@ -77,6 +77,23 @@
     "crop"
   ],
   "output": "runtime/resource-pixi-rendering-frame-manifest.json",
+  "delivery_profiles": {
+    "exact-original-parity": {
+      "required_scenarios": [
+        "ordinary",
+        "habahiro"
+      ],
+      "manifest": "runtime/resource-pixi-rendering-frame-manifest.json"
+    },
+    "explicit-degraded-habahiro": {
+      "required_scenarios": [
+        "ordinary"
+      ],
+      "manifest": "runtime/resource-pixi-rendering-delivery-frame-manifest.json",
+      "habahiro_scene_source": "habahiro_degraded_scene_oracle.json",
+      "original_habahiro_frame_claim": false
+    }
+  },
   "degraded_habahiro_disposition": {
     "exact_habahiro_anchors_remain_planned": true,
     "absence_blocks_exact_parity": true,

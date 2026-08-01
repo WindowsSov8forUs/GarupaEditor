@@ -5,10 +5,13 @@
 ```text
 offline_work_gate=closed
 offline_plan_gate=closed
-habahiro_exact_parity_gate=open
-habahiro_degraded_delivery_gate=closed-authorized-by-explicit-user-request
-rendering_gate=open
-production_authorization=false
+ordinary_runtime_gate=closed
+ordinary_frame_gate=closed
+habahiro_portable_resource_gate=closed-current-external-fallback
+habahiro_exact_parity_gate=open-not-claimed
+habahiro_degraded_delivery_gate=closed
+rendering_delivery_gate=closed
+production_authorization=true
 unknown_static_work=[]
 unknown_fields=[]
 methods=673
@@ -30,7 +33,12 @@ frame_anchors=13
 habahiro_degraded_profiles=2
 habahiro_difference_rows=12
 habahiro_degraded_sprite_keys=179
-remaining_exact_blockers=S01,S02,S03
+ordinary_runtime_events=87364
+ordinary_runtime_categories=8
+ordinary_runtime_anchors=8
+ordinary_physical_frames=7
+habahiro_current_external_assets=12
+remaining_exact_blockers=original-current-HABAHIRO-UnityFS-bytes,natural-HABAHIRO-runtime-R1,original-HABAHIRO-physical-frames
 ```
 
 ## 已关闭的离线工作
@@ -53,20 +61,28 @@ remaining_exact_blockers=S01,S02,S03
 - lane change保留marker→flash-start→change-lane顺序，但缺`Root_effect`/clip时默认同engine frame换线；粒子、颜色、延迟和完成phase可能不同。
 - HA-D01–HA-D12记录资源版本、宽音符图、mesh width输入、pool identity、lane animation、field/judge、mask/material/shader、HUD、lifecycle和raster差异；直接影响PR01、PR04、PR19、PR40。
 
-该处置关闭的是`habahiro_degraded_delivery_gate`，不是`habahiro_exact_parity_gate`，也不授权当前production。
+该处置与后续ordinary运行时、实体frame及current external resource证据共同关闭`ordinary-exact-habahiro-degraded`交付profile；它不关闭`habahiro_exact_parity_gate`，也不允许静默fallback或原作一致性宣称。
+
+## 已关闭的交付证据
+
+- ordinary natural Auto Live冻结87,364个连续observation-only事件，覆盖8类render/HUD事件与8个required anchor；静态4-byte `NoteBase.OnStart` no-op明确记为不可hook，生命周期由510组真实同alias mesh Activate→Deactivate对覆盖。
+- 7个ordinary physical-device frame anchor锁定1600×720 viewport与隐私裁剪；PNG只保留在Reverse提交，Garupa冻结manifest中的尺寸/hash。
+- 12项Bestdori current external portable asset与179个Sprite row/hash关闭HAB资源交付子门；production/test必须使用host本地hash provider，禁止联网，且不宣称原始UnityFS一致。
+- `delivery_closure.json`按交付profile关闭V01、D01–D18与PR01–PR40；PR01/PR04/PR19/PR40继续标记degraded disclosure，HA-D01–HA-D12仍为强制差异。
+- `rendering_delivery_gate=closed`、`production_authorization=true`仅解除RP03 typed renderer/Pixi backend硬门；profile外或未确认路径继续失败关闭。
 
 ## Exact 开放项
 
-### S01 当前 HABAHIRO bundle
+### 原始 current HABAHIRO UnityFS
 
-当前 `AssetBundleInfo` 的 11,026 条记录中没有 HABAHIRO bundle。需要通过游戏资源服务或已证明的当前缓存取得 `ingameskin/noteskin/habahiro` 字节，锁定 logical key、长度、SHA-256、atlas rows、texture/material/clip 与分发边界。
+服务器刷新后的`AssetBundleInfo`含11,041条记录，仍无HABAHIRO/wide bundle。current external portable atlas只关闭交付资源profile；若未来取得游戏原始`ingameskin/noteskin/habahiro` UnityFS，仍需锁定logical key、长度、SHA-256、atlas rows、texture/material/clip并独立关闭exact资源门。
 
-### S02 自然 Live R1
+### Natural HABAHIRO Live R1
 
-ordinary R1仍是production前置；HABAHIRO R1仅在exact parity轨必需。需要自然进入 ordinary 与可用时的 HABAHIRO Live，observation-only 捕获 selected resource、Sprite bind、pool identity/reuse、transform/geometry/line/mask、Animator phase、engine→renderer caller 顺序及 pause/reset/fault/dispose lifecycle。无 natural Live 的 synthetic invocation 不可晋升。
+ordinary R1已关闭。HABAHIRO对象identity、顺序、phase及original lifecycle仍需在未来自然进入HAB Live后按既定55-target计划observation-only捕获；synthetic invocation和ordinary投影不可晋升为exact。
 
-### S03 实体 frame anchors
+### 原始 HABAHIRO frame anchors
 
-ordinary实体frame仍是production前置；HABAHIRO原始frame仅在exact parity轨必需。frame用于关闭原作scene/command/raster oracle，不导出账户、room、member/card/Skill身份、display string或raw pointer。
+ordinary 7个实体frame已关闭交付门。HABAHIRO原始frame只在exact parity轨必需，必须来自实体设备并遵守既定viewport、anchor与隐私规则；generated degraded frame永不进入原作golden。
 
-整体`rendering_gate`继续因ordinary runtime/frame和剩余contract工作保持open；RP03–RP14 production、Pixi backend、阶段package scripts与资源二进制仍未授权。
+上述三项保持`habahiro_exact_parity_gate=open-not-claimed`，但不阻塞显式delivery profile。资源二进制仍不得入Garupa仓库，production/test仍不得联网。

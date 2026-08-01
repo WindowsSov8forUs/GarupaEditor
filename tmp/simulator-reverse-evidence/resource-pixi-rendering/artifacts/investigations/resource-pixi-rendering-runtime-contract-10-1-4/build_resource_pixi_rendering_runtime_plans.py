@@ -238,7 +238,7 @@ def build_frame_plan() -> dict[str, Any]:
         "status": "confirmed-frame-plan-game-server-required",
         "sample": {"package": "jp.co.craftegg.band", "version_name": "10.1.4", "version_code": 230, "abi": "arm64-v8a"},
         "safety": base_safety(),
-        "viewport": {"orientation": "landscape", "width": 2400, "height": 1080, "pixel_format": "RGBA8", "device_scale": 1},
+        "viewport": {"orientation": "landscape", "width": 1600, "height": 720, "pixel_format": "RGBA8", "device_scale": 1},
         "capture": {
             "format": "PNG",
             "source": "physical-device-screencap",
@@ -255,6 +255,10 @@ def build_frame_plan() -> dict[str, Any]:
         "manifest_required_fields": ["schema_version", "status", "sample", "viewport", "privacy", "frames"],
         "frame_required_fields": ["scenario", "anchor", "event_sequence", "relative_path", "bytes", "sha256", "width", "height", "crop"],
         "output": "runtime/resource-pixi-rendering-frame-manifest.json",
+        "delivery_profiles": {
+            "exact-original-parity": {"required_scenarios": ["ordinary", "habahiro"], "manifest": "runtime/resource-pixi-rendering-frame-manifest.json"},
+            "explicit-degraded-habahiro": {"required_scenarios": ["ordinary"], "manifest": "runtime/resource-pixi-rendering-delivery-frame-manifest.json", "habahiro_scene_source": "habahiro_degraded_scene_oracle.json", "original_habahiro_frame_claim": False},
+        },
         "degraded_habahiro_disposition": {
             "exact_habahiro_anchors_remain_planned": True,
             "absence_blocks_exact_parity": True,
@@ -287,8 +291,19 @@ def build_status() -> dict[str, Any]:
             "automatic_fallback": False,
             "generated_frames_are_golden": False,
         },
-        "confirmed_traces": [],
-        "confirmed_frames": [],
+        "delivery_closure": "delivery_closure.json",
+        "confirmed_traces": ["runtime/ordinary-rendering-r1.trace.json.gz"],
+        "confirmed_frames": ["runtime/resource-pixi-rendering-delivery-frame-manifest.json"],
+        "confirmed_external_resources": ["habahiro_current_external_resource_profile.json"],
+        "delivery_status": {
+            "profile": "ordinary-exact-habahiro-degraded",
+            "ordinary_runtime_gate": "closed",
+            "ordinary_frame_gate": "closed",
+            "habahiro_portable_resource_gate": "closed-current-external-fallback",
+            "habahiro_exact_parity_gate": "open-not-claimed",
+            "rendering_delivery_gate": "closed",
+            "production_authorization": True,
+        },
         "unknown_offline_work": [],
     }
 

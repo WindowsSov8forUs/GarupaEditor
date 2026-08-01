@@ -55,8 +55,8 @@
     },
     "F10": {
       "path": "runtime/resource-pixi-rendering-frame-plan.json",
-      "bytes": 2205,
-      "sha256": "F952DED2A67C6D2D73FB856E9FAA38B91F5AC36FB8CD9B0E5DE14B4BA85B7EBB"
+      "bytes": 2719,
+      "sha256": "076A06B80974FC14BED2C572DD9E22E36266B8B6A61DD5B1D10162EF777EB175"
     },
     "F11": {
       "path": "habahiro_degraded_approximation.json",

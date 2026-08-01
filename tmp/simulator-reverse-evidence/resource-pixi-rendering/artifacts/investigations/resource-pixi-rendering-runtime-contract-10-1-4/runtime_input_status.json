@@ -33,7 +33,24 @@
     "automatic_fallback": false,
     "generated_frames_are_golden": false
   },
-  "confirmed_traces": [],
-  "confirmed_frames": [],
+  "delivery_closure": "delivery_closure.json",
+  "confirmed_traces": [
+    "runtime/ordinary-rendering-r1.trace.json.gz"
+  ],
+  "confirmed_frames": [
+    "runtime/resource-pixi-rendering-delivery-frame-manifest.json"
+  ],
+  "confirmed_external_resources": [
+    "habahiro_current_external_resource_profile.json"
+  ],
+  "delivery_status": {
+    "profile": "ordinary-exact-habahiro-degraded",
+    "ordinary_runtime_gate": "closed",
+    "ordinary_frame_gate": "closed",
+    "habahiro_portable_resource_gate": "closed-current-external-fallback",
+    "habahiro_exact_parity_gate": "open-not-claimed",
+    "rendering_delivery_gate": "closed",
+    "production_authorization": true
+  },
   "unknown_offline_work": []
 }

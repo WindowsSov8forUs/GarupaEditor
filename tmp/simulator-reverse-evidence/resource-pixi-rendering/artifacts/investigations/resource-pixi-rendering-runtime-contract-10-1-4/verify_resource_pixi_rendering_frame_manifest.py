@@ -39,6 +39,7 @@ def png_dimensions(data: bytes) -> tuple[int, int]:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("manifest", type=Path)
+    parser.add_argument("--delivery-profile", choices=["exact-original-parity", "explicit-degraded-habahiro"], default="exact-original-parity")
     args = parser.parse_args()
     require(args.manifest.is_file(), f"frame manifest is absent: {args.manifest}")
     plan = strict_json(PLAN_PATH)
@@ -51,7 +52,8 @@ def main() -> int:
     require(all(privacy.get(key) is False for key in ["account_room_member_card_skill_identity_visible", "display_strings_visible", "raw_pointer_metadata"]), "frame privacy mismatch")
     require(privacy.get("approved_playfield_hud_crop_only") is True and privacy.get("manual_review_complete") is True, "frame privacy review mismatch")
     frames = manifest["frames"]
-    expected = {(scenario, anchor) for scenario, anchors in plan["scenarios"].items() for anchor in anchors}
+    required_scenarios = set(plan["delivery_profiles"][args.delivery_profile]["required_scenarios"])
+    expected = {(scenario, anchor) for scenario, anchors in plan["scenarios"].items() if scenario in required_scenarios for anchor in anchors}
     require(isinstance(frames, list) and len(frames) == len(expected), "frame count mismatch")
     require({(row.get("scenario"), row.get("anchor")) for row in frames} == expected, "frame anchor set mismatch")
     required_fields = set(plan["frame_required_fields"])
@@ -71,7 +73,10 @@ def main() -> int:
         require((width, height) == (row["width"], row["height"]), f"frame PNG dimensions mismatch: {relative_path}")
         require(width <= plan["viewport"]["width"] and height <= plan["viewport"]["height"] and width > 0 and height > 0, f"frame crop dimensions mismatch: {relative_path}")
         require(row["crop"] == "playfield-and-approved-HUD-only", f"frame crop label mismatch: {relative_path}")
-    print(f"verified rendering frame manifest: frames={len(frames)} ordinary=7 habahiro=6 privacy=closed")
+    ordinary_count = sum(row["scenario"] == "ordinary" for row in frames)
+    habahiro_count = sum(row["scenario"] == "habahiro" for row in frames)
+    require(args.delivery_profile != "explicit-degraded-habahiro" or habahiro_count == 0, "degraded delivery manifest must not claim original HABAHIRO frames")
+    print(f"verified rendering frame manifest: profile={args.delivery_profile} frames={len(frames)} ordinary={ordinary_count} habahiro={habahiro_count} privacy=closed")
     return 0
 
 
