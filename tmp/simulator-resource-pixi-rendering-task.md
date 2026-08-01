@@ -11,8 +11,8 @@
 - 锁定原作样本：`jp.co.craftegg.band` 10.1.4（version code 230，`arm64-v8a`）。
 - 锁定`libil2cpp.so` SHA-256：`815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F`。
 - 锁定`global-metadata.dat` SHA-256：`298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F`。
-- 当前Reverse基线提交：`6191b424412df955ce0a7d9e85716ee94d1ed3dc`；只消费该提交及其祖先中已提交、已push、可校验对象。
-- 当前状态：**RP00–RP03已关闭；RP04/RP07/RP08的已证实producer子集与RP10本地provider已落地，当前实施RP04–RP12剩余链。已闭合本地bytes browser decode、Texture/subtexture cache、Sprite bind、基础transform/portable ordering、引用计数与release；natural ordinary geometry R2已关闭mesh topology/vertices/UV/color/threshold、line endpoint/equal width与field/mesh transform载荷，current NoteSyncLine profile已关闭quad轮廓，新增ordinary projection profile关闭1600×720 world→Pixi endpoint/width映射。下一批直接落projection、producer与Pixi mapping；mask、HUD可见布局、animation及RP12剩余矩阵继续失败关闭并按批量缺口取证推进。原始HAB UnityFS、natural HAB R1与原始HAB frame保持`habahiro_exact_parity_gate=open-not-claimed`。`production_authorization=true`仅授权显式fidelity选择；必须显示`Approximate HABAHIRO`、禁止静默fallback、production/test联网、资源二进制入库与原作parity宣称。**
+- 当前Reverse基线提交：`35323566e65f22153825d7f37f461799fd3d7a31`；只消费该提交及其祖先中已提交、已push、可校验对象。
+- 当前状态：**RP00–RP03已关闭；RP04/RP07/RP08的已证实producer子集与RP10本地provider已落地，当前实施RP04–RP12剩余链。已闭合本地bytes browser decode、Texture/subtexture cache、Sprite bind、基础transform/portable ordering、引用计数与release；natural ordinary geometry R2已关闭mesh topology/vertices/UV/color/threshold、line endpoint/equal width与field/mesh transform载荷，current NoteSyncLine profile已关闭quad轮廓，新增ordinary projection profile关闭1600×720 world→Pixi endpoint/width映射。projection已落地，consolidated ordinary producer profile已一次关闭Note motion/base mesh/sync-line公式，下一批直接落engine producer与Pixi mapping；mask、HUD可见布局、animation及RP12剩余矩阵继续失败关闭并按批量缺口取证推进。原始HAB UnityFS、natural HAB R1与原始HAB frame保持`habahiro_exact_parity_gate=open-not-claimed`。`production_authorization=true`仅授权显式fidelity选择；必须显示`Approximate HABAHIRO`、禁止静默fallback、production/test联网、资源二进制入库与原作parity宣称。**
 - 计划证据包：`tmp/simulator-reverse-evidence/resource-pixi-rendering/`，只在Reverse新证据提交并push后创建。
 - 计划验收记录：`tmp/simulator-resource-pixi-rendering-acceptance.md`，RP14时创建。
 
@@ -314,6 +314,14 @@
 - render-contract suite确认projection对象、caller alias与完整profile均深冻结，并以错误PPU反例验证resource read前失败关闭；ordinary/degraded mode与projection identity必须一致。
 - Pixi suite将line输入换为viewport内current ordinary world值，逐项断言冻结expected 8个Float32 projected quad position，覆盖Y轴翻转、360 PPU width与top-left中心偏移，不由待测helper生成expected。
 - 隔离`tsc`、render-contract 6组、Pixi suite与各runner内dependency/evidence verifier通过；package无独立`simulator:test:dependency`脚本，dependency由两条runner自身执行。
+
+### 1.32 2026-08-01 ordinary Note geometry producer consolidated取证批
+
+- 为避免按单一setter/公式串行取证，Reverse `35323566e65f22153825d7f37f461799fd3d7a31`一次合并17个current managed方法、current `RhythmGame.unity` scene、R2 geometry、sync-line与projection profile，并已提交push。
+- profile锁定13个integer/half button与Launcher authored transform、screen-width/note-size/launch-distance/perspective公式、22/60 base mesh boundary/interpolation/UV/color/width-rate，以及sync-line margin exclusion、Setup/OnUpdate/hide/deactivate顺序。
+- 16个方法为current normalized instruction equivalent；`NoteMesh.GetMeshWidthRate`保留10.1.4专用static field offset差异并锁定current ARM64，不用统一RVA或历史field offset外推。builder/verifier重算current APK、17个ARM64 slice与全部上游profile hash并byte-idempotent通过。
+- 本批授权`ordinary_fixed_1600x720_note_motion`、`ordinary_base_note_mesh_producer`与`ordinary_sync_line_producer`；advanced 42-vertex mesh、Multiple back line、threshold shader与HAB exact显式false，后续仍失败关闭。
+- Garupa冻结包更新为740项；未复制APK、资源二进制、实体PNG、IDA数据库或`runtime/tools/`。下一production批直接实现该consolidated子集，不再为其中每条公式单独停顿。
 
 ## 2. 固定范围
 
