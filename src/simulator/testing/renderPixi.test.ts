@@ -398,6 +398,45 @@ async function main(): Promise<void> {
   equal(decodeFailure.snapshot().resourceCount, 0, "decode failure retains no resources");
   equal(decodeFailure.stage.children.length, 0, "decode failure creates no scene object");
 
+  let providerDecoderCalls = 0;
+  const providerFailure = new PixiRendererBackend({
+    async decodePng() {
+      providerDecoderCalls += 1;
+      return evidenceRequired("test.unreachable-decoder", ["PR35"], "Provider failure must precede decode.");
+    },
+  });
+  const rejectedProvider = await providerFailure.prepare(
+    "provider-failure-session",
+    profile(),
+    { async read() { throw new Error("synthetic provider failure"); } },
+    new PortableRenderResourcePreflightAdapter(),
+  );
+  equal(rejectedProvider.status, "evidence-required", "provider exception is structured");
+  equal(providerFailure.snapshot().state, "unprepared", "provider exception remains not-ready");
+  equal(providerDecoderCalls, 0, "provider exception occurs before any decode");
+  equal(providerFailure.resourceSnapshot().every((row) => !row.decoded), true, "provider exception retains no texture");
+
+  const wrongSource = new TextureSource({ width: 2, height: 2, resource: { width: 2, height: 2 } });
+  const wrongTexture = new Texture({ source: wrongSource, label: "wrong-dimensions" });
+  const dimensionFailure = new PixiRendererBackend({ async decodePng() { return ok(wrongTexture); } });
+  const rejectedDimensions = await dimensionFailure.prepare(
+    "dimension-failure-session", profile(), provider, new PortableRenderResourcePreflightAdapter(),
+  );
+  equal(rejectedDimensions.status, "evidence-required", "decoded dimension mismatch is structured");
+  equal(dimensionFailure.snapshot().state, "unprepared", "dimension mismatch remains not-ready");
+  equal(wrongTexture.destroyed, true, "dimension mismatch destroys rejected decoded texture");
+
+  const aliasSource = new TextureSource({ width: 4, height: 4, resource: { width: 4, height: 4 } });
+  const aliasTexture = new Texture({ source: aliasSource, label: "aliased-decoder-texture" });
+  const aliasFailure = new PixiRendererBackend({ async decodePng() { return ok(aliasTexture); } });
+  const rejectedAlias = await aliasFailure.prepare(
+    "alias-failure-session", profile(), provider, new PortableRenderResourcePreflightAdapter(),
+  );
+  equal(rejectedAlias.status, "evidence-required", "decoder texture identity alias is structured");
+  equal(aliasFailure.snapshot().state, "unprepared", "decoder alias remains not-ready");
+  equal(aliasTexture.destroyed, true, "decoder alias destroys partially owned texture once");
+  equal(aliasFailure.resourceSnapshot().every((row) => !row.decoded), true, "decoder alias rolls back texture cache");
+
   let factoryCalls = 0;
   const allocationFailure = new PixiRendererBackend(decoder, {
     create() {
@@ -516,10 +555,18 @@ async function main(): Promise<void> {
     provider,
     new PortableRenderResourcePreflightAdapter(),
   ), "prepare context-loss renderer");
+  requireOk(contextRenderer.execute({
+    sessionId: "context-session", sequence: 0, frame: 0, substep: 0,
+    kind: "create-object", renderObjectId: "context.live",
+    poolFamily: "normal", role: "note-root", parentObjectId: null,
+  }), "create live object before context loss");
+  equal(contextRenderer.sceneSnapshot().length, 1, "context test starts with live scene");
   const contextLoss = contextRenderer.notifyContextLoss();
   equal(contextLoss.status, "evidence-required", "context loss returned structurally");
   equal(contextRenderer.snapshot().state, "faulted", "context loss is terminal");
   equal(contextRenderer.snapshot().fault?.capability, "render.pixi.context-lost", "context fault preserved");
+  equal(contextRenderer.sceneSnapshot().length, 0, "context fault clears live scene identities");
+  equal(contextRenderer.stage.children.length, 0, "context fault detaches live Pixi nodes");
   const afterFault = contextRenderer.preflight([{
     ...base(0), kind: "create-object", renderObjectId: "after.fault",
     poolFamily: "normal", role: "note-root", parentObjectId: null,
@@ -533,7 +580,152 @@ async function main(): Promise<void> {
   requireOk(contextRenderer.dispose(), "dispose context-faulted renderer");
   equal(contextRenderer.snapshot().resourceCount, 0, "context-fault dispose releases resources");
 
-  console.log("Pixi v8 semantic adapter tests passed: atomic decode/cache/Sprite/R2-Mesh/sync-line/order/fault/release");
+  const missingRenderer = new PixiRendererBackend(decoder);
+  requireOk(await missingRenderer.prepare(
+    "missing-session", profile(), provider, new PortableRenderResourcePreflightAdapter(),
+  ), "prepare missing-object renderer");
+  const missingObject = missingRenderer.preflight([{
+    sessionId: "missing-session", sequence: 0, frame: 0, substep: 0,
+    kind: "activate-object", renderObjectId: "missing.object",
+  }]);
+  equal(missingObject.status, "evidence-required", "missing object is terminal");
+  equal(missingRenderer.snapshot().state, "faulted", "missing object faults renderer");
+  equal(missingRenderer.snapshot().fault?.capability, "render.command.missing-object", "missing-object first fault retained");
+  equal(missingRenderer.sceneSnapshot().length, 0, "missing object leaves empty scene");
+  requireOk(missingRenderer.dispose(), "dispose missing-object renderer");
+
+  const duplicateRenderer = new PixiRendererBackend(decoder);
+  requireOk(await duplicateRenderer.prepare(
+    "duplicate-session", profile(), provider, new PortableRenderResourcePreflightAdapter(),
+  ), "prepare duplicate-object renderer");
+  requireOk(duplicateRenderer.execute({
+    sessionId: "duplicate-session", sequence: 0, frame: 0, substep: 0,
+    kind: "create-object", renderObjectId: "duplicate.object",
+    poolFamily: "normal", role: "note-root", parentObjectId: null,
+  }), "create identity before duplicate");
+  const duplicateObject = duplicateRenderer.preflight([{
+    sessionId: "duplicate-session", sequence: 1, frame: 0, substep: 0,
+    kind: "create-object", renderObjectId: "duplicate.object",
+    poolFamily: "normal", role: "note-root", parentObjectId: null,
+  }]);
+  equal(duplicateObject.status, "evidence-required", "duplicate object is terminal");
+  equal(duplicateRenderer.snapshot().state, "faulted", "duplicate object faults renderer");
+  equal(duplicateRenderer.snapshot().fault?.capability, "render.command.invalid-object-acquire", "duplicate first fault retained");
+  equal(duplicateRenderer.sceneSnapshot().length, 0, "terminal duplicate reset clears live object");
+  equal(duplicateRenderer.stage.children.length, 0, "terminal duplicate reset clears Pixi stage");
+  requireOk(duplicateRenderer.dispose(), "dispose duplicate-object renderer");
+
+  const crossSessionRenderer = new PixiRendererBackend(decoder);
+  requireOk(await crossSessionRenderer.prepare(
+    "owned-session", profile(), provider, new PortableRenderResourcePreflightAdapter(),
+  ), "prepare cross-session renderer");
+  const crossSession = crossSessionRenderer.preflight([{
+    sessionId: "foreign-session", sequence: 0, frame: 0, substep: 0,
+    kind: "create-object", renderObjectId: "foreign.object",
+    poolFamily: "normal", role: "note-root", parentObjectId: null,
+  }]);
+  equal(crossSession.status, "evidence-required", "cross-session command is terminal");
+  equal(crossSessionRenderer.snapshot().fault?.capability, "render.command.invalid-session-or-sequence", "cross-session fault retained");
+  requireOk(crossSessionRenderer.dispose(), "dispose cross-session renderer");
+
+  const overlapReservations: Container[] = [];
+  const overlapRenderer = new PixiRendererBackend(decoder, {
+    create() {
+      const node = wrappedSprite();
+      overlapReservations.push(node);
+      return node;
+    },
+  });
+  requireOk(await overlapRenderer.prepare(
+    "overlap-session", profile(), provider, new PortableRenderResourcePreflightAdapter(),
+  ), "prepare overlapping-batch renderer");
+  const firstPending = requireOk(overlapRenderer.preflight([{
+    sessionId: "overlap-session", sequence: 0, frame: 0, substep: 0,
+    kind: "create-object", renderObjectId: "overlap.first",
+    poolFamily: "normal", role: "note-root", parentObjectId: null,
+  }]), "reserve first overlapping batch");
+  equal(overlapReservations[0]?.destroyed, false, "first overlapping reservation starts live");
+  const overlapFault = overlapRenderer.preflight([{
+    sessionId: "overlap-session", sequence: 0, frame: 0, substep: 0,
+    kind: "create-object", renderObjectId: "overlap.second",
+    poolFamily: "normal", role: "note-root", parentObjectId: null,
+  }]);
+  equal(overlapFault.status, "evidence-required", "overlapping batch is terminal");
+  equal(overlapRenderer.snapshot().fault?.capability, "render.command.invalid-or-overlapping-batch", "overlap first fault retained");
+  equal(overlapReservations[0]?.destroyed, true, "terminal overlap destroys detached reservation");
+  equal(overlapRenderer.commit(firstPending).status, "evidence-required", "stale capability after overlap rejected by first fault");
+  equal(overlapRenderer.sceneSnapshot().length, 0, "overlap fault leaves no scene identity");
+  requireOk(overlapRenderer.dispose(), "dispose overlap-fault renderer");
+
+  const invalidCapabilityRenderer = new PixiRendererBackend(decoder);
+  requireOk(await invalidCapabilityRenderer.prepare(
+    "capability-session", profile(), provider, new PortableRenderResourcePreflightAdapter(),
+  ), "prepare invalid-capability renderer");
+  requireOk(invalidCapabilityRenderer.execute({
+    sessionId: "capability-session", sequence: 0, frame: 0, substep: 0,
+    kind: "create-object", renderObjectId: "capability.live",
+    poolFamily: "normal", role: "note-root", parentObjectId: null,
+  }), "create object before invalid capability");
+  const invalidCapability = invalidCapabilityRenderer.commit(Object.freeze({
+    sessionId: "capability-session", firstSequence: 1, commandCount: 1,
+  }));
+  equal(invalidCapability.status, "evidence-required", "foreign batch capability is terminal");
+  equal(invalidCapabilityRenderer.snapshot().fault?.capability, "render.pixi.invalid-batch-capability", "invalid capability fault retained");
+  equal(invalidCapabilityRenderer.sceneSnapshot().length, 0, "invalid capability clears live scene");
+  equal(invalidCapabilityRenderer.stage.children.length, 0, "invalid capability clears Pixi stage");
+  requireOk(invalidCapabilityRenderer.dispose(), "dispose invalid-capability renderer");
+
+  const disposeOrder: string[] = [];
+  const ownedBaseTextures: Texture[] = [];
+  const disposalRenderer = new PixiRendererBackend({
+    async decodePng(asset) {
+      const decoded = requireOk(await decoder.decodePng(asset, png), "decode disposal texture");
+      ownedBaseTextures.push(decoded);
+      const destroy = decoded.destroy.bind(decoded);
+      decoded.destroy = ((destroySource?: boolean) => {
+        disposeOrder.push(`base:${String(destroySource)}`);
+        destroy(destroySource);
+      }) as typeof decoded.destroy;
+      return ok(decoded);
+    },
+  }, {
+    create() {
+      const node = wrappedSprite();
+      const destroy = node.destroy.bind(node);
+      node.destroy = ((options?: Parameters<Container["destroy"]>[0]) => {
+        disposeOrder.push("object");
+        destroy(options);
+      }) as typeof node.destroy;
+      return node;
+    },
+  });
+  requireOk(await disposalRenderer.prepare(
+    "dispose-session", profile(), provider, new PortableRenderResourcePreflightAdapter(),
+  ), "prepare disposal-order renderer");
+  requireOk(disposalRenderer.execute({
+    sessionId: "dispose-session", sequence: 0, frame: 0, substep: 0,
+    kind: "create-object", renderObjectId: "dispose.object",
+    poolFamily: "normal", role: "note-root", parentObjectId: null,
+  }), "create disposal object");
+  requireOk(disposalRenderer.execute({
+    sessionId: "dispose-session", sequence: 1, frame: 0, substep: 0,
+    kind: "bind-resource", renderObjectId: "dispose.object",
+    binding: "sprite", logicalAssetId: "asset.note", exactKey: "note_normal_0",
+  }), "bind disposal subtexture");
+  const disposalSprite = disposalRenderer.stage.children[0]?.children[0];
+  if (!(disposalSprite instanceof Sprite)) throw new Error("missing disposal Sprite");
+  const ownedSubtexture = disposalSprite.texture;
+  requireOk(disposalRenderer.dispose(), "dispose owned object and textures");
+  equal(disposeOrder[0], "object", "object is destroyed before owned base texture");
+  equal(disposeOrder[disposeOrder.length - 1], "base:true", "base texture/source is destroyed last");
+  equal(ownedSubtexture.destroyed, true, "owned atlas subtexture destroyed");
+  equal(ownedBaseTextures[0]?.destroyed, true, "owned base texture destroyed");
+  equal(disposalRenderer.stage.destroyed, false, "backend does not destroy host stage ownership");
+  const disposeCount = disposeOrder.length;
+  requireOk(disposalRenderer.dispose(), "repeat disposal-order dispose");
+  equal(disposeOrder.length, disposeCount, "repeated dispose destroys no resource twice");
+
+  console.log("Pixi v8 semantic adapter tests passed: atomic decode/cache/Sprite/R2-Mesh/sync-line/order/fault/context/dispose");
 }
 
 void main().catch((error: unknown) => {

@@ -397,6 +397,14 @@
 - context loss同样先锁定首错，再清空live scene与pending reservation；不自动reload texture/profile，base texture保持backend ownership直到显式dispose。
 - terminal cleanup逐对象best-effort继续，清理异常不得覆盖首个fault；已有scene-mutation catch复用同一集中路径。隔离`tsc`与Pixi suite通过。
 
+### 1.43 2026-08-01 RP12 failure/context/dispose matrix test子批
+
+- 新增`simulator:test:render-failures`独立临时编译入口，实际运行Pixi adapter完整语义/故障矩阵，再运行dependency与743项证据verifier；不以recording-only通过替代Pixi。
+- atomic prepare覆盖decoder structured failure、provider throw-before-decode、decoded dimensions mismatch、两个logical asset返回同一Texture identity、部分cache rollback；全部保持unprepared、零scene/decoded cache并销毁临时texture。
+- command矩阵覆盖unsupported semantic非terminal rejection，以及missing object、duplicate object、cross-session、overlapping pending batch、foreign capability、scene mutation exception与context loss的terminal first-fault precedence和scene/reservation reset。
+- dispose instrumentation确认object先销毁、atlas subtexture随后销毁、base Texture/source最后`destroy(true)`；host stage不由backend销毁，重复dispose不二次释放。
+- `tsc`、`simulator:test:render-pixi`与`simulator:test:render-failures`通过；runner内dependency/evidence verifier通过，未运行Vite/Tauri整体构建。
+
 ## 2. 固定范围
 
 ### 2.1 纳入范围
