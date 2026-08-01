@@ -81,7 +81,7 @@
 | RP08 恢复基础HUD消费链 | 阻塞于RP07 | Score/Combo/AP/AddScore/Result/Life exact scene state匹配 |
 | RP09 恢复HUD overlay与动画 | 阻塞于RP08 | Skill/guard/heal/score-up/judge-line overlay及clock匹配 |
 | RP10 建立portable resource backend | **进行中：decode/cache/subtexture/ref已完成** | 本地bytes atomic decode、Texture/subtexture cache与引用计数已落地；material/animation ownership待后续映射 |
-| RP11 建立Pixi v8 renderer | **进行中：Sprite语义子集已完成** | Sprite bind、pivot、blend、transform、portable ordering与release已落地；Mesh/Graphics/Mask/Text/Slider继续失败关闭 |
+| RP11 建立Pixi v8 renderer | **进行中：Sprite与R2 base Mesh语义子集已完成** | Sprite bind、pivot、blend、transform、ordering及22/60 MeshGeometry已落地；Line/Mask/Text/Slider与threshold shader继续失败关闭 |
 | RP12 failure/context/dispose矩阵 | **进行中：allocation/terminal/context/host cleanup已完成** | decode与Pixi object allocation零scene残留、context terminal fault、host显式dispose归零已落地；commit期异常原子回滚与完整PR35–PR38矩阵待关闭 |
 | RP13 production oracle与全回归 | 阻塞于RP12 | PR01–PR40、ordinary/HABAHIRO、dependency、证据index和上游回归通过 |
 | RP14 独立验收 | 阻塞于RP13 | 从提交后HEAD复验并创建acceptance，RP00–RP14全部closed |
@@ -244,6 +244,14 @@
 - Reverse compact oracle从完整R2确定性重建init topology、selected mesh lifecycle、selected line pair/nonzero width及field transform histogram；verifier重算10个setter ARM64、87,037事件schema/隐私/Float32与oracle source hash。
 - Garupa冻结包晋升至731项，新增7项R2来源并将全部source commit重锁到`85fd890c...`；实体frame PNG、资源二进制、IDA数据库及`runtime/tools/`仍未复制。
 - 本批只关闭ordinary geometry/line/owner transform载荷缺口，不外推Graphics cap/join、SpriteMask inside/outside、NGUI glyph布局、animation clock或Unity shader/raster parity；后者继续失败关闭并按需另行取证。
+
+### 1.22 2026-08-01 RP11 ordinary base NoteMesh Pixi mapping子批
+
+- Pixi backend现仅接受R2实体闭合的base `NoteMesh`轮廓：22 vertices、60 indices、22 UV、全部Z bits=`00000000`且22个vertex color逐项相同；advanced 42-vertex或任意非uniform color输入在scene mutation前失败关闭。
+- command preflight将`MeshGeometry`与`Mesh`连同object node一并detached reservation；Float32位置/UV和Uint32 indices在领域mutation前完成构造，allocation失败、discard、context loss与dispose均逆序销毁Geometry且不消费sequence。
+- Pixi v8 object identity改为稳定`Container` wrapper；Sprite与Mesh作为其child，避免v8已弃用的Sprite child ownership。transform/ordering/visibility继续只写wrapper，因此bind与geometry replacement不改变engine render identity。
+- R2证明所有base vertex colors在单次写入内uniform，故portable mapping将该RGBA显式投影为Mesh tint/alpha；current long/curve material无MainTex时使用Pixi内建white source作为color-only sampling primitive，不把它用于missing resource fallback。
+- `_Threshold`虽已取得property ID与Float32轨迹，但Unity shader坐标/clip语义尚未晋升portable contract；`set-threshold`继续拒绝，当前Mesh mapping不宣称sudden clipping或Unity GPU raster parity。Line quad、mask、HUD及animation后续分批实施。
 
 ## 2. 固定范围
 

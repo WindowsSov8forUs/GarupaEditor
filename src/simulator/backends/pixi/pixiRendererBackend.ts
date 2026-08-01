@@ -1,5 +1,7 @@
 import {
   Container,
+  Mesh,
+  MeshGeometry,
   Rectangle,
   Sprite,
   Texture,
@@ -38,6 +40,7 @@ interface PendingPixiBatch {
   readonly recordingBatch: RenderCommandBatch;
   readonly commands: readonly RenderCommand[];
   readonly reservedNodes: ReadonlyMap<number, Container>;
+  readonly reservedGeometry: ReadonlyMap<number, Mesh>;
 }
 
 interface PixiObjectRecord {
@@ -46,6 +49,8 @@ interface PixiObjectRecord {
   ordering: readonly [number, number, number, number];
   hudState: Readonly<Record<string, string | number | boolean | null>> | null;
   spriteBindingKey: string | null;
+  spriteContent: Sprite | null;
+  geometryContent: Mesh | null;
 }
 
 interface PixiShadowObject {
@@ -182,34 +187,39 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       return supported;
     }
     const reservedNodes = new Map<number, Container>();
+    const reservedGeometry = new Map<number, Mesh>();
     try {
       for (const command of commands) {
-        if (command.kind !== "create-object" && command.kind !== "acquire-object") continue;
-        const node = this.objectFactory.create(
-          command.role,
-          command.renderObjectId,
-          this.profile!.scene.roundPixels,
-        );
-        if (
-          node.destroyed ||
-          node.parent !== null ||
-          (spriteRole(command.role) && !(node instanceof Sprite))
-        ) {
-          node.destroy({ children: true } as DestroyOptions);
-          throw new Error("invalid reserved Pixi node");
+        if (command.kind === "create-object" || command.kind === "acquire-object") {
+          const node = this.objectFactory.create(
+            command.role,
+            command.renderObjectId,
+            this.profile!.scene.roundPixels,
+          );
+          if (
+            node.destroyed ||
+            node.parent !== null ||
+            (spriteRole(command.role) && spriteChild(node) === null)
+          ) {
+            node.destroy({ children: true } as DestroyOptions);
+            throw new Error("invalid reserved Pixi node");
+          }
+          node.label = command.renderObjectId;
+          node.visible = false;
+          reservedNodes.set(command.sequence, node);
+        } else if (command.kind === "set-mesh") {
+          reservedGeometry.set(command.sequence, createEvidenceMesh(command));
         }
-        node.label = command.renderObjectId;
-        node.visible = false;
-        reservedNodes.set(command.sequence, node);
       }
     } catch {
       for (const node of reservedNodes.values()) {
         node.destroy({ children: true } as DestroyOptions);
       }
+      for (const mesh of reservedGeometry.values()) destroyMesh(mesh);
       this.recording.discard(recordingBatch.value);
       return reject(
         "render.pixi.preflight-object-create-threw",
-        "Pixi object allocation is reserved during preflight so allocation failure precedes domain mutation.",
+        "Pixi object and geometry allocation is reserved during preflight so allocation failure precedes domain mutation.",
       );
     }
     const capability = Object.freeze({ ...recordingBatch.value });
@@ -217,6 +227,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       recordingBatch: recordingBatch.value,
       commands: Object.freeze(commands.map(copyPixiCommand)),
       reservedNodes,
+      reservedGeometry,
     }));
     return ok(capability);
   }
@@ -230,10 +241,12 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       );
     }
     try {
-      for (const command of pending.commands) this.apply(command, pending.reservedNodes);
+      for (const command of pending.commands) {
+        this.apply(command, pending.reservedNodes, pending.reservedGeometry);
+      }
     } catch {
       this.pending.delete(batch);
-      this.destroyUnownedReservedNodes(pending.reservedNodes);
+      this.destroyUnownedReservations(pending.reservedNodes, pending.reservedGeometry);
       this.recording.discard(pending.recordingBatch);
       return this.recording.recordTerminalFault(
         "render.pixi.scene-mutation-threw",
@@ -254,9 +267,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       );
     }
     this.pending.delete(batch);
-    for (const node of pending.reservedNodes.values()) {
-      node.destroy({ children: true } as DestroyOptions);
-    }
+    this.destroyUnownedReservations(pending.reservedNodes, pending.reservedGeometry);
     return this.recording.discard(pending.recordingBatch);
   }
 
@@ -278,7 +289,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       );
     }
     for (const pending of this.pending.values()) {
-      this.destroyUnownedReservedNodes(pending.reservedNodes);
+      this.destroyUnownedReservations(pending.reservedNodes, pending.reservedGeometry);
       this.recording.discard(pending.recordingBatch);
     }
     this.pending.clear();
@@ -314,6 +325,8 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     readonly parent: string | null;
     readonly ordering: readonly [number, number, number, number];
     readonly hudState: Readonly<Record<string, string | number | boolean | null>> | null;
+    readonly geometryVertexCount: number | null;
+    readonly geometryIndexCount: number | null;
   }[] {
     const idsByNode = new Map([...this.objects].map(([id, value]) => [value.node, id]));
     return Object.freeze([...this.objects].map(([renderObjectId, value]) => Object.freeze({
@@ -325,19 +338,22 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         : idsByNode.get(value.node.parent as Container) ?? null,
       ordering: value.ordering,
       hudState: value.hudState,
+      geometryVertexCount: value.geometryContent?.geometry.positions.length
+        ? value.geometryContent.geometry.positions.length / 2
+        : null,
+      geometryIndexCount: value.geometryContent?.geometry.indices.length ?? null,
     })));
   }
 
   dispose(): SimulatorResult<void> {
     for (const value of [...this.objects.values()].reverse()) {
+      if (value.geometryContent !== null) destroyMesh(value.geometryContent);
       value.node.removeFromParent();
       value.node.destroy({ children: true } as DestroyOptions);
     }
     this.objects.clear();
     for (const pending of this.pending.values()) {
-      for (const node of pending.reservedNodes.values()) {
-        node.destroy({ children: true } as DestroyOptions);
-      }
+      this.destroyUnownedReservations(pending.reservedNodes, pending.reservedGeometry);
     }
     this.pending.clear();
     for (const texture of this.spriteTextures.values()) texture.destroy(false);
@@ -366,6 +382,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         return command.binding === "sprite" && command.exactKey !== null &&
           this.spriteTextures.has(spriteKey(command.logicalAssetId, command.exactKey));
       case "set-mesh":
+        return command.materialRole === "long-note" || command.materialRole === "curve-note";
       case "set-line":
       case "set-threshold":
       case "play-animation":
@@ -426,8 +443,18 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         case "deactivate-object":
         case "set-transform":
           break;
-        case "set-hud":
         case "set-mesh":
+          if (
+            shadow.get(command.renderObjectId)!.role !== "note-mesh" ||
+            !isEvidenceMesh(command)
+          ) {
+            return reject(
+              "render.pixi.mesh-outside-r2-profile",
+              "Pixi accepts only the ordinary R2 22-vertex uniform-color NoteMesh profile.",
+            );
+          }
+          break;
+        case "set-hud":
         case "set-line":
         case "set-threshold":
         case "play-animation":
@@ -444,6 +471,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
   private apply(
     command: RenderCommand,
     reservedNodes: ReadonlyMap<number, Container>,
+    reservedGeometry: ReadonlyMap<number, Mesh>,
   ): void {
     switch (command.kind) {
       case "create-object":
@@ -459,6 +487,8 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           ordering: Object.freeze([0, 0, 0, command.sequence]),
           hudState: null,
           spriteBindingKey: null,
+          spriteContent: spriteChild(node),
+          geometryContent: null,
         });
         return;
       }
@@ -472,6 +502,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       case "release-object": {
         const object = this.objects.get(command.renderObjectId)!;
         if (object.spriteBindingKey !== null) this.decrementSpriteReference(object.spriteBindingKey);
+        if (object.geometryContent !== null) destroyMesh(object.geometryContent);
         object.node.removeFromParent();
         object.node.destroy({ children: true } as DestroyOptions);
         this.objects.delete(command.renderObjectId);
@@ -479,7 +510,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       }
       case "bind-resource": {
         const object = this.objects.get(command.renderObjectId)!;
-        const node = object.node as Sprite;
+        const node = object.spriteContent!;
         const bindingKey = spriteKey(command.logicalAssetId, command.exactKey!);
         node.texture = this.spriteTextures.get(bindingKey)!;
         node.anchor.copyFrom(node.texture.defaultAnchor ?? { x: 0, y: 0 });
@@ -519,7 +550,14 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       case "set-hud":
         this.objects.get(command.renderObjectId)!.hudState = Object.freeze({ ...command.state });
         return;
-      case "set-mesh":
+      case "set-mesh": {
+        const object = this.objects.get(command.renderObjectId)!;
+        if (object.geometryContent !== null) destroyMesh(object.geometryContent);
+        const mesh = reservedGeometry.get(command.sequence)!;
+        object.node.addChild(mesh);
+        object.geometryContent = mesh;
+        return;
+      }
       case "set-line":
       case "set-threshold":
       case "play-animation":
@@ -537,14 +575,22 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     });
   }
 
-  private destroyUnownedReservedNodes(
+  private destroyUnownedReservations(
     reservedNodes: ReadonlyMap<number, Container>,
+    reservedGeometry: ReadonlyMap<number, Mesh>,
   ): void {
     const ownedNodes = new Set([...this.objects.values()].map((value) => value.node));
+    const ownedGeometry = new Set(
+      [...this.objects.values()].flatMap((value) =>
+        value.geometryContent === null ? [] : [value.geometryContent]),
+    );
     for (const node of reservedNodes.values()) {
       if (!ownedNodes.has(node) && !node.destroyed) {
         node.destroy({ children: true } as DestroyOptions);
       }
+    }
+    for (const mesh of reservedGeometry.values()) {
+      if (!ownedGeometry.has(mesh) && !mesh.destroyed) destroyMesh(mesh);
     }
   }
 
@@ -583,11 +629,67 @@ class CachingProvider implements SimulatorResourceProvider {
   }
 }
 
+type SetMeshCommand = Extract<RenderCommand, { readonly kind: "set-mesh" }>;
+
+function isEvidenceMesh(command: SetMeshCommand): boolean {
+  if (
+    command.vertices.length !== 22 ||
+    command.indices.length !== 60 ||
+    command.uv.length !== 22 ||
+    command.colors.length !== 22 ||
+    command.vertices.some((vertex) => vertex.z.bits !== "00000000")
+  ) {
+    return false;
+  }
+  const first = command.colors[0]!;
+  return command.colors.every((color) =>
+    color.red.bits === first.red.bits &&
+    color.green.bits === first.green.bits &&
+    color.blue.bits === first.blue.bits &&
+    color.alpha.bits === first.alpha.bits);
+}
+
+function createEvidenceMesh(command: SetMeshCommand): Mesh {
+  if (!isEvidenceMesh(command)) throw new Error("mesh outside R2 profile");
+  const positions = new Float32Array(command.vertices.length * 2);
+  const uvs = new Float32Array(command.uv.length * 2);
+  for (let index = 0; index < command.vertices.length; index += 1) {
+    positions[index * 2] = command.vertices[index]!.x.value;
+    positions[index * 2 + 1] = command.vertices[index]!.y.value;
+    uvs[index * 2] = command.uv[index]!.x.value;
+    uvs[index * 2 + 1] = command.uv[index]!.y.value;
+  }
+  const geometry = new MeshGeometry({
+    positions,
+    uvs,
+    indices: Uint32Array.from(command.indices),
+    topology: "triangle-list",
+    shrinkBuffersToFit: true,
+  });
+  const mesh = new Mesh({ geometry, texture: Texture.WHITE, roundPixels: false });
+  const color = command.colors[0]!;
+  mesh.tint = rgbTint(color.red.value, color.green.value, color.blue.value);
+  mesh.alpha = color.alpha.value;
+  return mesh;
+}
+
+function destroyMesh(mesh: Mesh): void {
+  mesh.removeFromParent();
+  mesh.geometry.destroy();
+  mesh.destroy({ texture: false, textureSource: false } as DestroyOptions);
+}
+
 const defaultObjectFactory: PixiSceneObjectFactory = Object.freeze({
   create(role: string, renderObjectId: string, roundPixels: boolean): Container {
-    return spriteRole(role)
-      ? new Sprite({ texture: Texture.EMPTY, roundPixels, label: renderObjectId })
-      : new Container({ label: renderObjectId, sortableChildren: true });
+    const root = new Container({ label: renderObjectId, sortableChildren: true });
+    if (spriteRole(role)) {
+      root.addChild(new Sprite({
+        texture: Texture.EMPTY,
+        roundPixels,
+        label: `${renderObjectId}:sprite`,
+      }));
+    }
+    return root;
   },
 });
 
@@ -605,6 +707,11 @@ function applyTextureSettings(texture: Texture, asset: RenderResourceAssetProfil
   texture.source.alphaMode = settings.premultiplyAlpha
     ? "premultiply-alpha-on-upload"
     : "no-premultiply-alpha";
+}
+
+function spriteChild(node: Container): Sprite | null {
+  const child = node.children[0];
+  return child instanceof Sprite ? child : null;
 }
 
 function spriteRole(role: string): boolean {
@@ -634,6 +741,27 @@ function compareOrdering(
 }
 
 function copyPixiCommand(command: RenderCommand): RenderCommand {
+  if (command.kind === "set-mesh") {
+    return Object.freeze({
+      ...command,
+      vertices: Object.freeze(command.vertices.map((value) => Object.freeze({
+        x: Object.freeze({ ...value.x }),
+        y: Object.freeze({ ...value.y }),
+        z: Object.freeze({ ...value.z }),
+      }))),
+      indices: Object.freeze([...command.indices]),
+      uv: Object.freeze(command.uv.map((value) => Object.freeze({
+        x: Object.freeze({ ...value.x }),
+        y: Object.freeze({ ...value.y }),
+      }))),
+      colors: Object.freeze(command.colors.map((value) => Object.freeze({
+        red: Object.freeze({ ...value.red }),
+        green: Object.freeze({ ...value.green }),
+        blue: Object.freeze({ ...value.blue }),
+        alpha: Object.freeze({ ...value.alpha }),
+      }))),
+    });
+  }
   if (command.kind === "set-hud") {
     return Object.freeze({ ...command, state: Object.freeze({ ...command.state }) });
   }
