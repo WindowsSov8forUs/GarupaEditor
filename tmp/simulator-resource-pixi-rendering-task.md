@@ -288,6 +288,12 @@
 - recording backend增加仅供组合后端terminal路径调用的object reset，使fault snapshot的objectCount与已归零Pixi scene一致；session/fidelity/resource仍保留以支持结构化诊断和显式dispose。
 - 该路径选择terminal全scene归零而非恢复到故障前可继续渲染的scene：故障后renderer不可恢复，host依既有terminal cleanup清理domain owner并dispose backend；因此不存在部分可见scene或旧identity继续被误用。
 
+### 1.28 2026-08-01 RP12 commit mutation terminal scene reset测试子批
+
+- Pixi suite用注入object factory建立已visible且持有exact Sprite texture reference的live parent，再令其`addChild`于下一批commit抛出JavaScript异常；allocation本身仍在preflight成功，故精确命中scene mutation terminal路径。
+- 断言first fault capability、`state=faulted`、recording objectCount=0、Pixi scene identity=0、stage child=0及resource reference=0；随后显式dispose释放两项base Texture并归零resourceCount。
+- 该case与既有decode/allocation/discard/context/duplicate prepare/repeated dispose组合运行，隔离Pixi suite和dependency verifier通过。
+
 ## 2. 固定范围
 
 ### 2.1 纳入范围

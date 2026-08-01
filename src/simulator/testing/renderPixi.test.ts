@@ -397,6 +397,58 @@ async function main(): Promise<void> {
   equal(allocationFailure.stage.children.length, 0, "allocation rejection leaves stage empty");
   requireOk(allocationFailure.dispose(), "dispose allocation-failure renderer");
 
+  let mutationFactoryCalls = 0;
+  const mutationFailure = new PixiRendererBackend(decoder, {
+    create() {
+      mutationFactoryCalls += 1;
+      const node = mutationFactoryCalls === 1 ? wrappedSprite() : new Container();
+      if (mutationFactoryCalls === 1) {
+        node.addChild = (() => {
+          throw new Error("synthetic Pixi addChild mutation failure");
+        }) as typeof node.addChild;
+      }
+      return node;
+    },
+  });
+  requireOk(await mutationFailure.prepare(
+    "mutation-failure-session",
+    profile(),
+    provider,
+    new PortableRenderResourcePreflightAdapter(),
+  ), "prepare mutation-failure renderer");
+  requireOk(mutationFailure.execute({
+    sessionId: "mutation-failure-session", sequence: 0, frame: 0, substep: 0,
+    kind: "create-object", renderObjectId: "mutation.parent",
+    poolFamily: "normal", role: "note-root", parentObjectId: null,
+  }), "create live parent before mutation fault");
+  requireOk(mutationFailure.execute({
+    sessionId: "mutation-failure-session", sequence: 1, frame: 0, substep: 0,
+    kind: "bind-resource", renderObjectId: "mutation.parent",
+    binding: "sprite", logicalAssetId: "asset.note", exactKey: "note_normal_0",
+  }), "bind live parent before mutation fault");
+  requireOk(mutationFailure.execute({
+    sessionId: "mutation-failure-session", sequence: 2, frame: 0, substep: 0,
+    kind: "activate-object", renderObjectId: "mutation.parent",
+  }), "activate live parent before mutation fault");
+  equal(mutationFailure.resourceSnapshot()[0]?.spriteReferenceCount, 1, "pre-fault scene owns one texture reference");
+  const mutationBatch = requireOk(mutationFailure.preflight([
+    {
+      sessionId: "mutation-failure-session", sequence: 3, frame: 0, substep: 0,
+      kind: "create-object", renderObjectId: "mutation.child",
+      poolFamily: "long", role: "note-mesh", parentObjectId: "mutation.parent",
+    },
+  ]), "preflight mutation-failure batch");
+  const mutationFault = mutationFailure.commit(mutationBatch);
+  equal(mutationFault.status, "evidence-required", "Pixi scene mutation exception is structured");
+  equal(mutationFailure.snapshot().state, "faulted", "scene mutation exception is terminal");
+  equal(mutationFailure.snapshot().fault?.capability, "render.pixi.scene-mutation-threw", "scene mutation fault is retained");
+  equal(mutationFailure.snapshot().objectCount, 0, "terminal mutation reset clears recording identities");
+  equal(mutationFailure.sceneSnapshot().length, 0, "terminal mutation reset clears Pixi identities");
+  equal(mutationFailure.stage.children.length, 0, "terminal mutation reset detaches partial scene roots");
+  equal(mutationFailure.resourceSnapshot()[0]?.spriteReferenceCount, 0, "terminal mutation reset clears resource references");
+  requireOk(mutationFailure.dispose(), "dispose mutation-faulted renderer");
+  equal(mutationFailure.snapshot().resourceCount, 0, "mutation-fault dispose releases resources");
+
   const reserved: Container[] = [];
   const discardRenderer = new PixiRendererBackend(decoder, {
     create() {
