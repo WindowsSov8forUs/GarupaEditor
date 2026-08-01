@@ -30,13 +30,16 @@ import type { ScoreLifeReflectPlan } from "../managers/scoreLifeStateManager";
 import {
   advanceOrdinaryNoteActivationAdjustment,
   advanceOrdinaryNoteMotion,
+  buildOrdinarySyncLine,
   type OrdinaryNoteMotionResult,
   type OrdinaryNoteMotionState,
+  type OrdinarySyncLineOwnerState,
 } from "./ordinaryNoteGeometry";
 
 export interface RenderEngineResourceBindings {
   readonly noteAtlasLogicalAssetId: string;
   readonly directionalAtlasLogicalAssetId: string;
+  readonly syncLineLogicalAssetId?: string;
 }
 
 export interface RenderPoolIdentityPlan {
@@ -65,10 +68,12 @@ export interface OrdinaryFixedNoteSceneInput {
   readonly goalPositions: readonly RenderVector3[];
   readonly noteColor: RenderColor;
   readonly noteDomainLayer: number;
+  readonly syncLineEdgeMargin?: RenderFloat32;
 }
 
 export interface PreparedOrdinaryNoteActivation {
   readonly motionState: OrdinaryNoteMotionState;
+  readonly renderedTransform: OrdinaryNoteMotionResult;
   readonly transaction: RenderOwnerTransaction;
 }
 
@@ -384,10 +389,23 @@ export class RenderCommandProducer {
 
   preflightPoolSetup(
     pools: readonly RenderPoolIdentityPlan[],
+    syncLinePoolLength = 0,
   ): SimulatorResult<RenderOwnerTransaction> {
     const validation = this.validate();
     if (validation.status !== "ok") return validation;
-    if (pools.length === 0) {
+    const syncLineLogicalAssetId = this.resources.syncLineLogicalAssetId;
+    if (
+      !Number.isSafeInteger(syncLinePoolLength) ||
+      syncLinePoolLength < 0 ||
+      (syncLinePoolLength > 0 && !isNonEmpty(syncLineLogicalAssetId))
+    ) {
+      return evidenceRequired(
+        "render.producer.invalid-sync-line-pool-setup",
+        ["RPR-D06", "RPR-D13", "PR16", "PR39"],
+        "The current simultaneous-line path requires the fixed non-negative pool length and one explicit local material asset ID when present.",
+      );
+    }
+    if (pools.length === 0 && syncLinePoolLength === 0) {
       return ok(new RenderOwnerTransaction(this.renderer, null));
     }
     const base = this.commandBase(0);
@@ -403,6 +421,31 @@ export class RenderCommandProducer {
         poolFamily: pool.family,
         role: "note-root",
         parentObjectId: null,
+      });
+      commands.push({
+        ...base(commands.length),
+        kind: "hide-object",
+        renderObjectId,
+      });
+    }
+    for (let index = 0; index < syncLinePoolLength; index += 1) {
+      const renderObjectId = syncLineRenderObjectId(index);
+      created.push(renderObjectId);
+      commands.push({
+        ...base(commands.length),
+        kind: "create-object",
+        renderObjectId,
+        poolFamily: "sync-line",
+        role: "sync-line",
+        parentObjectId: null,
+      });
+      commands.push({
+        ...base(commands.length),
+        kind: "bind-resource",
+        renderObjectId,
+        binding: "material",
+        logicalAssetId: syncLineLogicalAssetId!,
+        exactKey: null,
       });
       commands.push({
         ...base(commands.length),
@@ -564,14 +607,66 @@ export class RenderCommandProducer {
     }
     const transaction = this.preflight(commands);
     if (transaction.status !== "ok") return transaction;
+    const renderedTransform = adjustment.value.motions[
+      adjustment.value.motions.length - 1
+    ] ?? Object.freeze({
+      progressRate: zero.value,
+      position: start,
+      localScale: Object.freeze({ x: one.value, y: one.value, z: one.value }),
+    });
     return ok(Object.freeze({
       motionState: Object.freeze({
         ...motionState,
         progressRate: adjustment.value.progressRate,
         realMoveSecond: adjustment.value.realMoveSecond,
       }),
+      renderedTransform,
       transaction: transaction.value,
     }));
+  }
+
+  preflightOrdinarySyncLine(
+    poolIndex: number,
+    ownerState: OrdinarySyncLineOwnerState,
+    activate: boolean,
+  ): SimulatorResult<RenderOwnerTransaction> {
+    const validation = this.validate();
+    if (validation.status !== "ok") return validation;
+    if (!Number.isSafeInteger(poolIndex) || poolIndex < 0) {
+      return evidenceRequired(
+        "render.producer.invalid-sync-line-pool-index",
+        ["RPR-D06", "RPR-D13", "PR16", "PR39"],
+        "Simultaneous-line updates require one non-negative engine-owned pool index.",
+      );
+    }
+    const renderObjectId = syncLineRenderObjectId(poolIndex);
+    if (!this.creationSequenceByObjectId.has(renderObjectId)) {
+      return evidenceRequired(
+        "render.producer.sync-line-not-created",
+        ["RPR-D06", "RPR-D13", "PR16", "PR39"],
+        "Simultaneous-line updates require a committed fixed-pool identity.",
+      );
+    }
+    const geometry = buildOrdinarySyncLine(ownerState);
+    if (geometry.status !== "ok") return geometry;
+    const base = this.commandBase(this.substep);
+    const commands: RenderCommand[] = [{
+      ...base(0),
+      kind: "set-line",
+      renderObjectId,
+      start: geometry.value.start,
+      end: geometry.value.end,
+      width: geometry.value.width,
+      materialRole: "sync-line",
+    }];
+    if (activate) {
+      commands.push({
+        ...base(1),
+        kind: "activate-object",
+        renderObjectId,
+      });
+    }
+    return this.preflight(commands);
   }
 
   preflightOrdinaryNoteSceneMotion(
@@ -643,12 +738,13 @@ export class RenderCommandProducer {
 
   preflightNoteDeactivation(
     poolObjectId: string,
+    syncLinePoolIndices: readonly number[] = [],
   ): SimulatorResult<RenderOwnerTransaction> {
     const validation = this.validate();
     if (validation.status !== "ok") return validation;
     const renderObjectId = rootRenderObjectId(poolObjectId);
     const base = this.commandBase(this.substep);
-    return this.preflight([
+    const commands: RenderCommand[] = [
       {
         ...base(0),
         kind: "hide-object",
@@ -659,7 +755,27 @@ export class RenderCommandProducer {
         kind: "deactivate-object",
         renderObjectId,
       },
-    ]);
+    ];
+    for (const poolIndex of syncLinePoolIndices) {
+      if (!Number.isSafeInteger(poolIndex) || poolIndex < 0) {
+        return evidenceRequired(
+          "render.producer.invalid-sync-line-pool-index",
+          ["RPR-D06", "RPR-D13", "PR16", "PR39"],
+          "Simultaneous-line teardown requires only non-negative engine-owned pool indices.",
+        );
+      }
+      commands.push({
+        ...base(commands.length),
+        kind: "hide-object",
+        renderObjectId: syncLineRenderObjectId(poolIndex),
+      });
+      commands.push({
+        ...base(commands.length),
+        kind: "deactivate-object",
+        renderObjectId: syncLineRenderObjectId(poolIndex),
+      });
+    }
+    return this.preflight(commands);
   }
 
   preflightSessionRelease(): SimulatorResult<RenderOwnerTransaction> {
@@ -728,7 +844,10 @@ export function validateOrdinaryFixedNoteSceneInput(
     scene.goalPositions.length !== 7 ||
     vectors.some((value) => !validateVector3(value)) ||
     !validateColor(scene.noteColor) ||
-    !Number.isSafeInteger(scene.noteDomainLayer)
+    !Number.isSafeInteger(scene.noteDomainLayer) ||
+    (scene.syncLineEdgeMargin !== undefined &&
+      (!validateRenderFloat32(scene.syncLineEdgeMargin) ||
+        scene.syncLineEdgeMargin.value < 0))
   ) {
     return evidenceRequired(
       "render.producer.invalid-ordinary-fixed-note-scene",
@@ -741,6 +860,10 @@ export function validateOrdinaryFixedNoteSceneInput(
 
 export function rootRenderObjectId(poolObjectId: string): string {
   return `render:${poolObjectId}:root`;
+}
+
+export function syncLineRenderObjectId(poolIndex: number): string {
+  return `render:sync-line:${poolIndex}`;
 }
 
 export function resolveFrontSpriteBinding(

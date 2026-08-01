@@ -49,10 +49,15 @@ import type {
   RenderCommandProducer,
   RenderOwnerTransaction,
 } from "../rendering/renderCommandProducer";
-import type { OrdinaryNoteMotionState } from "../rendering/ordinaryNoteGeometry";
+import type {
+  OrdinaryNoteMotionResult,
+  OrdinaryNoteMotionState,
+  OrdinarySyncLineOwnerState,
+} from "../rendering/ordinaryNoteGeometry";
 import { createRenderFloat32 } from "../../backends/renderingValidation";
 
 const BPM_POOL_LENGTH = 30;
+const SYNC_LINE_POOL_LENGTH = 80;
 
 export interface NoteManagerClock {
   validateAdvanceSequence(
@@ -146,6 +151,17 @@ interface NotePoolAcquisition {
   readonly nextCursor: number;
 }
 
+interface OrdinaryRenderedNoteState {
+  readonly motionState: OrdinaryNoteMotionState;
+  readonly renderedTransform: OrdinaryNoteMotionResult;
+}
+
+interface ActiveOrdinarySyncLine {
+  readonly poolIndex: number;
+  readonly targetA: NoteBase;
+  readonly targetB: NoteBase;
+}
+
 export class NoteManager {
   private readonly activeNotesValue: NoteBase[] = [];
   private readonly activeBpmChangesValue: NoteBpmChange[] = [];
@@ -183,8 +199,10 @@ export class NoteManager {
   private manualNoteDeactivatedOwner: ((note: NoteBase) => void) | null = null;
   private readonly ordinaryRenderMotionStates = new WeakMap<
     NoteBase,
-    OrdinaryNoteMotionState
+    OrdinaryRenderedNoteState
   >();
+  private readonly activeOrdinarySyncLines: Array<ActiveOrdinarySyncLine | null> =
+    Array.from({ length: SYNC_LINE_POOL_LENGTH }, () => null);
 
   constructor(
     private readonly batches: readonly NoteBatchInformation[],
@@ -315,12 +333,30 @@ export class NoteManager {
       }
     }
 
+    const requiresSyncLinePool = this.renderProducer !== null && this.batches.some((batch) =>
+      batch.informationList.filter((information) =>
+        !isNonPlayableCommand(information) &&
+        information.fireNoteType === FrontNoteType.Normal
+      ).length > 1
+    );
+    if (
+      requiresSyncLinePool &&
+      (this.ordinaryNoteScene === null ||
+        this.ordinaryNoteScene.syncLineEdgeMargin === undefined)
+    ) {
+      return evidenceRequired(
+        "render.note.sync-line-scene-unavailable",
+        ["RPR-D06", "RPR-D13", "PR16", "PR39"],
+        "A chart with simultaneous ordinary Normal notes requires the explicit typed sync-line edge margin.",
+      );
+    }
     const renderSetup = this.renderProducer?.preflightPoolSetup(
       [...familyNotes].flatMap(([family, notes]) =>
         notes.map((_, index) => Object.freeze({
           family,
           poolObjectId: `${family}:${index}`,
         }))),
+      requiresSyncLinePool ? SYNC_LINE_POOL_LENGTH : 0,
     ) ?? null;
     if (renderSetup?.status === "evidence-required") return renderSetup;
 
@@ -331,6 +367,7 @@ export class NoteManager {
           onActivate: (activeNote) => this.appendActiveNote(activeNote),
           onDeactivate: (inactiveNote) => {
             this.removeActiveNote(inactiveNote);
+            this.releaseOrdinarySyncLinesForNote(inactiveNote);
             this.ordinaryRenderMotionStates.delete(inactiveNote);
             this.manualNoteDeactivatedOwner?.(inactiveNote);
           },
@@ -357,7 +394,10 @@ export class NoteManager {
         });
         if (this.renderProducer !== null) {
           note.registerRenderDeactivationOwner(() =>
-            this.renderProducer!.preflightNoteDeactivation(note.poolObjectId));
+            this.renderProducer!.preflightNoteDeactivation(
+              note.poolObjectId,
+              this.ordinarySyncLinePoolIndicesForNote(note),
+            ));
           note.registerRenderMotionOwner((deltaTimeSeconds) =>
             this.advanceOrdinaryRenderMotion(note, deltaTimeSeconds));
         }
@@ -516,6 +556,11 @@ export class NoteManager {
           afterUpdateNotes.push(note);
         }
         activeIndex -= 1;
+      }
+
+      const syncLineUpdate = this.updateOrdinarySyncLines();
+      if (syncLineUpdate.status !== "ok") {
+        return syncLineUpdate;
       }
 
       for (const note of afterUpdateNotes) {
@@ -890,7 +935,7 @@ export class NoteManager {
     const prepared = this.renderProducer.preflightOrdinaryNoteSceneMotion(
       note.poolObjectId,
       Object.freeze({
-        ...current,
+        ...current.motionState,
         deltaTime: deltaTime.value,
       }),
       this.ordinaryNoteScene,
@@ -899,10 +944,137 @@ export class NoteManager {
     const committed = prepared.value.transaction.commit();
     if (committed.status !== "ok") return committed;
     this.ordinaryRenderMotionStates.set(note, Object.freeze({
-      ...current,
-      deltaTime: deltaTime.value,
-      progressRate: prepared.value.motion.progressRate,
+      motionState: Object.freeze({
+        ...current.motionState,
+        deltaTime: deltaTime.value,
+        progressRate: prepared.value.motion.progressRate,
+      }),
+      renderedTransform: prepared.value.motion,
     }));
+    return ok(undefined);
+  }
+
+  private ordinarySyncLinePoolIndicesForNote(note: NoteBase): readonly number[] {
+    return Object.freeze(this.activeOrdinarySyncLines.flatMap((line) =>
+      line !== null && (line.targetA === note || line.targetB === note)
+        ? [line.poolIndex]
+        : []
+    ));
+  }
+
+  private releaseOrdinarySyncLinesForNote(note: NoteBase): void {
+    for (let index = 0; index < this.activeOrdinarySyncLines.length; index += 1) {
+      const line = this.activeOrdinarySyncLines[index];
+      if (line !== null && (line.targetA === note || line.targetB === note)) {
+        this.activeOrdinarySyncLines[index] = null;
+      }
+    }
+  }
+
+  private ordinarySyncLineOwnerState(
+    line: ActiveOrdinarySyncLine,
+  ): SimulatorResult<OrdinarySyncLineOwnerState> {
+    if (this.ordinaryNoteScene?.syncLineEdgeMargin === undefined) {
+      return evidenceRequired(
+        "render.note.sync-line-scene-unavailable",
+        ["RPR-D06", "RPR-D13", "PR16", "PR39"],
+        "Simultaneous-line geometry requires the explicit typed edge margin.",
+      );
+    }
+    const targetA = this.ordinaryRenderMotionStates.get(line.targetA);
+    const targetB = this.ordinaryRenderMotionStates.get(line.targetB);
+    const informationA = line.targetA.noteInformation;
+    const informationB = line.targetB.noteInformation;
+    if (
+      targetA === undefined ||
+      targetB === undefined ||
+      informationA === null ||
+      informationB === null
+    ) {
+      return evidenceRequired(
+        "render.note.sync-line-target-state-unavailable",
+        ["RPR-D06", "RPR-D13", "PR16", "PR39"],
+        "Every active simultaneous line requires two committed ordinary transforms and their bound NoteInformation owners.",
+      );
+    }
+    return ok(Object.freeze({
+      targetA: Object.freeze({
+        position: targetA.renderedTransform.position,
+        lossyScaleX: targetA.renderedTransform.localScale.x,
+        localScaleX: targetA.renderedTransform.localScale.x,
+        gameNoteType: informationA.gameNoteType,
+      }),
+      targetB: Object.freeze({
+        position: targetB.renderedTransform.position,
+        lossyScaleX: targetB.renderedTransform.localScale.x,
+        localScaleX: targetB.renderedTransform.localScale.x,
+        gameNoteType: informationB.gameNoteType,
+      }),
+      edgeMargin: this.ordinaryNoteScene.syncLineEdgeMargin,
+    }));
+  }
+
+  private connectOrdinarySyncLines(
+    activatedNotes: readonly NoteBase[],
+  ): SimulatorResult<void> {
+    if (activatedNotes.length < 2 || this.renderProducer === null) {
+      return ok(undefined);
+    }
+    for (let index = 1; index < activatedNotes.length; index += 1) {
+      const targetA = activatedNotes[index - 1];
+      const targetB = activatedNotes[index];
+      if (targetA === undefined || targetB === undefined) continue;
+      const informationA = targetA.noteInformation;
+      const informationB = targetB.noteInformation;
+      if (informationA === null || informationB === null) {
+        return evidenceRequired(
+          "render.note.sync-line-target-information-unavailable",
+          ["RPR-D06", "RPR-D13", "PR16", "PR39"],
+          "Sync-line connection runs only after both adjacent Note activations commit their information owners.",
+        );
+      }
+      if (informationA.buttonTypesArray[0] === informationB.buttonTypesArray[0]) {
+        continue;
+      }
+      const poolIndex = this.activeOrdinarySyncLines.findIndex((line) => line === null);
+      if (poolIndex < 0) {
+        return evidenceRequired(
+          "render.note.sync-line-pool-exhausted",
+          ["RPR-D06", "RPR-D13", "PR16", "PR39"],
+          "The recovered 80-slot simultaneous-line pool has no inactive object.",
+        );
+      }
+      const line = Object.freeze({ poolIndex, targetA, targetB });
+      const ownerState = this.ordinarySyncLineOwnerState(line);
+      if (ownerState.status !== "ok") return ownerState;
+      const prepared = this.renderProducer.preflightOrdinarySyncLine(
+        poolIndex,
+        ownerState.value,
+        true,
+      );
+      if (prepared.status !== "ok") return prepared;
+      const committed = prepared.value.commit();
+      if (committed.status !== "ok") return committed;
+      this.activeOrdinarySyncLines[poolIndex] = line;
+    }
+    return ok(undefined);
+  }
+
+  private updateOrdinarySyncLines(): SimulatorResult<void> {
+    if (this.renderProducer === null) return ok(undefined);
+    for (const line of this.activeOrdinarySyncLines) {
+      if (line === null) continue;
+      const ownerState = this.ordinarySyncLineOwnerState(line);
+      if (ownerState.status !== "ok") return ownerState;
+      const prepared = this.renderProducer.preflightOrdinarySyncLine(
+        line.poolIndex,
+        ownerState.value,
+        false,
+      );
+      if (prepared.status !== "ok") return prepared;
+      const committed = prepared.value.commit();
+      if (committed.status !== "ok") return committed;
+    }
     return ok(undefined);
   }
 
@@ -918,6 +1090,20 @@ export class NoteManager {
     }
     if (!activationDecision.value) {
       return ok(undefined);
+    }
+
+    if (this.renderProducer !== null) {
+      const unsupported = batch.informationList.find((information) =>
+        !isNonPlayableCommand(information) &&
+        information.fireNoteType !== FrontNoteType.Normal
+      );
+      if (unsupported !== undefined) {
+        return evidenceRequired(
+          "render.note.ordinary-child-lifecycle-unimplemented",
+          ["RPR-D04", "RPR-D05", "RPR-D06", "RPR-D07", "PR06", "PR09", "PR10"],
+          "Rendered batches are prevalidated atomically; Flick, Directional, Long/Slide and Multiple child owners remain fail-closed.",
+        );
+      }
     }
 
     const bpmCommand = batch.informationList.find(isBpmCommand);
@@ -943,6 +1129,7 @@ export class NoteManager {
       });
     }
 
+    const activatedRenderedNotes: NoteBase[] = [];
     for (const noteInformation of batch.informationList) {
       if (isNonPlayableCommand(noteInformation)) {
         continue;
@@ -952,7 +1139,7 @@ export class NoteManager {
         return noteResult;
       }
       let renderActivation: RenderOwnerTransaction | null = null;
-      let renderMotionState: OrdinaryNoteMotionState | null = null;
+      let renderedState: OrdinaryRenderedNoteState | null = null;
       if (this.renderProducer !== null) {
         if (this.ordinaryNoteScene === null) {
           return evidenceRequired(
@@ -979,7 +1166,10 @@ export class NoteManager {
         );
         if (prepared.status !== "ok") return prepared;
         renderActivation = prepared.value.transaction;
-        renderMotionState = prepared.value.motionState;
+        renderedState = Object.freeze({
+          motionState: prepared.value.motionState,
+          renderedTransform: prepared.value.renderedTransform,
+        });
       }
       const activationResult = noteResult.value.note.activate(noteInformation);
       if (activationResult.status !== "ok") {
@@ -991,8 +1181,9 @@ export class NoteManager {
         const committed = renderActivation.commit();
         if (committed.status !== "ok") return committed;
       }
-      if (renderMotionState !== null) {
-        this.ordinaryRenderMotionStates.set(noteResult.value.note, renderMotionState);
+      if (renderedState !== null) {
+        this.ordinaryRenderMotionStates.set(noteResult.value.note, renderedState);
+        activatedRenderedNotes.push(noteResult.value.note);
       }
       this.schedulerTraceValue.push({
         kind: "note-activate",
@@ -1001,6 +1192,9 @@ export class NoteManager {
         poolObjectId: noteResult.value.note.poolObjectId,
       });
     }
+
+    const syncLineActivation = this.connectOrdinarySyncLines(activatedRenderedNotes);
+    if (syncLineActivation.status !== "ok") return syncLineActivation;
 
     this.schedulerTraceValue.push({
       kind: "group-activate",

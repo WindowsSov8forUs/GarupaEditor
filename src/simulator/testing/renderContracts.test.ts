@@ -17,6 +17,7 @@ import {
   createRenderFloat32,
   validateAndFreezeRenderProfile,
 } from "../backends/renderingValidation";
+import { ButtonType } from "../engine/chart/types";
 import type { ScoreLifeStateProfile } from "../engine/data/scoreLifeState";
 import { evidenceRequired, ok, type SimulatorResult } from "../engine/evidence";
 import { InGameRecord } from "../engine/managers/inGameRecord";
@@ -30,6 +31,10 @@ const SESSION = "render-contract-session";
 const RESOURCES = Object.freeze({
   noteAtlasLogicalAssetId: "asset.note",
   directionalAtlasLogicalAssetId: "asset.directional",
+});
+const SYNC_RESOURCES = Object.freeze({
+  ...RESOURCES,
+  syncLineLogicalAssetId: "asset.sync-line",
 });
 const BYTES = Uint8Array.from([1, 2, 3, 4]);
 
@@ -73,7 +78,10 @@ class LocalProvider implements SimulatorResourceProvider {
 
   async read(logicalAssetId: string): Promise<SimulatorResult<Uint8Array>> {
     if (this.mode === "throw") throw new Error("provider failure");
-    if (this.mode === "reject" || logicalAssetId !== "asset.note") {
+    if (
+      this.mode === "reject" ||
+      (logicalAssetId !== "asset.note" && logicalAssetId !== "asset.sync-line")
+    ) {
       return evidenceRequired(
         "test.provider.missing",
         ["PR35"],
@@ -192,6 +200,33 @@ function profile(
   };
 }
 
+function syncProfile(): RenderResourceProfile {
+  const base = profile();
+  return {
+    ...base,
+    assets: Object.freeze([
+      Object.freeze({
+        ...base.assets[0],
+        atlasRows: Object.freeze([
+          ...base.assets[0].atlasRows,
+          Object.freeze({
+            ...base.assets[0].atlasRows[0],
+            exactKey: "note_normal_6",
+          }),
+        ]),
+      }),
+      Object.freeze({
+        ...base.assets[0],
+        logicalAssetId: "asset.sync-line",
+        role: "material-texture" as const,
+        atlasRows: Object.freeze([]),
+        materialRole: "sync-line" as const,
+        animationRole: "none" as const,
+      }),
+    ]),
+  };
+}
+
 function cloneProfile(value: RenderResourceProfile): RenderResourceProfile {
   return {
     ...value,
@@ -251,11 +286,20 @@ const ORDINARY_NOTE_SCENE = Object.freeze({
   }),
   noteDomainLayer: 3,
 });
+const ORDINARY_SYNC_NOTE_SCENE = Object.freeze({
+  ...ORDINARY_NOTE_SCENE,
+  syncLineEdgeMargin: f32(0.2),
+});
 
 const RENDERING = Object.freeze({
   sessionId: SESSION,
   resources: RESOURCES,
   ordinaryNoteScene: ORDINARY_NOTE_SCENE,
+});
+const SYNC_RENDERING = Object.freeze({
+  sessionId: SESSION,
+  resources: SYNC_RESOURCES,
+  ordinaryNoteScene: ORDINARY_SYNC_NOTE_SCENE,
 });
 
 function renderedNoteBatch(testingId: string, absolutePos: number) {
@@ -272,6 +316,24 @@ function renderedNoteBatch(testingId: string, absolutePos: number) {
       bpm: 120,
       bpmString: "120",
     }))),
+  });
+}
+
+function renderedSyncNoteBatch(absolutePos: number) {
+  const batch = renderedNoteBatch("sync-left", absolutePos);
+  const second = renderedNoteBatch("sync-right", absolutePos).informationList[0]!;
+  return Object.freeze({
+    ...batch,
+    informationList: Object.freeze([
+      batch.informationList[0]!,
+      Object.freeze({
+        ...second,
+        index: 1,
+        buttonType: ButtonType.Button_07_BMS_1P_07,
+        buttonTypes: Object.freeze([ButtonType.Button_07_BMS_1P_07]),
+        buttonTypesArray: Object.freeze([ButtonType.Button_07_BMS_1P_07]),
+      }),
+    ]),
   });
 }
 
@@ -645,6 +707,70 @@ async function testHudReflectAtomic(): Promise<void> {
   console.log("ok 5 - Score/Life plan commits HUD/life-heal in R1 order and rejects atomically");
 }
 
+async function testOrdinarySyncLineLifecycle(): Promise<void> {
+  const renderer = new RecordingSimulatorRendererBackend();
+  requireOk(await renderer.prepare(
+    SESSION,
+    syncProfile(),
+    new LocalProvider(),
+    preflight(),
+  ), "sync-line renderer prepare");
+  const baseInput = engineInput([renderedSyncNoteBatch(96)]);
+  const input = {
+    ...baseInput,
+    runtime: {
+      ...baseInput.runtime,
+      playMode: {
+        kind: "auto-live" as const,
+        resultTransform: "identity-no-active-situation-skill" as const,
+      },
+    },
+    rendering: SYNC_RENDERING,
+  };
+  const engine = requireOk(
+    createSimulatorEngine(input, createRecordingSimulatorBackends(renderer)),
+    "sync-line engine create",
+  );
+  requireOk(engine.initialize(), "sync-line engine initialize");
+  equal(renderer.snapshot().objectCount, 82, "two Note roots plus recovered 80-slot line pool");
+  equal(renderer.snapshot().nextSequence, 244, "pool setup emits roots then 80 create-bind-hide triples");
+  const setupCommands = renderer.commandSnapshot();
+  const firstLineCreate = setupCommands[4];
+  equal(firstLineCreate?.kind, "create-object", "first sync owner created after roots");
+  if (firstLineCreate?.kind !== "create-object") throw new Error("missing sync create command");
+  equal(firstLineCreate.renderObjectId, "render:sync-line:0", "stable first sync pool identity");
+  equal(firstLineCreate.parentObjectId, null, "sync line is a global sibling, not a transformed Note child");
+  equal(setupCommands[5]?.kind, "bind-resource", "sync material binds at pool setup");
+  if (setupCommands[5]?.kind !== "bind-resource") throw new Error("missing sync material binding");
+  equal(setupCommands[5].logicalAssetId, "asset.sync-line", "explicit sync material asset route");
+
+  requireOk(engine.step(0), "activate simultaneous ordinary Notes");
+  const activated = renderer.commandSnapshot();
+  equal(activated.length, 252, "two roots and one sync line activate in one scheduler group");
+  equal(activated[250]?.kind, "set-line", "line geometry follows both Note activations");
+  equal(activated[251]?.kind, "activate-object", "line visibility follows initial geometry");
+  if (activated[250]?.kind !== "set-line") throw new Error("missing initial sync geometry");
+  equal(activated[250].renderObjectId, "render:sync-line:0", "first inactive pool slot acquired");
+  equal(activated[250].width.bits, f32(0.2800000011920929).bits, "current width factor uses initial scale one");
+
+  requireOk(engine.step(1 / 60), "advance simultaneous ordinary Notes");
+  const moved = renderer.commandSnapshot();
+  equal(moved[moved.length - 1]?.kind, "set-line", "line updates after both root transforms");
+  if (moved[moved.length - 1]?.kind !== "set-line") throw new Error("missing moving sync geometry");
+  equal(moved[moved.length - 1].substep, 0, "line preserves adaptive substep identity");
+
+  requireOk(engine.dispose(), "dispose active simultaneous Notes");
+  const disposed = renderer.commandSnapshot();
+  const lineDeactivations = disposed.filter((command) =>
+    command.kind === "deactivate-object" && command.renderObjectId === "render:sync-line:0"
+  );
+  equal(lineDeactivations.length, 1, "first endpoint teardown returns shared line exactly once");
+  const lineDeactivationIndex = disposed.findIndex((command) => command === lineDeactivations[0]);
+  equal(disposed[lineDeactivationIndex - 1]?.kind, "hide-object", "line hide precedes deactivation");
+  equal(renderer.snapshot().objectCount, 0, "session release removes roots and all fixed line owners");
+  console.log("ok 6 - ordinary simultaneous line fixed pool, motion and shared teardown lifecycle");
+}
+
 async function testHostReadyGate(): Promise<void> {
   const unprepared = new RecordingSimulatorRendererBackend();
   const backends = createRecordingSimulatorBackends(unprepared);
@@ -747,7 +873,7 @@ async function testHostReadyGate(): Promise<void> {
   equal(mismatch.status, "evidence-required", "cross-session host rejected");
   equal(createSimulatorEngine(engineInput(), createRecordingSimulatorBackends(unprepared)).status,
     "evidence-required", "typed backend requires explicit host session");
-  console.log("ok 6 - host ready and exact-session gate precedes owner mutation");
+  console.log("ok 7 - host ready and exact-session gate precedes owner mutation");
 }
 
 async function main(): Promise<void> {
@@ -756,8 +882,9 @@ async function main(): Promise<void> {
   await testAtomicPrepare();
   await testCommandsAndTerminalFault();
   await testHudReflectAtomic();
+  await testOrdinarySyncLineLifecycle();
   await testHostReadyGate();
-  console.log("render contract tests passed: 6");
+  console.log("render contract tests passed: 7");
 }
 
 void main().catch((error: unknown) => {

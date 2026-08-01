@@ -1,14 +1,14 @@
 # 资源与 Pixi 渲染阶段独立验收记录
 
-日期：2026-08-01
+日期：2026-08-01（2026-08-02更新production子集）
 
 ## 1. 验收结论
 
 **结论：RP13 回归入口通过；RP14 阶段完成验收不通过，阶段保持进行中。**
 
-本次验收不把“证据 closure 已确认”和“production 已可见实现”混为一谈。当前已完成 typed resource contract、本地 provider、Sprite、ordinary projection、22/60 base NoteMesh、sync-line quad、field/judge 显式 setup producer、基础 HUD semantic、observed life-heal semantic，以及完整 RP12 fault/context/dispose 矩阵；但下列 production surface 仍明确失败关闭：
+本次验收不把“证据 closure 已确认”和“production 已可见实现”混为一谈。当前已完成 typed resource contract、本地 provider、Sprite、ordinary projection、ordinary Normal root scene/motion、simultaneous Normal sync-line lifecycle、22/60 base NoteMesh pure producer、field/judge 显式 setup producer、基础 HUD semantic、observed life-heal semantic，以及完整 RP12 fault/context/dispose 矩阵；但下列 production surface 仍明确失败关闭：
 
-- NoteManager 尚无完整、已证实的 `specificSpeed/RealMoveSecond/sourceZ/scene` 输入，motion producer 未接入 Note lifecycle；
+- NoteManager 尚未接入 after/icon/mesh、非Normal sync与Multiple child owner；Flick/Directional/Long/Slide/Multiple继续在整批activation前失败关闭；
 - Advanced/Multiple mesh/back-line、threshold shader 与 SpriteMask runtime ordering 未实现；
 - Pixi `set-hud`、mask、slider、`play/stop-animation` 仍拒绝，HUD/动画没有可见 portable mapping；
 - ordinary field producer 尚未由 host scene plan 接入实际 session；
@@ -48,10 +48,10 @@
 | RP01 | 通过 | 任务书、失败关闭、fidelity 与排除边界已建立。 |
 | RP02 | 通过 | 743 项 frozen manifest/source/index verifier 可校验。 |
 | RP03 | 通过 | typed resource/scene/command/backend contract、原子事务与 recording backend 已实现。 |
-| RP04 | **部分** | Sprite key、pool root、motion/mesh/line pure producer 已实现；motion lifecycle 与完整 child graph 未接。 |
+| RP04 | **部分** | Sprite key、ordinary Normal pool root与Float32 motion lifecycle已接；after/icon/mesh与完整 child graph未接。 |
 | RP05 | **部分** | ordinary/directional root Sprite 与 field/judge explicit producer 已实现；flick icon/visible field session/HAB lane change 未实现。 |
-| RP06 | **部分** | base mesh 与 sync-line 已实现；advanced/Multiple/threshold/mask 未实现。 |
-| RP07 | **部分** | stable root pool identity、activate/deactivate/session release 已实现；完整 mesh/line/child reuse graph 未接。 |
+| RP06 | **部分** | base mesh pure producer与simultaneous Normal sync-line production lifecycle已实现；after mesh、非Normal sync、advanced/Multiple/threshold/mask未实现。 |
+| RP07 | **部分** | stable root identity、80-slot sync pool、activate/update/shared teardown/session release已实现；完整 mesh/icon/Multiple child reuse graph未接。 |
 | RP08 | **部分** | Score/Combo/Result/Life semantic HUD 原子命令已实现；Pixi 可见 HUD 未实现。 |
 | RP09 | **部分** | R1 observed life-heal semantic 已实现；其余 overlay/animation 及 Pixi sampling 未实现。 |
 | RP10 | 通过 | local bytes、SHA-256、PNG metadata、cache/refcount、无网络、atomic prepare 已实现。 |
@@ -109,7 +109,7 @@ production static audit确认：production 无网络 API/remote URL/Bestdori、�
 
 后续实施应重新拆成三个批量 job，避免逐证据停顿：
 
-1. Note lifecycle/child graph：补齐 runtime scene/motion 输入，并接 root/icon/mesh/sync/Multiple owner；
+1. Note lifecycle/child graph：ordinary Normal root与simultaneous sync已闭合；继续补after/icon/mesh、非Normal sync与Multiple owner；
 2. visible Pixi：一次实现 mask + bitmap HUD/slider + deterministic animation profile/sampling；
 3. production acceptance：补 PR remaining oracle、degraded visible label，再重跑 RP13/RP14。
 

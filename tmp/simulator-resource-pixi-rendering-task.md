@@ -12,7 +12,7 @@
 - 锁定`libil2cpp.so` SHA-256：`815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F`。
 - 锁定`global-metadata.dat` SHA-256：`298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F`。
 - 当前Reverse基线提交：`dd61e432202d2f1cc651b755cd69e09e73083947`；只消费该提交及其祖先中已提交、已push、可校验对象。
-- 当前状态：**RP00–RP03、RP10、RP12、RP13已关闭；RP04–RP09与RP11仅关闭任务书1.31–1.46记录的已证实子集。RP14独立验收已执行但不通过，详见`tmp/simulator-resource-pixi-rendering-acceptance.md`：ordinary Normal root scene/motion lifecycle已接线；after/icon/mesh/sync与Multiple child owner、advanced/threshold/mask、Pixi可见HUD/slider/animation及degraded visible label仍失败关闭。ordinary projection、typed Note motion、22/60 base mesh、sync-line、field explicit plan、basic HUD/life-heal semantic与terminal fault矩阵已落地；743项证据verifier与render production回归通过。原始HAB UnityFS、natural HAB R1与原始HAB frame保持`habahiro_exact_parity_gate=open-not-claimed`。`production_authorization=true`只授权显式fidelity profile，不等于production surface已全部实现；禁止静默fallback、production/test联网、资源二进制入库与原作parity宣称。**
+- 当前状态：**RP00–RP03、RP10、RP12、RP13已关闭；RP04–RP09与RP11仅关闭任务书1.31–1.47记录的已证实子集。RP14独立验收已执行但不通过，详见`tmp/simulator-resource-pixi-rendering-acceptance.md`：ordinary Normal root scene/motion与simultaneous Normal sync-line lifecycle已接线；after/icon/mesh、非Normal sync与Multiple child owner、advanced/threshold/mask、Pixi可见HUD/slider/animation及degraded visible label仍失败关闭。ordinary projection、typed Note motion、22/60 base mesh、sync-line、field explicit plan、basic HUD/life-heal semantic与terminal fault矩阵已落地；743项证据verifier与render production回归通过。原始HAB UnityFS、natural HAB R1与原始HAB frame保持`habahiro_exact_parity_gate=open-not-claimed`。`production_authorization=true`只授权显式fidelity profile，不等于production surface已全部实现；禁止静默fallback、production/test联网、资源二进制入库与原作parity宣称。**
 - 计划证据包：`tmp/simulator-reverse-evidence/resource-pixi-rendering/`，只在Reverse新证据提交并push后创建。
 - 计划验收记录：`tmp/simulator-resource-pixi-rendering-acceptance.md`，RP14时创建。
 
@@ -428,6 +428,16 @@
 - `NoteManager`只在activation renderer batch已完整preflight后绑定Note，commit后保存future motion state；每个Move adaptive substep先提交一个root transform再进入现有判定状态机，renderer拒绝不会推进progress。Deactivate仍保持`hide→deactivate`并清除motion owner state。
 - dedicated oracle冻结一position overshoot的三次progress/RealMoveSecond bits、六命令activation序列、70-order、typed Z、one-use transaction、七lane scene validation，以及virtual-lane与Multiple visual零sequence失败关闭；render-contract、actual Pixi、render-production和743项evidence verifier通过。
 - 本批只关闭ordinary Normal front root scene/motion。Flick/Directional/Long/Slide/Multiple均在activation preflight阶段零sequence拒绝；after/icon/mesh/sync child identity与连接、Multiple side/back-line、advanced mesh、threshold/mask和HAB scene motion未获本批授权，继续`evidence-required`；不得用空child、static icon或base mesh helper存在冒充lifecycle接线。
+
+### 1.47 2026-08-02 RP06 simultaneous Normal sync-line production/test子批
+
+- `SimulatorRenderingSessionInput.resources`新增可选显式`syncLineLogicalAssetId`，`ordinaryNoteScene`新增可选typed Float32 `syncLineEdgeMargin`；只有chart存在同批多个ordinary Normal时才消费二者，缺失时在render pool提交前失败关闭，单Note chart不被迫伪造无用输入。
+- `RenderCommandProducer.preflightPoolSetup`在同一原子batch中按current固定80槽建立全局`sibling` line owner，逐槽保持`create → exact local material bind → hide`；line不得挂到任一移动Note root下，避免world endpoint被父transform二次变换。
+- `NoteManager`保存每个root最后一次已commit的完整Float32 position/localScale，并在同批Note原序activation完成后按相邻owner获取首个inactive line槽；首次保持`set-line → activate`，后续每个adaptive substep在两端root transform后提交一个`set-line`。
+- geometry继续只调用已冻结ordinary producer：普通target的edge margin乘lossyScaleX后沿X内收，width取target A localScaleX×`0.2800000011920929`，完整XYZ保留；同lane不连接，degenerate和缺owner state继续`evidence-required`。
+- 任一endpoint进入Deactive时，其root与所有关联line在同一renderer preflight中执行hide/deactivate；domain回调只回收一次共享槽，另一endpoint之后不会重复deactivate。session release仍逆creation order释放全部80槽与root。
+- activation前新增整批front-family预检，含Flick/Directional/Long/Slide/Multiple的batch不会先提交前置Normal再失败；本批不外推到非Normal sync、after/icon/mesh或Multiple back line。
+- render-contract新增实际host oracle，冻结2 roots+80 slots、244条setup命令、global parent、exact material、首槽取得、initial width bits、逐substep update与单次shared teardown；隔离TypeScript、render-contract、render-production、actual Pixi/failure及14-stage总回归全部通过，evidence verifier仍为743项。
 
 ## 2. 固定范围
 
