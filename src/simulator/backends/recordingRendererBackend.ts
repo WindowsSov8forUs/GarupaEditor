@@ -8,6 +8,7 @@ import type {
   RenderBackendFault,
   RenderBackendSnapshot,
   RenderCommand,
+  RenderCommandBatch,
   RenderFidelitySelection,
   RenderResourcePreflightAdapter,
   RenderResourceProfile,
@@ -25,6 +26,12 @@ import {
 interface RecordingRenderObject {
   readonly role: string;
   readonly poolFamily: string;
+}
+
+interface PendingRenderBatch {
+  readonly capability: RenderCommandBatch;
+  readonly commands: readonly RenderCommand[];
+  readonly objects: ReadonlyMap<string, RecordingRenderObject>;
 }
 
 const RENDER_OBJECT_ROLES = new Set([
@@ -49,6 +56,7 @@ export class RecordingSimulatorRendererBackend implements SimulatorRendererBacke
   private readonly objects = new Map<string, RecordingRenderObject>();
   private readonly commands: RenderCommand[] = [];
   private profile: RenderResourceProfile | null = null;
+  private pendingBatch: PendingRenderBatch | null = null;
 
   async prepare(
     sessionId: string,
@@ -134,33 +142,93 @@ export class RecordingSimulatorRendererBackend implements SimulatorRendererBacke
     return ok(undefined);
   }
 
-  execute(command: RenderCommand): SimulatorResult<void> {
+  preflight(commands: readonly RenderCommand[]): SimulatorResult<RenderCommandBatch> {
     if (this.state !== "ready" || this.profile === null || this.sessionId === null) {
       return this.latchFault(
         "render.command.renderer-not-ready",
         "Commands require a prepared, non-faulted, non-disposed renderer session.",
       );
     }
-    if (
-      command === null ||
-      typeof command !== "object" ||
-      command.sessionId !== this.sessionId ||
-      command.sequence !== this.nextSequence ||
-      !isNonNegativeInteger(command.frame) ||
-      !isNonNegativeInteger(command.substep) ||
-      typeof command.renderObjectId !== "string" ||
-      command.renderObjectId.length === 0
-    ) {
+    if (this.pendingBatch !== null || !Array.isArray(commands) || commands.length === 0) {
       return this.latchFault(
-        "render.command.invalid-session-or-sequence",
-        "Commands must preserve one session, contiguous sequence and non-negative frame/substep identity.",
+        "render.command.invalid-or-overlapping-batch",
+        "Exactly one non-empty command batch may be preflighted for the current renderer state.",
       );
     }
-    const validation = this.validateCommand(command);
-    if (validation.status !== "ok") return validation;
-    this.commands.push(freezeCommand(command));
-    this.nextSequence += 1;
+    const simulatedObjects = new Map(this.objects);
+    const frozenCommands: RenderCommand[] = [];
+    for (let index = 0; index < commands.length; index += 1) {
+      const command = commands[index];
+      if (
+        command === null ||
+        typeof command !== "object" ||
+        command.sessionId !== this.sessionId ||
+        command.sequence !== this.nextSequence + index ||
+        !isNonNegativeInteger(command.frame) ||
+        !isNonNegativeInteger(command.substep) ||
+        typeof command.renderObjectId !== "string" ||
+        command.renderObjectId.length === 0
+      ) {
+        return this.latchFault(
+          "render.command.invalid-session-or-sequence",
+          "Commands must preserve one session, contiguous sequence and non-negative frame/substep identity.",
+        );
+      }
+      const validation = this.validateCommand(command, simulatedObjects);
+      if (validation.status !== "ok") return validation;
+      frozenCommands.push(freezeCommand(command));
+    }
+    const capability = Object.freeze({
+      sessionId: this.sessionId,
+      firstSequence: this.nextSequence,
+      commandCount: frozenCommands.length,
+    });
+    this.pendingBatch = Object.freeze({
+      capability,
+      commands: Object.freeze(frozenCommands),
+      objects: simulatedObjects,
+    });
+    return ok(capability);
+  }
+
+  commit(batch: RenderCommandBatch): SimulatorResult<void> {
+    const pending = this.pendingBatch;
+    if (
+      this.state !== "ready" ||
+      pending === null ||
+      pending.capability !== batch ||
+      batch.sessionId !== this.sessionId ||
+      batch.firstSequence !== this.nextSequence
+    ) {
+      return this.latchFault(
+        "render.command.invalid-batch-capability",
+        "Only the exact one-use batch capability issued for the current session and sequence may commit.",
+      );
+    }
+    this.objects.clear();
+    for (const [objectId, object] of pending.objects) {
+      this.objects.set(objectId, object);
+    }
+    this.commands.push(...pending.commands);
+    this.nextSequence += pending.commands.length;
+    this.pendingBatch = null;
     return ok(undefined);
+  }
+
+  discard(batch: RenderCommandBatch): SimulatorResult<void> {
+    if (this.pendingBatch?.capability !== batch) {
+      return this.latchFault(
+        "render.command.invalid-discard-capability",
+        "Only the exact pending batch may be discarded after an owner mutation fails.",
+      );
+    }
+    this.pendingBatch = null;
+    return ok(undefined);
+  }
+
+  execute(command: RenderCommand): SimulatorResult<void> {
+    const batch = this.preflight([command]);
+    return batch.status === "ok" ? this.commit(batch.value) : batch;
   }
 
   snapshot(): RenderBackendSnapshot {
@@ -189,49 +257,53 @@ export class RecordingSimulatorRendererBackend implements SimulatorRendererBacke
     this.nextSequence = 0;
     this.resourceCount = 0;
     this.fault = null;
+    this.pendingBatch = null;
     this.state = "disposed";
     return ok(undefined);
   }
 
-  private validateCommand(command: RenderCommand): SimulatorResult<void> {
+  private validateCommand(
+    command: RenderCommand,
+    objects: Map<string, RecordingRenderObject>,
+  ): SimulatorResult<void> {
     switch (command.kind) {
       case "create-object":
       case "acquire-object": {
         if (
-          this.objects.has(command.renderObjectId) ||
+          objects.has(command.renderObjectId) ||
           typeof command.poolFamily !== "string" ||
           command.poolFamily.length === 0 ||
           !RENDER_OBJECT_ROLES.has(command.role) ||
           (command.parentObjectId !== null &&
             (typeof command.parentObjectId !== "string" ||
-              !this.objects.has(command.parentObjectId)))
+              !objects.has(command.parentObjectId)))
         ) {
           return this.latchFault(
             "render.command.invalid-object-acquire",
             "Object identities are unique within one session and parent identities must already exist.",
           );
         }
-        this.objects.set(command.renderObjectId, Object.freeze({
+        objects.set(command.renderObjectId, Object.freeze({
           role: command.role,
           poolFamily: command.poolFamily,
         }));
         return ok(undefined);
       }
       case "release-object":
-        if (!this.objects.has(command.renderObjectId)) {
+        if (!objects.has(command.renderObjectId)) {
           return this.latchFault(
             "render.command.release-missing-object",
             "Release cannot infer or ignore a missing render identity.",
           );
         }
-        this.objects.delete(command.renderObjectId);
+        objects.delete(command.renderObjectId);
         return ok(undefined);
       case "activate-object":
       case "hide-object":
       case "deactivate-object":
-        return this.requireObject(command.renderObjectId);
+        return this.requireObject(objects, command.renderObjectId);
       case "bind-resource": {
-        const object = this.requireObject(command.renderObjectId);
+        const object = this.requireObject(objects, command.renderObjectId);
         if (object.status !== "ok") return object;
         const asset = this.profile!.assets.find(
           (candidate) => candidate.logicalAssetId === command.logicalAssetId,
@@ -260,14 +332,14 @@ export class RecordingSimulatorRendererBackend implements SimulatorRendererBacke
           !validateRenderFloat32(command.rotationDegrees) ||
           !validateColor(command.color) ||
           !validateOrdering(command.ordering) ||
-          (command.maskObjectId !== null && !this.objects.has(command.maskObjectId))
+          (command.maskObjectId !== null && !objects.has(command.maskObjectId))
         ) {
           return this.latchFault(
             "render.command.invalid-transform",
             "Transform, color, ordering and mask references must preserve validated Float32 values and identities.",
           );
         }
-        return this.requireObject(command.renderObjectId);
+        return this.requireObject(objects, command.renderObjectId);
       case "set-mesh":
         if (
           command.vertices.length === 0 ||
@@ -285,7 +357,7 @@ export class RecordingSimulatorRendererBackend implements SimulatorRendererBacke
             "Mesh topology, UV, colors and indices must be complete and in bounds.",
           );
         }
-        return this.requireObject(command.renderObjectId);
+        return this.requireObject(objects, command.renderObjectId);
       case "set-line":
         if (
           !validateVector3(command.start) ||
@@ -298,7 +370,7 @@ export class RecordingSimulatorRendererBackend implements SimulatorRendererBacke
             "Line endpoints and positive width must preserve confirmed Float32 values.",
           );
         }
-        return this.requireObject(command.renderObjectId);
+        return this.requireObject(objects, command.renderObjectId);
       case "set-threshold":
         if (!validateRenderFloat32(command.threshold)) {
           return this.latchFault(
@@ -306,7 +378,7 @@ export class RecordingSimulatorRendererBackend implements SimulatorRendererBacke
             "Shader threshold must preserve its confirmed Float32 value without clamping.",
           );
         }
-        return this.requireObject(command.renderObjectId);
+        return this.requireObject(objects, command.renderObjectId);
       case "set-hud":
         if (
           !HUD_ROLES.has(command.hudRole) ||
@@ -324,7 +396,7 @@ export class RecordingSimulatorRendererBackend implements SimulatorRendererBacke
             "HUD state must be an immutable scalar record authored by the engine owner.",
           );
         }
-        return this.requireObject(command.renderObjectId);
+        return this.requireObject(objects, command.renderObjectId);
       case "play-animation":
       case "stop-animation":
         if (
@@ -338,7 +410,7 @@ export class RecordingSimulatorRendererBackend implements SimulatorRendererBacke
             "Animation commands require one profile-declared exact animation role and explicit restart behavior.",
           );
         }
-        return this.requireObject(command.renderObjectId);
+        return this.requireObject(objects, command.renderObjectId);
       default:
         return this.latchFault(
           "render.command.unknown-command",
@@ -347,8 +419,11 @@ export class RecordingSimulatorRendererBackend implements SimulatorRendererBacke
     }
   }
 
-  private requireObject(renderObjectId: string): SimulatorResult<void> {
-    return this.objects.has(renderObjectId)
+  private requireObject(
+    objects: ReadonlyMap<string, RecordingRenderObject>,
+    renderObjectId: string,
+  ): SimulatorResult<void> {
+    return objects.has(renderObjectId)
       ? ok(undefined)
       : this.latchFault(
           "render.command.missing-object",

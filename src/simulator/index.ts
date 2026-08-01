@@ -26,6 +26,7 @@ export type {
   RenderColor,
   RenderCommand,
   RenderCommandBase,
+  RenderCommandBatch,
   RenderComponentMapping,
   RenderDecodedResourceMetadata,
   RenderFidelitySelection,

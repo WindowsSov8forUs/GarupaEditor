@@ -153,6 +153,7 @@
 - `validateAndFreezeRenderProfile`先验证10.1.4 sample、offline/no-fallback策略、logical ID、逐atlas exact key、byte length/SHA、dimensions/rect/pivot/PPU、全部8类component mapping及Pixi默认配置，再深复制并冻结caller输入。
 - `RecordingSimulatorRendererBackend.prepare()`按profile shape→provenance→读取全部本地bytes→byte length/SHA→decode dimension顺序原子预检；任何provider/hash/decode异常回到`unprepared`且不保留bytes/object，全部通过后才绑定session进入`ready`。
 - recording renderer按连续sequence与同session消费typed command，拒绝duplicate/cross-session identity、missing parent/object、unknown resource/exact key、非法Float32/mesh/line/HUD/animation并进入结构化terminal fault；snapshot不暴露bytes或backend对象。
+- RP04接入前将单命令入口扩展为一次性两阶段batch能力：`preflight()`只在副本scene上验证整批session/sequence/object/resource，不修改scene/sequence；领域owner成功后`commit()`原子应用，owner失败则`discard()`。伪造、重放、交叠batch均失败关闭，避免backend拒绝发生在领域mutation之后。
 - `SimulatorBackends`兼容扩展可选typed renderer；只有host显式提供rendering session时才要求backend已ready且session完全一致，并在chart/domain owner创建和`initialize()` mutation前失败关闭。旧切片未声明渲染时不伪装可见输出，也不破坏其隔离领域测试。
 - production批未导入Pixi/DOM/React/Tauri、未接入Note/HUD producer或测试；`tsc -p src/simulator/tsconfig.json`、dependency verifier与17项first-slice回归通过。
 - 独立test批新增`simulator:test:render-contracts`，从fresh临时目录编译并覆盖profile深冻结/alias、duplicate/out-of-bounds/incomplete mapping、显式HAB label/provenance、byte/hash/dimension/provider failure原子性、session/sequence/object/exact key、首个terminal fault、dispose及host mutation前ready门；4组测试、dependency与724项证据source/copy校验通过。

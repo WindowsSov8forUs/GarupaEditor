@@ -295,6 +295,12 @@ export interface RenderBackendFault {
   readonly boundary: string;
 }
 
+export interface RenderCommandBatch {
+  readonly sessionId: string;
+  readonly firstSequence: number;
+  readonly commandCount: number;
+}
+
 export interface RenderBackendSnapshot {
   readonly state: RenderBackendState;
   readonly sessionId: string | null;
@@ -313,6 +319,9 @@ export interface SimulatorRendererBackend {
     provider: SimulatorResourceProvider,
     preflight: RenderResourcePreflightAdapter,
   ): Promise<SimulatorResult<void>>;
+  preflight(commands: readonly RenderCommand[]): SimulatorResult<RenderCommandBatch>;
+  commit(batch: RenderCommandBatch): SimulatorResult<void>;
+  discard(batch: RenderCommandBatch): SimulatorResult<void>;
   execute(command: RenderCommand): SimulatorResult<void>;
   snapshot(): RenderBackendSnapshot;
   dispose(): SimulatorResult<void>;
