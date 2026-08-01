@@ -283,6 +283,24 @@ async function testAtomicPrepare(): Promise<void> {
 }
 
 async function testCommandsAndTerminalFault(): Promise<void> {
+  const staged = new RecordingSimulatorRendererBackend();
+  requireOk(await staged.prepare(SESSION, profile(), new LocalProvider(), preflight()), "staged renderer prepare");
+  const discarded = requireOk(staged.preflight([createObject(0)]), "preflight create batch");
+  equal(staged.snapshot().objectCount, 0, "preflight does not mutate objects");
+  equal(staged.snapshot().nextSequence, 0, "preflight does not advance sequence");
+  requireOk(staged.discard(discarded), "discard owner-aborted batch");
+  equal(staged.snapshot().objectCount, 0, "discard keeps scene unchanged");
+  const committed = requireOk(staged.preflight([createObject(0)]), "preflight committed batch");
+  requireOk(staged.commit(committed), "commit exact batch capability");
+  equal(staged.snapshot().objectCount, 1, "commit applies validated scene");
+  equal(staged.snapshot().nextSequence, 1, "commit advances full batch");
+
+  const forged = new RecordingSimulatorRendererBackend();
+  requireOk(await forged.prepare(SESSION, profile(), new LocalProvider(), preflight()), "forged renderer prepare");
+  equal(forged.commit({ sessionId: SESSION, firstSequence: 0, commandCount: 1 }).status,
+    "evidence-required", "forged batch rejected");
+  equal(forged.snapshot().objectCount, 0, "forged batch has no mutation");
+
   const renderer = new RecordingSimulatorRendererBackend();
   requireOk(await renderer.prepare(SESSION, profile(), new LocalProvider(), preflight()), "command renderer prepare");
   requireOk(renderer.execute(createObject(0)), "create object");
