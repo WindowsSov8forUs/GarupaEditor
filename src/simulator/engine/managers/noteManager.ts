@@ -44,6 +44,7 @@ import {
 import { SlideNoteManager } from "./slideNoteManager";
 import type { InGameMusicScoreController } from "./inGameMusicScoreController";
 import type { SimulatorManualInputGeometryBackend } from "../../backends/contracts";
+import type { RenderCommandProducer } from "../rendering/renderCommandProducer";
 
 const BPM_POOL_LENGTH = 30;
 
@@ -192,6 +193,7 @@ export class NoteManager {
       createUnavailableManualJudgementTransaction,
     private readonly manualInputGeometry: SimulatorManualInputGeometryBackend =
       unavailableManualInputGeometry,
+    private readonly renderProducer: RenderCommandProducer | null = null,
   ) {}
 
   validateSetup(): SimulatorResult<void> {
@@ -302,6 +304,15 @@ export class NoteManager {
       }
     }
 
+    const renderSetup = this.renderProducer?.preflightPoolSetup(
+      [...familyNotes].flatMap(([family, notes]) =>
+        notes.map((_, index) => Object.freeze({
+          family,
+          poolObjectId: `${family}:${index}`,
+        }))),
+    ) ?? null;
+    if (renderSetup?.status === "evidence-required") return renderSetup;
+
     for (const [family, notes] of familyNotes) {
       const objects = notes.map((_, index) => {
         const note = this.createPoolObject(family, `${family}:${index}`);
@@ -353,6 +364,10 @@ export class NoteManager {
     }
 
     this.setupComplete = true;
+    if (renderSetup?.status === "ok") {
+      const committed = renderSetup.value.commit();
+      if (committed.status !== "ok") return committed;
+    }
     return ok(undefined);
   }
 
@@ -405,6 +420,8 @@ export class NoteManager {
     }
     const substepExecuteFrame = Math.fround(executeFrame / substepCount);
     this.clock.setExecuteFrame(substepExecuteFrame);
+    const renderFrame = this.renderProducer?.beginOuterFrame(this.outerFrameIndexValue);
+    if (renderFrame?.status === "evidence-required") return renderFrame;
     this.schedulerTraceValue.push({
       kind: "frame",
       deltaTimeSeconds: frameDelta,
@@ -862,11 +879,22 @@ export class NoteManager {
       if (noteResult.status !== "ok") {
         return noteResult;
       }
+      const renderActivation = this.renderProducer?.preflightNoteActivation(
+        noteResult.value.note.poolObjectId,
+        noteInformation,
+        substepIndex,
+      ) ?? null;
+      if (renderActivation?.status === "evidence-required") return renderActivation;
       const activationResult = noteResult.value.note.activate(noteInformation);
       if (activationResult.status !== "ok") {
+        if (renderActivation?.status === "ok") renderActivation.value.discard();
         return activationResult;
       }
       noteResult.value.pool.cursor = noteResult.value.nextCursor;
+      if (renderActivation?.status === "ok") {
+        const committed = renderActivation.value.commit();
+        if (committed.status !== "ok") return committed;
+      }
       this.schedulerTraceValue.push({
         kind: "note-activate",
         substepIndex,

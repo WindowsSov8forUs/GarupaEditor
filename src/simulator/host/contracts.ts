@@ -11,12 +11,14 @@ import type {
 } from "../engine/data/manualInput";
 import type { ScoreLifeStateProfile } from "../engine/data/scoreLifeState";
 import type { SimulatorResult } from "../engine/evidence";
+import type { RenderEngineResourceBindings } from "../engine/rendering/renderCommandProducer";
 import type { FeverTimeCommandName } from "../engine/managers/feverTimeManager";
 import type { InGameDirectorSnapshot } from "../engine/managers/inGameDirector";
 import type { InGameManagerSnapshot } from "../engine/managers/inGameManager";
 
 export interface SimulatorRenderingSessionInput {
   readonly sessionId: string;
+  readonly resources: RenderEngineResourceBindings;
 }
 
 export interface SimulatorEngineInput {

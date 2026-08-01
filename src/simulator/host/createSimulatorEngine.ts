@@ -36,6 +36,7 @@ import {
 } from "../engine/managers/inputBoundaries";
 import { NoteManager } from "../engine/managers/noteManager";
 import { SlideNoteManager } from "../engine/managers/slideNoteManager";
+import { RenderCommandProducer } from "../engine/rendering/renderCommandProducer";
 import {
   validateAutoLiveActivationGraph,
   validateAutoLiveChartOwnership,
@@ -214,6 +215,15 @@ export function createSimulatorEngine(
   const renderingSessionId = input.rendering?.sessionId ?? null;
   const rendererValidation = validateRendererSession(renderingSessionId, backends);
   if (rendererValidation.status !== "ok") return rendererValidation;
+  const renderProducer = input.rendering !== undefined && backends.rendering !== undefined
+    ? new RenderCommandProducer(
+        input.rendering.sessionId,
+        backends.rendering,
+        input.rendering.resources,
+      )
+    : null;
+  const producerValidation = renderProducer?.validate();
+  if (producerValidation?.status === "evidence-required") return producerValidation;
   const chartValidation = validateChart(input.chart);
   if (chartValidation.status !== "ok") {
     return chartValidation;
@@ -281,6 +291,7 @@ export function createSimulatorEngine(
     undefined,
     () => oneFrameJudgementController.createManualJudgementTransaction(),
     backends.manualInputGeometry,
+    renderProducer,
   );
   const judgementOwner =
     oneFrameJudgementController.registerAutoLiveJudgementOwner(

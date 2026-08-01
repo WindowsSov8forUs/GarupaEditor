@@ -162,6 +162,16 @@ export { copyManualInputPosition } from "./engine/data/manualInput";
 export { NoteBase, NoteState } from "./engine/notes/noteBase";
 export { NoteBpmChange } from "./engine/notes/noteBpmChange";
 export {
+  RenderCommandProducer,
+  RenderOwnerTransaction,
+  resolveFrontSpriteBinding,
+  rootRenderObjectId,
+} from "./engine/rendering/renderCommandProducer";
+export type {
+  RenderEngineResourceBindings,
+  RenderPoolIdentityPlan,
+} from "./engine/rendering/renderCommandProducer";
+export {
   NoteAfterBase,
   NoteDirectionalFlick,
   NoteDirectionalFlickAfter,

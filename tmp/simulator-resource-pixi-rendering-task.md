@@ -12,7 +12,7 @@
 - 锁定`libil2cpp.so` SHA-256：`815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F`。
 - 锁定`global-metadata.dat` SHA-256：`298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F`。
 - 当前Reverse基线提交：`60410ae02f69b9d78cc554717b3dd04b941cd0c2`；只消费该提交及其祖先中已提交、已push、可校验对象。
-- 当前状态：**RP00–RP03已关闭。typed profile/provider/session/command、recording renderer原子preflight、host ready门及独立contract/failure测试已落地；下一任务为RP04 engine render producers。原始HAB UnityFS、natural HAB R1与原始HAB frame保持`habahiro_exact_parity_gate=open-not-claimed`。`production_authorization=true`仅授权显式fidelity选择；必须显示`Approximate HABAHIRO`、禁止静默fallback、production/test联网、资源二进制入库与原作parity宣称。**
+- 当前状态：**RP00–RP03已关闭；RP04正在实施。Note pool setup与front Sprite activation producer已用两阶段batch接入，下一子批为deactivate/update、mesh/line与HUD Reflect producer。原始HAB UnityFS、natural HAB R1与原始HAB frame保持`habahiro_exact_parity_gate=open-not-claimed`。`production_authorization=true`仅授权显式fidelity选择；必须显示`Approximate HABAHIRO`、禁止静默fallback、production/test联网、资源二进制入库与原作parity宣称。**
 - 计划证据包：`tmp/simulator-reverse-evidence/resource-pixi-rendering/`，只在Reverse新证据提交并push后创建。
 - 计划验收记录：`tmp/simulator-resource-pixi-rendering-acceptance.md`，RP14时创建。
 
@@ -74,7 +74,7 @@
 | RP01 10.1.4静态与资源重基线 | **交付profile已关闭 / exact HAB部分开放** | 当前方法/资源/scene/animation/portable与12项current external HAB profile已关闭；原始HAB UnityFS仍只阻塞exact parity |
 | RP02 实体/运行时与固定scene oracle | **交付profile已关闭** | ordinary 87,364-event R1与7个实体frame已关闭；HAB exact R1/frame开放但不阻塞显式degraded交付 |
 | RP03 锁定render/resource contracts | **已完成** | immutable profile、provider、command、identity、session、preflight与独立failure矩阵已关闭 |
-| RP04 接入engine渲染producer | **待实施 / 已解除硬门** | Note/manager/HUD只生产证据确认的typed commands，不依赖Pixi |
+| RP04 接入engine渲染producer | **进行中：pool/setup/front activation已完成** | Note/manager/HUD只生产证据确认的typed commands，不依赖Pixi |
 | RP05 恢复Note Sprite与field | 阻塞于RP04 | atlas route、exact lookup、transform、flick icon、field/judge line匹配 |
 | RP06 恢复mesh、sync line与mask | 阻塞于RP05 | Long/Slide topology/material/threshold、line、mask和ordering匹配 |
 | RP07 恢复render pool与生命周期 | 阻塞于RP06 | acquire/reuse/release、pause/reset/fault/dispose顺序匹配 |
@@ -157,6 +157,15 @@
 - `SimulatorBackends`兼容扩展可选typed renderer；只有host显式提供rendering session时才要求backend已ready且session完全一致，并在chart/domain owner创建和`initialize()` mutation前失败关闭。旧切片未声明渲染时不伪装可见输出，也不破坏其隔离领域测试。
 - production批未导入Pixi/DOM/React/Tauri、未接入Note/HUD producer或测试；`tsc -p src/simulator/tsconfig.json`、dependency verifier与17项first-slice回归通过。
 - 独立test批新增`simulator:test:render-contracts`，从fresh临时目录编译并覆盖profile深冻结/alias、duplicate/out-of-bounds/incomplete mapping、显式HAB label/provenance、byte/hash/dimension/provider failure原子性、session/sequence/object/exact key、首个terminal fault、dispose及host mutation前ready门；4组测试、dependency与724项证据source/copy校验通过。
+
+### 1.11 2026-08-01 RP04 Note pool与front activation production子批
+
+- 新建engine-owned `RenderCommandProducer`与一次性`RenderOwnerTransaction`；producer只持session、typed renderer与两个logical atlas ID，不读取证据包、文件、URL、bytes或Pixi对象。
+- `NoteManager.setupNotes()`按现有family分组与`${family}:${index}`稳定pool identity预先生成整批`create-object→hide-object`，renderer副本scene全量preflight后才构造/登记pool，成功后一次commit；空chart保持合法零命令路径。
+- 每个outer frame先冻结renderer frame identity；batch激活先完成无mutation pool查找，再由owner按`NoteInformation`生成exact atlas/key并preflight `activate-object→bind-resource`，只有通过后才调用`NoteBase.activate`与推进pool cursor。owner失败会discard capability，避免renderer拒绝后留下active Note。
+- ordinary key严格使用lane 0–6：Normal/short-rhythm/Skill/Long/Slide/Flick分别路由`note_normal`/`note_normal_16`/`note_skill`/`note_long`/`note_flick`；Directional使用独立atlas的`note_flick_l|r_<lane>`。HAB只接受升序连续range并生成完整`_<lane...>`后缀；ordinary multi-lane、未知方向、Multiple专用visual与未闭合front family失败关闭，不用alias。
+- host rendering input新增不可缺失的Note/Directional logical asset bindings；producer在chart/domain owner创建前验证非空binding与prepared fidelity session。backend仍逐命令验证logical ID/exact key，因此宿主不能借binding绕过profile。
+- 本子批不发送transform、mesh、line、mask、HUD或deactivate命令；这些保持后续RP04–RP09工作，不用默认值/no-op补齐。隔离`tsc`、dependency、17项first-slice与render-contract回归通过。
 
 ## 2. 固定范围
 
