@@ -12,7 +12,7 @@
 - 锁定`libil2cpp.so` SHA-256：`815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F`。
 - 锁定`global-metadata.dat` SHA-256：`298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F`。
 - 当前Reverse基线提交：`60410ae02f69b9d78cc554717b3dd04b941cd0c2`；只消费该提交及其祖先中已提交、已push、可校验对象。
-- 当前状态：**RP00–RP02已按`ordinary-exact-habahiro-degraded`交付profile关闭。RP03 production已建立typed profile/provider/session/command、recording renderer原子preflight与host ready门，正在补独立contract/preflight测试；尚未接入RP04 engine render producers。原始HAB UnityFS、natural HAB R1与原始HAB frame保持`habahiro_exact_parity_gate=open-not-claimed`。`production_authorization=true`仅授权显式fidelity选择；必须显示`Approximate HABAHIRO`、禁止静默fallback、production/test联网、资源二进制入库与原作parity宣称。**
+- 当前状态：**RP00–RP03已关闭。typed profile/provider/session/command、recording renderer原子preflight、host ready门及独立contract/failure测试已落地；下一任务为RP04 engine render producers。原始HAB UnityFS、natural HAB R1与原始HAB frame保持`habahiro_exact_parity_gate=open-not-claimed`。`production_authorization=true`仅授权显式fidelity选择；必须显示`Approximate HABAHIRO`、禁止静默fallback、production/test联网、资源二进制入库与原作parity宣称。**
 - 计划证据包：`tmp/simulator-reverse-evidence/resource-pixi-rendering/`，只在Reverse新证据提交并push后创建。
 - 计划验收记录：`tmp/simulator-resource-pixi-rendering-acceptance.md`，RP14时创建。
 
@@ -73,8 +73,8 @@
 | RP00 建立阶段任务书 | **已完成** | 范围、证据候选、硬门、owner、oracle、批次与完成定义写入本文档 |
 | RP01 10.1.4静态与资源重基线 | **交付profile已关闭 / exact HAB部分开放** | 当前方法/资源/scene/animation/portable与12项current external HAB profile已关闭；原始HAB UnityFS仍只阻塞exact parity |
 | RP02 实体/运行时与固定scene oracle | **交付profile已关闭** | ordinary 87,364-event R1与7个实体frame已关闭；HAB exact R1/frame开放但不阻塞显式degraded交付 |
-| RP03 锁定render/resource contracts | **production已完成 / 独立测试待完成** | immutable profile、provider、command、identity、session与preflight边界已落地，待contract/preflight矩阵关闭 |
-| RP04 接入engine渲染producer | 阻塞于RP03 | Note/manager/HUD只生产证据确认的typed commands，不依赖Pixi |
+| RP03 锁定render/resource contracts | **已完成** | immutable profile、provider、command、identity、session、preflight与独立failure矩阵已关闭 |
+| RP04 接入engine渲染producer | **待实施 / 已解除硬门** | Note/manager/HUD只生产证据确认的typed commands，不依赖Pixi |
 | RP05 恢复Note Sprite与field | 阻塞于RP04 | atlas route、exact lookup、transform、flick icon、field/judge line匹配 |
 | RP06 恢复mesh、sync line与mask | 阻塞于RP05 | Long/Slide topology/material/threshold、line、mask和ordering匹配 |
 | RP07 恢复render pool与生命周期 | 阻塞于RP06 | acquire/reuse/release、pause/reset/fault/dispose顺序匹配 |
@@ -154,7 +154,8 @@
 - `RecordingSimulatorRendererBackend.prepare()`按profile shape→provenance→读取全部本地bytes→byte length/SHA→decode dimension顺序原子预检；任何provider/hash/decode异常回到`unprepared`且不保留bytes/object，全部通过后才绑定session进入`ready`。
 - recording renderer按连续sequence与同session消费typed command，拒绝duplicate/cross-session identity、missing parent/object、unknown resource/exact key、非法Float32/mesh/line/HUD/animation并进入结构化terminal fault；snapshot不暴露bytes或backend对象。
 - `SimulatorBackends`兼容扩展可选typed renderer；只有host显式提供rendering session时才要求backend已ready且session完全一致，并在chart/domain owner创建和`initialize()` mutation前失败关闭。旧切片未声明渲染时不伪装可见输出，也不破坏其隔离领域测试。
-- 本批未导入Pixi/DOM/React/Tauri、未接入Note/HUD producer、未增加package script或测试；`tsc -p src/simulator/tsconfig.json`与dependency verifier通过。下一独立批覆盖profile alias mutation、preflight原子性、session/sequence/object/fault/dispose矩阵。
+- production批未导入Pixi/DOM/React/Tauri、未接入Note/HUD producer或测试；`tsc -p src/simulator/tsconfig.json`、dependency verifier与17项first-slice回归通过。
+- 独立test批新增`simulator:test:render-contracts`，从fresh临时目录编译并覆盖profile深冻结/alias、duplicate/out-of-bounds/incomplete mapping、显式HAB label/provenance、byte/hash/dimension/provider failure原子性、session/sequence/object/exact key、首个terminal fault、dispose及host mutation前ready门；4组测试、dependency与724项证据source/copy校验通过。
 
 ## 2. 固定范围
 
