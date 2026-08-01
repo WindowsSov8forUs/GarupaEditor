@@ -80,7 +80,7 @@
 | RP07 恢复render pool与生命周期 | 阻塞于RP06 | acquire/reuse/release、pause/reset/fault/dispose顺序匹配 |
 | RP08 恢复基础HUD消费链 | 阻塞于RP07 | Score/Combo/AP/AddScore/Result/Life exact scene state匹配 |
 | RP09 恢复HUD overlay与动画 | 阻塞于RP08 | Skill/guard/heal/score-up/judge-line overlay及clock匹配 |
-| RP10 建立portable resource backend | 阻塞于RP09 | async prepare、hash/atlas validation、decode/cache/dispose匹配 |
+| RP10 建立portable resource backend | **进行中：本地provider/hash/PNG preflight已完成** | async prepare、hash/atlas validation已落地，待Pixi decode/cache/dispose映射 |
 | RP11 建立Pixi v8 renderer | 阻塞于RP10 | Sprite/Mesh/Graphics/Mask/Text/ordering映射和command消费匹配 |
 | RP12 failure/context/dispose矩阵 | 阻塞于RP11 | backend异常、context loss、重复生命周期与零残留边界匹配 |
 | RP13 production oracle与全回归 | 阻塞于RP12 | PR01–PR40、ordinary/HABAHIRO、dependency、证据index和上游回归通过 |
@@ -183,6 +183,14 @@
 - host dispose先验证typed renderer仍为同session ready且无fault，避免context/backend故障后先改领域；随后复用Note active→Deactive两阶段门，按创建顺序逆序preflight/commit全部`release-object`，最后调用backend dispose归零object/resource ownership。
 - recording renderer dispose保留已冻结command trace，仅清理scene/profile/session/resource/fault/pending capability；因此release顺序可审计而snapshot为`disposed/objectCount=0/resourceCount=0`。重复host/backend dispose幂等且不追加命令。
 - 当前只有已实现的Note root与基础HUD identity进入release inventory；后续mesh/line/mask/animation child必须在各自create commit后加入同一逆序ownership链。
+
+### 1.14 2026-08-01 RP10本地provider与portable preflight子批
+
+- `ImmutableLocalRenderResourceProvider.create()`只接受非空、unique logical ID与非空`Uint8Array`；构造时复制caller bytes，每次read再次复制，missing ID直接失败，不接受URL、alias、Blob、decoded object或backend handle。
+- 新增无Node/DOM/网络依赖的纯TypeScript SHA-256，输出完整大写hex；preflight adapter严格识别PNG signature、首个13-byte IHDR与正width/height，font/octet明确返回无dimension，不对unknown MIME选择默认decoder。
+- provider只负责本地字节所有权，expected byte length/hash/dimension/atlas/cross-reference仍由renderer完整profile原子prepare验证；任何失败保持`unprepared/object=0/resource=0`。
+- 独立测试覆盖caller/read alias mutation、duplicate/missing ID、SHA-256 `abc`固定向量、PNG header/dimension拒绝及portable provider→recording renderer真实prepare。`render-contracts`增至6组并继续通过dependency/724项证据校验。
+- 本子批尚未创建Pixi Texture/Geometry或实现decode cache/reference count；RP11 adapter完成前不将portable preflight误称为可见renderer。
 
 ## 2. 固定范围
 

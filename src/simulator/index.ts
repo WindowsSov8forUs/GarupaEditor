@@ -52,6 +52,12 @@ export {
   validateRenderFloat32,
 } from "./backends/renderingValidation";
 export {
+  ImmutableLocalRenderResourceProvider,
+  PortableRenderResourcePreflightAdapter,
+} from "./backends/resources/localResourceProvider";
+export type { LocalRenderResource } from "./backends/resources/localResourceProvider";
+export { sha256UpperHex } from "./backends/resources/sha256";
+export {
   createNoteBatchInformationList,
   MusicScoreBezierConverter,
   MusicScoreHeaderParser,
