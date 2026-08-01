@@ -85,6 +85,26 @@ function profile(): RenderResourceProfile {
       materialRole: "sprite",
       animationRole: "none",
       provenance: "current-apk",
+    }, {
+      logicalAssetId: "asset.sync-line",
+      role: "material-texture",
+      byteLength: png.byteLength,
+      sha256: sha256UpperHex(png),
+      mime: "image/png",
+      width: 4,
+      height: 4,
+      textureSettings: {
+        scaleMode: "linear",
+        wrapModeU: "clamp",
+        wrapModeV: "clamp",
+        mipmap: "off",
+        premultiplyAlpha: true,
+        blendMode: "normal",
+      },
+      atlasRows: [],
+      materialRole: "sync-line",
+      animationRole: "none",
+      provenance: "current-apk",
     }],
     scene: {
       profileId: "pixi-test-scene",
@@ -166,6 +186,7 @@ async function main(): Promise<void> {
   }
   const provider = requireOk(ImmutableLocalRenderResourceProvider.create([
     { logicalAssetId: "asset.note", bytes: png },
+    { logicalAssetId: "asset.sync-line", bytes: png },
   ]), "create local PNG provider");
   const renderer = new PixiRendererBackend(decoder);
   requireOk(await renderer.prepare(
@@ -222,7 +243,7 @@ async function main(): Promise<void> {
     width: f32(1),
     materialRole: "sync-line",
   }]);
-  equal(unsupported.status, "evidence-required", "unsupported line mapping fails closed");
+  equal(unsupported.status, "evidence-required", "line on non-sync role fails closed");
   equal(renderer.snapshot().state, "ready", "capability rejection is non-terminal");
   equal(renderer.snapshot().nextSequence, 4, "capability rejection does not consume sequence");
   equal(renderer.sceneSnapshot().length, 1, "unsupported command leaves scene unchanged");
@@ -258,14 +279,58 @@ async function main(): Promise<void> {
   equal(meshScene?.geometryVertexCount, 22, "R2 mesh has 22 Pixi vertices");
   equal(meshScene?.geometryIndexCount, 60, "R2 mesh has 60 Pixi indices");
 
+  const missingMaterialLine = renderer.preflight([
+    {
+      ...base(6), kind: "create-object", renderObjectId: "note.sync-line",
+      poolFamily: "sync-line", role: "sync-line", parentObjectId: "note.root",
+    },
+    {
+      ...base(7), kind: "set-line", renderObjectId: "note.sync-line",
+      start: { x: f32(2), y: f32(3), z: f32(-14) },
+      end: { x: f32(12), y: f32(8), z: f32(-13) },
+      width: f32(0.28), materialRole: "sync-line",
+    },
+  ]);
+  equal(missingMaterialLine.status, "evidence-required", "line requires exact material texture binding");
+  equal(renderer.snapshot().nextSequence, 6, "missing line material consumes no sequence");
+
+  const lineBatch = requireOk(renderer.preflight([
+    {
+      ...base(6), kind: "create-object", renderObjectId: "note.sync-line",
+      poolFamily: "sync-line", role: "sync-line", parentObjectId: "note.root",
+    },
+    {
+      ...base(7), kind: "bind-resource", renderObjectId: "note.sync-line",
+      binding: "material", logicalAssetId: "asset.sync-line", exactKey: null,
+    },
+    {
+      ...base(8), kind: "set-line", renderObjectId: "note.sync-line",
+      start: { x: f32(2), y: f32(3), z: f32(-14) },
+      end: { x: f32(12), y: f32(8), z: f32(-13) },
+      width: f32(0.28), materialRole: "sync-line",
+    },
+    { ...base(9), kind: "activate-object", renderObjectId: "note.sync-line" },
+  ]), "preflight R2 sync-line batch");
+  equal(renderer.sceneSnapshot().length, 2, "sync-line preflight has zero scene mutation");
+  requireOk(renderer.commit(lineBatch), "commit R2 sync-line batch");
+  const lineScene = renderer.sceneSnapshot().find((row) => row.renderObjectId === "note.sync-line");
+  equal(lineScene?.geometryVertexCount, 4, "sync-line quad has four vertices");
+  equal(lineScene?.geometryIndexCount, 6, "sync-line quad has six indices");
+  equal(lineScene?.visible, true, "sync-line is visible after activation");
+  equal(renderer.resourceSnapshot()[1]?.spriteReferenceCount, 1, "sync-line material is reference counted");
+
   requireOk(renderer.execute({
-    ...base(6), kind: "release-object", renderObjectId: "note.mesh",
+    ...base(10), kind: "release-object", renderObjectId: "note.sync-line",
+  }), "release Pixi sync-line object");
+  requireOk(renderer.execute({
+    ...base(11), kind: "release-object", renderObjectId: "note.mesh",
   }), "release Pixi mesh object");
   requireOk(renderer.execute({
-    ...base(7), kind: "release-object", renderObjectId: "note.root",
+    ...base(12), kind: "release-object", renderObjectId: "note.root",
   }), "release Pixi object");
   equal(renderer.sceneSnapshot().length, 0, "Pixi release removes object");
   equal(renderer.resourceSnapshot()[0]?.spriteReferenceCount, 0, "release decrements Sprite reference");
+  equal(renderer.resourceSnapshot()[1]?.spriteReferenceCount, 0, "release decrements line material reference");
   const duplicatePrepare = await renderer.prepare(
     SESSION,
     profile(),
@@ -382,7 +447,7 @@ async function main(): Promise<void> {
   requireOk(contextRenderer.dispose(), "dispose context-faulted renderer");
   equal(contextRenderer.snapshot().resourceCount, 0, "context-fault dispose releases resources");
 
-  console.log("Pixi v8 semantic adapter tests passed: atomic decode/cache/Sprite/R2-Mesh/order/fault/release");
+  console.log("Pixi v8 semantic adapter tests passed: atomic decode/cache/Sprite/R2-Mesh/sync-line/order/fault/release");
 }
 
 void main().catch((error: unknown) => {

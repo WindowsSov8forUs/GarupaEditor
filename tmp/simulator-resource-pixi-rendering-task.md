@@ -275,6 +275,12 @@
 - Material bind与Sprite bind共用显式resource引用计数；bind-before-geometry及geometry replacement均复用同一base Texture，release/dispose销毁owned Geometry但不误销毁prepare-owned Texture。
 - Line Geometry与object一样在preflight detached reservation；allocation throw、discard、context loss及terminal dispose归零reservation。`_Threshold`、half-texel及Unity GPU raster继续失败关闭。
 
+### 1.26 2026-08-01 RP11 ordinary NoteSyncLine Pixi test子批
+
+- Pixi suite加入独立`material-texture`/`sync-line` profile资产，验证prepare只消费本地相同session已hash bytes并建立独立base Texture。
+- 正例按`create sync-line→bind exact material→set-line→activate`提交，断言preflight scene零mutation、commit生成4 vertices/6 indices、visible=true、material reference=1，再按line→mesh→root child-first release归零引用。
+- 反例覆盖non-sync role与missing material；两者均在scene/object mutation前返回`evidence-required`且不消费sequence。隔离Pixi suite、`tsc`、render-contract与dependency verifier通过。
+
 ## 2. 固定范围
 
 ### 2.1 纳入范围
