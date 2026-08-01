@@ -16,6 +16,7 @@ import type {
 import type { OneFrameDataHandle } from "../data/oneFrameData";
 import type { NoteAutoLiveRuntime } from "../data/autoLiveJudgement";
 import type { SimulatorManualInputGeometryBackend } from "../../backends/contracts";
+import type { RenderOwnerTransaction } from "../rendering/renderCommandProducer";
 
 export enum NoteState {
   Move = 0,
@@ -79,6 +80,7 @@ export class NoteBase {
   private getUsableOneFrameData: (() => SimulatorResult<OneFrameDataHandle>) | null = null;
   private autoLiveRuntimeValue: NoteAutoLiveRuntime | null = null;
   private manualRuntimeValue: ManualNoteRuntime | null = null;
+  private preflightRenderDeactivation: (() => SimulatorResult<RenderOwnerTransaction>) | null = null;
   private fingerIdValue = -1;
 
   constructor(readonly poolObjectId: string) {}
@@ -121,6 +123,12 @@ export class NoteBase {
     this.manualRuntimeValue = runtime;
   }
 
+  registerRenderDeactivationOwner(
+    owner: () => SimulatorResult<RenderOwnerTransaction>,
+  ): void {
+    this.preflightRenderDeactivation = owner;
+  }
+
   requestUsableOneFrameData(): SimulatorResult<OneFrameDataHandle> {
     if (this.getUsableOneFrameData === null) {
       return evidenceRequired(
@@ -148,6 +156,14 @@ export class NoteBase {
       return ok(undefined);
     }
 
+    const renderDeactivation =
+      previousState !== NoteState.Deactive && nextState === NoteState.Deactive
+        ? this.preflightRenderDeactivation?.() ?? null
+        : null;
+    if (renderDeactivation?.status === "evidence-required") {
+      return renderDeactivation;
+    }
+
     this.stateValue = nextState;
     if (previousState === NoteState.Deactive && nextState === NoteState.Move) {
       this.lifecycleCallbacks?.onActivate(this);
@@ -155,6 +171,10 @@ export class NoteBase {
       this.lifecycleCallbacks?.onDeactivate(this);
       this.onDeactivated();
       this.fingerIdValue = -1;
+    }
+    if (renderDeactivation?.status === "ok") {
+      const committed = renderDeactivation.value.commit();
+      if (committed.status !== "ok") return committed;
     }
 
     return ok(undefined);

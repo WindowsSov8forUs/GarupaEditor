@@ -60,6 +60,7 @@ export class RenderOwnerTransaction {
 
 export class RenderCommandProducer {
   private frame = 0;
+  private substep = 0;
 
   constructor(
     readonly sessionId: string,
@@ -96,6 +97,19 @@ export class RenderCommandProducer {
       );
     }
     this.frame = frame;
+    this.substep = 0;
+    return ok(undefined);
+  }
+
+  beginSubstep(substep: number): SimulatorResult<void> {
+    if (!Number.isSafeInteger(substep) || substep < 0) {
+      return evidenceRequired(
+        "render.producer.invalid-substep",
+        ["RPR-D13", "PR33", "PR39"],
+        "Render substep identity is a non-negative integer authored by NoteManager.",
+      );
+    }
+    this.substep = substep;
     return ok(undefined);
   }
 
@@ -166,6 +180,27 @@ export class RenderCommandProducer {
       },
     ];
     return this.preflight(commands);
+  }
+
+  preflightNoteDeactivation(
+    poolObjectId: string,
+  ): SimulatorResult<RenderOwnerTransaction> {
+    const validation = this.validate();
+    if (validation.status !== "ok") return validation;
+    const renderObjectId = rootRenderObjectId(poolObjectId);
+    const base = this.commandBase(this.substep);
+    return this.preflight([
+      {
+        ...base(0),
+        kind: "hide-object",
+        renderObjectId,
+      },
+      {
+        ...base(1),
+        kind: "deactivate-object",
+        renderObjectId,
+      },
+    ]);
   }
 
   private preflight(

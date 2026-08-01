@@ -162,10 +162,11 @@
 
 - 新建engine-owned `RenderCommandProducer`与一次性`RenderOwnerTransaction`；producer只持session、typed renderer与两个logical atlas ID，不读取证据包、文件、URL、bytes或Pixi对象。
 - `NoteManager.setupNotes()`按现有family分组与`${family}:${index}`稳定pool identity预先生成整批`create-object→hide-object`，renderer副本scene全量preflight后才构造/登记pool，成功后一次commit；空chart保持合法零命令路径。
-- 每个outer frame先冻结renderer frame identity；batch激活先完成无mutation pool查找，再由owner按`NoteInformation`生成exact atlas/key并preflight `activate-object→bind-resource`，只有通过后才调用`NoteBase.activate`与推进pool cursor。owner失败会discard capability，避免renderer拒绝后留下active Note。
+- 每个outer frame与adaptive substep先冻结renderer identity；batch激活先完成无mutation pool查找，再由owner按`NoteInformation`生成exact atlas/key并preflight `activate-object→bind-resource`，只有通过后才调用`NoteBase.activate`与推进pool cursor。owner失败会discard capability，避免renderer拒绝后留下active Note。
+- `NoteBase.changeState(active→Deactive)`在写state、移出active list和family reset前调用session-bound deactivation owner，preflight `hide-object→deactivate-object`；通过后才执行原领域顺序并commit。初始化Deactive对象不产生伪deactivate命令，dispose中的active对象复用同一门。
 - ordinary key严格使用lane 0–6：Normal/short-rhythm/Skill/Long/Slide/Flick分别路由`note_normal`/`note_normal_16`/`note_skill`/`note_long`/`note_flick`；Directional使用独立atlas的`note_flick_l|r_<lane>`。HAB只接受升序连续range并生成完整`_<lane...>`后缀；ordinary multi-lane、未知方向、Multiple专用visual与未闭合front family失败关闭，不用alias。
 - host rendering input新增不可缺失的Note/Directional logical asset bindings；producer在chart/domain owner创建前验证非空binding与prepared fidelity session。backend仍逐命令验证logical ID/exact key，因此宿主不能借binding绕过profile。
-- 本子批不发送transform、mesh、line、mask、HUD或deactivate命令；这些保持后续RP04–RP09工作，不用默认值/no-op补齐。隔离`tsc`、dependency、17项first-slice与render-contract回归通过。
+- 本子批不发送transform、mesh、line、mask或HUD命令；这些保持后续RP04–RP09工作，不用默认值/no-op补齐。隔离`tsc`、dependency、17项first-slice与render-contract回归通过；production host test确认`create→hide→activate→exact bind→hide→deactivate`六命令顺序。
 
 ## 2. 固定范围
 

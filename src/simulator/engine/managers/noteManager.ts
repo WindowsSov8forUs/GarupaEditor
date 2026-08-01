@@ -343,6 +343,10 @@ export class NoteManager {
           beginJudgementTransaction: () => this.createManualJudgementTransaction(),
           submitJudgement: (request) => this.submitManualJudgement(request),
         });
+        if (this.renderProducer !== null) {
+          note.registerRenderDeactivationOwner(() =>
+            this.renderProducer!.preflightNoteDeactivation(note.poolObjectId));
+        }
         if (note instanceof NoteMultipleDirectionalFlick) {
           note.registerMultipleDirectionalGroupResolver(
             (information) => this.resolveMultipleDirectionalGroup(information),
@@ -432,6 +436,8 @@ export class NoteManager {
     this.outerFrameIndexValue += 1;
 
     for (let substepIndex = 0; substepIndex < substepCount; substepIndex += 1) {
+      const renderSubstep = this.renderProducer?.beginSubstep(substepIndex);
+      if (renderSubstep?.status === "evidence-required") return renderSubstep;
       const advanceResult = this.clock.advance(substepDelta);
       if (advanceResult.status !== "ok") {
         return advanceResult;
