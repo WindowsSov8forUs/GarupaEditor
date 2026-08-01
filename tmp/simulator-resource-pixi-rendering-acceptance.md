@@ -117,6 +117,6 @@ production static audit确认：production 无网络 API/remote URL/Bestdori、�
 
 ## 9. 2026-08-02 增量复验
 
-- local commit `4c35028`新增ordinary simultaneous Normal sync production lifecycle与host oracle；`simulator:test:resource-pixi-rendering`从该commit工作树串行通过14 stages，resource/Pixi production、actual Pixi/failure、上游manual与Score/Life/State均绿色。
-- RP14结论仍为**不通过**：after/icon/mesh、非Normal sync、Multiple、mask、visible HUD/slider/animation与degraded label缺口未关闭。
-- 本次不能替换第2节“已推送HEAD”锁定值：GitHub 443连接失败，`4c35028`尚未push，远端仍为`d60a7ab`且本地ahead 1；最终独立验收必须在网络恢复、push成功并确认远端`0 0`后重新执行。
+- pushed commit `4c35028`新增ordinary simultaneous Normal sync production lifecycle与host oracle；验收文档修订commit为`1aaa6ad`，Windows Git Bash确认远端分支与本地差异`0 0`。
+- 从已推送`1aaa6ad`串行执行`simulator:test:resource-pixi-rendering`，14 stages全部通过；resource/Pixi production、actual Pixi/failure、上游manual与Score/Life/State均绿色。
+- RP14结论仍为**不通过**：after/icon/mesh、非Normal sync、Multiple、mask、visible HUD/slider/animation与degraded label缺口未关闭；不得因回归绿色改写为阶段完成。
