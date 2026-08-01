@@ -15,6 +15,10 @@ import type { FeverTimeCommandName } from "../engine/managers/feverTimeManager";
 import type { InGameDirectorSnapshot } from "../engine/managers/inGameDirector";
 import type { InGameManagerSnapshot } from "../engine/managers/inGameManager";
 
+export interface SimulatorRenderingSessionInput {
+  readonly sessionId: string;
+}
+
 export interface SimulatorEngineInput {
   readonly chart: ChartConstructionResult;
   readonly runtime: {
@@ -23,6 +27,7 @@ export interface SimulatorEngineInput {
     readonly playMode: SimulatorPlayMode;
   };
   readonly scoreLifeState?: ScoreLifeStateProfile;
+  readonly rendering?: SimulatorRenderingSessionInput;
 }
 
 export interface SimulatorSnapshot {

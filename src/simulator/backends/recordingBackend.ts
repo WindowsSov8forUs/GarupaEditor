@@ -1,6 +1,7 @@
 import { evidenceRequired, type SimulatorResult } from "../engine/evidence";
 import type { ButtonTypeValue } from "../engine/chart/types";
 import type { ManualInputPosition } from "../engine/data/manualInput";
+import type { SimulatorRendererBackend } from "./renderingContracts";
 import type {
   ManualInputWorldPosition,
   SimulatorBackendPort,
@@ -113,6 +114,8 @@ export class RecordingSimulatorBackends implements SimulatorBackends {
   readonly frameRate = new RecordingFrameRatePort(this.append.bind(this));
   readonly manualInputGeometry = new UnavailableManualInputGeometryPort();
 
+  constructor(readonly rendering?: SimulatorRendererBackend) {}
+
   snapshot(): readonly SimulatorBackendTraceEvent[] {
     return this.events.map((event) => ({ ...event }));
   }
@@ -130,6 +133,8 @@ export class RecordingSimulatorBackends implements SimulatorBackends {
   }
 }
 
-export function createRecordingSimulatorBackends(): RecordingSimulatorBackends {
-  return new RecordingSimulatorBackends();
+export function createRecordingSimulatorBackends(
+  rendering?: SimulatorRendererBackend,
+): RecordingSimulatorBackends {
+  return new RecordingSimulatorBackends(rendering);
 }

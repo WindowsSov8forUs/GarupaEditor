@@ -1,6 +1,7 @@
 import type { ButtonTypeValue } from "../engine/chart/types";
 import type { ManualInputPosition } from "../engine/data/manualInput";
 import type { SimulatorResult } from "../engine/evidence";
+import type { SimulatorRendererBackend } from "./renderingContracts";
 
 export interface SimulatorBackendPort {
   readonly id: string;
@@ -71,6 +72,7 @@ export interface SimulatorManualInputGeometryBackend {
 
 export interface SimulatorBackends {
   readonly renderer: SimulatorBackendPort;
+  readonly rendering?: SimulatorRendererBackend;
   readonly audio: SimulatorBackendPort;
   readonly input: SimulatorBackendPort;
   readonly resources: SimulatorBackendPort;

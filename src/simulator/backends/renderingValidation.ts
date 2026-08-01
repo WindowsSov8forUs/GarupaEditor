@@ -1,0 +1,336 @@
+import {
+  evidenceRequired,
+  ok,
+  type SimulatorResult,
+} from "../engine/evidence";
+import {
+  RenderFidelityLabel,
+  type RenderAtlasRow,
+  type RenderColor,
+  type RenderComponentMapping,
+  type RenderFloat32,
+  type RenderResourceAssetProfile,
+  type RenderResourceProfile,
+  type RenderVector2,
+  type RenderVector3,
+} from "./renderingContracts";
+
+const SHA256_PATTERN = /^[0-9A-F]{64}$/;
+const FLOAT32_BITS_PATTERN = /^[0-9A-F]{8}$/;
+const RESOURCE_ROLES = new Set([
+  "note-atlas", "directional-atlas", "judge-atlas", "field-atlas",
+  "hud-atlas", "font", "material-texture", "animation-clip",
+]);
+const MATERIAL_ROLES = new Set([
+  "none", "sprite", "long-note", "curve-note", "sync-line",
+  "multiple-directional-line", "mask", "hud",
+]);
+const ANIMATION_ROLES = new Set([
+  "none", "note-flick", "note-directional-flick", "note-long-flash",
+  "combo", "all-perfect", "add-score", "result", "life-heal",
+  "damage-guard", "score-skill", "judge-skill", "habahiro-lane-change",
+]);
+const PROVENANCE_VALUES = new Set([
+  "current-apk", "current-device-cache", "current-external-portable",
+  "historical-proxy", "generated-current-ordinary-proxy",
+]);
+const REQUIRED_COMPONENTS = Object.freeze([
+  "sprite",
+  "atlas-sprite",
+  "mesh",
+  "line",
+  "mask",
+  "text",
+  "slider",
+  "animation",
+] as const);
+
+export function validateAndFreezeRenderProfile(
+  profile: RenderResourceProfile,
+): SimulatorResult<RenderResourceProfile> {
+  if (
+    profile === null ||
+    typeof profile !== "object" ||
+    profile.schemaVersion !== 1 ||
+    profile.sample?.package !== "jp.co.craftegg.band" ||
+    profile.sample.versionName !== "10.1.4" ||
+    profile.sample.versionCode !== 230 ||
+    profile.sample.abi !== "arm64-v8a" ||
+    !isNonEmpty(profile.packIdentity) ||
+    profile.networkAllowed !== false ||
+    profile.automaticFallbackAllowed !== false ||
+    !Array.isArray(profile.assets) ||
+    profile.assets.length === 0
+  ) {
+    return reject(
+      "render.profile.invalid-shape",
+      "The complete 10.1.4 profile identity, explicit offline policy and non-empty asset inventory must validate before resource reads.",
+    );
+  }
+  const fidelityValidation = validateFidelity(profile.fidelity);
+  if (fidelityValidation.status !== "ok") return fidelityValidation;
+
+  const logicalIds = new Set<string>();
+  const assets: RenderResourceAssetProfile[] = [];
+  for (const asset of profile.assets) {
+    const validated = validateAsset(asset, logicalIds);
+    if (validated.status !== "ok") return validated;
+    assets.push(validated.value);
+  }
+
+  const scene = profile.scene;
+  if (
+    scene === null ||
+    typeof scene !== "object" ||
+    !isNonEmpty(scene.profileId) ||
+    typeof scene.roundPixels !== "boolean" ||
+    !Number.isFinite(scene.resolution) ||
+    scene.resolution <= 0 ||
+    typeof scene.antialias !== "boolean" ||
+    scene.ordering?.pixiDefaultZIndexAllowed !== false ||
+    scene.ordering.tuple.join(",") !==
+      "domain-layer,source-depth-or-sorting-order,source-z,creation-sequence" ||
+    !Array.isArray(scene.components)
+  ) {
+    return reject(
+      "render.profile.invalid-scene",
+      "Scene ordering and every renderer default must be explicit; Pixi zIndex defaults are not accepted.",
+    );
+  }
+  const componentMap = new Map<string, RenderComponentMapping>();
+  for (const mapping of scene.components) {
+    if (
+      !REQUIRED_COMPONENTS.includes(mapping.component) ||
+      (mapping.support !== "semantic-exact" && mapping.support !== "portable-equivalent") ||
+      componentMap.has(mapping.component)
+    ) {
+      return reject(
+        "render.profile.invalid-component-mapping",
+        "Each portable component requires one explicit supported mapping without duplicates.",
+      );
+    }
+    componentMap.set(mapping.component, Object.freeze({ ...mapping }));
+  }
+  if (componentMap.size !== REQUIRED_COMPONENTS.length) {
+    return reject(
+      "render.profile.incomplete-component-mapping",
+      "Sprite, atlas, mesh, line, mask, text, slider and animation mappings must all be declared before prepare.",
+    );
+  }
+
+  return ok(Object.freeze({
+    schemaVersion: 1,
+    sample: Object.freeze({ ...profile.sample }),
+    packIdentity: profile.packIdentity,
+    fidelity: fidelityValidation.value,
+    networkAllowed: false,
+    automaticFallbackAllowed: false,
+    assets: Object.freeze(assets),
+    scene: Object.freeze({
+      profileId: scene.profileId,
+      components: Object.freeze(
+        REQUIRED_COMPONENTS.map((component) => componentMap.get(component)!),
+      ),
+      ordering: Object.freeze({
+        tuple: Object.freeze([
+          "domain-layer",
+          "source-depth-or-sorting-order",
+          "source-z",
+          "creation-sequence",
+        ] as const),
+        pixiDefaultZIndexAllowed: false,
+      }),
+      roundPixels: scene.roundPixels,
+      resolution: scene.resolution,
+      antialias: scene.antialias,
+    }),
+  }));
+}
+
+export function createRenderFloat32(value: number): SimulatorResult<RenderFloat32> {
+  const rounded = Math.fround(value);
+  if (!Number.isFinite(value) || !Number.isFinite(rounded) || rounded !== value) {
+    return reject(
+      "render.float32.invalid-value",
+      "Renderer values must already be frozen at an evidence-confirmed Float32 owner write.",
+    );
+  }
+  const buffer = new ArrayBuffer(4);
+  const view = new DataView(buffer);
+  view.setFloat32(0, rounded, false);
+  return ok(Object.freeze({
+    value: rounded,
+    bits: view.getUint32(0, false).toString(16).toUpperCase().padStart(8, "0"),
+  }));
+}
+
+export function validateRenderFloat32(value: RenderFloat32): boolean {
+  if (
+    value === null ||
+    typeof value !== "object" ||
+    !Number.isFinite(value.value) ||
+    Math.fround(value.value) !== value.value ||
+    !FLOAT32_BITS_PATTERN.test(value.bits)
+  ) {
+    return false;
+  }
+  const buffer = new ArrayBuffer(4);
+  const view = new DataView(buffer);
+  view.setFloat32(0, value.value, false);
+  return view.getUint32(0, false).toString(16).toUpperCase().padStart(8, "0") === value.bits;
+}
+
+export function freezeRenderVector2(value: RenderVector2): RenderVector2 {
+  return Object.freeze({
+    x: Object.freeze({ ...value.x }),
+    y: Object.freeze({ ...value.y }),
+  });
+}
+
+export function freezeRenderVector3(value: RenderVector3): RenderVector3 {
+  return Object.freeze({
+    x: Object.freeze({ ...value.x }),
+    y: Object.freeze({ ...value.y }),
+    z: Object.freeze({ ...value.z }),
+  });
+}
+
+export function freezeRenderColor(value: RenderColor): RenderColor {
+  return Object.freeze({
+    red: Object.freeze({ ...value.red }),
+    green: Object.freeze({ ...value.green }),
+    blue: Object.freeze({ ...value.blue }),
+    alpha: Object.freeze({ ...value.alpha }),
+  });
+}
+
+function validateFidelity(
+  fidelity: RenderResourceProfile["fidelity"],
+): SimulatorResult<RenderResourceProfile["fidelity"]> {
+  if (fidelity?.mode === "ordinary" && fidelity.fidelity === "exact-current") {
+    return ok(Object.freeze({ ...fidelity }));
+  }
+  if (
+    fidelity?.mode === "habahiro" &&
+    fidelity.fidelity === "exact-current-unityfs"
+  ) {
+    return ok(Object.freeze({ ...fidelity }));
+  }
+  if (
+    fidelity?.mode === "habahiro" &&
+    fidelity.fidelity === "degraded" &&
+    (fidelity.profile === "current-external-portable-atlas" ||
+      fidelity.profile === "historical-atlas-proxy" ||
+      fidelity.profile === "current-ordinary-stretch-proxy") &&
+    fidelity.visibleLabel === RenderFidelityLabel
+  ) {
+    return ok(Object.freeze({ ...fidelity }));
+  }
+  return reject(
+    "render.profile.invalid-fidelity",
+    "HABAHIRO requires explicit exact or visibly labelled degraded fidelity; automatic fallback is forbidden.",
+  );
+}
+
+function validateAsset(
+  asset: RenderResourceAssetProfile,
+  logicalIds: Set<string>,
+): SimulatorResult<RenderResourceAssetProfile> {
+  if (
+    asset === null ||
+    typeof asset !== "object" ||
+    !isNonEmpty(asset.logicalAssetId) ||
+    logicalIds.has(asset.logicalAssetId) ||
+    !Number.isSafeInteger(asset.byteLength) ||
+    asset.byteLength <= 0 ||
+    !SHA256_PATTERN.test(asset.sha256) ||
+    !RESOURCE_ROLES.has(asset.role) ||
+    !MATERIAL_ROLES.has(asset.materialRole) ||
+    !ANIMATION_ROLES.has(asset.animationRole) ||
+    !PROVENANCE_VALUES.has(asset.provenance) ||
+    (asset.mime !== "image/png" &&
+      asset.mime !== "font/ttf" &&
+      asset.mime !== "application/octet-stream") ||
+    !Array.isArray(asset.atlasRows)
+  ) {
+    return reject(
+      "render.profile.invalid-asset",
+      "Every asset requires one logical ID, positive byte length, uppercase SHA-256 and an explicit atlas list.",
+    );
+  }
+  logicalIds.add(asset.logicalAssetId);
+  const image = asset.mime === "image/png";
+  const textureSettings = asset.textureSettings;
+  if (
+    image !== (asset.width !== null && asset.height !== null) ||
+    image !== (textureSettings !== null) ||
+    (textureSettings !== null &&
+      (textureSettings.scaleMode !== "nearest" && textureSettings.scaleMode !== "linear" ||
+        textureSettings.wrapModeU !== "clamp" && textureSettings.wrapModeU !== "repeat" ||
+        textureSettings.wrapModeV !== "clamp" && textureSettings.wrapModeV !== "repeat" ||
+        textureSettings.mipmap !== "off" && textureSettings.mipmap !== "on" ||
+        typeof textureSettings.premultiplyAlpha !== "boolean" ||
+        textureSettings.blendMode !== "normal" &&
+          textureSettings.blendMode !== "add" &&
+          textureSettings.blendMode !== "multiply")) ||
+    (image && (!isPositiveInteger(asset.width) || !isPositiveInteger(asset.height))) ||
+    (!image && asset.atlasRows.length !== 0)
+  ) {
+    return reject(
+      "render.profile.invalid-resource-metadata",
+      "Image dimensions and texture settings must be explicit; non-image assets cannot declare atlas rows.",
+    );
+  }
+  const rows: RenderAtlasRow[] = [];
+  const exactKeys = new Set<string>();
+  for (const row of asset.atlasRows) {
+    if (
+      !isNonEmpty(row.exactKey) ||
+      exactKeys.has(row.exactKey) ||
+      !isNonNegativeInteger(row.x) ||
+      !isNonNegativeInteger(row.y) ||
+      !isPositiveInteger(row.width) ||
+      !isPositiveInteger(row.height) ||
+      row.x + row.width > asset.width! ||
+      row.y + row.height > asset.height! ||
+      !Number.isFinite(row.pivotX) ||
+      !Number.isFinite(row.pivotY) ||
+      !Number.isFinite(row.pixelsPerUnit) ||
+      row.pixelsPerUnit <= 0
+    ) {
+      return reject(
+        "render.profile.invalid-atlas-row",
+        "Atlas exact keys must be unique within one logical asset and every rectangle, pivot and PPU must be finite and in bounds.",
+      );
+    }
+    exactKeys.add(row.exactKey);
+    rows.push(Object.freeze({ ...row }));
+  }
+  return ok(Object.freeze({
+    ...asset,
+    textureSettings: textureSettings === null
+      ? null
+      : Object.freeze({ ...textureSettings }),
+    atlasRows: Object.freeze(rows),
+  }));
+}
+
+function reject(capability: string, boundary: string) {
+  return evidenceRequired(
+    capability,
+    ["RPR-D14", "PR01", "PR05", "PR35"],
+    boundary,
+  );
+}
+
+function isNonEmpty(value: unknown): value is string {
+  return typeof value === "string" && value.length > 0;
+}
+
+function isPositiveInteger(value: unknown): value is number {
+  return Number.isSafeInteger(value) && (value as number) > 0;
+}
+
+function isNonNegativeInteger(value: unknown): value is number {
+  return Number.isSafeInteger(value) && (value as number) >= 0;
+}

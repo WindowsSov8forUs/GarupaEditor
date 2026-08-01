@@ -51,10 +51,13 @@ class SimulatorEngineHost implements SimulatorEngine {
     private readonly inGameDirector: InGameDirector,
     private readonly inGameManager: InGameManager,
     private readonly inputDispatcher: GamePlayInputDispatcher,
+    private readonly renderingSessionId: string | null,
     readonly backends: SimulatorBackends,
   ) {}
 
   initialize(): SimulatorResult<void> {
+    const renderer = validateRendererSession(this.renderingSessionId, this.backends);
+    if (renderer.status !== "ok") return renderer;
     if (
       this.inGameManager.state === "faulted" ||
       this.inGameManager.state === "disposed"
@@ -208,6 +211,9 @@ export function createSimulatorEngine(
   input: SimulatorEngineInput,
   backends: SimulatorBackends,
 ): SimulatorResult<SimulatorEngine> {
+  const renderingSessionId = input.rendering?.sessionId ?? null;
+  const rendererValidation = validateRendererSession(renderingSessionId, backends);
+  if (rendererValidation.status !== "ok") return rendererValidation;
   const chartValidation = validateChart(input.chart);
   if (chartValidation.status !== "ok") {
     return chartValidation;
@@ -314,8 +320,42 @@ export function createSimulatorEngine(
     inGameDirector,
     inGameManager,
     inputDispatcher,
+    renderingSessionId,
     backends,
   ));
+}
+
+function validateRendererSession(
+  sessionId: string | null,
+  backends: SimulatorBackends,
+): SimulatorResult<void> {
+  if (sessionId === null && backends.rendering === undefined) {
+    return ok(undefined);
+  }
+  if (
+    sessionId === null ||
+    sessionId.length === 0 ||
+    backends.rendering === undefined
+  ) {
+    return evidenceRequired(
+      "render.session.incomplete-host-binding",
+      ["RPR-D14", "RPR-D17", "PR35", "PR38"],
+      "A rendering engine requires both one explicit session identity and one prepared typed renderer backend.",
+    );
+  }
+  const snapshot = backends.rendering.snapshot();
+  if (
+    snapshot.state !== "ready" ||
+    snapshot.sessionId !== sessionId ||
+    snapshot.fault !== null
+  ) {
+    return evidenceRequired(
+      "render.session.renderer-not-ready",
+      ["RPR-D14", "RPR-D17", "PR35", "PR38"],
+      "Renderer readiness and the exact host session must validate before chart or domain owners are created or initialized.",
+    );
+  }
+  return ok(undefined);
 }
 
 function validatePlayMode(

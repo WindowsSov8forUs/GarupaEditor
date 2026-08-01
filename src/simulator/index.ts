@@ -13,6 +13,43 @@ export {
   createRecordingSimulatorBackends,
   RecordingSimulatorBackends,
 } from "./backends/recordingBackend";
+export { RecordingSimulatorRendererBackend } from "./backends/recordingRendererBackend";
+export {
+  RenderFidelityLabel,
+} from "./backends/renderingContracts";
+export type {
+  RenderAnimationRole,
+  RenderAtlasRow,
+  RenderBackendFault,
+  RenderBackendSnapshot,
+  RenderBackendState,
+  RenderColor,
+  RenderCommand,
+  RenderCommandBase,
+  RenderComponentMapping,
+  RenderDecodedResourceMetadata,
+  RenderFidelitySelection,
+  RenderFloat32,
+  RenderMaterialRole,
+  RenderObjectRole,
+  RenderOrderingKey,
+  RenderResourceAssetProfile,
+  RenderResourcePreflightAdapter,
+  RenderResourceProfile,
+  RenderResourceRole,
+  RenderSampleIdentity,
+  RenderSceneProfile,
+  RenderTextureSettings,
+  RenderVector2,
+  RenderVector3,
+  SimulatorRendererBackend,
+  SimulatorResourceProvider,
+} from "./backends/renderingContracts";
+export {
+  createRenderFloat32,
+  validateAndFreezeRenderProfile,
+  validateRenderFloat32,
+} from "./backends/renderingValidation";
 export {
   createNoteBatchInformationList,
   MusicScoreBezierConverter,
@@ -69,6 +106,7 @@ export type {
   FirstSliceEvidenceId,
   ManualInputEvidenceId,
   ScoreLifeStateEvidenceId,
+  ResourcePixiRenderingEvidenceId,
   SimulatorResult,
   SimulatorEvidenceId,
 } from "./engine/evidence";
@@ -145,5 +183,6 @@ export { createSimulatorEngine } from "./host/createSimulatorEngine";
 export type {
   SimulatorEngine,
   SimulatorEngineInput,
+  SimulatorRenderingSessionInput,
   SimulatorSnapshot,
 } from "./host/contracts";
