@@ -427,6 +427,37 @@ export class RenderCommandProducer {
         kind: "hide-object",
         renderObjectId,
       });
+      if (pool.family === "long") {
+        const afterObjectId = longAfterRenderObjectId(pool.poolObjectId);
+        const meshObjectId = longMeshRenderObjectId(pool.poolObjectId);
+        created.push(afterObjectId, meshObjectId);
+        commands.push({
+          ...base(commands.length),
+          kind: "create-object",
+          renderObjectId: afterObjectId,
+          poolFamily: pool.family,
+          role: "note-head",
+          parentObjectId: null,
+        });
+        commands.push({
+          ...base(commands.length),
+          kind: "hide-object",
+          renderObjectId: afterObjectId,
+        });
+        commands.push({
+          ...base(commands.length),
+          kind: "create-object",
+          renderObjectId: meshObjectId,
+          poolFamily: pool.family,
+          role: "note-mesh",
+          parentObjectId: null,
+        });
+        commands.push({
+          ...base(commands.length),
+          kind: "hide-object",
+          renderObjectId: meshObjectId,
+        });
+      }
     }
     for (let index = 0; index < syncLinePoolLength; index += 1) {
       const renderObjectId = syncLineRenderObjectId(index);
@@ -860,6 +891,14 @@ export function validateOrdinaryFixedNoteSceneInput(
 
 export function rootRenderObjectId(poolObjectId: string): string {
   return `render:${poolObjectId}:root`;
+}
+
+export function longAfterRenderObjectId(poolObjectId: string): string {
+  return `render:${poolObjectId}:after`;
+}
+
+export function longMeshRenderObjectId(poolObjectId: string): string {
+  return `render:${poolObjectId}:mesh`;
 }
 
 export function syncLineRenderObjectId(poolIndex: number): string {

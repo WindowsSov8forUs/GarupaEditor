@@ -456,6 +456,13 @@
 - dedicated oracle覆盖Wait strict/equal、Move→Stop顺序、Float32 position/progress bits、22/60 mesh，以及virtual lane/负afterPos失败关闭；`simulator:test:render-note-geometry`与759项evidence verifier通过。
 - 本批仍未建立render object identity或NoteManager command transaction，因此Long可见production继续未闭合；后续必须接after Sprite、mesh object及deactivate ownership后才能更新RP14状态。
 
+### 1.50 2026-08-02 RP07 Long root/after/mesh pool identity production/test子批
+
+- `preflightPoolSetup`对Long family在同一原子batch按`root → after → mesh`建立三个稳定identity；after使用已支持Sprite的`note-head` role，mesh使用`note-mesh` role，二者均为全局sibling以消费world endpoint而不继承移动root transform。
+- setup逐owner保持`create → hide`，不提前bind资源、activate或提交degenerate geometry；Long activation仍由既有family gate失败关闭，因此identity存在不会变成静默欠渲染。
+- create commit后三个identity统一进入producer release inventory，session release严格逆序`mesh → after → root`，满足child-first ownership；dedicated oracle冻结六条setup与三条release命令。
+- `simulator:test:render-note-geometry`与759项evidence verifier通过；本批只关闭pool identity，不关闭after Sprite/mesh command transaction或NoteManager lifecycle。
+
 ## 2. 固定范围
 
 ### 2.1 纳入范围

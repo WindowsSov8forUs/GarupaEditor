@@ -184,6 +184,8 @@ export { NoteBpmChange } from "./engine/notes/noteBpmChange";
 export {
   RenderCommandProducer,
   RenderOwnerTransaction,
+  longAfterRenderObjectId,
+  longMeshRenderObjectId,
   resolveFrontSpriteBinding,
   rootRenderObjectId,
   validateOrdinaryFixedNoteSceneInput,

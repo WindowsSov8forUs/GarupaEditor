@@ -307,6 +307,30 @@ function main(): void {
   equal(virtualRejected.status, "evidence-required", "virtual-lane activation remains fail-closed");
   equal(activationRenderer.nextSequence, 8, "unsupported activation routes consume no sequence");
 
+  const longPoolRenderer = new CapturingRenderer();
+  const longPoolProducer = new RenderCommandProducer("geometry-session", longPoolRenderer, {
+    noteAtlasLogicalAssetId: "asset.note",
+    directionalAtlasLogicalAssetId: "asset.directional",
+  });
+  const longPoolSetup = requireOk(longPoolProducer.preflightPoolSetup([
+    { poolObjectId: "long:0", family: "long" },
+  ]), "preflight Long child pool");
+  equal(
+    longPoolRenderer.commands.map((command) => `${command.kind}:${command.renderObjectId}`).join(","),
+    "create-object:render:long:0:root,hide-object:render:long:0:root," +
+      "create-object:render:long:0:after,hide-object:render:long:0:after," +
+      "create-object:render:long:0:mesh,hide-object:render:long:0:mesh",
+    "Long pool establishes root, after and mesh stable identities in owner order",
+  );
+  requireOk(longPoolSetup.commit(), "commit Long child pool");
+  const longPoolRelease = requireOk(longPoolProducer.preflightSessionRelease(), "preflight Long child release");
+  equal(
+    longPoolRenderer.commands.slice(-3).map((command) => command.renderObjectId).join(","),
+    "render:long:0:mesh,render:long:0:after,render:long:0:root",
+    "Long session release remains child-first",
+  );
+  requireOk(longPoolRelease.commit(), "commit Long child release");
+
   const renderer = new CapturingRenderer();
   const producer = new RenderCommandProducer("geometry-session", renderer, {
     noteAtlasLogicalAssetId: "asset.note",
