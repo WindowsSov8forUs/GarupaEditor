@@ -327,9 +327,17 @@
 
 - 新增engine-owned `ordinaryNoteGeometry.ts`，只消费typed Float32 owner state，不读取profile文件、资源bytes、Pixi、DOM或测试identity；输出可直接进入既有`set-mesh`/`set-line`合同的不可变semantic geometry。
 - base NoteMesh严格生成11组左右边界、22个Z=0 vertex、60个固定index、Float32 `V=section/10` UV与逐vertex uniform copied color；half-width按`localScaleX*buttonCount*screenToSafeAreaRatio*widthRate`逐次Float32计算，button count只接受1–7。
-- sync-line按target A/B完整XYZ保留Z，ordinary `GameNoteType 10..19`逐target排除edge margin，其余margin乘lossyScaleX后沿X向内；width固定为target A localScaleX×Float32 0.28，degenerate XY或非positive width失败关闭。
+- sync-line按target A/B完整XYZ保留Z，ordinary `GameNoteType 10..19`逐target排除edge margin，其余margin乘lossyScaleX后沿X向内；width固定为target A localScaleX×Float32 0.28，degenerate XY或non-positive width失败关闭。
 - 所有输入Float32 bits、range与完整owner字段先验证；无clamp（除证据profile后续显式width-rate计算）、无默认颜色/scale/margin、无advanced mesh/Multiple/threshold/HAB路径。
 - 新helper与types经`src/simulator/index.ts`作为portable production surface导出；本批只恢复几何authoring，不伪称NoteManager lifecycle接线已完成。隔离`tsc`、现有Pixi与render-contract回归通过。
+
+### 1.34 2026-08-01 RP04/RP06 ordinary geometry producer test子批
+
+- 新增独立`simulator:test:render-note-geometry` runner；先编译隔离TS，再运行producer oracle、dependency boundary与740项冻结证据verifier。
+- base mesh oracle不用待测helper生成expected：逐项冻结66个vertex Float32 bytes、完整60 index，并检查UV端点、uniform color bits与结果/数组/vertex/color深冻结及owner color无alias。
+- sync-line覆盖正向/反向target、按target `GameNoteType 10..19` margin exclusion、完整Z保留、A端local scale width来源；8-lane、zero width-rate、Float32 overflow、degenerate XY与malformed Float32反例均返回`evidence-required`而不抛异常。
+- Pixi suite的22/60 mesh与sync-line command改由production producer生成，再走既有preflight/commit、orthographic projection和quad expected，建立engine semantic geometry到Pixi adapter的端到端映射。
+- `tsc`、新producer suite与Pixi suite通过；未运行Vite/Tauri整体构建。
 
 ## 2. 固定范围
 

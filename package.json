@@ -39,6 +39,7 @@
     "simulator:test:score-life-production": "node src/simulator/testing/runScoreLifeStateTests.mjs",
     "simulator:test:score-life-state": "node src/simulator/testing/runScoreLifeStateTests.mjs",
     "simulator:test:render-contracts": "node src/simulator/testing/runRenderContractTests.mjs",
+    "simulator:test:render-note-geometry": "node src/simulator/testing/runOrdinaryNoteGeometryTests.mjs",
     "simulator:test:render-pixi": "node src/simulator/testing/runRenderPixiTests.mjs",
     "tauri": "tauri",
     "desktop:dev": "tauri dev",

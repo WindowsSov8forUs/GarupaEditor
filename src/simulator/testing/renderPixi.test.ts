@@ -12,6 +12,10 @@ import type {
 } from "../backends/renderingContracts";
 import { createRenderFloat32 } from "../backends/renderingValidation";
 import { evidenceRequired, ok, type SimulatorResult } from "../engine/evidence";
+import {
+  buildOrdinaryBaseNoteMesh,
+  buildOrdinarySyncLine,
+} from "../engine/rendering/ordinaryNoteGeometry";
 
 const SESSION = "pixi-test-session";
 const png = new Uint8Array(24);
@@ -158,30 +162,39 @@ function wrappedSprite(): Container {
 }
 
 function r2Mesh(sequence: number): RenderCommand {
-  const vertices = Array.from({ length: 22 }, (_, index) => ({
-    x: f32(index % 2),
-    y: f32(Math.floor(index / 2) / 10),
-    z: f32(0),
-  }));
-  const uv = Array.from({ length: 22 }, (_, index) => ({
-    x: f32(index % 2),
-    y: f32(Math.floor(index / 2) / 10),
-  }));
-  const color = () => ({ red: f32(0.9), green: f32(0.9), blue: f32(0.9), alpha: f32(0.8) });
-  const indices = Array.from({ length: 10 }, (_, section) => {
-    const start = section * 2;
-    return [start, start + 2, start + 1, start + 1, start + 2, start + 3];
-  }).flat();
+  const endpoint = (y: number) => ({
+    position: { x: f32(0.5), y: f32(y) },
+    localScaleX: f32(0.5),
+    buttonCount: 1,
+  });
+  const geometry = requireOk(buildOrdinaryBaseNoteMesh({
+    front: endpoint(0),
+    after: endpoint(1),
+    screenToSafeAreaRatio: f32(1),
+    widthRate: f32(1),
+    color: { red: f32(0.9), green: f32(0.9), blue: f32(0.9), alpha: f32(0.8) },
+  }), "produce R2 base mesh");
   return {
     ...base(sequence),
     kind: "set-mesh",
     renderObjectId: "note.mesh",
-    vertices,
-    indices,
-    uv,
-    colors: vertices.map(color),
+    ...geometry,
     materialRole: "long-note",
   };
+}
+
+function r2Line() {
+  return requireOk(buildOrdinarySyncLine({
+    targetA: {
+      position: { x: f32(-1), y: f32(0.5), z: f32(-14) },
+      lossyScaleX: f32(1), localScaleX: f32(0.1), gameNoteType: 10,
+    },
+    targetB: {
+      position: { x: f32(1), y: f32(-0.5), z: f32(-13) },
+      lossyScaleX: f32(1), localScaleX: f32(0.1), gameNoteType: 10,
+    },
+    edgeMargin: f32(0),
+  }), "produce R2 sync line");
 }
 
 async function main(): Promise<void> {
@@ -292,6 +305,7 @@ async function main(): Promise<void> {
   equal(meshScene?.geometryVertexCount, 22, "R2 mesh has 22 Pixi vertices");
   equal(meshScene?.geometryIndexCount, 60, "R2 mesh has 60 Pixi indices");
 
+  const lineGeometry = r2Line();
   const missingMaterialLine = renderer.preflight([
     {
       ...base(6), kind: "create-object", renderObjectId: "note.sync-line",
@@ -299,9 +313,7 @@ async function main(): Promise<void> {
     },
     {
       ...base(7), kind: "set-line", renderObjectId: "note.sync-line",
-      start: { x: f32(-1), y: f32(0.5), z: f32(-14) },
-      end: { x: f32(1), y: f32(-0.5), z: f32(-13) },
-      width: f32(0.028), materialRole: "sync-line",
+      ...lineGeometry, materialRole: "sync-line",
     },
   ]);
   equal(missingMaterialLine.status, "evidence-required", "line requires exact material texture binding");
@@ -318,9 +330,7 @@ async function main(): Promise<void> {
     },
     {
       ...base(8), kind: "set-line", renderObjectId: "note.sync-line",
-      start: { x: f32(-1), y: f32(0.5), z: f32(-14) },
-      end: { x: f32(1), y: f32(-0.5), z: f32(-13) },
-      width: f32(0.028), materialRole: "sync-line",
+      ...lineGeometry, materialRole: "sync-line",
     },
     { ...base(9), kind: "activate-object", renderObjectId: "note.sync-line" },
   ]), "preflight R2 sync-line batch");
