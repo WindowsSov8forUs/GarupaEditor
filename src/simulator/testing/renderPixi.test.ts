@@ -1,4 +1,4 @@
-import { Texture, TextureSource } from "pixi.js";
+import { Sprite, Texture, TextureSource } from "pixi.js";
 import { BrowserPixiTextureDecoder } from "../backends/pixi/browserPixiTextureDecoder";
 import { PixiRendererBackend, type PixiTextureDecoder } from "../backends/pixi/pixiRendererBackend";
 import {
@@ -231,6 +231,65 @@ async function main(): Promise<void> {
   equal(decodeFailure.snapshot().state, "unprepared", "decode failure remains not-ready");
   equal(decodeFailure.snapshot().resourceCount, 0, "decode failure retains no resources");
   equal(decodeFailure.stage.children.length, 0, "decode failure creates no scene object");
+
+  let factoryCalls = 0;
+  const allocationFailure = new PixiRendererBackend(decoder, {
+    create() {
+      factoryCalls += 1;
+      if (factoryCalls === 2) throw new Error("synthetic Pixi allocation failure");
+      return new Sprite({ texture: Texture.EMPTY });
+    },
+  });
+  requireOk(await allocationFailure.prepare(
+    "allocation-failure-session",
+    profile(),
+    provider,
+    new PortableRenderResourcePreflightAdapter(),
+  ), "prepare allocation-failure renderer");
+  const rejectedAllocation = allocationFailure.preflight([
+    {
+      sessionId: "allocation-failure-session", sequence: 0, frame: 0, substep: 0,
+      kind: "create-object", renderObjectId: "allocation.first",
+      poolFamily: "normal", role: "note-root", parentObjectId: null,
+    },
+    {
+      sessionId: "allocation-failure-session", sequence: 1, frame: 0, substep: 0,
+      kind: "create-object", renderObjectId: "allocation.second",
+      poolFamily: "normal", role: "note-root", parentObjectId: null,
+    },
+  ]);
+  equal(rejectedAllocation.status, "evidence-required", "Pixi allocation fails in preflight");
+  equal(allocationFailure.snapshot().state, "ready", "allocation rejection is non-terminal");
+  equal(allocationFailure.snapshot().nextSequence, 0, "allocation rejection consumes no sequence");
+  equal(allocationFailure.sceneSnapshot().length, 0, "allocation rejection creates no scene object");
+  equal(allocationFailure.stage.children.length, 0, "allocation rejection leaves stage empty");
+  requireOk(allocationFailure.dispose(), "dispose allocation-failure renderer");
+
+  const reserved: Sprite[] = [];
+  const discardRenderer = new PixiRendererBackend(decoder, {
+    create() {
+      const node = new Sprite({ texture: Texture.EMPTY });
+      reserved.push(node);
+      return node;
+    },
+  });
+  requireOk(await discardRenderer.prepare(
+    "discard-session",
+    profile(),
+    provider,
+    new PortableRenderResourcePreflightAdapter(),
+  ), "prepare reservation-discard renderer");
+  const discardBatch = requireOk(discardRenderer.preflight([{
+    sessionId: "discard-session", sequence: 0, frame: 0, substep: 0,
+    kind: "create-object", renderObjectId: "discard.reserved",
+    poolFamily: "normal", role: "note-root", parentObjectId: null,
+  }]), "reserve detached Pixi node");
+  equal(discardRenderer.sceneSnapshot().length, 0, "reserved node is detached during preflight");
+  equal(reserved[0]?.destroyed, false, "reserved node remains live while capability pending");
+  requireOk(discardRenderer.discard(discardBatch), "discard Pixi reservation");
+  equal(reserved[0]?.destroyed, true, "discard destroys reserved Pixi node");
+  equal(discardRenderer.snapshot().nextSequence, 0, "discarded reservation consumes no sequence");
+  requireOk(discardRenderer.dispose(), "dispose reservation-discard renderer");
 
   const contextRenderer = new PixiRendererBackend(decoder);
   requireOk(await contextRenderer.prepare(

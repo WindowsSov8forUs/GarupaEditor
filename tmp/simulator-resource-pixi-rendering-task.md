@@ -229,6 +229,12 @@
 - `discard()`、context loss、backend dispose与commit异常都会销毁尚未进入scene ownership的reservation；正常commit只消费对应sequence节点，支持同批release后复用render identity而不按ID覆盖reservation。
 - 此子批只前移可预见的Pixi对象allocation失败；标准Pixi addChild/property mutation的不可恢复JavaScript异常仍按terminal fault处理，并继续列为RP12开放原子回滚项。
 
+### 1.20 2026-08-01 RP12 Pixi object allocation reservation test子批
+
+- Pixi suite注入第二次create时throw的factory，验证首个detached reservation被销毁、scene/stage保持空、sequence保持0且renderer继续ready。
+- 另一路显式preflight单个create后discard，验证capability pending期间节点detached/live、discard后节点destroyed且不消费sequence。
+- 隔离`tsc`、Pixi suite、render-contract 6组与dependency verifier通过。
+
 ## 2. 固定范围
 
 ### 2.1 纳入范围
