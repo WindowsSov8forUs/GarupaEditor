@@ -57,6 +57,9 @@ export {
 } from "./backends/resources/localResourceProvider";
 export type { LocalRenderResource } from "./backends/resources/localResourceProvider";
 export { sha256UpperHex } from "./backends/resources/sha256";
+export { PixiRendererBackend } from "./backends/pixi/pixiRendererBackend";
+export type { PixiTextureDecoder } from "./backends/pixi/pixiRendererBackend";
+export { BrowserPixiTextureDecoder } from "./backends/pixi/browserPixiTextureDecoder";
 export {
   createNoteBatchInformationList,
   MusicScoreBezierConverter,

@@ -247,6 +247,10 @@ export class RecordingSimulatorRendererBackend implements SimulatorRendererBacke
     return Object.freeze([...this.commands]);
   }
 
+  recordTerminalFault(capability: string, boundary: string): EvidenceRequired {
+    return this.latchFault(capability, boundary);
+  }
+
   dispose(): SimulatorResult<void> {
     if (this.state === "disposed") return ok(undefined);
     this.objects.clear();

@@ -12,7 +12,7 @@
 - 锁定`libil2cpp.so` SHA-256：`815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F`。
 - 锁定`global-metadata.dat` SHA-256：`298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F`。
 - 当前Reverse基线提交：`60410ae02f69b9d78cc554717b3dd04b941cd0c2`；只消费该提交及其祖先中已提交、已push、可校验对象。
-- 当前状态：**RP00–RP03已关闭；RP04正在实施。Note root setup/activate/deactivate与基础Score/Combo/Result/Life HUD Reflect producer已接入；下一子批为Note transform、mesh/line/mask及Skill/HUD animation。原始HAB UnityFS、natural HAB R1与原始HAB frame保持`habahiro_exact_parity_gate=open-not-claimed`。`production_authorization=true`仅授权显式fidelity选择；必须显示`Approximate HABAHIRO`、禁止静默fallback、production/test联网、资源二进制入库与原作parity宣称。**
+- 当前状态：**RP00–RP03已关闭；RP04/RP07/RP08的已证实producer子集与RP10本地provider已落地，当前实施RP10/RP11 Pixi v8后端。已闭合本地bytes browser decode、Texture/subtexture cache、Sprite bind、基础transform/portable ordering、引用计数与release；mesh/line/mask/HUD可见映射、animation及RP12完整failure矩阵继续失败关闭。原始HAB UnityFS、natural HAB R1与原始HAB frame保持`habahiro_exact_parity_gate=open-not-claimed`。`production_authorization=true`仅授权显式fidelity选择；必须显示`Approximate HABAHIRO`、禁止静默fallback、production/test联网、资源二进制入库与原作parity宣称。**
 - 计划证据包：`tmp/simulator-reverse-evidence/resource-pixi-rendering/`，只在Reverse新证据提交并push后创建。
 - 计划验收记录：`tmp/simulator-resource-pixi-rendering-acceptance.md`，RP14时创建。
 
@@ -80,9 +80,9 @@
 | RP07 恢复render pool与生命周期 | 阻塞于RP06 | acquire/reuse/release、pause/reset/fault/dispose顺序匹配 |
 | RP08 恢复基础HUD消费链 | 阻塞于RP07 | Score/Combo/AP/AddScore/Result/Life exact scene state匹配 |
 | RP09 恢复HUD overlay与动画 | 阻塞于RP08 | Skill/guard/heal/score-up/judge-line overlay及clock匹配 |
-| RP10 建立portable resource backend | **进行中：本地provider/hash/PNG preflight已完成** | async prepare、hash/atlas validation已落地，待Pixi decode/cache/dispose映射 |
-| RP11 建立Pixi v8 renderer | 阻塞于RP10 | Sprite/Mesh/Graphics/Mask/Text/ordering映射和command消费匹配 |
-| RP12 failure/context/dispose矩阵 | 阻塞于RP11 | backend异常、context loss、重复生命周期与零残留边界匹配 |
+| RP10 建立portable resource backend | **进行中：decode/cache/subtexture/ref已完成** | 本地bytes atomic decode、Texture/subtexture cache与引用计数已落地；material/animation ownership待后续映射 |
+| RP11 建立Pixi v8 renderer | **进行中：Sprite语义子集已完成** | Sprite bind、pivot、blend、transform、portable ordering与release已落地；Mesh/Graphics/Mask/Text/Slider继续失败关闭 |
+| RP12 failure/context/dispose矩阵 | **进行中：terminal/context基础已完成** | decode零残留、context terminal fault、重复prepare/dispose已落地；backend throw与完整PR35–PR38矩阵待关闭 |
 | RP13 production oracle与全回归 | 阻塞于RP12 | PR01–PR40、ordinary/HABAHIRO、dependency、证据index和上游回归通过 |
 | RP14 独立验收 | 阻塞于RP13 | 从提交后HEAD复验并创建acceptance，RP00–RP14全部closed |
 
@@ -191,6 +191,16 @@
 - provider只负责本地字节所有权，expected byte length/hash/dimension/atlas/cross-reference仍由renderer完整profile原子prepare验证；任何失败保持`unprepared/object=0/resource=0`。
 - 独立测试覆盖caller/read alias mutation、duplicate/missing ID、SHA-256 `abc`固定向量、PNG header/dimension拒绝及portable provider→recording renderer真实prepare。`render-contracts`增至6组并继续通过dependency/724项证据校验。
 - 本子批尚未创建Pixi Texture/Geometry或实现decode cache/reference count；RP11 adapter完成前不将portable preflight误称为可见renderer。
+
+### 1.15 2026-08-01 RP10/RP11 Pixi Sprite adapter production子批
+
+- 新建`backends/pixi/PixiRendererBackend`，锁定Pixi v8真实`Container`、`Sprite`、`Texture`与`Rectangle` API；engine、host及backend-neutral合同不导入Pixi，dependency verifier只对专用`backends/pixi/`开放该依赖。
+- `prepare()`先用隔离recording validator完整读取并校验profile全部本地bytes，再从同一只读cache decode；任一decode、dimension、Texture alias或subtexture创建失败都会逆序销毁临时Texture、清空cache索引并保持`unprepared/object=0/resource=0`。
+- `BrowserPixiTextureDecoder`只消费provider bytes，经`Blob→createImageBitmap`并显式指定orientation、premultiply和color-space策略；无browser decoder时返回结构化`evidence-required`，不使用URL、Image元素、Pixi Assets loader或网络fallback。
+- 每个image只建立一个base Texture，并按exact atlas row建立共享source的subtexture；绑定时显式应用pivot、scale/wrap/mipmap/premultiply与blend profile，按logical/exact key计数Sprite引用，release减引用，dispose按object→subtexture→base Texture逆序归零。
+- 当前Pixi command子集只接受稳定identity的create/acquire、activate/hide/deactivate、exact Sprite bind、无mask transform、四元portable ordering与child-first release；ordering通过兄弟节点显式词典序重排，不使用Pixi默认zIndex。
+- mesh、line、threshold、mask、HUD可见state和animation尚无完整portable对象映射，preflight会在领域mutation前拒绝并保持scene/sequence不变，不用Container metadata、白Texture或默认Text伪装可见实现。
+- 增加context-loss terminal入口与first-fault precedence；duplicate prepare不替换live session，dispose释放对象与资源且幂等。完整backend throw原子回滚和PR35–PR38矩阵仍属于RP12开放项。
 
 ## 2. 固定范围
 
