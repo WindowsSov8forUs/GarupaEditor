@@ -175,7 +175,14 @@
 - 有Score/Life profile时，`InGameManager.initialize()`在Note pool前建立AddScore、Combo、Result、Score、Life与overlay稳定HUD identity，冻结初始Score/Life，Combo/Result/overlay初始隐藏；HAB degraded额外创建并持续显示`Approximate HABAHIRO` fidelity label。
 - OneFrame Reflect后先生成Score plan，再按ordinary R1首判定顺序preflight七命令：`AddScore state→Combo state→Combo Show/Hide→Result Show→Result state→Score state→Life state`。renderer拒绝会discard Score plan并在Record mutation前fault；通过后先commit领域plan再提交已验证renderer capability。
 - HUD state只消费owner已冻结的score/combo/allPerfect/result/current/max/upper/game-over与batch totals，不让backend重算Score/Life/representative result。本批不实现digit layout、颜色、fill geometry、clip clock或Skill overlay，留给RP08/RP09专批。
-- `tsc`、score-life-state全回归、render-contract与dependency通过；host测试确认future HUD score等于commit后的Record且七命令顺序匹配R1。
+- `tsc`、score-life-state全回归、render-contract与dependency通过；host测试确认future HUD score等于commit后的Record且七命令顺序匹配R1，拒绝测试确认Record/Combo与scene均零mutation。
+
+### 1.13 2026-08-01 RP07 session release production子批
+
+- producer只在对应setup batch成功commit后记录engine-authored render identity创建顺序；preflight失败或discard不会污染release inventory。
+- host dispose先验证typed renderer仍为同session ready且无fault，避免context/backend故障后先改领域；随后复用Note active→Deactive两阶段门，按创建顺序逆序preflight/commit全部`release-object`，最后调用backend dispose归零object/resource ownership。
+- recording renderer dispose保留已冻结command trace，仅清理scene/profile/session/resource/fault/pending capability；因此release顺序可审计而snapshot为`disposed/objectCount=0/resourceCount=0`。重复host/backend dispose幂等且不追加命令。
+- 当前只有已实现的Note root与基础HUD identity进入release inventory；后续mesh/line/mask/animation child必须在各自create commit后加入同一逆序ownership链。
 
 ## 2. 固定范围
 

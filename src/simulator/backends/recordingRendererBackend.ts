@@ -250,7 +250,6 @@ export class RecordingSimulatorRendererBackend implements SimulatorRendererBacke
   dispose(): SimulatorResult<void> {
     if (this.state === "disposed") return ok(undefined);
     this.objects.clear();
-    this.commands.length = 0;
     this.profile = null;
     this.sessionId = null;
     this.fidelity = null;

@@ -35,6 +35,7 @@ export class RenderOwnerTransaction {
   constructor(
     private readonly renderer: SimulatorRendererBackend,
     private readonly batch: RenderCommandBatch | null,
+    private readonly onCommit: () => void = () => {},
   ) {}
 
   commit(): SimulatorResult<void> {
@@ -44,7 +45,10 @@ export class RenderOwnerTransaction {
     const committed = this.batch === null
       ? ok(undefined)
       : this.renderer.commit(this.batch);
-    if (committed.status === "ok") this.state = "committed";
+    if (committed.status === "ok") {
+      this.state = "committed";
+      this.onCommit();
+    }
     return committed;
   }
 
@@ -73,6 +77,7 @@ const HUD_OBJECTS = Object.freeze({
 export class RenderCommandProducer {
   private frame = 0;
   private substep = 0;
+  private readonly createdObjectIds: string[] = [];
 
   constructor(
     readonly sessionId: string,
@@ -132,17 +137,21 @@ export class RenderCommandProducer {
     if (validation.status !== "ok") return validation;
     const base = this.commandBase(0);
     const commands: RenderCommand[] = [];
+    const created: string[] = [];
     const create = (
       renderObjectId: string,
       role: "hud-score" | "hud-combo" | "hud-result" | "hud-life" | "hud-overlay" | "fidelity-label",
-    ) => commands.push({
+    ) => {
+      created.push(renderObjectId);
+      commands.push({
       ...base(commands.length),
       kind: "create-object",
       renderObjectId,
       poolFamily: role,
       role,
       parentObjectId: null,
-    });
+      });
+    };
     create(HUD_OBJECTS.addScore, "hud-overlay");
     create(HUD_OBJECTS.combo, "hud-combo");
     commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: HUD_OBJECTS.combo });
@@ -177,7 +186,7 @@ export class RenderCommandProducer {
         state: Object.freeze({ label: fidelity.visibleLabel, visible: true }),
       });
     }
-    return this.preflight(commands);
+    return this.preflight(commands, () => this.createdObjectIds.push(...created));
   }
 
   preflightHudReflect(
@@ -254,8 +263,10 @@ export class RenderCommandProducer {
     }
     const base = this.commandBase(0);
     const commands: RenderCommand[] = [];
+    const created: string[] = [];
     for (const pool of pools) {
       const renderObjectId = rootRenderObjectId(pool.poolObjectId);
+      created.push(renderObjectId);
       commands.push({
         ...base(commands.length),
         kind: "create-object",
@@ -270,7 +281,7 @@ export class RenderCommandProducer {
         renderObjectId,
       });
     }
-    return this.preflight(commands);
+    return this.preflight(commands, () => this.createdObjectIds.push(...created));
   }
 
   preflightNoteActivation(
@@ -334,12 +345,30 @@ export class RenderCommandProducer {
     ]);
   }
 
+  preflightSessionRelease(): SimulatorResult<RenderOwnerTransaction> {
+    const validation = this.validate();
+    if (validation.status !== "ok") return validation;
+    if (this.createdObjectIds.length === 0) {
+      return ok(new RenderOwnerTransaction(this.renderer, null));
+    }
+    const base = this.commandBase(this.substep);
+    const commands: RenderCommand[] = [...this.createdObjectIds]
+      .reverse()
+      .map((renderObjectId, index) => ({
+        ...base(index),
+        kind: "release-object" as const,
+        renderObjectId,
+      }));
+    return this.preflight(commands, () => { this.createdObjectIds.length = 0; });
+  }
+
   private preflight(
     commands: readonly RenderCommand[],
+    onCommit: () => void = () => {},
   ): SimulatorResult<RenderOwnerTransaction> {
     const batch = this.renderer.preflight(commands);
     return batch.status === "ok"
-      ? ok(new RenderOwnerTransaction(this.renderer, batch.value))
+      ? ok(new RenderOwnerTransaction(this.renderer, batch.value, onCommit))
       : batch;
   }
 

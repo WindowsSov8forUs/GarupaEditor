@@ -53,6 +53,7 @@ class SimulatorEngineHost implements SimulatorEngine {
     private readonly inGameManager: InGameManager,
     private readonly inputDispatcher: GamePlayInputDispatcher,
     private readonly renderingSessionId: string | null,
+    private readonly renderProducer: RenderCommandProducer | null,
     readonly backends: SimulatorBackends,
   ) {}
 
@@ -204,7 +205,18 @@ class SimulatorEngineHost implements SimulatorEngine {
   }
 
   dispose(): SimulatorResult<void> {
-    return this.inGameManager.dispose();
+    if (this.inGameManager.state === "disposed") return ok(undefined);
+    const rendererValidation = this.renderProducer?.validate();
+    if (rendererValidation?.status === "evidence-required") return rendererValidation;
+    const domainDispose = this.inGameManager.dispose();
+    if (domainDispose.status !== "ok") return domainDispose;
+    const release = this.renderProducer?.preflightSessionRelease() ?? null;
+    if (release?.status === "evidence-required") return release;
+    if (release?.status === "ok") {
+      const committed = release.value.commit();
+      if (committed.status !== "ok") return committed;
+    }
+    return this.backends.rendering?.dispose() ?? ok(undefined);
   }
 }
 
@@ -333,6 +345,7 @@ export function createSimulatorEngine(
     inGameManager,
     inputDispatcher,
     renderingSessionId,
+    renderProducer,
     backends,
   ));
 }
