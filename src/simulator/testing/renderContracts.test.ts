@@ -3,6 +3,7 @@ import { RecordingSimulatorRendererBackend } from "../backends/recordingRenderer
 import {
   RenderFidelityLabel,
   type RenderCommand,
+  type RenderCommandBatch,
   type RenderResourcePreflightAdapter,
   type RenderResourceProfile,
   type SimulatorResourceProvider,
@@ -11,6 +12,7 @@ import {
   createRenderFloat32,
   validateAndFreezeRenderProfile,
 } from "../backends/renderingValidation";
+import type { ScoreLifeStateProfile } from "../engine/data/scoreLifeState";
 import { evidenceRequired, ok, type SimulatorResult } from "../engine/evidence";
 import { createSimulatorEngine } from "../host/createSimulatorEngine";
 import { engineInput, noteBatch } from "./firstSliceFixtures";
@@ -39,6 +41,21 @@ function requireOk<T>(result: SimulatorResult<T>, message: string): T {
     throw new Error(`${message}: ${result.capability}`);
   }
   return result.value;
+}
+
+class RejectingHudRenderer extends RecordingSimulatorRendererBackend {
+  override preflight(commands: readonly RenderCommand[]): SimulatorResult<RenderCommandBatch> {
+    if (commands.some((command) =>
+      command.kind === "set-hud" &&
+      Object.prototype.hasOwnProperty.call(command.state, "addScore"))) {
+      return evidenceRequired(
+        "test.render-hud-rejected",
+        ["PR36"],
+        "The test renderer rejects the Reflect HUD batch before scene mutation.",
+      );
+    }
+    return super.preflight(commands);
+  }
 }
 
 class LocalProvider implements SimulatorResourceProvider {
@@ -183,6 +200,26 @@ function cloneProfile(value: RenderResourceProfile): RenderResourceProfile {
 
 function f32(value: number) {
   return requireOk(createRenderFloat32(Math.fround(value)), "create Float32");
+}
+
+function scoreProfile(): ScoreLifeStateProfile {
+  return {
+    schemaVersion: 1,
+    sessionId: SESSION,
+    scoreLevel: 5,
+    deckTotalParameter: Math.fround(1000),
+    freeLiveEventBonusDeckTotalParameter: Math.fround(0),
+    life: {
+      initialLife: 1000,
+      playerMaxLife: 1000,
+      lifeUpperLimit: 2000,
+      missDamage: -100,
+      badDamage: -50,
+    },
+    mode: { kind: "auto-live", comboCoefficient: Math.fround(1) },
+    skills: [],
+    fever: { difficulty: "special", ownTeamMemberCount: 1 },
+  };
 }
 
 function createObject(sequence: number, objectId = "object.root"): RenderCommand {
@@ -375,6 +412,79 @@ async function testCommandsAndTerminalFault(): Promise<void> {
   console.log("ok 3 - session, sequence, identity, exact resource and terminal fault");
 }
 
+async function testHudReflectAtomic(): Promise<void> {
+  const renderer = new RecordingSimulatorRendererBackend();
+  requireOk(await renderer.prepare(SESSION, profile(), new LocalProvider(), preflight()), "HUD renderer prepare");
+  const baseInput = engineInput([noteBatch(["hud-normal"], 96)]);
+  const input = {
+    ...baseInput,
+    runtime: {
+      ...baseInput.runtime,
+      playMode: {
+        kind: "auto-live" as const,
+        resultTransform: "identity-no-active-situation-skill" as const,
+      },
+    },
+    scoreLifeState: scoreProfile(),
+    rendering: { sessionId: SESSION, resources: RESOURCES },
+  };
+  const engine = requireOk(
+    createSimulatorEngine(input, createRecordingSimulatorBackends(renderer)),
+    "HUD engine create",
+  );
+  requireOk(engine.initialize(), "HUD engine initialize");
+  equal(renderer.snapshot().objectCount, 7, "six HUD objects plus one Note root");
+  const before = requireOk(engine.snapshot(), "HUD before snapshot");
+  equal(before.managers.scoreLifeState?.record.score, 0, "score before judgement");
+  requireOk(engine.step(0), "HUD activation frame");
+  for (let frame = 0; frame < 120; frame += 1) {
+    const snapshot = requireOk(engine.snapshot(), `HUD snapshot ${frame}`);
+    if ((snapshot.managers.scoreLifeState?.record.score ?? 0) > 0) break;
+    requireOk(engine.step(1 / 60), `HUD judgement frame ${frame}`);
+  }
+  const after = requireOk(engine.snapshot(), "HUD after snapshot");
+  assert((after.managers.scoreLifeState?.record.score ?? 0) > 0, "score owner committed");
+  const commands = renderer.commandSnapshot();
+  const reflected = commands.slice(-7);
+  equal(reflected[0]?.kind, "set-hud", "AddScore first");
+  equal(reflected[1]?.kind, "set-hud", "Combo update second");
+  equal(reflected[2]?.kind, "activate-object", "Combo show third");
+  equal(reflected[3]?.kind, "activate-object", "Result show fourth");
+  equal(reflected[4]?.kind, "set-hud", "Result route fifth");
+  equal(reflected[5]?.kind, "set-hud", "Score update sixth");
+  equal(reflected[6]?.kind, "set-hud", "Life update seventh");
+  if (reflected[5]?.kind === "set-hud") {
+    equal(reflected[5].state.score, after.managers.scoreLifeState?.record.score,
+      "HUD score equals committed owner plan");
+  }
+  requireOk(engine.dispose(), "HUD engine dispose");
+
+  const rejecting = new RejectingHudRenderer();
+  requireOk(await rejecting.prepare(SESSION, profile(), new LocalProvider(), preflight()),
+    "rejecting HUD renderer prepare");
+  const rejectedEngine = requireOk(
+    createSimulatorEngine(input, createRecordingSimulatorBackends(rejecting)),
+    "rejecting HUD engine create",
+  );
+  requireOk(rejectedEngine.initialize(), "rejecting HUD engine initialize");
+  requireOk(rejectedEngine.step(0), "rejecting HUD activation");
+  let rejection: SimulatorResult<void> = ok(undefined);
+  for (let frame = 0; frame < 120 && rejection.status === "ok"; frame += 1) {
+    rejection = rejectedEngine.step(1 / 60);
+  }
+  equal(rejection.status, "evidence-required", "HUD renderer rejection reaches owner");
+  const rejectedSnapshot = requireOk(rejectedEngine.snapshot(), "rejected HUD snapshot");
+  equal(rejectedSnapshot.managers.scoreLifeState?.record.score, 0,
+    "renderer rejection leaves Record score unchanged");
+  equal(rejectedSnapshot.managers.scoreLifeState?.record.currentCombo, 0,
+    "renderer rejection leaves Record combo unchanged");
+  equal(rejecting.commandSnapshot().some((command) =>
+    command.kind === "set-hud" &&
+    Object.prototype.hasOwnProperty.call(command.state, "addScore")), false,
+  "rejected HUD batch has zero scene mutation");
+  console.log("ok 4 - Score/Life plan commits HUD in R1 order and rejects atomically");
+}
+
 async function testHostReadyGate(): Promise<void> {
   const unprepared = new RecordingSimulatorRendererBackend();
   const backends = createRecordingSimulatorBackends(unprepared);
@@ -424,15 +534,16 @@ async function testHostReadyGate(): Promise<void> {
   equal(mismatch.status, "evidence-required", "cross-session host rejected");
   equal(createSimulatorEngine(engineInput(), createRecordingSimulatorBackends(unprepared)).status,
     "evidence-required", "typed backend requires explicit host session");
-  console.log("ok 4 - host ready and exact-session gate precedes owner mutation");
+  console.log("ok 5 - host ready and exact-session gate precedes owner mutation");
 }
 
 async function main(): Promise<void> {
   await testProfileValidationAndAliases();
   await testAtomicPrepare();
   await testCommandsAndTerminalFault();
+  await testHudReflectAtomic();
   await testHostReadyGate();
-  console.log("render contract tests passed: 4");
+  console.log("render contract tests passed: 5");
 }
 
 void main().catch((error: unknown) => {
