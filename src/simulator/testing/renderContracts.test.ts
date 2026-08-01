@@ -526,6 +526,15 @@ async function testHostReadyGate(): Promise<void> {
   equal(lifecycle[4]?.kind, "hide-object", "deactivation hide command");
   equal(lifecycle[5]?.kind, "deactivate-object", "deactivation state command");
   requireOk(engine.dispose(), "prepared host dispose");
+  equal(unprepared.snapshot().state, "disposed", "typed renderer disposed with host");
+  equal(unprepared.snapshot().objectCount, 0, "host dispose releases render objects");
+  equal(unprepared.snapshot().resourceCount, 0, "host dispose releases resources");
+  const disposedTrace = unprepared.commandSnapshot();
+  equal(disposedTrace[disposedTrace.length - 1]?.kind, "release-object",
+    "release command retained in recording trace");
+  const traceLength = disposedTrace.length;
+  requireOk(engine.dispose(), "duplicate host dispose");
+  equal(unprepared.commandSnapshot().length, traceLength, "duplicate dispose adds no commands");
 
   const mismatch = createSimulatorEngine(
     { ...engineInput(), rendering: { sessionId: "foreign", resources: RESOURCES } },
