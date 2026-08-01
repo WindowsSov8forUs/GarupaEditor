@@ -1,8 +1,11 @@
 import type {
+  RenderColor,
   RenderCommand,
   RenderCommandBatch,
+  RenderOrderingKey,
   SimulatorRendererBackend,
 } from "../../backends/renderingContracts";
+import { createRenderFloat32 } from "../../backends/renderingValidation";
 import {
   ButtonType,
   FrontNoteType,
@@ -18,6 +21,11 @@ import {
 import type { NoteFamily } from "../data/noteData";
 import type { InGameRecordSnapshot } from "../managers/inGameRecord";
 import type { ScoreLifeReflectPlan } from "../managers/scoreLifeStateManager";
+import {
+  advanceOrdinaryNoteMotion,
+  type OrdinaryNoteMotionResult,
+  type OrdinaryNoteMotionState,
+} from "./ordinaryNoteGeometry";
 
 export interface RenderEngineResourceBindings {
   readonly noteAtlasLogicalAssetId: string;
@@ -27,6 +35,17 @@ export interface RenderEngineResourceBindings {
 export interface RenderPoolIdentityPlan {
   readonly poolObjectId: string;
   readonly family: NoteFamily;
+}
+
+export interface OrdinaryNoteTransformVisualState {
+  readonly color: RenderColor;
+  readonly ordering: RenderOrderingKey;
+  readonly maskObjectId: null;
+}
+
+export interface PreparedOrdinaryNoteMotion {
+  readonly motion: OrdinaryNoteMotionResult;
+  readonly transaction: RenderOwnerTransaction;
 }
 
 export class RenderOwnerTransaction {
@@ -322,6 +341,45 @@ export class RenderCommandProducer {
       },
     ];
     return this.preflight(commands);
+  }
+
+  preflightOrdinaryNoteMotion(
+    poolObjectId: string,
+    motionState: OrdinaryNoteMotionState,
+    visualState: OrdinaryNoteTransformVisualState,
+  ): SimulatorResult<PreparedOrdinaryNoteMotion> {
+    const validation = this.validate();
+    if (validation.status !== "ok") return validation;
+    if (!isNonEmpty(poolObjectId) || visualState.maskObjectId !== null) {
+      return evidenceRequired(
+        "render.producer.invalid-ordinary-note-transform-owner",
+        ["RPR-D05", "RPR-D13", "PR10", "PR39"],
+        "Ordinary Note Move requires one pool identity and the confirmed unmasked root Sprite path.",
+      );
+    }
+    const motion = advanceOrdinaryNoteMotion(motionState);
+    if (motion.status !== "ok") return motion;
+    const rotation = createRenderFloat32(Math.fround(0));
+    if (rotation.status !== "ok") return rotation;
+    const renderObjectId = rootRenderObjectId(poolObjectId);
+    const base = this.commandBase(this.substep);
+    const transaction = this.preflight([{
+      ...base(0),
+      kind: "set-transform",
+      renderObjectId,
+      position: motion.value.position,
+      scale: Object.freeze({
+        x: motion.value.localScale.x,
+        y: motion.value.localScale.y,
+      }),
+      rotationDegrees: rotation.value,
+      color: visualState.color,
+      ordering: visualState.ordering,
+      maskObjectId: null,
+    }]);
+    return transaction.status === "ok"
+      ? ok(Object.freeze({ motion: motion.value, transaction: transaction.value }))
+      : transaction;
   }
 
   preflightNoteDeactivation(

@@ -16,6 +16,18 @@ import {
 
 const BASE_SECTION_COUNT = 10;
 const SYNC_LINE_WIDTH_FACTOR = Math.fround(0.2800000011920929);
+const NOTE_POSITION_BASE = Math.fround(1.1);
+const NOTE_POSITION_EXPONENT_SCALE = Math.fround(50);
+const NOTE_SCALE_ASPECT_BASE = Math.fround(0.996);
+const NOTE_SCALE_MIN_RATIOS = Object.freeze([
+  Math.fround(0.98),
+  Math.fround(0.988),
+  Math.fround(0.9898),
+  Math.fround(0.9899),
+  Math.fround(0.991),
+  Math.fround(0.9915),
+  Math.fround(0.9917),
+]);
 
 const BASE_INDICES = Object.freeze(Array.from(
   { length: BASE_SECTION_COUNT },
@@ -63,6 +75,124 @@ export interface OrdinarySyncLineGeometry {
   readonly start: RenderVector3;
   readonly end: RenderVector3;
   readonly width: RenderFloat32;
+}
+
+export interface OrdinaryNoteMotionState {
+  readonly progressRate: RenderFloat32;
+  readonly specificSpeed: RenderFloat32;
+  readonly deltaTime: RenderFloat32;
+  readonly realMoveSecond: RenderFloat32;
+  readonly goalPosition: RenderVector2;
+  readonly noteStartPosition: RenderVector2;
+  readonly currentPositionZ: RenderFloat32;
+  readonly noteSettingScale: RenderFloat32;
+  readonly launcherY: RenderFloat32;
+  readonly targetCenterY: RenderFloat32;
+  readonly highAspectRatio: RenderFloat32;
+  readonly buttonCount: number;
+  readonly virtualLaneControllerPresent: boolean;
+}
+
+export interface OrdinaryNoteMotionResult {
+  readonly progressRate: RenderFloat32;
+  readonly position: RenderVector3;
+  readonly localScale: RenderVector3;
+}
+
+export function getOrdinaryNoteArrivalSeconds(
+  specificSpeed: RenderFloat32,
+): SimulatorResult<RenderFloat32> {
+  if (!validateRenderFloat32(specificSpeed)) {
+    return reject(
+      "render.geometry.invalid-specific-speed",
+      "GetNoteArrivalSeconds requires one exact Float32 specific speed.",
+    );
+  }
+  const value = specificSpeed.value <= Math.fround(11.01)
+    ? Math.fround(
+      Math.fround(Math.fround(specificSpeed.value - Math.fround(1)) * Math.fround(-0.5)) +
+        Math.fround(5.5),
+    )
+    : Math.fround(
+      Math.fround(Math.fround(specificSpeed.value - Math.fround(11)) / Math.fround(-10)) +
+        Math.fround(0.5),
+    );
+  const arrival = createRenderFloat32(value);
+  return arrival.status === "ok" && arrival.value.value > 0
+    ? arrival
+    : reject(
+      "render.geometry.non-positive-arrival-seconds",
+      "The current Move path requires GetNoteArrivalSeconds to remain positive; unsupported speed inputs are not clamped.",
+    );
+}
+
+export function advanceOrdinaryNoteMotion(
+  state: OrdinaryNoteMotionState,
+): SimulatorResult<OrdinaryNoteMotionResult> {
+  if (
+    !validateRenderFloat32(state.progressRate) ||
+    !validateRenderFloat32(state.deltaTime) ||
+    state.deltaTime.value < 0 ||
+    !validateRenderFloat32(state.realMoveSecond) ||
+    state.realMoveSecond.value < 0 ||
+    !validateVector2(state.goalPosition) ||
+    !validateVector2(state.noteStartPosition) ||
+    !validateRenderFloat32(state.currentPositionZ) ||
+    !validateRenderFloat32(state.noteSettingScale) ||
+    state.noteSettingScale.value < 0 ||
+    !validateRenderFloat32(state.launcherY) ||
+    !validateRenderFloat32(state.targetCenterY) ||
+    !validateRenderFloat32(state.highAspectRatio) ||
+    !Number.isInteger(state.buttonCount) ||
+    state.buttonCount < 1 ||
+    state.buttonCount > 7 ||
+    typeof state.virtualLaneControllerPresent !== "boolean"
+  ) {
+    return reject(
+      "render.geometry.invalid-note-motion-state",
+      "Note Move requires complete current Float32 timing, scene positions, scale inputs and a 1..7 button count.",
+    );
+  }
+  if (state.virtualLaneControllerPresent) {
+    return reject(
+      "render.geometry.virtual-lane-motion-unimplemented",
+      "The consolidated ordinary producer authorizes only the null virtual-lane-controller branch.",
+    );
+  }
+  const arrival = getOrdinaryNoteArrivalSeconds(state.specificSpeed);
+  if (arrival.status !== "ok") return arrival;
+  const progressValue = state.progressRate.value === 0
+    ? Math.fround(state.realMoveSecond.value / arrival.value.value)
+    : Math.fround(
+      state.progressRate.value + Math.fround(state.deltaTime.value / arrival.value.value),
+    );
+  const progress = createRenderFloat32(progressValue);
+  if (progress.status !== "ok") return progress;
+  const exponent = Math.fround(
+    Math.fround(progress.value.value - Math.fround(1)) * NOTE_POSITION_EXPONENT_SCALE,
+  );
+  const curve = Math.fround(Math.pow(NOTE_POSITION_BASE, exponent));
+  const x = Math.fround(
+    state.noteStartPosition.x.value + Math.fround(
+      curve * Math.fround(
+        state.goalPosition.x.value - state.noteStartPosition.x.value,
+      ),
+    ),
+  );
+  const y = Math.fround(
+    state.noteStartPosition.y.value - Math.abs(Math.fround(
+      Math.fround(state.noteStartPosition.y.value - state.goalPosition.y.value) * curve,
+    )),
+  );
+  const position = vector3(x, y, state.currentPositionZ.value);
+  if (position.status !== "ok") return position;
+  const scale = calculateOrdinaryNoteScale(state, y);
+  if (scale.status !== "ok") return scale;
+  return ok(Object.freeze({
+    progressRate: progress.value,
+    position: position.value,
+    localScale: scale.value,
+  }));
 }
 
 export function buildOrdinaryBaseNoteMesh(
@@ -171,6 +301,36 @@ export function buildOrdinarySyncLine(
     end: end.value,
     width: width.value,
   }));
+}
+
+function calculateOrdinaryNoteScale(
+  state: OrdinaryNoteMotionState,
+  currentY: number,
+): SimulatorResult<RenderVector3> {
+  const denominator = Math.abs(Math.fround(
+    state.launcherY.value - state.targetCenterY.value,
+  ));
+  if (denominator === 0) {
+    return reject(
+      "render.geometry.degenerate-note-scale-range",
+      "calcNoteScale requires distinct Launcher and target-center Y positions.",
+    );
+  }
+  const verticalRate = Math.fround(
+    state.noteSettingScale.value * Math.fround(
+      Math.abs(Math.fround(state.launcherY.value - currentY)) / denominator,
+    ),
+  );
+  const aspect = Math.fround(Math.min(1, Math.max(0, state.highAspectRatio.value)));
+  const aspectRatio = Math.fround(
+    Math.fround(aspect * Math.fround(
+      NOTE_SCALE_MIN_RATIOS[state.buttonCount - 1]! - NOTE_SCALE_ASPECT_BASE,
+    )) + NOTE_SCALE_ASPECT_BASE,
+  );
+  const uniform = Math.fround(
+    Math.fround(verticalRate * aspectRatio) + Math.fround(Math.fround(1) - aspectRatio),
+  );
+  return vector3(uniform, uniform, Math.fround(0));
 }
 
 function validateBaseMeshState(

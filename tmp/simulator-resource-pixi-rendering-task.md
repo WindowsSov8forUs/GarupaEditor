@@ -339,6 +339,14 @@
 - Pixi suite的22/60 mesh与sync-line command改由production producer生成，再走既有preflight/commit、orthographic projection和quad expected，建立engine semantic geometry到Pixi adapter的端到端映射。
 - `tsc`、新producer suite与Pixi suite通过；未运行Vite/Tauri整体构建。
 
+### 1.35 2026-08-01 RP04 ordinary Note motion/transform production子批
+
+- `ordinaryNoteGeometry.ts`新增current `GetNoteArrivalSeconds`双分支、`CalcProgressRate`零值/非零值更新、non-virtual `CalcNotePosition` powf曲线与`calcNoteScale` perspective/aspect流水；每个managed算术写入按Float32固化。
+- X/Y均消费`pow(1.1,(progress-1)*50)`，Y为`startY-abs((startY-goalY)*curve)`；Z不猜曲线，严格保留`NoteBase.Move`调用前`Transform.position.z`。scale按7项current min-ratio与证据中的`highAspectRatio` clamp计算，输出current写入的uniform XY与Z=0。
+- `RenderCommandProducer.preflightOrdinaryNoteMotion`将motion结果映射成一个root `set-transform`事务，要求已建pool identity、ordinary null mask、显式color/ordering；返回motion与one-use transaction，renderer拒绝时不推进owner progress。
+- virtual-lane controller、non-positive arrival、缺字段/非法Float32、button count越界与degenerate scale denominator失败关闭；无speed/progress clamp，无默认scene值。
+- 本批只建立可事务化motion producer；NoteManager尚未拥有完整scene/motion初始化字段，因此未用不完整默认值强接生命周期。隔离`tsc`及现有render contract/geometry/Pixi suite通过。
+
 ## 2. 固定范围
 
 ### 2.1 纳入范围

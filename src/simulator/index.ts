@@ -188,17 +188,23 @@ export {
   rootRenderObjectId,
 } from "./engine/rendering/renderCommandProducer";
 export type {
+  OrdinaryNoteTransformVisualState,
+  PreparedOrdinaryNoteMotion,
   RenderEngineResourceBindings,
   RenderPoolIdentityPlan,
 } from "./engine/rendering/renderCommandProducer";
 export {
+  advanceOrdinaryNoteMotion,
   buildOrdinaryBaseNoteMesh,
   buildOrdinarySyncLine,
+  getOrdinaryNoteArrivalSeconds,
 } from "./engine/rendering/ordinaryNoteGeometry";
 export type {
   OrdinaryBaseNoteMeshGeometry,
   OrdinaryBaseNoteMeshOwnerState,
   OrdinaryNoteMeshEndpoint,
+  OrdinaryNoteMotionResult,
+  OrdinaryNoteMotionState,
   OrdinarySyncLineGeometry,
   OrdinarySyncLineOwnerState,
   OrdinarySyncLineTargetState,
