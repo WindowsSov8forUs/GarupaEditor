@@ -30,9 +30,14 @@ export interface PixiTextureDecoder {
   ): Promise<SimulatorResult<Texture>>;
 }
 
+export interface PixiSceneObjectFactory {
+  create(role: string, renderObjectId: string, roundPixels: boolean): Container;
+}
+
 interface PendingPixiBatch {
   readonly recordingBatch: RenderCommandBatch;
   readonly commands: readonly RenderCommand[];
+  readonly reservedNodes: ReadonlyMap<number, Container>;
 }
 
 interface PixiObjectRecord {
@@ -60,7 +65,10 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
   private readonly pending = new Map<RenderCommandBatch, PendingPixiBatch>();
   private profile: RenderResourceProfile | null = null;
 
-  constructor(private readonly decoder: PixiTextureDecoder) {
+  constructor(
+    private readonly decoder: PixiTextureDecoder,
+    private readonly objectFactory: PixiSceneObjectFactory = defaultObjectFactory,
+  ) {
     this.stage = new Container({ label: "GarupaSimulatorRoot", sortableChildren: true });
     this.stage.sortableChildren = true;
   }
@@ -173,10 +181,42 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       this.recording.discard(recordingBatch.value);
       return supported;
     }
+    const reservedNodes = new Map<number, Container>();
+    try {
+      for (const command of commands) {
+        if (command.kind !== "create-object" && command.kind !== "acquire-object") continue;
+        const node = this.objectFactory.create(
+          command.role,
+          command.renderObjectId,
+          this.profile!.scene.roundPixels,
+        );
+        if (
+          node.destroyed ||
+          node.parent !== null ||
+          (spriteRole(command.role) && !(node instanceof Sprite))
+        ) {
+          node.destroy({ children: true } as DestroyOptions);
+          throw new Error("invalid reserved Pixi node");
+        }
+        node.label = command.renderObjectId;
+        node.visible = false;
+        reservedNodes.set(command.sequence, node);
+      }
+    } catch {
+      for (const node of reservedNodes.values()) {
+        node.destroy({ children: true } as DestroyOptions);
+      }
+      this.recording.discard(recordingBatch.value);
+      return reject(
+        "render.pixi.preflight-object-create-threw",
+        "Pixi object allocation is reserved during preflight so allocation failure precedes domain mutation.",
+      );
+    }
     const capability = Object.freeze({ ...recordingBatch.value });
     this.pending.set(capability, Object.freeze({
       recordingBatch: recordingBatch.value,
       commands: Object.freeze(commands.map(copyPixiCommand)),
+      reservedNodes,
     }));
     return ok(capability);
   }
@@ -190,9 +230,10 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       );
     }
     try {
-      for (const command of pending.commands) this.apply(command);
+      for (const command of pending.commands) this.apply(command, pending.reservedNodes);
     } catch {
       this.pending.delete(batch);
+      this.destroyUnownedReservedNodes(pending.reservedNodes);
       this.recording.discard(pending.recordingBatch);
       return this.recording.recordTerminalFault(
         "render.pixi.scene-mutation-threw",
@@ -213,6 +254,9 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       );
     }
     this.pending.delete(batch);
+    for (const node of pending.reservedNodes.values()) {
+      node.destroy({ children: true } as DestroyOptions);
+    }
     return this.recording.discard(pending.recordingBatch);
   }
 
@@ -234,6 +278,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       );
     }
     for (const pending of this.pending.values()) {
+      this.destroyUnownedReservedNodes(pending.reservedNodes);
       this.recording.discard(pending.recordingBatch);
     }
     this.pending.clear();
@@ -289,6 +334,11 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       value.node.destroy({ children: true } as DestroyOptions);
     }
     this.objects.clear();
+    for (const pending of this.pending.values()) {
+      for (const node of pending.reservedNodes.values()) {
+        node.destroy({ children: true } as DestroyOptions);
+      }
+    }
     this.pending.clear();
     for (const texture of this.spriteTextures.values()) texture.destroy(false);
     for (const texture of this.baseTextures.values()) texture.destroy(true);
@@ -391,15 +441,14 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     return ok(undefined);
   }
 
-  private apply(command: RenderCommand): void {
+  private apply(
+    command: RenderCommand,
+    reservedNodes: ReadonlyMap<number, Container>,
+  ): void {
     switch (command.kind) {
       case "create-object":
       case "acquire-object": {
-        const node = spriteRole(command.role)
-          ? new Sprite({ texture: Texture.EMPTY, roundPixels: this.profile!.scene.roundPixels })
-          : new Container({ label: command.renderObjectId, sortableChildren: true });
-        node.label = command.renderObjectId;
-        node.visible = false;
+        const node = reservedNodes.get(command.sequence)!;
         const parent = command.parentObjectId === null
           ? this.stage
           : this.objects.get(command.parentObjectId)!.node;
@@ -488,6 +537,17 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     });
   }
 
+  private destroyUnownedReservedNodes(
+    reservedNodes: ReadonlyMap<number, Container>,
+  ): void {
+    const ownedNodes = new Set([...this.objects.values()].map((value) => value.node));
+    for (const node of reservedNodes.values()) {
+      if (!ownedNodes.has(node) && !node.destroyed) {
+        node.destroy({ children: true } as DestroyOptions);
+      }
+    }
+  }
+
   private resetPreparedTextures(): void {
     for (const texture of this.spriteTextures.values()) texture.destroy(false);
     for (const texture of this.baseTextures.values()) texture.destroy(true);
@@ -522,6 +582,14 @@ class CachingProvider implements SimulatorResourceProvider {
     return value === undefined ? undefined : Uint8Array.from(value);
   }
 }
+
+const defaultObjectFactory: PixiSceneObjectFactory = Object.freeze({
+  create(role: string, renderObjectId: string, roundPixels: boolean): Container {
+    return spriteRole(role)
+      ? new Sprite({ texture: Texture.EMPTY, roundPixels, label: renderObjectId })
+      : new Container({ label: renderObjectId, sortableChildren: true });
+  },
+});
 
 function applyTextureSettings(texture: Texture, asset: RenderResourceAssetProfile): void {
   const settings = asset.textureSettings!;

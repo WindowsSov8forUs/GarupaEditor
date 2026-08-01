@@ -82,7 +82,7 @@
 | RP09 恢复HUD overlay与动画 | 阻塞于RP08 | Skill/guard/heal/score-up/judge-line overlay及clock匹配 |
 | RP10 建立portable resource backend | **进行中：decode/cache/subtexture/ref已完成** | 本地bytes atomic decode、Texture/subtexture cache与引用计数已落地；material/animation ownership待后续映射 |
 | RP11 建立Pixi v8 renderer | **进行中：Sprite语义子集已完成** | Sprite bind、pivot、blend、transform、portable ordering与release已落地；Mesh/Graphics/Mask/Text/Slider继续失败关闭 |
-| RP12 failure/context/dispose矩阵 | **进行中：terminal/context/host cleanup已完成** | decode零残留、context terminal fault、host显式dispose归零与重复生命周期已落地；backend throw原子回滚与完整PR35–PR38矩阵待关闭 |
+| RP12 failure/context/dispose矩阵 | **进行中：allocation/terminal/context/host cleanup已完成** | decode与Pixi object allocation零scene残留、context terminal fault、host显式dispose归零已落地；commit期异常原子回滚与完整PR35–PR38矩阵待关闭 |
 | RP13 production oracle与全回归 | 阻塞于RP12 | PR01–PR40、ordinary/HABAHIRO、dependency、证据index和上游回归通过 |
 | RP14 独立验收 | 阻塞于RP13 | 从提交后HEAD复验并创建acceptance，RP00–RP14全部closed |
 
@@ -221,6 +221,13 @@
 - render-contract host测试新增active Note会话的合成terminal renderer fault；显式`engine.dispose()`后验证manager state=`disposed`、renderer state=`disposed`、object/resource为0且command trace不追加故障后deactivate/release。
 - 正常ready dispose、逆序release与重复dispose既有断言保持通过，确认terminal专用路径没有改变正常生命周期。
 - 隔离`tsc`、render-contract 6组、first-slice 17项及dependency verifier通过。
+
+### 1.19 2026-08-01 RP12 Pixi object allocation reservation子批
+
+- Pixi command preflight在返回capability前通过可注入`PixiSceneObjectFactory`构造所有create/acquire节点；节点保持detached且按command sequence绑定，领域owner mutation前即关闭构造失败与错误对象类型。
+- 任一构造throw、destroyed/parented对象或Sprite role类型不匹配都会销毁本批全部reservation、discard recording capability并保持renderer ready、sequence不变、scene为空；不把allocation失败延迟到领域提交后的commit。
+- `discard()`、context loss、backend dispose与commit异常都会销毁尚未进入scene ownership的reservation；正常commit只消费对应sequence节点，支持同批release后复用render identity而不按ID覆盖reservation。
+- 此子批只前移可预见的Pixi对象allocation失败；标准Pixi addChild/property mutation的不可恢复JavaScript异常仍按terminal fault处理，并继续列为RP12开放原子回滚项。
 
 ## 2. 固定范围
 
