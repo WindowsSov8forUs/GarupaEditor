@@ -362,6 +362,9 @@ export class RecordingSimulatorRendererBackend implements SimulatorRendererBacke
   }
 
   private latchFault(capability: string, boundary: string): EvidenceRequired {
+    if (this.fault !== null) {
+      return this.reject(this.fault.capability, this.fault.boundary);
+    }
     const rejected = this.reject(capability, boundary);
     this.fault = Object.freeze({ capability, boundary });
     this.state = "faulted";
