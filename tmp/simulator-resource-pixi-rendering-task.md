@@ -202,6 +202,13 @@
 - mesh、line、threshold、mask、HUD可见state和animation尚无完整portable对象映射，preflight会在领域mutation前拒绝并保持scene/sequence不变，不用Container metadata、白Texture或默认Text伪装可见实现。
 - 增加context-loss terminal入口与first-fault precedence；duplicate prepare不替换live session，dispose释放对象与资源且幂等。完整backend throw原子回滚和PR35–PR38矩阵仍属于RP12开放项。
 
+### 1.16 2026-08-01 RP10/RP11 Pixi Sprite adapter test子批
+
+- 新增`simulator:test:render-pixi`，从fresh临时目录编译后通过注入decoder seam在无DOM/无GPU环境构造真实Pixi v8 `TextureSource`、`Texture`、`Sprite`与`Container`，不读取证据目录、不联网、不调用Python。
+- 测试覆盖browser decoder无能力时显式拒绝、atomic prepare、base/subtexture cache、exact Sprite bind/pivot、transform、ordering、visibility、引用计数、child release、duplicate prepare/dispose、unsupported line零scene/sequence mutation及context-loss first terminal fault。
+- dependency verifier改为只允许专用`backends/pixi/`导入`pixi.js`，继续禁止engine、host和其余backend-neutral代码导入Pixi；Windows/POSIX路径分隔均显式处理。
+- 隔离`tsc`、Pixi suite、render-contract 6组、first-slice 17项、score/life全回归与724项资源/Pixi证据校验均通过；本测试批不将尚未实现的Mesh/Graphics/Mask/Text/animation标记为通过。
+
 ## 2. 固定范围
 
 ### 2.1 纳入范围

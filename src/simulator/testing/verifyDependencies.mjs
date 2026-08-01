@@ -1,9 +1,10 @@
 import { readFileSync, readdirSync } from "node:fs";
-import { dirname, extname, resolve } from "node:path";
+import { dirname, extname, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const simulatorRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const scannedRoots = ["engine", "host", "backends"].map((path) => resolve(simulatorRoot, path));
+const pixiBackendRoot = resolve(simulatorRoot, "backends", "pixi");
 const forbidden = [
   { label: "React", pattern: /(?:from\s+["']react(?:\/[^"']*)?["']|import\s+["']react)/ },
   { label: "Pixi", pattern: /(?:from\s+["']pixi\.js["']|import\s+["']pixi\.js["'])/ },
@@ -29,6 +30,9 @@ for (const root of scannedRoots) {
   for (const path of listTypeScriptFiles(root)) {
     const source = readFileSync(path, "utf8");
     for (const rule of forbidden) {
+      if (rule.label === "Pixi" && path.startsWith(`${pixiBackendRoot}${sep}`)) {
+        continue;
+      }
       if (rule.pattern.test(source)) {
         violations.push(`${rule.label}: ${path}`);
       }
