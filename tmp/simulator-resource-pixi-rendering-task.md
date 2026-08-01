@@ -368,6 +368,13 @@
 - session release断言逆序为`judge field → rhythm field → Note pool root`，preflight无mutation、commit按owner数消费3，覆盖跨field/Note lifecycle的统一释放栈。
 - `tsc`、producer suite与Pixi suite通过；runner内dependency/evidence verifier通过，未运行Vite/Tauri整体构建。
 
+### 1.39 2026-08-01 RP08/RP09 life-heal animation semantic production子批
+
+- natural ordinary R1在两次实体heal轨迹均观察到`InGameLifeGauge.playSkillEffectLifeHealAnimation`先于`UpdateView/updateLifeText`；current static profile锁定`LifeHealGauge` controller、1秒non-loop clip及曲线。
+- `ScoreLifeReflectPlan`新增owner-derived `lifeHealAnimation`，仅在本次Reflect至少一个实际`lifeDelta>0`时为true；不从最终life总值猜heal，也不扩展到R1未出现的damage-guard/Never Die。
+- HUD producer在life `set-hud`前插入`play-animation(life-heal,restart=true)`，保持R1 caller顺序并与整个Reflect batch共用原子preflight/commit；profile缺exact animation role时由backend失败关闭。
+- Pixi尚无可采样的portable animation-channel profile输入，继续拒绝animation command而非no-op；本批只关闭engine semantic producer，不冒充可见动画已落地。`tsc`、Score/Life与render-contract回归通过。
+
 ## 2. 固定范围
 
 ### 2.1 纳入范围

@@ -278,6 +278,15 @@ export class RenderCommandProducer {
       hudRole: "score",
       state: Object.freeze({ score: plan.record.score }),
     });
+    if (plan.lifeHealAnimation) {
+      commands.push({
+        ...base(commands.length),
+        kind: "play-animation",
+        renderObjectId: HUD_OBJECTS.life,
+        animationRole: "life-heal",
+        restart: true,
+      });
+    }
     commands.push({
       ...base(commands.length),
       kind: "set-hud",

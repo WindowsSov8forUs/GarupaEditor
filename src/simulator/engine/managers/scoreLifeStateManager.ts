@@ -47,6 +47,7 @@ export interface ScoreLifeReflectPlan {
   readonly entryCount: number;
   readonly reflect: ScoreLifeReflectBatch;
   readonly record: InGameRecordSnapshot;
+  readonly lifeHealAnimation: boolean;
 }
 
 interface PendingScoreLifeReflect {
@@ -264,6 +265,7 @@ export class ScoreLifeStateManager {
       entryCount: batch.entryCount,
       reflect,
       record: freezeRecordSnapshot(stagedRecord.snapshot()),
+      lifeHealAnimation: projections.some((entry) => entry.lifeDelta > 0),
     });
     this.pendingReflect = Object.freeze({ plan, stagedRecord });
     return ok(plan);
