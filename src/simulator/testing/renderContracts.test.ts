@@ -408,6 +408,13 @@ async function testHostReadyGate(): Promise<void> {
   if (produced[3]?.kind === "bind-resource") {
     equal(produced[3].exactKey, "note_normal_0", "owner-authored exact Sprite key");
   }
+  for (let frame = 0; frame < 120 && unprepared.snapshot().nextSequence === 4; frame += 1) {
+    requireOk(engine.step(1 / 60), `rendered note lifecycle frame ${frame}`);
+  }
+  equal(unprepared.snapshot().nextSequence, 6, "deactivation hide then deactivate order");
+  const lifecycle = unprepared.commandSnapshot();
+  equal(lifecycle[4]?.kind, "hide-object", "deactivation hide command");
+  equal(lifecycle[5]?.kind, "deactivate-object", "deactivation state command");
   requireOk(engine.dispose(), "prepared host dispose");
 
   const mismatch = createSimulatorEngine(
