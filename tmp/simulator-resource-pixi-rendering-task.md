@@ -82,7 +82,7 @@
 | RP09 恢复HUD overlay与动画 | 阻塞于RP08 | Skill/guard/heal/score-up/judge-line overlay及clock匹配 |
 | RP10 建立portable resource backend | **进行中：decode/cache/subtexture/ref已完成** | 本地bytes atomic decode、Texture/subtexture cache与引用计数已落地；material/animation ownership待后续映射 |
 | RP11 建立Pixi v8 renderer | **进行中：Sprite与R2 base Mesh语义子集已完成** | Sprite bind、pivot、blend、transform、ordering及22/60 MeshGeometry已落地；Line/Mask/Text/Slider与threshold shader继续失败关闭 |
-| RP12 failure/context/dispose矩阵 | **进行中：allocation/terminal/context/host cleanup已完成** | decode与Pixi object allocation零scene残留、context terminal fault、host显式dispose归零已落地；commit期异常原子回滚与完整PR35–PR38矩阵待关闭 |
+| RP12 failure/context/dispose矩阵 | **进行中：allocation/commit-terminal/context/host cleanup已完成** | decode与allocation零scene残留、commit mutation terminal scene reset、context fault、host dispose归零已落地；完整PR35–PR38组合矩阵待关闭 |
 | RP13 production oracle与全回归 | 阻塞于RP12 | PR01–PR40、ordinary/HABAHIRO、dependency、证据index和上游回归通过 |
 | RP14 独立验收 | 阻塞于RP13 | 从提交后HEAD复验并创建acceptance，RP00–RP14全部closed |
 
@@ -280,6 +280,13 @@
 - Pixi suite加入独立`material-texture`/`sync-line` profile资产，验证prepare只消费本地相同session已hash bytes并建立独立base Texture。
 - 正例按`create sync-line→bind exact material→set-line→activate`提交，断言preflight scene零mutation、commit生成4 vertices/6 indices、visible=true、material reference=1，再按line→mesh→root child-first release归零引用。
 - 反例覆盖non-sync role与missing material；两者均在scene/object mutation前返回`evidence-required`且不消费sequence。隔离Pixi suite、`tsc`、render-contract与dependency verifier通过。
+
+### 1.27 2026-08-01 RP12 commit mutation terminal scene reset生产子批
+
+- 任意通过preflight后发生的Pixi JavaScript scene mutation throw仍锁存首个`render.pixi.scene-mutation-threw` terminal fault，不重试、不转no-op，也不回写engine/domain owner。
+- terminal catch先discard recording capability，再从stage detached全部既有root，清空Pixi identity/resource-reference maps，并best-effort逆序销毁existing object、Geometry及本批detached reservation；base Texture继续由最终backend dispose统一释放。
+- recording backend增加仅供组合后端terminal路径调用的object reset，使fault snapshot的objectCount与已归零Pixi scene一致；session/fidelity/resource仍保留以支持结构化诊断和显式dispose。
+- 该路径选择terminal全scene归零而非恢复到故障前可继续渲染的scene：故障后renderer不可恢复，host依既有terminal cleanup清理domain owner并dispose backend；因此不存在部分可见scene或旧identity继续被误用。
 
 ## 2. 固定范围
 

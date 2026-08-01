@@ -250,8 +250,9 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       }
     } catch {
       this.pending.delete(batch);
-      this.destroyUnownedReservations(pending.reservedNodes, pending.reservedGeometry);
       this.recording.discard(pending.recordingBatch);
+      this.resetSceneAfterTerminalMutation(pending);
+      this.recording.resetObjectsAfterTerminalRendererMutation();
       return this.recording.recordTerminalFault(
         "render.pixi.scene-mutation-threw",
         "A Pixi scene exception terminates the renderer and is never converted to a no-op.",
@@ -656,6 +657,53 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     }
     for (const mesh of reservedGeometry.values()) {
       if (!ownedGeometry.has(mesh) && !mesh.destroyed) destroyMesh(mesh);
+    }
+  }
+
+  private resetSceneAfterTerminalMutation(pending: PendingPixiBatch): void {
+    const records = [...this.objects.values()].reverse();
+    this.objects.clear();
+    this.spriteReferenceCounts.clear();
+    try {
+      this.stage.removeChildren();
+    } catch {
+      // The terminal path continues best-effort cleanup after an injected Pixi exception.
+    }
+    for (const value of records) {
+      if (value.geometryContent !== null && !value.geometryContent.destroyed) {
+        try {
+          destroyMesh(value.geometryContent);
+        } catch {
+          // Terminal cleanup must continue with every remaining owned identity.
+        }
+      }
+      if (!value.node.destroyed) {
+        try {
+          value.node.removeFromParent();
+          value.node.destroy({ children: true } as DestroyOptions);
+        } catch {
+          // The scene identity is already detached from the backend ownership map.
+        }
+      }
+    }
+    for (const mesh of pending.reservedGeometry.values()) {
+      if (!mesh.destroyed) {
+        try {
+          destroyMesh(mesh);
+        } catch {
+          // Terminal cleanup is best effort after scene mutation has already failed.
+        }
+      }
+    }
+    for (const node of pending.reservedNodes.values()) {
+      if (!node.destroyed) {
+        try {
+          node.removeFromParent();
+          node.destroy({ children: true } as DestroyOptions);
+        } catch {
+          // The terminal renderer does not retain this reservation.
+        }
+      }
     }
   }
 
