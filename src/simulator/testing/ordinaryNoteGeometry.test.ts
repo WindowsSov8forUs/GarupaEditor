@@ -233,6 +233,78 @@ function main(): void {
   equal(rejectedMotion.status, "evidence-required", "renderer rejection returns before owner can advance progress");
   equal(renderer.nextSequence, 3, "renderer rejection consumes no sequence");
 
+  const fieldTransform = Object.freeze({
+    position: vector3(0, 0, 0),
+    scale: vector2(1, 1),
+    rotationDegrees: f32(0),
+    color: color(1, 1, 1, 1),
+    ordering: Object.freeze({
+      domainLayer: 1,
+      sourceDepthOrSortingOrder: 0,
+      sourceZ: f32(0),
+      creationSequence: 0,
+    }),
+    maskObjectId: null,
+  });
+  const fieldSetup = requireOk(producer.preflightFieldSetup([
+    {
+      renderObjectId: "render:field:rhythm",
+      role: "field-line",
+      logicalAssetId: "asset.field",
+      exactKey: "bg_line_rhythm",
+      ...fieldTransform,
+    },
+    {
+      renderObjectId: "render:field:judge",
+      role: "judge-line",
+      logicalAssetId: "asset.judge",
+      exactKey: "game_play_line",
+      ...fieldTransform,
+      ordering: { ...fieldTransform.ordering, sourceDepthOrSortingOrder: 1, creationSequence: 1 },
+    },
+  ]), "preflight field setup");
+  equal(renderer.nextSequence, 3, "field preflight consumes no sequence");
+  const fieldCommands = renderer.commands.slice(-8);
+  equal(
+    fieldCommands.map((command) => command.kind).join(","),
+    "create-object,bind-resource,set-transform,activate-object,create-object,bind-resource,set-transform,activate-object",
+    "each field owner preserves create-bind-transform-activate order",
+  );
+  const fieldBinding = fieldCommands[1];
+  if (fieldBinding?.kind !== "bind-resource") throw new Error("missing field resource binding");
+  equal(fieldBinding.logicalAssetId, "asset.field", "field logical resource is caller-authored");
+  equal(fieldBinding.exactKey, "bg_line_rhythm", "field exact key is caller-authored");
+  requireOk(fieldSetup.commit(), "commit field setup");
+  equal(renderer.nextSequence, 11, "two field owners consume eight commands");
+  const invalidField = producer.preflightFieldSetup([
+    {
+      renderObjectId: "duplicate",
+      role: "field-line",
+      logicalAssetId: "asset.field",
+      exactKey: "bg_line_rhythm",
+      ...fieldTransform,
+    },
+    {
+      renderObjectId: "duplicate",
+      role: "judge-line",
+      logicalAssetId: "asset.judge",
+      exactKey: "game_play_line",
+      ...fieldTransform,
+    },
+  ]);
+  equal(invalidField.status, "evidence-required", "duplicate field identity fails before backend");
+  equal(renderer.nextSequence, 11, "invalid field plan consumes no sequence");
+  const release = requireOk(producer.preflightSessionRelease(), "preflight reverse session release");
+  const releaseCommands = renderer.commands.slice(-3);
+  equal(
+    releaseCommands.map((command) => command.renderObjectId).join(","),
+    "render:field:judge,render:field:rhythm,render:normal:0:root",
+    "session release reverses committed field and pool creation order",
+  );
+  equal(renderer.nextSequence, 11, "release preflight consumes no sequence");
+  requireOk(release.commit(), "commit reverse session release");
+  equal(renderer.nextSequence, 14, "release consumes one command per committed owner");
+
   const mesh = requireOk(buildOrdinaryBaseNoteMesh(meshState), "build ordinary base mesh");
   equal(mesh.vertices.length, 22, "base mesh vertex count");
   equal(mesh.indices.length, 60, "base mesh index count");

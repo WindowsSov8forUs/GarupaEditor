@@ -361,6 +361,13 @@
 - field与既有pool/HUD共享`preflightSessionRelease`逆创建顺序释放；Pixi已有field/judge Sprite role mapping和typed transform/resource gate，无新增backend猜测。
 - R2只授权已观察的field transform payload；本批不硬编码221次单位transform为所有field默认，不声称sudden/mask/HAB lane-change或field animation已关闭。隔离`tsc`与producer suite通过。
 
+### 1.38 2026-08-01 RP05/RP07 field setup与release test子批
+
+- capturing renderer一次验证两个field owner各自产生严格`create/bind/set-transform/activate`四命令，并逐项断言caller-authored logical resource与exact key未被producer替换。
+- field preflight零sequence mutation，commit两个对象恰消费8；重复identity在调用backend前失败关闭且不消费sequence。
+- session release断言逆序为`judge field → rhythm field → Note pool root`，preflight无mutation、commit按owner数消费3，覆盖跨field/Note lifecycle的统一释放栈。
+- `tsc`、producer suite与Pixi suite通过；runner内dependency/evidence verifier通过，未运行Vite/Tauri整体构建。
+
 ## 2. 固定范围
 
 ### 2.1 纳入范围
