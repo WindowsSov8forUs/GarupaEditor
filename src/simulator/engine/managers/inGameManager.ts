@@ -253,12 +253,22 @@ export class InGameManager {
     if (noteDispose.status !== "ok") {
       return noteDispose;
     }
+    this.finishDispose();
+    return ok(undefined);
+  }
+
+  disposeAfterTerminalRendererFault(): void {
+    if (this.lifecycleState === "disposed") return;
+    this.noteManager.disposeAfterTerminalRendererFault();
+    this.finishDispose();
+  }
+
+  private finishDispose(): void {
     this.oneFrameJudgementController.dispose();
     this.inputManager.dispose();
     this.lifecycleState = "disposed";
     this.currentGameStateValue = GameState.PlayingSound;
     this.pauseStateValue = PauseState.None;
-    return ok(undefined);
   }
 
   private isPaused(): boolean {

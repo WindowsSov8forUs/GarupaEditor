@@ -185,10 +185,23 @@ export class NoteBase {
     if (deactivated.status !== "ok") {
       return deactivated;
     }
+    this.clearForDispose();
+    return ok(undefined);
+  }
+
+  resetAfterTerminalRendererFault(): void {
+    if (this.stateValue !== NoteState.Deactive) {
+      this.stateValue = NoteState.Deactive;
+      this.lifecycleCallbacks?.onDeactivate(this);
+      this.onDeactivated();
+    }
+    this.clearForDispose();
+  }
+
+  private clearForDispose(): void {
     this.noteInformationValue = null;
     this.fingerIdValue = -1;
     this.onResetForDispose();
-    return ok(undefined);
   }
 
   executeUpdate(deltaTimeSeconds: number): SimulatorResult<void> {

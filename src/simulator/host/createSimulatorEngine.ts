@@ -205,7 +205,14 @@ class SimulatorEngineHost implements SimulatorEngine {
   }
 
   dispose(): SimulatorResult<void> {
-    if (this.inGameManager.state === "disposed") return ok(undefined);
+    if (this.inGameManager.state === "disposed") {
+      return this.backends.rendering?.dispose() ?? ok(undefined);
+    }
+    const rendererState = this.backends.rendering?.snapshot().state;
+    if (rendererState === "faulted" || rendererState === "disposed") {
+      this.inGameManager.disposeAfterTerminalRendererFault();
+      return this.backends.rendering?.dispose() ?? ok(undefined);
+    }
     const rendererValidation = this.renderProducer?.validate();
     if (rendererValidation?.status === "evidence-required") return rendererValidation;
     const domainDispose = this.inGameManager.dispose();

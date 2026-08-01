@@ -711,6 +711,19 @@ export class NoteManager {
       }
       pool.cursor = 0;
     }
+    this.clearRuntimeForDispose();
+    return ok(undefined);
+  }
+
+  disposeAfterTerminalRendererFault(): void {
+    for (const pool of this.notePoolsValue.values()) {
+      for (const note of pool.objects) note.resetAfterTerminalRendererFault();
+      pool.cursor = 0;
+    }
+    this.clearRuntimeForDispose();
+  }
+
+  private clearRuntimeForDispose(): void {
     for (const bpm of this.bpmPoolValue) {
       bpm.resetForDispose();
     }
@@ -719,7 +732,6 @@ export class NoteManager {
     this.bpmPoolCursorValue = 0;
     this.outerFrameIndexValue = 0;
     this.slideNoteManager.dispose();
-    return ok(undefined);
   }
 
   private setupMultipleDirectionalGroups(): void {

@@ -82,7 +82,7 @@
 | RP09 恢复HUD overlay与动画 | 阻塞于RP08 | Skill/guard/heal/score-up/judge-line overlay及clock匹配 |
 | RP10 建立portable resource backend | **进行中：decode/cache/subtexture/ref已完成** | 本地bytes atomic decode、Texture/subtexture cache与引用计数已落地；material/animation ownership待后续映射 |
 | RP11 建立Pixi v8 renderer | **进行中：Sprite语义子集已完成** | Sprite bind、pivot、blend、transform、portable ordering与release已落地；Mesh/Graphics/Mask/Text/Slider继续失败关闭 |
-| RP12 failure/context/dispose矩阵 | **进行中：terminal/context基础已完成** | decode零残留、context terminal fault、重复prepare/dispose已落地；backend throw与完整PR35–PR38矩阵待关闭 |
+| RP12 failure/context/dispose矩阵 | **进行中：terminal/context/host cleanup已完成** | decode零残留、context terminal fault、host显式dispose归零与重复生命周期已落地；backend throw原子回滚与完整PR35–PR38矩阵待关闭 |
 | RP13 production oracle与全回归 | 阻塞于RP12 | PR01–PR40、ordinary/HABAHIRO、dependency、证据index和上游回归通过 |
 | RP14 独立验收 | 阻塞于RP13 | 从提交后HEAD复验并创建acceptance，RP00–RP14全部closed |
 
@@ -208,6 +208,13 @@
 - 测试覆盖browser decoder无能力时显式拒绝、atomic prepare、base/subtexture cache、exact Sprite bind/pivot、transform、ordering、visibility、引用计数、child release、duplicate prepare/dispose、unsupported line零scene/sequence mutation及context-loss first terminal fault。
 - dependency verifier改为只允许专用`backends/pixi/`导入`pixi.js`，继续禁止engine、host和其余backend-neutral代码导入Pixi；Windows/POSIX路径分隔均显式处理。
 - 隔离`tsc`、Pixi suite、render-contract 6组、first-slice 17项、score/life全回归与724项资源/Pixi证据校验均通过；本测试批不将尚未实现的Mesh/Graphics/Mask/Text/animation标记为通过。
+
+### 1.17 2026-08-01 RP12 terminal renderer host cleanup子批
+
+- host `dispose()`在renderer已`faulted`或被外部先行`disposed`时不再尝试不可能成功的deactivate/release preflight；它走D17专用terminal cleanup，清空Note/OneFrame/input/slide领域owner后直接幂等dispose backend。
+- `NoteBase`的terminal cleanup仍执行owner本地Deactivate callback、family reset与finger/information清理，但明确不发送renderer命令；正常ready路径继续保持原`hide→deactivate→reverse release→backend dispose`顺序，两条路径不混用。
+- recording backend开放组合后端专用first-fault latch，供Pixi scene异常/context loss保留首个structured terminal fault；显式host dispose后object/resource均归零且历史command trace不追加伪release。
+- 本批只关闭terminal故障后的显式cleanup优先级，不声称backend commit中任意JavaScript异常已具备领域回滚；该项继续列入RP12开放边界。
 
 ## 2. 固定范围
 
