@@ -11,7 +11,7 @@
 - 锁定原作样本：`jp.co.craftegg.band` 10.1.4（version code 230，`arm64-v8a`）。
 - 锁定`libil2cpp.so` SHA-256：`815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F`。
 - 锁定`global-metadata.dat` SHA-256：`298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F`。
-- 当前Reverse基线提交：`85fd890ca25d85422ecf9659bc21d4edd0b452d2`；只消费该提交及其祖先中已提交、已push、可校验对象。
+- 当前Reverse基线提交：`e06940fb8f1e0519e49db3951cf5ed587e6edc2c`；只消费该提交及其祖先中已提交、已push、可校验对象。
 - 当前状态：**RP00–RP03已关闭；RP04/RP07/RP08的已证实producer子集与RP10本地provider已落地，当前实施RP10/RP11 Pixi v8后端。已闭合本地bytes browser decode、Texture/subtexture cache、Sprite bind、基础transform/portable ordering、引用计数与release；新增natural ordinary geometry R2已关闭mesh topology/vertices/UV/color/threshold、line endpoint/equal width与field/mesh transform载荷缺口，下一批可实施对应producer与Pixi mapping。mask、HUD可见布局、animation及RP12剩余矩阵继续失败关闭。原始HAB UnityFS、natural HAB R1与原始HAB frame保持`habahiro_exact_parity_gate=open-not-claimed`。`production_authorization=true`仅授权显式fidelity选择；必须显示`Approximate HABAHIRO`、禁止静默fallback、production/test联网、资源二进制入库与原作parity宣称。**
 - 计划证据包：`tmp/simulator-reverse-evidence/resource-pixi-rendering/`，只在Reverse新证据提交并push后创建。
 - 计划验收记录：`tmp/simulator-resource-pixi-rendering-acceptance.md`，RP14时创建。
@@ -258,6 +258,14 @@
 - Pixi suite用R2固定22-pair UV与60-index strip构造typed `set-mesh`，验证preflight阶段scene零mutation、commit后Pixi scene snapshot为22 vertices/60 indices，并验证child-first mesh/root release归零。
 - 反例将单个vertex color改为非uniform，确认Pixi capability在object/geometry mutation前返回`evidence-required`、sequence保持不变且未创建mesh identity。
 - 既有Sprite测试同步验证Pixi v8 `Container` wrapper ownership，运行不再触发Sprite child deprecation；隔离`tsc`、Pixi suite与dependency verifier通过。
+
+### 1.24 2026-08-01 current NoteSyncLine portable profile补充取证批
+
+- ordinary R2已取得endpoint/equal width，但Pixi quad仍缺current cap/join/alignment/texture/mask静态来源。Reverse `e06940fb8f1e0519e49db3951cf5ed587e6edc2c`重新从锁定10.1.4 base APK读取`prefabs/bms/notes/notesyncline`及`SyncNoteLine` material实体字节并提交push。
+- current prefab SHA固定为`632302305E81666F52D1FD8A03AC1FF9D5C03933E07191A6EE1B09AC30FCD198`，确认positionCount=2、world-space、non-loop、View alignment、Stretch texture、unit texture scale、opaque white、zero cap/corner、maskInteraction=0及constant 0.28 width curve。
+- current material SHA固定为`483CB2BC8D4A6B98762AA255789AFE88A316A94B16DE01B5FB4BE425AF680BC7`，确认`SyncNoteLine`、serialized `_Threshold=750`与空MainTex；运行时texture来源继续由exact `simultaneous_line`本地hash资源绑定，不用Pixi白纹理替代。
+- portable mapping锁定为camera-facing textured quad、butt cap、single segment无join、UV `(0,0)(1,0)(1,1)(0,1)`及indices `0,1,2,0,2,3`；width直接消费R2 typed equal width。它明确不宣称half-texel、Shader LOD或GPU raster parity。
+- builder/verifier重读current APK并要求byte-idempotent输出，同时重锁R2 source hash；Garupa冻结包更新为734项。该批关闭Line primitive mapping输入，不关闭`_Threshold` shader clip。
 
 ## 2. 固定范围
 
