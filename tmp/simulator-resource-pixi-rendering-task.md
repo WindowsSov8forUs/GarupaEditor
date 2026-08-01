@@ -216,6 +216,12 @@
 - recording backend开放组合后端专用first-fault latch，供Pixi scene异常/context loss保留首个structured terminal fault；显式host dispose后object/resource均归零且历史command trace不追加伪release。
 - 本批只关闭terminal故障后的显式cleanup优先级，不声称backend commit中任意JavaScript异常已具备领域回滚；该项继续列入RP12开放边界。
 
+### 1.18 2026-08-01 RP12 terminal renderer host cleanup test子批
+
+- render-contract host测试新增active Note会话的合成terminal renderer fault；显式`engine.dispose()`后验证manager state=`disposed`、renderer state=`disposed`、object/resource为0且command trace不追加故障后deactivate/release。
+- 正常ready dispose、逆序release与重复dispose既有断言保持通过，确认terminal专用路径没有改变正常生命周期。
+- 隔离`tsc`、render-contract 6组、first-slice 17项及dependency verifier通过。
+
 ## 2. 固定范围
 
 ### 2.1 纳入范围

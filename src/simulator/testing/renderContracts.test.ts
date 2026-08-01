@@ -586,6 +586,39 @@ async function testHostReadyGate(): Promise<void> {
   requireOk(engine.dispose(), "duplicate host dispose");
   equal(unprepared.commandSnapshot().length, traceLength, "duplicate dispose adds no commands");
 
+  const faultedRenderer = new RecordingSimulatorRendererBackend();
+  requireOk(await faultedRenderer.prepare(
+    SESSION,
+    profile(),
+    new LocalProvider(),
+    preflight(),
+  ), "fault-dispose renderer prepare");
+  const faultedEngine = requireOk(
+    createSimulatorEngine(input, createRecordingSimulatorBackends(faultedRenderer)),
+    "fault-dispose engine create",
+  );
+  requireOk(faultedEngine.initialize(), "fault-dispose engine initialize");
+  requireOk(faultedEngine.step(0), "fault-dispose active Note");
+  const beforeFaultDisposeCommands = faultedRenderer.commandSnapshot().length;
+  faultedRenderer.recordTerminalFault(
+    "test.renderer-terminal-fault",
+    "Synthetic terminal renderer fault for host cleanup priority.",
+  );
+  requireOk(faultedEngine.dispose(), "host disposes terminal-faulted renderer");
+  equal(faultedRenderer.snapshot().state, "disposed", "faulted host renderer disposed");
+  equal(faultedRenderer.snapshot().resourceCount, 0, "faulted host resources released");
+  equal(faultedRenderer.snapshot().objectCount, 0, "faulted host objects released");
+  equal(
+    faultedRenderer.commandSnapshot().length,
+    beforeFaultDisposeCommands,
+    "terminal cleanup emits no impossible renderer commands",
+  );
+  equal(
+    requireOk(faultedEngine.snapshot(), "fault-dispose engine snapshot").managers.state,
+    "disposed",
+    "domain owners clear after renderer terminal fault",
+  );
+
   const mismatch = createSimulatorEngine(
     { ...engineInput(), rendering: { sessionId: "foreign", resources: RESOURCES } },
     createRecordingSimulatorBackends(unprepared),
