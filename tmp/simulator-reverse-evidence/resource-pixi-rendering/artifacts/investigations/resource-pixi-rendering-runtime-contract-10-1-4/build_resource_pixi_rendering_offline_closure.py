@@ -20,6 +20,8 @@ SCORE_UP = HERE / "resource_pixi_rendering_score_up_profile.json"
 RUNTIME_TARGETS = HERE / "resource_pixi_rendering_runtime_hook_targets.json"
 RUNTIME_PLAN = HERE / "runtime/resource-pixi-rendering-r1-plan.json"
 FRAME_PLAN = HERE / "runtime/resource-pixi-rendering-frame-plan.json"
+HABAHIRO_DEGRADED = HERE / "habahiro_degraded_approximation.json"
+HABAHIRO_DEGRADED_SCENE = HERE / "habahiro_degraded_scene_oracle.json"
 
 
 def digest(path: Path) -> str:
@@ -38,6 +40,8 @@ def evidence() -> dict[str, dict[str, Any]]:
         "F08": RUNTIME_TARGETS,
         "F09": RUNTIME_PLAN,
         "F10": FRAME_PLAN,
+        "F11": HABAHIRO_DEGRADED,
+        "F12": HABAHIRO_DEGRADED_SCENE,
     }
     return {
         evidence_id: {
@@ -80,8 +84,11 @@ def build_portable_contract() -> dict[str, Any]:
             "unityfs_parsing_in_engine": False,
             "fallback_alias_allowed": False,
             "placeholder_allowed": False,
-            "habahiro_status": "evidence-required-current-bundle-absent-from-cache-index",
-            "evidence_ids": ["F03", "F04", "F05", "F06", "F07"],
+            "habahiro_exact_status": "evidence-required-current-bundle-absent-from-cache-index",
+            "habahiro_degraded_status": "explicit-profile-allowed-not-original-parity",
+            "habahiro_degraded_profiles": ["historical-atlas-proxy", "current-ordinary-stretch-proxy"],
+            "automatic_degraded_fallback_allowed": False,
+            "evidence_ids": ["F03", "F04", "F05", "F06", "F07", "F11", "F12"],
         },
         "render_identity": {
             "fields": ["session_id", "sequence", "render_object_id", "pool_family", "role"],
@@ -171,14 +178,24 @@ def build_portable_contract() -> dict[str, Any]:
             "renderer not prepared",
             "duplicate or cross-session render identity",
             "out-of-order or unknown command",
-            "HABAHIRO chart without a current confirmed HABAHIRO resource profile",
+            "HABAHIRO exact mode without a current confirmed HABAHIRO resource profile",
+            "HABAHIRO degraded mode without explicit profile selection and visible fidelity label",
+            "automatic fallback from exact HABAHIRO mode to a degraded profile",
         ],
         "production_authorization": False,
         "unknown_fields": [],
+        "degraded_habahiro_policy": {
+            "status": "delivery-authorized-exact-parity-open",
+            "profile_selection": "explicit-only",
+            "visible_label": "Approximate HABAHIRO",
+            "parity_tests": "excluded",
+            "directly_impacted_cases": ["PR01", "PR04", "PR19", "PR40"],
+            "evidence_ids": ["F11", "F12"],
+        },
         "blocking_findings": [
             "D13 runtime command freeze/order is not observed",
             "D15 cross-component runtime ordering and shader equivalence are not observed",
-            "current HABAHIRO resource bytes are unavailable",
+            "current HABAHIRO resource bytes are unavailable for exact parity",
         ],
     }
 
@@ -242,6 +259,17 @@ def build_fixed_case_status() -> dict[str, Any]:
             status: sum(1 for row in rows if row["status"] == status)
             for status in sorted({row["status"] for row in rows})
         },
+        "degraded_habahiro_disposition": {
+            "status": "accepted-for-explicit-preview-not-original-parity",
+            "evidence_ids": ["F11", "F12"],
+            "cases": {
+                "PR01": "degraded-profile-resource-inventory",
+                "PR04": "degraded-profile-exact-key-or-procedural-wide-proxy",
+                "PR19": "two-stage-order-with-same-frame-or-caller-delay-approximation",
+                "PR40": "diagnostic-scene-command-frame-only-not-golden",
+            },
+            "exact_case_statuses_unchanged": True,
+        },
         "unknown_cases": [],
         "production_authorization": False,
     }
@@ -303,16 +331,26 @@ def build_offline_closure() -> dict[str, Any]:
             "id": "S01",
             "requirement": "obtain and hash the current ingameskin/noteskin/habahiro bundle through the game resource service or a proven current cache",
             "requires_game_server": True,
+            "blocks_exact_parity": True,
+            "blocks_degraded_habahiro_delivery": False,
         },
         {
             "id": "S02",
-            "requirement": "naturally enter ordinary and HABAHIRO Live scenes and capture R1 object/resource/caller/lifecycle traces",
+            "requirement": "naturally enter ordinary Live and, when available, HABAHIRO Live to capture R1 object/resource/caller/lifecycle traces",
             "requires_game_server": True,
+            "ordinary_scope": "required-before-production",
+            "habahiro_scope": "required-for-exact-parity; explicit degraded disposition accepted",
+            "blocks_exact_parity": True,
+            "blocks_degraded_habahiro_delivery": False,
         },
         {
             "id": "S03",
-            "requirement": "capture privacy-safe 10.1.4 physical frame anchors at fixed viewport and event points",
+            "requirement": "capture privacy-safe 10.1.4 ordinary physical frame anchors and HABAHIRO anchors when naturally available",
             "requires_game_server": True,
+            "ordinary_scope": "required-before-production",
+            "habahiro_scope": "required-for-exact-parity; generated degraded frames are diagnostic-only",
+            "blocks_exact_parity": True,
+            "blocks_degraded_habahiro_delivery": False,
         },
     ]
     return {
@@ -329,9 +367,20 @@ def build_offline_closure() -> dict[str, Any]:
         "offline_work_gate": "closed",
         "offline_plan_gate": "closed",
         "rendering_gate": "open",
+        "habahiro_exact_parity_gate": "open",
+        "habahiro_degraded_delivery_gate": "closed-authorized-by-explicit-user-request",
         "production_authorization": False,
         "historical_candidate_status": h_status,
         "decision_status": d_status,
+        "degraded_habahiro": {
+            "status": "accepted-for-delivery-not-original-parity",
+            "profiles": ["historical-atlas-proxy", "current-ordinary-stretch-proxy"],
+            "visible_label": "Approximate HABAHIRO",
+            "automatic_fallback": False,
+            "difference_count": 12,
+            "directly_impacted_cases": ["PR01", "PR04", "PR19", "PR40"],
+            "evidence_ids": ["F11", "F12"],
+        },
         "runtime_capture_plan": {
             "status": "confirmed-observation-only-plan-game-server-required",
             "hook_target_count": 55,
@@ -358,7 +407,7 @@ def main() -> int:
     write_json("resource_pixi_rendering_portable_contract.json", build_portable_contract())
     write_json("resource_pixi_rendering_fixed_case_status.json", build_fixed_case_status())
     write_json("offline_closure.json", build_offline_closure())
-    print("offline closure: offline_work_gate=closed rendering_gate=open blockers=S01,S02,S03")
+    print("offline closure: offline_work_gate=closed habahiro_degraded=authorized exact=open rendering=open blockers=S01,S02,S03")
     return 0
 
 

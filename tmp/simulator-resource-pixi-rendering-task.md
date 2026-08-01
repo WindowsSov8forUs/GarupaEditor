@@ -11,8 +11,8 @@
 - 锁定原作样本：`jp.co.craftegg.band` 10.1.4（version code 230，`arm64-v8a`）。
 - 锁定`libil2cpp.so` SHA-256：`815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F`。
 - 锁定`global-metadata.dat` SHA-256：`298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F`。
-- 当前Reverse基线提交：`e2e66f7a15b532600a3fc53f392a4c0fa2493f22`；只消费该提交及其祖先中已提交、已push、可校验对象。
-- 当前状态：**RP00已完成；RP01全部可离线工作已关闭，阻塞于当前HABAHIRO bundle必须通过游戏资源服务或已证明的当前缓存取得；RP02阻塞于自然进入ordinary/HABAHIRO Live后的R1与实体frame。55个current hook target、2个R1场景与13个frame anchor已锁定，`offline_work_gate=closed`、`offline_plan_gate=closed`、`rendering_gate=open`、`production_authorization=false`。RP02关闭前禁止修改`src/simulator/**`生产实现、增加Pixi backend、加入阶段测试脚本或引入资源二进制。**
+- 当前Reverse基线提交：`d88188f5fcea2ade712577f1c64e44002fe77d48`；只消费该提交及其祖先中已提交、已push、可校验对象。
+- 当前状态：**RP00已完成；RP01/RP02全部可离线工作已关闭。自然进入HABAHIRO Live当前不可达：`habahiro_exact_parity_gate=open`，但经用户明确授权，2个显式降级profile与HA-D01–HA-D12差异已关闭`habahiro_degraded_delivery_gate`；禁止静默fallback或parity宣称。ordinary natural Live R1/frame及剩余render contracts仍阻塞整体`rendering_gate`，`production_authorization=false`。RP03前禁止修改`src/simulator/**`生产实现、增加Pixi backend、加入阶段测试脚本或引入资源二进制。**
 - 计划证据包：`tmp/simulator-reverse-evidence/resource-pixi-rendering/`，只在Reverse新证据提交并push后创建。
 - 计划验收记录：`tmp/simulator-resource-pixi-rendering-acceptance.md`，RP14时创建。
 
@@ -59,14 +59,20 @@
 20. 原作GPU raster、透明排序内部细节、Font hinting和PlayerLoop亚帧采样如未闭合，必须在验收中明确排除；“视觉接近”不能替代证据。
 21. backend异常、资源解码失败、WebGL/WebGPU context loss、重复prepare、重复initialize和dispose必须在D17闭合后实现；不得吞错、自动重载或保留半棵scene graph。
 22. evidence、production contracts、engine render producers、Pixi backend、测试和验收文档必须分批提交；任何一批绿色结果都不能单独关闭阶段。
+23. 由于限时HABAHIRO Live当前无法自然进入，本任务增加双轨门限：exact parity继续遵守全部证据硬门；degraded delivery只在用户显式选择`approximate-habahiro`时允许，不得宣称原作一致。
+24. exact模式缺当前HAB资源时仍必须在renderer mutation前返回`evidence-required`；禁止自动转入degraded模式。degraded模式必须显示`Approximate HABAHIRO`并输出`rendering-fidelity-degraded-habahiro`能力状态。
+25. degraded首选`historical-atlas-proxy`，只接受用户提供且匹配冻结历史bundle/texture哈希的本地字节；其10.1.4等价性明确为unproven。次选`current-ordinary-stretch-proxy`，其拉伸/组合宽音符属于更高差异代理。
+26. degraded lane change保留marker→flash-start→change-lane的当前静态顺序；缺`Root_effect`/clip时默认同engine frame换线，或接受宿主显式delay。不得把该时点写入exact/parity expected。
+27. HA-D01–HA-D12和PR01/PR04/PR19/PR40降级处置是强制验收项；generated degraded frame只能进入独立approximation regression，永不成为原作raster golden。
+28. 本例外只解除HABAHIRO不可达部分对交付轨的永久阻塞，不解除ordinary R1/frame、render command order、failure/dispose、resource preflight或Pixi mapping硬门，也不单独授权production。
 
 ### 1.3 执行进度
 
 | 任务 | 状态 | 完成标准 |
 | --- | --- | --- |
 | RP00 建立阶段任务书 | **已完成** | 范围、证据候选、硬门、owner、oracle、批次与完成定义写入本文档 |
-| RP01 10.1.4静态与资源重基线 | **阻塞于服务器资源** | 全部可离线方法/资源/scene/animation/portable工作已关闭；S01当前HABAHIRO bundle不在cache index |
-| RP02 实体/运行时与固定scene oracle | **阻塞于服务器Live** | S02自然Live R1与S03实体frame完成后关闭D01–D18、PR01–PR40及`rendering_gate` |
+| RP01 10.1.4静态与资源重基线 | **离线闭合 / exact部分开放** | 当前方法/资源/scene/animation/portable已关闭；S01仅阻塞HAB exact parity，降级交付已处置 |
+| RP02 实体/运行时与固定scene oracle | **阻塞于ordinary服务器Live** | ordinary R1/frame仍为生产前置；HAB exact R1/frame开放，显式degraded处置已关闭 |
 | RP03 锁定render/resource contracts | 阻塞于RP02 | immutable profile、provider、command、identity、session与preflight边界闭合 |
 | RP04 接入engine渲染producer | 阻塞于RP03 | Note/manager/HUD只生产证据确认的typed commands，不依赖Pixi |
 | RP05 恢复Note Sprite与field | 阻塞于RP04 | atlas route、exact lookup、transform、flick icon、field/judge line匹配 |
@@ -121,6 +127,16 @@
 - `offline_plan_gate=closed`，`runtime_input_status`不包含confirmed trace/frame；S01–S03仍全部`game-server-required`，`rendering_gate=open`、`production_authorization=false`。
 - Garupa冻结包`tmp/simulator-reverse-evidence/resource-pixi-rendering/`包含709个Reverse来源文件及manifest/README/OPEN_GAPS/verifier；不包含APK、bundle、dump、IDA、设备隐私数据或`runtime/tools/`。
 
+### 1.8 2026-08-01 HABAHIRO不可达降级决策批
+
+- 用户确认当前无法通过只读自然路径进入HABAHIRO Live，并要求优先寻找平替、无法等价时建立近似并记录差异。审计将硬门拆分为S01当前资源、S02实体runtime、S03原始frame：直接从游戏资源服务按logical key只读取得或证明当前cache可单独关闭S01；S02/S03不存在纯静态等价替代。
+- Reverse `d88188f5fcea2ade712577f1c64e44002fe77d48`建立`habahiro_degraded_approximation.json`与diagnostic scene oracle。current 10.1.4确认BMS SHA、maxNoteCount 731、lane marker 1728、`_habahiro` route、13个关键方法、mesh width公式和multiple-directional pool容量60；历史候选提供179个Sprite/9个texture、pivot `(0.5,0.5)`、PPU `100/65`，但current字节等价性明确为unproven。
+- 首选`historical-atlas-proxy`要求用户提供匹配冻结历史hash的本地字节；次选`current-ordinary-stretch-proxy`使用当前ordinary/directional/field/judge资源做程序化宽音符代理。两者必须显示`Approximate HABAHIRO`、禁止静默fallback，并设置`rendering-fidelity-degraded-habahiro`。
+- HA-D01–HA-D12逐项记录可能差异：资源版本与像素/rect、宽音符图、special-skin loader顺序、mesh width runtime输入、pool identity、lane clip/Root_effect时点和粒子、field/judge、mask/material/shader、HUD、pause/reset/fault/dispose及physical raster；直接影响PR01、PR04、PR19、PR40。
+- degraded scene锁定179 technical Sprite key、731容量、60池及marker→flash-start→同engine frame change-lane默认近似；不包含原作frame oracle，generated frame只能进入独立approximation regression。
+- exact trace/oracle入口继续对缺S01–S03失败关闭；`habahiro_exact_parity_gate=open`，仅`habahiro_degraded_delivery_gate=closed-authorized-by-explicit-user-request`。ordinary runtime/frame和剩余contracts仍令整体`rendering_gate=open`、`production_authorization=false`。
+- Garupa冻结包更新为713个Reverse来源文件；同时修正包级manifest旧笔误，将`AssetBundleInfo` SHA锁定为实际`D026CAE3740DB87AA777C2FDAE40B141FF16464BC2C839ACEF3C820E06850AC6`。
+
 ## 2. 固定范围
 
 ### 2.1 纳入范围
@@ -153,7 +169,7 @@
 
 ## 3. 强制执行规则
 
-1. RP01/RP02及V01/D01–D18全部关闭前，禁止实施RP03–RP14生产代码和阶段测试入口。
+1. RP01/RP02及V01/D01–D18全部关闭前，禁止实施RP03–RP14生产代码和阶段测试入口。选择degraded HAB轨时，HAB exact子项可按F11/F12与HA-D01–HA-D12记为`closed-degraded-not-original-parity`，但ordinary runtime/frame、通用command/lifecycle/failure和其余D门仍必须关闭。
 2. 新证据必须先在Reverse提交并push，再冻结到Garupa；不得读取Reverse未提交工作树作实现判断。
 3. 证据包每项必须记录Reverse commit、源路径、复制路径、字节数、完整大写SHA-256、sample、status和消费任务。
 4. `verify.mjs`必须校验Reverse commit对象、source、copy和Git index；资源二进制如不入库，必须校验其manifest/provenance而不是伪称校验了字节。
@@ -385,7 +401,7 @@ H25–H28不能外推到10.1.4；其local-only MKV/PNG/raw memory未提交，不
 
 ### D16 fixed scene/frame oracle
 
-建立PR01–PR40：expected scene/command来自10.1.4 static/resource/R1，不来自Reverse prototype或待测TS。scene字段必须exact；raster区域、viewport、容差和排除像素必须由实体证据预先定义。
+建立PR01–PR40：exact expected scene/command来自10.1.4 static/resource/R1，不来自Reverse prototype或待测TS。scene字段必须exact；raster区域、viewport、容差和排除像素必须由实体证据预先定义。HAB degraded轨另用F12 diagnostic scene，不得进入exact expected或raster golden。
 
 ### D17 lifecycle与failure atomicity
 
@@ -393,7 +409,7 @@ H25–H28不能外推到10.1.4；其local-only MKV/PNG/raw memory未提交，不
 
 ### D18 closure与production authorization
 
-Reverse生成`closure.json`：V01/D01–D18全部closed、PR01–PR40无unknown/blocker、`rendering_gate=closed`、`production_authorization=true`。任一项开放时RP03继续blocked。
+Reverse生成`closure.json`：V01/D01–D18全部closed；选择HAB degraded轨时，只有F11/F12定义的HAB exact子项可记`closed-degraded-not-original-parity`，并保留HA-D01–HA-D12。PR01/PR04/PR19/PR40必须同时记录exact open disposition与degraded regression；ordinary及通用门不得降级。完成其余门后才可令`rendering_gate=closed`、`production_authorization=true`。
 
 ## 9. 固定scene/frame oracle要求
 
@@ -401,7 +417,7 @@ Reverse生成`closure.json`：V01/D01–D18全部closed、PR01–PR40无unknown/
 
 - 锁定10.1.4 binary/metadata/package及资源pack identity。
 - ordinary `poppin_shuffle_special`和HABAHIRO `786_miracle_april_habahiro_special` production chart与上游domain oracle。
-- 哈希锁定ordinary/HABAHIRO/directional/judge/field/HUD atlas、scene/prefab/material/clip/font profile。
+- exact轨哈希锁定ordinary/HABAHIRO/directional/judge/field/HUD atlas、scene/prefab/material/clip/font profile；degraded轨锁定所选proxy本地字节/hash、technical key、可见标签与差异矩阵。
 - 明确viewport、safe-area、high-aspect、target/launcher、skin mode、pause和frame/substep序列。
 - Manual/Auto判定、Score/Life/Skill/Fever输入必须经上游public owner产生，不直接注入HUD expected。
 - R1 raw trace保留object alias、frame/substep、before/after renderer fields和严格caller顺序；不导出账号、room、deck/member/card/Skill身份或raw pointer。
@@ -665,19 +681,19 @@ git rev-list --left-right --count origin/codex/refactor-simulator-implementation
 
 只有以下条件全部满足，RP14才能关闭：
 
-1. 锁定10.1.4/230 binary、metadata和resource pack identity。
-2. V01/D01–D18全部closed，`rendering_gate=closed`、`production_authorization=true`。
-3. PR01–PR40全部confirmed、`unknown_fields=[]`、`blocking_findings=[]`。
+1. 锁定10.1.4/230 binary、metadata和ordinary resource pack identity；HAB使用exact current pack或显式锁定的degraded proxy identity。
+2. V01/D01–D18全部closed；HAB exact子项仅可按F11/F12记`closed-degraded-not-original-parity`，其余门不得降级；最终`rendering_gate=closed`、`production_authorization=true`。
+3. PR01–PR40全部confirmed；PR01/PR04/PR19/PR40可在degraded轨记独立approximation confirmed并保留HA-D01–HA-D12，`unknown_fields=[]`。
 4. 每个resource key/row、transform、geometry、sorting、mask、animation和lifecycle映射最终证据ID。
 5. resource profile/provider不可变、hash锁定、无网络、失败原子且所有权明确。
 6. engine只产生typed semantic commands，无Pixi/DOM/React/Tauri/编辑器依赖。
-7. Note Sprite、Flick icon、Long/Slide mesh、sync/back line、field/mask与HABAHIRO route匹配。
+7. Note Sprite、Flick icon、Long/Slide mesh、sync/back line、field/mask与HABAHIRO route匹配所声明fidelity；degraded轨必须显示标签且不宣称资源/动画/raster exact。
 8. Score/Combo/AP/AddScore/Result/Life/Skill/Fever HUD消费链匹配。
 9. pool identity、pause/reset/fault/dispose/context loss和跨session边界匹配。
 10. Pixi backend只消费command，不author领域状态，不依赖隐式默认值。
-11. scene/command oracle exact匹配；raster只在D16证据定义范围内通过。
+11. ordinary scene/command oracle exact匹配；exact raster只在D16实体证据范围内通过；HAB degraded scene只跑F12独立regression且无original frame golden。
 12. resource binary provenance/分发决策明确，未批准资产不入库。
-13. ordinary/HABAHIRO production重放通过。
+13. ordinary production exact重放通过；HAB exact重放或显式degraded profile重放通过，二者结果标签与验收分类不得混淆。
 14. first-slice、chart、clock、Auto、manual、score-life-state全回归通过。
 15. evidence source/copy/index、dependency和forbidden-default/network反审通过。
 16. `tmp/simulator-resource-pixi-rendering-acceptance.md`从提交后HEAD独立验收通过。
@@ -687,6 +703,6 @@ git rev-list --left-right --count origin/codex/refactor-simulator-implementation
 
 - 当前上游领域状态足以成为renderer/HUD source，但不能证明任何可见表现。
 - 当前Reverse已将H01–H28全部迁移为10.1.4逐项状态；历史调查不直接解除生产门，最终证据只引用current F/R系列。
-- 全部可离线资源、scene、animation、method、portable mapping和PR分类已关闭；最大硬门现为当前HABAHIRO bundle、自然Live resource/object/caller/lifecycle和实体frame。
-- RP02 observation-only采集plan/verifier已提交；在不连接游戏服务器的前提下已触及硬门，下一动作只能是服务器恢复后执行S01–S03，不直接编写Pixi代码。
+- 全部可离线资源、scene、animation、method、portable mapping和PR分类已关闭；HAB exact仍缺当前bundle、natural runtime与original frame，但显式degraded delivery已用2个profile、12项差异和179-key diagnostic scene处置。
+- RP02 observation-only采集plan/verifier已提交；下一生产前置是ordinary natural Live R1/frame与剩余contracts。HAB exact证据可在未来补齐，不再永久阻塞明确标注的degraded交付轨。
 - 所有未确认路径继续返回`evidence-required`，不得以placeholder、Pixi默认值或“视觉接近”填补。

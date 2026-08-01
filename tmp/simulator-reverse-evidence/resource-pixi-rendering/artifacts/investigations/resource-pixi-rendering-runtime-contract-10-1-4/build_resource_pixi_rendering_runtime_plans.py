@@ -221,6 +221,13 @@ def build_r1_plan(targets: dict[str, Any]) -> dict[str, Any]:
             "trace and verifier are committed and pushed before any Garupa evidence freeze",
             "failed, partial, timeout or privacy-invalid traces remain diagnostic-only",
         ],
+        "degraded_habahiro_disposition": {
+            "exact_scenario_remains_planned": True,
+            "absence_blocks_exact_parity": True,
+            "absence_blocks_degraded_delivery": False,
+            "approximation_contract": "habahiro_degraded_approximation.json",
+            "generated_trace_may_pass_this_verifier": False,
+        },
         "production_authorization": False,
     }
 
@@ -248,6 +255,13 @@ def build_frame_plan() -> dict[str, Any]:
         "manifest_required_fields": ["schema_version", "status", "sample", "viewport", "privacy", "frames"],
         "frame_required_fields": ["scenario", "anchor", "event_sequence", "relative_path", "bytes", "sha256", "width", "height", "crop"],
         "output": "runtime/resource-pixi-rendering-frame-manifest.json",
+        "degraded_habahiro_disposition": {
+            "exact_habahiro_anchors_remain_planned": True,
+            "absence_blocks_exact_parity": True,
+            "absence_blocks_degraded_delivery": False,
+            "generated_degraded_frames_are_original_expected": False,
+            "generated_degraded_frames_may_pass_this_verifier": False,
+        },
         "production_authorization": False,
     }
 
@@ -255,15 +269,24 @@ def build_frame_plan() -> dict[str, Any]:
 def build_status() -> dict[str, Any]:
     return {
         "schema_version": 1,
-        "status": "runtime-and-frame-evidence-required-game-server",
+        "status": "ordinary-runtime-required-habahiro-degraded-delivery-accepted",
         "offline_plan_gate": "closed",
         "rendering_gate": "open",
+        "habahiro_exact_parity_gate": "open",
+        "habahiro_degraded_delivery_gate": "closed-authorized-by-explicit-user-request",
         "production_authorization": False,
         "required": [
-            {"id": "S01", "status": "game-server-required", "artifact": "current HABAHIRO resource profile"},
-            {"id": "S02", "status": "game-server-required", "artifact": "ordinary and HABAHIRO confirmed R1 traces"},
-            {"id": "S03", "status": "game-server-required", "artifact": "ordinary and HABAHIRO fixed frame manifest"},
+            {"id": "S01", "status": "game-server-required-for-exact-parity", "artifact": "current HABAHIRO resource profile", "blocks_degraded_delivery": False},
+            {"id": "S02", "status": "ordinary-required-habahiro-exact-only", "artifact": "ordinary and HABAHIRO confirmed R1 traces", "blocks_degraded_delivery": False},
+            {"id": "S03", "status": "ordinary-required-habahiro-exact-only", "artifact": "ordinary and HABAHIRO fixed frame manifest", "blocks_degraded_delivery": False},
         ],
+        "degraded_habahiro": {
+            "status": "accepted-not-original-parity",
+            "contract": "habahiro_degraded_approximation.json",
+            "visible_label": "Approximate HABAHIRO",
+            "automatic_fallback": False,
+            "generated_frames_are_golden": False,
+        },
         "confirmed_traces": [],
         "confirmed_frames": [],
         "unknown_offline_work": [],
@@ -282,7 +305,7 @@ def main() -> int:
     write("runtime/resource-pixi-rendering-r1-plan.json", build_r1_plan(targets))
     write("runtime/resource-pixi-rendering-frame-plan.json", build_frame_plan())
     write("runtime_input_status.json", build_status())
-    print(f"runtime plans: targets={targets['target_count']} scenarios=2 frame_anchors=13 gate=game-server-required")
+    print(f"runtime plans: targets={targets['target_count']} scenarios=2 frame_anchors=13 exact=game-server-required habahiro-degraded=authorized")
     return 0
 
 

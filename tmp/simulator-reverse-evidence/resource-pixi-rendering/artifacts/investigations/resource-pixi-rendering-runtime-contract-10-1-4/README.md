@@ -35,6 +35,8 @@ The locked package files observed on the connected device are byte-identical to 
 - `resource_pixi_rendering_instruction_migration.json` conservatively compares all 673 methods while preserving instruction order, registers, instance offsets, arithmetic constants and internal branch shape.
 - `resource_pixi_rendering_portable_contract.json` records the backend-neutral resource/identity/command/component mapping draft without authorizing production.
 - `resource_pixi_rendering_fixed_case_status.json` classifies PR01-PR40 from current evidence.
+- `habahiro_degraded_approximation.json` records the explicit dual-track decision: exact HABAHIRO parity remains open, while two visibly labelled degraded preview profiles are accepted with HA-D01-HA-D12 differences.
+- `habahiro_degraded_scene_oracle.json` freezes the diagnostic approximation surface: 179 technical Sprite keys, current maxNoteCount 731, current static pool capacity 60 and same-frame lane-swap approximation; it deliberately contains no original frame oracle.
 - `resource_pixi_rendering_runtime_hook_targets.json` derives 55 minimal observation-only hooks directly from the current static contract.
 - `runtime/resource-pixi-rendering-r1-plan.json` and `runtime/resource-pixi-rendering-frame-plan.json` lock two natural-Live scenarios, trace privacy/completion rules and 13 physical-frame anchors.
 - `verify_resource_pixi_rendering_runtime_trace.py` and `verify_resource_pixi_rendering_frame_manifest.py` reject absent, partial, non-contiguous, mutation-capable or privacy-invalid future evidence.
@@ -62,24 +64,26 @@ The source target set is derived from the bounded H01-H24 investigations named i
 - The current managed route still maps multi-range notes through `_habahiro`, but the current cache index contains zero HABAHIRO bundle records. Its bytes therefore remain fail-closed rather than inherited from the historical Bestdori export.
 - Conservative instruction normalization classifies 652 methods as relocation-only equivalent and 21 as current-review-required; dedicated current profiles close the required ScoreUp/resource surfaces without upgrading normalization into a behavioral claim.
 - H01-H28, D01-D18 and PR01-PR40 are fully classified with no unknown static work. 55 hook targets、2个R1场景与13个frame anchors也已离线锁定；`offline_work_gate=closed`、`offline_plan_gate=closed`，while `rendering_gate=open` and `production_authorization=false`.
+- Natural HABAHIRO Live cannot currently be reached. No exact whole-gate substitute exists: direct current-resource retrieval can close only S01, while S02 runtime identity/order/phase and S03 original framebuffer cannot be derived from static or synthetic execution.
+- By explicit user request, a separate degraded delivery gate is accepted. `historical-atlas-proxy` uses the pinned 179-Sprite/9-texture historical candidate when matching local bytes are supplied; `current-ordinary-stretch-proxy` composes current ordinary resources. Both require the visible label `Approximate HABAHIRO`, forbid silent fallback and remain outside parity tests.
 
 ## Boundary
 
 This batch does **not** claim that a method body is behaviorally unchanged because its managed identity and signature map. `differing_word_detail` is retained for every changed word and explicitly separates PC-relative from non-PC-relative changes.
 
-The offline resource batch closes the present cache-index identity and promotes current Note/Directional/Judge/Field atlas metadata plus bounded APK Note/HUD assets. It does not close the absent current HABAHIRO bytes, naturally selected skin identity, remaining Skill/ScoreUp static semantics, runtime object identity, caller order, pause behavior, frame output or backend failure behavior. It does not authorize GarupaEditor production code.
+The offline resource batch closes the present cache-index identity and promotes current Note/Directional/Judge/Field atlas metadata plus bounded APK Note/HUD assets. It does not close the absent current HABAHIRO bytes, naturally selected skin identity, runtime object identity, caller order, pause behavior, frame output or backend failure behavior. The degraded decision is a delivery exception for a visibly labelled preview, not original evidence and not blanket production authorization.
 
 No game process was started. No game server was contacted. No Frida session, hook, return replacement, memory write, APK modification or managed invocation was used. Local-only APKs, binaries, dumps and bulk assets remain ignored and are not committed.
 
 ## Unresolved
 
-The offline-work gate is closed. Only three blockers remain:
+The offline-work gate is closed. Exact parity retains three blockers:
 
 1. obtain and hash the current `ingameskin/noteskin/habahiro` bundle through the game resource service or a proven current cache;
-2. naturally enter ordinary and HABAHIRO Live scenes and capture R1 object/resource/caller/lifecycle traces;
-3. capture privacy-safe 10.1.4 physical frame anchors at fixed viewport and event points.
+2. naturally enter ordinary Live and, when available, HABAHIRO Live for R1 object/resource/caller/lifecycle traces;
+3. capture ordinary physical frames and, for exact HABAHIRO parity, original HABAHIRO frame anchors.
 
-All three require game-server-backed resource or natural Live access. Their execution plans and fail-closed verifiers are committed; none may be replaced by historical bytes, synthetic events or production defaults.
+The inaccessible HABAHIRO portions no longer block the separate degraded delivery path. They remain open for exact parity and are replaced only by the explicit profiles and HA-D01-HA-D12 disclosures in `habahiro_degraded_approximation.json`. Ordinary runtime/frame evidence and the remaining contracts still block the overall rendering gate.
 
 ## Reproduction
 
@@ -93,10 +97,12 @@ py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-
 py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\extract_resource_pixi_rendering_note_animation_profiles.py
 py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\extract_resource_pixi_rendering_score_up_profile.py
 py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\build_resource_pixi_rendering_instruction_migration.py
+py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\build_habahiro_degraded_approximation.py
 py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\build_resource_pixi_rendering_runtime_plans.py
 py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\build_resource_pixi_rendering_offline_closure.py
 py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\verify_resource_pixi_rendering_static_contract.py
 py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\verify_resource_pixi_rendering_resource_contract.py
+py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\verify_habahiro_degraded_approximation.py
 py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\verify_resource_pixi_rendering_runtime_plans.py
 py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\verify_resource_pixi_rendering_offline_closure.py
 ```

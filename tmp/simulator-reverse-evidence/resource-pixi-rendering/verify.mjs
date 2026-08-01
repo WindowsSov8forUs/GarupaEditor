@@ -11,7 +11,7 @@ const sourceRoot = manifest.source.repository;
 const validateIndex = process.argv.includes("--index");
 const prefix = "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/";
 const investigation = resolve(packageRoot, prefix);
-const sourceCommit = "e2e66f7a15b532600a3fc53f392a4c0fa2493f22";
+const sourceCommit = "d88188f5fcea2ade712577f1c64e44002fe77d48";
 
 function fail(message) { throw new Error(message); }
 function check(condition, message) { if (!condition) fail(message); }
@@ -37,18 +37,21 @@ check(manifest.source.offlineEvidenceCommit === sourceCommit, "Unexpected source
 check(manifest.sample.package === "jp.co.craftegg.band" && manifest.sample.versionName === "10.1.4" && manifest.sample.versionCode === 230 && manifest.sample.abi === "arm64-v8a", "Unexpected sample");
 check(manifest.sample.libil2cppSha256 === "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F", "Unexpected ELF hash");
 check(manifest.sample.globalMetadataSha256 === "298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F", "Unexpected metadata hash");
-check(manifest.sample.assetBundleInfoSha256 === "D026CAE392A4253EF5B0E228B6AE50A49B34C8D79514CF4F93C7C91A46850AC6", "Unexpected cache index hash");
-check(manifest.entries.length === 709 && manifest.counts.totalEntries === 709, "Unexpected manifest entry count");
+check(manifest.sample.assetBundleInfoSha256 === "D026CAE3740DB87AA777C2FDAE40B141FF16464BC2C839ACEF3C820E06850AC6", "Unexpected cache index hash");
+check(manifest.entries.length === 713 && manifest.counts.totalEntries === 713, "Unexpected manifest entry count");
 check(manifest.counts.methods === 673 && manifest.counts.layouts === 32 && manifest.counts.enums === 19 && manifest.counts.arm64Slices === 673, "Static counts differ");
 check(manifest.counts.instructionEquivalent === 652 && manifest.counts.instructionChanged === 21, "Instruction migration counts differ");
 check(manifest.counts.cacheRecords === 11026 && manifest.counts.ingameSkinBundles === 57 && manifest.counts.baseResources === 100, "Resource counts differ");
 check(manifest.counts.hudProfiles === 8 && manifest.counts.skillAnimationClips === 4 && manifest.counts.noteAnimationClips === 4 && manifest.counts.scoreUpRoutes === 5 && manifest.counts.floatSpecialValues === 12, "Visual profile counts differ");
 check(manifest.counts.runtimeHookTargets === 55 && manifest.counts.r1Scenarios === 2 && manifest.counts.frameAnchors === 13, "Runtime plan counts differ");
+check(manifest.counts.habahiroDegradedProfiles === 2 && manifest.counts.habahiroDifferenceRows === 12 && manifest.counts.habahiroDegradedSpriteKeys === 179, "HABAHIRO degraded counts differ");
 check(manifest.counts.historicalCandidates === 28 && manifest.counts.decisions === 18 && manifest.counts.fixedCases === 40, "Closure classification counts differ");
 check(manifest.offlineWorkGate.status === "closed" && manifest.offlineWorkGate.offlinePlanGate === "closed" && manifest.offlineWorkGate.unknownStaticWork.length === 0 && manifest.offlineWorkGate.unknownFields.length === 0, "Offline work/plan gate differs");
 check(manifest.offlineWorkGate.remainingBlockersAllRequireGameServer === true && manifest.offlineWorkGate.remainingBlockers.map((row) => row.id).join(",") === "S01,S02,S03", "Server blocker set differs");
 check(manifest.offlineWorkGate.productionAuthorization === false && manifest.renderingGate.status === "open" && manifest.renderingGate.productionAuthorization === false, "Production/rendering gate differs");
-check(manifest.renderingGate.requiredBeforeCode.join(",") === "S01,S02,S03", "Required-before-code set differs");
+check(manifest.habahiroGate.exactParity === "open" && manifest.habahiroGate.degradedDelivery === "closed-authorized-by-explicit-user-request" && manifest.habahiroGate.visibleLabel === "Approximate HABAHIRO" && manifest.habahiroGate.automaticFallback === false, "Manifest HABAHIRO dual-track gate differs");
+check(manifest.habahiroGate.directlyImpactedCases.join(",") === "PR01,PR04,PR19,PR40", "Manifest HABAHIRO impacted cases differ");
+check(manifest.renderingGate.requiredBeforeCode.join(",") === "ordinary-runtime-and-frame,remaining-render-contracts", "Required-before-code set differs");
 
 git(["cat-file", "-e", `${sourceCommit}^{commit}`], sourceRoot);
 const ids = new Set();
@@ -86,7 +89,7 @@ for (const line of readFileSync(resolve(investigation, "SHA256SUMS"), "utf8").tr
   check(match !== null && !sums.has(match[2]), `Invalid SHA256SUMS row: ${line}`);
   sums.set(match[2], match[1]);
 }
-check(sums.size === 708, "Unexpected SHA256SUMS count");
+check(sums.size === 712, "Unexpected SHA256SUMS count");
 for (const path of frozenFiles.filter((path) => path !== "SHA256SUMS")) {
   check(sums.get(path) === sha256(readFileSync(resolve(investigation, path))), `SHA256SUMS mismatch: ${path}`);
 }
@@ -130,20 +133,32 @@ const runtimeStatus = json("runtime_input_status.json");
 check(targets.status === "confirmed-current-hook-target-plan-runtime-evidence-absent" && targets.target_count === 55 && targets.targets.length === 55 && targets.unknown_targets.length === 0 && targets.production_authorization === false, "Runtime hook target plan differs");
 check(r1Plan.status === "confirmed-observation-only-plan-game-server-required" && r1Plan.scenarios.length === 2 && r1Plan.hook_target_sha256 === sha256(readFileSync(resolve(investigation, "resource_pixi_rendering_runtime_hook_targets.json"))), "R1 capture plan differs");
 check(framePlan.status === "confirmed-frame-plan-game-server-required" && Object.values(framePlan.scenarios).reduce((count, rows) => count + rows.length, 0) === 13 && framePlan.production_authorization === false, "Frame plan differs");
-check(runtimeStatus.status === "runtime-and-frame-evidence-required-game-server" && runtimeStatus.offline_plan_gate === "closed" && runtimeStatus.rendering_gate === "open" && runtimeStatus.confirmed_traces.length === 0 && runtimeStatus.confirmed_frames.length === 0 && runtimeStatus.production_authorization === false, "Runtime input status differs");
+check(runtimeStatus.status === "ordinary-runtime-required-habahiro-degraded-delivery-accepted" && runtimeStatus.offline_plan_gate === "closed" && runtimeStatus.rendering_gate === "open" && runtimeStatus.confirmed_traces.length === 0 && runtimeStatus.confirmed_frames.length === 0 && runtimeStatus.production_authorization === false, "Runtime input status differs");
+check(runtimeStatus.habahiro_exact_parity_gate === "open" && runtimeStatus.habahiro_degraded_delivery_gate === "closed-authorized-by-explicit-user-request" && runtimeStatus.degraded_habahiro.automatic_fallback === false, "Runtime HABAHIRO dual-track status differs");
+
+const degraded = json("habahiro_degraded_approximation.json");
+const degradedScene = json("habahiro_degraded_scene_oracle.json");
+check(degraded.status === "confirmed-explicit-degraded-habahiro-decision-not-original-parity" && degraded.gate_policy.habahiro_exact_parity_gate === "open" && degraded.gate_policy.habahiro_degraded_delivery_gate === "closed-authorized-by-explicit-user-request" && degraded.gate_policy.production_authorization === false, "HABAHIRO degraded decision differs");
+check(degraded.profiles.length === 2 && degraded.difference_matrix.length === 12 && degraded.directly_impacted_fixed_cases.join(",") === "PR01,PR04,PR19,PR40", "HABAHIRO degraded profile/difference matrix differs");
+check(degraded.historical_candidate.atlas_profile.sprite_count === 179 && degraded.historical_candidate.atlas_profile.texture_count === 9 && degraded.historical_candidate.atlas_profile.version_equivalence_to_10_1_4 === "unproven", "Historical HABAHIRO candidate boundary differs");
+check(degradedScene.status === "confirmed-diagnostic-degraded-scene-oracle-not-original-frame" && degradedScene.logical_scene.historical_sprite_key_count === 179 && degradedScene.logical_scene.multiple_directional_pool_capacity === 60 && degradedScene.chart.max_note_count === 731, "HABAHIRO degraded scene differs");
+check(degradedScene.frame_oracle === null && degradedScene.scene_or_command_parity_claim === false && degradedScene.production_authorization === false, "HABAHIRO degraded scene incorrectly claims parity")
 
 const portable = json("resource_pixi_rendering_portable_contract.json");
 check(portable.status === "confirmed-offline-portable-draft-runtime-order-gate-open" && portable.production_authorization === false && portable.unknown_fields.length === 0, "Portable draft differs");
 check(portable.resource_profile.network_allowed === false && portable.resource_profile.fallback_alias_allowed === false && portable.resource_profile.placeholder_allowed === false, "Portable resource policy differs");
+check(portable.resource_profile.habahiro_exact_status === "evidence-required-current-bundle-absent-from-cache-index" && portable.resource_profile.habahiro_degraded_status === "explicit-profile-allowed-not-original-parity" && portable.resource_profile.automatic_degraded_fallback_allowed === false, "Portable HABAHIRO dual-track resource policy differs");
 const cases = json("resource_pixi_rendering_fixed_case_status.json");
 check(cases.status === "confirmed-offline-case-classification-server-gate-open" && cases.cases.length === 40 && cases.unknown_cases.length === 0 && cases.production_authorization === false, "PR case classification differs");
 check(cases.cases.map((row) => row.case).join(",") === Array.from({ length: 40 }, (_, index) => `PR${String(index + 1).padStart(2, "0")}`).join(","), "PR case IDs differ");
+check(cases.degraded_habahiro_disposition.status === "accepted-for-explicit-preview-not-original-parity" && Object.keys(cases.degraded_habahiro_disposition.cases).join(",") === "PR01,PR04,PR19,PR40" && cases.degraded_habahiro_disposition.exact_case_statuses_unchanged === true, "PR degraded HABAHIRO disposition differs");
 
 const closure = json("offline_closure.json");
 check(closure.status === "offline-work-gate-closed-server-required-gate-open" && closure.offline_work_gate === "closed" && closure.offline_plan_gate === "closed" && closure.rendering_gate === "open" && closure.production_authorization === false, "Offline closure differs");
+check(closure.habahiro_exact_parity_gate === "open" && closure.habahiro_degraded_delivery_gate === "closed-authorized-by-explicit-user-request" && closure.degraded_habahiro.automatic_fallback === false && closure.degraded_habahiro.difference_count === 12, "Offline HABAHIRO dual-track closure differs");
 check(closure.runtime_capture_plan.hook_target_count === 55 && closure.runtime_capture_plan.r1_scenarios.length === 2 && closure.runtime_capture_plan.physical_frame_anchors === 13, "Offline runtime plan summary differs");
 check(Object.keys(closure.historical_candidate_status).length === 28 && Object.keys(closure.decision_status).length === 18, "H/D closure counts differ");
 check(closure.unknown_static_work.length === 0 && closure.unknown_fields.length === 0 && closure.remaining_blockers_all_require_game_server === true, "Offline closure retains non-server work");
 check(closure.remaining_blockers.map((row) => row.id).join(",") === "S01,S02,S03", "Offline closure blocker IDs differ");
 
-console.log(`verified resource/Pixi offline evidence: entries=709 methods=673 layouts=32 enums=19 resources=11026/57/100 profiles=8+4+4+5 plans=55/2/13 H=28 D=18 PR=40 offline=closed rendering=open production=false blockers=S01,S02,S03${validateIndex ? " index=checked" : ""}`);
+console.log(`verified resource/Pixi offline evidence: entries=713 methods=673 layouts=32 enums=19 resources=11026/57/100 profiles=8+4+4+5 plans=55/2/13 HAB=2/12/179 exact=open degraded=authorized H=28 D=18 PR=40 offline=closed rendering=open production=false${validateIndex ? " index=checked" : ""}`);

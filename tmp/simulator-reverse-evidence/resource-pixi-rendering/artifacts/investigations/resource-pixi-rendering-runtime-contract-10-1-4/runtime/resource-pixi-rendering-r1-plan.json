@@ -7,7 +7,7 @@
     "version_code": 230,
     "abi": "arm64-v8a"
   },
-  "hook_target_sha256": "C0ECCED2E03D18B71A9687BDDA54ADEF43D4AFCD2A573D95864FAC51BCC78990",
+  "hook_target_sha256": "9275CAD3A530C451AC567F8BC94AE2F588F552D8B73C1F701DCEC46CD43D1B93",
   "safety": {
     "observation_only": true,
     "natural_live_entry_required": true,
@@ -178,5 +178,12 @@
     "trace and verifier are committed and pushed before any Garupa evidence freeze",
     "failed, partial, timeout or privacy-invalid traces remain diagnostic-only"
   ],
+  "degraded_habahiro_disposition": {
+    "exact_scenario_remains_planned": true,
+    "absence_blocks_exact_parity": true,
+    "absence_blocks_degraded_delivery": false,
+    "approximation_contract": "habahiro_degraded_approximation.json",
+    "generated_trace_may_pass_this_verifier": false
+  },
   "production_authorization": false
 }

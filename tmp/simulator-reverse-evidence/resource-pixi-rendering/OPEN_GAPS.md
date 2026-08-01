@@ -5,6 +5,8 @@
 ```text
 offline_work_gate=closed
 offline_plan_gate=closed
+habahiro_exact_parity_gate=open
+habahiro_degraded_delivery_gate=closed-authorized-by-explicit-user-request
 rendering_gate=open
 production_authorization=false
 unknown_static_work=[]
@@ -25,7 +27,10 @@ fixed_cases=40
 runtime_hook_targets=55
 r1_scenarios=2
 frame_anchors=13
-remaining_blockers=S01,S02,S03
+habahiro_degraded_profiles=2
+habahiro_difference_rows=12
+habahiro_degraded_sprite_keys=179
+remaining_exact_blockers=S01,S02,S03
 ```
 
 ## 已关闭的离线工作
@@ -38,7 +43,19 @@ remaining_blockers=S01,S02,S03
 - 所有仍可在不进入 Live、不请求游戏资源服务的条件下完成的工作；`unknown_static_work=[]`。
 - 55个current hook target、2个natural-Live R1场景、13个实体frame anchor，以及trace/frame/runtime-oracle fail-closed verifier；缺失输入时验证入口已确认拒绝。
 
-## 必须连接游戏服务器
+## HABAHIRO 显式降级处置
+
+无法自然进入限时HABAHIRO Live时，不存在可等价替代S02对象/顺序/phase和S03原始frame的纯静态方案。经用户明确授权，另设不宣称原作一致性的降级交付轨：
+
+- 首选`historical-atlas-proxy`：用户提供本地字节并匹配历史bundle/texture哈希，使用179个精确历史组合Sprite row；10.1.4字节等价性仍未证明。
+- 次选`current-ordinary-stretch-proxy`：用当前ordinary/directional/field/judge资源拉伸或组合宽音符，视觉差异更大。
+- 两者必须显式选择并显示`Approximate HABAHIRO`；禁止exact→degraded静默fallback，禁止生成frame进入原作golden/parity tests。
+- lane change保留marker→flash-start→change-lane顺序，但缺`Root_effect`/clip时默认同engine frame换线；粒子、颜色、延迟和完成phase可能不同。
+- HA-D01–HA-D12记录资源版本、宽音符图、mesh width输入、pool identity、lane animation、field/judge、mask/material/shader、HUD、lifecycle和raster差异；直接影响PR01、PR04、PR19、PR40。
+
+该处置关闭的是`habahiro_degraded_delivery_gate`，不是`habahiro_exact_parity_gate`，也不授权当前production。
+
+## Exact 开放项
 
 ### S01 当前 HABAHIRO bundle
 
@@ -46,10 +63,10 @@ remaining_blockers=S01,S02,S03
 
 ### S02 自然 Live R1
 
-需要自然进入 ordinary 与 HABAHIRO Live，observation-only 捕获 selected resource、Sprite bind、pool identity/reuse、transform/geometry/line/mask、Animator phase、engine→renderer caller 顺序及 pause/reset/fault/dispose lifecycle。无 natural Live 的 synthetic invocation 不可晋升。
+ordinary R1仍是production前置；HABAHIRO R1仅在exact parity轨必需。需要自然进入 ordinary 与可用时的 HABAHIRO Live，observation-only 捕获 selected resource、Sprite bind、pool identity/reuse、transform/geometry/line/mask、Animator phase、engine→renderer caller 顺序及 pause/reset/fault/dispose lifecycle。无 natural Live 的 synthetic invocation 不可晋升。
 
 ### S03 实体 frame anchors
 
-需要在锁定 viewport、skin、chart、event 与帧时点下取得隐私最小化的 10.1.4 ordinary/HABAHIRO 实体 frame；用于关闭 scene/command/raster oracle，不导出账户、room、member/card/Skill身份、display string 或 raw pointer。
+ordinary实体frame仍是production前置；HABAHIRO原始frame仅在exact parity轨必需。frame用于关闭原作scene/command/raster oracle，不导出账户、room、member/card/Skill身份、display string或raw pointer。
 
-S01–S03 关闭前，`rendering_gate`保持 open，RP03–RP14 production、Pixi backend、阶段 package scripts 与资源二进制均禁止加入。
+整体`rendering_gate`继续因ordinary runtime/frame和剩余contract工作保持open；RP03–RP14 production、Pixi backend、阶段package scripts与资源二进制仍未授权。

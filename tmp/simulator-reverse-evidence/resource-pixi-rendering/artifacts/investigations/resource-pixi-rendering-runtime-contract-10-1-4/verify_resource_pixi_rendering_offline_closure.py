@@ -43,6 +43,16 @@ def main() -> int:
     require(portable["resource_profile"]["network_allowed"] is False, "portable resource network must be disabled")
     require(portable["resource_profile"]["fallback_alias_allowed"] is False, "portable resource fallback must be disabled")
     require(portable["resource_profile"]["placeholder_allowed"] is False, "portable placeholders must be disabled")
+    require(portable["resource_profile"]["habahiro_exact_status"] == "evidence-required-current-bundle-absent-from-cache-index", "HABAHIRO exact resource status mismatch")
+    require(portable["resource_profile"]["habahiro_degraded_status"] == "explicit-profile-allowed-not-original-parity" and portable["resource_profile"]["automatic_degraded_fallback_allowed"] is False, "HABAHIRO degraded resource policy mismatch")
+    require(portable["degraded_habahiro_policy"] == {
+        "status": "delivery-authorized-exact-parity-open",
+        "profile_selection": "explicit-only",
+        "visible_label": "Approximate HABAHIRO",
+        "parity_tests": "excluded",
+        "directly_impacted_cases": ["PR01", "PR04", "PR19", "PR40"],
+        "evidence_ids": ["F11", "F12"],
+    }, "portable degraded HABAHIRO policy mismatch")
     require(len(portable["component_mapping"]) == 7, "component mapping count mismatch")
     require(bool(portable["rejections"]), "portable rejection matrix is empty")
 
@@ -57,6 +67,8 @@ def main() -> int:
     require(by_case["PR04"]["status"] == "server-resource-required", "HABAHIRO case must remain server-blocked")
     require(by_case["PR39"]["status"] == "runtime-live-and-frame-required", "ordinary production frame case must remain runtime-blocked")
     require(by_case["PR40"]["status"] == "runtime-live-and-frame-required", "HABAHIRO production frame case must remain runtime-blocked")
+    require(cases["degraded_habahiro_disposition"]["status"] == "accepted-for-explicit-preview-not-original-parity" and cases["degraded_habahiro_disposition"]["exact_case_statuses_unchanged"] is True, "degraded PR disposition mismatch")
+    require(list(cases["degraded_habahiro_disposition"]["cases"]) == ["PR01", "PR04", "PR19", "PR40"], "degraded PR case set mismatch")
 
     require(closure["status"] == "offline-work-gate-closed-server-required-gate-open", "offline closure status mismatch")
     require(closure["offline_work_gate"] == "closed", "offline work gate is not closed")
@@ -69,6 +81,16 @@ def main() -> int:
         "evidence_ids": ["F08", "F09", "F10"],
     }, "runtime capture plan summary mismatch")
     require(closure["rendering_gate"] == "open", "rendering gate closed without runtime evidence")
+    require(closure["habahiro_exact_parity_gate"] == "open" and closure["habahiro_degraded_delivery_gate"] == "closed-authorized-by-explicit-user-request", "HABAHIRO dual-track closure mismatch")
+    require(closure["degraded_habahiro"] == {
+        "status": "accepted-for-delivery-not-original-parity",
+        "profiles": ["historical-atlas-proxy", "current-ordinary-stretch-proxy"],
+        "visible_label": "Approximate HABAHIRO",
+        "automatic_fallback": False,
+        "difference_count": 12,
+        "directly_impacted_cases": ["PR01", "PR04", "PR19", "PR40"],
+        "evidence_ids": ["F11", "F12"],
+    }, "degraded HABAHIRO closure mismatch")
     require(closure["production_authorization"] is False, "offline evidence must not authorize production")
     require(len(closure["historical_candidate_status"]) == 28, "H candidate count mismatch")
     require(set(closure["historical_candidate_status"]) == {f"H{index:02d}" for index in range(1, 29)}, "H candidate IDs mismatch")
@@ -78,7 +100,8 @@ def main() -> int:
     require(closure["remaining_blockers_all_require_game_server"] is True, "non-server blocker remains after offline closure")
     require([row["id"] for row in closure["remaining_blockers"]] == ["S01", "S02", "S03"], "remaining blocker IDs mismatch")
     require(all(row["requires_game_server"] is True for row in closure["remaining_blockers"]), "remaining blocker is not server-bound")
-    print("verified rendering offline closure: H=28 D=18 PR=40 plans=55/2/13 remaining=S01,S02,S03 production=false")
+    require(all(row["blocks_degraded_habahiro_delivery"] is False for row in closure["remaining_blockers"]), "exact blocker still blocks degraded HABAHIRO delivery")
+    print("verified rendering offline closure: H=28 D=18 PR=40 plans=55/2/13 HAB-exact=open HAB-degraded=authorized remaining=S01,S02,S03 production=false")
     return 0
 
 

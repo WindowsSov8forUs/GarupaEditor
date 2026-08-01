@@ -1,0 +1,568 @@
+{
+  "schema_version": 1,
+  "status": "confirmed-explicit-degraded-habahiro-decision-not-original-parity",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "version_name": "10.1.4",
+    "version_code": 230,
+    "abi": "arm64-v8a"
+  },
+  "question": "Can unavailable natural HABAHIRO Live evidence be replaced, or only approximated?",
+  "decision": {
+    "exact_whole_gate_replacement_available": false,
+    "exact_s01_resource_recovery_paths": [
+      "read-only direct retrieval of the current logical bundle from the game resource service with version/hash provenance",
+      "a proven 10.1.4 device cache containing the current logical bundle",
+      "byte equality between a later current bundle and the historical pinned export"
+    ],
+    "exact_s02_runtime_replacement_available": false,
+    "exact_s03_frame_replacement_available": false,
+    "degraded_delivery_path_available": true,
+    "selected_policy": "dual-track: preserve exact parity gate, allow an explicit degraded HABAHIRO preview gate"
+  },
+  "gate_policy": {
+    "habahiro_exact_parity_gate": "open",
+    "habahiro_degraded_delivery_gate": "closed-authorized-by-explicit-user-request",
+    "overall_rendering_gate": "open-ordinary-runtime-and-contract-work-remain",
+    "production_authorization": false,
+    "future_production_condition": "an approximation profile must be explicitly selected; automatic fallback is forbidden",
+    "parity_claim_allowed": false
+  },
+  "mandatory_runtime_surface": {
+    "mode": "approximate-habahiro",
+    "visible_label": "Approximate HABAHIRO",
+    "telemetry_or_result_flag": "rendering-fidelity-degraded-habahiro",
+    "silent_fallback": false,
+    "parity_tests": "excluded; use a separate approximation regression suite",
+    "exact_mode_without_current_resource": "evidence-required before any renderer mutation"
+  },
+  "current_confirmed": {
+    "sources": {
+      "static": {
+        "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/resource_pixi_rendering_static_contract.json",
+        "bytes": 2615204,
+        "sha256": "213F64E0ACBD1D8B6E0773DD6107A392CF3BA70DD0D575269DE2661CE5163389"
+      },
+      "migration": {
+        "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/resource_pixi_rendering_instruction_migration.json",
+        "bytes": 348093,
+        "sha256": "E0FB0346291E9E14ADDC77F5F95479ED0CE84145E6C7F24F969C03835265B527"
+      },
+      "resource": {
+        "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/resource_pixi_rendering_resource_contract.json",
+        "bytes": 2111866,
+        "sha256": "F389AB0950156FAAA6B1B6407BA4D47AD66C9472DB9631D604460E39BC9F15A3"
+      },
+      "chart_metadata": {
+        "path": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime-inputs/bms/786_miracle_april_habahiro_special.metadata.json",
+        "bytes": 599,
+        "sha256": "AA81316DCF5971F2D58DF0C2850E820097AE1F4E3F06860A13FBD256B3AA277F"
+      },
+      "chart_oracle": {
+        "path": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/score_life_state_chart_count_oracle.json",
+        "bytes": 4144,
+        "sha256": "318D7E61A95735E8471C21A4E6BA978A1428BDCD324A61CC70DC7C9E5088FD78"
+      }
+    },
+    "chart": {
+      "asset": "786_miracle_april_habahiro_special",
+      "bytes": 38700,
+      "sha256": "43148090C40ABBD951E8D7112200BDAE9B796A8A531A0793169E0AD70C3DC159",
+      "max_note_count": 731,
+      "lane_change_absolute_position": 1728
+    },
+    "methods": [
+      {
+        "owner": "NoteManager",
+        "method": "setupNoteSkin",
+        "rva": "0x3774C74",
+        "end_rva": "0x3775080",
+        "arm64_sha256": "DA8DCDCF28166131767F6D89C3BD4E60D0277EC019EBD92C4140C4C16D4FA8C3",
+        "arm64_evidence": "arm64/03774c74__NoteManager__setupNoteSkin.arm64.tsv",
+        "migration_status": "changed-semantic-instruction-shape"
+      },
+      {
+        "owner": "NoteImageController",
+        "method": "SetupNoteFileNameMap",
+        "rva": "0x330AD28",
+        "end_rva": "0x330B070",
+        "arm64_sha256": "1140402FC4526FE69F57B1585060C5F8B3CB9176181DA5D3C1EEA9C6169E8F5D",
+        "arm64_evidence": "arm64/0330ad28__NoteImageController__SetupNoteFileNameMap.arm64.tsv",
+        "migration_status": "normalized-instruction-equivalent"
+      },
+      {
+        "owner": "NoteImageController",
+        "method": "GetNoteSprite",
+        "rva": "0x330A70C",
+        "end_rva": "0x330A72C",
+        "arm64_sha256": "40006CD9D4910F8319D82208FEAC5BF76548E7B2C817827D5EDD0B90C6744D51",
+        "arm64_evidence": "arm64/0330a70c__NoteImageController__GetNoteSprite.arm64.tsv",
+        "migration_status": "normalized-instruction-equivalent"
+      },
+      {
+        "owner": "NoteMesh",
+        "method": "GetMeshWidthRate",
+        "rva": "0x30E2038",
+        "end_rva": "0x30E20EC",
+        "arm64_sha256": "F47E5948746111A6CE27873DE3F5DFF049CAC608D4C507F7771E903EE630E661",
+        "arm64_evidence": "arm64/030e2038__NoteMesh__GetMeshWidthRate.arm64.tsv",
+        "migration_status": "changed-semantic-instruction-shape"
+      },
+      {
+        "owner": "NoteAddLongMultipleDirectionalFlickVisual",
+        "method": "CreateInstances",
+        "rva": "0x30E60A4",
+        "end_rva": "0x30E62F8",
+        "arm64_sha256": "BB17C8F06E7C8B3D7627602A189BDC361002A9E5FB40108D09B266931CC8B30E",
+        "arm64_evidence": "arm64/030e60a4__NoteAddLongMultipleDirectionalFlickVisual__CreateInstances.arm64.tsv",
+        "migration_status": "changed-semantic-instruction-shape"
+      },
+      {
+        "owner": "NoteBatchInformationListFactory",
+        "method": "IsEnableHabahiroChangeFlash",
+        "rva": "0x376DBDC",
+        "end_rva": "0x376DC18",
+        "arm64_sha256": "D9C9EB5F909965073FFEF10315BD13A6A79E1D305A9ED993C994F53BF1F05635",
+        "arm64_evidence": "arm64/0376dbdc__NoteBatchInformationListFactory__IsEnableHabahiroChangeFlash.arm64.tsv",
+        "migration_status": "normalized-instruction-equivalent"
+      },
+      {
+        "owner": "ButtonManager",
+        "method": "ExecAwakeStart",
+        "rva": "0x3880190",
+        "end_rva": "0x38807DC",
+        "arm64_sha256": "6624A83C16920BDAA02CE7A106EBD5DD43FE2D1F1C8A91283441859EFE364388",
+        "arm64_evidence": "arm64/03880190__ButtonManager__ExecAwakeStart.arm64.tsv",
+        "migration_status": "normalized-instruction-equivalent"
+      },
+      {
+        "owner": "ButtonManager",
+        "method": "getEffectSkinBundleName",
+        "rva": "0x3880AA4",
+        "end_rva": "0x3880DB8",
+        "arm64_sha256": "559D63917628A2184860206267BB3FF85E5191AD3B0D5622292B53AE5687D999",
+        "arm64_evidence": "arm64/03880aa4__ButtonManager__getEffectSkinBundleName.arm64.tsv",
+        "migration_status": "normalized-instruction-equivalent"
+      },
+      {
+        "owner": "ButtonManager",
+        "method": "onUpdateMusicPos",
+        "rva": "0x3882D6C",
+        "end_rva": "0x3882DE8",
+        "arm64_sha256": "933C0B7E7F78F3331AAD4B94D98F6CB43245DB07E4005A60130F9C45E7367001",
+        "arm64_evidence": "arm64/03882d6c__ButtonManager__onUpdateMusicPos.arm64.tsv",
+        "migration_status": "normalized-instruction-equivalent"
+      },
+      {
+        "owner": "ButtonManager",
+        "method": "changeLaneImage",
+        "rva": "0x3882DE8",
+        "end_rva": "0x3882E58",
+        "arm64_sha256": "375CBEE3476FF3107BA18819DBEC624B747F19A64224D5F3553BAF9A1FB33A77",
+        "arm64_evidence": "arm64/03882de8__ButtonManager__changeLaneImage.arm64.tsv",
+        "migration_status": "normalized-instruction-equivalent"
+      },
+      {
+        "owner": "RhythmGameHabahiroFlashAnim",
+        "method": "AnimationComplete",
+        "rva": "0x386FA80",
+        "end_rva": "0x386FA9C",
+        "arm64_sha256": "B486D8D23C01BB8459AECED999EE6CCF74DAEEF8E7DC6DBB582A9C8D74728253",
+        "arm64_evidence": "arm64/0386fa80__RhythmGameHabahiroFlashAnim__AnimationComplete.arm64.tsv",
+        "migration_status": "normalized-instruction-equivalent"
+      },
+      {
+        "owner": "RhythmGameHabahiroFlashAnim",
+        "method": "ChangeLane",
+        "rva": "0x386FA9C",
+        "end_rva": "0x386FAB8",
+        "arm64_sha256": "4ACFFD3E5B9A1B0E14A4D00CED8DAFF767C1FF73803BCE76E1E3C70067ACCCE5",
+        "arm64_evidence": "arm64/0386fa9c__RhythmGameHabahiroFlashAnim__ChangeLane.arm64.tsv",
+        "migration_status": "normalized-instruction-equivalent"
+      },
+      {
+        "owner": "RhythmGameHabahiroFlashAnim",
+        "method": ".ctor",
+        "rva": "0x386FAB8",
+        "end_rva": "0x386FAC0",
+        "arm64_sha256": "58531E4D9F612F79300F0980E5648C873D3515EF3964CCACE65E97F4ABE04C25",
+        "arm64_evidence": "arm64/0386fab8__RhythmGameHabahiroFlashAnim___ctor.arm64.tsv",
+        "migration_status": "normalized-instruction-equivalent"
+      }
+    ],
+    "normalized_equivalent_methods": [
+      "NoteImageController::SetupNoteFileNameMap",
+      "NoteImageController::GetNoteSprite",
+      "NoteBatchInformationListFactory::IsEnableHabahiroChangeFlash",
+      "ButtonManager::ExecAwakeStart",
+      "ButtonManager::getEffectSkinBundleName",
+      "ButtonManager::onUpdateMusicPos",
+      "ButtonManager::changeLaneImage",
+      "RhythmGameHabahiroFlashAnim::AnimationComplete",
+      "RhythmGameHabahiroFlashAnim::ChangeLane",
+      "RhythmGameHabahiroFlashAnim::.ctor"
+    ],
+    "changed_shape_methods_with_current_dedicated_findings": [
+      "NoteManager::setupNoteSkin",
+      "NoteMesh::GetMeshWidthRate",
+      "NoteAddLongMultipleDirectionalFlickVisual::CreateInstances"
+    ],
+    "current_arm64_findings": {
+      "setup_note_skin": {
+        "status": "confirmed-current-static-habahiro-suffix-and-bundle-name-route",
+        "multi_range_suffix_call": "AssetBundleNames.get_HabahiroBundleName @ 0x3774DCC",
+        "bundle_name_builder_call": "AssetBundleNames.GetInGameSkinNoteSkinBundleName @ 0x3774FB8"
+      },
+      "mesh_width": {
+        "status": "confirmed-current-static-formula-runtime-setting-value-open",
+        "ordinary_default": 1.0,
+        "multi_range_setting_source": "runtime singleton Float32 at +0x84",
+        "combination": "base + min(setting, 1.0) * coefficient when setting >= 0; base otherwise",
+        "unknown": "runtime singleton value and selected enum branch in an inaccessible HABAHIRO Live"
+      },
+      "multiple_directional_pool": {
+        "status": "confirmed-current-static-create-count-runtime-identity-open",
+        "loop_start": 1,
+        "exclusive_end": 61,
+        "created_instances": 60,
+        "unknown": "natural pool identity, reuse and release sequence"
+      }
+    },
+    "resource_proxies": {
+      "ingameskin/noteskin/skin00": {
+        "bytes": 673166,
+        "sha256": "FCE3B103AA5F94C533D2534A7FD2FBFCA042CEF3796E2EC3D5A0CE4FCFB2A50F",
+        "sprite_count": 45,
+        "texture_count": 4
+      },
+      "ingameskin/noteskin/skin01": {
+        "bytes": 801954,
+        "sha256": "6ED5098C57B8B94EC902DEFB26BE95A128200704009CDDA7F3D98AF6B04CE751",
+        "sprite_count": 45,
+        "texture_count": 4
+      },
+      "ingameskin/noteskin/directionalflickskin01": {
+        "bytes": 273834,
+        "sha256": "D13CD966BACB40D91B7D3BA915CF18207BC905702D0D044D95F95DD1838B6924",
+        "sprite_count": 16,
+        "texture_count": 3
+      },
+      "ingameskin/fieldskin/skin00": {
+        "bytes": 126003,
+        "sha256": "C14FF6BF91ECD83E6A71C3717BD9BB95657D64178F7E6A7C6F66B3BD7E5B48FB",
+        "sprite_count": 2,
+        "texture_count": 3
+      },
+      "ingameskin/judgeskin/skin00": {
+        "bytes": 133357,
+        "sha256": "EAA5BB5AA21E2CAEFA31EC76476CB825B14617B81F3176CC56467C46A377B475",
+        "sprite_count": 0,
+        "texture_count": 1
+      }
+    }
+  },
+  "historical_candidate": {
+    "sources": {
+      "atlas": {
+        "path": "artifacts/investigations/note-sprite-combination-lookup/habahiro_atlas_sources.json",
+        "bytes": 3350,
+        "sha256": "441F98B7FC2C840AC2A1CD6280447A4FA9FD504F82ADFBC1B653F30EA799B85E"
+      },
+      "bindings": {
+        "path": "artifacts/investigations/note-sprite-combination-lookup/habahiro_sprite_bindings.tsv",
+        "bytes": 15276,
+        "sha256": "556FFB802AD672F08F53AC01B3F704D17FDBC23346CB7A5C2FE960ECF6115A3E"
+      },
+      "lane_change": {
+        "path": "artifacts/investigations/habahiro-lane-change/evidence.json",
+        "bytes": 2132,
+        "sha256": "E2335D775F7BEC804DDA8A40443FA5BD13A89C03103DDE2FE455738ABC6633E2"
+      }
+    },
+    "atlas_profile": {
+      "status": "historical-10.1.3-unversioned-external-candidate-not-current-evidence",
+      "bundle_name": "ingameskin/noteskin/habahiro",
+      "bundle_export_sha256": "E4F0D2A380DC217AFB3EAD8A601493D72ED7A2C84746B949C0FD1BC4B08A96C5",
+      "sprite_metadata_sha256": "BEFD45C7D0702D4479365AFFD527DFB5D5FA263A8B58176EA7C5EA88B3740B6A",
+      "sprite_count": 179,
+      "family_counts": {
+        "note_flick": 28,
+        "note_flick_top": 3,
+        "note_long": 28,
+        "note_long_flash": 28,
+        "note_normal": 28,
+        "note_normal_16": 28,
+        "note_skill": 28,
+        "note_slide_among": 7,
+        "simultaneous_line": 1
+      },
+      "texture_count": 9,
+      "texture_profiles": {
+        "RhythmGameSprites1.png": {
+          "sha256": "BD949E997D85E58BE1E674E1115870E14C81369142CF85D6E73AF80CC0383656",
+          "size": [
+            2048,
+            2048
+          ],
+          "families": [
+            "note_flick",
+            "note_flick_top",
+            "note_slide_among"
+          ]
+        },
+        "RhythmGameSprites16.png": {
+          "sha256": "6FFE3A079FF03191F03A2A9CCA46B651DA1B3D4013D7E1556DD8D0C4E9E0A877",
+          "size": [
+            2048,
+            2048
+          ],
+          "families": [
+            "note_normal_16"
+          ]
+        },
+        "RhythmGameSprites2.png": {
+          "sha256": "F1319CE2143BA1DEBE7F2B5BB0B6208F134C6E0FF077D12C938D2CDA0B373894",
+          "size": [
+            2048,
+            2048
+          ],
+          "families": [
+            "note_long"
+          ]
+        },
+        "RhythmGameSprites3.png": {
+          "sha256": "3193607C11352516393AFB0AE23144C575A92EB58B7D21349621F9F676823E97",
+          "size": [
+            2048,
+            2048
+          ],
+          "families": [
+            "note_long_flash"
+          ]
+        },
+        "RhythmGameSprites4.png": {
+          "sha256": "E1D7E6C8F11A70BB2B633DFD9DA5C6D6F36005A47875DF7D652123D8C626D12D",
+          "size": [
+            2048,
+            2048
+          ],
+          "families": [
+            "note_normal"
+          ]
+        },
+        "RhythmGameSprites5.png": {
+          "sha256": "CC4464CF02E143B37E9E01E87352ED30CDC90EDA9A4CB19D4E0AC38C2C69AD11",
+          "size": [
+            2048,
+            2048
+          ],
+          "families": [
+            "note_skill"
+          ]
+        },
+        "longNoteLine.png": {
+          "sha256": "DC28380A2110D07022C63F323499DEC597DE5A82924F81DFC19394909C97E26E",
+          "size": [
+            146,
+            205
+          ],
+          "families": []
+        },
+        "longNoteLine2.png": {
+          "sha256": "845FE4E4FFC693B4C05526A765060E24E35E79A34CD9E4EA7F900104D4A9E397",
+          "size": [
+            146,
+            205
+          ],
+          "families": []
+        },
+        "simultaneous_line.png": {
+          "sha256": "1C9F1D79986F609733810D1068A927D895D9DA2E6366C2C5D68C975CAEB1BD88",
+          "size": [
+            10,
+            27
+          ],
+          "families": [
+            "simultaneous_line"
+          ]
+        }
+      },
+      "pivots": [
+        [
+          "0.5",
+          "0.5"
+        ]
+      ],
+      "pixels_per_unit": [
+        "100",
+        "65"
+      ],
+      "binary_committed": false,
+      "version_equivalence_to_10_1_4": "unproven",
+      "allowed_use": "explicit degraded preview only; never current parity evidence"
+    },
+    "lane_change_sample": {
+      "package": "jp.co.craftegg.band",
+      "version": "10.1.3",
+      "version_code": 229,
+      "abi": "arm64-v8a"
+    },
+    "allowed_claim": "closest known historical visual candidate only"
+  },
+  "profiles": [
+    {
+      "profile_id": "historical-atlas-proxy",
+      "priority": 1,
+      "availability": "requires user-supplied local bytes matching the pinned historical bundle/texture hashes",
+      "note_art": "use all 179 exact historical Sprite rows",
+      "directional_art": "use current directionalflickskin01",
+      "field": "use current field/judge resources with semantic lane-state projection",
+      "lane_change": "preserve two-stage order; omit Root_effect; default approximation applies swap in the same engine frame after flash-start",
+      "expected_difference_level": "high"
+    },
+    {
+      "profile_id": "current-ordinary-stretch-proxy",
+      "priority": 2,
+      "availability": "uses current cached ordinary/directional/field/judge resources",
+      "note_art": "stretch or compose current ordinary single-lane Sprite art to the contiguous range",
+      "directional_art": "use current directionalflickskin01",
+      "field": "use current field/judge resources with semantic lane-state projection",
+      "lane_change": "preserve two-stage order; omit Root_effect; same-frame swap after flash-start",
+      "expected_difference_level": "very-high"
+    }
+  ],
+  "difference_matrix": [
+    {
+      "id": "HA-D01",
+      "area": "resource-version",
+      "severity": "critical",
+      "exact_status": "open",
+      "approximation": "use user-supplied historical bundle/PNG bytes matching pinned hashes",
+      "possible_difference": "10.1.4 may contain changed pixels, rects, pivots, PPU, texture settings, materials or additional objects",
+      "detectable_without_live": "only if a current bundle is later obtained and byte/object compared"
+    },
+    {
+      "id": "HA-D02",
+      "area": "wide-note-artwork",
+      "severity": "high",
+      "exact_status": "open",
+      "approximation": "prefer 179 historical exact combination rows; secondary proxy stretches/composes current ordinary single-lane art",
+      "possible_difference": "secondary proxy distorts borders, highlights, flick tops and long/flash artwork; historical proxy may be version-stale",
+      "detectable_without_live": "current bundle required for exact comparison"
+    },
+    {
+      "id": "HA-D03",
+      "area": "bundle-selection-runtime",
+      "severity": "medium",
+      "exact_status": "current-static-route-confirmed-runtime-selection-open",
+      "approximation": "select degraded profile directly when chart is multi-range",
+      "possible_difference": "original special-skin/master overrides and loader failure order are bypassed",
+      "detectable_without_live": "natural selected profile trace required"
+    },
+    {
+      "id": "HA-D04",
+      "area": "mesh-width-setting",
+      "severity": "medium",
+      "exact_status": "current-formula-confirmed-runtime-input-open",
+      "approximation": "require an explicit host width setting; do not supply an implicit default",
+      "possible_difference": "host value may differ from inaccessible original session singleton +0x84",
+      "detectable_without_live": "original runtime value required"
+    },
+    {
+      "id": "HA-D05",
+      "area": "multiple-directional-pool",
+      "severity": "medium",
+      "exact_status": "current-create-count-60-confirmed-runtime-identity-open",
+      "approximation": "allocate deterministic chart/session identities and reuse in chart order",
+      "possible_difference": "acquire/reuse/release identity and same-frame visibility order may differ",
+      "detectable_without_live": "natural object trace required"
+    },
+    {
+      "id": "HA-D06",
+      "area": "lane-change-trigger",
+      "severity": "low",
+      "exact_status": "current-static-two-stage-semantics-confirmed",
+      "approximation": "preserve marker->flash-start->change-lane ordering",
+      "possible_difference": "none expected in domain order; renderer timing remains HA-D07",
+      "detectable_without_live": "current methods are instruction-equivalent; runtime still verifies phase"
+    },
+    {
+      "id": "HA-D07",
+      "area": "lane-change-animation",
+      "severity": "high",
+      "exact_status": "clip-event-time-curves-and-Root_effect-open",
+      "approximation": "omit Root_effect and apply line swap in the same engine frame after flash-start; optionally accept an explicit caller delay",
+      "possible_difference": "missing flash particles/color/alpha, wrong event delay and no original completion phase",
+      "detectable_without_live": "current effect bundle or natural frame trace required"
+    },
+    {
+      "id": "HA-D08",
+      "area": "field-and-judge-swap",
+      "severity": "high",
+      "exact_status": "four assignments-confirmed-current-resource-bytes-open",
+      "approximation": "reposition/scale current field/judge resources and swap semantic state immediately",
+      "possible_difference": "line/judge textures, mask boundaries, widths, colors and sorting may differ",
+      "detectable_without_live": "current HABAHIRO field/effect bundle required"
+    },
+    {
+      "id": "HA-D09",
+      "area": "mask-material-shader",
+      "severity": "high",
+      "exact_status": "runtime-instance-and-frame-open",
+      "approximation": "use portable alpha mask and standard material role",
+      "possible_difference": "SpriteMask interaction, threshold, blend, transparent sorting and edge sampling may differ",
+      "detectable_without_live": "runtime material snapshot and physical frame required"
+    },
+    {
+      "id": "HA-D10",
+      "area": "HUD-wide-judge",
+      "severity": "medium",
+      "exact_status": "current-route-static-runtime-bind-open",
+      "approximation": "use current standard judge/HUD assets",
+      "possible_difference": "wide-mode judge Sprite, depth, position or timing may differ",
+      "detectable_without_live": "HABAHIRO scene/HUD trace required"
+    },
+    {
+      "id": "HA-D11",
+      "area": "command-lifecycle",
+      "severity": "medium",
+      "exact_status": "runtime-order-pause-reset-fault-dispose-open",
+      "approximation": "project current static owner order into deterministic commands and use ordinary lifecycle policy",
+      "possible_difference": "same-frame order, pause clock, Retry/reset and partial failure mutation may differ",
+      "detectable_without_live": "natural R1 trace required"
+    },
+    {
+      "id": "HA-D12",
+      "area": "physical-raster",
+      "severity": "critical",
+      "exact_status": "no-10.1.4-habahiro-frame",
+      "approximation": "generated frames are diagnostic previews only and never golden expected",
+      "possible_difference": "all pixel-level output can differ through resources, transforms, animation phase, sampling, masks, sorting and GPU",
+      "detectable_without_live": "cannot be closed without an original framebuffer"
+    }
+  ],
+  "directly_impacted_fixed_cases": [
+    "PR01",
+    "PR04",
+    "PR19",
+    "PR40"
+  ],
+  "acceptance": {
+    "degraded_preview_may_continue": true,
+    "original_parity_may_close": false,
+    "required_tests": [
+      "explicit profile selection and visible degraded label",
+      "no silent fallback from exact to approximate mode",
+      "current chart structure and exact Sprite-key generation",
+      "historical/local resource hash rejection before mutation",
+      "deterministic approximation scene/command regression",
+      "all HA-D01-HA-D12 differences remain machine-readable and documented"
+    ],
+    "unknown_fields": [],
+    "blocking_findings_for_exact_parity": [
+      "S01-current-resource",
+      "S02-habahiro-natural-runtime",
+      "S03-habahiro-original-frame"
+    ]
+  }
+}

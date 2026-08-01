@@ -50,13 +50,23 @@
     },
     "F09": {
       "path": "runtime/resource-pixi-rendering-r1-plan.json",
-      "bytes": 5698,
-      "sha256": "69F5568F9F0974A55E056E2B0FD9D4E923A34EBEE525C81B1D6590D5498C8E16"
+      "bytes": 5994,
+      "sha256": "65D1E97146BA4FB85B15EE461C3D439DC4FA47A1EBA8DB93AFA772EA4A8695EC"
     },
     "F10": {
       "path": "runtime/resource-pixi-rendering-frame-plan.json",
-      "bytes": 1900,
-      "sha256": "F2B2D5B111F0498C867F2C9A19B5692B22ECF1B453744B68C3577B98458692D1"
+      "bytes": 2205,
+      "sha256": "F952DED2A67C6D2D73FB856E9FAA38B91F5AC36FB8CD9B0E5DE14B4BA85B7EBB"
+    },
+    "F11": {
+      "path": "habahiro_degraded_approximation.json",
+      "bytes": 23709,
+      "sha256": "FE1821CF2F939DCDE8751EA1320EFB6DD2139863B3DD43DE08AEA62382B2913F"
+    },
+    "F12": {
+      "path": "habahiro_degraded_scene_oracle.json",
+      "bytes": 7236,
+      "sha256": "DC13CEB1E726BA3D310AF28E8646F9345C80E7E7CDB4E9E5E1C8ACCAFCCD1665"
     }
   },
   "resource_profile": {
@@ -89,13 +99,21 @@
     "unityfs_parsing_in_engine": false,
     "fallback_alias_allowed": false,
     "placeholder_allowed": false,
-    "habahiro_status": "evidence-required-current-bundle-absent-from-cache-index",
+    "habahiro_exact_status": "evidence-required-current-bundle-absent-from-cache-index",
+    "habahiro_degraded_status": "explicit-profile-allowed-not-original-parity",
+    "habahiro_degraded_profiles": [
+      "historical-atlas-proxy",
+      "current-ordinary-stretch-proxy"
+    ],
+    "automatic_degraded_fallback_allowed": false,
     "evidence_ids": [
       "F03",
       "F04",
       "F05",
       "F06",
-      "F07"
+      "F07",
+      "F11",
+      "F12"
     ]
   },
   "render_identity": {
@@ -329,13 +347,31 @@
     "renderer not prepared",
     "duplicate or cross-session render identity",
     "out-of-order or unknown command",
-    "HABAHIRO chart without a current confirmed HABAHIRO resource profile"
+    "HABAHIRO exact mode without a current confirmed HABAHIRO resource profile",
+    "HABAHIRO degraded mode without explicit profile selection and visible fidelity label",
+    "automatic fallback from exact HABAHIRO mode to a degraded profile"
   ],
   "production_authorization": false,
   "unknown_fields": [],
+  "degraded_habahiro_policy": {
+    "status": "delivery-authorized-exact-parity-open",
+    "profile_selection": "explicit-only",
+    "visible_label": "Approximate HABAHIRO",
+    "parity_tests": "excluded",
+    "directly_impacted_cases": [
+      "PR01",
+      "PR04",
+      "PR19",
+      "PR40"
+    ],
+    "evidence_ids": [
+      "F11",
+      "F12"
+    ]
+  },
   "blocking_findings": [
     "D13 runtime command freeze/order is not observed",
     "D15 cross-component runtime ordering and shader equivalence are not observed",
-    "current HABAHIRO resource bytes are unavailable"
+    "current HABAHIRO resource bytes are unavailable for exact parity"
   ]
 }

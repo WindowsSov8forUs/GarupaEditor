@@ -50,19 +50,31 @@
     },
     "F09": {
       "path": "runtime/resource-pixi-rendering-r1-plan.json",
-      "bytes": 5698,
-      "sha256": "69F5568F9F0974A55E056E2B0FD9D4E923A34EBEE525C81B1D6590D5498C8E16"
+      "bytes": 5994,
+      "sha256": "65D1E97146BA4FB85B15EE461C3D439DC4FA47A1EBA8DB93AFA772EA4A8695EC"
     },
     "F10": {
       "path": "runtime/resource-pixi-rendering-frame-plan.json",
-      "bytes": 1900,
-      "sha256": "F2B2D5B111F0498C867F2C9A19B5692B22ECF1B453744B68C3577B98458692D1"
+      "bytes": 2205,
+      "sha256": "F952DED2A67C6D2D73FB856E9FAA38B91F5AC36FB8CD9B0E5DE14B4BA85B7EBB"
+    },
+    "F11": {
+      "path": "habahiro_degraded_approximation.json",
+      "bytes": 23709,
+      "sha256": "FE1821CF2F939DCDE8751EA1320EFB6DD2139863B3DD43DE08AEA62382B2913F"
+    },
+    "F12": {
+      "path": "habahiro_degraded_scene_oracle.json",
+      "bytes": 7236,
+      "sha256": "DC13CEB1E726BA3D310AF28E8646F9345C80E7E7CDB4E9E5E1C8ACCAFCCD1665"
     }
   },
   "version_rebaseline": "partial-server-resource-and-runtime-gate",
   "offline_work_gate": "closed",
   "offline_plan_gate": "closed",
   "rendering_gate": "open",
+  "habahiro_exact_parity_gate": "open",
+  "habahiro_degraded_delivery_gate": "closed-authorized-by-explicit-user-request",
   "production_authorization": false,
   "historical_candidate_status": {
     "H01": "confirmed-current-static-resource",
@@ -114,6 +126,26 @@
     "D17": "runtime-live-required",
     "D18": "open-server-runtime-gate"
   },
+  "degraded_habahiro": {
+    "status": "accepted-for-delivery-not-original-parity",
+    "profiles": [
+      "historical-atlas-proxy",
+      "current-ordinary-stretch-proxy"
+    ],
+    "visible_label": "Approximate HABAHIRO",
+    "automatic_fallback": false,
+    "difference_count": 12,
+    "directly_impacted_cases": [
+      "PR01",
+      "PR04",
+      "PR19",
+      "PR40"
+    ],
+    "evidence_ids": [
+      "F11",
+      "F12"
+    ]
+  },
   "runtime_capture_plan": {
     "status": "confirmed-observation-only-plan-game-server-required",
     "hook_target_count": 55,
@@ -132,17 +164,27 @@
     {
       "id": "S01",
       "requirement": "obtain and hash the current ingameskin/noteskin/habahiro bundle through the game resource service or a proven current cache",
-      "requires_game_server": true
+      "requires_game_server": true,
+      "blocks_exact_parity": true,
+      "blocks_degraded_habahiro_delivery": false
     },
     {
       "id": "S02",
-      "requirement": "naturally enter ordinary and HABAHIRO Live scenes and capture R1 object/resource/caller/lifecycle traces",
-      "requires_game_server": true
+      "requirement": "naturally enter ordinary Live and, when available, HABAHIRO Live to capture R1 object/resource/caller/lifecycle traces",
+      "requires_game_server": true,
+      "ordinary_scope": "required-before-production",
+      "habahiro_scope": "required-for-exact-parity; explicit degraded disposition accepted",
+      "blocks_exact_parity": true,
+      "blocks_degraded_habahiro_delivery": false
     },
     {
       "id": "S03",
-      "requirement": "capture privacy-safe 10.1.4 physical frame anchors at fixed viewport and event points",
-      "requires_game_server": true
+      "requirement": "capture privacy-safe 10.1.4 ordinary physical frame anchors and HABAHIRO anchors when naturally available",
+      "requires_game_server": true,
+      "ordinary_scope": "required-before-production",
+      "habahiro_scope": "required-for-exact-parity; generated degraded frames are diagnostic-only",
+      "blocks_exact_parity": true,
+      "blocks_degraded_habahiro_delivery": false
     }
   ],
   "remaining_blockers_all_require_game_server": true,

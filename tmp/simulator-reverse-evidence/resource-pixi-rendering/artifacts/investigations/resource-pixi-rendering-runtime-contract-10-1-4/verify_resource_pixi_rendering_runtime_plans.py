@@ -67,6 +67,13 @@ def main() -> int:
         require(scenario["status"] == "planned-game-server-required", f"scenario status mismatch: {scenario['plan_id']}")
         require(scenario["completion"]["capture_error"] is None and scenario["completion"]["sequence_contiguous_from_zero"] is True, f"scenario completion mismatch: {scenario['plan_id']}")
         require(scenario["completion"]["all_required_categories_observed"] is True and scenario["completion"]["all_required_anchors_observed"] is True, f"scenario coverage mismatch: {scenario['plan_id']}")
+    require(r1_plan["degraded_habahiro_disposition"] == {
+        "exact_scenario_remains_planned": True,
+        "absence_blocks_exact_parity": True,
+        "absence_blocks_degraded_delivery": False,
+        "approximation_contract": "habahiro_degraded_approximation.json",
+        "generated_trace_may_pass_this_verifier": False,
+    }, "R1 degraded HABAHIRO disposition mismatch")
     require(r1_plan["production_authorization"] is False, "R1 plan must not authorize production")
 
     require(frame_plan["status"] == "confirmed-frame-plan-game-server-required", "frame plan status mismatch")
@@ -74,14 +81,29 @@ def main() -> int:
     require(sum(len(rows) for rows in frame_plan["scenarios"].values()) == 13, "frame anchor count mismatch")
     require(frame_plan["capture"]["source"] == "physical-device-screencap" and frame_plan["capture"]["lossy_reencode"] is False, "frame source/encoding mismatch")
     require(frame_plan["capture"]["account_room_member_card_skill_identity_visible"] is False and frame_plan["capture"]["display_strings_visible"] is False and frame_plan["capture"]["raw_pointer_metadata"] is False, "frame privacy mismatch")
+    require(frame_plan["degraded_habahiro_disposition"] == {
+        "exact_habahiro_anchors_remain_planned": True,
+        "absence_blocks_exact_parity": True,
+        "absence_blocks_degraded_delivery": False,
+        "generated_degraded_frames_are_original_expected": False,
+        "generated_degraded_frames_may_pass_this_verifier": False,
+    }, "frame degraded HABAHIRO disposition mismatch")
     require(frame_plan["production_authorization"] is False, "frame plan must not authorize production")
 
-    require(status["status"] == "runtime-and-frame-evidence-required-game-server" and status["offline_plan_gate"] == "closed" and status["rendering_gate"] == "open", "runtime status gate mismatch")
+    require(status["status"] == "ordinary-runtime-required-habahiro-degraded-delivery-accepted" and status["offline_plan_gate"] == "closed" and status["rendering_gate"] == "open", "runtime status gate mismatch")
+    require(status["habahiro_exact_parity_gate"] == "open" and status["habahiro_degraded_delivery_gate"] == "closed-authorized-by-explicit-user-request", "HABAHIRO dual-track gate mismatch")
     require([row["id"] for row in status["required"]] == ["S01", "S02", "S03"], "runtime required IDs mismatch")
-    require(all(row["status"] == "game-server-required" for row in status["required"]), "runtime non-server blocker remains")
+    require(all(row["blocks_degraded_delivery"] is False for row in status["required"]), "exact blocker still blocks degraded delivery")
+    require(status["degraded_habahiro"] == {
+        "status": "accepted-not-original-parity",
+        "contract": "habahiro_degraded_approximation.json",
+        "visible_label": "Approximate HABAHIRO",
+        "automatic_fallback": False,
+        "generated_frames_are_golden": False,
+    }, "degraded HABAHIRO runtime disposition mismatch")
     require(status["confirmed_traces"] == [] and status["confirmed_frames"] == [] and status["unknown_offline_work"] == [], "runtime status invents evidence or retains offline work")
     require(status["production_authorization"] is False, "runtime plans must not authorize production")
-    print("verified rendering runtime plans: targets=55 scenarios=2 frame_anchors=13 S01-S03=game-server-required production=false")
+    print("verified rendering runtime plans: targets=55 scenarios=2 frame_anchors=13 exact=S01-S03-open habahiro-degraded=authorized production=false")
     return 0
 
 

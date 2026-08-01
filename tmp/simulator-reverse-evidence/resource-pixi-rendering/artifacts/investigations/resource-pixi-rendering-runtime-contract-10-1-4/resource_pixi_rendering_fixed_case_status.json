@@ -44,13 +44,23 @@
     },
     "F09": {
       "path": "runtime/resource-pixi-rendering-r1-plan.json",
-      "bytes": 5698,
-      "sha256": "69F5568F9F0974A55E056E2B0FD9D4E923A34EBEE525C81B1D6590D5498C8E16"
+      "bytes": 5994,
+      "sha256": "65D1E97146BA4FB85B15EE461C3D439DC4FA47A1EBA8DB93AFA772EA4A8695EC"
     },
     "F10": {
       "path": "runtime/resource-pixi-rendering-frame-plan.json",
-      "bytes": 1900,
-      "sha256": "F2B2D5B111F0498C867F2C9A19B5692B22ECF1B453744B68C3577B98458692D1"
+      "bytes": 2205,
+      "sha256": "F952DED2A67C6D2D73FB856E9FAA38B91F5AC36FB8CD9B0E5DE14B4BA85B7EBB"
+    },
+    "F11": {
+      "path": "habahiro_degraded_approximation.json",
+      "bytes": 23709,
+      "sha256": "FE1821CF2F939DCDE8751EA1320EFB6DD2139863B3DD43DE08AEA62382B2913F"
+    },
+    "F12": {
+      "path": "habahiro_degraded_scene_oracle.json",
+      "bytes": 7236,
+      "sha256": "DC13CEB1E726BA3D310AF28E8646F9345C80E7E7CDB4E9E5E1C8ACCAFCCD1665"
     }
   },
   "cases": [
@@ -416,6 +426,20 @@
     "runtime-live-and-frame-required": 2,
     "runtime-live-required": 16,
     "server-resource-required": 1
+  },
+  "degraded_habahiro_disposition": {
+    "status": "accepted-for-explicit-preview-not-original-parity",
+    "evidence_ids": [
+      "F11",
+      "F12"
+    ],
+    "cases": {
+      "PR01": "degraded-profile-resource-inventory",
+      "PR04": "degraded-profile-exact-key-or-procedural-wide-proxy",
+      "PR19": "two-stage-order-with-same-frame-or-caller-delay-approximation",
+      "PR40": "diagnostic-scene-command-frame-only-not-golden"
+    },
+    "exact_case_statuses_unchanged": true
   },
   "unknown_cases": [],
   "production_authorization": false

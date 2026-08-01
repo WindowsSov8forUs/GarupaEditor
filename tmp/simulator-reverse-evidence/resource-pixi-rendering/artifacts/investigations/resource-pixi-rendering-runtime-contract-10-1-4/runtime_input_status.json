@@ -1,26 +1,38 @@
 {
   "schema_version": 1,
-  "status": "runtime-and-frame-evidence-required-game-server",
+  "status": "ordinary-runtime-required-habahiro-degraded-delivery-accepted",
   "offline_plan_gate": "closed",
   "rendering_gate": "open",
+  "habahiro_exact_parity_gate": "open",
+  "habahiro_degraded_delivery_gate": "closed-authorized-by-explicit-user-request",
   "production_authorization": false,
   "required": [
     {
       "id": "S01",
-      "status": "game-server-required",
-      "artifact": "current HABAHIRO resource profile"
+      "status": "game-server-required-for-exact-parity",
+      "artifact": "current HABAHIRO resource profile",
+      "blocks_degraded_delivery": false
     },
     {
       "id": "S02",
-      "status": "game-server-required",
-      "artifact": "ordinary and HABAHIRO confirmed R1 traces"
+      "status": "ordinary-required-habahiro-exact-only",
+      "artifact": "ordinary and HABAHIRO confirmed R1 traces",
+      "blocks_degraded_delivery": false
     },
     {
       "id": "S03",
-      "status": "game-server-required",
-      "artifact": "ordinary and HABAHIRO fixed frame manifest"
+      "status": "ordinary-required-habahiro-exact-only",
+      "artifact": "ordinary and HABAHIRO fixed frame manifest",
+      "blocks_degraded_delivery": false
     }
   ],
+  "degraded_habahiro": {
+    "status": "accepted-not-original-parity",
+    "contract": "habahiro_degraded_approximation.json",
+    "visible_label": "Approximate HABAHIRO",
+    "automatic_fallback": false,
+    "generated_frames_are_golden": false
+  },
   "confirmed_traces": [],
   "confirmed_frames": [],
   "unknown_offline_work": []

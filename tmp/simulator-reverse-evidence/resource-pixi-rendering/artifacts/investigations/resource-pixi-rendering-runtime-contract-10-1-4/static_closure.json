@@ -20,6 +20,8 @@
   "offline_work_gate": "closed",
   "offline_plan_gate": "closed",
   "rendering_gate": "open",
+  "habahiro_exact_parity_gate": "open",
+  "habahiro_degraded_delivery_gate": "closed-authorized-by-explicit-user-request",
   "production_authorization": false,
   "open_static_work": [],
   "offline_resource_counts": {
@@ -31,6 +33,13 @@
     "note_animation_clips": 4,
     "score_up_routes": 5
   },
+  "habahiro_degraded": {
+    "status": "accepted-not-original-parity",
+    "profiles": ["historical-atlas-proxy", "current-ordinary-stretch-proxy"],
+    "difference_count": 12,
+    "visible_label": "Approximate HABAHIRO",
+    "automatic_fallback": false
+  },
   "runtime_capture_plan": {
     "hook_target_count": 55,
     "r1_scenarios": 2,
@@ -38,12 +47,14 @@
     "status": "confirmed-observation-only-plan-game-server-required"
   },
   "runtime_required_before_code": [
-    "current HABAHIRO bundle bytes from the game resource service or a proven current cache",
-    "renderer and pool object identity in a natural Live scene",
+    "ordinary renderer and pool object identity in a natural Live scene",
+    "ordinary physical frame anchors",
+    "explicit approximation profile selection and visible degraded label for HABAHIRO",
+    "renderer and pool object identity in a natural Live scene where exact parity is claimed",
     "resource binding and visible-state caller order",
     "same-frame engine-to-renderer command order",
     "pause, resume, reset, Game Over and disposal observations",
-    "10.1.4 ordinary and HABAHIRO physical frame anchors",
+    "10.1.4 HABAHIRO physical frame anchors only where exact parity is claimed",
     "runtime failure and context-loss ownership boundaries"
   ],
   "capability": {
@@ -57,7 +68,7 @@
   },
   "unknown_fields": [],
   "blocking_findings": [
-    "version_rebaseline remains partial because the current HABAHIRO resource is absent from the cache index",
-    "rendering_gate remains open until natural Live runtime and physical-frame evidence is captured"
+    "HABAHIRO exact parity remains open because the current resource and original frame are unavailable; explicit degraded delivery is accepted with 12 documented differences",
+    "rendering_gate remains open until ordinary natural Live runtime and physical-frame evidence plus remaining contracts are captured"
   ]
 }
