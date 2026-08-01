@@ -405,6 +405,14 @@
 - dispose instrumentation确认object先销毁、atlas subtexture随后销毁、base Texture/source最后`destroy(true)`；host stage不由backend销毁，重复dispose不二次释放。
 - `tsc`、`simulator:test:render-pixi`与`simulator:test:render-failures`通过；runner内dependency/evidence verifier通过，未运行Vite/Tauri整体构建。
 
+### 1.44 2026-08-01 RP13 production oracle与隔离全回归子批
+
+- 新增`simulator:test:render-production`：先跑743项evidence verifier和production static audit，再隔离`tsc`及render contracts、Note geometry producer、实际Pixi、RP12 failures；每个子runner仍创建全新系统临时产物。
+- static audit递归扫描production backends/engine/host，拒绝`fetch`/XHR/WebSocket/EventSource/remote URL/Bestdori、Reverse工作树或证据包runtime读取；同时拒绝全部simulator package script调用Python或网络URL。
+- 新增总入口`simulator:test:resource-pixi-rendering`，串行运行render production及first-slice、全部chart子套件、clock、Auto、manual acceptance、Score/Life/State共14 stage；禁止并发复验掩盖资源/临时目录问题。
+- render production与总入口均通过：evidence `entries=743`、geometry `87037`、HUD runtime `14084/1452`，实际Pixi semantic/failure矩阵绿色；上游first-slice 17、Auto 22、manual MJ01–MJ26、Score BS01–BS36及ordinary/HAB production chart全部绿色。
+- 总入口全程未联网、未调用Python、未读取Reverse工作树，未运行Vite/Tauri整体构建。PR01–PR40的证据closure由冻结verifier先行确认；unsupported mask/HUD visible/animation sampling继续以明确false/evidence-required纳入，而非假通过。
+
 ## 2. 固定范围
 
 ### 2.1 纳入范围

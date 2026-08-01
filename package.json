@@ -42,6 +42,8 @@
     "simulator:test:render-note-geometry": "node src/simulator/testing/runOrdinaryNoteGeometryTests.mjs",
     "simulator:test:render-pixi": "node src/simulator/testing/runRenderPixiTests.mjs",
     "simulator:test:render-failures": "node src/simulator/testing/runRenderFailureTests.mjs",
+    "simulator:test:render-production": "node src/simulator/testing/runRenderProductionTests.mjs",
+    "simulator:test:resource-pixi-rendering": "node src/simulator/testing/runResourcePixiRenderingTests.mjs",
     "tauri": "tauri",
     "desktop:dev": "tauri dev",
     "desktop:build": "tauri build",
