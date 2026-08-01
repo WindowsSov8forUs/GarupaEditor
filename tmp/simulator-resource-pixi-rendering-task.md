@@ -253,6 +253,12 @@
 - R2证明所有base vertex colors在单次写入内uniform，故portable mapping将该RGBA显式投影为Mesh tint/alpha；current long/curve material无MainTex时使用Pixi内建white source作为color-only sampling primitive，不把它用于missing resource fallback。
 - `_Threshold`虽已取得property ID与Float32轨迹，但Unity shader坐标/clip语义尚未晋升portable contract；`set-threshold`继续拒绝，当前Mesh mapping不宣称sudden clipping或Unity GPU raster parity。Line quad、mask、HUD及animation后续分批实施。
 
+### 1.23 2026-08-01 RP11 ordinary base NoteMesh Pixi test子批
+
+- Pixi suite用R2固定22-pair UV与60-index strip构造typed `set-mesh`，验证preflight阶段scene零mutation、commit后Pixi scene snapshot为22 vertices/60 indices，并验证child-first mesh/root release归零。
+- 反例将单个vertex color改为非uniform，确认Pixi capability在object/geometry mutation前返回`evidence-required`、sequence保持不变且未创建mesh identity。
+- 既有Sprite测试同步验证Pixi v8 `Container` wrapper ownership，运行不再触发Sprite child deprecation；隔离`tsc`、Pixi suite与dependency verifier通过。
+
 ## 2. 固定范围
 
 ### 2.1 纳入范围

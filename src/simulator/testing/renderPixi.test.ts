@@ -1,4 +1,4 @@
-import { Sprite, Texture, TextureSource } from "pixi.js";
+import { Container, Sprite, Texture, TextureSource } from "pixi.js";
 import { BrowserPixiTextureDecoder } from "../backends/pixi/browserPixiTextureDecoder";
 import { PixiRendererBackend, type PixiTextureDecoder } from "../backends/pixi/pixiRendererBackend";
 import {
@@ -118,6 +118,39 @@ function base(sequence: number) {
   return { sessionId: SESSION, sequence, frame: 0, substep: 0 };
 }
 
+function wrappedSprite(): Container {
+  const root = new Container();
+  root.addChild(new Sprite({ texture: Texture.EMPTY }));
+  return root;
+}
+
+function r2Mesh(sequence: number): RenderCommand {
+  const vertices = Array.from({ length: 22 }, (_, index) => ({
+    x: f32(index % 2),
+    y: f32(Math.floor(index / 2) / 10),
+    z: f32(0),
+  }));
+  const uv = Array.from({ length: 22 }, (_, index) => ({
+    x: f32(index % 2),
+    y: f32(Math.floor(index / 2) / 10),
+  }));
+  const color = () => ({ red: f32(0.9), green: f32(0.9), blue: f32(0.9), alpha: f32(0.8) });
+  const indices = Array.from({ length: 10 }, (_, section) => {
+    const start = section * 2;
+    return [start, start + 2, start + 1, start + 1, start + 2, start + 3];
+  }).flat();
+  return {
+    ...base(sequence),
+    kind: "set-mesh",
+    renderObjectId: "note.mesh",
+    vertices,
+    indices,
+    uv,
+    colors: vertices.map(color),
+    materialRole: "long-note",
+  };
+}
+
 async function main(): Promise<void> {
   if (typeof globalThis.createImageBitmap !== "function") {
     const unavailable = await new BrowserPixiTextureDecoder().decodePng(
@@ -194,8 +227,42 @@ async function main(): Promise<void> {
   equal(renderer.snapshot().nextSequence, 4, "capability rejection does not consume sequence");
   equal(renderer.sceneSnapshot().length, 1, "unsupported command leaves scene unchanged");
 
+  const invalidMesh = r2Mesh(5);
+  if (invalidMesh.kind !== "set-mesh") throw new Error("R2 mesh helper returned wrong command");
+  const rejectedMesh = renderer.preflight([
+    {
+      ...base(4), kind: "create-object", renderObjectId: "note.mesh",
+      poolFamily: "long", role: "note-mesh", parentObjectId: "note.root",
+    },
+    {
+      ...invalidMesh,
+      colors: invalidMesh.colors.map((color, index) => index === 0
+        ? { ...color, red: f32(0.8) }
+        : color),
+    },
+  ]);
+  equal(rejectedMesh.status, "evidence-required", "nonuniform mesh colors fail R2 gate");
+  equal(renderer.snapshot().nextSequence, 4, "rejected mesh consumes no sequence");
+  equal(renderer.sceneSnapshot().length, 1, "rejected mesh creates no object");
+
+  const meshBatch = requireOk(renderer.preflight([
+    {
+      ...base(4), kind: "create-object", renderObjectId: "note.mesh",
+      poolFamily: "long", role: "note-mesh", parentObjectId: "note.root",
+    },
+    r2Mesh(5),
+  ]), "preflight R2 mesh batch");
+  equal(renderer.sceneSnapshot().length, 1, "R2 mesh preflight has zero scene mutation");
+  requireOk(renderer.commit(meshBatch), "commit R2 mesh batch");
+  const meshScene = renderer.sceneSnapshot().find((row) => row.renderObjectId === "note.mesh");
+  equal(meshScene?.geometryVertexCount, 22, "R2 mesh has 22 Pixi vertices");
+  equal(meshScene?.geometryIndexCount, 60, "R2 mesh has 60 Pixi indices");
+
   requireOk(renderer.execute({
-    ...base(4), kind: "release-object", renderObjectId: "note.root",
+    ...base(6), kind: "release-object", renderObjectId: "note.mesh",
+  }), "release Pixi mesh object");
+  requireOk(renderer.execute({
+    ...base(7), kind: "release-object", renderObjectId: "note.root",
   }), "release Pixi object");
   equal(renderer.sceneSnapshot().length, 0, "Pixi release removes object");
   equal(renderer.resourceSnapshot()[0]?.spriteReferenceCount, 0, "release decrements Sprite reference");
@@ -237,7 +304,7 @@ async function main(): Promise<void> {
     create() {
       factoryCalls += 1;
       if (factoryCalls === 2) throw new Error("synthetic Pixi allocation failure");
-      return new Sprite({ texture: Texture.EMPTY });
+      return wrappedSprite();
     },
   });
   requireOk(await allocationFailure.prepare(
@@ -265,10 +332,10 @@ async function main(): Promise<void> {
   equal(allocationFailure.stage.children.length, 0, "allocation rejection leaves stage empty");
   requireOk(allocationFailure.dispose(), "dispose allocation-failure renderer");
 
-  const reserved: Sprite[] = [];
+  const reserved: Container[] = [];
   const discardRenderer = new PixiRendererBackend(decoder, {
     create() {
-      const node = new Sprite({ texture: Texture.EMPTY });
+      const node = wrappedSprite();
       reserved.push(node);
       return node;
     },
@@ -315,7 +382,7 @@ async function main(): Promise<void> {
   requireOk(contextRenderer.dispose(), "dispose context-faulted renderer");
   equal(contextRenderer.snapshot().resourceCount, 0, "context-fault dispose releases resources");
 
-  console.log("Pixi v8 semantic adapter tests passed: atomic decode/cache/Sprite/order/fault/release");
+  console.log("Pixi v8 semantic adapter tests passed: atomic decode/cache/Sprite/R2-Mesh/order/fault/release");
 }
 
 void main().catch((error: unknown) => {
