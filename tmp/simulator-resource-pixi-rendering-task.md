@@ -301,6 +301,14 @@
 - verifier重算`RhythmGame.unity`/`globalgamemanagers`身份，并将R2全部24,470个endpoint与12,235个width写入投影；所有endpoint均在viewport/clip范围，投影width范围为0–25.190730392932892 pixel。
 - 该profile只授权ordinary固定1600×720 scene，不外推HABAHIRO、任意viewport适配、threshold clipping或Unity GPU raster parity；冻结包更新为737项，下一production批必须通过显式scene profile消费而非硬用Pixi raw world值。
 
+### 1.30 2026-08-01 RP11 ordinary正交projection production子批
+
+- backend-neutral `RenderSceneProfile`新增不可缺失的typed orthographic projection：1600×720、top-left、camera Z -15、near/far 0/25、360 pixels/world-unit与`clampAllowed=false`全部在resource read与Pixi对象创建前验证并深冻结。
+- ordinary只接受`current-ordinary-rhythmgame-orthographic`；显式degraded HAB只接受`degraded-habahiro-ordinary-projection-proxy`并继续依赖可见fidelity label；exact HAB在缺current projection时失败关闭，不借ordinary profile冒充。
+- Pixi sync-line preflight现先将source Float32 world endpoint按`x=800+worldX*360`、`y=360-worldY*360`投影，并将equal world width乘360后生成4-vertex quad；不clamp、不改变source command bits。
+- Pixi scene snapshot新增backend-owned geometry position副本用于portable scene审计，不暴露Mesh/Geometry对象；Mesh local geometry路径保持原样，避免把line world projection误施加到NoteMesh局部顶点。
+- 隔离`tsc`、render-contract与Pixi suite通过；对应projection坐标/宽度exact断言留在独立test子批。
+
 ## 2. 固定范围
 
 ### 2.1 纳入范围

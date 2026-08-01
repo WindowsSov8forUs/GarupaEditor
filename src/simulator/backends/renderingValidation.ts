@@ -97,6 +97,34 @@ export function validateAndFreezeRenderProfile(
       "Scene ordering and every renderer default must be explicit; Pixi zIndex defaults are not accepted.",
     );
   }
+  const projection = scene.projection;
+  const expectedProjectionMode = fidelityValidation.value.mode === "ordinary"
+    ? "current-ordinary-rhythmgame-orthographic"
+    : fidelityValidation.value.fidelity === "degraded"
+    ? "degraded-habahiro-ordinary-projection-proxy"
+    : null;
+  if (
+    expectedProjectionMode === null ||
+    projection === null ||
+    typeof projection !== "object" ||
+    projection.mode !== expectedProjectionMode ||
+    projection.viewportWidth !== 1600 ||
+    projection.viewportHeight !== 720 ||
+    projection.pixiOrigin !== "top-left" ||
+    projection.worldCenterX !== 0 ||
+    projection.worldCenterY !== 0 ||
+    projection.cameraPositionZ !== -15 ||
+    projection.nearClip !== 0 ||
+    projection.farClip !== 25 ||
+    projection.pixelsPerWorldUnit !== 360 ||
+    projection.clampAllowed !== false
+  ) {
+    return reject(
+      "render.profile.invalid-projection",
+      "The fixed 1600x720 ordinary orthographic mapping must be explicit; degraded HABAHIRO may only select its visibly disclosed ordinary-projection proxy.",
+    );
+  }
+
   const componentMap = new Map<string, RenderComponentMapping>();
   for (const mapping of scene.components) {
     if (
@@ -140,6 +168,7 @@ export function validateAndFreezeRenderProfile(
         ] as const),
         pixiDefaultZIndexAllowed: false,
       }),
+      projection: Object.freeze({ ...projection }),
       roundPixels: scene.roundPixels,
       resolution: scene.resolution,
       antialias: scene.antialias,

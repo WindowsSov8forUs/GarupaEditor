@@ -18,6 +18,7 @@ import type {
   RenderBackendSnapshot,
   RenderCommand,
   RenderCommandBatch,
+  RenderOrthographicProjectionProfile,
   RenderResourceAssetProfile,
   RenderResourcePreflightAdapter,
   RenderResourceProfile,
@@ -212,7 +213,10 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         } else if (command.kind === "set-mesh") {
           reservedGeometry.set(command.sequence, createEvidenceMesh(command));
         } else if (command.kind === "set-line") {
-          reservedGeometry.set(command.sequence, createEvidenceLine(command));
+          reservedGeometry.set(command.sequence, createEvidenceLine(
+            command,
+            this.profile!.scene.projection,
+          ));
         }
       }
     } catch {
@@ -332,6 +336,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     readonly hudState: Readonly<Record<string, string | number | boolean | null>> | null;
     readonly geometryVertexCount: number | null;
     readonly geometryIndexCount: number | null;
+    readonly geometryPositions: readonly number[] | null;
   }[] {
     const idsByNode = new Map([...this.objects].map(([id, value]) => [value.node, id]));
     return Object.freeze([...this.objects].map(([renderObjectId, value]) => Object.freeze({
@@ -347,6 +352,9 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         ? value.geometryContent.geometry.positions.length / 2
         : null,
       geometryIndexCount: value.geometryContent?.geometry.indices.length ?? null,
+      geometryPositions: value.geometryContent === null
+        ? null
+        : Object.freeze(Array.from(value.geometryContent.geometry.positions)),
     })));
   }
 
@@ -754,20 +762,31 @@ function isEvidenceLine(command: SetLineCommand): boolean {
     ) > 0;
 }
 
-function createEvidenceLine(command: SetLineCommand): Mesh {
+function createEvidenceLine(
+  command: SetLineCommand,
+  projection: RenderOrthographicProjectionProfile,
+): Mesh {
   if (!isEvidenceLine(command)) throw new Error("line outside R2 profile");
-  const dx = command.end.x.value - command.start.x.value;
-  const dy = command.end.y.value - command.start.y.value;
+  const startX = projection.viewportWidth / 2 +
+    (command.start.x.value - projection.worldCenterX) * projection.pixelsPerWorldUnit;
+  const startY = projection.viewportHeight / 2 -
+    (command.start.y.value - projection.worldCenterY) * projection.pixelsPerWorldUnit;
+  const endX = projection.viewportWidth / 2 +
+    (command.end.x.value - projection.worldCenterX) * projection.pixelsPerWorldUnit;
+  const endY = projection.viewportHeight / 2 -
+    (command.end.y.value - projection.worldCenterY) * projection.pixelsPerWorldUnit;
+  const dx = endX - startX;
+  const dy = endY - startY;
   const length = Math.hypot(dx, dy);
-  const halfWidth = command.width.value / 2;
+  const halfWidth = command.width.value * projection.pixelsPerWorldUnit / 2;
   const nx = -dy / length * halfWidth;
   const ny = dx / length * halfWidth;
   const geometry = new MeshGeometry({
     positions: new Float32Array([
-      command.start.x.value + nx, command.start.y.value + ny,
-      command.end.x.value + nx, command.end.y.value + ny,
-      command.end.x.value - nx, command.end.y.value - ny,
-      command.start.x.value - nx, command.start.y.value - ny,
+      startX + nx, startY + ny,
+      endX + nx, endY + ny,
+      endX - nx, endY - ny,
+      startX - nx, startY - ny,
     ]),
     uvs: new Float32Array([0, 0, 1, 0, 1, 1, 0, 1]),
     indices: new Uint32Array([0, 1, 2, 0, 2, 3]),

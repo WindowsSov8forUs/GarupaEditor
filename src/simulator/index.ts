@@ -34,6 +34,8 @@ export type {
   RenderMaterialRole,
   RenderObjectRole,
   RenderOrderingKey,
+  RenderOrthographicProjectionProfile,
+  RenderProjectionMode,
   RenderResourceAssetProfile,
   RenderResourcePreflightAdapter,
   RenderResourceProfile,

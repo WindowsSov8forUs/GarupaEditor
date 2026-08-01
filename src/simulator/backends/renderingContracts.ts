@@ -140,10 +140,29 @@ export interface RenderOrderingProfile {
   readonly pixiDefaultZIndexAllowed: false;
 }
 
+export type RenderProjectionMode =
+  | "current-ordinary-rhythmgame-orthographic"
+  | "degraded-habahiro-ordinary-projection-proxy";
+
+export interface RenderOrthographicProjectionProfile {
+  readonly mode: RenderProjectionMode;
+  readonly viewportWidth: 1600;
+  readonly viewportHeight: 720;
+  readonly pixiOrigin: "top-left";
+  readonly worldCenterX: 0;
+  readonly worldCenterY: 0;
+  readonly cameraPositionZ: -15;
+  readonly nearClip: 0;
+  readonly farClip: 25;
+  readonly pixelsPerWorldUnit: 360;
+  readonly clampAllowed: false;
+}
+
 export interface RenderSceneProfile {
   readonly profileId: string;
   readonly components: readonly RenderComponentMapping[];
   readonly ordering: RenderOrderingProfile;
+  readonly projection: RenderOrthographicProjectionProfile;
   readonly roundPixels: boolean;
   readonly resolution: number;
   readonly antialias: boolean;
