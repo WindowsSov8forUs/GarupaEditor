@@ -49,6 +49,7 @@ import type {
   RenderCommandProducer,
   RenderOwnerTransaction,
 } from "../rendering/renderCommandProducer";
+import type { OrdinaryLongNormalChildState } from "../rendering/ordinaryLongChildLifecycle";
 import type {
   OrdinaryNoteMotionResult,
   OrdinaryNoteMotionState,
@@ -203,6 +204,10 @@ export class NoteManager {
   >();
   private readonly activeOrdinarySyncLines: Array<ActiveOrdinarySyncLine | null> =
     Array.from({ length: SYNC_LINE_POOL_LENGTH }, () => null);
+  private readonly ordinaryLongRenderStates = new Map<
+    NoteBase,
+    OrdinaryLongNormalChildState
+  >();
 
   constructor(
     private readonly batches: readonly NoteBatchInformation[],
@@ -333,6 +338,20 @@ export class NoteManager {
       }
     }
 
+    const requiresLongChildren = this.renderProducer !== null &&
+      (familyNotes.get("long")?.length ?? 0) > 0;
+    if (
+      requiresLongChildren &&
+      (this.ordinaryNoteScene === null ||
+        this.ordinaryNoteScene.screenToSafeAreaRatio === undefined ||
+        this.ordinaryNoteScene.longMeshColor === undefined)
+    ) {
+      return evidenceRequired(
+        "render.note.long-scene-unavailable",
+        ["RPR-D05", "RPR-D06", "RPR-D13", "PR11", "PR13", "PR15"],
+        "A chart with ordinary Long notes requires explicit safe-area ratio and base-mesh color before pool creation.",
+      );
+    }
     const requiresSyncLinePool = this.renderProducer !== null && this.batches.some((batch) =>
       batch.informationList.filter((information) =>
         !isNonPlayableCommand(information) &&
@@ -368,6 +387,7 @@ export class NoteManager {
           onDeactivate: (inactiveNote) => {
             this.removeActiveNote(inactiveNote);
             this.releaseOrdinarySyncLinesForNote(inactiveNote);
+            this.ordinaryLongRenderStates.delete(inactiveNote);
             this.ordinaryRenderMotionStates.delete(inactiveNote);
             this.manualNoteDeactivatedOwner?.(inactiveNote);
           },
@@ -397,6 +417,7 @@ export class NoteManager {
             this.renderProducer!.preflightNoteDeactivation(
               note.poolObjectId,
               this.ordinarySyncLinePoolIndicesForNote(note),
+              this.ordinaryLongRenderStates.has(note),
             ));
           note.registerRenderMotionOwner((deltaTimeSeconds) =>
             this.advanceOrdinaryRenderMotion(note, deltaTimeSeconds));
@@ -556,6 +577,11 @@ export class NoteManager {
           afterUpdateNotes.push(note);
         }
         activeIndex -= 1;
+      }
+
+      const longChildUpdate = this.updateOrdinaryLongChildren(substepDelta);
+      if (longChildUpdate.status !== "ok") {
+        return longChildUpdate;
       }
 
       const syncLineUpdate = this.updateOrdinarySyncLines();
@@ -954,6 +980,56 @@ export class NoteManager {
     return ok(undefined);
   }
 
+  private updateOrdinaryLongChildren(
+    deltaTimeSeconds: number,
+  ): SimulatorResult<void> {
+    if (this.renderProducer === null || this.ordinaryNoteScene === null) {
+      return this.ordinaryLongRenderStates.size === 0
+        ? ok(undefined)
+        : evidenceRequired(
+          "render.note.long-scene-unavailable",
+          ["RPR-D05", "RPR-D06", "RPR-D13", "PR11", "PR13", "PR15"],
+          "Active rendered Long children require their producer and typed ordinary scene.",
+        );
+    }
+    const deltaTime = createRenderFloat32(Math.fround(deltaTimeSeconds));
+    const launcherMusicPosition = createRenderFloat32(Math.fround(
+      this.musicScoreController.launcherMusicPosition,
+    ));
+    const musicPosition = createRenderFloat32(Math.fround(
+      this.musicScoreController.musicPosition,
+    ));
+    if (deltaTime.status !== "ok") return deltaTime;
+    if (launcherMusicPosition.status !== "ok") return launcherMusicPosition;
+    if (musicPosition.status !== "ok") return musicPosition;
+    for (const [note, childState] of this.ordinaryLongRenderStates) {
+      const front = this.ordinaryRenderMotionStates.get(note);
+      if (front === undefined) {
+        return evidenceRequired(
+          "render.note.long-front-state-unavailable",
+          ["RPR-D05", "RPR-D06", "RPR-D13", "PR11", "PR13", "PR15"],
+          "Every active rendered Long child requires its last committed front transform.",
+        );
+      }
+      const prepared = this.renderProducer.preflightOrdinaryLongChildFrame(
+        note.poolObjectId,
+        childState,
+        front.renderedTransform,
+        Object.freeze({
+          deltaTime: deltaTime.value,
+          launcherMusicPosition: launcherMusicPosition.value,
+          musicPosition: musicPosition.value,
+        }),
+        this.ordinaryNoteScene,
+      );
+      if (prepared.status !== "ok") return prepared;
+      const committed = prepared.value.transaction.commit();
+      if (committed.status !== "ok") return committed;
+      this.ordinaryLongRenderStates.set(note, prepared.value.childState);
+    }
+    return ok(undefined);
+  }
+
   private ordinarySyncLinePoolIndicesForNote(note: NoteBase): readonly number[] {
     return Object.freeze(this.activeOrdinarySyncLines.flatMap((line) =>
       line !== null && (line.targetA === note || line.targetB === note)
@@ -1095,13 +1171,19 @@ export class NoteManager {
     if (this.renderProducer !== null) {
       const unsupported = batch.informationList.find((information) =>
         !isNonPlayableCommand(information) &&
-        information.fireNoteType !== FrontNoteType.Normal
+        information.fireNoteType !== FrontNoteType.Normal &&
+        !(
+          information.fireNoteType === FrontNoteType.Long &&
+          information.afterNoteType === AfterNoteType.Normal &&
+          information.afterNoteAbsolutePos > information.absolutePos &&
+          information.virtualLaneDirection === 0
+        )
       );
       if (unsupported !== undefined) {
         return evidenceRequired(
           "render.note.ordinary-child-lifecycle-unimplemented",
           ["RPR-D04", "RPR-D05", "RPR-D06", "RPR-D07", "PR06", "PR09", "PR10"],
-          "Rendered batches are prevalidated atomically; Flick, Directional, Long/Slide and Multiple child owners remain fail-closed.",
+          "Rendered batches are prevalidated atomically; only Normal and Long with one Normal non-virtual tail are connected, while Flick/Directional tails, Slide and Multiple remain fail-closed.",
         );
       }
     }
@@ -1140,6 +1222,7 @@ export class NoteManager {
       }
       let renderActivation: RenderOwnerTransaction | null = null;
       let renderedState: OrdinaryRenderedNoteState | null = null;
+      let longChildState: OrdinaryLongNormalChildState | null = null;
       if (this.renderProducer !== null) {
         if (this.ordinaryNoteScene === null) {
           return evidenceRequired(
@@ -1170,6 +1253,7 @@ export class NoteManager {
           motionState: prepared.value.motionState,
           renderedTransform: prepared.value.renderedTransform,
         });
+        longChildState = prepared.value.longChildState;
       }
       const activationResult = noteResult.value.note.activate(noteInformation);
       if (activationResult.status !== "ok") {
@@ -1184,6 +1268,9 @@ export class NoteManager {
       if (renderedState !== null) {
         this.ordinaryRenderMotionStates.set(noteResult.value.note, renderedState);
         activatedRenderedNotes.push(noteResult.value.note);
+      }
+      if (longChildState !== null) {
+        this.ordinaryLongRenderStates.set(noteResult.value.note, longChildState);
       }
       this.schedulerTraceValue.push({
         kind: "note-activate",

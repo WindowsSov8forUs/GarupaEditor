@@ -13,6 +13,7 @@ import {
   validateRenderFloat32,
 } from "../../backends/renderingValidation";
 import {
+  AfterNoteType,
   ButtonType,
   FrontNoteType,
   GameNoteAdditionalType,
@@ -27,6 +28,13 @@ import {
 import type { NoteFamily } from "../data/noteData";
 import type { InGameRecordSnapshot } from "../managers/inGameRecord";
 import type { ScoreLifeReflectPlan } from "../managers/scoreLifeStateManager";
+import {
+  advanceOrdinaryLongNormalChild,
+  buildOrdinaryLongNormalMesh,
+  createOrdinaryLongNormalChildState,
+  type OrdinaryLongNormalChildFrameInput,
+  type OrdinaryLongNormalChildState,
+} from "./ordinaryLongChildLifecycle";
 import {
   advanceOrdinaryNoteActivationAdjustment,
   advanceOrdinaryNoteMotion,
@@ -69,11 +77,19 @@ export interface OrdinaryFixedNoteSceneInput {
   readonly noteColor: RenderColor;
   readonly noteDomainLayer: number;
   readonly syncLineEdgeMargin?: RenderFloat32;
+  readonly screenToSafeAreaRatio?: RenderFloat32;
+  readonly longMeshColor?: RenderColor;
 }
 
 export interface PreparedOrdinaryNoteActivation {
   readonly motionState: OrdinaryNoteMotionState;
   readonly renderedTransform: OrdinaryNoteMotionResult;
+  readonly longChildState: OrdinaryLongNormalChildState | null;
+  readonly transaction: RenderOwnerTransaction;
+}
+
+export interface PreparedOrdinaryLongChildFrame {
+  readonly childState: OrdinaryLongNormalChildState;
   readonly transaction: RenderOwnerTransaction;
 }
 
@@ -546,11 +562,28 @@ export class RenderCommandProducer {
         "Note activation commands require the engine-owned non-negative adaptive substep.",
       );
     }
-    if (information.fireNoteType !== FrontNoteType.Normal) {
+    const longNormalTail = information.fireNoteType === FrontNoteType.Long &&
+      information.afterNoteType === AfterNoteType.Normal &&
+      information.afterNoteAbsolutePos > information.absolutePos;
+    if (information.fireNoteType !== FrontNoteType.Normal && !longNormalTail) {
       return evidenceRequired(
         "render.note.ordinary-child-lifecycle-unimplemented",
         ["RPR-D04", "RPR-D05", "RPR-D06", "RPR-D07", "PR06", "PR09", "PR10"],
-        "Only the current ordinary Normal root lifecycle is connected; Flick icons, Directional side visuals, Long/Slide after+mesh and Multiple back-line owners remain fail-closed.",
+        "The connected subset is ordinary Normal root or ordinary Long with one Normal tail; Flick/Directional tails, Slide and Multiple owners remain fail-closed.",
+      );
+    }
+    if (
+      longNormalTail &&
+      (scene.screenToSafeAreaRatio === undefined ||
+        !validateRenderFloat32(scene.screenToSafeAreaRatio) ||
+        scene.screenToSafeAreaRatio.value <= 0 ||
+        scene.longMeshColor === undefined ||
+        !validateColor(scene.longMeshColor))
+    ) {
+      return evidenceRequired(
+        "render.note.long-scene-unavailable",
+        ["RPR-D05", "RPR-D06", "RPR-D13", "PR11", "PR13", "PR15"],
+        "The ordinary Long path requires explicit positive safe-area ratio and typed base-mesh color inputs.",
       );
     }
     const lane = resolveOrdinaryLaneIndex(information);
@@ -636,8 +669,6 @@ export class RenderCommandProducer {
         maskObjectId: null,
       });
     }
-    const transaction = this.preflight(commands);
-    if (transaction.status !== "ok") return transaction;
     const renderedTransform = adjustment.value.motions[
       adjustment.value.motions.length - 1
     ] ?? Object.freeze({
@@ -645,6 +676,94 @@ export class RenderCommandProducer {
       position: start,
       localScale: Object.freeze({ x: one.value, y: one.value, z: one.value }),
     });
+    let longChildState: OrdinaryLongNormalChildState | null = null;
+    if (longNormalTail) {
+      const afterObjectId = longAfterRenderObjectId(poolObjectId);
+      const meshObjectId = longMeshRenderObjectId(poolObjectId);
+      const afterCreationSequence = this.creationSequenceByObjectId.get(afterObjectId);
+      const meshCreationSequence = this.creationSequenceByObjectId.get(meshObjectId);
+      if (afterCreationSequence === undefined || meshCreationSequence === undefined) {
+        return evidenceRequired(
+          "render.producer.long-child-not-created",
+          ["RPR-D07", "RPR-D13", "PR15", "PR20", "PR39"],
+          "Long activation requires committed after and mesh pool identities.",
+        );
+      }
+      const createdChild = createOrdinaryLongNormalChildState(
+        motionState,
+        information.afterNoteAbsolutePos,
+        noteBpm,
+      );
+      if (createdChild.status !== "ok") return createdChild;
+      longChildState = createdChild.value;
+      const widthRate = createRenderFloat32(Math.fround(1));
+      const meshZ = createRenderFloat32(Math.fround(0.9900000095367432));
+      if (widthRate.status !== "ok") return widthRate;
+      if (meshZ.status !== "ok") return meshZ;
+      const mesh = buildOrdinaryLongNormalMesh({
+        front: renderedTransform,
+        after: longChildState.renderedTransform,
+        frontButtonCount: motionState.buttonCount,
+        afterButtonCount: motionState.buttonCount,
+        screenToSafeAreaRatio: scene.screenToSafeAreaRatio!,
+        widthRate: widthRate.value,
+        color: scene.longMeshColor!,
+      });
+      if (mesh.status !== "ok") return mesh;
+      commands.push({
+        ...base(commands.length),
+        kind: "set-transform",
+        renderObjectId: afterObjectId,
+        position: longChildState.renderedTransform.position,
+        scale: Object.freeze({ x: one.value, y: one.value }),
+        rotationDegrees: zero.value,
+        color: scene.noteColor,
+        ordering: Object.freeze({
+          domainLayer: scene.noteDomainLayer,
+          sourceDepthOrSortingOrder: 70,
+          sourceZ: start.z,
+          creationSequence: afterCreationSequence,
+        }),
+        maskObjectId: null,
+      });
+      commands.push({
+        ...base(commands.length),
+        kind: "set-transform",
+        renderObjectId: meshObjectId,
+        position: Object.freeze({ x: zero.value, y: zero.value, z: meshZ.value }),
+        scale: Object.freeze({ x: one.value, y: one.value }),
+        rotationDegrees: zero.value,
+        color: scene.longMeshColor!,
+        ordering: Object.freeze({
+          domainLayer: scene.noteDomainLayer,
+          sourceDepthOrSortingOrder: 0,
+          sourceZ: meshZ.value,
+          creationSequence: meshCreationSequence,
+        }),
+        maskObjectId: null,
+      });
+      commands.push({
+        ...base(commands.length),
+        kind: "set-mesh",
+        renderObjectId: meshObjectId,
+        vertices: mesh.value.vertices,
+        indices: mesh.value.indices,
+        uv: mesh.value.uv,
+        colors: mesh.value.colors,
+        materialRole: "long-note",
+      });
+      commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: meshObjectId });
+      commands.push({
+        ...base(commands.length),
+        kind: "bind-resource",
+        renderObjectId: afterObjectId,
+        binding: "sprite",
+        logicalAssetId: binding.value.logicalAssetId,
+        exactKey: binding.value.exactKey,
+      });
+    }
+    const transaction = this.preflight(commands);
+    if (transaction.status !== "ok") return transaction;
     return ok(Object.freeze({
       motionState: Object.freeze({
         ...motionState,
@@ -652,6 +771,7 @@ export class RenderCommandProducer {
         realMoveSecond: adjustment.value.realMoveSecond,
       }),
       renderedTransform,
+      longChildState,
       transaction: transaction.value,
     }));
   }
@@ -698,6 +818,95 @@ export class RenderCommandProducer {
       });
     }
     return this.preflight(commands);
+  }
+
+  preflightOrdinaryLongChildFrame(
+    poolObjectId: string,
+    childState: OrdinaryLongNormalChildState,
+    frontTransform: OrdinaryNoteMotionResult,
+    input: OrdinaryLongNormalChildFrameInput,
+    scene: OrdinaryFixedNoteSceneInput,
+  ): SimulatorResult<PreparedOrdinaryLongChildFrame> {
+    const validation = this.validate();
+    if (validation.status !== "ok") return validation;
+    const sceneValidation = validateOrdinaryFixedNoteSceneInput(scene);
+    if (sceneValidation.status !== "ok") return sceneValidation;
+    if (
+      scene.screenToSafeAreaRatio === undefined ||
+      !validateRenderFloat32(scene.screenToSafeAreaRatio) ||
+      scene.screenToSafeAreaRatio.value <= 0 ||
+      scene.longMeshColor === undefined ||
+      !validateColor(scene.longMeshColor)
+    ) {
+      return evidenceRequired(
+        "render.note.long-scene-unavailable",
+        ["RPR-D05", "RPR-D06", "RPR-D13", "PR11", "PR13", "PR15"],
+        "Long child frames require explicit positive safe-area ratio and typed base-mesh color inputs.",
+      );
+    }
+    const next = advanceOrdinaryLongNormalChild(childState, input);
+    if (next.status !== "ok") return next;
+    const widthRate = createRenderFloat32(Math.fround(1));
+    const zero = createRenderFloat32(Math.fround(0));
+    if (widthRate.status !== "ok") return widthRate;
+    if (zero.status !== "ok") return zero;
+    const mesh = buildOrdinaryLongNormalMesh({
+      front: frontTransform,
+      after: next.value.renderedTransform,
+      frontButtonCount: childState.motionState.buttonCount,
+      afterButtonCount: childState.motionState.buttonCount,
+      screenToSafeAreaRatio: scene.screenToSafeAreaRatio,
+      widthRate: widthRate.value,
+      color: scene.longMeshColor,
+    });
+    if (mesh.status !== "ok") return mesh;
+    const afterObjectId = longAfterRenderObjectId(poolObjectId);
+    const meshObjectId = longMeshRenderObjectId(poolObjectId);
+    const afterCreationSequence = this.creationSequenceByObjectId.get(afterObjectId);
+    if (afterCreationSequence === undefined || !this.creationSequenceByObjectId.has(meshObjectId)) {
+      return evidenceRequired(
+        "render.producer.long-child-not-created",
+        ["RPR-D07", "RPR-D13", "PR15", "PR20", "PR39"],
+        "Long child frames require committed after and mesh pool identities.",
+      );
+    }
+    const base = this.commandBase(this.substep);
+    const commands: RenderCommand[] = [{
+      ...base(0),
+      kind: "set-transform",
+      renderObjectId: afterObjectId,
+      position: next.value.renderedTransform.position,
+      scale: Object.freeze({
+        x: next.value.renderedTransform.localScale.x,
+        y: next.value.renderedTransform.localScale.y,
+      }),
+      rotationDegrees: zero.value,
+      color: scene.noteColor,
+      ordering: Object.freeze({
+        domainLayer: scene.noteDomainLayer,
+        sourceDepthOrSortingOrder: 70,
+        sourceZ: next.value.renderedTransform.position.z,
+        creationSequence: afterCreationSequence,
+      }),
+      maskObjectId: null,
+    }];
+    if (childState.phase === "wait" && next.value.phase === "move") {
+      commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: afterObjectId });
+    }
+    commands.push({
+      ...base(commands.length),
+      kind: "set-mesh",
+      renderObjectId: meshObjectId,
+      vertices: mesh.value.vertices,
+      indices: mesh.value.indices,
+      uv: mesh.value.uv,
+      colors: mesh.value.colors,
+      materialRole: "long-note",
+    });
+    const transaction = this.preflight(commands);
+    return transaction.status === "ok"
+      ? ok(Object.freeze({ childState: next.value, transaction: transaction.value }))
+      : transaction;
   }
 
   preflightOrdinaryNoteSceneMotion(
@@ -770,6 +979,7 @@ export class RenderCommandProducer {
   preflightNoteDeactivation(
     poolObjectId: string,
     syncLinePoolIndices: readonly number[] = [],
+    deactivateLongChildren = false,
   ): SimulatorResult<RenderOwnerTransaction> {
     const validation = this.validate();
     if (validation.status !== "ok") return validation;
@@ -787,6 +997,15 @@ export class RenderCommandProducer {
         renderObjectId,
       },
     ];
+    if (deactivateLongChildren) {
+      for (const renderObjectId of [
+        longAfterRenderObjectId(poolObjectId),
+        longMeshRenderObjectId(poolObjectId),
+      ]) {
+        commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId });
+        commands.push({ ...base(commands.length), kind: "deactivate-object", renderObjectId });
+      }
+    }
     for (const poolIndex of syncLinePoolIndices) {
       if (!Number.isSafeInteger(poolIndex) || poolIndex < 0) {
         return evidenceRequired(
@@ -878,7 +1097,11 @@ export function validateOrdinaryFixedNoteSceneInput(
     !Number.isSafeInteger(scene.noteDomainLayer) ||
     (scene.syncLineEdgeMargin !== undefined &&
       (!validateRenderFloat32(scene.syncLineEdgeMargin) ||
-        scene.syncLineEdgeMargin.value < 0))
+        scene.syncLineEdgeMargin.value < 0)) ||
+    (scene.screenToSafeAreaRatio !== undefined &&
+      (!validateRenderFloat32(scene.screenToSafeAreaRatio) ||
+        scene.screenToSafeAreaRatio.value <= 0)) ||
+    (scene.longMeshColor !== undefined && !validateColor(scene.longMeshColor))
   ) {
     return evidenceRequired(
       "render.producer.invalid-ordinary-fixed-note-scene",

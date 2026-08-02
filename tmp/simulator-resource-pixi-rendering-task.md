@@ -12,7 +12,7 @@
 - 锁定`libil2cpp.so` SHA-256：`815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F`。
 - 锁定`global-metadata.dat` SHA-256：`298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F`。
 - 当前Reverse基线提交：`626bf78bb9101117a1ae3f71a93420e4a882d58e`；只消费该提交及其祖先中已提交、已push、可校验对象。
-- 当前状态：**2026-08-02按HEAD `cd93f43`重新审计：RP00–RP03、RP10、RP12关闭；RP13只有当前已实现子集回归绿色，不再记作阶段级关闭；RP04–RP09、RP11、RP13、RP14均进行中。ordinary Normal root scene/motion、simultaneous Normal sync-line、Long normal-tail pure Wait→Move→Stop/22-60 mesh与root/after/mesh稳定identity已落地，但Long command transaction尚未接入NoteManager；Flick/Directional/Slide/Multiple child、advanced/threshold/mask、field host接线、Pixi可见HUD/slider/animation及degraded visible label仍失败关闭。PR01–PR40 production审计为10 closed、12 partial、18 open，详见1.51。759项证据verifier与当前render-production回归通过只证明已实现子集，不等于RP13/RP14关闭。**
+- 当前状态：**2026-08-02按HEAD `cd93f43`重新审计：RP00–RP03、RP10、RP12关闭；RP13只有当前已实现子集回归绿色，不再记作阶段级关闭；RP04–RP09、RP11、RP13、RP14均进行中。ordinary Normal root scene/motion、simultaneous Normal sync-line与Long normal-tail after/base-mesh完整command transaction已接入NoteManager；Flick/Directional/Slide/Multiple child、advanced/threshold/mask、field host接线、Pixi可见HUD/slider/animation及degraded visible label仍失败关闭。PR01–PR40 production审计为10 closed、12 partial、18 open，详见1.51。759项证据verifier与当前render-production回归通过只证明已实现子集，不等于RP13/RP14关闭。**
 - 计划证据包：`tmp/simulator-reverse-evidence/resource-pixi-rendering/`，只在Reverse新证据提交并push后创建。
 - 计划验收记录：`tmp/simulator-resource-pixi-rendering-acceptance.md`，RP14时创建。
 
@@ -74,10 +74,10 @@
 | RP01 10.1.4静态与资源重基线 | **交付profile已关闭 / exact HAB部分开放** | 当前方法/资源/scene/animation/portable与12项current external HAB profile已关闭；原始HAB UnityFS仍只阻塞exact parity |
 | RP02 实体/运行时与固定scene oracle | **交付profile已关闭** | ordinary 87,364-event R1与7个实体frame已关闭；HAB exact R1/frame开放但不阻塞显式degraded交付 |
 | RP03 锁定render/resource contracts | **已完成** | immutable profile、provider、command、identity、session、preflight与独立failure矩阵已关闭 |
-| RP04 接入engine渲染producer | **进行中** | Normal root/sync与Long pure state/identity完成；Long transaction及其余family未接 |
+| RP04 接入engine渲染producer | **进行中** | Normal root/sync与Long Normal-tail transaction完成；其余family未接 |
 | RP05 恢复Note Sprite与field | **进行中** | root exact lookup与field pure plan完成；icon/intermediate/side visual/field host未接 |
-| RP06 恢复mesh、sync line与mask | **进行中** | base 22/60 pure mesh与Normal sync完成；Long lifecycle、Slide/advanced/Multiple/threshold/mask未接 |
-| RP07 恢复render pool与生命周期 | **进行中** | root/sync/Long identity与ready/fault release完成；child reuse/pause/reset/GameOver未闭合 |
+| RP06 恢复mesh、sync line与mask | **进行中** | Long base 22/60 lifecycle与Normal sync完成；Slide/advanced/Multiple/threshold/mask未接 |
+| RP07 恢复render pool与生命周期 | **进行中** | root/sync/Long after+mesh lifecycle与ready/fault release完成；其余child reuse/pause/reset/GameOver未闭合 |
 | RP08 恢复基础HUD消费链 | **进行中** | Score/Combo/Result/Life semantic state完成；digit/layout/fill/lifetime与Pixi可见映射未接 |
 | RP09 恢复HUD overlay与动画 | **进行中** | observed life-heal semantic顺序完成；其余overlay与sampling未接 |
 | RP10 建立portable resource backend | **已完成** | local bytes/hash/decode/cache/subtexture/material引用与atomic failure已闭合 |
@@ -478,6 +478,15 @@
 
 - 当前冻结授权硬边界：child profile只授权ordinary Long+Normal tail+base mesh；`ordinary_slide_child_chain=false`、`multiple_directional_lifecycle=false`、`advanced_mesh=false`、`threshold_shader=false`。HUD runtime profile明确`mask_runtime_ordering=false`、`pixi_animation_curve_sampling=false`，Skill/note animation静态profile仍标记runtime assignment/phase open。上述项必须先在Reverse新增提交并push，才能实施production。
 - 收尾jobs重排为：实际闭合矩阵→Long production→HUD/mask/animation批量取证→Pixi可见映射→其余Note/Multiple授权边界→remaining PR oracle/degraded label→RP13/RP14。不得用缩小任务书完成定义或把unsupported rejection计作正向production通过。
+
+### 1.52 2026-08-02 RP04/RP06/RP07 ordinary Long production lifecycle子批
+
+- `OrdinaryFixedNoteSceneInput`为Long新增显式positive Float32 `screenToSafeAreaRatio`与typed `longMeshColor`；仅chart含Long时必需，缺失或malformed在pool/domain mutation前失败关闭，Normal-only host保持原合同。
+- `preflightOrdinaryNoteActivation`新增严格subset：`FrontNoteType.Long + GameNoteType.Long + AfterNoteType.Normal + afterPos>frontPos + single non-virtual lane`。同一renderer batch按front initial/activate/bind及synthetic Move后，提交hidden after transform、mesh transform、22/60 geometry、mesh activate与after exact `note_long_<lane>` bind。
+- producer返回已冻结Long child state；NoteManager在领域activation与renderer commit均成功后才登记可迭代owner。每个adaptive substep先更新front，再按Launcher/Music双时钟生成after transform、Wait→Move visibility与base mesh replacement，最后进入sync/AfterUpdate。
+- Long deactivation在root transaction内同时预检root、after、mesh hide/deactivate；domain callback只在preflight成功后删除child state，session release继续`mesh→after→root`。
+- activation整批门只放行Normal与上述Long subset；Flick/Directional tail、Slide、Multiple、virtual lane及缺Long scene输入不会先提交同批前置Normal。
+- 本production批不扩大child profile授权：Slide/icon/Multiple/advanced/threshold/mask仍失败关闭。recording host oracle属于后续独立test提交。
 
 ## 2. 固定范围
 
