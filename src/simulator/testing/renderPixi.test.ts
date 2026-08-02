@@ -22,6 +22,15 @@ const png = new Uint8Array(24);
 png.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 png.set([0, 0, 0, 13, 0x49, 0x48, 0x44, 0x52], 8);
 png.set([0, 0, 0, 4, 0, 0, 0, 4], 16);
+const hudPng = Uint8Array.from(png);
+hudPng.set([0, 0, 0, 32, 0, 0, 0, 16], 16);
+const animationBytes = new Uint8Array([0x52, 0x50, 0x48, 0x33]);
+const hudKeys = [
+  ...Array.from({ length: 10 }, (_, index) => `icon_number_big_${index}`),
+  ...Array.from({ length: 10 }, (_, index) => `icon_number_big_AP_${index}`),
+  "effect_health_guard_outline",
+  "UI_effect_life_plus_icon",
+];
 
 function equal<T>(actual: T, expected: T, message: string): void {
   if (!Object.is(actual, expected)) throw new Error(`${message}: ${String(actual)} !== ${String(expected)}`);
@@ -108,6 +117,61 @@ function profile(): RenderResourceProfile {
       atlasRows: [],
       materialRole: "sync-line",
       animationRole: "none",
+      provenance: "current-apk",
+    }, {
+      logicalAssetId: "asset.hud",
+      role: "hud-atlas",
+      byteLength: hudPng.byteLength,
+      sha256: sha256UpperHex(hudPng),
+      mime: "image/png",
+      width: 32,
+      height: 16,
+      textureSettings: {
+        scaleMode: "linear",
+        wrapModeU: "clamp",
+        wrapModeV: "clamp",
+        mipmap: "off",
+        premultiplyAlpha: true,
+        blendMode: "normal",
+      },
+      atlasRows: hudKeys.map((exactKey, index) => ({
+        exactKey,
+        x: index % 8 * 4,
+        y: Math.floor(index / 8) * 4,
+        width: 4,
+        height: 4,
+        pivotX: 0.5,
+        pivotY: 0.5,
+        pixelsPerUnit: 100,
+      })),
+      materialRole: "hud",
+      animationRole: "none",
+      provenance: "current-apk",
+    }, {
+      logicalAssetId: "asset.combo-animation",
+      role: "animation-clip",
+      byteLength: animationBytes.byteLength,
+      sha256: sha256UpperHex(animationBytes),
+      mime: "application/octet-stream",
+      width: null,
+      height: null,
+      textureSettings: null,
+      atlasRows: [],
+      materialRole: "none",
+      animationRole: "combo",
+      provenance: "current-apk",
+    }, {
+      logicalAssetId: "asset.life-animation",
+      role: "animation-clip",
+      byteLength: animationBytes.byteLength,
+      sha256: sha256UpperHex(animationBytes),
+      mime: "application/octet-stream",
+      width: null,
+      height: null,
+      textureSettings: null,
+      atlasRows: [],
+      materialRole: "none",
+      animationRole: "life-heal",
       provenance: "current-apk",
     }],
     scene: {
@@ -213,6 +277,9 @@ async function main(): Promise<void> {
   const provider = requireOk(ImmutableLocalRenderResourceProvider.create([
     { logicalAssetId: "asset.note", bytes: png },
     { logicalAssetId: "asset.sync-line", bytes: png },
+    { logicalAssetId: "asset.hud", bytes: hudPng },
+    { logicalAssetId: "asset.combo-animation", bytes: animationBytes },
+    { logicalAssetId: "asset.life-animation", bytes: animationBytes },
   ]), "create local PNG provider");
   const renderer = new PixiRendererBackend(decoder);
   requireOk(await renderer.prepare(
@@ -353,18 +420,131 @@ async function main(): Promise<void> {
   equal(lineScene?.visible, true, "sync-line is visible after activation");
   equal(renderer.resourceSnapshot()[1]?.spriteReferenceCount, 1, "sync-line material is reference counted");
 
+  const visibleBatch = requireOk(renderer.preflight([
+    {
+      ...base(10), kind: "create-object", renderObjectId: "field.mask",
+      poolFamily: "field-mask", role: "mask", parentObjectId: null,
+    },
+    {
+      ...base(11), kind: "set-mask", renderObjectId: "field.mask",
+      mode: "visible-inside",
+      polygon: [
+        { x: f32(0), y: f32(0) }, { x: f32(1600), y: f32(0) },
+        { x: f32(1600), y: f32(300) }, { x: f32(0), y: f32(300) },
+      ],
+    },
+    {
+      ...base(12), kind: "set-transform", renderObjectId: "field.mask",
+      position: { x: f32(0), y: f32(0), z: f32(0) },
+      scale: { x: f32(1), y: f32(1) }, rotationDegrees: f32(0),
+      color: { red: f32(1), green: f32(1), blue: f32(1), alpha: f32(1) },
+      ordering: { domainLayer: 0, sourceDepthOrSortingOrder: 0, sourceZ: f32(0), creationSequence: 0 },
+      maskObjectId: null,
+    },
+    { ...base(13), kind: "activate-object", renderObjectId: "field.mask" },
+    {
+      ...base(14), kind: "create-object", renderObjectId: "field.line",
+      poolFamily: "field", role: "field-line", parentObjectId: null,
+    },
+    {
+      ...base(15), kind: "bind-resource", renderObjectId: "field.line",
+      binding: "sprite", logicalAssetId: "asset.note", exactKey: "note_normal_0",
+    },
+    {
+      ...base(16), kind: "set-transform", renderObjectId: "field.line",
+      position: { x: f32(20), y: f32(30), z: f32(0) },
+      scale: { x: f32(1), y: f32(1) }, rotationDegrees: f32(0),
+      color: { red: f32(1), green: f32(1), blue: f32(1), alpha: f32(1) },
+      ordering: { domainLayer: 1, sourceDepthOrSortingOrder: 1, sourceZ: f32(0), creationSequence: 1 },
+      maskObjectId: "field.mask",
+    },
+    { ...base(17), kind: "activate-object", renderObjectId: "field.line" },
+    {
+      ...base(18), kind: "create-object", renderObjectId: "hud.combo",
+      poolFamily: "hud-combo", role: "hud-combo", parentObjectId: null,
+    },
+    {
+      ...base(19), kind: "set-hud", renderObjectId: "hud.combo", hudRole: "combo",
+      state: Object.freeze({ combo: 456, allPerfect: false }),
+    },
+    { ...base(20), kind: "activate-object", renderObjectId: "hud.combo" },
+    {
+      ...base(21), kind: "play-animation", renderObjectId: "hud.combo",
+      animationRole: "combo", restart: true,
+    },
+    {
+      ...base(22), kind: "sample-animation", renderObjectId: "hud.combo",
+      animationRole: "combo", elapsedSeconds: f32(0.05),
+    },
+    {
+      ...base(23), kind: "create-object", renderObjectId: "hud.life",
+      poolFamily: "hud-life", role: "hud-life", parentObjectId: null,
+    },
+    {
+      ...base(24), kind: "set-hud", renderObjectId: "hud.life", hudRole: "life",
+      state: Object.freeze({
+        currentLife: 1250, playerMaxLife: 1000, lifeUpperLimit: 2000,
+        singleGameOver: false, primaryFill: 1, secondaryFill: 0.25,
+      }),
+    },
+    { ...base(25), kind: "activate-object", renderObjectId: "hud.life" },
+    {
+      ...base(26), kind: "play-animation", renderObjectId: "hud.life",
+      animationRole: "life-heal", restart: true,
+    },
+    {
+      ...base(27), kind: "sample-animation", renderObjectId: "hud.life",
+      animationRole: "life-heal", elapsedSeconds: f32(0.25),
+    },
+  ]), "preflight R3 visible Pixi batch");
+  equal(renderer.sceneSnapshot().length, 3, "visible preflight has zero scene mutation");
+  requireOk(renderer.commit(visibleBatch), "commit R3 visible Pixi batch");
+  const visibleScene = renderer.sceneSnapshot();
+  equal(visibleScene.find((row) => row.renderObjectId === "field.mask")?.maskVertexCount, 4,
+    "visible-inside mask retains four explicit vertices");
+  const maskedField = renderer.stage.children.find((node) => node.label === "field.line");
+  const fieldMask = maskedField?.mask;
+  equal(fieldMask instanceof Container ? fieldMask.label : null,
+    "field.mask", "field Sprite references the exact Pixi mask identity");
+  equal(visibleScene.find((row) => row.renderObjectId === "hud.combo")?.activeAnimationRole,
+    "combo", "Combo animation role remains owner-local");
+  equal(visibleScene.find((row) => row.renderObjectId === "hud.combo")?.animationElapsedSeconds,
+    f32(0.05).value, "Combo sample uses engine-authored Float32 elapsed time");
+  equal(
+    JSON.stringify(visibleScene.find((row) => row.renderObjectId === "hud.life")?.hudFillRatios),
+    JSON.stringify([1, 0.25]),
+    "Life maps primary and secondary fill without backend clamp",
+  );
+  equal(visibleScene.find((row) => row.renderObjectId === "hud.life")?.hudText,
+    "1250/1000", "Life visible text uses committed semantic owner state");
+  equal(renderer.resourceSnapshot()[2]?.spriteReferenceCount, 5,
+    "three Combo digits and two Life overlay Sprites are reference counted");
+
   requireOk(renderer.execute({
-    ...base(10), kind: "release-object", renderObjectId: "note.sync-line",
+    ...base(28), kind: "stop-animation", renderObjectId: "hud.life",
+    animationRole: "life-heal", restart: false,
+  }), "stop Life animation");
+  requireOk(renderer.execute({ ...base(29), kind: "release-object", renderObjectId: "field.line" }),
+    "release masked field Sprite");
+  requireOk(renderer.execute({ ...base(30), kind: "release-object", renderObjectId: "field.mask" }),
+    "release field mask");
+  requireOk(renderer.execute({ ...base(31), kind: "release-object", renderObjectId: "hud.combo" }),
+    "release Combo HUD");
+  requireOk(renderer.execute({ ...base(32), kind: "release-object", renderObjectId: "hud.life" }),
+    "release Life HUD");
+  requireOk(renderer.execute({
+    ...base(33), kind: "release-object", renderObjectId: "note.sync-line",
   }), "release Pixi sync-line object");
   requireOk(renderer.execute({
-    ...base(11), kind: "release-object", renderObjectId: "note.mesh",
+    ...base(34), kind: "release-object", renderObjectId: "note.mesh",
   }), "release Pixi mesh object");
   requireOk(renderer.execute({
-    ...base(12), kind: "release-object", renderObjectId: "note.root",
+    ...base(35), kind: "release-object", renderObjectId: "note.root",
   }), "release Pixi object");
   equal(renderer.sceneSnapshot().length, 0, "Pixi release removes object");
   equal(renderer.resourceSnapshot()[0]?.spriteReferenceCount, 0, "release decrements Sprite reference");
   equal(renderer.resourceSnapshot()[1]?.spriteReferenceCount, 0, "release decrements line material reference");
+  equal(renderer.resourceSnapshot()[2]?.spriteReferenceCount, 0, "release decrements HUD Sprite references");
   const duplicatePrepare = await renderer.prepare(
     SESSION,
     profile(),
@@ -725,7 +905,7 @@ async function main(): Promise<void> {
   requireOk(disposalRenderer.dispose(), "repeat disposal-order dispose");
   equal(disposeOrder.length, disposeCount, "repeated dispose destroys no resource twice");
 
-  console.log("Pixi v8 semantic adapter tests passed: atomic decode/cache/Sprite/R2-Mesh/sync-line/order/fault/context/dispose");
+  console.log("Pixi v8 semantic adapter tests passed: Sprite/R2-Mesh/sync-line/mask/HUD/fill/animation/fault/dispose");
 }
 
 void main().catch((error: unknown) => {

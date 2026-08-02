@@ -681,17 +681,31 @@ async function testHudReflectAtomic(): Promise<void> {
   const after = requireOk(engine.snapshot(), "HUD after snapshot");
   assert((after.managers.scoreLifeState?.record.score ?? 0) > 0, "score owner committed");
   const commands = renderer.commandSnapshot();
-  const reflected = commands.slice(-7);
+  let reflectStart = -1;
+  for (let index = commands.length - 1; index >= 0; index -= 1) {
+    const command = commands[index]!;
+    if (command.kind === "set-hud" && Object.prototype.hasOwnProperty.call(command.state, "addScore")) {
+      reflectStart = index;
+      break;
+    }
+  }
+  const reflected = commands.slice(reflectStart);
+  equal(reflected.length, 8, "Reflect emits the visible ordinary HUD transaction");
   equal(reflected[0]?.kind, "set-hud", "AddScore first");
-  equal(reflected[1]?.kind, "set-hud", "Combo update second");
-  equal(reflected[2]?.kind, "activate-object", "Combo show third");
-  equal(reflected[3]?.kind, "activate-object", "Result show fourth");
-  equal(reflected[4]?.kind, "set-hud", "Result route fifth");
-  equal(reflected[5]?.kind, "set-hud", "Score update sixth");
-  equal(reflected[6]?.kind, "set-hud", "Life update seventh");
-  if (reflected[5]?.kind === "set-hud") {
-    equal(reflected[5].state.score, after.managers.scoreLifeState?.record.score,
+  equal(reflected[1]?.kind, "activate-object", "AddScore visibility follows its state");
+  equal(reflected[2]?.kind, "set-hud", "Combo update follows AddScore");
+  equal(reflected[3]?.kind, "activate-object", "Combo show follows Combo state");
+  equal(reflected[4]?.kind, "activate-object", "Result show precedes Result state");
+  equal(reflected[5]?.kind, "set-hud", "Result route follows visibility");
+  equal(reflected[6]?.kind, "set-hud", "Score update follows Result");
+  equal(reflected[7]?.kind, "set-hud", "Life update closes Reflect");
+  if (reflected[6]?.kind === "set-hud") {
+    equal(reflected[6].state.score, after.managers.scoreLifeState?.record.score,
       "HUD score equals committed owner plan");
+  }
+  if (reflected[7]?.kind === "set-hud") {
+    equal(reflected[7].state.primaryFill, 1, "Life primary fill uses min(current/1000, 1)");
+    equal(reflected[7].state.secondaryFill, 0, "Life secondary fill uses max(current/1000 - 1, 0)");
   }
   requireOk(engine.dispose(), "HUD engine dispose");
 
@@ -745,12 +759,22 @@ async function testHudReflectAtomic(): Promise<void> {
     record: healRecord.snapshot(),
   }), "preflight life-heal HUD reflect");
   requireOk(healReflect.commit(), "commit life-heal HUD reflect");
-  const healCommands = healRenderer.commandSnapshot().slice(-8);
-  equal(healCommands[6]?.kind, "play-animation", "life-heal plays before Life UpdateView");
-  if (healCommands[6]?.kind !== "play-animation") throw new Error("missing life-heal command");
-  equal(healCommands[6].animationRole, "life-heal", "life-heal exact animation role");
-  equal(healCommands[6].restart, true, "life-heal restarts current non-loop clip");
-  equal(healCommands[7]?.kind, "set-hud", "Life UpdateView follows heal animation");
+  const healCommands = healRenderer.commandSnapshot().slice(-9);
+  equal(healCommands[7]?.kind, "play-animation", "life-heal plays before Life UpdateView");
+  if (healCommands[7]?.kind !== "play-animation") throw new Error("missing life-heal command");
+  equal(healCommands[7].animationRole, "life-heal", "life-heal exact animation role");
+  equal(healCommands[7].restart, true, "life-heal restarts current non-loop clip");
+  equal(healCommands[8]?.kind, "set-hud", "Life UpdateView follows heal animation");
+  const healAdvance = requireOk(
+    producer.preflightHudAnimationAdvance(0.25),
+    "preflight life-heal engine-clock sample",
+  );
+  requireOk(healAdvance.commit(), "commit life-heal engine-clock sample");
+  const healSnapshot = healRenderer.commandSnapshot();
+  const sample = healSnapshot[healSnapshot.length - 1];
+  equal(sample?.kind, "sample-animation", "life-heal advances by explicit sample command");
+  if (sample?.kind !== "sample-animation") throw new Error("missing life-heal sample");
+  equal(sample.elapsedSeconds.bits, "3E800000", "life-heal elapsed preserves Float32 bits");
   requireOk(healRenderer.dispose(), "dispose life-heal renderer");
   console.log("ok 5 - Score/Life plan commits HUD/life-heal in R1 order and rejects atomically");
 }

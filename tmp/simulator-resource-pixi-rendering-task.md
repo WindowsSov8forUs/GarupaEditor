@@ -512,6 +512,14 @@
 - Pixi v8新增R3 state shape validation、exact Combo/AP digit subtexture、Score/Result/AddScore/fidelity portable Text、Life双Graphics fill、explicit Graphics polygon mask及frozen polynomial Combo/Life sampling；Guard/NeverDie/Judge/Flick/Multiple和threshold仍失败关闭。
 - 本批隔离tsc通过；既有render-contract命令索引oracle因新增显隐命令预期失败，按production/test分批纪律留给下一独立test提交更新，不以旧索引回退production顺序。
 
+### 1.56 2026-08-02 visible Pixi recording/scene oracle子批
+
+- recording HUD oracle改为从最后一个AddScore owner命令定位完整8-command Reflect transaction，不依赖setup长度；断言AddScore→Combo→Result→Score→Life顺序、Score owner值与Life primary/secondary公式。
+- life-heal oracle新增0.25秒engine-clock sample并锁定`3E800000` Float32 bits；play仍严格位于Life UpdateView前，stop/elapsed不由Pixi ticker生成。
+- actual Pixi oracle使用独立hash/preflight资源创建22个HUD exact row与Combo/Life clip role；同一atomic batch覆盖4点mask→masked field Sprite、456三个exact digit、Life `[1,0.25]`双fill、Combo/Life owner-local sample。
+- scene snapshot锁定mask vertex count、mask identity、HUD text/fill、active animation role/elapsed；资源快照锁定3个Combo+2个Life Sprite reference，并在stop/release后归零。
+- `npx.cmd tsc -p src/simulator/testing/tsconfig.tests.json`、`simulator:test:render-contracts`、`simulator:test:render-pixi`、`simulator:test:render-production`与14-stage `simulator:test:resource-pixi-rendering`均通过；RP13仍须在其余PR边界处理后最终重验。
+
 ## 2. 固定范围
 
 ### 2.1 纳入范围
