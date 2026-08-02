@@ -565,7 +565,7 @@
 - 标准`AfterNoteType.None` Slide按chart-owned after list建立固定child/mesh identity；可见/不可见intermediate分离，N个after node产生N个22/60 base segment（即N个intermediate加terminal对应N+1段），owner-local child Wait→Move→Stop沿已闭合NoteAfter/base motion推进并原子teardown。Flick/Directional/Multiple terminal继续整批失败关闭。
 - MultipleDirectional按batch内连续同方向、相邻button连接，不跨普通Note拼组；60-slot back-line pool在Activate选择显式left/right material，OnUpdate按current ARM64固定X升序、完整XYZ与`targetA.localScale.x * 0.75f`宽度，shared teardown隐藏并deactivate。
 - Pixi v8开放独立`multiple-directional-line` role和material profile，仅接受正宽、非退化quad；threshold command与42-vertex Advanced仍在mutation前失败关闭，R4 profile中对应false未被扩大。
-- 隔离`tsc`、render-note-geometry、render-contracts、actual Pixi及render-production通过；PR矩阵由14/14/12更新为17 closed/current-subset、16 partial、7 blocked，RP14仍由PR14/PR19/PR28/PR30/PR32/PR39/PR40阻断。
+- Production `ec1e69b`与oracle `674b1d1`均已push；从clean、已推送`674b1d1`串行运行14-stage `simulator:test:resource-pixi-rendering`及807项source verifier全部通过。PR矩阵由14/14/12更新为17 closed/current-subset、16 partial、7 blocked，RP14仍由PR14/PR19/PR28/PR30/PR32/PR39/PR40阻断。
 
 ## 2. 固定范围
 
