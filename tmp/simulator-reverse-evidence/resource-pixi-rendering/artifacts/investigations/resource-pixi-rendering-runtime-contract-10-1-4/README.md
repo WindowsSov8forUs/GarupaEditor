@@ -47,6 +47,8 @@ The locked package files observed on the connected device are byte-identical to 
 - `resource_pixi_rendering_note_geometry_profile.json` consolidates the next producer implementation wave from current evidence: 17 exact current methods, all 13 authored button transforms plus Launcher, fixed ordinary motion/scale formulas, the R2 22/60 base mesh, sync-line margin/update lifecycle and the 1600x720 projection. `NoteMesh.GetMeshWidthRate` remains current-specific at its changed static-field offset rather than being mislabeled relocation-only.
 - `resource_pixi_rendering_note_child_lifecycle_profile.json` joins 17 existing static-contract methods with 13 separately byte-pinned current `NoteLong`/`NoteManager` methods without changing the established 673-method contract hash. It authorizes only the fixed ordinary Long + normal tail + base 22/60 mesh lifecycle; Flick/Directional tails, Slide chains, Multiple reconnect/back-line, advanced mesh and threshold remain false.
 - `resource_pixi_rendering_hud_runtime_profile.json` compacts the committed ordinary R1 into a producer-facing HUD/animation boundary: all 23 HUD targets, 14,084 HUD and 1,452 HUD-animation caller entries, first-judged AddScore→Combo→Show→Result order, and both observed life-heal calls before Life UpdateView/updateLifeText. Five static-only routes remain explicitly unauthorized rather than inferred.
+- `resource_pixi_rendering_hud_setter_targets.json` and `hud-setter-arm64/` byte-pin 22 current UILabel/UISprite/UISlider/UIProgressBar/UIWidget/NGUITools/GameObject/Animator/Renderer/SpriteRenderer/Transform observation points for HUD R3. The capture plan exports only technical strings, scalar/vector Float32 bits, integer state hashes/depth/order and anonymous aliases under RPH-030..055 owner stacks; it forbids return replacement, writes, managed invocation, raw pointers and display strings.
+- `runtime/ordinary-rendering-hud-r3.trace.json.gz` records a natural 631-frame Demo Live with 19,888 caller-correlated setter events. `resource_pixi_rendering_hud_visible_profile.json` joins those events to frozen HUD/skill/note/resource profiles and authorizes only ordinary bitmap score/combo/life, score-skill overlay, serialized field/sudden mask hierarchy, combo/GameJudge restart-at-zero and portable combo/life-heal curve sampling. Unobserved Guard/NeverDie/Judge/Flick/Multiple routes remain false.
 - `runtime/resource-pixi-rendering-delivery-frame-manifest.json` locks seven privacy-reviewed physical-device ordinary PNG anchors at the observed 1600×720 viewport. Crops exclude identity-bearing Skill/pause text; no generated HABAHIRO frame is represented as original.
 - `habahiro_current_external_resource_profile.json` records the user-authorized Bestdori fallback: 12 live explorer/export assets, 179 Sprite rows and hashes whose 2026-03-31 release timestamps align with MasterMusic 786. Production remains offline and consumes only host-local hash-verified bytes.
 - `resource_pixi_rendering_delivery_oracle.json` and `delivery_closure.json` close the explicit `ordinary-exact-habahiro-degraded` delivery gate while retaining original HABAHIRO bundle/runtime/frame parity as open and unclaimed.
@@ -130,6 +132,9 @@ py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-
 py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\build_resource_pixi_rendering_note_geometry_profile.py
 py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\build_resource_pixi_rendering_note_child_lifecycle_profile.py
 py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\build_resource_pixi_rendering_hud_runtime_profile.py
+py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\build_resource_pixi_rendering_hud_setter_targets.py
+py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\capture_resource_pixi_rendering_hud_runtime.py
+py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\build_resource_pixi_rendering_hud_visible_profile.py
 py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\build_resource_pixi_rendering_offline_closure.py
 py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\verify_resource_pixi_rendering_static_contract.py
 py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\verify_resource_pixi_rendering_resource_contract.py
@@ -145,6 +150,9 @@ py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-
 py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\verify_resource_pixi_rendering_note_geometry_profile.py
 py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\verify_resource_pixi_rendering_note_child_lifecycle_profile.py
 py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\verify_resource_pixi_rendering_hud_runtime_profile.py
+py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\verify_resource_pixi_rendering_hud_setter_targets.py
+py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\verify_resource_pixi_rendering_hud_runtime.py
+py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\verify_resource_pixi_rendering_hud_visible_profile.py
 py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\verify_resource_pixi_rendering_offline_closure.py
 ```
 

@@ -1,0 +1,26 @@
+address	bytes	instruction	resolved_target
+0x304B478	0518532D	ldp s5, s6, [x0, #0x98]	-
+0x304B47C	0710542D	ldp s7, s4, [x0, #0xa0]	-
+0x304B480	4827FFD0	adrp x8, #0x1535000	-
+0x304B484	10A14FBD	ldr s16, [x8, #0xfa0]	-
+0x304B488	A538201E	fsub s5, s5, s0	-
+0x304B48C	C638211E	fsub s6, s6, s1	-
+0x304B490	E738221E	fsub s7, s7, s2	-
+0x304B494	A508251E	fmul s5, s5, s5	-
+0x304B498	C608261E	fmul s6, s6, s6	-
+0x304B49C	A528261E	fadd s5, s5, s6	-
+0x304B4A0	8638231E	fsub s6, s4, s3	-
+0x304B4A4	E708271E	fmul s7, s7, s7	-
+0x304B4A8	E528251E	fadd s5, s7, s5	-
+0x304B4AC	C608261E	fmul s6, s6, s6	-
+0x304B4B0	C528251E	fadd s5, s6, s5	-
+0x304B4B4	A020301E	fcmp s5, s16	-
+0x304B4B8	04010054	b.mi #0x304b4d8	-
+0x304B4BC	080040F9	ldr x8, [x0]	-
+0x304B4C0	0004132D	stp s0, s1, [x0, #0x98]	-
+0x304B4C4	020C142D	stp s2, s3, [x0, #0xa0]	-
+0x304B4C8	8020231E	fcmp s4, s3	-
+0x304B4CC	03895FA9	ldp x3, x2, [x8, #0x1f8]	-
+0x304B4D0	E1079F1A	cset w1, ne	-
+0x304B4D4	60001FD6	br x3	-
+0x304B4D8	C0035FD6	ret	-

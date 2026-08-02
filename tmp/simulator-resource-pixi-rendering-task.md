@@ -11,8 +11,8 @@
 - 锁定原作样本：`jp.co.craftegg.band` 10.1.4（version code 230，`arm64-v8a`）。
 - 锁定`libil2cpp.so` SHA-256：`815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F`。
 - 锁定`global-metadata.dat` SHA-256：`298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F`。
-- 当前Reverse基线提交：`626bf78bb9101117a1ae3f71a93420e4a882d58e`；只消费该提交及其祖先中已提交、已push、可校验对象。
-- 当前状态：**2026-08-02按HEAD `cd93f43`重新审计：RP00–RP03、RP10、RP12关闭；RP13只有当前已实现子集回归绿色，不再记作阶段级关闭；RP04–RP09、RP11、RP13、RP14均进行中。ordinary Normal root scene/motion、simultaneous Normal sync-line与Long normal-tail after/base-mesh完整command transaction已接入NoteManager；Flick/Directional/Slide/Multiple child、advanced/threshold/mask、field host接线、Pixi可见HUD/slider/animation及degraded visible label仍失败关闭。PR01–PR40 production审计为10 closed、12 partial、18 open，详见1.51。759项证据verifier与当前render-production回归通过只证明已实现子集，不等于RP13/RP14关闭。**
+- 当前Reverse基线提交：`fa28856133e0bc45f355407c39b84cac9cbcfb95`；只消费该提交及其祖先中已提交、已push、可校验对象。
+- 当前状态：**2026-08-02按HEAD `07fc1da`继续收尾：RP00–RP03、RP10、RP12关闭；RP13仍只代表当前已实现子集回归绿色，RP14不通过。ordinary Normal root/sync与Long normal-tail root/after/base-mesh完整transaction及host oracle已闭合；Reverse R3新增22个HUD setter/ARM64 slice与19,888-event/631-frame natural Demo Live，晋升bitmap HUD、serialized field/sudden mask及portable combo/life-heal animation sampling授权并冻结为790项。下一步是Pixi可见HUD/mask/animation production；Flick/Directional/Slide/Multiple、advanced/threshold、未观察动画与degraded visible label仍失败关闭。**
 - 计划证据包：`tmp/simulator-reverse-evidence/resource-pixi-rendering/`，只在Reverse新证据提交并push后创建。
 - 计划验收记录：`tmp/simulator-resource-pixi-rendering-acceptance.md`，RP14时创建。
 
@@ -494,6 +494,14 @@
 - oracle冻结pool三个owner/六条setup命令与14条activation后总sequence，逐项断言front set/activate/bind后接hidden after transform、mesh transform/geometry/activate及after bind。
 - 逐帧推进直到LauncherMusicPos等于tail，断言after transform先于activate、mesh refresh紧随visibility，且Wait期间已持续更新base mesh；不由待测helper生成命令expected。
 - dispose断言root/after/mesh各恰好一次deactivate并最终objectCount=0；render-contract增至8组，759项source verifier与dependency反审通过。
+
+### 1.54 2026-08-02 HUD/mask/animation natural R3证据晋升
+
+- Reverse先提交并push 22个current setter target与独立ARM64 slice，覆盖UILabel/UISprite/UIProgressBar/UIWidget/GameObject/Animator/Renderer/SpriteRenderer/Transform；采集器明确禁止return replacement、写内存、managed invocation、raw pointer与display string导出。
+- 实体设备10.1.4 Demo Live自然R3冻结19,888个caller-correlated setter事件与631个相对frame；观察到Combo数字`icon_number_big_0..9`、82×116/depth5、Score/Life fill、HUD RGBA/alpha/active/transform及1,275次Animator Play(string,layer,time)。
+- compact visible profile锁定`combo_number`和`GameJudge`各631次从normalized time 0重启、field setup/sudden transform与serialized VisibleInsideMask边界，并授权portable bitmap score/combo/life、score-skill overlay、combo/life-heal command-local curve sampling。
+- `damage_guard_animation`、`never_die_animation`、`judge_skill_animation`、`flick_icon_animation`与`multiple_directional_visual`继续false；Unity PlayerLoop subframe与GPU raster parity明确排除，不得由portable授权外推。
+- Reverse提交`fa288561`已push；Garupa冻结包由759项增至790项，新增22 target/22 slice、R3 trace与visible profile，source verifier通过。production Pixi消费必须在独立后续提交完成。
 
 ## 2. 固定范围
 

@@ -1,0 +1,3 @@
+address	bytes	instruction	resolved_target
+0x3008C48	21008052	mov w1, #1	-
+0x3008C4C	01000014	b #0x3008c50	UIProgressBar$$Set

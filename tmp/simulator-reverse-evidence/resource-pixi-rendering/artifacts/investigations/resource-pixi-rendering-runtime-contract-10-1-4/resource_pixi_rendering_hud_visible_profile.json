@@ -1,0 +1,193 @@
+{
+  "schema_version": 1,
+  "status": "confirmed-current-ordinary-visible-hud-mask-animation-portable-profile",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "version_name": "10.1.4",
+    "version_code": 230,
+    "abi": "arm64-v8a"
+  },
+  "source": {
+    "trace_path": "runtime/ordinary-rendering-hud-r3.trace.json.gz",
+    "trace_bytes": 137829,
+    "trace_sha256": "33A7994FBB1DBDC27CD4C96B13DDB40CD84AB7A7982BB826CF467791CFFCC9F0",
+    "setter_targets_sha256": "743560628D51EAB8989887CC9E86F5352B1D61776C1F3D9658412DE83C45A669",
+    "hud_asset_profiles_sha256": "0D36B7FD2E50EEE9F4528CB8D508D972EA2E3314863DD47CFE3617B314C5A05D",
+    "skill_animation_profiles_sha256": "527F1A49EFA9663CD7009BA7FA525776C0C8BF00733772AA09E7626429A4126E",
+    "note_animation_profiles_sha256": "3D72AEEC898E6346F21664BDFB61271CC6E8FDE2863BC9A6B78A1D2ADCCFF9AB",
+    "hud_runtime_profile_sha256": "2561A32A260C4104A5E4CFEB81B4E2ECA2696276D17ADFFB31B0498A503E6A91",
+    "resource_contract_sha256": "F389AB0950156FAAA6B1B6407BA4D47AD66C9472DB9631D604460E39BC9F15A3",
+    "portable_contract_sha256": "CADE4AD219DD3BD767E004FE2D1867A2DD3591AA389447C9D88956241D88BE15"
+  },
+  "coverage": {
+    "events": 19888,
+    "relative_frames": 631,
+    "setter_counts": {
+      "RPHU-001": 4,
+      "RPHU-002": 1999,
+      "RPHU-004": 189,
+      "RPHU-005": 3526,
+      "RPHU-006": 4,
+      "RPHU-007": 1998,
+      "RPHU-008": 1998,
+      "RPHU-015": 4217,
+      "RPHU-016": 223,
+      "RPHU-017": 7,
+      "RPHU-018": 4448,
+      "RPHU-020": 1275
+    }
+  },
+  "bitmap_hud": {
+    "combo": {
+      "digit_keys": [
+        "icon_number_big_0",
+        "icon_number_big_1",
+        "icon_number_big_2",
+        "icon_number_big_3",
+        "icon_number_big_4",
+        "icon_number_big_5",
+        "icon_number_big_6",
+        "icon_number_big_7",
+        "icon_number_big_8",
+        "icon_number_big_9"
+      ],
+      "widget_width": 82,
+      "widget_height": 116,
+      "depth": 5,
+      "play_state": "combo_number",
+      "play_count": 631,
+      "restart_normalized_time_f32_bits": "00000000"
+    },
+    "score": {
+      "meter_key": "score_meter_blue",
+      "fill_f32_bits": [
+        "00000000",
+        "3F800000",
+        "3E6147B0",
+        "3ED70A3C"
+      ]
+    },
+    "life": {
+      "fill_f32_bits": [
+        "00000000",
+        "3F800000",
+        "3E6147B0",
+        "3ED70A3C"
+      ],
+      "color_f32_bits": [
+        [
+          "3EDCDCDD",
+          "3F800000",
+          "3ED2D2D3",
+          "3F800000"
+        ],
+        [
+          "3F800000",
+          "3F800000",
+          "3F800000",
+          "3F800000"
+        ],
+        [
+          "3F73F3F4",
+          "3F6CECED",
+          "3C40C0C1",
+          "3F800000"
+        ],
+        [
+          "3F61E1E2",
+          "3F088889",
+          "00000000",
+          "3F800000"
+        ]
+      ]
+    },
+    "skill_display": {
+      "sprite_keys": [
+        "icon_skill_score_up_1",
+        "icon_skill_score_up_2"
+      ],
+      "widget_sizes": [
+        [
+          86,
+          20
+        ]
+      ],
+      "alpha_f32_bits": [
+        "00000000",
+        "3F800000"
+      ]
+    }
+  },
+  "field_mask": {
+    "setup_owner": "RPH-030",
+    "sudden_owner": "RPH-031",
+    "game_object_active_observed": true,
+    "local_scale_f32_bits": [
+      [
+        "3F800000",
+        "3F800000",
+        "3F800000"
+      ],
+      [
+        "3F800000",
+        "00000000",
+        "3F800000"
+      ],
+      [
+        "41200000",
+        "41200000",
+        "3F800000"
+      ]
+    ],
+    "serialized_mask_interaction_source": "resource_pixi_rendering_resource_contract.json + resource_pixi_rendering_portable_contract.json",
+    "runtime_mask_setter_observed": false,
+    "portable_boundary": "serialized mask hierarchy plus observed setup/sudden transform; no Unity shader/raster parity"
+  },
+  "animations": {
+    "combo_number": {
+      "duration_seconds": 1.0,
+      "runtime_restart_count": 631,
+      "loop": false,
+      "portable_sampling": "sample frozen polynomial curves from command-local elapsed time; restart at zero; pause when engine step is frozen"
+    },
+    "game_judge": {
+      "runtime_restart_count": 631,
+      "restart_at_zero": true
+    },
+    "life_heal": {
+      "duration_seconds": 1.0,
+      "loop": false,
+      "semantic_restart_before_life_update": true,
+      "portable_sampling": "sample frozen current curve from command-local elapsed time"
+    },
+    "score_skill": {
+      "runtime_sprite_and_alpha_observed": true,
+      "loop_duration_seconds": 0.75
+    },
+    "flick_icon": {
+      "duration_seconds": 0.3333333432674408,
+      "loop": true,
+      "runtime_assignment_observed": false
+    }
+  },
+  "authorization": {
+    "bitmap_combo_score_life": true,
+    "bitmap_skill_score_up": true,
+    "ordinary_field_sudden_mask": true,
+    "combo_animation_sampling": true,
+    "game_judge_animation_restart": true,
+    "life_heal_animation_sampling": true,
+    "score_skill_visible_overlay": true,
+    "damage_guard_animation": false,
+    "never_die_animation": false,
+    "judge_skill_animation": false,
+    "flick_icon_animation": false,
+    "multiple_directional_visual": false
+  },
+  "limits": [
+    "portable-equivalent command-clock sampling excludes Unity PlayerLoop subframe and GPU raster parity",
+    "unobserved Damage Guard, Never Die, Judge Skill, Flick icon and Multiple routes remain fail-closed",
+    "technical UILabel values rejected by privacy filter remain sourced from engine semantic state, not from trace strings"
+  ],
+  "unknown_fields": []
+}

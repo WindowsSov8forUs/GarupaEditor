@@ -1,0 +1,22 @@
+address	bytes	instruction	resolved_target
+0x65C8C58	FFC300D1	sub sp, sp, #0x30	-
+0x65C8C5C	FE0B00F9	str x30, [sp, #0x10]	-
+0x65C8C60	F44F02A9	stp x20, x19, [sp, #0x20]	-
+0x65C8C64	146500B0	adrp x20, #0x7269000	-
+0x65C8C68	88DE46F9	ldr x8, [x20, #0xdb8]	-
+0x65C8C6C	F30300AA	mov x19, x0	-
+0x65C8C70	E007002D	stp s0, s1, [sp]	-
+0x65C8C74	E20B00BD	str s2, [sp, #8]	-
+0x65C8C78	C80000B5	cbnz x8, #0x65c8c90	-
+0x65C8C7C	407CFDD0	adrp x0, #0x1552000	-
+0x65C8C80	000C3C91	add x0, x0, #0xf03	-
+0x65C8C84	661B2197	bl #0x2e0fa1c	-
+0x65C8C88	E80300AA	mov x8, x0	-
+0x65C8C8C	80DE06F9	str x0, [x20, #0xdb8]	-
+0x65C8C90	E1030091	mov x1, sp	-
+0x65C8C94	E00313AA	mov x0, x19	-
+0x65C8C98	00013FD6	blr x8	-
+0x65C8C9C	F44F42A9	ldp x20, x19, [sp, #0x20]	-
+0x65C8CA0	FE0B40F9	ldr x30, [sp, #0x10]	-
+0x65C8CA4	FFC30091	add sp, sp, #0x30	-
+0x65C8CA8	C0035FD6	ret	-
