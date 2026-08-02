@@ -26,6 +26,7 @@ import {
 import type { ScoreLifeStateProfile } from "../engine/data/scoreLifeState";
 import { evidenceRequired, ok, type SimulatorResult } from "../engine/evidence";
 import { InGameRecord } from "../engine/managers/inGameRecord";
+import type { SituationSkillSnapshot } from "../engine/managers/situationSkillManager";
 import { validateOrdinaryRenderedBatchAuthorization } from "../engine/managers/noteManager";
 import {
   RenderCommandProducer,
@@ -882,8 +883,62 @@ async function testHudReflectAtomic(): Promise<void> {
   equal(sample?.kind, "sample-animation", "life-heal advances by explicit sample command");
   if (sample?.kind !== "sample-animation") throw new Error("missing life-heal sample");
   equal(sample.elapsedSeconds.bits, "3E800000", "life-heal elapsed preserves Float32 bits");
+  requireOk(requireOk(producer.preflightHudAnimationAdvance(0.75),
+    "preflight Result one-second lifetime").commit(), "commit Result one-second lifetime");
+  equal(healRenderer.commandSnapshot().some((command) =>
+    command.kind === "hide-object" && command.renderObjectId === "render:hud:result"
+  ), true, "R5 Result lifetime hides at one owner-local second");
   requireOk(healRenderer.dispose(), "dispose life-heal renderer");
-  console.log("ok 5 - Score/Life plan commits HUD/life-heal in R1 order and rejects atomically");
+
+  const skillRenderer = new RecordingSimulatorRendererBackend();
+  const skillProfile: RenderResourceProfile = {
+    ...baseProfile,
+    assets: baseProfile.assets.map((asset) => ({ ...asset, animationRole: "score-skill" as const })),
+  };
+  requireOk(await skillRenderer.prepare(SESSION, skillProfile, new LocalProvider(), preflight()),
+    "R5 score-skill renderer prepare");
+  const skillProducer = new RenderCommandProducer(SESSION, skillRenderer, {
+    ...RESOURCES,
+    scoreSkillAnimationLogicalAssetId: "asset.note",
+  });
+  requireOk(requireOk(skillProducer.preflightHudSetup(healRecord.snapshot()),
+    "R5 skill HUD setup").commit(), "commit R5 skill HUD setup");
+  const skillSnapshot = (
+    state: 0 | 1 | 2 | 3,
+    activeEffectTypes: readonly number[],
+  ): SituationSkillSnapshot => Object.freeze({
+    state,
+    queue: Object.freeze(state === 0 ? [] : [0]),
+    currentSkillNoteIndex: state === 0 ? null : 0,
+    activeEffectTypes: Object.freeze([...activeEffectTypes]),
+    skillTimer: 5,
+    finishingTimer: 0,
+    reservationFrame: 0x7fffffff,
+    reservationEncore: false,
+    stockSize: 8,
+    continuousWorstResult: 4,
+    crescendoRate: 1,
+    trace: Object.freeze([]),
+  });
+  requireOk(requireOk(skillProducer.preflightHudSkillTransition(
+    skillSnapshot(1, []),
+    skillSnapshot(2, [0]),
+  ), "R5 score-skill start").commit(), "commit R5 score-skill start");
+  const skillStart = skillRenderer.commandSnapshot().slice(-3);
+  equal(skillStart.map((command) => command.kind).join(","),
+    "set-hud,activate-object,play-animation", "R5 skill start freezes display/gauge/Animator order");
+  if (skillStart[0]?.kind === "set-hud") {
+    equal(skillStart[0].state.scoreSkill, true, "R5 active score effect selects Score overlay");
+    equal(skillStart[0].state.scoreGaugeActive, true, "R5 ScoreGauge On follows score effect");
+  }
+  requireOk(requireOk(skillProducer.preflightHudSkillTransition(
+    skillSnapshot(2, [0]),
+    skillSnapshot(3, [0]),
+  ), "R5 score-skill finish").commit(), "commit R5 score-skill finish");
+  equal(skillRenderer.commandSnapshot().slice(-2).map((command) => command.kind).join(","),
+    "stop-animation,hide-object", "R5 skill finish stops Animator then hides generic display");
+  requireOk(skillRenderer.dispose(), "dispose R5 score-skill renderer");
+  console.log("ok 5 - Score/Life HUD, R5 Result lifetime and Skill/ScoreGauge transitions are atomic");
 }
 
 async function testOrdinaryLongLifecycle(): Promise<void> {

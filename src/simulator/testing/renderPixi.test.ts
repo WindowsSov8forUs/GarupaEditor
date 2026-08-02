@@ -195,6 +195,19 @@ function profile(): RenderResourceProfile {
       materialRole: "multiple-directional-line",
       animationRole: "none",
       provenance: "current-apk",
+    }, {
+      logicalAssetId: "asset.score-skill-animation",
+      role: "animation-clip",
+      byteLength: animationBytes.byteLength,
+      sha256: sha256UpperHex(animationBytes),
+      mime: "application/octet-stream",
+      width: null,
+      height: null,
+      textureSettings: null,
+      atlasRows: [],
+      materialRole: "none",
+      animationRole: "score-skill",
+      provenance: "current-apk",
     }],
     scene: {
       profileId: "pixi-test-scene",
@@ -303,6 +316,7 @@ async function main(): Promise<void> {
     { logicalAssetId: "asset.combo-animation", bytes: animationBytes },
     { logicalAssetId: "asset.life-animation", bytes: animationBytes },
     { logicalAssetId: "asset.multiple-directional-line", bytes: png },
+    { logicalAssetId: "asset.score-skill-animation", bytes: animationBytes },
   ]), "create local PNG provider");
   const renderer = new PixiRendererBackend(decoder);
   requireOk(await renderer.prepare(
@@ -611,7 +625,23 @@ async function main(): Promise<void> {
   equal(multipleLine?.geometryVertexCount, 4, "R4 Pixi line uses the portable four-vertex quad");
   equal(multipleLine?.geometryIndexCount, 6, "R4 Pixi line uses the portable six-index quad");
   equal(multipleLine?.visible, true, "R4 Pixi line becomes visible atomically");
-  requireOk(multipleRenderer.dispose(), "dispose R4 MultipleDirectional renderer");
+  const scoreSkillBatch = requireOk(multipleRenderer.preflight([
+    {
+      ...base(4), kind: "create-object", renderObjectId: "hud.skill",
+      poolFamily: "hud-overlay", role: "hud-overlay", parentObjectId: null,
+    },
+    {
+      ...base(5), kind: "set-hud", renderObjectId: "hud.skill", hudRole: "overlay",
+      state: { skillActive: true, scoreSkill: true, scoreGaugeActive: true, currentSkillNoteIndex: 0 },
+    },
+    { ...base(6), kind: "activate-object", renderObjectId: "hud.skill" },
+    { ...base(7), kind: "play-animation", renderObjectId: "hud.skill", animationRole: "score-skill", restart: true },
+  ]), "preflight R5 Score Skill Pixi batch");
+  requireOk(multipleRenderer.commit(scoreSkillBatch), "commit R5 Score Skill Pixi batch");
+  const scoreSkill = multipleRenderer.sceneSnapshot().find((entry) => entry.renderObjectId === "hud.skill");
+  equal(scoreSkill?.hudText, "SCORE UP", "R5 Pixi exposes the observed Score Skill display");
+  equal(scoreSkill?.activeAnimationRole, "score-skill", "R5 Pixi owns Score Skill Animator role");
+  requireOk(multipleRenderer.dispose(), "dispose R4/R5 renderer");
 
   const decodeFailure = new PixiRendererBackend({
     async decodePng() {
