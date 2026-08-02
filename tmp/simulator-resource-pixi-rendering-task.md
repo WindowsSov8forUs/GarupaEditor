@@ -587,6 +587,12 @@
 - earliest field尝试为zero-event且未通过完成门，已删除；R6只新增All Perfect `ExecUpdate` active gate，AddScore/JudgeTiming/Guard/NeverDie/changeable text/field setup、Long-after Flick、add/after Multiple、Advanced、threshold shader mapping及exact HAB继续false。
 - Garupa冻结更新为826 entries，Reverse commit/source working/copy三方verifier通过；7个physical PNG及原作资源binary继续排除。完成index verifier并提交冻结包前不得消费R6。
 
+### 1.66 2026-08-03 final R6 Note授权消费审计
+
+- R6全窗口Note trace扩大样本但没有观察Long-after Flick、add-Long/add-Slide/after Multiple、Advanced或可移植threshold shader mapping；这些route继续失败关闭，不以“全窗口”标题外推授权。
+- 既有front Flick/Directional、标准Slide chain、Multiple back-line的root/child/line stable identity、pool acquire/release、pause freeze与teardown已由R4 production和R6重复轨迹覆盖；本批不重复或改写生产逻辑。
+- Production evidence ID union只加入冻结`RPR-R6-001`–`009`，供后续All Perfect正向消费引用；PR08/PR09/PR11/PR14仍不得提升状态。
+
 ## 2. 固定范围
 
 ### 2.1 纳入范围
