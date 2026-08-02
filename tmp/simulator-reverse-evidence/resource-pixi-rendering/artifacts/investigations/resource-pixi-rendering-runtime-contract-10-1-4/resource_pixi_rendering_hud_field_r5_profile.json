@@ -1,0 +1,432 @@
+{
+  "schema_version": 1,
+  "status": "confirmed-current-hud-field-r5-runtime-profile",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "version_name": "10.1.4",
+    "version_code": 230,
+    "abi": "arm64-v8a",
+    "base_apk_bytes": 138157634,
+    "base_apk_sha256": "D3A6005BB1F7341E39016521390DCEB987E56A0E5D16B6BA73568837A3026413",
+    "arm64_split_apk_bytes": 47130776,
+    "arm64_split_apk_sha256": "3D846C0AA18CCBA4BFC48B5E6B82C2EED92A999D653057F0766198C1AEA1D9DD",
+    "libil2cpp_sha256": "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F",
+    "global_metadata_sha256": "298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F",
+    "dump_cs_sha256": "4AC4ACC5981D0010B3D6A69482C37C1175339458246BC4A5878CF30F694E884B",
+    "script_json_sha256": "826C592717ED07974F8DCD435AF92B8DCE7A6406E0706AC43A85102FE8567D91"
+  },
+  "source": {
+    "targets_sha256": "1B5D8E1795558BE4714DF5A9315D95ED176F717AEF6CB3A0CCB0A3CB65E4CA33",
+    "setter_targets_sha256": "743560628D51EAB8989887CC9E86F5352B1D61776C1F3D9658412DE83C45A669",
+    "builder_sha256": "CFAE99DFB295C610B5B56AE78D7A2FCDBBC3ACE843384A618B3586B35D4DD117"
+  },
+  "coverage": {
+    "core": {
+      "trace_sha256": "CEB3EF4E1DFBDA107F86D717109D9B2F808B7F38C5EB20D32DAF108AF345EDD6",
+      "event_count": 16259,
+      "relative_frame_count": 529,
+      "owner_enter_counts": {
+        "RPH5-000": 529,
+        "RPH5-004": 5790,
+        "RPH5-005": 529,
+        "RPH5-006": 1,
+        "RPH5-007": 5781,
+        "RPH5-010": 529
+      },
+      "setter_event_counts": {
+        "RPHU-002": 1681,
+        "RPHU-004": 149,
+        "RPHU-005": 2944,
+        "RPHU-007": 1681,
+        "RPHU-008": 1681,
+        "RPHU-015": 3362,
+        "RPHU-018": 3703,
+        "RPHU-020": 1058
+      }
+    },
+    "overlay": {
+      "trace_sha256": "35EAF4BD5683083F08EA401C493B1D513A93145FA947C3C12FE08B1315FAF537",
+      "event_count": 14716,
+      "relative_frame_count": 530,
+      "owner_enter_counts": {
+        "RPH5-000": 530,
+        "RPH5-013": 5,
+        "RPH5-014": 5,
+        "RPH5-015": 5,
+        "RPH5-016": 5,
+        "RPH5-020": 5,
+        "RPH5-021": 5,
+        "RPH5-022": 5,
+        "RPH5-023": 7,
+        "RPH5-024": 2,
+        "RPH5-025": 149,
+        "RPH5-026": 1060,
+        "RPH5-028": 530
+      },
+      "setter_event_counts": {
+        "RPHU-002": 1688,
+        "RPHU-004": 149,
+        "RPHU-005": 2414,
+        "RPHU-007": 1688,
+        "RPHU-008": 1688,
+        "RPHU-011": 5,
+        "RPHU-015": 3376,
+        "RPHU-018": 3179,
+        "RPHU-020": 529
+      }
+    }
+  },
+  "owner_enter_counts": {
+    "RPH5-000": 1059,
+    "RPH5-004": 5790,
+    "RPH5-005": 529,
+    "RPH5-006": 1,
+    "RPH5-007": 5781,
+    "RPH5-010": 529,
+    "RPH5-013": 5,
+    "RPH5-014": 5,
+    "RPH5-015": 5,
+    "RPH5-016": 5,
+    "RPH5-020": 5,
+    "RPH5-021": 5,
+    "RPH5-022": 5,
+    "RPH5-023": 7,
+    "RPH5-024": 2,
+    "RPH5-025": 149,
+    "RPH5-026": 1060,
+    "RPH5-028": 530
+  },
+  "owner_setter_counts": {
+    "RPH5-000/RPHU-002": 3071,
+    "RPH5-000/RPHU-007": 3071,
+    "RPH5-000/RPHU-008": 3071,
+    "RPH5-000/RPHU-015": 6142,
+    "RPH5-000/RPHU-018": 5290,
+    "RPH5-000/RPHU-020": 1058,
+    "RPH5-004/RPHU-005": 529,
+    "RPH5-004/RPHU-020": 529,
+    "RPH5-005/RPHU-002": 149,
+    "RPH5-005/RPHU-004": 149,
+    "RPH5-005/RPHU-005": 2414,
+    "RPH5-005/RPHU-007": 149,
+    "RPH5-005/RPHU-008": 149,
+    "RPH5-005/RPHU-015": 298,
+    "RPH5-005/RPHU-018": 529,
+    "RPH5-006/RPHU-005": 1,
+    "RPH5-010/RPHU-018": 529,
+    "RPH5-013/RPHU-011": 5,
+    "RPH5-022/RPHU-018": 5,
+    "RPH5-025/RPHU-002": 149,
+    "RPH5-025/RPHU-004": 149,
+    "RPH5-025/RPHU-005": 298,
+    "RPH5-025/RPHU-007": 149,
+    "RPH5-025/RPHU-008": 149,
+    "RPH5-025/RPHU-015": 298,
+    "RPH5-026/RPHU-005": 2116,
+    "RPH5-028/RPHU-018": 529
+  },
+  "portable_values": {
+    "RPH5-000/RPHU-002": [
+      {
+        "technical_value": "icon_number_big_0"
+      },
+      {
+        "technical_value": "icon_number_big_1"
+      },
+      {
+        "technical_value": "icon_number_big_2"
+      },
+      {
+        "technical_value": "icon_number_big_3"
+      },
+      {
+        "technical_value": "icon_number_big_4"
+      },
+      {
+        "technical_value": "icon_number_big_5"
+      },
+      {
+        "technical_value": "icon_number_big_6"
+      },
+      {
+        "technical_value": "icon_number_big_7"
+      },
+      {
+        "technical_value": "icon_number_big_8"
+      },
+      {
+        "technical_value": "icon_number_big_9"
+      }
+    ],
+    "RPH5-000/RPHU-007": [
+      {
+        "value_i32": 82
+      }
+    ],
+    "RPH5-000/RPHU-008": [
+      {
+        "value_i32": 116
+      }
+    ],
+    "RPH5-000/RPHU-015": [
+      {
+        "value_f32_bits": [
+          "00000000",
+          "00000000",
+          "00000000"
+        ]
+      },
+      {
+        "value_f32_bits": [
+          "420C0000",
+          "00000000",
+          "00000000"
+        ]
+      },
+      {
+        "value_f32_bits": [
+          "C20C0000",
+          "00000000",
+          "00000000"
+        ]
+      },
+      {
+        "value_f32_bits": [
+          "C28C0000",
+          "00000000",
+          "00000000"
+        ]
+      },
+      {
+        "value_f32_bits": [
+          "C2D20000",
+          "00000000",
+          "00000000"
+        ]
+      },
+      {
+        "value_f32_bits": [
+          "C30C0000",
+          "00000000",
+          "00000000"
+        ]
+      },
+      {
+        "value_f32_bits": [
+          "C3520000",
+          "00000000",
+          "00000000"
+        ]
+      }
+    ],
+    "RPH5-000/RPHU-018": [
+      {
+        "enabled": false
+      },
+      {
+        "enabled": true
+      }
+    ],
+    "RPH5-000/RPHU-020": [
+      {
+        "layer": 0,
+        "normalized_time_f32_bits": "00000000",
+        "technical_value": "combo_number"
+      }
+    ],
+    "RPH5-004/RPHU-005": [
+      {
+        "value_f32_bits": "3F800000"
+      }
+    ],
+    "RPH5-004/RPHU-020": [
+      {
+        "layer": 0,
+        "normalized_time_f32_bits": "00000000",
+        "technical_value": "GameJudge"
+      }
+    ],
+    "RPH5-005/RPHU-002": [
+      {
+        "technical_value": "icon_skill_score_up_1"
+      },
+      {
+        "technical_value": "icon_skill_score_up_2"
+      }
+    ],
+    "RPH5-005/RPHU-004": [
+      {
+        "color_f32_bits": [
+          "3F61E1E2",
+          "3F088889",
+          "00000000",
+          "3F800000"
+        ]
+      },
+      {
+        "color_f32_bits": [
+          "3F73F3F4",
+          "3F6CECED",
+          "3C40C0C1",
+          "3F800000"
+        ]
+      }
+    ],
+    "RPH5-005/RPHU-005": [
+      {
+        "value_f32_bits": "00000000"
+      },
+      {
+        "value_f32_bits": "3F800000"
+      }
+    ],
+    "RPH5-005/RPHU-007": [
+      {
+        "value_i32": 86
+      }
+    ],
+    "RPH5-005/RPHU-008": [
+      {
+        "value_i32": 20
+      }
+    ],
+    "RPH5-005/RPHU-015": [
+      {
+        "value_f32_bits": [
+          "00000000",
+          "42300000",
+          "00000000"
+        ]
+      },
+      {
+        "value_f32_bits": [
+          "42300000",
+          "41300000",
+          "00000000"
+        ]
+      }
+    ],
+    "RPH5-005/RPHU-018": [
+      {
+        "enabled": false
+      }
+    ],
+    "RPH5-006/RPHU-005": [
+      {
+        "value_f32_bits": "00000000"
+      }
+    ],
+    "RPH5-010/RPHU-018": [
+      {
+        "enabled": false
+      }
+    ],
+    "RPH5-013/RPHU-011": [
+      {
+        "layer": 0,
+        "normalized_time_f32_bits": "00000000",
+        "state_hash": -915621575
+      }
+    ],
+    "RPH5-022/RPHU-018": [
+      {
+        "enabled": false
+      }
+    ],
+    "RPH5-025/RPHU-002": [
+      {
+        "technical_value": "icon_skill_score_up_1"
+      },
+      {
+        "technical_value": "icon_skill_score_up_2"
+      }
+    ],
+    "RPH5-025/RPHU-004": [
+      {
+        "color_f32_bits": [
+          "3F61E1E2",
+          "3F088889",
+          "00000000",
+          "3F800000"
+        ]
+      },
+      {
+        "color_f32_bits": [
+          "3F73F3F4",
+          "3F6CECED",
+          "3C40C0C1",
+          "3F800000"
+        ]
+      }
+    ],
+    "RPH5-025/RPHU-005": [
+      {
+        "value_f32_bits": "3F800000"
+      }
+    ],
+    "RPH5-025/RPHU-007": [
+      {
+        "value_i32": 86
+      }
+    ],
+    "RPH5-025/RPHU-008": [
+      {
+        "value_i32": 20
+      }
+    ],
+    "RPH5-025/RPHU-015": [
+      {
+        "value_f32_bits": [
+          "00000000",
+          "42300000",
+          "00000000"
+        ]
+      },
+      {
+        "value_f32_bits": [
+          "42300000",
+          "41300000",
+          "00000000"
+        ]
+      }
+    ],
+    "RPH5-026/RPHU-005": [
+      {
+        "value_f32_bits": "00000000"
+      }
+    ],
+    "RPH5-028/RPHU-018": [
+      {
+        "enabled": false
+      }
+    ]
+  },
+  "authorization": {
+    "add_score_round_robin_lifecycle": false,
+    "result_show_change_hide_lifetime": true,
+    "judge_timing_sprite_lifetime": false,
+    "all_perfect_status_animation": false,
+    "score_skill_animation": true,
+    "score_gauge_effect": true,
+    "damage_guard_animation": false,
+    "never_die_animation": false,
+    "life_heal_animation": false,
+    "life_skill_start_finish": true,
+    "warning_game_over_visual": false,
+    "generic_skill_display": true,
+    "skill_changeable_text": false,
+    "ordinary_field_setup_sudden_lane": false
+  },
+  "limits": [
+    "add_score_round_robin_lifecycle",
+    "judge_timing_sprite_lifetime",
+    "all_perfect_status_animation",
+    "damage_guard_animation",
+    "never_die_animation",
+    "life_heal_animation",
+    "warning_game_over_visual",
+    "skill_changeable_text",
+    "ordinary_field_setup_sudden_lane"
+  ],
+  "unknown_fields": []
+}

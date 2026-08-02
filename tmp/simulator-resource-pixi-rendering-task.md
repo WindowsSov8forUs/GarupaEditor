@@ -11,8 +11,8 @@
 - 锁定原作样本：`jp.co.craftegg.band` 10.1.4（version code 230，`arm64-v8a`）。
 - 锁定`libil2cpp.so` SHA-256：`815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F`。
 - 锁定`global-metadata.dat` SHA-256：`298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F`。
-- 当前Reverse基线提交：`4b4ebdfada2c2deea7cb9b6d838e61b1e3240876`；只消费该提交及其祖先中已提交、已push、可校验对象。
-- 当前状态：**2026-08-02 R4已关闭并冻结807项evidence；front Flick/Directional、标准Slide child mesh chain及MultipleDirectional connect/back-line已接入production并通过隔离oracle，production矩阵重算为17 closed/current-subset、16 partial、7 blocked。Long-after Flick、NoteSlide root Wait runtime、add-Long/add-Slide/after Multiple、advanced/threshold、完整field/HUD与production chart replay继续失败关闭；RP14仍不通过。**
+- 当前Reverse基线提交：`e9621946c88ebe20e694bdb313294a32fe62a647`；只消费该提交及其祖先中已提交、已push、可校验对象。
+- 当前状态：**2026-08-02 R4 production已接入；R5 core/overlay新增30,975 events/1,059 frames并冻结至817项，只授权Result lifetime、Score skill、ScoreGauge、Life skill lifecycle与generic Skill display五条route。AddScore/JudgeTiming/AP完整动画/Guard/NeverDie/changeable text/field setup、advanced/threshold及production chart replay继续失败关闭；当前矩阵仍为17 closed/current-subset、16 partial、7 blocked，RP14不通过。**
 - 计划证据包：`tmp/simulator-reverse-evidence/resource-pixi-rendering/`，只在Reverse新证据提交并push后创建。
 - 计划验收记录：`tmp/simulator-resource-pixi-rendering-acceptance.md`，RP14时创建。
 
@@ -566,6 +566,13 @@
 - MultipleDirectional按batch内连续同方向、相邻button连接，不跨普通Note拼组；60-slot back-line pool在Activate选择显式left/right material，OnUpdate按current ARM64固定X升序、完整XYZ与`targetA.localScale.x * 0.75f`宽度，shared teardown隐藏并deactivate。
 - Pixi v8开放独立`multiple-directional-line` role和material profile，仅接受正宽、非退化quad；threshold command与42-vertex Advanced仍在mutation前失败关闭，R4 profile中对应false未被扩大。
 - Production `ec1e69b`与oracle `674b1d1`均已push；从clean、已推送`674b1d1`串行运行14-stage `simulator:test:resource-pixi-rendering`及807项source verifier全部通过。PR矩阵由14/14/12更新为17 closed/current-subset、16 partial、7 blocked，RP14仍由PR14/PR19/PR28/PR30/PR32/PR39/PR40阻断。
+
+### 1.63 2026-08-02 R5 HUD/field取证与冻结
+
+- Reverse `e9621946`晋升35个byte-pinned HUD/field owner target、core 16,259 events/529 frames与overlay 14,716/530，并由compact profile逐route失败关闭。
+- 正向授权仅为Result show/change/hide lifetime、Score skill animation、ScoreGauge On/Off、Life skill start/finish及generic Skill display；R3 LifeHeal与serialized field/mask边界保持独立有效，不冒充R5观察。
+- field在post-start 11秒与14秒稳定attach时均只观察到frame anchor，五个ButtonManager setup owner已结束；失败trace删除。AddScore、JudgeTiming、完整AP、Guard、NeverDie、warning/GameOver直接setter与changeable text也保持false。
+- Garupa冻结包升至817项；source verifier通过。后续production只能消费五个true route，不能按job标题扩大为完整HUD/field。
 
 ## 2. 固定范围
 
