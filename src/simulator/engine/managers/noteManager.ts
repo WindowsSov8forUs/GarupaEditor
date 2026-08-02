@@ -1169,23 +1169,8 @@ export class NoteManager {
     }
 
     if (this.renderProducer !== null) {
-      const unsupported = batch.informationList.find((information) =>
-        !isNonPlayableCommand(information) &&
-        information.fireNoteType !== FrontNoteType.Normal &&
-        !(
-          information.fireNoteType === FrontNoteType.Long &&
-          information.afterNoteType === AfterNoteType.Normal &&
-          information.afterNoteAbsolutePos > information.absolutePos &&
-          information.virtualLaneDirection === 0
-        )
-      );
-      if (unsupported !== undefined) {
-        return evidenceRequired(
-          "render.note.ordinary-child-lifecycle-unimplemented",
-          ["RPR-D04", "RPR-D05", "RPR-D06", "RPR-D07", "PR06", "PR09", "PR10"],
-          "Rendered batches are prevalidated atomically; only Normal and Long with one Normal non-virtual tail are connected, while Flick/Directional tails, Slide and Multiple remain fail-closed.",
-        );
-      }
+      const authorization = validateOrdinaryRenderedBatchAuthorization(batch.informationList);
+      if (authorization.status !== "ok") return authorization;
     }
 
     const bpmCommand = batch.informationList.find(isBpmCommand);
@@ -1428,6 +1413,69 @@ export function noteFamily(
         `FrontNoteType ${noteInformation.fireNoteType} has no recovered playable-root pool mapping.`,
       );
   }
+}
+
+export function validateOrdinaryRenderedBatchAuthorization(
+  informationList: readonly NoteInformation[],
+): SimulatorResult<void> {
+  for (const information of informationList) {
+    if (isNonPlayableCommand(information) || information.fireNoteType === FrontNoteType.Normal) {
+      continue;
+    }
+    if (information.fireNoteType === FrontNoteType.Long) {
+      if (
+        information.afterNoteType === AfterNoteType.Normal &&
+        information.afterNoteAbsolutePos > information.absolutePos &&
+        information.virtualLaneDirection === 0
+      ) {
+        continue;
+      }
+      if (information.virtualLaneDirection !== 0) {
+        return evidenceRequired(
+          "render.note.virtual-lane-child-evidence-required",
+          ["RPR-D05", "RPR-D07", "PR10", "PR19", "HA-D04"],
+          "The fixed ordinary Long profile does not authorize virtual-lane child transforms.",
+        );
+      }
+      return evidenceRequired(
+        "render.note.long-non-normal-tail-evidence-required",
+        ["RPR-D04", "RPR-D05", "RPR-D07", "PR08", "PR16"],
+        "Flick, Directional and Multiple Long tails require icon/reconnect lifecycle evidence that remains explicitly false.",
+      );
+    }
+    switch (information.fireNoteType) {
+      case FrontNoteType.Flick:
+      case FrontNoteType.DirectionalFlick:
+        return evidenceRequired(
+          "render.note.flick-icon-lifecycle-evidence-required",
+          ["RPR-D04", "RPR-D05", "RPR-D12", "PR08", "PR21"],
+          "Flick and Directional roots require the unpromoted icon hierarchy, sorting and runtime animation assignment.",
+        );
+      case FrontNoteType.SlideA:
+      case FrontNoteType.SlideB:
+        return evidenceRequired(
+          "render.note.slide-child-chain-evidence-required",
+          ["RPR-D04", "RPR-D06", "RPR-D07", "PR07", "PR12", "PR15"],
+          "Slide intermediate ownership and N+1 curve-mesh lifecycle remain explicitly unauthorized.",
+        );
+      case FrontNoteType.MultipleDirectionalFlick:
+      case FrontNoteType.LongMultipleDirectionalFlickAdd:
+      case FrontNoteType.SlideAMultipleDirectionalFlickAdd:
+      case FrontNoteType.SlideBMultipleDirectionalFlickAdd:
+        return evidenceRequired(
+          "render.note.multiple-directional-lifecycle-evidence-required",
+          ["RPR-D04", "RPR-D06", "RPR-D07", "PR09", "PR17", "PR20"],
+          "Multiple side-visual, back-line, reconnect and shared teardown behavior remain explicitly unauthorized.",
+        );
+      default:
+        return evidenceRequired(
+          "render.note.ordinary-child-lifecycle-evidence-required",
+          ["RPR-D04", "RPR-D05", "RPR-D06", "RPR-D07", "PR06", "PR09"],
+          "Every rendered family outside Normal and ordinary Long+Normal tail fails before batch mutation.",
+        );
+    }
+  }
+  return ok(undefined);
 }
 
 export function groupMultipleDirectionalInformationList(

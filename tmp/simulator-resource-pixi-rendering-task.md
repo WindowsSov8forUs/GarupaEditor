@@ -520,6 +520,14 @@
 - scene snapshot锁定mask vertex count、mask identity、HUD text/fill、active animation role/elapsed；资源快照锁定3个Combo+2个Life Sprite reference，并在stop/release后归零。
 - `npx.cmd tsc -p src/simulator/testing/tsconfig.tests.json`、`simulator:test:render-contracts`、`simulator:test:render-pixi`、`simulator:test:render-production`与14-stage `simulator:test:resource-pixi-rendering`均通过；RP13仍须在其余PR边界处理后最终重验。
 
+### 1.57 2026-08-02 remaining Note/Multiple授权边界production子批
+
+- 当前790项冻结child/visible profile仍明确`ordinary_long_flick_after_icon=false`、`ordinary_slide_child_chain=false`、`ordinary_non_normal_sync_reconnect=false`、`multiple_directional_lifecycle=false`、`advanced_mesh=false`、`threshold_shader=false`与`flick_icon_animation=false`；本批不得把static method inventory伪装成runtime授权。
+- NoteManager将原generic batch拒绝拆成family-specific capability：virtual-lane child、Long非Normal tail、Flick/Directional icon、Slide child chain、Multiple side/back-line各返回独立`evidence-required`与PR evidence IDs。
+- family分类仍在BPM/domain/pool/renderer任何mutation前遍历整批；只有Normal与ordinary single-lane Long+Normal tail通过。该边界关闭的是授权/失败语义，不是PR07–PR09/PR12/PR17正向production功能。
+- advanced mesh与threshold继续由Pixi/producer capability gate拒绝；不得用base 22/60或Graphics替代冒充。
+- 对应production-chart/family零mutation oracle留在下一独立test提交；RP14必须按这些正向缺口保持不通过，除非未来先晋升新的Reverse runtime profile。
+
 ## 2. 固定范围
 
 ### 2.1 纳入范围
