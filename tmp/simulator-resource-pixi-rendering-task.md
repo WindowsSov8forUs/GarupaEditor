@@ -11,8 +11,8 @@
 - 锁定原作样本：`jp.co.craftegg.band` 10.1.4（version code 230，`arm64-v8a`）。
 - 锁定`libil2cpp.so` SHA-256：`815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F`。
 - 锁定`global-metadata.dat` SHA-256：`298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F`。
-- 当前Reverse基线提交：`fa28856133e0bc45f355407c39b84cac9cbcfb95`；只消费该提交及其祖先中已提交、已push、可校验对象。
-- 当前状态：**2026-08-02从已推送HEAD `92e0dea`完成RP13重验：14-stage与790项evidence source verifier通过；actual Pixi已闭合ordinary Normal/Long+Normal tail、base mesh/sync、explicit mask、visible Score/Combo/Life、Combo/Life engine-clock sampling及degraded label。PR production矩阵为14 closed、14 partial、12 blocked，RP14因此不通过，阶段保持进行中。Flick/Directional icon、Slide chain、Multiple、advanced/threshold、完整field host、完整HUD overlay与production chart replay仍须新Reverse runtime授权。**
+- 当前Reverse基线提交：`4b4ebdfada2c2deea7cb9b6d838e61b1e3240876`；只消费该提交及其祖先中已提交、已push、可校验对象。
+- 当前状态：**2026-08-02 R4已关闭并冻结807项evidence：Flick/Slide/Multiple三条confirmed自然Live共118,152 events/1,258 aggregate frames，30个owner target与6个新增Slide slice；front Flick/Directional、observed Slide mesh+line及MultipleDirectional connect/back-line获得正向授权。RP13此前从`92e0dea`通过，production矩阵仍暂为14 closed、14 partial、12 blocked，直到R4 production与oracle实际接线后才可重算。Long-after Flick、Slide Wait runtime、add-Long/add-Slide/after Multiple、advanced/threshold、完整field/HUD与production chart replay继续失败关闭。**
 - 计划证据包：`tmp/simulator-reverse-evidence/resource-pixi-rendering/`，只在Reverse新证据提交并push后创建。
 - 计划验收记录：`tmp/simulator-resource-pixi-rendering-acceptance.md`，RP14时创建。
 
@@ -551,13 +551,13 @@
 - 重写acceptance记录790项证据、R3、Long、visible Pixi、degraded label、RP00–RP14和PR01–PR40真实状态；RP13通过，RP14不通过。
 - 阶段不能在当前证据边界下诚实宣布完成；下一轮必须先取得Flick/Slide/Multiple/advanced/threshold/full HUD/production chart的新runtime授权，禁止以failure-closed或绿色回归代替正向case。
 
-### 1.61 2026-08-02 R4 Note family取证尝试与最终阻断
+### 1.61 2026-08-02 R4 Note family取证关闭
 
-- Reverse先后提交并push `690a253c`、`ecb6fb43`、`3b4f4d76`、`9726c286`，建立30个Flick/Slide/Multiple/Advanced owner target、6个新增NoteSlide byte slice与按family拆分的observation-only采集器；这些plan提交位于冻结基线之后，未被Garupa消费或晋升。
-- 首次单流曾收到181,431个事件/635 frame并覆盖Flick、Slide、Multiple/back-line owner，但frida agent在歌曲结束前被设备终止，无法取得hook failure/summary完成门；该partial trace未提交并已删除，不得作为行为授权。
-- 随后降低事件量、拆成Flick/Slide/Multiple三组并重启实体设备；每次均在attach/script load后由设备终止`frida-server-17.15.3`，游戏继续自然运行但trace为0事件。已排除owner数量、event volume与旧app进程残留。
-- Reverse工作树最终只保留既有无关`.claude/`、`runtime/tools/`，远端`0 0`；无R4 trace/profile被提交。Garupa可消费证据基线继续为`fa288561`与790项冻结包。
-- 因新runtime输入当前不可获取，job-1转为外部取证阻断；禁止使用partial事件、static inventory或截图补齐正向Flick/Slide/Multiple实现。RP14维持不通过。
+- 早期181,431-event partial与三次0-event运行均未晋升；继续二分后确认Live bootstrap会终止预先运行的`frida-server-17.15.3`，即使尚无session。正确协议固定为自然Start→等待bootstrap→设备loopback启动server→adb forward→attach，完成门仍只看owner/setter事件、summary与无hook failure。
+- Reverse依次push采集plan、分组verifier与profile builder；最终`4b4ebdfa`提交三条confirmed trace：Flick 6,295 events/423 frames、Slide 103,797/411、Multiple 8,060/424，合计118,152 events/1,258 aggregate frames。
+- 30个byte-pinned owner target与6个新增NoteSlide direct slice连接到R4 profile；runtime观察16个owner。授权仅开放front Flick/Directional icon、Slide activate/update/move/stop/after mesh+line，以及MultipleDirectional activate/deactivate/connect/back-line。
+- RPF-006 Long-after Flick、RPF-010 Slide Wait runtime、RPF-017..024 add-Long/add-Slide/after Multiple、RPF-028/029 Advanced和threshold均保持false；不得由常量Material setter或static inventory外推。
+- Garupa冻结包由790项升至807项（7张实体PNG继续排除，仅冻结manifest/hash），source verifier通过；job-1关闭并进入R4 production消费。
 
 ## 2. 固定范围
 

@@ -53,6 +53,11 @@ hud_setter_arm64_slices=22
 ordinary_hud_visible_runtime_events=19888
 ordinary_hud_visible_runtime_frames=631
 current_ordinary_hud_visible_profile=closed-portable-bitmap-mask-animation-subset
+note_family_r4_targets=30
+note_family_r4_arm64_slices=6
+ordinary_note_family_r4_runtime_events=118152
+ordinary_note_family_r4_aggregate_frames=1258
+current_note_family_r4_profile=closed-observed-subset
 ordinary_physical_frames=7
 habahiro_current_external_assets=12
 remaining_exact_blockers=original-current-HABAHIRO-UnityFS-bytes,natural-HABAHIRO-runtime-R1,original-HABAHIRO-physical-frames
@@ -89,7 +94,8 @@ remaining_exact_blockers=original-current-HABAHIRO-UnityFS-bytes,natural-HABAHIR
 - consolidated producer profile将17个current ARM64方法、13个button与Launcher scene transform、Note motion/scale、R2 base mesh和sync-line update/margin一次闭合；仅授权ordinary fixed 1600×720 base subset，advanced/Multiple/threshold/HAB exact不在授权内。
 - child lifecycle profile额外锁定13个隔离current `NoteLong`/`NoteManager` ARM64 slice，并连接既有17个static-contract方法与510-owner R2；只授权ordinary Long + Normal tail + base 22/60 mesh的after Wait→Move与deactivate ownership，Flick/Directional tail、Slide、Multiple、advanced与threshold继续false。
 - ordinary HUD runtime profile从R1聚合23个target与14,084/1,452个HUD/animation caller entry；授权首次判定semantic顺序与两次observed life-heal先于life update，5条未出现route继续false。
-- natural ordinary R3冻结22个byte-pinned setter/ARM64 slice、19,888个caller-correlated事件及631个相对frame：闭合bitmap score/combo/life、score-skill overlay、serialized field/sudden mask、combo/GameJudge normalized-time-zero restart与portable combo/life-heal curve sampling；未观察的Guard/NeverDie/Judge/Flick/Multiple仍false，Unity PlayerLoop subframe与GPU raster parity仍排除。
+- natural ordinary R3冻结22个byte-pinned setter/ARM64 slice、19,888个caller-correlated事件及631个相对frame：闭合bitmap score/combo/life、score-skill overlay、serialized field/sudden mask、combo/GameJudge normalized-time-zero restart与portable combo/life-heal curve sampling；未观察的Guard/NeverDie/Judge仍false，Unity PlayerLoop subframe与GPU raster parity仍排除。
+- natural Note family R4按Flick/Slide/Multiple三组冻结118,152个caller-correlated事件与1,258个aggregate relative frame；30个owner target与6个新增Slide ARM64 slice共同授权front Flick/Directional icon、observed Slide mesh+line生命周期和MultipleDirectional connect/back-line。Long-after Flick、Slide Wait runtime、add-Long/add-Slide/after Multiple、Advanced与threshold继续false。
 - 7个ordinary physical-device frame anchor锁定1600×720 viewport与隐私裁剪；PNG只保留在Reverse提交，Garupa冻结manifest中的尺寸/hash。
 - 12项Bestdori current external portable asset与179个Sprite row/hash关闭HAB资源交付子门；production/test必须使用host本地hash provider，禁止联网，且不宣称原始UnityFS一致。
 - `delivery_closure.json`按交付profile关闭V01、D01–D18与PR01–PR40；PR01/PR04/PR19/PR40继续标记degraded disclosure，HA-D01–HA-D12仍为强制差异。

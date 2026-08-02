@@ -19,8 +19,8 @@
 - Garupa 分支：`codex/refactor-simulator-implementation`
 - 验收运行 HEAD：`92e0deaca0d42e2680a2a7beb7360d498702265c`
 - Reverse 分支：`main`
-- Garupa消费的Reverse证据基线：`fa28856133e0bc45f355407c39b84cac9cbcfb95`
-- Reverse当前远端HEAD：`9726c286`（仅R4采集plan/target/tooling，未产生可晋升trace，未冻结到Garupa）
+- Garupa消费的Reverse证据基线：`4b4ebdfada2c2deea7cb9b6d838e61b1e3240876`
+- Reverse当前远端HEAD：`4b4ebdfa`（R4三条confirmed trace与保守授权profile已晋升）
 - Garupa 与远端差异：`0 0`
 - Reverse 与远端差异：`0 0`
 - Garupa 验收运行前后工作树：clean
@@ -30,17 +30,18 @@
 
 `tmp/simulator-reverse-evidence/resource-pixi-rendering/verify.mjs`通过：
 
-- entries：790；methods/layouts/enums：673/32/19；
+- entries：807；methods/layouts/enums：673/32/19；
 - resources：11,026 / 57 / 100；HUD/Skill/Note/ScoreUp profile：8/4/4/5；
 - ordinary R1：87,364 events；geometry R2：87,037 events / 636 frames；
 - Long child：1 profile / 13 isolated ARM64 slices；
 - visible HUD R3：22 setter targets、22 ARM64 slices、19,888 events、631 frames；
+- Note family R4：30 owner targets、6个新增Slide slices、118,152 events、1,258 aggregate frames；
 - mesh owners：510；line owners：80；
 - HAB degraded：2 profiles / 12 differences / 179 Sprite keys；
 - delivery gate：closed；production authorization：true；
 - exact HABAHIRO：open-not-claimed。
 
-R3只授权bitmap Score/Combo/Life、score-skill observed overlay、serialized field/sudden mask边界、Combo/GameJudge restart和portable Combo/Life Heal sampling。Guard/NeverDie/Judge/Flick/Multiple等未观察路径仍显式false。
+R3只授权bitmap Score/Combo/Life、score-skill observed overlay、serialized field/sudden mask边界、Combo/GameJudge restart和portable Combo/Life Heal sampling。R4另授权front Flick/Directional icon、observed Slide mesh+line和MultipleDirectional connect/back-line；Guard/NeverDie/Judge、Long-after Flick、Slide Wait runtime、add-Long/add-Slide/after Multiple、Advanced与threshold仍显式false。
 
 ## 4. 本轮新增闭合
 
@@ -115,13 +116,13 @@ node tmp/simulator-reverse-evidence/resource-pixi-rendering/verify.mjs
 
 因此不得把`src/simulator/README.md`更新为阶段完成，也不得宣称原作完整parity。
 
-## 9. R4外部取证阻断复核
+## 9. R4取证关闭复核
 
-最终验收后继续尝试关闭12个blocked case所需的Note family runtime证据：
+最终验收后继续关闭Note family runtime证据，根因与结果如下：
 
-- 30个current owner target与6个NoteSlide byte slice已提交push；
-- 单流partial capture收到181,431 events / 635 frames，但agent终止导致summary/hook-failure完成门不可验证，trace未提交并删除；
-- 拆分Flick/Slide/Multiple并重启实体设备后，`frida-server-17.15.3`仍在attach/script load后被设备终止，三组均为0-event partial；
-- 无R4 trace/profile进入Reverse提交或Garupa冻结包。
+- Live bootstrap会终止预先运行的Frida server，即使无session；修正为自然Start后等待bootstrap，再启动device-loopback server并attach；
+- Flick、Slide、Multiple三组均通过capture summary、hook-failure、privacy和owner/setter完成门，共118,152 events / 1,258 aggregate frames；
+- Reverse `4b4ebdfa`提交并push三条trace与profile；Garupa冻结807项，实体PNG继续排除，source verifier通过；
+- 新授权仅覆盖front Flick/Directional、observed Slide mesh+line和MultipleDirectional connect/back-line；Long-after Flick、Slide Wait runtime、add-Long/add-Slide/after Multiple、Advanced与threshold仍false。
 
-因此阻断已经从“尚未尝试取证”收敛为“当前实体设备动态采集通道不可用”。在恢复可校验的observation-only runtime输入前，继续写Flick/Slide/Multiple/advanced/full-HUD production会违反失败关闭原则。
+R4动态取证阻断已解除，但本记录的production矩阵在R4实现与正向oracle完成前仍保持14/14/12，不能把新证据本身记为production闭合。

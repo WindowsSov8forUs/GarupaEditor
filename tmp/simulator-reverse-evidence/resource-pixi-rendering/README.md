@@ -1,6 +1,6 @@
 # 资源与 Pixi 渲染交付证据包
 
-本目录冻结 `jp.co.craftegg.band` 10.1.4（code 230，`arm64-v8a`）资源与渲染阶段的静态、资源、ordinary运行时、实体frame manifest与显式HAB降级交付证据。Reverse 来源提交为 `fa28856133e0bc45f355407c39b84cac9cbcfb95`；逐文件字节数和 SHA-256 见 `manifest.json`。
+本目录冻结 `jp.co.craftegg.band` 10.1.4（code 230，`arm64-v8a`）资源与渲染阶段的静态、资源、ordinary运行时、实体frame manifest与显式HAB降级交付证据。Reverse 来源提交为 `4b4ebdfada2c2deea7cb9b6d838e61b1e3240876`；逐文件字节数和 SHA-256 见 `manifest.json`。
 
 ## 交付闭合结果
 
@@ -16,7 +16,8 @@
 - ordinary projection profile：从当前`RhythmGame.unity`锁定build index 3、`GameCamera`正交size 1与1600×720实体viewport，并对R2全部24,470 endpoint与12,235 width写入验证`x=800+worldX*360`、`y=360-worldY*360`、`width=worldWidth*360`且无clamp。
 - ordinary Note geometry producer profile：一次合并17个current ARM64方法、13个button与Launcher scene transform、Note motion/scale、R2 22/60 base mesh与sync-line margin/update公式；只授权固定ordinary子集，advanced mesh、Multiple back line、threshold shader和HAB exact保持失败关闭。
 - ordinary HUD runtime semantic profile：从已提交R1一次聚合23个HUD target、14,084个HUD与1,452个HUD-animation caller entry、首次判定顺序和两次life-heal→UpdateView→updateLifeText顺序；5条static-only route保持失败关闭。
-- visible HUD/mask/animation R3：22个setter与22个独立ARM64 slice；自然Demo Live冻结19,888个caller-correlated事件、631个相对frame，授权bitmap score/combo/life、score-skill overlay、serialized field/sudden mask、combo/GameJudge restart-at-zero及portable combo/life-heal curve sampling；Guard/NeverDie/Judge/Flick/Multiple保持false。
+- visible HUD/mask/animation R3：22个setter与22个独立ARM64 slice；自然Demo Live冻结19,888个caller-correlated事件、631个相对frame，授权bitmap score/combo/life、score-skill overlay、serialized field/sudden mask、combo/GameJudge restart-at-zero及portable combo/life-heal curve sampling；Guard/NeverDie/Judge保持false。
+- Note family R4：30个current owner target、6个新增NoteSlide ARM64 slice及Flick/Slide/Multiple三条自然Demo Live；冻结118,152个caller-correlated事件与1,258个aggregate relative frame，授权front Flick/Directional icon、observed Slide mesh+line lifecycle及MultipleDirectional connect/back-line。Long-after Flick、Slide Wait runtime、add-Long/add-Slide/after Multiple、Advanced与threshold继续false。
 - ordinary实体frame：7个1600×720 physical-device anchor通过隐私审查；PNG只保留于Reverse提交，Garupa仅冻结manifest中的尺寸与SHA-256。
 - HAB资源：12项current external portable asset与179个Sprite row/hash已锁定；production/test只能消费host本地hash匹配字节，禁止联网。
 - HAB降级：2个显式profile、HA-D01–HA-D12共12项差异、179个diagnostic Sprite key；maxNoteCount 731、multiple pool 60，generated frame永不作为原作golden。
@@ -32,7 +33,7 @@
 ## 边界
 
 - 冻结目录不包含 APK、AssetBundle、7张实体frame PNG、Bestdori下载字节、`libil2cpp.so`、metadata、dump、IDA 数据库、设备账户数据或 `runtime/tools/`。
-- 设备只读 cache、锁定 APK、实体PNG和外部资源字节只用于 Reverse 取证；本包仅提交最小结构化证据与匿名压缩R1/R2。
+- 设备只读 cache、锁定 APK、实体PNG和外部资源字节只用于 Reverse 取证；本包仅提交最小结构化证据与匿名压缩R1/R2/R3/R4。
 - Portable contract已由delivery closure授权作为RP03输入，但production/test仍不得读取本证据目录、调用Python或请求网络。
 - 原始HAB exact parity继续开放；`production_authorization=true`不得被解释为UnityFS、natural HAB runtime或原始HAB raster一致性。
 
@@ -43,4 +44,4 @@ node tmp/simulator-reverse-evidence/resource-pixi-rendering/verify.mjs
 node tmp/simulator-reverse-evidence/resource-pixi-rendering/verify.mjs --index
 ```
 
-`verify.mjs`校验790个冻结文件的Reverse commit/source working tree/copy/index四方字节、逐文件SHA-256、目录文件集、样本身份、673/32/19静态计数、资源/HUD/动画/ScoreUp计数、87,364-event ordinary R1、87,037-event geometry R2、10个setter target/510 mesh owner/80 line owner、1个current sync-line portable profile、1个ordinary正交projection profile、1个ordinary Note geometry producer profile、1个Note child lifecycle profile及13个隔离ARM64 slice、1个ordinary HUD runtime semantic profile、22个HUD setter target/ARM64 slice、19,888-event/631-frame visible R3及1个visible HUD/mask/animation profile、7个physical frame manifest、12项current external HAB资源、H/D/PR closure、55/2/13 exact计划、2/12/179降级HAB决策及delivery/exact双轨门限。
+`verify.mjs`校验807个冻结文件的Reverse commit/source working tree/copy/index四方字节、逐文件SHA-256、目录文件集、样本身份、673/32/19静态计数、资源/HUD/动画/ScoreUp计数、87,364-event ordinary R1、87,037-event geometry R2、10个setter target/510 mesh owner/80 line owner、1个current sync-line portable profile、1个ordinary正交projection profile、1个ordinary Note geometry producer profile、1个Note child lifecycle profile及13个隔离ARM64 slice、30个R4 target/6个新增Slide slice/118,152-event与1,258-frame aggregate R4及其保守授权profile、1个ordinary HUD runtime semantic profile、22个HUD setter target/ARM64 slice、19,888-event/631-frame visible R3及1个visible HUD/mask/animation profile、7个physical frame manifest、12项current external HAB资源、H/D/PR closure、55/2/13 exact计划、2/12/179降级HAB决策及delivery/exact双轨门限。
