@@ -12,6 +12,8 @@ import type {
 } from "../backends/renderingContracts";
 import { createRenderFloat32 } from "../backends/renderingValidation";
 import { evidenceRequired, ok, type SimulatorResult } from "../engine/evidence";
+import { InGameRecord } from "../engine/managers/inGameRecord";
+import { RenderCommandProducer } from "../engine/rendering/renderCommandProducer";
 import {
   buildOrdinaryBaseNoteMesh,
   buildOrdinarySyncLine,
@@ -904,6 +906,60 @@ async function main(): Promise<void> {
   const disposeCount = disposeOrder.length;
   requireOk(disposalRenderer.dispose(), "repeat disposal-order dispose");
   equal(disposeOrder.length, disposeCount, "repeated dispose destroys no resource twice");
+
+  const degradedSession = "pixi-degraded-label-session";
+  const ordinaryProfile = profile();
+  const degradedProfile: RenderResourceProfile = {
+    ...ordinaryProfile,
+    fidelity: {
+      mode: "habahiro",
+      fidelity: "degraded",
+      profile: "current-external-portable-atlas",
+      visibleLabel: "Approximate HABAHIRO",
+    },
+    assets: ordinaryProfile.assets.map((asset) => ({
+      ...asset,
+      provenance: "current-external-portable" as const,
+    })),
+    scene: {
+      ...ordinaryProfile.scene,
+      projection: {
+        ...ordinaryProfile.scene.projection,
+        mode: "degraded-habahiro-ordinary-projection-proxy",
+      },
+    },
+  };
+  const degradedRenderer = new PixiRendererBackend(decoder);
+  requireOk(await degradedRenderer.prepare(
+    degradedSession,
+    degradedProfile,
+    provider,
+    new PortableRenderResourcePreflightAdapter(),
+  ), "prepare explicit degraded Pixi renderer");
+  const degradedProducer = new RenderCommandProducer(
+    degradedSession,
+    degradedRenderer,
+    {
+      noteAtlasLogicalAssetId: "asset.note",
+      directionalAtlasLogicalAssetId: "asset.note",
+    },
+  );
+  const degradedSetup = requireOk(
+    degradedProducer.preflightHudSetup(new InGameRecord(1000, 1000, 2000).snapshot()),
+    "preflight degraded fidelity HUD",
+  );
+  requireOk(degradedSetup.commit(), "commit degraded fidelity HUD");
+  const fidelityLabel = degradedRenderer.sceneSnapshot().find((row) =>
+    row.renderObjectId === "render:hud:fidelity-label");
+  equal(fidelityLabel?.visible, true, "degraded fidelity label is visibly active");
+  equal(fidelityLabel?.hudText, "Approximate HABAHIRO", "degraded fidelity text is exact");
+  const degradedRelease = requireOk(
+    degradedProducer.preflightSessionRelease(),
+    "preflight degraded session release",
+  );
+  requireOk(degradedRelease.commit(), "release degraded fidelity HUD");
+  equal(degradedRenderer.sceneSnapshot().length, 0, "degraded label participates in reverse release");
+  requireOk(degradedRenderer.dispose(), "dispose degraded renderer");
 
   console.log("Pixi v8 semantic adapter tests passed: Sprite/R2-Mesh/sync-line/mask/HUD/fill/animation/fault/dispose");
 }

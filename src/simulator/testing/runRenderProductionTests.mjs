@@ -12,6 +12,7 @@ run(process.execPath, [
   resolve(repositoryRoot, "tmp", "simulator-reverse-evidence", "resource-pixi-rendering", "verify.mjs"),
 ]);
 run(process.execPath, [join(testingRoot, "verifyRenderProductionStatic.mjs")]);
+run(process.execPath, [join(testingRoot, "verifyRenderProductionCases.mjs")]);
 run(process.execPath, [typeScriptCli, "-p", resolve(repositoryRoot, "src", "simulator", "tsconfig.json")]);
 for (const runner of [
   "runRenderContractTests.mjs",

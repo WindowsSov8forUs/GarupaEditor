@@ -535,6 +535,14 @@
 - 隔离testing tsc与`simulator:test:render-contracts`通过，suite增至9组；本test只验授权边界，不把unsupported rejection计为PR08/PR09/PR12/PR17正向通过。
 - job-5据此关闭“当前证据下授权边界”；正向视觉功能仍是RP14阻断项，必须在acceptance中真实列出。
 
+### 1.59 2026-08-02 remaining PR production matrix与degraded label oracle子批
+
+- actual Pixi新增显式`current-external-portable-atlas` degraded profile：所有asset provenance切为current-external、projection显式选择ordinary proxy，producer setup创建并激活`render:hud:fidelity-label`。
+- scene oracle断言label可见且文本严格为`Approximate HABAHIRO`，并参与session reverse release后scene count归零；该正向闭合只覆盖PR40 visible disclosure，不关闭HAB exact lane-change/frame parity。
+- 新增PR01–PR40 production-consumption verifier，固定当前HEAD为14 closed/closed-current-subset、14 partial、12 blocked/blocked-degraded；ID连续且检查mask/sample/label与Flick/Slide/Multiple fail-closed marker。
+- `simulator:test:render-production`总入口在static audit后强制运行该矩阵，runner绿色不再等价于PR40项正向闭合；当前RP14由12个blocked case明确阻断。
+- 本批不修改production行为；对应acceptance、README与最终RP13/RP14重验属于job-7。
+
 ## 2. 固定范围
 
 ### 2.1 纳入范围
