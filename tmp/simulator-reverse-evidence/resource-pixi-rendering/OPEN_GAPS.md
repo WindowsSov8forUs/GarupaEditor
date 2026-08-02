@@ -96,7 +96,8 @@ remaining_exact_blockers=original-current-HABAHIRO-UnityFS-bytes,natural-HABAHIR
 - ordinary HUD runtime profile从R1聚合23个target与14,084/1,452个HUD/animation caller entry；授权首次判定semantic顺序与两次observed life-heal先于life update，5条未出现route继续false。
 - natural ordinary R3冻结22个byte-pinned setter/ARM64 slice、19,888个caller-correlated事件及631个相对frame：闭合bitmap score/combo/life、score-skill overlay、serialized field/sudden mask、combo/GameJudge normalized-time-zero restart与portable combo/life-heal curve sampling；未观察的Guard/NeverDie/Judge仍false，Unity PlayerLoop subframe与GPU raster parity仍排除。
 - natural Note family R4按Flick/Slide/Multiple三组冻结118,152个caller-correlated事件与1,258个aggregate relative frame；30个owner target与6个新增Slide ARM64 slice共同授权front Flick/Directional icon、observed Slide mesh+line生命周期和MultipleDirectional connect/back-line。Long-after Flick、Slide Wait runtime、add-Long/add-Slide/after Multiple、Advanced与threshold继续false。
-- natural HUD R5冻结core/overlay共30,975 events/1,059 frames；5条正向route关闭。AddScore coroutine、JudgeTiming、完整AP、Guard、NeverDie、changeable text及field setup/sudden/lane仍为required-before-positive-code；field setup发生在稳定attach窗口前，两个失败trace已删除。
+- natural HUD R5冻结core/overlay共30,975 events/1,059 frames；5条正向route关闭。
+- final R6冻结五条clean全窗口trace共190,401 events/2,492 aggregate frames/26 observed owners；只新增All Perfect ExecUpdate active gate。AddScore coroutine、JudgeTiming、Guard、NeverDie、changeable text及field setup/sudden/lane仍为required-before-positive-code；R6 zero-event early-field trace已删除。
 - 7个ordinary physical-device frame anchor锁定1600×720 viewport与隐私裁剪；PNG只保留在Reverse提交，Garupa冻结manifest中的尺寸/hash。
 - 12项Bestdori current external portable asset与179个Sprite row/hash关闭HAB资源交付子门；production/test必须使用host本地hash provider，禁止联网，且不宣称原始UnityFS一致。
 - `delivery_closure.json`按交付profile关闭V01、D01–D18与PR01–PR40；PR01/PR04/PR19/PR40继续标记degraded disclosure，HA-D01–HA-D12仍为强制差异。

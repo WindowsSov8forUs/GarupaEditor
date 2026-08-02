@@ -12,7 +12,7 @@ const sourceRoot = manifest.source.repository;
 const validateIndex = process.argv.includes("--index");
 const prefix = "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/";
 const investigation = resolve(packageRoot, prefix);
-const sourceCommit = "e9621946c88ebe20e694bdb313294a32fe62a647";
+const sourceCommit = "64a88a8821d20eb1cc43003a9bd959c892d40e12";
 
 function fail(message) { throw new Error(message); }
 function check(condition, message) { if (!condition) fail(message); }
@@ -39,7 +39,7 @@ check(manifest.sample.package === "jp.co.craftegg.band" && manifest.sample.versi
 check(manifest.sample.libil2cppSha256 === "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F", "Unexpected ELF hash");
 check(manifest.sample.globalMetadataSha256 === "298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F", "Unexpected metadata hash");
 check(manifest.sample.assetBundleInfoSha256 === "D026CAE3740DB87AA777C2FDAE40B141FF16464BC2C839ACEF3C820E06850AC6", "Unexpected cache index hash");
-check(manifest.entries.length === 817 && manifest.counts.totalEntries === 817, "Unexpected manifest entry count");
+check(manifest.entries.length === 826 && manifest.counts.totalEntries === 826, "Unexpected manifest entry count");
 check(manifest.counts.methods === 673 && manifest.counts.layouts === 32 && manifest.counts.enums === 19 && manifest.counts.arm64Slices === 673, "Static counts differ");
 check(manifest.counts.instructionEquivalent === 652 && manifest.counts.instructionChanged === 21, "Instruction migration counts differ");
 check(manifest.counts.cacheRecords === 11026 && manifest.counts.ingameSkinBundles === 57 && manifest.counts.baseResources === 100, "Resource counts differ");
@@ -48,6 +48,7 @@ check(manifest.counts.runtimeHookTargets === 55 && manifest.counts.r1Scenarios =
 check(manifest.counts.renderSetterTargets === 10 && manifest.counts.ordinaryGeometryRuntimeEvents === 87037 && manifest.counts.ordinaryGeometryRuntimeFrames === 636 && manifest.counts.ordinaryGeometryMeshOwners === 510 && manifest.counts.ordinaryGeometryLineOwners === 80 && manifest.counts.currentSyncLineProfiles === 1 && manifest.counts.currentProjectionProfiles === 1 && manifest.counts.currentNoteGeometryProducerProfiles === 1 && manifest.counts.noteChildArm64Slices === 13 && manifest.counts.currentNoteChildLifecycleProfiles === 1 && manifest.counts.currentHudRuntimeProfiles === 1 && manifest.counts.hudSetterTargets === 22 && manifest.counts.hudSetterArm64Slices === 22 && manifest.counts.ordinaryHudVisibleRuntimeEvents === 19888 && manifest.counts.ordinaryHudVisibleRuntimeFrames === 631 && manifest.counts.currentHudVisibleProfiles === 1, "Geometry/child/HUD runtime profile counts differ");
 check(manifest.counts.noteFamilyR4Targets === 30 && manifest.counts.noteFamilyR4Arm64Slices === 6 && manifest.counts.ordinaryNoteFamilyR4RuntimeEvents === 118152 && manifest.counts.ordinaryNoteFamilyR4AggregateFrames === 1258 && manifest.counts.currentNoteFamilyR4Profiles === 1, "Note family R4 counts differ");
 check(manifest.counts.hudFieldR5Targets === 35 && manifest.counts.ordinaryHudFieldR5RuntimeEvents === 30975 && manifest.counts.ordinaryHudFieldR5AggregateFrames === 1059 && manifest.counts.currentHudFieldR5Profiles === 1 && manifest.counts.hudFieldR5AuthorizedRoutes === 5, "HUD/field R5 counts differ");
+check(manifest.counts.finalR6RuntimeEvents === 190401 && manifest.counts.finalR6AggregateFrames === 2492 && manifest.counts.finalR6ObservedOwners === 26 && manifest.counts.currentFinalR6Profiles === 1 && manifest.counts.finalR6AuthorizedNewRoutes === 1, "Final R6 counts differ");
 check(manifest.counts.habahiroDegradedProfiles === 2 && manifest.counts.habahiroDifferenceRows === 12 && manifest.counts.habahiroDegradedSpriteKeys === 179, "HABAHIRO degraded counts differ");
 check(manifest.counts.historicalCandidates === 28 && manifest.counts.decisions === 18 && manifest.counts.fixedCases === 40, "Closure classification counts differ");
 check(manifest.deliveryGate.status === "closed" && manifest.deliveryGate.profile === "ordinary-exact-habahiro-degraded" && manifest.deliveryGate.ordinaryRuntime === "closed" && manifest.deliveryGate.ordinaryFrames === "closed" && manifest.deliveryGate.habahiroPortableResource === "closed-current-external-fallback" && manifest.deliveryGate.productionAuthorization === true, "Delivery gate differs");
@@ -93,7 +94,7 @@ for (const line of readFileSync(resolve(investigation, "SHA256SUMS"), "utf8").tr
   check(match !== null && !sums.has(match[2]), `Invalid SHA256SUMS row: ${line}`);
   sums.set(match[2], match[1]);
 }
-check(sums.size === 823, "Unexpected SHA256SUMS count");
+check(sums.size === 832, "Unexpected SHA256SUMS count");
 for (const path of frozenFiles.filter((path) => path !== "SHA256SUMS")) {
   check(sums.get(path) === sha256(readFileSync(resolve(investigation, path))), `SHA256SUMS mismatch: ${path}`);
 }
@@ -175,6 +176,8 @@ const hudVisibleTrace = JSON.parse(gunzipSync(readFileSync(resolve(investigation
 const hudFieldR5Targets = json("resource_pixi_rendering_hud_field_r5_targets.json");
 const hudFieldR5Profile = json("resource_pixi_rendering_hud_field_r5_profile.json");
 const hudFieldR5Traces = ["core", "overlay"].map((group) => JSON.parse(gunzipSync(readFileSync(resolve(investigation, `runtime/ordinary-rendering-hud-field-r5-${group}.trace.json.gz`))).toString("utf8")));
+const finalR6Profile = json("resource_pixi_rendering_final_r6_profile.json");
+const finalR6Traces = ["flick", "slide", "multiple", "hud-core", "hud-overlay"].map((group) => JSON.parse(gunzipSync(readFileSync(resolve(investigation, `runtime/ordinary-rendering-final-r6-${group}-full.trace.json.gz`))).toString("utf8")));
 const geometryOracle = json("resource_pixi_rendering_geometry_oracle.json");
 const geometryTrace = JSON.parse(gunzipSync(readFileSync(resolve(investigation, "runtime/ordinary-rendering-geometry-r2.trace.json.gz"))).toString("utf8"));
 check(setterTargets.status === "confirmed-10.1.4-render-setter-targets" && setterTargets.targets.length === 10 && setterTargets.unknown_targets.length === 0 && setterTargets.observation_policy.memory_writes === false && setterTargets.observation_policy.managed_invocation === false, "Render setter target evidence differs");
@@ -203,6 +206,8 @@ check(hudFieldR5Targets.status === "confirmed-current-hud-field-r5-observation-t
 check(hudFieldR5Traces.every((trace) => trace.status === "confirmed-current-hud-field-r5-observation-only" && trace.capture.error === null && trace.capture.hook_failures.length === 0 && trace.summary.completion_requirements_met === true) && hudFieldR5Traces.reduce((count, trace) => count + trace.events.length, 0) === 30975 && hudFieldR5Traces.reduce((count, trace) => count + trace.summary.relative_frame_count, 0) === 1059, "Current HUD/field R5 traces differ");
 check(hudFieldR5Profile.status === "confirmed-current-hud-field-r5-runtime-profile" && Object.values(hudFieldR5Profile.authorization).filter(Boolean).length === 5 && hudFieldR5Profile.authorization.result_show_change_hide_lifetime === true && hudFieldR5Profile.authorization.score_skill_animation === true && hudFieldR5Profile.authorization.score_gauge_effect === true && hudFieldR5Profile.authorization.life_skill_start_finish === true && hudFieldR5Profile.authorization.generic_skill_display === true && hudFieldR5Profile.authorization.add_score_round_robin_lifecycle === false && hudFieldR5Profile.authorization.judge_timing_sprite_lifetime === false && hudFieldR5Profile.authorization.damage_guard_animation === false && hudFieldR5Profile.authorization.never_die_animation === false && hudFieldR5Profile.authorization.ordinary_field_setup_sudden_lane === false && hudFieldR5Profile.unknown_fields.length === 0, "Current HUD/field R5 profile differs");
 check(hudFieldR5Profile.source.targets_sha256 === sha256(readFileSync(resolve(investigation, "resource_pixi_rendering_hud_field_r5_targets.json"))) && hudFieldR5Profile.coverage.core.trace_sha256 === sha256(readFileSync(resolve(investigation, "runtime/ordinary-rendering-hud-field-r5-core.trace.json.gz"))) && hudFieldR5Profile.coverage.overlay.trace_sha256 === sha256(readFileSync(resolve(investigation, "runtime/ordinary-rendering-hud-field-r5-overlay.trace.json.gz"))), "Current HUD/field R5 source hashes differ");
+check(finalR6Traces.every((trace) => trace.status.startsWith("confirmed-current-") && trace.summary.completion_requirements_met === true) && finalR6Traces.reduce((count, trace) => count + trace.events.length, 0) === 190401 && finalR6Traces.reduce((count, trace) => count + trace.summary.relative_frame_count, 0) === 2492, "Final R6 traces differ");
+check(finalR6Profile.status === "confirmed-current-final-r6-conservative-profile" && finalR6Profile.coverage.event_count === 190401 && finalR6Profile.coverage.aggregate_relative_frame_count === 2492 && finalR6Profile.coverage.observed_owner_target_count === 26 && finalR6Profile.authorization.all_perfect_exec_update_active_gate === true && finalR6Profile.authorization.add_score_coroutine === false && finalR6Profile.authorization.field_early_setup === false && finalR6Profile.authorization.advanced_mesh === false && finalR6Profile.authorization.threshold_shader_mapping === false && finalR6Profile.authorization.habahiro_exact === false && finalR6Profile.unknown_fields.length === 0, "Final R6 conservative profile differs");
 
 const portable = json("resource_pixi_rendering_portable_contract.json");
 check(portable.status === "confirmed-offline-portable-draft-runtime-order-gate-open" && portable.production_authorization === false && portable.unknown_fields.length === 0, "Portable draft differs");
@@ -221,4 +226,4 @@ check(Object.keys(closure.historical_candidate_status).length === 28 && Object.k
 check(closure.unknown_static_work.length === 0 && closure.unknown_fields.length === 0 && closure.remaining_blockers_all_require_game_server === true, "Offline closure retains non-server work");
 check(closure.remaining_blockers.map((row) => row.id).join(",") === "S01,S02,S03", "Offline closure blocker IDs differ");
 
-console.log(`verified resource/Pixi delivery evidence: entries=817 methods=673 layouts=32 enums=19 resources=11026/57/100 profiles=8+4+4+5 plans=55/2/13 geometry=87037 line=1 projection=1 producer=1 child=1/13 R4=118152/1258/30 R5=30975/1059/35/5 hud-runtime=1 visible-hud=19888/631/22 HAB=2/12/179 exact=open degraded=authorized H=28 D=18 PR=40 offline=closed delivery=closed exact-HAB=open production=true${validateIndex ? " index=checked" : ""}`);
+console.log(`verified resource/Pixi delivery evidence: entries=826 methods=673 layouts=32 enums=19 resources=11026/57/100 profiles=8+4+4+5 plans=55/2/13 geometry=87037 line=1 projection=1 producer=1 child=1/13 R4=118152/1258/30 R5=30975/1059/35/5 R6=190401/2492/26/1 hud-runtime=1 visible-hud=19888/631/22 HAB=2/12/179 exact=open degraded=authorized H=28 D=18 PR=40 offline=closed delivery=closed exact-HAB=open production=true${validateIndex ? " index=checked" : ""}`);

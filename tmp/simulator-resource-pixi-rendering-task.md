@@ -581,6 +581,12 @@
 - Result owner-local计时在每次Reflect重置，engine clock累计到1秒时hide；pause不进入update，因此自然冻结。R5未观察JudgeTiming，PR27仍partial。
 - recording与actual Pixi正向oracle覆盖Skill display→ScoreGauge→Animator顺序、finish stop→hide、Result 1秒与release。PR32由blocked降为partial；从clean、已推送`d07cacc`运行14-stage总入口通过，矩阵为17 closed/current-subset、17 partial、6 blocked，RP14仍不通过。
 
+### 1.65 2026-08-03 final R6全窗口取证与冻结
+
+- Reverse先提交并push `119d10fa`计划，再晋升`64a88a88`五条clean trace：Flick 7,584/502、Slide 143,263/514、Multiple 11,224/505、HUD core 14,808/483、HUD overlay 13,522/488，合计190,401 events、2,492 aggregate frames、26 observed owners。
+- earliest field尝试为zero-event且未通过完成门，已删除；R6只新增All Perfect `ExecUpdate` active gate，AddScore/JudgeTiming/Guard/NeverDie/changeable text/field setup、Long-after Flick、add/after Multiple、Advanced、threshold shader mapping及exact HAB继续false。
+- Garupa冻结更新为826 entries，Reverse commit/source working/copy三方verifier通过；7个physical PNG及原作资源binary继续排除。完成index verifier并提交冻结包前不得消费R6。
+
 ## 2. 固定范围
 
 ### 2.1 纳入范围
