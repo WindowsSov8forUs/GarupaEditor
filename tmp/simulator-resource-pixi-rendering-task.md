@@ -551,6 +551,14 @@
 - 重写acceptance记录790项证据、R3、Long、visible Pixi、degraded label、RP00–RP14和PR01–PR40真实状态；RP13通过，RP14不通过。
 - 阶段不能在当前证据边界下诚实宣布完成；下一轮必须先取得Flick/Slide/Multiple/advanced/threshold/full HUD/production chart的新runtime授权，禁止以failure-closed或绿色回归代替正向case。
 
+### 1.61 2026-08-02 R4 Note family取证尝试与最终阻断
+
+- Reverse先后提交并push `690a253c`、`ecb6fb43`、`3b4f4d76`、`9726c286`，建立30个Flick/Slide/Multiple/Advanced owner target、6个新增NoteSlide byte slice与按family拆分的observation-only采集器；这些plan提交位于冻结基线之后，未被Garupa消费或晋升。
+- 首次单流曾收到181,431个事件/635 frame并覆盖Flick、Slide、Multiple/back-line owner，但frida agent在歌曲结束前被设备终止，无法取得hook failure/summary完成门；该partial trace未提交并已删除，不得作为行为授权。
+- 随后降低事件量、拆成Flick/Slide/Multiple三组并重启实体设备；每次均在attach/script load后由设备终止`frida-server-17.15.3`，游戏继续自然运行但trace为0事件。已排除owner数量、event volume与旧app进程残留。
+- Reverse工作树最终只保留既有无关`.claude/`、`runtime/tools/`，远端`0 0`；无R4 trace/profile被提交。Garupa可消费证据基线继续为`fa288561`与790项冻结包。
+- 因新runtime输入当前不可获取，job-1转为外部取证阻断；禁止使用partial事件、static inventory或截图补齐正向Flick/Slide/Multiple实现。RP14维持不通过。
+
 ## 2. 固定范围
 
 ### 2.1 纳入范围

@@ -19,7 +19,8 @@
 - Garupa 分支：`codex/refactor-simulator-implementation`
 - 验收运行 HEAD：`92e0deaca0d42e2680a2a7beb7360d498702265c`
 - Reverse 分支：`main`
-- Reverse 证据 HEAD：`fa28856133e0bc45f355407c39b84cac9cbcfb95`
+- Garupa消费的Reverse证据基线：`fa28856133e0bc45f355407c39b84cac9cbcfb95`
+- Reverse当前远端HEAD：`9726c286`（仅R4采集plan/target/tooling，未产生可晋升trace，未冻结到Garupa）
 - Garupa 与远端差异：`0 0`
 - Reverse 与远端差异：`0 0`
 - Garupa 验收运行前后工作树：clean
@@ -113,3 +114,14 @@ node tmp/simulator-reverse-evidence/resource-pixi-rendering/verify.mjs
 7. HAB lane-change production scene；exact HAB UnityFS/natural R1/original frame继续open-not-claimed。
 
 因此不得把`src/simulator/README.md`更新为阶段完成，也不得宣称原作完整parity。
+
+## 9. R4外部取证阻断复核
+
+最终验收后继续尝试关闭12个blocked case所需的Note family runtime证据：
+
+- 30个current owner target与6个NoteSlide byte slice已提交push；
+- 单流partial capture收到181,431 events / 635 frames，但agent终止导致summary/hook-failure完成门不可验证，trace未提交并删除；
+- 拆分Flick/Slide/Multiple并重启实体设备后，`frida-server-17.15.3`仍在attach/script load后被设备终止，三组均为0-event partial；
+- 无R4 trace/profile进入Reverse提交或Garupa冻结包。
+
+因此阻断已经从“尚未尝试取证”收敛为“当前实体设备动态采集通道不可用”。在恢复可校验的observation-only runtime输入前，继续写Flick/Slide/Multiple/advanced/full-HUD production会违反失败关闭原则。
