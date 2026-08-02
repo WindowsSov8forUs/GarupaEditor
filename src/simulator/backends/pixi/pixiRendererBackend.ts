@@ -1,9 +1,11 @@
 import {
   Container,
+  Graphics,
   Mesh,
   MeshGeometry,
   Rectangle,
   Sprite,
+  Text,
   Texture,
   type DestroyOptions,
 } from "pixi.js";
@@ -42,6 +44,17 @@ interface PendingPixiBatch {
   readonly commands: readonly RenderCommand[];
   readonly reservedNodes: ReadonlyMap<number, Container>;
   readonly reservedGeometry: ReadonlyMap<number, Mesh>;
+  readonly reservedMasks: ReadonlyMap<number, Graphics>;
+}
+
+interface PixiHudVisual {
+  readonly content: Container;
+  readonly text: Text;
+  readonly primaryFill: Graphics;
+  readonly secondaryFill: Graphics;
+  readonly animationLayer: Container;
+  readonly digitSprites: Sprite[];
+  fillRatios: readonly [number, number];
 }
 
 interface PixiObjectRecord {
@@ -50,15 +63,23 @@ interface PixiObjectRecord {
   ordering: readonly [number, number, number, number];
   hudState: Readonly<Record<string, string | number | boolean | null>> | null;
   spriteBindingKey: string | null;
+  hudBindingKeys: string[];
   spriteContent: Sprite | null;
   materialTexture: Texture | null;
   geometryContent: Mesh | null;
+  maskContent: Graphics | null;
+  maskVertexCount: number | null;
+  hudVisual: PixiHudVisual | null;
+  activeAnimationRole: "combo" | "life-heal" | null;
+  animationElapsedSeconds: number | null;
 }
 
 interface PixiShadowObject {
   readonly role: string;
   readonly parentObjectId: string | null;
   readonly materialBound: boolean;
+  readonly maskConfigured: boolean;
+  readonly activeAnimationRole: "combo" | "life-heal" | null;
 }
 
 export class PixiRendererBackend implements SimulatorRendererBackend {
@@ -197,6 +218,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     }
     const reservedNodes = new Map<number, Container>();
     const reservedGeometry = new Map<number, Mesh>();
+    const reservedMasks = new Map<number, Graphics>();
     try {
       for (const command of commands) {
         if (command.kind === "create-object" || command.kind === "acquire-object") {
@@ -223,6 +245,8 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
             command,
             this.profile!.scene.projection,
           ));
+        } else if (command.kind === "set-mask") {
+          reservedMasks.set(command.sequence, createEvidenceMask(command));
         }
       }
     } catch {
@@ -230,6 +254,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         node.destroy({ children: true } as DestroyOptions);
       }
       for (const mesh of reservedGeometry.values()) destroyMesh(mesh);
+      for (const mask of reservedMasks.values()) mask.destroy();
       this.recording.discard(recordingBatch.value);
       return reject(
         "render.pixi.preflight-object-create-threw",
@@ -242,6 +267,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       commands: Object.freeze(commands.map(copyPixiCommand)),
       reservedNodes,
       reservedGeometry,
+      reservedMasks,
     }));
     return ok(capability);
   }
@@ -259,7 +285,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     }
     try {
       for (const command of pending.commands) {
-        this.apply(command, pending.reservedNodes, pending.reservedGeometry);
+        this.apply(command, pending.reservedNodes, pending.reservedGeometry, pending.reservedMasks);
       }
     } catch {
       this.pending.delete(batch);
@@ -288,7 +314,11 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       return fault;
     }
     this.pending.delete(batch);
-    this.destroyUnownedReservations(pending.reservedNodes, pending.reservedGeometry);
+    this.destroyUnownedReservations(
+      pending.reservedNodes,
+      pending.reservedGeometry,
+      pending.reservedMasks,
+    );
     return this.recording.discard(pending.recordingBatch);
   }
 
@@ -347,6 +377,11 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     readonly geometryVertexCount: number | null;
     readonly geometryIndexCount: number | null;
     readonly geometryPositions: readonly number[] | null;
+    readonly maskVertexCount: number | null;
+    readonly hudText: string | null;
+    readonly hudFillRatios: readonly [number, number] | null;
+    readonly activeAnimationRole: "combo" | "life-heal" | null;
+    readonly animationElapsedSeconds: number | null;
   }[] {
     const idsByNode = new Map([...this.objects].map(([id, value]) => [value.node, id]));
     return Object.freeze([...this.objects].map(([renderObjectId, value]) => Object.freeze({
@@ -365,6 +400,11 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       geometryPositions: value.geometryContent === null
         ? null
         : Object.freeze(Array.from(value.geometryContent.geometry.positions)),
+      maskVertexCount: value.maskVertexCount,
+      hudText: value.hudVisual?.text.text ?? null,
+      hudFillRatios: value.hudVisual?.fillRatios ?? null,
+      activeAnimationRole: value.activeAnimationRole,
+      animationElapsedSeconds: value.animationElapsedSeconds,
     })));
   }
 
@@ -376,7 +416,11 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     }
     this.objects.clear();
     for (const pending of this.pending.values()) {
-      this.destroyUnownedReservations(pending.reservedNodes, pending.reservedGeometry);
+      this.destroyUnownedReservations(
+        pending.reservedNodes,
+        pending.reservedGeometry,
+        pending.reservedMasks,
+      );
     }
     this.pending.clear();
     for (const texture of this.spriteTextures.values()) texture.destroy(false);
@@ -398,9 +442,9 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       case "release-object":
         return true;
       case "set-transform":
-        return command.maskObjectId === null;
+      case "set-mask":
       case "set-hud":
-        return false;
+        return true;
       case "bind-resource":
         if (command.binding === "sprite") {
           return command.exactKey !== null &&
@@ -418,9 +462,11 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         return command.materialRole === "long-note" || command.materialRole === "curve-note";
       case "set-line":
         return command.materialRole === "sync-line";
-      case "set-threshold":
       case "play-animation":
       case "stop-animation":
+      case "sample-animation":
+        return command.animationRole === "combo" || command.animationRole === "life-heal";
+      case "set-threshold":
         return false;
     }
   }
@@ -437,6 +483,8 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           ? null
           : nodeIds.get(value.node.parent as Container) ?? null,
         materialBound: value.materialTexture !== null,
+        maskConfigured: value.maskContent !== null,
+        activeAnimationRole: value.activeAnimationRole,
       });
     }
     for (const command of commands) {
@@ -453,6 +501,8 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
             role: command.role,
             parentObjectId: command.parentObjectId,
             materialBound: false,
+            maskConfigured: false,
+            activeAnimationRole: null,
           });
           break;
         case "release-object":
@@ -481,6 +531,8 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
             shadow.set(command.renderObjectId, {
               ...shadow.get(command.renderObjectId)!,
               materialBound: true,
+              maskConfigured: shadow.get(command.renderObjectId)!.maskConfigured,
+              activeAnimationRole: shadow.get(command.renderObjectId)!.activeAnimationRole,
             });
           }
           break;
@@ -488,7 +540,30 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         case "activate-object":
         case "hide-object":
         case "deactivate-object":
+          break;
         case "set-transform":
+          if (
+            command.maskObjectId !== null &&
+            (shadow.get(command.maskObjectId)?.role !== "mask" ||
+              !shadow.get(command.maskObjectId)?.maskConfigured)
+          ) {
+            return reject(
+              "render.pixi.invalid-mask-reference",
+              "A transform may reference only one configured visible-inside mask identity from the same session.",
+            );
+          }
+          break;
+        case "set-mask":
+          if (shadow.get(command.renderObjectId)!.role !== "mask") {
+            return reject(
+              "render.pixi.mask-role-mismatch",
+              "Only an explicit mask object may receive portable polygon geometry.",
+            );
+          }
+          shadow.set(command.renderObjectId, {
+            ...shadow.get(command.renderObjectId)!,
+            maskConfigured: true,
+          });
           break;
         case "set-mesh":
           if (
@@ -514,12 +589,53 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           }
           break;
         case "set-hud":
+          if (!isEvidenceHud(command, shadow.get(command.renderObjectId)!.role, this.spriteTextures)) {
+            return reject(
+              "render.pixi.hud-outside-r3-profile",
+              "Pixi accepts only the current ordinary R3 bitmap/text/fill HUD state shapes and exact combo digit keys.",
+            );
+          }
+          break;
+        case "play-animation": {
+          const object = shadow.get(command.renderObjectId)!;
+          if (
+            !animationMatchesRole(command.animationRole, object.role) ||
+            command.animationRole === "life-heal" &&
+              (findTextureBinding(this.spriteTextures, "effect_health_guard_outline") === null ||
+                findTextureBinding(this.spriteTextures, "UI_effect_life_plus_icon") === null)
+          ) {
+            return reject(
+              "render.pixi.animation-role-mismatch",
+              "Portable R3 animation roles require their exact Combo/Life owner and both frozen life-heal Sprite keys.",
+            );
+          }
+          shadow.set(command.renderObjectId, {
+            ...object,
+            activeAnimationRole: requireEvidenceAnimationRole(command.animationRole),
+          });
+          break;
+        }
+        case "sample-animation":
+        case "stop-animation": {
+          const object = shadow.get(command.renderObjectId)!;
+          if (object.activeAnimationRole !== command.animationRole) {
+            return reject(
+              "render.pixi.animation-owner-not-playing",
+              "Animation sample/stop commands require the same owner-local role to have been started first.",
+            );
+          }
+          if (command.kind === "stop-animation") {
+            shadow.set(command.renderObjectId, {
+              ...object,
+              activeAnimationRole: null,
+            });
+          }
+          break;
+        }
         case "set-threshold":
-        case "play-animation":
-        case "stop-animation":
           return reject(
             "render.pixi.unsupported-semantic-command",
-            "Unsupported semantic commands cannot reach Pixi scene mutation.",
+            "Threshold shaders remain outside the authorized portable mapping.",
           );
       }
     }
@@ -530,6 +646,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     command: RenderCommand,
     reservedNodes: ReadonlyMap<number, Container>,
     reservedGeometry: ReadonlyMap<number, Mesh>,
+    reservedMasks: ReadonlyMap<number, Graphics>,
   ): void {
     switch (command.kind) {
       case "create-object":
@@ -545,9 +662,15 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           ordering: Object.freeze([0, 0, 0, command.sequence]),
           hudState: null,
           spriteBindingKey: null,
+          hudBindingKeys: [],
           spriteContent: spriteChild(node),
           materialTexture: null,
           geometryContent: null,
+          maskContent: null,
+          maskVertexCount: null,
+          hudVisual: null,
+          activeAnimationRole: null,
+          animationElapsedSeconds: null,
         });
         return;
       }
@@ -561,6 +684,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       case "release-object": {
         const object = this.objects.get(command.renderObjectId)!;
         if (object.spriteBindingKey !== null) this.decrementSpriteReference(object.spriteBindingKey);
+        for (const bindingKey of object.hudBindingKeys) this.decrementSpriteReference(bindingKey);
         if (object.geometryContent !== null) destroyMesh(object.geometryContent);
         object.node.removeFromParent();
         object.node.destroy({ children: true } as DestroyOptions);
@@ -608,6 +732,9 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         node.rotation = command.rotationDegrees.value * Math.PI / 180;
         node.alpha = command.color.alpha.value;
         node.tint = rgbTint(command.color.red.value, command.color.green.value, command.color.blue.value);
+        node.mask = command.maskObjectId === null
+          ? null
+          : this.objects.get(command.maskObjectId)!.node;
         object.ordering = Object.freeze([
           command.ordering.domainLayer,
           command.ordering.sourceDepthOrSortingOrder,
@@ -617,9 +744,26 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         this.sortSiblings(node.parent as Container);
         return;
       }
-      case "set-hud":
-        this.objects.get(command.renderObjectId)!.hudState = Object.freeze({ ...command.state });
+      case "set-mask": {
+        const object = this.objects.get(command.renderObjectId)!;
+        if (object.maskContent !== null) object.maskContent.destroy();
+        const mask = reservedMasks.get(command.sequence)!;
+        object.node.addChild(mask);
+        object.maskContent = mask;
+        object.maskVertexCount = command.polygon.length;
         return;
+      }
+      case "set-hud": {
+        const object = this.objects.get(command.renderObjectId)!;
+        object.hudState = Object.freeze({ ...command.state });
+        object.hudVisual = applyEvidenceHud(
+          object,
+          command,
+          this.spriteTextures,
+          this.spriteReferenceCounts,
+        );
+        return;
+      }
       case "set-mesh": {
         const object = this.objects.get(command.renderObjectId)!;
         if (object.geometryContent !== null) destroyMesh(object.geometryContent);
@@ -643,9 +787,30 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         object.geometryContent = mesh;
         return;
       }
+      case "play-animation": {
+        const object = this.objects.get(command.renderObjectId)!;
+        const role = requireEvidenceAnimationRole(command.animationRole);
+        object.activeAnimationRole = role;
+        object.animationElapsedSeconds = 0;
+        applyEvidenceAnimation(object, role, 0);
+        return;
+      }
+      case "sample-animation": {
+        const object = this.objects.get(command.renderObjectId)!;
+        const role = requireEvidenceAnimationRole(command.animationRole);
+        object.animationElapsedSeconds = command.elapsedSeconds.value;
+        applyEvidenceAnimation(object, role, command.elapsedSeconds.value);
+        return;
+      }
+      case "stop-animation": {
+        const object = this.objects.get(command.renderObjectId)!;
+        const role = requireEvidenceAnimationRole(command.animationRole);
+        stopEvidenceAnimation(object, role);
+        object.activeAnimationRole = null;
+        object.animationElapsedSeconds = null;
+        return;
+      }
       case "set-threshold":
-      case "play-animation":
-      case "stop-animation":
         throw new Error("unsupported command reached Pixi apply");
     }
   }
@@ -662,11 +827,16 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
   private destroyUnownedReservations(
     reservedNodes: ReadonlyMap<number, Container>,
     reservedGeometry: ReadonlyMap<number, Mesh>,
+    reservedMasks: ReadonlyMap<number, Graphics>,
   ): void {
     const ownedNodes = new Set([...this.objects.values()].map((value) => value.node));
     const ownedGeometry = new Set(
       [...this.objects.values()].flatMap((value) =>
         value.geometryContent === null ? [] : [value.geometryContent]),
+    );
+    const ownedMasks = new Set(
+      [...this.objects.values()].flatMap((value) =>
+        value.maskContent === null ? [] : [value.maskContent]),
     );
     for (const node of reservedNodes.values()) {
       if (!ownedNodes.has(node) && !node.destroyed) {
@@ -675,6 +845,9 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     }
     for (const mesh of reservedGeometry.values()) {
       if (!ownedGeometry.has(mesh) && !mesh.destroyed) destroyMesh(mesh);
+    }
+    for (const mask of reservedMasks.values()) {
+      if (!ownedMasks.has(mask) && !mask.destroyed) mask.destroy();
     }
   }
 
@@ -715,6 +888,15 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
             destroyMesh(mesh);
           } catch {
             // Terminal cleanup is best effort after scene mutation has already failed.
+          }
+        }
+      }
+      for (const mask of pendingValue.reservedMasks.values()) {
+        if (!mask.destroyed) {
+          try {
+            mask.destroy();
+          } catch {
+            // Terminal cleanup continues after one reserved mask failure.
           }
         }
       }
@@ -768,6 +950,285 @@ class CachingProvider implements SimulatorResourceProvider {
 
 type SetMeshCommand = Extract<RenderCommand, { readonly kind: "set-mesh" }>;
 type SetLineCommand = Extract<RenderCommand, { readonly kind: "set-line" }>;
+type SetMaskCommand = Extract<RenderCommand, { readonly kind: "set-mask" }>;
+type SetHudCommand = Extract<RenderCommand, { readonly kind: "set-hud" }>;
+type EvidenceAnimationRole = "combo" | "life-heal";
+
+function createEvidenceMask(command: SetMaskCommand): Graphics {
+  const points = command.polygon.flatMap((point) => [point.x.value, point.y.value]);
+  return new Graphics().poly(points, true).fill(0xffffff);
+}
+
+function isEvidenceHud(
+  command: SetHudCommand,
+  objectRole: string,
+  textures: ReadonlyMap<string, Texture>,
+): boolean {
+  const state = command.state;
+  switch (command.hudRole) {
+    case "score":
+      return objectRole === "hud-score" && exactStateKeys(state, ["score"]) &&
+        isNonNegativeSafeInteger(state.score);
+    case "combo": {
+      if (
+        objectRole !== "hud-combo" ||
+        !exactStateKeys(state, ["allPerfect", "combo"]) ||
+        !isNonNegativeSafeInteger(state.combo) ||
+        state.combo > 9999 ||
+        typeof state.allPerfect !== "boolean"
+      ) return false;
+      const prefix = state.allPerfect ? "icon_number_big_AP_" : "icon_number_big_";
+      return String(state.combo).split("").every((digit) =>
+        findTextureBinding(textures, `${prefix}${digit}`) !== null);
+    }
+    case "result":
+      return objectRole === "hud-result" &&
+        exactStateKeys(state, ["representativeResult", "representativeSlot"]) &&
+        isNullableFiniteScalar(state.representativeResult) &&
+        isNullableFiniteScalar(state.representativeSlot);
+    case "life":
+      return objectRole === "hud-life" &&
+        exactStateKeys(state, [
+          "currentLife", "lifeUpperLimit", "playerMaxLife",
+          "primaryFill", "secondaryFill", "singleGameOver",
+        ]) &&
+        isNonNegativeSafeInteger(state.currentLife) &&
+        isNonNegativeSafeInteger(state.playerMaxLife) &&
+        isNonNegativeSafeInteger(state.lifeUpperLimit) &&
+        typeof state.singleGameOver === "boolean" &&
+        isUnitFill(state.primaryFill) && isNonNegativeFinite(state.secondaryFill);
+    case "overlay":
+      return objectRole === "hud-overlay" &&
+        exactStateKeys(state, ["addScore", "freeLiveEventBonusAddScore"]) &&
+        typeof state.addScore === "number" && Number.isFinite(state.addScore) &&
+        typeof state.freeLiveEventBonusAddScore === "number" &&
+        Number.isFinite(state.freeLiveEventBonusAddScore);
+    case "fidelity-label":
+      return objectRole === "fidelity-label" &&
+        exactStateKeys(state, ["label", "visible"]) &&
+        state.label === "Approximate HABAHIRO" && state.visible === true;
+  }
+}
+
+function applyEvidenceHud(
+  object: PixiObjectRecord,
+  command: SetHudCommand,
+  textures: ReadonlyMap<string, Texture>,
+  referenceCounts: Map<string, number>,
+): PixiHudVisual {
+  const visual = object.hudVisual ?? createHudVisual(object.node);
+  visual.text.visible = true;
+  visual.primaryFill.clear();
+  visual.secondaryFill.clear();
+  visual.fillRatios = Object.freeze([0, 0]);
+  const state = command.state;
+  switch (command.hudRole) {
+    case "score":
+      object.node.position.set(601, 135);
+      setHudText(visual.text, String(state.score).padStart(8, "0"), 40, 0xffffff);
+      break;
+    case "combo": {
+      object.node.position.set(1256.699951171875, 277.20001220703125);
+      for (const bindingKey of object.hudBindingKeys) {
+        const next = (referenceCounts.get(bindingKey) ?? 0) - 1;
+        if (next <= 0) referenceCounts.delete(bindingKey);
+        else referenceCounts.set(bindingKey, next);
+      }
+      object.hudBindingKeys.length = 0;
+      for (const sprite of visual.digitSprites.splice(0)) sprite.destroy();
+      visual.text.visible = false;
+      const value = String(state.combo);
+      const prefix = state.allPerfect ? "icon_number_big_AP_" : "icon_number_big_";
+      [...value].reverse().forEach((digit, index) => {
+        const binding = findTextureBinding(textures, `${prefix}${digit}`)!;
+        const sprite = new Sprite({ texture: binding.texture, label: `combo-digit-${index}` });
+        sprite.anchor.copyFrom(sprite.texture.defaultAnchor ?? { x: 0.5, y: 0.5 });
+        sprite.position.set(35 - index * 70, 0);
+        visual.content.addChild(sprite);
+        visual.digitSprites.push(sprite);
+        object.hudBindingKeys.push(binding.key);
+        referenceCounts.set(binding.key, (referenceCounts.get(binding.key) ?? 0) + 1);
+      });
+      break;
+    }
+    case "result":
+      object.node.position.set(800, 520);
+      setHudText(
+        visual.text,
+        state.representativeResult === null ? "" : String(state.representativeResult),
+        54,
+        0xffffff,
+      );
+      break;
+    case "life": {
+      object.node.position.set(1000, 95);
+      const primary = state.primaryFill as number;
+      const secondary = state.secondaryFill as number;
+      visual.secondaryFill.rect(0, 0, 224 * secondary, 26).fill(0x64d8ff);
+      visual.primaryFill.rect(0, 0, 224 * primary, 26).fill(0xff679b);
+      visual.primaryFill.position.set(0, 0);
+      visual.secondaryFill.position.set(0, 0);
+      visual.fillRatios = Object.freeze([primary, secondary]);
+      setHudText(
+        visual.text,
+        `${state.currentLife}/${state.playerMaxLife}`,
+        28,
+        state.singleGameOver ? 0xff4d72 : 0xffffff,
+      );
+      visual.text.position.set(107, 36);
+      if (visual.animationLayer.children.length === 0) {
+        for (const exactKey of ["effect_health_guard_outline", "UI_effect_life_plus_icon"]) {
+          const binding = findTextureBinding(textures, exactKey);
+          if (binding === null) continue;
+          const sprite = new Sprite({ texture: binding.texture, label: exactKey });
+          sprite.anchor.copyFrom(sprite.texture.defaultAnchor ?? { x: 0.5, y: 0.5 });
+          if (exactKey === "UI_effect_life_plus_icon") sprite.position.set(-114, 12);
+          visual.animationLayer.addChild(sprite);
+          object.hudBindingKeys.push(binding.key);
+          referenceCounts.set(binding.key, (referenceCounts.get(binding.key) ?? 0) + 1);
+        }
+      }
+      break;
+    }
+    case "overlay": {
+      object.node.position.set(389, 51);
+      const total = (state.addScore as number) + (state.freeLiveEventBonusAddScore as number);
+      setHudText(visual.text, total === 0 ? "" : `+${total}`, 30, 0xffffff);
+      break;
+    }
+    case "fidelity-label":
+      object.node.position.set(20, 20);
+      setHudText(visual.text, String(state.label), 24, 0xffd166);
+      break;
+  }
+  return visual;
+}
+
+function createHudVisual(node: Container): PixiHudVisual {
+  const content = new Container({ sortableChildren: true });
+  const secondaryFill = new Graphics();
+  const primaryFill = new Graphics();
+  const text = new Text({ text: "", style: { fill: 0xffffff, fontSize: 32 } });
+  const animationLayer = new Container({ visible: false });
+  content.addChild(secondaryFill, primaryFill, text, animationLayer);
+  node.addChild(content);
+  return {
+    content,
+    text,
+    primaryFill,
+    secondaryFill,
+    animationLayer,
+    digitSprites: [],
+    fillRatios: Object.freeze([0, 0]),
+  };
+}
+
+function setHudText(text: Text, value: string, fontSize: number, fill: number): void {
+  text.text = value;
+  text.style = { fill, fontSize, fontWeight: "bold" };
+  text.anchor.set(0.5);
+}
+
+function applyEvidenceAnimation(
+  object: PixiObjectRecord,
+  role: EvidenceAnimationRole,
+  elapsedSeconds: number,
+): void {
+  if (role === "combo") {
+    const scale = samplePolynomialCurve(COMBO_SCALE_KEYS, elapsedSeconds);
+    object.node.scale.set(scale, scale);
+    return;
+  }
+  const visual = object.hudVisual;
+  if (visual === null) throw new Error("life HUD missing before animation");
+  visual.animationLayer.visible = true;
+  visual.animationLayer.scale.set(
+    samplePolynomialCurve(LIFE_ICON_SCALE_KEYS, elapsedSeconds),
+  );
+  visual.animationLayer.alpha = samplePolynomialCurve(LIFE_ICON_ALPHA_KEYS, elapsedSeconds);
+}
+
+function stopEvidenceAnimation(object: PixiObjectRecord, role: EvidenceAnimationRole): void {
+  if (role === "combo") {
+    object.node.scale.set(1, 1);
+    return;
+  }
+  if (object.hudVisual !== null) object.hudVisual.animationLayer.visible = false;
+}
+
+const COMBO_SCALE_KEYS = Object.freeze([
+  Object.freeze({ time: 0, coefficients: Object.freeze([-1036.800048828125, 129.60000610351562, 0, 0.800000011920929]) }),
+  Object.freeze({ time: 0.0833333358168602, coefficients: Object.freeze([0, 0, -1.200000286102295, 1.100000023841858]) }),
+  Object.freeze({ time: 0.1666666716337204, coefficients: Object.freeze([0, 0, 0, 1]) }),
+  Object.freeze({ time: 1, coefficients: Object.freeze([0, 0, 0, 1]) }),
+]);
+const LIFE_ICON_SCALE_KEYS = Object.freeze([
+  Object.freeze({ time: 0, coefficients: Object.freeze([0, 0, 2.25, 1]) }),
+  Object.freeze({ time: 0.6666666865348816, coefficients: Object.freeze([0, 0, 0, 2.5]) }),
+]);
+const LIFE_ICON_ALPHA_KEYS = Object.freeze([
+  Object.freeze({ time: 0, coefficients: Object.freeze([0, 0, -1.5, 1]) }),
+  Object.freeze({ time: 0.6666666865348816, coefficients: Object.freeze([0, 0, 0, 0]) }),
+]);
+
+function samplePolynomialCurve(
+  keys: readonly { readonly time: number; readonly coefficients: readonly number[] }[],
+  elapsedSeconds: number,
+): number {
+  let key = keys[0]!;
+  for (const candidate of keys) {
+    if (candidate.time > elapsedSeconds) break;
+    key = candidate;
+  }
+  const delta = Math.fround(elapsedSeconds - key.time);
+  const [a, b, c, d] = key.coefficients;
+  return Math.fround(Math.fround(Math.fround(Math.fround(a! * delta) + b!) * delta + c!) * delta + d!);
+}
+
+function findTextureBinding(
+  textures: ReadonlyMap<string, Texture>,
+  exactKey: string,
+): { readonly key: string; readonly texture: Texture } | null {
+  const suffix = `\u0000${exactKey}`;
+  for (const [key, texture] of textures) {
+    if (key.endsWith(suffix)) return { key, texture };
+  }
+  return null;
+}
+
+function exactStateKeys(
+  state: Readonly<Record<string, string | number | boolean | null>>,
+  keys: readonly string[],
+): boolean {
+  return Object.keys(state).sort().join(",") === [...keys].sort().join(",");
+}
+
+function isNonNegativeSafeInteger(value: unknown): value is number {
+  return Number.isSafeInteger(value) && (value as number) >= 0;
+}
+
+function isNullableFiniteScalar(value: unknown): boolean {
+  return value === null || typeof value === "string" ||
+    typeof value === "boolean" || typeof value === "number" && Number.isFinite(value);
+}
+
+function isUnitFill(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value) && value >= 0 && value <= 1;
+}
+
+function isNonNegativeFinite(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value) && value >= 0;
+}
+
+function animationMatchesRole(role: string, objectRole: string): boolean {
+  return role === "combo" && objectRole === "hud-combo" ||
+    role === "life-heal" && objectRole === "hud-life";
+}
+
+function requireEvidenceAnimationRole(role: string): EvidenceAnimationRole {
+  if (role !== "combo" && role !== "life-heal") throw new Error("unsupported animation role");
+  return role;
+}
 
 function isEvidenceLine(command: SetLineCommand): boolean {
   return command.materialRole === "sync-line" &&
@@ -963,8 +1424,23 @@ function copyPixiCommand(command: RenderCommand): RenderCommand {
       width: Object.freeze({ ...command.width }),
     });
   }
+  if (command.kind === "set-mask") {
+    return Object.freeze({
+      ...command,
+      polygon: Object.freeze(command.polygon.map((value) => Object.freeze({
+        x: Object.freeze({ ...value.x }),
+        y: Object.freeze({ ...value.y }),
+      }))),
+    });
+  }
   if (command.kind === "set-hud") {
     return Object.freeze({ ...command, state: Object.freeze({ ...command.state }) });
+  }
+  if (command.kind === "sample-animation") {
+    return Object.freeze({
+      ...command,
+      elapsedSeconds: Object.freeze({ ...command.elapsedSeconds }),
+    });
   }
   if (command.kind === "set-transform") {
     return Object.freeze({

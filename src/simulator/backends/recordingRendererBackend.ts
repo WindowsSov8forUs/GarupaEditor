@@ -6,6 +6,7 @@ import {
 } from "../engine/evidence";
 import type {
   RenderBackendFault,
+  RenderAnimationRole,
   RenderBackendSnapshot,
   RenderCommand,
   RenderCommandBatch,
@@ -387,6 +388,18 @@ export class RecordingSimulatorRendererBackend implements SimulatorRendererBacke
           );
         }
         return this.requireObject(objects, command.renderObjectId);
+      case "set-mask":
+        if (
+          command.mode !== "visible-inside" ||
+          command.polygon.length < 3 ||
+          command.polygon.some((value) => !validateVector2(value))
+        ) {
+          return this.latchFault(
+            "render.command.invalid-mask",
+            "Portable masks require one explicit visible-inside polygon with typed Float32 vertices.",
+          );
+        }
+        return this.requireObject(objects, command.renderObjectId);
       case "set-hud":
         if (
           !HUD_ROLES.has(command.hudRole) ||
@@ -409,13 +422,23 @@ export class RecordingSimulatorRendererBackend implements SimulatorRendererBacke
       case "stop-animation":
         if (
           typeof command.restart !== "boolean" ||
-          !this.profile!.assets.some((asset) =>
-            asset.animationRole === command.animationRole &&
-            asset.animationRole !== "none")
+          !this.hasAnimationRole(command.animationRole)
         ) {
           return this.latchFault(
             "render.command.unknown-animation",
             "Animation commands require one profile-declared exact animation role and explicit restart behavior.",
+          );
+        }
+        return this.requireObject(objects, command.renderObjectId);
+      case "sample-animation":
+        if (
+          !validateRenderFloat32(command.elapsedSeconds) ||
+          command.elapsedSeconds.value < 0 ||
+          !this.hasAnimationRole(command.animationRole)
+        ) {
+          return this.latchFault(
+            "render.command.invalid-animation-sample",
+            "Animation samples require a profile-declared role and one non-negative engine-clock Float32 time.",
           );
         }
         return this.requireObject(objects, command.renderObjectId);
@@ -425,6 +448,11 @@ export class RecordingSimulatorRendererBackend implements SimulatorRendererBacke
           "Unknown command kinds cannot be ignored or treated as no-op renderer mutations.",
         );
     }
+  }
+
+  private hasAnimationRole(role: RenderAnimationRole): boolean {
+    return this.profile!.assets.some((asset) =>
+      asset.animationRole === role && asset.animationRole !== "none");
   }
 
   private requireObject(
@@ -529,11 +557,16 @@ function freezeCommand(command: RenderCommand): RenderCommand {
         ...command,
         threshold: Object.freeze({ ...command.threshold }),
       });
-    case "set-hud":
+    case "set-mask":
       return Object.freeze({
         ...command,
-        state: Object.freeze({ ...command.state }),
+        polygon: Object.freeze(command.polygon.map(freezeRenderVector2)),
       });
+    case "set-hud":
+    case "sample-animation":
+      return command.kind === "set-hud"
+        ? Object.freeze({ ...command, state: Object.freeze({ ...command.state }) })
+        : Object.freeze({ ...command, elapsedSeconds: Object.freeze({ ...command.elapsedSeconds }) });
     default:
       return Object.freeze({ ...command });
   }

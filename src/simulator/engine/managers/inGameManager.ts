@@ -126,6 +126,14 @@ export class InGameManager {
     if (updateResult.status !== "ok") {
       return this.latchFault(updateResult);
     }
+    const hudAnimation = this.renderProducer?.preflightHudAnimationAdvance(deltaTimeSeconds) ?? null;
+    if (hudAnimation?.status === "evidence-required") {
+      return this.latchFault(hudAnimation);
+    }
+    if (hudAnimation?.status === "ok") {
+      const committed = hudAnimation.value.commit();
+      if (committed.status !== "ok") return this.latchFault(committed);
+    }
     if (this.oneFrameJudgementController.existsOneFrameData()) {
       const reflectResult = this.oneFrameJudgementController.reflectOneFrameData();
       if (reflectResult.status !== "ok") {

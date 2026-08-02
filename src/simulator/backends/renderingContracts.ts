@@ -299,6 +299,11 @@ export type RenderCommand =
       readonly threshold: RenderFloat32;
     })
   | (RenderObjectCommandBase & {
+      readonly kind: "set-mask";
+      readonly mode: "visible-inside";
+      readonly polygon: readonly RenderVector2[];
+    })
+  | (RenderObjectCommandBase & {
       readonly kind: "set-hud";
       readonly hudRole: "score" | "combo" | "result" | "life" | "overlay" | "fidelity-label";
       readonly state: Readonly<Record<string, string | number | boolean | null>>;
@@ -307,6 +312,11 @@ export type RenderCommand =
       readonly kind: "play-animation" | "stop-animation";
       readonly animationRole: RenderAnimationRole;
       readonly restart: boolean;
+    })
+  | (RenderObjectCommandBase & {
+      readonly kind: "sample-animation";
+      readonly animationRole: RenderAnimationRole;
+      readonly elapsedSeconds: RenderFloat32;
     });
 
 export interface RenderBackendFault {

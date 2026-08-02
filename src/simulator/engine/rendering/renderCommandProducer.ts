@@ -48,6 +48,7 @@ export interface RenderEngineResourceBindings {
   readonly noteAtlasLogicalAssetId: string;
   readonly directionalAtlasLogicalAssetId: string;
   readonly syncLineLogicalAssetId?: string;
+  readonly comboAnimationLogicalAssetId?: string;
 }
 
 export interface RenderPoolIdentityPlan {
@@ -103,7 +104,16 @@ export interface RenderFieldObjectPlan {
   readonly rotationDegrees: RenderFloat32;
   readonly color: RenderColor;
   readonly ordering: RenderOrderingKey;
-  readonly maskObjectId: null;
+  readonly maskObjectId: string | null;
+}
+
+export interface RenderFieldMaskPlan {
+  readonly renderObjectId: string;
+  readonly polygon: readonly RenderVector2[];
+  readonly position: RenderVector3;
+  readonly scale: RenderVector2;
+  readonly rotationDegrees: RenderFloat32;
+  readonly ordering: RenderOrderingKey;
 }
 
 export class RenderOwnerTransaction {
@@ -141,6 +151,8 @@ export class RenderOwnerTransaction {
   }
 }
 
+const RENDER_ONE = Object.freeze({ value: 1, bits: "3F800000" });
+
 const HUD_OBJECTS = Object.freeze({
   addScore: "render:hud:add-score",
   combo: "render:hud:combo",
@@ -156,6 +168,7 @@ export class RenderCommandProducer {
   private substep = 0;
   private readonly createdObjectIds: string[] = [];
   private readonly creationSequenceByObjectId = new Map<string, number>();
+  private readonly hudAnimationElapsedSeconds = new Map<"combo" | "life-heal", number>();
 
   constructor(
     readonly sessionId: string,
@@ -172,7 +185,9 @@ export class RenderCommandProducer {
       snapshot.sessionId !== this.sessionId ||
       snapshot.fault !== null ||
       !isNonEmpty(this.resources.noteAtlasLogicalAssetId) ||
-      !isNonEmpty(this.resources.directionalAtlasLogicalAssetId)
+      !isNonEmpty(this.resources.directionalAtlasLogicalAssetId) ||
+      (this.resources.comboAnimationLogicalAssetId !== undefined &&
+        !isNonEmpty(this.resources.comboAnimationLogicalAssetId))
     ) {
       return evidenceRequired(
         "render.producer.invalid-session-or-resource-bindings",
@@ -231,6 +246,7 @@ export class RenderCommandProducer {
       });
     };
     create(HUD_OBJECTS.addScore, "hud-overlay");
+    commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: HUD_OBJECTS.addScore });
     create(HUD_OBJECTS.combo, "hud-combo");
     commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: HUD_OBJECTS.combo });
     create(HUD_OBJECTS.result, "hud-result");
@@ -243,6 +259,7 @@ export class RenderCommandProducer {
       hudRole: "score",
       state: Object.freeze({ score: record.score }),
     });
+    commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: HUD_OBJECTS.score });
     create(HUD_OBJECTS.life, "hud-life");
     commands.push({
       ...base(commands.length),
@@ -251,6 +268,7 @@ export class RenderCommandProducer {
       hudRole: "life",
       state: lifeHudState(record),
     });
+    commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: HUD_OBJECTS.life });
     create(HUD_OBJECTS.overlay, "hud-overlay");
     commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: HUD_OBJECTS.overlay });
     const fidelity = this.renderer.snapshot().fidelity;
@@ -262,6 +280,11 @@ export class RenderCommandProducer {
         renderObjectId: HUD_OBJECTS.fidelity,
         hudRole: "fidelity-label",
         state: Object.freeze({ label: fidelity.visibleLabel, visible: true }),
+      });
+      commands.push({
+        ...base(commands.length),
+        kind: "activate-object",
+        renderObjectId: HUD_OBJECTS.fidelity,
       });
     }
     return this.preflight(commands, () => this.recordCreatedObjects(created));
@@ -286,6 +309,13 @@ export class RenderCommandProducer {
     });
     commands.push({
       ...base(commands.length),
+      kind: plan.reflect.totalOrdinaryScore + plan.reflect.totalFreeLiveEventBonusScore === 0
+        ? "hide-object"
+        : "activate-object",
+      renderObjectId: HUD_OBJECTS.addScore,
+    });
+    commands.push({
+      ...base(commands.length),
       kind: "set-hud",
       renderObjectId: HUD_OBJECTS.combo,
       hudRole: "combo",
@@ -294,6 +324,29 @@ export class RenderCommandProducer {
         allPerfect: plan.record.allPerfect,
       }),
     });
+    if (
+      plan.record.currentCombo > 0 &&
+      this.resources.comboAnimationLogicalAssetId !== undefined
+    ) {
+      commands.push({
+        ...base(commands.length),
+        kind: "play-animation",
+        renderObjectId: HUD_OBJECTS.combo,
+        animationRole: "combo",
+        restart: true,
+      });
+    } else if (
+      plan.record.currentCombo === 0 &&
+      this.hudAnimationElapsedSeconds.has("combo")
+    ) {
+      commands.push({
+        ...base(commands.length),
+        kind: "stop-animation",
+        renderObjectId: HUD_OBJECTS.combo,
+        animationRole: "combo",
+        restart: false,
+      });
+    }
     commands.push({
       ...base(commands.length),
       kind: plan.record.currentCombo > 0 ? "activate-object" : "hide-object",
@@ -337,34 +390,149 @@ export class RenderCommandProducer {
       hudRole: "life",
       state: lifeHudState(plan.record),
     });
-    return this.preflight(commands);
+    return this.preflight(commands, () => {
+      if (
+        plan.record.currentCombo > 0 &&
+        this.resources.comboAnimationLogicalAssetId !== undefined
+      ) {
+        this.hudAnimationElapsedSeconds.set("combo", 0);
+      } else if (plan.record.currentCombo === 0) {
+        this.hudAnimationElapsedSeconds.delete("combo");
+      }
+      if (plan.lifeHealAnimation) {
+        this.hudAnimationElapsedSeconds.set("life-heal", 0);
+      }
+    });
+  }
+
+  preflightHudAnimationAdvance(
+    deltaTimeSeconds: number,
+  ): SimulatorResult<RenderOwnerTransaction> {
+    const validation = this.validate();
+    if (validation.status !== "ok") return validation;
+    if (!Number.isFinite(deltaTimeSeconds) || deltaTimeSeconds < 0) {
+      return evidenceRequired(
+        "render.producer.invalid-hud-animation-delta",
+        ["RPR-D12", "RPR-D13", "PR21", "PR24", "PR31"],
+        "Portable HUD animation sampling requires one non-negative finite engine delta and never a backend ticker.",
+      );
+    }
+    if (this.hudAnimationElapsedSeconds.size === 0 || deltaTimeSeconds === 0) {
+      return ok(new RenderOwnerTransaction(this.renderer, null));
+    }
+    const next = new Map<"combo" | "life-heal", number>();
+    const base = this.commandBase(this.substep);
+    const commands: RenderCommand[] = [];
+    for (const [role, elapsed] of this.hudAnimationElapsedSeconds) {
+      const nextElapsed = Math.fround(elapsed + deltaTimeSeconds);
+      const renderObjectId = role === "combo" ? HUD_OBJECTS.combo : HUD_OBJECTS.life;
+      if (nextElapsed >= 1) {
+        commands.push({
+          ...base(commands.length),
+          kind: "stop-animation",
+          renderObjectId,
+          animationRole: role,
+          restart: false,
+        });
+        if (role === "combo") {
+          commands.push({
+            ...base(commands.length),
+            kind: "hide-object",
+            renderObjectId,
+          });
+        }
+      } else {
+        const sample = createRenderFloat32(nextElapsed);
+        if (sample.status !== "ok") return sample;
+        commands.push({
+          ...base(commands.length),
+          kind: "sample-animation",
+          renderObjectId,
+          animationRole: role,
+          elapsedSeconds: sample.value,
+        });
+        next.set(role, nextElapsed);
+      }
+    }
+    return this.preflight(commands, () => {
+      this.hudAnimationElapsedSeconds.clear();
+      for (const [role, elapsed] of next) {
+        this.hudAnimationElapsedSeconds.set(role, elapsed);
+      }
+    });
   }
 
   preflightFieldSetup(
     plans: readonly RenderFieldObjectPlan[],
+    maskPlans: readonly RenderFieldMaskPlan[] = [],
   ): SimulatorResult<RenderOwnerTransaction> {
     const validation = this.validate();
     if (validation.status !== "ok") return validation;
+    const maskIds = new Set(maskPlans.map((plan) => plan.renderObjectId));
+    const objectIds = [...maskPlans, ...plans].map((plan) => plan.renderObjectId);
     if (
       plans.length === 0 ||
+      objectIds.some((renderObjectId) => !isNonEmpty(renderObjectId)) ||
+      new Set(objectIds).size !== objectIds.length ||
+      maskPlans.some((plan) =>
+        plan.polygon.length < 3 ||
+        plan.polygon.some((point) => !validateVector2(point)) ||
+        !validateVector3(plan.position) ||
+        !validateVector2(plan.scale) ||
+        !validateRenderFloat32(plan.rotationDegrees) ||
+        !validateOrdering(plan.ordering)
+      ) ||
       plans.some((plan) =>
-        !isNonEmpty(plan.renderObjectId) ||
         !isNonEmpty(plan.logicalAssetId) ||
         !isNonEmpty(plan.exactKey) ||
         (plan.role !== "field-line" && plan.role !== "judge-line") ||
-        plan.maskObjectId !== null
-      ) ||
-      new Set(plans.map((plan) => plan.renderObjectId)).size !== plans.length
+        (plan.maskObjectId !== null && !maskIds.has(plan.maskObjectId))
+      )
     ) {
       return evidenceRequired(
         "render.producer.invalid-field-plan",
         ["RPR-D08", "RPR-D13", "PR18", "PR39"],
-        "Field setup requires non-empty unique identities, exact local resource/key routes and the confirmed unmasked field/judge roles.",
+        "Field setup requires unique typed field/judge identities and every visible-inside mask must be an explicit polygon referenced within the same atomic setup.",
       );
     }
     const base = this.commandBase(0);
     const commands: RenderCommand[] = [];
     const created: string[] = [];
+    const white = renderWhite();
+    for (const plan of maskPlans) {
+      created.push(plan.renderObjectId);
+      commands.push({
+        ...base(commands.length),
+        kind: "create-object",
+        renderObjectId: plan.renderObjectId,
+        poolFamily: "field-mask",
+        role: "mask",
+        parentObjectId: null,
+      });
+      commands.push({
+        ...base(commands.length),
+        kind: "set-mask",
+        renderObjectId: plan.renderObjectId,
+        mode: "visible-inside",
+        polygon: plan.polygon,
+      });
+      commands.push({
+        ...base(commands.length),
+        kind: "set-transform",
+        renderObjectId: plan.renderObjectId,
+        position: plan.position,
+        scale: plan.scale,
+        rotationDegrees: plan.rotationDegrees,
+        color: white,
+        ordering: plan.ordering,
+        maskObjectId: null,
+      });
+      commands.push({
+        ...base(commands.length),
+        kind: "activate-object",
+        renderObjectId: plan.renderObjectId,
+      });
+    }
     for (const plan of plans) {
       created.push(plan.renderObjectId);
       commands.push({
@@ -392,7 +560,7 @@ export class RenderCommandProducer {
         rotationDegrees: plan.rotationDegrees,
         color: plan.color,
         ordering: plan.ordering,
-        maskObjectId: null,
+        maskObjectId: plan.maskObjectId,
       });
       commands.push({
         ...base(commands.length),
@@ -1045,6 +1213,7 @@ export class RenderCommandProducer {
     return this.preflight(commands, () => {
       this.createdObjectIds.length = 0;
       this.creationSequenceByObjectId.clear();
+      this.hudAnimationElapsedSeconds.clear();
     });
   }
 
@@ -1232,11 +1401,14 @@ function resolveLaneSuffix(
 function lifeHudState(
   record: InGameRecordSnapshot,
 ): Readonly<Record<string, string | number | boolean | null>> {
+  const ratio = Math.fround(record.currentLife / 1000);
   return Object.freeze({
     currentLife: record.currentLife,
     playerMaxLife: record.playerMaxLife,
     lifeUpperLimit: record.lifeUpperLimit,
     singleGameOver: record.singleGameOver,
+    primaryFill: Math.fround(Math.min(ratio, 1)),
+    secondaryFill: Math.fround(Math.max(ratio - 1, 0)),
   });
 }
 
@@ -1280,11 +1452,33 @@ function resolveOrdinaryLaneIndex(
       );
 }
 
-function validateVector3(value: RenderVector3): boolean {
+function validateVector2(value: RenderVector2): boolean {
   return value !== null && typeof value === "object" &&
     validateRenderFloat32(value.x) &&
-    validateRenderFloat32(value.y) &&
+    validateRenderFloat32(value.y);
+}
+
+function validateVector3(value: RenderVector3): boolean {
+  return value !== null && typeof value === "object" &&
+    validateVector2(value) &&
     validateRenderFloat32(value.z);
+}
+
+function validateOrdering(value: RenderOrderingKey): boolean {
+  return Number.isSafeInteger(value.domainLayer) &&
+    Number.isSafeInteger(value.sourceDepthOrSortingOrder) &&
+    validateRenderFloat32(value.sourceZ) &&
+    Number.isSafeInteger(value.creationSequence) &&
+    value.creationSequence >= 0;
+}
+
+function renderWhite(): RenderColor {
+  return Object.freeze({
+    red: RENDER_ONE,
+    green: RENDER_ONE,
+    blue: RENDER_ONE,
+    alpha: RENDER_ONE,
+  });
 }
 
 function validateColor(value: RenderColor): boolean {

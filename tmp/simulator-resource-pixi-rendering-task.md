@@ -503,6 +503,15 @@
 - `damage_guard_animation`、`never_die_animation`、`judge_skill_animation`、`flick_icon_animation`与`multiple_directional_visual`继续false；Unity PlayerLoop subframe与GPU raster parity明确排除，不得由portable授权外推。
 - Reverse提交`fa288561`已push；Garupa冻结包由759项增至790项，新增22 target/22 slice、R3 trace与visible profile，source verifier通过。production Pixi消费必须在独立后续提交完成。
 
+### 1.55 2026-08-02 RP06/RP08/RP09/RP11 visible Pixi production子批
+
+- typed command contract新增显式`set-mask` visible-inside polygon与`sample-animation` non-negative Float32 elapsed；Recording backend深冻结/验证同一合同，禁止Pixi默认mask geometry或backend ticker。
+- field producer允许同一atomic setup先创建typed mask polygon，再由field/judge transform引用；未在同batch声明、少于3点或Float32/order无效的mask identity在scene mutation前失败关闭。
+- HUD producer显式激活Score/Life/fidelity label、管理AddScore/Combo显隐，并按current `InGameLifeGauge.UpdateView` ARM64锁定`ratio=currentLife/1000`、primary=`min(ratio,1)`、secondary=`max(ratio-1,0)`；不使用通用clamp。
+- Combo与Life Heal使用owner-local 1秒command clock；每个engine frame提交Float32 sample，pause时`ExecUpdate`不进入因此冻结，restart归零，1秒Stop；Combo仅在显式`comboAnimationLogicalAssetId`绑定时启用，未授权role继续拒绝。
+- Pixi v8新增R3 state shape validation、exact Combo/AP digit subtexture、Score/Result/AddScore/fidelity portable Text、Life双Graphics fill、explicit Graphics polygon mask及frozen polynomial Combo/Life sampling；Guard/NeverDie/Judge/Flick/Multiple和threshold仍失败关闭。
+- 本批隔离tsc通过；既有render-contract命令索引oracle因新增显隐命令预期失败，按production/test分批纪律留给下一独立test提交更新，不以旧索引回退production顺序。
+
 ## 2. 固定范围
 
 ### 2.1 纳入范围
