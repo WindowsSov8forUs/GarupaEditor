@@ -70,7 +70,7 @@ interface PixiObjectRecord {
   maskContent: Graphics | null;
   maskVertexCount: number | null;
   hudVisual: PixiHudVisual | null;
-  activeAnimationRole: "combo" | "life-heal" | null;
+  activeAnimationRole: "combo" | "life-heal" | "score-skill" | null;
   animationElapsedSeconds: number | null;
 }
 
@@ -79,7 +79,7 @@ interface PixiShadowObject {
   readonly parentObjectId: string | null;
   readonly materialBound: boolean;
   readonly maskConfigured: boolean;
-  readonly activeAnimationRole: "combo" | "life-heal" | null;
+  readonly activeAnimationRole: "combo" | "life-heal" | "score-skill" | null;
 }
 
 export class PixiRendererBackend implements SimulatorRendererBackend {
@@ -380,7 +380,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     readonly maskVertexCount: number | null;
     readonly hudText: string | null;
     readonly hudFillRatios: readonly [number, number] | null;
-    readonly activeAnimationRole: "combo" | "life-heal" | null;
+    readonly activeAnimationRole: "combo" | "life-heal" | "score-skill" | null;
     readonly animationElapsedSeconds: number | null;
   }[] {
     const idsByNode = new Map([...this.objects].map(([id, value]) => [value.node, id]));
@@ -466,6 +466,9 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           command.materialRole === "multiple-directional-line";
       case "play-animation":
       case "stop-animation":
+        return command.animationRole === "combo" ||
+          command.animationRole === "life-heal" ||
+          command.animationRole === "score-skill";
       case "sample-animation":
         return command.animationRole === "combo" || command.animationRole === "life-heal";
       case "set-threshold":
@@ -960,7 +963,7 @@ type SetMeshCommand = Extract<RenderCommand, { readonly kind: "set-mesh" }>;
 type SetLineCommand = Extract<RenderCommand, { readonly kind: "set-line" }>;
 type SetMaskCommand = Extract<RenderCommand, { readonly kind: "set-mask" }>;
 type SetHudCommand = Extract<RenderCommand, { readonly kind: "set-hud" }>;
-type EvidenceAnimationRole = "combo" | "life-heal";
+type EvidenceAnimationRole = "combo" | "life-heal" | "score-skill";
 
 function createEvidenceMask(command: SetMaskCommand): Graphics {
   const points = command.polygon.flatMap((point) => [point.x.value, point.y.value]);
@@ -1006,11 +1009,18 @@ function isEvidenceHud(
         typeof state.singleGameOver === "boolean" &&
         isUnitFill(state.primaryFill) && isNonNegativeFinite(state.secondaryFill);
     case "overlay":
-      return objectRole === "hud-overlay" &&
+      return objectRole === "hud-overlay" && (
         exactStateKeys(state, ["addScore", "freeLiveEventBonusAddScore"]) &&
-        typeof state.addScore === "number" && Number.isFinite(state.addScore) &&
-        typeof state.freeLiveEventBonusAddScore === "number" &&
-        Number.isFinite(state.freeLiveEventBonusAddScore);
+          typeof state.addScore === "number" && Number.isFinite(state.addScore) &&
+          typeof state.freeLiveEventBonusAddScore === "number" &&
+          Number.isFinite(state.freeLiveEventBonusAddScore) ||
+        exactStateKeys(state, [
+          "currentSkillNoteIndex", "scoreGaugeActive", "scoreSkill", "skillActive",
+        ]) && state.skillActive === true &&
+          typeof state.scoreSkill === "boolean" &&
+          typeof state.scoreGaugeActive === "boolean" &&
+          isNonNegativeSafeInteger(state.currentSkillNoteIndex)
+      );
     case "fidelity-label":
       return objectRole === "fidelity-label" &&
         exactStateKeys(state, ["label", "visible"]) &&
@@ -1099,9 +1109,14 @@ function applyEvidenceHud(
       break;
     }
     case "overlay": {
-      object.node.position.set(389, 51);
-      const total = (state.addScore as number) + (state.freeLiveEventBonusAddScore as number);
-      setHudText(visual.text, total === 0 ? "" : `+${total}`, 30, 0xffffff);
+      if (Object.prototype.hasOwnProperty.call(state, "skillActive")) {
+        object.node.position.set(800, 120);
+        setHudText(visual.text, state.scoreSkill ? "SCORE UP" : "SKILL", 30, 0xffffff);
+      } else {
+        object.node.position.set(389, 51);
+        const total = (state.addScore as number) + (state.freeLiveEventBonusAddScore as number);
+        setHudText(visual.text, total === 0 ? "" : `+${total}`, 30, 0xffffff);
+      }
       break;
     }
     case "fidelity-label":
@@ -1148,7 +1163,13 @@ function applyEvidenceAnimation(
     return;
   }
   const visual = object.hudVisual;
-  if (visual === null) throw new Error("life HUD missing before animation");
+  if (visual === null) throw new Error("HUD missing before animation");
+  if (role === "score-skill") {
+    visual.animationLayer.visible = true;
+    visual.animationLayer.scale.set(1);
+    visual.animationLayer.alpha = 1;
+    return;
+  }
   visual.animationLayer.visible = true;
   visual.animationLayer.scale.set(
     samplePolynomialCurve(LIFE_ICON_SCALE_KEYS, elapsedSeconds),
@@ -1230,11 +1251,14 @@ function isNonNegativeFinite(value: unknown): value is number {
 
 function animationMatchesRole(role: string, objectRole: string): boolean {
   return role === "combo" && objectRole === "hud-combo" ||
-    role === "life-heal" && objectRole === "hud-life";
+    role === "life-heal" && objectRole === "hud-life" ||
+    role === "score-skill" && objectRole === "hud-overlay";
 }
 
 function requireEvidenceAnimationRole(role: string): EvidenceAnimationRole {
-  if (role !== "combo" && role !== "life-heal") throw new Error("unsupported animation role");
+  if (role !== "combo" && role !== "life-heal" && role !== "score-skill") {
+    throw new Error("unsupported animation role");
+  }
   return role;
 }
 

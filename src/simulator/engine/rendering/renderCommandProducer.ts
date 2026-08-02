@@ -26,8 +26,10 @@ import {
   type SimulatorResult,
 } from "../evidence";
 import type { NoteFamily } from "../data/noteData";
+import { SkillActivateEffectType } from "../data/scoreLifeState";
 import type { InGameRecordSnapshot } from "../managers/inGameRecord";
 import type { ScoreLifeReflectPlan } from "../managers/scoreLifeStateManager";
+import type { SituationSkillSnapshot } from "../managers/situationSkillManager";
 import {
   advanceOrdinaryLongNormalChild,
   buildOrdinaryLongNormalMesh,
@@ -58,6 +60,7 @@ export interface RenderEngineResourceBindings {
   readonly multipleDirectionalLineLeftLogicalAssetId?: string;
   readonly multipleDirectionalLineRightLogicalAssetId?: string;
   readonly comboAnimationLogicalAssetId?: string;
+  readonly scoreSkillAnimationLogicalAssetId?: string;
 }
 
 export interface RenderPoolIdentityPlan {
@@ -185,6 +188,8 @@ export class RenderCommandProducer {
   private readonly createdObjectIds: string[] = [];
   private readonly creationSequenceByObjectId = new Map<string, number>();
   private readonly hudAnimationElapsedSeconds = new Map<"combo" | "life-heal", number>();
+  private resultElapsedSeconds: number | null = null;
+  private scoreSkillAnimationActive = false;
 
   constructor(
     readonly sessionId: string,
@@ -203,7 +208,9 @@ export class RenderCommandProducer {
       !isNonEmpty(this.resources.noteAtlasLogicalAssetId) ||
       !isNonEmpty(this.resources.directionalAtlasLogicalAssetId) ||
       (this.resources.comboAnimationLogicalAssetId !== undefined &&
-        !isNonEmpty(this.resources.comboAnimationLogicalAssetId))
+        !isNonEmpty(this.resources.comboAnimationLogicalAssetId)) ||
+      (this.resources.scoreSkillAnimationLogicalAssetId !== undefined &&
+        !isNonEmpty(this.resources.scoreSkillAnimationLogicalAssetId))
     ) {
       return evidenceRequired(
         "render.producer.invalid-session-or-resource-bindings",
@@ -418,6 +425,69 @@ export class RenderCommandProducer {
       if (plan.lifeHealAnimation) {
         this.hudAnimationElapsedSeconds.set("life-heal", 0);
       }
+      this.resultElapsedSeconds = 0;
+    });
+  }
+
+  preflightHudSkillTransition(
+    before: SituationSkillSnapshot,
+    after: SituationSkillSnapshot,
+  ): SimulatorResult<RenderOwnerTransaction> {
+    const validation = this.validate();
+    if (validation.status !== "ok") return validation;
+    const started = before.state !== 2 && after.state === 2;
+    const finished = before.state === 2 && after.state !== 2;
+    if (!started && !finished) return ok(new RenderOwnerTransaction(this.renderer, null));
+    const scoreTypes = new Set<number>([
+      SkillActivateEffectType.Score,
+      SkillActivateEffectType.ScoreOverLife,
+      SkillActivateEffectType.ScoreUnderLife,
+      SkillActivateEffectType.ScoreContinuedNoteJudge,
+      SkillActivateEffectType.ScoreRateUpWithPerfect,
+      SkillActivateEffectType.ScoreOnlyPerfect,
+      SkillActivateEffectType.ScoreUnderGreatHalf,
+    ]);
+    const scoreSkill = started && after.activeEffectTypes.some((type) => scoreTypes.has(type));
+    const base = this.commandBase(this.substep);
+    const commands: RenderCommand[] = [];
+    if (started) {
+      commands.push({
+        ...base(commands.length),
+        kind: "set-hud",
+        renderObjectId: HUD_OBJECTS.overlay,
+        hudRole: "overlay",
+        state: Object.freeze({
+          skillActive: true,
+          scoreSkill,
+          scoreGaugeActive: scoreSkill,
+          currentSkillNoteIndex: after.currentSkillNoteIndex,
+        }),
+      });
+      commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: HUD_OBJECTS.overlay });
+      if (scoreSkill && this.resources.scoreSkillAnimationLogicalAssetId !== undefined) {
+        commands.push({
+          ...base(commands.length),
+          kind: "play-animation",
+          renderObjectId: HUD_OBJECTS.overlay,
+          animationRole: "score-skill",
+          restart: true,
+        });
+      }
+    } else {
+      if (this.scoreSkillAnimationActive) {
+        commands.push({
+          ...base(commands.length),
+          kind: "stop-animation",
+          renderObjectId: HUD_OBJECTS.overlay,
+          animationRole: "score-skill",
+          restart: false,
+        });
+      }
+      commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: HUD_OBJECTS.overlay });
+    }
+    return this.preflight(commands, () => {
+      this.scoreSkillAnimationActive = started && scoreSkill &&
+        this.resources.scoreSkillAnimationLogicalAssetId !== undefined;
     });
   }
 
@@ -433,10 +503,14 @@ export class RenderCommandProducer {
         "Portable HUD animation sampling requires one non-negative finite engine delta and never a backend ticker.",
       );
     }
-    if (this.hudAnimationElapsedSeconds.size === 0 || deltaTimeSeconds === 0) {
+    if (
+      (this.hudAnimationElapsedSeconds.size === 0 && this.resultElapsedSeconds === null) ||
+      deltaTimeSeconds === 0
+    ) {
       return ok(new RenderOwnerTransaction(this.renderer, null));
     }
     const next = new Map<"combo" | "life-heal", number>();
+    let nextResultElapsed = this.resultElapsedSeconds;
     const base = this.commandBase(this.substep);
     const commands: RenderCommand[] = [];
     for (const [role, elapsed] of this.hudAnimationElapsedSeconds) {
@@ -470,11 +544,19 @@ export class RenderCommandProducer {
         next.set(role, nextElapsed);
       }
     }
+    if (this.resultElapsedSeconds !== null) {
+      nextResultElapsed = Math.fround(this.resultElapsedSeconds + deltaTimeSeconds);
+      if (nextResultElapsed >= 1) {
+        commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: HUD_OBJECTS.result });
+        nextResultElapsed = null;
+      }
+    }
     return this.preflight(commands, () => {
       this.hudAnimationElapsedSeconds.clear();
       for (const [role, elapsed] of next) {
         this.hudAnimationElapsedSeconds.set(role, elapsed);
       }
+      this.resultElapsedSeconds = nextResultElapsed;
     });
   }
 
@@ -1629,6 +1711,8 @@ export class RenderCommandProducer {
       this.createdObjectIds.length = 0;
       this.creationSequenceByObjectId.clear();
       this.hudAnimationElapsedSeconds.clear();
+      this.resultElapsedSeconds = null;
+      this.scoreSkillAnimationActive = false;
     });
   }
 

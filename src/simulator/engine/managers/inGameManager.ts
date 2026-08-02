@@ -121,7 +121,17 @@ export class InGameManager {
         "PlayingNone requires the original OneFrame input-inspection list, which is outside the first slice.",
       );
     }
+    const skillBefore = this.scoreLifeStateManager?.snapshot().skill ?? null;
     this.scoreLifeStateManager?.update(deltaTimeSeconds);
+    if (skillBefore !== null && this.scoreLifeStateManager !== null && this.renderProducer !== null) {
+      const skillRender = this.renderProducer.preflightHudSkillTransition(
+        skillBefore,
+        this.scoreLifeStateManager.snapshot().skill,
+      );
+      if (skillRender.status !== "ok") return this.latchFault(skillRender);
+      const committed = skillRender.value.commit();
+      if (committed.status !== "ok") return this.latchFault(committed);
+    }
     const updateResult = this.noteManager.execUpdate(deltaTimeSeconds);
     if (updateResult.status !== "ok") {
       return this.latchFault(updateResult);

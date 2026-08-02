@@ -12,7 +12,7 @@
 - 锁定`libil2cpp.so` SHA-256：`815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F`。
 - 锁定`global-metadata.dat` SHA-256：`298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F`。
 - 当前Reverse基线提交：`e9621946c88ebe20e694bdb313294a32fe62a647`；只消费该提交及其祖先中已提交、已push、可校验对象。
-- 当前状态：**2026-08-02 R4 production已接入；R5 core/overlay新增30,975 events/1,059 frames并冻结至817项，只授权Result lifetime、Score skill、ScoreGauge、Life skill lifecycle与generic Skill display五条route。AddScore/JudgeTiming/AP完整动画/Guard/NeverDie/changeable text/field setup、advanced/threshold及production chart replay继续失败关闭；当前矩阵仍为17 closed/current-subset、16 partial、7 blocked，RP14不通过。**
+- 当前状态：**2026-08-02 R4 production已接入；R5 core/overlay新增30,975 events/1,059 frames并冻结至817项，只授权Result lifetime、Score skill、ScoreGauge、Life skill lifecycle与generic Skill display五条route。AddScore/JudgeTiming/AP完整动画/Guard/NeverDie/changeable text/field setup、advanced/threshold及production chart replay继续失败关闭；R5 production消费后矩阵为17 closed/current-subset、17 partial、6 blocked，RP14不通过。**
 - 计划证据包：`tmp/simulator-reverse-evidence/resource-pixi-rendering/`，只在Reverse新证据提交并push后创建。
 - 计划验收记录：`tmp/simulator-resource-pixi-rendering-acceptance.md`，RP14时创建。
 
@@ -573,6 +573,13 @@
 - 正向授权仅为Result show/change/hide lifetime、Score skill animation、ScoreGauge On/Off、Life skill start/finish及generic Skill display；R3 LifeHeal与serialized field/mask边界保持独立有效，不冒充R5观察。
 - field在post-start 11秒与14秒稳定attach时均只观察到frame anchor，五个ButtonManager setup owner已结束；失败trace删除。AddScore、JudgeTiming、完整AP、Guard、NeverDie、warning/GameOver直接setter与changeable text也保持false。
 - Garupa冻结包升至817项；source verifier通过。后续production只能消费五个true route，不能按job标题扩大为完整HUD/field。
+
+### 1.64 2026-08-02 R5授权HUD production消费
+
+- `SituationSkillSnapshot`只新增领域派生的active effect type列表；InGameManager在Skill state进入/离开Playing时产生typed overlay transaction，不读取Reverse profile或测试身份。
+- generic Skill display在start时显式set/activate、finish时hide；仅Score类effect启用ScoreGauge语义和`score-skill` Animator start/stop。Pixi开放该独立HUD role，不为Judge/Guard/NeverDie伪造路线，也不使用backend ticker。
+- Result owner-local计时在每次Reflect重置，engine clock累计到1秒时hide；pause不进入update，因此自然冻结。R5未观察JudgeTiming，PR27仍partial。
+- recording与actual Pixi正向oracle覆盖Skill display→ScoreGauge→Animator顺序、finish stop→hide、Result 1秒与release。PR32由blocked降为partial；矩阵更新为17 closed/current-subset、17 partial、6 blocked，RP14仍不通过。
 
 ## 2. 固定范围
 

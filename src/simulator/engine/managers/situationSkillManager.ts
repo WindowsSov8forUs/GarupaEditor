@@ -17,6 +17,7 @@ export interface SituationSkillSnapshot {
   readonly state: 0 | 1 | 2 | 3;
   readonly queue: readonly number[];
   readonly currentSkillNoteIndex: number | null;
+  readonly activeEffectTypes: readonly number[];
   readonly skillTimer: number;
   readonly finishingTimer: number;
   readonly reservationFrame: number;
@@ -196,6 +197,9 @@ export class SituationSkillManager {
       state: this.stateValue,
       queue: this.queueValue.map((profile) => profile.skillNoteIndex),
       currentSkillNoteIndex: this.currentValue?.skillNoteIndex ?? null,
+      activeEffectTypes: Object.freeze(
+        this.currentValue?.activeEffects.map((effect) => effect.type) ?? [],
+      ),
       skillTimer: this.skillTimerValue,
       finishingTimer: this.finishingTimerValue,
       reservationFrame: this.reservationFrameValue,
