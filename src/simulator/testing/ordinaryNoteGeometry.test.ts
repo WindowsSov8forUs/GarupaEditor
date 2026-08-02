@@ -16,6 +16,7 @@ import {
   advanceOrdinaryNoteActivationAdjustment,
   advanceOrdinaryNoteMotion,
   buildOrdinaryBaseNoteMesh,
+  buildOrdinaryMultipleDirectionalLine,
   buildOrdinarySyncLine,
   getOrdinaryNoteArrivalSeconds,
   type OrdinaryBaseNoteMeshOwnerState,
@@ -279,8 +280,17 @@ function main(): void {
   equal(activationRenderer.nextSequence, 2, "activation preflight consumes no sequence");
   requireOk(preparedActivation.transaction.commit(), "commit ordinary activation");
   equal(activationRenderer.nextSequence, 8, "activation commits all six ordered commands");
+  const flickPrepared = requireOk(activationProducer.preflightOrdinaryNoteActivation(
+    "normal:0",
+    { ...activationInformation, fireNoteType: FrontNoteType.Flick },
+    f32(120),
+    f32(97),
+    fixedScene,
+    1,
+  ), "R4 front Flick activation preflight");
+  flickPrepared.transaction.discard();
+  equal(flickPrepared.slideChildStates, null, "R4 Flick has no synthetic Slide child state");
   for (const unsupportedFront of [
-    FrontNoteType.Flick,
     FrontNoteType.DirectionalFlick,
     FrontNoteType.Long,
     FrontNoteType.SlideA,
@@ -496,6 +506,29 @@ function main(): void {
   equal(floatBytes(reverse.start.x), "00000040", "reverse direction excluded A margin");
   equal(floatBytes(reverse.end.x), "8FC2F5BF", "reverse direction applies B margin inward");
   equal(floatBytes(reverse.width), "2506813E", "reverse width still uses target A local scale");
+
+  const multipleLine = requireOk(buildOrdinaryMultipleDirectionalLine({
+    targetA: Object.freeze({
+      progressRate: f32(0.5),
+      position: vector3(2, 1.25, -13),
+      localScale: vector3(1.2, 1.2, 0),
+    }),
+    targetB: Object.freeze({
+      progressRate: f32(0.5),
+      position: vector3(-2, 1, -13.5),
+      localScale: vector3(0.8, 0.8, 0),
+    }),
+  }), "build R4 MultipleDirectional back line");
+  equal(floatBytes(multipleLine.start.x), "000000C0",
+    "R4 back line sorts the lower-X target first");
+  equal(floatBytes(multipleLine.end.x), "00000040",
+    "R4 back line sorts the higher-X target second");
+  equal(floatBytes(multipleLine.start.z), "000058C1",
+    "R4 back line preserves complete lower-X target XYZ");
+  equal(floatBytes(multipleLine.end.z), "000050C1",
+    "R4 back line preserves complete higher-X target XYZ");
+  equal(floatBytes(multipleLine.width), "6766663F",
+    "R4 back line width uses target A localScale.x times Float32 0.75");
 
   const badButton = buildOrdinaryBaseNoteMesh({
     ...meshState,

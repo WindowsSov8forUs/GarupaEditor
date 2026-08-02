@@ -27,7 +27,10 @@ import type { ScoreLifeStateProfile } from "../engine/data/scoreLifeState";
 import { evidenceRequired, ok, type SimulatorResult } from "../engine/evidence";
 import { InGameRecord } from "../engine/managers/inGameRecord";
 import { validateOrdinaryRenderedBatchAuthorization } from "../engine/managers/noteManager";
-import { RenderCommandProducer } from "../engine/rendering/renderCommandProducer";
+import {
+  RenderCommandProducer,
+  resolveFrontSpriteBinding,
+} from "../engine/rendering/renderCommandProducer";
 import { createSimulatorEngine } from "../host/createSimulatorEngine";
 import { engineInput, noteBatch } from "./firstSliceFixtures";
 
@@ -41,6 +44,11 @@ const RESOURCES = Object.freeze({
 const SYNC_RESOURCES = Object.freeze({
   ...RESOURCES,
   syncLineLogicalAssetId: "asset.sync-line",
+});
+const R4_RESOURCES = Object.freeze({
+  ...RESOURCES,
+  multipleDirectionalLineLeftLogicalAssetId: "asset.multiple-directional-line-left",
+  multipleDirectionalLineRightLogicalAssetId: "asset.multiple-directional-line-right",
 });
 const BYTES = Uint8Array.from([1, 2, 3, 4]);
 
@@ -86,7 +94,13 @@ class LocalProvider implements SimulatorResourceProvider {
     if (this.mode === "throw") throw new Error("provider failure");
     if (
       this.mode === "reject" ||
-      (logicalAssetId !== "asset.note" && logicalAssetId !== "asset.sync-line")
+      ![
+        "asset.note",
+        "asset.directional",
+        "asset.sync-line",
+        "asset.multiple-directional-line-left",
+        "asset.multiple-directional-line-right",
+      ].includes(logicalAssetId)
     ) {
       return evidenceRequired(
         "test.provider.missing",
@@ -220,6 +234,50 @@ function longProfile(): RenderResourceProfile {
   };
 }
 
+function r4Profile(): RenderResourceProfile {
+  const base = profile();
+  const row = base.assets[0]!.atlasRows[0]!;
+  return {
+    ...base,
+    assets: Object.freeze([
+      Object.freeze({
+        ...base.assets[0]!,
+        atlasRows: Object.freeze([
+          ...base.assets[0]!.atlasRows,
+          Object.freeze({ ...row, exactKey: "note_flick_0" }),
+        ]),
+      }),
+      Object.freeze({
+        ...base.assets[0]!,
+        logicalAssetId: "asset.directional",
+        role: "directional-atlas" as const,
+        atlasRows: Object.freeze([
+          Object.freeze({ ...row, exactKey: "note_flick_l_0" }),
+          Object.freeze({ ...row, exactKey: "note_flick_l_1" }),
+          Object.freeze({ ...row, exactKey: "note_flick_r_0" }),
+          Object.freeze({ ...row, exactKey: "note_flick_r_1" }),
+        ]),
+      }),
+      Object.freeze({
+        ...base.assets[0]!,
+        logicalAssetId: "asset.multiple-directional-line-left",
+        role: "material-texture" as const,
+        atlasRows: Object.freeze([]),
+        materialRole: "multiple-directional-line" as const,
+        animationRole: "none" as const,
+      }),
+      Object.freeze({
+        ...base.assets[0]!,
+        logicalAssetId: "asset.multiple-directional-line-right",
+        role: "material-texture" as const,
+        atlasRows: Object.freeze([]),
+        materialRole: "multiple-directional-line" as const,
+        animationRole: "none" as const,
+      }),
+    ]),
+  };
+}
+
 function syncProfile(): RenderResourceProfile {
   const base = profile();
   return {
@@ -336,6 +394,16 @@ const LONG_RENDERING = Object.freeze({
   resources: RESOURCES,
   ordinaryNoteScene: ORDINARY_LONG_NOTE_SCENE,
 });
+const R4_RENDERING = Object.freeze({
+  sessionId: SESSION,
+  resources: R4_RESOURCES,
+  ordinaryNoteScene: ORDINARY_NOTE_SCENE,
+});
+const R4_SLIDE_RENDERING = Object.freeze({
+  sessionId: SESSION,
+  resources: RESOURCES,
+  ordinaryNoteScene: ORDINARY_LONG_NOTE_SCENE,
+});
 
 function renderedNoteBatch(testingId: string, absolutePos: number) {
   const batch = noteBatch([testingId], absolutePos);
@@ -365,6 +433,44 @@ function renderedLongNoteBatch(absolutePos: number, afterAbsolutePos: number) {
       afterNoteType: AfterNoteType.Normal,
       afterNoteAbsolutePos: afterAbsolutePos,
     }))),
+  });
+}
+
+function renderedSlideNoteBatch(absolutePos: number) {
+  const batch = renderedNoteBatch("render-slide-r4", absolutePos);
+  const root = batch.informationList[0]!;
+  const child = (
+    index: number,
+    childAbsolutePos: number,
+    isInvisible: boolean,
+    terminal: boolean,
+  ) => Object.freeze({
+    ...root,
+    index,
+    isSlideNoteHead: false,
+    isInvisible,
+    absolutePos: childAbsolutePos,
+    storedAbsolutePos: childAbsolutePos,
+    gameNoteType: terminal ? GameNoteType.SlideEndA : GameNoteType.SlideA,
+    fireNoteType: terminal ? FrontNoteType.None : FrontNoteType.SlideA,
+    afterNoteType: AfterNoteType.None,
+    slideNoteList: Object.freeze([]),
+  });
+  const children = Object.freeze([
+    child(root.index + 1, absolutePos + 48, true, false),
+    child(root.index + 2, absolutePos + 96, false, true),
+  ]);
+  return Object.freeze({
+    ...batch,
+    informationList: Object.freeze([Object.freeze({
+      ...root,
+      isSlideNoteHead: true,
+      gameNoteType: GameNoteType.SlideA,
+      fireNoteType: FrontNoteType.SlideA,
+      afterNoteType: AfterNoteType.None,
+      afterNoteAbsolutePos: absolutePos + 96,
+      slideNoteList: children,
+    })]),
   });
 }
 
@@ -1014,7 +1120,7 @@ async function testHostReadyGate(): Promise<void> {
   console.log("ok 8 - host ready and exact-session gate precedes owner mutation");
 }
 
-async function testUnpromotedNoteFamilyBoundaries(): Promise<void> {
+async function testR4NoteFamilyBoundaries(): Promise<void> {
   const normal = renderedNoteBatch("render-family-boundary", 96).informationList[0]!;
   const cases = [
     {
@@ -1028,24 +1134,9 @@ async function testUnpromotedNoteFamilyBoundaries(): Promise<void> {
       capability: "render.note.long-non-normal-tail-evidence-required",
     },
     {
-      label: "Flick",
-      information: { ...normal, fireNoteType: FrontNoteType.Flick },
-      capability: "render.note.flick-icon-lifecycle-evidence-required",
-    },
-    {
-      label: "Directional",
-      information: { ...normal, fireNoteType: FrontNoteType.DirectionalFlick },
-      capability: "render.note.flick-icon-lifecycle-evidence-required",
-    },
-    {
       label: "Slide",
       information: { ...normal, fireNoteType: FrontNoteType.SlideA },
       capability: "render.note.slide-child-chain-evidence-required",
-    },
-    {
-      label: "Multiple",
-      information: { ...normal, fireNoteType: FrontNoteType.MultipleDirectionalFlick },
-      capability: "render.note.multiple-directional-lifecycle-evidence-required",
     },
     {
       label: "Multiple side visual",
@@ -1064,11 +1155,43 @@ async function testUnpromotedNoteFamilyBoundaries(): Promise<void> {
   equal(validateOrdinaryRenderedBatchAuthorization([
     { ...normal, fireNoteType: FrontNoteType.Long, afterNoteType: AfterNoteType.Normal, afterNoteAbsolutePos: 192 },
   ]).status, "ok", "ordinary Long+Normal tail remains authorized");
+  equal(validateOrdinaryRenderedBatchAuthorization([
+    { ...normal, fireNoteType: FrontNoteType.Flick, gameNoteType: GameNoteType.Flick },
+  ]).status, "ok", "R4 front Flick is authorized");
+  equal(validateOrdinaryRenderedBatchAuthorization([
+    { ...normal, fireNoteType: FrontNoteType.DirectionalFlick, gameNoteType: GameNoteType.DirectionalFlickLeft },
+  ]).status, "ok", "R4 front Directional is authorized");
+  equal(validateOrdinaryRenderedBatchAuthorization([
+    { ...normal, fireNoteType: FrontNoteType.MultipleDirectionalFlick, gameNoteType: GameNoteType.DirectionalFlickLeft },
+  ]).status, "ok", "R4 MultipleDirectional root is authorized");
+  const laneButtons = Object.freeze([
+    ButtonType.Button_01_BMS_1P_01,
+    ButtonType.Button_02_BMS_1P_02,
+    ButtonType.Button_03_BMS_1P_03,
+    ButtonType.Button_04_BMS_1P_04,
+    ButtonType.Button_05_BMS_1P_05,
+    ButtonType.Button_06_BMS_1P_06,
+    ButtonType.Button_07_BMS_1P_07,
+  ]);
+  for (let width = 1; width <= 7; width += 1) {
+    const range = Object.freeze(laneButtons.slice(0, width));
+    const center = range[Math.floor((width - 1) / 2)]!;
+    const binding = requireOk(resolveFrontSpriteBinding({
+      ...normal,
+      fireNoteType: FrontNoteType.SlideA,
+      gameNoteType: GameNoteType.SlideA,
+      buttonType: center,
+      buttonTypes: range,
+      buttonTypesArray: range,
+    }, false, RESOURCES), `R4 Slide width ${width} binding`);
+    equal(binding.exactKey, `note_long_${center - ButtonType.Button_01_BMS_1P_01}`,
+      `R4 Slide width ${width} uses its authored center lane key`);
+  }
 
-  const renderer = new RecordingSimulatorRendererBackend();
-  requireOk(await renderer.prepare(SESSION, profile(), new LocalProvider(), preflight()),
-    "unsupported-family renderer prepare");
-  const flickBatch = renderedNoteBatch("render-flick-boundary", 96);
+  const flickRenderer = new RecordingSimulatorRendererBackend();
+  requireOk(await flickRenderer.prepare(SESSION, r4Profile(), new LocalProvider(), preflight()),
+    "R4 Flick renderer prepare");
+  const flickBatch = renderedNoteBatch("render-flick-r4", 96);
   const renderedFlickBatch = Object.freeze({
     ...flickBatch,
     informationList: Object.freeze(flickBatch.informationList.map((information) => Object.freeze({
@@ -1078,7 +1201,7 @@ async function testUnpromotedNoteFamilyBoundaries(): Promise<void> {
     }))),
   });
   const flickInput = engineInput([renderedFlickBatch]);
-  const engine = requireOk(createSimulatorEngine(
+  const flickEngine = requireOk(createSimulatorEngine(
     {
       ...flickInput,
       runtime: {
@@ -1088,20 +1211,127 @@ async function testUnpromotedNoteFamilyBoundaries(): Promise<void> {
           resultTransform: "identity-no-active-situation-skill" as const,
         },
       },
-      rendering: RENDERING,
+      rendering: R4_RENDERING,
     },
-    createRecordingSimulatorBackends(renderer),
-  ), "unsupported-family engine create");
-  requireOk(engine.initialize(), "unsupported-family engine initialize");
-  const beforeCommands = renderer.commandSnapshot().length;
-  const rejected = engine.step(0);
-  equal(rejected.status, "evidence-required", "unsupported family rejects at activation boundary");
-  equal(rejected.status === "evidence-required" ? rejected.capability : null,
-    "render.note.flick-icon-lifecycle-evidence-required", "activation preserves family capability");
-  equal(renderer.commandSnapshot().length, beforeCommands,
-    "unsupported family batch has zero renderer mutation");
-  requireOk(engine.dispose(), "dispose unsupported-family engine");
-  console.log("ok 9 - unpromoted Flick/Slide/Multiple families fail by exact authorization before mutation");
+    createRecordingSimulatorBackends(flickRenderer),
+  ), "R4 Flick engine create");
+  requireOk(flickEngine.initialize(), "R4 Flick engine initialize");
+  requireOk(flickEngine.step(0), "R4 Flick activates");
+  const flickCommands = flickRenderer.commandSnapshot();
+  equal(flickCommands.some((command) =>
+    command.kind === "bind-resource" && command.exactKey === "note_flick_0"),
+  true, "R4 Flick binds the exact current key");
+  equal(flickCommands.some((command) =>
+    command.kind === "set-transform" && command.ordering.sourceDepthOrSortingOrder === 70),
+  true, "R4 Flick retains ordinary root ordering");
+  requireOk(flickEngine.dispose(), "dispose R4 Flick engine");
+
+  const slideRenderer = new RecordingSimulatorRendererBackend();
+  requireOk(await slideRenderer.prepare(SESSION, longProfile(), new LocalProvider(), preflight()),
+    "R4 Slide renderer prepare");
+  const slideInput = engineInput([renderedSlideNoteBatch(96)]);
+  const slideEngine = requireOk(createSimulatorEngine(
+    {
+      ...slideInput,
+      runtime: {
+        ...slideInput.runtime,
+        playMode: {
+          kind: "auto-live" as const,
+          resultTransform: "identity-no-active-situation-skill" as const,
+        },
+      },
+      rendering: R4_SLIDE_RENDERING,
+    },
+    createRecordingSimulatorBackends(slideRenderer),
+  ), "R4 Slide engine create");
+  requireOk(slideEngine.initialize(), "R4 Slide engine initialize");
+  equal(slideRenderer.snapshot().objectCount, 5,
+    "R4 two-child Slide owns one root plus two child/segment pairs");
+  requireOk(slideEngine.step(0), "R4 Slide activates");
+  const slideCommands = slideRenderer.commandSnapshot();
+  equal(slideCommands.filter((command) =>
+    command.kind === "set-mesh" && command.renderObjectId.includes(":slide-mesh:")
+  ).length, 2, "R4 Slide N children emit exactly N base-mesh segments");
+  equal(slideCommands.filter((command) =>
+    command.kind === "activate-object" && command.renderObjectId.includes(":slide-child:")
+  ).length, 1, "R4 Slide preserves one visible and one invisible child owner");
+  requireOk(slideEngine.step(1 / 60), "R4 Slide child chain updates");
+  equal(slideRenderer.commandSnapshot().filter((command) =>
+    command.kind === "set-mesh" && command.renderObjectId.includes(":slide-mesh:")
+  ).length, 4, "R4 Slide refreshes every child-owned segment after root motion");
+  requireOk(slideEngine.dispose(), "dispose R4 Slide engine");
+  for (const renderObjectId of [
+    "render:slide:0:root",
+    "render:slide:0:slide-child:0",
+    "render:slide:0:slide-mesh:0",
+    "render:slide:0:slide-child:1",
+    "render:slide:0:slide-mesh:1",
+  ]) {
+    equal(slideRenderer.commandSnapshot().filter((command) =>
+      command.kind === "deactivate-object" && command.renderObjectId === renderObjectId
+    ).length, 1, `${renderObjectId} deactivates exactly once`);
+  }
+
+  const multipleRenderer = new RecordingSimulatorRendererBackend();
+  requireOk(await multipleRenderer.prepare(
+    SESSION,
+    r4Profile(),
+    new LocalProvider(),
+    preflight(),
+  ), "R4 Multiple renderer prepare");
+  const multipleBatch = renderedNoteBatch("render-multiple-r4", 96);
+  const multipleBase = multipleBatch.informationList[0]!;
+  const multipleInformation = ([
+    [ButtonType.Button_01_BMS_1P_01, 0],
+    [ButtonType.Button_02_BMS_1P_02, 1],
+  ] as const).map(([buttonType, index]) => Object.freeze({
+    ...multipleBase,
+    index: multipleBase.index + index,
+    buttonType,
+    buttonTypes: Object.freeze([buttonType]),
+    buttonTypesArray: Object.freeze([buttonType]),
+    fireNoteType: FrontNoteType.MultipleDirectionalFlick,
+    gameNoteType: GameNoteType.DirectionalFlickLeft,
+  }));
+  const renderedMultipleBatch = Object.freeze({
+    ...multipleBatch,
+    informationList: Object.freeze(multipleInformation),
+  });
+  const multipleInput = engineInput([renderedMultipleBatch]);
+  const multipleEngine = requireOk(createSimulatorEngine(
+    {
+      ...multipleInput,
+      runtime: {
+        ...multipleInput.runtime,
+        playMode: {
+          kind: "auto-live" as const,
+          resultTransform: "identity-no-active-situation-skill" as const,
+        },
+      },
+      rendering: R4_RENDERING,
+    },
+    createRecordingSimulatorBackends(multipleRenderer),
+  ), "R4 Multiple engine create");
+  requireOk(multipleEngine.initialize(), "R4 Multiple engine initialize");
+  requireOk(multipleEngine.step(0), "R4 Multiple activates");
+  const multipleCommands = multipleRenderer.commandSnapshot();
+  equal(multipleCommands.filter((command) =>
+    command.kind === "bind-resource" &&
+    (command.exactKey === "note_flick_l_0" || command.exactKey === "note_flick_l_1")
+  ).length, 2, "R4 Multiple roots bind both exact directional keys");
+  equal(multipleCommands.filter((command) =>
+    command.kind === "set-transform" && command.ordering.sourceDepthOrSortingOrder === 71
+  ).length >= 2, true, "R4 Directional roots use observed sorting order 71");
+  equal(multipleCommands.some((command) =>
+    command.kind === "bind-resource" &&
+    command.renderObjectId === "render:multiple-directional-line:0" &&
+    command.logicalAssetId === "asset.multiple-directional-line-left"
+  ), true, "R4 Multiple left group selects its explicit left material at activation");
+  equal(multipleCommands.some((command) =>
+    command.kind === "set-line" && command.materialRole === "multiple-directional-line"
+  ), true, "R4 Multiple group emits one dedicated back line");
+  requireOk(multipleEngine.dispose(), "dispose R4 Multiple engine");
+  console.log("ok 9 - R4 Flick/Directional, standard Slide chain and Multiple back line are positive while unobserved routes remain closed");
 }
 
 async function main(): Promise<void> {
@@ -1113,7 +1343,7 @@ async function main(): Promise<void> {
   await testOrdinarySyncLineLifecycle();
   await testOrdinaryLongLifecycle();
   await testHostReadyGate();
-  await testUnpromotedNoteFamilyBoundaries();
+  await testR4NoteFamilyBoundaries();
   console.log("render contract tests passed: 9");
 }
 

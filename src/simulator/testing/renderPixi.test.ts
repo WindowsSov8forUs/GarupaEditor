@@ -175,6 +175,26 @@ function profile(): RenderResourceProfile {
       materialRole: "none",
       animationRole: "life-heal",
       provenance: "current-apk",
+    }, {
+      logicalAssetId: "asset.multiple-directional-line",
+      role: "material-texture",
+      byteLength: png.byteLength,
+      sha256: sha256UpperHex(png),
+      mime: "image/png",
+      width: 4,
+      height: 4,
+      textureSettings: {
+        scaleMode: "linear",
+        wrapModeU: "clamp",
+        wrapModeV: "clamp",
+        mipmap: "off",
+        premultiplyAlpha: true,
+        blendMode: "normal",
+      },
+      atlasRows: [],
+      materialRole: "multiple-directional-line",
+      animationRole: "none",
+      provenance: "current-apk",
     }],
     scene: {
       profileId: "pixi-test-scene",
@@ -282,6 +302,7 @@ async function main(): Promise<void> {
     { logicalAssetId: "asset.hud", bytes: hudPng },
     { logicalAssetId: "asset.combo-animation", bytes: animationBytes },
     { logicalAssetId: "asset.life-animation", bytes: animationBytes },
+    { logicalAssetId: "asset.multiple-directional-line", bytes: png },
   ]), "create local PNG provider");
   const renderer = new PixiRendererBackend(decoder);
   requireOk(await renderer.prepare(
@@ -559,6 +580,38 @@ async function main(): Promise<void> {
   equal(renderer.snapshot().state, "disposed", "Pixi backend disposed");
   equal(renderer.snapshot().resourceCount, 0, "Pixi resources released");
   requireOk(renderer.dispose(), "repeated Pixi dispose is idempotent");
+
+  const multipleRenderer = new PixiRendererBackend(decoder);
+  requireOk(await multipleRenderer.prepare(
+    SESSION,
+    profile(),
+    provider,
+    new PortableRenderResourcePreflightAdapter(),
+  ), "prepare R4 MultipleDirectional Pixi renderer");
+  const multipleLineBatch = requireOk(multipleRenderer.preflight([
+    {
+      ...base(0), kind: "create-object", renderObjectId: "note.multiple-line",
+      poolFamily: "multiple-directional-line", role: "multiple-directional-line", parentObjectId: null,
+    },
+    {
+      ...base(1), kind: "bind-resource", renderObjectId: "note.multiple-line",
+      binding: "material", logicalAssetId: "asset.multiple-directional-line", exactKey: null,
+    },
+    {
+      ...base(2), kind: "set-line", renderObjectId: "note.multiple-line",
+      start: { x: f32(-0.5), y: f32(0.5), z: f32(-14) },
+      end: { x: f32(0.5), y: f32(0.5), z: f32(-14) },
+      width: f32(0.025), materialRole: "multiple-directional-line",
+    },
+    { ...base(3), kind: "activate-object", renderObjectId: "note.multiple-line" },
+  ]), "preflight R4 MultipleDirectional line batch");
+  requireOk(multipleRenderer.commit(multipleLineBatch), "commit R4 MultipleDirectional line batch");
+  const multipleLine = multipleRenderer.sceneSnapshot()[0];
+  equal(multipleLine?.role, "multiple-directional-line", "R4 Pixi line retains dedicated role");
+  equal(multipleLine?.geometryVertexCount, 4, "R4 Pixi line uses the portable four-vertex quad");
+  equal(multipleLine?.geometryIndexCount, 6, "R4 Pixi line uses the portable six-index quad");
+  equal(multipleLine?.visible, true, "R4 Pixi line becomes visible atomically");
+  requireOk(multipleRenderer.dispose(), "dispose R4 MultipleDirectional renderer");
 
   const decodeFailure = new PixiRendererBackend({
     async decodePng() {
@@ -961,7 +1014,7 @@ async function main(): Promise<void> {
   equal(degradedRenderer.sceneSnapshot().length, 0, "degraded label participates in reverse release");
   requireOk(degradedRenderer.dispose(), "dispose degraded renderer");
 
-  console.log("Pixi v8 semantic adapter tests passed: Sprite/R2-Mesh/sync-line/mask/HUD/fill/animation/fault/dispose");
+  console.log("Pixi v8 semantic adapter tests passed: Sprite/R2-Mesh/sync+Multiple-line/mask/HUD/fill/animation/fault/dispose");
 }
 
 void main().catch((error: unknown) => {

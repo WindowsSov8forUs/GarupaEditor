@@ -6,10 +6,10 @@ const root = resolve(fileURLToPath(new URL("..", import.meta.url)));
 const matrix = [
   ["PR01", "closed"], ["PR02", "closed"], ["PR03", "closed"],
   ["PR04", "closed-degraded"], ["PR05", "closed"], ["PR06", "partial"],
-  ["PR07", "blocked"], ["PR08", "blocked"], ["PR09", "blocked"],
-  ["PR10", "closed-current-subset"], ["PR11", "partial"], ["PR12", "blocked"],
+  ["PR07", "closed-current-subset"], ["PR08", "partial"], ["PR09", "partial"],
+  ["PR10", "closed-current-subset"], ["PR11", "partial"], ["PR12", "closed-current-subset"],
   ["PR13", "closed-current-subset"], ["PR14", "blocked"], ["PR15", "partial"],
-  ["PR16", "closed-current-subset"], ["PR17", "blocked"], ["PR18", "partial"],
+  ["PR16", "closed-current-subset"], ["PR17", "closed-current-subset"], ["PR18", "partial"],
   ["PR19", "blocked-degraded"], ["PR20", "partial"], ["PR21", "partial"],
   ["PR22", "partial"], ["PR23", "closed-current-subset"], ["PR24", "partial"],
   ["PR25", "partial"], ["PR26", "partial"], ["PR27", "partial"],
@@ -29,9 +29,11 @@ const source = [
 ].map((path) => readFileSync(resolve(root, path), "utf8")).join("\n");
 for (const marker of [
   'kind: "set-mask"', 'kind: "sample-animation"', "Approximate HABAHIRO",
-  "render.note.flick-icon-lifecycle-evidence-required",
-  "render.note.slide-child-chain-evidence-required",
+  "preflightOrdinarySlideChildFrame",
+  "multipleDirectionalLineLeftLogicalAssetId",
+  "render.note.long-non-normal-tail-evidence-required",
   "render.note.multiple-directional-lifecycle-evidence-required",
+  "Threshold shaders remain outside the authorized portable mapping",
 ]) {
   if (!source.includes(marker)) throw new Error(`PR production marker missing: ${marker}`);
 }
@@ -42,8 +44,8 @@ for (const [id, status] of matrix) {
   else if (status.startsWith("blocked")) groups.blocked.push(id);
   else throw new Error(`Unknown PR production status: ${status}`);
 }
-if (groups.closed.length !== 14 || groups.partial.length !== 14 || groups.blocked.length !== 12) {
+if (groups.closed.length !== 17 || groups.partial.length !== 16 || groups.blocked.length !== 7) {
   throw new Error(`PR production counts differ: ${JSON.stringify(groups)}`);
 }
 Object.freeze(matrix); Object.freeze(groups.closed); Object.freeze(groups.partial); Object.freeze(groups.blocked);
-console.log("render PR production matrix verified: closed=14 partial=14 blocked=12 RP14=blocked");
+console.log("render PR production matrix verified: closed=17 partial=16 blocked=7 RP14=blocked");
