@@ -12,15 +12,15 @@
 - 当前证据授权下的失败关闭；
 - production 正向可见功能闭合。
 
-R4 production消费后的 production-consumption 矩阵为：**17 closed/closed-current-subset、16 partial、7 blocked/blocked-degraded**。runner 全绿只说明当前已实现子集及失败边界一致，不等于 PR01–PR40 全部正向实现。
+R4 production消费后的 production-consumption 矩阵为：**17 closed/closed-current-subset、17 partial、6 blocked/blocked-degraded**。runner 全绿只说明当前已实现子集及失败边界一致，不等于 PR01–PR40 全部正向实现。
 
 ## 2. 锁定状态
 
 - Garupa 分支：`codex/refactor-simulator-implementation`
-- 验收运行 HEAD：`674b1d1`（production `ec1e69b` + oracle `674b1d1`）
+- 验收运行 HEAD：`d07cacc`（R5 evidence `1d701b3` + production `f78d08c` + oracle `d07cacc`）
 - Reverse 分支：`main`
-- Garupa消费的Reverse证据基线：`4b4ebdfada2c2deea7cb9b6d838e61b1e3240876`
-- Reverse当前远端HEAD：`4b4ebdfa`（R4三条confirmed trace与保守授权profile已晋升）
+- Garupa消费的Reverse证据基线：`e9621946c88ebe20e694bdb313294a32fe62a647`
+- Reverse当前远端HEAD：`e9621946`（R5 core/overlay confirmed trace与保守profile已晋升）
 - Garupa 与远端差异：`0 0`
 - Reverse 与远端差异：`0 0`
 - Garupa 验收运行前后工作树：clean
@@ -30,18 +30,19 @@ R4 production消费后的 production-consumption 矩阵为：**17 closed/closed-
 
 `tmp/simulator-reverse-evidence/resource-pixi-rendering/verify.mjs`通过：
 
-- entries：807；methods/layouts/enums：673/32/19；
+- entries：817；methods/layouts/enums：673/32/19；
 - resources：11,026 / 57 / 100；HUD/Skill/Note/ScoreUp profile：8/4/4/5；
 - ordinary R1：87,364 events；geometry R2：87,037 events / 636 frames；
 - Long child：1 profile / 13 isolated ARM64 slices；
 - visible HUD R3：22 setter targets、22 ARM64 slices、19,888 events、631 frames；
 - Note family R4：30 owner targets、6个新增Slide slices、118,152 events、1,258 aggregate frames；
+- HUD/field R5：35 owner targets、30,975 events、1,059 aggregate frames、5个authorized routes；
 - mesh owners：510；line owners：80；
 - HAB degraded：2 profiles / 12 differences / 179 Sprite keys；
 - delivery gate：closed；production authorization：true；
 - exact HABAHIRO：open-not-claimed。
 
-R3只授权bitmap Score/Combo/Life、score-skill observed overlay、serialized field/sudden mask边界、Combo/GameJudge restart和portable Combo/Life Heal sampling。R4另授权front Flick/Directional icon、observed Slide mesh+line和MultipleDirectional connect/back-line；Guard/NeverDie/Judge、Long-after Flick、Slide Wait runtime、add-Long/add-Slide/after Multiple、Advanced与threshold仍显式false。
+R3只授权bitmap Score/Combo/Life、score-skill observed overlay、serialized field/sudden mask边界、Combo/GameJudge restart和portable Combo/Life Heal sampling。R4另授权front Flick/Directional icon、observed Slide mesh+line和MultipleDirectional connect/back-line。R5只新增Result lifetime、Score Skill、ScoreGauge、Life Skill lifecycle与generic Skill display；AddScore/JudgeTiming/AP完整动画/Guard/NeverDie/changeable text/field setup仍显式false。Long-after Flick、add/after Multiple、Advanced与threshold也未扩大。
 
 ## 4. 本轮新增闭合
 
@@ -68,13 +69,13 @@ R3只授权bitmap Score/Combo/Life、score-skill observed overlay、serialized f
 | RP11 | 部分 | Sprite/base Mesh/sync+Multiple line/mask/HUD/fill/Combo-Life animation完成；任务书全部组件族未完成。 |
 | RP12 | 通过 | prepare/command/context/mutation/dispose/terminal precedence矩阵完成。 |
 | RP13 | 通过 | 已推送HEAD串行14-stage总入口通过。 |
-| RP14 | **不通过** | 7个blocked production case仍缺正向实现。 |
+| RP14 | **不通过** | 6个blocked production case仍缺正向实现。 |
 
 ## 6. PR01–PR40 production矩阵
 
 - **Closed / current subset（17）**：PR01–PR05、PR07、PR10、PR12–PR13、PR16–PR17、PR23、PR33、PR35–PR38。
-- **Partial（16）**：PR06、PR08–PR09、PR11、PR15、PR18、PR20–PR22、PR24–PR27、PR29、PR31、PR34。
-- **Blocked / degraded blocked（7）**：PR14、PR19、PR28、PR30、PR32、PR39–PR40。
+- **Partial（17）**：PR06、PR08–PR09、PR11、PR15、PR18、PR20–PR22、PR24–PR27、PR29、PR31–PR32、PR34。
+- **Blocked / degraded blocked（6）**：PR14、PR19、PR28、PR30、PR39–PR40。
 
 其中：
 
@@ -88,7 +89,7 @@ R3只授权bitmap Score/Combo/Life、score-skill observed overlay、serialized f
 
 ## 7. 验证结果
 
-从clean、已推送`674b1d1`串行执行：
+从clean、已推送`d07cacc`串行执行：
 
 ```powershell
 npm.cmd run simulator:test:resource-pixi-rendering
@@ -98,7 +99,7 @@ node tmp/simulator-reverse-evidence/resource-pixi-rendering/verify.mjs
 结果：
 
 - resource/Pixi production：通过；
-- PR production verifier：`closed=17 partial=16 blocked=7 RP14=blocked`；
+- PR production verifier：`closed=17 partial=17 blocked=6 RP14=blocked`；
 - render contracts：9组通过；
 - actual Pixi、failure、resource、geometry、Long、HUD/mask/animation/degraded label：通过；
 - first-slice、chart、clock、Auto Live、manual、Score/Life/State：14-stage全部通过；
@@ -111,11 +112,12 @@ node tmp/simulator-reverse-evidence/resource-pixi-rendering/verify.mjs
 阶段完成仍需要新的、已提交并冻结的Reverse runtime授权，然后才能实现并验收：
 
 1. Flick/Directional独立top-icon动画phase与Long-after Flick；
-2. add-Long/add-Slide/after Multiple side visual、icon visibility与非root reconnect；
-3. advanced mesh、threshold/material完整路径；
-4. field/mask实际host scene接线及ordinary production chart replay；
-5. AddScore round-robin、Result lifetime、Score gauge、warning/Guard/NeverDie/Judge/Skill完整HUD；
-6. HAB lane-change production scene；exact HAB UnityFS/natural R1/original frame继续open-not-claimed。
+2. R5仍false的AddScore coroutine、JudgeTiming、完整AP、Guard/NeverDie、changeable text与field setup；
+3. add-Long/add-Slide/after Multiple side visual、icon visibility与非root reconnect；
+4. advanced mesh、threshold/material完整路径；
+5. field/mask实际host scene接线及ordinary production chart replay；
+6. AddScore round-robin、JudgeTiming、warning/Guard/NeverDie/Judge完整HUD；
+7. HAB lane-change production scene；exact HAB UnityFS/natural R1/original frame继续open-not-claimed。
 
 因此不得把`src/simulator/README.md`更新为阶段完成，也不得宣称原作完整parity。
 
@@ -128,4 +130,4 @@ node tmp/simulator-reverse-evidence/resource-pixi-rendering/verify.mjs
 - Reverse `4b4ebdfa`提交并push三条trace与profile；Garupa冻结807项，实体PNG继续排除，source verifier通过；
 - 新授权仅覆盖front Flick/Directional、observed Slide mesh+line和MultipleDirectional connect/back-line；Long-after Flick、Slide Wait runtime、add-Long/add-Slide/after Multiple、Advanced与threshold仍false。
 
-R4动态取证阻断已解除，且已推送production/oracle将矩阵重算为17/16/7；该增量只关闭PR07/PR12/PR17 current subset，并将PR08/PR09从blocked降为partial，不得外推到profile中仍为false的Advanced、threshold或side/after路线。
+R4增量关闭PR07/PR12/PR17 current subset并将PR08/PR09降为partial。R5另将PR32从blocked降为partial：Result 1秒生命周期、generic Skill display、Score Skill/ScoreGauge和Life Skill start/finish已接入；profile中false的field、Guard/NeverDie/JudgeTiming/AP/AddScore/changeable text不得外推。

@@ -579,7 +579,7 @@
 - `SituationSkillSnapshot`只新增领域派生的active effect type列表；InGameManager在Skill state进入/离开Playing时产生typed overlay transaction，不读取Reverse profile或测试身份。
 - generic Skill display在start时显式set/activate、finish时hide；仅Score类effect启用ScoreGauge语义和`score-skill` Animator start/stop。Pixi开放该独立HUD role，不为Judge/Guard/NeverDie伪造路线，也不使用backend ticker。
 - Result owner-local计时在每次Reflect重置，engine clock累计到1秒时hide；pause不进入update，因此自然冻结。R5未观察JudgeTiming，PR27仍partial。
-- recording与actual Pixi正向oracle覆盖Skill display→ScoreGauge→Animator顺序、finish stop→hide、Result 1秒与release。PR32由blocked降为partial；矩阵更新为17 closed/current-subset、17 partial、6 blocked，RP14仍不通过。
+- recording与actual Pixi正向oracle覆盖Skill display→ScoreGauge→Animator顺序、finish stop→hide、Result 1秒与release。PR32由blocked降为partial；从clean、已推送`d07cacc`运行14-stage总入口通过，矩阵为17 closed/current-subset、17 partial、6 blocked，RP14仍不通过。
 
 ## 2. 固定范围
 
