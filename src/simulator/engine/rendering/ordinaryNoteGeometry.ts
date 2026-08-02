@@ -77,6 +77,11 @@ export interface OrdinarySyncLineGeometry {
   readonly width: RenderFloat32;
 }
 
+export interface OrdinaryMultipleDirectionalLineOwnerState {
+  readonly targetA: OrdinaryNoteMotionResult;
+  readonly targetB: OrdinaryNoteMotionResult;
+}
+
 export interface OrdinaryNoteMotionState {
   readonly progressRate: RenderFloat32;
   readonly specificSpeed: RenderFloat32;
@@ -331,6 +336,43 @@ export function buildOrdinaryBaseNoteMesh(
   }));
 }
 
+export function buildOrdinaryMultipleDirectionalLine(
+  state: OrdinaryMultipleDirectionalLineOwnerState,
+): SimulatorResult<OrdinarySyncLineGeometry> {
+  if (
+    !validateVector3(state.targetA.position) ||
+    !validateVector3(state.targetB.position) ||
+    !validateRenderFloat32(state.targetA.localScale.x) ||
+    state.targetA.localScale.x.value <= 0
+  ) {
+    return reject(
+      "render.geometry.invalid-multiple-directional-line-owner-state",
+      "MultipleDirectional back-line geometry requires two committed root positions and one positive owner-local Float32 scale.",
+    );
+  }
+  if (
+    Math.hypot(
+      state.targetB.position.x.value - state.targetA.position.x.value,
+      state.targetB.position.y.value - state.targetA.position.y.value,
+    ) === 0
+  ) {
+    return reject(
+      "render.geometry.degenerate-multiple-directional-line",
+      "The observed MultipleDirectional back line requires distinct root positions.",
+    );
+  }
+  const targetAFirst = state.targetA.position.x.value <= state.targetB.position.x.value;
+  const width = createRenderFloat32(Math.fround(
+    state.targetA.localScale.x.value * Math.fround(0.75),
+  ));
+  if (width.status !== "ok") return width;
+  return ok(Object.freeze({
+    start: targetAFirst ? state.targetA.position : state.targetB.position,
+    end: targetAFirst ? state.targetB.position : state.targetA.position,
+    width: width.value,
+  }));
+}
+
 export function buildOrdinarySyncLine(
   state: OrdinarySyncLineOwnerState,
 ): SimulatorResult<OrdinarySyncLineGeometry> {
@@ -539,7 +581,7 @@ function copyColor(value: RenderColor): RenderColor {
 function reject(capability: string, boundary: string) {
   return evidenceRequired(
     capability,
-    ["RPR-D05", "RPR-D06", "RPR-D07", "RPR-D14", "PR11", "PR13", "PR16"],
+    ["RPR-D05", "RPR-D06", "RPR-D07", "RPR-D14", "RPR-R4-010", "RPR-R4-013", "PR09", "PR11", "PR13", "PR16", "PR17"],
     boundary,
   );
 }

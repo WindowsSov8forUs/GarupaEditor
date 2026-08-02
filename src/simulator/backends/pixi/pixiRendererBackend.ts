@@ -454,14 +454,16 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           const asset = this.profile?.assets.find(
             (candidate) => candidate.logicalAssetId === command.logicalAssetId,
           );
-          return asset?.materialRole === "sync-line" &&
+          return (asset?.materialRole === "sync-line" ||
+            asset?.materialRole === "multiple-directional-line") &&
             this.baseTextures.has(command.logicalAssetId);
         }
         return false;
       case "set-mesh":
         return command.materialRole === "long-note" || command.materialRole === "curve-note";
       case "set-line":
-        return command.materialRole === "sync-line";
+        return command.materialRole === "sync-line" ||
+          command.materialRole === "multiple-directional-line";
       case "play-animation":
       case "stop-animation":
       case "sample-animation":
@@ -520,11 +522,13 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           const role = shadow.get(command.renderObjectId)!.role;
           if (
             (command.binding === "sprite" && !spriteRole(role)) ||
-            (command.binding === "material" && role !== "sync-line")
+            (command.binding === "material" &&
+              role !== "sync-line" &&
+              role !== "multiple-directional-line")
           ) {
             return reject(
               "render.pixi.resource-binding-role-mismatch",
-              "Sprite and sync-line material bindings require their exact engine-authored object roles.",
+              "Sprite and line material bindings require their exact engine-authored object roles.",
             );
           }
           if (command.binding === "material") {
@@ -578,13 +582,17 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           break;
         case "set-line":
           if (
-            shadow.get(command.renderObjectId)!.role !== "sync-line" ||
+            (shadow.get(command.renderObjectId)!.role === "sync-line"
+              ? command.materialRole !== "sync-line"
+              : shadow.get(command.renderObjectId)!.role === "multiple-directional-line"
+              ? command.materialRole !== "multiple-directional-line"
+              : true) ||
             !shadow.get(command.renderObjectId)!.materialBound ||
             !isEvidenceLine(command)
           ) {
             return reject(
-              "render.pixi.line-outside-r2-profile",
-              "Pixi accepts only a positive-width non-degenerate ordinary R2 sync-line segment.",
+              "render.pixi.line-outside-r2-r4-profile",
+              "Pixi accepts only positive-width non-degenerate ordinary R2 sync or R4 MultipleDirectional line segments.",
             );
           }
           break;
@@ -1231,7 +1239,8 @@ function requireEvidenceAnimationRole(role: string): EvidenceAnimationRole {
 }
 
 function isEvidenceLine(command: SetLineCommand): boolean {
-  return command.materialRole === "sync-line" &&
+  return (command.materialRole === "sync-line" ||
+    command.materialRole === "multiple-directional-line") &&
     command.width.value > 0 &&
     Math.hypot(
       command.end.x.value - command.start.x.value,

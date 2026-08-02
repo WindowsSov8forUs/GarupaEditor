@@ -2,6 +2,7 @@ import {
   AfterNoteType,
   ButtonType,
   FrontNoteType,
+  GameNoteType,
   type ButtonTypeValue,
   type NoteBatchInformation,
   type NoteInformation,
@@ -50,6 +51,7 @@ import type {
   RenderOwnerTransaction,
 } from "../rendering/renderCommandProducer";
 import type { OrdinaryLongNormalChildState } from "../rendering/ordinaryLongChildLifecycle";
+import type { OrdinarySlideChildState } from "../rendering/ordinarySlideChildLifecycle";
 import type {
   OrdinaryNoteMotionResult,
   OrdinaryNoteMotionState,
@@ -59,6 +61,7 @@ import { createRenderFloat32 } from "../../backends/renderingValidation";
 
 const BPM_POOL_LENGTH = 30;
 const SYNC_LINE_POOL_LENGTH = 80;
+const MULTIPLE_DIRECTIONAL_LINE_POOL_LENGTH = 60;
 
 export interface NoteManagerClock {
   validateAdvanceSequence(
@@ -163,6 +166,13 @@ interface ActiveOrdinarySyncLine {
   readonly targetB: NoteBase;
 }
 
+interface ActiveMultipleDirectionalLine {
+  readonly poolIndex: number;
+  readonly targetA: NoteBase;
+  readonly targetB: NoteBase;
+  readonly materialDirection: "left" | "right";
+}
+
 export class NoteManager {
   private readonly activeNotesValue: NoteBase[] = [];
   private readonly activeBpmChangesValue: NoteBpmChange[] = [];
@@ -204,9 +214,15 @@ export class NoteManager {
   >();
   private readonly activeOrdinarySyncLines: Array<ActiveOrdinarySyncLine | null> =
     Array.from({ length: SYNC_LINE_POOL_LENGTH }, () => null);
+  private readonly activeMultipleDirectionalLines: Array<ActiveMultipleDirectionalLine | null> =
+    Array.from({ length: MULTIPLE_DIRECTIONAL_LINE_POOL_LENGTH }, () => null);
   private readonly ordinaryLongRenderStates = new Map<
     NoteBase,
     OrdinaryLongNormalChildState
+  >();
+  private readonly ordinarySlideRenderStates = new Map<
+    NoteBase,
+    readonly OrdinarySlideChildState[]
   >();
 
   constructor(
@@ -338,10 +354,11 @@ export class NoteManager {
       }
     }
 
-    const requiresLongChildren = this.renderProducer !== null &&
-      (familyNotes.get("long")?.length ?? 0) > 0;
+    const requiresMeshChildren = this.renderProducer !== null &&
+      ((familyNotes.get("long")?.length ?? 0) > 0 ||
+        (familyNotes.get("slide")?.length ?? 0) > 0);
     if (
-      requiresLongChildren &&
+      requiresMeshChildren &&
       (this.ordinaryNoteScene === null ||
         this.ordinaryNoteScene.screenToSafeAreaRatio === undefined ||
         this.ordinaryNoteScene.longMeshColor === undefined)
@@ -349,7 +366,7 @@ export class NoteManager {
       return evidenceRequired(
         "render.note.long-scene-unavailable",
         ["RPR-D05", "RPR-D06", "RPR-D13", "PR11", "PR13", "PR15"],
-        "A chart with ordinary Long notes requires explicit safe-area ratio and base-mesh color before pool creation.",
+        "A chart with ordinary Long or R4 Slide notes requires explicit safe-area ratio and base-mesh color before pool creation.",
       );
     }
     const requiresSyncLinePool = this.renderProducer !== null && this.batches.some((batch) =>
@@ -369,13 +386,24 @@ export class NoteManager {
         "A chart with simultaneous ordinary Normal notes requires the explicit typed sync-line edge margin.",
       );
     }
+    const requiresMultipleDirectionalLinePool = this.renderProducer !== null &&
+      this.batches.some((batch) =>
+        groupMultipleDirectionalInformationList(batch.informationList)
+          .some((group) => group.length > 1)
+      );
     const renderSetup = this.renderProducer?.preflightPoolSetup(
       [...familyNotes].flatMap(([family, notes]) =>
-        notes.map((_, index) => Object.freeze({
+        notes.map((information, index) => Object.freeze({
           family,
           poolObjectId: `${family}:${index}`,
+          ...(family === "slide"
+            ? { slideChildCount: information.slideNoteList.length }
+            : {}),
         }))),
       requiresSyncLinePool ? SYNC_LINE_POOL_LENGTH : 0,
+      requiresMultipleDirectionalLinePool
+        ? MULTIPLE_DIRECTIONAL_LINE_POOL_LENGTH
+        : 0,
     ) ?? null;
     if (renderSetup?.status === "evidence-required") return renderSetup;
 
@@ -387,7 +415,9 @@ export class NoteManager {
           onDeactivate: (inactiveNote) => {
             this.removeActiveNote(inactiveNote);
             this.releaseOrdinarySyncLinesForNote(inactiveNote);
+            this.releaseMultipleDirectionalLinesForNote(inactiveNote);
             this.ordinaryLongRenderStates.delete(inactiveNote);
+            this.ordinarySlideRenderStates.delete(inactiveNote);
             this.ordinaryRenderMotionStates.delete(inactiveNote);
             this.manualNoteDeactivatedOwner?.(inactiveNote);
           },
@@ -418,6 +448,8 @@ export class NoteManager {
               note.poolObjectId,
               this.ordinarySyncLinePoolIndicesForNote(note),
               this.ordinaryLongRenderStates.has(note),
+              this.multipleDirectionalLinePoolIndicesForNote(note),
+              this.ordinarySlideRenderStates.get(note)?.length ?? 0,
             ));
           note.registerRenderMotionOwner((deltaTimeSeconds) =>
             this.advanceOrdinaryRenderMotion(note, deltaTimeSeconds));
@@ -583,10 +615,18 @@ export class NoteManager {
       if (longChildUpdate.status !== "ok") {
         return longChildUpdate;
       }
+      const slideChildUpdate = this.updateOrdinarySlideChildren(substepDelta);
+      if (slideChildUpdate.status !== "ok") {
+        return slideChildUpdate;
+      }
 
       const syncLineUpdate = this.updateOrdinarySyncLines();
       if (syncLineUpdate.status !== "ok") {
         return syncLineUpdate;
+      }
+      const multipleDirectionalLineUpdate = this.updateMultipleDirectionalLines();
+      if (multipleDirectionalLineUpdate.status !== "ok") {
+        return multipleDirectionalLineUpdate;
       }
 
       for (const note of afterUpdateNotes) {
@@ -814,6 +854,10 @@ export class NoteManager {
     }
     this.activeNotesValue.length = 0;
     this.activeBpmChangesValue.length = 0;
+    this.activeOrdinarySyncLines.fill(null);
+    this.activeMultipleDirectionalLines.fill(null);
+    this.ordinaryLongRenderStates.clear();
+    this.ordinarySlideRenderStates.clear();
     this.bpmPoolCursorValue = 0;
     this.outerFrameIndexValue = 0;
     this.slideNoteManager.dispose();
@@ -1030,6 +1074,57 @@ export class NoteManager {
     return ok(undefined);
   }
 
+  private updateOrdinarySlideChildren(
+    deltaTimeSeconds: number,
+  ): SimulatorResult<void> {
+    if (this.renderProducer === null || this.ordinaryNoteScene === null) {
+      return this.ordinarySlideRenderStates.size === 0
+        ? ok(undefined)
+        : evidenceRequired(
+          "render.slide.scene-unavailable",
+          ["RPR-R4-004", "RPR-R4-010", "RPR-R4-014", "PR07", "PR12", "PR15"],
+          "Active R4 Slide children require their producer and typed ordinary scene.",
+        );
+    }
+    const deltaTime = createRenderFloat32(Math.fround(deltaTimeSeconds));
+    const launcherMusicPosition = createRenderFloat32(Math.fround(
+      this.musicScoreController.launcherMusicPosition,
+    ));
+    const musicPosition = createRenderFloat32(Math.fround(
+      this.musicScoreController.musicPosition,
+    ));
+    if (deltaTime.status !== "ok") return deltaTime;
+    if (launcherMusicPosition.status !== "ok") return launcherMusicPosition;
+    if (musicPosition.status !== "ok") return musicPosition;
+    for (const [note, childStates] of this.ordinarySlideRenderStates) {
+      const front = this.ordinaryRenderMotionStates.get(note);
+      if (front === undefined) {
+        return evidenceRequired(
+          "render.slide.front-state-unavailable",
+          ["RPR-R4-004", "RPR-R4-010", "RPR-R4-014", "PR07", "PR12"],
+          "Every active R4 Slide chain requires its last committed front transform.",
+        );
+      }
+      const prepared = this.renderProducer.preflightOrdinarySlideChildFrame(
+        note.poolObjectId,
+        childStates,
+        front.renderedTransform,
+        front.motionState.buttonCount,
+        Object.freeze({
+          deltaTime: deltaTime.value,
+          launcherMusicPosition: launcherMusicPosition.value,
+          musicPosition: musicPosition.value,
+        }),
+        this.ordinaryNoteScene,
+      );
+      if (prepared.status !== "ok") return prepared;
+      const committed = prepared.value.transaction.commit();
+      if (committed.status !== "ok") return committed;
+      this.ordinarySlideRenderStates.set(note, prepared.value.childStates);
+    }
+    return ok(undefined);
+  }
+
   private ordinarySyncLinePoolIndicesForNote(note: NoteBase): readonly number[] {
     return Object.freeze(this.activeOrdinarySyncLines.flatMap((line) =>
       line !== null && (line.targetA === note || line.targetB === note)
@@ -1043,6 +1138,23 @@ export class NoteManager {
       const line = this.activeOrdinarySyncLines[index];
       if (line !== null && (line.targetA === note || line.targetB === note)) {
         this.activeOrdinarySyncLines[index] = null;
+      }
+    }
+  }
+
+  private multipleDirectionalLinePoolIndicesForNote(note: NoteBase): readonly number[] {
+    return Object.freeze(this.activeMultipleDirectionalLines.flatMap((line) =>
+      line !== null && (line.targetA === note || line.targetB === note)
+        ? [line.poolIndex]
+        : []
+    ));
+  }
+
+  private releaseMultipleDirectionalLinesForNote(note: NoteBase): void {
+    for (let index = 0; index < this.activeMultipleDirectionalLines.length; index += 1) {
+      const line = this.activeMultipleDirectionalLines[index];
+      if (line !== null && (line.targetA === note || line.targetB === note)) {
+        this.activeMultipleDirectionalLines[index] = null;
       }
     }
   }
@@ -1109,7 +1221,11 @@ export class NoteManager {
           "Sync-line connection runs only after both adjacent Note activations commit their information owners.",
         );
       }
-      if (informationA.buttonTypesArray[0] === informationB.buttonTypesArray[0]) {
+      if (
+        informationA.fireNoteType !== FrontNoteType.Normal ||
+        informationB.fireNoteType !== FrontNoteType.Normal ||
+        informationA.buttonTypesArray[0] === informationB.buttonTypesArray[0]
+      ) {
         continue;
       }
       const poolIndex = this.activeOrdinarySyncLines.findIndex((line) => line === null);
@@ -1145,6 +1261,101 @@ export class NoteManager {
       const prepared = this.renderProducer.preflightOrdinarySyncLine(
         line.poolIndex,
         ownerState.value,
+        false,
+      );
+      if (prepared.status !== "ok") return prepared;
+      const committed = prepared.value.commit();
+      if (committed.status !== "ok") return committed;
+    }
+    return ok(undefined);
+  }
+
+  private multipleDirectionalLineOwnerState(
+    line: ActiveMultipleDirectionalLine,
+  ): SimulatorResult<{
+    readonly targetA: OrdinaryNoteMotionResult;
+    readonly targetB: OrdinaryNoteMotionResult;
+  }> {
+    const targetA = this.ordinaryRenderMotionStates.get(line.targetA);
+    const targetB = this.ordinaryRenderMotionStates.get(line.targetB);
+    if (targetA === undefined || targetB === undefined) {
+      return evidenceRequired(
+        "render.note.multiple-directional-line-target-state-unavailable",
+        ["RPR-R4-010", "RPR-R4-013", "PR09", "PR17"],
+        "Every active MultipleDirectional back line requires two committed root transforms.",
+      );
+    }
+    return ok(Object.freeze({
+      targetA: targetA.renderedTransform,
+      targetB: targetB.renderedTransform,
+    }));
+  }
+
+  private connectMultipleDirectionalLines(
+    activatedNotes: readonly NoteBase[],
+  ): SimulatorResult<void> {
+    if (this.renderProducer === null) return ok(undefined);
+    let targetA: NoteBase | null = null;
+    for (const targetB of activatedNotes) {
+      const informationB = targetB.noteInformation;
+      if (informationB?.fireNoteType !== FrontNoteType.MultipleDirectionalFlick) {
+        targetA = null;
+        continue;
+      }
+      const informationA = targetA?.noteInformation;
+      if (
+        targetA === null ||
+        informationA === null ||
+        informationA === undefined ||
+        informationA.gameNoteType !== informationB.gameNoteType ||
+        Math.abs(informationA.buttonType - informationB.buttonType) !== 1
+      ) {
+        targetA = targetB;
+        continue;
+      }
+      const poolIndex = this.activeMultipleDirectionalLines.findIndex((line) => line === null);
+      if (poolIndex < 0) {
+        return evidenceRequired(
+          "render.note.multiple-directional-line-pool-exhausted",
+          ["RPR-R4-010", "RPR-R4-013", "PR09", "PR17"],
+          "The recovered 60-slot MultipleDirectional back-line pool has no inactive object.",
+        );
+      }
+      const line = Object.freeze({
+        poolIndex,
+        targetA,
+        targetB,
+        materialDirection: informationA.gameNoteType === GameNoteType.DirectionalFlickLeft
+          ? "left" as const
+          : "right" as const,
+      });
+      const ownerState = this.multipleDirectionalLineOwnerState(line);
+      if (ownerState.status !== "ok") return ownerState;
+      const prepared = this.renderProducer.preflightOrdinaryMultipleDirectionalLine(
+        poolIndex,
+        ownerState.value,
+        line.materialDirection,
+        true,
+      );
+      if (prepared.status !== "ok") return prepared;
+      const committed = prepared.value.commit();
+      if (committed.status !== "ok") return committed;
+      this.activeMultipleDirectionalLines[poolIndex] = line;
+      targetA = targetB;
+    }
+    return ok(undefined);
+  }
+
+  private updateMultipleDirectionalLines(): SimulatorResult<void> {
+    if (this.renderProducer === null) return ok(undefined);
+    for (const line of this.activeMultipleDirectionalLines) {
+      if (line === null) continue;
+      const ownerState = this.multipleDirectionalLineOwnerState(line);
+      if (ownerState.status !== "ok") return ownerState;
+      const prepared = this.renderProducer.preflightOrdinaryMultipleDirectionalLine(
+        line.poolIndex,
+        ownerState.value,
+        line.materialDirection,
         false,
       );
       if (prepared.status !== "ok") return prepared;
@@ -1208,6 +1419,7 @@ export class NoteManager {
       let renderActivation: RenderOwnerTransaction | null = null;
       let renderedState: OrdinaryRenderedNoteState | null = null;
       let longChildState: OrdinaryLongNormalChildState | null = null;
+      let slideChildStates: readonly OrdinarySlideChildState[] | null = null;
       if (this.renderProducer !== null) {
         if (this.ordinaryNoteScene === null) {
           return evidenceRequired(
@@ -1239,6 +1451,7 @@ export class NoteManager {
           renderedTransform: prepared.value.renderedTransform,
         });
         longChildState = prepared.value.longChildState;
+        slideChildStates = prepared.value.slideChildStates;
       }
       const activationResult = noteResult.value.note.activate(noteInformation);
       if (activationResult.status !== "ok") {
@@ -1257,6 +1470,9 @@ export class NoteManager {
       if (longChildState !== null) {
         this.ordinaryLongRenderStates.set(noteResult.value.note, longChildState);
       }
+      if (slideChildStates !== null) {
+        this.ordinarySlideRenderStates.set(noteResult.value.note, slideChildStates);
+      }
       this.schedulerTraceValue.push({
         kind: "note-activate",
         substepIndex,
@@ -1267,6 +1483,11 @@ export class NoteManager {
 
     const syncLineActivation = this.connectOrdinarySyncLines(activatedRenderedNotes);
     if (syncLineActivation.status !== "ok") return syncLineActivation;
+    const multipleDirectionalLineActivation =
+      this.connectMultipleDirectionalLines(activatedRenderedNotes);
+    if (multipleDirectionalLineActivation.status !== "ok") {
+      return multipleDirectionalLineActivation;
+    }
 
     this.schedulerTraceValue.push({
       kind: "group-activate",
@@ -1446,26 +1667,39 @@ export function validateOrdinaryRenderedBatchAuthorization(
     switch (information.fireNoteType) {
       case FrontNoteType.Flick:
       case FrontNoteType.DirectionalFlick:
-        return evidenceRequired(
-          "render.note.flick-icon-lifecycle-evidence-required",
-          ["RPR-D04", "RPR-D05", "RPR-D12", "PR08", "PR21"],
-          "Flick and Directional roots require the unpromoted icon hierarchy, sorting and runtime animation assignment.",
-        );
+      case FrontNoteType.MultipleDirectionalFlick:
+        if (information.virtualLaneDirection !== 0) {
+          return evidenceRequired(
+            "render.note.virtual-lane-child-evidence-required",
+            ["RPR-D05", "RPR-D07", "RPR-R4-010", "PR10", "PR19", "HA-D04"],
+            "The R4 front icon and MultipleDirectional profiles remain limited to the null virtual-lane branch.",
+          );
+        }
+        continue;
       case FrontNoteType.SlideA:
       case FrontNoteType.SlideB:
+        if (
+          information.afterNoteType === AfterNoteType.None &&
+          information.slideNoteList.length > 0 &&
+          information.virtualLaneDirection === 0 &&
+          information.slideNoteList.every((source) =>
+            source.virtualLaneDirection === 0 &&
+            source.absolutePos >= information.absolutePos)
+        ) {
+          continue;
+        }
         return evidenceRequired(
           "render.note.slide-child-chain-evidence-required",
-          ["RPR-D04", "RPR-D06", "RPR-D07", "PR07", "PR12", "PR15"],
-          "Slide intermediate ownership and N+1 curve-mesh lifecycle remain explicitly unauthorized.",
+          ["RPR-R4-004", "RPR-R4-010", "RPR-R4-014", "PR07", "PR12", "PR15"],
+          "R4 authorizes only the standard non-virtual Slide chain whose terminal GameNoteType is owned by an AfterNoteType.None root; Flick/Directional/Multiple terminals remain closed.",
         );
-      case FrontNoteType.MultipleDirectionalFlick:
       case FrontNoteType.LongMultipleDirectionalFlickAdd:
       case FrontNoteType.SlideAMultipleDirectionalFlickAdd:
       case FrontNoteType.SlideBMultipleDirectionalFlickAdd:
         return evidenceRequired(
           "render.note.multiple-directional-lifecycle-evidence-required",
           ["RPR-D04", "RPR-D06", "RPR-D07", "PR09", "PR17", "PR20"],
-          "Multiple side-visual, back-line, reconnect and shared teardown behavior remain explicitly unauthorized.",
+          "R4 authorizes the observed root MultipleDirectional connect/back-line only; add-Long/add-Slide side visuals and after routes remain explicitly unauthorized.",
         );
       default:
         return evidenceRequired(

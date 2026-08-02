@@ -38,22 +38,32 @@ import {
 import {
   advanceOrdinaryNoteActivationAdjustment,
   advanceOrdinaryNoteMotion,
+  buildOrdinaryMultipleDirectionalLine,
   buildOrdinarySyncLine,
+  type OrdinaryMultipleDirectionalLineOwnerState,
   type OrdinaryNoteMotionResult,
   type OrdinaryNoteMotionState,
   type OrdinarySyncLineOwnerState,
 } from "./ordinaryNoteGeometry";
+import {
+  advanceOrdinarySlideChildren,
+  createOrdinarySlideChildState,
+  type OrdinarySlideChildState,
+} from "./ordinarySlideChildLifecycle";
 
 export interface RenderEngineResourceBindings {
   readonly noteAtlasLogicalAssetId: string;
   readonly directionalAtlasLogicalAssetId: string;
   readonly syncLineLogicalAssetId?: string;
+  readonly multipleDirectionalLineLeftLogicalAssetId?: string;
+  readonly multipleDirectionalLineRightLogicalAssetId?: string;
   readonly comboAnimationLogicalAssetId?: string;
 }
 
 export interface RenderPoolIdentityPlan {
   readonly poolObjectId: string;
   readonly family: NoteFamily;
+  readonly slideChildCount?: number;
 }
 
 export interface OrdinaryNoteTransformVisualState {
@@ -86,11 +96,17 @@ export interface PreparedOrdinaryNoteActivation {
   readonly motionState: OrdinaryNoteMotionState;
   readonly renderedTransform: OrdinaryNoteMotionResult;
   readonly longChildState: OrdinaryLongNormalChildState | null;
+  readonly slideChildStates: readonly OrdinarySlideChildState[] | null;
   readonly transaction: RenderOwnerTransaction;
 }
 
 export interface PreparedOrdinaryLongChildFrame {
   readonly childState: OrdinaryLongNormalChildState;
+  readonly transaction: RenderOwnerTransaction;
+}
+
+export interface PreparedOrdinarySlideChildFrame {
+  readonly childStates: readonly OrdinarySlideChildState[];
   readonly transaction: RenderOwnerTransaction;
 }
 
@@ -574,10 +590,15 @@ export class RenderCommandProducer {
   preflightPoolSetup(
     pools: readonly RenderPoolIdentityPlan[],
     syncLinePoolLength = 0,
+    multipleDirectionalLinePoolLength = 0,
   ): SimulatorResult<RenderOwnerTransaction> {
     const validation = this.validate();
     if (validation.status !== "ok") return validation;
     const syncLineLogicalAssetId = this.resources.syncLineLogicalAssetId;
+    const multipleDirectionalLineLeftLogicalAssetId =
+      this.resources.multipleDirectionalLineLeftLogicalAssetId;
+    const multipleDirectionalLineRightLogicalAssetId =
+      this.resources.multipleDirectionalLineRightLogicalAssetId;
     if (
       !Number.isSafeInteger(syncLinePoolLength) ||
       syncLinePoolLength < 0 ||
@@ -589,13 +610,42 @@ export class RenderCommandProducer {
         "The current simultaneous-line path requires the fixed non-negative pool length and one explicit local material asset ID when present.",
       );
     }
-    if (pools.length === 0 && syncLinePoolLength === 0) {
+    if (
+      !Number.isSafeInteger(multipleDirectionalLinePoolLength) ||
+      multipleDirectionalLinePoolLength < 0 ||
+      (multipleDirectionalLinePoolLength > 0 &&
+        (!isNonEmpty(multipleDirectionalLineLeftLogicalAssetId) ||
+          !isNonEmpty(multipleDirectionalLineRightLogicalAssetId)))
+    ) {
+      return evidenceRequired(
+        "render.producer.invalid-multiple-directional-line-pool-setup",
+        ["RPR-R4-010", "RPR-R4-013", "PR09", "PR17"],
+        "The R4 MultipleDirectional path requires a fixed non-negative back-line pool and explicit left/right local material asset IDs.",
+      );
+    }
+    if (
+      pools.length === 0 &&
+      syncLinePoolLength === 0 &&
+      multipleDirectionalLinePoolLength === 0
+    ) {
       return ok(new RenderOwnerTransaction(this.renderer, null));
     }
     const base = this.commandBase(0);
     const commands: RenderCommand[] = [];
     const created: string[] = [];
     for (const pool of pools) {
+      const slideChildCount = pool.slideChildCount ?? 0;
+      if (
+        !Number.isSafeInteger(slideChildCount) ||
+        slideChildCount < 0 ||
+        (pool.family === "slide" ? slideChildCount < 1 : slideChildCount !== 0)
+      ) {
+        return evidenceRequired(
+          "render.producer.invalid-slide-child-pool-setup",
+          ["RPR-R4-010", "RPR-R4-014", "PR07", "PR12", "PR15"],
+          "Only a Slide pool identity may declare its positive chart-owned child count.",
+        );
+      }
       const renderObjectId = rootRenderObjectId(pool.poolObjectId);
       created.push(renderObjectId);
       commands.push({
@@ -642,6 +692,31 @@ export class RenderCommandProducer {
           renderObjectId: meshObjectId,
         });
       }
+      if (pool.family === "slide") {
+        for (let index = 0; index < slideChildCount; index += 1) {
+          const childObjectId = slideChildRenderObjectId(pool.poolObjectId, index);
+          const meshObjectId = slideMeshRenderObjectId(pool.poolObjectId, index);
+          created.push(childObjectId, meshObjectId);
+          commands.push({
+            ...base(commands.length),
+            kind: "create-object",
+            renderObjectId: childObjectId,
+            poolFamily: pool.family,
+            role: "note-intermediate",
+            parentObjectId: null,
+          });
+          commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: childObjectId });
+          commands.push({
+            ...base(commands.length),
+            kind: "create-object",
+            renderObjectId: meshObjectId,
+            poolFamily: pool.family,
+            role: "note-mesh",
+            parentObjectId: null,
+          });
+          commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: meshObjectId });
+        }
+      }
     }
     for (let index = 0; index < syncLinePoolLength; index += 1) {
       const renderObjectId = syncLineRenderObjectId(index);
@@ -661,6 +736,23 @@ export class RenderCommandProducer {
         binding: "material",
         logicalAssetId: syncLineLogicalAssetId!,
         exactKey: null,
+      });
+      commands.push({
+        ...base(commands.length),
+        kind: "hide-object",
+        renderObjectId,
+      });
+    }
+    for (let index = 0; index < multipleDirectionalLinePoolLength; index += 1) {
+      const renderObjectId = multipleDirectionalLineRenderObjectId(index);
+      created.push(renderObjectId);
+      commands.push({
+        ...base(commands.length),
+        kind: "create-object",
+        renderObjectId,
+        poolFamily: "multiple-directional-line",
+        role: "multiple-directional-line",
+        parentObjectId: null,
       });
       commands.push({
         ...base(commands.length),
@@ -733,15 +825,27 @@ export class RenderCommandProducer {
     const longNormalTail = information.fireNoteType === FrontNoteType.Long &&
       information.afterNoteType === AfterNoteType.Normal &&
       information.afterNoteAbsolutePos > information.absolutePos;
-    if (information.fireNoteType !== FrontNoteType.Normal && !longNormalTail) {
+    const r4Front = information.fireNoteType === FrontNoteType.Flick ||
+      information.fireNoteType === FrontNoteType.DirectionalFlick ||
+      information.fireNoteType === FrontNoteType.MultipleDirectionalFlick;
+    const r4Slide = (information.fireNoteType === FrontNoteType.SlideA ||
+      information.fireNoteType === FrontNoteType.SlideB) &&
+      information.afterNoteType === AfterNoteType.None &&
+      information.slideNoteList.length > 0;
+    if (
+      information.fireNoteType !== FrontNoteType.Normal &&
+      !longNormalTail &&
+      !r4Front &&
+      !r4Slide
+    ) {
       return evidenceRequired(
         "render.note.ordinary-child-lifecycle-unimplemented",
-        ["RPR-D04", "RPR-D05", "RPR-D06", "RPR-D07", "PR06", "PR09", "PR10"],
-        "The connected subset is ordinary Normal root or ordinary Long with one Normal tail; Flick/Directional tails, Slide and Multiple owners remain fail-closed.",
+        ["RPR-D04", "RPR-D05", "RPR-D06", "RPR-D07", "RPR-R4-010", "PR06", "PR09", "PR10"],
+        "The connected subset is ordinary Normal, Long+Normal tail, R4 front Flick/Directional, observed MultipleDirectional root, or ordinary SlideEnd child chain; unobserved terminal variants remain fail-closed.",
       );
     }
     if (
-      longNormalTail &&
+      (longNormalTail || r4Slide) &&
       (scene.screenToSafeAreaRatio === undefined ||
         !validateRenderFloat32(scene.screenToSafeAreaRatio) ||
         scene.screenToSafeAreaRatio.value <= 0 ||
@@ -751,10 +855,10 @@ export class RenderCommandProducer {
       return evidenceRequired(
         "render.note.long-scene-unavailable",
         ["RPR-D05", "RPR-D06", "RPR-D13", "PR11", "PR13", "PR15"],
-        "The ordinary Long path requires explicit positive safe-area ratio and typed base-mesh color inputs.",
+        "The ordinary Long and R4 Slide mesh paths require explicit positive safe-area ratio and typed mesh color inputs."
       );
     }
-    const lane = resolveOrdinaryLaneIndex(information);
+    const lane = resolveOrdinaryMotionLaneIndex(information, r4Slide);
     if (lane.status !== "ok") return lane;
     const binding = resolveFrontSpriteBinding(information, false, this.resources);
     if (binding.status !== "ok") return binding;
@@ -797,7 +901,11 @@ export class RenderCommandProducer {
     if (adjustment.status !== "ok") return adjustment;
     const ordering: RenderOrderingKey = Object.freeze({
       domainLayer: scene.noteDomainLayer,
-      sourceDepthOrSortingOrder: 70,
+      sourceDepthOrSortingOrder:
+        information.fireNoteType === FrontNoteType.DirectionalFlick ||
+          information.fireNoteType === FrontNoteType.MultipleDirectionalFlick
+          ? 71
+          : 70,
       sourceZ: start.z,
       creationSequence,
     });
@@ -845,6 +953,7 @@ export class RenderCommandProducer {
       localScale: Object.freeze({ x: one.value, y: one.value, z: one.value }),
     });
     let longChildState: OrdinaryLongNormalChildState | null = null;
+    let slideChildStates: readonly OrdinarySlideChildState[] | null = null;
     if (longNormalTail) {
       const afterObjectId = longAfterRenderObjectId(poolObjectId);
       const meshObjectId = longMeshRenderObjectId(poolObjectId);
@@ -930,6 +1039,131 @@ export class RenderCommandProducer {
         exactKey: binding.value.exactKey,
       });
     }
+    if (r4Slide) {
+      const states: OrdinarySlideChildState[] = [];
+      let previousTransform = renderedTransform;
+      let previousButtonCount = motionState.buttonCount;
+      for (let index = 0; index < information.slideNoteList.length; index += 1) {
+        const source = information.slideNoteList[index];
+        if (source === undefined) {
+          return evidenceRequired(
+            "render.slide.child-source-unavailable",
+            ["RPR-R4-004", "RPR-R4-010", "RPR-R4-014", "PR07", "PR12"],
+            "Each fixed Slide child identity requires its chart-owned source at the same index.",
+          );
+        }
+        const childLane = resolveOrdinaryMotionLaneIndex(source, true);
+        if (childLane.status !== "ok") return childLane;
+        const childStart = scene.noteStartPositions[childLane.value]!;
+        const childGoal = scene.goalPositions[childLane.value]!;
+        const childButtonCount = source.buttonTypesArray.length ||
+          source.buttonTypes.length || 1;
+        const childMotionState: OrdinaryNoteMotionState = Object.freeze({
+          ...motionState,
+          progressRate: zero.value,
+          deltaTime: zero.value,
+          realMoveSecond: zero.value,
+          goalPosition: Object.freeze({ x: childGoal.x, y: childGoal.y }),
+          noteStartPosition: Object.freeze({ x: childStart.x, y: childStart.y }),
+          currentPositionZ: childStart.z,
+          buttonCount: childButtonCount,
+          virtualLaneControllerPresent: source.virtualLaneDirection !== 0,
+        });
+        const created = createOrdinarySlideChildState(
+          index,
+          childButtonCount,
+          !source.isInvisible,
+          childMotionState,
+          source.absolutePos,
+          noteBpm,
+        );
+        if (created.status !== "ok") return created;
+        states.push(created.value);
+        const childObjectId = slideChildRenderObjectId(poolObjectId, index);
+        const meshObjectId = slideMeshRenderObjectId(poolObjectId, index);
+        const childCreationSequence = this.creationSequenceByObjectId.get(childObjectId);
+        const meshCreationSequence = this.creationSequenceByObjectId.get(meshObjectId);
+        if (childCreationSequence === undefined || meshCreationSequence === undefined) {
+          return evidenceRequired(
+            "render.producer.slide-child-not-created",
+            ["RPR-R4-004", "RPR-R4-010", "RPR-R4-014", "PR07", "PR12", "PR39"],
+            "Slide activation requires every chart-sized child and mesh pool identity to be committed.",
+          );
+        }
+        const childTransform = created.value.lifecycle.renderedTransform;
+        commands.push({
+          ...base(commands.length),
+          kind: "set-transform",
+          renderObjectId: childObjectId,
+          position: childTransform.position,
+          scale: Object.freeze({ x: childTransform.localScale.x, y: childTransform.localScale.y }),
+          rotationDegrees: zero.value,
+          color: scene.noteColor,
+          ordering: Object.freeze({
+            domainLayer: scene.noteDomainLayer,
+            sourceDepthOrSortingOrder: 70,
+            sourceZ: childTransform.position.z,
+            creationSequence: childCreationSequence,
+          }),
+          maskObjectId: null,
+        });
+        if (created.value.visible) {
+          const childKey = resolveOrdinarySlideChildSpriteKey(source);
+          if (childKey.status !== "ok") return childKey;
+          commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: childObjectId });
+          commands.push({
+            ...base(commands.length),
+            kind: "bind-resource",
+            renderObjectId: childObjectId,
+            binding: "sprite",
+            logicalAssetId: this.resources.noteAtlasLogicalAssetId,
+            exactKey: childKey.value,
+          });
+        }
+        const mesh = buildOrdinaryLongNormalMesh({
+          front: previousTransform,
+          after: childTransform,
+          frontButtonCount: previousButtonCount,
+          afterButtonCount: childButtonCount,
+          screenToSafeAreaRatio: scene.screenToSafeAreaRatio!,
+          widthRate: one.value,
+          color: scene.longMeshColor!,
+        });
+        if (mesh.status !== "ok") return mesh;
+        const meshZ = createRenderFloat32(Math.fround(0.9900000095367432));
+        if (meshZ.status !== "ok") return meshZ;
+        commands.push({
+          ...base(commands.length),
+          kind: "set-transform",
+          renderObjectId: meshObjectId,
+          position: Object.freeze({ x: zero.value, y: zero.value, z: meshZ.value }),
+          scale: Object.freeze({ x: one.value, y: one.value }),
+          rotationDegrees: zero.value,
+          color: scene.longMeshColor!,
+          ordering: Object.freeze({
+            domainLayer: scene.noteDomainLayer,
+            sourceDepthOrSortingOrder: 0,
+            sourceZ: meshZ.value,
+            creationSequence: meshCreationSequence,
+          }),
+          maskObjectId: null,
+        });
+        commands.push({
+          ...base(commands.length),
+          kind: "set-mesh",
+          renderObjectId: meshObjectId,
+          vertices: mesh.value.vertices,
+          indices: mesh.value.indices,
+          uv: mesh.value.uv,
+          colors: mesh.value.colors,
+          materialRole: "long-note",
+        });
+        commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: meshObjectId });
+        previousTransform = childTransform;
+        previousButtonCount = childButtonCount;
+      }
+      slideChildStates = Object.freeze(states);
+    }
     const transaction = this.preflight(commands);
     if (transaction.status !== "ok") return transaction;
     return ok(Object.freeze({
@@ -940,8 +1174,63 @@ export class RenderCommandProducer {
       }),
       renderedTransform,
       longChildState,
+      slideChildStates,
       transaction: transaction.value,
     }));
+  }
+
+  preflightOrdinaryMultipleDirectionalLine(
+    poolIndex: number,
+    ownerState: OrdinaryMultipleDirectionalLineOwnerState,
+    materialDirection: "left" | "right",
+    activate: boolean,
+  ): SimulatorResult<RenderOwnerTransaction> {
+    const validation = this.validate();
+    if (validation.status !== "ok") return validation;
+    if (!Number.isSafeInteger(poolIndex) || poolIndex < 0) {
+      return evidenceRequired(
+        "render.producer.invalid-multiple-directional-line-pool-index",
+        ["RPR-R4-010", "RPR-R4-013", "PR09", "PR17"],
+        "MultipleDirectional back-line updates require a non-negative engine-owned pool index.",
+      );
+    }
+    const renderObjectId = multipleDirectionalLineRenderObjectId(poolIndex);
+    if (!this.creationSequenceByObjectId.has(renderObjectId)) {
+      return evidenceRequired(
+        "render.producer.multiple-directional-line-not-created",
+        ["RPR-R4-010", "RPR-R4-013", "PR09", "PR17"],
+        "MultipleDirectional back-line updates require a committed fixed-pool identity.",
+      );
+    }
+    const geometry = buildOrdinaryMultipleDirectionalLine(ownerState);
+    if (geometry.status !== "ok") return geometry;
+    const base = this.commandBase(this.substep);
+    const commands: RenderCommand[] = [];
+    if (activate) {
+      commands.push({
+        ...base(commands.length),
+        kind: "bind-resource",
+        renderObjectId,
+        binding: "material",
+        logicalAssetId: materialDirection === "left"
+          ? this.resources.multipleDirectionalLineLeftLogicalAssetId!
+          : this.resources.multipleDirectionalLineRightLogicalAssetId!,
+        exactKey: null,
+      });
+    }
+    commands.push({
+      ...base(commands.length),
+      kind: "set-line",
+      renderObjectId,
+      start: geometry.value.start,
+      end: geometry.value.end,
+      width: geometry.value.width,
+      materialRole: "multiple-directional-line",
+    });
+    if (activate) {
+      commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId });
+    }
+    return this.preflight(commands);
   }
 
   preflightOrdinarySyncLine(
@@ -1077,6 +1366,92 @@ export class RenderCommandProducer {
       : transaction;
   }
 
+  preflightOrdinarySlideChildFrame(
+    poolObjectId: string,
+    childStates: readonly OrdinarySlideChildState[],
+    frontTransform: OrdinaryNoteMotionResult,
+    frontButtonCount: number,
+    input: OrdinaryLongNormalChildFrameInput,
+    scene: OrdinaryFixedNoteSceneInput,
+  ): SimulatorResult<PreparedOrdinarySlideChildFrame> {
+    const validation = this.validate();
+    if (validation.status !== "ok") return validation;
+    const sceneValidation = validateOrdinaryFixedNoteSceneInput(scene);
+    if (sceneValidation.status !== "ok") return sceneValidation;
+    if (
+      scene.screenToSafeAreaRatio === undefined ||
+      scene.longMeshColor === undefined
+    ) {
+      return evidenceRequired(
+        "render.slide.scene-unavailable",
+        ["RPR-R4-004", "RPR-R4-010", "RPR-R4-014", "PR07", "PR12", "PR15"],
+        "R4 Slide frames require explicit safe-area ratio and typed mesh color.",
+      );
+    }
+    const advanced = advanceOrdinarySlideChildren(
+      frontTransform,
+      frontButtonCount,
+      childStates,
+      input,
+      scene.screenToSafeAreaRatio,
+      scene.longMeshColor,
+    );
+    if (advanced.status !== "ok") return advanced;
+    const zero = createRenderFloat32(Math.fround(0));
+    if (zero.status !== "ok") return zero;
+    const base = this.commandBase(this.substep);
+    const commands: RenderCommand[] = [];
+    for (let index = 0; index < advanced.value.childStates.length; index += 1) {
+      const state = advanced.value.childStates[index]!;
+      const segment = advanced.value.segments[index]!;
+      const childObjectId = slideChildRenderObjectId(poolObjectId, state.sourceIndex);
+      const meshObjectId = slideMeshRenderObjectId(poolObjectId, segment.sourceIndex);
+      const childCreationSequence = this.creationSequenceByObjectId.get(childObjectId);
+      if (childCreationSequence === undefined || !this.creationSequenceByObjectId.has(meshObjectId)) {
+        return evidenceRequired(
+          "render.producer.slide-child-not-created",
+          ["RPR-R4-004", "RPR-R4-010", "RPR-R4-014", "PR07", "PR12", "PR39"],
+          "Slide updates require every chart-sized child and segment identity to remain committed.",
+        );
+      }
+      if (state.visible) {
+        commands.push({
+          ...base(commands.length),
+          kind: "set-transform",
+          renderObjectId: childObjectId,
+          position: state.lifecycle.renderedTransform.position,
+          scale: Object.freeze({
+            x: state.lifecycle.renderedTransform.localScale.x,
+            y: state.lifecycle.renderedTransform.localScale.y,
+          }),
+          rotationDegrees: zero.value,
+          color: scene.noteColor,
+          ordering: Object.freeze({
+            domainLayer: scene.noteDomainLayer,
+            sourceDepthOrSortingOrder: 70,
+            sourceZ: state.lifecycle.renderedTransform.position.z,
+            creationSequence: childCreationSequence,
+          }),
+          maskObjectId: null,
+        });
+      }
+      commands.push({
+        ...base(commands.length),
+        kind: "set-mesh",
+        renderObjectId: meshObjectId,
+        vertices: segment.geometry.vertices,
+        indices: segment.geometry.indices,
+        uv: segment.geometry.uv,
+        colors: segment.geometry.colors,
+        materialRole: "long-note",
+      });
+    }
+    const transaction = this.preflight(commands);
+    return transaction.status === "ok"
+      ? ok(Object.freeze({ childStates: advanced.value.childStates, transaction: transaction.value }))
+      : transaction;
+  }
+
   preflightOrdinaryNoteSceneMotion(
     poolObjectId: string,
     motionState: OrdinaryNoteMotionState,
@@ -1148,6 +1523,8 @@ export class RenderCommandProducer {
     poolObjectId: string,
     syncLinePoolIndices: readonly number[] = [],
     deactivateLongChildren = false,
+    multipleDirectionalLinePoolIndices: readonly number[] = [],
+    deactivateSlideChildCount = 0,
   ): SimulatorResult<RenderOwnerTransaction> {
     const validation = this.validate();
     if (validation.status !== "ok") return validation;
@@ -1165,6 +1542,16 @@ export class RenderCommandProducer {
         renderObjectId,
       },
     ];
+    if (
+      !Number.isSafeInteger(deactivateSlideChildCount) ||
+      deactivateSlideChildCount < 0
+    ) {
+      return evidenceRequired(
+        "render.producer.invalid-slide-child-teardown-count",
+        ["RPR-R4-004", "RPR-R4-010", "RPR-R4-014", "PR07", "PR12"],
+        "Slide teardown requires the non-negative chart-sized child count committed at setup.",
+      );
+    }
     if (deactivateLongChildren) {
       for (const renderObjectId of [
         longAfterRenderObjectId(poolObjectId),
@@ -1172,6 +1559,15 @@ export class RenderCommandProducer {
       ]) {
         commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId });
         commands.push({ ...base(commands.length), kind: "deactivate-object", renderObjectId });
+      }
+    }
+    for (let index = 0; index < deactivateSlideChildCount; index += 1) {
+      for (const childObjectId of [
+        slideChildRenderObjectId(poolObjectId, index),
+        slideMeshRenderObjectId(poolObjectId, index),
+      ]) {
+        commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: childObjectId });
+        commands.push({ ...base(commands.length), kind: "deactivate-object", renderObjectId: childObjectId });
       }
     }
     for (const poolIndex of syncLinePoolIndices) {
@@ -1191,6 +1587,25 @@ export class RenderCommandProducer {
         ...base(commands.length),
         kind: "deactivate-object",
         renderObjectId: syncLineRenderObjectId(poolIndex),
+      });
+    }
+    for (const poolIndex of multipleDirectionalLinePoolIndices) {
+      if (!Number.isSafeInteger(poolIndex) || poolIndex < 0) {
+        return evidenceRequired(
+          "render.producer.invalid-multiple-directional-line-pool-index",
+          ["RPR-R4-010", "RPR-R4-013", "PR09", "PR17"],
+          "MultipleDirectional teardown requires only non-negative engine-owned pool indices.",
+        );
+      }
+      commands.push({
+        ...base(commands.length),
+        kind: "hide-object",
+        renderObjectId: multipleDirectionalLineRenderObjectId(poolIndex),
+      });
+      commands.push({
+        ...base(commands.length),
+        kind: "deactivate-object",
+        renderObjectId: multipleDirectionalLineRenderObjectId(poolIndex),
       });
     }
     return this.preflight(commands);
@@ -1293,8 +1708,20 @@ export function longMeshRenderObjectId(poolObjectId: string): string {
   return `render:${poolObjectId}:mesh`;
 }
 
+export function slideChildRenderObjectId(poolObjectId: string, index: number): string {
+  return `render:${poolObjectId}:slide-child:${index}`;
+}
+
+export function slideMeshRenderObjectId(poolObjectId: string, index: number): string {
+  return `render:${poolObjectId}:slide-mesh:${index}`;
+}
+
 export function syncLineRenderObjectId(poolIndex: number): string {
   return `render:sync-line:${poolIndex}`;
+}
+
+export function multipleDirectionalLineRenderObjectId(poolIndex: number): string {
+  return `render:multiple-directional-line:${poolIndex}`;
 }
 
 export function resolveFrontSpriteBinding(
@@ -1305,7 +1732,7 @@ export function resolveFrontSpriteBinding(
   readonly logicalAssetId: string;
   readonly exactKey: string;
 }> {
-  const laneSuffix = resolveLaneSuffix(information, habahiro);
+  const laneSuffix = resolveFrontLaneSuffix(information, habahiro);
   if (laneSuffix.status !== "ok") return laneSuffix;
   if (
     information.fireNoteType === FrontNoteType.DirectionalFlick ||
@@ -1365,6 +1792,21 @@ export function resolveFrontSpriteBinding(
     logicalAssetId: resources.noteAtlasLogicalAssetId,
     exactKey: `${family}_${laneSuffix.value}`,
   }));
+}
+
+function resolveFrontLaneSuffix(
+  information: NoteInformation,
+  habahiro: boolean,
+): SimulatorResult<string> {
+  if (
+    !habahiro &&
+    (information.fireNoteType === FrontNoteType.SlideA ||
+      information.fireNoteType === FrontNoteType.SlideB)
+  ) {
+    const lane = resolveOrdinarySlideCenterLane(information);
+    return lane.status === "ok" ? ok(String(lane.value)) : lane;
+  }
+  return resolveLaneSuffix(information, habahiro);
 }
 
 function resolveLaneSuffix(
@@ -1427,9 +1869,11 @@ function isNonEmpty(value: unknown): value is string {
   return typeof value === "string" && value.length > 0;
 }
 
-function resolveOrdinaryLaneIndex(
+function resolveOrdinaryMotionLaneIndex(
   information: NoteInformation,
+  allowSlideRange = false,
 ): SimulatorResult<number> {
+  if (allowSlideRange) return resolveOrdinarySlideCenterLane(information);
   const buttons = information.buttonTypesArray.length > 0
     ? information.buttonTypesArray
     : information.buttonTypes.length > 0
@@ -1450,6 +1894,43 @@ function resolveOrdinaryLaneIndex(
         ["RPR-D05", "PR05", "PR10"],
         "The fixed ordinary motion profile requires one lane in the current 0..6 playfield.",
       );
+}
+
+function resolveOrdinarySlideCenterLane(
+  information: NoteInformation,
+): SimulatorResult<number> {
+  const buttons = information.buttonTypesArray.length > 0
+    ? information.buttonTypesArray
+    : information.buttonTypes.length > 0
+    ? information.buttonTypes
+    : [information.buttonType];
+  const lanes = buttons.map((button) => button - ButtonType.Button_01_BMS_1P_01);
+  const centerLane = information.buttonType - ButtonType.Button_01_BMS_1P_01;
+  if (
+    lanes.length < 1 ||
+    lanes.length > 7 ||
+    lanes.some((lane) => !Number.isInteger(lane) || lane < 0 || lane > 6) ||
+    lanes.some((lane, index) => index > 0 && lane !== lanes[index - 1]! + 1) ||
+    !Number.isInteger(centerLane) ||
+    centerLane < lanes[0]! ||
+    centerLane > lanes[lanes.length - 1]!
+  ) {
+    return evidenceRequired(
+      "render.slide.invalid-lane-range",
+      ["RPR-R4-004", "RPR-R4-010", "RPR-R4-014", "PR07", "PR12"],
+      "R4 Slide roots and children require one contiguous 1..7-button range and its authored center button.",
+    );
+  }
+  return ok(centerLane);
+}
+
+function resolveOrdinarySlideChildSpriteKey(
+  information: NoteInformation,
+): SimulatorResult<string> {
+  const lane = resolveOrdinarySlideCenterLane(information);
+  return lane.status === "ok"
+    ? ok(`note_long_${lane.value}`)
+    : lane;
 }
 
 function validateVector2(value: RenderVector2): boolean {

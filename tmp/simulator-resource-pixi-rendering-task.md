@@ -12,7 +12,7 @@
 - 锁定`libil2cpp.so` SHA-256：`815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F`。
 - 锁定`global-metadata.dat` SHA-256：`298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F`。
 - 当前Reverse基线提交：`4b4ebdfada2c2deea7cb9b6d838e61b1e3240876`；只消费该提交及其祖先中已提交、已push、可校验对象。
-- 当前状态：**2026-08-02 R4已关闭并冻结807项evidence：Flick/Slide/Multiple三条confirmed自然Live共118,152 events/1,258 aggregate frames，30个owner target与6个新增Slide slice；front Flick/Directional、observed Slide mesh+line及MultipleDirectional connect/back-line获得正向授权。RP13此前从`92e0dea`通过，production矩阵仍暂为14 closed、14 partial、12 blocked，直到R4 production与oracle实际接线后才可重算。Long-after Flick、Slide Wait runtime、add-Long/add-Slide/after Multiple、advanced/threshold、完整field/HUD与production chart replay继续失败关闭。**
+- 当前状态：**2026-08-02 R4已关闭并冻结807项evidence；front Flick/Directional、标准Slide child mesh chain及MultipleDirectional connect/back-line已接入production并通过隔离oracle，production矩阵重算为17 closed/current-subset、16 partial、7 blocked。Long-after Flick、NoteSlide root Wait runtime、add-Long/add-Slide/after Multiple、advanced/threshold、完整field/HUD与production chart replay继续失败关闭；RP14仍不通过。**
 - 计划证据包：`tmp/simulator-reverse-evidence/resource-pixi-rendering/`，只在Reverse新证据提交并push后创建。
 - 计划验收记录：`tmp/simulator-resource-pixi-rendering-acceptance.md`，RP14时创建。
 
@@ -558,6 +558,14 @@
 - 30个byte-pinned owner target与6个新增NoteSlide direct slice连接到R4 profile；runtime观察16个owner。授权仅开放front Flick/Directional icon、Slide activate/update/move/stop/after mesh+line，以及MultipleDirectional activate/deactivate/connect/back-line。
 - RPF-006 Long-after Flick、RPF-010 Slide Wait runtime、RPF-017..024 add-Long/add-Slide/after Multiple、RPF-028/029 Advanced和threshold均保持false；不得由常量Material setter或static inventory外推。
 - Garupa冻结包由790项升至807项（7张实体PNG继续排除，仅冻结manifest/hash），source verifier通过；job-1关闭并进入R4 production消费。
+
+### 1.62 2026-08-02 R4 Note/Slide/Multiple production消费
+
+- Flick与Directional/Multiple root沿用current ordinary root motion；Directional/Multiple固定sorting order 71，exact atlas key按left/right与authored center lane选择，未授权的Long-after icon和动画不外推。
+- 标准`AfterNoteType.None` Slide按chart-owned after list建立固定child/mesh identity；可见/不可见intermediate分离，N个after node产生N个22/60 base segment（即N个intermediate加terminal对应N+1段），owner-local child Wait→Move→Stop沿已闭合NoteAfter/base motion推进并原子teardown。Flick/Directional/Multiple terminal继续整批失败关闭。
+- MultipleDirectional按batch内连续同方向、相邻button连接，不跨普通Note拼组；60-slot back-line pool在Activate选择显式left/right material，OnUpdate按current ARM64固定X升序、完整XYZ与`targetA.localScale.x * 0.75f`宽度，shared teardown隐藏并deactivate。
+- Pixi v8开放独立`multiple-directional-line` role和material profile，仅接受正宽、非退化quad；threshold command与42-vertex Advanced仍在mutation前失败关闭，R4 profile中对应false未被扩大。
+- 隔离`tsc`、render-note-geometry、render-contracts、actual Pixi及render-production通过；PR矩阵由14/14/12更新为17 closed/current-subset、16 partial、7 blocked，RP14仍由PR14/PR19/PR28/PR30/PR32/PR39/PR40阻断。
 
 ## 2. 固定范围
 
