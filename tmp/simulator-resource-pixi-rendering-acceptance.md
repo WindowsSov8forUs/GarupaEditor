@@ -1,122 +1,115 @@
 # 资源与 Pixi 渲染阶段独立验收记录
 
-日期：2026-08-01（2026-08-02更新production子集）
+日期：2026-08-02
 
 ## 1. 验收结论
 
-**结论：RP13 回归入口通过；RP14 阶段完成验收不通过，阶段保持进行中。**
+**RP13 从已推送 HEAD 通过；RP14 不通过，资源与 Pixi 渲染阶段保持进行中。**
 
-本次验收不把“证据 closure 已确认”和“production 已可见实现”混为一谈。当前已完成 typed resource contract、本地 provider、Sprite、ordinary projection、ordinary Normal root scene/motion、simultaneous Normal sync-line lifecycle、22/60 base NoteMesh pure producer、field/judge 显式 setup producer、基础 HUD semantic、observed life-heal semantic，以及完整 RP12 fault/context/dispose 矩阵；但下列 production surface 仍明确失败关闭：
+本次验收严格区分：
 
-- NoteManager 尚未接入 after/icon/mesh、非Normal sync与Multiple child owner；Flick/Directional/Long/Slide/Multiple继续在整批activation前失败关闭；
-- Advanced/Multiple mesh/back-line、threshold shader 与 SpriteMask runtime ordering 未实现；
-- Pixi `set-hud`、mask、slider、`play/stop-animation` 仍拒绝，HUD/动画没有可见 portable mapping；
-- ordinary field producer 尚未由 host scene plan 接入实际 session；
-- HABAHIRO degraded 的可见 fidelity label 依赖 HUD mapping，因而 production scene 尚不能交付；exact HABAHIRO gate 继续开放。
+- Reverse evidence closure；
+- 当前证据授权下的失败关闭；
+- production 正向可见功能闭合。
 
-因此不得将 `src/simulator/README.md` 改成“资源与 Pixi 渲染阶段已完成”，不得宣称原作 parity。
+最终 production-consumption 矩阵为：**14 closed/closed-current-subset、14 partial、12 blocked/blocked-degraded**。runner 全绿只说明当前已实现子集及失败边界一致，不等于 PR01–PR40 全部正向实现。
 
 ## 2. 锁定状态
 
 - Garupa 分支：`codex/refactor-simulator-implementation`
-- 验收前已推送 HEAD：`ac315e4445c6341fd8cd083b08e67729eafb5e4f`
+- 验收运行 HEAD：`92e0deaca0d42e2680a2a7beb7360d498702265c`
 - Reverse 分支：`main`
-- Reverse 证据提交：`dd61e432202d2f1cc651b755cd69e09e73083947`
-- 验收前双仓远端差异：均为 `0 0`
-- Garupa 唯一无关工作树项：`tmp/current-device.png`，未读取、未暂存、未修改。
-- Reverse 既有无关项：`.claude/`、`runtime/tools/`，未消费、未暂存、未修改。
+- Reverse 证据 HEAD：`fa28856133e0bc45f355407c39b84cac9cbcfb95`
+- Garupa 与远端差异：`0 0`
+- Reverse 与远端差异：`0 0`
+- Garupa 验收运行前后工作树：clean
+- Reverse 保留无关未跟踪目录：`.claude/`、`runtime/tools/`；未读取、未暂存、未消费。
 
 ## 3. 证据验收
 
 `tmp/simulator-reverse-evidence/resource-pixi-rendering/verify.mjs`通过：
 
-- entries：743；methods/layouts/enums：673/32/19；
-- cache/ingameskin/base resources：11026/57/100；
+- entries：790；methods/layouts/enums：673/32/19；
+- resources：11,026 / 57 / 100；HUD/Skill/Note/ScoreUp profile：8/4/4/5；
 - ordinary R1：87,364 events；geometry R2：87,037 events / 636 frames；
-- mesh owners：510；line owners：80；projection/profile/producer/HUD-runtime：各 1；
-- HUD caller：14,084；HUD-animation caller：1,452；observed life-heal order：2；
-- H01–H28、D01–D18、PR01–PR40 evidence closure：closed；
-- delivery authorization：true；exact HABAHIRO：open-not-claimed。
+- Long child：1 profile / 13 isolated ARM64 slices；
+- visible HUD R3：22 setter targets、22 ARM64 slices、19,888 events、631 frames；
+- mesh owners：510；line owners：80；
+- HAB degraded：2 profiles / 12 differences / 179 Sprite keys；
+- delivery gate：closed；production authorization：true；
+- exact HABAHIRO：open-not-claimed。
 
-冻结包未包含 APK、UnityFS、资源图片/字体/clip bytes、raw R1/R2 trace、实体 PNG、IDA 数据库或 Reverse `runtime/tools/`。
+R3只授权bitmap Score/Combo/Life、score-skill observed overlay、serialized field/sudden mask边界、Combo/GameJudge restart和portable Combo/Life Heal sampling。Guard/NeverDie/Judge/Flick/Multiple等未观察路径仍显式false。
 
-## 4. RP00–RP14 实施验收
+## 4. 本轮新增闭合
+
+- ordinary Long + Normal tail：root/after/base-mesh stable identity、Wait→Move→Stop、22/60 mesh refresh、atomic deactivate与child-first release；
+- visible Pixi：exact Combo/AP digit subtexture、Score/Result/AddScore/fidelity portable Text、Life双Graphics fill、explicit polygon mask；
+- animation：engine-clock Float32 `sample-animation`、Combo/Life owner-local restart/sample/stop、pause不进入`ExecUpdate`因此冻结；
+- life fill：按current ARM64固定`ratio=currentLife/1000`、primary=`min(ratio,1)`、secondary=`max(ratio-1,0)`；
+- degraded disclosure：actual Pixi scene显示严格文本`Approximate HABAHIRO`并参与reverse release；
+- 未授权family：virtual Long、非Normal Long tail、Flick/Directional icon、Slide chain、Multiple side/back-line分family精确失败且整批零mutation。
+
+## 5. RP00–RP14
 
 | 项 | 结论 | 说明 |
 | --- | --- | --- |
-| RP00 | 通过 | 旧资源/旧入口边界与当前分支状态已锁定。 |
-| RP01 | 通过 | 任务书、失败关闭、fidelity 与排除边界已建立。 |
-| RP02 | 通过 | 743 项 frozen manifest/source/index verifier 可校验。 |
-| RP03 | 通过 | typed resource/scene/command/backend contract、原子事务与 recording backend 已实现。 |
-| RP04 | **部分** | Sprite key、ordinary Normal pool root与Float32 motion lifecycle已接；after/icon/mesh与完整 child graph未接。 |
-| RP05 | **部分** | ordinary/directional root Sprite 与 field/judge explicit producer 已实现；flick icon/visible field session/HAB lane change 未实现。 |
-| RP06 | **部分** | base mesh pure producer与simultaneous Normal sync-line production lifecycle已实现；after mesh、非Normal sync、advanced/Multiple/threshold/mask未实现。 |
-| RP07 | **部分** | stable root identity、80-slot sync pool、activate/update/shared teardown/session release已实现；完整 mesh/icon/Multiple child reuse graph未接。 |
-| RP08 | **部分** | Score/Combo/Result/Life semantic HUD 原子命令已实现；Pixi 可见 HUD 未实现。 |
-| RP09 | **部分** | R1 observed life-heal semantic 已实现；其余 overlay/animation 及 Pixi sampling 未实现。 |
-| RP10 | 通过 | local bytes、SHA-256、PNG metadata、cache/refcount、无网络、atomic prepare 已实现。 |
-| RP11 | **部分** | Pixi Sprite/Mesh/sync-line/projection/order 已实现；Mask/Text/Slider/Animation 仍拒绝。 |
-| RP12 | 通过 | prepare/command/context/capability/mutation/dispose 矩阵通过。 |
-| RP13 | 通过 | production runner 与 14-stage 全回归入口从临时产物通过。 |
-| RP14 | **不通过** | 因 RP04–RP09、RP11 production 缺口仍在，不满足阶段完成门。 |
+| RP00–RP03 | 通过 | 任务书、证据门、typed contract、resource/session/transaction边界完成。 |
+| RP04 | 部分 | Normal与Long+Normal tail producer完成；Flick/Slide/Multiple正向child未授权。 |
+| RP05 | 部分 | ordinary root与显式field/judge/mask producer存在；field host scene未接，icon/HAB lane change未实现。 |
+| RP06 | 部分 | base Long mesh、ordinary Normal sync、polygon mask完成；advanced/threshold/Slide/Multiple back line未实现。 |
+| RP07 | 部分 | root/Long/sync stable identity、teardown、session release完成；其余family pool graph未实现。 |
+| RP08 | 部分 | Score/Combo/Life与基础Result/AddScore可见映射完成；完整layout/lifetime/round-robin未完成。 |
+| RP09 | 部分 | Combo/Life Heal portable clock完成；Guard/NeverDie/Judge/score-skill完整owner链未完成。 |
+| RP10 | 通过 | local provider、hash、metadata、decode/cache/refcount与无网络完成。 |
+| RP11 | 部分 | Sprite/base Mesh/sync line/mask/HUD/fill/Combo-Life animation完成；任务书全部组件族未完成。 |
+| RP12 | 通过 | prepare/command/context/mutation/dispose/terminal precedence矩阵完成。 |
+| RP13 | 通过 | 已推送HEAD串行14-stage总入口通过。 |
+| RP14 | **不通过** | 12个blocked production case仍缺正向实现。 |
 
-## 5. PR01–PR40 production 状态
+## 6. PR01–PR40 production矩阵
 
-证据 case 均已闭合，但 production 验收必须按任务书原编号和实际实现分组：
+- **Closed / current subset（14）**：PR01–PR05、PR10、PR13、PR16、PR23、PR33、PR35–PR38。
+- **Partial（14）**：PR06、PR11、PR15、PR18、PR20–PR22、PR24–PR27、PR29、PR31、PR34。
+- **Blocked / degraded blocked（12）**：PR07–PR09、PR12、PR14、PR17、PR19、PR28、PR30、PR32、PR39–PR40。
 
-- **已通过当前声明子路径**：PR01–PR06 resource/Sprite、PR10 ordinary root motion、PR11 base 22/60 mesh、PR13 base geometry、PR16 simultaneous Normal sync、PR20 root与sync pool identity，以及PR33–PR39事务/故障/离线边界。
-- **部分**：PR07、PR10–PR11、PR13、PR15–PR16、PR18、PR20、PR22–PR30；其中pure producer或semantic command存在不等于可见child/HUD lifecycle已接。
-- **未实现/失败关闭**：PR08 Flick icon hierarchy/animation、PR09 Multiple side visual、PR12 Slide segments、PR14 material/threshold、PR15 mesh lifecycle、PR17 Multiple back line、PR18 mask runtime、PR19 HAB lane change、PR21 animation clock、PR22–PR32可见HUD/slider/animation剩余项、PR40可见degraded fidelity label。
+其中：
 
-这份分组不回写或降低 frozen PR evidence status；它只记录 production 消费完成度，尤其不得再把PR16 sync、PR17 Multiple back line和PR18 mask错位。
+- PR04仅以显式degraded资源交付关闭，exact HAB保持开放；
+- PR16只关闭simultaneous ordinary Normal sync；
+- PR18已有backend/producer mask正向oracle，但host field scene未接，因此仍partial；
+- PR40只关闭visible degraded label，不关闭HAB lane-change、natural runtime与original frame。
 
-## 6. 验证结果
+## 7. 验证结果
 
-验收前已从已推送 HEAD 串行执行：
+从已推送`92e0dea`串行执行：
 
 ```powershell
 npm.cmd run simulator:test:resource-pixi-rendering
+node tmp/simulator-reverse-evidence/resource-pixi-rendering/verify.mjs
 ```
 
-结果：14 stages 全部通过，包括：
+结果：
 
-1. resource/Pixi production（evidence、static audit、isolated `tsc`、contracts、producer、实际 Pixi、failure）；
-2. first-slice；
-3. chart boundary；
-4. chart parsing；
-5. chart batches；
-6. chart graphs；
-7. chart multi-range；
-8. chart command data；
-9. chart finalize；
-10. chart production（ordinary 与 HABAHIRO BMS）；
-11. clock scheduling；
-12. Auto Live；
-13. manual acceptance（MJ01–MJ26）；
-14. Score/Life/State（BS01–BS36）。
+- resource/Pixi production：通过；
+- PR production verifier：`closed=14 partial=14 blocked=12 RP14=blocked`；
+- render contracts：9组通过；
+- actual Pixi、failure、resource、geometry、Long、HUD/mask/animation/degraded label：通过；
+- first-slice、chart、clock、Auto Live、manual、Score/Life/State：14-stage全部通过；
+- dependency、network、Reverse runtime read、Python runtime dependency反审：通过。
 
-production static audit确认：production 无网络 API/remote URL/Bestdori、无 Reverse 工作树或 frozen evidence runtime read；simulator scripts 无 Python/网络依赖。未运行 Vite/Tauri 或 GarupaEditor 整体构建。
+未运行Vite/Tauri或GarupaEditor整体构建，符合阶段隔离验证约定。
 
-## 7. RP12 独立确认
+## 8. RP14阻断项
 
-- provider throw 在 decode 前失败；decode rejection、dimension mismatch 与 Texture alias 均回滚；
-- unsupported semantic command 非 terminal 且不消费 sequence；
-- missing/duplicate/cross-session/overlap/foreign capability/context/mutation exception 锁定首错并清空 scene/reservation；
-- object 先于 atlas subtexture，base Texture/source 最后 `destroy(true)`；
-- host stage 不销毁；重复 dispose 幂等。
+阶段完成仍需要新的、已提交并冻结的Reverse runtime授权，然后才能实现并验收：
 
-## 8. 后续硬门
+1. Slide intermediate与N+1 segment/curve mesh lifecycle；
+2. Flick/Directional icon hierarchy、sorting与runtime phase；
+3. Multiple side visual、back line、reconnect和shared teardown；
+4. advanced mesh、threshold/material完整路径；
+5. field/mask实际host scene接线及ordinary production chart replay；
+6. AddScore round-robin、Result lifetime、Score gauge、warning/Guard/NeverDie/Judge/Skill完整HUD；
+7. HAB lane-change production scene；exact HAB UnityFS/natural R1/original frame继续open-not-claimed。
 
-后续实施应重新拆成三个批量 job，避免逐证据停顿：
-
-1. Note lifecycle/child graph：ordinary Normal root与simultaneous sync已闭合；继续补after/icon/mesh、非Normal sync与Multiple owner；
-2. visible Pixi：一次实现 mask + bitmap HUD/slider + deterministic animation profile/sampling；
-3. production acceptance：补 PR remaining oracle、degraded visible label，再重跑 RP13/RP14。
-
-在这三个批次关闭前，本阶段状态必须保持“进行中”。
-
-## 9. 2026-08-02 增量复验
-
-- pushed commit `4c35028`新增ordinary simultaneous Normal sync production lifecycle与host oracle；验收文档修订commit为`1aaa6ad`，Windows Git Bash确认远端分支与本地差异`0 0`。
-- 从已推送`1aaa6ad`串行执行`simulator:test:resource-pixi-rendering`，14 stages全部通过；resource/Pixi production、actual Pixi/failure、上游manual与Score/Life/State均绿色。
-- RP14结论仍为**不通过**：after/icon/mesh、非Normal sync、Multiple、mask、visible HUD/slider/animation与degraded label缺口未关闭；不得因回归绿色改写为阶段完成。
+因此不得把`src/simulator/README.md`更新为阶段完成，也不得宣称原作完整parity。

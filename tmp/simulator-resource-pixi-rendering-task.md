@@ -12,7 +12,7 @@
 - 锁定`libil2cpp.so` SHA-256：`815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F`。
 - 锁定`global-metadata.dat` SHA-256：`298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F`。
 - 当前Reverse基线提交：`fa28856133e0bc45f355407c39b84cac9cbcfb95`；只消费该提交及其祖先中已提交、已push、可校验对象。
-- 当前状态：**2026-08-02按HEAD `07fc1da`继续收尾：RP00–RP03、RP10、RP12关闭；RP13仍只代表当前已实现子集回归绿色，RP14不通过。ordinary Normal root/sync与Long normal-tail root/after/base-mesh完整transaction及host oracle已闭合；Reverse R3新增22个HUD setter/ARM64 slice与19,888-event/631-frame natural Demo Live，晋升bitmap HUD、serialized field/sudden mask及portable combo/life-heal animation sampling授权并冻结为790项。下一步是Pixi可见HUD/mask/animation production；Flick/Directional/Slide/Multiple、advanced/threshold、未观察动画与degraded visible label仍失败关闭。**
+- 当前状态：**2026-08-02从已推送HEAD `92e0dea`完成RP13重验：14-stage与790项evidence source verifier通过；actual Pixi已闭合ordinary Normal/Long+Normal tail、base mesh/sync、explicit mask、visible Score/Combo/Life、Combo/Life engine-clock sampling及degraded label。PR production矩阵为14 closed、14 partial、12 blocked，RP14因此不通过，阶段保持进行中。Flick/Directional icon、Slide chain、Multiple、advanced/threshold、完整field host、完整HUD overlay与production chart replay仍须新Reverse runtime授权。**
 - 计划证据包：`tmp/simulator-reverse-evidence/resource-pixi-rendering/`，只在Reverse新证据提交并push后创建。
 - 计划验收记录：`tmp/simulator-resource-pixi-rendering-acceptance.md`，RP14时创建。
 
@@ -76,15 +76,15 @@
 | RP03 锁定render/resource contracts | **已完成** | immutable profile、provider、command、identity、session、preflight与独立failure矩阵已关闭 |
 | RP04 接入engine渲染producer | **进行中** | Normal root/sync与Long Normal-tail transaction完成；其余family未接 |
 | RP05 恢复Note Sprite与field | **进行中** | root exact lookup与field pure plan完成；icon/intermediate/side visual/field host未接 |
-| RP06 恢复mesh、sync line与mask | **进行中** | Long base 22/60 lifecycle与Normal sync完成；Slide/advanced/Multiple/threshold/mask未接 |
+| RP06 恢复mesh、sync line与mask | **进行中** | Long base 22/60、Normal sync与explicit polygon mask完成；Slide/advanced/Multiple/threshold未接 |
 | RP07 恢复render pool与生命周期 | **进行中** | root/sync/Long after+mesh lifecycle与ready/fault release完成；其余child reuse/pause/reset/GameOver未闭合 |
-| RP08 恢复基础HUD消费链 | **进行中** | Score/Combo/Result/Life semantic state完成；digit/layout/fill/lifetime与Pixi可见映射未接 |
-| RP09 恢复HUD overlay与动画 | **进行中** | observed life-heal semantic顺序完成；其余overlay与sampling未接 |
+| RP08 恢复基础HUD消费链 | **进行中** | Score/Combo/Life与基础Result/AddScore可见；完整layout/gauge/lifetime/round-robin未闭合 |
+| RP09 恢复HUD overlay与动画 | **进行中** | Combo/Life Heal owner-local sampling完成；Guard/NeverDie/Judge/Skill完整overlay未接 |
 | RP10 建立portable resource backend | **已完成** | local bytes/hash/decode/cache/subtexture/material引用与atomic failure已闭合 |
-| RP11 建立Pixi v8 renderer | **进行中** | Sprite/base Mesh/sync-line/projection/order完成；Mask/HUD/Slider/Animation/threshold未接 |
+| RP11 建立Pixi v8 renderer | **进行中** | Sprite/base Mesh/sync-line/mask/HUD/fill/Combo-Life animation完成；完整任务书组件族未闭合 |
 | RP12 failure/context/dispose矩阵 | **已完成** | prepare/allocation/commit/context/capability/dispose及host terminal cleanup矩阵通过 |
-| RP13 production oracle与全回归 | **进行中** | 当前子集runner绿色；缺PR07–PR34/PR39–PR40完整production oracle |
-| RP14 独立验收 | **不通过/待最终重验** | 旧acceptance已记录失败；全部production与oracle提交后从HEAD重验 |
+| RP13 production oracle与全回归 | **已完成（真实矩阵）** | 已推送HEAD 14-stage通过并强制报告14 closed/14 partial/12 blocked |
+| RP14 独立验收 | **不通过** | 最终验收已重跑；12个blocked正向case阻止阶段完成 |
 
 ### 1.4 2026-07-31 RP00初始盘点
 
@@ -542,6 +542,14 @@
 - 新增PR01–PR40 production-consumption verifier，固定当前HEAD为14 closed/closed-current-subset、14 partial、12 blocked/blocked-degraded；ID连续且检查mask/sample/label与Flick/Slide/Multiple fail-closed marker。
 - `simulator:test:render-production`总入口在static audit后强制运行该矩阵，runner绿色不再等价于PR40项正向闭合；当前RP14由12个blocked case明确阻断。
 - 本批不修改production行为；对应acceptance、README与最终RP13/RP14重验属于job-7。
+
+### 1.60 2026-08-02 RP13/RP14独立收尾验收
+
+- 验收基线为已推送Garupa `92e0deaca0d42e2680a2a7beb7360d498702265c`与Reverse `fa28856133e0bc45f355407c39b84cac9cbcfb95`；运行前清理隔离testing tsc误生成的未跟踪JS，未删除任何tracked或用户文件。
+- 从clean HEAD串行运行`simulator:test:resource-pixi-rendering`，14 stages全部通过；production入口强制输出`closed=14 partial=14 blocked=12 RP14=blocked`，随后source evidence verifier再次通过。
+- Windows Git Bash确认Garupa与远端`0 0`且工作树clean；Reverse与远端`0 0`，仅保留未消费的`.claude/`与`runtime/tools/`。
+- 重写acceptance记录790项证据、R3、Long、visible Pixi、degraded label、RP00–RP14和PR01–PR40真实状态；RP13通过，RP14不通过。
+- 阶段不能在当前证据边界下诚实宣布完成；下一轮必须先取得Flick/Slide/Multiple/advanced/threshold/full HUD/production chart的新runtime授权，禁止以failure-closed或绿色回归代替正向case。
 
 ## 2. 固定范围
 
