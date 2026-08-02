@@ -26,6 +26,7 @@ import {
 import type { ScoreLifeStateProfile } from "../engine/data/scoreLifeState";
 import { evidenceRequired, ok, type SimulatorResult } from "../engine/evidence";
 import { InGameRecord } from "../engine/managers/inGameRecord";
+import { validateOrdinaryRenderedBatchAuthorization } from "../engine/managers/noteManager";
 import { RenderCommandProducer } from "../engine/rendering/renderCommandProducer";
 import { createSimulatorEngine } from "../host/createSimulatorEngine";
 import { engineInput, noteBatch } from "./firstSliceFixtures";
@@ -1013,6 +1014,96 @@ async function testHostReadyGate(): Promise<void> {
   console.log("ok 8 - host ready and exact-session gate precedes owner mutation");
 }
 
+async function testUnpromotedNoteFamilyBoundaries(): Promise<void> {
+  const normal = renderedNoteBatch("render-family-boundary", 96).informationList[0]!;
+  const cases = [
+    {
+      label: "virtual Long",
+      information: { ...normal, fireNoteType: FrontNoteType.Long, afterNoteType: AfterNoteType.Normal, afterNoteAbsolutePos: 192, virtualLaneDirection: 1 },
+      capability: "render.note.virtual-lane-child-evidence-required",
+    },
+    {
+      label: "Long Flick tail",
+      information: { ...normal, fireNoteType: FrontNoteType.Long, afterNoteType: AfterNoteType.Flick, afterNoteAbsolutePos: 192 },
+      capability: "render.note.long-non-normal-tail-evidence-required",
+    },
+    {
+      label: "Flick",
+      information: { ...normal, fireNoteType: FrontNoteType.Flick },
+      capability: "render.note.flick-icon-lifecycle-evidence-required",
+    },
+    {
+      label: "Directional",
+      information: { ...normal, fireNoteType: FrontNoteType.DirectionalFlick },
+      capability: "render.note.flick-icon-lifecycle-evidence-required",
+    },
+    {
+      label: "Slide",
+      information: { ...normal, fireNoteType: FrontNoteType.SlideA },
+      capability: "render.note.slide-child-chain-evidence-required",
+    },
+    {
+      label: "Multiple",
+      information: { ...normal, fireNoteType: FrontNoteType.MultipleDirectionalFlick },
+      capability: "render.note.multiple-directional-lifecycle-evidence-required",
+    },
+    {
+      label: "Multiple side visual",
+      information: { ...normal, fireNoteType: FrontNoteType.LongMultipleDirectionalFlickAdd },
+      capability: "render.note.multiple-directional-lifecycle-evidence-required",
+    },
+  ] as const;
+  for (const testCase of cases) {
+    const result = validateOrdinaryRenderedBatchAuthorization([testCase.information]);
+    equal(result.status, "evidence-required", `${testCase.label} remains fail-closed`);
+    equal(result.status === "evidence-required" ? result.capability : null,
+      testCase.capability, `${testCase.label} reports its exact missing authorization`);
+  }
+  equal(validateOrdinaryRenderedBatchAuthorization([normal]).status, "ok",
+    "ordinary Normal remains authorized");
+  equal(validateOrdinaryRenderedBatchAuthorization([
+    { ...normal, fireNoteType: FrontNoteType.Long, afterNoteType: AfterNoteType.Normal, afterNoteAbsolutePos: 192 },
+  ]).status, "ok", "ordinary Long+Normal tail remains authorized");
+
+  const renderer = new RecordingSimulatorRendererBackend();
+  requireOk(await renderer.prepare(SESSION, profile(), new LocalProvider(), preflight()),
+    "unsupported-family renderer prepare");
+  const flickBatch = renderedNoteBatch("render-flick-boundary", 96);
+  const renderedFlickBatch = Object.freeze({
+    ...flickBatch,
+    informationList: Object.freeze(flickBatch.informationList.map((information) => Object.freeze({
+      ...information,
+      fireNoteType: FrontNoteType.Flick,
+      gameNoteType: GameNoteType.Flick,
+    }))),
+  });
+  const flickInput = engineInput([renderedFlickBatch]);
+  const engine = requireOk(createSimulatorEngine(
+    {
+      ...flickInput,
+      runtime: {
+        ...flickInput.runtime,
+        playMode: {
+          kind: "auto-live" as const,
+          resultTransform: "identity-no-active-situation-skill" as const,
+        },
+      },
+      rendering: RENDERING,
+    },
+    createRecordingSimulatorBackends(renderer),
+  ), "unsupported-family engine create");
+  requireOk(engine.initialize(), "unsupported-family engine initialize");
+  const beforeCommands = renderer.commandSnapshot().length;
+  const rejected = engine.step(0);
+  equal(rejected.status, "evidence-required", "unsupported family rejects at activation boundary");
+  equal(rejected.status === "evidence-required" ? rejected.capability : null,
+    "render.note.flick-icon-lifecycle-evidence-required", "activation preserves family capability");
+  equal(renderer.commandSnapshot().length, beforeCommands,
+    "unsupported family batch has zero renderer mutation");
+  requireOk(engine.dispose(), "dispose unsupported-family engine");
+  console.log("ok 9 - unpromoted Flick/Slide/Multiple families fail by exact authorization before mutation");
+}
+
 async function main(): Promise<void> {
   await testPortableLocalResources();
   await testProfileValidationAndAliases();
@@ -1022,7 +1113,8 @@ async function main(): Promise<void> {
   await testOrdinarySyncLineLifecycle();
   await testOrdinaryLongLifecycle();
   await testHostReadyGate();
-  console.log("render contract tests passed: 8");
+  await testUnpromotedNoteFamilyBoundaries();
+  console.log("render contract tests passed: 9");
 }
 
 void main().catch((error: unknown) => {

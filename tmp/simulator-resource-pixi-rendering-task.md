@@ -528,6 +528,13 @@
 - advanced mesh与threshold继续由Pixi/producer capability gate拒绝；不得用base 22/60或Graphics替代冒充。
 - 对应production-chart/family零mutation oracle留在下一独立test提交；RP14必须按这些正向缺口保持不通过，除非未来先晋升新的Reverse runtime profile。
 
+### 1.58 2026-08-02 remaining Note/Multiple fail-closed oracle子批
+
+- render-contract新增7项family矩阵：virtual Long、Long Flick tail、Flick、Directional、Slide、Multiple root与Multiple side visual逐项断言独立capability；Normal和Long+Normal tail正向授权保持ok。
+- public engine使用真实rendering session激活Flick batch，断言返回`render.note.flick-icon-lifecycle-evidence-required`且renderer command count完全不变，证明family gate先于pool/domain/renderer mutation。
+- 隔离testing tsc与`simulator:test:render-contracts`通过，suite增至9组；本test只验授权边界，不把unsupported rejection计为PR08/PR09/PR12/PR17正向通过。
+- job-5据此关闭“当前证据下授权边界”；正向视觉功能仍是RP14阻断项，必须在acceptance中真实列出。
+
 ## 2. 固定范围
 
 ### 2.1 纳入范围
