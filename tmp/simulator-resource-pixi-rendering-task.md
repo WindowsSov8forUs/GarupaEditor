@@ -488,6 +488,13 @@
 - activation整批门只放行Normal与上述Long subset；Flick/Directional tail、Slide、Multiple、virtual lane及缺Long scene输入不会先提交同批前置Normal。
 - 本production批不扩大child profile授权：Slide/icon/Multiple/advanced/threshold/mask仍失败关闭。recording host oracle属于后续独立test提交。
 
+### 1.53 2026-08-02 RP04/RP06/RP07 ordinary Long lifecycle test子批
+
+- render-contract新增真实host路径：构造head absolute 96、Normal tail 192的ordinary Long，准备含`note_long_0` exact row的本地profile并通过public engine initialize/step/dispose驱动。
+- oracle冻结pool三个owner/六条setup命令与14条activation后总sequence，逐项断言front set/activate/bind后接hidden after transform、mesh transform/geometry/activate及after bind。
+- 逐帧推进直到LauncherMusicPos等于tail，断言after transform先于activate、mesh refresh紧随visibility，且Wait期间已持续更新base mesh；不由待测helper生成命令expected。
+- dispose断言root/after/mesh各恰好一次deactivate并最终objectCount=0；render-contract增至8组，759项source verifier与dependency反审通过。
+
 ## 2. 固定范围
 
 ### 2.1 纳入范围

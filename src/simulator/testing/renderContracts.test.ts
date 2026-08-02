@@ -17,7 +17,12 @@ import {
   createRenderFloat32,
   validateAndFreezeRenderProfile,
 } from "../backends/renderingValidation";
-import { ButtonType } from "../engine/chart/types";
+import {
+  AfterNoteType,
+  ButtonType,
+  FrontNoteType,
+  GameNoteType,
+} from "../engine/chart/types";
 import type { ScoreLifeStateProfile } from "../engine/data/scoreLifeState";
 import { evidenceRequired, ok, type SimulatorResult } from "../engine/evidence";
 import { InGameRecord } from "../engine/managers/inGameRecord";
@@ -200,6 +205,20 @@ function profile(
   };
 }
 
+function longProfile(): RenderResourceProfile {
+  const base = profile();
+  return {
+    ...base,
+    assets: Object.freeze(base.assets.map((asset) => Object.freeze({
+      ...asset,
+      atlasRows: Object.freeze([
+        ...asset.atlasRows,
+        Object.freeze({ ...asset.atlasRows[0], exactKey: "note_long_0" }),
+      ]),
+    }))),
+  };
+}
+
 function syncProfile(): RenderResourceProfile {
   const base = profile();
   return {
@@ -290,6 +309,16 @@ const ORDINARY_SYNC_NOTE_SCENE = Object.freeze({
   ...ORDINARY_NOTE_SCENE,
   syncLineEdgeMargin: f32(0.2),
 });
+const ORDINARY_LONG_NOTE_SCENE = Object.freeze({
+  ...ORDINARY_NOTE_SCENE,
+  screenToSafeAreaRatio: f32(1),
+  longMeshColor: Object.freeze({
+    red: f32(0.8),
+    green: f32(0.8),
+    blue: f32(0.8),
+    alpha: f32(0.6),
+  }),
+});
 
 const RENDERING = Object.freeze({
   sessionId: SESSION,
@@ -300,6 +329,11 @@ const SYNC_RENDERING = Object.freeze({
   sessionId: SESSION,
   resources: SYNC_RESOURCES,
   ordinaryNoteScene: ORDINARY_SYNC_NOTE_SCENE,
+});
+const LONG_RENDERING = Object.freeze({
+  sessionId: SESSION,
+  resources: RESOURCES,
+  ordinaryNoteScene: ORDINARY_LONG_NOTE_SCENE,
 });
 
 function renderedNoteBatch(testingId: string, absolutePos: number) {
@@ -315,6 +349,20 @@ function renderedNoteBatch(testingId: string, absolutePos: number) {
       storedAbsolutePos: absolutePos,
       bpm: 120,
       bpmString: "120",
+    }))),
+  });
+}
+
+function renderedLongNoteBatch(absolutePos: number, afterAbsolutePos: number) {
+  const batch = renderedNoteBatch("render-long", absolutePos);
+  return Object.freeze({
+    ...batch,
+    informationList: Object.freeze(batch.informationList.map((information) => Object.freeze({
+      ...information,
+      fireNoteType: FrontNoteType.Long,
+      gameNoteType: GameNoteType.Long,
+      afterNoteType: AfterNoteType.Normal,
+      afterNoteAbsolutePos: afterAbsolutePos,
     }))),
   });
 }
@@ -707,6 +755,71 @@ async function testHudReflectAtomic(): Promise<void> {
   console.log("ok 5 - Score/Life plan commits HUD/life-heal in R1 order and rejects atomically");
 }
 
+async function testOrdinaryLongLifecycle(): Promise<void> {
+  const renderer = new RecordingSimulatorRendererBackend();
+  requireOk(await renderer.prepare(
+    SESSION,
+    longProfile(),
+    new LocalProvider(),
+    preflight(),
+  ), "Long renderer prepare");
+  const baseInput = engineInput([renderedLongNoteBatch(96, 192)]);
+  const input = {
+    ...baseInput,
+    runtime: {
+      ...baseInput.runtime,
+      playMode: {
+        kind: "auto-live" as const,
+        resultTransform: "identity-no-active-situation-skill" as const,
+      },
+    },
+    rendering: LONG_RENDERING,
+  };
+  const engine = requireOk(
+    createSimulatorEngine(input, createRecordingSimulatorBackends(renderer)),
+    "Long engine create",
+  );
+  requireOk(engine.initialize(), "Long engine initialize");
+  equal(renderer.snapshot().objectCount, 3, "Long pool owns root, after and mesh");
+  equal(renderer.snapshot().nextSequence, 6, "Long pool setup has three create-hide pairs");
+  requireOk(engine.step(0), "Long activation frame");
+  const activation = renderer.commandSnapshot();
+  equal(activation.length, 14, "Long activation commits root, hidden after and visible mesh atomically");
+  equal(
+    activation.slice(6).map((command) => `${command.kind}:${command.renderObjectId}`).join(","),
+    "set-transform:render:long:0:root,activate-object:render:long:0:root," +
+      "bind-resource:render:long:0:root,set-transform:render:long:0:after," +
+      "set-transform:render:long:0:mesh,set-mesh:render:long:0:mesh," +
+      "activate-object:render:long:0:mesh,bind-resource:render:long:0:after",
+    "Long Activate preserves front then after/mesh/setupNoteType owner order",
+  );
+  let afterActivationIndex = -1;
+  for (let frame = 0; frame < 60 && afterActivationIndex < 0; frame += 1) {
+    requireOk(engine.step(1 / 60), `Long child frame ${frame}`);
+    afterActivationIndex = renderer.commandSnapshot().findIndex((command) =>
+      command.kind === "activate-object" && command.renderObjectId === "render:long:0:after"
+    );
+  }
+  assert(afterActivationIndex > 14, "Long after becomes visible at LauncherMusicPos tail equality");
+  const moved = renderer.commandSnapshot();
+  equal(moved[afterActivationIndex - 1]?.kind, "set-transform", "after equality writes transform before visibility");
+  equal(moved[afterActivationIndex + 1]?.kind, "set-mesh", "mesh refresh follows after visibility transition");
+  assert(
+    moved.slice(14, afterActivationIndex).some((command) =>
+      command.kind === "set-mesh" && command.renderObjectId === "render:long:0:mesh"),
+    "Long mesh refreshes while after waits at launcher",
+  );
+  requireOk(engine.dispose(), "dispose active Long");
+  const disposed = renderer.commandSnapshot();
+  for (const renderObjectId of ["render:long:0:root", "render:long:0:after", "render:long:0:mesh"]) {
+    equal(disposed.filter((command) =>
+      command.kind === "deactivate-object" && command.renderObjectId === renderObjectId
+    ).length, 1, `${renderObjectId} deactivates exactly once`);
+  }
+  equal(renderer.snapshot().objectCount, 0, "Long session release clears all three owners");
+  console.log("ok 7 - ordinary Long normal-tail after and base mesh production lifecycle");
+}
+
 async function testOrdinarySyncLineLifecycle(): Promise<void> {
   const renderer = new RecordingSimulatorRendererBackend();
   requireOk(await renderer.prepare(
@@ -873,7 +986,7 @@ async function testHostReadyGate(): Promise<void> {
   equal(mismatch.status, "evidence-required", "cross-session host rejected");
   equal(createSimulatorEngine(engineInput(), createRecordingSimulatorBackends(unprepared)).status,
     "evidence-required", "typed backend requires explicit host session");
-  console.log("ok 7 - host ready and exact-session gate precedes owner mutation");
+  console.log("ok 8 - host ready and exact-session gate precedes owner mutation");
 }
 
 async function main(): Promise<void> {
@@ -883,8 +996,9 @@ async function main(): Promise<void> {
   await testCommandsAndTerminalFault();
   await testHudReflectAtomic();
   await testOrdinarySyncLineLifecycle();
+  await testOrdinaryLongLifecycle();
   await testHostReadyGate();
-  console.log("render contract tests passed: 7");
+  console.log("render contract tests passed: 8");
 }
 
 void main().catch((error: unknown) => {
