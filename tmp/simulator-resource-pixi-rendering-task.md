@@ -12,7 +12,7 @@
 - 锁定`libil2cpp.so` SHA-256：`815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F`。
 - 锁定`global-metadata.dat` SHA-256：`298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F`。
 - 当前Reverse基线提交：`ab5cc366a4a03d24a215e379849824e5ddf5f72f`；只消费该提交及其祖先中已提交、已push、可校验对象。
-- 当前状态：**2026-08-03 R1–R6与826项冻结包已消费；HAB degraded production重放已闭合。真实矩阵为19 closed/current-subset/degraded、18 partial、3 blocked。RP13从clean pushed HEAD通过，RP14因21个尚未完整confirmed的PR case不通过。下一轮必须先一次性关闭全部剩余static/runtime/portable证据，再集中实现，不再按单一setter或单一case交替取证与编码。**
+- 当前状态：**2026-08-03 R1–R7与850项冻结包已消费；PR01–PR40 production矩阵为40 closed、0 partial、0 blocked。Production `37304ec`、oracle `b49666d`已push；从独立clean pushed `b49666d`运行14-stage总入口通过，RP13/RP14均关闭，本阶段完成。exact HABAHIRO继续`open-not-claimed`，PR04/PR19/PR40只关闭显式degraded/disclosed轨。**
 - 计划证据包：`tmp/simulator-reverse-evidence/resource-pixi-rendering/`，只在Reverse新证据提交并push后创建。
 - 计划验收记录：`tmp/simulator-resource-pixi-rendering-acceptance.md`，RP14时创建。
 
@@ -74,17 +74,17 @@
 | RP01 10.1.4静态与资源重基线 | **交付profile已关闭 / exact HAB部分开放** | 当前方法/资源/scene/animation/portable与12项current external HAB profile已关闭；原始HAB UnityFS仍只阻塞exact parity |
 | RP02 实体/运行时与固定scene oracle | **交付profile已关闭** | ordinary 87,364-event R1与7个实体frame已关闭；HAB exact R1/frame开放但不阻塞显式degraded交付 |
 | RP03 锁定render/resource contracts | **已完成** | immutable profile、provider、command、identity、session、preflight与独立failure矩阵已关闭 |
-| RP04 接入engine渲染producer | **进行中** | Normal/Long、front Flick/Directional、标准Slide与Multiple root/back-line完成；非Normal terminal与side visual待R7 |
-| RP05 恢复Note Sprite与field | **进行中** | root/icon/intermediate与degraded lane-change完成；field host及remaining side visual待R7 |
-| RP06 恢复mesh、sync line与mask | **进行中** | base Long/Slide、Normal sync、Multiple back-line与polygon mask完成；advanced/threshold待R7 |
-| RP07 恢复render pool与生命周期 | **进行中** | 已实现family的stable identity/teardown/release完成；全family reuse/pause/reset/GameOver待R7 |
-| RP08 恢复基础HUD消费链 | **进行中** | Score/Combo/Life、Result lifetime与ScoreUp 1–4完成；AP/AddScore/JudgeTiming/完整layout待R7 |
-| RP09 恢复HUD overlay与动画 | **进行中** | Combo/Life Heal、generic/Score Skill完成；Guard/NeverDie/Judge/AP/Crescendo/Fever待R7 |
+| RP04 接入engine渲染producer | **已完成** | 全ordinary Note family、terminal/side visual与engine-clock动画关闭 |
+| RP05 恢复Note Sprite与field | **已完成** | root/head/icon/intermediate/field/judge/mask与degraded lane-change关闭 |
+| RP06 恢复mesh、sync line与mask | **已完成** | base/advanced、material/threshold、sync/Multiple line与mask关闭 |
+| RP07 恢复render pool与生命周期 | **已完成** | 全family stable identity/reuse/pause/reset/GameOver/teardown关闭 |
+| RP08 恢复基础HUD消费链 | **已完成** | Score/Combo/AP/AddScore/Result/JudgeTiming/Life/ScoreUp 1–5关闭 |
+| RP09 恢复HUD overlay与动画 | **已完成** | Heal/Guard/NeverDie/Score/Judge Skill/Crescendo/Fever/GameOver关闭 |
 | RP10 建立portable resource backend | **已完成** | local bytes/hash/decode/cache/subtexture/material引用与atomic failure已闭合 |
-| RP11 建立Pixi v8 renderer | **进行中** | Sprite/base Mesh/sync+Multiple line/mask/HUD/fill/Combo-Life/Score Skill完成；advanced threshold与剩余HUD组件待R7 |
+| RP11 建立Pixi v8 renderer | **已完成** | Sprite、base/advanced Mesh、material/threshold、line/mask/field及完整HUD/animation关闭 |
 | RP12 failure/context/dispose矩阵 | **已完成** | prepare/allocation/commit/context/capability/dispose及host terminal cleanup矩阵通过 |
-| RP13 production oracle与全回归 | **已完成（当前矩阵）** | clean pushed `1a9a626` 14-stage通过并强制报告19 closed、18 partial、3 blocked |
-| RP14 独立验收 | **不通过** | 21个非完整confirmed case必须经R7证据、production与oracle一次性闭合 |
+| RP13 production oracle与全回归 | **已完成** | clean pushed `b49666d` 14-stage通过并报告40 closed、0 partial、0 blocked |
+| RP14 独立验收 | **已完成** | PR01–PR40正向消费与双production replay关闭；exact HAB边界保持开放未声明 |
 
 ### 1.4 2026-07-31 RP00初始盘点
 
@@ -651,6 +651,20 @@
 - `verify.mjs`新增R7逐字段门：625,192 events、3,480 frames、51 owners、21 setters、21 remaining PR、40 evidence-confirmed cases、Advanced 42/120、threshold shader semantic、unknown/blocker=0，并继续校验Reverse commit/source working/copy/index四方字节。
 - 未复制APK、UnityFS、shader/resource binary、7张实体PNG、Bestdori bytes、IDA或`runtime/tools/`；exact HAB继续open-not-claimed。source verifier通过，暂存后必须再通过`--index`才解除production硬门。
 
+### 1.75 2026-08-03 final R7集中production消费
+
+- Production `37304ec`一次完成21个remaining PR消费链：ordinary Long/Slide非Normal terminal、Multiple add/after side visual、Flick/Directional engine-clock动画、virtual owner与Advanced 42/120、long/curve material、current threshold、固定pool/reuse/teardown以及完整ordinary family授权。
+- HUD补齐8位Score颜色/gauge、Combo/AP gate与loop、4对象AddScore round-robin/8 depth/三阶段coroutine、Result Fast/Slow、ScoreUpType 5 Crescendo、Life 0.2/0.25边界、Guard/NeverDie/later-wins、Judge Skill、Fever与GameOver停止/隐藏顺序；所有时间来自engine update，pause不调用更新。
+- Pixi补齐base/advanced Mesh、material、bottom-left threshold等价GPU mask、完整HUD/animation和snapshot oracle；Recording仅增加测试所需的可排空history，不改变sequence、object或transaction owner。
+- exact HAB未扩大；degraded轨仍严格显示`Approximate HABAHIRO`并保持1728两阶段命令。
+
+### 1.76 2026-08-03 PR01–PR40 oracle与RP13/RP14关闭
+
+- Oracle `b49666d`覆盖Advanced 42/120与`44322D84` threshold、actual Pixi material/HUD/Guard/NeverDie/Judge/Fever、AddScore四owner、AP、JudgeTiming、Crescendo、warning suppression及全family teardown。
+- `poppin_shuffle_special` ordinary exact replay完整消费656 batches，固定159,832 commands与digest `e174b8f0ab2e943ba84ab45a2ee8ecaca9fbcdc235fb32176c7cf6c18834a0ec`；HAB degraded replay固定371 batches/4,902 commands。
+- PR production matrix更新为`closed=40 partial=0 blocked=0 RP14=passed`；PR04/PR19/PR40保持disclosed degraded，exact HAB继续`open-not-claimed`。
+- 从独立detached clean、已推送`b49666d`运行14-stage `simulator:test:resource-pixi-rendering`全部通过；RP13与RP14均关闭，本阶段完成。
+
 ## 2. 固定范围
 
 ### 2.1 纳入范围
@@ -1213,10 +1227,10 @@ git rev-list --left-right --count origin/codex/refactor-simulator-implementation
 16. `tmp/simulator-resource-pixi-rendering-acceptance.md`从提交后HEAD独立验收通过。
 17. GarupaEditor与Reverse远端差异均为`0 0`。
 
-## 14. 当前审计结论
+## 14. 最终审计结论
 
-- 当前production已完成RP03、RP10、RP12及19个PR full/current-subset/degraded case；R1–R6、826项冻结证据与14-stage RP13均可复验。
-- RP14仍需一次性关闭第1.71节固定的21个remaining case；3个blocked与18个partial具有同等完成门，不再把partial解释为阶段可接受状态。
-- Reverse下一批是R7全量证据，不是继续RP03。R7必须同时交付Note/field/HUD自然运行时与current portable shader/asset mapping，并在profile中令每个remaining PR的`unknown_fields=[]`、`blocking_findings=[]`。
-- HAB exact保持`open-not-claimed`，PR04/PR19/PR40继续走已授权degraded profile；本次不重复追逐不可达exact HAB，也不允许它污染ordinary completion。
-- R7冻结前production代码、测试入口及package scripts保持不变；冻结后才按contracts→producer→Pixi→oracle顺序集中落地。
+- R1–R7、850项冻结证据、21个remaining PR与PR01–PR40 evidence gate均已关闭；`unknown_fields=[]`、`blocking_findings=[]`。
+- Production `37304ec`与oracle `b49666d`已完成并push；矩阵为40 closed、0 partial、0 blocked。
+- ordinary production exact重放与HAB disclosed degraded重放均固定command oracle并通过；RP13/RP14从独立clean pushed HEAD关闭。
+- HAB exact保持`open-not-claimed`，PR04/PR19/PR40继续仅代表已授权degraded/disclosed profile，不污染ordinary completion且不构成原作exact parity声明。
+- 本阶段完成；后续只允许按整体计划进入下一实施块，不在本阶段追加无新证据的视觉近似。
