@@ -11,7 +11,7 @@
 - 锁定原作样本：`jp.co.craftegg.band` 10.1.4（version code 230，`arm64-v8a`）。
 - 锁定`libil2cpp.so` SHA-256：`815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F`。
 - 锁定`global-metadata.dat` SHA-256：`298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F`。
-- 当前Reverse基线提交：`64a88a8821d20eb1cc43003a9bd959c892d40e12`；只消费该提交及其祖先中已提交、已push、可校验对象。
+- 当前Reverse基线提交：`ab5cc366a4a03d24a215e379849824e5ddf5f72f`；只消费该提交及其祖先中已提交、已push、可校验对象。
 - 当前状态：**2026-08-03 R1–R6与826项冻结包已消费；HAB degraded production重放已闭合。真实矩阵为19 closed/current-subset/degraded、18 partial、3 blocked。RP13从clean pushed HEAD通过，RP14因21个尚未完整confirmed的PR case不通过。下一轮必须先一次性关闭全部剩余static/runtime/portable证据，再集中实现，不再按单一setter或单一case交替取证与编码。**
 - 计划证据包：`tmp/simulator-reverse-evidence/resource-pixi-rendering/`，只在Reverse新证据提交并push后创建。
 - 计划验收记录：`tmp/simulator-resource-pixi-rendering-acceptance.md`，RP14时创建。
@@ -636,6 +636,14 @@
 - Reverse `82ae9199`已先提交并push，远端差异`0 0`；R7 owner inventory从current static/RPH/R4/R5去重出130个byte-pinned方法，分为Note 73、field 5、HUD core 25、HUD overlay 27，覆盖第1.71节全部21个remaining PR。
 - committed-before-capture plan固定9个scenario：两轮ordinary Note、earliest field、HUD core、Guard、NeverDie、Judge+Crescendo、Heal+Score+Fever，以及current portable static。collector统一关联geometry/HUD setter，保留Float32 bits与匿名alias，禁止return replacement、内存写、managed invocation、raw pointer/display string和in-process event injection。
 - promotion gate要求九场景均有处置、所有保留trace为confirmed/零hook failure/完整summary、每个runtime route有owner+setter、每个portable route有current 10.1.4 source，且最终`unknown_fields=[]`、`blocking_findings=[]`。partial trace删除；R7 profile晋升并push前禁止Garupa production/test/package改动。
+
+### 1.73 2026-08-03 final R7一次性证据晋升
+
+- Reverse `ab5cc366`已提交并push，远端差异`0 0`。七条保留trace共625,192 events、3,480 aggregate frames、51 observed owner targets、21 setters；包含Poppin' Shuffle Special两段Note窗口、首次25-frame field setup、Demo HUD以及真实Auto Live的AddScore/Score/Life/Skill路径。所有失败/partial trace均已删除。
+- 首次成功捕获`ButtonManager.ExecAwakeStart/SetupSudden/execMultiResolution/setupPlayButtons`；真实Auto Live捕获`AddScoreManager.Play`、四对象选择、`AddScoreObject.Play`与coroutine MoveNext，并重复观察Combo/AP、Score gauge、Life Heal、Score Skill、generic Skill和Result。
+- current static portable profile直接解析10.1.4 `star/Star Transparent Colored` Shader的8个GLES/Vulkan program，确认`_Threshold >= gl_FragCoord.y`及LOD200 alpha公式；同时锁定Advanced 42 vertices/120 indices/21 UV pairs、current HUD scene/font/controller/clip，以及Guard/NeverDie/Judge/Crescendo的current exact方法与资源路线。
+- final R7 profile为9个scenario逐项记录runtime或current-static disposition；21个remaining PR均`confirmed-current-r7`，`unknown_fields=[]`、`blocking_findings=[]`。closure将PR01–PR40证据门全部关闭，同时明确`production_consumption_claimed=false`；exact HAB继续open-not-claimed，既有degraded轨不变。
+- 自本记录起允许进入一次Garupa冻结；冻结source/copy/index验证通过前仍不得修改production/tests/package scripts。
 
 ## 2. 固定范围
 
