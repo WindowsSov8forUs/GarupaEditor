@@ -607,6 +607,12 @@
 - 同runner对`poppin_shuffle_special`执行ordinary exact audit，确认当前在包含Slide terminal的batch以`render.note.slide-child-chain-evidence-required`停止；因此PR39仍blocked，禁止用HAB proxy外推ordinary exact。
 - 修正production chart暴露的ordinary lane映射：BMS normal button 0..6直接对应atlas/scene lane 0..6；HAB 2P 8..14映射到0..6。矩阵更新为19 closed、18 partial、3 blocked，RP14仍不通过。
 
+### 1.69 2026-08-03 RP13最终正向oracle重验
+
+- 从clean、已推送`1a9a626`串行运行`simulator:test:resource-pixi-rendering`，14 stages全部通过；新production入口包含HAB degraded全谱重放及ordinary exact阻断审计。
+- PR production verifier固定当前真实矩阵`closed=19 partial=18 blocked=3 RP14=blocked`。PR19/PR40只以显式degraded/disclosed关闭，不改变exact HAB open-not-claimed。
+- 三个blocked正向case严格为PR14（threshold/material shader mapping）、PR30（Guard/NeverDie warning suppression）与PR39（ordinary Slide terminal/full chart）。其冻结R6授权均为false，故RP13通过但RP14不得关闭。
+
 ## 2. 固定范围
 
 ### 2.1 纳入范围
