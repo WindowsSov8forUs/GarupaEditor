@@ -1036,8 +1036,13 @@ function isEvidenceHud(
       );
     case "fidelity-label":
       return objectRole === "fidelity-label" &&
-        exactStateKeys(state, ["label", "visible"]) &&
-        state.label === "Approximate HABAHIRO" && state.visible === true;
+        state.label === "Approximate HABAHIRO" && state.visible === true && (
+          exactStateKeys(state, ["label", "visible"]) ||
+          exactStateKeys(state, ["absolutePosition", "label", "laneChangePhase", "visible"]) &&
+            Number.isInteger(state.absolutePosition) &&
+            (state.absolutePosition as number) >= 0 &&
+            (state.laneChangePhase === "flash-start" || state.laneChangePhase === "change-lane")
+        );
   }
 }
 
@@ -1156,8 +1161,20 @@ function applyEvidenceHud(
       break;
     }
     case "fidelity-label":
-      object.node.position.set(20, 20);
-      setHudText(visual.text, String(state.label), 24, 0xffd166);
+      if (Object.prototype.hasOwnProperty.call(state, "laneChangePhase")) {
+        object.node.position.set(20, 52);
+        setHudText(
+          visual.text,
+          state.laneChangePhase === "flash-start"
+            ? "Approximate HABAHIRO · Flash"
+            : "Approximate HABAHIRO · Lane Changed",
+          20,
+          0xffd166,
+        );
+      } else {
+        object.node.position.set(20, 20);
+        setHudText(visual.text, String(state.label), 24, 0xffd166);
+      }
       break;
   }
   return visual;

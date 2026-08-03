@@ -36,6 +36,7 @@ export class InGameManager {
   private currentGameStateValue: GameStateValue = GameState.PlayingSound;
   private pauseStateValue: PauseStateValue = PauseState.None;
   private faultValue: EvidenceRequired | null = null;
+  private degradedHabahiroLaneChanged = false;
 
   constructor(
     readonly musicScoreController: InGameMusicScoreController,
@@ -44,6 +45,7 @@ export class InGameManager {
     readonly inputManager: InputManager,
     readonly scoreLifeStateManager: ScoreLifeStateManager | null = null,
     private readonly renderProducer: RenderCommandProducer | null = null,
+    private readonly habahiroChangeAbsolutePos = -1,
   ) {}
 
   get state(): EngineLifecycleState {
@@ -135,6 +137,20 @@ export class InGameManager {
     const updateResult = this.noteManager.execUpdate(deltaTimeSeconds);
     if (updateResult.status !== "ok") {
       return this.latchFault(updateResult);
+    }
+    if (
+      !this.degradedHabahiroLaneChanged &&
+      this.renderProducer?.isDegradedHabahiro() === true &&
+      this.habahiroChangeAbsolutePos >= 0 &&
+      this.noteManager.peekAdjustedMusicPosition() >= this.habahiroChangeAbsolutePos
+    ) {
+      const laneChange = this.renderProducer.preflightDegradedHabahiroLaneChange(
+        this.habahiroChangeAbsolutePos,
+      );
+      if (laneChange.status !== "ok") return this.latchFault(laneChange);
+      const committed = laneChange.value.commit();
+      if (committed.status !== "ok") return this.latchFault(committed);
+      this.degradedHabahiroLaneChanged = true;
     }
     const hudAnimation = this.renderProducer?.preflightHudAnimationAdvance(deltaTimeSeconds) ?? null;
     if (hudAnimation?.status === "evidence-required") {

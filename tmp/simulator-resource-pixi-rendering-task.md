@@ -12,7 +12,7 @@
 - 锁定`libil2cpp.so` SHA-256：`815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F`。
 - 锁定`global-metadata.dat` SHA-256：`298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F`。
 - 当前Reverse基线提交：`e9621946c88ebe20e694bdb313294a32fe62a647`；只消费该提交及其祖先中已提交、已push、可校验对象。
-- 当前状态：**2026-08-02 R4 production已接入；R5 core/overlay新增30,975 events/1,059 frames并冻结至817项，只授权Result lifetime、Score skill、ScoreGauge、Life skill lifecycle与generic Skill display五条route。AddScore/JudgeTiming/AP完整动画/Guard/NeverDie/changeable text/field setup、advanced/threshold及production chart replay继续失败关闭；R6授权HUD消费后矩阵为17 closed/current-subset、18 partial、5 blocked，RP14不通过。**
+- 当前状态：**2026-08-02 R4 production已接入；R5 core/overlay新增30,975 events/1,059 frames并冻结至817项，只授权Result lifetime、Score skill、ScoreGauge、Life skill lifecycle与generic Skill display五条route。AddScore/JudgeTiming/AP完整动画/Guard/NeverDie/changeable text/field setup、advanced/threshold及production chart replay继续失败关闭；HAB degraded production重放后矩阵为19 closed/current-subset/degraded、18 partial、3 blocked，RP14不通过。**
 - 计划证据包：`tmp/simulator-reverse-evidence/resource-pixi-rendering/`，只在Reverse新证据提交并push后创建。
 - 计划验收记录：`tmp/simulator-resource-pixi-rendering-acceptance.md`，RP14时创建。
 
@@ -598,6 +598,14 @@
 - Score/Life Reflect plan保留owner冻结的`scoreUpType`并送入Result typed HUD state；Pixi对R5/R6观察到的type 1/2及current static已锁定的type 3/4映射exact icon key、`skill_eff`与三档RGBA8 tint，资源缺失时整批失败关闭。
 - ScoreUpType 5仍依赖R6未观察的`SkillEffectChangeableTextObject.Play`，因此在任何HUD mutation前返回`render.hud.crescendo-changeable-text-evidence-required`；AddScore/JudgeTiming/Guard/NeverDie与field setup也不扩权。
 - recording与actual Pixi oracle覆盖type 2 owner propagation、two-Sprite reference/release以及type 5零mutation拒绝。PR28从blocked降为partial，矩阵更新为17 closed/current-subset、18 partial、5 blocked；RP14仍不通过。
+
+### 1.68 2026-08-03 HAB degraded lane-change与双production chart审计
+
+- Host只新增显式`habahiro/degraded`入口；exact-current-unityfs继续在owner创建前失败关闭。Degraded根Note使用冻结179-key atlas的exact range key与ordinary-projection proxy，明确忽略未授权child/side/advanced visual，不做静默fallback或parity声明。
+- Engine在chart锁定`habahiroChangeAbsolutePos=1728`首次跨越时，同一transaction依次发出`flash-start`、`change-lane` diagnostic state并显示`Approximate HABAHIRO`；Pixi显示独立lane-change disclosure，session release清零全部owner。
+- 新增production runner从冻结BMS构造并重放`786_miracle_april_habahiro_special`至lane-change，验证179 keys、4,902 commands、phase顺序、visible label与release；PR19/PR40按任务书双轨规则关闭为`closed-degraded`，exact HAB仍open-not-claimed。
+- 同runner对`poppin_shuffle_special`执行ordinary exact audit，确认当前在包含Slide terminal的batch以`render.note.slide-child-chain-evidence-required`停止；因此PR39仍blocked，禁止用HAB proxy外推ordinary exact。
+- 修正production chart暴露的ordinary lane映射：BMS normal button 0..6直接对应atlas/scene lane 0..6；HAB 2P 8..14映射到0..6。矩阵更新为19 closed、18 partial、3 blocked，RP14仍不通过。
 
 ## 2. 固定范围
 

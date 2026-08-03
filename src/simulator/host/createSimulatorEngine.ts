@@ -238,11 +238,15 @@ export function createSimulatorEngine(
   const rendererValidation = validateRendererSession(renderingSessionId, backends);
   if (rendererValidation.status !== "ok") return rendererValidation;
   if (input.rendering !== undefined && backends.rendering !== undefined) {
-    if (backends.rendering.snapshot().fidelity?.mode !== "ordinary") {
+    const fidelity = backends.rendering.snapshot().fidelity;
+    if (
+      fidelity?.mode !== "ordinary" &&
+      !(fidelity?.mode === "habahiro" && fidelity.fidelity === "degraded")
+    ) {
       return evidenceRequired(
         "render.note.non-ordinary-scene-lifecycle-unimplemented",
-        ["RPR-D05", "RPR-D13", "PR04", "PR39", "HA-D04"],
-        "The connected Note scene/motion lifecycle is authorized only for the fixed ordinary 10.1.4 profile.",
+        ["RPR-D05", "RPR-D13", "PR04", "PR39", "PR40", "HA-D04"],
+        "The connected Note lifecycle accepts exact ordinary or an explicitly labeled degraded HABAHIRO ordinary-projection proxy; exact HABAHIRO remains closed.",
       );
     }
     const sceneValidation = validateOrdinaryFixedNoteSceneInput(
@@ -357,6 +361,7 @@ export function createSimulatorEngine(
     inputManager,
     scoreLifeStateManager,
     renderProducer,
+    input.chart.habahiroChangeAbsolutePos,
   );
   const inGameDirector = new InGameDirector(
     inGameManager,

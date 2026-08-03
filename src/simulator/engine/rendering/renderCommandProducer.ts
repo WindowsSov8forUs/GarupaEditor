@@ -172,6 +172,8 @@ export class RenderOwnerTransaction {
 
 const RENDER_ONE = Object.freeze({ value: 1, bits: "3F800000" });
 
+const DEGRADED_HABAHIRO_LANE_OBJECT = "render:habahiro:lane-change";
+
 const HUD_OBJECTS = Object.freeze({
   addScore: "render:hud:add-score",
   combo: "render:hud:combo",
@@ -196,6 +198,11 @@ export class RenderCommandProducer {
     private readonly renderer: SimulatorRendererBackend,
     private readonly resources: RenderEngineResourceBindings,
   ) {}
+
+  isDegradedHabahiro(): boolean {
+    const fidelity = this.renderer.snapshot().fidelity;
+    return fidelity?.mode === "habahiro" && fidelity.fidelity === "degraded";
+  }
 
   validate(): SimulatorResult<void> {
     const snapshot = this.renderer.snapshot();
@@ -294,22 +301,6 @@ export class RenderCommandProducer {
     commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: HUD_OBJECTS.life });
     create(HUD_OBJECTS.overlay, "hud-overlay");
     commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: HUD_OBJECTS.overlay });
-    const fidelity = this.renderer.snapshot().fidelity;
-    if (fidelity?.mode === "habahiro" && fidelity.fidelity === "degraded") {
-      create(HUD_OBJECTS.fidelity, "fidelity-label");
-      commands.push({
-        ...base(commands.length),
-        kind: "set-hud",
-        renderObjectId: HUD_OBJECTS.fidelity,
-        hudRole: "fidelity-label",
-        state: Object.freeze({ label: fidelity.visibleLabel, visible: true }),
-      });
-      commands.push({
-        ...base(commands.length),
-        kind: "activate-object",
-        renderObjectId: HUD_OBJECTS.fidelity,
-      });
-    }
     return this.preflight(commands, () => this.recordCreatedObjects(created));
   }
 
@@ -725,6 +716,7 @@ export class RenderCommandProducer {
       );
     }
     if (
+      !this.isDegradedHabahiro() &&
       pools.length === 0 &&
       syncLinePoolLength === 0 &&
       multipleDirectionalLinePoolLength === 0
@@ -739,7 +731,9 @@ export class RenderCommandProducer {
       if (
         !Number.isSafeInteger(slideChildCount) ||
         slideChildCount < 0 ||
-        (pool.family === "slide" ? slideChildCount < 1 : slideChildCount !== 0)
+        (pool.family === "slide"
+          ? this.isDegradedHabahiro() ? slideChildCount !== 0 : slideChildCount < 1
+          : slideChildCount !== 0)
       ) {
         return evidenceRequired(
           "render.producer.invalid-slide-child-pool-setup",
@@ -762,7 +756,7 @@ export class RenderCommandProducer {
         kind: "hide-object",
         renderObjectId,
       });
-      if (pool.family === "long") {
+      if (pool.family === "long" && !this.isDegradedHabahiro()) {
         const afterObjectId = longAfterRenderObjectId(pool.poolObjectId);
         const meshObjectId = longMeshRenderObjectId(pool.poolObjectId);
         created.push(afterObjectId, meshObjectId);
@@ -793,7 +787,7 @@ export class RenderCommandProducer {
           renderObjectId: meshObjectId,
         });
       }
-      if (pool.family === "slide") {
+      if (pool.family === "slide" && !this.isDegradedHabahiro()) {
         for (let index = 0; index < slideChildCount; index += 1) {
           const childObjectId = slideChildRenderObjectId(pool.poolObjectId, index);
           const meshObjectId = slideMeshRenderObjectId(pool.poolObjectId, index);
@@ -861,7 +855,85 @@ export class RenderCommandProducer {
         renderObjectId,
       });
     }
+    if (this.isDegradedHabahiro()) {
+      created.push(HUD_OBJECTS.fidelity, DEGRADED_HABAHIRO_LANE_OBJECT);
+      commands.push({
+        ...base(commands.length),
+        kind: "create-object",
+        renderObjectId: HUD_OBJECTS.fidelity,
+        poolFamily: "fidelity-label",
+        role: "fidelity-label",
+        parentObjectId: null,
+      });
+      commands.push({
+        ...base(commands.length),
+        kind: "set-hud",
+        renderObjectId: HUD_OBJECTS.fidelity,
+        hudRole: "fidelity-label",
+        state: Object.freeze({
+          label: "Approximate HABAHIRO",
+          visible: true,
+        }),
+      });
+      commands.push({
+        ...base(commands.length),
+        kind: "activate-object",
+        renderObjectId: HUD_OBJECTS.fidelity,
+      });
+      commands.push({
+        ...base(commands.length),
+        kind: "create-object",
+        renderObjectId: DEGRADED_HABAHIRO_LANE_OBJECT,
+        poolFamily: "degraded-habahiro-lane-change",
+        role: "fidelity-label",
+        parentObjectId: null,
+      });
+      commands.push({
+        ...base(commands.length),
+        kind: "hide-object",
+        renderObjectId: DEGRADED_HABAHIRO_LANE_OBJECT,
+      });
+    }
     return this.preflight(commands, () => this.recordCreatedObjects(created));
+  }
+
+  preflightDegradedHabahiroLaneChange(
+    absolutePosition: number,
+  ): SimulatorResult<RenderOwnerTransaction> {
+    const validation = this.validate();
+    if (validation.status !== "ok") return validation;
+    if (
+      !this.isDegradedHabahiro() ||
+      !Number.isInteger(absolutePosition) ||
+      absolutePosition < 0 ||
+      !this.creationSequenceByObjectId.has(DEGRADED_HABAHIRO_LANE_OBJECT)
+    ) {
+      return evidenceRequired(
+        "render.habahiro.invalid-degraded-lane-change",
+        ["RPR-D08", "PR19", "PR40", "HA-D07", "HA-D08", "HA-D09"],
+        "Only an explicitly selected degraded HABAHIRO session with its committed diagnostic owner may emit lane-change commands.",
+      );
+    }
+    const base = this.commandBase(this.substep);
+    const states = ["flash-start", "change-lane"] as const;
+    const commands: RenderCommand[] = states.map((laneChangePhase, index) => ({
+      ...base(index),
+      kind: "set-hud",
+      renderObjectId: DEGRADED_HABAHIRO_LANE_OBJECT,
+      hudRole: "fidelity-label",
+      state: Object.freeze({
+        label: "Approximate HABAHIRO",
+        visible: true,
+        laneChangePhase,
+        absolutePosition,
+      }),
+    }));
+    commands.push({
+      ...base(commands.length),
+      kind: "activate-object",
+      renderObjectId: DEGRADED_HABAHIRO_LANE_OBJECT,
+    });
+    return this.preflight(commands);
   }
 
   preflightNoteActivation(
@@ -923,17 +995,21 @@ export class RenderCommandProducer {
         "Note activation commands require the engine-owned non-negative adaptive substep.",
       );
     }
-    const longNormalTail = information.fireNoteType === FrontNoteType.Long &&
+    const degradedHabahiro = this.isDegradedHabahiro();
+    const longNormalTail = !degradedHabahiro &&
+      information.fireNoteType === FrontNoteType.Long &&
       information.afterNoteType === AfterNoteType.Normal &&
       information.afterNoteAbsolutePos > information.absolutePos;
     const r4Front = information.fireNoteType === FrontNoteType.Flick ||
       information.fireNoteType === FrontNoteType.DirectionalFlick ||
       information.fireNoteType === FrontNoteType.MultipleDirectionalFlick;
-    const r4Slide = (information.fireNoteType === FrontNoteType.SlideA ||
+    const r4Slide = !degradedHabahiro &&
+      (information.fireNoteType === FrontNoteType.SlideA ||
       information.fireNoteType === FrontNoteType.SlideB) &&
       information.afterNoteType === AfterNoteType.None &&
       information.slideNoteList.length > 0;
     if (
+      !degradedHabahiro &&
       information.fireNoteType !== FrontNoteType.Normal &&
       !longNormalTail &&
       !r4Front &&
@@ -959,9 +1035,13 @@ export class RenderCommandProducer {
         "The ordinary Long and R4 Slide mesh paths require explicit positive safe-area ratio and typed mesh color inputs."
       );
     }
-    const lane = resolveOrdinaryMotionLaneIndex(information, r4Slide);
+    const lane = degradedHabahiro
+      ? resolveDegradedHabahiroMotionLaneIndex(information)
+      : resolveOrdinaryMotionLaneIndex(information, r4Slide);
     if (lane.status !== "ok") return lane;
-    const binding = resolveFrontSpriteBinding(information, false, this.resources);
+    const binding = degradedHabahiro
+      ? resolveDegradedHabahiroFrontSpriteBinding(information, this.resources)
+      : resolveFrontSpriteBinding(information, false, this.resources);
     if (binding.status !== "ok") return binding;
     const renderObjectId = rootRenderObjectId(poolObjectId);
     const creationSequence = this.creationSequenceByObjectId.get(renderObjectId);
@@ -991,7 +1071,9 @@ export class RenderCommandProducer {
       targetCenterY: scene.targetCenterY,
       highAspectRatio: scene.highAspectRatio,
       buttonCount: information.buttonTypesArray.length || information.buttonTypes.length || 1,
-      virtualLaneControllerPresent: information.virtualLaneDirection !== 0,
+      virtualLaneControllerPresent: degradedHabahiro
+        ? false
+        : information.virtualLaneDirection !== 0,
     });
     const adjustment = advanceOrdinaryNoteActivationAdjustment(
       motionState,
@@ -1897,6 +1979,45 @@ export function resolveFrontSpriteBinding(
   }));
 }
 
+function resolveDegradedHabahiroFrontSpriteBinding(
+  information: NoteInformation,
+  resources: RenderEngineResourceBindings,
+): SimulatorResult<{ readonly logicalAssetId: string; readonly exactKey: string }> {
+  const laneSuffix = resolveLaneSuffix(information, true);
+  if (laneSuffix.status !== "ok") return laneSuffix;
+  let family: "note_normal" | "note_normal_16" | "note_skill" | "note_long" | "note_flick";
+  if (information.gameNoteAdditionalType === GameNoteAdditionalType.Skill) {
+    family = "note_skill";
+  } else if (information.fireNoteType === FrontNoteType.Normal) {
+    family = information.shortRhythmUnder8beat ? "note_normal_16" : "note_normal";
+  } else if (
+    information.fireNoteType === FrontNoteType.Flick ||
+    information.fireNoteType === FrontNoteType.DirectionalFlick ||
+    information.fireNoteType === FrontNoteType.MultipleDirectionalFlick
+  ) {
+    family = "note_flick";
+  } else {
+    family = "note_long";
+  }
+  return ok(Object.freeze({
+    logicalAssetId: resources.noteAtlasLogicalAssetId,
+    exactKey: `${family}_${laneSuffix.value}`,
+  }));
+}
+
+function resolveDegradedHabahiroMotionLaneIndex(
+  information: NoteInformation,
+): SimulatorResult<number> {
+  const lane = resolveLaneIndex(information.buttonType, true);
+  return Number.isInteger(lane) && lane >= 0 && lane < 7
+    ? ok(lane)
+    : evidenceRequired(
+        "render.note.degraded-habahiro-invalid-center-lane",
+        ["PR04", "PR40", "HA-D04"],
+        "The explicit degraded proxy projects the chart-authored center button through the ordinary 0..6 viewport without clamp.",
+      );
+}
+
 function resolveFrontLaneSuffix(
   information: NoteInformation,
   habahiro: boolean,
@@ -1921,7 +2042,7 @@ function resolveLaneSuffix(
     : information.buttonTypes.length > 0
     ? information.buttonTypes
     : [information.buttonType];
-  const lanes = buttons.map((button) => button - ButtonType.Button_01_BMS_1P_01);
+  const lanes = buttons.map((button) => resolveLaneIndex(button, habahiro));
   if (
     lanes.length === 0 ||
     lanes.some((lane) => !Number.isInteger(lane) || lane < 0 || lane > 6) ||
@@ -1941,6 +2062,22 @@ function resolveLaneSuffix(
     );
   }
   return ok(lanes.join("_"));
+}
+
+function resolveLaneIndex(button: number, habahiro: boolean): number {
+  if (habahiro) {
+    if (button === ButtonType.Button_00_BMS_1P_SC) return 0;
+    if (button === ButtonType.Button_15_BMS_2P_SC) return 6;
+    if (
+      button >= ButtonType.Button_08_BMS_2P_01 &&
+      button <= ButtonType.Button_14_BMS_2P_07
+    ) {
+      return button - ButtonType.Button_08_BMS_2P_01;
+    }
+  }
+  return button >= ButtonType.Button_00_BMS_1P_SC && button <= ButtonType.Button_06_BMS_1P_06
+    ? button
+    : -1;
 }
 
 function lifeHudState(
@@ -1989,7 +2126,7 @@ function resolveOrdinaryMotionLaneIndex(
       "The fixed ordinary motion profile accepts exactly one authored lane per front Note.",
     );
   }
-  const lane = buttons[0]! - ButtonType.Button_01_BMS_1P_01;
+  const lane = resolveLaneIndex(buttons[0]!, false);
   return Number.isInteger(lane) && lane >= 0 && lane < 7
     ? ok(lane)
     : evidenceRequired(
@@ -2007,8 +2144,8 @@ function resolveOrdinarySlideCenterLane(
     : information.buttonTypes.length > 0
     ? information.buttonTypes
     : [information.buttonType];
-  const lanes = buttons.map((button) => button - ButtonType.Button_01_BMS_1P_01);
-  const centerLane = information.buttonType - ButtonType.Button_01_BMS_1P_01;
+  const lanes = buttons.map((button) => resolveLaneIndex(button, false));
+  const centerLane = resolveLaneIndex(information.buttonType, false);
   if (
     lanes.length < 1 ||
     lanes.length > 7 ||
