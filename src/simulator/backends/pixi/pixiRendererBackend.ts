@@ -379,6 +379,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     readonly geometryPositions: readonly number[] | null;
     readonly maskVertexCount: number | null;
     readonly hudText: string | null;
+    readonly hudSpriteCount: number | null;
     readonly hudFillRatios: readonly [number, number] | null;
     readonly activeAnimationRole: "combo" | "life-heal" | "score-skill" | null;
     readonly animationElapsedSeconds: number | null;
@@ -402,6 +403,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         : Object.freeze(Array.from(value.geometryContent.geometry.positions)),
       maskVertexCount: value.maskVertexCount,
       hudText: value.hudVisual?.text.text ?? null,
+      hudSpriteCount: value.hudVisual?.digitSprites.length ?? null,
       hudFillRatios: value.hudVisual?.fillRatios ?? null,
       activeAnimationRole: value.activeAnimationRole,
       animationElapsedSeconds: value.animationElapsedSeconds,
@@ -992,11 +994,22 @@ function isEvidenceHud(
       return String(state.combo).split("").every((digit) =>
         findTextureBinding(textures, `${prefix}${digit}`) !== null);
     }
-    case "result":
-      return objectRole === "hud-result" &&
-        exactStateKeys(state, ["representativeResult", "representativeSlot"]) &&
-        isNullableFiniteScalar(state.representativeResult) &&
-        isNullableFiniteScalar(state.representativeSlot);
+    case "result": {
+      if (
+        objectRole !== "hud-result" ||
+        !exactStateKeys(state, ["representativeResult", "representativeSlot", "scoreUpType"]) ||
+        !isNullableFiniteScalar(state.representativeResult) ||
+        !isNullableFiniteScalar(state.representativeSlot) ||
+        !Number.isInteger(state.scoreUpType) ||
+        (state.scoreUpType as number) < 0 ||
+        (state.scoreUpType as number) > 4
+      ) return false;
+      if (state.scoreUpType === 0) return true;
+      const key = scoreUpSpriteKey(state.scoreUpType as number);
+      return key !== null &&
+        findTextureBinding(textures, key) !== null &&
+        findTextureBinding(textures, "skill_eff") !== null;
+    }
     case "life":
       return objectRole === "hud-life" &&
         exactStateKeys(state, [
@@ -1069,15 +1082,38 @@ function applyEvidenceHud(
       });
       break;
     }
-    case "result":
+    case "result": {
       object.node.position.set(800, 520);
-      setHudText(
-        visual.text,
-        state.representativeResult === null ? "" : String(state.representativeResult),
-        54,
-        0xffffff,
-      );
+      clearHudSprites(object, visual, referenceCounts);
+      const scoreUpType = state.scoreUpType as number;
+      if (scoreUpType === 0) {
+        setHudText(
+          visual.text,
+          state.representativeResult === null ? "" : String(state.representativeResult),
+          54,
+          0xffffff,
+        );
+        break;
+      }
+      visual.text.visible = false;
+      const mainKey = scoreUpSpriteKey(scoreUpType)!;
+      const tint = scoreUpTint(scoreUpType);
+      for (const [exactKey, x, y, label] of [
+        ["skill_eff", 0, 44, "score-up-base"],
+        [mainKey, 44, 11, "score-up-main"],
+      ] as const) {
+        const binding = findTextureBinding(textures, exactKey)!;
+        const sprite = new Sprite({ texture: binding.texture, label });
+        sprite.anchor.copyFrom(sprite.texture.defaultAnchor ?? { x: 0.5, y: 0.5 });
+        sprite.position.set(x, y);
+        sprite.tint = tint;
+        visual.content.addChild(sprite);
+        visual.digitSprites.push(sprite);
+        object.hudBindingKeys.push(binding.key);
+        referenceCounts.set(binding.key, (referenceCounts.get(binding.key) ?? 0) + 1);
+      }
       break;
+    }
     case "life": {
       object.node.position.set(1000, 95);
       const primary = state.primaryFill as number;
@@ -1144,6 +1180,36 @@ function createHudVisual(node: Container): PixiHudVisual {
     digitSprites: [],
     fillRatios: Object.freeze([0, 0]),
   };
+}
+
+function clearHudSprites(
+  object: PixiObjectRecord,
+  visual: PixiHudVisual,
+  referenceCounts: Map<string, number>,
+): void {
+  for (const bindingKey of object.hudBindingKeys) {
+    const next = (referenceCounts.get(bindingKey) ?? 0) - 1;
+    if (next <= 0) referenceCounts.delete(bindingKey);
+    else referenceCounts.set(bindingKey, next);
+  }
+  object.hudBindingKeys.length = 0;
+  for (const sprite of visual.digitSprites.splice(0)) sprite.destroy();
+}
+
+function scoreUpSpriteKey(scoreUpType: number): string | null {
+  switch (scoreUpType) {
+    case 1: return "icon_skill_score_up_1";
+    case 2: return "icon_skill_score_up_2";
+    case 3: return "icon_skill_score_zero";
+    case 4: return "icon_skill_score_half";
+    default: return null;
+  }
+}
+
+function scoreUpTint(scoreUpType: number): number {
+  if (scoreUpType === 1) return 0xf3ec03;
+  if (scoreUpType === 2) return 0xe18800;
+  return 0xc0c0c0;
 }
 
 function setHudText(text: Text, value: string, fontSize: number, fill: number): void {

@@ -318,6 +318,24 @@ export class RenderCommandProducer {
   ): SimulatorResult<RenderOwnerTransaction> {
     const validation = this.validate();
     if (validation.status !== "ok") return validation;
+    if (
+      !Number.isInteger(plan.reflect.representativeScoreUpType) ||
+      plan.reflect.representativeScoreUpType < 0 ||
+      plan.reflect.representativeScoreUpType > 5
+    ) {
+      return evidenceRequired(
+        "render.hud.invalid-score-up-type",
+        ["RPR-D10", "RPR-D13", "PR28"],
+        "Result.changeSprite consumes only the current ScoreUpType enum range 0 through 5.",
+      );
+    }
+    if (plan.reflect.representativeScoreUpType === 5) {
+      return evidenceRequired(
+        "render.hud.crescendo-changeable-text-evidence-required",
+        ["RPR-R6-005", "RPR-D10", "RPR-D12", "PR28"],
+        "R6 did not observe SkillEffectChangeableTextObject.Play, so Crescendo decimal text remains closed before HUD mutation.",
+      );
+    }
     const base = this.commandBase(this.substep);
     const commands: RenderCommand[] = [];
     commands.push({
@@ -388,6 +406,7 @@ export class RenderCommandProducer {
       state: Object.freeze({
         representativeSlot: plan.reflect.representativeSlot,
         representativeResult: plan.reflect.representativeRawResult,
+        scoreUpType: plan.reflect.representativeScoreUpType,
       }),
     });
     commands.push({

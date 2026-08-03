@@ -12,7 +12,7 @@
 - 锁定`libil2cpp.so` SHA-256：`815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F`。
 - 锁定`global-metadata.dat` SHA-256：`298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F`。
 - 当前Reverse基线提交：`e9621946c88ebe20e694bdb313294a32fe62a647`；只消费该提交及其祖先中已提交、已push、可校验对象。
-- 当前状态：**2026-08-02 R4 production已接入；R5 core/overlay新增30,975 events/1,059 frames并冻结至817项，只授权Result lifetime、Score skill、ScoreGauge、Life skill lifecycle与generic Skill display五条route。AddScore/JudgeTiming/AP完整动画/Guard/NeverDie/changeable text/field setup、advanced/threshold及production chart replay继续失败关闭；R5 production消费后矩阵为17 closed/current-subset、17 partial、6 blocked，RP14不通过。**
+- 当前状态：**2026-08-02 R4 production已接入；R5 core/overlay新增30,975 events/1,059 frames并冻结至817项，只授权Result lifetime、Score skill、ScoreGauge、Life skill lifecycle与generic Skill display五条route。AddScore/JudgeTiming/AP完整动画/Guard/NeverDie/changeable text/field setup、advanced/threshold及production chart replay继续失败关闭；R6授权HUD消费后矩阵为17 closed/current-subset、18 partial、5 blocked，RP14不通过。**
 - 计划证据包：`tmp/simulator-reverse-evidence/resource-pixi-rendering/`，只在Reverse新证据提交并push后创建。
 - 计划验收记录：`tmp/simulator-resource-pixi-rendering-acceptance.md`，RP14时创建。
 
@@ -592,6 +592,12 @@
 - R6全窗口Note trace扩大样本但没有观察Long-after Flick、add-Long/add-Slide/after Multiple、Advanced或可移植threshold shader mapping；这些route继续失败关闭，不以“全窗口”标题外推授权。
 - 既有front Flick/Directional、标准Slide chain、Multiple back-line的root/child/line stable identity、pool acquire/release、pause freeze与teardown已由R4 production和R6重复轨迹覆盖；本批不重复或改写生产逻辑。
 - Production evidence ID union只加入冻结`RPR-R6-001`–`009`，供后续All Perfect正向消费引用；PR08/PR09/PR11/PR14仍不得提升状态。
+
+### 1.67 2026-08-03 R6授权HUD overlay消费
+
+- Score/Life Reflect plan保留owner冻结的`scoreUpType`并送入Result typed HUD state；Pixi对R5/R6观察到的type 1/2及current static已锁定的type 3/4映射exact icon key、`skill_eff`与三档RGBA8 tint，资源缺失时整批失败关闭。
+- ScoreUpType 5仍依赖R6未观察的`SkillEffectChangeableTextObject.Play`，因此在任何HUD mutation前返回`render.hud.crescendo-changeable-text-evidence-required`；AddScore/JudgeTiming/Guard/NeverDie与field setup也不扩权。
+- recording与actual Pixi oracle覆盖type 2 owner propagation、two-Sprite reference/release以及type 5零mutation拒绝。PR28从blocked降为partial，矩阵更新为17 closed/current-subset、18 partial、5 blocked；RP14仍不通过。
 
 ## 2. 固定范围
 
