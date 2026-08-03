@@ -108,6 +108,7 @@ export function advanceOrdinarySlideChildren(
       screenToSafeAreaRatio,
       widthRate: widthRate.value,
       color,
+      advanced: state.lifecycle.motionState.virtualLaneControllerPresent,
     });
     if (mesh.status !== "ok") return mesh;
     segments.push(Object.freeze({ sourceIndex: state.sourceIndex, geometry: mesh.value }));

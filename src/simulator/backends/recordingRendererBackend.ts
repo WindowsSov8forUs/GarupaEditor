@@ -248,6 +248,12 @@ export class RecordingSimulatorRendererBackend implements SimulatorRendererBacke
     return Object.freeze([...this.commands]);
   }
 
+  drainCommandSnapshot(): readonly RenderCommand[] {
+    const snapshot = Object.freeze([...this.commands]);
+    this.commands.length = 0;
+    return snapshot;
+  }
+
   recordTerminalFault(capability: string, boundary: string): EvidenceRequired {
     return this.latchFault(capability, boundary);
   }
@@ -451,8 +457,8 @@ export class RecordingSimulatorRendererBackend implements SimulatorRendererBacke
   }
 
   private hasAnimationRole(role: RenderAnimationRole): boolean {
-    return this.profile!.assets.some((asset) =>
-      asset.animationRole === role && asset.animationRole !== "none");
+    return role !== "none" && role !== "habahiro-lane-change" ||
+      this.profile!.assets.some((asset) => asset.animationRole === role);
   }
 
   private requireObject(

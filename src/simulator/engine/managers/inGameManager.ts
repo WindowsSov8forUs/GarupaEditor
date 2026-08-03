@@ -212,7 +212,19 @@ export class InGameManager {
         "Fever commands require an initialized Score/Life session profile.",
       );
     }
-    return this.scoreLifeStateManager.changeFeverCommand(command);
+    const before = this.scoreLifeStateManager.snapshot().fever;
+    const render = this.renderProducer?.preflightHudFeverTransition(command, before) ?? null;
+    if (render?.status === "evidence-required") return this.latchFault(render);
+    const changed = this.scoreLifeStateManager.changeFeverCommand(command);
+    if (changed.status !== "ok") {
+      if (render?.status === "ok") render.value.discard();
+      return changed;
+    }
+    if (render?.status === "ok") {
+      const committed = render.value.commit();
+      if (committed.status !== "ok") return this.latchFault(committed);
+    }
+    return ok(undefined);
   }
 
   continueLive(): SimulatorResult<void> {

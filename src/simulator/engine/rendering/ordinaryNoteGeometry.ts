@@ -15,6 +15,7 @@ import {
 } from "../evidence";
 
 const BASE_SECTION_COUNT = 10;
+const ADVANCED_SECTION_COUNT = 20;
 const SYNC_LINE_WIDTH_FACTOR = Math.fround(0.2800000011920929);
 const NOTE_POSITION_BASE = Math.fround(1.1);
 const NOTE_POSITION_EXPONENT_SCALE = Math.fround(50);
@@ -29,13 +30,18 @@ const NOTE_SCALE_MIN_RATIOS = Object.freeze([
   Math.fround(0.9917),
 ]);
 
-const BASE_INDICES = Object.freeze(Array.from(
-  { length: BASE_SECTION_COUNT },
-  (_, section) => {
-    const left = section * 2;
-    return [left, left + 2, left + 1, left + 1, left + 2, left + 3];
-  },
-).flat());
+function createStripIndices(sectionCount: number): readonly number[] {
+  return Object.freeze(Array.from(
+    { length: sectionCount },
+    (_, section) => {
+      const left = section * 2;
+      return [left, left + 2, left + 1, left + 1, left + 2, left + 3];
+    },
+  ).flat());
+}
+
+const BASE_INDICES = createStripIndices(BASE_SECTION_COUNT);
+const ADVANCED_INDICES = createStripIndices(ADVANCED_SECTION_COUNT);
 
 export interface OrdinaryNoteMeshEndpoint {
   readonly position: RenderVector2;
@@ -162,12 +168,6 @@ export function advanceOrdinaryNoteMotion(
     return reject(
       "render.geometry.invalid-note-motion-state",
       "Note Move requires complete current Float32 timing, scene positions, scale inputs and a 1..7 button count.",
-    );
-  }
-  if (state.virtualLaneControllerPresent) {
-    return reject(
-      "render.geometry.virtual-lane-motion-unimplemented",
-      "The consolidated ordinary producer authorizes only the null virtual-lane-controller branch.",
     );
   }
   const arrival = getOrdinaryNoteArrivalSeconds(state.specificSpeed);
@@ -297,6 +297,20 @@ export function advanceOrdinaryNoteActivationAdjustment(
 export function buildOrdinaryBaseNoteMesh(
   state: OrdinaryBaseNoteMeshOwnerState,
 ): SimulatorResult<OrdinaryBaseNoteMeshGeometry> {
+  return buildOrdinaryNoteMeshStrip(state, BASE_SECTION_COUNT, BASE_INDICES);
+}
+
+export function buildOrdinaryAdvancedNoteMesh(
+  state: OrdinaryBaseNoteMeshOwnerState,
+): SimulatorResult<OrdinaryBaseNoteMeshGeometry> {
+  return buildOrdinaryNoteMeshStrip(state, ADVANCED_SECTION_COUNT, ADVANCED_INDICES);
+}
+
+function buildOrdinaryNoteMeshStrip(
+  state: OrdinaryBaseNoteMeshOwnerState,
+  sectionCount: number,
+  indices: readonly number[],
+): SimulatorResult<OrdinaryBaseNoteMeshGeometry> {
   const validation = validateBaseMeshState(state);
   if (validation.status !== "ok") return validation;
   const front = projectBoundary(
@@ -314,8 +328,8 @@ export function buildOrdinaryBaseNoteMesh(
   const vertices: RenderVector3[] = [];
   const uv: RenderVector2[] = [];
   const colors: RenderColor[] = [];
-  for (let section = 0; section <= BASE_SECTION_COUNT; section += 1) {
-    const rate = Math.fround(section / BASE_SECTION_COUNT);
+  for (let section = 0; section <= sectionCount; section += 1) {
+    const rate = Math.fround(section / sectionCount);
     for (const side of [0, 1] as const) {
       const x = interpolate(front.value[side].x.value, after.value[side].x.value, rate);
       const y = interpolate(front.value[side].y.value, after.value[side].y.value, rate);
@@ -330,7 +344,7 @@ export function buildOrdinaryBaseNoteMesh(
   }
   return ok(Object.freeze({
     vertices: Object.freeze(vertices),
-    indices: BASE_INDICES,
+    indices,
     uv: Object.freeze(uv),
     colors: Object.freeze(colors),
   }));

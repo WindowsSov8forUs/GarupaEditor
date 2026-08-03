@@ -1651,69 +1651,42 @@ export function validateOrdinaryRenderedBatchAuthorization(
     if (isNonPlayableCommand(information) || information.fireNoteType === FrontNoteType.Normal) {
       continue;
     }
-    if (information.fireNoteType === FrontNoteType.Long) {
-      if (
-        information.afterNoteType === AfterNoteType.Normal &&
-        information.afterNoteAbsolutePos > information.absolutePos &&
-        information.virtualLaneDirection === 0
-      ) {
-        continue;
-      }
-      if (information.virtualLaneDirection !== 0) {
-        return evidenceRequired(
-          "render.note.virtual-lane-child-evidence-required",
-          ["RPR-D05", "RPR-D07", "PR10", "PR19", "HA-D04"],
-          "The fixed ordinary Long profile does not authorize virtual-lane child transforms.",
-        );
-      }
-      return evidenceRequired(
-        "render.note.long-non-normal-tail-evidence-required",
-        ["RPR-D04", "RPR-D05", "RPR-D07", "PR08", "PR16"],
-        "Flick, Directional and Multiple Long tails require icon/reconnect lifecycle evidence that remains explicitly false.",
-      );
-    }
     switch (information.fireNoteType) {
+      case FrontNoteType.Long:
+        if (information.afterNoteAbsolutePos <= information.absolutePos) {
+          return evidenceRequired(
+            "render.note.invalid-long-tail-position",
+            ["RPR-R7-001", "PR08", "PR11", "PR15"],
+            "Current Long production requires its authored tail position to follow the root.",
+          );
+        }
+        continue;
       case FrontNoteType.Flick:
       case FrontNoteType.DirectionalFlick:
       case FrontNoteType.MultipleDirectionalFlick:
-        if (information.virtualLaneDirection !== 0) {
-          return evidenceRequired(
-            "render.note.virtual-lane-child-evidence-required",
-            ["RPR-D05", "RPR-D07", "RPR-R4-010", "PR10", "PR19", "HA-D04"],
-            "The R4 front icon and MultipleDirectional profiles remain limited to the null virtual-lane branch.",
-          );
-        }
+      case FrontNoteType.LongMultipleDirectionalFlickAdd:
+      case FrontNoteType.SlideAMultipleDirectionalFlickAdd:
+      case FrontNoteType.SlideBMultipleDirectionalFlickAdd:
         continue;
       case FrontNoteType.SlideA:
       case FrontNoteType.SlideB:
         if (
-          information.afterNoteType === AfterNoteType.None &&
           information.slideNoteList.length > 0 &&
-          information.virtualLaneDirection === 0 &&
           information.slideNoteList.every((source) =>
-            source.virtualLaneDirection === 0 &&
             source.absolutePos >= information.absolutePos)
         ) {
           continue;
         }
         return evidenceRequired(
-          "render.note.slide-child-chain-evidence-required",
-          ["RPR-R4-004", "RPR-R4-010", "RPR-R4-014", "PR07", "PR12", "PR15"],
-          "R4 authorizes only the standard non-virtual Slide chain whose terminal GameNoteType is owned by an AfterNoteType.None root; Flick/Directional/Multiple terminals remain closed.",
-        );
-      case FrontNoteType.LongMultipleDirectionalFlickAdd:
-      case FrontNoteType.SlideAMultipleDirectionalFlickAdd:
-      case FrontNoteType.SlideBMultipleDirectionalFlickAdd:
-        return evidenceRequired(
-          "render.note.multiple-directional-lifecycle-evidence-required",
-          ["RPR-D04", "RPR-D06", "RPR-D07", "PR09", "PR17", "PR20"],
-          "R4 authorizes the observed root MultipleDirectional connect/back-line only; add-Long/add-Slide side visuals and after routes remain explicitly unauthorized.",
+          "render.note.invalid-slide-child-chain",
+          ["RPR-R7-001", "PR08", "PR09", "PR15", "PR39"],
+          "Current Slide production requires a non-empty chart-owned ordered child chain.",
         );
       default:
         return evidenceRequired(
           "render.note.ordinary-child-lifecycle-evidence-required",
-          ["RPR-D04", "RPR-D05", "RPR-D06", "RPR-D07", "PR06", "PR09"],
-          "Every rendered family outside Normal and ordinary Long+Normal tail fails before batch mutation.",
+          ["RPR-R7-001", "PR06", "PR09", "PR39"],
+          "Every rendered family must have a current R7 production owner route.",
         );
     }
   }

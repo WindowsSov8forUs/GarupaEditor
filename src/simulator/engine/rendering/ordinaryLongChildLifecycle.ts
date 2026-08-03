@@ -14,6 +14,7 @@ import {
 import {
   advanceOrdinaryNoteActivationAdjustment,
   advanceOrdinaryNoteMotion,
+  buildOrdinaryAdvancedNoteMesh,
   buildOrdinaryBaseNoteMesh,
   type OrdinaryBaseNoteMeshGeometry,
   type OrdinaryNoteMotionResult,
@@ -44,6 +45,7 @@ export interface OrdinaryLongNormalMeshInput {
   readonly screenToSafeAreaRatio: RenderFloat32;
   readonly widthRate: RenderFloat32;
   readonly color: RenderColor;
+  readonly advanced?: boolean;
 }
 
 export function createOrdinaryLongNormalChildState(
@@ -55,8 +57,7 @@ export function createOrdinaryLongNormalChildState(
     !Number.isSafeInteger(afterAbsolutePosition) ||
     afterAbsolutePosition < 0 ||
     !validateRenderFloat32(noteBpm) ||
-    noteBpm.value <= 0 ||
-    motionState.virtualLaneControllerPresent
+    noteBpm.value <= 0
   ) {
     return reject(
       "render.long-child.invalid-activation-owner-state",
@@ -154,7 +155,7 @@ export function advanceOrdinaryLongNormalChild(
 export function buildOrdinaryLongNormalMesh(
   input: OrdinaryLongNormalMeshInput,
 ): SimulatorResult<OrdinaryBaseNoteMeshGeometry> {
-  return buildOrdinaryBaseNoteMesh(Object.freeze({
+  const state = Object.freeze({
     front: Object.freeze({
       position: Object.freeze({ x: input.front.position.x, y: input.front.position.y }),
       localScaleX: input.front.localScale.x,
@@ -168,7 +169,10 @@ export function buildOrdinaryLongNormalMesh(
     screenToSafeAreaRatio: input.screenToSafeAreaRatio,
     widthRate: input.widthRate,
     color: input.color,
-  }));
+  });
+  return input.advanced === true
+    ? buildOrdinaryAdvancedNoteMesh(state)
+    : buildOrdinaryBaseNoteMesh(state);
 }
 
 function reject(capability: string, detail: string): SimulatorResult<never> {

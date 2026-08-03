@@ -32,6 +32,7 @@ export interface ScoreLifeReflectEntry {
   readonly comboAfter: number;
   readonly stageEffectLevel: number;
   readonly scoreUpType: number;
+  readonly crescendoRate: number;
 }
 
 export interface ScoreLifeReflectBatch {
@@ -41,7 +42,9 @@ export interface ScoreLifeReflectBatch {
   readonly totalFreeLiveEventBonusScore: number;
   readonly representativeSlot: number;
   readonly representativeRawResult: 0 | 1 | 2 | 3 | 4;
+  readonly representativeJudgeTiming: 0 | 1 | 2;
   readonly representativeScoreUpType: number;
+  readonly representativeCrescendoRate: number;
 }
 
 export interface ScoreLifeReflectPlan {
@@ -253,6 +256,7 @@ export class ScoreLifeStateManager {
         comboAfter: stagedRecord.currentCombo,
         stageEffectLevel: festival.level,
         scoreUpType: business.scoreUpType,
+        crescendoRate: business.crescendoSkillScoreUpRate,
       }));
     }
     const reflect = Object.freeze({
@@ -262,7 +266,9 @@ export class ScoreLifeStateManager {
       totalFreeLiveEventBonusScore: totalBonusScore,
       representativeSlot: representative.slot,
       representativeRawResult: representative.rawResult,
+      representativeJudgeTiming: representative.judgeTiming,
       representativeScoreUpType: representative.business!.scoreUpType,
+      representativeCrescendoRate: representative.business!.crescendoSkillScoreUpRate,
     });
     const plan = Object.freeze({
       batchIndex: batch.batchIndex,
