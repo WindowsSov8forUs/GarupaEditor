@@ -613,6 +613,12 @@
 - PR production verifier固定当前真实矩阵`closed=19 partial=18 blocked=3 RP14=blocked`。PR19/PR40只以显式degraded/disclosed关闭，不改变exact HAB open-not-claimed。
 - 三个blocked正向case严格为PR14（threshold/material shader mapping）、PR30（Guard/NeverDie warning suppression）与PR39（ordinary Slide terminal/full chart）。其冻结R6授权均为false，故RP13通过但RP14不得关闭。
 
+### 1.70 2026-08-03 RP14独立最终验收
+
+- 验收记录重写为R6/826-entry/双production chart现状；RP00–RP13在所声明fidelity与授权子集内通过，RP14按任务书第13节仍不通过。
+- 当前仅剩3个blocked正向case，但另有18个partial；任何一个都不能由failure-closed或绿色runner替代confirmed production consumption。阶段状态继续“进行中”。
+- 后续若要关闭RP14，必须先在Reverse新增并提交PR14/PR30/PR39对应自然运行时或可移植shader证据，再冻结、实现并从新HEAD独立验收；当前提交不得宣称阶段完成。
+
 ## 2. 固定范围
 
 ### 2.1 纳入范围
