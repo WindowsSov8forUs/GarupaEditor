@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "status": "frozen-user-authorized-habahiro-approximation-evidence",
+  "source_reverse_commit": "ab5cc366a4a03d24a215e379849824e5ddf5f72f",
+  "remote_assets_verified_once": true,
+  "remote_verification_user_agent": "Mozilla/5.0",
+  "remote_asset_count": 12,
+  "entries": [
+    {
+      "path": "bestdori-atlas-profile.json",
+      "bytes": 50294,
+      "sha256": "192650772F1142CF2C70A459B1D76CCD7A4E2ACDB60388C67A13B0C8D2E2D484"
+    },
+    {
+      "path": "difference-matrix.json",
+      "bytes": 2318,
+      "sha256": "DADAAE3D83EDDDECC0E7921761CDF1B64BFE2A584823A91854760D190383CE84"
+    }
+  ]
+}

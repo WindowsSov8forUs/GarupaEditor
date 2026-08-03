@@ -92,3 +92,11 @@
 - 审计已完成：现有实现只有宽root ordinary-projection proxy和同帧两阶段diagnostic；Long/Slide child、mesh/line、field/judge、完整lane-change与Bestdori准备器仍缺。
 - 当前外部资源profile已锁定179 rows及资源hash，但尚未由production下载/解析/消费。
 - 本专项重新打开HAB functional completion；旧`exact open-not-claimed`将保留为parity声明边界，而不再代表功能未实现。
+
+## 10. 2026-08-03 一次性资源与推导冻结
+
+- 按固定Bestdori URL一次下载explorer、bundle、`.sprites`、6张atlas PNG及3张line/material PNG；12项byte length与SHA-256全部匹配Reverse current external profile，原始bytes留在临时目录且不入库。
+- 解析bundle preload range建立texture PathID→PNG映射；`.sprites`得到179个unique exact key，按PNG分组为31/28/35/28/28/28/1行；Unity bottom-left rect转换为Pixi top-left后全部通过dimension边界。
+- 从current 10.1.4 `libil2cpp.so`只读恢复`GetMeshWidthRate`常量：base `1.05f`（`3F866666`）、coefficient `0.0300000906f`（`3CF5C2C0`）；宿主setting继续显式输入。
+- 冻结`tmp/simulator-habahiro-approximation-evidence/`：pinned assets、179 atlas rows、mesh-width formula、0.25秒显式推导flash profile和HA-D01–HA-D12 difference matrix。verifier输出`functional-blockers=0 parity=false`。
+- 自本记录提交并push后，允许按resource→engine→Pixi→oracle顺序集中实施；实现不得删除visible approximation label或差异矩阵。

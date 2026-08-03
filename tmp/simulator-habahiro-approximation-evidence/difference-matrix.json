@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "status": "all-functional-routes-implemented-with-parity-differences-disclosed",
+  "entries": [
+    {
+      "id": "HA-D01",
+      "disposition": "implemented-approximation",
+      "possible_difference": "Bestdori export may differ from internal UnityFS/import settings"
+    },
+    {
+      "id": "HA-D02",
+      "disposition": "implemented-approximation",
+      "possible_difference": "wide artwork is current external export, not internal bundle byte parity"
+    },
+    {
+      "id": "HA-D03",
+      "disposition": "implemented-approximation",
+      "possible_difference": "profile selected explicitly rather than observed natural loader selection"
+    },
+    {
+      "id": "HA-D04",
+      "disposition": "implemented-approximation",
+      "possible_difference": "mesh width singleton replaced by explicit host setting"
+    },
+    {
+      "id": "HA-D05",
+      "disposition": "implemented-approximation",
+      "possible_difference": "pool identity follows deterministic chart order inferred from common R7 owners"
+    },
+    {
+      "id": "HA-D06",
+      "disposition": "implemented-approximation",
+      "possible_difference": "lane-change domain order is static-confirmed"
+    },
+    {
+      "id": "HA-D07",
+      "disposition": "implemented-approximation",
+      "possible_difference": "0.25 second portable flash and Root_effect substitute are inferred"
+    },
+    {
+      "id": "HA-D08",
+      "disposition": "implemented-approximation",
+      "possible_difference": "field/judge swap uses current portable resources and inferred transforms"
+    },
+    {
+      "id": "HA-D09",
+      "disposition": "implemented-approximation",
+      "possible_difference": "mask/material/filter settings use portable equivalents"
+    },
+    {
+      "id": "HA-D10",
+      "disposition": "implemented-approximation",
+      "possible_difference": "standard current HUD/judge route reused"
+    },
+    {
+      "id": "HA-D11",
+      "disposition": "implemented-approximation",
+      "possible_difference": "pause/reset/fault/dispose use common R7 lifecycle"
+    },
+    {
+      "id": "HA-D12",
+      "disposition": "implemented-approximation",
+      "possible_difference": "generated frames are approximation oracle, not original framebuffer"
+    }
+  ],
+  "functional_blockers": [],
+  "parity_claim": false
+}
