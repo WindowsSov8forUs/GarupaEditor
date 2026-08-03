@@ -13,7 +13,7 @@ const matrix = [
   ["PR19", "blocked-degraded"], ["PR20", "partial"], ["PR21", "partial"],
   ["PR22", "partial"], ["PR23", "closed-current-subset"], ["PR24", "partial"],
   ["PR25", "partial"], ["PR26", "partial"], ["PR27", "partial"],
-  ["PR28", "blocked"], ["PR29", "partial"], ["PR30", "blocked"],
+  ["PR28", "partial"], ["PR29", "partial"], ["PR30", "blocked"],
   ["PR31", "partial"], ["PR32", "partial"], ["PR33", "closed"],
   ["PR34", "partial"], ["PR35", "closed"], ["PR36", "closed"],
   ["PR37", "closed"], ["PR38", "closed"], ["PR39", "blocked"],
@@ -32,6 +32,7 @@ for (const marker of [
   "preflightOrdinarySlideChildFrame",
   "multipleDirectionalLineLeftLogicalAssetId",
   "preflightHudSkillTransition",
+  "representativeScoreUpType",
   "score-skill",
   "render.note.long-non-normal-tail-evidence-required",
   "render.note.multiple-directional-lifecycle-evidence-required",
@@ -46,8 +47,8 @@ for (const [id, status] of matrix) {
   else if (status.startsWith("blocked")) groups.blocked.push(id);
   else throw new Error(`Unknown PR production status: ${status}`);
 }
-if (groups.closed.length !== 17 || groups.partial.length !== 17 || groups.blocked.length !== 6) {
+if (groups.closed.length !== 17 || groups.partial.length !== 18 || groups.blocked.length !== 5) {
   throw new Error(`PR production counts differ: ${JSON.stringify(groups)}`);
 }
 Object.freeze(matrix); Object.freeze(groups.closed); Object.freeze(groups.partial); Object.freeze(groups.blocked);
-console.log("render PR production matrix verified: closed=17 partial=17 blocked=6 RP14=blocked");
+console.log("render PR production matrix verified: closed=17 partial=18 blocked=5 RP14=blocked");

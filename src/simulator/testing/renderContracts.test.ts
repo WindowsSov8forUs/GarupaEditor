@@ -858,11 +858,12 @@ async function testHudReflectAtomic(): Promise<void> {
     lifeHealAnimation: true,
     reflect: {
       batchIndex: 0,
-      entries: [{ slot: 0, ordinaryScore: 100, freeLiveEventBonusScore: 0, lifeDelta: 300, comboAfter: 1, stageEffectLevel: 0 }],
+      entries: [{ slot: 0, ordinaryScore: 100, freeLiveEventBonusScore: 0, lifeDelta: 300, comboAfter: 1, stageEffectLevel: 0, scoreUpType: 0 }],
       totalOrdinaryScore: 100,
       totalFreeLiveEventBonusScore: 0,
       representativeSlot: 0,
       representativeRawResult: 4,
+      representativeScoreUpType: 0,
     },
     record: healRecord.snapshot(),
   }), "preflight life-heal HUD reflect");
@@ -883,6 +884,35 @@ async function testHudReflectAtomic(): Promise<void> {
   equal(sample?.kind, "sample-animation", "life-heal advances by explicit sample command");
   if (sample?.kind !== "sample-animation") throw new Error("missing life-heal sample");
   equal(sample.elapsedSeconds.bits, "3E800000", "life-heal elapsed preserves Float32 bits");
+  const scoreUpPlan = {
+    batchIndex: 1,
+    entryCount: 1,
+    lifeHealAnimation: false,
+    reflect: {
+      batchIndex: 1,
+      entries: [{ slot: 0, ordinaryScore: 100, freeLiveEventBonusScore: 0, lifeDelta: 0, comboAfter: 2, stageEffectLevel: 0, scoreUpType: 2 }],
+      totalOrdinaryScore: 100,
+      totalFreeLiveEventBonusScore: 0,
+      representativeSlot: 0,
+      representativeRawResult: 4 as const,
+      representativeScoreUpType: 2,
+    },
+    record: healRecord.snapshot(),
+  };
+  requireOk(requireOk(producer.preflightHudReflect(scoreUpPlan),
+    "preflight R6 ScoreUp type 2").commit(), "commit R6 ScoreUp type 2");
+  const scoreUpResult = [...healRenderer.commandSnapshot()].reverse().find((command) =>
+    command.kind === "set-hud" && command.renderObjectId === "render:hud:result"
+  );
+  if (scoreUpResult?.kind !== "set-hud") throw new Error("missing ScoreUp Result state");
+  equal(scoreUpResult.state.scoreUpType, 2, "R6 Result carries owner-frozen ScoreUpType 2");
+  const beforeCrescendoReject = healRenderer.commandSnapshot().length;
+  equal(producer.preflightHudReflect({
+    ...scoreUpPlan,
+    reflect: { ...scoreUpPlan.reflect, representativeScoreUpType: 5 },
+  }).status, "evidence-required", "unobserved Crescendo text route stays closed");
+  equal(healRenderer.commandSnapshot().length, beforeCrescendoReject,
+    "Crescendo rejection has zero renderer mutation");
   requireOk(requireOk(producer.preflightHudAnimationAdvance(0.75),
     "preflight Result one-second lifetime").commit(), "commit Result one-second lifetime");
   equal(healRenderer.commandSnapshot().some((command) =>

@@ -32,6 +32,11 @@ const hudKeys = [
   ...Array.from({ length: 10 }, (_, index) => `icon_number_big_AP_${index}`),
   "effect_health_guard_outline",
   "UI_effect_life_plus_icon",
+  "skill_eff",
+  "icon_skill_score_up_1",
+  "icon_skill_score_up_2",
+  "icon_skill_score_zero",
+  "icon_skill_score_half",
 ];
 
 function equal<T>(actual: T, expected: T, message: string): void {
@@ -533,7 +538,16 @@ async function main(): Promise<void> {
       ...base(27), kind: "sample-animation", renderObjectId: "hud.life",
       animationRole: "life-heal", elapsedSeconds: f32(0.25),
     },
-  ]), "preflight R3 visible Pixi batch");
+    {
+      ...base(28), kind: "create-object", renderObjectId: "hud.result",
+      poolFamily: "hud-result", role: "hud-result", parentObjectId: null,
+    },
+    {
+      ...base(29), kind: "set-hud", renderObjectId: "hud.result", hudRole: "result",
+      state: Object.freeze({ representativeResult: 4, representativeSlot: 0, scoreUpType: 2 }),
+    },
+    { ...base(30), kind: "activate-object", renderObjectId: "hud.result" },
+  ]), "preflight R3/R6 visible Pixi batch");
   equal(renderer.sceneSnapshot().length, 3, "visible preflight has zero scene mutation");
   requireOk(renderer.commit(visibleBatch), "commit R3 visible Pixi batch");
   const visibleScene = renderer.sceneSnapshot();
@@ -554,29 +568,33 @@ async function main(): Promise<void> {
   );
   equal(visibleScene.find((row) => row.renderObjectId === "hud.life")?.hudText,
     "1250/1000", "Life visible text uses committed semantic owner state");
-  equal(renderer.resourceSnapshot()[2]?.spriteReferenceCount, 5,
-    "three Combo digits and two Life overlay Sprites are reference counted");
+  equal(visibleScene.find((row) => row.renderObjectId === "hud.result")?.hudSpriteCount,
+    2, "R6 ScoreUp type 2 owns the exact skill_eff and icon overlay Sprites");
+  equal(renderer.resourceSnapshot()[2]?.spriteReferenceCount, 7,
+    "Combo, Life and ScoreUp HUD Sprites are reference counted");
 
   requireOk(renderer.execute({
-    ...base(28), kind: "stop-animation", renderObjectId: "hud.life",
+    ...base(31), kind: "stop-animation", renderObjectId: "hud.life",
     animationRole: "life-heal", restart: false,
   }), "stop Life animation");
-  requireOk(renderer.execute({ ...base(29), kind: "release-object", renderObjectId: "field.line" }),
+  requireOk(renderer.execute({ ...base(32), kind: "release-object", renderObjectId: "field.line" }),
     "release masked field Sprite");
-  requireOk(renderer.execute({ ...base(30), kind: "release-object", renderObjectId: "field.mask" }),
+  requireOk(renderer.execute({ ...base(33), kind: "release-object", renderObjectId: "field.mask" }),
     "release field mask");
-  requireOk(renderer.execute({ ...base(31), kind: "release-object", renderObjectId: "hud.combo" }),
+  requireOk(renderer.execute({ ...base(34), kind: "release-object", renderObjectId: "hud.combo" }),
     "release Combo HUD");
-  requireOk(renderer.execute({ ...base(32), kind: "release-object", renderObjectId: "hud.life" }),
+  requireOk(renderer.execute({ ...base(35), kind: "release-object", renderObjectId: "hud.life" }),
     "release Life HUD");
+  requireOk(renderer.execute({ ...base(36), kind: "release-object", renderObjectId: "hud.result" }),
+    "release ScoreUp Result HUD");
   requireOk(renderer.execute({
-    ...base(33), kind: "release-object", renderObjectId: "note.sync-line",
+    ...base(37), kind: "release-object", renderObjectId: "note.sync-line",
   }), "release Pixi sync-line object");
   requireOk(renderer.execute({
-    ...base(34), kind: "release-object", renderObjectId: "note.mesh",
+    ...base(38), kind: "release-object", renderObjectId: "note.mesh",
   }), "release Pixi mesh object");
   requireOk(renderer.execute({
-    ...base(35), kind: "release-object", renderObjectId: "note.root",
+    ...base(39), kind: "release-object", renderObjectId: "note.root",
   }), "release Pixi object");
   equal(renderer.sceneSnapshot().length, 0, "Pixi release removes object");
   equal(renderer.resourceSnapshot()[0]?.spriteReferenceCount, 0, "release decrements Sprite reference");
