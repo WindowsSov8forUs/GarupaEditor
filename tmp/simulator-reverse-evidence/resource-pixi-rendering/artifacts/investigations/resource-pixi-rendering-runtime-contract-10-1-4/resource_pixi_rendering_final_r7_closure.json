@@ -1,0 +1,193 @@
+{
+  "schema_version": 1,
+  "status": "final-r7-evidence-gate-closed",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "version_name": "10.1.4",
+    "version_code": 230,
+    "abi": "arm64-v8a",
+    "base_apk_bytes": 138157634,
+    "base_apk_sha256": "D3A6005BB1F7341E39016521390DCEB987E56A0E5D16B6BA73568837A3026413",
+    "arm64_split_apk_bytes": 47130776,
+    "arm64_split_apk_sha256": "3D846C0AA18CCBA4BFC48B5E6B82C2EED92A999D653057F0766198C1AEA1D9DD",
+    "libil2cpp_sha256": "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F",
+    "global_metadata_sha256": "298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F",
+    "dump_cs_sha256": "4AC4ACC5981D0010B3D6A69482C37C1175339458246BC4A5878CF30F694E884B",
+    "script_json_sha256": "826C592717ED07974F8DCD435AF92B8DCE7A6406E0706AC43A85102FE8567D91"
+  },
+  "delivery_profile": "ordinary-exact-habahiro-degraded",
+  "source": {
+    "delivery_closure_sha256": "089317E751F5F65E4FAF968874A19EE12F694DE509FFF3C2CE6AAC70B911EFAE",
+    "final_r7_profile_sha256": "9A6E3E09A2004327E467D3F874D24E24BC201ED873635C6D0C691D668AE22DFE"
+  },
+  "rendering_evidence_gate": "closed",
+  "production_authorization": true,
+  "production_consumption_claimed": false,
+  "pr_cases": {
+    "PR01": {
+      "evidence_status": "confirmed-current-r1-r6",
+      "production_consumption_status": "authorized-not-claimed-by-reverse"
+    },
+    "PR02": {
+      "evidence_status": "confirmed-current-r1-r6",
+      "production_consumption_status": "authorized-not-claimed-by-reverse"
+    },
+    "PR03": {
+      "evidence_status": "confirmed-current-r1-r6",
+      "production_consumption_status": "authorized-not-claimed-by-reverse"
+    },
+    "PR04": {
+      "evidence_status": "confirmed-degraded",
+      "production_consumption_status": "authorized-not-claimed-by-reverse"
+    },
+    "PR05": {
+      "evidence_status": "confirmed-current-r1-r6",
+      "production_consumption_status": "authorized-not-claimed-by-reverse"
+    },
+    "PR06": {
+      "evidence_status": "confirmed-current-r7",
+      "production_consumption_status": "authorized-not-claimed-by-reverse"
+    },
+    "PR07": {
+      "evidence_status": "confirmed-current-r1-r6",
+      "production_consumption_status": "authorized-not-claimed-by-reverse"
+    },
+    "PR08": {
+      "evidence_status": "confirmed-current-r7",
+      "production_consumption_status": "authorized-not-claimed-by-reverse"
+    },
+    "PR09": {
+      "evidence_status": "confirmed-current-r7",
+      "production_consumption_status": "authorized-not-claimed-by-reverse"
+    },
+    "PR10": {
+      "evidence_status": "confirmed-current-r1-r6",
+      "production_consumption_status": "authorized-not-claimed-by-reverse"
+    },
+    "PR11": {
+      "evidence_status": "confirmed-current-r7",
+      "production_consumption_status": "authorized-not-claimed-by-reverse"
+    },
+    "PR12": {
+      "evidence_status": "confirmed-current-r1-r6",
+      "production_consumption_status": "authorized-not-claimed-by-reverse"
+    },
+    "PR13": {
+      "evidence_status": "confirmed-current-r1-r6",
+      "production_consumption_status": "authorized-not-claimed-by-reverse"
+    },
+    "PR14": {
+      "evidence_status": "confirmed-current-r7",
+      "production_consumption_status": "authorized-not-claimed-by-reverse"
+    },
+    "PR15": {
+      "evidence_status": "confirmed-current-r7",
+      "production_consumption_status": "authorized-not-claimed-by-reverse"
+    },
+    "PR16": {
+      "evidence_status": "confirmed-current-r1-r6",
+      "production_consumption_status": "authorized-not-claimed-by-reverse"
+    },
+    "PR17": {
+      "evidence_status": "confirmed-current-r1-r6",
+      "production_consumption_status": "authorized-not-claimed-by-reverse"
+    },
+    "PR18": {
+      "evidence_status": "confirmed-current-r7",
+      "production_consumption_status": "authorized-not-claimed-by-reverse"
+    },
+    "PR19": {
+      "evidence_status": "confirmed-degraded",
+      "production_consumption_status": "authorized-not-claimed-by-reverse"
+    },
+    "PR20": {
+      "evidence_status": "confirmed-current-r7",
+      "production_consumption_status": "authorized-not-claimed-by-reverse"
+    },
+    "PR21": {
+      "evidence_status": "confirmed-current-r7",
+      "production_consumption_status": "authorized-not-claimed-by-reverse"
+    },
+    "PR22": {
+      "evidence_status": "confirmed-current-r7",
+      "production_consumption_status": "authorized-not-claimed-by-reverse"
+    },
+    "PR23": {
+      "evidence_status": "confirmed-current-r1-r6",
+      "production_consumption_status": "authorized-not-claimed-by-reverse"
+    },
+    "PR24": {
+      "evidence_status": "confirmed-current-r7",
+      "production_consumption_status": "authorized-not-claimed-by-reverse"
+    },
+    "PR25": {
+      "evidence_status": "confirmed-current-r7",
+      "production_consumption_status": "authorized-not-claimed-by-reverse"
+    },
+    "PR26": {
+      "evidence_status": "confirmed-current-r7",
+      "production_consumption_status": "authorized-not-claimed-by-reverse"
+    },
+    "PR27": {
+      "evidence_status": "confirmed-current-r7",
+      "production_consumption_status": "authorized-not-claimed-by-reverse"
+    },
+    "PR28": {
+      "evidence_status": "confirmed-current-r7",
+      "production_consumption_status": "authorized-not-claimed-by-reverse"
+    },
+    "PR29": {
+      "evidence_status": "confirmed-current-r7",
+      "production_consumption_status": "authorized-not-claimed-by-reverse"
+    },
+    "PR30": {
+      "evidence_status": "confirmed-current-r7",
+      "production_consumption_status": "authorized-not-claimed-by-reverse"
+    },
+    "PR31": {
+      "evidence_status": "confirmed-current-r7",
+      "production_consumption_status": "authorized-not-claimed-by-reverse"
+    },
+    "PR32": {
+      "evidence_status": "confirmed-current-r7",
+      "production_consumption_status": "authorized-not-claimed-by-reverse"
+    },
+    "PR33": {
+      "evidence_status": "confirmed-current-r1-r6",
+      "production_consumption_status": "authorized-not-claimed-by-reverse"
+    },
+    "PR34": {
+      "evidence_status": "confirmed-current-r7",
+      "production_consumption_status": "authorized-not-claimed-by-reverse"
+    },
+    "PR35": {
+      "evidence_status": "confirmed-current-r1-r6",
+      "production_consumption_status": "authorized-not-claimed-by-reverse"
+    },
+    "PR36": {
+      "evidence_status": "confirmed-current-r1-r6",
+      "production_consumption_status": "authorized-not-claimed-by-reverse"
+    },
+    "PR37": {
+      "evidence_status": "confirmed-current-r1-r6",
+      "production_consumption_status": "authorized-not-claimed-by-reverse"
+    },
+    "PR38": {
+      "evidence_status": "confirmed-current-r1-r6",
+      "production_consumption_status": "authorized-not-claimed-by-reverse"
+    },
+    "PR39": {
+      "evidence_status": "confirmed-current-r7",
+      "production_consumption_status": "authorized-not-claimed-by-reverse"
+    },
+    "PR40": {
+      "evidence_status": "confirmed-degraded",
+      "production_consumption_status": "authorized-not-claimed-by-reverse"
+    }
+  },
+  "confirmed_case_count": 40,
+  "habahiro_exact_parity_gate": "open-not-claimed",
+  "habahiro_degraded_delivery_gate": "closed",
+  "unknown_fields": [],
+  "blocking_findings": []
+}

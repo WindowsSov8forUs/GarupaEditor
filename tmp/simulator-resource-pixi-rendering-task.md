@@ -645,6 +645,12 @@
 - final R7 profile为9个scenario逐项记录runtime或current-static disposition；21个remaining PR均`confirmed-current-r7`，`unknown_fields=[]`、`blocking_findings=[]`。closure将PR01–PR40证据门全部关闭，同时明确`production_consumption_claimed=false`；exact HAB继续open-not-claimed，既有degraded轨不变。
 - 自本记录起允许进入一次Garupa冻结；冻结source/copy/index验证通过前仍不得修改production/tests/package scripts。
 
+### 1.74 2026-08-03 final R7一次冻结证据包
+
+- Garupa冻结包由826增至850 entries，全部source commit重锁`ab5cc366a4a03d24a215e379849824e5ddf5f72f`；新增24项包含plan/130-target inventory、七条匿名trace、current static/profile/closure及builders/verifiers。
+- `verify.mjs`新增R7逐字段门：625,192 events、3,480 frames、51 owners、21 setters、21 remaining PR、40 evidence-confirmed cases、Advanced 42/120、threshold shader semantic、unknown/blocker=0，并继续校验Reverse commit/source working/copy/index四方字节。
+- 未复制APK、UnityFS、shader/resource binary、7张实体PNG、Bestdori bytes、IDA或`runtime/tools/`；exact HAB继续open-not-claimed。source verifier通过，暂存后必须再通过`--index`才解除production硬门。
+
 ## 2. 固定范围
 
 ### 2.1 纳入范围

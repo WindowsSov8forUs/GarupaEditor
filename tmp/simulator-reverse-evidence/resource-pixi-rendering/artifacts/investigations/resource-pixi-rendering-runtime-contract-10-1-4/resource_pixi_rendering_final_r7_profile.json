@@ -1,0 +1,724 @@
+{
+  "schema_version": 1,
+  "status": "confirmed-current-final-r7-completion-profile",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "version_name": "10.1.4",
+    "version_code": 230,
+    "abi": "arm64-v8a",
+    "base_apk_bytes": 138157634,
+    "base_apk_sha256": "D3A6005BB1F7341E39016521390DCEB987E56A0E5D16B6BA73568837A3026413",
+    "arm64_split_apk_bytes": 47130776,
+    "arm64_split_apk_sha256": "3D846C0AA18CCBA4BFC48B5E6B82C2EED92A999D653057F0766198C1AEA1D9DD",
+    "libil2cpp_sha256": "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F",
+    "global_metadata_sha256": "298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F",
+    "dump_cs_sha256": "4AC4ACC5981D0010B3D6A69482C37C1175339458246BC4A5878CF30F694E884B",
+    "script_json_sha256": "826C592717ED07974F8DCD435AF92B8DCE7A6406E0706AC43A85102FE8567D91"
+  },
+  "source": {
+    "plan_sha256": "03A3EB769D755215A66A6005A64C78084E700B0B5FF3D25B6AF6254168A3412A",
+    "targets_sha256": "5A3925F23E3140066EFA4D6E92F88C17CB9504A9D085BFAAA43D5414CB092875",
+    "static_profile_sha256": "E589CE875C9B14F87400E28D216FB3DA912E5337957F7D4E8917BB157D96A7FE",
+    "traces": {
+      "note_production": {
+        "path": "runtime/ordinary-rendering-final-r7-note-production.trace.json.gz",
+        "sha256": "DDD8998B5BF4D3398513545ABC2E8F17441D5E8F3503AC67710F63C5D725C7BC",
+        "event_count": 279049,
+        "relative_frame_count": 606
+      },
+      "note_second": {
+        "path": "runtime/ordinary-rendering-final-r7-note-second-pass.trace.json.gz",
+        "sha256": "0A126914A50D3CB4A2BDFF7F01D14563026424D7E96D6C58C33B883FB22130E1",
+        "event_count": 211517,
+        "relative_frame_count": 571
+      },
+      "field": {
+        "path": "runtime/ordinary-rendering-final-r7-field-earliest.trace.json.gz",
+        "sha256": "699DA6499101A0BDE78488F935A1DD230D0B0608AC79EDF1538625D503DD430B",
+        "event_count": 4002,
+        "relative_frame_count": 25
+      },
+      "hud_core_demo": {
+        "path": "runtime/ordinary-rendering-final-r7-hud-core.trace.json.gz",
+        "sha256": "85647CCBB0F9D89E0D028F6C1832624F3B4321BE31D03C453D5F5F831C740A73",
+        "event_count": 17044,
+        "relative_frame_count": 568
+      },
+      "hud_overlay_demo": {
+        "path": "runtime/ordinary-rendering-final-r7-hud-overlay.trace.json.gz",
+        "sha256": "B6C0946353CC4DAC6D618FFF939787131A4CEBCAFF7D4AB6433B3CF67754E9BD",
+        "event_count": 15440,
+        "relative_frame_count": 570
+      },
+      "hud_core_auto": {
+        "path": "runtime/ordinary-rendering-final-r7-hud-core-auto.trace.json.gz",
+        "sha256": "C2601C00364356A0B7D697E381F3177765B9A966466112393C6E6DDCD5E23800",
+        "event_count": 82748,
+        "relative_frame_count": 572
+      },
+      "hud_overlay_auto": {
+        "path": "runtime/ordinary-rendering-final-r7-hud-overlay-auto.trace.json.gz",
+        "sha256": "8B2C975EF0D38A3D8FB3FF8CD87EB3DA74D4A3800E0E05B73F20D94D0D4B72A5",
+        "event_count": 15392,
+        "relative_frame_count": 568
+      }
+    }
+  },
+  "coverage": {
+    "event_count": 625192,
+    "aggregate_relative_frame_count": 3480,
+    "observed_owner_target_count": 51,
+    "observed_setter_target_count": 21,
+    "owner_event_counts": {
+      "R7O-000": 2,
+      "R7O-001": 2,
+      "R7O-003": 3148,
+      "R7O-004": 468,
+      "R7O-005": 5684,
+      "R7O-008": 24530,
+      "R7O-011": 33645,
+      "R7O-016": 2,
+      "R7O-017": 2280,
+      "R7O-018": 7681,
+      "R7O-021": 568,
+      "R7O-023": 23114,
+      "R7O-027": 1716,
+      "R7O-028": 572,
+      "R7O-032": 10,
+      "R7O-034": 2,
+      "R7O-035": 18,
+      "R7O-040": 10,
+      "R7O-042": 10,
+      "R7O-043": 4,
+      "R7O-044": 4,
+      "R7O-046": 4552,
+      "R7O-047": 2000,
+      "R7O-050": 12,
+      "R7O-055": 1138,
+      "R7O-057": 47659,
+      "R7O-067": 162,
+      "R7O-068": 4312,
+      "R7O-069": 2156,
+      "R7O-070": 5214,
+      "R7O-073": 67404,
+      "R7O-083": 376,
+      "R7O-086": 24442,
+      "R7O-087": 3074,
+      "R7O-088": 8250,
+      "R7O-089": 1210,
+      "R7O-099": 10765,
+      "R7O-101": 6468,
+      "R7O-102": 70785,
+      "R7O-110": 352,
+      "R7O-115": 175,
+      "R7O-116": 20244,
+      "R7O-117": 704,
+      "R7O-118": 8686,
+      "R7O-120": 1427,
+      "R7O-121": 173351,
+      "R7O-122": 5,
+      "R7O-125": 475,
+      "R7O-127": 944,
+      "R7O-128": 36920,
+      "R7O-129": 18460
+    },
+    "owner_enter_counts": {
+      "R7O-000": 1,
+      "R7O-001": 1,
+      "R7O-003": 1,
+      "R7O-004": 1,
+      "R7O-005": 812,
+      "R7O-006": 812,
+      "R7O-008": 812,
+      "R7O-011": 20080,
+      "R7O-012": 568,
+      "R7O-016": 2,
+      "R7O-017": 12758,
+      "R7O-018": 1140,
+      "R7O-021": 568,
+      "R7O-023": 1140,
+      "R7O-027": 572,
+      "R7O-028": 1140,
+      "R7O-029": 12758,
+      "R7O-032": 10,
+      "R7O-033": 12,
+      "R7O-034": 13106,
+      "R7O-035": 4,
+      "R7O-036": 4,
+      "R7O-037": 10,
+      "R7O-038": 12,
+      "R7O-040": 2,
+      "R7O-042": 10,
+      "R7O-043": 4,
+      "R7O-044": 4,
+      "R7O-045": 14,
+      "R7O-046": 2276,
+      "R7O-047": 250,
+      "R7O-048": 10,
+      "R7O-049": 12,
+      "R7O-050": 12,
+      "R7O-051": 10,
+      "R7O-052": 10,
+      "R7O-053": 12,
+      "R7O-055": 1138,
+      "R7O-057": 3480,
+      "R7O-067": 54,
+      "R7O-068": 2156,
+      "R7O-069": 2210,
+      "R7O-070": 2607,
+      "R7O-071": 87194,
+      "R7O-073": 11475,
+      "R7O-074": 2153,
+      "R7O-075": 15601,
+      "R7O-076": 3698,
+      "R7O-079": 10328,
+      "R7O-080": 10680,
+      "R7O-081": 3702,
+      "R7O-082": 54,
+      "R7O-083": 376,
+      "R7O-084": 18,
+      "R7O-085": 18,
+      "R7O-086": 1549,
+      "R7O-087": 1542,
+      "R7O-088": 4141,
+      "R7O-089": 605,
+      "R7O-091": 4474,
+      "R7O-099": 2153,
+      "R7O-101": 2156,
+      "R7O-102": 87192,
+      "R7O-104": 2153,
+      "R7O-109": 322,
+      "R7O-110": 352,
+      "R7O-111": 320,
+      "R7O-112": 352,
+      "R7O-115": 175,
+      "R7O-116": 6750,
+      "R7O-117": 176,
+      "R7O-118": 145,
+      "R7O-119": 5446,
+      "R7O-120": 4141,
+      "R7O-121": 5593,
+      "R7O-122": 56,
+      "R7O-125": 475,
+      "R7O-126": 18465,
+      "R7O-127": 948,
+      "R7O-128": 18486,
+      "R7O-129": 18486
+    },
+    "owner_setter_counts": {
+      "R7O-000/R7S-G10": 1,
+      "R7O-000/RPHU-018": 1,
+      "R7O-001/R7S-G10": 2,
+      "R7O-003/R7S-G09": 14,
+      "R7O-003/R7S-G10": 3134,
+      "R7O-004/R7S-G09": 221,
+      "R7O-004/R7S-G10": 221,
+      "R7O-004/RPHU-018": 13,
+      "R7O-004/RPHU-020": 13,
+      "R7O-005/RPHU-006": 5684,
+      "R7O-008/R7S-G09": 8188,
+      "R7O-008/RPHU-002": 3282,
+      "R7O-008/RPHU-005": 812,
+      "R7O-008/RPHU-007": 3282,
+      "R7O-008/RPHU-008": 3282,
+      "R7O-008/RPHU-018": 5684,
+      "R7O-011/R7S-G09": 19465,
+      "R7O-011/RPHU-005": 14180,
+      "R7O-016/RPHU-005": 2,
+      "R7O-017/RPHU-005": 1140,
+      "R7O-017/RPHU-020": 1140,
+      "R7O-018/R7S-G09": 496,
+      "R7O-018/RPHU-002": 248,
+      "R7O-018/RPHU-004": 247,
+      "R7O-018/RPHU-005": 5054,
+      "R7O-018/RPHU-007": 248,
+      "R7O-018/RPHU-008": 248,
+      "R7O-018/RPHU-018": 1140,
+      "R7O-021/RPHU-018": 568,
+      "R7O-023/R7S-G09": 6500,
+      "R7O-023/RPHU-002": 3250,
+      "R7O-023/RPHU-004": 8,
+      "R7O-023/RPHU-006": 8,
+      "R7O-023/RPHU-007": 3250,
+      "R7O-023/RPHU-008": 3250,
+      "R7O-023/RPHU-018": 5708,
+      "R7O-023/RPHU-020": 1140,
+      "R7O-027/RPHU-002": 572,
+      "R7O-027/RPHU-005": 572,
+      "R7O-027/RPHU-017": 572,
+      "R7O-028/RPHU-001": 572,
+      "R7O-032/RPHU-018": 10,
+      "R7O-034/RPHU-005": 2,
+      "R7O-035/RPHU-002": 10,
+      "R7O-035/RPHU-017": 8,
+      "R7O-040/RPHU-002": 4,
+      "R7O-040/RPHU-004": 2,
+      "R7O-040/RPHU-011": 2,
+      "R7O-040/RPHU-018": 2,
+      "R7O-042/RPHU-018": 10,
+      "R7O-043/RPHU-004": 4,
+      "R7O-044/RPHU-001": 4,
+      "R7O-046/RPHU-005": 4552,
+      "R7O-047/R7S-G09": 500,
+      "R7O-047/RPHU-002": 250,
+      "R7O-047/RPHU-004": 250,
+      "R7O-047/RPHU-005": 500,
+      "R7O-047/RPHU-007": 250,
+      "R7O-047/RPHU-008": 250,
+      "R7O-050/RPHU-011": 12,
+      "R7O-055/RPHU-018": 1138,
+      "R7O-057/R7S-G09": 13438,
+      "R7O-057/RPHU-002": 6719,
+      "R7O-057/RPHU-004": 16,
+      "R7O-057/RPHU-006": 16,
+      "R7O-057/RPHU-007": 6719,
+      "R7O-057/RPHU-008": 6719,
+      "R7O-057/RPHU-018": 11696,
+      "R7O-057/RPHU-020": 2336,
+      "R7O-067/R7S-G08": 54,
+      "R7O-067/R7S-G10": 54,
+      "R7O-067/RPHU-018": 54,
+      "R7O-068/R7S-G09": 2156,
+      "R7O-068/RPHU-018": 2156,
+      "R7O-069/RPHU-018": 2156,
+      "R7O-070/R7S-G08": 2607,
+      "R7O-070/R7S-G10": 2607,
+      "R7O-073/R7S-G08": 39435,
+      "R7O-073/R7S-G10": 27969,
+      "R7O-083/RPHU-013": 376,
+      "R7O-086/R7S-G08": 12024,
+      "R7O-086/R7S-G10": 12024,
+      "R7O-086/RPHU-022": 394,
+      "R7O-087/R7S-G09": 1537,
+      "R7O-087/RPHU-018": 1537,
+      "R7O-088/R7S-G08": 4125,
+      "R7O-088/R7S-G10": 4125,
+      "R7O-089/R7S-G08": 605,
+      "R7O-089/R7S-G10": 605,
+      "R7O-099/R7S-G01": 2153,
+      "R7O-099/R7S-G03": 2153,
+      "R7O-099/R7S-G05": 2153,
+      "R7O-099/R7S-G08": 2153,
+      "R7O-099/R7S-G10": 2153,
+      "R7O-101/R7S-G01": 2156,
+      "R7O-101/R7S-G08": 2156,
+      "R7O-101/R7S-G10": 2156,
+      "R7O-102/R7S-G01": 70785,
+      "R7O-110/R7S-G08": 352,
+      "R7O-115/RPHU-018": 175,
+      "R7O-116/R7S-G06": 13496,
+      "R7O-116/R7S-G07": 6748,
+      "R7O-117/R7S-G05": 176,
+      "R7O-117/R7S-G06": 352,
+      "R7O-117/R7S-G07": 176,
+      "R7O-118/R7S-G08": 2099,
+      "R7O-118/R7S-G10": 2099,
+      "R7O-118/RPHU-018": 4488,
+      "R7O-120/R7S-G03": 145,
+      "R7O-120/R7S-G08": 145,
+      "R7O-120/R7S-G09": 290,
+      "R7O-120/R7S-G10": 290,
+      "R7O-120/RPHU-011": 122,
+      "R7O-120/RPHU-018": 290,
+      "R7O-120/RPHU-020": 145,
+      "R7O-121/R7S-G03": 1218,
+      "R7O-121/R7S-G08": 80063,
+      "R7O-121/R7S-G09": 28498,
+      "R7O-121/R7S-G10": 63027,
+      "R7O-121/RPHU-011": 80,
+      "R7O-121/RPHU-018": 306,
+      "R7O-121/RPHU-020": 159,
+      "R7O-122/R7S-G03": 1,
+      "R7O-122/R7S-G10": 2,
+      "R7O-122/RPHU-011": 1,
+      "R7O-122/RPHU-020": 1,
+      "R7O-125/RPHU-018": 475,
+      "R7O-127/R7S-G05": 944,
+      "R7O-128/R7S-G06": 36920,
+      "R7O-129/R7S-G07": 18460
+    }
+  },
+  "scenario_dispositions": {
+    "R7-NOTE-PRODUCTION": {
+      "disposition": "confirmed-runtime+current-static",
+      "sources": [
+        "note_production"
+      ]
+    },
+    "R7-NOTE-SECOND-PASS": {
+      "disposition": "confirmed-runtime+current-static",
+      "sources": [
+        "note_second"
+      ]
+    },
+    "R7-FIELD-EARLIEST": {
+      "disposition": "confirmed-runtime+current-static",
+      "sources": [
+        "field"
+      ]
+    },
+    "R7-HUD-CORE": {
+      "disposition": "confirmed-runtime-demo+auto",
+      "sources": [
+        "hud_core_demo",
+        "hud_core_auto"
+      ]
+    },
+    "R7-HUD-GUARD": {
+      "disposition": "confirmed-current-static-method+scene+clip",
+      "sources": [
+        "static_profile"
+      ],
+      "runtime_note": "locked deck has no eligible Guard route; no runtime claim added"
+    },
+    "R7-HUD-NEVER-DIE": {
+      "disposition": "confirmed-current-static-method+scene+clip",
+      "sources": [
+        "static_profile"
+      ],
+      "runtime_note": "locked deck has no eligible NeverDie route; no runtime claim added"
+    },
+    "R7-HUD-JUDGE-CRESCENDO": {
+      "disposition": "confirmed-current-static-method+scene+branch-table",
+      "sources": [
+        "static_profile"
+      ],
+      "runtime_note": "runtime owner absent; exact current method/asset route used"
+    },
+    "R7-HUD-HEAL-SCORE-FEVER": {
+      "disposition": "confirmed-runtime+current-static",
+      "sources": [
+        "hud_overlay_demo",
+        "hud_overlay_auto",
+        "static_profile"
+      ]
+    },
+    "R7-PORTABLE-STATIC": {
+      "disposition": "confirmed-current-static-portable",
+      "sources": [
+        "static_profile"
+      ]
+    }
+  },
+  "remaining_pr_cases": {
+    "PR06": {
+      "status": "confirmed-current-r7",
+      "basis": [
+        "current-static-portable",
+        "runtime-owner-setter"
+      ]
+    },
+    "PR08": {
+      "status": "confirmed-current-r7",
+      "basis": [
+        "current-static-portable",
+        "runtime-owner-setter"
+      ]
+    },
+    "PR09": {
+      "status": "confirmed-current-r7",
+      "basis": [
+        "current-static-portable",
+        "runtime-owner-setter"
+      ]
+    },
+    "PR11": {
+      "status": "confirmed-current-r7",
+      "basis": [
+        "current-static-portable",
+        "current-static-method-asset"
+      ]
+    },
+    "PR14": {
+      "status": "confirmed-current-r7",
+      "basis": [
+        "current-static-portable",
+        "current-static-method-asset"
+      ]
+    },
+    "PR15": {
+      "status": "confirmed-current-r7",
+      "basis": [
+        "current-static-portable",
+        "runtime-owner-setter"
+      ]
+    },
+    "PR18": {
+      "status": "confirmed-current-r7",
+      "basis": [
+        "current-static-portable",
+        "runtime-owner-setter"
+      ]
+    },
+    "PR20": {
+      "status": "confirmed-current-r7",
+      "basis": [
+        "current-static-portable",
+        "runtime-owner-setter"
+      ]
+    },
+    "PR21": {
+      "status": "confirmed-current-r7",
+      "basis": [
+        "current-static-portable",
+        "runtime-owner-setter"
+      ]
+    },
+    "PR22": {
+      "status": "confirmed-current-r7",
+      "basis": [
+        "current-static-portable",
+        "runtime-owner-setter"
+      ]
+    },
+    "PR24": {
+      "status": "confirmed-current-r7",
+      "basis": [
+        "current-static-portable",
+        "runtime-owner-setter"
+      ]
+    },
+    "PR25": {
+      "status": "confirmed-current-r7",
+      "basis": [
+        "current-static-portable",
+        "runtime-owner-setter"
+      ]
+    },
+    "PR26": {
+      "status": "confirmed-current-r7",
+      "basis": [
+        "current-static-portable",
+        "runtime-owner-setter"
+      ]
+    },
+    "PR27": {
+      "status": "confirmed-current-r7",
+      "basis": [
+        "current-static-portable",
+        "runtime-owner-setter"
+      ]
+    },
+    "PR28": {
+      "status": "confirmed-current-r7",
+      "basis": [
+        "current-static-portable",
+        "current-static-method-asset"
+      ]
+    },
+    "PR29": {
+      "status": "confirmed-current-r7",
+      "basis": [
+        "current-static-portable",
+        "runtime-owner-setter"
+      ]
+    },
+    "PR30": {
+      "status": "confirmed-current-r7",
+      "basis": [
+        "current-static-portable",
+        "current-static-method-asset"
+      ]
+    },
+    "PR31": {
+      "status": "confirmed-current-r7",
+      "basis": [
+        "current-static-portable",
+        "current-static-method-asset"
+      ]
+    },
+    "PR32": {
+      "status": "confirmed-current-r7",
+      "basis": [
+        "current-static-portable",
+        "current-static-method-asset"
+      ]
+    },
+    "PR34": {
+      "status": "confirmed-current-r7",
+      "basis": [
+        "current-static-portable",
+        "current-static-method-asset"
+      ]
+    },
+    "PR39": {
+      "status": "confirmed-current-r7",
+      "basis": [
+        "current-static-portable",
+        "runtime-owner-setter"
+      ]
+    }
+  },
+  "authorization": {
+    "skill_root": true,
+    "flick_top_animation": true,
+    "non_normal_after_icon": true,
+    "multiple_add_after_side_visual": true,
+    "advanced_mesh": true,
+    "threshold_shader_mapping": true,
+    "all_family_pool_reuse": true,
+    "field_setup": true,
+    "field_pause_gameover": true,
+    "combo_ap_complete": true,
+    "score_digits_complete": true,
+    "add_score_coroutine": true,
+    "judge_timing": true,
+    "score_up_type_5": true,
+    "life_warning": true,
+    "guard": true,
+    "never_die": true,
+    "life_later_wins": true,
+    "judge_skill": true,
+    "fever_gameover_order": true,
+    "ordinary_production_chart": true,
+    "habahiro_exact": false,
+    "habahiro_degraded": true
+  },
+  "portable_static": {
+    "advanced_mesh": {
+      "vertex_count": 42,
+      "triangle_index_count": 120,
+      "uv_pair_count": 21,
+      "section_count": 20,
+      "uv_v_step": 0.05,
+      "allocation_immediates": {
+        "vertices": "0x2A",
+        "indices": "0x78"
+      },
+      "mapping": "same semantic strip producer with 20 sections; current ARM64 exact"
+    },
+    "shader": {
+      "source_space": "bottom-left fragment coordinate",
+      "alpha_keep_condition": "threshold >= fragment_y",
+      "top_left_visible_condition": "pixel_y >= viewport_height - threshold",
+      "rgb": "sample.rgb * vertex_color.rgb",
+      "alpha": "LOD200 recovered current polynomial multiplied by threshold select",
+      "mapping": "portable-equivalent custom Pixi shader; no backend ticker or CPU default clipping"
+    },
+    "hud": {
+      "score": {
+        "max_digits": 8,
+        "leading_color": {
+          "rgba": [
+            0.7450980544090271,
+            0.7450980544090271,
+            0.7450980544090271,
+            1.0
+          ],
+          "rgba8": [
+            190,
+            190,
+            190,
+            255
+          ]
+        },
+        "significant_color": {
+          "rgba": [
+            1.0,
+            0.23137255012989044,
+            0.4470588266849518,
+            1.0
+          ],
+          "rgba8": [
+            255,
+            59,
+            114,
+            255
+          ]
+        },
+        "gauge_source": "Score.UpdateScoreGauge current owner"
+      },
+      "add_score": {
+        "pool_size": 4,
+        "selection": "round-robin oldest/ready owner",
+        "depth_cycle": 8,
+        "start_alpha": 0.6,
+        "start_local_y": -50.0,
+        "phase_seconds": 0.14000000059604645,
+        "phases": [
+          "alpha=0.2+0.8*progress,y+=8",
+          "alpha=1,y+=1",
+          "alpha=1-progress,y+=1"
+        ]
+      },
+      "result_judge": {
+        "result_seconds": 1.0,
+        "judge_timing_keys": [
+          "judge_fast",
+          "judge_slow"
+        ],
+        "none_and_auto_gate": "current owner branch"
+      },
+      "score_up_type_5": {
+        "address": "0x32E2D60",
+        "integer_input": "truncate(currentRateUpValue * 10.0)",
+        "set_number": {
+          "address": "0x33750D4",
+          "mode": 0,
+          "interval": 0.0,
+          "should_add_plus_sign": false
+        },
+        "set_depth": {
+          "address": "0x3375058",
+          "depth": 55
+        },
+        "digit_layout": {
+          "order": "least-significant-first",
+          "align": "center",
+          "digit_size": [
+            18,
+            22
+          ],
+          "padding": -3.0,
+          "step": 15.0
+        },
+        "decimal_layout": {
+          "period_local_x": 16.100000381469727,
+          "fractional_digit_local_x": "period_local_x + 4.0",
+          "resolved_fractional_digit_local_x": 20.100000381469727,
+          "fractional_digit_y": "preserve current local Y",
+          "set_position_address": "0x3B054C0"
+        },
+        "full_digit_and_decimal_layout_recovered": true
+      },
+      "life": {
+        "primary": "min(currentLife/1000,1)",
+        "secondary": "max(currentLife/1000-1,0)",
+        "danger_threshold": 0.2,
+        "warning_threshold": 0.25,
+        "warning_condition": "primary <= 0.25 and not damageGuardPlaying",
+        "display": "current/max/upper owner values"
+      },
+      "life_skill": {
+        "dispatch_order": [
+          "never_die",
+          "heal",
+          "damage_guard"
+        ],
+        "guard": {
+          "state": "DamageGuard",
+          "sprite": "effect_health_guard_outline",
+          "icon_alpha": 0.0
+        },
+        "never_die": {
+          "state": "DamageGuard",
+          "sprite": "effect_health_guts_outline",
+          "icon_alpha": 0.0
+        },
+        "heal": {
+          "state": "LifeHealGauge",
+          "sprite": "UI_effect_life_plus_gauge",
+          "icon": "UI_effect_life_plus_icon"
+        },
+        "finish": "animator disabled, object inactive, playing flag false, refresh warning"
+      }
+    }
+  },
+  "limits": [
+    "Exact HABAHIRO remains open-not-claimed and is not changed by R7.",
+    "Guard/NeverDie/Judge/Crescendo routes are authorized from exact current method, scene, atlas and clip evidence; no synthetic runtime event was injected.",
+    "Unity GPU binary parity remains excluded; threshold uses the current decoded shader semantic as an explicit Pixi portable equivalent."
+  ],
+  "unknown_fields": [],
+  "blocking_findings": []
+}

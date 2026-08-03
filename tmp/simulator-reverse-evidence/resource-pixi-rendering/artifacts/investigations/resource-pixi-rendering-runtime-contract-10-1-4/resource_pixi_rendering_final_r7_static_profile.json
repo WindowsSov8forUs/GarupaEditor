@@ -1,0 +1,1608 @@
+{
+  "schema_version": 1,
+  "status": "confirmed-current-final-r7-static-portable-profile",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "version_name": "10.1.4",
+    "version_code": 230,
+    "abi": "arm64-v8a",
+    "base_apk_bytes": 138157634,
+    "base_apk_sha256": "D3A6005BB1F7341E39016521390DCEB987E56A0E5D16B6BA73568837A3026413",
+    "arm64_split_apk_bytes": 47130776,
+    "arm64_split_apk_sha256": "3D846C0AA18CCBA4BFC48B5E6B82C2EED92A999D653057F0766198C1AEA1D9DD",
+    "libil2cpp_sha256": "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F",
+    "global_metadata_sha256": "298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F",
+    "dump_cs_sha256": "4AC4ACC5981D0010B3D6A69482C37C1175339458246BC4A5878CF30F694E884B",
+    "script_json_sha256": "826C592717ED07974F8DCD435AF92B8DCE7A6406E0706AC43A85102FE8567D91"
+  },
+  "source": {
+    "targets_sha256": "5A3925F23E3140066EFA4D6E92F88C17CB9504A9D085BFAAA43D5414CB092875",
+    "static_contract_sha256": "213F64E0ACBD1D8B6E0773DD6107A392CF3BA70DD0D575269DE2661CE5163389",
+    "instruction_migration_sha256": "E0FB0346291E9E14ADDC77F5F95479ED0CE84145E6C7F24F969C03835265B527",
+    "resource_contract_sha256": "F389AB0950156FAAA6B1B6407BA4D47AD66C9472DB9631D604460E39BC9F15A3",
+    "hud_assets_sha256": "0D36B7FD2E50EEE9F4528CB8D508D972EA2E3314863DD47CFE3617B314C5A05D",
+    "skill_animations_sha256": "527F1A49EFA9663CD7009BA7FA525776C0C8BF00733772AA09E7626429A4126E",
+    "note_animations_sha256": "3D72AEEC898E6346F21664BDFB61271CC6E8FDE2863BC9A6B78A1D2ADCCFF9AB",
+    "score_up_sha256": "62937484F0BBDF1FC4CBFBBCC5598407852A177AF5EDDC6C1A4A262B354B5058",
+    "libil2cpp_sha256": "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F"
+  },
+  "methods": {
+    "advanced_mesh": [
+      {
+        "owner": "NoteMeshAdvanced",
+        "method": "InitVertices",
+        "rva": "0x30E34A8",
+        "end_rva": "0x30E3578",
+        "arm64_sha256": "186F2EA44382CFC8C17B2460E91EDECFC858CCFAB318C6A680B8F9BB21DE6B9D",
+        "arm64_tsv": "arm64/030e34a8__NoteMeshAdvanced__InitVertices.arm64.tsv",
+        "arm64_tsv_sha256": "7C06A3B0AE0EE42FC9CB21B8D7A3878C427283A92F537AE470B8A15E5308A2F3"
+      },
+      {
+        "owner": "NoteMeshAdvanced",
+        "method": "initMesh",
+        "rva": "0x30E2584",
+        "end_rva": "0x30E34A8",
+        "arm64_sha256": "CB27F75B858937066331BD36A9671648DDB806C3279ED1E5D49FCFA971083817",
+        "arm64_tsv": "arm64/030e2584__NoteMeshAdvanced__initMesh.arm64.tsv",
+        "arm64_tsv_sha256": "8EFCA111363DE8E8024DD1809661F8A8E03A8F856A4D5822C671A384F7446C4A"
+      },
+      {
+        "owner": "NoteMeshAdvanced",
+        "method": "OnUpdate",
+        "rva": "0x30E3578",
+        "end_rva": "0x30E43F8",
+        "arm64_sha256": "741DEDF6E596999FEFED6619724D8244D3C25ABC0944928D854A6DB5E9212980",
+        "arm64_tsv": "arm64/030e3578__NoteMeshAdvanced__OnUpdate.arm64.tsv",
+        "arm64_tsv_sha256": "502AB72DB22DE481B611A73AC29DE5075189E2D2A8BA20A3CD43EEDCEB4DE260"
+      }
+    ],
+    "threshold": [
+      {
+        "owner": "NoteMesh",
+        "method": "Activate",
+        "rva": "0x30E16B8",
+        "end_rva": "0x30E1850",
+        "arm64_sha256": "364E5DD587F2790F083AD9F670C87E781A7F23FDF365D70BD13DA37DE0B38C56",
+        "arm64_tsv": "arm64/030e16b8__NoteMesh__Activate.arm64.tsv",
+        "arm64_tsv_sha256": "D89A36E35B48D32B748AED01EAA98F5454F6701995D9D748E3789F24FE309416"
+      },
+      {
+        "owner": "NoteMesh",
+        "method": "SetMaterial",
+        "rva": "0x30E15CC",
+        "end_rva": "0x30E15E8",
+        "arm64_sha256": "608E3A9189098C1FBF70B36666E8867AF2E0E72B6179F741520A6E7D35BF6414",
+        "arm64_tsv": "arm64/030e15cc__NoteMesh__SetMaterial.arm64.tsv",
+        "arm64_tsv_sha256": "3384579264365B15AE3ADA0E9D082F100555BCDB9599809775FBFDE9E56E483D"
+      }
+    ],
+    "score_combo": [
+      {
+        "owner": "Score",
+        "method": "UpdateView",
+        "rva": "0x322A234",
+        "end_rva": "0x322A248",
+        "arm64_sha256": "7185DB77B94EF8F96760056785205998CDD5187A0987806545385E1FF5472EB3",
+        "arm64_tsv": "arm64/0322a234__Score__UpdateView.arm64.tsv",
+        "arm64_tsv_sha256": "830758D5EF3D801388FA89E9A5ADEF41F74D3578F05F6FC4A7B717330E11A06B"
+      },
+      {
+        "owner": "Score",
+        "method": "UpdateScoreGauge",
+        "rva": "0x322A360",
+        "end_rva": "0x322A490",
+        "arm64_sha256": "6CB619CE379C97E828247691ECDF04103CF3A3053DA28042FDBB9DCECEFD9EBA",
+        "arm64_tsv": "arm64/0322a360__Score__UpdateScoreGauge.arm64.tsv",
+        "arm64_tsv_sha256": "0FE520AAE2FB48F32C07203978A95D8714248A379AA8EFCECA12CA068D0BB21A"
+      },
+      {
+        "owner": "Combo",
+        "method": "ExecUpdate",
+        "rva": "0x396CE54",
+        "end_rva": "0x396CE90",
+        "arm64_sha256": "2580F96F85838BCE7D2CAC87760D6A4E2274C1A0574FA1D8BC87FB6E8F90C8D4",
+        "arm64_tsv": "arm64/0396ce54__Combo__ExecUpdate.arm64.tsv",
+        "arm64_tsv_sha256": "E709A3BCAF1E611784A9990324014EDFAF848F5565259586FB4344BEF71E224E"
+      },
+      {
+        "owner": "ComboNumber",
+        "method": "Show",
+        "rva": "0x396CCEC",
+        "end_rva": "0x396CDA8",
+        "arm64_sha256": "A28D7CB622FDB8269ED2C1183340F1695D2BEAC116B30C04B575AB27BFB58A24",
+        "arm64_tsv": "arm64/0396ccec__ComboNumber__Show.arm64.tsv",
+        "arm64_tsv_sha256": "45514B7434E5CB5818EC464919E032CD1EA6F0498560903C480044EACC6CAC9D"
+      },
+      {
+        "owner": "ComboNumber",
+        "method": "Hide",
+        "rva": "0x396CBF8",
+        "end_rva": "0x396CC1C",
+        "arm64_sha256": "06EB7DED4EE6C89A663DC35DE2CBBF6222FC0EA16A80235232632F5FDC372C28",
+        "arm64_tsv": "arm64/0396cbf8__ComboNumber__Hide.arm64.tsv",
+        "arm64_tsv_sha256": "C60739EC1A465C08B0B761EF77D3E649F1AF6B1DEECA91D4A4F402A90981B1C9"
+      },
+      {
+        "owner": "AllPerfectStatusAnimation",
+        "method": "ExecUpdate",
+        "rva": "0x396CC88",
+        "end_rva": "0x396CCEC",
+        "arm64_sha256": "D1F5BD7C0EDBFDD54DA39E6A384A7A3115466C30B2C1AD0E4E6428AC8B2FFB69",
+        "arm64_tsv": "arm64/0396cc88__AllPerfectStatusAnimation__ExecUpdate.arm64.tsv",
+        "arm64_tsv_sha256": "A742390635CBED04074A3ABDE055280E49E1798FE9073C136AFCF26BB2CE9E4D"
+      }
+    ],
+    "add_score": [
+      {
+        "owner": "AddScoreManager",
+        "method": "Play",
+        "rva": "0x3879E3C",
+        "end_rva": "0x3879EB8",
+        "arm64_sha256": "A86B5E4AA9E93810ACDAEE976A2E497DEA5460128B2D754A794021575E7387C4",
+        "arm64_tsv": "arm64/03879e3c__AddScoreManager__Play.arm64.tsv",
+        "arm64_tsv_sha256": "B384AD528B1C01408F09C275D049721A272AF9F7B7CC34EBBB2D6F87829714A8"
+      },
+      {
+        "owner": "AddScoreManager",
+        "method": "searchOldestAddScoreObject",
+        "rva": "0x3879EB8",
+        "end_rva": "0x3879F00",
+        "arm64_sha256": "DBC27A1DA04923AC98DE67BD9FC7B5FC2B8019AEDCE380261B81988625E00D07",
+        "arm64_tsv": "arm64/03879eb8__AddScoreManager__searchOldestAddScoreObject.arm64.tsv",
+        "arm64_tsv_sha256": "14B68D07ADC8342C612274467AAA1755A51896649B4CB24FA25E4AF092A0815D"
+      },
+      {
+        "owner": "AddScoreObject",
+        "method": "Play",
+        "rva": "0x3879F1C",
+        "end_rva": "0x387A088",
+        "arm64_sha256": "74D32A75FE7DD9779C5AAD59F6693753306CC3EBA084AFCE135A3CA24E1A60B3",
+        "arm64_tsv": "arm64/03879f1c__AddScoreObject__Play.arm64.tsv",
+        "arm64_tsv_sha256": "4921541E6BC14FC62791D18D85C04935A45CAE3CAE584B28473B61B84D4AF247"
+      },
+      {
+        "owner": "AddScoreObject.<playCoroutine>d__11",
+        "method": "MoveNext",
+        "rva": "0x387A260",
+        "end_rva": "0x387A564",
+        "arm64_sha256": "B81124D877064F12FE0D46976B59CDB4847231542E8CB27F0B8002A5C640CEBA",
+        "arm64_tsv": "arm64/0387a260__AddScoreObject_playCoroutine_d__11__MoveNext.arm64.tsv",
+        "arm64_tsv_sha256": "D2C8C6C82D7A7E5E775D96E782E7D5DB27E2FA3FEE8FA917BF9BA44E05023654"
+      }
+    ],
+    "result_judge": [
+      {
+        "owner": "CE.Result",
+        "method": "Show",
+        "rva": "0x32ABEAC",
+        "end_rva": "0x32AC010",
+        "arm64_sha256": "E8D7A5AACFEAE38F3E61F82B21C167672380D3ADC845E57C74B0A5276F6CE258",
+        "arm64_tsv": "arm64/032abeac__CE_Result__Show.arm64.tsv",
+        "arm64_tsv_sha256": "50E17DB7499DFA129AF8F48F3FA2852E7E32456C5D140A1929E22D3ABAA18497"
+      },
+      {
+        "owner": "CE.Result",
+        "method": "changeSprite",
+        "rva": "0x32AC010",
+        "end_rva": "0x32AC548",
+        "arm64_sha256": "47A245DC2A52402AD20B50F76D43B970440FC40EC939DB708431BD2700175BFA",
+        "arm64_tsv": "arm64/032ac010__CE_Result__changeSprite.arm64.tsv",
+        "arm64_tsv_sha256": "4C6C7219375A1BDE6CEDB9DBF6A41F6D51EB9878D0FEC2A708078BB88A7C507A"
+      },
+      {
+        "owner": "JudgeTimingController",
+        "method": "Show",
+        "rva": "0x3A6E09C",
+        "end_rva": "0x3A6E1DC",
+        "arm64_sha256": "F13EE694E2C4B3C41E98E0922FC904DBE3C850D8A37A70FD145B53DA00CEF845",
+        "arm64_tsv": "arm64/03a6e09c__JudgeTimingController__Show.arm64.tsv",
+        "arm64_tsv_sha256": "5B7CE617C1D294D2FEE366C56700326675D61D680D6CF360A7E92A08D46C3E4D"
+      }
+    ],
+    "life_skill": [
+      {
+        "owner": "InGameLifeGauge",
+        "method": "UpdateView",
+        "rva": "0x3A6E860",
+        "end_rva": "0x3A6E9E8",
+        "arm64_sha256": "1BF70575A5CB3FBD5857695F15B13683940DAA327DCD79025105E04DC2B5A816",
+        "arm64_tsv": "arm64/03a6e860__InGameLifeGauge__UpdateView.arm64.tsv",
+        "arm64_tsv_sha256": "2FEA9F97502C16DC7467DB6DF974DC1EB7454F92EE4CA2500B58FE4899C39D2A"
+      },
+      {
+        "owner": "InGameLifeGauge",
+        "method": "updateWarningGaugeBlink",
+        "rva": "0x3A6EAE0",
+        "end_rva": "0x3A6EBA4",
+        "arm64_sha256": "5F887C48B731C2C97CE61DBBCD418E36A48AFD14897C9E64E443CC6FB4E8EC57",
+        "arm64_tsv": "arm64/03a6eae0__InGameLifeGauge__updateWarningGaugeBlink.arm64.tsv",
+        "arm64_tsv_sha256": "676DD387BC0117965B0EBB758D19F26F6097C55168F94C61E40BC59E53377164"
+      },
+      {
+        "owner": "InGameLifeGauge",
+        "method": "onPlaySkill",
+        "rva": "0x3A6EFCC",
+        "end_rva": "0x3A6F244",
+        "arm64_sha256": "70F9723EB01059A95CB0B7DA967803B0DE55626F734EC148FE6D1574B38BF591",
+        "arm64_tsv": "arm64/03a6efcc__InGameLifeGauge__onPlaySkill.arm64.tsv",
+        "arm64_tsv_sha256": "1B926F78BCD11031F16EAC76F2D6007020C9F43A543A9E18202428CEC4BAB7E3"
+      },
+      {
+        "owner": "InGameLifeGauge",
+        "method": "onFinishSkill",
+        "rva": "0x3A6F244",
+        "end_rva": "0x3A6F248",
+        "arm64_sha256": "C0E9BF75DB37FBF8039E12C7C84B8AE35167D07FE0B9F55526239FEBCED0FF95",
+        "arm64_tsv": "arm64/03a6f244__InGameLifeGauge__onFinishSkill.arm64.tsv",
+        "arm64_tsv_sha256": "86AA508DC0A0B85C78E87C8062FB66668BE1D565762E9849071729A8FEFA17E5"
+      },
+      {
+        "owner": "InGameLifeGauge",
+        "method": "playSkillEffectDamageGuardAnimation",
+        "rva": "0x3A6ED74",
+        "end_rva": "0x3A6EEA0",
+        "arm64_sha256": "E81532434DB069AE98A0B708DD89A898A8BE2F4279E566404E073C5935C13FFE",
+        "arm64_tsv": "arm64/03a6ed74__InGameLifeGauge__playSkillEffectDamageGuardAnimation.arm64.tsv",
+        "arm64_tsv_sha256": "B4AD8465BAF853F9C7B2D64500672522DBEAD6794DEE3DF69E4A3027D2B758A3"
+      },
+      {
+        "owner": "InGameLifeGauge",
+        "method": "playSkillEffectNeverDieAnimation",
+        "rva": "0x3A6EEA0",
+        "end_rva": "0x3A6EFCC",
+        "arm64_sha256": "54D2BBF9DF4BBD71A019D1A89308F682C94A7072F582EF10D0D9D765A76DF00C",
+        "arm64_tsv": "arm64/03a6eea0__InGameLifeGauge__playSkillEffectNeverDieAnimation.arm64.tsv",
+        "arm64_tsv_sha256": "CC12BB49E881AF3490B2E1C6072E31798CFA12FC9FDDFACCC6C76B2ECF0D5D5E"
+      },
+      {
+        "owner": "InGameLifeGauge",
+        "method": "playSkillEffectLifeHealAnimation",
+        "rva": "0x3A6EC88",
+        "end_rva": "0x3A6ED74",
+        "arm64_sha256": "918C5DB4DA79D62F102E335B751DB6ED109CC3370EEA5BECCBA4CD420189E0CC",
+        "arm64_tsv": "arm64/03a6ec88__InGameLifeGauge__playSkillEffectLifeHealAnimation.arm64.tsv",
+        "arm64_tsv_sha256": "EF05D5D9977CDD87F84D29A8D5066D2CD09591DBD362E89719C47AEDFD239D78"
+      },
+      {
+        "owner": "InGameLifeGauge",
+        "method": "changeLifeGaugeBaseColorWhenGameOver",
+        "rva": "0x3A6EAA8",
+        "end_rva": "0x3A6EAE0",
+        "arm64_sha256": "E6609DEB6312485CC273CE937D43238703CFAF9988BC91509A933873EA0F3A56",
+        "arm64_tsv": "arm64/03a6eaa8__InGameLifeGauge__changeLifeGaugeBaseColorWhenGameOver.arm64.tsv",
+        "arm64_tsv_sha256": "3E5337DF20D3050119B2F50D6E6600A0240AB6999389657E6FE31FF6839D7876"
+      }
+    ],
+    "score_judge_skill": [
+      {
+        "owner": "Score",
+        "method": "onPlaySkill",
+        "rva": "0x322B84C",
+        "end_rva": "0x322BA64",
+        "arm64_sha256": "07FCC608EFBF9FB2F9170CCA5D545BE0041446B212D4316B62683E09A6A7ABEE",
+        "arm64_tsv": "arm64/0322b84c__Score__onPlaySkill.arm64.tsv",
+        "arm64_tsv_sha256": "7876922E2ABCBCF30B16F447ADB75D72EF109601912E08E1D14A63F6FB82DD1F"
+      },
+      {
+        "owner": "Score",
+        "method": "onFinishSkill",
+        "rva": "0x322BA64",
+        "end_rva": "0x322BA68",
+        "arm64_sha256": "B7EB050D0FBEC96CAD420520688B43E511045DDC564996B8C60C375F66560272",
+        "arm64_tsv": "arm64/0322ba64__Score__onFinishSkill.arm64.tsv",
+        "arm64_tsv_sha256": "DDD02DBCBB1F34B0A7E42505644C5AFF9185FD6AFA18D0B85F2F89A12D5FE965"
+      },
+      {
+        "owner": "ButtonManager",
+        "method": "onPlaySkill",
+        "rva": "0x3882720",
+        "end_rva": "0x38827DC",
+        "arm64_sha256": "0AE241FC4C063F4846B2FE7EDD90EC86A56AB33F4887FA8295F45EA0928F471F",
+        "arm64_tsv": "arm64/03882720__ButtonManager__onPlaySkill.arm64.tsv",
+        "arm64_tsv_sha256": "E77F8A2F3FF04C9EA94885ACC981D7494273897FD7070EE3FDEB27DCDD11C963"
+      },
+      {
+        "owner": "ButtonManager",
+        "method": "onFinishSkill",
+        "rva": "0x3882864",
+        "end_rva": "0x3882868",
+        "arm64_sha256": "788F1512F26F87F558CCDA89030F23036527961BE061F31E047AD5B93B8AAFE2",
+        "arm64_tsv": "arm64/03882864__ButtonManager__onFinishSkill.arm64.tsv",
+        "arm64_tsv_sha256": "430DAAE83D91E25F85381BAA7F674E921054309E9646FF0F1F43E02E166C06C0"
+      },
+      {
+        "owner": "SkillEffectChangeableTextObject",
+        "method": "Play",
+        "rva": "0x32E2D60",
+        "end_rva": "0x32E2E20",
+        "arm64_sha256": "29B91E9A4AE5653A1B90A4A6889F77B90765671CF05656E776CC00EB113CAE72",
+        "arm64_tsv": "arm64/032e2d60__SkillEffectChangeableTextObject__Play.arm64.tsv",
+        "arm64_tsv_sha256": "ED16CF348CCBA05F117C14ECBBB8EE3B8E0061D9ABF3AE61A42E054AEDFFB773"
+      }
+    ],
+    "field": [
+      {
+        "owner": "ButtonManager",
+        "method": "ExecAwakeStart",
+        "rva": "0x3880190",
+        "end_rva": "0x38807DC",
+        "arm64_sha256": "6624A83C16920BDAA02CE7A106EBD5DD43FE2D1F1C8A91283441859EFE364388",
+        "arm64_tsv": "arm64/03880190__ButtonManager__ExecAwakeStart.arm64.tsv",
+        "arm64_tsv_sha256": "A768746BDAB97649CB104B088E36F759C649128C3BC6AC3F1C165CFE38FCA00D"
+      },
+      {
+        "owner": "ButtonManager",
+        "method": "setupPlayButtons",
+        "rva": "0x3881078",
+        "end_rva": "0x3881C30",
+        "arm64_sha256": "FFDB958C83C797EC5DC83B48A5C09280952FF82C4DDC9C111FA646933FEAC21B",
+        "arm64_tsv": "arm64/03881078__ButtonManager__setupPlayButtons.arm64.tsv",
+        "arm64_tsv_sha256": "C4FCD46C2387E0C5A533408B9BF1B8E5103B3BDD9C5C449E531486EF214BAC40"
+      },
+      {
+        "owner": "ButtonManager",
+        "method": "SetupSudden",
+        "rva": "0x3882974",
+        "end_rva": "0x3882D6C",
+        "arm64_sha256": "0F1BEAA28606FBDC0691FEF93FEE832D88D8B9F853B877C368E98471D93E090D",
+        "arm64_tsv": "arm64/03882974__ButtonManager__SetupSudden.arm64.tsv",
+        "arm64_tsv_sha256": "3BF03ED8B87BA6550B5398B9CE1DF1876BED4CD52C7887B0A4F3FE6AF3DA1253"
+      },
+      {
+        "owner": "ButtonManager",
+        "method": "execMultiResolution",
+        "rva": "0x3881C30",
+        "end_rva": "0x3881D04",
+        "arm64_sha256": "278FA093BCFF7B32AEF9BD33576EEC0EB1DC0A95A03C598138680EB407B8C7A7",
+        "arm64_tsv": "arm64/03881c30__ButtonManager__execMultiResolution.arm64.tsv",
+        "arm64_tsv_sha256": "EC31892AE5D561213300FAEEFA6FA5924AE2BAF8C826A20C2F0DC3777314481C"
+      }
+    ],
+    "colors": [
+      {
+        "owner": "ColorUtility",
+        "method": "GetStarPinkColor",
+        "rva": "0x3384900",
+        "end_rva": "0x3384964",
+        "arm64_sha256": "172EE2301026099148F974119D9389BB50E3552207E04B15A787DC0A50A17BDB",
+        "arm64_tsv": "arm64/03384900__ColorUtility__GetStarPinkColor.arm64.tsv",
+        "arm64_tsv_sha256": "7B466E6433C17D699CF8C32656C227C02108062A721C4BA70BB8BB77A3DB9AD8"
+      },
+      {
+        "owner": "ColorUtility",
+        "method": "GetLightGrayColor",
+        "rva": "0x3384964",
+        "end_rva": "0x33849C4",
+        "arm64_sha256": "E3AA8EE140B4848A3B381D241D07EF732D4B4C60EC4EBDAAF4C4DE912CE60DE4",
+        "arm64_tsv": "arm64/03384964__ColorUtility__GetLightGrayColor.arm64.tsv",
+        "arm64_tsv_sha256": "F4894B8AC90A7AB08A54B075EE8D02DB9D55ED917EF9BDB67D65CE66BC8049B0"
+      }
+    ]
+  },
+  "advanced_mesh": {
+    "vertex_count": 42,
+    "triangle_index_count": 120,
+    "uv_pair_count": 21,
+    "section_count": 20,
+    "uv_v_step": 0.05,
+    "allocation_immediates": {
+      "vertices": "0x2A",
+      "indices": "0x78"
+    },
+    "mapping": "same semantic strip producer with 20 sections; current ARM64 exact"
+  },
+  "shader": {
+    "asset_file": "557cd4ec75204d04391bf23e03c389f7",
+    "asset_bytes": 10256,
+    "asset_sha256": "13471D89D2137E9D2D7A0016B17DF3DA1CB1DD2651F3064E29B19B129C3BBA53",
+    "serialized_bytes": 10112,
+    "serialized_sha256": "7A12C46E4C8BA5C21E3E7AA46AAAAB2257CF02064F19E64C0BA265EF0846F1C4",
+    "name": "star/Star Transparent Colored",
+    "threshold_default": 750.0,
+    "properties": [
+      "_MainTex",
+      "_Threshold"
+    ],
+    "programs": [
+      {
+        "platform": 9,
+        "subprogram": 0,
+        "program_type": "kShaderGpuProgramGLES3",
+        "bytes": 7060,
+        "sha256": "56FDB0E88BEFE71B38545F0A72A3479880ECE78DD9F0DB31CE1674A8159653EB",
+        "threshold_compare": true,
+        "threshold_alpha_select": true,
+        "lod200_alpha_constants_present": false
+      },
+      {
+        "platform": 9,
+        "subprogram": 1,
+        "program_type": "kShaderGpuProgramGLES3",
+        "bytes": 4626,
+        "sha256": "A7E32B5F7B289E14E8DB68A91F6F0490B7B48FC7E0A3E4BC6655BE548555A4DF",
+        "threshold_compare": true,
+        "threshold_alpha_select": true,
+        "lod200_alpha_constants_present": false
+      },
+      {
+        "platform": 9,
+        "subprogram": 2,
+        "program_type": "kShaderGpuProgramGLES31AEP",
+        "bytes": 2176,
+        "sha256": "BD09C172E8AA6363A41C0F8326A93CB298F39DEB83781550A1FC8F9F281D8655",
+        "threshold_compare": false,
+        "threshold_alpha_select": false,
+        "lod200_alpha_constants_present": false
+      },
+      {
+        "platform": 9,
+        "subprogram": 3,
+        "program_type": "kShaderGpuProgramGLES3",
+        "bytes": 2119,
+        "sha256": "8FA32526734DF10DCA6BE1EBA7CD5A779A70747F81B457BED132BEFC49DED03A",
+        "threshold_compare": false,
+        "threshold_alpha_select": false,
+        "lod200_alpha_constants_present": false
+      },
+      {
+        "platform": 18,
+        "subprogram": 0,
+        "program_type": "kShaderGpuProgramGLES3",
+        "bytes": 0,
+        "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+        "threshold_compare": false,
+        "threshold_alpha_select": false,
+        "lod200_alpha_constants_present": false
+      },
+      {
+        "platform": 18,
+        "subprogram": 1,
+        "program_type": "kShaderGpuProgramSPIRV",
+        "bytes": 2175,
+        "sha256": "C29002C3BD9D4C479B397FE65D5FA0E3C0A1E097FF785A83616C7E140617A69A",
+        "threshold_compare": false,
+        "threshold_alpha_select": false,
+        "lod200_alpha_constants_present": true
+      },
+      {
+        "platform": 18,
+        "subprogram": 2,
+        "program_type": "kShaderGpuProgramGLES31AEP",
+        "bytes": 0,
+        "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+        "threshold_compare": false,
+        "threshold_alpha_select": false,
+        "lod200_alpha_constants_present": false
+      },
+      {
+        "platform": 18,
+        "subprogram": 3,
+        "program_type": "kShaderGpuProgramSPIRV",
+        "bytes": 1314,
+        "sha256": "884EC83B99C994F6E8A2D1F0EC33F4D7929CC6FC07B0FBB71826F50261E17530",
+        "threshold_compare": false,
+        "threshold_alpha_select": false,
+        "lod200_alpha_constants_present": false
+      }
+    ],
+    "portable_semantic": {
+      "source_space": "bottom-left fragment coordinate",
+      "alpha_keep_condition": "threshold >= fragment_y",
+      "top_left_visible_condition": "pixel_y >= viewport_height - threshold",
+      "rgb": "sample.rgb * vertex_color.rgb",
+      "alpha": "LOD200 recovered current polynomial multiplied by threshold select",
+      "mapping": "portable-equivalent custom Pixi shader; no backend ticker or CPU default clipping"
+    }
+  },
+  "field": {
+    "scene_profile": "current RhythmGame scene and R7 earliest runtime correlation",
+    "mask": "VisibleInsideMask explicit polygon",
+    "host_setup_authorized": true
+  },
+  "hud": {
+    "combo": {
+      "normal_and_all_perfect_scene": true,
+      "max_digits": 4,
+      "padding": -12.0,
+      "alignment": "center",
+      "ordinary_and_ap_exact_keys": true
+    },
+    "score": {
+      "max_digits": 8,
+      "leading_color": {
+        "rgba": [
+          0.7450980544090271,
+          0.7450980544090271,
+          0.7450980544090271,
+          1.0
+        ],
+        "rgba8": [
+          190,
+          190,
+          190,
+          255
+        ]
+      },
+      "significant_color": {
+        "rgba": [
+          1.0,
+          0.23137255012989044,
+          0.4470588266849518,
+          1.0
+        ],
+        "rgba8": [
+          255,
+          59,
+          114,
+          255
+        ]
+      },
+      "gauge_source": "Score.UpdateScoreGauge current owner"
+    },
+    "add_score": {
+      "pool_size": 4,
+      "selection": "round-robin oldest/ready owner",
+      "depth_cycle": 8,
+      "start_alpha": 0.6,
+      "start_local_y": -50.0,
+      "phase_seconds": 0.14000000059604645,
+      "phases": [
+        "alpha=0.2+0.8*progress,y+=8",
+        "alpha=1,y+=1",
+        "alpha=1-progress,y+=1"
+      ]
+    },
+    "result_judge": {
+      "result_seconds": 1.0,
+      "judge_timing_keys": [
+        "judge_fast",
+        "judge_slow"
+      ],
+      "none_and_auto_gate": "current owner branch"
+    },
+    "score_up_type_5": {
+      "address": "0x32E2D60",
+      "integer_input": "truncate(currentRateUpValue * 10.0)",
+      "set_number": {
+        "address": "0x33750D4",
+        "mode": 0,
+        "interval": 0.0,
+        "should_add_plus_sign": false
+      },
+      "set_depth": {
+        "address": "0x3375058",
+        "depth": 55
+      },
+      "digit_layout": {
+        "order": "least-significant-first",
+        "align": "center",
+        "digit_size": [
+          18,
+          22
+        ],
+        "padding": -3.0,
+        "step": 15.0
+      },
+      "decimal_layout": {
+        "period_local_x": 16.100000381469727,
+        "fractional_digit_local_x": "period_local_x + 4.0",
+        "resolved_fractional_digit_local_x": 20.100000381469727,
+        "fractional_digit_y": "preserve current local Y",
+        "set_position_address": "0x3B054C0"
+      },
+      "full_digit_and_decimal_layout_recovered": true
+    },
+    "life": {
+      "primary": "min(currentLife/1000,1)",
+      "secondary": "max(currentLife/1000-1,0)",
+      "danger_threshold": 0.2,
+      "warning_threshold": 0.25,
+      "warning_condition": "primary <= 0.25 and not damageGuardPlaying",
+      "display": "current/max/upper owner values"
+    },
+    "life_skill": {
+      "dispatch_order": [
+        "never_die",
+        "heal",
+        "damage_guard"
+      ],
+      "guard": {
+        "state": "DamageGuard",
+        "sprite": "effect_health_guard_outline",
+        "icon_alpha": 0.0
+      },
+      "never_die": {
+        "state": "DamageGuard",
+        "sprite": "effect_health_guts_outline",
+        "icon_alpha": 0.0
+      },
+      "heal": {
+        "state": "LifeHealGauge",
+        "sprite": "UI_effect_life_plus_gauge",
+        "icon": "UI_effect_life_plus_icon"
+      },
+      "finish": "animator disabled, object inactive, playing flag false, refresh warning"
+    },
+    "animations": {
+      "life_heal": {
+        "path": "base.apk!/assets/bin/Data/64c7d8e6881a845cc870e9287e5199dc",
+        "size": 3048,
+        "sha256": "087B881CE4247AFFF2C8BA5A07AF5D9F9E75DE223BBB03103AC15D5A6EFE8090",
+        "name": "LifeHealGauge",
+        "sample_rate": 60.0,
+        "start_time": 0.0,
+        "stop_time": 1.0,
+        "loop_time": false,
+        "streamed_curve_count": 5,
+        "constant_curve_count": 3,
+        "bindings": [
+          {
+            "path_hash": 2496849696,
+            "path": "SpriteIcon",
+            "attribute_hash": 3,
+            "attribute": "m_LocalScale",
+            "type_id": 4,
+            "script_file_id": 0,
+            "script_path_id": 0,
+            "channels": [
+              "SpriteIcon.m_LocalScale.x",
+              "SpriteIcon.m_LocalScale.y",
+              "SpriteIcon.m_LocalScale.z"
+            ]
+          },
+          {
+            "path_hash": 837955738,
+            "path": "SpriteBase",
+            "attribute_hash": 4224524717,
+            "attribute": "mColor.a",
+            "type_id": 114,
+            "script_file_id": 1,
+            "script_path_id": 822,
+            "channels": [
+              "SpriteBase.mColor.a"
+            ]
+          },
+          {
+            "path_hash": 2496849696,
+            "path": "SpriteIcon",
+            "attribute_hash": 4224524717,
+            "attribute": "mColor.a",
+            "type_id": 114,
+            "script_file_id": 1,
+            "script_path_id": 822,
+            "channels": [
+              "SpriteIcon.mColor.a"
+            ]
+          },
+          {
+            "path_hash": 2496849696,
+            "path": "SpriteIcon",
+            "attribute_hash": 2138267763,
+            "attribute": "mColor.r",
+            "type_id": 114,
+            "script_file_id": 1,
+            "script_path_id": 822,
+            "channels": [
+              "SpriteIcon.mColor.r"
+            ]
+          },
+          {
+            "path_hash": 2496849696,
+            "path": "SpriteIcon",
+            "attribute_hash": 313427096,
+            "attribute": "mColor.g",
+            "type_id": 114,
+            "script_file_id": 1,
+            "script_path_id": 822,
+            "channels": [
+              "SpriteIcon.mColor.g"
+            ]
+          },
+          {
+            "path_hash": 2496849696,
+            "path": "SpriteIcon",
+            "attribute_hash": 1657040919,
+            "attribute": "mColor.b",
+            "type_id": 114,
+            "script_file_id": 1,
+            "script_path_id": 822,
+            "channels": [
+              "SpriteIcon.mColor.b"
+            ]
+          }
+        ],
+        "curves": [
+          {
+            "index": 0,
+            "channel": "SpriteIcon.m_LocalScale.x",
+            "storage": "streamed",
+            "keys": [
+              {
+                "time": 0.0,
+                "coefficients": [
+                  0.0,
+                  0.0,
+                  2.25,
+                  1.0
+                ]
+              },
+              {
+                "time": 0.6666666865348816,
+                "coefficients": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  2.5
+                ]
+              }
+            ]
+          },
+          {
+            "index": 1,
+            "channel": "SpriteIcon.m_LocalScale.y",
+            "storage": "streamed",
+            "keys": [
+              {
+                "time": 0.0,
+                "coefficients": [
+                  0.0,
+                  0.0,
+                  2.25,
+                  1.0
+                ]
+              },
+              {
+                "time": 0.6666666865348816,
+                "coefficients": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  2.5
+                ]
+              }
+            ]
+          },
+          {
+            "index": 2,
+            "channel": "SpriteIcon.m_LocalScale.z",
+            "storage": "streamed",
+            "keys": [
+              {
+                "time": 0.0,
+                "coefficients": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ]
+              },
+              {
+                "time": 0.6666666865348816,
+                "coefficients": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ]
+              }
+            ]
+          },
+          {
+            "index": 3,
+            "channel": "SpriteBase.mColor.a",
+            "storage": "streamed",
+            "keys": [
+              {
+                "time": 0.0,
+                "coefficients": [
+                  -4.148148536682129,
+                  3.1111114025115967,
+                  0.6666666865348816,
+                  0.5
+                ]
+              },
+              {
+                "time": 0.75,
+                "coefficients": [
+                  37.333335876464844,
+                  -18.666664123535156,
+                  -1.6666666269302368,
+                  1.0
+                ]
+              },
+              {
+                "time": 1.0,
+                "coefficients": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              }
+            ]
+          },
+          {
+            "index": 4,
+            "channel": "SpriteIcon.mColor.a",
+            "storage": "streamed",
+            "keys": [
+              {
+                "time": 0.0,
+                "coefficients": [
+                  0.0,
+                  0.0,
+                  -1.5,
+                  1.0
+                ]
+              },
+              {
+                "time": 0.6666666865348816,
+                "coefficients": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              }
+            ]
+          },
+          {
+            "index": 5,
+            "channel": "SpriteIcon.mColor.r",
+            "storage": "constant",
+            "value": 1.0
+          },
+          {
+            "index": 6,
+            "channel": "SpriteIcon.mColor.g",
+            "storage": "constant",
+            "value": 1.0
+          },
+          {
+            "index": 7,
+            "channel": "SpriteIcon.mColor.b",
+            "storage": "constant",
+            "value": 1.0
+          }
+        ],
+        "events": []
+      },
+      "damage_guard": {
+        "path": "base.apk!/assets/bin/Data/f6d3164e2619543bfb47f42d5a603c15",
+        "size": 2588,
+        "sha256": "1739AB632E8A8764FA6AA01EE5437A236FB0188DD0C254104F59F4B9E2EB50EA",
+        "name": "DamageGuard",
+        "sample_rate": 60.0,
+        "start_time": 0.0,
+        "stop_time": 1.0,
+        "loop_time": true,
+        "streamed_curve_count": 1,
+        "constant_curve_count": 0,
+        "bindings": [
+          {
+            "path_hash": 837955738,
+            "path": "SpriteBase",
+            "attribute_hash": 4224524717,
+            "attribute": "mColor.a",
+            "type_id": 114,
+            "script_file_id": 1,
+            "script_path_id": 822,
+            "channels": [
+              "SpriteBase.mColor.a"
+            ]
+          }
+        ],
+        "curves": [
+          {
+            "index": 0,
+            "channel": "SpriteBase.mColor.a",
+            "storage": "streamed",
+            "keys": [
+              {
+                "time": 0.0,
+                "coefficients": [
+                  -4.148148536682129,
+                  3.1111114025115967,
+                  0.6666666865348816,
+                  0.5
+                ]
+              },
+              {
+                "time": 0.75,
+                "coefficients": [
+                  37.333335876464844,
+                  -18.666664123535156,
+                  -1.6666666269302368,
+                  1.0
+                ]
+              },
+              {
+                "time": 1.0,
+                "coefficients": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              }
+            ]
+          }
+        ],
+        "events": []
+      },
+      "score_up": {
+        "path": "base.apk!/assets/bin/Data/2295aaec51fdd4fe0a73bb8ffc702f9b",
+        "size": 3064,
+        "sha256": "46AFB69547B41F9D0EAFBDF14E863D1B57A401BFE92F0F0D94097D86C8E45DB6",
+        "name": "ScoreUpGauge",
+        "sample_rate": 60.0,
+        "start_time": 0.0,
+        "stop_time": 0.75,
+        "loop_time": true,
+        "streamed_curve_count": 5,
+        "constant_curve_count": 3,
+        "bindings": [
+          {
+            "path_hash": 2496849696,
+            "path": "SpriteIcon",
+            "attribute_hash": 3,
+            "attribute": "m_LocalScale",
+            "type_id": 4,
+            "script_file_id": 0,
+            "script_path_id": 0,
+            "channels": [
+              "SpriteIcon.m_LocalScale.x",
+              "SpriteIcon.m_LocalScale.y",
+              "SpriteIcon.m_LocalScale.z"
+            ]
+          },
+          {
+            "path_hash": 837955738,
+            "path": "SpriteBase",
+            "attribute_hash": 4224524717,
+            "attribute": "mColor.a",
+            "type_id": 114,
+            "script_file_id": 1,
+            "script_path_id": 822,
+            "channels": [
+              "SpriteBase.mColor.a"
+            ]
+          },
+          {
+            "path_hash": 2496849696,
+            "path": "SpriteIcon",
+            "attribute_hash": 4224524717,
+            "attribute": "mColor.a",
+            "type_id": 114,
+            "script_file_id": 1,
+            "script_path_id": 822,
+            "channels": [
+              "SpriteIcon.mColor.a"
+            ]
+          },
+          {
+            "path_hash": 2496849696,
+            "path": "SpriteIcon",
+            "attribute_hash": 2138267763,
+            "attribute": "mColor.r",
+            "type_id": 114,
+            "script_file_id": 1,
+            "script_path_id": 822,
+            "channels": [
+              "SpriteIcon.mColor.r"
+            ]
+          },
+          {
+            "path_hash": 2496849696,
+            "path": "SpriteIcon",
+            "attribute_hash": 313427096,
+            "attribute": "mColor.g",
+            "type_id": 114,
+            "script_file_id": 1,
+            "script_path_id": 822,
+            "channels": [
+              "SpriteIcon.mColor.g"
+            ]
+          },
+          {
+            "path_hash": 2496849696,
+            "path": "SpriteIcon",
+            "attribute_hash": 1657040919,
+            "attribute": "mColor.b",
+            "type_id": 114,
+            "script_file_id": 1,
+            "script_path_id": 822,
+            "channels": [
+              "SpriteIcon.mColor.b"
+            ]
+          }
+        ],
+        "curves": [
+          {
+            "index": 0,
+            "channel": "SpriteIcon.m_LocalScale.x",
+            "storage": "streamed",
+            "keys": [
+              {
+                "time": 0.0,
+                "coefficients": [
+                  0.0,
+                  0.0,
+                  1.3333333730697632,
+                  1.0
+                ]
+              },
+              {
+                "time": 0.75,
+                "coefficients": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  2.0
+                ]
+              }
+            ]
+          },
+          {
+            "index": 1,
+            "channel": "SpriteIcon.m_LocalScale.y",
+            "storage": "streamed",
+            "keys": [
+              {
+                "time": 0.0,
+                "coefficients": [
+                  0.0,
+                  0.0,
+                  1.3333333730697632,
+                  1.0
+                ]
+              },
+              {
+                "time": 0.75,
+                "coefficients": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  2.0
+                ]
+              }
+            ]
+          },
+          {
+            "index": 2,
+            "channel": "SpriteIcon.m_LocalScale.z",
+            "storage": "streamed",
+            "keys": [
+              {
+                "time": 0.0,
+                "coefficients": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ]
+              },
+              {
+                "time": 0.75,
+                "coefficients": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ]
+              }
+            ]
+          },
+          {
+            "index": 3,
+            "channel": "SpriteBase.mColor.a",
+            "storage": "streamed",
+            "keys": [
+              {
+                "time": 0.0,
+                "coefficients": [
+                  -32.0,
+                  8.0,
+                  2.0,
+                  0.5
+                ]
+              },
+              {
+                "time": 0.25,
+                "coefficients": [
+                  32.0,
+                  -16.0,
+                  0.0,
+                  1.0
+                ]
+              },
+              {
+                "time": 0.5,
+                "coefficients": [
+                  0.0,
+                  0.0,
+                  -2.0,
+                  0.5
+                ]
+              },
+              {
+                "time": 0.75,
+                "coefficients": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              }
+            ]
+          },
+          {
+            "index": 4,
+            "channel": "SpriteIcon.mColor.a",
+            "storage": "streamed",
+            "keys": [
+              {
+                "time": 0.0,
+                "coefficients": [
+                  0.0,
+                  0.0,
+                  -1.3333333730697632,
+                  1.0
+                ]
+              },
+              {
+                "time": 0.75,
+                "coefficients": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              }
+            ]
+          },
+          {
+            "index": 5,
+            "channel": "SpriteIcon.mColor.r",
+            "storage": "constant",
+            "value": 1.0
+          },
+          {
+            "index": 6,
+            "channel": "SpriteIcon.mColor.g",
+            "storage": "constant",
+            "value": 1.0
+          },
+          {
+            "index": 7,
+            "channel": "SpriteIcon.mColor.b",
+            "storage": "constant",
+            "value": 1.0
+          }
+        ],
+        "events": []
+      },
+      "judge_adjust": {
+        "path": "base.apk!/assets/bin/Data/5964c266e9a334f98966b714e38cc6bf",
+        "size": 2696,
+        "sha256": "D2A3C4CE98F98CE5254CD8138A06C8C2EE4738FFE361B50E2B8F368CF153A5B5",
+        "name": "SkillAdjustEffect",
+        "sample_rate": 60.0,
+        "start_time": 0.0,
+        "stop_time": 0.9833333492279053,
+        "loop_time": true,
+        "streamed_curve_count": 1,
+        "constant_curve_count": 3,
+        "bindings": [
+          {
+            "path_hash": 0,
+            "path": "",
+            "attribute_hash": 304273561,
+            "attribute": null,
+            "type_id": 212,
+            "script_file_id": 0,
+            "script_path_id": 0,
+            "channels": [
+              "attribute_hash:304273561"
+            ]
+          },
+          {
+            "path_hash": 0,
+            "path": "",
+            "attribute_hash": 2526845255,
+            "attribute": null,
+            "type_id": 212,
+            "script_file_id": 0,
+            "script_path_id": 0,
+            "channels": [
+              "attribute_hash:2526845255"
+            ]
+          },
+          {
+            "path_hash": 0,
+            "path": "",
+            "attribute_hash": 4215373228,
+            "attribute": null,
+            "type_id": 212,
+            "script_file_id": 0,
+            "script_path_id": 0,
+            "channels": [
+              "attribute_hash:4215373228"
+            ]
+          },
+          {
+            "path_hash": 0,
+            "path": "",
+            "attribute_hash": 2334886179,
+            "attribute": null,
+            "type_id": 212,
+            "script_file_id": 0,
+            "script_path_id": 0,
+            "channels": [
+              "attribute_hash:2334886179"
+            ]
+          }
+        ],
+        "curves": [
+          {
+            "index": 0,
+            "channel": "attribute_hash:304273561",
+            "storage": "streamed",
+            "keys": [
+              {
+                "time": 0.0,
+                "coefficients": [
+                  0.0,
+                  0.0,
+                  -0.0,
+                  0.699999988079071
+                ]
+              },
+              {
+                "time": 0.25,
+                "coefficients": [
+                  1.5658713579177856,
+                  -0.9134251475334167,
+                  -0.514285683631897,
+                  0.699999988079071
+                ]
+              },
+              {
+                "time": 0.8333333134651184,
+                "coefficients": [
+                  -88.6244888305664,
+                  13.293678283691406,
+                  1.9999994039535522,
+                  0.4000000059604645
+                ]
+              },
+              {
+                "time": 0.9833333492279053,
+                "coefficients": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.699999988079071
+                ]
+              }
+            ]
+          },
+          {
+            "index": 1,
+            "channel": "attribute_hash:2526845255",
+            "storage": "constant",
+            "value": 1.0
+          },
+          {
+            "index": 2,
+            "channel": "attribute_hash:4215373228",
+            "storage": "constant",
+            "value": 1.0
+          },
+          {
+            "index": 3,
+            "channel": "attribute_hash:2334886179",
+            "storage": "constant",
+            "value": 1.0
+          }
+        ],
+        "events": []
+      }
+    },
+    "judge_skill": {
+      "path": "base.apk!/assets/bin/Data/level3",
+      "size": 764840,
+      "sha256": "445fcf60c32222942d368d98b158f484d7e8e260b6237a6f595ae0c361db75a8",
+      "unity_scene": "Assets/star/Scenes/RhythmGame.unity",
+      "button_manager": {
+        "path_id": 1153,
+        "script_file_id": 1,
+        "script_path_id": 7097,
+        "class": "ButtonManager",
+        "serialized_size": 116,
+        "path": "GamePlay",
+        "transform": {
+          "path_id": 544,
+          "game_object_path_id": 111,
+          "game_object_name": "GamePlay",
+          "local_position": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "local_scale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "parent_path_id": 0,
+          "children": [
+            436,
+            447,
+            577,
+            543,
+            585,
+            538
+          ]
+        },
+        "ui_local_transform": {
+          "position": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "scale": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        }
+      },
+      "sprite_renderer": {
+        "path_id": 1047,
+        "game_object_path_id": 64,
+        "game_object_name": "judgeLineAdjustSkillEffect",
+        "transform": {
+          "path_id": 497,
+          "game_object_path_id": 64,
+          "game_object_name": "judgeLineAdjustSkillEffect",
+          "local_position": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "local_scale": [
+            0.9900000095367432,
+            0.9900000095367432,
+            1.0
+          ],
+          "parent_path_id": 488,
+          "children": []
+        },
+        "world_transform": {
+          "position": [
+            0.0,
+            -3.450000047683716,
+            0.0
+          ],
+          "scale": [
+            0.9900000095367432,
+            0.9900000095367432,
+            1.0
+          ]
+        },
+        "enabled": true,
+        "sorting_order": 21,
+        "serialized_sprite": {
+          "m_FileID": 0,
+          "m_PathID": 0
+        },
+        "serialized_color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "material": {
+          "m_FileID": 1,
+          "m_PathID": 2,
+          "external": "globalgamemanagers.assets"
+        }
+      },
+      "animator": {
+        "path_id": 881,
+        "enabled": true,
+        "controller": {
+          "file_id": 5,
+          "path_id": 1,
+          "external": "fb10e0ef8672a4d2fa44b5d3cfe7f11f"
+        }
+      }
+    },
+    "score_skill": {
+      "path": "base.apk!/assets/bin/Data/level3",
+      "size": 764840,
+      "sha256": "445fcf60c32222942d368d98b158f484d7e8e260b6237a6f595ae0c361db75a8",
+      "unity_scene": "Assets/star/Scenes/RhythmGame.unity",
+      "ui_root_scale": [
+        0.003241491038352251,
+        0.003241491038352251,
+        0.003241491038352251
+      ],
+      "score_gauge_effect": {
+        "path_id": 1322,
+        "script_file_id": 1,
+        "script_path_id": 5848,
+        "class": "ScoreGaugeEffect",
+        "serialized_size": 56,
+        "path": "GamePlay/UI_Root/Display/Score/Progress/SkillEffect",
+        "transform": {
+          "path_id": 768,
+          "game_object_path_id": 301,
+          "game_object_name": "SkillEffect",
+          "local_position": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "local_scale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "parent_path_id": 685,
+          "children": [
+            650,
+            746
+          ]
+        },
+        "ui_local_transform": {
+          "position": [
+            -386.0,
+            264.0,
+            0.0
+          ],
+          "scale": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        "sprite_base": {
+          "path_id": 1276,
+          "game_object_path_id": 278,
+          "game_object_name": "SpriteBase",
+          "game_object_active": true,
+          "transform": {
+            "path_id": 650,
+            "game_object_path_id": 278,
+            "game_object_name": "SpriteBase",
+            "local_position": [
+              237.0,
+              -27.0,
+              0.0
+            ],
+            "local_scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "parent_path_id": 768,
+            "children": []
+          },
+          "width": 500,
+          "height": 110,
+          "depth": 3,
+          "atlas": {
+            "file_id": 31,
+            "path_id": 3,
+            "external": "7a973c9610ddb4405aa7764876ab4a61"
+          },
+          "sprite_name": "UI_effect_score_plus_guage",
+          "ui_local_transform": {
+            "position": [
+              -149.0,
+              237.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          },
+          "serialized_color": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        "sprite_icon": {
+          "path_id": 1335,
+          "game_object_path_id": 171,
+          "game_object_name": "SpriteIcon",
+          "game_object_active": true,
+          "transform": {
+            "path_id": 746,
+            "game_object_path_id": 171,
+            "game_object_name": "SpriteIcon",
+            "local_position": [
+              21.0,
+              2.0,
+              0.0
+            ],
+            "local_scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "parent_path_id": 768,
+            "children": []
+          },
+          "width": 88,
+          "height": 86,
+          "depth": 35,
+          "atlas": {
+            "file_id": 31,
+            "path_id": 3,
+            "external": "7a973c9610ddb4405aa7764876ab4a61"
+          },
+          "sprite_name": "UI_effect_score_plus_icon",
+          "ui_local_transform": {
+            "position": [
+              -365.0,
+              266.0,
+              0.0
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          },
+          "serialized_color": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+          ]
+        }
+      },
+      "animator": {
+        "path_id": 895,
+        "game_object_path_id": 301,
+        "enabled": true,
+        "controller": {
+          "file_id": 9,
+          "path_id": 1,
+          "external": "ee1bec92ae1cc4396998d3c17ee09e12",
+          "path": "base.apk!/assets/bin/Data/ee1bec92ae1cc4396998d3c17ee09e12",
+          "size": 616,
+          "sha256": "dced4d070af7807307cfd7dc9774a72d7b18a38d85e453aa1534bbd62ac12d34"
+        }
+      }
+    }
+  },
+  "authorization": {
+    "skill_root": true,
+    "flick_top_animation": true,
+    "non_normal_after_icon": true,
+    "multiple_add_after_side_visual": true,
+    "advanced_mesh": true,
+    "threshold_shader_mapping": true,
+    "field_setup": true,
+    "combo_ap_complete": true,
+    "score_digits_complete": true,
+    "add_score_coroutine": true,
+    "judge_timing": true,
+    "changeable_skill_text": true,
+    "life_warning": true,
+    "guard": true,
+    "never_die": true,
+    "judge_skill": true,
+    "game_over_order_inputs": true
+  },
+  "unknown_fields": [],
+  "blocking_findings": []
+}

@@ -53,6 +53,8 @@ The locked package files observed on the connected device are byte-identical to 
 - `runtime/ordinary-rendering-hud-r3.trace.json.gz` records a natural 631-frame Demo Live with 19,888 caller-correlated setter events. `resource_pixi_rendering_hud_visible_profile.json` joins those events to frozen HUD/skill/note/resource profiles and authorizes only ordinary bitmap score/combo/life, score-skill overlay, serialized field/sudden mask hierarchy, combo/GameJudge restart-at-zero and portable combo/life-heal curve sampling. Unobserved Guard/NeverDie/Judge/Flick/Multiple routes remain false.
 - R5 byte-pins 35 current owner methods in `resource_pixi_rendering_hud_field_r5_targets.json` and reuses the 22 R3 setter wrappers. Two verified natural-Live traces contain 16,259 core events/529 frames and 14,716 overlay events/530 frames. The compact profile positively authorizes only Result show/change/hide lifetime, Score skill animation, ScoreGauge On/Off, Life skill start/finish and generic Skill display. AddScore coroutine, JudgeTiming, full AP animation, Guard, NeverDie, R5 LifeHeal, warning/GameOver setter output and changeable Skill text remain false. Field attempts at 11- and 14-second post-start attach observed only the frame anchor because all five ButtonManager setup owners completed before the stable attach window; those traces were deleted and field receives no R5 authorization. The collector retains the no-write/no-invoke/no-pointer/no-display-string/no-synthetic-event policy.
 - `runtime/resource-pixi-rendering-final-r6-plan.json` is the committed-before-capture final production-consumption plan. It pins the already-reviewed R4/R5 owner inventories, geometry/HUD setters and collectors by SHA-256. Five clean full-window traces contain 190,401 events, 2,492 aggregate relative frames and 26 observed owner targets. They reconfirm Flick/Directional, Slide base chain, Multiple back-line, Result and Score Skill routes and additionally authorize only the All Perfect ExecUpdate active gate. AddScore/JudgeTiming/Guard/NeverDie/changeable text/field setup, Long-after Flick, add/after Multiple, Advanced and threshold shader mapping remain false; the zero-event early-field attempt was deleted. Ordinary R6 cannot be extrapolated to exact HABAHIRO.
+- Final R7 is the one-shot completion campaign for all 21 production cases still partial or blocked after R6. `resource_pixi_rendering_final_r7_targets.json` byte-pins 130 deduplicated owner methods in four groups, while `runtime/resource-pixi-rendering-final-r7-plan.json` pins nine natural/static scenarios and every collector/input hash before capture. Seven retained traces contain 625,192 events, 3,480 aggregate relative frames, 51 observed owner targets and 21 setters. They include two Poppin' Shuffle Special Note windows, earliest field setup, Demo HUD, and real Auto Live AddScore/Score/Life/Skill routes; all partial/failed traces were deleted.
+- `resource_pixi_rendering_final_r7_static_profile.json` independently parses the current 10.1.4 `star/Star Transparent Colored` Shader asset and eight GLES/Vulkan programs. It confirms `_Threshold >= gl_FragCoord.y`, the LOD200 alpha formula, explicit top-left portable conversion, current Advanced 42/120 topology, current HUD scenes/fonts/controllers/clips and exact current method bodies for Guard/NeverDie/Judge/Crescendo routes that the locked deck cannot naturally trigger. `resource_pixi_rendering_final_r7_profile.json` records all nine dispositions with empty unknown/blocking lists. `resource_pixi_rendering_final_r7_closure.json` closes evidence authorization for PR01–PR40 while explicitly leaving Garupa production consumption unclaimed. Existing exact-HAB disposition is not reopened.
 - `runtime/resource-pixi-rendering-delivery-frame-manifest.json` locks seven privacy-reviewed physical-device ordinary PNG anchors at the observed 1600×720 viewport. Crops exclude identity-bearing Skill/pause text; no generated HABAHIRO frame is represented as original.
 - `habahiro_current_external_resource_profile.json` records the user-authorized Bestdori fallback: 12 live explorer/export assets, 179 Sprite rows and hashes whose 2026-03-31 release timestamps align with MasterMusic 786. Production remains offline and consumes only host-local hash-verified bytes.
 - `resource_pixi_rendering_delivery_oracle.json` and `delivery_closure.json` close the explicit `ordinary-exact-habahiro-degraded` delivery gate while retaining original HABAHIRO bundle/runtime/frame parity as open and unclaimed.
@@ -90,6 +92,7 @@ The source target set is derived from the bounded H01-H24 investigations named i
 - Natural HABAHIRO Live cannot currently be reached. Bestdori closes only the current portable resource-delivery part of S01; it does not manufacture S02 runtime identity/order/phase or S03 original framebuffer.
 - By explicit user request, the `ordinary-exact-habahiro-degraded` delivery profile is closed and production-authorized. Its preferred `current-external-portable-atlas` source uses the pinned live Bestdori export; historical/current-ordinary proxies remain lower-fidelity alternatives. All require `Approximate HABAHIRO`, forbid silent fallback and remain outside original parity tests.
 - `rendering_delivery_gate=closed` and scoped `production_authorization=true`; `habahiro_exact_parity_gate=open-not-claimed` remains independent.
+- Final R7 closes the remaining ordinary/common-HUD evidence gate: all 40 PR cases are evidence-confirmed under the declared ordinary-exact/HAB-degraded fidelity. This is authorization for the subsequent Garupa implementation, not a claim that production has consumed every route.
 
 ## Boundary
 
@@ -107,13 +110,9 @@ R5 is partial behavioral evidence, not full HUD/field closure. A successful tran
 
 ## Unresolved
 
-The delivery gate is closed. Only original HABAHIRO parity remains unresolved:
+Final R7 has closed the ordinary/common-HUD evidence inputs for all 21 formerly partial/blocked PR cases. Garupa production consumption and RP14 acceptance remain separate downstream work.
 
-1. obtain and hash the game's original current `ingameskin/noteskin/habahiro` AssetBundle bytes if they become available;
-2. naturally enter HABAHIRO Live for original runtime identity/order/phase evidence;
-3. capture original HABAHIRO physical frame anchors.
-
-These exact-parity items do not block the explicit degraded delivery profile and cannot be silently substituted. Ordinary runtime/frame and all delivery contracts are closed.
+Original HABAHIRO parity independently remains unresolved: original current AssetBundle bytes, natural HAB runtime, and original physical frame anchors are unavailable. These items do not block the explicit degraded delivery profile and are not part of R7.
 
 ## Reproduction
 
@@ -148,6 +147,17 @@ py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-
 py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\capture_resource_pixi_rendering_hud_field_r5.py --owner-group core --already-running-live
 py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\build_resource_pixi_rendering_hud_field_r5_profile.py --trace core=runtime\ordinary-rendering-hud-field-r5-core.trace.json.gz
 py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\build_resource_pixi_rendering_offline_closure.py
+py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\build_resource_pixi_rendering_final_r7_targets.py
+py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\build_resource_pixi_rendering_final_r7_plan.py
+py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\verify_resource_pixi_rendering_final_r7_targets.py
+py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\verify_resource_pixi_rendering_final_r7_plan.py
+py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\capture_resource_pixi_rendering_final_r7.py --owner-group note --scenario-id R7-NOTE-PRODUCTION --output artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\runtime\ordinary-rendering-final-r7-note-production.trace.json.gz
+py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\build_resource_pixi_rendering_final_r7_static_profile.py
+py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\build_resource_pixi_rendering_final_r7_profile.py
+py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\build_resource_pixi_rendering_final_r7_closure.py
+py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\verify_resource_pixi_rendering_final_r7_static_profile.py
+py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\verify_resource_pixi_rendering_final_r7_profile.py
+py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\verify_resource_pixi_rendering_final_r7_closure.py
 py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\verify_resource_pixi_rendering_static_contract.py
 py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\verify_resource_pixi_rendering_resource_contract.py
 py -3.14 artifacts\investigations\resource-pixi-rendering-runtime-contract-10-1-4\verify_habahiro_degraded_approximation.py

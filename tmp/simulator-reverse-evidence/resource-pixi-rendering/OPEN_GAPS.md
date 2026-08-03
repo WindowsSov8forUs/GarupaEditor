@@ -58,6 +58,15 @@ note_family_r4_arm64_slices=6
 ordinary_note_family_r4_runtime_events=118152
 ordinary_note_family_r4_aggregate_frames=1258
 current_note_family_r4_profile=closed-observed-subset
+final_r7_owner_targets=130
+final_r7_runtime_events=625192
+final_r7_aggregate_frames=3480
+final_r7_observed_owners=51
+final_r7_observed_setters=21
+final_r7_remaining_pr_confirmed=21
+final_r7_evidence_confirmed_cases=40
+final_r7_unknown_fields=0
+final_r7_blocking_findings=0
 ordinary_physical_frames=7
 habahiro_current_external_assets=12
 remaining_exact_blockers=original-current-HABAHIRO-UnityFS-bytes,natural-HABAHIRO-runtime-R1,original-HABAHIRO-physical-frames
@@ -97,7 +106,8 @@ remaining_exact_blockers=original-current-HABAHIRO-UnityFS-bytes,natural-HABAHIR
 - natural ordinary R3冻结22个byte-pinned setter/ARM64 slice、19,888个caller-correlated事件及631个相对frame：闭合bitmap score/combo/life、score-skill overlay、serialized field/sudden mask、combo/GameJudge normalized-time-zero restart与portable combo/life-heal curve sampling；未观察的Guard/NeverDie/Judge仍false，Unity PlayerLoop subframe与GPU raster parity仍排除。
 - natural Note family R4按Flick/Slide/Multiple三组冻结118,152个caller-correlated事件与1,258个aggregate relative frame；30个owner target与6个新增Slide ARM64 slice共同授权front Flick/Directional icon、observed Slide mesh+line生命周期和MultipleDirectional connect/back-line。Long-after Flick、Slide Wait runtime、add-Long/add-Slide/after Multiple、Advanced与threshold继续false。
 - natural HUD R5冻结core/overlay共30,975 events/1,059 frames；5条正向route关闭。
-- final R6冻结五条clean全窗口trace共190,401 events/2,492 aggregate frames/26 observed owners；只新增All Perfect ExecUpdate active gate。AddScore coroutine、JudgeTiming、Guard、NeverDie、changeable text及field setup/sudden/lane仍为required-before-positive-code；R6 zero-event early-field trace已删除。
+- final R6冻结五条clean全窗口trace共190,401 events/2,492 aggregate frames/26 observed owners；只新增All Perfect ExecUpdate active gate。R6未观察路线没有被当时外推，zero-event field trace已删除。
+- final R7在production实现前一次性冻结130个owner target、七条confirmed trace与current static portable profile：625,192 events/3,480 aggregate frames/51 owners/21 setters；首次闭合field setup和真实Auto Live AddScore coroutine，并从current Shader程序闭合Advanced 42/120与threshold，从current方法/scene/clip闭合Guard/NeverDie/Judge/Crescendo。21个remaining PR及PR01–PR40证据门全部confirmed，unknown/blocker为0；Reverse仍不宣称Garupa已消费。
 - 7个ordinary physical-device frame anchor锁定1600×720 viewport与隐私裁剪；PNG只保留在Reverse提交，Garupa冻结manifest中的尺寸/hash。
 - 12项Bestdori current external portable asset与179个Sprite row/hash关闭HAB资源交付子门；production/test必须使用host本地hash provider，禁止联网，且不宣称原始UnityFS一致。
 - `delivery_closure.json`按交付profile关闭V01、D01–D18与PR01–PR40；PR01/PR04/PR19/PR40继续标记degraded disclosure，HA-D01–HA-D12仍为强制差异。
@@ -117,4 +127,4 @@ ordinary R1已关闭。HABAHIRO对象identity、顺序、phase及original lifecy
 
 ordinary 7个实体frame已关闭交付门。HABAHIRO原始frame只在exact parity轨必需，必须来自实体设备并遵守既定viewport、anchor与隐私规则；generated degraded frame永不进入原作golden。
 
-上述三项保持`habahiro_exact_parity_gate=open-not-claimed`，但不阻塞显式delivery profile。资源二进制仍不得入Garupa仓库，production/test仍不得联网。
+上述三项保持`habahiro_exact_parity_gate=open-not-claimed`，但不阻塞显式delivery profile，也不再阻塞ordinary/common-HUD RP14实施。资源二进制仍不得入Garupa仓库，production/test仍不得联网。
