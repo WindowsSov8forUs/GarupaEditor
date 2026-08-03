@@ -15,6 +15,7 @@ import { evidenceRequired, ok, type SimulatorResult } from "../engine/evidence";
 import {
   advanceOrdinaryNoteActivationAdjustment,
   advanceOrdinaryNoteMotion,
+  buildOrdinaryAdvancedNoteMesh,
   buildOrdinaryBaseNoteMesh,
   buildOrdinaryMultipleDirectionalLine,
   buildOrdinarySyncLine,
@@ -218,7 +219,12 @@ function main(): void {
     0,
     "equal LauncherMusicPos performs no synthetic Move",
   );
-  equal(advanceOrdinaryNoteMotion({ ...motionState, virtualLaneControllerPresent: true }).status, "evidence-required", "virtual-lane branch stays closed");
+  const virtualMotion = requireOk(
+    advanceOrdinaryNoteMotion({ ...motionState, virtualLaneControllerPresent: true }),
+    "current R7 virtual-lane owner motion",
+  );
+  equal(virtualMotion.position.x.bits, motion.position.x.bits,
+    "virtual-lane owner consumes the same typed endpoint projection before advanced mesh interpolation");
   equal(advanceOrdinaryNoteMotion({ ...motionState, targetCenterY: motionState.launcherY }).status, "evidence-required", "degenerate scale range fails closed");
 
   const fixedScene = Object.freeze({
@@ -306,16 +312,16 @@ function main(): void {
     );
     equal(childRejected.status, "evidence-required", `front family ${unsupportedFront} child route remains fail-closed`);
   }
-  const virtualRejected = activationProducer.preflightOrdinaryNoteActivation(
+  const virtualPrepared = requireOk(activationProducer.preflightOrdinaryNoteActivation(
     "normal:0",
     { ...activationInformation, virtualLaneDirection: VirtualLaneDirection.Left },
     f32(120),
     f32(97),
     fixedScene,
     1,
-  );
-  equal(virtualRejected.status, "evidence-required", "virtual-lane activation remains fail-closed");
-  equal(activationRenderer.nextSequence, 8, "unsupported activation routes consume no sequence");
+  ), "current R7 virtual-lane activation");
+  requireOk(virtualPrepared.transaction.discard(), "discard virtual-lane activation probe");
+  equal(activationRenderer.nextSequence, 8, "discarded and invalid activation routes consume no sequence");
 
   const longPoolRenderer = new CapturingRenderer();
   const longPoolProducer = new RenderCommandProducer("geometry-session", longPoolRenderer, {
@@ -487,6 +493,17 @@ function main(): void {
   equal(Object.isFrozen(mesh.colors[0]), true, "copied color frozen");
   equal(mesh.colors[0] === meshState.color, false, "owner color is not aliased");
 
+  const advancedMesh = requireOk(
+    buildOrdinaryAdvancedNoteMesh(meshState),
+    "build current R7 advanced mesh",
+  );
+  equal(advancedMesh.vertices.length, 42, "advanced mesh has 42 vertices");
+  equal(advancedMesh.indices.length, 120, "advanced mesh has 120 triangle indices");
+  equal(advancedMesh.uv.length, 42, "advanced mesh has 21 UV pairs");
+  equal(advancedMesh.uv[2]!.y.bits, "3D4CCCCD", "advanced mesh V step is exact Float32 0.05");
+  equal(advancedMesh.uv[20]!.y.bits, "3F000000", "advanced mesh midpoint V is exact Float32 0.5");
+  equal(advancedMesh.uv[40]!.y.bits, "3F800000", "advanced mesh terminal V is one");
+
   const line = requireOk(buildOrdinarySyncLine({
     targetA: target(-2, 1, -13.5, 0.4, 0.7, 1),
     targetB: target(2, 1.25, -13, 0.6, 0.9, 10),
@@ -595,9 +612,20 @@ function main(): void {
   }), "build ordinary Long normal mesh");
   equal(longMesh.vertices.length, 22, "Long child base mesh keeps 22 vertices");
   equal(longMesh.indices.length, 60, "Long child base mesh keeps 60 indices");
-  equal(createOrdinaryLongNormalChildState(
+  const virtualLongChild = requireOk(createOrdinaryLongNormalChildState(
     { ...motionState, virtualLaneControllerPresent: true }, 96, f32(120),
-  ).status, "evidence-required", "Long child virtual lane remains fail-closed");
+  ), "current R7 virtual Long child");
+  const virtualLongMesh = requireOk(buildOrdinaryLongNormalMesh({
+    front: motion,
+    after: virtualLongChild.renderedTransform,
+    frontButtonCount: 1,
+    afterButtonCount: 1,
+    screenToSafeAreaRatio: f32(1),
+    widthRate: f32(1),
+    color: color(0.8, 0.8, 0.8, 0.6),
+    advanced: true,
+  }), "current R7 virtual Long advanced mesh");
+  equal(virtualLongMesh.vertices.length, 42, "virtual Long consumes advanced 42-vertex topology");
   equal(createOrdinaryLongNormalChildState(motionState, -1, f32(120)).status,
     "evidence-required", "Long child invalid tail position remains fail-closed");
 

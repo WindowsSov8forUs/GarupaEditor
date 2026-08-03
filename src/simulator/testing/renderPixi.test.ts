@@ -15,6 +15,7 @@ import { evidenceRequired, ok, type SimulatorResult } from "../engine/evidence";
 import { InGameRecord } from "../engine/managers/inGameRecord";
 import { RenderCommandProducer } from "../engine/rendering/renderCommandProducer";
 import {
+  buildOrdinaryAdvancedNoteMesh,
   buildOrdinaryBaseNoteMesh,
   buildOrdinarySyncLine,
 } from "../engine/rendering/ordinaryNoteGeometry";
@@ -31,6 +32,8 @@ const hudKeys = [
   ...Array.from({ length: 10 }, (_, index) => `icon_number_big_${index}`),
   ...Array.from({ length: 10 }, (_, index) => `icon_number_big_AP_${index}`),
   "effect_health_guard_outline",
+  "effect_health_guts_outline",
+  "UI_effect_life_plus_gauge",
   "UI_effect_life_plus_icon",
   "skill_eff",
   "icon_skill_score_up_1",
@@ -201,6 +204,22 @@ function profile(): RenderResourceProfile {
       animationRole: "none",
       provenance: "current-apk",
     }, {
+      logicalAssetId: "asset.curve-note",
+      role: "material-texture",
+      byteLength: png.byteLength,
+      sha256: sha256UpperHex(png),
+      mime: "image/png",
+      width: 4,
+      height: 4,
+      textureSettings: {
+        scaleMode: "linear", wrapModeU: "clamp", wrapModeV: "clamp",
+        mipmap: "off", premultiplyAlpha: true, blendMode: "normal",
+      },
+      atlasRows: [],
+      materialRole: "curve-note",
+      animationRole: "none",
+      provenance: "current-apk",
+    }, {
       logicalAssetId: "asset.score-skill-animation",
       role: "animation-clip",
       byteLength: animationBytes.byteLength,
@@ -287,6 +306,25 @@ function r2Mesh(sequence: number): RenderCommand {
   };
 }
 
+function r7AdvancedMesh(sequence: number, renderObjectId: string): RenderCommand {
+  const endpoint = (x: number, y: number) => ({
+    position: { x: f32(x), y: f32(y) },
+    localScaleX: f32(0.5),
+    buttonCount: 1,
+  });
+  const geometry = requireOk(buildOrdinaryAdvancedNoteMesh({
+    front: endpoint(-0.5, 0),
+    after: endpoint(0.5, 1),
+    screenToSafeAreaRatio: f32(1),
+    widthRate: f32(1),
+    color: { red: f32(0.9), green: f32(0.9), blue: f32(0.9), alpha: f32(0.8) },
+  }), "produce R7 advanced mesh");
+  return {
+    ...base(sequence), kind: "set-mesh", renderObjectId,
+    ...geometry, materialRole: "curve-note",
+  };
+}
+
 function r2Line() {
   return requireOk(buildOrdinarySyncLine({
     targetA: {
@@ -321,6 +359,7 @@ async function main(): Promise<void> {
     { logicalAssetId: "asset.combo-animation", bytes: animationBytes },
     { logicalAssetId: "asset.life-animation", bytes: animationBytes },
     { logicalAssetId: "asset.multiple-directional-line", bytes: png },
+    { logicalAssetId: "asset.curve-note", bytes: png },
     { logicalAssetId: "asset.score-skill-animation", bytes: animationBytes },
   ]), "create local PNG provider");
   const renderer = new PixiRendererBackend(decoder);
@@ -527,6 +566,7 @@ async function main(): Promise<void> {
       state: Object.freeze({
         currentLife: 1250, playerMaxLife: 1000, lifeUpperLimit: 2000,
         singleGameOver: false, primaryFill: 1, secondaryFill: 0.25,
+        danger: false, warning: false, damageGuardPlaying: false,
       }),
     },
     { ...base(25), kind: "activate-object", renderObjectId: "hud.life" },
@@ -544,7 +584,10 @@ async function main(): Promise<void> {
     },
     {
       ...base(29), kind: "set-hud", renderObjectId: "hud.result", hudRole: "result",
-      state: Object.freeze({ representativeResult: 4, representativeSlot: 0, scoreUpType: 2 }),
+      state: Object.freeze({
+        representativeResult: 4, representativeSlot: 0, judgeTiming: 0,
+        scoreUpType: 2, crescendoTenths: 10,
+      }),
     },
     { ...base(30), kind: "activate-object", renderObjectId: "hud.result" },
   ]), "preflight R3/R6 visible Pixi batch");
@@ -570,8 +613,8 @@ async function main(): Promise<void> {
     "1250/1000", "Life visible text uses committed semantic owner state");
   equal(visibleScene.find((row) => row.renderObjectId === "hud.result")?.hudSpriteCount,
     2, "R6 ScoreUp type 2 owns the exact skill_eff and icon overlay Sprites");
-  equal(renderer.resourceSnapshot()[2]?.spriteReferenceCount, 7,
-    "Combo, Life and ScoreUp HUD Sprites are reference counted");
+  equal(renderer.resourceSnapshot()[2]?.spriteReferenceCount, 9,
+    "Combo, all Life overlays and ScoreUp HUD Sprites are reference counted");
 
   requireOk(renderer.execute({
     ...base(31), kind: "stop-animation", renderObjectId: "hud.life",
@@ -612,6 +655,85 @@ async function main(): Promise<void> {
   equal(renderer.snapshot().state, "disposed", "Pixi backend disposed");
   equal(renderer.snapshot().resourceCount, 0, "Pixi resources released");
   requireOk(renderer.dispose(), "repeated Pixi dispose is idempotent");
+
+  const thresholdRenderer = new PixiRendererBackend(decoder);
+  requireOk(await thresholdRenderer.prepare(
+    SESSION, profile(), provider, new PortableRenderResourcePreflightAdapter(),
+  ), "prepare R7 advanced/threshold Pixi renderer");
+  const thresholdBatch = requireOk(thresholdRenderer.preflight([
+    {
+      ...base(0), kind: "create-object", renderObjectId: "note.advanced",
+      poolFamily: "slide", role: "note-mesh", parentObjectId: null,
+    },
+    {
+      ...base(1), kind: "bind-resource", renderObjectId: "note.advanced",
+      binding: "material", logicalAssetId: "asset.curve-note", exactKey: null,
+    },
+    r7AdvancedMesh(2, "note.advanced"),
+    {
+      ...base(3), kind: "set-threshold", renderObjectId: "note.advanced",
+      threshold: f32(712.711181640625),
+    },
+    { ...base(4), kind: "activate-object", renderObjectId: "note.advanced" },
+  ]), "preflight R7 advanced/threshold Pixi batch");
+  requireOk(thresholdRenderer.commit(thresholdBatch), "commit R7 advanced/threshold Pixi batch");
+  const thresholdScene = thresholdRenderer.sceneSnapshot()[0];
+  equal(thresholdScene?.geometryVertexCount, 42, "R7 Pixi accepts 42 advanced vertices");
+  equal(thresholdScene?.geometryIndexCount, 120, "R7 Pixi accepts 120 advanced indices");
+  equal(thresholdScene?.threshold, f32(712.711181640625).value,
+    "R7 Pixi retains current bottom-left threshold value");
+  requireOk(thresholdRenderer.execute({
+    ...base(5), kind: "release-object", renderObjectId: "note.advanced",
+  }), "release R7 advanced mesh");
+  requireOk(thresholdRenderer.dispose(), "dispose R7 advanced/threshold renderer");
+
+  const r7HudRenderer = new PixiRendererBackend(decoder);
+  requireOk(await r7HudRenderer.prepare(
+    SESSION, profile(), provider, new PortableRenderResourcePreflightAdapter(),
+  ), "prepare R7 complete HUD Pixi renderer");
+  const r7HudBatch = requireOk(r7HudRenderer.preflight([
+    { ...base(0), kind: "create-object", renderObjectId: "hud.r7.score", poolFamily: "hud-score", role: "hud-score", parentObjectId: null },
+    { ...base(1), kind: "set-hud", renderObjectId: "hud.r7.score", hudRole: "score", state: Object.freeze({ score: 1234, digits: "00001234", firstSignificant: 4, gaugeFill: 0.25 }) },
+    { ...base(2), kind: "activate-object", renderObjectId: "hud.r7.score" },
+    { ...base(3), kind: "create-object", renderObjectId: "hud.r7.add", poolFamily: "hud-overlay", role: "hud-overlay", parentObjectId: null },
+    { ...base(4), kind: "set-hud", renderObjectId: "hud.r7.add", hudRole: "overlay", state: Object.freeze({ addScore: 100, freeLiveEventBonusAddScore: 0, poolIndex: 2, depth: 5, phase: 0, phaseProgress: 0 }) },
+    { ...base(5), kind: "activate-object", renderObjectId: "hud.r7.add" },
+    { ...base(6), kind: "play-animation", renderObjectId: "hud.r7.add", animationRole: "add-score", restart: true },
+    { ...base(7), kind: "sample-animation", renderObjectId: "hud.r7.add", animationRole: "add-score", elapsedSeconds: f32(0.21) },
+    { ...base(8), kind: "create-object", renderObjectId: "hud.r7.life", poolFamily: "hud-life", role: "hud-life", parentObjectId: null },
+    { ...base(9), kind: "set-hud", renderObjectId: "hud.r7.life", hudRole: "life", state: Object.freeze({ currentLife: 200, playerMaxLife: 1000, lifeUpperLimit: 2000, singleGameOver: false, primaryFill: 0.2, secondaryFill: 0, danger: true, warning: false, damageGuardPlaying: true }) },
+    { ...base(10), kind: "activate-object", renderObjectId: "hud.r7.life" },
+    { ...base(11), kind: "play-animation", renderObjectId: "hud.r7.life", animationRole: "never-die", restart: true },
+    { ...base(12), kind: "create-object", renderObjectId: "hud.r7.judge", poolFamily: "hud-overlay", role: "hud-overlay", parentObjectId: null },
+    { ...base(13), kind: "set-hud", renderObjectId: "hud.r7.judge", hudRole: "overlay", state: Object.freeze({ skillActive: true, scoreSkill: false, scoreGaugeActive: false, currentSkillNoteIndex: 3 }) },
+    { ...base(14), kind: "activate-object", renderObjectId: "hud.r7.judge" },
+    { ...base(15), kind: "play-animation", renderObjectId: "hud.r7.judge", animationRole: "judge-skill", restart: true },
+    { ...base(16), kind: "create-object", renderObjectId: "hud.r7.fever", poolFamily: "hud-overlay", role: "hud-overlay", parentObjectId: null },
+    { ...base(17), kind: "set-hud", renderObjectId: "hud.r7.fever", hudRole: "overlay", state: Object.freeze({ feverCommand: "start", feverState: 1, active: true }) },
+    { ...base(18), kind: "activate-object", renderObjectId: "hud.r7.fever" },
+    { ...base(19), kind: "play-animation", renderObjectId: "hud.r7.fever", animationRole: "fever", restart: true },
+    { ...base(20), kind: "create-object", renderObjectId: "hud.r7.result", poolFamily: "hud-result", role: "hud-result", parentObjectId: null },
+    { ...base(21), kind: "set-hud", renderObjectId: "hud.r7.result", hudRole: "result", state: Object.freeze({ representativeResult: 4, representativeSlot: 0, judgeTiming: 2, scoreUpType: 5, crescendoTenths: 12 }) },
+    { ...base(22), kind: "activate-object", renderObjectId: "hud.r7.result" },
+    { ...base(23), kind: "play-animation", renderObjectId: "hud.r7.result", animationRole: "result", restart: true },
+  ]), "preflight R7 complete HUD Pixi batch");
+  requireOk(r7HudRenderer.commit(r7HudBatch), "commit R7 complete HUD Pixi batch");
+  const r7HudScene = r7HudRenderer.sceneSnapshot();
+  equal(r7HudScene.find((row) => row.renderObjectId === "hud.r7.score")?.hudScoreDigitCount, 8,
+    "R7 Score owns eight independently colored digit objects");
+  equal(JSON.stringify(r7HudScene.find((row) => row.renderObjectId === "hud.r7.score")?.hudFillRatios),
+    JSON.stringify([0.25, 0]), "R7 Score gauge consumes its typed source fill");
+  equal(r7HudScene.find((row) => row.renderObjectId === "hud.r7.add")?.position[1], -41.5,
+    "R7 AddScore samples the second motion phase from engine time");
+  equal(r7HudScene.find((row) => row.renderObjectId === "hud.r7.life")?.activeAnimationRole,
+    "never-die", "R7 NeverDie selects the guts overlay");
+  equal(r7HudScene.find((row) => row.renderObjectId === "hud.r7.judge")?.activeAnimationRole,
+    "judge-skill", "R7 Judge Skill owns its portable animation");
+  equal(r7HudScene.find((row) => row.renderObjectId === "hud.r7.fever")?.hudText,
+    "FEVER", "R7 Fever Start maps to the visible current HUD route");
+  equal(r7HudScene.find((row) => row.renderObjectId === "hud.r7.result")?.hudText,
+    "1.2 SLOW", "R7 Crescendo decimal and Slow JudgeTiming share Result layout");
+  requireOk(r7HudRenderer.dispose(), "dispose R7 complete HUD renderer");
 
   const multipleRenderer = new PixiRendererBackend(decoder);
   requireOk(await multipleRenderer.prepare(

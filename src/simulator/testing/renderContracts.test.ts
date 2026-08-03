@@ -780,7 +780,7 @@ async function testHudReflectAtomic(): Promise<void> {
     "HUD engine create",
   );
   requireOk(engine.initialize(), "HUD engine initialize");
-  equal(renderer.snapshot().objectCount, 7, "six HUD objects plus one Note root");
+  equal(renderer.snapshot().objectCount, 12, "eleven HUD objects plus one Note root");
   const before = requireOk(engine.snapshot(), "HUD before snapshot");
   equal(before.managers.scoreLifeState?.record.score, 0, "score before judgement");
   requireOk(engine.step(0), "HUD activation frame");
@@ -801,22 +801,25 @@ async function testHudReflectAtomic(): Promise<void> {
     }
   }
   const reflected = commands.slice(reflectStart);
-  equal(reflected.length, 8, "Reflect emits the visible ordinary HUD transaction");
+  equal(reflected.length, 11, "Reflect emits the complete current ordinary HUD transaction");
   equal(reflected[0]?.kind, "set-hud", "AddScore first");
   equal(reflected[1]?.kind, "activate-object", "AddScore visibility follows its state");
-  equal(reflected[2]?.kind, "set-hud", "Combo update follows AddScore");
-  equal(reflected[3]?.kind, "activate-object", "Combo show follows Combo state");
-  equal(reflected[4]?.kind, "activate-object", "Result show precedes Result state");
-  equal(reflected[5]?.kind, "set-hud", "Result route follows visibility");
-  equal(reflected[6]?.kind, "set-hud", "Score update follows Result");
-  equal(reflected[7]?.kind, "set-hud", "Life update closes Reflect");
-  if (reflected[6]?.kind === "set-hud") {
-    equal(reflected[6].state.score, after.managers.scoreLifeState?.record.score,
+  equal(reflected[2]?.kind, "play-animation", "AddScore coroutine starts on its selected owner");
+  equal(reflected[3]?.kind, "set-hud", "Combo update follows AddScore");
+  equal(reflected[4]?.kind, "play-animation", "All Perfect alpha loop follows Combo state");
+  equal(reflected[5]?.kind, "activate-object", "Combo show follows Combo animation");
+  equal(reflected[6]?.kind, "activate-object", "Result show precedes Result state");
+  equal(reflected[7]?.kind, "set-hud", "Result route follows visibility");
+  equal(reflected[8]?.kind, "play-animation", "Result lifetime starts explicitly");
+  equal(reflected[9]?.kind, "set-hud", "Score update follows Result");
+  equal(reflected[10]?.kind, "set-hud", "Life update closes Reflect");
+  if (reflected[9]?.kind === "set-hud") {
+    equal(reflected[9].state.score, after.managers.scoreLifeState?.record.score,
       "HUD score equals committed owner plan");
   }
-  if (reflected[7]?.kind === "set-hud") {
-    equal(reflected[7].state.primaryFill, 1, "Life primary fill uses min(current/1000, 1)");
-    equal(reflected[7].state.secondaryFill, 0, "Life secondary fill uses max(current/1000 - 1, 0)");
+  if (reflected[10]?.kind === "set-hud") {
+    equal(reflected[10].state.primaryFill, 1, "Life primary fill uses min(current/1000, 1)");
+    equal(reflected[10].state.secondaryFill, 0, "Life secondary fill uses max(current/1000 - 1, 0)");
   }
   requireOk(engine.dispose(), "HUD engine dispose");
 
@@ -861,12 +864,14 @@ async function testHudReflectAtomic(): Promise<void> {
     lifeHealAnimation: true,
     reflect: {
       batchIndex: 0,
-      entries: [{ slot: 0, ordinaryScore: 100, freeLiveEventBonusScore: 0, lifeDelta: 300, comboAfter: 1, stageEffectLevel: 0, scoreUpType: 0 }],
+      entries: [{ slot: 0, ordinaryScore: 100, freeLiveEventBonusScore: 0, lifeDelta: 300, comboAfter: 1, stageEffectLevel: 0, scoreUpType: 0, crescendoRate: 1 }],
       totalOrdinaryScore: 100,
       totalFreeLiveEventBonusScore: 0,
       representativeSlot: 0,
       representativeRawResult: 4,
+      representativeJudgeTiming: 0,
       representativeScoreUpType: 0,
+      representativeCrescendoRate: 1,
     },
     record: healRecord.snapshot(),
   }), "preflight life-heal HUD reflect");
@@ -893,12 +898,14 @@ async function testHudReflectAtomic(): Promise<void> {
     lifeHealAnimation: false,
     reflect: {
       batchIndex: 1,
-      entries: [{ slot: 0, ordinaryScore: 100, freeLiveEventBonusScore: 0, lifeDelta: 0, comboAfter: 2, stageEffectLevel: 0, scoreUpType: 2 }],
+      entries: [{ slot: 0, ordinaryScore: 100, freeLiveEventBonusScore: 0, lifeDelta: 0, comboAfter: 2, stageEffectLevel: 0, scoreUpType: 2, crescendoRate: 1 }],
       totalOrdinaryScore: 100,
       totalFreeLiveEventBonusScore: 0,
       representativeSlot: 0,
       representativeRawResult: 4 as const,
+      representativeJudgeTiming: 0 as const,
       representativeScoreUpType: 2,
+      representativeCrescendoRate: 1,
     },
     record: healRecord.snapshot(),
   };
@@ -909,18 +916,65 @@ async function testHudReflectAtomic(): Promise<void> {
   );
   if (scoreUpResult?.kind !== "set-hud") throw new Error("missing ScoreUp Result state");
   equal(scoreUpResult.state.scoreUpType, 2, "R6 Result carries owner-frozen ScoreUpType 2");
-  const beforeCrescendoReject = healRenderer.commandSnapshot().length;
-  equal(producer.preflightHudReflect({
+  const crescendo = requireOk(producer.preflightHudReflect({
     ...scoreUpPlan,
-    reflect: { ...scoreUpPlan.reflect, representativeScoreUpType: 5 },
-  }).status, "evidence-required", "unobserved Crescendo text route stays closed");
-  equal(healRenderer.commandSnapshot().length, beforeCrescendoReject,
-    "Crescendo rejection has zero renderer mutation");
+    reflect: {
+      ...scoreUpPlan.reflect,
+      representativeScoreUpType: 5,
+      representativeCrescendoRate: 1.2,
+    },
+  }), "preflight current R7 Crescendo text route");
+  requireOk(crescendo.commit(), "commit current R7 Crescendo text route");
+  const crescendoState = [...healRenderer.commandSnapshot()].reverse().find((command) =>
+    command.kind === "set-hud" && command.renderObjectId === "render:hud:result"
+  );
+  if (crescendoState?.kind !== "set-hud") throw new Error("missing Crescendo Result state");
+  equal(crescendoState.state.scoreUpType, 5, "R7 Result carries ScoreUpType 5");
+  equal(crescendoState.state.crescendoTenths, 12, "R7 Crescendo truncates rate times ten");
   requireOk(requireOk(producer.preflightHudAnimationAdvance(0.75),
     "preflight Result one-second lifetime").commit(), "commit Result one-second lifetime");
   equal(healRenderer.commandSnapshot().some((command) =>
     command.kind === "hide-object" && command.renderObjectId === "render:hud:result"
   ), true, "R5 Result lifetime hides at one owner-local second");
+  requireOk(requireOk(producer.preflightHudReflect({
+    ...scoreUpPlan,
+    batchIndex: 2,
+    reflect: {
+      ...scoreUpPlan.reflect,
+      batchIndex: 2,
+      representativeJudgeTiming: 1,
+      representativeScoreUpType: 0,
+    },
+  }), "preflight fourth AddScore/JudgeTiming route").commit(),
+  "commit fourth AddScore/JudgeTiming route");
+  const addScoreOwners = healRenderer.commandSnapshot().filter((command) =>
+    command.kind === "set-hud" && Object.prototype.hasOwnProperty.call(command.state, "addScore")
+  ).map((command) => command.renderObjectId);
+  equal(addScoreOwners.slice(0, 4).join(","),
+    "render:hud:add-score,render:hud:add-score:1,render:hud:add-score:2,render:hud:add-score:3",
+    "R7 AddScore selects all four owners in round-robin order");
+  const fastResult = [...healRenderer.commandSnapshot()].reverse().find((command) =>
+    command.kind === "set-hud" && command.renderObjectId === "render:hud:result"
+  );
+  if (fastResult?.kind !== "set-hud") throw new Error("missing JudgeTiming state");
+  equal(fastResult.state.judgeTiming, 1, "R7 Result carries Fast JudgeTiming");
+  healRecord.addLife(-800);
+  requireOk(requireOk(producer.preflightHudReflect({
+    ...scoreUpPlan,
+    batchIndex: 3,
+    reflect: {
+      ...scoreUpPlan.reflect, batchIndex: 3,
+      totalOrdinaryScore: 0, totalFreeLiveEventBonusScore: 0,
+      representativeScoreUpType: 0,
+    },
+    record: healRecord.snapshot(),
+  }), "preflight warning-boundary Life route").commit(), "commit warning-boundary Life route");
+  const warningLife = [...healRenderer.commandSnapshot()].reverse().find((command) =>
+    command.kind === "set-hud" && command.renderObjectId === "render:hud:life"
+  );
+  if (warningLife?.kind !== "set-hud") throw new Error("missing warning Life state");
+  equal(warningLife.state.danger, true, "R7 Life marks primary equality at 0.2 dangerous");
+  equal(warningLife.state.warning, true, "R7 Life marks <=0.25 warning without Guard");
   requireOk(healRenderer.dispose(), "dispose life-heal renderer");
 
   const skillRenderer = new RecordingSimulatorRendererBackend();
@@ -968,9 +1022,74 @@ async function testHudReflectAtomic(): Promise<void> {
     skillSnapshot(2, [0]),
     skillSnapshot(3, [0]),
   ), "R5 score-skill finish").commit(), "commit R5 score-skill finish");
-  equal(skillRenderer.commandSnapshot().slice(-2).map((command) => command.kind).join(","),
-    "stop-animation,hide-object", "R5 skill finish stops Animator then hides generic display");
-  requireOk(skillRenderer.dispose(), "dispose R5 score-skill renderer");
+  equal(skillRenderer.commandSnapshot().slice(-3).map((command) => command.kind).join(","),
+    "stop-animation,hide-object,hide-object", "R7 skill finish stops Animator then hides score and judge displays");
+  requireOk(requireOk(skillProducer.preflightHudSkillTransition(
+    skillSnapshot(1, []), skillSnapshot(2, [9]),
+  ), "R7 NeverDie start").commit(), "commit R7 NeverDie start");
+  const neverDiePlay = [...skillRenderer.commandSnapshot()].reverse().find((command) =>
+    command.kind === "play-animation"
+  );
+  equal(neverDiePlay?.kind === "play-animation" ? neverDiePlay.animationRole : null,
+    "never-die", "R7 NeverDie selects the guts overlay role");
+  requireOk(requireOk(skillProducer.preflightHudSkillTransition(
+    skillSnapshot(2, [9]), skillSnapshot(3, [9]),
+  ), "R7 NeverDie finish").commit(), "commit R7 NeverDie finish");
+  requireOk(requireOk(skillProducer.preflightHudSkillTransition(
+    skillSnapshot(1, []), skillSnapshot(2, [9, 2, 1]),
+  ), "R7 later-wins Life Skill start").commit(), "commit R7 later-wins Life Skill start");
+  const lifeSkillPlay = [...skillRenderer.commandSnapshot()].reverse().find((command) =>
+    command.kind === "play-animation"
+  );
+  equal(lifeSkillPlay?.kind === "play-animation" ? lifeSkillPlay.animationRole : null,
+    "damage-guard", "R7 later eligible DamageGuard wins over Heal and NeverDie");
+  requireOk(requireOk(skillProducer.preflightHudReflect({
+    ...scoreUpPlan,
+    batchIndex: 4,
+    reflect: {
+      ...scoreUpPlan.reflect, batchIndex: 4,
+      totalOrdinaryScore: 0, totalFreeLiveEventBonusScore: 0,
+      representativeScoreUpType: 0,
+    },
+    record: healRecord.snapshot(),
+  }), "R7 guarded warning refresh").commit(), "commit R7 guarded warning refresh");
+  const guardedLife = [...skillRenderer.commandSnapshot()].reverse().find((command) =>
+    command.kind === "set-hud" && command.renderObjectId === "render:hud:life"
+  );
+  if (guardedLife?.kind !== "set-hud") throw new Error("missing guarded Life state");
+  equal(guardedLife.state.warning, false, "R7 DamageGuard suppresses Life warning");
+  equal(guardedLife.state.damageGuardPlaying, true, "R7 Life exposes active DamageGuard owner");
+  requireOk(requireOk(skillProducer.preflightHudSkillTransition(
+    skillSnapshot(2, [9, 2, 1]), skillSnapshot(3, [9, 2, 1]),
+  ), "R7 DamageGuard finish").commit(), "commit R7 DamageGuard finish");
+  requireOk(requireOk(skillProducer.preflightHudSkillTransition(
+    skillSnapshot(1, []), skillSnapshot(2, [3]),
+  ), "R7 Judge Skill start").commit(), "commit R7 Judge Skill start");
+  equal(skillRenderer.commandSnapshot().some((command) =>
+    command.kind === "play-animation" && command.animationRole === "judge-skill" &&
+    command.renderObjectId === "render:hud:judge-overlay"
+  ), true, "R7 Judge Skill owns its independent overlay");
+  requireOk(requireOk(skillProducer.preflightHudSkillTransition(
+    skillSnapshot(2, [3]), skillSnapshot(3, [3]),
+  ), "R7 Judge Skill finish").commit(), "commit R7 Judge Skill finish");
+  const feverSnapshot = Object.freeze({
+    state: 0 as const, command: 0 as const, myPoint: 80,
+    ownTeamPassCount: 1, ownTeamMemberCount: 1,
+    reservationFrame: 0, reservationCommand: 0 as const,
+    reservationAfterState: 0 as const, trace: Object.freeze([]),
+  });
+  requireOk(requireOk(skillProducer.preflightHudFeverTransition("ready", feverSnapshot),
+    "R7 Fever Ready").commit(), "commit R7 Fever Ready");
+  requireOk(requireOk(skillProducer.preflightHudFeverTransition("start", feverSnapshot),
+    "R7 Fever Start").commit(), "commit R7 Fever Start");
+  requireOk(requireOk(skillProducer.preflightHudFeverTransition("end", feverSnapshot),
+    "R7 Fever End").commit(), "commit R7 Fever End");
+  equal(skillRenderer.commandSnapshot().flatMap((command) =>
+    command.kind === "set-hud" && command.renderObjectId === "render:hud:fever-overlay"
+      ? [command.state.feverCommand] : []
+  ).join(","), "ready,start,end",
+  "R7 Fever owner preserves Ready→Start→End command order");
+  requireOk(skillRenderer.dispose(), "dispose R7 complete HUD renderer");
   console.log("ok 5 - Score/Life HUD, R5 Result lifetime and Skill/ScoreGauge transitions are atomic");
 }
 
@@ -1003,13 +1122,14 @@ async function testOrdinaryLongLifecycle(): Promise<void> {
   equal(renderer.snapshot().nextSequence, 6, "Long pool setup has three create-hide pairs");
   requireOk(engine.step(0), "Long activation frame");
   const activation = renderer.commandSnapshot();
-  equal(activation.length, 14, "Long activation commits root, hidden after and visible mesh atomically");
+  equal(activation.length, 15, "Long activation commits root, hidden after, threshold and visible mesh atomically");
   equal(
     activation.slice(6).map((command) => `${command.kind}:${command.renderObjectId}`).join(","),
     "set-transform:render:long:0:root,activate-object:render:long:0:root," +
       "bind-resource:render:long:0:root,set-transform:render:long:0:after," +
       "set-transform:render:long:0:mesh,set-mesh:render:long:0:mesh," +
-      "activate-object:render:long:0:mesh,bind-resource:render:long:0:after",
+      "set-threshold:render:long:0:mesh,activate-object:render:long:0:mesh," +
+      "bind-resource:render:long:0:after",
     "Long Activate preserves front then after/mesh/setupNoteType owner order",
   );
   let afterActivationIndex = -1;
@@ -1019,12 +1139,12 @@ async function testOrdinaryLongLifecycle(): Promise<void> {
       command.kind === "activate-object" && command.renderObjectId === "render:long:0:after"
     );
   }
-  assert(afterActivationIndex > 14, "Long after becomes visible at LauncherMusicPos tail equality");
+  assert(afterActivationIndex > 15, "Long after becomes visible at LauncherMusicPos tail equality");
   const moved = renderer.commandSnapshot();
   equal(moved[afterActivationIndex - 1]?.kind, "set-transform", "after equality writes transform before visibility");
   equal(moved[afterActivationIndex + 1]?.kind, "set-mesh", "mesh refresh follows after visibility transition");
   assert(
-    moved.slice(14, afterActivationIndex).some((command) =>
+    moved.slice(15, afterActivationIndex).some((command) =>
       command.kind === "set-mesh" && command.renderObjectId === "render:long:0:mesh"),
     "Long mesh refreshes while after waits at launcher",
   );
@@ -1210,34 +1330,20 @@ async function testHostReadyGate(): Promise<void> {
 
 async function testR4NoteFamilyBoundaries(): Promise<void> {
   const normal = renderedNoteBatch("render-family-boundary", 96).informationList[0]!;
-  const cases = [
-    {
-      label: "virtual Long",
-      information: { ...normal, fireNoteType: FrontNoteType.Long, afterNoteType: AfterNoteType.Normal, afterNoteAbsolutePos: 192, virtualLaneDirection: 1 },
-      capability: "render.note.virtual-lane-child-evidence-required",
-    },
-    {
-      label: "Long Flick tail",
-      information: { ...normal, fireNoteType: FrontNoteType.Long, afterNoteType: AfterNoteType.Flick, afterNoteAbsolutePos: 192 },
-      capability: "render.note.long-non-normal-tail-evidence-required",
-    },
-    {
-      label: "Slide",
-      information: { ...normal, fireNoteType: FrontNoteType.SlideA },
-      capability: "render.note.slide-child-chain-evidence-required",
-    },
-    {
-      label: "Multiple side visual",
-      information: { ...normal, fireNoteType: FrontNoteType.LongMultipleDirectionalFlickAdd },
-      capability: "render.note.multiple-directional-lifecycle-evidence-required",
-    },
-  ] as const;
-  for (const testCase of cases) {
-    const result = validateOrdinaryRenderedBatchAuthorization([testCase.information]);
-    equal(result.status, "evidence-required", `${testCase.label} remains fail-closed`);
-    equal(result.status === "evidence-required" ? result.capability : null,
-      testCase.capability, `${testCase.label} reports its exact missing authorization`);
+  for (const testCase of [
+    { label: "virtual Long", information: { ...normal, fireNoteType: FrontNoteType.Long, afterNoteType: AfterNoteType.Normal, afterNoteAbsolutePos: 192, virtualLaneDirection: 1 as const } },
+    { label: "Long Flick tail", information: { ...normal, fireNoteType: FrontNoteType.Long, afterNoteType: AfterNoteType.Flick, afterNoteAbsolutePos: 192 } },
+    { label: "Multiple side visual", information: { ...normal, fireNoteType: FrontNoteType.LongMultipleDirectionalFlickAdd } },
+  ]) {
+    equal(validateOrdinaryRenderedBatchAuthorization([testCase.information]).status, "ok",
+      `${testCase.label} is authorized by current R7`);
   }
+  const invalidSlide = validateOrdinaryRenderedBatchAuthorization([
+    { ...normal, fireNoteType: FrontNoteType.SlideA },
+  ]);
+  equal(invalidSlide.status, "evidence-required", "Slide without a child chain stays invalid");
+  equal(invalidSlide.status === "evidence-required" ? invalidSlide.capability : null,
+    "render.note.invalid-slide-child-chain", "invalid Slide reports the exact structural gate");
   equal(validateOrdinaryRenderedBatchAuthorization([normal]).status, "ok",
     "ordinary Normal remains authorized");
   equal(validateOrdinaryRenderedBatchAuthorization([

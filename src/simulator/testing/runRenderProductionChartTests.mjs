@@ -89,6 +89,7 @@ async function verifyHabahiroDegradedReplay() {
   }
   if (snapshot.adjustedMusicPosition < 1730) throw new Error("lane-change position was not reached");
   const commands = renderer.commandSnapshot();
+  equal(commands.length, 4902, "degraded HABAHIRO exact command count");
   const phases = commands.filter((command) => command.kind === "set-hud" && command.renderObjectId === "render:habahiro:lane-change").map((command) => command.state.laneChangePhase);
   equal(phases.join(","), "flash-start,change-lane", "degraded lane-change command order");
   if (!commands.some((command) => command.kind === "set-hud" && command.renderObjectId === "render:hud:fidelity-label" && command.state.label === "Approximate HABAHIRO")) throw new Error("visible degraded label missing");
@@ -117,7 +118,9 @@ async function verifyHabahiroDegradedReplay() {
       atlasRows: ordinaryKeys.map((exactKey) => ({ exactKey, x: 0, y: 0, width: 1, height: 1, pivotX: 0.5, pivotY: 0.5, pixelsPerUnit: 100 })),
     }, lineAsset("asset.ordinary.sync", "sync-line"),
       lineAsset("asset.ordinary.multiple-left", "multiple-directional-line"),
-      lineAsset("asset.ordinary.multiple-right", "multiple-directional-line")],
+      lineAsset("asset.ordinary.multiple-right", "multiple-directional-line"),
+      lineAsset("asset.ordinary.long", "long-note"),
+      lineAsset("asset.ordinary.curve", "curve-note")],
     scene: { ...profile.scene, projection: { ...profile.scene.projection, mode: "current-ordinary-rhythmgame-orthographic" } },
   };
   const ordinaryRenderer = new RecordingSimulatorRendererBackend();
@@ -133,23 +136,38 @@ async function verifyHabahiroDegradedReplay() {
       syncLineLogicalAssetId: "asset.ordinary.sync",
       multipleDirectionalLineLeftLogicalAssetId: "asset.ordinary.multiple-left",
       multipleDirectionalLineRightLogicalAssetId: "asset.ordinary.multiple-right",
+      longNoteMaterialLogicalAssetId: "asset.ordinary.long",
+      curveNoteMaterialLogicalAssetId: "asset.ordinary.curve",
     }, ordinaryNoteScene: { ...scene, syncLineEdgeMargin: f32(.2) } },
   }, createRecordingSimulatorBackends(ordinaryRenderer)), "create ordinary production audit engine");
   ok(ordinaryEngine.initialize(), "initialize ordinary production audit engine");
   let ordinaryFailure = null;
-  for (let frame=0; frame<12000 && ordinaryFailure===null; frame++) {
-    const result = ordinaryEngine.step(1/60);
+  let ordinaryCommandCount = ordinaryRenderer.drainCommandSnapshot().length;
+  const ordinaryCommandDigest = createHash("sha256");
+  for (let frame=0; frame<7200 && ordinaryFailure===null; frame++) {
+    const result = ordinaryEngine.step(1/30);
     if (result.status === "evidence-required") ordinaryFailure = result;
+    const frameCommands = ordinaryRenderer.drainCommandSnapshot();
+    ordinaryCommandCount += frameCommands.length;
+    for (const command of frameCommands) {
+      ordinaryCommandDigest.update(`${command.kind}|${command.renderObjectId}|${command.frame}|${command.substep}\n`);
+    }
   }
-  if (ordinaryFailure === null) throw new Error("ordinary production replay unexpectedly claimed complete support");
-  const ordinaryFailureSnapshot = ok(ordinaryEngine.snapshot(), "ordinary failure snapshot");
-  const blockedBatch = ordinaryChart.value.noteBatches[ordinaryFailureSnapshot.managers.noteManager.nextBatchIndex];
-  const blockedSummary = blockedBatch?.informationList.map((note) => `${note.index}:${note.buttonType}:${note.halfButtonIndex}:${note.fireNoteType}`).join("|") ?? "missing";
-  if (!["render.note.ordinary-motion-invalid-lane", "render.note.long-non-normal-tail-evidence-required", "render.note.slide-child-chain-evidence-required", "render.note.multiple-directional-lifecycle-evidence-required"].includes(ordinaryFailure.capability)) {
-    throw new Error(`unexpected ordinary production blocker: ${ordinaryFailure.capability}`);
+  if (ordinaryFailure !== null) {
+    const ordinaryFailureSnapshot = ok(ordinaryEngine.snapshot(), "ordinary failure snapshot");
+    const blockedBatch = ordinaryChart.value.noteBatches[ordinaryFailureSnapshot.managers.noteManager.nextBatchIndex];
+    const blockedSummary = blockedBatch?.informationList.map((note) => `${note.index}:${note.buttonType}:${note.halfButtonIndex}:${note.fireNoteType}`).join("|") ?? "missing";
+    throw new Error(`ordinary production blocker ${ordinaryFailure.capability}: ${blockedSummary}`);
   }
+  const ordinarySnapshot = ok(ordinaryEngine.snapshot(), "ordinary completed snapshot");
+  equal(ordinarySnapshot.managers.noteManager.nextBatchIndex, ordinaryChart.value.noteBatches.length, "ordinary consumed all production batches");
   ok(ordinaryEngine.dispose(), "dispose ordinary production audit engine");
-  console.log(`render ordinary production audit remains closed at ${ordinaryFailure.capability}: ${blockedSummary}`);
+  equal(ordinaryRenderer.snapshot().objectCount, 0, "ordinary replay releases every render owner");
+  const ordinaryDigest = ordinaryCommandDigest.digest("hex");
+  equal(ordinaryCommandCount, 159832, "ordinary exact command count");
+  equal(ordinaryDigest, "e174b8f0ab2e943ba84ab45a2ee8ecaca9fbcdc235fb32176c7cf6c18834a0ec",
+    "ordinary exact command identity digest");
+  console.log(`render ordinary exact production replay passed: batches=${ordinaryChart.value.noteBatches.length} commands=${ordinaryCommandCount} digest=${ordinaryDigest}`);
 }
 function ok(result,message){if(result.status!=="ok")throw new Error(`${message}: ${result.capability}`);return result.value;}
 function equal(actual,expected,message){if(!Object.is(actual,expected))throw new Error(`${message}: ${actual} !== ${expected}`);}
