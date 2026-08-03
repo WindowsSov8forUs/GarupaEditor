@@ -631,6 +631,12 @@
 - 取证顺序固定为：先提交R7 plan/targets/verifier → 一次自然Live campaign按Note、field、HUD core、HUD overlay完整窗口采集 → 同批完成current shader/asset静态重建 → 只晋升零hook failure、完整summary、owner/setter correlation且privacy flags全false的trace/profile → Reverse提交push → Garupa一次冻结。此前不得修改production、tests或package scripts。
 - 实现顺序固定为：typed contracts/producer预检 → Note/advanced/threshold/field → HUD/animation → Pixi mappings → PR01–PR40 actual oracle → ordinary/HAB production replay → RP13全回归 → RP14独立验收。任何新观察仍为false的route必须回Reverse补证，不允许在production阶段用默认值解阻。
 
+### 1.72 2026-08-03 final R7全量证据计划先行提交
+
+- Reverse `82ae9199`已先提交并push，远端差异`0 0`；R7 owner inventory从current static/RPH/R4/R5去重出130个byte-pinned方法，分为Note 73、field 5、HUD core 25、HUD overlay 27，覆盖第1.71节全部21个remaining PR。
+- committed-before-capture plan固定9个scenario：两轮ordinary Note、earliest field、HUD core、Guard、NeverDie、Judge+Crescendo、Heal+Score+Fever，以及current portable static。collector统一关联geometry/HUD setter，保留Float32 bits与匿名alias，禁止return replacement、内存写、managed invocation、raw pointer/display string和in-process event injection。
+- promotion gate要求九场景均有处置、所有保留trace为confirmed/零hook failure/完整summary、每个runtime route有owner+setter、每个portable route有current 10.1.4 source，且最终`unknown_fields=[]`、`blocking_findings=[]`。partial trace删除；R7 profile晋升并push前禁止Garupa production/test/package改动。
+
 ## 2. 固定范围
 
 ### 2.1 纳入范围
