@@ -164,8 +164,8 @@ function profile(
         premultiplyAlpha: true,
         blendMode: "normal",
       },
-      atlasRows: [{
-        exactKey: "note_normal_0",
+      atlasRows: ["note_normal_0", "note_normal_1"].map((exactKey) => ({
+        exactKey,
         x: 0,
         y: 0,
         width: 4,
@@ -173,7 +173,7 @@ function profile(
         pivotX: 0.5,
         pivotY: 0.5,
         pixelsPerUnit: 100,
-      }],
+      })),
       materialRole: "sprite",
       animationRole: "note-flick",
       provenance,
@@ -417,6 +417,9 @@ function renderedNoteBatch(testingId: string, absolutePos: number) {
       denominator: 192,
       absolutePos,
       storedAbsolutePos: absolutePos,
+      buttonType: ButtonType.Button_00_BMS_1P_SC,
+      buttonTypes: Object.freeze([ButtonType.Button_00_BMS_1P_SC]),
+      buttonTypesArray: Object.freeze([ButtonType.Button_00_BMS_1P_SC]),
       bpm: 120,
       bpmString: "120",
     }))),
@@ -485,9 +488,9 @@ function renderedSyncNoteBatch(absolutePos: number) {
       Object.freeze({
         ...second,
         index: 1,
-        buttonType: ButtonType.Button_07_BMS_1P_07,
-        buttonTypes: Object.freeze([ButtonType.Button_07_BMS_1P_07]),
-        buttonTypesArray: Object.freeze([ButtonType.Button_07_BMS_1P_07]),
+        buttonType: ButtonType.Button_06_BMS_1P_06,
+        buttonTypes: Object.freeze([ButtonType.Button_06_BMS_1P_06]),
+        buttonTypesArray: Object.freeze([ButtonType.Button_06_BMS_1P_06]),
       }),
     ]),
   });
@@ -1250,13 +1253,13 @@ async function testR4NoteFamilyBoundaries(): Promise<void> {
     { ...normal, fireNoteType: FrontNoteType.MultipleDirectionalFlick, gameNoteType: GameNoteType.DirectionalFlickLeft },
   ]).status, "ok", "R4 MultipleDirectional root is authorized");
   const laneButtons = Object.freeze([
+    ButtonType.Button_00_BMS_1P_SC,
     ButtonType.Button_01_BMS_1P_01,
     ButtonType.Button_02_BMS_1P_02,
     ButtonType.Button_03_BMS_1P_03,
     ButtonType.Button_04_BMS_1P_04,
     ButtonType.Button_05_BMS_1P_05,
     ButtonType.Button_06_BMS_1P_06,
-    ButtonType.Button_07_BMS_1P_07,
   ]);
   for (let width = 1; width <= 7; width += 1) {
     const range = Object.freeze(laneButtons.slice(0, width));
@@ -1269,7 +1272,7 @@ async function testR4NoteFamilyBoundaries(): Promise<void> {
       buttonTypes: range,
       buttonTypesArray: range,
     }, false, RESOURCES), `R4 Slide width ${width} binding`);
-    equal(binding.exactKey, `note_long_${center - ButtonType.Button_01_BMS_1P_01}`,
+    equal(binding.exactKey, `note_long_${center}`,
       `R4 Slide width ${width} uses its authored center lane key`);
   }
 
@@ -1367,8 +1370,8 @@ async function testR4NoteFamilyBoundaries(): Promise<void> {
   const multipleBatch = renderedNoteBatch("render-multiple-r4", 96);
   const multipleBase = multipleBatch.informationList[0]!;
   const multipleInformation = ([
-    [ButtonType.Button_01_BMS_1P_01, 0],
-    [ButtonType.Button_02_BMS_1P_02, 1],
+    [ButtonType.Button_00_BMS_1P_SC, 0],
+    [ButtonType.Button_01_BMS_1P_01, 1],
   ] as const).map(([buttonType, index]) => Object.freeze({
     ...multipleBase,
     index: multipleBase.index + index,

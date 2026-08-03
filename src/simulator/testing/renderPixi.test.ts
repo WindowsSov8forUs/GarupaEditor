@@ -1045,6 +1045,11 @@ async function main(): Promise<void> {
       directionalAtlasLogicalAssetId: "asset.note",
     },
   );
+  const degradedPoolSetup = requireOk(
+    degradedProducer.preflightPoolSetup([], 0, 0),
+    "preflight degraded diagnostic owner",
+  );
+  requireOk(degradedPoolSetup.commit(), "commit degraded diagnostic owner");
   const degradedSetup = requireOk(
     degradedProducer.preflightHudSetup(new InGameRecord(1000, 1000, 2000).snapshot()),
     "preflight degraded fidelity HUD",
@@ -1054,6 +1059,16 @@ async function main(): Promise<void> {
     row.renderObjectId === "render:hud:fidelity-label");
   equal(fidelityLabel?.visible, true, "degraded fidelity label is visibly active");
   equal(fidelityLabel?.hudText, "Approximate HABAHIRO", "degraded fidelity text is exact");
+  const laneChange = requireOk(
+    degradedProducer.preflightDegradedHabahiroLaneChange(1728),
+    "preflight degraded HABAHIRO lane change",
+  );
+  requireOk(laneChange.commit(), "commit degraded HABAHIRO lane change");
+  const laneDiagnostic = degradedRenderer.sceneSnapshot().find((row) =>
+    row.renderObjectId === "render:habahiro:lane-change");
+  equal(laneDiagnostic?.visible, true, "degraded lane-change diagnostic becomes visible");
+  equal(laneDiagnostic?.hudText, "Approximate HABAHIRO · Lane Changed",
+    "degraded flash then lane-change ends at the disclosed diagnostic state");
   const degradedRelease = requireOk(
     degradedProducer.preflightSessionRelease(),
     "preflight degraded session release",

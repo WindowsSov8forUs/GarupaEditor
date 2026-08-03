@@ -10,14 +10,14 @@ const matrix = [
   ["PR10", "closed-current-subset"], ["PR11", "partial"], ["PR12", "closed-current-subset"],
   ["PR13", "closed-current-subset"], ["PR14", "blocked"], ["PR15", "partial"],
   ["PR16", "closed-current-subset"], ["PR17", "closed-current-subset"], ["PR18", "partial"],
-  ["PR19", "blocked-degraded"], ["PR20", "partial"], ["PR21", "partial"],
+  ["PR19", "closed-degraded"], ["PR20", "partial"], ["PR21", "partial"],
   ["PR22", "partial"], ["PR23", "closed-current-subset"], ["PR24", "partial"],
   ["PR25", "partial"], ["PR26", "partial"], ["PR27", "partial"],
   ["PR28", "partial"], ["PR29", "partial"], ["PR30", "blocked"],
   ["PR31", "partial"], ["PR32", "partial"], ["PR33", "closed"],
   ["PR34", "partial"], ["PR35", "closed"], ["PR36", "closed"],
   ["PR37", "closed"], ["PR38", "closed"], ["PR39", "blocked"],
-  ["PR40", "blocked-degraded"],
+  ["PR40", "closed-degraded"],
 ];
 const ids = matrix.map(([id]) => id);
 const expectedIds = Array.from({ length: 40 }, (_, index) => `PR${String(index + 1).padStart(2, "0")}`);
@@ -33,6 +33,8 @@ for (const marker of [
   "multipleDirectionalLineLeftLogicalAssetId",
   "preflightHudSkillTransition",
   "representativeScoreUpType",
+  "preflightDegradedHabahiroLaneChange",
+  "Approximate HABAHIRO",
   "score-skill",
   "render.note.long-non-normal-tail-evidence-required",
   "render.note.multiple-directional-lifecycle-evidence-required",
@@ -47,8 +49,8 @@ for (const [id, status] of matrix) {
   else if (status.startsWith("blocked")) groups.blocked.push(id);
   else throw new Error(`Unknown PR production status: ${status}`);
 }
-if (groups.closed.length !== 17 || groups.partial.length !== 18 || groups.blocked.length !== 5) {
+if (groups.closed.length !== 19 || groups.partial.length !== 18 || groups.blocked.length !== 3) {
   throw new Error(`PR production counts differ: ${JSON.stringify(groups)}`);
 }
 Object.freeze(matrix); Object.freeze(groups.closed); Object.freeze(groups.partial); Object.freeze(groups.blocked);
-console.log("render PR production matrix verified: closed=17 partial=18 blocked=5 RP14=blocked");
+console.log("render PR production matrix verified: closed=19 partial=18 blocked=3 RP14=blocked");

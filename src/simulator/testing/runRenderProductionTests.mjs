@@ -18,9 +18,10 @@ for (const runner of [
   "runRenderContractTests.mjs",
   "runOrdinaryNoteGeometryTests.mjs",
   "runRenderPixiTests.mjs",
+  "runRenderProductionChartTests.mjs",
   "runRenderFailureTests.mjs",
 ]) run(process.execPath, [join(testingRoot, runner)]);
-console.log("render production oracle passed: contracts/producers/Pixi/failures/static/evidence");
+console.log("render production oracle passed: contracts/producers/Pixi/HAB-degraded-chart/failures/static/evidence");
 
 function run(command, args) {
   const result = spawnSync(command, args, {
