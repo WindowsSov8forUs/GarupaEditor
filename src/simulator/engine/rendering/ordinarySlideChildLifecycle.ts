@@ -17,10 +17,11 @@ import {
   type OrdinaryLongNormalChildFrameInput,
   type OrdinaryLongNormalChildState,
 } from "./ordinaryLongChildLifecycle";
-import type {
-  OrdinaryBaseNoteMeshGeometry,
-  OrdinaryNoteMotionResult,
-  OrdinaryNoteMotionState,
+import {
+  getApproximateHabahiroMeshWidthRate,
+  type OrdinaryBaseNoteMeshGeometry,
+  type OrdinaryNoteMotionResult,
+  type OrdinaryNoteMotionState,
 } from "./ordinaryNoteGeometry";
 
 export interface OrdinarySlideChildState {
@@ -82,6 +83,7 @@ export function advanceOrdinarySlideChildren(
   input: OrdinaryLongNormalChildFrameInput,
   screenToSafeAreaRatio: RenderFloat32,
   color: RenderColor,
+  habahiroMeshWidthSetting?: RenderFloat32,
 ): SimulatorResult<OrdinarySlideFrameResult> {
   if (childStates.length === 0) {
     return reject(
@@ -98,7 +100,12 @@ export function advanceOrdinarySlideChildren(
     if (advanced.status !== "ok") return advanced;
     const next = Object.freeze({ ...state, lifecycle: advanced.value });
     nextStates.push(next);
-    const widthRate = createRenderFloat32(Math.fround(1));
+    const widthRate = habahiroMeshWidthSetting === undefined
+      ? createRenderFloat32(Math.fround(1))
+      : getApproximateHabahiroMeshWidthRate(
+          Math.max(previousButtonCount, state.buttonCount),
+          habahiroMeshWidthSetting,
+        );
     if (widthRate.status !== "ok") return widthRate;
     const mesh = buildOrdinaryLongNormalMesh({
       front: previousTransform,

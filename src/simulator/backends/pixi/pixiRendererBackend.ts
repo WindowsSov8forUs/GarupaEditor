@@ -69,8 +69,10 @@ type EvidenceAnimationRole =
   | "score-skill"
   | "judge-skill"
   | "fever"
+  | "habahiro-lane-change"
   | "note-flick"
-  | "note-directional-flick";
+  | "note-directional-flick"
+  | "note-long-flash";
 
 interface PixiObjectRecord {
   readonly role: string;
@@ -1102,6 +1104,8 @@ function isEvidenceHud(
           typeof state.scoreSkill === "boolean" &&
           typeof state.scoreGaugeActive === "boolean" &&
           isNonNegativeSafeInteger(state.currentSkillNoteIndex) ||
+        exactStateKeys(state, ["habahiroFlashPhase", "progress"]) &&
+          state.habahiroFlashPhase === "flash-start" && state.progress === 0 ||
         exactStateKeys(state, ["active", "feverCommand", "feverState"]) &&
           typeof state.active === "boolean" &&
           (state.feverCommand === "ready" || state.feverCommand === "start" || state.feverCommand === "end") &&
@@ -1114,7 +1118,8 @@ function isEvidenceHud(
           exactStateKeys(state, ["absolutePosition", "label", "laneChangePhase", "visible"]) &&
             Number.isInteger(state.absolutePosition) &&
             (state.absolutePosition as number) >= 0 &&
-            (state.laneChangePhase === "flash-start" || state.laneChangePhase === "change-lane")
+            (state.laneChangePhase === "flash-start" ||
+              state.laneChangePhase === "change-lane" || state.laneChangePhase === "complete")
         );
   }
 }
@@ -1250,7 +1255,12 @@ function applyEvidenceHud(
       break;
     }
     case "overlay": {
-      if (Object.prototype.hasOwnProperty.call(state, "feverCommand")) {
+      if (Object.prototype.hasOwnProperty.call(state, "habahiroFlashPhase")) {
+        object.node.position.set(0, 0);
+        visual.text.visible = false;
+        visual.primaryFill.rect(0, 0, 1600, 720).fill(0xffffff);
+        visual.primaryFill.alpha = 0;
+      } else if (Object.prototype.hasOwnProperty.call(state, "feverCommand")) {
         object.node.position.set(800, 185);
         const label = state.feverCommand === "ready"
           ? "FEVER READY"
@@ -1357,6 +1367,14 @@ function applyEvidenceAnimation(
     object.node.alpha = Math.fround(0.7 + 0.3 * Math.abs(Math.sin(elapsedSeconds * Math.PI)));
     return;
   }
+  if (role === "habahiro-lane-change") {
+    const visual = object.hudVisual;
+    if (visual === null) throw new Error("HABAHIRO flash owner missing HUD visual");
+    visual.primaryFill.alpha = Math.fround(Math.sin(
+      Math.min(1, elapsedSeconds / 0.25) * Math.PI,
+    ));
+    return;
+  }
   if (role === "add-score") {
     const phaseSeconds = Math.fround(0.14000000059604645);
     const phase = Math.min(2, Math.floor(elapsedSeconds / phaseSeconds));
@@ -1374,12 +1392,12 @@ function applyEvidenceAnimation(
     object.node.alpha = elapsedSeconds < 0.85 ? 1 : Math.max(0, (1 - elapsedSeconds) / 0.15);
     return;
   }
-  if (role === "note-flick" || role === "note-directional-flick") {
+  if (role === "note-flick" || role === "note-directional-flick" || role === "note-long-flash") {
     const sprite = object.spriteContent;
     if (sprite === null) throw new Error("Note animation owner missing Sprite");
     const pulse = Math.fround(1 + 0.08 * Math.sin(elapsedSeconds * Math.PI * 8));
     sprite.scale.set(pulse, pulse);
-    if (role === "note-directional-flick") sprite.alpha = Math.fround(0.8 + 0.2 * Math.abs(Math.sin(elapsedSeconds * Math.PI * 4)));
+    if (role === "note-directional-flick" || role === "note-long-flash") sprite.alpha = Math.fround(0.8 + 0.2 * Math.abs(Math.sin(elapsedSeconds * Math.PI * 4)));
     return;
   }
   const visual = object.hudVisual;
@@ -1411,11 +1429,15 @@ function stopEvidenceAnimation(object: PixiObjectRecord, role: EvidenceAnimation
     object.node.alpha = 1;
     return;
   }
+  if (role === "habahiro-lane-change") {
+    if (object.hudVisual !== null) object.hudVisual.primaryFill.alpha = 0;
+    return;
+  }
   if (role === "add-score") {
     object.node.alpha = 1;
     return;
   }
-  if (role === "note-flick" || role === "note-directional-flick") {
+  if (role === "note-flick" || role === "note-directional-flick" || role === "note-long-flash") {
     if (object.spriteContent !== null) {
       object.spriteContent.scale.set(1, 1);
       object.spriteContent.alpha = 1;
@@ -1493,9 +1515,10 @@ function animationMatchesRole(role: string, objectRole: string): boolean {
   return (role === "combo" || role === "all-perfect") && objectRole === "hud-combo" ||
     role === "result" && objectRole === "hud-result" ||
     (role === "life-heal" || role === "damage-guard" || role === "never-die") && objectRole === "hud-life" ||
-    (role === "score-skill" || role === "judge-skill" || role === "fever" || role === "add-score") && objectRole === "hud-overlay" ||
-    (role === "note-flick" || role === "note-directional-flick") &&
-      (objectRole === "note-root" || objectRole === "note-head" ||
+    (role === "score-skill" || role === "judge-skill" || role === "fever" ||
+      role === "habahiro-lane-change" || role === "add-score") && objectRole === "hud-overlay" ||
+    (role === "note-flick" || role === "note-directional-flick" || role === "note-long-flash") &&
+      (objectRole === "note-root" || objectRole === "note-head" || objectRole === "note-icon" ||
         objectRole === "note-intermediate" || objectRole === "note-side-visual");
 }
 
@@ -1503,7 +1526,8 @@ function isEvidenceAnimationRole(role: string): role is EvidenceAnimationRole {
   return role === "combo" || role === "all-perfect" || role === "add-score" ||
     role === "result" || role === "life-heal" || role === "damage-guard" ||
     role === "never-die" || role === "score-skill" || role === "judge-skill" ||
-    role === "fever" || role === "note-flick" || role === "note-directional-flick";
+    role === "fever" || role === "habahiro-lane-change" || role === "note-flick" ||
+    role === "note-directional-flick" || role === "note-long-flash";
 }
 
 function requireEvidenceAnimationRole(role: string): EvidenceAnimationRole {

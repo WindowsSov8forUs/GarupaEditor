@@ -20,6 +20,8 @@ const SYNC_LINE_WIDTH_FACTOR = Math.fround(0.2800000011920929);
 const NOTE_POSITION_BASE = Math.fround(1.1);
 const NOTE_POSITION_EXPONENT_SCALE = Math.fround(50);
 const NOTE_SCALE_ASPECT_BASE = Math.fround(0.996);
+const HABAHIRO_MESH_WIDTH_BASE = Math.fround(1.0499999523162842);
+const HABAHIRO_MESH_WIDTH_COEFFICIENT = Math.fround(0.03000009059906006);
 const NOTE_SCALE_MIN_RATIOS = Object.freeze([
   Math.fround(0.98),
   Math.fround(0.988),
@@ -114,6 +116,29 @@ export interface OrdinaryNoteActivationAdjustmentResult {
   readonly motions: readonly OrdinaryNoteMotionResult[];
   readonly progressRate: RenderFloat32;
   readonly realMoveSecond: RenderFloat32;
+}
+
+export function getApproximateHabahiroMeshWidthRate(
+  noteLength: number,
+  explicitSetting: RenderFloat32,
+): SimulatorResult<RenderFloat32> {
+  if (
+    !Number.isInteger(noteLength) || noteLength < 1 || noteLength > 7 ||
+    !validateRenderFloat32(explicitSetting)
+  ) {
+    return reject(
+      "render.geometry.invalid-habahiro-mesh-width-input",
+      "The current static HABAHIRO width formula requires a 1..7 note length and explicit Float32 host setting.",
+    );
+  }
+  let value = noteLength === 1 ? Math.fround(1) : HABAHIRO_MESH_WIDTH_BASE;
+  if (noteLength >= 3 && explicitSetting.value >= 0) {
+    value = Math.fround(
+      HABAHIRO_MESH_WIDTH_BASE +
+        Math.fround(Math.min(explicitSetting.value, Math.fround(1)) * HABAHIRO_MESH_WIDTH_COEFFICIENT),
+    );
+  }
+  return createRenderFloat32(value);
 }
 
 export function getOrdinaryNoteArrivalSeconds(

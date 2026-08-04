@@ -457,7 +457,7 @@ export class RecordingSimulatorRendererBackend implements SimulatorRendererBacke
   }
 
   private hasAnimationRole(role: RenderAnimationRole): boolean {
-    return role !== "none" && role !== "habahiro-lane-change" ||
+    return role !== "none" ||
       this.profile!.assets.some((asset) => asset.animationRole === role);
   }
 
@@ -508,6 +508,10 @@ function validateResourceProvenance(
     if (profile.fidelity.fidelity === "exact-current-unityfs") {
       return asset.provenance !== "current-apk" &&
         asset.provenance !== "current-device-cache";
+    }
+    if (profile.fidelity.fidelity === "approximate-current-external") {
+      return asset.provenance !== "current-external-portable" &&
+        asset.provenance !== "current-apk" && asset.provenance !== "current-device-cache";
     }
     switch (profile.fidelity.profile) {
       case "current-external-portable-atlas":

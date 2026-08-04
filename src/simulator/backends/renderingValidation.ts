@@ -28,7 +28,7 @@ const MATERIAL_ROLES = new Set([
 const ANIMATION_ROLES = new Set([
   "none", "note-flick", "note-directional-flick", "note-long-flash",
   "combo", "all-perfect", "add-score", "result", "life-heal",
-  "damage-guard", "score-skill", "judge-skill", "habahiro-lane-change",
+  "damage-guard", "never-die", "score-skill", "judge-skill", "fever", "habahiro-lane-change",
 ]);
 const PROVENANCE_VALUES = new Set([
   "current-apk", "current-device-cache", "current-external-portable",
@@ -100,6 +100,8 @@ export function validateAndFreezeRenderProfile(
   const projection = scene.projection;
   const expectedProjectionMode = fidelityValidation.value.mode === "ordinary"
     ? "current-ordinary-rhythmgame-orthographic"
+    : fidelityValidation.value.fidelity === "approximate-current-external"
+    ? "approximate-habahiro-current-external"
     : fidelityValidation.value.fidelity === "degraded"
     ? "degraded-habahiro-ordinary-projection-proxy"
     : null;
@@ -121,7 +123,7 @@ export function validateAndFreezeRenderProfile(
   ) {
     return reject(
       "render.profile.invalid-projection",
-      "The fixed 1600x720 ordinary orthographic mapping must be explicit; degraded HABAHIRO may only select its visibly disclosed ordinary-projection proxy.",
+      "The fixed 1600x720 mapping must explicitly distinguish ordinary, current-external approximate HABAHIRO and legacy degraded projection.",
     );
   }
 
@@ -247,6 +249,15 @@ function validateFidelity(
   }
   if (
     fidelity?.mode === "habahiro" &&
+    fidelity.fidelity === "approximate-current-external" &&
+    fidelity.visibleLabel === RenderFidelityLabel &&
+    fidelity.machineReadableFlag === "rendering-fidelity-approximate-habahiro" &&
+    fidelity.differenceProfile === "HA-D01-HA-D12"
+  ) {
+    return ok(Object.freeze({ ...fidelity }));
+  }
+  if (
+    fidelity?.mode === "habahiro" &&
     fidelity.fidelity === "degraded" &&
     (fidelity.profile === "current-external-portable-atlas" ||
       fidelity.profile === "historical-atlas-proxy" ||
@@ -257,7 +268,7 @@ function validateFidelity(
   }
   return reject(
     "render.profile.invalid-fidelity",
-    "HABAHIRO requires explicit exact or visibly labelled degraded fidelity; automatic fallback is forbidden.",
+    "HABAHIRO requires explicit exact, current-external approximation or visibly labelled legacy degraded fidelity; automatic fallback is forbidden.",
   );
 }
 

@@ -18,7 +18,11 @@ import { ScoreLifeStateManager } from "./scoreLifeStateManager";
 import type { FeverTimeCommandName } from "./feverTimeManager";
 import { InputManager } from "./inputBoundaries";
 import { NoteManager } from "./noteManager";
-import type { RenderCommandProducer } from "../rendering/renderCommandProducer";
+import type {
+  OrdinaryFixedNoteSceneInput,
+  RenderCommandProducer,
+} from "../rendering/renderCommandProducer";
+import { createRenderFloat32 } from "../../backends/renderingValidation";
 
 export interface InGameManagerSnapshot extends EngineLifecycleSnapshot {
   readonly fault: EvidenceRequired | null;
@@ -37,6 +41,8 @@ export class InGameManager {
   private pauseStateValue: PauseStateValue = PauseState.None;
   private faultValue: EvidenceRequired | null = null;
   private degradedHabahiroLaneChanged = false;
+  private approximateHabahiroLanePhase: "idle" | "flashing" | "complete" = "idle";
+  private approximateHabahiroFlashElapsed = Math.fround(0);
 
   constructor(
     readonly musicScoreController: InGameMusicScoreController,
@@ -46,6 +52,7 @@ export class InGameManager {
     readonly scoreLifeStateManager: ScoreLifeStateManager | null = null,
     private readonly renderProducer: RenderCommandProducer | null = null,
     private readonly habahiroChangeAbsolutePos = -1,
+    private readonly renderScene: OrdinaryFixedNoteSceneInput | null = null,
   ) {}
 
   get state(): EngineLifecycleState {
@@ -70,6 +77,18 @@ export class InGameManager {
     const noteValidation = this.noteManager.validateSetup();
     if (noteValidation.status !== "ok") {
       return noteValidation;
+    }
+    const fieldSetup = this.renderProducer?.isApproximateHabahiro() === true &&
+        this.renderScene?.habahiroApproximation !== undefined
+      ? this.renderProducer.preflightFieldSetup(
+          this.renderScene.habahiroApproximation.fieldBefore,
+          this.renderScene.habahiroApproximation.fieldMasks,
+        )
+      : null;
+    if (fieldSetup?.status === "evidence-required") return fieldSetup;
+    if (fieldSetup?.status === "ok") {
+      const committed = fieldSetup.value.commit();
+      if (committed.status !== "ok") return committed;
     }
     const hudSetup = this.scoreLifeStateManager !== null && this.renderProducer !== null
       ? this.renderProducer.preflightHudSetup(this.scoreLifeStateManager.record.snapshot())
@@ -151,6 +170,46 @@ export class InGameManager {
       const committed = laneChange.value.commit();
       if (committed.status !== "ok") return this.latchFault(committed);
       this.degradedHabahiroLaneChanged = true;
+    }
+    if (
+      this.renderProducer?.isApproximateHabahiro() === true &&
+      this.renderScene?.habahiroApproximation !== undefined &&
+      this.habahiroChangeAbsolutePos >= 0
+    ) {
+      if (
+        this.approximateHabahiroLanePhase === "idle" &&
+        this.noteManager.peekAdjustedMusicPosition() >= this.habahiroChangeAbsolutePos
+      ) {
+        const flash = this.renderProducer.preflightApproximateHabahiroFlashStart(
+          this.habahiroChangeAbsolutePos,
+        );
+        if (flash.status !== "ok") return this.latchFault(flash);
+        const committed = flash.value.commit();
+        if (committed.status !== "ok") return this.latchFault(committed);
+        this.approximateHabahiroLanePhase = "flashing";
+        this.approximateHabahiroFlashElapsed = Math.fround(0);
+      } else if (this.approximateHabahiroLanePhase === "flashing") {
+        const nextElapsed = Math.fround(this.approximateHabahiroFlashElapsed + deltaTimeSeconds);
+        if (nextElapsed >= this.renderScene.habahiroApproximation.flashDurationSeconds.value) {
+          const laneChange = this.renderProducer.preflightApproximateHabahiroLaneChange(
+            this.habahiroChangeAbsolutePos,
+            this.renderScene,
+          );
+          if (laneChange.status !== "ok") return this.latchFault(laneChange);
+          const committed = laneChange.value.commit();
+          if (committed.status !== "ok") return this.latchFault(committed);
+          this.approximateHabahiroLanePhase = "complete";
+          this.approximateHabahiroFlashElapsed = nextElapsed;
+        } else {
+          const elapsed = createRenderFloat32(nextElapsed);
+          if (elapsed.status !== "ok") return this.latchFault(elapsed);
+          const sample = this.renderProducer.preflightApproximateHabahiroFlashAdvance(elapsed.value);
+          if (sample.status !== "ok") return this.latchFault(sample);
+          const committed = sample.value.commit();
+          if (committed.status !== "ok") return this.latchFault(committed);
+          this.approximateHabahiroFlashElapsed = nextElapsed;
+        }
+      }
     }
     const hudAnimation = this.renderProducer?.preflightHudAnimationAdvance(deltaTimeSeconds) ?? null;
     if (hudAnimation?.status === "evidence-required") {

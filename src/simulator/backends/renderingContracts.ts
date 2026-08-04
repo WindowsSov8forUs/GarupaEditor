@@ -69,6 +69,13 @@ export type RenderFidelitySelection =
     }
   | {
       readonly mode: "habahiro";
+      readonly fidelity: "approximate-current-external";
+      readonly visibleLabel: typeof RenderFidelityLabel;
+      readonly machineReadableFlag: "rendering-fidelity-approximate-habahiro";
+      readonly differenceProfile: "HA-D01-HA-D12";
+    }
+  | {
+      readonly mode: "habahiro";
       readonly fidelity: "degraded";
       readonly profile:
         | "current-external-portable-atlas"
@@ -144,6 +151,7 @@ export interface RenderOrderingProfile {
 
 export type RenderProjectionMode =
   | "current-ordinary-rhythmgame-orthographic"
+  | "approximate-habahiro-current-external"
   | "degraded-habahiro-ordinary-projection-proxy";
 
 export interface RenderOrthographicProjectionProfile {

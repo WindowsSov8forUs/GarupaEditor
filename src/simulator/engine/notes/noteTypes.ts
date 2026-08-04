@@ -2398,6 +2398,12 @@ export class NoteMultipleDirectionalFlick extends NoteDirectionalFlick {
 }
 
 export class NoteMultipleDirectionalVisual extends NoteFrontBase {
+  private presentationLifecycleEnabled = false;
+
+  registerPresentationLifecycle(enabled: boolean): void {
+    this.presentationLifecycleEnabled = enabled;
+  }
+
   override activate(noteInformation: NoteInformation): SimulatorResult<void> {
     const activationValidation = this.validateCanActivate(noteInformation);
     if (activationValidation.status !== "ok") {
@@ -2419,12 +2425,27 @@ export class NoteMultipleDirectionalVisual extends NoteFrontBase {
       : graphValidation;
   }
 
-  protected override moveState(): SimulatorResult<void> {
-    return evidenceRequired(
+  protected override onUpdate(_deltaTimeSeconds: number): SimulatorResult<void> {
+    return ok(undefined);
+  }
+
+  protected override moveState(_deltaTimeSeconds: number): SimulatorResult<void> {
+    // R7 closes the presentation owner only for the explicitly connected renderer.
+    if (!this.presentationLifecycleEnabled) return evidenceRequired(
       "auto-live.multiple-directional-visual-presentation",
       ["R10", "R13", "R16.D01", "R16.D03"],
-      "AddLong/AddSlide Multiple Directional Visual runs NotesCheck/connect presentation and has a native RET Force Perfect; presentation is outside Auto Live.",
+      "AddLong/AddSlide Multiple Directional presentation requires its explicit R7 renderer owner.",
     );
+    const noteInformation = this.noteInformation;
+    const runtime = this.autoLiveRuntime;
+    if (noteInformation === null || runtime.status !== "ok") return evidenceRequired(
+      "auto-live.multiple-directional-visual-presentation",
+      ["R10", "R13", "R16.D01", "R16.D03", "RPR-R7-009"],
+      "The connected Multiple Directional visual requires its activated chart time owner; R7 closes only the registered production presentation path.",
+    );
+    return runtime.value.getAdjustedMusicPosition() >= noteInformation.absolutePos
+      ? this.changeState(NoteState.Deactive)
+      : ok(undefined);
   }
 }
 

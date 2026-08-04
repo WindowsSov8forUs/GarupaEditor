@@ -43,6 +43,7 @@ import {
   advanceOrdinaryNoteMotion,
   buildOrdinaryMultipleDirectionalLine,
   buildOrdinarySyncLine,
+  getApproximateHabahiroMeshWidthRate,
   type OrdinaryMultipleDirectionalLineOwnerState,
   type OrdinaryNoteMotionResult,
   type OrdinaryNoteMotionState,
@@ -62,6 +63,15 @@ export interface RenderEngineResourceBindings {
   readonly multipleDirectionalLineRightLogicalAssetId?: string;
   readonly longNoteMaterialLogicalAssetId?: string;
   readonly curveNoteMaterialLogicalAssetId?: string;
+  readonly habahiroAtlasLogicalAssetIds?: {
+    readonly normal: string;
+    readonly normal16: string;
+    readonly skill: string;
+    readonly flick: string;
+    readonly long: string;
+    readonly longFlash: string;
+    readonly slideAmong: string;
+  };
   readonly comboAnimationLogicalAssetId?: string;
   readonly scoreSkillAnimationLogicalAssetId?: string;
 }
@@ -83,6 +93,14 @@ export interface PreparedOrdinaryNoteMotion {
   readonly transaction: RenderOwnerTransaction;
 }
 
+export interface HabahiroApproximationSceneInput {
+  readonly meshWidthSetting: RenderFloat32;
+  readonly flashDurationSeconds: RenderFloat32;
+  readonly fieldBefore: readonly RenderFieldObjectPlan[];
+  readonly fieldAfter: readonly RenderFieldObjectPlan[];
+  readonly fieldMasks: readonly RenderFieldMaskPlan[];
+}
+
 export interface OrdinaryFixedNoteSceneInput {
   readonly specificSpeed: RenderFloat32;
   readonly noteSettingScale: RenderFloat32;
@@ -96,6 +114,7 @@ export interface OrdinaryFixedNoteSceneInput {
   readonly syncLineEdgeMargin?: RenderFloat32;
   readonly screenToSafeAreaRatio?: RenderFloat32;
   readonly longMeshColor?: RenderColor;
+  readonly habahiroApproximation?: HabahiroApproximationSceneInput;
 }
 
 export interface PreparedOrdinaryNoteActivation {
@@ -180,6 +199,7 @@ const CURRENT_SUDDEN_THRESHOLD = Object.freeze({
 });
 
 const DEGRADED_HABAHIRO_LANE_OBJECT = "render:habahiro:lane-change";
+const APPROXIMATE_HABAHIRO_FLASH_OBJECT = "render:habahiro:flash";
 
 const HUD_OBJECTS = Object.freeze({
   addScore: Object.freeze([
@@ -198,6 +218,11 @@ const HUD_OBJECTS = Object.freeze({
   fidelity: "render:hud:fidelity-label",
 });
 
+type NoteVisualAnimationRole =
+  | "note-flick"
+  | "note-directional-flick"
+  | "note-long-flash";
+
 export class RenderCommandProducer {
   private frame = 0;
   private substep = 0;
@@ -215,7 +240,7 @@ export class RenderCommandProducer {
   private lastCombo = 0;
   private lastAllPerfect = false;
   private readonly noteAnimationElapsedSeconds = new Map<string, {
-    readonly role: "note-flick" | "note-directional-flick";
+    readonly role: NoteVisualAnimationRole;
     readonly elapsed: number;
   }>();
 
@@ -225,9 +250,18 @@ export class RenderCommandProducer {
     private readonly resources: RenderEngineResourceBindings,
   ) {}
 
+  isApproximateHabahiro(): boolean {
+    const fidelity = this.renderer.snapshot().fidelity;
+    return fidelity?.mode === "habahiro" && fidelity.fidelity === "approximate-current-external";
+  }
+
   isDegradedHabahiro(): boolean {
     const fidelity = this.renderer.snapshot().fidelity;
     return fidelity?.mode === "habahiro" && fidelity.fidelity === "degraded";
+  }
+
+  isAnyHabahiroApproximation(): boolean {
+    return this.isApproximateHabahiro() || this.isDegradedHabahiro();
   }
 
   validate(): SimulatorResult<void> {
@@ -243,7 +277,11 @@ export class RenderCommandProducer {
       (this.resources.comboAnimationLogicalAssetId !== undefined &&
         !isNonEmpty(this.resources.comboAnimationLogicalAssetId)) ||
       (this.resources.scoreSkillAnimationLogicalAssetId !== undefined &&
-        !isNonEmpty(this.resources.scoreSkillAnimationLogicalAssetId))
+        !isNonEmpty(this.resources.scoreSkillAnimationLogicalAssetId)) ||
+      (this.renderer.snapshot().fidelity?.mode === "habahiro" &&
+        this.renderer.snapshot().fidelity?.fidelity === "approximate-current-external" &&
+        (this.resources.habahiroAtlasLogicalAssetIds === undefined ||
+          Object.values(this.resources.habahiroAtlasLogicalAssetIds).some((value) => !isNonEmpty(value))))
     ) {
       return evidenceRequired(
         "render.producer.invalid-session-or-resource-bindings",
@@ -875,7 +913,7 @@ export class RenderCommandProducer {
       );
     }
     if (
-      !this.isDegradedHabahiro() &&
+      !this.isAnyHabahiroApproximation() &&
       pools.length === 0 &&
       syncLinePoolLength === 0 &&
       multipleDirectionalLinePoolLength === 0
@@ -917,6 +955,15 @@ export class RenderCommandProducer {
         kind: "hide-object",
         renderObjectId,
       });
+      if (this.isApproximateHabahiro()) {
+        const iconObjectId = habahiroIconRenderObjectId(pool.poolObjectId);
+        created.push(iconObjectId);
+        commands.push({
+          ...base(commands.length), kind: "create-object", renderObjectId: iconObjectId,
+          poolFamily: `${pool.family}-habahiro-icon`, role: "note-icon", parentObjectId: null,
+        });
+        commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: iconObjectId });
+      }
       if (pool.family === "long" && !this.isDegradedHabahiro()) {
         const afterObjectId = longAfterRenderObjectId(pool.poolObjectId);
         const meshObjectId = longMeshRenderObjectId(pool.poolObjectId);
@@ -1026,7 +1073,7 @@ export class RenderCommandProducer {
         renderObjectId,
       });
     }
-    if (this.isDegradedHabahiro()) {
+    if (this.isAnyHabahiroApproximation()) {
       created.push(HUD_OBJECTS.fidelity, DEGRADED_HABAHIRO_LANE_OBJECT);
       commands.push({
         ...base(commands.length),
@@ -1055,7 +1102,7 @@ export class RenderCommandProducer {
         ...base(commands.length),
         kind: "create-object",
         renderObjectId: DEGRADED_HABAHIRO_LANE_OBJECT,
-        poolFamily: "degraded-habahiro-lane-change",
+        poolFamily: "approximate-habahiro-lane-change",
         role: "fidelity-label",
         parentObjectId: null,
       });
@@ -1064,8 +1111,125 @@ export class RenderCommandProducer {
         kind: "hide-object",
         renderObjectId: DEGRADED_HABAHIRO_LANE_OBJECT,
       });
+      if (this.isApproximateHabahiro()) {
+        created.push(APPROXIMATE_HABAHIRO_FLASH_OBJECT);
+        commands.push({
+          ...base(commands.length),
+          kind: "create-object",
+          renderObjectId: APPROXIMATE_HABAHIRO_FLASH_OBJECT,
+          poolFamily: "approximate-habahiro-flash",
+          role: "hud-overlay",
+          parentObjectId: null,
+        });
+        commands.push({
+          ...base(commands.length),
+          kind: "hide-object",
+          renderObjectId: APPROXIMATE_HABAHIRO_FLASH_OBJECT,
+        });
+      }
     }
     return this.preflight(commands, () => this.recordCreatedObjects(created));
+  }
+
+  preflightApproximateHabahiroFlashStart(
+    absolutePosition: number,
+  ): SimulatorResult<RenderOwnerTransaction> {
+    const validation = this.validate();
+    if (validation.status !== "ok") return validation;
+    if (
+      !this.isApproximateHabahiro() ||
+      !Number.isInteger(absolutePosition) || absolutePosition < 0 ||
+      !this.creationSequenceByObjectId.has(DEGRADED_HABAHIRO_LANE_OBJECT) ||
+      !this.creationSequenceByObjectId.has(APPROXIMATE_HABAHIRO_FLASH_OBJECT)
+    ) {
+      return evidenceRequired(
+        "render.habahiro.invalid-approximate-flash-start",
+        ["HAB-A07", "HAB-A09", "HA-D07"],
+        "The explicit HABAHIRO approximation requires committed lane and flash owners before its marker phase.",
+      );
+    }
+    const base = this.commandBase(this.substep);
+    const commands: RenderCommand[] = [{
+      ...base(0), kind: "set-hud", renderObjectId: DEGRADED_HABAHIRO_LANE_OBJECT,
+      hudRole: "fidelity-label", state: Object.freeze({
+        label: "Approximate HABAHIRO", visible: true,
+        laneChangePhase: "flash-start", absolutePosition,
+      }),
+    }, {
+      ...base(1), kind: "activate-object", renderObjectId: DEGRADED_HABAHIRO_LANE_OBJECT,
+    }, {
+      ...base(2), kind: "set-hud", renderObjectId: APPROXIMATE_HABAHIRO_FLASH_OBJECT,
+      hudRole: "overlay", state: Object.freeze({ habahiroFlashPhase: "flash-start", progress: 0 }),
+    }, {
+      ...base(3), kind: "activate-object", renderObjectId: APPROXIMATE_HABAHIRO_FLASH_OBJECT,
+    }, {
+      ...base(4), kind: "play-animation", renderObjectId: APPROXIMATE_HABAHIRO_FLASH_OBJECT,
+      animationRole: "habahiro-lane-change", restart: true,
+    }];
+    return this.preflight(commands);
+  }
+
+  preflightApproximateHabahiroFlashAdvance(
+    elapsedSeconds: RenderFloat32,
+  ): SimulatorResult<RenderOwnerTransaction> {
+    const validation = this.validate();
+    if (validation.status !== "ok") return validation;
+    if (!this.isApproximateHabahiro() || !validateRenderFloat32(elapsedSeconds) || elapsedSeconds.value < 0) {
+      return evidenceRequired(
+        "render.habahiro.invalid-approximate-flash-sample",
+        ["HAB-A09", "HAB-A10", "HA-D07"],
+        "HABAHIRO flash sampling requires explicit engine-clock Float32 time.",
+      );
+    }
+    const base = this.commandBase(this.substep);
+    return this.preflight([{
+      ...base(0), kind: "sample-animation", renderObjectId: APPROXIMATE_HABAHIRO_FLASH_OBJECT,
+      animationRole: "habahiro-lane-change", elapsedSeconds,
+    }]);
+  }
+
+  preflightApproximateHabahiroLaneChange(
+    absolutePosition: number,
+    scene: OrdinaryFixedNoteSceneInput,
+  ): SimulatorResult<RenderOwnerTransaction> {
+    const validation = this.validate();
+    if (validation.status !== "ok") return validation;
+    const approximation = scene.habahiroApproximation;
+    if (
+      !this.isApproximateHabahiro() || approximation === undefined ||
+      !Number.isInteger(absolutePosition) || absolutePosition < 0 ||
+      approximation.fieldAfter.some((plan) =>
+        !this.creationSequenceByObjectId.has(plan.renderObjectId) ||
+        !validateVector3(plan.position) || !validateVector2(plan.scale) ||
+        !validateRenderFloat32(plan.rotationDegrees) || !validateColor(plan.color) ||
+        !validateOrdering(plan.ordering))
+    ) {
+      return evidenceRequired(
+        "render.habahiro.invalid-approximate-lane-change",
+        ["HAB-A07", "HAB-A09", "HAB-A10", "HA-D08"],
+        "The inferred HABAHIRO lane swap requires every pre-created field/judge owner and typed post-change transform.",
+      );
+    }
+    const base = this.commandBase(this.substep);
+    const commands: RenderCommand[] = approximation.fieldAfter.map((plan, index) => ({
+      ...base(index), kind: "set-transform" as const, renderObjectId: plan.renderObjectId,
+      position: plan.position, scale: plan.scale, rotationDegrees: plan.rotationDegrees,
+      color: plan.color, ordering: plan.ordering, maskObjectId: plan.maskObjectId,
+    }));
+    commands.push({
+      ...base(commands.length), kind: "stop-animation", renderObjectId: APPROXIMATE_HABAHIRO_FLASH_OBJECT,
+      animationRole: "habahiro-lane-change", restart: false,
+    });
+    commands.push({
+      ...base(commands.length), kind: "hide-object", renderObjectId: APPROXIMATE_HABAHIRO_FLASH_OBJECT,
+    });
+    for (const laneChangePhase of ["change-lane", "complete"] as const) commands.push({
+      ...base(commands.length), kind: "set-hud", renderObjectId: DEGRADED_HABAHIRO_LANE_OBJECT,
+      hudRole: "fidelity-label", state: Object.freeze({
+        label: "Approximate HABAHIRO", visible: true, laneChangePhase, absolutePosition,
+      }),
+    });
+    return this.preflight(commands);
   }
 
   preflightDegradedHabahiroLaneChange(
@@ -1082,7 +1246,7 @@ export class RenderCommandProducer {
       return evidenceRequired(
         "render.habahiro.invalid-degraded-lane-change",
         ["RPR-D08", "PR19", "PR40", "HA-D07", "HA-D08", "HA-D09"],
-        "Only an explicitly selected degraded HABAHIRO session with its committed diagnostic owner may emit lane-change commands.",
+        "Only an explicitly selected HABAHIRO approximation with its committed diagnostic owner may emit the legacy same-frame lane-change command.",
       );
     }
     const base = this.commandBase(this.substep);
@@ -1166,8 +1330,17 @@ export class RenderCommandProducer {
         "Note activation commands require the engine-owned non-negative adaptive substep.",
       );
     }
-    const degradedHabahiro = this.isDegradedHabahiro();
-    const longTail = !degradedHabahiro &&
+    const approximateHabahiro = this.isApproximateHabahiro();
+    const legacyDegradedHabahiro = this.isDegradedHabahiro();
+    const habahiro = approximateHabahiro || legacyDegradedHabahiro;
+    if (approximateHabahiro && !validateHabahiroApproximationScene(scene.habahiroApproximation)) {
+      return evidenceRequired(
+        "render.habahiro.approximation-scene-required",
+        ["HAB-A04", "HAB-A08", "HAB-A09", "HAB-A10"],
+        "Full HABAHIRO approximation requires explicit mesh width, flash duration and pre/post field plans.",
+      );
+    }
+    const longTail = !legacyDegradedHabahiro &&
       information.fireNoteType === FrontNoteType.Long &&
       information.afterNoteAbsolutePos > information.absolutePos;
     const r7Front = information.fireNoteType === FrontNoteType.Flick ||
@@ -1176,13 +1349,12 @@ export class RenderCommandProducer {
       information.fireNoteType === FrontNoteType.LongMultipleDirectionalFlickAdd ||
       information.fireNoteType === FrontNoteType.SlideAMultipleDirectionalFlickAdd ||
       information.fireNoteType === FrontNoteType.SlideBMultipleDirectionalFlickAdd;
-    const r7Slide = !degradedHabahiro &&
+    const r7Slide = !legacyDegradedHabahiro &&
       (information.fireNoteType === FrontNoteType.SlideA ||
       information.fireNoteType === FrontNoteType.SlideB) &&
       information.slideNoteList.length > 0;
     if (
-      !degradedHabahiro &&
-      information.fireNoteType !== FrontNoteType.Normal &&
+      !legacyDegradedHabahiro && information.fireNoteType !== FrontNoteType.Normal &&
       !longTail &&
       !r7Front &&
       !r7Slide
@@ -1207,12 +1379,12 @@ export class RenderCommandProducer {
         "The ordinary Long and R4 Slide mesh paths require explicit positive safe-area ratio and typed mesh color inputs."
       );
     }
-    const lane = degradedHabahiro
-      ? resolveDegradedHabahiroMotionLaneIndex(information)
+    const lane = habahiro
+      ? resolveApproximateHabahiroMotionLaneIndex(information)
       : resolveOrdinaryMotionLaneIndex(information, r7Slide);
     if (lane.status !== "ok") return lane;
-    const binding = degradedHabahiro
-      ? resolveDegradedHabahiroFrontSpriteBinding(information, this.resources)
+    const binding = habahiro
+      ? resolveApproximateHabahiroFrontSpriteBinding(information, this.resources)
       : resolveFrontSpriteBinding(information, false, this.resources);
     if (binding.status !== "ok") return binding;
     const renderObjectId = rootRenderObjectId(poolObjectId);
@@ -1243,7 +1415,7 @@ export class RenderCommandProducer {
       targetCenterY: scene.targetCenterY,
       highAspectRatio: scene.highAspectRatio,
       buttonCount: information.buttonTypesArray.length || information.buttonTypes.length || 1,
-      virtualLaneControllerPresent: degradedHabahiro
+      virtualLaneControllerPresent: legacyDegradedHabahiro
         ? false
         : information.virtualLaneDirection !== 0,
     });
@@ -1292,6 +1464,42 @@ export class RenderCommandProducer {
       ...base(commands.length), kind: "play-animation", renderObjectId,
       animationRole: rootAnimationRole, restart: true,
     });
+    const habahiroIcon = approximateHabahiro
+      ? resolveApproximateHabahiroIconBinding(information, this.resources)
+      : null;
+    if (habahiroIcon !== null) {
+      const iconObjectId = habahiroIconRenderObjectId(poolObjectId);
+      const iconCreationSequence = this.creationSequenceByObjectId.get(iconObjectId);
+      if (iconCreationSequence === undefined) {
+        return evidenceRequired(
+          "render.habahiro.icon-owner-missing",
+          ["HAB-A04", "HAB-A06", "HAB-A07"],
+          "Every approximate HABAHIRO Flick/Long/Slide visual requires its fixed icon owner.",
+        );
+      }
+      commands.push({
+        ...base(commands.length), kind: "set-transform", renderObjectId: iconObjectId,
+        position: start, scale: Object.freeze({ x: one.value, y: one.value }),
+        rotationDegrees: zero.value, color: scene.noteColor,
+        ordering: Object.freeze({
+          domainLayer: scene.noteDomainLayer,
+          sourceDepthOrSortingOrder: 72,
+          sourceZ: start.z,
+          creationSequence: iconCreationSequence,
+        }),
+        maskObjectId: null,
+      });
+      commands.push({
+        ...base(commands.length), kind: "bind-resource", renderObjectId: iconObjectId,
+        binding: "sprite", logicalAssetId: habahiroIcon.logicalAssetId,
+        exactKey: habahiroIcon.exactKey,
+      });
+      commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: iconObjectId });
+      commands.push({
+        ...base(commands.length), kind: "play-animation", renderObjectId: iconObjectId,
+        animationRole: habahiroIcon.animationRole, restart: true,
+      });
+    }
     for (const motion of adjustment.value.motions) {
       commands.push({
         ...base(commands.length),
@@ -1302,6 +1510,21 @@ export class RenderCommandProducer {
         rotationDegrees: zero.value,
         color: scene.noteColor,
         ordering,
+        maskObjectId: null,
+      });
+      if (habahiroIcon !== null) commands.push({
+        ...base(commands.length), kind: "set-transform",
+        renderObjectId: habahiroIconRenderObjectId(poolObjectId),
+        position: motion.position,
+        scale: Object.freeze({ x: motion.localScale.x, y: motion.localScale.y }),
+        rotationDegrees: zero.value, color: scene.noteColor,
+        ordering: Object.freeze({
+          ...ordering,
+          sourceDepthOrSortingOrder: 72,
+          creationSequence: this.creationSequenceByObjectId.get(
+            habahiroIconRenderObjectId(poolObjectId),
+          )!,
+        }),
         maskObjectId: null,
       });
     }
@@ -1333,7 +1556,12 @@ export class RenderCommandProducer {
       );
       if (createdChild.status !== "ok") return createdChild;
       longChildState = createdChild.value;
-      const widthRate = createRenderFloat32(Math.fround(1));
+      const widthRate = approximateHabahiro
+        ? getApproximateHabahiroMeshWidthRate(
+            motionState.buttonCount,
+            scene.habahiroApproximation!.meshWidthSetting,
+          )
+        : createRenderFloat32(Math.fround(1));
       const meshZ = createRenderFloat32(Math.fround(0.9900000095367432));
       if (widthRate.status !== "ok") return widthRate;
       if (meshZ.status !== "ok") return meshZ;
@@ -1397,7 +1625,9 @@ export class RenderCommandProducer {
         threshold: CURRENT_SUDDEN_THRESHOLD,
       });
       commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: meshObjectId });
-      const afterBinding = resolveAfterSpriteBinding(information, this.resources);
+      const afterBinding = approximateHabahiro
+        ? resolveApproximateHabahiroAfterSpriteBinding(information, this.resources)
+        : resolveAfterSpriteBinding(information, this.resources);
       if (afterBinding.status !== "ok") return afterBinding;
       commands.push({
         ...base(commands.length),
@@ -1426,7 +1656,9 @@ export class RenderCommandProducer {
             "Each fixed Slide child identity requires its chart-owned source at the same index.",
           );
         }
-        const childLane = resolveOrdinaryMotionLaneIndex(source, true);
+        const childLane = approximateHabahiro
+          ? resolveApproximateHabahiroMotionLaneIndex(source)
+          : resolveOrdinaryMotionLaneIndex(source, true);
         if (childLane.status !== "ok") return childLane;
         const childStart = scene.noteStartPositions[childLane.value]!;
         const childGoal = scene.goalPositions[childLane.value]!;
@@ -1482,7 +1714,13 @@ export class RenderCommandProducer {
           maskObjectId: null,
         });
         if (created.value.visible) {
-          const childBinding = resolveSlideChildSpriteBinding(source, this.resources);
+          const childBinding = approximateHabahiro
+            ? resolveApproximateHabahiroSlideChildBinding(
+                source,
+                index === information.slideNoteList.length - 1,
+                this.resources,
+              )
+            : resolveSlideChildSpriteBinding(source, this.resources);
           if (childBinding.status !== "ok") return childBinding;
           commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: childObjectId });
           commands.push({
@@ -1499,13 +1737,20 @@ export class RenderCommandProducer {
             animationRole: childAnimationRole, restart: true,
           });
         }
+        const segmentWidthRate = approximateHabahiro
+          ? getApproximateHabahiroMeshWidthRate(
+              Math.max(previousButtonCount, childButtonCount),
+              scene.habahiroApproximation!.meshWidthSetting,
+            )
+          : createRenderFloat32(Math.fround(1));
+        if (segmentWidthRate.status !== "ok") return segmentWidthRate;
         const mesh = buildOrdinaryLongNormalMesh({
           front: previousTransform,
           after: childTransform,
           frontButtonCount: previousButtonCount,
           afterButtonCount: childButtonCount,
           screenToSafeAreaRatio: scene.screenToSafeAreaRatio!,
-          widthRate: one.value,
+          widthRate: segmentWidthRate.value,
           color: scene.longMeshColor!,
           advanced: information.virtualLaneDirection !== 0 || source.virtualLaneDirection !== 0,
         });
@@ -1557,6 +1802,10 @@ export class RenderCommandProducer {
           elapsed: 0,
         }));
       }
+      if (habahiroIcon !== null) this.noteAnimationElapsedSeconds.set(
+        habahiroIconRenderObjectId(poolObjectId),
+        Object.freeze({ role: habahiroIcon.animationRole, elapsed: 0 }),
+      );
       const afterRole = resolveAfterAnimationRole(information.afterNoteType);
       if (longTail && afterRole !== null) this.noteAnimationElapsedSeconds.set(
         longAfterRenderObjectId(poolObjectId),
@@ -1694,6 +1943,13 @@ export class RenderCommandProducer {
     if (validation.status !== "ok") return validation;
     const sceneValidation = validateOrdinaryFixedNoteSceneInput(scene);
     if (sceneValidation.status !== "ok") return sceneValidation;
+    if (this.isApproximateHabahiro() && !validateHabahiroApproximationScene(scene.habahiroApproximation)) {
+      return evidenceRequired(
+        "render.habahiro.approximation-scene-required",
+        ["HAB-A04", "HAB-A08", "HAB-A09", "HAB-A10"],
+        "Approximate HABAHIRO Long motion requires its validated width and field profile.",
+      );
+    }
     if (
       scene.screenToSafeAreaRatio === undefined ||
       !validateRenderFloat32(scene.screenToSafeAreaRatio) ||
@@ -1709,7 +1965,12 @@ export class RenderCommandProducer {
     }
     const next = advanceOrdinaryLongNormalChild(childState, input);
     if (next.status !== "ok") return next;
-    const widthRate = createRenderFloat32(Math.fround(1));
+    const widthRate = this.isApproximateHabahiro()
+      ? getApproximateHabahiroMeshWidthRate(
+          childState.motionState.buttonCount,
+          scene.habahiroApproximation!.meshWidthSetting,
+        )
+      : createRenderFloat32(Math.fround(1));
     const zero = createRenderFloat32(Math.fround(0));
     if (widthRate.status !== "ok") return widthRate;
     if (zero.status !== "ok") return zero;
@@ -1802,6 +2063,13 @@ export class RenderCommandProducer {
     if (validation.status !== "ok") return validation;
     const sceneValidation = validateOrdinaryFixedNoteSceneInput(scene);
     if (sceneValidation.status !== "ok") return sceneValidation;
+    if (this.isApproximateHabahiro() && !validateHabahiroApproximationScene(scene.habahiroApproximation)) {
+      return evidenceRequired(
+        "render.habahiro.approximation-scene-required",
+        ["HAB-A04", "HAB-A08", "HAB-A09", "HAB-A10"],
+        "Approximate HABAHIRO Slide motion requires its validated width and field profile.",
+      );
+    }
     if (
       scene.screenToSafeAreaRatio === undefined ||
       scene.longMeshColor === undefined
@@ -1819,13 +2087,16 @@ export class RenderCommandProducer {
       input,
       scene.screenToSafeAreaRatio,
       scene.longMeshColor,
+      this.isApproximateHabahiro()
+        ? scene.habahiroApproximation!.meshWidthSetting
+        : undefined,
     );
     if (advanced.status !== "ok") return advanced;
     const zero = createRenderFloat32(Math.fround(0));
     if (zero.status !== "ok") return zero;
     const base = this.commandBase(this.substep);
     const commands: RenderCommand[] = [];
-    const animationUpdates: { readonly renderObjectId: string; readonly role: "note-flick" | "note-directional-flick"; readonly elapsed: number }[] = [];
+    const animationUpdates: { readonly renderObjectId: string; readonly role: NoteVisualAnimationRole; readonly elapsed: number }[] = [];
     for (let index = 0; index < advanced.value.childStates.length; index += 1) {
       const state = advanced.value.childStates[index]!;
       const segment = advanced.value.segments[index]!;
@@ -1955,24 +2226,40 @@ export class RenderCommandProducer {
       ordering: visualState.ordering,
       maskObjectId: null,
     }];
-    const animation = this.noteAnimationElapsedSeconds.get(renderObjectId);
-    let nextAnimationElapsed: number | null = null;
-    if (animation !== undefined) {
-      nextAnimationElapsed = Math.fround(animation.elapsed + motionState.deltaTime.value);
-      const sample = createRenderFloat32(nextAnimationElapsed);
-      if (sample.status !== "ok") return sample;
+    const animationUpdates: { readonly renderObjectId: string; readonly role: NoteVisualAnimationRole; readonly elapsed: number }[] = [];
+    const iconObjectId = habahiroIconRenderObjectId(poolObjectId);
+    const iconCreationSequence = this.creationSequenceByObjectId.get(iconObjectId);
+    if (iconCreationSequence !== undefined && this.noteAnimationElapsedSeconds.has(iconObjectId)) {
       commands.push({
-        ...base(commands.length), kind: "sample-animation", renderObjectId,
-        animationRole: animation.role, elapsedSeconds: sample.value,
+        ...base(commands.length), kind: "set-transform", renderObjectId: iconObjectId,
+        position: motion.value.position,
+        scale: Object.freeze({ x: motion.value.localScale.x, y: motion.value.localScale.y }),
+        rotationDegrees: rotation.value, color: visualState.color,
+        ordering: Object.freeze({
+          ...visualState.ordering,
+          sourceDepthOrSortingOrder: 72,
+          creationSequence: iconCreationSequence,
+        }),
+        maskObjectId: null,
       });
     }
+    for (const animatedObjectId of [renderObjectId, iconObjectId]) {
+      const animation = this.noteAnimationElapsedSeconds.get(animatedObjectId);
+      if (animation === undefined) continue;
+      const elapsed = Math.fround(animation.elapsed + motionState.deltaTime.value);
+      const sample = createRenderFloat32(elapsed);
+      if (sample.status !== "ok") return sample;
+      commands.push({
+        ...base(commands.length), kind: "sample-animation", renderObjectId: animatedObjectId,
+        animationRole: animation.role, elapsedSeconds: sample.value,
+      });
+      animationUpdates.push(Object.freeze({ renderObjectId: animatedObjectId, role: animation.role, elapsed }));
+    }
     const transaction = this.preflight(commands, () => {
-      if (animation !== undefined && nextAnimationElapsed !== null) {
-        this.noteAnimationElapsedSeconds.set(renderObjectId, Object.freeze({
-          role: animation.role,
-          elapsed: nextAnimationElapsed,
-        }));
-      }
+      for (const update of animationUpdates) this.noteAnimationElapsedSeconds.set(
+        update.renderObjectId,
+        Object.freeze({ role: update.role, elapsed: update.elapsed }),
+      );
     });
     return transaction.status === "ok"
       ? ok(Object.freeze({ motion: motion.value, transaction: transaction.value }))
@@ -1998,6 +2285,16 @@ export class RenderCommandProducer {
     });
     commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId });
     commands.push({ ...base(commands.length), kind: "deactivate-object", renderObjectId });
+    const iconObjectId = habahiroIconRenderObjectId(poolObjectId);
+    if (this.creationSequenceByObjectId.has(iconObjectId)) {
+      const iconAnimation = this.noteAnimationElapsedSeconds.get(iconObjectId);
+      if (iconAnimation !== undefined) commands.push({
+        ...base(commands.length), kind: "stop-animation", renderObjectId: iconObjectId,
+        animationRole: iconAnimation.role, restart: false,
+      });
+      commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: iconObjectId });
+      commands.push({ ...base(commands.length), kind: "deactivate-object", renderObjectId: iconObjectId });
+    }
     if (
       !Number.isSafeInteger(deactivateSlideChildCount) ||
       deactivateSlideChildCount < 0
@@ -2076,6 +2373,7 @@ export class RenderCommandProducer {
     }
     return this.preflight(commands, () => {
       this.noteAnimationElapsedSeconds.delete(renderObjectId);
+      this.noteAnimationElapsedSeconds.delete(habahiroIconRenderObjectId(poolObjectId));
       this.noteAnimationElapsedSeconds.delete(longAfterRenderObjectId(poolObjectId));
       for (let index = 0; index < deactivateSlideChildCount; index += 1) {
         this.noteAnimationElapsedSeconds.delete(slideChildRenderObjectId(poolObjectId, index));
@@ -2142,6 +2440,35 @@ export class RenderCommandProducer {
   }
 }
 
+export function validateHabahiroApproximationScene(
+  approximation: HabahiroApproximationSceneInput | undefined,
+): approximation is HabahiroApproximationSceneInput {
+  if (
+    approximation === undefined ||
+    !validateRenderFloat32(approximation.meshWidthSetting) ||
+    !validateRenderFloat32(approximation.flashDurationSeconds) ||
+    approximation.flashDurationSeconds.value !== Math.fround(0.25) ||
+    approximation.fieldBefore.length === 0 ||
+    approximation.fieldBefore.length !== approximation.fieldAfter.length
+  ) return false;
+  const beforeIds = approximation.fieldBefore.map((plan) => plan.renderObjectId);
+  const afterIds = approximation.fieldAfter.map((plan) => plan.renderObjectId);
+  const validateField = (plan: RenderFieldObjectPlan) =>
+    isNonEmpty(plan.renderObjectId) && isNonEmpty(plan.logicalAssetId) && isNonEmpty(plan.exactKey) &&
+    (plan.role === "field-line" || plan.role === "judge-line") &&
+    validateVector3(plan.position) && validateVector2(plan.scale) &&
+    validateRenderFloat32(plan.rotationDegrees) && validateColor(plan.color) &&
+    validateOrdering(plan.ordering);
+  return new Set(beforeIds).size === beforeIds.length &&
+    approximation.fieldBefore.every(validateField) && approximation.fieldAfter.every(validateField) &&
+    beforeIds.every((id, index) => id === afterIds[index]) &&
+    approximation.fieldMasks.every((plan) =>
+      isNonEmpty(plan.renderObjectId) && plan.polygon.length >= 3 &&
+      plan.polygon.every(validateVector2) && validateVector3(plan.position) &&
+      validateVector2(plan.scale) && validateRenderFloat32(plan.rotationDegrees) &&
+      validateOrdering(plan.ordering));
+}
+
 export function validateOrdinaryFixedNoteSceneInput(
   scene: OrdinaryFixedNoteSceneInput,
 ): SimulatorResult<void> {
@@ -2177,6 +2504,10 @@ export function validateOrdinaryFixedNoteSceneInput(
 
 export function rootRenderObjectId(poolObjectId: string): string {
   return `render:${poolObjectId}:root`;
+}
+
+export function habahiroIconRenderObjectId(poolObjectId: string): string {
+  return `render:${poolObjectId}:habahiro-icon`;
 }
 
 export function longAfterRenderObjectId(poolObjectId: string): string {
@@ -2276,42 +2607,143 @@ export function resolveFrontSpriteBinding(
   }));
 }
 
-function resolveDegradedHabahiroFrontSpriteBinding(
+function resolveApproximateHabahiroFrontSpriteBinding(
   information: NoteInformation,
   resources: RenderEngineResourceBindings,
 ): SimulatorResult<{ readonly logicalAssetId: string; readonly exactKey: string }> {
   const laneSuffix = resolveLaneSuffix(information, true);
   if (laneSuffix.status !== "ok") return laneSuffix;
-  let family: "note_normal" | "note_normal_16" | "note_skill" | "note_long" | "note_flick";
+  const atlases = resolveHabahiroAtlasLogicalIds(resources);
   if (information.gameNoteAdditionalType === GameNoteAdditionalType.Skill) {
-    family = "note_skill";
-  } else if (information.fireNoteType === FrontNoteType.Normal) {
-    family = information.shortRhythmUnder8beat ? "note_normal_16" : "note_normal";
-  } else if (
+    return ok(Object.freeze({ logicalAssetId: atlases.skill, exactKey: `note_skill_${laneSuffix.value}` }));
+  }
+  if (information.fireNoteType === FrontNoteType.Normal) {
+    return information.shortRhythmUnder8beat
+      ? ok(Object.freeze({ logicalAssetId: atlases.normal16, exactKey: `note_normal_16_${laneSuffix.value}` }))
+      : ok(Object.freeze({ logicalAssetId: atlases.normal, exactKey: `note_normal_${laneSuffix.value}` }));
+  }
+  if (
     information.fireNoteType === FrontNoteType.Flick ||
     information.fireNoteType === FrontNoteType.DirectionalFlick ||
-    information.fireNoteType === FrontNoteType.MultipleDirectionalFlick
+    information.fireNoteType === FrontNoteType.MultipleDirectionalFlick ||
+    information.fireNoteType === FrontNoteType.LongMultipleDirectionalFlickAdd ||
+    information.fireNoteType === FrontNoteType.SlideAMultipleDirectionalFlickAdd ||
+    information.fireNoteType === FrontNoteType.SlideBMultipleDirectionalFlickAdd
   ) {
-    family = "note_flick";
-  } else {
-    family = "note_long";
+    return ok(Object.freeze({ logicalAssetId: atlases.flick, exactKey: `note_flick_${laneSuffix.value}` }));
   }
+  return ok(Object.freeze({ logicalAssetId: atlases.long, exactKey: `note_long_${laneSuffix.value}` }));
+}
+
+function resolveApproximateHabahiroIconBinding(
+  information: NoteInformation,
+  resources: RenderEngineResourceBindings,
+): {
+  readonly logicalAssetId: string;
+  readonly exactKey: string;
+  readonly animationRole: NoteVisualAnimationRole;
+} | null {
+  const atlases = resolveHabahiroAtlasLogicalIds(resources);
+  const buttonCount = information.buttonTypesArray.length || information.buttonTypes.length || 1;
+  if (
+    information.fireNoteType === FrontNoteType.Flick ||
+    information.fireNoteType === FrontNoteType.DirectionalFlick ||
+    information.fireNoteType === FrontNoteType.MultipleDirectionalFlick ||
+    information.fireNoteType === FrontNoteType.LongMultipleDirectionalFlickAdd ||
+    information.fireNoteType === FrontNoteType.SlideAMultipleDirectionalFlickAdd ||
+    information.fireNoteType === FrontNoteType.SlideBMultipleDirectionalFlickAdd
+  ) {
+    const topWidth = Math.min(buttonCount, 3);
+    return Object.freeze({
+      logicalAssetId: atlases.flick,
+      exactKey: topWidth === 1 ? "note_flick_top" : `note_flick_top_${topWidth}`,
+      animationRole: information.fireNoteType === FrontNoteType.Flick
+        ? "note-flick" : "note-directional-flick",
+    });
+  }
+  if (
+    information.fireNoteType === FrontNoteType.Long ||
+    information.fireNoteType === FrontNoteType.SlideA ||
+    information.fireNoteType === FrontNoteType.SlideB
+  ) {
+    const suffix = resolveLaneSuffix(information, true);
+    if (suffix.status !== "ok") return null;
+    return Object.freeze({
+      logicalAssetId: atlases.longFlash,
+      exactKey: `note_long_flash_${suffix.value}`,
+      animationRole: "note-long-flash",
+    });
+  }
+  return null;
+}
+
+function resolveApproximateHabahiroAfterSpriteBinding(
+  information: NoteInformation,
+  resources: RenderEngineResourceBindings,
+): SimulatorResult<{ readonly logicalAssetId: string; readonly exactKey: string }> {
+  const laneSuffix = resolveLaneSuffix(information, true);
+  if (laneSuffix.status !== "ok") return laneSuffix;
+  const flick = information.afterNoteType === AfterNoteType.Flick ||
+    information.afterNoteType === AfterNoteType.SlideFlickEnd ||
+    afterTypeIsDirectional(information.afterNoteType);
   return ok(Object.freeze({
-    logicalAssetId: resources.noteAtlasLogicalAssetId,
-    exactKey: `${family}_${laneSuffix.value}`,
+    logicalAssetId: flick
+      ? resolveHabahiroAtlasLogicalIds(resources).flick
+      : resolveHabahiroAtlasLogicalIds(resources).long,
+    exactKey: `${flick ? "note_flick" : "note_long"}_${laneSuffix.value}`,
   }));
 }
 
-function resolveDegradedHabahiroMotionLaneIndex(
+function resolveApproximateHabahiroSlideChildBinding(
+  information: NoteInformation,
+  terminal: boolean,
+  resources: RenderEngineResourceBindings,
+): SimulatorResult<{ readonly logicalAssetId: string; readonly exactKey: string }> {
+  const atlases = resolveHabahiroAtlasLogicalIds(resources);
+  const buttonCount = information.buttonTypesArray.length || information.buttonTypes.length || 1;
+  if (!terminal) {
+    return ok(Object.freeze({
+      logicalAssetId: atlases.slideAmong,
+      exactKey: buttonCount === 1 ? "note_slide_among" : `note_slide_among_${buttonCount}`,
+    }));
+  }
+  const laneSuffix = resolveLaneSuffix(information, true);
+  if (laneSuffix.status !== "ok") return laneSuffix;
+  const flick = information.gameNoteType === GameNoteType.Flick ||
+    information.gameNoteType === GameNoteType.LongEndFlick ||
+    information.gameNoteType === GameNoteType.SlideEndFlickA ||
+    information.gameNoteType === GameNoteType.SlideEndFlickB ||
+    gameTypeIsDirectional(information.gameNoteType);
+  return ok(Object.freeze({
+    logicalAssetId: flick ? atlases.flick : atlases.long,
+    exactKey: `${flick ? "note_flick" : "note_long"}_${laneSuffix.value}`,
+  }));
+}
+
+function resolveHabahiroAtlasLogicalIds(
+  resources: RenderEngineResourceBindings,
+): NonNullable<RenderEngineResourceBindings["habahiroAtlasLogicalAssetIds"]> {
+  return resources.habahiroAtlasLogicalAssetIds ?? Object.freeze({
+    normal: resources.noteAtlasLogicalAssetId,
+    normal16: resources.noteAtlasLogicalAssetId,
+    skill: resources.noteAtlasLogicalAssetId,
+    flick: resources.noteAtlasLogicalAssetId,
+    long: resources.noteAtlasLogicalAssetId,
+    longFlash: resources.noteAtlasLogicalAssetId,
+    slideAmong: resources.noteAtlasLogicalAssetId,
+  });
+}
+
+function resolveApproximateHabahiroMotionLaneIndex(
   information: NoteInformation,
 ): SimulatorResult<number> {
   const lane = resolveLaneIndex(information.buttonType, true);
   return Number.isInteger(lane) && lane >= 0 && lane < 7
     ? ok(lane)
     : evidenceRequired(
-        "render.note.degraded-habahiro-invalid-center-lane",
+        "render.note.approximate-habahiro-invalid-center-lane",
         ["PR04", "PR40", "HA-D04"],
-        "The explicit degraded proxy projects the chart-authored center button through the ordinary 0..6 viewport without clamp.",
+        "The explicit HABAHIRO approximation projects the chart-authored range representative through the current 0..6 viewport without clamp.",
       );
 }
 

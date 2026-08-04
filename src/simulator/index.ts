@@ -59,6 +59,19 @@ export {
 } from "./backends/resources/localResourceProvider";
 export type { LocalRenderResource } from "./backends/resources/localResourceProvider";
 export { sha256UpperHex } from "./backends/resources/sha256";
+export {
+  BrowserHabahiroBestdoriTransport,
+  parseHabahiroAtlasRows,
+  prepareHabahiroBestdoriPack,
+} from "./backends/resources/habahiroBestdoriProvider";
+export type {
+  HabahiroBestdoriTransport,
+  PreparedHabahiroBestdoriPack,
+} from "./backends/resources/habahiroBestdoriProvider";
+export {
+  HABAHIRO_BESTDORI_PACK_IDENTITY,
+  HABAHIRO_BESTDORI_PINNED_ASSETS,
+} from "./backends/resources/habahiroBestdoriManifest";
 export { PixiRendererBackend } from "./backends/pixi/pixiRendererBackend";
 export type {
   PixiSceneObjectFactory,
@@ -188,9 +201,11 @@ export {
   longMeshRenderObjectId,
   resolveFrontSpriteBinding,
   rootRenderObjectId,
+  validateHabahiroApproximationScene,
   validateOrdinaryFixedNoteSceneInput,
 } from "./engine/rendering/renderCommandProducer";
 export type {
+  HabahiroApproximationSceneInput,
   OrdinaryFixedNoteSceneInput,
   OrdinaryNoteTransformVisualState,
   PreparedOrdinaryNoteActivation,
@@ -202,8 +217,10 @@ export type {
 export {
   advanceOrdinaryNoteActivationAdjustment,
   advanceOrdinaryNoteMotion,
+  buildOrdinaryAdvancedNoteMesh,
   buildOrdinaryBaseNoteMesh,
   buildOrdinarySyncLine,
+  getApproximateHabahiroMeshWidthRate,
   getOrdinaryNoteArrivalSeconds,
 } from "./engine/rendering/ordinaryNoteGeometry";
 export {

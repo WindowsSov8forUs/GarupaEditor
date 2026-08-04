@@ -458,6 +458,11 @@ export class NoteManager {
           note.registerRenderMotionOwner((deltaTimeSeconds) =>
             this.advanceOrdinaryRenderMotion(note, deltaTimeSeconds));
         }
+        if (note instanceof NoteMultipleDirectionalVisual) {
+          note.registerPresentationLifecycle(
+            this.renderProducer?.isApproximateHabahiro() === true,
+          );
+        }
         if (note instanceof NoteMultipleDirectionalFlick) {
           note.registerMultipleDirectionalGroupResolver(
             (information) => this.resolveMultipleDirectionalGroup(information),

@@ -38,6 +38,7 @@ import { NoteManager } from "../engine/managers/noteManager";
 import { SlideNoteManager } from "../engine/managers/slideNoteManager";
 import {
   RenderCommandProducer,
+  validateHabahiroApproximationScene,
   validateOrdinaryFixedNoteSceneInput,
 } from "../engine/rendering/renderCommandProducer";
 import {
@@ -241,18 +242,33 @@ export function createSimulatorEngine(
     const fidelity = backends.rendering.snapshot().fidelity;
     if (
       fidelity?.mode !== "ordinary" &&
-      !(fidelity?.mode === "habahiro" && fidelity.fidelity === "degraded")
+      !(fidelity?.mode === "habahiro" &&
+        (fidelity.fidelity === "degraded" ||
+          fidelity.fidelity === "approximate-current-external"))
     ) {
       return evidenceRequired(
         "render.note.non-ordinary-scene-lifecycle-unimplemented",
         ["RPR-D05", "RPR-D13", "PR04", "PR39", "PR40", "HA-D04"],
-        "The connected Note lifecycle accepts exact ordinary or an explicitly labeled degraded HABAHIRO ordinary-projection proxy; exact HABAHIRO remains closed.",
+        "The connected Note lifecycle accepts exact ordinary or an explicitly labelled HABAHIRO approximation; UnityFS exact parity remains a separate claim.",
       );
     }
     const sceneValidation = validateOrdinaryFixedNoteSceneInput(
       input.rendering.ordinaryNoteScene,
     );
     if (sceneValidation.status !== "ok") return sceneValidation;
+    if (
+      fidelity?.mode === "habahiro" &&
+      fidelity.fidelity === "approximate-current-external" &&
+      !validateHabahiroApproximationScene(
+        input.rendering.ordinaryNoteScene.habahiroApproximation,
+      )
+    ) {
+      return evidenceRequired(
+        "render.habahiro.approximation-scene-required",
+        ["HAB-A04", "HAB-A08", "HAB-A09", "HAB-A10"],
+        "HABAHIRO approximation requires explicit mesh-width, flash-clock and field/judge scene plans before engine creation.",
+      );
+    }
   }
   const renderProducer = input.rendering !== undefined && backends.rendering !== undefined
     ? new RenderCommandProducer(
@@ -362,6 +378,7 @@ export function createSimulatorEngine(
     scoreLifeStateManager,
     renderProducer,
     input.chart.habahiroChangeAbsolutePos,
+    input.rendering?.ordinaryNoteScene ?? null,
   );
   const inGameDirector = new InGameDirector(
     inGameManager,
