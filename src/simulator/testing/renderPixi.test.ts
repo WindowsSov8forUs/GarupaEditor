@@ -1138,7 +1138,7 @@ async function main(): Promise<void> {
       mode: "habahiro",
       fidelity: "degraded",
       profile: "current-external-portable-atlas",
-      visibleLabel: "Approximate HABAHIRO",
+      visibleLabel: "HABAHIRO",
     },
     assets: ordinaryProfile.assets.map((asset) => ({
       ...asset,
@@ -1180,7 +1180,7 @@ async function main(): Promise<void> {
   const fidelityLabel = degradedRenderer.sceneSnapshot().find((row) =>
     row.renderObjectId === "render:hud:fidelity-label");
   equal(fidelityLabel?.visible, true, "degraded fidelity label is visibly active");
-  equal(fidelityLabel?.hudText, "Approximate HABAHIRO", "degraded fidelity text is exact");
+  equal(fidelityLabel?.hudText, "HABAHIRO", "legacy fidelity text does not describe implementation completeness");
   const laneChange = requireOk(
     degradedProducer.preflightDegradedHabahiroLaneChange(1728),
     "preflight degraded HABAHIRO lane change",
@@ -1189,8 +1189,8 @@ async function main(): Promise<void> {
   const laneDiagnostic = degradedRenderer.sceneSnapshot().find((row) =>
     row.renderObjectId === "render:habahiro:lane-change");
   equal(laneDiagnostic?.visible, true, "degraded lane-change diagnostic becomes visible");
-  equal(laneDiagnostic?.hudText, "Approximate HABAHIRO · Lane Changed",
-    "degraded flash then lane-change ends at the disclosed diagnostic state");
+  equal(laneDiagnostic?.hudText, "HABAHIRO · Lane Changed",
+    "legacy lane-change diagnostic contains no approximation wording");
   const degradedRelease = requireOk(
     degradedProducer.preflightSessionRelease(),
     "preflight degraded session release",
@@ -1199,32 +1199,29 @@ async function main(): Promise<void> {
   equal(degradedRenderer.sceneSnapshot().length, 0, "degraded label participates in reverse release");
   requireOk(degradedRenderer.dispose(), "dispose degraded renderer");
 
-  const approximateSession = "approximate-habahiro-pixi-session";
-  const approximateProfile: RenderResourceProfile = {
+  const habahiroSession = "complete-habahiro-pixi-session";
+  const habahiroProfile: RenderResourceProfile = {
     ...degradedProfile,
     fidelity: {
       mode: "habahiro",
-      fidelity: "approximate-current-external",
-      visibleLabel: "Approximate HABAHIRO",
-      machineReadableFlag: "rendering-fidelity-approximate-habahiro",
-      differenceProfile: "HA-D01-HA-D12",
+      fidelity: "current-external-complete",
     },
     scene: {
       ...degradedProfile.scene,
       projection: {
         ...degradedProfile.scene.projection,
-        mode: "approximate-habahiro-current-external",
+        mode: "habahiro-current-external",
       },
     },
   };
-  const approximateRenderer = new PixiRendererBackend(decoder);
-  requireOk(await approximateRenderer.prepare(
-    approximateSession, approximateProfile, provider,
+  const habahiroRenderer = new PixiRendererBackend(decoder);
+  requireOk(await habahiroRenderer.prepare(
+    habahiroSession, habahiroProfile, provider,
     new PortableRenderResourcePreflightAdapter(),
-  ), "prepare full approximate HABAHIRO Pixi renderer");
-  const approximateProducer = new RenderCommandProducer(
-    approximateSession,
-    approximateRenderer,
+  ), "prepare complete HABAHIRO Pixi renderer");
+  const habahiroProducer = new RenderCommandProducer(
+    habahiroSession,
+    habahiroRenderer,
     {
       noteAtlasLogicalAssetId: "asset.note",
       directionalAtlasLogicalAssetId: "asset.note",
@@ -1236,33 +1233,33 @@ async function main(): Promise<void> {
     },
   );
   requireOk(requireOk(
-    approximateProducer.preflightPoolSetup([], 0, 0),
-    "preflight approximate HABAHIRO owners",
-  ).commit(), "commit approximate HABAHIRO owners");
+    habahiroProducer.preflightPoolSetup([], 0, 0),
+    "preflight complete HABAHIRO owners",
+  ).commit(), "commit complete HABAHIRO owners");
   requireOk(requireOk(
-    approximateProducer.preflightApproximateHabahiroFlashStart(1728),
-    "preflight approximate HABAHIRO flash",
-  ).commit(), "commit approximate HABAHIRO flash");
+    habahiroProducer.preflightHabahiroFlashStart(1728),
+    "preflight HABAHIRO flash",
+  ).commit(), "commit HABAHIRO flash");
   requireOk(requireOk(
-    approximateProducer.preflightApproximateHabahiroFlashAdvance(f32(0.125)),
-    "preflight approximate engine-clock flash sample",
-  ).commit(), "commit approximate engine-clock flash sample");
-  const flash = approximateRenderer.stage.children.find((child) =>
+    habahiroProducer.preflightHabahiroFlashAdvance(f32(0.125)),
+    "preflight HABAHIRO engine-clock flash sample",
+  ).commit(), "commit HABAHIRO engine-clock flash sample");
+  const flash = habahiroRenderer.stage.children.find((child) =>
     child.label === "render:habahiro:flash");
-  if (!(flash instanceof Container)) throw new Error("approximate flash Pixi owner missing");
+  if (!(flash instanceof Container)) throw new Error("HABAHIRO flash Pixi owner missing");
   const flashFill = [...flash.children, ...flash.children.flatMap((child) =>
     child instanceof Container ? [...child.children] : [])].find((child) =>
       child instanceof Graphics && child.alpha > 0);
   if (!(flashFill instanceof Graphics)) throw new Error(
-    "approximate flash did not consume engine-clock animation through Pixi",
+    "HABAHIRO flash did not consume engine-clock animation through Pixi",
   );
   requireOk(requireOk(
-    approximateProducer.preflightSessionRelease(),
-    "preflight approximate HABAHIRO release",
-  ).commit(), "release approximate HABAHIRO scene");
-  equal(approximateRenderer.sceneSnapshot().length, 0,
-    "approximate HABAHIRO releases all fixed owners");
-  requireOk(approximateRenderer.dispose(), "dispose approximate HABAHIRO renderer");
+    habahiroProducer.preflightSessionRelease(),
+    "preflight HABAHIRO release",
+  ).commit(), "release complete HABAHIRO scene");
+  equal(habahiroRenderer.sceneSnapshot().length, 0,
+    "complete HABAHIRO releases all fixed owners");
+  requireOk(habahiroRenderer.dispose(), "dispose complete HABAHIRO renderer");
 
   console.log("Pixi v8 semantic adapter tests passed: Sprite/R2-Mesh/sync+Multiple-line/mask/HUD/fill/animation/fault/dispose");
 }

@@ -460,7 +460,7 @@ export class NoteManager {
         }
         if (note instanceof NoteMultipleDirectionalVisual) {
           note.registerPresentationLifecycle(
-            this.renderProducer?.isApproximateHabahiro() === true,
+            this.renderProducer?.isCompleteHabahiro() === true,
           );
         }
         if (note instanceof NoteMultipleDirectionalFlick) {

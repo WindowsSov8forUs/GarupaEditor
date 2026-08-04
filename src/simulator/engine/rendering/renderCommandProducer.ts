@@ -43,7 +43,7 @@ import {
   advanceOrdinaryNoteMotion,
   buildOrdinaryMultipleDirectionalLine,
   buildOrdinarySyncLine,
-  getApproximateHabahiroMeshWidthRate,
+  getHabahiroMeshWidthRate,
   type OrdinaryMultipleDirectionalLineOwnerState,
   type OrdinaryNoteMotionResult,
   type OrdinaryNoteMotionState,
@@ -93,7 +93,7 @@ export interface PreparedOrdinaryNoteMotion {
   readonly transaction: RenderOwnerTransaction;
 }
 
-export interface HabahiroApproximationSceneInput {
+export interface HabahiroSceneInput {
   readonly meshWidthSetting: RenderFloat32;
   readonly flashDurationSeconds: RenderFloat32;
   readonly fieldBefore: readonly RenderFieldObjectPlan[];
@@ -114,7 +114,7 @@ export interface OrdinaryFixedNoteSceneInput {
   readonly syncLineEdgeMargin?: RenderFloat32;
   readonly screenToSafeAreaRatio?: RenderFloat32;
   readonly longMeshColor?: RenderColor;
-  readonly habahiroApproximation?: HabahiroApproximationSceneInput;
+  readonly habahiro?: HabahiroSceneInput;
 }
 
 export interface PreparedOrdinaryNoteActivation {
@@ -199,7 +199,7 @@ const CURRENT_SUDDEN_THRESHOLD = Object.freeze({
 });
 
 const DEGRADED_HABAHIRO_LANE_OBJECT = "render:habahiro:lane-change";
-const APPROXIMATE_HABAHIRO_FLASH_OBJECT = "render:habahiro:flash";
+const HABAHIRO_FLASH_OBJECT = "render:habahiro:flash";
 
 const HUD_OBJECTS = Object.freeze({
   addScore: Object.freeze([
@@ -250,9 +250,9 @@ export class RenderCommandProducer {
     private readonly resources: RenderEngineResourceBindings,
   ) {}
 
-  isApproximateHabahiro(): boolean {
+  isCompleteHabahiro(): boolean {
     const fidelity = this.renderer.snapshot().fidelity;
-    return fidelity?.mode === "habahiro" && fidelity.fidelity === "approximate-current-external";
+    return fidelity?.mode === "habahiro" && fidelity.fidelity === "current-external-complete";
   }
 
   isDegradedHabahiro(): boolean {
@@ -260,8 +260,8 @@ export class RenderCommandProducer {
     return fidelity?.mode === "habahiro" && fidelity.fidelity === "degraded";
   }
 
-  isAnyHabahiroApproximation(): boolean {
-    return this.isApproximateHabahiro() || this.isDegradedHabahiro();
+  isAnyHabahiro(): boolean {
+    return this.isCompleteHabahiro() || this.isDegradedHabahiro();
   }
 
   validate(): SimulatorResult<void> {
@@ -279,7 +279,7 @@ export class RenderCommandProducer {
       (this.resources.scoreSkillAnimationLogicalAssetId !== undefined &&
         !isNonEmpty(this.resources.scoreSkillAnimationLogicalAssetId)) ||
       (this.renderer.snapshot().fidelity?.mode === "habahiro" &&
-        this.renderer.snapshot().fidelity?.fidelity === "approximate-current-external" &&
+        this.renderer.snapshot().fidelity?.fidelity === "current-external-complete" &&
         (this.resources.habahiroAtlasLogicalAssetIds === undefined ||
           Object.values(this.resources.habahiroAtlasLogicalAssetIds).some((value) => !isNonEmpty(value))))
     ) {
@@ -913,7 +913,7 @@ export class RenderCommandProducer {
       );
     }
     if (
-      !this.isAnyHabahiroApproximation() &&
+      !this.isAnyHabahiro() &&
       pools.length === 0 &&
       syncLinePoolLength === 0 &&
       multipleDirectionalLinePoolLength === 0
@@ -955,7 +955,7 @@ export class RenderCommandProducer {
         kind: "hide-object",
         renderObjectId,
       });
-      if (this.isApproximateHabahiro()) {
+      if (this.isCompleteHabahiro()) {
         const iconObjectId = habahiroIconRenderObjectId(pool.poolObjectId);
         created.push(iconObjectId);
         commands.push({
@@ -1073,161 +1073,124 @@ export class RenderCommandProducer {
         renderObjectId,
       });
     }
-    if (this.isAnyHabahiroApproximation()) {
+    if (this.isDegradedHabahiro()) {
       created.push(HUD_OBJECTS.fidelity, DEGRADED_HABAHIRO_LANE_OBJECT);
       commands.push({
-        ...base(commands.length),
-        kind: "create-object",
-        renderObjectId: HUD_OBJECTS.fidelity,
-        poolFamily: "fidelity-label",
-        role: "fidelity-label",
-        parentObjectId: null,
+        ...base(commands.length), kind: "create-object", renderObjectId: HUD_OBJECTS.fidelity,
+        poolFamily: "fidelity-label", role: "fidelity-label", parentObjectId: null,
       });
       commands.push({
-        ...base(commands.length),
-        kind: "set-hud",
-        renderObjectId: HUD_OBJECTS.fidelity,
+        ...base(commands.length), kind: "set-hud", renderObjectId: HUD_OBJECTS.fidelity,
         hudRole: "fidelity-label",
-        state: Object.freeze({
-          label: "Approximate HABAHIRO",
-          visible: true,
-        }),
+        state: Object.freeze({ label: "HABAHIRO", visible: true }),
       });
+      commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: HUD_OBJECTS.fidelity });
       commands.push({
-        ...base(commands.length),
-        kind: "activate-object",
-        renderObjectId: HUD_OBJECTS.fidelity,
-      });
-      commands.push({
-        ...base(commands.length),
-        kind: "create-object",
+        ...base(commands.length), kind: "create-object",
         renderObjectId: DEGRADED_HABAHIRO_LANE_OBJECT,
-        poolFamily: "approximate-habahiro-lane-change",
-        role: "fidelity-label",
-        parentObjectId: null,
+        poolFamily: "degraded-habahiro-lane-change", role: "fidelity-label", parentObjectId: null,
       });
       commands.push({
-        ...base(commands.length),
-        kind: "hide-object",
+        ...base(commands.length), kind: "hide-object",
         renderObjectId: DEGRADED_HABAHIRO_LANE_OBJECT,
       });
-      if (this.isApproximateHabahiro()) {
-        created.push(APPROXIMATE_HABAHIRO_FLASH_OBJECT);
-        commands.push({
-          ...base(commands.length),
-          kind: "create-object",
-          renderObjectId: APPROXIMATE_HABAHIRO_FLASH_OBJECT,
-          poolFamily: "approximate-habahiro-flash",
-          role: "hud-overlay",
-          parentObjectId: null,
-        });
-        commands.push({
-          ...base(commands.length),
-          kind: "hide-object",
-          renderObjectId: APPROXIMATE_HABAHIRO_FLASH_OBJECT,
-        });
-      }
+    }
+    if (this.isCompleteHabahiro()) {
+      created.push(HABAHIRO_FLASH_OBJECT);
+      commands.push({
+        ...base(commands.length), kind: "create-object",
+        renderObjectId: HABAHIRO_FLASH_OBJECT,
+        poolFamily: "habahiro-flash", role: "hud-overlay", parentObjectId: null,
+      });
+      commands.push({
+        ...base(commands.length), kind: "hide-object",
+        renderObjectId: HABAHIRO_FLASH_OBJECT,
+      });
     }
     return this.preflight(commands, () => this.recordCreatedObjects(created));
   }
 
-  preflightApproximateHabahiroFlashStart(
+  preflightHabahiroFlashStart(
     absolutePosition: number,
   ): SimulatorResult<RenderOwnerTransaction> {
     const validation = this.validate();
     if (validation.status !== "ok") return validation;
     if (
-      !this.isApproximateHabahiro() ||
+      !this.isCompleteHabahiro() ||
       !Number.isInteger(absolutePosition) || absolutePosition < 0 ||
-      !this.creationSequenceByObjectId.has(DEGRADED_HABAHIRO_LANE_OBJECT) ||
-      !this.creationSequenceByObjectId.has(APPROXIMATE_HABAHIRO_FLASH_OBJECT)
+      !this.creationSequenceByObjectId.has(HABAHIRO_FLASH_OBJECT)
     ) {
       return evidenceRequired(
-        "render.habahiro.invalid-approximate-flash-start",
+        "render.habahiro.invalid-flash-start",
         ["HAB-A07", "HAB-A09", "HA-D07"],
-        "The explicit HABAHIRO approximation requires committed lane and flash owners before its marker phase.",
+        "The complete HABAHIRO route requires its committed flash owner before the chart marker phase.",
       );
     }
     const base = this.commandBase(this.substep);
-    const commands: RenderCommand[] = [{
-      ...base(0), kind: "set-hud", renderObjectId: DEGRADED_HABAHIRO_LANE_OBJECT,
-      hudRole: "fidelity-label", state: Object.freeze({
-        label: "Approximate HABAHIRO", visible: true,
-        laneChangePhase: "flash-start", absolutePosition,
-      }),
-    }, {
-      ...base(1), kind: "activate-object", renderObjectId: DEGRADED_HABAHIRO_LANE_OBJECT,
-    }, {
-      ...base(2), kind: "set-hud", renderObjectId: APPROXIMATE_HABAHIRO_FLASH_OBJECT,
+    return this.preflight([{
+      ...base(0), kind: "set-hud", renderObjectId: HABAHIRO_FLASH_OBJECT,
       hudRole: "overlay", state: Object.freeze({ habahiroFlashPhase: "flash-start", progress: 0 }),
     }, {
-      ...base(3), kind: "activate-object", renderObjectId: APPROXIMATE_HABAHIRO_FLASH_OBJECT,
+      ...base(1), kind: "activate-object", renderObjectId: HABAHIRO_FLASH_OBJECT,
     }, {
-      ...base(4), kind: "play-animation", renderObjectId: APPROXIMATE_HABAHIRO_FLASH_OBJECT,
+      ...base(2), kind: "play-animation", renderObjectId: HABAHIRO_FLASH_OBJECT,
       animationRole: "habahiro-lane-change", restart: true,
-    }];
-    return this.preflight(commands);
+    }]);
   }
 
-  preflightApproximateHabahiroFlashAdvance(
+  preflightHabahiroFlashAdvance(
     elapsedSeconds: RenderFloat32,
   ): SimulatorResult<RenderOwnerTransaction> {
     const validation = this.validate();
     if (validation.status !== "ok") return validation;
-    if (!this.isApproximateHabahiro() || !validateRenderFloat32(elapsedSeconds) || elapsedSeconds.value < 0) {
+    if (!this.isCompleteHabahiro() || !validateRenderFloat32(elapsedSeconds) || elapsedSeconds.value < 0) {
       return evidenceRequired(
-        "render.habahiro.invalid-approximate-flash-sample",
+        "render.habahiro.invalid-flash-sample",
         ["HAB-A09", "HAB-A10", "HA-D07"],
         "HABAHIRO flash sampling requires explicit engine-clock Float32 time.",
       );
     }
     const base = this.commandBase(this.substep);
     return this.preflight([{
-      ...base(0), kind: "sample-animation", renderObjectId: APPROXIMATE_HABAHIRO_FLASH_OBJECT,
+      ...base(0), kind: "sample-animation", renderObjectId: HABAHIRO_FLASH_OBJECT,
       animationRole: "habahiro-lane-change", elapsedSeconds,
     }]);
   }
 
-  preflightApproximateHabahiroLaneChange(
+  preflightHabahiroLaneChange(
     absolutePosition: number,
     scene: OrdinaryFixedNoteSceneInput,
   ): SimulatorResult<RenderOwnerTransaction> {
     const validation = this.validate();
     if (validation.status !== "ok") return validation;
-    const approximation = scene.habahiroApproximation;
+    const habahiroScene = scene.habahiro;
     if (
-      !this.isApproximateHabahiro() || approximation === undefined ||
+      !this.isCompleteHabahiro() || habahiroScene === undefined ||
       !Number.isInteger(absolutePosition) || absolutePosition < 0 ||
-      approximation.fieldAfter.some((plan) =>
+      habahiroScene.fieldAfter.some((plan) =>
         !this.creationSequenceByObjectId.has(plan.renderObjectId) ||
         !validateVector3(plan.position) || !validateVector2(plan.scale) ||
         !validateRenderFloat32(plan.rotationDegrees) || !validateColor(plan.color) ||
         !validateOrdering(plan.ordering))
     ) {
       return evidenceRequired(
-        "render.habahiro.invalid-approximate-lane-change",
+        "render.habahiro.invalid-lane-change",
         ["HAB-A07", "HAB-A09", "HAB-A10", "HA-D08"],
         "The inferred HABAHIRO lane swap requires every pre-created field/judge owner and typed post-change transform.",
       );
     }
     const base = this.commandBase(this.substep);
-    const commands: RenderCommand[] = approximation.fieldAfter.map((plan, index) => ({
+    const commands: RenderCommand[] = habahiroScene.fieldAfter.map((plan, index) => ({
       ...base(index), kind: "set-transform" as const, renderObjectId: plan.renderObjectId,
       position: plan.position, scale: plan.scale, rotationDegrees: plan.rotationDegrees,
       color: plan.color, ordering: plan.ordering, maskObjectId: plan.maskObjectId,
     }));
     commands.push({
-      ...base(commands.length), kind: "stop-animation", renderObjectId: APPROXIMATE_HABAHIRO_FLASH_OBJECT,
+      ...base(commands.length), kind: "stop-animation", renderObjectId: HABAHIRO_FLASH_OBJECT,
       animationRole: "habahiro-lane-change", restart: false,
     });
     commands.push({
-      ...base(commands.length), kind: "hide-object", renderObjectId: APPROXIMATE_HABAHIRO_FLASH_OBJECT,
-    });
-    for (const laneChangePhase of ["change-lane", "complete"] as const) commands.push({
-      ...base(commands.length), kind: "set-hud", renderObjectId: DEGRADED_HABAHIRO_LANE_OBJECT,
-      hudRole: "fidelity-label", state: Object.freeze({
-        label: "Approximate HABAHIRO", visible: true, laneChangePhase, absolutePosition,
-      }),
+      ...base(commands.length), kind: "hide-object", renderObjectId: HABAHIRO_FLASH_OBJECT,
     });
     return this.preflight(commands);
   }
@@ -1246,7 +1209,7 @@ export class RenderCommandProducer {
       return evidenceRequired(
         "render.habahiro.invalid-degraded-lane-change",
         ["RPR-D08", "PR19", "PR40", "HA-D07", "HA-D08", "HA-D09"],
-        "Only an explicitly selected HABAHIRO approximation with its committed diagnostic owner may emit the legacy same-frame lane-change command.",
+        "Only the legacy degraded HABAHIRO route with its committed diagnostic owner may emit the same-frame lane-change command.",
       );
     }
     const base = this.commandBase(this.substep);
@@ -1257,7 +1220,7 @@ export class RenderCommandProducer {
       renderObjectId: DEGRADED_HABAHIRO_LANE_OBJECT,
       hudRole: "fidelity-label",
       state: Object.freeze({
-        label: "Approximate HABAHIRO",
+        label: "HABAHIRO",
         visible: true,
         laneChangePhase,
         absolutePosition,
@@ -1330,14 +1293,14 @@ export class RenderCommandProducer {
         "Note activation commands require the engine-owned non-negative adaptive substep.",
       );
     }
-    const approximateHabahiro = this.isApproximateHabahiro();
+    const completeHabahiro = this.isCompleteHabahiro();
     const legacyDegradedHabahiro = this.isDegradedHabahiro();
-    const habahiro = approximateHabahiro || legacyDegradedHabahiro;
-    if (approximateHabahiro && !validateHabahiroApproximationScene(scene.habahiroApproximation)) {
+    const habahiro = completeHabahiro || legacyDegradedHabahiro;
+    if (completeHabahiro && !validateHabahiroScene(scene.habahiro)) {
       return evidenceRequired(
-        "render.habahiro.approximation-scene-required",
+        "render.habahiro.scene-required",
         ["HAB-A04", "HAB-A08", "HAB-A09", "HAB-A10"],
-        "Full HABAHIRO approximation requires explicit mesh width, flash duration and pre/post field plans.",
+        "Complete HABAHIRO rendering requires explicit mesh width, flash duration and pre/post field plans.",
       );
     }
     const longTail = !legacyDegradedHabahiro &&
@@ -1380,11 +1343,11 @@ export class RenderCommandProducer {
       );
     }
     const lane = habahiro
-      ? resolveApproximateHabahiroMotionLaneIndex(information)
+      ? resolveHabahiroMotionLaneIndex(information)
       : resolveOrdinaryMotionLaneIndex(information, r7Slide);
     if (lane.status !== "ok") return lane;
     const binding = habahiro
-      ? resolveApproximateHabahiroFrontSpriteBinding(information, this.resources)
+      ? resolveHabahiroFrontSpriteBinding(information, this.resources)
       : resolveFrontSpriteBinding(information, false, this.resources);
     if (binding.status !== "ok") return binding;
     const renderObjectId = rootRenderObjectId(poolObjectId);
@@ -1464,8 +1427,8 @@ export class RenderCommandProducer {
       ...base(commands.length), kind: "play-animation", renderObjectId,
       animationRole: rootAnimationRole, restart: true,
     });
-    const habahiroIcon = approximateHabahiro
-      ? resolveApproximateHabahiroIconBinding(information, this.resources)
+    const habahiroIcon = completeHabahiro
+      ? resolveHabahiroIconBinding(information, this.resources)
       : null;
     if (habahiroIcon !== null) {
       const iconObjectId = habahiroIconRenderObjectId(poolObjectId);
@@ -1474,7 +1437,7 @@ export class RenderCommandProducer {
         return evidenceRequired(
           "render.habahiro.icon-owner-missing",
           ["HAB-A04", "HAB-A06", "HAB-A07"],
-          "Every approximate HABAHIRO Flick/Long/Slide visual requires its fixed icon owner.",
+          "Every complete HABAHIRO Flick/Long/Slide visual requires its fixed icon owner.",
         );
       }
       commands.push({
@@ -1556,10 +1519,10 @@ export class RenderCommandProducer {
       );
       if (createdChild.status !== "ok") return createdChild;
       longChildState = createdChild.value;
-      const widthRate = approximateHabahiro
-        ? getApproximateHabahiroMeshWidthRate(
+      const widthRate = completeHabahiro
+        ? getHabahiroMeshWidthRate(
             motionState.buttonCount,
-            scene.habahiroApproximation!.meshWidthSetting,
+            scene.habahiro!.meshWidthSetting,
           )
         : createRenderFloat32(Math.fround(1));
       const meshZ = createRenderFloat32(Math.fround(0.9900000095367432));
@@ -1625,8 +1588,8 @@ export class RenderCommandProducer {
         threshold: CURRENT_SUDDEN_THRESHOLD,
       });
       commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: meshObjectId });
-      const afterBinding = approximateHabahiro
-        ? resolveApproximateHabahiroAfterSpriteBinding(information, this.resources)
+      const afterBinding = completeHabahiro
+        ? resolveHabahiroAfterSpriteBinding(information, this.resources)
         : resolveAfterSpriteBinding(information, this.resources);
       if (afterBinding.status !== "ok") return afterBinding;
       commands.push({
@@ -1656,8 +1619,8 @@ export class RenderCommandProducer {
             "Each fixed Slide child identity requires its chart-owned source at the same index.",
           );
         }
-        const childLane = approximateHabahiro
-          ? resolveApproximateHabahiroMotionLaneIndex(source)
+        const childLane = completeHabahiro
+          ? resolveHabahiroMotionLaneIndex(source)
           : resolveOrdinaryMotionLaneIndex(source, true);
         if (childLane.status !== "ok") return childLane;
         const childStart = scene.noteStartPositions[childLane.value]!;
@@ -1714,8 +1677,8 @@ export class RenderCommandProducer {
           maskObjectId: null,
         });
         if (created.value.visible) {
-          const childBinding = approximateHabahiro
-            ? resolveApproximateHabahiroSlideChildBinding(
+          const childBinding = completeHabahiro
+            ? resolveHabahiroSlideChildBinding(
                 source,
                 index === information.slideNoteList.length - 1,
                 this.resources,
@@ -1737,10 +1700,10 @@ export class RenderCommandProducer {
             animationRole: childAnimationRole, restart: true,
           });
         }
-        const segmentWidthRate = approximateHabahiro
-          ? getApproximateHabahiroMeshWidthRate(
+        const segmentWidthRate = completeHabahiro
+          ? getHabahiroMeshWidthRate(
               Math.max(previousButtonCount, childButtonCount),
-              scene.habahiroApproximation!.meshWidthSetting,
+              scene.habahiro!.meshWidthSetting,
             )
           : createRenderFloat32(Math.fround(1));
         if (segmentWidthRate.status !== "ok") return segmentWidthRate;
@@ -1943,11 +1906,11 @@ export class RenderCommandProducer {
     if (validation.status !== "ok") return validation;
     const sceneValidation = validateOrdinaryFixedNoteSceneInput(scene);
     if (sceneValidation.status !== "ok") return sceneValidation;
-    if (this.isApproximateHabahiro() && !validateHabahiroApproximationScene(scene.habahiroApproximation)) {
+    if (this.isCompleteHabahiro() && !validateHabahiroScene(scene.habahiro)) {
       return evidenceRequired(
-        "render.habahiro.approximation-scene-required",
+        "render.habahiro.scene-required",
         ["HAB-A04", "HAB-A08", "HAB-A09", "HAB-A10"],
-        "Approximate HABAHIRO Long motion requires its validated width and field profile.",
+        "Complete HABAHIRO Long motion requires its validated width and field profile.",
       );
     }
     if (
@@ -1965,10 +1928,10 @@ export class RenderCommandProducer {
     }
     const next = advanceOrdinaryLongNormalChild(childState, input);
     if (next.status !== "ok") return next;
-    const widthRate = this.isApproximateHabahiro()
-      ? getApproximateHabahiroMeshWidthRate(
+    const widthRate = this.isCompleteHabahiro()
+      ? getHabahiroMeshWidthRate(
           childState.motionState.buttonCount,
-          scene.habahiroApproximation!.meshWidthSetting,
+          scene.habahiro!.meshWidthSetting,
         )
       : createRenderFloat32(Math.fround(1));
     const zero = createRenderFloat32(Math.fround(0));
@@ -2063,11 +2026,11 @@ export class RenderCommandProducer {
     if (validation.status !== "ok") return validation;
     const sceneValidation = validateOrdinaryFixedNoteSceneInput(scene);
     if (sceneValidation.status !== "ok") return sceneValidation;
-    if (this.isApproximateHabahiro() && !validateHabahiroApproximationScene(scene.habahiroApproximation)) {
+    if (this.isCompleteHabahiro() && !validateHabahiroScene(scene.habahiro)) {
       return evidenceRequired(
-        "render.habahiro.approximation-scene-required",
+        "render.habahiro.scene-required",
         ["HAB-A04", "HAB-A08", "HAB-A09", "HAB-A10"],
-        "Approximate HABAHIRO Slide motion requires its validated width and field profile.",
+        "Complete HABAHIRO Slide motion requires its validated width and field profile.",
       );
     }
     if (
@@ -2087,8 +2050,8 @@ export class RenderCommandProducer {
       input,
       scene.screenToSafeAreaRatio,
       scene.longMeshColor,
-      this.isApproximateHabahiro()
-        ? scene.habahiroApproximation!.meshWidthSetting
+      this.isCompleteHabahiro()
+        ? scene.habahiro!.meshWidthSetting
         : undefined,
     );
     if (advanced.status !== "ok") return advanced;
@@ -2440,19 +2403,19 @@ export class RenderCommandProducer {
   }
 }
 
-export function validateHabahiroApproximationScene(
-  approximation: HabahiroApproximationSceneInput | undefined,
-): approximation is HabahiroApproximationSceneInput {
+export function validateHabahiroScene(
+  scene: HabahiroSceneInput | undefined,
+): scene is HabahiroSceneInput {
   if (
-    approximation === undefined ||
-    !validateRenderFloat32(approximation.meshWidthSetting) ||
-    !validateRenderFloat32(approximation.flashDurationSeconds) ||
-    approximation.flashDurationSeconds.value !== Math.fround(0.25) ||
-    approximation.fieldBefore.length === 0 ||
-    approximation.fieldBefore.length !== approximation.fieldAfter.length
+    scene === undefined ||
+    !validateRenderFloat32(scene.meshWidthSetting) ||
+    !validateRenderFloat32(scene.flashDurationSeconds) ||
+    scene.flashDurationSeconds.value !== Math.fround(0.25) ||
+    scene.fieldBefore.length === 0 ||
+    scene.fieldBefore.length !== scene.fieldAfter.length
   ) return false;
-  const beforeIds = approximation.fieldBefore.map((plan) => plan.renderObjectId);
-  const afterIds = approximation.fieldAfter.map((plan) => plan.renderObjectId);
+  const beforeIds = scene.fieldBefore.map((plan) => plan.renderObjectId);
+  const afterIds = scene.fieldAfter.map((plan) => plan.renderObjectId);
   const validateField = (plan: RenderFieldObjectPlan) =>
     isNonEmpty(plan.renderObjectId) && isNonEmpty(plan.logicalAssetId) && isNonEmpty(plan.exactKey) &&
     (plan.role === "field-line" || plan.role === "judge-line") &&
@@ -2460,9 +2423,9 @@ export function validateHabahiroApproximationScene(
     validateRenderFloat32(plan.rotationDegrees) && validateColor(plan.color) &&
     validateOrdering(plan.ordering);
   return new Set(beforeIds).size === beforeIds.length &&
-    approximation.fieldBefore.every(validateField) && approximation.fieldAfter.every(validateField) &&
+    scene.fieldBefore.every(validateField) && scene.fieldAfter.every(validateField) &&
     beforeIds.every((id, index) => id === afterIds[index]) &&
-    approximation.fieldMasks.every((plan) =>
+    scene.fieldMasks.every((plan) =>
       isNonEmpty(plan.renderObjectId) && plan.polygon.length >= 3 &&
       plan.polygon.every(validateVector2) && validateVector3(plan.position) &&
       validateVector2(plan.scale) && validateRenderFloat32(plan.rotationDegrees) &&
@@ -2607,7 +2570,7 @@ export function resolveFrontSpriteBinding(
   }));
 }
 
-function resolveApproximateHabahiroFrontSpriteBinding(
+function resolveHabahiroFrontSpriteBinding(
   information: NoteInformation,
   resources: RenderEngineResourceBindings,
 ): SimulatorResult<{ readonly logicalAssetId: string; readonly exactKey: string }> {
@@ -2635,7 +2598,7 @@ function resolveApproximateHabahiroFrontSpriteBinding(
   return ok(Object.freeze({ logicalAssetId: atlases.long, exactKey: `note_long_${laneSuffix.value}` }));
 }
 
-function resolveApproximateHabahiroIconBinding(
+function resolveHabahiroIconBinding(
   information: NoteInformation,
   resources: RenderEngineResourceBindings,
 ): {
@@ -2677,7 +2640,7 @@ function resolveApproximateHabahiroIconBinding(
   return null;
 }
 
-function resolveApproximateHabahiroAfterSpriteBinding(
+function resolveHabahiroAfterSpriteBinding(
   information: NoteInformation,
   resources: RenderEngineResourceBindings,
 ): SimulatorResult<{ readonly logicalAssetId: string; readonly exactKey: string }> {
@@ -2694,7 +2657,7 @@ function resolveApproximateHabahiroAfterSpriteBinding(
   }));
 }
 
-function resolveApproximateHabahiroSlideChildBinding(
+function resolveHabahiroSlideChildBinding(
   information: NoteInformation,
   terminal: boolean,
   resources: RenderEngineResourceBindings,
@@ -2734,16 +2697,16 @@ function resolveHabahiroAtlasLogicalIds(
   });
 }
 
-function resolveApproximateHabahiroMotionLaneIndex(
+function resolveHabahiroMotionLaneIndex(
   information: NoteInformation,
 ): SimulatorResult<number> {
   const lane = resolveLaneIndex(information.buttonType, true);
   return Number.isInteger(lane) && lane >= 0 && lane < 7
     ? ok(lane)
     : evidenceRequired(
-        "render.note.approximate-habahiro-invalid-center-lane",
+        "render.note.habahiro-invalid-center-lane",
         ["PR04", "PR40", "HA-D04"],
-        "The explicit HABAHIRO approximation projects the chart-authored range representative through the current 0..6 viewport without clamp.",
+        "HABAHIRO projects the chart-authored range representative through the current 0..6 viewport without clamp.",
       );
 }
 

@@ -509,7 +509,7 @@ function validateResourceProvenance(
       return asset.provenance !== "current-apk" &&
         asset.provenance !== "current-device-cache";
     }
-    if (profile.fidelity.fidelity === "approximate-current-external") {
+    if (profile.fidelity.fidelity === "current-external-complete") {
       return asset.provenance !== "current-external-portable" &&
         asset.provenance !== "current-apk" && asset.provenance !== "current-device-cache";
     }

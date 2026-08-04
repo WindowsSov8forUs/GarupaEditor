@@ -118,7 +118,7 @@ export interface OrdinaryNoteActivationAdjustmentResult {
   readonly realMoveSecond: RenderFloat32;
 }
 
-export function getApproximateHabahiroMeshWidthRate(
+export function getHabahiroMeshWidthRate(
   noteLength: number,
   explicitSetting: RenderFloat32,
 ): SimulatorResult<RenderFloat32> {

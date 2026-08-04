@@ -9,16 +9,16 @@ const require = createRequire(import.meta.url);
 const tsc = require.resolve("typescript/bin/tsc");
 for (const [label, command, args] of [
   ["evidence", process.execPath, [resolve(root, "tmp/simulator-habahiro-approximation-evidence/verify.mjs")]],
-  ["static audit", process.execPath, [join(testingRoot, "verifyHabahiroApproximationStatic.mjs")]],
+  ["static audit", process.execPath, [join(testingRoot, "verifyHabahiroStatic.mjs")]],
   ["isolated type check", process.execPath, [tsc, "-p", resolve(root, "src/simulator/tsconfig.json")]],
   ["contracts", process.execPath, [join(testingRoot, "runHabahiroContractTests.mjs")]],
   ["Pixi consumption", process.execPath, [join(testingRoot, "runRenderPixiTests.mjs")]],
   ["full-chart oracle", process.execPath, [join(testingRoot, "runRenderProductionChartTests.mjs")]],
 ]) {
-  console.log(`\n=== HABAHIRO approximation: ${label} ===`);
+  console.log(`\n=== HABAHIRO complete implementation: ${label} ===`);
   run(command, args);
 }
-console.log("HABAHIRO approximation acceptance passed: HR01-HR12");
+console.log("HABAHIRO complete implementation acceptance passed: HR01-HR12");
 
 function run(command, args) {
   const result = spawnSync(command, args, {

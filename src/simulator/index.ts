@@ -201,11 +201,11 @@ export {
   longMeshRenderObjectId,
   resolveFrontSpriteBinding,
   rootRenderObjectId,
-  validateHabahiroApproximationScene,
+  validateHabahiroScene,
   validateOrdinaryFixedNoteSceneInput,
 } from "./engine/rendering/renderCommandProducer";
 export type {
-  HabahiroApproximationSceneInput,
+  HabahiroSceneInput,
   OrdinaryFixedNoteSceneInput,
   OrdinaryNoteTransformVisualState,
   PreparedOrdinaryNoteActivation,
@@ -220,7 +220,7 @@ export {
   buildOrdinaryAdvancedNoteMesh,
   buildOrdinaryBaseNoteMesh,
   buildOrdinarySyncLine,
-  getApproximateHabahiroMeshWidthRate,
+  getHabahiroMeshWidthRate,
   getOrdinaryNoteArrivalSeconds,
 } from "./engine/rendering/ordinaryNoteGeometry";
 export {

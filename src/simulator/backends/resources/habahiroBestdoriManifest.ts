@@ -87,4 +87,4 @@ export const HABAHIRO_BESTDORI_PINNED_ASSETS: readonly HabahiroBestdoriPinnedAss
 ]);
 
 export const HABAHIRO_BESTDORI_PACK_IDENTITY =
-  "bestdori-jp-habahiro-2026-03-31-current-external-approximation" as const;
+  "bestdori-jp-habahiro-2026-03-31-current-external-complete" as const;

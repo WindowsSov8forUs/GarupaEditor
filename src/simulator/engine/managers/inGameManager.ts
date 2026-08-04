@@ -41,8 +41,8 @@ export class InGameManager {
   private pauseStateValue: PauseStateValue = PauseState.None;
   private faultValue: EvidenceRequired | null = null;
   private degradedHabahiroLaneChanged = false;
-  private approximateHabahiroLanePhase: "idle" | "flashing" | "complete" = "idle";
-  private approximateHabahiroFlashElapsed = Math.fround(0);
+  private habahiroLanePhase: "idle" | "flashing" | "complete" = "idle";
+  private habahiroFlashElapsed = Math.fround(0);
 
   constructor(
     readonly musicScoreController: InGameMusicScoreController,
@@ -78,11 +78,11 @@ export class InGameManager {
     if (noteValidation.status !== "ok") {
       return noteValidation;
     }
-    const fieldSetup = this.renderProducer?.isApproximateHabahiro() === true &&
-        this.renderScene?.habahiroApproximation !== undefined
+    const fieldSetup = this.renderProducer?.isCompleteHabahiro() === true &&
+        this.renderScene?.habahiro !== undefined
       ? this.renderProducer.preflightFieldSetup(
-          this.renderScene.habahiroApproximation.fieldBefore,
-          this.renderScene.habahiroApproximation.fieldMasks,
+          this.renderScene.habahiro.fieldBefore,
+          this.renderScene.habahiro.fieldMasks,
         )
       : null;
     if (fieldSetup?.status === "evidence-required") return fieldSetup;
@@ -172,42 +172,42 @@ export class InGameManager {
       this.degradedHabahiroLaneChanged = true;
     }
     if (
-      this.renderProducer?.isApproximateHabahiro() === true &&
-      this.renderScene?.habahiroApproximation !== undefined &&
+      this.renderProducer?.isCompleteHabahiro() === true &&
+      this.renderScene?.habahiro !== undefined &&
       this.habahiroChangeAbsolutePos >= 0
     ) {
       if (
-        this.approximateHabahiroLanePhase === "idle" &&
+        this.habahiroLanePhase === "idle" &&
         this.noteManager.peekAdjustedMusicPosition() >= this.habahiroChangeAbsolutePos
       ) {
-        const flash = this.renderProducer.preflightApproximateHabahiroFlashStart(
+        const flash = this.renderProducer.preflightHabahiroFlashStart(
           this.habahiroChangeAbsolutePos,
         );
         if (flash.status !== "ok") return this.latchFault(flash);
         const committed = flash.value.commit();
         if (committed.status !== "ok") return this.latchFault(committed);
-        this.approximateHabahiroLanePhase = "flashing";
-        this.approximateHabahiroFlashElapsed = Math.fround(0);
-      } else if (this.approximateHabahiroLanePhase === "flashing") {
-        const nextElapsed = Math.fround(this.approximateHabahiroFlashElapsed + deltaTimeSeconds);
-        if (nextElapsed >= this.renderScene.habahiroApproximation.flashDurationSeconds.value) {
-          const laneChange = this.renderProducer.preflightApproximateHabahiroLaneChange(
+        this.habahiroLanePhase = "flashing";
+        this.habahiroFlashElapsed = Math.fround(0);
+      } else if (this.habahiroLanePhase === "flashing") {
+        const nextElapsed = Math.fround(this.habahiroFlashElapsed + deltaTimeSeconds);
+        if (nextElapsed >= this.renderScene.habahiro.flashDurationSeconds.value) {
+          const laneChange = this.renderProducer.preflightHabahiroLaneChange(
             this.habahiroChangeAbsolutePos,
             this.renderScene,
           );
           if (laneChange.status !== "ok") return this.latchFault(laneChange);
           const committed = laneChange.value.commit();
           if (committed.status !== "ok") return this.latchFault(committed);
-          this.approximateHabahiroLanePhase = "complete";
-          this.approximateHabahiroFlashElapsed = nextElapsed;
+          this.habahiroLanePhase = "complete";
+          this.habahiroFlashElapsed = nextElapsed;
         } else {
           const elapsed = createRenderFloat32(nextElapsed);
           if (elapsed.status !== "ok") return this.latchFault(elapsed);
-          const sample = this.renderProducer.preflightApproximateHabahiroFlashAdvance(elapsed.value);
+          const sample = this.renderProducer.preflightHabahiroFlashAdvance(elapsed.value);
           if (sample.status !== "ok") return this.latchFault(sample);
           const committed = sample.value.commit();
           if (committed.status !== "ok") return this.latchFault(committed);
-          this.approximateHabahiroFlashElapsed = nextElapsed;
+          this.habahiroFlashElapsed = nextElapsed;
         }
       }
     }

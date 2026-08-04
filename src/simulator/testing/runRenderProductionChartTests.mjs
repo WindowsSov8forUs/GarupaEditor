@@ -13,14 +13,14 @@ const require = createRequire(import.meta.url);
 const typeScriptCli = require.resolve("typescript/bin/tsc");
 try {
   run(process.execPath, [typeScriptCli, "-p", join(testingRoot, "tsconfig.tests.json"), "--outDir", outputRoot]);
-  await verifyHabahiroApproximateReplay();
-  await verifyHabahiroDegradedReplay();
+  await verifyHabahiroCompleteReplay();
+  await verifyLegacyRejectionAndOrdinaryReplay();
   run(process.execPath, [join(testingRoot, "verifyDependencies.mjs")]);
 } finally {
   rmSync(outputRoot, { recursive: true, force: true });
 }
 
-async function verifyHabahiroApproximateReplay() {
+async function verifyHabahiroCompleteReplay() {
   const compiled = join(outputRoot, "src", "simulator");
   const { createNoteBatchInformationList } = require(join(compiled, "engine", "chart", "construction.js"));
   const { createRenderFloat32 } = require(join(compiled, "backends", "renderingValidation.js"));
@@ -32,8 +32,8 @@ async function verifyHabahiroApproximateReplay() {
   const chartResult = createNoteBatchInformationList({
     musicScoreData: readFileSync(join(fixtureRoot, "786_miracle_april_habahiro_special.txt"), "utf8"),
   });
-  ok(chartResult, "construct approximate HABAHIRO chart");
-  equal(chartResult.value.habahiroChangeAbsolutePos, 1728, "approximate lane-change position");
+  ok(chartResult, "construct complete HABAHIRO chart");
+  equal(chartResult.value.habahiroChangeAbsolutePos, 1728, "complete lane-change position");
 
   const atlasEvidence = JSON.parse(readFileSync(join(
     repositoryRoot, "tmp", "simulator-habahiro-approximation-evidence", "bestdori-atlas-profile.json",
@@ -74,8 +74,8 @@ async function verifyHabahiroApproximateReplay() {
   const profile = {
     schemaVersion: 1,
     sample: { package: "jp.co.craftegg.band", versionName: "10.1.4", versionCode: 230, abi: "arm64-v8a" },
-    packIdentity: "habahiro-static-bestdori-approximation-oracle",
-    fidelity: { mode: "habahiro", fidelity: "approximate-current-external", visibleLabel: "Approximate HABAHIRO", machineReadableFlag: "rendering-fidelity-approximate-habahiro", differenceProfile: "HA-D01-HA-D12" },
+    packIdentity: "habahiro-static-bestdori-complete-oracle",
+    fidelity: { mode: "habahiro", fidelity: "current-external-complete" },
     networkAllowed: false, automaticFallbackAllowed: false,
     assets: [
       atlasAsset("RhythmGameSprites1.png"), atlasAsset("RhythmGameSprites2.png"),
@@ -86,18 +86,23 @@ async function verifyHabahiroApproximateReplay() {
       materialAsset("multiple-right", "multiple-directional-line"),
     ],
     scene: {
-      profileId: "habahiro-approximation-oracle",
+      profileId: "habahiro-complete-oracle",
       components: ["sprite","atlas-sprite","mesh","line","mask","text","slider","animation"].map((component) => ({ component, support: "portable-equivalent" })),
       ordering: { tuple: ["domain-layer","source-depth-or-sorting-order","source-z","creation-sequence"], pixiDefaultZIndexAllowed: false },
-      projection: { mode: "approximate-habahiro-current-external", viewportWidth: 1600, viewportHeight: 720, pixiOrigin: "top-left", worldCenterX: 0, worldCenterY: 0, cameraPositionZ: -15, nearClip: 0, farClip: 25, pixelsPerWorldUnit: 360, clampAllowed: false },
+      projection: { mode: "habahiro-current-external", viewportWidth: 1600, viewportHeight: 720, pixiOrigin: "top-left", worldCenterX: 0, worldCenterY: 0, cameraPositionZ: -15, nearClip: 0, farClip: 25, pixelsPerWorldUnit: 360, clampAllowed: false },
       roundPixels: false, resolution: 1, antialias: false,
     },
   };
   const renderer = new RecordingSimulatorRendererBackend();
   const resources = profile.assets.map((asset) => ({ logicalAssetId: asset.logicalAssetId, bytes: png }));
-  ok(await renderer.prepare("habahiro-approximation-oracle", profile,
-    ok(ImmutableLocalRenderResourceProvider.create(resources), "create approximate provider"),
-    new PortableRenderResourcePreflightAdapter()), "prepare approximate renderer");
+  ok(await renderer.prepare("habahiro-complete-oracle", profile,
+    ok(ImmutableLocalRenderResourceProvider.create(resources), "create complete provider"),
+    new PortableRenderResourcePreflightAdapter()), "prepare complete renderer");
+  const completeFidelity = renderer.snapshot().fidelity;
+  equal(completeFidelity?.fidelity, "current-external-complete", "runtime exposes complete HABAHIRO fidelity");
+  if (completeFidelity != null && ("visibleLabel" in completeFidelity || "machineReadableFlag" in completeFidelity || "differenceProfile" in completeFidelity)) {
+    throw new Error("complete HABAHIRO fidelity leaked documentation-only approximation metadata");
+  }
   const f32 = (value) => ok(createRenderFloat32(Math.fround(value)), `Float32 ${value}`);
   const v2 = (x,y) => Object.freeze({ x:f32(x), y:f32(y) });
   const v3 = (x,y,z) => Object.freeze({ x:f32(x), y:f32(y), z:f32(z) });
@@ -117,7 +122,7 @@ async function verifyHabahiroApproximateReplay() {
     goalPositions:Object.freeze(Array.from({length:7},(_,lane)=>v3(Math.fround((lane-3)*2.2),-3.450000047683716,-13.5))),
     noteColor:white, noteDomainLayer:3, screenToSafeAreaRatio:f32(1), syncLineEdgeMargin:f32(.2),
     longMeshColor:Object.freeze({red:f32(.8),green:f32(.8),blue:f32(.8),alpha:f32(.6)}),
-    habahiroApproximation:Object.freeze({
+    habahiro:Object.freeze({
       meshWidthSetting:f32(1), flashDurationSeconds:f32(.25), fieldBefore, fieldAfter,
       fieldMasks:Object.freeze([Object.freeze({ renderObjectId:"render:habahiro:field-mask", parentObjectId:null,
         polygon:Object.freeze([v2(-4,-5),v2(4,-5),v2(4,5),v2(-4,5)]), position:v3(0,0,0), scale:v2(1,1),
@@ -133,55 +138,63 @@ async function verifyHabahiroApproximateReplay() {
   const engine = ok(createSimulatorEngine({
     chart: chartResult.value,
     runtime: { highFrequencyMode:false, judgeOffsetFrames:0, playMode:{ kind:"auto-live", resultTransform:"identity-no-active-situation-skill" } },
-    rendering: { sessionId:"habahiro-approximation-oracle", resources: {
+    rendering: { sessionId:"habahiro-complete-oracle", resources: {
       noteAtlasLogicalAssetId:atlasIds.normal, directionalAtlasLogicalAssetId:atlasIds.flick,
       habahiroAtlasLogicalAssetIds:atlasIds, syncLineLogicalAssetId:logical("sync"),
       longNoteMaterialLogicalAssetId:logical("long"), curveNoteMaterialLogicalAssetId:logical("curve"),
       multipleDirectionalLineLeftLogicalAssetId:logical("multiple-left"),
       multipleDirectionalLineRightLogicalAssetId:logical("multiple-right"),
     }, ordinaryNoteScene:scene },
-  }, createRecordingSimulatorBackends(renderer)), "create approximate HABAHIRO engine");
-  ok(engine.initialize(), "initialize approximate HABAHIRO engine");
+  }, createRecordingSimulatorBackends(renderer)), "create complete HABAHIRO engine");
+  ok(engine.initialize(), "initialize complete HABAHIRO engine");
   let failure = null;
-  let snapshot = ok(engine.snapshot(), "approximate initial snapshot");
+  let snapshot = ok(engine.snapshot(), "complete initial snapshot");
   const digest = createHash("sha256");
   let commandCount = 0;
-  const lanePhases = [];
+  let flashStartCommandIndex = -1;
+  let fieldChangeCommandIndex = -1;
+  let flashStopCommandIndex = -1;
   let sawAdvancedMesh = false;
   let sawLongFlash = false;
   let sawFieldMask = false;
+  let sawRuntimeModeLabel = false;
   let frames = 0;
   for (; frames<12000 && failure===null; frames++) {
     const result = engine.step(1/60);
     if (result.status === "evidence-required") failure = result;
     const commands = renderer.drainCommandSnapshot();
     commandCount += commands.length;
-    for (const command of commands) {
+    for (const [localIndex, command] of commands.entries()) {
       digest.update(`${command.kind}|${command.renderObjectId}|${command.frame}|${command.substep}\n`);
-      if (command.kind === "set-hud" && command.renderObjectId === "render:habahiro:lane-change" && command.state.laneChangePhase) lanePhases.push(command.state.laneChangePhase);
+      const commandIndex = commandCount - commands.length + localIndex;
+      if (command.kind === "play-animation" && command.animationRole === "habahiro-lane-change") flashStartCommandIndex = commandIndex;
+      if (flashStartCommandIndex >= 0 && fieldChangeCommandIndex < 0 && command.kind === "set-transform" && command.renderObjectId === "render:habahiro:field") fieldChangeCommandIndex = commandIndex;
+      if (command.kind === "stop-animation" && command.animationRole === "habahiro-lane-change") flashStopCommandIndex = commandIndex;
       if (command.kind === "set-mesh" && command.vertices.length === 42 && command.indices.length === 120) sawAdvancedMesh = true;
       if (command.kind === "bind-resource" && command.exactKey?.startsWith("note_long_flash_")) sawLongFlash = true;
       if (command.kind === "set-mask" && command.renderObjectId === "render:habahiro:field-mask") sawFieldMask = true;
+      if (command.renderObjectId === "render:hud:fidelity-label" || command.renderObjectId === "render:habahiro:lane-change") sawRuntimeModeLabel = true;
     }
-    snapshot = ok(engine.snapshot(), `approximate snapshot ${frames}`);
+    snapshot = ok(engine.snapshot(), `complete snapshot ${frames}`);
     if (snapshot.managers.noteManager.nextBatchIndex === chartResult.value.noteBatches.length && snapshot.adjustedMusicPosition > 1730) break;
   }
-  if (failure !== null) throw new Error(`approximate HABAHIRO blocker ${failure.capability}: ${failure.detail}`);
-  equal(snapshot.managers.noteManager.nextBatchIndex, chartResult.value.noteBatches.length, "approximate consumed all batches");
-  equal(lanePhases.join(","), "flash-start,change-lane,complete", "approximate staged lane-change phases");
-  if (!sawAdvancedMesh) throw new Error("approximate 42/120 mesh missing");
-  if (!sawLongFlash) throw new Error("approximate long flash atlas binding missing");
-  if (!sawFieldMask) throw new Error("approximate field mask missing");
-  equal(frames, 6130, "approximate deterministic frame count");
-  equal(commandCount, 217604, "approximate deterministic command count");
+  if (failure !== null) throw new Error(`complete HABAHIRO blocker ${failure.capability}: ${failure.detail}`);
+  equal(snapshot.managers.noteManager.nextBatchIndex, chartResult.value.noteBatches.length, "complete consumed all batches");
+  if (!(flashStartCommandIndex >= 0 && fieldChangeCommandIndex > flashStartCommandIndex && flashStopCommandIndex > fieldChangeCommandIndex)) throw new Error("HABAHIRO flash, field change and completion order is invalid");
+  if (!sawAdvancedMesh) throw new Error("complete 42/120 mesh missing");
+  if (!sawLongFlash) throw new Error("complete long flash atlas binding missing");
+  if (!sawFieldMask) throw new Error("complete field mask missing");
+  if (sawRuntimeModeLabel) throw new Error("complete HABAHIRO emitted a runtime approximation/mode label");
+  equal(frames, 6130, "complete deterministic frame count");
+  equal(commandCount, 217595, "complete deterministic command count");
   const commandIdentity = digest.digest("hex");
-  equal(commandIdentity, "f1e1aac4b8c9b4de6d6cefde1f04f6a69636adedde9b352c559671098f22767c", "approximate command identity digest");
-  ok(engine.dispose(), "dispose approximate HABAHIRO engine");
-  equal(renderer.snapshot().objectCount, 0, "approximate replay releases all owners");
-  console.log(`render HABAHIRO approximate production replay passed: batches=${chartResult.value.noteBatches.length} frames=${frames} commands=${commandCount} digest=${commandIdentity}`);
+  equal(commandIdentity, "74d11cf3742de6e955a46ddd0f5d1b5c8e620f74e3e52502a7feae364f3ad8b5", "complete command identity digest");
+  ok(engine.dispose(), "dispose complete HABAHIRO engine");
+  equal(renderer.snapshot().objectCount, 0, "complete replay releases all owners");
+  console.log(`render HABAHIRO complete production replay passed: batches=${chartResult.value.noteBatches.length} frames=${frames} commands=${commandCount} digest=${commandIdentity}`);
 }
 
-async function verifyHabahiroDegradedReplay() {
+async function verifyLegacyRejectionAndOrdinaryReplay() {
   const compiled = join(outputRoot, "src", "simulator");
   const { createNoteBatchInformationList } = require(join(compiled, "engine", "chart", "construction.js"));
   const { createRenderFloat32 } = require(join(compiled, "backends", "renderingValidation.js"));
@@ -204,7 +217,7 @@ async function verifyHabahiroDegradedReplay() {
     schemaVersion: 1,
     sample: { package: "jp.co.craftegg.band", versionName: "10.1.4", versionCode: 230, abi: "arm64-v8a" },
     packIdentity: "current-external-portable-habahiro-test-fixture",
-    fidelity: { mode: "habahiro", fidelity: "degraded", profile: "current-external-portable-atlas", visibleLabel: "Approximate HABAHIRO" },
+    fidelity: { mode: "habahiro", fidelity: "degraded", profile: "current-external-portable-atlas", visibleLabel: "HABAHIRO" },
     networkAllowed: false,
     automaticFallbackAllowed: false,
     assets: [{
@@ -238,26 +251,17 @@ async function verifyHabahiroDegradedReplay() {
     noteColor:Object.freeze({red:f32(1),green:f32(1),blue:f32(1),alpha:f32(1)}), noteDomainLayer:3,
     screenToSafeAreaRatio:f32(1), longMeshColor:Object.freeze({red:f32(.8),green:f32(.8),blue:f32(.8),alpha:f32(.6)}),
   });
-  const engine = ok(createSimulatorEngine({
+  const legacyCreation = createSimulatorEngine({
     chart: chartResult.value,
     runtime: { highFrequencyMode: false, judgeOffsetFrames: 0, playMode: { kind: "auto-live", resultTransform: "identity-no-active-situation-skill" } },
     rendering: { sessionId: "habahiro-production-replay", resources: { noteAtlasLogicalAssetId: assetId, directionalAtlasLogicalAssetId: assetId }, ordinaryNoteScene: scene },
-  }, createRecordingSimulatorBackends(renderer)), "create degraded production engine");
-  ok(engine.initialize(), "initialize degraded production engine");
-  let snapshot = ok(engine.snapshot(), "initial degraded snapshot");
-  for (let frame=0; frame<12000 && snapshot.adjustedMusicPosition<1730; frame++) {
-    ok(engine.step(1/60), `degraded frame ${frame}`);
-    snapshot = ok(engine.snapshot(), `degraded snapshot ${frame}`);
-  }
-  if (snapshot.adjustedMusicPosition < 1730) throw new Error("lane-change position was not reached");
-  const commands = renderer.commandSnapshot();
-  equal(commands.length, 4902, "degraded HABAHIRO exact command count");
-  const phases = commands.filter((command) => command.kind === "set-hud" && command.renderObjectId === "render:habahiro:lane-change").map((command) => command.state.laneChangePhase);
-  equal(phases.join(","), "flash-start,change-lane", "degraded lane-change command order");
-  if (!commands.some((command) => command.kind === "set-hud" && command.renderObjectId === "render:hud:fidelity-label" && command.state.label === "Approximate HABAHIRO")) throw new Error("visible degraded label missing");
-  ok(engine.dispose(), "dispose degraded production engine");
-  equal(renderer.snapshot().objectCount, 0, "degraded replay releases every render owner");
-  console.log(`render HABAHIRO degraded production replay passed: batches=${chartResult.value.noteBatches.length} lane=1728 commands=${commands.length}`);
+  }, createRecordingSimulatorBackends(renderer));
+  equal(legacyCreation.status, "evidence-required", "legacy degraded profile is not a production engine mode");
+  equal(legacyCreation.status === "evidence-required" ? legacyCreation.capability : null,
+    "render.note.non-ordinary-scene-lifecycle-unimplemented", "legacy rejection capability");
+  equal(renderer.snapshot().objectCount, 0, "legacy rejection creates no render owner");
+  ok(renderer.dispose(), "dispose rejected legacy renderer");
+  console.log("render HABAHIRO legacy degraded production profile rejected before engine creation");
 
   const ordinaryBms = readFileSync(join(fixtureRoot, "poppin_shuffle_special.txt"), "utf8");
   const ordinaryChart = createNoteBatchInformationList({ musicScoreData: ordinaryBms });

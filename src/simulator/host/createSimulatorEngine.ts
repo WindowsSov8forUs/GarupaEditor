@@ -38,7 +38,7 @@ import { NoteManager } from "../engine/managers/noteManager";
 import { SlideNoteManager } from "../engine/managers/slideNoteManager";
 import {
   RenderCommandProducer,
-  validateHabahiroApproximationScene,
+  validateHabahiroScene,
   validateOrdinaryFixedNoteSceneInput,
 } from "../engine/rendering/renderCommandProducer";
 import {
@@ -243,13 +243,12 @@ export function createSimulatorEngine(
     if (
       fidelity?.mode !== "ordinary" &&
       !(fidelity?.mode === "habahiro" &&
-        (fidelity.fidelity === "degraded" ||
-          fidelity.fidelity === "approximate-current-external"))
+        fidelity.fidelity === "current-external-complete")
     ) {
       return evidenceRequired(
         "render.note.non-ordinary-scene-lifecycle-unimplemented",
         ["RPR-D05", "RPR-D13", "PR04", "PR39", "PR40", "HA-D04"],
-        "The connected Note lifecycle accepts exact ordinary or an explicitly labelled HABAHIRO approximation; UnityFS exact parity remains a separate claim.",
+        "The connected Note lifecycle accepts exact ordinary or the functionally complete HABAHIRO current-external route; legacy degraded profiles are not production engine modes.",
       );
     }
     const sceneValidation = validateOrdinaryFixedNoteSceneInput(
@@ -258,15 +257,15 @@ export function createSimulatorEngine(
     if (sceneValidation.status !== "ok") return sceneValidation;
     if (
       fidelity?.mode === "habahiro" &&
-      fidelity.fidelity === "approximate-current-external" &&
-      !validateHabahiroApproximationScene(
-        input.rendering.ordinaryNoteScene.habahiroApproximation,
+      fidelity.fidelity === "current-external-complete" &&
+      !validateHabahiroScene(
+        input.rendering.ordinaryNoteScene.habahiro,
       )
     ) {
       return evidenceRequired(
-        "render.habahiro.approximation-scene-required",
+        "render.habahiro.scene-required",
         ["HAB-A04", "HAB-A08", "HAB-A09", "HAB-A10"],
-        "HABAHIRO approximation requires explicit mesh-width, flash-clock and field/judge scene plans before engine creation.",
+        "Complete HABAHIRO rendering requires explicit mesh-width, flash-clock and field/judge scene plans before engine creation.",
       );
     }
   }

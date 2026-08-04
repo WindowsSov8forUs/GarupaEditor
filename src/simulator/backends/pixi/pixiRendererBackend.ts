@@ -1113,7 +1113,7 @@ function isEvidenceHud(
       );
     case "fidelity-label":
       return objectRole === "fidelity-label" &&
-        state.label === "Approximate HABAHIRO" && state.visible === true && (
+        state.label === "HABAHIRO" && state.visible === true && (
           exactStateKeys(state, ["label", "visible"]) ||
           exactStateKeys(state, ["absolutePosition", "label", "laneChangePhase", "visible"]) &&
             Number.isInteger(state.absolutePosition) &&
@@ -1283,8 +1283,8 @@ function applyEvidenceHud(
         setHudText(
           visual.text,
           state.laneChangePhase === "flash-start"
-            ? "Approximate HABAHIRO · Flash"
-            : "Approximate HABAHIRO · Lane Changed",
+            ? "HABAHIRO · Flash"
+            : "HABAHIRO · Lane Changed",
           20,
           0xffd166,
         );

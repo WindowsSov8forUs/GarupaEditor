@@ -100,8 +100,8 @@ export function validateAndFreezeRenderProfile(
   const projection = scene.projection;
   const expectedProjectionMode = fidelityValidation.value.mode === "ordinary"
     ? "current-ordinary-rhythmgame-orthographic"
-    : fidelityValidation.value.fidelity === "approximate-current-external"
-    ? "approximate-habahiro-current-external"
+    : fidelityValidation.value.fidelity === "current-external-complete"
+    ? "habahiro-current-external"
     : fidelityValidation.value.fidelity === "degraded"
     ? "degraded-habahiro-ordinary-projection-proxy"
     : null;
@@ -123,7 +123,7 @@ export function validateAndFreezeRenderProfile(
   ) {
     return reject(
       "render.profile.invalid-projection",
-      "The fixed 1600x720 mapping must explicitly distinguish ordinary, current-external approximate HABAHIRO and legacy degraded projection.",
+      "The fixed 1600x720 mapping must explicitly distinguish ordinary, functionally complete HABAHIRO current-external, and legacy degraded projection.",
     );
   }
 
@@ -249,10 +249,7 @@ function validateFidelity(
   }
   if (
     fidelity?.mode === "habahiro" &&
-    fidelity.fidelity === "approximate-current-external" &&
-    fidelity.visibleLabel === RenderFidelityLabel &&
-    fidelity.machineReadableFlag === "rendering-fidelity-approximate-habahiro" &&
-    fidelity.differenceProfile === "HA-D01-HA-D12"
+    fidelity.fidelity === "current-external-complete"
   ) {
     return ok(Object.freeze({ ...fidelity }));
   }
@@ -268,7 +265,7 @@ function validateFidelity(
   }
   return reject(
     "render.profile.invalid-fidelity",
-    "HABAHIRO requires explicit exact, current-external approximation or visibly labelled legacy degraded fidelity; automatic fallback is forbidden.",
+    "HABAHIRO requires explicit exact, functionally complete current-external, or legacy degraded fidelity; automatic fallback is forbidden.",
   );
 }
 

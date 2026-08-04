@@ -37,7 +37,7 @@ for (const marker of [
   "damageGuardPlaying",
   "render ordinary exact production replay passed",
   "e174b8f0ab2e943ba84ab45a2ee8ecaca9fbcdc235fb32176c7cf6c18834a0ec",
-  "Approximate HABAHIRO",
+  "HABAHIRO",
 ]) {
   if (!source.includes(marker)) throw new Error(`PR production marker missing: ${marker}`);
 }

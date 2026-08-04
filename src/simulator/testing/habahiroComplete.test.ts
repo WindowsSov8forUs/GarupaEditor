@@ -8,7 +8,7 @@ import {
 } from "../backends/resources/habahiroBestdoriProvider";
 import { createRenderFloat32 } from "../backends/renderingValidation";
 import { ok, type SimulatorResult } from "../engine/evidence";
-import { getApproximateHabahiroMeshWidthRate } from "../engine/rendering/ordinaryNoteGeometry";
+import { getHabahiroMeshWidthRate } from "../engine/rendering/ordinaryNoteGeometry";
 
 function requireOk<T>(result: SimulatorResult<T>, message: string): T {
   if (result.status !== "ok") throw new Error(`${message}: ${result.capability}`);
@@ -49,19 +49,19 @@ async function main(): Promise<void> {
 
   const settingZero = requireOk(createRenderFloat32(0), "zero mesh setting");
   const settingOne = requireOk(createRenderFloat32(1), "one mesh setting");
-  equal(requireOk(getApproximateHabahiroMeshWidthRate(1, settingOne), "width one").value,
+  equal(requireOk(getHabahiroMeshWidthRate(1, settingOne), "width one").value,
     Math.fround(1), "single-lane HABAHIRO width");
-  equal(requireOk(getApproximateHabahiroMeshWidthRate(2, settingOne), "width two").value,
+  equal(requireOk(getHabahiroMeshWidthRate(2, settingOne), "width two").value,
     Math.fround(1.05), "two-lane HABAHIRO base width");
-  equal(requireOk(getApproximateHabahiroMeshWidthRate(3, settingZero), "width three zero").value,
+  equal(requireOk(getHabahiroMeshWidthRate(3, settingZero), "width three zero").value,
     Math.fround(1.05), "wide HABAHIRO zero setting");
-  equal(requireOk(getApproximateHabahiroMeshWidthRate(7, settingOne), "width seven one").value,
+  equal(requireOk(getHabahiroMeshWidthRate(7, settingOne), "width seven one").value,
     Math.fround(Math.fround(1.05) + Math.fround(0.0300000906)),
     "wide HABAHIRO coefficient uses Float32 steps");
-  equal(getApproximateHabahiroMeshWidthRate(8, settingOne).status, "evidence-required",
+  equal(getHabahiroMeshWidthRate(8, settingOne).status, "evidence-required",
     "out-of-domain HABAHIRO width fails closed");
 
-  console.log("HABAHIRO approximation contracts passed: pinned tamper/parser/Float32 width failure closure");
+  console.log("HABAHIRO complete implementation contracts passed: pinned tamper/parser/Float32 width failure closure");
 }
 
 void main();

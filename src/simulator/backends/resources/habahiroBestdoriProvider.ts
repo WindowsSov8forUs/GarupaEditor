@@ -82,7 +82,7 @@ export class BrowserHabahiroBestdoriTransport implements HabahiroBestdoriTranspo
     if (!isAllowedBestdoriUrl(url) || typeof fetch !== "function") {
       return reject(
         "render.habahiro.bestdori-transport-unavailable",
-        "The explicit HABAHIRO approximation transport accepts only its pinned Bestdori HTTPS allowlist.",
+        "The HABAHIRO resource transport accepts only its pinned Bestdori HTTPS allowlist.",
       );
     }
     try {
@@ -216,16 +216,13 @@ export async function prepareHabahiroBestdoriPack(
     packIdentity: HABAHIRO_BESTDORI_PACK_IDENTITY,
     fidelity: Object.freeze({
       mode: "habahiro" as const,
-      fidelity: "approximate-current-external" as const,
-      visibleLabel: "Approximate HABAHIRO" as const,
-      machineReadableFlag: "rendering-fidelity-approximate-habahiro" as const,
-      differenceProfile: "HA-D01-HA-D12" as const,
+      fidelity: "current-external-complete" as const,
     }),
     networkAllowed: false,
     automaticFallbackAllowed: false,
     assets: frozenAssets,
     scene: Object.freeze({
-      profileId: "habahiro-10.1.4-static-bestdori-approximation",
+      profileId: "habahiro-10.1.4-current-external-complete",
       components: Object.freeze((["sprite", "atlas-sprite", "mesh", "line", "mask", "text", "slider", "animation"] as const).map(
         (component) => Object.freeze({ component, support: "portable-equivalent" as const }),
       )),
@@ -234,7 +231,7 @@ export async function prepareHabahiroBestdoriPack(
         pixiDefaultZIndexAllowed: false,
       }),
       projection: Object.freeze({
-        mode: "approximate-habahiro-current-external" as const,
+        mode: "habahiro-current-external" as const,
         viewportWidth: 1600,
         viewportHeight: 720,
         pixiOrigin: "top-left" as const,

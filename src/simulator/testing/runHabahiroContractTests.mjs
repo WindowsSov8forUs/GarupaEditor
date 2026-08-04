@@ -11,7 +11,7 @@ const output = mkdtempSync(join(tmpdir(), "garupa-habahiro-contract-"));
 const tsc = createRequire(import.meta.url).resolve("typescript/bin/tsc");
 try {
   run(process.execPath, [tsc, "-p", join(testingRoot, "tsconfig.tests.json"), "--outDir", output]);
-  run(process.execPath, [join(output, "src", "simulator", "testing", "habahiroApproximation.test.js")]);
+  run(process.execPath, [join(output, "src", "simulator", "testing", "habahiroComplete.test.js")]);
 } finally {
   rmSync(output, { recursive: true, force: true });
 }

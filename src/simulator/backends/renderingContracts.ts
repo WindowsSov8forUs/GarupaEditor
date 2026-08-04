@@ -1,6 +1,6 @@
 import type { SimulatorResult } from "../engine/evidence";
 
-export const RenderFidelityLabel = "Approximate HABAHIRO" as const;
+export const RenderFidelityLabel = "HABAHIRO" as const;
 
 export type RenderBackendState =
   | "unprepared"
@@ -69,10 +69,7 @@ export type RenderFidelitySelection =
     }
   | {
       readonly mode: "habahiro";
-      readonly fidelity: "approximate-current-external";
-      readonly visibleLabel: typeof RenderFidelityLabel;
-      readonly machineReadableFlag: "rendering-fidelity-approximate-habahiro";
-      readonly differenceProfile: "HA-D01-HA-D12";
+      readonly fidelity: "current-external-complete";
     }
   | {
       readonly mode: "habahiro";
@@ -151,7 +148,7 @@ export interface RenderOrderingProfile {
 
 export type RenderProjectionMode =
   | "current-ordinary-rhythmgame-orthographic"
-  | "approximate-habahiro-current-external"
+  | "habahiro-current-external"
   | "degraded-habahiro-ordinary-projection-proxy";
 
 export interface RenderOrthographicProjectionProfile {

@@ -18,7 +18,7 @@ import {
   type OrdinaryLongNormalChildState,
 } from "./ordinaryLongChildLifecycle";
 import {
-  getApproximateHabahiroMeshWidthRate,
+  getHabahiroMeshWidthRate,
   type OrdinaryBaseNoteMeshGeometry,
   type OrdinaryNoteMotionResult,
   type OrdinaryNoteMotionState,
@@ -102,7 +102,7 @@ export function advanceOrdinarySlideChildren(
     nextStates.push(next);
     const widthRate = habahiroMeshWidthSetting === undefined
       ? createRenderFloat32(Math.fround(1))
-      : getApproximateHabahiroMeshWidthRate(
+      : getHabahiroMeshWidthRate(
           Math.max(previousButtonCount, state.buttonCount),
           habahiroMeshWidthSetting,
         );
