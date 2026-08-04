@@ -5,16 +5,17 @@
 - 阶段：模拟器彻底重构实施块7——音频。
 - 上级计划：`tmp/simulator-reconstruction-plan.md`“后续实施块 / 7. 音频”。
 - 上游：第一切片、谱面构造、时钟与调度、Auto Live、手动输入与判定、分数/生命/状态、资源与Pixi渲染均已关闭；HABAHIRO当前交付路线另有专项记录。
-- 上游当前提交：GarupaEditor `5b2d39ec647f1ae34ee4cca4a2d6d6038de16a16`。
+- 阶段起点提交：GarupaEditor `5b2d39ec647f1ae34ee4cca4a2d6d6038de16a16`；本次整理前任务书提交/分支HEAD为`7bfecd9f08c11164072e460b4314ea3eac6d4aeb`，`origin/codex/refactor-simulator-implementation...HEAD = 0 0`。
 - 上游资源/Pixi验收：`tmp/simulator-resource-pixi-rendering-acceptance.md`。
 - HABAHIRO专项：`tmp/simulator-habahiro-approximation-task.md`、`tmp/simulator-habahiro-approximation-acceptance.md`。
 - 目标分支：`codex/refactor-simulator-implementation`；不得新建或切换分支。
 - 锁定原作样本：`jp.co.craftegg.band` 10.1.4（version code 230，`arm64-v8a`）。
 - 锁定`libil2cpp.so` SHA-256：`815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F`。
 - 锁定`global-metadata.dat` SHA-256：`298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F`。
-- 当前Reverse基线提交：`ab5cc366a4a03d24a215e379849824e5ddf5f72f`；只消费该提交及其祖先中已提交、已push、可校验对象。
-- Reverse远端状态：`origin/main...HEAD = 0 0`；Reverse未跟踪工作、`.claude/`、`runtime/tools/`和本地IDA数据库永久排除。
-- 当前状态：**AU00任务书已完成；10.1.4只有判定分派、Long/Slide局部Hold调用与scheduler pause的可复用证据，没有完整音频static/runtime/resource/portable closure。AU01–AU03是生产代码硬门，关闭前禁止实施AU04–AU12。**
+- 当前可消费Reverse基线提交：`ab5cc366a4a03d24a215e379849824e5ddf5f72f`；只消费该提交及其祖先中已提交、已push、可校验对象。
+- Reverse本地进展：`10aae92078cc283303a39f907dcb5b4e39442576`（`evidence(audio): 晋升10.1.4完整音频静态契约`）已形成464方法、19布局、13枚举和471个新增文件的**本地候选提交**，但当前`origin/main...HEAD = 0 1`，因此尚未晋升为Garupa可消费证据。
+- Reverse工作树存在大量与本阶段不可混用的已修改/未跟踪对象；其内容以及`.claude/`、`runtime/tools/`和本地IDA数据库一律排除。只有显式限定到提交对象并通过校验、push后的音频证据才可消费。
+- 当前状态：**AU00任务书已完成；AU01已有未push静态候选，AU02 runtime/resource/oracle与AU03冻结授权均未关闭。后续严格分为“统一一次性取证阶段”和“落地实现阶段”：AU01–AU03、V01、D01–D32及AU-C01–AU-C40证据先全部关闭，再一次性解锁AU04–AU12；禁止边取证边实现。**
 - 计划证据包：`tmp/simulator-reverse-evidence/audio/`；只在Reverse新证据提交并push后创建。
 - 计划验收记录：`tmp/simulator-audio-acceptance.md`；AU12创建。
 
@@ -41,41 +42,42 @@
 
 1. `GirlsBandParty-Reverse`是唯一原作行为依据。旧Python audio renderer、浏览器音频经验、BMS的`#WAV`名称、Bestdori镜像和已删除旧模拟器都不能独立授权生产行为。
 2. 本阶段只接受10.1.4/230证据。所有10.1.3/229调查降级为`AU-Hxx`发现线索；即使方法名、cue名、资源hash或地址delta看似相同，也必须在当前样本逐项重证。
-3. AU01必须按managed owner/method/signature逐项重解析当前方法、布局、枚举、常量和调用边界；禁止统一RVA平移或仅凭signature unchanged宣称语义不变。
-4. AU02必须同时关闭自然运行时调用序、对象identity、Float32参数、BGM播放头、Hold生命周期、pause/resume和固定事件oracle；禁止memory write、return replacement、managed invocation、synthetic event或合成Note注入。
-5. AU03必须在Reverse证据提交并push后冻结source/copy/index三方可校验证据包。AU01–AU03及D01–D32全部关闭前，禁止修改音频production、测试入口或package scripts。
-6. `engine/`不得导入DOM、`AudioContext`、`AudioNode`、React、Pixi、Tauri、编辑器类型、资源URL、文件系统API、codec decoder或Reverse profile。
-7. engine只发送typed semantic command，不发送`AudioBuffer`、`AudioBufferSourceNode`、`GainNode`、callback、Promise、文件字节或backend时钟对象。
-8. Web Audio后端不得读取Note/Score/Life/Skill/Fever manager来决定播放什么，也不得把`AudioContext.currentTime`反馈为music position或判定时钟。
-9. resource provider只提供profile声明且length/hash匹配的字节。资源准备天然异步，必须在`createSimulatorEngine`前完成；未ready、缺资源、hash mismatch或decode失败必须在领域owner创建前失败关闭。
-10. 本地资源与显式网络provider是portable delivery选择，不是原作行为。AU-D31关闭前不得新增网络实现；若最终允许网络，只能由宿主显式选择、固定HTTPS allowlist、长度/hash校验且禁止自动fallback，测试仍必须离线。
-11. portable MP3/WAV镜像与原作CRI HCA不是字节等价。profile必须声明`exact-current-cri`、`current-external-portable`等provenance/fidelity；不得把外部镜像标记为exact CRI parity。
-12. 不允许从一个fidelity自动回落到另一个。exact资源缺失必须在任何audio object/voice mutation前返回`evidence-required`；portable路线必须由调用者显式选择。
-13. BGM、one-shot和Hold loop必须使用engine稳定voice/resource identity。backend不得按cue名、noteIndex、数组位置或当前空闲node猜测owner。
-14. 原作固定pool、独立one-shot pool、voice reuse/steal/exhaustion边界必须由当前证据关闭。未知时不得动态扩容、覆盖最旧voice、丢弃命令或无限并发。
-15. 同帧命令保持原始提交顺序；Flick与result cue、particle与audio、多个判定、Skill/Fever命令不能排序、合并或去重。
-16. 所有Float32输入、增益乘法、fade插值、seek、sample/frame换算和边界比较必须按证据显式实现。不得用Web Audio默认gain、loop、channelCountMode或浏览器隐式clamp补齐。
-17. `AudioContext.currentTime`只能作为portable transport schedule；engine clock仍是领域时间owner。是否需要BGM playback-head观测、校正或seek必须由D05关闭，不能根据浏览器漂移经验增加周期纠偏。
-18. pause必须沿用上游scheduler冻结、不追赶wall clock的已确认边界；具体BGM/SE/Hold pause顺序和resume offset必须由D14/D15的当前audio trace确认。
-19. Web Audio的“暂停”若需要stop并在resume重建`AudioBufferSourceNode`，这是portable mechanism；它必须保留同一engine voice identity、精确offset和命令顺序，不宣称原作也重建node。
-20. autoplay/user gesture、context suspended/interrupted/closed、decode能力和context loss属于宿主/backend capability。未满足时返回结构化失败，不自动静音、不伪造已播放、不推进audio state。
-21. 实时Web Audio输出不作为确定性expected。固定oracle必须基于engine command和离线PCM；浏览器smoke只验证能力映射与生命周期。
-22. 旧实机Perfect offset分布不得转换为固定`latencyMs`。尤其禁止把median `21.168510 ms`、BGM intercept或设备报告latency写入engine/backend默认值。
-23. backend prepare、batch preflight、domain mutation和command commit必须构成两阶段边界。后一个非法命令不能留下前一个voice、sequence、gain或领域mutation。
-24. 异步设备错误必须保留first terminal fault并在下一明确宿主边界可见；不得吞错、自动重建context、回落无声backend或继续接受命令。
-25. pause、resume、stop、dispose、重复调用和command-after-dispose的优先级必须由D28关闭。重复幂等不能借机追加伪音频事件。
-26. recording snapshot不得暴露资源bytes、AudioNode、可写profile、callback或provider；只保留冻结的semantic commands、状态、identity和结构化fault。
-27. production实现、evidence整理、resource provider、offline backend、Web Audio backend、测试与验收文档分批提交；任何单批绿色不能关闭阶段。
-28. 不修改`App.tsx`、编辑器控制器、窗口路由、启动载荷或移动端Activity；主程序音频解锁/入口属于实施块9。
+3. AU01–AU03构成一个不可穿插production的“统一一次性取证阶段”。“一次性”指先前置覆盖整个Audio surface并关闭全部门禁，不要求把自然场景压缩到一次物理运行或一个Git提交；允许为稳定性分多次自然采集，但必须使用同一版本、schema、allowlist、alias/sequence规则和总closure。
+4. AU01必须按managed owner/method/signature逐项重解析当前方法、布局、枚举、常量和调用边界；禁止统一RVA平移或仅凭signature unchanged宣称语义不变。现有`10aae920...`仅是未push候选，必须先在干净提交对象上校验并push，不能据此提前实现。
+5. AU02在同一取证总阶段内一次性关闭自然运行时调用序、对象identity、Float32参数、BGM播放头、Hold生命周期、pause/resume、资源profile和固定事件oracle；禁止memory write、return replacement、managed invocation、synthetic event或合成Note注入。
+6. AU03必须在全部Reverse证据提交并push后统一冻结source/copy/index三方可校验证据包。AU01–AU03、V01、D01–D32和AU-C01–AU-C40 evidence expected全部关闭前，禁止修改音频production、测试入口或package scripts。
+7. `engine/`不得导入DOM、`AudioContext`、`AudioNode`、React、Pixi、Tauri、编辑器类型、资源URL、文件系统API、codec decoder或Reverse profile。
+8. engine只发送typed semantic command，不发送`AudioBuffer`、`AudioBufferSourceNode`、`GainNode`、callback、Promise、文件字节或backend时钟对象。
+9. Web Audio后端不得读取Note/Score/Life/Skill/Fever manager来决定播放什么，也不得把`AudioContext.currentTime`反馈为music position或判定时钟。
+10. resource provider只提供profile声明且length/hash匹配的字节。资源准备天然异步，必须在`createSimulatorEngine`前完成；未ready、缺资源、hash mismatch或decode失败必须在领域owner创建前失败关闭。
+11. 本地资源与显式网络provider是portable delivery选择，不是原作行为。AU-D31关闭前不得新增网络实现；若最终允许网络，只能由宿主显式选择、固定HTTPS allowlist、长度/hash校验且禁止自动fallback，测试仍必须离线。
+12. portable MP3/WAV镜像与原作CRI HCA不是字节等价。profile必须声明`exact-current-cri`、`current-external-portable`等provenance/fidelity；不得把外部镜像标记为exact CRI parity。
+13. 不允许从一个fidelity自动回落到另一个。exact资源缺失必须在任何audio object/voice mutation前返回`evidence-required`；portable路线必须由调用者显式选择。
+14. BGM、one-shot和Hold loop必须使用engine稳定voice/resource identity。backend不得按cue名、noteIndex、数组位置或当前空闲node猜测owner。
+15. 原作固定pool、独立one-shot pool、voice reuse/steal/exhaustion边界必须由当前证据关闭。未知时不得动态扩容、覆盖最旧voice、丢弃命令或无限并发。
+16. 同帧命令保持原始提交顺序；Flick与result cue、particle与audio、多个判定、Skill/Fever命令不能排序、合并或去重。
+17. 所有Float32输入、增益乘法、fade插值、seek、sample/frame换算和边界比较必须按证据显式实现。不得用Web Audio默认gain、loop、channelCountMode或浏览器隐式clamp补齐。
+18. `AudioContext.currentTime`只能作为portable transport schedule；engine clock仍是领域时间owner。是否需要BGM playback-head观测、校正或seek必须由D05关闭，不能根据浏览器漂移经验增加周期纠偏。
+19. pause必须沿用上游scheduler冻结、不追赶wall clock的已确认边界；具体BGM/SE/Hold pause顺序和resume offset必须由D14/D15的当前audio trace确认。
+20. Web Audio的“暂停”若需要stop并在resume重建`AudioBufferSourceNode`，这是portable mechanism；它必须保留同一engine voice identity、精确offset和命令顺序，不宣称原作也重建node。
+21. autoplay/user gesture、context suspended/interrupted/closed、decode能力和context loss属于宿主/backend capability。未满足时返回结构化失败，不自动静音、不伪造已播放、不推进audio state。
+22. 实时Web Audio输出不作为确定性expected。固定oracle必须基于engine command和离线PCM；浏览器smoke只验证能力映射与生命周期。
+23. 旧实机Perfect offset分布不得转换为固定`latencyMs`。尤其禁止把median `21.168510 ms`、BGM intercept或设备报告latency写入engine/backend默认值。
+24. backend prepare、batch preflight、domain mutation和command commit必须构成两阶段边界。后一个非法命令不能留下前一个voice、sequence、gain或领域mutation。
+25. 异步设备错误必须保留first terminal fault并在下一明确宿主边界可见；不得吞错、自动重建context、回落无声backend或继续接受命令。
+26. pause、resume、stop、dispose、重复调用和command-after-dispose的优先级必须由D28关闭。重复幂等不能借机追加伪音频事件。
+27. recording snapshot不得暴露资源bytes、AudioNode、可写profile、callback或provider；只保留冻结的semantic commands、状态、identity和结构化fault。
+28. production实现、evidence整理、resource provider、offline backend、Web Audio backend、测试与验收文档分批提交；任何单批绿色不能关闭阶段。
+29. 不修改`App.tsx`、编辑器控制器、窗口路由、启动载荷或移动端Activity；主程序音频解锁/入口属于实施块9。
 
 ### 1.3 执行进度
 
 | 任务 | 状态 | 完成标准 |
 | --- | --- | --- |
-| AU00 建立阶段任务书 | **已完成** | 范围、证据矩阵、硬门、runtime/resource要求、oracle、批次和完成定义写入本文档 |
-| AU01 10.1.4静态重基线 | **阻塞生产** | 全方法/布局/枚举/常量/调用边界当前profile通过，无blocking finding |
-| AU02 实体runtime与资源证据 | **阻塞生产** | 自然BGM/判定/Hold/pause/lifecycle trace及current资源profile关闭 |
-| AU03 冻结证据包与portable closure | **阻塞生产** | Reverse已push；source/copy/index verifier、D01–D32与production authorization关闭 |
+| AU00 建立并整理阶段任务书 | **已完成** | 范围、统一取证优先级、证据矩阵、硬门、oracle、批次和完成定义写入本文档 |
+| AU01 10.1.4静态重基线 | **本地候选完成，尚未晋升；阻塞生产** | `10aae920...`从干净提交对象复验通过、限定音频scope、push后远端`0 0`，且全方法/布局/枚举/常量无blocking finding |
+| AU02 统一实体runtime、资源、portable与oracle取证 | **未开始；阻塞生产** | 使用统一plan/schema/allowlist自然覆盖BGM/判定/Hold/辅助SE/pause/lifecycle，关闭resource/profile/mapping和全部fixed expected |
+| AU03 统一冻结证据包与production authorization | **未开始；阻塞生产** | 全部Reverse证据已push；source/copy/index verifier、V01、D01–D32、AU-C01–AU-C40与production authorization关闭 |
 | AU04 typed audio合同与recording backend | 未开始 | immutable profile/command/session/voice/preflight/state machine关闭 |
 | AU05 资源provider与offline backend | 未开始 | hash/decode metadata、gain/loop/fade/mix和固定PCM oracle关闭 |
 | AU06 BGM producer | 未开始 | load/start/seek/playhead/pause/resume/stop/end命令匹配 |
@@ -89,13 +91,37 @@
 ### 1.4 AU00初始盘点
 
 - 完整重读总体计划实施块7、资源/Pixi任务书和上游host/backend/OneFrame/lifecycle边界。
-- 核验Garupa `5b2d39ec...`与Reverse `ab5cc366...`均和各自远端`0 0`；只读取Reverse提交对象，不消费工作树。
+- AU00建立时核验Garupa `5b2d39ec...`与Reverse `ab5cc366...`均和各自远端`0 0`；本次整理时Garupa已到`7bfecd9...`且远端`0 0`，Reverse出现未push的音频静态候选`10aae920...`并领先远端1提交。该候选及Reverse脏工作树在push/校验前均不作为production证据。
 - 当前`SimulatorBackends.audio`仍是通用`SimulatorBackendPort.record()`，没有typed profile、资源preflight、voice identity、offline mixer或Web Audio实现。
 - 当前10.1.4证据确认`onJudgeNote`分派和Long/Slide局部Hold调用，但未冻结BGM、cue literal、完整SoundManager/CRI链、gain、pool、资源或audio pause行为。
 - 当前clock trace只确认scheduler pause冻结与resume不追赶，不能外推“音频也已暂停”或resume offset。
 - 盘点10.1.3历史调查，确认其足以生成current target list，但全部保持`discovery-only`。
 - 旧real-play BGM与judge cue分析均是分布/线性对齐，不提供可写入portable backend的固定latency常量。
-- 本批只创建任务书，不创建证据包，不修改`src/simulator/**`、测试、package scripts或主程序，不运行Vite/Tauri/整体构建。
+- 本批只整理任务书和执行队列，不创建证据包，不修改`src/simulator/**`、测试、package scripts或主程序，不运行Vite/Tauri/整体构建。
+
+### 1.5 本次对话执行列表（统一取证优先）
+
+以下列表在本文档整理完成后保持等待；只有用户明确下达开始命令才从`E01`继续。`E01–E08`全部属于同一个统一取证总阶段，期间不得进入`I01–I06`。
+
+| 顺序 | 任务 | 交付/硬门 | 当前状态 |
+| --- | --- | --- | --- |
+| P00 | 审计并整理任务书 | 锁定当前双仓库状态、统一取证路线和执行列表 | **已完成；blocked等待命令** |
+| E01 | 隔离并复验现有静态候选 | 仅从`10aae920...`提交对象复验464方法/19布局/13枚举/哈希；不读取或清理Reverse无关脏工作树 | 待命令 |
+| E02 | 晋升AU01静态证据 | 修复候选自身blocking（若有），限定scope提交/push，确认Reverse远端`0 0` | 待命令 |
+| E03 | 建立统一runtime/resource取证协议 | 一次性冻结全场景coverage matrix、hook allowlist、trace schema、匿名化、verifier、设备恢复和失败重采规则 | 待命令 |
+| E04 | 执行全场景自然runtime采集 | 覆盖BGM、standard/Flick/Directional/Multiple、Long/Slide、Skill/FullCombo/GameClear/GameOver、pause/resume、song end/dispose；允许多次自然run，不允许合成事件 | 待命令 |
+| E05 | 完成资源与portable mapping | 冻结current ACF/ACB/AWB/HCA metadata、资源/镜像provenance与hash、gain/pool/fade/seek/decode/WebAudio边界 | 待命令 |
+| E06 | 生成统一closure与固定expected | 关闭V01、D01–D32、AU-R01–AU-R11及AU-C01–AU-C40 command/PCM expected；任一blocking非空则留在取证阶段补采 | 待命令 |
+| E07 | 提交并push完整Reverse证据 | 校验、最小化、中文提交、push，确认`origin/main...HEAD = 0 0`；记录最终锁定commit | 待命令 |
+| E08 | 冻结Garupa证据包并授权 | 创建audio manifest/OPEN_GAPS/verifier/fixtures，source/copy/index三方通过且`production_authorization=true` | 待命令 |
+| I01 | typed合同与recording backend | 对应AU04；production与test分提交 | E08后 |
+| I02 | resource provider与offline backend | 对应AU05；固定PCM oracle，不联网/不调用Python | E08后 |
+| I03 | BGM、判定、Hold及辅助SE producer | 对应AU06–AU09；按证据顺序拆分production/test提交 | E08后 |
+| I04 | Web Audio backend | 对应AU10；只做portable映射，不author领域时间 | E08后 |
+| I05 | lifecycle/failure总集成 | 对应AU11；原子preflight、first fault与cleanup闭合 | E08后 |
+| I06 | production oracle与独立验收 | 对应AU12；fresh build、上游隔离回归、acceptance、push与远端`0 0` | E08后 |
+
+开始实现的唯一解锁条件是：`E01–E08`全部完成、Reverse与Garupa证据校验绿色、D01–D32无blocking、AU-C01–AU-C40 expected齐备且`production_authorization=true`。任何补证都必须回到统一取证总阶段完成，不能在某个producer实现中临时补一个cue或常量。
 
 ## 2. 固定范围
 
@@ -128,8 +154,8 @@
 
 ## 3. 强制执行规则
 
-1. AU01、AU02、AU03、V01及D01–D32全部关闭前，禁止实施AU04–AU12 production与本阶段package test入口。
-2. 新证据先在Reverse形成最小、可复验提交并push，再冻结到Garupa；严禁引用Reverse未提交文件、local capture、IDA数据库或`runtime/tools/`。
+1. AU01–AU03必须作为统一取证总阶段完整执行；V01、D01–D32、AU-R01–AU-R12及AU-C01–AU-C40 evidence expected全部关闭前，禁止实施AU04–AU12 production与本阶段package test入口。
+2. 新证据先在Reverse形成最小、可复验提交并push，再统一冻结到Garupa；严禁引用Reverse未push提交、未提交文件、local capture、IDA数据库或`runtime/tools/`。不得在AU04–AU12之间穿插补证后继续写代码。
 3. 证据包每项记录Reverse commit、相对路径、字节数、完整大写SHA-256、sample、状态和消费任务；`verify.mjs`必须校验source/copy/index三方。
 4. 10.1.3的`AU-Hxx`不得进入最终confirmed manifest，不得成为production evidence ID，也不得通过“方法字节相似”自动晋升。
 5. 静态摘要、README、Python prototype与ARM64/raw runtime冲突时，先修Reverse contract/closure，再更新本文档，最后改代码。
@@ -290,6 +316,8 @@ src/simulator/
 历史候选中的URL、cue字面量、pool数、sample rate、loop point、gain常量和PCM digest均不得进入production constant，直到对应AU-R证据在10.1.4闭合。
 
 ## 7. 10.1.4重验矩阵
+
+下表的“当前”只统计已push、可消费证据。未push的`10aae920...`静态候选虽覆盖464方法、19布局和13枚举，但在E01/E02复验、push前不改变表中授权状态；晋升后必须一次性回填整张矩阵，不能只把某个producer改为closed。
 
 | 领域 | 当前静态 | 当前runtime | 当前资源 | 必须新增 | 当前状态 |
 | --- | --- | --- | --- | --- | --- |
@@ -610,32 +638,34 @@ AU-C01–AU-C40的expected必须在Reverse AU-R10中先冻结。若某case经D13
 4. 写明production硬门、portable边界、测试、提交和完成定义。
 5. 只提交本文档，不修改production/test/package scripts。
 
-### AU01 晋升10.1.4静态证据
+### 统一取证总阶段（AU01–AU03，禁止穿插AU04–AU12）
 
-1. 在Reverse从10.1.4 dump/ELF/metadata按managed identity生成目标集。
-2. 导出逐方法ARM64、owner layout、enum、literal、rodata和native import。
-3. 静态重建BGM、judge、Hold、auxiliary、gain、pause、dispose调用图。
-4. 从锁定APK/cache提取最小ACF/ACB/AWB/HCA结构化metadata，不提交未批准二进制。
-5. extractor/verifier幂等，形成独立中文提交并push。
-6. 更新本文档AU01进度；仍不写Garupa production。
+#### AU01 晋升10.1.4静态证据
 
-### AU02 实体runtime与资源证据
+1. 先隔离审计Reverse本地候选`10aae920...`：只读取提交对象，确认471个新增文件均在音频调查目录，不读取、不覆盖、不暂存现有无关脏工作树。
+2. 在具备锁定依赖的环境从该提交对象复跑extractor/verifier，核对464方法、19布局、13枚举、ARM64/Float32/literal/native import和`STATIC_SHA256SUMS`。
+3. 对候选自身发现的错误只追加音频scope修订提交；不得用工作树中未提交生成物替换证据。
+4. push后确认`origin/main...HEAD = 0 0`，此时AU01才从“本地候选”晋升为confirmed；仍不写Garupa production。
+5. 将AU01静态输出作为统一coverage matrix输入，不把它视为可单独解锁任何producer的阶段成果。
 
-1. 先提交observation-only capture plan、hook allowlist、trace schema和future verifier。
-2. 在自然Live收集9.2场景；采集脚本finally恢复设备状态并记录SELinux/版本。
-3. 构造匿名、最小化、连续trace和固定event/resource profiles。
-4. 对static/runtime冲突先修Reverse结论，不在Garupa中调和。
-5. 生成D01–D32和AU-C01–AU-C40 closure；blocking非空则继续取证。
-6. 提交并push Reverse；确认`origin/main...HEAD = 0 0`。
+#### AU02 统一实体runtime、资源、portable与oracle取证
 
-### AU03 冻结证据包与portable closure
+1. 在采集前一次性提交覆盖全部D01–D32/AU-C01–AU-C40的observation-only capture plan、hook allowlist、trace schema、alias/sequence规则、future verifier和设备恢复协议。
+2. 使用同一10.1.4样本与统一协议收集9.2全部自然场景。为保证自然可达和稳定性可分多个run，但每个run必须进入同一总manifest并可按session独立复验。
+3. 同一总阶段内完成current APK/cache资源metadata、portable镜像provenance、length/hash/codec/control、gain/pool/fade/seek与CRI→offline/WebAudio mapping；不得把资源调查留到实现期。
+4. 构造匿名、最小化、连续runtime trace、event/resource profiles、command expected和PCM expected。expected必须在TypeScript production存在前冻结。
+5. 对static/runtime/resource冲突先修Reverse contract/closure并重跑受影响的统一matrix，不在Garupa中调和。
+6. 生成V01、D01–D32、AU-R01–AU-R11和AU-C01–AU-C40总closure；blocking非空时继续留在AU02补采，不得部分授权BGM、判定或Hold实现。
+7. 全部Reverse音频证据分scope校验、提交并push，最终确认`origin/main...HEAD = 0 0`。
 
-1. 创建`tmp/simulator-reverse-evidence/audio/manifest.json`、`README.md`、`OPEN_GAPS.md`、`verify.mjs`和最小artifacts/fixtures。
-2. manifest记录每项source commit/path/bytes/SHA/sample/status/consumer。
-3. verifier支持working tree与`--index`三方hash校验，拒绝历史H项晋升和runtime schema污染。
-4. 冻结portable mapping与fidelity/provenance；D31明确resource delivery。
-5. 只有`production_authorization=true`、0 blocking时才解锁AU04。
-6. 证据包单独提交并push，不混production。
+#### AU03 统一冻结证据包与portable closure
+
+1. 仅在AU01/AU02全部Reverse证据已push后，创建`tmp/simulator-reverse-evidence/audio/manifest.json`、`README.md`、`OPEN_GAPS.md`、`verify.mjs`和最小artifacts/fixtures。
+2. manifest记录每项source commit/path/bytes/SHA/sample/status/consumer，并把所有session/resource/oracle纳入同一阶段closure。
+3. verifier支持working tree与`--index`三方hash校验，拒绝历史H项、未push提交、Reverse脏工作树和runtime schema污染。
+4. 冻结portable mapping与fidelity/provenance；D31明确resource delivery；AU-R12关闭source/copy/index closure。
+5. 只有V01、D01–D32、AU-R01–AU-R12、AU-C01–AU-C40全部closed、`production_authorization=true`且0 blocking时，才统一解锁AU04–AU12。
+6. 证据包单独提交并push，不混production；解锁后原则上不再回Reverse补普通实现细节，若确需补证则暂停全部production并重新进入统一取证总阶段。
 
 ### AU04 typed audio合同与recording backend
 
@@ -854,7 +884,9 @@ git rev-list --left-right --count origin/codex/refactor-simulator-implementation
 ## 15. 当前审计结论
 
 - 实施块7范围、架构、证据分类、硬门、runtime/resource计划、AU-C01–AU-C40、批次和完成定义已建立。
-- 当前10.1.4证据只提供判定入口、Long/Slide局部Hold与scheduler pause边界，不能授权完整音频production。
+- 当前**可消费的已push** 10.1.4证据只提供判定入口、Long/Slide局部Hold与scheduler pause边界，不能授权完整音频production。
 - 10.1.3 Perfect→CRI、cue资源、gain、pause和real-play调查具有定位价值，但全部保持discovery-only。
-- 当前最先执行AU01/AU02：一次性批量重基线并自然采集完整audio surface；避免按单个setter/单个cue交替取证与实现。
-- AU03关闭前，不得创建typed audio production合同、Web Audio backend、音频test入口或package script。
+- 当前Garupa HEAD为已push的`7bfecd9...`；Reverse可消费基线仍是已push的`ab5cc366...`。本地`10aae920...`虽已形成完整静态候选，但因领先远端1提交且Reverse工作树有大量无关变化，当前只能作为E01待复验候选，不能进入Garupa manifest或production evidence。
+- 后续不再采用“取一个cue/常量→实现一段→再补证”的交替路线。必须依次完成E01–E08统一取证总阶段：静态候选晋升、统一自然runtime、resource/portable profile、固定command/PCM expected、总closure、Reverse push与Garupa三方冻结。
+- AU03关闭前，不得创建typed audio production合同、Web Audio backend、音频test入口或package script；只有`production_authorization=true`后才按I01–I06落地实现。
+- 本次对话任务列表已经写入1.5；任务书整理完成后状态为`blocked`，等待用户明确命令再从E01开始。
