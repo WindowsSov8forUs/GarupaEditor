@@ -1,6 +1,0 @@
-address	bytes	instruction	resolved_target
-0x33214C8	092040F9	ldr x9, [x0, #0x40]	-
-0x33214CC	000CC03D	ldr q0, [x0, #0x30]	-
-0x33214D0	090900F9	str x9, [x8, #0x10]	-
-0x33214D4	0001803D	str q0, [x8]	-
-0x33214D8	C0035FD6	ret	-

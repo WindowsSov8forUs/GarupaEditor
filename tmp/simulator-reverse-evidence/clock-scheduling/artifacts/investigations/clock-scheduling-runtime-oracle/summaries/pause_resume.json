@@ -1,5 +1,0 @@
-{
-  "schema_version": 1,
-  "status": "unresolved",
-  "reason": "The current probe lacks the GameState/PauseState gate fields required to prove freeze and in-place continuation."
-}

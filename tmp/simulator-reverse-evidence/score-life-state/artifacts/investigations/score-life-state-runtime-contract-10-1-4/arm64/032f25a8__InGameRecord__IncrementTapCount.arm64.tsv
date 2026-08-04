@@ -1,5 +1,0 @@
-address	bytes	instruction	resolved_target
-0x32F25A8	087040B9	ldr w8, [x0, #0x70]	-
-0x32F25AC	08050011	add w8, w8, #1	-
-0x32F25B0	087000B9	str w8, [x0, #0x70]	-
-0x32F25B4	C0035FD6	ret	-

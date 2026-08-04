@@ -1,2 +1,0 @@
-address	bytes	instruction	resolved_target
-0x30E09F0	43FFFF17	b #0x30e06fc	NoteFrontBase$$.ctor

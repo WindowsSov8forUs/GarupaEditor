@@ -1,8 +1,0 @@
-address	bytes	instruction	resolved_target
-0x30E15CC	FE0F1FF8	str x30, [sp, #-0x10]!	-
-0x30E15D0	002440F9	ldr x0, [x0, #0x48]	-
-0x30E15D4	800000B4	cbz x0, #0x30e15e4	-
-0x30E15D8	E2031FAA	mov x2, xzr	-
-0x30E15DC	FE0741F8	ldr x30, [sp], #0x10	-
-0x30E15E0	FFB2D214	b #0x658e1dc	UnityEngine.Renderer$$set_sharedMaterial
-0x30E15E4	C0B9F497	bl #0x2e0fce4	-

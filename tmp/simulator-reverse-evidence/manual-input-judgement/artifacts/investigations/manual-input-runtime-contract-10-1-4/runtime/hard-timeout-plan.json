@@ -1,8 +1,0 @@
-{
-  "scenario_id": "MJ16-MJ17-hard-long-timeout",
-  "actions": [
-    {"delay_ms": 200, "marker": "hard-timeout-live-start", "kind": "tap", "x": 1240, "y": 590},
-    {"delay_ms": 22000, "marker": "hard-timeout-tail", "kind": "wait"}
-  ],
-  "tail_seconds": 2
-}
