@@ -21,13 +21,21 @@ const forbidden = [
   [/GirlsBandParty-Reverse/i, "runtime Reverse-worktree read"],
   [/runtime[\\/]tools/i, "runtime/tools dependency"],
 ];
+const authorizedHabahiroExternalFiles = new Set([
+  resolve(simulatorRoot, "backends", "resources", "habahiroBestdoriManifest.ts"),
+  resolve(simulatorRoot, "backends", "resources", "habahiroBestdoriProvider.ts"),
+]);
+const authorizedExternalLabels = new Set(["network fetch", "remote URL", "Bestdori dependency"]);
 const violations = [];
 for (const root of productionRoots) {
   for (const path of walk(root)) {
     if (extname(path) !== ".ts") continue;
     const source = readFileSync(path, "utf8");
     for (const [pattern, label] of forbidden) {
-      if (pattern.test(source)) violations.push(`${path}: ${label}`);
+      if (
+        pattern.test(source) &&
+        !(authorizedHabahiroExternalFiles.has(path) && authorizedExternalLabels.has(label))
+      ) violations.push(`${path}: ${label}`);
     }
   }
 }
@@ -42,7 +50,7 @@ for (const [name, command] of Object.entries(packageJson.scripts ?? {})) {
 if (violations.length > 0) {
   throw new Error(`render production static audit failed:\n${violations.join("\n")}`);
 }
-console.log("render production static audit passed: network=off reverse-runtime=off python=off");
+console.log("render production static audit passed: runtime-network=off except explicit pinned HABAHIRO preflight; reverse-runtime=off python=off");
 
 function* walk(root) {
   for (const entry of readdirSync(root, { withFileTypes: true })) {

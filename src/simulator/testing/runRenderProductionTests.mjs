@@ -11,17 +11,22 @@ const typeScriptCli = require.resolve("typescript/bin/tsc");
 run(process.execPath, [
   resolve(repositoryRoot, "tmp", "simulator-reverse-evidence", "resource-pixi-rendering", "verify.mjs"),
 ]);
+run(process.execPath, [
+  resolve(repositoryRoot, "tmp", "simulator-habahiro-approximation-evidence", "verify.mjs"),
+]);
 run(process.execPath, [join(testingRoot, "verifyRenderProductionStatic.mjs")]);
+run(process.execPath, [join(testingRoot, "verifyHabahiroApproximationStatic.mjs")]);
 run(process.execPath, [join(testingRoot, "verifyRenderProductionCases.mjs")]);
 run(process.execPath, [typeScriptCli, "-p", resolve(repositoryRoot, "src", "simulator", "tsconfig.json")]);
 for (const runner of [
   "runRenderContractTests.mjs",
+  "runHabahiroContractTests.mjs",
   "runOrdinaryNoteGeometryTests.mjs",
   "runRenderPixiTests.mjs",
   "runRenderProductionChartTests.mjs",
   "runRenderFailureTests.mjs",
 ]) run(process.execPath, [join(testingRoot, runner)]);
-console.log("render production oracle passed: contracts/producers/Pixi/HAB-degraded-chart/failures/static/evidence");
+console.log("render production oracle passed: contracts/producers/Pixi/HAB-approximate+degraded charts/failures/static/evidence");
 
 function run(command, args) {
   const result = spawnSync(command, args, {

@@ -1,4 +1,4 @@
-import { Container, Sprite, Texture, TextureSource } from "pixi.js";
+import { Container, Graphics, Sprite, Texture, TextureSource } from "pixi.js";
 import { BrowserPixiTextureDecoder } from "../backends/pixi/browserPixiTextureDecoder";
 import { PixiRendererBackend, type PixiTextureDecoder } from "../backends/pixi/pixiRendererBackend";
 import {
@@ -1198,6 +1198,71 @@ async function main(): Promise<void> {
   requireOk(degradedRelease.commit(), "release degraded fidelity HUD");
   equal(degradedRenderer.sceneSnapshot().length, 0, "degraded label participates in reverse release");
   requireOk(degradedRenderer.dispose(), "dispose degraded renderer");
+
+  const approximateSession = "approximate-habahiro-pixi-session";
+  const approximateProfile: RenderResourceProfile = {
+    ...degradedProfile,
+    fidelity: {
+      mode: "habahiro",
+      fidelity: "approximate-current-external",
+      visibleLabel: "Approximate HABAHIRO",
+      machineReadableFlag: "rendering-fidelity-approximate-habahiro",
+      differenceProfile: "HA-D01-HA-D12",
+    },
+    scene: {
+      ...degradedProfile.scene,
+      projection: {
+        ...degradedProfile.scene.projection,
+        mode: "approximate-habahiro-current-external",
+      },
+    },
+  };
+  const approximateRenderer = new PixiRendererBackend(decoder);
+  requireOk(await approximateRenderer.prepare(
+    approximateSession, approximateProfile, provider,
+    new PortableRenderResourcePreflightAdapter(),
+  ), "prepare full approximate HABAHIRO Pixi renderer");
+  const approximateProducer = new RenderCommandProducer(
+    approximateSession,
+    approximateRenderer,
+    {
+      noteAtlasLogicalAssetId: "asset.note",
+      directionalAtlasLogicalAssetId: "asset.note",
+      habahiroAtlasLogicalAssetIds: {
+        normal: "asset.note", normal16: "asset.note", skill: "asset.note",
+        flick: "asset.note", long: "asset.note", longFlash: "asset.note",
+        slideAmong: "asset.note",
+      },
+    },
+  );
+  requireOk(requireOk(
+    approximateProducer.preflightPoolSetup([], 0, 0),
+    "preflight approximate HABAHIRO owners",
+  ).commit(), "commit approximate HABAHIRO owners");
+  requireOk(requireOk(
+    approximateProducer.preflightApproximateHabahiroFlashStart(1728),
+    "preflight approximate HABAHIRO flash",
+  ).commit(), "commit approximate HABAHIRO flash");
+  requireOk(requireOk(
+    approximateProducer.preflightApproximateHabahiroFlashAdvance(f32(0.125)),
+    "preflight approximate engine-clock flash sample",
+  ).commit(), "commit approximate engine-clock flash sample");
+  const flash = approximateRenderer.stage.children.find((child) =>
+    child.label === "render:habahiro:flash");
+  if (!(flash instanceof Container)) throw new Error("approximate flash Pixi owner missing");
+  const flashFill = [...flash.children, ...flash.children.flatMap((child) =>
+    child instanceof Container ? [...child.children] : [])].find((child) =>
+      child instanceof Graphics && child.alpha > 0);
+  if (!(flashFill instanceof Graphics)) throw new Error(
+    "approximate flash did not consume engine-clock animation through Pixi",
+  );
+  requireOk(requireOk(
+    approximateProducer.preflightSessionRelease(),
+    "preflight approximate HABAHIRO release",
+  ).commit(), "release approximate HABAHIRO scene");
+  equal(approximateRenderer.sceneSnapshot().length, 0,
+    "approximate HABAHIRO releases all fixed owners");
+  requireOk(approximateRenderer.dispose(), "dispose approximate HABAHIRO renderer");
 
   console.log("Pixi v8 semantic adapter tests passed: Sprite/R2-Mesh/sync+Multiple-line/mask/HUD/fill/animation/fault/dispose");
 }
