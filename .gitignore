@@ -23,6 +23,7 @@ dist-ssr
 *.sw?
 
 # Local test / debug artifacts
+/tmp/
 /test.json
 /test-*.json
 /tsc-trace*.txt
