@@ -1,0 +1,130 @@
+{
+  "status": "confirmed-production-field-oracle-integrated",
+  "source": {
+    "name": "poppin_shuffle_special.txt",
+    "url": "https://bestdori.com/assets/jp/musicscore/musicscore10_rip/poppin_shuffle_special.txt",
+    "bytes": 17882,
+    "sha256": "418db7f5bfc6b5431ac0abf2fb905120bdfa8c778c35aa42418a6fa43f4094dc",
+    "multi_range": false,
+    "control_headers": [
+      "#WAV0M cont_bezier_front_a.wav",
+      "#WAV0N cont_bezier_front_b.wav",
+      "#WAV0O cont_bezier_back_a.wav",
+      "#WAV0P cont_bezier_back_b.wav"
+    ]
+  },
+  "converter_result": {
+    "source_lines": 873,
+    "source_wav_headers": 28,
+    "source_score_lines": 704,
+    "output_lines": 2107,
+    "output_wav_headers": 224,
+    "output_score_lines": 1742,
+    "generated_wav_headers": 200,
+    "remaining_control_headers": 0,
+    "preserved_source_lines": 869,
+    "preservation_explanation": "all 873 source lines except the four control WAV declarations remain present",
+    "output_sha256": "b3f3aec64444d2553060641b1ada203f99478727489a627c97f39b3fea08880d"
+  },
+  "independent_chart_oracle": {
+    "url": "https://bestdori.com/api/charts/3/special.json",
+    "bytes": 50591,
+    "sha256": "fa636238280d384c3bae42335b54522b02cdbe608c890516f2f38fb728dea2fc",
+    "events": 830,
+    "playable_events": 825,
+    "event_types": {
+      "BPM": 1,
+      "System": 4,
+      "Single": 576,
+      "Directional": 127,
+      "Slide": 93,
+      "Long": 29
+    }
+  },
+  "runtime_result": {
+    "materials": 2563,
+    "batches": 656,
+    "information_records": 935,
+    "start_bpm": 220.0,
+    "start_bpm_string": "220",
+    "bpm_change_commands": 0,
+    "bpm_timeline": [[0, 220.0]],
+    "playable_specs": 825,
+    "max_note_count": 979,
+    "spec_kinds": {
+      "normal": 562,
+      "flick": 14,
+      "directional_flick_left": 64,
+      "directional_flick_right": 63,
+      "slide": 93,
+      "long": 29
+    },
+    "directional_widths": {
+      "1": 38,
+      "2": 72,
+      "3": 17
+    },
+    "single_charge": 26,
+    "single_skill": 6,
+    "additional_note_consumers": {
+      "root_skill": 6,
+      "end_skill": 0,
+      "root_fever": 30,
+      "end_fever": 0
+    },
+    "slide_source_connection_nodes": 298,
+    "slide_source_hidden_nodes": 80,
+    "slide_runtime_connection_nodes": 1577,
+    "slide_runtime_hidden_nodes": 1359,
+    "sync_connections": 192,
+    "sync_endpoint_pairs": {
+      "front_right->front": 20,
+      "front->front": 126,
+      "front->front_left": 19,
+      "end->front": 21,
+      "front_right->front_left": 6
+    },
+    "sync_side_node_endpoints": 0
+  },
+  "canonical_field_comparison": {
+    "single": {
+      "fields": ["absolute_pos", "lane", "flick", "charge", "skill"],
+      "missing": 0,
+      "extra": 0
+    },
+    "directional": {
+      "fields": ["absolute_pos", "directional_anchor_lane", "width", "direction"],
+      "missing": 0,
+      "extra": 0
+    },
+    "long": {
+      "fields": ["root_absolute_pos", "root_lane", "end_absolute_pos", "end_lane", "charge"],
+      "missing": 0,
+      "extra": 0
+    },
+    "source_slide": {
+      "fields": ["ordered_absolute_pos", "ordered_lane", "hidden"],
+      "missing": 0,
+      "extra": 0
+    },
+    "runtime_slide_source_subsequence": {
+      "explanation": "every independent authoring connection remains an ordered node in the denser runtime Bezier expansion",
+      "missing_slides": 0,
+      "extra_slides": 0
+    }
+  },
+  "confirmed": [
+    "the production BMS enters the recovered Bezier converter without fallback",
+    "all four normal Bezier control families are exercised and all 200 additive WAV keys are allocated",
+    "Single, Directional, Long and source Slide fields match the independent 825-playable-event oracle exactly",
+    "Directional lane comparison preserves the native direction endpoint separately from the baked contiguous button span",
+    "all 298 authoring Slide nodes remain ordered subsequences of the 1577 runtime-expanded nodes",
+    "the converted output and material projection are deterministic for the locked source hashes",
+    "the BMS start BPM string 220 matches the independent beat-zero BPM event and no change command is present",
+    "the production chart projects 192 endpoint-aware sync connections including 21 After-to-front relations"
+  ],
+  "boundary": [
+    "the independent chart API describes authoring Slide nodes, while MusicScoreBezierConverter deliberately replaces 115 control records with 1359 runtime-hidden samples"
+  ],
+  "reproduction": "python ../music-score-bezier/validate_production_bms.py"
+}

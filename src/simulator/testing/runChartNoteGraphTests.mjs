@@ -41,8 +41,7 @@ function validateProductionGraphs() {
   } = require(join(chartRoot, "noteGraph.js"));
   const fixturesRoot = join(
     repositoryRoot,
-    "tmp",
-    "simulator-reverse-evidence",
+    "src", "simulator", "testing", "fixtures", "reverse-snapshots",
     "chart-construction",
     "fixtures",
   );

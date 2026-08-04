@@ -11,7 +11,7 @@ const repositoryRoot = resolve(testingRoot, "..", "..", "..");
 const outputRoot = mkdtempSync(join(tmpdir(), "garupa-manual-flick-"));
 const require = createRequire(import.meta.url);
 const typeScriptCli = require.resolve("typescript/bin/tsc");
-const evidenceRoot = join(repositoryRoot, "tmp", "simulator-reverse-evidence",
+const evidenceRoot = join(repositoryRoot, "src", "simulator", "testing", "fixtures", "reverse-snapshots",
   "manual-input-judgement", "artifacts", "investigations",
   "manual-input-runtime-contract-10-1-4");
 

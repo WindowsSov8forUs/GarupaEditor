@@ -4,8 +4,8 @@ import { fileURLToPath } from "node:url";
 
 const testingRoot = dirname(fileURLToPath(import.meta.url));
 const root = resolve(testingRoot, "..", "..", "..");
-const evidence = JSON.parse(read("tmp/simulator-habahiro-approximation-evidence/bestdori-atlas-profile.json"));
-const differences = JSON.parse(read("tmp/simulator-habahiro-approximation-evidence/difference-matrix.json"));
+const evidence = JSON.parse(read("src/simulator/testing/fixtures/habahiro-snapshots/bestdori-atlas-profile.json"));
+const differences = JSON.parse(read("src/simulator/testing/fixtures/habahiro-snapshots/difference-matrix.json"));
 const manifestSource = read("src/simulator/backends/resources/habahiroBestdoriManifest.ts");
 const providerSource = read("src/simulator/backends/resources/habahiroBestdoriProvider.ts");
 const fidelitySource = read("src/simulator/backends/renderingContracts.ts");

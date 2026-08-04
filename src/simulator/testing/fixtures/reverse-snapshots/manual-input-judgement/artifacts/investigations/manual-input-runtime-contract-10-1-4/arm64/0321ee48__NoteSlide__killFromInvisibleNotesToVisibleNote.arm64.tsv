@@ -1,0 +1,47 @@
+address	bytes	instruction	resolved_target
+0x321EE48	FE57BEA9	stp x30, x21, [sp, #-0x20]!	-
+0x321EE4C	F44F01A9	stp x20, x19, [sp, #0x10]	-
+0x321EE50	940102F0	adrp x20, #0x7251000	-
+0x321EE54	35D30190	adrp x21, #0x6c82000	-
+0x321EE58	88365C39	ldrb w8, [x20, #0x70d]	-
+0x321EE5C	B52241F9	ldr x21, [x21, #0x240]	-
+0x321EE60	F30300AA	mov x19, x0	-
+0x321EE64	28030037	tbnz w8, #0, #0x321eec8	-
+0x321EE68	20D30190	adrp x0, #0x6c82000	-
+0x321EE6C	002041F9	ldr x0, [x0, #0x240]	-
+0x321EE70	FAC2EF97	bl #0x2e0fa58	-
+0x321EE74	28008052	mov w8, #1	-
+0x321EE78	88361C39	strb w8, [x20, #0x70d]	-
+0x321EE7C	13000014	b #0x321eec8	-
+0x321EE80	60CE40F9	ldr x0, [x19, #0x198]	-
+0x321EE84	C00300B4	cbz x0, #0x321eefc	-
+0x321EE88	083040F9	ldr x8, [x0, #0x60]	-
+0x321EE8C	880300B4	cbz x8, #0x321eefc	-
+0x321EE90	085D4039	ldrb w8, [x8, #0x17]	-
+0x321EE94	E8020034	cbz w8, #0x321eef0	-
+0x321EE98	81008052	mov w1, #4	-
+0x321EE9C	E2031FAA	mov x2, xzr	-
+0x321EEA0	59542194	bl #0x3a74004	NoteBase$$ChangeState
+0x321EEA4	618A59A9	ldp x1, x2, [x19, #0x198]	-
+0x321EEA8	23008052	mov w3, #1	-
+0x321EEAC	E00313AA	mov x0, x19	-
+0x321EEB0	C0FBFF97	bl #0x321ddb0	NoteSlide$$hideNote
+0x321EEB4	61D240F9	ldr x1, [x19, #0x1a0]	-
+0x321EEB8	E00313AA	mov x0, x19	-
+0x321EEBC	2EEEFF97	bl #0x321a774	NoteSlide$$changeCurrentNote
+0x321EEC0	E00313AA	mov x0, x19	-
+0x321EEC4	43010094	bl #0x321f3d0	NoteSlide$$refreshTargetButton
+0x321EEC8	A00240F9	ldr x0, [x21]	-
+0x321EECC	74CE40F9	ldr x20, [x19, #0x198]	-
+0x321EED0	08E040B9	ldr w8, [x0, #0xe0]	-
+0x321EED4	48000035	cbnz w8, #0x321eedc	-
+0x321EED8	3DC3EF97	bl #0x2e0fbcc	-
+0x321EEDC	E00314AA	mov x0, x20	-
+0x321EEE0	E1031FAA	mov x1, xzr	-
+0x321EEE4	E2031FAA	mov x2, xzr	-
+0x321EEE8	6F78CE94	bl #0x65bd0a4	UnityEngine.Object$$op_Inequality
+0x321EEEC	A0FC0737	tbnz w0, #0, #0x321ee80	-
+0x321EEF0	F44F41A9	ldp x20, x19, [sp, #0x10]	-
+0x321EEF4	FE57C2A8	ldp x30, x21, [sp], #0x20	-
+0x321EEF8	C0035FD6	ret	-
+0x321EEFC	7AC3EF97	bl #0x2e0fce4	-

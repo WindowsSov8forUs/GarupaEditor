@@ -46,8 +46,7 @@ function validateProductionMultiRange() {
   } = require(join(chartRoot, "multiRangeSources.js"));
   const source = readFileSync(join(
     repositoryRoot,
-    "tmp",
-    "simulator-reverse-evidence",
+    "src", "simulator", "testing", "fixtures", "reverse-snapshots",
     "chart-construction",
     "fixtures",
     "786_miracle_april_habahiro_special.txt",

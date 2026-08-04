@@ -1,0 +1,58 @@
+address	bytes	instruction	resolved_target
+0x30EAB88	E923BD6D	stp d9, d8, [sp, #-0x30]!	-
+0x30EAB8C	FE5701A9	stp x30, x21, [sp, #0x10]	-
+0x30EAB90	F44F02A9	stp x20, x19, [sp, #0x20]	-
+0x30EAB94	340B02D0	adrp x20, #0x7250000	-
+0x30EAB98	885A7139	ldrb w8, [x20, #0xc56]	-
+0x30EAB9C	081CA04E	mov v8.16b, v0.16b	-
+0x30EABA0	F30300AA	mov x19, x0	-
+0x30EABA4	C8000037	tbnz w8, #0, #0x30eabbc	-
+0x30EABA8	20DD0190	adrp x0, #0x6c8e000	-
+0x30EABAC	007C40F9	ldr x0, [x0, #0xf8]	-
+0x30EABB0	AA93F497	bl #0x2e0fa58	-
+0x30EABB4	28008052	mov w8, #1	-
+0x30EABB8	885A3139	strb w8, [x20, #0xc56]	-
+0x30EABBC	600641BD	ldr s0, [x19, #0x104]	-
+0x30EABC0	E00313AA	mov x0, x19	-
+0x30EABC4	E1031FAA	mov x1, xzr	-
+0x30EABC8	0028281E	fadd s0, s0, s8	-
+0x30EABCC	600601BD	str s0, [x19, #0x104]	-
+0x30EABD0	001DA84E	mov v0.16b, v8.16b	-
+0x30EABD4	78242694	bl #0x3a73db4	NoteBase$$Move
+0x30EABD8	607E40F9	ldr x0, [x19, #0xf8]	-
+0x30EABDC	600400B4	cbz x0, #0x30eac68	-
+0x30EABE0	E1031FAA	mov x1, xzr	-
+0x30EABE4	F12B1A94	bl #0x3775ba8	NoteManager$$GetAdjustMusicPos
+0x30EABE8	683240F9	ldr x8, [x19, #0x60]	-
+0x30EABEC	E80300B4	cbz x8, #0x30eac68	-
+0x30EABF0	69A240F9	ldr x9, [x19, #0x140]	-
+0x30EABF4	A90300B4	cbz x9, #0x30eac68	-
+0x30EABF8	34DD0190	adrp x20, #0x6c8e000	-
+0x30EABFC	947E40F9	ldr x20, [x20, #0xf8]	-
+0x30EAC00	155940B9	ldr w21, [x8, #0x58]	-
+0x30EAC04	291D40BD	ldr s9, [x9, #0x1c]	-
+0x30EAC08	081CA04E	mov v8.16b, v0.16b	-
+0x30EAC0C	800240F9	ldr x0, [x20]	-
+0x30EAC10	08E040B9	ldr w8, [x0, #0xe0]	-
+0x30EAC14	48000035	cbnz w8, #0x30eac1c	-
+0x30EAC18	ED93F497	bl #0x2e0fbcc	-
+0x30EAC1C	A002221E	scvtf s0, w21	-
+0x30EAC20	0039201E	fsub s0, s8, s0	-
+0x30EAC24	211DA94E	mov v1.16b, v9.16b	-
+0x30EAC28	E0031FAA	mov x0, xzr	-
+0x30EAC2C	0E4D1A94	bl #0x377e064	NoteUtility$$GetSecWithDistance
+0x30EAC30	880240F9	ldr x8, [x20]	-
+0x30EAC34	085D40F9	ldr x8, [x8, #0xb8]	-
+0x30EAC38	010140BD	ldr s1, [x8]	-
+0x30EAC3C	0020211E	fcmp s0, s1	-
+0x30EAC40	CD000054	b.le #0x30eac58	-
+0x30EAC44	E00313AA	mov x0, x19	-
+0x30EAC48	F44F42A9	ldp x20, x19, [sp, #0x20]	-
+0x30EAC4C	FE5741A9	ldp x30, x21, [sp, #0x10]	-
+0x30EAC50	E923C36C	ldp d9, d8, [sp], #0x30	-
+0x30EAC54	06000014	b #0x30eac6c	NoteLong$$execOverWaitState
+0x30EAC58	F44F42A9	ldp x20, x19, [sp, #0x20]	-
+0x30EAC5C	FE5741A9	ldp x30, x21, [sp, #0x10]	-
+0x30EAC60	E923C36C	ldp d9, d8, [sp], #0x30	-
+0x30EAC64	C0035FD6	ret	-
+0x30EAC68	1F94F497	bl #0x2e0fce4	-

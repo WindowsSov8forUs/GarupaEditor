@@ -9,7 +9,7 @@ const testingRoot = dirname(fileURLToPath(import.meta.url));
 const repositoryRoot = resolve(testingRoot, "..", "..", "..");
 const outputRoot = mkdtempSync(join(tmpdir(), "garupa-manual-timeout-"));
 const require = createRequire(import.meta.url); const typeScriptCli = require.resolve("typescript/bin/tsc");
-const evidenceRoot = join(repositoryRoot, "tmp", "simulator-reverse-evidence", "manual-input-judgement",
+const evidenceRoot = join(repositoryRoot, "src", "simulator", "testing", "fixtures", "reverse-snapshots", "manual-input-judgement",
   "artifacts", "investigations", "manual-input-runtime-contract-10-1-4");
 try {
   const oracle = JSON.parse(readFileSync(join(evidenceRoot, "manual_input_fixed_event_oracle.json"), "utf8"));

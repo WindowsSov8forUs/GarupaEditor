@@ -23,9 +23,6 @@ try {
     join(outputRoot, "src", "simulator", "testing", "ordinaryNoteGeometry.test.js"),
   ]);
   run(process.execPath, [join(testingRoot, "verifyDependencies.mjs")]);
-  run(process.execPath, [
-    resolve(repositoryRoot, "tmp", "simulator-reverse-evidence", "resource-pixi-rendering", "verify.mjs"),
-  ]);
 } finally {
   rmSync(outputRoot, { recursive: true, force: true });
 }

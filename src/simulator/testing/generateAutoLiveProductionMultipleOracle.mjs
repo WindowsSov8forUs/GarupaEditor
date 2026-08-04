@@ -11,8 +11,7 @@ if (!compiledSimulatorRoot || !outputPath) {
 const repositoryRoot = resolve(import.meta.dirname, "..", "..", "..");
 const fixtureRoot = join(
   repositoryRoot,
-  "tmp",
-  "simulator-reverse-evidence",
+  "src", "simulator", "testing", "fixtures", "reverse-snapshots",
   "chart-construction",
   "fixtures",
 );

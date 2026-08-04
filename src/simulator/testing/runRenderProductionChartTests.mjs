@@ -28,7 +28,7 @@ async function verifyHabahiroCompleteReplay() {
   const { createRecordingSimulatorBackends } = require(join(compiled, "backends", "recordingBackend.js"));
   const { ImmutableLocalRenderResourceProvider, PortableRenderResourcePreflightAdapter } = require(join(compiled, "backends", "resources", "localResourceProvider.js"));
   const { createSimulatorEngine } = require(join(compiled, "host", "createSimulatorEngine.js"));
-  const fixtureRoot = join(repositoryRoot, "tmp", "simulator-reverse-evidence", "chart-construction", "fixtures");
+  const fixtureRoot = join(repositoryRoot, "src", "simulator", "testing", "fixtures", "reverse-snapshots", "chart-construction", "fixtures");
   const chartResult = createNoteBatchInformationList({
     musicScoreData: readFileSync(join(fixtureRoot, "786_miracle_april_habahiro_special.txt"), "utf8"),
   });
@@ -36,7 +36,7 @@ async function verifyHabahiroCompleteReplay() {
   equal(chartResult.value.habahiroChangeAbsolutePos, 1728, "complete lane-change position");
 
   const atlasEvidence = JSON.parse(readFileSync(join(
-    repositoryRoot, "tmp", "simulator-habahiro-approximation-evidence", "bestdori-atlas-profile.json",
+    repositoryRoot, "src", "simulator", "testing", "fixtures", "habahiro-snapshots", "bestdori-atlas-profile.json",
   ), "utf8"));
   equal(atlasEvidence.atlas_row_count, 179, "frozen external Sprite row count");
   const png = new Uint8Array(24);
@@ -202,7 +202,7 @@ async function verifyLegacyRejectionAndOrdinaryReplay() {
   const { createRecordingSimulatorBackends } = require(join(compiled, "backends", "recordingBackend.js"));
   const { ImmutableLocalRenderResourceProvider, PortableRenderResourcePreflightAdapter } = require(join(compiled, "backends", "resources", "localResourceProvider.js"));
   const { createSimulatorEngine } = require(join(compiled, "host", "createSimulatorEngine.js"));
-  const fixtureRoot = join(repositoryRoot, "tmp", "simulator-reverse-evidence", "chart-construction", "fixtures");
+  const fixtureRoot = join(repositoryRoot, "src", "simulator", "testing", "fixtures", "reverse-snapshots", "chart-construction", "fixtures");
   const bms = readFileSync(join(fixtureRoot, "786_miracle_april_habahiro_special.txt"), "utf8");
   const chartResult = createNoteBatchInformationList({ musicScoreData: bms });
   ok(chartResult, "construct HABAHIRO production chart");

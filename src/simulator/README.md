@@ -15,6 +15,16 @@
 - 不再通过旧模拟器行为、常见音游实现、主观观感或方便实现的假设补齐未知部分。
 - 无法确认的行为必须明确标记为未解决，并在证据闭合前停止实现该部分。
 
+## 逆向证据获取与存放工作流（强制）
+
+完整流程见 [`evidence-workflow.md`](./evidence-workflow.md)。
+
+1. 新的逆向证据必须以 `HOST________\VSCode\GirlsBandParty-Reverse` 为工作目录：在那里取证、生成 raw/oracle/closure/profile、运行 verifier，并把结果放入对应的 `artifacts/investigations/` 或 `runtime/` 目录。
+2. Reverse 证据必须先 `git diff --check`、校验、提交并 `git push origin main`，确认 `origin/main...HEAD = 0 0` 后，GarupaEditor 才能引用该提交。
+3. 当前项目不得消费 Reverse 未提交工作树、`runtime/tools/` 或其他临时输出。静态/动态冲突先回 Reverse 修订并推送，再更新本项目任务书和实现。
+4. `tmp/` 只保存任务书、验收记录、专项计划、开放缺口和 `simulator-evidence-pointers.md` 等指针文档；不保存 Reverse 证据副本、raw trace、oracle、manifest、verifier 或重复反编译文件。
+5. 离线测试需要的最小快照放在 `src/simulator/testing/fixtures/`，记录 Reverse 提交、源相对路径、字节数和 SHA-256；生产代码不得读取 tmp、Reverse 或 testing fixture。
+
 ## 分支状态
 
 第一切片 T01–T11 已完成隔离验收：原作管理器对象图、音符四态、夹具驱动的分族对象池、活跃列表回调、确定性子步顺序、暂停续跑门、OneFrame 容器所有权、统一 Reflect、记录后端和测试快照均已落地。验收记录位于 `tmp/simulator-first-slice-acceptance.md`。
@@ -33,7 +43,7 @@ OneFrame 容量现在由原作证据固定为 5，不再接受宿主或测试容
 
 “分数、生命与状态”B00–B12已完成独立隔离验收，记录位于`tmp/simulator-score-life-state-acceptance.md`。冻结包含326方法、25布局、19枚举、ordinary/HABAHIRO `979/731`、12条R1、8个当前ARM64语义簇/48方法、125项portable处置与36个closed BS case；Reverse `44d2f20bf4cf19eb4c91e5b025101ec154f31e60`关闭V01/D01–D24。Production `9726880`恢复Score/Combo/Record、Life/guard/Never Die/Game Over、Skill/active effect/Crescendo、Fever和special-mode领域链；测试`9d382f2`通过Score/Life总入口、production BMS、dependency/evidence index及first-slice/chart/clock/Auto/manual全回归。Continue、active-heal无consumer、缺失profile及未观察fault/dispose/duplicate partial mutation继续在领域mutation前返回`evidence-required`；不导出账号、room、deck/member/card/Skill身份或raw pointer。
 
-“资源与Pixi渲染”阶段RP00–RP14已完成独立验收，任务书见`tmp/simulator-resource-pixi-rendering-task.md`，验收记录见`tmp/simulator-resource-pixi-rendering-acceptance.md`。Reverse `ab5cc366a4a03d24a215e379849824e5ddf5f72f`与Garupa 850项冻结包包含R1–R7；final R7为625,192 events、3,480 aggregate frames、51个observed owner和21个setter，21个remaining PR及PR01–PR40 evidence gate全部关闭。Production `37304ec`完成全ordinary Note family、Advanced 42/120、material/threshold、field、完整HUD与engine-clock animation；oracle `b49666d`固定`poppin_shuffle_special` 656 batches/159,832 commands/digest与HAB degraded 371 batches/4,902 commands。PR矩阵为40 closed、0 partial、0 blocked；从独立clean pushed `b49666d`运行14-stage总入口通过，RP13/RP14均通过。
+“资源与Pixi渲染”阶段RP00–RP14已完成独立验收，任务书见`tmp/simulator-resource-pixi-rendering-task.md`，验收记录见`tmp/simulator-resource-pixi-rendering-acceptance.md`。Reverse `ab5cc366a4a03d24a215e379849824e5ddf5f72f`包含R1–R7；测试只消费 `src/simulator/testing/fixtures/` 中登记的最小快照；final R7为625,192 events、3,480 aggregate frames、51个observed owner和21个setter，21个remaining PR及PR01–PR40 evidence gate全部关闭。Production `37304ec`完成全ordinary Note family、Advanced 42/120、material/threshold、field、完整HUD与engine-clock animation；oracle `b49666d`固定`poppin_shuffle_special` 656 batches/159,832 commands/digest与HAB degraded 371 batches/4,902 commands。PR矩阵为40 closed、0 partial、0 blocked；从独立clean pushed `b49666d`运行14-stage总入口通过，RP13/RP14均通过。
 
 HABAHIRO完整功能专项HR01–HR12已完成；证据/parity说明见`tmp/simulator-habahiro-approximation-task.md`，验收记录见`tmp/simulator-habahiro-approximation-acceptance.md`。Production使用`current-external-complete`，从Bestdori固定allowlist准备并校验11项payload，解析179个source Sprite row，完整消费宽Note、Long/Slide 42/120 mesh、sync/Multiple line、field/judge/mask及engine-clock `flash-start → field change → complete`。运行时不显示“Approximate”标签、不暴露approximation flag，也不产生对应semantic command；HA-D01–HA-D12只保留在文本中。固定全谱oracle为371 batches、6,130 frames、217,595 commands、digest `74d11cf3742de6e955a46ddd0f5d1b5c8e620f74e3e52502a7feae364f3ad8b5`，legacy degraded与ordinary digest保持不变。原始HAB UnityFS、natural HAB R1、Root_effect原clip和original frame仍是文档中的`open-not-claimed` parity边界，不代表功能缺失或运行时降级。
 

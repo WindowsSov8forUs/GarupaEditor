@@ -10,8 +10,7 @@ const testingRoot = dirname(fileURLToPath(import.meta.url));
 const repositoryRoot = resolve(testingRoot, "..", "..", "..");
 const evidencePackage = join(
   repositoryRoot,
-  "tmp",
-  "simulator-reverse-evidence",
+  "src", "simulator", "testing", "fixtures", "reverse-snapshots",
   "resource-pixi-rendering",
 );
 const evidenceRoot = join(
@@ -37,7 +36,6 @@ try {
     join(outputRoot, "src", "simulator", "testing", "renderContracts.test.js"),
   ]);
   run(process.execPath, [join(testingRoot, "verifyDependencies.mjs")]);
-  run(process.execPath, [join(evidencePackage, "verify.mjs")]);
 } finally {
   rmSync(outputRoot, { recursive: true, force: true });
 }

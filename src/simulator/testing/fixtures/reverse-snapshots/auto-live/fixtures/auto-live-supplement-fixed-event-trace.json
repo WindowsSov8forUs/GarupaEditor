@@ -1,0 +1,588 @@
+{
+  "schema_version": 1,
+  "sample": "jp.co.craftegg.band 10.1.3 (229) arm64-v8a",
+  "status": "confirmed-static-and-upstream-runtime-supplement-oracle",
+  "excluded_by_stage": [
+    "real-touch-thresholds",
+    "finger-ownership",
+    "sprite",
+    "back-line",
+    "audio",
+    "particle",
+    "score",
+    "life",
+    "skill"
+  ],
+  "cases": [
+    {
+      "case_id": "multiple-directional-left-auto-group",
+      "evidence": [
+        "S02",
+        "S03",
+        "S04",
+        "S05"
+      ],
+      "source_note": {
+        "classification": "method-fixture-backed-by-production-front-type-6",
+        "game_note_type": 10,
+        "front_note_type": 6,
+        "group_count": 3
+      },
+      "settings": {
+        "is_auto_live": true,
+        "judgement_adjust_value_b": 0
+      },
+      "steps": [
+        {
+          "event": "flick-begin",
+          "state_before": "Move",
+          "state_after": "Move",
+          "submitted_result": 4
+        },
+        {
+          "event": "flick-synthetic-move",
+          "synthetic_x": {
+            "value": -500.0,
+            "bits": "0xC3FA0000"
+          },
+          "source_note_type": 10
+        },
+        {
+          "event": "head-perfect",
+          "state_before": "Move",
+          "state_after": "Deactive",
+          "note_type": 10,
+          "raw_result": 4,
+          "adjusted_result": 4,
+          "add_combo": 1,
+          "judge_timing": 0,
+          "multiple_directional_flick_note_count": 3,
+          "one_frame_slot": 0
+        },
+        {
+          "event": "side-notes-used",
+          "left_count": 1,
+          "right_count": 1
+        },
+        {
+          "event": "reflect",
+          "slots": [
+            0
+          ],
+          "entry_count": 1,
+          "add_combo": 1
+        }
+      ]
+    },
+    {
+      "case_id": "multiple-directional-right-auto-group",
+      "evidence": [
+        "S02",
+        "S03",
+        "S04",
+        "S05"
+      ],
+      "source_note": {
+        "classification": "method-fixture-backed-by-production-front-type-6",
+        "game_note_type": 11,
+        "front_note_type": 6,
+        "group_count": 2
+      },
+      "settings": {
+        "is_auto_live": true,
+        "judgement_adjust_value_b": 0
+      },
+      "steps": [
+        {
+          "event": "flick-begin",
+          "state_before": "Move",
+          "state_after": "Move",
+          "submitted_result": 4
+        },
+        {
+          "event": "flick-synthetic-move",
+          "synthetic_x": {
+            "value": 500.0,
+            "bits": "0x43FA0000"
+          },
+          "source_note_type": 11
+        },
+        {
+          "event": "head-perfect",
+          "state_before": "Move",
+          "state_after": "Deactive",
+          "note_type": 10,
+          "raw_result": 4,
+          "adjusted_result": 4,
+          "add_combo": 1,
+          "judge_timing": 0,
+          "multiple_directional_flick_note_count": 2,
+          "one_frame_slot": 0
+        },
+        {
+          "event": "side-notes-used",
+          "left_count": 0,
+          "right_count": 1
+        },
+        {
+          "event": "reflect",
+          "slots": [
+            0
+          ],
+          "entry_count": 1,
+          "add_combo": 1
+        }
+      ]
+    },
+    {
+      "case_id": "slide-stop-selected-visible-intermediate",
+      "evidence": [
+        "S06",
+        "R02:slide-stop"
+      ],
+      "source_note": {
+        "classification": "method-fixture",
+        "family": "slide",
+        "selected_after_index": 0
+      },
+      "settings": {
+        "is_auto_live": true,
+        "judgement_adjust_value_b": 0
+      },
+      "steps": [
+        {
+          "event": "stop-before-crossing",
+          "adjusted_position": {
+            "value": 179.99998474121094,
+            "bits": "0x4333FFFF"
+          },
+          "state_before": "Stop",
+          "state_after": "Stop",
+          "selected_judged": false,
+          "current_after_index": 0
+        },
+        {
+          "event": "stop-intermediate-perfect",
+          "adjusted_position": {
+            "value": 180.0,
+            "bits": "0x43340000"
+          },
+          "state_before": "Stop",
+          "state_after": "Stop",
+          "phase": "intermediate",
+          "note_type": 8,
+          "raw_result": 4,
+          "adjusted_result": 4,
+          "one_frame_slot": 0,
+          "selected_judged": true
+        },
+        {
+          "event": "on-update-advance-judged-current",
+          "current_after_before": 0,
+          "current_after_after": 1
+        },
+        {
+          "event": "reflect",
+          "slots": [
+            0
+          ],
+          "entry_count": 1,
+          "add_combo": 1
+        }
+      ]
+    },
+    {
+      "case_id": "pause-active-long-freeze-resume",
+      "evidence": [
+        "S07",
+        "U03",
+        "U04"
+      ],
+      "source_note": {
+        "classification": "composed-confirmed-manager-and-long-contract",
+        "family": "long"
+      },
+      "steps": [
+        {
+          "event": "head-perfect",
+          "state_before": "Move",
+          "state_after": "Wait",
+          "linked_judged": false
+        },
+        {
+          "event": "pause-enter",
+          "state_before": "Wait",
+          "state_after": "Wait",
+          "linked_judged": false
+        },
+        {
+          "event": "paused-frame",
+          "music_advanced": false,
+          "note_manager_entered": false,
+          "state_before": "Wait",
+          "state_after": "Wait",
+          "linked_judged": false,
+          "one_frame_slots_unchanged": true
+        },
+        {
+          "event": "resume",
+          "catch_up_substeps": 0,
+          "state_before": "Wait",
+          "state_after": "Wait"
+        },
+        {
+          "event": "tail-equal-no-crossing",
+          "state_before": "Wait",
+          "state_after": "Wait",
+          "linked_judged": false
+        },
+        {
+          "event": "tail-strict-greater",
+          "state_before": "Wait",
+          "state_after": "Deactive",
+          "linked_finish_before_tail": true
+        }
+      ]
+    },
+    {
+      "case_id": "pause-active-slide-pending-slot-freeze",
+      "evidence": [
+        "S07",
+        "U03",
+        "U04"
+      ],
+      "source_note": {
+        "classification": "composed-confirmed-manager-and-slide-contract",
+        "family": "slide"
+      },
+      "steps": [
+        {
+          "event": "pause-enter",
+          "state": "Wait",
+          "current_after_index": 0,
+          "occupied_slots": [
+            0
+          ]
+        },
+        {
+          "event": "paused-frame",
+          "music_advanced": false,
+          "note_manager_entered": false,
+          "current_after_before": 0,
+          "current_after_after": 0,
+          "occupied_slots_before": [
+            0
+          ],
+          "occupied_slots_after": [
+            0
+          ]
+        },
+        {
+          "event": "resume",
+          "catch_up_substeps": 0
+        },
+        {
+          "event": "one-normal-current-transition",
+          "current_after_before": 0,
+          "current_after_after": 1
+        }
+      ]
+    },
+    {
+      "case_id": "offset-plus5-cross-bpm-exact",
+      "evidence": [
+        "S08",
+        "U03",
+        "U04"
+      ],
+      "source_note": {
+        "classification": "committed-device-runtime-oracle",
+        "run_id": "ikuoku-cc08-run-025-offset-plus5"
+      },
+      "settings": {
+        "judgement_adjust_value_b": 5,
+        "frames_argument": 5
+      },
+      "entry_music_cursor": {
+        "bar": 15,
+        "beat_progress": {
+          "value": 187.35589599609375,
+          "bits": "0x433B5B1C"
+        }
+      },
+      "entry_music_absolute_position": {
+        "value": 3067.35595703125,
+        "bits": "0x453FB5B2"
+      },
+      "step_bpms": [
+        99.5,
+        99.5,
+        99.5,
+        99.5,
+        95.5
+      ],
+      "result_adjusted_position": {
+        "value": 3073.935791015625,
+        "bits": "0x45401EF9"
+      },
+      "crossed_bar": true,
+      "crossed_bpm": true
+    },
+    {
+      "case_id": "offset-minus5-cross-bar-exact",
+      "evidence": [
+        "S08",
+        "U03",
+        "U04"
+      ],
+      "source_note": {
+        "classification": "committed-device-runtime-oracle",
+        "run_id": "ikuoku-cc08-run-026-offset-minus5"
+      },
+      "settings": {
+        "judgement_adjust_value_b": -5,
+        "frames_argument": 5
+      },
+      "entry_music_cursor": {
+        "bar": 5,
+        "beat_progress": {
+          "value": 0.454833984375,
+          "bits": "0x3EE8E000"
+        }
+      },
+      "entry_music_absolute_position": {
+        "value": 960.454833984375,
+        "bits": "0x44701D1C"
+      },
+      "step_bpms": [
+        99.5,
+        99.5,
+        99.5,
+        99.5,
+        99.5
+      ],
+      "result_adjusted_position": {
+        "value": 953.821533203125,
+        "bits": "0x446E7494"
+      },
+      "crossed_bar": true,
+      "crossed_bpm": false
+    },
+    {
+      "case_id": "offset-zero-identity-exact",
+      "evidence": [
+        "S08",
+        "U03"
+      ],
+      "settings": {
+        "judgement_adjust_value_b": 0
+      },
+      "entry_music_cursor": {
+        "bar": 5,
+        "beat_progress": {
+          "value": 0.454833984375,
+          "bits": "0x3EE8E000"
+        }
+      },
+      "entry_music_absolute_position": {
+        "value": 960.454833984375,
+        "bits": "0x44701D1C"
+      },
+      "result_adjusted_position": {
+        "value": 960.454833984375,
+        "bits": "0x44701D1C"
+      },
+      "step_count": 0
+    },
+    {
+      "case_id": "multiple-source-order-interleaved-break",
+      "evidence": [
+        "S11",
+        "S12",
+        "S14",
+        "G18",
+        "G21"
+      ],
+      "source_note": {
+        "classification": "method-fixture-with-interleaved-playable-root",
+        "absolute_position": 1424
+      },
+      "source_order": [
+        {
+          "slot": 0,
+          "front_note_type": 6,
+          "game_note_type": 11,
+          "button_type": 4
+        },
+        {
+          "slot": 1,
+          "front_note_type": 6,
+          "game_note_type": 11,
+          "button_type": 5
+        },
+        {
+          "slot": 2,
+          "front_note_type": 3,
+          "game_note_type": 4,
+          "button_type": 0
+        },
+        {
+          "slot": 3,
+          "front_note_type": 6,
+          "game_note_type": 11,
+          "button_type": 6
+        }
+      ],
+      "multiple_candidate_source_order": [
+        4,
+        5,
+        6
+      ],
+      "source_order_runs": [
+        [
+          4,
+          5
+        ],
+        [
+          6
+        ]
+      ],
+      "reverse_playable_update_buttons": [
+        6,
+        0,
+        5,
+        4
+      ],
+      "judged_buttons": [
+        6,
+        5
+      ],
+      "multiple_judgement_count": 2,
+      "multiple_directional_flick_note_counts": [
+        1,
+        2
+      ]
+    },
+    {
+      "case_id": "one-frame-exhaustion-long-head-terminal-fault",
+      "evidence": [
+        "R02:long",
+        "R02:one-frame",
+        "G19"
+      ],
+      "native_order": [
+        "change-state-wait",
+        "judge-front-note",
+        "get-usable-one-frame-data",
+        "exception-after-five-is-use-slots"
+      ],
+      "state_at_native_failure": "Wait",
+      "portable_boundary": {
+        "result": "evidence-required",
+        "manager_state": "faulted",
+        "five_committed_entries_retained": true,
+        "subsequent_step": "same-latched-failure",
+        "allowed_after_fault": [
+          "snapshot",
+          "dispose"
+        ]
+      }
+    },
+    {
+      "case_id": "one-frame-exhaustion-slide-head-terminal-fault",
+      "evidence": [
+        "R02:slide",
+        "R02:one-frame",
+        "G19"
+      ],
+      "native_order": [
+        "change-state-wait",
+        "judge-front-note",
+        "get-usable-one-frame-data",
+        "exception-after-five-is-use-slots"
+      ],
+      "state_at_native_failure": "Wait",
+      "portable_boundary": {
+        "result": "evidence-required",
+        "manager_state": "faulted",
+        "five_committed_entries_retained": true,
+        "subsequent_step": "same-latched-failure",
+        "allowed_after_fault": [
+          "snapshot",
+          "dispose"
+        ]
+      }
+    },
+    {
+      "case_id": "one-frame-exhaustion-long-tail-terminal-fault",
+      "evidence": [
+        "R02:long",
+        "R02:one-frame",
+        "G19"
+      ],
+      "native_order": [
+        "linked-after-finish",
+        "tail-judgement",
+        "get-usable-one-frame-data",
+        "exception-after-five-is-use-slots"
+      ],
+      "state_at_native_failure": "Wait",
+      "portable_boundary": {
+        "result": "evidence-required",
+        "manager_state": "faulted",
+        "five_committed_entries_retained": true,
+        "subsequent_step": "same-latched-failure",
+        "allowed_after_fault": [
+          "snapshot",
+          "dispose"
+        ]
+      }
+    },
+    {
+      "case_id": "actual-adaptive-scheduler-observation-requirements",
+      "evidence": [
+        "R02:reflect-owner",
+        "U03",
+        "U04",
+        "G20"
+      ],
+      "must_be_observed_from_runtime": [
+        "outer-frame-index",
+        "substep-index",
+        "adjusted-position-value-and-bits",
+        "note-state-before-and-after",
+        "one-frame-slot",
+        "single-outer-reflect-batch"
+      ],
+      "forbidden_test_inputs": [
+        "substep-index",
+        "event-order"
+      ],
+      "oracle_case": "adaptive-substeps-one-outer-reflect"
+    },
+    {
+      "case_id": "actual-offset-tempo-query-observation-requirements",
+      "evidence": [
+        "S08",
+        "U03",
+        "U04",
+        "G20"
+      ],
+      "must_be_observed_from_runtime": [
+        "entry-bar",
+        "entry-beat-progress-bits",
+        "per-step-bpm",
+        "result-position-bits"
+      ],
+      "forbidden_test_inputs": [
+        "expected-step-bpms"
+      ],
+      "production_owner": "InGameMusicScoreController.getAdjustedMusicPosition",
+      "oracle_cases": [
+        "offset-plus5-cross-bpm-exact",
+        "offset-minus5-cross-bar-exact",
+        "offset-zero-identity-exact"
+      ]
+    }
+  ]
+}

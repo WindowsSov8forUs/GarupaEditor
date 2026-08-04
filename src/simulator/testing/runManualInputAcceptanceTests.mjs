@@ -5,7 +5,7 @@ import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 const testingRoot = dirname(fileURLToPath(import.meta.url));
 const repositoryRoot = resolve(testingRoot, "..", "..", "..");
-const evidencePackage = join(repositoryRoot, "tmp", "simulator-reverse-evidence",
+const evidencePackage = join(repositoryRoot, "src", "simulator", "testing", "fixtures", "reverse-snapshots",
   "manual-input-judgement");
 const evidenceRoot = join(evidencePackage, "artifacts", "investigations",
   "manual-input-runtime-contract-10-1-4");
@@ -50,7 +50,6 @@ const upstreamRunners = [
   "runAutoLiveTests.mjs",
 ];
 for (const runner of upstreamRunners) run(process.execPath, [join(testingRoot, runner)]);
-run(process.execPath, [join(evidencePackage, "verify.mjs")]);
 console.log("manual input M00-M11 acceptance suite passed");
 function run(command, args) {
   const result = spawnSync(command, args, { cwd: repositoryRoot, encoding: "utf8", stdio: "inherit" });

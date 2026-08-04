@@ -8,7 +8,6 @@ const root = resolve(testingRoot, "..", "..", "..");
 const require = createRequire(import.meta.url);
 const tsc = require.resolve("typescript/bin/tsc");
 for (const [label, command, args] of [
-  ["evidence", process.execPath, [resolve(root, "tmp/simulator-habahiro-approximation-evidence/verify.mjs")]],
   ["static audit", process.execPath, [join(testingRoot, "verifyHabahiroStatic.mjs")]],
   ["isolated type check", process.execPath, [tsc, "-p", resolve(root, "src/simulator/tsconfig.json")]],
   ["contracts", process.execPath, [join(testingRoot, "runHabahiroContractTests.mjs")]],

@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "source": "Reverse manual-input-runtime-contract-10-1-4 hard-touch/easy-play projections",
+  "hard": {
+    "events": [
+      {
+        "kind": "OneFrameData.Setup.leave",
+        "frame": {
+          "pointer": "0x6d0e8d8700",
+          "is_using": 1,
+          "index": 6,
+          "button_types": {
+            "length": 1,
+            "values": [
+              6
+            ],
+            "truncated": false
+          },
+          "add_score": {
+            "value": 776.3848876953125,
+            "bits": "0x444218A2"
+          },
+          "add_power": 0,
+          "add_combo": -1,
+          "note_type": 4,
+          "result": 2,
+          "adjusted_result": 2,
+          "absolute_pos": 276,
+          "damage_guard_type": 0,
+          "judge_timing": 2
+        }
+      }
+    ]
+  },
+  "easy": {
+    "events": [
+      {
+        "kind": "OneFrameData.Setup.leave",
+        "frame": {
+          "pointer": "0x6d0e93fbd0",
+          "is_using": 1,
+          "index": 1,
+          "button_types": {
+            "length": 1,
+            "values": [
+              4
+            ],
+            "truncated": false
+          },
+          "add_score": {
+            "value": 0,
+            "bits": "0x00000000"
+          },
+          "add_power": -100,
+          "add_combo": -1,
+          "note_type": 0,
+          "result": 0,
+          "adjusted_result": 0,
+          "absolute_pos": 0,
+          "damage_guard_type": 0,
+          "judge_timing": 0
+        }
+      },
+      {
+        "kind": "OneFrameData.Setup.leave",
+        "frame": {
+          "pointer": "0x6d0e93fbd0",
+          "is_using": 1,
+          "index": 2,
+          "button_types": {
+            "length": 1,
+            "values": [
+              2
+            ],
+            "truncated": false
+          },
+          "add_score": {
+            "value": 0,
+            "bits": "0x00000000"
+          },
+          "add_power": -100,
+          "add_combo": -1,
+          "note_type": 0,
+          "result": 0,
+          "adjusted_result": 0,
+          "absolute_pos": 0,
+          "damage_guard_type": 0,
+          "judge_timing": 0
+        }
+      },
+      {
+        "kind": "OneFrameData.Setup.leave",
+        "frame": {
+          "pointer": "0x6d0e93fbd0",
+          "is_using": 1,
+          "index": 3,
+          "button_types": {
+            "length": 1,
+            "values": [
+              5
+            ],
+            "truncated": false
+          },
+          "add_score": {
+            "value": 0,
+            "bits": "0x00000000"
+          },
+          "add_power": -100,
+          "add_combo": -1,
+          "note_type": 0,
+          "result": 0,
+          "adjusted_result": 0,
+          "absolute_pos": 0,
+          "damage_guard_type": 0,
+          "judge_timing": 0
+        }
+      }
+    ]
+  }
+}

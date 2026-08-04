@@ -59,15 +59,13 @@ function validateClockScheduling() {
   });
   const chartFixtures = join(
     repositoryRoot,
-    "tmp",
-    "simulator-reverse-evidence",
+    "src", "simulator", "testing", "fixtures", "reverse-snapshots",
     "chart-construction",
     "fixtures",
   );
   const runtimeOracle = join(
     repositoryRoot,
-    "tmp",
-    "simulator-reverse-evidence",
+    "src", "simulator", "testing", "fixtures", "reverse-snapshots",
     "clock-scheduling",
     "artifacts",
     "investigations",

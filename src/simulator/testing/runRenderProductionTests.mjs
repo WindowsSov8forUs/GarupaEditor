@@ -8,12 +8,6 @@ const repositoryRoot = resolve(testingRoot, "..", "..", "..");
 const require = createRequire(import.meta.url);
 const typeScriptCli = require.resolve("typescript/bin/tsc");
 
-run(process.execPath, [
-  resolve(repositoryRoot, "tmp", "simulator-reverse-evidence", "resource-pixi-rendering", "verify.mjs"),
-]);
-run(process.execPath, [
-  resolve(repositoryRoot, "tmp", "simulator-habahiro-approximation-evidence", "verify.mjs"),
-]);
 run(process.execPath, [join(testingRoot, "verifyRenderProductionStatic.mjs")]);
 run(process.execPath, [join(testingRoot, "verifyHabahiroStatic.mjs")]);
 run(process.execPath, [join(testingRoot, "verifyRenderProductionCases.mjs")]);

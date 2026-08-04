@@ -14,24 +14,21 @@ const require = createRequire(import.meta.url);
 const typeScriptCli = require.resolve("typescript/bin/tsc");
 const oraclePath = join(
   repositoryRoot,
-  "tmp",
-  "simulator-reverse-evidence",
+  "src", "simulator", "testing", "fixtures", "reverse-snapshots",
   "auto-live",
   "fixtures",
   "auto-live-fixed-event-trace.json",
 );
 const failurePath = join(
   repositoryRoot,
-  "tmp",
-  "simulator-reverse-evidence",
+  "src", "simulator", "testing", "fixtures", "reverse-snapshots",
   "auto-live",
   "fixtures",
   "auto-live-failure-cases.json",
 );
 const supplementOraclePath = join(
   repositoryRoot,
-  "tmp",
-  "simulator-reverse-evidence",
+  "src", "simulator", "testing", "fixtures", "reverse-snapshots",
   "auto-live",
   "fixtures",
   "auto-live-supplement-fixed-event-trace.json",
@@ -42,16 +39,14 @@ const productionMultipleOraclePath = join(
 );
 const actualReplayPath = join(
   repositoryRoot,
-  "tmp",
-  "simulator-reverse-evidence",
+  "src", "simulator", "testing", "fixtures", "reverse-snapshots",
   "auto-live",
   "fixtures",
   "auto-live-actual-replay.json",
 );
 const actualReplayChartPath = join(
   repositoryRoot,
-  "tmp",
-  "simulator-reverse-evidence",
+  "src", "simulator", "testing", "fixtures", "reverse-snapshots",
   "auto-live",
   "fixtures",
   "auto-live-actual-replay-chart.txt",
@@ -1096,8 +1091,7 @@ function validateAutoLive() {
   test("AL19", "production BMS 六类 core root 与全部 Directional group 直接消费", () => {
     const fixtureRoot = join(
       repositoryRoot,
-      "tmp",
-      "simulator-reverse-evidence",
+      "src", "simulator", "testing", "fixtures", "reverse-snapshots",
       "chart-construction",
       "fixtures",
     );
@@ -1967,8 +1961,7 @@ function validateAutoLive() {
   test("AL20", "production HABAHIRO 只消费静态构造图并保留运行边界", () => {
     const source = readFileSync(join(
       repositoryRoot,
-      "tmp",
-      "simulator-reverse-evidence",
+      "src", "simulator", "testing", "fixtures", "reverse-snapshots",
       "chart-construction",
       "fixtures",
       "786_miracle_april_habahiro_special.txt",
@@ -1998,14 +1991,6 @@ function validateAutoLive() {
     ok(visualNote.activate(visual), "visual helper activate");
     evidence(visualNote.executeUpdate(0),
       "auto-live.multiple-directional-visual-presentation");
-    const openGaps = readFileSync(join(
-      repositoryRoot,
-      "tmp",
-      "simulator-reverse-evidence",
-      "auto-live",
-      "OPEN_GAPS.md",
-    ), "utf8");
-    assert.match(openGaps, /HABAHIRO.*runtime|HABAHIRO.*运行/i);
   });
 
   tests.sort((left, right) => left.id.localeCompare(right.id));

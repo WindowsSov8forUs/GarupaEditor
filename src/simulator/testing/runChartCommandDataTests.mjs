@@ -56,8 +56,7 @@ function validateProductionCommandData() {
   for (const fixture of fixtures) {
     const source = readFileSync(join(
       repositoryRoot,
-      "tmp",
-      "simulator-reverse-evidence",
+      "src", "simulator", "testing", "fixtures", "reverse-snapshots",
       "chart-construction",
       "fixtures",
       fixture.file,

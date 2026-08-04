@@ -13,8 +13,7 @@ const require = createRequire(import.meta.url);
 const typeScriptCli = require.resolve("typescript/bin/tsc");
 const evidenceRoot = join(
   repositoryRoot,
-  "tmp",
-  "simulator-reverse-evidence",
+  "src", "simulator", "testing", "fixtures", "reverse-snapshots",
   "manual-input-judgement",
   "artifacts",
   "investigations",
@@ -56,7 +55,8 @@ function verifyFrozenProjection() {
   assert.equal(mj11.output.observed_long.judge_timing, 2);
   assert.equal(mj11.output.observed_long.note_type, 4);
 
-  const hard = JSON.parse(readFileSync(join(evidenceRoot, "runtime", "hard-touch.json"), "utf8"));
+  const projection = JSON.parse(readFileSync(join(evidenceRoot, "runtime", "manual_projection.json"), "utf8"));
+  const hard = projection.hard;
   const good = hard.events.find((entry) =>
     entry.kind === "OneFrameData.Setup.leave" &&
     entry.frame.index === 6 &&
@@ -67,7 +67,7 @@ function verifyFrozenProjection() {
   assert.equal(good.frame.add_combo, -1);
   assert.equal(good.frame.judge_timing, 2);
 
-  const easy = JSON.parse(readFileSync(join(evidenceRoot, "runtime", "easy-play.json"), "utf8"));
+  const easy = projection.easy;
   const miss = easy.events.find((entry) =>
     entry.kind === "OneFrameData.Setup.leave" && entry.frame.result === 0);
   assert.ok(miss);

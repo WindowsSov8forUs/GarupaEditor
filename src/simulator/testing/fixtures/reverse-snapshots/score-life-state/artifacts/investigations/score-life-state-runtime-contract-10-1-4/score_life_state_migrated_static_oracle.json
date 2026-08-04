@@ -1,0 +1,1002 @@
+{
+  "schema_version": 1,
+  "status": "confirmed-current-arm64-semantic-bundles",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "version_name": "10.1.4",
+    "version_code": 230,
+    "abi": "arm64-v8a",
+    "libil2cpp_sha256": "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F",
+    "global_metadata_sha256": "298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F"
+  },
+  "historical_guides": {
+    "base_score": {
+      "path": "artifacts/investigations/base-score-construction/base_score_construction.json",
+      "sha256": "FAC19A68CEF22F299D15304E9F05A4947913AC08E7E8D6948788F3C6B5D7CC9F"
+    },
+    "event_score": {
+      "path": "artifacts/investigations/event-score-multipliers/event_score_multipliers.json",
+      "sha256": "DA1EBFA0BC6B9813577C809DF0AD867E8AC90DCAC24BB025903AC5713322BB01"
+    },
+    "free_event": {
+      "path": "artifacts/investigations/free-live-event-bonus-construction/free_live_event_bonus_construction.json",
+      "sha256": "84A6C04E378A642CE90F4A8CF4B943C94959E7492990A92A8E958B4C4ECDE919"
+    },
+    "special_combo": {
+      "path": "artifacts/investigations/special-mode-combo-rates/special_mode_combo_rates.json",
+      "sha256": "7D5EF4396771ECE85277AF059C9064C625627354862CF38CB8504BC437A0F01B"
+    },
+    "skill_fever_notes": {
+      "path": "artifacts/investigations/skill-fever-consumers/README.md",
+      "sha256": "B1252479933D0EC85AD01AFAA18B0AE00D2BA538DD6CB1F6DA2C89645A10093B"
+    },
+    "skill_playback": {
+      "path": "artifacts/investigations/skill-playback-state-machine/skill_playback_state_machine.json",
+      "sha256": "99B1DEC146FEE33D7025A87C034DA3C322C3565656E5B69D55D787339237F7C5"
+    },
+    "active_effects": {
+      "path": "artifacts/investigations/skill-activate-effect-consumers/skill_activate_effect_consumers.json",
+      "sha256": "6CE30C07E73AF1967C72DEAED56BA356F098AAC203A41FB20F12A2A45D40B734"
+    },
+    "fever_command": {
+      "path": "artifacts/investigations/fever-command-state-machine/fever_command_state_machine.json",
+      "sha256": "8D063CC679EFC06F4DD53A607FCA5495877A3BF1DA157337CD9F9546DAB7DC15"
+    }
+  },
+  "bundles": {
+    "base_score": {
+      "historical_guide": {
+        "path": "artifacts/investigations/base-score-construction/base_score_construction.json",
+        "sha256": "FAC19A68CEF22F299D15304E9F05A4947913AC08E7E8D6948788F3C6B5D7CC9F"
+      },
+      "current_methods": [
+        {
+          "managed_name": "ScoreUtility.calcTotalParameter",
+          "signature": "float ScoreUtility__calcTotalParameter (const MethodInfo* method);",
+          "target_rva": "0x331E0AC",
+          "target_end_rva": "0x331E188",
+          "target_sha256": "DBE62725AEE83C601B3E1D89FEE42A495BB3FBBC1F1065E182750178950A5B94",
+          "target_arm64_tsv": "arm64/0331e0ac__ScoreUtility__calcTotalParameter.arm64.tsv",
+          "target_arm64_tsv_sha256": "24C2D834F8A43D357D81D30054FE5ECBAAAC2B5307FE6CF4B7A6BA04EEC4D758",
+          "migration_class": "target-arm64-reviewed"
+        },
+        {
+          "managed_name": "ScoreUtility.InitBaseScore",
+          "signature": "void ScoreUtility__InitBaseScore (int32_t maxNoteCount, const MethodInfo* method);",
+          "target_rva": "0x331E660",
+          "target_end_rva": "0x331E84C",
+          "target_sha256": "25F565D30FFEBB22334815EBEE0E15703EB690B811CB7B0869839372712320CD",
+          "target_arm64_tsv": "arm64/0331e660__ScoreUtility__InitBaseScore.arm64.tsv",
+          "target_arm64_tsv_sha256": "AE60E3672AAE76A3892374A2A5106003D02B68193808573AF8ABC26D120CD11E",
+          "migration_class": "target-arm64-reviewed"
+        },
+        {
+          "managed_name": "ScoreUtility.GetBaseScore",
+          "signature": "float ScoreUtility__GetBaseScore (float baseScore, InGameRecord_o* inGameRecord, InGameCalculatedData_o* calculatedData, const MethodInfo* method);",
+          "target_rva": "0x331E864",
+          "target_end_rva": "0x331E91C",
+          "target_sha256": "A4EFDFE02DCF1F501D3ECF67478D389BA43677CB1E769397CE19D7593D3BBFA0",
+          "target_arm64_tsv": "arm64/0331e864__ScoreUtility__GetBaseScore.arm64.tsv",
+          "target_arm64_tsv_sha256": "6D5EE06AA18806AE71D3225ABAACB87B3483A58853FAC2936F8EF7848E5AA901",
+          "migration_class": "target-arm64-reviewed"
+        },
+        {
+          "managed_name": "NoteBase.calcBaseCorrectedScore",
+          "signature": "float NoteBase__calcBaseCorrectedScore (NoteBase_o* __this, float baseScore, int32_t resultType, const MethodInfo* method);",
+          "target_rva": "0x3A75F80",
+          "target_end_rva": "0x3A760B4",
+          "target_sha256": "9C1B090ACF3CE705D885EBBCF7D77DC5BF879888C3BEAAC94392CC502D634561",
+          "target_arm64_tsv": "arm64/03a75f80__NoteBase__calcBaseCorrectedScore.arm64.tsv",
+          "target_arm64_tsv_sha256": "2C5D6FDA156CF66658FB8E0215C78B016CD9EA931312D8500657A97E7BDAA311",
+          "migration_class": "target-arm64-reviewed"
+        },
+        {
+          "managed_name": "NoteManager.analyzeBMS",
+          "signature": "void NoteManager__analyzeBMS (NoteManager_o* __this, System_String_o* text, const MethodInfo* method);",
+          "target_rva": "0x377BEF8",
+          "target_end_rva": "0x377C6BC",
+          "target_sha256": "6E74EF088DBF16B35F7ED25738BB5F484937A7243D5BFDA2B3FA0773E0E5D2EE",
+          "target_arm64_tsv": "arm64/0377bef8__NoteManager__analyzeBMS.arm64.tsv",
+          "target_arm64_tsv_sha256": "F2D61C63D285A4B6997183F51161FD0C4CEC848BE92D66D015432EC329F77F04",
+          "migration_class": "target-arm64-reviewed"
+        }
+      ],
+      "confirmation": "10.1.4 target ARM64 reviewed directly; historical bytes are a semantic guide only"
+    },
+    "event_score": {
+      "historical_guide": {
+        "path": "artifacts/investigations/event-score-multipliers/event_score_multipliers.json",
+        "sha256": "DA1EBFA0BC6B9813577C809DF0AD867E8AC90DCAC24BB025903AC5713322BB01"
+      },
+      "current_methods": [
+        {
+          "managed_name": "InGameOneFrameJudgementController.ReflectOneFrameData",
+          "signature": "void InGameOneFrameJudgementController__ReflectOneFrameData (InGameOneFrameJudgementController_o* __this, bool isOnMoveTime, InGameMultiPlayController_o* multiPlayController, System_Action_NoteResultType__o* updateAllPerfectStatus, const MethodInfo* method);",
+          "target_rva": "0x3303FF0",
+          "target_end_rva": "0x33044FC",
+          "target_sha256": "72F3B60D5625256F297F81A355C739F272564B01E3EE7577FE62BC6E5E86D023",
+          "target_arm64_tsv": "arm64/03303ff0__InGameOneFrameJudgementController__ReflectOneFrameData.arm64.tsv",
+          "target_arm64_tsv_sha256": "96DA7CA9FF778ECDBB6DF384E423D642E2741A352B99BE36ED3B910B78BA979E",
+          "migration_class": "target-arm64-reviewed"
+        },
+        {
+          "managed_name": "TeamLiveFestivalInGameController.GetStageEffectScoreUpRate",
+          "signature": "float TeamLiveFestivalInGameController__GetStageEffectScoreUpRate (TeamLiveFestivalInGameController_o* __this, OneFrameData_o* frameData, InGameRecord_o* inGameRecord, int32_t stageType, uint32_t* teamLiveFestivalStageEffectLevel, const MethodInfo* method);",
+          "target_rva": "0x3A6A430",
+          "target_end_rva": "0x3A6A8A0",
+          "target_sha256": "75DBB28089086423A756518AECD9E53BBB5A5D2B5D709FC4E27ED3783D5663ED",
+          "target_arm64_tsv": "arm64/03a6a430__TeamLiveFestivalInGameController__GetStageEffectScoreUpRate.arm64.tsv",
+          "target_arm64_tsv_sha256": "C83E01D061D938D6881CA4D75B6FBC7EA15F653B25BB4C3629DA39AFF2A1718A",
+          "migration_class": "target-arm64-reviewed"
+        },
+        {
+          "managed_name": "InGameRecord.CalcOneNotesMaxScoreInfo",
+          "signature": "void InGameRecord__CalcOneNotesMaxScoreInfo (InGameRecord_o* __this, uint32_t addScore, OneFrameData_o* frameData, const MethodInfo* method);",
+          "target_rva": "0x32F2478",
+          "target_end_rva": "0x32F24B0",
+          "target_sha256": "0DC156E1A028B53B90207C798C4A855A377756C90F3636C245100011D09F97E6",
+          "target_arm64_tsv": "arm64/032f2478__InGameRecord__CalcOneNotesMaxScoreInfo.arm64.tsv",
+          "target_arm64_tsv_sha256": "BC38964D21E31A9FAA3E688E7BAC0EDF23DD297DC4A68E876785470BE8FEFE3E",
+          "migration_class": "pc-relative-only"
+        },
+        {
+          "managed_name": "InGameRecord.CalcFreeLiveEventBonusAppliedOneNotesMaxScoreInfo",
+          "signature": "void InGameRecord__CalcFreeLiveEventBonusAppliedOneNotesMaxScoreInfo (InGameRecord_o* __this, uint32_t addScore, OneFrameData_o* frameData, const MethodInfo* method);",
+          "target_rva": "0x32F2570",
+          "target_end_rva": "0x32F25A8",
+          "target_sha256": "C4E8A4094571F4C10EAA9C291993F527D2CC75FD0E7FC5F45026A11BE94873E3",
+          "target_arm64_tsv": "arm64/032f2570__InGameRecord__CalcFreeLiveEventBonusAppliedOneNotesMaxScoreInfo.arm64.tsv",
+          "target_arm64_tsv_sha256": "6520573F1BC1682BCBCEC6D47C6D9756E5FD5E72F749D80D0E63A43BDB4E5B3F",
+          "migration_class": "pc-relative-only"
+        },
+        {
+          "managed_name": "InGameRecord.updateOneNotesMaxScoreInfo",
+          "signature": "void InGameRecord__updateOneNotesMaxScoreInfo (InGameRecord_o* __this, CE_OneNotesMaxScoreInfo_o* oneNoteInfo, uint32_t addScore, OneFrameData_o* frameData, const MethodInfo* method);",
+          "target_rva": "0x32F24B0",
+          "target_end_rva": "0x32F2570",
+          "target_sha256": "BA07F8140C31D4510A8A206C29DD6D73E5D485BD5B738EEEF959A905D8AACFDA",
+          "target_arm64_tsv": "arm64/032f24b0__InGameRecord__updateOneNotesMaxScoreInfo.arm64.tsv",
+          "target_arm64_tsv_sha256": "C5A4AD023A59C088771C8837FB68EFC8E81AB62F9E6346E99716E0DEE156862B",
+          "migration_class": "target-arm64-reviewed"
+        }
+      ],
+      "confirmation": "10.1.4 target ARM64 reviewed directly; historical bytes are a semantic guide only"
+    },
+    "free_event": {
+      "historical_guide": {
+        "path": "artifacts/investigations/free-live-event-bonus-construction/free_live_event_bonus_construction.json",
+        "sha256": "84A6C04E378A642CE90F4A8CF4B943C94959E7492990A92A8E958B4C4ECDE919"
+      },
+      "current_methods": [
+        {
+          "managed_name": "ScreenLayerSoloLiveDeckSelectBase.setupFreeLiveEventBonusAppliedDeckTotalParameter",
+          "signature": "void ScreenLayerSoloLiveDeckSelectBase__setupFreeLiveEventBonusAppliedDeckTotalParameter (ScreenLayerSoloLiveDeckSelectBase_o* __this, UserDeckModel_o* userDeckModel, const MethodInfo* method);",
+          "target_rva": "0x3A3CA08",
+          "target_end_rva": "0x3A3CB18",
+          "target_sha256": "F54A5C87D514A6C3A56590137479378DF64B9AEEF157BD82D9211BDE786186A6",
+          "target_arm64_tsv": "arm64/03a3ca08__ScreenLayerSoloLiveDeckSelectBase__setupFreeLiveEventBonusAppliedDeckTotalParameter.arm64.tsv",
+          "target_arm64_tsv_sha256": "78B3D3B03DEA6D0DA70E59AE7527532B74B3FEDD64A545811A0F26966B09BD6D",
+          "migration_class": "target-arm64-reviewed"
+        },
+        {
+          "managed_name": "ScreenLayerSoloLiveDeckSelectBase.createEventBuffData",
+          "signature": "EventBuffData_o* ScreenLayerSoloLiveDeckSelectBase__createEventBuffData (ScreenLayerSoloLiveDeckSelectBase_o* __this, EventModel_o* playableEvent, const MethodInfo* method);",
+          "target_rva": "0x3A3CB18",
+          "target_end_rva": "0x3A3CCC8",
+          "target_sha256": "9B651E3D9B5606C349279E2F81330EC7B94B31C478517FDEE147357D322F0AD2",
+          "target_arm64_tsv": "arm64/03a3cb18__ScreenLayerSoloLiveDeckSelectBase__createEventBuffData.arm64.tsv",
+          "target_arm64_tsv_sha256": "2F6D2403696492C7FDA7A591B6E865D7F9063A84DC1D6DC6D18F98B416B1949D",
+          "migration_class": "target-arm64-reviewed"
+        },
+        {
+          "managed_name": "DeckParamCalcUtility.CalculateEventParameterBuff",
+          "signature": "float DeckParamCalcUtility__CalculateEventParameterBuff (EventBuffData_o* eventBuffData, UserSituationModel_o* userSituationModel, const MethodInfo* method);",
+          "target_rva": "0x33A2C80",
+          "target_end_rva": "0x33A2ED0",
+          "target_sha256": "CB96DE55D78C9BC70DA7162BE9C0F0067DF089D78481B6C87E5ADDB8132B5AEA",
+          "target_arm64_tsv": "arm64/033a2c80__DeckParamCalcUtility__CalculateEventParameterBuff.arm64.tsv",
+          "target_arm64_tsv_sha256": "CEF1BA3DF16FF8B07ED21B8F64A01866E47BB0E46C509456B5B90EE255F27EAB",
+          "migration_class": "target-arm64-reviewed"
+        },
+        {
+          "managed_name": "RhythmGameStartData.SetFreeLiveEventBonusAppliedDeckTotalParameter",
+          "signature": "void RhythmGameStartData__SetFreeLiveEventBonusAppliedDeckTotalParameter (RhythmGameStartData_o* __this, float totalParameter, const MethodInfo* method);",
+          "target_rva": "0x3410380",
+          "target_end_rva": "0x3410388",
+          "target_sha256": "D1B2ED43C87C64F8A841E3208C1E3AD2A1F07D23F68A9C9A82D00AD6A0A776A4",
+          "target_arm64_tsv": "arm64/03410380__RhythmGameStartData__SetFreeLiveEventBonusAppliedDeckTotalParameter.arm64.tsv",
+          "target_arm64_tsv_sha256": "766E7111C4EB2664AE3C9F578A7B7CCAD76337A5032887D02FAAC02366CD2A66",
+          "migration_class": "exact-bytes"
+        },
+        {
+          "managed_name": "PostRhythmGame.<start>d__3.MoveNext",
+          "signature": "bool PostRhythmGame__start_d__3__MoveNext (PostRhythmGame__start_d__3_o* __this, const MethodInfo* method);",
+          "target_rva": "0x331F328",
+          "target_end_rva": "0x331F5F4",
+          "target_sha256": "237598884BF126CF134D9FC023DFD42A21ED43760935B8A50B827A2D25CF7355",
+          "target_arm64_tsv": "arm64/0331f328__PostRhythmGame_start_d__3__MoveNext.arm64.tsv",
+          "target_arm64_tsv_sha256": "92EEDE91115DDC3298A1C1D56CDFC9B914CDFD2414214718D8415BA817E836AF",
+          "migration_class": "target-arm64-reviewed"
+        }
+      ],
+      "confirmation": "10.1.4 target ARM64 reviewed directly; historical bytes are a semantic guide only"
+    },
+    "special_combo": {
+      "historical_guide": {
+        "path": "artifacts/investigations/special-mode-combo-rates/special_mode_combo_rates.json",
+        "sha256": "7D5EF4396771ECE85277AF059C9064C625627354862CF38CB8504BC437A0F01B"
+      },
+      "current_methods": [
+        {
+          "managed_name": "InGameOneFrameJudgementController.getComboCorrectionRate",
+          "signature": "float InGameOneFrameJudgementController__getComboCorrectionRate (InGameOneFrameJudgementController_o* __this, OneFrameData_o* frameData, const MethodInfo* method);",
+          "target_rva": "0x33044FC",
+          "target_end_rva": "0x33045BC",
+          "target_sha256": "614C8B30DEC8788A9FA0DB2E00D52C2D4CC018CD75D902DAE68641048495AD6D",
+          "target_arm64_tsv": "arm64/033044fc__InGameOneFrameJudgementController__getComboCorrectionRate.arm64.tsv",
+          "target_arm64_tsv_sha256": "C16AC8B6C184B61E7DA69245C5CE0576CD961F36B03535C6558CFDE7690560E9",
+          "migration_class": "pc-relative-only"
+        },
+        {
+          "managed_name": "MedleyInGameController.GetComboCorrectionRate",
+          "signature": "float MedleyInGameController__GetComboCorrectionRate (MedleyInGameController_o* __this, int32_t currentCombo, const MethodInfo* method);",
+          "target_rva": "0x3A693D0",
+          "target_end_rva": "0x3A695EC",
+          "target_sha256": "7D24D5E16CCB3CA0AF128FCA7C7257B41FC21EA76B2AF26E68CAFA7071C6E8FB",
+          "target_arm64_tsv": "arm64/03a693d0__MedleyInGameController__GetComboCorrectionRate.arm64.tsv",
+          "target_arm64_tsv_sha256": "68ABBF2ED67AE523D50C0E1D7DD955D0E3AAB799D89AD24EE09229D8F87C622F",
+          "migration_class": "target-arm64-reviewed"
+        },
+        {
+          "managed_name": "MedleyComboRateModel.IsInRangeCombo",
+          "signature": "bool MedleyComboRateModel__IsInRangeCombo (MedleyComboRateModel_o* __this, int32_t comboCount, const MethodInfo* method);",
+          "target_rva": "0x3ADAE6C",
+          "target_end_rva": "0x3ADAE9C",
+          "target_sha256": "9FFC6578DC9038D49E100B8A71E3F4E806A68913EFC0D4642CFFB81B6B175AA7",
+          "target_arm64_tsv": "arm64/03adae6c__MedleyComboRateModel__IsInRangeCombo.arm64.tsv",
+          "target_arm64_tsv_sha256": "F3DFF031EEB1A95D4BBBE719037FBD356386D839D1ADD923CC20E098867BF145",
+          "migration_class": "exact-bytes"
+        },
+        {
+          "managed_name": "GarupaCupQualificationComboRateCalculator.GetCurrentComboRate",
+          "signature": "float GarupaCupQualificationComboRateCalculator__GetCurrentComboRate (GarupaCupQualificationComboRateCalculator_o* __this, int32_t comboCount, const MethodInfo* method);",
+          "target_rva": "0x3A6C770",
+          "target_end_rva": "0x3A6C8AC",
+          "target_sha256": "0FB6F8134F3B1D1EA25F4A9DB52A090A23A214DF5144CD85F03365BE34090398",
+          "target_arm64_tsv": "arm64/03a6c770__GarupaCupQualificationComboRateCalculator__GetCurrentComboRate.arm64.tsv",
+          "target_arm64_tsv_sha256": "692DB558A38AD96A1EC579E34626B7E44696647E36FB437396537C7AB0969369",
+          "migration_class": "target-arm64-reviewed"
+        }
+      ],
+      "confirmation": "10.1.4 target ARM64 reviewed directly; historical bytes are a semantic guide only"
+    },
+    "skill_fever_notes": {
+      "historical_guide": {
+        "path": "artifacts/investigations/skill-fever-consumers/README.md",
+        "sha256": "B1252479933D0EC85AD01AFAA18B0AE00D2BA538DD6CB1F6DA2C89645A10093B"
+      },
+      "current_methods": [
+        {
+          "managed_name": "NoteBase.playSkillNote",
+          "signature": "void NoteBase__playSkillNote (NoteBase_o* __this, int32_t skillNoteIndex, const MethodInfo* method);",
+          "target_rva": "0x3A765AC",
+          "target_end_rva": "0x3A766B0",
+          "target_sha256": "DCE43B553D356FE4DAE9AD7F7A00CCA161839706E1013E77F55087DFD7D6A420",
+          "target_arm64_tsv": "arm64/03a765ac__NoteBase__playSkillNote.arm64.tsv",
+          "target_arm64_tsv_sha256": "93B368244117F9701931240CFF80577DCEA3813543E7FE25F7327FF1FB143A27",
+          "migration_class": "target-arm64-reviewed"
+        },
+        {
+          "managed_name": "NoteFrontBase.judgeFrontNote",
+          "signature": "void NoteFrontBase__judgeFrontNote (NoteFrontBase_o* __this, int32_t result, int32_t judgeNoteType, GamePlayButton_array* targetButtons, GamePlayButton_o* effectButton, int32_t judgeTiming, const MethodInfo* method);",
+          "target_rva": "0x30E0130",
+          "target_end_rva": "0x30E05F0",
+          "target_sha256": "A7F8739061E48F20213A42F15DA2FE9236C3D293B3DB3AFE798971F517A5DE35",
+          "target_arm64_tsv": "arm64/030e0130__NoteFrontBase__judgeFrontNote.arm64.tsv",
+          "target_arm64_tsv_sha256": "46E8C3CCD63301255094BAE2375BA65478160512DB29E276F67CEC4665A548A1",
+          "migration_class": "target-arm64-reviewed"
+        },
+        {
+          "managed_name": "NoteFrontBase.checkFeverNote",
+          "signature": "void NoteFrontBase__checkFeverNote (NoteFrontBase_o* __this, NoteInformation_o* noteInfo, const MethodInfo* method);",
+          "target_rva": "0x30DF8DC",
+          "target_end_rva": "0x30DF91C",
+          "target_sha256": "42F812A3E4476F0B3A4144BC1E26424CD996D8218D0AB8F6276F1F8B881EAA71",
+          "target_arm64_tsv": "arm64/030df8dc__NoteFrontBase__checkFeverNote.arm64.tsv",
+          "target_arm64_tsv_sha256": "D586BE185829FD4F0CDDE5D9B31A8EB554F5D456A30C3A23D3D74AE4EC232BE6",
+          "migration_class": "pc-relative-only"
+        },
+        {
+          "managed_name": "NoteBase.judgeAfterNote",
+          "signature": "void NoteBase__judgeAfterNote (NoteBase_o* __this, int32_t result, NoteAfterBase_o* afterNote, const MethodInfo* method);",
+          "target_rva": "0x3A76214",
+          "target_end_rva": "0x3A7624C",
+          "target_sha256": "5DF5AE67B751B36C20C2ABDA68E35C6845ADF9B1DD0FF3249247713BB0D00119",
+          "target_arm64_tsv": "arm64/03a76214__NoteBase__judgeAfterNote.arm64.tsv",
+          "target_arm64_tsv_sha256": "F614FAC57822A67079C3F0B7531D60E6CE137C98353F47BD73E885C20C15E7C6",
+          "migration_class": "pc-relative-only"
+        },
+        {
+          "managed_name": "FeverTimeManager.JudgeFeverNote",
+          "signature": "void FeverTimeManager__JudgeFeverNote (FeverTimeManager_o* __this, int32_t result, InGameCalculatedData_o* calculatedData, const MethodInfo* method);",
+          "target_rva": "0x32F3D18",
+          "target_end_rva": "0x32F3E80",
+          "target_sha256": "13F66B6A84DB3609D741A8517B69B8714469BC0EF9E450984B5C03AE27FCE67D",
+          "target_arm64_tsv": "arm64/032f3d18__FeverTimeManager__JudgeFeverNote.arm64.tsv",
+          "target_arm64_tsv_sha256": "BAE64C35097D40FB07B5554B14E2ED2A6578365E92A8AFA4023CBFF653D88EAA",
+          "migration_class": "target-arm64-reviewed"
+        },
+        {
+          "managed_name": "FeverTimeManager.getNeedFeverNoteCount",
+          "signature": "int32_t FeverTimeManager__getNeedFeverNoteCount (FeverTimeManager_o* __this, const MethodInfo* method);",
+          "target_rva": "0x32F3748",
+          "target_end_rva": "0x32F3808",
+          "target_sha256": "A5CF41E991ED2E42939DE69CF3393A5F09C2A03CCB7D478E6749F41327B211AF",
+          "target_arm64_tsv": "arm64/032f3748__FeverTimeManager__getNeedFeverNoteCount.arm64.tsv",
+          "target_arm64_tsv_sha256": "DCE08621BA74BA03E06465FE1DEBAD0B6D84B92C3222B347ACB24F25BBF55ABE",
+          "migration_class": "target-arm64-reviewed"
+        }
+      ],
+      "confirmation": "10.1.4 target ARM64 reviewed directly; historical bytes are a semantic guide only"
+    },
+    "skill_playback": {
+      "historical_guide": {
+        "path": "artifacts/investigations/skill-playback-state-machine/skill_playback_state_machine.json",
+        "sha256": "99B1DEC146FEE33D7025A87C034DA3C322C3565656E5B69D55D787339237F7C5"
+      },
+      "current_methods": [
+        {
+          "managed_name": "SituationSkillManager.ExecUpdate",
+          "signature": "void SituationSkillManager__ExecUpdate (SituationSkillManager_o* __this, int32_t gameFrameCounter, int32_t currentGameState, const MethodInfo* method);",
+          "target_rva": "0x3321904",
+          "target_end_rva": "0x3321934",
+          "target_sha256": "8332CFEE7551CBB7B07C6FC862FE4123AD49F1D15F61980CDF1009344819A80E",
+          "target_arm64_tsv": "arm64/03321904__SituationSkillManager__ExecUpdate.arm64.tsv",
+          "target_arm64_tsv_sha256": "D0E085893917131BCA17228DD179F75B8AF1E1499A6A09DA9C7043686ED48AEA",
+          "migration_class": "exact-bytes"
+        },
+        {
+          "managed_name": "SituationSkillManager.executeBeginSkillProcess",
+          "signature": "void SituationSkillManager__executeBeginSkillProcess (SituationSkillManager_o* __this, int32_t gameFrameCounter, const MethodInfo* method);",
+          "target_rva": "0x3321934",
+          "target_end_rva": "0x3321A08",
+          "target_sha256": "C812B8C805E84ABE1D42AA0A70A4822673068FCD0C30A50AE7D3415B393354C5",
+          "target_arm64_tsv": "arm64/03321934__SituationSkillManager__executeBeginSkillProcess.arm64.tsv",
+          "target_arm64_tsv_sha256": "DF734263B1FC83100806FBDBDEB9025174335EE8D7E8B78F28D6C1A6F193B0FE",
+          "migration_class": "target-arm64-reviewed"
+        },
+        {
+          "managed_name": "SituationSkillManager.executePlayingSkillProcess",
+          "signature": "void SituationSkillManager__executePlayingSkillProcess (SituationSkillManager_o* __this, int32_t currentGameState, const MethodInfo* method);",
+          "target_rva": "0x3321A08",
+          "target_end_rva": "0x3321A68",
+          "target_sha256": "35FBB447283645B0E0BB57ED8158ED64B4636583299D8330829B5155C6A78D4A",
+          "target_arm64_tsv": "arm64/03321a08__SituationSkillManager__executePlayingSkillProcess.arm64.tsv",
+          "target_arm64_tsv_sha256": "3DA456478617256CC6A4A4820E7E6DB99A89F77D3BD18891DC0E18B5FCB5BAEA",
+          "migration_class": "pc-relative-only"
+        },
+        {
+          "managed_name": "SituationSkillManager.executeFinishingSkillProcess",
+          "signature": "void SituationSkillManager__executeFinishingSkillProcess (SituationSkillManager_o* __this, const MethodInfo* method);",
+          "target_rva": "0x3321A68",
+          "target_end_rva": "0x3321B08",
+          "target_sha256": "232B6C31EE8C3EA87C4B993ACBF47F0255E900F48273BBEE0658E2CFDEAB64C7",
+          "target_arm64_tsv": "arm64/03321a68__SituationSkillManager__executeFinishingSkillProcess.arm64.tsv",
+          "target_arm64_tsv_sha256": "7914D19176B5DD24F0B83A07D35B75684D1500EF7851B201CA6029555D69E2B8",
+          "migration_class": "target-arm64-reviewed"
+        },
+        {
+          "managed_name": "SituationSkillManager.processOfSkillTriggered",
+          "signature": "void SituationSkillManager__processOfSkillTriggered (SituationSkillManager_o* __this, int32_t gameFrameCounter, const MethodInfo* method);",
+          "target_rva": "0x33224BC",
+          "target_end_rva": "0x33225B0",
+          "target_sha256": "C91879E7E2E0222F0E47F2CE2D68D361CBC375237DA3EECFC27AF2C457227207",
+          "target_arm64_tsv": "arm64/033224bc__SituationSkillManager__processOfSkillTriggered.arm64.tsv",
+          "target_arm64_tsv_sha256": "1344B2ADC2B4FB8D2C2CC1169BD549D084AB444719CDF07F9EBC053F2F290F64",
+          "migration_class": "target-arm64-reviewed"
+        },
+        {
+          "managed_name": "SituationSkillManager.processOfSkillFinished",
+          "signature": "void SituationSkillManager__processOfSkillFinished (SituationSkillManager_o* __this, const MethodInfo* method);",
+          "target_rva": "0x33227F4",
+          "target_end_rva": "0x33228D8",
+          "target_sha256": "DAE182AC2EA4AFDAB5C091D0A7B19381C1746D633A304C40BDCB398FF6BD331E",
+          "target_arm64_tsv": "arm64/033227f4__SituationSkillManager__processOfSkillFinished.arm64.tsv",
+          "target_arm64_tsv_sha256": "0980D7BDDAF626502E8AC637727BF14A4BBE02FAD047E4492CC59BA344F86B9F",
+          "migration_class": "target-arm64-reviewed"
+        },
+        {
+          "managed_name": "SituationSkillManager.Stop",
+          "signature": "void SituationSkillManager__Stop (SituationSkillManager_o* __this, const MethodInfo* method);",
+          "target_rva": "0x33228D8",
+          "target_end_rva": "0x3322948",
+          "target_sha256": "36EE90D7F52087B41C7A7688FC707B7BC5E395A89AF188501BACA0C41E041519",
+          "target_arm64_tsv": "arm64/033228d8__SituationSkillManager__Stop.arm64.tsv",
+          "target_arm64_tsv_sha256": "48520B64ECB5514CAEFD441E893FDB0AEB29FC907832E969520BDDDB1C40DBB3",
+          "migration_class": "target-arm64-reviewed"
+        },
+        {
+          "managed_name": "SituationSkillManager.playOnceEffectSkill",
+          "signature": "void SituationSkillManager__playOnceEffectSkill (SituationSkillManager_o* __this, const MethodInfo* method);",
+          "target_rva": "0x332269C",
+          "target_end_rva": "0x33227F4",
+          "target_sha256": "F05ACE809CC0A189DE8C248C563CE9A2481497990AF3DB8615CD28792F9BFA36",
+          "target_arm64_tsv": "arm64/0332269c__SituationSkillManager__playOnceEffectSkill.arm64.tsv",
+          "target_arm64_tsv_sha256": "C56D6E770D9918A33256ADD2E419CA305F49EB2CE0376C3A9EBF22EF4CFF47CE",
+          "migration_class": "target-arm64-reviewed"
+        }
+      ],
+      "confirmation": "10.1.4 target ARM64 reviewed directly; historical bytes are a semantic guide only"
+    },
+    "active_effects": {
+      "historical_guide": {
+        "path": "artifacts/investigations/skill-activate-effect-consumers/skill_activate_effect_consumers.json",
+        "sha256": "6CE30C07E73AF1967C72DEAED56BA356F098AAC203A41FB20F12A2A45D40B734"
+      },
+      "current_methods": [
+        {
+          "managed_name": "GamePlayButton.CorrectNoteResult",
+          "signature": "int32_t GamePlayButton__CorrectNoteResult (GamePlayButton_o* __this, int32_t before, const MethodInfo* method);",
+          "target_rva": "0x387E684",
+          "target_end_rva": "0x387E74C",
+          "target_sha256": "B35C9B88E7E436858C32BE61862FF02EFCBA3BA803B059DEE04E15B7C21126E4",
+          "target_arm64_tsv": "arm64/0387e684__GamePlayButton__CorrectNoteResult.arm64.tsv",
+          "target_arm64_tsv_sha256": "47E0CDF03F63F2922264131FAA9C083781B3F03891A310A8D9702B0878818A59",
+          "migration_class": "target-arm64-reviewed"
+        },
+        {
+          "managed_name": "NoteFrontBase.calcAddDamage",
+          "signature": "int32_t NoteFrontBase__calcAddDamage (NoteFrontBase_o* __this, int32_t result, int32_t* damageGuardType, const MethodInfo* method);",
+          "target_rva": "0x30DFA98",
+          "target_end_rva": "0x30DFC24",
+          "target_sha256": "618D16F96CCADBB83963B11450C763CEB6D61987C32F78B76DE67369E8DA8910",
+          "target_arm64_tsv": "arm64/030dfa98__NoteFrontBase__calcAddDamage.arm64.tsv",
+          "target_arm64_tsv_sha256": "81298FE54DCB2B40211523F528CEAAC8F346F4FB84CD37F87B45F17A8F2910D4",
+          "migration_class": "target-arm64-reviewed"
+        },
+        {
+          "managed_name": "NoteFrontBase.calcSkillScoreUpRate",
+          "signature": "float NoteFrontBase__calcSkillScoreUpRate (NoteFrontBase_o* __this, int32_t resultType, int32_t* scoreUpType, const MethodInfo* method);",
+          "target_rva": "0x30DFCD8",
+          "target_end_rva": "0x30DFFA0",
+          "target_sha256": "2A7EE4E45F1BE6418A490202A8DC6D6ED843E09D2D0F7BD35C53767931E6E8D0",
+          "target_arm64_tsv": "arm64/030dfcd8__NoteFrontBase__calcSkillScoreUpRate.arm64.tsv",
+          "target_arm64_tsv_sha256": "ACACE2C0C8B94D9B41F3A5354AF9CA20120EC3ADD217A319BE8B1D23B61911DD",
+          "migration_class": "target-arm64-reviewed"
+        },
+        {
+          "managed_name": "SkillUtility.CalcAddDamageWithNeverDieSkill",
+          "signature": "int32_t SkillUtility__CalcAddDamageWithNeverDieSkill (int32_t life, int32_t addDamage, const MethodInfo* method);",
+          "target_rva": "0x33DADDC",
+          "target_end_rva": "0x33DADF4",
+          "target_sha256": "420F2513D18C28A61560085E7936762D7801F240C2E68675DA9E07C0AF22DD61",
+          "target_arm64_tsv": "arm64/033daddc__SkillUtility__CalcAddDamageWithNeverDieSkill.arm64.tsv",
+          "target_arm64_tsv_sha256": "AD3301CC0E1B3A7A97B3B48D7C20562C94A344429B094E37F31518956D42A48E",
+          "migration_class": "exact-bytes"
+        },
+        {
+          "managed_name": "SkillUtility.GetDamageGuardTypeWithNeverDieSkill",
+          "signature": "int32_t SkillUtility__GetDamageGuardTypeWithNeverDieSkill (int32_t life, int32_t addDamage, int32_t damageGuardType, const MethodInfo* method);",
+          "target_rva": "0x33DADF4",
+          "target_end_rva": "0x33DAE08",
+          "target_sha256": "9D4A231A9CEA96F23477867A0E0B6C512CE403AC0DF0D8A1D02F5FAAD6245E7C",
+          "target_arm64_tsv": "arm64/033dadf4__SkillUtility__GetDamageGuardTypeWithNeverDieSkill.arm64.tsv",
+          "target_arm64_tsv_sha256": "4437EE8749D8916456922B390ECD110BCC78764E12E904B3168B1DC55FDDA4A9",
+          "migration_class": "exact-bytes"
+        },
+        {
+          "managed_name": "SkillUtility.CalcJudgeContinuousResultType",
+          "signature": "void SkillUtility__CalcJudgeContinuousResultType (SituationSkillData_o* skillData, int32_t adjustedResult, const MethodInfo* method);",
+          "target_rva": "0x33DAFD0",
+          "target_end_rva": "0x33DAFEC",
+          "target_sha256": "77443A167D54B70F5B01A609549F2415281FE14CE9C7776D653EF52EFFB2BFEA",
+          "target_arm64_tsv": "arm64/033dafd0__SkillUtility__CalcJudgeContinuousResultType.arm64.tsv",
+          "target_arm64_tsv_sha256": "155B6D518A386E045EC77D1768E1A6F1C6ECAF0892227A598B36CFB7D7ED32B3",
+          "migration_class": "pc-relative-only"
+        },
+        {
+          "managed_name": "SkillUtility.CalculateRateUpValueWithGettingPerfect",
+          "signature": "void SkillUtility__CalculateRateUpValueWithGettingPerfect (SituationSkillData_o* skillData, int32_t adjustedResult, SituationSkillActivateEffect_o* situationSkillActivateEffect, float defaultRateUpValue, const MethodInfo* method);",
+          "target_rva": "0x33DAFEC",
+          "target_end_rva": "0x33DB07C",
+          "target_sha256": "7B12701049198A3825113E790800A7E7D16CE85110B89EA923365450E5C7F4CC",
+          "target_arm64_tsv": "arm64/033dafec__SkillUtility__CalculateRateUpValueWithGettingPerfect.arm64.tsv",
+          "target_arm64_tsv_sha256": "882624C7A1DC2396233A5685FE451425F3EEE6D4114B3D138C8C9A7D27E27CDF",
+          "migration_class": "pc-relative-only"
+        }
+      ],
+      "confirmation": "10.1.4 target ARM64 reviewed directly; historical bytes are a semantic guide only"
+    },
+    "fever_command": {
+      "historical_guide": {
+        "path": "artifacts/investigations/fever-command-state-machine/fever_command_state_machine.json",
+        "sha256": "8D063CC679EFC06F4DD53A607FCA5495877A3BF1DA157337CD9F9546DAB7DC15"
+      },
+      "current_methods": [
+        {
+          "managed_name": "FeverTimeManager.GetFeverTimeScoreRate",
+          "signature": "float FeverTimeManager__GetFeverTimeScoreRate (FeverTimeManager_o* __this, const MethodInfo* method);",
+          "target_rva": "0x32F3BF8",
+          "target_end_rva": "0x32F3C10",
+          "target_sha256": "57F687FD0F8D749A4D471F7DABA4EF241C42A0274B732A73D97A0705D36C3D0A",
+          "target_arm64_tsv": "arm64/032f3bf8__FeverTimeManager__GetFeverTimeScoreRate.arm64.tsv",
+          "target_arm64_tsv_sha256": "6C4ED494CB65266333C06F785E3178B67008140C3DC88C4C01A794C6E902663B",
+          "migration_class": "exact-bytes"
+        },
+        {
+          "managed_name": "FeverTimeManager.changeFeverTimeCommandType",
+          "signature": "void FeverTimeManager__changeFeverTimeCommandType (FeverTimeManager_o* __this, int32_t command, int32_t gameFrameCounter, const MethodInfo* method);",
+          "target_rva": "0x32F3C14",
+          "target_end_rva": "0x32F3D18",
+          "target_sha256": "D3B10473654E3CB014A171AACB1AC9B769D61E79F162E174E694841C8340959E",
+          "target_arm64_tsv": "arm64/032f3c14__FeverTimeManager__changeFeverTimeCommandType.arm64.tsv",
+          "target_arm64_tsv_sha256": "2F01E8EF07074BE83A651A4D93E255FAC5E53BC279883DB89EFF087026DC3517",
+          "migration_class": "target-arm64-reviewed"
+        },
+        {
+          "managed_name": "FeverTimeManager.execFeverCommandChanged",
+          "signature": "void FeverTimeManager__execFeverCommandChanged (FeverTimeManager_o* __this, const MethodInfo* method);",
+          "target_rva": "0x32F41CC",
+          "target_end_rva": "0x32F4208",
+          "target_sha256": "7865D7997491176D78C55348A3A8A59E8F7E0C468622B4DE4E79FC25F39F96DF",
+          "target_arm64_tsv": "arm64/032f41cc__FeverTimeManager__execFeverCommandChanged.arm64.tsv",
+          "target_arm64_tsv_sha256": "33CF957016EE16C50245A0B1E7BC8EDA6EDC4D42A865A7D25E948E242E95A47E",
+          "migration_class": "exact-bytes"
+        },
+        {
+          "managed_name": "FeverTimeManager.judgeFever",
+          "signature": "void FeverTimeManager__judgeFever (FeverTimeManager_o* __this, const MethodInfo* method);",
+          "target_rva": "0x32F4214",
+          "target_end_rva": "0x32F449C",
+          "target_sha256": "34A7A76F0CAE611D69F28368498501C6A9E640C9C8698B2BCF017E930246383A",
+          "target_arm64_tsv": "arm64/032f4214__FeverTimeManager__judgeFever.arm64.tsv",
+          "target_arm64_tsv_sha256": "C29E0F55D6B561B9B11A9B8B791A7E8BA6B33BEFD6D870938628F655A696C541",
+          "migration_class": "target-arm64-reviewed"
+        },
+        {
+          "managed_name": "FeverTimeManager.updateFeverStatePassConditions",
+          "signature": "void FeverTimeManager__updateFeverStatePassConditions (FeverTimeManager_o* __this, const MethodInfo* method);",
+          "target_rva": "0x32F44A4",
+          "target_end_rva": "0x32F45F4",
+          "target_sha256": "130CDE8FAE8458637C7C362D14F958B33B53873FFC9F0804FEC015406E3866C8",
+          "target_arm64_tsv": "arm64/032f44a4__FeverTimeManager__updateFeverStatePassConditions.arm64.tsv",
+          "target_arm64_tsv_sha256": "B6ECE75AC911C70E631839AFDCB73A80773EBE37DDE90C6830A52211F6961B57",
+          "migration_class": "target-arm64-reviewed"
+        },
+        {
+          "managed_name": "FeverTimeManager.resetFeverPoint",
+          "signature": "void FeverTimeManager__resetFeverPoint (FeverTimeManager_o* __this, const MethodInfo* method);",
+          "target_rva": "0x32F4128",
+          "target_end_rva": "0x32F417C",
+          "target_sha256": "2D43B1E668FCBF3AE5CFFA1943D9046D8222A5A1A5B49BAFC571D78FE2F73AE7",
+          "target_arm64_tsv": "arm64/032f4128__FeverTimeManager__resetFeverPoint.arm64.tsv",
+          "target_arm64_tsv_sha256": "9B3A205D6327A48AD51A36E6EED4B6E41257155AFEB247784C89C2D95875E6A0",
+          "migration_class": "pc-relative-only"
+        },
+        {
+          "managed_name": "FeverTimeManager.resetFeverStatePassConditions",
+          "signature": "void FeverTimeManager__resetFeverStatePassConditions (FeverTimeManager_o* __this, const MethodInfo* method);",
+          "target_rva": "0x32F417C",
+          "target_end_rva": "0x32F41CC",
+          "target_sha256": "5DD88EE7904ABF47CA772A18C146F2601FD33427AA89FB6A7DE62096229010D7",
+          "target_arm64_tsv": "arm64/032f417c__FeverTimeManager__resetFeverStatePassConditions.arm64.tsv",
+          "target_arm64_tsv_sha256": "A6621BCEC22B5C1F1DCD0A1387C026C65343A8DCA7470EB53690E2C3E40DE91A",
+          "migration_class": "pc-relative-only"
+        },
+        {
+          "managed_name": "FeverTimeManager.FeverEffectReservationData.Reserve",
+          "signature": "void FeverTimeManager_FeverEffectReservationData__Reserve (FeverTimeManager_FeverEffectReservationData_o __this, int32_t targetFrame, int32_t command, int32_t afterState, const MethodInfo* method);",
+          "target_rva": "0x32F4208",
+          "target_end_rva": "0x32F4214",
+          "target_sha256": "DEC77B0BC3D0BD1166357DACEA3179F2EE77D5D26C8836853B5A17880CABE35B",
+          "target_arm64_tsv": "arm64/032f4208__FeverTimeManager_FeverEffectReservationData__Reserve.arm64.tsv",
+          "target_arm64_tsv_sha256": "2D2B2E2B945391FB7E2CD1E4DFBC88703E12E84E666B5FC4F488D9CB4AB946E6",
+          "migration_class": "exact-bytes"
+        }
+      ],
+      "confirmation": "10.1.4 target ARM64 reviewed directly; historical bytes are a semantic guide only"
+    }
+  },
+  "conclusions": {
+    "base_score": [
+      "The ordinary deck total sums three float score parameters for every active member.",
+      "Ordinary and Free Live event-bonus base scores use the same play-level and maximum-Note formula.",
+      "NoteManager.analyzeBMS writes InGameRecord.maxNoteCount before InGameManager calls InitBaseScore.",
+      "Long tails and visible Slide nodes contribute to maximum Note count.",
+      "Game Over decrease routing depends on multiplayer/single flags, mode, Practice, and collaboration-original-music state.",
+      "Team Live Festival and Auto Live bypass standard result correction in NoteBase.calcBaseCorrectedScore.",
+      "Eligible real-value score Skill effects add a truncated fixed value after result correction.",
+      "The upstream Free Live event-bonus deck construction is continued and integrated by ../free-live-event-bonus-construction/free_live_event_bonus_construction.json."
+    ],
+    "event_score": [
+      "Ordinary and Free Live event-bonus scores share Combo and ScoreUpRate correction.",
+      "Festival stage effect multiplies only the ordinary corrected score.",
+      "Judge, Combo, and Life stage rates always multiply together.",
+      "Stage type changes only the selected display level.",
+      "Combo and Life ranges are inclusive.",
+      "The two one-note maximum records are independent and retain the first equal maximum."
+    ],
+    "free_event": [
+      "RhythmGameStartData owns the Free Live event-bonus total parameter backing field at +0x88.",
+      "Only Versus and Festival event types construct and store this bonus in the recovered setup path.",
+      "Area Item and event-buff deltas remain separately accumulated before the aggregate getter adds them to original totals.",
+      "Event parameter percentage applies to original member parameters.",
+      "The prototype can feed the structured deck profile directly into base-score initialization.",
+      "The normal PostRhythmGame coroutine is the only direct caller of the public clear method and clears the backing field before its screen transition.",
+      "Event parameter percentage is the sum of character attribute conditional paired situation and limit-break sources.",
+      "The flat event value is an original-parameter weighted percentage gated by event character and attribute matches and routed by positive-field priority."
+    ],
+    "special_combo": [
+      "ButtonType.None bypasses Auto Live and every mode-specific controller.",
+      "Auto Live bypasses the mode switch.",
+      "Team Live Festival Combo correction is 1.0.",
+      "Only Garupa Cup first qualification uses the qualification calculator.",
+      "Medley and Garupa Cup use inclusive ordered ranges and fall back to 1.0."
+    ],
+    "skill_notes": {
+      "eligibility": "modes 1,3,4,5,10,11,12 enabled; modes 6,7 disabled; MultiNormal(2) requires local skillCharaList ownership",
+      "result_route": "Great/Perfect enqueue unless MoveTime; Good/Bad/Miss failure; MultiNormal reserves played index",
+      "fever_route": "state None only; root front path and Long/Slide terminal after path; only Great/Perfect have point keys",
+      "difficulty_points": {
+        "easy": {
+          "great": 20,
+          "perfect": 20
+        },
+        "normal": {
+          "great": 12,
+          "perfect": 12
+        },
+        "hard": {
+          "great": 6,
+          "perfect": 6
+        },
+        "expert": {
+          "great": 4,
+          "perfect": 4
+        },
+        "special": {
+          "great": 4,
+          "perfect": 4
+        }
+      }
+    },
+    "skill_playback": {
+      "status": "confirmed-static-consumer-integrated",
+      "states": {
+        "0": "None",
+        "1": "Begin",
+        "2": "Playing",
+        "3": "Finishing"
+      },
+      "begin": [
+        "select playlist item zero",
+        "mark SkillNoteIndex minus one as Played",
+        "trigger the current Skill",
+        "enter Playing"
+      ],
+      "trigger": {
+        "cached_life": true,
+        "judge_continuous_result_type": "Perfect(4)",
+        "duration_source": "SituationSkillMaster.duration",
+        "effective_timer_reset": 0.0,
+        "reservation_frame": "gameFrameCounter + 1",
+        "encore": "SkillNoteIndex == 6",
+        "order": [
+          "play Skill SE",
+          "play callback",
+          "once effect"
+        ]
+      },
+      "playing": {
+        "frozen_game_states": [
+          7,
+          8
+        ],
+        "frozen_names": [
+          "PauseSound",
+          "GameOverMotionFirstStart"
+        ],
+        "duration_delta": "-Time.deltaTime",
+        "effective_timer_delta": "+Time.deltaTime",
+        "expiry_check": "skillTimer <= 0 before current-frame subtraction"
+      },
+      "finishing": {
+        "seconds": 0.75,
+        "completion_order": [
+          "finish callback",
+          "register SkillActivateInfoList data",
+          "clear request Skill master",
+          "remove playlist index zero",
+          "clear current playing data"
+        ],
+        "next": "Begin when queue remains, otherwise None"
+      },
+      "once_effect": {
+        "type": "life",
+        "value_types": [
+          "real_value",
+          "rate"
+        ],
+        "rate_formula": "playerMaxLife * onceEffectValue / 100",
+        "optional_condition": "current life < onceEffectConditionLife"
+      },
+      "stop": "set None, drain every queue item through finish, reset notes-info list",
+      "prototype": {
+        "spec": "SkillPlaybackSpec",
+        "events": [
+          "skill_se_played",
+          "skill_started",
+          "skill_visuals_started",
+          "skill_life_restored",
+          "skill_visuals_finished",
+          "skill_finished",
+          "skill_playback_stopped"
+        ],
+        "skill_se_sequence": "Skill then Audience unless practice"
+      },
+      "inference": [
+        "the backend-neutral outer update count supplies the caller-owned gameFrameCounter"
+      ],
+      "unresolved": [
+        "concrete cue routing and ACB HCA profiles are continued by ../skill-se-routing/skill_se_routing.json and ../skill-se-acb-profile/skill_se_acb_profile.json; device output timing remains unresolved",
+        "activateEffectList consumers are continued by ../skill-activate-effect-consumers/skill_activate_effect_consumers.json",
+        "UI trigger gates and animation helpers are continued by ../skill-ui-consumers/skill_ui_consumers.json and ../skill-ui-animation-helpers/skill_ui_animation_helpers.json",
+        "animation curves are continued by ../skill-ui-animation-curves/skill_ui_animation_curves.json; final pixels and exact cross-module callback order remain unresolved"
+      ],
+      "avd_used": false
+    },
+    "active_effects": {
+      "status": "confirmed-static-consumers-integrated",
+      "activate_effect_types": {
+        "0": "score",
+        "1": "damage",
+        "2": "heal",
+        "3": "judge",
+        "4": "score_over_life",
+        "5": "score_under_life",
+        "6": "score_continued_note_judge",
+        "7": "score_rate_up_with_perfect",
+        "8": "score_only_perfect",
+        "9": "never_die",
+        "10": "score_under_great_half"
+      },
+      "order": [
+        "raw result",
+        "judge effect correction",
+        "damage and damage-guard calculation",
+        "Skill score-rate and score-up-type calculation",
+        "OneFrameData construction",
+        "deferred reflection and lethal Never Die adjustment"
+      ],
+      "damage": {
+        "real_value": "nativeAddDamage += int(effectValue)",
+        "rate": "nativeAddDamage = int(effectValue * nativeAddDamage / 100) when damage is negative",
+        "zero_rate_guard": 1,
+        "never_die_guard": 2,
+        "never_die_life": 5
+      },
+      "score": {
+        "ordinary": "multiply by 1 + selectedEffectValue / 100",
+        "continuous": "update worst result, condition gate, then return selected rate",
+        "crescendo": "Perfect adds stack and clamps to maxValue - (defaultRate - 1) * 100",
+        "only_perfect": "Good or Great returns zero with type 3; Bad or Miss returns zero with type 0",
+        "under_great_half": "Good or Great returns 0.5 with type 4; Bad or Miss returns zero"
+      },
+      "prototype": {
+        "effect_spec": "SkillActivateEffectSpec",
+        "tests": 9,
+        "suite_total": 266
+      },
+      "confirmed": [
+        "judge correction is applied before gameplay consumers",
+        "front tail and Slide intermediate paths share the integrated OneFrameData boundary",
+        "deferred entries retain their own Never Die state",
+        "continuous-result and Crescendo state reset at Skill start"
+      ],
+      "inference": [
+        "immutable prototype specs stand in for master-data-created SituationSkillActivateEffect objects"
+      ],
+      "unresolved": [
+        "activate-effect heal has no confirmed gameplay-note consumer; life restoration uses the separate once-effect record",
+        "UI trigger gates helpers and curves are continued by ../skill-ui-consumers/skill_ui_consumers.json ../skill-ui-animation-helpers/skill_ui_animation_helpers.json and ../skill-ui-animation-curves/skill_ui_animation_curves.json; final pixels remain unresolved",
+        "live simultaneous-frame display and network timing"
+      ],
+      "avd_used": false
+    },
+    "fever_command": {
+      "status": "confirmed-static-consumer-integrated",
+      "states": {
+        "0": "None",
+        "1": "FeverLevel_1",
+        "2": "FeverTimeFailed"
+      },
+      "commands": {
+        "0": "None",
+        "1": "FeverReady",
+        "2": "FeverStart",
+        "3": "FeverEnd"
+      },
+      "score_rate": {
+        "FeverLevel_1": 2.0,
+        "other": 1.0
+      },
+      "command_order": [
+        "capture before state",
+        "write command",
+        "execute state mutation",
+        "invoke command callback with before and after state",
+        "reserve effect for gameFrameCounter plus one"
+      ],
+      "ready": "state unchanged; refresh local progress when previous state is None",
+      "start": {
+        "success": "passed condition count >= own-team member count",
+        "success_state": "FeverLevel_1",
+        "failure_state": "FeverTimeFailed",
+        "after": [
+          "reset all Fever points",
+          "reset all pass conditions"
+        ]
+      },
+      "end": [
+        "reset all Fever points",
+        "change state to None"
+      ],
+      "member_pass": {
+        "minimum_point": 80,
+        "requires_own_team": true,
+        "idempotent": true,
+        "callback": [
+          "display index",
+          "FeverLevel_1",
+          "rest note count zero",
+          "is mine"
+        ]
+      },
+      "reservation_fields": [
+        "target frame",
+        "command type",
+        "after state"
+      ],
+      "prototype": {
+        "events": [
+          "fever_pass_condition_changed",
+          "fever_command_changed"
+        ],
+        "team_input": "caller-supplied own-team display indices"
+      },
+      "inference": [
+        "local points enter the member-pass adapter immediately instead of waiting for Photon echo"
+      ],
+      "unresolved": [
+        "FeverTimeDisplayController reservation consumption",
+        "Photon and master synchronization timing",
+        "opponent disconnect replacement and concrete Fever UI effects"
+      ],
+      "avd_used": false
+    },
+    "current_findings": {
+      "one_frame": {
+        "setup_parameters": [
+          "index:int32",
+          "buttonTypes:ButtonType[]",
+          "addScore:float32",
+          "freeLiveEventBonusAppliedAddScore:float32",
+          "addPower:int32",
+          "addCombo:int32",
+          "noteType:JudgeNoteType",
+          "result:NoteResultType",
+          "adjustedResult:NoteResultType",
+          "feverScoreUpRate:float32",
+          "skillScoreUpRate:float32",
+          "crescendoSkillScoreUpRate:float32",
+          "scoreUpType:ScoreUpType",
+          "absolutePos:int32",
+          "damageGuardType:DamageGuardType",
+          "judgeTiming:JudgeTiming"
+        ],
+        "fields": {
+          "isUsing": "0x10:bool",
+          "index": "0x14:int32",
+          "buttonTypes": "0x18:managed-reference",
+          "addScore": "0x20:float32",
+          "addPower": "0x24:int32",
+          "addCombo": "0x28:int32",
+          "noteType": "0x2C:int32-enum",
+          "result": "0x30:int32-enum",
+          "adjustedResult": "0x34:int32-enum",
+          "feverScoreUpRate": "0x38:float32",
+          "skillScoreUpRate": "0x3C:float32",
+          "crescendoSkillScoreUpRate": "0x40:float32",
+          "scoreUpType": "0x44:int32-enum",
+          "absolutePos": "0x48:int32",
+          "damageGuardType": "0x4C:int32-enum",
+          "judgeTiming": "0x50:int32-enum",
+          "freeLiveEventBonusAppliedAddScore": "0x54:float32",
+          "scoreUpRate": "0x58:float32"
+        },
+        "score_up_rate_storage": "Setup multiplies Fever, Skill, and Crescendo rates in ARM64 Float32 order and stores the product at +0x58."
+      },
+      "reflect": {
+        "slot_scan": "The managed five-entry list is scanned by ascending list index.",
+        "clear_point": "Each in-use entry has isUsing cleared before Combo, score, Life, counters, callbacks, and total aggregation mutate.",
+        "representative": "A strictly greater raw result replaces the representative; equal raw result retains the first entry.",
+        "mutation_order": [
+          "AddCombo",
+          "select Combo correction from updated current Combo",
+          "truncate addScore * comboRate toward zero to int32",
+          "multiply truncated value by stored ScoreUpRate",
+          "truncate toward zero to int32",
+          "apply ordinary and bonus score",
+          "apply Life/Power and record mutations",
+          "increment result and Fast/Slow counters",
+          "aggregate OneFrameTotalData"
+        ],
+        "integer_semantics": "Score additions are uint32 modulo-2^32; Combo and Life arithmetic use int32 ARM64 operations."
+      },
+      "damage": {
+        "Miss": "Returns InGameCalculatedData.MissDamage at +0xA8.",
+        "Bad": "Returns InGameCalculatedData.BadDamage at +0xAC.",
+        "Good_Great_Perfect": "Return zero base damage.",
+        "skill_order": "NoteFrontBase applies ordered active damage effects after selecting base damage and before OneFrameData Setup."
+      },
+      "never_die": {
+        "lethal_predicate": "-signedDamage >= currentLife; equality is lethal.",
+        "replacement_delta": "For lethal damage, return 5 - currentLife; otherwise preserve signedDamage.",
+        "resulting_life": 5,
+        "guard_type": "The Never Die path selects DamageGuardType 2."
+      },
+      "once_heal": {
+        "eligibility": "Only once-effect type 1 enters Life mutation; condition type 1 suppresses the effect when current Life is greater than or equal to the condition value.",
+        "fixed": "Truncate the Float32 effect value toward zero to int32 and pass it to AddIPower.",
+        "percentage": "Compute int32(+0x24) * truncFloatToInt(effectValue), then signed-divide by 100 using the compiler strength-reduced sequence, and pass the result to AddIPower.",
+        "upper_limit": "AddIPower clamps the resulting current Life to +0x28, not +0x24.",
+        "callback": "The registered heal callback runs after AddIPower or after the no-operation once-effect branch."
+      },
+      "skill_state": {
+        "states": "The mapped enum is None=0, Begin=1, Playing=2, Finishing=3.",
+        "playing_timer": "+0x88 is reduced by the engine delta except in game states 7 and 8.",
+        "transition": "At +0x88 <= 0, processOfSkillFinished runs and +0x8C is initialized from exact bits 0x3F400000 (0.75f).",
+        "finishing_timer": "+0x8C is reduced by the engine delta and transitions to the next queued state at expiry.",
+        "runtime_pending": "Same-frame callbacks, reservation frame identity, pause/Game Over observations, and queue object identity remain R1 requirements."
+      },
+      "fever_rate": {
+        "state_test": "Return 2.0f only when Fever state at +0x4C equals 1; otherwise return 1.0f.",
+        "normal_bits_le": "0000803F",
+        "level_1_bits_le": "00000040",
+        "pass_point_constant": 80,
+        "runtime_pending": "Difficulty point rows, own-team identity, command/callback/reservation order, and same-frame freezing remain B02 requirements."
+      },
+      "record": {
+        "combo": "Positive addCombo updates current/max and live current/max using strict greater for maxima; negative addCombo resets current and live current to zero; zero is a no-op.",
+        "results": "Miss/Bad/Good/Great each reset perfectCombo and increment their counter; Perfect increments both perfectCombo and perfectCount.",
+        "timing": "JudgeTiming 1 increments Fast and JudgeTiming 2 increments Slow; all other values are no-op."
+      }
+    },
+    "all_perfect": {
+      "reset": 1,
+      "cleared_by_results": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "retained_by_perfect": 4
+    }
+  },
+  "portable_profile_ownership": {
+    "caller_required": [
+      "deck parameter components or validated member rows",
+      "ordered active Skill effect rows",
+      "Fever difficulty-point table",
+      "Auto combo coefficient",
+      "Festival judge/combo/life rows",
+      "Medley and Garupa ordered combo ranges",
+      "Free Live event-buff rows",
+      "mode and collaboration flags"
+    ],
+    "missing_or_invalid": "evidence-required before domain mutation",
+    "concrete_identity_fields": "not exported; profiles are owner/session-bound numeric values"
+  },
+  "business_state_gate": "open-pending-portable-contract-and-fixed-event-rebuild",
+  "production_authorization": false
+}

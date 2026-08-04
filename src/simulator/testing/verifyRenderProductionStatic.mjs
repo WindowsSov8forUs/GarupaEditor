@@ -17,7 +17,7 @@ const forbidden = [
   [/\bEventSource\b/, "EventSource"],
   [/https?:\/\//, "remote URL"],
   [/bestdori/i, "Bestdori dependency"],
-  [/simulator-reverse-evidence/i, "runtime evidence-package read"],
+  [/reverse-snapshots/i, "runtime evidence-package read"],
   [/GirlsBandParty-Reverse/i, "runtime Reverse-worktree read"],
   [/runtime[\\/]tools/i, "runtime/tools dependency"],
 ];

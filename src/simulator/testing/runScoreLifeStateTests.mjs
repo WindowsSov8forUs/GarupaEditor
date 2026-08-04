@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 
 const testingRoot = dirname(fileURLToPath(import.meta.url));
 const repositoryRoot = resolve(testingRoot, "..", "..", "..");
-const evidencePackage = join(repositoryRoot, "tmp", "simulator-reverse-evidence", "score-life-state");
+const evidencePackage = join(repositoryRoot, "src", "simulator", "testing", "fixtures", "reverse-snapshots", "score-life-state");
 const evidenceRoot = join(evidencePackage, "artifacts", "investigations", "score-life-state-runtime-contract-10-1-4");
 const outputRoot = mkdtempSync(join(tmpdir(), "garupa-score-life-state-"));
 const require = createRequire(import.meta.url);
@@ -20,7 +20,6 @@ try {
   verifyProductionCounts();
   run(process.execPath, [join(outputRoot, "src", "simulator", "testing", "scoreLifeState.test.js")]);
   run(process.execPath, [join(testingRoot, "verifyDependencies.mjs")]);
-  run(process.execPath, [join(evidencePackage, "verify.mjs")]);
 } finally {
   rmSync(outputRoot, { recursive: true, force: true });
 }

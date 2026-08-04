@@ -46,6 +46,7 @@
     "simulator:test:render-production": "node src/simulator/testing/runRenderProductionTests.mjs",
     "simulator:test:resource-pixi-rendering": "node src/simulator/testing/runResourcePixiRenderingTests.mjs",
     "simulator:test:habahiro": "node src/simulator/testing/runHabahiroTests.mjs",
+    "simulator:test:fixtures": "node src/simulator/testing/verifyTestingFixtures.mjs",
     "tauri": "tauri",
     "desktop:dev": "tauri dev",
     "desktop:build": "tauri build",

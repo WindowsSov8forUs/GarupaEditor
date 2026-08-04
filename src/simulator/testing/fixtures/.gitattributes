@@ -1,0 +1,11 @@
+*.txt whitespace=-trailing-space
+*.bms.txt whitespace=-trailing-space
+reverse-snapshots/add-score-rank-logic/artifacts/investigations/simulator-add-score-rank-logic-reaudit-10-1-4/add_score_rank_logic_reaudit.json text eol=crlf
+reverse-snapshots/default-particle-lane-logic/artifacts/investigations/simulator-default-particle-lane-logic-reaudit-10-1-4/default_particle_lane_logic_reaudit.json text eol=crlf
+reverse-snapshots/hud-ap-fourth-reaudit/artifacts/investigations/simulator-hud-ap-fourth-reaudit-10-1-4/hud_ap_fourth_reaudit_contract.json text eol=crlf
+reverse-snapshots/judge-display-logic/artifacts/investigations/simulator-judge-display-logic-reaudit-10-1-4/judge_display_logic_reaudit.json text eol=crlf
+reverse-snapshots/lane-particle-same-state/artifacts/investigations/simulator-lane-judgement-particle-same-state-10-1-4/lane_judgement_particle_same_state.json text eol=crlf
+reverse-snapshots/note-hierarchy-fourth-reaudit/artifacts/investigations/simulator-note-hierarchy-fourth-reaudit-10-1-4/note_hierarchy_fourth_reaudit_contract.json text eol=crlf
+reverse-snapshots/particle-transform-fourth-reaudit/artifacts/investigations/simulator-particle-transform-fourth-reaudit-10-1-4/particle_transform_fourth_reaudit_contract.json text eol=crlf
+reverse-snapshots/production-visual-third-reaudit/artifacts/investigations/simulator-production-visual-third-reaudit-10-1-4/simulator_production_visual_third_reaudit.json text eol=crlf
+reverse-snapshots/slide-connection-logic/artifacts/investigations/simulator-slide-connection-logic-reaudit-10-1-4/slide_connection_logic_reaudit.json text eol=crlf

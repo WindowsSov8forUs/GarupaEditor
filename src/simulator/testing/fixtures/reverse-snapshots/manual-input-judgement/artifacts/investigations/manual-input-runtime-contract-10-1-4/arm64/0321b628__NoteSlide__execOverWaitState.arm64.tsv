@@ -1,0 +1,30 @@
+address	bytes	instruction	resolved_target
+0x321B628	FE0F1EF8	str x30, [sp, #-0x20]!	-
+0x321B62C	F44F01A9	stp x20, x19, [sp, #0x10]	-
+0x321B630	B40102D0	adrp x20, #0x7251000	-
+0x321B634	88325C39	ldrb w8, [x20, #0x70c]	-
+0x321B638	F30300AA	mov x19, x0	-
+0x321B63C	C8000037	tbnz w8, #0, #0x321b654	-
+0x321B640	C0D301D0	adrp x0, #0x6c95000	-
+0x321B644	005C47F9	ldr x0, [x0, #0xeb8]	-
+0x321B648	04D1EF97	bl #0x2e0fa58	-
+0x321B64C	28008052	mov w8, #1	-
+0x321B650	88321C39	strb w8, [x20, #0x70c]	-
+0x321B654	E00313AA	mov x0, x19	-
+0x321B658	AD0C0094	bl #0x321e90c	NoteSlide$$FadeoutSlideNoteSound
+0x321B65C	60DE40F9	ldr x0, [x19, #0x1b8]	-
+0x321B660	C00100B4	cbz x0, #0x321b698	-
+0x321B664	C8D301D0	adrp x8, #0x6c95000	-
+0x321B668	085D47F9	ldr x8, [x8, #0xeb8]	-
+0x321B66C	E1031F2A	mov w1, wzr	-
+0x321B670	020140F9	ldr x2, [x8]	-
+0x321B674	9F319594	bl #0x5767cf0	System.Collections.Generic.List<object>$$get_Item
+0x321B678	E20300AA	mov x2, x0	-
+0x321B67C	E00313AA	mov x0, x19	-
+0x321B680	E10313AA	mov x1, x19	-
+0x321B684	810D0094	bl #0x321ec88	NoteSlide$$onMiss
+0x321B688	E00313AA	mov x0, x19	-
+0x321B68C	F44F41A9	ldp x20, x19, [sp, #0x10]	-
+0x321B690	FE0742F8	ldr x30, [sp], #0x20	-
+0x321B694	ED0D0014	b #0x321ee48	NoteSlide$$killFromInvisibleNotesToVisibleNote
+0x321B698	93D1EF97	bl #0x2e0fce4	-

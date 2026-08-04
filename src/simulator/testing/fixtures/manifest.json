@@ -1,0 +1,337 @@
+{
+  "schemaVersion": 1,
+  "purpose": "offline simulator test fixtures",
+  "sourceRepository": "HOST________/VSCode/GirlsBandParty-Reverse",
+  "sourceHead": "c9a4629bdfac248c167a966a92bdb2c45dad87e6",
+  "entries": [
+    {
+      "path": "habahiro-snapshots/bestdori-atlas-profile.json",
+      "sourceReverseCommit": "c9a4629bdfac248c167a966a92bdb2c45dad87e6",
+      "sourcePath": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/habahiro_external_atlas_profile.json",
+      "bytes": 50294,
+      "sha256": "5B8BB2BDF01D8DBEC7D916400E25C1654AA4CEA69E79F973C168EB1959667C81"
+    },
+    {
+      "path": "habahiro-snapshots/difference-matrix.json",
+      "sourceReverseCommit": "c9a4629bdfac248c167a966a92bdb2c45dad87e6",
+      "sourcePath": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/habahiro_approximation_difference_matrix.json",
+      "bytes": 2318,
+      "sha256": "DADAAE3D83EDDDECC0E7921761CDF1B64BFE2A584823A91854760D190383CE84"
+    },
+    {
+      "path": "reverse-snapshots/auto-live/fixtures/auto-live-actual-replay-chart.txt",
+      "sourceReverseCommit": "c9a4629bdfac248c167a966a92bdb2c45dad87e6",
+      "sourcePath": "registered replay fixture input",
+      "bytes": 1688,
+      "sha256": "4C2F8D202DED5DFD9C4144C0FE000B1E3524E0F25D3FEAF4DD102413F6CD6325"
+    },
+    {
+      "path": "reverse-snapshots/auto-live/fixtures/auto-live-actual-replay.json",
+      "sourceReverseCommit": "c9a4629bdfac248c167a966a92bdb2c45dad87e6",
+      "sourcePath": "artifacts/investigations/auto-live-runtime-contract-supplement/auto_live_actual_replay.json",
+      "bytes": 37635,
+      "sha256": "226041C1A182641C79EB43882988B905F064524F83A6F7AED7256D15D2DA5BE7"
+    },
+    {
+      "path": "reverse-snapshots/auto-live/fixtures/auto-live-failure-cases.json",
+      "sourceReverseCommit": "c9a4629bdfac248c167a966a92bdb2c45dad87e6",
+      "sourcePath": "artifacts/investigations/auto-live-runtime-contract/auto_live_failure_cases.json",
+      "bytes": 1884,
+      "sha256": "2EC743C8A33E3C73EBACBBA3F8C894803449AA6B174F004FEFC348AFEF208E6B"
+    },
+    {
+      "path": "reverse-snapshots/auto-live/fixtures/auto-live-fixed-event-trace.json",
+      "sourceReverseCommit": "c9a4629bdfac248c167a966a92bdb2c45dad87e6",
+      "sourcePath": "artifacts/investigations/auto-live-runtime-contract/auto_live_fixed_event_trace.json",
+      "bytes": 26558,
+      "sha256": "789B726369B91390C144693CF53B660427C52F674835CDB01A1727EAE37C4249"
+    },
+    {
+      "path": "reverse-snapshots/auto-live/fixtures/auto-live-supplement-fixed-event-trace.json",
+      "sourceReverseCommit": "c9a4629bdfac248c167a966a92bdb2c45dad87e6",
+      "sourcePath": "artifacts/investigations/auto-live-runtime-contract-supplement/auto_live_supplement_fixed_event_trace.json",
+      "bytes": 14124,
+      "sha256": "372A9AEC10FCACD5ECAD92C2B6D51E31AD8DD961F58A627C2DFE84EA59C17B78"
+    },
+    {
+      "path": "reverse-snapshots/chart-construction/artifacts/investigations/runtime-integration-prototype/production_bms_validation.json",
+      "sourceReverseCommit": "c9a4629bdfac248c167a966a92bdb2c45dad87e6",
+      "sourcePath": "artifacts/investigations/runtime-integration-prototype/production_bms_validation.json",
+      "bytes": 4527,
+      "sha256": "081956FDB61263D84F6FDBC1DCDC5A93365B50F0032BE282EF8D42DD046BFF0A"
+    },
+    {
+      "path": "reverse-snapshots/chart-construction/artifacts/investigations/runtime-integration-prototype/production_habahiro_bms_validation.json",
+      "sourceReverseCommit": "c9a4629bdfac248c167a966a92bdb2c45dad87e6",
+      "sourcePath": "artifacts/investigations/runtime-integration-prototype/production_habahiro_bms_validation.json",
+      "bytes": 4859,
+      "sha256": "ECBAF86B547FED5426CD0A59F1D8401AB8A1E1714B78BF8EED974A923BCEE951"
+    },
+    {
+      "path": "reverse-snapshots/chart-construction/fixtures/786_miracle_april_habahiro_special.json",
+      "sourceReverseCommit": "c9a4629bdfac248c167a966a92bdb2c45dad87e6",
+      "sourcePath": "registered production chart fixture (source URL and hash in archived chart task record)",
+      "bytes": 58170,
+      "sha256": "F30C0BC1AE5766D11394FBA02C8F14E463787B31A79E38E6C79F6E02B3493773"
+    },
+    {
+      "path": "reverse-snapshots/chart-construction/fixtures/786_miracle_april_habahiro_special.txt",
+      "sourceReverseCommit": "c9a4629bdfac248c167a966a92bdb2c45dad87e6",
+      "sourcePath": "registered production chart fixture (source URL and hash in archived chart task record)",
+      "bytes": 38700,
+      "sha256": "43148090C40ABBD951E8D7112200BDAE9B796A8A531A0793169E0AD70C3DC159"
+    },
+    {
+      "path": "reverse-snapshots/chart-construction/fixtures/poppin_shuffle_special.json",
+      "sourceReverseCommit": "c9a4629bdfac248c167a966a92bdb2c45dad87e6",
+      "sourcePath": "registered production chart fixture (source URL and hash in archived chart task record)",
+      "bytes": 50591,
+      "sha256": "FA636238280D384C3BAE42335B54522B02CDBE608C890516F2F38FB728DEA2FC"
+    },
+    {
+      "path": "reverse-snapshots/chart-construction/fixtures/poppin_shuffle_special.txt",
+      "sourceReverseCommit": "c9a4629bdfac248c167a966a92bdb2c45dad87e6",
+      "sourcePath": "registered production chart fixture (source URL and hash in archived chart task record)",
+      "bytes": 17882,
+      "sha256": "418DB7F5BFC6B5431AC0ABF2FB905120BDFA8C778C35AA42418A6FA43F4094DC"
+    },
+    {
+      "path": "reverse-snapshots/clock-scheduling/artifacts/investigations/clock-scheduling-runtime-oracle/sources/087_thesis_easy.bms.txt",
+      "sourceReverseCommit": "c9a4629bdfac248c167a966a92bdb2c45dad87e6",
+      "sourcePath": "artifacts/investigations/clock-scheduling-runtime-oracle/sources/087_thesis_easy.bms.txt",
+      "bytes": 2463,
+      "sha256": "06FDD68C34D6CE51B16BD5D0E42DC8283AD8284C8A54234DCC70CFA438FF3206"
+    },
+    {
+      "path": "reverse-snapshots/clock-scheduling/artifacts/investigations/clock-scheduling-runtime-oracle/sources/653_ikuoku_easy.bms.txt",
+      "sourceReverseCommit": "c9a4629bdfac248c167a966a92bdb2c45dad87e6",
+      "sourcePath": "artifacts/investigations/clock-scheduling-runtime-oracle/sources/653_ikuoku_easy.bms.txt",
+      "bytes": 1688,
+      "sha256": "4C2F8D202DED5DFD9C4144C0FE000B1E3524E0F25D3FEAF4DD102413F6CD6325"
+    },
+    {
+      "path": "reverse-snapshots/manual-input-judgement/artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/030eab88__NoteLong__WaitState.arm64.tsv",
+      "sourceReverseCommit": "c9a4629bdfac248c167a966a92bdb2c45dad87e6",
+      "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/030eab88__NoteLong__WaitState.arm64.tsv",
+      "bytes": 2382,
+      "sha256": "9196AEE211234CF1B69DCE05CA53501C2E4F015EE4BA14D80BA02BFD8CEAFFC6"
+    },
+    {
+      "path": "reverse-snapshots/manual-input-judgement/artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/030eac6c__NoteLong__execOverWaitState.arm64.tsv",
+      "sourceReverseCommit": "c9a4629bdfac248c167a966a92bdb2c45dad87e6",
+      "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/030eac6c__NoteLong__execOverWaitState.arm64.tsv",
+      "bytes": 1143,
+      "sha256": "3710502F32A7EC0C184431382D4B1F22412B3149D2BEC17F862F4EB91BD62A79"
+    },
+    {
+      "path": "reverse-snapshots/manual-input-judgement/artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/030eacd8__NoteLong__StopState.arm64.tsv",
+      "sourceReverseCommit": "c9a4629bdfac248c167a966a92bdb2c45dad87e6",
+      "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/030eacd8__NoteLong__StopState.arm64.tsv",
+      "bytes": 3296,
+      "sha256": "26E4EC8281AB101528488ABD1F89C6D34FE0AAECD34D4AC78C0AC07EB87C808D"
+    },
+    {
+      "path": "reverse-snapshots/manual-input-judgement/artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/030eae08__NoteLong__execOverStopState.arm64.tsv",
+      "sourceReverseCommit": "c9a4629bdfac248c167a966a92bdb2c45dad87e6",
+      "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/030eae08__NoteLong__execOverStopState.arm64.tsv",
+      "bytes": 2259,
+      "sha256": "8ECB9AF4228DBAC65C793D23AD848E839A234509BB8569A3AFFA1A5C61386C8F"
+    },
+    {
+      "path": "reverse-snapshots/manual-input-judgement/artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/030eaedc__NoteLong__ExecTouchBegan.arm64.tsv",
+      "sourceReverseCommit": "c9a4629bdfac248c167a966a92bdb2c45dad87e6",
+      "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/030eaedc__NoteLong__ExecTouchBegan.arm64.tsv",
+      "bytes": 6257,
+      "sha256": "0C397F222725EC8DF401F7F0364443C9C656B9EBA718E463CB4BF9C82F915548"
+    },
+    {
+      "path": "reverse-snapshots/manual-input-judgement/artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/030eb210__NoteLong__ExecTouchMoved.arm64.tsv",
+      "sourceReverseCommit": "c9a4629bdfac248c167a966a92bdb2c45dad87e6",
+      "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/030eb210__NoteLong__ExecTouchMoved.arm64.tsv",
+      "bytes": 12617,
+      "sha256": "96C58E289472076297EE509ED766C0FE0642BF7730BB393A2B7DB2518EC38552"
+    },
+    {
+      "path": "reverse-snapshots/manual-input-judgement/artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/030eb8d0__NoteLong__judgeAfterNote.arm64.tsv",
+      "sourceReverseCommit": "c9a4629bdfac248c167a966a92bdb2c45dad87e6",
+      "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/030eb8d0__NoteLong__judgeAfterNote.arm64.tsv",
+      "bytes": 13597,
+      "sha256": "3D90AB91C2225612DD49ABE4F7AE71793D78A683977AB82D5588FCF706ECC49C"
+    },
+    {
+      "path": "reverse-snapshots/manual-input-judgement/artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/030ec820__NoteMultipleDirectionalFlick__ExecTouchMoved.arm64.tsv",
+      "sourceReverseCommit": "c9a4629bdfac248c167a966a92bdb2c45dad87e6",
+      "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/030ec820__NoteMultipleDirectionalFlick__ExecTouchMoved.arm64.tsv",
+      "bytes": 4683,
+      "sha256": "29849AB2001C0886A721DE958A70671E0383A1D7D5E847A1EB7A97AB6F23E9A4"
+    },
+    {
+      "path": "reverse-snapshots/manual-input-judgement/artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/030eca54__NoteMultipleDirectionalFlick__getMultipleDirectionalFlickNoteCount.arm64.tsv",
+      "sourceReverseCommit": "c9a4629bdfac248c167a966a92bdb2c45dad87e6",
+      "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/030eca54__NoteMultipleDirectionalFlick__getMultipleDirectionalFlickNoteCount.arm64.tsv",
+      "bytes": 673,
+      "sha256": "AABDD996D9CCC48A728139DF483B98650F9B541B2FE392BA58CDA093F9FFC532"
+    },
+    {
+      "path": "reverse-snapshots/manual-input-judgement/artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/0321ab5c__NoteSlide__OnUpdate.arm64.tsv",
+      "sourceReverseCommit": "c9a4629bdfac248c167a966a92bdb2c45dad87e6",
+      "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/0321ab5c__NoteSlide__OnUpdate.arm64.tsv",
+      "bytes": 2735,
+      "sha256": "13875C47736007355AFBED3E007E4A48E8314391DDB04E616825762B7702247D"
+    },
+    {
+      "path": "reverse-snapshots/manual-input-judgement/artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/0321b414__NoteSlide__WaitState.arm64.tsv",
+      "sourceReverseCommit": "c9a4629bdfac248c167a966a92bdb2c45dad87e6",
+      "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/0321b414__NoteSlide__WaitState.arm64.tsv",
+      "bytes": 5482,
+      "sha256": "8054265CE4A20753CA083EE6E348E68C343A5671438F14FDADF3C20892ACC531"
+    },
+    {
+      "path": "reverse-snapshots/manual-input-judgement/artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/0321b628__NoteSlide__execOverWaitState.arm64.tsv",
+      "sourceReverseCommit": "c9a4629bdfac248c167a966a92bdb2c45dad87e6",
+      "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/0321b628__NoteSlide__execOverWaitState.arm64.tsv",
+      "bytes": 1291,
+      "sha256": "C0E28381AEBD0D00C86EC5BE352FF2470530CC1EF9374229F4B82BC7B9F473F6"
+    },
+    {
+      "path": "reverse-snapshots/manual-input-judgement/artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/0321b69c__NoteSlide__StopState.arm64.tsv",
+      "sourceReverseCommit": "c9a4629bdfac248c167a966a92bdb2c45dad87e6",
+      "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/0321b69c__NoteSlide__StopState.arm64.tsv",
+      "bytes": 7362,
+      "sha256": "44669140C70003A4ED6A5F9907CFED1FEE2BD493E1EF004C1CB0E02EA47AC476"
+    },
+    {
+      "path": "reverse-snapshots/manual-input-judgement/artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/0321ba8c__NoteSlide__ExecTouchBegan.arm64.tsv",
+      "sourceReverseCommit": "c9a4629bdfac248c167a966a92bdb2c45dad87e6",
+      "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/0321ba8c__NoteSlide__ExecTouchBegan.arm64.tsv",
+      "bytes": 17885,
+      "sha256": "47BE828D451D8B41C8A95BC9326C6704F8339D247BC8CDC199376FF00A81A148"
+    },
+    {
+      "path": "reverse-snapshots/manual-input-judgement/artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/0321c664__NoteSlide__ExecTouchMoved.arm64.tsv",
+      "sourceReverseCommit": "c9a4629bdfac248c167a966a92bdb2c45dad87e6",
+      "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/0321c664__NoteSlide__ExecTouchMoved.arm64.tsv",
+      "bytes": 47327,
+      "sha256": "CDF4923BBFCE7E2D6F2BBEF97E2D286C29D716091842998661A04CFE7FD22CCB"
+    },
+    {
+      "path": "reverse-snapshots/manual-input-judgement/artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/0321d96c__SlideNoteManager__Judge.arm64.tsv",
+      "sourceReverseCommit": "c9a4629bdfac248c167a966a92bdb2c45dad87e6",
+      "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/0321d96c__SlideNoteManager__Judge.arm64.tsv",
+      "bytes": 4587,
+      "sha256": "53F13E831839CE0EEEB839247020714D2B62845AF26AE59018C38A20B93CAD31"
+    },
+    {
+      "path": "reverse-snapshots/manual-input-judgement/artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/0321ec88__NoteSlide__onMiss.arm64.tsv",
+      "sourceReverseCommit": "c9a4629bdfac248c167a966a92bdb2c45dad87e6",
+      "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/0321ec88__NoteSlide__onMiss.arm64.tsv",
+      "bytes": 4526,
+      "sha256": "1C60954A61E34C13FA4C08724A75609C9855FD88AC56CAE1A2CD3A6C421828BE"
+    },
+    {
+      "path": "reverse-snapshots/manual-input-judgement/artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/0321ee48__NoteSlide__killFromInvisibleNotesToVisibleNote.arm64.tsv",
+      "sourceReverseCommit": "c9a4629bdfac248c167a966a92bdb2c45dad87e6",
+      "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/0321ee48__NoteSlide__killFromInvisibleNotesToVisibleNote.arm64.tsv",
+      "bytes": 1943,
+      "sha256": "6D79D1DFD1BD853D442AE11D357C3BC4EBDF5321861C289AFE872DC1775AAEC4"
+    },
+    {
+      "path": "reverse-snapshots/manual-input-judgement/artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/0321f47c__NoteSlide__onMissAfterNote.arm64.tsv",
+      "sourceReverseCommit": "c9a4629bdfac248c167a966a92bdb2c45dad87e6",
+      "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/0321f47c__NoteSlide__onMissAfterNote.arm64.tsv",
+      "bytes": 2188,
+      "sha256": "83509AE4E53A760A228675AB0504AA4D811944224592F787030A9CA36D661942"
+    },
+    {
+      "path": "reverse-snapshots/manual-input-judgement/artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/03223820__SlideNoteManager__GetNearJudgeLineNote.arm64.tsv",
+      "sourceReverseCommit": "c9a4629bdfac248c167a966a92bdb2c45dad87e6",
+      "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/03223820__SlideNoteManager__GetNearJudgeLineNote.arm64.tsv",
+      "bytes": 3674,
+      "sha256": "A507FF5342956718DA7D83A3606DD48544902C88F2FFEF32F77C401CAE3DA323"
+    },
+    {
+      "path": "reverse-snapshots/manual-input-judgement/artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/03a76878__NoteFlickBase__WaitState.arm64.tsv",
+      "sourceReverseCommit": "c9a4629bdfac248c167a966a92bdb2c45dad87e6",
+      "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/03a76878__NoteFlickBase__WaitState.arm64.tsv",
+      "bytes": 731,
+      "sha256": "CF4521054FF5DA58A1C5C54BF82D1B2753630AC3DEA3AB0E92096C82B6E1E38A"
+    },
+    {
+      "path": "reverse-snapshots/manual-input-judgement/artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/03a768c0__NoteFlickBase__ExecTouchBegan.arm64.tsv",
+      "sourceReverseCommit": "c9a4629bdfac248c167a966a92bdb2c45dad87e6",
+      "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/03a768c0__NoteFlickBase__ExecTouchBegan.arm64.tsv",
+      "bytes": 769,
+      "sha256": "FAFEE4CC23D778B9CB5E162707566F506CCA6C4F9D27009EA4CCDA3E91B0D29A"
+    },
+    {
+      "path": "reverse-snapshots/manual-input-judgement/artifacts/investigations/manual-input-runtime-contract-10-1-4/closure.json",
+      "sourceReverseCommit": "c9a4629bdfac248c167a966a92bdb2c45dad87e6",
+      "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/closure.json",
+      "bytes": 3734,
+      "sha256": "5663C186B67F62E6BEEFB62E67983DE878FD5FEB68590154C7596A4FC3FD5DC2"
+    },
+    {
+      "path": "reverse-snapshots/manual-input-judgement/artifacts/investigations/manual-input-runtime-contract-10-1-4/manual_input_fixed_event_oracle.json",
+      "sourceReverseCommit": "c9a4629bdfac248c167a966a92bdb2c45dad87e6",
+      "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/manual_input_fixed_event_oracle.json",
+      "bytes": 30331,
+      "sha256": "25646D696863910173F85A723ECAEE7A6B86D934F80F3ABB39FDD6B9755E2323"
+    },
+    {
+      "path": "reverse-snapshots/resource-pixi-rendering/artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/delivery_closure.json",
+      "sourceReverseCommit": "c9a4629bdfac248c167a966a92bdb2c45dad87e6",
+      "sourcePath": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/delivery_closure.json",
+      "bytes": 3726,
+      "sha256": "089317E751F5F65E4FAF968874A19EE12F694DE509FFF3C2CE6AAC70B911EFAE"
+    },
+    {
+      "path": "reverse-snapshots/resource-pixi-rendering/artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/resource_pixi_rendering_delivery_oracle.json",
+      "sourceReverseCommit": "c9a4629bdfac248c167a966a92bdb2c45dad87e6",
+      "sourcePath": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/resource_pixi_rendering_delivery_oracle.json",
+      "bytes": 7734,
+      "sha256": "03DEE2153F0E700448D87DD5D9DF977AE163C9BEE1333A578A79AF210C28EDEB"
+    },
+    {
+      "path": "reverse-snapshots/score-life-state/artifacts/investigations/score-life-state-runtime-contract-10-1-4/closure.json",
+      "sourceReverseCommit": "c9a4629bdfac248c167a966a92bdb2c45dad87e6",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/closure.json",
+      "bytes": 5363,
+      "sha256": "AF922AECF249403DA4A5CA12CDB9A73672486230883353311D04D930138492A5"
+    },
+    {
+      "path": "reverse-snapshots/score-life-state/artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime-inputs/bms/786_miracle_april_habahiro_special.bms.txt",
+      "sourceReverseCommit": "c9a4629bdfac248c167a966a92bdb2c45dad87e6",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime-inputs/bms/786_miracle_april_habahiro_special.bms.txt",
+      "bytes": 38700,
+      "sha256": "43148090C40ABBD951E8D7112200BDAE9B796A8A531A0793169E0AD70C3DC159"
+    },
+    {
+      "path": "reverse-snapshots/score-life-state/artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime-inputs/bms/poppin_shuffle_special.bms.txt",
+      "sourceReverseCommit": "c9a4629bdfac248c167a966a92bdb2c45dad87e6",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime-inputs/bms/poppin_shuffle_special.bms.txt",
+      "bytes": 17882,
+      "sha256": "418DB7F5BFC6B5431AC0ABF2FB905120BDFA8C778C35AA42418A6FA43F4094DC"
+    },
+    {
+      "path": "reverse-snapshots/score-life-state/artifacts/investigations/score-life-state-runtime-contract-10-1-4/score_life_state_fixed_event_oracle.json",
+      "sourceReverseCommit": "c9a4629bdfac248c167a966a92bdb2c45dad87e6",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/score_life_state_fixed_event_oracle.json",
+      "bytes": 150524,
+      "sha256": "0B46D57F72E544939B63A68D0D956AB2474A2F5C999BBB95A9335354C29933E7"
+    },
+    {
+      "path": "reverse-snapshots/score-life-state/artifacts/investigations/score-life-state-runtime-contract-10-1-4/score_life_state_migrated_static_oracle.json",
+      "sourceReverseCommit": "c9a4629bdfac248c167a966a92bdb2c45dad87e6",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/score_life_state_migrated_static_oracle.json",
+      "bytes": 56029,
+      "sha256": "574C247CF50AA973C7732AB4707BAF9A6D1BB9D26A1CC8EB13F0EEB61D62BD1C"
+    },
+    {
+      "path": "reverse-snapshots/score-life-state/artifacts/investigations/score-life-state-runtime-contract-10-1-4/score_life_state_portable_contract.json",
+      "sourceReverseCommit": "c9a4629bdfac248c167a966a92bdb2c45dad87e6",
+      "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/score_life_state_portable_contract.json",
+      "bytes": 128440,
+      "sha256": "19DA944D1866ED98586C55F69D20E0F01424AE44BC2602F8AB5B0EE898189B9F"
+    }
+  ]
+}

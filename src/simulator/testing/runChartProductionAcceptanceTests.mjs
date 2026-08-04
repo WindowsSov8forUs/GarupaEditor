@@ -61,15 +61,13 @@ function validateProductionCharts() {
   } = require(join(chartRoot, "multiRangeSources.js"));
   const fixturesRoot = join(
     repositoryRoot,
-    "tmp",
-    "simulator-reverse-evidence",
+    "src", "simulator", "testing", "fixtures", "reverse-snapshots",
     "chart-construction",
     "fixtures",
   );
   const evidenceRoot = join(
     repositoryRoot,
-    "tmp",
-    "simulator-reverse-evidence",
+    "src", "simulator", "testing", "fixtures", "reverse-snapshots",
     "chart-construction",
     "artifacts",
     "investigations",

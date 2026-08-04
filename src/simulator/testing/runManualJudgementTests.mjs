@@ -13,8 +13,7 @@ const require = createRequire(import.meta.url);
 const typeScriptCli = require.resolve("typescript/bin/tsc");
 const oracle = JSON.parse(readFileSync(join(
   repositoryRoot,
-  "tmp",
-  "simulator-reverse-evidence",
+  "src", "simulator", "testing", "fixtures", "reverse-snapshots",
   "manual-input-judgement",
   "artifacts",
   "investigations",
