@@ -89,14 +89,37 @@
 
 ## 9. 当前状态
 
-- 审计已完成：现有实现只有宽root ordinary-projection proxy和同帧两阶段diagnostic；Long/Slide child、mesh/line、field/judge、完整lane-change与Bestdori准备器仍缺。
-- 当前外部资源profile已锁定179 rows及资源hash，但尚未由production下载/解析/消费。
-- 本专项重新打开HAB functional completion；旧`exact open-not-claimed`将保留为parity声明边界，而不再代表功能未实现。
+- **专项功能实施与本地验收已完成**：HR01–HR12全部通过，等待clean pushed HEAD独立复验后归档。
+- Production已下载前校验固定Bestdori资源、解析179 rows，并完整消费宽Note、Long/Slide、line、field/judge/mask与分阶段lane-change。
+- 旧`exact open-not-claimed`只保留为parity声明边界，不再代表HABAHIRO功能未实现。
 
 ## 10. 2026-08-03 一次性资源与推导冻结
 
-- 按固定Bestdori URL一次下载explorer、bundle、`.sprites`、6张atlas PNG及3张line/material PNG；12项byte length与SHA-256全部匹配Reverse current external profile，原始bytes留在临时目录且不入库。
+- 按固定Bestdori URL一次下载bundle、`.sprites`、6张atlas PNG及3张line/material PNG；11项payload的byte length与SHA-256全部匹配Reverse current external profile，原始bytes留在临时目录且不入库。
 - 解析bundle preload range建立texture PathID→PNG映射；`.sprites`得到179个unique exact key，按PNG分组为31/28/35/28/28/28/1行；Unity bottom-left rect转换为Pixi top-left后全部通过dimension边界。
 - 从current 10.1.4 `libil2cpp.so`只读恢复`GetMeshWidthRate`常量：base `1.05f`（`3F866666`）、coefficient `0.0300000906f`（`3CF5C2C0`）；宿主setting继续显式输入。
 - 冻结`tmp/simulator-habahiro-approximation-evidence/`：pinned assets、179 atlas rows、mesh-width formula、0.25秒显式推导flash profile和HA-D01–HA-D12 difference matrix。verifier输出`functional-blockers=0 parity=false`。
 - 自本记录提交并push后，允许按resource→engine→Pixi→oracle顺序集中实施；实现不得删除visible approximation label或差异矩阵。
+
+## 11. 2026-08-04 集中实现结果
+
+- resource：新增固定Bestdori allowlist、浏览器准备transport、11项length/SHA-256校验、bundle preload与`.sprites` parser、179-row source atlas profile、6 atlas texture绑定、3 material texture绑定及Multiple line显式alias；hash/metadata异常在profile生成前失败关闭。
+- engine：新增`approximate-current-external` fidelity和显式`HabahiroApproximationSceneInput`；宽root使用range exact key，Long/Slide恢复child、base/advanced 42/120 mesh与material，Flick/Directional/Multiple恢复icon/side/back-line，sync/fixed pool/reuse/release沿用R7 owner链。
+- width：`getApproximateHabahiroMeshWidthRate`按current ARM64的`1.05f`与`0.0300000906f`逐步Float32计算，setting由宿主显式提供，缺失或range越界失败关闭。
+- field/lane：初始化前完整验证field/judge/mask与0.25秒推导flash；运行时按engine clock发出`marker → flash-start → change-lane → complete`，pause不推进，整批preflight/commit失败保持原子。
+- Pixi：消费approximate projection、179-row atlas、base/advanced mesh、material、mask、field/judge、long flash icon及portable全屏flash；不使用ticker创作领域时间。
+- compatibility：旧`fidelity=degraded`路线及4,902-command oracle保留隔离；ordinary 656-batch/159,832-command/digest保持不变。
+
+## 12. HR01–HR12 关闭记录
+
+| ID | 结果 | 固定oracle |
+| --- | --- | --- |
+| HR01–HR03 | passed | dedicated fidelity/label；11 pinned payload；179 source Sprite rows |
+| HR04–HR08 | passed | 全range atlas、Long/Slide/Directional/Multiple/sync/fixed pool、42/120 mesh与Float32 width |
+| HR09–HR10 | passed | field/judge/mask；`flash-start,change-lane,complete` engine-clock顺序 |
+| HR11 | passed | session release后0 owner；tamper/parser/非法width失败关闭 |
+| HR12 | passed | 371 batches、6,130 frames、217,604 commands、digest `f1e1aac4b8c9b4de6d6cefde1f04f6a69636adedde9b352c559671098f22767c` |
+
+专项总入口：`npm.cmd run simulator:test:habahiro-approximation`。验收记录见`tmp/simulator-habahiro-approximation-acceptance.md`。
+
+功能状态为closed；UnityFS bytes、natural HAB runtime顺序、Root_effect原clip和original physical frame parity仍明确为`open-not-claimed`，不得把本专项oracle表述为原作逐帧一致。
