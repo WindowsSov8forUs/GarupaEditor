@@ -3,6 +3,7 @@ tmp/simulator-reverse-evidence/** -text whitespace=cr-at-eol
 tmp/simulator-reverse-evidence/chart-construction/** -text -whitespace
 tmp/simulator-reverse-evidence/clock-scheduling/** -text -whitespace
 tmp/simulator-reverse-evidence/auto-live/** -text -whitespace
+tmp/simulator-habahiro-approximation-evidence/** -text whitespace=cr-at-eol
 src/assets/game/portable/profiles/default-particle/textures.json text eol=crlf
 src/assets/icons/apply-action.svg text eol=crlf
 src/assets/icons/back-arrow.svg text eol=crlf
