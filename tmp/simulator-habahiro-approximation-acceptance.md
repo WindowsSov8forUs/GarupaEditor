@@ -61,11 +61,12 @@ npm.cmd run simulator:test:resource-pixi-rendering
 
 专项总入口覆盖evidence verifier、static audit、isolated type check、tamper/parser/Float32 contract、actual Pixi消费和full-chart oracle；测试期间不联网。
 
-独立复验基线：已推送`60e5bf5`。在Windows detached clean worktree中重新执行`npm.cmd ci --ignore-scripts`后：
+独立复验基线：已推送`45edd6c`。在Windows detached clean worktree中重新执行`npm.cmd ci --ignore-scripts`后：
 
 - `npm.cmd run simulator:test:habahiro`：passed，HR01–HR12；
 - `npm.cmd run simulator:test:resource-pixi-rendering`：passed，14/14 stages；
 - evidence verifier：11 assets / 179 rows / 12 differences / 0 functional blockers / parity false；
+- static audit确认production contracts/provider/producer不包含runtime approximation marker；
 - `.gitattributes`固定专项证据包为byte-preserving checkout，Windows clean verifier通过。
 
 ## 6. 保留差异
