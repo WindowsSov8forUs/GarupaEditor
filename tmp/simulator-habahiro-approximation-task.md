@@ -89,7 +89,7 @@
 
 ## 9. 当前状态
 
-- **专项功能实施与本地验收已完成**：HR01–HR12全部通过，等待clean pushed HEAD独立复验后归档。
+- **专项已完成并归档**：HR01–HR12全部通过；从已推送`60e5bf5` detached clean worktree完成专项总入口与14-stage全上游独立复验。
 - Production已下载前校验固定Bestdori资源、解析179 rows，并完整消费宽Note、Long/Slide、line、field/judge/mask与分阶段lane-change。
 - 旧`exact open-not-claimed`只保留为parity声明边界，不再代表HABAHIRO功能未实现。
 

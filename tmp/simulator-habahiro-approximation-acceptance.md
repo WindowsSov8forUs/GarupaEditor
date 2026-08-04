@@ -62,6 +62,13 @@ npm.cmd run simulator:test:resource-pixi-rendering
 
 专项总入口覆盖evidence verifier、static audit、isolated type check、tamper/parser/Float32 contract、actual Pixi消费和full-chart oracle；测试期间不联网。
 
+独立复验基线：已推送`60e5bf5`。在Windows detached clean worktree中重新执行`npm.cmd ci --ignore-scripts`后：
+
+- `npm.cmd run simulator:test:habahiro-approximation`：passed，HR01–HR12；
+- `npm.cmd run simulator:test:resource-pixi-rendering`：passed，14/14 stages；
+- evidence verifier：11 assets / 179 rows / 12 differences / 0 functional blockers / parity false；
+- `.gitattributes`固定专项证据包为byte-preserving checkout，Windows clean verifier通过。
+
 ## 6. 保留差异
 
 HA-D01–HA-D12继续作为产品可见、machine-readable差异边界。Exact HABAHIRO parity仍为`open-not-claimed`；只有获得current UnityFS、natural HAB runtime和original frame新证据后，才能另立exact parity任务，不得倒写本验收为原作逐帧复刻。
