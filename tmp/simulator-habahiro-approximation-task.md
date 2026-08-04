@@ -13,12 +13,11 @@
 交付模式固定为：
 
 - `mode = habahiro`
-- `fidelity = approximate-current-external`
-- visible label：`Approximate HABAHIRO`
-- machine-readable flag：`rendering-fidelity-approximate-habahiro`
-- 不宣称 Unity AssetBundle byte parity、自然运行时顺序 parity、原始 framebuffer parity 或 GPU raster parity。
+- `fidelity = current-external-complete`
+- 运行时不显示“Approximate”标签，不暴露approximation flag；实现按完整HABAHIRO功能路线运行。
+- Unity AssetBundle byte parity、自然运行时顺序、原始framebuffer和GPU raster的证据差异只在本文及验收文本中说明。
 
-“近似”只表示证据等级和差异披露，不表示允许省略功能。最终必须实现全部谱面 Note family、宽音符资源、Long/Slide mesh、sync/Multiple line、field/judge/mask、lane-change、pause/reset/reuse/release，并完整重放固定 HABAHIRO production chart。
+“近似”仅是证据来源与原作逐帧parity的**文档说明**，不是功能模式、运行时状态或实现裁剪。实现必须覆盖全部谱面Note family、宽音符资源、Long/Slide mesh、sync/Multiple line、field/judge/mask、lane-change、pause/reset/reuse/release，并完整重放固定HABAHIRO production chart。
 
 ## 3. 依据层级
 
@@ -31,7 +30,7 @@
 ## 4. 资源策略
 
 - Production允许显式调用HAB专用Bestdori准备器；engine仍不联网，网络只存在于host/backend资源准备边界。
-- 自动下载只在用户显式选择HAB approximate profile后发生；ordinary及其他profile不得触发。
+- 自动下载只在用户显式选择HAB `current-external-complete` profile后发生；ordinary及其他profile不得触发。
 - Bestdori失败、hash变化、缺文件、非法`.sprites`、越界rect或重复key必须在renderer object创建前失败。
 - 原始PNG/Bundle不提交仓库；提交固定manifest、parser、profile builder、mock transport测试和结构化oracle。
 - Test总入口不得联网；使用最小合成bytes和冻结metadata验证同一流程。
@@ -51,7 +50,7 @@
 
 ## 6. 差异披露
 
-必须持续显示并记录以下可能差异：
+以下可能差异只在任务书、验收记录和证据矩阵等文本中记录：
 
 - Bestdori导出资源可能与游戏内部UnityFS打包、材质或导入设置不同；
 - HAB自然runtime的同帧pool identity、setter顺序和pause相位未直接观察；
@@ -59,13 +58,13 @@
 - flash clip曲线、Root_effect、field/judge精确纹理与事件时刻可能不同；
 - mask、透明排序、采样、GPU raster和physical frame可能不同。
 
-这些差异不得再作为“不实现”的理由，但也不得从文档、UI label、snapshot或oracle中删除。
+这些差异不得再作为“不实现”的理由，也不得从文档删除；production UI、snapshot、fidelity和semantic command不得把完整功能路线标记为“Approximate”。
 
 ## 7. 固定验收项
 
 | ID | 验收项 |
 | --- | --- |
-| HR01 | explicit approximate profile、visible label、machine-readable fidelity，无silent fallback |
+| HR01 | explicit `current-external-complete` profile；无silent fallback、无运行时approximation label/flag |
 | HR02 | pinned Bestdori allowlist、length/hash/dimension、失败原子 |
 | HR03 | `.sprites`解析179 unique rows并按6 atlas textures分组 |
 | HR04 | Normal/16/Skill/Flick/Long/Flash/SlideAmong宽range exact key绑定 |
@@ -99,27 +98,27 @@
 - 解析bundle preload range建立texture PathID→PNG映射；`.sprites`得到179个unique exact key，按PNG分组为31/28/35/28/28/28/1行；Unity bottom-left rect转换为Pixi top-left后全部通过dimension边界。
 - 从current 10.1.4 `libil2cpp.so`只读恢复`GetMeshWidthRate`常量：base `1.05f`（`3F866666`）、coefficient `0.0300000906f`（`3CF5C2C0`）；宿主setting继续显式输入。
 - 冻结`tmp/simulator-habahiro-approximation-evidence/`：pinned assets、179 atlas rows、mesh-width formula、0.25秒显式推导flash profile和HA-D01–HA-D12 difference matrix。verifier输出`functional-blockers=0 parity=false`。
-- 自本记录提交并push后，允许按resource→engine→Pixi→oracle顺序集中实施；实现不得删除visible approximation label或差异矩阵。
+- 自本记录提交并push后，允许按resource→engine→Pixi→oracle顺序集中实施；差异矩阵必须保留在文本证据中。
 
 ## 11. 2026-08-04 集中实现结果
 
 - resource：新增固定Bestdori allowlist、浏览器准备transport、11项length/SHA-256校验、bundle preload与`.sprites` parser、179-row source atlas profile、6 atlas texture绑定、3 material texture绑定及Multiple line显式alias；hash/metadata异常在profile生成前失败关闭。
-- engine：新增`approximate-current-external` fidelity和显式`HabahiroApproximationSceneInput`；宽root使用range exact key，Long/Slide恢复child、base/advanced 42/120 mesh与material，Flick/Directional/Multiple恢复icon/side/back-line，sync/fixed pool/reuse/release沿用R7 owner链。
-- width：`getApproximateHabahiroMeshWidthRate`按current ARM64的`1.05f`与`0.0300000906f`逐步Float32计算，setting由宿主显式提供，缺失或range越界失败关闭。
-- field/lane：初始化前完整验证field/judge/mask与0.25秒推导flash；运行时按engine clock发出`marker → flash-start → change-lane → complete`，pause不推进，整批preflight/commit失败保持原子。
-- Pixi：消费approximate projection、179-row atlas、base/advanced mesh、material、mask、field/judge、long flash icon及portable全屏flash；不使用ticker创作领域时间。
-- compatibility：旧`fidelity=degraded`路线及4,902-command oracle保留隔离；ordinary 656-batch/159,832-command/digest保持不变。
+- engine：使用`current-external-complete` fidelity和显式`HabahiroSceneInput`；宽root使用range exact key，Long/Slide恢复child、base/advanced 42/120 mesh与material，Flick/Directional/Multiple恢复icon/side/back-line，sync/fixed pool/reuse/release沿用R7 owner链。
+- width：`getHabahiroMeshWidthRate`按current ARM64的`1.05f`与`0.0300000906f`逐步Float32计算，setting由宿主显式提供，缺失或range越界失败关闭。
+- field/lane：初始化前完整验证field/judge/mask与0.25秒推导flash；运行时按engine clock执行`marker → flash-start → change-lane → complete`，pause不推进，整批preflight/commit失败保持原子。
+- Pixi：消费HABAHIRO current-external projection、179-row atlas、base/advanced mesh、material、mask、field/judge、long flash icon及portable全屏flash；不使用ticker创作领域时间，也不渲染approximation说明。
+- compatibility：旧`fidelity=degraded`只保留backend contract兼容，host在创建production engine前拒绝；ordinary 656-batch/159,832-command/digest保持不变。
 
 ## 12. HR01–HR12 关闭记录
 
 | ID | 结果 | 固定oracle |
 | --- | --- | --- |
-| HR01–HR03 | passed | dedicated fidelity/label；11 pinned payload；179 source Sprite rows |
+| HR01–HR03 | passed | complete fidelity、无运行时approximation marker；11 pinned payload；179 source Sprite rows |
 | HR04–HR08 | passed | 全range atlas、Long/Slide/Directional/Multiple/sync/fixed pool、42/120 mesh与Float32 width |
 | HR09–HR10 | passed | field/judge/mask；`flash-start,change-lane,complete` engine-clock顺序 |
 | HR11 | passed | session release后0 owner；tamper/parser/非法width失败关闭 |
-| HR12 | passed | 371 batches、6,130 frames、217,604 commands、digest `f1e1aac4b8c9b4de6d6cefde1f04f6a69636adedde9b352c559671098f22767c` |
+| HR12 | passed | 371 batches、6,130 frames、217,595 commands、digest `74d11cf3742de6e955a46ddd0f5d1b5c8e620f74e3e52502a7feae364f3ad8b5` |
 
-专项总入口：`npm.cmd run simulator:test:habahiro-approximation`。验收记录见`tmp/simulator-habahiro-approximation-acceptance.md`。
+专项总入口：`npm.cmd run simulator:test:habahiro`。验收记录见`tmp/simulator-habahiro-approximation-acceptance.md`。
 
 功能状态为closed；UnityFS bytes、natural HAB runtime顺序、Root_effect原clip和original physical frame parity仍明确为`open-not-claimed`，不得把本专项oracle表述为原作逐帧一致。
