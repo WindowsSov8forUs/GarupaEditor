@@ -886,7 +886,7 @@ git rev-list --left-right --count origin/codex/refactor-simulator-implementation
 - 实施块7范围、架构、证据分类、硬门、runtime/resource计划、AU-C01–AU-C40、批次和完成定义已建立。
 - 当前**可消费的已push** 10.1.4证据只提供判定入口、Long/Slide局部Hold与scheduler pause边界，不能授权完整音频production。
 - 10.1.3 Perfect→CRI、cue资源、gain、pause和real-play调查具有定位价值，但全部保持discovery-only。
-- 当前Garupa HEAD为已push的`7bfecd9...`；Reverse可消费基线仍是已push的`ab5cc366...`。本地`10aae920...`虽已形成完整静态候选，但因领先远端1提交且Reverse工作树有大量无关变化，当前只能作为E01待复验候选，不能进入Garupa manifest或production evidence。
+- 本次整理前Garupa基线为已push的`7bfecd9...`，整理后的任务书提交同样要求远端差异`0 0`；Reverse可消费基线仍是已push的`ab5cc366...`。本地`10aae920...`虽已形成完整静态候选，但因领先远端1提交且Reverse工作树有大量无关变化，当前只能作为E01待复验候选，不能进入Garupa manifest或production evidence。
 - 后续不再采用“取一个cue/常量→实现一段→再补证”的交替路线。必须依次完成E01–E08统一取证总阶段：静态候选晋升、统一自然runtime、resource/portable profile、固定command/PCM expected、总closure、Reverse push与Garupa三方冻结。
 - AU03关闭前，不得创建typed audio production合同、Web Audio backend、音频test入口或package script；只有`production_authorization=true`后才按I01–I06落地实现。
 - 本次对话任务列表已经写入1.5；任务书整理完成后状态为`blocked`，等待用户明确命令再从E01开始。
