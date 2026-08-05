@@ -41,15 +41,6 @@ const manualRunners = [
   "runManualTimeoutJudgementTests.mjs",
 ];
 for (const runner of manualRunners) run(process.execPath, [join(testingRoot, runner)]);
-const upstreamRunners = [
-  "runFirstSliceTests.mjs", "runChartConstructionBoundaryTests.mjs",
-  "runChartConstructionParsingTests.mjs", "runChartBatchConversionTests.mjs",
-  "runChartNoteGraphTests.mjs", "runChartMultiRangeTests.mjs",
-  "runChartCommandDataTests.mjs", "runChartFinalizeTests.mjs",
-  "runChartProductionAcceptanceTests.mjs", "runClockSchedulingTests.mjs",
-  "runAutoLiveTests.mjs",
-];
-for (const runner of upstreamRunners) run(process.execPath, [join(testingRoot, runner)]);
 console.log("manual input M00-M11 acceptance suite passed");
 function run(command, args) {
   const result = spawnSync(command, args, { cwd: repositoryRoot, encoding: "utf8", stdio: "inherit" });

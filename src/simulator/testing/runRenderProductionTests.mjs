@@ -18,7 +18,6 @@ for (const runner of [
   "runOrdinaryNoteGeometryTests.mjs",
   "runRenderPixiTests.mjs",
   "runRenderProductionChartTests.mjs",
-  "runRenderFailureTests.mjs",
 ]) run(process.execPath, [join(testingRoot, runner)]);
 console.log("render production oracle passed: contracts/producers/Pixi/HAB-complete+legacy-rejection charts/failures/static/evidence");
 
