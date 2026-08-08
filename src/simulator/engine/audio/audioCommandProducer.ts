@@ -122,6 +122,24 @@ export class AudioCommandProducer {
     return ok(undefined);
   }
 
+  pollBackendFault(): SimulatorResult<void> {
+    const snapshot = this.backend.snapshot();
+    if (snapshot.fault !== null) {
+      return evidenceRequired(
+        `audio.audio-backend-fault.${snapshot.fault.capability}`,
+        [],
+        snapshot.fault.boundary,
+      );
+    }
+    if (snapshot.state !== "ready") {
+      return rejected(
+        "audio.session.backend-left-ready-state",
+        "An active audio session cannot continue after its backend leaves ready state.",
+      );
+    }
+    return ok(undefined);
+  }
+
   beginOuterFrame(): void {
     if (this.tapStatus.frameCounter <= 0) return;
     this.tapStatus = Object.freeze({

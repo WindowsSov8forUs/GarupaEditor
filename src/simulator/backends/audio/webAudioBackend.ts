@@ -233,20 +233,32 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
   dispose(): AudioOperationResult<void> {
     if (this.recording.snapshot().state === "disposed") return terminalDisposed();
     this.pending = null;
-    for (const voice of this.voices.values()) this.releaseVoice(voice);
+    let disposeFault: AudioOperationResult<never> | null = null;
+    const release = (action: () => void): void => {
+      try {
+        action();
+      } catch {
+        disposeFault ??= this.recording.recordTerminalFault(
+          "audio.web.dispose-node-threw",
+          "The first source stop or node disconnect exception is latched while disposal continues releasing all owned capabilities.",
+        );
+      }
+    };
+    for (const voice of this.voices.values()) release(() => this.releaseVoice(voice));
     this.voices.clear();
     this.decodedByCue.clear();
-    this.disconnectCategory(this.bgmGain);
-    this.disconnectCategory(this.seGain);
-    this.disconnectCategory(this.voiceGain);
+    release(() => this.bgmGain?.disconnect());
+    release(() => this.seGain?.disconnect());
+    release(() => this.voiceGain?.disconnect());
     this.bgmGain = null;
     this.seGain = null;
     this.voiceGain = null;
     if (this.contextListenerInstalled) {
-      this.context.removeEventListener("statechange", this.onContextStateChange);
+      release(() => this.context.removeEventListener("statechange", this.onContextStateChange));
       this.contextListenerInstalled = false;
     }
-    return this.recording.dispose();
+    const disposed = this.recording.dispose();
+    return disposeFault ?? disposed;
   }
 
   private applyCommands(commands: readonly AudioCommand[]): void {
@@ -381,8 +393,15 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
       if (voice.source !== source || voice.paused) return;
       voice.source = null;
       if (voice.loopStart === null) {
-        voice.gain.disconnect();
-        this.voices.delete(voice.voiceKey);
+        try {
+          voice.gain.disconnect();
+          this.voices.delete(voice.voiceKey);
+        } catch {
+          this.recording.recordTerminalFault(
+            "audio.web.async-ended-cleanup-threw",
+            "The first asynchronous ended-handler node exception is terminal and stable.",
+          );
+        }
       }
     };
     source.start(this.context.currentTime, normalizeOffset(voice, buffer));
@@ -453,15 +472,10 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
       const source = voice.source;
       voice.source = null;
       source.onended = null;
-      try { source.stop(this.context.currentTime); } catch {}
-      try { source.disconnect(); } catch {}
+      source.stop(this.context.currentTime);
+      source.disconnect();
     }
-    try { voice.gain.disconnect(); } catch {}
-  }
-
-  private disconnectCategory(node: GainNode | null): void {
-    if (node === null) return;
-    try { node.disconnect(); } catch {}
+    voice.gain.disconnect();
   }
 
   private installContextLossListener(): void {

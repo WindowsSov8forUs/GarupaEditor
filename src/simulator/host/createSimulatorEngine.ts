@@ -48,6 +48,7 @@ import {
 import {
   AudioCommandProducer,
   mapAudioResult,
+  type AudioOwnerTransaction,
 } from "../engine/audio/audioCommandProducer";
 import type {
   SimulatorEngine,
@@ -76,6 +77,8 @@ class SimulatorEngineHost implements SimulatorEngine {
       return this.inGameManager.initialize();
     }
     if (this.inGameManager.state === "initialized") return ok(undefined);
+    const audioFault = this.pollAudioFault();
+    if (audioFault.status !== "ok") return audioFault;
     const audio = this.audioProducer?.preflightInitialize() ?? null;
     if (audio !== null && audio.status !== "ok") return audio;
     const awake = this.inGameDirector.awake();
@@ -88,7 +91,9 @@ class SimulatorEngineHost implements SimulatorEngine {
       if (audio?.status === "ok") audio.value.discard();
       return initialized;
     }
-    return audio?.status === "ok" ? audio.value.commit() : ok(undefined);
+    return audio?.status === "ok"
+      ? this.commitAudio(audio.value)
+      : ok(undefined);
   }
 
   step(
@@ -98,6 +103,8 @@ class SimulatorEngineHost implements SimulatorEngine {
     if (this.inGameManager.fault !== null) {
       return this.inGameManager.fault;
     }
+    const audioFault = this.pollAudioFault();
+    if (audioFault.status !== "ok") return audioFault;
     if (this.inGameManager.state !== "initialized") {
       return this.inGameManager.execUpdate(deltaTimeSeconds);
     }
@@ -122,6 +129,8 @@ class SimulatorEngineHost implements SimulatorEngine {
     if (this.inGameManager.fault !== null) {
       return this.inGameManager.fault;
     }
+    const audioFault = this.pollAudioFault();
+    if (audioFault.status !== "ok") return audioFault;
     const managerSnapshot = this.inGameManager.snapshot();
     if (this.inGameManager.state !== "initialized" || managerSnapshot.paused) {
       return evidenceRequired(
@@ -162,6 +171,8 @@ class SimulatorEngineHost implements SimulatorEngine {
     if (this.inGameManager.fault !== null) {
       return this.inGameManager.fault;
     }
+    const audioFault = this.pollAudioFault();
+    if (audioFault.status !== "ok") return audioFault;
     if (this.inGameManager.snapshot().paused) {
       return ok(undefined);
     }
@@ -173,13 +184,17 @@ class SimulatorEngineHost implements SimulatorEngine {
       return pauseResult;
     }
     this.backends.lifecycle.recordState("paused");
-    return audio?.status === "ok" ? audio.value.commit() : ok(undefined);
+    return audio?.status === "ok"
+      ? this.commitAudio(audio.value)
+      : ok(undefined);
   }
 
   resume(): SimulatorResult<void> {
     if (this.inGameManager.fault !== null) {
       return this.inGameManager.fault;
     }
+    const audioFault = this.pollAudioFault();
+    if (audioFault.status !== "ok") return audioFault;
     if (this.inGameManager.state !== "initialized") {
       return this.inGameManager.resume();
     }
@@ -194,7 +209,9 @@ class SimulatorEngineHost implements SimulatorEngine {
       return resumeResult;
     }
     this.backends.lifecycle.recordState("running");
-    return audio?.status === "ok" ? audio.value.commit() : ok(undefined);
+    return audio?.status === "ok"
+      ? this.commitAudio(audio.value)
+      : ok(undefined);
   }
 
   updateFeverMemberPoint(
@@ -202,19 +219,30 @@ class SimulatorEngineHost implements SimulatorEngine {
     point: number,
     isOwnTeam: boolean,
   ): SimulatorResult<void> {
-    return this.inGameManager.updateFeverMemberPoint(displayIndex, point, isOwnTeam);
+    const audioFault = this.pollAudioFault();
+    return audioFault.status === "ok"
+      ? this.inGameManager.updateFeverMemberPoint(displayIndex, point, isOwnTeam)
+      : audioFault;
   }
 
   changeFeverCommand(command: FeverTimeCommandName): SimulatorResult<void> {
-    return this.inGameManager.changeFeverCommand(command);
+    const audioFault = this.pollAudioFault();
+    return audioFault.status === "ok"
+      ? this.inGameManager.changeFeverCommand(command)
+      : audioFault;
   }
 
   continueLive(): SimulatorResult<void> {
-    return this.inGameManager.continueLive();
+    const audioFault = this.pollAudioFault();
+    return audioFault.status === "ok"
+      ? this.inGameManager.continueLive()
+      : audioFault;
   }
 
   completeLiveAudio(clearStatus: 1 | 2 | 3): SimulatorResult<void> {
     if (this.inGameManager.fault !== null) return this.inGameManager.fault;
+    const audioFault = this.pollAudioFault();
+    if (audioFault.status !== "ok") return audioFault;
     if (this.inGameManager.state !== "initialized" || this.audioProducer === null) {
       return evidenceRequired(
         "audio.complete.without-active-session",
@@ -230,11 +258,14 @@ class SimulatorEngineHost implements SimulatorEngine {
       );
     }
     const audio = this.audioProducer.preflightCompleteLive(clearStatus);
-    return audio.status === "ok" ? audio.value.commit() : audio;
+    return audio.status === "ok" ? this.commitAudio(audio.value) : audio;
   }
 
   getAdjustedMusicPosition(): SimulatorResult<number> {
-    return this.inGameManager.getAdjustedMusicPosition();
+    const audioFault = this.pollAudioFault();
+    return audioFault.status === "ok"
+      ? this.inGameManager.getAdjustedMusicPosition()
+      : audioFault;
   }
 
   snapshot(): SimulatorResult<SimulatorSnapshot> {
@@ -278,6 +309,21 @@ class SimulatorEngineHost implements SimulatorEngine {
     return audio.status === "ok"
       ? this.backends.rendering?.dispose() ?? ok(undefined)
       : audio;
+  }
+
+  private commitAudio(transaction: AudioOwnerTransaction): SimulatorResult<void> {
+    const committed = transaction.commit();
+    return committed.status === "ok"
+      ? committed
+      : this.inGameManager.latchExternalFault(committed);
+  }
+
+  private pollAudioFault(): SimulatorResult<void> {
+    if (this.audioProducer === null) return ok(undefined);
+    const result = this.audioProducer.pollBackendFault();
+    return result.status === "ok"
+      ? result
+      : this.inGameManager.latchExternalFault(result);
   }
 
   private disposeAudio(): SimulatorResult<void> {

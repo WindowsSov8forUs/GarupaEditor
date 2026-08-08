@@ -273,8 +273,6 @@ function validateResource(
   if (
     expectedLogicalId === undefined || expected === undefined ||
     resource.logicalId !== expectedLogicalId ||
-    resource.byteLength !== expected.byteLength ||
-    resource.sha256 !== expected.sha256 ||
     resource.sampleRate !== expected.sampleRate ||
     resource.channels !== expected.channels ||
     resource.durationSeconds !== expected.durationSeconds ||

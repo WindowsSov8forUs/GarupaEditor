@@ -62,6 +62,10 @@ export type OneFrameTraceEntry =
       readonly noteIndices: readonly number[];
     };
 
+export interface OneFrameReflectPlan {
+  readonly batch: OneFrameJudgementBatch;
+}
+
 export interface OneFrameJudgementControllerSnapshot {
   readonly initialized: boolean;
   readonly capacity: 5;
@@ -105,6 +109,7 @@ export class InGameOneFrameJudgementController {
   private autoLiveJudgementOwner: AutoLiveJudgementOwner | null = null;
   private manualJudgementOwner: ManualJudgementOwner | null = null;
   private businessOwner: OneFrameBusinessOwner | null = null;
+  private pendingReflectPlan: OneFrameReflectPlan | null = null;
 
   get isInitialized(): boolean {
     return this.initializedValue;
@@ -347,7 +352,7 @@ export class InGameOneFrameJudgementController {
       .map((container) => container.handle);
   }
 
-  reflectOneFrameData(): SimulatorResult<OneFrameJudgementBatch | null> {
+  preflightReflectOneFrameData(): SimulatorResult<OneFrameReflectPlan | null> {
     if (!this.initializedValue) {
       return evidenceRequired(
         "one-frame.reflect-before-initialize",
@@ -355,15 +360,18 @@ export class InGameOneFrameJudgementController {
         "ReflectOneFrameData requires the initialized fixed five-slot pool.",
       );
     }
-    if (!this.existsOneFrameData()) {
-      return ok(null);
+    if (this.pendingReflectPlan !== null) {
+      return evidenceRequired(
+        "one-frame.reflect-plan-already-pending",
+        ["R02", "R03", "D15"],
+        "Only one OneFrame reflection capability may be pending for the current container state.",
+      );
     }
+    if (!this.existsOneFrameData()) return ok(null);
 
     const entries: OneFrameJudgementEntry[] = [];
     for (const container of this.containers) {
-      if (!container.inUse) {
-        continue;
-      }
+      if (!container.inUse) continue;
       if (container.payload === null) {
         return evidenceRequired(
           "one-frame.in-use-without-payload",
@@ -396,21 +404,67 @@ export class InGameOneFrameJudgementController {
       adjustedResult: firstEntry.adjustedResult,
       judgeTiming: firstEntry.judgeTiming,
     });
+    const plan = Object.freeze({ batch });
+    this.pendingReflectPlan = plan;
+    return ok(plan);
+  }
+
+  commitReflectOneFrameData(
+    plan: OneFrameReflectPlan,
+  ): SimulatorResult<OneFrameJudgementBatch> {
+    if (this.pendingReflectPlan !== plan) {
+      return evidenceRequired(
+        "one-frame.invalid-reflect-capability",
+        ["R02", "R03", "D15"],
+        "Only the exact pending OneFrame reflection capability may commit.",
+      );
+    }
+    for (const entry of plan.batch.entries) {
+      const container = this.containers[entry.slot];
+      if (container?.containerId !== entry.containerId ||
+          !container.inUse || container.payload === null) {
+        return evidenceRequired(
+          "one-frame.reflect-source-changed",
+          ["R02", "R03", "D15"],
+          "Every reserved OneFrame container must remain committed and unchanged until reflection commit.",
+        );
+      }
+    }
     for (const container of this.containers) {
       if (container.inUse) {
         container.inUse = false;
         container.payload = null;
       }
     }
+    this.pendingReflectPlan = null;
     this.nextReflectBatchIndex += 1;
-    this.lastJudgementBatchValue = batch;
+    this.lastJudgementBatchValue = plan.batch;
     this.traceValue.push({
       kind: "one-frame.reflect",
-      batchIndex: batch.batchIndex,
-      containerIds: batch.entries.map((entry) => entry.containerId),
-      noteIndices: batch.entries.map((entry) => entry.noteIndex),
+      batchIndex: plan.batch.batchIndex,
+      containerIds: plan.batch.entries.map((entry) => entry.containerId),
+      noteIndices: plan.batch.entries.map((entry) => entry.noteIndex),
     });
-    return ok(cloneBatch(batch));
+    return ok(cloneBatch(plan.batch));
+  }
+
+  discardReflectOneFrameData(plan: OneFrameReflectPlan): SimulatorResult<void> {
+    if (this.pendingReflectPlan !== plan) {
+      return evidenceRequired(
+        "one-frame.invalid-reflect-discard-capability",
+        ["R02", "R03", "D15"],
+        "Only the exact pending OneFrame reflection capability may be discarded.",
+      );
+    }
+    this.pendingReflectPlan = null;
+    return ok(undefined);
+  }
+
+  reflectOneFrameData(): SimulatorResult<OneFrameJudgementBatch | null> {
+    const planned = this.preflightReflectOneFrameData();
+    if (planned.status !== "ok") return planned;
+    if (planned.value === null) return ok(null);
+    return this.commitReflectOneFrameData(planned.value);
   }
 
   getReflectOneFrameData(): OneFrameJudgementBatch | null {
@@ -420,6 +474,7 @@ export class InGameOneFrameJudgementController {
   }
 
   dispose(): void {
+    this.pendingReflectPlan = null;
     for (const container of this.containers) {
       container.inUse = false;
       container.payload = null;
