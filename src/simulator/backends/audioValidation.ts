@@ -239,6 +239,17 @@ export function freezeAudioCommand(command: AudioCommand): AudioCommand {
   return Object.freeze({ ...command }) as AudioCommand;
 }
 
+export function audioFloat32ToBits(value: number): string | null {
+  const rounded = Math.fround(value);
+  if (!Number.isFinite(value) || !Number.isFinite(rounded) || rounded !== value) {
+    return null;
+  }
+  const buffer = new ArrayBuffer(4);
+  const view = new DataView(buffer);
+  view.setFloat32(0, rounded, false);
+  return `0x${view.getUint32(0, false).toString(16).toUpperCase().padStart(8, "0")}`;
+}
+
 export function audioFloat32FromBits(bits: string): number | null {
   if (!FLOAT32_BITS_PATTERN.test(bits)) return null;
   const buffer = new ArrayBuffer(4);

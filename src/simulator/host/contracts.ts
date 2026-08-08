@@ -11,6 +11,8 @@ import type {
 } from "../engine/data/manualInput";
 import type { ScoreLifeStateProfile } from "../engine/data/scoreLifeState";
 import type { SimulatorResult } from "../engine/evidence";
+import type { AudioBackendSnapshot } from "../backends/audioContracts";
+import type { SimulatorAudioSessionInput } from "../engine/audio/audioCommandProducer";
 import type {
   OrdinaryFixedNoteSceneInput,
   RenderEngineResourceBindings,
@@ -34,6 +36,7 @@ export interface SimulatorEngineInput {
   };
   readonly scoreLifeState?: ScoreLifeStateProfile;
   readonly rendering?: SimulatorRenderingSessionInput;
+  readonly audio?: SimulatorAudioSessionInput;
 }
 
 export interface SimulatorSnapshot {
@@ -41,6 +44,7 @@ export interface SimulatorSnapshot {
   readonly managers: InGameManagerSnapshot;
   readonly adjustedMusicPosition: number;
   readonly backendTrace: readonly SimulatorBackendTraceEvent[];
+  readonly audioBackend: AudioBackendSnapshot;
 }
 
 export interface SimulatorEngine {
@@ -61,6 +65,7 @@ export interface SimulatorEngine {
   ): SimulatorResult<void>;
   changeFeverCommand(command: FeverTimeCommandName): SimulatorResult<void>;
   continueLive(): SimulatorResult<void>;
+  completeLiveAudio(clearStatus: 1 | 2 | 3): SimulatorResult<void>;
   getAdjustedMusicPosition(): SimulatorResult<number>;
   snapshot(): SimulatorResult<SimulatorSnapshot>;
   dispose(): SimulatorResult<void>;

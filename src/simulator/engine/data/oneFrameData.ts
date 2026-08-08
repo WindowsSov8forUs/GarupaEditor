@@ -12,6 +12,7 @@ export interface AutoLiveJudgementData {
   readonly addCombo: 1;
   readonly absolutePosition: number;
   readonly judgeTiming: 0;
+  readonly multipleDirectionalFlickNoteCount: number;
 }
 
 export interface ManualJudgementData {
@@ -24,6 +25,7 @@ export interface ManualJudgementData {
   readonly addCombo: -1 | 1;
   readonly absolutePosition: number;
   readonly judgeTiming: 0 | 1 | 2;
+  readonly multipleDirectionalFlickNoteCount: number;
 }
 
 export interface OneFrameBusinessData {

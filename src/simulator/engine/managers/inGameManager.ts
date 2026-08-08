@@ -23,6 +23,7 @@ import type {
   RenderCommandProducer,
 } from "../rendering/renderCommandProducer";
 import { createRenderFloat32 } from "../../backends/renderingValidation";
+import type { AudioCommandProducer } from "../audio/audioCommandProducer";
 
 export interface InGameManagerSnapshot extends EngineLifecycleSnapshot {
   readonly fault: EvidenceRequired | null;
@@ -51,6 +52,7 @@ export class InGameManager {
     readonly inputManager: InputManager,
     readonly scoreLifeStateManager: ScoreLifeStateManager | null = null,
     private readonly renderProducer: RenderCommandProducer | null = null,
+    private readonly audioProducer: AudioCommandProducer | null = null,
     private readonly habahiroChangeAbsolutePos = -1,
     private readonly renderScene: OrdinaryFixedNoteSceneInput | null = null,
   ) {}
@@ -142,16 +144,37 @@ export class InGameManager {
         "PlayingNone requires the original OneFrame input-inspection list, which is outside the first slice.",
       );
     }
+    this.audioProducer?.beginOuterFrame();
     const skillBefore = this.scoreLifeStateManager?.snapshot().skill ?? null;
     this.scoreLifeStateManager?.update(deltaTimeSeconds);
-    if (skillBefore !== null && this.scoreLifeStateManager !== null && this.renderProducer !== null) {
-      const skillRender = this.renderProducer.preflightHudSkillTransition(
+    const skillAfter = this.scoreLifeStateManager?.snapshot().skill ?? null;
+    if (skillBefore !== null && skillAfter !== null) {
+      const skillAudio =
+        skillBefore.state !== 2 && skillAfter.state === 2
+          ? this.audioProducer?.preflightSkillTriggered() ?? null
+          : null;
+      if (skillAudio !== null && skillAudio.status !== "ok") {
+        return this.latchFault(skillAudio);
+      }
+      const skillRender = this.renderProducer?.preflightHudSkillTransition(
         skillBefore,
-        this.scoreLifeStateManager.snapshot().skill,
-      );
-      if (skillRender.status !== "ok") return this.latchFault(skillRender);
-      const committed = skillRender.value.commit();
-      if (committed.status !== "ok") return this.latchFault(committed);
+        skillAfter,
+      ) ?? null;
+      if (skillRender?.status === "evidence-required") {
+        if (skillAudio?.status === "ok") skillAudio.value.discard();
+        return this.latchFault(skillRender);
+      }
+      if (skillAudio?.status === "ok") {
+        const committed = skillAudio.value.commit();
+        if (committed.status !== "ok") {
+          if (skillRender?.status === "ok") skillRender.value.discard();
+          return this.latchFault(committed);
+        }
+      }
+      if (skillRender?.status === "ok") {
+        const committed = skillRender.value.commit();
+        if (committed.status !== "ok") return this.latchFault(committed);
+      }
     }
     const updateResult = this.noteManager.execUpdate(deltaTimeSeconds);
     if (updateResult.status !== "ok") {
@@ -224,18 +247,46 @@ export class InGameManager {
       if (reflectResult.status !== "ok") {
         return this.latchFault(reflectResult);
       }
-      if (reflectResult.value !== null && this.scoreLifeStateManager !== null) {
-        const businessPlan = this.scoreLifeStateManager.preflightReflect(reflectResult.value);
-        if (businessPlan.status !== "ok") return this.latchFault(businessPlan);
-        const renderPlan = this.renderProducer?.preflightHudReflect(businessPlan.value) ?? null;
+      if (reflectResult.value !== null) {
+        const lifeBefore = this.scoreLifeStateManager?.record.currentLife ?? null;
+        const businessPlan = this.scoreLifeStateManager?.preflightReflect(reflectResult.value) ?? null;
+        if (businessPlan?.status === "evidence-required") return this.latchFault(businessPlan);
+        const gameOver = businessPlan?.status === "ok" && lifeBefore !== null &&
+          lifeBefore > 0 && businessPlan.value.record.currentLife <= 0;
+        const audioPlan = this.audioProducer?.preflightJudgement(
+          reflectResult.value,
+          gameOver,
+        ) ?? null;
+        if (audioPlan?.status === "evidence-required") {
+          if (businessPlan?.status === "ok") {
+            this.scoreLifeStateManager!.discardReflect(businessPlan.value);
+          }
+          return this.latchFault(audioPlan);
+        }
+        const renderPlan = businessPlan?.status === "ok"
+          ? this.renderProducer?.preflightHudReflect(businessPlan.value) ?? null
+          : null;
         if (renderPlan?.status === "evidence-required") {
-          this.scoreLifeStateManager.discardReflect(businessPlan.value);
+          if (audioPlan?.status === "ok") audioPlan.value.discard();
+          this.scoreLifeStateManager!.discardReflect(businessPlan!.value);
           return this.latchFault(renderPlan);
         }
-        const businessReflect = this.scoreLifeStateManager.commitReflect(businessPlan.value);
-        if (businessReflect.status !== "ok") {
-          if (renderPlan?.status === "ok") renderPlan.value.discard();
-          return this.latchFault(businessReflect);
+        if (businessPlan?.status === "ok") {
+          const businessReflect = this.scoreLifeStateManager!.commitReflect(
+            businessPlan.value,
+          );
+          if (businessReflect.status !== "ok") {
+            if (audioPlan?.status === "ok") audioPlan.value.discard();
+            if (renderPlan?.status === "ok") renderPlan.value.discard();
+            return this.latchFault(businessReflect);
+          }
+        }
+        if (audioPlan?.status === "ok") {
+          const committed = audioPlan.value.commit();
+          if (committed.status !== "ok") {
+            if (renderPlan?.status === "ok") renderPlan.value.discard();
+            return this.latchFault(committed);
+          }
         }
         if (renderPlan?.status === "ok") {
           const committed = renderPlan.value.commit();

@@ -38,6 +38,7 @@ export type {
 export {
   audioAccepted,
   audioFloat32FromBits,
+  audioFloat32ToBits,
   audioRejected,
   freezeAudioCommand,
   validateAndFreezeAudioProfile,
@@ -204,6 +205,12 @@ export {
 } from "./engine/managers/feverTimeManager";
 export type { FeverTimeCommandName } from "./engine/managers/feverTimeManager";
 export { SituationSkillPlayState } from "./engine/managers/situationSkillManager";
+export {
+  AudioCommandProducer,
+  AudioOwnerTransaction,
+  mapAudioResult,
+} from "./engine/audio/audioCommandProducer";
+export type { SimulatorAudioSessionInput } from "./engine/audio/audioCommandProducer";
 export { countMaximumNotes } from "./engine/managers/scoreLifeStateManager";
 export type {
   ScoreLifeReflectBatch,

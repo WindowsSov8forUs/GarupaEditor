@@ -45,6 +45,10 @@ import {
   validateAutoLiveActivationGraph,
   validateAutoLiveChartOwnership,
 } from "../engine/notes/noteTypes";
+import {
+  AudioCommandProducer,
+  mapAudioResult,
+} from "../engine/audio/audioCommandProducer";
 import type {
   SimulatorEngine,
   SimulatorEngineInput,
@@ -58,6 +62,7 @@ class SimulatorEngineHost implements SimulatorEngine {
     private readonly inputDispatcher: GamePlayInputDispatcher,
     private readonly renderingSessionId: string | null,
     private readonly renderProducer: RenderCommandProducer | null,
+    private readonly audioProducer: AudioCommandProducer | null,
     readonly backends: SimulatorBackends,
   ) {}
 
@@ -70,11 +75,20 @@ class SimulatorEngineHost implements SimulatorEngine {
     ) {
       return this.inGameManager.initialize();
     }
+    if (this.inGameManager.state === "initialized") return ok(undefined);
+    const audio = this.audioProducer?.preflightInitialize() ?? null;
+    if (audio !== null && audio.status !== "ok") return audio;
     const awake = this.inGameDirector.awake();
     if (awake.status !== "ok") {
+      if (audio?.status === "ok") audio.value.discard();
       return awake;
     }
-    return this.inGameManager.initialize();
+    const initialized = this.inGameManager.initialize();
+    if (initialized.status !== "ok") {
+      if (audio?.status === "ok") audio.value.discard();
+      return initialized;
+    }
+    return audio?.status === "ok" ? audio.value.commit() : ok(undefined);
   }
 
   step(
@@ -151,12 +165,15 @@ class SimulatorEngineHost implements SimulatorEngine {
     if (this.inGameManager.snapshot().paused) {
       return ok(undefined);
     }
+    const audio = this.audioProducer?.preflightPause() ?? null;
+    if (audio !== null && audio.status !== "ok") return audio;
     const pauseResult = this.inGameManager.pause();
     if (pauseResult.status !== "ok") {
+      if (audio?.status === "ok") audio.value.discard();
       return pauseResult;
     }
     this.backends.lifecycle.recordState("paused");
-    return ok(undefined);
+    return audio?.status === "ok" ? audio.value.commit() : ok(undefined);
   }
 
   resume(): SimulatorResult<void> {
@@ -169,12 +186,15 @@ class SimulatorEngineHost implements SimulatorEngine {
     if (!this.inGameManager.snapshot().paused) {
       return ok(undefined);
     }
+    const audio = this.audioProducer?.preflightResume() ?? null;
+    if (audio !== null && audio.status !== "ok") return audio;
     const resumeResult = this.inGameManager.resume();
     if (resumeResult.status !== "ok") {
+      if (audio?.status === "ok") audio.value.discard();
       return resumeResult;
     }
     this.backends.lifecycle.recordState("running");
-    return ok(undefined);
+    return audio?.status === "ok" ? audio.value.commit() : ok(undefined);
   }
 
   updateFeverMemberPoint(
@@ -193,6 +213,26 @@ class SimulatorEngineHost implements SimulatorEngine {
     return this.inGameManager.continueLive();
   }
 
+  completeLiveAudio(clearStatus: 1 | 2 | 3): SimulatorResult<void> {
+    if (this.inGameManager.fault !== null) return this.inGameManager.fault;
+    if (this.inGameManager.state !== "initialized" || this.audioProducer === null) {
+      return evidenceRequired(
+        "audio.complete.without-active-session",
+        [],
+        "Game Clear audio requires an initialized explicitly configured audio session.",
+      );
+    }
+    if (clearStatus !== 1 && clearStatus !== 2 && clearStatus !== 3) {
+      return evidenceRequired(
+        "audio.complete.invalid-clear-status",
+        [],
+        "Current Full Combo/Game Clear routing is confirmed only for clear status 1, 2 or 3.",
+      );
+    }
+    const audio = this.audioProducer.preflightCompleteLive(clearStatus);
+    return audio.status === "ok" ? audio.value.commit() : audio;
+  }
+
   getAdjustedMusicPosition(): SimulatorResult<number> {
     return this.inGameManager.getAdjustedMusicPosition();
   }
@@ -205,17 +245,24 @@ class SimulatorEngineHost implements SimulatorEngine {
       managers: this.inGameManager.snapshot(),
       adjustedMusicPosition,
       backendTrace: this.backends.snapshot(),
+      audioBackend: this.backends.audio.snapshot(),
     });
   }
 
   dispose(): SimulatorResult<void> {
     if (this.inGameManager.state === "disposed") {
-      return this.backends.rendering?.dispose() ?? ok(undefined);
+      const audio = this.disposeAudio();
+      return audio.status === "ok"
+        ? this.backends.rendering?.dispose() ?? ok(undefined)
+        : audio;
     }
     const rendererState = this.backends.rendering?.snapshot().state;
     if (rendererState === "faulted" || rendererState === "disposed") {
       this.inGameManager.disposeAfterTerminalRendererFault();
-      return this.backends.rendering?.dispose() ?? ok(undefined);
+      const audio = this.disposeAudio();
+      return audio.status === "ok"
+        ? this.backends.rendering?.dispose() ?? ok(undefined)
+        : audio;
     }
     const rendererValidation = this.renderProducer?.validate();
     if (rendererValidation?.status === "evidence-required") return rendererValidation;
@@ -227,7 +274,17 @@ class SimulatorEngineHost implements SimulatorEngine {
       const committed = release.value.commit();
       if (committed.status !== "ok") return committed;
     }
-    return this.backends.rendering?.dispose() ?? ok(undefined);
+    const audio = this.disposeAudio();
+    return audio.status === "ok"
+      ? this.backends.rendering?.dispose() ?? ok(undefined)
+      : audio;
+  }
+
+  private disposeAudio(): SimulatorResult<void> {
+    if (this.audioProducer === null || this.backends.audio.snapshot().state === "disposed") {
+      return ok(undefined);
+    }
+    return mapAudioResult(this.backends.audio.dispose());
   }
 }
 
@@ -282,6 +339,20 @@ export function createSimulatorEngine(
   if (chartValidation.status !== "ok") {
     return chartValidation;
   }
+  if (input.audio === undefined && backends.audio.snapshot().state === "ready") {
+    return evidenceRequired(
+      "audio.session.incomplete-host-binding",
+      [],
+      "A prepared audio backend requires one explicit matching host audio session.",
+    );
+  }
+  const audioProducer = input.audio === undefined
+    ? null
+    : new AudioCommandProducer(input.audio, backends.audio, input.chart);
+  const audioValidation = audioProducer?.validate();
+  if (audioValidation !== undefined && audioValidation.status !== "ok") {
+    return audioValidation;
+  }
   const runtimeMetadata = getConstructedChartRuntimeMetadata(input.chart);
   if (runtimeMetadata === undefined) {
     return evidenceRequired(
@@ -324,6 +395,16 @@ export function createSimulatorEngine(
       );
   if (scoreLifeStateResult.status !== "ok") return scoreLifeStateResult;
   const scoreLifeStateManager = scoreLifeStateResult.value;
+  if (
+    input.audio !== undefined && scoreLifeStateManager !== null &&
+    input.audio.practiceMode !== (scoreLifeStateManager.mode === "practice")
+  ) {
+    return evidenceRequired(
+      "audio.session.practice-mode-mismatch",
+      [],
+      "Skill, audience and clear routing must use the same practice-mode fact as the Score/Life session.",
+    );
+  }
   const musicScoreController = new InGameMusicScoreController(input.chart);
   const oneFrameJudgementController = new InGameOneFrameJudgementController();
   if (scoreLifeStateManager !== null) {
@@ -376,6 +457,7 @@ export function createSimulatorEngine(
     inputManager,
     scoreLifeStateManager,
     renderProducer,
+    audioProducer,
     input.chart.habahiroChangeAbsolutePos,
     input.rendering?.ordinaryNoteScene ?? null,
   );
@@ -391,6 +473,7 @@ export function createSimulatorEngine(
     inputDispatcher,
     renderingSessionId,
     renderProducer,
+    audioProducer,
     backends,
   ));
 }

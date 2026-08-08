@@ -308,6 +308,7 @@ export class InGameOneFrameJudgementController {
       addCombo: 1,
       absolutePosition: request.absolutePosition,
       judgeTiming: 0,
+      multipleDirectionalFlickNoteCount: request.multipleDirectionalFlickNoteCount,
     });
     const business = this.businessOwner?.(judgement);
     const payload: OneFrameDataPayload = Object.freeze({
@@ -488,6 +489,8 @@ export class InGameOneFrameJudgementController {
         adjustedResult === NoteResultType.Miss || adjustedResult === NoteResultType.Perfect
           ? JudgeTiming.None
           : request.rawTiming,
+      multipleDirectionalFlickNoteCount:
+        request.multipleDirectionalFlickNoteCount ?? 0,
     });
     const business = this.businessOwner?.(judgement);
     const payload: OneFrameDataPayload = Object.freeze({
