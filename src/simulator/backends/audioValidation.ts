@@ -1,3 +1,4 @@
+import { CURRENT_AUDIO_RESOURCE_PROFILE } from "./resources/currentAudioResourceManifest";
 import type {
   AudioCommand,
   AudioFailureCode,
@@ -255,9 +256,19 @@ function validateResource(
     return rejectProfile("audio.profile.invalid-resource-shape", "Resource declarations reject missing and unknown fields before reads.");
   }
   const expectedLogicalId = CUE_LOGICAL_IDS[resource.cue as keyof typeof CUE_LOGICAL_IDS];
+  const expected = CURRENT_AUDIO_RESOURCE_PROFILE.resources.find(
+    (candidate) => candidate.cue === resource.cue,
+  );
   if (
-    expectedLogicalId === undefined ||
+    expectedLogicalId === undefined || expected === undefined ||
     resource.logicalId !== expectedLogicalId ||
+    resource.byteLength !== expected.byteLength ||
+    resource.sha256 !== expected.sha256 ||
+    resource.sampleRate !== expected.sampleRate ||
+    resource.channels !== expected.channels ||
+    resource.durationSeconds !== expected.durationSeconds ||
+    resource.currentSampleFrames !== expected.currentSampleFrames ||
+    resource.signal !== expected.signal ||
     seen.has(resource.cue) ||
     !Number.isSafeInteger(resource.byteLength) || resource.byteLength <= 0 ||
     !SHA256_PATTERN.test(resource.sha256) ||
@@ -277,7 +288,7 @@ function validateResource(
   }
   if (resource.cue === "SE_RHYTHM_TAP_LONG") {
     if (!isRecord(resource.loop) || !hasExactKeys(resource.loop, ["start", "end"]) ||
-        resource.loop.start !== 0 || resource.loop.end !== 22997 ||
+        resource.loop.start !== expected.loop?.start || resource.loop.end !== expected.loop.end ||
         resource.currentSampleFrames !== 23253) {
       return rejectProfile("audio.profile.invalid-loop", "The current Long/Slide loop is the half-open source range [0,22997) within 23253 samples.");
     }

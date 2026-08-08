@@ -89,6 +89,21 @@ export {
 } from "./backends/resources/localResourceProvider";
 export type { LocalRenderResource } from "./backends/resources/localResourceProvider";
 export { sha256UpperHex } from "./backends/resources/sha256";
+export { CURRENT_AUDIO_RESOURCE_PROFILE } from "./backends/resources/currentAudioResourceManifest";
+export {
+  ImmutableLocalAudioResourceProvider,
+} from "./backends/resources/localAudioResourceProvider";
+export type { LocalAudioResource } from "./backends/resources/localAudioResourceProvider";
+export { DeterministicOfflineAudioBackend } from "./backends/audio/offlineAudioBackend";
+export type {
+  OfflineAudioBackend,
+  OfflineAudioFadePlan,
+  OfflineAudioLoopPlan,
+  OfflineAudioMixRequest,
+  OfflineAudioMixResult,
+  OfflineAudioPcmSource,
+  OfflineAudioVoicePlan,
+} from "./backends/audio/offlineAudioContracts";
 export {
   BrowserHabahiroBestdoriTransport,
   parseHabahiroAtlasRows,
