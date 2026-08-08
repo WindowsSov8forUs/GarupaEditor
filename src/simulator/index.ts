@@ -96,6 +96,7 @@ export {
 } from "./backends/resources/localAudioResourceProvider";
 export type { LocalAudioResource } from "./backends/resources/localAudioResourceProvider";
 export { DeterministicOfflineAudioBackend } from "./backends/audio/offlineAudioBackend";
+export { WebAudioSimulatorBackend } from "./backends/audio/webAudioBackend";
 export type {
   OfflineAudioBackend,
   OfflineAudioFadePlan,

@@ -5,6 +5,12 @@ import { fileURLToPath } from "node:url";
 const simulatorRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const scannedRoots = ["engine", "host", "backends"].map((path) => resolve(simulatorRoot, path));
 const pixiBackendRoot = resolve(simulatorRoot, "backends", "pixi");
+const webAudioBackend = resolve(
+  simulatorRoot,
+  "backends",
+  "audio",
+  "webAudioBackend.ts",
+);
 const forbidden = [
   { label: "React", pattern: /(?:from\s+["']react(?:\/[^"']*)?["']|import\s+["']react)/ },
   { label: "Pixi", pattern: /(?:from\s+["']pixi\.js["']|import\s+["']pixi\.js["'])/ },
@@ -31,6 +37,9 @@ for (const root of scannedRoots) {
     const source = readFileSync(path, "utf8");
     for (const rule of forbidden) {
       if (rule.label === "Pixi" && path.startsWith(`${pixiBackendRoot}${sep}`)) {
+        continue;
+      }
+      if ((rule.label === "DOM global" || rule.label === "DOM type") && path === webAudioBackend) {
         continue;
       }
       if (rule.pattern.test(source)) {
