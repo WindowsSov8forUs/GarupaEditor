@@ -2,6 +2,7 @@ import { evidenceRequired, type SimulatorResult } from "../engine/evidence";
 import type { ButtonTypeValue } from "../engine/chart/types";
 import type { ManualInputPosition } from "../engine/data/manualInput";
 import type { SimulatorRendererBackend } from "./renderingContracts";
+import { RecordingSimulatorAudioBackend } from "./recordingAudioBackend";
 import type {
   ManualInputWorldPosition,
   SimulatorBackendPort,
@@ -107,7 +108,7 @@ export class RecordingSimulatorBackends implements SimulatorBackends {
   private readonly events: SimulatorBackendTraceEvent[] = [];
 
   readonly renderer = new RecordingPort("renderer", this.append.bind(this));
-  readonly audio = new RecordingPort("audio", this.append.bind(this));
+  readonly audio = new RecordingSimulatorAudioBackend();
   readonly input = new RecordingPort("input", this.append.bind(this));
   readonly resources = new RecordingPort("resources", this.append.bind(this));
   readonly lifecycle = new RecordingLifecyclePort(this.append.bind(this));

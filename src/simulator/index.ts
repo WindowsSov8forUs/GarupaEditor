@@ -13,6 +13,36 @@ export {
   createRecordingSimulatorBackends,
   RecordingSimulatorBackends,
 } from "./backends/recordingBackend";
+export { RecordingSimulatorAudioBackend } from "./backends/recordingAudioBackend";
+export type {
+  AudioBackendFault,
+  AudioBackendSnapshot,
+  AudioBackendState,
+  AudioCommand,
+  AudioCommandBatch,
+  AudioDecodedResourceMetadata,
+  AudioFailure,
+  AudioFailureCode,
+  AudioLoopFrames,
+  AudioOperationResult,
+  AudioPoolProfile,
+  AudioResourcePreflightAdapter,
+  AudioResourceProfile,
+  AudioResourceProfileSet,
+  AudioResourceProvider,
+  AudioSampleIdentity,
+  AudioSemanticStateSnapshot,
+  AudioVoiceSnapshot,
+  SimulatorAudioBackend,
+} from "./backends/audioContracts";
+export {
+  audioAccepted,
+  audioFloat32FromBits,
+  audioRejected,
+  freezeAudioCommand,
+  validateAndFreezeAudioProfile,
+  validateAudioCommandShape,
+} from "./backends/audioValidation";
 export { RecordingSimulatorRendererBackend } from "./backends/recordingRendererBackend";
 export {
   RenderFidelityLabel,
