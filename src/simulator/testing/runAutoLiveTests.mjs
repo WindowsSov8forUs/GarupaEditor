@@ -1936,15 +1936,16 @@ function validateAutoLive() {
       "note-manager.unrepresented-note-family");
   });
 
-  test("AL21", "阶段外业务字段保持 absent，消费者明确 evidence-required", () => {
+  test("AL21", "阶段外业务字段保持 absent，已闭合音频字段保留确定投影", () => {
     const oneFrame = controller();
     ok(oneFrame.setupAutoLiveJudgement(request(normalInfo(600), "head")), "setup projection");
     const entry = reflect(oneFrame).entries[0];
     for (const key of [
       "addScore", "addPower", "life", "skill", "fever", "crescendo",
       "audio", "particle", "rendering", "hud",
-      "multipleDirectionalFlickNoteCount",
     ]) assert.equal(Object.hasOwn(entry, key), false, `${key} must remain absent`);
+    assert.equal(entry.multipleDirectionalFlickNoteCount, 0,
+      "closed audio projection requires the exact directional group count");
     evidence(oneFrame.setupBusinessData(), "one-frame.setup-business-data");
     const deterministicProjection = () => {
       const repeated = controller();

@@ -35,6 +35,7 @@
     "simulator:test:render-production-chart": "node src/simulator/testing/runRenderProductionChartTests.mjs",
     "simulator:test:render-production": "node src/simulator/testing/runRenderProductionTests.mjs",
     "simulator:test:resource-pixi-rendering": "node src/simulator/testing/runResourcePixiRenderingTests.mjs",
+    "simulator:test:audio": "node src/simulator/testing/runAudioTests.mjs",
     "simulator:test:fixtures": "node src/simulator/testing/verifyTestingFixtures.mjs",
     "tauri": "tauri",
     "desktop:dev": "tauri dev",

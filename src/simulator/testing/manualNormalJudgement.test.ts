@@ -188,6 +188,7 @@ test("Normal Perfect提交owner派生OneFrame并即时Deactive", () => {
     addCombo: 1,
     absolutePosition: 2,
     judgeTiming: JudgeTiming.None,
+    multipleDirectionalFlickNoteCount: 0,
   }], "Perfect closed projection");
 });
 
