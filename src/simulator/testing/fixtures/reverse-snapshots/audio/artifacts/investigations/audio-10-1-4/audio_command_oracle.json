@@ -1,0 +1,1201 @@
+{
+  "schema_version": 1,
+  "status": "command-oracle-closed-pre-typescript",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "version_name": "10.1.4",
+    "version_code": 230,
+    "abi": "arm64-v8a"
+  },
+  "sources": {
+    "static_contract": {
+      "path": "../audio-runtime-contract-10-1-4/audio_static_contract.json",
+      "sha256": "CA13A1F6977ED63CAA37FDD8701F602BC0AF4D7A4D27D0AD4DFEA88D79281F71"
+    },
+    "static_matrix": {
+      "path": "../audio-runtime-contract-10-1-4/audio_static_semantic_matrix.json",
+      "sha256": "D5B5CAFB4315A0FB718EBAC5ED2607932E2A91486D0A3018F8D705D18CF48EE4"
+    },
+    "resource_profile": {
+      "path": "../audio-current-cri-profile-10-1-4/current_cri_resource_profile.json",
+      "sha256": "8995BEAB11F1ABD5C7564DFA728CD9609E5C58C7C14759E5E4AADF5D0C2B4676"
+    },
+    "portable_profile": {
+      "path": "../audio-current-portable-profile-10-1-4/current_external_portable_profile.json",
+      "sha256": "17DB2D66E9B495A37FAAA004FFAFBD4BAE2A45C7BFF4828AA7894C08407553A8"
+    },
+    "semantic_coverage": {
+      "path": "audio_semantic_coverage.json",
+      "sha256": "233C601F1D72FDE77FC47B6F67C87BF76B24B3B5BADCF794E29104FE42904444"
+    },
+    "accepted_manifest": {
+      "path": "accepted_trace_manifest.json",
+      "sha256": "B228BE02B5759252BCE37FAB4F2391716292950258110C0CB04789D07470FDF8"
+    },
+    "portable_lifecycle_contract": {
+      "path": "../audio-portable-lifecycle-pcm-contract-10-1-4/portable_audio_contract.json",
+      "sha256": "1A15D50AEEBF8635D8A5BF7658E12E16CC66453F3F16A2CB4C5A26FD4CAD5CC0"
+    },
+    "portable_lifecycle_oracle": {
+      "path": "../audio-portable-lifecycle-pcm-contract-10-1-4/portable_audio_oracle.json",
+      "sha256": "BE1C70ADC5513FE9FBE7E8C89E69FDEB44DBAF284D1AD22BA70397EBF1125F51"
+    },
+    "generator": {
+      "path": "generate_audio_command_oracle.py",
+      "sha256": "980690A1BF4A0D6319D7F425B87B37EA58FF996E376E24C69BFBEB7E065AA33E"
+    }
+  },
+  "boundary": {
+    "future_typescript_or_test_subject_used": false,
+    "network_used": false,
+    "wall_clock_used": false,
+    "rejected_trace_used": false,
+    "commands_are_portable_semantic_contract_not_original_api_names": true,
+    "same_frame_order_preserved": true,
+    "unknown_expected": "evidence-required-with-null-commands"
+  },
+  "command_kinds": [
+    "session.open",
+    "bgm.load",
+    "bgm.pause",
+    "bgm.resume",
+    "audio.pause-all",
+    "se.pause",
+    "se.resume",
+    "se.play-one-shot",
+    "hold.start-loop",
+    "hold.fade",
+    "hold.pause",
+    "hold.resume",
+    "gain.set",
+    "pool.profile"
+  ],
+  "cases": [
+    {
+      "case_id": "AU-C01",
+      "name": "prepare-valid-portable-profile",
+      "status": "confirmed-command-expected",
+      "source_requirements": [
+        "D21",
+        "D22",
+        "D31"
+      ],
+      "input": {
+        "operation": "prepare-profile",
+        "provider_id": "current-external-portable-v1",
+        "resource_count": 19
+      },
+      "expected": {
+        "outcome": "accepted",
+        "commands": [],
+        "mutation": "atomic-commit"
+      },
+      "notes": [
+        "Preparation validates declarations and emits no domain audio command."
+      ]
+    },
+    {
+      "case_id": "AU-C02",
+      "name": "prepare-missing-provider",
+      "status": "confirmed-command-expected",
+      "source_requirements": [
+        "D31"
+      ],
+      "input": {
+        "operation": "prepare-profile",
+        "provider": null
+      },
+      "expected": {
+        "outcome": "evidence-required",
+        "commands": [],
+        "mutation": "none"
+      },
+      "notes": [
+        "Portable delivery policy failure.missing_provider=evidence-required."
+      ]
+    },
+    {
+      "case_id": "AU-C03",
+      "name": "prepare-resource-integrity-failure",
+      "status": "confirmed-command-expected",
+      "source_requirements": [
+        "D21",
+        "D31"
+      ],
+      "input": {
+        "operation": "prepare-resource",
+        "cue": "perfect",
+        "declared_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "expected": {
+        "outcome": "audio-resource-integrity",
+        "commands": [],
+        "mutation": "none"
+      },
+      "notes": []
+    },
+    {
+      "case_id": "AU-C04",
+      "name": "prepare-duplicate-resource-key",
+      "status": "confirmed-command-expected",
+      "source_requirements": [
+        "D21",
+        "D31"
+      ],
+      "input": {
+        "operation": "prepare-profile",
+        "duplicate_key": [
+          "sound/tapseskin/skin00",
+          "perfect"
+        ]
+      },
+      "expected": {
+        "outcome": "evidence-required",
+        "commands": [],
+        "mutation": "none"
+      },
+      "notes": []
+    },
+    {
+      "case_id": "AU-C05",
+      "name": "backend-session-preflight",
+      "status": "confirmed-command-expected",
+      "source_requirements": [
+        "D23",
+        "D24",
+        "D31"
+      ],
+      "input": {
+        "operation": "open-session",
+        "profile": "prepared",
+        "backend": "prepared",
+        "context": "running"
+      },
+      "expected": {
+        "outcome": "accepted",
+        "commands": [
+          {
+            "kind": "session.open",
+            "bgm_pool": 8,
+            "se_pool": 12,
+            "one_shot_pool": 1
+          }
+        ],
+        "mutation": "atomic-commit"
+      },
+      "notes": []
+    },
+    {
+      "case_id": "AU-C06",
+      "name": "bgm-load-and-start-zero-seek",
+      "status": "confirmed-command-expected",
+      "source_requirements": [
+        "D03",
+        "AP01",
+        "AP02",
+        "AP03"
+      ],
+      "input": {
+        "cue": "bgm003",
+        "seek_ms": 0
+      },
+      "expected": {
+        "outcome": "accepted",
+        "commands": [
+          {
+            "kind": "bgm.load",
+            "cue": "bgm003",
+            "seek_ms": 0,
+            "priority": 255,
+            "fade_bits": "0x00000000"
+          },
+          {
+            "kind": "audio.pause-all",
+            "paused": true
+          },
+          {
+            "kind": "audio.pause-all",
+            "paused": false
+          }
+        ],
+        "mutation": "atomic-commit"
+      },
+      "notes": []
+    },
+    {
+      "case_id": "AU-C07",
+      "name": "bgm-nonzero-seek",
+      "status": "confirmed-command-expected",
+      "source_requirements": [
+        "D04",
+        "AP03"
+      ],
+      "input": {
+        "cue": "bgm003",
+        "seek_ms": 1234
+      },
+      "expected": {
+        "outcome": "accepted",
+        "commands": [
+          {
+            "kind": "bgm.load",
+            "cue": "bgm003",
+            "seek_ms": 1234,
+            "priority": 255,
+            "fade_bits": "0x00000000"
+          },
+          {
+            "kind": "audio.pause-all",
+            "paused": true
+          }
+        ],
+        "mutation": "atomic-commit"
+      },
+      "notes": []
+    },
+    {
+      "case_id": "AU-C08",
+      "name": "active-audio-pause",
+      "status": "confirmed-command-expected",
+      "source_requirements": [
+        "D14",
+        "AP17"
+      ],
+      "input": {
+        "bgm_active": true,
+        "hold_owner_keys": [
+          "long-a"
+        ]
+      },
+      "expected": {
+        "outcome": "accepted",
+        "commands": [
+          {
+            "kind": "bgm.pause"
+          },
+          {
+            "kind": "se.pause"
+          },
+          {
+            "kind": "hold.pause",
+            "owner_key": "long-a"
+          }
+        ],
+        "mutation": "atomic-commit"
+      },
+      "notes": []
+    },
+    {
+      "case_id": "AU-C09",
+      "name": "active-audio-resume",
+      "status": "confirmed-command-expected",
+      "source_requirements": [
+        "D15",
+        "AP18"
+      ],
+      "input": {
+        "bgm_paused": true,
+        "hold_owner_keys": [
+          "long-a"
+        ]
+      },
+      "expected": {
+        "outcome": "accepted",
+        "commands": [
+          {
+            "kind": "bgm.resume"
+          },
+          {
+            "kind": "se.resume"
+          },
+          {
+            "kind": "hold.resume",
+            "owner_key": "long-a"
+          }
+        ],
+        "mutation": "atomic-commit"
+      },
+      "notes": []
+    },
+    {
+      "case_id": "AU-C10",
+      "name": "bgm-natural-end-without-explicit-stop",
+      "status": "confirmed-command-expected",
+      "source_requirements": [
+        "D05",
+        "D16",
+        "AP04"
+      ],
+      "input": {
+        "operation": "natural-song-end"
+      },
+      "expected": {
+        "outcome": "accepted",
+        "commands": [],
+        "mutation": "atomic-commit"
+      },
+      "notes": [
+        "Natural playback transitions playing to ended before clear; no explicit StopMusic or transport-stop command is emitted."
+      ]
+    },
+    {
+      "case_id": "AU-C11",
+      "name": "standard-good-judgement",
+      "status": "confirmed-command-expected",
+      "source_requirements": [
+        "D06",
+        "D07",
+        "AP05"
+      ],
+      "input": {
+        "result": "Good",
+        "silent": false
+      },
+      "expected": {
+        "outcome": "accepted",
+        "commands": [
+          {
+            "kind": "se.play-one-shot",
+            "cue": "good",
+            "voice_key": "one-shot-0",
+            "volume_bits": "0x3F800000",
+            "pitch_bits": "0x00000000",
+            "pan_distance_bits": "0x00000000",
+            "pan_angle_bits": "0x00000000"
+          }
+        ],
+        "mutation": "atomic-commit"
+      },
+      "notes": []
+    },
+    {
+      "case_id": "AU-C12",
+      "name": "standard-great-judgement",
+      "status": "confirmed-command-expected",
+      "source_requirements": [
+        "D06",
+        "D07",
+        "AP05"
+      ],
+      "input": {
+        "result": "Great",
+        "silent": false
+      },
+      "expected": {
+        "outcome": "accepted",
+        "commands": [
+          {
+            "kind": "se.play-one-shot",
+            "cue": "great",
+            "voice_key": "one-shot-0",
+            "volume_bits": "0x3F800000",
+            "pitch_bits": "0x00000000",
+            "pan_distance_bits": "0x00000000",
+            "pan_angle_bits": "0x00000000"
+          }
+        ],
+        "mutation": "atomic-commit"
+      },
+      "notes": []
+    },
+    {
+      "case_id": "AU-C13",
+      "name": "standard-perfect-judgement",
+      "status": "confirmed-command-expected",
+      "source_requirements": [
+        "D06",
+        "D07",
+        "AP05"
+      ],
+      "input": {
+        "result": "Perfect",
+        "silent": false
+      },
+      "expected": {
+        "outcome": "accepted",
+        "commands": [
+          {
+            "kind": "se.play-one-shot",
+            "cue": "perfect",
+            "voice_key": "one-shot-0",
+            "volume_bits": "0x3F800000",
+            "pitch_bits": "0x00000000",
+            "pan_distance_bits": "0x00000000",
+            "pan_angle_bits": "0x00000000"
+          }
+        ],
+        "mutation": "atomic-commit"
+      },
+      "notes": []
+    },
+    {
+      "case_id": "AU-C14",
+      "name": "bad-judgement-no-standard-cue",
+      "status": "excluded-current-route",
+      "source_requirements": [
+        "D07"
+      ],
+      "input": {
+        "result": "Bad",
+        "silent": false
+      },
+      "expected": {
+        "outcome": "excluded-current-route",
+        "commands": [],
+        "mutation": "none",
+        "reason": "current standard result cue map contains only Good/Great/Perfect"
+      },
+      "notes": [
+        "No synthetic no-op command is emitted."
+      ]
+    },
+    {
+      "case_id": "AU-C15",
+      "name": "miss-judgement-no-standard-cue",
+      "status": "excluded-current-route",
+      "source_requirements": [
+        "D07"
+      ],
+      "input": {
+        "result": "Miss",
+        "silent": false
+      },
+      "expected": {
+        "outcome": "excluded-current-route",
+        "commands": [],
+        "mutation": "none",
+        "reason": "current standard result cue map contains only Good/Great/Perfect"
+      },
+      "notes": [
+        "No synthetic no-op command is emitted."
+      ]
+    },
+    {
+      "case_id": "AU-C16",
+      "name": "silent-judgement",
+      "status": "excluded-current-route",
+      "source_requirements": [
+        "D06",
+        "AP06"
+      ],
+      "input": {
+        "result": "Perfect",
+        "silent": true
+      },
+      "expected": {
+        "outcome": "excluded-current-route",
+        "commands": [],
+        "mutation": "none",
+        "reason": "ShouldSilent suppresses standard and flick producers"
+      },
+      "notes": [
+        "No synthetic no-op command is emitted."
+      ]
+    },
+    {
+      "case_id": "AU-C17",
+      "name": "flick-default",
+      "status": "confirmed-command-expected",
+      "source_requirements": [
+        "D08",
+        "AP07"
+      ],
+      "input": {
+        "note_type": "Flick",
+        "multiple_count": 1
+      },
+      "expected": {
+        "outcome": "accepted",
+        "commands": [
+          {
+            "kind": "se.play-one-shot",
+            "cue": "flick",
+            "voice_key": "one-shot-0",
+            "volume_bits": "0x3F800000",
+            "pitch_bits": "0x00000000",
+            "pan_distance_bits": "0x00000000",
+            "pan_angle_bits": "0x00000000"
+          }
+        ],
+        "mutation": "atomic-commit"
+      },
+      "notes": []
+    },
+    {
+      "case_id": "AU-C18",
+      "name": "directional-width-selection",
+      "status": "confirmed-command-expected",
+      "source_requirements": [
+        "D08",
+        "AP07"
+      ],
+      "input": {
+        "note_type": 7,
+        "multiple_count": 3
+      },
+      "expected": {
+        "outcome": "accepted",
+        "commands": [
+          {
+            "kind": "se.play-one-shot",
+            "cue": "directional_fl_3",
+            "voice_key": "one-shot-0",
+            "volume_bits": "0x3F800000",
+            "pitch_bits": "0x00000000",
+            "pan_distance_bits": "0x00000000",
+            "pan_angle_bits": "0x00000000"
+          }
+        ],
+        "mutation": "atomic-commit"
+      },
+      "notes": []
+    },
+    {
+      "case_id": "AU-C19",
+      "name": "multiple-directional-mutually-exclusive",
+      "status": "confirmed-command-expected",
+      "source_requirements": [
+        "D08",
+        "AP07"
+      ],
+      "input": {
+        "note_type": 7,
+        "multiple_count": 2
+      },
+      "expected": {
+        "outcome": "accepted",
+        "commands": [
+          {
+            "kind": "se.play-one-shot",
+            "cue": "directional_fl_2",
+            "voice_key": "one-shot-0",
+            "volume_bits": "0x3F800000",
+            "pitch_bits": "0x00000000",
+            "pan_distance_bits": "0x00000000",
+            "pan_angle_bits": "0x00000000"
+          }
+        ],
+        "mutation": "atomic-commit"
+      },
+      "notes": [
+        "Exactly one selected flick cue; no standard cue is co-emitted."
+      ]
+    },
+    {
+      "case_id": "AU-C20",
+      "name": "same-frame-audio-before-vibration",
+      "status": "confirmed-command-expected",
+      "source_requirements": [
+        "D02",
+        "D08",
+        "AP07"
+      ],
+      "input": {
+        "relative_frame": 100,
+        "note_type": "Flick"
+      },
+      "expected": {
+        "outcome": "accepted",
+        "commands": [
+          {
+            "kind": "se.play-one-shot",
+            "cue": "flick",
+            "voice_key": "one-shot-0",
+            "volume_bits": "0x3F800000",
+            "pitch_bits": "0x00000000",
+            "pan_distance_bits": "0x00000000",
+            "pan_angle_bits": "0x00000000"
+          }
+        ],
+        "mutation": "atomic-commit"
+      },
+      "notes": [
+        "The non-audio vibration follows the audio producer in the same relative frame and is outside the audio command batch."
+      ]
+    },
+    {
+      "case_id": "AU-C21",
+      "name": "long-start",
+      "status": "confirmed-command-expected",
+      "source_requirements": [
+        "D10",
+        "AP09"
+      ],
+      "input": {
+        "owner_key": "long-a",
+        "transition": "touch-began"
+      },
+      "expected": {
+        "outcome": "accepted",
+        "commands": [
+          {
+            "kind": "hold.start-loop",
+            "cue": "SE_RHYTHM_TAP_LONG",
+            "owner_key": "long-a",
+            "volume_bits": "0x3F800000",
+            "fade_in_bits": "0x00000000"
+          }
+        ],
+        "mutation": "atomic-commit"
+      },
+      "notes": []
+    },
+    {
+      "case_id": "AU-C22",
+      "name": "long-normal-tail",
+      "status": "confirmed-command-expected",
+      "source_requirements": [
+        "D11",
+        "D12",
+        "AP10"
+      ],
+      "input": {
+        "owner_key": "long-a",
+        "transition": "touch-ended"
+      },
+      "expected": {
+        "outcome": "accepted",
+        "commands": [
+          {
+            "kind": "hold.fade",
+            "owner_key": "long-a",
+            "target_bits": "0x00000000",
+            "duration_bits": "0x3E99999A",
+            "stop_at_zero": true
+          }
+        ],
+        "mutation": "atomic-commit"
+      },
+      "notes": []
+    },
+    {
+      "case_id": "AU-C23",
+      "name": "long-miss",
+      "status": "confirmed-command-expected",
+      "source_requirements": [
+        "D11",
+        "D12",
+        "AP10"
+      ],
+      "input": {
+        "owner_key": "long-a",
+        "transition": "miss"
+      },
+      "expected": {
+        "outcome": "accepted",
+        "commands": [
+          {
+            "kind": "hold.fade",
+            "owner_key": "long-a",
+            "target_bits": "0x00000000",
+            "duration_bits": "0x3E99999A",
+            "stop_at_zero": true
+          }
+        ],
+        "mutation": "atomic-commit"
+      },
+      "notes": []
+    },
+    {
+      "case_id": "AU-C24",
+      "name": "long-deactivate",
+      "status": "confirmed-command-expected",
+      "source_requirements": [
+        "D12",
+        "AP10"
+      ],
+      "input": {
+        "owner_key": "long-a",
+        "transition": "deactivate"
+      },
+      "expected": {
+        "outcome": "accepted",
+        "commands": [
+          {
+            "kind": "hold.fade",
+            "owner_key": "long-a",
+            "target_bits": "0x00000000",
+            "duration_bits": "0x3E99999A",
+            "stop_at_zero": true
+          }
+        ],
+        "mutation": "atomic-commit"
+      },
+      "notes": []
+    },
+    {
+      "case_id": "AU-C25",
+      "name": "slide-start",
+      "status": "confirmed-command-expected",
+      "source_requirements": [
+        "D10",
+        "AP11"
+      ],
+      "input": {
+        "owner_key": "slide-a",
+        "transition": "touch-began"
+      },
+      "expected": {
+        "outcome": "accepted",
+        "commands": [
+          {
+            "kind": "hold.start-loop",
+            "cue": "SE_RHYTHM_TAP_LONG",
+            "owner_key": "slide-a",
+            "volume_bits": "0x3F800000",
+            "fade_in_bits": "0x00000000"
+          }
+        ],
+        "mutation": "atomic-commit"
+      },
+      "notes": []
+    },
+    {
+      "case_id": "AU-C26",
+      "name": "slide-normal-tail",
+      "status": "confirmed-command-expected",
+      "source_requirements": [
+        "D11",
+        "D12",
+        "AP12"
+      ],
+      "input": {
+        "owner_key": "slide-a",
+        "transition": "terminal"
+      },
+      "expected": {
+        "outcome": "accepted",
+        "commands": [
+          {
+            "kind": "hold.fade",
+            "owner_key": "slide-a",
+            "target_bits": "0x00000000",
+            "duration_bits": "0x3E99999A",
+            "stop_at_zero": true
+          }
+        ],
+        "mutation": "atomic-commit"
+      },
+      "notes": []
+    },
+    {
+      "case_id": "AU-C27",
+      "name": "slide-miss-deactivate",
+      "status": "confirmed-command-expected",
+      "source_requirements": [
+        "D11",
+        "D12",
+        "AP12"
+      ],
+      "input": {
+        "owner_key": "slide-a",
+        "transitions": [
+          "miss",
+          "deactivate"
+        ]
+      },
+      "expected": {
+        "outcome": "accepted",
+        "commands": [
+          {
+            "kind": "hold.fade",
+            "owner_key": "slide-a",
+            "target_bits": "0x00000000",
+            "duration_bits": "0x3E99999A",
+            "stop_at_zero": true
+          }
+        ],
+        "mutation": "atomic-commit"
+      },
+      "notes": []
+    },
+    {
+      "case_id": "AU-C28",
+      "name": "hold-active-pause-resume",
+      "status": "confirmed-command-expected",
+      "source_requirements": [
+        "D14",
+        "D15",
+        "AP17",
+        "AP18"
+      ],
+      "input": {
+        "owner_key": "long-a",
+        "active": true
+      },
+      "expected": {
+        "outcome": "accepted",
+        "commands": [
+          {
+            "kind": "bgm.pause"
+          },
+          {
+            "kind": "se.pause"
+          },
+          {
+            "kind": "hold.pause",
+            "owner_key": "long-a"
+          },
+          {
+            "kind": "bgm.resume"
+          },
+          {
+            "kind": "se.resume"
+          },
+          {
+            "kind": "hold.resume",
+            "owner_key": "long-a"
+          }
+        ],
+        "mutation": "atomic-commit"
+      },
+      "notes": []
+    },
+    {
+      "case_id": "AU-C29",
+      "name": "binary32-gain-chain",
+      "status": "confirmed-command-expected",
+      "source_requirements": [
+        "D17",
+        "D18",
+        "D19",
+        "AP20"
+      ],
+      "input": {
+        "master_bits": "0x3F000000",
+        "bgm_bits": "0x3F000000",
+        "se_bits": "0x3F800000",
+        "voice_bits": "0x3F800000"
+      },
+      "expected": {
+        "outcome": "accepted",
+        "commands": [
+          {
+            "kind": "gain.set",
+            "bgm_bits": "0x3E800000",
+            "se_bits": "0x3F000000",
+            "voice_bits": "0x3F000000"
+          }
+        ],
+        "mutation": "atomic-commit"
+      },
+      "notes": []
+    },
+    {
+      "case_id": "AU-C30",
+      "name": "skill-and-audience",
+      "status": "confirmed-command-expected",
+      "source_requirements": [
+        "D13",
+        "AP13"
+      ],
+      "input": {
+        "practice": false
+      },
+      "expected": {
+        "outcome": "accepted",
+        "commands": [
+          {
+            "kind": "se.play-one-shot",
+            "cue": "SE_RHYTHM_CUTIN_SKILL",
+            "voice_key": "skill",
+            "volume_bits": "0x3F800000",
+            "pitch_bits": "0x00000000",
+            "pan_distance_bits": "0x00000000",
+            "pan_angle_bits": "0x00000000"
+          },
+          {
+            "kind": "se.play-one-shot",
+            "cue": "SE_RHYTHM_CUTIN_AUDIENCE",
+            "voice_key": "audience",
+            "volume_bits": "0x3F800000",
+            "pitch_bits": "0x00000000",
+            "pan_distance_bits": "0x00000000",
+            "pan_angle_bits": "0x00000000"
+          }
+        ],
+        "mutation": "atomic-commit"
+      },
+      "notes": []
+    },
+    {
+      "case_id": "AU-C31",
+      "name": "fever-no-direct-audio",
+      "status": "excluded-current-route",
+      "source_requirements": [
+        "D13",
+        "AP15"
+      ],
+      "input": {
+        "transition": "fever-start"
+      },
+      "expected": {
+        "outcome": "excluded-current-route",
+        "commands": [],
+        "mutation": "none",
+        "reason": "current static contract and resource profile exclude a direct Fever audio route"
+      },
+      "notes": [
+        "No synthetic no-op command is emitted."
+      ]
+    },
+    {
+      "case_id": "AU-C32",
+      "name": "full-combo-and-game-clear",
+      "status": "confirmed-command-expected",
+      "source_requirements": [
+        "D13",
+        "AP14"
+      ],
+      "input": {
+        "clear_status": 2,
+        "practice": false
+      },
+      "expected": {
+        "outcome": "accepted",
+        "commands": [
+          {
+            "kind": "se.play-one-shot",
+            "cue": "SE_RHYTHM_FULLCOMBO",
+            "voice_key": "full-combo",
+            "volume_bits": "0x3F800000",
+            "pitch_bits": "0x00000000",
+            "pan_distance_bits": "0x00000000",
+            "pan_angle_bits": "0x00000000"
+          },
+          {
+            "kind": "se.play-one-shot",
+            "cue": "SE_RHYTHM_CLEAR",
+            "voice_key": "game-clear",
+            "volume_bits": "0x3F800000",
+            "pitch_bits": "0x00000000",
+            "pan_distance_bits": "0x00000000",
+            "pan_angle_bits": "0x00000000"
+          },
+          {
+            "kind": "se.play-one-shot",
+            "cue": "SE_RHYTHM_CLEAR_VO",
+            "voice_key": "game-clear-voice",
+            "volume_bits": "0x3F800000",
+            "pitch_bits": "0x00000000",
+            "pan_distance_bits": "0x00000000",
+            "pan_angle_bits": "0x00000000"
+          }
+        ],
+        "mutation": "atomic-commit"
+      },
+      "notes": [
+        "ARM64 confirms Full Combo for clearStatus 2/3; final S-A confirms clear and clear-voice producer/order while clearStatus 1 suppresses Full Combo."
+      ]
+    },
+    {
+      "case_id": "AU-C33",
+      "name": "game-over-double-pause",
+      "status": "confirmed-command-expected",
+      "source_requirements": [
+        "D13",
+        "D16",
+        "AP16"
+      ],
+      "input": {
+        "transition": "life-zero-game-over"
+      },
+      "expected": {
+        "outcome": "accepted",
+        "commands": [
+          {
+            "kind": "audio.pause-all",
+            "paused": true,
+            "delay_seconds_bits": "0x3D4CCCCD"
+          },
+          {
+            "kind": "audio.pause-all",
+            "paused": true,
+            "delay_seconds_bits": "0x3DCCCCCD"
+          }
+        ],
+        "mutation": "atomic-commit"
+      },
+      "notes": []
+    },
+    {
+      "case_id": "AU-C34",
+      "name": "fixed-pool-capacity-and-reuse",
+      "status": "confirmed-command-expected",
+      "source_requirements": [
+        "D09",
+        "D25",
+        "AP08",
+        "AP22"
+      ],
+      "input": {
+        "allocations": [
+          "one-shot-a",
+          "one-shot-b",
+          "one-shot-a"
+        ]
+      },
+      "expected": {
+        "outcome": "accepted",
+        "commands": [
+          {
+            "kind": "pool.profile",
+            "bgm": 8,
+            "se": 12,
+            "one_shot": 1,
+            "exhaustion": "evidence-required"
+          }
+        ],
+        "mutation": "atomic-commit"
+      },
+      "notes": []
+    },
+    {
+      "case_id": "AU-C35",
+      "name": "post-item-invalid-atomic-batch",
+      "status": "confirmed-command-expected",
+      "source_requirements": [
+        "D27"
+      ],
+      "input": {
+        "batch": [
+          "valid-command",
+          "invalid-command"
+        ]
+      },
+      "expected": {
+        "outcome": "evidence-required",
+        "commands": [],
+        "mutation": "none"
+      },
+      "notes": [
+        "Portable batch preflight rejects the full batch without sequence, voice or domain mutation."
+      ]
+    },
+    {
+      "case_id": "AU-C36",
+      "name": "sync-and-async-first-fault",
+      "status": "confirmed-command-expected",
+      "source_requirements": [
+        "D28"
+      ],
+      "input": {
+        "fault_modes": [
+          "sync",
+          "async"
+        ]
+      },
+      "expected": {
+        "outcome": "audio-backend-fault",
+        "commands": [],
+        "mutation": "first-fault-latched"
+      },
+      "notes": [
+        "The first fault is stable; later faults do not replace it and later mutating APIs reject before validation."
+      ]
+    },
+    {
+      "case_id": "AU-C37",
+      "name": "context-state-boundary",
+      "status": "confirmed-command-expected",
+      "source_requirements": [
+        "D24",
+        "D28"
+      ],
+      "input": {
+        "context_states": [
+          "suspended",
+          "closed"
+        ]
+      },
+      "expected": {
+        "outcome": "audio-context-unavailable",
+        "commands": [],
+        "mutation": "none"
+      },
+      "notes": [
+        "Prepare fails closed; there is no automatic context resume, recreation or silent fallback."
+      ]
+    },
+    {
+      "case_id": "AU-C38",
+      "name": "global-dispose-not-per-live-exit",
+      "status": "excluded-current-route",
+      "source_requirements": [
+        "D16",
+        "D28",
+        "AP19"
+      ],
+      "input": {
+        "operations": [
+          "live-exit",
+          "global-dispose"
+        ]
+      },
+      "expected": {
+        "outcome": "excluded-current-route",
+        "commands": [],
+        "mutation": "none",
+        "reason": "the confirmed per-Live route stops SE, removes Live bundles and hands off Home BGM while the global SoundManager remains alive"
+      },
+      "notes": [
+        "No synthetic no-op command is emitted."
+      ]
+    },
+    {
+      "case_id": "AU-C39",
+      "name": "ordinary-and-habahiro-production-command-digest",
+      "status": "confirmed-command-expected",
+      "source_requirements": [
+        "D02",
+        "D26",
+        "D29",
+        "AP04",
+        "AP14",
+        "AP19"
+      ],
+      "input": {
+        "charts": [
+          "ordinary-production",
+          "habahiro-production"
+        ]
+      },
+      "expected": {
+        "outcome": "accepted",
+        "commands": [],
+        "mutation": "none",
+        "normalized_projection": {
+          "case_id": "AU-C39",
+          "ordinary": {
+            "normalized_command_count": 1277,
+            "normalized_command_sha256": "25DA5C28B66E3B1AFD361657854639908A97614645B0930B81618666565BE9A1"
+          },
+          "habahiro": {
+            "normalized_command_count": 713,
+            "normalized_command_sha256": "903C36F0617E566B88A7900CB4B4836E04CB4655CC6C9D45A51525D78F1E66FE",
+            "projection": "chart-family-normalized"
+          },
+          "normalization_excludes": [
+            "trace sequence",
+            "runtime alias",
+            "pointer",
+            "wall clock",
+            "audio bytes"
+          ]
+        }
+      },
+      "notes": [
+        "Production output is compared through the pre-TypeScript normalized count/digest projection; trace aliases and sequence numbers are excluded."
+      ]
+    }
+  ],
+  "summary": {
+    "case_count": 39,
+    "confirmed_count": 34,
+    "excluded_count": 5,
+    "blocking_count": 0,
+    "blocking_case_ids": []
+  },
+  "blocking_findings": [],
+  "production_authorization": false
+}

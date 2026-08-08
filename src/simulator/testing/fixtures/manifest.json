@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "purpose": "offline simulator test fixtures",
   "sourceRepository": "HOST________/VSCode/GirlsBandParty-Reverse",
-  "sourceHead": "c9a4629bdfac248c167a966a92bdb2c45dad87e6",
+  "sourceHead": "50798c00b009cba87a99229024d925b69e9cff98",
   "entries": [
     {
       "path": "habahiro-snapshots/bestdori-atlas-profile.json",
@@ -17,6 +17,35 @@
       "sourcePath": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/habahiro_approximation_difference_matrix.json",
       "bytes": 2318,
       "sha256": "DADAAE3D83EDDDECC0E7921761CDF1B64BFE2A584823A91854760D190383CE84"
+    },
+    {
+      "path": "reverse-snapshots/audio/artifacts/investigations/audio-10-1-4/audio_command_oracle.json",
+      "sourceReverseCommit": "50798c00b009cba87a99229024d925b69e9cff98",
+      "sourcePath": "artifacts/investigations/audio-runtime-evidence-10-1-4/audio_command_oracle.json",
+      "bytes": 30404,
+      "sha256": "CDA8ED00CD3382601B87903148D71A663739B41F5B66B5108046B2478BC49043"
+    },
+    {
+      "path": "reverse-snapshots/audio/artifacts/investigations/audio-10-1-4/audio_pcm_oracle.json",
+      "sourceReverseCommit": "50798c00b009cba87a99229024d925b69e9cff98",
+      "sourcePath": "artifacts/investigations/audio-runtime-evidence-10-1-4/audio_pcm_oracle.json",
+      "bytes": 4752,
+      "sha256": "53BE9F084F7AFB12AA7B156DE79EC7C46D06BEB07E06F9FDDBAB6647AFC1C430"
+    },
+    {
+      "path": "reverse-snapshots/audio/artifacts/investigations/audio-10-1-4/portable-mix-expected-f32le-stereo.bin",
+      "sourceReverseCommit": "50798c00b009cba87a99229024d925b69e9cff98",
+      "sourcePath": "artifacts/investigations/audio-portable-lifecycle-pcm-contract-10-1-4/portable_audio_oracle.json#/pcm_case/pcm_base64",
+      "bytes": 19264,
+      "sha256": "3A5E38BF7DF5C02BF884D493D48732BC36B8EA811340BBDAF2E25D6AA37211E5",
+      "extraction": "base64-decoded exact portable PCM expected"
+    },
+    {
+      "path": "reverse-snapshots/audio/artifacts/investigations/audio-10-1-4/synthetic-mono-f32le.bin",
+      "sourceReverseCommit": "50798c00b009cba87a99229024d925b69e9cff98",
+      "sourcePath": "artifacts/investigations/audio-portable-lifecycle-pcm-contract-10-1-4/fixtures/synthetic-mono-f32le.bin",
+      "bytes": 32,
+      "sha256": "2CAA3FC0F1CC321947DEEAC3DF261AEE15F17A8C50383B487B4B76FECC358BF8"
     },
     {
       "path": "reverse-snapshots/auto-live/fixtures/auto-live-actual-replay-chart.txt",

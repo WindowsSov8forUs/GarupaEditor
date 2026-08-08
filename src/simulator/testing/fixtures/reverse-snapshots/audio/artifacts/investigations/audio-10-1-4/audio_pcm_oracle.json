@@ -1,0 +1,146 @@
+{
+  "schema_version": 1,
+  "status": "pcm-oracle-closed-pre-typescript",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "version_name": "10.1.4",
+    "version_code": 230,
+    "abi": "arm64-v8a"
+  },
+  "sources": {
+    "static_matrix": {
+      "path": "../audio-runtime-contract-10-1-4/audio_static_semantic_matrix.json",
+      "sha256": "D5B5CAFB4315A0FB718EBAC5ED2607932E2A91486D0A3018F8D705D18CF48EE4"
+    },
+    "resource_profile": {
+      "path": "../audio-current-cri-profile-10-1-4/current_cri_resource_profile.json",
+      "sha256": "8995BEAB11F1ABD5C7564DFA728CD9609E5C58C7C14759E5E4AADF5D0C2B4676"
+    },
+    "portable_profile": {
+      "path": "../audio-current-portable-profile-10-1-4/current_external_portable_profile.json",
+      "sha256": "17DB2D66E9B495A37FAAA004FFAFBD4BAE2A45C7BFF4828AA7894C08407553A8"
+    },
+    "portable_contract": {
+      "path": "../audio-portable-lifecycle-pcm-contract-10-1-4/portable_audio_contract.json",
+      "sha256": "1A15D50AEEBF8635D8A5BF7658E12E16CC66453F3F16A2CB4C5A26FD4CAD5CC0"
+    },
+    "portable_oracle": {
+      "path": "../audio-portable-lifecycle-pcm-contract-10-1-4/portable_audio_oracle.json",
+      "sha256": "BE1C70ADC5513FE9FBE7E8C89E69FDEB44DBAF284D1AD22BA70397EBF1125F51"
+    },
+    "command_oracle": {
+      "path": "audio_command_oracle.json",
+      "sha256": "CDA8ED00CD3382601B87903148D71A663739B41F5B66B5108046B2478BC49043"
+    },
+    "generator": {
+      "path": "generate_audio_pcm_oracle.py",
+      "sha256": "C1598D7D8BEA0DEB81595C02A88C9DB189D5D2715049F05D872A2BB234F3537A"
+    }
+  },
+  "boundary": {
+    "case_id": "AU-C40",
+    "future_typescript_or_test_subject_used": false,
+    "device_recording_used": false,
+    "listening_judgement_used": false,
+    "network_used": false,
+    "original_audio_bytes_committed": false,
+    "external_portable_audio_bytes_committed": false,
+    "project_authored_numeric_fixture_committed": true,
+    "portable_reference_renderer_used": true,
+    "expected_pcm_bytes_committed_in_source_oracle": true,
+    "scope": "portable deterministic backend contract; no CRI/browser/device waveform equivalence claim",
+    "empty_pcm_is_not_success": true
+  },
+  "case": {
+    "case_id": "AU-C40",
+    "name": "fixed-offline-pcm-bytes-anchors-length-and-digest",
+    "status": "confirmed-pcm-expected",
+    "source_requirements": [
+      "D18",
+      "D22",
+      "D30",
+      "D31"
+    ],
+    "input": {
+      "fixture": "../audio-portable-lifecycle-pcm-contract-10-1-4/fixtures/synthetic-mono-f32le.bin",
+      "fixture_sha256": "2CAA3FC0F1CC321947DEEAC3DF261AEE15F17A8C50383B487B4B76FECC358BF8",
+      "fixture_bytes": 32,
+      "rights": "project-authored numeric test vector; no game or external audio bytes",
+      "mix": {
+        "output_frames": 2408,
+        "voice_a": {
+          "start_frame": 0,
+          "gain_bits": "0x3F800000",
+          "loop": [
+            1,
+            7
+          ]
+        },
+        "voice_b": {
+          "start_frame": 4,
+          "gain_bits": "0x3F000000",
+          "loop": [
+            0,
+            8
+          ],
+          "fade_start_frame": 4,
+          "fade_duration_bits": "0x3E99999A",
+          "fade_target_bits": "0x00000000",
+          "stop_at_zero": true
+        }
+      }
+    },
+    "expected": {
+      "outcome": "accepted",
+      "sample_format": "f32le-stereo-interleaved",
+      "sample_rate": 8000,
+      "channel_count": 2,
+      "frame_count": 2408,
+      "fade_frame_count": 2401,
+      "anchors": {
+        "0": [
+          "0x00000000",
+          "0x00000000"
+        ],
+        "4": [
+          "0xBF800000",
+          "0xBF800000"
+        ],
+        "5": [
+          "0xBEC006D3",
+          "0xBEC006D3"
+        ],
+        "7": [
+          "0x3F3FD70E",
+          "0x3F3FD70E"
+        ],
+        "2404": [
+          "0xBF800000",
+          "0xBF800000"
+        ],
+        "2405": [
+          "0xBF000000",
+          "0xBF000000"
+        ],
+        "2407": [
+          "0x3E800000",
+          "0x3E800000"
+        ]
+      },
+      "byte_length": 19264,
+      "pcm_sha256": "3A5E38BF7DF5C02BF884D493D48732BC36B8EA811340BBDAF2E25D6AA37211E5",
+      "pcm_base64_source": "../audio-portable-lifecycle-pcm-contract-10-1-4/portable_audio_oracle.json#/pcm_case/pcm_base64",
+      "mutation": "none"
+    },
+    "missing_evidence": [],
+    "forbidden_substitutes": [
+      "current CRI or external portable gameplay audio bytes contrary to committed distribution policy",
+      "device recording or listening judgement",
+      "future TypeScript implementation or test helper as expected",
+      "zero-length or silent placeholder PCM",
+      "CRI browser or hardware binary-equivalence claim"
+    ]
+  },
+  "blocking_findings": [],
+  "production_authorization": false
+}
