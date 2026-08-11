@@ -38,6 +38,7 @@
     "simulator:test:audio": "node src/simulator/testing/runAudioTests.mjs",
     "simulator:test:particles": "node src/simulator/testing/runParticleTests.mjs",
     "simulator:test:device-closure": "node src/simulator/testing/runDeviceClosureTests.mjs",
+    "simulator:test:autonomous-module": "node src/simulator/testing/runAutonomousModuleTests.mjs",
     "simulator:test:fixtures": "node src/simulator/testing/verifyTestingFixtures.mjs",
     "tauri": "tauri",
     "desktop:dev": "tauri dev",

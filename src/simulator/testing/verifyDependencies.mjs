@@ -3,14 +3,17 @@ import { dirname, extname, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const simulatorRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const scannedRoots = ["engine", "host", "backends"].map((path) => resolve(simulatorRoot, path));
-const pixiBackendRoot = resolve(simulatorRoot, "backends", "pixi");
-const webAudioBackend = resolve(
-  simulatorRoot,
-  "backends",
-  "audio",
-  "webAudioBackend.ts",
-);
+const scannedRoots = [simulatorRoot];
+const testingRoot = resolve(simulatorRoot, "testing");
+const pixiAllowedRoots = [
+  resolve(simulatorRoot, "backends", "pixi"),
+  resolve(simulatorRoot, "platform"),
+];
+const domAllowedRoots = [
+  resolve(simulatorRoot, "backends", "audio"),
+  resolve(simulatorRoot, "backends", "pixi"),
+  resolve(simulatorRoot, "platform"),
+];
 const forbidden = [
   { label: "React", pattern: /(?:from\s+["']react(?:\/[^"']*)?["']|import\s+["']react)/ },
   { label: "Pixi", pattern: /(?:from\s+["']pixi\.js["']|import\s+["']pixi\.js["'])/ },
@@ -35,11 +38,14 @@ const violations = [];
 for (const root of scannedRoots) {
   for (const path of listTypeScriptFiles(root)) {
     const source = readFileSync(path, "utf8");
+    if (path.startsWith(`${testingRoot}${sep}`)) continue;
     for (const rule of forbidden) {
-      if (rule.label === "Pixi" && path.startsWith(`${pixiBackendRoot}${sep}`)) {
+      if (rule.label === "Pixi" && pixiAllowedRoots.some((root) =>
+        path === root || path.startsWith(`${root}${sep}`))) {
         continue;
       }
-      if ((rule.label === "DOM global" || rule.label === "DOM type") && path === webAudioBackend) {
+      if ((rule.label === "DOM global" || rule.label === "DOM type") &&
+        domAllowedRoots.some((root) => path === root || path.startsWith(`${root}${sep}`))) {
         continue;
       }
       if (rule.pattern.test(source)) {

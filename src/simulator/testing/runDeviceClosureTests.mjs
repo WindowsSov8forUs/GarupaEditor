@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 const testingRoot = dirname(fileURLToPath(import.meta.url));
 const repositoryRoot = resolve(testingRoot, "..", "..", "..");
 const stages = [
+  ["autonomous module public/resource/runtime boundary", "runAutonomousModuleTests.mjs"],
   ["particle contracts/oracles/production", "runParticleTests.mjs"],
   ["audio", "runAudioTests.mjs"],
   ["resource/Pixi and all upstream simulator blocks", "runResourcePixiRenderingTests.mjs"],
