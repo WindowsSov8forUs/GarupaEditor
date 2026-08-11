@@ -5,6 +5,7 @@ import type {
   ParticleFrameBatch,
   ParticleFrameRequest,
   ParticleFrameSnapshot,
+  ParticleInstanceIdentity,
   ParticleOperationResult,
   ParticleOwnerSnapshot,
   ParticlePortableProfile,
@@ -27,6 +28,7 @@ import { CURRENT_PARTICLE_RESOURCE_MANIFEST } from "./resources/currentParticleR
 
 interface MutableOwner {
   readonly root: ParticleRootId;
+  readonly instance: ParticleInstanceIdentity;
   restartCount: number;
 }
 
@@ -228,7 +230,12 @@ export class RecordingSimulatorParticleBackend implements SimulatorParticleBacke
   snapshot(): ParticleBackendSnapshot {
     const activeOwners: ParticleOwnerSnapshot[] = [...this.owners]
       .sort(([left], [right]) => left.localeCompare(right))
-      .map(([ownerKey, owner]) => Object.freeze({ ownerKey, root: owner.root, restartCount: owner.restartCount }));
+      .map(([ownerKey, owner]) => Object.freeze({
+        ownerKey,
+        instance: Object.freeze({ ...owner.instance }),
+        root: owner.root,
+        restartCount: owner.restartCount,
+      }));
     return Object.freeze({
       state: this.state,
       sessionId: this.sessionId,
@@ -332,8 +339,12 @@ function applyCommand(
       }
       const owner = owners.get(command.ownerKey);
       if (owner === undefined) {
-        owners.set(command.ownerKey, { root: command.root, restartCount: 0 });
-      } else if (owner.root === command.root) {
+        owners.set(command.ownerKey, {
+          root: command.root,
+          instance: Object.freeze({ ...command.instance }),
+          restartCount: 0,
+        });
+      } else if (owner.root === command.root && sameInstance(owner.instance, command.instance)) {
         owner.restartCount += 1;
       } else {
         return transitionRejected("particle.command.owner-root-mismatch", "A live owner cannot silently switch roots without exact Stop/Clear/deactivate.");
@@ -342,7 +353,7 @@ function applyCommand(
     }
     case "stop-clear-deactivate-root": {
       const owner = owners.get(command.ownerKey);
-      if (owner === undefined || owner.root !== command.root) {
+      if (owner === undefined || owner.root !== command.root || !sameInstance(owner.instance, command.instance)) {
         return transitionRejected("particle.command.missing-active-owner", "Stop/Clear/deactivate requires the exact active owner/root pair.");
       }
       owners.delete(command.ownerKey);
@@ -358,6 +369,13 @@ function applyCommand(
     default:
       return transitionRejected("particle.command.unknown-transition", "Unknown particle commands cannot mutate recording state.");
   }
+}
+
+function sameInstance(left: ParticleInstanceIdentity, right: ParticleInstanceIdentity): boolean {
+  if (left.kind !== right.kind || left.rangeLength !== right.rangeLength) return false;
+  return left.kind === "game-play-button" && right.kind === "game-play-button"
+    ? left.buttonType === right.buttonType
+    : left.kind === "note-slide" && right.kind === "note-slide" && left.noteIndex === right.noteIndex;
 }
 
 function cloneOwners(source: ReadonlyMap<string, MutableOwner>): Map<string, MutableOwner> {

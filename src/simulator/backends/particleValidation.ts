@@ -289,12 +289,16 @@ export function validateParticleCommandShape(
   }
   switch (command.kind) {
     case "play-root":
-      return hasExactKeys(command, ["kind", "ownerKey", "root", "restartIfActive"]) &&
-        isNonEmpty(command.ownerKey) && ROOT_SET.has(command.root) && command.restartIfActive === true
+      return hasExactKeys(command, ["kind", "ownerKey", "instance", "root", "restartIfActive"]) &&
+        isNonEmpty(command.ownerKey) && isParticleInstanceIdentity(command.instance) &&
+        ROOT_SET.has(command.root) && isInstanceCompatibleWithRoot(command.instance, command.root) &&
+        command.restartIfActive === true
         ? particleAccepted(undefined)
         : reject("particle.command.invalid-play", "Play requires a stable owner, exact route root and explicit restart-if-active semantics.");
     case "stop-clear-deactivate-root":
-      return hasExactKeys(command, ["kind", "ownerKey", "root"]) && isNonEmpty(command.ownerKey) && ROOT_SET.has(command.root)
+      return hasExactKeys(command, ["kind", "ownerKey", "instance", "root"]) &&
+        isNonEmpty(command.ownerKey) && isParticleInstanceIdentity(command.instance) &&
+        ROOT_SET.has(command.root) && isInstanceCompatibleWithRoot(command.instance, command.root)
         ? particleAccepted(undefined)
         : reject("particle.command.invalid-stop", "Stop/Clear/deactivate requires the exact active owner and root.");
     case "clear-all":
@@ -334,7 +338,9 @@ export function validateParticleFrameRequest(
 }
 
 export function freezeParticleCommand(command: ParticleCommand): ParticleCommand {
-  return Object.freeze({ ...command }) as ParticleCommand;
+  return "instance" in command
+    ? Object.freeze({ ...command, instance: Object.freeze({ ...command.instance }) }) as ParticleCommand
+    : Object.freeze({ ...command }) as ParticleCommand;
 }
 
 export function particleFloat32ToBits(value: number): string | null {
@@ -363,6 +369,30 @@ function parseJson(bytes: Uint8Array, capability: string): ParticleOperationResu
   } catch {
     return reject(capability, "JSON resources must be valid fatal UTF-8 and parse without recovery.");
   }
+}
+
+function isParticleInstanceIdentity(value: unknown): boolean {
+  if (!isRecord(value) || typeof value.kind !== "string") return false;
+  if (value.kind === "game-play-button") {
+    return hasExactKeys(value, ["kind", "buttonType", "rangeLength"]) &&
+      Number.isInteger(value.buttonType) && value.buttonType >= 0 && value.buttonType <= 15 &&
+      (value.rangeLength === null ||
+        (Number.isInteger(value.rangeLength) && value.rangeLength >= 1 && value.rangeLength <= 7));
+  }
+  return value.kind === "note-slide" &&
+    hasExactKeys(value, ["kind", "noteIndex", "rangeLength"]) &&
+    Number.isSafeInteger(value.noteIndex) && value.noteIndex >= 0 &&
+    Number.isInteger(value.rangeLength) && value.rangeLength >= 1 && value.rangeLength <= 7;
+}
+
+function isInstanceCompatibleWithRoot(
+  instance: Record<string, any>,
+  root: string,
+): boolean {
+  if (instance.kind === "note-slide") return root === "ordinary:effect_TapKeep";
+  return root.startsWith("directional:")
+    ? instance.rangeLength === null
+    : Number.isInteger(instance.rangeLength) && instance.rangeLength >= 1 && instance.rangeLength <= 7;
 }
 
 function isLockedSample(value: unknown): boolean {

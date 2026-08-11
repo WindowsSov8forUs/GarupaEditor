@@ -448,16 +448,30 @@ export interface ParticleResourcePreflightAdapter {
   inspectPng(bytes: Uint8Array): Promise<ParticleOperationResult<ParticleDecodedResourceMetadata>>;
 }
 
+export type ParticleInstanceIdentity =
+  | {
+      readonly kind: "game-play-button";
+      readonly buttonType: number;
+      readonly rangeLength: number | null;
+    }
+  | {
+      readonly kind: "note-slide";
+      readonly noteIndex: number;
+      readonly rangeLength: number;
+    };
+
 export type ParticleCommand =
   | {
       readonly kind: "play-root";
       readonly ownerKey: string;
+      readonly instance: ParticleInstanceIdentity;
       readonly root: ParticleRootId;
       readonly restartIfActive: true;
     }
   | {
       readonly kind: "stop-clear-deactivate-root";
       readonly ownerKey: string;
+      readonly instance: ParticleInstanceIdentity;
       readonly root: ParticleRootId;
     }
   | {
@@ -526,6 +540,7 @@ export interface ParticleFrameSnapshot {
 
 export interface ParticleOwnerSnapshot {
   readonly ownerKey: string;
+  readonly instance: ParticleInstanceIdentity;
   readonly root: ParticleRootId;
   readonly restartCount: number;
 }

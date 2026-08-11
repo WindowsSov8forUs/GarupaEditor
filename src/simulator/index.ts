@@ -28,6 +28,7 @@ export type {
   ParticleFrameBatch,
   ParticleFrameRequest,
   ParticleFrameSnapshot,
+  ParticleInstanceIdentity,
   ParticleModuleProfileMap,
   ParticleModuleType,
   ParticleOperationResult,
@@ -67,6 +68,21 @@ export {
   PortableParticleResourcePreflightAdapter,
 } from "./backends/resources/localParticleResourceProvider";
 export type { LocalParticleResource } from "./backends/resources/localParticleResourceProvider";
+export {
+  ParticleCommandOwnerTransaction,
+  ParticleCommandProducer,
+} from "./engine/particles/particleCommandProducer";
+export type { ParticleCommandProducerSnapshot } from "./engine/particles/particleCommandProducer";
+export {
+  isTapKeepStartJudgeNoteType,
+  isTapKeepStopJudgeNoteType,
+  resolveParticleDirectionalFingerRoot,
+  resolveParticleJudgementRoot,
+} from "./engine/particles/particleRouteResolver";
+export type {
+  ParticleDirectionalFingerRouteInput,
+  ParticleJudgementRouteInput,
+} from "./engine/particles/particleRouteResolver";
 export type {
   AudioBackendFault,
   AudioBackendSnapshot,
