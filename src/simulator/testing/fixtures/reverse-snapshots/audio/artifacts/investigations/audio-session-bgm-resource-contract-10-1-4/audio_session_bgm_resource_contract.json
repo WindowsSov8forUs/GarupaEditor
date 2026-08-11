@@ -1,0 +1,236 @@
+{
+  "schema_version": 1,
+  "status": "current-static-generic-session-bgm-portable-contract-closed",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "version_name": "10.1.4",
+    "version_code": 230,
+    "abi": "arm64-v8a",
+    "libil2cpp_sha256": "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F",
+    "global_metadata_sha256": "298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F"
+  },
+  "sources": {
+    "audio_static_contract": {
+      "path": "../audio-runtime-contract-10-1-4/audio_static_contract.json",
+      "sha256": "CA13A1F6977ED63CAA37FDD8701F602BC0AF4D7A4D27D0AD4DFEA88D79281F71"
+    },
+    "score_life_static_contract": {
+      "path": "../score-life-state-runtime-contract-10-1-4/score_life_state_static_contract.json",
+      "sha256": "932AE569D6B2AD8620D1D8CECD44EB812B6AFDB16E18590140D7DA56998566C2"
+    },
+    "current_portable_profile": {
+      "path": "../audio-current-portable-profile-10-1-4/current_external_portable_profile.json",
+      "sha256": "17DB2D66E9B495A37FAAA004FFAFBD4BAE2A45C7BFF4828AA7894C08407553A8"
+    }
+  },
+  "current_static_observations": {
+    "rhythm_game_start_bgm_id": {
+      "field": "public readonly string BgmId",
+      "offset": "0x140",
+      "layout_rows": 1
+    },
+    "generic_string_methods": [
+      {
+        "owner": "AssetBundleNames",
+        "method": "GetInGameBgmBundleName",
+        "signature": "System_String_o* AssetBundleNames__GetInGameBgmBundleName (System_String_o* key, const MethodInfo* method);",
+        "target_rva": "0x3326BAC",
+        "target_sha256": "CE578E2FD0899B0C4DCA0592C03BEB2BDA65FD4A558633CC488BF9F395A3D677",
+        "evidence": "../audio-runtime-contract-10-1-4/arm64/03326bac__AssetBundleNames__GetInGameBgmBundleName.arm64.tsv"
+      },
+      {
+        "owner": "CE.SoundManager",
+        "method": "PlayBGM",
+        "signature": "void CE_SoundManager__PlayBGM (CE_SoundManager_o* __this, System_String_o* cueName, float fadeTime, int32_t seekTime, const MethodInfo* method);",
+        "target_rva": "0x32C0328",
+        "target_sha256": "0D671D40ADB72A80DA7E2C40F5E0411289F575B7A58352197BAF8FC3BFFAFC41",
+        "evidence": "../audio-runtime-contract-10-1-4/arm64/032c0328__CE_SoundManager__PlayBGM.arm64.tsv"
+      },
+      {
+        "owner": "CE.BgmPlayer",
+        "method": "PlayBGM",
+        "signature": "void CE_BgmPlayer__PlayBGM (CE_BgmPlayer_o* __this, System_String_o* cueName, float fadeTime, int32_t seekTime, const MethodInfo* method);",
+        "target_rva": "0x32BD7EC",
+        "target_sha256": "9856F7E4256369C5081CAE61D0256D5A618227DF461B11588CFFF35378486735",
+        "evidence": "../audio-runtime-contract-10-1-4/arm64/032bd7ec__CE_BgmPlayer__PlayBGM.arm64.tsv"
+      },
+      {
+        "owner": "MusicModel",
+        "method": "get_BgmId",
+        "signature": "System_String_o* MusicModel__get_BgmId (MusicModel_o* __this, const MethodInfo* method);",
+        "target_rva": "0x3AEC274",
+        "target_sha256": "8C0A439978A4A884BC829DE916E368EA0924BE96B5C9005A6F510AA43E830E53",
+        "evidence": "../audio-runtime-contract-10-1-4/arm64/03aec274__MusicModel__get_BgmId.arm64.tsv"
+      },
+      {
+        "owner": "MusicModel",
+        "method": "get_BgmFile",
+        "signature": "System_String_o* MusicModel__get_BgmFile (MusicModel_o* __this, const MethodInfo* method);",
+        "target_rva": "0x3AEC290",
+        "target_sha256": "3FA5C214E8EF203F94E86C14ECC2E42A006921735861DA695E3889F1C32CA9AE",
+        "evidence": "../audio-runtime-contract-10-1-4/arm64/03aec290__MusicModel__get_BgmFile.arm64.tsv"
+      },
+      {
+        "owner": "InGameManager.<loadBGMData>d__89",
+        "method": "MoveNext",
+        "signature": "bool InGameManager__loadBGMData_d__89__MoveNext (InGameManager__loadBGMData_d__89_o* __this, const MethodInfo* method);",
+        "target_rva": "0x32FEDD8",
+        "target_sha256": "840A22CCCD26D0F3C8BBE238923F9C8CA09435EE48291D291C7B558CE7ADA63E",
+        "evidence": "../audio-runtime-contract-10-1-4/arm64/032fedd8__InGameManager_loadBGMData_d__89__MoveNext.arm64.tsv"
+      }
+    ],
+    "load_route": [
+      "RhythmGameStartData.BgmId string",
+      "AssetBundleNames.GetInGameBgmBundleName(key)",
+      "SoundManager.LoadSoundBundleAsync(bundle)",
+      "MusicManager.LoadMusic dynamic cue",
+      "SoundManager.PlayBGM(cueName, fade=0, seekTime)",
+      "BgmPlayer.PlayBGM(cueName, fade=0, seekTime)"
+    ],
+    "literal_bgm003_in_generic_method_contract": false
+  },
+  "chart_identity_examples": [
+    {
+      "source": "score-life-state-runtime-contract-10-1-4/runtime-inputs/bms/poppin_shuffle_special.bms.txt",
+      "source_sha256": "418DB7F5BFC6B5431AC0ABF2FB905120BDFA8C778C35AA42418A6FA43F4094DC",
+      "wav": "bgm003.wav",
+      "portable_identity_example": "bgm003",
+      "classification": "chart-input-cross-check-not-runtime-resource-metadata"
+    },
+    {
+      "source": "clock-scheduling-runtime-oracle/sources/087_thesis_easy.bms.txt",
+      "source_sha256": "06FDD68C34D6CE51B16BD5D0E42DC8283AD8284C8A54234DCC70CFA438FF3206",
+      "wav": "bgm087.wav",
+      "portable_identity_example": "bgm087",
+      "classification": "chart-input-cross-check-not-runtime-resource-metadata"
+    },
+    {
+      "source": "clock-scheduling-runtime-oracle/sources/653_ikuoku_easy.bms.txt",
+      "source_sha256": "4C2F8D202DED5DFD9C4144C0FE000B1E3524E0F25D3FEAF4DD102413F6CD6325",
+      "wav": "bgm653.wav",
+      "portable_identity_example": "bgm653",
+      "classification": "chart-input-cross-check-not-runtime-resource-metadata"
+    }
+  ],
+  "current_resource_partition": {
+    "current_total": 19,
+    "fixed_se_count": 18,
+    "session_bgm_count": 1,
+    "fixed_se_projection_sha256": "4BFD3E6216F65F2497CCB879BE0A541AFB8420C07B32B690D3F1BB4C657B17A2",
+    "current_bgm_regression": {
+      "logical_id": "sound/bgm003",
+      "cue": "bgm003",
+      "bytes": 4494816,
+      "sha256": "63BB8DA8387CE908966C6B6CAC4810A9B76091593909F1E3C0788D8D6D7C9BA7",
+      "codec": "mp3",
+      "sample_rate": 48000,
+      "channels": 2,
+      "duration_seconds": 133.037458,
+      "current_sample_frames": 6385798,
+      "loop": null,
+      "classification": "current-10.1.4-regression-case-not-production-default"
+    }
+  },
+  "portable_contract": {
+    "profile_id": "session-external-portable-v1",
+    "resource_inventory": "exactly-one-session-bgm-plus-exact-18-current-se",
+    "session_bgm_fields": [
+      "role",
+      "logicalId",
+      "cue",
+      "byteLength",
+      "sha256",
+      "mime",
+      "codec",
+      "sampleRate",
+      "channels",
+      "durationSeconds",
+      "currentSampleFrames",
+      "loop",
+      "identity",
+      "signal"
+    ],
+    "session_bgm_constraints": {
+      "role": "bgm",
+      "logical_id": "non-empty-host-authored-not-equal-to-fixed-se-logical-id",
+      "cue": "non-empty-host-authored-not-equal-to-fixed-se-cue",
+      "bytes": "positive-safe-integer",
+      "sha256": "uppercase-64-hex",
+      "mime": "audio/mpeg",
+      "codec": "mp3",
+      "sample_rate": "positive-safe-integer",
+      "channels": [
+        1,
+        2
+      ],
+      "duration_seconds": "positive-finite",
+      "current_sample_frames": "positive-safe-integer",
+      "loop": null,
+      "identity": "session-explicit",
+      "signal": "host-supplied-portable"
+    },
+    "binding": "SimulatorAudioSessionInput.bgmCue must equal the prepared role=bgm cue",
+    "provider": "explicit exact logicalId+cue bytes; full length/hash/decode metadata preflight",
+    "defaults": false,
+    "automatic_bms_derivation": false,
+    "automatic_fallback": false,
+    "network_default": false,
+    "original_claim_boundary": "Only the dynamic BgmId/cue route is current-original evidence; arbitrary host bytes and metadata are explicit portable session input, not original resource evidence."
+  },
+  "cases": [
+    {
+      "id": "BG-C01",
+      "name": "current-bgm003-regression",
+      "input": {
+        "logical_id": "sound/bgm003",
+        "cue": "bgm003",
+        "bytes": 4494816,
+        "sha256": "63BB8DA8387CE908966C6B6CAC4810A9B76091593909F1E3C0788D8D6D7C9BA7",
+        "codec": "mp3",
+        "sample_rate": 48000,
+        "channels": 2,
+        "duration_seconds": 133.037458,
+        "current_sample_frames": 6385798,
+        "loop": null,
+        "classification": "current-10.1.4-regression-case-not-production-default"
+      },
+      "expected": "accepted-only-when-session-cue-profile-provider-and-decoded-metadata-match"
+    },
+    {
+      "id": "BG-C02",
+      "name": "non-bgm003-session-resource",
+      "input": {
+        "logical_id": "host/session-bgm",
+        "cue": "host_session_cue",
+        "classification": "portable-contract-test-identity-not-original-resource-evidence"
+      },
+      "expected": "accepted-with-explicit-metadata-and-exact-bytes-without-bgm003-alias"
+    },
+    {
+      "id": "BG-C03",
+      "name": "session-cue-profile-mismatch",
+      "expected": "evidence-required-before-engine-mutation"
+    },
+    {
+      "id": "BG-C04",
+      "name": "missing-or-duplicate-bgm-role",
+      "expected": "evidence-required-before-provider-read"
+    },
+    {
+      "id": "BG-C05",
+      "name": "bgm-aliases-fixed-se-cue-or-key",
+      "expected": "evidence-required-before-provider-read"
+    },
+    {
+      "id": "BG-C06",
+      "name": "bgm-length-hash-or-decoded-metadata-mismatch",
+      "expected": "integrity-or-decode-failure-with-unprepared-backend"
+    }
+  ],
+  "case_count": 6,
+  "unknown_fields": [],
+  "blocking_findings": [],
+  "typescript_production_authorization": true,
+  "fixture_promotion_authorization": true,
+  "main_program_integration_authorization": false
+}

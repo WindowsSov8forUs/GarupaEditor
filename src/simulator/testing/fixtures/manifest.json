@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "purpose": "offline simulator test fixtures",
   "sourceRepository": "HOST________/VSCode/GirlsBandParty-Reverse",
-  "sourceHead": "9fb544b281d25fe0cefb4b2d6e692bb38df66a81",
+  "sourceHead": "ffdb4257d6986bcbd7576f77e1703531f880183e",
   "entries": [
     {
       "path": "habahiro-snapshots/bestdori-atlas-profile.json",
@@ -46,6 +46,13 @@
       "sourcePath": "artifacts/investigations/audio-portable-lifecycle-pcm-contract-10-1-4/fixtures/synthetic-mono-f32le.bin",
       "bytes": 32,
       "sha256": "2CAA3FC0F1CC321947DEEAC3DF261AEE15F17A8C50383B487B4B76FECC358BF8"
+    },
+    {
+      "path": "reverse-snapshots/audio/artifacts/investigations/audio-session-bgm-resource-contract-10-1-4/audio_session_bgm_resource_contract.json",
+      "sourceReverseCommit": "ffdb4257d6986bcbd7576f77e1703531f880183e",
+      "sourcePath": "artifacts/investigations/audio-session-bgm-resource-contract-10-1-4/audio_session_bgm_resource_contract.json",
+      "bytes": 9866,
+      "sha256": "E0105E47EF036857A5838409483CF6CA3EDD2F330E2AEF8BC2EDD1DEC1051DC7"
     },
     {
       "path": "reverse-snapshots/auto-live/fixtures/auto-live-actual-replay-chart.txt",
