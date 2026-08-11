@@ -51,29 +51,49 @@ export interface AudioLoopFrames {
   readonly end: number;
 }
 
-export interface AudioResourceProfile {
-  readonly logicalId:
-    | "sound/bgm003"
-    | "sound/common"
-    | "sound/tapseskin/directionalflickskin00"
-    | "sound/tapseskin/skin00";
+export type AudioFixedSeLogicalId =
+  | "sound/common"
+  | "sound/tapseskin/directionalflickskin00"
+  | "sound/tapseskin/skin00";
+
+interface AudioResourceProfileBase {
+  readonly logicalId: string;
   readonly cue: string;
   readonly byteLength: number;
   readonly sha256: string;
   readonly mime: "audio/mpeg";
   readonly codec: "mp3";
-  readonly sampleRate: 8000 | 44100 | 48000;
+  readonly sampleRate: number;
   readonly channels: 1 | 2;
   readonly durationSeconds: number;
   readonly currentSampleFrames: number;
   readonly loop: AudioLoopFrames | null;
+}
+
+export interface AudioSessionBgmResourceProfile extends AudioResourceProfileBase {
+  readonly role: "bgm";
+  readonly logicalId: string;
+  readonly cue: string;
+  readonly loop: null;
+  readonly identity: "session-explicit";
+  readonly signal: "host-supplied-portable";
+}
+
+export interface AudioFixedSeResourceProfile extends AudioResourceProfileBase {
+  readonly role: "se";
+  readonly logicalId: AudioFixedSeLogicalId;
+  readonly sampleRate: 8000 | 44100 | 48000;
   readonly identity: "semantic-exact";
   readonly signal: "portable-equivalent-lossy" | "semantic-exact-silence";
 }
 
+export type AudioResourceProfile =
+  | AudioSessionBgmResourceProfile
+  | AudioFixedSeResourceProfile;
+
 export interface AudioResourceProfileSet {
   readonly schemaVersion: 1;
-  readonly profileId: "current-external-portable-v1";
+  readonly profileId: "session-external-portable-v1";
   readonly sample: AudioSampleIdentity;
   readonly sourceClass: "external-reference-only-no-redistribution";
   readonly fidelity: "semantic-exact-portable-equivalent-lossy";
@@ -202,6 +222,7 @@ export interface AudioBackendSnapshot {
   readonly sessionId: string | null;
   readonly profileId: AudioResourceProfileSet["profileId"] | null;
   readonly fidelity: AudioResourceProfileSet["fidelity"] | null;
+  readonly preparedBgmCue: string | null;
   readonly nextSequence: number;
   readonly resourceCount: number;
   readonly semantic: AudioSemanticStateSnapshot;

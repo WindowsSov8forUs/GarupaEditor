@@ -1,21 +1,10 @@
-import type { AudioResourceProfileSet } from "../audioContracts";
+import type {
+  AudioFixedSeResourceProfile,
+  AudioResourceProfileSet,
+  AudioSessionBgmResourceProfile,
+} from "../audioContracts";
 
-const RESOURCES = Object.freeze([
-  Object.freeze({
-    logicalId: "sound/bgm003",
-    cue: "bgm003",
-    byteLength: 4494816,
-    sha256: "63BB8DA8387CE908966C6B6CAC4810A9B76091593909F1E3C0788D8D6D7C9BA7",
-    mime: "audio/mpeg",
-    codec: "mp3",
-    sampleRate: 48000,
-    channels: 2,
-    durationSeconds: 133.037458,
-    currentSampleFrames: 6385798,
-    loop: null,
-    identity: "semantic-exact",
-    signal: "portable-equivalent-lossy",
-  }),
+const SE_RESOURCES_WITHOUT_ROLE: readonly Omit<AudioFixedSeResourceProfile, "role">[] = Object.freeze([
   Object.freeze({
     logicalId: "sound/tapseskin/directionalflickskin00",
     cue: "directional_fl",
@@ -288,26 +277,39 @@ const RESOURCES = Object.freeze([
   }),
 ]);
 
-export const CURRENT_AUDIO_RESOURCE_PROFILE: AudioResourceProfileSet = Object.freeze({
-  schemaVersion: 1,
-  profileId: "current-external-portable-v1",
-  sample: Object.freeze({
-    package: "jp.co.craftegg.band",
-    versionName: "10.1.4",
-    versionCode: 230,
-    abi: "arm64-v8a",
-    libil2cppSha256: "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F",
-    globalMetadataSha256: "298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F",
-  }),
-  sourceClass: "external-reference-only-no-redistribution",
-  fidelity: "semantic-exact-portable-equivalent-lossy",
-  networkAllowed: false,
-  automaticFallbackAllowed: false,
-  pools: Object.freeze({
-    bgm: 8,
-    se: 12,
-    oneShot: 1,
-    exhaustion: "evidence-required",
-  }),
-  resources: RESOURCES,
-});
+export const CURRENT_AUDIO_SE_RESOURCES: readonly AudioFixedSeResourceProfile[] =
+  Object.freeze(SE_RESOURCES_WITHOUT_ROLE.map((resource) => Object.freeze({
+    role: "se" as const,
+    ...resource,
+  })));
+
+export function createAudioSessionResourceProfile(
+  bgm: AudioSessionBgmResourceProfile,
+): AudioResourceProfileSet {
+  return Object.freeze({
+    schemaVersion: 1,
+    profileId: "session-external-portable-v1",
+    sample: Object.freeze({
+      package: "jp.co.craftegg.band",
+      versionName: "10.1.4",
+      versionCode: 230,
+      abi: "arm64-v8a",
+      libil2cppSha256: "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F",
+      globalMetadataSha256: "298D92CB0DC44B11681C5478F3BB08CE5476321361CE962096095CC31812961F",
+    }),
+    sourceClass: "external-reference-only-no-redistribution",
+    fidelity: "semantic-exact-portable-equivalent-lossy",
+    networkAllowed: false,
+    automaticFallbackAllowed: false,
+    pools: Object.freeze({
+      bgm: 8,
+      se: 12,
+      oneShot: 1,
+      exhaustion: "evidence-required",
+    }),
+    resources: Object.freeze([
+      Object.freeze({ ...bgm }),
+      ...CURRENT_AUDIO_SE_RESOURCES,
+    ]),
+  });
+}

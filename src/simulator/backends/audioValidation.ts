@@ -1,17 +1,18 @@
-import { CURRENT_AUDIO_RESOURCE_PROFILE } from "./resources/currentAudioResourceManifest";
+import { CURRENT_AUDIO_SE_RESOURCES } from "./resources/currentAudioResourceManifest";
 import type {
   AudioCommand,
   AudioFailureCode,
+  AudioFixedSeResourceProfile,
   AudioOperationResult,
   AudioResourceProfile,
   AudioResourceProfileSet,
+  AudioSessionBgmResourceProfile,
 } from "./audioContracts";
 
 const SHA256_PATTERN = /^[0-9A-F]{64}$/;
 const FLOAT32_BITS_PATTERN = /^0x[0-9A-F]{8}$/;
 
-const CUE_LOGICAL_IDS = Object.freeze({
-  bgm003: "sound/bgm003",
+const FIXED_SE_LOGICAL_IDS = Object.freeze({
   directional_fl: "sound/tapseskin/directionalflickskin00",
   directional_fl_2: "sound/tapseskin/directionalflickskin00",
   directional_fl_3: "sound/tapseskin/directionalflickskin00",
@@ -32,8 +33,10 @@ const CUE_LOGICAL_IDS = Object.freeze({
   perfect: "sound/tapseskin/skin00",
 } as const);
 
+const FIXED_SE_LOGICAL_IDS_SET: ReadonlySet<string> = new Set(Object.values(FIXED_SE_LOGICAL_IDS));
+
 const RESOURCE_KEYS = Object.freeze([
-  "logicalId", "cue", "byteLength", "sha256", "mime", "codec",
+  "role", "logicalId", "cue", "byteLength", "sha256", "mime", "codec",
   "sampleRate", "channels", "durationSeconds", "currentSampleFrames", "loop",
   "identity", "signal",
 ] as const);
@@ -67,17 +70,17 @@ export function validateAndFreezeAudioProfile(
       "networkAllowed", "automaticFallbackAllowed", "pools", "resources",
     ]) ||
     profile.schemaVersion !== 1 ||
-    profile.profileId !== "current-external-portable-v1" ||
+    profile.profileId !== "session-external-portable-v1" ||
     profile.sourceClass !== "external-reference-only-no-redistribution" ||
     profile.fidelity !== "semantic-exact-portable-equivalent-lossy" ||
     profile.networkAllowed !== false ||
     profile.automaticFallbackAllowed !== false ||
     !Array.isArray(profile.resources) ||
-    profile.resources.length !== Object.keys(CUE_LOGICAL_IDS).length
+    profile.resources.length !== CURRENT_AUDIO_SE_RESOURCES.length + 1
   ) {
     return rejectProfile(
       "audio.profile.invalid-shape",
-      "The current portable profile identity, fidelity, offline policy and exact 19-resource inventory must be explicit.",
+      "The session portable profile requires exactly one explicit BGM plus the exact eighteen current SE resources.",
     );
   }
   if (
@@ -97,7 +100,7 @@ export function validateAndFreezeAudioProfile(
   ) {
     return rejectProfile(
       "audio.profile.wrong-sample",
-      "Audio accepts only the locked jp.co.craftegg.band 10.1.4/230 arm64-v8a sample and binary identities.",
+      "Audio accepts only the locked jp.co.craftegg.band 10.1.4/230 arm64-v8a engine contract.",
     );
   }
   if (
@@ -114,23 +117,40 @@ export function validateAndFreezeAudioProfile(
     );
   }
 
-  const seen = new Set<string>();
-  const resources: AudioResourceProfile[] = [];
+  let bgm: AudioSessionBgmResourceProfile | null = null;
+  const seenSe = new Set<string>();
   for (const resource of profile.resources) {
-    const validated = validateResource(resource, seen);
+    if (resource?.role === "bgm") {
+      if (bgm !== null) {
+        return rejectProfile(
+          "audio.profile.duplicate-session-bgm",
+          "A Live session owns exactly one explicit BGM resource and cannot alias or replace it.",
+        );
+      }
+      const validated = validateSessionBgmResource(resource);
+      if (validated.status !== "accepted") return validated;
+      bgm = validated.value;
+      continue;
+    }
+    const validated = validateFixedSeResource(resource, seenSe);
     if (validated.status !== "accepted") return validated;
-    resources.push(validated.value);
   }
-  if (seen.size !== Object.keys(CUE_LOGICAL_IDS).length) {
+  if (bgm === null || seenSe.size !== CURRENT_AUDIO_SE_RESOURCES.length) {
     return rejectProfile(
-      "audio.profile.incomplete-cues",
-      "Every exact current portable cue must appear once; aliases and default substitutions are forbidden.",
+      "audio.profile.incomplete-session-inventory",
+      "The profile must contain one session BGM and every exact current SE once; defaults and substitutions are forbidden.",
+    );
+  }
+  if (seenSe.has(bgm.cue) || FIXED_SE_LOGICAL_IDS_SET.has(bgm.logicalId)) {
+    return rejectProfile(
+      "audio.profile.session-bgm-aliases-fixed-se",
+      "Session BGM cue and logical identity cannot alias a fixed SE resource.",
     );
   }
 
   return audioAccepted(Object.freeze({
     schemaVersion: 1,
-    profileId: "current-external-portable-v1",
+    profileId: "session-external-portable-v1",
     sample: Object.freeze({ ...profile.sample }),
     sourceClass: "external-reference-only-no-redistribution",
     fidelity: "semantic-exact-portable-equivalent-lossy",
@@ -142,13 +162,17 @@ export function validateAndFreezeAudioProfile(
       oneShot: 1,
       exhaustion: "evidence-required",
     }),
-    resources: Object.freeze(resources),
+    resources: Object.freeze([
+      bgm,
+      ...CURRENT_AUDIO_SE_RESOURCES,
+    ]),
   }));
 }
 
 export function validateAudioCommandShape(
   command: AudioCommand,
-  cueSet: ReadonlySet<string>,
+  bgmCue: string,
+  seCueSet: ReadonlySet<string>,
 ): AudioOperationResult<void> {
   if (!isRecord(command) || typeof command.kind !== "string") {
     return rejectCommand("audio.command.invalid-shape", "Audio commands must be typed immutable records.");
@@ -161,11 +185,11 @@ export function validateAudioCommandShape(
         : rejectCommand("audio.command.invalid-session-open", "Session open preserves the exact fixed pool capacities.");
     case "bgm.load":
       return hasExactKeys(command, ["kind", "cue", "seek_ms", "priority", "fade_bits"]) &&
-        command.cue === "bgm003" && cueSet.has(command.cue) &&
+        isNonEmpty(bgmCue) && command.cue === bgmCue &&
         Number.isSafeInteger(command.seek_ms) && command.seek_ms >= 0 &&
         command.priority === 255 && command.fade_bits === "0x00000000"
         ? audioAccepted(undefined)
-        : rejectCommand("audio.command.invalid-bgm-load", "BGM load requires exact cue, millisecond seek, priority and zero-fade fields.");
+        : rejectCommand("audio.command.invalid-bgm-load", "BGM load requires the exact prepared session cue, millisecond seek, priority and zero-fade fields.");
     case "bgm.pause":
     case "bgm.resume":
     case "se.pause":
@@ -190,7 +214,7 @@ export function validateAudioCommandShape(
       return hasExactKeys(command, [
         "kind", "cue", "voice_key", "volume_bits", "pitch_bits",
         "pan_distance_bits", "pan_angle_bits",
-      ]) && cueSet.has(command.cue) && isNonEmpty(command.voice_key) &&
+      ]) && seCueSet.has(command.cue) && isNonEmpty(command.voice_key) &&
         isUnitFloat32Bits(command.volume_bits) &&
         command.pitch_bits === "0x00000000" &&
         command.pan_distance_bits === "0x00000000" &&
@@ -200,7 +224,7 @@ export function validateAudioCommandShape(
     case "hold.start-loop":
       return hasExactKeys(command, [
         "kind", "cue", "owner_key", "volume_bits", "fade_in_bits",
-      ]) && command.cue === "SE_RHYTHM_TAP_LONG" && cueSet.has(command.cue) &&
+      ]) && command.cue === "SE_RHYTHM_TAP_LONG" && seCueSet.has(command.cue) &&
         isNonEmpty(command.owner_key) && isUnitFloat32Bits(command.volume_bits) &&
         command.fade_in_bits === "0x00000000"
         ? audioAccepted(undefined)
@@ -259,55 +283,73 @@ export function audioFloat32FromBits(bits: string): number | null {
   return Number.isFinite(value) ? value : null;
 }
 
-function validateResource(
+function validateSessionBgmResource(
   resource: AudioResourceProfile,
-  seen: Set<string>,
-): AudioOperationResult<AudioResourceProfile> {
-  if (!isRecord(resource) || !hasExactKeys(resource, RESOURCE_KEYS)) {
-    return rejectProfile("audio.profile.invalid-resource-shape", "Resource declarations reject missing and unknown fields before reads.");
-  }
-  const expectedLogicalId = CUE_LOGICAL_IDS[resource.cue as keyof typeof CUE_LOGICAL_IDS];
-  const expected = CURRENT_AUDIO_RESOURCE_PROFILE.resources.find(
-    (candidate) => candidate.cue === resource.cue,
-  );
-  if (
-    expectedLogicalId === undefined || expected === undefined ||
-    resource.logicalId !== expectedLogicalId ||
-    resource.sampleRate !== expected.sampleRate ||
-    resource.channels !== expected.channels ||
-    resource.durationSeconds !== expected.durationSeconds ||
-    resource.currentSampleFrames !== expected.currentSampleFrames ||
-    resource.signal !== expected.signal ||
-    seen.has(resource.cue) ||
+): AudioOperationResult<AudioSessionBgmResourceProfile> {
+  if (!isRecord(resource) || !hasExactKeys(resource, RESOURCE_KEYS) ||
+    resource.role !== "bgm" || !isNonEmpty(resource.logicalId) || !isNonEmpty(resource.cue) ||
     !Number.isSafeInteger(resource.byteLength) || resource.byteLength <= 0 ||
     !SHA256_PATTERN.test(resource.sha256) ||
     resource.mime !== "audio/mpeg" || resource.codec !== "mp3" ||
-    ![8000, 44100, 48000].includes(resource.sampleRate) ||
+    !Number.isSafeInteger(resource.sampleRate) || resource.sampleRate <= 0 ||
     (resource.channels !== 1 && resource.channels !== 2) ||
     !Number.isFinite(resource.durationSeconds) || resource.durationSeconds <= 0 ||
     !Number.isSafeInteger(resource.currentSampleFrames) || resource.currentSampleFrames <= 0 ||
-    resource.identity !== "semantic-exact" ||
-    (resource.signal !== "portable-equivalent-lossy" && resource.signal !== "semantic-exact-silence") ||
-    ((resource.cue === "bad" || resource.cue === "miss") !== (resource.signal === "semantic-exact-silence"))
+    resource.loop !== null || resource.identity !== "session-explicit" ||
+    resource.signal !== "host-supplied-portable"
   ) {
     return rejectProfile(
-      "audio.profile.invalid-resource",
-      "Every resource requires its exact cue/logical-ID pair, positive metadata, uppercase SHA-256 and declared fidelity.",
+      "audio.profile.invalid-session-bgm",
+      "Session BGM requires one explicit non-empty identity, positive MP3 metadata, uppercase SHA-256, no loop, and portable host classification.",
+    );
+  }
+  return audioAccepted(Object.freeze({ ...resource }));
+}
+
+function validateFixedSeResource(
+  resource: AudioResourceProfile,
+  seen: Set<string>,
+): AudioOperationResult<AudioFixedSeResourceProfile> {
+  if (!isRecord(resource) || !hasExactKeys(resource, RESOURCE_KEYS) || resource.role !== "se") {
+    return rejectProfile(
+      "audio.profile.invalid-resource-shape",
+      "Fixed SE declarations require the exact typed resource fields and role.",
+    );
+  }
+  const expectedLogicalId = FIXED_SE_LOGICAL_IDS[resource.cue as keyof typeof FIXED_SE_LOGICAL_IDS];
+  const expected = CURRENT_AUDIO_SE_RESOURCES.find((candidate) => candidate.cue === resource.cue);
+  if (
+    expectedLogicalId === undefined || expected === undefined || seen.has(resource.cue) ||
+    resource.logicalId !== expectedLogicalId || resource.byteLength !== expected.byteLength ||
+    resource.sha256 !== expected.sha256 || resource.mime !== expected.mime ||
+    resource.codec !== expected.codec || resource.sampleRate !== expected.sampleRate ||
+    resource.channels !== expected.channels || resource.durationSeconds !== expected.durationSeconds ||
+    resource.currentSampleFrames !== expected.currentSampleFrames ||
+    resource.identity !== expected.identity || resource.signal !== expected.signal
+  ) {
+    return rejectProfile(
+      "audio.profile.invalid-fixed-se",
+      "Every fixed SE must match the exact current cue, logical ID, bytes, metadata and fidelity without aliases.",
     );
   }
   if (resource.cue === "SE_RHYTHM_TAP_LONG") {
     if (!isRecord(resource.loop) || !hasExactKeys(resource.loop, ["start", "end"]) ||
-        resource.loop.start !== expected.loop?.start || resource.loop.end !== expected.loop.end ||
-        resource.currentSampleFrames !== 23253) {
-      return rejectProfile("audio.profile.invalid-loop", "The current Long/Slide loop is the half-open source range [0,22997) within 23253 samples.");
+      resource.loop.start !== expected.loop?.start || resource.loop.end !== expected.loop.end) {
+      return rejectProfile(
+        "audio.profile.invalid-loop",
+        "The current Long/Slide loop is the exact half-open source range [0,22997).",
+      );
     }
   } else if (resource.loop !== null) {
-    return rejectProfile("audio.profile.unexpected-loop", "Only SE_RHYTHM_TAP_LONG carries a current loop range.");
+    return rejectProfile(
+      "audio.profile.unexpected-loop",
+      "Only SE_RHYTHM_TAP_LONG carries a current loop range.",
+    );
   }
   seen.add(resource.cue);
   return audioAccepted(Object.freeze({
-    ...resource,
-    loop: resource.loop === null ? null : Object.freeze({ ...resource.loop }),
+    ...expected,
+    loop: expected.loop === null ? null : Object.freeze({ ...expected.loop }),
   }));
 }
 

@@ -4,10 +4,9 @@ import type {
   AudioResourceProvider,
 } from "../audioContracts";
 import { audioAccepted, audioRejected } from "../audioValidation";
-import { CURRENT_AUDIO_RESOURCE_PROFILE } from "./currentAudioResourceManifest";
 
 export interface LocalAudioResource {
-  readonly logicalId: AudioResourceProfile["logicalId"];
+  readonly logicalId: string;
   readonly cue: string;
   readonly bytes: Uint8Array;
 }
@@ -36,13 +35,11 @@ export class ImmutableLocalAudioResourceProvider implements AudioResourceProvide
           "Each local resource contains only exact logical ID, cue and bytes.",
         );
       }
-      const expected = CURRENT_AUDIO_RESOURCE_PROFILE.resources.find(
-        (candidate) => candidate.cue === resource.cue,
-      );
-      if (expected === undefined || expected.logicalId !== resource.logicalId) {
+      if (typeof resource.logicalId !== "string" || resource.logicalId.length === 0 ||
+        typeof resource.cue !== "string" || resource.cue.length === 0) {
         return reject(
-          "audio.provider.unknown-resource",
-          "Local resources must use an exact current cue/logical-ID pair without aliases.",
+          "audio.provider.invalid-resource-identity",
+          "Local resources require explicit non-empty logical ID and cue strings.",
         );
       }
       const key = resourceKey(resource.logicalId, resource.cue);
@@ -58,13 +55,12 @@ export class ImmutableLocalAudioResourceProvider implements AudioResourceProvide
   }
 
   async read(resource: AudioResourceProfile): Promise<AudioOperationResult<Uint8Array>> {
-    const expected = CURRENT_AUDIO_RESOURCE_PROFILE.resources.find(
-      (candidate) => candidate.cue === resource.cue,
-    );
-    if (expected === undefined || expected.logicalId !== resource.logicalId) {
+    if (resource === null || typeof resource !== "object" ||
+      typeof resource.logicalId !== "string" || resource.logicalId.length === 0 ||
+      typeof resource.cue !== "string" || resource.cue.length === 0) {
       return reject(
-        "audio.provider.foreign-profile-resource",
-        "Provider reads reject resources outside the exact current profile before key lookup.",
+        "audio.provider.invalid-read-identity",
+        "Provider reads require the validated profile's explicit logical ID and cue.",
       );
     }
     const bytes = this.bytesByKey.get(resourceKey(resource.logicalId, resource.cue));

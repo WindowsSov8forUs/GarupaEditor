@@ -116,6 +116,8 @@ export type {
   AudioDecodedResourceMetadata,
   AudioFailure,
   AudioFailureCode,
+  AudioFixedSeLogicalId,
+  AudioFixedSeResourceProfile,
   AudioLoopFrames,
   AudioOperationResult,
   AudioPoolProfile,
@@ -124,6 +126,7 @@ export type {
   AudioResourceProfileSet,
   AudioResourceProvider,
   AudioSampleIdentity,
+  AudioSessionBgmResourceProfile,
   AudioSemanticStateSnapshot,
   AudioVoiceSnapshot,
   SimulatorAudioBackend,
@@ -183,7 +186,10 @@ export {
 } from "./backends/resources/localResourceProvider";
 export type { LocalRenderResource } from "./backends/resources/localResourceProvider";
 export { sha256UpperHex } from "./backends/resources/sha256";
-export { CURRENT_AUDIO_RESOURCE_PROFILE } from "./backends/resources/currentAudioResourceManifest";
+export {
+  CURRENT_AUDIO_SE_RESOURCES,
+  createAudioSessionResourceProfile,
+} from "./backends/resources/currentAudioResourceManifest";
 export {
   ImmutableLocalAudioResourceProvider,
 } from "./backends/resources/localAudioResourceProvider";

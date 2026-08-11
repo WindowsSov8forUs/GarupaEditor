@@ -18,7 +18,6 @@ import {
   validateAndFreezeAudioProfile,
   validateAudioCommandShape,
 } from "./audioValidation";
-import { CURRENT_AUDIO_RESOURCE_PROFILE } from "./resources/currentAudioResourceManifest";
 
 interface MutableHoldVoice {
   readonly cue: "SE_RHYTHM_TAP_LONG";
@@ -94,19 +93,6 @@ export class RecordingSimulatorAudioBackend implements SimulatorAudioBackend {
     this.state = "preparing";
     try {
       for (const resource of validated.value.resources) {
-        const current = CURRENT_AUDIO_RESOURCE_PROFILE.resources.find(
-          (candidate) => candidate.cue === resource.cue,
-        )!;
-        if (
-          resource.byteLength !== current.byteLength ||
-          resource.sha256 !== current.sha256
-        ) {
-          return this.abortPrepare(audioRejected(
-            "audio-resource-integrity",
-            "audio.prepare.profile-allowlist-mismatch",
-            "Declared resource length and SHA-256 must match the exact current allowlist before byte acquisition.",
-          ));
-        }
         const read = await provider.read(resource);
         if (read.status !== "accepted") return this.abortPrepare(read);
         if (!(read.value instanceof Uint8Array)) {
@@ -184,11 +170,14 @@ export class RecordingSimulatorAudioBackend implements SimulatorAudioBackend {
       );
     }
 
-    const cueSet = new Set(this.profile.resources.map((resource) => resource.cue));
+    const bgmCue = this.profile.resources.find((resource) => resource.role === "bgm")!.cue;
+    const seCueSet = new Set(
+      this.profile.resources.filter((resource) => resource.role === "se").map((resource) => resource.cue),
+    );
     const simulated = cloneSemanticState(this.semantic);
     const frozenCommands: AudioCommand[] = [];
     for (const command of commands) {
-      const shape = validateAudioCommandShape(command, cueSet);
+      const shape = validateAudioCommandShape(command, bgmCue, seCueSet);
       if (shape.status !== "accepted") return shape;
       const transition = applyCommand(command, simulated);
       if (transition.status !== "accepted") return transition;
@@ -262,6 +251,7 @@ export class RecordingSimulatorAudioBackend implements SimulatorAudioBackend {
       sessionId: this.sessionId,
       profileId: this.profile?.profileId ?? null,
       fidelity: this.profile?.fidelity ?? null,
+      preparedBgmCue: this.profile?.resources.find((resource) => resource.role === "bgm")?.cue ?? null,
       nextSequence: this.nextSequence,
       resourceCount: this.resourceCount,
       semantic: freezeSemanticSnapshot(this.semantic),

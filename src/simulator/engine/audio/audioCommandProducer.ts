@@ -14,7 +14,7 @@ import { evidenceRequired, ok, type SimulatorResult } from "../evidence";
 
 export interface SimulatorAudioSessionInput {
   readonly sessionId: string;
-  readonly bgmCue: "bgm003";
+  readonly bgmCue: string;
   readonly seekMilliseconds: number;
   readonly masterGainBits: string;
   readonly bgmGainBits: string;
@@ -101,7 +101,7 @@ export class AudioCommandProducer {
       Object.keys(this.input).sort().join(",") !==
         "bgmCue,bgmGainBits,masterGainBits,practiceMode,seGainBits,seekMilliseconds,sessionId,voiceGainBits" ||
       typeof this.input.sessionId !== "string" || this.input.sessionId.length === 0 ||
-      this.input.bgmCue !== "bgm003" ||
+      typeof this.input.bgmCue !== "string" || this.input.bgmCue.length === 0 ||
       !Number.isSafeInteger(this.input.seekMilliseconds) || this.input.seekMilliseconds < 0 ||
       typeof this.input.practiceMode !== "boolean" ||
       !isUnitGain(this.input.masterGainBits) || !isUnitGain(this.input.bgmGainBits) ||
@@ -113,10 +113,11 @@ export class AudioCommandProducer {
       );
     }
     const snapshot = this.backend.snapshot();
-    if (snapshot.state !== "ready" || snapshot.sessionId !== this.input.sessionId) {
+    if (snapshot.state !== "ready" || snapshot.sessionId !== this.input.sessionId ||
+      snapshot.preparedBgmCue !== this.input.bgmCue) {
       return rejected(
-        "audio.session.backend-not-prepared",
-        "The host must prepare the selected audio backend for the exact session before engine creation.",
+        "audio.session.backend-not-prepared-or-bgm-mismatch",
+        "The host must prepare the exact session BGM cue before engine creation; no chart-specific default or alias is available.",
       );
     }
     return ok(undefined);
@@ -163,7 +164,7 @@ export class AudioCommandProducer {
       gain.value,
       {
         kind: "bgm.load",
-        cue: "bgm003",
+        cue: this.input.bgmCue,
         seek_ms: this.input.seekMilliseconds,
         priority: 255,
         fade_bits: "0x00000000",
