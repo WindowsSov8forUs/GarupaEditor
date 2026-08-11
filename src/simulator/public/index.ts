@@ -1,3 +1,5 @@
+export { launchSimulatorModule } from "./launch";
+
 export type {
   LaunchSimulatorModule,
   SimulatorChartAudioData,
