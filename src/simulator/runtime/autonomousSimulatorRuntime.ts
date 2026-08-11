@@ -166,6 +166,9 @@ export class AutonomousSimulatorModule {
     }
     if (command.kind === "pause") return this.session!.pause();
     if (command.kind === "resume") return this.session!.resume();
+    if (command.kind === "create-replay-checkpoint") {
+      return this.session!.createReplayCheckpoint();
+    }
     if (command.kind === "return-time") return this.session!.returnTime();
     return rejected(
       "evidence-required",

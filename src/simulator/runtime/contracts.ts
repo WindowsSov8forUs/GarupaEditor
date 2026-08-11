@@ -24,6 +24,7 @@ export interface SimulatorFrameScheduler {
 export type SimulatorRuntimeCommand =
   | { readonly kind: "pause" }
   | { readonly kind: "resume" }
+  | { readonly kind: "create-replay-checkpoint" }
   | { readonly kind: "return-time" }
   | { readonly kind: "user-close" };
 
@@ -49,6 +50,7 @@ export interface SimulatorOwnedSession {
   ): SimulatorOwnedSessionStepResult;
   pause(): SimulatorAssemblyResult<void>;
   resume(): SimulatorAssemblyResult<void>;
+  createReplayCheckpoint(): SimulatorAssemblyResult<void>;
   returnTime(): Promise<SimulatorAssemblyResult<void>>;
   close(
     reason: "user-closed" | "terminal-fault",
