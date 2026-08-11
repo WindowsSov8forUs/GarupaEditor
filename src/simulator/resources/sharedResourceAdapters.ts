@@ -13,12 +13,21 @@ import {
 } from "../backends/resources/localParticleResourceProvider";
 import type { HabahiroBestdoriTransport } from "../backends/resources/habahiroBestdoriProvider";
 import type { SimulatorChartAudioData, SimulatorModuleFailure } from "../public/contracts";
+import type { RenderResourceProfile, SimulatorResourceProvider } from "../backends/renderingContracts";
+import { validateAndFreezeRenderProfile } from "../backends/renderingValidation";
+import { sha256UpperHex } from "../backends/resources/sha256";
+import {
+  ImmutableLocalRenderResourceProvider,
+  type LocalRenderResource,
+} from "../backends/resources/localResourceProvider";
+import { CURRENT_ORDINARY_PORTABLE_PACK_IDENTITY } from "../backends/resources/currentOrdinaryResourceManifest";
 import type { ParticleResourceProvider } from "../backends/particleContracts";
 import type { AudioResourceProvider } from "../backends/audioContracts";
 import { evidenceRequired, ok } from "../engine/evidence";
 import type {
   SelectedAudioSeResource,
   SelectedHabahiroResource,
+  SelectedOrdinaryResource,
   SelectedParticleResource,
 } from "./staticResourceSelector";
 import type { SharedStaticResourceStore } from "./sharedStaticResourceStore";
@@ -26,6 +35,87 @@ import type { SharedStaticResourceStore } from "./sharedStaticResourceStore";
 export type SimulatorAssemblyResult<T> =
   | { readonly status: "accepted"; readonly value: T }
   | { readonly status: "rejected"; readonly failure: SimulatorModuleFailure };
+
+export interface PreparedSharedOrdinaryRenderResources {
+  readonly profile: RenderResourceProfile;
+  readonly provider: SimulatorResourceProvider;
+}
+
+export async function prepareSharedOrdinaryRenderResources(
+  profileResource: {
+    readonly resourceKey: string;
+    readonly profile: { readonly byteLength: number; readonly sha256: string };
+  },
+  selected: readonly SelectedOrdinaryResource[],
+  store: SharedStaticResourceStore,
+): Promise<SimulatorAssemblyResult<PreparedSharedOrdinaryRenderResources>> {
+  const profileRead = await readStatic(store, profileResource.resourceKey);
+  if (profileRead.status === "rejected") return profileRead;
+  if (profileRead.value.byteLength !== profileResource.profile.byteLength ||
+    sha256UpperHex(profileRead.value) !== profileResource.profile.sha256) {
+    return rejected(
+      "resource-integrity",
+      "simulator.resources.ordinary-profile-integrity",
+      "The internal current ordinary profile must match its committed byte length and SHA-256 before JSON parsing.",
+    );
+  }
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(new TextDecoder().decode(profileRead.value));
+  } catch {
+    return rejected(
+      "resource-decode",
+      "simulator.resources.ordinary-profile-json",
+      "The hash-validated current ordinary profile must be valid UTF-8 JSON.",
+    );
+  }
+  const validated = validateAndFreezeRenderProfile(parsed as RenderResourceProfile);
+  if (validated.status !== "ok") {
+    return rejected("evidence-required", validated.capability, validated.boundary);
+  }
+  if (validated.value.packIdentity !== CURRENT_ORDINARY_PORTABLE_PACK_IDENTITY ||
+    validated.value.fidelity.mode !== "ordinary" ||
+    validated.value.fidelity.fidelity !== "exact-current" ||
+    validated.value.assets.length !== selected.length) {
+    return rejected(
+      "resource-integrity",
+      "simulator.resources.ordinary-profile-identity",
+      "The ordinary profile must remain the committed current pack with exactly seven internally selected assets.",
+    );
+  }
+  const declared = new Map(validated.value.assets.map((asset) => [asset.logicalAssetId, asset]));
+  const local: LocalRenderResource[] = [];
+  for (const resource of selected) {
+    const asset = declared.get(resource.profile.logicalAssetId);
+    if (asset === undefined || asset.byteLength !== resource.profile.byteLength ||
+      asset.sha256 !== resource.profile.sha256 || asset.width !== resource.profile.width ||
+      asset.height !== resource.profile.height) {
+      return rejected(
+        "resource-integrity",
+        "simulator.resources.ordinary-profile-asset-mismatch",
+        "Every ordinary profile asset must match the internally pinned logical ID, bytes, SHA-256 and dimensions.",
+      );
+    }
+    const read = await readStatic(store, resource.resourceKey);
+    if (read.status === "rejected") return read;
+    if (read.value.byteLength !== resource.profile.byteLength ||
+      sha256UpperHex(read.value) !== resource.profile.sha256) {
+      return rejected(
+        "resource-integrity",
+        "simulator.resources.ordinary-asset-integrity",
+        "Every ordinary PNG must match its committed portable-pack bytes and SHA-256 before renderer preparation.",
+      );
+    }
+    local.push({ logicalAssetId: resource.profile.logicalAssetId, bytes: read.value });
+  }
+  const provider = ImmutableLocalRenderResourceProvider.create(local);
+  if (provider.status !== "ok") return rejected(
+    "launch-failed",
+    provider.capability,
+    provider.boundary,
+  );
+  return accepted(Object.freeze({ profile: validated.value, provider: provider.value }));
+}
 
 export interface PreparedSharedAudioResources {
   readonly profile: AudioResourceProfileSet;

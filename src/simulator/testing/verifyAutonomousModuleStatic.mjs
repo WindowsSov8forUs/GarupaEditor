@@ -34,7 +34,7 @@ for (const required of [
 for (const required of [
   "CURRENT_AUDIO_SE_RESOURCES", "CURRENT_PARTICLE_RESOURCE_MANIFEST",
   "HABAHIRO_BESTDORI_PINNED_ASSETS", "habahiroChangeAbsolutePos >= 0",
-  "simulator.resources.ordinary-current-pack",
+  "CURRENT_ORDINARY_PORTABLE_PROFILE_RESOURCE", "CURRENT_ORDINARY_PORTABLE_RESOURCES",
 ]) {
   if (!selector.includes(required)) throw new Error(`static selector missing fixed owner: ${required}`);
 }

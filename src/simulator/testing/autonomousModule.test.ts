@@ -23,6 +23,7 @@ import {
 } from "../resources/sharedStaticResourceStore";
 import { selectSimulatorStaticResources } from "../resources/staticResourceSelector";
 import { createSimulatorSessionRecipe } from "../assembly/sessionRecipe";
+import { prepareSharedOrdinaryRenderResources } from "../resources/sharedResourceAdapters";
 import type {
   SimulatorModuleCloseReport,
   SimulatorModuleLaunchRequest,
@@ -38,6 +39,7 @@ async function main(): Promise<void> {
 
   await testSharedStore();
   testSelector();
+  await testOrdinaryPack();
   testRecipeOwnership();
   await testAutonomousLaunchAndClose();
   await testInvalidTickCloses();
@@ -66,7 +68,9 @@ function testSelector(): void {
   assert.equal(ordinarySelection.particles.length, 9);
   assert.equal(ordinarySelection.rendering.kind, "ordinary");
   if (ordinarySelection.rendering.kind === "ordinary") {
-    assert.equal(ordinarySelection.rendering.status, "evidence-required");
+    assert.equal(ordinarySelection.rendering.status, "selected");
+    assert.equal(ordinarySelection.rendering.resources.length, 7);
+    assert.equal(ordinarySelection.rendering.profileResource.profile.byteLength, 20287);
   }
   assert.ok(ordinarySelection.audioSe.every((row) =>
     row.resourceKey.startsWith("simulator-static/current-10.1.4/audio-se/")));
@@ -82,6 +86,49 @@ function testSelector(): void {
     assert.equal(habSelection.rendering.resources.length, 11);
     assert.ok(habSelection.rendering.resources.every((row) =>
       row.resourceKey.startsWith("simulator-static/current-10.1.4/habahiro/")));
+  }
+}
+
+async function testOrdinaryPack(): Promise<void> {
+  const chart = requireOk(createNoteBatchInformationList({
+    musicScoreData: "#BPM 120\n#00111:01\n",
+  }));
+  const selection = selectSimulatorStaticResources(chart).rendering;
+  if (selection.kind !== "ordinary") throw new Error("ordinary route expected");
+  const fixtureBase = join(
+    process.cwd(),
+    "src/simulator/testing/fixtures/reverse-snapshots/autonomous-module/artifacts/investigations/autonomous-simulator-portable-pack-10-1-4",
+  );
+  const manifest = JSON.parse(readFileSync(join(fixtureBase, "ordinary_portable_pack_manifest.json"), "utf8"));
+  const fileById = new Map(manifest.assets.map((row: any) => [row.logicalAssetId, row.file]));
+  const entries = [{
+    resourceKey: selection.profileResource.resourceKey,
+    bytes: new Uint8Array(readFileSync(join(fixtureBase, "ordinary_portable_profile.json"))),
+  }, ...selection.resources.map((resource) => ({
+    resourceKey: resource.resourceKey,
+    bytes: new Uint8Array(readFileSync(join(fixtureBase, fileById.get(resource.profile.logicalAssetId)))),
+  }))];
+  const store = requireAccepted(ImmutableSharedStaticResourceStore.create(entries));
+  const prepared = requireAccepted(await prepareSharedOrdinaryRenderResources(
+    selection.profileResource,
+    selection.resources,
+    store,
+  ));
+  assert.equal(prepared.profile.assets.length, 7);
+  assert.equal(prepared.profile.assets.reduce((count, asset) => count + asset.atlasRows.length, 0), 60);
+  const firstAsset = prepared.profile.assets[0]!;
+  assert.equal((await prepared.provider.read(firstAsset.logicalAssetId)).status, "ok");
+
+  entries[1]!.bytes[0] ^= 0xff;
+  const tamperedStore = requireAccepted(ImmutableSharedStaticResourceStore.create(entries));
+  const tampered = await prepareSharedOrdinaryRenderResources(
+    selection.profileResource,
+    selection.resources,
+    tamperedStore,
+  );
+  assert.equal(tampered.status, "rejected");
+  if (tampered.status === "rejected") {
+    assert.equal(tampered.failure.capability, "simulator.resources.ordinary-asset-integrity");
   }
 }
 

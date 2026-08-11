@@ -6,6 +6,12 @@ import {
   type HabahiroBestdoriPinnedAsset,
 } from "../backends/resources/habahiroBestdoriManifest";
 import { CURRENT_PARTICLE_RESOURCE_MANIFEST } from "../backends/resources/currentParticleResourceManifest";
+import {
+  CURRENT_ORDINARY_PORTABLE_PACK_IDENTITY,
+  CURRENT_ORDINARY_PORTABLE_PROFILE_RESOURCE,
+  CURRENT_ORDINARY_PORTABLE_RESOURCES,
+  type OrdinaryPortableResourceEntry,
+} from "../backends/resources/currentOrdinaryResourceManifest";
 import type { ParticleResourceAllowlistEntry } from "../backends/particleContracts";
 import type { ChartConstructionResult } from "../engine/chart/types";
 
@@ -26,12 +32,21 @@ export interface SelectedHabahiroResource {
   readonly profile: HabahiroBestdoriPinnedAsset;
 }
 
+export interface SelectedOrdinaryResource {
+  readonly resourceKey: string;
+  readonly profile: OrdinaryPortableResourceEntry;
+}
+
 export type SelectedRenderResourceRoute =
   | {
       readonly kind: "ordinary";
-      readonly status: "evidence-required";
-      readonly capability: "simulator.resources.ordinary-current-pack";
-      readonly boundary: string;
+      readonly status: "selected";
+      readonly packIdentity: typeof CURRENT_ORDINARY_PORTABLE_PACK_IDENTITY;
+      readonly profileResource: {
+        readonly resourceKey: string;
+        readonly profile: typeof CURRENT_ORDINARY_PORTABLE_PROFILE_RESOURCE;
+      };
+      readonly resources: readonly SelectedOrdinaryResource[];
     }
   | {
       readonly kind: "habahiro";
@@ -75,9 +90,17 @@ export function selectSimulatorStaticResources(
       })
     : Object.freeze({
         kind: "ordinary" as const,
-        status: "evidence-required" as const,
-        capability: "simulator.resources.ordinary-current-pack" as const,
-        boundary: "The current evidence does not yet provide a committed portable ordinary PNG/profile pack; autonomous launch fails before resource reads rather than accepting a caller-authored profile.",
+        status: "selected" as const,
+        packIdentity: CURRENT_ORDINARY_PORTABLE_PACK_IDENTITY,
+        profileResource: Object.freeze({
+          resourceKey: ordinaryResourceKey(CURRENT_ORDINARY_PORTABLE_PROFILE_RESOURCE.logicalAssetId),
+          profile: CURRENT_ORDINARY_PORTABLE_PROFILE_RESOURCE,
+        }),
+        resources: Object.freeze(CURRENT_ORDINARY_PORTABLE_RESOURCES.map((profile) =>
+          Object.freeze({
+            resourceKey: ordinaryResourceKey(profile.logicalAssetId),
+            profile,
+          }))),
       });
   return Object.freeze({
     schemaVersion: 1 as const,
@@ -97,6 +120,10 @@ export function particleResourceKey(logicalAssetId: string): string {
 
 export function habahiroResourceKey(technicalName: string): string {
   return `${STATIC_RESOURCE_NAMESPACE}/habahiro/${encodeKey(technicalName)}`;
+}
+
+export function ordinaryResourceKey(logicalAssetId: string): string {
+  return `${STATIC_RESOURCE_NAMESPACE}/render-ordinary/${encodeKey(logicalAssetId)}`;
 }
 
 function encodeKey(value: string): string {

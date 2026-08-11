@@ -13,6 +13,7 @@ import type {
   SimulatorRendererBackend,
 } from "../backends/renderingContracts";
 import { prepareHabahiroBestdoriPack } from "../backends/resources/habahiroBestdoriProvider";
+import { CURRENT_ORDINARY_RENDER_BINDINGS } from "../backends/resources/currentOrdinaryResourceManifest";
 import type { RenderEngineResourceBindings } from "../engine/rendering/renderCommandProducer";
 import type { SimulatorChartAudioData } from "../public/contracts";
 import type { SharedStaticResourceStore } from "../resources/sharedStaticResourceStore";
@@ -20,6 +21,7 @@ import type { SimulatorStaticResourceSelection } from "../resources/staticResour
 import {
   createSharedHabahiroTransport,
   prepareSharedAudioResources,
+  prepareSharedOrdinaryRenderResources,
   prepareSharedParticleProvider,
   rejected,
   type SimulatorAssemblyResult,
@@ -59,27 +61,61 @@ export async function assembleSimulatorResources(
   targets: SimulatorResourceAssemblyTargets,
 ): Promise<SimulatorAssemblyResult<PreparedSimulatorResourceAssembly>> {
   if (
-    typeof targets.sessionId !== "string" || targets.sessionId.length === 0 ||
-    selection.rendering.kind === "ordinary"
+    typeof targets.sessionId !== "string" || targets.sessionId.length === 0
   ) {
-    return selection.rendering.kind === "ordinary"
-      ? rejected(
-          "evidence-required",
-          selection.rendering.capability,
-          selection.rendering.boundary,
-        )
-      : rejected(
-          "launch-failed",
-          "simulator.assembly.invalid-session",
-          "Autonomous resource assembly requires one internally generated non-empty session identity.",
-        );
+    return rejected(
+      "launch-failed",
+      "simulator.assembly.invalid-session",
+      "Autonomous resource assembly requires one internally generated non-empty session identity.",
+    );
   }
 
-  const habahiro = await prepareHabahiroBestdoriPack(
-    createSharedHabahiroTransport(selection.rendering.resources, store),
-  );
-  if (habahiro.status !== "ok") {
-    return rejected("resource-unavailable", habahiro.capability, habahiro.boundary);
+  let renderPack: {
+    readonly profile: Parameters<SimulatorRendererBackend["prepare"]>[1];
+    readonly provider: Parameters<SimulatorRendererBackend["prepare"]>[2];
+    readonly bindings: RenderEngineResourceBindings;
+  };
+  if (selection.rendering.kind === "ordinary") {
+    const ordinary = await prepareSharedOrdinaryRenderResources(
+      selection.rendering.profileResource,
+      selection.rendering.resources,
+      store,
+    );
+    if (ordinary.status === "rejected") return ordinary;
+    renderPack = Object.freeze({
+      profile: ordinary.value.profile,
+      provider: ordinary.value.provider,
+      bindings: CURRENT_ORDINARY_RENDER_BINDINGS,
+    });
+  } else {
+    const habahiro = await prepareHabahiroBestdoriPack(
+      createSharedHabahiroTransport(selection.rendering.resources, store),
+    );
+    if (habahiro.status !== "ok") {
+      return rejected("resource-unavailable", habahiro.capability, habahiro.boundary);
+    }
+    renderPack = Object.freeze({
+      profile: habahiro.value.profile,
+      provider: habahiro.value.provider,
+      bindings: Object.freeze({
+        noteAtlasLogicalAssetId: habahiro.value.bindings.normalAtlasLogicalAssetId,
+        directionalAtlasLogicalAssetId: habahiro.value.bindings.flickAtlasLogicalAssetId,
+        syncLineLogicalAssetId: habahiro.value.bindings.syncLineLogicalAssetId,
+        multipleDirectionalLineLeftLogicalAssetId: habahiro.value.bindings.multipleDirectionalLineLeftLogicalAssetId,
+        multipleDirectionalLineRightLogicalAssetId: habahiro.value.bindings.multipleDirectionalLineRightLogicalAssetId,
+        longNoteMaterialLogicalAssetId: habahiro.value.bindings.longNoteMaterialLogicalAssetId,
+        curveNoteMaterialLogicalAssetId: habahiro.value.bindings.curveNoteMaterialLogicalAssetId,
+        habahiroAtlasLogicalAssetIds: Object.freeze({
+          normal: habahiro.value.bindings.normalAtlasLogicalAssetId,
+          normal16: habahiro.value.bindings.normal16AtlasLogicalAssetId,
+          skill: habahiro.value.bindings.skillAtlasLogicalAssetId,
+          flick: habahiro.value.bindings.flickAtlasLogicalAssetId,
+          long: habahiro.value.bindings.longAtlasLogicalAssetId,
+          longFlash: habahiro.value.bindings.longFlashAtlasLogicalAssetId,
+          slideAmong: habahiro.value.bindings.slideAmongAtlasLogicalAssetId,
+        }),
+      }),
+    });
   }
   const audio = await prepareSharedAudioResources(chartAudio, selection.audioSe, store);
   if (audio.status === "rejected") return audio;
@@ -95,8 +131,8 @@ export async function assembleSimulatorResources(
 
   const renderReady = await targets.rendering.backend.prepare(
     targets.sessionId,
-    habahiro.value.profile,
-    habahiro.value.provider,
+    renderPack.profile,
+    renderPack.provider,
     targets.rendering.preflight,
   );
   if (renderReady.status !== "ok") {
@@ -151,27 +187,9 @@ export async function assembleSimulatorResources(
     );
   }
 
-  const bindings = habahiro.value.bindings;
   return accepted(Object.freeze({
     sessionId: targets.sessionId,
-    renderBindings: Object.freeze({
-      noteAtlasLogicalAssetId: bindings.normalAtlasLogicalAssetId,
-      directionalAtlasLogicalAssetId: bindings.flickAtlasLogicalAssetId,
-      syncLineLogicalAssetId: bindings.syncLineLogicalAssetId,
-      multipleDirectionalLineLeftLogicalAssetId: bindings.multipleDirectionalLineLeftLogicalAssetId,
-      multipleDirectionalLineRightLogicalAssetId: bindings.multipleDirectionalLineRightLogicalAssetId,
-      longNoteMaterialLogicalAssetId: bindings.longNoteMaterialLogicalAssetId,
-      curveNoteMaterialLogicalAssetId: bindings.curveNoteMaterialLogicalAssetId,
-      habahiroAtlasLogicalAssetIds: Object.freeze({
-        normal: bindings.normalAtlasLogicalAssetId,
-        normal16: bindings.normal16AtlasLogicalAssetId,
-        skill: bindings.skillAtlasLogicalAssetId,
-        flick: bindings.flickAtlasLogicalAssetId,
-        long: bindings.longAtlasLogicalAssetId,
-        longFlash: bindings.longFlashAtlasLogicalAssetId,
-        slideAmong: bindings.slideAmongAtlasLogicalAssetId,
-      }),
-    }),
+    renderBindings: renderPack.bindings,
     audioBackend: targets.audio.backend,
     rendererBackend: targets.rendering.backend,
     particleBackend: targets.particles.backend,
