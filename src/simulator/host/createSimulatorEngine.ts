@@ -50,6 +50,10 @@ import {
   mapAudioResult,
   type AudioOwnerTransaction,
 } from "../engine/audio/audioCommandProducer";
+import {
+  ParticleCommandProducer,
+} from "../engine/particles/particleCommandProducer";
+import { ParticleFrameCoordinator } from "../engine/particles/particleFrameCoordinator";
 import type {
   SimulatorEngine,
   SimulatorEngineInput,
@@ -64,6 +68,7 @@ class SimulatorEngineHost implements SimulatorEngine {
     private readonly renderingSessionId: string | null,
     private readonly renderProducer: RenderCommandProducer | null,
     private readonly audioProducer: AudioCommandProducer | null,
+    private readonly particleCoordinator: ParticleFrameCoordinator | null,
     readonly backends: SimulatorBackends,
   ) {}
 
@@ -257,8 +262,30 @@ class SimulatorEngineHost implements SimulatorEngine {
         "Current Full Combo/Game Clear routing is confirmed only for clear status 1, 2 or 3.",
       );
     }
+    const particle = this.particleCoordinator?.preflightTerminal("natural-end") ?? null;
+    if (particle?.status === "evidence-required") return particle;
     const audio = this.audioProducer.preflightCompleteLive(clearStatus);
-    return audio.status === "ok" ? this.commitAudio(audio.value) : audio;
+    if (audio.status !== "ok") {
+      if (particle?.status === "ok") particle.value.discard();
+      return audio;
+    }
+    if (particle?.status === "ok") {
+      const domain = particle.value.commitDomain();
+      if (domain.status !== "ok") {
+        audio.value.discard();
+        return this.inGameManager.latchExternalFault(domain);
+      }
+    }
+    const committedAudio = this.commitAudio(audio.value);
+    if (committedAudio.status !== "ok") {
+      if (particle?.status === "ok") particle.value.discardRenderAfterDomainFault();
+      return committedAudio;
+    }
+    if (particle?.status === "ok") {
+      const rendered = particle.value.commitRender();
+      if (rendered.status !== "ok") return this.inGameManager.latchExternalFault(rendered);
+    }
+    return ok(undefined);
   }
 
   getAdjustedMusicPosition(): SimulatorResult<number> {
@@ -269,6 +296,9 @@ class SimulatorEngineHost implements SimulatorEngine {
   }
 
   snapshot(): SimulatorResult<SimulatorSnapshot> {
+    if (this.inGameManager.state !== "disposed" && this.inGameManager.fault === null) {
+      this.pollAudioFault();
+    }
     const adjustedMusicPosition =
       this.inGameManager.noteManager.peekAdjustedMusicPosition();
     return ok({
@@ -277,38 +307,70 @@ class SimulatorEngineHost implements SimulatorEngine {
       adjustedMusicPosition,
       backendTrace: this.backends.snapshot(),
       audioBackend: this.backends.audio.snapshot(),
+      particleBackend: this.backends.particles?.snapshot() ?? null,
+      particleRendererBackend: this.backends.particleRendering?.snapshot() ?? null,
     });
   }
 
   dispose(): SimulatorResult<void> {
     if (this.inGameManager.state === "disposed") {
       const audio = this.disposeAudio();
-      return audio.status === "ok"
+      if (audio.status !== "ok") return audio;
+      const particles = this.disposeParticles();
+      return particles.status === "ok"
         ? this.backends.rendering?.dispose() ?? ok(undefined)
-        : audio;
+        : particles;
     }
     const rendererState = this.backends.rendering?.snapshot().state;
-    if (rendererState === "faulted" || rendererState === "disposed") {
-      this.inGameManager.disposeAfterTerminalRendererFault();
+    const particleBackendState = this.backends.particles?.snapshot().state;
+    const particleRendererState = this.backends.particleRendering?.snapshot().state;
+    if (this.inGameManager.state === "faulted" ||
+      rendererState === "faulted" || rendererState === "disposed" ||
+      particleBackendState === "faulted" || particleBackendState === "disposed" ||
+      particleRendererState === "faulted" || particleRendererState === "disposed") {
+      this.inGameManager.disposeAfterTerminalBackendFault();
       const audio = this.disposeAudio();
-      return audio.status === "ok"
+      if (audio.status !== "ok") return audio;
+      const particles = this.disposeParticles();
+      return particles.status === "ok"
         ? this.backends.rendering?.dispose() ?? ok(undefined)
-        : audio;
+        : particles;
     }
     const rendererValidation = this.renderProducer?.validate();
     if (rendererValidation?.status === "evidence-required") return rendererValidation;
+    const particle = this.particleCoordinator?.preflightDispose() ?? null;
+    if (particle?.status === "evidence-required") return particle;
     const domainDispose = this.inGameManager.dispose();
-    if (domainDispose.status !== "ok") return domainDispose;
+    if (domainDispose.status !== "ok") {
+      if (particle?.status === "ok") particle.value.discard();
+      return domainDispose;
+    }
+    if (particle?.status === "ok") {
+      const domain = particle.value.commitDomain();
+      if (domain.status !== "ok") return domain;
+    }
     const release = this.renderProducer?.preflightSessionRelease() ?? null;
-    if (release?.status === "evidence-required") return release;
+    if (release?.status === "evidence-required") {
+      if (particle?.status === "ok") particle.value.discardRenderAfterDomainFault();
+      return release;
+    }
     if (release?.status === "ok") {
       const committed = release.value.commit();
-      if (committed.status !== "ok") return committed;
+      if (committed.status !== "ok") {
+        if (particle?.status === "ok") particle.value.discardRenderAfterDomainFault();
+        return committed;
+      }
+    }
+    if (particle?.status === "ok") {
+      const rendered = particle.value.commitRender();
+      if (rendered.status !== "ok") return rendered;
     }
     const audio = this.disposeAudio();
-    return audio.status === "ok"
+    if (audio.status !== "ok") return audio;
+    const particles = this.disposeParticles();
+    return particles.status === "ok"
       ? this.backends.rendering?.dispose() ?? ok(undefined)
-      : audio;
+      : particles;
   }
 
   private commitAudio(transaction: AudioOwnerTransaction): SimulatorResult<void> {
@@ -319,6 +381,10 @@ class SimulatorEngineHost implements SimulatorEngine {
   }
 
   private pollAudioFault(): SimulatorResult<void> {
+    const particle = this.particleCoordinator?.pollFaults() ?? null;
+    if (particle?.status === "evidence-required") {
+      return this.inGameManager.latchExternalFault(particle);
+    }
     if (this.audioProducer === null) return ok(undefined);
     const result = this.audioProducer.pollBackendFault();
     return result.status === "ok"
@@ -331,6 +397,14 @@ class SimulatorEngineHost implements SimulatorEngine {
       return ok(undefined);
     }
     return mapAudioResult(this.backends.audio.dispose());
+  }
+
+  private disposeParticles(): SimulatorResult<void> {
+    if (this.particleCoordinator === null ||
+      this.backends.particles?.snapshot().state === "disposed") {
+      return ok(undefined);
+    }
+    return this.particleCoordinator.disposeBackends();
   }
 }
 
@@ -385,6 +459,9 @@ export function createSimulatorEngine(
   if (chartValidation.status !== "ok") {
     return chartValidation;
   }
+  const particleCoordinatorResult = createParticleCoordinator(input, backends);
+  if (particleCoordinatorResult.status !== "ok") return particleCoordinatorResult;
+  const particleCoordinator = particleCoordinatorResult.value;
   if (input.audio === undefined && backends.audio.snapshot().state === "ready") {
     return evidenceRequired(
       "audio.session.incomplete-host-binding",
@@ -504,6 +581,7 @@ export function createSimulatorEngine(
     scoreLifeStateManager,
     renderProducer,
     audioProducer,
+    particleCoordinator,
     input.chart.habahiroChangeAbsolutePos,
     input.rendering?.ordinaryNoteScene ?? null,
   );
@@ -520,8 +598,45 @@ export function createSimulatorEngine(
     renderingSessionId,
     renderProducer,
     audioProducer,
+    particleCoordinator,
     backends,
   ));
+}
+
+function createParticleCoordinator(
+  input: SimulatorEngineInput,
+  backends: SimulatorBackends,
+): SimulatorResult<ParticleFrameCoordinator | null> {
+  const backendState = backends.particles?.snapshot().state ?? null;
+  const rendererState = backends.particleRendering?.snapshot().state ?? null;
+  if (input.particles === undefined) {
+    return backendState === "ready" || rendererState === "ready"
+      ? evidenceRequired(
+          "particle.session.incomplete-host-binding",
+          [],
+          "A prepared particle backend/renderer requires one explicit matching host particle session.",
+        )
+      : ok(null);
+  }
+  if (input.particles === null || typeof input.particles !== "object" ||
+    Object.keys(input.particles).length !== 1 ||
+    typeof input.particles.sessionId !== "string" || input.particles.sessionId.length === 0 ||
+    backends.particles === undefined) {
+    return evidenceRequired(
+      "particle.session.invalid-host-binding",
+      [],
+      "Particle input contains only one non-empty session identity and requires an explicit prepared backend.",
+    );
+  }
+  const producer = new ParticleCommandProducer(input.chart);
+  const coordinator = new ParticleFrameCoordinator(
+    input.particles.sessionId,
+    producer,
+    backends.particles,
+    backends.particleRendering ?? null,
+  );
+  const validated = coordinator.validate();
+  return validated.status === "ok" ? ok(coordinator) : validated;
 }
 
 function validateRendererSession(

@@ -414,6 +414,7 @@ export { createSimulatorEngine } from "./host/createSimulatorEngine";
 export type {
   SimulatorEngine,
   SimulatorEngineInput,
+  SimulatorParticleSessionInput,
   SimulatorRenderingSessionInput,
   SimulatorSnapshot,
 } from "./host/contracts";

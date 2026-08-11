@@ -12,6 +12,10 @@ import type {
 import type { ScoreLifeStateProfile } from "../engine/data/scoreLifeState";
 import type { SimulatorResult } from "../engine/evidence";
 import type { AudioBackendSnapshot } from "../backends/audioContracts";
+import type {
+  ParticleBackendSnapshot,
+  ParticleRendererBackendSnapshot,
+} from "../backends/particleContracts";
 import type { SimulatorAudioSessionInput } from "../engine/audio/audioCommandProducer";
 import type {
   OrdinaryFixedNoteSceneInput,
@@ -27,6 +31,10 @@ export interface SimulatorRenderingSessionInput {
   readonly ordinaryNoteScene: OrdinaryFixedNoteSceneInput;
 }
 
+export interface SimulatorParticleSessionInput {
+  readonly sessionId: string;
+}
+
 export interface SimulatorEngineInput {
   readonly chart: ChartConstructionResult;
   readonly runtime: {
@@ -37,6 +45,7 @@ export interface SimulatorEngineInput {
   readonly scoreLifeState?: ScoreLifeStateProfile;
   readonly rendering?: SimulatorRenderingSessionInput;
   readonly audio?: SimulatorAudioSessionInput;
+  readonly particles?: SimulatorParticleSessionInput;
 }
 
 export interface SimulatorSnapshot {
@@ -45,6 +54,8 @@ export interface SimulatorSnapshot {
   readonly adjustedMusicPosition: number;
   readonly backendTrace: readonly SimulatorBackendTraceEvent[];
   readonly audioBackend: AudioBackendSnapshot;
+  readonly particleBackend: ParticleBackendSnapshot | null;
+  readonly particleRendererBackend: ParticleRendererBackendSnapshot | null;
 }
 
 export interface SimulatorEngine {

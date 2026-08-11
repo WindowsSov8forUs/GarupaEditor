@@ -114,6 +114,7 @@ export class ParticleCommandProducer {
 
   preflightJudgement(
     batch: OneFrameJudgementBatch,
+    terminalAfter: "game-over" | null = null,
   ): SimulatorResult<ParticleCommandOwnerTransaction> {
     const available = this.validateAvailable();
     if (available.status !== "ok") return available;
@@ -176,6 +177,12 @@ export class ParticleCommandProducer {
           ));
         }
       }
+    }
+    if (terminalAfter !== null) {
+      commands.push(Object.freeze({ kind: "clear-all", reason: terminalAfter }));
+      projected.buttonTapKeep.clear();
+      projected.slideTapKeep.clear();
+      projected.terminal = true;
     }
     return this.stage(commands, projected);
   }
@@ -348,7 +355,7 @@ export class ParticleCommandProducer {
     projected.slideTapKeep.clear();
     projected.terminal = true;
     projected.disposed = true;
-    return this.stage(this.state.disposed || this.state.terminal
+    return this.stage(this.state.disposed || this.state.terminal || this.state.suppressedUntilReplay
       ? []
       : [Object.freeze({ kind: "clear-all", reason: "dispose" })], projected);
   }

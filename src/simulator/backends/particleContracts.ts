@@ -635,6 +635,7 @@ export interface SimulatorParticleBackend {
     preflight: ParticleResourcePreflightAdapter,
   ): Promise<ParticleOperationResult<void>>;
   preflightFrame(request: ParticleFrameRequest): ParticleOperationResult<ParticleFrameBatch>;
+  previewFrame(batch: ParticleFrameBatch): ParticleOperationResult<readonly ParticleRenderSample[]>;
   commitFrame(batch: ParticleFrameBatch): ParticleOperationResult<void>;
   discardFrame(batch: ParticleFrameBatch): ParticleOperationResult<void>;
   recordTerminalFault(capability: string, boundary: string): ParticleOperationResult<never>;

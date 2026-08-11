@@ -170,6 +170,14 @@ export class DeterministicSimulatorParticleBackend implements SimulatorParticleB
     }
   }
 
+  previewFrame(batch: ParticleFrameBatch): ParticleOperationResult<readonly ParticleRenderSample[]> {
+    const terminal = this.terminalResult<readonly ParticleRenderSample[]>();
+    if (terminal !== null) return terminal;
+    return this.pendingFrame?.capability === batch
+      ? particleAccepted(this.pendingFrame.samples)
+      : this.reject("particle.frame.invalid-preview-capability", "Only the exact pending deterministic frame may expose its immutable sample preview.");
+  }
+
   commitFrame(batch: ParticleFrameBatch): ParticleOperationResult<void> {
     const terminal = this.terminalResult<void>();
     if (terminal !== null) return terminal;

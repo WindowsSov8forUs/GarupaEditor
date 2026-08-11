@@ -140,6 +140,14 @@ export class RecordingSimulatorParticleBackend implements SimulatorParticleBacke
     return particleAccepted(capability);
   }
 
+  previewFrame(batch: ParticleFrameBatch): ParticleOperationResult<readonly never[]> {
+    const terminal = this.terminalResult<readonly never[]>();
+    if (terminal !== null) return terminal;
+    return this.pendingFrame?.capability === batch
+      ? particleAccepted(Object.freeze([]))
+      : this.reject("particle.frame.invalid-preview-capability", "Only the exact pending particle frame may expose its immutable sample preview.");
+  }
+
   commitFrame(batch: ParticleFrameBatch): ParticleOperationResult<void> {
     const terminal = this.terminalResult<void>();
     if (terminal !== null) return terminal;

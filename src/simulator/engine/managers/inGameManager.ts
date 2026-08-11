@@ -24,6 +24,10 @@ import type {
 } from "../rendering/renderCommandProducer";
 import { createRenderFloat32 } from "../../backends/renderingValidation";
 import type { AudioCommandProducer } from "../audio/audioCommandProducer";
+import type {
+  ParticleFrameCoordinator,
+  ParticleOuterFrameTransaction,
+} from "../particles/particleFrameCoordinator";
 
 export interface InGameManagerSnapshot extends EngineLifecycleSnapshot {
   readonly fault: EvidenceRequired | null;
@@ -34,6 +38,7 @@ export interface InGameManagerSnapshot extends EngineLifecycleSnapshot {
   readonly inputManager: ReturnType<InputManager["snapshot"]>;
   readonly oneFrame: ReturnType<InGameOneFrameJudgementController["snapshot"]>;
   readonly scoreLifeState: ReturnType<ScoreLifeStateManager["snapshot"]> | null;
+  readonly particle: ReturnType<ParticleFrameCoordinator["producer"]["snapshot"]> | null;
 }
 
 export class InGameManager {
@@ -53,6 +58,7 @@ export class InGameManager {
     readonly scoreLifeStateManager: ScoreLifeStateManager | null = null,
     private readonly renderProducer: RenderCommandProducer | null = null,
     private readonly audioProducer: AudioCommandProducer | null = null,
+    private readonly particleCoordinator: ParticleFrameCoordinator | null = null,
     private readonly habahiroChangeAbsolutePos = -1,
     private readonly renderScene: OrdinaryFixedNoteSceneInput | null = null,
   ) {}
@@ -128,14 +134,14 @@ export class InGameManager {
       );
     }
     if (this.currentGameStateValue === GameState.PauseNone) {
-      return ok(undefined);
+      return this.commitParticleAdvance(deltaTimeSeconds, true);
     }
     const inputResult = this.inputManager.execInput(this.currentGameStateValue);
     if (inputResult.status !== "ok") {
       return inputResult;
     }
     if (this.currentGameStateValue === GameState.PauseSound) {
-      return ok(undefined);
+      return this.commitParticleAdvance(deltaTimeSeconds, true);
     }
     if (this.currentGameStateValue === GameState.PlayingNone) {
       return evidenceRequired(
@@ -249,6 +255,7 @@ export class InGameManager {
       const committed = hudAnimation.value.commit();
       if (committed.status !== "ok") return this.latchFault(committed);
     }
+    let particleAdvanced = false;
     if (this.oneFrameJudgementController.existsOneFrameData()) {
       const reflectPlan =
         this.oneFrameJudgementController.preflightReflectOneFrameData();
@@ -265,8 +272,21 @@ export class InGameManager {
         }
         const gameOver = businessPlan?.status === "ok" && lifeBefore !== null &&
           lifeBefore > 0 && businessPlan.value.record.currentLife <= 0;
+        const particlePlan = this.particleCoordinator?.preflightJudgement(
+          deltaTimeSeconds,
+          batch,
+          gameOver,
+        ) ?? null;
+        if (particlePlan?.status === "evidence-required") {
+          if (businessPlan?.status === "ok") {
+            this.scoreLifeStateManager!.discardReflect(businessPlan.value);
+          }
+          this.oneFrameJudgementController.discardReflectOneFrameData(reflectPlan.value);
+          return this.latchFault(particlePlan);
+        }
         const audioPlan = this.audioProducer?.preflightJudgement(batch, gameOver) ?? null;
         if (audioPlan?.status === "evidence-required") {
+          if (particlePlan?.status === "ok") particlePlan.value.discard();
           if (businessPlan?.status === "ok") {
             this.scoreLifeStateManager!.discardReflect(businessPlan.value);
           }
@@ -279,6 +299,7 @@ export class InGameManager {
           ? this.renderProducer?.preflightHudReflect(businessPlan.value) ?? null
           : null;
         if (renderPlan?.status === "evidence-required") {
+          if (particlePlan?.status === "ok") particlePlan.value.discard();
           if (audioPlan?.status === "ok") audioPlan.value.discard();
           this.scoreLifeStateManager!.discardReflect(businessPlan!.value);
           this.oneFrameJudgementController.discardReflectOneFrameData(
@@ -294,6 +315,7 @@ export class InGameManager {
           if (businessPlan?.status === "ok") {
             this.scoreLifeStateManager!.discardReflect(businessPlan.value);
           }
+          if (particlePlan?.status === "ok") particlePlan.value.discard();
           if (audioPlan?.status === "ok") audioPlan.value.discard();
           if (renderPlan?.status === "ok") renderPlan.value.discard();
           return this.latchFault(reflected);
@@ -303,23 +325,45 @@ export class InGameManager {
             businessPlan.value,
           );
           if (businessReflect.status !== "ok") {
+            if (particlePlan?.status === "ok") particlePlan.value.discard();
             if (audioPlan?.status === "ok") audioPlan.value.discard();
             if (renderPlan?.status === "ok") renderPlan.value.discard();
             return this.latchFault(businessReflect);
           }
         }
+        if (particlePlan?.status === "ok") {
+          const committed = particlePlan.value.commitDomain();
+          if (committed.status !== "ok") {
+            if (audioPlan?.status === "ok") audioPlan.value.discard();
+            if (renderPlan?.status === "ok") renderPlan.value.discard();
+            return this.latchFault(committed);
+          }
+        }
         if (audioPlan?.status === "ok") {
           const committed = audioPlan.value.commit();
           if (committed.status !== "ok") {
+            if (particlePlan?.status === "ok") particlePlan.value.discardRenderAfterDomainFault();
             if (renderPlan?.status === "ok") renderPlan.value.discard();
             return this.latchFault(committed);
           }
         }
         if (renderPlan?.status === "ok") {
           const committed = renderPlan.value.commit();
+          if (committed.status !== "ok") {
+            if (particlePlan?.status === "ok") particlePlan.value.discardRenderAfterDomainFault();
+            return this.latchFault(committed);
+          }
+        }
+        if (particlePlan?.status === "ok") {
+          const committed = particlePlan.value.commitRender();
           if (committed.status !== "ok") return this.latchFault(committed);
+          particleAdvanced = true;
         }
       }
+    }
+    if (!particleAdvanced) {
+      const advanced = this.commitParticleAdvance(deltaTimeSeconds, false);
+      if (advanced.status !== "ok") return this.latchFault(advanced);
     }
     return ok(undefined);
   }
@@ -440,10 +484,14 @@ export class InGameManager {
     return ok(undefined);
   }
 
-  disposeAfterTerminalRendererFault(): void {
+  disposeAfterTerminalBackendFault(): void {
     if (this.lifecycleState === "disposed") return;
     this.noteManager.disposeAfterTerminalRendererFault();
     this.finishDispose();
+  }
+
+  disposeAfterTerminalRendererFault(): void {
+    this.disposeAfterTerminalBackendFault();
   }
 
   private finishDispose(): void {
@@ -452,6 +500,23 @@ export class InGameManager {
     this.lifecycleState = "disposed";
     this.currentGameStateValue = GameState.PlayingSound;
     this.pauseStateValue = PauseState.None;
+  }
+
+  private commitParticleAdvance(
+    deltaTimeSeconds: number,
+    paused: boolean,
+  ): SimulatorResult<void> {
+    const planned = this.particleCoordinator?.preflightAdvance(deltaTimeSeconds, paused) ?? null;
+    if (planned === null) return ok(undefined);
+    if (planned.status !== "ok") return planned;
+    return this.commitParticleTransaction(planned.value);
+  }
+
+  private commitParticleTransaction(
+    transaction: ParticleOuterFrameTransaction,
+  ): SimulatorResult<void> {
+    const domain = transaction.commitDomain();
+    return domain.status === "ok" ? transaction.commitRender() : domain;
   }
 
   private isPaused(): boolean {
@@ -491,6 +556,7 @@ export class InGameManager {
       inputManager: this.inputManager.snapshot(),
       oneFrame: this.oneFrameJudgementController.snapshot(),
       scoreLifeState: this.scoreLifeStateManager?.snapshot() ?? null,
+      particle: this.particleCoordinator?.producer.snapshot() ?? null,
     };
   }
 }
