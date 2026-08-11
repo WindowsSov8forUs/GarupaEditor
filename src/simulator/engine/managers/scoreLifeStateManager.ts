@@ -82,6 +82,10 @@ export class ScoreLifeStateManager {
   private pendingReflect: PendingScoreLifeReflect | null = null;
   private readonly traceValue: string[] = [];
 
+  getClearStatus(): 1 | 2 | 3 {
+    return this.record.getClearStatus(this.scoreUtility.maxNoteCount);
+  }
+
   private constructor(
     profile: ScoreLifeStateProfile,
     chart: ChartConstructionResult,

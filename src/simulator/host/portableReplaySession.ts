@@ -212,6 +212,10 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
     }), () => this.active.completeLiveAudio(clearStatus));
   }
 
+  getNaturalCompletionClearStatus(): 1 | 2 | 3 | null {
+    return this.active.getNaturalCompletionClearStatus();
+  }
+
   getAdjustedMusicPosition(): SimulatorResult<number> {
     const available = this.available<number>();
     return available ?? this.active.getAdjustedMusicPosition();

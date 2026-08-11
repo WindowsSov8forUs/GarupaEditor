@@ -53,6 +53,7 @@ export class RecordingSimulatorAudioBackend implements SimulatorAudioBackend {
   private resourceCount = 0;
   private nextSequence = 0;
   private semantic = createEmptySemanticState();
+  private bgmNaturallyEnded = false;
   private readonly commands: AudioCommand[] = [];
   private pendingBatch: PendingAudioBatch | null = null;
   private fault: AudioBackendFault | null = null;
@@ -238,6 +239,27 @@ export class RecordingSimulatorAudioBackend implements SimulatorAudioBackend {
     return batch.status === "accepted" ? this.commit(batch.value) : batch;
   }
 
+  getBgmPlaybackState(): AudioOperationResult<"not-loaded" | "playing" | "paused" | "ended"> {
+    const terminal = this.terminalResult<"not-loaded" | "playing" | "paused" | "ended">();
+    if (terminal !== null) return terminal;
+    if (this.semantic.bgmCue === null) return audioAccepted("not-loaded");
+    if (this.bgmNaturallyEnded) return audioAccepted("ended");
+    return audioAccepted(this.semantic.bgmPaused || this.semantic.allPaused ? "paused" : "playing");
+  }
+
+  notifyBgmNaturalEnd(): AudioOperationResult<void> {
+    const terminal = this.terminalResult<void>();
+    if (terminal !== null) return terminal;
+    if (this.state !== "ready" || this.semantic.bgmCue === null || this.bgmNaturallyEnded) {
+      return this.reject(
+        "audio.recording.invalid-natural-end",
+        "The recording oracle can publish one natural end only for one loaded ready BGM voice.",
+      );
+    }
+    this.bgmNaturallyEnded = true;
+    return audioAccepted(undefined);
+  }
+
   recordTerminalFault(capability: string, boundary: string): AudioOperationResult<never> {
     const disposed = this.state === "disposed" ? this.disposedResult<never>() : null;
     if (disposed !== null) return disposed;
@@ -267,6 +289,7 @@ export class RecordingSimulatorAudioBackend implements SimulatorAudioBackend {
     this.sessionId = null;
     this.resourceCount = 0;
     this.semantic = createEmptySemanticState();
+    this.bgmNaturallyEnded = false;
     this.state = "disposed";
     return audioAccepted(undefined);
   }

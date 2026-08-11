@@ -61,6 +61,8 @@ import type {
 } from "./contracts";
 
 class SimulatorEngineHost implements SimulatorEngine {
+  private naturalCompletionClearStatus: 1 | 2 | 3 | null = null;
+
   constructor(
     private readonly inGameDirector: InGameDirector,
     private readonly inGameManager: InGameManager,
@@ -125,7 +127,9 @@ class SimulatorEngineHost implements SimulatorEngine {
     if (inputValidation.status !== "ok") {
       return inputValidation;
     }
-    return this.inGameDirector.update(deltaTimeSeconds);
+    const updated = this.inGameDirector.update(deltaTimeSeconds);
+    if (updated.status !== "ok") return updated;
+    return this.pollNaturalCompletion();
   }
 
   resolveManualInputButton(
@@ -285,7 +289,12 @@ class SimulatorEngineHost implements SimulatorEngine {
       const rendered = particle.value.commitRender();
       if (rendered.status !== "ok") return this.inGameManager.latchExternalFault(rendered);
     }
+    this.naturalCompletionClearStatus = clearStatus;
     return ok(undefined);
+  }
+
+  getNaturalCompletionClearStatus(): 1 | 2 | 3 | null {
+    return this.naturalCompletionClearStatus;
   }
 
   enterMoveTimeForWholeEngineReplay(): SimulatorResult<void> {
@@ -403,6 +412,23 @@ class SimulatorEngineHost implements SimulatorEngine {
     return committed.status === "ok"
       ? committed
       : this.inGameManager.latchExternalFault(committed);
+  }
+
+  private pollNaturalCompletion(): SimulatorResult<void> {
+    if (this.audioProducer === null || this.naturalCompletionClearStatus !== null) {
+      return ok(undefined);
+    }
+    const ended = this.audioProducer.pollBgmNaturalEnd();
+    if (ended.status !== "ok" || !ended.value) return ended.status === "ok" ? ok(undefined) : ended;
+    const scoreLife = this.inGameManager.scoreLifeStateManager;
+    if (scoreLife === null) {
+      return evidenceRequired(
+        "audio.natural-completion.without-score-owner",
+        [],
+        "Natural BGM completion requires the recovered InGameRecord clear-status owner; a default clear status is forbidden.",
+      );
+    }
+    return this.completeLiveAudio(scoreLife.getClearStatus());
   }
 
   private pollAudioFault(): SimulatorResult<void> {

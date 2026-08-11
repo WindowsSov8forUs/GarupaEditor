@@ -222,6 +222,15 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
     return batch.status === "accepted" ? this.commit(batch.value) : batch;
   }
 
+  getBgmPlaybackState(): AudioOperationResult<"not-loaded" | "playing" | "paused" | "ended"> {
+    const terminal = this.requireTerminalBeforeValidation<"not-loaded" | "playing" | "paused" | "ended">();
+    if (terminal !== null) return terminal;
+    const semantic = this.recording.snapshot().semantic;
+    if (semantic.bgmCue === null) return audioAccepted("not-loaded");
+    if (semantic.bgmPaused || semantic.allPaused) return audioAccepted("paused");
+    return audioAccepted(this.voices.has("bgm") ? "playing" : "ended");
+  }
+
   recordTerminalFault(capability: string, boundary: string): AudioOperationResult<never> {
     return this.recording.recordTerminalFault(capability, boundary);
   }

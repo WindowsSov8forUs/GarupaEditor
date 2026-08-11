@@ -203,6 +203,8 @@ export interface AudioVoiceSnapshot {
   readonly paused: boolean;
 }
 
+export type AudioBgmPlaybackState = "not-loaded" | "playing" | "paused" | "ended";
+
 export interface AudioSemanticStateSnapshot {
   readonly sessionOpened: boolean;
   readonly bgmCue: string | null;
@@ -242,6 +244,7 @@ export interface SimulatorAudioBackend {
   commit(batch: AudioCommandBatch): AudioOperationResult<void>;
   discard(batch: AudioCommandBatch): AudioOperationResult<void>;
   execute(command: AudioCommand): AudioOperationResult<void>;
+  getBgmPlaybackState?(): AudioOperationResult<AudioBgmPlaybackState>;
   recordTerminalFault(capability: string, boundary: string): AudioOperationResult<never>;
   snapshot(): AudioBackendSnapshot;
   dispose(): AudioOperationResult<void>;

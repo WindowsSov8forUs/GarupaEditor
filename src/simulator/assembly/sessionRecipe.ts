@@ -88,6 +88,10 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
       manualFrame ?? undefined,
     );
     if (stepped.status !== "ok") return rejectedStep(stepped);
+    if (this.engine.getNaturalCompletionClearStatus() !== null) {
+      const report = this.finish("completed", null);
+      return Object.freeze({ status: "closed" as const, report });
+    }
     const snapshot = this.engine.snapshot();
     if (snapshot.status !== "ok") return rejectedStep(snapshot);
     const record = snapshot.value.managers.scoreLifeState?.record ?? null;
@@ -168,7 +172,7 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
   }
 
   private finish(
-    reason: "game-over" | "user-closed" | "terminal-fault",
+    reason: "completed" | "game-over" | "user-closed" | "terminal-fault",
     failure: SimulatorModuleFailure | null,
   ): SimulatorModuleCloseReport {
     const snapshot = this.engine.snapshot();
@@ -189,7 +193,7 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
         score: record?.score ?? null,
         life: record?.currentLife ?? null,
         combo: record?.currentCombo ?? null,
-        clearStatus: null,
+        clearStatus: this.engine.getNaturalCompletionClearStatus(),
       }),
       failure: terminalFailure,
     });

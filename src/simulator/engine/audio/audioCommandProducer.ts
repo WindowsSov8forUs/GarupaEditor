@@ -303,6 +303,20 @@ export class AudioCommandProducer {
     ], () => { this.gameOverTriggered = true; });
   }
 
+  pollBgmNaturalEnd(): SimulatorResult<boolean> {
+    const readState = this.backend.getBgmPlaybackState;
+    if (readState === undefined) {
+      return evidenceRequired(
+        "audio.bgm-natural-end-observer-missing",
+        [],
+        "Natural live completion requires a backend-owned BGM end observer; chart duration inference and silent fallback are forbidden.",
+      );
+    }
+    const observed = mapAudioResult(readState.call(this.backend));
+    if (observed.status !== "ok") return observed;
+    return ok(observed.value === "ended");
+  }
+
   preflightCompleteLive(
     clearStatus: 1 | 2 | 3,
   ): SimulatorResult<AudioOwnerTransaction> {

@@ -79,6 +79,7 @@ export interface SimulatorEngine {
   changeFeverCommand(command: FeverTimeCommandName): SimulatorResult<void>;
   continueLive(): SimulatorResult<void>;
   completeLiveAudio(clearStatus: 1 | 2 | 3): SimulatorResult<void>;
+  getNaturalCompletionClearStatus(): 1 | 2 | 3 | null;
   getAdjustedMusicPosition(): SimulatorResult<number>;
   snapshot(): SimulatorResult<SimulatorSnapshot>;
   dispose(): SimulatorResult<void>;

@@ -65,6 +65,12 @@ export class InGameRecord {
   get currentCombo(): number { return this.currentComboValue; }
   get singleGameOver(): boolean { return this.singleGameOverValue; }
 
+  getClearStatus(maxNoteCount: number): 1 | 2 | 3 {
+    const perfectCount = this.resultCountsValue[4];
+    if (perfectCount === maxNoteCount) return 3;
+    return perfectCount + this.resultCountsValue[3] === maxNoteCount ? 2 : 1;
+  }
+
   addScore(value: number): void {
     this.scoreValue = addInt32(this.scoreValue, value);
     this.reserveTotalScoreValue = addInt32(this.reserveTotalScoreValue, value);
