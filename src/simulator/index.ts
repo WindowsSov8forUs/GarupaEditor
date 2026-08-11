@@ -34,6 +34,7 @@ export type {
   ParticleOperationResult,
   ParticleOwnerSnapshot,
   ParticlePortableProfile,
+  ParticleRandomStateSnapshot,
   ParticlePreparedResourcePack,
   ParticleProfileDefinition,
   ParticleRenderSample,
@@ -63,6 +64,20 @@ export {
   validateParticleProfileTextureRelations,
 } from "./backends/particleValidation";
 export { CURRENT_PARTICLE_RESOURCE_MANIFEST } from "./backends/resources/currentParticleResourceManifest";
+export { DeterministicSimulatorParticleBackend } from "./backends/particles/deterministicParticleBackend";
+export {
+  DeterministicParticleSimulation,
+  ParticleSimulationFault,
+} from "./engine/particles/particleSimulation";
+export {
+  particleRandomSlots,
+  particleSeedRatio,
+  particleXorshift128,
+} from "./engine/particles/particleRandom";
+export type {
+  ParticleRandomStateU32,
+  ParticleRandomStep,
+} from "./engine/particles/particleRandom";
 export {
   ImmutableLocalParticleResourceProvider,
   PortableParticleResourcePreflightAdapter,

@@ -513,6 +513,7 @@ export interface ParticleFloat32Color {
 export interface ParticleRenderSample {
   readonly particleId: string;
   readonly ownerKey: string;
+  readonly instance: ParticleInstanceIdentity;
   readonly root: ParticleRootId;
   readonly systemId: string;
   readonly creationSequence: number;
@@ -551,6 +552,12 @@ export interface ParticleBackendFault {
   readonly boundary: string;
 }
 
+export interface ParticleRandomStateSnapshot {
+  readonly systemId: string;
+  readonly stateU32: readonly [number, number, number, number];
+  readonly birthCount: number;
+}
+
 export interface ParticleBackendSnapshot {
   readonly state: ParticleBackendState;
   readonly sessionId: string | null;
@@ -560,6 +567,7 @@ export interface ParticleBackendSnapshot {
   readonly resourceCount: number;
   readonly suppressedUntilReplay: boolean;
   readonly activeOwners: readonly ParticleOwnerSnapshot[];
+  readonly randomState: readonly ParticleRandomStateSnapshot[];
   readonly frames: readonly ParticleFrameSnapshot[];
   readonly fault: ParticleBackendFault | null;
 }
