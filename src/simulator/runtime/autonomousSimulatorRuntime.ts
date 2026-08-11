@@ -1,0 +1,265 @@
+import type {
+  LaunchSimulatorModule,
+  SimulatorModuleCloseReport,
+  SimulatorModuleFailure,
+  SimulatorModuleLaunchRequest,
+  SimulatorModuleLaunchResult,
+} from "../public/contracts";
+import { rejected, type SimulatorAssemblyResult } from "../resources/sharedResourceAdapters";
+import type {
+  AutonomousSimulatorEnvironment,
+  SimulatorFrameSubscription,
+  SimulatorOwnedSession,
+  SimulatorRuntimeCommand,
+} from "./contracts";
+
+export class AutonomousSimulatorModule {
+  private state: "idle" | "launching" | "running" | "closing" | "closed" = "idle";
+  private session: SimulatorOwnedSession | null = null;
+  private frameSubscription: SimulatorFrameSubscription | null = null;
+  private expectedFrame = 0;
+  private processingFrame = false;
+  private resolveClosed: ((report: SimulatorModuleCloseReport) => void) | null = null;
+  private closedPromise: Promise<SimulatorModuleCloseReport> | null = null;
+
+  constructor(private readonly environment: AutonomousSimulatorEnvironment) {}
+
+  readonly launch: LaunchSimulatorModule = async (
+    request: SimulatorModuleLaunchRequest,
+  ): Promise<SimulatorModuleLaunchResult> => {
+    if (this.state !== "idle") {
+      return launchRejected(
+        "launch-failed",
+        "simulator.runtime.launch-not-idle",
+        "An autonomous simulator module instance accepts exactly one launch and is never reused after ownership transfer or failure.",
+      );
+    }
+    if (!validEnvironment(this.environment)) {
+      this.state = "closed";
+      return launchRejected(
+        "platform-unavailable",
+        "simulator.runtime.invalid-environment",
+        "Autonomous launch requires internal scheduler, input and session-factory capabilities before ownership transfer.",
+      );
+    }
+    this.state = "launching";
+    let created;
+    try {
+      created = await this.environment.sessions.create(request);
+    } catch {
+      this.state = "closed";
+      this.disposeInput();
+      return launchRejected(
+        "launch-failed",
+        "simulator.runtime.session-factory-threw",
+        "An internal session-factory exception fails launch before lifecycle ownership transfers and has no fallback.",
+      );
+    }
+    if (created.status === "rejected") {
+      this.state = "closed";
+      this.disposeInput();
+      return Object.freeze({ status: "rejected" as const, failure: created.failure });
+    }
+    this.session = created.value;
+    this.closedPromise = new Promise<SimulatorModuleCloseReport>((resolve) => {
+      this.resolveClosed = resolve;
+    });
+    let scheduled: SimulatorAssemblyResult<SimulatorFrameSubscription>;
+    try {
+      scheduled = this.environment.scheduler.start((tick) => this.consumeFrame(tick));
+    } catch {
+      const failure = moduleFailure(
+        "platform-unavailable",
+        "simulator.runtime.scheduler-start-threw",
+        "The internal frame scheduler threw before launch publication; the prepared session is closed without ownership transfer.",
+      );
+      this.closeBeforeTransfer(failure);
+      return Object.freeze({ status: "rejected" as const, failure });
+    }
+    if (scheduled.status === "rejected") {
+      this.closeBeforeTransfer(scheduled.failure);
+      return Object.freeze({ status: "rejected" as const, failure: scheduled.failure });
+    }
+    this.frameSubscription = scheduled.value;
+    this.state = "running";
+    return Object.freeze({
+      status: "accepted" as const,
+      closed: this.closedPromise,
+    });
+  };
+
+  private async consumeFrame(
+    tick: { readonly sequence: number; readonly deltaTimeSeconds: number },
+  ): Promise<void> {
+    if (this.state !== "running") return;
+    if (this.processingFrame) {
+      this.closeTerminal(moduleFailure(
+        "launch-failed",
+        "simulator.runtime.overlapping-frame",
+        "The autonomous scheduler must await each outer-frame consumer; overlapping ticks are terminal and are never merged or dropped.",
+      ));
+      return;
+    }
+    this.processingFrame = true;
+    try {
+      if (
+        tick === null || typeof tick !== "object" ||
+        tick.sequence !== this.expectedFrame ||
+        !Number.isFinite(tick.deltaTimeSeconds) ||
+        Math.fround(tick.deltaTimeSeconds) < 0
+      ) {
+        this.closeTerminal(moduleFailure(
+          "evidence-required",
+          "simulator.runtime.invalid-frame-tick",
+          "Outer-frame identities are contiguous and deltas must remain finite non-negative Float32 values; runtime never clamps or repairs them.",
+        ));
+        return;
+      }
+      const input = this.environment.input.consume(tick.sequence);
+      if (input.status === "rejected") {
+        this.closeTerminal(input.failure);
+        return;
+      }
+      for (const command of input.value.commands) {
+        const applied = await this.applyCommand(command);
+        if (applied.status === "rejected") {
+          this.closeTerminal(applied.failure);
+          return;
+        }
+        if (this.state !== "running") return;
+      }
+      const stepped = this.session!.step(
+        tick.deltaTimeSeconds,
+        input.value.manualFrame,
+      );
+      if (stepped.status === "rejected") {
+        this.closeTerminal(stepped.failure);
+        return;
+      }
+      this.expectedFrame += 1;
+      if (stepped.status === "closed") this.closePublished(stepped.report);
+    } catch {
+      this.closeTerminal(moduleFailure(
+        "launch-failed",
+        "simulator.runtime.frame-consumer-threw",
+        "The first internal input, command or engine frame exception is terminal and closes the autonomous module exactly once.",
+      ));
+    } finally {
+      this.processingFrame = false;
+    }
+  }
+
+  private async applyCommand(
+    command: SimulatorRuntimeCommand,
+  ): Promise<SimulatorAssemblyResult<void>> {
+    if (command === null || typeof command !== "object") {
+      return rejected(
+        "evidence-required",
+        "simulator.runtime.invalid-command",
+        "The internal UI/input owner emits only typed pause, resume, ReturnTime or user-close commands.",
+      );
+    }
+    if (command.kind === "user-close") {
+      const report = this.session!.close("user-closed");
+      this.closePublished(report);
+      return accepted(undefined);
+    }
+    if (command.kind === "pause") return this.session!.pause();
+    if (command.kind === "resume") return this.session!.resume();
+    if (command.kind === "return-time") return this.session!.returnTime();
+    return rejected(
+      "evidence-required",
+      "simulator.runtime.unknown-command",
+      "Unknown internal runtime commands fail closed and are never treated as no-op.",
+    );
+  }
+
+  private closeBeforeTransfer(failure: SimulatorModuleFailure): void {
+    try { this.session?.close("terminal-fault", failure); } catch {}
+    this.session = null;
+    this.stopScheduler();
+    this.disposeInput();
+    this.resolveClosed = null;
+    this.closedPromise = null;
+    this.state = "closed";
+  }
+
+  private closeTerminal(failure: SimulatorModuleFailure): void {
+    if (this.state !== "running") return;
+    let report: SimulatorModuleCloseReport;
+    try {
+      report = this.session!.close("terminal-fault", failure);
+    } catch {
+      report = Object.freeze({
+        reason: "terminal-fault" as const,
+        result: null,
+        failure,
+      });
+    }
+    this.closePublished(report);
+  }
+
+  private closePublished(report: SimulatorModuleCloseReport): void {
+    if (this.state === "closing" || this.state === "closed") return;
+    this.state = "closing";
+    this.stopScheduler();
+    this.disposeInput();
+    this.session = null;
+    const frozen = freezeCloseReport(report);
+    const resolve = this.resolveClosed;
+    this.resolveClosed = null;
+    this.state = "closed";
+    resolve?.(frozen);
+  }
+
+  private stopScheduler(): void {
+    const subscription = this.frameSubscription;
+    this.frameSubscription = null;
+    try { subscription?.stop(); } catch {}
+  }
+
+  private disposeInput(): void {
+    try { this.environment.input.dispose(); } catch {}
+  }
+}
+
+function validEnvironment(environment: AutonomousSimulatorEnvironment): boolean {
+  return environment !== null && typeof environment === "object" &&
+    environment.scheduler !== null && typeof environment.scheduler === "object" &&
+    typeof environment.scheduler.start === "function" &&
+    environment.input !== null && typeof environment.input === "object" &&
+    typeof environment.input.consume === "function" && typeof environment.input.dispose === "function" &&
+    environment.sessions !== null && typeof environment.sessions === "object" &&
+    typeof environment.sessions.create === "function";
+}
+
+function freezeCloseReport(report: SimulatorModuleCloseReport): SimulatorModuleCloseReport {
+  return Object.freeze({
+    reason: report.reason,
+    result: report.result === null ? null : Object.freeze({ ...report.result }),
+    failure: report.failure === null ? null : Object.freeze({ ...report.failure }),
+  });
+}
+
+function moduleFailure(
+  code: SimulatorModuleFailure["code"],
+  capability: string,
+  boundary: string,
+): SimulatorModuleFailure {
+  return Object.freeze({ code, capability, boundary });
+}
+
+function launchRejected(
+  code: SimulatorModuleFailure["code"],
+  capability: string,
+  boundary: string,
+): SimulatorModuleLaunchResult {
+  return Object.freeze({
+    status: "rejected" as const,
+    failure: moduleFailure(code, capability, boundary),
+  });
+}
+
+function accepted<T>(value: T): SimulatorAssemblyResult<T> {
+  return Object.freeze({ status: "accepted" as const, value });
+}
