@@ -411,6 +411,12 @@ export {
   NoteSlideMultipleDirectionalFlickAfter,
 } from "./engine/notes/noteTypes";
 export { createSimulatorEngine } from "./host/createSimulatorEngine";
+export { createPortableReplaySimulatorEngine } from "./host/portableReplaySession";
+export type {
+  PortableReplaySimulatorEngine,
+  SimulatorReplayCheckpoint,
+  SimulatorWholeEngineReplayFactory,
+} from "./host/portableReplaySession";
 export type {
   SimulatorEngine,
   SimulatorEngineInput,

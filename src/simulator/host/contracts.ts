@@ -12,6 +12,7 @@ import type {
 import type { ScoreLifeStateProfile } from "../engine/data/scoreLifeState";
 import type { SimulatorResult } from "../engine/evidence";
 import type { AudioBackendSnapshot } from "../backends/audioContracts";
+import type { RenderBackendSnapshot } from "../backends/renderingContracts";
 import type {
   ParticleBackendSnapshot,
   ParticleRendererBackendSnapshot,
@@ -53,6 +54,7 @@ export interface SimulatorSnapshot {
   readonly managers: InGameManagerSnapshot;
   readonly adjustedMusicPosition: number;
   readonly backendTrace: readonly SimulatorBackendTraceEvent[];
+  readonly renderingBackend: RenderBackendSnapshot | null;
   readonly audioBackend: AudioBackendSnapshot;
   readonly particleBackend: ParticleBackendSnapshot | null;
   readonly particleRendererBackend: ParticleRendererBackendSnapshot | null;

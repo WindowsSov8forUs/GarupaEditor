@@ -288,6 +288,30 @@ class SimulatorEngineHost implements SimulatorEngine {
     return ok(undefined);
   }
 
+  enterMoveTimeForWholeEngineReplay(): SimulatorResult<void> {
+    if (this.inGameManager.fault !== null) return this.inGameManager.fault;
+    const backendFault = this.pollAudioFault();
+    if (backendFault.status !== "ok") return backendFault;
+    if (this.inGameManager.state !== "initialized" || this.particleCoordinator === null) {
+      return evidenceRequired(
+        "particle.movetime.without-whole-engine-participant",
+        [],
+        "MoveTime requires one initialized particle session owned by the whole-engine replay host.",
+      );
+    }
+    if (this.particleCoordinator.producer.snapshot().terminal) {
+      return ok(undefined);
+    }
+    const planned = this.particleCoordinator.preflightMoveTime();
+    if (planned.status !== "ok") return planned;
+    const domain = planned.value.commitDomain();
+    if (domain.status !== "ok") return this.inGameManager.latchExternalFault(domain);
+    const rendered = planned.value.commitRender();
+    return rendered.status === "ok"
+      ? rendered
+      : this.inGameManager.latchExternalFault(rendered);
+  }
+
   getAdjustedMusicPosition(): SimulatorResult<number> {
     const audioFault = this.pollAudioFault();
     return audioFault.status === "ok"
@@ -306,6 +330,7 @@ class SimulatorEngineHost implements SimulatorEngine {
       managers: this.inGameManager.snapshot(),
       adjustedMusicPosition,
       backendTrace: this.backends.snapshot(),
+      renderingBackend: this.backends.rendering?.snapshot() ?? null,
       audioBackend: this.backends.audio.snapshot(),
       particleBackend: this.backends.particles?.snapshot() ?? null,
       particleRendererBackend: this.backends.particleRendering?.snapshot() ?? null,
@@ -406,6 +431,18 @@ class SimulatorEngineHost implements SimulatorEngine {
     }
     return this.particleCoordinator.disposeBackends();
   }
+}
+
+export function enterMoveTimeForWholeEngineReplay(
+  engine: SimulatorEngine,
+): SimulatorResult<void> {
+  return engine instanceof SimulatorEngineHost
+    ? engine.enterMoveTimeForWholeEngineReplay()
+    : evidenceRequired(
+        "particle.movetime.foreign-engine",
+        [],
+        "Whole-engine replay accepts only an engine created by the portable simulator host.",
+      );
 }
 
 export function createSimulatorEngine(
