@@ -22,7 +22,11 @@ import {
   type SharedStaticResourceResult,
 } from "../resources/sharedStaticResourceStore";
 import { selectSimulatorStaticResources } from "../resources/staticResourceSelector";
-import { createSimulatorSessionRecipe } from "../assembly/sessionRecipe";
+import {
+  createSimulatorSessionRecipe,
+  RecipeOwnedSessionFactory,
+} from "../assembly/sessionRecipe";
+import { ok } from "../engine/evidence";
 import { prepareSharedOrdinaryRenderResources } from "../resources/sharedResourceAdapters";
 import type {
   SimulatorModuleCloseReport,
@@ -41,6 +45,7 @@ async function main(): Promise<void> {
   testSelector();
   await testOrdinaryPack();
   testRecipeOwnership();
+  await testRecipeNaturalCompletion();
   await testAutonomousLaunchAndClose();
   await testInvalidTickCloses();
   console.log("autonomous simulator module tests passed: public/store/selector/recipe/runtime/self-close");
@@ -152,6 +157,51 @@ function testRecipeOwnership(): void {
     chartData: { ...request().chartData, sessionBusinessData: cyclic },
   } as unknown as SimulatorModuleLaunchRequest;
   assert.equal(createSimulatorSessionRecipe(invalidBusiness).status, "rejected");
+}
+
+async function testRecipeNaturalCompletion(): Promise<void> {
+  let initialized = false;
+  let completed = false;
+  let disposals = 0;
+  const engine = {
+    initialize: () => { initialized = true; return ok(undefined); },
+    step: () => { completed = true; return ok(undefined); },
+    resolveManualInputButton: () => ok(null),
+    pause: () => ok(undefined),
+    resume: () => ok(undefined),
+    updateFeverMemberPoint: () => ok(undefined),
+    changeFeverCommand: () => ok(undefined),
+    continueLive: () => ok(undefined),
+    completeLiveAudio: () => ok(undefined),
+    getNaturalCompletionClearStatus: () => completed ? 2 as const : null,
+    getAdjustedMusicPosition: () => ok(1.25),
+    snapshot: () => ok({
+      adjustedMusicPosition: 1.25,
+      director: { awakeComplete: initialized },
+      managers: {
+        state: initialized ? "initialized" : "created",
+        fault: null,
+        particle: {},
+        scoreLifeState: {
+          record: { score: 123, currentLife: 900, currentCombo: 7, singleGameOver: false },
+        },
+      },
+      particleBackend: { state: "ready" },
+    } as any),
+    dispose: () => { disposals += 1; return ok(undefined); },
+    backends: {} as any,
+  };
+  const factory = new RecipeOwnedSessionFactory({
+    createFreshEngine: async () => ok(engine as any),
+  });
+  const session = requireAccepted(await factory.create(request()));
+  const stepped = session.step(1 / 60, null);
+  assert.equal(stepped.status, "closed");
+  if (stepped.status !== "closed") throw new Error("natural completion must close");
+  assert.equal(stepped.report.reason, "completed");
+  assert.equal(stepped.report.result?.clearStatus, 2);
+  assert.equal(stepped.report.result?.score, 123);
+  assert.equal(disposals, 1);
 }
 
 async function testAutonomousLaunchAndClose(): Promise<void> {

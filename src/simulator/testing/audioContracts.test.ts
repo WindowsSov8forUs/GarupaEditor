@@ -261,7 +261,14 @@ async function testCommandCases(): Promise<void> {
     voiceGainBits: "0x3F800000",
     practiceMode: false,
   }, natural, chart);
+  runCommands(natural, [{
+    kind: "bgm.load", cue: "bgm003", seek_ms: 0, priority: 255,
+    fade_bits: "0x00000000",
+  }]);
   const beforeNatural = natural.snapshot().commands.length;
+  assert.equal(requireOk(producer.pollBgmNaturalEnd()), false);
+  assert.equal(natural.notifyBgmNaturalEnd().status, "accepted");
+  assert.equal(requireOk(producer.pollBgmNaturalEnd()), true);
   assert.equal(requireOk(producer.preflightNaturalEnd()).commit().status, "ok");
   assert.equal(expected("AU-C10").outcome, "accepted");
   assert.equal(natural.snapshot().commands.length, beforeNatural);
