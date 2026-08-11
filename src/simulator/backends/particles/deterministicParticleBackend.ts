@@ -360,7 +360,8 @@ function sameInstance(left: ParticleInstanceIdentity, right: ParticleInstanceIde
   if (left.kind !== right.kind || left.rangeLength !== right.rangeLength) return false;
   return left.kind === "game-play-button" && right.kind === "game-play-button"
     ? left.buttonType === right.buttonType
-    : left.kind === "note-slide" && right.kind === "note-slide" && left.noteIndex === right.noteIndex;
+    : left.kind === "note-slide" && right.kind === "note-slide" &&
+      left.noteIndex === right.noteIndex && left.buttonType === right.buttonType;
 }
 
 function cloneOwners(source: ReadonlyMap<string, MutableOwner>): Map<string, MutableOwner> {

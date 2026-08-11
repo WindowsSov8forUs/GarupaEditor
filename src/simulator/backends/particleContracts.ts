@@ -457,6 +457,7 @@ export type ParticleInstanceIdentity =
   | {
       readonly kind: "note-slide";
       readonly noteIndex: number;
+      readonly buttonType: number;
       readonly rangeLength: number;
     };
 
@@ -570,6 +571,60 @@ export interface ParticleBackendSnapshot {
   readonly randomState: readonly ParticleRandomStateSnapshot[];
   readonly frames: readonly ParticleFrameSnapshot[];
   readonly fault: ParticleBackendFault | null;
+}
+
+export interface ParticlePixiButtonAnchor {
+  readonly buttonType: number;
+  readonly position: ParticleFloat32Vector3;
+}
+
+export interface ParticlePixiSceneProfile {
+  readonly viewportWidth: 1600;
+  readonly viewportHeight: 720;
+  readonly worldCenterXBits: "0x00000000";
+  readonly worldCenterYBits: "0x00000000";
+  readonly pixelsPerWorldUnitBits: "0x43B40000";
+  readonly roundPixels: false;
+  readonly buttonAnchors: readonly ParticlePixiButtonAnchor[];
+}
+
+export interface ParticleRendererFrameRequest {
+  readonly sessionId: string;
+  readonly frame: number;
+  readonly samples: readonly ParticleRenderSample[];
+}
+
+export interface ParticleRendererFrameBatch {
+  readonly sessionId: string;
+  readonly frame: number;
+  readonly sampleCount: number;
+}
+
+export interface ParticleRendererBackendSnapshot {
+  readonly state: ParticleBackendState;
+  readonly sessionId: string | null;
+  readonly nextFrame: number | null;
+  readonly resourceCount: number;
+  readonly nodeCount: number;
+  readonly lastSampleCount: number;
+  readonly fault: ParticleBackendFault | null;
+}
+
+export interface SimulatorParticleRendererBackend {
+  readonly id: string;
+  prepare(
+    sessionId: string,
+    scene: ParticlePixiSceneProfile,
+    provider: ParticleResourceProvider,
+    preflight: ParticleResourcePreflightAdapter,
+  ): Promise<ParticleOperationResult<void>>;
+  preflightFrame(request: ParticleRendererFrameRequest): ParticleOperationResult<ParticleRendererFrameBatch>;
+  commitFrame(batch: ParticleRendererFrameBatch): ParticleOperationResult<void>;
+  discardFrame(batch: ParticleRendererFrameBatch): ParticleOperationResult<void>;
+  recordTerminalFault(capability: string, boundary: string): ParticleOperationResult<never>;
+  notifyContextLoss(): ParticleOperationResult<never>;
+  snapshot(): ParticleRendererBackendSnapshot;
+  dispose(): ParticleOperationResult<void>;
 }
 
 export interface SimulatorParticleBackend {

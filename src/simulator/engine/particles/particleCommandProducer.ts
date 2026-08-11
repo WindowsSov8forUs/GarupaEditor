@@ -154,7 +154,7 @@ export class ParticleCommandProducer {
           stopSlideTapKeep(slideRoot.index, projected, commands);
         }
         if (slideRoot !== undefined && entry.phase === "head" && entry.adjustedResult > 0) {
-          playSlideTapKeep(slideRoot.index, entry.buttonTypes.length, projected, commands);
+          playSlideTapKeep(slideRoot.index, buttonType, entry.buttonTypes.length, projected, commands);
         }
         const routed = resolveParticleJudgementRoot({
           result: entry.adjustedResult,
@@ -246,6 +246,7 @@ export class ParticleCommandProducer {
 
   preflightSlideTapKeepStart(
     noteIndex: number,
+    buttonType: number,
     rangeLength: number,
   ): SimulatorResult<ParticleCommandOwnerTransaction> {
     const available = this.validateAvailable();
@@ -253,7 +254,7 @@ export class ParticleCommandProducer {
     const note = this.notesByIndex.get(noteIndex);
     if (note === undefined ||
       (note.fireNoteType !== FrontNoteType.SlideA && note.fireNoteType !== FrontNoteType.SlideB) ||
-      !isRangeLength(rangeLength)) {
+      !isButtonType(buttonType) || !isRangeLength(rangeLength)) {
       return rejected(
         "particle.producer.invalid-slide-tap-keep-owner",
         "Pooled Slide TapKeep Play requires a production chart note identity and current 1..7 range.",
@@ -262,7 +263,7 @@ export class ParticleCommandProducer {
     const projected = cloneState(this.state);
     if (projected.suppressedUntilReplay) return this.stage([], projected);
     const commands: ParticleCommand[] = [];
-    playSlideTapKeep(noteIndex, rangeLength, projected, commands);
+    playSlideTapKeep(noteIndex, buttonType, rangeLength, projected, commands);
     return this.stage(commands, projected);
   }
 
@@ -442,12 +443,13 @@ export class ParticleCommandProducer {
 
 function playSlideTapKeep(
   noteIndex: number,
+  buttonType: number,
   rangeLength: number,
   state: MutableParticleOwnerState,
   commands: ParticleCommand[],
 ): void {
-  const ownerKey = slideTapKeepOwnerKey(noteIndex, rangeLength);
-  const instance = slideInstance(noteIndex, rangeLength);
+  const ownerKey = slideTapKeepOwnerKey(noteIndex, buttonType, rangeLength);
+  const instance = slideInstance(noteIndex, buttonType, rangeLength);
   const before = state.slideTapKeep.get(noteIndex);
   if (before !== undefined && before.ownerKey !== ownerKey) {
     commands.push(stopRoot(before.ownerKey, before.instance, "ordinary:effect_TapKeep"));
@@ -528,8 +530,12 @@ function buttonInstance(
   return Object.freeze({ kind: "game-play-button", buttonType, rangeLength });
 }
 
-function slideInstance(noteIndex: number, rangeLength: number): ParticleInstanceIdentity {
-  return Object.freeze({ kind: "note-slide", noteIndex, rangeLength });
+function slideInstance(
+  noteIndex: number,
+  buttonType: number,
+  rangeLength: number,
+): ParticleInstanceIdentity {
+  return Object.freeze({ kind: "note-slide", noteIndex, buttonType, rangeLength });
 }
 
 function buttonParticleOwnerKey(
@@ -546,8 +552,8 @@ function buttonTapKeepOwnerKey(buttonType: number, rangeLength: number): string 
   return buttonParticleOwnerKey(buttonType, "ordinary:effect_TapKeep", rangeLength);
 }
 
-function slideTapKeepOwnerKey(noteIndex: number, rangeLength: number): string {
-  return `note-slide:${noteIndex}/particle:ordinary:effect_TapKeep/range:${rangeLength}`;
+function slideTapKeepOwnerKey(noteIndex: number, buttonType: number, rangeLength: number): string {
+  return `note-slide:${noteIndex}/button:${buttonType}/particle:ordinary:effect_TapKeep/range:${rangeLength}`;
 }
 
 function targetCenterButtonType(note: NoteInformation): number | null {

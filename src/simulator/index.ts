@@ -34,8 +34,13 @@ export type {
   ParticleOperationResult,
   ParticleOwnerSnapshot,
   ParticlePortableProfile,
+  ParticlePixiButtonAnchor,
+  ParticlePixiSceneProfile,
   ParticleRandomStateSnapshot,
   ParticlePreparedResourcePack,
+  ParticleRendererBackendSnapshot,
+  ParticleRendererFrameBatch,
+  ParticleRendererFrameRequest,
   ParticleProfileDefinition,
   ParticleRenderSample,
   ParticleRendererProfile,
@@ -49,6 +54,7 @@ export type {
   ParticleTextureManifestEntry,
   ParticleTextureProfile,
   SimulatorParticleBackend,
+  SimulatorParticleRendererBackend,
 } from "./backends/particleContracts";
 export {
   CURRENT_PARTICLE_ROOTS,
@@ -65,6 +71,9 @@ export {
 } from "./backends/particleValidation";
 export { CURRENT_PARTICLE_RESOURCE_MANIFEST } from "./backends/resources/currentParticleResourceManifest";
 export { DeterministicSimulatorParticleBackend } from "./backends/particles/deterministicParticleBackend";
+export { PixiParticleRendererBackend } from "./backends/pixi/pixiParticleRendererBackend";
+export type { ParticlePixiTextureDecoder } from "./backends/pixi/pixiParticleRendererBackend";
+export { BrowserPixiParticleTextureDecoder } from "./backends/pixi/browserPixiParticleTextureDecoder";
 export {
   DeterministicParticleSimulation,
   ParticleSimulationFault,
