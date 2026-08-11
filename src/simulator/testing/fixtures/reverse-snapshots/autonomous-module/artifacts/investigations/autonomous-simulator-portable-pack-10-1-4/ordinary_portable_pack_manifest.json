@@ -1,0 +1,110 @@
+{
+  "schemaVersion": 1,
+  "status": "current-ordinary-portable-pack-closed",
+  "packIdentity": "ordinary-current-10.1.4-portable-v1",
+  "sourceResourceContract": "../resource-pixi-rendering-runtime-contract-10-1-4/resource_pixi_rendering_resource_contract.json",
+  "sourceResourceContractSha256": "F389AB0950156FAAA6B1B6407BA4D47AD66C9472DB9631D604460E39BC9F15A3",
+  "profile": {
+    "file": "ordinary_portable_profile.json",
+    "bytes": 20287,
+    "sha256": "82F9D26EF7A2A770F4846B534528094EEEDCE87DABDF5BB9E8D108777751453C"
+  },
+  "assets": [
+    {
+      "file": "ordinary-portable-assets/rhythm-game-sprites.png",
+      "logicalAssetId": "ordinary/notes/skin00/atlas",
+      "bytes": 1190293,
+      "sha256": "E3D8EDE1D3CEC31D0250D41E0DF2EDE9822A9BDC981D2B69585F5875C5A9618F",
+      "width": 2048,
+      "height": 1024,
+      "rgbaBytes": 8388608,
+      "rgbaSha256": "114FE2DDFFD6CFB2F5C8B48C3D35295824FB1332C1506C119664269036F813A2",
+      "sourceBundle": "ingameskin/noteskin/skin00",
+      "sourceBundleSha256": "FCE3B103AA5F94C533D2534A7FD2FBFCA042CEF3796E2EC3D5A0CE4FCFB2A50F",
+      "sourceTexturePathId": 1187220515473810583
+    },
+    {
+      "file": "ordinary-portable-assets/long-note-line.png",
+      "logicalAssetId": "ordinary/notes/skin00/long-note-line",
+      "bytes": 1976,
+      "sha256": "D4011A1FF77407E3E3EA224C6C81B5BFC3122AC65E4A1A2FC99CFA667E1ECA2D",
+      "width": 146,
+      "height": 205,
+      "rgbaBytes": 119720,
+      "rgbaSha256": "C92C6A3C48AEA789252AE631B58D11B5F8EA6069EAD48E1E119CA7F9BBA32D09",
+      "sourceBundle": "ingameskin/noteskin/skin00",
+      "sourceBundleSha256": "FCE3B103AA5F94C533D2534A7FD2FBFCA042CEF3796E2EC3D5A0CE4FCFB2A50F",
+      "sourceTexturePathId": 7885111247748804973
+    },
+    {
+      "file": "ordinary-portable-assets/curve-note-line.png",
+      "logicalAssetId": "ordinary/notes/skin00/curve-note-line",
+      "bytes": 1905,
+      "sha256": "09F8E06F160A34D95B337590BCBED1A88C914396B7EF3B4E8373CE29F8527FBE",
+      "width": 146,
+      "height": 205,
+      "rgbaBytes": 119720,
+      "rgbaSha256": "3412FA54F1FB7C309330E651013EE10B6F92F92D79DDCA04E69207B62CF6B852",
+      "sourceBundle": "ingameskin/noteskin/skin00",
+      "sourceBundleSha256": "FCE3B103AA5F94C533D2534A7FD2FBFCA042CEF3796E2EC3D5A0CE4FCFB2A50F",
+      "sourceTexturePathId": -2450859111606879010
+    },
+    {
+      "file": "ordinary-portable-assets/simultaneous-line.png",
+      "logicalAssetId": "ordinary/notes/skin00/simultaneous-line",
+      "bytes": 247,
+      "sha256": "9DC5E6C2DAA88BACFC3F39F791CAC7C40601300AA4BD6870344326C2CCB4CCE5",
+      "width": 10,
+      "height": 27,
+      "rgbaBytes": 1080,
+      "rgbaSha256": "C4A6E2E10A78101A0708133E02DF74A40C81984BC165594DB958698D9F09E3F6",
+      "sourceBundle": "ingameskin/noteskin/skin00",
+      "sourceBundleSha256": "FCE3B103AA5F94C533D2534A7FD2FBFCA042CEF3796E2EC3D5A0CE4FCFB2A50F",
+      "sourceTexturePathId": -2709382774411213539
+    },
+    {
+      "file": "ordinary-portable-assets/directional-flick-sprites.png",
+      "logicalAssetId": "ordinary/notes/directionalflickskin00/atlas",
+      "bytes": 264263,
+      "sha256": "9B16438FEFA28997D7B813421A8683B42D9BFECD378CC419F1E688239FD82365",
+      "width": 1024,
+      "height": 1024,
+      "rgbaBytes": 4194304,
+      "rgbaSha256": "8D8D90997656B01E2D82593A08B3BE8EE867E24B5AE44401D308F324EB8D3BF8",
+      "sourceBundle": "ingameskin/noteskin/directionalflickskin00",
+      "sourceBundleSha256": "0689538620373DAD6040BA91FC14EB6DB83F928CC82130F3E344DD7BDD9D8365",
+      "sourceTexturePathId": -2434531279304552562
+    },
+    {
+      "file": "ordinary-portable-assets/directional-line-left.png",
+      "logicalAssetId": "ordinary/notes/directionalflickskin00/line-left",
+      "bytes": 190,
+      "sha256": "6B9A27F589A65CBF9F36D1F73690B95D8304BC95DC3F8BE3A580B8AEB47C478B",
+      "width": 10,
+      "height": 78,
+      "rgbaBytes": 3120,
+      "rgbaSha256": "424D7CC72D77138E2C588C0D3C17D45CE34E6A0DC6CC0FDF21EC25E4D78CD93E",
+      "sourceBundle": "ingameskin/noteskin/directionalflickskin00",
+      "sourceBundleSha256": "0689538620373DAD6040BA91FC14EB6DB83F928CC82130F3E344DD7BDD9D8365",
+      "sourceTexturePathId": 781558832430136875
+    },
+    {
+      "file": "ordinary-portable-assets/directional-line-right.png",
+      "logicalAssetId": "ordinary/notes/directionalflickskin00/line-right",
+      "bytes": 191,
+      "sha256": "19654D4B306230CC770ED37E2CD763239AC2A5F253064123DBF3862DBD271886",
+      "width": 10,
+      "height": 78,
+      "rgbaBytes": 3120,
+      "rgbaSha256": "3D6D1DD0F68BAC29DAA3468F0B51B21F1C938D40B7A80A42A719F94FA5891DE9",
+      "sourceBundle": "ingameskin/noteskin/directionalflickskin00",
+      "sourceBundleSha256": "0689538620373DAD6040BA91FC14EB6DB83F928CC82130F3E344DD7BDD9D8365",
+      "sourceTexturePathId": -5254250772661216887
+    }
+  ],
+  "assetCount": 7,
+  "atlasRowCount": 60,
+  "productionAuthorization": true,
+  "mainProgramIntegrationAuthorization": false,
+  "unknownFields": []
+}
