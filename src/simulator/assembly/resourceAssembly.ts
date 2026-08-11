@@ -3,7 +3,6 @@ import type {
   SimulatorAudioBackend,
 } from "../backends/audioContracts";
 import type {
-  ParticlePixiSceneProfile,
   ParticleResourcePreflightAdapter,
   SimulatorParticleBackend,
   SimulatorParticleRendererBackend,
@@ -16,6 +15,7 @@ import { prepareHabahiroBestdoriPack } from "../backends/resources/habahiroBestd
 import { CURRENT_ORDINARY_RENDER_BINDINGS } from "../backends/resources/currentOrdinaryResourceManifest";
 import type { RenderEngineResourceBindings } from "../engine/rendering/renderCommandProducer";
 import type { SimulatorChartAudioData } from "../public/contracts";
+import type { SimulatorSceneLayout } from "../scene/simulatorSceneLayout";
 import type { SharedStaticResourceStore } from "../resources/sharedStaticResourceStore";
 import type { SimulatorStaticResourceSelection } from "../resources/staticResourceSelector";
 import {
@@ -41,8 +41,11 @@ export interface SimulatorResourceAssemblyTargets {
     readonly backend: SimulatorParticleBackend;
     readonly renderer: SimulatorParticleRendererBackend;
     readonly preflight: ParticleResourcePreflightAdapter;
-    readonly scene: ParticlePixiSceneProfile;
   };
+  createSceneLayout(
+    renderingKind: "ordinary" | "habahiro",
+    resources: RenderEngineResourceBindings,
+  ): SimulatorAssemblyResult<SimulatorSceneLayout>;
 }
 
 export interface PreparedSimulatorResourceAssembly {
@@ -52,6 +55,7 @@ export interface PreparedSimulatorResourceAssembly {
   readonly rendererBackend: SimulatorRendererBackend;
   readonly particleBackend: SimulatorParticleBackend;
   readonly particleRendererBackend: SimulatorParticleRendererBackend;
+  readonly sceneLayout: SimulatorSceneLayout;
 }
 
 export async function assembleSimulatorResources(
@@ -117,6 +121,8 @@ export async function assembleSimulatorResources(
       }),
     });
   }
+  const scene = targets.createSceneLayout(selection.rendering.kind, renderPack.bindings);
+  if (scene.status === "rejected") return scene;
   const audio = await prepareSharedAudioResources(chartAudio, selection.audioSe, store);
   if (audio.status === "rejected") return audio;
   const particles = await prepareSharedParticleProvider(selection.particles, store);
@@ -174,7 +180,7 @@ export async function assembleSimulatorResources(
 
   const particleRendererReady = await targets.particles.renderer.prepare(
     targets.sessionId,
-    targets.particles.scene,
+    scene.value.particleScene,
     particles.value,
     targets.particles.preflight,
   );
@@ -194,6 +200,7 @@ export async function assembleSimulatorResources(
     rendererBackend: targets.rendering.backend,
     particleBackend: targets.particles.backend,
     particleRendererBackend: targets.particles.renderer,
+    sceneLayout: scene.value,
   }));
 }
 

@@ -19,7 +19,7 @@ import {
   type SimulatorAssemblyResult,
 } from "../resources/sharedResourceAdapters";
 import type { ManualInputFrame } from "../engine/data/manualInput";
-import type { SimulatorResult } from "../engine/evidence";
+import { evidenceRequired, ok, type SimulatorResult } from "../engine/evidence";
 
 export interface SimulatorSessionRecipe {
   readonly schemaVersion: 1;
@@ -29,7 +29,7 @@ export interface SimulatorSessionRecipe {
 export interface SimulatorRecipeEngineBuilder {
   createFreshEngine(
     recipe: SimulatorSessionRecipe,
-  ): Promise<SimulatorResult<SimulatorEngine>>;
+  ): Promise<SimulatorAssemblyResult<SimulatorEngine>>;
 }
 
 export function createSimulatorSessionRecipe(
@@ -59,9 +59,14 @@ export class RecipeOwnedSessionFactory implements SimulatorOwnedSessionFactory {
         "The internal recipe builder exception fails launch before engine ownership transfers and has no caller factory fallback.",
       );
     }
-    if (initial.status !== "ok") return fromEngineFailure(initial);
+    if (initial.status === "rejected") return initial;
     const replay = createPortableReplaySimulatorEngine(initial.value, {
-      createFreshEngine: () => this.builder.createFreshEngine(recipe.value),
+      createFreshEngine: async () => {
+        const fresh = await this.builder.createFreshEngine(recipe.value);
+        return fresh.status === "accepted"
+          ? ok(fresh.value)
+          : evidenceRequired(fresh.failure.capability, [], fresh.failure.boundary);
+      },
     });
     if (replay.status !== "ok") {
       initial.value.dispose();
@@ -208,13 +213,13 @@ function copyLaunchRequest(
     Object.keys(request).sort().join(",") !== "chartData,config" ||
     request.chartData === null || typeof request.chartData !== "object" ||
     Object.keys(request.chartData).sort().join(",") !==
-      (request.chartData.sessionBusinessData === undefined
-        ? "bgm,bmsText"
-        : "bgm,bmsText,sessionBusinessData") ||
+      "bgm,bmsText,sessionBusinessData" ||
+    request.chartData.sessionBusinessData === null ||
+    typeof request.chartData.sessionBusinessData !== "object" ||
     typeof request.chartData.bmsText !== "string" || request.chartData.bmsText.length === 0 ||
     request.config === null || typeof request.config !== "object" ||
     Object.keys(request.config).sort().join(",") !==
-      "audio,highFrequencyMode,judgeOffsetFrames,playMode,practice" ||
+      "audio,highFrequencyMode,judgeOffsetFrames,playMode,practice,visual" ||
     (request.config.playMode !== "manual" && request.config.playMode !== "auto-live") ||
     typeof request.config.highFrequencyMode !== "boolean" ||
     !Number.isInteger(request.config.judgeOffsetFrames) ||
@@ -224,6 +229,14 @@ function copyLaunchRequest(
     typeof request.config.practice.enabled !== "boolean" ||
     !Number.isSafeInteger(request.config.practice.startMilliseconds) ||
     request.config.practice.startMilliseconds < 0 ||
+    request.config.visual === null || typeof request.config.visual !== "object" ||
+    Object.keys(request.config.visual).sort().join(",") !==
+      "habahiroMeshWidthSetting,highAspectRatio,noteSize,specificSpeed" ||
+    !isExactPositiveFloat32(request.config.visual.specificSpeed) ||
+    !isExactFloat32(request.config.visual.noteSize) ||
+    request.config.visual.noteSize < 80 || request.config.visual.noteSize > 150 ||
+    (request.config.visual.highAspectRatio !== 0 && request.config.visual.highAspectRatio !== 1) ||
+    !isExactFloat32(request.config.visual.habahiroMeshWidthSetting) ||
     request.config.audio === null || typeof request.config.audio !== "object" ||
     Object.keys(request.config.audio).sort().join(",") !==
       "bgmGain,masterGain,seGain,voiceGain" ||
@@ -232,7 +245,7 @@ function copyLaunchRequest(
     return rejected(
       "evidence-required",
       "simulator.recipe.invalid-public-request",
-      "The launch recipe accepts only exact chart/config keys, explicit modes, confirmed judgement offset, non-negative practice seek and finite unit gains.",
+      "The launch recipe accepts only exact chart/config/business keys, explicit modes, confirmed judgement offset, non-negative practice seek, evidence-bounded Float32 visual settings and finite unit gains.",
     );
   }
   const bgm = request.chartData.bgm;
@@ -245,9 +258,7 @@ function copyLaunchRequest(
   }
   let business: typeof request.chartData.sessionBusinessData;
   try {
-    business = request.chartData.sessionBusinessData === undefined
-      ? undefined
-      : deepFreezeClone(request.chartData.sessionBusinessData) as typeof request.chartData.sessionBusinessData;
+    business = deepFreezeClone(request.chartData.sessionBusinessData) as typeof request.chartData.sessionBusinessData;
   } catch {
     return rejected(
       "evidence-required",
@@ -259,13 +270,14 @@ function copyLaunchRequest(
     chartData: Object.freeze({
       bmsText: request.chartData.bmsText,
       bgm: Object.freeze({ ...bgm, bytes: Uint8Array.from(bgm.bytes) }),
-      ...(business === undefined ? {} : { sessionBusinessData: business }),
+      sessionBusinessData: business,
     }),
     config: Object.freeze({
       playMode: request.config.playMode,
       highFrequencyMode: request.config.highFrequencyMode,
       judgeOffsetFrames: request.config.judgeOffsetFrames,
       practice: Object.freeze({ ...request.config.practice }),
+      visual: Object.freeze({ ...request.config.visual }),
       audio: Object.freeze({ ...request.config.audio }),
     }),
   }));
@@ -289,6 +301,14 @@ function deepFreezeClone(value: unknown, seen = new Set<object>()): unknown {
   for (const [key, entry] of Object.entries(value)) output[key] = deepFreezeClone(entry, seen);
   seen.delete(value);
   return Object.freeze(output);
+}
+
+function isExactFloat32(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value) && Object.is(value, Math.fround(value));
+}
+
+function isExactPositiveFloat32(value: unknown): value is number {
+  return isExactFloat32(value) && value > 0;
 }
 
 function isUnitGain(value: unknown): boolean {

@@ -115,7 +115,7 @@ export interface SimulatorSessionBusinessData {
 export interface SimulatorChartDataPackage {
   readonly bmsText: string;
   readonly bgm: SimulatorChartAudioData;
-  readonly sessionBusinessData?: SimulatorSessionBusinessData;
+  readonly sessionBusinessData: SimulatorSessionBusinessData;
 }
 
 export interface SimulatorLaunchConfig {
@@ -125,6 +125,12 @@ export interface SimulatorLaunchConfig {
   readonly practice: {
     readonly enabled: boolean;
     readonly startMilliseconds: number;
+  };
+  readonly visual: {
+    readonly specificSpeed: number;
+    readonly noteSize: number;
+    readonly highAspectRatio: 0 | 1;
+    readonly habahiroMeshWidthSetting: number;
   };
   readonly audio: {
     readonly masterGain: number;
