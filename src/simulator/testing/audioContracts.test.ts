@@ -18,8 +18,13 @@ import { audioAccepted } from "../backends/audioValidation";
 import { DeterministicOfflineAudioBackend } from "../backends/audio/offlineAudioBackend";
 import { WebAudioSimulatorBackend } from "../backends/audio/webAudioBackend";
 import { RecordingSimulatorAudioBackend } from "../backends/recordingAudioBackend";
-import { CURRENT_AUDIO_RESOURCE_PROFILE } from "../backends/resources/currentAudioResourceManifest";
 import { AudioCommandProducer } from "../engine/audio/audioCommandProducer";
+import {
+  ALTERNATIVE_AUDIO_TEST_PROFILE,
+  ALTERNATIVE_SESSION_BGM_RESOURCE,
+  AUDIO_SESSION_BGM_CONTRACT,
+  CURRENT_AUDIO_TEST_PROFILE,
+} from "./audioSessionBgmTestProfile";
 
 interface OracleCase {
   readonly case_id: string;
@@ -52,44 +57,9 @@ const pcmOracle = JSON.parse(
 ) as any;
 const byId = new Map(oracle.cases.map((entry) => [entry.case_id, entry]));
 
-const bytesByLength = new Map<number, Uint8Array>();
-const hashByLength = new Map<number, string>();
-for (let index = 0; index < CURRENT_AUDIO_RESOURCE_PROFILE.resources.length; index += 1) {
-  const resource = CURRENT_AUDIO_RESOURCE_PROFILE.resources[index]!;
-  const bytes = new Uint8Array(resource.byteLength);
-  bytes[0] = index + 1;
-  bytesByLength.set(resource.byteLength, bytes);
-  hashByLength.set(resource.byteLength, resource.sha256);
-}
-
-const virtualProvider: AudioResourceProvider = {
-  async read(resource) {
-    const bytes = bytesByLength.get(resource.byteLength);
-    return bytes === undefined
-      ? ({
-          status: "audio-resource-unavailable",
-          failure: {
-            code: "audio-resource-unavailable",
-            capability: "test.virtual.missing",
-            boundary: "missing virtual bytes",
-          },
-        } as const)
-      : audioAccepted(bytes);
-  },
-};
-const virtualPreflight: AudioResourcePreflightAdapter = {
-  async sha256(bytes) {
-    return audioAccepted(hashByLength.get(bytes.byteLength) ?? "");
-  },
-  async inspect(_bytes, resource) {
-    return audioAccepted<AudioDecodedResourceMetadata>({
-      codec: resource.codec,
-      sampleRate: resource.sampleRate,
-      channels: resource.channels,
-      durationSeconds: resource.durationSeconds,
-    });
-  },
-};
+const currentCapabilities = virtualCapabilities(CURRENT_AUDIO_TEST_PROFILE);
+const virtualProvider = currentCapabilities.provider;
+const virtualPreflight = currentCapabilities.preflight;
 
 async function main(): Promise<void> {
   assert.equal(oracle.status, "command-oracle-closed-pre-typescript");
@@ -106,6 +76,7 @@ async function main(): Promise<void> {
     ["AU-C14", "AU-C15", "AU-C16", "AU-C31", "AU-C38"],
   );
 
+  await testSessionBgmContract();
   await testPrepareCases();
   await testCommandCases();
   await testLifecycleCases();
@@ -115,42 +86,136 @@ async function main(): Promise<void> {
   console.log("audio C01-C40 tests passed: 34 confirmed + 5 excluded + fixed PCM");
 }
 
+async function testSessionBgmContract(): Promise<void> {
+  assert.equal(AUDIO_SESSION_BGM_CONTRACT.status,
+    "current-static-generic-session-bgm-portable-contract-closed");
+  assert.equal(AUDIO_SESSION_BGM_CONTRACT.case_count, 6);
+  assert.deepEqual(
+    AUDIO_SESSION_BGM_CONTRACT.cases.map((entry: any) => entry.id),
+    ["BG-C01", "BG-C02", "BG-C03", "BG-C04", "BG-C05", "BG-C06"],
+  );
+  assert.equal(AUDIO_SESSION_BGM_CONTRACT.typescript_production_authorization, true);
+  assert.equal(AUDIO_SESSION_BGM_CONTRACT.main_program_integration_authorization, false);
+  assert.equal(CURRENT_AUDIO_TEST_PROFILE.profileId, "session-external-portable-v1");
+  assert.equal(CURRENT_AUDIO_TEST_PROFILE.resources.filter((resource) => resource.role === "bgm").length, 1);
+  assert.equal(CURRENT_AUDIO_TEST_PROFILE.resources.filter((resource) => resource.role === "se").length, 18);
+
+  const alternativeCapabilities = virtualCapabilities(ALTERNATIVE_AUDIO_TEST_PROFILE);
+  const alternative = new RecordingSimulatorAudioBackend();
+  assert.equal((await alternative.prepare(
+    "alternative-session",
+    ALTERNATIVE_AUDIO_TEST_PROFILE,
+    alternativeCapabilities.provider,
+    alternativeCapabilities.preflight,
+  )).status, "accepted");
+  assert.equal(alternative.snapshot().preparedBgmCue, ALTERNATIVE_SESSION_BGM_RESOURCE.cue);
+  const producer = new AudioCommandProducer({
+    sessionId: "alternative-session",
+    bgmCue: ALTERNATIVE_SESSION_BGM_RESOURCE.cue,
+    seekMilliseconds: 0,
+    masterGainBits: "0x3F800000",
+    bgmGainBits: "0x3F800000",
+    seGainBits: "0x3F800000",
+    voiceGainBits: "0x3F800000",
+    practiceMode: false,
+  }, alternative, { noteBatches: [] } as any);
+  const initialized = producer.preflightInitialize();
+  assert.equal(initialized.status, "ok");
+  if (initialized.status !== "ok") throw new Error(initialized.capability);
+  assert.equal(initialized.value.commit().status, "ok");
+  const dynamicLoad = alternative.snapshot().commands.find((command) => command.kind === "bgm.load");
+  assert.equal(dynamicLoad?.kind === "bgm.load" ? dynamicLoad.cue : null,
+    ALTERNATIVE_SESSION_BGM_RESOURCE.cue);
+
+  const mismatch = new AudioCommandProducer({
+    ...producer.input,
+    bgmCue: "foreign-session-cue",
+  }, alternative, { noteBatches: [] } as any);
+  assert.equal(mismatch.validate().status, "evidence-required");
+  assert.equal(alternative.dispose().status, "accepted");
+
+  const missingBgm = cloneProfile(ALTERNATIVE_AUDIO_TEST_PROFILE);
+  missingBgm.resources = missingBgm.resources.filter((resource: any) => resource.role !== "bgm");
+  const missingBackend = new RecordingSimulatorAudioBackend();
+  assert.equal((await missingBackend.prepare(
+    "missing-bgm", missingBgm, alternativeCapabilities.provider, alternativeCapabilities.preflight,
+  )).status, "evidence-required");
+
+  const duplicateBgm = cloneProfile(ALTERNATIVE_AUDIO_TEST_PROFILE);
+  duplicateBgm.resources[18] = { ...duplicateBgm.resources[0] };
+  const duplicateBackend = new RecordingSimulatorAudioBackend();
+  assert.equal((await duplicateBackend.prepare(
+    "duplicate-bgm", duplicateBgm, alternativeCapabilities.provider, alternativeCapabilities.preflight,
+  )).status, "evidence-required");
+
+  const aliasedBgm = cloneProfile(ALTERNATIVE_AUDIO_TEST_PROFILE);
+  aliasedBgm.resources[0].logicalId = "sound/common";
+  const aliasBackend = new RecordingSimulatorAudioBackend();
+  assert.equal((await aliasBackend.prepare(
+    "aliased-bgm", aliasedBgm, alternativeCapabilities.provider, alternativeCapabilities.preflight,
+  )).status, "evidence-required");
+
+  const shortProvider: AudioResourceProvider = {
+    async read(resource) {
+      const result = await alternativeCapabilities.provider.read(resource);
+      return result.status === "accepted" && resource.role === "bgm"
+        ? audioAccepted(result.value.slice(0, -1))
+        : result;
+    },
+  };
+  const integrityBackend = new RecordingSimulatorAudioBackend();
+  assert.equal((await integrityBackend.prepare(
+    "integrity-bgm", ALTERNATIVE_AUDIO_TEST_PROFILE, shortProvider, alternativeCapabilities.preflight,
+  )).status, "audio-resource-integrity");
+  assert.equal(integrityBackend.snapshot().state, "unprepared");
+  console.log("audio BG-C01-C06 session BGM contract passed: current regression + non-bgm003 + mismatch/alias/integrity closure");
+}
+
 async function testPrepareCases(): Promise<void> {
   const valid = new RecordingSimulatorAudioBackend();
   assert.equal((await valid.prepare(
     "audio-session",
-    CURRENT_AUDIO_RESOURCE_PROFILE,
+    CURRENT_AUDIO_TEST_PROFILE,
     virtualProvider,
     virtualPreflight,
   )).status, expected("AU-C01").outcome);
   assert.equal(valid.snapshot().resourceCount, 19);
   assert.equal(valid.snapshot().state, "ready");
+  assert.equal(valid.snapshot().preparedBgmCue, CURRENT_AUDIO_TEST_PROFILE.resources[0]!.cue);
   assert.ok(Object.isFrozen(valid.snapshot()));
   assert.ok(Object.isFrozen(valid.snapshot().commands));
 
   const missing = new RecordingSimulatorAudioBackend();
   assert.equal((await missing.prepare(
     "audio-session",
-    CURRENT_AUDIO_RESOURCE_PROFILE,
+    CURRENT_AUDIO_TEST_PROFILE,
     null as unknown as AudioResourceProvider,
     virtualPreflight,
   )).status, expected("AU-C02").outcome);
   assert.equal(missing.snapshot().state, "unprepared");
 
-  const wrongHash = cloneProfile(CURRENT_AUDIO_RESOURCE_PROFILE);
-  const perfect = wrongHash.resources.find((resource: any) => resource.cue === "perfect")! as any;
-  perfect.sha256 = "0".repeat(64);
+  const perfectLength = CURRENT_AUDIO_TEST_PROFILE.resources.find(
+    (resource) => resource.cue === "perfect",
+  )!.byteLength;
+  const integrityPreflight: AudioResourcePreflightAdapter = {
+    ...virtualPreflight,
+    async sha256(bytes) {
+      return bytes.byteLength === perfectLength
+        ? audioAccepted("0".repeat(64))
+        : virtualPreflight.sha256(bytes);
+    },
+  };
   const integrity = new RecordingSimulatorAudioBackend();
   assert.equal((await integrity.prepare(
     "audio-session",
-    wrongHash,
+    CURRENT_AUDIO_TEST_PROFILE,
     virtualProvider,
-    virtualPreflight,
+    integrityPreflight,
   )).status, expected("AU-C03").outcome);
   assert.equal(integrity.snapshot().state, "unprepared");
   assert.equal(integrity.snapshot().resourceCount, 0);
 
-  const duplicate = cloneProfile(CURRENT_AUDIO_RESOURCE_PROFILE);
+  const duplicate = cloneProfile(CURRENT_AUDIO_TEST_PROFILE);
   duplicate.resources[18] = { ...duplicate.resources[0]! };
   const duplicateBackend = new RecordingSimulatorAudioBackend();
   assert.equal((await duplicateBackend.prepare(
@@ -239,7 +304,7 @@ async function testLifecycleCases(): Promise<void> {
   const web = new WebAudioSimulatorBackend(suspendedContext);
   assert.equal((await web.prepare(
     "audio-session",
-    CURRENT_AUDIO_RESOURCE_PROFILE,
+    CURRENT_AUDIO_TEST_PROFILE,
     virtualProvider,
     virtualPreflight,
   )).status, expected("AU-C37").outcome);
@@ -428,7 +493,7 @@ async function readyBackend(): Promise<RecordingSimulatorAudioBackend> {
   const backend = new RecordingSimulatorAudioBackend();
   const result = await backend.prepare(
     "audio-session",
-    CURRENT_AUDIO_RESOURCE_PROFILE,
+    CURRENT_AUDIO_TEST_PROFILE,
     virtualProvider,
     virtualPreflight,
   );
@@ -534,6 +599,51 @@ function singleBatch(entry: any): any {
     adjustedResult: entry.adjustedResult,
     judgeTiming: entry.judgeTiming,
   });
+}
+
+function virtualCapabilities(profile: AudioResourceProfileSet): {
+  readonly provider: AudioResourceProvider;
+  readonly preflight: AudioResourcePreflightAdapter;
+} {
+  const bytesByKey = new Map<string, Uint8Array>();
+  const hashByLength = new Map<number, string>();
+  for (let index = 0; index < profile.resources.length; index += 1) {
+    const resource = profile.resources[index]!;
+    const bytes = new Uint8Array(resource.byteLength);
+    bytes[0] = (index + 1) & 0xff;
+    bytesByKey.set(`${resource.logicalId}\u0000${resource.cue}`, bytes);
+    hashByLength.set(resource.byteLength, resource.sha256);
+  }
+  return {
+    provider: {
+      async read(resource) {
+        const bytes = bytesByKey.get(`${resource.logicalId}\u0000${resource.cue}`);
+        return bytes === undefined
+          ? ({
+              status: "audio-resource-unavailable",
+              failure: {
+                code: "audio-resource-unavailable",
+                capability: "test.virtual.missing",
+                boundary: "missing virtual bytes",
+              },
+            } as const)
+          : audioAccepted(bytes);
+      },
+    },
+    preflight: {
+      async sha256(bytes) {
+        return audioAccepted(hashByLength.get(bytes.byteLength) ?? "");
+      },
+      async inspect(_bytes, resource) {
+        return audioAccepted<AudioDecodedResourceMetadata>({
+          codec: resource.codec,
+          sampleRate: resource.sampleRate,
+          channels: resource.channels,
+          durationSeconds: resource.durationSeconds,
+        });
+      },
+    },
+  };
 }
 
 function cloneProfile(profile: AudioResourceProfileSet): any {

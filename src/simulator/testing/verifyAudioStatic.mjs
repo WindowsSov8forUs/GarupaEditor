@@ -10,13 +10,20 @@ const webAudioPath = resolve(simulatorRoot, "backends", "audio", "webAudioBacken
 const audioTestPaths = [
   resolve(testingRoot, "audioContracts.test.ts"),
   resolve(testingRoot, "audioWebAudio.test.ts"),
+  resolve(testingRoot, "audioSessionBgmTestProfile.ts"),
   resolve(testingRoot, "runAudioTests.mjs"),
 ];
+const bgmContract = JSON.parse(readFileSync(resolve(
+  testingRoot, "fixtures", "reverse-snapshots", "audio", "artifacts", "investigations",
+  "audio-session-bgm-resource-contract-10-1-4", "audio_session_bgm_resource_contract.json",
+), "utf8"));
 
 const violations = [];
+let productionSource = "";
 for (const root of productionRoots) {
   for (const path of listFiles(root, ".ts")) {
     const source = readFileSync(path, "utf8");
+    productionSource += `\n${source}`;
     if (/testing[\\/]fixtures|GirlsBandParty-Reverse|(?:^|["'`])tmp[\\/]/m.test(source)) {
       violations.push(`production evidence path: ${path}`);
     }
@@ -29,6 +36,14 @@ for (const root of productionRoots) {
       violations.push(`engine Node filesystem/network dependency: ${path}`);
     }
   }
+}
+if (/bgm003|sound\/bgm003|current-external-portable-v1/.test(productionSource)) {
+  violations.push("production retains a chart-specific BGM literal or old fixed profile identity");
+}
+if (bgmContract.status !== "current-static-generic-session-bgm-portable-contract-closed" ||
+  bgmContract.case_count !== 6 || bgmContract.typescript_production_authorization !== true ||
+  bgmContract.main_program_integration_authorization !== false) {
+  violations.push("session BGM Reverse contract/gate mismatch");
 }
 const webSource = readFileSync(webAudioPath, "utf8");
 if (/from\s+["'](?:\.\.\/)*\.\.\/engine\/(?:managers|notes)|from\s+["'](?:\.\.\/)*\.\.\/host/.test(webSource)) {
@@ -48,7 +63,7 @@ if (/fixtureId|evidenceId|sourceOrder|expected/i.test(commandSection)) {
 if (violations.length > 0) {
   throw new Error(`Audio static boundary failed:\n${violations.join("\n")}`);
 }
-console.log("audio static boundary verified: engine DOM/WebAudio/fs/network/codec=off production fixtures=off tests network/python/sleep=off command test identity=off");
+console.log("audio static boundary verified: dynamic session BGM, no production bgm003/default, engine DOM/WebAudio/fs/network/codec=off production fixtures=off tests network/python/sleep=off");
 
 function listFiles(root, extension) {
   return readdirSync(root, { withFileTypes: true }).flatMap((entry) => {

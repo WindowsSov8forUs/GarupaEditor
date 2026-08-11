@@ -9,10 +9,13 @@ import type {
 } from "../backends/audioContracts";
 import { audioAccepted } from "../backends/audioValidation";
 import { WebAudioSimulatorBackend } from "../backends/audio/webAudioBackend";
-import { CURRENT_AUDIO_RESOURCE_PROFILE } from "../backends/resources/currentAudioResourceManifest";
+import {
+  CURRENT_AUDIO_TEST_PROFILE,
+  CURRENT_BGM_REGRESSION_RESOURCE,
+} from "./audioSessionBgmTestProfile";
 
 const profileByLength = new Map(
-  CURRENT_AUDIO_RESOURCE_PROFILE.resources.map((resource) => [resource.byteLength, resource]),
+  CURRENT_AUDIO_TEST_PROFILE.resources.map((resource) => [resource.byteLength, resource]),
 );
 const provider: AudioResourceProvider = {
   async read(resource) {
@@ -38,7 +41,7 @@ async function main(): Promise<void> {
   const backend = new WebAudioSimulatorBackend(context as unknown as AudioContext);
   assert.equal((await backend.prepare(
     "web-session",
-    CURRENT_AUDIO_RESOURCE_PROFILE,
+    CURRENT_AUDIO_TEST_PROFILE,
     provider,
     preflight,
   )).status, "accepted");
@@ -49,7 +52,7 @@ async function main(): Promise<void> {
   execute(backend, [
     { kind: "session.open", bgm_pool: 8, se_pool: 12, one_shot_pool: 1 },
     { kind: "gain.set", bgm_bits: "0x3E800000", se_bits: "0x3F000000", voice_bits: "0x3F000000" },
-    { kind: "bgm.load", cue: "bgm003", seek_ms: 1234, priority: 255, fade_bits: "0x00000000" },
+    { kind: "bgm.load", cue: CURRENT_BGM_REGRESSION_RESOURCE.cue, seek_ms: 1234, priority: 255, fade_bits: "0x00000000" },
     { kind: "audio.pause-all", paused: true },
     { kind: "audio.pause-all", paused: false },
   ]);
@@ -106,14 +109,14 @@ async function main(): Promise<void> {
   const throwing = new WebAudioSimulatorBackend(throwingContext as unknown as AudioContext);
   assert.equal((await throwing.prepare(
     "throw-session",
-    CURRENT_AUDIO_RESOURCE_PROFILE,
+    CURRENT_AUDIO_TEST_PROFILE,
     provider,
     preflight,
   )).status, "accepted");
   execute(throwing, [{ kind: "session.open", bgm_pool: 8, se_pool: 12, one_shot_pool: 1 }]);
   throwingContext.throwOnStart = true;
   const thrown = throwing.execute({
-    kind: "bgm.load", cue: "bgm003", seek_ms: 0, priority: 255, fade_bits: "0x00000000",
+    kind: "bgm.load", cue: CURRENT_BGM_REGRESSION_RESOURCE.cue, seek_ms: 0, priority: 255, fade_bits: "0x00000000",
   });
   assert.equal(thrown.status, "audio-backend-fault");
   assert.equal(throwing.snapshot().fault?.capability, "audio.web.command-commit-threw");
