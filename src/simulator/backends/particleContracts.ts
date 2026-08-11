@@ -457,6 +457,7 @@ export type ParticleInstanceIdentity =
   | {
       readonly kind: "note-slide";
       readonly noteIndex: number;
+      readonly absolutePosition: number;
       readonly buttonType: number;
       readonly rangeLength: number;
     };

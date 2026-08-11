@@ -28,9 +28,14 @@ interface TapKeepOwner {
   readonly rangeLength: number;
 }
 
+interface SlideSemanticIdentity {
+  readonly noteIndex: number;
+  readonly absolutePosition: number;
+}
+
 interface MutableParticleOwnerState {
   readonly buttonTapKeep: Map<number, Map<number, TapKeepOwner>>;
-  readonly slideTapKeep: Map<number, TapKeepOwner>;
+  readonly slideTapKeep: Map<string, TapKeepOwner>;
   suppressedUntilReplay: boolean;
   terminal: boolean;
   disposed: boolean;
@@ -47,6 +52,7 @@ export interface ParticleCommandProducerSnapshot {
   }[];
   readonly activeSlideTapKeepOwners: readonly {
     readonly noteIndex: number;
+    readonly absolutePosition: number;
     readonly rangeLength: number;
     readonly ownerKey: string;
   }[];
@@ -88,7 +94,10 @@ export class ParticleCommandOwnerTransaction {
 
 export class ParticleCommandProducer {
   private readonly notesByIndex = new Map<number, NoteInformation>();
-  private readonly slideRootByNodeIndex = new Map<number, NoteInformation>();
+  private readonly ambiguousNoteIndices = new Set<number>();
+  private readonly notesByJudgementKey = new Map<string, NoteInformation[]>();
+  private readonly slideRootByNode = new WeakMap<NoteInformation, NoteInformation>();
+  private readonly registeredNotes = new WeakSet<NoteInformation>();
   private chartIdentityValid = true;
   private state = createEmptyState();
   private pending: ParticleCommandOwnerTransaction | null = null;
@@ -108,7 +117,7 @@ export class ParticleCommandProducer {
       ? ok(undefined)
       : rejected(
           "particle.producer.invalid-chart-identity",
-          "Particle ownership requires one unambiguous production NoteInformation object for every stable chart note index.",
+          "Particle ownership requires complete chart-semantic judgement keys; source note indices are not treated as globally unique identities.",
         );
   }
 
@@ -128,13 +137,9 @@ export class ParticleCommandProducer {
     const commands: ParticleCommand[] = [];
     if (!projected.suppressedUntilReplay) {
       for (const entry of batch.entries) {
-        const note = this.notesByIndex.get(entry.noteIndex);
-        if (note === undefined) {
-          return rejected(
-            "particle.producer.missing-note-owner",
-            "Judgement particle routing requires the parent chart's stable NoteInformation identity.",
-          );
-        }
+        const resolvedNote = this.resolveJudgementNote(entry);
+        if (resolvedNote.status !== "ok") return resolvedNote;
+        const note = resolvedNote.value;
         const buttonType = targetCenterButtonType(note);
         if (buttonType === null || !entry.buttonTypes.includes(buttonType) ||
           entry.buttonTypes.length < 1 || entry.buttonTypes.length > 7) {
@@ -150,12 +155,18 @@ export class ParticleCommandProducer {
           (note.fireNoteType === FrontNoteType.Long && entry.phase === "head" && entry.adjustedResult > 0)) {
           playButtonTapKeep(buttonType, entry.buttonTypes.length, projected, commands);
         }
-        const slideRoot = this.slideRootByNodeIndex.get(note.index);
+        const slideRoot = this.slideRootByNode.get(note);
         if (slideRoot !== undefined && entry.phase === "tail") {
-          stopSlideTapKeep(slideRoot.index, projected, commands);
+          stopSlideTapKeep(slideIdentity(slideRoot), projected, commands);
         }
         if (slideRoot !== undefined && entry.phase === "head" && entry.adjustedResult > 0) {
-          playSlideTapKeep(slideRoot.index, buttonType, entry.buttonTypes.length, projected, commands);
+          playSlideTapKeep(
+            slideIdentity(slideRoot),
+            buttonType,
+            entry.buttonTypes.length,
+            projected,
+            commands,
+          );
         }
         const routed = resolveParticleJudgementRoot({
           result: entry.adjustedResult,
@@ -258,7 +269,7 @@ export class ParticleCommandProducer {
   ): SimulatorResult<ParticleCommandOwnerTransaction> {
     const available = this.validateAvailable();
     if (available.status !== "ok") return available;
-    const note = this.notesByIndex.get(noteIndex);
+    const note = this.ambiguousNoteIndices.has(noteIndex) ? undefined : this.notesByIndex.get(noteIndex);
     if (note === undefined ||
       (note.fireNoteType !== FrontNoteType.SlideA && note.fireNoteType !== FrontNoteType.SlideB) ||
       !isButtonType(buttonType) || !isRangeLength(rangeLength)) {
@@ -270,7 +281,7 @@ export class ParticleCommandProducer {
     const projected = cloneState(this.state);
     if (projected.suppressedUntilReplay) return this.stage([], projected);
     const commands: ParticleCommand[] = [];
-    playSlideTapKeep(noteIndex, buttonType, rangeLength, projected, commands);
+    playSlideTapKeep(slideIdentity(note), buttonType, rangeLength, projected, commands);
     return this.stage(commands, projected);
   }
 
@@ -279,15 +290,21 @@ export class ParticleCommandProducer {
   ): SimulatorResult<ParticleCommandOwnerTransaction> {
     const available = this.validateAvailable();
     if (available.status !== "ok") return available;
-    if (!Number.isSafeInteger(noteIndex) || noteIndex < 0 || !this.notesByIndex.has(noteIndex)) {
+    const active = [...this.state.slideTapKeep]
+      .filter(([, owner]) => owner.instance.kind === "note-slide" && owner.instance.noteIndex === noteIndex);
+    if (!Number.isSafeInteger(noteIndex) || noteIndex < 0 || active.length !== 1 ||
+      active[0]![1].instance.kind !== "note-slide") {
       return rejected(
         "particle.producer.invalid-slide-tap-keep-stop-owner",
-        "Pooled Slide TapKeep Stop requires its production chart note identity.",
+        "Pooled Slide TapKeep Stop requires one unambiguous active production chart identity.",
       );
     }
     const projected = cloneState(this.state);
     const commands: ParticleCommand[] = [];
-    stopSlideTapKeep(noteIndex, projected, commands);
+    stopSlideTapKeep({
+      noteIndex,
+      absolutePosition: active[0]![1].instance.absolutePosition,
+    }, projected, commands);
     return this.stage(commands, projected);
   }
 
@@ -369,13 +386,20 @@ export class ParticleCommandProducer {
       })))
       .sort((left, right) => left.buttonType - right.buttonType || left.rangeLength - right.rangeLength)
       .map((owner) => Object.freeze(owner));
-    const activeSlideTapKeepOwners = [...this.state.slideTapKeep]
-      .map(([noteIndex, owner]) => Object.freeze({
-        noteIndex,
-        rangeLength: owner.rangeLength,
-        ownerKey: owner.ownerKey,
-      }))
-      .sort((left, right) => left.noteIndex - right.noteIndex);
+    const activeSlideTapKeepOwners = [...this.state.slideTapKeep.values()]
+      .map((owner) => {
+        if (owner.instance.kind !== "note-slide") {
+          throw new Error("Slide TapKeep owner lost its typed NoteSlide identity");
+        }
+        return Object.freeze({
+          noteIndex: owner.instance.noteIndex,
+          absolutePosition: owner.instance.absolutePosition,
+          rangeLength: owner.rangeLength,
+          ownerKey: owner.ownerKey,
+        });
+      })
+      .sort((left, right) => left.noteIndex - right.noteIndex ||
+        left.absolutePosition - right.absolutePosition);
     return Object.freeze({
       suppressedUntilReplay: this.state.suppressedUntilReplay,
       terminal: this.state.terminal,
@@ -425,54 +449,102 @@ export class ParticleCommandProducer {
     return ok(undefined);
   }
 
+  private resolveJudgementNote(
+    entry: OneFrameJudgementEntry,
+  ): SimulatorResult<NoteInformation> {
+    const candidates = this.notesByJudgementKey.get(judgementKey(
+      entry.absolutePosition,
+      entry.buttonTypes,
+    )) ?? [];
+    const indexed = candidates.filter((note) => note.index === entry.noteIndex);
+    const tailOwners = entry.phase === "tail"
+      ? indexed.filter((note) => note.afterNoteAbsolutePos === entry.absolutePosition)
+      : [];
+    const matching = tailOwners.length > 0
+      ? tailOwners
+      : indexed.filter((note) => note.absolutePos === entry.absolutePosition);
+    if (matching.length === 0) {
+      return rejected(
+        "particle.producer.missing-note-owner",
+        "Judgement particle routing requires the exact chart absolute-position/button-span owner authored into OneFrame.",
+      );
+    }
+    const first = matching[0]!;
+    if (matching.some((note) => !particleEquivalentNote(first, note))) {
+      return rejected(
+        "particle.producer.ambiguous-note-owner",
+        "Semantically different chart notes cannot share one judgement owner key.",
+      );
+    }
+    return ok(first);
+  }
+
   private registerNote(
     note: NoteInformation,
     slideRoot: NoteInformation | null,
   ): void {
-    if (note === null || typeof note !== "object" || !Number.isSafeInteger(note.index) || note.index < 0) {
+    if (note === null || typeof note !== "object" || this.registeredNotes.has(note)) return;
+    if (!Number.isSafeInteger(note.index) || note.index < 0 ||
+      !Number.isSafeInteger(note.absolutePos) || note.absolutePos < 0 ||
+      !Array.isArray(note.buttonTypesArray) || note.buttonTypesArray.length < 1) {
       this.chartIdentityValid = false;
       return;
     }
+    this.registeredNotes.add(note);
     const existing = this.notesByIndex.get(note.index);
-    if (existing !== undefined && existing !== note) {
-      this.chartIdentityValid = false;
-      return;
-    }
     if (existing === undefined) this.notesByIndex.set(note.index, note);
+    else if (existing !== note) this.ambiguousNoteIndices.add(note.index);
+    this.registerJudgementKey(note.absolutePos, note.buttonTypesArray, note);
+    if (Number.isSafeInteger(note.afterNoteAbsolutePos) && note.afterNoteAbsolutePos >= 0) {
+      this.registerJudgementKey(note.afterNoteAbsolutePos, note.buttonTypesArray, note);
+    }
     const ownedSlideRoot = note.fireNoteType === FrontNoteType.SlideA ||
       note.fireNoteType === FrontNoteType.SlideB
       ? note
       : slideRoot;
-    if (ownedSlideRoot !== null) this.slideRootByNodeIndex.set(note.index, ownedSlideRoot);
+    if (ownedSlideRoot !== null) this.slideRootByNode.set(note, ownedSlideRoot);
     for (const child of note.slideNoteList) this.registerNote(child, ownedSlideRoot);
+  }
+
+  private registerJudgementKey(
+    absolutePosition: number,
+    buttonTypes: readonly number[],
+    note: NoteInformation,
+  ): void {
+    const key = judgementKey(absolutePosition, buttonTypes);
+    const candidates = this.notesByJudgementKey.get(key) ?? [];
+    if (!candidates.includes(note)) candidates.push(note);
+    this.notesByJudgementKey.set(key, candidates);
   }
 }
 
 function playSlideTapKeep(
-  noteIndex: number,
+  identity: SlideSemanticIdentity,
   buttonType: number,
   rangeLength: number,
   state: MutableParticleOwnerState,
   commands: ParticleCommand[],
 ): void {
-  const ownerKey = slideTapKeepOwnerKey(noteIndex, buttonType, rangeLength);
-  const instance = slideInstance(noteIndex, buttonType, rangeLength);
-  const before = state.slideTapKeep.get(noteIndex);
+  const semanticKey = slideSemanticKey(identity);
+  const ownerKey = slideTapKeepOwnerKey(identity, buttonType, rangeLength);
+  const instance = slideInstance(identity, buttonType, rangeLength);
+  const before = state.slideTapKeep.get(semanticKey);
   if (before !== undefined && before.ownerKey !== ownerKey) {
     commands.push(stopRoot(before.ownerKey, before.instance, "ordinary:effect_TapKeep"));
   }
   commands.push(playRoot(ownerKey, instance, "ordinary:effect_TapKeep"));
-  state.slideTapKeep.set(noteIndex, Object.freeze({ ownerKey, instance, rangeLength }));
+  state.slideTapKeep.set(semanticKey, Object.freeze({ ownerKey, instance, rangeLength }));
 }
 
 function stopSlideTapKeep(
-  noteIndex: number,
+  identity: SlideSemanticIdentity,
   state: MutableParticleOwnerState,
   commands: ParticleCommand[],
 ): void {
-  const active = state.slideTapKeep.get(noteIndex);
+  const semanticKey = slideSemanticKey(identity);
+  const active = state.slideTapKeep.get(semanticKey);
   if (active === undefined) return;
-  state.slideTapKeep.delete(noteIndex);
+  state.slideTapKeep.delete(semanticKey);
   commands.push(stopRoot(active.ownerKey, active.instance, "ordinary:effect_TapKeep"));
 }
 
@@ -538,11 +610,17 @@ function buttonInstance(
 }
 
 function slideInstance(
-  noteIndex: number,
+  identity: SlideSemanticIdentity,
   buttonType: number,
   rangeLength: number,
 ): ParticleInstanceIdentity {
-  return Object.freeze({ kind: "note-slide", noteIndex, buttonType, rangeLength });
+  return Object.freeze({
+    kind: "note-slide",
+    noteIndex: identity.noteIndex,
+    absolutePosition: identity.absolutePosition,
+    buttonType,
+    rangeLength,
+  });
 }
 
 function buttonParticleOwnerKey(
@@ -559,8 +637,20 @@ function buttonTapKeepOwnerKey(buttonType: number, rangeLength: number): string 
   return buttonParticleOwnerKey(buttonType, "ordinary:effect_TapKeep", rangeLength);
 }
 
-function slideTapKeepOwnerKey(noteIndex: number, buttonType: number, rangeLength: number): string {
-  return `note-slide:${noteIndex}/button:${buttonType}/particle:ordinary:effect_TapKeep/range:${rangeLength}`;
+function slideTapKeepOwnerKey(
+  identity: SlideSemanticIdentity,
+  buttonType: number,
+  rangeLength: number,
+): string {
+  return `note-slide:${identity.noteIndex}@${identity.absolutePosition}/button:${buttonType}/particle:ordinary:effect_TapKeep/range:${rangeLength}`;
+}
+
+function slideSemanticKey(identity: SlideSemanticIdentity): string {
+  return `${identity.noteIndex}@${identity.absolutePosition}`;
+}
+
+function slideIdentity(note: NoteInformation): SlideSemanticIdentity {
+  return Object.freeze({ noteIndex: note.index, absolutePosition: note.absolutePos });
 }
 
 function targetCenterButtonType(note: NoteInformation): number | null {
@@ -606,6 +696,30 @@ function isSkillEntry(note: NoteInformation, entry: OneFrameJudgementEntry): boo
     : note.gameNoteAdditionalType === GameNoteAdditionalType.Skill;
 }
 
+function judgementKey(
+  absolutePosition: number,
+  buttonTypes: readonly number[],
+): string {
+  return `${absolutePosition}|${buttonTypes.join(",")}`;
+}
+
+function particleEquivalentNote(
+  left: NoteInformation,
+  right: NoteInformation,
+): boolean {
+  return left.index === right.index &&
+    left.absolutePos === right.absolutePos &&
+    left.fireNoteType === right.fireNoteType &&
+    left.afterNoteType === right.afterNoteType &&
+    left.gameNoteType === right.gameNoteType &&
+    left.gameNoteAdditionalType === right.gameNoteAdditionalType &&
+    left.gameNoteAdditionalTypeLongNoteEnd === right.gameNoteAdditionalTypeLongNoteEnd &&
+    left.buttonType === right.buttonType &&
+    left.halfButtonIndex === right.halfButtonIndex &&
+    left.buttonTypesArray.length === right.buttonTypesArray.length &&
+    left.buttonTypesArray.every((button, index) => button === right.buttonTypesArray[index]);
+}
+
 function isButtonType(value: number): boolean {
   return Number.isInteger(value) &&
     value >= ButtonType.Button_00_BMS_1P_SC && value <= ButtonType.Button_15_BMS_2P_SC;
@@ -624,6 +738,8 @@ function isJudgementBatchShape(batch: OneFrameJudgementBatch): boolean {
       Number.isSafeInteger(entry.noteIndex) && entry.noteIndex >= 0 &&
       Number.isInteger(entry.noteType) && entry.noteType >= 0 && entry.noteType <= 10 &&
       Number.isInteger(entry.adjustedResult) && entry.adjustedResult >= 0 && entry.adjustedResult <= 4 &&
+      Number.isSafeInteger(entry.absolutePosition) && entry.absolutePosition >= 0 &&
+      (entry.phase === "head" || entry.phase === "intermediate" || entry.phase === "tail") &&
       Array.isArray(entry.buttonTypes) && entry.buttonTypes.every(isButtonType) &&
       Number.isSafeInteger(entry.multipleDirectionalFlickNoteCount) &&
       entry.multipleDirectionalFlickNoteCount >= 0);

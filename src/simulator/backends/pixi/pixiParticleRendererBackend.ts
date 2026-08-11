@@ -572,6 +572,7 @@ function isInstance(value: ParticleInstanceIdentity): boolean {
   }
   const rangeLength = value.rangeLength;
   return value.kind === "note-slide" && Number.isSafeInteger(value.noteIndex) && value.noteIndex >= 0 &&
+    Number.isSafeInteger(value.absolutePosition) && value.absolutePosition >= 0 &&
     typeof rangeLength === "number" && Number.isInteger(rangeLength) && rangeLength >= 1 && rangeLength <= 7;
 }
 

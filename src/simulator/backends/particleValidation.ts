@@ -380,8 +380,9 @@ function isParticleInstanceIdentity(value: unknown): boolean {
         (Number.isInteger(value.rangeLength) && value.rangeLength >= 1 && value.rangeLength <= 7));
   }
   return value.kind === "note-slide" &&
-    hasExactKeys(value, ["kind", "noteIndex", "buttonType", "rangeLength"]) &&
+    hasExactKeys(value, ["kind", "noteIndex", "absolutePosition", "buttonType", "rangeLength"]) &&
     Number.isSafeInteger(value.noteIndex) && value.noteIndex >= 0 &&
+    Number.isSafeInteger(value.absolutePosition) && value.absolutePosition >= 0 &&
     Number.isInteger(value.buttonType) && value.buttonType >= 0 && value.buttonType <= 15 &&
     Number.isInteger(value.rangeLength) && value.rangeLength >= 1 && value.rangeLength <= 7;
 }
