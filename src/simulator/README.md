@@ -49,6 +49,8 @@ HABAHIRO完整功能专项HR01–HR12已完成；证据/parity说明见`tmp/simu
 
 “音频”E00–E07、G00、I00–I05、T00、A00已完成提交后独立验收，任务书见`tmp/simulator-audio-task.md`，验收记录见`tmp/simulator-audio-acceptance.md`。Reverse `50798c00b009cba87a99229024d925b69e9cff98`关闭85行总门（80 closed、5 current-route excluded、0 blocking）；Production恢复typed immutable command、19资源严格prepare、BGM/判定/Hold/Skill/clear/GameOver路由、deterministic offline PCM、Recording和Web Audio backend、outer-frame原子提交、first fault及dispose。C39 ordinary/HABAHIRO为1,277/713 commands；C40为2,408帧、19,264 bytes、SHA-256 `3A5E38BF7DF5C02BF884D493D48732BC36B8EA811340BBDAF2E25D6AA37211E5`。Web Audio只作portable transport，不author engine clock；CRI/browser/OS/hardware波形与延迟等价不作声明，主程序用户手势与资源交付仍属块9。
 
+当前进入实施块8“实体设备闭环”，任务书见`tmp/simulator-device-closure-task.md`。固定设备不可更换后，Reverse `e71b6efd`已建立双门：原作物理/设备exact门保持`open-not-claimed-fixed-device-limit`，功能交付路线改为`current-static-portable-complete`；SC02/SC03、portable policy、command/random/sample/semantic-frame oracle和双门closure关闭前，G00、particle production及块9仍不授权。拒绝的设备run不重分类，portable policy必须在TypeScript前独立生成和校验。
+
 `src/simulator/engine` 不依赖 React、Pixi、Tauri、DOM、编辑器谱面类型或窗口协议。宿主 API 是 GarupaEditor 的可移植边界，不宣称属于原作接口。
 
 在达到需要整体联调的重构节点前，不要求中间提交能够构建、启动或保持既有模拟器行为；外部编辑器入口与接入点仍可能引用尚未重建的模块。
