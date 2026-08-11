@@ -39,8 +39,9 @@ for (const required of [
   if (!selector.includes(required)) throw new Error(`static selector missing fixed owner: ${required}`);
 }
 
-const productionRoots = ["public", "runtime", "assembly", "resources"].map((name) =>
+const productionRoots = ["public", "runtime", "assembly", "resources", "scene"].map((name) =>
   join(simulatorRoot, name));
+const platformRoot = join(simulatorRoot, "platform");
 const forbiddenProduction = [
   [/src[\\/]app|\.\.[\\/]\.\.[\\/]app|chartCore/, "main/editor dependency"],
   [/testing[\\/]fixtures|reverse-snapshots/, "testing fixture dependency"],
@@ -57,6 +58,12 @@ for (const root of productionRoots) {
     for (const [pattern, label] of forbiddenProduction) {
       if (pattern.test(source)) throw new Error(`${label}: ${path}`);
     }
+  }
+}
+for (const path of listTypeScript(platformRoot)) {
+  const source = readFileSync(path, "utf8");
+  for (const [pattern, label] of forbiddenProduction.slice(0, -1)) {
+    if (pattern.test(source)) throw new Error(`${label}: ${path}`);
   }
 }
 console.log("autonomous simulator static boundary verified: single launch, closed-only receipt, internal resources/runtime/replay, no legacy barrel");

@@ -28,6 +28,7 @@ import {
 } from "../assembly/sessionRecipe";
 import { ok } from "../engine/evidence";
 import { prepareSharedOrdinaryRenderResources } from "../resources/sharedResourceAdapters";
+import { createProductionAutonomousSimulatorModule } from "../platform/platformComposition";
 import type {
   SimulatorModuleCloseReport,
   SimulatorModuleLaunchRequest,
@@ -46,6 +47,7 @@ async function main(): Promise<void> {
   await testOrdinaryPack();
   testRecipeOwnership();
   await testRecipeNaturalCompletion();
+  await testProductionCompositionFailureBoundary();
   await testAutonomousLaunchAndClose();
   await testInvalidTickCloses();
   console.log("autonomous simulator module tests passed: public/store/selector/recipe/runtime/self-close");
@@ -192,7 +194,7 @@ async function testRecipeNaturalCompletion(): Promise<void> {
     backends: {} as any,
   };
   const factory = new RecipeOwnedSessionFactory({
-    createFreshEngine: async () => ok(engine as any),
+    createFreshEngine: async () => accepted(engine as any),
   });
   const session = requireAccepted(await factory.create(request()));
   const stepped = session.step(1 / 60, null);
@@ -202,6 +204,55 @@ async function testRecipeNaturalCompletion(): Promise<void> {
   assert.equal(stepped.report.result?.clearStatus, 2);
   assert.equal(stepped.report.result?.score, 123);
   assert.equal(disposals, 1);
+}
+
+async function testProductionCompositionFailureBoundary(): Promise<void> {
+  assert.equal(createProductionAutonomousSimulatorModule({} as any).status, "rejected");
+  let resourceReads = 0;
+  let mounts = 0;
+  const scheduler = new ControlledScheduler();
+  const input = new ControlledInput();
+  const module = requireAccepted(createProductionAutonomousSimulatorModule({
+    staticResources: {
+      read: async () => {
+        resourceReads += 1;
+        return {
+          status: "rejected" as const,
+          failure: {
+            code: "resource-unavailable" as const,
+            capability: "test.missing",
+            boundary: "missing",
+          },
+        };
+      },
+    },
+    audioContext: {} as AudioContext,
+    graphics: {
+      viewportWidth: 1600,
+      viewportHeight: 720,
+      inputOrigin: "bottom-left" as const,
+      mount: () => {
+        mounts += 1;
+        return accepted({ dispose: () => {} });
+      },
+    },
+    scheduler,
+    input,
+    requestTargetFrameRate: () => {},
+    publishLifecycleState: () => {},
+  }));
+  const seekRequest: any = request();
+  seekRequest.config.practice.enabled = true;
+  seekRequest.config.practice.startMilliseconds = 1;
+  seekRequest.config.playMode = "manual";
+  seekRequest.chartData.sessionBusinessData.mode = { kind: "practice" };
+  const launched = await module.launch(seekRequest);
+  assert.equal(launched.status, "rejected");
+  if (launched.status === "rejected") {
+    assert.equal(launched.failure.capability, "simulator.composition.nonzero-initial-practice-seek");
+  }
+  assert.equal(resourceReads, 0);
+  assert.equal(mounts, 0);
 }
 
 async function testAutonomousLaunchAndClose(): Promise<void> {
@@ -328,12 +379,33 @@ function request(): SimulatorModuleLaunchRequest {
         durationSeconds: 1,
         currentSampleFrames: 44100,
       },
+      sessionBusinessData: {
+        scoreLevel: 1,
+        deckTotalParameter: 100000,
+        freeLiveEventBonusDeckTotalParameter: 0,
+        life: {
+          initialLife: 1000,
+          playerMaxLife: 1000,
+          lifeUpperLimit: 2000,
+          missDamage: 100,
+          badDamage: 50,
+        },
+        mode: { kind: "auto-live", comboCoefficient: Math.fround(1) },
+        skills: [],
+        fever: { difficulty: "expert", ownTeamMemberCount: 5 },
+      },
     },
     config: {
       playMode: "auto-live",
       highFrequencyMode: false,
       judgeOffsetFrames: 0,
       practice: { enabled: false, startMilliseconds: 0 },
+      visual: {
+        specificSpeed: Math.fround(11),
+        noteSize: Math.fround(100),
+        highAspectRatio: 1,
+        habahiroMeshWidthSetting: Math.fround(1),
+      },
       audio: { masterGain: 1, bgmGain: 1, seGain: 1, voiceGain: 1 },
     },
   };
