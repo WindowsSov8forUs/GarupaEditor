@@ -2,7 +2,9 @@ import { evidenceRequired, type SimulatorResult } from "../engine/evidence";
 import type { ButtonTypeValue } from "../engine/chart/types";
 import type { ManualInputPosition } from "../engine/data/manualInput";
 import type { SimulatorRendererBackend } from "./renderingContracts";
+import type { SimulatorParticleBackend } from "./particleContracts";
 import { RecordingSimulatorAudioBackend } from "./recordingAudioBackend";
+import { RecordingSimulatorParticleBackend } from "./recordingParticleBackend";
 import type {
   ManualInputWorldPosition,
   SimulatorBackendPort,
@@ -109,13 +111,19 @@ export class RecordingSimulatorBackends implements SimulatorBackends {
 
   readonly renderer = new RecordingPort("renderer", this.append.bind(this));
   readonly audio = new RecordingSimulatorAudioBackend();
+  readonly particles: SimulatorParticleBackend;
   readonly input = new RecordingPort("input", this.append.bind(this));
   readonly resources = new RecordingPort("resources", this.append.bind(this));
   readonly lifecycle = new RecordingLifecyclePort(this.append.bind(this));
   readonly frameRate = new RecordingFrameRatePort(this.append.bind(this));
   readonly manualInputGeometry = new UnavailableManualInputGeometryPort();
 
-  constructor(readonly rendering?: SimulatorRendererBackend) {}
+  constructor(
+    readonly rendering?: SimulatorRendererBackend,
+    particles: SimulatorParticleBackend = new RecordingSimulatorParticleBackend(),
+  ) {
+    this.particles = particles;
+  }
 
   snapshot(): readonly SimulatorBackendTraceEvent[] {
     return this.events.map((event) => ({ ...event }));
@@ -136,6 +144,7 @@ export class RecordingSimulatorBackends implements SimulatorBackends {
 
 export function createRecordingSimulatorBackends(
   rendering?: SimulatorRendererBackend,
+  particles?: SimulatorParticleBackend,
 ): RecordingSimulatorBackends {
-  return new RecordingSimulatorBackends(rendering);
+  return new RecordingSimulatorBackends(rendering, particles);
 }

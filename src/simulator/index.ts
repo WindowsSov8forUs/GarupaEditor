@@ -14,6 +14,59 @@ export {
   RecordingSimulatorBackends,
 } from "./backends/recordingBackend";
 export { RecordingSimulatorAudioBackend } from "./backends/recordingAudioBackend";
+export { RecordingSimulatorParticleBackend } from "./backends/recordingParticleBackend";
+export type {
+  ParticleBackendFault,
+  ParticleBackendSnapshot,
+  ParticleBackendState,
+  ParticleBundleProfile,
+  ParticleCommand,
+  ParticleCurrentResourceManifest,
+  ParticleDecodedResourceMetadata,
+  ParticleFailure,
+  ParticleFailureCode,
+  ParticleFrameBatch,
+  ParticleFrameRequest,
+  ParticleFrameSnapshot,
+  ParticleModuleProfileMap,
+  ParticleModuleType,
+  ParticleOperationResult,
+  ParticleOwnerSnapshot,
+  ParticlePortableProfile,
+  ParticlePreparedResourcePack,
+  ParticleProfileDefinition,
+  ParticleRenderSample,
+  ParticleRendererProfile,
+  ParticleResourceAllowlistEntry,
+  ParticleResourcePreflightAdapter,
+  ParticleResourceProvider,
+  ParticleRootId,
+  ParticleSampleIdentity,
+  ParticleSystemDefinition,
+  ParticleTextureManifest,
+  ParticleTextureManifestEntry,
+  ParticleTextureProfile,
+  SimulatorParticleBackend,
+} from "./backends/particleContracts";
+export {
+  CURRENT_PARTICLE_ROOTS,
+  freezeParticleCommand,
+  parseAndFreezeParticleProfile,
+  parseAndFreezeParticleTextureManifest,
+  particleAccepted,
+  particleFloat32FromBits,
+  particleFloat32ToBits,
+  particleRejected,
+  validateParticleCommandShape,
+  validateParticleFrameRequest,
+  validateParticleProfileTextureRelations,
+} from "./backends/particleValidation";
+export { CURRENT_PARTICLE_RESOURCE_MANIFEST } from "./backends/resources/currentParticleResourceManifest";
+export {
+  ImmutableLocalParticleResourceProvider,
+  PortableParticleResourcePreflightAdapter,
+} from "./backends/resources/localParticleResourceProvider";
+export type { LocalParticleResource } from "./backends/resources/localParticleResourceProvider";
 export type {
   AudioBackendFault,
   AudioBackendSnapshot,

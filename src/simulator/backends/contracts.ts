@@ -3,6 +3,7 @@ import type { ManualInputPosition } from "../engine/data/manualInput";
 import type { SimulatorResult } from "../engine/evidence";
 import type { SimulatorRendererBackend } from "./renderingContracts";
 import type { SimulatorAudioBackend } from "./audioContracts";
+import type { SimulatorParticleBackend } from "./particleContracts";
 
 export interface SimulatorBackendPort {
   readonly id: string;
@@ -75,6 +76,7 @@ export interface SimulatorBackends {
   readonly renderer: SimulatorBackendPort;
   readonly rendering?: SimulatorRendererBackend;
   readonly audio: SimulatorAudioBackend;
+  readonly particles?: SimulatorParticleBackend;
   readonly input: SimulatorBackendPort;
   readonly resources: SimulatorBackendPort;
   readonly lifecycle: SimulatorLifecycleBackend;
