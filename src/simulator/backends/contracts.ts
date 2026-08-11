@@ -59,16 +59,16 @@ export interface SimulatorManualInputGeometryBackend {
   projectScreenToGameplayLocalX?(
     position: ManualInputPosition,
   ): SimulatorResult<number>;
-  getGameplayButtonLocalX?(
+  getGameplayButtonLocalY?(
     buttonType: ButtonTypeValue,
   ): SimulatorResult<number>;
-  getSlideCurrentLocalX?(
+  getSlideCurrentLocalY?(
     source: import("../engine/chart/types").NoteInformation,
     adjustedMusicPosition: number,
   ): SimulatorResult<number>;
+  setHabahiroLaneChanged?(): void;
   getSlideJudgeGeometry?(
-    buttonTypes: readonly ButtonTypeValue[],
-    targetButtonType: ButtonTypeValue,
+    source: import("../engine/chart/types").NoteInformation,
   ): SimulatorResult<{
     readonly positions: readonly number[];
     readonly virtualPerfectLine: number;

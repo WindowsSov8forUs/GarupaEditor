@@ -31,8 +31,8 @@ export class SlideNoteManager {
     const geometry = this.geometry;
     if (
       !this.initialized ||
-      geometry?.getGameplayButtonLocalX === undefined ||
-      geometry.getSlideCurrentLocalX === undefined
+      geometry?.getGameplayButtonLocalY === undefined ||
+      geometry.getSlideCurrentLocalY === undefined
     ) {
       return evidenceRequired(
         "manual.slide-near-line-geometry-unavailable",
@@ -40,15 +40,15 @@ export class SlideNoteManager {
         "Slide near-line arbitration requires host-owned gameplay button local positions.",
       );
     }
-    const center = geometry.getGameplayButtonLocalX(3);
+    const center = geometry.getGameplayButtonLocalY(3);
     if (center.status !== "ok") {
       return center;
     }
-    const first = geometry.getSlideCurrentLocalX(firstSource, adjustedMusicPosition);
+    const first = geometry.getSlideCurrentLocalY(firstSource, adjustedMusicPosition);
     if (first.status !== "ok") {
       return first;
     }
-    const second = geometry.getSlideCurrentLocalX(secondSource, adjustedMusicPosition);
+    const second = geometry.getSlideCurrentLocalY(secondSource, adjustedMusicPosition);
     if (second.status !== "ok") {
       return second;
     }
@@ -75,7 +75,7 @@ export class SlideNoteManager {
     const geometry = this.geometry;
     if (
       !this.initialized ||
-      geometry?.getSlideCurrentLocalX === undefined ||
+      geometry?.getSlideCurrentLocalY === undefined ||
       geometry.getSlideJudgeGeometry === undefined
     ) {
       return evidenceRequired(
@@ -84,14 +84,11 @@ export class SlideNoteManager {
         "Slide judgement requires the host-owned gameplay-local touch projection and frozen judge positions.",
       );
     }
-    const projected = geometry.getSlideCurrentLocalX(source, adjustedMusicPosition);
+    const projected = geometry.getSlideCurrentLocalY(source, adjustedMusicPosition);
     if (projected.status !== "ok") {
       return projected;
     }
-    const judgeGeometry = geometry.getSlideJudgeGeometry(
-      source.buttonTypesArray,
-      source.buttonType,
-    );
+    const judgeGeometry = geometry.getSlideJudgeGeometry(source);
     if (judgeGeometry.status !== "ok") {
       return judgeGeometry;
     }

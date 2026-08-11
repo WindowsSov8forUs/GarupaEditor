@@ -234,6 +234,7 @@ export class InGameManager {
           if (laneChange.status !== "ok") return this.latchFault(laneChange);
           const committed = laneChange.value.commit();
           if (committed.status !== "ok") return this.latchFault(committed);
+          this.noteManager.commitHabahiroLaneChangeGeometry();
           this.habahiroLanePhase = "complete";
           this.habahiroFlashElapsed = nextElapsed;
         } else {

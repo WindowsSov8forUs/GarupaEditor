@@ -342,7 +342,8 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
     for (const sample of samples) {
       if (sample === null || typeof sample !== "object" || typeof sample.particleId !== "string" ||
         sample.particleId.length === 0 || ids.has(sample.particleId) || typeof sample.ownerKey !== "string" ||
-        sample.ownerKey.length === 0 || !isInstance(sample.instance)) {
+        sample.ownerKey.length === 0 || !isInstance(sample.instance) ||
+        !this.scene?.buttonAnchors.some((anchor) => anchor.buttonType === sample.instance.buttonType)) {
         return this.reject("particle.pixi.invalid-sample-identity", "Every sample requires one unique stable particle and typed owner instance identity.");
       }
       ids.add(sample.particleId);
@@ -378,7 +379,12 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
       roundPixels: false,
     });
     sprite.anchor.set(0.5);
-    const anchor = this.scene!.buttonAnchors[sample.instance.buttonType]!;
+    const anchor = this.scene!.buttonAnchors.find(
+      (candidate) => candidate.buttonType === sample.instance.buttonType,
+    );
+    if (anchor === undefined) {
+      throw new Error("particle button has no evidence-authored scene anchor");
+    }
     const worldX = addBits(anchor.position.xBits, sample.position.xBits);
     const worldY = addBits(anchor.position.yBits, sample.position.yBits);
     const pixelsPerUnit = particleFloat32FromBits(this.scene!.pixelsPerWorldUnitBits)!;
@@ -543,15 +549,16 @@ function validateScene(scene: ParticlePixiSceneProfile): ParticleOperationResult
   if (scene === null || typeof scene !== "object" || scene.viewportWidth !== 1600 || scene.viewportHeight !== 720 ||
     scene.worldCenterXBits !== "0x00000000" || scene.worldCenterYBits !== "0x00000000" ||
     scene.pixelsPerWorldUnitBits !== "0x43B40000" || scene.roundPixels !== false ||
-    !Array.isArray(scene.buttonAnchors) || scene.buttonAnchors.length !== 16 ||
-    scene.buttonAnchors.some((anchor, index) => anchor.buttonType !== index ||
+    !Array.isArray(scene.buttonAnchors) || scene.buttonAnchors.length !== 15 ||
+    scene.buttonAnchors.some((anchor, index) =>
+      anchor.buttonType !== (index < 7 ? index : index + 1) ||
       particleFloat32FromBits(anchor.position.xBits) === null ||
       particleFloat32FromBits(anchor.position.yBits) === null ||
       particleFloat32FromBits(anchor.position.zBits) === null)) {
     return particleRejected(
       "evidence-required",
       "particle.pixi.invalid-scene-profile",
-      "Particle projection requires the fixed 1600x720/360 PPU scene and 16 ordered finite engine-authored button anchors.",
+      "Particle projection requires the fixed 1600x720/360 PPU scene and the 15 supported ordered engine-authored anchors; unsupported Button_07 fails closed.",
     );
   }
   return particleAccepted(Object.freeze({

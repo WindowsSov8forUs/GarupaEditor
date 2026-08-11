@@ -273,6 +273,10 @@ export class NoteManager {
     return ok(undefined);
   }
 
+  commitHabahiroLaneChangeGeometry(): void {
+    this.manualInputGeometry.setHabahiroLaneChanged?.();
+  }
+
   execAwakeEnd(): SimulatorResult<void> {
     const setupValidation = this.validateSetup();
     if (setupValidation.status !== "ok") {
