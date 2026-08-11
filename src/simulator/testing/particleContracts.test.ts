@@ -658,14 +658,16 @@ function particleScene(): ParticlePixiSceneProfile {
     worldCenterYBits: "0x00000000",
     pixelsPerWorldUnitBits: "0x43B40000",
     roundPixels: false,
-    buttonAnchors: Object.freeze(Array.from({ length: 16 }, (_, buttonType) => Object.freeze({
-      buttonType,
-      position: Object.freeze({
-        xBits: particleFloat32ToBits(Math.fround((buttonType - 7.5) * 0.1))!,
-        yBits: particleFloat32ToBits(Math.fround(-3.45))!,
-        zBits: particleFloat32ToBits(Math.fround(-13.5))!,
-      }),
-    }))),
+    buttonAnchors: Object.freeze(Array.from({ length: 16 }, (_, buttonType) => buttonType)
+      .filter((buttonType) => buttonType !== 7)
+      .map((buttonType) => Object.freeze({
+        buttonType,
+        position: Object.freeze({
+          xBits: particleFloat32ToBits(Math.fround((buttonType - 7.5) * 0.1))!,
+          yBits: particleFloat32ToBits(Math.fround(-3.45))!,
+          zBits: particleFloat32ToBits(Math.fround(-13.5))!,
+        }),
+      }))),
   });
 }
 

@@ -42,8 +42,8 @@ class Geometry implements SimulatorManualInputGeometryBackend {
     return ok(Object.freeze({ cameraScale: Math.fround(1), gameplayScale: Math.fround(1) }));
   }
   isInsideTargetButtons() { return ok(true) }
-  getGameplayButtonLocalX(buttonType: number) { return ok(Math.fround(buttonType)) }
-  getSlideCurrentLocalX() { return ok(Math.fround(0)) }
+  getGameplayButtonLocalY(buttonType: number) { return ok(Math.fround(buttonType)) }
+  getSlideCurrentLocalY() { return ok(Math.fround(0)) }
   getSlideJudgeGeometry() {
     return ok(Object.freeze({
       positions: Object.freeze(Array.from({ length: 17 }, (_, index) => Math.fround(index - 8))),

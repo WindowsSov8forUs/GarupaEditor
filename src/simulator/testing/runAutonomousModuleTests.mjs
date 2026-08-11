@@ -22,6 +22,9 @@ try {
   run(process.execPath, [
     join(outputRoot, "src", "simulator", "testing", "autonomousModule.test.js"),
   ]);
+  run(process.execPath, [
+    join(outputRoot, "src", "simulator", "testing", "sceneLayout.test.js"),
+  ]);
   run(process.execPath, [join(testingRoot, "verifyAutonomousModuleStatic.mjs")]);
   run(process.execPath, [join(testingRoot, "verifyDependencies.mjs")]);
 } finally {
