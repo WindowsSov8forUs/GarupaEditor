@@ -1,0 +1,4684 @@
+{
+  "schemaVersion": 1,
+  "generatedBeforeTypescript": true,
+  "numericPolicy": "Float32-every-named-operation",
+  "caseCount": 5,
+  "cases": [
+    {
+      "case": "ordinary-good-60",
+      "root": "ordinary:effect_tap_good",
+      "frames": [
+        {
+          "frame": 1,
+          "deltaBits": "0x3C888889",
+          "paused": false,
+          "sampleCount": 9,
+          "sampleSha256": "6F3AABE3F7A783631227DEB177D836ECB86B5DF38DBDF5C0F717217E41E2F793"
+        },
+        {
+          "frame": 2,
+          "deltaBits": "0x3C888889",
+          "paused": false,
+          "sampleCount": 9,
+          "sampleSha256": "B8159EAF9CD6D8F1D6EFBE685FFF31D8493EE5D12F9BD00688C8C08DFE8B9600"
+        },
+        {
+          "frame": 3,
+          "deltaBits": "0x3C888889",
+          "paused": false,
+          "sampleCount": 9,
+          "sampleSha256": "C142D879800578EE7AD59887C34686298686353BCB47EE904A9EE690AD16241F"
+        },
+        {
+          "frame": 4,
+          "deltaBits": "0x3C888889",
+          "paused": false,
+          "sampleCount": 9,
+          "sampleSha256": "87B99E0368C2AF549E50B924BE5A3EEC2C5ADAAD03722425B903053F3556D096"
+        },
+        {
+          "frame": 5,
+          "deltaBits": "0x3C888889",
+          "paused": false,
+          "sampleCount": 9,
+          "sampleSha256": "130CC6AE1D02B54A599ABF7620A2832BD14D3AEE5B605C5B27E916CBDBF91194"
+        },
+        {
+          "frame": 6,
+          "deltaBits": "0x3C888889",
+          "paused": false,
+          "sampleCount": 9,
+          "sampleSha256": "89081312053657203DFD7E2428ED238E90E659383634C2812863A6B5D305CCF4"
+        }
+      ],
+      "finalSampleCount": 9,
+      "finalSamples": [
+        {
+          "particleId": "ordinary:effect_tap_good/Sring_1#1",
+          "systemId": "ordinary:effect_tap_good/Sring_1",
+          "sequence": 2,
+          "positionBits": [
+            "0x00000000",
+            "0xBE6147AE",
+            "0x3A83126F"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0xB0800000",
+            "0x3C23D70A"
+          ],
+          "sizeBits": [
+            "0x402AE148",
+            "0x402AE148",
+            "0x402AE148"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x00000000"
+          ],
+          "colorBits": [
+            "0x3F078788",
+            "0x3F5CDCDD",
+            "0x3F800000",
+            "0x3F34B4B5"
+          ],
+          "ageBits": "0x3DCCCCCD",
+          "lifeBits": "0x3F19999A",
+          "uvFrame": 0,
+          "sortingOrder": 5,
+          "renderMode": 1,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_2"
+        },
+        {
+          "particleId": "ordinary:effect_tap_good/kira#1",
+          "systemId": "ordinary:effect_tap_good/kira",
+          "sequence": 3,
+          "positionBits": [
+            "0xBE116037",
+            "0x3E3ADCF5",
+            "0xBF18F67B"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0xB4A83598",
+            "0xC069AF3B"
+          ],
+          "sizeBits": [
+            "0x3F1A97D8",
+            "0x3F1A97D8",
+            "0x3F1A97D8"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x00000000"
+          ],
+          "colorBits": [
+            "0x3F13D4AE",
+            "0x3F53813E",
+            "0x3F800000",
+            "0x3F800000"
+          ],
+          "ageBits": "0x3DCCCCCD",
+          "lifeBits": "0x3EC82F70",
+          "uvFrame": 14,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_1"
+        },
+        {
+          "particleId": "ordinary:effect_tap_good/kira#2",
+          "systemId": "ordinary:effect_tap_good/kira",
+          "sequence": 4,
+          "positionBits": [
+            "0x3F1ED365",
+            "0x3E8C1662",
+            "0xBF1CDF5D"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0xB527491B",
+            "0xC06EE4B2"
+          ],
+          "sizeBits": [
+            "0x3F131E46",
+            "0x3F131E46",
+            "0x3F131E46"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x00000000"
+          ],
+          "colorBits": [
+            "0x3F757E98",
+            "0x3F7BADB8",
+            "0x3F800000",
+            "0x3F800000"
+          ],
+          "ageBits": "0x3DCCCCCD",
+          "lifeBits": "0x3F12F244",
+          "uvFrame": 14,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_1"
+        },
+        {
+          "particleId": "ordinary:effect_tap_good/kira#3",
+          "systemId": "ordinary:effect_tap_good/kira",
+          "sequence": 5,
+          "positionBits": [
+            "0x3F68A0EC",
+            "0x3E8081B5",
+            "0xBEDA088E"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0xB509D380",
+            "0xC02F22AB"
+          ],
+          "sizeBits": [
+            "0x3F057357",
+            "0x3F057357",
+            "0x3F057357"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x00000000"
+          ],
+          "colorBits": [
+            "0x3F08B4B8",
+            "0x3F4EEDBE",
+            "0x3F800000",
+            "0x3F800000"
+          ],
+          "ageBits": "0x3DCCCCCD",
+          "lifeBits": "0x3E9B0A82",
+          "uvFrame": 14,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_1"
+        },
+        {
+          "particleId": "ordinary:effect_tap_good/kira#4",
+          "systemId": "ordinary:effect_tap_good/kira",
+          "sequence": 6,
+          "positionBits": [
+            "0x3F2401E4",
+            "0x3D9A6E42",
+            "0xBEAC043C"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0xB4C762B3",
+            "0xC0107B42"
+          ],
+          "sizeBits": [
+            "0x3ED0CDD1",
+            "0x3ED0CDD1",
+            "0x3ED0CDD1"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x00000000"
+          ],
+          "colorBits": [
+            "0x3F046C6F",
+            "0x3F4D2ACA",
+            "0x3F800000",
+            "0x3F800000"
+          ],
+          "ageBits": "0x3DCCCCCD",
+          "lifeBits": "0x3EFDF378",
+          "uvFrame": 14,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_1"
+        },
+        {
+          "particleId": "ordinary:effect_tap_good/kira#5",
+          "systemId": "ordinary:effect_tap_good/kira",
+          "sequence": 7,
+          "positionBits": [
+            "0xBF1FAE1E",
+            "0xBDC127CB",
+            "0xBF098DB3"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0xB4AC6A38",
+            "0xC05527A2"
+          ],
+          "sizeBits": [
+            "0x3EC13DF9",
+            "0x3EC13DF9",
+            "0x3EC13DF9"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x00000000"
+          ],
+          "colorBits": [
+            "0x3F37A76C",
+            "0x3F623D9B",
+            "0x3F800000",
+            "0x3F800000"
+          ],
+          "ageBits": "0x3DCCCCCD",
+          "lifeBits": "0x3EDC1915",
+          "uvFrame": 14,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_1"
+        },
+        {
+          "particleId": "ordinary:effect_tap_good/kira#6",
+          "systemId": "ordinary:effect_tap_good/kira",
+          "sequence": 8,
+          "positionBits": [
+            "0xBF355170",
+            "0x3DD79D24",
+            "0xBEC0DCB4"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0xB4BF3E5D",
+            "0xC01E5E20"
+          ],
+          "sizeBits": [
+            "0x3EFD6FC9",
+            "0x3EFD6FC9",
+            "0x3EFD6FC9"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x00000000"
+          ],
+          "colorBits": [
+            "0x3F3EBE72",
+            "0x3F652836",
+            "0x3F800000",
+            "0x3F800000"
+          ],
+          "ageBits": "0x3DCCCCCD",
+          "lifeBits": "0x3EB73D41",
+          "uvFrame": 14,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_1"
+        },
+        {
+          "particleId": "ordinary:effect_tap_good/kira#7",
+          "systemId": "ordinary:effect_tap_good/kira",
+          "sequence": 9,
+          "positionBits": [
+            "0x3E5ED8A8",
+            "0xBE2355B5",
+            "0xBF1844AD"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0xB4A860FC",
+            "0xC068C25A"
+          ],
+          "sizeBits": [
+            "0x3E808028",
+            "0x3E808028",
+            "0x3E808028"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x00000000"
+          ],
+          "colorBits": [
+            "0x3F0F3D7A",
+            "0x3F519DD4",
+            "0x3F800000",
+            "0x3F800000"
+          ],
+          "ageBits": "0x3DCCCCCD",
+          "lifeBits": "0x3F0A22C2",
+          "uvFrame": 14,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_1"
+        },
+        {
+          "particleId": "ordinary:effect_tap_good/star#1",
+          "systemId": "ordinary:effect_tap_good/star",
+          "sequence": 10,
+          "positionBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x00000000"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x00000000"
+          ],
+          "sizeBits": [
+            "0x403AE148",
+            "0x403AE148",
+            "0x403AE148"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x00000000"
+          ],
+          "colorBits": [
+            "0x3F2DADAE",
+            "0x3F5FDFE0",
+            "0x3F7DFDFE",
+            "0x3F4CCCCD"
+          ],
+          "ageBits": "0x3DCCCCCD",
+          "lifeBits": "0x3F000000",
+          "uvFrame": 1,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_2"
+        }
+      ],
+      "finalSampleSha256": "89081312053657203DFD7E2428ED238E90E659383634C2812863A6B5D305CCF4",
+      "randomState": [
+        {
+          "systemId": "ordinary:effect_tap_good",
+          "stateU32": [
+            2968859945,
+            233819868,
+            3803046940,
+            2021141668
+          ]
+        },
+        {
+          "systemId": "ordinary:effect_tap_good/Sring_1",
+          "stateU32": [
+            2056706880,
+            2394258477,
+            2272131004,
+            1296724204
+          ]
+        },
+        {
+          "systemId": "ordinary:effect_tap_good/kira",
+          "stateU32": [
+            3067592864,
+            3140570144,
+            2474549608,
+            1922248439
+          ]
+        },
+        {
+          "systemId": "ordinary:effect_tap_good/star",
+          "stateU32": [
+            2892061707,
+            2588200103,
+            2569264086,
+            1480809519
+          ]
+        }
+      ],
+      "projectionSha256": "2FD8E75B8B4F36987573680461FB1768CF266B0322FFD07D05262F09F9E57491"
+    },
+    {
+      "case": "directional-left3-120",
+      "root": "directional:effect_tap_directional_flick_l_3",
+      "frames": [
+        {
+          "frame": 1,
+          "deltaBits": "0x3C088889",
+          "paused": false,
+          "sampleCount": 60,
+          "sampleSha256": "3B09FAD73ADB44C9D283AC4971DAAFC46487FDD18A460A71A68EF94FC865BA65"
+        },
+        {
+          "frame": 2,
+          "deltaBits": "0x3C088889",
+          "paused": false,
+          "sampleCount": 60,
+          "sampleSha256": "2BFAA886C1CD70CF0121B2D36415111865B3D026A03CC8ACB60FC5859F1AC43E"
+        },
+        {
+          "frame": 3,
+          "deltaBits": "0x3C088889",
+          "paused": false,
+          "sampleCount": 60,
+          "sampleSha256": "4F42B2C43D1B9BC0FC8897E40F32B7D00506B9C9A504C67414E672953B83D23D"
+        },
+        {
+          "frame": 4,
+          "deltaBits": "0x3C088889",
+          "paused": false,
+          "sampleCount": 60,
+          "sampleSha256": "3FDA7E1E577A3E6F95905F47D8A64A6D8343378B107AEF098C64F02C3CBC8007"
+        },
+        {
+          "frame": 5,
+          "deltaBits": "0x3C088889",
+          "paused": false,
+          "sampleCount": 60,
+          "sampleSha256": "90E1F6D22A2C9A7E877771EDCD2BD156D804C2033ED3528435B54C2634BFF8B9"
+        },
+        {
+          "frame": 6,
+          "deltaBits": "0x3C088889",
+          "paused": false,
+          "sampleCount": 60,
+          "sampleSha256": "5186D63C32BA0B29FE1DB515226614A89017AC378F511D377C894F4533CA1CEC"
+        },
+        {
+          "frame": 7,
+          "deltaBits": "0x3C088889",
+          "paused": false,
+          "sampleCount": 60,
+          "sampleSha256": "A071549D2284716BA25717D3482F7EFB9ABB2915E4D8C3E165CFA782A1ABEB2D"
+        },
+        {
+          "frame": 8,
+          "deltaBits": "0x3C088889",
+          "paused": false,
+          "sampleCount": 60,
+          "sampleSha256": "D75CFFC74026DAFF66EB8DB06075F0CBEA8846F9D419EB8714B82AB0E45D2B1D"
+        },
+        {
+          "frame": 9,
+          "deltaBits": "0x3C088889",
+          "paused": false,
+          "sampleCount": 60,
+          "sampleSha256": "6C2BBBAA606B0532059B7AA132C8F849A24F40CD683FD87303726D5FD7A0B6FC"
+        },
+        {
+          "frame": 10,
+          "deltaBits": "0x3C088889",
+          "paused": false,
+          "sampleCount": 75,
+          "sampleSha256": "CBD5C6077248D7D06BFA1DABCD050011EB655C869F94B6C3CEFAA02AF358835D"
+        },
+        {
+          "frame": 11,
+          "deltaBits": "0x3C088889",
+          "paused": false,
+          "sampleCount": 75,
+          "sampleSha256": "F8BB677C753B81BB397963709A2BEBB4D0CC3C4B24D98D88EE47A6BCD78B0BA4"
+        },
+        {
+          "frame": 12,
+          "deltaBits": "0x3C088889",
+          "paused": false,
+          "sampleCount": 77,
+          "sampleSha256": "164AAA6BEFFFB52FCC35A29691A61345A33F20328F7FF607A98923DE72E95527"
+        }
+      ],
+      "finalSampleCount": 77,
+      "finalSamples": [
+        {
+          "particleId": "directional:effect_tap_directional_flick_l_3/burtst#1",
+          "systemId": "directional:effect_tap_directional_flick_l_3/burtst",
+          "sequence": 1,
+          "positionBits": [
+            "0x3F4F91E4",
+            "0xBF9D83A6",
+            "0xB8387F88"
+          ],
+          "velocityBits": [
+            "0x3BF99EE8",
+            "0xBBD44836",
+            "0x31900000"
+          ],
+          "sizeBits": [
+            "0x40B00000",
+            "0x40733333",
+            "0x3F800000"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x00000000"
+          ],
+          "colorBits": [
+            "0x3F3ADFDA",
+            "0x3F1A5229",
+            "0x3F4B3488",
+            "0x3F800000"
+          ],
+          "ageBits": "0x3DCCCCCD",
+          "lifeBits": "0x3E800000",
+          "uvFrame": 7,
+          "sortingOrder": 50,
+          "renderMode": 1,
+          "renderAlignment": 0,
+          "material": "mt_parSet_1"
+        },
+        {
+          "particleId": "directional:effect_tap_directional_flick_l_3/glitter_1_1#1",
+          "systemId": "directional:effect_tap_directional_flick_l_3/glitter_1_1",
+          "sequence": 2,
+          "positionBits": [
+            "0xC07AB18B",
+            "0xBECECB15",
+            "0x33800000"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x00000000"
+          ],
+          "sizeBits": [
+            "0x3F4531E8",
+            "0x3F4531E8",
+            "0x3F4531E8"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x00000000"
+          ],
+          "colorBits": [
+            "0x3F71CDED",
+            "0x3F262508",
+            "0x3F800000",
+            "0x3F800000"
+          ],
+          "ageBits": "0x3DCCCCCD",
+          "lifeBits": "0x3EF18B24",
+          "uvFrame": 8,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "mt_parSet_1"
+        },
+        {
+          "particleId": "directional:effect_tap_directional_flick_l_3/glitter_1_1#2",
+          "systemId": "directional:effect_tap_directional_flick_l_3/glitter_1_1",
+          "sequence": 3,
+          "positionBits": [
+            "0xBEB9F258",
+            "0x3E08944B",
+            "0xB2800000"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x00000000"
+          ],
+          "sizeBits": [
+            "0x3F9D929E",
+            "0x3F9D929E",
+            "0x3F9D929E"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x00000000"
+          ],
+          "colorBits": [
+            "0x3F700FA7",
+            "0x3F1C4435",
+            "0x3F800000",
+            "0x3F800000"
+          ],
+          "ageBits": "0x3DCCCCCD",
+          "lifeBits": "0x3E9AFE96",
+          "uvFrame": 8,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "mt_parSet_1"
+        },
+        {
+          "particleId": "directional:effect_tap_directional_flick_l_3/glitter_1_1#3",
+          "systemId": "directional:effect_tap_directional_flick_l_3/glitter_1_1",
+          "sequence": 4,
+          "positionBits": [
+            "0xBF986526",
+            "0x3E32151C",
+            "0xB3000000"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x00000000"
+          ],
+          "sizeBits": [
+            "0x3F5E9F78",
+            "0x3F5E9F78",
+            "0x3F5E9F78"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x00000000"
+          ],
+          "colorBits": [
+            "0x3F7DD2DF",
+            "0x3F6A40C6",
+            "0x3F800000",
+            "0x3F800000"
+          ],
+          "ageBits": "0x3DCCCCCD",
+          "lifeBits": "0x3ED6AC60",
+          "uvFrame": 8,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "mt_parSet_1"
+        },
+        {
+          "particleId": "directional:effect_tap_directional_flick_l_3/glitter_1_1#4",
+          "systemId": "directional:effect_tap_directional_flick_l_3/glitter_1_1",
+          "sequence": 76,
+          "positionBits": [
+            "0xC018E9EE",
+            "0xBE0485CF",
+            "0x32800000"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x00000000"
+          ],
+          "sizeBits": [
+            "0x3FEB43C4",
+            "0x3FEB43C4",
+            "0x3FEB43C4"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x00000000"
+          ],
+          "colorBits": [
+            "0x3F72899E",
+            "0x3F2A4C9C",
+            "0x3F800000",
+            "0x3F800000"
+          ],
+          "ageBits": "0x00000000",
+          "lifeBits": "0x3EAA9688",
+          "uvFrame": 8,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "mt_parSet_1"
+        },
+        {
+          "particleId": "directional:effect_tap_directional_flick_l_3/notes#1",
+          "systemId": "directional:effect_tap_directional_flick_l_3/notes",
+          "sequence": 5,
+          "positionBits": [
+            "0x3E6A7EFF",
+            "0x3D4D1319",
+            "0x389B8E00"
+          ],
+          "velocityBits": [
+            "0xBC23D70A",
+            "0x00000000",
+            "0x00000000"
+          ],
+          "sizeBits": [
+            "0x40172ECC",
+            "0x4031CA7E",
+            "0x3F71E47A"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x40490FDA"
+          ],
+          "colorBits": [
+            "0x3ECFD4D8",
+            "0x3E32DC63",
+            "0x3EF2E6EC",
+            "0x3F800000"
+          ],
+          "ageBits": "0x3DCCCCCD",
+          "lifeBits": "0x3E4CCCCD",
+          "uvFrame": 0,
+          "sortingOrder": 50,
+          "renderMode": 1,
+          "renderAlignment": 0,
+          "material": "mt_parSet_1"
+        },
+        {
+          "particleId": "directional:effect_tap_directional_flick_l_3/notes#2",
+          "systemId": "directional:effect_tap_directional_flick_l_3/notes",
+          "sequence": 77,
+          "positionBits": [
+            "0x3E6B851F",
+            "0x3D4C95C0",
+            "0xB8B28600"
+          ],
+          "velocityBits": [
+            "0xBC23D70A",
+            "0x00000000",
+            "0x00000000"
+          ],
+          "sizeBits": [
+            "0x3F8C7580",
+            "0x3FA52E05",
+            "0x3EE0BC00"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x40490FDA"
+          ],
+          "colorBits": [
+            "0x3F800000",
+            "0x3F800000",
+            "0x3F800000",
+            "0x3F800000"
+          ],
+          "ageBits": "0x00000000",
+          "lifeBits": "0x3E4CCCCD",
+          "uvFrame": 0,
+          "sortingOrder": 50,
+          "renderMode": 1,
+          "renderAlignment": 0,
+          "material": "mt_parSet_1"
+        },
+        {
+          "particleId": "directional:effect_tap_directional_flick_l_3/spark_1#1",
+          "systemId": "directional:effect_tap_directional_flick_l_3/spark_1",
+          "sequence": 6,
+          "positionBits": [
+            "0xBF940F41",
+            "0x400A913A",
+            "0x3DEED241"
+          ],
+          "velocityBits": [
+            "0xBD4270ED",
+            "0x3FB886DA",
+            "0x3DC306AB"
+          ],
+          "sizeBits": [
+            "0x3DDFE1C5",
+            "0x3DDFE1C5",
+            "0x3DDFE1C5"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x3FC90FDA"
+          ],
+          "colorBits": [
+            "0x3F800000",
+            "0x3F800000",
+            "0x3F800000",
+            "0x3F800000"
+          ],
+          "ageBits": "0x3DCCCCCD",
+          "lifeBits": "0x3E8C18AE",
+          "uvFrame": 2,
+          "sortingOrder": 50,
+          "renderMode": 1,
+          "renderAlignment": 0,
+          "material": "mt_parSet_1"
+        },
+        {
+          "particleId": "directional:effect_tap_directional_flick_l_3/spark_1#2",
+          "systemId": "directional:effect_tap_directional_flick_l_3/spark_1",
+          "sequence": 7,
+          "positionBits": [
+            "0xBF7577E0",
+            "0x4005DEBD",
+            "0x3E8F4103"
+          ],
+          "velocityBits": [
+            "0xBD7ECF0F",
+            "0x3FB39DA8",
+            "0x3DFE2E79"
+          ],
+          "sizeBits": [
+            "0x3E8DC0B5",
+            "0x3E8DC0B5",
+            "0x3E8DC0B5"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x3FC90FDA"
+          ],
+          "colorBits": [
+            "0x3F800000",
+            "0x3F800000",
+            "0x3F800000",
+            "0x3F800000"
+          ],
+          "ageBits": "0x3DCCCCCD",
+          "lifeBits": "0x3EAF520A",
+          "uvFrame": 2,
+          "sortingOrder": 50,
+          "renderMode": 1,
+          "renderAlignment": 0,
+          "material": "mt_parSet_1"
+        },
+        {
+          "particleId": "directional:effect_tap_directional_flick_l_3/spark_1#3",
+          "systemId": "directional:effect_tap_directional_flick_l_3/spark_1",
+          "sequence": 8,
+          "positionBits": [
+            "0xBFC784AE",
+            "0x3FD9044B",
+            "0x3E189E1E"
+          ],
+          "velocityBits": [
+            "0xBED74874",
+            "0x3F9F530C",
+            "0x3E0332CE"
+          ],
+          "sizeBits": [
+            "0x3E7C26C7",
+            "0x3E7C26C7",
+            "0x3E7C26C7"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x3FC90FDA"
+          ],
+          "colorBits": [
+            "0x3F800000",
+            "0x3F800000",
+            "0x3F800000",
+            "0x3F800000"
+          ],
+          "ageBits": "0x3DCCCCCD",
+          "lifeBits": "0x3E00F6D4",
+          "uvFrame": 2,
+          "sortingOrder": 50,
+          "renderMode": 1,
+          "renderAlignment": 0,
+          "material": "mt_parSet_1"
+        },
+        {
+          "particleId": "directional:effect_tap_directional_flick_l_3/spark_1#4",
+          "systemId": "directional:effect_tap_directional_flick_l_3/spark_1",
+          "sequence": 9,
+          "positionBits": [
+            "0xBFB649CB",
+            "0x3FC42D10",
+            "0x3EBB37AB"
+          ],
+          "velocityBits": [
+            "0xBE94F8CF",
+            "0x3F9AC100",
+            "0x3E4F6683"
+          ],
+          "sizeBits": [
+            "0x3E44AC70",
+            "0x3E44AC70",
+            "0x3E44AC70"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x3FC90FDA"
+          ],
+          "colorBits": [
+            "0x3F800000",
+            "0x3F800000",
+            "0x3F800000",
+            "0x3F800000"
+          ],
+          "ageBits": "0x3DCCCCCD",
+          "lifeBits": "0x3E39EB41",
+          "uvFrame": 2,
+          "sortingOrder": 50,
+          "renderMode": 1,
+          "renderAlignment": 0,
+          "material": "mt_parSet_1"
+        },
+        {
+          "particleId": "directional:effect_tap_directional_flick_l_3/spark_1#5",
+          "systemId": "directional:effect_tap_directional_flick_l_3/spark_1",
+          "sequence": 10,
+          "positionBits": [
+            "0xBFDD14DA",
+            "0x3FBFAF88",
+            "0x3E57C4BD"
+          ],
+          "velocityBits": [
+            "0xBED6AE24",
+            "0x3F988DE0",
+            "0x3DC5F19A"
+          ],
+          "sizeBits": [
+            "0x3EBC2061",
+            "0x3EBC2061",
+            "0x3EBC2061"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x3FC90FDA"
+          ],
+          "colorBits": [
+            "0x3F800000",
+            "0x3F800000",
+            "0x3F800000",
+            "0x3F800000"
+          ],
+          "ageBits": "0x3DCCCCCD",
+          "lifeBits": "0x3E99F56E",
+          "uvFrame": 2,
+          "sortingOrder": 50,
+          "renderMode": 1,
+          "renderAlignment": 0,
+          "material": "mt_parSet_1"
+        },
+        {
+          "particleId": "directional:effect_tap_directional_flick_l_3/spark_1#6",
+          "systemId": "directional:effect_tap_directional_flick_l_3/spark_1",
+          "sequence": 11,
+          "positionBits": [
+            "0xBFC55294",
+            "0x3FCD8178",
+            "0x3E92A69E"
+          ],
+          "velocityBits": [
+            "0xBEBA061C",
+            "0x3F9CE54A",
+            "0x3E32AC29"
+          ],
+          "sizeBits": [
+            "0x3D6B32F3",
+            "0x3D6B32F3",
+            "0x3D6B32F3"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x3FC90FDA"
+          ],
+          "colorBits": [
+            "0x3F800000",
+            "0x3F800000",
+            "0x3F800000",
+            "0x3F800000"
+          ],
+          "ageBits": "0x3DCCCCCD",
+          "lifeBits": "0x3DDD8727",
+          "uvFrame": 2,
+          "sortingOrder": 50,
+          "renderMode": 1,
+          "renderAlignment": 0,
+          "material": "mt_parSet_1"
+        },
+        {
+          "particleId": "directional:effect_tap_directional_flick_l_3/spark_1#7",
+          "systemId": "directional:effect_tap_directional_flick_l_3/spark_1",
+          "sequence": 12,
+          "positionBits": [
+            "0xBF875C28",
+            "0x40051BFF",
+            "0x3E94A97E"
+          ],
+          "velocityBits": [
+            "0xBDA488E4",
+            "0x3FB374D7",
+            "0x3E19A404"
+          ],
+          "sizeBits": [
+            "0x3E552A43",
+            "0x3E552A43",
+            "0x3E552A43"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x3FC90FDA"
+          ],
+          "colorBits": [
+            "0x3F800000",
+            "0x3F800000",
+            "0x3F800000",
+            "0x3F800000"
+          ],
+          "ageBits": "0x3DCCCCCD",
+          "lifeBits": "0x3E35C1C2",
+          "uvFrame": 2,
+          "sortingOrder": 50,
+          "renderMode": 1,
+          "renderAlignment": 0,
+          "material": "mt_parSet_1"
+        },
+        {
+          "particleId": "directional:effect_tap_directional_flick_l_3/spark_1#8",
+          "systemId": "directional:effect_tap_directional_flick_l_3/spark_1",
+          "sequence": 13,
+          "positionBits": [
+            "0xBF8344CB",
+            "0x4003D655",
+            "0xBE9D7841"
+          ],
+          "velocityBits": [
+            "0xBDA0FD34",
+            "0x3FB26F33",
+            "0xBE171F6C"
+          ],
+          "sizeBits": [
+            "0x3DACA427",
+            "0x3DACA427",
+            "0x3DACA427"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x3FC90FDA"
+          ],
+          "colorBits": [
+            "0x3F800000",
+            "0x3F800000",
+            "0x3F800000",
+            "0x3F800000"
+          ],
+          "ageBits": "0x3DCCCCCD",
+          "lifeBits": "0x3EAE67B7",
+          "uvFrame": 2,
+          "sortingOrder": 50,
+          "renderMode": 1,
+          "renderAlignment": 0,
+          "material": "mt_parSet_1"
+        },
+        {
+          "particleId": "directional:effect_tap_directional_flick_l_3/spark_1#9",
+          "systemId": "directional:effect_tap_directional_flick_l_3/spark_1",
+          "sequence": 14,
+          "positionBits": [
+            "0xBF633601",
+            "0x3FE6CE69",
+            "0x3E35D922"
+          ],
+          "velocityBits": [
+            "0xBD22B026",
+            "0x3FA7C745",
+            "0x3D9F8385"
+          ],
+          "sizeBits": [
+            "0x3ECDC66F",
+            "0x3ECDC66F",
+            "0x3ECDC66F"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x3FC90FDA"
+          ],
+          "colorBits": [
+            "0x3F800000",
+            "0x3F800000",
+            "0x3F800000",
+            "0x3F800000"
+          ],
+          "ageBits": "0x3DCCCCCD",
+          "lifeBits": "0x3EAB0CB4",
+          "uvFrame": 2,
+          "sortingOrder": 50,
+          "renderMode": 1,
+          "renderAlignment": 0,
+          "material": "mt_parSet_1"
+        },
+        {
+          "particleId": "directional:effect_tap_directional_flick_l_3/spark_1#10",
+          "systemId": "directional:effect_tap_directional_flick_l_3/spark_1",
+          "sequence": 15,
+          "positionBits": [
+            "0xBFEE82E3",
+            "0x3FE28590",
+            "0x3CF133DD"
+          ],
+          "velocityBits": [
+            "0xBEF32C89",
+            "0x3FA36B01",
+            "0x3C5E096D"
+          ],
+          "sizeBits": [
+            "0x3EB8A750",
+            "0x3EB8A750",
+            "0x3EB8A750"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x3FC90FDA"
+          ],
+          "colorBits": [
+            "0x3F800000",
+            "0x3F800000",
+            "0x3F800000",
+            "0x3F800000"
+          ],
+          "ageBits": "0x3DCCCCCD",
+          "lifeBits": "0x3E09B080",
+          "uvFrame": 2,
+          "sortingOrder": 50,
+          "renderMode": 1,
+          "renderAlignment": 0,
+          "material": "mt_parSet_1"
+        },
+        {
+          "particleId": "directional:effect_tap_directional_flick_l_3/spark_1#11",
+          "systemId": "directional:effect_tap_directional_flick_l_3/spark_1",
+          "sequence": 16,
+          "positionBits": [
+            "0xBF716198",
+            "0x3FF66518",
+            "0xBE10ACB6"
+          ],
+          "velocityBits": [
+            "0xBD18F571",
+            "0x3FAD42B7",
+            "0xBD8EE522"
+          ],
+          "sizeBits": [
+            "0x3E823CF2",
+            "0x3E823CF2",
+            "0x3E823CF2"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x3FC90FDA"
+          ],
+          "colorBits": [
+            "0x3F800000",
+            "0x3F800000",
+            "0x3F800000",
+            "0x3F800000"
+          ],
+          "ageBits": "0x3DCCCCCD",
+          "lifeBits": "0x3E4BFB85",
+          "uvFrame": 2,
+          "sortingOrder": 50,
+          "renderMode": 1,
+          "renderAlignment": 0,
+          "material": "mt_parSet_1"
+        },
+        {
+          "particleId": "directional:effect_tap_directional_flick_l_3/spark_1#12",
+          "systemId": "directional:effect_tap_directional_flick_l_3/spark_1",
+          "sequence": 17,
+          "positionBits": [
+            "0xBF9C5920",
+            "0x3FDE9F7F",
+            "0xBE84C45A"
+          ],
+          "velocityBits": [
+            "0xBE14CD35",
+            "0x3FA530C3",
+            "0xBE49ACCE"
+          ],
+          "sizeBits": [
+            "0x3DCB5151",
+            "0x3DCB5151",
+            "0x3DCB5151"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x3FC90FDA"
+          ],
+          "colorBits": [
+            "0x3F800000",
+            "0x3F800000",
+            "0x3F800000",
+            "0x3F800000"
+          ],
+          "ageBits": "0x3DCCCCCD",
+          "lifeBits": "0x3E51C018",
+          "uvFrame": 2,
+          "sortingOrder": 50,
+          "renderMode": 1,
+          "renderAlignment": 0,
+          "material": "mt_parSet_1"
+        },
+        {
+          "particleId": "directional:effect_tap_directional_flick_l_3/spark_1#13",
+          "systemId": "directional:effect_tap_directional_flick_l_3/spark_1",
+          "sequence": 18,
+          "positionBits": [
+            "0xBF72D875",
+            "0x3FD80005",
+            "0x3E412B72"
+          ],
+          "velocityBits": [
+            "0xBD3DAE32",
+            "0x3FA35A2D",
+            "0x3DC03499"
+          ],
+          "sizeBits": [
+            "0x3EDA0A26",
+            "0x3EDA0A26",
+            "0x3EDA0A26"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x3FC90FDA"
+          ],
+          "colorBits": [
+            "0x3F800000",
+            "0x3F800000",
+            "0x3F800000",
+            "0x3F800000"
+          ],
+          "ageBits": "0x3DCCCCCD",
+          "lifeBits": "0x3E644099",
+          "uvFrame": 2,
+          "sortingOrder": 50,
+          "renderMode": 1,
+          "renderAlignment": 0,
+          "material": "mt_parSet_1"
+        },
+        {
+          "particleId": "directional:effect_tap_directional_flick_l_3/spark_1#14",
+          "systemId": "directional:effect_tap_directional_flick_l_3/spark_1",
+          "sequence": 19,
+          "positionBits": [
+            "0xBFD6EA97",
+            "0x3FE4799E",
+            "0xBD902151"
+          ],
+          "velocityBits": [
+            "0xBEEF6ED9",
+            "0x3FA2C8A4",
+            "0xBD4D4811"
+          ],
+          "sizeBits": [
+            "0x3E7C872A",
+            "0x3E7C872A",
+            "0x3E7C872A"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x3FC90FDA"
+          ],
+          "colorBits": [
+            "0x3F800000",
+            "0x3F800000",
+            "0x3F800000",
+            "0x3F800000"
+          ],
+          "ageBits": "0x3DCCCCCD",
+          "lifeBits": "0x3E4992EA",
+          "uvFrame": 2,
+          "sortingOrder": 50,
+          "renderMode": 1,
+          "renderAlignment": 0,
+          "material": "mt_parSet_1"
+        },
+        {
+          "particleId": "directional:effect_tap_directional_flick_l_3/spark_1#15",
+          "systemId": "directional:effect_tap_directional_flick_l_3/spark_1",
+          "sequence": 20,
+          "positionBits": [
+            "0xBFCA8C95",
+            "0x3FBCE6D2",
+            "0xBE92FDB7"
+          ],
+          "velocityBits": [
+            "0xBEBEEEC7",
+            "0x3F97A9B0",
+            "0xBE1B5783"
+          ],
+          "sizeBits": [
+            "0x3EA34912",
+            "0x3EA34912",
+            "0x3EA34912"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x3FC90FDA"
+          ],
+          "colorBits": [
+            "0x3F800000",
+            "0x3F800000",
+            "0x3F800000",
+            "0x3F800000"
+          ],
+          "ageBits": "0x3DCCCCCD",
+          "lifeBits": "0x3E557B0C",
+          "uvFrame": 2,
+          "sortingOrder": 50,
+          "renderMode": 1,
+          "renderAlignment": 0,
+          "material": "mt_parSet_1"
+        },
+        {
+          "particleId": "directional:effect_tap_directional_flick_l_3/spark_1#16",
+          "systemId": "directional:effect_tap_directional_flick_l_3/spark_1",
+          "sequence": 21,
+          "positionBits": [
+            "0xBF9CBC59",
+            "0x3FFFCBDF",
+            "0xBEC751E2"
+          ],
+          "velocityBits": [
+            "0xBE26E51C",
+            "0x3FAF6886",
+            "0xBE5A9B67"
+          ],
+          "sizeBits": [
+            "0x3E06E1B1",
+            "0x3E06E1B1",
+            "0x3E06E1B1"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x3FC90FDA"
+          ],
+          "colorBits": [
+            "0x3F800000",
+            "0x3F800000",
+            "0x3F800000",
+            "0x3F800000"
+          ],
+          "ageBits": "0x3DCCCCCD",
+          "lifeBits": "0x3E014204",
+          "uvFrame": 2,
+          "sortingOrder": 50,
+          "renderMode": 1,
+          "renderAlignment": 0,
+          "material": "mt_parSet_1"
+        },
+        {
+          "particleId": "directional:effect_tap_directional_flick_l_3/spark_1#17",
+          "systemId": "directional:effect_tap_directional_flick_l_3/spark_1",
+          "sequence": 22,
+          "positionBits": [
+            "0xBF87ADA6",
+            "0x400F5206",
+            "0xBE898D28"
+          ],
+          "velocityBits": [
+            "0xBD94A211",
+            "0x3FBA349D",
+            "0xBE108FC4"
+          ],
+          "sizeBits": [
+            "0x3E965E35",
+            "0x3E965E35",
+            "0x3E965E35"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x3FC90FDA"
+          ],
+          "colorBits": [
+            "0x3F800000",
+            "0x3F800000",
+            "0x3F800000",
+            "0x3F800000"
+          ],
+          "ageBits": "0x3DCCCCCD",
+          "lifeBits": "0x3E84F8D5",
+          "uvFrame": 2,
+          "sortingOrder": 50,
+          "renderMode": 1,
+          "renderAlignment": 0,
+          "material": "mt_parSet_1"
+        },
+        {
+          "particleId": "directional:effect_tap_directional_flick_l_3/spark_1#18",
+          "systemId": "directional:effect_tap_directional_flick_l_3/spark_1",
+          "sequence": 23,
+          "positionBits": [
+            "0xBF9F41FC",
+            "0x400BF588",
+            "0xBEE496A5"
+          ],
+          "velocityBits": [
+            "0xBE326381",
+            "0x3FB7039F",
+            "0xBE661192"
+          ],
+          "sizeBits": [
+            "0x3E2EDF13",
+            "0x3E2EDF13",
+            "0x3E2EDF13"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x3FC90FDA"
+          ],
+          "colorBits": [
+            "0x3F800000",
+            "0x3F800000",
+            "0x3F800000",
+            "0x3F800000"
+          ],
+          "ageBits": "0x3DCCCCCD",
+          "lifeBits": "0x3ECBEAC6",
+          "uvFrame": 2,
+          "sortingOrder": 50,
+          "renderMode": 1,
+          "renderAlignment": 0,
+          "material": "mt_parSet_1"
+        },
+        {
+          "particleId": "directional:effect_tap_directional_flick_l_3/spark_1#19",
+          "systemId": "directional:effect_tap_directional_flick_l_3/spark_1",
+          "sequence": 24,
+          "positionBits": [
+            "0xBFA22C17",
+            "0x400627BC",
+            "0x3E86224A"
+          ],
+          "velocityBits": [
+            "0xBE1509D5",
+            "0x3FB42C12",
+            "0x3E54782E"
+          ],
+          "sizeBits": [
+            "0x3DECD05A",
+            "0x3DECD05A",
+            "0x3DECD05A"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x3FC90FDA"
+          ],
+          "colorBits": [
+            "0x3F800000",
+            "0x3F800000",
+            "0x3F800000",
+            "0x3F800000"
+          ],
+          "ageBits": "0x3DCCCCCD",
+          "lifeBits": "0x3E992B99",
+          "uvFrame": 2,
+          "sortingOrder": 50,
+          "renderMode": 1,
+          "renderAlignment": 0,
+          "material": "mt_parSet_1"
+        },
+        {
+          "particleId": "directional:effect_tap_directional_flick_l_3/spark_1#20",
+          "systemId": "directional:effect_tap_directional_flick_l_3/spark_1",
+          "sequence": 25,
+          "positionBits": [
+            "0xBF9FC9BA",
+            "0x3FCF481F",
+            "0x3ECC029A"
+          ],
+          "velocityBits": [
+            "0xBE4620E5",
+            "0x3F9F5045",
+            "0x3E56CFF4"
+          ],
+          "sizeBits": [
+            "0x3EF63706",
+            "0x3EF63706",
+            "0x3EF63706"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x3FC90FDA"
+          ],
+          "colorBits": [
+            "0x3F800000",
+            "0x3F800000",
+            "0x3F800000",
+            "0x3F800000"
+          ],
+          "ageBits": "0x3DCCCCCD",
+          "lifeBits": "0x3E8C277A",
+          "uvFrame": 2,
+          "sortingOrder": 50,
+          "renderMode": 1,
+          "renderAlignment": 0,
+          "material": "mt_parSet_1"
+        },
+        {
+          "particleId": "directional:effect_tap_directional_flick_l_3/spark_1#21",
+          "systemId": "directional:effect_tap_directional_flick_l_3/spark_1",
+          "sequence": 26,
+          "positionBits": [
+            "0xBFE6CCA2",
+            "0x3FCA0ABA",
+            "0xB9AB9BB9"
+          ],
+          "velocityBits": [
+            "0xBEE7D179",
+            "0x3F9BA5E3",
+            "0xB91E5B88"
+          ],
+          "sizeBits": [
+            "0x3EEF995E",
+            "0x3EEF995E",
+            "0x3EEF995E"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x3FC90FDA"
+          ],
+          "colorBits": [
+            "0x3F800000",
+            "0x3F800000",
+            "0x3F800000",
+            "0x3F800000"
+          ],
+          "ageBits": "0x3DCCCCCD",
+          "lifeBits": "0x3E750234",
+          "uvFrame": 2,
+          "sortingOrder": 50,
+          "renderMode": 1,
+          "renderAlignment": 0,
+          "material": "mt_parSet_1"
+        },
+        {
+          "particleId": "directional:effect_tap_directional_flick_l_3/spark_1#22",
+          "systemId": "directional:effect_tap_directional_flick_l_3/spark_1",
+          "sequence": 27,
+          "positionBits": [
+            "0xBFBE4A9C",
+            "0x3FE19716",
+            "0x3EFA31EC"
+          ],
+          "velocityBits": [
+            "0xBE9A66CF",
+            "0x3FA46763",
+            "0x3E5E2E31"
+          ],
+          "sizeBits": [
+            "0x3E9C4A1F",
+            "0x3E9C4A1F",
+            "0x3E9C4A1F"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x3FC90FDA"
+          ],
+          "colorBits": [
+            "0x3F800000",
+            "0x3F800000",
+            "0x3F800000",
+            "0x3F800000"
+          ],
+          "ageBits": "0x3DCCCCCD",
+          "lifeBits": "0x3E450BF6",
+          "uvFrame": 2,
+          "sortingOrder": 50,
+          "renderMode": 1,
+          "renderAlignment": 0,
+          "material": "mt_parSet_1"
+        },
+        {
+          "particleId": "directional:effect_tap_directional_flick_l_3/spark_1#23",
+          "systemId": "directional:effect_tap_directional_flick_l_3/spark_1",
+          "sequence": 28,
+          "positionBits": [
+            "0xBFC85B61",
+            "0x3FBAE1E8",
+            "0xBE9D6BF1"
+          ],
+          "velocityBits": [
+            "0xBEB95521",
+            "0x3F972620",
+            "0xBE232519"
+          ],
+          "sizeBits": [
+            "0x3E0A0485",
+            "0x3E0A0485",
+            "0x3E0A0485"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x3FC90FDA"
+          ],
+          "colorBits": [
+            "0x3F800000",
+            "0x3F800000",
+            "0x3F800000",
+            "0x3F800000"
+          ],
+          "ageBits": "0x3DCCCCCD",
+          "lifeBits": "0x3E5A3035",
+          "uvFrame": 2,
+          "sortingOrder": 50,
+          "renderMode": 1,
+          "renderAlignment": 0,
+          "material": "mt_parSet_1"
+        },
+        {
+          "particleId": "directional:effect_tap_directional_flick_l_3/spark_1#24",
+          "systemId": "directional:effect_tap_directional_flick_l_3/spark_1",
+          "sequence": 29,
+          "positionBits": [
+            "0xBFE6D4F0",
+            "0x4001F0D3",
+            "0xBE9A709B"
+          ],
+          "velocityBits": [
+            "0xBEE7F547",
+            "0x3FAE2AEF",
+            "0xBE17FEE9"
+          ],
+          "sizeBits": [
+            "0x3E1CC99C",
+            "0x3E1CC99C",
+            "0x3E1CC99C"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x3FC90FDA"
+          ],
+          "colorBits": [
+            "0x3F800000",
+            "0x3F800000",
+            "0x3F800000",
+            "0x3F800000"
+          ],
+          "ageBits": "0x3DCCCCCD",
+          "lifeBits": "0x3E1A7D90",
+          "uvFrame": 2,
+          "sortingOrder": 50,
+          "renderMode": 1,
+          "renderAlignment": 0,
+          "material": "mt_parSet_1"
+        },
+        {
+          "particleId": "directional:effect_tap_directional_flick_l_3/spark_1#25",
+          "systemId": "directional:effect_tap_directional_flick_l_3/spark_1",
+          "sequence": 30,
+          "positionBits": [
+            "0xBF8F945F",
+            "0x3FC50679",
+            "0xBEA41C0F"
+          ],
+          "velocityBits": [
+            "0xBDFF3CFE",
+            "0x3F9CB7CA",
+            "0xBE379328"
+          ],
+          "sizeBits": [
+            "0x3E96A370",
+            "0x3E96A370",
+            "0x3E96A370"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x3FC90FDA"
+          ],
+          "colorBits": [
+            "0x3F800000",
+            "0x3F800000",
+            "0x3F800000",
+            "0x3F800000"
+          ],
+          "ageBits": "0x3DCCCCCD",
+          "lifeBits": "0x3E0DAFC0",
+          "uvFrame": 2,
+          "sortingOrder": 50,
+          "renderMode": 1,
+          "renderAlignment": 0,
+          "material": "mt_parSet_1"
+        }
+      ],
+      "finalSampleSha256": "164AAA6BEFFFB52FCC35A29691A61345A33F20328F7FF607A98923DE72E95527",
+      "randomState": [
+        {
+          "systemId": "directional:effect_tap_directional_flick_l_3",
+          "stateU32": [
+            937038384,
+            2081742065,
+            3574539286,
+            1843593903
+          ]
+        },
+        {
+          "systemId": "directional:effect_tap_directional_flick_l_3/burtst",
+          "stateU32": [
+            2860417868,
+            3088560447,
+            2073290748,
+            2879286050
+          ]
+        },
+        {
+          "systemId": "directional:effect_tap_directional_flick_l_3/glitter_1_1",
+          "stateU32": [
+            2460263204,
+            2317179902,
+            1709227038,
+            3878152340
+          ]
+        },
+        {
+          "systemId": "directional:effect_tap_directional_flick_l_3/notes",
+          "stateU32": [
+            3976271519,
+            3821300450,
+            2818152339,
+            135757792
+          ]
+        },
+        {
+          "systemId": "directional:effect_tap_directional_flick_l_3/spark_1",
+          "stateU32": [
+            3728885341,
+            1463555842,
+            4230615895,
+            291729540
+          ]
+        },
+        {
+          "systemId": "directional:effect_tap_directional_flick_l_3/spark_2",
+          "stateU32": [
+            2946494378,
+            3356262906,
+            238045409,
+            3813224670
+          ]
+        },
+        {
+          "systemId": "directional:effect_tap_directional_flick_l_3/spark_3",
+          "stateU32": [
+            2490809675,
+            4013085080,
+            1818167545,
+            3894070078
+          ]
+        },
+        {
+          "systemId": "directional:effect_tap_directional_flick_l_3/star_1",
+          "stateU32": [
+            2168830390,
+            3837143638,
+            3602262698,
+            1787422014
+          ]
+        },
+        {
+          "systemId": "directional:effect_tap_directional_flick_l_3/star_glitter_1",
+          "stateU32": [
+            1630592461,
+            758191704,
+            3859615657,
+            2469051497
+          ]
+        }
+      ],
+      "projectionSha256": "3D10C4E5535753B6AE351707EA731BE7B9231A3EC0110CFE54FE593C315B298D"
+    },
+    {
+      "case": "ordinary-perfect-adaptive",
+      "root": "ordinary:effect_tap_perfect",
+      "frames": [
+        {
+          "frame": 1,
+          "deltaBits": "0x3C23D70A",
+          "paused": false,
+          "sampleCount": 64,
+          "sampleSha256": "CCEB8B3515A0E10849ADB422A9D287157E9F8C98C34E4D1EB5AA1AE5F52A74C7"
+        },
+        {
+          "frame": 2,
+          "deltaBits": "0x3CB43958",
+          "paused": false,
+          "sampleCount": 64,
+          "sampleSha256": "9BE02422064D2E770AD416C2B17642829A930F18D88160B975EB11D17E0F02E1"
+        },
+        {
+          "frame": 3,
+          "deltaBits": "0x3C03126F",
+          "paused": false,
+          "sampleCount": 64,
+          "sampleSha256": "4DAAB44EBDA11A3FDCF74064387E6892CCB076EB4CCF33F99024F279F1D60C45"
+        },
+        {
+          "frame": 4,
+          "deltaBits": "0x3C8B4396",
+          "paused": false,
+          "sampleCount": 64,
+          "sampleSha256": "737B89789FA23518759015F20877CD6C0E97B9486E9C120671B889E4F8203912"
+        }
+      ],
+      "finalSampleCount": 64,
+      "finalSamples": [
+        {
+          "particleId": "ordinary:effect_tap_perfect/light_lay_2#1",
+          "systemId": "ordinary:effect_tap_perfect/light_lay_2",
+          "sequence": 62,
+          "positionBits": [
+            "0x17E978D5",
+            "0x2EE978D5",
+            "0x3A156C0D"
+          ],
+          "velocityBits": [
+            "0x1A000000",
+            "0x31000000",
+            "0x3C23D70A"
+          ],
+          "sizeBits": [
+            "0x40333333",
+            "0x40333333",
+            "0x40333333"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x00000000"
+          ],
+          "colorBits": [
+            "0x3F1C9C9D",
+            "0x3F800000",
+            "0x3F800000",
+            "0x3F5CDCDD"
+          ],
+          "ageBits": "0x3D6978D5",
+          "lifeBits": "0x3F000000",
+          "uvFrame": 4,
+          "sortingOrder": 1,
+          "renderMode": 1,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_2"
+        },
+        {
+          "particleId": "ordinary:effect_tap_perfect/Smatt_1#1",
+          "systemId": "ordinary:effect_tap_perfect/Smatt_1",
+          "sequence": 2,
+          "positionBits": [
+            "0x17E978D5",
+            "0x2EE978D5",
+            "0x3A156C0D"
+          ],
+          "velocityBits": [
+            "0x1A000000",
+            "0x31000000",
+            "0x3C23D70A"
+          ],
+          "sizeBits": [
+            "0x40333333",
+            "0x40333333",
+            "0x40333333"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x00000000"
+          ],
+          "colorBits": [
+            "0x3F1C9C9D",
+            "0x3F800000",
+            "0x3F800000",
+            "0x3F5CDCDD"
+          ],
+          "ageBits": "0x3D6978D5",
+          "lifeBits": "0x3F000000",
+          "uvFrame": 4,
+          "sortingOrder": 5,
+          "renderMode": 1,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_2"
+        },
+        {
+          "particleId": "ordinary:effect_tap_perfect/Sring_1#1",
+          "systemId": "ordinary:effect_tap_perfect/Sring_1",
+          "sequence": 3,
+          "positionBits": [
+            "0x00000000",
+            "0xBC23D70A",
+            "0x00000000"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x00000000"
+          ],
+          "sizeBits": [
+            "0x405B1AE8",
+            "0x40195FA3",
+            "0x3EAF48BA"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x00000000"
+          ],
+          "colorBits": [
+            "0x3F4963E6",
+            "0x3F77A222",
+            "0x3F77F29E",
+            "0x3F800000"
+          ],
+          "ageBits": "0x3D6978D5",
+          "lifeBits": "0x3F666666",
+          "uvFrame": 13,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_1"
+        },
+        {
+          "particleId": "ordinary:effect_tap_perfect/Sring_2#1",
+          "systemId": "ordinary:effect_tap_perfect/Sring_2",
+          "sequence": 4,
+          "positionBits": [
+            "0x00000000",
+            "0xBC23D700",
+            "0xC0400000"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x00000000"
+          ],
+          "sizeBits": [
+            "0x405B1AE8",
+            "0x405B1AE8",
+            "0x405B1AE8"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x00000000"
+          ],
+          "colorBits": [
+            "0x3F5B8319",
+            "0x3F798B19",
+            "0x3F63C025",
+            "0x3F800000"
+          ],
+          "ageBits": "0x3D6978D5",
+          "lifeBits": "0x3F666666",
+          "uvFrame": 15,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 2,
+          "material": "Mat_parSet_1"
+        },
+        {
+          "particleId": "ordinary:effect_tap_perfect/kira#1",
+          "systemId": "ordinary:effect_tap_perfect/kira",
+          "sequence": 5,
+          "positionBits": [
+            "0xBF41FC9F",
+            "0x3EE1257F",
+            "0xBFA27717"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0xB5D75045",
+            "0xC17E515C"
+          ],
+          "sizeBits": [
+            "0x3EF3961A",
+            "0x3EF3961A",
+            "0x3EF3961A"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x40AAA03C"
+          ],
+          "colorBits": [
+            "0x3EE84319",
+            "0x3F53DF95",
+            "0x3F51BC5E",
+            "0x3F5947D9"
+          ],
+          "ageBits": "0x3D6978D5",
+          "lifeBits": "0x3EC0F454",
+          "uvFrame": 11,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_1"
+        },
+        {
+          "particleId": "ordinary:effect_tap_perfect/kira#2",
+          "systemId": "ordinary:effect_tap_perfect/kira",
+          "sequence": 6,
+          "positionBits": [
+            "0xBEF85C08",
+            "0x3F08DE9C",
+            "0xBF8CE95F"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0xB5D82EDD",
+            "0xC15D047E"
+          ],
+          "sizeBits": [
+            "0x3E719290",
+            "0x3E719290",
+            "0x3E719290"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x40A2C4CC"
+          ],
+          "colorBits": [
+            "0x3EB814E1",
+            "0x3F46EE9C",
+            "0x3F455F0A",
+            "0x3F510ED1"
+          ],
+          "ageBits": "0x3D6978D5",
+          "lifeBits": "0x3E9F26EA",
+          "uvFrame": 11,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_1"
+        },
+        {
+          "particleId": "ordinary:effect_tap_perfect/kira#3",
+          "systemId": "ordinary:effect_tap_perfect/kira",
+          "sequence": 7,
+          "positionBits": [
+            "0x3E94A8A9",
+            "0x3E4A83A6",
+            "0xBEF6D33A"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0xB5A89657",
+            "0xC0C54A7B"
+          ],
+          "sizeBits": [
+            "0x3E79CDA9",
+            "0x3E79CDA9",
+            "0x3E79CDA9"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x40B82BD9"
+          ],
+          "colorBits": [
+            "0x3F64773C",
+            "0x3F7A29C4",
+            "0x3F78D1D7",
+            "0x3F5FA2E0"
+          ],
+          "ageBits": "0x3D6978D5",
+          "lifeBits": "0x3EE6DA81",
+          "uvFrame": 11,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_1"
+        },
+        {
+          "particleId": "ordinary:effect_tap_perfect/kira#4",
+          "systemId": "ordinary:effect_tap_perfect/kira",
+          "sequence": 8,
+          "positionBits": [
+            "0xBF925C66",
+            "0x3ECC7D58",
+            "0xBF2C9F84"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0xB5DC60E1",
+            "0xC108A91A"
+          ],
+          "sizeBits": [
+            "0x3EB547CC",
+            "0x3EB547CC",
+            "0x3EB547CC"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x40038CF1"
+          ],
+          "colorBits": [
+            "0x3F51CD8A",
+            "0x3F744575",
+            "0x3F72B84C",
+            "0x3F5F25DF"
+          ],
+          "ageBits": "0x3D6978D5",
+          "lifeBits": "0x3EE36782",
+          "uvFrame": 11,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_1"
+        },
+        {
+          "particleId": "ordinary:effect_tap_perfect/kira#5",
+          "systemId": "ordinary:effect_tap_perfect/kira",
+          "sequence": 9,
+          "positionBits": [
+            "0xBF11EFA5",
+            "0x3D62B62F",
+            "0xBF0896B1"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0xB55F4852",
+            "0xC0D9A5E0"
+          ],
+          "sizeBits": [
+            "0x3F0EA56F",
+            "0x3F0EA56F",
+            "0x3F0EA56F"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x3F857D17"
+          ],
+          "colorBits": [
+            "0x3E2E7B86",
+            "0x3F461066",
+            "0x3F41BA9D",
+            "0x3F6748E7"
+          ],
+          "ageBits": "0x3D6978D5",
+          "lifeBits": "0x3F172450",
+          "uvFrame": 11,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_1"
+        },
+        {
+          "particleId": "ordinary:effect_tap_perfect/kira#6",
+          "systemId": "ordinary:effect_tap_perfect/kira",
+          "sequence": 10,
+          "positionBits": [
+            "0xBED0E754",
+            "0x3E814915",
+            "0xBF5980AB"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0xB5DA2253",
+            "0xC12B5477"
+          ],
+          "sizeBits": [
+            "0x3E9B7C48",
+            "0x3E9B7C48",
+            "0x3E9B7C48"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x4089AC9F"
+          ],
+          "colorBits": [
+            "0x3CF063AB",
+            "0x3F2CF929",
+            "0x3F2A7C5A",
+            "0x3F57D4D8"
+          ],
+          "ageBits": "0x3D6978D5",
+          "lifeBits": "0x3EB9FFB3",
+          "uvFrame": 11,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_1"
+        },
+        {
+          "particleId": "ordinary:effect_tap_perfect/kira#7",
+          "systemId": "ordinary:effect_tap_perfect/kira",
+          "sequence": 11,
+          "positionBits": [
+            "0x3F68D5AF",
+            "0x3EE30F9D",
+            "0xBF8A362A"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0xB5D84FB7",
+            "0xC158D894"
+          ],
+          "sizeBits": [
+            "0x3EECA09A",
+            "0x3EECA09A",
+            "0x3EECA09A"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x408C415E"
+          ],
+          "colorBits": [
+            "0x3F598BD2",
+            "0x3F76C054",
+            "0x3F755B0E",
+            "0x3F63FDE4"
+          ],
+          "ageBits": "0x3D6978D5",
+          "lifeBits": "0x3F05601B",
+          "uvFrame": 11,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_1"
+        },
+        {
+          "particleId": "ordinary:effect_tap_perfect/kira#8",
+          "systemId": "ordinary:effect_tap_perfect/kira",
+          "sequence": 12,
+          "positionBits": [
+            "0x3F885052",
+            "0x3E1AC768",
+            "0xBEFC3DC0"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0xB56072BB",
+            "0xC0C97992"
+          ],
+          "sizeBits": [
+            "0x3E9021CE",
+            "0x3E9021CE",
+            "0x3E9021CE"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x4094220E"
+          ],
+          "colorBits": [
+            "0x3F552DB4",
+            "0x3F7588CE",
+            "0x3F74174A",
+            "0x3F65B9E6"
+          ],
+          "ageBits": "0x3D6978D5",
+          "lifeBits": "0x3F0E2F0C",
+          "uvFrame": 11,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_1"
+        },
+        {
+          "particleId": "ordinary:effect_tap_perfect/kira#9",
+          "systemId": "ordinary:effect_tap_perfect/kira",
+          "sequence": 13,
+          "positionBits": [
+            "0xBEAFA74C",
+            "0x3F2B973C",
+            "0xBF46F72E"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0xB5DAEF88",
+            "0xC11D0294"
+          ],
+          "sizeBits": [
+            "0x3EC7739C",
+            "0x3EC7739C",
+            "0x3EC7739C"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x402326F9"
+          ],
+          "colorBits": [
+            "0x3E8C9960",
+            "0x3F43FA1E",
+            "0x3F419B16",
+            "0x3F5928D9"
+          ],
+          "ageBits": "0x3D6978D5",
+          "lifeBits": "0x3EC05B1E",
+          "uvFrame": 11,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_1"
+        },
+        {
+          "particleId": "ordinary:effect_tap_perfect/kira#10",
+          "systemId": "ordinary:effect_tap_perfect/kira",
+          "sequence": 14,
+          "positionBits": [
+            "0x3F52F654",
+            "0x3E889988",
+            "0xBF43D9B6"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0xB5DB15E9",
+            "0xC11A9A88"
+          ],
+          "sizeBits": [
+            "0x3F05A8F6",
+            "0x3F05A8F6",
+            "0x3F05A8F6"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x4007B69E"
+          ],
+          "colorBits": [
+            "0x3F66B36D",
+            "0x3F7A9686",
+            "0x3F7968E6",
+            "0x3F6526E5"
+          ],
+          "ageBits": "0x3D6978D5",
+          "lifeBits": "0x3F0B2543",
+          "uvFrame": 11,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_1"
+        },
+        {
+          "particleId": "ordinary:effect_tap_perfect/kira#11",
+          "systemId": "ordinary:effect_tap_perfect/kira",
+          "sequence": 15,
+          "positionBits": [
+            "0x3F16046C",
+            "0x3ECF6BA7",
+            "0xBFA3FFB8"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0xB5D742B2",
+            "0xC18057FC"
+          ],
+          "sizeBits": [
+            "0x3ECD4275",
+            "0x3ECD4275",
+            "0x3ECD4275"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x3F697362"
+          ],
+          "colorBits": [
+            "0x3EAAE7A2",
+            "0x3F4BFF4D",
+            "0x3F4946A7",
+            "0x3F5DC6DE"
+          ],
+          "ageBits": "0x3D6978D5",
+          "lifeBits": "0x3EDA50F1",
+          "uvFrame": 11,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_1"
+        },
+        {
+          "particleId": "ordinary:effect_tap_perfect/kira#12",
+          "systemId": "ordinary:effect_tap_perfect/kira",
+          "sequence": 16,
+          "positionBits": [
+            "0x3F1D8E54",
+            "0x3F01A755",
+            "0xBF2133A4"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0xB5DD2792",
+            "0xC0FFACD3"
+          ],
+          "sizeBits": [
+            "0x3EFDA4AA",
+            "0x3EFDA4AA",
+            "0x3EFDA4AA"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x408B0BD7"
+          ],
+          "colorBits": [
+            "0x3DE9898B",
+            "0x3F2FDD80",
+            "0x3F2E3D50",
+            "0x3F526CD2"
+          ],
+          "ageBits": "0x3D6978D5",
+          "lifeBits": "0x3EA3EEAA",
+          "uvFrame": 11,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_1"
+        },
+        {
+          "particleId": "ordinary:effect_tap_perfect/kira#13",
+          "systemId": "ordinary:effect_tap_perfect/kira",
+          "sequence": 17,
+          "positionBits": [
+            "0x3DDF30CC",
+            "0x3F15BA60",
+            "0xBE9F74D4"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0xB4E981C0",
+            "0xC081CC74"
+          ],
+          "sizeBits": [
+            "0x3EAD763C",
+            "0x3EAD763C",
+            "0x3EAD763C"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x401C886E"
+          ],
+          "colorBits": [
+            "0x3EDD2F03",
+            "0x3F55675C",
+            "0x3F52BA2C",
+            "0x3F605FE0"
+          ],
+          "ageBits": "0x3D6978D5",
+          "lifeBits": "0x3EEC3ABC",
+          "uvFrame": 11,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_1"
+        },
+        {
+          "particleId": "ordinary:effect_tap_perfect/kira#14",
+          "systemId": "ordinary:effect_tap_perfect/kira",
+          "sequence": 18,
+          "positionBits": [
+            "0x3EC3930D",
+            "0x3D1DE9EF",
+            "0xBE98592D"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0xB4EAAECD",
+            "0xC0789D8F"
+          ],
+          "sizeBits": [
+            "0x3EEECAE4",
+            "0x3EEECAE4",
+            "0x3EEECAE4"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x401CFB5F"
+          ],
+          "colorBits": [
+            "0x3DF1A354",
+            "0x3F3DB553",
+            "0x3F39E3F8",
+            "0x3F61EFE2"
+          ],
+          "ageBits": "0x3D6978D5",
+          "lifeBits": "0x3EF8876E",
+          "uvFrame": 11,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_1"
+        },
+        {
+          "particleId": "ordinary:effect_tap_perfect/kira#15",
+          "systemId": "ordinary:effect_tap_perfect/kira",
+          "sequence": 19,
+          "positionBits": [
+            "0x3F8D1314",
+            "0x3E186BD3",
+            "0xBF516CFE"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0xB55A772E",
+            "0xC1251730"
+          ],
+          "sizeBits": [
+            "0x3EDB4B4C",
+            "0x3EDB4B4C",
+            "0x3EDB4B4C"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x40AD7894"
+          ],
+          "colorBits": [
+            "0x3E8CBE62",
+            "0x3F4B8A1C",
+            "0x3F47FB52",
+            "0x3F644DE4"
+          ],
+          "ageBits": "0x3D6978D5",
+          "lifeBits": "0x3F06DF76",
+          "uvFrame": 11,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_1"
+        },
+        {
+          "particleId": "ordinary:effect_tap_perfect/kira#16",
+          "systemId": "ordinary:effect_tap_perfect/kira",
+          "sequence": 20,
+          "positionBits": [
+            "0xBD46FFE8",
+            "0x3F170A3F",
+            "0xBE56B960"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0xB4760CD2",
+            "0xC0331C9A"
+          ],
+          "sizeBits": [
+            "0x3F03C5D3",
+            "0x3F03C5D3",
+            "0x3F03C5D3"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x4013F7F6"
+          ],
+          "colorBits": [
+            "0x3F57EC1D",
+            "0x3F7658FC",
+            "0x3F74F46B",
+            "0x3F666EE6"
+          ],
+          "ageBits": "0x3D6978D5",
+          "lifeBits": "0x3F121E4C",
+          "uvFrame": 11,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_1"
+        },
+        {
+          "particleId": "ordinary:effect_tap_perfect/kira#17",
+          "systemId": "ordinary:effect_tap_perfect/kira",
+          "sequence": 21,
+          "positionBits": [
+            "0x3F7F27C4",
+            "0x3EF5A938",
+            "0xBF779187"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0xB5D917FC",
+            "0xC1428E48"
+          ],
+          "sizeBits": [
+            "0x3E6FAE96",
+            "0x3E6FAE96",
+            "0x3E6FAE96"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x400C87E2"
+          ],
+          "colorBits": [
+            "0x3F0E40C5",
+            "0x3F5F93C4",
+            "0x3F5D38E0",
+            "0x3F6144E1"
+          ],
+          "ageBits": "0x3D6978D5",
+          "lifeBits": "0x3EF31F58",
+          "uvFrame": 11,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_1"
+        },
+        {
+          "particleId": "ordinary:effect_tap_perfect/kira#18",
+          "systemId": "ordinary:effect_tap_perfect/kira",
+          "sequence": 22,
+          "positionBits": [
+            "0x3F9E006B",
+            "0x3F378F5A",
+            "0xBFA5723E"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0xB5D7361D",
+            "0xC1817636"
+          ],
+          "sizeBits": [
+            "0x3E6EAFAB",
+            "0x3E6EAFAB",
+            "0x3E6EAFAB"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x3EAE0B8F"
+          ],
+          "colorBits": [
+            "0x3E6DCDF5",
+            "0x3F49FDB6",
+            "0x3F460231",
+            "0x3F6694E7"
+          ],
+          "ageBits": "0x3D6978D5",
+          "lifeBits": "0x3F12F46E",
+          "uvFrame": 11,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_1"
+        },
+        {
+          "particleId": "ordinary:effect_tap_perfect/kira#19",
+          "systemId": "ordinary:effect_tap_perfect/kira",
+          "sequence": 23,
+          "positionBits": [
+            "0x3E1BD836",
+            "0x3EF788E0",
+            "0xBE90CB86"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0xB4EC112B",
+            "0xC06CF20F"
+          ],
+          "sizeBits": [
+            "0x3E95A0E3",
+            "0x3E95A0E3",
+            "0x3E95A0E3"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x40A3635B"
+          ],
+          "colorBits": [
+            "0x3F2E1054",
+            "0x3F68B5C0",
+            "0x3F66CE9F",
+            "0x3F5DF9DE"
+          ],
+          "ageBits": "0x3D6978D5",
+          "lifeBits": "0x3EDB940F",
+          "uvFrame": 11,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_1"
+        },
+        {
+          "particleId": "ordinary:effect_tap_perfect/kira#20",
+          "systemId": "ordinary:effect_tap_perfect/kira",
+          "sequence": 24,
+          "positionBits": [
+            "0x3F13F406",
+            "0x3EA744EB",
+            "0xBF07C92D"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0xB5A78627",
+            "0xC0D8685B"
+          ],
+          "sizeBits": [
+            "0x3F13A9FF",
+            "0x3F13A9FF",
+            "0x3F13A9FF"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x40ACE527"
+          ],
+          "colorBits": [
+            "0x3F45A6B4",
+            "0x3F70FF6F",
+            "0x3F6F4F8A",
+            "0x3F650EE5"
+          ],
+          "ageBits": "0x3D6978D5",
+          "lifeBits": "0x3F0AA8BD",
+          "uvFrame": 11,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_1"
+        },
+        {
+          "particleId": "ordinary:effect_tap_perfect/kira#21",
+          "systemId": "ordinary:effect_tap_perfect/kira",
+          "sequence": 25,
+          "positionBits": [
+            "0x3E09D10E",
+            "0x3F111F8C",
+            "0xBDDB6E46"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0xB48F9FD4",
+            "0xBFC3FC30"
+          ],
+          "sizeBits": [
+            "0x3F072AB2",
+            "0x3F072AB2",
+            "0x3F072AB2"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x4024B45B"
+          ],
+          "colorBits": [
+            "0x3F0AE5F3",
+            "0x3F5FE8DD",
+            "0x3F5D5390",
+            "0x3F64F7E5"
+          ],
+          "ageBits": "0x3D6978D5",
+          "lifeBits": "0x3F0A3304",
+          "uvFrame": 11,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_1"
+        },
+        {
+          "particleId": "ordinary:effect_tap_perfect/kira#22",
+          "systemId": "ordinary:effect_tap_perfect/kira",
+          "sequence": 26,
+          "positionBits": [
+            "0x3E600FF6",
+            "0x3F0AF014",
+            "0xBEBA38C6"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0xB565EC35",
+            "0xC0967993"
+          ],
+          "sizeBits": [
+            "0x3E98A057",
+            "0x3E98A057",
+            "0x3E98A057"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x40BAD8FA"
+          ],
+          "colorBits": [
+            "0x3F508F11",
+            "0x3F73CA9C",
+            "0x3F721638",
+            "0x3F55A1D6"
+          ],
+          "ageBits": "0x3D6978D5",
+          "lifeBits": "0x3EB05696",
+          "uvFrame": 11,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_1"
+        },
+        {
+          "particleId": "ordinary:effect_tap_perfect/kira#23",
+          "systemId": "ordinary:effect_tap_perfect/kira",
+          "sequence": 27,
+          "positionBits": [
+            "0xBF5CE614",
+            "0x3F2FB73F",
+            "0xBF917DA0"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0xB5D7F9F8",
+            "0xC164179E"
+          ],
+          "sizeBits": [
+            "0x3F05A053",
+            "0x3F05A053",
+            "0x3F05A053"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x4007B67F"
+          ],
+          "colorBits": [
+            "0x3F1CCA70",
+            "0x3F64F63D",
+            "0x3F62AB9D",
+            "0x3F6475E4"
+          ],
+          "ageBits": "0x3D6978D5",
+          "lifeBits": "0x3F07A618",
+          "uvFrame": 11,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_1"
+        },
+        {
+          "particleId": "ordinary:effect_tap_perfect/kira#24",
+          "systemId": "ordinary:effect_tap_perfect/kira",
+          "sequence": 28,
+          "positionBits": [
+            "0xBF67FDE2",
+            "0x3E627EBE",
+            "0xBE801AE5"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0xB533CF33",
+            "0xC05328DB"
+          ],
+          "sizeBits": [
+            "0x3EFD22E2",
+            "0x3EFD22E2",
+            "0x3EFD22E2"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x40192B3B"
+          ],
+          "colorBits": [
+            "0x3E8FA163",
+            "0x3F4C2D1A",
+            "0x3F489B2E",
+            "0x3F649EE5"
+          ],
+          "ageBits": "0x3D6978D5",
+          "lifeBits": "0x3F087171",
+          "uvFrame": 11,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_1"
+        },
+        {
+          "particleId": "ordinary:effect_tap_perfect/kira#25",
+          "systemId": "ordinary:effect_tap_perfect/kira",
+          "sequence": 29,
+          "positionBits": [
+            "0xBE5E6A8E",
+            "0x3DFED187",
+            "0xBF5FA14D"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0xB5D9E622",
+            "0xC130103C"
+          ],
+          "sizeBits": [
+            "0x3EB0B49F",
+            "0x3EB0B49F",
+            "0x3EB0B49F"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x4066C799"
+          ],
+          "colorBits": [
+            "0x3F292C54",
+            "0x3F67B3C8",
+            "0x3F65B149",
+            "0x3F6098E1"
+          ],
+          "ageBits": "0x3D6978D5",
+          "lifeBits": "0x3EEDE645",
+          "uvFrame": 11,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_1"
+        },
+        {
+          "particleId": "ordinary:effect_tap_perfect/kira (1)#1",
+          "systemId": "ordinary:effect_tap_perfect/kira (1)",
+          "sequence": 30,
+          "positionBits": [
+            "0x3F49D4B8",
+            "0x3DED8519",
+            "0xBE58244B"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0xB4839C8B",
+            "0xC039E14B"
+          ],
+          "sizeBits": [
+            "0x3F38AC63",
+            "0x3F38AC63",
+            "0x3F38AC63"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x00000000"
+          ],
+          "colorBits": [
+            "0x3F0B8403",
+            "0x3F5CE7CE",
+            "0x3F628547",
+            "0x3F800000"
+          ],
+          "ageBits": "0x3D6978D5",
+          "lifeBits": "0x3ED6B91E",
+          "uvFrame": 14,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_1"
+        },
+        {
+          "particleId": "ordinary:effect_tap_perfect/kira (1)#2",
+          "systemId": "ordinary:effect_tap_perfect/kira (1)",
+          "sequence": 31,
+          "positionBits": [
+            "0x3F04E6EE",
+            "0xBEAEB6E8",
+            "0xBE29DEFD"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0xB48C1F8B",
+            "0xC01622D3"
+          ],
+          "sizeBits": [
+            "0x3EE984E3",
+            "0x3EE984E3",
+            "0x3EE984E3"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x00000000"
+          ],
+          "colorBits": [
+            "0x3F11A9FA",
+            "0x3F609BFB",
+            "0x3F65A1BE",
+            "0x3F800000"
+          ],
+          "ageBits": "0x3D6978D5",
+          "lifeBits": "0x3F0DE943",
+          "uvFrame": 14,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_1"
+        },
+        {
+          "particleId": "ordinary:effect_tap_perfect/kira (1)#3",
+          "systemId": "ordinary:effect_tap_perfect/kira (1)",
+          "sequence": 32,
+          "positionBits": [
+            "0x3F3A5C55",
+            "0x3E38C6F3",
+            "0xBF0192C6"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0xB5667C6F",
+            "0xC0D1A55B"
+          ],
+          "sizeBits": [
+            "0x3F16A3BE",
+            "0x3F16A3BE",
+            "0x3F16A3BE"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x00000000"
+          ],
+          "colorBits": [
+            "0x3F447CF2",
+            "0x3F7F39EA",
+            "0x3F7F599B",
+            "0x3F800000"
+          ],
+          "ageBits": "0x3D6978D5",
+          "lifeBits": "0x3ED7197A",
+          "uvFrame": 14,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_1"
+        }
+      ],
+      "finalSampleSha256": "737B89789FA23518759015F20877CD6C0E97B9486E9C120671B889E4F8203912",
+      "randomState": [
+        {
+          "systemId": "ordinary:effect_tap_perfect",
+          "stateU32": [
+            2623149759,
+            2466200663,
+            3791707413,
+            589381924
+          ]
+        },
+        {
+          "systemId": "ordinary:effect_tap_perfect/Smatt_1",
+          "stateU32": [
+            996761207,
+            1172183431,
+            1644947383,
+            638522168
+          ]
+        },
+        {
+          "systemId": "ordinary:effect_tap_perfect/Sring_1",
+          "stateU32": [
+            2960656549,
+            1786918506,
+            1093661634,
+            1848036483
+          ]
+        },
+        {
+          "systemId": "ordinary:effect_tap_perfect/Sring_2",
+          "stateU32": [
+            3074990587,
+            1526781758,
+            203857269,
+            4187226586
+          ]
+        },
+        {
+          "systemId": "ordinary:effect_tap_perfect/kira",
+          "stateU32": [
+            4245896134,
+            3227846369,
+            2108799988,
+            3093024034
+          ]
+        },
+        {
+          "systemId": "ordinary:effect_tap_perfect/kira (1)",
+          "stateU32": [
+            2157656919,
+            200612318,
+            1614008292,
+            3448636646
+          ]
+        },
+        {
+          "systemId": "ordinary:effect_tap_perfect/kira_par_2",
+          "stateU32": [
+            718743457,
+            3513898362,
+            3602660435,
+            3659222825
+          ]
+        },
+        {
+          "systemId": "ordinary:effect_tap_perfect/light_lay_2",
+          "stateU32": [
+            2104475316,
+            302603186,
+            4222718284,
+            2142884143
+          ]
+        },
+        {
+          "systemId": "ordinary:effect_tap_perfect/ring_2",
+          "stateU32": [
+            28768062,
+            2079958360,
+            2617528138,
+            4211043162
+          ]
+        },
+        {
+          "systemId": "ordinary:effect_tap_perfect/ring_3",
+          "stateU32": [
+            4208760996,
+            2111646004,
+            1346895005,
+            1805970176
+          ]
+        },
+        {
+          "systemId": "ordinary:effect_tap_perfect/star",
+          "stateU32": [
+            3453780861,
+            3064360089,
+            308273841,
+            2598323022
+          ]
+        }
+      ],
+      "projectionSha256": "5C0B93A0B090E473518ACEE1AC80F8A1F9758233AACA04D1EBE791F435A0789F"
+    },
+    {
+      "case": "tapkeep-pause-freeze",
+      "root": "ordinary:effect_TapKeep",
+      "frames": [
+        {
+          "frame": 1,
+          "deltaBits": "0x3C888889",
+          "paused": false,
+          "sampleCount": 23,
+          "sampleSha256": "4B44F078B8EA5C0A12C3A823CFE82D78D8D1C6F758B1576305F3E4CD04E79011"
+        },
+        {
+          "frame": 2,
+          "deltaBits": "0x3C888889",
+          "paused": false,
+          "sampleCount": 23,
+          "sampleSha256": "AAAF8A288EB43FA8626999CC233820F1E20063333A4BC2B5D11A7E6AFE91F250"
+        },
+        {
+          "frame": 3,
+          "deltaBits": "0x3C888889",
+          "paused": true,
+          "sampleCount": 23,
+          "sampleSha256": "AAAF8A288EB43FA8626999CC233820F1E20063333A4BC2B5D11A7E6AFE91F250"
+        },
+        {
+          "frame": 4,
+          "deltaBits": "0x3C888889",
+          "paused": true,
+          "sampleCount": 23,
+          "sampleSha256": "AAAF8A288EB43FA8626999CC233820F1E20063333A4BC2B5D11A7E6AFE91F250"
+        },
+        {
+          "frame": 5,
+          "deltaBits": "0x3C888889",
+          "paused": true,
+          "sampleCount": 23,
+          "sampleSha256": "AAAF8A288EB43FA8626999CC233820F1E20063333A4BC2B5D11A7E6AFE91F250"
+        },
+        {
+          "frame": 6,
+          "deltaBits": "0x3C888889",
+          "paused": false,
+          "sampleCount": 23,
+          "sampleSha256": "92C8B8F0C8BCD055FBA9C4EFB494509C90715E15CB0F69A28B4230F4217EAA0F"
+        },
+        {
+          "frame": 7,
+          "deltaBits": "0x3C888889",
+          "paused": false,
+          "sampleCount": 23,
+          "sampleSha256": "5C9967F1C5B9274515E2BC61AAA495B9F17B6143B36AB9B86C86FE803F5C7E96"
+        },
+        {
+          "frame": 8,
+          "deltaBits": "0x3C888889",
+          "paused": false,
+          "sampleCount": 23,
+          "sampleSha256": "A606CF0E80DEE820D2F90399B84C99AC8F753C13E09259F05F334E6E36805966"
+        }
+      ],
+      "finalSampleCount": 23,
+      "finalSamples": [
+        {
+          "particleId": "ordinary:effect_TapKeep/par_parOnpu_a#1",
+          "systemId": "ordinary:effect_TapKeep/par_parOnpu_a",
+          "sequence": 1,
+          "positionBits": [
+            "0xBE418DAD",
+            "0x3E5C83A4",
+            "0xBEE5A14C"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0xB5800000",
+            "0xC0AC38F8"
+          ],
+          "sizeBits": [
+            "0x3F564B36",
+            "0x3F564B36",
+            "0x3F564B36"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x00000000"
+          ],
+          "colorBits": [
+            "0x3F6F24BA",
+            "0x3F7E0813",
+            "0x3F7D04C4",
+            "0x3F640F5E"
+          ],
+          "ageBits": "0x3DAAAAAB",
+          "lifeBits": "0x3EE67D70",
+          "uvFrame": 9,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_2"
+        },
+        {
+          "particleId": "ordinary:effect_TapKeep/par_parOnpu_a#2",
+          "systemId": "ordinary:effect_TapKeep/par_parOnpu_a",
+          "sequence": 2,
+          "positionBits": [
+            "0x3F53A707",
+            "0x3E0A6DDD",
+            "0xBF08C337"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0xB5800000",
+            "0xC0CD24D2"
+          ],
+          "sizeBits": [
+            "0x3F730753",
+            "0x3F730753",
+            "0x3F730753"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x00000000"
+          ],
+          "colorBits": [
+            "0x3F65919C",
+            "0x3F7BD492",
+            "0x3F7A432D",
+            "0x3F597E40"
+          ],
+          "ageBits": "0x3DAAAAAB",
+          "lifeBits": "0x3ECF59D0",
+          "uvFrame": 9,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_2"
+        },
+        {
+          "particleId": "ordinary:effect_TapKeep/par_parOnpu_a#3",
+          "systemId": "ordinary:effect_TapKeep/par_parOnpu_a",
+          "sequence": 3,
+          "positionBits": [
+            "0x3EAE7852",
+            "0xBE639A52",
+            "0xBF1649D5"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0xB5800000",
+            "0xC0E16EC0"
+          ],
+          "sizeBits": [
+            "0x3F7A40F4",
+            "0x3F7A40F4",
+            "0x3F7A40F4"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x00000000"
+          ],
+          "colorBits": [
+            "0x3F677A60",
+            "0x3F7D1466",
+            "0x3F7B9B72",
+            "0x3F5FBDF1"
+          ],
+          "ageBits": "0x3DAAAAAB",
+          "lifeBits": "0x3ECAE31C",
+          "uvFrame": 9,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_2"
+        },
+        {
+          "particleId": "ordinary:effect_TapKeep/par_parOnpu_a#4",
+          "systemId": "ordinary:effect_TapKeep/par_parOnpu_a",
+          "sequence": 4,
+          "positionBits": [
+            "0x3E2EE903",
+            "0x3E913C27",
+            "0xBF40C6BA"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0xB5800000",
+            "0xC110950B"
+          ],
+          "sizeBits": [
+            "0x3F6134E5",
+            "0x3F6134E5",
+            "0x3F6134E5"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x00000000"
+          ],
+          "colorBits": [
+            "0x3F6B810E",
+            "0x3F7DBBCF",
+            "0x3F7C7FE8",
+            "0x3F62CFC1"
+          ],
+          "ageBits": "0x3DAAAAAB",
+          "lifeBits": "0x3ED6A53A",
+          "uvFrame": 9,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_2"
+        },
+        {
+          "particleId": "ordinary:effect_TapKeep/par_parOnpu_a#5",
+          "systemId": "ordinary:effect_TapKeep/par_parOnpu_a",
+          "sequence": 5,
+          "positionBits": [
+            "0x3E973C50",
+            "0x3CAF069F",
+            "0xBF204BFF"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0xB5C00000",
+            "0xC0F071FE"
+          ],
+          "sizeBits": [
+            "0x3F5291B6",
+            "0x3F5291B6",
+            "0x3F5291B6"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x00000000"
+          ],
+          "colorBits": [
+            "0x3F71A87A",
+            "0x3F7E5F5A",
+            "0x3F7D8280",
+            "0x3F65ACAB"
+          ],
+          "ageBits": "0x3DAAAAAB",
+          "lifeBits": "0x3EF08958",
+          "uvFrame": 9,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_2"
+        },
+        {
+          "particleId": "ordinary:effect_TapKeep/par_parOnpu_b#1",
+          "systemId": "ordinary:effect_TapKeep/par_parOnpu_b",
+          "sequence": 6,
+          "positionBits": [
+            "0x3F14CE53",
+            "0x3D222C36",
+            "0xBF48B0AC"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0xB5800000",
+            "0xC1168480"
+          ],
+          "sizeBits": [
+            "0x3F046059",
+            "0x3F046059",
+            "0x3F046059"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x00000000"
+          ],
+          "colorBits": [
+            "0x3F653995",
+            "0x3F7BB233",
+            "0x3F7B70C5",
+            "0x3F5DD3FD"
+          ],
+          "ageBits": "0x3DAAAAAB",
+          "lifeBits": "0x3EC51B64",
+          "uvFrame": 7,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_2"
+        },
+        {
+          "particleId": "ordinary:effect_TapKeep/par_parOnpu_b#2",
+          "systemId": "ordinary:effect_TapKeep/par_parOnpu_b",
+          "sequence": 7,
+          "positionBits": [
+            "0xBF6D56A2",
+            "0xBE8DFF7C",
+            "0xBEDE981A"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0xB5000000",
+            "0xC0A6F214"
+          ],
+          "sizeBits": [
+            "0x3F185A62",
+            "0x3F185A62",
+            "0x3F185A62"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x00000000"
+          ],
+          "colorBits": [
+            "0x3F59DE22",
+            "0x3F79EF24",
+            "0x3F7988EF",
+            "0x3F582802"
+          ],
+          "ageBits": "0x3DAAAAAB",
+          "lifeBits": "0x3EA6F74C",
+          "uvFrame": 7,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_2"
+        },
+        {
+          "particleId": "ordinary:effect_TapKeep/par_parOnpu_b#3",
+          "systemId": "ordinary:effect_TapKeep/par_parOnpu_b",
+          "sequence": 8,
+          "positionBits": [
+            "0xBF6668D1",
+            "0x3E1B5227",
+            "0xBEF13F60"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0xB5800000",
+            "0xC0B4EF86"
+          ],
+          "sizeBits": [
+            "0x3F0C883C",
+            "0x3F0C883C",
+            "0x3F0C883C"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x00000000"
+          ],
+          "colorBits": [
+            "0x3F6A097F",
+            "0x3F7BCA93",
+            "0x3F7BF507",
+            "0x3F58DE33"
+          ],
+          "ageBits": "0x3DAAAAAB",
+          "lifeBits": "0x3EEA94EA",
+          "uvFrame": 7,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_2"
+        },
+        {
+          "particleId": "ordinary:effect_TapKeep/par_parStar#1",
+          "systemId": "ordinary:effect_TapKeep/par_parStar",
+          "sequence": 9,
+          "positionBits": [
+            "0xBF6D6AA8",
+            "0xBE98E52C",
+            "0xBF062766"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0xB5800000",
+            "0xC0C93B19"
+          ],
+          "sizeBits": [
+            "0x3E5DA8B9",
+            "0x3E5DA8B9",
+            "0x3E5DA8B9"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x405F824B"
+          ],
+          "colorBits": [
+            "0x3F65E8C4",
+            "0x3F79D0BE",
+            "0x3F7A13F7",
+            "0x3F59F3F0"
+          ],
+          "ageBits": "0x3DAAAAAB",
+          "lifeBits": "0x3ECFF578",
+          "uvFrame": 11,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_1"
+        },
+        {
+          "particleId": "ordinary:effect_TapKeep/par_parStar#2",
+          "systemId": "ordinary:effect_TapKeep/par_parStar",
+          "sequence": 10,
+          "positionBits": [
+            "0x3E2BE81E",
+            "0xBE3E670E",
+            "0xBF074796"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0xB5800000",
+            "0xC0CAEB61"
+          ],
+          "sizeBits": [
+            "0x3E8E71C3",
+            "0x3E8E71C3",
+            "0x3E8E71C3"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x40A4613F"
+          ],
+          "colorBits": [
+            "0x3F61DD74",
+            "0x3F790641",
+            "0x3F792C4E",
+            "0x3F5B2809"
+          ],
+          "ageBits": "0x3DAAAAAB",
+          "lifeBits": "0x3EBCA693",
+          "uvFrame": 11,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_1"
+        },
+        {
+          "particleId": "ordinary:effect_TapKeep/par_parStar#3",
+          "systemId": "ordinary:effect_TapKeep/par_parStar",
+          "sequence": 11,
+          "positionBits": [
+            "0xBF5FF069",
+            "0xBE8032F9",
+            "0xBF2E40C4"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0xB5800000",
+            "0xC102B092"
+          ],
+          "sizeBits": [
+            "0x3E955FF9",
+            "0x3E955FF9",
+            "0x3E955FF9"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x4056B760"
+          ],
+          "colorBits": [
+            "0x3F5E9E10",
+            "0x3F78342D",
+            "0x3F786E96",
+            "0x3F57D40B"
+          ],
+          "ageBits": "0x3DAAAAAB",
+          "lifeBits": "0x3EB61A9C",
+          "uvFrame": 11,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_1"
+        },
+        {
+          "particleId": "ordinary:effect_TapKeep/par_parStar#4",
+          "systemId": "ordinary:effect_TapKeep/par_parStar",
+          "sequence": 12,
+          "positionBits": [
+            "0xBEF7273C",
+            "0x3E4A2E3A",
+            "0xBF158297"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0xB5C00000",
+            "0xC0E043E2"
+          ],
+          "sizeBits": [
+            "0x3E5D634B",
+            "0x3E5D634B",
+            "0x3E5D634B"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x404FE80C"
+          ],
+          "colorBits": [
+            "0x3F6AEA59",
+            "0x3F7B23E8",
+            "0x3F7B399A",
+            "0x3F60D476"
+          ],
+          "ageBits": "0x3DAAAAAB",
+          "lifeBits": "0x3ED8726C",
+          "uvFrame": 11,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_1"
+        },
+        {
+          "particleId": "ordinary:effect_TapKeep/par_parStar#5",
+          "systemId": "ordinary:effect_TapKeep/par_parStar",
+          "sequence": 13,
+          "positionBits": [
+            "0xBF04EA67",
+            "0x3E984D19",
+            "0xBF4BBF0C"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0xB5800000",
+            "0xC118CF49"
+          ],
+          "sizeBits": [
+            "0x3EA9F667",
+            "0x3EA9F667",
+            "0x3EA9F667"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x407C2DFC"
+          ],
+          "colorBits": [
+            "0x3F62B2B5",
+            "0x3F7919C7",
+            "0x3F795A4C",
+            "0x3F58F77C"
+          ],
+          "ageBits": "0x3DAAAAAB",
+          "lifeBits": "0x3EC3AA3A",
+          "uvFrame": 11,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_1"
+        },
+        {
+          "particleId": "ordinary:effect_TapKeep/par_parStar _b#1",
+          "systemId": "ordinary:effect_TapKeep/par_parStar _b",
+          "sequence": 14,
+          "positionBits": [
+            "0xBE890B8D",
+            "0xBE353161",
+            "0xBEDDCF75"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0xB5000000",
+            "0xC0A65B98"
+          ],
+          "sizeBits": [
+            "0x3EFBEE40",
+            "0x3EFBEE40",
+            "0x3EFBEE40"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x3F895B32"
+          ],
+          "colorBits": [
+            "0x3F6A8522",
+            "0x3F7AF8A9",
+            "0x3F7B2122",
+            "0x3F5EA348"
+          ],
+          "ageBits": "0x3DAAAAAB",
+          "lifeBits": "0x3EDBF1EA",
+          "uvFrame": 10,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_2"
+        },
+        {
+          "particleId": "ordinary:effect_TapKeep/par_parStar _b#2",
+          "systemId": "ordinary:effect_TapKeep/par_parStar _b",
+          "sequence": 15,
+          "positionBits": [
+            "0xBF5EB72A",
+            "0xBE174A08",
+            "0xBF52780F"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0xB6000000",
+            "0xC11DDA0C"
+          ],
+          "sizeBits": [
+            "0x3ED30D40",
+            "0x3ED30D40",
+            "0x3ED30D40"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x3E5351A8"
+          ],
+          "colorBits": [
+            "0x3F63D7F6",
+            "0x3F794CA9",
+            "0x3F799B6A",
+            "0x3F57F932"
+          ],
+          "ageBits": "0x3DAAAAAB",
+          "lifeBits": "0x3ECA934C",
+          "uvFrame": 10,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_2"
+        },
+        {
+          "particleId": "ordinary:effect_TapKeep/par_parStar _b#3",
+          "systemId": "ordinary:effect_TapKeep/par_parStar _b",
+          "sequence": 16,
+          "positionBits": [
+            "0xBEC01E8E",
+            "0x3E145B38",
+            "0xBF0D01C6"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0xB5800000",
+            "0xC0D382A7"
+          ],
+          "sizeBits": [
+            "0x3E76D0BE",
+            "0x3E76D0BE",
+            "0x3E76D0BE"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x4043946D"
+          ],
+          "colorBits": [
+            "0x3F67BBBA",
+            "0x3F7A38B1",
+            "0x3F7A7D6D",
+            "0x3F5A7383"
+          ],
+          "ageBits": "0x3DAAAAAB",
+          "lifeBits": "0x3ED7F967",
+          "uvFrame": 10,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_2"
+        },
+        {
+          "particleId": "ordinary:effect_TapKeep/par_parStar _b#4",
+          "systemId": "ordinary:effect_TapKeep/par_parStar _b",
+          "sequence": 17,
+          "positionBits": [
+            "0x3ED25C72",
+            "0xBE7926FC",
+            "0xBF003974"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0xB5800000",
+            "0xC0C0562F"
+          ],
+          "sizeBits": [
+            "0x3EB539A6",
+            "0x3EB539A6",
+            "0x3EB539A6"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x3D2AD623"
+          ],
+          "colorBits": [
+            "0x3F622D2E",
+            "0x3F78C6C8",
+            "0x3F793801",
+            "0x3F53C206"
+          ],
+          "ageBits": "0x3DAAAAAB",
+          "lifeBits": "0x3ECBD6CB",
+          "uvFrame": 10,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_2"
+        },
+        {
+          "particleId": "ordinary:effect_TapKeep/par_parStar _b#5",
+          "systemId": "ordinary:effect_TapKeep/par_parStar _b",
+          "sequence": 18,
+          "positionBits": [
+            "0xBEE026A8",
+            "0x3CC8EE80",
+            "0xBF29F356"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0xB5800000",
+            "0xC0FEED00"
+          ],
+          "sizeBits": [
+            "0x3EAF4B46",
+            "0x3EAF4B46",
+            "0x3EAF4B46"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x3FBE864D"
+          ],
+          "colorBits": [
+            "0x3F5BDF19",
+            "0x3F777A5D",
+            "0x3F77CD8A",
+            "0x3F546206"
+          ],
+          "ageBits": "0x3DAAAAAB",
+          "lifeBits": "0x3EB1A566",
+          "uvFrame": 10,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_2"
+        },
+        {
+          "particleId": "ordinary:effect_TapKeep/par_ring_scale#1",
+          "systemId": "ordinary:effect_TapKeep/par_ring_scale",
+          "sequence": 19,
+          "positionBits": [
+            "0x00000000",
+            "0x3A122C7F",
+            "0xC03FF5DD"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0x3BDB42BE",
+            "0x3BF38381"
+          ],
+          "sizeBits": [
+            "0x405C3E80",
+            "0x405C3E80",
+            "0x405C3E80"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x00000000"
+          ],
+          "colorBits": [
+            "0x3EF045A5",
+            "0x3F5A5A5F",
+            "0x3F1B9BCC",
+            "0x3EABA6A2"
+          ],
+          "ageBits": "0x3DAAAAAB",
+          "lifeBits": "0x3F000000",
+          "uvFrame": 6,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 2,
+          "material": "Mat_parSet_2"
+        },
+        {
+          "particleId": "ordinary:effect_TapKeep/par_square#1",
+          "systemId": "ordinary:effect_TapKeep/par_square",
+          "sequence": 20,
+          "positionBits": [
+            "0x00000000",
+            "0xAEAAAAAB",
+            "0x3A5A740E"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0xB0800000",
+            "0x3C23D70A"
+          ],
+          "sizeBits": [
+            "0x3FB7896A",
+            "0x3FB7896A",
+            "0x3FB7896A"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x00000000"
+          ],
+          "colorBits": [
+            "0x3EF045A5",
+            "0x3F5A5A5F",
+            "0x3F1B9BCC",
+            "0x3EABA6A2"
+          ],
+          "ageBits": "0x3DAAAAAB",
+          "lifeBits": "0x3F000000",
+          "uvFrame": 1,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_2"
+        },
+        {
+          "particleId": "ordinary:effect_TapKeep/ring_rotate_a#1",
+          "systemId": "ordinary:effect_TapKeep/ring_rotate_a",
+          "sequence": 21,
+          "positionBits": [
+            "0x00000000",
+            "0x00000000",
+            "0xC0400000"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x00000000"
+          ],
+          "sizeBits": [
+            "0x40866666",
+            "0x40866666",
+            "0x40866666"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x3F060A92"
+          ],
+          "colorBits": [
+            "0x3ECA3D25",
+            "0x3F6A6F63",
+            "0x3F58DDCA",
+            "0x3F800000"
+          ],
+          "ageBits": "0x3DAAAAAB",
+          "lifeBits": "0x41A00000",
+          "uvFrame": 6,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 2,
+          "material": "Mat_parSet_2"
+        },
+        {
+          "particleId": "ordinary:effect_TapKeep/ring_rotate_b#1",
+          "systemId": "ordinary:effect_TapKeep/ring_rotate_b",
+          "sequence": 22,
+          "positionBits": [
+            "0x00000000",
+            "0x00000000",
+            "0xC0400000"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x00000000"
+          ],
+          "sizeBits": [
+            "0x40600000",
+            "0x40600000",
+            "0x40600000"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x3EDF66F4"
+          ],
+          "colorBits": [
+            "0x3ECA3D25",
+            "0x3F6A6F63",
+            "0x3F58DDCA",
+            "0x3F800000"
+          ],
+          "ageBits": "0x3DAAAAAB",
+          "lifeBits": "0x41A00000",
+          "uvFrame": 15,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 2,
+          "material": "Mat_parSet_2"
+        },
+        {
+          "particleId": "ordinary:effect_TapKeep/ring_rotate_c#1",
+          "systemId": "ordinary:effect_TapKeep/ring_rotate_c",
+          "sequence": 23,
+          "positionBits": [
+            "0x00000000",
+            "0x00000000",
+            "0xC0400000"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x00000000"
+          ],
+          "sizeBits": [
+            "0x40900000",
+            "0x40900000",
+            "0x40900000"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x3F060A92"
+          ],
+          "colorBits": [
+            "0x3ECA3D25",
+            "0x3F6A6F63",
+            "0x3F58DDCA",
+            "0x3F800000"
+          ],
+          "ageBits": "0x3DAAAAAB",
+          "lifeBits": "0x41A00000",
+          "uvFrame": 15,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 2,
+          "material": "Mat_parSet_2"
+        }
+      ],
+      "finalSampleSha256": "A606CF0E80DEE820D2F90399B84C99AC8F753C13E09259F05F334E6E36805966",
+      "randomState": [
+        {
+          "systemId": "ordinary:effect_TapKeep",
+          "stateU32": [
+            3554845541,
+            4120806362,
+            1326427907,
+            2733483824
+          ]
+        },
+        {
+          "systemId": "ordinary:effect_TapKeep/par_parOnpu_a",
+          "stateU32": [
+            253861339,
+            3101124535,
+            3393873440,
+            2674952035
+          ]
+        },
+        {
+          "systemId": "ordinary:effect_TapKeep/par_parOnpu_b",
+          "stateU32": [
+            1579254544,
+            623259371,
+            2225631752,
+            3452905070
+          ]
+        },
+        {
+          "systemId": "ordinary:effect_TapKeep/par_parStar",
+          "stateU32": [
+            2804101170,
+            1933216375,
+            3322067144,
+            2093517700
+          ]
+        },
+        {
+          "systemId": "ordinary:effect_TapKeep/par_parStar _b",
+          "stateU32": [
+            1617890578,
+            396055660,
+            154192746,
+            1646974740
+          ]
+        },
+        {
+          "systemId": "ordinary:effect_TapKeep/par_ring_scale",
+          "stateU32": [
+            2846020117,
+            3893591517,
+            2381687021,
+            606680552
+          ]
+        },
+        {
+          "systemId": "ordinary:effect_TapKeep/par_square",
+          "stateU32": [
+            247916082,
+            1383966357,
+            1676701959,
+            395374088
+          ]
+        },
+        {
+          "systemId": "ordinary:effect_TapKeep/ring_rotate_a",
+          "stateU32": [
+            3372553786,
+            3775836504,
+            4054873770,
+            978729522
+          ]
+        },
+        {
+          "systemId": "ordinary:effect_TapKeep/ring_rotate_b",
+          "stateU32": [
+            2687359250,
+            3802385915,
+            1573178581,
+            2904553545
+          ]
+        },
+        {
+          "systemId": "ordinary:effect_TapKeep/ring_rotate_c",
+          "stateU32": [
+            3704003906,
+            1562424060,
+            3340041139,
+            4123225938
+          ]
+        }
+      ],
+      "projectionSha256": "E881662EE68C50384198677AA750652E367C96E7C1C008198161EA86586CD614"
+    },
+    {
+      "case": "restart-active",
+      "root": "ordinary:effect_tap_good",
+      "beforeSha256": "6F3AABE3F7A783631227DEB177D836ECB86B5DF38DBDF5C0F717217E41E2F793",
+      "afterSha256": "23AC6345A28CFFF37642037356E86FE9476FCC07DD1541909F8F4D014589312A",
+      "afterSampleCount": 9,
+      "afterSamples": [
+        {
+          "particleId": "ordinary:effect_tap_good/Sring_1#2",
+          "systemId": "ordinary:effect_tap_good/Sring_1",
+          "sequence": 12,
+          "positionBits": [
+            "0x00000000",
+            "0xBE6147AE",
+            "0x392EC33E"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0xB0800000",
+            "0x3C23D70A"
+          ],
+          "sizeBits": [
+            "0x402AE148",
+            "0x402AE148",
+            "0x402AE148"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x00000000"
+          ],
+          "colorBits": [
+            "0x3F078788",
+            "0x3F5CDCDD",
+            "0x3F800000",
+            "0x3F34B4B5"
+          ],
+          "ageBits": "0x3C888889",
+          "lifeBits": "0x3F19999A",
+          "uvFrame": 0,
+          "sortingOrder": 5,
+          "renderMode": 1,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_2"
+        },
+        {
+          "particleId": "ordinary:effect_tap_good/kira#8",
+          "systemId": "ordinary:effect_tap_good/kira",
+          "sequence": 13,
+          "positionBits": [
+            "0x3DC9BDAA",
+            "0x3E6277D8",
+            "0xBE45EAE7"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0xB5D064DE",
+            "0xC1398C36"
+          ],
+          "sizeBits": [
+            "0x3E999032",
+            "0x3E999032",
+            "0x3E999032"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x00000000"
+          ],
+          "colorBits": [
+            "0x3F449EEC",
+            "0x3F679313",
+            "0x3F800000",
+            "0x3F800000"
+          ],
+          "ageBits": "0x3C888889",
+          "lifeBits": "0x3EE4770E",
+          "uvFrame": 14,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_1"
+        },
+        {
+          "particleId": "ordinary:effect_tap_good/kira#9",
+          "systemId": "ordinary:effect_tap_good/kira",
+          "sequence": 14,
+          "positionBits": [
+            "0xBF82222C",
+            "0xBE89A90D",
+            "0xBE2FFAA8"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0xB550D9D6",
+            "0xC124FAFF"
+          ],
+          "sizeBits": [
+            "0x3F05978B",
+            "0x3F05978B",
+            "0x3F05978B"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x00000000"
+          ],
+          "colorBits": [
+            "0x3F097E47",
+            "0x3F4F40A7",
+            "0x3F800000",
+            "0x3F800000"
+          ],
+          "ageBits": "0x3C888889",
+          "lifeBits": "0x3EA54BD8",
+          "uvFrame": 14,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_1"
+        },
+        {
+          "particleId": "ordinary:effect_tap_good/kira#10",
+          "systemId": "ordinary:effect_tap_good/kira",
+          "sequence": 15,
+          "positionBits": [
+            "0x3F0F7EEE",
+            "0xBDEDF961",
+            "0xBD889953"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0xB4D792D0",
+            "0xC0800FBF"
+          ],
+          "sizeBits": [
+            "0x3EB74F14",
+            "0x3EB74F14",
+            "0x3EB74F14"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x00000000"
+          ],
+          "colorBits": [
+            "0x3F403074",
+            "0x3F65C06A",
+            "0x3F800000",
+            "0x3F800000"
+          ],
+          "ageBits": "0x3C888889",
+          "lifeBits": "0x3EE4F094",
+          "uvFrame": 14,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_1"
+        },
+        {
+          "particleId": "ordinary:effect_tap_good/kira#11",
+          "systemId": "ordinary:effect_tap_good/kira",
+          "sequence": 16,
+          "positionBits": [
+            "0x3F657C88",
+            "0xBC22F662",
+            "0xBD9E1948"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0xB5560AD5",
+            "0xC09437B2"
+          ],
+          "sizeBits": [
+            "0x3E8DF087",
+            "0x3E8DF087",
+            "0x3E8DF087"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x00000000"
+          ],
+          "colorBits": [
+            "0x3F48D798",
+            "0x3F694F9B",
+            "0x3F800000",
+            "0x3F800000"
+          ],
+          "ageBits": "0x3C888889",
+          "lifeBits": "0x3E9E4FD0",
+          "uvFrame": 14,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_1"
+        },
+        {
+          "particleId": "ordinary:effect_tap_good/kira#12",
+          "systemId": "ordinary:effect_tap_good/kira",
+          "sequence": 17,
+          "positionBits": [
+            "0x3EF84C70",
+            "0xBDC0827D",
+            "0xBE0323E6"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0xB55245E4",
+            "0xC0F5E34E"
+          ],
+          "sizeBits": [
+            "0x3E5E19E0",
+            "0x3E5E19E0",
+            "0x3E5E19E0"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x00000000"
+          ],
+          "colorBits": [
+            "0x3F26640F",
+            "0x3F5B23B6",
+            "0x3F800000",
+            "0x3F800000"
+          ],
+          "ageBits": "0x3C888889",
+          "lifeBits": "0x3F05E25F",
+          "uvFrame": 14,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_1"
+        },
+        {
+          "particleId": "ordinary:effect_tap_good/kira#13",
+          "systemId": "ordinary:effect_tap_good/kira",
+          "sequence": 18,
+          "positionBits": [
+            "0xBF29CC2F",
+            "0xBD8FC2E9",
+            "0xBDC762C0"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0xB5540F86",
+            "0xC0BAEC94"
+          ],
+          "sizeBits": [
+            "0x3F011F69",
+            "0x3F011F69",
+            "0x3F011F69"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x00000000"
+          ],
+          "colorBits": [
+            "0x3F38E1FA",
+            "0x3F62BEFF",
+            "0x3F800000",
+            "0x3F800000"
+          ],
+          "ageBits": "0x3C888889",
+          "lifeBits": "0x3ED148BA",
+          "uvFrame": 14,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_1"
+        },
+        {
+          "particleId": "ordinary:effect_tap_good/kira#14",
+          "systemId": "ordinary:effect_tap_good/kira",
+          "sequence": 19,
+          "positionBits": [
+            "0xBE0A18EE",
+            "0x3EA32834",
+            "0xBDC3AC47"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0xB5543412",
+            "0xC0B7717E"
+          ],
+          "sizeBits": [
+            "0x3E6E3F06",
+            "0x3E6E3F06",
+            "0x3E6E3F06"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x00000000"
+          ],
+          "colorBits": [
+            "0x3F19C39C",
+            "0x3F55F20E",
+            "0x3F800000",
+            "0x3F800000"
+          ],
+          "ageBits": "0x3C888889",
+          "lifeBits": "0x3EC1801F",
+          "uvFrame": 14,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_1"
+        },
+        {
+          "particleId": "ordinary:effect_tap_good/star#2",
+          "systemId": "ordinary:effect_tap_good/star",
+          "sequence": 20,
+          "positionBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x00000000"
+          ],
+          "velocityBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x00000000"
+          ],
+          "sizeBits": [
+            "0x403AE148",
+            "0x403AE148",
+            "0x403AE148"
+          ],
+          "rotationBits": [
+            "0x00000000",
+            "0x00000000",
+            "0x00000000"
+          ],
+          "colorBits": [
+            "0x3F2DADAE",
+            "0x3F5FDFE0",
+            "0x3F7DFDFE",
+            "0x3F7776F7"
+          ],
+          "ageBits": "0x3C888889",
+          "lifeBits": "0x3F000000",
+          "uvFrame": 1,
+          "sortingOrder": 50,
+          "renderMode": 0,
+          "renderAlignment": 0,
+          "material": "Mat_parSet_2"
+        }
+      ],
+      "projectionSha256": "23AC6345A28CFFF37642037356E86FE9476FCC07DD1541909F8F4D014589312A"
+    }
+  ],
+  "corpusRootCount": 17,
+  "corpusSmoke": [
+    {
+      "root": "directional:effect_tap_directional_flick_l",
+      "sampleCount": 55,
+      "sampleSha256": "45B7BE586F7041B97B186F76E36EACD7FD01422B7AB1F38C8289DD11B99C8340",
+      "randomStateSha256": "43112EA8EA4701BDF4A96E139CBD3EA9F3FE782D83FD11472721C5A97C37CEF8"
+    },
+    {
+      "root": "directional:effect_tap_directional_flick_l_2",
+      "sampleCount": 42,
+      "sampleSha256": "9A9E359F6CFEF5C45DC790FC60B48A7836CB45DE61BEC608D0C6CD4972E71EB5",
+      "randomStateSha256": "AB95EAD07E8052C2B9F587D248F062DF2DE67DEA7FFDAF32F92DBB402AD58D27"
+    },
+    {
+      "root": "directional:effect_tap_directional_flick_l_3",
+      "sampleCount": 60,
+      "sampleSha256": "D4FAE86DB09C82416C00CFC63DD1149F8A1E9440F0476669C5E6296530596388",
+      "randomStateSha256": "EA2A2487517DCCF0C4C32DD2D46A4DFB04E56C615EE8A0CF9DC8E3A87BB8A96F"
+    },
+    {
+      "root": "directional:effect_tap_directional_flick_l_finger",
+      "sampleCount": 4,
+      "sampleSha256": "12242779B9D47E8A347B4E20912A4406D1ECCF95BF02E1D913D6668B020A5FBB",
+      "randomStateSha256": "D48D2A14FC53857ABB2D25404DAAF12AD9703EE5EB51ED88938D8744A42A53DF"
+    },
+    {
+      "root": "directional:effect_tap_directional_flick_r",
+      "sampleCount": 55,
+      "sampleSha256": "6F5DE5123764657145336010294821704815F08D6FE59C6E280CBC316D76F1A5",
+      "randomStateSha256": "A7132DAB0596C8C77A7566C50037987865374EEE0EFBE1E52D2183CC609A3EB6"
+    },
+    {
+      "root": "directional:effect_tap_directional_flick_r_2",
+      "sampleCount": 42,
+      "sampleSha256": "80D04C54113C9A469B0A9985B7490CB5B20294A39545BD84D278AB4EEAE21DAF",
+      "randomStateSha256": "8B940A8A267AE2C07EB1C2087CB91ADA66EA222DB3B82D0C92555453F1C5CA70"
+    },
+    {
+      "root": "directional:effect_tap_directional_flick_r_3",
+      "sampleCount": 60,
+      "sampleSha256": "234F4CB637F474C9DC168B161D2AD904F03E4E27EC1D08AFA28FE7FBE563037F",
+      "randomStateSha256": "526B2BCC5C819C5BED94E6316E69A77553E50BB5BFA839ACE6EDDA09C2F8CC98"
+    },
+    {
+      "root": "directional:effect_tap_directional_flick_r_finger",
+      "sampleCount": 4,
+      "sampleSha256": "74EB8885A297B755DD25A63DED503DBC990263C0492806C6C8BA197F8B76E74D",
+      "randomStateSha256": "6DF7910BD520C8B2DF95B20623BF4243CF4327B5596E13DBE5F2CA8612D15A0B"
+    },
+    {
+      "root": "ordinary:effect_TapKeep",
+      "sampleCount": 23,
+      "sampleSha256": "F49A23D07BAE724F65AFBA8AD39333A56BCF56963E60E7E32651D38DD43362F1",
+      "randomStateSha256": "D26427608BA78B88E339494039AA80195155FF244983DA9D2332346C3BA45EA5"
+    },
+    {
+      "root": "ordinary:effect_tap",
+      "sampleCount": 10,
+      "sampleSha256": "BE5BEEDA3E41A574AAA5EC487FBBDD6A23862901C3FCF7FBCE7A7075183E6F37",
+      "randomStateSha256": "1491FAA5D62E3196C000FF1F4646DABAB63FF52E265FF966E228FBAC75C4B96A"
+    },
+    {
+      "root": "ordinary:effect_tap_good",
+      "sampleCount": 9,
+      "sampleSha256": "B8899791CE462490218FFBC004632D3F0AE77B70C7B4D831C670F489AF5E9427",
+      "randomStateSha256": "E7B35A042F3714FB5BEC31AF0FCA7FB99A353DB16A74503EBDD86F85E61999EE"
+    },
+    {
+      "root": "ordinary:effect_tap_great",
+      "sampleCount": 11,
+      "sampleSha256": "BBBEEC9A31A664C16B8FE08B4244EA2696A5696DAAB8A6FFFA58170B740B6BD6",
+      "randomStateSha256": "77CE1C758D46DE2AF3566D78A4772B5F29B56D00BA10E91D1806B14CF69C5EE6"
+    },
+    {
+      "root": "ordinary:effect_tap_perfect",
+      "sampleCount": 64,
+      "sampleSha256": "B15BBFD157BDB29E2818ABBF35852963F2AFC2C529473F6CF061A497554AE2B0",
+      "randomStateSha256": "16273D037500D539C8EA23956CE023DED9CC3942CB824935267B7534CC64209B"
+    },
+    {
+      "root": "ordinary:effect_tap_skill_good",
+      "sampleCount": 9,
+      "sampleSha256": "7E99320738224B40C4F500E524C47A9308D2C49A7B686717233DFE05EB47F6F1",
+      "randomStateSha256": "680D82B05696B53CC7D819F9646FD7A845C2B94615C37D30CD0E86111A7CE77A"
+    },
+    {
+      "root": "ordinary:effect_tap_skill_great",
+      "sampleCount": 11,
+      "sampleSha256": "8796497E7D3E0DC8BCF587A3409902F0AF4AAA8A1A3869E1EA1B8518274A6066",
+      "randomStateSha256": "278FD1633F6FC8D0A85D4E0E88561CEE07DE027B9104139148029A132F10C759"
+    },
+    {
+      "root": "ordinary:effect_tap_skill_perfect",
+      "sampleCount": 65,
+      "sampleSha256": "BD5197093E0129D87C151677C24A3125763B0E7C398337E7DF7A1EB6412952B5",
+      "randomStateSha256": "600820ADBCDF231FA45224838F8E1E92FB9D77BAB8B139A378106370EAA85D39"
+    },
+    {
+      "root": "ordinary:effect_tap_swipe",
+      "sampleCount": 37,
+      "sampleSha256": "B3C028F93E59EE241CE55D4F2B3435732B602992AA9E9F9FC2E0E62E4B36F1B2",
+      "randomStateSha256": "FB72E21D7E3F273E1C3232B2510D01B7D0DE6CE709479A911E1E57A068107711"
+    }
+  ],
+  "corpusProjectionSha256": "96D1CABE8ED5AD65B9BBAAAE81230C47BE5F905E30C8C82E975A2C6987107246",
+  "projectionSha256": "B874672BDFA53B65D4C406C91E16F7775B365B4CC1DA8FF44447F1EAC758568D",
+  "profileProjectionSha256": "66D78A227898C95C670EC20690F12BA8685D84CB3F668D994E9DAC8391227492"
+}

@@ -1,0 +1,244 @@
+{
+  "schemaVersion": 1,
+  "fidelity": "current-static-portable-complete",
+  "classification": "portable-policy-is-not-original-runtime-evidence",
+  "sources": {
+    "resource": {
+      "path": "resource_profile.json",
+      "bytes": 3948882,
+      "sha256": "5CF5CBF7DCB39B9B7A378518806FB804AFA226C41E057756AE236AA5EB534452"
+    },
+    "random": {
+      "path": "particle_random_draw_static.json",
+      "bytes": 71752,
+      "sha256": "29A5326FBFBB3AA2C898EB1FE7C4ED9D36D2C044A6AE91BE3F16F435B1DD998A"
+    },
+    "route": {
+      "path": "particle_route_lifecycle_static.json",
+      "bytes": 12608,
+      "sha256": "389280BF73C77A29D3D722D7C5AFA843D6219A861B2F5778727919C3DDA5B7AF"
+    },
+    "renderer": {
+      "path": "particle_renderer_handoff_static.json",
+      "bytes": 16341,
+      "sha256": "3914D11B7CC4ED29DD49AF34C7169741B568FE6DE0A896654D3F54A959C5F562"
+    },
+    "quality": {
+      "path": "quality_profile.json",
+      "bytes": 8906,
+      "sha256": "918AC7CE9074B14EADF90DD1F5F59A2929D5F75951606AC7C9BBE227CA6F5D2D"
+    },
+    "fixedPlan": {
+      "path": "fixed_device_portable_completion_plan.json",
+      "bytes": 5064,
+      "sha256": "62075BBA4D2F8108C8BC62761BB3FB7512F1889845BD53F3D1FE3482E3A05A26"
+    }
+  },
+  "numeric": {
+    "integer": "uint32 modulo 2^32",
+    "domainFloat": "IEEE-754 binary32 rounded after every named arithmetic operation",
+    "invalid": "NaN, infinity, negative delta and unsupported enum fail evidence-required",
+    "clamp": "only a formula explicitly named below may clamp"
+  },
+  "supportedInventory": {
+    "systems": 120,
+    "profiles": 100,
+    "enabledModuleRelations": 605,
+    "moduleCombinations": 16,
+    "moduleTypes": [
+      "ClampVelocityModule",
+      "ColorModule",
+      "EmissionModule",
+      "InitialModule",
+      "RotationBySpeedModule",
+      "RotationModule",
+      "ShapeModule",
+      "SizeModule",
+      "UVModule"
+    ],
+    "routeRoots": [
+      "directional:effect_tap_directional_flick_l",
+      "directional:effect_tap_directional_flick_l_2",
+      "directional:effect_tap_directional_flick_l_3",
+      "directional:effect_tap_directional_flick_l_finger",
+      "directional:effect_tap_directional_flick_r",
+      "directional:effect_tap_directional_flick_r_2",
+      "directional:effect_tap_directional_flick_r_3",
+      "directional:effect_tap_directional_flick_r_finger",
+      "ordinary:effect_TapKeep",
+      "ordinary:effect_tap",
+      "ordinary:effect_tap_good",
+      "ordinary:effect_tap_great",
+      "ordinary:effect_tap_perfect",
+      "ordinary:effect_tap_skill_good",
+      "ordinary:effect_tap_skill_great",
+      "ordinary:effect_tap_skill_perfect",
+      "ordinary:effect_tap_swipe"
+    ],
+    "shapeTypes": [
+      4,
+      5,
+      10
+    ],
+    "rendererModes": [
+      0,
+      1
+    ],
+    "rendererAlignments": [
+      0,
+      2
+    ]
+  },
+  "random": {
+    "fidelity": "current-static-portable-complete",
+    "system_iteration": "sort current semantic systems by (bundle key, semantic identity) once per session",
+    "session_initial_global_state_u32": [
+      0,
+      1,
+      1812433254,
+      1900727103
+    ],
+    "system_seed_assignment": "one current xorshift128 step per stable system in portable iteration order",
+    "particle_random_slots": 12,
+    "particle_slot_generation": "for each birth, advance the owning per-system xorshift128 stream once per slot, then apply the current seed-derived sample expression",
+    "module_slot_assignment": {
+      "0": "lifetime",
+      "1": "speed",
+      "2": "size-x-and-uniform-size",
+      "3": "size-y",
+      "4": "size-z",
+      "5": "color",
+      "6": "rotation-x",
+      "7": "rotation-y-and-rotation-by-speed",
+      "8": "rotation-z-and-uv-start-frame",
+      "9": "gravity-and-uv-frame-over-time",
+      "10": "clamp-velocity",
+      "11": "shape-or-emission-extra"
+    },
+    "canonical_module_application_order": [
+      "InitialModule.birth",
+      "EmissionModule.event",
+      "ShapeModule.birth",
+      "ClampVelocityModule.update",
+      "ColorModule.update",
+      "SizeModule.update",
+      "RotationModule.update",
+      "RotationBySpeedModule.update",
+      "UVModule.update"
+    ],
+    "event_random_stream": "burst probability, rate and shape consume the same owning system stream in chronological event order before birth slots",
+    "frame_partition": "birth events are ordered by exact Float32 event time and stable event sequence; each particle update samples its immutable 12 slots so coarse and split outer frames do not consume different random counts",
+    "reset": "session reset reconstructs the fixed portable global state; clear removes live particles but does not rewind the owning system stream; retry creates a new session stream",
+    "classification": "portable-policy-not-original-module-draw-witness"
+  },
+  "emission": {
+    "interval": "events in (previousTime,currentTime], with time-zero bursts included on first step",
+    "burst": "serialized time/count/cycle/repeat/probability; current probability is uniformly 1",
+    "rate": "analytic n/rate timestamps per duration cycle",
+    "capacity": "drop a birth when live count already equals maxNumParticles; never steal",
+    "expiry": "update existing, remove expired, then process chronologically ordered births",
+    "loop": "repeat emission at serialized duration",
+    "prewarm": "analytically seed one preceding duration at Play before the first outer frame",
+    "culling": "portable simulation always advances while engine runs; serialized culling mode is retained only for the difference report"
+  },
+  "curves": {
+    "states": {
+      "0": "constant scalar",
+      "1": "scalar times cubic Hermite maxCurve",
+      "2": "random lerp of scaled min/max cubic Hermite curves",
+      "3": "random lerp minScalar to scalar"
+    },
+    "gradientStates": {
+      "0": "maxColor",
+      "1": "maxGradient",
+      "2": "random lerp minColor/maxColor",
+      "3": "random lerp minGradient/maxGradient",
+      "4": "maxGradient sampled by immutable random slot"
+    },
+    "gradientTime": "uint16 key times with component-wise linear interpolation",
+    "normalizedAge": "Float32 clamp(age/lifetime,0,1)"
+  },
+  "shape": {
+    "supportedCurrentTypes": {
+      "4": "Cone",
+      "5": "Box",
+      "10": "Circle"
+    },
+    "cone": "slot11 azimuth; slot10 radius/thickness; serialized angle gives direction",
+    "box": "slots9/10/11 centered in serialized scale",
+    "circle": "slot11 azimuth and slot10 radius/thickness",
+    "transform": "system local TRS then parent TRS in stored order"
+  },
+  "update": {
+    "order": [
+      "gravity",
+      "clamp-velocity",
+      "position-Euler",
+      "rotation-over-lifetime",
+      "rotation-by-speed",
+      "age",
+      "size/color/UV sample"
+    ],
+    "gravity": "velocity.y += -9.81*gravityModifier*delta",
+    "clampVelocity": "when speed exceeds magnitude, lerp speed toward magnitude by dampen",
+    "uv": "floor((startFrame+frameOverTime*cycles)*tilesX*tilesY) modulo tile count"
+  },
+  "renderer": {
+    "handoff": "one immutable sorted sample after particle update per host outer frame",
+    "sortTuple": [
+      "sortingOrder",
+      "systemSemanticIdentity",
+      "particleCreationSequence"
+    ],
+    "modes": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "texture": "current RGBA SHA/size plus material texture name; Pixi upload is backend-only",
+    "blend": "Mobile/Particles/Additive maps add; other locked material maps normal",
+    "physicalClaim": "no GPU/driver/framebuffer or visible-onset parity"
+  },
+  "frameTransaction": {
+    "preflight": "all business, particle, audio and render/sample batches before any commit",
+    "commitOrder": [
+      "OneFrame",
+      "business-state",
+      "particle-command-and-simulation",
+      "audio-command",
+      "render-command-and-particle-sample"
+    ],
+    "meaning": "semantic phase only; no physical audible/visible ordering claim",
+    "laterFailure": "discard all staged domains and preserve prior committed snapshot"
+  },
+  "lifecycle": {
+    "classification": "portable-policy-not-original-lifecycle-witness",
+    "route_mapping": "use the closed current route table exactly; unsupported enum or invalid range fails evidence-required before command publication",
+    "play_restart": "non-null active route emits Stop(clear), Clear, then Play atomically; inactive emits Play; resources are preflight-complete so runtime null is an invariant fault",
+    "outer_frame": "advance particle simulation exactly once per host outer frame with Float32 delta; never once per adaptive NoteManager substep",
+    "pause": "freeze particle domain with the engine clock and consume no random/event draws until resume; this intentionally differs from native UI-pause continuation",
+    "movetime": "particle backend refuses standalone seek; the host must restore a whole-engine checkpoint and deterministically replay. Entering MoveTime clears all live particles, route commands remain suppressed in state 14, and replay reconstructs particles/random together with notes, score, life, skill, audio and render state",
+    "game_over_and_natural_end": "after the terminal semantic frame, clear all particles and publish one final empty sample",
+    "retry_and_reset": "clear all, discard system streams, then construct a fresh session from the fixed portable global state",
+    "fault": "preflight and stage all particle commands/simulation samples before publication; on fault publish nothing and preserve the last committed cross-domain frame",
+    "dispose": "clear all live particles and release resource/backend handles exactly once; repeat dispose is idempotent",
+    "repeat_session": "no particle identity, state, random stream, command sequence or renderer handle survives into the next session",
+    "targeted_r1": "not launched: current managed route and accepted MoveTime facts answer the actionable static questions; physical scene-destruction cleanup cannot close the exact identity claim on the fixed device and is replaced only for portable product delivery",
+    "auto_live_budget_remaining": 10
+  },
+  "productionBoundaries": {
+    "engineTime": "host outer-frame delta only",
+    "forbidden": [
+      "Math.random",
+      "wall clock",
+      "Pixi ticker",
+      "AudioContext time as domain time",
+      "fixture or Reverse worktree reads"
+    ],
+    "unknown": "fail evidence-required",
+    "networkAllowed": false
+  }
+}

@@ -1,0 +1,745 @@
+{
+  "schemaVersion": 1,
+  "status": "portable-particle-functional-gate-closed-original-exact-open",
+  "fidelity": "current-static-portable-complete",
+  "ledger": [
+    {
+      "id": "V01",
+      "claim": "locked 10.1.4 sample qualification",
+      "exactStatus": "closed-current-10.1.4",
+      "portableDisposition": "closed-current-source",
+      "portableExpected": "accept only the locked package/version/ABI/Unity profile"
+    },
+    {
+      "id": "D01",
+      "claim": "managed owner/method/layout/enum/literal/callsite",
+      "exactStatus": "closed-current-10.1.4",
+      "portableDisposition": "closed-by-current-source",
+      "portableExpected": "the named policy/profile/oracle field is mandatory and failure-closed"
+    },
+    {
+      "id": "D02",
+      "claim": "native icall/Play/active-list/PlayerLoop provenance",
+      "exactStatus": "closed-current-10.1.4",
+      "portableDisposition": "closed-by-current-source",
+      "portableExpected": "the named policy/profile/oracle field is mandatory and failure-closed"
+    },
+    {
+      "id": "D03",
+      "claim": "bundle/prefab/component identity",
+      "exactStatus": "closed-current-10.1.4",
+      "portableDisposition": "closed-by-current-source",
+      "portableExpected": "the named policy/profile/oracle field is mandatory and failure-closed"
+    },
+    {
+      "id": "D04",
+      "claim": "120-system module/renderer/material/texture/quality inventory",
+      "exactStatus": "closed-current-10.1.4",
+      "portableDisposition": "closed-by-current-source",
+      "portableExpected": "the named policy/profile/oracle field is mandatory and failure-closed"
+    },
+    {
+      "id": "D05",
+      "claim": "ordinary result and range route",
+      "exactStatus": "closed-current-10.1.4",
+      "portableDisposition": "closed-by-current-source",
+      "portableExpected": "the named policy/profile/oracle field is mandatory and failure-closed"
+    },
+    {
+      "id": "D06",
+      "claim": "skill result route",
+      "exactStatus": "closed-current-10.1.4",
+      "portableDisposition": "closed-by-current-source",
+      "portableExpected": "the named policy/profile/oracle field is mandatory and failure-closed"
+    },
+    {
+      "id": "D07",
+      "claim": "flick/directional/finger/MoveTime route",
+      "exactStatus": "closed-current-10.1.4",
+      "portableDisposition": "closed-by-current-source",
+      "portableExpected": "the named policy/profile/oracle field is mandatory and failure-closed"
+    },
+    {
+      "id": "D08",
+      "claim": "Long/Slide TapKeep/restart/cleanup route",
+      "exactStatus": "closed-current-10.1.4",
+      "portableDisposition": "closed-by-current-source",
+      "portableExpected": "the named policy/profile/oracle field is mandatory and failure-closed"
+    },
+    {
+      "id": "D09",
+      "claim": "silent/GameOver/practice/Auto/manual/unknown route",
+      "exactStatus": "closed-current-10.1.4",
+      "portableDisposition": "closed-by-current-source",
+      "portableExpected": "the named policy/profile/oracle field is mandatory and failure-closed"
+    },
+    {
+      "id": "D10",
+      "claim": "concrete alias and same-frame correlation",
+      "exactStatus": "open-not-claimed-fixed-device-limit",
+      "portableDisposition": "closed-by-explicit-portable-policy-and-oracle",
+      "portableExpected": "the named policy/profile/oracle field is mandatory and failure-closed"
+    },
+    {
+      "id": "D11",
+      "claim": "setup/list/pool/reuse/cross-session",
+      "exactStatus": "open-not-claimed-fixed-device-limit",
+      "portableDisposition": "closed-by-explicit-portable-policy-and-oracle",
+      "portableExpected": "the named policy/profile/oracle field is mandatory and failure-closed"
+    },
+    {
+      "id": "D12",
+      "claim": "active/isPlaying/Stop/Clear/Play/list mutation",
+      "exactStatus": "closed-current-10.1.4",
+      "portableDisposition": "closed-by-current-source",
+      "portableExpected": "the named policy/profile/oracle field is mandatory and failure-closed"
+    },
+    {
+      "id": "D13",
+      "claim": "startDelay/duration/emission/lifetime/capacity",
+      "exactStatus": "open-not-claimed-fixed-device-limit",
+      "portableDisposition": "closed-by-explicit-portable-policy-and-oracle",
+      "portableExpected": "the named policy/profile/oracle field is mandatory and failure-closed"
+    },
+    {
+      "id": "D14",
+      "claim": "shape/velocity/modules/space/culling/prewarm",
+      "exactStatus": "open-not-claimed-fixed-device-limit",
+      "portableDisposition": "closed-by-explicit-portable-policy-and-oracle",
+      "portableExpected": "the named policy/profile/oracle field is mandatory and failure-closed"
+    },
+    {
+      "id": "D15",
+      "claim": "seed/auto-seed/state algorithm owner",
+      "exactStatus": "closed-current-10.1.4",
+      "portableDisposition": "closed-by-current-source",
+      "portableExpected": "the named policy/profile/oracle field is mandatory and failure-closed"
+    },
+    {
+      "id": "D16",
+      "claim": "module draw/reuse/reset/frame partition",
+      "exactStatus": "open-not-claimed-fixed-device-limit",
+      "portableDisposition": "closed-by-explicit-portable-policy-and-oracle",
+      "portableExpected": "the named policy/profile/oracle field is mandatory and failure-closed"
+    },
+    {
+      "id": "D17",
+      "claim": "managed outer-frame/substep freeze",
+      "exactStatus": "open-not-claimed-fixed-device-limit",
+      "portableDisposition": "closed-by-explicit-portable-policy-and-oracle",
+      "portableExpected": "the named policy/profile/oracle field is mandatory and failure-closed"
+    },
+    {
+      "id": "D18",
+      "claim": "native Begin/End/work/emission/render phase",
+      "exactStatus": "open-not-claimed-fixed-device-limit",
+      "portableDisposition": "closed-by-explicit-portable-policy-and-oracle",
+      "portableExpected": "the named policy/profile/oracle field is mandatory and failure-closed"
+    },
+    {
+      "id": "D19",
+      "claim": "geometry/alignment/parent TRS/bounds",
+      "exactStatus": "closed-current-10.1.4",
+      "portableDisposition": "closed-by-current-source",
+      "portableExpected": "the named policy/profile/oracle field is mandatory and failure-closed"
+    },
+    {
+      "id": "D20",
+      "claim": "texture/shader/color/blend/renderer gate",
+      "exactStatus": "closed-current-10.1.4",
+      "portableDisposition": "closed-by-current-source",
+      "portableExpected": "the named policy/profile/oracle field is mandatory and failure-closed"
+    },
+    {
+      "id": "D21",
+      "claim": "sorting/camera/mask/depth/Pixi mapping",
+      "exactStatus": "closed-current-10.1.4",
+      "portableDisposition": "closed-by-current-source",
+      "portableExpected": "the named policy/profile/oracle field is mandatory and failure-closed"
+    },
+    {
+      "id": "D22",
+      "claim": "physical visible onset/peak and capture error",
+      "exactStatus": "open-not-claimed-fixed-device-limit",
+      "portableDisposition": "closed-by-explicit-portable-policy-and-oracle",
+      "portableExpected": "the named policy/profile/oracle field is mandatory and failure-closed"
+    },
+    {
+      "id": "D23",
+      "claim": "particle/render/audio physical ordering",
+      "exactStatus": "open-not-claimed-fixed-device-limit",
+      "portableDisposition": "closed-by-explicit-portable-policy-and-oracle",
+      "portableExpected": "the named policy/profile/oracle field is mandatory and failure-closed"
+    },
+    {
+      "id": "D24",
+      "claim": "animation/local clock/pause sample",
+      "exactStatus": "open-not-claimed-fixed-device-limit",
+      "portableDisposition": "closed-by-explicit-portable-policy-and-oracle",
+      "portableExpected": "the named policy/profile/oracle field is mandatory and failure-closed"
+    },
+    {
+      "id": "D25",
+      "claim": "pause/resume emitter/random/elapsed/list",
+      "exactStatus": "closed-current-10.1.4",
+      "portableDisposition": "closed-by-current-source",
+      "portableExpected": "the named policy/profile/oracle field is mandatory and failure-closed"
+    },
+    {
+      "id": "D26",
+      "claim": "MoveTime/ReturnTime/seek state",
+      "exactStatus": "closed-current-10.1.4",
+      "portableDisposition": "closed-by-current-source",
+      "portableExpected": "the named policy/profile/oracle field is mandatory and failure-closed"
+    },
+    {
+      "id": "D27",
+      "claim": "GameOver/end/exit cleanup",
+      "exactStatus": "open-not-claimed-fixed-device-limit",
+      "portableDisposition": "closed-by-explicit-portable-policy-and-oracle",
+      "portableExpected": "the named policy/profile/oracle field is mandatory and failure-closed"
+    },
+    {
+      "id": "D28",
+      "claim": "retry/reset/fault/dispose/repeat",
+      "exactStatus": "open-not-claimed-fixed-device-limit",
+      "portableDisposition": "closed-by-explicit-portable-policy-and-oracle",
+      "portableExpected": "the named policy/profile/oracle field is mandatory and failure-closed"
+    },
+    {
+      "id": "D29",
+      "claim": "cross-domain preflight/atomic transaction",
+      "exactStatus": "open-not-claimed-fixed-device-limit",
+      "portableDisposition": "closed-by-explicit-portable-policy-and-oracle",
+      "portableExpected": "the named policy/profile/oracle field is mandatory and failure-closed"
+    },
+    {
+      "id": "D30",
+      "claim": "terminal fault/snapshot/context loss/after-dispose",
+      "exactStatus": "open-not-claimed-fixed-device-limit",
+      "portableDisposition": "closed-by-explicit-portable-policy-and-oracle",
+      "portableExpected": "the named policy/profile/oracle field is mandatory and failure-closed"
+    },
+    {
+      "id": "D31",
+      "claim": "case oracle/fixture/privacy/offline",
+      "exactStatus": "open-not-claimed-fixed-device-limit",
+      "portableDisposition": "closed-by-explicit-portable-policy-and-oracle",
+      "portableExpected": "the named policy/profile/oracle field is mandatory and failure-closed"
+    },
+    {
+      "id": "D32",
+      "claim": "aggregate closure and production formula",
+      "exactStatus": "open-not-claimed-fixed-device-limit",
+      "portableDisposition": "closed-by-explicit-portable-policy-and-oracle",
+      "portableExpected": "the named policy/profile/oracle field is mandatory and failure-closed"
+    },
+    {
+      "id": "DC-R01",
+      "claim": "sample and device provenance",
+      "exactStatus": "closed-current-10.1.4",
+      "portableDisposition": "closed-by-current-source",
+      "portableExpected": "consume only the frozen current source or named portable replacement"
+    },
+    {
+      "id": "DC-R02",
+      "claim": "managed/native/layout/enum/current binary",
+      "exactStatus": "closed-current-10.1.4",
+      "portableDisposition": "closed-by-current-source",
+      "portableExpected": "consume only the frozen current source or named portable replacement"
+    },
+    {
+      "id": "DC-R03",
+      "claim": "resource and quality profile",
+      "exactStatus": "closed-current-10.1.4",
+      "portableDisposition": "closed-by-current-source",
+      "portableExpected": "consume only the frozen current source or named portable replacement"
+    },
+    {
+      "id": "DC-R04",
+      "claim": "all judgement routes and call order",
+      "exactStatus": "closed-current-10.1.4",
+      "portableDisposition": "closed-by-current-source",
+      "portableExpected": "consume only the frozen current source or named portable replacement"
+    },
+    {
+      "id": "DC-R05",
+      "claim": "owners/identity/index/pool",
+      "exactStatus": "open-not-claimed-fixed-device-limit",
+      "portableDisposition": "closed-by-explicit-portable-policy-and-oracle",
+      "portableExpected": "consume only the frozen current source or named portable replacement"
+    },
+    {
+      "id": "DC-R06",
+      "claim": "state transitions and list mutation",
+      "exactStatus": "closed-current-10.1.4",
+      "portableDisposition": "closed-by-current-source",
+      "portableExpected": "consume only the frozen current source or named portable replacement"
+    },
+    {
+      "id": "DC-R07",
+      "claim": "outer-frame/native/simulation/render phase",
+      "exactStatus": "open-not-claimed-fixed-device-limit",
+      "portableDisposition": "closed-by-explicit-portable-policy-and-oracle",
+      "portableExpected": "consume only the frozen current source or named portable replacement"
+    },
+    {
+      "id": "DC-R08",
+      "claim": "random state/draw/reset/partition",
+      "exactStatus": "open-not-claimed-fixed-device-limit",
+      "portableDisposition": "closed-by-explicit-portable-policy-and-oracle",
+      "portableExpected": "consume only the frozen current source or named portable replacement"
+    },
+    {
+      "id": "DC-R09",
+      "claim": "module/curve/emission/capacity/simulation",
+      "exactStatus": "open-not-claimed-fixed-device-limit",
+      "portableDisposition": "closed-by-explicit-portable-policy-and-oracle",
+      "portableExpected": "consume only the frozen current source or named portable replacement"
+    },
+    {
+      "id": "DC-R10",
+      "claim": "geometry/UV/material/sorting/projection",
+      "exactStatus": "closed-current-10.1.4",
+      "portableDisposition": "closed-by-current-source",
+      "portableExpected": "consume only the frozen current source or named portable replacement"
+    },
+    {
+      "id": "DC-R11",
+      "claim": "animation/local clock/pause",
+      "exactStatus": "open-not-claimed-fixed-device-limit",
+      "portableDisposition": "closed-by-explicit-portable-policy-and-oracle",
+      "portableExpected": "consume only the frozen current source or named portable replacement"
+    },
+    {
+      "id": "DC-R12",
+      "claim": "judgement/OneFrame/score/render/audio order",
+      "exactStatus": "open-not-claimed-fixed-device-limit",
+      "portableDisposition": "closed-by-explicit-portable-policy-and-oracle",
+      "portableExpected": "consume only the frozen current source or named portable replacement"
+    },
+    {
+      "id": "DC-R13",
+      "claim": "physical onset/cue/BGM alignment",
+      "exactStatus": "open-not-claimed-fixed-device-limit",
+      "portableDisposition": "closed-by-explicit-portable-policy-and-oracle",
+      "portableExpected": "consume only the frozen current source or named portable replacement"
+    },
+    {
+      "id": "DC-R14",
+      "claim": "pause/seek/retry/end/fault/dispose",
+      "exactStatus": "open-not-claimed-fixed-device-limit",
+      "portableDisposition": "closed-by-explicit-portable-policy-and-oracle",
+      "portableExpected": "consume only the frozen current source or named portable replacement"
+    },
+    {
+      "id": "DC-R15",
+      "claim": "ordinary/Auto/manual/practice/skin/HAB",
+      "exactStatus": "open-not-claimed-fixed-device-limit",
+      "portableDisposition": "closed-by-explicit-portable-policy-and-oracle",
+      "portableExpected": "consume only the frozen current source or named portable replacement"
+    },
+    {
+      "id": "DC-R16",
+      "claim": "original-to-portable/GPU/audio/device/privacy difference",
+      "exactStatus": "open-not-claimed-fixed-device-limit",
+      "portableDisposition": "closed-by-explicit-portable-policy-and-oracle",
+      "portableExpected": "consume only the frozen current source or named portable replacement"
+    },
+    {
+      "id": "DC-C01",
+      "claim": "valid profile prepare",
+      "exactStatus": "closed-current-10.1.4",
+      "portableDisposition": "closed-by-frozen-expected-and-oracle",
+      "portableExpected": "prepare reaches ready with 120 systems and no commands"
+    },
+    {
+      "id": "DC-C02",
+      "claim": "wrong sample/version/ABI/profile",
+      "exactStatus": "open-not-claimed-fixed-device-limit",
+      "portableDisposition": "closed-by-frozen-expected-and-oracle",
+      "portableExpected": "evidence-required before mutation"
+    },
+    {
+      "id": "DC-C03",
+      "claim": "missing provider/resource",
+      "exactStatus": "open-not-claimed-fixed-device-limit",
+      "portableDisposition": "closed-by-frozen-expected-and-oracle",
+      "portableExpected": "evidence-required before provider read or mutation"
+    },
+    {
+      "id": "DC-C04",
+      "claim": "length/hash/decode/metadata mismatch",
+      "exactStatus": "open-not-claimed-fixed-device-limit",
+      "portableDisposition": "closed-by-frozen-expected-and-oracle",
+      "portableExpected": "evidence-required and prior snapshot unchanged"
+    },
+    {
+      "id": "DC-C05",
+      "claim": "duplicate/missing key and later rollback",
+      "exactStatus": "open-not-claimed-fixed-device-limit",
+      "portableDisposition": "closed-by-frozen-expected-and-oracle",
+      "portableExpected": "evidence-required with zero partial resources"
+    },
+    {
+      "id": "DC-C06",
+      "claim": "backend/session/scene capability",
+      "exactStatus": "open-not-claimed-fixed-device-limit",
+      "portableDisposition": "closed-by-frozen-expected-and-oracle",
+      "portableExpected": "one session capability; duplicate prepare/use fails"
+    },
+    {
+      "id": "DC-C07",
+      "claim": "ordinary None",
+      "exactStatus": "closed-current-10.1.4",
+      "portableDisposition": "closed-by-frozen-expected-and-oracle",
+      "portableExpected": "one ordinary effect_tap restart command"
+    },
+    {
+      "id": "DC-C08",
+      "claim": "ordinary Miss",
+      "exactStatus": "closed-current-10.1.4",
+      "portableDisposition": "closed-by-frozen-expected-and-oracle",
+      "portableExpected": "no particle command"
+    },
+    {
+      "id": "DC-C09",
+      "claim": "ordinary Bad",
+      "exactStatus": "closed-current-10.1.4",
+      "portableDisposition": "closed-by-frozen-expected-and-oracle",
+      "portableExpected": "no particle command"
+    },
+    {
+      "id": "DC-C10",
+      "claim": "ordinary Good",
+      "exactStatus": "closed-current-10.1.4",
+      "portableDisposition": "closed-by-frozen-expected-and-oracle",
+      "portableExpected": "one effect_tap_good restart command"
+    },
+    {
+      "id": "DC-C11",
+      "claim": "ordinary Great",
+      "exactStatus": "closed-current-10.1.4",
+      "portableDisposition": "closed-by-frozen-expected-and-oracle",
+      "portableExpected": "one effect_tap_great restart command"
+    },
+    {
+      "id": "DC-C12",
+      "claim": "ordinary Perfect",
+      "exactStatus": "closed-current-10.1.4",
+      "portableDisposition": "closed-by-frozen-expected-and-oracle",
+      "portableExpected": "one effect_tap_perfect restart command"
+    },
+    {
+      "id": "DC-C13",
+      "claim": "Skill Good",
+      "exactStatus": "closed-current-10.1.4",
+      "portableDisposition": "closed-by-frozen-expected-and-oracle",
+      "portableExpected": "one skill_good restart command"
+    },
+    {
+      "id": "DC-C14",
+      "claim": "Skill Great",
+      "exactStatus": "closed-current-10.1.4",
+      "portableDisposition": "closed-by-frozen-expected-and-oracle",
+      "portableExpected": "one skill_great restart command"
+    },
+    {
+      "id": "DC-C15",
+      "claim": "Skill Perfect",
+      "exactStatus": "closed-current-10.1.4",
+      "portableDisposition": "closed-by-frozen-expected-and-oracle",
+      "portableExpected": "one skill_perfect restart command"
+    },
+    {
+      "id": "DC-C16",
+      "claim": "Flick high/low",
+      "exactStatus": "closed-current-10.1.4",
+      "portableDisposition": "closed-by-frozen-expected-and-oracle",
+      "portableExpected": "Good/Great/Perfect share swipe; lower results emit none"
+    },
+    {
+      "id": "DC-C17",
+      "claim": "Directional left counts",
+      "exactStatus": "closed-current-10.1.4",
+      "portableDisposition": "closed-by-frozen-expected-and-oracle",
+      "portableExpected": "counts 0/1,2,>=3 map left roots 1,2,3"
+    },
+    {
+      "id": "DC-C18",
+      "claim": "Directional right counts",
+      "exactStatus": "closed-current-10.1.4",
+      "portableDisposition": "closed-by-frozen-expected-and-oracle",
+      "portableExpected": "counts 0/1,2,>=3 map right roots 1,2,3"
+    },
+    {
+      "id": "DC-C19",
+      "claim": "Directional finger",
+      "exactStatus": "closed-current-10.1.4",
+      "portableDisposition": "closed-by-frozen-expected-and-oracle",
+      "portableExpected": "current side owner maps one finger root; MoveTime suppresses"
+    },
+    {
+      "id": "DC-C20",
+      "claim": "MoveTime/silent/unknown",
+      "exactStatus": "closed-current-10.1.4",
+      "portableDisposition": "closed-by-frozen-expected-and-oracle",
+      "portableExpected": "MoveTime clears/suppresses; silent shares particles; unknown fails evidence-required"
+    },
+    {
+      "id": "DC-C21",
+      "claim": "Long head TapKeep",
+      "exactStatus": "closed-current-10.1.4",
+      "portableDisposition": "closed-by-frozen-expected-and-oracle",
+      "portableExpected": "activate and restart TapKeep root"
+    },
+    {
+      "id": "DC-C22",
+      "claim": "Long tail cleanup/result",
+      "exactStatus": "closed-current-10.1.4",
+      "portableDisposition": "closed-by-frozen-expected-and-oracle",
+      "portableExpected": "Stop/Clear/deactivate TapKeep then result route"
+    },
+    {
+      "id": "DC-C23",
+      "claim": "Long Miss/deactivate",
+      "exactStatus": "closed-current-10.1.4",
+      "portableDisposition": "closed-by-frozen-expected-and-oracle",
+      "portableExpected": "Stop/Clear/deactivate with no Miss particle"
+    },
+    {
+      "id": "DC-C24",
+      "claim": "Slide routes",
+      "exactStatus": "closed-current-10.1.4",
+      "portableDisposition": "closed-by-frozen-expected-and-oracle",
+      "portableExpected": "pooled slide keep starts; tail/Miss/deactivate Stop/Clear/deactivate"
+    },
+    {
+      "id": "DC-C25",
+      "claim": "same-frame multi-note order",
+      "exactStatus": "closed-current-10.1.4",
+      "portableDisposition": "closed-by-frozen-expected-and-oracle",
+      "portableExpected": "stable producer order then stable root/system order"
+    },
+    {
+      "id": "DC-C26",
+      "claim": "repeated active play",
+      "exactStatus": "closed-current-10.1.4",
+      "portableDisposition": "closed-by-frozen-expected-and-oracle",
+      "portableExpected": "active root Stop/Clear/Play atomically"
+    },
+    {
+      "id": "DC-C27",
+      "claim": "inactive active-object transition",
+      "exactStatus": "closed-current-10.1.4",
+      "portableDisposition": "closed-by-frozen-expected-and-oracle",
+      "portableExpected": "inactive emits Play; active object does not invent Stop"
+    },
+    {
+      "id": "DC-C28",
+      "claim": "pool exhaustion/cross-session",
+      "exactStatus": "open-not-claimed-fixed-device-limit",
+      "portableDisposition": "closed-by-frozen-expected-and-oracle",
+      "portableExpected": "capacity drops birth; foreign session identity fails evidence-required"
+    },
+    {
+      "id": "DC-C29",
+      "claim": "seed initialization",
+      "exactStatus": "closed-current-10.1.4",
+      "portableDisposition": "closed-by-frozen-expected-and-oracle",
+      "portableExpected": "fixed global state assigns the frozen first per-system state"
+    },
+    {
+      "id": "DC-C30",
+      "claim": "module draw first samples",
+      "exactStatus": "open-not-claimed-fixed-device-limit",
+      "portableDisposition": "closed-by-frozen-expected-and-oracle",
+      "portableExpected": "twelve immutable slots and frozen first ratios"
+    },
+    {
+      "id": "DC-C31",
+      "claim": "burst/rate birth timestamps",
+      "exactStatus": "open-not-claimed-fixed-device-limit",
+      "portableDisposition": "closed-by-frozen-expected-and-oracle",
+      "portableExpected": "analytic serialized burst/rate timestamps"
+    },
+    {
+      "id": "DC-C32",
+      "claim": "capacity/expiry/loop",
+      "exactStatus": "open-not-claimed-fixed-device-limit",
+      "portableDisposition": "closed-by-frozen-expected-and-oracle",
+      "portableExpected": "expired existing particles removed before chronological births; loop repeats duration"
+    },
+    {
+      "id": "DC-C33",
+      "claim": "lifetime/curve/gradient Float32",
+      "exactStatus": "open-not-claimed-fixed-device-limit",
+      "portableDisposition": "closed-by-frozen-expected-and-oracle",
+      "portableExpected": "binary32 Hermite/gradient samples match simulation oracle"
+    },
+    {
+      "id": "DC-C34",
+      "claim": "Cone/Box/Circle",
+      "exactStatus": "open-not-claimed-fixed-device-limit",
+      "portableDisposition": "closed-by-frozen-expected-and-oracle",
+      "portableExpected": "portable Cone/Box/Circle formulas use fixed slots"
+    },
+    {
+      "id": "DC-C35",
+      "claim": "velocity/clamp/rotation/size/color",
+      "exactStatus": "open-not-claimed-fixed-device-limit",
+      "portableDisposition": "closed-by-frozen-expected-and-oracle",
+      "portableExpected": "named update order and Float32 samples match simulation oracle"
+    },
+    {
+      "id": "DC-C36",
+      "claim": "prewarm/loop/culling/offscreen",
+      "exactStatus": "open-not-claimed-fixed-device-limit",
+      "portableDisposition": "closed-by-frozen-expected-and-oracle",
+      "portableExpected": "one-duration analytic prewarm; loop repeats; no offscreen culling freeze"
+    },
+    {
+      "id": "DC-C37",
+      "claim": "60/120/adaptive partition",
+      "exactStatus": "open-not-claimed-fixed-device-limit",
+      "portableDisposition": "closed-by-frozen-expected-and-oracle",
+      "portableExpected": "one update per supplied 60/120/adaptive outer frame, never adaptive note substeps"
+    },
+    {
+      "id": "DC-C38",
+      "claim": "pause/resume",
+      "exactStatus": "closed-current-10.1.4",
+      "portableDisposition": "closed-by-frozen-expected-and-oracle",
+      "portableExpected": "paused frames preserve samples and random state exactly"
+    },
+    {
+      "id": "DC-C39",
+      "claim": "MoveTime checkpoint/replay",
+      "exactStatus": "open-not-claimed-fixed-device-limit",
+      "portableDisposition": "closed-by-frozen-expected-and-oracle",
+      "portableExpected": "particle-only seek fails; whole-engine checkpoint/replay clears and reconstructs"
+    },
+    {
+      "id": "DC-C40",
+      "claim": "GameOver/end/retry/reset",
+      "exactStatus": "open-not-claimed-fixed-device-limit",
+      "portableDisposition": "closed-by-frozen-expected-and-oracle",
+      "portableExpected": "terminal empty sample; retry/reset fresh stream and zero foreign owners"
+    },
+    {
+      "id": "DC-C41",
+      "claim": "Perfect/OneFrame/audio semantic order",
+      "exactStatus": "open-not-claimed-fixed-device-limit",
+      "portableDisposition": "closed-by-frozen-expected-and-oracle",
+      "portableExpected": "semantic frame commit order matches semantic-frame oracle"
+    },
+    {
+      "id": "DC-C42",
+      "claim": "Play/native/Begin/End/emission",
+      "exactStatus": "open-not-claimed-fixed-device-limit",
+      "portableDisposition": "closed-by-frozen-expected-and-oracle",
+      "portableExpected": "static native relation retained; physical cadence remains unclaimed"
+    },
+    {
+      "id": "DC-C43",
+      "claim": "semantic replacement for visible/cue/BGM oracle",
+      "exactStatus": "open-not-claimed-fixed-device-limit",
+      "portableDisposition": "closed-by-frozen-expected-and-oracle",
+      "portableExpected": "semantic-frame oracle replaces physical onset/cue timing claim"
+    },
+    {
+      "id": "DC-C44",
+      "claim": "first fault and snapshot",
+      "exactStatus": "open-not-claimed-fixed-device-limit",
+      "portableDisposition": "closed-by-frozen-expected-and-oracle",
+      "portableExpected": "first fault is terminal and last committed snapshot is stable"
+    },
+    {
+      "id": "DC-C45",
+      "claim": "later cross-domain invalid mutation",
+      "exactStatus": "open-not-claimed-fixed-device-limit",
+      "portableDisposition": "closed-by-frozen-expected-and-oracle",
+      "portableExpected": "later preflight fault discards every domain"
+    },
+    {
+      "id": "DC-C46",
+      "claim": "dispose/repeat/after-dispose",
+      "exactStatus": "open-not-claimed-fixed-device-limit",
+      "portableDisposition": "closed-by-frozen-expected-and-oracle",
+      "portableExpected": "dispose clears once; repeat idempotent; all later APIs fail"
+    },
+    {
+      "id": "DC-C47",
+      "claim": "ordinary chart aggregate",
+      "exactStatus": "open-not-claimed-fixed-device-limit",
+      "portableDisposition": "closed-by-frozen-expected-and-oracle",
+      "portableExpected": "ordinary scenario command/simulation/frame projections match frozen digests"
+    },
+    {
+      "id": "DC-C48",
+      "claim": "HAB shared route and session aggregate",
+      "exactStatus": "open-not-claimed-fixed-device-limit",
+      "portableDisposition": "closed-by-frozen-expected-and-oracle",
+      "portableExpected": "HAB uses authorized shared portable roots and complete session cleanup"
+    }
+  ],
+  "ledgerCount": 97,
+  "ledgerProjectionSha256": "7ECA6657BECA500055123B90D01D53B888ED26663186A6F480D65E03417975D9",
+  "artifacts": {
+    "particle_portable_policy.json": {
+      "bytes": 10430,
+      "sha256": "2904A3B9E5ADAA2A7B6A581D5122E1DFA33AC78B9D63E5DFDB68653D3FB36D08"
+    },
+    "particle_portable_profile.json": {
+      "bytes": 1529609,
+      "sha256": "2A7FDAB9AEC96F0262F92557047933F19A93EBDC3FAF0345CA4768888E43EA29"
+    },
+    "particle_route_contract.json": {
+      "bytes": 5232,
+      "sha256": "C82F4927A444DB7F38C1770234CEEDFCB1C861B2E0586832A9A9A318CAA77432"
+    },
+    "particle_command_oracle.json": {
+      "bytes": 8235,
+      "sha256": "5BDA0080BA954CEBE7FE8966E756F101359F74E78D5CD31D30E1A9736435197F"
+    },
+    "particle_simulation_oracle.json": {
+      "bytes": 127583,
+      "sha256": "A081A49AAC5F9C1D486D6977EC8590FD494669265C07D9E665916341A65DEDDE"
+    },
+    "particle_semantic_frame_oracle.json": {
+      "bytes": 1740,
+      "sha256": "8EACC3B0F58E2E353F796EADED5750CDFDE3237A216E2A2BDC292BAC85CE802D"
+    },
+    "particle_portable_difference_matrix.json": {
+      "bytes": 3120,
+      "sha256": "E8F8A2A69CF97493E5BEA8271D6F5464E7EEB890A47E2877DFCE18674D67DC4E"
+    }
+  },
+  "dualGate": {
+    "originalDeviceExactGate": "open-not-claimed-fixed-device-limit",
+    "portableParticleFunctionalGate": "closed",
+    "portableProductionAuthorization": true,
+    "g00Authorization": true,
+    "typescriptProductionAuthorization": true,
+    "stage8TestEntryAuthorization": true,
+    "mainProgramIntegrationAuthorization": false
+  },
+  "authorizationFormula": {
+    "allProductReachableRowsDisposed": true,
+    "allPortablePoliciesIndependentlyOracled": true,
+    "unknownPortableMethodsLayoutsConstantsFieldsRoutes": [],
+    "portableBlockingFindings": [],
+    "committedOnlyVerifierRequired": true,
+    "originMainEqualsHeadRequiredBeforeConsumption": true
+  },
+  "exactOpenClaims": [
+    "real 120/adaptive cadence",
+    "GPU/driver framebuffer",
+    "visible onset/peak",
+    "CRI/Android/speaker output"
+  ],
+  "autoLiveBudgetUsed": 0,
+  "autoLiveBudgetRemaining": 10,
+  "rejectedTracesReclassified": false,
+  "portablePolicyClaimedAsOriginalEvidence": false
+}

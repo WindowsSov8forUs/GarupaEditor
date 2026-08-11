@@ -1,0 +1,411 @@
+{
+  "schemaVersion": 1,
+  "generatedBeforeTypescript": true,
+  "caseCount": 32,
+  "cases": [
+    {
+      "case": {
+        "route": "ordinary",
+        "result": "None",
+        "rangeLength": 1
+      },
+      "expected": [
+        {
+          "kind": "play-root",
+          "root": "ordinary:effect_tap",
+          "restartIfActive": true
+        }
+      ]
+    },
+    {
+      "case": {
+        "route": "ordinary",
+        "result": "Miss",
+        "rangeLength": 1
+      },
+      "expected": []
+    },
+    {
+      "case": {
+        "route": "ordinary",
+        "result": "Bad",
+        "rangeLength": 1
+      },
+      "expected": []
+    },
+    {
+      "case": {
+        "route": "ordinary",
+        "result": "Good",
+        "rangeLength": 1
+      },
+      "expected": [
+        {
+          "kind": "play-root",
+          "root": "ordinary:effect_tap_good",
+          "restartIfActive": true
+        }
+      ]
+    },
+    {
+      "case": {
+        "route": "ordinary",
+        "result": "Great",
+        "rangeLength": 1
+      },
+      "expected": [
+        {
+          "kind": "play-root",
+          "root": "ordinary:effect_tap_great",
+          "restartIfActive": true
+        }
+      ]
+    },
+    {
+      "case": {
+        "route": "ordinary",
+        "result": "Perfect",
+        "rangeLength": 1
+      },
+      "expected": [
+        {
+          "kind": "play-root",
+          "root": "ordinary:effect_tap_perfect",
+          "restartIfActive": true
+        }
+      ]
+    },
+    {
+      "case": {
+        "route": "skill",
+        "result": "None",
+        "rangeLength": 1
+      },
+      "expected": [
+        {
+          "kind": "play-root",
+          "root": "ordinary:effect_tap",
+          "restartIfActive": true
+        }
+      ]
+    },
+    {
+      "case": {
+        "route": "skill",
+        "result": "Miss",
+        "rangeLength": 1
+      },
+      "expected": []
+    },
+    {
+      "case": {
+        "route": "skill",
+        "result": "Bad",
+        "rangeLength": 1
+      },
+      "expected": []
+    },
+    {
+      "case": {
+        "route": "skill",
+        "result": "Good",
+        "rangeLength": 1
+      },
+      "expected": [
+        {
+          "kind": "play-root",
+          "root": "ordinary:effect_tap_skill_good",
+          "restartIfActive": true
+        }
+      ]
+    },
+    {
+      "case": {
+        "route": "skill",
+        "result": "Great",
+        "rangeLength": 1
+      },
+      "expected": [
+        {
+          "kind": "play-root",
+          "root": "ordinary:effect_tap_skill_great",
+          "restartIfActive": true
+        }
+      ]
+    },
+    {
+      "case": {
+        "route": "skill",
+        "result": "Perfect",
+        "rangeLength": 1
+      },
+      "expected": [
+        {
+          "kind": "play-root",
+          "root": "ordinary:effect_tap_skill_perfect",
+          "restartIfActive": true
+        }
+      ]
+    },
+    {
+      "case": {
+        "route": "flick",
+        "result": "Miss",
+        "rangeLength": 7
+      },
+      "expected": []
+    },
+    {
+      "case": {
+        "route": "flick",
+        "result": "Bad",
+        "rangeLength": 7
+      },
+      "expected": []
+    },
+    {
+      "case": {
+        "route": "flick",
+        "result": "Good",
+        "rangeLength": 7
+      },
+      "expected": [
+        {
+          "kind": "play-root",
+          "root": "ordinary:effect_tap_swipe",
+          "restartIfActive": true
+        }
+      ]
+    },
+    {
+      "case": {
+        "route": "flick",
+        "result": "Perfect",
+        "rangeLength": 7
+      },
+      "expected": [
+        {
+          "kind": "play-root",
+          "root": "ordinary:effect_tap_swipe",
+          "restartIfActive": true
+        }
+      ]
+    },
+    {
+      "case": {
+        "route": "directional",
+        "result": "Perfect",
+        "side": "left",
+        "count": 0
+      },
+      "expected": [
+        {
+          "kind": "play-root",
+          "root": "directional:effect_tap_directional_flick_l",
+          "restartIfActive": true
+        }
+      ]
+    },
+    {
+      "case": {
+        "route": "directional",
+        "result": "Perfect",
+        "side": "left",
+        "count": 1
+      },
+      "expected": [
+        {
+          "kind": "play-root",
+          "root": "directional:effect_tap_directional_flick_l",
+          "restartIfActive": true
+        }
+      ]
+    },
+    {
+      "case": {
+        "route": "directional",
+        "result": "Perfect",
+        "side": "left",
+        "count": 2
+      },
+      "expected": [
+        {
+          "kind": "play-root",
+          "root": "directional:effect_tap_directional_flick_l_2",
+          "restartIfActive": true
+        }
+      ]
+    },
+    {
+      "case": {
+        "route": "directional",
+        "result": "Perfect",
+        "side": "left",
+        "count": 3
+      },
+      "expected": [
+        {
+          "kind": "play-root",
+          "root": "directional:effect_tap_directional_flick_l_3",
+          "restartIfActive": true
+        }
+      ]
+    },
+    {
+      "case": {
+        "route": "directional",
+        "result": "Perfect",
+        "side": "left",
+        "count": 8
+      },
+      "expected": [
+        {
+          "kind": "play-root",
+          "root": "directional:effect_tap_directional_flick_l_3",
+          "restartIfActive": true
+        }
+      ]
+    },
+    {
+      "case": {
+        "route": "directional",
+        "result": "Perfect",
+        "side": "right",
+        "count": 0
+      },
+      "expected": [
+        {
+          "kind": "play-root",
+          "root": "directional:effect_tap_directional_flick_r",
+          "restartIfActive": true
+        }
+      ]
+    },
+    {
+      "case": {
+        "route": "directional",
+        "result": "Perfect",
+        "side": "right",
+        "count": 1
+      },
+      "expected": [
+        {
+          "kind": "play-root",
+          "root": "directional:effect_tap_directional_flick_r",
+          "restartIfActive": true
+        }
+      ]
+    },
+    {
+      "case": {
+        "route": "directional",
+        "result": "Perfect",
+        "side": "right",
+        "count": 2
+      },
+      "expected": [
+        {
+          "kind": "play-root",
+          "root": "directional:effect_tap_directional_flick_r_2",
+          "restartIfActive": true
+        }
+      ]
+    },
+    {
+      "case": {
+        "route": "directional",
+        "result": "Perfect",
+        "side": "right",
+        "count": 3
+      },
+      "expected": [
+        {
+          "kind": "play-root",
+          "root": "directional:effect_tap_directional_flick_r_3",
+          "restartIfActive": true
+        }
+      ]
+    },
+    {
+      "case": {
+        "route": "directional",
+        "result": "Perfect",
+        "side": "right",
+        "count": 8
+      },
+      "expected": [
+        {
+          "kind": "play-root",
+          "root": "directional:effect_tap_directional_flick_r_3",
+          "restartIfActive": true
+        }
+      ]
+    },
+    {
+      "case": {
+        "route": "directional",
+        "result": "Bad",
+        "side": "left",
+        "count": 3
+      },
+      "expected": []
+    },
+    {
+      "case": {
+        "route": "tap-keep-start",
+        "rangeLength": 7
+      },
+      "expected": [
+        {
+          "kind": "play-root",
+          "root": "ordinary:effect_TapKeep",
+          "restartIfActive": true
+        }
+      ]
+    },
+    {
+      "case": {
+        "route": "tap-keep-stop"
+      },
+      "expected": [
+        {
+          "kind": "stop-clear-deactivate-root",
+          "root": "ordinary:effect_TapKeep"
+        }
+      ]
+    },
+    {
+      "case": {
+        "route": "movetime"
+      },
+      "expected": [
+        {
+          "kind": "clear-all"
+        },
+        {
+          "kind": "suppress-until-replay"
+        }
+      ]
+    },
+    {
+      "case": {
+        "route": "ordinary",
+        "result": "Perfect",
+        "rangeLength": 0
+      },
+      "expected": {
+        "error": "evidence-required"
+      }
+    },
+    {
+      "case": {
+        "route": "unknown-enum"
+      },
+      "expected": {
+        "error": "evidence-required"
+      }
+    }
+  ],
+  "projectionSha256": "3A04C1042AA0CBEECDFB8480EA30E9B02A3E83FE50D4C704A28FC61C67D162D3",
+  "sourceSha256": "C47E94E3679D660372C28D90BD68428508B58F353E5ABBC5F5F1E34D8386B6E0"
+}

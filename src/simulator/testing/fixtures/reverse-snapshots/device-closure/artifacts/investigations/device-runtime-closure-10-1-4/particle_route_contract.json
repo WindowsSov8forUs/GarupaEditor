@@ -1,0 +1,190 @@
+{
+  "schemaVersion": 1,
+  "fidelity": "current-static-portable-complete",
+  "commandKinds": [
+    "play-root",
+    "stop-clear-deactivate-root",
+    "clear-all",
+    "suppress-until-replay"
+  ],
+  "routes": {
+    "result": {
+      "None": -1,
+      "Miss": 0,
+      "Bad": 1,
+      "Good": 2,
+      "Great": 3,
+      "Perfect": 4
+    },
+    "ordinary": {
+      "None": "ordinary:effect_tap",
+      "Miss": null,
+      "Bad": null,
+      "Good": "ordinary:effect_tap_good",
+      "Great": "ordinary:effect_tap_great",
+      "Perfect": "ordinary:effect_tap_perfect",
+      "range_rule": "rangeLength 1..7 selects the correspondingly suffixed prefab array element; invalid index throws in current managed code"
+    },
+    "skill": {
+      "None": "ordinary:effect_tap",
+      "Miss": null,
+      "Bad": null,
+      "Good": "ordinary:effect_tap_skill_good",
+      "Great": "ordinary:effect_tap_skill_great",
+      "Perfect": "ordinary:effect_tap_skill_perfect",
+      "range_rule": "rangeLength 1..7; invalid index throws"
+    },
+    "flick": {
+      "None": null,
+      "Miss": null,
+      "Bad": null,
+      "Good": "ordinary:effect_tap_swipe",
+      "Great": "ordinary:effect_tap_swipe",
+      "Perfect": "ordinary:effect_tap_swipe",
+      "judge_note_types": [
+        3,
+        5
+      ],
+      "range_rule": "rangeLength 1..7; invalid index throws"
+    },
+    "directional": {
+      "play_results": [
+        "Good",
+        "Great",
+        "Perfect"
+      ],
+      "left_game_note_types": [
+        10,
+        12,
+        14,
+        16
+      ],
+      "right_game_note_types": [
+        11,
+        13,
+        15,
+        17
+      ],
+      "left_roots": [
+        "directional:effect_tap_directional_flick_l",
+        "directional:effect_tap_directional_flick_l_2",
+        "directional:effect_tap_directional_flick_l_3"
+      ],
+      "right_roots": [
+        "directional:effect_tap_directional_flick_r",
+        "directional:effect_tap_directional_flick_r_2",
+        "directional:effect_tap_directional_flick_r_3"
+      ],
+      "count_rule": "0 or 1 selects element 0; 2 selects element 1; greater than 2 selects element 2",
+      "unknown_game_note_type": "current logs then supplies null; no Play"
+    },
+    "directional_finger": {
+      "play_results": [
+        "Good",
+        "Great",
+        "Perfect"
+      ],
+      "suppressed_game_state": 14,
+      "left_after_note_types": [
+        2,
+        4,
+        9,
+        11
+      ],
+      "right_after_note_types": [
+        3,
+        5,
+        10,
+        12
+      ],
+      "fallback_left_game_note_types": [
+        10,
+        12,
+        14,
+        16
+      ],
+      "fallback_right_game_note_types": [
+        11,
+        13,
+        15,
+        17
+      ],
+      "left_root": "directional:effect_tap_directional_flick_l_finger",
+      "right_root": "directional:effect_tap_directional_flick_r_finger"
+    },
+    "tap_keep": {
+      "stop_all_before_judge_note_types": [
+        1,
+        2,
+        5,
+        6,
+        7
+      ],
+      "start_judge_note_type": 4,
+      "root": "ordinary:effect_TapKeep",
+      "range_rule": "rangeLength 1..7",
+      "start_sequence": [
+        "activate",
+        "Play"
+      ],
+      "stop_sequence": [
+        "Stop",
+        "Clear",
+        "deactivate"
+      ]
+    },
+    "slide_keep": {
+      "root": "ordinary:effect_TapKeep",
+      "play_owner": "NoteSlide.playSlideNoteParticle",
+      "start_sequence": [
+        "acquire pooled effect",
+        "activate",
+        "parent and transform",
+        "Play"
+      ],
+      "stop_owners": [
+        "NoteSlide.Activate",
+        "NoteSlide.onMiss",
+        "NoteSlide.deactivate"
+      ],
+      "stop_sequence": [
+        "Stop",
+        "Clear",
+        "deactivate"
+      ]
+    },
+    "product_route_disposition": {
+      "auto_and_manual": "shared current GamePlayButton.PlayAnimation route after judgement; particle mapping does not recompute input mode",
+      "practice": "shared current route outside GameState.MoveTime; MoveTime itself suppresses PlayAnimation and clears current effects",
+      "silent": "audio silence is not an argument or branch in GamePlayButton.PlayAnimation; the current particle route remains selected by result/judge/game-note fields",
+      "habahiro": "portable shared-route disposition under the separately authorized current-external-complete functional mode; not claimed as an original HABAHIRO runtime witness",
+      "unknown_enum": "fail evidence-required in portable production rather than reproduce current logging plus null"
+    }
+  },
+  "restart": {
+    "null": "return",
+    "non_null_not_playing": [
+      "Play"
+    ],
+    "non_null_playing": [
+      "Stop",
+      "Clear",
+      "Play"
+    ],
+    "with_children": true,
+    "classification": "restart-if-active-not-already-playing-suppression"
+  },
+  "unsupported": "evidence-required",
+  "sources": {
+    "route": {
+      "path": "particle_route_lifecycle_static.json",
+      "bytes": 12608,
+      "sha256": "389280BF73C77A29D3D722D7C5AFA843D6219A861B2F5778727919C3DDA5B7AF"
+    },
+    "resource": {
+      "path": "resource_profile.json",
+      "bytes": 3948882,
+      "sha256": "5CF5CBF7DCB39B9B7A378518806FB804AFA226C41E057756AE236AA5EB534452"
+    }
+  }
+}

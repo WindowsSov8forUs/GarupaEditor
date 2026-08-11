@@ -1,0 +1,91 @@
+{
+  "schemaVersion": 1,
+  "fidelity": "current-static-portable-complete",
+  "rows": [
+    {
+      "surface": "system identity/resources",
+      "original": "current-static-confirmed",
+      "portable": "same 120 systems/100 profiles and current texture hashes",
+      "claim": "semantic/profile exact"
+    },
+    {
+      "surface": "global/per-system PRNG",
+      "original": "current-static-confirmed",
+      "portable": "current xorshift128 and binary32 sample mix",
+      "claim": "algorithm exact; assignment order portable"
+    },
+    {
+      "surface": "per-module draw counts",
+      "original": "open-not-claimed",
+      "portable": "twelve immutable slots and canonical nine phases",
+      "claim": "portable deterministic replacement"
+    },
+    {
+      "surface": "Unity module math",
+      "original": "partial-current-static",
+      "portable": "named portable curve/shape/update formulas",
+      "claim": "not Unity byte parity"
+    },
+    {
+      "surface": "60/120/adaptive cadence",
+      "original": "physical exact unavailable",
+      "portable": "one update per logical host outer frame",
+      "claim": "separate deterministic oracle per cadence"
+    },
+    {
+      "surface": "UI pause",
+      "original": "current-runtime continues/retires particles",
+      "portable": "portable freezes with engine clock",
+      "claim": "intentional product difference"
+    },
+    {
+      "surface": "MoveTime",
+      "original": "current-runtime 130 Stop/Clear pairs and replay",
+      "portable": "whole-engine checkpoint/replay; particle-only seek refused",
+      "claim": "current semantic plus portable checkpoint"
+    },
+    {
+      "surface": "GameOver/end/retry cleanup",
+      "original": "exact natural binding open",
+      "portable": "terminal empty sample and fresh retry session",
+      "claim": "portable completion"
+    },
+    {
+      "surface": "render handoff",
+      "original": "current-static-confirmed",
+      "portable": "immutable sample once per outer frame",
+      "claim": "semantic exact"
+    },
+    {
+      "surface": "geometry/raster",
+      "original": "GPU/driver exact unavailable",
+      "portable": "Pixi billboard/stretch mapping from sample",
+      "claim": "portable visual mapping"
+    },
+    {
+      "surface": "visible/audio onset",
+      "original": "accepted AV unavailable",
+      "portable": "semantic-frame command/sample oracle",
+      "claim": "no physical ordering claim"
+    },
+    {
+      "surface": "audio device/CRI output",
+      "original": "device exact unavailable",
+      "portable": "existing current semantic audio backend",
+      "claim": "outside particle fidelity"
+    },
+    {
+      "surface": "HABAHIRO",
+      "original": "original runtime parity not claimed",
+      "portable": "authorized current-external-complete shared particle route",
+      "claim": "portable product route"
+    }
+  ],
+  "physicalClaimsRemainingOpen": [
+    "real 120/adaptive cadence",
+    "GPU/driver framebuffer",
+    "visible onset/peak",
+    "CRI/Android/speaker output"
+  ],
+  "projectionSha256": "A577559C77D432A1306F949FD34418E241D19D4FA0B400A0E41B7F741B6094B0"
+}

@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "generatedBeforeTypescript": true,
+  "physicalOrderingClaimed": false,
+  "cases": [
+    {
+      "case": "perfect-semantic-frame",
+      "frame": 17,
+      "events": [
+        "preflight:business+particle+audio+render",
+        "OneFrame:freeze-Perfect",
+        "business:score-life-skill-fever",
+        "particle:play-root+advance+sample",
+        "audio:play-perfect-cue",
+        "render:judgement+hud+particle-sample",
+        "commit:snapshot"
+      ]
+    },
+    {
+      "case": "miss-no-particle-frame",
+      "frame": 18,
+      "events": [
+        "preflight:business+audio+render",
+        "OneFrame:freeze-Miss",
+        "business:life-combo",
+        "audio:play-miss-or-none-by-current-audio-contract",
+        "render:judgement+hud+existing-particle-sample",
+        "commit:snapshot"
+      ]
+    },
+    {
+      "case": "later-domain-preflight-fault",
+      "frame": 19,
+      "events": [
+        "preflight:business",
+        "preflight:particle",
+        "preflight:audio",
+        "preflight:render-fault",
+        "discard:business+particle+audio+render",
+        "snapshot:frame18-unchanged"
+      ]
+    },
+    {
+      "case": "terminal-cleanup-frame",
+      "frame": 20,
+      "events": [
+        "preflight:terminal+particle+audio+render",
+        "business:terminal",
+        "particle:clear-all+empty-sample",
+        "audio:terminal-command",
+        "render:terminal+empty-particle-sample",
+        "commit:snapshot"
+      ]
+    }
+  ],
+  "projectionSha256": "4EF7A236BA19B73C44087BB9A11C77F8CF9DA9C73CCD97E5E087FC66DA7BC954",
+  "commitOrder": [
+    "OneFrame",
+    "business-state",
+    "particle-command-and-simulation",
+    "audio-command",
+    "render-command-and-particle-sample"
+  ]
+}

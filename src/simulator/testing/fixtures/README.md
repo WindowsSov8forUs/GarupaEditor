@@ -7,3 +7,4 @@
 - 生产代码不得读取本目录；只有 `src/simulator/testing/` 测试旁路可以读取。
 - 新证据必须先进入已推送的 Reverse，再按测试需要提取最小快照；不得从 GarupaEditor/tmp 反向生成证据。
 - `reverse-snapshots/audio/` 仅包含 AU-C01–AU-C40 的 command/PCM oracle、32-byte 项目自制数值输入和 19,264-byte 可移植 PCM expected；不含原作或外部音频资源，也不声明 CRI/browser/hardware 波形等价。
+- `reverse-snapshots/device-closure/` 包含已推送 Reverse `9fb544b2` 的 portable policy/profile/route、command/simulation/semantic-frame oracle、97行双门closure、difference matrix，以及8个逻辑纹理对应的7个去重PNG；PNG解码RGBA与current资源像素SHA一致，但不声明Unity shader、GPU、driver或framebuffer parity。

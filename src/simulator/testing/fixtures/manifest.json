@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "purpose": "offline simulator test fixtures",
   "sourceRepository": "HOST________/VSCode/GirlsBandParty-Reverse",
-  "sourceHead": "50798c00b009cba87a99229024d925b69e9cff98",
+  "sourceHead": "9fb544b281d25fe0cefb4b2d6e692bb38df66a81",
   "entries": [
     {
       "path": "habahiro-snapshots/bestdori-atlas-profile.json",
@@ -137,6 +137,118 @@
       "sourcePath": "artifacts/investigations/clock-scheduling-runtime-oracle/sources/653_ikuoku_easy.bms.txt",
       "bytes": 1688,
       "sha256": "4C2F8D202DED5DFD9C4144C0FE000B1E3524E0F25D3FEAF4DD102413F6CD6325"
+    },
+    {
+      "path": "reverse-snapshots/device-closure/artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/directional/Default-ParticleSystem.png",
+      "sourceReverseCommit": "9fb544b281d25fe0cefb4b2d6e692bb38df66a81",
+      "sourcePath": "artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/directional/Default-ParticleSystem.png",
+      "bytes": 2024,
+      "sha256": "ADB7DDF12ABDBEE0C3CF5B764D928A9D716B35662502A5456DCD63F8D1A8BDA9"
+    },
+    {
+      "path": "reverse-snapshots/device-closure/artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/directional/tex_parSet_1.png",
+      "sourceReverseCommit": "9fb544b281d25fe0cefb4b2d6e692bb38df66a81",
+      "sourcePath": "artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/directional/tex_parSet_1.png",
+      "bytes": 202371,
+      "sha256": "89E7956A371483077B947D7F0D340AD0F7B39F584CB3BE6FBF78246313A06814"
+    },
+    {
+      "path": "reverse-snapshots/device-closure/artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/ordinary/Default-Particle.png",
+      "sourceReverseCommit": "9fb544b281d25fe0cefb4b2d6e692bb38df66a81",
+      "sourcePath": "artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/ordinary/Default-Particle.png",
+      "bytes": 4116,
+      "sha256": "DA6E91E00F401C352900D3FAF2151BF8FA90C9D1F731C6039C7453135FEB0DC2"
+    },
+    {
+      "path": "reverse-snapshots/device-closure/artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/ordinary/Tex_parSet_1.png",
+      "sourceReverseCommit": "9fb544b281d25fe0cefb4b2d6e692bb38df66a81",
+      "sourcePath": "artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/ordinary/Tex_parSet_1.png",
+      "bytes": 236417,
+      "sha256": "A6F33F5B074D4900FB5DE868D1388A71F2C6DFF06E266A7C9BC8298B7F2129F9"
+    },
+    {
+      "path": "reverse-snapshots/device-closure/artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/ordinary/Tex_parSet_2.png",
+      "sourceReverseCommit": "9fb544b281d25fe0cefb4b2d6e692bb38df66a81",
+      "sourcePath": "artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/ordinary/Tex_parSet_2.png",
+      "bytes": 222637,
+      "sha256": "47B252C8673167E804B7BF0D9202F1DD8D46BBA99F203DDFBD6D118C8A36A742"
+    },
+    {
+      "path": "reverse-snapshots/device-closure/artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/ordinary/effect_circle.png",
+      "sourceReverseCommit": "9fb544b281d25fe0cefb4b2d6e692bb38df66a81",
+      "sourcePath": "artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/ordinary/effect_circle.png",
+      "bytes": 40235,
+      "sha256": "D8AB0762BC5841BDB1917B0C4744BE2F6252F2A5DACD1FDB96C12F8BC5B61EE9"
+    },
+    {
+      "path": "reverse-snapshots/device-closure/artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/ordinary/light.png",
+      "sourceReverseCommit": "9fb544b281d25fe0cefb4b2d6e692bb38df66a81",
+      "sourcePath": "artifacts/investigations/device-runtime-closure-10-1-4/particle-portable-textures/ordinary/light.png",
+      "bytes": 13393,
+      "sha256": "DD4AE4DB60300E9404B6E27B543B44F8927E18A20609E7FA91B3E458E8DF68D2"
+    },
+    {
+      "path": "reverse-snapshots/device-closure/artifacts/investigations/device-runtime-closure-10-1-4/particle_command_oracle.json",
+      "sourceReverseCommit": "9fb544b281d25fe0cefb4b2d6e692bb38df66a81",
+      "sourcePath": "artifacts/investigations/device-runtime-closure-10-1-4/particle_command_oracle.json",
+      "bytes": 8235,
+      "sha256": "5BDA0080BA954CEBE7FE8966E756F101359F74E78D5CD31D30E1A9736435197F"
+    },
+    {
+      "path": "reverse-snapshots/device-closure/artifacts/investigations/device-runtime-closure-10-1-4/particle_portable_closure.json",
+      "sourceReverseCommit": "9fb544b281d25fe0cefb4b2d6e692bb38df66a81",
+      "sourcePath": "artifacts/investigations/device-runtime-closure-10-1-4/particle_portable_closure.json",
+      "bytes": 30977,
+      "sha256": "245A0768BC19EE6D415C9AC2B7EC0F813495A4E6CF0F933F2A38B49FEAC7F2F7"
+    },
+    {
+      "path": "reverse-snapshots/device-closure/artifacts/investigations/device-runtime-closure-10-1-4/particle_portable_difference_matrix.json",
+      "sourceReverseCommit": "9fb544b281d25fe0cefb4b2d6e692bb38df66a81",
+      "sourcePath": "artifacts/investigations/device-runtime-closure-10-1-4/particle_portable_difference_matrix.json",
+      "bytes": 3120,
+      "sha256": "E8F8A2A69CF97493E5BEA8271D6F5464E7EEB890A47E2877DFCE18674D67DC4E"
+    },
+    {
+      "path": "reverse-snapshots/device-closure/artifacts/investigations/device-runtime-closure-10-1-4/particle_portable_policy.json",
+      "sourceReverseCommit": "9fb544b281d25fe0cefb4b2d6e692bb38df66a81",
+      "sourcePath": "artifacts/investigations/device-runtime-closure-10-1-4/particle_portable_policy.json",
+      "bytes": 10430,
+      "sha256": "2904A3B9E5ADAA2A7B6A581D5122E1DFA33AC78B9D63E5DFDB68653D3FB36D08"
+    },
+    {
+      "path": "reverse-snapshots/device-closure/artifacts/investigations/device-runtime-closure-10-1-4/particle_portable_profile.json",
+      "sourceReverseCommit": "9fb544b281d25fe0cefb4b2d6e692bb38df66a81",
+      "sourcePath": "artifacts/investigations/device-runtime-closure-10-1-4/particle_portable_profile.json",
+      "bytes": 1529609,
+      "sha256": "2A7FDAB9AEC96F0262F92557047933F19A93EBDC3FAF0345CA4768888E43EA29"
+    },
+    {
+      "path": "reverse-snapshots/device-closure/artifacts/investigations/device-runtime-closure-10-1-4/particle_portable_texture_manifest.json",
+      "sourceReverseCommit": "9fb544b281d25fe0cefb4b2d6e692bb38df66a81",
+      "sourcePath": "artifacts/investigations/device-runtime-closure-10-1-4/particle_portable_texture_manifest.json",
+      "bytes": 3778,
+      "sha256": "49D8B99F4F192B038A55A2320E0B5E3C5330369744D792FCAB3795BD918811DB"
+    },
+    {
+      "path": "reverse-snapshots/device-closure/artifacts/investigations/device-runtime-closure-10-1-4/particle_route_contract.json",
+      "sourceReverseCommit": "9fb544b281d25fe0cefb4b2d6e692bb38df66a81",
+      "sourcePath": "artifacts/investigations/device-runtime-closure-10-1-4/particle_route_contract.json",
+      "bytes": 5232,
+      "sha256": "C82F4927A444DB7F38C1770234CEEDFCB1C861B2E0586832A9A9A318CAA77432"
+    },
+    {
+      "path": "reverse-snapshots/device-closure/artifacts/investigations/device-runtime-closure-10-1-4/particle_semantic_frame_oracle.json",
+      "sourceReverseCommit": "9fb544b281d25fe0cefb4b2d6e692bb38df66a81",
+      "sourcePath": "artifacts/investigations/device-runtime-closure-10-1-4/particle_semantic_frame_oracle.json",
+      "bytes": 1740,
+      "sha256": "8EACC3B0F58E2E353F796EADED5750CDFDE3237A216E2A2BDC292BAC85CE802D"
+    },
+    {
+      "path": "reverse-snapshots/device-closure/artifacts/investigations/device-runtime-closure-10-1-4/particle_simulation_oracle.json",
+      "sourceReverseCommit": "9fb544b281d25fe0cefb4b2d6e692bb38df66a81",
+      "sourcePath": "artifacts/investigations/device-runtime-closure-10-1-4/particle_simulation_oracle.json",
+      "bytes": 127583,
+      "sha256": "A081A49AAC5F9C1D486D6977EC8590FD494669265C07D9E665916341A65DEDDE"
     },
     {
       "path": "reverse-snapshots/manual-input-judgement/artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/030eab88__NoteLong__WaitState.arm64.tsv",
