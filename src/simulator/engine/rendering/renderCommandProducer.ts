@@ -767,6 +767,30 @@ export class RenderCommandProducer {
         kind: "hide-object",
         renderObjectId,
       });
+      if (!this.isAnyHabahiro()) {
+        if (pool.family === "flick" || pool.family === "directional-flick" || pool.family === "multiple-directional-flick") {
+          appendHiddenChild(
+            commands,
+            created,
+            base,
+            ordinaryNoteIconRenderObjectId(renderObjectId),
+            `${pool.family}-icon`,
+            "note-icon",
+            renderObjectId,
+          );
+        }
+        if (pool.family === "long" || pool.family === "slide") {
+          appendHiddenChild(
+            commands,
+            created,
+            base,
+            ordinaryLongFlashRenderObjectId(renderObjectId),
+            `${pool.family}-long-flash`,
+            "note-intermediate",
+            renderObjectId,
+          );
+        }
+      }
       if (this.isCompleteHabahiro()) {
         const iconObjectId = habahiroIconRenderObjectId(pool.poolObjectId);
         created.push(iconObjectId);
@@ -793,6 +817,15 @@ export class RenderCommandProducer {
           kind: "hide-object",
           renderObjectId: afterObjectId,
         });
+        if (!this.isAnyHabahiro()) appendHiddenChild(
+          commands,
+          created,
+          base,
+          ordinaryNoteIconRenderObjectId(afterObjectId),
+          `${pool.family}-after-icon`,
+          "note-icon",
+          afterObjectId,
+        );
         commands.push({
           ...base(commands.length),
           kind: "create-object",
@@ -826,6 +859,26 @@ export class RenderCommandProducer {
             parentObjectId: null,
           });
           commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: childObjectId });
+          if (!this.isAnyHabahiro()) {
+            appendHiddenChild(
+              commands,
+              created,
+              base,
+              ordinaryNoteIconRenderObjectId(childObjectId),
+              `${pool.family}-child-icon`,
+              "note-icon",
+              childObjectId,
+            );
+            appendHiddenChild(
+              commands,
+              created,
+              base,
+              ordinaryLongFlashRenderObjectId(childObjectId),
+              `${pool.family}-child-long-flash`,
+              "note-intermediate",
+              childObjectId,
+            );
+          }
           commands.push({
             ...base(commands.length),
             kind: "create-object",
@@ -1234,11 +1287,17 @@ export class RenderCommandProducer {
       logicalAssetId: binding.value.logicalAssetId,
       exactKey: binding.value.exactKey,
     }];
-    const rootAnimationRole = resolveNoteAnimationRole(information);
-    if (rootAnimationRole !== null) commands.push({
-      ...base(commands.length), kind: "play-animation", renderObjectId,
-      animationRole: rootAnimationRole, restart: true,
-    });
+    const ordinaryFrontAnimation = habahiro
+      ? null
+      : resolveOrdinaryAnimationBinding(information, renderObjectId, this.resources);
+    if (ordinaryFrontAnimation !== null) {
+      const ownerValidation = validateOrdinaryAnimationOwner(
+        ordinaryFrontAnimation,
+        this.creationSequenceByObjectId,
+      );
+      if (ownerValidation.status !== "ok") return ownerValidation;
+      appendOrdinaryAnimationStart(commands, base, ordinaryFrontAnimation);
+    }
     const habahiroIcon = completeHabahiro
       ? resolveHabahiroIconBinding(information, this.resources)
       : null;
@@ -1412,11 +1471,21 @@ export class RenderCommandProducer {
         logicalAssetId: afterBinding.value.logicalAssetId,
         exactKey: afterBinding.value.exactKey,
       });
-      const afterAnimationRole = resolveAfterAnimationRole(information.afterNoteType);
-      if (afterAnimationRole !== null) commands.push({
-        ...base(commands.length), kind: "play-animation", renderObjectId: afterObjectId,
-        animationRole: afterAnimationRole, restart: true,
-      });
+      const afterAnimation = completeHabahiro
+        ? null
+        : resolveOrdinaryAfterAnimationBinding(
+            information,
+            afterObjectId,
+            this.resources,
+          );
+      if (afterAnimation !== null) {
+        const ownerValidation = validateOrdinaryAnimationOwner(
+          afterAnimation,
+          this.creationSequenceByObjectId,
+        );
+        if (ownerValidation.status !== "ok") return ownerValidation;
+        appendOrdinaryAnimationStart(commands, base, afterAnimation);
+      }
     }
     if (r7Slide) {
       const states: OrdinarySlideChildState[] = [];
@@ -1506,11 +1575,17 @@ export class RenderCommandProducer {
             logicalAssetId: childBinding.value.logicalAssetId,
             exactKey: childBinding.value.exactKey,
           });
-          const childAnimationRole = resolveNoteAnimationRole(source);
-          if (childAnimationRole !== null) commands.push({
-            ...base(commands.length), kind: "play-animation", renderObjectId: childObjectId,
-            animationRole: childAnimationRole, restart: true,
-          });
+          const childAnimation = completeHabahiro
+            ? null
+            : resolveOrdinaryAnimationBinding(source, childObjectId, this.resources, true);
+          if (childAnimation !== null) {
+            const ownerValidation = validateOrdinaryAnimationOwner(
+              childAnimation,
+              this.creationSequenceByObjectId,
+            );
+            if (ownerValidation.status !== "ok") return ownerValidation;
+            appendOrdinaryAnimationStart(commands, base, childAnimation);
+          }
         }
         const segmentWidthRate = completeHabahiro
           ? getHabahiroMeshWidthRate(
@@ -1571,9 +1646,9 @@ export class RenderCommandProducer {
       slideChildStates = Object.freeze(states);
     }
     const transaction = this.preflight(commands, () => {
-      if (rootAnimationRole !== null) {
-        this.noteAnimationElapsedSeconds.set(renderObjectId, Object.freeze({
-          role: rootAnimationRole,
+      if (ordinaryFrontAnimation !== null) {
+        this.noteAnimationElapsedSeconds.set(ordinaryFrontAnimation.ownerObjectId, Object.freeze({
+          role: ordinaryFrontAnimation.animationRole,
           elapsed: 0,
         }));
       }
@@ -1581,17 +1656,32 @@ export class RenderCommandProducer {
         habahiroIconRenderObjectId(poolObjectId),
         Object.freeze({ role: habahiroIcon.animationRole, elapsed: 0 }),
       );
-      const afterRole = resolveAfterAnimationRole(information.afterNoteType);
-      if (longTail && afterRole !== null) this.noteAnimationElapsedSeconds.set(
-        longAfterRenderObjectId(poolObjectId),
-        Object.freeze({ role: afterRole, elapsed: 0 }),
-      );
+      if (longTail) {
+        const afterAnimation = completeHabahiro
+          ? null
+          : resolveOrdinaryAfterAnimationBinding(
+              information,
+              longAfterRenderObjectId(poolObjectId),
+              this.resources,
+            );
+        if (afterAnimation !== null) this.noteAnimationElapsedSeconds.set(
+          afterAnimation.ownerObjectId,
+          Object.freeze({ role: afterAnimation.animationRole, elapsed: 0 }),
+        );
+      }
       for (let index = 0; index < information.slideNoteList.length; index += 1) {
         const source = information.slideNoteList[index]!;
-        const role = source.isInvisible ? null : resolveNoteAnimationRole(source);
-        if (role !== null) this.noteAnimationElapsedSeconds.set(
-          slideChildRenderObjectId(poolObjectId, index),
-          Object.freeze({ role, elapsed: 0 }),
+        const animation = source.isInvisible || completeHabahiro
+          ? null
+          : resolveOrdinaryAnimationBinding(
+              source,
+              slideChildRenderObjectId(poolObjectId, index),
+              this.resources,
+              true,
+            );
+        if (animation !== null) this.noteAnimationElapsedSeconds.set(
+          animation.ownerObjectId,
+          Object.freeze({ role: animation.animationRole, elapsed: 0 }),
         );
       }
     });
@@ -1793,14 +1883,15 @@ export class RenderCommandProducer {
     if (childState.phase === "wait" && next.value.phase === "move") {
       commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: afterObjectId });
     }
-    const animation = this.noteAnimationElapsedSeconds.get(afterObjectId);
+    const animatedAfterObjectId = ordinaryNoteIconRenderObjectId(afterObjectId);
+    const animation = this.noteAnimationElapsedSeconds.get(animatedAfterObjectId);
     let nextAnimationElapsed: number | null = null;
     if (animation !== undefined) {
       nextAnimationElapsed = Math.fround(animation.elapsed + input.deltaTime.value);
       const sample = createRenderFloat32(nextAnimationElapsed);
       if (sample.status !== "ok") return sample;
       commands.push({
-        ...base(commands.length), kind: "sample-animation", renderObjectId: afterObjectId,
+        ...base(commands.length), kind: "sample-animation", renderObjectId: animatedAfterObjectId,
         animationRole: animation.role, elapsedSeconds: sample.value,
       });
     }
@@ -1816,7 +1907,7 @@ export class RenderCommandProducer {
     });
     const transaction = this.preflight(commands, () => {
       if (animation !== undefined && nextAnimationElapsed !== null) {
-        this.noteAnimationElapsedSeconds.set(afterObjectId, Object.freeze({
+        this.noteAnimationElapsedSeconds.set(animatedAfterObjectId, Object.freeze({
           role: animation.role, elapsed: nextAnimationElapsed,
         }));
       }
@@ -1905,16 +1996,20 @@ export class RenderCommandProducer {
           }),
           maskObjectId: null,
         });
-        const animation = this.noteAnimationElapsedSeconds.get(childObjectId);
-        if (animation !== undefined) {
+        for (const animatedObjectId of [
+          ordinaryNoteIconRenderObjectId(childObjectId),
+          ordinaryLongFlashRenderObjectId(childObjectId),
+        ]) {
+          const animation = this.noteAnimationElapsedSeconds.get(animatedObjectId);
+          if (animation === undefined) continue;
           const elapsed = Math.fround(animation.elapsed + input.deltaTime.value);
           const sample = createRenderFloat32(elapsed);
           if (sample.status !== "ok") return sample;
           commands.push({
-            ...base(commands.length), kind: "sample-animation", renderObjectId: childObjectId,
+            ...base(commands.length), kind: "sample-animation", renderObjectId: animatedObjectId,
             animationRole: animation.role, elapsedSeconds: sample.value,
           });
-          animationUpdates.push(Object.freeze({ renderObjectId: childObjectId, role: animation.role, elapsed }));
+          animationUpdates.push(Object.freeze({ renderObjectId: animatedObjectId, role: animation.role, elapsed }));
         }
       }
       commands.push({
@@ -2018,7 +2113,11 @@ export class RenderCommandProducer {
         maskObjectId: null,
       });
     }
-    for (const animatedObjectId of [renderObjectId, iconObjectId]) {
+    for (const animatedObjectId of [
+      ordinaryNoteIconRenderObjectId(renderObjectId),
+      ordinaryLongFlashRenderObjectId(renderObjectId),
+      iconObjectId,
+    ]) {
       const animation = this.noteAnimationElapsedSeconds.get(animatedObjectId);
       if (animation === undefined) continue;
       const elapsed = Math.fround(animation.elapsed + motionState.deltaTime.value);
@@ -2053,23 +2152,19 @@ export class RenderCommandProducer {
     const renderObjectId = rootRenderObjectId(poolObjectId);
     const base = this.commandBase(this.substep);
     const commands: RenderCommand[] = [];
-    const rootAnimation = this.noteAnimationElapsedSeconds.get(renderObjectId);
-    if (rootAnimation !== undefined) commands.push({
-      ...base(commands.length), kind: "stop-animation", renderObjectId,
-      animationRole: rootAnimation.role, restart: false,
-    });
+    for (const childObjectId of [
+      ordinaryNoteIconRenderObjectId(renderObjectId),
+      ordinaryLongFlashRenderObjectId(renderObjectId),
+      habahiroIconRenderObjectId(poolObjectId),
+    ]) appendAnimationChildTeardown(
+      commands,
+      base,
+      childObjectId,
+      this.creationSequenceByObjectId,
+      this.noteAnimationElapsedSeconds,
+    );
     commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId });
     commands.push({ ...base(commands.length), kind: "deactivate-object", renderObjectId });
-    const iconObjectId = habahiroIconRenderObjectId(poolObjectId);
-    if (this.creationSequenceByObjectId.has(iconObjectId)) {
-      const iconAnimation = this.noteAnimationElapsedSeconds.get(iconObjectId);
-      if (iconAnimation !== undefined) commands.push({
-        ...base(commands.length), kind: "stop-animation", renderObjectId: iconObjectId,
-        animationRole: iconAnimation.role, restart: false,
-      });
-      commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: iconObjectId });
-      commands.push({ ...base(commands.length), kind: "deactivate-object", renderObjectId: iconObjectId });
-    }
     if (
       !Number.isSafeInteger(deactivateSlideChildCount) ||
       deactivateSlideChildCount < 0
@@ -2081,29 +2176,32 @@ export class RenderCommandProducer {
       );
     }
     if (deactivateLongChildren) {
-      for (const renderObjectId of [
-        longAfterRenderObjectId(poolObjectId),
-        longMeshRenderObjectId(poolObjectId),
-      ]) {
-        const animation = this.noteAnimationElapsedSeconds.get(renderObjectId);
-        if (animation !== undefined) commands.push({
-          ...base(commands.length), kind: "stop-animation", renderObjectId,
-          animationRole: animation.role, restart: false,
-        });
-        commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId });
-        commands.push({ ...base(commands.length), kind: "deactivate-object", renderObjectId });
+      const afterObjectId = longAfterRenderObjectId(poolObjectId);
+      appendAnimationChildTeardown(
+        commands,
+        base,
+        ordinaryNoteIconRenderObjectId(afterObjectId),
+        this.creationSequenceByObjectId,
+        this.noteAnimationElapsedSeconds,
+      );
+      for (const childObjectId of [afterObjectId, longMeshRenderObjectId(poolObjectId)]) {
+        commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: childObjectId });
+        commands.push({ ...base(commands.length), kind: "deactivate-object", renderObjectId: childObjectId });
       }
     }
     for (let index = 0; index < deactivateSlideChildCount; index += 1) {
-      for (const childObjectId of [
-        slideChildRenderObjectId(poolObjectId, index),
-        slideMeshRenderObjectId(poolObjectId, index),
-      ]) {
-        const animation = this.noteAnimationElapsedSeconds.get(childObjectId);
-        if (animation !== undefined) commands.push({
-          ...base(commands.length), kind: "stop-animation", renderObjectId: childObjectId,
-          animationRole: animation.role, restart: false,
-        });
+      const slideChildObjectId = slideChildRenderObjectId(poolObjectId, index);
+      for (const animationChildObjectId of [
+        ordinaryNoteIconRenderObjectId(slideChildObjectId),
+        ordinaryLongFlashRenderObjectId(slideChildObjectId),
+      ]) appendAnimationChildTeardown(
+        commands,
+        base,
+        animationChildObjectId,
+        this.creationSequenceByObjectId,
+        this.noteAnimationElapsedSeconds,
+      );
+      for (const childObjectId of [slideChildObjectId, slideMeshRenderObjectId(poolObjectId, index)]) {
         commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: childObjectId });
         commands.push({ ...base(commands.length), kind: "deactivate-object", renderObjectId: childObjectId });
       }
@@ -2147,11 +2245,19 @@ export class RenderCommandProducer {
       });
     }
     return this.preflight(commands, () => {
-      this.noteAnimationElapsedSeconds.delete(renderObjectId);
-      this.noteAnimationElapsedSeconds.delete(habahiroIconRenderObjectId(poolObjectId));
-      this.noteAnimationElapsedSeconds.delete(longAfterRenderObjectId(poolObjectId));
+      for (const objectId of [
+        renderObjectId,
+        ordinaryNoteIconRenderObjectId(renderObjectId),
+        ordinaryLongFlashRenderObjectId(renderObjectId),
+        habahiroIconRenderObjectId(poolObjectId),
+        longAfterRenderObjectId(poolObjectId),
+        ordinaryNoteIconRenderObjectId(longAfterRenderObjectId(poolObjectId)),
+      ]) this.noteAnimationElapsedSeconds.delete(objectId);
       for (let index = 0; index < deactivateSlideChildCount; index += 1) {
-        this.noteAnimationElapsedSeconds.delete(slideChildRenderObjectId(poolObjectId, index));
+        const childObjectId = slideChildRenderObjectId(poolObjectId, index);
+        this.noteAnimationElapsedSeconds.delete(childObjectId);
+        this.noteAnimationElapsedSeconds.delete(ordinaryNoteIconRenderObjectId(childObjectId));
+        this.noteAnimationElapsedSeconds.delete(ordinaryLongFlashRenderObjectId(childObjectId));
       }
     });
   }
@@ -2286,8 +2392,111 @@ export function validateOrdinaryFixedNoteSceneInput(
   return ok(undefined);
 }
 
+type RenderCommandBaseFactory = (offset: number) => {
+  readonly sessionId: string;
+  readonly sequence: number;
+  readonly frame: number;
+  readonly substep: number;
+};
+
+type OrdinaryAnimationBinding = Readonly<{
+  ownerObjectId: string;
+  logicalAssetId: string;
+  exactKey: string;
+  animationRole: NoteVisualAnimationRole;
+}>;
+
+function appendHiddenChild(
+  commands: RenderCommand[],
+  created: string[],
+  base: RenderCommandBaseFactory,
+  renderObjectId: string,
+  poolFamily: string,
+  role: "note-icon" | "note-intermediate",
+  parentObjectId: string,
+): void {
+  created.push(renderObjectId);
+  commands.push({
+    ...base(commands.length),
+    kind: "create-object",
+    renderObjectId,
+    poolFamily,
+    role,
+    parentObjectId,
+  });
+  commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId });
+}
+
+function appendOrdinaryAnimationStart(
+  commands: RenderCommand[],
+  base: RenderCommandBaseFactory,
+  binding: OrdinaryAnimationBinding,
+): void {
+  commands.push({
+    ...base(commands.length),
+    kind: "bind-resource",
+    renderObjectId: binding.ownerObjectId,
+    binding: "sprite",
+    logicalAssetId: binding.logicalAssetId,
+    exactKey: binding.exactKey,
+  });
+  commands.push({
+    ...base(commands.length),
+    kind: "activate-object",
+    renderObjectId: binding.ownerObjectId,
+  });
+  commands.push({
+    ...base(commands.length),
+    kind: "play-animation",
+    renderObjectId: binding.ownerObjectId,
+    animationRole: binding.animationRole,
+    restart: true,
+  });
+}
+
+function validateOrdinaryAnimationOwner(
+  binding: OrdinaryAnimationBinding,
+  creationSequenceByObjectId: ReadonlyMap<string, number>,
+): SimulatorResult<void> {
+  return creationSequenceByObjectId.has(binding.ownerObjectId)
+    ? ok(undefined)
+    : evidenceRequired(
+        "render.note.ordinary-animation-owner-missing",
+        ["RPR-R7-001", "PR08", "PR09", "PR11", "PR39"],
+        "Current ordinary Note animation requires its fixed independent Sprite child before activation.",
+      );
+}
+
+function appendAnimationChildTeardown(
+  commands: RenderCommand[],
+  base: RenderCommandBaseFactory,
+  renderObjectId: string,
+  creationSequenceByObjectId: ReadonlyMap<string, number>,
+  animations: ReadonlyMap<string, { readonly role: NoteVisualAnimationRole; readonly elapsed: number }>,
+): void {
+  if (!creationSequenceByObjectId.has(renderObjectId)) return;
+  const animation = animations.get(renderObjectId);
+  if (animation !== undefined) commands.push({
+    ...base(commands.length),
+    kind: "stop-animation",
+    renderObjectId,
+    animationRole: animation.role,
+    restart: false,
+  });
+  commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId });
+  commands.push({ ...base(commands.length), kind: "deactivate-object", renderObjectId });
+}
+
 export function rootRenderObjectId(poolObjectId: string): string {
   return `render:${poolObjectId}:root`;
+}
+
+export function ordinaryNoteIconRenderObjectId(parentObjectId: string): string {
+  return `${parentObjectId}:ordinary-note-icon`;
+}
+
+export function ordinaryLongFlashRenderObjectId(parentObjectId: string): string {
+  return `${parentObjectId}:ordinary-long-flash`;
 }
 
 export function habahiroIconRenderObjectId(poolObjectId: string): string {
@@ -2767,6 +2976,73 @@ function resolveSlideChildSpriteBinding(
     logicalAssetId: resources.noteAtlasLogicalAssetId,
     exactKey: `${flick ? "note_flick" : "note_long"}_${lane.value}`,
   }));
+}
+
+function resolveOrdinaryAnimationBinding(
+  information: NoteInformation,
+  parentObjectId: string,
+  resources: RenderEngineResourceBindings,
+  allowLongFlash = true,
+): OrdinaryAnimationBinding | null {
+  const role = resolveNoteAnimationRole(information);
+  if (role !== null) {
+    const directional = role === "note-directional-flick";
+    const direction = gameTypeIsDirectional(information.gameNoteType)
+      ? gameTypeIsLeft(information.gameNoteType) ? "left" : "right"
+      : afterTypeIsDirectional(information.afterNoteType)
+      ? afterTypeIsLeft(information.afterNoteType) ? "left" : "right"
+      : "up";
+    return Object.freeze({
+      ownerObjectId: ordinaryNoteIconRenderObjectId(parentObjectId),
+      logicalAssetId: directional
+        ? resources.directionalAtlasLogicalAssetId
+        : resources.noteAtlasLogicalAssetId,
+      exactKey: direction === "up"
+        ? "note_flick_top"
+        : direction === "left" ? "note_flick_top_l" : "note_flick_top_r",
+      animationRole: role,
+    });
+  }
+  if (!allowLongFlash || (
+    information.fireNoteType !== FrontNoteType.Long &&
+    information.fireNoteType !== FrontNoteType.SlideA &&
+    information.fireNoteType !== FrontNoteType.SlideB &&
+    information.gameNoteType !== GameNoteType.Long &&
+    information.gameNoteType !== GameNoteType.SlideA &&
+    information.gameNoteType !== GameNoteType.SlideB &&
+    information.gameNoteType !== GameNoteType.SlideEndA &&
+    information.gameNoteType !== GameNoteType.SlideEndB
+  )) return null;
+  const lane = resolveOrdinarySlideCenterLane(information);
+  if (lane.status !== "ok") return null;
+  return Object.freeze({
+    ownerObjectId: ordinaryLongFlashRenderObjectId(parentObjectId),
+    logicalAssetId: resources.noteAtlasLogicalAssetId,
+    exactKey: `note_long_flash_${lane.value}`,
+    animationRole: "note-long-flash",
+  });
+}
+
+function resolveOrdinaryAfterAnimationBinding(
+  information: NoteInformation,
+  parentObjectId: string,
+  resources: RenderEngineResourceBindings,
+): OrdinaryAnimationBinding | null {
+  const role = resolveAfterAnimationRole(information.afterNoteType);
+  if (role === null) return null;
+  const direction = afterTypeIsDirectional(information.afterNoteType)
+    ? afterTypeIsLeft(information.afterNoteType) ? "left" : "right"
+    : "up";
+  return Object.freeze({
+    ownerObjectId: ordinaryNoteIconRenderObjectId(parentObjectId),
+    logicalAssetId: role === "note-directional-flick"
+      ? resources.directionalAtlasLogicalAssetId
+      : resources.noteAtlasLogicalAssetId,
+    exactKey: direction === "up"
+      ? "note_flick_top"
+      : direction === "left" ? "note_flick_top_l" : "note_flick_top_r",
+    animationRole: role,
+  });
 }
 
 function resolveAfterAnimationRole(

@@ -35,8 +35,8 @@ export interface OrdinaryVisibleProfile {
   readonly status: "confirmed-current-ordinary-visible-rendering-portable-profile";
   readonly noteAnimations: {
     readonly iconOwnerKey: "note_flick_top";
-    readonly directionalOwnerKeys: Readonly<Record<"up" | "left" | "right", string>>;
-    readonly longFlashOwnerKeys: readonly ["note_long_flash_front", "note_long_flash_back"];
+    readonly directionalSpriteKeys: Readonly<Record<"up" | "left" | "right", string>>;
+    readonly longFlashSpritePrefix: "note_long_flash_";
     readonly clips: readonly OrdinaryVisibleClip[];
     readonly pausePolicy: "owner-clock-does-not-advance";
     readonly resetPolicy: "child-first-reset-initial-channels-and-clock";
@@ -111,11 +111,11 @@ export function parseCurrentOrdinaryVisibleProfile(value: unknown): OrdinaryVisi
 }
 
 function validateNote(value: unknown): boolean {
-  if (!record(value) || !exactKeys(value, ["clips", "directionalOwnerKeys", "iconOwnerKey", "longFlashOwnerKeys", "pausePolicy", "resetPolicy"]) ||
+  if (!record(value) || !exactKeys(value, ["clips", "directionalSpriteKeys", "iconOwnerKey", "longFlashSpritePrefix", "pausePolicy", "resetPolicy"]) ||
     value.iconOwnerKey !== "note_flick_top" || value.pausePolicy !== "owner-clock-does-not-advance" || value.resetPolicy !== "child-first-reset-initial-channels-and-clock" ||
-    !record(value.directionalOwnerKeys) || !exactKeys(value.directionalOwnerKeys, ["left", "right", "up"]) ||
-    value.directionalOwnerKeys.up !== "note_flick_top" || value.directionalOwnerKeys.left !== "note_directional_flick_left_top" || value.directionalOwnerKeys.right !== "note_directional_flick_right_top" ||
-    !tuple(value.longFlashOwnerKeys, ["note_long_flash_front", "note_long_flash_back"]) || !Array.isArray(value.clips) || value.clips.length !== 4
+    !record(value.directionalSpriteKeys) || !exactKeys(value.directionalSpriteKeys, ["left", "right", "up"]) ||
+    value.directionalSpriteKeys.up !== "note_flick_top" || value.directionalSpriteKeys.left !== "note_flick_top_l" || value.directionalSpriteKeys.right !== "note_flick_top_r" ||
+    value.longFlashSpritePrefix !== "note_long_flash_" || !Array.isArray(value.clips) || value.clips.length !== 4
   ) return false;
   return value.clips.every((clip, index) => validateClip(clip, index));
 }

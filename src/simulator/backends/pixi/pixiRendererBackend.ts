@@ -17,6 +17,7 @@ import {
 } from "../../engine/evidence";
 import { RecordingSimulatorRendererBackend } from "../recordingRendererBackend";
 import { validateAndFreezeRenderProfile } from "../renderingValidation";
+import type { OrdinaryVisibleClip } from "../resources/currentOrdinaryVisibleProfile";
 import {
   CURRENT_SCORE_HUD_BITMAP_GLYPHS,
   CURRENT_SCORE_HUD_BINDINGS,
@@ -105,6 +106,7 @@ interface PixiObjectRecord {
   maskVertexCount: number | null;
   hudVisual: PixiHudVisual | null;
   readonly scoreGaugeSsAnimation: RenderResourceProfile["scoreGaugeSsAnimation"];
+  readonly ordinaryVisibleProfile: RenderResourceProfile["ordinaryVisibleProfile"];
   activeAnimationRole: EvidenceAnimationRole | null;
   animationElapsedSeconds: number | null;
 }
@@ -113,6 +115,7 @@ interface PixiShadowObject {
   readonly role: string;
   readonly parentObjectId: string | null;
   readonly materialBound: boolean;
+  readonly spriteBindingKey: string | null;
   readonly maskConfigured: boolean;
   readonly activeAnimationRole: EvidenceAnimationRole | null;
 }
@@ -573,6 +576,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           ? null
           : nodeIds.get(value.node.parent as Container) ?? null,
         materialBound: value.materialTexture !== null,
+        spriteBindingKey: value.spriteBindingKey,
         maskConfigured: value.maskContent !== null,
         activeAnimationRole: value.activeAnimationRole,
       });
@@ -591,6 +595,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
             role: command.role,
             parentObjectId: command.parentObjectId,
             materialBound: false,
+            spriteBindingKey: null,
             maskConfigured: false,
             activeAnimationRole: null,
           });
@@ -619,14 +624,15 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
               "Sprite and Note/line material bindings require their exact engine-authored object roles.",
             );
           }
-          if (command.binding === "material") {
-            shadow.set(command.renderObjectId, {
-              ...shadow.get(command.renderObjectId)!,
-              materialBound: true,
-              maskConfigured: shadow.get(command.renderObjectId)!.maskConfigured,
-              activeAnimationRole: shadow.get(command.renderObjectId)!.activeAnimationRole,
-            });
-          }
+          shadow.set(command.renderObjectId, {
+            ...shadow.get(command.renderObjectId)!,
+            materialBound: command.binding === "material"
+              ? true
+              : shadow.get(command.renderObjectId)!.materialBound,
+            spriteBindingKey: command.binding === "sprite"
+              ? spriteKey(command.logicalAssetId, command.exactKey!)
+              : shadow.get(command.renderObjectId)!.spriteBindingKey,
+          });
           break;
         }
         case "activate-object":
@@ -699,7 +705,14 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           break;
         case "play-animation": {
           const object = shadow.get(command.renderObjectId)!;
-          if (!animationMatchesRole(command.animationRole, object.role)) {
+          if (
+            !animationMatchesRole(command.animationRole, object.role) ||
+            !animationBindingMatchesProfile(
+              command.animationRole,
+              object.spriteBindingKey,
+              this.profile?.ordinaryVisibleProfile,
+            )
+          ) {
             return reject(
               "render.pixi.animation-role-mismatch",
               "Portable R7 animation roles require their exact engine-owned HUD/Note owner and frozen Sprite key where applicable.",
@@ -771,6 +784,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           maskVertexCount: null,
           hudVisual: null,
           scoreGaugeSsAnimation: this.profile?.scoreGaugeSsAnimation,
+          ordinaryVisibleProfile: this.profile?.ordinaryVisibleProfile,
           activeAnimationRole: null,
           animationElapsedSeconds: null,
         });
@@ -1592,11 +1606,7 @@ function applyEvidenceAnimation(
     return;
   }
   if (role === "note-flick" || role === "note-directional-flick" || role === "note-long-flash") {
-    const sprite = object.spriteContent;
-    if (sprite === null) throw new Error("Note animation owner missing Sprite");
-    const pulse = Math.fround(1 + 0.08 * Math.sin(elapsedSeconds * Math.PI * 8));
-    sprite.scale.set(pulse, pulse);
-    if (role === "note-directional-flick" || role === "note-long-flash") sprite.alpha = Math.fround(0.8 + 0.2 * Math.abs(Math.sin(elapsedSeconds * Math.PI * 4)));
+    applyOrdinaryNoteAnimation(object, role, elapsedSeconds);
     return;
   }
   throw new Error("unsupported HUD animation role");
@@ -1621,13 +1631,66 @@ function stopEvidenceAnimation(object: PixiObjectRecord, role: EvidenceAnimation
     return;
   }
   if (role === "note-flick" || role === "note-directional-flick" || role === "note-long-flash") {
-    if (object.spriteContent !== null) {
-      object.spriteContent.scale.set(1, 1);
-      object.spriteContent.alpha = 1;
-    }
+    applyOrdinaryNoteAnimation(object, role, 0);
     return;
   }
   if (object.hudVisual !== null) object.hudVisual.animationLayer.visible = false;
+}
+
+function applyOrdinaryNoteAnimation(
+  object: PixiObjectRecord,
+  role: "note-flick" | "note-directional-flick" | "note-long-flash",
+  elapsedSeconds: number,
+): void {
+  const sprite = object.spriteContent;
+  const profile = object.ordinaryVisibleProfile;
+  if (sprite === null || profile === undefined || object.spriteBindingKey === null) {
+    throw new Error("ordinary Note animation owner/profile/resource binding is missing");
+  }
+  const exactKey = object.spriteBindingKey.slice(object.spriteBindingKey.indexOf("\u0000") + 1);
+  const clipId = role === "note-flick"
+    ? "note-flick-up"
+    : role === "note-directional-flick"
+    ? exactKey === profile.noteAnimations.directionalSpriteKeys.left
+      ? "note-flick-left"
+      : exactKey === profile.noteAnimations.directionalSpriteKeys.right
+      ? "note-flick-right"
+      : null
+    : exactKey.startsWith(profile.noteAnimations.longFlashSpritePrefix)
+    ? "note-long-flash"
+    : null;
+  if (clipId === null) throw new Error("ordinary Note animation resource key does not select a current clip");
+  const clip = profile.noteAnimations.clips.find((candidate) => candidate.clipId === clipId);
+  if (clip === undefined) throw new Error("ordinary Note animation clip is missing");
+  const values = sampleOrdinaryVisibleClip(clip, elapsedSeconds);
+  if (role === "note-long-flash") {
+    sprite.tint = rgbTint(values[0]!, values[1]!, values[2]!);
+    sprite.alpha = values[3]!;
+  } else {
+    object.node.position.set(values[0]!, -values[1]!);
+    object.node.rotation = Math.fround(values[5]! * Math.PI / 180);
+  }
+}
+
+function sampleOrdinaryVisibleClip(
+  clip: OrdinaryVisibleClip,
+  elapsedSeconds: number,
+): readonly number[] {
+  const phase = clip.loop
+    ? Math.fround(elapsedSeconds % clip.durationSeconds)
+    : Math.fround(Math.min(elapsedSeconds, clip.durationSeconds));
+  return Object.freeze(clip.curves.map((curve) => {
+    if (curve.storage === "constant") return curve.value;
+    let key = curve.keys[0]!;
+    for (const candidate of curve.keys) {
+      if (candidate.time > phase) break;
+      key = candidate;
+    }
+    const delta = Math.fround(phase - key.time);
+    let value = Math.fround(Math.fround(key.coefficients[0] * delta) + key.coefficients[1]);
+    value = Math.fround(Math.fround(value * delta) + key.coefficients[2]);
+    return Math.fround(Math.fround(value * delta) + key.coefficients[3]);
+  }));
 }
 
 const COMBO_SCALE_KEYS = Object.freeze([
@@ -1775,6 +1838,24 @@ function quaternionZRadians(quaternion: readonly [number, number, number, number
     2 * (quaternion[3] * quaternion[2] + quaternion[0] * quaternion[1]),
     1 - 2 * (quaternion[1] * quaternion[1] + quaternion[2] * quaternion[2]),
   ));
+}
+
+function animationBindingMatchesProfile(
+  role: string,
+  spriteBindingKey: string | null,
+  profile: RenderResourceProfile["ordinaryVisibleProfile"],
+): boolean {
+  if (role !== "note-flick" && role !== "note-directional-flick" && role !== "note-long-flash") {
+    return true;
+  }
+  if (profile === undefined || spriteBindingKey === null) return false;
+  const exactKey = spriteBindingKey.slice(spriteBindingKey.indexOf("\u0000") + 1);
+  if (role === "note-flick") return exactKey === profile.noteAnimations.directionalSpriteKeys.up;
+  if (role === "note-directional-flick") {
+    return exactKey === profile.noteAnimations.directionalSpriteKeys.left ||
+      exactKey === profile.noteAnimations.directionalSpriteKeys.right;
+  }
+  return exactKey.startsWith(profile.noteAnimations.longFlashSpritePrefix);
 }
 
 function animationMatchesRole(role: string, objectRole: string): boolean {

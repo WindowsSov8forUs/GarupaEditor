@@ -27,6 +27,7 @@ import {
 interface RecordingRenderObject {
   readonly role: string;
   readonly poolFamily: string;
+  readonly spriteExactKey: string | null;
 }
 
 interface PendingRenderBatch {
@@ -298,6 +299,7 @@ export class RecordingSimulatorRendererBackend implements SimulatorRendererBacke
         objects.set(command.renderObjectId, Object.freeze({
           role: command.role,
           poolFamily: command.poolFamily,
+          spriteExactKey: null,
         }));
         return ok(undefined);
       }
@@ -335,6 +337,10 @@ export class RecordingSimulatorRendererBackend implements SimulatorRendererBacke
             "Resource bindings use exact logical IDs and Sprite keys without aliases or fallback.",
           );
         }
+        if (command.binding === "sprite") objects.set(command.renderObjectId, Object.freeze({
+          ...objects.get(command.renderObjectId)!,
+          spriteExactKey: command.exactKey,
+        }));
         return ok(undefined);
       }
       case "set-transform":
@@ -418,7 +424,12 @@ export class RecordingSimulatorRendererBackend implements SimulatorRendererBacke
         if (
           typeof command.restart !== "boolean" ||
           !this.hasAnimationRole(command.animationRole) ||
-          !animationRoleMatchesObject(command.animationRole, objects.get(command.renderObjectId)?.role)
+          !animationRoleMatchesObject(command.animationRole, objects.get(command.renderObjectId)?.role) ||
+          !animationBindingMatchesProfile(
+            command.animationRole,
+            objects.get(command.renderObjectId)?.spriteExactKey ?? null,
+            this.profile!.ordinaryVisibleProfile,
+          )
         ) {
           return this.latchFault(
             "render.command.unknown-animation",
@@ -431,7 +442,12 @@ export class RecordingSimulatorRendererBackend implements SimulatorRendererBacke
           !validateRenderFloat32(command.elapsedSeconds) ||
           command.elapsedSeconds.value < 0 ||
           !this.hasAnimationRole(command.animationRole) ||
-          !animationRoleMatchesObject(command.animationRole, objects.get(command.renderObjectId)?.role)
+          !animationRoleMatchesObject(command.animationRole, objects.get(command.renderObjectId)?.role) ||
+          !animationBindingMatchesProfile(
+            command.animationRole,
+            objects.get(command.renderObjectId)?.spriteExactKey ?? null,
+            this.profile!.ordinaryVisibleProfile,
+          )
         ) {
           return this.latchFault(
             "render.command.invalid-animation-sample",
@@ -580,6 +596,23 @@ function freezeCommand(command: RenderCommand): RenderCommand {
     default:
       return Object.freeze({ ...command });
   }
+}
+
+function animationBindingMatchesProfile(
+  role: RenderAnimationRole,
+  spriteExactKey: string | null,
+  profile: RenderResourceProfile["ordinaryVisibleProfile"],
+): boolean {
+  if (role !== "note-flick" && role !== "note-directional-flick" && role !== "note-long-flash") {
+    return true;
+  }
+  if (profile === undefined || spriteExactKey === null) return false;
+  if (role === "note-flick") return spriteExactKey === profile.noteAnimations.directionalSpriteKeys.up;
+  if (role === "note-directional-flick") {
+    return spriteExactKey === profile.noteAnimations.directionalSpriteKeys.left ||
+      spriteExactKey === profile.noteAnimations.directionalSpriteKeys.right;
+  }
+  return spriteExactKey.startsWith(profile.noteAnimations.longFlashSpritePrefix);
 }
 
 function animationRoleMatchesObject(role: RenderAnimationRole, objectRole: string | undefined): boolean {

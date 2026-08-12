@@ -8,7 +8,7 @@ export interface OrdinaryVisiblePortableResourceEntry {
 const TEXTURE = Object.freeze({ scaleMode: "linear" as const, wrapModeU: "clamp" as const, wrapModeV: "clamp" as const, mipmap: "off" as const, premultiplyAlpha: true, blendMode: "normal" as const });
 const ADDITIVE_TEXTURE = Object.freeze({ ...TEXTURE, blendMode: "add" as const });
 
-export const CURRENT_ORDINARY_VISIBLE_PROFILE_RESOURCE = Object.freeze({ logicalAssetId: "hud/ordinary/visible-profile", resourceKeySuffix: "ordinary-visible-rendering-profile.json", byteLength: 28885, sha256: "A7DB45369B1F92909B329F8F71D893E7F1C187B91B5B8C4B8D37AC158F74BEF3" });
+export const CURRENT_ORDINARY_VISIBLE_PROFILE_RESOURCE = Object.freeze({ logicalAssetId: "hud/ordinary/visible-profile", resourceKeySuffix: "ordinary-visible-rendering-profile.json", byteLength: 28809, sha256: "13690E23ED72074C142681746EF933D97020E70D7E35D7BE10CF94E54BBE804D" });
 
 export const CURRENT_ORDINARY_VISIBLE_PORTABLE_RESOURCES: readonly OrdinaryVisiblePortableResourceEntry[] = Object.freeze([
   entry("combo-number.png", {
