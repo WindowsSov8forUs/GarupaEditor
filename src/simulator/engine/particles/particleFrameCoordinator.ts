@@ -166,19 +166,15 @@ export class ParticleFrameCoordinator {
   preflightJudgement(
     deltaTimeSeconds: number,
     batch: OneFrameJudgementBatch,
-    gameOverAfterReflect: boolean,
   ): SimulatorResult<ParticleOuterFrameTransaction> {
-    const owner = this.producer.preflightJudgement(
-      batch,
-      gameOverAfterReflect ? "game-over" : null,
-    );
+    const owner = this.producer.preflightJudgement(batch);
     return owner.status === "ok"
       ? this.preflight(deltaTimeSeconds, false, owner.value)
       : owner;
   }
 
   preflightTerminal(
-    reason: "game-over" | "natural-end",
+    reason: "natural-end",
   ): SimulatorResult<ParticleOuterFrameTransaction> {
     const owner = this.producer.preflightTerminal(reason);
     return owner.status === "ok" ? this.preflight(0, false, owner.value) : owner;

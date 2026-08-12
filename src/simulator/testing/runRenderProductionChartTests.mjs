@@ -80,7 +80,7 @@ async function verifyHabahiroCompleteReplay() {
     assets: [
       atlasAsset("RhythmGameSprites1.png"), atlasAsset("RhythmGameSprites2.png"),
       atlasAsset("RhythmGameSprites3.png"), atlasAsset("RhythmGameSprites4.png"),
-      atlasAsset("RhythmGameSprites5.png"), atlasAsset("RhythmGameSprites16.png"),
+      atlasAsset("RhythmGameSprites16.png"),
       materialAsset("sync", "sync-line"), materialAsset("long", "long-note"),
       materialAsset("curve", "curve-note"), materialAsset("multiple-left", "multiple-directional-line"),
       materialAsset("multiple-right", "multiple-directional-line"),
@@ -131,13 +131,13 @@ async function verifyHabahiroCompleteReplay() {
   });
   const atlasIds = {
     normal:logical("RhythmGameSprites4.png"), normal16:logical("RhythmGameSprites16.png"),
-    skill:logical("RhythmGameSprites5.png"), flick:logical("RhythmGameSprites1.png"),
+    flick:logical("RhythmGameSprites1.png"),
     long:logical("RhythmGameSprites2.png"), longFlash:logical("RhythmGameSprites3.png"),
     slideAmong:logical("RhythmGameSprites2.png"),
   };
   const engine = ok(createSimulatorEngine({
     chart: chartResult.value,
-    runtime: { highFrequencyMode:false, judgeOffsetFrames:0, playMode:{ kind:"auto-live", resultTransform:"identity-no-active-situation-skill" } },
+    runtime: { highFrequencyMode:false, judgeOffsetFrames:0, playMode:{ kind:"auto-live", resultTransform:"identity" } },
     rendering: { sessionId:"habahiro-complete-oracle", resources: {
       noteAtlasLogicalAssetId:atlasIds.normal, directionalAtlasLogicalAssetId:atlasIds.flick,
       habahiroAtlasLogicalAssetIds:atlasIds, syncLineLogicalAssetId:logical("sync"),
@@ -186,9 +186,9 @@ async function verifyHabahiroCompleteReplay() {
   if (!sawFieldMask) throw new Error("complete field mask missing");
   if (sawRuntimeModeLabel) throw new Error("complete HABAHIRO emitted a runtime approximation/mode label");
   equal(frames, 6130, "complete deterministic frame count");
-  equal(commandCount, 217595, "complete deterministic command count");
+  equal(commandCount, 225945, "complete deterministic command count");
   const commandIdentity = digest.digest("hex");
-  equal(commandIdentity, "74d11cf3742de6e955a46ddd0f5d1b5c8e620f74e3e52502a7feae364f3ad8b5", "complete command identity digest");
+  equal(commandIdentity, "013732cc47d589aa4ab503a766e4b16d57d300b8abd6e9cff2d1b564934d49bb", "complete command identity digest");
   ok(engine.dispose(), "dispose complete HABAHIRO engine");
   equal(renderer.snapshot().objectCount, 0, "complete replay releases all owners");
   console.log(`render HABAHIRO complete production replay passed: batches=${chartResult.value.noteBatches.length} frames=${frames} commands=${commandCount} digest=${commandIdentity}`);
@@ -207,8 +207,11 @@ async function verifyLegacyRejectionAndOrdinaryReplay() {
   const chartResult = createNoteBatchInformationList({ musicScoreData: bms });
   ok(chartResult, "construct HABAHIRO production chart");
   equal(chartResult.value.habahiroChangeAbsolutePos, 1728, "locked lane-change position");
-  const keyFixture = JSON.parse(readFileSync(join(testingRoot, "habahiroDegradedSpriteKeys.json"), "utf8"));
-  equal(keyFixture.keys.length, 179, "degraded Sprite key count");
+  const retainedKeys = JSON.parse(readFileSync(
+    join(testingRoot, "habahiroRetainedSpriteKeys.json"),
+    "utf8",
+  ));
+  equal(retainedKeys.keys.length, 151, "retained non-character Sprite key count");
   const png = new Uint8Array(24);
   png.set([0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a,0,0,0,13,0x49,0x48,0x44,0x52], 0);
   png.set([0,0,0,1,0,0,0,1], 16);
@@ -225,7 +228,7 @@ async function verifyLegacyRejectionAndOrdinaryReplay() {
       sha256: createHash("sha256").update(png).digest("hex").toUpperCase(), mime: "image/png",
       width: 1, height: 1,
       textureSettings: { scaleMode: "linear", wrapModeU: "clamp", wrapModeV: "clamp", mipmap: "off", premultiplyAlpha: true, blendMode: "normal" },
-      atlasRows: keyFixture.keys.map((exactKey) => ({ exactKey, x: 0, y: 0, width: 1, height: 1, pivotX: 0.5, pivotY: 0.5, pixelsPerUnit: 100 })),
+      atlasRows: retainedKeys.keys.map((exactKey) => ({ exactKey, x: 0, y: 0, width: 1, height: 1, pivotX: 0.5, pivotY: 0.5, pixelsPerUnit: 100 })),
       materialRole: "sprite", animationRole: "none", provenance: "current-external-portable",
     }],
     scene: {
@@ -253,7 +256,7 @@ async function verifyLegacyRejectionAndOrdinaryReplay() {
   });
   const legacyCreation = createSimulatorEngine({
     chart: chartResult.value,
-    runtime: { highFrequencyMode: false, judgeOffsetFrames: 0, playMode: { kind: "auto-live", resultTransform: "identity-no-active-situation-skill" } },
+    runtime: { highFrequencyMode: false, judgeOffsetFrames: 0, playMode: { kind: "auto-live", resultTransform: "identity" } },
     rendering: { sessionId: "habahiro-production-replay", resources: { noteAtlasLogicalAssetId: assetId, directionalAtlasLogicalAssetId: assetId }, ordinaryNoteScene: scene },
   }, createRecordingSimulatorBackends(renderer));
   equal(legacyCreation.status, "evidence-required", "legacy degraded profile is not a production engine mode");
@@ -274,7 +277,7 @@ async function verifyLegacyRejectionAndOrdinaryReplay() {
     textureSettings: { scaleMode: "linear", wrapModeU: "clamp", wrapModeV: "clamp", mipmap: "off", premultiplyAlpha: true, blendMode: "normal" },
     atlasRows: [], materialRole, animationRole: "none", provenance: "current-apk",
   });
-  const ordinaryKeys = [...keyFixture.keys, ...Array.from({ length: 7 }, (_, lane) => `note_flick_l_${lane}`), ...Array.from({ length: 7 }, (_, lane) => `note_flick_r_${lane}`)];
+  const ordinaryKeys = [...retainedKeys.keys, ...Array.from({ length: 7 }, (_, lane) => `note_flick_l_${lane}`), ...Array.from({ length: 7 }, (_, lane) => `note_flick_r_${lane}`)];
   const ordinaryProfile = {
     ...profile,
     packIdentity: "current-ordinary-production-audit",
@@ -296,7 +299,7 @@ async function verifyLegacyRejectionAndOrdinaryReplay() {
     new PortableRenderResourcePreflightAdapter()), "prepare ordinary renderer");
   const ordinaryEngine = ok(createSimulatorEngine({
     chart: ordinaryChart.value,
-    runtime: { highFrequencyMode: false, judgeOffsetFrames: 0, playMode: { kind: "auto-live", resultTransform: "identity-no-active-situation-skill" } },
+    runtime: { highFrequencyMode: false, judgeOffsetFrames: 0, playMode: { kind: "auto-live", resultTransform: "identity" } },
     rendering: { sessionId: "ordinary-production-audit", resources: {
       noteAtlasLogicalAssetId: ordinaryAssetId, directionalAtlasLogicalAssetId: ordinaryAssetId,
       syncLineLogicalAssetId: "asset.ordinary.sync",
@@ -330,8 +333,8 @@ async function verifyLegacyRejectionAndOrdinaryReplay() {
   ok(ordinaryEngine.dispose(), "dispose ordinary production audit engine");
   equal(ordinaryRenderer.snapshot().objectCount, 0, "ordinary replay releases every render owner");
   const ordinaryDigest = ordinaryCommandDigest.digest("hex");
-  equal(ordinaryCommandCount, 159832, "ordinary exact command count");
-  equal(ordinaryDigest, "e174b8f0ab2e943ba84ab45a2ee8ecaca9fbcdc235fb32176c7cf6c18834a0ec",
+  equal(ordinaryCommandCount, 171620, "ordinary exact command count");
+  equal(ordinaryDigest, "69919824b7ec235e657a840ad9fd8d88795662963dd23ecfce20e82a3165aa66",
     "ordinary exact command identity digest");
   console.log(`render ordinary exact production replay passed: batches=${ordinaryChart.value.noteBatches.length} commands=${ordinaryCommandCount} digest=${ordinaryDigest}`);
 }

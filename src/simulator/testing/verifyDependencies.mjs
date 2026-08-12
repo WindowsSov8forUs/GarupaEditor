@@ -22,6 +22,10 @@ const forbidden = [
   { label: "DOM type", pattern: /\b(?:HTMLElement|HTMLCanvasElement|AudioContext)\b/ },
   { label: "main program", pattern: /(?:src\/app|\.\.\/\.\.\/app|\.\.\/\.\.\/App)/ },
   { label: "editor chart model", pattern: /chartCore/ },
+  {
+    label: "removed character/multiplayer mechanism",
+    pattern: /\b(?:SituationSkillManager|FeverTimeManager|ScoreLifeStateManager|ScoreUtility|InGameRecord|updateFeverMemberPoint|changeFeverCommand|continueLive|sessionBusinessData|voiceGain|skillIndex|feverIndex|gameOver|GameOver|RhythmGameSprites5)\b|["']game-over["']/,
+  },
 ];
 
 function listTypeScriptFiles(root) {

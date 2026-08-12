@@ -28,24 +28,8 @@ export interface ManualJudgementData {
   readonly multipleDirectionalFlickNoteCount: number;
 }
 
-export interface OneFrameBusinessData {
-  readonly adjustedResult: 0 | 1 | 2 | 3 | 4;
-  readonly addScore: number;
-  readonly freeLiveEventBonusAppliedAddScore: number;
-  readonly addPower: number;
-  readonly feverScoreUpRate: number;
-  readonly skillScoreUpRate: number;
-  readonly crescendoSkillScoreUpRate: number;
-  readonly scoreUpRate: number;
-  readonly scoreUpType: number;
-  readonly damageGuardType: 0 | 1 | 2;
-  readonly neverDie: boolean;
-}
-
 export type OneFrameJudgementData = AutoLiveJudgementData | ManualJudgementData;
-export type OneFrameDataPayload = OneFrameJudgementData & {
-  readonly business?: OneFrameBusinessData;
-};
+export type OneFrameDataPayload = OneFrameJudgementData;
 
 export type OneFrameJudgementEntry = OneFrameDataPayload & {
   readonly slot: number;

@@ -14,8 +14,7 @@ import {
 import type { EngineLifecycleSnapshot, EngineLifecycleState } from "../lifecycle";
 import { InGameMusicScoreController } from "./inGameMusicScoreController";
 import { InGameOneFrameJudgementController } from "./inGameOneFrameJudgementController";
-import { ScoreLifeStateManager } from "./scoreLifeStateManager";
-import type { FeverTimeCommandName } from "./feverTimeManager";
+import { JudgementStateManager } from "./judgementStateManager";
 import { InputManager } from "./inputBoundaries";
 import { NoteManager } from "./noteManager";
 import type {
@@ -37,7 +36,7 @@ export interface InGameManagerSnapshot extends EngineLifecycleSnapshot {
   readonly noteManager: ReturnType<NoteManager["snapshot"]>;
   readonly inputManager: ReturnType<InputManager["snapshot"]>;
   readonly oneFrame: ReturnType<InGameOneFrameJudgementController["snapshot"]>;
-  readonly scoreLifeState: ReturnType<ScoreLifeStateManager["snapshot"]> | null;
+  readonly judgementState: ReturnType<JudgementStateManager["snapshot"]> | null;
   readonly particle: ReturnType<ParticleFrameCoordinator["producer"]["snapshot"]> | null;
 }
 
@@ -55,7 +54,7 @@ export class InGameManager {
     readonly noteManager: NoteManager,
     readonly oneFrameJudgementController: InGameOneFrameJudgementController,
     readonly inputManager: InputManager,
-    readonly scoreLifeStateManager: ScoreLifeStateManager | null = null,
+    readonly judgementStateManager: JudgementStateManager | null = null,
     private readonly renderProducer: RenderCommandProducer | null = null,
     private readonly audioProducer: AudioCommandProducer | null = null,
     private readonly particleCoordinator: ParticleFrameCoordinator | null = null,
@@ -98,8 +97,10 @@ export class InGameManager {
       const committed = fieldSetup.value.commit();
       if (committed.status !== "ok") return committed;
     }
-    const hudSetup = this.scoreLifeStateManager !== null && this.renderProducer !== null
-      ? this.renderProducer.preflightHudSetup(this.scoreLifeStateManager.record.snapshot())
+    const hudSetup = this.judgementStateManager !== null
+      ? this.renderProducer?.preflightHudSetup(
+          this.judgementStateManager.record.snapshot(),
+        ) ?? null
       : null;
     if (hudSetup?.status === "evidence-required") return hudSetup;
     if (hudSetup?.status === "ok") {
@@ -151,44 +152,6 @@ export class InGameManager {
       );
     }
     this.audioProducer?.beginOuterFrame();
-    const skillBefore = this.scoreLifeStateManager?.snapshot().skill ?? null;
-    const skillAudio = skillBefore?.state === 1
-      ? this.audioProducer?.preflightSkillTriggered() ?? null
-      : null;
-    if (skillAudio !== null && skillAudio.status !== "ok") {
-      return this.latchFault(skillAudio);
-    }
-    this.scoreLifeStateManager?.update(deltaTimeSeconds);
-    const skillAfter = this.scoreLifeStateManager?.snapshot().skill ?? null;
-    if (skillBefore !== null && skillAfter !== null) {
-      if (skillAudio?.status === "ok" && skillAfter.state !== 2) {
-        skillAudio.value.discard();
-        return this.latchFault(evidenceRequired(
-          "audio.skill.preflight-transition-changed",
-          [],
-          "A preflighted Skill audio transition must enter Playing in the same owner update.",
-        ));
-      }
-      const skillRender = this.renderProducer?.preflightHudSkillTransition(
-        skillBefore,
-        skillAfter,
-      ) ?? null;
-      if (skillRender?.status === "evidence-required") {
-        if (skillAudio?.status === "ok") skillAudio.value.discard();
-        return this.latchFault(skillRender);
-      }
-      if (skillAudio?.status === "ok") {
-        const committed = skillAudio.value.commit();
-        if (committed.status !== "ok") {
-          if (skillRender?.status === "ok") skillRender.value.discard();
-          return this.latchFault(committed);
-        }
-      }
-      if (skillRender?.status === "ok") {
-        const committed = skillRender.value.commit();
-        if (committed.status !== "ok") return this.latchFault(committed);
-      }
-    }
     const updateResult = this.noteManager.execUpdate(deltaTimeSeconds);
     if (updateResult.status !== "ok") {
       return this.latchFault(updateResult);
@@ -263,46 +226,44 @@ export class InGameManager {
       if (reflectPlan.status !== "ok") return this.latchFault(reflectPlan);
       if (reflectPlan.value !== null) {
         const batch = reflectPlan.value.batch;
-        const lifeBefore = this.scoreLifeStateManager?.record.currentLife ?? null;
-        const businessPlan = this.scoreLifeStateManager?.preflightReflect(batch) ?? null;
-        if (businessPlan?.status === "evidence-required") {
+        const judgementPlan = this.judgementStateManager?.preflightReflect(batch) ?? null;
+        if (judgementPlan?.status === "evidence-required") {
           this.oneFrameJudgementController.discardReflectOneFrameData(
             reflectPlan.value,
           );
-          return this.latchFault(businessPlan);
+          return this.latchFault(judgementPlan);
         }
-        const gameOver = businessPlan?.status === "ok" && lifeBefore !== null &&
-          lifeBefore > 0 && businessPlan.value.record.currentLife <= 0;
         const particlePlan = this.particleCoordinator?.preflightJudgement(
           deltaTimeSeconds,
           batch,
-          gameOver,
         ) ?? null;
         if (particlePlan?.status === "evidence-required") {
-          if (businessPlan?.status === "ok") {
-            this.scoreLifeStateManager!.discardReflect(businessPlan.value);
+          if (judgementPlan?.status === "ok") {
+            this.judgementStateManager!.discardReflect(judgementPlan.value);
           }
           this.oneFrameJudgementController.discardReflectOneFrameData(reflectPlan.value);
           return this.latchFault(particlePlan);
         }
-        const audioPlan = this.audioProducer?.preflightJudgement(batch, gameOver) ?? null;
+        const audioPlan = this.audioProducer?.preflightJudgement(batch) ?? null;
         if (audioPlan?.status === "evidence-required") {
           if (particlePlan?.status === "ok") particlePlan.value.discard();
-          if (businessPlan?.status === "ok") {
-            this.scoreLifeStateManager!.discardReflect(businessPlan.value);
+          if (judgementPlan?.status === "ok") {
+            this.judgementStateManager!.discardReflect(judgementPlan.value);
           }
           this.oneFrameJudgementController.discardReflectOneFrameData(
             reflectPlan.value,
           );
           return this.latchFault(audioPlan);
         }
-        const renderPlan = businessPlan?.status === "ok"
-          ? this.renderProducer?.preflightHudReflect(businessPlan.value) ?? null
+        const renderPlan = judgementPlan?.status === "ok"
+          ? this.renderProducer?.preflightHudReflect(judgementPlan.value) ?? null
           : null;
         if (renderPlan?.status === "evidence-required") {
           if (particlePlan?.status === "ok") particlePlan.value.discard();
           if (audioPlan?.status === "ok") audioPlan.value.discard();
-          this.scoreLifeStateManager!.discardReflect(businessPlan!.value);
+          if (judgementPlan?.status === "ok") {
+            this.judgementStateManager!.discardReflect(judgementPlan.value);
+          }
           this.oneFrameJudgementController.discardReflectOneFrameData(
             reflectPlan.value,
           );
@@ -313,23 +274,23 @@ export class InGameManager {
             reflectPlan.value,
           );
         if (reflected.status !== "ok") {
-          if (businessPlan?.status === "ok") {
-            this.scoreLifeStateManager!.discardReflect(businessPlan.value);
+          if (judgementPlan?.status === "ok") {
+            this.judgementStateManager!.discardReflect(judgementPlan.value);
           }
           if (particlePlan?.status === "ok") particlePlan.value.discard();
           if (audioPlan?.status === "ok") audioPlan.value.discard();
           if (renderPlan?.status === "ok") renderPlan.value.discard();
           return this.latchFault(reflected);
         }
-        if (businessPlan?.status === "ok") {
-          const businessReflect = this.scoreLifeStateManager!.commitReflect(
-            businessPlan.value,
+        if (judgementPlan?.status === "ok") {
+          const judgementReflect = this.judgementStateManager!.commitReflect(
+            judgementPlan.value,
           );
-          if (businessReflect.status !== "ok") {
+          if (judgementReflect.status !== "ok") {
             if (particlePlan?.status === "ok") particlePlan.value.discard();
             if (audioPlan?.status === "ok") audioPlan.value.discard();
             if (renderPlan?.status === "ok") renderPlan.value.discard();
-            return this.latchFault(businessReflect);
+            return this.latchFault(judgementReflect);
           }
         }
         if (particlePlan?.status === "ok") {
@@ -367,58 +328,6 @@ export class InGameManager {
       if (advanced.status !== "ok") return this.latchFault(advanced);
     }
     return ok(undefined);
-  }
-
-  updateFeverMemberPoint(
-    displayIndex: number,
-    point: number,
-    isOwnTeam: boolean,
-  ): SimulatorResult<void> {
-    if (this.faultValue !== null) return this.faultValue;
-    if (this.lifecycleState !== "initialized" || this.scoreLifeStateManager === null) {
-      return evidenceRequired(
-        "score-life.fever-adapter-without-active-profile",
-        ["SLS-D16", "SLS-D24"],
-        "Fever adapter updates require an initialized Score/Life session profile.",
-      );
-    }
-    return this.scoreLifeStateManager.updateFeverMemberPoint(displayIndex, point, isOwnTeam);
-  }
-
-  changeFeverCommand(command: FeverTimeCommandName): SimulatorResult<void> {
-    if (this.faultValue !== null) return this.faultValue;
-    if (this.lifecycleState !== "initialized" || this.scoreLifeStateManager === null) {
-      return evidenceRequired(
-        "score-life.fever-command-without-active-profile",
-        ["SLS-D16", "SLS-D24"],
-        "Fever commands require an initialized Score/Life session profile.",
-      );
-    }
-    const before = this.scoreLifeStateManager.snapshot().fever;
-    const render = this.renderProducer?.preflightHudFeverTransition(command, before) ?? null;
-    if (render?.status === "evidence-required") return this.latchFault(render);
-    const changed = this.scoreLifeStateManager.changeFeverCommand(command);
-    if (changed.status !== "ok") {
-      if (render?.status === "ok") render.value.discard();
-      return changed;
-    }
-    if (render?.status === "ok") {
-      const committed = render.value.commit();
-      if (committed.status !== "ok") return this.latchFault(committed);
-    }
-    return ok(undefined);
-  }
-
-  continueLive(): SimulatorResult<void> {
-    if (this.faultValue !== null) return this.faultValue;
-    if (this.scoreLifeStateManager === null) {
-      return evidenceRequired(
-        "score-life.continue-without-profile",
-        ["SLS-D22", "SLS-D24", "BS36"],
-        "Continue is unavailable without a Score/Life session and remains excluded with one.",
-      );
-    }
-    return this.scoreLifeStateManager.continueLive();
   }
 
   getAdjustedMusicPosition(): SimulatorResult<number> {
@@ -556,7 +465,7 @@ export class InGameManager {
       noteManager: this.noteManager.snapshot(),
       inputManager: this.inputManager.snapshot(),
       oneFrame: this.oneFrameJudgementController.snapshot(),
-      scoreLifeState: this.scoreLifeStateManager?.snapshot() ?? null,
+      judgementState: this.judgementStateManager?.snapshot() ?? null,
       particle: this.particleCoordinator?.producer.snapshot() ?? null,
     };
   }

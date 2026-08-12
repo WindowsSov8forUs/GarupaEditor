@@ -97,13 +97,6 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
       const report = this.finish("completed", null);
       return Object.freeze({ status: "closed" as const, report });
     }
-    const snapshot = this.engine.snapshot();
-    if (snapshot.status !== "ok") return rejectedStep(snapshot);
-    const record = snapshot.value.managers.scoreLifeState?.record ?? null;
-    if (record?.singleGameOver === true) {
-      const report = this.finish("game-over", null);
-      return Object.freeze({ status: "closed" as const, report });
-    }
     return Object.freeze({ status: "running" as const });
   }
 
@@ -177,12 +170,13 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
   }
 
   private finish(
-    reason: "completed" | "game-over" | "user-closed" | "terminal-fault",
+    reason: "completed" | "user-closed" | "terminal-fault",
     failure: SimulatorModuleFailure | null,
   ): SimulatorModuleCloseReport {
     const snapshot = this.engine.snapshot();
     const value = snapshot.status === "ok" ? snapshot.value : null;
-    const record = value?.managers.scoreLifeState?.record ?? null;
+    const judgement = value?.managers.judgementState ?? null;
+    const record = judgement?.record ?? null;
     const disposed = this.engine.dispose();
     this.checkpoint = null;
     this.state = "closed";
@@ -193,12 +187,11 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
       : null);
     return Object.freeze({
       reason: terminalFailure === null ? reason : "terminal-fault" as const,
-      result: value === null ? null : Object.freeze({
+      result: value === null || record === null ? null : Object.freeze({
         adjustedMusicPosition: value.adjustedMusicPosition,
-        score: record?.score ?? null,
-        life: record?.currentLife ?? null,
-        combo: record?.currentCombo ?? null,
-        clearStatus: this.engine.getNaturalCompletionClearStatus(),
+        combo: record.currentCombo,
+        clearStatus: this.engine.getNaturalCompletionClearStatus() ??
+          clearStatusFromSnapshot(judgement!),
       }),
       failure: terminalFailure,
     });
@@ -212,10 +205,7 @@ function copyLaunchRequest(
     request === null || typeof request !== "object" || Array.isArray(request) ||
     Object.keys(request).sort().join(",") !== "chartData,config" ||
     request.chartData === null || typeof request.chartData !== "object" ||
-    Object.keys(request.chartData).sort().join(",") !==
-      "bgm,bmsText,sessionBusinessData" ||
-    request.chartData.sessionBusinessData === null ||
-    typeof request.chartData.sessionBusinessData !== "object" ||
+    Object.keys(request.chartData).sort().join(",") !== "bgm,bmsText" ||
     typeof request.chartData.bmsText !== "string" || request.chartData.bmsText.length === 0 ||
     request.config === null || typeof request.config !== "object" ||
     Object.keys(request.config).sort().join(",") !==
@@ -239,13 +229,13 @@ function copyLaunchRequest(
     !isExactFloat32(request.config.visual.habahiroMeshWidthSetting) ||
     request.config.audio === null || typeof request.config.audio !== "object" ||
     Object.keys(request.config.audio).sort().join(",") !==
-      "bgmGain,masterGain,seGain,voiceGain" ||
+      "bgmGain,masterGain,seGain" ||
     !Object.values(request.config.audio).every(isUnitGain)
   ) {
     return rejected(
       "evidence-required",
       "simulator.recipe.invalid-public-request",
-      "The launch recipe accepts only exact chart/config/business keys, explicit modes, confirmed judgement offset, non-negative practice seek, evidence-bounded Float32 visual settings and finite unit gains.",
+      "The launch recipe accepts only exact chart/config keys, explicit play mode, confirmed judgement offset, non-negative practice seek, evidence-bounded Float32 visual settings and finite unit gains.",
     );
   }
   const bgm = request.chartData.bgm;
@@ -256,21 +246,10 @@ function copyLaunchRequest(
       "The immutable chart package requires one explicit owned BGM byte sequence.",
     );
   }
-  let business: typeof request.chartData.sessionBusinessData;
-  try {
-    business = deepFreezeClone(request.chartData.sessionBusinessData) as typeof request.chartData.sessionBusinessData;
-  } catch {
-    return rejected(
-      "evidence-required",
-      "simulator.recipe.invalid-session-business-data",
-      "Session business data must be one finite JSON-like immutable value graph without capabilities or cyclic aliases.",
-    );
-  }
   return accepted(Object.freeze({
     chartData: Object.freeze({
       bmsText: request.chartData.bmsText,
       bgm: Object.freeze({ ...bgm, bytes: Uint8Array.from(bgm.bytes) }),
-      sessionBusinessData: business,
     }),
     config: Object.freeze({
       playMode: request.config.playMode,
@@ -283,24 +262,13 @@ function copyLaunchRequest(
   }));
 }
 
-function deepFreezeClone(value: unknown, seen = new Set<object>()): unknown {
-  if (value === null || typeof value === "string" || typeof value === "boolean") return value;
-  if (typeof value === "number") {
-    if (!Number.isFinite(value)) throw new Error("non-finite");
-    return value;
-  }
-  if (typeof value !== "object" || seen.has(value)) throw new Error("invalid graph");
-  seen.add(value);
-  if (Array.isArray(value)) {
-    const output = Object.freeze(value.map((entry) => deepFreezeClone(entry, seen)));
-    seen.delete(value);
-    return output;
-  }
-  if (Object.getPrototypeOf(value) !== Object.prototype) throw new Error("invalid prototype");
-  const output: Record<string, unknown> = {};
-  for (const [key, entry] of Object.entries(value)) output[key] = deepFreezeClone(entry, seen);
-  seen.delete(value);
-  return Object.freeze(output);
+function clearStatusFromSnapshot(snapshot: {
+  readonly maxNoteCount: number;
+  readonly record: { readonly resultCounts: readonly number[] };
+}): 1 | 2 | 3 {
+  const perfect = snapshot.record.resultCounts[4] ?? 0;
+  if (perfect === snapshot.maxNoteCount) return 3;
+  return perfect + (snapshot.record.resultCounts[3] ?? 0) === snapshot.maxNoteCount ? 2 : 1;
 }
 
 function isExactFloat32(value: unknown): value is number {

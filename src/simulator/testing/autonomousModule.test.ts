@@ -71,7 +71,7 @@ function testSelector(): void {
     musicScoreData: "#BPM 120\n#00111:01\n",
   }));
   const ordinarySelection = selectSimulatorStaticResources(ordinary);
-  assert.equal(ordinarySelection.audioSe.length, 18);
+  assert.equal(ordinarySelection.audioSe.length, 13);
   assert.equal(ordinarySelection.particles.length, 9);
   assert.equal(ordinarySelection.rendering.kind, "ordinary");
   if (ordinarySelection.rendering.kind === "ordinary") {
@@ -90,7 +90,7 @@ function testSelector(): void {
   const habSelection = selectSimulatorStaticResources(hab);
   assert.equal(habSelection.rendering.kind, "habahiro");
   if (habSelection.rendering.kind === "habahiro") {
-    assert.equal(habSelection.rendering.resources.length, 11);
+    assert.equal(habSelection.rendering.resources.length, 10);
     assert.ok(habSelection.rendering.resources.every((row) =>
       row.resourceKey.startsWith("simulator-static/current-10.1.4/habahiro/")));
   }
@@ -152,13 +152,6 @@ function testRecipeOwnership(): void {
 
   const extra = { ...request(), extra: true } as unknown as SimulatorModuleLaunchRequest;
   assert.equal(createSimulatorSessionRecipe(extra).status, "rejected");
-  const cyclic: any = {};
-  cyclic.self = cyclic;
-  const invalidBusiness = {
-    ...request(),
-    chartData: { ...request().chartData, sessionBusinessData: cyclic },
-  } as unknown as SimulatorModuleLaunchRequest;
-  assert.equal(createSimulatorSessionRecipe(invalidBusiness).status, "rejected");
 }
 
 async function testRecipeNaturalCompletion(): Promise<void> {
@@ -171,9 +164,6 @@ async function testRecipeNaturalCompletion(): Promise<void> {
     resolveManualInputButton: () => ok(null),
     pause: () => ok(undefined),
     resume: () => ok(undefined),
-    updateFeverMemberPoint: () => ok(undefined),
-    changeFeverCommand: () => ok(undefined),
-    continueLive: () => ok(undefined),
     completeLiveAudio: () => ok(undefined),
     getNaturalCompletionClearStatus: () => completed ? 2 as const : null,
     getAdjustedMusicPosition: () => ok(1.25),
@@ -184,8 +174,9 @@ async function testRecipeNaturalCompletion(): Promise<void> {
         state: initialized ? "initialized" : "created",
         fault: null,
         particle: {},
-        scoreLifeState: {
-          record: { score: 123, currentLife: 900, currentCombo: 7, singleGameOver: false },
+        judgementState: {
+          maxNoteCount: 10,
+          record: { currentCombo: 7, resultCounts: [0, 0, 0, 10, 0] },
         },
       },
       particleBackend: { state: "ready" },
@@ -202,7 +193,7 @@ async function testRecipeNaturalCompletion(): Promise<void> {
   if (stepped.status !== "closed") throw new Error("natural completion must close");
   assert.equal(stepped.report.reason, "completed");
   assert.equal(stepped.report.result?.clearStatus, 2);
-  assert.equal(stepped.report.result?.score, 123);
+  assert.equal(stepped.report.result?.combo, 7);
   assert.equal(disposals, 1);
 }
 
@@ -245,7 +236,6 @@ async function testProductionCompositionFailureBoundary(): Promise<void> {
   seekRequest.config.practice.enabled = true;
   seekRequest.config.practice.startMilliseconds = 1;
   seekRequest.config.playMode = "manual";
-  seekRequest.chartData.sessionBusinessData.mode = { kind: "practice" };
   const launched = await module.launch(seekRequest);
   assert.equal(launched.status, "rejected");
   if (launched.status === "rejected") {
@@ -379,21 +369,6 @@ function request(): SimulatorModuleLaunchRequest {
         durationSeconds: 1,
         currentSampleFrames: 44100,
       },
-      sessionBusinessData: {
-        scoreLevel: 1,
-        deckTotalParameter: 100000,
-        freeLiveEventBonusDeckTotalParameter: 0,
-        life: {
-          initialLife: 1000,
-          playerMaxLife: 1000,
-          lifeUpperLimit: 2000,
-          missDamage: 100,
-          badDamage: 50,
-        },
-        mode: { kind: "auto-live", comboCoefficient: Math.fround(1) },
-        skills: [],
-        fever: { difficulty: "expert", ownTeamMemberCount: 5 },
-      },
     },
     config: {
       playMode: "auto-live",
@@ -406,7 +381,7 @@ function request(): SimulatorModuleLaunchRequest {
         highAspectRatio: 1,
         habahiroMeshWidthSetting: Math.fround(1),
       },
-      audio: { masterGain: 1, bgmGain: 1, seGain: 1, voiceGain: 1 },
+      audio: { masterGain: 1, bgmGain: 1, seGain: 1 },
     },
   };
 }

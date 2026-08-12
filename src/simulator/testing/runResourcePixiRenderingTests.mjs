@@ -18,7 +18,7 @@ const stages = [
   ["clock scheduling", "runClockSchedulingTests.mjs"],
   ["Auto Live", "runAutoLiveTests.mjs"],
   ["manual input", "runManualInputAcceptanceTests.mjs"],
-  ["Score/Life/State", "runScoreLifeStateTests.mjs"],
+  ["Judgement State", "runJudgementStateTests.mjs"],
 ];
 for (const [label, runner] of stages) {
   console.log(`\n=== resource/Pixi regression: ${label} ===`);

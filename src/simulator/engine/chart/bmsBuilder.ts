@@ -500,8 +500,6 @@ function getGameNoteTypeWithSoundValue(
 }
 
 function getGameNoteAdditionalType(soundValue: string): GameNoteAdditionalTypeValue {
-  if (soundValue.includes("fever")) return GameNoteAdditionalType.Fever;
-  if (soundValue.includes("skill")) return GameNoteAdditionalType.Skill;
   if (soundValue.includes("lane_change")) return GameNoteAdditionalType.LaneChange;
   return GameNoteAdditionalType.None;
 }

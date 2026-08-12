@@ -540,9 +540,9 @@ function buildSystemBindings(
       }));
     }
   }
-  return bindings.size === 104
+  return bindings.size === 85
     ? particleAccepted(bindings)
-    : particleRejected("evidence-required", "particle.pixi.renderer-binding-count-mismatch", "Exactly 104 of the 120 current systems have enabled renderer bindings.");
+    : particleRejected("evidence-required", "particle.pixi.renderer-binding-count-mismatch", "Exactly 85 of the 98 retained current systems have enabled renderer bindings.");
 }
 
 function validateScene(scene: ParticlePixiSceneProfile): ParticleOperationResult<ParticlePixiSceneProfile> {

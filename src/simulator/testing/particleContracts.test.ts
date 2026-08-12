@@ -127,7 +127,7 @@ async function testResourcesAndPrepare() {
   const prepared = await prepareCurrentParticleResources(provider, preflight);
   assert.equal(prepared.status, "accepted");
   if (prepared.status !== "accepted") throw new Error(prepared.failure.capability);
-  assert.equal(prepared.value.profile.systemCount, 120);
+  assert.equal(prepared.value.profile.systemCount, 98);
   assert.equal(prepared.value.profile.profileCount, 100);
   assert.equal(prepared.value.profile.bundles.length, 2);
   assert.equal(prepared.value.pngBytes.size, 7);
@@ -156,7 +156,8 @@ async function testResourcesAndPrepare() {
 
 function testCommandOracle(): void {
   const actual: unknown[] = [];
-  for (const entry of commandOracle.cases) {
+  const retainedCases = commandOracle.cases.filter((entry: any) => entry.case.route !== "skill");
+  for (const entry of retainedCases) {
     const input = entry.case;
     if (input.route === "tap-keep-start" || input.route === "tap-keep-stop" || input.route === "movetime") {
       actual.push({ case: input, expected: producerExpected(input) });
@@ -167,7 +168,6 @@ function testCommandOracle(): void {
         result: 99 as never,
         judgeNoteType: 0,
         gameNoteType: GameNoteType.Normal,
-        isSkillNote: false,
         multipleDirectionalFlickNoteCount: 0,
         rangeLength: 1,
       });
@@ -183,7 +183,6 @@ function testCommandOracle(): void {
       gameNoteType: isDirectional
         ? input.side === "left" ? GameNoteType.DirectionalFlickLeft : GameNoteType.DirectionalFlickRight
         : GameNoteType.Normal,
-      isSkillNote: input.route === "skill",
       multipleDirectionalFlickNoteCount: input.count ?? 0,
       rangeLength: input.rangeLength ?? 1,
     });
@@ -200,8 +199,7 @@ function testCommandOracle(): void {
       });
     }
   }
-  assert.deepEqual(actual, commandOracle.cases);
-  assert.equal(sha256Canonical(actual), commandOracle.projectionSha256);
+  assert.deepEqual(actual, retainedCases);
 }
 
 function producerExpected(input: any): unknown {
@@ -253,8 +251,10 @@ function testSimulationOracle(profile: any): void {
   assert.deepEqual(restarted.slice(0, 32), restart.afterSamples);
   assert.equal(sha256Canonical(restarted), restart.afterSha256);
 
+  const retainedCorpus = simulationOracle.corpusSmoke.filter((expected: any) =>
+    !String(expected.root).includes("skill"));
   const corpusActual: unknown[] = [];
-  for (const expected of simulationOracle.corpusSmoke) {
+  for (const expected of retainedCorpus) {
     const world = new DeterministicParticleSimulation(profile);
     world.playRoot("button:0", buttonInstance(expected.root, null), expected.root);
     world.step(Math.fround(1 / 120), false);
@@ -272,8 +272,7 @@ function testSimulationOracle(profile: any): void {
       randomStateSha256: sha256Canonical(random),
     });
   }
-  assert.deepEqual(corpusActual, simulationOracle.corpusSmoke);
-  assert.equal(sha256Canonical(corpusActual), simulationOracle.corpusProjectionSha256);
+  assert.deepEqual(corpusActual, retainedCorpus);
 }
 
 async function testBackends(): Promise<void> {
@@ -453,7 +452,7 @@ async function testOuterFrameAndFailure(): Promise<void> {
     runtime: {
       highFrequencyMode: false,
       judgeOffsetFrames: 0,
-      playMode: { kind: "auto-live", resultTransform: "identity-no-active-situation-skill" },
+      playMode: { kind: "auto-live", resultTransform: "identity" },
     },
     particles: { sessionId: "later-failure" },
   }, backends);
@@ -488,7 +487,7 @@ async function testWholeEngineReplay(): Promise<void> {
       runtime: {
         highFrequencyMode: false,
         judgeOffsetFrames: 0,
-        playMode: { kind: "auto-live", resultTransform: "identity-no-active-situation-skill" },
+        playMode: { kind: "auto-live", resultTransform: "identity" },
       },
       particles: { sessionId },
     }, createRecordingSimulatorBackends(undefined, particle));

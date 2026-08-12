@@ -175,7 +175,6 @@ export type AudioCommand =
       readonly kind: "gain.set";
       readonly bgm_bits: string;
       readonly se_bits: string;
-      readonly voice_bits: string;
     }
   | {
       readonly kind: "pool.profile";
@@ -215,7 +214,6 @@ export interface AudioSemanticStateSnapshot {
   readonly gain: {
     readonly bgmBits: string;
     readonly seBits: string;
-    readonly voiceBits: string;
   } | null;
 }
 

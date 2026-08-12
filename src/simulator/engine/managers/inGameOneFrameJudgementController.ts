@@ -12,7 +12,6 @@ import type {
   ManualJudgementData,
   OneFrameDataHandle,
   OneFrameDataPayload,
-  OneFrameBusinessData,
   OneFrameJudgementBatch,
   OneFrameJudgementData,
   OneFrameJudgementEntry,
@@ -95,10 +94,6 @@ export type ManualJudgementOwner = (
   noteInformation: ManualJudgementRequest["noteInformation"],
 ) => ManualJudgementOwnership | null;
 
-export type OneFrameBusinessOwner = (
-  judgement: OneFrameJudgementData,
-) => OneFrameBusinessData;
-
 export class InGameOneFrameJudgementController {
   private initializedValue = false;
   private readonly containers: OneFrameDataContainer[] = [];
@@ -108,7 +103,6 @@ export class InGameOneFrameJudgementController {
   private nextReflectBatchIndex = 0;
   private autoLiveJudgementOwner: AutoLiveJudgementOwner | null = null;
   private manualJudgementOwner: ManualJudgementOwner | null = null;
-  private businessOwner: OneFrameBusinessOwner | null = null;
   private pendingReflectPlan: OneFrameReflectPlan | null = null;
 
   get isInitialized(): boolean {
@@ -190,18 +184,6 @@ export class InGameOneFrameJudgementController {
       );
     }
     this.manualJudgementOwner = owner;
-    return ok(undefined);
-  }
-
-  registerBusinessOwner(owner: OneFrameBusinessOwner): SimulatorResult<void> {
-    if (typeof owner !== "function" || this.businessOwner !== null) {
-      return evidenceRequired(
-        "one-frame.invalid-or-duplicate-business-owner",
-        ["SLS-D02", "SLS-D18"],
-        "The controller accepts one session-bound Score/Life business projection owner.",
-      );
-    }
-    this.businessOwner = owner;
     return ok(undefined);
   }
 
@@ -315,13 +297,7 @@ export class InGameOneFrameJudgementController {
       judgeTiming: 0,
       multipleDirectionalFlickNoteCount: request.multipleDirectionalFlickNoteCount,
     });
-    const business = this.businessOwner?.(judgement);
-    const payload: OneFrameDataPayload = Object.freeze({
-      ...judgement,
-      adjustedResult: business?.adjustedResult ?? judgement.adjustedResult,
-      addCombo: (business?.adjustedResult ?? judgement.adjustedResult) >= NoteResultType.Great ? 1 : -1,
-      business,
-    });
+    const payload: OneFrameDataPayload = Object.freeze({ ...judgement });
     container.payload = payload;
     container.inUse = true;
     this.traceValue.push({
@@ -332,14 +308,6 @@ export class InGameOneFrameJudgementController {
       multipleDirectionalFlickNoteCount: request.multipleDirectionalFlickNoteCount,
     });
     return ok(undefined);
-  }
-
-  setupBusinessData(): SimulatorResult<void> {
-    return evidenceRequired(
-      "one-frame.setup-business-data",
-      ["E21", "E24", "R02"],
-      "Score, power, life, skill, Fever, audio, particle and HUD consumers are absent from the Auto Live judgement projection.",
-    );
   }
 
   existsOneFrameData(): boolean {
@@ -547,13 +515,7 @@ export class InGameOneFrameJudgementController {
       multipleDirectionalFlickNoteCount:
         request.multipleDirectionalFlickNoteCount ?? 0,
     });
-    const business = this.businessOwner?.(judgement);
-    const payload: OneFrameDataPayload = Object.freeze({
-      ...judgement,
-      adjustedResult: business?.adjustedResult ?? judgement.adjustedResult,
-      addCombo: (business?.adjustedResult ?? judgement.adjustedResult) >= NoteResultType.Great ? 1 : -1,
-      business,
-    });
+    const payload: OneFrameDataPayload = Object.freeze({ ...judgement });
     container.payload = payload;
     container.inUse = true;
     this.traceValue.push({

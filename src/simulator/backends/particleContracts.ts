@@ -360,7 +360,7 @@ export interface ParticlePortableProfile {
   readonly fidelity: "current-static-portable-complete";
   readonly networkAllowed: false;
   readonly automaticFallbackAllowed: false;
-  readonly systemCount: 120;
+  readonly systemCount: 98;
   readonly profileCount: 100;
   readonly bundles: readonly ParticleBundleProfile[];
 }
@@ -371,9 +371,6 @@ export type ParticleRootId =
   | "ordinary:effect_tap_good"
   | "ordinary:effect_tap_great"
   | "ordinary:effect_tap_perfect"
-  | "ordinary:effect_tap_skill_good"
-  | "ordinary:effect_tap_skill_great"
-  | "ordinary:effect_tap_skill_perfect"
   | "ordinary:effect_tap_swipe"
   | "directional:effect_tap_directional_flick_l"
   | "directional:effect_tap_directional_flick_l_2"
@@ -478,7 +475,7 @@ export type ParticleCommand =
     }
   | {
       readonly kind: "clear-all";
-      readonly reason: "movetime" | "game-over" | "natural-end" | "retry" | "reset" | "dispose";
+      readonly reason: "movetime" | "natural-end" | "retry" | "reset" | "dispose";
     }
   | {
       readonly kind: "suppress-until-replay";

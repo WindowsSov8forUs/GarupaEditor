@@ -130,15 +130,6 @@ export function countKinds(specs) {
   return Object.fromEntries([...countValues(specs.map((spec) => spec.kind)).entries()]);
 }
 
-export function countAdditionalTypes(specs) {
-  return {
-    root_skill: specs.filter((spec) => spec.rootAdditionalType === 2).length,
-    end_skill: specs.filter((spec) => spec.endAdditionalType === 2).length,
-    root_fever: specs.filter((spec) => spec.rootAdditionalType === 1).length,
-    end_fever: specs.filter((spec) => spec.endAdditionalType === 1).length,
-  };
-}
-
 export function countValues(values) {
   const counts = new Map();
   for (const value of values) {

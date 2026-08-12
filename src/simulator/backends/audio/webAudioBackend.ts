@@ -19,7 +19,7 @@ import { RecordingSimulatorAudioBackend } from "../recordingAudioBackend";
 interface WebAudioVoice {
   readonly voiceKey: string;
   readonly cue: string;
-  readonly category: "bgm" | "se" | "voice";
+  readonly category: "bgm" | "se";
   readonly gain: GainNode;
   source: AudioBufferSourceNode | null;
   startedAt: number;
@@ -43,7 +43,6 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
   private pending: PendingWebAudioBatch | null = null;
   private bgmGain: GainNode | null = null;
   private seGain: GainNode | null = null;
-  private voiceGain: GainNode | null = null;
   private contextListenerInstalled = false;
   private scheduledPauseOffset = 0;
 
@@ -135,14 +134,10 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
       temporaryGains.push(bgmGain);
       const seGain = this.context.createGain();
       temporaryGains.push(seGain);
-      const voiceGain = this.context.createGain();
-      temporaryGains.push(voiceGain);
       bgmGain.connect(this.context.destination);
       seGain.connect(this.context.destination);
-      voiceGain.connect(this.context.destination);
       this.bgmGain = bgmGain;
       this.seGain = seGain;
-      this.voiceGain = voiceGain;
     } catch {
       for (const gain of temporaryGains) {
         try { gain.disconnect(); } catch {}
@@ -258,10 +253,8 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
     this.decodedByCue.clear();
     release(() => this.bgmGain?.disconnect());
     release(() => this.seGain?.disconnect());
-    release(() => this.voiceGain?.disconnect());
     this.bgmGain = null;
     this.seGain = null;
-    this.voiceGain = null;
     if (this.contextListenerInstalled) {
       release(() => this.context.removeEventListener("statechange", this.onContextStateChange));
       this.contextListenerInstalled = false;
@@ -280,7 +273,6 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
         case "gain.set":
           this.setCategoryGain(this.bgmGain!, audioFloat32FromBits(command.bgm_bits)!);
           this.setCategoryGain(this.seGain!, audioFloat32FromBits(command.se_bits)!);
-          this.setCategoryGain(this.voiceGain!, audioFloat32FromBits(command.voice_bits)!);
           break;
         case "bgm.load":
           this.createVoice("bgm", command.cue, "bgm", 1, command.seek_ms / 1000, null, null);
@@ -304,7 +296,7 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
           this.replaceVoice(
             `se:${command.voice_key}`,
             command.cue,
-            command.voice_key === "game-clear-voice" ? "voice" : "se",
+            "se",
             audioFloat32FromBits(command.volume_bits)!,
             0,
             null,
@@ -457,7 +449,6 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
     if (!paused) throw new Error("delayed resume is unsupported");
     this.bgmGain!.gain.setValueAtTime(0, at);
     this.seGain!.gain.setValueAtTime(0, at);
-    this.voiceGain!.gain.setValueAtTime(0, at);
   }
 
   private setCategoryGain(node: GainNode, value: number): void {
@@ -466,7 +457,7 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
   }
 
   private categoryGain(category: WebAudioVoice["category"]): GainNode {
-    return category === "bgm" ? this.bgmGain! : category === "voice" ? this.voiceGain! : this.seGain!;
+    return category === "bgm" ? this.bgmGain! : this.seGain!;
   }
 
   private forEachVoice(

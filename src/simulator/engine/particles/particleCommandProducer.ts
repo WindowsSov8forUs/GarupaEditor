@@ -7,7 +7,6 @@ import {
   AfterNoteType,
   ButtonType,
   FrontNoteType,
-  GameNoteAdditionalType,
   GameNoteType,
   type ChartConstructionResult,
   type NoteInformation,
@@ -123,7 +122,6 @@ export class ParticleCommandProducer {
 
   preflightJudgement(
     batch: OneFrameJudgementBatch,
-    terminalAfter: "game-over" | null = null,
   ): SimulatorResult<ParticleCommandOwnerTransaction> {
     const available = this.validateAvailable();
     if (available.status !== "ok") return available;
@@ -172,7 +170,6 @@ export class ParticleCommandProducer {
           result: entry.adjustedResult,
           judgeNoteType: entry.noteType,
           gameNoteType: judgementGameNoteType(note, entry),
-          isSkillNote: isSkillEntry(note, entry),
           multipleDirectionalFlickNoteCount: entry.multipleDirectionalFlickNoteCount,
           rangeLength: entry.buttonTypes.length,
         });
@@ -188,12 +185,6 @@ export class ParticleCommandProducer {
           ));
         }
       }
-    }
-    if (terminalAfter !== null) {
-      commands.push(Object.freeze({ kind: "clear-all", reason: terminalAfter }));
-      projected.buttonTapKeep.clear();
-      projected.slideTapKeep.clear();
-      projected.terminal = true;
     }
     return this.stage(commands, projected);
   }
@@ -333,7 +324,7 @@ export class ParticleCommandProducer {
   }
 
   preflightTerminal(
-    reason: "game-over" | "natural-end",
+    reason: "natural-end",
   ): SimulatorResult<ParticleCommandOwnerTransaction> {
     const available = this.validateAvailable(false);
     if (available.status !== "ok") return available;
@@ -688,12 +679,6 @@ function judgementGameNoteType(
     }
   }
   return note.gameNoteType;
-}
-
-function isSkillEntry(note: NoteInformation, entry: OneFrameJudgementEntry): boolean {
-  return entry.phase === "tail"
-    ? note.gameNoteAdditionalTypeLongNoteEnd === GameNoteAdditionalType.Skill
-    : note.gameNoteAdditionalType === GameNoteAdditionalType.Skill;
 }
 
 function judgementKey(

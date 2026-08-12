@@ -9,7 +9,6 @@ import type {
   ManualInputFrame,
   ManualInputPosition,
 } from "../engine/data/manualInput";
-import type { ScoreLifeStateProfile } from "../engine/data/scoreLifeState";
 import type { SimulatorResult } from "../engine/evidence";
 import type { AudioBackendSnapshot } from "../backends/audioContracts";
 import type { RenderBackendSnapshot } from "../backends/renderingContracts";
@@ -22,7 +21,6 @@ import type {
   OrdinaryFixedNoteSceneInput,
   RenderEngineResourceBindings,
 } from "../engine/rendering/renderCommandProducer";
-import type { FeverTimeCommandName } from "../engine/managers/feverTimeManager";
 import type { InGameDirectorSnapshot } from "../engine/managers/inGameDirector";
 import type { InGameManagerSnapshot } from "../engine/managers/inGameManager";
 
@@ -43,7 +41,6 @@ export interface SimulatorEngineInput {
     readonly judgeOffsetFrames: number;
     readonly playMode: SimulatorPlayMode;
   };
-  readonly scoreLifeState?: ScoreLifeStateProfile;
   readonly rendering?: SimulatorRenderingSessionInput;
   readonly audio?: SimulatorAudioSessionInput;
   readonly particles?: SimulatorParticleSessionInput;
@@ -71,13 +68,6 @@ export interface SimulatorEngine {
   ): SimulatorResult<ManualInputButtonResolution | null>;
   pause(): SimulatorResult<void>;
   resume(): SimulatorResult<void>;
-  updateFeverMemberPoint(
-    displayIndex: number,
-    point: number,
-    isOwnTeam: boolean,
-  ): SimulatorResult<void>;
-  changeFeverCommand(command: FeverTimeCommandName): SimulatorResult<void>;
-  continueLive(): SimulatorResult<void>;
   completeLiveAudio(clearStatus: 1 | 2 | 3): SimulatorResult<void>;
   getNaturalCompletionClearStatus(): 1 | 2 | 3 | null;
   getAdjustedMusicPosition(): SimulatorResult<number>;

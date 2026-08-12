@@ -1,4 +1,3 @@
-import type { FeverTimeCommandName } from "../engine/managers/feverTimeManager";
 import type {
   ManualInputButtonResolution,
   ManualInputFrame,
@@ -46,17 +45,6 @@ type ReplayEvent =
     }
   | { readonly kind: "pause" }
   | { readonly kind: "resume" }
-  | {
-      readonly kind: "fever-member-point";
-      readonly displayIndex: number;
-      readonly point: number;
-      readonly isOwnTeam: boolean;
-    }
-  | {
-      readonly kind: "fever-command";
-      readonly command: FeverTimeCommandName;
-    }
-  | { readonly kind: "continue-live" }
   | {
       readonly kind: "complete-live";
       readonly clearStatus: 1 | 2 | 3;
@@ -179,30 +167,6 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
 
   resume(): SimulatorResult<void> {
     return this.commitSimpleEvent({ kind: "resume" }, () => this.active.resume());
-  }
-
-  updateFeverMemberPoint(
-    displayIndex: number,
-    point: number,
-    isOwnTeam: boolean,
-  ): SimulatorResult<void> {
-    return this.commitSimpleEvent(Object.freeze({
-      kind: "fever-member-point",
-      displayIndex,
-      point,
-      isOwnTeam,
-    }), () => this.active.updateFeverMemberPoint(displayIndex, point, isOwnTeam));
-  }
-
-  changeFeverCommand(command: FeverTimeCommandName): SimulatorResult<void> {
-    return this.commitSimpleEvent(Object.freeze({
-      kind: "fever-command",
-      command,
-    }), () => this.active.changeFeverCommand(command));
-  }
-
-  continueLive(): SimulatorResult<void> {
-    return this.commitSimpleEvent({ kind: "continue-live" }, () => this.active.continueLive());
   }
 
   completeLiveAudio(clearStatus: 1 | 2 | 3): SimulatorResult<void> {
@@ -502,12 +466,6 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
         return engine.pause();
       case "resume":
         return engine.resume();
-      case "fever-member-point":
-        return engine.updateFeverMemberPoint(event.displayIndex, event.point, event.isOwnTeam);
-      case "fever-command":
-        return engine.changeFeverCommand(event.command);
-      case "continue-live":
-        return engine.continueLive();
       case "complete-live":
         return engine.completeLiveAudio(event.clearStatus);
     }

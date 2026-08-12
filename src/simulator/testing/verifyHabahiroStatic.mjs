@@ -13,13 +13,17 @@ const producerSource = read("src/simulator/engine/rendering/renderCommandProduce
 const chartOracle = read("src/simulator/testing/runRenderProductionChartTests.mjs");
 
 assert(evidence.atlas_row_count === 179, "HA-D04 keeps exactly 179 source Sprite rows");
-assert(evidence.assets.length === 11, "all eleven pinned Bestdori payloads are profiled");
-for (const asset of evidence.assets) {
+assert(evidence.assets.length === 11, "historical evidence keeps all eleven pinned Bestdori payloads");
+const retainedAssets = evidence.assets.filter((asset) => asset.technical_name !== "RhythmGameSprites5.png");
+assert(retainedAssets.length === 10, "reduced playback deploys ten non-character HABAHIRO payloads");
+for (const asset of retainedAssets) {
   assert(manifestSource.includes(`technicalName: "${asset.technical_name}"`), `manifest technical name ${asset.technical_name}`);
   assert(manifestSource.includes(`byteLength: ${asset.bytes}`), `manifest byte length ${asset.technical_name}`);
   assert(manifestSource.includes(`sha256: "${asset.sha256}"`), `manifest SHA-256 ${asset.technical_name}`);
   assert(manifestSource.includes(`url: "${asset.url}"`), `manifest URL ${asset.technical_name}`);
 }
+assert(!manifestSource.includes('technicalName: "RhythmGameSprites5.png"'),
+  "character-note atlas is absent from the deployed manifest");
 assert(differences.parity_claim === false, "approximation never claims original parity");
 assert(differences.functional_blockers.length === 0, "difference profile has no functional blocker");
 assert(providerSource.includes('parsed.hostname === "bestdori.com"'), "provider host allowlist is exact");
@@ -33,10 +37,10 @@ assert(!`${providerSource}\n${fidelitySource}\n${producerSource}`.toLowerCase().
 assert(producerSource.includes('getHabahiroMeshWidthRate'), "static mesh-width rule is consumed");
 assert(producerSource.includes('preflightHabahiroFlashStart'), "engine-clock flash phase is explicit");
 assert(producerSource.includes('preflightHabahiroLaneChange'), "post-flash lane change is explicit");
-assert(chartOracle.includes('217595'), "full-chart command count is locked");
-assert(chartOracle.includes('74d11cf3742de6e955a46ddd0f5d1b5c8e620f74e3e52502a7feae364f3ad8b5'), "full-chart digest is locked");
+assert(chartOracle.includes('225945'), "reduced full-chart command count is locked");
+assert(chartOracle.includes('013732cc47d589aa4ab503a766e4b16d57d300b8abd6e9cff2d1b564934d49bb'), "reduced full-chart digest is locked");
 assert(!providerSource.includes("GirlsBandParty-Reverse"), "production provider does not read Reverse");
-console.log("HABAHIRO complete implementation static audit passed: HA-D01-HA-D12, 11 payloads, 179 Sprites, locked replay");
+console.log("HABAHIRO reduced playback static audit passed: 10 payloads, 151 reachable of 179 source Sprites");
 
 function read(path) { return readFileSync(resolve(root, path), "utf8"); }
 function assert(condition, message) { if (!condition) throw new Error(message); }

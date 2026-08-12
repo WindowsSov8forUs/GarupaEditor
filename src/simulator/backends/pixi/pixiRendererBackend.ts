@@ -54,21 +54,13 @@ interface PixiHudVisual {
   readonly secondaryFill: Graphics;
   readonly animationLayer: Container;
   readonly digitSprites: Sprite[];
-  readonly scoreDigitTexts: Text[];
   fillRatios: readonly [number, number];
 }
 
 type EvidenceAnimationRole =
   | "combo"
   | "all-perfect"
-  | "add-score"
   | "result"
-  | "life-heal"
-  | "damage-guard"
-  | "never-die"
-  | "score-skill"
-  | "judge-skill"
-  | "fever"
   | "habahiro-lane-change"
   | "note-flick"
   | "note-directional-flick"
@@ -407,7 +399,6 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     readonly threshold: number | null;
     readonly hudText: string | null;
     readonly hudSpriteCount: number | null;
-    readonly hudScoreDigitCount: number | null;
     readonly hudFillRatios: readonly [number, number] | null;
     readonly activeAnimationRole: EvidenceAnimationRole | null;
     readonly animationElapsedSeconds: number | null;
@@ -435,7 +426,6 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       threshold: value.threshold,
       hudText: value.hudVisual?.text.text ?? null,
       hudSpriteCount: value.hudVisual?.digitSprites.length ?? null,
-      hudScoreDigitCount: value.hudVisual?.scoreDigitTexts.length ?? null,
       hudFillRatios: value.hudVisual?.fillRatios ?? null,
       activeAnimationRole: value.activeAnimationRole,
       animationElapsedSeconds: value.animationElapsedSeconds,
@@ -641,17 +631,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           break;
         case "play-animation": {
           const object = shadow.get(command.renderObjectId)!;
-          const requiredSprite = command.animationRole === "life-heal"
-            ? "UI_effect_life_plus_icon"
-            : command.animationRole === "damage-guard"
-            ? "effect_health_guard_outline"
-            : command.animationRole === "never-die"
-            ? "effect_health_guts_outline"
-            : null;
-          if (
-            !animationMatchesRole(command.animationRole, object.role) ||
-            requiredSprite !== null && findTextureBinding(this.spriteTextures, requiredSprite) === null
-          ) {
+          if (!animationMatchesRole(command.animationRole, object.role)) {
             return reject(
               "render.pixi.animation-role-mismatch",
               "Portable R7 animation roles require their exact engine-owned HUD/Note owner and frozen Sprite key where applicable.",
@@ -1040,14 +1020,6 @@ function isEvidenceHud(
 ): boolean {
   const state = command.state;
   switch (command.hudRole) {
-    case "score":
-      return objectRole === "hud-score" &&
-        exactStateKeys(state, ["digits", "firstSignificant", "gaugeFill", "score"]) &&
-        isNonNegativeSafeInteger(state.score) &&
-        typeof state.digits === "string" && /^\d{8}$/.test(state.digits) &&
-        Number.isInteger(state.firstSignificant) &&
-        (state.firstSignificant as number) >= 0 && (state.firstSignificant as number) <= 7 &&
-        isUnitFill(state.gaugeFill);
     case "combo": {
       if (
         objectRole !== "hud-combo" ||
@@ -1060,57 +1032,17 @@ function isEvidenceHud(
       return String(state.combo).split("").every((digit) =>
         findTextureBinding(textures, `${prefix}${digit}`) !== null);
     }
-    case "result": {
-      if (
-        objectRole !== "hud-result" ||
-        !exactStateKeys(state, ["crescendoTenths", "judgeTiming", "representativeResult", "representativeSlot", "scoreUpType"]) ||
-        !isNullableFiniteScalar(state.representativeResult) ||
-        !isNullableFiniteScalar(state.representativeSlot) ||
-        !Number.isInteger(state.judgeTiming) || (state.judgeTiming as number) < 0 || (state.judgeTiming as number) > 2 ||
-        !Number.isInteger(state.scoreUpType) ||
-        (state.scoreUpType as number) < 0 ||
-        (state.scoreUpType as number) > 5 ||
-        !Number.isInteger(state.crescendoTenths)
-      ) return false;
-      if (state.scoreUpType === 0 || state.scoreUpType === 5) return true;
-      const key = scoreUpSpriteKey(state.scoreUpType as number);
-      return key !== null && findTextureBinding(textures, key) !== null &&
-        findTextureBinding(textures, "skill_eff") !== null;
-    }
-    case "life":
-      return objectRole === "hud-life" &&
-        exactStateKeys(state, [
-          "currentLife", "lifeUpperLimit", "playerMaxLife",
-          "danger", "damageGuardPlaying", "primaryFill", "secondaryFill", "singleGameOver", "warning",
-        ]) &&
-        isNonNegativeSafeInteger(state.currentLife) &&
-        isNonNegativeSafeInteger(state.playerMaxLife) &&
-        isNonNegativeSafeInteger(state.lifeUpperLimit) &&
-        typeof state.singleGameOver === "boolean" &&
-        typeof state.danger === "boolean" && typeof state.warning === "boolean" &&
-        typeof state.damageGuardPlaying === "boolean" &&
-        isUnitFill(state.primaryFill) && isNonNegativeFinite(state.secondaryFill);
+    case "result":
+      return objectRole === "hud-result" &&
+        exactStateKeys(state, ["judgeTiming", "representativeResult", "representativeSlot"]) &&
+        isNullableFiniteScalar(state.representativeResult) &&
+        isNullableFiniteScalar(state.representativeSlot) &&
+        Number.isInteger(state.judgeTiming) &&
+        (state.judgeTiming as number) >= 0 && (state.judgeTiming as number) <= 2;
     case "overlay":
-      return objectRole === "hud-overlay" && (
-        exactStateKeys(state, ["addScore", "depth", "freeLiveEventBonusAddScore", "phase", "phaseProgress", "poolIndex"]) &&
-          typeof state.addScore === "number" && Number.isFinite(state.addScore) &&
-          typeof state.freeLiveEventBonusAddScore === "number" && Number.isFinite(state.freeLiveEventBonusAddScore) &&
-          Number.isInteger(state.poolIndex) && (state.poolIndex as number) >= 0 && (state.poolIndex as number) < 4 &&
-          Number.isInteger(state.depth) && (state.depth as number) >= 0 && (state.depth as number) < 8 &&
-          state.phase === 0 && state.phaseProgress === 0 ||
-        exactStateKeys(state, [
-          "currentSkillNoteIndex", "scoreGaugeActive", "scoreSkill", "skillActive",
-        ]) && state.skillActive === true &&
-          typeof state.scoreSkill === "boolean" &&
-          typeof state.scoreGaugeActive === "boolean" &&
-          isNonNegativeSafeInteger(state.currentSkillNoteIndex) ||
+      return objectRole === "hud-overlay" &&
         exactStateKeys(state, ["habahiroFlashPhase", "progress"]) &&
-          state.habahiroFlashPhase === "flash-start" && state.progress === 0 ||
-        exactStateKeys(state, ["active", "feverCommand", "feverState"]) &&
-          typeof state.active === "boolean" &&
-          (state.feverCommand === "ready" || state.feverCommand === "start" || state.feverCommand === "end") &&
-          Number.isInteger(state.feverState) && (state.feverState as number) >= 0 && (state.feverState as number) <= 2
-      );
+        state.habahiroFlashPhase === "flash-start" && state.progress === 0;
     case "fidelity-label":
       return objectRole === "fidelity-label" &&
         state.label === "HABAHIRO" && state.visible === true && (
@@ -1137,35 +1069,9 @@ function applyEvidenceHud(
   visual.fillRatios = Object.freeze([0, 0]);
   const state = command.state;
   switch (command.hudRole) {
-    case "score": {
-      object.node.position.set(601, 135);
-      visual.text.visible = false;
-      for (const digit of visual.scoreDigitTexts.splice(0)) digit.destroy();
-      const firstSignificant = state.firstSignificant as number;
-      [...String(state.digits)].forEach((digit, index) => {
-        const text = new Text({
-          text: digit,
-          style: { fill: index < firstSignificant ? 0xbebebe : 0xff3b72, fontSize: 40, fontWeight: "bold" },
-        });
-        text.anchor.set(0.5);
-        text.position.set((index - 3.5) * 25, 0);
-        visual.content.addChild(text);
-        visual.scoreDigitTexts.push(text);
-      });
-      const gauge = state.gaugeFill as number;
-      visual.primaryFill.rect(-100, 28, 200 * gauge, 5).fill(0xff3b72);
-      visual.fillRatios = Object.freeze([gauge, 0]);
-      break;
-    }
     case "combo": {
       object.node.position.set(1256.699951171875, 277.20001220703125);
-      for (const bindingKey of object.hudBindingKeys) {
-        const next = (referenceCounts.get(bindingKey) ?? 0) - 1;
-        if (next <= 0) referenceCounts.delete(bindingKey);
-        else referenceCounts.set(bindingKey, next);
-      }
-      object.hudBindingKeys.length = 0;
-      for (const sprite of visual.digitSprites.splice(0)) sprite.destroy();
+      clearHudSprites(object, visual, referenceCounts);
       visual.text.visible = false;
       const value = String(state.combo);
       const prefix = state.allPerfect ? "icon_number_big_AP_" : "icon_number_big_";
@@ -1184,99 +1090,21 @@ function applyEvidenceHud(
     case "result": {
       object.node.position.set(800, 520);
       clearHudSprites(object, visual, referenceCounts);
-      const scoreUpType = state.scoreUpType as number;
       const timing = state.judgeTiming === 1 ? " FAST" : state.judgeTiming === 2 ? " SLOW" : "";
-      if (scoreUpType === 0) {
-        setHudText(
-          visual.text,
-          state.representativeResult === null ? "" : `${state.representativeResult}${timing}`,
-          54,
-          0xffffff,
-        );
-        break;
-      }
-      if (scoreUpType === 5) {
-        const tenths = Math.abs(state.crescendoTenths as number);
-        setHudText(visual.text, `${Math.trunc(tenths / 10)}.${tenths % 10}${timing}`, 36, 0xf3ec03);
-        break;
-      }
-      visual.text.visible = false;
-      const mainKey = scoreUpSpriteKey(scoreUpType)!;
-      const tint = scoreUpTint(scoreUpType);
-      for (const [exactKey, x, y, label] of [
-        ["skill_eff", 0, 44, "score-up-base"],
-        [mainKey, 44, 11, "score-up-main"],
-      ] as const) {
-        const binding = findTextureBinding(textures, exactKey)!;
-        const sprite = new Sprite({ texture: binding.texture, label });
-        sprite.anchor.copyFrom(sprite.texture.defaultAnchor ?? { x: 0.5, y: 0.5 });
-        sprite.position.set(x, y);
-        sprite.tint = tint;
-        visual.content.addChild(sprite);
-        visual.digitSprites.push(sprite);
-        object.hudBindingKeys.push(binding.key);
-        referenceCounts.set(binding.key, (referenceCounts.get(binding.key) ?? 0) + 1);
-      }
-      break;
-    }
-    case "life": {
-      object.node.position.set(1000, 95);
-      const primary = state.primaryFill as number;
-      const secondary = state.secondaryFill as number;
-      visual.secondaryFill.rect(0, 0, 224 * secondary, 26).fill(0x64d8ff);
-      visual.primaryFill.rect(0, 0, 224 * primary, 26).fill(0xff679b);
-      visual.primaryFill.position.set(0, 0);
-      visual.secondaryFill.position.set(0, 0);
-      visual.fillRatios = Object.freeze([primary, secondary]);
       setHudText(
         visual.text,
-        `${state.currentLife}/${state.playerMaxLife}`,
-        28,
-        state.singleGameOver || state.danger ? 0xff4d72 : state.warning ? 0xffd166 : 0xffffff,
+        state.representativeResult === null ? "" : `${state.representativeResult}${timing}`,
+        54,
+        0xffffff,
       );
-      visual.text.position.set(107, 36);
-      if (visual.animationLayer.children.length === 0) {
-        for (const exactKey of [
-          "effect_health_guard_outline",
-          "effect_health_guts_outline",
-          "UI_effect_life_plus_gauge",
-          "UI_effect_life_plus_icon",
-        ]) {
-          const binding = findTextureBinding(textures, exactKey);
-          if (binding === null) continue;
-          const sprite = new Sprite({ texture: binding.texture, label: exactKey });
-          sprite.anchor.copyFrom(sprite.texture.defaultAnchor ?? { x: 0.5, y: 0.5 });
-          if (exactKey === "UI_effect_life_plus_icon") sprite.position.set(-114, 12);
-          visual.animationLayer.addChild(sprite);
-          object.hudBindingKeys.push(binding.key);
-          referenceCounts.set(binding.key, (referenceCounts.get(binding.key) ?? 0) + 1);
-        }
-      }
       break;
     }
-    case "overlay": {
-      if (Object.prototype.hasOwnProperty.call(state, "habahiroFlashPhase")) {
-        object.node.position.set(0, 0);
-        visual.text.visible = false;
-        visual.primaryFill.rect(0, 0, 1600, 720).fill(0xffffff);
-        visual.primaryFill.alpha = 0;
-      } else if (Object.prototype.hasOwnProperty.call(state, "feverCommand")) {
-        object.node.position.set(800, 185);
-        const label = state.feverCommand === "ready"
-          ? "FEVER READY"
-          : state.feverCommand === "end" ? "" : state.feverState === 1 ? "FEVER" : "FEVER FAILED";
-        setHudText(visual.text, label, 36, state.feverState === 2 ? 0xbebebe : 0xff3b72);
-      } else if (Object.prototype.hasOwnProperty.call(state, "skillActive")) {
-        object.node.position.set(800, 120);
-        setHudText(visual.text, state.scoreSkill ? "SCORE UP" : "SKILL", 30, 0xffffff);
-      } else {
-        object.node.position.set(389, -50);
-        object.node.zIndex = state.depth as number;
-        const total = (state.addScore as number) + (state.freeLiveEventBonusAddScore as number);
-        setHudText(visual.text, total === 0 ? "" : `+${total}`, 30, 0xffffff);
-      }
+    case "overlay":
+      object.node.position.set(0, 0);
+      visual.text.visible = false;
+      visual.primaryFill.rect(0, 0, 1600, 720).fill(0xffffff);
+      visual.primaryFill.alpha = 0;
       break;
-    }
     case "fidelity-label":
       if (Object.prototype.hasOwnProperty.call(state, "laneChangePhase")) {
         object.node.position.set(20, 52);
@@ -1312,7 +1140,6 @@ function createHudVisual(node: Container): PixiHudVisual {
     secondaryFill,
     animationLayer,
     digitSprites: [],
-    scoreDigitTexts: [],
     fillRatios: Object.freeze([0, 0]),
   };
 }
@@ -1329,22 +1156,6 @@ function clearHudSprites(
   }
   object.hudBindingKeys.length = 0;
   for (const sprite of visual.digitSprites.splice(0)) sprite.destroy();
-}
-
-function scoreUpSpriteKey(scoreUpType: number): string | null {
-  switch (scoreUpType) {
-    case 1: return "icon_skill_score_up_1";
-    case 2: return "icon_skill_score_up_2";
-    case 3: return "icon_skill_score_zero";
-    case 4: return "icon_skill_score_half";
-    default: return null;
-  }
-}
-
-function scoreUpTint(scoreUpType: number): number {
-  if (scoreUpType === 1) return 0xf3ec03;
-  if (scoreUpType === 2) return 0xe18800;
-  return 0xc0c0c0;
 }
 
 function setHudText(text: Text, value: string, fontSize: number, fill: number): void {
@@ -1375,18 +1186,6 @@ function applyEvidenceAnimation(
     ));
     return;
   }
-  if (role === "add-score") {
-    const phaseSeconds = Math.fround(0.14000000059604645);
-    const phase = Math.min(2, Math.floor(elapsedSeconds / phaseSeconds));
-    const progress = Math.fround((elapsedSeconds - phase * phaseSeconds) / phaseSeconds);
-    object.node.position.y = phase === 0
-      ? Math.fround(-50 + 8 * progress)
-      : phase === 1 ? Math.fround(-42 + progress) : Math.fround(-41 + progress);
-    object.node.alpha = phase === 0
-      ? Math.fround(0.6 + 0.4 * progress)
-      : phase === 1 ? 1 : Math.fround(1 - progress);
-    return;
-  }
   if (role === "result") {
     object.node.scale.set(1, 1);
     object.node.alpha = elapsedSeconds < 0.85 ? 1 : Math.max(0, (1 - elapsedSeconds) / 0.15);
@@ -1400,27 +1199,6 @@ function applyEvidenceAnimation(
     if (role === "note-directional-flick" || role === "note-long-flash") sprite.alpha = Math.fround(0.8 + 0.2 * Math.abs(Math.sin(elapsedSeconds * Math.PI * 4)));
     return;
   }
-  const visual = object.hudVisual;
-  if (visual === null) throw new Error("HUD missing before animation");
-  if (role === "score-skill" || role === "judge-skill" || role === "fever") {
-    visual.animationLayer.visible = true;
-    visual.animationLayer.scale.set(1);
-    visual.animationLayer.alpha = 1;
-    return;
-  }
-  visual.animationLayer.visible = true;
-  for (const child of visual.animationLayer.children) {
-    child.visible = role === "life-heal"
-      ? child.label.includes("life_plus")
-      : role === "never-die"
-      ? child.label === "effect_health_guts_outline"
-      : child.label === "effect_health_guard_outline";
-  }
-  visual.animationLayer.scale.set(
-    role === "life-heal" ? samplePolynomialCurve(LIFE_ICON_SCALE_KEYS, elapsedSeconds) : 1,
-  );
-  visual.animationLayer.alpha = role === "life-heal"
-    ? samplePolynomialCurve(LIFE_ICON_ALPHA_KEYS, elapsedSeconds) : 1;
 }
 
 function stopEvidenceAnimation(object: PixiObjectRecord, role: EvidenceAnimationRole): void {
@@ -1431,10 +1209,6 @@ function stopEvidenceAnimation(object: PixiObjectRecord, role: EvidenceAnimation
   }
   if (role === "habahiro-lane-change") {
     if (object.hudVisual !== null) object.hudVisual.primaryFill.alpha = 0;
-    return;
-  }
-  if (role === "add-score") {
-    object.node.alpha = 1;
     return;
   }
   if (role === "note-flick" || role === "note-directional-flick" || role === "note-long-flash") {
@@ -1453,15 +1227,6 @@ const COMBO_SCALE_KEYS = Object.freeze([
   Object.freeze({ time: 0.1666666716337204, coefficients: Object.freeze([0, 0, 0, 1]) }),
   Object.freeze({ time: 1, coefficients: Object.freeze([0, 0, 0, 1]) }),
 ]);
-const LIFE_ICON_SCALE_KEYS = Object.freeze([
-  Object.freeze({ time: 0, coefficients: Object.freeze([0, 0, 2.25, 1]) }),
-  Object.freeze({ time: 0.6666666865348816, coefficients: Object.freeze([0, 0, 0, 2.5]) }),
-]);
-const LIFE_ICON_ALPHA_KEYS = Object.freeze([
-  Object.freeze({ time: 0, coefficients: Object.freeze([0, 0, -1.5, 1]) }),
-  Object.freeze({ time: 0.6666666865348816, coefficients: Object.freeze([0, 0, 0, 0]) }),
-]);
-
 function samplePolynomialCurve(
   keys: readonly { readonly time: number; readonly coefficients: readonly number[] }[],
   elapsedSeconds: number,
@@ -1503,30 +1268,18 @@ function isNullableFiniteScalar(value: unknown): boolean {
     typeof value === "boolean" || typeof value === "number" && Number.isFinite(value);
 }
 
-function isUnitFill(value: unknown): value is number {
-  return typeof value === "number" && Number.isFinite(value) && value >= 0 && value <= 1;
-}
-
-function isNonNegativeFinite(value: unknown): value is number {
-  return typeof value === "number" && Number.isFinite(value) && value >= 0;
-}
-
 function animationMatchesRole(role: string, objectRole: string): boolean {
   return (role === "combo" || role === "all-perfect") && objectRole === "hud-combo" ||
     role === "result" && objectRole === "hud-result" ||
-    (role === "life-heal" || role === "damage-guard" || role === "never-die") && objectRole === "hud-life" ||
-    (role === "score-skill" || role === "judge-skill" || role === "fever" ||
-      role === "habahiro-lane-change" || role === "add-score") && objectRole === "hud-overlay" ||
+    role === "habahiro-lane-change" && objectRole === "hud-overlay" ||
     (role === "note-flick" || role === "note-directional-flick" || role === "note-long-flash") &&
       (objectRole === "note-root" || objectRole === "note-head" || objectRole === "note-icon" ||
         objectRole === "note-intermediate" || objectRole === "note-side-visual");
 }
 
 function isEvidenceAnimationRole(role: string): role is EvidenceAnimationRole {
-  return role === "combo" || role === "all-perfect" || role === "add-score" ||
-    role === "result" || role === "life-heal" || role === "damage-guard" ||
-    role === "never-die" || role === "score-skill" || role === "judge-skill" ||
-    role === "fever" || role === "habahiro-lane-change" || role === "note-flick" ||
+  return role === "combo" || role === "all-perfect" || role === "result" ||
+    role === "habahiro-lane-change" || role === "note-flick" ||
     role === "note-directional-flick" || role === "note-long-flash";
 }
 

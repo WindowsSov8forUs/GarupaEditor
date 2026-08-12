@@ -46,12 +46,12 @@ async function main(): Promise<void> {
     preflight,
   )).status, "accepted");
   assert.equal(backend.snapshot().state, "ready");
-  assert.equal(context.decodeCount, 19);
-  assert.equal(context.gains.length, 3);
+  assert.equal(context.decodeCount, 14);
+  assert.equal(context.gains.length, 2);
 
   execute(backend, [
     { kind: "session.open", bgm_pool: 8, se_pool: 12, one_shot_pool: 1 },
-    { kind: "gain.set", bgm_bits: "0x3E800000", se_bits: "0x3F000000", voice_bits: "0x3F000000" },
+    { kind: "gain.set", bgm_bits: "0x3E800000", se_bits: "0x3F000000" },
     { kind: "bgm.load", cue: CURRENT_BGM_REGRESSION_RESOURCE.cue, seek_ms: 1234, priority: 255, fade_bits: "0x00000000" },
     { kind: "audio.pause-all", paused: true },
     { kind: "audio.pause-all", paused: false },

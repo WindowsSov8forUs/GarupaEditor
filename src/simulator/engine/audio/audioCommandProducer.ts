@@ -19,8 +19,6 @@ export interface SimulatorAudioSessionInput {
   readonly masterGainBits: string;
   readonly bgmGainBits: string;
   readonly seGainBits: string;
-  readonly voiceGainBits: string;
-  readonly practiceMode: boolean;
 }
 
 interface TapStatusSnapshot {
@@ -82,7 +80,6 @@ export class AudioCommandProducer {
     frameCounter: 0,
   });
   private naturallyEnded = false;
-  private gameOverTriggered = false;
   private completionTriggered = false;
 
   constructor(
@@ -99,13 +96,12 @@ export class AudioCommandProducer {
     if (
       this.input === null || typeof this.input !== "object" ||
       Object.keys(this.input).sort().join(",") !==
-        "bgmCue,bgmGainBits,masterGainBits,practiceMode,seGainBits,seekMilliseconds,sessionId,voiceGainBits" ||
+        "bgmCue,bgmGainBits,masterGainBits,seGainBits,seekMilliseconds,sessionId" ||
       typeof this.input.sessionId !== "string" || this.input.sessionId.length === 0 ||
       typeof this.input.bgmCue !== "string" || this.input.bgmCue.length === 0 ||
       !Number.isSafeInteger(this.input.seekMilliseconds) || this.input.seekMilliseconds < 0 ||
-      typeof this.input.practiceMode !== "boolean" ||
       !isUnitGain(this.input.masterGainBits) || !isUnitGain(this.input.bgmGainBits) ||
-      !isUnitGain(this.input.seGainBits) || !isUnitGain(this.input.voiceGainBits)
+      !isUnitGain(this.input.seGainBits)
     ) {
       return rejected(
         "audio.session.invalid-input",
@@ -200,7 +196,6 @@ export class AudioCommandProducer {
 
   preflightJudgement(
     batch: OneFrameJudgementBatch,
-    gameOverAfterReflect = false,
   ): SimulatorResult<AudioOwnerTransaction> {
     const nextTap = { ...this.tapStatus };
     const activeHolds = new Set(
@@ -243,64 +238,10 @@ export class AudioCommandProducer {
       }
       updateTapStatus(nextTap, entry);
     }
-    if (gameOverAfterReflect) {
-      if (this.gameOverTriggered) {
-        return rejected(
-          "audio.game-over.duplicate",
-          "The life-zero Game Over audio coroutine starts once.",
-        );
-      }
-      commands.push(
-        {
-          kind: "audio.pause-all",
-          paused: true,
-          delay_seconds_bits: "0x3D4CCCCD",
-        },
-        {
-          kind: "audio.pause-all",
-          paused: true,
-          delay_seconds_bits: "0x3DCCCCCD",
-        },
-      );
-    }
     return this.preflightCommands(
       commands,
-      () => {
-        this.tapStatus = Object.freeze({ ...nextTap });
-        if (gameOverAfterReflect) this.gameOverTriggered = true;
-      },
+      () => { this.tapStatus = Object.freeze({ ...nextTap }); },
     );
-  }
-
-  preflightSkillTriggered(): SimulatorResult<AudioOwnerTransaction> {
-    const commands: AudioCommand[] = [
-      oneShot("SE_RHYTHM_CUTIN_SKILL", "skill"),
-    ];
-    if (!this.input.practiceMode) {
-      commands.push(oneShot("SE_RHYTHM_CUTIN_AUDIENCE", "audience"));
-    }
-    return this.preflightCommands(commands);
-  }
-
-  preflightGameOver(): SimulatorResult<AudioOwnerTransaction> {
-    if (this.gameOverTriggered) {
-      return rejected(
-        "audio.game-over.duplicate",
-        "The life-zero Game Over audio coroutine starts once.",
-      );
-    }
-    return this.preflightCommands([
-      {
-        kind: "audio.pause-all",
-        paused: true,
-        delay_seconds_bits: "0x3D4CCCCD",
-      },
-      {
-        kind: "audio.pause-all",
-        paused: true,
-        delay_seconds_bits: "0x3DCCCCCD",
-      },
-    ], () => { this.gameOverTriggered = true; });
   }
 
   pollBgmNaturalEnd(): SimulatorResult<boolean> {
@@ -331,9 +272,6 @@ export class AudioCommandProducer {
       commands.push(oneShot("SE_RHYTHM_FULLCOMBO", "full-combo"));
     }
     commands.push(oneShot("SE_RHYTHM_CLEAR", "game-clear"));
-    if (!this.input.practiceMode) {
-      commands.push(oneShot("SE_RHYTHM_CLEAR_VO", "game-clear-voice"));
-    }
     return this.preflightCommands(commands, () => {
       this.naturallyEnded = true;
       this.completionTriggered = true;
@@ -371,8 +309,7 @@ export class AudioCommandProducer {
     const master = audioFloat32FromBits(this.input.masterGainBits)!;
     const bgm = multiplyGain(master, this.input.bgmGainBits);
     const se = multiplyGain(master, this.input.seGainBits);
-    const voice = multiplyGain(master, this.input.voiceGainBits);
-    if (bgm === null || se === null || voice === null) {
+    if (bgm === null || se === null) {
       return rejected(
         "audio.gain.invalid-binary32-product",
         "Option gains must produce finite binary32 values without browser clamping.",
@@ -382,7 +319,6 @@ export class AudioCommandProducer {
       kind: "gain.set",
       bgm_bits: bgm,
       se_bits: se,
-      voice_bits: voice,
     });
   }
 

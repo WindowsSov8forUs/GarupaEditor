@@ -38,11 +38,11 @@ interface PendingRenderBatch {
 const RENDER_OBJECT_ROLES = new Set([
   "note-root", "note-head", "note-icon", "note-intermediate",
   "note-side-visual", "note-mesh", "sync-line", "multiple-directional-line",
-  "field-line", "judge-line", "mask", "hud-score", "hud-combo",
-  "hud-result", "hud-life", "hud-overlay", "fidelity-label",
+  "field-line", "judge-line", "mask", "hud-combo",
+  "hud-result", "hud-overlay", "fidelity-label",
 ]);
 const HUD_ROLES = new Set([
-  "score", "combo", "result", "life", "overlay", "fidelity-label",
+  "combo", "result", "overlay", "fidelity-label",
 ]);
 
 export class RecordingSimulatorRendererBackend implements SimulatorRendererBackend {

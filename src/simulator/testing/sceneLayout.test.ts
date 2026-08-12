@@ -24,7 +24,6 @@ const resources = Object.freeze({
   habahiroAtlasLogicalAssetIds: Object.freeze({
     normal: "hab-normal",
     normal16: "hab-normal16",
-    skill: "hab-skill",
     flick: "hab-flick",
     long: "hab-long",
     longFlash: "hab-long-flash",
