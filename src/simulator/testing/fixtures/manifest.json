@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "purpose": "offline simulator test fixtures",
   "sourceRepository": "HOST________/VSCode/GirlsBandParty-Reverse",
-  "sourceHead": "80a173a210aa7d0943a80d37935f394df41b3a83",
+  "sourceHead": "3ca922ccee572b907e7c8ee05672a3e2723e31bd",
   "entries": [
     {
       "path": "habahiro-snapshots/bestdori-atlas-profile.json",
@@ -490,10 +490,10 @@
     },
     {
       "path": "reverse-snapshots/ordinary-visible-rendering/artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/closure.json",
-      "sourceReverseCommit": "80a173a210aa7d0943a80d37935f394df41b3a83",
+      "sourceReverseCommit": "3ca922ccee572b907e7c8ee05672a3e2723e31bd",
       "sourcePath": "artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/closure.json",
       "bytes": 740,
-      "sha256": "B1A9B974CF5160DE4015A2D09A1528A16DA2AE1CB98768AF7D7DD8F98A7FC50B"
+      "sha256": "D1EBF74105FC44059021CC44AF23F19887994AD9F77DC6D734B32C0056DC8E0A"
     },
     {
       "path": "reverse-snapshots/ordinary-visible-rendering/artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/ordinary_visible_rendering_oracle.json",
@@ -511,10 +511,10 @@
     },
     {
       "path": "reverse-snapshots/ordinary-visible-rendering/artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/ordinary_visible_rendering_portable_manifest.json",
-      "sourceReverseCommit": "80a173a210aa7d0943a80d37935f394df41b3a83",
+      "sourceReverseCommit": "3ca922ccee572b907e7c8ee05672a3e2723e31bd",
       "sourcePath": "artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/ordinary_visible_rendering_portable_manifest.json",
-      "bytes": 18525,
-      "sha256": "27FF8B7129C46F480D642DE1DB0D61EB9DE822E8CEA4E1C932673D17E56BFADA"
+      "bytes": 22373,
+      "sha256": "0E55BFC2296D227824B02E368C35B29B8EDA82965C1CF2954A41CBA012B93DD4"
     },
     {
       "path": "reverse-snapshots/ordinary-visible-rendering/artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/ordinary_visible_rendering_profile.json",
