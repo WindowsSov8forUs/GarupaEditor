@@ -26,6 +26,9 @@ export const CURRENT_PARTICLE_ROOTS: readonly ParticleRootId[] = Object.freeze([
   "ordinary:effect_tap_good",
   "ordinary:effect_tap_great",
   "ordinary:effect_tap_perfect",
+  "ordinary:effect_tap_skill_good",
+  "ordinary:effect_tap_skill_great",
+  "ordinary:effect_tap_skill_perfect",
   "ordinary:effect_tap_swipe",
 ]);
 
@@ -56,44 +59,32 @@ export function parseAndFreezeParticleProfile(
 ): ParticleOperationResult<ParticlePortableProfile> {
   const parsed = parseJson(bytes, "particle.profile.invalid-json");
   if (parsed.status !== "accepted") return parsed;
-  const source = parsed.value;
+  const value = parsed.value;
   if (
-    !isRecord(source) ||
-    !hasExactKeys(source, [
+    !isRecord(value) ||
+    !hasExactKeys(value, [
       "schemaVersion", "sample", "packIdentity", "fidelity", "networkAllowed",
       "automaticFallbackAllowed", "systemCount", "profileCount", "bundles",
     ]) ||
-    source.schemaVersion !== 1 ||
-    source.packIdentity !== "particle-current-10.1.4-portable-v1" ||
-    source.fidelity !== "current-static-portable-complete" ||
-    source.networkAllowed !== false ||
-    source.automaticFallbackAllowed !== false ||
-    source.systemCount !== 120 ||
-    source.profileCount !== 100 ||
-    !isLockedSample(source.sample) ||
-    !Array.isArray(source.bundles) ||
-    source.bundles.length !== 2
+    value.schemaVersion !== 1 ||
+    value.packIdentity !== "particle-current-10.1.4-portable-v1" ||
+    value.fidelity !== "current-static-portable-complete" ||
+    value.networkAllowed !== false ||
+    value.automaticFallbackAllowed !== false ||
+    value.systemCount !== 120 ||
+    value.profileCount !== 100 ||
+    !isLockedSample(value.sample) ||
+    !Array.isArray(value.bundles) ||
+    value.bundles.length !== 2
   ) {
     return reject(
       "particle.profile.invalid-shape",
-      "Only the locked offline current-static source profile with 120 systems and 100 profiles is accepted before product-scope reduction.",
+      "Only the locked offline current-static portable profile with 120 systems and 100 profiles is accepted.",
     );
   }
-  const value = Object.freeze({
-    ...source,
-    systemCount: 98,
-    bundles: Object.freeze(source.bundles.map((candidate) =>
-      isRecord(candidate) && Array.isArray(candidate.systems)
-        ? Object.freeze({
-            ...candidate,
-            systems: Object.freeze(candidate.systems.filter((system) =>
-              isRecord(system) && typeof system.root === "string" && ROOT_SET.has(system.root))),
-          })
-        : candidate)),
-  });
 
   const expected = Object.freeze({
-    ordinary: Object.freeze({ systems: 44, profiles: 58, renderers: 24, materials: 5, textures: 5 }),
+    ordinary: Object.freeze({ systems: 66, profiles: 58, renderers: 24, materials: 5, textures: 5 }),
     directional: Object.freeze({ systems: 54, profiles: 42, renderers: 12, materials: 3, textures: 3 }),
   });
   const bundleKeys = new Set<string>();
@@ -191,9 +182,9 @@ export function parseAndFreezeParticleProfile(
       enabledModuleRelationCount += Object.keys(bundle.profiles[system.profile].modules).length;
     }
   }
-  if (bundleKeys.size !== 2 || identities.size !== 98 || roots.size !== 14 || profileCount !== 100 ||
-    enabledModuleRelationCount !== 495 || moduleCombinations.size !== 16) {
-    return reject("particle.profile.incomplete-inventory", "The reduced playback profile must close 98 reachable systems, 100 source profiles, 14 roots, 495 enabled module relations and 16 combinations.");
+  if (bundleKeys.size !== 2 || identities.size !== 120 || roots.size !== 17 || profileCount !== 100 ||
+    enabledModuleRelationCount !== 605 || moduleCombinations.size !== 16) {
+    return reject("particle.profile.incomplete-inventory", "The portable profile must close 120 systems, 100 profiles, 17 roots, 605 enabled module relations and 16 combinations.");
   }
   return particleAccepted(deepFreeze(value) as unknown as ParticlePortableProfile);
 }
@@ -312,7 +303,7 @@ export function validateParticleCommandShape(
         : reject("particle.command.invalid-stop", "Stop/Clear/deactivate requires the exact active owner and root.");
     case "clear-all":
       return hasExactKeys(command, ["kind", "reason"]) &&
-        ["movetime", "natural-end", "retry", "reset", "dispose"].includes(command.reason)
+        ["movetime", "game-over", "natural-end", "retry", "reset", "dispose"].includes(command.reason)
         ? particleAccepted(undefined)
         : reject("particle.command.invalid-clear", "Clear-all requires one evidenced lifecycle reason.");
     case "suppress-until-replay":

@@ -17,11 +17,17 @@ export interface ResultDictionaryConversionOptions {
   readonly isMultiRange?: boolean;
 }
 
+type MutableNoteInformation = {
+  -readonly [Key in keyof NoteInformation]: NoteInformation[Key];
+};
+
 export function convertResultDictionary(
   resultDictionary: ReadonlyMap<number, BMSBarData>,
   options: ResultDictionaryConversionOptions = {},
 ): NoteBatchInformation[] {
   const batches: NoteBatchInformation[] = [];
+  const skillPositions = new Set<number>();
+  let skillNoteIndex = 0;
   const orderedBars = [...resultDictionary.entries()]
     .sort(([leftBar], [rightBar]) => leftBar - rightBar);
   for (const [, barData] of orderedBars) {
@@ -31,6 +37,14 @@ export function convertResultDictionary(
           buttonGroup.buttonType_,
           material,
         );
+        if (
+          noteInformation.gameNoteAdditionalType === GameNoteAdditionalType.Skill
+          && (!options.isMultiRange || !skillPositions.has(noteInformation.absolutePos))
+        ) {
+          skillNoteIndex += 1;
+          (noteInformation as MutableNoteInformation).skillNoteIndex = skillNoteIndex;
+          skillPositions.add(noteInformation.absolutePos);
+        }
         const batch = createNoteBatchInformation(material);
         insertNoteBatchInformation(batches, batch, noteInformation);
       }
@@ -80,6 +94,8 @@ export function createNoteInformation(
     soundValueList: [...material.soundValueList],
     gameNoteAdditionalType: material.gameNoteAdditionalType_,
     gameNoteAdditionalTypeLongNoteEnd: GameNoteAdditionalType.None,
+    skillNoteIndex: 0,
+    skillAfterNoteIndex: 0,
     virtualLaneDirection: material.VirtualLaneDirection,
     virtualLaneDistance: material.VirtualLaneDistance,
   };

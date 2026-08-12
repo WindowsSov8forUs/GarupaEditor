@@ -92,6 +92,8 @@ export type AfterNoteTypeValue = (typeof AfterNoteType)[keyof typeof AfterNoteTy
 
 export const GameNoteAdditionalType = {
   None: 0,
+  Fever: 1,
+  Skill: 2,
   BpmChange: 3,
   LaneChange: 4,
 } as const;
@@ -137,6 +139,8 @@ export interface NoteInformation {
   readonly soundValueList: readonly string[];
   readonly gameNoteAdditionalType: GameNoteAdditionalTypeValue;
   readonly gameNoteAdditionalTypeLongNoteEnd: GameNoteAdditionalTypeValue;
+  readonly skillNoteIndex: number;
+  readonly skillAfterNoteIndex: number;
   readonly virtualLaneDirection: VirtualLaneDirectionValue;
   readonly virtualLaneDistance: number;
 }

@@ -23,6 +23,7 @@ export interface PreparedHabahiroBestdoriPack {
   readonly bindings: {
     readonly normalAtlasLogicalAssetId: string;
     readonly normal16AtlasLogicalAssetId: string;
+    readonly skillAtlasLogicalAssetId: string;
     readonly flickAtlasLogicalAssetId: string;
     readonly longAtlasLogicalAssetId: string;
     readonly longFlashAtlasLogicalAssetId: string;
@@ -33,7 +34,7 @@ export interface PreparedHabahiroBestdoriPack {
     readonly multipleDirectionalLineLeftLogicalAssetId: string;
     readonly multipleDirectionalLineRightLogicalAssetId: string;
   };
-  readonly spriteCount: 151;
+  readonly spriteCount: 179;
 }
 
 interface RawSpriteEntry {
@@ -255,6 +256,7 @@ export async function prepareHabahiroBestdoriPack(
     bindings: Object.freeze({
       normalAtlasLogicalAssetId: logicalAssetId("RhythmGameSprites4.png"),
       normal16AtlasLogicalAssetId: logicalAssetId("RhythmGameSprites16.png"),
+      skillAtlasLogicalAssetId: logicalAssetId("RhythmGameSprites5.png"),
       flickAtlasLogicalAssetId: logicalAssetId("RhythmGameSprites1.png"),
       longAtlasLogicalAssetId: logicalAssetId("RhythmGameSprites2.png"),
       longFlashAtlasLogicalAssetId: logicalAssetId("RhythmGameSprites3.png"),
@@ -265,7 +267,7 @@ export async function prepareHabahiroBestdoriPack(
       multipleDirectionalLineLeftLogicalAssetId: "bestdori.habahiro.multiple-directional-left",
       multipleDirectionalLineRightLogicalAssetId: "bestdori.habahiro.multiple-directional-right",
     }),
-    spriteCount: 151 as const,
+    spriteCount: 179 as const,
   }));
 }
 
@@ -292,13 +294,12 @@ export function parseHabahiroAtlasRows(
   }
   const pathToFile = parseBundleTextureMap(bundle as RawBundle);
   if (pathToFile.status !== "ok") return pathToFile;
-  const dimensions = new Map<string, readonly [number, number]>([
-    ...HABAHIRO_BESTDORI_PINNED_ASSETS.flatMap((asset) =>
+  const dimensions = new Map(
+    HABAHIRO_BESTDORI_PINNED_ASSETS.flatMap((asset) =>
       asset.dimensions === null
         ? []
         : [[asset.technicalName.toLowerCase(), asset.dimensions] as const]),
-    ["rhythmgamesprites5.png", Object.freeze([2048, 2048] as const)],
-  ]);
+  );
   const exactKeys = new Set<string>();
   const rowsByTexture = new Map<string, RenderAtlasRow[]>();
   for (const candidate of sprites as RawSpriteEntry[]) {

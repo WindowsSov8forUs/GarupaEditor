@@ -36,7 +36,14 @@ export type RenderAnimationRole =
   | "note-long-flash"
   | "combo"
   | "all-perfect"
+  | "add-score"
   | "result"
+  | "life-heal"
+  | "damage-guard"
+  | "never-die"
+  | "score-skill"
+  | "judge-skill"
+  | "fever"
   | "habahiro-lane-change";
 
 export type RenderTextureScaleMode = "nearest" | "linear";
@@ -247,8 +254,10 @@ export type RenderObjectRole =
   | "field-line"
   | "judge-line"
   | "mask"
+  | "hud-score"
   | "hud-combo"
   | "hud-result"
+  | "hud-life"
   | "hud-overlay"
   | "fidelity-label";
 
@@ -303,7 +312,7 @@ export type RenderCommand =
     })
   | (RenderObjectCommandBase & {
       readonly kind: "set-hud";
-      readonly hudRole: "combo" | "result" | "overlay" | "fidelity-label";
+      readonly hudRole: "score" | "combo" | "result" | "life" | "overlay" | "fidelity-label";
       readonly state: Readonly<Record<string, string | number | boolean | null>>;
     })
   | (RenderObjectCommandBase & {

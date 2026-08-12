@@ -57,6 +57,13 @@ export const HABAHIRO_BESTDORI_PINNED_ASSETS: readonly HabahiroBestdoriPinnedAss
     dimensions: Object.freeze([2048, 2048] as const),
   }),
   Object.freeze({
+    technicalName: "RhythmGameSprites5.png",
+    url: "https://bestdori.com/assets/jp/ingameskin/noteskin/habahiro_rip/RhythmGameSprites5.png",
+    byteLength: 443964,
+    sha256: "CC4464CF02E143B37E9E01E87352ED30CDC90EDA9A4CB19D4E0AC38C2C69AD11",
+    dimensions: Object.freeze([2048, 2048] as const),
+  }),
+  Object.freeze({
     technicalName: "longNoteLine.png",
     url: "https://bestdori.com/assets/jp/ingameskin/noteskin/habahiro_rip/longNoteLine.png",
     byteLength: 3124,

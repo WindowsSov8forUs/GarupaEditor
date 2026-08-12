@@ -112,6 +112,7 @@ export async function assembleSimulatorResources(
         habahiroAtlasLogicalAssetIds: Object.freeze({
           normal: habahiro.value.bindings.normalAtlasLogicalAssetId,
           normal16: habahiro.value.bindings.normal16AtlasLogicalAssetId,
+          skill: habahiro.value.bindings.skillAtlasLogicalAssetId,
           flick: habahiro.value.bindings.flickAtlasLogicalAssetId,
           long: habahiro.value.bindings.longAtlasLogicalAssetId,
           longFlash: habahiro.value.bindings.longFlashAtlasLogicalAssetId,

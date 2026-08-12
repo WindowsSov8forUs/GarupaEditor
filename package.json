@@ -28,7 +28,7 @@
     "simulator:test:manual-slide": "node src/simulator/testing/runManualSlideJudgementTests.mjs",
     "simulator:test:manual-timeout": "node src/simulator/testing/runManualTimeoutJudgementTests.mjs",
     "simulator:test:manual-input": "node src/simulator/testing/runManualInputAcceptanceTests.mjs",
-    "simulator:test:judgement-state": "node src/simulator/testing/runJudgementStateTests.mjs",
+    "simulator:test:score-life-state": "node src/simulator/testing/runScoreLifeStateTests.mjs",
     "simulator:test:render-contracts": "node src/simulator/testing/runRenderContractTests.mjs",
     "simulator:test:render-note-geometry": "node src/simulator/testing/runOrdinaryNoteGeometryTests.mjs",
     "simulator:test:render-pixi": "node src/simulator/testing/runRenderPixiTests.mjs",

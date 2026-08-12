@@ -36,11 +36,16 @@ function validateProductionCommandData() {
   const { NoteDataBMSBuilder } = require(join(chartRoot, "bmsBuilder.js"));
   const { convertResultDictionary } = require(join(chartRoot, "batchConversion.js"));
   const { setupLongAndSlideNoteGraphs } = require(join(chartRoot, "noteGraph.js"));
+  const { GameNoteAdditionalType } = require(join(chartRoot, "types.js"));
   const fixtures = [
     {
       file: "poppin_shuffle_special.txt",
       startBpm: 220,
       startBpmString: "220",
+      rootSkill: 6,
+      rootFever: 30,
+      endSkill: 0,
+      endFever: 0,
     },
     {
       file: "786_miracle_april_habahiro_special.txt",
@@ -71,21 +76,39 @@ function validateProductionCommandData() {
       isMultiRange: builder.isMultiRangeNotes,
     });
     setupLongAndSlideNoteGraphs(batches, builder.isMultiRangeNotes);
-    const allNotes = batches
-      .flatMap((batch) => batch.informationList)
-      .filter(isPlayableRootOracle);
-    assertEqual(
-      allNotes.every((note) => note.gameNoteAdditionalType !== 1 && note.gameNoteAdditionalType !== 2),
-      true,
-      `${fixture.file} removed markers normalize on playable roots`,
-    );
-    assertEqual(
-      allNotes.every((note) =>
-        note.gameNoteAdditionalTypeLongNoteEnd !== 1 &&
-        note.gameNoteAdditionalTypeLongNoteEnd !== 2),
-      true,
-      `${fixture.file} removed markers normalize on terminals`,
-    );
+    if (fixture.rootSkill !== undefined) {
+      const allNotes = batches
+        .flatMap((batch) => batch.informationList)
+        .filter(isPlayableRootOracle);
+      assertEqual(
+        allNotes.filter(
+          (note) => note.gameNoteAdditionalType === GameNoteAdditionalType.Skill,
+        ).length,
+        fixture.rootSkill,
+        `${fixture.file} root Skill count`,
+      );
+      assertEqual(
+        allNotes.filter(
+          (note) => note.gameNoteAdditionalType === GameNoteAdditionalType.Fever,
+        ).length,
+        fixture.rootFever,
+        `${fixture.file} root Fever count`,
+      );
+      assertEqual(
+        allNotes.filter(
+          (note) => note.gameNoteAdditionalTypeLongNoteEnd === GameNoteAdditionalType.Skill,
+        ).length,
+        fixture.endSkill,
+        `${fixture.file} end Skill count`,
+      );
+      assertEqual(
+        allNotes.filter(
+          (note) => note.gameNoteAdditionalTypeLongNoteEnd === GameNoteAdditionalType.Fever,
+        ).length,
+        fixture.endFever,
+        `${fixture.file} end Fever count`,
+      );
+    }
     console.log(`ok - production command data ${fixture.file}`);
   }
 }

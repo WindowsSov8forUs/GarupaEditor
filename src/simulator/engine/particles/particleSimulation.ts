@@ -97,8 +97,8 @@ export class DeterministicParticleSimulation {
         });
       }
     }
-    if (this.definitions.size !== 98) {
-      throw fault("particle.simulation.incomplete-system-inventory", "The reduced playback world requires all 98 reachable current systems.");
+    if (this.definitions.size !== 120) {
+      throw fault("particle.simulation.incomplete-system-inventory", "The deterministic world requires all 120 current systems.");
     }
   }
 
@@ -129,7 +129,7 @@ export class DeterministicParticleSimulation {
       .map(([identity]) => identity)
       .sort();
     if (selected.length === 0) {
-      throw fault("particle.simulation.unknown-root", "Play requires one of the 14 retained current roots.");
+      throw fault("particle.simulation.unknown-root", "Play requires one of the 17 prepared current roots.");
     }
     const systems = new Map<string, OwnerSystemRuntime>();
     const owner: OwnerRuntime = {

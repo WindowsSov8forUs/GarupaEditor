@@ -34,6 +34,7 @@ interface MutableAudioSemanticState {
   gain: {
     bgmBits: string;
     seBits: string;
+    voiceBits: string;
   } | null;
 }
 
@@ -423,6 +424,7 @@ function applyCommand(
       state.gain = {
         bgmBits: command.bgm_bits,
         seBits: command.se_bits,
+        voiceBits: command.voice_bits,
       };
       return audioAccepted(undefined);
     case "pool.profile":

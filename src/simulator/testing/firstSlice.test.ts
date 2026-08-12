@@ -38,7 +38,7 @@ interface TestCase {
 const tests: TestCase[] = [];
 const autoPlayMode = {
   kind: "auto-live",
-  resultTransform: "identity",
+  resultTransform: "identity-no-active-situation-skill",
 } as const;
 
 function test(name: string, run: () => void): void {

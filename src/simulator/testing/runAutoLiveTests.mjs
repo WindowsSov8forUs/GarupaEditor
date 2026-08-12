@@ -256,7 +256,7 @@ function validateAutoLive() {
     const manualMode = new InGameCalculatedData({ kind: "manual" });
     const autoMode = new InGameCalculatedData({
       kind: "auto-live",
-      resultTransform: "identity",
+      resultTransform: "identity-no-active-situation-skill",
     });
     assert.equal(manualMode.isAutoPlay, false);
     assert.equal(autoMode.isAutoPlay, true);
@@ -265,12 +265,12 @@ function validateAutoLive() {
     assert.deepEqual(autoMode.snapshot(), {
       playMode: "auto-live",
       isAutoPlay: true,
-      resultTransform: "identity",
+      resultTransform: "identity-no-active-situation-skill",
     });
 
     const mutableAutoMode = {
       kind: "auto-live",
-      resultTransform: "identity",
+      resultTransform: "identity-no-active-situation-skill",
     };
     const autoHost = ok(createSimulatorEngine({
       chart: fixture.chart([batch(2, [normalInfo(99, 2)])], 120),
@@ -285,14 +285,14 @@ function validateAutoLive() {
       .managers.noteManager.calculatedData, {
       playMode: "auto-live",
       isAutoPlay: true,
-      resultTransform: "identity",
+      resultTransform: "identity-no-active-situation-skill",
     });
     mutableAutoMode.kind = "mode14";
     assert.deepEqual(ok(autoHost.snapshot(), "Auto host after kind mutation")
       .managers.noteManager.calculatedData, {
       playMode: "auto-live",
       isAutoPlay: true,
-      resultTransform: "identity",
+      resultTransform: "identity-no-active-situation-skill",
     });
     ok(autoHost.initialize(), "mutable Auto host initialize");
     ok(autoHost.step(1 / 60), "mutable Auto host activate");
@@ -312,7 +312,7 @@ function validateAutoLive() {
       },
     }, createRecordingSimulatorBackends()), "mutable manual host create");
     mutableManualMode.kind = "auto-live";
-    mutableManualMode.resultTransform = "identity";
+    mutableManualMode.resultTransform = "identity-no-active-situation-skill";
     assert.deepEqual(ok(manualHost.snapshot(), "manual host after alias mutation")
       .managers.noteManager.calculatedData, {
       playMode: "manual",
@@ -878,7 +878,7 @@ function validateAutoLive() {
         judgeOffsetFrames: 0,
         playMode: {
           kind: "auto-live",
-          resultTransform: "identity",
+          resultTransform: "identity-no-active-situation-skill",
         },
       },
     }, createRecordingSimulatorBackends());
@@ -1067,7 +1067,7 @@ function validateAutoLive() {
         judgeOffsetFrames: 0,
         playMode: {
           kind: "auto-live",
-          resultTransform: "identity",
+          resultTransform: "identity-no-active-situation-skill",
         },
       },
     }, disposedBackends), "dispose-before-initialize host create");
@@ -1344,7 +1344,7 @@ function validateAutoLive() {
           judgeOffsetFrames: 0,
           playMode: {
             kind: "auto-live",
-            resultTransform: "identity",
+            resultTransform: "identity-no-active-situation-skill",
           },
         },
       }, createRecordingSimulatorBackends());
@@ -1564,7 +1564,7 @@ function validateAutoLive() {
         judgeOffsetFrames: 0,
         playMode: {
           kind: "auto-live",
-          resultTransform: "identity",
+          resultTransform: "identity-no-active-situation-skill",
         },
       },
     }, invalidBatchBackends), "auto-live.invalid-long-after-graph");
@@ -1594,7 +1594,7 @@ function validateAutoLive() {
         judgeOffsetFrames: 0,
         playMode: {
           kind: "auto-live",
-          resultTransform: "identity",
+          resultTransform: "identity-no-active-situation-skill",
         },
       },
     }, invalidChildRoleBackends), "auto-live.invalid-slide-child-role");
@@ -1627,7 +1627,7 @@ function validateAutoLive() {
         judgeOffsetFrames: 0,
         playMode: {
           kind: "auto-live",
-          resultTransform: "identity",
+          resultTransform: "identity-no-active-situation-skill",
         },
       },
     }, createRecordingSimulatorBackends()), "auto-live.shared-slide-child-owner");
@@ -1640,7 +1640,7 @@ function validateAutoLive() {
         judgeOffsetFrames: 0,
         playMode: {
           kind: "auto-live",
-          resultTransform: "identity",
+          resultTransform: "identity-no-active-situation-skill",
         },
       },
     }, createRecordingSimulatorBackends()), "auto-live.duplicate-runtime-note-identity");
@@ -1667,7 +1667,7 @@ function validateAutoLive() {
         judgeOffsetFrames: 0,
         playMode: {
           kind: "auto-live",
-          resultTransform: "identity",
+          resultTransform: "identity-no-active-situation-skill",
         },
       },
     }, createRecordingSimulatorBackends()), "auto-live.shared-slide-child-owner");
@@ -1883,7 +1883,7 @@ function validateAutoLive() {
         judgeOffsetFrames: 0,
         playMode: {
           kind: "auto-live",
-          resultTransform: "identity",
+          resultTransform: "identity-no-active-situation-skill",
         },
       },
     }, nonFiniteClockBackends), "non-finite clock engine create");
@@ -1931,11 +1931,12 @@ function validateAutoLive() {
     assert.equal(nonFiniteInvisible.note.autoLiveTrace.some(
       (entry) => entry.kind === "slide-invisible-support-skip"), false);
     evidence(new GamePlayButton().execTouchBegan(), "input.game-play-button.touch-began");
+    evidence(oneFrame.setupBusinessData(), "one-frame.setup-business-data");
     evidence(noteFamily(normalInfo(514, 120, { fireNoteType: 99 })),
       "note-manager.unrepresented-note-family");
   });
 
-  test("AL21", "已删除业务字段保持 absent，纯判定投影保持确定", () => {
+  test("AL21", "阶段外业务字段保持 absent，已闭合音频字段保留确定投影", () => {
     const oneFrame = controller();
     ok(oneFrame.setupAutoLiveJudgement(request(normalInfo(600), "head")), "setup projection");
     const entry = reflect(oneFrame).entries[0];
@@ -1945,6 +1946,7 @@ function validateAutoLive() {
     ]) assert.equal(Object.hasOwn(entry, key), false, `${key} must remain absent`);
     assert.equal(entry.multipleDirectionalFlickNoteCount, 0,
       "closed audio projection requires the exact directional group count");
+    evidence(oneFrame.setupBusinessData(), "one-frame.setup-business-data");
     const deterministicProjection = () => {
       const repeated = controller();
       ok(repeated.setupAutoLiveJudgement(request(normalInfo(601), "head")),
@@ -2049,7 +2051,7 @@ function validateAutoLive() {
       0,
       new InGameCalculatedData({
         kind: "auto-live",
-        resultTransform: "identity",
+        resultTransform: "identity-no-active-situation-skill",
       }),
       () => oneFrame.getUsableOneFrameData(),
       (judgement) => oneFrame.setupAutoLiveJudgement(judgement),
@@ -2067,7 +2069,7 @@ function validateAutoLive() {
         oneFrame,
         new InputManager({
           kind: "auto-live",
-          resultTransform: "identity",
+          resultTransform: "identity-no-active-situation-skill",
         }),
       ),
     };
@@ -2836,7 +2838,7 @@ function validateAutoLive() {
           judgeOffsetFrames: replay.judge_offset_frames,
           playMode: {
             kind: "auto-live",
-            resultTransform: "identity",
+            resultTransform: "identity-no-active-situation-skill",
           },
         },
       }, createRecordingSimulatorBackends()), `G22 replay engine ${caseId}`);

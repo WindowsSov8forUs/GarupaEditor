@@ -15,11 +15,24 @@ import { createRecordingSimulatorBackends } from "../backends/recordingBackend";
 import { PortableParticleResourcePreflightAdapter } from "../backends/resources/localParticleResourceProvider";
 import { PortableRenderResourcePreflightAdapter } from "../backends/resources/localResourceProvider";
 import { createNoteBatchInformationList } from "../engine/chart/construction";
+import type { NoteResultTypeValue } from "../engine/data/manualJudgement";
+import {
+  SkillActivateEffectType,
+  type ScoreLifeSpecialModeProfile,
+  type ScoreLifeStateProfile,
+  type SituationSkillProfile,
+  type SkillActivateEffectTypeValue,
+} from "../engine/data/scoreLifeState";
 import { evidenceRequired, type SimulatorResult } from "../engine/evidence";
 import type { ManualInputFrame, ManualInputPosition } from "../engine/data/manualInput";
+import type { FeverTimeCommandName } from "../engine/managers/feverTimeManager";
 import type { SimulatorEngine, SimulatorSnapshot } from "../host/contracts";
 import { createSimulatorEngine } from "../host/createSimulatorEngine";
-import type { SimulatorModuleLaunchRequest } from "../public/contracts";
+import type {
+  SimulatorModuleLaunchRequest,
+  SimulatorPublicNoteResult,
+  SimulatorSessionBusinessData,
+} from "../public/contracts";
 import {
   rejected,
   type SimulatorAssemblyResult,
@@ -114,6 +127,12 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
       musicScoreData: recipe.request.chartData.bmsText,
     });
     if (chart.status !== "ok") return fromEvidence(chart);
+    const score = mapScoreLifeProfile(
+      recipe.request.chartData.sessionBusinessData,
+      recipe.request,
+      this.sessionId(),
+    );
+    if (score.status === "rejected") return score;
     const selection = selectSimulatorStaticResources(chart.value);
     const renderer = new PixiRendererBackend(new BrowserPixiTextureDecoder());
     const audio = new WebAudioSimulatorBackend(this.platform.audioContext);
@@ -193,9 +212,10 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
           ? Object.freeze({ kind: "manual" as const })
           : Object.freeze({
               kind: "auto-live" as const,
-              resultTransform: "identity" as const,
+              resultTransform: "identity-no-active-situation-skill" as const,
             }),
       },
+      scoreLifeState: score.value,
       rendering: {
         sessionId,
         resources: assembly.value.renderBindings,
@@ -208,6 +228,8 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
         masterGainBits: gains.value.master,
         bgmGainBits: gains.value.bgm,
         seGainBits: gains.value.se,
+        voiceGainBits: gains.value.voice,
+        practiceMode: recipe.request.config.practice.enabled,
       },
       particles: { sessionId },
     }, backends);
@@ -249,6 +271,13 @@ class MountedSimulatorEngine implements SimulatorEngine {
   }
   pause(): SimulatorResult<void> { return this.engine.pause(); }
   resume(): SimulatorResult<void> { return this.engine.resume(); }
+  updateFeverMemberPoint(displayIndex: number, point: number, isOwnTeam: boolean) {
+    return this.engine.updateFeverMemberPoint(displayIndex, point, isOwnTeam);
+  }
+  changeFeverCommand(command: FeverTimeCommandName) {
+    return this.engine.changeFeverCommand(command);
+  }
+  continueLive(): SimulatorResult<void> { return this.engine.continueLive(); }
   completeLiveAudio(clearStatus: 1 | 2 | 3): SimulatorResult<void> {
     return this.engine.completeLiveAudio(clearStatus);
   }
@@ -278,21 +307,124 @@ class MountedSimulatorEngine implements SimulatorEngine {
   }
 }
 
+function mapScoreLifeProfile(
+  business: SimulatorSessionBusinessData,
+  request: SimulatorModuleLaunchRequest,
+  sessionId: string,
+): SimulatorAssemblyResult<ScoreLifeStateProfile> {
+  try {
+    if (
+      request.config.practice.enabled !== (business.mode.kind === "practice") ||
+      (request.config.playMode === "auto-live") !== (business.mode.kind === "auto-live")
+    ) {
+      return rejected(
+        "evidence-required",
+        "simulator.composition.mode-mismatch",
+        "Public play, practice and Score/Life modes must describe one identical recovered session mode.",
+      );
+    }
+    const mode = mapMode(business.mode);
+    const skills: SituationSkillProfile[] = business.skills.map((skill) => Object.freeze({
+      skillNoteIndex: skill.skillNoteIndex,
+      durationSeconds: skill.durationSeconds,
+      ...(skill.onceEffect === undefined ? {} : {
+        onceEffect: Object.freeze({ ...skill.onceEffect }),
+      }),
+      activeEffects: Object.freeze(skill.activeEffects.map((effect) => Object.freeze({
+        type: mapEffectKind(effect.kind),
+        valueType: effect.valueType,
+        value: effect.value,
+        ...(effect.conditionResult === undefined ? {} : {
+          conditionResult: mapNoteResult(effect.conditionResult),
+        }),
+        ...(effect.conditionLife === undefined ? {} : { conditionLife: effect.conditionLife }),
+        ...(effect.maxValue === undefined ? {} : { maxValue: effect.maxValue }),
+      }))),
+    }));
+    return accepted(Object.freeze({
+      schemaVersion: 1 as const,
+      sessionId,
+      scoreLevel: business.scoreLevel,
+      deckTotalParameter: business.deckTotalParameter,
+      freeLiveEventBonusDeckTotalParameter: business.freeLiveEventBonusDeckTotalParameter,
+      life: Object.freeze({ ...business.life }),
+      mode,
+      skills: Object.freeze(skills),
+      fever: Object.freeze({ ...business.fever }),
+    }));
+  } catch {
+    return rejected(
+      "evidence-required",
+      "simulator.composition.invalid-business-profile",
+      "Unknown session business enum values and non-structural profile data fail before engine creation.",
+    );
+  }
+}
+
+function mapMode(mode: SimulatorSessionBusinessData["mode"]): ScoreLifeSpecialModeProfile {
+  if (mode.kind === "team-live-festival") {
+    return Object.freeze({
+      ...mode,
+      judgeRates: Object.freeze(mode.judgeRates.map((row) => Object.freeze({
+        ...row,
+        result: mapNoteResult(row.result),
+      }))),
+      comboRates: Object.freeze(mode.comboRates.map((row) => Object.freeze({ ...row }))),
+      lifeRates: Object.freeze(mode.lifeRates.map((row) => Object.freeze({ ...row }))),
+    });
+  }
+  if (mode.kind === "single-medley" || mode.kind === "garupa-cup-first-qualification") {
+    return Object.freeze({
+      ...mode,
+      comboRates: Object.freeze(mode.comboRates.map((row) => Object.freeze({ ...row }))),
+    });
+  }
+  return Object.freeze({ ...mode });
+}
+
+function mapNoteResult(result: SimulatorPublicNoteResult): Exclude<NoteResultTypeValue, -1> {
+  if (result === "perfect") return 4;
+  if (result === "great") return 3;
+  if (result === "good") return 2;
+  if (result === "bad") return 1;
+  if (result === "miss") return 0;
+  throw new Error("unknown result");
+}
+
+function mapEffectKind(
+  kind: SimulatorSessionBusinessData["skills"][number]["activeEffects"][number]["kind"],
+): SkillActivateEffectTypeValue {
+  if (kind === "score") return SkillActivateEffectType.Score;
+  if (kind === "damage-guard") return SkillActivateEffectType.Damage;
+  if (kind === "heal") return SkillActivateEffectType.Heal;
+  if (kind === "judge") return SkillActivateEffectType.Judge;
+  if (kind === "score-over-life") return SkillActivateEffectType.ScoreOverLife;
+  if (kind === "score-under-life") return SkillActivateEffectType.ScoreUnderLife;
+  if (kind === "score-continued-note-judge") return SkillActivateEffectType.ScoreContinuedNoteJudge;
+  if (kind === "score-rate-up-with-perfect") return SkillActivateEffectType.ScoreRateUpWithPerfect;
+  if (kind === "score-only-perfect") return SkillActivateEffectType.ScoreOnlyPerfect;
+  if (kind === "never-die") return SkillActivateEffectType.NeverDie;
+  if (kind === "score-under-great-half") return SkillActivateEffectType.ScoreUnderGreatHalf;
+  throw new Error("unknown effect");
+}
+
 function gainBits(request: SimulatorModuleLaunchRequest): SimulatorAssemblyResult<{
   readonly master: string;
   readonly bgm: string;
   readonly se: string;
+  readonly voice: string;
 }> {
   const master = audioFloat32ToBits(Math.fround(request.config.audio.masterGain));
   const bgm = audioFloat32ToBits(Math.fround(request.config.audio.bgmGain));
   const se = audioFloat32ToBits(Math.fround(request.config.audio.seGain));
-  return master === null || bgm === null || se === null
+  const voice = audioFloat32ToBits(Math.fround(request.config.audio.voiceGain));
+  return master === null || bgm === null || se === null || voice === null
     ? rejected(
         "evidence-required",
         "simulator.composition.invalid-audio-gain",
-        "Public master, BGM and SE unit gains must convert to finite binary32 values without fallback.",
+        "Public unit gains must convert to finite binary32 values without fallback.",
       )
-    : accepted(Object.freeze({ master, bgm, se }));
+    : accepted(Object.freeze({ master, bgm, se, voice }));
 }
 
 function validatePlatform(

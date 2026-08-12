@@ -11,6 +11,7 @@ import {
   assertWideSlideMainPaths,
   chartPosition,
   compareMultiset,
+  countAdditionalTypes,
   countKinds,
   countValues,
   maxNoteCount,
@@ -260,11 +261,25 @@ function validateNormal(chart, expected, sourceSpecs, runtimeSpecs) {
     "normal directional widths",
   );
   assertEqual(
-    runtimeSpecs.every((spec) =>
-      spec.rootAdditionalType !== 1 && spec.rootAdditionalType !== 2 &&
-      spec.endAdditionalType !== 1 && spec.endAdditionalType !== 2),
-    true,
-    "removed character/multiplayer additional types stay unreachable",
+    runtimeSpecs.filter(
+      (spec) => (spec.kind === "normal" || spec.kind === "flick")
+        && spec.rootAdditionalType === 1,
+    ).length,
+    expected.single_charge,
+    "normal charged Singles",
+  );
+  assertEqual(
+    runtimeSpecs.filter(
+      (spec) => (spec.kind === "normal" || spec.kind === "flick")
+        && spec.rootAdditionalType === 2,
+    ).length,
+    expected.single_skill,
+    "normal Skill Singles",
+  );
+  assertDeepEqual(
+    countAdditionalTypes(runtimeSpecs),
+    expected.additional_note_consumers,
+    "normal additional consumers",
   );
   assertEqual(
     runtimeSpecs
@@ -402,8 +417,8 @@ function singleEventSignature(event) {
     chartPosition(event.beat),
     event.lane,
     Boolean(event.flick),
-    false,
-    false,
+    Boolean(event.charge),
+    Boolean(event.skill),
   ];
 }
 
@@ -412,8 +427,8 @@ function singleSpecSignature(spec, lane = spec.lanes[0]) {
     spec.position,
     lane,
     spec.kind === "flick",
-    false,
-    false,
+    spec.rootAdditionalType === 1,
+    spec.rootAdditionalType === 2,
   ];
 }
 
@@ -439,22 +454,22 @@ function longEventSignature(event) {
   return event.connections.map((connection) => [
     chartPosition(connection.beat),
     connection.lane,
-    false,
+    Boolean(connection.charge),
   ]);
 }
 
 function longSpecSignature(spec) {
   return [
-    [spec.position, spec.lanes[0], false],
-    [spec.endPosition, spec.endLanes[0], false],
+    [spec.position, spec.lanes[0], spec.rootAdditionalType === 1],
+    [spec.endPosition, spec.endLanes[0], spec.endAdditionalType === 1],
   ];
 }
 
 function longSpecLaneSignatures(spec) {
   assertEqual(spec.lanes.length, spec.endLanes.length, "Long source lane width");
   return spec.lanes.map((lane, index) => [
-    [spec.position, lane, false],
-    [spec.endPosition, spec.endLanes[index], false],
+    [spec.position, lane, spec.rootAdditionalType === 1],
+    [spec.endPosition, spec.endLanes[index], spec.endAdditionalType === 1],
   ]);
 }
 

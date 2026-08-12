@@ -73,6 +73,8 @@ export function noteInformation(
     soundValueList: ["01"],
     gameNoteAdditionalType: GameNoteAdditionalType.None,
     gameNoteAdditionalTypeLongNoteEnd: GameNoteAdditionalType.None,
+    skillNoteIndex: 0,
+    skillAfterNoteIndex: 0,
     virtualLaneDirection: VirtualLaneDirection.None,
     virtualLaneDistance: 0,
   };

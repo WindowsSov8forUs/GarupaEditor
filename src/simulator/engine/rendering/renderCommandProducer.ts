@@ -16,6 +16,7 @@ import {
   AfterNoteType,
   ButtonType,
   FrontNoteType,
+  GameNoteAdditionalType,
   GameNoteType,
   type NoteInformation,
 } from "../chart/types";
@@ -25,8 +26,11 @@ import {
   type SimulatorResult,
 } from "../evidence";
 import type { NoteFamily } from "../data/noteData";
-import type { JudgementRecordSnapshot } from "../data/judgementState";
-import type { JudgementReflectPlan } from "../managers/judgementStateManager";
+import { SkillActivateEffectType } from "../data/scoreLifeState";
+import type { FeverTimeSnapshot } from "../managers/feverTimeManager";
+import type { InGameRecordSnapshot } from "../managers/inGameRecord";
+import type { ScoreLifeReflectPlan } from "../managers/scoreLifeStateManager";
+import type { SituationSkillSnapshot } from "../managers/situationSkillManager";
 import {
   advanceOrdinaryLongNormalChild,
   buildOrdinaryLongNormalMesh,
@@ -62,12 +66,14 @@ export interface RenderEngineResourceBindings {
   readonly habahiroAtlasLogicalAssetIds?: {
     readonly normal: string;
     readonly normal16: string;
+    readonly skill: string;
     readonly flick: string;
     readonly long: string;
     readonly longFlash: string;
     readonly slideAmong: string;
   };
   readonly comboAnimationLogicalAssetId?: string;
+  readonly scoreSkillAnimationLogicalAssetId?: string;
 }
 
 export interface RenderPoolIdentityPlan {
@@ -196,8 +202,19 @@ const DEGRADED_HABAHIRO_LANE_OBJECT = "render:habahiro:lane-change";
 const HABAHIRO_FLASH_OBJECT = "render:habahiro:flash";
 
 const HUD_OBJECTS = Object.freeze({
+  addScore: Object.freeze([
+    "render:hud:add-score",
+    "render:hud:add-score:1",
+    "render:hud:add-score:2",
+    "render:hud:add-score:3",
+  ]),
   combo: "render:hud:combo",
   result: "render:hud:result",
+  score: "render:hud:score",
+  life: "render:hud:life",
+  overlay: "render:hud:overlay",
+  judgeOverlay: "render:hud:judge-overlay",
+  feverOverlay: "render:hud:fever-overlay",
   fidelity: "render:hud:fidelity-label",
 });
 
@@ -211,8 +228,15 @@ export class RenderCommandProducer {
   private substep = 0;
   private readonly createdObjectIds: string[] = [];
   private readonly creationSequenceByObjectId = new Map<string, number>();
-  private readonly hudAnimationElapsedSeconds = new Map<"combo" | "all-perfect", number>();
+  private readonly hudAnimationElapsedSeconds = new Map<"combo" | "all-perfect" | "life-heal", number>();
+  private readonly addScoreElapsedSeconds = new Map<string, number>();
   private resultElapsedSeconds: number | null = null;
+  private scoreSkillAnimationActive = false;
+  private judgeSkillAnimationActive = false;
+  private feverAnimationActive = false;
+  private lifeSkillAnimation: "damage-guard" | "never-die" | null = null;
+  private addScoreCursor = 0;
+  private addScoreDepthCycle = 0;
   private lastCombo = 0;
   private lastAllPerfect = false;
   private readonly noteAnimationElapsedSeconds = new Map<string, {
@@ -252,6 +276,8 @@ export class RenderCommandProducer {
       !isNonEmpty(this.resources.directionalAtlasLogicalAssetId) ||
       (this.resources.comboAnimationLogicalAssetId !== undefined &&
         !isNonEmpty(this.resources.comboAnimationLogicalAssetId)) ||
+      (this.resources.scoreSkillAnimationLogicalAssetId !== undefined &&
+        !isNonEmpty(this.resources.scoreSkillAnimationLogicalAssetId)) ||
       (this.renderer.snapshot().fidelity?.mode === "habahiro" &&
         this.renderer.snapshot().fidelity?.fidelity === "current-external-complete" &&
         (this.resources.habahiroAtlasLogicalAssetIds === undefined ||
@@ -292,37 +318,108 @@ export class RenderCommandProducer {
   }
 
   preflightHudSetup(
-    _record: JudgementRecordSnapshot,
+    record: InGameRecordSnapshot,
   ): SimulatorResult<RenderOwnerTransaction> {
     const validation = this.validate();
     if (validation.status !== "ok") return validation;
     const base = this.commandBase(0);
     const commands: RenderCommand[] = [];
     const created: string[] = [];
-    const create = (renderObjectId: string, role: "hud-combo" | "hud-result") => {
+    const create = (
+      renderObjectId: string,
+      role: "hud-score" | "hud-combo" | "hud-result" | "hud-life" | "hud-overlay" | "fidelity-label",
+    ) => {
       created.push(renderObjectId);
       commands.push({
-        ...base(commands.length),
-        kind: "create-object",
-        renderObjectId,
-        poolFamily: role,
-        role,
-        parentObjectId: null,
+      ...base(commands.length),
+      kind: "create-object",
+      renderObjectId,
+      poolFamily: role,
+      role,
+      parentObjectId: null,
       });
-      commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId });
     };
+    for (const renderObjectId of HUD_OBJECTS.addScore) {
+      create(renderObjectId, "hud-overlay");
+      commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId });
+    }
     create(HUD_OBJECTS.combo, "hud-combo");
+    commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: HUD_OBJECTS.combo });
     create(HUD_OBJECTS.result, "hud-result");
+    commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: HUD_OBJECTS.result });
+    create(HUD_OBJECTS.score, "hud-score");
+    commands.push({
+      ...base(commands.length),
+      kind: "set-hud",
+      renderObjectId: HUD_OBJECTS.score,
+      hudRole: "score",
+      state: scoreHudState(record),
+    });
+    commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: HUD_OBJECTS.score });
+    create(HUD_OBJECTS.life, "hud-life");
+    commands.push({
+      ...base(commands.length),
+      kind: "set-hud",
+      renderObjectId: HUD_OBJECTS.life,
+      hudRole: "life",
+      state: lifeHudState(record, false),
+    });
+    commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: HUD_OBJECTS.life });
+    create(HUD_OBJECTS.overlay, "hud-overlay");
+    commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: HUD_OBJECTS.overlay });
+    create(HUD_OBJECTS.judgeOverlay, "hud-overlay");
+    commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: HUD_OBJECTS.judgeOverlay });
+    create(HUD_OBJECTS.feverOverlay, "hud-overlay");
+    commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: HUD_OBJECTS.feverOverlay });
     return this.preflight(commands, () => this.recordCreatedObjects(created));
   }
 
   preflightHudReflect(
-    plan: JudgementReflectPlan,
+    plan: ScoreLifeReflectPlan,
   ): SimulatorResult<RenderOwnerTransaction> {
     const validation = this.validate();
     if (validation.status !== "ok") return validation;
+    if (
+      !Number.isInteger(plan.reflect.representativeScoreUpType) ||
+      plan.reflect.representativeScoreUpType < 0 ||
+      plan.reflect.representativeScoreUpType > 5 ||
+      !Number.isFinite(plan.reflect.representativeCrescendoRate)
+    ) {
+      return evidenceRequired(
+        "render.hud.invalid-score-up-state",
+        ["RPR-R7-004", "RPR-D10", "RPR-D13", "PR28"],
+        "Result.changeSprite consumes the current ScoreUpType 0..5 and a finite typed Crescendo rate.",
+      );
+    }
     const base = this.commandBase(this.substep);
     const commands: RenderCommand[] = [];
+    const totalAddScore = plan.reflect.totalOrdinaryScore +
+      plan.reflect.totalFreeLiveEventBonusScore;
+    const addScoreObjectId = HUD_OBJECTS.addScore[this.addScoreCursor]!;
+    if (totalAddScore !== 0) {
+      commands.push({
+        ...base(commands.length),
+        kind: "set-hud",
+        renderObjectId: addScoreObjectId,
+        hudRole: "overlay",
+        state: Object.freeze({
+          addScore: plan.reflect.totalOrdinaryScore,
+          freeLiveEventBonusAddScore: plan.reflect.totalFreeLiveEventBonusScore,
+          poolIndex: this.addScoreCursor,
+          depth: this.addScoreDepthCycle,
+          phase: 0,
+          phaseProgress: 0,
+        }),
+      });
+      commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: addScoreObjectId });
+      commands.push({
+        ...base(commands.length),
+        kind: "play-animation",
+        renderObjectId: addScoreObjectId,
+        animationRole: "add-score",
+        restart: true,
+      });
+    }
     const comboChanged = plan.record.currentCombo !== this.lastCombo ||
       plan.record.allPerfect !== this.lastAllPerfect;
     const comboRole = plan.record.allPerfect ? "all-perfect" as const : "combo" as const;
@@ -370,13 +467,66 @@ export class RenderCommandProducer {
         representativeSlot: plan.reflect.representativeSlot,
         representativeResult: plan.reflect.representativeRawResult,
         judgeTiming: plan.reflect.representativeJudgeTiming,
+        scoreUpType: plan.reflect.representativeScoreUpType,
+        crescendoTenths: Math.trunc(Math.fround(plan.reflect.representativeCrescendoRate * 10)),
       }),
     });
     commands.push({
       ...base(commands.length), kind: "play-animation", renderObjectId: HUD_OBJECTS.result,
       animationRole: "result", restart: true,
     });
+    commands.push({
+      ...base(commands.length), kind: "set-hud", renderObjectId: HUD_OBJECTS.score,
+      hudRole: "score", state: scoreHudState(plan.record),
+    });
+    if (plan.lifeHealAnimation) {
+      if (this.lifeSkillAnimation !== null) {
+        commands.push({
+          ...base(commands.length), kind: "stop-animation", renderObjectId: HUD_OBJECTS.life,
+          animationRole: this.lifeSkillAnimation, restart: false,
+        });
+      }
+      commands.push({
+        ...base(commands.length), kind: "play-animation", renderObjectId: HUD_OBJECTS.life,
+        animationRole: "life-heal", restart: true,
+      });
+    }
+    commands.push({
+      ...base(commands.length), kind: "set-hud", renderObjectId: HUD_OBJECTS.life,
+      hudRole: "life", state: lifeHudState(plan.record, this.lifeSkillAnimation !== null),
+    });
+    if (plan.record.singleGameOver) {
+      if (this.scoreSkillAnimationActive) commands.push({
+        ...base(commands.length), kind: "stop-animation", renderObjectId: HUD_OBJECTS.overlay,
+        animationRole: "score-skill", restart: false,
+      });
+      if (this.judgeSkillAnimationActive) commands.push({
+        ...base(commands.length), kind: "stop-animation", renderObjectId: HUD_OBJECTS.judgeOverlay,
+        animationRole: "judge-skill", restart: false,
+      });
+      if (this.lifeSkillAnimation !== null) commands.push({
+        ...base(commands.length), kind: "stop-animation", renderObjectId: HUD_OBJECTS.life,
+        animationRole: this.lifeSkillAnimation, restart: false,
+      });
+      if (this.feverAnimationActive) commands.push({
+        ...base(commands.length), kind: "stop-animation", renderObjectId: HUD_OBJECTS.feverOverlay,
+        animationRole: "fever", restart: false,
+      });
+      if (totalAddScore !== 0) commands.push({
+        ...base(commands.length), kind: "stop-animation", renderObjectId: addScoreObjectId,
+        animationRole: "add-score", restart: false,
+      });
+      for (const renderObjectId of [
+        HUD_OBJECTS.combo, HUD_OBJECTS.overlay, HUD_OBJECTS.judgeOverlay,
+        HUD_OBJECTS.feverOverlay, ...HUD_OBJECTS.addScore,
+      ]) commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId });
+    }
     return this.preflight(commands, () => {
+      if (totalAddScore !== 0) {
+        this.addScoreElapsedSeconds.set(addScoreObjectId, 0);
+        this.addScoreCursor = (this.addScoreCursor + 1) % HUD_OBJECTS.addScore.length;
+        this.addScoreDepthCycle = (this.addScoreDepthCycle + 1) % 8;
+      }
       if (comboChanged) {
         this.hudAnimationElapsedSeconds.delete("combo");
         this.hudAnimationElapsedSeconds.delete("all-perfect");
@@ -384,7 +534,145 @@ export class RenderCommandProducer {
         this.lastCombo = plan.record.currentCombo;
         this.lastAllPerfect = plan.record.allPerfect;
       }
+      if (plan.lifeHealAnimation) {
+        this.lifeSkillAnimation = null;
+        this.hudAnimationElapsedSeconds.set("life-heal", 0);
+      }
       this.resultElapsedSeconds = 0;
+      if (plan.record.singleGameOver) {
+        this.hudAnimationElapsedSeconds.clear();
+        this.addScoreElapsedSeconds.clear();
+        this.scoreSkillAnimationActive = false;
+        this.judgeSkillAnimationActive = false;
+        this.lifeSkillAnimation = null;
+        this.feverAnimationActive = false;
+      }
+    });
+  }
+
+  preflightHudSkillTransition(
+    before: SituationSkillSnapshot,
+    after: SituationSkillSnapshot,
+  ): SimulatorResult<RenderOwnerTransaction> {
+    const validation = this.validate();
+    if (validation.status !== "ok") return validation;
+    const started = before.state !== 2 && after.state === 2;
+    const finished = before.state === 2 && after.state !== 2;
+    if (!started && !finished) return ok(new RenderOwnerTransaction(this.renderer, null));
+    const scoreTypes = new Set<number>([
+      SkillActivateEffectType.Score,
+      SkillActivateEffectType.ScoreOverLife,
+      SkillActivateEffectType.ScoreUnderLife,
+      SkillActivateEffectType.ScoreContinuedNoteJudge,
+      SkillActivateEffectType.ScoreRateUpWithPerfect,
+      SkillActivateEffectType.ScoreOnlyPerfect,
+      SkillActivateEffectType.ScoreUnderGreatHalf,
+    ]);
+    const scoreSkill = started && after.activeEffectTypes.some((type) => scoreTypes.has(type));
+    const judgeSkill = started && after.activeEffectTypes.includes(SkillActivateEffectType.Judge);
+    const guard = started && after.activeEffectTypes.includes(SkillActivateEffectType.Damage);
+    const neverDie = started && after.activeEffectTypes.includes(SkillActivateEffectType.NeverDie);
+    const heal = started && after.activeEffectTypes.includes(SkillActivateEffectType.Heal);
+    const nextLifeRole = guard
+      ? "damage-guard" as const
+      : heal ? "life-heal" as const
+      : neverDie ? "never-die" as const : null;
+    const base = this.commandBase(this.substep);
+    const commands: RenderCommand[] = [];
+    if (started) {
+      commands.push({
+        ...base(commands.length), kind: "set-hud", renderObjectId: HUD_OBJECTS.overlay,
+        hudRole: "overlay", state: Object.freeze({
+          skillActive: true, scoreSkill, scoreGaugeActive: scoreSkill,
+          currentSkillNoteIndex: after.currentSkillNoteIndex,
+        }),
+      });
+      commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: HUD_OBJECTS.overlay });
+      if (scoreSkill) {
+        commands.push({
+          ...base(commands.length), kind: "play-animation", renderObjectId: HUD_OBJECTS.overlay,
+          animationRole: "score-skill", restart: true,
+        });
+      }
+      if (judgeSkill) {
+        commands.push({
+          ...base(commands.length), kind: "set-hud", renderObjectId: HUD_OBJECTS.judgeOverlay,
+          hudRole: "overlay", state: Object.freeze({
+            skillActive: true, scoreSkill: false, scoreGaugeActive: false,
+            currentSkillNoteIndex: after.currentSkillNoteIndex,
+          }),
+        });
+        commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: HUD_OBJECTS.judgeOverlay });
+        commands.push({
+          ...base(commands.length), kind: "play-animation", renderObjectId: HUD_OBJECTS.judgeOverlay,
+          animationRole: "judge-skill", restart: true,
+        });
+      }
+      if (nextLifeRole !== null) {
+        if (this.hudAnimationElapsedSeconds.has("life-heal")) commands.push({
+          ...base(commands.length), kind: "stop-animation", renderObjectId: HUD_OBJECTS.life,
+          animationRole: "life-heal", restart: false,
+        });
+        commands.push({
+          ...base(commands.length), kind: "play-animation", renderObjectId: HUD_OBJECTS.life,
+          animationRole: nextLifeRole, restart: true,
+        });
+      }
+    } else {
+      if (this.scoreSkillAnimationActive) commands.push({
+        ...base(commands.length), kind: "stop-animation", renderObjectId: HUD_OBJECTS.overlay,
+        animationRole: "score-skill", restart: false,
+      });
+      if (this.judgeSkillAnimationActive) commands.push({
+        ...base(commands.length), kind: "stop-animation", renderObjectId: HUD_OBJECTS.judgeOverlay,
+        animationRole: "judge-skill", restart: false,
+      });
+      if (this.lifeSkillAnimation !== null) commands.push({
+        ...base(commands.length), kind: "stop-animation", renderObjectId: HUD_OBJECTS.life,
+        animationRole: this.lifeSkillAnimation, restart: false,
+      });
+      commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: HUD_OBJECTS.overlay });
+      commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: HUD_OBJECTS.judgeOverlay });
+    }
+    return this.preflight(commands, () => {
+      this.scoreSkillAnimationActive = started && scoreSkill;
+      this.judgeSkillAnimationActive = started && judgeSkill;
+      if (started && nextLifeRole !== null) this.hudAnimationElapsedSeconds.delete("life-heal");
+      this.lifeSkillAnimation = started && nextLifeRole !== "life-heal" ? nextLifeRole : null;
+      if (started && nextLifeRole === "life-heal") this.hudAnimationElapsedSeconds.set("life-heal", 0);
+    });
+  }
+
+  preflightHudFeverTransition(
+    command: "ready" | "start" | "end",
+    before: FeverTimeSnapshot,
+  ): SimulatorResult<RenderOwnerTransaction> {
+    const validation = this.validate();
+    if (validation.status !== "ok") return validation;
+    const feverState = command === "start"
+      ? before.ownTeamPassCount >= before.ownTeamMemberCount ? 1 : 2
+      : command === "end" ? 0 : before.state;
+    const active = command !== "end";
+    const base = this.commandBase(this.substep);
+    const commands: RenderCommand[] = [{
+      ...base(0), kind: "set-hud", renderObjectId: HUD_OBJECTS.feverOverlay,
+      hudRole: "overlay", state: Object.freeze({ feverCommand: command, feverState, active }),
+    }];
+    if (active) {
+      commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: HUD_OBJECTS.feverOverlay });
+      commands.push({
+        ...base(commands.length), kind: "play-animation", renderObjectId: HUD_OBJECTS.feverOverlay,
+        animationRole: "fever", restart: true,
+      });
+    } else {
+      if (this.feverAnimationActive) commands.push({
+        ...base(commands.length), kind: "stop-animation", renderObjectId: HUD_OBJECTS.feverOverlay,
+        animationRole: "fever", restart: false,
+      });
+      commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: HUD_OBJECTS.feverOverlay });
+    }
+    return this.preflight(commands, () => {
+      this.feverAnimationActive = active;
     });
   }
 
@@ -402,19 +690,23 @@ export class RenderCommandProducer {
     }
     if (
       (this.hudAnimationElapsedSeconds.size === 0 &&
+        this.addScoreElapsedSeconds.size === 0 &&
         this.resultElapsedSeconds === null) ||
       deltaTimeSeconds === 0
     ) {
       return ok(new RenderOwnerTransaction(this.renderer, null));
     }
-    const next = new Map<"combo" | "all-perfect", number>();
+    const next = new Map<"combo" | "all-perfect" | "life-heal", number>();
+    const nextAddScore = new Map<string, number>();
     let nextResultElapsed = this.resultElapsedSeconds;
     const base = this.commandBase(this.substep);
     const commands: RenderCommand[] = [];
     for (const [role, elapsed] of this.hudAnimationElapsedSeconds) {
       const nextElapsed = Math.fround(elapsed + deltaTimeSeconds);
-      const renderObjectId = HUD_OBJECTS.combo;
-      if (role !== "all-perfect" && nextElapsed >= 1) {
+      const renderObjectId = role === "combo" || role === "all-perfect"
+        ? HUD_OBJECTS.combo : HUD_OBJECTS.life;
+      const duration = role === "life-heal" ? Math.fround(0.6666666865348816) : 1;
+      if (role !== "all-perfect" && nextElapsed >= duration) {
         commands.push({
           ...base(commands.length), kind: "stop-animation", renderObjectId,
           animationRole: role, restart: false,
@@ -433,6 +725,24 @@ export class RenderCommandProducer {
         next.set(role, nextElapsed);
       }
     }
+    for (const [renderObjectId, elapsed] of this.addScoreElapsedSeconds) {
+      const nextElapsed = Math.fround(elapsed + deltaTimeSeconds);
+      if (nextElapsed >= Math.fround(0.42000000178813934)) {
+        commands.push({
+          ...base(commands.length), kind: "stop-animation", renderObjectId,
+          animationRole: "add-score", restart: false,
+        });
+        commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId });
+      } else {
+        const sample = createRenderFloat32(nextElapsed);
+        if (sample.status !== "ok") return sample;
+        commands.push({
+          ...base(commands.length), kind: "sample-animation", renderObjectId,
+          animationRole: "add-score", elapsedSeconds: sample.value,
+        });
+        nextAddScore.set(renderObjectId, nextElapsed);
+      }
+    }
     if (this.resultElapsedSeconds !== null) {
       nextResultElapsed = Math.fround(this.resultElapsedSeconds + deltaTimeSeconds);
       if (nextResultElapsed >= 1) {
@@ -448,6 +758,10 @@ export class RenderCommandProducer {
       this.hudAnimationElapsedSeconds.clear();
       for (const [role, elapsed] of next) {
         this.hudAnimationElapsedSeconds.set(role, elapsed);
+      }
+      this.addScoreElapsedSeconds.clear();
+      for (const [renderObjectId, elapsed] of nextAddScore) {
+        this.addScoreElapsedSeconds.set(renderObjectId, elapsed);
       }
       this.resultElapsedSeconds = nextResultElapsed;
     });
@@ -2048,8 +2362,13 @@ export class RenderCommandProducer {
       this.createdObjectIds.length = 0;
       this.creationSequenceByObjectId.clear();
       this.hudAnimationElapsedSeconds.clear();
+      this.addScoreElapsedSeconds.clear();
       this.noteAnimationElapsedSeconds.clear();
       this.resultElapsedSeconds = null;
+      this.scoreSkillAnimationActive = false;
+      this.judgeSkillAnimationActive = false;
+      this.feverAnimationActive = false;
+      this.lifeSkillAnimation = null;
     });
   }
 
@@ -2221,25 +2540,29 @@ export function resolveFrontSpriteBinding(
     }));
   }
 
-  let family: "note_normal" | "note_normal_16" | "note_long" | "note_flick";
-  switch (information.fireNoteType) {
-    case FrontNoteType.Normal:
-      family = information.shortRhythmUnder8beat ? "note_normal_16" : "note_normal";
-      break;
-    case FrontNoteType.Long:
-    case FrontNoteType.SlideA:
-    case FrontNoteType.SlideB:
-      family = "note_long";
-      break;
-    case FrontNoteType.Flick:
-      family = "note_flick";
-      break;
-    default:
-      return evidenceRequired(
-        "render.note.front-sprite-route-unrepresented",
-        ["RPR-D03", "RPR-D04", "PR06", "PR09"],
-        "Multiple Directional and add-visual families require their dedicated owner route rather than a guessed front Sprite.",
-      );
+  let family: "note_normal" | "note_normal_16" | "note_skill" | "note_long" | "note_flick";
+  if (information.gameNoteAdditionalType === GameNoteAdditionalType.Skill) {
+    family = "note_skill";
+  } else {
+    switch (information.fireNoteType) {
+      case FrontNoteType.Normal:
+        family = information.shortRhythmUnder8beat ? "note_normal_16" : "note_normal";
+        break;
+      case FrontNoteType.Long:
+      case FrontNoteType.SlideA:
+      case FrontNoteType.SlideB:
+        family = "note_long";
+        break;
+      case FrontNoteType.Flick:
+        family = "note_flick";
+        break;
+      default:
+        return evidenceRequired(
+          "render.note.front-sprite-route-unrepresented",
+          ["RPR-D03", "RPR-D04", "PR06", "PR09"],
+          "Multiple Directional and add-visual families require their dedicated owner route rather than a guessed front Sprite.",
+        );
+    }
   }
   return ok(Object.freeze({
     logicalAssetId: resources.noteAtlasLogicalAssetId,
@@ -2254,6 +2577,9 @@ function resolveHabahiroFrontSpriteBinding(
   const laneSuffix = resolveLaneSuffix(information, true);
   if (laneSuffix.status !== "ok") return laneSuffix;
   const atlases = resolveHabahiroAtlasLogicalIds(resources);
+  if (information.gameNoteAdditionalType === GameNoteAdditionalType.Skill) {
+    return ok(Object.freeze({ logicalAssetId: atlases.skill, exactKey: `note_skill_${laneSuffix.value}` }));
+  }
   if (information.fireNoteType === FrontNoteType.Normal) {
     return information.shortRhythmUnder8beat
       ? ok(Object.freeze({ logicalAssetId: atlases.normal16, exactKey: `note_normal_16_${laneSuffix.value}` }))
@@ -2363,6 +2689,7 @@ function resolveHabahiroAtlasLogicalIds(
   return resources.habahiroAtlasLogicalAssetIds ?? Object.freeze({
     normal: resources.noteAtlasLogicalAssetId,
     normal16: resources.noteAtlasLogicalAssetId,
+    skill: resources.noteAtlasLogicalAssetId,
     flick: resources.noteAtlasLogicalAssetId,
     long: resources.noteAtlasLogicalAssetId,
     longFlash: resources.noteAtlasLogicalAssetId,
@@ -2443,6 +2770,38 @@ function resolveLaneIndex(button: number, habahiro: boolean): number {
   return button >= ButtonType.Button_00_BMS_1P_SC && button <= ButtonType.Button_06_BMS_1P_06
     ? button
     : -1;
+}
+
+function scoreHudState(
+  record: InGameRecordSnapshot,
+): Readonly<Record<string, string | number | boolean | null>> {
+  const digits = String(record.score).padStart(8, "0").slice(-8);
+  const firstSignificant = Math.max(0, digits.search(/[1-9]/));
+  return Object.freeze({
+    score: record.score,
+    digits,
+    firstSignificant,
+    gaugeFill: Math.fround(Math.min(record.score / 99_999_999, 1)),
+  });
+}
+
+function lifeHudState(
+  record: InGameRecordSnapshot,
+  damageGuardPlaying: boolean,
+): Readonly<Record<string, string | number | boolean | null>> {
+  const ratio = Math.fround(record.currentLife / 1000);
+  const primaryFill = Math.fround(Math.min(ratio, 1));
+  return Object.freeze({
+    currentLife: record.currentLife,
+    playerMaxLife: record.playerMaxLife,
+    lifeUpperLimit: record.lifeUpperLimit,
+    singleGameOver: record.singleGameOver,
+    primaryFill,
+    secondaryFill: Math.fround(Math.max(ratio - 1, 0)),
+    danger: primaryFill <= Math.fround(0.2),
+    warning: primaryFill <= Math.fround(0.25) && !damageGuardPlaying,
+    damageGuardPlaying,
+  });
 }
 
 function transactionRejected(

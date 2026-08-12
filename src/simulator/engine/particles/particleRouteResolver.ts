@@ -12,6 +12,7 @@ export interface ParticleJudgementRouteInput {
   readonly result: NoteResultTypeValue;
   readonly judgeNoteType: number;
   readonly gameNoteType: GameNoteTypeValue;
+  readonly isSkillNote: boolean;
   readonly multipleDirectionalFlickNoteCount: number;
   readonly rangeLength: number;
 }
@@ -57,6 +58,7 @@ export function resolveParticleJudgementRoot(
       "Particle routing accepts only the closed result, judge-note, game-note, count and range domains.",
     );
   }
+  if (input.isSkillNote) return ok(skillRoot(input.result));
   if (DIRECTIONAL_JUDGE_NOTE_TYPES.has(input.judgeNoteType)) {
     if (input.result < NoteResultType.Good) return ok(null);
     const side = directionalSideFromGameNote(input.gameNoteType);
@@ -126,6 +128,22 @@ function ordinaryRoot(result: NoteResultTypeValue): ParticleRootId | null {
   }
 }
 
+function skillRoot(result: NoteResultTypeValue): ParticleRootId | null {
+  switch (result) {
+    case NoteResultType.None:
+      return "ordinary:effect_tap";
+    case NoteResultType.Good:
+      return "ordinary:effect_tap_skill_good";
+    case NoteResultType.Great:
+      return "ordinary:effect_tap_skill_great";
+    case NoteResultType.Perfect:
+      return "ordinary:effect_tap_skill_perfect";
+    case NoteResultType.Miss:
+    case NoteResultType.Bad:
+      return null;
+  }
+}
+
 function directionalSideFromGameNote(gameNoteType: number): "l" | "r" | null {
   if (LEFT_DIRECTIONAL_GAME_NOTE_TYPES.has(gameNoteType)) return "l";
   if (RIGHT_DIRECTIONAL_GAME_NOTE_TYPES.has(gameNoteType)) return "r";
@@ -140,6 +158,7 @@ function isClosedJudgementRouteInput(
     Number.isInteger(input.judgeNoteType) && input.judgeNoteType >= 0 && input.judgeNoteType <= 10 &&
     Number.isInteger(input.gameNoteType) && input.gameNoteType >= GameNoteType.None &&
       input.gameNoteType <= GameNoteType.SlideAddDirectionalFlick &&
+    typeof input.isSkillNote === "boolean" &&
     Number.isSafeInteger(input.multipleDirectionalFlickNoteCount) &&
       input.multipleDirectionalFlickNoteCount >= 0 && input.multipleDirectionalFlickNoteCount <= 0xffffffff &&
     Number.isInteger(input.rangeLength) && input.rangeLength >= 1 && input.rangeLength <= 7;

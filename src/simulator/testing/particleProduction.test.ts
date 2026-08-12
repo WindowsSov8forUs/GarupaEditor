@@ -99,7 +99,7 @@ async function replay(
     runtime: {
       highFrequencyMode: false,
       judgeOffsetFrames: 0,
-      playMode: { kind: "auto-live", resultTransform: "identity" },
+      playMode: { kind: "auto-live", resultTransform: "identity-no-active-situation-skill" },
     },
     particles: { sessionId },
   }, createRecordingSimulatorBackends(undefined, particle)), `create ${sessionId}`);

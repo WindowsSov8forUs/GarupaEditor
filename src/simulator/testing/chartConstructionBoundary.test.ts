@@ -68,6 +68,8 @@ function noteInformation(
     soundValueList: [],
     gameNoteAdditionalType: GameNoteAdditionalType.None,
     gameNoteAdditionalTypeLongNoteEnd: GameNoteAdditionalType.None,
+    skillNoteIndex: 0,
+    skillAfterNoteIndex: 0,
     virtualLaneDirection: VirtualLaneDirection.None,
     virtualLaneDistance: 0,
     ...overrides,

@@ -2,6 +2,7 @@ import {
   AfterNoteType,
   ButtonType,
   FrontNoteType,
+  GameNoteAdditionalType,
   GameNoteType,
   type AfterNoteTypeValue,
   type ButtonTypeValue,
@@ -99,6 +100,9 @@ function setupLongNotePairs(
       root.afterNoteAbsolutePos = terminal.absolutePos;
       root.afterNoteShortRhythmUnder8beat = terminal.shortRhythmUnder8beat;
       root.gameNoteAdditionalTypeLongNoteEnd = terminal.gameNoteAdditionalType;
+      if (terminal.gameNoteAdditionalType === GameNoteAdditionalType.Skill) {
+        root.skillAfterNoteIndex = terminal.skillNoteIndex;
+      }
       setMultiRangeAfterSourceIdentity(root, terminal);
       terminal.buttonType = ButtonType.None;
     }
@@ -156,6 +160,9 @@ function setupSlideNoteFamily(
       matching.buttonTypes = buttons;
       matching.buttonTypesArray = [...buttons];
       mergeMultiRangeSourceIdentity(matching, note);
+      if (note.skillNoteIndex !== 0) {
+        matching.skillNoteIndex = note.skillNoteIndex;
+      }
       note.isMultiRangeCombine = true;
     } else {
       const previous = active[active.length - 1];

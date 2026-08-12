@@ -98,7 +98,7 @@ async function testSessionBgmContract(): Promise<void> {
   assert.equal(AUDIO_SESSION_BGM_CONTRACT.main_program_integration_authorization, false);
   assert.equal(CURRENT_AUDIO_TEST_PROFILE.profileId, "session-external-portable-v1");
   assert.equal(CURRENT_AUDIO_TEST_PROFILE.resources.filter((resource) => resource.role === "bgm").length, 1);
-  assert.equal(CURRENT_AUDIO_TEST_PROFILE.resources.filter((resource) => resource.role === "se").length, 13);
+  assert.equal(CURRENT_AUDIO_TEST_PROFILE.resources.filter((resource) => resource.role === "se").length, 18);
 
   const alternativeCapabilities = virtualCapabilities(ALTERNATIVE_AUDIO_TEST_PROFILE);
   const alternative = new RecordingSimulatorAudioBackend();
@@ -116,6 +116,8 @@ async function testSessionBgmContract(): Promise<void> {
     masterGainBits: "0x3F800000",
     bgmGainBits: "0x3F800000",
     seGainBits: "0x3F800000",
+    voiceGainBits: "0x3F800000",
+    practiceMode: false,
   }, alternative, { noteBatches: [] } as any);
   const initialized = producer.preflightInitialize();
   assert.equal(initialized.status, "ok");
@@ -140,7 +142,7 @@ async function testSessionBgmContract(): Promise<void> {
   )).status, "evidence-required");
 
   const duplicateBgm = cloneProfile(ALTERNATIVE_AUDIO_TEST_PROFILE);
-  duplicateBgm.resources[13] = { ...duplicateBgm.resources[0] };
+  duplicateBgm.resources[18] = { ...duplicateBgm.resources[0] };
   const duplicateBackend = new RecordingSimulatorAudioBackend();
   assert.equal((await duplicateBackend.prepare(
     "duplicate-bgm", duplicateBgm, alternativeCapabilities.provider, alternativeCapabilities.preflight,
@@ -177,7 +179,7 @@ async function testPrepareCases(): Promise<void> {
     virtualProvider,
     virtualPreflight,
   )).status, expected("AU-C01").outcome);
-  assert.equal(valid.snapshot().resourceCount, 14);
+  assert.equal(valid.snapshot().resourceCount, 19);
   assert.equal(valid.snapshot().state, "ready");
   assert.equal(valid.snapshot().preparedBgmCue, CURRENT_AUDIO_TEST_PROFILE.resources[0]!.cue);
   assert.ok(Object.isFrozen(valid.snapshot()));
@@ -214,7 +216,7 @@ async function testPrepareCases(): Promise<void> {
   assert.equal(integrity.snapshot().resourceCount, 0);
 
   const duplicate = cloneProfile(CURRENT_AUDIO_TEST_PROFILE);
-  duplicate.resources[13] = { ...duplicate.resources[0]! };
+  duplicate.resources[18] = { ...duplicate.resources[0]! };
   const duplicateBackend = new RecordingSimulatorAudioBackend();
   assert.equal((await duplicateBackend.prepare(
     "audio-session",
@@ -232,7 +234,8 @@ async function testCommandCases(): Promise<void> {
   const executable = [
     "AU-C06", "AU-C07", "AU-C08", "AU-C09", "AU-C11", "AU-C12", "AU-C13",
     "AU-C17", "AU-C18", "AU-C19", "AU-C20", "AU-C21", "AU-C22", "AU-C23",
-    "AU-C24", "AU-C25", "AU-C26", "AU-C27", "AU-C28", "AU-C34",
+    "AU-C24", "AU-C25", "AU-C26", "AU-C27", "AU-C28", "AU-C29", "AU-C30",
+    "AU-C32", "AU-C33", "AU-C34",
   ];
   for (const caseId of executable) {
     const backend = await readyOpenBackend();
@@ -255,6 +258,8 @@ async function testCommandCases(): Promise<void> {
     masterGainBits: "0x3F800000",
     bgmGainBits: "0x3F800000",
     seGainBits: "0x3F800000",
+    voiceGainBits: "0x3F800000",
+    practiceMode: false,
   }, natural, chart);
   runCommands(natural, [{
     kind: "bgm.load", cue: "bgm003", seek_ms: 0, priority: 255,
@@ -333,12 +338,14 @@ async function testDomainProducer(): Promise<void> {
     masterGainBits: "0x3F000000",
     bgmGainBits: "0x3F000000",
     seGainBits: "0x3F800000",
+    voiceGainBits: "0x3F800000",
+    practiceMode: false,
   }, backend, { noteBatches: [{ informationList: notes }] } as any);
   assert.equal(producer.validate().status, "ok");
   assert.equal(requireOk(producer.preflightInitialize()).commit().status, "ok");
   assert.deepEqual(backend.snapshot().commands.slice(0, 5), [
     { kind: "session.open", bgm_pool: 8, se_pool: 12, one_shot_pool: 1 },
-    { kind: "gain.set", bgm_bits: "0x3E800000", se_bits: "0x3F000000" },
+    { kind: "gain.set", bgm_bits: "0x3E800000", se_bits: "0x3F000000", voice_bits: "0x3F000000" },
     { kind: "bgm.load", cue: "bgm003", seek_ms: 1234, priority: 255, fade_bits: "0x00000000" },
     { kind: "audio.pause-all", paused: true },
     { kind: "audio.pause-all", paused: false },
@@ -387,10 +394,14 @@ async function testDomainProducer(): Promise<void> {
     "hold.fade", "se.play-one-shot",
   ]);
 
-  assert.equal(requireOk(producer.preflightCompleteLive(2)).commit().status, "ok");
+  assert.equal(requireOk(producer.preflightSkillTriggered()).commit().status, "ok");
   assert.deepEqual(backend.snapshot().commands.slice(-2).map((command: any) => command.cue), [
-    "SE_RHYTHM_FULLCOMBO", "SE_RHYTHM_CLEAR",
+    "SE_RHYTHM_CUTIN_SKILL", "SE_RHYTHM_CUTIN_AUDIENCE",
   ]);
+  assert.equal(requireOk(producer.preflightGameOver()).commit().status, "ok");
+  assert.deepEqual(backend.snapshot().commands.slice(-2), expectedCommands("AU-C33"));
+  assert.equal(requireOk(producer.preflightCompleteLive(2)).commit().status, "ok");
+  assert.deepEqual(backend.snapshot().commands.slice(-3), expectedCommands("AU-C32"));
 }
 
 function testProductionDigestCase(): void {

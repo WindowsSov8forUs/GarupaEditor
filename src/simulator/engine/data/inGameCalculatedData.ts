@@ -2,13 +2,13 @@ export type SimulatorPlayMode =
   | { readonly kind: "manual" }
   | {
       readonly kind: "auto-live";
-      readonly resultTransform: "identity";
+      readonly resultTransform: "identity-no-active-situation-skill";
     };
 
 export interface InGameCalculatedDataSnapshot {
   readonly playMode: "manual" | "auto-live";
   readonly isAutoPlay: boolean;
-  readonly resultTransform: "none" | "identity";
+  readonly resultTransform: "none" | "identity-no-active-situation-skill";
 }
 
 export class InGameCalculatedData {

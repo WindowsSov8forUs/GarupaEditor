@@ -181,7 +181,7 @@ test("MJ25 pause不解析输入且fault dispose优先于delta和shape", () => {
       ...autoInput.runtime,
       playMode: {
         kind: "auto-live",
-        resultTransform: "identity",
+        resultTransform: "identity-no-active-situation-skill",
       },
     },
   }, createRecordingSimulatorBackends()), "create Auto Live input boundary engine");

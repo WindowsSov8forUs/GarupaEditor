@@ -28,10 +28,8 @@ import {
 import { InGameManager } from "../engine/managers/inGameManager";
 import { InGameMusicScoreController } from "../engine/managers/inGameMusicScoreController";
 import { InGameOneFrameJudgementController } from "../engine/managers/inGameOneFrameJudgementController";
-import {
-  countMaximumNotes,
-  JudgementStateManager,
-} from "../engine/managers/judgementStateManager";
+import { ScoreLifeStateManager } from "../engine/managers/scoreLifeStateManager";
+import type { FeverTimeCommandName } from "../engine/managers/feverTimeManager";
 import {
   GamePlayInputDispatcher,
   InputManager,
@@ -225,6 +223,31 @@ class SimulatorEngineHost implements SimulatorEngine {
       : ok(undefined);
   }
 
+  updateFeverMemberPoint(
+    displayIndex: number,
+    point: number,
+    isOwnTeam: boolean,
+  ): SimulatorResult<void> {
+    const audioFault = this.pollAudioFault();
+    return audioFault.status === "ok"
+      ? this.inGameManager.updateFeverMemberPoint(displayIndex, point, isOwnTeam)
+      : audioFault;
+  }
+
+  changeFeverCommand(command: FeverTimeCommandName): SimulatorResult<void> {
+    const audioFault = this.pollAudioFault();
+    return audioFault.status === "ok"
+      ? this.inGameManager.changeFeverCommand(command)
+      : audioFault;
+  }
+
+  continueLive(): SimulatorResult<void> {
+    const audioFault = this.pollAudioFault();
+    return audioFault.status === "ok"
+      ? this.inGameManager.continueLive()
+      : audioFault;
+  }
+
   completeLiveAudio(clearStatus: 1 | 2 | 3): SimulatorResult<void> {
     if (this.inGameManager.fault !== null) return this.inGameManager.fault;
     const audioFault = this.pollAudioFault();
@@ -397,14 +420,15 @@ class SimulatorEngineHost implements SimulatorEngine {
     }
     const ended = this.audioProducer.pollBgmNaturalEnd();
     if (ended.status !== "ok" || !ended.value) return ended.status === "ok" ? ok(undefined) : ended;
-    const judgement = this.inGameManager.judgementStateManager;
-    return judgement === null
-      ? evidenceRequired(
-          "audio.natural-completion.without-judgement-owner",
-          [],
-          "Natural BGM completion requires the reduced judgement clear-status owner.",
-        )
-      : this.completeLiveAudio(judgement.getClearStatus());
+    const scoreLife = this.inGameManager.scoreLifeStateManager;
+    if (scoreLife === null) {
+      return evidenceRequired(
+        "audio.natural-completion.without-score-owner",
+        [],
+        "Natural BGM completion requires the recovered InGameRecord clear-status owner; a default clear status is forbidden.",
+      );
+    }
+    return this.completeLiveAudio(scoreLife.getClearStatus());
   }
 
   private pollAudioFault(): SimulatorResult<void> {
@@ -548,13 +572,33 @@ export function createSimulatorEngine(
   }
   const slideNoteManager = new SlideNoteManager();
   const inGameCalculatedData = new InGameCalculatedData(playModeValidation.value);
-  const judgementStateResult = countMaximumNotes(input.chart) === 0
-    ? ok<JudgementStateManager | null>(null)
-    : JudgementStateManager.create(input.chart);
-  if (judgementStateResult.status !== "ok") return judgementStateResult;
-  const judgementStateManager = judgementStateResult.value;
+  const scoreLifeStateResult = input.scoreLifeState === undefined
+    ? ok<ScoreLifeStateManager | null>(null)
+    : ScoreLifeStateManager.create(
+        input.scoreLifeState,
+        input.chart,
+        playModeValidation.value.kind,
+      );
+  if (scoreLifeStateResult.status !== "ok") return scoreLifeStateResult;
+  const scoreLifeStateManager = scoreLifeStateResult.value;
+  if (
+    input.audio !== undefined && scoreLifeStateManager !== null &&
+    input.audio.practiceMode !== (scoreLifeStateManager.mode === "practice")
+  ) {
+    return evidenceRequired(
+      "audio.session.practice-mode-mismatch",
+      [],
+      "Skill, audience and clear routing must use the same practice-mode fact as the Score/Life session.",
+    );
+  }
   const musicScoreController = new InGameMusicScoreController(input.chart);
   const oneFrameJudgementController = new InGameOneFrameJudgementController();
+  if (scoreLifeStateManager !== null) {
+    const businessOwner = oneFrameJudgementController.registerBusinessOwner(
+      (judgement) => scoreLifeStateManager.freezeOneFrame(judgement),
+    );
+    if (businessOwner.status !== "ok") return businessOwner;
+  }
   const noteManager = new NoteManager(
     input.chart.noteBatches,
     slideNoteManager,
@@ -597,7 +641,7 @@ export function createSimulatorEngine(
     noteManager,
     oneFrameJudgementController,
     inputManager,
-    judgementStateManager,
+    scoreLifeStateManager,
     renderProducer,
     audioProducer,
     particleCoordinator,
@@ -707,17 +751,17 @@ function validatePlayMode(
   }
   if (
     kind === "auto-live" &&
-    value.resultTransform === "identity"
+    value.resultTransform === "identity-no-active-situation-skill"
   ) {
     return ok(Object.freeze({
       kind: "auto-live",
-      resultTransform: "identity",
+      resultTransform: "identity-no-active-situation-skill",
     }));
   }
   return evidenceRequired(
     "runtime.unsupported-play-mode-or-result-transform",
     ["R01", "R02", "R04"],
-    "Only the recovered identity Auto Live result transform is part of the reduced playback contract.",
+    "Mode 14, debug Force Perfect and active result-transform Skill contexts are outside the closed Auto Live contract.",
   );
 }
 
