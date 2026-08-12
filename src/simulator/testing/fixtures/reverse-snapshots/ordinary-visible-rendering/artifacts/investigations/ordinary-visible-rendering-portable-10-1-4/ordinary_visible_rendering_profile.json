@@ -956,7 +956,7 @@
       309.0,
       0.0
     ],
-    "scale": 0.6,
+    "scale": 0.6000000238418579,
     "digits": {
       "plus": "icon_number_plus",
       "prefix": "icon_number_",
@@ -968,7 +968,7 @@
       "alignment": "center"
     },
     "start": {
-      "alpha": 0.6,
+      "alpha": 0.6000000238418579,
       "localY": -50.0
     },
     "phaseSeconds": 0.14000000059604645,

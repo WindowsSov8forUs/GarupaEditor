@@ -8,6 +8,15 @@
       "sha256": "7CFEC4DABC83BC20E79E21D6AEB13CD9FA77ABE499E5E088A60C41014B96F6B6",
       "width": 1024,
       "height": 1024,
+      "textureSettings": {
+        "scaleMode": "linear",
+        "wrapModeU": "clamp",
+        "wrapModeV": "clamp",
+        "mipmap": "off",
+        "premultiplyAlpha": true,
+        "blendMode": "normal",
+        "portablePolicy": "browser-premultiplied-alpha"
+      },
       "rows": [
         {
           "exactKey": "bg_health",
@@ -331,6 +340,15 @@
       "rgbaSha256": "4A98A20B2DE55879805C312D4B78EBED6A7DEA26135122930BA374FB7505294C",
       "bytes": 137053,
       "sha256": "1AC0E30098F776E3E570AA2D8A7C15D8C71025D71A67BFCCD3B68EA56F2D743C",
+      "textureSettings": {
+        "scaleMode": "linear",
+        "wrapModeU": "clamp",
+        "wrapModeV": "clamp",
+        "mipmap": "off",
+        "premultiplyAlpha": true,
+        "blendMode": "normal",
+        "portablePolicy": "browser-premultiplied-alpha"
+      },
       "rows": [
         {
           "exactKey": "icon_number_big_0",
@@ -723,6 +741,15 @@
       "rgbaSha256": "585EA9485DF3C5D38B4004BB1E1867F8FFAAA05E79427C04C2C8BD74141BFEE2",
       "bytes": 97258,
       "sha256": "1FACA23DE96039095EF2CE5970335C560DC6A365070C601A1C53AF5A1457E205",
+      "textureSettings": {
+        "scaleMode": "linear",
+        "wrapModeU": "clamp",
+        "wrapModeV": "clamp",
+        "mipmap": "off",
+        "premultiplyAlpha": true,
+        "blendMode": "normal",
+        "portablePolicy": "browser-premultiplied-alpha"
+      },
       "rows": [
         {
           "exactKey": "judge_auto",
@@ -887,6 +914,15 @@
       "rgbaSha256": "4F19AF5C9974368F0D26E9D9D71AD7F2D7C398EC4B621B53DAA431C0F1F9327E",
       "bytes": 464153,
       "sha256": "D7A31B6A2BD4CE298C3D580DFACE8312483E941D103FD4D11FA2CFD29BC50533",
+      "textureSettings": {
+        "scaleMode": "linear",
+        "wrapModeU": "clamp",
+        "wrapModeV": "clamp",
+        "mipmap": "off",
+        "premultiplyAlpha": true,
+        "blendMode": "add",
+        "portablePolicy": "browser-premultiplied-alpha"
+      },
       "rows": [
         {
           "exactKey": "hp_meter",
@@ -918,6 +954,15 @@
       "rgbaSha256": "C12CF8ED745DAC36EFC062AC0CF6A0B4B6589488B77EA47B0B780383E68103F0",
       "bytes": 20188,
       "sha256": "C20901739059F91886257DEDC7C57F1029FDBC2D38A5E63A25F7EE5BCEDBC97E",
+      "textureSettings": {
+        "scaleMode": "linear",
+        "wrapModeU": "clamp",
+        "wrapModeV": "clamp",
+        "mipmap": "off",
+        "premultiplyAlpha": true,
+        "blendMode": "add",
+        "portablePolicy": "browser-premultiplied-alpha"
+      },
       "rows": [
         {
           "exactKey": "effect_health_caution_inside",

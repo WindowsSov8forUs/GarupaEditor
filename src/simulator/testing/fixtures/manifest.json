@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "purpose": "offline simulator test fixtures",
   "sourceRepository": "HOST________/VSCode/GirlsBandParty-Reverse",
-  "sourceHead": "3ca922ccee572b907e7c8ee05672a3e2723e31bd",
+  "sourceHead": "bd21127cdf4dd948a7732008aa1f4d5ccc7f54e7",
   "entries": [
     {
       "path": "habahiro-snapshots/bestdori-atlas-profile.json",
@@ -490,10 +490,10 @@
     },
     {
       "path": "reverse-snapshots/ordinary-visible-rendering/artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/closure.json",
-      "sourceReverseCommit": "3ca922ccee572b907e7c8ee05672a3e2723e31bd",
+      "sourceReverseCommit": "bd21127cdf4dd948a7732008aa1f4d5ccc7f54e7",
       "sourcePath": "artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/closure.json",
       "bytes": 740,
-      "sha256": "D1EBF74105FC44059021CC44AF23F19887994AD9F77DC6D734B32C0056DC8E0A"
+      "sha256": "57AABBF9AC55FB2EB30DE5A54E422A964D774998946592D956627925AA1C1175"
     },
     {
       "path": "reverse-snapshots/ordinary-visible-rendering/artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/ordinary_visible_rendering_oracle.json",
@@ -511,17 +511,17 @@
     },
     {
       "path": "reverse-snapshots/ordinary-visible-rendering/artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/ordinary_visible_rendering_portable_manifest.json",
-      "sourceReverseCommit": "3ca922ccee572b907e7c8ee05672a3e2723e31bd",
+      "sourceReverseCommit": "ee76bd2923781ac80935e93608b515818905f968",
       "sourcePath": "artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/ordinary_visible_rendering_portable_manifest.json",
-      "bytes": 22373,
-      "sha256": "0E55BFC2296D227824B02E368C35B29B8EDA82965C1CF2954A41CBA012B93DD4"
+      "bytes": 23732,
+      "sha256": "7F2FE0D4422AB331A78CA4D3DA55C5422B023C0BF38F21B829819002A94DCA34"
     },
     {
       "path": "reverse-snapshots/ordinary-visible-rendering/artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/ordinary_visible_rendering_profile.json",
-      "sourceReverseCommit": "80a173a210aa7d0943a80d37935f394df41b3a83",
+      "sourceReverseCommit": "bd21127cdf4dd948a7732008aa1f4d5ccc7f54e7",
       "sourcePath": "artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/ordinary_visible_rendering_profile.json",
-      "bytes": 28855,
-      "sha256": "93098C8EC905070BD3FF6A35C892438EBDE3B8B2EFE2FE1F175E3CE9879CCB1F"
+      "bytes": 28885,
+      "sha256": "A7DB45369B1F92909B329F8F71D893E7F1C187B91B5B8C4B8D37AC158F74BEF3"
     },
     {
       "path": "reverse-snapshots/ordinary-visible-rendering/artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/portable-assets/combo-number.png",
