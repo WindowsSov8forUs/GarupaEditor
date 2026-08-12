@@ -129,6 +129,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
   readonly stage: Container;
   private readonly recording = new RecordingSimulatorRendererBackend();
   private readonly objects = new Map<string, PixiObjectRecord>();
+  private readonly objectIdsByNode = new Map<Container, string>();
   private readonly baseTextures = new Map<string, Texture>();
   private readonly spriteTextures = new Map<string, Texture>();
   private readonly spriteReferenceCounts = new Map<string, number>();
@@ -445,6 +446,12 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     readonly maskVertexCount: number | null;
     readonly threshold: number | null;
     readonly hudText: string | null;
+    readonly hudFontFamily: string | null;
+    readonly spriteBindingKey: string | null;
+    readonly spriteAlpha: number | null;
+    readonly spriteTint: number | null;
+    readonly hudSpriteLabels: readonly string[] | null;
+    readonly hudSpriteAlphas: readonly number[] | null;
     readonly hudSpriteCount: number | null;
     readonly hudScoreDigitCount: number | null;
     readonly hudScoreRankVisualCount: number | null;
@@ -459,7 +466,6 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     readonly activeAnimationRole: EvidenceAnimationRole | null;
     readonly animationElapsedSeconds: number | null;
   }[] {
-    const idsByNode = new Map([...this.objects].map(([id, value]) => [value.node, id]));
     return Object.freeze([...this.objects].map(([renderObjectId, value]) => Object.freeze({
       renderObjectId,
       role: value.role,
@@ -468,7 +474,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       position: Object.freeze([value.node.position.x, value.node.position.y] as const),
       parent: value.node.parent === this.stage
         ? null
-        : idsByNode.get(value.node.parent as Container) ?? null,
+        : this.objectIdsByNode.get(value.node.parent as Container) ?? null,
       ordering: value.ordering,
       hudState: value.hudState,
       geometryVertexCount: value.geometryContent?.geometry.positions.length
@@ -481,6 +487,18 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       maskVertexCount: value.maskVertexCount,
       threshold: value.threshold,
       hudText: value.hudVisual?.text?.text ?? null,
+      hudFontFamily: value.hudVisual?.text?.style.fontFamily == null
+        ? null
+        : String(value.hudVisual.text.style.fontFamily),
+      spriteBindingKey: value.spriteBindingKey,
+      spriteAlpha: value.spriteContent?.alpha ?? null,
+      spriteTint: value.spriteContent?.tint ?? null,
+      hudSpriteLabels: value.hudVisual === null
+        ? null
+        : Object.freeze(value.hudVisual.digitSprites.map((sprite) => sprite.label)),
+      hudSpriteAlphas: value.hudVisual === null
+        ? null
+        : Object.freeze(value.hudVisual.digitSprites.map((sprite) => sprite.alpha)),
       hudSpriteCount: value.hudVisual?.digitSprites.length ?? null,
       hudScoreDigitCount: value.hudVisual?.scoreDigitTexts.length ?? null,
       hudScoreRankVisualCount: value.hudVisual?.scoreRankSprites.length ?? null,
@@ -506,6 +524,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       value.node.destroy({ children: true } as DestroyOptions);
     }
     this.objects.clear();
+    this.objectIdsByNode.clear();
     for (const pending of this.pending.values()) {
       this.destroyUnownedReservations(
         pending.reservedNodes,
@@ -570,14 +589,13 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
   private validatePixiBatch(
     commands: readonly RenderCommand[],
   ): SimulatorResult<void> {
-    const nodeIds = new Map([...this.objects].map(([id, value]) => [value.node, id]));
     const shadow = new Map<string, PixiShadowObject>();
     for (const [id, value] of this.objects) {
       shadow.set(id, {
         role: value.role,
         parentObjectId: value.node.parent === this.stage
           ? null
-          : nodeIds.get(value.node.parent as Container) ?? null,
+          : this.objectIdsByNode.get(value.node.parent as Container) ?? null,
         materialBound: value.materialTexture !== null,
         spriteBindingKey: value.spriteBindingKey,
         maskConfigured: value.maskContent !== null,
@@ -797,6 +815,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           activeAnimationRoles: new Set(),
           animationElapsedSeconds: null,
         });
+        this.objectIdsByNode.set(node, command.renderObjectId);
         return;
       }
       case "activate-object":
@@ -813,6 +832,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         if (object.geometryContent !== null) destroyMesh(object.geometryContent);
         object.node.removeFromParent();
         object.node.destroy({ children: true } as DestroyOptions);
+        this.objectIdsByNode.delete(object.node);
         this.objects.delete(command.renderObjectId);
         return;
       }
@@ -953,10 +973,9 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
   }
 
   private sortSiblings(parent: Container): void {
-    const ids = new Map([...this.objects].map(([id, value]) => [value.node, id]));
     parent.children.sort((left, right) => {
-      const leftRecord = this.objects.get(ids.get(left)!)!;
-      const rightRecord = this.objects.get(ids.get(right)!)!;
+      const leftRecord = this.objects.get(this.objectIdsByNode.get(left as Container)!)!;
+      const rightRecord = this.objects.get(this.objectIdsByNode.get(right as Container)!)!;
       return compareOrdering(leftRecord.ordering, rightRecord.ordering);
     });
   }
@@ -997,6 +1016,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     this.pending.clear();
     const records = [...this.objects.values()].reverse();
     this.objects.clear();
+    this.objectIdsByNode.clear();
     this.spriteReferenceCounts.clear();
     try {
       this.stage.removeChildren();
