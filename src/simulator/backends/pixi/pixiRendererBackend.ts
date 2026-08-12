@@ -18,6 +18,7 @@ import {
 import { RecordingSimulatorRendererBackend } from "../recordingRendererBackend";
 import { validateAndFreezeRenderProfile } from "../renderingValidation";
 import type { OrdinaryVisibleClip } from "../resources/currentOrdinaryVisibleProfile";
+import { CURRENT_ORDINARY_VISIBLE_BINDINGS } from "../resources/currentOrdinaryVisibleResourceManifest";
 import {
   CURRENT_SCORE_HUD_BITMAP_GLYPHS,
   CURRENT_SCORE_HUD_BINDINGS,
@@ -65,10 +66,11 @@ interface PendingPixiBatch {
 }
 
 interface PixiHudVisual {
+  readonly kind: "score" | "combo" | "result" | "life" | "add-score" | "habahiro-flash" | "fidelity-label";
   readonly content: Container;
-  readonly text: Text;
-  readonly primaryFill: Graphics;
-  readonly secondaryFill: Graphics;
+  readonly text: Text | null;
+  readonly primaryFill: Graphics | null;
+  readonly secondaryFill: Graphics | null;
   readonly animationLayer: Container;
   readonly digitSprites: Sprite[];
   readonly scoreDigitTexts: Sprite[];
@@ -108,6 +110,7 @@ interface PixiObjectRecord {
   readonly scoreGaugeSsAnimation: RenderResourceProfile["scoreGaugeSsAnimation"];
   readonly ordinaryVisibleProfile: RenderResourceProfile["ordinaryVisibleProfile"];
   activeAnimationRole: EvidenceAnimationRole | null;
+  readonly activeAnimationRoles: Set<EvidenceAnimationRole>;
   animationElapsedSeconds: number | null;
 }
 
@@ -117,7 +120,7 @@ interface PixiShadowObject {
   readonly materialBound: boolean;
   readonly spriteBindingKey: string | null;
   readonly maskConfigured: boolean;
-  readonly activeAnimationRole: EvidenceAnimationRole | null;
+  readonly activeAnimationRoles: ReadonlySet<EvidenceAnimationRole>;
 }
 
 export class PixiRendererBackend implements SimulatorRendererBackend {
@@ -477,7 +480,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         : Object.freeze(Array.from(value.geometryContent.geometry.positions)),
       maskVertexCount: value.maskVertexCount,
       threshold: value.threshold,
-      hudText: value.hudVisual?.text.text ?? null,
+      hudText: value.hudVisual?.text?.text ?? null,
       hudSpriteCount: value.hudVisual?.digitSprites.length ?? null,
       hudScoreDigitCount: value.hudVisual?.scoreDigitTexts.length ?? null,
       hudScoreRankVisualCount: value.hudVisual?.scoreRankSprites.length ?? null,
@@ -578,7 +581,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         materialBound: value.materialTexture !== null,
         spriteBindingKey: value.spriteBindingKey,
         maskConfigured: value.maskContent !== null,
-        activeAnimationRole: value.activeAnimationRole,
+        activeAnimationRoles: new Set(value.activeAnimationRoles),
       });
     }
     for (const command of commands) {
@@ -597,7 +600,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
             materialBound: false,
             spriteBindingKey: null,
             maskConfigured: false,
-            activeAnimationRole: null,
+            activeAnimationRoles: new Set(),
           });
           break;
         case "release-object":
@@ -720,14 +723,17 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           }
           shadow.set(command.renderObjectId, {
             ...object,
-            activeAnimationRole: requireEvidenceAnimationRole(command.animationRole),
+            activeAnimationRoles: new Set([
+              ...object.activeAnimationRoles,
+              requireEvidenceAnimationRole(command.animationRole),
+            ]),
           });
           break;
         }
         case "sample-animation":
         case "stop-animation": {
           const object = shadow.get(command.renderObjectId)!;
-          if (object.activeAnimationRole !== command.animationRole) {
+          if (!object.activeAnimationRoles.has(requireEvidenceAnimationRole(command.animationRole))) {
             return reject(
               "render.pixi.animation-owner-not-playing",
               "Animation sample/stop commands require the same owner-local role to have been started first.",
@@ -736,7 +742,9 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           if (command.kind === "stop-animation") {
             shadow.set(command.renderObjectId, {
               ...object,
-              activeAnimationRole: null,
+              activeAnimationRoles: new Set(
+                [...object.activeAnimationRoles].filter((role) => role !== command.animationRole),
+              ),
             });
           }
           break;
@@ -786,6 +794,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           scoreGaugeSsAnimation: this.profile?.scoreGaugeSsAnimation,
           ordinaryVisibleProfile: this.profile?.ordinaryVisibleProfile,
           activeAnimationRole: null,
+          activeAnimationRoles: new Set(),
           animationElapsedSeconds: null,
         });
         return;
@@ -908,6 +917,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       case "play-animation": {
         const object = this.objects.get(command.renderObjectId)!;
         const role = requireEvidenceAnimationRole(command.animationRole);
+        object.activeAnimationRoles.add(role);
         object.activeAnimationRole = role;
         object.animationElapsedSeconds = 0;
         applyEvidenceAnimation(object, role, 0);
@@ -924,7 +934,8 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         const object = this.objects.get(command.renderObjectId)!;
         const role = requireEvidenceAnimationRole(command.animationRole);
         stopEvidenceAnimation(object, role);
-        object.activeAnimationRole = null;
+        object.activeAnimationRoles.delete(role);
+        object.activeAnimationRole = [...object.activeAnimationRoles][object.activeAnimationRoles.size - 1] ?? null;
         object.animationElapsedSeconds = null;
         return;
       }
@@ -1158,20 +1169,34 @@ function isEvidenceHud(
       return findTextureBinding(textures, state.judgeKey) !== null &&
         (state.timingKey === null || findTextureBinding(textures, state.timingKey) !== null);
     }
-    case "life":
+    case "life": {
+      const ratio = Math.fround(state.currentLife / 1000);
+      const primary = Math.fround(Math.min(ratio, 1));
+      const secondary = Math.fround(Math.max(ratio - 1, 0));
       return objectRole === "hud-life" &&
         exactStateKeys(state, [
           "color", "currentLife", "label", "lifeUpperLimit", "playerMaxLife",
           "primaryFill", "secondaryFill", "singleGameOver", "warning",
         ]) &&
         isNonNegativeSafeInteger(state.currentLife) &&
-        isNonNegativeSafeInteger(state.playerMaxLife) &&
-        isNonNegativeSafeInteger(state.lifeUpperLimit) &&
-        typeof state.singleGameOver === "boolean" && typeof state.warning === "boolean" &&
-        (state.color === "normal" || state.color === "danger") && typeof state.label === "string" &&
-        isRenderFloat32State(state.primaryFill) && isRenderFloat32State(state.secondaryFill);
+        isNonNegativeSafeInteger(state.playerMaxLife) && state.playerMaxLife > 0 &&
+        isNonNegativeSafeInteger(state.lifeUpperLimit) && state.currentLife <= state.lifeUpperLimit &&
+        typeof state.singleGameOver === "boolean" && state.singleGameOver === (state.currentLife === 0) &&
+        typeof state.warning === "boolean" && state.warning === (primary <= Math.fround(0.25)) &&
+        state.color === (primary <= Math.fround(0.2) ? "danger" : "normal") &&
+        state.label === `${state.currentLife}/${state.playerMaxLife}` &&
+        isRenderFloat32State(state.primaryFill) && state.primaryFill.value === primary &&
+        isRenderFloat32State(state.secondaryFill) && state.secondaryFill.value === secondary &&
+        ordinaryLifeTexturesAvailable(textures) &&
+        decodedFonts.has(CURRENT_SCORE_HUD_BINDINGS.rankLabelFontLogicalAssetId);
+    }
     case "add-score":
-      return objectRole === "hud-add-score" && state.value > 0 && state.poolIndex >= 0 && state.poolIndex < 4 && state.depth >= 0 && state.depth < 8;
+      return objectRole === "hud-add-score" && exactStateKeys(state, ["depth", "poolIndex", "value"]) &&
+        isUInt32(state.value) && state.value > 0 &&
+        Number.isInteger(state.poolIndex) && state.poolIndex >= 0 && state.poolIndex < 4 &&
+        Number.isInteger(state.depth) && state.depth >= 0 && state.depth < 8 &&
+        ["icon_number_plus", ...String(state.value).split("").map((digit) => `icon_number_${digit}`)]
+          .every((key) => textures.has(spriteKey(CURRENT_SCORE_HUD_BINDINGS.gaugeLogicalAssetId, key)));
     case "habahiro-flash":
       return objectRole === "habahiro-flash" && state.phase === "flash-start" && state.progress?.value === 0;
     case "fidelity-label":
@@ -1195,10 +1220,11 @@ function applyEvidenceHud(
   referenceCounts: Map<string, number>,
   decodedFonts: ReadonlyMap<string, PixiDecodedFont>,
 ): PixiHudVisual {
-  const visual = object.hudVisual ?? createHudVisual(object.node);
-  visual.text.visible = true;
-  visual.primaryFill.clear();
-  visual.secondaryFill.clear();
+  const visual = object.hudVisual ?? createHudVisual(object.node, command.hudRole);
+  if (visual.kind !== command.hudRole) throw new Error("HUD visual route cannot change owner kind");
+  if (visual.text !== null) visual.text.visible = true;
+  visual.primaryFill?.clear();
+  visual.secondaryFill?.clear();
   visual.fillRatios = Object.freeze([0, 0]);
   const state = command.state as any;
   switch (command.hudRole) {
@@ -1207,71 +1233,33 @@ function applyEvidenceHud(
       break;
     }
     case "combo": {
-      object.node.position.set(1256.699951171875, 277.20001220703125);
-      for (const bindingKey of object.hudBindingKeys) {
-        const next = (referenceCounts.get(bindingKey) ?? 0) - 1;
-        if (next <= 0) referenceCounts.delete(bindingKey);
-        else referenceCounts.set(bindingKey, next);
-      }
-      object.hudBindingKeys.length = 0;
-      for (const sprite of visual.digitSprites.splice(0)) sprite.destroy();
-      visual.text.visible = false;
-      const value = String(state.combo);
-      const prefix = state.allPerfect ? "icon_number_big_AP_" : "icon_number_big_";
-      [...value].reverse().forEach((digit, index) => {
-        const binding = findTextureBinding(textures, `${prefix}${digit}`)!;
-        const sprite = new Sprite({ texture: binding.texture, label: `combo-digit-${index}` });
-        sprite.anchor.copyFrom(sprite.texture.defaultAnchor ?? { x: 0.5, y: 0.5 });
-        sprite.position.set(35 - index * 70, 0);
-        visual.content.addChild(sprite);
-        visual.digitSprites.push(sprite);
-        object.hudBindingKeys.push(binding.key);
-        referenceCounts.set(binding.key, (referenceCounts.get(binding.key) ?? 0) + 1);
-      });
+      applyComboHud(object, visual, state, textures, referenceCounts);
       break;
     }
     case "result": {
-      object.node.position.set(800, 520);
-      clearHudSprites(object, visual, referenceCounts);
-      setHudText(visual.text, state.timingKey === null ? state.judgeKey : `${state.judgeKey} ${state.timingKey}`, 54, 0xffffff);
+      applyResultHud(object, visual, state, textures, referenceCounts);
       break;
     }
     case "life": {
-      object.node.position.set(1000, 95);
-      const primary = state.primaryFill.value as number;
-      const secondary = state.secondaryFill.value as number;
-      visual.secondaryFill.rect(0, 0, 224 * secondary, 26).fill(0x64d8ff);
-      visual.primaryFill.rect(0, 0, 224 * primary, 26).fill(0xff679b);
-      visual.primaryFill.position.set(0, 0);
-      visual.secondaryFill.position.set(0, 0);
-      visual.fillRatios = Object.freeze([primary, secondary]);
-      setHudText(
-        visual.text,
-        state.label,
-        28,
-        state.singleGameOver || state.color === "danger" ? 0xff4d72 : state.warning ? 0xffd166 : 0xffffff,
-      );
-      visual.text.position.set(107, 36);
+      applyLifeHud(object, visual, state, textures, referenceCounts, decodedFonts);
       break;
     }
     case "add-score": {
-      object.node.position.set(389, -50);
-      object.node.zIndex = state.depth as number;
-      setHudText(visual.text, `+${state.value}`, 30, 0xffffff);
+      applyAddScoreHud(object, visual, state, textures, referenceCounts);
       break;
     }
     case "habahiro-flash": {
       object.node.position.set(0, 0);
-      visual.text.visible = false;
-      visual.primaryFill.rect(0, 0, 1600, 720).fill(0xffffff);
-      visual.primaryFill.alpha = 0;
+      if (visual.text !== null) visual.text.visible = false;
+      visual.primaryFill!.rect(0, 0, 1600, 720).fill(0xffffff);
+      visual.primaryFill!.alpha = 0;
       break;
     }
     case "fidelity-label":
       if (Object.prototype.hasOwnProperty.call(state, "laneChangePhase")) {
         object.node.position.set(20, 52);
         setHudText(
-          visual.text,
+          visual.text!,
           state.laneChangePhase === "flash-start"
             ? "HABAHIRO · Flash"
             : "HABAHIRO · Lane Changed",
@@ -1280,22 +1268,28 @@ function applyEvidenceHud(
         );
       } else {
         object.node.position.set(20, 20);
-        setHudText(visual.text, String(state.label), 24, 0xffd166);
+        setHudText(visual.text!, String(state.label), 24, 0xffd166);
       }
       break;
   }
   return visual;
 }
 
-function createHudVisual(node: Container): PixiHudVisual {
+function createHudVisual(node: Container, kind: PixiHudVisual["kind"]): PixiHudVisual {
   const content = new Container({ sortableChildren: true });
-  const secondaryFill = new Graphics();
-  const primaryFill = new Graphics();
-  const text = new Text({ text: "", style: { fill: 0xffffff, fontSize: 32 } });
+  const needsText = kind === "score" || kind === "life" || kind === "fidelity-label";
+  const needsFill = kind === "score" || kind === "habahiro-flash";
+  const secondaryFill = needsFill ? new Graphics() : null;
+  const primaryFill = needsFill ? new Graphics() : null;
+  const text = needsText ? new Text({ text: "", style: { fill: 0xffffff, fontSize: 32 } }) : null;
   const animationLayer = new Container({ visible: false });
-  content.addChild(secondaryFill, primaryFill, text, animationLayer);
+  if (secondaryFill !== null) content.addChild(secondaryFill);
+  if (primaryFill !== null) content.addChild(primaryFill);
+  if (text !== null) content.addChild(text);
+  content.addChild(animationLayer);
   node.addChild(content);
   return {
+    kind,
     content,
     text,
     primaryFill,
@@ -1311,6 +1305,172 @@ function createHudVisual(node: Container): PixiHudVisual {
   };
 }
 
+function applyComboHud(
+  object: PixiObjectRecord,
+  visual: PixiHudVisual,
+  state: { readonly combo: number; readonly allPerfect: boolean },
+  textures: ReadonlyMap<string, Texture>,
+  referenceCounts: Map<string, number>,
+): void {
+  const profile = requireOrdinaryVisibleProfile(object);
+  clearHudSprites(object, visual, referenceCounts);
+  object.node.position.set(800 + profile.combo.rootPosition[0], 360 - profile.combo.rootPosition[1]);
+  const displayed = String(state.combo);
+  const digitPrefix = state.allPerfect ? "icon_number_big_AP_" : "icon_number_big_";
+  [...displayed].reverse().forEach((digit, index) => {
+    const binding = requiredTextureBinding(
+      textures,
+      CURRENT_ORDINARY_VISIBLE_BINDINGS.comboNumberLogicalAssetId,
+      `${digitPrefix}${digit}`,
+    );
+    const sprite = new Sprite({ texture: binding.texture, label: `combo-digit-${index}` });
+    sprite.anchor.set(0.5);
+    sprite.width = profile.combo.digitSize[0];
+    sprite.height = profile.combo.digitSize[1];
+    sprite.position.set(
+      profile.combo.numberLocalPosition[0] + (displayed.length - 1) * profile.combo.digitStep / 2 - index * profile.combo.digitStep,
+      -profile.combo.numberLocalPosition[1],
+    );
+    visual.content.addChild(sprite);
+    visual.digitSprites.push(sprite);
+    retainHudBinding(object, binding.key, referenceCounts);
+  });
+  const unitKey = state.allPerfect ? profile.combo.unit.allPerfect : profile.combo.unit.normal;
+  const unitBinding = requiredTextureBinding(
+    textures,
+    CURRENT_SCORE_HUD_BINDINGS.gaugeLogicalAssetId,
+    unitKey,
+  );
+  const unit = new Sprite({ texture: unitBinding.texture, label: "combo-unit" });
+  unit.anchor.set(0.5);
+  unit.width = profile.combo.unit.size[0];
+  unit.height = profile.combo.unit.size[1];
+  unit.position.set(profile.combo.unit.localPosition[0], -profile.combo.unit.localPosition[1]);
+  visual.content.addChild(unit);
+  visual.digitSprites.unshift(unit);
+  retainHudBinding(object, unitBinding.key, referenceCounts);
+}
+
+function applyAddScoreHud(
+  object: PixiObjectRecord,
+  visual: PixiHudVisual,
+  state: { readonly value: number; readonly depth: number },
+  textures: ReadonlyMap<string, Texture>,
+  referenceCounts: Map<string, number>,
+): void {
+  const profile = requireOrdinaryVisibleProfile(object);
+  clearHudSprites(object, visual, referenceCounts);
+  object.node.position.set(800 + profile.addScore.rootPosition[0], 360 - profile.addScore.rootPosition[1] + profile.addScore.start.localY);
+  object.node.scale.set(profile.addScore.scale);
+  object.node.alpha = profile.addScore.start.alpha;
+  object.node.zIndex = state.depth;
+  const keys = [profile.addScore.digits.plus, ...String(state.value).split("").reverse().map((digit) => `${profile.addScore.digits.prefix}${digit}`)];
+  keys.forEach((exactKey, index) => {
+    const binding = requiredTextureBinding(textures, CURRENT_SCORE_HUD_BINDINGS.gaugeLogicalAssetId, exactKey);
+    const sprite = new Sprite({ texture: binding.texture, label: `add-score-${index}` });
+    sprite.anchor.set(0.5);
+    sprite.width = profile.addScore.digits.size[0];
+    sprite.height = profile.addScore.digits.size[1];
+    sprite.position.set((keys.length - 1) * profile.addScore.digits.size[0] / 2 - index * profile.addScore.digits.size[0], 0);
+    visual.content.addChild(sprite);
+    visual.digitSprites.push(sprite);
+    retainHudBinding(object, binding.key, referenceCounts);
+  });
+}
+
+function applyResultHud(
+  object: PixiObjectRecord,
+  visual: PixiHudVisual,
+  state: { readonly judgeKey: string; readonly timingKey: string | null },
+  textures: ReadonlyMap<string, Texture>,
+  referenceCounts: Map<string, number>,
+): void {
+  const profile = requireOrdinaryVisibleProfile(object);
+  clearHudSprites(object, visual, referenceCounts);
+  object.node.position.set(800 + profile.result.rootPosition[0], 360 - profile.result.rootPosition[1]);
+  object.node.alpha = profile.result.alpha;
+  const judgeBinding = requiredTextureBinding(textures, CURRENT_ORDINARY_VISIBLE_BINDINGS.judgeLogicalAssetId, state.judgeKey);
+  const judge = new Sprite({ texture: judgeBinding.texture, label: "result-judge" });
+  judge.anchor.set(0.5);
+  judge.width = profile.result.judgeSize[0];
+  judge.height = profile.result.judgeSize[1];
+  visual.content.addChild(judge);
+  visual.digitSprites.push(judge);
+  retainHudBinding(object, judgeBinding.key, referenceCounts);
+  if (state.timingKey !== null) {
+    const timingBinding = requiredTextureBinding(textures, CURRENT_ORDINARY_VISIBLE_BINDINGS.judgeLogicalAssetId, state.timingKey);
+    const timing = new Sprite({ texture: timingBinding.texture, label: "result-timing" });
+    timing.anchor.set(0.5);
+    timing.width = profile.result.timingSize[0];
+    timing.height = profile.result.timingSize[1];
+    timing.position.set(profile.result.timingLocalPosition[0], -profile.result.timingLocalPosition[1]);
+    visual.content.addChild(timing);
+    visual.digitSprites.push(timing);
+    retainHudBinding(object, timingBinding.key, referenceCounts);
+  }
+}
+
+function applyLifeHud(
+  object: PixiObjectRecord,
+  visual: PixiHudVisual,
+  state: { readonly label: string; readonly primaryFill: { readonly value: number }; readonly secondaryFill: { readonly value: number }; readonly color: "normal" | "danger"; readonly warning: boolean; readonly singleGameOver: boolean },
+  textures: ReadonlyMap<string, Texture>,
+  referenceCounts: Map<string, number>,
+  decodedFonts: ReadonlyMap<string, PixiDecodedFont>,
+): void {
+  const profile = requireOrdinaryVisibleProfile(object);
+  clearHudSprites(object, visual, referenceCounts);
+  object.node.position.set(800 + profile.life.rootPosition[0], 360 - profile.life.rootPosition[1]);
+  const add = (
+    logicalAssetId: string,
+    exactKey: string,
+    sceneKey: keyof typeof profile.life.sprites,
+    label: string,
+    visible = true,
+    tint = 0xffffff,
+  ) => {
+    const scene = profile.life.sprites[sceneKey];
+    const binding = requiredTextureBinding(textures, logicalAssetId, exactKey);
+    const sprite = new NineSliceSprite({ texture: binding.texture, width: scene.size[0], height: scene.size[1], anchor: { x: 0.5, y: 0.5 }, label });
+    sprite.position.set(scene.position[0], -scene.position[1]);
+    sprite.zIndex = scene.depth;
+    sprite.visible = visible;
+    sprite.tint = tint;
+    visual.content.addChild(sprite);
+    visual.digitSprites.push(sprite as unknown as Sprite);
+    retainHudBinding(object, binding.key, referenceCounts);
+    return sprite;
+  };
+  const colors = state.singleGameOver ? profile.life.colorsF32Bits.gameOverBase : profile.life.colorsF32Bits[state.color];
+  const tint = rgbTint(f32FromBits(colors[0]), f32FromBits(colors[1]), f32FromBits(colors[2]));
+  add(CURRENT_SCORE_HUD_BINDINGS.gaugeLogicalAssetId, "bg_health", "gauge_base", "life-gauge-base", true, tint);
+  const secondary = add(CURRENT_ORDINARY_VISIBLE_BINDINGS.lifeAdditiveLogicalAssetId, "hp_meter", "second", "life-secondary", state.secondaryFill.value > 0);
+  secondary.width = Math.max(profile.life.sprites.second.size[0] * state.secondaryFill.value, 0.0001);
+  const primary = add(CURRENT_SCORE_HUD_BINDINGS.gaugeLogicalAssetId, "hp_meter", "primary", "life-primary", state.primaryFill.value > 0, tint);
+  primary.width = Math.max(profile.life.sprites.primary.size[0] * state.primaryFill.value, 0.0001);
+  add(CURRENT_ORDINARY_VISIBLE_BINDINGS.warningLogicalAssetId, "effect_health_caution_outline", "warning_outline", "life-warning-outline", state.warning);
+  add(CURRENT_ORDINARY_VISIBLE_BINDINGS.warningLogicalAssetId, "effect_health_caution_inside", "warning_body", "life-warning-body", state.warning);
+  add(CURRENT_SCORE_HUD_BINDINGS.gaugeLogicalAssetId, "bg_no_health", "game_over_background", "life-game-over", state.singleGameOver);
+  const font = decodedFonts.get(profile.life.label.fontLogicalAssetId);
+  if (font === undefined || visual.text === null) throw new Error("Life sgm label font is missing");
+  setHudText(visual.text, state.label, profile.life.label.size, 0xffffff, font.family);
+  visual.text.position.set(profile.life.label.position[0], -profile.life.label.position[1]);
+  visual.text.zIndex = profile.life.label.depth;
+  visual.fillRatios = Object.freeze([state.primaryFill.value, state.secondaryFill.value]);
+}
+
+function requireOrdinaryVisibleProfile(object: PixiObjectRecord): NonNullable<RenderResourceProfile["ordinaryVisibleProfile"]> {
+  if (object.ordinaryVisibleProfile === undefined) throw new Error("ordinary visible HUD profile is missing");
+  return object.ordinaryVisibleProfile;
+}
+
+function f32FromBits(bits: string): number {
+  const buffer = new ArrayBuffer(4);
+  const view = new DataView(buffer);
+  view.setUint32(0, Number.parseInt(bits, 16), false);
+  return view.getFloat32(0, false);
+}
+
 function applyScoreHud(
   object: PixiObjectRecord,
   visual: PixiHudVisual,
@@ -1320,7 +1480,7 @@ function applyScoreHud(
   decodedFonts: ReadonlyMap<string, PixiDecodedFont>,
 ): void {
   clearScoreHud(object, visual, referenceCounts);
-  visual.text.visible = false;
+  if (visual.text !== null) visual.text.visible = false;
   const scene = CURRENT_SCORE_HUD_SCENE_PROFILE;
   object.node.position.set(
     scene.viewportCenter[0] + scene.rootLocalPosition[0],
@@ -1533,9 +1693,15 @@ function clearHudSprites(
   for (const sprite of visual.digitSprites.splice(0)) sprite.destroy();
 }
 
-function setHudText(text: Text, value: string, fontSize: number, fill: number): void {
+function setHudText(
+  text: Text,
+  value: string,
+  fontSize: number,
+  fill: number,
+  fontFamily?: string,
+): void {
   text.text = value;
-  text.style = { fill, fontSize, fontWeight: "bold" };
+  text.style = { fill, fontSize, fontFamily, fontWeight: fontFamily === undefined ? "bold" : "normal" };
   text.anchor.set(0.5);
 }
 
@@ -1545,12 +1711,23 @@ function applyEvidenceAnimation(
   elapsedSeconds: number,
 ): void {
   if (role === "combo") {
-    const scale = samplePolynomialCurve(COMBO_SCALE_KEYS, elapsedSeconds);
-    object.node.scale.set(scale, scale);
+    const profile = requireOrdinaryVisibleProfile(object);
+    const clip = profile.combo.clips.find((candidate) => candidate.clipId === "combo-scale");
+    if (clip === undefined) throw new Error("Combo scale clip is missing");
+    const values = sampleOrdinaryVisibleClip(clip, elapsedSeconds);
+    object.node.scale.set(values[0]!, values[1]!);
     return;
   }
   if (role === "all-perfect") {
-    object.node.alpha = Math.fround(0.7 + 0.3 * Math.abs(Math.sin(elapsedSeconds * Math.PI)));
+    const profile = requireOrdinaryVisibleProfile(object);
+    const clip = profile.combo.clips.find((candidate) => candidate.clipId === "combo-all-perfect");
+    if (clip === undefined || object.hudVisual?.kind !== "combo") {
+      throw new Error("All Perfect Sprite clip/owner is missing");
+    }
+    const values = sampleOrdinaryVisibleClip(clip, elapsedSeconds);
+    object.hudVisual.digitSprites.forEach((sprite, index) => {
+      sprite.alpha = values[Math.min(index, 4)]!;
+    });
     return;
   }
   if (role === "score-gauge-ss") {
@@ -1582,19 +1759,23 @@ function applyEvidenceAnimation(
   }
   if (role === "habahiro-lane-change") {
     const visual = object.hudVisual;
-    if (visual === null) throw new Error("HABAHIRO flash owner missing HUD visual");
+    if (visual?.primaryFill === null || visual?.primaryFill === undefined) throw new Error("HABAHIRO flash owner missing HUD visual");
     visual.primaryFill.alpha = Math.fround(Math.sin(
       Math.min(1, elapsedSeconds / 0.25) * Math.PI,
     ));
     return;
   }
   if (role === "add-score") {
-    const phaseSeconds = Math.fround(0.14000000059604645);
+    const profile = requireOrdinaryVisibleProfile(object);
+    const phaseSeconds = profile.addScore.phaseSeconds;
     const phase = Math.min(2, Math.floor(elapsedSeconds / phaseSeconds));
     const progress = Math.fround((elapsedSeconds - phase * phaseSeconds) / phaseSeconds);
-    object.node.position.y = phase === 0
-      ? Math.fround(-50 + 8 * progress)
-      : phase === 1 ? Math.fround(-42 + progress) : Math.fround(-41 + progress);
+    const localY = phase === 0
+      ? Math.fround(profile.addScore.start.localY + 8 * progress)
+      : phase === 1
+      ? Math.fround(profile.addScore.start.localY + 8 + progress)
+      : Math.fround(profile.addScore.start.localY + 9 + progress);
+    object.node.position.y = Math.fround(360 - profile.addScore.rootPosition[1] + localY);
     object.node.alpha = phase === 0
       ? Math.fround(0.2 + 0.8 * progress)
       : phase === 1 ? 1 : Math.fround(1 - progress);
@@ -1613,9 +1794,13 @@ function applyEvidenceAnimation(
 }
 
 function stopEvidenceAnimation(object: PixiObjectRecord, role: EvidenceAnimationRole): void {
-  if (role === "combo" || role === "all-perfect" || role === "result") {
+  if (role === "combo" || role === "result") {
     object.node.scale.set(1, 1);
     object.node.alpha = 1;
+    return;
+  }
+  if (role === "all-perfect") {
+    for (const sprite of object.hudVisual?.digitSprites ?? []) sprite.alpha = 1;
     return;
   }
   if (role === "score-gauge-ss") {
@@ -1623,7 +1808,7 @@ function stopEvidenceAnimation(object: PixiObjectRecord, role: EvidenceAnimation
     return;
   }
   if (role === "habahiro-lane-change") {
-    if (object.hudVisual !== null) object.hudVisual.primaryFill.alpha = 0;
+    if (object.hudVisual?.primaryFill !== null && object.hudVisual?.primaryFill !== undefined) object.hudVisual.primaryFill.alpha = 0;
     return;
   }
   if (role === "add-score") {
@@ -1691,26 +1876,6 @@ function sampleOrdinaryVisibleClip(
     value = Math.fround(Math.fround(value * delta) + key.coefficients[2]);
     return Math.fround(Math.fround(value * delta) + key.coefficients[3]);
   }));
-}
-
-const COMBO_SCALE_KEYS = Object.freeze([
-  Object.freeze({ time: 0, coefficients: Object.freeze([-1036.800048828125, 129.60000610351562, 0, 0.800000011920929]) }),
-  Object.freeze({ time: 0.0833333358168602, coefficients: Object.freeze([0, 0, -1.200000286102295, 1.100000023841858]) }),
-  Object.freeze({ time: 0.1666666716337204, coefficients: Object.freeze([0, 0, 0, 1]) }),
-  Object.freeze({ time: 1, coefficients: Object.freeze([0, 0, 0, 1]) }),
-]);
-function samplePolynomialCurve(
-  keys: readonly { readonly time: number; readonly coefficients: readonly number[] }[],
-  elapsedSeconds: number,
-): number {
-  let key = keys[0]!;
-  for (const candidate of keys) {
-    if (candidate.time > elapsedSeconds) break;
-    key = candidate;
-  }
-  const delta = Math.fround(elapsedSeconds - key.time);
-  const [a, b, c, d] = key.coefficients;
-  return Math.fround(Math.fround(Math.fround(Math.fround(a! * delta) + b!) * delta + c!) * delta + d!);
 }
 
 function findTextureBinding(
@@ -1784,6 +1949,17 @@ function float32Bits(value: number): string {
   const view = new DataView(buffer);
   view.setFloat32(0, value, false);
   return view.getUint32(0, false).toString(16).toUpperCase().padStart(8, "0");
+}
+
+function ordinaryLifeTexturesAvailable(textures: ReadonlyMap<string, Texture>): boolean {
+  return [
+    [CURRENT_SCORE_HUD_BINDINGS.gaugeLogicalAssetId, "bg_health"],
+    [CURRENT_SCORE_HUD_BINDINGS.gaugeLogicalAssetId, "hp_meter"],
+    [CURRENT_SCORE_HUD_BINDINGS.gaugeLogicalAssetId, "bg_no_health"],
+    [CURRENT_ORDINARY_VISIBLE_BINDINGS.lifeAdditiveLogicalAssetId, "hp_meter"],
+    [CURRENT_ORDINARY_VISIBLE_BINDINGS.warningLogicalAssetId, "effect_health_caution_outline"],
+    [CURRENT_ORDINARY_VISIBLE_BINDINGS.warningLogicalAssetId, "effect_health_caution_inside"],
+  ].every(([logicalAssetId, exactKey]) => textures.has(spriteKey(logicalAssetId!, exactKey!)));
 }
 
 function scoreHudTexturesAvailable(

@@ -329,6 +329,8 @@ export class RenderCommandProducer {
     if (validation.status !== "ok") return validation;
     const scoreHud = this.validateScoreHudBindings();
     if (scoreHud.status !== "ok") return scoreHud;
+    const ordinaryVisible = this.validateOrdinaryVisibleBindings();
+    if (ordinaryVisible.status !== "ok") return ordinaryVisible;
     const base = this.commandBase(0);
     const commands: RenderCommand[] = [];
     const created: string[] = [];
@@ -372,6 +374,8 @@ export class RenderCommandProducer {
     if (validation.status !== "ok") return validation;
     const scoreHud = this.validateScoreHudBindings();
     if (scoreHud.status !== "ok") return scoreHud;
+    const ordinaryVisible = this.validateOrdinaryVisibleBindings();
+    if (ordinaryVisible.status !== "ok") return ordinaryVisible;
     const base = this.commandBase(this.substep);
     const commands: RenderCommand[] = [];
     const totalAddScore = plan.reflect.totalScore;
@@ -393,28 +397,37 @@ export class RenderCommandProducer {
     }
     const comboChanged = plan.record.currentCombo !== this.lastCombo ||
       plan.record.allPerfect !== this.lastAllPerfect;
-    const comboRole = plan.record.allPerfect ? "all-perfect" as const : "combo" as const;
-    const previousComboRole = this.hudAnimationElapsedSeconds.has("all-perfect")
-      ? "all-perfect" as const
-      : this.hudAnimationElapsedSeconds.has("combo") ? "combo" as const : null;
+    const comboScalePlaying = this.hudAnimationElapsedSeconds.has("combo");
+    const allPerfectPlaying = this.hudAnimationElapsedSeconds.has("all-perfect");
     if (comboChanged) {
       commands.push({
         ...base(commands.length), kind: "set-hud", renderObjectId: HUD_OBJECTS.combo,
         hudRole: "combo",
         state: Object.freeze({ combo: plan.record.currentCombo, allPerfect: plan.record.allPerfect }),
       });
-      if (previousComboRole !== null && previousComboRole !== comboRole) commands.push({
-        ...base(commands.length), kind: "stop-animation", renderObjectId: HUD_OBJECTS.combo,
-        animationRole: previousComboRole, restart: false,
-      });
-      if (plan.record.currentCombo > 0) commands.push({
-        ...base(commands.length), kind: "play-animation", renderObjectId: HUD_OBJECTS.combo,
-        animationRole: comboRole, restart: true,
-      });
-      else if (previousComboRole !== null) commands.push({
-        ...base(commands.length), kind: "stop-animation", renderObjectId: HUD_OBJECTS.combo,
-        animationRole: previousComboRole, restart: false,
-      });
+      if (plan.record.currentCombo > 0) {
+        commands.push({
+          ...base(commands.length), kind: "play-animation", renderObjectId: HUD_OBJECTS.combo,
+          animationRole: "combo", restart: true,
+        });
+        if (plan.record.allPerfect && !allPerfectPlaying) commands.push({
+          ...base(commands.length), kind: "play-animation", renderObjectId: HUD_OBJECTS.combo,
+          animationRole: "all-perfect", restart: true,
+        });
+        if (!plan.record.allPerfect && allPerfectPlaying) commands.push({
+          ...base(commands.length), kind: "stop-animation", renderObjectId: HUD_OBJECTS.combo,
+          animationRole: "all-perfect", restart: false,
+        });
+      } else {
+        if (comboScalePlaying) commands.push({
+          ...base(commands.length), kind: "stop-animation", renderObjectId: HUD_OBJECTS.combo,
+          animationRole: "combo", restart: false,
+        });
+        if (allPerfectPlaying) commands.push({
+          ...base(commands.length), kind: "stop-animation", renderObjectId: HUD_OBJECTS.combo,
+          animationRole: "all-perfect", restart: false,
+        });
+      }
       commands.push({
         ...base(commands.length),
         kind: plan.record.currentCombo > 0 ? "activate-object" : "hide-object",
@@ -462,8 +475,16 @@ export class RenderCommandProducer {
       }
       if (comboChanged) {
         this.hudAnimationElapsedSeconds.delete("combo");
-        this.hudAnimationElapsedSeconds.delete("all-perfect");
-        if (plan.record.currentCombo > 0) this.hudAnimationElapsedSeconds.set(comboRole, 0);
+        if (plan.record.currentCombo > 0) {
+          this.hudAnimationElapsedSeconds.set("combo", 0);
+          if (plan.record.allPerfect && !allPerfectPlaying) {
+            this.hudAnimationElapsedSeconds.set("all-perfect", 0);
+          } else if (!plan.record.allPerfect) {
+            this.hudAnimationElapsedSeconds.delete("all-perfect");
+          }
+        } else {
+          this.hudAnimationElapsedSeconds.delete("all-perfect");
+        }
         this.lastCombo = plan.record.currentCombo;
         this.lastAllPerfect = plan.record.allPerfect;
       }
@@ -508,17 +529,13 @@ export class RenderCommandProducer {
     for (const [role, elapsed] of this.hudAnimationElapsedSeconds) {
       const nextElapsed = Math.fround(elapsed + deltaTimeSeconds);
       const renderObjectId = HUD_OBJECTS.combo;
-      if (role !== "all-perfect" && nextElapsed >= 1) {
+      if (role === "combo" && nextElapsed >= 1) {
         commands.push({
           ...base(commands.length), kind: "stop-animation", renderObjectId,
           animationRole: role, restart: false,
         });
-        if (role === "combo") commands.push({
-          ...base(commands.length), kind: "hide-object", renderObjectId,
-        });
       } else {
-        const sampledElapsed = role === "all-perfect" ? Math.fround(nextElapsed % 1) : nextElapsed;
-        const sample = createRenderFloat32(sampledElapsed);
+        const sample = createRenderFloat32(nextElapsed);
         if (sample.status !== "ok") return sample;
         commands.push({
           ...base(commands.length), kind: "sample-animation", renderObjectId,
@@ -2285,6 +2302,18 @@ export class RenderCommandProducer {
       this.resultElapsedSeconds = null;
       this.scoreGaugeSsElapsedSeconds = null;
     });
+  }
+
+  private validateOrdinaryVisibleBindings(): SimulatorResult<void> {
+    if (this.resources.ordinaryVisible === undefined ||
+      Object.values(this.resources.ordinaryVisible).some((value) => !isNonEmpty(value))) {
+      return evidenceRequired(
+        "render.producer.missing-ordinary-visible-bindings",
+        ["PR22", "PR26", "PR27", "PR29", "PR30", "PR39"],
+        "Common single-player HUD setup requires exact Combo, Judge, Life and warning resources before domain mutation.",
+      );
+    }
+    return ok(undefined);
   }
 
   private validateScoreHudBindings(): SimulatorResult<void> {
