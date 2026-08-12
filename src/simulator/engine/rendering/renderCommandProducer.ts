@@ -334,7 +334,7 @@ export class RenderCommandProducer {
     const created: string[] = [];
     const create = (
       renderObjectId: string,
-      role: "hud-score" | "hud-combo" | "hud-result" | "hud-life" | "hud-overlay",
+      role: "hud-score" | "hud-combo" | "hud-result" | "hud-life" | "hud-add-score",
     ) => {
       created.push(renderObjectId);
       commands.push({
@@ -343,7 +343,7 @@ export class RenderCommandProducer {
       });
     };
     for (const renderObjectId of HUD_OBJECTS.addScore) {
-      create(renderObjectId, "hud-overlay");
+      create(renderObjectId, "hud-add-score");
       commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId });
     }
     create(HUD_OBJECTS.combo, "hud-combo");
@@ -379,9 +379,10 @@ export class RenderCommandProducer {
     if (totalAddScore !== 0) {
       commands.push({
         ...base(commands.length), kind: "set-hud", renderObjectId: addScoreObjectId,
-        hudRole: "overlay", state: Object.freeze({
-          addScore: totalAddScore, poolIndex: this.addScoreCursor,
-          depth: this.addScoreDepthCycle, phase: 0, phaseProgress: 0,
+        hudRole: "add-score", state: Object.freeze({
+          value: totalAddScore,
+          poolIndex: this.addScoreCursor as 0 | 1 | 2 | 3,
+          depth: this.addScoreDepthCycle as 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7,
         }),
       });
       commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: addScoreObjectId });
@@ -424,9 +425,8 @@ export class RenderCommandProducer {
     commands.push({
       ...base(commands.length), kind: "set-hud", renderObjectId: HUD_OBJECTS.result,
       hudRole: "result", state: Object.freeze({
-        representativeSlot: plan.reflect.representativeSlot,
-        representativeResult: plan.reflect.representativeRawResult,
-        judgeTiming: plan.reflect.representativeJudgeTiming,
+        judgeKey: judgeKeyForResult(plan.reflect.representativeRawResult),
+        timingKey: timingKeyForJudgeTiming(plan.reflect.representativeJudgeTiming),
       }),
     });
     commands.push({
@@ -912,7 +912,7 @@ export class RenderCommandProducer {
       commands.push({
         ...base(commands.length), kind: "create-object",
         renderObjectId: HABAHIRO_FLASH_OBJECT,
-        poolFamily: "habahiro-flash", role: "hud-overlay", parentObjectId: null,
+        poolFamily: "habahiro-flash", role: "habahiro-flash", parentObjectId: null,
       });
       commands.push({
         ...base(commands.length), kind: "hide-object",
@@ -941,7 +941,7 @@ export class RenderCommandProducer {
     const base = this.commandBase(this.substep);
     return this.preflight([{
       ...base(0), kind: "set-hud", renderObjectId: HABAHIRO_FLASH_OBJECT,
-      hudRole: "overlay", state: Object.freeze({ habahiroFlashPhase: "flash-start", progress: 0 }),
+      hudRole: "habahiro-flash", state: Object.freeze({ phase: "flash-start", progress: float32State(0) }),
     }, {
       ...base(1), kind: "activate-object", renderObjectId: HABAHIRO_FLASH_OBJECT,
     }, {
@@ -2596,7 +2596,7 @@ function resolveLaneIndex(button: number, habahiro: boolean): number {
 function scoreHudState(
   record: InGameRecordSnapshot,
   gauge: SinglePlayScoreGaugeSnapshot,
-): Readonly<Record<string, string | number | boolean | null>> {
+) {
   const scoreText = zeroFilledScoreText(record.score);
   return Object.freeze({
     score: record.score,
@@ -2606,17 +2606,15 @@ function scoreHudState(
     beforeRank: gauge.beforeGaugeColorRank,
     rankChanged: gauge.rankChanged,
     meterKey: gauge.meterKey,
-    ratio: gauge.ratio,
-    ratioBits: gauge.ratioBits,
-    sliderValue: gauge.sliderValue,
-    sliderValueBits: gauge.sliderValueBits,
+    ratio: Object.freeze({ value: gauge.ratio, bits: gauge.ratioBits }),
+    sliderValue: Object.freeze({ value: gauge.sliderValue, bits: gauge.sliderValueBits }),
     foregroundActive: gauge.foregroundActive,
     indicatorLocalX: gauge.indicatorLocalX,
-    rankMarkerCLocalX: gauge.rankMarkerCLocalX,
-    rankMarkerBLocalX: gauge.rankMarkerBLocalX,
-    rankMarkerALocalX: gauge.rankMarkerALocalX,
-    rankMarkerSLocalX: gauge.rankMarkerSLocalX,
-    rankMarkerSSLocalX: gauge.rankMarkerSSLocalX,
+    rankMarkerCLocalX: float32State(gauge.rankMarkerCLocalX),
+    rankMarkerBLocalX: float32State(gauge.rankMarkerBLocalX),
+    rankMarkerALocalX: float32State(gauge.rankMarkerALocalX),
+    rankMarkerSLocalX: float32State(gauge.rankMarkerSLocalX),
+    rankMarkerSSLocalX: float32State(gauge.rankMarkerSSLocalX),
     highRankEffect: gauge.highRankEffect,
     highRankEffectActive: gauge.highRankEffectActive,
   });
@@ -2628,21 +2626,35 @@ function zeroFilledScoreText(score: number): string {
   return `[BEBEBE]${"0".repeat(zeroCount)}[-][FF3B72]${digits}[-]`;
 }
 
-function lifeHudState(
-  record: InGameRecordSnapshot,
-): Readonly<Record<string, string | number | boolean | null>> {
+function lifeHudState(record: InGameRecordSnapshot) {
   const ratio = Math.fround(record.currentLife / 1000);
   const primaryFill = Math.fround(Math.min(ratio, 1));
+  const secondaryFill = Math.fround(Math.max(ratio - 1, 0));
   return Object.freeze({
     currentLife: record.currentLife,
     playerMaxLife: record.playerMaxLife,
     lifeUpperLimit: record.lifeUpperLimit,
     singleGameOver: record.singleGameOver,
-    primaryFill,
-    secondaryFill: Math.fround(Math.max(ratio - 1, 0)),
-    danger: primaryFill <= Math.fround(0.2),
+    primaryFill: float32State(primaryFill),
+    secondaryFill: float32State(secondaryFill),
+    color: primaryFill <= Math.fround(0.2) ? "danger" as const : "normal" as const,
     warning: primaryFill <= Math.fround(0.25),
+    label: `${record.currentLife}/${record.playerMaxLife}`,
   });
+}
+
+function float32State(value: number): RenderFloat32 {
+  const result = createRenderFloat32(value);
+  if (result.status !== "ok") throw new Error("internal HUD Float32 invariant failed");
+  return result.value;
+}
+
+function judgeKeyForResult(result: 0 | 1 | 2 | 3 | 4) {
+  return (["judge_miss", "judge_bad", "judge_good", "judge_great", "judge_perfect"] as const)[result];
+}
+
+function timingKeyForJudgeTiming(timing: 0 | 1 | 2): "judge_fast" | "judge_slow" | null {
+  return timing === 1 ? "judge_fast" : timing === 2 ? "judge_slow" : null;
 }
 
 function transactionRejected(
