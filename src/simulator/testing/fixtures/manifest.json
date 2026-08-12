@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "purpose": "offline simulator test fixtures",
   "sourceRepository": "HOST________/VSCode/GirlsBandParty-Reverse",
-  "sourceHead": "95e629d9bdb3ac02203eab03ffeb545ccd74fb36",
+  "sourceHead": "80a173a210aa7d0943a80d37935f394df41b3a83",
   "entries": [
     {
       "path": "habahiro-snapshots/bestdori-atlas-profile.json",
@@ -487,6 +487,69 @@
       "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/manual_input_fixed_event_oracle.json",
       "bytes": 30331,
       "sha256": "25646D696863910173F85A723ECAEE7A6B86D934F80F3ABB39FDD6B9755E2323"
+    },
+    {
+      "path": "reverse-snapshots/ordinary-visible-rendering/artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/closure.json",
+      "sourceReverseCommit": "80a173a210aa7d0943a80d37935f394df41b3a83",
+      "sourcePath": "artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/closure.json",
+      "bytes": 740,
+      "sha256": "B1A9B974CF5160DE4015A2D09A1528A16DA2AE1CB98768AF7D7DD8F98A7FC50B"
+    },
+    {
+      "path": "reverse-snapshots/ordinary-visible-rendering/artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/ordinary_visible_rendering_oracle.json",
+      "sourceReverseCommit": "80a173a210aa7d0943a80d37935f394df41b3a83",
+      "sourcePath": "artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/ordinary_visible_rendering_oracle.json",
+      "bytes": 19511,
+      "sha256": "AA3AD83EE90B127FC817EA66ADF0A32BDBD10994128B93356280531697AE6794"
+    },
+    {
+      "path": "reverse-snapshots/ordinary-visible-rendering/artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/ordinary_visible_rendering_portable_contract.json",
+      "sourceReverseCommit": "80a173a210aa7d0943a80d37935f394df41b3a83",
+      "sourcePath": "artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/ordinary_visible_rendering_portable_contract.json",
+      "bytes": 3003,
+      "sha256": "5024B0CE0B3BA0ED1B0AED20F6615F4BCD090D295A494017EC222F95F88CEB65"
+    },
+    {
+      "path": "reverse-snapshots/ordinary-visible-rendering/artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/ordinary_visible_rendering_portable_manifest.json",
+      "sourceReverseCommit": "80a173a210aa7d0943a80d37935f394df41b3a83",
+      "sourcePath": "artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/ordinary_visible_rendering_portable_manifest.json",
+      "bytes": 18525,
+      "sha256": "27FF8B7129C46F480D642DE1DB0D61EB9DE822E8CEA4E1C932673D17E56BFADA"
+    },
+    {
+      "path": "reverse-snapshots/ordinary-visible-rendering/artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/ordinary_visible_rendering_profile.json",
+      "sourceReverseCommit": "80a173a210aa7d0943a80d37935f394df41b3a83",
+      "sourcePath": "artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/ordinary_visible_rendering_profile.json",
+      "bytes": 28855,
+      "sha256": "93098C8EC905070BD3FF6A35C892438EBDE3B8B2EFE2FE1F175E3CE9879CCB1F"
+    },
+    {
+      "path": "reverse-snapshots/ordinary-visible-rendering/artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/portable-assets/combo-number.png",
+      "sourceReverseCommit": "80a173a210aa7d0943a80d37935f394df41b3a83",
+      "sourcePath": "artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/portable-assets/combo-number.png",
+      "bytes": 137053,
+      "sha256": "1AC0E30098F776E3E570AA2D8A7C15D8C71025D71A67BFCCD3B68EA56F2D743C"
+    },
+    {
+      "path": "reverse-snapshots/ordinary-visible-rendering/artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/portable-assets/judge-skin00.png",
+      "sourceReverseCommit": "80a173a210aa7d0943a80d37935f394df41b3a83",
+      "sourcePath": "artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/portable-assets/judge-skin00.png",
+      "bytes": 97258,
+      "sha256": "1FACA23DE96039095EF2CE5970335C560DC6A365070C601A1C53AF5A1457E205"
+    },
+    {
+      "path": "reverse-snapshots/ordinary-visible-rendering/artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/portable-assets/rhythm-game-additive.png",
+      "sourceReverseCommit": "80a173a210aa7d0943a80d37935f394df41b3a83",
+      "sourcePath": "artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/portable-assets/rhythm-game-additive.png",
+      "bytes": 464153,
+      "sha256": "D7A31B6A2BD4CE298C3D580DFACE8312483E941D103FD4D11FA2CFD29BC50533"
+    },
+    {
+      "path": "reverse-snapshots/ordinary-visible-rendering/artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/portable-assets/ui-additive-effect.png",
+      "sourceReverseCommit": "80a173a210aa7d0943a80d37935f394df41b3a83",
+      "sourcePath": "artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/portable-assets/ui-additive-effect.png",
+      "bytes": 20188,
+      "sha256": "C20901739059F91886257DEDC7C57F1029FDBC2D38A5E63A25F7EE5BCEDBC97E"
     },
     {
       "path": "reverse-snapshots/resource-pixi-rendering/artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/delivery_closure.json",

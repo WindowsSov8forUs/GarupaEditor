@@ -1,0 +1,792 @@
+{
+  "schemaVersion": 1,
+  "status": "ordinary-visible-rendering-semantic-oracle-closed",
+  "curveSamples": [
+    {
+      "clipId": "note-flick-up",
+      "time": 0.0,
+      "values": [
+        {
+          "channel": "path_hash:1704208859.m_LocalPosition.x",
+          "value": 0.0
+        },
+        {
+          "channel": "path_hash:1704208859.m_LocalPosition.y",
+          "value": 0.699999988079071
+        },
+        {
+          "channel": "path_hash:1704208859.m_LocalPosition.z",
+          "value": 0.0
+        },
+        {
+          "channel": "path_hash:1704208859.localEulerAnglesRaw.x",
+          "value": 0.0
+        },
+        {
+          "channel": "path_hash:1704208859.localEulerAnglesRaw.y",
+          "value": 0.0
+        },
+        {
+          "channel": "path_hash:1704208859.localEulerAnglesRaw.z",
+          "value": 0.0
+        }
+      ]
+    },
+    {
+      "clipId": "note-flick-up",
+      "time": 0.1666666716337204,
+      "values": [
+        {
+          "channel": "path_hash:1704208859.m_LocalPosition.x",
+          "value": 0.0
+        },
+        {
+          "channel": "path_hash:1704208859.m_LocalPosition.y",
+          "value": 1.0
+        },
+        {
+          "channel": "path_hash:1704208859.m_LocalPosition.z",
+          "value": 0.0
+        },
+        {
+          "channel": "path_hash:1704208859.localEulerAnglesRaw.x",
+          "value": 0.0
+        },
+        {
+          "channel": "path_hash:1704208859.localEulerAnglesRaw.y",
+          "value": 0.0
+        },
+        {
+          "channel": "path_hash:1704208859.localEulerAnglesRaw.z",
+          "value": 0.0
+        }
+      ]
+    },
+    {
+      "clipId": "note-flick-up",
+      "time": 0.3333333432674408,
+      "values": [
+        {
+          "channel": "path_hash:1704208859.m_LocalPosition.x",
+          "value": 0.0
+        },
+        {
+          "channel": "path_hash:1704208859.m_LocalPosition.y",
+          "value": 1.2999999523162842
+        },
+        {
+          "channel": "path_hash:1704208859.m_LocalPosition.z",
+          "value": 0.0
+        },
+        {
+          "channel": "path_hash:1704208859.localEulerAnglesRaw.x",
+          "value": 0.0
+        },
+        {
+          "channel": "path_hash:1704208859.localEulerAnglesRaw.y",
+          "value": 0.0
+        },
+        {
+          "channel": "path_hash:1704208859.localEulerAnglesRaw.z",
+          "value": 0.0
+        }
+      ]
+    },
+    {
+      "clipId": "note-flick-left",
+      "time": 0.0,
+      "values": [
+        {
+          "channel": "path_hash:1704208859.m_LocalPosition.x",
+          "value": -1.600000023841858
+        },
+        {
+          "channel": "path_hash:1704208859.m_LocalPosition.y",
+          "value": 0.0
+        },
+        {
+          "channel": "path_hash:1704208859.m_LocalPosition.z",
+          "value": 0.0
+        },
+        {
+          "channel": "path_hash:1704208859.localEulerAnglesRaw.x",
+          "value": 0.0
+        },
+        {
+          "channel": "path_hash:1704208859.localEulerAnglesRaw.y",
+          "value": 0.0
+        },
+        {
+          "channel": "path_hash:1704208859.localEulerAnglesRaw.z",
+          "value": 0.0
+        }
+      ]
+    },
+    {
+      "clipId": "note-flick-left",
+      "time": 0.1666666716337204,
+      "values": [
+        {
+          "channel": "path_hash:1704208859.m_LocalPosition.x",
+          "value": -1.9500000476837158
+        },
+        {
+          "channel": "path_hash:1704208859.m_LocalPosition.y",
+          "value": 0.0
+        },
+        {
+          "channel": "path_hash:1704208859.m_LocalPosition.z",
+          "value": 0.0
+        },
+        {
+          "channel": "path_hash:1704208859.localEulerAnglesRaw.x",
+          "value": 0.0
+        },
+        {
+          "channel": "path_hash:1704208859.localEulerAnglesRaw.y",
+          "value": 0.0
+        },
+        {
+          "channel": "path_hash:1704208859.localEulerAnglesRaw.z",
+          "value": 0.0
+        }
+      ]
+    },
+    {
+      "clipId": "note-flick-left",
+      "time": 0.3333333432674408,
+      "values": [
+        {
+          "channel": "path_hash:1704208859.m_LocalPosition.x",
+          "value": -2.299999952316284
+        },
+        {
+          "channel": "path_hash:1704208859.m_LocalPosition.y",
+          "value": 0.0
+        },
+        {
+          "channel": "path_hash:1704208859.m_LocalPosition.z",
+          "value": 0.0
+        },
+        {
+          "channel": "path_hash:1704208859.localEulerAnglesRaw.x",
+          "value": 0.0
+        },
+        {
+          "channel": "path_hash:1704208859.localEulerAnglesRaw.y",
+          "value": 0.0
+        },
+        {
+          "channel": "path_hash:1704208859.localEulerAnglesRaw.z",
+          "value": 0.0
+        }
+      ]
+    },
+    {
+      "clipId": "note-flick-right",
+      "time": 0.0,
+      "values": [
+        {
+          "channel": "path_hash:1704208859.m_LocalPosition.x",
+          "value": 1.600000023841858
+        },
+        {
+          "channel": "path_hash:1704208859.m_LocalPosition.y",
+          "value": 0.0
+        },
+        {
+          "channel": "path_hash:1704208859.m_LocalPosition.z",
+          "value": 0.0
+        },
+        {
+          "channel": "path_hash:1704208859.localEulerAnglesRaw.x",
+          "value": 0.0
+        },
+        {
+          "channel": "path_hash:1704208859.localEulerAnglesRaw.y",
+          "value": 0.0
+        },
+        {
+          "channel": "path_hash:1704208859.localEulerAnglesRaw.z",
+          "value": 0.0
+        }
+      ]
+    },
+    {
+      "clipId": "note-flick-right",
+      "time": 0.1666666716337204,
+      "values": [
+        {
+          "channel": "path_hash:1704208859.m_LocalPosition.x",
+          "value": 1.9500000476837158
+        },
+        {
+          "channel": "path_hash:1704208859.m_LocalPosition.y",
+          "value": 0.0
+        },
+        {
+          "channel": "path_hash:1704208859.m_LocalPosition.z",
+          "value": 0.0
+        },
+        {
+          "channel": "path_hash:1704208859.localEulerAnglesRaw.x",
+          "value": 0.0
+        },
+        {
+          "channel": "path_hash:1704208859.localEulerAnglesRaw.y",
+          "value": 0.0
+        },
+        {
+          "channel": "path_hash:1704208859.localEulerAnglesRaw.z",
+          "value": 0.0
+        }
+      ]
+    },
+    {
+      "clipId": "note-flick-right",
+      "time": 0.3333333432674408,
+      "values": [
+        {
+          "channel": "path_hash:1704208859.m_LocalPosition.x",
+          "value": 2.299999952316284
+        },
+        {
+          "channel": "path_hash:1704208859.m_LocalPosition.y",
+          "value": 0.0
+        },
+        {
+          "channel": "path_hash:1704208859.m_LocalPosition.z",
+          "value": 0.0
+        },
+        {
+          "channel": "path_hash:1704208859.localEulerAnglesRaw.x",
+          "value": 0.0
+        },
+        {
+          "channel": "path_hash:1704208859.localEulerAnglesRaw.y",
+          "value": 0.0
+        },
+        {
+          "channel": "path_hash:1704208859.localEulerAnglesRaw.z",
+          "value": 0.0
+        }
+      ]
+    },
+    {
+      "clipId": "note-long-flash",
+      "time": 0.0,
+      "values": [
+        {
+          "channel": "path_hash:1735311026.attribute_hash:2526845255",
+          "value": 0.20000000298023224
+        },
+        {
+          "channel": "path_hash:1735311026.attribute_hash:4215373228",
+          "value": 0.20000000298023224
+        },
+        {
+          "channel": "path_hash:1735311026.attribute_hash:2334886179",
+          "value": 0.20000000298023224
+        },
+        {
+          "channel": "path_hash:1735311026.attribute_hash:304273561",
+          "value": 1.0
+        }
+      ]
+    },
+    {
+      "clipId": "note-long-flash",
+      "time": 0.4166666567325592,
+      "values": [
+        {
+          "channel": "path_hash:1735311026.attribute_hash:2526845255",
+          "value": 0.6000000238418579
+        },
+        {
+          "channel": "path_hash:1735311026.attribute_hash:4215373228",
+          "value": 0.6000000238418579
+        },
+        {
+          "channel": "path_hash:1735311026.attribute_hash:2334886179",
+          "value": 0.6000000238418579
+        },
+        {
+          "channel": "path_hash:1735311026.attribute_hash:304273561",
+          "value": 1.0
+        }
+      ]
+    },
+    {
+      "clipId": "note-long-flash",
+      "time": 0.8333333134651184,
+      "values": [
+        {
+          "channel": "path_hash:1735311026.attribute_hash:2526845255",
+          "value": 0.20000000298023224
+        },
+        {
+          "channel": "path_hash:1735311026.attribute_hash:4215373228",
+          "value": 0.20000000298023224
+        },
+        {
+          "channel": "path_hash:1735311026.attribute_hash:2334886179",
+          "value": 0.20000000298023224
+        },
+        {
+          "channel": "path_hash:1735311026.attribute_hash:304273561",
+          "value": 1.0
+        }
+      ]
+    },
+    {
+      "clipId": "combo-scale",
+      "time": 0.0,
+      "values": [
+        {
+          "channel": "m_LocalScale.x",
+          "value": 0.800000011920929
+        },
+        {
+          "channel": "m_LocalScale.y",
+          "value": 0.800000011920929
+        },
+        {
+          "channel": "m_LocalScale.z",
+          "value": 1.0
+        }
+      ]
+    },
+    {
+      "clipId": "combo-scale",
+      "time": 0.5,
+      "values": [
+        {
+          "channel": "m_LocalScale.x",
+          "value": 1.0
+        },
+        {
+          "channel": "m_LocalScale.y",
+          "value": 1.0
+        },
+        {
+          "channel": "m_LocalScale.z",
+          "value": 1.0
+        }
+      ]
+    },
+    {
+      "clipId": "combo-scale",
+      "time": 1.0,
+      "values": [
+        {
+          "channel": "m_LocalScale.x",
+          "value": 1.0
+        },
+        {
+          "channel": "m_LocalScale.y",
+          "value": 1.0
+        },
+        {
+          "channel": "m_LocalScale.z",
+          "value": 1.0
+        }
+      ]
+    },
+    {
+      "clipId": "combo-all-perfect",
+      "time": 0.0,
+      "values": [
+        {
+          "channel": "combo_number/combo_unit.mColor.a",
+          "value": 1.0
+        },
+        {
+          "channel": "combo_number/combo_num_label/num.mColor.a",
+          "value": 1.0
+        },
+        {
+          "channel": "combo_number/combo_num_label/num (1).mColor.a",
+          "value": 1.0
+        },
+        {
+          "channel": "combo_number/combo_num_label/num (2).mColor.a",
+          "value": 1.0
+        },
+        {
+          "channel": "combo_number/combo_num_label/num (3).mColor.a",
+          "value": 1.0
+        },
+        {
+          "channel": "combo_number/combo_unit.mColor.r",
+          "value": 1.0
+        },
+        {
+          "channel": "combo_number/combo_unit.mColor.g",
+          "value": 1.0
+        },
+        {
+          "channel": "combo_number/combo_unit.mColor.b",
+          "value": 1.0
+        },
+        {
+          "channel": "combo_number/combo_num_label/num.mColor.r",
+          "value": 1.0
+        },
+        {
+          "channel": "combo_number/combo_num_label/num.mColor.g",
+          "value": 1.0
+        },
+        {
+          "channel": "combo_number/combo_num_label/num.mColor.b",
+          "value": 1.0
+        },
+        {
+          "channel": "combo_number/combo_num_label/num (1).mColor.r",
+          "value": 1.0
+        },
+        {
+          "channel": "combo_number/combo_num_label/num (1).mColor.g",
+          "value": 1.0
+        },
+        {
+          "channel": "combo_number/combo_num_label/num (1).mColor.b",
+          "value": 1.0
+        },
+        {
+          "channel": "combo_number/combo_num_label/num (2).mColor.r",
+          "value": 1.0
+        },
+        {
+          "channel": "combo_number/combo_num_label/num (2).mColor.g",
+          "value": 1.0
+        },
+        {
+          "channel": "combo_number/combo_num_label/num (2).mColor.b",
+          "value": 1.0
+        },
+        {
+          "channel": "combo_number/combo_num_label/num (3).mColor.r",
+          "value": 1.0
+        },
+        {
+          "channel": "combo_number/combo_num_label/num (3).mColor.g",
+          "value": 1.0
+        },
+        {
+          "channel": "combo_number/combo_num_label/num (3).mColor.b",
+          "value": 1.0
+        }
+      ]
+    },
+    {
+      "clipId": "combo-all-perfect",
+      "time": 0.4166666567325592,
+      "values": [
+        {
+          "channel": "combo_number/combo_unit.mColor.a",
+          "value": 0.5
+        },
+        {
+          "channel": "combo_number/combo_num_label/num.mColor.a",
+          "value": 0.5
+        },
+        {
+          "channel": "combo_number/combo_num_label/num (1).mColor.a",
+          "value": 0.5
+        },
+        {
+          "channel": "combo_number/combo_num_label/num (2).mColor.a",
+          "value": 0.5
+        },
+        {
+          "channel": "combo_number/combo_num_label/num (3).mColor.a",
+          "value": 0.5
+        },
+        {
+          "channel": "combo_number/combo_unit.mColor.r",
+          "value": 1.0
+        },
+        {
+          "channel": "combo_number/combo_unit.mColor.g",
+          "value": 1.0
+        },
+        {
+          "channel": "combo_number/combo_unit.mColor.b",
+          "value": 1.0
+        },
+        {
+          "channel": "combo_number/combo_num_label/num.mColor.r",
+          "value": 1.0
+        },
+        {
+          "channel": "combo_number/combo_num_label/num.mColor.g",
+          "value": 1.0
+        },
+        {
+          "channel": "combo_number/combo_num_label/num.mColor.b",
+          "value": 1.0
+        },
+        {
+          "channel": "combo_number/combo_num_label/num (1).mColor.r",
+          "value": 1.0
+        },
+        {
+          "channel": "combo_number/combo_num_label/num (1).mColor.g",
+          "value": 1.0
+        },
+        {
+          "channel": "combo_number/combo_num_label/num (1).mColor.b",
+          "value": 1.0
+        },
+        {
+          "channel": "combo_number/combo_num_label/num (2).mColor.r",
+          "value": 1.0
+        },
+        {
+          "channel": "combo_number/combo_num_label/num (2).mColor.g",
+          "value": 1.0
+        },
+        {
+          "channel": "combo_number/combo_num_label/num (2).mColor.b",
+          "value": 1.0
+        },
+        {
+          "channel": "combo_number/combo_num_label/num (3).mColor.r",
+          "value": 1.0
+        },
+        {
+          "channel": "combo_number/combo_num_label/num (3).mColor.g",
+          "value": 1.0
+        },
+        {
+          "channel": "combo_number/combo_num_label/num (3).mColor.b",
+          "value": 1.0
+        }
+      ]
+    },
+    {
+      "clipId": "combo-all-perfect",
+      "time": 0.8333333134651184,
+      "values": [
+        {
+          "channel": "combo_number/combo_unit.mColor.a",
+          "value": 1.0
+        },
+        {
+          "channel": "combo_number/combo_num_label/num.mColor.a",
+          "value": 1.0
+        },
+        {
+          "channel": "combo_number/combo_num_label/num (1).mColor.a",
+          "value": 1.0
+        },
+        {
+          "channel": "combo_number/combo_num_label/num (2).mColor.a",
+          "value": 1.0
+        },
+        {
+          "channel": "combo_number/combo_num_label/num (3).mColor.a",
+          "value": 1.0
+        },
+        {
+          "channel": "combo_number/combo_unit.mColor.r",
+          "value": 1.0
+        },
+        {
+          "channel": "combo_number/combo_unit.mColor.g",
+          "value": 1.0
+        },
+        {
+          "channel": "combo_number/combo_unit.mColor.b",
+          "value": 1.0
+        },
+        {
+          "channel": "combo_number/combo_num_label/num.mColor.r",
+          "value": 1.0
+        },
+        {
+          "channel": "combo_number/combo_num_label/num.mColor.g",
+          "value": 1.0
+        },
+        {
+          "channel": "combo_number/combo_num_label/num.mColor.b",
+          "value": 1.0
+        },
+        {
+          "channel": "combo_number/combo_num_label/num (1).mColor.r",
+          "value": 1.0
+        },
+        {
+          "channel": "combo_number/combo_num_label/num (1).mColor.g",
+          "value": 1.0
+        },
+        {
+          "channel": "combo_number/combo_num_label/num (1).mColor.b",
+          "value": 1.0
+        },
+        {
+          "channel": "combo_number/combo_num_label/num (2).mColor.r",
+          "value": 1.0
+        },
+        {
+          "channel": "combo_number/combo_num_label/num (2).mColor.g",
+          "value": 1.0
+        },
+        {
+          "channel": "combo_number/combo_num_label/num (2).mColor.b",
+          "value": 1.0
+        },
+        {
+          "channel": "combo_number/combo_num_label/num (3).mColor.r",
+          "value": 1.0
+        },
+        {
+          "channel": "combo_number/combo_num_label/num (3).mColor.g",
+          "value": 1.0
+        },
+        {
+          "channel": "combo_number/combo_num_label/num (3).mColor.b",
+          "value": 1.0
+        }
+      ]
+    }
+  ],
+  "routes": {
+    "result": {
+      "auto": "judge_auto",
+      "miss": "judge_miss",
+      "bad": "judge_bad",
+      "good": "judge_good",
+      "great": "judge_great",
+      "perfect": "judge_perfect"
+    },
+    "timing": {
+      "none": null,
+      "fast": "judge_fast",
+      "slow": "judge_slow"
+    }
+  },
+  "thresholdCases": [
+    {
+      "life": 0,
+      "primary": 0.0,
+      "secondary": 0.0,
+      "danger": true,
+      "warning": true,
+      "gameOver": true
+    },
+    {
+      "life": 200,
+      "primary": 0.20000000298023224,
+      "secondary": 0.0,
+      "danger": true,
+      "warning": true,
+      "gameOver": false
+    },
+    {
+      "life": 250,
+      "primary": 0.25,
+      "secondary": 0.0,
+      "danger": false,
+      "warning": true,
+      "gameOver": false
+    },
+    {
+      "life": 251,
+      "primary": 0.25099998712539673,
+      "secondary": 0.0,
+      "danger": false,
+      "warning": false,
+      "gameOver": false
+    },
+    {
+      "life": 1000,
+      "primary": 1.0,
+      "secondary": 0.0,
+      "danger": false,
+      "warning": false,
+      "gameOver": false
+    },
+    {
+      "life": 1200,
+      "primary": 1.0,
+      "secondary": 0.20000000298023224,
+      "danger": false,
+      "warning": false,
+      "gameOver": false
+    }
+  ],
+  "commandOrder": {
+    "judged": [
+      "result",
+      "combo",
+      "add-score",
+      "score",
+      "life"
+    ],
+    "gameOver": [
+      "update-primary",
+      "update-secondary",
+      "update-label",
+      "update-color",
+      "show-bg-no-health",
+      "update-warning"
+    ]
+  },
+  "ownerResourceKeys": {
+    "combo": [
+      "icon_number_big_0..9",
+      "icon_number_big_AP_0..9",
+      "combo",
+      "combo_AP"
+    ],
+    "addScore": [
+      "icon_number_plus",
+      "icon_number_0..9"
+    ],
+    "result": [
+      "judge_auto",
+      "judge_miss",
+      "judge_bad",
+      "judge_good",
+      "judge_great",
+      "judge_perfect",
+      "judge_fast",
+      "judge_slow"
+    ],
+    "life": [
+      "bg_health",
+      "hp_meter",
+      "hp_meter",
+      "effect_health_caution_outline",
+      "effect_health_caution_inside",
+      "bg_no_health"
+    ]
+  },
+  "expectedProductionCases": [
+    "PR08",
+    "PR09",
+    "PR11",
+    "PR22",
+    "PR23",
+    "PR24",
+    "PR26",
+    "PR27",
+    "PR29",
+    "PR30",
+    "PR39"
+  ],
+  "staticSlice": {
+    "method": "InGameUtility$$.cctor",
+    "start": "0x331CBC8",
+    "end": "0x331CC64",
+    "arm64Sha256": "EAB78E654D5D9F6408F48AD4134DE1FB652F1E5286C5DB1B48B1C5A66294D467",
+    "dangerColorRodataAddress": "0x1535950",
+    "dangerColorF32Bits": [
+      "3F800000",
+      "3F19999A",
+      "3F19999A",
+      "3F800000"
+    ]
+  }
+}

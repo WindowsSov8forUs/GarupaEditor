@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "status": "ordinary-visible-rendering-portable-evidence-gate-closed",
+  "contractSha256": "5024B0CE0B3BA0ED1B0AED20F6615F4BCD090D295A494017EC222F95F88CEB65",
+  "profileSha256": "93098C8EC905070BD3FF6A35C892438EBDE3B8B2EFE2FE1F175E3CE9879CCB1F",
+  "manifestSha256": "27FF8B7129C46F480D642DE1DB0D61EB9DE822E8CEA4E1C932673D17E56BFADA",
+  "oracleSha256": "AA3AD83EE90B127FC817EA66ADF0A32BDBD10994128B93356280531697AE6794",
+  "productionAuthorization": true,
+  "productionConsumptionClaimed": false,
+  "ordinaryRenderingPortableEvidenceGate": "closed",
+  "originalDeviceExactGate": "open-not-claimed-fixed-device-limit",
+  "mainProgramIntegrationAuthorization": false,
+  "unknownFields": [],
+  "blockingFindings": []
+}

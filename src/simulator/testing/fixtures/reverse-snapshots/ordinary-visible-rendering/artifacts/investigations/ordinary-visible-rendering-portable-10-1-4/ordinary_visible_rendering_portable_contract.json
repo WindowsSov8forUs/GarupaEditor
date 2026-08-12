@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "status": "ordinary-visible-rendering-portable-contract-closed",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "versionName": "10.1.4",
+    "versionCode": 230,
+    "abi": "arm64-v8a"
+  },
+  "sources": {
+    "closure": {
+      "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/resource_pixi_rendering_final_r7_closure.json",
+      "bytes": 7275,
+      "sha256": "C7F432D7A3C21B7CEE3A49B90C1090D13C5D8BD7F92ABC6027B463445F4D0D8A"
+    },
+    "static": {
+      "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/resource_pixi_rendering_final_r7_static_profile.json",
+      "bytes": 50260,
+      "sha256": "E589CE875C9B14F87400E28D216FB3DA912E5337957F7D4E8917BB157D96A7FE"
+    },
+    "assets": {
+      "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/resource_pixi_rendering_hud_asset_profiles.json",
+      "bytes": 432616,
+      "sha256": "0D36B7FD2E50EEE9F4528CB8D508D972EA2E3314863DD47CFE3617B314C5A05D"
+    },
+    "visible": {
+      "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/resource_pixi_rendering_hud_visible_profile.json",
+      "bytes": 5540,
+      "sha256": "F35205BCAF954555E243DCFD71045067BCFBB00FB1083CCE24D00851348C867A"
+    },
+    "note": {
+      "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/resource_pixi_rendering_note_animation_profiles.json",
+      "bytes": 19172,
+      "sha256": "3D72AEEC898E6346F21664BDFB61271CC6E8FDE2863BC9A6B78A1D2ADCCFF9AB"
+    },
+    "resources": {
+      "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/resource_pixi_rendering_resource_contract.json",
+      "bytes": 2111866,
+      "sha256": "F389AB0950156FAAA6B1B6407BA4D47AD66C9472DB9631D604460E39BC9F15A3"
+    },
+    "score": {
+      "path": "artifacts/investigations/score-hud-rank-gauge-10-1-4/score_hud_rank_gauge_portable_contract.json",
+      "bytes": 23582,
+      "sha256": "5FCDED8221C2D71D4AC98AA86F3C567D8C19AB78D8FA7086DAB98A92938CB7FD"
+    }
+  },
+  "evidence": {
+    "OVR-E01": "R7 production authorization and current owner/setter closure",
+    "OVR-E02": "current Note animation controllers/clips",
+    "OVR-E03": "current Combo/AP atlas, scene and clips",
+    "OVR-E04": "current AddScore owner, UISpriteNumber scene and ARM64 coroutine",
+    "OVR-E05": "current Result/JudgeTiming atlas, scene and one-second lifecycle",
+    "OVR-E06": "current Life scene/resources/static fields/runtime Float32 color observation",
+    "OVR-E07": "current InGameUtility cctor 110/255,255/255,105/255 and dangerous rodata [1,.6,.6,1]",
+    "OVR-E08": "current ReserveTotalScore accessor zero-call bounded managed-text scan"
+  },
+  "productionAuthorization": true,
+  "productionConsumptionClaimed": false,
+  "mainProgramIntegrationAuthorization": false,
+  "originalDeviceExactGate": "open-not-claimed-fixed-device-limit",
+  "unknownFields": [],
+  "blockingFindings": []
+}
