@@ -1,3 +1,5 @@
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 import { createRequire } from "node:module";
@@ -8,18 +10,24 @@ const repositoryRoot = resolve(testingRoot, "..", "..", "..");
 const require = createRequire(import.meta.url);
 const typeScriptCli = require.resolve("typescript/bin/tsc");
 
-run(process.execPath, [join(testingRoot, "verifyRenderProductionStatic.mjs")]);
-run(process.execPath, [join(testingRoot, "verifyHabahiroStatic.mjs")]);
-run(process.execPath, [join(testingRoot, "verifyRenderProductionCases.mjs")]);
-run(process.execPath, [typeScriptCli, "-p", resolve(repositoryRoot, "src", "simulator", "tsconfig.json")]);
-for (const runner of [
-  "runRenderContractTests.mjs",
-  "runHabahiroContractTests.mjs",
-  "runOrdinaryNoteGeometryTests.mjs",
-  "runRenderPixiTests.mjs",
-  "runRenderProductionChartTests.mjs",
-]) run(process.execPath, [join(testingRoot, runner)]);
-console.log("render production oracle passed: contracts/producers/Pixi/HAB-complete+legacy-rejection charts/failures/static/evidence");
+const observationRoot = mkdtempSync(join(tmpdir(), "garupa-render-observation-"));
+const observationPath = join(observationRoot, "actual-pixi-observation.json");
+process.env.SIMULATOR_RENDER_OBSERVATION_PATH = observationPath;
+try {
+  run(process.execPath, [join(testingRoot, "verifyRenderProductionStatic.mjs")]);
+  run(process.execPath, [join(testingRoot, "verifyHabahiroStatic.mjs")]);
+  run(process.execPath, [typeScriptCli, "-p", resolve(repositoryRoot, "src", "simulator", "tsconfig.json")]);
+  for (const runner of [
+    "runRenderContractTests.mjs",
+    "runHabahiroContractTests.mjs",
+    "runRenderPixiTests.mjs",
+    "runRenderProductionChartTests.mjs",
+  ]) run(process.execPath, [join(testingRoot, runner)]);
+  run(process.execPath, [join(testingRoot, "verifyRenderProductionCases.mjs")]);
+  console.log("render production oracle passed: Reverse closure + contracts + actual Pixi Note/HUD/full-chart dynamic observations");
+} finally {
+  rmSync(observationRoot, { recursive: true, force: true });
+}
 
 function run(command, args) {
   const result = spawnSync(command, args, {

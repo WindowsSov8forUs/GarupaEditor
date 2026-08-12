@@ -1,3 +1,8 @@
+declare function require(name: string): any;
+declare const process: any;
+const { readFileSync } = require("node:fs");
+const { join } = require("node:path");
+
 import { createRecordingSimulatorBackends } from "../backends/recordingBackend";
 import { RecordingSimulatorRendererBackend } from "../backends/recordingRendererBackend";
 import {
@@ -5,6 +10,7 @@ import {
   PortableRenderResourcePreflightAdapter,
 } from "../backends/resources/localResourceProvider";
 import { sha256UpperHex } from "../backends/resources/sha256";
+import { parseCurrentOrdinaryVisibleProfile } from "../backends/resources/currentOrdinaryVisibleProfile";
 import {
   RenderFidelityLabel,
   type RenderCommand,
@@ -45,6 +51,13 @@ const R4_RESOURCES = Object.freeze({
   multipleDirectionalLineRightLogicalAssetId: "asset.multiple-directional-line-right",
 });
 const BYTES = Uint8Array.from([1, 2, 3, 4]);
+const parsedOrdinaryVisibleProfile = parseCurrentOrdinaryVisibleProfile(JSON.parse(readFileSync(join(
+  process.cwd(),
+  "src/simulator/testing/fixtures/reverse-snapshots/ordinary-visible-rendering/artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/ordinary_visible_rendering_profile.json",
+), "utf8")));
+const ORDINARY_VISIBLE_PROFILE = parsedOrdinaryVisibleProfile === null
+  ? (() => { throw new Error("ordinary visible fixture profile must parse"); })()
+  : parsedOrdinaryVisibleProfile;
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
@@ -203,11 +216,13 @@ function longProfile(): RenderResourceProfile {
   const base = profile();
   return {
     ...base,
+    ordinaryVisibleProfile: ORDINARY_VISIBLE_PROFILE,
     assets: Object.freeze(base.assets.map((asset) => Object.freeze({
       ...asset,
       atlasRows: Object.freeze([
         ...asset.atlasRows,
         Object.freeze({ ...asset.atlasRows[0], exactKey: "note_long_0" }),
+        Object.freeze({ ...asset.atlasRows[0], exactKey: "note_long_flash_0" }),
       ]),
     }))),
   };
@@ -218,23 +233,28 @@ function r4Profile(): RenderResourceProfile {
   const row = base.assets[0]!.atlasRows[0]!;
   return {
     ...base,
+    ordinaryVisibleProfile: ORDINARY_VISIBLE_PROFILE,
     assets: Object.freeze([
       Object.freeze({
         ...base.assets[0]!,
         atlasRows: Object.freeze([
           ...base.assets[0]!.atlasRows,
           Object.freeze({ ...row, exactKey: "note_flick_0" }),
+          Object.freeze({ ...row, exactKey: "note_flick_top" }),
         ]),
       }),
       Object.freeze({
         ...base.assets[0]!,
         logicalAssetId: "asset.directional",
         role: "directional-atlas" as const,
+        animationRole: "note-directional-flick" as const,
         atlasRows: Object.freeze([
           Object.freeze({ ...row, exactKey: "note_flick_l_0" }),
           Object.freeze({ ...row, exactKey: "note_flick_l_1" }),
           Object.freeze({ ...row, exactKey: "note_flick_r_0" }),
           Object.freeze({ ...row, exactKey: "note_flick_r_1" }),
+          Object.freeze({ ...row, exactKey: "note_flick_top_l" }),
+          Object.freeze({ ...row, exactKey: "note_flick_top_r" }),
         ]),
       }),
       Object.freeze({
@@ -742,20 +762,18 @@ async function testOrdinaryLongLifecycle(): Promise<void> {
     "Long engine create",
   );
   requireOk(engine.initialize(), "Long engine initialize");
-  equal(renderer.snapshot().objectCount, 3, "Long root, after and mesh without an optional gameplay HUD owner");
-  equal(renderer.snapshot().nextSequence, 6, "Long pool setup create-hide pairs");
+  equal(renderer.snapshot().objectCount, 5, "Long root/flash, after/icon and mesh use fixed independent owners");
+  equal(renderer.snapshot().nextSequence, 10, "Long pool setup creates every parent before its hidden animation child");
   requireOk(engine.step(0), "Long activation frame");
   const activation = renderer.commandSnapshot();
-  equal(activation.length, 15, "Long activation commits root, hidden after, threshold and visible mesh atomically");
-  equal(
-    activation.slice(6).map((command) => `${command.kind}:${command.renderObjectId}`).join(","),
-    "set-transform:render:long:0:root,activate-object:render:long:0:root," +
-      "bind-resource:render:long:0:root,set-transform:render:long:0:after," +
-      "set-transform:render:long:0:mesh,set-mesh:render:long:0:mesh," +
-      "set-threshold:render:long:0:mesh,activate-object:render:long:0:mesh," +
-      "bind-resource:render:long:0:after",
-    "Long Activate preserves front then after/mesh/setupNoteType owner order",
-  );
+  equal(activation.length, 22, "Long activation atomically starts its independent flash owner with tail/mesh setup");
+  const longFlashId = "render:long:0:root:ordinary-long-flash";
+  equal(activation.some((command) => command.kind === "bind-resource" &&
+    command.renderObjectId === longFlashId && command.exactKey === "note_long_flash_0"), true,
+  "Long flash child binds the exact current lane Sprite");
+  equal(activation.some((command) => command.kind === "play-animation" &&
+    command.renderObjectId === longFlashId && command.animationRole === "note-long-flash"), true,
+  "Long flash animation runs on its independent note-intermediate owner");
   let afterActivationIndex = -1;
   for (let frame = 0; frame < 60 && afterActivationIndex < 0; frame += 1) {
     requireOk(engine.step(1 / 60), `Long child frame ${frame}`);
@@ -763,23 +781,35 @@ async function testOrdinaryLongLifecycle(): Promise<void> {
       command.kind === "activate-object" && command.renderObjectId === "render:long:0:after"
     );
   }
-  assert(afterActivationIndex > 15, "Long after becomes visible at LauncherMusicPos tail equality");
+  assert(afterActivationIndex > 22, "Long after becomes visible at LauncherMusicPos tail equality");
   const moved = renderer.commandSnapshot();
   equal(moved[afterActivationIndex - 1]?.kind, "set-transform", "after equality writes transform before visibility");
   equal(moved[afterActivationIndex + 1]?.kind, "set-mesh", "mesh refresh follows after visibility transition");
   assert(
-    moved.slice(15, afterActivationIndex).some((command) =>
+    moved.slice(22, afterActivationIndex).some((command) =>
       command.kind === "set-mesh" && command.renderObjectId === "render:long:0:mesh"),
     "Long mesh refreshes while after waits at launcher",
   );
   requireOk(engine.dispose(), "dispose active Long");
   const disposed = renderer.commandSnapshot();
-  for (const renderObjectId of ["render:long:0:root", "render:long:0:after", "render:long:0:mesh"]) {
+  for (const renderObjectId of [
+    "render:long:0:root:ordinary-long-flash",
+    "render:long:0:root",
+    "render:long:0:after:ordinary-note-icon",
+    "render:long:0:after",
+    "render:long:0:mesh",
+  ]) {
     equal(disposed.filter((command) =>
       command.kind === "deactivate-object" && command.renderObjectId === renderObjectId
     ).length, 1, `${renderObjectId} deactivates exactly once`);
   }
-  equal(renderer.snapshot().objectCount, 0, "Long session release clears all three owners");
+  const flashDeactivate = disposed.findIndex((command) => command.kind === "deactivate-object" &&
+    command.renderObjectId === "render:long:0:root:ordinary-long-flash");
+  const rootDeactivate = disposed.findIndex((command) => command.kind === "deactivate-object" &&
+    command.renderObjectId === "render:long:0:root");
+  assert(flashDeactivate >= 0 && flashDeactivate < rootDeactivate,
+    "Long animation child resets and deactivates before its root");
+  equal(renderer.snapshot().objectCount, 0, "Long session release clears all five owners");
   console.log("ok 7 - ordinary Long normal-tail after and base mesh production lifecycle");
 }
 
@@ -1039,10 +1069,35 @@ async function testR4NoteFamilyBoundaries(): Promise<void> {
   equal(flickCommands.some((command) =>
     command.kind === "bind-resource" && command.exactKey === "note_flick_0"),
   true, "R4 Flick binds the exact current key");
+  const flickIconId = "render:flick:0:root:ordinary-note-icon";
+  equal(flickCommands.some((command) =>
+    command.kind === "create-object" && command.renderObjectId === flickIconId &&
+    command.parentObjectId === "render:flick:0:root" && command.role === "note-icon"),
+  true, "R4 Flick creates an independent icon child under its moving root");
+  equal(flickCommands.some((command) =>
+    command.kind === "bind-resource" && command.renderObjectId === flickIconId &&
+    command.exactKey === "note_flick_top"),
+  true, "R4 Flick icon binds the exact current top Sprite");
+  equal(flickCommands.some((command) =>
+    command.kind === "play-animation" && command.renderObjectId === flickIconId &&
+    command.animationRole === "note-flick"),
+  true, "R4 Flick clip runs only on the icon child");
   equal(flickCommands.some((command) =>
     command.kind === "set-transform" && command.ordering.sourceDepthOrSortingOrder === 70),
   true, "R4 Flick retains ordinary root ordering");
+  requireOk(flickEngine.step(1 / 60), "R4 Flick advances independent owner clock");
+  equal(flickRenderer.commandSnapshot().some((command) =>
+    command.kind === "sample-animation" && command.renderObjectId === flickIconId &&
+    command.elapsedSeconds.bits === f32(1 / 60).bits),
+  true, "R4 Flick samples the owner-local engine delta clock");
   requireOk(flickEngine.dispose(), "dispose R4 Flick engine");
+  const flickDisposed = flickRenderer.commandSnapshot();
+  const flickIconStop = flickDisposed.findIndex((command) =>
+    command.kind === "stop-animation" && command.renderObjectId === flickIconId);
+  const flickRootDeactivate = flickDisposed.findIndex((command) =>
+    command.kind === "deactivate-object" && command.renderObjectId === "render:flick:0:root");
+  assert(flickIconStop >= 0 && flickIconStop < flickRootDeactivate,
+    "R4 Flick resets its child clip before root deactivation");
 
   const slideRenderer = new RecordingSimulatorRendererBackend();
   requireOk(await slideRenderer.prepare(SESSION, longProfile(), new LocalProvider(), preflight()),
@@ -1063,16 +1118,16 @@ async function testR4NoteFamilyBoundaries(): Promise<void> {
     createRecordingSimulatorBackends(slideRenderer),
   ), "R4 Slide engine create");
   requireOk(slideEngine.initialize(), "R4 Slide engine initialize");
-  equal(slideRenderer.snapshot().objectCount, 5,
-    "R4 root and two child/segment pairs without an optional gameplay HUD owner");
+  equal(slideRenderer.snapshot().objectCount, 10,
+    "R4 root/flash and two child icon/flash/segment owner groups are fixed before activation");
   requireOk(slideEngine.step(0), "R4 Slide activates");
   const slideCommands = slideRenderer.commandSnapshot();
   equal(slideCommands.filter((command) =>
     command.kind === "set-mesh" && command.renderObjectId.includes(":slide-mesh:")
   ).length, 2, "R4 Slide N children emit exactly N base-mesh segments");
   equal(slideCommands.filter((command) =>
-    command.kind === "activate-object" && command.renderObjectId.includes(":slide-child:")
-  ).length, 1, "R4 Slide preserves one visible and one invisible child owner");
+    command.kind === "activate-object" && /:slide-child:\d+$/.test(command.renderObjectId)
+  ).length, 1, "R4 Slide preserves one visible and one invisible child head owner");
   requireOk(slideEngine.step(1 / 60), "R4 Slide child chain updates");
   equal(slideRenderer.commandSnapshot().filter((command) =>
     command.kind === "set-mesh" && command.renderObjectId.includes(":slide-mesh:")
@@ -1136,7 +1191,15 @@ async function testR4NoteFamilyBoundaries(): Promise<void> {
   equal(multipleCommands.filter((command) =>
     command.kind === "bind-resource" &&
     (command.exactKey === "note_flick_l_0" || command.exactKey === "note_flick_l_1")
-  ).length, 2, "R4 Multiple roots bind both exact directional keys");
+  ).length, 2, "R4 Multiple roots bind both exact directional head keys");
+  equal(multipleCommands.filter((command) =>
+    command.kind === "bind-resource" && command.exactKey === "note_flick_top_l" &&
+    command.renderObjectId.endsWith(":ordinary-note-icon")
+  ).length, 2, "R4 Multiple left icons bind only the exact directional top Sprite");
+  equal(multipleCommands.filter((command) =>
+    command.kind === "play-animation" && command.animationRole === "note-directional-flick" &&
+    command.renderObjectId.endsWith(":ordinary-note-icon")
+  ).length, 2, "R4 Multiple directional clips run on independent icon owners");
   equal(multipleCommands.filter((command) =>
     command.kind === "set-transform" && command.ordering.sourceDepthOrSortingOrder === 71
   ).length >= 2, true, "R4 Directional roots use observed sorting order 71");

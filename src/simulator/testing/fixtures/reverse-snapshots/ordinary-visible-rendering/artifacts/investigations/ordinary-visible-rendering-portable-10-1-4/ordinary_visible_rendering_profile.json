@@ -19,15 +19,12 @@
   ],
   "noteAnimations": {
     "iconOwnerKey": "note_flick_top",
-    "directionalOwnerKeys": {
+    "directionalSpriteKeys": {
       "up": "note_flick_top",
-      "left": "note_directional_flick_left_top",
-      "right": "note_directional_flick_right_top"
+      "left": "note_flick_top_l",
+      "right": "note_flick_top_r"
     },
-    "longFlashOwnerKeys": [
-      "note_long_flash_front",
-      "note_long_flash_back"
-    ],
+    "longFlashSpritePrefix": "note_long_flash_",
     "clips": [
       {
         "clipId": "note-flick-up",

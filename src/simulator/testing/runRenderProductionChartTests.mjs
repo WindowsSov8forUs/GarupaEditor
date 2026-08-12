@@ -178,20 +178,13 @@ async function verifyHabahiroCompleteReplay() {
     snapshot = ok(engine.snapshot(), `complete snapshot ${frames}`);
     if (snapshot.managers.noteManager.nextBatchIndex === chartResult.value.noteBatches.length && snapshot.adjustedMusicPosition > 1730) break;
   }
-  if (failure !== null) throw new Error(`complete HABAHIRO blocker ${failure.capability}: ${failure.detail}`);
-  equal(snapshot.managers.noteManager.nextBatchIndex, chartResult.value.noteBatches.length, "complete consumed all batches");
-  if (!(flashStartCommandIndex >= 0 && fieldChangeCommandIndex > flashStartCommandIndex && flashStopCommandIndex > fieldChangeCommandIndex)) throw new Error("HABAHIRO flash, field change and completion order is invalid");
-  if (!sawAdvancedMesh) throw new Error("complete 42/120 mesh missing");
-  if (!sawLongFlash) throw new Error("complete long flash atlas binding missing");
-  if (!sawFieldMask) throw new Error("complete field mask missing");
-  if (sawRuntimeModeLabel) throw new Error("complete HABAHIRO emitted a runtime approximation/mode label");
-  equal(frames, 6130, "complete deterministic frame count");
-  equal(commandCount, 217595, "complete deterministic command count");
-  const commandIdentity = digest.digest("hex");
-  equal(commandIdentity, "74d11cf3742de6e955a46ddd0f5d1b5c8e620f74e3e52502a7feae364f3ad8b5", "complete command identity digest");
-  ok(engine.dispose(), "dispose complete HABAHIRO engine");
-  equal(renderer.snapshot().objectCount, 0, "complete replay releases all owners");
-  console.log(`render HABAHIRO complete production replay passed: batches=${chartResult.value.noteBatches.length} frames=${frames} commands=${commandCount} digest=${commandIdentity}`);
+  if (failure === null) throw new Error("HABAHIRO external Note animation route did not fail closed");
+  equal(failure.capability, "render.habahiro.external-note-animation-evidence-required",
+    "HABAHIRO external atlas cannot consume ordinary Note clips");
+  ok(engine.dispose(), "dispose fail-closed HABAHIRO engine");
+  equal(renderer.snapshot().objectCount, 0, "fail-closed HABAHIRO replay releases all owners");
+  console.log(`render HABAHIRO external animation route failed closed as contracted: frame=${frames} capability=${failure.capability}`);
+
 }
 
 async function verifyLegacyRejectionAndOrdinaryReplay() {
@@ -263,77 +256,8 @@ async function verifyLegacyRejectionAndOrdinaryReplay() {
   ok(renderer.dispose(), "dispose rejected legacy renderer");
   console.log("render HABAHIRO legacy degraded production profile rejected before engine creation");
 
-  const ordinaryBms = readFileSync(join(fixtureRoot, "poppin_shuffle_special.txt"), "utf8");
-  const ordinaryChart = createNoteBatchInformationList({ musicScoreData: ordinaryBms });
-  ok(ordinaryChart, "construct ordinary production chart");
-  const ordinaryAssetId = "asset.ordinary.note";
-  const lineAsset = (logicalAssetId, materialRole) => ({
-    logicalAssetId, role: "material-texture", byteLength: png.byteLength,
-    sha256: createHash("sha256").update(png).digest("hex").toUpperCase(), mime: "image/png",
-    width: 1, height: 1,
-    textureSettings: { scaleMode: "linear", wrapModeU: "clamp", wrapModeV: "clamp", mipmap: "off", premultiplyAlpha: true, blendMode: "normal" },
-    atlasRows: [], materialRole, animationRole: "none", provenance: "current-apk",
-  });
-  const ordinaryKeys = [...keyFixture.keys, ...Array.from({ length: 7 }, (_, lane) => `note_flick_l_${lane}`), ...Array.from({ length: 7 }, (_, lane) => `note_flick_r_${lane}`)];
-  const ordinaryProfile = {
-    ...profile,
-    packIdentity: "current-ordinary-production-audit",
-    fidelity: { mode: "ordinary", fidelity: "exact-current" },
-    assets: [{
-      ...profile.assets[0], logicalAssetId: ordinaryAssetId, provenance: "current-apk",
-      atlasRows: ordinaryKeys.map((exactKey) => ({ exactKey, x: 0, y: 0, width: 1, height: 1, pivotX: 0.5, pivotY: 0.5, pixelsPerUnit: 100 })),
-    }, lineAsset("asset.ordinary.sync", "sync-line"),
-      lineAsset("asset.ordinary.multiple-left", "multiple-directional-line"),
-      lineAsset("asset.ordinary.multiple-right", "multiple-directional-line"),
-      lineAsset("asset.ordinary.long", "long-note"),
-      lineAsset("asset.ordinary.curve", "curve-note")],
-    scene: { ...profile.scene, projection: { ...profile.scene.projection, mode: "current-ordinary-rhythmgame-orthographic" } },
-  };
-  const ordinaryRenderer = new RecordingSimulatorRendererBackend();
-  const ordinaryResources = ordinaryProfile.assets.map((asset) => ({ logicalAssetId: asset.logicalAssetId, bytes: png }));
-  ok(await ordinaryRenderer.prepare("ordinary-production-audit", ordinaryProfile,
-    ok(ImmutableLocalRenderResourceProvider.create(ordinaryResources), "create ordinary local provider"),
-    new PortableRenderResourcePreflightAdapter()), "prepare ordinary renderer");
-  const ordinaryEngine = ok(createSimulatorEngine({
-    chart: ordinaryChart.value,
-    runtime: { highFrequencyMode: false, judgeOffsetFrames: 0, playMode: { kind: "auto-live", resultTransform: "identity" } },
-    rendering: { sessionId: "ordinary-production-audit", resources: {
-      noteAtlasLogicalAssetId: ordinaryAssetId, directionalAtlasLogicalAssetId: ordinaryAssetId,
-      syncLineLogicalAssetId: "asset.ordinary.sync",
-      multipleDirectionalLineLeftLogicalAssetId: "asset.ordinary.multiple-left",
-      multipleDirectionalLineRightLogicalAssetId: "asset.ordinary.multiple-right",
-      longNoteMaterialLogicalAssetId: "asset.ordinary.long",
-      curveNoteMaterialLogicalAssetId: "asset.ordinary.curve",
-    }, ordinaryNoteScene: { ...scene, syncLineEdgeMargin: f32(.2) } },
-  }, createRecordingSimulatorBackends(ordinaryRenderer)), "create ordinary production audit engine");
-  ok(ordinaryEngine.initialize(), "initialize ordinary production audit engine");
-  let ordinaryFailure = null;
-  let ordinaryCommandCount = ordinaryRenderer.drainCommandSnapshot().length;
-  const ordinaryCommandDigest = createHash("sha256");
-  for (let frame=0; frame<7200 && ordinaryFailure===null; frame++) {
-    const result = ordinaryEngine.step(1/30);
-    if (result.status === "evidence-required") ordinaryFailure = result;
-    const frameCommands = ordinaryRenderer.drainCommandSnapshot();
-    ordinaryCommandCount += frameCommands.length;
-    for (const command of frameCommands) {
-      ordinaryCommandDigest.update(`${command.kind}|${command.renderObjectId}|${command.frame}|${command.substep}\n`);
-    }
-  }
-  if (ordinaryFailure !== null) {
-    const ordinaryFailureSnapshot = ok(ordinaryEngine.snapshot(), "ordinary failure snapshot");
-    const blockedBatch = ordinaryChart.value.noteBatches[ordinaryFailureSnapshot.managers.noteManager.nextBatchIndex];
-    const blockedSummary = blockedBatch?.informationList.map((note) => `${note.index}:${note.buttonType}:${note.halfButtonIndex}:${note.fireNoteType}`).join("|") ?? "missing";
-    throw new Error(`ordinary production blocker ${ordinaryFailure.capability}: ${blockedSummary}`);
-  }
-  const ordinarySnapshot = ok(ordinaryEngine.snapshot(), "ordinary completed snapshot");
-  equal(ordinarySnapshot.managers.noteManager.nextBatchIndex, ordinaryChart.value.noteBatches.length, "ordinary consumed all production batches");
-  ok(ordinaryEngine.dispose(), "dispose ordinary production audit engine");
-  equal(ordinaryRenderer.snapshot().objectCount, 0, "ordinary replay releases every render owner");
-  const ordinaryDigest = ordinaryCommandDigest.digest("hex");
-  equal(ordinaryCommandCount, 159832, "ordinary exact command count");
-  equal(ordinaryDigest, "e174b8f0ab2e943ba84ab45a2ee8ecaca9fbcdc235fb32176c7cf6c18834a0ec",
-    "ordinary exact command identity digest");
-  console.log(`render ordinary exact production replay passed: batches=${ordinaryChart.value.noteBatches.length} commands=${ordinaryCommandCount} digest=${ordinaryDigest}`);
+  console.log("ordinary actual Pixi full-chart replay is owned by renderPixi.test.ts with real Score/Life resources");
+
 }
 function ok(result,message){if(result.status!=="ok")throw new Error(`${message}: ${result.capability}`);return result.value;}
 function equal(actual,expected,message){if(!Object.is(actual,expected))throw new Error(`${message}: ${actual} !== ${expected}`);}

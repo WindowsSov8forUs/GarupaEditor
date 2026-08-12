@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "purpose": "offline simulator test fixtures",
   "sourceRepository": "HOST________/VSCode/GirlsBandParty-Reverse",
-  "sourceHead": "bd21127cdf4dd948a7732008aa1f4d5ccc7f54e7",
+  "sourceHead": "f94947d9376d00e90e260bccfe06366f3d87bb2f",
   "entries": [
     {
       "path": "habahiro-snapshots/bestdori-atlas-profile.json",
@@ -490,10 +490,10 @@
     },
     {
       "path": "reverse-snapshots/ordinary-visible-rendering/artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/closure.json",
-      "sourceReverseCommit": "bd21127cdf4dd948a7732008aa1f4d5ccc7f54e7",
+      "sourceReverseCommit": "f94947d9376d00e90e260bccfe06366f3d87bb2f",
       "sourcePath": "artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/closure.json",
       "bytes": 740,
-      "sha256": "57AABBF9AC55FB2EB30DE5A54E422A964D774998946592D956627925AA1C1175"
+      "sha256": "932B4064C2CD257A3824D3412EC93D8AC6DA8D41C200D16F3E11A4236558C74F"
     },
     {
       "path": "reverse-snapshots/ordinary-visible-rendering/artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/ordinary_visible_rendering_oracle.json",
@@ -518,10 +518,10 @@
     },
     {
       "path": "reverse-snapshots/ordinary-visible-rendering/artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/ordinary_visible_rendering_profile.json",
-      "sourceReverseCommit": "bd21127cdf4dd948a7732008aa1f4d5ccc7f54e7",
+      "sourceReverseCommit": "f94947d9376d00e90e260bccfe06366f3d87bb2f",
       "sourcePath": "artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/ordinary_visible_rendering_profile.json",
-      "bytes": 28885,
-      "sha256": "A7DB45369B1F92909B329F8F71D893E7F1C187B91B5B8C4B8D37AC158F74BEF3"
+      "bytes": 28809,
+      "sha256": "13690E23ED72074C142681746EF933D97020E70D7E35D7BE10CF94E54BBE804D"
     },
     {
       "path": "reverse-snapshots/ordinary-visible-rendering/artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/portable-assets/combo-number.png",
