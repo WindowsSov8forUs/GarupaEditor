@@ -1600,13 +1600,13 @@ function applyEvidenceAnimation(
       ? Math.fround(-50 + 8 * progress)
       : phase === 1 ? Math.fround(-42 + progress) : Math.fround(-41 + progress);
     object.node.alpha = phase === 0
-      ? Math.fround(0.6 + 0.4 * progress)
+      ? Math.fround(0.2 + 0.8 * progress)
       : phase === 1 ? 1 : Math.fround(1 - progress);
     return;
   }
   if (role === "result") {
     object.node.scale.set(1, 1);
-    object.node.alpha = elapsedSeconds < 0.85 ? 1 : Math.max(0, (1 - elapsedSeconds) / 0.15);
+    object.node.alpha = 1;
     return;
   }
   if (role === "note-flick" || role === "note-directional-flick" || role === "note-long-flash") {
