@@ -354,10 +354,19 @@ function disposeAssembly(assembly: {
   readonly particleBackend: { dispose(): unknown };
   readonly particleRendererBackend: { dispose(): unknown };
 }): void {
-  try { assembly.particleRendererBackend.dispose(); } catch {}
-  try { assembly.particleBackend.dispose(); } catch {}
-  try { assembly.audioBackend.dispose(); } catch {}
-  try { assembly.rendererBackend.dispose(); } catch {}
+  const rollbackOwners = [
+    assembly.particleRendererBackend,
+    assembly.particleBackend,
+    assembly.audioBackend,
+    assembly.rendererBackend,
+  ];
+  for (const owner of rollbackOwners) {
+    try {
+      owner.dispose();
+    } catch {
+      // The caller already owns a primary composition failure; rollback continues all owners.
+    }
+  }
 }
 
 function accepted<T>(value: T): SimulatorAssemblyResult<T> {

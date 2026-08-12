@@ -140,7 +140,11 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
       this.seGain = seGain;
     } catch {
       for (const gain of temporaryGains) {
-        try { gain.disconnect(); } catch {}
+        try {
+          gain.disconnect();
+        } catch {
+          // Decode/prepare already failed; disconnect is best-effort rollback of an unpublished node.
+        }
       }
       this.recording = candidate;
       return this.recording.recordTerminalFault(

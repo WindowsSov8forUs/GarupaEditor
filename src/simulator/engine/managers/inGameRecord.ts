@@ -7,7 +7,6 @@ export interface OneNoteMaxScoreInfo {
 
 export interface InGameRecordSnapshot {
   readonly score: number;
-  readonly reserveTotalScore: number;
   readonly currentLife: number;
   readonly playerMaxLife: number;
   readonly lifeUpperLimit: number;
@@ -26,7 +25,6 @@ const EMPTY_ONE_NOTE: OneNoteMaxScoreInfo = Object.freeze({ score: 0, combo: 0 }
 
 export class InGameRecord {
   private scoreValue = 0;
-  private reserveTotalScoreValue = 0;
   private currentLifeValue: number;
   private currentComboValue = 0;
   private maxComboValue = 0;
@@ -58,7 +56,6 @@ export class InGameRecord {
 
   addScore(value: number): void {
     this.scoreValue = addUInt32(this.scoreValue, value);
-    this.reserveTotalScoreValue = addUInt32(this.reserveTotalScoreValue, value);
   }
 
   addCombo(value: number): void {
@@ -108,7 +105,6 @@ export class InGameRecord {
       throw new Error("InGameRecord preflight profile identity changed");
     }
     this.scoreValue = staged.scoreValue;
-    this.reserveTotalScoreValue = staged.reserveTotalScoreValue;
     this.currentLifeValue = staged.currentLifeValue;
     this.currentComboValue = staged.currentComboValue;
     this.maxComboValue = staged.maxComboValue;
@@ -126,7 +122,6 @@ export class InGameRecord {
   snapshot(): InGameRecordSnapshot {
     return Object.freeze({
       score: this.scoreValue,
-      reserveTotalScore: this.reserveTotalScoreValue,
       currentLife: this.currentLifeValue,
       playerMaxLife: this.playerMaxLife,
       lifeUpperLimit: this.lifeUpperLimit,

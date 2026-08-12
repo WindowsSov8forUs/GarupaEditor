@@ -178,7 +178,11 @@ export class AutonomousSimulatorModule {
   }
 
   private closeBeforeTransfer(failure: SimulatorModuleFailure): void {
-    try { this.session?.close("terminal-fault", failure); } catch {}
+    try {
+      this.session?.close("terminal-fault", failure);
+    } catch {
+      // A launch failure already owns the public result; rollback continues all remaining owners.
+    }
     this.session = null;
     this.stopScheduler();
     this.disposeInput();
@@ -205,24 +209,50 @@ export class AutonomousSimulatorModule {
   private closePublished(report: SimulatorModuleCloseReport): void {
     if (this.state === "closing" || this.state === "closed") return;
     this.state = "closing";
-    this.stopScheduler();
-    this.disposeInput();
+    const schedulerFailure = this.stopScheduler();
+    const inputFailure = this.disposeInput();
     this.session = null;
-    const frozen = freezeCloseReport(report);
+    const cleanupFailure = schedulerFailure ?? inputFailure;
+    const published = cleanupFailure === null || report.failure !== null
+      ? report
+      : Object.freeze({
+          reason: "terminal-fault" as const,
+          result: null,
+          failure: cleanupFailure,
+        });
+    const frozen = freezeCloseReport(published);
     const resolve = this.resolveClosed;
     this.resolveClosed = null;
     this.state = "closed";
     resolve?.(frozen);
   }
 
-  private stopScheduler(): void {
+  private stopScheduler(): SimulatorModuleFailure | null {
     const subscription = this.frameSubscription;
     this.frameSubscription = null;
-    try { subscription?.stop(); } catch {}
+    try {
+      subscription?.stop();
+      return null;
+    } catch {
+      return moduleFailure(
+        "launch-failed",
+        "simulator.runtime.scheduler-stop-threw",
+        "An independently observable scheduler stop failure is terminal; cleanup still proceeds to the input owner.",
+      );
+    }
   }
 
-  private disposeInput(): void {
-    try { this.environment.input.dispose(); } catch {}
+  private disposeInput(): SimulatorModuleFailure | null {
+    try {
+      this.environment.input.dispose();
+      return null;
+    } catch {
+      return moduleFailure(
+        "launch-failed",
+        "simulator.runtime.input-dispose-threw",
+        "An independently observable input disposal failure is terminal and is never silently swallowed.",
+      );
+    }
   }
 }
 

@@ -77,38 +77,6 @@ const TEXTURE_SETTINGS = Object.freeze({
 
 const LOGICAL_PREFIX = "bestdori.habahiro.";
 
-export class BrowserHabahiroBestdoriTransport implements HabahiroBestdoriTransport {
-  async read(url: string): Promise<SimulatorResult<Uint8Array>> {
-    if (!isAllowedBestdoriUrl(url) || typeof fetch !== "function") {
-      return reject(
-        "render.habahiro.bestdori-transport-unavailable",
-        "The HABAHIRO resource transport accepts only its pinned Bestdori HTTPS allowlist.",
-      );
-    }
-    try {
-      const response = await fetch(url, {
-        method: "GET",
-        mode: "cors",
-        credentials: "omit",
-        cache: "no-store",
-        redirect: "follow",
-      });
-      if (!response.ok) {
-        return reject(
-          "render.habahiro.bestdori-http-failure",
-          `Bestdori returned HTTP ${response.status} for a pinned HABAHIRO asset.`,
-        );
-      }
-      return ok(new Uint8Array(await response.arrayBuffer()));
-    } catch {
-      return reject(
-        "render.habahiro.bestdori-network-failure",
-        "The explicit Bestdori HABAHIRO download failed without creating a renderer profile.",
-      );
-    }
-  }
-}
-
 export async function prepareHabahiroBestdoriPack(
   transport: HabahiroBestdoriTransport,
 ): Promise<SimulatorResult<PreparedHabahiroBestdoriPack>> {
@@ -152,11 +120,19 @@ export async function prepareHabahiroBestdoriPack(
   const assets: RenderResourceAssetProfile[] = [];
   for (const pinned of imageAssets) {
     const [width, height] = pinned.dimensions!;
-    const sourceRows = parsed.value.get(pinned.technicalName.toLowerCase()) ?? Object.freeze([]);
-    const rows = pinned.technicalName === "RhythmGameSprites1.png"
-      ? Object.freeze([...sourceRows, ...createDirectionalAliasRows(sourceRows)])
-      : sourceRows;
     const materialRole = materialRoleFor(pinned.technicalName);
+    const sourceRows = parsed.value.get(pinned.technicalName.toLowerCase());
+    if (materialRole === "sprite" && sourceRows === undefined) {
+      return reject(
+        "render.habahiro.bestdori-atlas-rows-missing",
+        "Every pinned HABAHIRO Sprite texture must have an explicit parsed row set.",
+      );
+    }
+    const directionalAliases = pinned.technicalName === "RhythmGameSprites1.png"
+      ? createDirectionalAliasRows(sourceRows!)
+      : ok(Object.freeze([]));
+    if (directionalAliases.status !== "ok") return directionalAliases;
+    const rows = Object.freeze([...(sourceRows ?? []), ...directionalAliases.value]);
     assets.push(Object.freeze({
       logicalAssetId: logicalAssetId(pinned.technicalName),
       role: materialRole === "sprite" ? "note-atlas" as const : "material-texture" as const,
@@ -409,14 +385,19 @@ function materialRoleFor(
 
 function createDirectionalAliasRows(
   rows: readonly RenderAtlasRow[],
-): readonly RenderAtlasRow[] {
-  const source = rows.find((row) => row.exactKey === "note_flick_top") ?? rows[0];
-  if (source === undefined) return Object.freeze([]);
-  return Object.freeze(["l", "r"].flatMap((direction) =>
+): SimulatorResult<readonly RenderAtlasRow[]> {
+  const source = rows.find((row) => row.exactKey === "note_flick_top");
+  if (source === undefined) {
+    return reject(
+      "render.habahiro.bestdori-directional-alias-source-missing",
+      "The external portable directional disposition requires exact note_flick_top and never aliases an arbitrary first row.",
+    );
+  }
+  return ok(Object.freeze(["l", "r"].flatMap((direction) =>
     Array.from({ length: 7 }, (_, lane) => Object.freeze({
       ...source,
       exactKey: `note_flick_${direction}_${lane}`,
-    }))));
+    })))));
 }
 
 function logicalAssetIdFor(technicalName: string): string {

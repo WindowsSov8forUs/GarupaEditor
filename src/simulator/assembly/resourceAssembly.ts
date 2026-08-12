@@ -181,7 +181,11 @@ export async function assembleSimulatorResources(
   const prepared: Array<() => void> = [];
   const rollback = (): void => {
     for (let index = prepared.length - 1; index >= 0; index -= 1) {
-      try { prepared[index]!(); } catch {}
+      try {
+        prepared[index]!();
+      } catch {
+        // Resource preparation already has a primary rejection; rollback continues every owner.
+      }
     }
   };
 

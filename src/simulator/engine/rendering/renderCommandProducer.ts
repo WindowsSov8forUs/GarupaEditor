@@ -1318,39 +1318,11 @@ export class RenderCommandProducer {
     const habahiroIcon = completeHabahiro
       ? resolveHabahiroIconBinding(information, this.resources)
       : null;
-    if (habahiroIcon !== null) {
-      const iconObjectId = habahiroIconRenderObjectId(poolObjectId);
-      const iconCreationSequence = this.creationSequenceByObjectId.get(iconObjectId);
-      if (iconCreationSequence === undefined) {
-        return evidenceRequired(
-          "render.habahiro.icon-owner-missing",
-          ["HAB-A04", "HAB-A06", "HAB-A07"],
-          "Every complete HABAHIRO Flick/Long/Slide visual requires its fixed icon owner.",
-        );
-      }
-      commands.push({
-        ...base(commands.length), kind: "set-transform", renderObjectId: iconObjectId,
-        position: start, scale: Object.freeze({ x: one.value, y: one.value }),
-        rotationDegrees: zero.value, color: scene.noteColor,
-        ordering: Object.freeze({
-          domainLayer: scene.noteDomainLayer,
-          sourceDepthOrSortingOrder: 72,
-          sourceZ: start.z,
-          creationSequence: iconCreationSequence,
-        }),
-        maskObjectId: null,
-      });
-      commands.push({
-        ...base(commands.length), kind: "bind-resource", renderObjectId: iconObjectId,
-        binding: "sprite", logicalAssetId: habahiroIcon.logicalAssetId,
-        exactKey: habahiroIcon.exactKey,
-      });
-      commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: iconObjectId });
-      commands.push({
-        ...base(commands.length), kind: "play-animation", renderObjectId: iconObjectId,
-        animationRole: habahiroIcon.animationRole, restart: true,
-      });
-    }
+    if (habahiroIcon !== null) return evidenceRequired(
+      "render.habahiro.external-note-animation-evidence-required",
+      ["PR08", "PR09", "PR11", "PR40", "HA-D04"],
+      "Current common Note animation clips are not authorized for the HABAHIRO external atlas; the route cannot substitute static or ordinary-atlas animation.",
+    );
     for (const motion of adjustment.value.motions) {
       commands.push({
         ...base(commands.length),
@@ -1363,21 +1335,7 @@ export class RenderCommandProducer {
         ordering,
         maskObjectId: null,
       });
-      if (habahiroIcon !== null) commands.push({
-        ...base(commands.length), kind: "set-transform",
-        renderObjectId: habahiroIconRenderObjectId(poolObjectId),
-        position: motion.position,
-        scale: Object.freeze({ x: motion.localScale.x, y: motion.localScale.y }),
-        rotationDegrees: zero.value, color: scene.noteColor,
-        ordering: Object.freeze({
-          ...ordering,
-          sourceDepthOrSortingOrder: 72,
-          creationSequence: this.creationSequenceByObjectId.get(
-            habahiroIconRenderObjectId(poolObjectId),
-          )!,
-        }),
-        maskObjectId: null,
-      });
+
     }
     const renderedTransform = adjustment.value.motions[
       adjustment.value.motions.length - 1
@@ -1669,10 +1627,7 @@ export class RenderCommandProducer {
           elapsed: 0,
         }));
       }
-      if (habahiroIcon !== null) this.noteAnimationElapsedSeconds.set(
-        habahiroIconRenderObjectId(poolObjectId),
-        Object.freeze({ role: habahiroIcon.animationRole, elapsed: 0 }),
-      );
+
       if (longTail) {
         const afterAnimation = completeHabahiro
           ? null
@@ -2745,15 +2700,11 @@ function resolveHabahiroSlideChildBinding(
 function resolveHabahiroAtlasLogicalIds(
   resources: RenderEngineResourceBindings,
 ): NonNullable<RenderEngineResourceBindings["habahiroAtlasLogicalAssetIds"]> {
-  return resources.habahiroAtlasLogicalAssetIds ?? Object.freeze({
-    normal: resources.noteAtlasLogicalAssetId,
-    normal16: resources.noteAtlasLogicalAssetId,
-    skill: resources.noteAtlasLogicalAssetId,
-    flick: resources.noteAtlasLogicalAssetId,
-    long: resources.noteAtlasLogicalAssetId,
-    longFlash: resources.noteAtlasLogicalAssetId,
-    slideAmong: resources.noteAtlasLogicalAssetId,
-  });
+  const atlases = resources.habahiroAtlasLogicalAssetIds;
+  if (atlases === undefined || Object.values(atlases).some((value) => !isNonEmpty(value))) {
+    throw new Error("complete HABAHIRO atlas bindings were not preflighted");
+  }
+  return atlases;
 }
 
 function resolveHabahiroMotionLaneIndex(
