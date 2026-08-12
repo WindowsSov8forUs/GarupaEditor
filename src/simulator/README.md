@@ -4,16 +4,20 @@
 
 ## 当前状态
 
-已完成并隔离验收：
+2026-08-12反审发现，原RP14/自治/device-closure验收没有执行带Score/Life profile的actual Pixi普通全谱，并以源码marker自行生成40项closed；因此**普通渲染portable总门已重开**。完整缺口与证据见`tmp/simulator-unrestored-implementation-audit.md`。
+
+已完成并保持有效的子门：
 
 - BMS构造、时钟与调度；
 - Auto Live、手动输入与判定；
-- 通用UInt32 score、combo、判定计数、Life、Miss/Bad伤害、Game Over与clear status；
+- 通用UInt32 score、combo、判定计数、Life、Miss/Bad伤害、Game Over与clear status领域状态机；
 - 逐谱C/B/A/S/SS master驱动的普通单人Score Rank/Gauge、8位最小零填充BMFont、Rank marker与SS曲线动画；
-- ordinary及HABAHIRO谱面、Skill音符atlas/SE/判定粒子、普通渲染与HUD；
+- ordinary及HABAHIRO谱面、Skill音符atlas/SE/判定粒子；
 - 逐谱BGM、14项固定玩法SE及WebAudio transport；
 - deterministic particle、Pixi particle与whole-engine ReturnTime；
 - single public launch、shared resource selection、unified scene/manual geometry、autonomous runtime及natural completion。
+
+当前未关闭：Combo/AP、AddScore、Result/JudgeTiming、Life/GameOver可见HUD，以及ordinary Flick/Directional/Long Flash current动画曲线。现有production仍含系统Text、Graphics假HUD或通用正弦动画；对应路径不得声明原作portable等价。
 
 已从production删除：
 
@@ -25,10 +29,13 @@
 
 **Skill音符不是角色技能效果。** `GameNoteAdditionalType.Skill`、ordinary/HAB专用外观、`SE_RHYTHM_TAP_SKILL`和Good/Great/Perfect Skill粒子继续保留。Fever谱面命名仍可解析，但不再产生多人Fever状态。
 
-Portable functional gate已关闭。原作物理设备exact保持：
+当前门状态：
 
 ```text
-open-not-claimed-fixed-device-limit
+ordinary_rendering_portable_gate=open-unrestored-hud-note-animation
+score_rank_gauge_portable_subgate=closed
+particle_audio_semantic_portable_subgates=closed
+original_device_exact_gate=open-not-claimed-fixed-device-limit
 ```
 
 ## Public边界
@@ -78,7 +85,9 @@ Production只内置manifest/metadata，不读取testing fixture。部署的中�
 - HABAHIRO：11 keys / 3,815,563 bytes；
 - Score HUD：8 keys / 5,085,771 bytes（7项font/PNG资源及1项SS animation profile）。
 
-共50 keys / 12,858,200 bytes，另加每session动态BGM。相比原库存只删除4项角色voice/cut-in专用SE；Skill音符SE、Skill粒子和`RhythmGameSprites5.png`保留。
+当前库存共50 keys / 12,858,200 bytes，另加每session动态BGM。相比原库存只删除4项角色voice/cut-in专用SE；Skill音符SE、Skill粒子和`RhythmGameSprites5.png`保留。
+
+该库存**不足以关闭完整ordinary HUD**：尚未纳入current Combo/AP、Judge/Timing、Life/GameOver所需atlas rows/字体及相关动画profile；actual Pixi首次正Combo可因缺少`icon_number_big_*`失败关闭。
 
 缺项、长度/SHA、PNG/MP3 metadata、cue或关系不符全部失败关闭；自治launch不隐式联网、不使用默认资源或fallback。
 
@@ -109,10 +118,14 @@ npm.cmd run simulator:test:score-life-state
 npm.cmd run simulator:test:device-closure
 ```
 
-通用score/life测试显式覆盖UInt32累分、C/B/A/S/SS全部阈值前/等于/后、Float32 ratio bits、同Rank/越级/SS/超`scoreMax`、事务discard/commit、扣血、上限、Game Over及Skill音符不触发角色效果；render测试锁定BMFont溢出不截断、Rank资源与SS 56-curve采样。
+通用score/life测试显式覆盖UInt32累分、C/B/A/S/SS全部阈值前/等于/后、Float32 ratio bits、同Rank/越级/SS/超`scoreMax`、事务discard/commit、扣血、上限、Game Over及Skill音符不触发角色效果；Score专项render测试锁定BMFont溢出不截断、Rank资源与SS 56-curve采样。
+
+`simulator:test:render-production`当前会以开放门失败；不得以Recording replay或synthetic 4×4 Pixi profile替代Reverse-backed actual Pixi普通全谱oracle。
 
 ## 显式开放项
 
+- ordinary Combo/AP、AddScore、Result/JudgeTiming、Life/GameOver HUD与Flick/Directional/Long Flash动画；
+- actual Pixi带Score/Life profile的普通全谱production replay与独立semantic oracle；
 - 非零initial practice seek；
 - `Button_07_BMS_1P_07` scene mapping；
 - 固定设备120/adaptive cadence、GPU/framebuffer、visible/audio physical exact；
