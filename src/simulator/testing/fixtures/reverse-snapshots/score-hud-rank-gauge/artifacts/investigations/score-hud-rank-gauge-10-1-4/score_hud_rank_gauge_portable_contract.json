@@ -1,0 +1,968 @@
+{
+  "schema_version": 1,
+  "status": "confirmed-current-ordinary-single-score-hud-rank-gauge-portable-contract",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "version_name": "10.1.4",
+    "version_code": 230,
+    "abi": "arm64-v8a",
+    "libil2cpp_sha256": "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F"
+  },
+  "sources": {
+    "dump": {
+      "path": "static/il2cpp/dump-10.1.4_230/dump.cs",
+      "bytes": 53099861,
+      "sha256": "4AC4ACC5981D0010B3D6A69482C37C1175339458246BC4A5878CF30F694E884B"
+    },
+    "script": {
+      "path": "static/il2cpp/dump-10.1.4_230/script.json",
+      "bytes": 139657741,
+      "sha256": "826C592717ED07974F8DCD435AF92B8DCE7A6406E0706AC43A85102FE8567D91"
+    },
+    "runtime": {
+      "path": "artifacts/investigations/score-hud-rank-gauge-10-1-4/runtime/ordinary-single-score-hud.trace.json.gz",
+      "bytes": 34938,
+      "sha256": "1C07E0EFEFCB562623AEECB0385CBBCF9D0B9E5EF83357B00E2CE404EA38C03D"
+    },
+    "master_music_786": {
+      "path": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/score_life_master_music_786_profile_oracle.json",
+      "bytes": 6664,
+      "sha256": "387360A99A8DE6400E2F673D322B9DBC9E8B7C0903420A488CF655D7BCD9FA5E"
+    },
+    "hud_assets": {
+      "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/resource_pixi_rendering_hud_asset_profiles.json",
+      "bytes": 432616,
+      "sha256": "0D36B7FD2E50EEE9F4528CB8D508D972EA2E3314863DD47CFE3617B314C5A05D"
+    }
+  },
+  "scope": {
+    "authorized": [
+      "InGameMode.SingleNormal",
+      "InGameMode.Practice",
+      "ordinary Auto Live through SingleNormal"
+    ],
+    "excluded": [
+      "SingleChallenge",
+      "Garupa Cup",
+      "SingleMedley",
+      "SingleStageChallenge",
+      "all multiplayer and festival modes"
+    ]
+  },
+  "enums": {
+    "live_clear_rank": {
+      "S": 0,
+      "A": 1,
+      "B": 2,
+      "C": 3,
+      "D": 4,
+      "SS": 5,
+      "SSS": 6,
+      "S_plus": 7,
+      "A_plus": 8,
+      "B_plus": 9,
+      "C_plus": 10,
+      "D_plus": 11,
+      "SS_plus": 12
+    }
+  },
+  "master_input": {
+    "fields": [
+      "musicId",
+      "difficulty",
+      "scoreC",
+      "scoreB",
+      "scoreA",
+      "scoreS",
+      "scoreSS"
+    ],
+    "validation": "music/difficulty identity exact; unsigned integer thresholds strictly C<B<A<S<SS; no defaults or BMS/scoreLevel derivation"
+  },
+  "state_machine": {
+    "initial_before_rank": "D",
+    "initial_current_rank": "D",
+    "rank_boundaries": "score<threshold; exact threshold enters the named rank",
+    "rank_sprite": {
+      "D": "score_meter_blue",
+      "C": "score_meter_green",
+      "B": "score_meter_orange",
+      "A": "score_meter_pink",
+      "S": "score_meter_s",
+      "SS": "score_meter_s"
+    },
+    "score_max": {
+      "formula": "uint(Float32(uint(scoreSS))*Float32(1.111111044883728))",
+      "coefficient_f32_bits": "3F8E38E3",
+      "sample_value": 959999
+    },
+    "ratio": "Float32(uint(score))/Float32(uint(scoreMax)); UISlider clamps, callback receives unclamped ratio",
+    "update_order": [
+      "rank compare",
+      "foreground sprite assignment",
+      "rank callback iff enum changed",
+      "UISlider.set_value",
+      "foreground GameObject active iff ratio>0",
+      "ratio callback"
+    ],
+    "high_rank_effect": {
+      "SS": "activate highRankEffect and play constructor hash ScoreGaugeSS",
+      "SSS": "activate highRankEffect and play constructor hash ScoreGaugeSSS",
+      "other": "no high-rank animation",
+      "ordinary_master_has_sss": false
+    }
+  },
+  "score_text": {
+    "max_digits": 8,
+    "function": "StringUtility.ZeroFilledNumberString",
+    "leading_color": {
+      "type": "Gray",
+      "bbcode": "[BEBEBE]"
+    },
+    "significant_color": {
+      "type": "Pink",
+      "bbcode": "[FF3B72]"
+    },
+    "zero_digit_count": 1,
+    "overflow": "not truncated; maxDigit only controls prepended zero count"
+  },
+  "scene": {
+    "score_root_local_position": [
+      -411.0,
+      309.0,
+      0.0
+    ],
+    "progress_local_position": [
+      25.0,
+      -45.0,
+      0.0
+    ],
+    "base_local_position": [
+      148.0,
+      -65.0,
+      0.0
+    ],
+    "total_score": {
+      "path_id": 1271,
+      "script_file_id": 1,
+      "script_path_id": 6527,
+      "class": "UILabel",
+      "serialized_size": 372,
+      "path": "GamePlay/UI_Root/Display/Score/Base/TotalScore",
+      "transform": {
+        "path_id": 767,
+        "game_object_path_id": 204,
+        "game_object_name": "TotalScore",
+        "local_position": [
+          64.0,
+          -19.0,
+          0.0
+        ],
+        "local_scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "parent_path_id": 745,
+        "children": []
+      },
+      "ui_local_transform": {
+        "position": [
+          -199.0,
+          225.0,
+          0.0
+        ],
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "width": 188,
+      "height": 204,
+      "depth": 40,
+      "text": "10000000",
+      "font_size": 28,
+      "pivot": "Right",
+      "support_encoding": true
+    },
+    "gauge": {
+      "background": {
+        "local_position": [
+          0.0,
+          -23.0,
+          0.0
+        ],
+        "width": 470,
+        "height": 82,
+        "pivot": "Left",
+        "depth": 4,
+        "sprite": "gauge_base_score"
+      },
+      "background_cover": {
+        "local_position": [
+          38.0,
+          -1.0,
+          0.0
+        ],
+        "width": 427,
+        "height": 33,
+        "pivot": "Left",
+        "depth": 28,
+        "sprite": "bg_gauge_score_multi"
+      },
+      "foreground": {
+        "local_position": [
+          41.0,
+          -1.0,
+          0.0
+        ],
+        "width": 421,
+        "height": 24,
+        "pivot": "Left",
+        "depth": 5,
+        "initial_sprite": "score_meter_blue"
+      },
+      "slider_value": "UIProgressBar.Set clamps score/scoreMax to [0,1]",
+      "indicator_local_x": "trunc_toward_zero(ratio*422), except ratio>=1 => 422"
+    },
+    "rank_roots": [
+      {
+        "rank": "C",
+        "initial_local_position": [
+          50.0,
+          -2.0,
+          0.0
+        ],
+        "separator": {
+          "sprite": "level_mark",
+          "size": [
+            8,
+            6
+          ],
+          "local_position": [
+            0.0,
+            -8.0,
+            0.0
+          ],
+          "depth": 29
+        },
+        "label": {
+          "font_size": 12,
+          "height": 26
+        }
+      },
+      {
+        "rank": "B",
+        "initial_local_position": [
+          100.0,
+          -2.0,
+          0.0
+        ],
+        "separator": {
+          "sprite": "level_mark",
+          "size": [
+            8,
+            6
+          ],
+          "local_position": [
+            0.0,
+            -8.0,
+            0.0
+          ],
+          "depth": 29
+        },
+        "label": {
+          "font_size": 12,
+          "height": 26
+        }
+      },
+      {
+        "rank": "A",
+        "initial_local_position": [
+          150.0,
+          -2.0,
+          0.0
+        ],
+        "separator": {
+          "sprite": "level_mark",
+          "size": [
+            8,
+            6
+          ],
+          "local_position": [
+            0.0,
+            -8.0,
+            0.0
+          ],
+          "depth": 29
+        },
+        "label": {
+          "font_size": 12,
+          "height": 26
+        }
+      },
+      {
+        "rank": "S",
+        "initial_local_position": [
+          200.0,
+          -2.0,
+          0.0
+        ],
+        "separator": {
+          "sprite": "level_mark",
+          "size": [
+            8,
+            6
+          ],
+          "local_position": [
+            0.0,
+            -8.0,
+            0.0
+          ],
+          "depth": 29
+        },
+        "label": {
+          "font_size": 12,
+          "height": 26
+        }
+      },
+      {
+        "rank": "SS",
+        "initial_local_position": [
+          420.0,
+          -2.0,
+          0.0
+        ],
+        "separator": {
+          "sprite": "level_mark",
+          "size": [
+            8,
+            6
+          ],
+          "local_position": [
+            0.0,
+            -8.0,
+            0.0
+          ],
+          "depth": 29
+        },
+        "label": {
+          "font_size": 12,
+          "height": 26
+        }
+      },
+      {
+        "rank": "SSS",
+        "initial_local_position": [
+          420.0,
+          -2.0,
+          0.0
+        ],
+        "separator": {
+          "sprite": "level_mark",
+          "size": [
+            8,
+            6
+          ],
+          "local_position": [
+            0.0,
+            -8.0,
+            0.0
+          ],
+          "depth": 29
+        },
+        "label": {
+          "font_size": 12,
+          "height": 26
+        }
+      }
+    ]
+  },
+  "resources": {
+    "score_font": {
+      "source_texture": {
+        "file_id": 868,
+        "path_id": 1,
+        "external": "702bf9b25c49a4524990d053f774a0f1",
+        "types": [
+          "Texture2D"
+        ],
+        "path": "base.apk!/assets/bin/Data/702bf9b25c49a4524990d053f774a0f1",
+        "size": [
+          512,
+          256
+        ],
+        "sha256": "1d12852ecd95e273e333e6f17ee1c47a3c9a58cb3ecef6ef1fcad0e48af5879c",
+        "name": "score",
+        "rgba_sha256": "61640bd9d352a0cab9ff92924c11167fe9554b52b15deeb609363014aea1c552",
+        "filter_mode": 1,
+        "wrap_u": 0,
+        "wrap_v": 0
+      },
+      "bmfont": {
+        "file_id": 870,
+        "path_id": 1,
+        "external": "6701cd85a7a5c4385bd4840f2273ed1b",
+        "types": [
+          "TextAsset"
+        ],
+        "path": "base.apk!/assets/bin/Data/6701cd85a7a5c4385bd4840f2273ed1b",
+        "size": 12180,
+        "sha256": "8471b1e7529d09840fd0c4130e7a991a249fc7940fdc6aba70b4031b6a60a81f",
+        "line_height": 36,
+        "base": 24,
+        "scale": [
+          512,
+          256
+        ],
+        "digit_glyphs": {
+          "0": {
+            "id": 48,
+            "x": 92,
+            "y": 40,
+            "width": 40,
+            "height": 28,
+            "xoffset": 2,
+            "yoffset": 0,
+            "xadvance": 36,
+            "page": 0,
+            "chnl": 0
+          },
+          "1": {
+            "id": 49,
+            "x": 138,
+            "y": 130,
+            "width": 17,
+            "height": 28,
+            "xoffset": 0,
+            "yoffset": 0,
+            "xadvance": 11,
+            "page": 0,
+            "chnl": 0
+          },
+          "2": {
+            "id": 50,
+            "x": 43,
+            "y": 100,
+            "width": 37,
+            "height": 28,
+            "xoffset": 2,
+            "yoffset": 0,
+            "xadvance": 33,
+            "page": 0,
+            "chnl": 0
+          },
+          "3": {
+            "id": 51,
+            "x": 82,
+            "y": 100,
+            "width": 37,
+            "height": 28,
+            "xoffset": 2,
+            "yoffset": 0,
+            "xadvance": 33,
+            "page": 0,
+            "chnl": 0
+          },
+          "4": {
+            "id": 52,
+            "x": 121,
+            "y": 100,
+            "width": 37,
+            "height": 28,
+            "xoffset": 2,
+            "yoffset": 0,
+            "xadvance": 33,
+            "page": 0,
+            "chnl": 0
+          },
+          "5": {
+            "id": 53,
+            "x": 160,
+            "y": 100,
+            "width": 37,
+            "height": 28,
+            "xoffset": 2,
+            "yoffset": 0,
+            "xadvance": 33,
+            "page": 0,
+            "chnl": 0
+          },
+          "6": {
+            "id": 54,
+            "x": 199,
+            "y": 100,
+            "width": 37,
+            "height": 28,
+            "xoffset": 2,
+            "yoffset": 0,
+            "xadvance": 33,
+            "page": 0,
+            "chnl": 0
+          },
+          "7": {
+            "id": 55,
+            "x": 432,
+            "y": 100,
+            "width": 31,
+            "height": 28,
+            "xoffset": 2,
+            "yoffset": 0,
+            "xadvance": 27,
+            "page": 0,
+            "chnl": 0
+          },
+          "8": {
+            "id": 56,
+            "x": 263,
+            "y": 130,
+            "width": 37,
+            "height": 27,
+            "xoffset": 2,
+            "yoffset": 1,
+            "xadvance": 33,
+            "page": 0,
+            "chnl": 0
+          },
+          "9": {
+            "id": 57,
+            "x": 238,
+            "y": 100,
+            "width": 37,
+            "height": 28,
+            "xoffset": 2,
+            "yoffset": 0,
+            "xadvance": 33,
+            "page": 0,
+            "chnl": 0
+          }
+        }
+      },
+      "portable_texture": {
+        "path": "artifacts/investigations/score-hud-rank-gauge-10-1-4/portable-assets/score-font.png",
+        "bytes": 48359,
+        "sha256": "3DEEB2AA6E0B1CEDCB76208DEED73F81D7B7BE952A59708B6B9F0851F0CEE0FE"
+      }
+    },
+    "rhythm_game_ui": {
+      "source_texture": {
+        "file_id": 601,
+        "path_id": 1,
+        "external": "923acbc2709f740bb8f9ccbd6fed5d52",
+        "types": [
+          "Texture2D"
+        ],
+        "path": "base.apk!/assets/bin/Data/923acbc2709f740bb8f9ccbd6fed5d52",
+        "size": [
+          1024,
+          1024
+        ],
+        "sha256": "788141db50d3a33a0b4ed869d89dd7778ff66a4e2244a19daa9384cd017f4f70",
+        "name": "RhythmGameUI",
+        "rgba_sha256": "a3abe242c670dffe7f82abc4a3fea4a8489eb4aeee4f16229d63ba5d4da3a65b",
+        "filter_mode": 2,
+        "wrap_u": 1,
+        "wrap_v": 1
+      },
+      "portable_texture": {
+        "path": "artifacts/investigations/score-hud-rank-gauge-10-1-4/portable-assets/rhythm-game-ui.png",
+        "bytes": 641969,
+        "sha256": "7CFEC4DABC83BC20E79E21D6AEB13CD9FA77ABE499E5E088A60C41014B96F6B6"
+      },
+      "score_sprites": [
+        {
+          "name": "gauge_base_score",
+          "rect": [
+            648,
+            449,
+            236,
+            82
+          ],
+          "border": [
+            216,
+            16,
+            0,
+            0
+          ],
+          "padding": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "bg_gauge_score_multi",
+          "rect": [
+            277,
+            195,
+            18,
+            18
+          ],
+          "border": [
+            8,
+            8,
+            8,
+            8
+          ],
+          "padding": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "score_meter_blue",
+          "rect": [
+            413,
+            133,
+            40,
+            22
+          ],
+          "border": [
+            4,
+            4,
+            3,
+            3
+          ],
+          "padding": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "score_meter_green",
+          "rect": [
+            504,
+            128,
+            40,
+            22
+          ],
+          "border": [
+            5,
+            5,
+            0,
+            0
+          ],
+          "padding": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "score_meter_orange",
+          "rect": [
+            586,
+            151,
+            40,
+            22
+          ],
+          "border": [
+            5,
+            5,
+            0,
+            0
+          ],
+          "padding": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "score_meter_pink",
+          "rect": [
+            277,
+            125,
+            40,
+            22
+          ],
+          "border": [
+            5,
+            5,
+            0,
+            0
+          ],
+          "padding": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "score_meter_s",
+          "rect": [
+            0,
+            393,
+            662,
+            22
+          ],
+          "border": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "padding": [
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    "rank_label_font": {
+      "name": "sgm",
+      "source_file": "sharedassets0.assets",
+      "source_path_id": 75,
+      "font_size": 12,
+      "portable_font": {
+        "path": "artifacts/investigations/score-hud-rank-gauge-10-1-4/portable-assets/rank-label-font.ttf",
+        "bytes": 4304904,
+        "sha256": "949356BBFEA78FB5BC3BA1610E1C64235FCCB9FD9A6F166A996715706FBFCE56"
+      }
+    },
+    "ui_common_level_mark": {
+      "texture_size": [
+        512,
+        256
+      ],
+      "texture_rgba_sha256": "0AF2857DD9F5F6CA3D581748A5A9E9040D15831E36BF826C7AFDF0002263A5D6",
+      "rect": [
+        128,
+        4,
+        8,
+        5
+      ],
+      "portable_texture": {
+        "path": "artifacts/investigations/score-hud-rank-gauge-10-1-4/portable-assets/ui-common.png",
+        "bytes": 43935,
+        "sha256": "54659D05FB2902A7BD761D581A7DEFE7816B7D96977DCF960CA18F358B415A88"
+      }
+    },
+    "high_rank_effect": {
+      "controller": {
+        "name": "ScoreGaugeAnimation",
+        "source_bytes": 884,
+        "source_sha256": "FF5181F398BA79EC52C167555A6AB675E36E9A5E4122619804923C1F63A28E5A",
+        "states": [
+          "ScoreGaugeSS",
+          "ScoreGaugeSSS"
+        ]
+      },
+      "clips": [
+        {
+          "name": "ScoreGaugeSS",
+          "source_bytes": 10796,
+          "source_sha256": "8FBB59FF0DC37177A3513206449A03D42ED6D3A724D45D185CCF7A48D1F3C9DC",
+          "duration_seconds": 3.0,
+          "loop": true
+        },
+        {
+          "name": "ScoreGaugeSSS",
+          "source_bytes": 11352,
+          "source_sha256": "19522B7DB12F262D3CDE984116A19EA96F0AF653E82C480BAD1D04BB0ECD32EA",
+          "duration_seconds": 3.0,
+          "loop": true
+        }
+      ],
+      "portable_textures": [
+        {
+          "path": "artifacts/investigations/score-hud-rank-gauge-10-1-4/portable-assets/high-rank-kira.png",
+          "bytes": 2002,
+          "sha256": "F7A2AA384A4187C5BAFC2F9A51E31F181BBB331571B254A8F6307C345A68F54D"
+        },
+        {
+          "path": "artifacts/investigations/score-hud-rank-gauge-10-1-4/portable-assets/high-rank-long-star.png",
+          "bytes": 5658,
+          "sha256": "2F2BBA614FA19EA9D013D880687AF8F4EFC420A86B45E69412F41331671C2A4E"
+        },
+        {
+          "path": "artifacts/investigations/score-hud-rank-gauge-10-1-4/portable-assets/high-rank-overlay.png",
+          "bytes": 908,
+          "sha256": "5BB09270C1BE907738A2071444E9866A3A19F493148599CE1F15F361719D6594"
+        }
+      ],
+      "portable_animation": {
+        "path": "artifacts/investigations/score-hud-rank-gauge-10-1-4/score_gauge_ss_animation_profile.json",
+        "bytes": 81471,
+        "sha256": "B567F40836F22A2368E4CDE205269458A037EDE5733573926910991305ADFA05"
+      }
+    }
+  },
+  "oracle": {
+    "music_786_special": {
+      "thresholds": {
+        "c": 36000,
+        "b": 216000,
+        "a": 432000,
+        "s": 648000,
+        "ss": 864000
+      },
+      "score_max": 959999,
+      "boundaries": [
+        {
+          "score": 0,
+          "rank": "D",
+          "ratio_f32_bits": "00000000",
+          "slider_f32_bits": "00000000",
+          "indicator_local_x": 0
+        },
+        {
+          "score": 35999,
+          "rank": "D",
+          "ratio_f32_bits": "3D19988C",
+          "slider_f32_bits": "3D19988C",
+          "indicator_local_x": 15
+        },
+        {
+          "score": 36000,
+          "rank": "C",
+          "ratio_f32_bits": "3D1999A4",
+          "slider_f32_bits": "3D1999A4",
+          "indicator_local_x": 15
+        },
+        {
+          "score": 36001,
+          "rank": "C",
+          "ratio_f32_bits": "3D199ABC",
+          "slider_f32_bits": "3D199ABC",
+          "indicator_local_x": 15
+        },
+        {
+          "score": 215999,
+          "rank": "C",
+          "ratio_f32_bits": "3E666630",
+          "slider_f32_bits": "3E666630",
+          "indicator_local_x": 94
+        },
+        {
+          "score": 216000,
+          "rank": "B",
+          "ratio_f32_bits": "3E666676",
+          "slider_f32_bits": "3E666676",
+          "indicator_local_x": 94
+        },
+        {
+          "score": 216001,
+          "rank": "B",
+          "ratio_f32_bits": "3E6666BC",
+          "slider_f32_bits": "3E6666BC",
+          "indicator_local_x": 94
+        },
+        {
+          "score": 431999,
+          "rank": "B",
+          "ratio_f32_bits": "3EE66653",
+          "slider_f32_bits": "3EE66653",
+          "indicator_local_x": 189
+        },
+        {
+          "score": 432000,
+          "rank": "A",
+          "ratio_f32_bits": "3EE66676",
+          "slider_f32_bits": "3EE66676",
+          "indicator_local_x": 189
+        },
+        {
+          "score": 432001,
+          "rank": "A",
+          "ratio_f32_bits": "3EE66699",
+          "slider_f32_bits": "3EE66699",
+          "indicator_local_x": 189
+        },
+        {
+          "score": 647999,
+          "rank": "A",
+          "ratio_f32_bits": "3F2CCCC7",
+          "slider_f32_bits": "3F2CCCC7",
+          "indicator_local_x": 284
+        },
+        {
+          "score": 648000,
+          "rank": "S",
+          "ratio_f32_bits": "3F2CCCD9",
+          "slider_f32_bits": "3F2CCCD9",
+          "indicator_local_x": 284
+        },
+        {
+          "score": 648001,
+          "rank": "S",
+          "ratio_f32_bits": "3F2CCCEA",
+          "slider_f32_bits": "3F2CCCEA",
+          "indicator_local_x": 284
+        },
+        {
+          "score": 863999,
+          "rank": "S",
+          "ratio_f32_bits": "3F666665",
+          "slider_f32_bits": "3F666665",
+          "indicator_local_x": 379
+        },
+        {
+          "score": 864000,
+          "rank": "SS",
+          "ratio_f32_bits": "3F666676",
+          "slider_f32_bits": "3F666676",
+          "indicator_local_x": 379
+        },
+        {
+          "score": 864001,
+          "rank": "SS",
+          "ratio_f32_bits": "3F666688",
+          "slider_f32_bits": "3F666688",
+          "indicator_local_x": 379
+        },
+        {
+          "score": 959998,
+          "rank": "SS",
+          "ratio_f32_bits": "3F7FFFEF",
+          "slider_f32_bits": "3F7FFFEF",
+          "indicator_local_x": 421
+        },
+        {
+          "score": 959999,
+          "rank": "SS",
+          "ratio_f32_bits": "3F800000",
+          "slider_f32_bits": "3F800000",
+          "indicator_local_x": 422
+        },
+        {
+          "score": 960000,
+          "rank": "SS",
+          "ratio_f32_bits": "3F800009",
+          "slider_f32_bits": "3F800000",
+          "indicator_local_x": 422
+        }
+      ]
+    },
+    "runtime_observation": {
+      "sample_score": 54610,
+      "sample_score_max": 951999,
+      "sample_ratio_f32_bits": "3D6AF5FF",
+      "transition": {
+        "score": 214619,
+        "before_rank": 3,
+        "current_rank": 2,
+        "callback_rank": 2
+      }
+    }
+  },
+  "failure_policy": {
+    "missing_master": "evidence-required before resource read/domain mutation",
+    "invalid_threshold_order": "evidence-required",
+    "missing_or_invalid_resource": "resource-unavailable/resource-integrity/resource-decode before domain mutation",
+    "fallback_score_max_60000": "original diagnostic fallback documented but not authorized as portable production default"
+  },
+  "unknown_fields": [],
+  "blocking_findings": [],
+  "production_authorization": true
+}

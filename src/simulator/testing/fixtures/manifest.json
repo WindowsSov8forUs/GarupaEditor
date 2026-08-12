@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "purpose": "offline simulator test fixtures",
   "sourceRepository": "HOST________/VSCode/GirlsBandParty-Reverse",
-  "sourceHead": "6f49ebbce86c162f0d86ea9a612618b4c573d45c",
+  "sourceHead": "95e629d9bdb3ac02203eab03ffeb545ccd74fb36",
   "entries": [
     {
       "path": "habahiro-snapshots/bestdori-atlas-profile.json",
@@ -88,6 +88,69 @@
       "sourcePath": "artifacts/investigations/auto-live-runtime-contract-supplement/auto_live_supplement_fixed_event_trace.json",
       "bytes": 14124,
       "sha256": "372A9AEC10FCACD5ECAD92C2B6D51E31AD8DD961F58A627C2DFE84EA59C17B78"
+    },
+    {
+      "path": "reverse-snapshots/autonomous-module/artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary-portable-assets/curve-note-line.png",
+      "sourceReverseCommit": "6f49ebbce86c162f0d86ea9a612618b4c573d45c",
+      "sourcePath": "artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary-portable-assets/curve-note-line.png",
+      "bytes": 1905,
+      "sha256": "09F8E06F160A34D95B337590BCBED1A88C914396B7EF3B4E8373CE29F8527FBE"
+    },
+    {
+      "path": "reverse-snapshots/autonomous-module/artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary-portable-assets/directional-flick-sprites.png",
+      "sourceReverseCommit": "6f49ebbce86c162f0d86ea9a612618b4c573d45c",
+      "sourcePath": "artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary-portable-assets/directional-flick-sprites.png",
+      "bytes": 264263,
+      "sha256": "9B16438FEFA28997D7B813421A8683B42D9BFECD378CC419F1E688239FD82365"
+    },
+    {
+      "path": "reverse-snapshots/autonomous-module/artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary-portable-assets/directional-line-left.png",
+      "sourceReverseCommit": "6f49ebbce86c162f0d86ea9a612618b4c573d45c",
+      "sourcePath": "artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary-portable-assets/directional-line-left.png",
+      "bytes": 190,
+      "sha256": "6B9A27F589A65CBF9F36D1F73690B95D8304BC95DC3F8BE3A580B8AEB47C478B"
+    },
+    {
+      "path": "reverse-snapshots/autonomous-module/artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary-portable-assets/directional-line-right.png",
+      "sourceReverseCommit": "6f49ebbce86c162f0d86ea9a612618b4c573d45c",
+      "sourcePath": "artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary-portable-assets/directional-line-right.png",
+      "bytes": 191,
+      "sha256": "19654D4B306230CC770ED37E2CD763239AC2A5F253064123DBF3862DBD271886"
+    },
+    {
+      "path": "reverse-snapshots/autonomous-module/artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary-portable-assets/long-note-line.png",
+      "sourceReverseCommit": "6f49ebbce86c162f0d86ea9a612618b4c573d45c",
+      "sourcePath": "artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary-portable-assets/long-note-line.png",
+      "bytes": 1976,
+      "sha256": "D4011A1FF77407E3E3EA224C6C81B5BFC3122AC65E4A1A2FC99CFA667E1ECA2D"
+    },
+    {
+      "path": "reverse-snapshots/autonomous-module/artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary-portable-assets/rhythm-game-sprites.png",
+      "sourceReverseCommit": "6f49ebbce86c162f0d86ea9a612618b4c573d45c",
+      "sourcePath": "artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary-portable-assets/rhythm-game-sprites.png",
+      "bytes": 1190293,
+      "sha256": "E3D8EDE1D3CEC31D0250D41E0DF2EDE9822A9BDC981D2B69585F5875C5A9618F"
+    },
+    {
+      "path": "reverse-snapshots/autonomous-module/artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary-portable-assets/simultaneous-line.png",
+      "sourceReverseCommit": "6f49ebbce86c162f0d86ea9a612618b4c573d45c",
+      "sourcePath": "artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary-portable-assets/simultaneous-line.png",
+      "bytes": 247,
+      "sha256": "9DC5E6C2DAA88BACFC3F39F791CAC7C40601300AA4BD6870344326C2CCB4CCE5"
+    },
+    {
+      "path": "reverse-snapshots/autonomous-module/artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary_portable_pack_manifest.json",
+      "sourceReverseCommit": "6f49ebbce86c162f0d86ea9a612618b4c573d45c",
+      "sourcePath": "artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary_portable_pack_manifest.json",
+      "bytes": 4978,
+      "sha256": "174E885B00989AC1724B884C9D15115BA9476E503DE436852E96E1BB3F4EC36A"
+    },
+    {
+      "path": "reverse-snapshots/autonomous-module/artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary_portable_profile.json",
+      "sourceReverseCommit": "6f49ebbce86c162f0d86ea9a612618b4c573d45c",
+      "sourcePath": "artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary_portable_profile.json",
+      "bytes": 20287,
+      "sha256": "82F9D26EF7A2A770F4846B534528094EEEDCE87DABDF5BB9E8D108777751453C"
     },
     {
       "path": "reverse-snapshots/chart-construction/artifacts/investigations/runtime-integration-prototype/production_bms_validation.json",
@@ -440,6 +503,69 @@
       "sha256": "03DEE2153F0E700448D87DD5D9DF977AE163C9BEE1333A578A79AF210C28EDEB"
     },
     {
+      "path": "reverse-snapshots/score-hud-rank-gauge/artifacts/investigations/score-hud-rank-gauge-10-1-4/portable-assets/high-rank-kira.png",
+      "sourceReverseCommit": "95e629d9bdb3ac02203eab03ffeb545ccd74fb36",
+      "sourcePath": "artifacts/investigations/score-hud-rank-gauge-10-1-4/portable-assets/high-rank-kira.png",
+      "bytes": 2002,
+      "sha256": "F7A2AA384A4187C5BAFC2F9A51E31F181BBB331571B254A8F6307C345A68F54D"
+    },
+    {
+      "path": "reverse-snapshots/score-hud-rank-gauge/artifacts/investigations/score-hud-rank-gauge-10-1-4/portable-assets/high-rank-long-star.png",
+      "sourceReverseCommit": "95e629d9bdb3ac02203eab03ffeb545ccd74fb36",
+      "sourcePath": "artifacts/investigations/score-hud-rank-gauge-10-1-4/portable-assets/high-rank-long-star.png",
+      "bytes": 5658,
+      "sha256": "2F2BBA614FA19EA9D013D880687AF8F4EFC420A86B45E69412F41331671C2A4E"
+    },
+    {
+      "path": "reverse-snapshots/score-hud-rank-gauge/artifacts/investigations/score-hud-rank-gauge-10-1-4/portable-assets/high-rank-overlay.png",
+      "sourceReverseCommit": "95e629d9bdb3ac02203eab03ffeb545ccd74fb36",
+      "sourcePath": "artifacts/investigations/score-hud-rank-gauge-10-1-4/portable-assets/high-rank-overlay.png",
+      "bytes": 908,
+      "sha256": "5BB09270C1BE907738A2071444E9866A3A19F493148599CE1F15F361719D6594"
+    },
+    {
+      "path": "reverse-snapshots/score-hud-rank-gauge/artifacts/investigations/score-hud-rank-gauge-10-1-4/portable-assets/rank-label-font.ttf",
+      "sourceReverseCommit": "95e629d9bdb3ac02203eab03ffeb545ccd74fb36",
+      "sourcePath": "artifacts/investigations/score-hud-rank-gauge-10-1-4/portable-assets/rank-label-font.ttf",
+      "bytes": 4304904,
+      "sha256": "949356BBFEA78FB5BC3BA1610E1C64235FCCB9FD9A6F166A996715706FBFCE56"
+    },
+    {
+      "path": "reverse-snapshots/score-hud-rank-gauge/artifacts/investigations/score-hud-rank-gauge-10-1-4/portable-assets/rhythm-game-ui.png",
+      "sourceReverseCommit": "95e629d9bdb3ac02203eab03ffeb545ccd74fb36",
+      "sourcePath": "artifacts/investigations/score-hud-rank-gauge-10-1-4/portable-assets/rhythm-game-ui.png",
+      "bytes": 641969,
+      "sha256": "7CFEC4DABC83BC20E79E21D6AEB13CD9FA77ABE499E5E088A60C41014B96F6B6"
+    },
+    {
+      "path": "reverse-snapshots/score-hud-rank-gauge/artifacts/investigations/score-hud-rank-gauge-10-1-4/portable-assets/score-font.png",
+      "sourceReverseCommit": "95e629d9bdb3ac02203eab03ffeb545ccd74fb36",
+      "sourcePath": "artifacts/investigations/score-hud-rank-gauge-10-1-4/portable-assets/score-font.png",
+      "bytes": 48359,
+      "sha256": "3DEEB2AA6E0B1CEDCB76208DEED73F81D7B7BE952A59708B6B9F0851F0CEE0FE"
+    },
+    {
+      "path": "reverse-snapshots/score-hud-rank-gauge/artifacts/investigations/score-hud-rank-gauge-10-1-4/portable-assets/ui-common.png",
+      "sourceReverseCommit": "95e629d9bdb3ac02203eab03ffeb545ccd74fb36",
+      "sourcePath": "artifacts/investigations/score-hud-rank-gauge-10-1-4/portable-assets/ui-common.png",
+      "bytes": 43935,
+      "sha256": "54659D05FB2902A7BD761D581A7DEFE7816B7D96977DCF960CA18F358B415A88"
+    },
+    {
+      "path": "reverse-snapshots/score-hud-rank-gauge/artifacts/investigations/score-hud-rank-gauge-10-1-4/score_gauge_ss_animation_profile.json",
+      "sourceReverseCommit": "95e629d9bdb3ac02203eab03ffeb545ccd74fb36",
+      "sourcePath": "artifacts/investigations/score-hud-rank-gauge-10-1-4/score_gauge_ss_animation_profile.json",
+      "bytes": 81471,
+      "sha256": "B567F40836F22A2368E4CDE205269458A037EDE5733573926910991305ADFA05"
+    },
+    {
+      "path": "reverse-snapshots/score-hud-rank-gauge/artifacts/investigations/score-hud-rank-gauge-10-1-4/score_hud_rank_gauge_portable_contract.json",
+      "sourceReverseCommit": "95e629d9bdb3ac02203eab03ffeb545ccd74fb36",
+      "sourcePath": "artifacts/investigations/score-hud-rank-gauge-10-1-4/score_hud_rank_gauge_portable_contract.json",
+      "bytes": 23582,
+      "sha256": "5FCDED8221C2D71D4AC98AA86F3C567D8C19AB78D8FA7086DAB98A92938CB7FD"
+    },
+    {
       "path": "reverse-snapshots/score-life-state/artifacts/investigations/score-life-state-runtime-contract-10-1-4/closure.json",
       "sourceReverseCommit": "c9a4629bdfac248c167a966a92bdb2c45dad87e6",
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/closure.json",
@@ -480,69 +606,6 @@
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/score_life_state_portable_contract.json",
       "bytes": 128440,
       "sha256": "19DA944D1866ED98586C55F69D20E0F01424AE44BC2602F8AB5B0EE898189B9F"
-    },
-    {
-      "path": "reverse-snapshots/autonomous-module/artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary_portable_pack_manifest.json",
-      "sourceReverseCommit": "6f49ebbce86c162f0d86ea9a612618b4c573d45c",
-      "sourcePath": "artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary_portable_pack_manifest.json",
-      "bytes": 4978,
-      "sha256": "174E885B00989AC1724B884C9D15115BA9476E503DE436852E96E1BB3F4EC36A"
-    },
-    {
-      "path": "reverse-snapshots/autonomous-module/artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary_portable_profile.json",
-      "sourceReverseCommit": "6f49ebbce86c162f0d86ea9a612618b4c573d45c",
-      "sourcePath": "artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary_portable_profile.json",
-      "bytes": 20287,
-      "sha256": "82F9D26EF7A2A770F4846B534528094EEEDCE87DABDF5BB9E8D108777751453C"
-    },
-    {
-      "path": "reverse-snapshots/autonomous-module/artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary-portable-assets/curve-note-line.png",
-      "sourceReverseCommit": "6f49ebbce86c162f0d86ea9a612618b4c573d45c",
-      "sourcePath": "artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary-portable-assets/curve-note-line.png",
-      "bytes": 1905,
-      "sha256": "09F8E06F160A34D95B337590BCBED1A88C914396B7EF3B4E8373CE29F8527FBE"
-    },
-    {
-      "path": "reverse-snapshots/autonomous-module/artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary-portable-assets/directional-flick-sprites.png",
-      "sourceReverseCommit": "6f49ebbce86c162f0d86ea9a612618b4c573d45c",
-      "sourcePath": "artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary-portable-assets/directional-flick-sprites.png",
-      "bytes": 264263,
-      "sha256": "9B16438FEFA28997D7B813421A8683B42D9BFECD378CC419F1E688239FD82365"
-    },
-    {
-      "path": "reverse-snapshots/autonomous-module/artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary-portable-assets/directional-line-left.png",
-      "sourceReverseCommit": "6f49ebbce86c162f0d86ea9a612618b4c573d45c",
-      "sourcePath": "artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary-portable-assets/directional-line-left.png",
-      "bytes": 190,
-      "sha256": "6B9A27F589A65CBF9F36D1F73690B95D8304BC95DC3F8BE3A580B8AEB47C478B"
-    },
-    {
-      "path": "reverse-snapshots/autonomous-module/artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary-portable-assets/directional-line-right.png",
-      "sourceReverseCommit": "6f49ebbce86c162f0d86ea9a612618b4c573d45c",
-      "sourcePath": "artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary-portable-assets/directional-line-right.png",
-      "bytes": 191,
-      "sha256": "19654D4B306230CC770ED37E2CD763239AC2A5F253064123DBF3862DBD271886"
-    },
-    {
-      "path": "reverse-snapshots/autonomous-module/artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary-portable-assets/long-note-line.png",
-      "sourceReverseCommit": "6f49ebbce86c162f0d86ea9a612618b4c573d45c",
-      "sourcePath": "artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary-portable-assets/long-note-line.png",
-      "bytes": 1976,
-      "sha256": "D4011A1FF77407E3E3EA224C6C81B5BFC3122AC65E4A1A2FC99CFA667E1ECA2D"
-    },
-    {
-      "path": "reverse-snapshots/autonomous-module/artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary-portable-assets/rhythm-game-sprites.png",
-      "sourceReverseCommit": "6f49ebbce86c162f0d86ea9a612618b4c573d45c",
-      "sourcePath": "artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary-portable-assets/rhythm-game-sprites.png",
-      "bytes": 1190293,
-      "sha256": "E3D8EDE1D3CEC31D0250D41E0DF2EDE9822A9BDC981D2B69585F5875C5A9618F"
-    },
-    {
-      "path": "reverse-snapshots/autonomous-module/artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary-portable-assets/simultaneous-line.png",
-      "sourceReverseCommit": "6f49ebbce86c162f0d86ea9a612618b4c573d45c",
-      "sourcePath": "artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary-portable-assets/simultaneous-line.png",
-      "bytes": 247,
-      "sha256": "9DC5E6C2DAA88BACFC3F39F791CAC7C40601300AA4BD6870344326C2CCB4CCE5"
     }
   ]
 }

@@ -27,7 +27,11 @@ import {
   RecipeOwnedSessionFactory,
 } from "../assembly/sessionRecipe";
 import { ok } from "../engine/evidence";
-import { prepareSharedOrdinaryRenderResources } from "../resources/sharedResourceAdapters";
+import {
+  prepareSharedOrdinaryRenderResources,
+  prepareSharedScoreGaugeSsAnimationResource,
+  prepareSharedScoreHudRenderResources,
+} from "../resources/sharedResourceAdapters";
 import { createProductionAutonomousSimulatorModule } from "../platform/platformComposition";
 import type {
   SimulatorModuleCloseReport,
@@ -45,6 +49,7 @@ async function main(): Promise<void> {
   await testSharedStore();
   testSelector();
   await testOrdinaryPack();
+  await testScoreHudPack();
   testRecipeOwnership();
   await testRecipeNaturalCompletion();
   await testProductionCompositionFailureBoundary();
@@ -73,6 +78,10 @@ function testSelector(): void {
   const ordinarySelection = selectSimulatorStaticResources(ordinary);
   assert.equal(ordinarySelection.audioSe.length, 14);
   assert.equal(ordinarySelection.particles.length, 9);
+  assert.equal(ordinarySelection.scoreHud.length, 7);
+  assert.ok(ordinarySelection.scoreGaugeSsAnimation.resourceKey.endsWith("score-gauge-ss-animation-profile.json"));
+  assert.ok(ordinarySelection.scoreHud.every((row) =>
+    row.resourceKey.startsWith("simulator-static/current-10.1.4/score-hud/")));
   assert.equal(ordinarySelection.rendering.kind, "ordinary");
   if (ordinarySelection.rendering.kind === "ordinary") {
     assert.equal(ordinarySelection.rendering.status, "selected");
@@ -88,6 +97,7 @@ function testSelector(): void {
   ), "utf8");
   const hab = requireOk(createNoteBatchInformationList({ musicScoreData: habBms }));
   const habSelection = selectSimulatorStaticResources(hab);
+  assert.equal(habSelection.scoreHud.length, 7);
   assert.equal(habSelection.rendering.kind, "habahiro");
   if (habSelection.rendering.kind === "habahiro") {
     assert.equal(habSelection.rendering.resources.length, 11);
@@ -139,6 +149,44 @@ async function testOrdinaryPack(): Promise<void> {
   }
 }
 
+async function testScoreHudPack(): Promise<void> {
+  const chart = requireOk(createNoteBatchInformationList({
+    musicScoreData: "#BPM 120\n#00111:01\n",
+  }));
+  const selection = selectSimulatorStaticResources(chart).scoreHud;
+  const fixtureBase = join(
+    process.cwd(),
+    "src/simulator/testing/fixtures/reverse-snapshots/score-hud-rank-gauge/artifacts/investigations/score-hud-rank-gauge-10-1-4/portable-assets",
+  );
+  const entries = selection.map((resource) => ({
+    resourceKey: resource.resourceKey,
+    bytes: new Uint8Array(readFileSync(join(fixtureBase, resource.resourceKey.split("/").pop()))),
+  }));
+  const animation = selectSimulatorStaticResources(chart).scoreGaugeSsAnimation;
+  entries.push({
+    resourceKey: animation.resourceKey,
+    bytes: new Uint8Array(readFileSync(join(
+      process.cwd(),
+      "src/simulator/testing/fixtures/reverse-snapshots/score-hud-rank-gauge/artifacts/investigations/score-hud-rank-gauge-10-1-4/score_gauge_ss_animation_profile.json",
+    ))),
+  });
+  const store = requireAccepted(ImmutableSharedStaticResourceStore.create(entries));
+  const prepared = requireAccepted(await prepareSharedScoreHudRenderResources(selection, store));
+  assert.equal(prepared.assets.length, 7);
+  assert.equal((await prepared.provider.read("hud/score/font-atlas")).status, "ok");
+  const animationProfile = requireAccepted(await prepareSharedScoreGaugeSsAnimationResource(animation, store));
+  assert.equal(animationProfile.curveCount, 56);
+  assert.equal(animationProfile.frames.length, 39);
+
+  entries[0]!.bytes[0] ^= 0xff;
+  const tamperedStore = requireAccepted(ImmutableSharedStaticResourceStore.create(entries));
+  const tampered = await prepareSharedScoreHudRenderResources(selection, tamperedStore);
+  assert.equal(tampered.status, "rejected");
+  if (tampered.status === "rejected") {
+    assert.equal(tampered.failure.capability, "simulator.resources.score-hud-asset-integrity");
+  }
+}
+
 function testRecipeOwnership(): void {
   const source = request();
   const recipe = requireAccepted(createSimulatorSessionRecipe(source));
@@ -149,9 +197,21 @@ function testRecipeOwnership(): void {
   assert.ok(Object.isFrozen(recipe));
   assert.ok(Object.isFrozen(recipe.request));
   assert.ok(Object.isFrozen(recipe.request.chartData.bgm));
+  assert.ok(Object.isFrozen(recipe.request.chartData.gameplay));
+  assert.ok(Object.isFrozen(recipe.request.chartData.gameplay.score));
+  assert.ok(Object.isFrozen(recipe.request.chartData.gameplay.score.master));
 
   const extra = { ...request(), extra: true } as unknown as SimulatorModuleLaunchRequest;
   assert.equal(createSimulatorSessionRecipe(extra).status, "rejected");
+  const missingMaster: any = request();
+  delete missingMaster.chartData.gameplay.score.master;
+  assert.equal(createSimulatorSessionRecipe(missingMaster).status, "rejected");
+  const unorderedMaster: any = request();
+  unorderedMaster.chartData.gameplay.score.master.scoreB = 36000;
+  assert.equal(createSimulatorSessionRecipe(unorderedMaster).status, "rejected");
+  const overflowingMaster: any = request();
+  overflowingMaster.chartData.gameplay.score.master.scoreSS = 0xffffffff;
+  assert.equal(createSimulatorSessionRecipe(overflowingMaster).status, "rejected");
 }
 
 async function testRecipeNaturalCompletion(): Promise<void> {
@@ -208,7 +268,7 @@ async function testProductionCompositionFailureBoundary(): Promise<void> {
   let mounts = 0;
   const scheduler = new ControlledScheduler();
   const input = new ControlledInput();
-  const module = requireAccepted(createProductionAutonomousSimulatorModule({
+  const platform = {
     staticResources: {
       read: async () => {
         resourceReads += 1;
@@ -224,8 +284,8 @@ async function testProductionCompositionFailureBoundary(): Promise<void> {
     },
     audioContext: {} as AudioContext,
     graphics: {
-      viewportWidth: 1600,
-      viewportHeight: 720,
+      viewportWidth: 1600 as const,
+      viewportHeight: 720 as const,
       inputOrigin: "bottom-left" as const,
       mount: () => {
         mounts += 1;
@@ -236,7 +296,19 @@ async function testProductionCompositionFailureBoundary(): Promise<void> {
     input,
     requestTargetFrameRate: () => {},
     publishLifecycleState: () => {},
-  }));
+  };
+  const invalidMasterModule = requireAccepted(createProductionAutonomousSimulatorModule(platform));
+  const invalidMasterRequest: any = request();
+  invalidMasterRequest.chartData.gameplay.score.master.scoreB = 36000;
+  const invalidMasterLaunch = await invalidMasterModule.launch(invalidMasterRequest);
+  assert.equal(invalidMasterLaunch.status, "rejected");
+  if (invalidMasterLaunch.status === "rejected") {
+    assert.equal(invalidMasterLaunch.failure.capability, "simulator.recipe.invalid-public-request");
+  }
+  assert.equal(resourceReads, 0, "invalid Score Gauge master fails before shared resource read");
+  assert.equal(mounts, 0);
+
+  const module = requireAccepted(createProductionAutonomousSimulatorModule(platform));
   const seekRequest: any = request();
   seekRequest.config.practice.enabled = true;
   seekRequest.config.practice.startMilliseconds = 1;
@@ -375,7 +447,20 @@ function request(): SimulatorModuleLaunchRequest {
         currentSampleFrames: 44100,
       },
       gameplay: {
-        score: { level: 27, totalParameter: Math.fround(100000), autoLiveComboCoefficient: Math.fround(1) },
+        score: {
+          level: 27,
+          totalParameter: Math.fround(100000),
+          autoLiveComboCoefficient: Math.fround(1),
+          master: {
+            musicId: 786,
+            difficulty: "special",
+            scoreC: 36000,
+            scoreB: 216000,
+            scoreA: 432000,
+            scoreS: 648000,
+            scoreSS: 864000,
+          },
+        },
         life: { initialLife: 1000, playerMaxLife: 1000, lifeUpperLimit: 2000, missDamage: -100, badDamage: -50 },
       },
     },
