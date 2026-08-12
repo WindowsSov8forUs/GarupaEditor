@@ -22,6 +22,9 @@ import {
 } from "../backends/resources/localResourceProvider";
 import { CURRENT_ORDINARY_PORTABLE_PACK_IDENTITY } from "../backends/resources/currentOrdinaryResourceManifest";
 import { parseCurrentScoreGaugeSsAnimationProfile } from "../backends/resources/currentScoreGaugeSsAnimationProfile";
+import { CURRENT_SCORE_HUD_PORTABLE_RESOURCES } from "../backends/resources/currentScoreHudResourceManifest";
+import { parseCurrentOrdinaryVisibleProfile } from "../backends/resources/currentOrdinaryVisibleProfile";
+import { CURRENT_ORDINARY_VISIBLE_PORTABLE_RESOURCES } from "../backends/resources/currentOrdinaryVisibleResourceManifest";
 import type { ParticleResourceProvider } from "../backends/particleContracts";
 import type { AudioResourceProvider } from "../backends/audioContracts";
 import { evidenceRequired, ok } from "../engine/evidence";
@@ -29,6 +32,8 @@ import type {
   SelectedAudioSeResource,
   SelectedHabahiroResource,
   SelectedOrdinaryResource,
+  SelectedOrdinaryVisibleProfileResource,
+  SelectedOrdinaryVisibleResource,
   SelectedParticleResource,
   SelectedScoreGaugeSsAnimationResource,
   SelectedScoreHudResource,
@@ -120,6 +125,73 @@ export async function prepareSharedOrdinaryRenderResources(
   return accepted(Object.freeze({ profile: validated.value, provider: provider.value }));
 }
 
+export interface PreparedSharedOrdinaryVisibleRenderResources {
+  readonly profile: NonNullable<RenderResourceProfile["ordinaryVisibleProfile"]>;
+  readonly assets: RenderResourceProfile["assets"];
+  readonly provider: SimulatorResourceProvider;
+}
+
+export async function prepareSharedOrdinaryVisibleRenderResources(
+  profileSelection: SelectedOrdinaryVisibleProfileResource,
+  selected: readonly SelectedOrdinaryVisibleResource[],
+  store: SharedStaticResourceStore,
+): Promise<SimulatorAssemblyResult<PreparedSharedOrdinaryVisibleRenderResources>> {
+  if (selected.length !== CURRENT_ORDINARY_VISIBLE_PORTABLE_RESOURCES.length ||
+    selected.some((resource, index) => resource.profile.logicalAssetId !== CURRENT_ORDINARY_VISIBLE_PORTABLE_RESOURCES[index]?.profile.logicalAssetId)) {
+    return rejected(
+      "resource-integrity",
+      "simulator.resources.ordinary-visible-inventory",
+      "The ordinary visible inventory must preserve the complete internally ordered manifest identity.",
+    );
+  }
+  const profileRead = await readStatic(store, profileSelection.resourceKey);
+  if (profileRead.status === "rejected") return profileRead;
+  if (profileRead.value.byteLength !== profileSelection.profile.byteLength ||
+    sha256UpperHex(profileRead.value) !== profileSelection.profile.sha256) {
+    return rejected(
+      "resource-integrity",
+      "simulator.resources.ordinary-visible-profile-integrity",
+      "The ordinary visible profile must match its committed byte length and SHA-256 before JSON parsing.",
+    );
+  }
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(new TextDecoder().decode(profileRead.value));
+  } catch {
+    return rejected(
+      "resource-decode",
+      "simulator.resources.ordinary-visible-profile-json",
+      "The hash-validated ordinary visible profile must be valid UTF-8 JSON.",
+    );
+  }
+  const profile = parseCurrentOrdinaryVisibleProfile(parsed);
+  if (profile === null) {
+    return rejected(
+      "resource-integrity",
+      "simulator.resources.ordinary-visible-profile-shape",
+      "Every ordinary visible route, owner, curve, scene constant and Float32 value must preserve the committed strict profile.",
+    );
+  }
+  const local: LocalRenderResource[] = [];
+  for (const resource of selected) {
+    const read = await readStatic(store, resource.resourceKey);
+    if (read.status === "rejected") return read;
+    if (read.value.byteLength !== resource.profile.byteLength ||
+      sha256UpperHex(read.value) !== resource.profile.sha256) {
+      return rejected(
+        "resource-integrity",
+        "simulator.resources.ordinary-visible-asset-integrity",
+        "Every ordinary visible PNG must match its committed byte length and SHA-256 before renderer preparation.",
+      );
+    }
+    local.push({ logicalAssetId: resource.profile.logicalAssetId, bytes: read.value });
+  }
+  const provider = ImmutableLocalRenderResourceProvider.create(local);
+  return provider.status === "ok"
+    ? accepted(Object.freeze({ profile, assets: Object.freeze(selected.map((row) => row.profile)), provider: provider.value }))
+    : rejected("launch-failed", provider.capability, provider.boundary);
+}
+
 export interface PreparedSharedScoreHudRenderResources {
   readonly assets: RenderResourceProfile["assets"];
   readonly provider: SimulatorResourceProvider;
@@ -163,11 +235,12 @@ export async function prepareSharedScoreHudRenderResources(
   selected: readonly SelectedScoreHudResource[],
   store: SharedStaticResourceStore,
 ): Promise<SimulatorAssemblyResult<PreparedSharedScoreHudRenderResources>> {
-  if (selected.length !== 7) {
+  if (selected.length !== CURRENT_SCORE_HUD_PORTABLE_RESOURCES.length ||
+    selected.some((resource, index) => resource.profile.logicalAssetId !== CURRENT_SCORE_HUD_PORTABLE_RESOURCES[index]?.profile.logicalAssetId)) {
     return rejected(
       "resource-integrity",
       "simulator.resources.score-hud-inventory",
-      "The current Score HUD requires exactly the seven committed portable bitmap font, rank-label font, gauge, rank-marker and high-rank resources.",
+      "The current Score HUD requires the non-empty internally selected portable bitmap font, rank-label font, gauge, rank-marker and high-rank resource identities."
     );
   }
   const local: LocalRenderResource[] = [];

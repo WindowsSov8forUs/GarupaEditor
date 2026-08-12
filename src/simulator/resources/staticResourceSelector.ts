@@ -17,6 +17,11 @@ import {
   CURRENT_ORDINARY_PORTABLE_RESOURCES,
   type OrdinaryPortableResourceEntry,
 } from "../backends/resources/currentOrdinaryResourceManifest";
+import {
+  CURRENT_ORDINARY_VISIBLE_PORTABLE_RESOURCES,
+  CURRENT_ORDINARY_VISIBLE_PROFILE_RESOURCE,
+  type OrdinaryVisiblePortableResourceEntry,
+} from "../backends/resources/currentOrdinaryVisibleResourceManifest";
 import type { ParticleResourceAllowlistEntry } from "../backends/particleContracts";
 import type { ChartConstructionResult } from "../engine/chart/types";
 
@@ -40,6 +45,16 @@ export interface SelectedHabahiroResource {
 export interface SelectedOrdinaryResource {
   readonly resourceKey: string;
   readonly profile: OrdinaryPortableResourceEntry;
+}
+
+export interface SelectedOrdinaryVisibleResource {
+  readonly resourceKey: string;
+  readonly profile: OrdinaryVisiblePortableResourceEntry["profile"];
+}
+
+export interface SelectedOrdinaryVisibleProfileResource {
+  readonly resourceKey: string;
+  readonly profile: typeof CURRENT_ORDINARY_VISIBLE_PROFILE_RESOURCE;
 }
 
 export interface SelectedScoreGaugeSsAnimationResource {
@@ -75,6 +90,8 @@ export interface SimulatorStaticResourceSelection {
   readonly audioSe: readonly SelectedAudioSeResource[];
   readonly particles: readonly SelectedParticleResource[];
   readonly scoreHud: readonly SelectedScoreHudResource[];
+  readonly ordinaryVisibleProfile: SelectedOrdinaryVisibleProfileResource;
+  readonly ordinaryVisible: readonly SelectedOrdinaryVisibleResource[];
   readonly scoreGaugeSsAnimation: SelectedScoreGaugeSsAnimationResource;
   readonly rendering: SelectedRenderResourceRoute;
 }
@@ -97,6 +114,15 @@ export function selectSimulatorStaticResources(
   const scoreHud = Object.freeze(CURRENT_SCORE_HUD_PORTABLE_RESOURCES.map((entry) =>
     Object.freeze({
       resourceKey: scoreHudResourceKey(entry.resourceKeySuffix),
+      profile: entry.profile,
+    })));
+  const ordinaryVisibleProfile = Object.freeze({
+    resourceKey: ordinaryVisibleResourceKey(CURRENT_ORDINARY_VISIBLE_PROFILE_RESOURCE.resourceKeySuffix),
+    profile: CURRENT_ORDINARY_VISIBLE_PROFILE_RESOURCE,
+  });
+  const ordinaryVisible = Object.freeze(CURRENT_ORDINARY_VISIBLE_PORTABLE_RESOURCES.map((entry) =>
+    Object.freeze({
+      resourceKey: ordinaryVisibleResourceKey(entry.resourceKeySuffix),
       profile: entry.profile,
     })));
   const scoreGaugeSsAnimation = Object.freeze({
@@ -133,6 +159,8 @@ export function selectSimulatorStaticResources(
     audioSe,
     particles,
     scoreHud,
+    ordinaryVisibleProfile,
+    ordinaryVisible,
     scoreGaugeSsAnimation,
     rendering,
   });
@@ -152,6 +180,10 @@ export function habahiroResourceKey(technicalName: string): string {
 
 export function ordinaryResourceKey(logicalAssetId: string): string {
   return `${STATIC_RESOURCE_NAMESPACE}/render-ordinary/${encodeKey(logicalAssetId)}`;
+}
+
+export function ordinaryVisibleResourceKey(resourceKeySuffix: string): string {
+  return `${STATIC_RESOURCE_NAMESPACE}/ordinary-visible/${encodeKey(resourceKeySuffix)}`;
 }
 
 export function scoreHudResourceKey(resourceKeySuffix: string): string {

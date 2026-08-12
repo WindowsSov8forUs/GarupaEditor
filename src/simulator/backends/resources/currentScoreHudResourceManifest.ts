@@ -87,6 +87,22 @@ export const CURRENT_SCORE_HUD_PORTABLE_RESOURCES: readonly ScoreHudPortableReso
       atlas("score_meter_orange", 586, 851, 40, 22),
       atlas("score_meter_pink", 277, 877, 40, 22),
       atlas("score_meter_s", 0, 609, 662, 22),
+      atlas("bg_health", 0, 633, 186, 62, [39, 143, 0, 0]),
+      atlas("bg_no_health", 349, 287, 131, 69, [50, 50, 0, 0]),
+      atlas("combo", 592, 807, 150, 42),
+      atlas("combo_AP", 837, 777, 150, 42),
+      atlas("hp_meter", 208, 874, 17, 26, [4, 4, 0, 0]),
+      atlas("icon_number_0", 147, 757, 47, 70, [2, 2, 0, 0]),
+      atlas("icon_number_1", 98, 757, 47, 70, [8, 9, 1, 1]),
+      atlas("icon_number_2", 0, 757, 47, 70, [1, 1, 0, 0]),
+      atlas("icon_number_3", 49, 757, 47, 70, [1, 1, 0, 0]),
+      atlas("icon_number_4", 237, 685, 47, 70),
+      atlas("icon_number_5", 188, 685, 47, 70, [0, 1, 0, 0]),
+      atlas("icon_number_6", 953, 821, 47, 70, [0, 1, 0, 0]),
+      atlas("icon_number_7", 228, 817, 47, 70, [1, 1, 0, 0]),
+      atlas("icon_number_8", 966, 893, 47, 70, [1, 0, 0, 0]),
+      atlas("icon_number_9", 917, 893, 47, 70, [2, 1, 0, 0]),
+      atlas("icon_number_plus", 432, 358, 47, 70),
     ]),
     materialRole: "hud",
     animationRole: "none",
@@ -194,8 +210,12 @@ function atlas(
   y: number,
   width: number,
   height: number,
+  border: readonly [number, number, number, number] = [0, 0, 0, 0],
 ): RenderAtlasRow {
-  return Object.freeze({ exactKey, x, y, width, height, pivotX: 0, pivotY: 0, pixelsPerUnit: 100 });
+  return Object.freeze({
+    exactKey, x, y, width, height, pivotX: 0, pivotY: 0, pixelsPerUnit: 100,
+    borderLeft: border[0], borderRight: border[1], borderTop: border[2], borderBottom: border[3],
+  });
 }
 
 function fullTexture(

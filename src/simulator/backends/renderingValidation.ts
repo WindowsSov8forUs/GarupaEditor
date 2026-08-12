@@ -3,6 +3,7 @@ import {
   ok,
   type SimulatorResult,
 } from "../engine/evidence";
+import { parseCurrentOrdinaryVisibleProfile } from "./resources/currentOrdinaryVisibleProfile";
 import {
   RenderFidelityLabel,
   type RenderAtlasRow,
@@ -149,6 +150,17 @@ export function validateAndFreezeRenderProfile(
 
   const scoreGaugeSsAnimation = validateScoreGaugeSsAnimation(profile.scoreGaugeSsAnimation);
   if (scoreGaugeSsAnimation.status !== "ok") return scoreGaugeSsAnimation;
+  let ordinaryVisibleProfile: RenderResourceProfile["ordinaryVisibleProfile"];
+  if (profile.ordinaryVisibleProfile !== undefined) {
+    const parsedOrdinaryVisibleProfile = parseCurrentOrdinaryVisibleProfile(profile.ordinaryVisibleProfile);
+    if (parsedOrdinaryVisibleProfile === null) {
+      return reject(
+        "render.profile.invalid-ordinary-visible-profile",
+        "The ordinary gameplay HUD and Note animation profile must preserve every committed route, owner, curve and Float32 value.",
+      );
+    }
+    ordinaryVisibleProfile = parsedOrdinaryVisibleProfile;
+  }
 
   return ok(Object.freeze({
     schemaVersion: 1,
@@ -159,6 +171,7 @@ export function validateAndFreezeRenderProfile(
     automaticFallbackAllowed: false,
     assets: Object.freeze(assets),
     scoreGaugeSsAnimation: scoreGaugeSsAnimation.value,
+    ordinaryVisibleProfile,
     scene: Object.freeze({
       profileId: scene.profileId,
       components: Object.freeze(
@@ -336,7 +349,13 @@ function validateAsset(
       !Number.isFinite(row.pivotX) ||
       !Number.isFinite(row.pivotY) ||
       !Number.isFinite(row.pixelsPerUnit) ||
-      row.pixelsPerUnit <= 0
+      row.pixelsPerUnit <= 0 ||
+      !validAtlasBorder(row.borderLeft, row.width) ||
+      !validAtlasBorder(row.borderRight, row.width) ||
+      !validAtlasBorder(row.borderTop, row.height) ||
+      !validAtlasBorder(row.borderBottom, row.height) ||
+      (row.borderLeft ?? 0) + (row.borderRight ?? 0) > row.width ||
+      (row.borderTop ?? 0) + (row.borderBottom ?? 0) > row.height
     ) {
       return reject(
         "render.profile.invalid-atlas-row",
@@ -429,6 +448,10 @@ function reject(capability: string, boundary: string) {
 
 function isNonEmpty(value: unknown): value is string {
   return typeof value === "string" && value.length > 0;
+}
+
+function validAtlasBorder(value: unknown, extent: number): boolean {
+  return value === undefined || (isNonNegativeInteger(value) && (value as number) <= extent);
 }
 
 function isPositiveInteger(value: unknown): value is number {

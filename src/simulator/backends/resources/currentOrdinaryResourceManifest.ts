@@ -1,4 +1,5 @@
 import { CURRENT_SCORE_HUD_BINDINGS } from "./currentScoreHudResourceManifest";
+import { CURRENT_ORDINARY_VISIBLE_BINDINGS } from "./currentOrdinaryVisibleResourceManifest";
 
 export interface OrdinaryPortableResourceEntry {
   readonly logicalAssetId: string;
@@ -78,4 +79,5 @@ export const CURRENT_ORDINARY_RENDER_BINDINGS = Object.freeze({
   longNoteMaterialLogicalAssetId: "ordinary/notes/skin00/long-note-line",
   curveNoteMaterialLogicalAssetId: "ordinary/notes/skin00/curve-note-line",
   scoreHud: CURRENT_SCORE_HUD_BINDINGS,
+  ordinaryVisible: CURRENT_ORDINARY_VISIBLE_BINDINGS,
 });

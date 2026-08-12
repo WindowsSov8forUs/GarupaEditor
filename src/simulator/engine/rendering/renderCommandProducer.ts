@@ -71,6 +71,12 @@ export interface RenderEngineResourceBindings {
     readonly slideAmong: string;
   };
   readonly comboAnimationLogicalAssetId?: string;
+  readonly ordinaryVisible?: {
+    readonly comboNumberLogicalAssetId: string;
+    readonly judgeLogicalAssetId: string;
+    readonly lifeAdditiveLogicalAssetId: string;
+    readonly warningLogicalAssetId: string;
+  };
   readonly scoreHud?: {
     readonly fontLogicalAssetId: string;
     readonly gaugeLogicalAssetId: string;

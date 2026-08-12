@@ -15,6 +15,7 @@ import type {
 import { prepareHabahiroBestdoriPack } from "../backends/resources/habahiroBestdoriProvider";
 import { CURRENT_ORDINARY_RENDER_BINDINGS } from "../backends/resources/currentOrdinaryResourceManifest";
 import { CURRENT_SCORE_HUD_BINDINGS } from "../backends/resources/currentScoreHudResourceManifest";
+import { CURRENT_ORDINARY_VISIBLE_BINDINGS } from "../backends/resources/currentOrdinaryVisibleResourceManifest";
 import type { RenderEngineResourceBindings } from "../engine/rendering/renderCommandProducer";
 import type { SimulatorChartAudioData } from "../public/contracts";
 import type { SimulatorSceneLayout } from "../scene/simulatorSceneLayout";
@@ -24,6 +25,7 @@ import {
   createSharedHabahiroTransport,
   prepareSharedAudioResources,
   prepareSharedOrdinaryRenderResources,
+  prepareSharedOrdinaryVisibleRenderResources,
   prepareSharedParticleProvider,
   prepareSharedScoreGaugeSsAnimationResource,
   prepareSharedScoreHudRenderResources,
@@ -114,6 +116,7 @@ export async function assembleSimulatorResources(
         longNoteMaterialLogicalAssetId: habahiro.value.bindings.longNoteMaterialLogicalAssetId,
         curveNoteMaterialLogicalAssetId: habahiro.value.bindings.curveNoteMaterialLogicalAssetId,
         scoreHud: CURRENT_SCORE_HUD_BINDINGS,
+        ordinaryVisible: CURRENT_ORDINARY_VISIBLE_BINDINGS,
         habahiroAtlasLogicalAssetIds: Object.freeze({
           normal: habahiro.value.bindings.normalAtlasLogicalAssetId,
           normal16: habahiro.value.bindings.normal16AtlasLogicalAssetId,
@@ -126,6 +129,12 @@ export async function assembleSimulatorResources(
       }),
     });
   }
+  const ordinaryVisible = await prepareSharedOrdinaryVisibleRenderResources(
+    selection.ordinaryVisibleProfile,
+    selection.ordinaryVisible,
+    store,
+  );
+  if (ordinaryVisible.status === "rejected") return ordinaryVisible;
   const scoreHud = await prepareSharedScoreHudRenderResources(selection.scoreHud, store);
   if (scoreHud.status === "rejected") return scoreHud;
   const scoreGaugeSsAnimation = await prepareSharedScoreGaugeSsAnimationResource(
@@ -133,17 +142,34 @@ export async function assembleSimulatorResources(
     store,
   );
   if (scoreGaugeSsAnimation.status === "rejected") return scoreGaugeSsAnimation;
+  const combinedAssets = [
+    ...renderPack.profile.assets,
+    ...ordinaryVisible.value.assets,
+    ...scoreHud.value.assets,
+  ];
+  if (new Set(combinedAssets.map((asset) => asset.logicalAssetId)).size !== combinedAssets.length) {
+    return rejected(
+      "resource-integrity",
+      "simulator.assembly.duplicate-render-logical-id",
+      "Ordinary, visible HUD and Score resource manifests must be disjoint before renderer preparation.",
+    );
+  }
   renderPack = Object.freeze({
     ...renderPack,
     profile: Object.freeze({
       ...renderPack.profile,
-      packIdentity: `${renderPack.profile.packIdentity}+score-hud-current-10.1.4-v1`,
-      assets: Object.freeze([...renderPack.profile.assets, ...scoreHud.value.assets]),
+      packIdentity: `${renderPack.profile.packIdentity}+ordinary-visible-current-10.1.4-v1+score-hud-current-10.1.4-v1`,
+      assets: Object.freeze(combinedAssets),
+      ordinaryVisibleProfile: ordinaryVisible.value.profile,
       scoreGaugeSsAnimation: scoreGaugeSsAnimation.value,
     }),
-    provider: mergeRenderProviders(renderPack.provider, scoreHud.value.provider, scoreHud.value.assets.map(
-      (asset) => asset.logicalAssetId,
-    )),
+    provider: mergeRenderProviders(
+      mergeRenderProviders(renderPack.provider, ordinaryVisible.value.provider, ordinaryVisible.value.assets.map(
+        (asset) => asset.logicalAssetId,
+      )),
+      scoreHud.value.provider,
+      scoreHud.value.assets.map((asset) => asset.logicalAssetId),
+    ),
   });
   const scene = targets.createSceneLayout(selection.rendering.kind, renderPack.bindings);
   if (scene.status === "rejected") return scene;

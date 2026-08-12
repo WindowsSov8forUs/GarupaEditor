@@ -1,4 +1,5 @@
 import type { SimulatorResult } from "../engine/evidence";
+import type { OrdinaryVisibleProfile } from "./resources/currentOrdinaryVisibleProfile";
 
 export const RenderFidelityLabel = "HABAHIRO" as const;
 
@@ -94,6 +95,10 @@ export interface RenderAtlasRow {
   readonly pivotX: number;
   readonly pivotY: number;
   readonly pixelsPerUnit: number;
+  readonly borderLeft?: number;
+  readonly borderRight?: number;
+  readonly borderTop?: number;
+  readonly borderBottom?: number;
 }
 
 export interface RenderResourceAssetProfile {
@@ -206,6 +211,7 @@ export interface RenderResourceProfile {
   readonly assets: readonly RenderResourceAssetProfile[];
   readonly scene: RenderSceneProfile;
   readonly scoreGaugeSsAnimation?: RenderScoreGaugeSsAnimationProfile;
+  readonly ordinaryVisibleProfile?: OrdinaryVisibleProfile;
 }
 
 export interface SimulatorResourceProvider {
