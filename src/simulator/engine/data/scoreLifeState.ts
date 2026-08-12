@@ -1,3 +1,5 @@
+import type { SinglePlayScoreGaugeMasterProfile } from "./singlePlayScoreGauge";
+
 export const ScoreLifeMode = {
   Ordinary: "ordinary",
   AutoLive: "auto-live",
@@ -16,6 +18,7 @@ export interface ScoreLifeStateProfile {
   readonly sessionId: string;
   readonly scoreLevel: number;
   readonly totalParameter: number;
+  readonly scoreGaugeMaster: SinglePlayScoreGaugeMasterProfile;
   readonly life: {
     readonly initialLife: number;
     readonly playerMaxLife: number;
@@ -43,5 +46,6 @@ export function deepFreezeScoreLifeProfile(
     ...profile,
     life: Object.freeze({ ...profile.life }),
     mode: Object.freeze({ ...profile.mode }),
+    scoreGaugeMaster: Object.freeze({ ...profile.scoreGaugeMaster }),
   });
 }

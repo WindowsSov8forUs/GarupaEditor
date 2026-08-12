@@ -98,7 +98,10 @@ export class InGameManager {
       if (committed.status !== "ok") return committed;
     }
     const hudSetup = this.scoreLifeStateManager !== null && this.renderProducer !== null
-      ? this.renderProducer.preflightHudSetup(this.scoreLifeStateManager.record.snapshot())
+      ? this.renderProducer.preflightHudSetup(
+          this.scoreLifeStateManager.record.snapshot(),
+          this.scoreLifeStateManager.scoreGauge.snapshot(),
+        )
       : null;
     if (hudSetup?.status === "evidence-required") return hudSetup;
     if (hudSetup?.status === "ok") {

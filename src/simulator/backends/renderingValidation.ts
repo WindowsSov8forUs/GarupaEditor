@@ -27,7 +27,7 @@ const MATERIAL_ROLES = new Set([
 ]);
 const ANIMATION_ROLES = new Set([
   "none", "note-flick", "note-directional-flick", "note-long-flash",
-  "combo", "all-perfect", "add-score", "result", "habahiro-lane-change",
+  "combo", "all-perfect", "add-score", "result", "score-gauge-ss", "habahiro-lane-change",
 ]);
 const PROVENANCE_VALUES = new Set([
   "current-apk", "current-device-cache", "current-external-portable",
@@ -147,6 +147,9 @@ export function validateAndFreezeRenderProfile(
     );
   }
 
+  const scoreGaugeSsAnimation = validateScoreGaugeSsAnimation(profile.scoreGaugeSsAnimation);
+  if (scoreGaugeSsAnimation.status !== "ok") return scoreGaugeSsAnimation;
+
   return ok(Object.freeze({
     schemaVersion: 1,
     sample: Object.freeze({ ...profile.sample }),
@@ -155,6 +158,7 @@ export function validateAndFreezeRenderProfile(
     networkAllowed: false,
     automaticFallbackAllowed: false,
     assets: Object.freeze(assets),
+    scoreGaugeSsAnimation: scoreGaugeSsAnimation.value,
     scene: Object.freeze({
       profileId: scene.profileId,
       components: Object.freeze(
@@ -349,6 +353,70 @@ function validateAsset(
       : Object.freeze({ ...textureSettings }),
     atlasRows: Object.freeze(rows),
   }));
+}
+
+function validateScoreGaugeSsAnimation(
+  profile: RenderResourceProfile["scoreGaugeSsAnimation"],
+): SimulatorResult<RenderResourceProfile["scoreGaugeSsAnimation"]> {
+  if (profile === undefined) return ok(undefined);
+  if (
+    profile.durationSeconds !== 3 || profile.loop !== true || profile.curveCount !== 56 ||
+    !Array.isArray(profile.nodes) || profile.nodes.length !== 11 ||
+    !Array.isArray(profile.frames) || profile.frames.length !== 39
+  ) return reject("render.profile.invalid-score-gauge-ss-animation", "The ScoreGaugeSS profile identity must remain the committed 3-second 56-curve loop.");
+  const nodeNames = new Set<string>();
+  const nodes = [];
+  for (const node of profile.nodes) {
+    if (
+      !isNonEmpty(node.name) || nodeNames.has(node.name) ||
+      (node.textureKey !== "high-rank-kira" && node.textureKey !== "high-rank-long-star" && node.textureKey !== "high-rank-overlay") ||
+      !validFiniteTuple(node.initialPosition, 3) || !validFiniteTuple(node.initialScale, 3) ||
+      !validFiniteTuple(node.initialRotationQuaternion, 4)
+    ) return reject("render.profile.invalid-score-gauge-ss-node", "Every ScoreGaugeSS node requires one unique identity, explicit portable texture and finite initial transform.");
+    nodeNames.add(node.name);
+    nodes.push(Object.freeze({
+      ...node,
+      initialPosition: Object.freeze([...node.initialPosition]) as readonly [number, number, number],
+      initialScale: Object.freeze([...node.initialScale]) as readonly [number, number, number],
+      initialRotationQuaternion: Object.freeze([...node.initialRotationQuaternion]) as readonly [number, number, number, number],
+    }));
+  }
+  let previousTime = -1;
+  let totalKeys = 0;
+  const frames = [];
+  for (const frame of profile.frames) {
+    if (!isExactFloat32(frame.time) || frame.time < 0 || frame.time >= 3 || frame.time <= previousTime || !Array.isArray(frame.keys) || frame.keys.length === 0) {
+      return reject("render.profile.invalid-score-gauge-ss-frame", "ScoreGaugeSS finite frame times must be strict binary32 values in [0,3).")
+    }
+    previousTime = frame.time;
+    const indices = new Set<number>();
+    const keys = [];
+    for (const key of frame.keys) {
+      if (!Number.isInteger(key.index) || key.index < 0 || key.index >= 56 || indices.has(key.index) ||
+        !validFiniteTuple(key.coefficients, 4) || key.coefficients.some((value: unknown) => !isExactFloat32(value))) {
+        return reject("render.profile.invalid-score-gauge-ss-key", "Every ScoreGaugeSS curve key must have one unique index and four binary32 coefficients.");
+      }
+      indices.add(key.index);
+      keys.push(Object.freeze({
+        index: key.index,
+        coefficients: Object.freeze([...key.coefficients]) as readonly [number, number, number, number],
+      }));
+      totalKeys += 1;
+    }
+    frames.push(Object.freeze({ time: frame.time, keys: Object.freeze(keys) }));
+  }
+  if (totalKeys !== 236 || frames[0]!.time !== 0 || frames[0]!.keys.length !== 56) {
+    return reject("render.profile.incomplete-score-gauge-ss-curves", "The committed ScoreGaugeSS stream requires 236 finite keys and an initial value for all 56 curves.");
+  }
+  return ok(Object.freeze({ durationSeconds: 3 as const, loop: true as const, curveCount: 56 as const, nodes: Object.freeze(nodes), frames: Object.freeze(frames) }));
+}
+
+function validFiniteTuple(value: unknown, length: number): value is readonly number[] {
+  return Array.isArray(value) && value.length === length && value.every((entry) => typeof entry === "number" && Number.isFinite(entry));
+}
+
+function isExactFloat32(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value) && Math.fround(value) === value;
 }
 
 function reject(capability: string, boundary: string) {

@@ -301,6 +301,7 @@ function mapScoreLifeProfile(
     sessionId,
     scoreLevel: gameplay.score.level,
     totalParameter: gameplay.score.totalParameter,
+    scoreGaugeMaster: Object.freeze({ ...gameplay.score.master }),
     life: Object.freeze({ ...gameplay.life }),
     mode,
   }));

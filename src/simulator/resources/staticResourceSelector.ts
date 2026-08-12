@@ -7,6 +7,11 @@ import {
 } from "../backends/resources/habahiroBestdoriManifest";
 import { CURRENT_PARTICLE_RESOURCE_MANIFEST } from "../backends/resources/currentParticleResourceManifest";
 import {
+  CURRENT_SCORE_GAUGE_SS_ANIMATION_RESOURCE,
+  CURRENT_SCORE_HUD_PORTABLE_RESOURCES,
+  type ScoreHudPortableResourceEntry,
+} from "../backends/resources/currentScoreHudResourceManifest";
+import {
   CURRENT_ORDINARY_PORTABLE_PACK_IDENTITY,
   CURRENT_ORDINARY_PORTABLE_PROFILE_RESOURCE,
   CURRENT_ORDINARY_PORTABLE_RESOURCES,
@@ -37,6 +42,16 @@ export interface SelectedOrdinaryResource {
   readonly profile: OrdinaryPortableResourceEntry;
 }
 
+export interface SelectedScoreGaugeSsAnimationResource {
+  readonly resourceKey: string;
+  readonly profile: typeof CURRENT_SCORE_GAUGE_SS_ANIMATION_RESOURCE;
+}
+
+export interface SelectedScoreHudResource {
+  readonly resourceKey: string;
+  readonly profile: ScoreHudPortableResourceEntry["profile"];
+}
+
 export type SelectedRenderResourceRoute =
   | {
       readonly kind: "ordinary";
@@ -59,6 +74,8 @@ export interface SimulatorStaticResourceSelection {
   readonly schemaVersion: 1;
   readonly audioSe: readonly SelectedAudioSeResource[];
   readonly particles: readonly SelectedParticleResource[];
+  readonly scoreHud: readonly SelectedScoreHudResource[];
+  readonly scoreGaugeSsAnimation: SelectedScoreGaugeSsAnimationResource;
   readonly rendering: SelectedRenderResourceRoute;
 }
 
@@ -77,6 +94,15 @@ export function selectSimulatorStaticResources(
         profile,
       })),
   );
+  const scoreHud = Object.freeze(CURRENT_SCORE_HUD_PORTABLE_RESOURCES.map((entry) =>
+    Object.freeze({
+      resourceKey: scoreHudResourceKey(entry.resourceKeySuffix),
+      profile: entry.profile,
+    })));
+  const scoreGaugeSsAnimation = Object.freeze({
+    resourceKey: scoreHudResourceKey(CURRENT_SCORE_GAUGE_SS_ANIMATION_RESOURCE.resourceKeySuffix),
+    profile: CURRENT_SCORE_GAUGE_SS_ANIMATION_RESOURCE,
+  });
   const rendering: SelectedRenderResourceRoute = chart.habahiroChangeAbsolutePos >= 0
     ? Object.freeze({
         kind: "habahiro" as const,
@@ -106,6 +132,8 @@ export function selectSimulatorStaticResources(
     schemaVersion: 1 as const,
     audioSe,
     particles,
+    scoreHud,
+    scoreGaugeSsAnimation,
     rendering,
   });
 }
@@ -124,6 +152,10 @@ export function habahiroResourceKey(technicalName: string): string {
 
 export function ordinaryResourceKey(logicalAssetId: string): string {
   return `${STATIC_RESOURCE_NAMESPACE}/render-ordinary/${encodeKey(logicalAssetId)}`;
+}
+
+export function scoreHudResourceKey(resourceKeySuffix: string): string {
+  return `${STATIC_RESOURCE_NAMESPACE}/score-hud/${encodeKey(resourceKeySuffix)}`;
 }
 
 function encodeKey(value: string): string {

@@ -16,8 +16,10 @@ import {
   type ScoreLifeStateProfile,
 } from "../data/scoreLifeState";
 import { evidenceRequired, ok, type SimulatorResult } from "../evidence";
+import type { SinglePlayScoreGaugeSnapshot } from "../data/singlePlayScoreGauge";
 import { InGameRecord, type InGameRecordSnapshot } from "./inGameRecord";
 import { ScoreUtility } from "./scoreUtility";
+import { SinglePlayScoreGauge } from "./singlePlayScoreGauge";
 
 export interface ScoreLifeReflectEntry {
   readonly slot: number;
@@ -40,16 +42,19 @@ export interface ScoreLifeReflectPlan {
   readonly entryCount: number;
   readonly reflect: ScoreLifeReflectBatch;
   readonly record: InGameRecordSnapshot;
+  readonly scoreGauge: SinglePlayScoreGaugeSnapshot;
 }
 
 interface PendingScoreLifeReflect {
   readonly plan: ScoreLifeReflectPlan;
   readonly stagedRecord: InGameRecord;
+  readonly stagedScoreGauge: SinglePlayScoreGauge;
 }
 
 export interface ScoreLifeStateSnapshot {
   readonly initialization: ScoreLifeInitializationSnapshot;
   readonly record: InGameRecordSnapshot;
+  readonly scoreGauge: SinglePlayScoreGaugeSnapshot;
   readonly lastReflectBatch: ScoreLifeReflectBatch | null;
   readonly trace: readonly string[];
 }
@@ -58,6 +63,7 @@ export class ScoreLifeStateManager {
   readonly profile: ScoreLifeStateProfile;
   readonly record: InGameRecord;
   readonly scoreUtility: ScoreUtility;
+  readonly scoreGauge: SinglePlayScoreGauge;
   private lastReflectBatchValue: ScoreLifeReflectBatch | null = null;
   private pendingReflect: PendingScoreLifeReflect | null = null;
   private readonly traceValue: string[] = [];
@@ -65,6 +71,7 @@ export class ScoreLifeStateManager {
   private constructor(
     profile: ScoreLifeStateProfile,
     maxNoteCount: number,
+    scoreGauge: SinglePlayScoreGauge,
   ) {
     this.profile = deepFreezeScoreLifeProfile(profile);
     this.record = new InGameRecord(
@@ -77,6 +84,7 @@ export class ScoreLifeStateManager {
       profile.scoreLevel,
       maxNoteCount,
     );
+    this.scoreGauge = scoreGauge;
   }
 
   static create(
@@ -86,6 +94,10 @@ export class ScoreLifeStateManager {
   ): SimulatorResult<ScoreLifeStateManager> {
     const validation = validateProfile(profile, runtimePlayMode);
     if (validation.status !== "ok") return validation;
+    const scoreGauge = SinglePlayScoreGauge.create(validation.value.scoreGaugeMaster);
+    if (scoreGauge.status !== "ok") return scoreGauge;
+    const initializedGauge = scoreGauge.value.update(0);
+    if (initializedGauge.status !== "ok") return initializedGauge;
     const maxNoteCount = countMaximumNotes(chart);
     if (!Number.isInteger(maxNoteCount) || maxNoteCount <= 0) {
       return evidenceRequired(
@@ -94,7 +106,7 @@ export class ScoreLifeStateManager {
         "The parent-owned production chart must derive a positive Int32 maxNoteCount before score initialization.",
       );
     }
-    return ok(new ScoreLifeStateManager(validation.value, maxNoteCount));
+    return ok(new ScoreLifeStateManager(validation.value, maxNoteCount, scoreGauge.value));
   }
 
   get mode(): ScoreLifeModeValue { return this.profile.mode.kind; }
@@ -127,6 +139,7 @@ export class ScoreLifeStateManager {
       );
     }
     const stagedRecord = this.record.cloneForPreflight();
+    const stagedScoreGauge = this.scoreGauge.cloneForPreflight();
     const entries: ScoreLifeReflectEntry[] = [];
     let totalScore = 0;
     let representative = batch.entries[0]!;
@@ -159,6 +172,8 @@ export class ScoreLifeStateManager {
         comboAfter: stagedRecord.currentCombo,
       }));
     }
+    const gauge = stagedScoreGauge.update(stagedRecord.snapshot().score);
+    if (gauge.status !== "ok") return gauge;
     const reflect: ScoreLifeReflectBatch = Object.freeze({
       batchIndex: batch.batchIndex,
       entries: Object.freeze(entries),
@@ -172,8 +187,9 @@ export class ScoreLifeStateManager {
       entryCount: batch.entryCount,
       reflect,
       record: freezeRecordSnapshot(stagedRecord.snapshot()),
+      scoreGauge: freezeScoreGaugeSnapshot(gauge.value),
     });
-    this.pendingReflect = Object.freeze({ plan, stagedRecord });
+    this.pendingReflect = Object.freeze({ plan, stagedRecord, stagedScoreGauge });
     return ok(plan);
   }
 
@@ -186,6 +202,7 @@ export class ScoreLifeStateManager {
       );
     }
     this.record.commitFromPreflight(this.pendingReflect.stagedRecord);
+    this.scoreGauge.commitFromPreflight(this.pendingReflect.stagedScoreGauge);
     this.lastReflectBatchValue = plan.reflect;
     this.traceValue.push(`reflect:${plan.batchIndex}:${plan.entryCount}`);
     this.pendingReflect = null;
@@ -224,6 +241,7 @@ export class ScoreLifeStateManager {
         baseScore: this.scoreUtility.baseScore,
       }),
       record: this.record.snapshot(),
+      scoreGauge: this.scoreGauge.snapshot(),
       lastReflectBatch: this.lastReflectBatchValue === null
         ? null
         : Object.freeze({
@@ -275,6 +293,7 @@ function validateProfile(
     typeof profile.sessionId !== "string" || profile.sessionId.length === 0 ||
     !isInt32(profile.scoreLevel) || profile.scoreLevel < 5 ||
     !isFiniteFloat32(profile.totalParameter) || profile.totalParameter < 0 ||
+    profile.scoreGaugeMaster === null || typeof profile.scoreGaugeMaster !== "object" ||
     !validLife(profile.life) || !validMode(profile.mode) || !modeMatches
   ) {
     return evidenceRequired(
@@ -308,6 +327,12 @@ function freezeRecordSnapshot(snapshot: InGameRecordSnapshot): InGameRecordSnaps
     resultCounts: Object.freeze([...snapshot.resultCounts]) as InGameRecordSnapshot["resultCounts"],
     oneNoteMax: Object.freeze({ ...snapshot.oneNoteMax }),
   });
+}
+
+function freezeScoreGaugeSnapshot(
+  snapshot: SinglePlayScoreGaugeSnapshot,
+): SinglePlayScoreGaugeSnapshot {
+  return Object.freeze({ ...snapshot });
 }
 
 function correctedScore(source: number, comboRate: number): number {

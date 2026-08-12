@@ -57,8 +57,8 @@ export class InGameRecord {
   }
 
   addScore(value: number): void {
-    this.scoreValue = addInt32(this.scoreValue, value);
-    this.reserveTotalScoreValue = addInt32(this.reserveTotalScoreValue, value);
+    this.scoreValue = addUInt32(this.scoreValue, value);
+    this.reserveTotalScoreValue = addUInt32(this.reserveTotalScoreValue, value);
   }
 
   addCombo(value: number): void {
@@ -145,4 +145,8 @@ export class InGameRecord {
 
 function addInt32(left: number, right: number): number {
   return (left + right) | 0;
+}
+
+function addUInt32(left: number, right: number): number {
+  return (left + right) >>> 0;
 }

@@ -1,9 +1,40 @@
 import { Texture } from "pixi.js";
 import { evidenceRequired, ok, type SimulatorResult } from "../../engine/evidence";
 import type { RenderResourceAssetProfile } from "../renderingContracts";
-import type { PixiTextureDecoder } from "./pixiRendererBackend";
+import type { PixiDecodedFont, PixiTextureDecoder } from "./pixiRendererBackend";
 
 export class BrowserPixiTextureDecoder implements PixiTextureDecoder {
+  async decodeFont(
+    asset: RenderResourceAssetProfile,
+    bytes: Uint8Array,
+  ): Promise<SimulatorResult<PixiDecodedFont>> {
+    if (typeof globalThis.FontFace !== "function" || typeof document === "undefined" || document.fonts == null) {
+      return reject(
+        "render.pixi.font-face-unavailable",
+        "Browser Score Rank label preparation requires FontFace and document.fonts without a system-font fallback.",
+      );
+    }
+    const family = `GarupaScoreRank-${asset.sha256.slice(0, 16)}`;
+    let face: FontFace | null = null;
+    try {
+      const owned = Uint8Array.from(bytes);
+      face = new FontFace(family, owned.buffer as ArrayBuffer);
+      await face.load();
+      document.fonts.add(face);
+      const loaded = face;
+      return ok(Object.freeze({
+        family,
+        dispose() { document.fonts.delete(loaded); },
+      }));
+    } catch {
+      if (face !== null) document.fonts.delete(face);
+      return reject(
+        "render.pixi.rank-font-decode-threw",
+        "The hash-validated current sgm Rank label font must load before renderer readiness.",
+      );
+    }
+  }
+
   async decodePng(
     asset: RenderResourceAssetProfile,
     bytes: Uint8Array,

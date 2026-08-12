@@ -26,6 +26,7 @@ import {
   type SimulatorResult,
 } from "../evidence";
 import type { NoteFamily } from "../data/noteData";
+import type { SinglePlayScoreGaugeSnapshot } from "../data/singlePlayScoreGauge";
 import type { InGameRecordSnapshot } from "../managers/inGameRecord";
 import type { ScoreLifeReflectPlan } from "../managers/scoreLifeStateManager";
 import {
@@ -70,6 +71,15 @@ export interface RenderEngineResourceBindings {
     readonly slideAmong: string;
   };
   readonly comboAnimationLogicalAssetId?: string;
+  readonly scoreHud?: {
+    readonly fontLogicalAssetId: string;
+    readonly gaugeLogicalAssetId: string;
+    readonly levelMarkLogicalAssetId: string;
+    readonly rankLabelFontLogicalAssetId: string;
+    readonly highRankKiraLogicalAssetId: string;
+    readonly highRankLongStarLogicalAssetId: string;
+    readonly highRankOverlayLogicalAssetId: string;
+  };
 }
 
 export interface RenderPoolIdentityPlan {
@@ -224,6 +234,7 @@ export class RenderCommandProducer {
   private readonly hudAnimationElapsedSeconds = new Map<"combo" | "all-perfect", number>();
   private readonly addScoreElapsedSeconds = new Map<string, number>();
   private resultElapsedSeconds: number | null = null;
+  private scoreGaugeSsElapsedSeconds: number | null = null;
   private addScoreCursor = 0;
   private addScoreDepthCycle = 0;
   private lastCombo = 0;
@@ -306,9 +317,12 @@ export class RenderCommandProducer {
 
   preflightHudSetup(
     record: InGameRecordSnapshot,
+    scoreGauge: SinglePlayScoreGaugeSnapshot,
   ): SimulatorResult<RenderOwnerTransaction> {
     const validation = this.validate();
     if (validation.status !== "ok") return validation;
+    const scoreHud = this.validateScoreHudBindings();
+    if (scoreHud.status !== "ok") return scoreHud;
     const base = this.commandBase(0);
     const commands: RenderCommand[] = [];
     const created: string[] = [];
@@ -333,7 +347,7 @@ export class RenderCommandProducer {
     create(HUD_OBJECTS.score, "hud-score");
     commands.push({
       ...base(commands.length), kind: "set-hud", renderObjectId: HUD_OBJECTS.score,
-      hudRole: "score", state: scoreHudState(record),
+      hudRole: "score", state: scoreHudState(record, scoreGauge),
     });
     commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: HUD_OBJECTS.score });
     create(HUD_OBJECTS.life, "hud-life");
@@ -350,6 +364,8 @@ export class RenderCommandProducer {
   ): SimulatorResult<RenderOwnerTransaction> {
     const validation = this.validate();
     if (validation.status !== "ok") return validation;
+    const scoreHud = this.validateScoreHudBindings();
+    if (scoreHud.status !== "ok") return scoreHud;
     const base = this.commandBase(this.substep);
     const commands: RenderCommand[] = [];
     const totalAddScore = plan.reflect.totalScore;
@@ -413,7 +429,11 @@ export class RenderCommandProducer {
     });
     commands.push({
       ...base(commands.length), kind: "set-hud", renderObjectId: HUD_OBJECTS.score,
-      hudRole: "score", state: scoreHudState(plan.record),
+      hudRole: "score", state: scoreHudState(plan.record, plan.scoreGauge),
+    });
+    if (plan.scoreGauge.highRankEffect === "ScoreGaugeSS") commands.push({
+      ...base(commands.length), kind: "play-animation", renderObjectId: HUD_OBJECTS.score,
+      animationRole: "score-gauge-ss", restart: true,
     });
     commands.push({
       ...base(commands.length), kind: "set-hud", renderObjectId: HUD_OBJECTS.life,
@@ -442,6 +462,9 @@ export class RenderCommandProducer {
         this.lastAllPerfect = plan.record.allPerfect;
       }
       this.resultElapsedSeconds = 0;
+      if (plan.scoreGauge.highRankEffect === "ScoreGaugeSS") {
+        this.scoreGaugeSsElapsedSeconds = 0;
+      }
       if (plan.record.singleGameOver) {
         this.hudAnimationElapsedSeconds.clear();
         this.addScoreElapsedSeconds.clear();
@@ -464,7 +487,8 @@ export class RenderCommandProducer {
     if (
       (this.hudAnimationElapsedSeconds.size === 0 &&
         this.addScoreElapsedSeconds.size === 0 &&
-        this.resultElapsedSeconds === null) ||
+        this.resultElapsedSeconds === null &&
+        this.scoreGaugeSsElapsedSeconds === null) ||
       deltaTimeSeconds === 0
     ) {
       return ok(new RenderOwnerTransaction(this.renderer, null));
@@ -472,6 +496,7 @@ export class RenderCommandProducer {
     const next = new Map<"combo" | "all-perfect", number>();
     const nextAddScore = new Map<string, number>();
     let nextResultElapsed = this.resultElapsedSeconds;
+    let nextScoreGaugeSsElapsed = this.scoreGaugeSsElapsedSeconds;
     const base = this.commandBase(this.substep);
     const commands: RenderCommand[] = [];
     for (const [role, elapsed] of this.hudAnimationElapsedSeconds) {
@@ -514,6 +539,15 @@ export class RenderCommandProducer {
         nextAddScore.set(renderObjectId, nextElapsed);
       }
     }
+    if (this.scoreGaugeSsElapsedSeconds !== null) {
+      nextScoreGaugeSsElapsed = Math.fround(this.scoreGaugeSsElapsedSeconds + deltaTimeSeconds);
+      const sample = createRenderFloat32(Math.fround(nextScoreGaugeSsElapsed % 3));
+      if (sample.status !== "ok") return sample;
+      commands.push({
+        ...base(commands.length), kind: "sample-animation", renderObjectId: HUD_OBJECTS.score,
+        animationRole: "score-gauge-ss", elapsedSeconds: sample.value,
+      });
+    }
     if (this.resultElapsedSeconds !== null) {
       nextResultElapsed = Math.fround(this.resultElapsedSeconds + deltaTimeSeconds);
       if (nextResultElapsed >= 1) {
@@ -535,6 +569,7 @@ export class RenderCommandProducer {
         this.addScoreElapsedSeconds.set(renderObjectId, elapsed);
       }
       this.resultElapsedSeconds = nextResultElapsed;
+      this.scoreGaugeSsElapsedSeconds = nextScoreGaugeSsElapsed;
     });
   }
 
@@ -2136,7 +2171,20 @@ export class RenderCommandProducer {
       this.addScoreElapsedSeconds.clear();
       this.noteAnimationElapsedSeconds.clear();
       this.resultElapsedSeconds = null;
+      this.scoreGaugeSsElapsedSeconds = null;
     });
+  }
+
+  private validateScoreHudBindings(): SimulatorResult<void> {
+    if (this.resources.scoreHud === undefined ||
+      Object.values(this.resources.scoreHud).some((value) => !isNonEmpty(value))) {
+      return evidenceRequired(
+        "render.producer.missing-score-hud-bindings",
+        [],
+        "Score HUD setup requires the exact font, gauge and high-rank resource bindings prepared before domain mutation.",
+      );
+    }
+    return ok(undefined);
   }
 
   private recordCreatedObjects(renderObjectIds: readonly string[]): void {
@@ -2541,15 +2589,37 @@ function resolveLaneIndex(button: number, habahiro: boolean): number {
 
 function scoreHudState(
   record: InGameRecordSnapshot,
+  gauge: SinglePlayScoreGaugeSnapshot,
 ): Readonly<Record<string, string | number | boolean | null>> {
-  const digits = String(record.score).padStart(8, "0").slice(-8);
-  const firstSignificant = Math.max(0, digits.search(/[1-9]/));
+  const scoreText = zeroFilledScoreText(record.score);
   return Object.freeze({
     score: record.score,
-    digits,
-    firstSignificant,
-    gaugeFill: Math.fround(Math.min(record.score / 99_999_999, 1)),
+    scoreText,
+    scoreMax: gauge.scoreMax,
+    rank: gauge.currentGaugeColorRank,
+    beforeRank: gauge.beforeGaugeColorRank,
+    rankChanged: gauge.rankChanged,
+    meterKey: gauge.meterKey,
+    ratio: gauge.ratio,
+    ratioBits: gauge.ratioBits,
+    sliderValue: gauge.sliderValue,
+    sliderValueBits: gauge.sliderValueBits,
+    foregroundActive: gauge.foregroundActive,
+    indicatorLocalX: gauge.indicatorLocalX,
+    rankMarkerCLocalX: gauge.rankMarkerCLocalX,
+    rankMarkerBLocalX: gauge.rankMarkerBLocalX,
+    rankMarkerALocalX: gauge.rankMarkerALocalX,
+    rankMarkerSLocalX: gauge.rankMarkerSLocalX,
+    rankMarkerSSLocalX: gauge.rankMarkerSSLocalX,
+    highRankEffect: gauge.highRankEffect,
+    highRankEffectActive: gauge.highRankEffectActive,
   });
+}
+
+function zeroFilledScoreText(score: number): string {
+  const digits = String(score);
+  const zeroCount = Math.max(8 - Math.max(1, digits.length), 0);
+  return `[BEBEBE]${"0".repeat(zeroCount)}[-][FF3B72]${digits}[-]`;
 }
 
 function lifeHudState(

@@ -21,6 +21,7 @@ import {
   type LocalRenderResource,
 } from "../backends/resources/localResourceProvider";
 import { CURRENT_ORDINARY_PORTABLE_PACK_IDENTITY } from "../backends/resources/currentOrdinaryResourceManifest";
+import { parseCurrentScoreGaugeSsAnimationProfile } from "../backends/resources/currentScoreGaugeSsAnimationProfile";
 import type { ParticleResourceProvider } from "../backends/particleContracts";
 import type { AudioResourceProvider } from "../backends/audioContracts";
 import { evidenceRequired, ok } from "../engine/evidence";
@@ -29,6 +30,8 @@ import type {
   SelectedHabahiroResource,
   SelectedOrdinaryResource,
   SelectedParticleResource,
+  SelectedScoreGaugeSsAnimationResource,
+  SelectedScoreHudResource,
 } from "./staticResourceSelector";
 import type { SharedStaticResourceStore } from "./sharedStaticResourceStore";
 
@@ -115,6 +118,86 @@ export async function prepareSharedOrdinaryRenderResources(
     provider.boundary,
   );
   return accepted(Object.freeze({ profile: validated.value, provider: provider.value }));
+}
+
+export interface PreparedSharedScoreHudRenderResources {
+  readonly assets: RenderResourceProfile["assets"];
+  readonly provider: SimulatorResourceProvider;
+}
+
+export async function prepareSharedScoreGaugeSsAnimationResource(
+  selected: SelectedScoreGaugeSsAnimationResource,
+  store: SharedStaticResourceStore,
+): Promise<SimulatorAssemblyResult<NonNullable<RenderResourceProfile["scoreGaugeSsAnimation"]>>> {
+  const read = await readStatic(store, selected.resourceKey);
+  if (read.status === "rejected") return read;
+  if (read.value.byteLength !== selected.profile.byteLength ||
+    sha256UpperHex(read.value) !== selected.profile.sha256) {
+    return rejected(
+      "resource-integrity",
+      "simulator.resources.score-gauge-ss-animation-integrity",
+      "The ScoreGaugeSS animation profile must match its committed byte length and SHA-256 before JSON parsing.",
+    );
+  }
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(new TextDecoder().decode(read.value));
+  } catch {
+    return rejected(
+      "resource-decode",
+      "simulator.resources.score-gauge-ss-animation-json",
+      "The hash-validated ScoreGaugeSS animation profile must be valid UTF-8 JSON.",
+    );
+  }
+  const profile = parseCurrentScoreGaugeSsAnimationProfile(parsed);
+  return profile === null
+    ? rejected(
+        "resource-integrity",
+        "simulator.resources.score-gauge-ss-animation-shape",
+        "The ScoreGaugeSS profile must preserve all 56 curves, 39 finite frames, 236 keys and 11 scene nodes.",
+      )
+    : accepted(profile);
+}
+
+export async function prepareSharedScoreHudRenderResources(
+  selected: readonly SelectedScoreHudResource[],
+  store: SharedStaticResourceStore,
+): Promise<SimulatorAssemblyResult<PreparedSharedScoreHudRenderResources>> {
+  if (selected.length !== 7) {
+    return rejected(
+      "resource-integrity",
+      "simulator.resources.score-hud-inventory",
+      "The current Score HUD requires exactly the seven committed portable bitmap font, rank-label font, gauge, rank-marker and high-rank resources.",
+    );
+  }
+  const local: LocalRenderResource[] = [];
+  const logicalIds = new Set<string>();
+  for (const resource of selected) {
+    const profile = resource.profile;
+    if (logicalIds.has(profile.logicalAssetId)) {
+      return rejected(
+        "resource-integrity",
+        "simulator.resources.score-hud-duplicate-logical-id",
+        "Every selected Score HUD resource must have one unique internally pinned logical identity.",
+      );
+    }
+    logicalIds.add(profile.logicalAssetId);
+    const read = await readStatic(store, resource.resourceKey);
+    if (read.status === "rejected") return read;
+    if (read.value.byteLength !== profile.byteLength ||
+      sha256UpperHex(read.value) !== profile.sha256) {
+      return rejected(
+        "resource-integrity",
+        "simulator.resources.score-hud-asset-integrity",
+        "Every Score HUD PNG must match the committed portable byte length and SHA-256 before renderer preparation.",
+      );
+    }
+    local.push({ logicalAssetId: profile.logicalAssetId, bytes: read.value });
+  }
+  const provider = ImmutableLocalRenderResourceProvider.create(local);
+  return provider.status === "ok"
+    ? accepted(Object.freeze({ assets: Object.freeze(selected.map((row) => row.profile)), provider: provider.value }))
+    : rejected("launch-failed", provider.capability, provider.boundary);
 }
 
 export interface PreparedSharedAudioResources {

@@ -19,6 +19,7 @@ import {
   type SimulatorAssemblyResult,
 } from "../resources/sharedResourceAdapters";
 import type { ManualInputFrame } from "../engine/data/manualInput";
+import { isSinglePlayScoreGaugeMasterProfile } from "../engine/data/singlePlayScoreGauge";
 import { evidenceRequired, ok, type SimulatorResult } from "../engine/evidence";
 
 export interface SimulatorSessionRecipe {
@@ -297,12 +298,22 @@ function isGameplayShape(value: unknown): value is SimulatorModuleLaunchRequest[
   const score = gameplay.score;
   const life = gameplay.life;
   return score !== null && typeof score === "object" && !Array.isArray(score) &&
-    Object.keys(score).sort().join(",") === "autoLiveComboCoefficient,level,totalParameter" &&
-    Object.values(score).every((entry) => typeof entry === "number" && Number.isFinite(entry)) &&
+    Object.keys(score).sort().join(",") === "autoLiveComboCoefficient,level,master,totalParameter" &&
+    typeof (score as Record<string, unknown>).level === "number" &&
+    Number.isFinite((score as Record<string, number>).level) &&
+    typeof (score as Record<string, unknown>).totalParameter === "number" &&
+    Number.isFinite((score as Record<string, number>).totalParameter) &&
+    typeof (score as Record<string, unknown>).autoLiveComboCoefficient === "number" &&
+    Number.isFinite((score as Record<string, number>).autoLiveComboCoefficient) &&
+    isScoreGaugeMasterShape((score as Record<string, unknown>).master) &&
     life !== null && typeof life === "object" && !Array.isArray(life) &&
     Object.keys(life).sort().join(",") ===
       "badDamage,initialLife,lifeUpperLimit,missDamage,playerMaxLife" &&
     Object.values(life).every((entry) => typeof entry === "number" && Number.isFinite(entry));
+}
+
+function isScoreGaugeMasterShape(value: unknown): boolean {
+  return isSinglePlayScoreGaugeMasterProfile(value);
 }
 
 function deepFreezeClone(value: unknown, seen = new Set<object>()): unknown {

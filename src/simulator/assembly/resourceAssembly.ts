@@ -10,9 +10,11 @@ import type {
 import type {
   RenderResourcePreflightAdapter,
   SimulatorRendererBackend,
+  SimulatorResourceProvider,
 } from "../backends/renderingContracts";
 import { prepareHabahiroBestdoriPack } from "../backends/resources/habahiroBestdoriProvider";
 import { CURRENT_ORDINARY_RENDER_BINDINGS } from "../backends/resources/currentOrdinaryResourceManifest";
+import { CURRENT_SCORE_HUD_BINDINGS } from "../backends/resources/currentScoreHudResourceManifest";
 import type { RenderEngineResourceBindings } from "../engine/rendering/renderCommandProducer";
 import type { SimulatorChartAudioData } from "../public/contracts";
 import type { SimulatorSceneLayout } from "../scene/simulatorSceneLayout";
@@ -23,6 +25,8 @@ import {
   prepareSharedAudioResources,
   prepareSharedOrdinaryRenderResources,
   prepareSharedParticleProvider,
+  prepareSharedScoreGaugeSsAnimationResource,
+  prepareSharedScoreHudRenderResources,
   rejected,
   type SimulatorAssemblyResult,
 } from "../resources/sharedResourceAdapters";
@@ -109,6 +113,7 @@ export async function assembleSimulatorResources(
         multipleDirectionalLineRightLogicalAssetId: habahiro.value.bindings.multipleDirectionalLineRightLogicalAssetId,
         longNoteMaterialLogicalAssetId: habahiro.value.bindings.longNoteMaterialLogicalAssetId,
         curveNoteMaterialLogicalAssetId: habahiro.value.bindings.curveNoteMaterialLogicalAssetId,
+        scoreHud: CURRENT_SCORE_HUD_BINDINGS,
         habahiroAtlasLogicalAssetIds: Object.freeze({
           normal: habahiro.value.bindings.normalAtlasLogicalAssetId,
           normal16: habahiro.value.bindings.normal16AtlasLogicalAssetId,
@@ -121,6 +126,25 @@ export async function assembleSimulatorResources(
       }),
     });
   }
+  const scoreHud = await prepareSharedScoreHudRenderResources(selection.scoreHud, store);
+  if (scoreHud.status === "rejected") return scoreHud;
+  const scoreGaugeSsAnimation = await prepareSharedScoreGaugeSsAnimationResource(
+    selection.scoreGaugeSsAnimation,
+    store,
+  );
+  if (scoreGaugeSsAnimation.status === "rejected") return scoreGaugeSsAnimation;
+  renderPack = Object.freeze({
+    ...renderPack,
+    profile: Object.freeze({
+      ...renderPack.profile,
+      packIdentity: `${renderPack.profile.packIdentity}+score-hud-current-10.1.4-v1`,
+      assets: Object.freeze([...renderPack.profile.assets, ...scoreHud.value.assets]),
+      scoreGaugeSsAnimation: scoreGaugeSsAnimation.value,
+    }),
+    provider: mergeRenderProviders(renderPack.provider, scoreHud.value.provider, scoreHud.value.assets.map(
+      (asset) => asset.logicalAssetId,
+    )),
+  });
   const scene = targets.createSceneLayout(selection.rendering.kind, renderPack.bindings);
   if (scene.status === "rejected") return scene;
   const audio = await prepareSharedAudioResources(chartAudio, selection.audioSe, store);
@@ -202,6 +226,21 @@ export async function assembleSimulatorResources(
     particleRendererBackend: targets.particles.renderer,
     sceneLayout: scene.value,
   }));
+}
+
+function mergeRenderProviders(
+  base: SimulatorResourceProvider,
+  scoreHud: SimulatorResourceProvider,
+  scoreHudLogicalAssetIds: readonly string[],
+): SimulatorResourceProvider {
+  const scoreHudIds = new Set(scoreHudLogicalAssetIds);
+  return Object.freeze({
+    read(logicalAssetId: string) {
+      return scoreHudIds.has(logicalAssetId)
+        ? scoreHud.read(logicalAssetId)
+        : base.read(logicalAssetId);
+    },
+  });
 }
 
 function mapAudioFailure(

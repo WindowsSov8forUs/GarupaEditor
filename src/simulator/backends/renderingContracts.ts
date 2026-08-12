@@ -38,6 +38,7 @@ export type RenderAnimationRole =
   | "all-perfect"
   | "add-score"
   | "result"
+  | "score-gauge-ss"
   | "habahiro-lane-change";
 
 export type RenderTextureScaleMode = "nearest" | "linear";
@@ -169,6 +170,32 @@ export interface RenderSceneProfile {
   readonly antialias: boolean;
 }
 
+export interface RenderScoreGaugeSsAnimationKey {
+  readonly index: number;
+  readonly coefficients: readonly [number, number, number, number];
+}
+
+export interface RenderScoreGaugeSsAnimationFrame {
+  readonly time: number;
+  readonly keys: readonly RenderScoreGaugeSsAnimationKey[];
+}
+
+export interface RenderScoreGaugeSsAnimationNode {
+  readonly name: string;
+  readonly textureKey: "high-rank-kira" | "high-rank-long-star" | "high-rank-overlay";
+  readonly initialPosition: readonly [number, number, number];
+  readonly initialScale: readonly [number, number, number];
+  readonly initialRotationQuaternion: readonly [number, number, number, number];
+}
+
+export interface RenderScoreGaugeSsAnimationProfile {
+  readonly durationSeconds: 3;
+  readonly loop: true;
+  readonly curveCount: 56;
+  readonly nodes: readonly RenderScoreGaugeSsAnimationNode[];
+  readonly frames: readonly RenderScoreGaugeSsAnimationFrame[];
+}
+
 export interface RenderResourceProfile {
   readonly schemaVersion: 1;
   readonly sample: RenderSampleIdentity;
@@ -178,6 +205,7 @@ export interface RenderResourceProfile {
   readonly automaticFallbackAllowed: false;
   readonly assets: readonly RenderResourceAssetProfile[];
   readonly scene: RenderSceneProfile;
+  readonly scoreGaugeSsAnimation?: RenderScoreGaugeSsAnimationProfile;
 }
 
 export interface SimulatorResourceProvider {
