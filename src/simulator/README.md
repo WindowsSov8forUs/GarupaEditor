@@ -1,26 +1,34 @@
 # GarupaEditor Simulator
 
-`src/simulator`是按Reverse证据重建的自治portable模拟器模块。旧模拟器结构已删除；当前实现不保留旧host/app/controller接口兼容。
+`src/simulator`是按Reverse证据重建的自治portable谱面模拟器。当前产品范围保留完整单人谱面玩法与独立的Skill音符表现；只删除角色/卡组技能效果系统和多人玩法。
 
 ## 当前状态
 
 已完成并隔离验收：
 
-- 引擎对象图、谱面构造、时钟与调度；
+- BMS构造、时钟与调度；
 - Auto Live、手动输入与判定；
-- Score/Life/Skill/Fever/Game Over；
-- ordinary与HABAHIRO resource/Pixi rendering；
-- 逐谱BGM、固定SE、WebAudio portable transport；
+- 通用score、combo、判定计数、Life、Miss/Bad伤害、Game Over与clear status；
+- ordinary及HABAHIRO谱面、Skill音符atlas/SE/判定粒子、普通渲染与HUD；
+- 逐谱BGM、14项固定玩法SE及WebAudio transport；
 - deterministic particle、Pixi particle与whole-engine ReturnTime；
-- single public launch、shared resource selection、unified scene/manual geometry、autonomous runtime、natural completion及production composition root。
+- single public launch、shared resource selection、unified scene/manual geometry、autonomous runtime及natural completion。
+
+已从production删除：
+
+- character/card/deck业务模型；
+- `skillNoteIndex → member/card`、技能队列/持续时间与加分、回血、判定强化、护盾、不死等角色技能效果；
+- character cut-in、audience、clear voice及其独立voice gain/category；
+- collaboration、team-live-festival、Fever point/state/command/member adapter及活动倍率；
+- 对应public字段、replay journal和HUD动画。
+
+**Skill音符不是角色技能效果。** `GameNoteAdditionalType.Skill`、ordinary/HAB专用外观、`SE_RHYTHM_TAP_SKILL`和Good/Great/Perfect Skill粒子继续保留。Fever谱面命名仍可解析，但不再产生多人Fever状态。
 
 Portable functional gate已关闭。原作物理设备exact保持：
 
 ```text
 open-not-claimed-fixed-device-limit
 ```
-
-不声明Unity/CRI/Android/GPU/driver/framebuffer/扬声器exact等价。
 
 ## Public边界
 
@@ -30,29 +38,29 @@ open-not-claimed-fixed-device-limit
 import { launchSimulatorModule } from "src/simulator";
 ```
 
-调用方只提交：
+调用方提交：
 
-- BMS；
-- 显式逐谱BGM bytes及metadata；
-- session score/life/skill/fever业务数据；
+- BMS与显式逐谱BGM bytes/metadata；
+- 中立gameplay数据：score level、generic total parameter、Auto Live combo coefficient；
+- 通用Life初值/上限与Miss/Bad伤害；
 - play/practice/audio/visual用户配置。
 
-成功后只得到`closed` Promise。Public barrel不导出engine、step、backend、provider、profile、scene、replay factory或dispose。
+Public不接收card、deck、character skill、team、festival、Fever或member数据。成功后只得到`closed` Promise；close result报告adjusted music position、score、life、combo与clear status，终态为`completed`、`game-over`、`user-closed`或`terminal-fault`。
 
-启动成功后，scheduler、input、pause、checkpoint/ReturnTime、BGM自然结束、clear/Game Over、fault、mount及dispose全部归simulator内部owner。
+Public barrel不导出engine、step、backend、provider、profile、scene、replay factory或dispose。启动后scheduler、input、pause、checkpoint/ReturnTime、BGM自然结束、Game Over、fault、mount及dispose全部归simulator内部owner。
 
 ## 架构
 
 ```text
 src/simulator/
-├─ public/      # 唯一chart/config/launch/close合同
+├─ public/      # 唯一chart/gameplay/config/launch/close合同
 ├─ runtime/     # 自治scheduler/input/session生命周期
 ├─ assembly/    # frozen recipe与原子resource assembly
-├─ platform/    # 中立production capability composition，不属于public业务面
+├─ platform/    # 中立production capability composition
 ├─ scene/       # ordinary/particle/manual/HAB统一layout owner
-├─ host/        # simulator内部engine host与whole-engine replay
-├─ engine/      # 证据化领域对象、manager、note、render/audio/particle producer
-├─ backends/    # Recording/Pixi/WebAudio/particle/resource portable adapters
+├─ host/        # 内部engine host与whole-engine replay
+├─ engine/      # 谱面、score/life、判定、note、音画producer
+├─ backends/    # Recording/Pixi/WebAudio/particle/resource adapters
 ├─ resources/   # immutable shared store、fixed selector及store adapters
 └─ testing/     # 隔离测试与登记fixture
 ```
@@ -64,39 +72,25 @@ src/simulator/
 Production只内置manifest/metadata，不读取testing fixture。部署的中立shared store需预置：
 
 - ordinary：8 keys / 1,479,352 bytes；
-- fixed SE：18 keys / 392,018 bytes；
+- fixed gameplay SE：14 keys / 222,934 bytes；
 - particle：9 keys / 2,254,580 bytes；
 - HABAHIRO：11 keys / 3,815,563 bytes。
 
-共46 keys / 7,941,513 bytes，另加每session动态BGM。
+共42 keys / 7,772,429 bytes，另加每session动态BGM。相比原库存只删除4项角色voice/cut-in专用SE；Skill音符SE、Skill粒子和`RhythmGameSprites5.png`保留。
 
-Simulator内部决定manifest、resource key、route、profile、binding与prepare顺序。缺项、长度/SHA、PNG/MP3 metadata、cue或关系不符全部失败关闭；自治launch route不隐式联网、不使用默认资源或fallback。
+缺项、长度/SHA、PNG/MP3 metadata、cue或关系不符全部失败关闭；自治launch不隐式联网、不使用默认资源或fallback。
 
 ## Unified scene
 
-当前scene基线来自Reverse `30788a2ab30cd5ab61b84148f0d596776d47b3a1`：
-
-- 1600×720 orthographic、360 PPU；
-- ordinary 7 lane motion；
-- 15个supported GamePlayButton particle world anchors；
-- bottom-left manual ScreenToWorld、collision及distance normalization；
-- Slide local-Y、1/60 position list与JudgeOffsetFrame VirtualPerfectLine；
-- HAB lane-change后的manual ButtonType切换；
-- 已授权portable HAB field/judge/mask与0.25秒flash policy。
+当前scene基线来自Reverse `30788a2ab30cd5ab61b84148f0d596776d47b3a1`：1600×720 orthographic、360 PPU、ordinary 7 lane、15个particle anchors、bottom-left manual geometry、Slide local-Y/1/60 list及HAB lane-change geometry。
 
 `Button_07_BMS_1P_07`没有current scene mapping，被请求时返回`evidence-required`。
 
 ## Evidence workflow
 
-完整流程见[`evidence-workflow.md`](./evidence-workflow.md)。
+完整流程见[`evidence-workflow.md`](./evidence-workflow.md)。只消费已verify、commit、push的Reverse证据；production不读取Reverse工作树、`tmp/`或testing fixture。历史fixture中的角色/多人字段保持原字节，不代表production可达。
 
-1. 逆向只在`HOST________\VSCode\GirlsBandParty-Reverse`进行。
-2. Evidence必须先verify、commit、push并确认`origin/main...HEAD = 0 0`。
-3. GarupaEditor只消费已提交证据；不消费Reverse脏工作树、`.claude/`或`runtime/tools/`。
-4. `tmp/`只保存任务/验收/指针；不复制raw trace、oracle或Reverse manifest。
-5. 最小测试快照只放`src/simulator/testing/fixtures/`并登记来源、长度与SHA-256；production禁止读取。
-
-当前关键Reverse提交：
+关键Reverse提交：
 
 - particle closure：`9fb544b281d25fe0cefb4b2d6e692bb38df66a81`；
 - per-chart BGM：`55bdde635526d2a94a48c760f18ae7f90cd96631`；
@@ -105,28 +99,19 @@ Simulator内部决定manifest、resource key、route、profile、binding与prepa
 
 ## 验收
 
-主任务与最终记录：
-
-- `tmp/simulator-autonomous-module-refactor-task.md`；
-- `tmp/simulator-autonomous-module-refactor-acceptance.md`；
-- `tmp/simulator-external-resource-audit.md`；
-- `tmp/simulator-evidence-pointers.md`。
-
-隔离总入口：
-
 ```powershell
 npx.cmd tsc -p src/simulator/tsconfig.json
+npm.cmd run simulator:test:score-life-state
 npm.cmd run simulator:test:device-closure
 ```
 
-当前固定结果包括：ordinary particle 656 batches / 7200 frames / 1251 commands，digest
-`9B65E8D022E2407AECABCD09D0EE152B8CE0C27EB85C6BAB68AA46DCC6F71FC6`；resource/Pixi 14 stages；device closure 4 stages。
+通用score/life测试显式覆盖扣血、上限、Game Over及Skill音符不触发角色效果；audio/particle/render测试分别锁定Skill音符SE、Skill判定粒子和Skill atlas route。
 
 ## 显式开放项
 
-- 非零initial practice seek：缺少whole-engine pre-roll cadence证据，资源读取前失败关闭；
+- 非零initial practice seek；
 - `Button_07_BMS_1P_07` scene mapping；
 - 固定设备120/adaptive cadence、GPU/framebuffer、visible/audio physical exact；
 - stage-9主程序集成。
 
-`mainProgramIntegrationAuthorization=false`。不得修改主程序入口或用兼容壳恢复已删除结构；若后续单独授权，主程序只能提供chart/config并调用public launch。
+`mainProgramIntegrationAuthorization=false`。不得修改主程序入口或用兼容壳恢复已删除结构。

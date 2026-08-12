@@ -29,7 +29,6 @@ import { InGameManager } from "../engine/managers/inGameManager";
 import { InGameMusicScoreController } from "../engine/managers/inGameMusicScoreController";
 import { InGameOneFrameJudgementController } from "../engine/managers/inGameOneFrameJudgementController";
 import { ScoreLifeStateManager } from "../engine/managers/scoreLifeStateManager";
-import type { FeverTimeCommandName } from "../engine/managers/feverTimeManager";
 import {
   GamePlayInputDispatcher,
   InputManager,
@@ -221,24 +220,6 @@ class SimulatorEngineHost implements SimulatorEngine {
     return audio?.status === "ok"
       ? this.commitAudio(audio.value)
       : ok(undefined);
-  }
-
-  updateFeverMemberPoint(
-    displayIndex: number,
-    point: number,
-    isOwnTeam: boolean,
-  ): SimulatorResult<void> {
-    const audioFault = this.pollAudioFault();
-    return audioFault.status === "ok"
-      ? this.inGameManager.updateFeverMemberPoint(displayIndex, point, isOwnTeam)
-      : audioFault;
-  }
-
-  changeFeverCommand(command: FeverTimeCommandName): SimulatorResult<void> {
-    const audioFault = this.pollAudioFault();
-    return audioFault.status === "ok"
-      ? this.inGameManager.changeFeverCommand(command)
-      : audioFault;
   }
 
   continueLive(): SimulatorResult<void> {
@@ -581,16 +562,6 @@ export function createSimulatorEngine(
       );
   if (scoreLifeStateResult.status !== "ok") return scoreLifeStateResult;
   const scoreLifeStateManager = scoreLifeStateResult.value;
-  if (
-    input.audio !== undefined && scoreLifeStateManager !== null &&
-    input.audio.practiceMode !== (scoreLifeStateManager.mode === "practice")
-  ) {
-    return evidenceRequired(
-      "audio.session.practice-mode-mismatch",
-      [],
-      "Skill, audience and clear routing must use the same practice-mode fact as the Score/Life session.",
-    );
-  }
   const musicScoreController = new InGameMusicScoreController(input.chart);
   const oneFrameJudgementController = new InGameOneFrameJudgementController();
   if (scoreLifeStateManager !== null) {
@@ -751,11 +722,11 @@ function validatePlayMode(
   }
   if (
     kind === "auto-live" &&
-    value.resultTransform === "identity-no-active-situation-skill"
+    value.resultTransform === "identity"
   ) {
     return ok(Object.freeze({
       kind: "auto-live",
-      resultTransform: "identity-no-active-situation-skill",
+      resultTransform: "identity",
     }));
   }
   return evidenceRequired(

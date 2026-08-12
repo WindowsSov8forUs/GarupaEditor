@@ -15,7 +15,6 @@ import type { EngineLifecycleSnapshot, EngineLifecycleState } from "../lifecycle
 import { InGameMusicScoreController } from "./inGameMusicScoreController";
 import { InGameOneFrameJudgementController } from "./inGameOneFrameJudgementController";
 import { ScoreLifeStateManager } from "./scoreLifeStateManager";
-import type { FeverTimeCommandName } from "./feverTimeManager";
 import { InputManager } from "./inputBoundaries";
 import { NoteManager } from "./noteManager";
 import type {
@@ -151,44 +150,6 @@ export class InGameManager {
       );
     }
     this.audioProducer?.beginOuterFrame();
-    const skillBefore = this.scoreLifeStateManager?.snapshot().skill ?? null;
-    const skillAudio = skillBefore?.state === 1
-      ? this.audioProducer?.preflightSkillTriggered() ?? null
-      : null;
-    if (skillAudio !== null && skillAudio.status !== "ok") {
-      return this.latchFault(skillAudio);
-    }
-    this.scoreLifeStateManager?.update(deltaTimeSeconds);
-    const skillAfter = this.scoreLifeStateManager?.snapshot().skill ?? null;
-    if (skillBefore !== null && skillAfter !== null) {
-      if (skillAudio?.status === "ok" && skillAfter.state !== 2) {
-        skillAudio.value.discard();
-        return this.latchFault(evidenceRequired(
-          "audio.skill.preflight-transition-changed",
-          [],
-          "A preflighted Skill audio transition must enter Playing in the same owner update.",
-        ));
-      }
-      const skillRender = this.renderProducer?.preflightHudSkillTransition(
-        skillBefore,
-        skillAfter,
-      ) ?? null;
-      if (skillRender?.status === "evidence-required") {
-        if (skillAudio?.status === "ok") skillAudio.value.discard();
-        return this.latchFault(skillRender);
-      }
-      if (skillAudio?.status === "ok") {
-        const committed = skillAudio.value.commit();
-        if (committed.status !== "ok") {
-          if (skillRender?.status === "ok") skillRender.value.discard();
-          return this.latchFault(committed);
-        }
-      }
-      if (skillRender?.status === "ok") {
-        const committed = skillRender.value.commit();
-        if (committed.status !== "ok") return this.latchFault(committed);
-      }
-    }
     const updateResult = this.noteManager.execUpdate(deltaTimeSeconds);
     if (updateResult.status !== "ok") {
       return this.latchFault(updateResult);
@@ -365,46 +326,6 @@ export class InGameManager {
     if (!particleAdvanced) {
       const advanced = this.commitParticleAdvance(deltaTimeSeconds, false);
       if (advanced.status !== "ok") return this.latchFault(advanced);
-    }
-    return ok(undefined);
-  }
-
-  updateFeverMemberPoint(
-    displayIndex: number,
-    point: number,
-    isOwnTeam: boolean,
-  ): SimulatorResult<void> {
-    if (this.faultValue !== null) return this.faultValue;
-    if (this.lifecycleState !== "initialized" || this.scoreLifeStateManager === null) {
-      return evidenceRequired(
-        "score-life.fever-adapter-without-active-profile",
-        ["SLS-D16", "SLS-D24"],
-        "Fever adapter updates require an initialized Score/Life session profile.",
-      );
-    }
-    return this.scoreLifeStateManager.updateFeverMemberPoint(displayIndex, point, isOwnTeam);
-  }
-
-  changeFeverCommand(command: FeverTimeCommandName): SimulatorResult<void> {
-    if (this.faultValue !== null) return this.faultValue;
-    if (this.lifecycleState !== "initialized" || this.scoreLifeStateManager === null) {
-      return evidenceRequired(
-        "score-life.fever-command-without-active-profile",
-        ["SLS-D16", "SLS-D24"],
-        "Fever commands require an initialized Score/Life session profile.",
-      );
-    }
-    const before = this.scoreLifeStateManager.snapshot().fever;
-    const render = this.renderProducer?.preflightHudFeverTransition(command, before) ?? null;
-    if (render?.status === "evidence-required") return this.latchFault(render);
-    const changed = this.scoreLifeStateManager.changeFeverCommand(command);
-    if (changed.status !== "ok") {
-      if (render?.status === "ok") render.value.discard();
-      return changed;
-    }
-    if (render?.status === "ok") {
-      const committed = render.value.commit();
-      if (committed.status !== "ok") return this.latchFault(committed);
     }
     return ok(undefined);
   }

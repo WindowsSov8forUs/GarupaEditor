@@ -38,12 +38,6 @@ export type RenderAnimationRole =
   | "all-perfect"
   | "add-score"
   | "result"
-  | "life-heal"
-  | "damage-guard"
-  | "never-die"
-  | "score-skill"
-  | "judge-skill"
-  | "fever"
   | "habahiro-lane-change";
 
 export type RenderTextureScaleMode = "nearest" | "linear";

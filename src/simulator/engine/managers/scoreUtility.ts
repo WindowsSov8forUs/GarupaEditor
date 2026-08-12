@@ -1,4 +1,4 @@
-import type { InclusiveRateRange, ScoreLifeSpecialModeProfile } from "../data/scoreLifeState";
+import type { ScoreLifeModeProfile } from "../data/scoreLifeState";
 import type { NoteResultTypeValue } from "../data/manualJudgement";
 
 const RESULT_RATES = Object.freeze([
@@ -27,23 +27,14 @@ const COMBO_RANGES = Object.freeze([
 export class ScoreUtility {
   readonly scoreLevelRate: number;
   readonly baseScore: number;
-  readonly freeLiveEventBonusBaseScore: number;
 
   constructor(
     readonly totalParameter: number,
-    readonly freeLiveEventBonusTotalParameter: number,
     readonly scoreLevel: number,
     readonly maxNoteCount: number,
   ) {
     this.scoreLevelRate = calculateScoreLevelRate(scoreLevel);
     this.baseScore = calculateBaseScore(totalParameter, this.scoreLevelRate, maxNoteCount);
-    this.freeLiveEventBonusBaseScore = freeLiveEventBonusTotalParameter === 0
-      ? Math.fround(0)
-      : calculateBaseScore(
-          freeLiveEventBonusTotalParameter,
-          this.scoreLevelRate,
-          maxNoteCount,
-        );
   }
 
   getResultTypeCorrectionRate(result: Exclude<NoteResultTypeValue, -1>): number {
@@ -51,28 +42,21 @@ export class ScoreUtility {
   }
 
   calculateCorrectedBaseScore(
-    baseScore: number,
     result: Exclude<NoteResultTypeValue, -1>,
-    mode: ScoreLifeSpecialModeProfile,
-    fixedSkillAddition: number,
+    mode: ScoreLifeModeProfile,
   ): number {
-    const corrected = mode.kind === "auto-live" || mode.kind === "team-live-festival"
-      ? baseScore
-      : Math.fround(baseScore * this.getResultTypeCorrectionRate(result));
-    return Math.fround(corrected + Math.trunc(fixedSkillAddition));
+    return mode.kind === "auto-live"
+      ? this.baseScore
+      : Math.fround(this.baseScore * this.getResultTypeCorrectionRate(result));
   }
 
   getComboCorrectionRate(
     combo: number,
-    mode: ScoreLifeSpecialModeProfile,
+    mode: ScoreLifeModeProfile,
     buttonTypes: readonly number[],
   ): number {
     if (buttonTypes[0] === -1) return Math.fround(1);
     if (mode.kind === "auto-live") return mode.comboCoefficient;
-    if (mode.kind === "team-live-festival") return Math.fround(1);
-    if (mode.kind === "single-medley" || mode.kind === "garupa-cup-first-qualification") {
-      return firstInclusiveRate(mode.comboRates, combo);
-    }
     return COMBO_RANGES.find((row) => combo <= row.to)!.rate;
   }
 }
@@ -91,10 +75,6 @@ export function calculateBaseScore(
   const scaled = Math.fround(Math.fround(totalParameter) * scoreLevelRate);
   const divided = Math.fround(scaled / Math.fround(maxNoteCount));
   return Math.fround(divided * Math.fround(3));
-}
-
-function firstInclusiveRate(ranges: readonly InclusiveRateRange[], value: number): number {
-  return ranges.find((row) => row.from <= value && value <= row.to)?.rate ?? Math.fround(1);
 }
 
 function float32FromBits(bits: number): number {

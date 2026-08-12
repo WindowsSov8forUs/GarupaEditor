@@ -86,7 +86,7 @@ test("CC03 与 CC08 生成原作 type 3 记录并保持值、字符串和顺序"
   assertDeepEqual(commands.map((note) => note.bpmString), ["120", "175.50"], "command strings");
 });
 
-test("普通谱面 Skill 按构造源序从一开始连续分配索引", () => {
+test("Skill音符保留独立附加类型而Fever标记归一", () => {
   const { batches } = build([
     "#BPM 120",
     "#WAV01 skill.wav",
@@ -96,59 +96,33 @@ test("普通谱面 Skill 按构造源序从一开始连续分配索引", () => {
     "#00213:01",
   ]);
   const constructed = notes(batches);
-  assertDeepEqual(constructed.map((note) => note.skillNoteIndex), [1, 0, 2], "skill indices");
   assertDeepEqual(
     constructed.map((note) => note.gameNoteAdditionalType),
-    [GameNoteAdditionalType.Skill, GameNoteAdditionalType.Fever, GameNoteAdditionalType.Skill],
-    "additional types",
+    [GameNoteAdditionalType.Skill, GameNoteAdditionalType.None, GameNoteAdditionalType.Skill],
+    "Skill-note presentation remains distinct while Fever gameplay is removed",
   );
 });
 
-test("HABAHIRO 同绝对位置 Skill 来源只分配一次索引", () => {
-  const { batches } = build([
-    "#HABAHIRO",
-    "#BPM 120",
-    "#WAV01 skill.wav",
-    "#00011:01",
-    "#00012:01",
-    "#00113:01",
-  ]);
-  const constructed = notes(batches);
-  assertDeepEqual(constructed.map((note) => note.skillNoteIndex), [1, 0, 2], "multi-range indices");
-});
-
-test("Long 终端传播 Skill 与 Fever 附加类型且仅 Skill 复制索引", () => {
-  const skill = build([
-    "#BPM 120",
-    "#WAV01 normal.wav",
-    "#WAV02 skill.wav",
-    "#00051:01",
-    "#00151:02",
-  ], true);
-  const skillRoot = notes(skill.batches).find((note) => note.buttonType !== ButtonType.None);
-  assert(skillRoot !== undefined, "skill Long root");
-  assertEqual(
-    skillRoot.gameNoteAdditionalTypeLongNoteEnd,
-    GameNoteAdditionalType.Skill,
-    "skill terminal additional type",
-  );
-  assertEqual(skillRoot.skillAfterNoteIndex, 1, "skill terminal index");
-
-  const fever = build([
-    "#BPM 120",
-    "#WAV01 normal.wav",
-    "#WAV02 fever_note.wav",
-    "#00051:01",
-    "#00151:02",
-  ], true);
-  const feverRoot = notes(fever.batches).find((note) => note.buttonType !== ButtonType.None);
-  assert(feverRoot !== undefined, "fever Long root");
-  assertEqual(
-    feverRoot.gameNoteAdditionalTypeLongNoteEnd,
-    GameNoteAdditionalType.Fever,
-    "fever terminal additional type",
-  );
-  assertEqual(feverRoot.skillAfterNoteIndex, 0, "fever terminal index");
+test("Long终端保留Skill音符但归一Fever标记", () => {
+  for (const [terminalName, expected] of [
+    ["skill.wav", GameNoteAdditionalType.Skill],
+    ["fever_note.wav", GameNoteAdditionalType.None],
+  ] as const) {
+    const converted = build([
+      "#BPM 120",
+      "#WAV01 normal.wav",
+      `#WAV02 ${terminalName}`,
+      "#00051:01",
+      "#00151:02",
+    ], true);
+    const root = notes(converted.batches).find((note) => note.buttonType !== ButtonType.None);
+    assert(root !== undefined, "Long root");
+    assertEqual(
+      root.gameNoteAdditionalTypeLongNoteEnd,
+      expected,
+      "terminal presentation marker follows the reduced gameplay boundary",
+    );
+  }
 });
 
 test("非法 BPM command 继续失败关闭", () => {

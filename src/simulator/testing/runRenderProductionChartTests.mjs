@@ -137,7 +137,7 @@ async function verifyHabahiroCompleteReplay() {
   };
   const engine = ok(createSimulatorEngine({
     chart: chartResult.value,
-    runtime: { highFrequencyMode:false, judgeOffsetFrames:0, playMode:{ kind:"auto-live", resultTransform:"identity-no-active-situation-skill" } },
+    runtime: { highFrequencyMode:false, judgeOffsetFrames:0, playMode:{ kind:"auto-live", resultTransform:"identity" } },
     rendering: { sessionId:"habahiro-complete-oracle", resources: {
       noteAtlasLogicalAssetId:atlasIds.normal, directionalAtlasLogicalAssetId:atlasIds.flick,
       habahiroAtlasLogicalAssetIds:atlasIds, syncLineLogicalAssetId:logical("sync"),
@@ -253,7 +253,7 @@ async function verifyLegacyRejectionAndOrdinaryReplay() {
   });
   const legacyCreation = createSimulatorEngine({
     chart: chartResult.value,
-    runtime: { highFrequencyMode: false, judgeOffsetFrames: 0, playMode: { kind: "auto-live", resultTransform: "identity-no-active-situation-skill" } },
+    runtime: { highFrequencyMode: false, judgeOffsetFrames: 0, playMode: { kind: "auto-live", resultTransform: "identity" } },
     rendering: { sessionId: "habahiro-production-replay", resources: { noteAtlasLogicalAssetId: assetId, directionalAtlasLogicalAssetId: assetId }, ordinaryNoteScene: scene },
   }, createRecordingSimulatorBackends(renderer));
   equal(legacyCreation.status, "evidence-required", "legacy degraded profile is not a production engine mode");
@@ -296,7 +296,7 @@ async function verifyLegacyRejectionAndOrdinaryReplay() {
     new PortableRenderResourcePreflightAdapter()), "prepare ordinary renderer");
   const ordinaryEngine = ok(createSimulatorEngine({
     chart: ordinaryChart.value,
-    runtime: { highFrequencyMode: false, judgeOffsetFrames: 0, playMode: { kind: "auto-live", resultTransform: "identity-no-active-situation-skill" } },
+    runtime: { highFrequencyMode: false, judgeOffsetFrames: 0, playMode: { kind: "auto-live", resultTransform: "identity" } },
     rendering: { sessionId: "ordinary-production-audit", resources: {
       noteAtlasLogicalAssetId: ordinaryAssetId, directionalAtlasLogicalAssetId: ordinaryAssetId,
       syncLineLogicalAssetId: "asset.ordinary.sync",

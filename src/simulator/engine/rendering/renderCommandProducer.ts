@@ -26,11 +26,8 @@ import {
   type SimulatorResult,
 } from "../evidence";
 import type { NoteFamily } from "../data/noteData";
-import { SkillActivateEffectType } from "../data/scoreLifeState";
-import type { FeverTimeSnapshot } from "../managers/feverTimeManager";
 import type { InGameRecordSnapshot } from "../managers/inGameRecord";
 import type { ScoreLifeReflectPlan } from "../managers/scoreLifeStateManager";
-import type { SituationSkillSnapshot } from "../managers/situationSkillManager";
 import {
   advanceOrdinaryLongNormalChild,
   buildOrdinaryLongNormalMesh,
@@ -73,7 +70,6 @@ export interface RenderEngineResourceBindings {
     readonly slideAmong: string;
   };
   readonly comboAnimationLogicalAssetId?: string;
-  readonly scoreSkillAnimationLogicalAssetId?: string;
 }
 
 export interface RenderPoolIdentityPlan {
@@ -212,9 +208,6 @@ const HUD_OBJECTS = Object.freeze({
   result: "render:hud:result",
   score: "render:hud:score",
   life: "render:hud:life",
-  overlay: "render:hud:overlay",
-  judgeOverlay: "render:hud:judge-overlay",
-  feverOverlay: "render:hud:fever-overlay",
   fidelity: "render:hud:fidelity-label",
 });
 
@@ -228,13 +221,9 @@ export class RenderCommandProducer {
   private substep = 0;
   private readonly createdObjectIds: string[] = [];
   private readonly creationSequenceByObjectId = new Map<string, number>();
-  private readonly hudAnimationElapsedSeconds = new Map<"combo" | "all-perfect" | "life-heal", number>();
+  private readonly hudAnimationElapsedSeconds = new Map<"combo" | "all-perfect", number>();
   private readonly addScoreElapsedSeconds = new Map<string, number>();
   private resultElapsedSeconds: number | null = null;
-  private scoreSkillAnimationActive = false;
-  private judgeSkillAnimationActive = false;
-  private feverAnimationActive = false;
-  private lifeSkillAnimation: "damage-guard" | "never-die" | null = null;
   private addScoreCursor = 0;
   private addScoreDepthCycle = 0;
   private lastCombo = 0;
@@ -276,8 +265,6 @@ export class RenderCommandProducer {
       !isNonEmpty(this.resources.directionalAtlasLogicalAssetId) ||
       (this.resources.comboAnimationLogicalAssetId !== undefined &&
         !isNonEmpty(this.resources.comboAnimationLogicalAssetId)) ||
-      (this.resources.scoreSkillAnimationLogicalAssetId !== undefined &&
-        !isNonEmpty(this.resources.scoreSkillAnimationLogicalAssetId)) ||
       (this.renderer.snapshot().fidelity?.mode === "habahiro" &&
         this.renderer.snapshot().fidelity?.fidelity === "current-external-complete" &&
         (this.resources.habahiroAtlasLogicalAssetIds === undefined ||
@@ -327,16 +314,12 @@ export class RenderCommandProducer {
     const created: string[] = [];
     const create = (
       renderObjectId: string,
-      role: "hud-score" | "hud-combo" | "hud-result" | "hud-life" | "hud-overlay" | "fidelity-label",
+      role: "hud-score" | "hud-combo" | "hud-result" | "hud-life" | "hud-overlay",
     ) => {
       created.push(renderObjectId);
       commands.push({
-      ...base(commands.length),
-      kind: "create-object",
-      renderObjectId,
-      poolFamily: role,
-      role,
-      parentObjectId: null,
+        ...base(commands.length), kind: "create-object", renderObjectId,
+        poolFamily: role, role, parentObjectId: null,
       });
     };
     for (const renderObjectId of HUD_OBJECTS.addScore) {
@@ -349,28 +332,16 @@ export class RenderCommandProducer {
     commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: HUD_OBJECTS.result });
     create(HUD_OBJECTS.score, "hud-score");
     commands.push({
-      ...base(commands.length),
-      kind: "set-hud",
-      renderObjectId: HUD_OBJECTS.score,
-      hudRole: "score",
-      state: scoreHudState(record),
+      ...base(commands.length), kind: "set-hud", renderObjectId: HUD_OBJECTS.score,
+      hudRole: "score", state: scoreHudState(record),
     });
     commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: HUD_OBJECTS.score });
     create(HUD_OBJECTS.life, "hud-life");
     commands.push({
-      ...base(commands.length),
-      kind: "set-hud",
-      renderObjectId: HUD_OBJECTS.life,
-      hudRole: "life",
-      state: lifeHudState(record, false),
+      ...base(commands.length), kind: "set-hud", renderObjectId: HUD_OBJECTS.life,
+      hudRole: "life", state: lifeHudState(record),
     });
     commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: HUD_OBJECTS.life });
-    create(HUD_OBJECTS.overlay, "hud-overlay");
-    commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: HUD_OBJECTS.overlay });
-    create(HUD_OBJECTS.judgeOverlay, "hud-overlay");
-    commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: HUD_OBJECTS.judgeOverlay });
-    create(HUD_OBJECTS.feverOverlay, "hud-overlay");
-    commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: HUD_OBJECTS.feverOverlay });
     return this.preflight(commands, () => this.recordCreatedObjects(created));
   }
 
@@ -379,45 +350,22 @@ export class RenderCommandProducer {
   ): SimulatorResult<RenderOwnerTransaction> {
     const validation = this.validate();
     if (validation.status !== "ok") return validation;
-    if (
-      !Number.isInteger(plan.reflect.representativeScoreUpType) ||
-      plan.reflect.representativeScoreUpType < 0 ||
-      plan.reflect.representativeScoreUpType > 5 ||
-      !Number.isFinite(plan.reflect.representativeCrescendoRate)
-    ) {
-      return evidenceRequired(
-        "render.hud.invalid-score-up-state",
-        ["RPR-R7-004", "RPR-D10", "RPR-D13", "PR28"],
-        "Result.changeSprite consumes the current ScoreUpType 0..5 and a finite typed Crescendo rate.",
-      );
-    }
     const base = this.commandBase(this.substep);
     const commands: RenderCommand[] = [];
-    const totalAddScore = plan.reflect.totalOrdinaryScore +
-      plan.reflect.totalFreeLiveEventBonusScore;
+    const totalAddScore = plan.reflect.totalScore;
     const addScoreObjectId = HUD_OBJECTS.addScore[this.addScoreCursor]!;
     if (totalAddScore !== 0) {
       commands.push({
-        ...base(commands.length),
-        kind: "set-hud",
-        renderObjectId: addScoreObjectId,
-        hudRole: "overlay",
-        state: Object.freeze({
-          addScore: plan.reflect.totalOrdinaryScore,
-          freeLiveEventBonusAddScore: plan.reflect.totalFreeLiveEventBonusScore,
-          poolIndex: this.addScoreCursor,
-          depth: this.addScoreDepthCycle,
-          phase: 0,
-          phaseProgress: 0,
+        ...base(commands.length), kind: "set-hud", renderObjectId: addScoreObjectId,
+        hudRole: "overlay", state: Object.freeze({
+          addScore: totalAddScore, poolIndex: this.addScoreCursor,
+          depth: this.addScoreDepthCycle, phase: 0, phaseProgress: 0,
         }),
       });
       commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: addScoreObjectId });
       commands.push({
-        ...base(commands.length),
-        kind: "play-animation",
-        renderObjectId: addScoreObjectId,
-        animationRole: "add-score",
-        restart: true,
+        ...base(commands.length), kind: "play-animation", renderObjectId: addScoreObjectId,
+        animationRole: "add-score", restart: true,
       });
     }
     const comboChanged = plan.record.currentCombo !== this.lastCombo ||
@@ -428,29 +376,22 @@ export class RenderCommandProducer {
       : this.hudAnimationElapsedSeconds.has("combo") ? "combo" as const : null;
     if (comboChanged) {
       commands.push({
-        ...base(commands.length),
-        kind: "set-hud",
-        renderObjectId: HUD_OBJECTS.combo,
+        ...base(commands.length), kind: "set-hud", renderObjectId: HUD_OBJECTS.combo,
         hudRole: "combo",
         state: Object.freeze({ combo: plan.record.currentCombo, allPerfect: plan.record.allPerfect }),
       });
-      if (previousComboRole !== null && previousComboRole !== comboRole) {
-        commands.push({
-          ...base(commands.length), kind: "stop-animation", renderObjectId: HUD_OBJECTS.combo,
-          animationRole: previousComboRole, restart: false,
-        });
-      }
-      if (plan.record.currentCombo > 0) {
-        commands.push({
-          ...base(commands.length), kind: "play-animation", renderObjectId: HUD_OBJECTS.combo,
-          animationRole: comboRole, restart: true,
-        });
-      } else if (previousComboRole !== null) {
-        commands.push({
-          ...base(commands.length), kind: "stop-animation", renderObjectId: HUD_OBJECTS.combo,
-          animationRole: previousComboRole, restart: false,
-        });
-      }
+      if (previousComboRole !== null && previousComboRole !== comboRole) commands.push({
+        ...base(commands.length), kind: "stop-animation", renderObjectId: HUD_OBJECTS.combo,
+        animationRole: previousComboRole, restart: false,
+      });
+      if (plan.record.currentCombo > 0) commands.push({
+        ...base(commands.length), kind: "play-animation", renderObjectId: HUD_OBJECTS.combo,
+        animationRole: comboRole, restart: true,
+      });
+      else if (previousComboRole !== null) commands.push({
+        ...base(commands.length), kind: "stop-animation", renderObjectId: HUD_OBJECTS.combo,
+        animationRole: previousComboRole, restart: false,
+      });
       commands.push({
         ...base(commands.length),
         kind: plan.record.currentCombo > 0 ? "activate-object" : "hide-object",
@@ -459,16 +400,11 @@ export class RenderCommandProducer {
     }
     commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: HUD_OBJECTS.result });
     commands.push({
-      ...base(commands.length),
-      kind: "set-hud",
-      renderObjectId: HUD_OBJECTS.result,
-      hudRole: "result",
-      state: Object.freeze({
+      ...base(commands.length), kind: "set-hud", renderObjectId: HUD_OBJECTS.result,
+      hudRole: "result", state: Object.freeze({
         representativeSlot: plan.reflect.representativeSlot,
         representativeResult: plan.reflect.representativeRawResult,
         judgeTiming: plan.reflect.representativeJudgeTiming,
-        scoreUpType: plan.reflect.representativeScoreUpType,
-        crescendoTenths: Math.trunc(Math.fround(plan.reflect.representativeCrescendoRate * 10)),
       }),
     });
     commands.push({
@@ -479,47 +415,18 @@ export class RenderCommandProducer {
       ...base(commands.length), kind: "set-hud", renderObjectId: HUD_OBJECTS.score,
       hudRole: "score", state: scoreHudState(plan.record),
     });
-    if (plan.lifeHealAnimation) {
-      if (this.lifeSkillAnimation !== null) {
-        commands.push({
-          ...base(commands.length), kind: "stop-animation", renderObjectId: HUD_OBJECTS.life,
-          animationRole: this.lifeSkillAnimation, restart: false,
-        });
-      }
-      commands.push({
-        ...base(commands.length), kind: "play-animation", renderObjectId: HUD_OBJECTS.life,
-        animationRole: "life-heal", restart: true,
-      });
-    }
     commands.push({
       ...base(commands.length), kind: "set-hud", renderObjectId: HUD_OBJECTS.life,
-      hudRole: "life", state: lifeHudState(plan.record, this.lifeSkillAnimation !== null),
+      hudRole: "life", state: lifeHudState(plan.record),
     });
     if (plan.record.singleGameOver) {
-      if (this.scoreSkillAnimationActive) commands.push({
-        ...base(commands.length), kind: "stop-animation", renderObjectId: HUD_OBJECTS.overlay,
-        animationRole: "score-skill", restart: false,
-      });
-      if (this.judgeSkillAnimationActive) commands.push({
-        ...base(commands.length), kind: "stop-animation", renderObjectId: HUD_OBJECTS.judgeOverlay,
-        animationRole: "judge-skill", restart: false,
-      });
-      if (this.lifeSkillAnimation !== null) commands.push({
-        ...base(commands.length), kind: "stop-animation", renderObjectId: HUD_OBJECTS.life,
-        animationRole: this.lifeSkillAnimation, restart: false,
-      });
-      if (this.feverAnimationActive) commands.push({
-        ...base(commands.length), kind: "stop-animation", renderObjectId: HUD_OBJECTS.feverOverlay,
-        animationRole: "fever", restart: false,
-      });
       if (totalAddScore !== 0) commands.push({
         ...base(commands.length), kind: "stop-animation", renderObjectId: addScoreObjectId,
         animationRole: "add-score", restart: false,
       });
-      for (const renderObjectId of [
-        HUD_OBJECTS.combo, HUD_OBJECTS.overlay, HUD_OBJECTS.judgeOverlay,
-        HUD_OBJECTS.feverOverlay, ...HUD_OBJECTS.addScore,
-      ]) commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId });
+      for (const renderObjectId of [HUD_OBJECTS.combo, ...HUD_OBJECTS.addScore]) {
+        commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId });
+      }
     }
     return this.preflight(commands, () => {
       if (totalAddScore !== 0) {
@@ -534,145 +441,11 @@ export class RenderCommandProducer {
         this.lastCombo = plan.record.currentCombo;
         this.lastAllPerfect = plan.record.allPerfect;
       }
-      if (plan.lifeHealAnimation) {
-        this.lifeSkillAnimation = null;
-        this.hudAnimationElapsedSeconds.set("life-heal", 0);
-      }
       this.resultElapsedSeconds = 0;
       if (plan.record.singleGameOver) {
         this.hudAnimationElapsedSeconds.clear();
         this.addScoreElapsedSeconds.clear();
-        this.scoreSkillAnimationActive = false;
-        this.judgeSkillAnimationActive = false;
-        this.lifeSkillAnimation = null;
-        this.feverAnimationActive = false;
       }
-    });
-  }
-
-  preflightHudSkillTransition(
-    before: SituationSkillSnapshot,
-    after: SituationSkillSnapshot,
-  ): SimulatorResult<RenderOwnerTransaction> {
-    const validation = this.validate();
-    if (validation.status !== "ok") return validation;
-    const started = before.state !== 2 && after.state === 2;
-    const finished = before.state === 2 && after.state !== 2;
-    if (!started && !finished) return ok(new RenderOwnerTransaction(this.renderer, null));
-    const scoreTypes = new Set<number>([
-      SkillActivateEffectType.Score,
-      SkillActivateEffectType.ScoreOverLife,
-      SkillActivateEffectType.ScoreUnderLife,
-      SkillActivateEffectType.ScoreContinuedNoteJudge,
-      SkillActivateEffectType.ScoreRateUpWithPerfect,
-      SkillActivateEffectType.ScoreOnlyPerfect,
-      SkillActivateEffectType.ScoreUnderGreatHalf,
-    ]);
-    const scoreSkill = started && after.activeEffectTypes.some((type) => scoreTypes.has(type));
-    const judgeSkill = started && after.activeEffectTypes.includes(SkillActivateEffectType.Judge);
-    const guard = started && after.activeEffectTypes.includes(SkillActivateEffectType.Damage);
-    const neverDie = started && after.activeEffectTypes.includes(SkillActivateEffectType.NeverDie);
-    const heal = started && after.activeEffectTypes.includes(SkillActivateEffectType.Heal);
-    const nextLifeRole = guard
-      ? "damage-guard" as const
-      : heal ? "life-heal" as const
-      : neverDie ? "never-die" as const : null;
-    const base = this.commandBase(this.substep);
-    const commands: RenderCommand[] = [];
-    if (started) {
-      commands.push({
-        ...base(commands.length), kind: "set-hud", renderObjectId: HUD_OBJECTS.overlay,
-        hudRole: "overlay", state: Object.freeze({
-          skillActive: true, scoreSkill, scoreGaugeActive: scoreSkill,
-          currentSkillNoteIndex: after.currentSkillNoteIndex,
-        }),
-      });
-      commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: HUD_OBJECTS.overlay });
-      if (scoreSkill) {
-        commands.push({
-          ...base(commands.length), kind: "play-animation", renderObjectId: HUD_OBJECTS.overlay,
-          animationRole: "score-skill", restart: true,
-        });
-      }
-      if (judgeSkill) {
-        commands.push({
-          ...base(commands.length), kind: "set-hud", renderObjectId: HUD_OBJECTS.judgeOverlay,
-          hudRole: "overlay", state: Object.freeze({
-            skillActive: true, scoreSkill: false, scoreGaugeActive: false,
-            currentSkillNoteIndex: after.currentSkillNoteIndex,
-          }),
-        });
-        commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: HUD_OBJECTS.judgeOverlay });
-        commands.push({
-          ...base(commands.length), kind: "play-animation", renderObjectId: HUD_OBJECTS.judgeOverlay,
-          animationRole: "judge-skill", restart: true,
-        });
-      }
-      if (nextLifeRole !== null) {
-        if (this.hudAnimationElapsedSeconds.has("life-heal")) commands.push({
-          ...base(commands.length), kind: "stop-animation", renderObjectId: HUD_OBJECTS.life,
-          animationRole: "life-heal", restart: false,
-        });
-        commands.push({
-          ...base(commands.length), kind: "play-animation", renderObjectId: HUD_OBJECTS.life,
-          animationRole: nextLifeRole, restart: true,
-        });
-      }
-    } else {
-      if (this.scoreSkillAnimationActive) commands.push({
-        ...base(commands.length), kind: "stop-animation", renderObjectId: HUD_OBJECTS.overlay,
-        animationRole: "score-skill", restart: false,
-      });
-      if (this.judgeSkillAnimationActive) commands.push({
-        ...base(commands.length), kind: "stop-animation", renderObjectId: HUD_OBJECTS.judgeOverlay,
-        animationRole: "judge-skill", restart: false,
-      });
-      if (this.lifeSkillAnimation !== null) commands.push({
-        ...base(commands.length), kind: "stop-animation", renderObjectId: HUD_OBJECTS.life,
-        animationRole: this.lifeSkillAnimation, restart: false,
-      });
-      commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: HUD_OBJECTS.overlay });
-      commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: HUD_OBJECTS.judgeOverlay });
-    }
-    return this.preflight(commands, () => {
-      this.scoreSkillAnimationActive = started && scoreSkill;
-      this.judgeSkillAnimationActive = started && judgeSkill;
-      if (started && nextLifeRole !== null) this.hudAnimationElapsedSeconds.delete("life-heal");
-      this.lifeSkillAnimation = started && nextLifeRole !== "life-heal" ? nextLifeRole : null;
-      if (started && nextLifeRole === "life-heal") this.hudAnimationElapsedSeconds.set("life-heal", 0);
-    });
-  }
-
-  preflightHudFeverTransition(
-    command: "ready" | "start" | "end",
-    before: FeverTimeSnapshot,
-  ): SimulatorResult<RenderOwnerTransaction> {
-    const validation = this.validate();
-    if (validation.status !== "ok") return validation;
-    const feverState = command === "start"
-      ? before.ownTeamPassCount >= before.ownTeamMemberCount ? 1 : 2
-      : command === "end" ? 0 : before.state;
-    const active = command !== "end";
-    const base = this.commandBase(this.substep);
-    const commands: RenderCommand[] = [{
-      ...base(0), kind: "set-hud", renderObjectId: HUD_OBJECTS.feverOverlay,
-      hudRole: "overlay", state: Object.freeze({ feverCommand: command, feverState, active }),
-    }];
-    if (active) {
-      commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: HUD_OBJECTS.feverOverlay });
-      commands.push({
-        ...base(commands.length), kind: "play-animation", renderObjectId: HUD_OBJECTS.feverOverlay,
-        animationRole: "fever", restart: true,
-      });
-    } else {
-      if (this.feverAnimationActive) commands.push({
-        ...base(commands.length), kind: "stop-animation", renderObjectId: HUD_OBJECTS.feverOverlay,
-        animationRole: "fever", restart: false,
-      });
-      commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: HUD_OBJECTS.feverOverlay });
-    }
-    return this.preflight(commands, () => {
-      this.feverAnimationActive = active;
     });
   }
 
@@ -696,17 +469,15 @@ export class RenderCommandProducer {
     ) {
       return ok(new RenderOwnerTransaction(this.renderer, null));
     }
-    const next = new Map<"combo" | "all-perfect" | "life-heal", number>();
+    const next = new Map<"combo" | "all-perfect", number>();
     const nextAddScore = new Map<string, number>();
     let nextResultElapsed = this.resultElapsedSeconds;
     const base = this.commandBase(this.substep);
     const commands: RenderCommand[] = [];
     for (const [role, elapsed] of this.hudAnimationElapsedSeconds) {
       const nextElapsed = Math.fround(elapsed + deltaTimeSeconds);
-      const renderObjectId = role === "combo" || role === "all-perfect"
-        ? HUD_OBJECTS.combo : HUD_OBJECTS.life;
-      const duration = role === "life-heal" ? Math.fround(0.6666666865348816) : 1;
-      if (role !== "all-perfect" && nextElapsed >= duration) {
+      const renderObjectId = HUD_OBJECTS.combo;
+      if (role !== "all-perfect" && nextElapsed >= 1) {
         commands.push({
           ...base(commands.length), kind: "stop-animation", renderObjectId,
           animationRole: role, restart: false,
@@ -2365,10 +2136,6 @@ export class RenderCommandProducer {
       this.addScoreElapsedSeconds.clear();
       this.noteAnimationElapsedSeconds.clear();
       this.resultElapsedSeconds = null;
-      this.scoreSkillAnimationActive = false;
-      this.judgeSkillAnimationActive = false;
-      this.feverAnimationActive = false;
-      this.lifeSkillAnimation = null;
     });
   }
 
@@ -2787,7 +2554,6 @@ function scoreHudState(
 
 function lifeHudState(
   record: InGameRecordSnapshot,
-  damageGuardPlaying: boolean,
 ): Readonly<Record<string, string | number | boolean | null>> {
   const ratio = Math.fround(record.currentLife / 1000);
   const primaryFill = Math.fround(Math.min(ratio, 1));
@@ -2799,8 +2565,7 @@ function lifeHudState(
     primaryFill,
     secondaryFill: Math.fround(Math.max(ratio - 1, 0)),
     danger: primaryFill <= Math.fround(0.2),
-    warning: primaryFill <= Math.fround(0.25) && !damageGuardPlaying,
-    damageGuardPlaying,
+    warning: primaryFill <= Math.fround(0.25),
   });
 }
 

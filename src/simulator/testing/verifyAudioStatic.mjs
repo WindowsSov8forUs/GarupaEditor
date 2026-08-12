@@ -40,6 +40,13 @@ for (const root of productionRoots) {
 if (/bgm003|sound\/bgm003|current-external-portable-v1/.test(productionSource)) {
   violations.push("production retains a chart-specific BGM literal or old fixed profile identity");
 }
+if (!productionSource.includes('cue: "SE_RHYTHM_TAP_SKILL"') ||
+  !productionSource.includes('return ok("SE_RHYTHM_TAP_SKILL")')) {
+  violations.push("Skill-note hit SE resource or chart-owned route was removed with the character skill effect system");
+}
+if (/SE_RHYTHM_(?:CLEAR_VO|CUTIN|CUTIN_AUDIENCE|CUTIN_SKILL)/.test(productionSource)) {
+  violations.push("character voice/cut-in-only SE remains production-reachable");
+}
 if (bgmContract.status !== "current-static-generic-session-bgm-portable-contract-closed" ||
   bgmContract.case_count !== 6 || bgmContract.typescript_production_authorization !== true ||
   bgmContract.main_program_integration_authorization !== false) {

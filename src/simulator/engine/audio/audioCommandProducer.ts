@@ -8,7 +8,11 @@ import {
   audioFloat32FromBits,
   audioFloat32ToBits,
 } from "../../backends/audioValidation";
-import type { ChartConstructionResult, NoteInformation } from "../chart/types";
+import {
+  GameNoteAdditionalType,
+  type ChartConstructionResult,
+  type NoteInformation,
+} from "../chart/types";
 import type { OneFrameJudgementBatch, OneFrameJudgementEntry } from "../data/oneFrameData";
 import { evidenceRequired, ok, type SimulatorResult } from "../evidence";
 
@@ -19,8 +23,6 @@ export interface SimulatorAudioSessionInput {
   readonly masterGainBits: string;
   readonly bgmGainBits: string;
   readonly seGainBits: string;
-  readonly voiceGainBits: string;
-  readonly practiceMode: boolean;
 }
 
 interface TapStatusSnapshot {
@@ -99,13 +101,12 @@ export class AudioCommandProducer {
     if (
       this.input === null || typeof this.input !== "object" ||
       Object.keys(this.input).sort().join(",") !==
-        "bgmCue,bgmGainBits,masterGainBits,practiceMode,seGainBits,seekMilliseconds,sessionId,voiceGainBits" ||
+        "bgmCue,bgmGainBits,masterGainBits,seGainBits,seekMilliseconds,sessionId" ||
       typeof this.input.sessionId !== "string" || this.input.sessionId.length === 0 ||
       typeof this.input.bgmCue !== "string" || this.input.bgmCue.length === 0 ||
       !Number.isSafeInteger(this.input.seekMilliseconds) || this.input.seekMilliseconds < 0 ||
-      typeof this.input.practiceMode !== "boolean" ||
       !isUnitGain(this.input.masterGainBits) || !isUnitGain(this.input.bgmGainBits) ||
-      !isUnitGain(this.input.seGainBits) || !isUnitGain(this.input.voiceGainBits)
+      !isUnitGain(this.input.seGainBits)
     ) {
       return rejected(
         "audio.session.invalid-input",
@@ -237,7 +238,7 @@ export class AudioCommandProducer {
         activeHolds.add(holdOwner);
       }
       if (!shouldSilent(nextTap, entry)) {
-        const cue = judgementCue(entry);
+        const cue = judgementCue(entry, note);
         if (cue.status !== "ok") return cue;
         if (cue.value !== null) commands.push(oneShot(cue.value, "one-shot-0"));
       }
@@ -270,16 +271,6 @@ export class AudioCommandProducer {
         if (gameOverAfterReflect) this.gameOverTriggered = true;
       },
     );
-  }
-
-  preflightSkillTriggered(): SimulatorResult<AudioOwnerTransaction> {
-    const commands: AudioCommand[] = [
-      oneShot("SE_RHYTHM_CUTIN_SKILL", "skill"),
-    ];
-    if (!this.input.practiceMode) {
-      commands.push(oneShot("SE_RHYTHM_CUTIN_AUDIENCE", "audience"));
-    }
-    return this.preflightCommands(commands);
   }
 
   preflightGameOver(): SimulatorResult<AudioOwnerTransaction> {
@@ -331,9 +322,6 @@ export class AudioCommandProducer {
       commands.push(oneShot("SE_RHYTHM_FULLCOMBO", "full-combo"));
     }
     commands.push(oneShot("SE_RHYTHM_CLEAR", "game-clear"));
-    if (!this.input.practiceMode) {
-      commands.push(oneShot("SE_RHYTHM_CLEAR_VO", "game-clear-voice"));
-    }
     return this.preflightCommands(commands, () => {
       this.naturallyEnded = true;
       this.completionTriggered = true;
@@ -371,8 +359,7 @@ export class AudioCommandProducer {
     const master = audioFloat32FromBits(this.input.masterGainBits)!;
     const bgm = multiplyGain(master, this.input.bgmGainBits);
     const se = multiplyGain(master, this.input.seGainBits);
-    const voice = multiplyGain(master, this.input.voiceGainBits);
-    if (bgm === null || se === null || voice === null) {
+    if (bgm === null || se === null) {
       return rejected(
         "audio.gain.invalid-binary32-product",
         "Option gains must produce finite binary32 values without browser clamping.",
@@ -382,7 +369,6 @@ export class AudioCommandProducer {
       kind: "gain.set",
       bgm_bits: bgm,
       se_bits: se,
-      voice_bits: voice,
     });
   }
 
@@ -402,8 +388,15 @@ export function mapAudioResult<T>(result: AudioOperationResult<T>): SimulatorRes
       );
 }
 
-function judgementCue(entry: OneFrameJudgementEntry): SimulatorResult<string | null> {
+function judgementCue(
+  entry: OneFrameJudgementEntry,
+  note: NoteInformation,
+): SimulatorResult<string | null> {
   if (entry.adjustedResult < 2) return ok(null);
+  const additionalType = entry.phase === "tail"
+    ? note.gameNoteAdditionalTypeLongNoteEnd
+    : note.gameNoteAdditionalType;
+  if (additionalType === GameNoteAdditionalType.Skill) return ok("SE_RHYTHM_TAP_SKILL");
   const flickMask = 0x6e8;
   if (((1 << entry.noteType) & flickMask) !== 0) {
     if (entry.noteType === 6 || entry.noteType === 9) return ok("directional_fl");

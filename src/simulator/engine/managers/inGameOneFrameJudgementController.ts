@@ -338,7 +338,7 @@ export class InGameOneFrameJudgementController {
     return evidenceRequired(
       "one-frame.setup-business-data",
       ["E21", "E24", "R02"],
-      "Score, power, life, skill, Fever, audio, particle and HUD consumers are absent from the Auto Live judgement projection.",
+      "Gameplay projection is supplied only by the registered session owner during judgement setup; callers cannot inject a second payload.",
     );
   }
 

@@ -17,10 +17,6 @@ const FIXED_SE_LOGICAL_IDS = Object.freeze({
   directional_fl_2: "sound/tapseskin/directionalflickskin00",
   directional_fl_3: "sound/tapseskin/directionalflickskin00",
   SE_RHYTHM_CLEAR: "sound/common",
-  SE_RHYTHM_CLEAR_VO: "sound/common",
-  SE_RHYTHM_CUTIN: "sound/common",
-  SE_RHYTHM_CUTIN_AUDIENCE: "sound/common",
-  SE_RHYTHM_CUTIN_SKILL: "sound/common",
   SE_RHYTHM_FULLCOMBO: "sound/common",
   SE_RHYTHM_TAP_SKILL: "sound/common",
   bad: "sound/common",
@@ -80,7 +76,7 @@ export function validateAndFreezeAudioProfile(
   ) {
     return rejectProfile(
       "audio.profile.invalid-shape",
-      "The session portable profile requires exactly one explicit BGM plus the exact eighteen current SE resources.",
+      "The reduced gameplay profile requires one explicit BGM plus the fourteen retained gameplay SE resources, including the Skill-note hit cue.",
     );
   }
   if (
@@ -243,11 +239,10 @@ export function validateAudioCommandShape(
         ? audioAccepted(undefined)
         : rejectCommand("audio.command.invalid-hold-owner", "Hold pause/resume requires one stable non-empty owner identity.");
     case "gain.set":
-      return hasExactKeys(command, ["kind", "bgm_bits", "se_bits", "voice_bits"]) &&
-        isUnitFloat32Bits(command.bgm_bits) && isUnitFloat32Bits(command.se_bits) &&
-        isUnitFloat32Bits(command.voice_bits)
+      return hasExactKeys(command, ["kind", "bgm_bits", "se_bits"]) &&
+        isUnitFloat32Bits(command.bgm_bits) && isUnitFloat32Bits(command.se_bits)
         ? audioAccepted(undefined)
-        : rejectCommand("audio.command.invalid-gain", "BGM, SE and voice gains must be finite binary32 values in [0,1] without clamping.");
+        : rejectCommand("audio.command.invalid-gain", "BGM and SE gains must be finite binary32 values in [0,1] without clamping.");
     case "pool.profile":
       return hasExactKeys(command, ["kind", "bgm", "se", "one_shot", "exhaustion"]) &&
         command.bgm === 8 && command.se === 12 && command.one_shot === 1 &&

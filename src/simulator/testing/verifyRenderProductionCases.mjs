@@ -27,16 +27,8 @@ for (const marker of [
   "buildOrdinaryAdvancedNoteMesh",
   "CURRENT_SUDDEN_THRESHOLD",
   '"note-directional-flick"',
-  'animationRole: "add-score"',
-  'animationRole: "judge-skill"',
-  'animationRole: "fever"',
-  "effect_health_guts_outline",
-  "representativeCrescendoRate",
   "representativeJudgeTiming",
-  "scoreHudState",
-  "damageGuardPlaying",
   "render ordinary exact production replay passed",
-  "e174b8f0ab2e943ba84ab45a2ee8ecaca9fbcdc235fb32176c7cf6c18834a0ec",
   "HABAHIRO",
 ]) {
   if (!source.includes(marker)) throw new Error(`PR production marker missing: ${marker}`);
@@ -46,4 +38,4 @@ if (open.length !== 0 || matrix.length !== 40) {
   throw new Error(`RP14 production matrix remains open: ${JSON.stringify(open)}`);
 }
 Object.freeze(matrix);
-console.log("render PR production matrix verified: closed=40 partial=0 blocked=0 RP14=passed exact-HAB=open degraded=disclosed");
+console.log("render production matrix verified for retained note/geometry/judgement playback scope");

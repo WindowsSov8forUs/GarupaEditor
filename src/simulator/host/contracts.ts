@@ -22,7 +22,6 @@ import type {
   OrdinaryFixedNoteSceneInput,
   RenderEngineResourceBindings,
 } from "../engine/rendering/renderCommandProducer";
-import type { FeverTimeCommandName } from "../engine/managers/feverTimeManager";
 import type { InGameDirectorSnapshot } from "../engine/managers/inGameDirector";
 import type { InGameManagerSnapshot } from "../engine/managers/inGameManager";
 
@@ -71,12 +70,6 @@ export interface SimulatorEngine {
   ): SimulatorResult<ManualInputButtonResolution | null>;
   pause(): SimulatorResult<void>;
   resume(): SimulatorResult<void>;
-  updateFeverMemberPoint(
-    displayIndex: number,
-    point: number,
-    isOwnTeam: boolean,
-  ): SimulatorResult<void>;
-  changeFeverCommand(command: FeverTimeCommandName): SimulatorResult<void>;
   continueLive(): SimulatorResult<void>;
   completeLiveAudio(clearStatus: 1 | 2 | 3): SimulatorResult<void>;
   getNaturalCompletionClearStatus(): 1 | 2 | 3 | null;

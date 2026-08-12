@@ -1,4 +1,4 @@
-import type { SimulatorEngine } from "../host/contracts";
+import type { SimulatorEngine, SimulatorSnapshot } from "../host/contracts";
 import {
   createPortableReplaySimulatorEngine,
   type PortableReplaySimulatorEngine,
@@ -193,12 +193,13 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
       : null);
     return Object.freeze({
       reason: terminalFailure === null ? reason : "terminal-fault" as const,
-      result: value === null ? null : Object.freeze({
+      result: value === null || record === null ? null : Object.freeze({
         adjustedMusicPosition: value.adjustedMusicPosition,
-        score: record?.score ?? null,
-        life: record?.currentLife ?? null,
-        combo: record?.currentCombo ?? null,
-        clearStatus: this.engine.getNaturalCompletionClearStatus(),
+        score: record.score,
+        life: record.currentLife,
+        combo: record.currentCombo,
+        clearStatus: this.engine.getNaturalCompletionClearStatus() ??
+          clearStatusFromSnapshot(value.managers.scoreLifeState!),
       }),
       failure: terminalFailure,
     });
@@ -212,10 +213,8 @@ function copyLaunchRequest(
     request === null || typeof request !== "object" || Array.isArray(request) ||
     Object.keys(request).sort().join(",") !== "chartData,config" ||
     request.chartData === null || typeof request.chartData !== "object" ||
-    Object.keys(request.chartData).sort().join(",") !==
-      "bgm,bmsText,sessionBusinessData" ||
-    request.chartData.sessionBusinessData === null ||
-    typeof request.chartData.sessionBusinessData !== "object" ||
+    Object.keys(request.chartData).sort().join(",") !== "bgm,bmsText,gameplay" ||
+    !isGameplayShape(request.chartData.gameplay) ||
     typeof request.chartData.bmsText !== "string" || request.chartData.bmsText.length === 0 ||
     request.config === null || typeof request.config !== "object" ||
     Object.keys(request.config).sort().join(",") !==
@@ -239,13 +238,13 @@ function copyLaunchRequest(
     !isExactFloat32(request.config.visual.habahiroMeshWidthSetting) ||
     request.config.audio === null || typeof request.config.audio !== "object" ||
     Object.keys(request.config.audio).sort().join(",") !==
-      "bgmGain,masterGain,seGain,voiceGain" ||
+      "bgmGain,masterGain,seGain" ||
     !Object.values(request.config.audio).every(isUnitGain)
   ) {
     return rejected(
       "evidence-required",
       "simulator.recipe.invalid-public-request",
-      "The launch recipe accepts only exact chart/config/business keys, explicit modes, confirmed judgement offset, non-negative practice seek, evidence-bounded Float32 visual settings and finite unit gains.",
+      "The launch recipe accepts only exact chart/config/gameplay keys, explicit modes, confirmed judgement offset, non-negative practice seek, evidence-bounded Float32 visual settings and finite unit gains.",
     );
   }
   const bgm = request.chartData.bgm;
@@ -256,21 +255,21 @@ function copyLaunchRequest(
       "The immutable chart package requires one explicit owned BGM byte sequence.",
     );
   }
-  let business: typeof request.chartData.sessionBusinessData;
+  let gameplay: typeof request.chartData.gameplay;
   try {
-    business = deepFreezeClone(request.chartData.sessionBusinessData) as typeof request.chartData.sessionBusinessData;
+    gameplay = deepFreezeClone(request.chartData.gameplay) as typeof request.chartData.gameplay;
   } catch {
     return rejected(
       "evidence-required",
-      "simulator.recipe.invalid-session-business-data",
-      "Session business data must be one finite JSON-like immutable value graph without capabilities or cyclic aliases.",
+      "simulator.recipe.invalid-session-gameplay-data",
+      "Session gameplay data must be one finite JSON-like immutable value graph without capabilities or cyclic aliases.",
     );
   }
   return accepted(Object.freeze({
     chartData: Object.freeze({
       bmsText: request.chartData.bmsText,
       bgm: Object.freeze({ ...bgm, bytes: Uint8Array.from(bgm.bytes) }),
-      sessionBusinessData: business,
+      gameplay,
     }),
     config: Object.freeze({
       playMode: request.config.playMode,
@@ -281,6 +280,29 @@ function copyLaunchRequest(
       audio: Object.freeze({ ...request.config.audio }),
     }),
   }));
+}
+
+function clearStatusFromSnapshot(
+  state: NonNullable<SimulatorSnapshot["managers"]["scoreLifeState"]>,
+): 1 | 2 | 3 {
+  const perfect = state.record.resultCounts[4];
+  if (perfect === state.initialization.maxNoteCount) return 3;
+  return perfect + state.record.resultCounts[3] === state.initialization.maxNoteCount ? 2 : 1;
+}
+
+function isGameplayShape(value: unknown): value is SimulatorModuleLaunchRequest["chartData"]["gameplay"] {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) return false;
+  const gameplay = value as Record<string, unknown>;
+  if (Object.keys(gameplay).sort().join(",") !== "life,score") return false;
+  const score = gameplay.score;
+  const life = gameplay.life;
+  return score !== null && typeof score === "object" && !Array.isArray(score) &&
+    Object.keys(score).sort().join(",") === "autoLiveComboCoefficient,level,totalParameter" &&
+    Object.values(score).every((entry) => typeof entry === "number" && Number.isFinite(entry)) &&
+    life !== null && typeof life === "object" && !Array.isArray(life) &&
+    Object.keys(life).sort().join(",") ===
+      "badDamage,initialLife,lifeUpperLimit,missDamage,playerMaxLife" &&
+    Object.values(life).every((entry) => typeof entry === "number" && Number.isFinite(entry));
 }
 
 function deepFreezeClone(value: unknown, seen = new Set<object>()): unknown {
