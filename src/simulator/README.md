@@ -8,7 +8,8 @@
 
 - BMS构造、时钟与调度；
 - Auto Live、手动输入与判定；
-- 通用score、combo、判定计数、Life、Miss/Bad伤害、Game Over与clear status；
+- 通用UInt32 score、combo、判定计数、Life、Miss/Bad伤害、Game Over与clear status；
+- 逐谱C/B/A/S/SS master驱动的普通单人Score Rank/Gauge、8位最小零填充BMFont、Rank marker与SS曲线动画；
 - ordinary及HABAHIRO谱面、Skill音符atlas/SE/判定粒子、普通渲染与HUD；
 - 逐谱BGM、14项固定玩法SE及WebAudio transport；
 - deterministic particle、Pixi particle与whole-engine ReturnTime；
@@ -41,7 +42,7 @@ import { launchSimulatorModule } from "src/simulator";
 调用方提交：
 
 - BMS与显式逐谱BGM bytes/metadata；
-- 中立gameplay数据：score level、generic total parameter、Auto Live combo coefficient；
+- 中立gameplay数据：score level、generic total parameter、Auto Live combo coefficient，以及逐谱/难度`musicId+difficulty+scoreC/B/A/S/SS`原始master字段；
 - 通用Life初值/上限与Miss/Bad伤害；
 - play/practice/audio/visual用户配置。
 
@@ -74,9 +75,10 @@ Production只内置manifest/metadata，不读取testing fixture。部署的中�
 - ordinary：8 keys / 1,479,352 bytes；
 - fixed gameplay SE：14 keys / 222,934 bytes；
 - particle：9 keys / 2,254,580 bytes；
-- HABAHIRO：11 keys / 3,815,563 bytes。
+- HABAHIRO：11 keys / 3,815,563 bytes；
+- Score HUD：8 keys / 5,085,771 bytes（7项font/PNG资源及1项SS animation profile）。
 
-共42 keys / 7,772,429 bytes，另加每session动态BGM。相比原库存只删除4项角色voice/cut-in专用SE；Skill音符SE、Skill粒子和`RhythmGameSprites5.png`保留。
+共50 keys / 12,858,200 bytes，另加每session动态BGM。相比原库存只删除4项角色voice/cut-in专用SE；Skill音符SE、Skill粒子和`RhythmGameSprites5.png`保留。
 
 缺项、长度/SHA、PNG/MP3 metadata、cue或关系不符全部失败关闭；自治launch不隐式联网、不使用默认资源或fallback。
 
@@ -95,7 +97,9 @@ Production只内置manifest/metadata，不读取testing fixture。部署的中�
 - particle closure：`9fb544b281d25fe0cefb4b2d6e692bb38df66a81`；
 - per-chart BGM：`55bdde635526d2a94a48c760f18ae7f90cd96631`；
 - ordinary portable pack：`6f49ebbce86c162f0d86ea9a612618b4c573d45c`；
-- autonomous scene/manual：`30788a2ab30cd5ab61b84148f0d596776d47b3a1`。
+- autonomous scene/manual：`30788a2ab30cd5ab61b84148f0d596776d47b3a1`；
+- Score HUD/Rank/Gauge基础合同：`6892bcc972434082913502527f9f10735b098f7d`；
+- `ScoreGaugeSS`曲线、Rank marker及sgm字体补充：`2fd90fa7`、`d5f5bc0e`、`95e629d9`。
 
 ## 验收
 
@@ -105,7 +109,7 @@ npm.cmd run simulator:test:score-life-state
 npm.cmd run simulator:test:device-closure
 ```
 
-通用score/life测试显式覆盖扣血、上限、Game Over及Skill音符不触发角色效果；audio/particle/render测试分别锁定Skill音符SE、Skill判定粒子和Skill atlas route。
+通用score/life测试显式覆盖UInt32累分、C/B/A/S/SS全部阈值前/等于/后、Float32 ratio bits、同Rank/越级/SS/超`scoreMax`、事务discard/commit、扣血、上限、Game Over及Skill音符不触发角色效果；render测试锁定BMFont溢出不截断、Rank资源与SS 56-curve采样。
 
 ## 显式开放项
 
