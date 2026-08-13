@@ -24,6 +24,7 @@ import {
   CURRENT_SCORE_HUD_BINDINGS,
   CURRENT_SCORE_HUD_SCENE_PROFILE,
 } from "../resources/currentScoreHudResourceManifest";
+import { RenderFidelityLabel } from "../renderingContracts";
 import type {
   RenderBackendSnapshot,
   RenderCommand,
@@ -1221,7 +1222,7 @@ function isEvidenceHud(
       return objectRole === "habahiro-flash" && state.phase === "flash-start" && state.progress?.value === 0;
     case "fidelity-label":
       return objectRole === "fidelity-label" &&
-        state.label === "HABAHIRO" && state.visible === true && (
+        state.label === RenderFidelityLabel && state.visible === true && (
           exactStateKeys(state, ["label", "visible"]) ||
           exactStateKeys(state, ["absolutePosition", "label", "laneChangePhase", "visible"]) &&
             Number.isInteger(state.absolutePosition) &&
@@ -1281,8 +1282,8 @@ function applyEvidenceHud(
         setHudText(
           visual.text!,
           state.laneChangePhase === "flash-start"
-            ? "HABAHIRO · Flash"
-            : "HABAHIRO · Lane Changed",
+            ? "Approximate HABAHIRO · Flash"
+            : "Approximate HABAHIRO · Lane Changed",
           20,
           0xffd166,
         );

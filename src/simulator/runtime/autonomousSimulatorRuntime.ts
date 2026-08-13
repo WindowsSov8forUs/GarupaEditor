@@ -1,3 +1,4 @@
+import { createSimulatorModuleCapabilitySummary } from "../public/capabilities";
 import type {
   LaunchSimulatorModule,
   SimulatorModuleCloseReport,
@@ -201,6 +202,7 @@ export class AutonomousSimulatorModule {
         reason: "terminal-fault" as const,
         result: null,
         failure,
+        capabilities: createSimulatorModuleCapabilitySummary(null),
       });
     }
     this.closePublished(report);
@@ -219,6 +221,7 @@ export class AutonomousSimulatorModule {
           reason: "terminal-fault" as const,
           result: null,
           failure: cleanupFailure,
+          capabilities: report.capabilities,
         });
     const frozen = freezeCloseReport(published);
     const resolve = this.resolveClosed;
@@ -271,6 +274,7 @@ function freezeCloseReport(report: SimulatorModuleCloseReport): SimulatorModuleC
     reason: report.reason,
     result: report.result === null ? null : Object.freeze({ ...report.result }),
     failure: report.failure === null ? null : Object.freeze({ ...report.failure }),
+    capabilities: Object.freeze({ ...report.capabilities }),
   });
 }
 

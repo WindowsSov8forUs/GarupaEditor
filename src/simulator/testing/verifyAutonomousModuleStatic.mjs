@@ -26,6 +26,7 @@ for (const forbidden of ["step(", "pause(", "resume(", "dispose(", "returnTime("
 for (const required of [
   "launchSimulatorModule", "SimulatorChartDataPackage", "SimulatorLaunchConfig",
   "SimulatorModuleLaunchRequest", "SimulatorModuleLaunchResult", "SimulatorModuleCloseReport",
+  "SimulatorModuleCapabilitySummary", "SimulatorRenderingFidelity",
 ]) {
   if (!rootIndex.includes(required) && !publicIndex.includes(required)) {
     throw new Error(`autonomous public barrel missing: ${required}`);
@@ -33,7 +34,7 @@ for (const required of [
 }
 for (const required of [
   "CURRENT_AUDIO_SE_RESOURCES", "CURRENT_PARTICLE_RESOURCE_MANIFEST",
-  "HABAHIRO_BESTDORI_PINNED_ASSETS", "habahiroChangeAbsolutePos >= 0",
+  "HABAHIRO_EXTERNAL_PINNED_ASSETS", "habahiroChangeAbsolutePos >= 0",
   "CURRENT_ORDINARY_PORTABLE_PROFILE_RESOURCE", "CURRENT_ORDINARY_PORTABLE_RESOURCES",
 ]) {
   if (!selector.includes(required)) throw new Error(`static selector missing fixed owner: ${required}`);

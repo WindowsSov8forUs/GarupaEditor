@@ -5,7 +5,9 @@ const { readFileSync } = require("node:fs");
 const { join } = require("node:path");
 
 import { launchSimulatorModule } from "../index";
+import { createSimulatorModuleCapabilitySummary } from "../public/capabilities";
 import { createNoteBatchInformationList } from "../engine/chart/construction";
+import { ButtonType } from "../engine/chart/types";
 import { AutonomousSimulatorModule } from "../runtime/autonomousSimulatorRuntime";
 import { installSimulatorModuleLauncher } from "../runtime/moduleEntryBinding";
 import type {
@@ -32,6 +34,7 @@ import {
   prepareSharedScoreGaugeSsAnimationResource,
   prepareSharedScoreHudRenderResources,
 } from "../resources/sharedResourceAdapters";
+import { validateConstructedChartCapabilities } from "../assembly/chartCapabilityValidation";
 import { createProductionAutonomousSimulatorModule } from "../platform/platformComposition";
 import type {
   SimulatorModuleCloseReport,
@@ -53,6 +56,7 @@ async function main(): Promise<void> {
   testRecipeOwnership();
   await testRecipeNaturalCompletion();
   await testProductionCompositionFailureBoundary();
+  testConstructedChartEarlyCapabilityGates();
   await testAutonomousLaunchAndClose();
   await testInvalidTickCloses();
   console.log("autonomous simulator module tests passed: public/store/selector/recipe/runtime/self-close");
@@ -322,6 +326,52 @@ async function testProductionCompositionFailureBoundary(): Promise<void> {
   assert.equal(mounts, 0);
 }
 
+function testConstructedChartEarlyCapabilityGates(): void {
+  const habBms = readFileSync(join(
+    process.cwd(),
+    "src/simulator/testing/fixtures/reverse-snapshots/chart-construction/fixtures/786_miracle_april_habahiro_special.txt",
+  ), "utf8");
+  const hab = requireOk(createNoteBatchInformationList({ musicScoreData: habBms }));
+  const source = hab.noteBatches.flatMap((batch) => batch.informationList).find((note) => note.buttonType >= 0)!;
+  const sourceBatch = hab.noteBatches.find((batch) => batch.informationList.includes(source))!;
+  const button07Chart = {
+    ...hab,
+    habahiroChangeAbsolutePos: -1,
+    noteBatches: Object.freeze([Object.freeze({
+      ...sourceBatch,
+      informationList: Object.freeze([Object.freeze({
+        ...source,
+        buttonType: ButtonType.Button_07_BMS_1P_07,
+        buttonTypes: Object.freeze([ButtonType.Button_07_BMS_1P_07]),
+        buttonTypesArray: Object.freeze([ButtonType.Button_07_BMS_1P_07]),
+      })]),
+    })]),
+  };
+  const button07 = validateConstructedChartCapabilities(button07Chart, request());
+  assert.equal(button07.status, "rejected");
+  if (button07.status === "rejected") {
+    assert.equal(button07.failure.capability, "simulator.composition.unsupported-button-07");
+  }
+
+  const unselected = validateConstructedChartCapabilities(hab, request());
+  assert.equal(unselected.status, "rejected");
+  if (unselected.status === "rejected") {
+    assert.equal(unselected.failure.capability, "simulator.composition.habahiro-degraded-preview-not-selected");
+  }
+  const selectedRequest = request();
+  const selected = validateConstructedChartCapabilities(hab, {
+    ...selectedRequest,
+    config: {
+      ...selectedRequest.config,
+      habahiroPreview: { allowExternalDegraded: true },
+    },
+  });
+  assert.equal(selected.status, "rejected");
+  if (selected.status === "rejected") {
+    assert.equal(selected.failure.capability, "render.habahiro.external-note-animation-evidence-required");
+  }
+}
+
 async function testAutonomousLaunchAndClose(): Promise<void> {
   const scheduler = new ControlledScheduler();
   const input = new ControlledInput();
@@ -424,7 +474,12 @@ class FakeSession implements SimulatorOwnedSession {
   async returnTime(): Promise<SimulatorAssemblyResult<void>> { this.commands.push("return-time"); return accepted(undefined); }
   close(reason: "user-closed" | "terminal-fault", failure?: any): SimulatorModuleCloseReport {
     this.closes += 1;
-    return Object.freeze({ reason, result: null, failure: failure ?? null });
+    return Object.freeze({
+      reason,
+      result: null,
+      failure: failure ?? null,
+      capabilities: createSimulatorModuleCapabilitySummary(null),
+    });
   }
 }
 
@@ -469,6 +524,7 @@ function request(): SimulatorModuleLaunchRequest {
       highFrequencyMode: false,
       judgeOffsetFrames: 0,
       practice: { enabled: false, startMilliseconds: 0 },
+      habahiroPreview: { allowExternalDegraded: false },
       visual: {
         specificSpeed: Math.fround(11),
         noteSize: Math.fround(100),

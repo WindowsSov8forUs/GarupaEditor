@@ -77,10 +77,11 @@
       "id": "CAP-HAB-01",
       "capability": "HABAHIRO external-asset preview",
       "productionPath": "chart selection -> explicit degraded preview",
-      "status": "reopened-audit",
+      "status": "open-evidence-required",
       "reverseEvidence": ["resource_pixi_rendering_delivery_oracle: ordinary-exact-habahiro-degraded", "habahiro_degraded_approximation"],
       "dynamicRequirement": "explicit opt-in, visible Approximate HABAHIRO label, machine-readable fidelity, separate degraded oracle",
-      "blockingFindings": ["production currently names external route complete", "ordinary Note animation is unauthorized on external atlas", "route fails only after engine mutation"]
+      "failureCapability": "render.habahiro.external-note-animation-evidence-required",
+      "failureBoundary": "post-chart capability scan before static-resource reads; current chart remains blocked because external Note animation is unauthorized"
     },
     {
       "id": "CAP-HAB-EXACT-01",

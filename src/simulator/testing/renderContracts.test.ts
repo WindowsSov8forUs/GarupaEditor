@@ -12,6 +12,7 @@ import {
 import { sha256UpperHex } from "../backends/resources/sha256";
 import { parseCurrentOrdinaryVisibleProfile } from "../backends/resources/currentOrdinaryVisibleProfile";
 import {
+  RenderFidelityDisclosure,
   RenderFidelityLabel,
   type RenderCommand,
   type RenderResourcePreflightAdapter,
@@ -193,7 +194,7 @@ function profile(
       projection: {
         mode: fidelity.mode === "ordinary"
           ? "current-ordinary-rhythmgame-orthographic"
-          : "degraded-habahiro-ordinary-projection-proxy",
+          : "habahiro-external-degraded-preview",
         viewportWidth: 1600,
         viewportHeight: 720,
         pixiOrigin: "top-left",
@@ -589,9 +590,9 @@ async function testProfileValidationAndAliases(): Promise<void> {
 
   const badLabel = profile({
     mode: "habahiro",
-    fidelity: "degraded",
-    profile: "current-external-portable-atlas",
+    fidelity: "habahiro-external-degraded-preview",
     visibleLabel: "wrong" as typeof RenderFidelityLabel,
+    disclosure: RenderFidelityDisclosure,
   }, "current-external-portable");
   equal(validateAndFreezeRenderProfile(badLabel).status, "evidence-required", "degraded label rejected");
   console.log("ok 2 - profile shape, deep freeze and fidelity gates");
@@ -627,7 +628,10 @@ async function testAtomicPrepare(): Promise<void> {
   const exactExternal = new RecordingSimulatorRendererBackend();
   equal((await exactExternal.prepare(
     SESSION,
-    profile({ mode: "habahiro", fidelity: "exact-current-unityfs" }, "current-external-portable"),
+    profile({
+      mode: "habahiro",
+      fidelity: "exact-current-unityfs",
+    } as unknown as RenderResourceProfile["fidelity"], "current-external-portable"),
     new LocalProvider(),
     preflight(),
   )).status, "evidence-required", "external bytes cannot claim exact HAB");
@@ -637,14 +641,14 @@ async function testAtomicPrepare(): Promise<void> {
     SESSION,
     profile({
       mode: "habahiro",
-      fidelity: "degraded",
-      profile: "current-external-portable-atlas",
+      fidelity: "habahiro-external-degraded-preview",
       visibleLabel: RenderFidelityLabel,
+      disclosure: RenderFidelityDisclosure,
     }, "current-external-portable"),
     new LocalProvider(),
     preflight(),
   ), "explicit degraded prepare");
-  equal(degraded.snapshot().fidelity?.mode, "habahiro", "degraded fidelity exposed");
+  equal(degraded.snapshot().fidelity?.mode, "habahiro", "explicit degraded-preview fidelity exposed");
   console.log("ok 3 - atomic resource preflight and provenance gates");
 }
 

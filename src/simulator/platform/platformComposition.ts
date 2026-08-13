@@ -35,6 +35,7 @@ import type {
 } from "../runtime/contracts";
 import { installSimulatorModuleLauncher } from "../runtime/moduleEntryBinding";
 import { createSimulatorSceneLayout } from "../scene/simulatorSceneLayout";
+import { validateConstructedChartCapabilities } from "../assembly/chartCapabilityValidation";
 import { assembleSimulatorResources } from "../assembly/resourceAssembly";
 import {
   RecipeOwnedSessionFactory,
@@ -115,6 +116,8 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
       musicScoreData: recipe.request.chartData.bmsText,
     });
     if (chart.status !== "ok") return fromEvidence(chart);
+    const chartCapabilities = validateConstructedChartCapabilities(chart.value, recipe.request);
+    if (chartCapabilities.status === "rejected") return chartCapabilities;
     const score = mapScoreLifeProfile(recipe.request, this.sessionId());
     if (score.status === "rejected") return score;
     const selection = selectSimulatorStaticResources(chart.value);

@@ -12,7 +12,7 @@ import type {
   SimulatorRendererBackend,
   SimulatorResourceProvider,
 } from "../backends/renderingContracts";
-import { prepareHabahiroBestdoriPack } from "../backends/resources/habahiroBestdoriProvider";
+import { prepareHabahiroExternalPreviewPack } from "../backends/resources/habahiroExternalProvider";
 import { CURRENT_ORDINARY_RENDER_BINDINGS } from "../backends/resources/currentOrdinaryResourceManifest";
 import { CURRENT_SCORE_HUD_BINDINGS } from "../backends/resources/currentScoreHudResourceManifest";
 import { CURRENT_ORDINARY_VISIBLE_BINDINGS } from "../backends/resources/currentOrdinaryVisibleResourceManifest";
@@ -22,7 +22,7 @@ import type { SimulatorSceneLayout } from "../scene/simulatorSceneLayout";
 import type { SharedStaticResourceStore } from "../resources/sharedStaticResourceStore";
 import type { SimulatorStaticResourceSelection } from "../resources/staticResourceSelector";
 import {
-  createSharedHabahiroTransport,
+  createSharedHabahiroExternalTransport,
   prepareSharedAudioResources,
   prepareSharedOrdinaryRenderResources,
   prepareSharedOrdinaryVisibleRenderResources,
@@ -98,11 +98,11 @@ export async function assembleSimulatorResources(
       bindings: CURRENT_ORDINARY_RENDER_BINDINGS,
     });
   } else {
-    const habahiro = await prepareHabahiroBestdoriPack(
-      createSharedHabahiroTransport(selection.rendering.resources, store),
+    const habahiro = await prepareHabahiroExternalPreviewPack(
+      createSharedHabahiroExternalTransport(selection.rendering.resources, store),
     );
     if (habahiro.status !== "ok") {
-      return rejected("resource-unavailable", habahiro.capability, habahiro.boundary);
+      return rejected("evidence-required", habahiro.capability, habahiro.boundary);
     }
     renderPack = Object.freeze({
       profile: habahiro.value.profile,

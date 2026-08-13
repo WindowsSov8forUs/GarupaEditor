@@ -4,6 +4,7 @@ export type {
   SimulatorChartAudioData,
   SimulatorChartDataPackage,
   SimulatorLaunchConfig,
+  SimulatorModuleCapabilitySummary,
   SimulatorModuleCloseReason,
   SimulatorModuleCloseReport,
   SimulatorModuleFailure,
@@ -11,5 +12,6 @@ export type {
   SimulatorModuleLaunchRequest,
   SimulatorModuleLaunchResult,
   SimulatorPublicPlayMode,
+  SimulatorRenderingFidelity,
   SimulatorSessionGameplayData,
 } from "./public";

@@ -49,6 +49,9 @@ export interface SimulatorLaunchConfig {
     readonly enabled: boolean;
     readonly startMilliseconds: number;
   };
+  readonly habahiroPreview: {
+    readonly allowExternalDegraded: boolean;
+  };
   readonly visual: {
     readonly specificSpeed: number;
     readonly noteSize: number;
@@ -93,10 +96,23 @@ export interface SimulatorModuleFailure {
   readonly boundary: string;
 }
 
+export type SimulatorRenderingFidelity =
+  | "ordinary-current-portable"
+  | "habahiro-external-degraded-preview";
+
+export interface SimulatorModuleCapabilitySummary {
+  readonly rendering: SimulatorRenderingFidelity | null;
+  readonly browserRaster: "open-not-claimed";
+  readonly fixedDeviceExact: "open-not-claimed-fixed-device-limit";
+  readonly characterSkillFeverMultiplayer: "excluded-not-implemented";
+  readonly mainProgramIntegrationAuthorized: false;
+}
+
 export interface SimulatorModuleCloseReport {
   readonly reason: SimulatorModuleCloseReason;
   readonly result: SimulatorModuleFinalResult | null;
   readonly failure: SimulatorModuleFailure | null;
+  readonly capabilities: SimulatorModuleCapabilitySummary;
 }
 
 export type SimulatorModuleLaunchResult =

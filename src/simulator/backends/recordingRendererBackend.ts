@@ -4,6 +4,7 @@ import {
   type EvidenceRequired,
   type SimulatorResult,
 } from "../engine/evidence";
+import { RenderFidelityLabel } from "./renderingContracts";
 import type {
   RenderBackendFault,
   RenderAnimationRole,
@@ -522,24 +523,8 @@ function validateResourceProvenance(
       return asset.provenance !== "current-apk" &&
         asset.provenance !== "current-device-cache";
     }
-    if (profile.fidelity.fidelity === "exact-current-unityfs") {
-      return asset.provenance !== "current-apk" &&
-        asset.provenance !== "current-device-cache";
-    }
-    if (profile.fidelity.fidelity === "current-external-complete") {
-      return asset.provenance !== "current-external-portable" &&
-        asset.provenance !== "current-apk" && asset.provenance !== "current-device-cache";
-    }
-    switch (profile.fidelity.profile) {
-      case "current-external-portable-atlas":
-        return asset.provenance !== "current-external-portable";
-      case "historical-atlas-proxy":
-        return asset.provenance !== "historical-proxy";
-      case "current-ordinary-stretch-proxy":
-        return asset.provenance !== "generated-current-ordinary-proxy" &&
-          asset.provenance !== "current-apk" &&
-          asset.provenance !== "current-device-cache";
-    }
+    return asset.provenance !== "current-external-portable" &&
+      asset.provenance !== "current-apk" && asset.provenance !== "current-device-cache";
   });
   return invalid
     ? evidenceRequired(
@@ -659,7 +644,7 @@ function validateTypedHudCommand(
     case "habahiro-flash":
       return objectRole === "habahiro-flash" && exactKeys(state, ["phase", "progress"]) && state.phase === "flash-start" && validateRenderFloat32(state.progress as never) && (state.progress as { value: number }).value === 0;
     case "fidelity-label":
-      return objectRole === "fidelity-label" && state.label === "HABAHIRO" && state.visible === true && (exactKeys(state, ["label", "visible"]) || exactKeys(state, ["absolutePosition", "label", "laneChangePhase", "visible"]) && Number.isInteger(state.absolutePosition) && (state.absolutePosition as number) >= 0 && ["flash-start", "change-lane", "complete"].includes(state.laneChangePhase as string));
+      return objectRole === "fidelity-label" && state.label === RenderFidelityLabel && state.visible === true && (exactKeys(state, ["label", "visible"]) || exactKeys(state, ["absolutePosition", "label", "laneChangePhase", "visible"]) && Number.isInteger(state.absolutePosition) && (state.absolutePosition as number) >= 0 && ["flash-start", "change-lane", "complete"].includes(state.laneChangePhase as string));
   }
 }
 

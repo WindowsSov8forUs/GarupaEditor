@@ -1,10 +1,10 @@
 import type { AudioFixedSeResourceProfile } from "../backends/audioContracts";
 import { CURRENT_AUDIO_SE_RESOURCES } from "../backends/resources/currentAudioResourceManifest";
 import {
-  HABAHIRO_BESTDORI_PACK_IDENTITY,
-  HABAHIRO_BESTDORI_PINNED_ASSETS,
-  type HabahiroBestdoriPinnedAsset,
-} from "../backends/resources/habahiroBestdoriManifest";
+  HABAHIRO_EXTERNAL_PACK_IDENTITY,
+  HABAHIRO_EXTERNAL_PINNED_ASSETS,
+  type HabahiroExternalPinnedAsset,
+} from "../backends/resources/habahiroExternalManifest";
 import { CURRENT_PARTICLE_RESOURCE_MANIFEST } from "../backends/resources/currentParticleResourceManifest";
 import {
   CURRENT_SCORE_GAUGE_SS_ANIMATION_RESOURCE,
@@ -39,7 +39,7 @@ export interface SelectedParticleResource {
 
 export interface SelectedHabahiroResource {
   readonly resourceKey: string;
-  readonly profile: HabahiroBestdoriPinnedAsset;
+  readonly profile: HabahiroExternalPinnedAsset;
 }
 
 export interface SelectedOrdinaryResource {
@@ -81,7 +81,7 @@ export type SelectedRenderResourceRoute =
   | {
       readonly kind: "habahiro";
       readonly status: "selected";
-      readonly packIdentity: typeof HABAHIRO_BESTDORI_PACK_IDENTITY;
+      readonly packIdentity: typeof HABAHIRO_EXTERNAL_PACK_IDENTITY;
       readonly resources: readonly SelectedHabahiroResource[];
     };
 
@@ -133,8 +133,8 @@ export function selectSimulatorStaticResources(
     ? Object.freeze({
         kind: "habahiro" as const,
         status: "selected" as const,
-        packIdentity: HABAHIRO_BESTDORI_PACK_IDENTITY,
-        resources: Object.freeze(HABAHIRO_BESTDORI_PINNED_ASSETS.map((profile) =>
+        packIdentity: HABAHIRO_EXTERNAL_PACK_IDENTITY,
+        resources: Object.freeze(HABAHIRO_EXTERNAL_PINNED_ASSETS.map((profile) =>
           Object.freeze({
             resourceKey: habahiroResourceKey(profile.technicalName),
             profile,

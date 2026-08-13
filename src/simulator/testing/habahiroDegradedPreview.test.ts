@@ -1,11 +1,11 @@
 import {
-  HABAHIRO_BESTDORI_PINNED_ASSETS,
-} from "../backends/resources/habahiroBestdoriManifest";
+  HABAHIRO_EXTERNAL_PINNED_ASSETS,
+} from "../backends/resources/habahiroExternalManifest";
 import {
-  parseHabahiroAtlasRows,
-  prepareHabahiroBestdoriPack,
-  type HabahiroBestdoriTransport,
-} from "../backends/resources/habahiroBestdoriProvider";
+  parseHabahiroExternalAtlasRows,
+  prepareHabahiroExternalPreviewPack,
+  type HabahiroExternalResourceTransport,
+} from "../backends/resources/habahiroExternalProvider";
 import { createRenderFloat32 } from "../backends/renderingValidation";
 import { ok, type SimulatorResult } from "../engine/evidence";
 import { getHabahiroMeshWidthRate } from "../engine/rendering/ordinaryNoteGeometry";
@@ -20,30 +20,30 @@ function equal<T>(actual: T, expected: T, message: string): void {
 
 async function main(): Promise<void> {
   const requested: string[] = [];
-  const tamperedTransport: HabahiroBestdoriTransport = {
-    async read(url) {
-      requested.push(url);
-      const pinned = HABAHIRO_BESTDORI_PINNED_ASSETS.find((asset) => asset.url === url);
+  const tamperedTransport: HabahiroExternalResourceTransport = {
+    async readTechnicalResource(technicalName) {
+      requested.push(technicalName);
+      const pinned = HABAHIRO_EXTERNAL_PINNED_ASSETS.find((asset) => asset.technicalName === technicalName);
       return ok(new Uint8Array(pinned?.byteLength ?? 0));
     },
   };
-  const tampered = await prepareHabahiroBestdoriPack(tamperedTransport);
-  equal(tampered.status, "evidence-required", "tampered Bestdori payload fails closed");
+  const tampered = await prepareHabahiroExternalPreviewPack(tamperedTransport);
+  equal(tampered.status, "evidence-required", "tampered external payload fails closed");
   equal(
     tampered.status === "evidence-required" ? tampered.capability : null,
-    "render.habahiro.bestdori-resource-mismatch",
+    "render.habahiro.external-resource-mismatch",
     "tamper capability is stable",
   );
-  equal(requested.length, 1, "tamper rejection stops before later downloads");
+  equal(requested.length, 1, "tamper rejection stops before later shared-store reads");
 
-  const malformedRows = parseHabahiroAtlasRows(
+  const malformedRows = parseHabahiroExternalAtlasRows(
     new TextEncoder().encode("[]"),
     new TextEncoder().encode("{}"),
   );
   equal(malformedRows.status, "evidence-required", "malformed Sprite metadata fails closed");
   equal(
     malformedRows.status === "evidence-required" ? malformedRows.capability : null,
-    "render.habahiro.bestdori-sprite-count-mismatch",
+    "render.habahiro.external-sprite-count-mismatch",
     "Sprite count capability is stable",
   );
 
@@ -61,7 +61,7 @@ async function main(): Promise<void> {
   equal(getHabahiroMeshWidthRate(8, settingOne).status, "evidence-required",
     "out-of-domain HABAHIRO width fails closed");
 
-  console.log("HABAHIRO complete implementation contracts passed: pinned tamper/parser/Float32 width failure closure");
+  console.log("explicit degraded HABAHIRO preview contracts passed: pinned tamper/parser/Float32 width failure boundaries");
 }
 
 void main();

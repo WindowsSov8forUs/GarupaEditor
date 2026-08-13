@@ -4,10 +4,12 @@ import {
   type PortableReplaySimulatorEngine,
   type SimulatorReplayCheckpoint,
 } from "../host/portableReplaySession";
+import { createSimulatorModuleCapabilitySummary } from "../public/capabilities";
 import type {
   SimulatorModuleCloseReport,
   SimulatorModuleFailure,
   SimulatorModuleLaunchRequest,
+  SimulatorRenderingFidelity,
 } from "../public/contracts";
 import type {
   SimulatorOwnedSession,
@@ -80,6 +82,7 @@ export class RecipeOwnedSessionFactory implements SimulatorOwnedSessionFactory {
 class RecipeOwnedSession implements SimulatorOwnedSession {
   private checkpoint: SimulatorReplayCheckpoint | null = null;
   private state: "running" | "closed" = "running";
+  private renderingFidelity: SimulatorRenderingFidelity | null = null;
 
   constructor(private readonly engine: PortableReplaySimulatorEngine) {}
 
@@ -153,6 +156,7 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
           "simulator.recipe.repeated-close",
           "A closed owned session is terminal and cannot publish another mutable result.",
         ),
+        capabilities: createSimulatorModuleCapabilitySummary(this.renderingFidelity),
       });
     }
     return this.finish(reason, failure ?? null);
@@ -184,6 +188,11 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
     const snapshot = this.engine.snapshot();
     const value = snapshot.status === "ok" ? snapshot.value : null;
     const record = value?.managers.scoreLifeState?.record ?? null;
+    const observedFidelity = value === null ? null : renderingFidelityFromSnapshot(value);
+    if (observedFidelity !== null) this.renderingFidelity = observedFidelity;
+    const clearStatus = value === null || record === null
+      ? null
+      : this.engine.getNaturalCompletionClearStatus() ?? clearStatusFromSnapshot(value.managers.scoreLifeState!);
     const disposed = this.engine.dispose();
     this.checkpoint = null;
     this.state = "closed";
@@ -199,10 +208,12 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
         score: record.score,
         life: record.currentLife,
         combo: record.currentCombo,
-        clearStatus: this.engine.getNaturalCompletionClearStatus() ??
-          clearStatusFromSnapshot(value.managers.scoreLifeState!),
+        clearStatus: clearStatus === null
+          ? clearStatusFromSnapshot(value.managers.scoreLifeState!)
+          : clearStatus,
       }),
       failure: terminalFailure,
+      capabilities: createSimulatorModuleCapabilitySummary(this.renderingFidelity),
     });
   }
 }
@@ -219,7 +230,7 @@ function copyLaunchRequest(
     typeof request.chartData.bmsText !== "string" || request.chartData.bmsText.length === 0 ||
     request.config === null || typeof request.config !== "object" ||
     Object.keys(request.config).sort().join(",") !==
-      "audio,highFrequencyMode,judgeOffsetFrames,playMode,practice,visual" ||
+      "audio,habahiroPreview,highFrequencyMode,judgeOffsetFrames,playMode,practice,visual" ||
     (request.config.playMode !== "manual" && request.config.playMode !== "auto-live") ||
     typeof request.config.highFrequencyMode !== "boolean" ||
     !Number.isInteger(request.config.judgeOffsetFrames) ||
@@ -229,6 +240,9 @@ function copyLaunchRequest(
     typeof request.config.practice.enabled !== "boolean" ||
     !Number.isSafeInteger(request.config.practice.startMilliseconds) ||
     request.config.practice.startMilliseconds < 0 ||
+    request.config.habahiroPreview === null || typeof request.config.habahiroPreview !== "object" ||
+    Object.keys(request.config.habahiroPreview).join(",") !== "allowExternalDegraded" ||
+    typeof request.config.habahiroPreview.allowExternalDegraded !== "boolean" ||
     request.config.visual === null || typeof request.config.visual !== "object" ||
     Object.keys(request.config.visual).sort().join(",") !==
       "habahiroMeshWidthSetting,highAspectRatio,noteSize,specificSpeed" ||
@@ -277,10 +291,22 @@ function copyLaunchRequest(
       highFrequencyMode: request.config.highFrequencyMode,
       judgeOffsetFrames: request.config.judgeOffsetFrames,
       practice: Object.freeze({ ...request.config.practice }),
+      habahiroPreview: Object.freeze({ ...request.config.habahiroPreview }),
       visual: Object.freeze({ ...request.config.visual }),
       audio: Object.freeze({ ...request.config.audio }),
     }),
   }));
+}
+
+function renderingFidelityFromSnapshot(
+  snapshot: SimulatorSnapshot,
+): SimulatorRenderingFidelity | null {
+  const fidelity = snapshot.renderingBackend?.fidelity;
+  if (fidelity?.mode === "ordinary") return "ordinary-current-portable";
+  if (fidelity?.mode === "habahiro" && fidelity.fidelity === "habahiro-external-degraded-preview") {
+    return "habahiro-external-degraded-preview";
+  }
+  return null;
 }
 
 function clearStatusFromSnapshot(

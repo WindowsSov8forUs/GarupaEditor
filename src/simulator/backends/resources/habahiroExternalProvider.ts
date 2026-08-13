@@ -1,22 +1,24 @@
-import type {
-  RenderAtlasRow,
-  RenderResourceAssetProfile,
-  RenderResourceProfile,
-  SimulatorResourceProvider,
+import {
+  RenderFidelityDisclosure,
+  RenderFidelityLabel,
+  type RenderAtlasRow,
+  type RenderResourceAssetProfile,
+  type RenderResourceProfile,
+  type SimulatorResourceProvider,
 } from "../renderingContracts";
 import { evidenceRequired, ok, type SimulatorResult } from "../../engine/evidence";
 import { sha256UpperHex } from "./sha256";
 import {
-  HABAHIRO_BESTDORI_PACK_IDENTITY,
-  HABAHIRO_BESTDORI_PINNED_ASSETS,
-} from "./habahiroBestdoriManifest";
+  HABAHIRO_EXTERNAL_PACK_IDENTITY,
+  HABAHIRO_EXTERNAL_PINNED_ASSETS,
+} from "./habahiroExternalManifest";
 
-export interface HabahiroBestdoriTransport {
-  read(url: string): Promise<SimulatorResult<Uint8Array>>;
+export interface HabahiroExternalResourceTransport {
+  readTechnicalResource(technicalName: string): Promise<SimulatorResult<Uint8Array>>;
 }
 
-export interface PreparedHabahiroBestdoriPack {
-  readonly packIdentity: typeof HABAHIRO_BESTDORI_PACK_IDENTITY;
+export interface PreparedHabahiroExternalPreviewPack {
+  readonly packIdentity: typeof HABAHIRO_EXTERNAL_PACK_IDENTITY;
   readonly profile: RenderResourceProfile;
   readonly assets: readonly RenderResourceAssetProfile[];
   readonly provider: SimulatorResourceProvider;
@@ -75,20 +77,14 @@ const TEXTURE_SETTINGS = Object.freeze({
   blendMode: "normal" as const,
 });
 
-const LOGICAL_PREFIX = "bestdori.habahiro.";
+const LOGICAL_PREFIX = "external.habahiro.";
 
-export async function prepareHabahiroBestdoriPack(
-  transport: HabahiroBestdoriTransport,
-): Promise<SimulatorResult<PreparedHabahiroBestdoriPack>> {
+export async function prepareHabahiroExternalPreviewPack(
+  transport: HabahiroExternalResourceTransport,
+): Promise<SimulatorResult<PreparedHabahiroExternalPreviewPack>> {
   const bytesByName = new Map<string, Uint8Array>();
-  for (const pinned of HABAHIRO_BESTDORI_PINNED_ASSETS) {
-    if (!isAllowedBestdoriUrl(pinned.url)) {
-      return reject(
-        "render.habahiro.bestdori-url-not-allowed",
-        "Every HABAHIRO resource URL must remain under the pinned bestdori.com HTTPS path.",
-      );
-    }
-    const read = await transport.read(pinned.url);
+  for (const pinned of HABAHIRO_EXTERNAL_PINNED_ASSETS) {
+    const read = await transport.readTechnicalResource(pinned.technicalName);
     if (read.status !== "ok") return read;
     const bytes = Uint8Array.from(read.value);
     if (
@@ -96,7 +92,7 @@ export async function prepareHabahiroBestdoriPack(
       sha256UpperHex(bytes) !== pinned.sha256
     ) {
       return reject(
-        "render.habahiro.bestdori-resource-mismatch",
+        "render.habahiro.external-resource-mismatch",
         `Pinned HABAHIRO resource ${pinned.technicalName} changed length or SHA-256.`,
       );
     }
@@ -107,14 +103,14 @@ export async function prepareHabahiroBestdoriPack(
   const bundleBytes = bytesByName.get("ingameskin-noteskin-habahiro.bundle");
   if (spriteBytes === undefined || bundleBytes === undefined) {
     return reject(
-      "render.habahiro.bestdori-metadata-missing",
+      "render.habahiro.external-metadata-missing",
       "The pinned HABAHIRO Sprite and bundle manifests are both required.",
     );
   }
-  const parsed = parseHabahiroAtlasRows(spriteBytes, bundleBytes);
+  const parsed = parseHabahiroExternalAtlasRows(spriteBytes, bundleBytes);
   if (parsed.status !== "ok") return parsed;
 
-  const imageAssets = HABAHIRO_BESTDORI_PINNED_ASSETS.filter(
+  const imageAssets = HABAHIRO_EXTERNAL_PINNED_ASSETS.filter(
     (asset) => asset.dimensions !== null,
   );
   const assets: RenderResourceAssetProfile[] = [];
@@ -124,7 +120,7 @@ export async function prepareHabahiroBestdoriPack(
     const sourceRows = parsed.value.get(pinned.technicalName.toLowerCase());
     if (materialRole === "sprite" && sourceRows === undefined) {
       return reject(
-        "render.habahiro.bestdori-atlas-rows-missing",
+        "render.habahiro.external-atlas-rows-missing",
         "Every pinned HABAHIRO Sprite texture must have an explicit parsed row set.",
       );
     }
@@ -149,8 +145,8 @@ export async function prepareHabahiroBestdoriPack(
     }));
   }
   for (const [logicalAssetId, technicalName] of [
-    ["bestdori.habahiro.multiple-directional-left", "longNoteLine.png"],
-    ["bestdori.habahiro.multiple-directional-right", "longNoteLine2.png"],
+    ["external.habahiro.multiple-directional-left", "longNoteLine.png"],
+    ["external.habahiro.multiple-directional-right", "longNoteLine2.png"],
   ] as const) {
     assets.push(Object.freeze({
       ...assets.find((asset) => asset.logicalAssetId === logicalAssetIdFor(technicalName))!,
@@ -167,14 +163,14 @@ export async function prepareHabahiroBestdoriPack(
       Uint8Array.from(bytesByName.get(asset.technicalName)!),
     );
   }
-  providerBytes.set("bestdori.habahiro.multiple-directional-left", Uint8Array.from(bytesByName.get("longNoteLine.png")!));
-  providerBytes.set("bestdori.habahiro.multiple-directional-right", Uint8Array.from(bytesByName.get("longNoteLine2.png")!));
+  providerBytes.set("external.habahiro.multiple-directional-left", Uint8Array.from(bytesByName.get("longNoteLine.png")!));
+  providerBytes.set("external.habahiro.multiple-directional-right", Uint8Array.from(bytesByName.get("longNoteLine2.png")!));
   const provider: SimulatorResourceProvider = Object.freeze({
     async read(logicalAssetId: string): Promise<SimulatorResult<Uint8Array>> {
       const bytes = providerBytes.get(logicalAssetId);
       return bytes === undefined
         ? reject(
-            "render.habahiro.bestdori-logical-asset-missing",
+            "render.habahiro.external-logical-asset-missing",
             "The prepared HABAHIRO provider rejects undeclared logical asset IDs.",
           )
         : ok(Uint8Array.from(bytes));
@@ -189,16 +185,18 @@ export async function prepareHabahiroBestdoriPack(
       versionCode: 230 as const,
       abi: "arm64-v8a" as const,
     }),
-    packIdentity: HABAHIRO_BESTDORI_PACK_IDENTITY,
+    packIdentity: HABAHIRO_EXTERNAL_PACK_IDENTITY,
     fidelity: Object.freeze({
       mode: "habahiro" as const,
-      fidelity: "current-external-complete" as const,
+      fidelity: "habahiro-external-degraded-preview" as const,
+      visibleLabel: RenderFidelityLabel,
+      disclosure: RenderFidelityDisclosure,
     }),
     networkAllowed: false,
     automaticFallbackAllowed: false,
     assets: frozenAssets,
     scene: Object.freeze({
-      profileId: "habahiro-10.1.4-current-external-complete",
+      profileId: "habahiro-10.1.4-external-degraded-preview",
       components: Object.freeze((["sprite", "atlas-sprite", "mesh", "line", "mask", "text", "slider", "animation"] as const).map(
         (component) => Object.freeze({ component, support: "portable-equivalent" as const }),
       )),
@@ -207,7 +205,7 @@ export async function prepareHabahiroBestdoriPack(
         pixiDefaultZIndexAllowed: false,
       }),
       projection: Object.freeze({
-        mode: "habahiro-current-external" as const,
+        mode: "habahiro-external-degraded-preview" as const,
         viewportWidth: 1600,
         viewportHeight: 720,
         pixiOrigin: "top-left" as const,
@@ -225,7 +223,7 @@ export async function prepareHabahiroBestdoriPack(
     }),
   });
   return ok(Object.freeze({
-    packIdentity: HABAHIRO_BESTDORI_PACK_IDENTITY,
+    packIdentity: HABAHIRO_EXTERNAL_PACK_IDENTITY,
     profile,
     assets: frozenAssets,
     provider,
@@ -240,14 +238,14 @@ export async function prepareHabahiroBestdoriPack(
       syncLineLogicalAssetId: logicalAssetId("simultaneous_line.png"),
       longNoteMaterialLogicalAssetId: logicalAssetId("longNoteLine.png"),
       curveNoteMaterialLogicalAssetId: logicalAssetId("longNoteLine2.png"),
-      multipleDirectionalLineLeftLogicalAssetId: "bestdori.habahiro.multiple-directional-left",
-      multipleDirectionalLineRightLogicalAssetId: "bestdori.habahiro.multiple-directional-right",
+      multipleDirectionalLineLeftLogicalAssetId: "external.habahiro.multiple-directional-left",
+      multipleDirectionalLineRightLogicalAssetId: "external.habahiro.multiple-directional-right",
     }),
     spriteCount: 179 as const,
   }));
 }
 
-export function parseHabahiroAtlasRows(
+export function parseHabahiroExternalAtlasRows(
   spriteBytes: Uint8Array,
   bundleBytes: Uint8Array,
 ): SimulatorResult<ReadonlyMap<string, readonly RenderAtlasRow[]>> {
@@ -258,20 +256,20 @@ export function parseHabahiroAtlasRows(
     bundle = JSON.parse(new TextDecoder().decode(bundleBytes));
   } catch {
     return reject(
-      "render.habahiro.bestdori-metadata-invalid-json",
+      "render.habahiro.external-metadata-invalid-json",
       "The pinned HABAHIRO exported Sprite and bundle metadata must both be valid JSON.",
     );
   }
   if (!Array.isArray(sprites) || sprites.length !== 179) {
     return reject(
-      "render.habahiro.bestdori-sprite-count-mismatch",
+      "render.habahiro.external-sprite-count-mismatch",
       "The current external HABAHIRO profile requires exactly 179 Sprite rows.",
     );
   }
   const pathToFile = parseBundleTextureMap(bundle as RawBundle);
   if (pathToFile.status !== "ok") return pathToFile;
   const dimensions = new Map(
-    HABAHIRO_BESTDORI_PINNED_ASSETS.flatMap((asset) =>
+    HABAHIRO_EXTERNAL_PINNED_ASSETS.flatMap((asset) =>
       asset.dimensions === null
         ? []
         : [[asset.technicalName.toLowerCase(), asset.dimensions] as const]),
@@ -294,7 +292,7 @@ export function parseHabahiroAtlasRows(
       (typeof pathId !== "string" && typeof pathId !== "number")
     ) {
       return reject(
-        "render.habahiro.bestdori-sprite-row-invalid",
+        "render.habahiro.external-sprite-row-invalid",
         "Every HABAHIRO Sprite row requires one unique key, finite rect/pivot/PPU and texture PathID.",
       );
     }
@@ -302,7 +300,7 @@ export function parseHabahiroAtlasRows(
     const size = textureName === undefined ? undefined : dimensions.get(textureName);
     if (textureName === undefined || size === undefined) {
       return reject(
-        "render.habahiro.bestdori-texture-path-unresolved",
+        "render.habahiro.external-texture-path-unresolved",
         "Every HABAHIRO Sprite texture PathID must resolve through the pinned bundle preload range.",
       );
     }
@@ -315,7 +313,7 @@ export function parseHabahiroAtlasRows(
       x + width > size[0] || y + height > size[1]
     ) {
       return reject(
-        "render.habahiro.bestdori-sprite-rect-out-of-bounds",
+        "render.habahiro.external-sprite-rect-out-of-bounds",
         "Unity bottom-left HABAHIRO rects must convert inside the pinned PNG dimensions.",
       );
     }
@@ -346,7 +344,7 @@ function parseBundleTextureMap(
   const container = bundle.Base?.m_Container;
   if (!Array.isArray(preload) || container === null || typeof container !== "object") {
     return reject(
-      "render.habahiro.bestdori-bundle-shape-invalid",
+      "render.habahiro.external-bundle-shape-invalid",
       "The HABAHIRO bundle export requires preload and container tables.",
     );
   }
@@ -357,7 +355,7 @@ function parseBundleTextureMap(
     if (typeof start !== "number" || typeof size !== "number" ||
       !Number.isSafeInteger(start) || !Number.isSafeInteger(size) || start < 0 || size < 0) {
       return reject(
-        "render.habahiro.bestdori-bundle-range-invalid",
+        "render.habahiro.external-bundle-range-invalid",
         "Every HABAHIRO bundle container requires one valid preload range.",
       );
     }
@@ -389,7 +387,7 @@ function createDirectionalAliasRows(
   const source = rows.find((row) => row.exactKey === "note_flick_top");
   if (source === undefined) {
     return reject(
-      "render.habahiro.bestdori-directional-alias-source-missing",
+      "render.habahiro.external-directional-alias-source-missing",
       "The external portable directional disposition requires exact note_flick_top and never aliases an arbitrary first row.",
     );
   }
@@ -406,16 +404,6 @@ function logicalAssetIdFor(technicalName: string): string {
 
 function logicalAssetId(technicalName: string): string {
   return logicalAssetIdFor(technicalName);
-}
-
-function isAllowedBestdoriUrl(url: string): boolean {
-  try {
-    const parsed = new URL(url);
-    return parsed.protocol === "https:" && parsed.hostname === "bestdori.com" &&
-      parsed.pathname.startsWith("/assets/jp/ingameskin/noteskin/habahiro_rip/");
-  } catch {
-    return false;
-  }
 }
 
 function isFiniteNumber(value: unknown): value is number {
