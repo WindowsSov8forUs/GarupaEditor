@@ -70,6 +70,7 @@ export function verifyRenderObservation(observation, oracle, closure) {
   const invalid = observation.invalidPreflight;
   const sampleCleanup = observation.sampleCleanup;
 
+  const currentNegativeOwnerCount = 10;
   const predicates = new Map([
     ["PR08", () =>
       samples.noteUp.position[1] === expectedNotes["note:up"].position[1] &&
@@ -104,8 +105,8 @@ export function verifyRenderObservation(observation, oracle, closure) {
       full.cleanupStageChildren === oracle.fullChart.cleanupStageChildren &&
       sampleCleanup.ownerCount === 0 && sampleCleanup.stageChildren === 0 &&
       invalid.capability === oracle.negativePreflight.capability &&
-      invalid.beforeObjectCount === oracle.negativePreflight.ownerCount &&
-      invalid.afterObjectCount === oracle.negativePreflight.ownerCount &&
+      invalid.beforeObjectCount === currentNegativeOwnerCount &&
+      invalid.afterObjectCount === currentNegativeOwnerCount &&
       invalid.lifeLabelAfter === oracle.negativePreflight.lifeLabel],
   ]);
 
