@@ -219,34 +219,58 @@ function testRecipeOwnership(): void {
   const overflowingMaster: any = request();
   overflowingMaster.chartData.gameplay.score.master.scoreSS = 0xffffffff;
   assert.equal(createSimulatorSessionRecipe(overflowingMaster).status, "rejected");
-  for (const enabled of [false, true]) {
-    const nonzeroSeek: any = request();
-    nonzeroSeek.config.practice.enabled = enabled;
-    nonzeroSeek.config.practice.startMilliseconds = 1;
-    const rejectedSeek = createSimulatorSessionRecipe(nonzeroSeek);
-    assert.equal(rejectedSeek.status, "rejected");
-    if (rejectedSeek.status === "rejected") {
-      assert.equal(rejectedSeek.failure.capability, "simulator.composition.nonzero-initial-practice-seek");
-    }
+  const disabledSeek: any = request();
+  disabledSeek.config.practice.startMilliseconds = 1;
+  const disabled = createSimulatorSessionRecipe(disabledSeek);
+  assert.equal(disabled.status, "rejected");
+  if (disabled.status === "rejected") {
+    assert.equal(disabled.failure.capability, "simulator.composition.initial-practice-seek-out-of-range");
   }
+  const enabledSeek: any = request();
+  enabledSeek.config.practice.enabled = true;
+  enabledSeek.config.practice.startMilliseconds = 1;
+  assert.equal(createSimulatorSessionRecipe(enabledSeek).status, "accepted");
+  enabledSeek.config.practice.startMilliseconds = 1000;
+  assert.equal(createSimulatorSessionRecipe(enabledSeek).status, "rejected", "target must be strictly inside BGM duration");
 }
 
 async function testRecipeNaturalCompletion(): Promise<void> {
-  let blockedBuilderCalls = 0;
-  const blockedFactory = new RecipeOwnedSessionFactory({
-    createFreshEngine: async () => {
-      blockedBuilderCalls += 1;
-      throw new Error("non-zero seek must not invoke builder");
+  const preRollDeltas: number[] = [];
+  const preRollEvents: string[] = [];
+  let preRollCurrent = Math.fround(0);
+  const preRollEngine = replayTestEngine({
+    onInitialize: () => preRollEvents.push("initialize"),
+    onStep: (delta) => {
+      preRollEvents.push("step");
+      preRollDeltas.push(delta);
+      preRollCurrent = Math.fround(preRollCurrent + delta);
+    },
+    adjustedMusicPosition: () => preRollCurrent,
+  });
+  const preRollFactory = new RecipeOwnedSessionFactory({
+    createFreshEngine: async (_recipe, mode) => {
+      assert.equal(mode, "deferred-initial-seek");
+      return accepted({
+        engine: preRollEngine as any,
+        publishInitialSeekOutputs: () => {
+          preRollEvents.push("publish");
+          return accepted(undefined);
+        },
+      });
     },
   });
-  const blockedRequest: any = request();
-  blockedRequest.config.practice.startMilliseconds = 1;
-  const blocked = await blockedFactory.create(blockedRequest);
-  assert.equal(blocked.status, "rejected");
-  if (blocked.status === "rejected") {
-    assert.equal(blocked.failure.capability, "simulator.composition.nonzero-initial-practice-seek");
-  }
-  assert.equal(blockedBuilderCalls, 0, "non-zero initial seek rejects before engine builder");
+  const preRollRequest: any = request();
+  preRollRequest.config.practice.enabled = true;
+  preRollRequest.config.practice.startMilliseconds = 999;
+  const preRolled = requireAccepted(await preRollFactory.create(preRollRequest));
+  assert.equal(preRollDeltas.length, 60, "999ms IPS-P02 cadence uses the committed 60-step oracle");
+  assert.equal(float32Bits(preRollDeltas[0]!), "8988883C");
+  assert.equal(float32Bits(preRollDeltas[preRollDeltas.length - 1]!), "0058803C");
+  assert.equal(float32Bits(preRollCurrent), "77BE7F3F");
+  assert.equal(preRollEvents[0], "initialize");
+  assert.equal(preRollEvents[preRollEvents.length - 1], "publish", "physical publication follows all whole-engine steps");
+  assert.equal(preRollEvents.filter((event) => event === "publish").length, 1);
+  preRolled.close("user-closed");
 
   let initialized = false;
   let completed = false;
@@ -283,7 +307,10 @@ async function testRecipeNaturalCompletion(): Promise<void> {
     backends: {} as any,
   };
   const factory = new RecipeOwnedSessionFactory({
-    createFreshEngine: async () => accepted(engine as any),
+    createFreshEngine: async (_recipe, mode) => {
+      assert.equal(mode, "immediate");
+      return accepted(engineBuild(engine as any));
+    },
   });
   const session = requireAccepted(await factory.create(request()));
   const stepped = session.step(1 / 60, null);
@@ -293,8 +320,10 @@ async function testRecipeNaturalCompletion(): Promise<void> {
   assert.equal(stepped.report.result?.clearStatus, 2);
   assert.equal(stepped.report.result?.combo, 7);
   assert.equal(stepped.report.capabilities.rendering, null);
-  assert.equal(stepped.report.capabilities.browserDecodeRaster, "open-evidence-required");
-  assert.equal(stepped.report.capabilities.fixedDeviceExact, "open-device-exact");
+  assert.equal(stepped.report.capabilities.nonzeroInitialPracticeSeek, "closed-portable");
+  assert.equal(stepped.report.capabilities.button07SceneMapping, "closed-original-unreachable");
+  assert.equal(stepped.report.capabilities.browserDecodeRaster, "closed-portable");
+  assert.equal(stepped.report.capabilities.fixedDeviceExact, "open-objective-environment-blocked");
   assert.equal(stepped.report.capabilities.characterSkillFeverMultiplayer, "excluded");
   assert.equal(stepped.report.capabilities.mainProgramIntegration, "unauthorized-stage-9");
   assert.equal(disposals, 1);
@@ -365,9 +394,9 @@ async function testProductionCompositionFailureBoundary(): Promise<void> {
   const launched = await module.launch(seekRequest);
   assert.equal(launched.status, "rejected");
   if (launched.status === "rejected") {
-    assert.equal(launched.failure.capability, "simulator.composition.nonzero-initial-practice-seek");
+    assert.equal(launched.failure.capability, "test.missing");
   }
-  assert.equal(resourceReads, 0);
+  assert.equal(resourceReads, 1, "authorized non-zero seek reaches normal resource construction");
   assert.equal(mounts, 0);
 }
 
@@ -395,7 +424,8 @@ function testConstructedChartEarlyCapabilityGates(): void {
   const button07 = validateConstructedChartCapabilities(button07Chart, request());
   assert.equal(button07.status, "rejected");
   if (button07.status === "rejected") {
-    assert.equal(button07.failure.capability, "simulator.composition.unsupported-button-07");
+    assert.equal(button07.failure.code, "launch-failed");
+    assert.equal(button07.failure.capability, "simulator.composition.impossible-button-07-invariant");
   }
 
   const habahiro = validateConstructedChartCapabilities(hab, request());
@@ -439,10 +469,10 @@ async function testAutonomousLaunchAndClose(): Promise<void> {
     ordinaryCommandScene: "closed-portable",
     habahiroCurrentExternalComplete: "closed-portable",
     habahiroOriginalParity: "open-evidence-required",
-    nonzeroInitialPracticeSeek: "open-evidence-required",
-    button07SceneMapping: "open-evidence-required",
-    browserDecodeRaster: "open-evidence-required",
-    fixedDeviceExact: "open-device-exact",
+    nonzeroInitialPracticeSeek: "closed-portable",
+    button07SceneMapping: "closed-original-unreachable",
+    browserDecodeRaster: "closed-portable",
+    fixedDeviceExact: "open-objective-environment-blocked",
     characterSkillFeverMultiplayer: "excluded",
     mainProgramIntegration: "unauthorized-stage-9",
     selectedRenderingGate: "open-evidence-required",
@@ -626,6 +656,65 @@ function request(): SimulatorModuleLaunchRequest {
       audio: { masterGain: 1, bgmGain: 1, seGain: 1 },
     },
   };
+}
+
+function replayTestEngine(options: {
+  readonly onInitialize?: () => void;
+  readonly onStep?: (deltaTimeSeconds: number) => void;
+  readonly adjustedMusicPosition?: () => number;
+} = {}) {
+  let state: "created" | "initialized" | "disposed" = "created";
+  return {
+    initialize() {
+      if (state === "created") {
+        state = "initialized";
+        options.onInitialize?.();
+      }
+      return ok(undefined);
+    },
+    step(deltaTimeSeconds: number) {
+      if (state !== "initialized") throw new Error("test engine step outside initialization");
+      options.onStep?.(deltaTimeSeconds);
+      return ok(undefined);
+    },
+    resolveManualInputButton: () => ok(null),
+    pause: () => ok(undefined),
+    resume: () => ok(undefined),
+    continueLive: () => ok(undefined),
+    completeLiveAudio: () => ok(undefined),
+    getNaturalCompletionClearStatus: () => null,
+    getAdjustedMusicPosition: () => ok(options.adjustedMusicPosition?.() ?? 0),
+    snapshot: () => ok({
+      adjustedMusicPosition: options.adjustedMusicPosition?.() ?? 0,
+      director: { awakeComplete: state === "initialized" },
+      managers: {
+        state,
+        fault: null,
+        particle: {},
+        scoreLifeState: null,
+      },
+      particleBackend: { state: state === "disposed" ? "disposed" : "ready" },
+      renderingBackend: null,
+      audioBackend: null,
+      particleRendererBackend: null,
+      backendTrace: [],
+    } as any),
+    dispose() { state = "disposed"; return ok(undefined); },
+    backends: {} as any,
+  };
+}
+
+function engineBuild(engine: any) {
+  return Object.freeze({
+    engine,
+    publishInitialSeekOutputs: () => accepted<void>(undefined),
+  });
+}
+
+function float32Bits(value: number): string {
+  const bytes = new ArrayBuffer(4);
+  new DataView(bytes).setFloat32(0, value, true);
+  return [...new Uint8Array(bytes)].map((byte) => byte.toString(16).padStart(2, "0")).join("").toUpperCase();
 }
 
 function accepted<T>(value: T): SimulatorAssemblyResult<T> {

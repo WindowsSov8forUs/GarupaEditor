@@ -153,6 +153,27 @@
       "sha256": "82F9D26EF7A2A770F4846B534528094EEEDCE87DABDF5BB9E8D108777751453C"
     },
     {
+      "path": "reverse-snapshots/c07-evidence/artifacts/investigations/fixed-device-exact-environment-disposition-10-1-4/fixed_device_exact_environment_disposition.json",
+      "sourceReverseCommit": "0dd4d71ce1ce9ad33b8336a58662d164d69b17e9",
+      "sourcePath": "artifacts/investigations/fixed-device-exact-environment-disposition-10-1-4/fixed_device_exact_environment_disposition.json",
+      "bytes": 7323,
+      "sha256": "8588E6FE5CE15B06A0B4EDEC4862CE47BD82FE618DE39B2AD5CDE9AE8137DDEB"
+    },
+    {
+      "path": "reverse-snapshots/c07-evidence/artifacts/investigations/initial-practice-seek-state-restore-10-1-4/initial_practice_seek_state_restore_contract.json",
+      "sourceReverseCommit": "cbd042398e1e8aa1255bb2adb89ca14e5d6ca062",
+      "sourcePath": "artifacts/investigations/initial-practice-seek-state-restore-10-1-4/initial_practice_seek_state_restore_contract.json",
+      "bytes": 14712,
+      "sha256": "159D0E44F1510D0DFB6313D4B8298B9759EA67639CC44A0E668B069AD41BB93E"
+    },
+    {
+      "path": "reverse-snapshots/c07-evidence/artifacts/investigations/webview2-browser-raster-10-1-4/webview2_browser_raster_contract.json",
+      "sourceReverseCommit": "a87cd3a7cbd8b53fdc8695c5ee27af8a5fa6b8b1",
+      "sourcePath": "artifacts/investigations/webview2-browser-raster-10-1-4/webview2_browser_raster_contract.json",
+      "bytes": 13172,
+      "sha256": "BF3AAFCCCDD2A2ECE1A9A01928FB89A91B9C5018723B709E5B5E65DB633DF84D"
+    },
+    {
       "path": "reverse-snapshots/chart-construction/artifacts/investigations/runtime-integration-prototype/production_bms_validation.json",
       "sourceReverseCommit": "c9a4629bdfac248c167a966a92bdb2c45dad87e6",
       "sourcePath": "artifacts/investigations/runtime-integration-prototype/production_bms_validation.json",

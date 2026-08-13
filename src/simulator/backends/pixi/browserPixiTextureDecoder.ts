@@ -81,7 +81,7 @@ export class BrowserPixiTextureDecoder implements PixiTextureDecoder {
 function reject(capability: string, boundary: string) {
   return evidenceRequired(
     capability,
-    ["RPR-D02", "RPR-D14", "RPR-D17", "PR35", "PR37"],
+    ["RPR-D02", "RPR-D14", "RPR-D17", "PR35", "PR37", "WBR-P01", "WBR-P02", "WBR-P03", "WBR-P04"],
     boundary,
   );
 }

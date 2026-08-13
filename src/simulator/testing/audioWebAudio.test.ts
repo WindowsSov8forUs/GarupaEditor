@@ -105,6 +105,51 @@ async function main(): Promise<void> {
   assert.equal(backend.snapshot().fault?.capability, "audio.web.context-lost-after-ready");
   assert.equal(backend.dispose().status, "terminal-disposed");
 
+  const suppressedContext = new FakeAudioContext();
+  const suppressed = new WebAudioSimulatorBackend(
+    suppressedContext as unknown as AudioContext,
+    { suppressPhysicalOutput: true, seekMilliseconds: 999 },
+  );
+  assert.equal((await suppressed.prepare(
+    "suppressed-session",
+    CURRENT_AUDIO_TEST_PROFILE,
+    provider,
+    preflight,
+  )).status, "accepted");
+  execute(suppressed, [
+    { kind: "session.open", bgm_pool: 8, se_pool: 12, one_shot_pool: 1 },
+    { kind: "gain.set", bgm_bits: "0x3E800000", se_bits: "0x3F000000" },
+    { kind: "bgm.load", cue: CURRENT_BGM_REGRESSION_RESOURCE.cue, seek_ms: 0, priority: 255, fade_bits: "0x00000000" },
+    { kind: "audio.pause-all", paused: true },
+    { kind: "audio.pause-all", paused: false },
+  ]);
+  execute(suppressed, [{
+    kind: "se.play-one-shot", cue: "perfect", voice_key: "pre-roll", volume_bits: "0x3F800000",
+    pitch_bits: "0x00000000", pan_distance_bits: "0x00000000", pan_angle_bits: "0x00000000",
+  }]);
+  execute(suppressed, [{
+    kind: "hold.start-loop", cue: "SE_RHYTHM_TAP_LONG", owner_key: "pre-roll-hold",
+    volume_bits: "0x3F800000", fade_in_bits: "0x00000000",
+  }]);
+  assert.equal(suppressedContext.sources.length, 0, "IPS-P03 suppresses every physical pre-roll BGM/SE source");
+  assert.equal(suppressed.getBgmPlaybackState().status, "accepted");
+  assert.equal((suppressed.getBgmPlaybackState() as any).value, "playing", "semantic BGM remains live during fast reconstruction");
+  assert.equal(suppressed.publishInitialSeekOutput().status, "accepted");
+  assert.equal(suppressedContext.sources.length, 1, "IPS-P04 publishes BGM exactly once");
+  assert.equal(suppressedContext.sources[0]!.startOffset, 0.999);
+  assert.equal(suppressed.publishInitialSeekOutput().status, "evidence-required", "physical publication capability is one-use");
+  execute(suppressed, [{
+    kind: "hold.fade", owner_key: "pre-roll-hold", target_bits: "0x00000000",
+    duration_bits: "0x3E99999A", stop_at_zero: true,
+  }]);
+  assert.equal(suppressedContext.sources.length, 1, "a suppressed pre-roll Hold tail never appears after publication");
+  execute(suppressed, [{
+    kind: "se.play-one-shot", cue: "perfect", voice_key: "post-publish", volume_bits: "0x3F800000",
+    pitch_bits: "0x00000000", pan_distance_bits: "0x00000000", pan_angle_bits: "0x00000000",
+  }]);
+  assert.equal(suppressedContext.sources.length, 2, "future physical SE resumes only after final-state publication");
+  assert.equal(suppressed.dispose().status, "accepted");
+
   const throwingContext = new FakeAudioContext();
   const throwing = new WebAudioSimulatorBackend(throwingContext as unknown as AudioContext);
   assert.equal((await throwing.prepare(
@@ -126,13 +171,14 @@ async function main(): Promise<void> {
   assert.equal(throwing.snapshot().fault?.capability, "audio.web.command-commit-threw");
   assert.equal(throwing.dispose().status, "accepted");
 
-  console.log("audio Web Audio tests passed: prepare/decode graph transport context-loss sync-fault dispose");
+  console.log("audio Web Audio tests passed: prepare/decode graph transport initial-seek-suppression context-loss sync-fault dispose");
 }
 
 function execute(backend: WebAudioSimulatorBackend, commands: readonly any[]): void {
   const batch = backend.preflight(commands);
-  assert.equal(batch.status, "accepted");
-  assert.equal(backend.commit((batch as any).value).status, "accepted");
+  assert.equal(batch.status, "accepted", JSON.stringify(batch));
+  const committed = backend.commit((batch as any).value);
+  assert.equal(committed.status, "accepted", JSON.stringify(committed));
 }
 
 class FakeAudioParam {

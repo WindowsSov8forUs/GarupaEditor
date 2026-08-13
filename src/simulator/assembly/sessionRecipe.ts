@@ -33,10 +33,20 @@ export interface SimulatorSessionRecipe {
   readonly request: SimulatorModuleLaunchRequest;
 }
 
+export type SimulatorRecipeEngineOutputMode =
+  | "immediate"
+  | "deferred-initial-seek";
+
+export interface SimulatorRecipeEngineBuild {
+  readonly engine: SimulatorEngine;
+  publishInitialSeekOutputs(): SimulatorAssemblyResult<void>;
+}
+
 export interface SimulatorRecipeEngineBuilder {
   createFreshEngine(
     recipe: SimulatorSessionRecipe,
-  ): Promise<SimulatorAssemblyResult<SimulatorEngine>>;
+    outputMode: SimulatorRecipeEngineOutputMode,
+  ): Promise<SimulatorAssemblyResult<SimulatorRecipeEngineBuild>>;
 }
 
 export function createSimulatorSessionRecipe(
@@ -44,11 +54,16 @@ export function createSimulatorSessionRecipe(
 ): SimulatorAssemblyResult<SimulatorSessionRecipe> {
   const copied = copyLaunchRequest(request);
   if (copied.status === "rejected") return copied;
-  if (copied.value.config.practice.startMilliseconds !== 0) {
+  const startMilliseconds = copied.value.config.practice.startMilliseconds;
+  if (
+    startMilliseconds !== 0 &&
+    (!copied.value.config.practice.enabled ||
+      !(startMilliseconds / 1000 < copied.value.chartData.bgm.durationSeconds))
+  ) {
     return rejected(
       "evidence-required",
-      "simulator.composition.nonzero-initial-practice-seek",
-      "Initial non-zero practice seek remains blocked before engine-builder invocation because the 10.1.3 MoveTime investigation has no committed per-claim 10.1.4 equivalence and pre-roll oracle.",
+      "simulator.composition.initial-practice-seek-out-of-range",
+      "IPS-P01 accepts a non-zero explicit millisecond target only for enabled practice and strictly inside the explicit chart BGM duration; the recipe never clamps or repairs it.",
     );
   }
   return accepted(Object.freeze({ schemaVersion: 1 as const, request: copied.value }));
@@ -62,9 +77,13 @@ export class RecipeOwnedSessionFactory implements SimulatorOwnedSessionFactory {
   ): Promise<SimulatorAssemblyResult<SimulatorOwnedSession>> {
     const recipe = createSimulatorSessionRecipe(request);
     if (recipe.status === "rejected") return recipe;
+    const targetMilliseconds = recipe.value.request.config.practice.startMilliseconds;
     let initial;
     try {
-      initial = await this.builder.createFreshEngine(recipe.value);
+      initial = await this.builder.createFreshEngine(
+        recipe.value,
+        targetMilliseconds === 0 ? "immediate" : "deferred-initial-seek",
+      );
     } catch {
       return rejected(
         "launch-failed",
@@ -73,17 +92,29 @@ export class RecipeOwnedSessionFactory implements SimulatorOwnedSessionFactory {
       );
     }
     if (initial.status === "rejected") return initial;
-    const replay = createPortableReplaySimulatorEngine(initial.value, {
+    const replay = createPortableReplaySimulatorEngine(initial.value.engine, {
       createFreshEngine: async () => {
-        const fresh = await this.builder.createFreshEngine(recipe.value);
+        const fresh = await this.builder.createFreshEngine(recipe.value, "immediate");
         return fresh.status === "accepted"
-          ? ok(fresh.value)
+          ? ok(fresh.value.engine)
           : evidenceRequired(fresh.failure.capability, [], fresh.failure.boundary);
       },
     });
     if (replay.status !== "ok") {
-      initial.value.dispose();
+      initial.value.engine.dispose();
       return fromEngineFailure(replay);
+    }
+    if (targetMilliseconds !== 0) {
+      const reconstructed = preRollInitialPracticeSeek(replay.value, targetMilliseconds);
+      if (reconstructed.status !== "ok") {
+        replay.value.dispose();
+        return fromEngineFailure(reconstructed);
+      }
+      const published = initial.value.publishInitialSeekOutputs();
+      if (published.status === "rejected") {
+        replay.value.dispose();
+        return published;
+      }
     }
     return accepted(new RecipeOwnedSession(replay.value));
   }
@@ -318,6 +349,62 @@ function copyLaunchRequest(
       audio: Object.freeze({ ...request.config.audio }),
     }),
   }));
+}
+
+const INITIAL_SEEK_MAX_DELTA_SECONDS = Math.fround(0.01666666753590107);
+
+export function preRollInitialPracticeSeek(
+  engine: SimulatorEngine,
+  targetMilliseconds: number,
+): SimulatorResult<void> {
+  if (!Number.isSafeInteger(targetMilliseconds) || targetMilliseconds <= 0) {
+    return evidenceRequired(
+      "simulator.recipe.invalid-initial-seek-target",
+      ["IPS-P01", "IPS-P02"],
+      "The non-zero pre-roll owner accepts one positive safe-integer millisecond target already validated strictly inside the explicit BGM duration.",
+    );
+  }
+  const targetSeconds = Math.fround(targetMilliseconds / 1000);
+  if (!Number.isFinite(targetSeconds) || targetSeconds <= 0) {
+    return evidenceRequired(
+      "simulator.recipe.initial-seek-target-float32-overflow",
+      ["IPS-P01", "IPS-P02"],
+      "The explicit millisecond target must have one finite positive Float32 seconds representation; no alternate precision route is available.",
+    );
+  }
+  let currentSeconds = Math.fround(0);
+  while (currentSeconds < targetSeconds) {
+    const remaining = Math.fround(targetSeconds - currentSeconds);
+    const deltaTimeSeconds = Math.fround(Math.min(
+      remaining,
+      INITIAL_SEEK_MAX_DELTA_SECONDS,
+    ));
+    if (!(deltaTimeSeconds > 0) || deltaTimeSeconds > INITIAL_SEEK_MAX_DELTA_SECONDS) {
+      return evidenceRequired(
+        "simulator.recipe.initial-seek-cadence-did-not-converge",
+        ["IPS-F02", "IPS-P02"],
+        "Initial practice reconstruction must converge through positive Float32 deltas no larger than 0x3C888889 and never jumps or clamps the clock.",
+      );
+    }
+    const stepped = engine.step(deltaTimeSeconds);
+    if (stepped.status !== "ok") return stepped;
+    const nextSeconds = Math.fround(currentSeconds + deltaTimeSeconds);
+    if (!(nextSeconds > currentSeconds)) {
+      return evidenceRequired(
+        "simulator.recipe.initial-seek-float32-progress-stalled",
+        ["IPS-F02", "IPS-P02"],
+        "Every bounded pre-roll step must advance the Float32 reconstruction cursor; stalled precision is not repaired with a direct clock mutation.",
+      );
+    }
+    currentSeconds = nextSeconds;
+  }
+  return Object.is(currentSeconds, targetSeconds)
+    ? ok(undefined)
+    : evidenceRequired(
+        "simulator.recipe.initial-seek-final-remainder-mismatch",
+        ["IPS-P02"],
+        "The exact final Float32 remainder must land on the requested target representation without overshoot or clamp.",
+      );
 }
 
 function renderingFidelityFromSnapshot(

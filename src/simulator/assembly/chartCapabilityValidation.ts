@@ -14,9 +14,9 @@ export function validateConstructedChartCapabilities(
   const notes = chart.noteBatches.flatMap((batch) => batch.informationList);
   if (notes.some(noteTreeUsesUnsupportedButton07)) {
     return rejected(
-      "evidence-required",
-      "simulator.composition.unsupported-button-07",
-      "The committed 10.1.4 scene contract has no Button_07_BMS_1P_07 mapping; the chart is rejected before static-resource selection or backend construction.",
+      "launch-failed",
+      "simulator.composition.impossible-button-07-invariant",
+      "Current legal 10.1.4 BMS construction cannot produce enum value 7, and the original scene owns only full ButtonType 0..6. A post-construction value-7 injection is an internal graph invariant violation, not an open eighth-lane capability.",
     );
   }
   return accepted(undefined);

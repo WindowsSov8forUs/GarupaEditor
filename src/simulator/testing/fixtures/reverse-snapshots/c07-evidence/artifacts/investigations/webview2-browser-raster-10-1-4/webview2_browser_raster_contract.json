@@ -1,0 +1,380 @@
+{
+  "schemaVersion": 1,
+  "status": "confirmed-current-webview2-browser-decode-glyph-pixi-raster-bounded",
+  "captureDate": "2026-08-14",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "versionName": "10.1.4",
+    "versionCode": 230,
+    "abi": "arm64-v8a"
+  },
+  "hostScope": {
+    "os": "Windows 10.0.26200.9168",
+    "architecture": "x86_64",
+    "webView2Runtime": "151.0.4129.78",
+    "chromium": "151.0.7922.109",
+    "devicePixelRatio": 1.5,
+    "pixi": "8.17.1",
+    "renderer": "webgl",
+    "webgl": {
+      "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+      "shadingLanguageVersion": "WebGL GLSL ES 3.00 (OpenGL ES GLSL ES 3.0 Chromium)",
+      "vendor": "WebKit",
+      "renderer": "WebKit WebGL",
+      "unmaskedVendor": "Google Inc. (NVIDIA)",
+      "unmaskedRenderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 5060 Laptop GPU (0x00002D19) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+    }
+  },
+  "packageSources": [
+    {
+      "path": "harness/Cargo.toml",
+      "bytes": 189,
+      "sha256": "065A44414B66A445B0C2F327FB85E233B8D522CC41F1881BA92A0A326DAD62A0"
+    },
+    {
+      "path": "harness/Cargo.lock",
+      "bytes": 65510,
+      "sha256": "1877D69B2A417AF61265C1E02502D1292E23FD0CB345D9E779BE9F749F8FF26B"
+    },
+    {
+      "path": "harness/index.html",
+      "bytes": 677,
+      "sha256": "B2675EE197959E8576306E475C9B8B4C93B8419955DEF5142C2409785D5E1C45"
+    },
+    {
+      "path": "harness/harness.js",
+      "bytes": 10986,
+      "sha256": "84AEEC47B0BCA46ECD20D0E95B0B6183E0E932E82FEAB5B680B4EA5A4DE76192"
+    },
+    {
+      "path": "harness/src/main.rs",
+      "bytes": 4687,
+      "sha256": "86BC03E8ADFAC98EA8439B1DD28663E086F0E9336D186986E5D22BC735C2C038"
+    },
+    {
+      "path": "inputs/pixi-8.17.1.min.js",
+      "bytes": 787286,
+      "sha256": "BC95AF4589C41ED0F3B7BFE288FAB0D56B278A7122217EEEC2EB22E3FC15E186"
+    },
+    {
+      "path": "runtime/capture-1.json",
+      "bytes": 298650,
+      "sha256": "B5DF0E093C756CF7A33B464E2531899BE65467EAA1B137369EF839EEFD8DD3C6"
+    },
+    {
+      "path": "runtime/capture-2.json",
+      "bytes": 298650,
+      "sha256": "B5DF0E093C756CF7A33B464E2531899BE65467EAA1B137369EF839EEFD8DD3C6"
+    },
+    {
+      "path": "runtime/capture-3.json",
+      "bytes": 298650,
+      "sha256": "B5DF0E093C756CF7A33B464E2531899BE65467EAA1B137369EF839EEFD8DD3C6"
+    }
+  ],
+  "committedReverseInputs": [
+    {
+      "path": "artifacts/investigations/score-hud-rank-gauge-10-1-4/portable-assets/rhythm-game-ui.png",
+      "bytes": 641969,
+      "sha256": "7CFEC4DABC83BC20E79E21D6AEB13CD9FA77ABE499E5E088A60C41014B96F6B6"
+    },
+    {
+      "path": "artifacts/investigations/score-hud-rank-gauge-10-1-4/portable-assets/rank-label-font.ttf",
+      "bytes": 4304904,
+      "sha256": "949356BBFEA78FB5BC3BA1610E1C64235FCCB9FD9A6F166A996715706FBFCE56"
+    }
+  ],
+  "captureFiles": [
+    {
+      "path": "runtime/capture-1.json",
+      "bytes": 298650,
+      "sha256": "B5DF0E093C756CF7A33B464E2531899BE65467EAA1B137369EF839EEFD8DD3C6"
+    },
+    {
+      "path": "runtime/capture-2.json",
+      "bytes": 298650,
+      "sha256": "B5DF0E093C756CF7A33B464E2531899BE65467EAA1B137369EF839EEFD8DD3C6"
+    },
+    {
+      "path": "runtime/capture-3.json",
+      "bytes": 298650,
+      "sha256": "B5DF0E093C756CF7A33B464E2531899BE65467EAA1B137369EF839EEFD8DD3C6"
+    }
+  ],
+  "repeatability": {
+    "runs": 3,
+    "byteIdentical": true,
+    "captureSha256": "B5DF0E093C756CF7A33B464E2531899BE65467EAA1B137369EF839EEFD8DD3C6"
+  },
+  "observation": {
+    "runtime": {
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36 Edg/151.0.0.0",
+      "userAgentDataBrands": [
+        {
+          "brand": "Chromium",
+          "version": "151"
+        },
+        {
+          "brand": "Not=A?Brand",
+          "version": "99"
+        },
+        {
+          "brand": "Microsoft Edge WebView2",
+          "version": "151"
+        },
+        {
+          "brand": "Microsoft Edge",
+          "version": "151"
+        }
+      ],
+      "highEntropyUserAgent": {
+        "architecture": "x86",
+        "bitness": "64",
+        "brands": [
+          {
+            "brand": "Chromium",
+            "version": "151"
+          },
+          {
+            "brand": "Not=A?Brand",
+            "version": "99"
+          },
+          {
+            "brand": "Microsoft Edge WebView2",
+            "version": "151"
+          },
+          {
+            "brand": "Microsoft Edge",
+            "version": "151"
+          }
+        ],
+        "fullVersionList": [
+          {
+            "brand": "Chromium",
+            "version": "151.0.7922.109"
+          },
+          {
+            "brand": "Not=A?Brand",
+            "version": "99.0.0.0"
+          },
+          {
+            "brand": "Microsoft Edge WebView2",
+            "version": "151.0.4129.78"
+          },
+          {
+            "brand": "Microsoft Edge",
+            "version": "151.0.4129.78"
+          }
+        ],
+        "mobile": false,
+        "platform": "Windows",
+        "platformVersion": "19.0.0"
+      },
+      "platform": "Win32",
+      "language": "zh-CN",
+      "devicePixelRatio": 1.5,
+      "locationOrigin": "http://garupa.localhost",
+      "pixiVersion": "8.17.1",
+      "rendererName": "webgl",
+      "rendererType": 1,
+      "webgl": {
+        "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+        "shadingLanguageVersion": "WebGL GLSL ES 3.00 (OpenGL ES GLSL ES 3.0 Chromium)",
+        "vendor": "WebKit",
+        "renderer": "WebKit WebGL",
+        "unmaskedVendor": "Google Inc. (NVIDIA)",
+        "unmaskedRenderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 5060 Laptop GPU (0x00002D19) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+      }
+    },
+    "isolation": {
+      "csp": "default-src 'none'; script-src 'self' 'unsafe-eval'; connect-src 'self'; img-src 'self' blob:; font-src 'self' blob:; style-src 'unsafe-inline'; object-src 'none'; frame-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'",
+      "resourceUrls": [
+        "http://garupa.localhost/favicon.ico",
+        "http://garupa.localhost/font.ttf",
+        "http://garupa.localhost/harness.js",
+        "http://garupa.localhost/pixi.js",
+        "http://garupa.localhost/pixi.js",
+        "http://garupa.localhost/texture.png"
+      ],
+      "foreignResourceUrls": [],
+      "fetchXmlHttpRequestWebSocketFallbackUsed": false
+    },
+    "inputs": {
+      "sha256": {
+        "pixiJs": "bc95af4589c41ed0f3b7bfe288fab0d56b278a7122217eeec2eb22e3fc15e186",
+        "png": "7cfec4dabc83bc20e79e21d6aeb13cd9fa77abe499e5e088a60c41014b96f6b6",
+        "font": "949356bbfea78fb5bc3ba1610e1c64235fccb9fd9a6f166a996715706fbfce56"
+      },
+      "byteLength": {
+        "pixiJs": 787286,
+        "png": 641969,
+        "font": 4304904
+      },
+      "pngDimensions": [
+        1024,
+        1024
+      ],
+      "fontFamily": "GarupaScoreRank-949356bbfea78fb5"
+    },
+    "browserDecode": {
+      "fontFaceStatus": "loaded",
+      "documentFontsCheck": true,
+      "fallbackMetrics": {
+        "width": 151.2952880859375,
+        "actualBoundingBoxLeft": -1,
+        "actualBoundingBoxRight": 150.53529357910156,
+        "actualBoundingBoxAscent": 24,
+        "actualBoundingBoxDescent": 1
+      },
+      "loadedMetrics": {
+        "width": 204.90625,
+        "actualBoundingBoxLeft": -1,
+        "actualBoundingBoxRight": 204.625,
+        "actualBoundingBoxAscent": 25,
+        "actualBoundingBoxDescent": 0
+      },
+      "createImageBitmapOptions": {
+        "imageOrientation": "none",
+        "premultiplyAlpha": "none",
+        "colorSpaceConversion": "none"
+      },
+      "textureSourceResourceType": "ImageBitmap",
+      "textureDimensions": [
+        1024,
+        1024
+      ]
+    },
+    "raster": {
+      "width": 128,
+      "height": 96,
+      "pngOnly": {
+        "sha256": "9c81b7baa91f83a561fc17610f007eff0dc4dbca9d30df0e1acffae3c4d981f0",
+        "stats": {
+          "nonTransparentPixels": 7874,
+          "opaquePixels": 2768,
+          "distinctRgba": 3587,
+          "alphaBounds": [
+            0,
+            9,
+            127,
+            95
+          ]
+        }
+      },
+      "fontOnly": {
+        "sha256": "6dbafeb76081c82cdff84d341e554f7777fb8fd6242ec61e871ae54155225418",
+        "stats": {
+          "nonTransparentPixels": 2208,
+          "opaquePixels": 1104,
+          "distinctRgba": 540,
+          "alphaBounds": [
+            2,
+            33,
+            127,
+            55
+          ]
+        }
+      },
+      "composite": {
+        "sha256": "52d111e5ef852aa5d78a3519793ea9f2e3ff63cb269c8aa214b903b4e7d89619",
+        "stats": {
+          "nonTransparentPixels": 9528,
+          "opaquePixels": 3517,
+          "distinctRgba": 3952,
+          "alphaBounds": [
+            0,
+            9,
+            127,
+            95
+          ]
+        }
+      }
+    },
+    "ownershipBeforeDestroy": {
+      "bitmapDestroyEvent": false
+    },
+    "ownershipAfterDestroy": {
+      "bitmapDestroyEvent": true
+    }
+  },
+  "currentFacts": [
+    {
+      "id": "WBR-F01",
+      "fact": "The isolated harness executed in Microsoft Edge WebView2 151.0.4129.78 and Chromium 151.0.7922.109; the full versions came from User-Agent Client Hints inside that WebView2 instance."
+    },
+    {
+      "id": "WBR-F02",
+      "fact": "A deny-by-default CSP and the garupa custom-protocol origin loaded only the pinned harness, Pixi bundle, PNG and TTF; foreignResourceUrls is empty and no URL/Image/network fallback exists in the decode route."
+    },
+    {
+      "id": "WBR-F03",
+      "fact": "The browser hashed Pixi 8.17.1, rhythm-game-ui.png and rank-label-font.ttf before use; hashes and byte lengths match the committed inputs."
+    },
+    {
+      "id": "WBR-F04",
+      "fact": "A real FontFace loaded from owned TTF bytes, was added to document.fonts and passed document.fonts.check; its SS 864000 Canvas2D metrics differ from the deliberately absent-family fallback."
+    },
+    {
+      "id": "WBR-F05",
+      "fact": "A real createImageBitmap call with imageOrientation/premultiplyAlpha/colorSpaceConversion all set to none decoded the 1024x1024 PNG, and Pixi Texture consumed an ImageBitmap resource with matching dimensions."
+    },
+    {
+      "id": "WBR-F06",
+      "fact": "Actual Pixi WebGL extraction of the PNG-backed Sprite produced the recorded non-empty 128x96 RGBA digest."
+    },
+    {
+      "id": "WBR-F07",
+      "fact": "Actual Pixi WebGL extraction of Text using the loaded hash-derived font family produced the recorded non-empty 128x96 glyph RGBA digest."
+    },
+    {
+      "id": "WBR-F08",
+      "fact": "The actual Pixi PNG-plus-font composite produced a third non-empty RGBA digest distinct from PNG-only and font-only output."
+    },
+    {
+      "id": "WBR-F09",
+      "fact": "Destroying the Pixi TextureSource triggered its registered owner callback and closed the ImageBitmap; FontFace cleanup removed the loaded face."
+    },
+    {
+      "id": "WBR-F10",
+      "fact": "Three fresh incognito WebView2 executions produced byte-identical raw capture JSON, including metrics, raster bytes, digests and runtime identity."
+    }
+  ],
+  "portablePolicies": [
+    {
+      "id": "WBR-P01",
+      "policy": "The current browser texture decoder route may consume hash-validated PNG and TTF bytes through createImageBitmap and FontFace/document.fonts, then pass the resulting ImageBitmap Texture and loaded family to actual Pixi rendering."
+    },
+    {
+      "id": "WBR-P02",
+      "policy": "Missing browser APIs, FontFace load failure, PNG decode failure, dimension mismatch or Pixi renderer failure must remain structured evidence-required failures; URL, Image element, network and system-font fallback remain forbidden."
+    },
+    {
+      "id": "WBR-P03",
+      "policy": "The exact glyph metrics and RGBA digests are a bounded WebView2 151.0.4129.78 / Pixi 8.17.1 / ANGLE NVIDIA D3D11 observation, not a universal digest for other runtimes, scale factors, GPUs or drivers."
+    },
+    {
+      "id": "WBR-P04",
+      "policy": "This closes the real current WebView2 browser-decode/glyph/Pixi-raster functional gate only; it does not claim original Unity framebuffer parity, Android-device GPU parity, physical audio parity or main-program integration."
+    }
+  ],
+  "productionBoundary": {
+    "realWebView2PngDecodeObserved": true,
+    "realWebView2FontFaceObserved": true,
+    "realWebView2GlyphRasterObserved": true,
+    "realWebView2PixiRasterObserved": true,
+    "syntheticTextureSourceUsed": false,
+    "urlOrImageFallbackAllowed": false,
+    "networkFallbackAllowed": false,
+    "systemFontFallbackAllowed": false,
+    "originalUnityFramebufferExactClaimed": false,
+    "fixedAndroidDeviceExactClaimed": false,
+    "physicalAudioExactClaimed": false,
+    "mainProgramIntegrationAuthorized": false
+  },
+  "functionalBlockers": [],
+  "remainingExactGaps": [
+    "Original Unity framebuffer and WebView2/Pixi framebuffer equivalence are not established.",
+    "Other WebView2/Chromium/Pixi/GPU/driver/scale-factor combinations do not inherit the exact captured RGBA digests.",
+    "Android fixed-device cadence, framebuffer and physical audio remain separate C06 gates."
+  ]
+}

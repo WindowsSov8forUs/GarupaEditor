@@ -32,6 +32,7 @@ import {
 } from "../public/failures";
 import type {
   SimulatorModuleCleanupFailure,
+  SimulatorModuleFailure,
   SimulatorModuleLaunchRequest,
 } from "../public/contracts";
 import {
@@ -52,7 +53,9 @@ import { validateConstructedChartCapabilities } from "../assembly/chartCapabilit
 import { assembleSimulatorResources } from "../assembly/resourceAssembly";
 import {
   RecipeOwnedSessionFactory,
+  type SimulatorRecipeEngineBuild,
   type SimulatorRecipeEngineBuilder,
+  type SimulatorRecipeEngineOutputMode,
   type SimulatorSessionRecipe,
 } from "../assembly/sessionRecipe";
 
@@ -117,7 +120,15 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
 
   async createFreshEngine(
     recipe: SimulatorSessionRecipe,
-  ): Promise<SimulatorAssemblyResult<SimulatorEngine>> {
+    outputMode: SimulatorRecipeEngineOutputMode,
+  ): Promise<SimulatorAssemblyResult<SimulatorRecipeEngineBuild>> {
+    if (outputMode !== "immediate" && outputMode !== "deferred-initial-seek") {
+      return rejected(
+        "evidence-required",
+        "simulator.composition.invalid-engine-output-mode",
+        "Fresh engine construction requires an explicit immediate or IPS-P02 deferred-initial-seek output policy and never infers publication behavior.",
+      );
+    }
     if (isTotalRevalidationOpen()) {
       return rejected(
         "evidence-required",
@@ -135,7 +146,15 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
     if (score.status === "rejected") return score;
     const selection = selectSimulatorStaticResources(chart.value);
     const renderer = new PixiRendererBackend(new BrowserPixiTextureDecoder());
-    const audio = new WebAudioSimulatorBackend(this.platform.audioContext);
+    const audio = new WebAudioSimulatorBackend(
+      this.platform.audioContext,
+      outputMode === "deferred-initial-seek"
+        ? Object.freeze({
+            suppressPhysicalOutput: true as const,
+            seekMilliseconds: recipe.request.config.practice.startMilliseconds,
+          })
+        : null,
+    );
     const particles = new DeterministicSimulatorParticleBackend();
     const particleRenderer = new PixiParticleRendererBackend(
       new BrowserPixiParticleTextureDecoder(),
@@ -223,7 +242,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
       audio: {
         sessionId,
         bgmCue: recipe.request.chartData.bgm.cue,
-        seekMilliseconds: recipe.request.config.practice.startMilliseconds,
+        seekMilliseconds: 0,
         masterGainBits: gains.value.master,
         bgmGainBits: gains.value.bgm,
         seGainBits: gains.value.se,
@@ -233,16 +252,52 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
     if (engine.status !== "ok") {
       return rejectedWithCleanup(fromEvidence(engine), disposeAssembly(assembly.value));
     }
-    const mounted = this.platform.graphics.mount(
-      sessionId,
-      renderer.stage,
-      particleRenderer.stage,
-    );
-    if (mounted.status === "rejected") {
-      const cleanup = simulatorCleanupFailureFromResult("engine-after-mount-failure", engine.value.dispose());
-      return rejectedWithCleanup(mounted, cleanup === null ? [] : [cleanup]);
+    let initialMount: SimulatorGraphicsMount | null = null;
+    if (outputMode === "immediate") {
+      const mounted = this.platform.graphics.mount(
+        sessionId,
+        renderer.stage,
+        particleRenderer.stage,
+      );
+      if (mounted.status === "rejected") {
+        const cleanup = simulatorCleanupFailureFromResult("engine-after-mount-failure", engine.value.dispose());
+        return rejectedWithCleanup(mounted, cleanup === null ? [] : [cleanup]);
+      }
+      initialMount = mounted.value;
     }
-    return accepted(new MountedSimulatorEngine(engine.value, mounted.value));
+    const mountedEngine = new MountedSimulatorEngine(engine.value, initialMount);
+    return accepted(Object.freeze({
+      engine: mountedEngine,
+      publishInitialSeekOutputs: (): SimulatorAssemblyResult<void> => {
+        if (outputMode !== "deferred-initial-seek") return accepted(undefined);
+        const mounted = this.platform.graphics.mount(
+          sessionId,
+          renderer.stage,
+          particleRenderer.stage,
+        );
+        if (mounted.status === "rejected") return mounted;
+        const attached = mountedEngine.attachMount(mounted.value);
+        if (attached.status === "rejected") {
+          try {
+            mounted.value.dispose();
+            return attached;
+          } catch {
+            return rejectedWithCleanup(attached, [simulatorCleanupFailure(
+              "simulator.composition.rejected-initial-seek-mount-dispose-threw",
+              "A rejected duplicate final-state mount also threw while releasing its unowned graphics capability.",
+            )]);
+          }
+        }
+        const published = audio.publishInitialSeekOutput();
+        return published.status === "accepted"
+          ? accepted(undefined)
+          : rejected(
+              mapCompositionAudioFailure(published.status),
+              published.failure.capability,
+              published.failure.boundary,
+            );
+      },
+    }));
   }
 
   private sessionId(): string {
@@ -252,11 +307,26 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
 
 class MountedSimulatorEngine implements SimulatorEngine {
   private disposed = false;
+  private mount: SimulatorGraphicsMount | null;
 
   constructor(
     private readonly engine: SimulatorEngine,
-    private readonly mount: SimulatorGraphicsMount,
-  ) {}
+    mount: SimulatorGraphicsMount | null,
+  ) {
+    this.mount = mount;
+  }
+
+  attachMount(mount: SimulatorGraphicsMount): SimulatorAssemblyResult<void> {
+    if (this.disposed || this.mount !== null) {
+      return rejected(
+        "launch-failed",
+        "simulator.composition.initial-seek-mount-invariant",
+        "The reconstructed final visual state acquires exactly one mount before session publication and never replaces or duplicates it.",
+      );
+    }
+    this.mount = mount;
+    return accepted(undefined);
+  }
 
   initialize(): SimulatorResult<void> { return this.engine.initialize(); }
   step(deltaTimeSeconds: number, inputFrame?: ManualInputFrame): SimulatorResult<void> {
@@ -282,8 +352,10 @@ class MountedSimulatorEngine implements SimulatorEngine {
     if (this.disposed) return this.engine.dispose();
     this.disposed = true;
     const result = this.engine.dispose();
+    const mount = this.mount;
+    this.mount = null;
     try {
-      this.mount.dispose();
+      mount?.dispose();
     } catch {
       return result.status === "ok"
         ? evidenceRequired(
@@ -364,6 +436,18 @@ function validatePlatform(
     );
   }
   return accepted(undefined);
+}
+
+function mapCompositionAudioFailure(
+  code: "evidence-required" | "audio-resource-unavailable" |
+    "audio-resource-integrity" | "audio-resource-decode" |
+    "audio-context-unavailable" | "audio-backend-fault" | "terminal-disposed",
+): SimulatorModuleFailure["code"] {
+  if (code === "audio-resource-unavailable") return "resource-unavailable";
+  if (code === "audio-resource-integrity") return "resource-integrity";
+  if (code === "audio-resource-decode") return "resource-decode";
+  if (code === "audio-context-unavailable") return "platform-unavailable";
+  return code === "evidence-required" ? "evidence-required" : "launch-failed";
 }
 
 function disposeAssembly(assembly: {

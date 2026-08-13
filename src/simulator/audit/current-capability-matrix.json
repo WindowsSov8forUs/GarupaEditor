@@ -38,7 +38,7 @@
     },
     {
       "id": "CAP-RUNTIME-01",
-      "capability": "zero-seek manual and Auto Live scheduling, judgement, score/life state",
+      "capability": "manual and Auto Live scheduling, judgement, score/life state",
       "productionPath": "engine initialize -> scheduler/input -> frame owners",
       "status": "closed-portable",
       "reverseEvidence": [
@@ -56,26 +56,31 @@
     {
       "id": "CAP-PRACTICE-01",
       "capability": "initial non-zero practice seek",
-      "productionPath": "public request -> recipe builder",
-      "status": "open-evidence-required",
+      "productionPath": "public request -> fresh zero-state engine -> bounded Float32 whole-engine pre-roll -> one BGM/final-visual publication",
+      "status": "closed-portable",
       "reverseEvidence": [
-        "move-time-state-restore is 10.1.3-only and has no committed per-claim 10.1.4 equivalence closure"
+        "initial-practice-seek-state-restore-10-1-4@cbd04239"
       ],
-      "dynamicRequirement": "whole-engine pre-publication pre-roll oracle",
-      "failureCapability": "simulator.composition.nonzero-initial-practice-seek",
-      "failureBoundary": "before static-resource selection and backend preparation"
+      "dynamicRequirement": "IPS-P01-P05 cadence matrix, output suppression and one-shot publication oracle",
+      "exclusions": [
+        "original initial millisecond UI feature",
+        "physical audio exact",
+        "GPU framebuffer exact"
+      ]
     },
     {
       "id": "CAP-SCENE-07",
       "capability": "Button_07_BMS_1P_07 scene/manual/render/particle mapping",
-      "productionPath": "constructed chart -> scene capability preflight",
-      "status": "open-evidence-required",
+      "productionPath": "legal BMS construction cannot produce value 7; post-construction injection is an internal invariant failure",
+      "status": "closed-original-unreachable",
       "reverseEvidence": [
-        "autonomous-simulator-scene-layout-10-1-4 explicitly marks Button 7 unsupported"
+        "button-07-original-unreachable-10-1-4@53e3f8f8"
       ],
-      "dynamicRequirement": "current scene mapping plus cross-owner oracle",
-      "failureCapability": "simulator.composition.unsupported-button-07",
-      "failureBoundary": "before static-resource reads and backend preparation"
+      "dynamicRequirement": "ordinary/multi-range BMS tables, scene owner set and GetPlayButton switch verifier",
+      "exclusions": [
+        "invented eighth lane",
+        "synthetic position or particle anchor"
+      ]
     },
     {
       "id": "CAP-RENDER-ORDINARY-01",
@@ -89,27 +94,30 @@
       ],
       "dynamicRequirement": "current actual-Pixi raw observation including 20-row Score boundary matrix, persistent SS owner and persistent indicator panel mask consumer",
       "closedSubgates": [
-        "score-high-rank-panel-indicator-clip-contract"
+        "score-high-rank-panel-indicator-clip-contract",
+        "WebView2 151.0.4129.78 PNG/FontFace/glyph/Pixi raster"
       ],
       "openSubgates": [
-        "WebView2 decode/glyph/raster",
         "framebuffer/device exact"
       ],
       "exclusions": [
-        "browser PNG/FontFace decode unless browser harness executes",
+        "cross-runtime/GPU exact raster digest",
         "framebuffer/device exact"
       ]
     },
     {
       "id": "CAP-RENDER-BROWSER-01",
       "capability": "browser createImageBitmap and FontFace decode integration",
-      "productionPath": "BrowserPixiTextureDecoder",
-      "status": "open-evidence-required",
+      "productionPath": "BrowserPixiTextureDecoder -> FontFace/document.fonts + createImageBitmap -> Pixi WebGL",
+      "status": "closed-portable",
       "reverseEvidence": [
-        "portable resource hashes and metadata only"
+        "webview2-browser-raster-10-1-4@a87cd3a7"
       ],
-      "dynamicRequirement": "real browser decode harness",
-      "failureBoundary": "decoder rejects when browser capabilities are unavailable"
+      "dynamicRequirement": "three byte-identical real WebView2 captures plus production decoder operation/fallback scan",
+      "exclusions": [
+        "cross-runtime/GPU exact raster digest",
+        "original Unity framebuffer parity"
+      ]
     },
     {
       "id": "CAP-HAB-01",
@@ -185,12 +193,15 @@
       "id": "CAP-DEVICE-01",
       "capability": "fixed-device cadence, GPU framebuffer and physical audio parity",
       "productionPath": "outside portable gate",
-      "status": "open-device-exact",
+      "status": "open-objective-environment-blocked",
       "reverseEvidence": [
-        "device exact gate open-not-claimed-fixed-device-limit"
+        "fixed-device-exact-environment-disposition-10-1-4@0dd4d71c"
       ],
-      "dynamicRequirement": "locked device and physical observation",
-      "exclusions": []
+      "dynamicRequirement": "replacement >=119Hz/adaptive device or authorized same-device candidate plus calibrated optical/acoustic protocol",
+      "exclusions": [
+        "positive exact claim",
+        "reclassification of rejected AV traces"
+      ]
     },
     {
       "id": "CAP-STAGE9-01",

@@ -110,6 +110,8 @@ export type SimulatorCapabilityGateStatus =
   | "excluded"
   | "open-evidence-required"
   | "open-device-exact"
+  | "open-objective-environment-blocked"
+  | "closed-original-unreachable"
   | "unauthorized-stage-9";
 
 export interface SimulatorModuleCapabilitySummary {
@@ -118,10 +120,10 @@ export interface SimulatorModuleCapabilitySummary {
   readonly ordinaryCommandScene: "closed-portable";
   readonly habahiroCurrentExternalComplete: "closed-portable";
   readonly habahiroOriginalParity: "open-evidence-required";
-  readonly nonzeroInitialPracticeSeek: "open-evidence-required";
-  readonly button07SceneMapping: "open-evidence-required";
-  readonly browserDecodeRaster: "open-evidence-required";
-  readonly fixedDeviceExact: "open-device-exact";
+  readonly nonzeroInitialPracticeSeek: "closed-portable";
+  readonly button07SceneMapping: "closed-original-unreachable";
+  readonly browserDecodeRaster: "closed-portable";
+  readonly fixedDeviceExact: "open-objective-environment-blocked";
   readonly characterSkillFeverMultiplayer: "excluded";
   readonly mainProgramIntegration: "unauthorized-stage-9";
   readonly selectedRenderingGate: "closed-portable" | "open-evidence-required";

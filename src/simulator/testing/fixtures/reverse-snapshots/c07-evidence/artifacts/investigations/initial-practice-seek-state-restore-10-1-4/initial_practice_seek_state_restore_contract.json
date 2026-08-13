@@ -1,0 +1,349 @@
+{
+  "schemaVersion": 1,
+  "status": "confirmed-current-initial-practice-seek-portable-state-restore-policy",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "versionName": "10.1.4",
+    "versionCode": 230,
+    "abi": "arm64-v8a",
+    "unity": "2022.3.62f1"
+  },
+  "sources": {
+    "libil2cpp": {
+      "path": "samples/jp.co.craftegg.band/10.1.4_230/extracted/libil2cpp.so",
+      "bytes": 119816840,
+      "sha256": "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F"
+    },
+    "dump": {
+      "path": "static/il2cpp/dump-10.1.4_230/dump.cs",
+      "bytes": 53099861,
+      "sha256": "4AC4ACC5981D0010B3D6A69482C37C1175339458246BC4A5878CF30F694E884B"
+    },
+    "currentStaticContract": {
+      "path": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/score_life_state_static_contract.json",
+      "bytes": 1107943,
+      "sha256": "932AE569D6B2AD8620D1D8CECD44EB812B6AFDB16E18590140D7DA56998566C2"
+    },
+    "currentReturnTimeR1Oracle": {
+      "path": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/score_life_rehearsal_pause_return_time_oracle.json",
+      "bytes": 11546,
+      "sha256": "E1752870E8B2694728EBDF71A474EF2E846D8DD56D1C15AE27968350861347AC"
+    }
+  },
+  "methods": [
+    {
+      "evidenceId": "IPS-E01",
+      "owner": "InGameMoveTimeController",
+      "method": "moveTime",
+      "rva": "0x3300C5C",
+      "endRva": "0x3300D0C",
+      "codeBytes": 176,
+      "codeSha256": "636448E8355D2BE2DAFC9DE46EBE64BA4F942E444578DA0D2412BC18B2BBC56A",
+      "arm64": "arm64/03300c5c__InGameMoveTimeController__moveTime.arm64.tsv",
+      "arm64Bytes": 1663,
+      "arm64Sha256": "C5BD5061F808801C2BCECB6118CE4456E28A0871DB2ECC7FA20D6B10F343119D"
+    },
+    {
+      "evidenceId": "IPS-E02",
+      "owner": "InGameMoveTimeController",
+      "method": "advanceTime",
+      "rva": "0x3300D0C",
+      "endRva": "0x3300E08",
+      "codeBytes": 252,
+      "codeSha256": "EB6F2AD052EEF2C5638B62DA649D5AF3ADF1E30E901E7310358D58907EC28697",
+      "arm64": "arm64/03300d0c__InGameMoveTimeController__advanceTime.arm64.tsv",
+      "arm64Bytes": 2334,
+      "arm64Sha256": "995B5AE5358B1E21E522C2785200352789116BC13EC3F2BF5238E2DB2D055288"
+    },
+    {
+      "evidenceId": "IPS-E03",
+      "owner": "InGameMoveTimeController",
+      "method": "returnTime",
+      "rva": "0x3300E08",
+      "endRva": "0x3300F54",
+      "codeBytes": 332,
+      "codeSha256": "EAD4F298B6C0786E3AB93749666E97D76A954B7C92BC12D41B737B65D43416DA",
+      "arm64": "arm64/03300e08__InGameMoveTimeController__returnTime.arm64.tsv",
+      "arm64Bytes": 3030,
+      "arm64Sha256": "19751BE39397236EB4EA53491F1E3CEDF83A7FB609142C831385E227B4553729"
+    },
+    {
+      "evidenceId": "IPS-E04",
+      "owner": "InGameMoveTimeController_moveTimeToStartMusic",
+      "method": "MoveNext",
+      "rva": "0x330101C",
+      "endRva": "0x33013C8",
+      "codeBytes": 940,
+      "codeSha256": "7F8D0821BF7FE797F2CFD059AFFD1394A24DA45B032E0644A0B895186BE1CE35",
+      "arm64": "arm64/0330101c__InGameMoveTimeController_moveTimeToStartMusic__MoveNext.arm64.tsv",
+      "arm64Bytes": 8665,
+      "arm64Sha256": "F818D3123BA69704A59391ED7A77F3EFB6C5EE44C754F540474B20624C3D97CE"
+    },
+    {
+      "evidenceId": "IPS-E05",
+      "owner": "InGameManager",
+      "method": "onAdvanceTime",
+      "rva": "0x32FDB6C",
+      "endRva": "0x32FDBE4",
+      "codeBytes": 120,
+      "codeSha256": "9620D99BA14C9870911266B0B041152B55BA284C34CE8A811D588B203D2EEF4D",
+      "arm64": "arm64/032fdb6c__InGameManager__onAdvanceTime.arm64.tsv",
+      "arm64Bytes": 1165,
+      "arm64Sha256": "B28141C1CD7DDEDF377FF3FF3F4D57726757C252F1D5922F47D451921B06105D"
+    },
+    {
+      "evidenceId": "IPS-E06",
+      "owner": "InGameManager",
+      "method": "updatePlayState",
+      "rva": "0x32F8CF4",
+      "endRva": "0x32F92F4",
+      "codeBytes": 1536,
+      "codeSha256": "3DDB8261CBACD63095E756D38952D3254EA21636D5F43D1401A96EA299EED9F5",
+      "arm64": "arm64/032f8cf4__InGameManager__updatePlayState.arm64.tsv",
+      "arm64Bytes": 14201,
+      "arm64Sha256": "0D4589036A41D2555FE7E5DB1AF912AF03E5461B95382C6C501C3452D92D8FA3"
+    },
+    {
+      "evidenceId": "IPS-E07",
+      "owner": "InGameSnapshotData",
+      "method": "Snapshot",
+      "rva": "0x32F2DA0",
+      "endRva": "0x32F2E3C",
+      "codeBytes": 156,
+      "codeSha256": "91FE9D01AE0BE4BEACC8C642120DA9C8DD727EC2B32FFA968C77B63983B5257D",
+      "arm64": "arm64/032f2da0__InGameSnapshotData__Snapshot.arm64.tsv",
+      "arm64Bytes": 1524,
+      "arm64Sha256": "CA540B3F8A965E35930B6D97D537A6687AF676828BAC46B8F82DE3AB0D7EF8FB"
+    },
+    {
+      "evidenceId": "IPS-E08",
+      "owner": "InGameSnapshotController",
+      "method": "NeedSnapshot",
+      "rva": "0x3307130",
+      "endRva": "0x3307178",
+      "codeBytes": 72,
+      "codeSha256": "51B5BDE116D09176FEB0E3271BF4DAFEB8ABFAE86DA03129C6E4359B1B6925E6",
+      "arm64": "arm64/03307130__InGameSnapshotController__NeedSnapshot.arm64.tsv",
+      "arm64Bytes": 701,
+      "arm64Sha256": "2CA2B9E501FF1598BBBF1F92848CE4144F44F110428B9BBF45CEE8B9FA37621D"
+    },
+    {
+      "evidenceId": "IPS-E09",
+      "owner": "InGameSnapshotController",
+      "method": "Snapshot",
+      "rva": "0x3307178",
+      "endRva": "0x3307260",
+      "codeBytes": 232,
+      "codeSha256": "DE96728E6065251BA572ACB565B9B3A1DD6AA7C374927304EF47CFD6255CF96C",
+      "arm64": "arm64/03307178__InGameSnapshotController__Snapshot.arm64.tsv",
+      "arm64Bytes": 1987,
+      "arm64Sha256": "B702808A8ACAF909FA2CDFDC07CE577A1FB03F760CBA326FCA7C04DE522CC016"
+    },
+    {
+      "evidenceId": "IPS-E10",
+      "owner": "InGameSnapshotController",
+      "method": "GetSnapshot",
+      "rva": "0x3307260",
+      "endRva": "0x33072FC",
+      "codeBytes": 156,
+      "codeSha256": "41A63BE3F8E3B2083A1BA480BF4FA388AEF20ABFD9D148BDA24822F796964780",
+      "arm64": "arm64/03307260__InGameSnapshotController__GetSnapshot.arm64.tsv",
+      "arm64Bytes": 1305,
+      "arm64Sha256": "ECA089F4251366CC39434FA08E602D9FF898DBB98F95441AE5343443143BCE36"
+    },
+    {
+      "evidenceId": "IPS-E11",
+      "owner": "NoteManager",
+      "method": "ReturnTime",
+      "rva": "0x37756A8",
+      "endRva": "0x3775BA8",
+      "codeBytes": 1280,
+      "codeSha256": "8C28B24C44EC1C9C4719C62CBC6D5E9027D22F85ED42A1D16B5314F5C083F47D",
+      "arm64": "arm64/037756a8__NoteManager__ReturnTime.arm64.tsv",
+      "arm64Bytes": 11476,
+      "arm64Sha256": "F975868B632887E30CDF42599608D5FCCAAC4C3FB744868C6DE8F0409C1CA0F8"
+    },
+    {
+      "evidenceId": "IPS-E12",
+      "owner": "NoteManager",
+      "method": "resetAllNotes",
+      "rva": "0x3775D48",
+      "endRva": "0x3775FC4",
+      "codeBytes": 636,
+      "codeSha256": "43D3D651A6EBD42E7B5B8B2073425109F40C31E516534E063ED335F503FCFF9A",
+      "arm64": "arm64/03775d48__NoteManager__resetAllNotes.arm64.tsv",
+      "arm64Bytes": 5776,
+      "arm64Sha256": "438C3B52FDF1E63C7E2CC860A877B9F49185BEEFF7F695741269F5A890821895"
+    },
+    {
+      "evidenceId": "IPS-E13",
+      "owner": "NoteManager",
+      "method": "RefreshAfterMoveTime",
+      "rva": "0x3775FC4",
+      "endRva": "0x3776184",
+      "codeBytes": 448,
+      "codeSha256": "669B5513B293B191416A4C718A880FDAC4A590406FD45B16B1FB73B24646106C",
+      "arm64": "arm64/03775fc4__NoteManager__RefreshAfterMoveTime.arm64.tsv",
+      "arm64Bytes": 4161,
+      "arm64Sha256": "8A99FEB77AF17CADA87F4D6EAD38E69F49C211CBA4B05ABA94C435AD726BE533"
+    },
+    {
+      "evidenceId": "IPS-E14",
+      "owner": "CommandNoteManager",
+      "method": "ReturnTime",
+      "rva": "0x367CC44",
+      "endRva": "0x367CC60",
+      "codeBytes": 28,
+      "codeSha256": "B7E43E92240C813661CCFD835A01517AE6615A5720C1A31B99AC4F337D3847E3",
+      "arm64": "arm64/0367cc44__CommandNoteManager__ReturnTime.arm64.tsv",
+      "arm64Bytes": 261,
+      "arm64Sha256": "EADFC56B5E042364DB8211C4F9D722D824F8293C3FFBA8A1CD2696973B70F9A5"
+    }
+  ],
+  "currentFacts": [
+    {
+      "id": "IPS-F01",
+      "finding": "advanceTime enters GameState 14, hides Judgement and Combo, stops Music, invokes onAdvanceTime with the bounded target seconds, then starts moveTimeToStartMusic."
+    },
+    {
+      "id": "IPS-F02",
+      "finding": "onAdvanceTime computes target=floor(current InGameSec)+seconds and repeatedly calls updatePlayState with min(target-current, Float32 0.01666666753590107) until target is reached."
+    },
+    {
+      "id": "IPS-F03",
+      "finding": "Current 10.1.4 onAdvanceTime passes updatePlayState isDoubleUpdate=false; this corrects the old 10.1.3 investigation prose. GameState 14 and absent external touch still prevent live user input from becoming initial-seek history."
+    },
+    {
+      "id": "IPS-F04",
+      "finding": "updatePlayState advances the ordinary time, NoteManager, judgement/record, CommandNote, skill/stage/effect and display pipeline rather than mutating only chart/audio cursors."
+    },
+    {
+      "id": "IPS-F05",
+      "finding": "moveTimeToStartMusic resets transient display/effect owners, increments MoveTime count, loads Music at trunc(InGameSec*1000), refreshes NoteManager after MoveTime and enters state 15 before shared resume reaches state 16."
+    },
+    {
+      "id": "IPS-F06",
+      "finding": "Backward ReturnTime restores the compact eleven-field scheduling snapshot, resets Note and CommandNote owners, and reuses advanceTime with hasReturned=true for at most sixteen reconstructed seconds."
+    },
+    {
+      "id": "IPS-F07",
+      "finding": "The committed current R1 oracle observes ReturnTime(5), nested NoteManager/CommandNoteManager restoration and aggregate record restoration with a contiguous privacy-minimized trace."
+    }
+  ],
+  "snapshotFields": [
+    "RecordedSnapshot",
+    "InGameSec",
+    "NextBpm",
+    "CurrentBpm",
+    "BeforeBeatProgress",
+    "MusicBarProgress",
+    "MusicBeatProgress",
+    "NoteGroupIndex",
+    "CommandNoteGroupIndex",
+    "LauncherMusicBarProgress",
+    "LauncherMusicBeatProgress"
+  ],
+  "portablePolicies": [
+    {
+      "id": "IPS-P01",
+      "surface": "initial-target",
+      "disposition": "Accept one explicit non-negative startMilliseconds strictly inside the explicit chart BGM duration; reject out-of-range values without clamp. Zero retains the ordinary route.",
+      "notOriginalFact": "The original rehearsal UI advances by integer seconds and does not expose an initial millisecond launch parameter."
+    },
+    {
+      "id": "IPS-P02",
+      "surface": "whole-engine-pre-roll",
+      "disposition": "For a non-zero target, initialize one fresh engine at zero, suppress external input/output publication, and replay the ordinary whole-engine pipeline with Float32 deltas no larger than 0x3C888889 plus one exact final remainder to the requested millisecond target.",
+      "notOriginalFact": "The final fractional target generalizes the recovered current integer-second loop for the host's explicit millisecond contract."
+    },
+    {
+      "id": "IPS-P03",
+      "surface": "state-owners",
+      "disposition": "Pre-roll must consume chart/BPM cursors, Note/judgement, score/life/combo, command, chart-owned Skill appearance, render, particle random/owners and lifecycle through normal frame ordering; audio effects remain suppressed during reconstruction.",
+      "notOriginalFact": "No audio-only seek or direct chart-time mutation is permitted."
+    },
+    {
+      "id": "IPS-P04",
+      "surface": "audio-publication",
+      "disposition": "After state reconstruction, publish BGM once at the exact requested seekMilliseconds and expose only the reconstructed final render/particle state; pre-roll SE/BGM commands are not physically emitted.",
+      "notOriginalFact": "This is the portable equivalent of current StopMusic -> replay -> LoadMusic(trunc(InGameSec*1000)) -> resume."
+    },
+    {
+      "id": "IPS-P05",
+      "surface": "acceptance",
+      "disposition": "Compare the non-zero launch snapshot against an independent zero-start no-input continuous replay at the same target across clock, chart cursor, judgement, score/life, render, particle and audio command state; require fresh-session and cleanup isolation.",
+      "notOriginalFact": "Portable equality is state/command equality, not CRI device output or GPU framebuffer parity."
+    }
+  ],
+  "cadence": {
+    "maxDeltaBits": "3C888889",
+    "maxDeltaSeconds": 0.01666666753590107,
+    "oracleCases": [
+      {
+        "targetMilliseconds": 1,
+        "targetSecondsBits": "6F12833A",
+        "stepCount": 1,
+        "firstDeltaBits": "6F12833A",
+        "lastDeltaBits": "6F12833A",
+        "finalSecondsBits": "6F12833A",
+        "deltaBitsSha256": "0835A5C87BA00A93F8D84FB3BDF20866024A13FC710FC1225E3D67073543BBA0"
+      },
+      {
+        "targetMilliseconds": 999,
+        "targetSecondsBits": "77BE7F3F",
+        "stepCount": 60,
+        "firstDeltaBits": "8988883C",
+        "lastDeltaBits": "0058803C",
+        "finalSecondsBits": "77BE7F3F",
+        "deltaBitsSha256": "A6B1F5199E857A6A0A696926C36A6BBA87A83141F17A0BE27797D986B36E83CD"
+      },
+      {
+        "targetMilliseconds": 1000,
+        "targetSecondsBits": "0000803F",
+        "stepCount": 61,
+        "firstDeltaBits": "8988883C",
+        "lastDeltaBits": "0000A034",
+        "finalSecondsBits": "0000803F",
+        "deltaBitsSha256": "2F54487A37DECEF4EC79116634D20859713080E803CD63E7F79D61E3E814046B"
+      },
+      {
+        "targetMilliseconds": 5000,
+        "targetSecondsBits": "0000A040",
+        "stepCount": 300,
+        "firstDeltaBits": "8988883C",
+        "lastDeltaBits": "0074883C",
+        "finalSecondsBits": "0000A040",
+        "deltaBitsSha256": "EEEAB30CE1E99F144D6505A4CC53B8F584AB2DF59750EA19466DCC27E9A1CB85"
+      },
+      {
+        "targetMilliseconds": 16001,
+        "targetSecondsBits": "0C028041",
+        "stepCount": 961,
+        "firstDeltaBits": "8988883C",
+        "lastDeltaBits": "00808C3A",
+        "finalSecondsBits": "0C028041",
+        "deltaBitsSha256": "E49612AA043634E03D7039C362FFC721A1A6746B13D62797CFD74D0FB985A4A8"
+      },
+      {
+        "targetMilliseconds": 60000,
+        "targetSecondsBits": "00007042",
+        "stepCount": 3601,
+        "firstDeltaBits": "8988883C",
+        "lastDeltaBits": "0000433A",
+        "finalSecondsBits": "00007042",
+        "deltaBitsSha256": "5AEC1E7EA2947E0685737545708F2408FEE0E7B9F9A831780BD301EFE0003E09"
+      }
+    ]
+  },
+  "functionalBlockers": [],
+  "productionBoundary": {
+    "functionalRouteClosedPortable": true,
+    "originalInitialMillisecondFeatureClaimed": false,
+    "audioOnlySeekAllowed": false,
+    "directClockJumpAllowed": false,
+    "implicitClampAllowed": false,
+    "physicalAudioExactClaimed": false,
+    "gpuFramebufferExactClaimed": false,
+    "mainProgramIntegrationAuthorized": false
+  }
+}

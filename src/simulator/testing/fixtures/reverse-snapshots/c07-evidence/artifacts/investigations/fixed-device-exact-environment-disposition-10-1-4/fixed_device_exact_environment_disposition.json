@@ -1,0 +1,161 @@
+{
+  "schemaVersion": 1,
+  "status": "objective-environment-blockers-confirmed-exact-gate-remains-open-not-claimed",
+  "date": "2026-08-14",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "versionName": "10.1.4",
+    "versionCode": 230,
+    "abi": "arm64-v8a",
+    "deviceAlias": "device-particle-0001",
+    "fingerprint": "Android/lineage_gsi_arm64_gN/lineage_gsi_arm64:13/TQ3A.230901.001/eng.crossg.20240215.155026:userdebug/test-keys",
+    "model": "LineageOS GSI on ARM64",
+    "hardware": "mt6833"
+  },
+  "sources": {
+    "planCommit": "8698674a",
+    "packageFiles": [
+      {
+        "path": ".gitattributes",
+        "bytes": 128,
+        "sha256": "E65C4A3BB7E0E2B6AE6658E0F3C67B2AE2A4DBAD05D02882CA3DF5795B6B90FD"
+      },
+      {
+        "path": "README.md",
+        "bytes": 2121,
+        "sha256": "313BD566A06471DF46B004769110C72CF6F62C59E33C4CCA898E122F2ED009E7"
+      },
+      {
+        "path": "PLAN_SHA256SUMS",
+        "bytes": 107,
+        "sha256": "C495F81913258E809B569FDA70A7A8A52401E4F3F8461AE5104E88114FF3D506"
+      },
+      {
+        "path": "fixed_device_exact_environment_plan.json",
+        "bytes": 4745,
+        "sha256": "3F69503FF9094CF5AE5843C2ECF6F712DFB80DCDB80DC6855B311225A6F12DD1"
+      },
+      {
+        "path": "verify_fixed_device_exact_environment_plan.py",
+        "bytes": 2185,
+        "sha256": "302062F25B56A239D7E2E22DDA86FFA5076F0B5EA5000242B388623F039463C6"
+      },
+      {
+        "path": "verify_fixed_device_exact_environment_plan_committed.py",
+        "bytes": 623,
+        "sha256": "E7FD66D7D443D13DEC58A7D090386F73F1742E93AFA503ED4CA561BDAD024C6F"
+      },
+      {
+        "path": "capture_fixed_device_exact_environment.py",
+        "bytes": 4791,
+        "sha256": "80851BABE66539E3CB44ACD4FFE32A44D919CEAC7D1461DA68E335C16F10BC35"
+      },
+      {
+        "path": "fixed_device_exact_environment_capture.json",
+        "bytes": 43091,
+        "sha256": "F3CC98C77FEA71AF7D3A6318ADBEBFBED8B1441D16CB2632DA863C422423DCDB"
+      }
+    ],
+    "priorPortableClosure": {
+      "path": "artifacts/investigations/device-runtime-closure-10-1-4/particle_portable_closure.json",
+      "bytes": 30977,
+      "sha256": "245A0768BC19EE6D415C9AC2B7EC0F813495A4E6CF0F933F2A38B49FEAC7F2F7"
+    },
+    "priorAvRejections": {
+      "path": "artifacts/investigations/device-runtime-closure-10-1-4/device_runtime_av_rejections.json",
+      "bytes": 121029,
+      "sha256": "FEB9978E97828AA625FEC0A3DDF99A434F95F21CEDF87E4D5DCCEF368CCA18CE"
+    }
+  },
+  "operationAudit": {
+    "adbReadOnlyInventory": 23,
+    "packageLaunch": 0,
+    "gameplayInput": 0,
+    "autoLive": 0,
+    "manualLive": 0,
+    "fridaAttach": 0,
+    "screenRecording": 0,
+    "audioRecording": 0,
+    "network": 0,
+    "installOrUninstall": 0,
+    "settingsMutation": 0
+  },
+  "environmentFacts": [
+    {
+      "id": "FDE-F01",
+      "fact": "The locked device was online and the installed original sample remained jp.co.craftegg.band 10.1.4 / 230 / arm64-v8a."
+    },
+    {
+      "id": "FDE-F02",
+      "fact": "The physical display inventory contains exactly one 720x1600 mode at 60.0 Hz with no alternative refresh rate; peak_refresh_rate and min_refresh_rate settings are absent."
+    },
+    {
+      "id": "FDE-F03",
+      "fact": "SurfaceFlinger identifies the physical display as 60.00 Hz and the renderer as ARM Mali-G57 MC2, OpenGL ES 3.2 v1.r26p0-01eac0.71c60347ed1612c587f5404db7380c0d."
+    },
+    {
+      "id": "FDE-F04",
+      "fact": "The production candidate package com.garupa.editor is absent from the locked Android device; prior closure also fixes mainProgramIntegrationAuthorization=false."
+    },
+    {
+      "id": "FDE-F05",
+      "fact": "Android exposes screenrecord, a SurfaceFlinger compositor and digital framebuffer/video surfaces, but these are upstream of physical panel emission and cannot by themselves measure optical onset or peak."
+    },
+    {
+      "id": "FDE-F06",
+      "fact": "AudioFlinger and AudioPolicy expose an AUDIO_DEVICE_OUT_SPEAKER route and internal PCM/HAL surfaces; these are upstream of amplifier and speaker acoustics and cannot by themselves measure physical speaker output."
+    },
+    {
+      "id": "FDE-F07",
+      "fact": "The three committed scrcpy H.264 plus FLAC campaigns remain rejected-insufficient-resolution with zero formal behavior coverage and no ROI visible-onset, cue alignment or phase analysis."
+    },
+    {
+      "id": "FDE-F08",
+      "fact": "This C06 inventory used 23 read-only ADB operations and zero launch, input, Auto Live, Frida, recording, network, installation or settings mutation operations."
+    }
+  ],
+  "claimDispositions": [
+    {
+      "id": "FDE-D01",
+      "claim": "real 120/adaptive cadence",
+      "result": "objectively-blocked-on-locked-device",
+      "reason": "The locked physical panel exposes only one 60.0 Hz mode and no alternatives. A real 120/adaptive run cannot exist on this device without changing the fixed-device identity.",
+      "retryCondition": "A separately authorized replacement device with verified >=119 Hz and adaptive/multiple native modes plus a new preregistered protocol."
+    },
+    {
+      "id": "FDE-D02",
+      "claim": "GPU/driver framebuffer",
+      "result": "objectively-blocked-no-candidate-on-locked-device",
+      "reason": "The original renderer identity is inventoryable, but the production candidate package is absent and Android/mobile main-program integration is unauthorized. Original-only framebuffer bytes cannot establish original-to-candidate equivalence.",
+      "retryCondition": "Stage-9 authorization, a committed candidate installed on the same locked GPU/driver/compositor, and a separately preregistered synchronized comparison protocol."
+    },
+    {
+      "id": "FDE-D03",
+      "claim": "visible onset/peak",
+      "result": "objectively-blocked-no-comparable-physical-output-path",
+      "reason": "There is no candidate on the locked device. Available device-native capture is digital compositor/encoder output, not calibrated optical panel output; historical digital AV campaigns remain rejected with zero coverage.",
+      "retryCondition": "Stage-9 candidate availability plus a calibrated external optical capture surface and separately preregistered semantic-anchor/error protocol."
+    },
+    {
+      "id": "FDE-D04",
+      "claim": "CRI/Android/speaker output",
+      "result": "objectively-blocked-no-comparable-physical-output-path",
+      "reason": "There is no candidate on the locked device. Available AudioFlinger/HAL/playback surfaces are upstream of amplifier/speaker acoustics and cannot establish physical speaker equivalence.",
+      "retryCondition": "Stage-9 candidate availability plus calibrated external acoustic/analog capture and separately preregistered synchronization/error protocol."
+    }
+  ],
+  "finalBoundary": {
+    "originalDeviceExactGate": "open-not-claimed-objective-environment-blockers",
+    "positiveExactClaimsAdded": 0,
+    "objectiveBlockedClaims": 4,
+    "portableParticleFunctionalGate": "closed-retained",
+    "portableProductionAuthorization": true,
+    "rejectedTracesReclassified": false,
+    "autoLiveBudgetUsedByC06": 0,
+    "autoLiveBudgetRemaining": 10,
+    "r2Used": false,
+    "mainProgramIntegrationAuthorization": false,
+    "stage9Changed": false
+  },
+  "functionalBlockers": []
+}

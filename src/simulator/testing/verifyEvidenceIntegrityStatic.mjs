@@ -44,8 +44,8 @@ if (
 }
 const ids = new Set();
 const statuses = new Set([
-  "closed-portable", "degraded-explicit", "excluded", "open-evidence-required",
-  "open-device-exact", "unauthorized-stage-9", "reopened-audit",
+  "closed-portable", "closed-original-unreachable", "degraded-explicit", "excluded", "open-evidence-required",
+  "open-device-exact", "open-objective-environment-blocked", "unauthorized-stage-9", "reopened-audit",
 ]);
 for (const row of matrix.rows) {
   if (typeof row.id !== "string" || ids.has(row.id)) throw new Error("capability IDs must be unique");
@@ -63,8 +63,8 @@ for (const required of ["CAP-PRACTICE-01", "CAP-SCENE-07", "CAP-HAB-01", "CAP-HA
 }
 const closedPortableIds = matrix.rows.filter((row) => row.status === "closed-portable").map((row) => row.id).sort();
 const expectedClosedPortableIds = [
-  "CAP-AUDIO-01", "CAP-CHART-01", "CAP-HAB-01", "CAP-PARTICLE-01", "CAP-PUBLIC-01",
-  "CAP-RENDER-ORDINARY-01", "CAP-RUNTIME-01",
+  "CAP-AUDIO-01", "CAP-CHART-01", "CAP-HAB-01", "CAP-PARTICLE-01", "CAP-PRACTICE-01", "CAP-PUBLIC-01",
+  "CAP-RENDER-BROWSER-01", "CAP-RENDER-ORDINARY-01", "CAP-RUNTIME-01",
 ];
 if (JSON.stringify(closedPortableIds) !== JSON.stringify(expectedClosedPortableIds)) {
   throw new Error(`portable release scope changed: ${closedPortableIds.join(",")}`);
@@ -73,8 +73,8 @@ if (matrix.auditStatus !== "portable-release-candidate" || claims.auditStatus !=
   throw new Error("machine ledgers do not identify the conditional portable release candidate");
 }
 const publicGateLiterals = [
-  "closed-portable", "reopened-audit", "degraded-explicit", "excluded", "open-evidence-required",
-  "open-device-exact", "unauthorized-stage-9",
+  "closed-portable", "closed-original-unreachable", "reopened-audit", "degraded-explicit", "excluded", "open-evidence-required",
+  "open-device-exact", "open-objective-environment-blocked", "unauthorized-stage-9",
 ];
 for (const literal of publicGateLiterals) {
   if (!publicContracts.includes(`\"${literal}\"`) || !readme.includes(`\`${literal}\``)) {

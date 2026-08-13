@@ -16,19 +16,19 @@
 
 | 门 | 状态 | 当前边界 |
 | --- | --- | --- |
-| Public/autonomous、chart、zero-seek runtime | `closed-portable` | 当前10.1.4证据、raw production-path与detached DAG限定范围 |
-| Ordinary Pixi command/scene | `closed-portable` | 含656-batch actual-Pixi routing及20行Score panel mask raw；不含browser/device raster |
+| Public/autonomous、chart、runtime | `closed-portable` | 当前10.1.4证据、raw production-path与detached DAG限定范围；non-zero practice seek见独立行 |
+| Ordinary Pixi command/scene | `closed-portable` | 含656-batch actual-Pixi routing及20行Score panel mask raw；真实browser门见独立行，不含device framebuffer exact |
 | Audio、Particle | `closed-portable` | semantic/PCM/WebAudio graph及deterministic simulation/Pixi routing；不含物理输出/framebuffer |
 | HAB current-external-complete | `closed-portable` | 11项pinned资源、179 rows、全Note/mesh/line/field/mask/lane-change及Pixi consumer；差异仅文档披露 |
 | HAB original parity | `open-evidence-required` | UnityFS、natural owner/setter、Root_effect原clip及original physical frame不作等价声明 |
-| Non-zero initial seek | `open-evidence-required` | 缺少10.1.4逐claim MoveTime闭环 |
-| Button 07 | `open-evidence-required` | scene/manual/render/particle mapping未知 |
-| WebView2 decode/glyph/raster | `open-evidence-required` | Node synthetic `TextureSource`不证明Tauri WebView2输出 |
-| Fixed-device physical exact | `open-device-exact` | cadence、GPU/framebuffer、speaker output保持开放 |
+| Non-zero initial seek | `closed-portable` | 10.1.4 IPS-P01–P05：fresh zero-state bounded Float32 whole-engine pre-roll，重建期物理输出抑制，完成后一次BGM/final visual publication |
+| Button 07 | `closed-original-unreachable` | 10.1.4合法BMS不可生成值7，scene只拥有0..6；不发明第八lane，注入值7按内部不变量拒绝 |
+| WebView2 decode/glyph/raster | `closed-portable` | 真实WebView2 151.0.4129.78执行production `BrowserPixiTextureDecoder`的PNG/FontFace/glyph/Pixi WebGL raster；跨runtime/GPU exact不泛化 |
+| Fixed-device physical exact | `open-objective-environment-blocked` | 锁定panel只有60 Hz、Android candidate缺失且stage-9=false、无校准光学/声学比较路径；四项客观阻断，不新增exact claim |
 | Character/card/deck skill、Fever、multiplayer | `excluded` | public和production依赖图不得引入 |
 | Main-program integration | `unauthorized-stage-9` | 不修改App/window/editor/Tauri/mobile入口 |
 
-状态词：`closed-portable`只表示当前证据和raw验收明确覆盖的portable合同；`reopened-audit`保留为历史隔离状态词，不是当前正向能力；`degraded-explicit`不等于原作parity；其余开放和排除状态按表中边界解释。
+状态词：`closed-portable`只表示当前证据和raw验收明确覆盖的portable合同；`closed-original-unreachable`表示原作合法输入不可达而非待补功能；`open-objective-environment-blocked`保持exact不声明且记录可复现环境阻断；`reopened-audit`保留为历史隔离状态词，不是当前正向能力；`degraded-explicit`不等于原作parity；`open-device-exact`保留为旧审计状态词，其余开放和排除状态按表中边界解释。
 
 ## Public合同
 
@@ -63,7 +63,7 @@ src/simulator/
 
 ## Rendering验收分层
 
-- `actual-pixi-command-scene-routing`：当前production raw observation已由独立verifier核验，普通单人portable子门为`closed-portable`；它不包含browser raster或device framebuffer。
+- `actual-pixi-command-scene-routing`：当前production raw observation已由独立verifier核验，普通单人portable子门为`closed-portable`；真实WebView2 browser decode/raster由独立production harness关闭，但两者都不声明device framebuffer exact。
 - `webview2-decode-raster`：真实`createImageBitmap`、`FontFace` glyph及Pixi Canvas/WebGL raster本轮不执行，保持开放。
 - `framebuffer/device-exact`：没有锁定设备当前oracle时保持开放。
 

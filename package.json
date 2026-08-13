@@ -53,7 +53,9 @@
     "ios:dev": "tauri ios dev",
     "ios:build": "tauri ios build",
     "sprites:map": "node ./scripts/build-sprite-source-map.mjs",
-    "simulator:test:habahiro": "node src/simulator/testing/runHabahiroTests.mjs"
+    "simulator:test:habahiro": "node src/simulator/testing/runHabahiroTests.mjs",
+    "simulator:test:c07-evidence-consumption": "node src/simulator/testing/runC07EvidenceConsumptionTests.mjs",
+    "simulator:test:browser-webview2": "node src/simulator/testing/runBrowserPixiDecoderWebView2Tests.mjs"
   },
   "dependencies": {
     "@tauri-apps/api": "2.11.0",
