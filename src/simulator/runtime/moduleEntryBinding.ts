@@ -3,6 +3,10 @@ import type {
   SimulatorModuleLaunchRequest,
   SimulatorModuleLaunchResult,
 } from "../public/contracts";
+import {
+  isTotalRevalidationOpen,
+  totalRevalidationFailure,
+} from "../public/capabilities";
 import { rejected, type SimulatorAssemblyResult } from "../resources/sharedResourceAdapters";
 
 let installedLauncher: LaunchSimulatorModule | null = null;
@@ -31,6 +35,7 @@ export function installSimulatorModuleLauncher(
 export async function launchInstalledSimulatorModule(
   request: SimulatorModuleLaunchRequest,
 ): Promise<SimulatorModuleLaunchResult> {
+  if (isTotalRevalidationOpen()) return totalRevalidationFailure();
   const launcher = installedLauncher;
   if (launcher === null) {
     return Object.freeze({

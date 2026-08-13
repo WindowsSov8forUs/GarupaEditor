@@ -21,6 +21,11 @@ import type { ManualInputFrame, ManualInputPosition } from "../engine/data/manua
 import type { SimulatorEngine, SimulatorSnapshot } from "../host/contracts";
 import { createSimulatorEngine } from "../host/createSimulatorEngine";
 import {
+  isTotalRevalidationOpen,
+  TOTAL_REVALIDATION_BOUNDARY,
+  TOTAL_REVALIDATION_CAPABILITY,
+} from "../public/capabilities";
+import {
   appendSimulatorCleanupFailures,
   simulatorCleanupFailure,
   simulatorCleanupFailureFromResult,
@@ -113,6 +118,13 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
   async createFreshEngine(
     recipe: SimulatorSessionRecipe,
   ): Promise<SimulatorAssemblyResult<SimulatorEngine>> {
+    if (isTotalRevalidationOpen()) {
+      return rejected(
+        "evidence-required",
+        TOTAL_REVALIDATION_CAPABILITY,
+        TOTAL_REVALIDATION_BOUNDARY,
+      );
+    }
     const chart = createNoteBatchInformationList({
       musicScoreData: recipe.request.chartData.bmsText,
     });

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "status": "closed-for-reachable-supported-scope",
+  "status": "reopened-audit",
   "reverseAudit": {
     "commit": "a0431def732cf0d252ac3314865415701467e2e10",
     "package": "simulator-full-evidence-integrity-audit-10-1-4",
@@ -19,11 +19,12 @@
       "excluded",
       "early-evidence-required"
     ],
-    "reachableSupportedUnknownCount": 0,
+    "reachableSupportedUnknownCount": null,
     "networkFallbackCount": 0,
     "ambientRandomOrWallClockCount": 0,
     "untypedProductionEscapeCount": 0,
-    "commentOnlyCatchCount": 0
+    "commentOnlyCatchCount": 0,
+    "currentInventoryRequired": true
   },
   "groups": [
     {
@@ -283,5 +284,6 @@
     "src/simulator/runtime/contracts.ts",
     "src/simulator/runtime/moduleEntryBinding.ts",
     "src/simulator/scene/simulatorSceneLayout.ts"
-  ]
+  ],
+  "supersededReason": "The previous grouped occurrence review and completion conclusions are not current acceptance authority; B01 must rebuild a per-occurrence, per-field and mutation-boundary inventory from the pushed B00 source commit."
 }

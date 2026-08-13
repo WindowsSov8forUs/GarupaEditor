@@ -1,22 +1,26 @@
 # Simulator evidence-integrity audit
 
-This directory is the committed, machine-checkable statement of the simulator's production scope. It is not Reverse evidence and does not authorize behavior by itself.
+This directory is a machine-checkable description of the current production boundary. It is not Reverse evidence and does not authorize behavior by itself.
+
+The total revalidation is open. Every capability formerly reported as portable support is `reopened-audit` and the public launch rejects before the installed launcher, chart parsing, resource selection, backend preparation, scheduler start, or owner mutation.
 
 Rules:
 
-- `current-capability-matrix.json` classifies every public production capability as supported, explicit degraded preview, excluded, or evidence-required before mutation.
-- `current-claim-ledger.json` limits wording in committed documentation and test output. A test pass proves only the named gate.
-- Reverse remains the only behavioral source. Every supported row names committed Reverse evidence and a production-path observation requirement.
-- A Reverse `productionAuthorization` field permits implementation; it never proves Garupa consumption.
-- Recording backends, source markers, synthetic textures, or a self-authored `status: closed` field cannot close a positive production gate.
-- `browser-decode-integration` and fixed-device framebuffer/audio gates remain separate from Pixi command/scene routing.
-- Repository-local ignored working material is not an acceptance authority and must not be cited by committed files.
+- Old task documents, acceptance records, closure fields, green aggregate tests, source markers and Recording backends cannot close a current gate.
+- A Reverse `productionAuthorization` field permits candidate implementation only; it never proves Garupa consumption.
+- Fixture verification proves byte/SHA provenance only.
+- A synthetic Pixi `TextureSource` does not prove WebView2 decode, glyph rendering, raster output or framebuffer parity.
+- Every reachable behavior occurrence and field must receive an individual disposition; group mapping is not blanket authorization.
+- Every `evidence-bound` field needs a committed Reverse fact and a current production-path raw observation.
+- Every `early-open` row needs an independently observed zero-side-effect failure boundary.
+- Repository-local ignored material is not acceptance authority and must not be cited by committed files.
 
 Status vocabulary:
 
-- `closed-portable`: supported only within the listed portable/semantic scope.
-- `degraded-explicit`: available only after explicit caller selection and with visible plus machine-readable fidelity disclosure.
-- `excluded`: intentionally not implemented and not part of completion claims.
+- `reopened-audit`: globally isolated candidate behavior awaiting current revalidation.
+- `closed-portable`: available only after a current per-claim evidence and production-observation gate is closed.
+- `degraded-explicit`: caller-selected disclosed approximation; never original parity.
+- `excluded`: intentionally absent from the accepted product scope.
 - `open-evidence-required`: rejected before resource/backend/domain mutation.
 - `open-device-exact`: physical device parity is not claimed.
 - `unauthorized-stage-9`: main-program integration is outside this branch.

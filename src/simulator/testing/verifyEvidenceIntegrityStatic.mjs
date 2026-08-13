@@ -30,21 +30,13 @@ const currentProductionFiles = [...walk(simulatorRoot)]
   .map((path) => `src/simulator/${path}`)
   .sort();
 if (
-  integrity.schemaVersion !== 1 || integrity.status !== "closed-for-reachable-supported-scope" ||
+  integrity.schemaVersion !== 1 || integrity.status !== "reopened-audit" ||
   integrity.reviewPolicy?.sourceOccurrenceIsNotEvidence !== true ||
   integrity.reviewPolicy?.groupMappingIsNotBlanketAuthorization !== true ||
-  integrity.reviewPolicy?.reachableSupportedUnknownCount !== 0 ||
-  integrity.reviewPolicy?.networkFallbackCount !== 0 ||
-  integrity.reviewPolicy?.ambientRandomOrWallClockCount !== 0 ||
-  integrity.reviewPolicy?.untypedProductionEscapeCount !== 0 ||
-  integrity.reviewPolicy?.commentOnlyCatchCount !== 0 ||
-  integrity.currentProductionFileCount !== currentProductionFiles.length ||
-  JSON.stringify(integrity.currentProductionFiles) !== JSON.stringify(currentProductionFiles)
+  integrity.reviewPolicy?.currentInventoryRequired !== true ||
+  typeof integrity.supersededReason !== "string"
 ) {
-  throw new Error("production integrity review is stale, incomplete or not failed closed");
-}
-if (integrity.groups?.reduce((count, group) => count + group.occurrenceCount, 0) !== 14230) {
-  throw new Error("production integrity review does not consume the full frozen Reverse occurrence inventory");
+  throw new Error("production integrity review did not explicitly reopen the superseded grouped audit");
 }
 const ids = new Set();
 const statuses = new Set([
@@ -55,8 +47,11 @@ for (const row of matrix.rows) {
   if (typeof row.id !== "string" || ids.has(row.id)) throw new Error("capability IDs must be unique");
   ids.add(row.id);
   if (!statuses.has(row.status)) throw new Error(`${row.id} has an unclassified status: ${row.status}`);
-  if (row.status === "closed-portable" && (!Array.isArray(row.reverseEvidence) || row.reverseEvidence.length === 0 || typeof row.dynamicRequirement !== "string")) {
-    throw new Error(`${row.id} claims portable closure without evidence and a dynamic requirement`);
+  if (row.status === "closed-portable") {
+    throw new Error(`${row.id} retains a portable closure while total revalidation is open`);
+  }
+  if (row.status === "reopened-audit" && typeof row.dynamicRequirement !== "string") {
+    throw new Error(`${row.id} is reopened without a current dynamic requirement`);
   }
   if (row.status === "open-evidence-required" && typeof row.failureBoundary !== "string" && row.id !== "CAP-HAB-EXACT-01") {
     throw new Error(`${row.id} lacks an early failure boundary`);
@@ -66,7 +61,7 @@ for (const required of ["CAP-PRACTICE-01", "CAP-SCENE-07", "CAP-HAB-01", "CAP-HA
   if (!ids.has(required)) throw new Error(`capability matrix omitted ${required}`);
 }
 const publicGateLiterals = [
-  "closed-portable", "degraded-explicit", "excluded", "open-evidence-required",
+  "closed-portable", "reopened-audit", "degraded-explicit", "excluded", "open-evidence-required",
   "open-device-exact", "unauthorized-stage-9",
 ];
 for (const literal of publicGateLiterals) {
@@ -99,7 +94,11 @@ for (const path of walk(simulatorRoot)) {
     throw new Error(`committed simulator documentation cites ignored local work: ${path}`);
   }
 }
-console.log(`evidence-integrity static baseline passed: capabilities=${matrix.rows.length} claims=${claims.allowedClaims.length} production-files=${currentProductionFiles.length} occurrences=14230`);
+if (!publicCapabilities.includes("simulator.audit.total-revalidation-open") ||
+    !readFileSync(join(simulatorRoot, "public", "launch.ts"), "utf8").includes("totalRevalidationFailure")) {
+  throw new Error("public launch is not isolated by the total revalidation gate");
+}
+console.log(`evidence-integrity reopened baseline passed: capabilities=${matrix.rows.length} claims=${claims.allowedClaims.length} current-production-files=${currentProductionFiles.length}`);
 
 function* walk(root) {
   for (const entry of readdirSync(root, { withFileTypes: true })) {

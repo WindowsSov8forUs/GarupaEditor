@@ -1,49 +1,78 @@
 {
   "schemaVersion": 1,
-  "auditStatus": "reopened",
+  "auditStatus": "total-revalidation-open",
   "rules": {
     "forbidCommittedTmpReferences": true,
     "forbidUnscopedCompletionClaims": true,
     "productionAuthorizationDoesNotProveConsumption": true,
     "recordingOrSourceMarkersCannotClosePositiveGate": true,
-    "syntheticTextureSourceIsNotBrowserDecode": true
+    "syntheticTextureSourceIsNotBrowserDecode": true,
+    "legacyAcceptanceCannotCloseCurrentGate": true
   },
   "allowedClaims": [
     {
       "id": "CLAIM-ORDINARY-COMMAND-SCENE",
       "wording": "ordinary Pixi command/scene portable observation",
       "scope": "hash-validated resource identity, typed command order, owner lifecycle and Pixi scene mapping",
-      "notClaimed": ["browser raster", "GPU framebuffer", "fixed-device exact"]
+      "notClaimed": [
+        "browser raster",
+        "GPU framebuffer",
+        "fixed-device exact"
+      ],
+      "auditDisposition": "reopened-audit-candidate-only"
     },
     {
       "id": "CLAIM-SCORE-LIFE",
       "wording": "single-player score/life portable state subgate",
       "scope": "current master thresholds, UInt32/Float32 state and typed HUD commands",
-      "notClaimed": ["character skill effects", "multiplayer"]
+      "notClaimed": [
+        "character skill effects",
+        "multiplayer"
+      ],
+      "auditDisposition": "reopened-audit-candidate-only"
     },
     {
       "id": "CLAIM-AUDIO-SEMANTIC",
       "wording": "audio semantic portable subgate",
       "scope": "command/lifecycle/PCM/WebAudio graph mapping",
-      "notClaimed": ["CRI", "Android mixer", "speaker output"]
+      "notClaimed": [
+        "CRI",
+        "Android mixer",
+        "speaker output"
+      ],
+      "auditDisposition": "reopened-audit-candidate-only"
     },
     {
       "id": "CLAIM-PARTICLE-PORTABLE",
       "wording": "particle semantic portable subgate",
       "scope": "command, deterministic simulation and Pixi geometry routing",
-      "notClaimed": ["Unity GPU shader/framebuffer parity"]
+      "notClaimed": [
+        "Unity GPU shader/framebuffer parity"
+      ],
+      "auditDisposition": "reopened-audit-candidate-only"
     },
     {
       "id": "CLAIM-HAB-DEGRADED",
       "wording": "explicit degraded HABAHIRO preview",
       "scope": "external portable assets with disclosed differences",
-      "notClaimed": ["original runtime", "ordinary Note animation parity", "framebuffer parity"]
+      "notClaimed": [
+        "original runtime",
+        "ordinary Note animation parity",
+        "framebuffer parity"
+      ],
+      "auditDisposition": "reopened-audit-candidate-only"
     },
     {
       "id": "CLAIM-CORE-SUBSET",
       "wording": "evidence-bounded single-player core subset",
       "scope": "only capability-matrix rows marked closed-portable",
-      "notClaimed": ["excluded mechanisms", "open evidence gates", "device exact", "stage-9"]
+      "notClaimed": [
+        "excluded mechanisms",
+        "open evidence gates",
+        "device exact",
+        "stage-9"
+      ],
+      "auditDisposition": "reopened-audit-candidate-only"
     }
   ],
   "forbiddenExamples": [

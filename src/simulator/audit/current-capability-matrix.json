@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "auditStatus": "published-evidence-bounded-production-scope",
+  "auditStatus": "total-revalidation-open",
   "lockedSample": {
     "package": "jp.co.craftegg.band",
     "versionName": "10.1.4",
@@ -12,7 +12,7 @@
       "id": "CAP-PUBLIC-01",
       "capability": "single public launch and closed-only receipt",
       "productionPath": "public -> runtime binding -> autonomous session",
-      "status": "closed-portable",
+      "status": "reopened-audit",
       "reverseEvidence": [
         "autonomous-simulator-portable-pack-10-1-4",
         "autonomous-simulator-scene-layout-10-1-4"
@@ -27,7 +27,7 @@
       "id": "CAP-CHART-01",
       "capability": "BMS construction and command parsing for registered production charts",
       "productionPath": "public chart bytes -> createNoteBatchInformationList",
-      "status": "closed-portable",
+      "status": "reopened-audit",
       "reverseEvidence": [
         "chart construction committed fixtures and contracts"
       ],
@@ -40,7 +40,7 @@
       "id": "CAP-RUNTIME-01",
       "capability": "zero-seek manual and Auto Live scheduling, judgement, score/life state",
       "productionPath": "engine initialize -> scheduler/input -> frame owners",
-      "status": "closed-portable",
+      "status": "reopened-audit",
       "reverseEvidence": [
         "clock-scheduling-runtime-oracle",
         "manual-input-runtime-contract-10-1-4",
@@ -81,7 +81,7 @@
       "id": "CAP-RENDER-ORDINARY-01",
       "capability": "ordinary Note and single-player HUD Pixi command/scene routing",
       "productionPath": "engine render producer -> Pixi owner/resource mapping",
-      "status": "closed-portable",
+      "status": "reopened-audit",
       "reverseEvidence": [
         "ordinary-visible-rendering-portable-10-1-4@f94947d9",
         "score-hud-rank-gauge-10-1-4@95e629d9",
@@ -132,7 +132,7 @@
       "id": "CAP-AUDIO-01",
       "capability": "portable semantic BGM/SE command and WebAudio transport",
       "productionPath": "session BGM + fixed SE -> audio producer/backend",
-      "status": "closed-portable",
+      "status": "reopened-audit",
       "reverseEvidence": [
         "audio 10.1.4 portable lifecycle/PCM closure",
         "audio-session-bgm-resource-contract-10-1-4"
@@ -148,7 +148,7 @@
       "id": "CAP-PARTICLE-01",
       "capability": "deterministic portable particle command/simulation/Pixi routing",
       "productionPath": "particle producer -> deterministic simulation -> Pixi renderer",
-      "status": "closed-portable",
+      "status": "reopened-audit",
       "reverseEvidence": [
         "device-runtime-closure-10-1-4 portable closure"
       ],
