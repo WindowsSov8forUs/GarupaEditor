@@ -132,7 +132,12 @@ if (
   attestation.boundaries?.rejectedDeviceTracesReclassified !== false ||
   attestation.boundaries?.autoLiveBudgetRemaining !== 10 ||
   attestation.boundaries?.r2Used !== false ||
-  attestation.boundaries?.mainProgramIntegrationAuthorization !== false
+  attestation.boundaries?.mainProgramIntegrationAuthorization !== false ||
+  attestation.attestationCommitValidation?.commit !== "dadf952ae2d5526b0eff92856f3e03f132e23892" ||
+  attestation.attestationCommitValidation?.pushedDetachedUniqueLeaves !== 25 ||
+  attestation.attestationCommitValidation?.pushedDetachedElapsedMilliseconds !== 526895 ||
+  attestation.attestationCommitValidation?.productionBrowserWebView2Executed !== true ||
+  attestation.attestationCommitValidation?.originEqualsHead !== true
 ) {
   throw new Error("final capability attestation identity, DAG or non-positive boundary changed");
 }

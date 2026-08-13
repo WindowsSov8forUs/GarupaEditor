@@ -94,5 +94,12 @@
     "mainProgramIntegrationAuthorization": false,
     "productionReadsReverseOrTmpOrTestingFixtures": false
   },
+  "attestationCommitValidation": {
+    "commit": "dadf952ae2d5526b0eff92856f3e03f132e23892",
+    "pushedDetachedUniqueLeaves": 25,
+    "pushedDetachedElapsedMilliseconds": 526895,
+    "productionBrowserWebView2Executed": true,
+    "originEqualsHead": true
+  },
   "conclusion": "All currently authorized portable functional gates have individual pushed evidence and production-path observations. Remaining original/device/stage-9/excluded surfaces retain their explicit non-positive dispositions; this attestation is not an original-engine or all-device parity claim."
 }
