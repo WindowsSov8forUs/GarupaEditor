@@ -2,9 +2,9 @@
 
 This directory is a machine-checkable description of the current production boundary. It is not Reverse evidence and does not authorize behavior by itself.
 
-The total revalidation is open. Every capability formerly reported as portable support is `reopened-audit` and the public launch rejects before the installed launcher, chart parsing, resource selection, backend preparation, scheduler start, or owner mutation.
+The total revalidation gate is in a conditional portable release transition. Public launch delegates to the installed autonomous launcher; the six capability-matrix rows marked `closed-portable` are the only positive scope. Every separately open, excluded, device-exact and stage-9 row retains its own early boundary.
 
-The final pushed candidate source surface is frozen by Reverse `simulator-total-revalidation-10-1-4@0ddc5fbd`: 102 production files, 21,322 individually disposed occurrences, 14,158 candidate field/formula claims, 253 mutation points and 555 completion-like claims. Schema v2 replaces the former blanket `early-open` classification: each row now carries an evidence-bound, open, excluded or structural disposition. `current-field-claim-index.json` and `current-mutation-boundaries.json` are pointers, not evidence copies or release authorization.
+The pushed pre-transition candidate source surface is frozen by Reverse `simulator-total-revalidation-10-1-4@0ddc5fbd`: 102 production files, 21,322 individually disposed occurrences, 14,158 candidate field/formula claims, 253 mutation points and 555 completion-like claims. Schema v2 replaces the former blanket `early-open` classification. The release transition is limited to three public gate/contract files and requires a pushed detached-DAG pass; `current-field-claim-index.json` and `current-mutation-boundaries.json` remain evidence pointers rather than self-authorization.
 
 Rules:
 
@@ -19,8 +19,8 @@ Rules:
 
 Status vocabulary:
 
-- `reopened-audit`: globally isolated candidate behavior awaiting current revalidation.
-- `closed-portable`: available only after a current per-claim evidence and production-observation gate is closed.
+- `reopened-audit`: historical globally isolated candidate behavior; not a current positive claim.
+- `closed-portable`: available only for a current per-claim evidence and production-observation gate closed by the release attestation.
 - `degraded-explicit`: caller-selected disclosed approximation; never original parity.
 - `excluded`: intentionally absent from the accepted product scope.
 - `open-evidence-required`: rejected before resource/backend/domain mutation.

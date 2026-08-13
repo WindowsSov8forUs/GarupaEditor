@@ -38,7 +38,7 @@ try {
   for (const [id, runner, env, extraArgs = []] of leaves) {
     run(id, process.execPath, [join(testingRoot, runner), ...extraArgs], env);
   }
-  console.log(`total revalidation unique-leaf DAG passed: leaves=${leaves.length + 1} elapsedMs=${Date.now() - started}; production gate remains open`);
+  console.log(`total revalidation unique-leaf DAG passed: leaves=${leaves.length + 1} elapsedMs=${Date.now() - started}; portable release scope only, browser/device/stage-9 gates remain open`);
 } finally {
   rmSync(tempRoot, { recursive: true, force: true });
 }

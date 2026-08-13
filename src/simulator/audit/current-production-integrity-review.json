@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "status": "reopened-audit",
+  "status": "portable-release-candidate",
   "reverseAudit": {
     "commit": "0ddc5fbd44ac8eb5a5d0b6667e259fbc1f7fa52a",
     "package": "simulator-total-revalidation-10-1-4",
@@ -179,6 +179,25 @@
       "src/simulator/runtime/autonomousSimulatorRuntime.ts"
     ]
   },
+  "releaseTransition": {
+    "status": "pending-pushed-detached-dag",
+    "prerequisiteCandidateCommit": "735a040dc91c97dda8dc09ed1022d0771b8e04d2",
+    "prerequisiteDetachedDag": {
+      "status": "passed",
+      "uniqueLeaves": 23,
+      "elapsedMilliseconds": 939408,
+      "scoreMaskIndependentRawRows": 20,
+      "syntheticDecoderClaimsBrowserRaster": false,
+      "syntheticDecoderClaimsDeviceExact": false
+    },
+    "boundedProductionFiles": [
+      "src/simulator/public/capabilities.ts",
+      "src/simulator/public/contracts.ts",
+      "src/simulator/public/launch.ts"
+    ],
+    "releaseCommit": null,
+    "releaseDetachedDag": "pending"
+  },
   "openOrExcluded": [
     "HABAHIRO original runtime/frame parity",
     "HABAHIRO external Note animation",
@@ -294,5 +313,5 @@
     "src/simulator/runtime/moduleEntryBinding.ts",
     "src/simulator/scene/simulatorSceneLayout.ts"
   ],
-  "supersededReason": "Schema v1 blanket early-open and all earlier grouped reviews are superseded by the pushed schema v2 per-occurrence, per-field and per-mutation candidate inventory. Schema v2 remains behind the global gate and is not release authorization."
+  "supersededReason": "Schema v1 blanket early-open and all earlier grouped reviews are superseded by the pushed schema v2 per-occurrence, per-field and per-mutation candidate inventory. The bounded three-file release transition is conditional on a pushed detached-DAG pass and does not widen any separately open, excluded, device-exact or stage-9 gate."
 }

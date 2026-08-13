@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "auditStatus": "total-revalidation-open",
+  "auditStatus": "portable-release-candidate",
   "lockedSample": {
     "package": "jp.co.craftegg.band",
     "versionName": "10.1.4",
@@ -12,7 +12,7 @@
       "id": "CAP-PUBLIC-01",
       "capability": "single public launch and closed-only receipt",
       "productionPath": "public -> runtime binding -> autonomous session",
-      "status": "reopened-audit",
+      "status": "closed-portable",
       "reverseEvidence": [
         "autonomous-simulator-portable-pack-10-1-4",
         "autonomous-simulator-scene-layout-10-1-4"
@@ -27,7 +27,7 @@
       "id": "CAP-CHART-01",
       "capability": "BMS construction and command parsing for registered production charts",
       "productionPath": "public chart bytes -> createNoteBatchInformationList",
-      "status": "reopened-audit",
+      "status": "closed-portable",
       "reverseEvidence": [
         "chart construction committed fixtures and contracts"
       ],
@@ -40,7 +40,7 @@
       "id": "CAP-RUNTIME-01",
       "capability": "zero-seek manual and Auto Live scheduling, judgement, score/life state",
       "productionPath": "engine initialize -> scheduler/input -> frame owners",
-      "status": "reopened-audit",
+      "status": "closed-portable",
       "reverseEvidence": [
         "clock-scheduling-runtime-oracle",
         "manual-input-runtime-contract-10-1-4",
@@ -81,16 +81,14 @@
       "id": "CAP-RENDER-ORDINARY-01",
       "capability": "ordinary Note and single-player HUD Pixi command/scene routing",
       "productionPath": "engine render producer -> Pixi owner/resource mapping",
-      "status": "reopened-audit",
+      "status": "closed-portable",
       "reverseEvidence": [
         "ordinary-visible-rendering-portable-10-1-4@f94947d9",
         "score-hud-portable-revalidation-10-1-4@a53f8a27",
         "score-hud-panel-clip-portable-10-1-4@1abae506"
       ],
       "dynamicRequirement": "current actual-Pixi raw observation including 20-row Score boundary matrix, persistent SS owner and persistent indicator panel mask consumer",
-      "failureCapability": "simulator.audit.total-revalidation-open",
-      "failureBoundary": "global production launch gate before installed launcher and all resource/backend/owner mutation",
-      "candidateClosedSubgates": [
+      "closedSubgates": [
         "score-high-rank-panel-indicator-clip-contract"
       ],
       "openSubgates": [
@@ -141,7 +139,7 @@
       "id": "CAP-AUDIO-01",
       "capability": "portable semantic BGM/SE command and WebAudio transport",
       "productionPath": "session BGM + fixed SE -> audio producer/backend",
-      "status": "reopened-audit",
+      "status": "closed-portable",
       "reverseEvidence": [
         "audio 10.1.4 portable lifecycle/PCM closure",
         "audio-session-bgm-resource-contract-10-1-4"
@@ -157,7 +155,7 @@
       "id": "CAP-PARTICLE-01",
       "capability": "deterministic portable particle command/simulation/Pixi routing",
       "productionPath": "particle producer -> deterministic simulation -> Pixi renderer",
-      "status": "reopened-audit",
+      "status": "closed-portable",
       "reverseEvidence": [
         "device-runtime-closure-10-1-4 portable closure"
       ],

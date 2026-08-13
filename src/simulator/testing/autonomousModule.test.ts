@@ -47,8 +47,9 @@ import type { SimulatorAssemblyResult } from "../resources/sharedResourceAdapter
 
 async function main(): Promise<void> {
   const beforeInstall = await launchSimulatorModule(request());
-  assertAuditGate(beforeInstall);
-  assertAuditGate(await launchSimulatorModule(null as unknown as SimulatorModuleLaunchRequest));
+  assertPlatformUnavailable(beforeInstall);
+  assertPlatformUnavailable(await launchSimulatorModule(null as unknown as SimulatorModuleLaunchRequest));
+  assertPlatformUnavailable(await launchInstalledSimulatorModule(request()));
 
   await testSharedStore();
   testSelector();
@@ -345,12 +346,16 @@ async function testProductionCompositionFailureBoundary(): Promise<void> {
   assert.equal(resourceReads, 0, "invalid Score Gauge master fails before shared resource read");
   assert.equal(mounts, 0);
 
-  const gatedModule = requireAccepted(createProductionAutonomousSimulatorModule(platform));
-  const gated = await gatedModule.launch(request());
-  assertAuditGate(gated);
-  assert.equal(resourceReads, 0, "total revalidation rejects before shared resource read");
-  assert.equal(mounts, 0, "total revalidation rejects before visual mount");
-  assert.equal(scheduler.consumer, null, "total revalidation rejects before scheduler start");
+  const missingResourceModule = requireAccepted(createProductionAutonomousSimulatorModule(platform));
+  const missingResource = await missingResourceModule.launch(request());
+  assert.equal(missingResource.status, "rejected");
+  if (missingResource.status === "rejected") {
+    assert.equal(missingResource.failure.capability, "test.missing");
+  }
+  assert.equal(resourceReads, 1, "released portable composition reaches the explicit shared-resource boundary");
+  assert.equal(mounts, 0, "missing resources reject before visual mount");
+  assert.equal(scheduler.consumer, null, "missing resources reject before scheduler start");
+  resourceReads = 0;
 
   const module = requireAccepted(createProductionAutonomousSimulatorModule(platform));
   const seekRequest: any = request();
@@ -430,10 +435,7 @@ async function testAutonomousLaunchAndClose(): Promise<void> {
   });
   assert.equal(installSimulatorModuleLauncher(module.launch).status, "accepted");
   assert.equal(installSimulatorModuleLauncher(module.launch).status, "rejected");
-  assertAuditGate(await launchSimulatorModule(request()));
-  assertAuditGate(await launchInstalledSimulatorModule(request()));
-  assert.equal(scheduler.consumer, null, "public and internal binding gates do not invoke the installed launcher");
-  const launched = await module.launch(request());
+  const launched = await launchSimulatorModule(request());
   assert.equal(launched.status, "accepted");
   if (launched.status !== "accepted") throw new Error(launched.failure.capability);
   assert.deepEqual(Object.keys(launched).sort(), ["closed", "status"]);
@@ -448,8 +450,8 @@ async function testAutonomousLaunchAndClose(): Promise<void> {
   assert.ok(Object.isFrozen(report));
   assert.deepEqual(report.capabilities, {
     rendering: null,
-    publicAutonomousCore: "reopened-audit",
-    ordinaryCommandScene: "reopened-audit",
+    publicAutonomousCore: "closed-portable",
+    ordinaryCommandScene: "closed-portable",
     habahiroExternalPreview: "open-evidence-required",
     habahiroOriginalParity: "open-evidence-required",
     nonzeroInitialPracticeSeek: "open-evidence-required",
@@ -464,15 +466,14 @@ async function testAutonomousLaunchAndClose(): Promise<void> {
   assert.equal(session.closes, 1);
   assert.equal(scheduler.stops, 1);
   assert.equal(input.disposes, 1);
-  assertAuditGate(await launchSimulatorModule(request()));
 }
 
-function assertAuditGate(result: Awaited<ReturnType<typeof launchSimulatorModule>>): void {
+function assertPlatformUnavailable(result: Awaited<ReturnType<typeof launchSimulatorModule>>): void {
   assert.equal(result.status, "rejected");
   if (result.status === "rejected") {
-    assert.equal(result.failure.code, "evidence-required");
-    assert.equal(result.failure.capability, "simulator.audit.total-revalidation-open");
-    assert.match(result.failure.boundary, /before the installed launcher, chart parsing, static-resource selection, backend preparation, scheduler start, or scene\/domain owner mutation/);
+    assert.equal(result.failure.code, "platform-unavailable");
+    assert.equal(result.failure.capability, "simulator.entry.platform-not-installed");
+    assert.match(result.failure.boundary, /must be installed before the main entry transfers chart\/config ownership/);
   }
 }
 

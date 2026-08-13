@@ -31,7 +31,7 @@ const manualRunners = [
   "runManualTimeoutJudgementTests.mjs",
 ];
 for (const runner of manualRunners) run(process.execPath, [join(testingRoot, runner)]);
-console.log("manual input M00-M11 candidate-path suite passed behind the global production gate");
+console.log("manual input M00-M11 portable suite passed; separately open capability gates remain fail-closed");
 function run(command, args) {
   const result = spawnSync(command, args, { cwd: repositoryRoot, encoding: "utf8", stdio: "inherit" });
   if (result.error) throw result.error;

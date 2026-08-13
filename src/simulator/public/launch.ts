@@ -2,11 +2,10 @@ import type {
   SimulatorModuleLaunchRequest,
   SimulatorModuleLaunchResult,
 } from "./contracts";
-import { totalRevalidationFailure } from "./capabilities";
+import { launchInstalledSimulatorModule } from "../runtime/moduleEntryBinding";
 
 export async function launchSimulatorModule(
   request: SimulatorModuleLaunchRequest,
 ): Promise<SimulatorModuleLaunchResult> {
-  void request;
-  return totalRevalidationFailure();
+  return launchInstalledSimulatorModule(request);
 }

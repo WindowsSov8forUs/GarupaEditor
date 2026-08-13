@@ -117,8 +117,8 @@ export type SimulatorCapabilityGateStatus =
 
 export interface SimulatorModuleCapabilitySummary {
   readonly rendering: SimulatorRenderingFidelity | null;
-  readonly publicAutonomousCore: "reopened-audit";
-  readonly ordinaryCommandScene: "reopened-audit";
+  readonly publicAutonomousCore: "closed-portable";
+  readonly ordinaryCommandScene: "closed-portable";
   readonly habahiroExternalPreview: "open-evidence-required";
   readonly habahiroOriginalParity: "open-evidence-required";
   readonly nonzeroInitialPracticeSeek: "open-evidence-required";
@@ -127,7 +127,7 @@ export interface SimulatorModuleCapabilitySummary {
   readonly fixedDeviceExact: "open-device-exact";
   readonly characterSkillFeverMultiplayer: "excluded";
   readonly mainProgramIntegration: "unauthorized-stage-9";
-  readonly selectedRenderingGate: "reopened-audit" | "open-evidence-required";
+  readonly selectedRenderingGate: "closed-portable" | "open-evidence-required";
 }
 
 export interface SimulatorModuleCloseReport {

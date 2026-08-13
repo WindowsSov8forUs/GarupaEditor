@@ -88,7 +88,7 @@ for (const [label, pattern] of [
 check(packageJson.scripts["simulator:test:particles"] === "node src/simulator/testing/runParticleTests.mjs", "particle package script");
 check(packageJson.scripts["simulator:test:device-closure"] === "node src/simulator/testing/runDeviceClosureTests.mjs", "device closure package script");
 
-console.log("particle static candidate boundary verified: 97 raw rows, production globally reopened, device exact=open, runtime fallback/network/wall-clock=off");
+console.log("particle static portable boundary verified: 97 raw rows, device exact=open, runtime fallback/network/wall-clock=off");
 
 function json(name) {
   return JSON.parse(readFileSync(join(fixtureRoot, name), "utf8"));

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "auditStatus": "total-revalidation-open",
+  "auditStatus": "portable-release-candidate",
   "rules": {
     "forbidCommittedTmpReferences": true,
     "forbidUnscopedCompletionClaims": true,
@@ -19,7 +19,7 @@
         "GPU framebuffer",
         "fixed-device exact"
       ],
-      "auditDisposition": "reopened-audit-candidate-only"
+      "auditDisposition": "closed-portable"
     },
     {
       "id": "CLAIM-SCORE-LIFE",
@@ -29,7 +29,7 @@
         "character skill effects",
         "multiplayer"
       ],
-      "auditDisposition": "reopened-audit-candidate-only"
+      "auditDisposition": "closed-portable"
     },
     {
       "id": "CLAIM-AUDIO-SEMANTIC",
@@ -40,7 +40,7 @@
         "Android mixer",
         "speaker output"
       ],
-      "auditDisposition": "reopened-audit-candidate-only"
+      "auditDisposition": "closed-portable"
     },
     {
       "id": "CLAIM-PARTICLE-PORTABLE",
@@ -49,7 +49,7 @@
       "notClaimed": [
         "Unity GPU shader/framebuffer parity"
       ],
-      "auditDisposition": "reopened-audit-candidate-only"
+      "auditDisposition": "closed-portable"
     },
     {
       "id": "CLAIM-HAB-DEGRADED",
@@ -60,7 +60,7 @@
         "ordinary Note animation parity",
         "framebuffer parity"
       ],
-      "auditDisposition": "reopened-audit-candidate-only"
+      "auditDisposition": "open-evidence-required"
     },
     {
       "id": "CLAIM-CORE-SUBSET",
@@ -72,7 +72,7 @@
         "device exact",
         "stage-9"
       ],
-      "auditDisposition": "reopened-audit-candidate-only"
+      "auditDisposition": "closed-portable"
     }
   ],
   "forbiddenExamples": [

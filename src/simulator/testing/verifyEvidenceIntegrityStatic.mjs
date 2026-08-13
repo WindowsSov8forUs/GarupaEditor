@@ -34,13 +34,13 @@ const currentProductionFiles = [...walk(simulatorRoot)]
   .map((path) => `src/simulator/${path}`)
   .sort();
 if (
-  integrity.schemaVersion !== 1 || integrity.status !== "reopened-audit" ||
+  integrity.schemaVersion !== 1 || integrity.status !== "portable-release-candidate" ||
   integrity.reviewPolicy?.sourceOccurrenceIsNotEvidence !== true ||
   integrity.reviewPolicy?.groupMappingIsNotBlanketAuthorization !== true ||
   integrity.reviewPolicy?.currentInventoryRequired !== true ||
   typeof integrity.supersededReason !== "string"
 ) {
-  throw new Error("production integrity review did not explicitly reopen the superseded grouped audit");
+  throw new Error("production integrity review does not describe the bounded portable release candidate");
 }
 const ids = new Set();
 const statuses = new Set([
@@ -51,9 +51,6 @@ for (const row of matrix.rows) {
   if (typeof row.id !== "string" || ids.has(row.id)) throw new Error("capability IDs must be unique");
   ids.add(row.id);
   if (!statuses.has(row.status)) throw new Error(`${row.id} has an unclassified status: ${row.status}`);
-  if (row.status === "closed-portable") {
-    throw new Error(`${row.id} retains a portable closure while total revalidation is open`);
-  }
   if (row.status === "reopened-audit" && typeof row.dynamicRequirement !== "string") {
     throw new Error(`${row.id} is reopened without a current dynamic requirement`);
   }
@@ -63,6 +60,17 @@ for (const row of matrix.rows) {
 }
 for (const required of ["CAP-PRACTICE-01", "CAP-SCENE-07", "CAP-HAB-01", "CAP-HAB-EXACT-01", "CAP-DEVICE-01", "CAP-STAGE9-01", "CAP-EXCLUDED-01"]) {
   if (!ids.has(required)) throw new Error(`capability matrix omitted ${required}`);
+}
+const closedPortableIds = matrix.rows.filter((row) => row.status === "closed-portable").map((row) => row.id).sort();
+const expectedClosedPortableIds = [
+  "CAP-AUDIO-01", "CAP-CHART-01", "CAP-PARTICLE-01", "CAP-PUBLIC-01",
+  "CAP-RENDER-ORDINARY-01", "CAP-RUNTIME-01",
+];
+if (JSON.stringify(closedPortableIds) !== JSON.stringify(expectedClosedPortableIds)) {
+  throw new Error(`portable release scope changed: ${closedPortableIds.join(",")}`);
+}
+if (matrix.auditStatus !== "portable-release-candidate" || claims.auditStatus !== "portable-release-candidate") {
+  throw new Error("machine ledgers do not identify the conditional portable release candidate");
 }
 const publicGateLiterals = [
   "closed-portable", "reopened-audit", "degraded-explicit", "excluded", "open-evidence-required",
@@ -117,11 +125,29 @@ if (
 ) {
   throw new Error("current field or mutation pointer does not match the pushed Reverse schema v2 inventory");
 }
+const publicLaunch = readFileSync(join(simulatorRoot, "public", "launch.ts"), "utf8");
 if (!publicCapabilities.includes("simulator.audit.total-revalidation-open") ||
-    !readFileSync(join(simulatorRoot, "public", "launch.ts"), "utf8").includes("totalRevalidationFailure")) {
-  throw new Error("public launch is not isolated by the total revalidation gate");
+    !publicCapabilities.includes("return false") ||
+    !publicLaunch.includes("launchInstalledSimulatorModule(request)")) {
+  throw new Error("public launch did not perform the bounded total-revalidation gate transition");
 }
-console.log(`evidence-integrity reopened baseline passed: capabilities=${matrix.rows.length} claims=${claims.allowedClaims.length} current-production-files=${currentProductionFiles.length}`);
+if (
+  integrity.releaseTransition?.status !== "pending-pushed-detached-dag" ||
+  integrity.releaseTransition?.prerequisiteCandidateCommit !== "735a040dc91c97dda8dc09ed1022d0771b8e04d2" ||
+  integrity.releaseTransition?.prerequisiteDetachedDag?.status !== "passed" ||
+  integrity.releaseTransition?.prerequisiteDetachedDag?.uniqueLeaves !== 23 ||
+  integrity.releaseTransition?.prerequisiteDetachedDag?.scoreMaskIndependentRawRows !== 20 ||
+  integrity.releaseTransition?.prerequisiteDetachedDag?.syntheticDecoderClaimsBrowserRaster !== false ||
+  integrity.releaseTransition?.prerequisiteDetachedDag?.syntheticDecoderClaimsDeviceExact !== false ||
+  JSON.stringify(integrity.releaseTransition?.boundedProductionFiles) !== JSON.stringify([
+    "src/simulator/public/capabilities.ts",
+    "src/simulator/public/contracts.ts",
+    "src/simulator/public/launch.ts",
+  ])
+) {
+  throw new Error("portable release transition lacks the exact prerequisite detached attestation and bounded delta");
+}
+console.log(`evidence-integrity portable release candidate passed: capabilities=${matrix.rows.length} claims=${claims.allowedClaims.length} current-production-files=${currentProductionFiles.length}`);
 
 function* walk(root) {
   for (const entry of readdirSync(root, { withFileTypes: true })) {
