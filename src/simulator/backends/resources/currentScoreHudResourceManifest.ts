@@ -183,6 +183,14 @@ export const CURRENT_SCORE_HUD_SCENE_PROFILE = Object.freeze({
     foreground: Object.freeze({ position: Object.freeze([41, -1] as const), width: 421, height: 24, depth: 5 }),
     markerDepth: 29,
     indicatorMaximumX: 422,
+    highRankPanel: Object.freeze({
+      targetLeftX: 38,
+      leftAbsolute: 4,
+      bottomY: -25.5,
+      topY: 13.5,
+      minimumWidth: 2,
+      softness: Object.freeze([20, 3] as const),
+    }),
   }),
   rankRoots: Object.freeze([
     Object.freeze({ rank: "C", x: 50 }),

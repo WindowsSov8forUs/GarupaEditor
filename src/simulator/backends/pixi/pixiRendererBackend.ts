@@ -86,6 +86,9 @@ interface PixiHudVisual {
   readonly scoreRankSprites: Container[];
   readonly scoreHighRankSprites: Sprite[];
   readonly scoreHighRankNodeNames: string[];
+  readonly scoreHighRankPanelMask: Graphics | null;
+  scoreHighRankPanelMaskGeneration: number;
+  scoreHighRankPanelMaskBounds: readonly [number, number, number, number] | null;
   scoreHighRankGeneration: number;
   fillRatios: readonly [number, number];
 }
@@ -483,7 +486,13 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       readonly right: number;
       readonly bottom: number;
     }[] | null;
-    readonly hudScoreIndicatorMask: null;
+    readonly hudScoreIndicatorMask: {
+      readonly owner: "score-high-rank-panel-mask";
+      readonly consumer: "score-high-rank-animation-layer";
+      readonly generation: number;
+      readonly bounds: readonly [number, number, number, number];
+      readonly softness: readonly [20, 3];
+    } | null;
     readonly hudFillRatios: readonly [number, number] | null;
     readonly hudScoreHighRankNodes: readonly {
       readonly name: string;
@@ -549,7 +558,17 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
               right: node.rightWidth,
               bottom: node.bottomHeight,
             }))),
-      hudScoreIndicatorMask: null,
+      hudScoreIndicatorMask: value.hudVisual?.kind !== "score" ||
+          value.hudVisual.scoreHighRankPanelMask === null ||
+          value.hudVisual.scoreHighRankPanelMaskBounds === null
+        ? null
+        : Object.freeze({
+            owner: "score-high-rank-panel-mask" as const,
+            consumer: "score-high-rank-animation-layer" as const,
+            generation: value.hudVisual.scoreHighRankPanelMaskGeneration,
+            bounds: value.hudVisual.scoreHighRankPanelMaskBounds,
+            softness: Object.freeze([20, 3] as const),
+          }),
       hudFillRatios: value.hudVisual?.fillRatios ?? null,
       hudScoreHighRankNodes: value.hudVisual === null
         ? null
@@ -1374,11 +1393,18 @@ function createHudVisual(node: Container, kind: PixiHudVisual["kind"]): PixiHudV
   const secondaryFill = needsFill ? new Graphics() : null;
   const primaryFill = needsFill ? new Graphics() : null;
   const text = needsText ? new Text({ text: "", style: { fill: 0xffffff, fontSize: 32 } }) : null;
-  const animationLayer = new Container({ visible: false });
+  const animationLayer = new Container({ visible: false, label: "score-high-rank-animation-layer" });
+  const scoreHighRankPanelMask = kind === "score"
+    ? new Graphics({ label: "score-high-rank-panel-mask" })
+    : null;
   if (secondaryFill !== null) content.addChild(secondaryFill);
   if (primaryFill !== null) content.addChild(primaryFill);
   if (text !== null) content.addChild(text);
   content.addChild(animationLayer);
+  if (scoreHighRankPanelMask !== null) {
+    content.addChild(scoreHighRankPanelMask);
+    animationLayer.mask = scoreHighRankPanelMask;
+  }
   node.addChild(content);
   return {
     kind,
@@ -1393,6 +1419,9 @@ function createHudVisual(node: Container, kind: PixiHudVisual["kind"]): PixiHudV
     scoreRankSprites: [],
     scoreHighRankSprites: [],
     scoreHighRankNodeNames: [],
+    scoreHighRankPanelMask,
+    scoreHighRankPanelMaskGeneration: scoreHighRankPanelMask === null ? 0 : 1,
+    scoreHighRankPanelMaskBounds: null,
     scoreHighRankGeneration: 0,
     fillRatios: Object.freeze([0, 0]),
   };
@@ -1691,6 +1720,24 @@ function applyScoreHud(
     progress.addChild(rankLabel);
     visual.scoreRankSprites.push(rankLabel);
   }
+
+  const panel = scene.gauge.highRankPanel;
+  if (visual.scoreHighRankPanelMask === null) {
+    throw new Error("Score high-rank panel mask owner is missing");
+  }
+  const panelRight = panel.targetLeftX + state.indicatorLocalX;
+  const authoredLeft = panel.targetLeftX + panel.leftAbsolute;
+  const panelWidth = Math.max(panel.minimumWidth, panelRight - authoredLeft);
+  const panelCenter = (authoredLeft + panelRight) / 2;
+  const panelLeft = panelCenter - panelWidth / 2;
+  const panelTop = -panel.topY;
+  const panelHeight = panel.topY - panel.bottomY;
+  visual.scoreHighRankPanelMask.clear()
+    .rect(panelLeft, panelTop, panelWidth, panelHeight)
+    .fill(0xffffff);
+  visual.scoreHighRankPanelMaskBounds = Object.freeze([
+    panelLeft, panelTop, panelWidth, panelHeight,
+  ] as const);
 
   if (state.highRankEffectActive === true && visual.scoreHighRankSprites.length === 0) {
     const animation = currentScoreGaugeSsAnimation(object);

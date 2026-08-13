@@ -72,7 +72,7 @@ src/simulator/
 
 Synthetic decoder、资源hash或typed command都不能升级为真实WebView2 raster证明。
 
-当前Score HUD候选实现已修正NineSlice轴序、已知depth、master派生marker校验和SS持久owner，并由direct actual-Pixi raw Score矩阵重新观察。但Reverse `score-hud-portable-revalidation-10-1-4@a53f8a27`确认`highRankEffectPanel.rightAnchor.absolute`缺少完整anchor target、clip range与parent portable mapping；`indicatorLocalX`尚无可见Pixi mask consumer。因此Score HUD Pixi子门及全局production门继续开放。
+当前Score HUD候选实现已修正NineSlice轴序、已知depth、master派生marker校验和SS持久owner。Reverse `score-hud-panel-clip-portable-10-1-4@1abae506`又从当前10.1.4 APK直接确认Score UIPanel path 1451、Background_Cover anchor target、四anchor、SoftClip range/softness/offset及父级坐标，并排除AllPerfect path 1450身份混淆。`indicatorLocalX`现驱动挂在ScoreGaugeSS animation layer上的持久Pixi mask consumer；20行阈值±1/scoreMax/over-max raw矩阵由独立verifier重算。Score panel子门已具备候选闭合事实，但全局production门仍等待其余全模块重验与最终账本，不提前解除。
 
 ## Evidence workflow
 

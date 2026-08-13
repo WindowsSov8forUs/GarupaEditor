@@ -18,12 +18,29 @@ assert.ok(samples && typeof samples === "object");
 const matrix = samples.scoreMatrix;
 assert.ok(Array.isArray(matrix));
 assert.deepEqual(matrix.map((row) => [row.score, row.rank, row.observation.hudScoreDigitCount]), [
-  [0, 4, 8], [35999, 4, 8], [36000, 3, 8], [216000, 2, 8],
-  [432000, 1, 8], [648000, 0, 8], [864000, 5, 8], [100000000, 5, 9],
+  [0, 4, 8], [35999, 4, 8], [36000, 3, 8], [36001, 3, 8],
+  [215999, 3, 8], [216000, 2, 8], [216001, 2, 8],
+  [431999, 2, 8], [432000, 1, 8], [432001, 1, 8],
+  [647999, 1, 8], [648000, 0, 8], [648001, 0, 8],
+  [863999, 0, 8], [864000, 5, 8], [864001, 5, 8],
+  [959998, 5, 8], [959999, 5, 8], [960000, 5, 8], [100000000, 5, 9],
 ]);
-assert.deepEqual(matrix.map((row) => row.observation.hudState.indicatorLocalX), [0, 15, 15, 94, 189, 284, 379, 422]);
 for (const row of matrix) {
   const state = row.observation.hudState;
+  const indicator = state.ratio.value >= 1
+    ? 422
+    : Math.trunc(Math.fround(state.ratio.value * Math.fround(422)));
+  assert.equal(state.indicatorLocalX, indicator);
+  const right = 38 + indicator;
+  const width = Math.max(2, indicator - 4);
+  const left = (42 + right) / 2 - width / 2;
+  assert.deepEqual(row.observation.hudScoreIndicatorMask, {
+    owner: "score-high-rank-panel-mask",
+    consumer: "score-high-rank-animation-layer",
+    generation: 1,
+    bounds: [left, -13.5, width, 39],
+    softness: [20, 3],
+  });
   const max = Math.trunc(Math.fround(Math.fround(state.master.scoreSS) * Math.fround(1.111111044883728)));
   assert.equal(state.scoreMax, max);
   const marker = (value) => Math.fround(Math.fround(41) + Math.fround(
@@ -51,9 +68,16 @@ assert.deepEqual(half.hudScoreNineSliceBorders.find((row) => row.label === "scor
 for (const [label, depth] of [["score-digit-0", 40], ["score-gauge-background", 4], ["score-gauge-foreground", 5], ["score-gauge-cover", 28], ["score-rank-marker-SS", 29]]) {
   assert.ok(half.hudScoreLayerNodes.some((row) => row.label === label && row.zIndex === depth), `${label} depth`);
 }
-assert.equal(half.hudScoreIndicatorMask, null, "panel clipping remains an explicit open subgate");
+assert.deepEqual(half.hudScoreIndicatorMask, {
+  owner: "score-high-rank-panel-mask",
+  consumer: "score-high-rank-animation-layer",
+  generation: 1,
+  bounds: [42, -13.5, 375, 39],
+  softness: [20, 3],
+});
+assert.equal(continued.hudScoreIndicatorMask.generation, 1);
 assert.equal(samples.invalidScore.capability, "render.pixi.invalid-typed-hud-state");
 assert.deepEqual(raw.sampleCleanup, { ownerCount: 0, stageChildren: 0 });
 assert.equal(raw.fullChart.cleanupOwnerCount, 0);
 assert.equal(raw.fullChart.cleanupStageChildren, 0);
-console.log(`independent current raw observation verified: score-matrix=${matrix.length} ss-generation=1 indicator-clip=open`);
+console.log(`independent current raw observation verified: score-matrix=${matrix.length} ss-generation=1 indicator-clip=visible-consumer`);

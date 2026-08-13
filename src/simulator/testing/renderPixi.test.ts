@@ -171,7 +171,13 @@ async function main(): Promise<void> {
   const foregroundBorder = borders.get("score-gauge-foreground");
   assert(foregroundBorder !== undefined, "Score foreground NineSlice exists");
   equal(JSON.stringify(foregroundBorder), JSON.stringify({ label: "score-gauge-foreground", left: 0, top: 0, right: 0, bottom: 0 }), "SS meter border mapping");
-  equal(scoreAtHalf.hudScoreIndicatorMask, null, "indicator panel clipping remains explicitly unimplemented/open");
+  equal(JSON.stringify(scoreAtHalf.hudScoreIndicatorMask), JSON.stringify({
+    owner: "score-high-rank-panel-mask",
+    consumer: "score-high-rank-animation-layer",
+    generation: 1,
+    bounds: [42, -13.5, 375, 39],
+    softness: [20, 3],
+  }), "indicator drives the persistent Score high-rank panel mask owner");
   equal(scoreAtHalf.animationElapsedSeconds, Math.fround(0.5), "ScoreGaugeSS reaches the direct half-second sample");
   const halfNodes = JSON.stringify(scoreAtHalf.hudScoreHighRankNodes);
 
@@ -192,6 +198,7 @@ async function main(): Promise<void> {
   assert(scoreContinued !== undefined, "continued Score owner exists");
   equal(scoreContinued.hudScoreHighRankNodes?.length, 11, "ordinary Score update does not destroy/recreate SS nodes");
   equal(scoreContinued.hudScoreHighRankGeneration, 1, "ordinary Score update preserves the same SS owner generation");
+  equal(scoreContinued.hudScoreIndicatorMask?.generation, 1, "ordinary Score update preserves the same panel mask owner generation");
   equal(scoreContinued.animationElapsedSeconds, Math.fround(0.55), "Score update preserves the running SS phase owner");
   assert(JSON.stringify(scoreContinued.hudScoreHighRankNodes) !== halfNodes, "continued SS sample advances visible node state after Score update");
 
@@ -199,8 +206,12 @@ async function main(): Promise<void> {
   let previousRank = 4;
   let matrixHighRankActive = false;
   for (const [matrixScore, expectedRank] of [
-    [0, 4], [35999, 4], [36000, 3], [216000, 2], [432000, 1],
-    [648000, 0], [864000, 5], [100000000, 5],
+    [0, 4], [35999, 4], [36000, 3], [36001, 3],
+    [215999, 3], [216000, 2], [216001, 2],
+    [431999, 2], [432000, 1], [432001, 1],
+    [647999, 1], [648000, 0], [648001, 0],
+    [863999, 0], [864000, 5], [864001, 5],
+    [959998, 5], [959999, 5], [960000, 5], [100000000, 5],
   ] as const) {
     const changed = previousRank !== expectedRank;
     const effect = changed && expectedRank === 5 ? "ScoreGaugeSS" as const : "none" as const;
