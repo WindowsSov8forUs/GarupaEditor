@@ -40,6 +40,7 @@
     "simulator:test:device-closure": "node src/simulator/testing/runDeviceClosureTests.mjs",
     "simulator:test:autonomous-module": "node src/simulator/testing/runAutonomousModuleTests.mjs",
     "simulator:test:fixtures": "node src/simulator/testing/verifyTestingFixtures.mjs",
+    "simulator:test:evidence-integrity": "node src/simulator/testing/verifyEvidenceIntegrityStatic.mjs",
     "tauri": "tauri",
     "desktop:dev": "tauri dev",
     "desktop:build": "tauri build",
