@@ -24,12 +24,18 @@ import {
   CURRENT_SCORE_HUD_BINDINGS,
   CURRENT_SCORE_HUD_SCENE_PROFILE,
 } from "../resources/currentScoreHudResourceManifest";
-import { RenderFidelityLabel } from "../renderingContracts";
+import {
+  animationBindingMatchesProfile,
+  animationRoleMatchesObject,
+  validateTypedRenderHudCommand,
+  validateTypedRenderResourceBinding,
+} from "../renderingCommandValidation";
 import type {
   RenderBackendSnapshot,
   RenderCommand,
   RenderCommandBatch,
   RenderOrthographicProjectionProfile,
+  RenderObjectRole,
   RenderResourceAssetProfile,
   RenderResourcePreflightAdapter,
   RenderScoreHudState,
@@ -94,7 +100,7 @@ type EvidenceAnimationRole =
   | "note-long-flash";
 
 interface PixiObjectRecord {
-  readonly role: string;
+  readonly role: RenderObjectRole;
   readonly node: Container;
   ordering: readonly [number, number, number, number];
   hudState: Readonly<object> | null;
@@ -116,7 +122,7 @@ interface PixiObjectRecord {
 }
 
 interface PixiShadowObject {
-  readonly role: string;
+  readonly role: RenderObjectRole;
   readonly parentObjectId: string | null;
   readonly materialBound: boolean;
   readonly spriteBindingKey: string | null;
@@ -263,6 +269,8 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
   }
 
   preflight(commands: readonly RenderCommand[]): SimulatorResult<RenderCommandBatch> {
+    const typed = this.validateTypedPreflight(commands);
+    if (typed.status !== "ok") return typed;
     const recordingBatch = this.recording.preflight(commands);
     if (recordingBatch.status !== "ok") {
       if (this.recording.snapshot().state === "faulted") {
@@ -545,6 +553,63 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     return this.recording.dispose();
   }
 
+  private validateTypedPreflight(commands: readonly RenderCommand[]): SimulatorResult<void> {
+    if (this.profile === null) return ok(undefined);
+    const shadow = new Map<string, { role: RenderObjectRole; spriteExactKey: string | null }>(
+      [...this.objects].map(([id, value]) => [id, {
+        role: value.role,
+        spriteExactKey: boundSpriteExactKey(value.spriteBindingKey),
+      }]),
+    );
+    for (const command of commands) {
+      if (command.kind === "create-object" || command.kind === "acquire-object") {
+        shadow.set(command.renderObjectId, { role: command.role, spriteExactKey: null });
+        continue;
+      }
+      if (command.kind === "release-object") {
+        shadow.delete(command.renderObjectId);
+        continue;
+      }
+      const object = shadow.get(command.renderObjectId);
+      if (object === undefined) continue;
+      if (command.kind === "bind-resource") {
+        if (!validateTypedRenderResourceBinding(command, object.role, this.profile)) {
+          return evidenceRequired(
+            "render.pixi.invalid-typed-resource-binding",
+            ["RPR-D14", "RPR-D17", "PR35"],
+            "Pixi rejects a mismatched logical asset, exact atlas key or object role before backend preflight or scene mutation.",
+          );
+        }
+        if (command.binding === "sprite") object.spriteExactKey = command.exactKey;
+      } else if (command.kind === "set-hud") {
+        if (!validateTypedRenderHudCommand(command, object.role)) {
+          return evidenceRequired(
+            "render.pixi.invalid-typed-hud-state",
+            ["RPR-D14", "RPR-D17", "PR35"],
+            "Pixi rejects a malformed discriminated HUD payload before backend preflight or scene mutation.",
+          );
+        }
+      } else if (
+        command.kind === "play-animation" || command.kind === "stop-animation" ||
+        command.kind === "sample-animation"
+      ) {
+        if (!animationRoleMatchesObject(command.animationRole, object.role) ||
+          !animationBindingMatchesProfile(
+            command.animationRole,
+            object.spriteExactKey,
+            this.profile.ordinaryVisibleProfile,
+          )) {
+          return evidenceRequired(
+            "render.pixi.invalid-typed-animation-route",
+            ["RPR-D14", "RPR-D17", "PR35"],
+            "Pixi rejects a mismatched animation owner or Sprite binding before backend preflight or scene mutation.",
+          );
+        }
+      }
+    }
+    return ok(undefined);
+  }
+
   private supports(command: RenderCommand): boolean {
     switch (command.kind) {
       case "create-object":
@@ -635,12 +700,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           break;
         case "bind-resource": {
           const role = shadow.get(command.renderObjectId)!.role;
-          if (
-            (command.binding === "sprite" && !spriteRole(role)) ||
-            (command.binding === "material" &&
-              role !== "sync-line" &&
-              role !== "multiple-directional-line" && role !== "note-mesh")
-          ) {
+          if (!validateTypedRenderResourceBinding(command, role, this.profile!)) {
             return reject(
               "render.pixi.resource-binding-role-mismatch",
               "Sprite and Note/line material bindings require their exact engine-authored object roles.",
@@ -728,10 +788,10 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         case "play-animation": {
           const object = shadow.get(command.renderObjectId)!;
           if (
-            !animationMatchesRole(command.animationRole, object.role) ||
+            !animationRoleMatchesObject(command.animationRole, object.role) ||
             !animationBindingMatchesProfile(
               command.animationRole,
-              object.spriteBindingKey,
+              boundSpriteExactKey(object.spriteBindingKey),
               this.profile?.ordinaryVisibleProfile,
             )
           ) {
@@ -1137,101 +1197,39 @@ function isEvidenceHud(
   textures: ReadonlyMap<string, Texture>,
   decodedFonts: ReadonlyMap<string, PixiDecodedFont>,
 ): boolean {
-  const state = command.state as any;
+  if (!validateTypedRenderHudCommand(command, objectRole)) return false;
   switch (command.hudRole) {
     case "score":
-      return objectRole === "hud-score" &&
-        exactStateKeys(state, [
-          "beforeRank", "foregroundActive", "highRankEffect", "highRankEffectActive", "indicatorLocalX",
-          "meterKey", "rank", "rankChanged", "rankMarkerALocalX", "rankMarkerBLocalX",
-          "rankMarkerCLocalX", "rankMarkerSLocalX", "rankMarkerSSLocalX", "ratio", "score",
-          "scoreMax", "scoreText", "sliderValue",
-        ]) &&
-        isUInt32(state.score) && isUInt32(state.scoreMax) && (state.scoreMax as number) > 0 &&
-        typeof state.scoreText === "string" &&
-        /^\[BEBEBE\]0*\[-\]\[FF3B72\]\d+\[-\]$/.test(state.scoreText) &&
-        state.scoreText === expectedScoreText(state.score as number) &&
-        isOrdinaryScoreRank(state.beforeRank) && isOrdinaryScoreRank(state.rank) &&
-        typeof state.rankChanged === "boolean" &&
-        state.rankChanged === (state.beforeRank !== state.rank) &&
-        isScoreMeterKey(state.meterKey) &&
-        state.meterKey === scoreMeterKeyForRank(state.rank as number) &&
-        isRenderFloat32State(state.ratio) && state.ratio.value === expectedScoreRatio(state.score as number, state.scoreMax as number) &&
-        isRenderFloat32State(state.sliderValue) && state.sliderValue.value === Math.fround(Math.min(Math.max(state.ratio.value, 0), 1)) &&
-        typeof state.foregroundActive === "boolean" && state.foregroundActive === (state.ratio.value > 0) &&
-        Number.isInteger(state.indicatorLocalX) && state.indicatorLocalX === expectedScoreIndicatorX(state.ratio.value) &&
-        [state.rankMarkerCLocalX, state.rankMarkerBLocalX, state.rankMarkerALocalX,
-          state.rankMarkerSLocalX, state.rankMarkerSSLocalX].every(isRenderFloat32State) &&
-        (state.highRankEffect === "none" || state.highRankEffect === "ScoreGaugeSS") &&
-        (state.highRankEffect !== "ScoreGaugeSS" || state.rank === 5 && state.rankChanged === true) &&
-        typeof state.highRankEffectActive === "boolean" &&
-        (state.highRankEffect !== "ScoreGaugeSS" || state.highRankEffectActive === true) &&
-        scoreHudTexturesAvailable(textures, state.meterKey as string) &&
+      return scoreHudTexturesAvailable(textures, command.state.meterKey) &&
         decodedFonts.has(CURRENT_SCORE_HUD_BINDINGS.rankLabelFontLogicalAssetId);
     case "combo": {
-      if (
-        objectRole !== "hud-combo" ||
-        !exactStateKeys(state, ["allPerfect", "combo"]) ||
-        !isNonNegativeSafeInteger(state.combo) ||
-        state.combo > 9999 ||
-        typeof state.allPerfect !== "boolean"
-      ) return false;
-      const prefix = state.allPerfect ? "icon_number_big_AP_" : "icon_number_big_";
-      return String(state.combo).split("").every((digit) =>
-        findTextureBinding(textures, `${prefix}${digit}`) !== null);
+      const prefix = command.state.allPerfect ? "icon_number_big_AP_" : "icon_number_big_";
+      return String(command.state.combo).split("").every((digit) =>
+        textures.has(spriteKey(
+          CURRENT_ORDINARY_VISIBLE_BINDINGS.comboNumberLogicalAssetId,
+          `${prefix}${digit}`,
+        )));
     }
-    case "result": {
-      if (
-        objectRole !== "hud-result" ||
-        !exactStateKeys(state, ["judgeKey", "timingKey"]) ||
-        !["judge_auto", "judge_miss", "judge_bad", "judge_good", "judge_great", "judge_perfect"].includes(state.judgeKey) ||
-        !(state.timingKey === null || state.timingKey === "judge_fast" || state.timingKey === "judge_slow")
-      ) return false;
-      return findTextureBinding(textures, state.judgeKey) !== null &&
-        (state.timingKey === null || findTextureBinding(textures, state.timingKey) !== null);
-    }
-    case "life": {
-      const ratio = Math.fround(state.currentLife / 1000);
-      const primary = Math.fround(Math.min(ratio, 1));
-      const secondary = Math.fround(Math.max(ratio - 1, 0));
-      return objectRole === "hud-life" &&
-        exactStateKeys(state, [
-          "color", "currentLife", "label", "lifeUpperLimit", "playerMaxLife",
-          "primaryFill", "secondaryFill", "singleGameOver", "warning",
-        ]) &&
-        isNonNegativeSafeInteger(state.currentLife) &&
-        isNonNegativeSafeInteger(state.playerMaxLife) && state.playerMaxLife > 0 &&
-        isNonNegativeSafeInteger(state.lifeUpperLimit) && state.currentLife <= state.lifeUpperLimit &&
-        typeof state.singleGameOver === "boolean" && state.singleGameOver === (state.currentLife === 0) &&
-        typeof state.warning === "boolean" && state.warning === (primary <= Math.fround(0.25)) &&
-        state.color === (primary <= Math.fround(0.2) ? "danger" : "normal") &&
-        state.label === `${state.currentLife}/${state.playerMaxLife}` &&
-        isRenderFloat32State(state.primaryFill) && state.primaryFill.value === primary &&
-        isRenderFloat32State(state.secondaryFill) && state.secondaryFill.value === secondary &&
-        ordinaryLifeTexturesAvailable(textures) &&
+    case "result":
+      return textures.has(spriteKey(
+        CURRENT_ORDINARY_VISIBLE_BINDINGS.judgeLogicalAssetId,
+        command.state.judgeKey,
+      )) && (command.state.timingKey === null || textures.has(spriteKey(
+        CURRENT_ORDINARY_VISIBLE_BINDINGS.judgeLogicalAssetId,
+        command.state.timingKey,
+      )));
+    case "life":
+      return ordinaryLifeTexturesAvailable(textures) &&
         decodedFonts.has(CURRENT_SCORE_HUD_BINDINGS.rankLabelFontLogicalAssetId);
-    }
     case "add-score":
-      return objectRole === "hud-add-score" && exactStateKeys(state, ["depth", "poolIndex", "value"]) &&
-        isUInt32(state.value) && state.value > 0 &&
-        Number.isInteger(state.poolIndex) && state.poolIndex >= 0 && state.poolIndex < 4 &&
-        Number.isInteger(state.depth) && state.depth >= 0 && state.depth < 8 &&
-        ["icon_number_plus", ...String(state.value).split("").map((digit) => `icon_number_${digit}`)]
-          .every((key) => textures.has(spriteKey(CURRENT_SCORE_HUD_BINDINGS.gaugeLogicalAssetId, key)));
+      return [
+        "icon_number_plus",
+        ...String(command.state.value).split("").map((digit) => `icon_number_${digit}`),
+      ].every((key) => textures.has(spriteKey(CURRENT_SCORE_HUD_BINDINGS.gaugeLogicalAssetId, key)));
     case "habahiro-flash":
-      return objectRole === "habahiro-flash" && state.phase === "flash-start" && state.progress?.value === 0;
     case "fidelity-label":
-      return objectRole === "fidelity-label" &&
-        state.label === RenderFidelityLabel && state.visible === true && (
-          exactStateKeys(state, ["label", "visible"]) ||
-          exactStateKeys(state, ["absolutePosition", "label", "laneChangePhase", "visible"]) &&
-            Number.isInteger(state.absolutePosition) &&
-            (state.absolutePosition as number) >= 0 &&
-            (state.laneChangePhase === "flash-start" ||
-              state.laneChangePhase === "change-lane" || state.laneChangePhase === "complete")
-        );
+      return true;
   }
-  return false;
 }
 
 function applyEvidenceHud(
@@ -1247,26 +1245,25 @@ function applyEvidenceHud(
   visual.primaryFill?.clear();
   visual.secondaryFill?.clear();
   visual.fillRatios = Object.freeze([0, 0]);
-  const state = command.state as any;
   switch (command.hudRole) {
     case "score": {
-      applyScoreHud(object, visual, state, textures, referenceCounts, decodedFonts);
+      applyScoreHud(object, visual, command.state, textures, referenceCounts, decodedFonts);
       break;
     }
     case "combo": {
-      applyComboHud(object, visual, state, textures, referenceCounts);
+      applyComboHud(object, visual, command.state, textures, referenceCounts);
       break;
     }
     case "result": {
-      applyResultHud(object, visual, state, textures, referenceCounts);
+      applyResultHud(object, visual, command.state, textures, referenceCounts);
       break;
     }
     case "life": {
-      applyLifeHud(object, visual, state, textures, referenceCounts, decodedFonts);
+      applyLifeHud(object, visual, command.state, textures, referenceCounts, decodedFonts);
       break;
     }
     case "add-score": {
-      applyAddScoreHud(object, visual, state, textures, referenceCounts);
+      applyAddScoreHud(object, visual, command.state, textures, referenceCounts);
       break;
     }
     case "habahiro-flash": {
@@ -1277,11 +1274,11 @@ function applyEvidenceHud(
       break;
     }
     case "fidelity-label":
-      if (Object.prototype.hasOwnProperty.call(state, "laneChangePhase")) {
+      if ("laneChangePhase" in command.state) {
         object.node.position.set(20, 52);
         setHudText(
           visual.text!,
-          state.laneChangePhase === "flash-start"
+          command.state.laneChangePhase === "flash-start"
             ? "Approximate HABAHIRO · Flash"
             : "Approximate HABAHIRO · Lane Changed",
           20,
@@ -1289,7 +1286,7 @@ function applyEvidenceHud(
         );
       } else {
         object.node.position.set(20, 20);
-        setHudText(visual.text!, String(state.label), 24, 0xffd166);
+        setHudText(visual.text!, command.state.label, 24, 0xffd166);
       }
       break;
   }
@@ -1899,79 +1896,6 @@ function sampleOrdinaryVisibleClip(
   }));
 }
 
-function findTextureBinding(
-  textures: ReadonlyMap<string, Texture>,
-  exactKey: string,
-): { readonly key: string; readonly texture: Texture } | null {
-  const suffix = `\u0000${exactKey}`;
-  for (const [key, texture] of textures) {
-    if (key.endsWith(suffix)) return { key, texture };
-  }
-  return null;
-}
-
-function exactStateKeys(
-  state: Readonly<Record<string, string | number | boolean | null>>,
-  keys: readonly string[],
-): boolean {
-  return Object.keys(state).sort().join(",") === [...keys].sort().join(",");
-}
-
-function isNonNegativeSafeInteger(value: unknown): value is number {
-  return Number.isSafeInteger(value) && (value as number) >= 0;
-}
-
-function isUInt32(value: unknown): value is number {
-  return typeof value === "number" && Number.isInteger(value) && value >= 0 && value <= 0xffffffff;
-}
-
-function isOrdinaryScoreRank(value: unknown): boolean {
-  return Number.isInteger(value) && (value as number) >= 0 && (value as number) <= 5;
-}
-
-function isScoreMeterKey(value: unknown): boolean {
-  return value === "score_meter_blue" || value === "score_meter_green" ||
-    value === "score_meter_orange" || value === "score_meter_pink" || value === "score_meter_s";
-}
-
-function scoreMeterKeyForRank(rank: number): string {
-  if (rank === 4) return "score_meter_blue";
-  if (rank === 3) return "score_meter_green";
-  if (rank === 2) return "score_meter_orange";
-  if (rank === 1) return "score_meter_pink";
-  return "score_meter_s";
-}
-
-function expectedScoreText(score: number): string {
-  const digits = String(score);
-  return `[BEBEBE]${"0".repeat(Math.max(8 - Math.max(1, digits.length), 0))}[-][FF3B72]${digits}[-]`;
-}
-
-function expectedScoreRatio(score: number, scoreMax: number): number {
-  return Math.fround(Math.fround(score) / Math.fround(scoreMax));
-}
-
-function expectedScoreIndicatorX(ratio: number): number {
-  return ratio >= 1 ? 422 : Math.trunc(Math.fround(ratio * Math.fround(422)));
-}
-
-function isRenderFloat32State(value: unknown): value is { readonly value: number; readonly bits: string } {
-  return value !== null && typeof value === "object" &&
-    typeof (value as any).value === "number" && Math.fround((value as any).value) === (value as any).value &&
-    isFloat32Bits((value as any).bits) && float32Bits((value as any).value) === (value as any).bits;
-}
-
-function isFloat32Bits(value: unknown): value is string {
-  return typeof value === "string" && /^[0-9A-F]{8}$/.test(value);
-}
-
-function float32Bits(value: number): string {
-  const buffer = new ArrayBuffer(4);
-  const view = new DataView(buffer);
-  view.setFloat32(0, value, false);
-  return view.getUint32(0, false).toString(16).toUpperCase().padStart(8, "0");
-}
-
 function ordinaryLifeTexturesAvailable(textures: ReadonlyMap<string, Texture>): boolean {
   return [
     [CURRENT_SCORE_HUD_BINDINGS.gaugeLogicalAssetId, "bg_health"],
@@ -2037,32 +1961,8 @@ function quaternionZRadians(quaternion: readonly [number, number, number, number
   ));
 }
 
-function animationBindingMatchesProfile(
-  role: string,
-  spriteBindingKey: string | null,
-  profile: RenderResourceProfile["ordinaryVisibleProfile"],
-): boolean {
-  if (role !== "note-flick" && role !== "note-directional-flick" && role !== "note-long-flash") {
-    return true;
-  }
-  if (profile === undefined || spriteBindingKey === null) return false;
-  const exactKey = spriteBindingKey.slice(spriteBindingKey.indexOf("\u0000") + 1);
-  if (role === "note-flick") return exactKey === profile.noteAnimations.directionalSpriteKeys.up;
-  if (role === "note-directional-flick") {
-    return exactKey === profile.noteAnimations.directionalSpriteKeys.left ||
-      exactKey === profile.noteAnimations.directionalSpriteKeys.right;
-  }
-  return exactKey.startsWith(profile.noteAnimations.longFlashSpritePrefix);
-}
-
-function animationMatchesRole(role: string, objectRole: string): boolean {
-  return (role === "combo" || role === "all-perfect") && objectRole === "hud-combo" ||
-    role === "result" && objectRole === "hud-result" ||
-    role === "score-gauge-ss" && objectRole === "hud-score" ||
-    role === "habahiro-lane-change" && objectRole === "habahiro-flash" ||
-    role === "add-score" && objectRole === "hud-add-score" ||
-    (role === "note-flick" || role === "note-directional-flick") && objectRole === "note-icon" ||
-    role === "note-long-flash" && objectRole === "note-intermediate";
+function boundSpriteExactKey(bindingKey: string | null): string | null {
+  return bindingKey === null ? null : bindingKey.slice(bindingKey.indexOf("\u0000") + 1);
 }
 
 function isEvidenceAnimationRole(role: string): role is EvidenceAnimationRole {

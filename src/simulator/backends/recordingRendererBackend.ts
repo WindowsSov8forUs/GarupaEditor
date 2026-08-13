@@ -4,7 +4,13 @@ import {
   type EvidenceRequired,
   type SimulatorResult,
 } from "../engine/evidence";
-import { RenderFidelityLabel } from "./renderingContracts";
+import {
+  animationBindingMatchesProfile,
+  animationRoleMatchesObject,
+  freezeTypedHudState,
+  validateTypedRenderHudCommand,
+  validateTypedRenderResourceBinding,
+} from "./renderingCommandValidation";
 import type {
   RenderBackendFault,
   RenderAnimationRole,
@@ -12,6 +18,7 @@ import type {
   RenderCommand,
   RenderCommandBatch,
   RenderFidelitySelection,
+  RenderObjectRole,
   RenderResourcePreflightAdapter,
   RenderResourceProfile,
   SimulatorRendererBackend,
@@ -26,7 +33,7 @@ import {
 } from "./renderingValidation";
 
 interface RecordingRenderObject {
-  readonly role: string;
+  readonly role: RenderObjectRole;
   readonly poolFamily: string;
   readonly spriteExactKey: string | null;
 }
@@ -320,19 +327,11 @@ export class RecordingSimulatorRendererBackend implements SimulatorRendererBacke
       case "bind-resource": {
         const object = this.requireObject(objects, command.renderObjectId);
         if (object.status !== "ok") return object;
-        const asset = this.profile!.assets.find(
-          (candidate) => candidate.logicalAssetId === command.logicalAssetId,
-        );
-        if (
-          asset === undefined ||
-          (command.binding !== "sprite" &&
-            command.binding !== "material" &&
-            command.binding !== "animation") ||
-          (command.binding === "sprite" &&
-            (command.exactKey === null ||
-              !asset.atlasRows.some((row) => row.exactKey === command.exactKey))) ||
-          (command.binding !== "sprite" && command.exactKey !== null)
-        ) {
+        if (!validateTypedRenderResourceBinding(
+          command,
+          objects.get(command.renderObjectId)!.role,
+          this.profile!,
+        )) {
           return this.latchFault(
             "render.command.unknown-resource-binding",
             "Resource bindings use exact logical IDs and Sprite keys without aliases or fallback.",
@@ -412,7 +411,7 @@ export class RecordingSimulatorRendererBackend implements SimulatorRendererBacke
         return this.requireObject(objects, command.renderObjectId);
       case "set-hud": {
         const object = objects.get(command.renderObjectId);
-        if (object === undefined || !validateTypedHudCommand(command, object.role)) {
+        if (object === undefined || !validateTypedRenderHudCommand(command, object.role)) {
           return this.latchFault(
             "render.command.invalid-hud-state",
             "Each HUD route requires its exact discriminated state, object role and committed Float32 values.",
@@ -575,85 +574,12 @@ function freezeCommand(command: RenderCommand): RenderCommand {
         polygon: Object.freeze(command.polygon.map(freezeRenderVector2)),
       });
     case "set-hud":
-      return Object.freeze({ ...command, state: freezeHudState(command.state) }) as RenderCommand;
+      return Object.freeze({ ...command, state: freezeTypedHudState(command.state) }) as RenderCommand;
     case "sample-animation":
       return Object.freeze({ ...command, elapsedSeconds: Object.freeze({ ...command.elapsedSeconds }) });
     default:
       return Object.freeze({ ...command });
   }
-}
-
-function animationBindingMatchesProfile(
-  role: RenderAnimationRole,
-  spriteExactKey: string | null,
-  profile: RenderResourceProfile["ordinaryVisibleProfile"],
-): boolean {
-  if (role !== "note-flick" && role !== "note-directional-flick" && role !== "note-long-flash") {
-    return true;
-  }
-  if (profile === undefined || spriteExactKey === null) return false;
-  if (role === "note-flick") return spriteExactKey === profile.noteAnimations.directionalSpriteKeys.up;
-  if (role === "note-directional-flick") {
-    return spriteExactKey === profile.noteAnimations.directionalSpriteKeys.left ||
-      spriteExactKey === profile.noteAnimations.directionalSpriteKeys.right;
-  }
-  return spriteExactKey.startsWith(profile.noteAnimations.longFlashSpritePrefix);
-}
-
-function animationRoleMatchesObject(role: RenderAnimationRole, objectRole: string | undefined): boolean {
-  return (role === "note-flick" || role === "note-directional-flick") ? objectRole === "note-icon" :
-    role === "note-long-flash" ? objectRole === "note-intermediate" :
-    (role === "combo" || role === "all-perfect") ? objectRole === "hud-combo" :
-    role === "add-score" ? objectRole === "hud-add-score" :
-    role === "result" ? objectRole === "hud-result" :
-    role === "score-gauge-ss" ? objectRole === "hud-score" :
-    role === "habahiro-lane-change" ? objectRole === "habahiro-flash" : false;
-}
-
-function freezeHudState<T extends object>(state: T): T {
-  const frozen: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(state)) {
-    frozen[key] = value !== null && typeof value === "object"
-      ? Object.freeze({ ...(value as object) })
-      : value;
-  }
-  return Object.freeze(frozen) as T;
-}
-
-function validateTypedHudCommand(
-  command: Extract<RenderCommand, { readonly kind: "set-hud" }>,
-  objectRole: string,
-): boolean {
-  const state = command.state as unknown as Record<string, unknown>;
-  switch (command.hudRole) {
-    case "score":
-      return objectRole === "hud-score" && exactKeys(state, ["beforeRank", "foregroundActive", "highRankEffect", "highRankEffectActive", "indicatorLocalX", "meterKey", "rank", "rankChanged", "rankMarkerALocalX", "rankMarkerBLocalX", "rankMarkerCLocalX", "rankMarkerSLocalX", "rankMarkerSSLocalX", "ratio", "score", "scoreMax", "scoreText", "sliderValue"]) &&
-        isUInt32(state.score) && isUInt32(state.scoreMax) && (state.scoreMax as number) > 0 && typeof state.scoreText === "string" &&
-        validateRenderFloat32(state.ratio as never) && validateRenderFloat32(state.sliderValue as never) &&
-        [state.rankMarkerALocalX, state.rankMarkerBLocalX, state.rankMarkerCLocalX, state.rankMarkerSLocalX, state.rankMarkerSSLocalX].every((value) => validateRenderFloat32(value as never));
-    case "combo":
-      return objectRole === "hud-combo" && exactKeys(state, ["allPerfect", "combo"]) && isUInt32(state.combo) && (state.combo as number) <= 9999 && typeof state.allPerfect === "boolean";
-    case "result":
-      return objectRole === "hud-result" && exactKeys(state, ["judgeKey", "timingKey"]) && ["judge_auto", "judge_miss", "judge_bad", "judge_good", "judge_great", "judge_perfect"].includes(state.judgeKey as string) && (state.timingKey === null || state.timingKey === "judge_fast" || state.timingKey === "judge_slow");
-    case "life":
-      return objectRole === "hud-life" && exactKeys(state, ["color", "currentLife", "label", "lifeUpperLimit", "playerMaxLife", "primaryFill", "secondaryFill", "singleGameOver", "warning"]) &&
-        isUInt32(state.currentLife) && isUInt32(state.playerMaxLife) && isUInt32(state.lifeUpperLimit) && typeof state.label === "string" && /^\d+\/\d+$/.test(state.label) &&
-        validateRenderFloat32(state.primaryFill as never) && validateRenderFloat32(state.secondaryFill as never) && (state.color === "normal" || state.color === "danger") && typeof state.warning === "boolean" && typeof state.singleGameOver === "boolean";
-    case "add-score":
-      return objectRole === "hud-add-score" && exactKeys(state, ["depth", "poolIndex", "value"]) && isUInt32(state.value) && (state.value as number) > 0 && Number.isInteger(state.poolIndex) && (state.poolIndex as number) >= 0 && (state.poolIndex as number) < 4 && Number.isInteger(state.depth) && (state.depth as number) >= 0 && (state.depth as number) < 8;
-    case "habahiro-flash":
-      return objectRole === "habahiro-flash" && exactKeys(state, ["phase", "progress"]) && state.phase === "flash-start" && validateRenderFloat32(state.progress as never) && (state.progress as { value: number }).value === 0;
-    case "fidelity-label":
-      return objectRole === "fidelity-label" && state.label === RenderFidelityLabel && state.visible === true && (exactKeys(state, ["label", "visible"]) || exactKeys(state, ["absolutePosition", "label", "laneChangePhase", "visible"]) && Number.isInteger(state.absolutePosition) && (state.absolutePosition as number) >= 0 && ["flash-start", "change-lane", "complete"].includes(state.laneChangePhase as string));
-  }
-}
-
-function exactKeys(value: Record<string, unknown>, keys: readonly string[]): boolean {
-  return Object.keys(value).sort().join(",") === [...keys].sort().join(",");
-}
-
-function isUInt32(value: unknown): value is number {
-  return Number.isInteger(value) && (value as number) >= 0 && (value as number) <= 0xffffffff;
 }
 
 function validateVector2(value: unknown): boolean {

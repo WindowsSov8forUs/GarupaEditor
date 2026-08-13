@@ -1219,6 +1219,92 @@ async function testR4NoteFamilyBoundaries(): Promise<void> {
   console.log("ok 9 - R4 Flick/Directional, standard Slide chain and Multiple back line are positive while unobserved routes remain closed");
 }
 
+async function testSharedTypedHudValidation(): Promise<void> {
+  const score = {
+    score: 100,
+    scoreText: "[BEBEBE]00000[-][FF3B72]100[-]",
+    scoreMax: 1000,
+    rank: 0,
+    beforeRank: 0,
+    rankChanged: false,
+    meterKey: "score_meter_s",
+    ratio: f32(0.1),
+    sliderValue: f32(0.1),
+    foregroundActive: true,
+    indicatorLocalX: 42,
+    rankMarkerCLocalX: f32(1),
+    rankMarkerBLocalX: f32(2),
+    rankMarkerALocalX: f32(3),
+    rankMarkerSLocalX: f32(4),
+    rankMarkerSSLocalX: f32(5),
+    highRankEffect: "none",
+    highRankEffectActive: false,
+  };
+  const combo = { combo: 12, allPerfect: false };
+  const result = { judgeKey: "judge_great", timingKey: "judge_fast" };
+  const life = {
+    currentLife: 200,
+    playerMaxLife: 1000,
+    lifeUpperLimit: 2000,
+    singleGameOver: false,
+    primaryFill: f32(0.2),
+    secondaryFill: f32(0),
+    color: "danger",
+    warning: true,
+    label: "200/1000",
+  };
+  const addScore = { value: 50, poolIndex: 0, depth: 0 };
+  const without = (state: Readonly<Record<string, unknown>>, key: string) => {
+    const copy = { ...state };
+    delete copy[key];
+    return copy;
+  };
+  const cases = [
+    { hudRole: "score", objectRole: "hud-score", valid: score, missing: without(score, "ratio"), tampered: { ...score, ratio: { value: score.ratio.value, bits: "00000000" } } },
+    { hudRole: "combo", objectRole: "hud-combo", valid: combo, missing: without(combo, "combo"), tampered: { ...combo, combo: 10000 } },
+    { hudRole: "result", objectRole: "hud-result", valid: result, missing: without(result, "judgeKey"), tampered: { ...result, timingKey: "judge_early" } },
+    { hudRole: "life", objectRole: "hud-life", valid: life, missing: without(life, "primaryFill"), tampered: { ...life, warning: false } },
+    { hudRole: "add-score", objectRole: "hud-add-score", valid: addScore, missing: without(addScore, "value"), tampered: { ...addScore, poolIndex: 4 } },
+  ] as const;
+  for (const route of cases) {
+    const malformedStates = [
+      { label: "extra", state: { ...route.valid, unsupportedExtra: true } },
+      { label: "missing", state: route.missing },
+      { label: "tampered", state: route.tampered },
+    ];
+    for (const malformed of malformedStates) {
+      const renderer = new RecordingSimulatorRendererBackend();
+      requireOk(await renderer.prepare(SESSION, profile(), new LocalProvider(), preflight()), `${route.hudRole} ${malformed.label} prepare`);
+      requireOk(renderer.execute({
+        kind: "create-object",
+        sessionId: SESSION,
+        sequence: 0,
+        frame: 0,
+        substep: 0,
+        renderObjectId: `hud:${route.hudRole}`,
+        poolFamily: `hud:${route.hudRole}`,
+        role: route.objectRole,
+        parentObjectId: null,
+      }), `${route.hudRole} ${malformed.label} owner`);
+      const rejected = renderer.execute({
+        kind: "set-hud",
+        sessionId: SESSION,
+        sequence: 1,
+        frame: 0,
+        substep: 0,
+        renderObjectId: `hud:${route.hudRole}`,
+        hudRole: route.hudRole,
+        state: malformed.state,
+      } as unknown as RenderCommand);
+      equal(rejected.status, "evidence-required", `${route.hudRole} ${malformed.label} rejected`);
+      equal(renderer.snapshot().objectCount, 1, `${route.hudRole} ${malformed.label} zero owner mutation`);
+      equal(renderer.commandSnapshot().length, 1, `${route.hudRole} ${malformed.label} zero command mutation`);
+      requireOk(renderer.dispose(), `${route.hudRole} ${malformed.label} dispose`);
+    }
+  }
+  console.log("ok 10 - shared typed HUD validator rejects extra/missing/tampered state before mutation");
+}
+
 async function main(): Promise<void> {
   await testPortableLocalResources();
   await testProfileValidationAndAliases();
@@ -1228,7 +1314,8 @@ async function main(): Promise<void> {
   await testOrdinaryLongLifecycle();
   await testHostReadyGate();
   await testR4NoteFamilyBoundaries();
-  console.log("render contract tests passed: 9");
+  await testSharedTypedHudValidation();
+  console.log("render contract tests passed: 10");
 }
 
 void main().catch((error: unknown) => {

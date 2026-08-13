@@ -14,6 +14,7 @@ import { ImmutableLocalRenderResourceProvider, PortableRenderResourcePreflightAd
 import type { RenderCommand, RenderResourceAssetProfile, RenderResourceProfile } from "../backends/renderingContracts";
 import { createRenderFloat32 } from "../backends/renderingValidation";
 import { createRecordingSimulatorBackends } from "../backends/recordingBackend";
+import { RecordingSimulatorRendererBackend } from "../backends/recordingRendererBackend";
 import { createNoteBatchInformationList } from "../engine/chart/construction";
 import { ok, type SimulatorResult } from "../engine/evidence";
 import { createSimulatorEngine } from "../host/createSimulatorEngine";
@@ -142,13 +143,30 @@ async function main(): Promise<void> {
   assert(life.hudSpriteLabels?.includes("life-warning-outline"), "Life warning outline Sprite exists");
   assert(life.hudSpriteLabels?.includes("life-warning-body"), "Life warning body Sprite exists");
 
-  const invalid = renderer.preflight([{
+  const invalidCommand: RenderCommand = {
     sessionId: SESSION, sequence, frame: 1, substep: 0,
     kind: "set-hud", renderObjectId: "hud:life", hudRole: "life",
     state: { ...lifeState(251, 1000, 2000, false), warning: true },
-  }]);
+  };
+  const invalid = renderer.preflight([invalidCommand]);
   equal(invalid.status, "evidence-required", "Life threshold mismatch fails before Pixi mutation");
+  equal(renderer.snapshot().objectCount, 8, "failed typed Pixi HUD input preserves owner count");
   equal(renderer.sceneSnapshot().find((candidate) => candidate.renderObjectId === "hud:life")?.hudText, "200/1000", "failed batch leaves Pixi HUD unchanged");
+
+  const recording = new RecordingSimulatorRendererBackend();
+  const recordingProvider = requireOk(ImmutableLocalRenderResourceProvider.create(resources), "recording parity provider");
+  requireOk(await recording.prepare(
+    SESSION, profile, recordingProvider, new PortableRenderResourcePreflightAdapter(),
+  ), "recording parity prepare");
+  const recordingBatch = requireOk(recording.preflight(commands), "recording parity valid preflight");
+  requireOk(recording.commit(recordingBatch), "recording parity valid commit");
+  const recordingCommandCount = recording.commandSnapshot().length;
+  const recordingObjectCount = recording.snapshot().objectCount;
+  const invalidRecording = recording.execute(invalidCommand);
+  equal(invalidRecording.status, invalid.status, "Recording and Pixi reject the same malformed typed HUD input");
+  equal(recording.commandSnapshot().length, recordingCommandCount, "failed typed Recording HUD input adds no command");
+  equal(recording.snapshot().objectCount, recordingObjectCount, "failed typed Recording HUD input preserves owner count");
+  requireOk(recording.dispose(), "recording parity dispose");
 
   requireOk(renderer.dispose(), "actual Pixi dispose");
   equal(renderer.snapshot().objectCount, 0, "actual Pixi dispose releases all owners");
