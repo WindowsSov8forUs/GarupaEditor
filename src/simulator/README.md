@@ -1,41 +1,35 @@
 # GarupaEditor Simulator
 
-`src/simulator`是按Reverse证据重建的**证据有界单人核心子集**。本目录不代表完整原作Live：角色/card/deck技能效果、角色Heal/Guard/NeverDie、Fever与多人机制明确排除；证据不足的输入必须在owner mutation前失败关闭。
+`src/simulator`是按已提交Reverse证据重建的**证据有界单人核心子集**，不是完整原作Live。证据不足的输入在最早可知边界返回`evidence-required`；角色/card/deck效果、Fever和多人机制明确排除。
 
-## 当前反审状态
+## 当前分门状态
 
-2026-08-13重新开启全模块证据完整性反审。可提交的能力分类与声明边界见：
+可提交状态由以下机器可校验账本限定：
 
 - [`audit/current-capability-matrix.json`](./audit/current-capability-matrix.json)
 - [`audit/current-claim-ledger.json`](./audit/current-claim-ledger.json)
+- [`audit/current-production-integrity-review.json`](./audit/current-production-integrity-review.json)
 
-Reverse中的`productionAuthorization=true`只授权实现，不证明Garupa已消费。Recording backend、源码marker、合成texture decoder或测试自行写入的`status=closed`都不能关闭production正向门。
+| 门 | 状态 | 精确范围 |
+| --- | --- | --- |
+| Public/autonomous core | `closed-portable` | 单一launch、内部scheduler/input/session、自然结束/Game Over/fault/cleanup、closed-only receipt |
+| BMS/chart | `closed-portable` | 已登记production chart bytes的构造、图、批次和command data |
+| Zero-seek runtime | `closed-portable` | manual、Auto Live、pause/resume、opaque checkpoint ReturnTime、score/life |
+| Ordinary Pixi | `closed-portable` | hash资源身份、typed命令、owner、Float32和Pixi command/scene routing |
+| Audio | `closed-portable` | semantic command、PCM与WebAudio graph；不含CRI/Android mixer/物理输出 |
+| Particle | `closed-portable` | deterministic semantic simulation与Pixi handoff；不含Unity GPU/framebuffer |
+| HAB external preview | `open-evidence-required` | 类型只允许显式`degraded-explicit`，但当前锁定HAB谱因external Note animation无授权而在资源读取前拒绝 |
+| HAB original parity | `open-evidence-required` | 原作resource/runtime/frame未关闭 |
+| Non-zero initial seek | `open-evidence-required` | 10.1.3 MoveTime没有逐claim 10.1.4等价闭环 |
+| Button 07 | `open-evidence-required` | current scene/manual/render/particle mapping未知 |
+| Browser decode/raster | `open-evidence-required` | Node synthetic decoder不证明`createImageBitmap`、FontFace glyph或raster |
+| Fixed-device physical exact | `open-device-exact` | 120/adaptive cadence、GPU/framebuffer、speaker output保持开放 |
+| Character skill/Fever/multiplayer | `excluded` | 不属于当前产品范围 |
+| Main-program integration | `unauthorized-stage-9` | 本分支未安装到App/window/editor/Tauri/mobile |
 
-当前可以分别陈述的已验收范围：
+不得用一个总体“完成”状态覆盖这些不同门。
 
-- BMS构造及已登记生产谱样本；
-- 零初始seek下的时钟/调度、Auto Live、手动输入与判定；
-- 不含角色技能效果的UInt32 score、combo、判定计数、Life、Game Over和clear status领域链；
-- 逐谱C/B/A/S/SS master驱动的Score Rank/Gauge portable状态与资源命令；
-- ordinary Note/HUD的hash资源身份、typed命令、owner生命周期及Pixi scene routing；
-- 逐谱BGM、固定玩法SE的portable语义和WebAudio图映射；
-- deterministic particle语义、Pixi particle routing与whole-engine checkpoint ReturnTime；
-- single public launch、shared resource selection、autonomous runtime及natural completion。
-
-这些是分门portable结论，不是browser raster、固定设备framebuffer、CRI/Android音频或原作整体exact声明。
-
-## 已排除机制
-
-Production不接受也不恢复：
-
-- character/card/deck业务模型和技能效果；
-- 角色加分、回血、判定强化、Guard/NeverDie；
-- character cut-in、audience、clear voice；
-- collaboration、team-live-festival、Fever及多人HUD/倍率。
-
-**Skill音符不等于角色技能效果。** `GameNoteAdditionalType.Skill`的chart-owned外观、命中SE和判定粒子仍在当前单人核心子集内，但不会查询member/card或触发角色效果。
-
-## Public边界
+## Public合同
 
 唯一业务入口：
 
@@ -43,11 +37,34 @@ Production不接受也不恢复：
 import { launchSimulatorModule } from "src/simulator";
 ```
 
-调用方提交BMS、显式逐谱BGM bytes/metadata、中立score/life master数据，以及play/practice/audio/visual配置。成功receipt只暴露`closed` Promise，不暴露engine、step、backend、provider、scene、replay factory或dispose。
+调用方提交BMS、逐谱BGM bytes/metadata、中立score/life master，以及play/practice/audio/visual配置。成功结果只暴露`closed` Promise，不暴露engine、step、backend、provider、scene、replay factory或dispose。
 
-启动后scheduler、input、pause、checkpoint/ReturnTime、BGM自然结束、Game Over、fault、mount与dispose均为simulator内部owner。当前分支没有把该入口安装进主程序。
+`SimulatorModuleCloseReport.capabilities`逐门发布：
 
-## 架构
+- selected rendering fidelity及`selectedRenderingGate`；
+- ordinary command/scene、HAB preview/parity、non-zero seek、Button 07；
+- browser decode/raster、fixed-device exact；
+- excluded character/Fever/multiplayer；
+- unauthorized stage-9。
+
+若已有primary failure，cleanup仍尝试所有owner，secondary failures写入`failure.cleanupFailures`，不会覆盖primary identity。
+
+## 支持范围说明
+
+当前`closed-portable`子集包括：
+
+- BMS构造与登记生产谱样本；
+- 零initial seek时的clock/scheduling、Auto Live、manual input/judgement；
+- 不含角色效果的UInt32 score、combo、判定计数、Life、Game Over、clear status；
+- 逐谱C/B/A/S/SS master驱动的Rank/Gauge portable状态与资源命令；
+- ordinary Note/HUD typed命令与Pixi command/scene routing；
+- 逐谱BGM、固定玩法SE、portable PCM/WebAudio graph；
+- deterministic particle与whole-engine checkpoint ReturnTime；
+- single public launch、shared resource selection和autonomous lifecycle。
+
+**Skill音符不等于角色技能效果。** `GameNoteAdditionalType.Skill`的chart-owned外观、命中SE和判定粒子仍在范围内，但不会查询member/card或触发角色加分、Heal、Guard、NeverDie或判定强化。
+
+## 架构与resource边界
 
 ```text
 src/simulator/
@@ -57,61 +74,57 @@ src/simulator/
 ├─ platform/    # 中立production capability composition
 ├─ scene/       # ordinary/particle/manual/HAB scene owner
 ├─ host/        # engine host与whole-engine replay
-├─ engine/      # chart、score/life、judgement、note及命令producer
+├─ engine/      # chart、score/life、judgement、Note及command producers
 ├─ backends/    # Recording/Pixi/WebAudio/particle/resource adapters
 ├─ resources/   # immutable shared store与selector
-├─ audit/       # 可提交能力矩阵与声明账本
-└─ testing/     # 隔离测试与登记fixture
+├─ audit/       # committed capability/claim/integrity ledgers
+└─ testing/     # 隔离测试与manifested fixture
 ```
 
-`engine/`不依赖React、Pixi、Tauri、DOM、编辑器谱面类型或窗口协议。
+`engine/`不依赖React、Pixi、Tauri、DOM、编辑器谱面类型或窗口协议。Production不读取testing fixture、Reverse工作树或本地忽略目录，不隐式联网、不选择默认资源、不自动fallback。缺少长度/SHA、metadata、cue、logical ID/exact key、typed state或backend capability时失败关闭。
 
-## Resource边界
+## Rendering验收分层
 
-Production只内置manifest/metadata，不读取testing fixture、Reverse工作树或本地忽略工作目录。当前shared store inventory为55 keys / 13,605,661 bytes，另加每session显式BGM；该数字只表示已装配库存，不表示所有原作资源或能力均可达。
+### `actual-pixi-command-scene-routing`
 
-缺项、长度/SHA、PNG/MP3 metadata、cue或关系不符均失败关闭。Production不得隐式联网、选择默认资源或fallback。
+真实fixture bytes经过长度/SHA/profile检查；production run只输出raw resource/owner/Float32/scene/cleanup observation。Verifier从Reverse `simulator-dynamic-acceptance-oracle-10-1-4@11b37f4a`的具体expected values独立计算PR08/09/11/22/23/24/26/27/29/30/39。测试自写`status=closed`不能影响结论。
 
-## Rendering门分层
+当前全谱portable observation：656 batches、3900 frames、positive score、`add-score|combo|life|result|score` routes、dispose后owner 0/stage children 0。`373000`是当前配置的observed value，不声明原作全谱exact score。
 
-### Ordinary
+### `browser-decode-integration`
 
-当前关闭的是`actual-pixi-command-scene-routing`：真实fixture bytes经过长度/SHA/profile检查后，验证typed命令、资源key、owner生命周期和Pixi scene对象。现有Node测试decoder创建空`TextureSource`，因此**不**证明真实browser PNG/FontFace decode、字形raster或framebuffer像素。
+现有Node adapter创建synthetic `TextureSource`并返回test font family，只证明command/scene routing。真实`createImageBitmap`、FontFace glyph和browser raster未执行，保持开放。
 
-### HABAHIRO
+### `framebuffer/device-exact`
 
-Reverse只授权external portable asset的**显式degraded preview**，并要求可见`Approximate HABAHIRO`标签与machine-readable fidelity。原作HAB runtime/frame parity保持开放；external atlas上的ordinary Note动画未获授权。反审完成前不得把`current-external`路线称作complete/exact，也不得由ordinary RP结果关闭HAB门。
+没有真实GPU/device oracle时不关闭。Reverse历史physical frame只能说明原作证据，不等于当前browser framebuffer parity。
+
+## HABAHIRO边界
+
+合同类型只保留`habahiro-external-degraded-preview`，要求caller显式opt-in、可见`Approximate HABAHIRO`及machine-readable fidelity，禁止ordinary animation substitution和automatic fallback。当前锁定HAB谱触及未授权external Note animation，因此chart capability scan后、shared-store read/backend prepare前返回`render.habahiro.external-note-animation-evidence-required`。这不是可运行preview或original parity声明。
 
 ## Evidence workflow
 
 流程见[`evidence-workflow.md`](./evidence-workflow.md)。只消费已verify、commit、push的Reverse证据。10.1.3或其他来源只有在Reverse建立逐claim跨版本/跨来源等价证明、适用域、反例检查和committed-only verifier后，才可用于10.1.4 production。
 
-关键10.1.4证据包括：
+本轮审计基线：
 
-- particle portable closure：`9fb544b2`；
-- per-chart BGM：`55bdde63`；
-- ordinary portable resources：`6f49ebbc`；
-- scene/manual：`30788a2a`；
-- Score Rank/Gauge：`82c7facb`、`2fd90fa7`、`d5f5bc0e`、`95e629d9`；
-- ordinary visible authorization：`80a173a2`、`3ca922cc`、`ee76bd29`、`bd21127c`、`f94947d9`。
+- 全量source/claim/constant账本：Reverse `be017d83`；
+- 非自证动态expected values及晋升chart/PCM快照：Reverse `11b37f4a`；
+- ordinary visible授权：Reverse `f94947d9`；
+- particle portable closure：Reverse `9fb544b2`；
+- ordinary resources：Reverse `6f49ebbc`；
+- Score Rank/Gauge：Reverse `95e629d9`。
 
 ## 验证
 
 ```powershell
 npm.cmd run simulator:test:fixtures
 npx.cmd tsc -p src/simulator/tsconfig.json
+npm.cmd run simulator:test:evidence-integrity
 npm.cmd run simulator:test:device-closure
 ```
 
-每个测试入口只证明其命名范围。`simulator:test:render-production`必须使用动态observation；后续反审将使verifier从原始observation独立计算结论，不再信任测试自报closed状态。
-
-## 显式开放项
-
-- HAB external atlas ordinary Note动画与HAB original parity；
-- 非零initial practice seek的10.1.4 whole-engine pre-roll；
-- `Button_07_BMS_1P_07` scene/manual/render/particle mapping；
-- browser真实PNG/FontFace decode integration与framebuffer raster；
-- 固定设备120/adaptive cadence、GPU/driver framebuffer、visible/audio physical exact；
-- stage-9主程序集成。
+`simulator:test:evidence-integrity`执行fixture provenance、static integrity、raw Pixi independent verifier、ordinary/HAB early gate、manual、Auto、score/life、audio和particle动态矩阵。每个入口只证明其命名范围。
 
 `mainProgramIntegrationAuthorization=false`。不得修改主程序入口或用兼容壳恢复已删除结构。

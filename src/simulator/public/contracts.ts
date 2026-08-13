@@ -106,12 +106,27 @@ export type SimulatorRenderingFidelity =
   | "ordinary-current-portable"
   | "habahiro-external-degraded-preview";
 
+export type SimulatorCapabilityGateStatus =
+  | "closed-portable"
+  | "degraded-explicit"
+  | "excluded"
+  | "open-evidence-required"
+  | "open-device-exact"
+  | "unauthorized-stage-9";
+
 export interface SimulatorModuleCapabilitySummary {
   readonly rendering: SimulatorRenderingFidelity | null;
-  readonly browserRaster: "open-not-claimed";
-  readonly fixedDeviceExact: "open-not-claimed-fixed-device-limit";
-  readonly characterSkillFeverMultiplayer: "excluded-not-implemented";
-  readonly mainProgramIntegrationAuthorized: false;
+  readonly publicAutonomousCore: "closed-portable";
+  readonly ordinaryCommandScene: "closed-portable";
+  readonly habahiroExternalPreview: "open-evidence-required";
+  readonly habahiroOriginalParity: "open-evidence-required";
+  readonly nonzeroInitialPracticeSeek: "open-evidence-required";
+  readonly button07SceneMapping: "open-evidence-required";
+  readonly browserDecodeRaster: "open-evidence-required";
+  readonly fixedDeviceExact: "open-device-exact";
+  readonly characterSkillFeverMultiplayer: "excluded";
+  readonly mainProgramIntegration: "unauthorized-stage-9";
+  readonly selectedRenderingGate: "closed-portable" | "degraded-explicit" | "open-evidence-required";
 }
 
 export interface SimulatorModuleCloseReport {

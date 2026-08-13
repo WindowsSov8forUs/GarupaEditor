@@ -11,6 +11,8 @@ const matrix = JSON.parse(readFileSync(matrixPath, "utf8"));
 const claims = JSON.parse(readFileSync(claimsPath, "utf8"));
 const integrity = JSON.parse(readFileSync(integrityPath, "utf8"));
 const readme = readFileSync(join(simulatorRoot, "README.md"), "utf8");
+const publicContracts = readFileSync(join(simulatorRoot, "public", "contracts.ts"), "utf8");
+const publicCapabilities = readFileSync(join(simulatorRoot, "public", "capabilities.ts"), "utf8");
 
 if (matrix.schemaVersion !== 1 || !Array.isArray(matrix.rows) || matrix.rows.length === 0) {
   throw new Error("capability matrix is missing or empty");
@@ -62,6 +64,25 @@ for (const row of matrix.rows) {
 }
 for (const required of ["CAP-PRACTICE-01", "CAP-SCENE-07", "CAP-HAB-01", "CAP-HAB-EXACT-01", "CAP-DEVICE-01", "CAP-STAGE9-01", "CAP-EXCLUDED-01"]) {
   if (!ids.has(required)) throw new Error(`capability matrix omitted ${required}`);
+}
+const publicGateLiterals = [
+  "closed-portable", "degraded-explicit", "excluded", "open-evidence-required",
+  "open-device-exact", "unauthorized-stage-9",
+];
+for (const literal of publicGateLiterals) {
+  if (!publicContracts.includes(`\"${literal}\"`) || !readme.includes(`\`${literal}\``)) {
+    throw new Error(`public contract or README omitted gate literal: ${literal}`);
+  }
+}
+for (const field of [
+  "publicAutonomousCore", "ordinaryCommandScene", "habahiroExternalPreview",
+  "habahiroOriginalParity", "nonzeroInitialPracticeSeek", "button07SceneMapping",
+  "browserDecodeRaster", "fixedDeviceExact", "characterSkillFeverMultiplayer",
+  "mainProgramIntegration", "selectedRenderingGate",
+]) {
+  if (!publicContracts.includes(`readonly ${field}:`) || !publicCapabilities.includes(`${field}:`)) {
+    throw new Error(`public capability summary omitted or failed to populate ${field}`);
+  }
 }
 for (const [pattern, label] of [
   [/完整单人谱面玩法/, "unscoped complete single-player claim"],

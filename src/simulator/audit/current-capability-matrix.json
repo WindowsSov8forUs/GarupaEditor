@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "auditStatus": "reopened-full-production-evidence-integrity-audit",
+  "auditStatus": "published-evidence-bounded-production-scope",
   "lockedSample": {
     "package": "jp.co.craftegg.band",
     "versionName": "10.1.4",
@@ -13,34 +13,54 @@
       "capability": "single public launch and closed-only receipt",
       "productionPath": "public -> runtime binding -> autonomous session",
       "status": "closed-portable",
-      "reverseEvidence": ["autonomous-simulator-portable-pack-10-1-4", "autonomous-simulator-scene-layout-10-1-4"],
+      "reverseEvidence": [
+        "autonomous-simulator-portable-pack-10-1-4",
+        "autonomous-simulator-scene-layout-10-1-4"
+      ],
       "dynamicRequirement": "public/runtime production composition tests",
-      "exclusions": ["main-program installation", "caller lifecycle control handles"]
+      "exclusions": [
+        "main-program installation",
+        "caller lifecycle control handles"
+      ]
     },
     {
       "id": "CAP-CHART-01",
       "capability": "BMS construction and command parsing for registered production charts",
       "productionPath": "public chart bytes -> createNoteBatchInformationList",
       "status": "closed-portable",
-      "reverseEvidence": ["chart construction committed fixtures and contracts"],
+      "reverseEvidence": [
+        "chart construction committed fixtures and contracts"
+      ],
       "dynamicRequirement": "chart production oracle",
-      "exclusions": ["unregistered cloned ChartConstructionResult"]
+      "exclusions": [
+        "unregistered cloned ChartConstructionResult"
+      ]
     },
     {
       "id": "CAP-RUNTIME-01",
       "capability": "zero-seek manual and Auto Live scheduling, judgement, score/life state",
       "productionPath": "engine initialize -> scheduler/input -> frame owners",
       "status": "closed-portable",
-      "reverseEvidence": ["clock-scheduling-runtime-oracle", "manual-input-runtime-contract-10-1-4", "score-life-state-runtime-contract-10-1-4"],
+      "reverseEvidence": [
+        "clock-scheduling-runtime-oracle",
+        "manual-input-runtime-contract-10-1-4",
+        "score-life-state-runtime-contract-10-1-4"
+      ],
       "dynamicRequirement": "clock/manual/Auto/score-life production tests",
-      "exclusions": ["character/card/deck skills", "Fever", "multiplayer"]
+      "exclusions": [
+        "character/card/deck skills",
+        "Fever",
+        "multiplayer"
+      ]
     },
     {
       "id": "CAP-PRACTICE-01",
       "capability": "initial non-zero practice seek",
       "productionPath": "public request -> recipe builder",
       "status": "open-evidence-required",
-      "reverseEvidence": ["move-time-state-restore is 10.1.3-only and has no committed per-claim 10.1.4 equivalence closure"],
+      "reverseEvidence": [
+        "move-time-state-restore is 10.1.3-only and has no committed per-claim 10.1.4 equivalence closure"
+      ],
       "dynamicRequirement": "whole-engine pre-publication pre-roll oracle",
       "failureCapability": "simulator.composition.nonzero-initial-practice-seek",
       "failureBoundary": "before static-resource selection and backend preparation"
@@ -50,7 +70,9 @@
       "capability": "Button_07_BMS_1P_07 scene/manual/render/particle mapping",
       "productionPath": "constructed chart -> scene capability preflight",
       "status": "open-evidence-required",
-      "reverseEvidence": ["autonomous-simulator-scene-layout-10-1-4 explicitly marks Button 7 unsupported"],
+      "reverseEvidence": [
+        "autonomous-simulator-scene-layout-10-1-4 explicitly marks Button 7 unsupported"
+      ],
       "dynamicRequirement": "current scene mapping plus cross-owner oracle",
       "failureCapability": "simulator.composition.unsupported-button-07",
       "failureBoundary": "before static-resource reads and backend preparation"
@@ -60,25 +82,37 @@
       "capability": "ordinary Note and single-player HUD Pixi command/scene routing",
       "productionPath": "engine render producer -> Pixi owner/resource mapping",
       "status": "closed-portable",
-      "reverseEvidence": ["ordinary-visible-rendering-portable-10-1-4@f94947d9", "score-hud-rank-gauge-10-1-4@95e629d9"],
-      "dynamicRequirement": "actual-pixi-command-scene-routing from hash-validated bytes and independent expected values",
-      "exclusions": ["browser PNG/FontFace decode unless browser harness executes", "framebuffer/device exact"]
+      "reverseEvidence": [
+        "ordinary-visible-rendering-portable-10-1-4@f94947d9",
+        "score-hud-rank-gauge-10-1-4@95e629d9",
+        "simulator-dynamic-acceptance-oracle-10-1-4@11b37f4a"
+      ],
+      "dynamicRequirement": "actual-pixi-command-scene-routing raw observation independently evaluated against committed expected values",
+      "exclusions": [
+        "browser PNG/FontFace decode unless browser harness executes",
+        "framebuffer/device exact"
+      ]
     },
     {
       "id": "CAP-RENDER-BROWSER-01",
       "capability": "browser createImageBitmap and FontFace decode integration",
       "productionPath": "BrowserPixiTextureDecoder",
       "status": "open-evidence-required",
-      "reverseEvidence": ["portable resource hashes and metadata only"],
+      "reverseEvidence": [
+        "portable resource hashes and metadata only"
+      ],
       "dynamicRequirement": "real browser decode harness",
       "failureBoundary": "decoder rejects when browser capabilities are unavailable"
     },
     {
       "id": "CAP-HAB-01",
-      "capability": "HABAHIRO external-asset preview",
+      "capability": "HABAHIRO external-asset degraded preview (current locked charts fail early because external Note animation is unauthorized)",
       "productionPath": "chart selection -> explicit degraded preview",
       "status": "open-evidence-required",
-      "reverseEvidence": ["resource_pixi_rendering_delivery_oracle: ordinary-exact-habahiro-degraded", "habahiro_degraded_approximation"],
+      "reverseEvidence": [
+        "resource_pixi_rendering_delivery_oracle: ordinary-exact-habahiro-degraded",
+        "habahiro_degraded_approximation"
+      ],
       "dynamicRequirement": "explicit opt-in, visible Approximate HABAHIRO label, machine-readable fidelity, separate degraded oracle",
       "failureCapability": "render.habahiro.external-note-animation-evidence-required",
       "failureBoundary": "post-chart capability scan before static-resource reads; current chart remains blocked because external Note animation is unauthorized"
@@ -88,7 +122,9 @@
       "capability": "HABAHIRO original runtime/frame parity",
       "productionPath": "not production-authorized",
       "status": "open-evidence-required",
-      "reverseEvidence": ["habahiro_exact_parity_gate=open-not-claimed"],
+      "reverseEvidence": [
+        "habahiro_exact_parity_gate=open-not-claimed"
+      ],
       "dynamicRequirement": "current original resource, natural runtime and frame oracle",
       "failureBoundary": "must not be constructible as a production fidelity"
     },
@@ -97,18 +133,29 @@
       "capability": "portable semantic BGM/SE command and WebAudio transport",
       "productionPath": "session BGM + fixed SE -> audio producer/backend",
       "status": "closed-portable",
-      "reverseEvidence": ["audio 10.1.4 portable lifecycle/PCM closure", "audio-session-bgm-resource-contract-10-1-4"],
+      "reverseEvidence": [
+        "audio 10.1.4 portable lifecycle/PCM closure",
+        "audio-session-bgm-resource-contract-10-1-4"
+      ],
       "dynamicRequirement": "semantic command, PCM and WebAudio graph tests",
-      "exclusions": ["CRI exact", "Android mixer", "speaker physical output"]
+      "exclusions": [
+        "CRI exact",
+        "Android mixer",
+        "speaker physical output"
+      ]
     },
     {
       "id": "CAP-PARTICLE-01",
       "capability": "deterministic portable particle command/simulation/Pixi routing",
       "productionPath": "particle producer -> deterministic simulation -> Pixi renderer",
       "status": "closed-portable",
-      "reverseEvidence": ["device-runtime-closure-10-1-4 portable closure"],
+      "reverseEvidence": [
+        "device-runtime-closure-10-1-4 portable closure"
+      ],
       "dynamicRequirement": "command/simulation/semantic-frame oracle and locked digest",
-      "exclusions": ["Unity shader/GPU/driver/framebuffer parity"]
+      "exclusions": [
+        "Unity shader/GPU/driver/framebuffer parity"
+      ]
     },
     {
       "id": "CAP-EXCLUDED-01",
@@ -117,14 +164,18 @@
       "status": "excluded",
       "reverseEvidence": [],
       "dynamicRequirement": "public/dependency static rejection",
-      "exclusions": ["all listed mechanisms are intentionally not implemented"]
+      "exclusions": [
+        "all listed mechanisms are intentionally not implemented"
+      ]
     },
     {
       "id": "CAP-DEVICE-01",
       "capability": "fixed-device cadence, GPU framebuffer and physical audio parity",
       "productionPath": "outside portable gate",
       "status": "open-device-exact",
-      "reverseEvidence": ["device exact gate open-not-claimed-fixed-device-limit"],
+      "reverseEvidence": [
+        "device exact gate open-not-claimed-fixed-device-limit"
+      ],
       "dynamicRequirement": "locked device and physical observation",
       "exclusions": []
     },
@@ -133,9 +184,13 @@
       "capability": "main-program integration",
       "productionPath": "not installed by this branch",
       "status": "unauthorized-stage-9",
-      "reverseEvidence": ["mainProgramIntegrationAuthorization=false"],
+      "reverseEvidence": [
+        "mainProgramIntegrationAuthorization=false"
+      ],
       "dynamicRequirement": "separate authorization",
-      "exclusions": ["App/window/editor/Tauri/mobile integration"]
+      "exclusions": [
+        "App/window/editor/Tauri/mobile integration"
+      ]
     }
   ]
 }

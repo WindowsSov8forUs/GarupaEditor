@@ -291,10 +291,10 @@ async function testRecipeNaturalCompletion(): Promise<void> {
   assert.equal(stepped.report.result?.clearStatus, 2);
   assert.equal(stepped.report.result?.combo, 7);
   assert.equal(stepped.report.capabilities.rendering, null);
-  assert.equal(stepped.report.capabilities.browserRaster, "open-not-claimed");
-  assert.equal(stepped.report.capabilities.fixedDeviceExact, "open-not-claimed-fixed-device-limit");
-  assert.equal(stepped.report.capabilities.characterSkillFeverMultiplayer, "excluded-not-implemented");
-  assert.equal(stepped.report.capabilities.mainProgramIntegrationAuthorized, false);
+  assert.equal(stepped.report.capabilities.browserDecodeRaster, "open-evidence-required");
+  assert.equal(stepped.report.capabilities.fixedDeviceExact, "open-device-exact");
+  assert.equal(stepped.report.capabilities.characterSkillFeverMultiplayer, "excluded");
+  assert.equal(stepped.report.capabilities.mainProgramIntegration, "unauthorized-stage-9");
   assert.equal(disposals, 1);
 }
 
@@ -435,6 +435,20 @@ async function testAutonomousLaunchAndClose(): Promise<void> {
   const report = await launched.closed;
   assert.equal(report.reason, "user-closed");
   assert.ok(Object.isFrozen(report));
+  assert.deepEqual(report.capabilities, {
+    rendering: null,
+    publicAutonomousCore: "closed-portable",
+    ordinaryCommandScene: "closed-portable",
+    habahiroExternalPreview: "open-evidence-required",
+    habahiroOriginalParity: "open-evidence-required",
+    nonzeroInitialPracticeSeek: "open-evidence-required",
+    button07SceneMapping: "open-evidence-required",
+    browserDecodeRaster: "open-evidence-required",
+    fixedDeviceExact: "open-device-exact",
+    characterSkillFeverMultiplayer: "excluded",
+    mainProgramIntegration: "unauthorized-stage-9",
+    selectedRenderingGate: "open-evidence-required",
+  }, "close receipt publishes each capability gate without an aggregate complete claim");
   assert.equal(session.steps, 1, "user-close owns frame before engine step");
   assert.equal(session.closes, 1);
   assert.equal(scheduler.stops, 1);
