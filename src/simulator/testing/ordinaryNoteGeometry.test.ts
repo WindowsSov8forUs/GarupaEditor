@@ -258,7 +258,10 @@ function main(): void {
   requireOk(activationProducer.beginOuterFrame(8), "begin activation frame");
   requireOk(activationProducer.beginSubstep(1), "begin activation substep");
   const activationPool = requireOk(
-    activationProducer.preflightPoolSetup([{ poolObjectId: "normal:0", family: "normal" }]),
+    activationProducer.preflightPoolSetup([
+      { poolObjectId: "normal:0", family: "normal" },
+      { poolObjectId: "flick:0", family: "flick" },
+    ]),
     "preflight activation pool",
   );
   requireOk(activationPool.commit(), "commit activation pool");
@@ -283,11 +286,11 @@ function main(): void {
     "Activate preserves initial transform, visibility, setupNoteType and three adjustment writes",
   );
   equal(floatBytes(preparedActivation.motionState.progressRate), "398EE33C", "activation returns committed future progress");
-  equal(activationRenderer.nextSequence, 2, "activation preflight consumes no sequence");
+  equal(activationRenderer.nextSequence, 6, "activation preflight consumes no sequence after two pool owners and one fixed Flick child");
   requireOk(preparedActivation.transaction.commit(), "commit ordinary activation");
-  equal(activationRenderer.nextSequence, 8, "activation commits all six ordered commands");
+  equal(activationRenderer.nextSequence, 12, "activation commits all six ordered commands");
   const flickPrepared = requireOk(activationProducer.preflightOrdinaryNoteActivation(
-    "normal:0",
+    "flick:0",
     { ...activationInformation, fireNoteType: FrontNoteType.Flick },
     f32(120),
     f32(97),
@@ -321,7 +324,7 @@ function main(): void {
     1,
   ), "current R7 virtual-lane activation");
   requireOk(virtualPrepared.transaction.discard(), "discard virtual-lane activation probe");
-  equal(activationRenderer.nextSequence, 8, "discarded and invalid activation routes consume no sequence");
+  equal(activationRenderer.nextSequence, 12, "discarded and invalid activation routes consume no sequence");
 
   const longPoolRenderer = new CapturingRenderer();
   const longPoolProducer = new RenderCommandProducer("geometry-session", longPoolRenderer, {
@@ -334,16 +337,19 @@ function main(): void {
   equal(
     longPoolRenderer.commands.map((command) => `${command.kind}:${command.renderObjectId}`).join(","),
     "create-object:render:long:0:root,hide-object:render:long:0:root," +
+      "create-object:render:long:0:root:ordinary-long-flash,hide-object:render:long:0:root:ordinary-long-flash," +
       "create-object:render:long:0:after,hide-object:render:long:0:after," +
+      "create-object:render:long:0:after:ordinary-note-icon,hide-object:render:long:0:after:ordinary-note-icon," +
       "create-object:render:long:0:mesh,hide-object:render:long:0:mesh",
-    "Long pool establishes root, after and mesh stable identities in owner order",
+    "Long pool establishes root, independent Flash, after/icon and mesh stable identities in owner order",
   );
   requireOk(longPoolSetup.commit(), "commit Long child pool");
   const longPoolRelease = requireOk(longPoolProducer.preflightSessionRelease(), "preflight Long child release");
   equal(
-    longPoolRenderer.commands.slice(-3).map((command) => command.renderObjectId).join(","),
-    "render:long:0:mesh,render:long:0:after,render:long:0:root",
-    "Long session release remains child-first",
+    longPoolRenderer.commands.slice(-5).map((command) => command.renderObjectId).join(","),
+    "render:long:0:after:ordinary-note-icon,render:long:0:mesh,render:long:0:after," +
+      "render:long:0:root:ordinary-long-flash,render:long:0:root",
+    "Long session release remains child-first across independent animation owners",
   );
   requireOk(longPoolRelease.commit(), "commit Long child release");
 
