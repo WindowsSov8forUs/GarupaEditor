@@ -202,10 +202,12 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
     try {
       for (const sample of request.samples) sprites.push(this.createSprite(sample));
     } catch {
-      destroySprites(sprites);
+      const cleanupFailures = destroySprites(sprites);
       return this.latchFault(
         "particle.pixi.sample-allocation-threw",
-        "Detached Sprite allocation, texture or mapping failure is the first terminal Pixi particle fault and consumes no frame.",
+        cleanupFailures.length === 0
+          ? "Detached Sprite allocation, texture or mapping failure is the first terminal Pixi particle fault and consumes no frame."
+          : `Detached Sprite allocation failed and cleanup continued; failed identities: ${cleanupFailures.join(",")}.`,
       );
     }
     const capability = Object.freeze({
@@ -234,18 +236,25 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
       );
     }
     try {
-      this.clearLiveSprites();
+      const priorCleanupFailures = this.clearLiveSprites();
+      if (priorCleanupFailures.length > 0) {
+        throw new Error(`failed prior live Sprite cleanup: ${priorCleanupFailures.join(",")}`);
+      }
       for (const sprite of pending.sprites) {
         this.stage.addChild(sprite);
         this.liveSprites.push(sprite);
       }
     } catch {
       this.pending = null;
-      destroySprites(pending.sprites);
-      this.clearLiveSprites();
+      const cleanupFailures = [
+        ...destroySprites(pending.sprites),
+        ...this.clearLiveSprites(),
+      ];
       return this.latchFault(
         "particle.pixi.scene-mutation-threw",
-        "A Pixi particle scene mutation is terminal and clears every live/detached sample node.",
+        cleanupFailures.length === 0
+          ? "A Pixi particle scene mutation is terminal and clears every live/detached sample node."
+          : `A Pixi particle scene mutation is terminal; cleanup continued with failed identities: ${cleanupFailures.join(",")}.`,
       );
     }
     this.pending = null;
@@ -260,9 +269,14 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
     if (this.pending?.capability !== batch) {
       return this.reject("particle.pixi.invalid-discard-capability", "Only the exact pending Pixi particle frame may be discarded.");
     }
-    destroySprites(this.pending.sprites);
+    const cleanupFailures = destroySprites(this.pending.sprites);
     this.pending = null;
-    return particleAccepted(undefined);
+    return cleanupFailures.length === 0
+      ? particleAccepted(undefined)
+      : this.latchFault(
+          "particle.pixi.discard-owner-threw",
+          `Discard continued across every detached Sprite; failed identities: ${cleanupFailures.join(",")}.`,
+        );
   }
 
   recordTerminalFault(capability: string, boundary: string): ParticleOperationResult<never> {
@@ -322,18 +336,33 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
 
   dispose(): ParticleOperationResult<void> {
     if (this.state === "disposed") return particleAccepted(undefined);
-    if (this.pending !== null) destroySprites(this.pending.sprites);
+    const cleanupFailures = [
+      ...(this.pending === null ? [] : destroySprites(this.pending.sprites, "pending")),
+      ...this.clearLiveSprites(),
+      ...this.resetTextures(),
+    ];
     this.pending = null;
-    this.clearLiveSprites();
-    this.resetTextures();
     this.systems.clear();
     this.profile = null;
     this.scene = null;
     this.sessionId = null;
     this.nextFrame = null;
     this.lastSampleCount = 0;
+    if (cleanupFailures.length > 0 && this.fault === null) {
+      this.fault = Object.freeze({
+        code: "particle-backend-fault" as const,
+        capability: "particle.pixi.dispose-owner-threw",
+        boundary: `Pixi particle disposal continued across every owner; failed cleanup identities: ${cleanupFailures.join(",")}.`,
+      });
+    }
     this.state = "disposed";
-    return particleAccepted(undefined);
+    return cleanupFailures.length === 0
+      ? particleAccepted(undefined)
+      : particleRejected(
+          "particle-backend-fault",
+          "particle.pixi.dispose-owner-threw",
+          `Pixi particle disposal continued across every owner; failed cleanup identities: ${cleanupFailures.join(",")}.`,
+        );
   }
 
   private validateSamples(samples: readonly ParticleRenderSample[]): ParticleOperationResult<void> {
@@ -449,23 +478,39 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
     }
   }
 
-  private clearLiveSprites(): void {
+  private clearLiveSprites(): readonly string[] {
+    const failures: string[] = [];
     for (const sprite of this.liveSprites.splice(0)) {
-      sprite.removeFromParent();
-      if (!sprite.destroyed) sprite.destroy({ children: true } as DestroyOptions);
+      try {
+        sprite.removeFromParent();
+        if (!sprite.destroyed) sprite.destroy({ children: true } as DestroyOptions);
+      } catch {
+        failures.push(`live-sprite:${sprite.label}`);
+      }
     }
+    return failures;
   }
 
-  private resetTextures(): void {
-    for (const texture of this.uvTextures.values()) {
-      if (!texture.destroyed) texture.destroy(false);
+  private resetTextures(): readonly string[] {
+    const failures: string[] = [];
+    for (const [key, texture] of this.uvTextures) {
+      try {
+        if (!texture.destroyed) texture.destroy(false);
+      } catch {
+        failures.push(`uv-texture:${key}`);
+      }
     }
     this.uvTextures.clear();
     for (const texture of this.uniqueBaseTextures) {
-      if (!texture.destroyed) texture.destroy(true);
+      try {
+        if (!texture.destroyed) texture.destroy(true);
+      } catch {
+        failures.push(`base-texture:${texture.label ?? "unlabelled"}`);
+      }
     }
     this.uniqueBaseTextures.clear();
     this.textures.clear();
+    return failures;
   }
 
   private abortPrepare<T>(result: ParticleOperationResult<T>): ParticleOperationResult<void> {
@@ -483,10 +528,18 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
 
   private latchFault(capability: string, boundary: string): ParticleOperationResult<never> {
     if (this.fault === null) {
-      this.fault = Object.freeze({ code: "particle-backend-fault", capability, boundary });
-      if (this.pending !== null) destroySprites(this.pending.sprites);
+      const cleanupFailures = [
+        ...(this.pending === null ? [] : destroySprites(this.pending.sprites, "pending")),
+        ...this.clearLiveSprites(),
+      ];
+      this.fault = Object.freeze({
+        code: "particle-backend-fault",
+        capability,
+        boundary: cleanupFailures.length === 0
+          ? boundary
+          : `${boundary} Secondary cleanup failures: ${cleanupFailures.join(",")}.`,
+      });
       this.pending = null;
-      this.clearLiveSprites();
       this.state = "faulted";
     }
     return this.faultResult();
@@ -620,16 +673,32 @@ function rgbTint(red: number, green: number, blue: number): number {
   return (byte(red) << 16) | (byte(green) << 8) | byte(blue);
 }
 
-function destroySprites(sprites: readonly Sprite[]): void {
+function destroySprites(
+  sprites: readonly Sprite[],
+  ownerPrefix = "detached",
+): readonly string[] {
+  const failures: string[] = [];
   for (const sprite of sprites) {
-    if (!sprite.destroyed) sprite.destroy({ children: true } as DestroyOptions);
+    try {
+      sprite.removeFromParent();
+      if (!sprite.destroyed) sprite.destroy({ children: true } as DestroyOptions);
+    } catch {
+      failures.push(`${ownerPrefix}-sprite:${sprite.label}`);
+    }
   }
+  return failures;
 }
 
-function destroyTextureSet(textures: ReadonlySet<Texture>): void {
+function destroyTextureSet(textures: ReadonlySet<Texture>): readonly string[] {
+  const failures: string[] = [];
   for (const texture of textures) {
-    if (!texture.destroyed) texture.destroy(true);
+    try {
+      if (!texture.destroyed) texture.destroy(true);
+    } catch {
+      failures.push(`texture:${texture.label ?? "unlabelled"}`);
+    }
   }
+  return failures;
 }
 
 function compareOrdinal(left: string, right: string): number {

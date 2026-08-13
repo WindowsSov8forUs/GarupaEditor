@@ -27,16 +27,18 @@ export interface ScoreGaugeSsAnimationProfile {
 export function parseCurrentScoreGaugeSsAnimationProfile(
   value: unknown,
 ): ScoreGaugeSsAnimationProfile | null {
-  if (value === null || typeof value !== "object" || Array.isArray(value)) return null;
-  const root = value as Record<string, any>;
+  if (!isRecord(value)) return null;
+  const root = value;
+  const sample = isRecord(root.sample) ? root.sample : null;
+  const clip = isRecord(root.clip) ? root.clip : null;
   if (
     root.schema_version !== 1 ||
     root.status !== "confirmed-current-score-gauge-ss-streamed-animation-profile" ||
-    root.sample?.package !== "jp.co.craftegg.band" || root.sample?.version_name !== "10.1.4" ||
-    root.sample?.version_code !== 230 || root.sample?.abi !== "arm64-v8a" ||
-    root.clip?.name !== "ScoreGaugeSS" || root.clip?.sample_rate !== 60 ||
-    root.clip?.duration_seconds !== 3 || root.clip?.loop !== true ||
-    root.clip?.curve_count !== 56 || root.clip?.frame_count !== 39 ||
+    sample?.package !== "jp.co.craftegg.band" || sample.version_name !== "10.1.4" ||
+    sample.version_code !== 230 || sample.abi !== "arm64-v8a" ||
+    clip?.name !== "ScoreGaugeSS" || clip.sample_rate !== 60 ||
+    clip.duration_seconds !== 3 || clip.loop !== true ||
+    clip.curve_count !== 56 || clip.frame_count !== 39 ||
     !Array.isArray(root.nodes) || root.nodes.length !== 11 ||
     !Array.isArray(root.frames) || root.frames.length !== 39 ||
     !Array.isArray(root.unknown_fields) || root.unknown_fields.length !== 0 ||
@@ -50,7 +52,7 @@ export function parseCurrentScoreGaugeSsAnimationProfile(
   for (let index = 0; index < root.nodes.length; index += 1) {
     const node = root.nodes[index];
     if (
-      node === null || typeof node !== "object" || node.name !== expectedNames[index] ||
+      !isRecord(node) || node.name !== expectedNames[index] ||
       !validVector(node.initial_position, 3) || !validVector(node.initial_scale, 3) ||
       !validVector(node.initial_rotation_quaternion, 4) ||
       (node.portable_texture !== "high-rank-kira" &&
@@ -71,7 +73,7 @@ export function parseCurrentScoreGaugeSsAnimationProfile(
   let keyCount = 0;
   for (const frame of root.frames) {
     if (
-      frame === null || typeof frame !== "object" ||
+      !isRecord(frame) ||
       typeof frame.time !== "number" || !Number.isFinite(frame.time) ||
       Math.fround(frame.time) !== frame.time || frame.time < 0 || frame.time >= 3 ||
       frame.time <= previousTime || !Array.isArray(frame.keys) || frame.keys.length === 0
@@ -81,7 +83,7 @@ export function parseCurrentScoreGaugeSsAnimationProfile(
     const keys: ScoreGaugeSsAnimationKey[] = [];
     for (const key of frame.keys) {
       if (
-        key === null || typeof key !== "object" || !Number.isInteger(key.index) ||
+        !isRecord(key) || typeof key.index !== "number" || !Number.isInteger(key.index) ||
         key.index < 0 || key.index >= 56 || indices.has(key.index) ||
         !validVector(key.coefficients, 4) ||
         key.coefficients.some((entry: number) => Math.fround(entry) !== entry)
@@ -103,6 +105,10 @@ export function parseCurrentScoreGaugeSsAnimationProfile(
     nodes: Object.freeze(nodes),
     frames: Object.freeze(frames),
   });
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
 function validVector(value: unknown, length: number): value is number[] {

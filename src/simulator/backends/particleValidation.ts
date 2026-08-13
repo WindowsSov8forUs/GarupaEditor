@@ -2,10 +2,12 @@ import type {
   ParticleCommand,
   ParticleFailureCode,
   ParticleFrameRequest,
+  ParticleInstanceIdentity,
   ParticleOperationResult,
   ParticlePortableProfile,
   ParticleRootId,
   ParticleTextureManifest,
+  ParticleTextureManifestEntry,
 } from "./particleContracts";
 import { CURRENT_PARTICLE_RESOURCE_MANIFEST } from "./resources/currentParticleResourceManifest";
 
@@ -54,6 +56,9 @@ export function particleRejected(
   });
 }
 
+// Serialized Reverse fixture identity only; production snapshots expose the scoped portable fidelity below.
+const REVERSE_SERIALIZED_PARTICLE_FIDELITY = "current-static-portable-complete";
+
 export function parseAndFreezeParticleProfile(
   bytes: Uint8Array,
 ): ParticleOperationResult<ParticlePortableProfile> {
@@ -68,7 +73,7 @@ export function parseAndFreezeParticleProfile(
     ]) ||
     value.schemaVersion !== 1 ||
     value.packIdentity !== "particle-current-10.1.4-portable-v1" ||
-    value.fidelity !== "current-static-portable-complete" ||
+    value.fidelity !== REVERSE_SERIALIZED_PARTICLE_FIDELITY ||
     value.networkAllowed !== false ||
     value.automaticFallbackAllowed !== false ||
     value.systemCount !== 120 ||
@@ -116,6 +121,7 @@ export function parseAndFreezeParticleProfile(
     for (const material of bundle.materials) {
       if (!isRecord(material) || !hasExactKeys(material, ["name", "shader", "texture", "blend"]) ||
         !isNonEmpty(material.name) || materialNames.has(material.name) ||
+        !isNonEmpty(material.shader) ||
         !["Legacy Shaders/Particles/Alpha Blended Premultiply", "Mobile/Particles/Additive", "Particles/Standard Unlit"].includes(material.shader) ||
         (material.texture !== null && !isNonEmpty(material.texture)) ||
         (material.blend !== "add" && material.blend !== "normal") ||
@@ -179,14 +185,24 @@ export function parseAndFreezeParticleProfile(
       }
     }
     for (const system of bundle.systems) {
-      enabledModuleRelationCount += Object.keys(bundle.profiles[system.profile].modules).length;
+      if (!isRecord(system) || !isNonEmpty(system.profile)) {
+        return reject("particle.profile.invalid-count-system", "Current system counting requires one validated profile identity.");
+      }
+      const countedProfile = bundle.profiles[system.profile];
+      if (!isRecord(countedProfile) || !isRecord(countedProfile.modules)) {
+        return reject("particle.profile.invalid-count-profile", "Current enabled module counting requires one validated module map.");
+      }
+      enabledModuleRelationCount += Object.keys(countedProfile.modules).length;
     }
   }
   if (bundleKeys.size !== 2 || identities.size !== 120 || roots.size !== 17 || profileCount !== 100 ||
     enabledModuleRelationCount !== 605 || moduleCombinations.size !== 16) {
     return reject("particle.profile.incomplete-inventory", "The portable profile must close 120 systems, 100 profiles, 17 roots, 605 enabled module relations and 16 combinations.");
   }
-  return particleAccepted(deepFreeze(value) as unknown as ParticlePortableProfile);
+  return particleAccepted(deepFreeze({
+    ...value,
+    fidelity: "current-static-portable",
+  }) as unknown as ParticlePortableProfile);
 }
 
 export function parseAndFreezeParticleTextureManifest(
@@ -236,24 +252,27 @@ export function parseAndFreezeParticleTextureManifest(
     status: "eight-logical-textures-seven-unique-png-snapshots",
     logicalTextureCount: 8,
     uniquePngCount: 7,
-    entries: value.entries.map((entry: Record<string, any>) => typeof entry.aliasOf === "string"
-      ? {
-          logicalAssetId: entry.logicalAssetId,
-          aliasOf: entry.aliasOf,
-          width: entry.width,
-          height: entry.height,
-          rgbaBytes: entry.rgbaBytes,
-          rgbaSha256: entry.rgbaSha256,
-        }
-      : {
-          logicalAssetId: entry.logicalAssetId,
-          bytes: entry.bytes,
-          sha256: entry.sha256,
-          width: entry.width,
-          height: entry.height,
-          rgbaBytes: entry.rgbaBytes,
-          rgbaSha256: entry.rgbaSha256,
-        }),
+    entries: value.entries.map((rawEntry): ParticleTextureManifestEntry => {
+      const entry = rawEntry as Record<string, unknown>;
+      return typeof entry.aliasOf === "string"
+        ? {
+            logicalAssetId: entry.logicalAssetId as string,
+            aliasOf: entry.aliasOf,
+            width: entry.width as number,
+            height: entry.height as number,
+            rgbaBytes: entry.rgbaBytes as number,
+            rgbaSha256: entry.rgbaSha256 as string,
+          }
+        : {
+            logicalAssetId: entry.logicalAssetId as string,
+            bytes: entry.bytes as number,
+            sha256: entry.sha256 as string,
+            width: entry.width as number,
+            height: entry.height as number,
+            rgbaBytes: entry.rgbaBytes as number,
+            rgbaSha256: entry.rgbaSha256 as string,
+          };
+    }),
     productionBoundary: value.productionBoundary,
   };
   return particleAccepted(deepFreeze(productionManifest));
@@ -371,30 +390,33 @@ function parseJson(bytes: Uint8Array, capability: string): ParticleOperationResu
   }
 }
 
-function isParticleInstanceIdentity(value: unknown): boolean {
+function isParticleInstanceIdentity(value: unknown): value is ParticleInstanceIdentity {
   if (!isRecord(value) || typeof value.kind !== "string") return false;
   if (value.kind === "game-play-button") {
     return hasExactKeys(value, ["kind", "buttonType", "rangeLength"]) &&
-      Number.isInteger(value.buttonType) && value.buttonType >= 0 && value.buttonType <= 15 &&
+      typeof value.buttonType === "number" && Number.isInteger(value.buttonType) &&
+      value.buttonType >= 0 && value.buttonType <= 15 &&
       (value.rangeLength === null ||
-        (Number.isInteger(value.rangeLength) && value.rangeLength >= 1 && value.rangeLength <= 7));
+        (typeof value.rangeLength === "number" && Number.isInteger(value.rangeLength) &&
+          value.rangeLength >= 1 && value.rangeLength <= 7));
   }
   return value.kind === "note-slide" &&
     hasExactKeys(value, ["kind", "noteIndex", "absolutePosition", "buttonType", "rangeLength"]) &&
-    Number.isSafeInteger(value.noteIndex) && value.noteIndex >= 0 &&
-    Number.isSafeInteger(value.absolutePosition) && value.absolutePosition >= 0 &&
-    Number.isInteger(value.buttonType) && value.buttonType >= 0 && value.buttonType <= 15 &&
-    Number.isInteger(value.rangeLength) && value.rangeLength >= 1 && value.rangeLength <= 7;
+    typeof value.noteIndex === "number" && Number.isSafeInteger(value.noteIndex) && value.noteIndex >= 0 &&
+    typeof value.absolutePosition === "number" && Number.isSafeInteger(value.absolutePosition) && value.absolutePosition >= 0 &&
+    typeof value.buttonType === "number" && Number.isInteger(value.buttonType) && value.buttonType >= 0 && value.buttonType <= 15 &&
+    typeof value.rangeLength === "number" && Number.isInteger(value.rangeLength) && value.rangeLength >= 1 && value.rangeLength <= 7;
 }
 
 function isInstanceCompatibleWithRoot(
-  instance: Record<string, any>,
-  root: string,
+  instance: ParticleInstanceIdentity,
+  root: ParticleRootId,
 ): boolean {
   if (instance.kind === "note-slide") return root === "ordinary:effect_TapKeep";
   return root.startsWith("directional:")
     ? instance.rangeLength === null
-    : Number.isInteger(instance.rangeLength) && instance.rangeLength >= 1 && instance.rangeLength <= 7;
+    : instance.rangeLength !== null && Number.isInteger(instance.rangeLength) &&
+      instance.rangeLength >= 1 && instance.rangeLength <= 7;
 }
 
 function isLockedSample(value: unknown): boolean {
@@ -404,8 +426,10 @@ function isLockedSample(value: unknown): boolean {
 }
 
 function isTransform(value: unknown): boolean {
-  return isRecord(value) && isVector3(value.m_LocalPosition) && isVector3(value.m_LocalScale) &&
-    isRecord(value.m_LocalRotation) && ["x", "y", "z", "w"].every((key) => isFiniteNumber(value.m_LocalRotation[key]));
+  if (!isRecord(value) || !isVector3(value.m_LocalPosition) || !isVector3(value.m_LocalScale) ||
+    !isRecord(value.m_LocalRotation)) return false;
+  const rotation = value.m_LocalRotation;
+  return ["x", "y", "z", "w"].every((key) => isFiniteNumber(rotation[key]));
 }
 
 function isVector3(value: unknown): boolean {
@@ -428,15 +452,15 @@ function isNonEmpty(value: unknown): value is string {
   return typeof value === "string" && value.length > 0;
 }
 
-function isRecord(value: unknown): value is Record<string, any> {
+function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
-function owns(value: Record<string, any>, key: string): boolean {
+function owns(value: Record<string, unknown>, key: string): boolean {
   return Object.prototype.hasOwnProperty.call(value, key);
 }
 
-function hasExactKeys(value: Record<string, any>, expected: readonly string[]): boolean {
+function hasExactKeys(value: Record<string, unknown>, expected: readonly string[]): boolean {
   const actual = Object.keys(value).sort();
   const required = [...expected].sort();
   return actual.length === required.length && actual.every((key, index) => key === required[index]);

@@ -17,7 +17,15 @@ import { CURRENT_ORDINARY_RENDER_BINDINGS } from "../backends/resources/currentO
 import { CURRENT_SCORE_HUD_BINDINGS } from "../backends/resources/currentScoreHudResourceManifest";
 import { CURRENT_ORDINARY_VISIBLE_BINDINGS } from "../backends/resources/currentOrdinaryVisibleResourceManifest";
 import type { RenderEngineResourceBindings } from "../engine/rendering/renderCommandProducer";
-import type { SimulatorChartAudioData } from "../public/contracts";
+import {
+  appendSimulatorCleanupFailures,
+  simulatorCleanupFailure,
+  simulatorCleanupFailureFromResult,
+} from "../public/failures";
+import type {
+  SimulatorChartAudioData,
+  SimulatorModuleCleanupFailure,
+} from "../public/contracts";
 import type { SimulatorSceneLayout } from "../scene/simulatorSceneLayout";
 import type { SharedStaticResourceStore } from "../resources/sharedStaticResourceStore";
 import type { SimulatorStaticResourceSelection } from "../resources/staticResourceSelector";
@@ -178,15 +186,26 @@ export async function assembleSimulatorResources(
   const particles = await prepareSharedParticleProvider(selection.particles, store);
   if (particles.status === "rejected") return particles;
 
-  const prepared: Array<() => void> = [];
-  const rollback = (): void => {
+  const prepared: Array<{
+    readonly identity: string;
+    readonly dispose: () => unknown;
+  }> = [];
+  const rollback = (): readonly SimulatorModuleCleanupFailure[] => {
+    const failures: SimulatorModuleCleanupFailure[] = [];
     for (let index = prepared.length - 1; index >= 0; index -= 1) {
+      const owner = prepared[index]!;
       try {
-        prepared[index]!();
+        const result = owner.dispose();
+        const failure = simulatorCleanupFailureFromResult(owner.identity, result);
+        if (failure !== null) failures.push(failure);
       } catch {
-        // Resource preparation already has a primary rejection; rollback continues every owner.
+        failures.push(simulatorCleanupFailure(
+          `simulator.assembly.rollback-${owner.identity}-threw`,
+          `The ${owner.identity} owner threw during resource-assembly rollback; every remaining owner was still released.`,
+        ));
       }
     }
+    return Object.freeze(failures);
   };
 
   const renderReady = await targets.rendering.backend.prepare(
@@ -196,10 +215,12 @@ export async function assembleSimulatorResources(
     targets.rendering.preflight,
   );
   if (renderReady.status !== "ok") {
-    rollback();
     return rejected("resource-integrity", renderReady.capability, renderReady.boundary);
   }
-  prepared.push(() => { targets.rendering.backend.dispose(); });
+  prepared.push({
+    identity: "renderer",
+    dispose: () => targets.rendering.backend.dispose(),
+  });
 
   const audioReady = await targets.audio.backend.prepare(
     targets.sessionId,
@@ -208,14 +229,19 @@ export async function assembleSimulatorResources(
     targets.audio.preflight,
   );
   if (audioReady.status !== "accepted") {
-    rollback();
-    return rejected(
-      mapAudioFailure(audioReady.status),
-      audioReady.failure.capability,
-      audioReady.failure.boundary,
+    return rejectedWithCleanup(
+      rejected(
+        mapAudioFailure(audioReady.status),
+        audioReady.failure.capability,
+        audioReady.failure.boundary,
+      ),
+      rollback(),
     );
   }
-  prepared.push(() => { targets.audio.backend.dispose(); });
+  prepared.push({
+    identity: "audio",
+    dispose: () => targets.audio.backend.dispose(),
+  });
 
   const particleReady = await targets.particles.backend.prepare(
     targets.sessionId,
@@ -223,14 +249,19 @@ export async function assembleSimulatorResources(
     targets.particles.preflight,
   );
   if (particleReady.status !== "accepted") {
-    rollback();
-    return rejected(
-      mapParticleFailure(particleReady.status),
-      particleReady.failure.capability,
-      particleReady.failure.boundary,
+    return rejectedWithCleanup(
+      rejected(
+        mapParticleFailure(particleReady.status),
+        particleReady.failure.capability,
+        particleReady.failure.boundary,
+      ),
+      rollback(),
     );
   }
-  prepared.push(() => { targets.particles.backend.dispose(); });
+  prepared.push({
+    identity: "particle-backend",
+    dispose: () => targets.particles.backend.dispose(),
+  });
 
   const particleRendererReady = await targets.particles.renderer.prepare(
     targets.sessionId,
@@ -239,11 +270,13 @@ export async function assembleSimulatorResources(
     targets.particles.preflight,
   );
   if (particleRendererReady.status !== "accepted") {
-    rollback();
-    return rejected(
-      mapParticleFailure(particleRendererReady.status),
-      particleRendererReady.failure.capability,
-      particleRendererReady.failure.boundary,
+    return rejectedWithCleanup(
+      rejected(
+        mapParticleFailure(particleRendererReady.status),
+        particleRendererReady.failure.capability,
+        particleRendererReady.failure.boundary,
+      ),
+      rollback(),
     );
   }
 
@@ -294,6 +327,17 @@ function mapParticleFailure(
   if (code === "particle-resource-integrity") return "resource-integrity";
   if (code === "particle-resource-decode") return "resource-decode";
   return code === "evidence-required" ? "evidence-required" : "launch-failed";
+}
+
+function rejectedWithCleanup<T>(
+  primary: SimulatorAssemblyResult<T>,
+  cleanupFailures: readonly SimulatorModuleCleanupFailure[],
+): SimulatorAssemblyResult<T> {
+  if (primary.status === "accepted" || cleanupFailures.length === 0) return primary;
+  return Object.freeze({
+    status: "rejected" as const,
+    failure: appendSimulatorCleanupFailures(primary.failure, cleanupFailures),
+  });
 }
 
 function accepted<T>(value: T): SimulatorAssemblyResult<T> {

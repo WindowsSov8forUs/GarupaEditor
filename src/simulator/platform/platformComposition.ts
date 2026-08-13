@@ -20,7 +20,15 @@ import { evidenceRequired, type SimulatorResult } from "../engine/evidence";
 import type { ManualInputFrame, ManualInputPosition } from "../engine/data/manualInput";
 import type { SimulatorEngine, SimulatorSnapshot } from "../host/contracts";
 import { createSimulatorEngine } from "../host/createSimulatorEngine";
-import type { SimulatorModuleLaunchRequest } from "../public/contracts";
+import {
+  appendSimulatorCleanupFailures,
+  simulatorCleanupFailure,
+  simulatorCleanupFailureFromResult,
+} from "../public/failures";
+import type {
+  SimulatorModuleCleanupFailure,
+  SimulatorModuleLaunchRequest,
+} from "../public/contracts";
 import {
   rejected,
   type SimulatorAssemblyResult,
@@ -158,8 +166,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
     if (assembly.status === "rejected") return assembly;
     const gains = gainBits(recipe.request);
     if (gains.status === "rejected") {
-      disposeAssembly(assembly.value);
-      return gains;
+      return rejectedWithCleanup(gains, disposeAssembly(assembly.value));
     }
     const tracing = createRecordingSimulatorBackends();
     const backends: SimulatorBackends = Object.freeze({
@@ -212,8 +219,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
       particles: { sessionId },
     }, backends);
     if (engine.status !== "ok") {
-      disposeAssembly(assembly.value);
-      return fromEvidence(engine);
+      return rejectedWithCleanup(fromEvidence(engine), disposeAssembly(assembly.value));
     }
     const mounted = this.platform.graphics.mount(
       sessionId,
@@ -221,8 +227,8 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
       particleRenderer.stage,
     );
     if (mounted.status === "rejected") {
-      engine.value.dispose();
-      return mounted;
+      const cleanup = simulatorCleanupFailureFromResult("engine-after-mount-failure", engine.value.dispose());
+      return rejectedWithCleanup(mounted, cleanup === null ? [] : [cleanup]);
     }
     return accepted(new MountedSimulatorEngine(engine.value, mounted.value));
   }
@@ -273,7 +279,11 @@ class MountedSimulatorEngine implements SimulatorEngine {
             [],
             "The visual surface mount threw during terminal cleanup after all engine-owned backends were disposed.",
           )
-        : result;
+        : evidenceRequired(
+            result.capability,
+            result.requiredEvidence,
+            `${result.boundary} Secondary cleanup failure: simulator.composition.visual-unmount-threw.`,
+          );
     }
     return result;
   }
@@ -349,20 +359,37 @@ function disposeAssembly(assembly: {
   readonly audioBackend: { dispose(): unknown };
   readonly particleBackend: { dispose(): unknown };
   readonly particleRendererBackend: { dispose(): unknown };
-}): void {
+}): readonly SimulatorModuleCleanupFailure[] {
   const rollbackOwners = [
-    assembly.particleRendererBackend,
-    assembly.particleBackend,
-    assembly.audioBackend,
-    assembly.rendererBackend,
+    { identity: "particle-renderer", owner: assembly.particleRendererBackend },
+    { identity: "particle-backend", owner: assembly.particleBackend },
+    { identity: "audio-backend", owner: assembly.audioBackend },
+    { identity: "renderer-backend", owner: assembly.rendererBackend },
   ];
-  for (const owner of rollbackOwners) {
+  const failures: SimulatorModuleCleanupFailure[] = [];
+  for (const { identity, owner } of rollbackOwners) {
     try {
-      owner.dispose();
+      const failure = simulatorCleanupFailureFromResult(identity, owner.dispose());
+      if (failure !== null) failures.push(failure);
     } catch {
-      // The caller already owns a primary composition failure; rollback continues all owners.
+      failures.push(simulatorCleanupFailure(
+        `simulator.composition.rollback-${identity}-threw`,
+        `The ${identity} owner threw during composition rollback; every remaining owner was still released.`,
+      ));
     }
   }
+  return Object.freeze(failures);
+}
+
+function rejectedWithCleanup<T>(
+  primary: SimulatorAssemblyResult<T>,
+  cleanupFailures: readonly SimulatorModuleCleanupFailure[],
+): SimulatorAssemblyResult<T> {
+  if (primary.status === "accepted" || cleanupFailures.length === 0) return primary;
+  return Object.freeze({
+    status: "rejected" as const,
+    failure: appendSimulatorCleanupFailures(primary.failure, cleanupFailures),
+  });
 }
 
 function accepted<T>(value: T): SimulatorAssemblyResult<T> {

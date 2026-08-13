@@ -84,6 +84,11 @@ export interface SimulatorModuleFinalResult {
   readonly clearStatus: 1 | 2 | 3;
 }
 
+export interface SimulatorModuleCleanupFailure {
+  readonly capability: string;
+  readonly boundary: string;
+}
+
 export interface SimulatorModuleFailure {
   readonly code:
     | "evidence-required"
@@ -94,6 +99,7 @@ export interface SimulatorModuleFailure {
     | "launch-failed";
   readonly capability: string;
   readonly boundary: string;
+  readonly cleanupFailures?: readonly SimulatorModuleCleanupFailure[];
 }
 
 export type SimulatorRenderingFidelity =

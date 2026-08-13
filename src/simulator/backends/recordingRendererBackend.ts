@@ -264,6 +264,14 @@ export class RecordingSimulatorRendererBackend implements SimulatorRendererBacke
     return this.latchFault(capability, boundary);
   }
 
+  recordSecondaryCleanupFailures(failedIdentities: readonly string[]): void {
+    if (this.fault === null || failedIdentities.length === 0) return;
+    this.fault = Object.freeze({
+      capability: this.fault.capability,
+      boundary: `${this.fault.boundary} Secondary cleanup failures: ${failedIdentities.join(",")}.`,
+    });
+  }
+
   resetObjectsAfterTerminalRendererMutation(): void {
     this.objects.clear();
     this.pendingBatch = null;

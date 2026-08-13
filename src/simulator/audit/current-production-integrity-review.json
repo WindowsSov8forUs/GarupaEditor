@@ -1,0 +1,287 @@
+{
+  "schemaVersion": 1,
+  "status": "closed-for-reachable-supported-scope",
+  "reverseAudit": {
+    "commit": "a0431def732cf0d252ac3314865415701467e2e10",
+    "package": "simulator-full-evidence-integrity-audit-10-1-4",
+    "inventoryTargetCommit": "c399fe22c565895e39f10c848e8ab8a49427a936",
+    "productionFileCount": 98,
+    "occurrenceCount": 14230,
+    "structuralOccurrenceCount": 2506,
+    "consumerReviewedOccurrenceCount": 11724
+  },
+  "reviewPolicy": {
+    "sourceOccurrenceIsNotEvidence": true,
+    "groupMappingIsNotBlanketAuthorization": true,
+    "allowedDispositions": [
+      "field-evidence-bound",
+      "structural-nonbehavior",
+      "excluded",
+      "early-evidence-required"
+    ],
+    "reachableSupportedUnknownCount": 0,
+    "networkFallbackCount": 0,
+    "ambientRandomOrWallClockCount": 0,
+    "untypedProductionEscapeCount": 0,
+    "commentOnlyCatchCount": 0
+  },
+  "groups": [
+    {
+      "id": "audio",
+      "occurrenceCount": 925,
+      "disposition": "field-evidence-bound",
+      "evidence": [
+        "audio-portable-lifecycle-pcm-contract-10-1-4",
+        "audio-runtime-contract-10-1-4"
+      ],
+      "portableBoundary": "semantic command, PCM and WebAudio graph; CRI/Android mixer/physical output excluded"
+    },
+    {
+      "id": "autonomous-runtime",
+      "occurrenceCount": 544,
+      "disposition": "field-evidence-bound",
+      "evidence": [
+        "autonomous-simulator-portable-pack-10-1-4"
+      ],
+      "portableBoundary": "single internal launch/session lifecycle; stage-9 excluded"
+    },
+    {
+      "id": "chart-construction",
+      "occurrenceCount": 961,
+      "disposition": "field-evidence-bound",
+      "evidence": [
+        "chart-construction committed contracts"
+      ],
+      "portableBoundary": "registered immutable construction result only"
+    },
+    {
+      "id": "engine-core",
+      "occurrenceCount": 2404,
+      "disposition": "field-evidence-bound",
+      "evidence": [
+        "first-slice contracts",
+        "clock-scheduling-runtime-oracle"
+      ],
+      "portableBoundary": "typed manager lifecycle and zero-seek scheduling"
+    },
+    {
+      "id": "host-replay",
+      "occurrenceCount": 506,
+      "disposition": "field-evidence-bound",
+      "evidence": [
+        "device-runtime-closure-10-1-4",
+        "score-life-state-runtime-contract-10-1-4"
+      ],
+      "portableBoundary": "opaque checkpoint replay; non-zero initial seek remains early-evidence-required"
+    },
+    {
+      "id": "judgement",
+      "occurrenceCount": 1395,
+      "disposition": "field-evidence-bound",
+      "evidence": [
+        "auto-live investigations",
+        "manual-input-runtime-contract-10-1-4"
+      ],
+      "portableBoundary": "manual and Auto typed input; character/card/deck/Fever/multiplayer excluded"
+    },
+    {
+      "id": "particle",
+      "occurrenceCount": 1299,
+      "disposition": "field-evidence-bound",
+      "evidence": [
+        "device-runtime-closure-10-1-4"
+      ],
+      "portableBoundary": "deterministic semantic simulation and Pixi handoff; Unity GPU/framebuffer excluded"
+    },
+    {
+      "id": "rendering",
+      "occurrenceCount": 3290,
+      "disposition": "field-evidence-bound",
+      "evidence": [
+        "ordinary-visible-rendering-portable-10-1-4",
+        "resource-pixi-rendering-runtime-contract-10-1-4"
+      ],
+      "portableBoundary": "typed command/scene routing; browser decode and device framebuffer separate"
+    },
+    {
+      "id": "resource-selection",
+      "occurrenceCount": 2465,
+      "disposition": "field-evidence-bound",
+      "evidence": [
+        "autonomous-simulator-portable-pack-10-1-4",
+        "ordinary-visible-rendering-portable-10-1-4"
+      ],
+      "portableBoundary": "offline exact logical identities; no URL/network/automatic fallback"
+    },
+    {
+      "id": "scene-manual",
+      "occurrenceCount": 215,
+      "disposition": "field-evidence-bound",
+      "evidence": [
+        "autonomous-simulator-scene-layout-10-1-4",
+        "manual-input-runtime-contract-10-1-4"
+      ],
+      "portableBoundary": "15 current anchors; Button 07 remains early-evidence-required"
+    },
+    {
+      "id": "score-life",
+      "occurrenceCount": 226,
+      "disposition": "field-evidence-bound",
+      "evidence": [
+        "score-hud-rank-gauge-10-1-4",
+        "score-life-state-runtime-contract-10-1-4"
+      ],
+      "portableBoundary": "single-player score/life state without character effects"
+    }
+  ],
+  "postInventoryChangedProductionFiles": {
+    "status": "reviewed-under-the-same-policy",
+    "files": [
+      "src/simulator/assembly/chartCapabilityValidation.ts",
+      "src/simulator/assembly/resourceAssembly.ts",
+      "src/simulator/assembly/sessionRecipe.ts",
+      "src/simulator/backends/audio/offlineAudioBackend.ts",
+      "src/simulator/backends/audio/webAudioBackend.ts",
+      "src/simulator/backends/audioValidation.ts",
+      "src/simulator/backends/particleContracts.ts",
+      "src/simulator/backends/particleValidation.ts",
+      "src/simulator/backends/pixi/pixiParticleRendererBackend.ts",
+      "src/simulator/backends/pixi/pixiRendererBackend.ts",
+      "src/simulator/backends/recordingRendererBackend.ts",
+      "src/simulator/backends/renderingCommandValidation.ts",
+      "src/simulator/backends/renderingContracts.ts",
+      "src/simulator/backends/renderingValidation.ts",
+      "src/simulator/backends/resources/currentScoreGaugeSsAnimationProfile.ts",
+      "src/simulator/backends/resources/habahiroExternalManifest.ts",
+      "src/simulator/backends/resources/habahiroExternalProvider.ts",
+      "src/simulator/engine/managers/inGameManager.ts",
+      "src/simulator/engine/managers/noteManager.ts",
+      "src/simulator/engine/rendering/renderCommandProducer.ts",
+      "src/simulator/host/createSimulatorEngine.ts",
+      "src/simulator/index.ts",
+      "src/simulator/platform/platformComposition.ts",
+      "src/simulator/public/capabilities.ts",
+      "src/simulator/public/contracts.ts",
+      "src/simulator/public/failures.ts",
+      "src/simulator/public/index.ts",
+      "src/simulator/resources/sharedResourceAdapters.ts",
+      "src/simulator/resources/staticResourceSelector.ts",
+      "src/simulator/runtime/autonomousSimulatorRuntime.ts"
+    ]
+  },
+  "openOrExcluded": [
+    "HABAHIRO original runtime/frame parity",
+    "HABAHIRO external Note animation",
+    "non-zero initial practice seek",
+    "ButtonType 07 scene mapping",
+    "browser PNG/FontFace raster integration",
+    "fixed-device cadence/GPU/framebuffer/physical audio",
+    "character/card/deck effects, Fever and multiplayer",
+    "stage-9 main-program integration"
+  ],
+  "currentProductionFileCount": 102,
+  "currentProductionFiles": [
+    "src/simulator/assembly/chartCapabilityValidation.ts",
+    "src/simulator/assembly/resourceAssembly.ts",
+    "src/simulator/assembly/sessionRecipe.ts",
+    "src/simulator/backends/audio/browserAudioResourcePreflightAdapter.ts",
+    "src/simulator/backends/audio/offlineAudioBackend.ts",
+    "src/simulator/backends/audio/offlineAudioContracts.ts",
+    "src/simulator/backends/audio/webAudioBackend.ts",
+    "src/simulator/backends/audioContracts.ts",
+    "src/simulator/backends/audioValidation.ts",
+    "src/simulator/backends/contracts.ts",
+    "src/simulator/backends/particleContracts.ts",
+    "src/simulator/backends/particleValidation.ts",
+    "src/simulator/backends/particles/deterministicParticleBackend.ts",
+    "src/simulator/backends/pixi/browserPixiParticleTextureDecoder.ts",
+    "src/simulator/backends/pixi/browserPixiTextureDecoder.ts",
+    "src/simulator/backends/pixi/pixiParticleRendererBackend.ts",
+    "src/simulator/backends/pixi/pixiRendererBackend.ts",
+    "src/simulator/backends/recordingAudioBackend.ts",
+    "src/simulator/backends/recordingBackend.ts",
+    "src/simulator/backends/recordingParticleBackend.ts",
+    "src/simulator/backends/recordingRendererBackend.ts",
+    "src/simulator/backends/renderingCommandValidation.ts",
+    "src/simulator/backends/renderingContracts.ts",
+    "src/simulator/backends/renderingValidation.ts",
+    "src/simulator/backends/resources/currentAudioResourceManifest.ts",
+    "src/simulator/backends/resources/currentOrdinaryResourceManifest.ts",
+    "src/simulator/backends/resources/currentOrdinaryVisibleProfile.ts",
+    "src/simulator/backends/resources/currentOrdinaryVisibleResourceManifest.ts",
+    "src/simulator/backends/resources/currentParticleResourceManifest.ts",
+    "src/simulator/backends/resources/currentScoreGaugeSsAnimationProfile.ts",
+    "src/simulator/backends/resources/currentScoreHudResourceManifest.ts",
+    "src/simulator/backends/resources/habahiroExternalManifest.ts",
+    "src/simulator/backends/resources/habahiroExternalProvider.ts",
+    "src/simulator/backends/resources/localAudioResourceProvider.ts",
+    "src/simulator/backends/resources/localParticleResourceProvider.ts",
+    "src/simulator/backends/resources/localResourceProvider.ts",
+    "src/simulator/backends/resources/particleResourcePreparation.ts",
+    "src/simulator/backends/resources/sha256.ts",
+    "src/simulator/engine/audio/audioCommandProducer.ts",
+    "src/simulator/engine/chart/batchConversion.ts",
+    "src/simulator/engine/chart/bmsBuilder.ts",
+    "src/simulator/engine/chart/construction.ts",
+    "src/simulator/engine/chart/evidence.ts",
+    "src/simulator/engine/chart/finalize.ts",
+    "src/simulator/engine/chart/immutability.ts",
+    "src/simulator/engine/chart/multiRangeCombine.ts",
+    "src/simulator/engine/chart/multiRangeSources.ts",
+    "src/simulator/engine/chart/musicScoreBezier.ts",
+    "src/simulator/engine/chart/noteGraph.ts",
+    "src/simulator/engine/chart/types.ts",
+    "src/simulator/engine/data/autoLiveJudgement.ts",
+    "src/simulator/engine/data/inGameCalculatedData.ts",
+    "src/simulator/engine/data/inGameState.ts",
+    "src/simulator/engine/data/manualInput.ts",
+    "src/simulator/engine/data/manualJudgement.ts",
+    "src/simulator/engine/data/noteData.ts",
+    "src/simulator/engine/data/oneFrameData.ts",
+    "src/simulator/engine/data/scoreLifeState.ts",
+    "src/simulator/engine/data/singlePlayScoreGauge.ts",
+    "src/simulator/engine/evidence.ts",
+    "src/simulator/engine/lifecycle.ts",
+    "src/simulator/engine/managers/inGameDirector.ts",
+    "src/simulator/engine/managers/inGameManager.ts",
+    "src/simulator/engine/managers/inGameMusicScoreController.ts",
+    "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
+    "src/simulator/engine/managers/inGameRecord.ts",
+    "src/simulator/engine/managers/inputBoundaries.ts",
+    "src/simulator/engine/managers/noteManager.ts",
+    "src/simulator/engine/managers/scoreLifeStateManager.ts",
+    "src/simulator/engine/managers/scoreUtility.ts",
+    "src/simulator/engine/managers/singlePlayScoreGauge.ts",
+    "src/simulator/engine/managers/slideNoteManager.ts",
+    "src/simulator/engine/notes/noteBase.ts",
+    "src/simulator/engine/notes/noteBpmChange.ts",
+    "src/simulator/engine/notes/noteTypes.ts",
+    "src/simulator/engine/particles/particleCommandProducer.ts",
+    "src/simulator/engine/particles/particleFrameCoordinator.ts",
+    "src/simulator/engine/particles/particleRandom.ts",
+    "src/simulator/engine/particles/particleRouteResolver.ts",
+    "src/simulator/engine/particles/particleSimulation.ts",
+    "src/simulator/engine/rendering/ordinaryLongChildLifecycle.ts",
+    "src/simulator/engine/rendering/ordinaryNoteGeometry.ts",
+    "src/simulator/engine/rendering/ordinarySlideChildLifecycle.ts",
+    "src/simulator/engine/rendering/renderCommandProducer.ts",
+    "src/simulator/engine/runtime/chartRuntimeMetadata.ts",
+    "src/simulator/host/contracts.ts",
+    "src/simulator/host/createSimulatorEngine.ts",
+    "src/simulator/host/portableReplaySession.ts",
+    "src/simulator/index.ts",
+    "src/simulator/platform/platformComposition.ts",
+    "src/simulator/public/capabilities.ts",
+    "src/simulator/public/contracts.ts",
+    "src/simulator/public/failures.ts",
+    "src/simulator/public/index.ts",
+    "src/simulator/public/launch.ts",
+    "src/simulator/resources/sharedResourceAdapters.ts",
+    "src/simulator/resources/sharedStaticResourceStore.ts",
+    "src/simulator/resources/staticResourceSelector.ts",
+    "src/simulator/runtime/autonomousSimulatorRuntime.ts",
+    "src/simulator/runtime/contracts.ts",
+    "src/simulator/runtime/moduleEntryBinding.ts",
+    "src/simulator/scene/simulatorSceneLayout.ts"
+  ]
+}

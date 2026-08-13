@@ -1,4 +1,9 @@
 import { createSimulatorModuleCapabilitySummary } from "../public/capabilities";
+import {
+  appendSimulatorCleanupFailures,
+  freezeSimulatorFailure,
+  simulatorCleanupFailure,
+} from "../public/failures";
 import type {
   LaunchSimulatorModule,
   SimulatorModuleCloseReport,
@@ -49,17 +54,24 @@ export class AutonomousSimulatorModule {
       created = await this.environment.sessions.create(request);
     } catch {
       this.state = "closed";
-      this.disposeInput();
-      return launchRejected(
+      const cleanupFailure = this.disposeInput();
+      const primary = moduleFailure(
         "launch-failed",
         "simulator.runtime.session-factory-threw",
         "An internal session-factory exception fails launch before lifecycle ownership transfers and has no fallback.",
       );
+      return Object.freeze({
+        status: "rejected" as const,
+        failure: appendSimulatorCleanupFailures(primary, [cleanupFailure]),
+      });
     }
     if (created.status === "rejected") {
       this.state = "closed";
-      this.disposeInput();
-      return Object.freeze({ status: "rejected" as const, failure: created.failure });
+      const cleanupFailure = this.disposeInput();
+      return Object.freeze({
+        status: "rejected" as const,
+        failure: appendSimulatorCleanupFailures(created.failure, [cleanupFailure]),
+      });
     }
     this.session = created.value;
     this.closedPromise = new Promise<SimulatorModuleCloseReport>((resolve) => {
@@ -74,12 +86,12 @@ export class AutonomousSimulatorModule {
         "simulator.runtime.scheduler-start-threw",
         "The internal frame scheduler threw before launch publication; the prepared session is closed without ownership transfer.",
       );
-      this.closeBeforeTransfer(failure);
-      return Object.freeze({ status: "rejected" as const, failure });
+      const rejectedFailure = this.closeBeforeTransfer(failure);
+      return Object.freeze({ status: "rejected" as const, failure: rejectedFailure });
     }
     if (scheduled.status === "rejected") {
-      this.closeBeforeTransfer(scheduled.failure);
-      return Object.freeze({ status: "rejected" as const, failure: scheduled.failure });
+      const rejectedFailure = this.closeBeforeTransfer(scheduled.failure);
+      return Object.freeze({ status: "rejected" as const, failure: rejectedFailure });
     }
     this.frameSubscription = scheduled.value;
     this.state = "running";
@@ -178,18 +190,30 @@ export class AutonomousSimulatorModule {
     );
   }
 
-  private closeBeforeTransfer(failure: SimulatorModuleFailure): void {
+  private closeBeforeTransfer(failure: SimulatorModuleFailure): SimulatorModuleFailure {
+    let sessionFailure = null;
     try {
-      this.session?.close("terminal-fault", failure);
+      const report = this.session?.close("terminal-fault", failure);
+      sessionFailure = report?.failure?.cleanupFailures === undefined
+        ? null
+        : report.failure.cleanupFailures;
     } catch {
-      // A launch failure already owns the public result; rollback continues all remaining owners.
+      sessionFailure = [simulatorCleanupFailure(
+        "simulator.runtime.prepublication-session-close-threw",
+        "The prepared session close threw during pre-publication rollback; scheduler and input cleanup still ran.",
+      )];
     }
     this.session = null;
-    this.stopScheduler();
-    this.disposeInput();
+    const schedulerFailure = this.stopScheduler();
+    const inputFailure = this.disposeInput();
     this.resolveClosed = null;
     this.closedPromise = null;
     this.state = "closed";
+    return appendSimulatorCleanupFailures(failure, [
+      ...(sessionFailure ?? []),
+      schedulerFailure,
+      inputFailure,
+    ]);
   }
 
   private closeTerminal(failure: SimulatorModuleFailure): void {
@@ -201,7 +225,10 @@ export class AutonomousSimulatorModule {
       report = Object.freeze({
         reason: "terminal-fault" as const,
         result: null,
-        failure,
+        failure: appendSimulatorCleanupFailures(failure, [simulatorCleanupFailure(
+          "simulator.runtime.terminal-session-close-threw",
+          "The owned session close threw after the terminal primary failure; scheduler and input cleanup still ran.",
+        )]),
         capabilities: createSimulatorModuleCapabilitySummary(null),
       });
     }
@@ -214,13 +241,24 @@ export class AutonomousSimulatorModule {
     const schedulerFailure = this.stopScheduler();
     const inputFailure = this.disposeInput();
     this.session = null;
-    const cleanupFailure = schedulerFailure ?? inputFailure;
-    const published = cleanupFailure === null || report.failure !== null
+    const cleanupFailures = [schedulerFailure, inputFailure];
+    const firstCleanupFailure = cleanupFailures.find(
+      (failure): failure is SimulatorModuleFailure => failure !== null,
+    ) ?? null;
+    const published = report.failure !== null
+      ? Object.freeze({
+          ...report,
+          failure: appendSimulatorCleanupFailures(report.failure, cleanupFailures),
+        })
+      : firstCleanupFailure === null
       ? report
       : Object.freeze({
           reason: "terminal-fault" as const,
           result: null,
-          failure: cleanupFailure,
+          failure: appendSimulatorCleanupFailures(
+            firstCleanupFailure,
+            cleanupFailures.filter((failure) => failure !== firstCleanupFailure),
+          ),
           capabilities: report.capabilities,
         });
     const frozen = freezeCloseReport(published);
@@ -273,7 +311,7 @@ function freezeCloseReport(report: SimulatorModuleCloseReport): SimulatorModuleC
   return Object.freeze({
     reason: report.reason,
     result: report.result === null ? null : Object.freeze({ ...report.result }),
-    failure: report.failure === null ? null : Object.freeze({ ...report.failure }),
+    failure: report.failure === null ? null : freezeSimulatorFailure(report.failure),
     capabilities: Object.freeze({ ...report.capabilities }),
   });
 }

@@ -17,6 +17,13 @@ const forbidden = [
   [/reverse-snapshots/i, "runtime evidence-package read"],
   [/GirlsBandParty-Reverse/i, "runtime Reverse-worktree read"],
   [/runtime[\\/]tools/i, "runtime/tools dependency"],
+  [/\bMath\.random\s*\(/, "ambient random source"],
+  [/\b(?:Date\.now|performance\.now)\s*\(/, "ambient wall clock"],
+  [/\b(?:setTimeout|setInterval)\s*\(/, "implicit timer scheduler"],
+  [/\bTextureSource\b/, "synthetic TextureSource decode substitute"],
+  [/\bfindTextureBinding\b/, "cross-logical-asset atlas-key lookup"],
+  [/\bas\s+any\b|\bRecord\s*<\s*string\s*,\s*any\s*>|:\s*any\b/, "untyped production escape"],
+  [/fontFamily\s*:\s*["'](?:Arial|Helvetica|sans-serif|serif|system-ui)/i, "undeclared system font"],
 ];
 const violations = [];
 for (const root of productionRoots) {
@@ -25,6 +32,9 @@ for (const root of productionRoots) {
     const source = readFileSync(path, "utf8");
     for (const [pattern, label] of forbidden) {
       if (pattern.test(source)) violations.push(`${path}: ${label}`);
+    }
+    if (/catch(?:\s*\([^)]*\))?\s*\{\s*(?:\/\/[^\n]*\s*)*\}/m.test(source)) {
+      violations.push(`${path}: comment-only swallowed exception`);
     }
   }
 }

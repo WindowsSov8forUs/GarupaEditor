@@ -5,6 +5,10 @@ import {
   type SimulatorReplayCheckpoint,
 } from "../host/portableReplaySession";
 import { createSimulatorModuleCapabilitySummary } from "../public/capabilities";
+import {
+  appendSimulatorCleanupFailures,
+  simulatorCleanupFailure,
+} from "../public/failures";
 import type {
   SimulatorModuleCloseReport,
   SimulatorModuleFailure,
@@ -202,11 +206,27 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
     const disposed = this.engine.dispose();
     this.checkpoint = null;
     this.state = "closed";
-    const terminalFailure = failure ?? (snapshot.status !== "ok"
-      ? fromEvidence(snapshot)
-      : disposed.status !== "ok"
-      ? fromEvidence(disposed)
-      : null);
+    let terminalFailure = failure;
+    const secondaryFailures = [];
+    if (snapshot.status !== "ok") {
+      if (terminalFailure === null) terminalFailure = moduleFailure(
+        "evidence-required",
+        snapshot.capability,
+        snapshot.boundary,
+      );
+      else secondaryFailures.push(simulatorCleanupFailure(snapshot.capability, snapshot.boundary));
+    }
+    if (disposed.status !== "ok") {
+      if (terminalFailure === null) terminalFailure = moduleFailure(
+        "evidence-required",
+        disposed.capability,
+        disposed.boundary,
+      );
+      else secondaryFailures.push(simulatorCleanupFailure(disposed.capability, disposed.boundary));
+    }
+    if (terminalFailure !== null) {
+      terminalFailure = appendSimulatorCleanupFailures(terminalFailure, secondaryFailures);
+    }
     return Object.freeze({
       reason: terminalFailure === null ? reason : "terminal-fault" as const,
       result: value === null || record === null ? null : Object.freeze({

@@ -357,7 +357,7 @@ export interface ParticlePortableProfile {
   readonly schemaVersion: 1;
   readonly sample: ParticleSampleIdentity;
   readonly packIdentity: "particle-current-10.1.4-portable-v1";
-  readonly fidelity: "current-static-portable-complete";
+  readonly fidelity: "current-static-portable";
   readonly networkAllowed: false;
   readonly automaticFallbackAllowed: false;
   readonly systemCount: 120;

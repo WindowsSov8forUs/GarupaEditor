@@ -59,7 +59,8 @@ async function main(): Promise<void> {
   testConstructedChartEarlyCapabilityGates();
   await testAutonomousLaunchAndClose();
   await testInvalidTickCloses();
-  console.log("autonomous simulator module tests passed: public/store/selector/recipe/runtime/self-close");
+  await testTerminalCleanupFailuresRemainSecondary();
+  console.log("autonomous simulator module tests passed: public/store/selector/recipe/runtime/self-close/cleanup-faults");
 }
 
 async function testSharedStore(): Promise<void> {
@@ -457,6 +458,27 @@ async function testInvalidTickCloses(): Promise<void> {
   assert.equal(session.closes, 1);
 }
 
+async function testTerminalCleanupFailuresRemainSecondary(): Promise<void> {
+  const scheduler = new ThrowingStopScheduler();
+  const input = new ThrowingDisposeInput();
+  const session = new FakeSession();
+  const module = new AutonomousSimulatorModule({ scheduler, input, sessions: factory(session) });
+  const launched = await module.launch(request());
+  assert.equal(launched.status, "accepted");
+  if (launched.status !== "accepted") throw new Error(launched.failure.capability);
+  await scheduler.tick(1, 1 / 60);
+  const report = await launched.closed;
+  assert.equal(report.failure?.capability, "simulator.runtime.invalid-frame-tick", "primary failure remains stable");
+  assert.deepEqual(
+    report.failure?.cleanupFailures?.map((failure) => failure.capability),
+    ["simulator.runtime.scheduler-stop-threw", "simulator.runtime.input-dispose-threw"],
+    "both independently failing cleanup owners are reported in execution order",
+  );
+  assert.equal(scheduler.stops, 1, "scheduler stop was attempted");
+  assert.equal(input.disposes, 1, "input dispose still ran after scheduler stop failure");
+  assert.ok(Object.isFrozen(report.failure?.cleanupFailures), "cleanup failure receipt is frozen");
+}
+
 class ControlledScheduler implements SimulatorFrameScheduler {
   consumer: ((tick: SimulatorFrameTick) => Promise<void>) | null = null;
   stops = 0;
@@ -469,6 +491,19 @@ class ControlledScheduler implements SimulatorFrameScheduler {
   async tick(sequence: number, deltaTimeSeconds: number): Promise<void> {
     if (this.consumer === null) throw new Error("scheduler stopped");
     await this.consumer(Object.freeze({ sequence, deltaTimeSeconds }));
+  }
+}
+
+class ThrowingStopScheduler extends ControlledScheduler {
+  override start(consumer: (tick: SimulatorFrameTick) => Promise<void>): SimulatorAssemblyResult<SimulatorFrameSubscription> {
+    this.consumer = consumer;
+    return accepted({
+      stop: () => {
+        this.stops += 1;
+        this.consumer = null;
+        throw new Error("injected scheduler stop failure");
+      },
+    });
   }
 }
 
@@ -488,6 +523,13 @@ class ControlledInput implements SimulatorRuntimeInputSource {
   }
 
   dispose(): void { this.disposes += 1; }
+}
+
+class ThrowingDisposeInput extends ControlledInput {
+  override dispose(): void {
+    this.disposes += 1;
+    throw new Error("injected input dispose failure");
+  }
 }
 
 class FakeSession implements SimulatorOwnedSession {

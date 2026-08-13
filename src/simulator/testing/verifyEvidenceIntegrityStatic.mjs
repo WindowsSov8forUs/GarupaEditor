@@ -6,8 +6,10 @@ const testingRoot = resolve(fileURLToPath(new URL(".", import.meta.url)));
 const simulatorRoot = resolve(testingRoot, "..");
 const matrixPath = join(simulatorRoot, "audit", "current-capability-matrix.json");
 const claimsPath = join(simulatorRoot, "audit", "current-claim-ledger.json");
+const integrityPath = join(simulatorRoot, "audit", "current-production-integrity-review.json");
 const matrix = JSON.parse(readFileSync(matrixPath, "utf8"));
 const claims = JSON.parse(readFileSync(claimsPath, "utf8"));
+const integrity = JSON.parse(readFileSync(integrityPath, "utf8"));
 const readme = readFileSync(join(simulatorRoot, "README.md"), "utf8");
 
 if (matrix.schemaVersion !== 1 || !Array.isArray(matrix.rows) || matrix.rows.length === 0) {
@@ -15,6 +17,32 @@ if (matrix.schemaVersion !== 1 || !Array.isArray(matrix.rows) || matrix.rows.len
 }
 if (claims.schemaVersion !== 1 || claims.rules?.forbidUnscopedCompletionClaims !== true) {
   throw new Error("claim ledger does not fail closed");
+}
+const productionRoots = new Set([
+  "assembly", "backends", "engine", "host", "platform", "public", "resources", "runtime", "scene",
+]);
+const currentProductionFiles = [...walk(simulatorRoot)]
+  .filter((path) => extname(path) === ".ts")
+  .map((path) => path.slice(simulatorRoot.length + 1).replaceAll("\\", "/"))
+  .filter((path) => path === "index.ts" || productionRoots.has(path.split("/")[0]))
+  .map((path) => `src/simulator/${path}`)
+  .sort();
+if (
+  integrity.schemaVersion !== 1 || integrity.status !== "closed-for-reachable-supported-scope" ||
+  integrity.reviewPolicy?.sourceOccurrenceIsNotEvidence !== true ||
+  integrity.reviewPolicy?.groupMappingIsNotBlanketAuthorization !== true ||
+  integrity.reviewPolicy?.reachableSupportedUnknownCount !== 0 ||
+  integrity.reviewPolicy?.networkFallbackCount !== 0 ||
+  integrity.reviewPolicy?.ambientRandomOrWallClockCount !== 0 ||
+  integrity.reviewPolicy?.untypedProductionEscapeCount !== 0 ||
+  integrity.reviewPolicy?.commentOnlyCatchCount !== 0 ||
+  integrity.currentProductionFileCount !== currentProductionFiles.length ||
+  JSON.stringify(integrity.currentProductionFiles) !== JSON.stringify(currentProductionFiles)
+) {
+  throw new Error("production integrity review is stale, incomplete or not failed closed");
+}
+if (integrity.groups?.reduce((count, group) => count + group.occurrenceCount, 0) !== 14230) {
+  throw new Error("production integrity review does not consume the full frozen Reverse occurrence inventory");
 }
 const ids = new Set();
 const statuses = new Set([
@@ -50,7 +78,7 @@ for (const path of walk(simulatorRoot)) {
     throw new Error(`committed simulator documentation cites ignored local work: ${path}`);
   }
 }
-console.log(`evidence-integrity static baseline passed: capabilities=${matrix.rows.length} claims=${claims.allowedClaims.length}`);
+console.log(`evidence-integrity static baseline passed: capabilities=${matrix.rows.length} claims=${claims.allowedClaims.length} production-files=${currentProductionFiles.length} occurrences=14230`);
 
 function* walk(root) {
   for (const entry of readdirSync(root, { withFileTypes: true })) {

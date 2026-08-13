@@ -370,11 +370,11 @@ function isFiniteFloat32Bits(bits: string): boolean {
   return audioFloat32FromBits(bits) !== null;
 }
 
-function isRecord(value: unknown): value is Record<string, any> {
+function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
-function hasExactKeys(value: Record<string, any>, expected: readonly string[]): boolean {
+function hasExactKeys(value: Record<string, unknown>, expected: readonly string[]): boolean {
   const actual = Object.keys(value).sort();
   const required = [...expected].sort();
   return actual.length === required.length && actual.every((key, index) => key === required[index]);

@@ -139,17 +139,20 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
       this.bgmGain = bgmGain;
       this.seGain = seGain;
     } catch {
-      for (const gain of temporaryGains) {
+      const cleanupFailures: string[] = [];
+      for (const [index, gain] of temporaryGains.entries()) {
         try {
           gain.disconnect();
         } catch {
-          // Decode/prepare already failed; disconnect is best-effort rollback of an unpublished node.
+          cleanupFailures.push(`temporary-gain:${index}`);
         }
       }
       this.recording = candidate;
       return this.recording.recordTerminalFault(
         "audio.web.decode-or-graph-threw",
-        "A decode rejection or synchronous graph exception is the first terminal Web Audio backend fault.",
+        cleanupFailures.length === 0
+          ? "A decode rejection or synchronous graph exception is the first terminal Web Audio backend fault."
+          : `A decode or graph exception is terminal; rollback continued with failed identities: ${cleanupFailures.join(",")}.`,
       );
     }
 

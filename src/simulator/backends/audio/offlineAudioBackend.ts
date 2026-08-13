@@ -196,11 +196,11 @@ function reject(capability: string, boundary: string): AudioOperationResult<neve
   return audioRejected("evidence-required", capability, boundary);
 }
 
-function isRecord(value: unknown): value is Record<string, any> {
+function isRecord(value: unknown): boolean {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
-function hasExactKeys(value: Record<string, any>, expected: readonly string[]): boolean {
+function hasExactKeys(value: object, expected: readonly string[]): boolean {
   const actual = Object.keys(value).sort();
   const required = [...expected].sort();
   return actual.length === required.length && actual.every((key, index) => key === required[index]);
