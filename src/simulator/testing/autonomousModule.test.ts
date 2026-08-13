@@ -216,9 +216,35 @@ function testRecipeOwnership(): void {
   const overflowingMaster: any = request();
   overflowingMaster.chartData.gameplay.score.master.scoreSS = 0xffffffff;
   assert.equal(createSimulatorSessionRecipe(overflowingMaster).status, "rejected");
+  for (const enabled of [false, true]) {
+    const nonzeroSeek: any = request();
+    nonzeroSeek.config.practice.enabled = enabled;
+    nonzeroSeek.config.practice.startMilliseconds = 1;
+    const rejectedSeek = createSimulatorSessionRecipe(nonzeroSeek);
+    assert.equal(rejectedSeek.status, "rejected");
+    if (rejectedSeek.status === "rejected") {
+      assert.equal(rejectedSeek.failure.capability, "simulator.composition.nonzero-initial-practice-seek");
+    }
+  }
 }
 
 async function testRecipeNaturalCompletion(): Promise<void> {
+  let blockedBuilderCalls = 0;
+  const blockedFactory = new RecipeOwnedSessionFactory({
+    createFreshEngine: async () => {
+      blockedBuilderCalls += 1;
+      throw new Error("non-zero seek must not invoke builder");
+    },
+  });
+  const blockedRequest: any = request();
+  blockedRequest.config.practice.startMilliseconds = 1;
+  const blocked = await blockedFactory.create(blockedRequest);
+  assert.equal(blocked.status, "rejected");
+  if (blocked.status === "rejected") {
+    assert.equal(blocked.failure.capability, "simulator.composition.nonzero-initial-practice-seek");
+  }
+  assert.equal(blockedBuilderCalls, 0, "non-zero initial seek rejects before engine builder");
+
   let initialized = false;
   let completed = false;
   let disposals = 0;
@@ -263,6 +289,11 @@ async function testRecipeNaturalCompletion(): Promise<void> {
   assert.equal(stepped.report.reason, "completed");
   assert.equal(stepped.report.result?.clearStatus, 2);
   assert.equal(stepped.report.result?.combo, 7);
+  assert.equal(stepped.report.capabilities.rendering, null);
+  assert.equal(stepped.report.capabilities.browserRaster, "open-not-claimed");
+  assert.equal(stepped.report.capabilities.fixedDeviceExact, "open-not-claimed-fixed-device-limit");
+  assert.equal(stepped.report.capabilities.characterSkillFeverMultiplayer, "excluded-not-implemented");
+  assert.equal(stepped.report.capabilities.mainProgramIntegrationAuthorized, false);
   assert.equal(disposals, 1);
 }
 

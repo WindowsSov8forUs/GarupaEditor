@@ -39,9 +39,15 @@ export function createSimulatorSessionRecipe(
   request: SimulatorModuleLaunchRequest,
 ): SimulatorAssemblyResult<SimulatorSessionRecipe> {
   const copied = copyLaunchRequest(request);
-  return copied.status === "rejected"
-    ? copied
-    : accepted(Object.freeze({ schemaVersion: 1 as const, request: copied.value }));
+  if (copied.status === "rejected") return copied;
+  if (copied.value.config.practice.startMilliseconds !== 0) {
+    return rejected(
+      "evidence-required",
+      "simulator.composition.nonzero-initial-practice-seek",
+      "Initial non-zero practice seek remains blocked before engine-builder invocation because the 10.1.3 MoveTime investigation has no committed per-claim 10.1.4 equivalence and pre-roll oracle.",
+    );
+  }
+  return accepted(Object.freeze({ schemaVersion: 1 as const, request: copied.value }));
 }
 
 export class RecipeOwnedSessionFactory implements SimulatorOwnedSessionFactory {

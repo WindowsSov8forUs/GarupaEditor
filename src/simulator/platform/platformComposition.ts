@@ -105,13 +105,6 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
   async createFreshEngine(
     recipe: SimulatorSessionRecipe,
   ): Promise<SimulatorAssemblyResult<SimulatorEngine>> {
-    if (recipe.request.config.practice.startMilliseconds !== 0) {
-      return rejected(
-        "evidence-required",
-        "simulator.composition.nonzero-initial-practice-seek",
-        "Initial non-zero practice seek requires a recovered whole-engine pre-roll cadence; audio-only seek and chart-time jumps are forbidden.",
-      );
-    }
     const chart = createNoteBatchInformationList({
       musicScoreData: recipe.request.chartData.bmsText,
     });
