@@ -148,6 +148,7 @@ async function main(): Promise<void> {
     kind: "set-hud", renderObjectId: "hud:life", hudRole: "life",
     state: { ...lifeState(251, 1000, 2000, false), warning: true },
   };
+  const preInvalidObjectCount = renderer.snapshot().objectCount;
   const invalid = renderer.preflight([invalidCommand]);
   equal(invalid.status, "evidence-required", "Life threshold mismatch fails before Pixi mutation");
   equal(renderer.snapshot().objectCount, 8, "failed typed Pixi HUD input preserves owner count");
@@ -168,17 +169,46 @@ async function main(): Promise<void> {
   equal(recording.snapshot().objectCount, recordingObjectCount, "failed typed Recording HUD input preserves owner count");
   requireOk(recording.dispose(), "recording parity dispose");
 
+  const resourcePreparation = renderer.resourceSnapshot();
+  const invalidObservation = Object.freeze({
+    capability: invalid.status === "evidence-required" ? invalid.capability : null,
+    beforeObjectCount: preInvalidObjectCount,
+    afterObjectCount: renderer.snapshot().objectCount,
+    lifeLabelAfter: renderer.sceneSnapshot().find(
+      (candidate) => candidate.renderObjectId === "hud:life",
+    )?.hudText ?? null,
+  });
+  const sampleObservation = Object.freeze({
+    noteUp: pickSceneObservation(row("note:up")),
+    noteLeft: pickSceneObservation(row("note:left")),
+    noteRight: pickSceneObservation(row("note:right")),
+    noteFlash: pickSceneObservation(row("note:flash")),
+    combo: pickSceneObservation(combo),
+    addScore: pickSceneObservation(add),
+    result: pickSceneObservation(result),
+    life: pickSceneObservation(life),
+  });
   requireOk(renderer.dispose(), "actual Pixi dispose");
   equal(renderer.snapshot().objectCount, 0, "actual Pixi dispose releases all owners");
+  const sampleCleanup = Object.freeze({
+    ownerCount: renderer.snapshot().objectCount,
+    stageChildren: renderer.stage.children.length,
+  });
   const fullChart = await verifyActualPixiFullChart(profile, resources);
   const observationPath = process.env.SIMULATOR_RENDER_OBSERVATION_PATH;
   if (typeof observationPath === "string" && observationPath.length > 0) {
     writeFileSync(observationPath, JSON.stringify({
-      schemaVersion: 1,
-      source: "actual-pixi-reverse-semantic-oracle",
-      cases: Object.fromEntries([
-        "PR08", "PR09", "PR11", "PR22", "PR23", "PR24", "PR26", "PR27", "PR29", "PR30", "PR39",
-      ].map((id) => [id, { status: "closed", observation: id === "PR39" ? "failed-batch-zero-mutation" : "actual-pixi-positive-route" }])),
+      schemaVersion: 2,
+      source: "actual-pixi-command-scene-routing",
+      decoder: {
+        kind: "synthetic-texture-source-routing-adapter",
+        browserDecodeExecuted: false,
+        rasterObserved: false,
+      },
+      resourcePreparation,
+      samples: sampleObservation,
+      invalidPreflight: invalidObservation,
+      sampleCleanup,
       fullChart,
     }, null, 2));
   }
@@ -188,10 +218,23 @@ async function main(): Promise<void> {
 async function verifyActualPixiFullChart(
   profile: RenderResourceProfile,
   resources: readonly { readonly logicalAssetId: string; readonly bytes: Uint8Array }[],
-): Promise<{ readonly batches: number; readonly frames: number; readonly score: number; readonly routes: readonly string[] }> {
+): Promise<{
+  readonly batches: number;
+  readonly consumedBatches: number;
+  readonly maxNoteCount: number;
+  readonly frames: number;
+  readonly score: number;
+  readonly life: number;
+  readonly routes: readonly string[];
+  readonly roles: readonly string[];
+  readonly animationRoles: readonly string[];
+  readonly maxGeometryVertexCount: number;
+  readonly cleanupOwnerCount: number;
+  readonly cleanupStageChildren: number;
+}> {
   const chartText = readFileSync(join(
     fixtureRoot,
-    "chart-construction/fixtures/poppin_shuffle_special.txt",
+    "evidence-integrity/artifacts/investigations/simulator-dynamic-acceptance-oracle-10-1-4/bms/poppin_shuffle_special.bms.txt",
   ), "utf8");
   const chart = requireOk(createNoteBatchInformationList({ musicScoreData: chartText }), "construct ordinary full chart");
   const sessionId = "pixi-actual-poppin-shuffle-special";
@@ -239,6 +282,9 @@ async function verifyActualPixiFullChart(
   }, createRecordingSimulatorBackends(renderer)), "create actual Pixi full-chart engine");
   requireOk(engine.initialize(), "initialize actual Pixi full-chart engine");
   const routes = new Set<string>();
+  const roles = new Set<string>();
+  const animationRoles = new Set<string>();
+  let maxGeometryVertexCount = 0;
   let frames = 0;
   let finalSnapshot = requireOk(engine.snapshot(), "initial full-chart snapshot");
   for (; frames < 7200; frames += 1) {
@@ -247,6 +293,11 @@ async function verifyActualPixiFullChart(
     if (frames % 60 !== 0) continue;
     finalSnapshot = requireOk(engine.snapshot(), `full-chart snapshot ${frames}`);
     const visible = renderer.sceneSnapshot();
+    for (const row of visible) {
+      roles.add(row.role);
+      if (row.activeAnimationRole !== null) animationRoles.add(row.activeAnimationRole);
+      maxGeometryVertexCount = Math.max(maxGeometryVertexCount, row.geometryVertexCount ?? 0);
+    }
     const combo = visible.find((row) => row.renderObjectId === "render:hud:combo");
     const add = visible.find((row) => row.renderObjectId.startsWith("render:hud:add-score") && row.visible);
     const result = visible.find((row) => row.renderObjectId === "render:hud:result");
@@ -269,12 +320,51 @@ async function verifyActualPixiFullChart(
   assert(record !== undefined, "full-chart Score/Life snapshot exists");
   assert(record.score > 0 && record.currentCombo > 0, "full-chart Auto Live updates Score and Combo");
   equal(record.currentLife, 1000, "full-chart Auto Live preserves ordinary Life");
+  const consumedBatches = finalSnapshot.managers.noteManager.nextBatchIndex;
+  const maxNoteCount = finalSnapshot.managers.scoreLifeState?.initialization.maxNoteCount ?? 0;
   requireOk(engine.dispose(), "dispose actual Pixi full-chart engine");
   equal(renderer.snapshot().objectCount, 0, "actual Pixi full-chart releases every owner");
   equal(renderer.stage.children.length, 0, "actual Pixi full-chart leaves an empty stage");
   const routeList = Object.freeze([...routes].sort());
   console.log(`actual Pixi ordinary full-chart passed: batches=${chart.noteBatches.length} frames=${frames} score=${record.score} routes=${routeList.join("|")}`);
-  return Object.freeze({ batches: chart.noteBatches.length, frames, score: record.score, routes: routeList });
+  return Object.freeze({
+    batches: chart.noteBatches.length,
+    consumedBatches,
+    maxNoteCount,
+    frames,
+    score: record.score,
+    life: record.currentLife,
+    routes: routeList,
+    roles: Object.freeze([...roles].sort()),
+    animationRoles: Object.freeze([...animationRoles].sort()),
+    maxGeometryVertexCount,
+    cleanupOwnerCount: renderer.snapshot().objectCount,
+    cleanupStageChildren: renderer.stage.children.length,
+  });
+}
+
+function pickSceneObservation(
+  row: ReturnType<PixiRendererBackend["sceneSnapshot"]>[number],
+) {
+  return Object.freeze({
+    renderObjectId: row.renderObjectId,
+    role: row.role,
+    visible: row.visible,
+    alpha: row.alpha,
+    position: row.position,
+    hudText: row.hudText,
+    hudFontFamily: row.hudFontFamily,
+    hudSpriteCount: row.hudSpriteCount,
+    hudSpriteLabels: row.hudSpriteLabels,
+    hudSpriteAlphas: row.hudSpriteAlphas,
+    hudFillRatios: row.hudFillRatios,
+    spriteBindingKey: row.spriteBindingKey,
+    spriteAlpha: row.spriteAlpha,
+    spriteTint: row.spriteTint,
+    geometryVertexCount: row.geometryVertexCount,
+    activeAnimationRole: row.activeAnimationRole,
+    animationElapsedSeconds: row.animationElapsedSeconds,
+  });
 }
 
 function ordinaryScene() {

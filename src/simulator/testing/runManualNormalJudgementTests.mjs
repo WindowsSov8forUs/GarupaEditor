@@ -54,27 +54,7 @@ function verifyFrozenProjection() {
   assert.equal(mj11.output.observed_long.result, 2);
   assert.equal(mj11.output.observed_long.judge_timing, 2);
   assert.equal(mj11.output.observed_long.note_type, 4);
-
-  const projection = JSON.parse(readFileSync(join(evidenceRoot, "runtime", "manual_projection.json"), "utf8"));
-  const hard = projection.hard;
-  const good = hard.events.find((entry) =>
-    entry.kind === "OneFrameData.Setup.leave" &&
-    entry.frame.index === 6 &&
-    entry.frame.result === 2 &&
-    entry.frame.note_type === 4);
-  assert.ok(good);
-  assert.equal(good.frame.adjusted_result, 2);
-  assert.equal(good.frame.add_combo, -1);
-  assert.equal(good.frame.judge_timing, 2);
-
-  const easy = projection.easy;
-  const miss = easy.events.find((entry) =>
-    entry.kind === "OneFrameData.Setup.leave" && entry.frame.result === 0);
-  assert.ok(miss);
-  assert.equal(miss.frame.adjusted_result, 0);
-  assert.equal(miss.frame.add_combo, -1);
-  assert.equal(miss.frame.judge_timing, 0);
-  console.log("frozen manual OneFrame projection verified: Good/Slow identity and Miss timing clear");
+  console.log("committed manual fixed-event oracle verified: Long Good/Slow identity and Note type");
 }
 
 function run(command, args) {

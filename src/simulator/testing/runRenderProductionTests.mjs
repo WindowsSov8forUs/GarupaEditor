@@ -24,7 +24,8 @@ try {
     "runRenderProductionChartTests.mjs",
   ]) run(process.execPath, [join(testingRoot, runner)]);
   run(process.execPath, [join(testingRoot, "verifyRenderProductionCases.mjs")]);
-  console.log("render production oracle passed: Reverse closure + contracts + actual Pixi Note/HUD/full-chart dynamic observations");
+  run(process.execPath, [join(testingRoot, "verifyRenderObservationIndependence.mjs")]);
+  console.log("actual-pixi-command-scene-routing passed: Reverse expected values + independently computed raw Note/HUD/full-chart observations");
 } finally {
   rmSync(observationRoot, { recursive: true, force: true });
 }

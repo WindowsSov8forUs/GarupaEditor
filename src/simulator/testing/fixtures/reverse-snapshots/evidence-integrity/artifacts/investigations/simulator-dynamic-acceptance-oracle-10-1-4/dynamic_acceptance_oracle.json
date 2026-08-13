@@ -1,0 +1,174 @@
+{
+  "schemaVersion": 1,
+  "status": "simulator-dynamic-acceptance-expected-values-closed",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "versionName": "10.1.4",
+    "versionCode": 230,
+    "abi": "arm64-v8a"
+  },
+  "scope": "actual-pixi-command-scene-routing; not browser decode, raster, framebuffer or device exact",
+  "sourceEvidence": {
+    "ordinaryVisibleOracle": {
+      "path": "../ordinary-visible-rendering-portable-10-1-4/ordinary_visible_rendering_oracle.json",
+      "sha256": "AA3AD83EE90B127FC817EA66ADF0A32BDBD10994128B93356280531697AE6794"
+    },
+    "productionChartOracle": {
+      "path": "../runtime-integration-prototype/production_bms_validation.json",
+      "sha256": "081956FDB61263D84F6FDBC1DCDC5A93365B50F0032BE282EF8D42DD046BFF0A"
+    }
+  },
+  "chartOracleSnapshots": [
+    {
+      "path": "chart-oracles/poppin_shuffle_special.json",
+      "bytes": 50591,
+      "sha256": "FA636238280D384C3BAE42335B54522B02CDBE608C890516F2F38FB728DEA2FC"
+    },
+    {
+      "path": "chart-oracles/786_miracle_april_habahiro_special.json",
+      "bytes": 58170,
+      "sha256": "F30C0BC1AE5766D11394FBA02C8F14E463787B31A79E38E6C79F6E02B3493773"
+    }
+  ],
+  "expectedProductionCases": [
+    "PR08",
+    "PR09",
+    "PR11",
+    "PR22",
+    "PR23",
+    "PR24",
+    "PR26",
+    "PR27",
+    "PR29",
+    "PR30",
+    "PR39"
+  ],
+  "noteAnimationMidpoints": {
+    "note:up": {
+      "position": [
+        0,
+        -1.0
+      ],
+      "exactKey": "note_flick_top"
+    },
+    "note:left": {
+      "position": [
+        -1.9500000476837158,
+        0
+      ],
+      "exactKey": "note_flick_top_l"
+    },
+    "note:right": {
+      "position": [
+        1.9500000476837158,
+        0
+      ],
+      "exactKey": "note_flick_top_r"
+    },
+    "note:flash": {
+      "rgb": [
+        0.6000000238418579,
+        0.6000000238418579,
+        0.6000000238418579
+      ],
+      "alpha": 1.0,
+      "exactKey": "note_long_flash_3"
+    }
+  },
+  "comboMidpoint": {
+    "value": 1234,
+    "allPerfect": true,
+    "spriteCount": 5,
+    "spriteAlpha": 0.5
+  },
+  "addScoreRoute": {
+    "value": 456,
+    "poolIndex": 0,
+    "depth": 3,
+    "spriteCount": 4,
+    "resourceKeys": [
+      "icon_number_plus",
+      "icon_number_4",
+      "icon_number_5",
+      "icon_number_6"
+    ]
+  },
+  "resultRoute": {
+    "judgeKey": "judge_great",
+    "timingKey": "judge_fast",
+    "spriteCount": 2
+  },
+  "lifeThreshold": {
+    "life": 200,
+    "primary": 0.20000000298023224,
+    "secondary": 0.0,
+    "danger": true,
+    "warning": true,
+    "gameOver": false
+  },
+  "judgedCommandOrder": [
+    "result",
+    "combo",
+    "add-score",
+    "score",
+    "life"
+  ],
+  "ownerResourceKeys": {
+    "combo": [
+      "icon_number_big_0..9",
+      "icon_number_big_AP_0..9",
+      "combo",
+      "combo_AP"
+    ],
+    "addScore": [
+      "icon_number_plus",
+      "icon_number_0..9"
+    ],
+    "result": [
+      "judge_auto",
+      "judge_miss",
+      "judge_bad",
+      "judge_good",
+      "judge_great",
+      "judge_perfect",
+      "judge_fast",
+      "judge_slow"
+    ],
+    "life": [
+      "bg_health",
+      "hp_meter",
+      "hp_meter",
+      "effect_health_caution_outline",
+      "effect_health_caution_inside",
+      "bg_no_health"
+    ]
+  },
+  "fullChart": {
+    "batches": 656,
+    "playableSpecs": 825,
+    "maxNoteCount": 979,
+    "routes": [
+      "add-score",
+      "combo",
+      "life",
+      "result",
+      "score"
+    ],
+    "scoreRequirement": "positive-observation-not-an-original-exact-score-claim",
+    "life": 1000,
+    "cleanupOwnerCount": 0,
+    "cleanupStageChildren": 0
+  },
+  "negativePreflight": {
+    "capability": "render.pixi.invalid-typed-hud-state",
+    "ownerCount": 8,
+    "lifeLabel": "200/1000"
+  },
+  "decoderLayer": {
+    "name": "synthetic-texture-source-routing-adapter",
+    "browserDecodeExecuted": false,
+    "rasterClaimAllowed": false
+  },
+  "unknownFields": [],
+  "blockingFindings": []
+}

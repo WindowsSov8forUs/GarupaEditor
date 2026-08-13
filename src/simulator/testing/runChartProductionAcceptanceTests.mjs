@@ -58,11 +58,11 @@ function validateProductionCharts() {
     getMultiRangeSourceIdentity,
     registerMultiRangeSources,
   } = require(join(chartRoot, "multiRangeSources.js"));
-  const fixturesRoot = join(
+  const promotedRoot = join(
     repositoryRoot,
     "src", "simulator", "testing", "fixtures", "reverse-snapshots",
-    "chart-construction",
-    "fixtures",
+    "evidence-integrity", "artifacts", "investigations",
+    "simulator-dynamic-acceptance-oracle-10-1-4",
   );
   const evidenceRoot = join(
     repositoryRoot,
@@ -75,21 +75,21 @@ function validateProductionCharts() {
   const fixtures = [
     {
       name: "normal",
-      bms: "poppin_shuffle_special.txt",
+      bms: "poppin_shuffle_special.bms.txt",
       chart: "poppin_shuffle_special.json",
       evidence: "production_bms_validation.json",
     },
     {
       name: "habahiro",
-      bms: "786_miracle_april_habahiro_special.txt",
+      bms: "786_miracle_april_habahiro_special.bms.txt",
       chart: "786_miracle_april_habahiro_special.json",
       evidence: "production_habahiro_bms_validation.json",
     },
   ];
 
   for (const fixture of fixtures) {
-    const source = readFileSync(join(fixturesRoot, fixture.bms), "utf8");
-    const chart = JSON.parse(readFileSync(join(fixturesRoot, fixture.chart), "utf8"));
+    const source = readFileSync(join(promotedRoot, "bms", fixture.bms), "utf8");
+    const chart = JSON.parse(readFileSync(join(promotedRoot, "chart-oracles", fixture.chart), "utf8"));
     const evidence = JSON.parse(readFileSync(
       join(evidenceRoot, fixture.evidence),
       "utf8",
