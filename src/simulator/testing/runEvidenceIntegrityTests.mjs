@@ -21,7 +21,7 @@ for (const [label, runner] of stages) {
   run(process.execPath, [join(testingRoot, runner)]);
 }
 console.log(
-  "evidence-integrity dynamic matrix passed: ordinary portable gates observed; HAB original parity, browser raster, device exact and stage-9 remain open/excluded as classified",
+  "legacy evidence-integrity candidate matrix executed; it does not close current production gates, and HAB/browser/device/stage-9 remain open or excluded",
 );
 
 function run(command, args) {

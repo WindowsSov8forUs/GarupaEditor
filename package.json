@@ -42,6 +42,7 @@
     "simulator:test:fixtures": "node src/simulator/testing/verifyTestingFixtures.mjs",
     "simulator:test:evidence-integrity:static": "node src/simulator/testing/verifyEvidenceIntegrityStatic.mjs",
     "simulator:test:evidence-integrity": "node src/simulator/testing/runEvidenceIntegrityTests.mjs",
+    "simulator:test:total-revalidation": "node src/simulator/testing/runTotalRevalidationTests.mjs",
     "tauri": "tauri",
     "desktop:dev": "tauri dev",
     "desktop:build": "tauri build",
