@@ -4,6 +4,8 @@ This directory is a machine-checkable description of the current production boun
 
 The total revalidation is open. Every capability formerly reported as portable support is `reopened-audit` and the public launch rejects before the installed launcher, chart parsing, resource selection, backend preparation, scheduler start, or owner mutation.
 
+The current pushed source surface is frozen by Reverse `simulator-total-revalidation-10-1-4@dae49ee3`: 102 production files, 21,194 individually disposed occurrences, 14,031 candidate field/formula claims, 253 mutation points and 552 completion-like claims. `current-field-claim-index.json` and `current-mutation-boundaries.json` are pointers, not evidence copies or behavior authorization.
+
 Rules:
 
 - Old task documents, acceptance records, closure fields, green aggregate tests, source markers and Recording backends cannot close a current gate.

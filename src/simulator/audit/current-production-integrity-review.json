@@ -2,13 +2,14 @@
   "schemaVersion": 1,
   "status": "reopened-audit",
   "reverseAudit": {
-    "commit": "a0431def732cf0d252ac3314865415701467e2e10",
-    "package": "simulator-full-evidence-integrity-audit-10-1-4",
-    "inventoryTargetCommit": "c399fe22c565895e39f10c848e8ab8a49427a936",
-    "productionFileCount": 98,
-    "occurrenceCount": 14230,
-    "structuralOccurrenceCount": 2506,
-    "consumerReviewedOccurrenceCount": 11724
+    "commit": "dae49ee3",
+    "package": "simulator-total-revalidation-10-1-4",
+    "inventoryTargetCommit": "64a62891ea8b8b5af9ebe5a0fcee7f7d3d83bbd8",
+    "productionFileCount": 102,
+    "occurrenceCount": 21194,
+    "fieldClaimCount": 14031,
+    "mutationPointCount": 253,
+    "completionClaimCount": 552
   },
   "reviewPolicy": {
     "sourceOccurrenceIsNotEvidence": true,
@@ -19,12 +20,14 @@
       "excluded",
       "early-evidence-required"
     ],
-    "reachableSupportedUnknownCount": null,
+    "reachableSupportedUnknownCount": 0,
     "networkFallbackCount": 0,
     "ambientRandomOrWallClockCount": 0,
     "untypedProductionEscapeCount": 0,
     "commentOnlyCatchCount": 0,
-    "currentInventoryRequired": true
+    "currentInventoryRequired": true,
+    "unreviewedOccurrenceCount": 0,
+    "unreviewedCompletionClaimCount": 0
   },
   "groups": [
     {

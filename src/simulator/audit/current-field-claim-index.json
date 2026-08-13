@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "status": "globally-early-open",
+  "reverseCommit": "dae49ee3",
+  "reversePackage": "artifacts/investigations/simulator-total-revalidation-10-1-4",
+  "targetGarupaCommit": "64a62891ea8b8b5af9ebe5a0fcee7f7d3d83bbd8",
+  "counts": {
+    "productionFiles": 102,
+    "behaviorOccurrences": 21194,
+    "fieldClaims": 14031,
+    "completionClaims": 552
+  },
+  "reachableSupportedUnknownCount": 0,
+  "reason": "All candidate fields are individually indexed as early-open behind simulator.audit.total-revalidation-open; this is a fail-closed inventory, not behavioral authorization."
+}

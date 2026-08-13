@@ -7,9 +7,13 @@ const simulatorRoot = resolve(testingRoot, "..");
 const matrixPath = join(simulatorRoot, "audit", "current-capability-matrix.json");
 const claimsPath = join(simulatorRoot, "audit", "current-claim-ledger.json");
 const integrityPath = join(simulatorRoot, "audit", "current-production-integrity-review.json");
+const fieldIndexPath = join(simulatorRoot, "audit", "current-field-claim-index.json");
+const mutationPath = join(simulatorRoot, "audit", "current-mutation-boundaries.json");
 const matrix = JSON.parse(readFileSync(matrixPath, "utf8"));
 const claims = JSON.parse(readFileSync(claimsPath, "utf8"));
 const integrity = JSON.parse(readFileSync(integrityPath, "utf8"));
+const fieldIndex = JSON.parse(readFileSync(fieldIndexPath, "utf8"));
+const mutations = JSON.parse(readFileSync(mutationPath, "utf8"));
 const readme = readFileSync(join(simulatorRoot, "README.md"), "utf8");
 const publicContracts = readFileSync(join(simulatorRoot, "public", "contracts.ts"), "utf8");
 const publicCapabilities = readFileSync(join(simulatorRoot, "public", "capabilities.ts"), "utf8");
@@ -93,6 +97,17 @@ for (const path of walk(simulatorRoot)) {
   if (/(?:^|[\\/`])tmp[\\/]/m.test(source)) {
     throw new Error(`committed simulator documentation cites ignored local work: ${path}`);
   }
+}
+if (
+  fieldIndex.status !== "globally-early-open" ||
+  fieldIndex.targetGarupaCommit !== "64a62891ea8b8b5af9ebe5a0fcee7f7d3d83bbd8" ||
+  fieldIndex.counts?.productionFiles !== 102 || fieldIndex.counts?.behaviorOccurrences !== 21194 ||
+  fieldIndex.counts?.fieldClaims !== 14031 || fieldIndex.reachableSupportedUnknownCount !== 0 ||
+  mutations.status !== "production-unreachable-behind-global-gate" ||
+  mutations.mutationPointCount !== 253 || mutations.productionAcceptedMutationPointCount !== 0 ||
+  mutations.earliestBoundary?.capability !== "simulator.audit.total-revalidation-open"
+) {
+  throw new Error("current field or mutation pointer does not match the pushed Reverse B01 baseline");
 }
 if (!publicCapabilities.includes("simulator.audit.total-revalidation-open") ||
     !readFileSync(join(simulatorRoot, "public", "launch.ts"), "utf8").includes("totalRevalidationFailure")) {
