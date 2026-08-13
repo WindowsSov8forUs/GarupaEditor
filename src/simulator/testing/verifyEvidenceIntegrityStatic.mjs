@@ -99,15 +99,23 @@ for (const path of walk(simulatorRoot)) {
   }
 }
 if (
-  fieldIndex.status !== "globally-early-open" ||
-  fieldIndex.targetGarupaCommit !== "64a62891ea8b8b5af9ebe5a0fcee7f7d3d83bbd8" ||
-  fieldIndex.counts?.productionFiles !== 102 || fieldIndex.counts?.behaviorOccurrences !== 21194 ||
-  fieldIndex.counts?.fieldClaims !== 14031 || fieldIndex.reachableSupportedUnknownCount !== 0 ||
-  mutations.status !== "production-unreachable-behind-global-gate" ||
-  mutations.mutationPointCount !== 253 || mutations.productionAcceptedMutationPointCount !== 0 ||
+  fieldIndex.schemaVersion !== 2 ||
+  fieldIndex.status !== "candidate-per-claim-indexed-behind-global-gate" ||
+  fieldIndex.reverseCommit !== "76b673f8d110ae8ed43357ffcbc0231eb77c0aad" ||
+  fieldIndex.targetGarupaCommit !== "c66e4d94bd248e8e0decd5a7430358f96d787599" ||
+  fieldIndex.counts?.productionFiles !== 102 || fieldIndex.counts?.behaviorOccurrences !== 21287 ||
+  fieldIndex.counts?.fieldClaims !== 14120 || fieldIndex.counts?.completionClaims !== 555 ||
+  fieldIndex.fieldDispositionCounts?.["field-evidence-bound"] !== 13893 ||
+  fieldIndex.fieldDispositionCounts?.["early-evidence-required"] !== 225 ||
+  fieldIndex.fieldDispositionCounts?.excluded !== 2 || fieldIndex.reachableSupportedUnknownCount !== 0 ||
+  mutations.schemaVersion !== 2 ||
+  mutations.status !== "candidate-mutations-indexed-behind-global-gate" ||
+  mutations.reverseCommit !== fieldIndex.reverseCommit ||
+  mutations.mutationPointCount !== 252 || mutations.productionAcceptedMutationPointCount !== 0 ||
+  mutations.perMutationDispositionRequired !== true ||
   mutations.earliestBoundary?.capability !== "simulator.audit.total-revalidation-open"
 ) {
-  throw new Error("current field or mutation pointer does not match the pushed Reverse B01 baseline");
+  throw new Error("current field or mutation pointer does not match the pushed Reverse schema v2 inventory");
 }
 if (!publicCapabilities.includes("simulator.audit.total-revalidation-open") ||
     !readFileSync(join(simulatorRoot, "public", "launch.ts"), "utf8").includes("totalRevalidationFailure")) {

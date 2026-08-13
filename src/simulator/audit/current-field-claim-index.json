@@ -1,15 +1,21 @@
 {
-  "schemaVersion": 1,
-  "status": "globally-early-open",
-  "reverseCommit": "dae49ee3",
+  "schemaVersion": 2,
+  "status": "candidate-per-claim-indexed-behind-global-gate",
+  "reverseCommit": "76b673f8d110ae8ed43357ffcbc0231eb77c0aad",
   "reversePackage": "artifacts/investigations/simulator-total-revalidation-10-1-4",
-  "targetGarupaCommit": "64a62891ea8b8b5af9ebe5a0fcee7f7d3d83bbd8",
+  "targetGarupaCommit": "c66e4d94bd248e8e0decd5a7430358f96d787599",
   "counts": {
     "productionFiles": 102,
-    "behaviorOccurrences": 21194,
-    "fieldClaims": 14031,
-    "completionClaims": 552
+    "behaviorOccurrences": 21287,
+    "fieldClaims": 14120,
+    "completionClaims": 555
+  },
+  "fieldDispositionCounts": {
+    "field-evidence-bound": 13893,
+    "early-evidence-required": 225,
+    "excluded": 2
   },
   "reachableSupportedUnknownCount": 0,
-  "reason": "All candidate fields are individually indexed as early-open behind simulator.audit.total-revalidation-open; this is a fail-closed inventory, not behavioral authorization."
+  "globalGate": "simulator.audit.total-revalidation-open",
+  "reason": "Schema v2 individually binds candidate fields to evidence/raw families or explicit open/excluded dispositions; it is not release authorization while the global production gate remains open."
 }

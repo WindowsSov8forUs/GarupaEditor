@@ -2,14 +2,20 @@
   "schemaVersion": 1,
   "status": "reopened-audit",
   "reverseAudit": {
-    "commit": "dae49ee3",
+    "commit": "76b673f8d110ae8ed43357ffcbc0231eb77c0aad",
     "package": "simulator-total-revalidation-10-1-4",
-    "inventoryTargetCommit": "64a62891ea8b8b5af9ebe5a0fcee7f7d3d83bbd8",
+    "inventoryTargetCommit": "c66e4d94bd248e8e0decd5a7430358f96d787599",
+    "schemaVersion": 2,
     "productionFileCount": 102,
-    "occurrenceCount": 21194,
-    "fieldClaimCount": 14031,
-    "mutationPointCount": 253,
-    "completionClaimCount": 552
+    "occurrenceCount": 21287,
+    "fieldClaimCount": 14120,
+    "mutationPointCount": 252,
+    "completionClaimCount": 555,
+    "fieldDispositionCounts": {
+      "field-evidence-bound": 13893,
+      "early-evidence-required": 225,
+      "excluded": 2
+    }
   },
   "reviewPolicy": {
     "sourceOccurrenceIsNotEvidence": true,
@@ -288,5 +294,5 @@
     "src/simulator/runtime/moduleEntryBinding.ts",
     "src/simulator/scene/simulatorSceneLayout.ts"
   ],
-  "supersededReason": "The previous grouped occurrence review and completion conclusions are not current acceptance authority; B01 must rebuild a per-occurrence, per-field and mutation-boundary inventory from the pushed B00 source commit."
+  "supersededReason": "Schema v1 blanket early-open and all earlier grouped reviews are superseded by the pushed schema v2 per-occurrence, per-field and per-mutation candidate inventory. Schema v2 remains behind the global gate and is not release authorization."
 }
