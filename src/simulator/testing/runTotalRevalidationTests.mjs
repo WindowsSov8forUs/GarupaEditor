@@ -31,6 +31,8 @@ const leaves = [
   ["audio", "runAudioTests.mjs", {}],
   ["particle", "runParticleTests.mjs", {}],
   ["host-runtime-public-gate", "runAutonomousModuleTests.mjs", {}],
+  ["remaining-capability-consumption", "runC07EvidenceConsumptionTests.mjs", {}],
+  ["production-browser-webview2", "runBrowserPixiDecoderWebView2Tests.mjs", {}],
 ];
 const started = Date.now();
 try {
@@ -38,7 +40,7 @@ try {
   for (const [id, runner, env, extraArgs = []] of leaves) {
     run(id, process.execPath, [join(testingRoot, runner), ...extraArgs], env);
   }
-  console.log(`total revalidation unique-leaf DAG passed: leaves=${leaves.length + 1} elapsedMs=${Date.now() - started}; portable release scope only, browser/device/stage-9 gates remain open`);
+  console.log(`total revalidation unique-leaf DAG passed: leaves=${leaves.length + 1} elapsedMs=${Date.now() - started}; portable gates include initial seek and real browser decode; fixed-device exact remains objectively blocked and stage-9 remains unauthorized`);
 } finally {
   rmSync(tempRoot, { recursive: true, force: true });
 }
