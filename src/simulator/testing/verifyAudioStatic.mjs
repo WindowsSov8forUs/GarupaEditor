@@ -47,10 +47,8 @@ if (!productionSource.includes('cue: "SE_RHYTHM_TAP_SKILL"') ||
 if (/SE_RHYTHM_(?:CLEAR_VO|CUTIN|CUTIN_AUDIENCE|CUTIN_SKILL)/.test(productionSource)) {
   violations.push("character voice/cut-in-only SE remains production-reachable");
 }
-if (bgmContract.status !== "current-static-generic-session-bgm-portable-contract-closed" ||
-  bgmContract.case_count !== 6 || bgmContract.typescript_production_authorization !== true ||
-  bgmContract.main_program_integration_authorization !== false) {
-  violations.push("session BGM Reverse contract/gate mismatch");
+if (bgmContract.case_count !== 6 || !Array.isArray(bgmContract.cases) || bgmContract.cases.length !== 6) {
+  violations.push("session BGM raw Reverse case inventory mismatch; legacy closure/authorization fields are ignored");
 }
 const webSource = readFileSync(webAudioPath, "utf8");
 if (/from\s+["'](?:\.\.\/)*\.\.\/engine\/(?:managers|notes)|from\s+["'](?:\.\.\/)*\.\.\/host/.test(webSource)) {

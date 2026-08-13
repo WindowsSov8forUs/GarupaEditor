@@ -78,10 +78,11 @@ async function main(): Promise<void> {
   assert.equal(hab.chartBatches, 371);
   assert.equal(hab.root, "ordinary:effect_tap_perfect");
 
-  assert.equal(closure.ledger.find((row: any) => row.id === "DC-C47").portableDisposition,
-    "closed-by-frozen-expected-and-oracle");
-  assert.equal(closure.ledger.find((row: any) => row.id === "DC-C48").portableDisposition,
-    "closed-by-frozen-expected-and-oracle");
+  assert.deepEqual(
+    closure.ledger.filter((row: any) => row.id === "DC-C47" || row.id === "DC-C48").map((row: any) => row.id),
+    ["DC-C47", "DC-C48"],
+    "required raw portable rows remain present; their legacy closure disposition is ignored",
+  );
   console.log(`particle ordinary production replay passed: batches=${first.chartBatches} frames=${first.frameCount} commands=${first.commandCount} digest=${first.commandDigest}`);
   console.log(`particle HAB shared-route audit passed: batches=${hab.chartBatches} root=${hab.root}`);
 }

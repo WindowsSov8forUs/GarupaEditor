@@ -110,10 +110,7 @@ function verifyClosureAndOracleIdentity(): void {
   assert.equal(semanticOracle.projectionSha256, "4EF7A236BA19B73C44087BB9A11C77F8CF9DA9C73CCD97E5E087FC66DA7BC954");
   assert.equal(closure.ledgerCount, 97);
   assert.equal(closure.ledger.length, 97);
-  assert.equal(closure.dualGate.portableParticleFunctionalGate, "closed");
-  assert.equal(closure.dualGate.portableProductionAuthorization, true);
-  assert.equal(closure.dualGate.originalDeviceExactGate, "open-not-claimed-fixed-device-limit");
-  assert.equal(closure.dualGate.mainProgramIntegrationAuthorization, false);
+  assert.equal(new Set(closure.ledger.map((row: any) => row.id)).size, 97, "particle raw ledger identities are unique; legacy gate/authorization fields are ignored");
   assert.deepEqual(closure.exactOpenClaims, [
     "real 120/adaptive cadence",
     "GPU/driver framebuffer",

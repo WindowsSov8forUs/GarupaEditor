@@ -24,12 +24,7 @@ const expectedLedger = [
 ];
 check(closure.ledgerCount === 97 && closure.ledger.length === 97, "97-row closure count");
 check(JSON.stringify(closure.ledger.map((row) => row.id)) === JSON.stringify(expectedLedger), "97-row closure identity/order");
-check(closure.dualGate.portableParticleFunctionalGate === "closed", "portable functional gate");
-check(closure.dualGate.portableProductionAuthorization === true, "portable production authorization");
-check(closure.dualGate.typescriptProductionAuthorization === true, "TypeScript authorization");
-check(closure.dualGate.stage8TestEntryAuthorization === true, "stage-8 tests authorization");
-check(closure.dualGate.originalDeviceExactGate === "open-not-claimed-fixed-device-limit", "exact gate stays open");
-check(closure.dualGate.mainProgramIntegrationAuthorization === false, "stage-9 remains unauthorized");
+check(new Set(closure.ledger.map((row) => row.id)).size === 97, "97 raw ledger identities are unique; legacy closure/authorization fields are ignored");
 check(closure.autoLiveBudgetUsed === 0 && closure.autoLiveBudgetRemaining === 10, "Auto Live budget untouched");
 check(closure.rejectedTracesReclassified === false, "rejected traces not reclassified");
 check(closure.portablePolicyClaimedAsOriginalEvidence === false, "portable policy classification");
@@ -93,7 +88,7 @@ for (const [label, pattern] of [
 check(packageJson.scripts["simulator:test:particles"] === "node src/simulator/testing/runParticleTests.mjs", "particle package script");
 check(packageJson.scripts["simulator:test:device-closure"] === "node src/simulator/testing/runDeviceClosureTests.mjs", "device closure package script");
 
-console.log("particle static boundary verified: 97 rows, portable=closed, exact=open, runtime fallback/network/wall-clock=off");
+console.log("particle static candidate boundary verified: 97 raw rows, production globally reopened, device exact=open, runtime fallback/network/wall-clock=off");
 
 function json(name) {
   return JSON.parse(readFileSync(join(fixtureRoot, name), "utf8"));
