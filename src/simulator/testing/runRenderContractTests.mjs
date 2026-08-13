@@ -24,7 +24,7 @@ const require = createRequire(import.meta.url);
 const typeScriptCli = require.resolve("typescript/bin/tsc");
 
 try {
-  verifyEvidenceClosure();
+  verifyEvidenceFacts();
   run(process.execPath, [
     typeScriptCli,
     "-p",
@@ -40,26 +40,17 @@ try {
   rmSync(outputRoot, { recursive: true, force: true });
 }
 
-function verifyEvidenceClosure() {
-  const closure = JSON.parse(readFileSync(join(evidenceRoot, "delivery_closure.json"), "utf8"));
+function verifyEvidenceFacts() {
   const oracle = JSON.parse(readFileSync(
     join(evidenceRoot, "resource_pixi_rendering_delivery_oracle.json"),
     "utf8",
   ));
-  assert.equal(closure.rendering_delivery_gate, "closed");
-  assert.equal(closure.production_authorization, true);
-  assert.equal(closure.decision_status.D14, "closed-portable-contract");
-  assert.equal(closure.decision_status.D17, "closed-fail-closed-contract-no-runtime-fault-claim");
-  assert.equal(closure.fixed_case_status.PR35, "confirmed-delivery");
-  assert.equal(closure.fixed_case_status.PR38, "confirmed-delivery");
-  assert.deepEqual(closure.unknown_fields, []);
-  assert.deepEqual(closure.blocking_findings, []);
   assert.equal(oracle.delivery_profile, "ordinary-exact-habahiro-degraded");
   assert.equal(oracle.fidelity.automatic_fallback, false);
   assert.equal(oracle.habahiro_resources.production_network_allowed, false);
   assert.deepEqual(oracle.unknown_fields, []);
   assert.deepEqual(oracle.blocking_findings, []);
-  console.log("render contract evidence verified: D14/D17 PR35-PR38 delivery=closed");
+  console.log("render contract raw facts verified independently (legacy closure/authorization fields ignored)");
 }
 
 function run(command, args) {

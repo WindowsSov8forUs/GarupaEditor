@@ -80,13 +80,13 @@ export const CURRENT_SCORE_HUD_PORTABLE_RESOURCES: readonly ScoreHudPortableReso
     height: 1024,
     textureSettings: LINEAR_CLAMP,
     atlasRows: Object.freeze([
-      atlas("gauge_base_score", 648, 493, 236, 82),
-      atlas("bg_gauge_score_multi", 277, 811, 18, 18),
-      atlas("score_meter_blue", 413, 869, 40, 22),
-      atlas("score_meter_green", 504, 874, 40, 22),
-      atlas("score_meter_orange", 586, 851, 40, 22),
-      atlas("score_meter_pink", 277, 877, 40, 22),
-      atlas("score_meter_s", 0, 609, 662, 22),
+      scoreAtlas("gauge_base_score", 648, 493, 236, 82, [216, 16, 0, 0]),
+      scoreAtlas("bg_gauge_score_multi", 277, 811, 18, 18, [8, 8, 8, 8]),
+      scoreAtlas("score_meter_blue", 413, 869, 40, 22, [4, 4, 3, 3]),
+      scoreAtlas("score_meter_green", 504, 874, 40, 22, [5, 5, 0, 0]),
+      scoreAtlas("score_meter_orange", 586, 851, 40, 22, [5, 5, 0, 0]),
+      scoreAtlas("score_meter_pink", 277, 877, 40, 22, [5, 5, 0, 0]),
+      scoreAtlas("score_meter_s", 0, 609, 662, 22, [0, 0, 0, 0]),
       atlas("bg_health", 0, 633, 186, 62, [39, 143, 0, 0]),
       atlas("bg_no_health", 349, 287, 131, 69, [50, 50, 0, 0]),
       atlas("combo", 592, 807, 150, 42),
@@ -160,20 +160,28 @@ export const CURRENT_SCORE_HUD_BINDINGS = Object.freeze({
   highRankOverlayLogicalAssetId: "hud/score/high-rank-overlay",
 });
 
+export const CURRENT_SCORE_HUD_NINE_SLICE_BORDERS = Object.freeze({
+  gaugeBase: pixiBorderFromUnity(216, 16, 0, 0),
+  gaugeCover: pixiBorderFromUnity(8, 8, 8, 8),
+  meterBlue: pixiBorderFromUnity(4, 4, 3, 3),
+  meterOther: pixiBorderFromUnity(5, 5, 0, 0),
+  meterS: pixiBorderFromUnity(0, 0, 0, 0),
+});
+
 export const CURRENT_SCORE_HUD_SCENE_PROFILE = Object.freeze({
   viewportCenter: Object.freeze([800, 360] as const),
   rootLocalPosition: Object.freeze([-411, 309] as const),
   totalScoreLocalPosition: Object.freeze([212, -84] as const),
-  scoreFontSize: 28,
-  scoreFontSourceSize: 32,
   scoreMinimumDigits: 8,
   scoreLeadingColor: 0xbebebe,
   scoreSignificantColor: 0xff3b72,
+  totalScoreDepth: 40,
   progressLocalPosition: Object.freeze([25, -45] as const),
   gauge: Object.freeze({
-    background: Object.freeze({ position: Object.freeze([0, -23] as const), width: 470, height: 82 }),
-    cover: Object.freeze({ position: Object.freeze([38, -1] as const), width: 427, height: 33 }),
-    foreground: Object.freeze({ position: Object.freeze([41, -1] as const), width: 421, height: 24 }),
+    background: Object.freeze({ position: Object.freeze([0, -23] as const), width: 470, height: 82, depth: 4 }),
+    cover: Object.freeze({ position: Object.freeze([38, -1] as const), width: 427, height: 33, depth: 28 }),
+    foreground: Object.freeze({ position: Object.freeze([41, -1] as const), width: 421, height: 24, depth: 5 }),
+    markerDepth: 29,
     indicatorMaximumX: 422,
   }),
   rankRoots: Object.freeze([
@@ -216,6 +224,32 @@ function atlas(
     exactKey, x, y, width, height, pivotX: 0, pivotY: 0, pixelsPerUnit: 100,
     borderLeft: border[0], borderRight: border[1], borderTop: border[2], borderBottom: border[3],
   });
+}
+
+function scoreAtlas(
+  exactKey: string,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  unityLeftBottomRightTop: readonly [number, number, number, number],
+): RenderAtlasRow {
+  return Object.freeze({
+    exactKey, x, y, width, height, pivotX: 0, pivotY: 0, pixelsPerUnit: 100,
+    borderLeft: unityLeftBottomRightTop[0],
+    borderRight: unityLeftBottomRightTop[2],
+    borderTop: unityLeftBottomRightTop[3],
+    borderBottom: unityLeftBottomRightTop[1],
+  });
+}
+
+function pixiBorderFromUnity(
+  left: number,
+  bottom: number,
+  right: number,
+  top: number,
+) {
+  return Object.freeze({ left, top, right, bottom });
 }
 
 function fullTexture(

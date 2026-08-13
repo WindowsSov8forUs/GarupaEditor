@@ -1220,23 +1220,32 @@ async function testR4NoteFamilyBoundaries(): Promise<void> {
 }
 
 async function testSharedTypedHudValidation(): Promise<void> {
+  const master = {
+    musicId: 786, difficulty: "special", scoreC: 36, scoreB: 216,
+    scoreA: 432, scoreS: 648, scoreSS: 900,
+  };
+  const scoreMax = Math.trunc(Math.fround(Math.fround(master.scoreSS) * Math.fround(1.111111044883728)));
+  const marker = (value: number) => f32(Math.fround(Math.fround(41) + Math.fround(
+    Math.fround(Math.fround(value) * Math.fround(421)) / Math.fround(scoreMax),
+  )));
   const score = {
+    master,
     score: 100,
     scoreText: "[BEBEBE]00000[-][FF3B72]100[-]",
-    scoreMax: 1000,
-    rank: 0,
-    beforeRank: 0,
+    scoreMax,
+    rank: 3,
+    beforeRank: 3,
     rankChanged: false,
-    meterKey: "score_meter_s",
-    ratio: f32(0.1),
-    sliderValue: f32(0.1),
+    meterKey: "score_meter_green",
+    ratio: f32(Math.fround(Math.fround(100) / Math.fround(scoreMax))),
+    sliderValue: f32(Math.fround(Math.fround(100) / Math.fround(scoreMax))),
     foregroundActive: true,
-    indicatorLocalX: 42,
-    rankMarkerCLocalX: f32(1),
-    rankMarkerBLocalX: f32(2),
-    rankMarkerALocalX: f32(3),
-    rankMarkerSLocalX: f32(4),
-    rankMarkerSSLocalX: f32(5),
+    indicatorLocalX: Math.trunc(Math.fround(Math.fround(Math.fround(100) / Math.fround(scoreMax)) * Math.fround(422))),
+    rankMarkerCLocalX: marker(master.scoreC),
+    rankMarkerBLocalX: marker(master.scoreB),
+    rankMarkerALocalX: marker(master.scoreA),
+    rankMarkerSLocalX: marker(master.scoreS),
+    rankMarkerSSLocalX: marker(master.scoreSS),
     highRankEffect: "none",
     highRankEffectActive: false,
   };
@@ -1260,7 +1269,7 @@ async function testSharedTypedHudValidation(): Promise<void> {
     return copy;
   };
   const cases = [
-    { hudRole: "score", objectRole: "hud-score", valid: score, missing: without(score, "ratio"), tampered: { ...score, ratio: { value: score.ratio.value, bits: "00000000" } } },
+    { hudRole: "score", objectRole: "hud-score", valid: score, missing: without(score, "ratio"), tampered: { ...score, rankMarkerCLocalX: marker(master.scoreC + 1) } },
     { hudRole: "combo", objectRole: "hud-combo", valid: combo, missing: without(combo, "combo"), tampered: { ...combo, combo: 10000 } },
     { hudRole: "result", objectRole: "hud-result", valid: result, missing: without(result, "judgeKey"), tampered: { ...result, timingKey: "judge_early" } },
     { hudRole: "life", objectRole: "hud-life", valid: life, missing: without(life, "primaryFill"), tampered: { ...life, warning: false } },

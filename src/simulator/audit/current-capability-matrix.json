@@ -84,10 +84,16 @@
       "status": "reopened-audit",
       "reverseEvidence": [
         "ordinary-visible-rendering-portable-10-1-4@f94947d9",
-        "score-hud-rank-gauge-10-1-4@95e629d9",
-        "simulator-dynamic-acceptance-oracle-10-1-4@61650964"
+        "score-hud-portable-revalidation-10-1-4@a53f8a27"
       ],
-      "dynamicRequirement": "actual-pixi-command-scene-routing raw observation independently evaluated against committed expected values",
+      "dynamicRequirement": "current actual-Pixi raw observation including direct Score matrix and persistent SS owner; Score indicator panel clipping remains open",
+      "failureCapability": "simulator.audit.total-revalidation-open",
+      "failureBoundary": "global production launch gate before installed launcher and all resource/backend/owner mutation",
+      "openSubgates": [
+        "score-high-rank-panel-indicator-clip-contract",
+        "WebView2 decode/glyph/raster",
+        "framebuffer/device exact"
+      ],
       "exclusions": [
         "browser PNG/FontFace decode unless browser harness executes",
         "framebuffer/device exact"

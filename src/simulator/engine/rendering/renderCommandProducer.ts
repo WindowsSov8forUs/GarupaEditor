@@ -2725,6 +2725,7 @@ function scoreHudState(
 ) {
   const scoreText = zeroFilledScoreText(record.score);
   return Object.freeze({
+    master: gauge.master,
     score: record.score,
     scoreText,
     scoreMax: gauge.scoreMax,

@@ -43,15 +43,21 @@ export function validateTypedRenderHudCommand(
   switch (command.hudRole) {
     case "score": {
       const state = command.state;
+      const master = state.master;
+      const expectedMax = validScoreMaster(master)
+        ? Math.trunc(Math.fround(Math.fround(master.scoreSS) * Math.fround(1.111111044883728)))
+        : null;
       return objectRole === "hud-score" && exactKeys(state, [
         "beforeRank", "foregroundActive", "highRankEffect", "highRankEffectActive", "indicatorLocalX",
-        "meterKey", "rank", "rankChanged", "rankMarkerALocalX", "rankMarkerBLocalX",
+        "master", "meterKey", "rank", "rankChanged", "rankMarkerALocalX", "rankMarkerBLocalX",
         "rankMarkerCLocalX", "rankMarkerSLocalX", "rankMarkerSSLocalX", "ratio", "score",
         "scoreMax", "scoreText", "sliderValue",
       ]) &&
+        validScoreMaster(master) && expectedMax !== null && state.scoreMax === expectedMax &&
         isUInt32(state.score) && isUInt32(state.scoreMax) && state.scoreMax > 0 &&
         state.scoreText === expectedScoreText(state.score) &&
         isOrdinaryScoreRank(state.beforeRank) && isOrdinaryScoreRank(state.rank) &&
+        state.rank === scoreRankForMaster(state.score, master) &&
         state.rankChanged === (state.beforeRank !== state.rank) &&
         isScoreMeterKey(state.meterKey) && state.meterKey === scoreMeterKeyForRank(state.rank) &&
         validateRenderFloat32(state.ratio) && state.ratio.value === expectedScoreRatio(state.score, state.scoreMax) &&
@@ -60,6 +66,11 @@ export function validateTypedRenderHudCommand(
         Number.isInteger(state.indicatorLocalX) && state.indicatorLocalX === expectedScoreIndicatorX(state.ratio.value) &&
         [state.rankMarkerCLocalX, state.rankMarkerBLocalX, state.rankMarkerALocalX,
           state.rankMarkerSLocalX, state.rankMarkerSSLocalX].every(validateRenderFloat32) &&
+        state.rankMarkerCLocalX.value === expectedRankMarkerX(master.scoreC, state.scoreMax) &&
+        state.rankMarkerBLocalX.value === expectedRankMarkerX(master.scoreB, state.scoreMax) &&
+        state.rankMarkerALocalX.value === expectedRankMarkerX(master.scoreA, state.scoreMax) &&
+        state.rankMarkerSLocalX.value === expectedRankMarkerX(master.scoreS, state.scoreMax) &&
+        state.rankMarkerSSLocalX.value === expectedRankMarkerX(master.scoreSS, state.scoreMax) &&
         (state.highRankEffect === "none" || state.highRankEffect === "ScoreGaugeSS") &&
         (state.highRankEffect !== "ScoreGaugeSS" || state.rank === 5 && state.rankChanged) &&
         (state.highRankEffect !== "ScoreGaugeSS" || state.highRankEffectActive);
@@ -178,6 +189,39 @@ function isOrdinaryScoreRank(value: unknown): value is number {
 function isScoreMeterKey(value: unknown): value is string {
   return value === "score_meter_blue" || value === "score_meter_green" ||
     value === "score_meter_orange" || value === "score_meter_pink" || value === "score_meter_s";
+}
+
+function validScoreMaster(value: unknown): value is RenderScoreMaster {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) return false;
+  const master = value as Record<string, unknown>;
+  return exactKeys(master, ["difficulty", "musicId", "scoreA", "scoreB", "scoreC", "scoreS", "scoreSS"]) &&
+    isUInt32(master.musicId) && master.musicId > 0 &&
+    typeof master.difficulty === "string" && master.difficulty.length > 0 &&
+    isUInt32(master.scoreC) && isUInt32(master.scoreB) && isUInt32(master.scoreA) &&
+    isUInt32(master.scoreS) && isUInt32(master.scoreSS) && master.scoreC > 0 &&
+    master.scoreC < master.scoreB && master.scoreB < master.scoreA &&
+    master.scoreA < master.scoreS && master.scoreS < master.scoreSS;
+}
+
+type RenderScoreMaster = {
+  readonly musicId: number; readonly difficulty: string;
+  readonly scoreC: number; readonly scoreB: number; readonly scoreA: number;
+  readonly scoreS: number; readonly scoreSS: number;
+};
+
+function scoreRankForMaster(score: number, master: RenderScoreMaster): number {
+  if (score < master.scoreC) return 4;
+  if (score < master.scoreB) return 3;
+  if (score < master.scoreA) return 2;
+  if (score < master.scoreS) return 1;
+  if (score < master.scoreSS) return 0;
+  return 5;
+}
+
+function expectedRankMarkerX(score: number, scoreMax: number): number {
+  return Math.fround(Math.fround(41) + Math.fround(
+    Math.fround(Math.fround(score) * Math.fround(421)) / Math.fround(scoreMax),
+  ));
 }
 
 function scoreMeterKeyForRank(rank: number): string {

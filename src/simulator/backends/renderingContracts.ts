@@ -258,6 +258,15 @@ export interface RenderObjectCommandBase extends RenderCommandBase {
 }
 
 export interface RenderScoreHudState {
+  readonly master: {
+    readonly musicId: number;
+    readonly difficulty: string;
+    readonly scoreC: number;
+    readonly scoreB: number;
+    readonly scoreA: number;
+    readonly scoreS: number;
+    readonly scoreSS: number;
+  };
   readonly score: number;
   readonly scoreText: string;
   readonly scoreMax: number;

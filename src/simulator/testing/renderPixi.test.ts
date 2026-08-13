@@ -104,6 +104,16 @@ async function main(): Promise<void> {
   push({ kind: "set-hud", renderObjectId: "hud:life", hudRole: "life", state: lifeState(200, 1000, 2000, false) });
   push({ kind: "activate-object", renderObjectId: "hud:life" });
 
+  push({ kind: "create-object", renderObjectId: "hud:score", poolFamily: "score", role: "hud-score", parentObjectId: null });
+  push({ kind: "set-hud", renderObjectId: "hud:score", hudRole: "score", state: scoreState(864000, 0, 5, true, "ScoreGaugeSS", true) });
+  push({ kind: "activate-object", renderObjectId: "hud:score" });
+  push({ kind: "play-animation", renderObjectId: "hud:score", animationRole: "score-gauge-ss", restart: true });
+  push({ kind: "sample-animation", renderObjectId: "hud:score", animationRole: "score-gauge-ss", elapsedSeconds: f32(0.5) });
+
+  push({ kind: "create-object", renderObjectId: "hud:score:matrix", poolFamily: "score-matrix", role: "hud-score", parentObjectId: null });
+  push({ kind: "set-hud", renderObjectId: "hud:score:matrix", hudRole: "score", state: scoreState(0, 4, 4, false, "none", false) });
+  push({ kind: "activate-object", renderObjectId: "hud:score:matrix" });
+
   const batch = requireOk(renderer.preflight(commands), "actual visible command preflight");
   requireOk(renderer.commit(batch), "actual visible command commit");
   const scene = renderer.sceneSnapshot();
@@ -143,6 +153,81 @@ async function main(): Promise<void> {
   assert(life.hudSpriteLabels?.includes("life-warning-outline"), "Life warning outline Sprite exists");
   assert(life.hudSpriteLabels?.includes("life-warning-body"), "Life warning body Sprite exists");
 
+  const scoreAtHalf = row("hud:score");
+  equal(scoreAtHalf.hudText, null, "Score allocates no hidden system Text owner");
+  equal(scoreAtHalf.hudScoreDigitCount, 8, "Score threshold value owns eight bitmap glyph Sprites");
+  equal(scoreAtHalf.hudScoreRankVisualCount, 10, "Score owns five marker and five TTF rank label nodes");
+  equal(scoreAtHalf.hudScoreHighRankNodes?.length, 11, "ScoreGaugeSS owns the committed eleven persistent nodes");
+  equal(scoreAtHalf.hudScoreHighRankGeneration, 1, "ScoreGaugeSS nodes have one owner generation");
+  assert(scoreAtHalf.hudScoreLayerNodes?.some((node) => node.label === "score-digit-0" && node.zIndex === 40), "TotalScore bitmap glyph depth is 40");
+  assert(scoreAtHalf.hudScoreLayerNodes?.some((node) => node.label === "score-gauge-background" && node.zIndex === 4), "Score background depth is 4");
+  assert(scoreAtHalf.hudScoreLayerNodes?.some((node) => node.label === "score-gauge-foreground" && node.zIndex === 5), "Score foreground depth is 5");
+  assert(scoreAtHalf.hudScoreLayerNodes?.some((node) => node.label === "score-gauge-cover" && node.zIndex === 28), "Score cover depth is 28");
+  assert(scoreAtHalf.hudScoreLayerNodes?.some((node) => node.label === "score-rank-marker-SS" && node.zIndex === 29), "Score marker depth is 29");
+  const borders = new Map(scoreAtHalf.hudScoreNineSliceBorders?.map((row) => [row.label, row]));
+  const backgroundBorder = borders.get("score-gauge-background");
+  assert(backgroundBorder !== undefined, "Score background NineSlice exists");
+  equal(JSON.stringify(backgroundBorder), JSON.stringify({ label: "score-gauge-background", left: 216, top: 0, right: 0, bottom: 16 }), "Unity left/bottom/right/top maps to Pixi left/top/right/bottom");
+  const foregroundBorder = borders.get("score-gauge-foreground");
+  assert(foregroundBorder !== undefined, "Score foreground NineSlice exists");
+  equal(JSON.stringify(foregroundBorder), JSON.stringify({ label: "score-gauge-foreground", left: 0, top: 0, right: 0, bottom: 0 }), "SS meter border mapping");
+  equal(scoreAtHalf.hudScoreIndicatorMask, null, "indicator panel clipping remains explicitly unimplemented/open");
+  equal(scoreAtHalf.animationElapsedSeconds, Math.fround(0.5), "ScoreGaugeSS reaches the direct half-second sample");
+  const halfNodes = JSON.stringify(scoreAtHalf.hudScoreHighRankNodes);
+
+  const continued: RenderCommand[] = [
+    {
+      sessionId: SESSION, sequence: sequence++, frame: 1, substep: 0,
+      kind: "set-hud", renderObjectId: "hud:score", hudRole: "score",
+      state: scoreState(900000, 5, 5, false, "none", true),
+    },
+    {
+      sessionId: SESSION, sequence: sequence++, frame: 1, substep: 0,
+      kind: "sample-animation", renderObjectId: "hud:score", animationRole: "score-gauge-ss",
+      elapsedSeconds: f32(0.55),
+    },
+  ];
+  requireOk(renderer.commit(requireOk(renderer.preflight(continued), "persistent SS update preflight")), "persistent SS update commit");
+  const scoreContinued = renderer.sceneSnapshot().find((candidate) => candidate.renderObjectId === "hud:score");
+  assert(scoreContinued !== undefined, "continued Score owner exists");
+  equal(scoreContinued.hudScoreHighRankNodes?.length, 11, "ordinary Score update does not destroy/recreate SS nodes");
+  equal(scoreContinued.hudScoreHighRankGeneration, 1, "ordinary Score update preserves the same SS owner generation");
+  equal(scoreContinued.animationElapsedSeconds, Math.fround(0.55), "Score update preserves the running SS phase owner");
+  assert(JSON.stringify(scoreContinued.hudScoreHighRankNodes) !== halfNodes, "continued SS sample advances visible node state after Score update");
+
+  const scoreMatrix = [];
+  let previousRank = 4;
+  let matrixHighRankActive = false;
+  for (const [matrixScore, expectedRank] of [
+    [0, 4], [35999, 4], [36000, 3], [216000, 2], [432000, 1],
+    [648000, 0], [864000, 5], [100000000, 5],
+  ] as const) {
+    const changed = previousRank !== expectedRank;
+    const effect = changed && expectedRank === 5 ? "ScoreGaugeSS" as const : "none" as const;
+    if (effect === "ScoreGaugeSS") matrixHighRankActive = true;
+    const matrixCommand: RenderCommand = {
+      sessionId: SESSION, sequence: sequence++, frame: 2, substep: 0,
+      kind: "set-hud", renderObjectId: "hud:score:matrix", hudRole: "score",
+      state: scoreState(matrixScore, previousRank, expectedRank, changed, effect, matrixHighRankActive),
+    };
+    requireOk(renderer.commit(requireOk(renderer.preflight([matrixCommand]), `Score matrix ${matrixScore} preflight`)), `Score matrix ${matrixScore} commit`);
+    const observed = renderer.sceneSnapshot().find((candidate) => candidate.renderObjectId === "hud:score:matrix");
+    assert(observed !== undefined, `Score matrix ${matrixScore} owner exists`);
+    scoreMatrix.push(Object.freeze({ score: matrixScore, rank: expectedRank, observation: pickSceneObservation(observed) }));
+    previousRank = expectedRank;
+  }
+  equal(scoreMatrix[scoreMatrix.length - 1]?.observation.hudScoreDigitCount, 9, "Score overflow keeps the ninth bitmap digit");
+
+  const invalidScoreCommand: RenderCommand = {
+    sessionId: SESSION, sequence: sequence++, frame: 3, substep: 0,
+    kind: "set-hud", renderObjectId: "hud:score:matrix", hudRole: "score",
+    state: { ...scoreState(36000, 4, 3, true, "none", false), rankMarkerCLocalX: f32(42) },
+  };
+  const invalidScoreBefore = JSON.stringify(renderer.sceneSnapshot().find((candidate) => candidate.renderObjectId === "hud:score:matrix"));
+  const invalidScore = renderer.preflight([invalidScoreCommand]);
+  equal(invalidScore.status, "evidence-required", "derived Score marker tamper rejects before Pixi mutation");
+  equal(JSON.stringify(renderer.sceneSnapshot().find((candidate) => candidate.renderObjectId === "hud:score:matrix")), invalidScoreBefore, "derived Score marker failure leaves scene unchanged");
+
   const invalidCommand: RenderCommand = {
     sessionId: SESSION, sequence, frame: 1, substep: 0,
     kind: "set-hud", renderObjectId: "hud:life", hudRole: "life",
@@ -151,7 +236,7 @@ async function main(): Promise<void> {
   const preInvalidObjectCount = renderer.snapshot().objectCount;
   const invalid = renderer.preflight([invalidCommand]);
   equal(invalid.status, "evidence-required", "Life threshold mismatch fails before Pixi mutation");
-  equal(renderer.snapshot().objectCount, 8, "failed typed Pixi HUD input preserves owner count");
+  equal(renderer.snapshot().objectCount, 10, "failed typed Pixi HUD input preserves owner count");
   equal(renderer.sceneSnapshot().find((candidate) => candidate.renderObjectId === "hud:life")?.hudText, "200/1000", "failed batch leaves Pixi HUD unchanged");
 
   const recording = new RecordingSimulatorRendererBackend();
@@ -187,6 +272,10 @@ async function main(): Promise<void> {
     addScore: pickSceneObservation(add),
     result: pickSceneObservation(result),
     life: pickSceneObservation(life),
+    scoreHalf: pickSceneObservation(scoreAtHalf),
+    scoreContinued: pickSceneObservation(scoreContinued),
+    scoreMatrix: Object.freeze(scoreMatrix),
+    invalidScore: Object.freeze({ capability: invalidScore.status === "evidence-required" ? invalidScore.capability : null }),
   });
   requireOk(renderer.dispose(), "actual Pixi dispose");
   equal(renderer.snapshot().objectCount, 0, "actual Pixi dispose releases all owners");
@@ -358,6 +447,14 @@ function pickSceneObservation(
     hudSpriteLabels: row.hudSpriteLabels,
     hudSpriteAlphas: row.hudSpriteAlphas,
     hudFillRatios: row.hudFillRatios,
+    hudScoreDigitCount: row.hudScoreDigitCount,
+    hudScoreRankVisualCount: row.hudScoreRankVisualCount,
+    hudScoreHighRankNodes: row.hudScoreHighRankNodes,
+    hudScoreHighRankGeneration: row.hudScoreHighRankGeneration,
+    hudScoreLayerNodes: row.hudScoreLayerNodes,
+    hudScoreNineSliceBorders: row.hudScoreNineSliceBorders,
+    hudScoreIndicatorMask: row.hudScoreIndicatorMask,
+    hudState: row.hudState,
     spriteBindingKey: row.spriteBindingKey,
     spriteAlpha: row.spriteAlpha,
     spriteTint: row.spriteTint,
@@ -427,6 +524,40 @@ function createAnimatedSprite(
   push({ kind: "activate-object", renderObjectId: id });
   push({ kind: "play-animation", renderObjectId: id, animationRole, restart: true });
   push({ kind: "sample-animation", renderObjectId: id, animationRole, elapsedSeconds });
+}
+
+function scoreState(
+  score: number,
+  beforeRank: number,
+  rank: number,
+  rankChanged: boolean,
+  highRankEffect: "none" | "ScoreGaugeSS",
+  highRankEffectActive: boolean,
+) {
+  const master = Object.freeze({
+    musicId: 786, difficulty: "special", scoreC: 36000, scoreB: 216000,
+    scoreA: 432000, scoreS: 648000, scoreSS: 864000,
+  });
+  const scoreMax = 959999;
+  const ratio = Math.fround(Math.fround(score) / Math.fround(scoreMax));
+  const marker = (value: number) => f32(Math.fround(
+    Math.fround(41) + Math.fround(
+      Math.fround(Math.fround(value) * Math.fround(421)) / Math.fround(scoreMax),
+    ),
+  ));
+  const digits = String(score);
+  return Object.freeze({
+    master, score, scoreText: `[BEBEBE]${"0".repeat(Math.max(8 - digits.length, 0))}[-][FF3B72]${digits}[-]`,
+    scoreMax, rank, beforeRank, rankChanged,
+    meterKey: rank === 4 ? "score_meter_blue" : rank === 3 ? "score_meter_green" :
+      rank === 2 ? "score_meter_orange" : rank === 1 ? "score_meter_pink" : "score_meter_s",
+    ratio: f32(ratio), sliderValue: f32(Math.fround(Math.min(Math.max(ratio, 0), 1))),
+    foregroundActive: ratio > 0,
+    indicatorLocalX: ratio >= 1 ? 422 : Math.trunc(Math.fround(ratio * Math.fround(422))),
+    rankMarkerCLocalX: marker(master.scoreC), rankMarkerBLocalX: marker(master.scoreB),
+    rankMarkerALocalX: marker(master.scoreA), rankMarkerSLocalX: marker(master.scoreS),
+    rankMarkerSSLocalX: marker(master.scoreSS), highRankEffect, highRankEffectActive,
+  });
 }
 
 function lifeState(currentLife: number, playerMaxLife: number, lifeUpperLimit: number, singleGameOver: boolean) {

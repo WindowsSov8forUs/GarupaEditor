@@ -100,6 +100,7 @@ export class SinglePlayScoreGauge {
 
   snapshot(): SinglePlayScoreGaugeSnapshot {
     return Object.freeze({
+      master: this.master,
       scoreMax: this.scoreMax,
       beforeGaugeColorRank: this.beforeRankValue,
       currentGaugeColorRank: this.currentRankValue,

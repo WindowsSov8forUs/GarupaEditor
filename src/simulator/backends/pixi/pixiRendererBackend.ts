@@ -22,6 +22,7 @@ import { CURRENT_ORDINARY_VISIBLE_BINDINGS } from "../resources/currentOrdinaryV
 import {
   CURRENT_SCORE_HUD_BITMAP_GLYPHS,
   CURRENT_SCORE_HUD_BINDINGS,
+  CURRENT_SCORE_HUD_NINE_SLICE_BORDERS,
   CURRENT_SCORE_HUD_SCENE_PROFILE,
 } from "../resources/currentScoreHudResourceManifest";
 import {
@@ -85,6 +86,7 @@ interface PixiHudVisual {
   readonly scoreRankSprites: Container[];
   readonly scoreHighRankSprites: Sprite[];
   readonly scoreHighRankNodeNames: string[];
+  scoreHighRankGeneration: number;
   fillRatios: readonly [number, number];
 }
 
@@ -106,6 +108,7 @@ interface PixiObjectRecord {
   hudState: Readonly<object> | null;
   spriteBindingKey: string | null;
   hudBindingKeys: string[];
+  scoreHighRankBindingKeys: string[];
   spriteContent: Sprite | null;
   materialTexture: Texture | null;
   geometryContent: Mesh | null;
@@ -471,6 +474,16 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     readonly hudSpriteCount: number | null;
     readonly hudScoreDigitCount: number | null;
     readonly hudScoreRankVisualCount: number | null;
+    readonly hudScoreHighRankGeneration: number | null;
+    readonly hudScoreLayerNodes: readonly { readonly label: string; readonly zIndex: number }[] | null;
+    readonly hudScoreNineSliceBorders: readonly {
+      readonly label: string;
+      readonly left: number;
+      readonly top: number;
+      readonly right: number;
+      readonly bottom: number;
+    }[] | null;
+    readonly hudScoreIndicatorMask: null;
     readonly hudFillRatios: readonly [number, number] | null;
     readonly hudScoreHighRankNodes: readonly {
       readonly name: string;
@@ -518,6 +531,25 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       hudSpriteCount: value.hudVisual?.digitSprites.length ?? null,
       hudScoreDigitCount: value.hudVisual?.scoreDigitTexts.length ?? null,
       hudScoreRankVisualCount: value.hudVisual?.scoreRankSprites.length ?? null,
+      hudScoreHighRankGeneration: value.hudVisual?.scoreHighRankGeneration ?? null,
+      hudScoreLayerNodes: value.hudVisual?.kind !== "score"
+        ? null
+        : Object.freeze(scoreHudDescendants(value.hudVisual.content).map((node) => Object.freeze({
+            label: node.label,
+            zIndex: node.zIndex,
+          }))),
+      hudScoreNineSliceBorders: value.hudVisual?.kind !== "score"
+        ? null
+        : Object.freeze(scoreHudDescendants(value.hudVisual.content)
+            .filter((node): node is NineSliceSprite => node instanceof NineSliceSprite)
+            .map((node) => Object.freeze({
+              label: node.label,
+              left: node.leftWidth,
+              top: node.topHeight,
+              right: node.rightWidth,
+              bottom: node.bottomHeight,
+            }))),
+      hudScoreIndicatorMask: null,
       hudFillRatios: value.hudVisual?.fillRatios ?? null,
       hudScoreHighRankNodes: value.hudVisual === null
         ? null
@@ -900,6 +932,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           hudState: null,
           spriteBindingKey: null,
           hudBindingKeys: [],
+          scoreHighRankBindingKeys: [],
           spriteContent: spriteChild(node),
           materialTexture: null,
           geometryContent: null,
@@ -928,6 +961,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         const object = this.objects.get(command.renderObjectId)!;
         if (object.spriteBindingKey !== null) this.decrementSpriteReference(object.spriteBindingKey);
         for (const bindingKey of object.hudBindingKeys) this.decrementSpriteReference(bindingKey);
+        for (const bindingKey of object.scoreHighRankBindingKeys) this.decrementSpriteReference(bindingKey);
         if (object.geometryContent !== null) destroyMesh(object.geometryContent);
         object.node.removeFromParent();
         object.node.destroy({ children: true } as DestroyOptions);
@@ -1335,8 +1369,8 @@ function applyEvidenceHud(
 
 function createHudVisual(node: Container, kind: PixiHudVisual["kind"]): PixiHudVisual {
   const content = new Container({ sortableChildren: true });
-  const needsText = kind === "score" || kind === "life" || kind === "fidelity-label";
-  const needsFill = kind === "score" || kind === "habahiro-flash";
+  const needsText = kind === "life" || kind === "fidelity-label";
+  const needsFill = kind === "habahiro-flash";
   const secondaryFill = needsFill ? new Graphics() : null;
   const primaryFill = needsFill ? new Graphics() : null;
   const text = needsText ? new Text({ text: "", style: { fill: 0xffffff, fontSize: 32 } }) : null;
@@ -1359,6 +1393,7 @@ function createHudVisual(node: Container, kind: PixiHudVisual["kind"]): PixiHudV
     scoreRankSprites: [],
     scoreHighRankSprites: [],
     scoreHighRankNodeNames: [],
+    scoreHighRankGeneration: 0,
     fillRatios: Object.freeze([0, 0]),
   };
 }
@@ -1549,7 +1584,7 @@ function applyScoreHud(
   const leadingZeroCount = Math.max(scene.scoreMinimumDigits - scoreDigits.length, 0);
   const displayed = `${"0".repeat(leadingZeroCount)}${scoreDigits}`;
   const glyphByKey = new Map(CURRENT_SCORE_HUD_BITMAP_GLYPHS.map((glyph) => [glyph.exactKey, glyph]));
-  const fontScale = scene.scoreFontSize / scene.scoreFontSourceSize;
+  const fontScale = 1;
   const advances = [...displayed].map((digit) => glyphByKey.get(digit)!.xAdvance * fontScale);
   let cursor = scene.totalScoreLocalPosition[0] - advances.reduce((sum, value) => sum + value, 0);
   [...displayed].forEach((digit, index) => {
@@ -1559,6 +1594,7 @@ function applyScoreHud(
     sprite.anchor.set(0, 0);
     sprite.scale.set(fontScale);
     sprite.tint = index < leadingZeroCount ? scene.scoreLeadingColor : scene.scoreSignificantColor;
+    sprite.zIndex = scene.totalScoreDepth;
     sprite.position.set(
       cursor + glyph.xOffset * fontScale,
       scene.totalScoreLocalPosition[1] + glyph.yOffset * fontScale,
@@ -1578,10 +1614,11 @@ function applyScoreHud(
     requiredTextureBinding(textures, gaugeAssetId, "gauge_base_score"),
     scene.gauge.background.width,
     scene.gauge.background.height,
-    [216, 0, 16, 0],
+    CURRENT_SCORE_HUD_NINE_SLICE_BORDERS.gaugeBase,
     "score-gauge-background",
   );
   background.position.set(scene.gauge.background.position[0], -scene.gauge.background.position[1]);
+  background.zIndex = scene.gauge.background.depth;
   progress.addChild(background);
   retainHudBinding(object, spriteKey(gaugeAssetId, "gauge_base_score"), referenceCounts);
 
@@ -1589,21 +1626,21 @@ function applyScoreHud(
     requiredTextureBinding(textures, gaugeAssetId, "bg_gauge_score_multi"),
     scene.gauge.cover.width,
     scene.gauge.cover.height,
-    [8, 8, 8, 8],
+    CURRENT_SCORE_HUD_NINE_SLICE_BORDERS.gaugeCover,
     "score-gauge-cover",
   );
   cover.position.set(scene.gauge.cover.position[0], -scene.gauge.cover.position[1]);
-  cover.zIndex = 28;
+  cover.zIndex = scene.gauge.cover.depth;
   progress.addChild(cover);
   retainHudBinding(object, spriteKey(gaugeAssetId, "bg_gauge_score_multi"), referenceCounts);
 
   const meterKey = state.meterKey as string;
   const foregroundBinding = requiredTextureBinding(textures, gaugeAssetId, meterKey);
   const borders = meterKey === "score_meter_blue"
-    ? [4, 3, 4, 3] as const
+    ? CURRENT_SCORE_HUD_NINE_SLICE_BORDERS.meterBlue
     : meterKey === "score_meter_s"
-    ? [0, 0, 0, 0] as const
-    : [5, 0, 5, 0] as const;
+    ? CURRENT_SCORE_HUD_NINE_SLICE_BORDERS.meterS
+    : CURRENT_SCORE_HUD_NINE_SLICE_BORDERS.meterOther;
   const foregroundWidth = Math.fround(scene.gauge.foreground.width * state.sliderValue.value);
   const foreground = scoreNineSlice(
     foregroundBinding,
@@ -1614,7 +1651,7 @@ function applyScoreHud(
   );
   foreground.position.set(scene.gauge.foreground.position[0], -scene.gauge.foreground.position[1]);
   foreground.visible = state.foregroundActive as boolean;
-  foreground.zIndex = 5;
+  foreground.zIndex = scene.gauge.foreground.depth;
   progress.addChild(foreground);
   retainHudBinding(object, foregroundBinding.key, referenceCounts);
 
@@ -1637,7 +1674,7 @@ function applyScoreHud(
     levelMark.width = 8;
     levelMark.height = 6;
     levelMark.position.set(x, 10);
-    levelMark.zIndex = 29;
+    levelMark.zIndex = scene.gauge.markerDepth;
     progress.addChild(levelMark);
     visual.scoreRankSprites.push(levelMark);
     retainHudBinding(object, levelMarkBinding.key, referenceCounts);
@@ -1650,12 +1687,16 @@ function applyScoreHud(
     });
     rankLabel.anchor.set(0.5, 0.5);
     rankLabel.position.set(x, 2);
+    rankLabel.zIndex = scene.gauge.markerDepth;
     progress.addChild(rankLabel);
     visual.scoreRankSprites.push(rankLabel);
   }
 
   if (state.highRankEffectActive === true && visual.scoreHighRankSprites.length === 0) {
     const animation = currentScoreGaugeSsAnimation(object);
+    visual.animationLayer.position.copyFrom(progress.position);
+    visual.animationLayer.visible = true;
+    visual.scoreHighRankGeneration += 1;
     for (const node of animation.nodes) {
       const assetId = node.textureKey === "high-rank-kira"
         ? CURRENT_SCORE_HUD_BINDINGS.highRankKiraLogicalAssetId
@@ -1670,10 +1711,10 @@ function applyScoreHud(
       sprite.rotation = quaternionZRadians(node.initialRotationQuaternion);
       sprite.visible = false;
       sprite.zIndex = 30;
-      progress.addChild(sprite);
+      visual.animationLayer.addChild(sprite);
       visual.scoreHighRankSprites.push(sprite);
       visual.scoreHighRankNodeNames.push(node.name);
-      retainHudBinding(object, binding.key, referenceCounts);
+      retainScoreHighRankBinding(object, binding.key, referenceCounts);
     }
   }
   visual.fillRatios = Object.freeze([state.sliderValue.value, state.ratio.value]);
@@ -1692,8 +1733,6 @@ function clearScoreHud(
   object.hudBindingKeys.length = 0;
   for (const sprite of visual.scoreDigitTexts.splice(0)) sprite.destroy();
   for (const sprite of visual.scoreRankSprites.splice(0)) sprite.destroy();
-  for (const sprite of visual.scoreHighRankSprites.splice(0)) sprite.destroy();
-  visual.scoreHighRankNodeNames.length = 0;
   for (const node of visual.scoreGaugeSprites.splice(0)) node.destroy({ children: true });
 }
 
@@ -1701,20 +1740,32 @@ function scoreNineSlice(
   binding: { readonly key: string; readonly texture: Texture },
   width: number,
   height: number,
-  borders: readonly [number, number, number, number],
+  borders: { readonly left: number; readonly top: number; readonly right: number; readonly bottom: number },
   label: string,
 ): NineSliceSprite {
   return new NineSliceSprite({
     texture: binding.texture,
-    leftWidth: borders[0],
-    topHeight: borders[1],
-    rightWidth: borders[2],
-    bottomHeight: borders[3],
+    leftWidth: borders.left,
+    topHeight: borders.top,
+    rightWidth: borders.right,
+    bottomHeight: borders.bottom,
     width,
     height,
     anchor: { x: 0, y: 0.5 },
     label,
   });
+}
+
+function scoreHudDescendants(root: Container): Container[] {
+  const rows: Container[] = [];
+  const visit = (node: Container): void => {
+    for (const child of node.children) {
+      rows.push(child);
+      visit(child);
+    }
+  };
+  visit(root);
+  return rows;
 }
 
 function requiredTextureBinding(
@@ -1734,6 +1785,15 @@ function retainHudBinding(
   referenceCounts: Map<string, number>,
 ): void {
   object.hudBindingKeys.push(bindingKey);
+  referenceCounts.set(bindingKey, (referenceCounts.get(bindingKey) ?? 0) + 1);
+}
+
+function retainScoreHighRankBinding(
+  object: PixiObjectRecord,
+  bindingKey: string,
+  referenceCounts: Map<string, number>,
+): void {
+  object.scoreHighRankBindingKeys.push(bindingKey);
   referenceCounts.set(bindingKey, (referenceCounts.get(bindingKey) ?? 0) + 1);
 }
 

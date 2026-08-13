@@ -28,6 +28,7 @@ export interface SinglePlayScoreGaugeMasterProfile {
 }
 
 export interface SinglePlayScoreGaugeSnapshot {
+  readonly master: SinglePlayScoreGaugeMasterProfile;
   readonly scoreMax: number;
   readonly beforeGaugeColorRank: LiveClearRankValue;
   readonly currentGaugeColorRank: LiveClearRankValue;
