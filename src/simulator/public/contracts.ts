@@ -49,9 +49,6 @@ export interface SimulatorLaunchConfig {
     readonly enabled: boolean;
     readonly startMilliseconds: number;
   };
-  readonly habahiroPreview: {
-    readonly allowExternalDegraded: boolean;
-  };
   readonly visual: {
     readonly specificSpeed: number;
     readonly noteSize: number;
@@ -104,7 +101,7 @@ export interface SimulatorModuleFailure {
 
 export type SimulatorRenderingFidelity =
   | "ordinary-current-portable"
-  | "habahiro-external-degraded-preview";
+  | "habahiro-current-external-complete";
 
 export type SimulatorCapabilityGateStatus =
   | "closed-portable"
@@ -119,7 +116,7 @@ export interface SimulatorModuleCapabilitySummary {
   readonly rendering: SimulatorRenderingFidelity | null;
   readonly publicAutonomousCore: "closed-portable";
   readonly ordinaryCommandScene: "closed-portable";
-  readonly habahiroExternalPreview: "open-evidence-required";
+  readonly habahiroCurrentExternalComplete: "closed-portable";
   readonly habahiroOriginalParity: "open-evidence-required";
   readonly nonzeroInitialPracticeSeek: "open-evidence-required";
   readonly button07SceneMapping: "open-evidence-required";

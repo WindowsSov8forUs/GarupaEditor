@@ -30,7 +30,7 @@ export function createSimulatorModuleCapabilitySummary(
     rendering,
     publicAutonomousCore: "closed-portable" as const,
     ordinaryCommandScene: "closed-portable" as const,
-    habahiroExternalPreview: "open-evidence-required" as const,
+    habahiroCurrentExternalComplete: "closed-portable" as const,
     habahiroOriginalParity: "open-evidence-required" as const,
     nonzeroInitialPracticeSeek: "open-evidence-required" as const,
     button07SceneMapping: "open-evidence-required" as const,

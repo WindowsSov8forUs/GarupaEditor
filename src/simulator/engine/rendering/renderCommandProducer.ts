@@ -1,4 +1,3 @@
-import { RenderFidelityLabel } from "../../backends/renderingContracts";
 import type {
   RenderColor,
   RenderCommand,
@@ -211,6 +210,7 @@ const CURRENT_SUDDEN_THRESHOLD = Object.freeze({
   bits: "44322D84",
 });
 
+const DEGRADED_HABAHIRO_LANE_OBJECT = "render:habahiro:lane-change";
 const HABAHIRO_FLASH_OBJECT = "render:habahiro:flash";
 
 const HUD_OBJECTS = Object.freeze({
@@ -256,13 +256,18 @@ export class RenderCommandProducer {
     private readonly resources: RenderEngineResourceBindings,
   ) {}
 
-  isExternalHabahiroPreview(): boolean {
+  isCompleteHabahiro(): boolean {
     const fidelity = this.renderer.snapshot().fidelity;
-    return fidelity?.mode === "habahiro" && fidelity.fidelity === "habahiro-external-degraded-preview";
+    return fidelity?.mode === "habahiro" && fidelity.fidelity === "current-external-complete";
+  }
+
+  isDegradedHabahiro(): boolean {
+    const fidelity = this.renderer.snapshot().fidelity;
+    return fidelity?.mode === "habahiro" && fidelity.fidelity === "degraded";
   }
 
   isAnyHabahiro(): boolean {
-    return this.isExternalHabahiroPreview();
+    return this.isCompleteHabahiro() || this.isDegradedHabahiro();
   }
 
   validate(): SimulatorResult<void> {
@@ -278,7 +283,7 @@ export class RenderCommandProducer {
       (this.resources.comboAnimationLogicalAssetId !== undefined &&
         !isNonEmpty(this.resources.comboAnimationLogicalAssetId)) ||
       (this.renderer.snapshot().fidelity?.mode === "habahiro" &&
-        this.renderer.snapshot().fidelity?.fidelity === "habahiro-external-degraded-preview" &&
+        this.renderer.snapshot().fidelity?.fidelity === "current-external-complete" &&
         (this.resources.habahiroAtlasLogicalAssetIds === undefined ||
           Object.values(this.resources.habahiroAtlasLogicalAssetIds).some((value) => !isNonEmpty(value))))
     ) {
@@ -752,7 +757,9 @@ export class RenderCommandProducer {
       if (
         !Number.isSafeInteger(slideChildCount) ||
         slideChildCount < 0 ||
-        (pool.family === "slide" ? slideChildCount < 1 : slideChildCount !== 0)
+        (pool.family === "slide"
+          ? this.isDegradedHabahiro() ? slideChildCount !== 0 : slideChildCount < 1
+          : slideChildCount !== 0)
       ) {
         return evidenceRequired(
           "render.producer.invalid-slide-child-pool-setup",
@@ -801,7 +808,7 @@ export class RenderCommandProducer {
           );
         }
       }
-      if (this.isExternalHabahiroPreview()) {
+      if (this.isCompleteHabahiro()) {
         const iconObjectId = habahiroIconRenderObjectId(pool.poolObjectId);
         created.push(iconObjectId);
         commands.push({
@@ -810,7 +817,7 @@ export class RenderCommandProducer {
         });
         commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: iconObjectId });
       }
-      if (pool.family === "long") {
+      if (pool.family === "long" && !this.isDegradedHabahiro()) {
         const afterObjectId = longAfterRenderObjectId(pool.poolObjectId);
         const meshObjectId = longMeshRenderObjectId(pool.poolObjectId);
         created.push(afterObjectId, meshObjectId);
@@ -855,7 +862,7 @@ export class RenderCommandProducer {
           exactKey: null,
         });
       }
-      if (pool.family === "slide") {
+      if (pool.family === "slide" && !this.isDegradedHabahiro()) {
         for (let index = 0; index < slideChildCount; index += 1) {
           const childObjectId = slideChildRenderObjectId(pool.poolObjectId, index);
           const meshObjectId = slideMeshRenderObjectId(pool.poolObjectId, index);
@@ -948,8 +955,8 @@ export class RenderCommandProducer {
         renderObjectId,
       });
     }
-    if (this.isExternalHabahiroPreview()) {
-      created.push(HUD_OBJECTS.fidelity, HABAHIRO_FLASH_OBJECT);
+    if (this.isDegradedHabahiro()) {
+      created.push(HUD_OBJECTS.fidelity, DEGRADED_HABAHIRO_LANE_OBJECT);
       commands.push({
         ...base(commands.length), kind: "create-object", renderObjectId: HUD_OBJECTS.fidelity,
         poolFamily: "fidelity-label", role: "fidelity-label", parentObjectId: null,
@@ -957,9 +964,21 @@ export class RenderCommandProducer {
       commands.push({
         ...base(commands.length), kind: "set-hud", renderObjectId: HUD_OBJECTS.fidelity,
         hudRole: "fidelity-label",
-        state: Object.freeze({ label: RenderFidelityLabel, visible: true }),
+        state: Object.freeze({ label: "HABAHIRO", visible: true }),
       });
       commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: HUD_OBJECTS.fidelity });
+      commands.push({
+        ...base(commands.length), kind: "create-object",
+        renderObjectId: DEGRADED_HABAHIRO_LANE_OBJECT,
+        poolFamily: "degraded-habahiro-lane-change", role: "fidelity-label", parentObjectId: null,
+      });
+      commands.push({
+        ...base(commands.length), kind: "hide-object",
+        renderObjectId: DEGRADED_HABAHIRO_LANE_OBJECT,
+      });
+    }
+    if (this.isCompleteHabahiro()) {
+      created.push(HABAHIRO_FLASH_OBJECT);
       commands.push({
         ...base(commands.length), kind: "create-object",
         renderObjectId: HABAHIRO_FLASH_OBJECT,
@@ -979,14 +998,14 @@ export class RenderCommandProducer {
     const validation = this.validate();
     if (validation.status !== "ok") return validation;
     if (
-      !this.isExternalHabahiroPreview() ||
+      !this.isCompleteHabahiro() ||
       !Number.isInteger(absolutePosition) || absolutePosition < 0 ||
       !this.creationSequenceByObjectId.has(HABAHIRO_FLASH_OBJECT)
     ) {
       return evidenceRequired(
         "render.habahiro.invalid-flash-start",
         ["HAB-A07", "HAB-A09", "HA-D07"],
-        "The degraded HABAHIRO preview route requires its committed flash owner before the chart marker phase.",
+        "The complete HABAHIRO route requires its committed flash owner before the chart marker phase.",
       );
     }
     const base = this.commandBase(this.substep);
@@ -1006,7 +1025,7 @@ export class RenderCommandProducer {
   ): SimulatorResult<RenderOwnerTransaction> {
     const validation = this.validate();
     if (validation.status !== "ok") return validation;
-    if (!this.isExternalHabahiroPreview() || !validateRenderFloat32(elapsedSeconds) || elapsedSeconds.value < 0) {
+    if (!this.isCompleteHabahiro() || !validateRenderFloat32(elapsedSeconds) || elapsedSeconds.value < 0) {
       return evidenceRequired(
         "render.habahiro.invalid-flash-sample",
         ["HAB-A09", "HAB-A10", "HA-D07"],
@@ -1028,7 +1047,7 @@ export class RenderCommandProducer {
     if (validation.status !== "ok") return validation;
     const habahiroScene = scene.habahiro;
     if (
-      !this.isExternalHabahiroPreview() || habahiroScene === undefined ||
+      !this.isCompleteHabahiro() || habahiroScene === undefined ||
       !Number.isInteger(absolutePosition) || absolutePosition < 0 ||
       habahiroScene.fieldAfter.some((plan) =>
         !this.creationSequenceByObjectId.has(plan.renderObjectId) ||
@@ -1054,6 +1073,45 @@ export class RenderCommandProducer {
     });
     commands.push({
       ...base(commands.length), kind: "hide-object", renderObjectId: HABAHIRO_FLASH_OBJECT,
+    });
+    return this.preflight(commands);
+  }
+
+  preflightDegradedHabahiroLaneChange(
+    absolutePosition: number,
+  ): SimulatorResult<RenderOwnerTransaction> {
+    const validation = this.validate();
+    if (validation.status !== "ok") return validation;
+    if (
+      !this.isDegradedHabahiro() ||
+      !Number.isInteger(absolutePosition) ||
+      absolutePosition < 0 ||
+      !this.creationSequenceByObjectId.has(DEGRADED_HABAHIRO_LANE_OBJECT)
+    ) {
+      return evidenceRequired(
+        "render.habahiro.invalid-degraded-lane-change",
+        ["RPR-D08", "PR19", "PR40", "HA-D07", "HA-D08", "HA-D09"],
+        "Only the legacy degraded HABAHIRO route with its committed diagnostic owner may emit the same-frame lane-change command.",
+      );
+    }
+    const base = this.commandBase(this.substep);
+    const states = ["flash-start", "change-lane"] as const;
+    const commands: RenderCommand[] = states.map((laneChangePhase, index) => ({
+      ...base(index),
+      kind: "set-hud",
+      renderObjectId: DEGRADED_HABAHIRO_LANE_OBJECT,
+      hudRole: "fidelity-label",
+      state: Object.freeze({
+        label: "HABAHIRO",
+        visible: true,
+        laneChangePhase,
+        absolutePosition,
+      }),
+    }));
+    commands.push({
+      ...base(commands.length),
+      kind: "activate-object",
+      renderObjectId: DEGRADED_HABAHIRO_LANE_OBJECT,
     });
     return this.preflight(commands);
   }
@@ -1117,16 +1175,18 @@ export class RenderCommandProducer {
         "Note activation commands require the engine-owned non-negative adaptive substep.",
       );
     }
-    const habahiroPreview = this.isExternalHabahiroPreview();
-    const habahiro = habahiroPreview;
-    if (habahiroPreview && !validateHabahiroScene(scene.habahiro)) {
+    const completeHabahiro = this.isCompleteHabahiro();
+    const legacyDegradedHabahiro = this.isDegradedHabahiro();
+    const habahiro = completeHabahiro || legacyDegradedHabahiro;
+    if (completeHabahiro && !validateHabahiroScene(scene.habahiro)) {
       return evidenceRequired(
         "render.habahiro.scene-required",
         ["HAB-A04", "HAB-A08", "HAB-A09", "HAB-A10"],
-        "Explicit degraded HABAHIRO preview rendering requires explicit mesh width, flash duration and pre/post field plans.",
+        "Complete HABAHIRO rendering requires explicit mesh width, flash duration and pre/post field plans.",
       );
     }
-    const longTail = information.fireNoteType === FrontNoteType.Long &&
+    const longTail = !legacyDegradedHabahiro &&
+      information.fireNoteType === FrontNoteType.Long &&
       information.afterNoteAbsolutePos > information.absolutePos;
     const r7Front = information.fireNoteType === FrontNoteType.Flick ||
       information.fireNoteType === FrontNoteType.DirectionalFlick ||
@@ -1134,11 +1194,12 @@ export class RenderCommandProducer {
       information.fireNoteType === FrontNoteType.LongMultipleDirectionalFlickAdd ||
       information.fireNoteType === FrontNoteType.SlideAMultipleDirectionalFlickAdd ||
       information.fireNoteType === FrontNoteType.SlideBMultipleDirectionalFlickAdd;
-    const r7Slide = (information.fireNoteType === FrontNoteType.SlideA ||
+    const r7Slide = !legacyDegradedHabahiro &&
+      (information.fireNoteType === FrontNoteType.SlideA ||
       information.fireNoteType === FrontNoteType.SlideB) &&
       information.slideNoteList.length > 0;
     if (
-      information.fireNoteType !== FrontNoteType.Normal &&
+      !legacyDegradedHabahiro && information.fireNoteType !== FrontNoteType.Normal &&
       !longTail &&
       !r7Front &&
       !r7Slide
@@ -1199,7 +1260,9 @@ export class RenderCommandProducer {
       targetCenterY: scene.targetCenterY,
       highAspectRatio: scene.highAspectRatio,
       buttonCount: information.buttonTypesArray.length || information.buttonTypes.length || 1,
-      virtualLaneControllerPresent: information.virtualLaneDirection !== 0,
+      virtualLaneControllerPresent: legacyDegradedHabahiro
+        ? false
+        : information.virtualLaneDirection !== 0,
     });
     const adjustment = advanceOrdinaryNoteActivationAdjustment(
       motionState,
@@ -1252,14 +1315,42 @@ export class RenderCommandProducer {
       if (ownerValidation.status !== "ok") return ownerValidation;
       appendOrdinaryAnimationStart(commands, base, ordinaryFrontAnimation);
     }
-    const habahiroIcon = habahiroPreview
+    const habahiroIcon = completeHabahiro
       ? resolveHabahiroIconBinding(information, this.resources)
       : null;
-    if (habahiroIcon !== null) return evidenceRequired(
-      "render.habahiro.external-note-animation-evidence-required",
-      ["PR08", "PR09", "PR11", "PR40", "HA-D04"],
-      "Current common Note animation clips are not authorized for the HABAHIRO external atlas; the route cannot substitute static or ordinary-atlas animation.",
-    );
+    if (habahiroIcon !== null) {
+      const iconObjectId = habahiroIconRenderObjectId(poolObjectId);
+      const iconCreationSequence = this.creationSequenceByObjectId.get(iconObjectId);
+      if (iconCreationSequence === undefined) {
+        return evidenceRequired(
+          "render.habahiro.icon-owner-missing",
+          ["HAB-A04", "HAB-A06", "HAB-A07"],
+          "Every current-external-complete HABAHIRO Flick/Long/Slide visual requires its fixed icon owner.",
+        );
+      }
+      commands.push({
+        ...base(commands.length), kind: "set-transform", renderObjectId: iconObjectId,
+        position: start, scale: Object.freeze({ x: one.value, y: one.value }),
+        rotationDegrees: zero.value, color: scene.noteColor,
+        ordering: Object.freeze({
+          domainLayer: scene.noteDomainLayer,
+          sourceDepthOrSortingOrder: 72,
+          sourceZ: start.z,
+          creationSequence: iconCreationSequence,
+        }),
+        maskObjectId: null,
+      });
+      commands.push({
+        ...base(commands.length), kind: "bind-resource", renderObjectId: iconObjectId,
+        binding: "sprite", logicalAssetId: habahiroIcon.logicalAssetId,
+        exactKey: habahiroIcon.exactKey,
+      });
+      commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: iconObjectId });
+      commands.push({
+        ...base(commands.length), kind: "play-animation", renderObjectId: iconObjectId,
+        animationRole: habahiroIcon.animationRole, restart: true,
+      });
+    }
     for (const motion of adjustment.value.motions) {
       commands.push({
         ...base(commands.length),
@@ -1272,7 +1363,21 @@ export class RenderCommandProducer {
         ordering,
         maskObjectId: null,
       });
-
+      if (habahiroIcon !== null) commands.push({
+        ...base(commands.length), kind: "set-transform",
+        renderObjectId: habahiroIconRenderObjectId(poolObjectId),
+        position: motion.position,
+        scale: Object.freeze({ x: motion.localScale.x, y: motion.localScale.y }),
+        rotationDegrees: zero.value, color: scene.noteColor,
+        ordering: Object.freeze({
+          ...ordering,
+          sourceDepthOrSortingOrder: 72,
+          creationSequence: this.creationSequenceByObjectId.get(
+            habahiroIconRenderObjectId(poolObjectId),
+          )!,
+        }),
+        maskObjectId: null,
+      });
     }
     const renderedTransform = adjustment.value.motions[
       adjustment.value.motions.length - 1
@@ -1302,7 +1407,7 @@ export class RenderCommandProducer {
       );
       if (createdChild.status !== "ok") return createdChild;
       longChildState = createdChild.value;
-      const widthRate = habahiroPreview
+      const widthRate = completeHabahiro
         ? getHabahiroMeshWidthRate(
             motionState.buttonCount,
             scene.habahiro!.meshWidthSetting,
@@ -1371,7 +1476,7 @@ export class RenderCommandProducer {
         threshold: CURRENT_SUDDEN_THRESHOLD,
       });
       commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: meshObjectId });
-      const afterBinding = habahiroPreview
+      const afterBinding = completeHabahiro
         ? resolveHabahiroAfterSpriteBinding(information, this.resources)
         : resolveAfterSpriteBinding(information, this.resources);
       if (afterBinding.status !== "ok") return afterBinding;
@@ -1383,7 +1488,7 @@ export class RenderCommandProducer {
         logicalAssetId: afterBinding.value.logicalAssetId,
         exactKey: afterBinding.value.exactKey,
       });
-      const afterAnimation = habahiroPreview
+      const afterAnimation = completeHabahiro
         ? null
         : resolveOrdinaryAfterAnimationBinding(
             information,
@@ -1412,7 +1517,7 @@ export class RenderCommandProducer {
             "Each fixed Slide child identity requires its chart-owned source at the same index.",
           );
         }
-        const childLane = habahiroPreview
+        const childLane = completeHabahiro
           ? resolveHabahiroMotionLaneIndex(source)
           : resolveOrdinaryMotionLaneIndex(source, true);
         if (childLane.status !== "ok") return childLane;
@@ -1470,7 +1575,7 @@ export class RenderCommandProducer {
           maskObjectId: null,
         });
         if (created.value.visible) {
-          const childBinding = habahiroPreview
+          const childBinding = completeHabahiro
             ? resolveHabahiroSlideChildBinding(
                 source,
                 index === information.slideNoteList.length - 1,
@@ -1487,7 +1592,7 @@ export class RenderCommandProducer {
             logicalAssetId: childBinding.value.logicalAssetId,
             exactKey: childBinding.value.exactKey,
           });
-          const childAnimation = habahiroPreview
+          const childAnimation = completeHabahiro
             ? null
             : resolveOrdinaryAnimationBinding(source, childObjectId, this.resources, true);
           if (childAnimation !== null) {
@@ -1499,7 +1604,7 @@ export class RenderCommandProducer {
             appendOrdinaryAnimationStart(commands, base, childAnimation);
           }
         }
-        const segmentWidthRate = habahiroPreview
+        const segmentWidthRate = completeHabahiro
           ? getHabahiroMeshWidthRate(
               Math.max(previousButtonCount, childButtonCount),
               scene.habahiro!.meshWidthSetting,
@@ -1564,9 +1669,13 @@ export class RenderCommandProducer {
           elapsed: 0,
         }));
       }
+      if (habahiroIcon !== null) this.noteAnimationElapsedSeconds.set(
+        habahiroIconRenderObjectId(poolObjectId),
+        Object.freeze({ role: habahiroIcon.animationRole, elapsed: 0 }),
+      );
 
       if (longTail) {
-        const afterAnimation = habahiroPreview
+        const afterAnimation = completeHabahiro
           ? null
           : resolveOrdinaryAfterAnimationBinding(
               information,
@@ -1580,7 +1689,7 @@ export class RenderCommandProducer {
       }
       for (let index = 0; index < information.slideNoteList.length; index += 1) {
         const source = information.slideNoteList[index]!;
-        const animation = source.isInvisible || habahiroPreview
+        const animation = source.isInvisible || completeHabahiro
           ? null
           : resolveOrdinaryAnimationBinding(
               source,
@@ -1717,11 +1826,11 @@ export class RenderCommandProducer {
     if (validation.status !== "ok") return validation;
     const sceneValidation = validateOrdinaryFixedNoteSceneInput(scene);
     if (sceneValidation.status !== "ok") return sceneValidation;
-    if (this.isExternalHabahiroPreview() && !validateHabahiroScene(scene.habahiro)) {
+    if (this.isCompleteHabahiro() && !validateHabahiroScene(scene.habahiro)) {
       return evidenceRequired(
         "render.habahiro.scene-required",
         ["HAB-A04", "HAB-A08", "HAB-A09", "HAB-A10"],
-        "Explicit degraded HABAHIRO preview Long motion requires its validated width and field profile.",
+        "Complete HABAHIRO Long motion requires its validated width and field profile.",
       );
     }
     if (
@@ -1739,7 +1848,7 @@ export class RenderCommandProducer {
     }
     const next = advanceOrdinaryLongNormalChild(childState, input);
     if (next.status !== "ok") return next;
-    const widthRate = this.isExternalHabahiroPreview()
+    const widthRate = this.isCompleteHabahiro()
       ? getHabahiroMeshWidthRate(
           childState.motionState.buttonCount,
           scene.habahiro!.meshWidthSetting,
@@ -1838,11 +1947,11 @@ export class RenderCommandProducer {
     if (validation.status !== "ok") return validation;
     const sceneValidation = validateOrdinaryFixedNoteSceneInput(scene);
     if (sceneValidation.status !== "ok") return sceneValidation;
-    if (this.isExternalHabahiroPreview() && !validateHabahiroScene(scene.habahiro)) {
+    if (this.isCompleteHabahiro() && !validateHabahiroScene(scene.habahiro)) {
       return evidenceRequired(
         "render.habahiro.scene-required",
         ["HAB-A04", "HAB-A08", "HAB-A09", "HAB-A10"],
-        "Explicit degraded HABAHIRO preview Slide motion requires its validated width and field profile.",
+        "Complete HABAHIRO Slide motion requires its validated width and field profile.",
       );
     }
     if (
@@ -1862,7 +1971,7 @@ export class RenderCommandProducer {
       input,
       scene.screenToSafeAreaRatio,
       scene.longMeshColor,
-      this.isExternalHabahiroPreview()
+      this.isCompleteHabahiro()
         ? scene.habahiro!.meshWidthSetting
         : undefined,
     );
@@ -2559,20 +2668,32 @@ function resolveHabahiroIconBinding(
 } | null {
   const atlases = resolveHabahiroAtlasLogicalIds(resources);
   const buttonCount = information.buttonTypesArray.length || information.buttonTypes.length || 1;
+  if (information.fireNoteType === FrontNoteType.Flick) {
+    const topWidth = Math.min(buttonCount, 3);
+    return Object.freeze({
+      logicalAssetId: atlases.flick,
+      exactKey: topWidth === 1 ? "note_flick_top" : `note_flick_top_${topWidth}`,
+      animationRole: "note-flick",
+    });
+  }
   if (
-    information.fireNoteType === FrontNoteType.Flick ||
     information.fireNoteType === FrontNoteType.DirectionalFlick ||
     information.fireNoteType === FrontNoteType.MultipleDirectionalFlick ||
     information.fireNoteType === FrontNoteType.LongMultipleDirectionalFlickAdd ||
     information.fireNoteType === FrontNoteType.SlideAMultipleDirectionalFlickAdd ||
     information.fireNoteType === FrontNoteType.SlideBMultipleDirectionalFlickAdd
   ) {
-    const topWidth = Math.min(buttonCount, 3);
+    const direction = gameTypeIsDirectional(information.gameNoteType)
+      ? gameTypeIsLeft(information.gameNoteType) ? "l" : "r"
+      : afterTypeIsDirectional(information.afterNoteType)
+      ? afterTypeIsLeft(information.afterNoteType) ? "l" : "r"
+      : null;
+    const lane = resolveLaneIndex(information.buttonType, true);
+    if (direction === null || !Number.isInteger(lane) || lane < 0 || lane > 6) return null;
     return Object.freeze({
       logicalAssetId: atlases.flick,
-      exactKey: topWidth === 1 ? "note_flick_top" : `note_flick_top_${topWidth}`,
-      animationRole: information.fireNoteType === FrontNoteType.Flick
-        ? "note-flick" : "note-directional-flick",
+      exactKey: `note_flick_${direction}_${lane}`,
+      animationRole: "note-directional-flick",
     });
   }
   if (
@@ -2639,7 +2760,7 @@ function resolveHabahiroAtlasLogicalIds(
 ): NonNullable<RenderEngineResourceBindings["habahiroAtlasLogicalAssetIds"]> {
   const atlases = resources.habahiroAtlasLogicalAssetIds;
   if (atlases === undefined || Object.values(atlases).some((value) => !isNonEmpty(value))) {
-    throw new Error("degraded HABAHIRO preview atlas bindings were not preflighted");
+    throw new Error("complete HABAHIRO atlas bindings were not preflighted");
   }
   return atlases;
 }

@@ -398,23 +398,8 @@ function testConstructedChartEarlyCapabilityGates(): void {
     assert.equal(button07.failure.capability, "simulator.composition.unsupported-button-07");
   }
 
-  const unselected = validateConstructedChartCapabilities(hab, request());
-  assert.equal(unselected.status, "rejected");
-  if (unselected.status === "rejected") {
-    assert.equal(unselected.failure.capability, "simulator.composition.habahiro-degraded-preview-not-selected");
-  }
-  const selectedRequest = request();
-  const selected = validateConstructedChartCapabilities(hab, {
-    ...selectedRequest,
-    config: {
-      ...selectedRequest.config,
-      habahiroPreview: { allowExternalDegraded: true },
-    },
-  });
-  assert.equal(selected.status, "rejected");
-  if (selected.status === "rejected") {
-    assert.equal(selected.failure.capability, "render.habahiro.external-note-animation-evidence-required");
-  }
+  const habahiro = validateConstructedChartCapabilities(hab, request());
+  assert.equal(habahiro.status, "accepted", "authorized current-external-complete HABAHIRO is not downgraded to an unsupported preview");
 }
 
 async function testAutonomousLaunchAndClose(): Promise<void> {
@@ -452,7 +437,7 @@ async function testAutonomousLaunchAndClose(): Promise<void> {
     rendering: null,
     publicAutonomousCore: "closed-portable",
     ordinaryCommandScene: "closed-portable",
-    habahiroExternalPreview: "open-evidence-required",
+    habahiroCurrentExternalComplete: "closed-portable",
     habahiroOriginalParity: "open-evidence-required",
     nonzeroInitialPracticeSeek: "open-evidence-required",
     button07SceneMapping: "open-evidence-required",
@@ -632,7 +617,6 @@ function request(): SimulatorModuleLaunchRequest {
       highFrequencyMode: false,
       judgeOffsetFrames: 0,
       practice: { enabled: false, startMilliseconds: 0 },
-      habahiroPreview: { allowExternalDegraded: false },
       visual: {
         specificSpeed: Math.fround(11),
         noteSize: Math.fround(100),

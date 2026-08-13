@@ -464,12 +464,12 @@ export function createSimulatorEngine(
     if (
       fidelity?.mode !== "ordinary" &&
       !(fidelity?.mode === "habahiro" &&
-        fidelity.fidelity === "habahiro-external-degraded-preview")
+        fidelity.fidelity === "current-external-complete")
     ) {
       return evidenceRequired(
         "render.note.non-ordinary-scene-lifecycle-unimplemented",
         ["RPR-D05", "RPR-D13", "PR04", "PR39", "PR40", "HA-D04"],
-        "The connected Note lifecycle accepts the ordinary current portable route or the explicitly disclosed degraded HABAHIRO external preview; no exact/proxy/legacy HAB fidelity is a production engine mode.",
+        "The connected Note lifecycle accepts exact ordinary or the functionally complete HABAHIRO current-external route; legacy degraded profiles are not production engine modes.",
       );
     }
     const sceneValidation = validateOrdinaryFixedNoteSceneInput(
@@ -478,7 +478,7 @@ export function createSimulatorEngine(
     if (sceneValidation.status !== "ok") return sceneValidation;
     if (
       fidelity?.mode === "habahiro" &&
-      fidelity.fidelity === "habahiro-external-degraded-preview" &&
+      fidelity.fidelity === "current-external-complete" &&
       !validateHabahiroScene(
         input.rendering.ordinaryNoteScene.habahiro,
       )
@@ -486,7 +486,7 @@ export function createSimulatorEngine(
       return evidenceRequired(
         "render.habahiro.scene-required",
         ["HAB-A04", "HAB-A08", "HAB-A09", "HAB-A10"],
-        "Explicit degraded HABAHIRO preview rendering requires explicit mesh-width, flash-clock and field/judge scene plans before engine creation.",
+        "Complete HABAHIRO rendering requires explicit mesh-width, flash-clock and field/judge scene plans before engine creation.",
       );
     }
   }

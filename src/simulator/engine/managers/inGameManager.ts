@@ -45,6 +45,7 @@ export class InGameManager {
   private currentGameStateValue: GameStateValue = GameState.PlayingSound;
   private pauseStateValue: PauseStateValue = PauseState.None;
   private faultValue: EvidenceRequired | null = null;
+  private degradedHabahiroLaneChanged = false;
   private habahiroLanePhase: "idle" | "flashing" | "complete" = "idle";
   private habahiroFlashElapsed = Math.fround(0);
 
@@ -84,7 +85,7 @@ export class InGameManager {
     if (noteValidation.status !== "ok") {
       return noteValidation;
     }
-    const fieldSetup = this.renderProducer?.isExternalHabahiroPreview() === true &&
+    const fieldSetup = this.renderProducer?.isCompleteHabahiro() === true &&
         this.renderScene?.habahiro !== undefined
       ? this.renderProducer.preflightFieldSetup(
           this.renderScene.habahiro.fieldBefore,
@@ -157,7 +158,21 @@ export class InGameManager {
       return this.latchFault(updateResult);
     }
     if (
-      this.renderProducer?.isExternalHabahiroPreview() === true &&
+      !this.degradedHabahiroLaneChanged &&
+      this.renderProducer?.isDegradedHabahiro() === true &&
+      this.habahiroChangeAbsolutePos >= 0 &&
+      this.noteManager.peekAdjustedMusicPosition() >= this.habahiroChangeAbsolutePos
+    ) {
+      const laneChange = this.renderProducer.preflightDegradedHabahiroLaneChange(
+        this.habahiroChangeAbsolutePos,
+      );
+      if (laneChange.status !== "ok") return this.latchFault(laneChange);
+      const committed = laneChange.value.commit();
+      if (committed.status !== "ok") return this.latchFault(committed);
+      this.degradedHabahiroLaneChanged = true;
+    }
+    if (
+      this.renderProducer?.isCompleteHabahiro() === true &&
       this.renderScene?.habahiro !== undefined &&
       this.habahiroChangeAbsolutePos >= 0
     ) {

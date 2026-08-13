@@ -113,16 +113,22 @@
     },
     {
       "id": "CAP-HAB-01",
-      "capability": "HABAHIRO external-asset degraded preview (current locked charts fail early because external Note animation is unauthorized)",
-      "productionPath": "chart selection -> explicit degraded preview",
-      "status": "open-evidence-required",
+      "capability": "HABAHIRO current-external-complete functional route",
+      "productionPath": "HABAHIRO chart -> pinned external pack -> complete engine/Pixi owner route",
+      "status": "closed-portable",
       "reverseEvidence": [
-        "resource_pixi_rendering_delivery_oracle: ordinary-exact-habahiro-degraded",
-        "habahiro_degraded_approximation"
+        "habahiro_current_external_resource_profile",
+        "habahiro_degraded_approximation difference matrix",
+        "autonomous-simulator-scene-layout-10-1-4 portable policy",
+        "device-runtime-closure-10-1-4 shared particle disposition"
       ],
-      "dynamicRequirement": "explicit opt-in, visible Approximate HABAHIRO label, machine-readable fidelity, separate degraded oracle",
-      "failureCapability": "render.habahiro.external-note-animation-evidence-required",
-      "failureBoundary": "post-chart capability scan before static-resource reads; current chart remains blocked because external Note animation is unauthorized"
+      "dynamicRequirement": "HR01-HR12 full-chart plus actual Pixi flash consumer; no runtime approximation label or original parity claim",
+      "exclusions": [
+        "original UnityFS byte parity",
+        "natural HAB owner/setter order",
+        "Root_effect original clip",
+        "GPU/framebuffer physical parity"
+      ]
     },
     {
       "id": "CAP-HAB-EXACT-01",

@@ -1372,8 +1372,8 @@ function applyEvidenceHud(
         setHudText(
           visual.text!,
           command.state.laneChangePhase === "flash-start"
-            ? "Approximate HABAHIRO · Flash"
-            : "Approximate HABAHIRO · Lane Changed",
+            ? "HABAHIRO · Flash"
+            : "HABAHIRO · Lane Changed",
           20,
           0xffd166,
         );
@@ -1999,11 +1999,14 @@ function applyOrdinaryNoteAnimation(
   }
   const exactKey = object.spriteBindingKey.slice(object.spriteBindingKey.indexOf("\u0000") + 1);
   const clipId = role === "note-flick"
-    ? "note-flick-up"
+    ? exactKey === profile.noteAnimations.directionalSpriteKeys.up ||
+        /^note_flick_top(?:_[23])?$/.test(exactKey)
+      ? "note-flick-up"
+      : null
     : role === "note-directional-flick"
-    ? exactKey === profile.noteAnimations.directionalSpriteKeys.left
+    ? exactKey === profile.noteAnimations.directionalSpriteKeys.left || /^note_flick_l_[0-6]$/.test(exactKey)
       ? "note-flick-left"
-      : exactKey === profile.noteAnimations.directionalSpriteKeys.right
+      : exactKey === profile.noteAnimations.directionalSpriteKeys.right || /^note_flick_r_[0-6]$/.test(exactKey)
       ? "note-flick-right"
       : null
     : exactKey.startsWith(profile.noteAnimations.longFlashSpritePrefix)

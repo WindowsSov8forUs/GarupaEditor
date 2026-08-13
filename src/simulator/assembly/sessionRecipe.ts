@@ -256,7 +256,7 @@ function copyLaunchRequest(
     typeof request.chartData.bmsText !== "string" || request.chartData.bmsText.length === 0 ||
     request.config === null || typeof request.config !== "object" ||
     Object.keys(request.config).sort().join(",") !==
-      "audio,habahiroPreview,highFrequencyMode,judgeOffsetFrames,playMode,practice,visual" ||
+      "audio,highFrequencyMode,judgeOffsetFrames,playMode,practice,visual" ||
     (request.config.playMode !== "manual" && request.config.playMode !== "auto-live") ||
     typeof request.config.highFrequencyMode !== "boolean" ||
     !Number.isInteger(request.config.judgeOffsetFrames) ||
@@ -266,9 +266,6 @@ function copyLaunchRequest(
     typeof request.config.practice.enabled !== "boolean" ||
     !Number.isSafeInteger(request.config.practice.startMilliseconds) ||
     request.config.practice.startMilliseconds < 0 ||
-    request.config.habahiroPreview === null || typeof request.config.habahiroPreview !== "object" ||
-    Object.keys(request.config.habahiroPreview).join(",") !== "allowExternalDegraded" ||
-    typeof request.config.habahiroPreview.allowExternalDegraded !== "boolean" ||
     request.config.visual === null || typeof request.config.visual !== "object" ||
     Object.keys(request.config.visual).sort().join(",") !==
       "habahiroMeshWidthSetting,highAspectRatio,noteSize,specificSpeed" ||
@@ -317,7 +314,6 @@ function copyLaunchRequest(
       highFrequencyMode: request.config.highFrequencyMode,
       judgeOffsetFrames: request.config.judgeOffsetFrames,
       practice: Object.freeze({ ...request.config.practice }),
-      habahiroPreview: Object.freeze({ ...request.config.habahiroPreview }),
       visual: Object.freeze({ ...request.config.visual }),
       audio: Object.freeze({ ...request.config.audio }),
     }),
@@ -329,8 +325,8 @@ function renderingFidelityFromSnapshot(
 ): SimulatorRenderingFidelity | null {
   const fidelity = snapshot.renderingBackend?.fidelity;
   if (fidelity?.mode === "ordinary") return "ordinary-current-portable";
-  if (fidelity?.mode === "habahiro" && fidelity.fidelity === "habahiro-external-degraded-preview") {
-    return "habahiro-external-degraded-preview";
+  if (fidelity?.mode === "habahiro" && fidelity.fidelity === "current-external-complete") {
+    return "habahiro-current-external-complete";
   }
   return null;
 }

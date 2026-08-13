@@ -1,8 +1,7 @@
 import type { SimulatorResult } from "../engine/evidence";
 import type { OrdinaryVisibleProfile } from "./resources/currentOrdinaryVisibleProfile";
 
-export const RenderFidelityLabel = "Approximate HABAHIRO" as const;
-export const RenderFidelityDisclosure = "rendering-fidelity-degraded-habahiro" as const;
+export const RenderFidelityLabel = "HABAHIRO" as const;
 
 export type RenderBackendState =
   | "unprepared"
@@ -62,9 +61,20 @@ export type RenderFidelitySelection =
     }
   | {
       readonly mode: "habahiro";
-      readonly fidelity: "habahiro-external-degraded-preview";
+      readonly fidelity: "exact-current-unityfs";
+    }
+  | {
+      readonly mode: "habahiro";
+      readonly fidelity: "current-external-complete";
+    }
+  | {
+      readonly mode: "habahiro";
+      readonly fidelity: "degraded";
+      readonly profile:
+        | "current-external-portable-atlas"
+        | "historical-atlas-proxy"
+        | "current-ordinary-stretch-proxy";
       readonly visibleLabel: typeof RenderFidelityLabel;
-      readonly disclosure: typeof RenderFidelityDisclosure;
     };
 
 export interface RenderTextureSettings {
@@ -106,7 +116,9 @@ export interface RenderResourceAssetProfile {
   readonly provenance:
     | "current-apk"
     | "current-device-cache"
-    | "current-external-portable";
+    | "current-external-portable"
+    | "historical-proxy"
+    | "generated-current-ordinary-proxy";
 }
 
 export type RenderPortableComponent =
@@ -136,7 +148,8 @@ export interface RenderOrderingProfile {
 
 export type RenderProjectionMode =
   | "current-ordinary-rhythmgame-orthographic"
-  | "habahiro-external-degraded-preview";
+  | "habahiro-current-external"
+  | "degraded-habahiro-ordinary-projection-proxy";
 
 export interface RenderOrthographicProjectionProfile {
   readonly mode: RenderProjectionMode;

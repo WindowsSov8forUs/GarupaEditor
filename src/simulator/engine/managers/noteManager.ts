@@ -358,7 +358,9 @@ export class NoteManager {
       }
     }
 
+    const degradedHabahiro = this.renderProducer?.isDegradedHabahiro() ?? false;
     const requiresMeshChildren = this.renderProducer !== null &&
+      !degradedHabahiro &&
       ((familyNotes.get("long")?.length ?? 0) > 0 ||
         (familyNotes.get("slide")?.length ?? 0) > 0);
     if (
@@ -374,7 +376,7 @@ export class NoteManager {
       );
     }
     const requiresSyncLinePool = this.renderProducer !== null &&
-      this.batches.some((batch) =>
+      !degradedHabahiro && this.batches.some((batch) =>
       batch.informationList.filter((information) =>
         !isNonPlayableCommand(information) &&
         information.fireNoteType === FrontNoteType.Normal
@@ -392,6 +394,7 @@ export class NoteManager {
       );
     }
     const requiresMultipleDirectionalLinePool = this.renderProducer !== null &&
+      !degradedHabahiro &&
       this.batches.some((batch) =>
         groupMultipleDirectionalInformationList(batch.informationList)
           .some((group) => group.length > 1)
@@ -401,7 +404,7 @@ export class NoteManager {
         notes.map((information, index) => Object.freeze({
           family,
           poolObjectId: `${family}:${index}`,
-          ...(family === "slide"
+          ...(family === "slide" && !degradedHabahiro
             ? { slideChildCount: information.slideNoteList.length }
             : {}),
         }))),
@@ -461,7 +464,7 @@ export class NoteManager {
         }
         if (note instanceof NoteMultipleDirectionalVisual) {
           note.registerPresentationLifecycle(
-            this.renderProducer?.isExternalHabahiroPreview() === true,
+            this.renderProducer?.isCompleteHabahiro() === true,
           );
         }
         if (note instanceof NoteMultipleDirectionalFlick) {
@@ -1217,7 +1220,8 @@ export class NoteManager {
   ): SimulatorResult<void> {
     if (
       activatedNotes.length < 2 ||
-      this.renderProducer === null
+      this.renderProducer === null ||
+      this.renderProducer.isDegradedHabahiro()
     ) {
       return ok(undefined);
     }
@@ -1266,7 +1270,7 @@ export class NoteManager {
   }
 
   private updateOrdinarySyncLines(): SimulatorResult<void> {
-    if (this.renderProducer === null) return ok(undefined);
+    if (this.renderProducer === null || this.renderProducer.isDegradedHabahiro()) return ok(undefined);
     for (const line of this.activeOrdinarySyncLines) {
       if (line === null) continue;
       const ownerState = this.ordinarySyncLineOwnerState(line);
@@ -1307,7 +1311,7 @@ export class NoteManager {
   private connectMultipleDirectionalLines(
     activatedNotes: readonly NoteBase[],
   ): SimulatorResult<void> {
-    if (this.renderProducer === null) return ok(undefined);
+    if (this.renderProducer === null || this.renderProducer.isDegradedHabahiro()) return ok(undefined);
     let targetA: NoteBase | null = null;
     for (const targetB of activatedNotes) {
       const informationB = targetB.noteInformation;
@@ -1360,7 +1364,7 @@ export class NoteManager {
   }
 
   private updateMultipleDirectionalLines(): SimulatorResult<void> {
-    if (this.renderProducer === null) return ok(undefined);
+    if (this.renderProducer === null || this.renderProducer.isDegradedHabahiro()) return ok(undefined);
     for (const line of this.activeMultipleDirectionalLines) {
       if (line === null) continue;
       const ownerState = this.multipleDirectionalLineOwnerState(line);
@@ -1392,7 +1396,7 @@ export class NoteManager {
       return ok(undefined);
     }
 
-    if (this.renderProducer !== null) {
+    if (this.renderProducer !== null && !this.renderProducer.isDegradedHabahiro()) {
       const authorization = validateOrdinaryRenderedBatchAuthorization(batch.informationList);
       if (authorization.status !== "ok") return authorization;
     }

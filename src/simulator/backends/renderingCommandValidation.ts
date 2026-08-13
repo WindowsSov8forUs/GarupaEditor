@@ -137,10 +137,12 @@ export function animationBindingMatchesProfile(
     return true;
   }
   if (profile === undefined || spriteExactKey === null) return false;
-  if (role === "note-flick") return spriteExactKey === profile.noteAnimations.directionalSpriteKeys.up;
+  if (role === "note-flick") return spriteExactKey === profile.noteAnimations.directionalSpriteKeys.up ||
+    /^note_flick_top(?:_[23])?$/.test(spriteExactKey);
   if (role === "note-directional-flick") {
     return spriteExactKey === profile.noteAnimations.directionalSpriteKeys.left ||
-      spriteExactKey === profile.noteAnimations.directionalSpriteKeys.right;
+      spriteExactKey === profile.noteAnimations.directionalSpriteKeys.right ||
+      /^note_flick_[lr]_[0-6]$/.test(spriteExactKey);
   }
   return spriteExactKey.startsWith(profile.noteAnimations.longFlashSpritePrefix);
 }

@@ -52,15 +52,16 @@
       "auditDisposition": "closed-portable"
     },
     {
-      "id": "CLAIM-HAB-DEGRADED",
-      "wording": "explicit degraded HABAHIRO preview",
-      "scope": "external portable assets with disclosed differences",
+      "id": "CLAIM-HAB-CURRENT-EXTERNAL-COMPLETE",
+      "wording": "HABAHIRO current-external-complete functional route",
+      "scope": "pinned external assets, all chart Note families, mesh/line/field/mask/lane-change, pause/reset/release and actual Pixi flash consumer",
       "notClaimed": [
-        "original runtime",
-        "ordinary Note animation parity",
+        "original UnityFS byte parity",
+        "natural HAB owner/setter order",
+        "Root_effect original clip",
         "framebuffer parity"
       ],
-      "auditDisposition": "open-evidence-required"
+      "auditDisposition": "closed-portable"
     },
     {
       "id": "CLAIM-CORE-SUBSET",

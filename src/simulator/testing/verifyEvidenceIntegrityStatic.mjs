@@ -63,7 +63,7 @@ for (const required of ["CAP-PRACTICE-01", "CAP-SCENE-07", "CAP-HAB-01", "CAP-HA
 }
 const closedPortableIds = matrix.rows.filter((row) => row.status === "closed-portable").map((row) => row.id).sort();
 const expectedClosedPortableIds = [
-  "CAP-AUDIO-01", "CAP-CHART-01", "CAP-PARTICLE-01", "CAP-PUBLIC-01",
+  "CAP-AUDIO-01", "CAP-CHART-01", "CAP-HAB-01", "CAP-PARTICLE-01", "CAP-PUBLIC-01",
   "CAP-RENDER-ORDINARY-01", "CAP-RUNTIME-01",
 ];
 if (JSON.stringify(closedPortableIds) !== JSON.stringify(expectedClosedPortableIds)) {
@@ -82,7 +82,7 @@ for (const literal of publicGateLiterals) {
   }
 }
 for (const field of [
-  "publicAutonomousCore", "ordinaryCommandScene", "habahiroExternalPreview",
+  "publicAutonomousCore", "ordinaryCommandScene", "habahiroCurrentExternalComplete",
   "habahiroOriginalParity", "nonzeroInitialPracticeSeek", "button07SceneMapping",
   "browserDecodeRaster", "fixedDeviceExact", "characterSkillFeverMultiplayer",
   "mainProgramIntegration", "selectedRenderingGate",

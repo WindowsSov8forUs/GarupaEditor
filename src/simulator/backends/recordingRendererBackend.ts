@@ -431,17 +431,19 @@ export class RecordingSimulatorRendererBackend implements SimulatorRendererBacke
       case "stop-animation":
         if (
           typeof command.restart !== "boolean" ||
-          !this.hasAnimationRole(command.animationRole) ||
-          !animationRoleMatchesObject(command.animationRole, objects.get(command.renderObjectId)?.role) ||
-          !animationBindingMatchesProfile(
-            command.animationRole,
-            objects.get(command.renderObjectId)?.spriteExactKey ?? null,
-            this.profile!.ordinaryVisibleProfile,
-          )
+          !(isCurrentExternalHabahiroNoteAnimation(this.profile!, command.animationRole,
+              objects.get(command.renderObjectId)?.role,
+              objects.get(command.renderObjectId)?.spriteExactKey ?? null) ||
+            animationRoleMatchesObject(command.animationRole, objects.get(command.renderObjectId)?.role) &&
+            this.hasAnimationRole(command.animationRole) && animationBindingMatchesProfile(
+              command.animationRole,
+              objects.get(command.renderObjectId)?.spriteExactKey ?? null,
+              this.profile!.ordinaryVisibleProfile,
+            ))
         ) {
           return this.latchFault(
             "render.command.unknown-animation",
-            "Animation commands require one profile-declared exact animation role and explicit restart behavior.",
+            `Animation commands require one profile-declared exact animation role and explicit restart behavior; role=${command.animationRole}, key=${objects.get(command.renderObjectId)?.spriteExactKey ?? "null"}, fidelity=${this.profile!.fidelity.mode === "habahiro" ? this.profile!.fidelity.fidelity : "ordinary"}.`,
           );
         }
         return this.requireObject(objects, command.renderObjectId);
@@ -449,13 +451,15 @@ export class RecordingSimulatorRendererBackend implements SimulatorRendererBacke
         if (
           !validateRenderFloat32(command.elapsedSeconds) ||
           command.elapsedSeconds.value < 0 ||
-          !this.hasAnimationRole(command.animationRole) ||
-          !animationRoleMatchesObject(command.animationRole, objects.get(command.renderObjectId)?.role) ||
-          !animationBindingMatchesProfile(
-            command.animationRole,
-            objects.get(command.renderObjectId)?.spriteExactKey ?? null,
-            this.profile!.ordinaryVisibleProfile,
-          )
+          !(isCurrentExternalHabahiroNoteAnimation(this.profile!, command.animationRole,
+              objects.get(command.renderObjectId)?.role,
+              objects.get(command.renderObjectId)?.spriteExactKey ?? null) ||
+            animationRoleMatchesObject(command.animationRole, objects.get(command.renderObjectId)?.role) &&
+            this.hasAnimationRole(command.animationRole) && animationBindingMatchesProfile(
+              command.animationRole,
+              objects.get(command.renderObjectId)?.spriteExactKey ?? null,
+              this.profile!.ordinaryVisibleProfile,
+            ))
         ) {
           return this.latchFault(
             "render.command.invalid-animation-sample",
@@ -520,6 +524,19 @@ export class RecordingSimulatorRendererBackend implements SimulatorRendererBacke
       boundary,
     );
   }
+}
+
+function isCurrentExternalHabahiroNoteAnimation(
+  profile: RenderResourceProfile,
+  role: RenderAnimationRole,
+  objectRole: string | undefined,
+  exactKey: string | null,
+): boolean {
+  if (profile.fidelity.mode !== "habahiro" ||
+    profile.fidelity.fidelity !== "current-external-complete" || objectRole !== "note-icon" || exactKey === null) return false;
+  if (role === "note-flick") return /^note_flick_top(?:_[23])?$/.test(exactKey);
+  if (role === "note-directional-flick") return /^note_flick_[lr]_[0-6]$/.test(exactKey);
+  return role === "note-long-flash" && exactKey.startsWith("note_long_flash_");
 }
 
 function validateResourceProvenance(

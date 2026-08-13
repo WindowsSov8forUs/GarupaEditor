@@ -5,7 +5,6 @@ import {
 } from "../engine/evidence";
 import { parseCurrentOrdinaryVisibleProfile } from "./resources/currentOrdinaryVisibleProfile";
 import {
-  RenderFidelityDisclosure,
   RenderFidelityLabel,
   type RenderAtlasRow,
   type RenderColor,
@@ -33,6 +32,7 @@ const ANIMATION_ROLES = new Set([
 ]);
 const PROVENANCE_VALUES = new Set([
   "current-apk", "current-device-cache", "current-external-portable",
+  "historical-proxy", "generated-current-ordinary-proxy",
 ]);
 const REQUIRED_COMPONENTS = Object.freeze([
   "sprite",
@@ -64,7 +64,7 @@ export function validateAndFreezeRenderProfile(
   ) {
     return reject(
       "render.profile.invalid-shape",
-      "The locked 10.1.4 profile identity, explicit offline policy and non-empty asset inventory must validate before resource reads.",
+      "The complete 10.1.4 profile identity, explicit offline policy and non-empty asset inventory must validate before resource reads.",
     );
   }
   const fidelityValidation = validateFidelity(profile.fidelity);
@@ -100,8 +100,13 @@ export function validateAndFreezeRenderProfile(
   const projection = scene.projection;
   const expectedProjectionMode = fidelityValidation.value.mode === "ordinary"
     ? "current-ordinary-rhythmgame-orthographic"
-    : "habahiro-external-degraded-preview";
+    : fidelityValidation.value.fidelity === "current-external-complete"
+    ? "habahiro-current-external"
+    : fidelityValidation.value.fidelity === "degraded"
+    ? "degraded-habahiro-ordinary-projection-proxy"
+    : null;
   if (
+    expectedProjectionMode === null ||
     projection === null ||
     typeof projection !== "object" ||
     projection.mode !== expectedProjectionMode ||
@@ -118,7 +123,7 @@ export function validateAndFreezeRenderProfile(
   ) {
     return reject(
       "render.profile.invalid-projection",
-      "The fixed 1600x720 mapping must explicitly distinguish ordinary command/scene routing from the disclosed degraded HABAHIRO external preview.",
+      "The fixed 1600x720 mapping must explicitly distinguish ordinary, functionally complete HABAHIRO current-external, and legacy degraded projection.",
     );
   }
 
@@ -254,15 +259,29 @@ function validateFidelity(
   }
   if (
     fidelity?.mode === "habahiro" &&
-    fidelity.fidelity === "habahiro-external-degraded-preview" &&
-    fidelity.visibleLabel === RenderFidelityLabel &&
-    fidelity.disclosure === RenderFidelityDisclosure
+    fidelity.fidelity === "exact-current-unityfs"
+  ) {
+    return ok(Object.freeze({ ...fidelity }));
+  }
+  if (
+    fidelity?.mode === "habahiro" &&
+    fidelity.fidelity === "current-external-complete"
+  ) {
+    return ok(Object.freeze({ ...fidelity }));
+  }
+  if (
+    fidelity?.mode === "habahiro" &&
+    fidelity.fidelity === "degraded" &&
+    (fidelity.profile === "current-external-portable-atlas" ||
+      fidelity.profile === "historical-atlas-proxy" ||
+      fidelity.profile === "current-ordinary-stretch-proxy") &&
+    fidelity.visibleLabel === RenderFidelityLabel
   ) {
     return ok(Object.freeze({ ...fidelity }));
   }
   return reject(
     "render.profile.invalid-fidelity",
-    "Production rendering accepts only the ordinary current profile or an explicitly disclosed degraded HABAHIRO external preview; exact/proxy/legacy HAB fidelities are not constructible.",
+    "HABAHIRO requires explicit exact, functionally complete current-external, or legacy degraded fidelity; automatic fallback is forbidden.",
   );
 }
 

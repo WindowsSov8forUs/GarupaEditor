@@ -52,7 +52,8 @@
     "ios:init": "tauri ios init",
     "ios:dev": "tauri ios dev",
     "ios:build": "tauri ios build",
-    "sprites:map": "node ./scripts/build-sprite-source-map.mjs"
+    "sprites:map": "node ./scripts/build-sprite-source-map.mjs",
+    "simulator:test:habahiro": "node src/simulator/testing/runHabahiroTests.mjs"
   },
   "dependencies": {
     "@tauri-apps/api": "2.11.0",

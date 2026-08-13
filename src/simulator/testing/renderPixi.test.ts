@@ -3,7 +3,7 @@ declare const process: any;
 const { readFileSync, writeFileSync } = require("node:fs");
 const { join } = require("node:path");
 
-import { Texture, TextureSource } from "pixi.js";
+import { Container, Graphics, Texture, TextureSource } from "pixi.js";
 import { PixiRendererBackend, type PixiTextureDecoder } from "../backends/pixi/pixiRendererBackend";
 import { CURRENT_ORDINARY_RENDER_BINDINGS } from "../backends/resources/currentOrdinaryResourceManifest";
 import { CURRENT_ORDINARY_VISIBLE_PORTABLE_RESOURCES } from "../backends/resources/currentOrdinaryVisibleResourceManifest";
@@ -16,6 +16,7 @@ import { createRenderFloat32 } from "../backends/renderingValidation";
 import { createRecordingSimulatorBackends } from "../backends/recordingBackend";
 import { RecordingSimulatorRendererBackend } from "../backends/recordingRendererBackend";
 import { createNoteBatchInformationList } from "../engine/chart/construction";
+import { RenderCommandProducer } from "../engine/rendering/renderCommandProducer";
 import { ok, type SimulatorResult } from "../engine/evidence";
 import { createSimulatorEngine } from "../host/createSimulatorEngine";
 
@@ -294,6 +295,7 @@ async function main(): Promise<void> {
     ownerCount: renderer.snapshot().objectCount,
     stageChildren: renderer.stage.children.length,
   });
+  await verifyActualPixiHabahiroComplete(profile, resources);
   const fullChart = await verifyActualPixiFullChart(profile, resources);
   const observationPath = process.env.SIMULATOR_RENDER_OBSERVATION_PATH;
   if (typeof observationPath === "string" && observationPath.length > 0) {
@@ -313,6 +315,56 @@ async function main(): Promise<void> {
     }, null, 2));
   }
   console.log("actual Pixi ordinary visible oracle passed: Note cubic owners + Combo/AP/AddScore/Result/Life resource routes");
+}
+
+async function verifyActualPixiHabahiroComplete(
+  ordinaryProfile: RenderResourceProfile,
+  resources: readonly { readonly logicalAssetId: string; readonly bytes: Uint8Array }[],
+): Promise<void> {
+  const sessionId = "actual-pixi-habahiro-current-external-complete";
+  const profile: RenderResourceProfile = {
+    ...ordinaryProfile,
+    packIdentity: `${ordinaryProfile.packIdentity}+habahiro-current-external-complete`,
+    fidelity: Object.freeze({ mode: "habahiro" as const, fidelity: "current-external-complete" as const }),
+    scene: Object.freeze({
+      ...ordinaryProfile.scene,
+      projection: Object.freeze({
+        ...ordinaryProfile.scene.projection,
+        mode: "habahiro-current-external" as const,
+      }),
+    }),
+  };
+  const provider = requireOk(ImmutableLocalRenderResourceProvider.create(resources), "HABAHIRO actual provider");
+  const renderer = new PixiRendererBackend(decoder);
+  requireOk(await renderer.prepare(
+    sessionId, profile, provider, new PortableRenderResourcePreflightAdapter(),
+  ), "prepare current-external-complete HABAHIRO actual Pixi renderer");
+  const producer = new RenderCommandProducer(sessionId, renderer, {
+    ...CURRENT_ORDINARY_RENDER_BINDINGS,
+    habahiroAtlasLogicalAssetIds: Object.freeze({
+      normal: CURRENT_ORDINARY_RENDER_BINDINGS.noteAtlasLogicalAssetId,
+      normal16: CURRENT_ORDINARY_RENDER_BINDINGS.noteAtlasLogicalAssetId,
+      skill: CURRENT_ORDINARY_RENDER_BINDINGS.noteAtlasLogicalAssetId,
+      flick: CURRENT_ORDINARY_RENDER_BINDINGS.noteAtlasLogicalAssetId,
+      long: CURRENT_ORDINARY_RENDER_BINDINGS.noteAtlasLogicalAssetId,
+      longFlash: CURRENT_ORDINARY_RENDER_BINDINGS.noteAtlasLogicalAssetId,
+      slideAmong: CURRENT_ORDINARY_RENDER_BINDINGS.noteAtlasLogicalAssetId,
+    }),
+  });
+  requireOk(requireOk(producer.preflightPoolSetup([], 0, 0), "HABAHIRO owner preflight").commit(), "HABAHIRO owner commit");
+  requireOk(requireOk(producer.preflightHabahiroFlashStart(1728), "HABAHIRO flash preflight").commit(), "HABAHIRO flash commit");
+  requireOk(requireOk(producer.preflightHabahiroFlashAdvance(f32(0.125)), "HABAHIRO sample preflight").commit(), "HABAHIRO sample commit");
+  const flash = renderer.stage.children.find((child) => child.label === "render:habahiro:flash");
+  assert(flash instanceof Container, "HABAHIRO persistent flash owner exists");
+  const flashFill = [...flash.children, ...flash.children.flatMap((child) =>
+    child instanceof Container ? [...child.children] : [])].find((child) =>
+      child instanceof Graphics && child.alpha > 0);
+  assert(flashFill instanceof Graphics, "HABAHIRO engine-clock flash reaches actual Pixi visual consumer");
+  assert(renderer.sceneSnapshot().every((row) => row.renderObjectId !== "render:hud:fidelity-label"),
+    "current-external-complete HABAHIRO emits no runtime approximation label");
+  requireOk(requireOk(producer.preflightSessionRelease(), "HABAHIRO release preflight").commit(), "HABAHIRO release commit");
+  equal(renderer.sceneSnapshot().length, 0, "HABAHIRO actual Pixi releases all owners");
+  requireOk(renderer.dispose(), "dispose HABAHIRO actual Pixi renderer");
 }
 
 async function verifyActualPixiFullChart(

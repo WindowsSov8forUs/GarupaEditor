@@ -6,7 +6,7 @@
 
 总重验全局隔离已条件解除。唯一public入口`launchSimulatorModule(...)`委托给已安装的内部自治launcher；未安装platform时返回`platform-unavailable / simulator.entry.platform-not-installed`。它不自动安装主程序入口，也不绕过每个仍开放能力的最早失败边界。
 
-`runtime/moduleEntryBinding.ts`与production platform engine builder保留同一门函数作为防绕过结构；当前门值为关闭。HABAHIRO、non-zero seek、Button 07、browser raster及其他开放路径继续在各自resource/backend/owner mutation之前失败关闭。
+`runtime/moduleEntryBinding.ts`与production platform engine builder保留同一门函数作为防绕过结构；当前门值为关闭。Non-zero seek、Button 07、browser raster及其他开放路径继续在各自resource/backend/owner mutation之前失败关闭。HABAHIRO按用户已授权`current-external-complete`功能路线运行，不因original parity缺口失败关闭。
 
 机器账本：
 
@@ -19,7 +19,8 @@
 | Public/autonomous、chart、zero-seek runtime | `closed-portable` | 当前10.1.4证据、raw production-path与detached DAG限定范围 |
 | Ordinary Pixi command/scene | `closed-portable` | 含656-batch actual-Pixi routing及20行Score panel mask raw；不含browser/device raster |
 | Audio、Particle | `closed-portable` | semantic/PCM/WebAudio graph及deterministic simulation/Pixi routing；不含物理输出/framebuffer |
-| HAB external/original | `open-evidence-required` | external Note animation与原作runtime/frame未授权 |
+| HAB current-external-complete | `closed-portable` | 11项pinned资源、179 rows、全Note/mesh/line/field/mask/lane-change及Pixi consumer；差异仅文档披露 |
+| HAB original parity | `open-evidence-required` | UnityFS、natural owner/setter、Root_effect原clip及original physical frame不作等价声明 |
 | Non-zero initial seek | `open-evidence-required` | 缺少10.1.4逐claim MoveTime闭环 |
 | Button 07 | `open-evidence-required` | scene/manual/render/particle mapping未知 |
 | WebView2 decode/glyph/raster | `open-evidence-required` | Node synthetic `TextureSource`不证明Tauri WebView2输出 |

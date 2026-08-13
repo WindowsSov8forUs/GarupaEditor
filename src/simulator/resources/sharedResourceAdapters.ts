@@ -11,7 +11,7 @@ import {
   ImmutableLocalParticleResourceProvider,
   type LocalParticleResource,
 } from "../backends/resources/localParticleResourceProvider";
-import type { HabahiroExternalResourceTransport } from "../backends/resources/habahiroExternalProvider";
+import type { HabahiroBestdoriTransport } from "../backends/resources/habahiroBestdoriProvider";
 import type { SimulatorChartAudioData, SimulatorModuleFailure } from "../public/contracts";
 import type { RenderResourceProfile, SimulatorResourceProvider } from "../backends/renderingContracts";
 import { validateAndFreezeRenderProfile } from "../backends/renderingValidation";
@@ -331,19 +331,19 @@ export async function prepareSharedParticleProvider(
       );
 }
 
-export function createSharedHabahiroExternalTransport(
+export function createSharedHabahiroTransport(
   selected: readonly SelectedHabahiroResource[],
   store: SharedStaticResourceStore,
-): HabahiroExternalResourceTransport {
-  const byTechnicalName = new Map(selected.map((resource) => [resource.profile.technicalName, resource.resourceKey]));
+): HabahiroBestdoriTransport {
+  const byUrl = new Map(selected.map((resource) => [resource.profile.url, resource.resourceKey]));
   return Object.freeze({
-    async readTechnicalResource(technicalName: string) {
-      const resourceKey = byTechnicalName.get(technicalName);
+    async read(url: string) {
+      const resourceKey = byUrl.get(url);
       if (resourceKey === undefined) {
         return evidenceRequired(
-          "render.habahiro.shared-store-resource-not-selected",
+          "render.habahiro.shared-store-url-not-selected",
           ["HAB-A01", "HAB-A02"],
-          "The degraded HAB preview transport accepts only internally selected technical resource identities; URLs and alternate acquisition are outside production.",
+          "The autonomous HAB transport accepts only URLs mapped by the internal pinned selection.",
         );
       }
       let read;
