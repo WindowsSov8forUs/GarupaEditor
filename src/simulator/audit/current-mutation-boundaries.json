@@ -1,10 +1,10 @@
 {
   "schemaVersion": 2,
-  "status": "candidate-mutations-indexed-behind-global-gate",
-  "reverseCommit": "76b673f8d110ae8ed43357ffcbc0231eb77c0aad",
+  "status": "final-candidate-mutations-indexed-behind-global-gate",
+  "reverseCommit": "0ddc5fbd44ac8eb5a5d0b6667e259fbc1f7fa52a",
   "reversePackage": "artifacts/investigations/simulator-total-revalidation-10-1-4",
-  "targetGarupaCommit": "c66e4d94bd248e8e0decd5a7430358f96d787599",
-  "mutationPointCount": 252,
+  "targetGarupaCommit": "9b5fdcb9267aa1d293b34c7306cec71f5c7e8590",
+  "mutationPointCount": 253,
   "productionAcceptedMutationPointCount": 0,
   "perMutationDispositionRequired": true,
   "earliestBoundary": {

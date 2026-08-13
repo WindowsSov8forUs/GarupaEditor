@@ -4,7 +4,7 @@ This directory is a machine-checkable description of the current production boun
 
 The total revalidation is open. Every capability formerly reported as portable support is `reopened-audit` and the public launch rejects before the installed launcher, chart parsing, resource selection, backend preparation, scheduler start, or owner mutation.
 
-The current pushed candidate source surface is frozen by Reverse `simulator-total-revalidation-10-1-4@76b673f8`: 102 production files, 21,287 individually disposed occurrences, 14,120 candidate field/formula claims, 252 mutation points and 555 completion-like claims. Schema v2 replaces the former blanket `early-open` classification: each row now carries an evidence-bound, open, excluded or structural disposition. `current-field-claim-index.json` and `current-mutation-boundaries.json` are pointers, not evidence copies or release authorization.
+The final pushed candidate source surface is frozen by Reverse `simulator-total-revalidation-10-1-4@0ddc5fbd`: 102 production files, 21,322 individually disposed occurrences, 14,158 candidate field/formula claims, 253 mutation points and 555 completion-like claims. Schema v2 replaces the former blanket `early-open` classification: each row now carries an evidence-bound, open, excluded or structural disposition. `current-field-claim-index.json` and `current-mutation-boundaries.json` are pointers, not evidence copies or release authorization.
 
 Rules:
 

@@ -100,18 +100,18 @@ for (const path of walk(simulatorRoot)) {
 }
 if (
   fieldIndex.schemaVersion !== 2 ||
-  fieldIndex.status !== "candidate-per-claim-indexed-behind-global-gate" ||
-  fieldIndex.reverseCommit !== "76b673f8d110ae8ed43357ffcbc0231eb77c0aad" ||
-  fieldIndex.targetGarupaCommit !== "c66e4d94bd248e8e0decd5a7430358f96d787599" ||
-  fieldIndex.counts?.productionFiles !== 102 || fieldIndex.counts?.behaviorOccurrences !== 21287 ||
-  fieldIndex.counts?.fieldClaims !== 14120 || fieldIndex.counts?.completionClaims !== 555 ||
-  fieldIndex.fieldDispositionCounts?.["field-evidence-bound"] !== 13893 ||
+  fieldIndex.status !== "final-candidate-per-claim-indexed-behind-global-gate" ||
+  fieldIndex.reverseCommit !== "0ddc5fbd44ac8eb5a5d0b6667e259fbc1f7fa52a" ||
+  fieldIndex.targetGarupaCommit !== "9b5fdcb9267aa1d293b34c7306cec71f5c7e8590" ||
+  fieldIndex.counts?.productionFiles !== 102 || fieldIndex.counts?.behaviorOccurrences !== 21322 ||
+  fieldIndex.counts?.fieldClaims !== 14158 || fieldIndex.counts?.completionClaims !== 555 ||
+  fieldIndex.fieldDispositionCounts?.["field-evidence-bound"] !== 13931 ||
   fieldIndex.fieldDispositionCounts?.["early-evidence-required"] !== 225 ||
   fieldIndex.fieldDispositionCounts?.excluded !== 2 || fieldIndex.reachableSupportedUnknownCount !== 0 ||
   mutations.schemaVersion !== 2 ||
-  mutations.status !== "candidate-mutations-indexed-behind-global-gate" ||
+  mutations.status !== "final-candidate-mutations-indexed-behind-global-gate" ||
   mutations.reverseCommit !== fieldIndex.reverseCommit ||
-  mutations.mutationPointCount !== 252 || mutations.productionAcceptedMutationPointCount !== 0 ||
+  mutations.mutationPointCount !== 253 || mutations.productionAcceptedMutationPointCount !== 0 ||
   mutations.perMutationDispositionRequired !== true ||
   mutations.earliestBoundary?.capability !== "simulator.audit.total-revalidation-open"
 ) {
