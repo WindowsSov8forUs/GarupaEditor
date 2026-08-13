@@ -132,13 +132,22 @@ if (!publicCapabilities.includes("simulator.audit.total-revalidation-open") ||
   throw new Error("public launch did not perform the bounded total-revalidation gate transition");
 }
 if (
-  integrity.releaseTransition?.status !== "pending-pushed-detached-dag" ||
+  integrity.releaseTransition?.status !== "passed-pushed-detached-dag" ||
   integrity.releaseTransition?.prerequisiteCandidateCommit !== "735a040dc91c97dda8dc09ed1022d0771b8e04d2" ||
   integrity.releaseTransition?.prerequisiteDetachedDag?.status !== "passed" ||
   integrity.releaseTransition?.prerequisiteDetachedDag?.uniqueLeaves !== 23 ||
   integrity.releaseTransition?.prerequisiteDetachedDag?.scoreMaskIndependentRawRows !== 20 ||
   integrity.releaseTransition?.prerequisiteDetachedDag?.syntheticDecoderClaimsBrowserRaster !== false ||
   integrity.releaseTransition?.prerequisiteDetachedDag?.syntheticDecoderClaimsDeviceExact !== false ||
+  integrity.releaseTransition?.releaseCommit !== "0d0e4459f295f2d6cbbe7f4a1f93d07a1c9980fa" ||
+  integrity.releaseTransition?.releaseDetachedDag?.status !== "passed" ||
+  integrity.releaseTransition?.releaseDetachedDag?.source !== "pushed-detached-head" ||
+  integrity.releaseTransition?.releaseDetachedDag?.uniqueLeaves !== 23 ||
+  integrity.releaseTransition?.releaseDetachedDag?.elapsedMilliseconds !== 985307 ||
+  integrity.releaseTransition?.releaseDetachedDag?.scoreMaskIndependentRawRows !== 20 ||
+  integrity.releaseTransition?.releaseDetachedDag?.browserDecodeRaster !== "open-evidence-required" ||
+  integrity.releaseTransition?.releaseDetachedDag?.fixedDeviceExact !== "open-device-exact" ||
+  integrity.releaseTransition?.releaseDetachedDag?.mainProgramIntegration !== "unauthorized-stage-9" ||
   JSON.stringify(integrity.releaseTransition?.boundedProductionFiles) !== JSON.stringify([
     "src/simulator/public/capabilities.ts",
     "src/simulator/public/contracts.ts",

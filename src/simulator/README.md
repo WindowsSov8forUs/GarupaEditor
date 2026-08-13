@@ -74,7 +74,7 @@ Synthetic decoder、资源hash或typed command都不能升级为真实WebView2 r
 
 流程见[`evidence-workflow.md`](./evidence-workflow.md)。只消费已verify、commit、push的Reverse证据。10.1.3或其他来源必须先建立逐claim等价证明、适用域和反例检查。旧调查包可提供待重新核验的原始事实，但其`closed`、`productionAuthorization`或总体closure字段不是本轮授权。
 
-全局隔离的条件转换仅覆盖机器账本中六个`closed-portable`行；任何单独开放、排除、device-exact或stage-9行均未随之放行。发布提交仍须在push后由detached worktree执行完整去重DAG；失败必须恢复隔离。
+全局隔离的条件转换仅覆盖机器账本中六个`closed-portable`行；任何单独开放、排除、device-exact或stage-9行均未随之放行。发布提交`0d0e4459f295f2d6cbbe7f4a1f93d07a1c9980fa`已push，并在detached worktree通过23-leaf完整去重DAG；该attestation只授权机器账本中的portable范围，失败关闭边界不变。
 
 最终去重入口为`npm.cmd run simulator:test:total-revalidation`。它按唯一leaf DAG执行isolated tsc、chart/clock/input/state、render raw+independent verifier、audio、particle及host/runtime/public release path；不运行Vite/Tauri，也不声称WebView2门通过。
 

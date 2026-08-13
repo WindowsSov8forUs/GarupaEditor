@@ -4,7 +4,7 @@ This directory is a machine-checkable description of the current production boun
 
 The total revalidation gate is in a conditional portable release transition. Public launch delegates to the installed autonomous launcher; the six capability-matrix rows marked `closed-portable` are the only positive scope. Every separately open, excluded, device-exact and stage-9 row retains its own early boundary.
 
-The pushed pre-transition candidate source surface is frozen by Reverse `simulator-total-revalidation-10-1-4@0ddc5fbd`: 102 production files, 21,322 individually disposed occurrences, 14,158 candidate field/formula claims, 253 mutation points and 555 completion-like claims. Schema v2 replaces the former blanket `early-open` classification. The release transition is limited to three public gate/contract files and requires a pushed detached-DAG pass; `current-field-claim-index.json` and `current-mutation-boundaries.json` remain evidence pointers rather than self-authorization.
+The pushed pre-transition candidate source surface is frozen by Reverse `simulator-total-revalidation-10-1-4@0ddc5fbd`: 102 production files, 21,322 individually disposed occurrences, 14,158 candidate field/formula claims, 253 mutation points and 555 completion-like claims. Schema v2 replaces the former blanket `early-open` classification. The release transition is limited to three public gate/contract files. Pushed release commit `0d0e4459f295f2d6cbbe7f4a1f93d07a1c9980fa` passed the 23-leaf detached DAG; `current-field-claim-index.json` and `current-mutation-boundaries.json` remain evidence pointers rather than self-authorization.
 
 Rules:
 
