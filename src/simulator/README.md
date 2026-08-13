@@ -72,10 +72,14 @@ src/simulator/
 
 Synthetic decoder、资源hash或typed command都不能升级为真实WebView2 raster证明。
 
+当前Score HUD候选实现已修正NineSlice轴序、已知depth、master派生marker校验和SS持久owner，并由direct actual-Pixi raw Score矩阵重新观察。但Reverse `score-hud-portable-revalidation-10-1-4@a53f8a27`确认`highRankEffectPanel.rightAnchor.absolute`缺少完整anchor target、clip range与parent portable mapping；`indicatorLocalX`尚无可见Pixi mask consumer。因此Score HUD Pixi子门及全局production门继续开放。
+
 ## Evidence workflow
 
 流程见[`evidence-workflow.md`](./evidence-workflow.md)。只消费已verify、commit、push的Reverse证据。10.1.3或其他来源必须先建立逐claim等价证明、适用域和反例检查。旧调查包可提供待重新核验的原始事实，但其`closed`、`productionAuthorization`或总体closure字段不是本轮授权。
 
 全局隔离只会在当前production源码、逐occurrence/field/mutation账本、各分域raw observation和一次已推送detached验收全部满足完成门后解除。任一必需门仍有unknown时，保持`evidence-required`是合法最终结果。
+
+最终去重入口为`npm.cmd run simulator:test:total-revalidation`。它按唯一leaf DAG执行isolated tsc、chart/clock/input/state、render raw+independent verifier、audio、particle及host/runtime gate；不运行Vite/Tauri，也不声称WebView2门通过。
 
 `mainProgramIntegrationAuthorization=false`。
