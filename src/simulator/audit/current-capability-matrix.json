@@ -85,7 +85,7 @@
       "reverseEvidence": [
         "ordinary-visible-rendering-portable-10-1-4@f94947d9",
         "score-hud-rank-gauge-10-1-4@95e629d9",
-        "simulator-dynamic-acceptance-oracle-10-1-4@11b37f4a"
+        "simulator-dynamic-acceptance-oracle-10-1-4@61650964"
       ],
       "dynamicRequirement": "actual-pixi-command-scene-routing raw observation independently evaluated against committed expected values",
       "exclusions": [

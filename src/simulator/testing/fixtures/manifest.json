@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "purpose": "offline simulator test fixtures",
   "sourceRepository": "HOST________/VSCode/GirlsBandParty-Reverse",
-  "sourceHead": "11b37f4ab7c75fc6242d0830128b72fe7a591898",
+  "sourceHead": "616509643f87e258fb286520eb6a13f99c7a56f6",
   "entries": [
     {
       "path": "habahiro-snapshots/bestdori-atlas-profile.json",
@@ -322,45 +322,45 @@
     },
     {
       "path": "reverse-snapshots/evidence-integrity/artifacts/investigations/simulator-dynamic-acceptance-oracle-10-1-4/bms/653_ikuoku_easy.bms.txt",
-      "sourceReverseCommit": "11b37f4ab7c75fc6242d0830128b72fe7a591898",
+      "sourceReverseCommit": "616509643f87e258fb286520eb6a13f99c7a56f6",
       "sourcePath": "artifacts/investigations/auto-live-runtime-contract-supplement/fixtures/653_ikuoku_easy.bms.txt",
       "bytes": 1688,
       "sha256": "4C2F8D202DED5DFD9C4144C0FE000B1E3524E0F25D3FEAF4DD102413F6CD6325"
     },
     {
       "path": "reverse-snapshots/evidence-integrity/artifacts/investigations/simulator-dynamic-acceptance-oracle-10-1-4/bms/786_miracle_april_habahiro_special.bms.txt",
-      "sourceReverseCommit": "11b37f4ab7c75fc6242d0830128b72fe7a591898",
+      "sourceReverseCommit": "616509643f87e258fb286520eb6a13f99c7a56f6",
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime-inputs/bms/786_miracle_april_habahiro_special.bms.txt",
       "bytes": 38700,
       "sha256": "43148090C40ABBD951E8D7112200BDAE9B796A8A531A0793169E0AD70C3DC159"
     },
     {
       "path": "reverse-snapshots/evidence-integrity/artifacts/investigations/simulator-dynamic-acceptance-oracle-10-1-4/bms/poppin_shuffle_special.bms.txt",
-      "sourceReverseCommit": "11b37f4ab7c75fc6242d0830128b72fe7a591898",
+      "sourceReverseCommit": "616509643f87e258fb286520eb6a13f99c7a56f6",
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime-inputs/bms/poppin_shuffle_special.bms.txt",
       "bytes": 17882,
       "sha256": "418DB7F5BFC6B5431AC0ABF2FB905120BDFA8C778C35AA42418A6FA43F4094DC"
     },
     {
       "path": "reverse-snapshots/evidence-integrity/artifacts/investigations/simulator-dynamic-acceptance-oracle-10-1-4/chart-oracles/786_miracle_april_habahiro_special.json",
-      "sourceReverseCommit": "11b37f4ab7c75fc6242d0830128b72fe7a591898",
+      "sourceReverseCommit": "616509643f87e258fb286520eb6a13f99c7a56f6",
       "sourcePath": "artifacts/investigations/simulator-dynamic-acceptance-oracle-10-1-4/chart-oracles/786_miracle_april_habahiro_special.json",
       "bytes": 58170,
       "sha256": "F30C0BC1AE5766D11394FBA02C8F14E463787B31A79E38E6C79F6E02B3493773"
     },
     {
       "path": "reverse-snapshots/evidence-integrity/artifacts/investigations/simulator-dynamic-acceptance-oracle-10-1-4/chart-oracles/poppin_shuffle_special.json",
-      "sourceReverseCommit": "11b37f4ab7c75fc6242d0830128b72fe7a591898",
+      "sourceReverseCommit": "616509643f87e258fb286520eb6a13f99c7a56f6",
       "sourcePath": "artifacts/investigations/simulator-dynamic-acceptance-oracle-10-1-4/chart-oracles/poppin_shuffle_special.json",
       "bytes": 50591,
       "sha256": "FA636238280D384C3BAE42335B54522B02CDBE608C890516F2F38FB728DEA2FC"
     },
     {
       "path": "reverse-snapshots/evidence-integrity/artifacts/investigations/simulator-dynamic-acceptance-oracle-10-1-4/dynamic_acceptance_oracle.json",
-      "sourceReverseCommit": "11b37f4ab7c75fc6242d0830128b72fe7a591898",
+      "sourceReverseCommit": "616509643f87e258fb286520eb6a13f99c7a56f6",
       "sourcePath": "artifacts/investigations/simulator-dynamic-acceptance-oracle-10-1-4/dynamic_acceptance_oracle.json",
-      "bytes": 4095,
-      "sha256": "D0439A09F46C2512FADBAFFF57EB9935998B2F9EAAB7F8E8592AF9B8D659230D"
+      "bytes": 3921,
+      "sha256": "5B219C8BB3E79F2D9E759EA6D78A480025AE648ED1BA84FF9B49DB6E89401E99"
     },
     {
       "path": "reverse-snapshots/manual-input-judgement/artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/030eab88__NoteLong__WaitState.arm64.tsv",

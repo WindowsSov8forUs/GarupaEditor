@@ -87,7 +87,7 @@ src/simulator/
 
 ### `actual-pixi-command-scene-routing`
 
-真实fixture bytes经过长度/SHA/profile检查；production run只输出raw resource/owner/Float32/scene/cleanup observation。Verifier从Reverse `simulator-dynamic-acceptance-oracle-10-1-4@11b37f4a`的具体expected values独立计算PR08/09/11/22/23/24/26/27/29/30/39。测试自写`status=closed`不能影响结论。
+真实fixture bytes经过长度/SHA/profile检查；production run只输出raw resource/owner/Float32/scene/cleanup observation。Verifier从Reverse `simulator-dynamic-acceptance-oracle-10-1-4@61650964`的具体expected values独立计算PR08/09/11/22/23/24/26/27/29/30/39。测试自写`status=closed`不能影响结论。
 
 当前全谱portable observation：656 batches、3900 frames、positive score、`add-score|combo|life|result|score` routes、dispose后owner 0/stage children 0。`373000`是当前配置的observed value，不声明原作全谱exact score。
 
@@ -110,7 +110,7 @@ src/simulator/
 本轮审计基线：
 
 - 全量source/claim/constant账本：Reverse `be017d83`；
-- 非自证动态expected values及晋升chart/PCM快照：Reverse `11b37f4a`；
+- 非自证动态expected values及晋升chart/PCM快照：Reverse `61650964`；
 - ordinary visible授权：Reverse `f94947d9`；
 - particle portable closure：Reverse `9fb544b2`；
 - ordinary resources：Reverse `6f49ebbc`；
