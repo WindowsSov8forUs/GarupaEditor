@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "auditStatus": "portable-release-candidate",
+  "auditStatus": "final-evidence-bounded-capability-attestation",
   "lockedSample": {
     "package": "jp.co.craftegg.band",
     "versionName": "10.1.4",

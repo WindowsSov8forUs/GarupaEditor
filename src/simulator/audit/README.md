@@ -2,9 +2,9 @@
 
 This directory is a machine-checkable description of the current production boundary. It is not Reverse evidence and does not authorize behavior by itself.
 
-The total revalidation gate is in a conditional portable release transition. Public launch delegates to the installed autonomous launcher; the six capability-matrix rows marked `closed-portable` are the only positive scope. Every separately open, excluded, device-exact and stage-9 row retains its own early boundary.
+The total revalidation gate has an evidence-bounded final capability attestation. Public launch delegates to the installed autonomous launcher; only capability-matrix rows marked `closed-portable` are positive functional scope. `closed-original-unreachable` is not an added feature, and every open, excluded, objective-environment-blocked and stage-9 row retains its own non-positive boundary.
 
-The pushed pre-transition candidate source surface is frozen by Reverse `simulator-total-revalidation-10-1-4@0ddc5fbd`: 102 production files, 21,322 individually disposed occurrences, 14,158 candidate field/formula claims, 253 mutation points and 555 completion-like claims. Schema v2 replaces the former blanket `early-open` classification. The release transition is limited to three public gate/contract files. Pushed release commit `0d0e4459f295f2d6cbbe7f4a1f93d07a1c9980fa` passed the 23-leaf detached DAG; `current-field-claim-index.json` and `current-mutation-boundaries.json` remain evidence pointers rather than self-authorization.
+The current pushed production surface is frozen by Reverse `simulator-final-capability-ledger-10-1-4@f1298aa8` at Garupa `7ad5e3b8efcd8ca410db4dd972d7b64d6f607ad8`: 102 production files, 21,649 individually disposed occurrences, 14,320 field/formula claims, 269 mutation points and 637 completion/status occurrences. All unreviewed and supported-unknown counts are zero. The 25-leaf worktree and pushed-detached DAGs passed, and both executed the real production `BrowserPixiTextureDecoder` in WebView2 151.0.4129.78. `current-field-claim-index.json` and `current-mutation-boundaries.json` remain historical evidence pointers; `current-final-capability-attestation.json` records the current bounded result.
 
 Rules:
 
@@ -20,9 +20,11 @@ Rules:
 Status vocabulary:
 
 - `reopened-audit`: historical globally isolated candidate behavior; not a current positive claim.
-- `closed-portable`: available only for a current per-claim evidence and production-observation gate closed by the release attestation.
+- `closed-portable`: available only for a current per-claim evidence and production-observation gate closed by this bounded attestation.
+- `closed-original-unreachable`: current original legal inputs cannot reach the value; no synthetic feature is added.
 - `degraded-explicit`: caller-selected disclosed approximation; never original parity.
 - `excluded`: intentionally absent from the accepted product scope.
-- `open-evidence-required`: rejected before resource/backend/domain mutation.
-- `open-device-exact`: physical device parity is not claimed.
+- `open-evidence-required`: original parity remains unclaimed pending evidence.
+- `open-device-exact`: historical vocabulary meaning physical device parity is not claimed.
+- `open-objective-environment-blocked`: exact remains unclaimed and a reproducible environment blocker is recorded.
 - `unauthorized-stage-9`: main-program integration is outside this branch.

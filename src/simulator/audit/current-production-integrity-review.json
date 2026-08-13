@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "status": "portable-release-candidate",
+  "status": "final-evidence-bounded-capability-attestation",
   "reverseAudit": {
     "commit": "0ddc5fbd44ac8eb5a5d0b6667e259fbc1f7fa52a",
     "package": "simulator-total-revalidation-10-1-4",
@@ -207,13 +207,34 @@
       "mainProgramIntegration": "unauthorized-stage-9"
     }
   },
+  "finalCapabilityContinuation": {
+    "implementationCommit": "7ad5e3b8efcd8ca410db4dd972d7b64d6f607ad8",
+    "reverseLedgerCommit": "f1298aa8",
+    "reverseLedgerPackage": "simulator-final-capability-ledger-10-1-4",
+    "counts": {
+      "productionFiles": 102,
+      "behaviorOccurrences": 21649,
+      "fieldClaims": 14320,
+      "mutationPoints": 269,
+      "completionStatusOccurrences": 637
+    },
+    "unreviewedOrSupportedUnknown": 0,
+    "worktreeDag": {
+      "uniqueLeaves": 25,
+      "elapsedMilliseconds": 506162,
+      "status": "passed"
+    },
+    "pushedDetachedDag": {
+      "uniqueLeaves": 25,
+      "elapsedMilliseconds": 511876,
+      "status": "passed",
+      "productionBrowserWebView2Executed": true
+    }
+  },
   "openOrExcluded": [
     "HABAHIRO original UnityFS/natural runtime/Root_effect/frame parity",
-    "non-zero initial practice seek",
-    "ButtonType 07 scene mapping",
-    "browser PNG/FontFace raster integration",
-    "fixed-device cadence/GPU/framebuffer/physical audio",
-    "character/card/deck effects, Fever and multiplayer",
+    "fixed-device real 120/adaptive cadence, GPU/framebuffer, visible onset/peak and physical speaker output with objective environment blockers",
+    "character/card/deck effects, Heal/Guard/NeverDie, Fever and multiplayer",
     "stage-9 main-program integration"
   ],
   "currentProductionFileCount": 102,

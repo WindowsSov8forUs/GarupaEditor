@@ -1,0 +1,98 @@
+{
+  "schemaVersion": 1,
+  "status": "final-evidence-bounded-capability-attestation",
+  "date": "2026-08-14",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "versionName": "10.1.4",
+    "versionCode": 230,
+    "abi": "arm64-v8a"
+  },
+  "implementation": {
+    "repository": "https://github.com/WindowsSov8forUs/GarupaEditor.git",
+    "branch": "codex/refactor-simulator-implementation",
+    "commit": "7ad5e3b8efcd8ca410db4dd972d7b64d6f607ad8",
+    "originEqualsHead": true
+  },
+  "reverseLedger": {
+    "repository": "https://github.com/WindowsSov8forUs/GirlsBandParty-Reverse.git",
+    "branch": "main",
+    "commit": "f1298aa8",
+    "package": "artifacts/investigations/simulator-final-capability-ledger-10-1-4",
+    "originEqualsHead": true,
+    "counts": {
+      "productionFiles": 102,
+      "behaviorOccurrences": 21649,
+      "fieldClaims": 14320,
+      "mutationPoints": 269,
+      "completionStatusOccurrences": 637
+    },
+    "unreviewedOrSupportedUnknown": 0
+  },
+  "validation": {
+    "uniqueLeaves": 25,
+    "worktree": {
+      "status": "passed",
+      "elapsedMilliseconds": 506162
+    },
+    "pushedDetachedImplementation": {
+      "status": "passed",
+      "commit": "7ad5e3b8efcd8ca410db4dd972d7b64d6f607ad8",
+      "elapsedMilliseconds": 511876,
+      "sourceCodeCopied": false,
+      "nodeModulesOnlyReused": true,
+      "networkUsed": false
+    },
+    "productionBrowserLeaf": {
+      "executedInBothDags": true,
+      "decoder": "BrowserPixiTextureDecoder",
+      "webView2Runtime": "151.0.4129.78",
+      "chromium": "151.0.7922.109",
+      "pixi": "8.17.1",
+      "pngRasterSha256": "9c81b7baa91f83a561fc17610f007eff0dc4dbca9d30df0e1acffae3c4d981f0",
+      "fontRasterSha256": "6dbafeb76081c82cdff84d341e554f7777fb8fd6242ec61e871ae54155225418"
+    }
+  },
+  "capabilities": {
+    "closedPortable": [
+      "public autonomous core and chart construction",
+      "manual and Auto Live clock/judgement/score-life state",
+      "ordinary Pixi command/scene rendering",
+      "portable audio and deterministic particle routes",
+      "HABAHIRO current-external-complete functional route",
+      "non-zero initial practice seek whole-engine pre-roll",
+      "real current WebView2 PNG/FontFace/glyph/Pixi raster"
+    ],
+    "closedOriginalUnreachable": [
+      "Button value 7 as a legal BMS/scene lane"
+    ],
+    "openEvidenceRequired": [
+      "HABAHIRO original UnityFS/natural owner/Root_effect/frame parity"
+    ],
+    "openObjectiveEnvironmentBlocked": [
+      "real 120/adaptive cadence on the locked 60 Hz-only panel",
+      "original-to-candidate GPU/driver framebuffer comparison",
+      "physical visible onset/peak comparison",
+      "CRI/Android/speaker physical output comparison"
+    ],
+    "excluded": [
+      "character/card/deck effects",
+      "Heal/Guard/NeverDie",
+      "Fever",
+      "multiplayer"
+    ],
+    "unauthorized": [
+      "stage-9 main-program/App/window/editor/Tauri/mobile integration"
+    ]
+  },
+  "boundaries": {
+    "aggregateOriginalParityClaimed": false,
+    "positiveFixedDeviceExactClaims": 0,
+    "rejectedDeviceTracesReclassified": false,
+    "autoLiveBudgetRemaining": 10,
+    "r2Used": false,
+    "mainProgramIntegrationAuthorization": false,
+    "productionReadsReverseOrTmpOrTestingFixtures": false
+  },
+  "conclusion": "All currently authorized portable functional gates have individual pushed evidence and production-path observations. Remaining original/device/stage-9/excluded surfaces retain their explicit non-positive dispositions; this attestation is not an original-engine or all-device parity claim."
+}

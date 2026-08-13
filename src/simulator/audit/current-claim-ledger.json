@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "auditStatus": "portable-release-candidate",
+  "auditStatus": "final-evidence-bounded-capability-attestation",
   "rules": {
     "forbidCommittedTmpReferences": true,
     "forbidUnscopedCompletionClaims": true,
@@ -62,6 +62,38 @@
         "framebuffer parity"
       ],
       "auditDisposition": "closed-portable"
+    },
+    {
+      "id": "CLAIM-INITIAL-SEEK-PORTABLE",
+      "wording": "non-zero initial practice seek portable state reconstruction",
+      "scope": "strict-inside explicit BGM target, fresh zero-state bounded Float32 whole-engine pre-roll, physical output suppression and one final BGM/visual publication",
+      "notClaimed": [
+        "original initial-millisecond UI feature",
+        "physical audio exact",
+        "GPU framebuffer exact"
+      ],
+      "auditDisposition": "closed-portable"
+    },
+    {
+      "id": "CLAIM-WEBVIEW2-CURRENT-RASTER",
+      "wording": "real current WebView2 browser decode/glyph/Pixi raster",
+      "scope": "WebView2 151.0.4129.78, Chromium 151.0.7922.109, Pixi 8.17.1 and the hash-locked production decoder inputs",
+      "notClaimed": [
+        "other browser/GPU digest identity",
+        "original Unity framebuffer parity",
+        "Android fixed-device framebuffer parity"
+      ],
+      "auditDisposition": "closed-portable"
+    },
+    {
+      "id": "CLAIM-BUTTON07-UNREACHABLE",
+      "wording": "Button value 7 is original-unreachable rather than an eighth portable lane",
+      "scope": "legal current BMS tables, scene owner set 0..6 and GetPlayButton switch 0..6",
+      "notClaimed": [
+        "invented lane position",
+        "invented particle anchor"
+      ],
+      "auditDisposition": "closed-original-unreachable"
     },
     {
       "id": "CLAIM-CORE-SUBSET",

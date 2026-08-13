@@ -9,11 +9,13 @@ const claimsPath = join(simulatorRoot, "audit", "current-claim-ledger.json");
 const integrityPath = join(simulatorRoot, "audit", "current-production-integrity-review.json");
 const fieldIndexPath = join(simulatorRoot, "audit", "current-field-claim-index.json");
 const mutationPath = join(simulatorRoot, "audit", "current-mutation-boundaries.json");
+const attestationPath = join(simulatorRoot, "audit", "current-final-capability-attestation.json");
 const matrix = JSON.parse(readFileSync(matrixPath, "utf8"));
 const claims = JSON.parse(readFileSync(claimsPath, "utf8"));
 const integrity = JSON.parse(readFileSync(integrityPath, "utf8"));
 const fieldIndex = JSON.parse(readFileSync(fieldIndexPath, "utf8"));
 const mutations = JSON.parse(readFileSync(mutationPath, "utf8"));
+const attestation = JSON.parse(readFileSync(attestationPath, "utf8"));
 const readme = readFileSync(join(simulatorRoot, "README.md"), "utf8");
 const publicContracts = readFileSync(join(simulatorRoot, "public", "contracts.ts"), "utf8");
 const publicCapabilities = readFileSync(join(simulatorRoot, "public", "capabilities.ts"), "utf8");
@@ -34,7 +36,7 @@ const currentProductionFiles = [...walk(simulatorRoot)]
   .map((path) => `src/simulator/${path}`)
   .sort();
 if (
-  integrity.schemaVersion !== 1 || integrity.status !== "portable-release-candidate" ||
+  integrity.schemaVersion !== 1 || integrity.status !== "final-evidence-bounded-capability-attestation" ||
   integrity.reviewPolicy?.sourceOccurrenceIsNotEvidence !== true ||
   integrity.reviewPolicy?.groupMappingIsNotBlanketAuthorization !== true ||
   integrity.reviewPolicy?.currentInventoryRequired !== true ||
@@ -69,8 +71,9 @@ const expectedClosedPortableIds = [
 if (JSON.stringify(closedPortableIds) !== JSON.stringify(expectedClosedPortableIds)) {
   throw new Error(`portable release scope changed: ${closedPortableIds.join(",")}`);
 }
-if (matrix.auditStatus !== "portable-release-candidate" || claims.auditStatus !== "portable-release-candidate") {
-  throw new Error("machine ledgers do not identify the conditional portable release candidate");
+if (matrix.auditStatus !== "final-evidence-bounded-capability-attestation" ||
+    claims.auditStatus !== "final-evidence-bounded-capability-attestation") {
+  throw new Error("machine ledgers do not identify the final evidence-bounded capability attestation");
 }
 const publicGateLiterals = [
   "closed-portable", "closed-original-unreachable", "reopened-audit", "degraded-explicit", "excluded", "open-evidence-required",
@@ -105,6 +108,43 @@ for (const path of walk(simulatorRoot)) {
   if (/(?:^|[\\/`])tmp[\\/]/m.test(source)) {
     throw new Error(`committed simulator documentation cites ignored local work: ${path}`);
   }
+}
+if (
+  attestation.schemaVersion !== 1 ||
+  attestation.status !== "final-evidence-bounded-capability-attestation" ||
+  attestation.implementation?.commit !== "7ad5e3b8efcd8ca410db4dd972d7b64d6f607ad8" ||
+  attestation.reverseLedger?.commit !== "f1298aa8" ||
+  attestation.reverseLedger?.counts?.productionFiles !== 102 ||
+  attestation.reverseLedger?.counts?.behaviorOccurrences !== 21649 ||
+  attestation.reverseLedger?.counts?.fieldClaims !== 14320 ||
+  attestation.reverseLedger?.counts?.mutationPoints !== 269 ||
+  attestation.reverseLedger?.counts?.completionStatusOccurrences !== 637 ||
+  attestation.reverseLedger?.unreviewedOrSupportedUnknown !== 0 ||
+  attestation.validation?.uniqueLeaves !== 25 ||
+  attestation.validation?.worktree?.elapsedMilliseconds !== 506162 ||
+  attestation.validation?.pushedDetachedImplementation?.elapsedMilliseconds !== 511876 ||
+  attestation.validation?.pushedDetachedImplementation?.sourceCodeCopied !== false ||
+  attestation.validation?.pushedDetachedImplementation?.nodeModulesOnlyReused !== true ||
+  attestation.validation?.pushedDetachedImplementation?.networkUsed !== false ||
+  attestation.validation?.productionBrowserLeaf?.executedInBothDags !== true ||
+  attestation.boundaries?.aggregateOriginalParityClaimed !== false ||
+  attestation.boundaries?.positiveFixedDeviceExactClaims !== 0 ||
+  attestation.boundaries?.rejectedDeviceTracesReclassified !== false ||
+  attestation.boundaries?.autoLiveBudgetRemaining !== 10 ||
+  attestation.boundaries?.r2Used !== false ||
+  attestation.boundaries?.mainProgramIntegrationAuthorization !== false
+) {
+  throw new Error("final capability attestation identity, DAG or non-positive boundary changed");
+}
+if (
+  integrity.finalCapabilityContinuation?.implementationCommit !== attestation.implementation.commit ||
+  integrity.finalCapabilityContinuation?.reverseLedgerCommit !== attestation.reverseLedger.commit ||
+  integrity.finalCapabilityContinuation?.unreviewedOrSupportedUnknown !== 0 ||
+  integrity.finalCapabilityContinuation?.worktreeDag?.uniqueLeaves !== 25 ||
+  integrity.finalCapabilityContinuation?.pushedDetachedDag?.uniqueLeaves !== 25 ||
+  integrity.finalCapabilityContinuation?.pushedDetachedDag?.productionBrowserWebView2Executed !== true
+) {
+  throw new Error("integrity review does not point to the final pushed ledger and DAG");
 }
 if (
   fieldIndex.schemaVersion !== 2 ||
@@ -156,7 +196,7 @@ if (
 ) {
   throw new Error("portable release transition lacks the exact prerequisite detached attestation and bounded delta");
 }
-console.log(`evidence-integrity portable release candidate passed: capabilities=${matrix.rows.length} claims=${claims.allowedClaims.length} current-production-files=${currentProductionFiles.length}`);
+console.log(`evidence-integrity final bounded attestation passed: capabilities=${matrix.rows.length} claims=${claims.allowedClaims.length} current-production-files=${currentProductionFiles.length} leaves=${attestation.validation.uniqueLeaves}`);
 
 function* walk(root) {
   for (const entry of readdirSync(root, { withFileTypes: true })) {
