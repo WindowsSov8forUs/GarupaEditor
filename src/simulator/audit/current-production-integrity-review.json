@@ -1,6 +1,8 @@
 {
   "schemaVersion": 1,
   "status": "final-evidence-bounded-capability-attestation",
+  "currentDisposition": "historical-pre-ordinary-single-rendering-total-reaudit",
+  "ordinaryRenderingPositiveAuthority": false,
   "reverseAudit": {
     "commit": "0ddc5fbd44ac8eb5a5d0b6667e259fbc1f7fa52a",
     "package": "simulator-total-revalidation-10-1-4",
@@ -345,5 +347,5 @@
     "src/simulator/runtime/moduleEntryBinding.ts",
     "src/simulator/scene/simulatorSceneLayout.ts"
   ],
-  "supersededReason": "Schema v1 blanket early-open and all earlier grouped reviews are superseded by the pushed schema v2 per-occurrence, per-field and per-mutation candidate inventory. The bounded three-file release transition is conditional on a pushed detached-DAG pass and does not widen any separately open, excluded, device-exact or stage-9 gate."
+  "supersededReason": "The former final review remains a historical inventory pointer only while ordinary Note/HUD/particle visible composition is reopened behind the total evidence-required gate. Earlier grouped reviews, source occurrences, old green DAGs and the bounded release transition do not authorize the current ordinary-rendering reaudit; separately open, excluded, device-exact and stage-9 gates remain non-positive."
 }

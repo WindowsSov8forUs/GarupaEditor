@@ -37,6 +37,8 @@ const currentProductionFiles = [...walk(simulatorRoot)]
   .sort();
 if (
   integrity.schemaVersion !== 1 || integrity.status !== "final-evidence-bounded-capability-attestation" ||
+  integrity.currentDisposition !== "historical-pre-ordinary-single-rendering-total-reaudit" ||
+  integrity.ordinaryRenderingPositiveAuthority !== false ||
   integrity.reviewPolicy?.sourceOccurrenceIsNotEvidence !== true ||
   integrity.reviewPolicy?.groupMappingIsNotBlanketAuthorization !== true ||
   integrity.reviewPolicy?.currentInventoryRequired !== true ||
@@ -66,14 +68,20 @@ for (const required of ["CAP-PRACTICE-01", "CAP-SCENE-07", "CAP-HAB-01", "CAP-HA
 const closedPortableIds = matrix.rows.filter((row) => row.status === "closed-portable").map((row) => row.id).sort();
 const expectedClosedPortableIds = [
   "CAP-AUDIO-01", "CAP-CHART-01", "CAP-HAB-01", "CAP-PARTICLE-01", "CAP-PRACTICE-01", "CAP-PUBLIC-01",
-  "CAP-RENDER-BROWSER-01", "CAP-RENDER-ORDINARY-01", "CAP-RUNTIME-01",
+  "CAP-RENDER-BROWSER-01", "CAP-RUNTIME-01",
 ];
 if (JSON.stringify(closedPortableIds) !== JSON.stringify(expectedClosedPortableIds)) {
-  throw new Error(`portable release scope changed: ${closedPortableIds.join(",")}`);
+  throw new Error(`portable scope changed while ordinary rendering is reopened: ${closedPortableIds.join(",")}`);
 }
-if (matrix.auditStatus !== "final-evidence-bounded-capability-attestation" ||
-    claims.auditStatus !== "final-evidence-bounded-capability-attestation") {
-  throw new Error("machine ledgers do not identify the final evidence-bounded capability attestation");
+const reopenedIds = matrix.rows.filter((row) => row.status === "reopened-audit").map((row) => row.id).sort();
+if (JSON.stringify(reopenedIds) !== JSON.stringify([
+  "CAP-RENDER-ORDINARY-01", "CAP-RENDER-PARTICLE-COMPOSITION-01",
+])) {
+  throw new Error(`ordinary rendering reaudit scope changed: ${reopenedIds.join(",")}`);
+}
+if (matrix.auditStatus !== "ordinary-single-rendering-total-reaudit-open" ||
+    claims.auditStatus !== "ordinary-single-rendering-total-reaudit-open") {
+  throw new Error("machine ledgers do not identify the open ordinary rendering total reaudit");
 }
 const publicGateLiterals = [
   "closed-portable", "closed-original-unreachable", "reopened-audit", "degraded-explicit", "excluded", "open-evidence-required",
@@ -112,6 +120,8 @@ for (const path of walk(simulatorRoot)) {
 if (
   attestation.schemaVersion !== 1 ||
   attestation.status !== "final-evidence-bounded-capability-attestation" ||
+  attestation.currentDisposition !== "historical-pre-ordinary-single-rendering-total-reaudit" ||
+  attestation.supersededForPositiveOrdinaryRenderingClaims !== true ||
   attestation.implementation?.commit !== "9ab1ff7a339fa3cfd395c5f6fe841e1f3f1585a9" ||
   attestation.reverseLedger?.commit !== "36a6941fab361c1f6bcf1eef02069d4867f565c7" ||
   attestation.reverseLedger?.counts?.productionFiles !== 102 ||
@@ -186,7 +196,7 @@ if (
 }
 const publicLaunch = readFileSync(join(simulatorRoot, "public", "launch.ts"), "utf8");
 if (!publicCapabilities.includes("simulator.audit.total-revalidation-open") ||
-    !publicCapabilities.includes("return false") ||
+    !publicCapabilities.includes("return true") ||
     !publicLaunch.includes("launchInstalledSimulatorModule(request)")) {
   throw new Error("public launch did not perform the bounded total-revalidation gate transition");
 }
@@ -215,7 +225,7 @@ if (
 ) {
   throw new Error("portable release transition lacks the exact prerequisite detached attestation and bounded delta");
 }
-console.log(`evidence-integrity final bounded attestation passed: capabilities=${matrix.rows.length} claims=${claims.allowedClaims.length} current-production-files=${currentProductionFiles.length} leaves=${attestation.validation.uniqueLeaves}`);
+console.log(`evidence-integrity ordinary-rendering reaudit gate passed: capabilities=${matrix.rows.length} claims=${claims.allowedClaims.length} current-production-files=${currentProductionFiles.length} historical-leaves=${attestation.validation.uniqueLeaves}`);
 
 function* walk(root) {
   for (const entry of readdirSync(root, { withFileTypes: true })) {

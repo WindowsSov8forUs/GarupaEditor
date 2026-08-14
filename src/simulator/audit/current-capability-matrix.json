@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "auditStatus": "final-evidence-bounded-capability-attestation",
+  "auditStatus": "ordinary-single-rendering-total-reaudit-open",
   "lockedSample": {
     "package": "jp.co.craftegg.band",
     "versionName": "10.1.4",
@@ -86,18 +86,20 @@
       "id": "CAP-RENDER-ORDINARY-01",
       "capability": "ordinary Note and single-player HUD Pixi command/scene routing",
       "productionPath": "engine render producer -> Pixi owner/resource mapping",
-      "status": "closed-portable",
+      "status": "reopened-audit",
       "reverseEvidence": [
         "ordinary-visible-rendering-portable-10-1-4@f94947d9",
         "score-hud-portable-revalidation-10-1-4@a53f8a27",
         "score-hud-panel-clip-portable-10-1-4@1abae506"
       ],
-      "dynamicRequirement": "current actual-Pixi raw observation including 20-row Score boundary matrix, persistent SS owner and persistent indicator panel mask consumer",
-      "closedSubgates": [
+      "dynamicRequirement": "independent 10.1.4 hierarchy/world-space oracle plus complete production Note/HUD/particle WebView2 composition and pushed-detached DAG",
+      "historicalSubgatesNotAcceptedForCurrentReaudit": [
         "score-high-rank-panel-indicator-clip-contract",
         "WebView2 151.0.4129.78 PNG/FontFace/glyph/Pixi raster"
       ],
       "openSubgates": [
+        "ordinary scene world-space composition",
+        "complete ordinary production WebView2 composition",
         "framebuffer/device exact"
       ],
       "exclusions": [
@@ -174,6 +176,24 @@
         "device-runtime-closure-10-1-4 portable closure"
       ],
       "dynamicRequirement": "command/simulation/semantic-frame oracle and locked digest",
+      "exclusions": [
+        "Unity shader/GPU/driver/framebuffer parity"
+      ]
+    },
+    {
+      "id": "CAP-RENDER-PARTICLE-COMPOSITION-01",
+      "capability": "ordinary particle visible Pixi and combined-scene composition",
+      "productionPath": "particle command/simulation -> Pixi renderer -> combined ordinary scene root",
+      "status": "reopened-audit",
+      "reverseEvidence": [
+        "device-runtime-closure-10-1-4 portable semantic closure"
+      ],
+      "dynamicRequirement": "current 10.1.4 hierarchy/order evidence plus actual Pixi world observation and complete production WebView2 combined-scene capture",
+      "openSubgates": [
+        "cross-stage ordering",
+        "browser particle texture decode in complete scene",
+        "dispose owner/resource stability"
+      ],
       "exclusions": [
         "Unity shader/GPU/driver/framebuffer parity"
       ]

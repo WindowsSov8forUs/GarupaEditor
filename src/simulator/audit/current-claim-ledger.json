@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "auditStatus": "final-evidence-bounded-capability-attestation",
+  "auditStatus": "ordinary-single-rendering-total-reaudit-open",
   "rules": {
     "forbidCommittedTmpReferences": true,
     "forbidUnscopedCompletionClaims": true,
@@ -19,7 +19,7 @@
         "GPU framebuffer",
         "fixed-device exact"
       ],
-      "auditDisposition": "closed-portable"
+      "auditDisposition": "reopened-audit"
     },
     {
       "id": "CLAIM-SCORE-LIFE",
@@ -50,6 +50,16 @@
         "Unity GPU shader/framebuffer parity"
       ],
       "auditDisposition": "closed-portable"
+    },
+    {
+      "id": "CLAIM-PARTICLE-VISIBLE-COMPOSITION",
+      "wording": "ordinary particle actual-Pixi and complete-scene composition",
+      "scope": "browser texture decode, world transform, cross-stage ordering and disposal",
+      "notClaimed": [
+        "semantic command/simulation regression",
+        "Unity GPU shader/framebuffer parity"
+      ],
+      "auditDisposition": "reopened-audit"
     },
     {
       "id": "CLAIM-HAB-CURRENT-EXTERNAL-COMPLETE",

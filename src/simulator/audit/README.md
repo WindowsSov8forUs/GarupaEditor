@@ -2,9 +2,9 @@
 
 This directory is a machine-checkable description of the current production boundary. It is not Reverse evidence and does not authorize behavior by itself.
 
-The total revalidation gate has an evidence-bounded final capability attestation. Public launch delegates to the installed autonomous launcher; only capability-matrix rows marked `closed-portable` are positive functional scope. `closed-original-unreachable` is not an added feature, and every open, excluded, objective-environment-blocked and stage-9 row retains its own non-positive boundary.
+The total revalidation gate is open for the ordinary single-player rendering end-to-end reaudit. Public launch rejects before the installed launcher, chart parsing, resource/backend preparation, mount or owner mutation. `CAP-RENDER-ORDINARY-01` and ordinary particle visible composition are `reopened-audit`; this is not a positive functional status. `closed-original-unreachable` is not an added feature, and every excluded, objective-environment-blocked and stage-9 row retains its non-positive boundary.
 
-The current pushed production surface is frozen by Reverse `simulator-final-capability-ledger-10-1-4@36a6941f` at Garupa `9ab1ff7a339fa3cfd395c5f6fe841e1f3f1585a9`: 102 production files, 21,649 individually disposed occurrences, 14,322 field/formula claims, 269 mutation points and 637 completion/status occurrences. All unreviewed and supported-unknown counts are zero. The pushed-detached 25-leaf DAG passed and executed the real production `BrowserPixiTextureDecoder` plus complete Score HUD composition in WebView2 151.0.4129.78. The re-audit corrected TotalScore Y conversion and the high-rank panel mask's missing `Progress [25,45]` transform. `current-field-claim-index.json` and `current-mutation-boundaries.json` remain historical evidence pointers; `current-final-capability-attestation.json` records the current bounded result.
+Reverse `simulator-final-capability-ledger-10-1-4@36a6941f`, Garupa `9ab1ff7a339fa3cfd395c5f6fe841e1f3f1585a9`, the former 25-leaf DAG and complete Score HUD capture are historical pointers only for this reaudit. They do not authorize the current ordinary Note/HUD/particle world-space or complete-browser composition claims. `current-field-claim-index.json`, `current-mutation-boundaries.json` and `current-final-capability-attestation.json` remain historical evidence pointers until replaced by a pushed candidate ledger and release attestation.
 
 Rules:
 
@@ -19,7 +19,7 @@ Rules:
 
 Status vocabulary:
 
-- `reopened-audit`: historical globally isolated candidate behavior; not a current positive claim.
+- `reopened-audit`: currently isolated candidate behavior behind the total evidence-required gate; not a positive claim.
 - `closed-portable`: available only for a current per-claim evidence and production-observation gate closed by this bounded attestation.
 - `closed-original-unreachable`: current original legal inputs cannot reach the value; no synthetic feature is added.
 - `degraded-explicit`: caller-selected disclosed approximation; never original parity.

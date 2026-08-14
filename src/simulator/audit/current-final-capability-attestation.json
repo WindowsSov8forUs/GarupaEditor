@@ -1,6 +1,8 @@
 {
   "schemaVersion": 1,
   "status": "final-evidence-bounded-capability-attestation",
+  "currentDisposition": "historical-pre-ordinary-single-rendering-total-reaudit",
+  "supersededForPositiveOrdinaryRenderingClaims": true,
   "date": "2026-08-14",
   "sample": {
     "package": "jp.co.craftegg.band",
@@ -63,11 +65,15 @@
     "closedPortable": [
       "public autonomous core and chart construction",
       "manual and Auto Live clock/judgement/score-life state",
-      "ordinary Pixi command/scene rendering",
-      "portable audio and deterministic particle routes",
+      "portable audio and deterministic particle semantic routes",
       "HABAHIRO current-external-complete functional route",
       "non-zero initial practice seek whole-engine pre-roll",
       "real current WebView2 PNG/FontFace/glyph/Pixi raster"
+    ],
+    "reopenedAudit": [
+      "ordinary Note/HUD Pixi command and scene composition",
+      "ordinary particle actual-Pixi and combined-scene composition",
+      "complete ordinary production WebView2 composition"
     ],
     "closedOriginalUnreachable": [
       "Button value 7 as a legal BMS/scene lane"
@@ -118,5 +124,5 @@
     "originalUnitySoftClipShaderRasterClaimed": false,
     "fixedDeviceFramebufferClaimed": false
   },
-  "conclusion": "All currently authorized portable functional gates have individual pushed evidence and production-path observations, including the corrected complete Score HUD WebView2 composition. Remaining original/device/stage-9/excluded surfaces retain their explicit non-positive dispositions; this attestation is not an original-engine or all-device parity claim."
+  "conclusion": "This is a historical pre-reaudit attestation only. The ordinary Note/HUD/particle visible-composition claims are reopened behind the total evidence-required gate and cannot consume this document as positive authority. Other original/device/stage-9/excluded surfaces retain their explicit non-positive dispositions."
 }
