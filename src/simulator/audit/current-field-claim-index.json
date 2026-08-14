@@ -1,20 +1,20 @@
 {
   "schemaVersion": 4,
-  "status": "ordinary-rendering-candidate-per-claim-indexed-for-bounded-release",
-  "reverseCommit": "3f9ef7880654fc80ce45b23e4c20de326001afb9",
+  "status": "final-release-per-claim-indexed-and-attested",
+  "reverseCommit": "b5fb3dca34b26511355879d62839661c5cf505d3",
   "reversePackage": "artifacts/investigations/simulator-final-capability-ledger-10-1-4",
-  "targetGarupaCommit": "5a25161cbb0fc179c877c4153dd9efeab17edcd2",
+  "targetGarupaCommit": "2b758eb6c40632c8c658e97772b9cb7afb5785fd",
   "counts": {
     "productionFiles": 104,
-    "behaviorOccurrences": 22216,
-    "fieldClaims": 14722,
+    "behaviorOccurrences": 22210,
+    "fieldClaims": 14721,
     "mutationPoints": 281,
-    "completionClaims": 646
+    "completionClaims": 647
   },
   "fieldDispositionCounts": {
     "closed-original-unreachable": 7,
     "excluded": 2,
-    "field-evidence-bound": 14707,
+    "field-evidence-bound": 14706,
     "open-evidence-required": 2,
     "open-objective-environment-blocked": 2,
     "unauthorized-stage-9": 2
@@ -26,6 +26,9 @@
   "reachableSupportedUnknownCount": 0,
   "groupMappingIsNotAuthorization": true,
   "exactClaimBindingRequired": true,
-  "candidateGlobalGate": "simulator.audit.total-revalidation-open",
-  "releaseTransition": "R12 changes only the bounded public gate and capability summary; R13/R14 record the pushed release DAG and final attestation."
+  "globalGateOpen": false,
+  "releaseDetachedDag": {
+    "uniqueLeaves": 26,
+    "elapsedMilliseconds": 1153047
+  }
 }

@@ -89,7 +89,7 @@
       "status": "closed-portable",
       "reverseEvidence": [
         "ordinary-single-rendering-total-reaudit-10-1-4@6908ddfa OSR-E0001..OSR-E13323 and OSR-GAP-01",
-        "simulator-final-capability-ledger-10-1-4@3f9ef788 target 5a25161cbb0fc179c877c4153dd9efeab17edcd2"
+        "simulator-final-capability-ledger-10-1-4@b5fb3dca target 2b758eb6c40632c8c658e97772b9cb7afb5785fd"
       ],
       "dynamicRequirement": "actual Pixi world observer with six mutation sentinels plus 656-batch production dual-decoder combined-scene WebView2 3-fresh capture and pushed-detached 26-leaf DAG",
       "portableObservations": [
@@ -183,7 +183,7 @@
       "reverseEvidence": [
         "ordinary-single-rendering-total-reaudit-10-1-4@6908ddfa OSR-E6201..OSR-E13323 and OSR-GAP-01",
         "device-runtime-closure-10-1-4 portable semantic closure",
-        "simulator-final-capability-ledger-10-1-4@3f9ef788 target 5a25161cbb0fc179c877c4153dd9efeab17edcd2"
+        "simulator-final-capability-ledger-10-1-4@b5fb3dca target 2b758eb6c40632c8c658e97772b9cb7afb5785fd"
       ],
       "dynamicRequirement": "17-root actual Pixi world/UV/blend/viewport observations, cross-stage sentinel, production BrowserPixiParticleTextureDecoder full-scene capture and zero-owner cleanup",
       "exclusions": [

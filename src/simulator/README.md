@@ -1,10 +1,10 @@
 # GarupaEditor Simulator
 
-`src/simulator`已完成普通单人渲染端到端candidate总复审，并进入R12有界portable release。旧任务书、旧acceptance、旧closure字段、Recording backend、源码标记和旧绿色DAG不构成本轮依据；当前正向边界只消费Reverse `6908ddfa`总复审叶事实、`3f9ef788`逐claim账本及pushed-detached candidate `5a25161`观察。
+`src/simulator`已完成普通单人渲染端到端总复审与有界portable release。旧任务书、旧acceptance、旧closure字段、Recording backend、源码标记和旧绿色DAG不构成本轮依据；当前正向边界只消费Reverse `6908ddfa`总复审叶事实、`b5fb3dca`最终逐claim账本及pushed-detached candidate/release观察。
 
 ## 当前全局门
 
-R11 schema-4账本冻结104个production文件、22,216个occurrences、14,722个field/formula claims、281个mutations及646个completion claims，所有unreviewed/unknown为0。Candidate 26叶detached DAG在2,067,351ms内通过；完整ordinary WebView2使用production双decoder、单一particle→Note/HUD combined root、656-batch全谱、3 fresh×17 captures，digest为`100f640350d9f49b41cc94a2df47284b42f8e46f182fce7c862a8b921e791538`。
+最终schema-4账本冻结release的104个production文件、22,210个occurrences、14,721个field/formula claims、281个mutations及647个completion claims，所有unreviewed/unknown为0。Candidate与release均通过26叶pushed-detached DAG（2,067,351ms / 1,153,047ms）；完整ordinary WebView2使用production双decoder、单一particle→Note/HUD combined root、656-batch全谱、3 fresh×17 captures，digest为`100f640350d9f49b41cc94a2df47284b42f8e46f182fce7c862a8b921e791538`。
 
 总重验aggregate gate已在R12有界关闭；`CAP-RENDER-ORDINARY-01`与`CAP-RENDER-PARTICLE-COMPOSITION-01`恢复`closed-portable`。这不移除request/resource/backend/owner各自的失败关闭，不升级Unity framebuffer、fixed-device exact、HAB original、excluded玩法或Stage 9。
 
@@ -77,7 +77,7 @@ Synthetic decoder、资源hash或typed command仍不能单独升级为真实WebV
 
 流程见[`evidence-workflow.md`](./evidence-workflow.md)。只消费已verify、commit、push的Reverse证据。10.1.3或其他来源必须先建立逐claim等价证明、适用域和反例检查。旧调查包可提供待重新核验的原始事实，但其`closed`、`productionAuthorization`或总体closure字段不是本轮授权。
 
-当前依据为Reverse普通渲染静态/HUD提交`6908ddfa8a45721f981e2356a9dde84970313bae`、candidate逐claim账本`3f9ef7880654fc80ce45b23e4c20de326001afb9`及Garupa candidate `5a25161cbb0fc179c877c4153dd9efeab17edcd2`。R12只执行有界gate/summary transition；R13从已push release commit运行detached DAG，R14才登记最终attestation。HAB original、fixed-device exact、excluded和stage-9边界不因本轮复审升级。
+当前依据为Reverse普通渲染静态/HUD提交`6908ddfa8a45721f981e2356a9dde84970313bae`、最终逐claim账本`b5fb3dca34b26511355879d62839661c5cf505d3`、Garupa candidate `5a25161cbb0fc179c877c4153dd9efeab17edcd2`与release `2b758eb6c40632c8c658e97772b9cb7afb5785fd`。R14 attestation登记两轮DAG与全部非正向边界；HAB original、fixed-device exact、excluded和stage-9边界不因本轮复审升级。
 
 最终去重入口为`npm.cmd run simulator:test:total-revalidation`。它按唯一leaf DAG执行isolated tsc、chart/clock/input/state、render raw+independent verifier、audio、particle、host/runtime/public、C07证据消费、generic browser及完整ordinary production WebView2双decoder；不运行Vite/Tauri，也不声称原作framebuffer或物理输出等价。
 

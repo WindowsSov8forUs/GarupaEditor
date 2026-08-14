@@ -1,31 +1,20 @@
 {
   "schemaVersion": 4,
-  "status": "ordinary-rendering-candidate-mutations-dispositioned-for-bounded-release",
-  "reverseCommit": "3f9ef7880654fc80ce45b23e4c20de326001afb9",
+  "status": "final-release-mutations-dispositioned-and-attested",
+  "reverseCommit": "b5fb3dca34b26511355879d62839661c5cf505d3",
   "reversePackage": "artifacts/investigations/simulator-final-capability-ledger-10-1-4",
-  "targetGarupaCommit": "5a25161cbb0fc179c877c4153dd9efeab17edcd2",
+  "targetGarupaCommit": "2b758eb6c40632c8c658e97772b9cb7afb5785fd",
   "mutationPointCount": 281,
   "unreviewedMutationCount": 0,
   "perMutationDispositionRequired": true,
   "exactClaimBindingRequired": true,
-  "candidateGateBoundary": {
-    "capability": "simulator.audit.total-revalidation-open",
-    "before": [
-      "installed launcher",
-      "chart parsing",
-      "static-resource selection",
-      "backend preparation",
-      "scheduler start",
-      "scene/domain owner mutation"
-    ],
-    "dynamicCase": "PUBLIC-GATE-00"
-  },
   "releaseBoundary": {
     "globalGateOpen": false,
     "boundedProductionDelta": [
       "src/simulator/public/capabilities.ts",
       "src/simulator/public/contracts.ts"
     ],
+    "releaseDetachedDagPassed": true,
     "failurePolicy": "Each request/resource/backend/owner mutation retains its own typed preflight, rollback and evidence-required boundary; closing the aggregate gate adds no fallback or mutation bypass."
   }
 }

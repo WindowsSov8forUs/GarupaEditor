@@ -57,7 +57,7 @@ if (JSON.stringify(actualClosed) !== JSON.stringify(expectedClosed) ||
 }
 for (const id of ["CAP-RENDER-ORDINARY-01", "CAP-RENDER-PARTICLE-COMPOSITION-01"]) {
   const row = rows.get(id);
-  if (row.status !== "closed-portable" || !row.reverseEvidence.some((value) => value.includes("3f9ef788")) ||
+  if (row.status !== "closed-portable" || !row.reverseEvidence.some((value) => value.includes("b5fb3dca")) ||
       typeof row.dynamicRequirement !== "string") {
     throw new Error(`${id} lacks current candidate evidence/DAG boundary`);
   }
@@ -75,54 +75,65 @@ for (const id of ["CLAIM-ORDINARY-COMMAND-SCENE", "CLAIM-PARTICLE-VISIBLE-COMPOS
   }
 }
 
-if (integrity.schemaVersion !== 2 || integrity.status !== "ordinary-single-rendering-bounded-release-candidate" ||
-    integrity.currentDisposition !== "R11-candidate-ledger-verified-R12-bounded-gate-transition" ||
+if (integrity.schemaVersion !== 2 || integrity.status !== "final-ordinary-single-rendering-evidence-bounded-release" ||
+    integrity.currentDisposition !== "R14-final-release-attested" ||
     integrity.ordinaryRenderingPositiveAuthority !== true || integrity.currentProductionFileCount !== 104 ||
     currentProductionFiles.length !== 104 || integrity.reviewPolicy?.groupMappingIsNotBlanketAuthorization !== true ||
-    integrity.reviewPolicy?.exactClaimBindingRequired !== true || integrity.reverseAudit?.commit !== "3f9ef7880654fc80ce45b23e4c20de326001afb9" ||
-    integrity.reverseAudit?.inventoryTargetCommit !== "5a25161cbb0fc179c877c4153dd9efeab17edcd2" ||
-    integrity.reverseAudit?.productionFileCount !== 104 || integrity.reverseAudit?.occurrenceCount !== 22216 ||
-    integrity.reverseAudit?.fieldClaimCount !== 14722 || integrity.reverseAudit?.mutationPointCount !== 281 ||
-    integrity.reverseAudit?.completionClaimCount !== 646 || integrity.reverseAudit?.unreviewedOrSupportedUnknown !== 0) {
-  throw new Error("production integrity review does not match the pushed schema-4 candidate ledger");
+    integrity.reviewPolicy?.exactClaimBindingRequired !== true || integrity.reverseAudit?.commit !== "b5fb3dca34b26511355879d62839661c5cf505d3" ||
+    integrity.reverseAudit?.inventoryTargetCommit !== "2b758eb6c40632c8c658e97772b9cb7afb5785fd" ||
+    integrity.reverseAudit?.productionFileCount !== 104 || integrity.reverseAudit?.occurrenceCount !== 22210 ||
+    integrity.reverseAudit?.fieldClaimCount !== 14721 || integrity.reverseAudit?.mutationPointCount !== 281 ||
+    integrity.reverseAudit?.completionClaimCount !== 647 || integrity.reverseAudit?.unreviewedOrSupportedUnknown !== 0) {
+  throw new Error("production integrity review does not match the pushed final schema-4 release ledger");
 }
 if (integrity.candidateDetachedDag?.status !== "passed" || integrity.candidateDetachedDag?.uniqueLeaves !== 26 ||
-    integrity.candidateDetachedDag?.elapsedMilliseconds !== 2067351 ||
-    integrity.candidateDetachedDag?.ordinaryWebView2?.productionRenderDecoder !== "BrowserPixiTextureDecoder" ||
-    integrity.candidateDetachedDag?.ordinaryWebView2?.productionParticleDecoder !== "BrowserPixiParticleTextureDecoder" ||
-    integrity.candidateDetachedDag?.ordinaryWebView2?.freshProcesses !== 3 ||
-    integrity.candidateDetachedDag?.ordinaryWebView2?.capturesPerProcess !== 17 ||
-    integrity.candidateDetachedDag?.ordinaryWebView2?.aggregateSha256 !== "100f640350d9f49b41cc94a2df47284b42f8e46f182fce7c862a8b921e791538") {
-  throw new Error("candidate detached ordinary WebView2 observation changed");
+    integrity.candidateDetachedDag?.commit !== "5a25161cbb0fc179c877c4153dd9efeab17edcd2" ||
+    integrity.candidateDetachedDag?.elapsedMilliseconds !== 2067351) {
+  throw new Error("candidate detached DAG identity changed");
 }
 const boundedProductionFiles = [
   "src/simulator/public/capabilities.ts",
   "src/simulator/public/contracts.ts",
 ];
-if (integrity.releaseTransition?.status !== "bounded-R12-transition" ||
+if (integrity.releaseTransition?.status !== "passed-pushed-detached-release" ||
+    integrity.releaseTransition?.commit !== "2b758eb6c40632c8c658e97772b9cb7afb5785fd" ||
+    integrity.releaseTransition?.finalReverseLedgerCommit !== integrity.reverseAudit.commit ||
     integrity.releaseTransition?.globalGateOpenAfterTransition !== false ||
     integrity.releaseTransition?.ordinaryCommandScene !== "closed-portable" ||
     integrity.releaseTransition?.ordinaryParticleVisibleComposition !== "closed-portable" ||
+    integrity.releaseTransition?.uniqueLeaves !== 26 || integrity.releaseTransition?.elapsedMilliseconds !== 1153047 ||
+    integrity.releaseTransition?.sourceCodeCopied !== false || integrity.releaseTransition?.nodeModulesOnlyReused !== true ||
+    integrity.releaseTransition?.networkUsed !== false || integrity.releaseTransition?.reverseWorktreeRead !== false ||
     JSON.stringify(integrity.releaseTransition?.boundedProductionFiles) !== JSON.stringify(boundedProductionFiles)) {
-  throw new Error("R12 release delta is not bounded");
+  throw new Error("final release transition or detached DAG is not bounded");
+}
+if (integrity.ordinaryWebView2?.productionRenderDecoder !== "BrowserPixiTextureDecoder" ||
+    integrity.ordinaryWebView2?.productionParticleDecoder !== "BrowserPixiParticleTextureDecoder" ||
+    integrity.ordinaryWebView2?.combinedRoot !== true || integrity.ordinaryWebView2?.freshProcesses !== 3 ||
+    integrity.ordinaryWebView2?.capturesPerProcess !== 17 ||
+    integrity.ordinaryWebView2?.aggregateSha256 !== "100f640350d9f49b41cc94a2df47284b42f8e46f182fce7c862a8b921e791538" ||
+    integrity.ordinaryWebView2?.originalUnityFramebufferOracle !== false) {
+  throw new Error("final ordinary WebView2 observation changed scope");
 }
 
-if (fieldIndex.schemaVersion !== 4 || fieldIndex.status !== "ordinary-rendering-candidate-per-claim-indexed-for-bounded-release" ||
+if (fieldIndex.schemaVersion !== 4 || fieldIndex.status !== "final-release-per-claim-indexed-and-attested" ||
     fieldIndex.reverseCommit !== integrity.reverseAudit.commit || fieldIndex.targetGarupaCommit !== integrity.reverseAudit.inventoryTargetCommit ||
-    fieldIndex.counts?.productionFiles !== 104 || fieldIndex.counts?.behaviorOccurrences !== 22216 ||
-    fieldIndex.counts?.fieldClaims !== 14722 || fieldIndex.counts?.mutationPoints !== 281 ||
-    fieldIndex.counts?.completionClaims !== 646 || fieldIndex.unreviewedOccurrenceCount !== 0 ||
+    fieldIndex.counts?.productionFiles !== 104 || fieldIndex.counts?.behaviorOccurrences !== 22210 ||
+    fieldIndex.counts?.fieldClaims !== 14721 || fieldIndex.counts?.mutationPoints !== 281 ||
+    fieldIndex.counts?.completionClaims !== 647 || fieldIndex.unreviewedOccurrenceCount !== 0 ||
     fieldIndex.unreviewedFieldClaimCount !== 0 || fieldIndex.unreviewedMutationCount !== 0 ||
     fieldIndex.unreviewedCompletionClaimCount !== 0 || fieldIndex.reachableSupportedUnknownCount !== 0 ||
-    fieldIndex.groupMappingIsNotAuthorization !== true || fieldIndex.exactClaimBindingRequired !== true) {
-  throw new Error("current field pointer does not match Reverse 3f9ef788");
+    fieldIndex.groupMappingIsNotAuthorization !== true || fieldIndex.exactClaimBindingRequired !== true ||
+    fieldIndex.globalGateOpen !== false || fieldIndex.releaseDetachedDag?.elapsedMilliseconds !== 1153047) {
+  throw new Error("current field pointer does not match final Reverse release ledger");
 }
-if (mutations.schemaVersion !== 4 || mutations.reverseCommit !== fieldIndex.reverseCommit ||
-    mutations.targetGarupaCommit !== fieldIndex.targetGarupaCommit || mutations.mutationPointCount !== 281 ||
-    mutations.unreviewedMutationCount !== 0 || mutations.perMutationDispositionRequired !== true ||
-    mutations.exactClaimBindingRequired !== true || mutations.releaseBoundary?.globalGateOpen !== false ||
+if (mutations.schemaVersion !== 4 || mutations.status !== "final-release-mutations-dispositioned-and-attested" ||
+    mutations.reverseCommit !== fieldIndex.reverseCommit || mutations.targetGarupaCommit !== fieldIndex.targetGarupaCommit ||
+    mutations.mutationPointCount !== 281 || mutations.unreviewedMutationCount !== 0 ||
+    mutations.perMutationDispositionRequired !== true || mutations.exactClaimBindingRequired !== true ||
+    mutations.releaseBoundary?.globalGateOpen !== false || mutations.releaseBoundary?.releaseDetachedDagPassed !== true ||
     JSON.stringify(mutations.releaseBoundary?.boundedProductionDelta) !== JSON.stringify(boundedProductionFiles)) {
-  throw new Error("current mutation boundary does not match bounded release");
+  throw new Error("current mutation boundary does not match final release");
 }
 
 if (!publicCapabilities.includes("simulator.audit.total-revalidation-open") ||
@@ -141,10 +152,33 @@ for (const field of [
   }
 }
 
-if (attestation.schemaVersion !== 1 || attestation.currentDisposition !== "historical-pre-ordinary-single-rendering-total-reaudit" ||
-    attestation.supersededForPositiveOrdinaryRenderingClaims !== true ||
-    integrity.historicalAttestation?.positiveAuthorityForThisRelease !== false || integrity.historicalAttestation?.replacementStage !== "R14") {
-  throw new Error("historical attestation was prematurely reused or upgraded before R14");
+if (attestation.schemaVersion !== 2 ||
+    attestation.status !== "final-ordinary-single-rendering-evidence-bounded-release-attestation" ||
+    attestation.implementation?.releaseCommit !== integrity.releaseTransition.commit ||
+    attestation.reverseLedger?.commit !== integrity.reverseAudit.commit ||
+    attestation.reverseLedger?.targetReleaseCommit !== integrity.reverseAudit.inventoryTargetCommit ||
+    attestation.reverseLedger?.counts?.productionFiles !== 104 ||
+    attestation.reverseLedger?.counts?.behaviorOccurrences !== 22210 ||
+    attestation.reverseLedger?.counts?.fieldClaims !== 14721 ||
+    attestation.reverseLedger?.counts?.mutationPoints !== 281 ||
+    attestation.reverseLedger?.counts?.completionStatusOccurrences !== 647 ||
+    attestation.reverseLedger?.unreviewedOrSupportedUnknown !== 0 ||
+    attestation.reverseLedger?.groupMappingIsNotAuthorization !== true ||
+    attestation.reverseLedger?.exactClaimBindingRequired !== true ||
+    attestation.validation?.candidate?.elapsedMilliseconds !== 2067351 ||
+    attestation.validation?.release?.elapsedMilliseconds !== 1153047 ||
+    attestation.validation?.ordinaryProductionBrowserLeaf?.renderDecoder !== "BrowserPixiTextureDecoder" ||
+    attestation.validation?.ordinaryProductionBrowserLeaf?.particleDecoder !== "BrowserPixiParticleTextureDecoder" ||
+    attestation.validation?.ordinaryProductionBrowserLeaf?.freshProcessRepeatCount !== 3 ||
+    attestation.validation?.ordinaryProductionBrowserLeaf?.capturesPerProcess !== 17 ||
+    attestation.validation?.ordinaryProductionBrowserLeaf?.aggregateSha256 !== "100f640350d9f49b41cc94a2df47284b42f8e46f182fce7c862a8b921e791538" ||
+    attestation.validation?.ordinaryProductionBrowserLeaf?.candidateDigestClaimedAsOriginalUnityOracle !== false ||
+    attestation.boundaries?.aggregateOriginalParityClaimed !== false ||
+    attestation.boundaries?.positiveFixedDeviceExactClaims !== 0 ||
+    attestation.boundaries?.mainProgramIntegrationAuthorization !== false ||
+    attestation.boundaries?.audioPhysicalPerformanceClaimedByVisualHarness !== false ||
+    integrity.finalAttestation?.positiveAuthorityForBoundedOrdinaryPortableRelease !== true) {
+  throw new Error("final ordinary release attestation identity or boundary changed");
 }
 for (const source of [readme, auditReadme]) {
   if (/(?:^|[\\/`])tmp[\\/]/m.test(source)) throw new Error("committed documentation cites ignored local work");
@@ -164,7 +198,7 @@ for (const literal of [
   }
 }
 
-console.log(`evidence-integrity ordinary bounded release passed: capabilities=${matrix.rows.length} claims=${claims.allowedClaims.length} production-files=${currentProductionFiles.length} candidate-leaves=${integrity.candidateDetachedDag.uniqueLeaves}`);
+console.log(`evidence-integrity final ordinary release passed: capabilities=${matrix.rows.length} claims=${claims.allowedClaims.length} production-files=${currentProductionFiles.length} candidate/release-leaves=${integrity.candidateDetachedDag.uniqueLeaves}/${integrity.releaseTransition.uniqueLeaves}`);
 
 function json(name) {
   return JSON.parse(readFileSync(join(auditRoot, name), "utf8"));

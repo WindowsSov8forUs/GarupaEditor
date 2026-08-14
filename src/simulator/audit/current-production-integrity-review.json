@@ -1,18 +1,18 @@
 {
   "schemaVersion": 2,
-  "status": "ordinary-single-rendering-bounded-release-candidate",
-  "currentDisposition": "R11-candidate-ledger-verified-R12-bounded-gate-transition",
+  "status": "final-ordinary-single-rendering-evidence-bounded-release",
+  "currentDisposition": "R14-final-release-attested",
   "ordinaryRenderingPositiveAuthority": true,
   "reverseAudit": {
-    "commit": "3f9ef7880654fc80ce45b23e4c20de326001afb9",
+    "commit": "b5fb3dca34b26511355879d62839661c5cf505d3",
     "package": "artifacts/investigations/simulator-final-capability-ledger-10-1-4",
-    "inventoryTargetCommit": "5a25161cbb0fc179c877c4153dd9efeab17edcd2",
+    "inventoryTargetCommit": "2b758eb6c40632c8c658e97772b9cb7afb5785fd",
     "schemaVersion": 4,
     "productionFileCount": 104,
-    "occurrenceCount": 22216,
-    "fieldClaimCount": 14722,
+    "occurrenceCount": 22210,
+    "fieldClaimCount": 14721,
     "mutationPointCount": 281,
-    "completionClaimCount": 646,
+    "completionClaimCount": 647,
     "unreviewedOrSupportedUnknown": 0
   },
   "reviewPolicy": {
@@ -47,21 +47,14 @@
     "sourceCodeCopied": false,
     "nodeModulesOnlyReused": true,
     "networkUsed": false,
-    "reverseWorktreeRead": false,
-    "ordinaryWebView2": {
-      "runtime": "151.0.4129.78",
-      "productionRenderDecoder": "BrowserPixiTextureDecoder",
-      "productionParticleDecoder": "BrowserPixiParticleTextureDecoder",
-      "combinedRoot": true,
-      "freshProcesses": 3,
-      "capturesPerProcess": 17,
-      "aggregateSha256": "100f640350d9f49b41cc94a2df47284b42f8e46f182fce7c862a8b921e791538"
-    }
+    "reverseWorktreeRead": false
   },
   "releaseTransition": {
-    "status": "bounded-R12-transition",
+    "status": "passed-pushed-detached-release",
+    "commit": "2b758eb6c40632c8c658e97772b9cb7afb5785fd",
     "prerequisiteCandidateCommit": "5a25161cbb0fc179c877c4153dd9efeab17edcd2",
-    "prerequisiteReverseLedgerCommit": "3f9ef7880654fc80ce45b23e4c20de326001afb9",
+    "prerequisiteReverseCandidateLedgerCommit": "3f9ef7880654fc80ce45b23e4c20de326001afb9",
+    "finalReverseLedgerCommit": "b5fb3dca34b26511355879d62839661c5cf505d3",
     "boundedProductionFiles": [
       "src/simulator/public/capabilities.ts",
       "src/simulator/public/contracts.ts"
@@ -69,12 +62,26 @@
     "globalGateOpenAfterTransition": false,
     "ordinaryCommandScene": "closed-portable",
     "ordinaryParticleVisibleComposition": "closed-portable",
-    "releaseCommitAndDetachedDagRecordedAtR14": true
+    "uniqueLeaves": 26,
+    "elapsedMilliseconds": 1153047,
+    "sourceCodeCopied": false,
+    "nodeModulesOnlyReused": true,
+    "networkUsed": false,
+    "reverseWorktreeRead": false
   },
-  "historicalAttestation": {
+  "ordinaryWebView2": {
+    "runtime": "151.0.4129.78",
+    "productionRenderDecoder": "BrowserPixiTextureDecoder",
+    "productionParticleDecoder": "BrowserPixiParticleTextureDecoder",
+    "combinedRoot": true,
+    "freshProcesses": 3,
+    "capturesPerProcess": 17,
+    "aggregateSha256": "100f640350d9f49b41cc94a2df47284b42f8e46f182fce7c862a8b921e791538",
+    "originalUnityFramebufferOracle": false
+  },
+  "finalAttestation": {
     "file": "current-final-capability-attestation.json",
-    "positiveAuthorityForThisRelease": false,
-    "replacementStage": "R14"
+    "positiveAuthorityForBoundedOrdinaryPortableRelease": true
   },
   "openOrExcluded": [
     "HABAHIRO original UnityFS/natural runtime/Root_effect/frame parity",
@@ -83,5 +90,5 @@
     "stage-9 main-program integration"
   ],
   "currentProductionFileCount": 104,
-  "supersededReason": "The previous group summary and 102-file inventory are replaced by the pushed schema-4 exact-binding candidate ledger; final release identity is intentionally deferred to R14."
+  "supersededReason": "All pre-reaudit group summaries and historical attestations are replaced for ordinary portable claims by the pushed final schema-4 exact-binding release ledger and candidate/release detached DAGs."
 }
