@@ -33,6 +33,7 @@ const leaves = [
   ["host-runtime-public-gate", "runAutonomousModuleTests.mjs", {}],
   ["remaining-capability-consumption", "runC07EvidenceConsumptionTests.mjs", {}],
   ["production-browser-webview2", "runBrowserPixiDecoderWebView2Tests.mjs", {}],
+  ["ordinary-full-scene-browser-webview2", "runOrdinaryRenderingWebView2Tests.mjs", {}],
 ];
 const started = Date.now();
 try {
