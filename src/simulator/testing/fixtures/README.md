@@ -11,3 +11,4 @@
 - `reverse-snapshots/score-hud-rank-gauge/` 包含已推送 Reverse `95e629d9` 的普通单人Score HUD/Rank/Gauge portable contract、SS 56-curve动画profile、6个hash锁定PNG及current sgm Rank标签字体，仅用于阈值/Float32边界、动画采样oracle及shared-store资源完整性测试。
 - `reverse-snapshots/ordinary-visible-rendering/` 包含已推送 Reverse `f94947d9` 的普通Note动画与通用单人HUD contract/profile/oracle/closure/manifest及4个去重PNG；RhythmGameUI与sgm字体复用既有Score快照身份，不重复保存。该快照授权portable production消费，但不声明设备GPU/framebuffer exact。
 - `reverse-snapshots/c07-evidence/` 只包含已推送Reverse `cbd04239` initial-seek合同、`a87cd3a7`真实WebView2合同与`0dd4d71c`fixed-device客观阻断disposition三项最小JSON；真实PNG/TTF复用Score快照，不复制raw WebView2 RGBA或设备输出。
+- `reverse-snapshots/ordinary-rendering-total-reaudit/` 只晋升Reverse `73914d53`的候选最小夹具：selected hierarchy/world坐标、particle→Note/HUD combined-root顺序、资源logical IDs及明确不作为原作oracle的browser验收政策；不复制12,368行完整账本、原始trace或Reverse closure。

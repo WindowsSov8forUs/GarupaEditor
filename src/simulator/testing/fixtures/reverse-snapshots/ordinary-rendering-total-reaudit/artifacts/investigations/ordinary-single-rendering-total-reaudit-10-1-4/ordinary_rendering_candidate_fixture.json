@@ -1,0 +1,5315 @@
+{
+  "schemaVersion": 1,
+  "status": "minimal-candidate-observation-fixture-current-10.1.4",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "versionName": "10.1.4",
+    "versionCode": 230,
+    "abi": "arm64-v8a"
+  },
+  "sourcePolicy": "facts are re-extracted from the locked sample or independently flattened from committed raw/static artifacts; predecessor closure/status/productionAuthorization fields are not consumed",
+  "sources": {
+    "ordinaryProfile": {
+      "path": "artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/ordinary_visible_rendering_profile.json",
+      "bytes": 28809,
+      "sha256": "13690E23ED72074C142681746EF933D97020E70D7E35D7BE10CF94E54BBE804D"
+    },
+    "ordinaryOracle": {
+      "path": "artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/ordinary_visible_rendering_oracle.json",
+      "bytes": 19511,
+      "sha256": "AA3AD83EE90B127FC817EA66ADF0A32BDBD10994128B93356280531697AE6794"
+    },
+    "ordinaryManifest": {
+      "path": "artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/ordinary_visible_rendering_portable_manifest.json",
+      "bytes": 23732,
+      "sha256": "7F2FE0D4422AB331A78CA4D3DA55C5422B023C0BF38F21B829819002A94DCA34"
+    },
+    "scene": {
+      "path": "artifacts/investigations/autonomous-simulator-scene-layout-10-1-4/scene_layout_contract.json",
+      "bytes": 9132,
+      "sha256": "9182D635E36DBF47A25F8C73DA395AD423D617AC3A5A0E7F86119D7D6908D941"
+    },
+    "geometry": {
+      "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/resource_pixi_rendering_note_geometry_profile.json",
+      "bytes": 20910,
+      "sha256": "940A4BCB88B760CD7EF2EAD26EDBA52038FC8051A327191151DDCB896F403BCB"
+    },
+    "projection": {
+      "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/resource_pixi_rendering_projection_profile.json",
+      "bytes": 2500,
+      "sha256": "E62E9D50128EA210AF800F53EF11C1F1B9CB650A677278CC3ED7EE29022A8C40"
+    },
+    "visible": {
+      "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/resource_pixi_rendering_hud_visible_profile.json",
+      "bytes": 5540,
+      "sha256": "F35205BCAF954555E243DCFD71045067BCFBB00FB1083CCE24D00851348C867A"
+    },
+    "noteAnimation": {
+      "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/resource_pixi_rendering_note_animation_profiles.json",
+      "bytes": 19172,
+      "sha256": "3D72AEEC898E6346F21664BDFB61271CC6E8FDE2863BC9A6B78A1D2ADCCFF9AB"
+    },
+    "noteFamily": {
+      "path": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/resource_pixi_rendering_note_family_r4_profile.json",
+      "bytes": 23931,
+      "sha256": "B57A918F44124EBB7218B311FCC7D39FABBCDC08E6A912087AE44BAB63EB3AD3"
+    },
+    "ordinaryResources": {
+      "path": "artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary_portable_pack_manifest.json",
+      "bytes": 4978,
+      "sha256": "174E885B00989AC1724B884C9D15115BA9476E503DE436852E96E1BB3F4EC36A"
+    },
+    "score": {
+      "path": "artifacts/investigations/score-hud-rank-gauge-10-1-4/score_hud_rank_gauge_portable_contract.json",
+      "bytes": 23582,
+      "sha256": "5FCDED8221C2D71D4AC98AA86F3C567D8C19AB78D8FA7086DAB98A92938CB7FD"
+    },
+    "scorePanel": {
+      "path": "artifacts/investigations/score-hud-panel-clip-portable-10-1-4/score_hud_panel_clip_portable_contract.json",
+      "bytes": 14343,
+      "sha256": "EAAD5175499737F8F3C492885819AC8634D902366F9D04AFE49F68E47518E2D5"
+    },
+    "particlePolicy": {
+      "path": "artifacts/investigations/device-runtime-closure-10-1-4/particle_portable_policy.json",
+      "bytes": 10430,
+      "sha256": "2904A3B9E5ADAA2A7B6A581D5122E1DFA33AC78B9D63E5DFDB68653D3FB36D08"
+    },
+    "particleProfile": {
+      "path": "artifacts/investigations/device-runtime-closure-10-1-4/particle_portable_profile.json",
+      "bytes": 1529609,
+      "sha256": "2A7FDAB9AEC96F0262F92557047933F19A93EBDC3FAF0345CA4768888E43EA29"
+    },
+    "particleRoute": {
+      "path": "artifacts/investigations/device-runtime-closure-10-1-4/particle_route_contract.json",
+      "bytes": 5232,
+      "sha256": "C82F4927A444DB7F38C1770234CEEDFCB1C861B2E0586832A9A9A318CAA77432"
+    },
+    "particleTexture": {
+      "path": "artifacts/investigations/device-runtime-closure-10-1-4/particle_portable_texture_manifest.json",
+      "bytes": 3778,
+      "sha256": "49D8B99F4F192B038A55A2320E0B5E3C5330369744D792FCAB3795BD918811DB"
+    },
+    "particleHandoff": {
+      "path": "artifacts/investigations/device-runtime-closure-10-1-4/particle_renderer_handoff_static.json",
+      "bytes": 16341,
+      "sha256": "3914D11B7CC4ED29DD49AF34C7169741B568FE6DE0A896654D3F54A959C5F562"
+    },
+    "particleCommand": {
+      "path": "artifacts/investigations/device-runtime-closure-10-1-4/particle_command_oracle.json",
+      "bytes": 8235,
+      "sha256": "5BDA0080BA954CEBE7FE8966E756F101359F74E78D5CD31D30E1A9736435197F"
+    },
+    "particleSimulation": {
+      "path": "artifacts/investigations/device-runtime-closure-10-1-4/particle_simulation_oracle.json",
+      "bytes": 127583,
+      "sha256": "A081A49AAC5F9C1D486D6977EC8590FD494669265C07D9E665916341A65DEDDE"
+    },
+    "particleFrame": {
+      "path": "artifacts/investigations/device-runtime-closure-10-1-4/particle_semantic_frame_oracle.json",
+      "bytes": 1740,
+      "sha256": "8EACC3B0F58E2E353F796EADED5750CDFDE3237A216E2A2BDC292BAC85CE802D"
+    },
+    "level3": {
+      "path": "local locked APK assets/bin/Data/level3 (not committed binary)",
+      "bytes": 764840,
+      "sha256": "445FCF60C32222942D368D98B158F484D7E8E260B6237A6F595AE0C361DB75A8"
+    },
+    "baseApk": {
+      "path": "local locked sample base.apk (not committed binary)",
+      "bytes": 138157634,
+      "sha256": "D3A6005BB1F7341E39016521390DCEB987E56A0E5D16B6BA73568837A3026413"
+    },
+    "libil2cpp": {
+      "path": "local locked sample libil2cpp.so (not committed binary)",
+      "bytes": 119816840,
+      "sha256": "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F"
+    }
+  },
+  "rowCount": 514,
+  "rows": [
+    {
+      "evidenceId": "OSR-E11855",
+      "claim": "fixture.selectedUiWorld.addScore.authoredLocalSum[0]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/addScore/authoredLocalSum/0",
+      "expected": -411.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11856",
+      "claim": "fixture.selectedUiWorld.addScore.authoredLocalSum[1]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/addScore/authoredLocalSum/1",
+      "expected": 309.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11857",
+      "claim": "fixture.selectedUiWorld.addScore.pixiWorld[0]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/addScore/pixiWorld/0",
+      "expected": 389.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11858",
+      "claim": "fixture.selectedUiWorld.addScore.pixiWorld[1]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/addScore/pixiWorld/1",
+      "expected": 51.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11859",
+      "claim": "fixture.selectedUiWorld.backDisplay.authoredLocalSum[0]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/backDisplay/authoredLocalSum/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11860",
+      "claim": "fixture.selectedUiWorld.backDisplay.authoredLocalSum[1]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/backDisplay/authoredLocalSum/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11861",
+      "claim": "fixture.selectedUiWorld.backDisplay.pixiWorld[0]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/backDisplay/pixiWorld/0",
+      "expected": 800.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11862",
+      "claim": "fixture.selectedUiWorld.backDisplay.pixiWorld[1]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/backDisplay/pixiWorld/1",
+      "expected": 360.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11863",
+      "claim": "fixture.selectedUiWorld.combo.authoredLocalSum[0]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/combo/authoredLocalSum/0",
+      "expected": 434.70001220703125,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11864",
+      "claim": "fixture.selectedUiWorld.combo.authoredLocalSum[1]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/combo/authoredLocalSum/1",
+      "expected": 82.80000305175781,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11865",
+      "claim": "fixture.selectedUiWorld.combo.pixiWorld[0]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/combo/pixiWorld/0",
+      "expected": 1234.699951171875,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11866",
+      "claim": "fixture.selectedUiWorld.combo.pixiWorld[1]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/combo/pixiWorld/1",
+      "expected": 277.20001220703125,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11867",
+      "claim": "fixture.selectedUiWorld.frontDisplay.authoredLocalSum[0]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/frontDisplay/authoredLocalSum/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11868",
+      "claim": "fixture.selectedUiWorld.frontDisplay.authoredLocalSum[1]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/frontDisplay/authoredLocalSum/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11869",
+      "claim": "fixture.selectedUiWorld.frontDisplay.pixiWorld[0]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/frontDisplay/pixiWorld/0",
+      "expected": 800.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11870",
+      "claim": "fixture.selectedUiWorld.frontDisplay.pixiWorld[1]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/frontDisplay/pixiWorld/1",
+      "expected": 360.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11871",
+      "claim": "fixture.selectedUiWorld.information.authoredLocalSum[0]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/information/authoredLocalSum/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11872",
+      "claim": "fixture.selectedUiWorld.information.authoredLocalSum[1]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/information/authoredLocalSum/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11873",
+      "claim": "fixture.selectedUiWorld.information.pixiWorld[0]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/information/pixiWorld/0",
+      "expected": 800.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11874",
+      "claim": "fixture.selectedUiWorld.information.pixiWorld[1]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/information/pixiWorld/1",
+      "expected": 360.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11875",
+      "claim": "fixture.selectedUiWorld.judgeTiming.authoredLocalSum[0]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/judgeTiming/authoredLocalSum/0",
+      "expected": 4.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11876",
+      "claim": "fixture.selectedUiWorld.judgeTiming.authoredLocalSum[1]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/judgeTiming/authoredLocalSum/1",
+      "expected": -198.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11877",
+      "claim": "fixture.selectedUiWorld.judgeTiming.pixiWorld[0]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/judgeTiming/pixiWorld/0",
+      "expected": 804.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11878",
+      "claim": "fixture.selectedUiWorld.judgeTiming.pixiWorld[1]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/judgeTiming/pixiWorld/1",
+      "expected": 558.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11879",
+      "claim": "fixture.selectedUiWorld.life.authoredLocalSum[0]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/life/authoredLocalSum/0",
+      "expected": 411.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11880",
+      "claim": "fixture.selectedUiWorld.life.authoredLocalSum[1]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/life/authoredLocalSum/1",
+      "expected": 309.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11881",
+      "claim": "fixture.selectedUiWorld.life.pixiWorld[0]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/life/pixiWorld/0",
+      "expected": 1211.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11882",
+      "claim": "fixture.selectedUiWorld.life.pixiWorld[1]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/life/pixiWorld/1",
+      "expected": 51.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11883",
+      "claim": "fixture.selectedUiWorld.noteLane.authoredLocalSum[0]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/noteLane/authoredLocalSum/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11884",
+      "claim": "fixture.selectedUiWorld.noteLane.authoredLocalSum[1]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/noteLane/authoredLocalSum/1",
+      "expected": -240.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11885",
+      "claim": "fixture.selectedUiWorld.noteLane.pixiWorld[0]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/noteLane/pixiWorld/0",
+      "expected": 800.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11886",
+      "claim": "fixture.selectedUiWorld.noteLane.pixiWorld[1]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/noteLane/pixiWorld/1",
+      "expected": 600.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11887",
+      "claim": "fixture.selectedUiWorld.result.authoredLocalSum[0]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/result/authoredLocalSum/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11888",
+      "claim": "fixture.selectedUiWorld.result.authoredLocalSum[1]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/result/authoredLocalSum/1",
+      "expected": -160.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11889",
+      "claim": "fixture.selectedUiWorld.result.pixiWorld[0]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/result/pixiWorld/0",
+      "expected": 800.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11890",
+      "claim": "fixture.selectedUiWorld.result.pixiWorld[1]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/result/pixiWorld/1",
+      "expected": 520.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11891",
+      "claim": "fixture.selectedUiWorld.score.authoredLocalSum[0]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/score/authoredLocalSum/0",
+      "expected": -411.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11892",
+      "claim": "fixture.selectedUiWorld.score.authoredLocalSum[1]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/score/authoredLocalSum/1",
+      "expected": 309.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11893",
+      "claim": "fixture.selectedUiWorld.score.pixiWorld[0]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/score/pixiWorld/0",
+      "expected": 389.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11894",
+      "claim": "fixture.selectedUiWorld.score.pixiWorld[1]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/score/pixiWorld/1",
+      "expected": 51.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11895",
+      "claim": "fixture.selectedUiWorld.scoreBase.authoredLocalSum[0]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/scoreBase/authoredLocalSum/0",
+      "expected": -263.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11896",
+      "claim": "fixture.selectedUiWorld.scoreBase.authoredLocalSum[1]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/scoreBase/authoredLocalSum/1",
+      "expected": 244.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11897",
+      "claim": "fixture.selectedUiWorld.scoreBase.pixiWorld[0]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/scoreBase/pixiWorld/0",
+      "expected": 537.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11898",
+      "claim": "fixture.selectedUiWorld.scoreBase.pixiWorld[1]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/scoreBase/pixiWorld/1",
+      "expected": 116.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11899",
+      "claim": "fixture.selectedUiWorld.scoreHighRank.authoredLocalSum[0]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/scoreHighRank/authoredLocalSum/0",
+      "expected": -344.95001220703125,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11900",
+      "claim": "fixture.selectedUiWorld.scoreHighRank.authoredLocalSum[1]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/scoreHighRank/authoredLocalSum/1",
+      "expected": 264.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11901",
+      "claim": "fixture.selectedUiWorld.scoreHighRank.pixiWorld[0]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/scoreHighRank/pixiWorld/0",
+      "expected": 455.04998779296875,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11902",
+      "claim": "fixture.selectedUiWorld.scoreHighRank.pixiWorld[1]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/scoreHighRank/pixiWorld/1",
+      "expected": 96.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11903",
+      "claim": "fixture.selectedUiWorld.scorePanel.authoredLocalSum[0]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/scorePanel/authoredLocalSum/0",
+      "expected": -386.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11904",
+      "claim": "fixture.selectedUiWorld.scorePanel.authoredLocalSum[1]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/scorePanel/authoredLocalSum/1",
+      "expected": 264.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11905",
+      "claim": "fixture.selectedUiWorld.scorePanel.pixiWorld[0]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/scorePanel/pixiWorld/0",
+      "expected": 414.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11906",
+      "claim": "fixture.selectedUiWorld.scorePanel.pixiWorld[1]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/scorePanel/pixiWorld/1",
+      "expected": 96.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11907",
+      "claim": "fixture.selectedUiWorld.scoreProgress.authoredLocalSum[0]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/scoreProgress/authoredLocalSum/0",
+      "expected": -386.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11908",
+      "claim": "fixture.selectedUiWorld.scoreProgress.authoredLocalSum[1]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/scoreProgress/authoredLocalSum/1",
+      "expected": 264.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11909",
+      "claim": "fixture.selectedUiWorld.scoreProgress.pixiWorld[0]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/scoreProgress/pixiWorld/0",
+      "expected": 414.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11910",
+      "claim": "fixture.selectedUiWorld.scoreProgress.pixiWorld[1]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/scoreProgress/pixiWorld/1",
+      "expected": 96.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11911",
+      "claim": "fixture.selectedUiWorld.scoreTotal.authoredLocalSum[0]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/scoreTotal/authoredLocalSum/0",
+      "expected": -199.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11912",
+      "claim": "fixture.selectedUiWorld.scoreTotal.authoredLocalSum[1]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/scoreTotal/authoredLocalSum/1",
+      "expected": 225.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11913",
+      "claim": "fixture.selectedUiWorld.scoreTotal.pixiWorld[0]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/scoreTotal/pixiWorld/0",
+      "expected": 601.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11914",
+      "claim": "fixture.selectedUiWorld.scoreTotal.pixiWorld[1]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/scoreTotal/pixiWorld/1",
+      "expected": 135.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11915",
+      "claim": "fixture.selectedUiWorld.uiRoot.authoredLocalSum[0]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/uiRoot/authoredLocalSum/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11916",
+      "claim": "fixture.selectedUiWorld.uiRoot.authoredLocalSum[1]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/uiRoot/authoredLocalSum/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11917",
+      "claim": "fixture.selectedUiWorld.uiRoot.pixiWorld[0]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/uiRoot/pixiWorld/0",
+      "expected": 800.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11918",
+      "claim": "fixture.selectedUiWorld.uiRoot.pixiWorld[1]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/uiRoot/pixiWorld/1",
+      "expected": 360.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11919",
+      "claim": "fixture.selectedUiWorld.uiRootBack.authoredLocalSum[0]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/uiRootBack/authoredLocalSum/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11920",
+      "claim": "fixture.selectedUiWorld.uiRootBack.authoredLocalSum[1]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/uiRootBack/authoredLocalSum/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11921",
+      "claim": "fixture.selectedUiWorld.uiRootBack.pixiWorld[0]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/uiRootBack/pixiWorld/0",
+      "expected": 800.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11922",
+      "claim": "fixture.selectedUiWorld.uiRootBack.pixiWorld[1]",
+      "source": "level3",
+      "sourcePointer": "derived selected UI world owners/uiRootBack/pixiWorld/1",
+      "expected": 360.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11923",
+      "claim": "fixture.hierarchy.addScore[0].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/addScore/0/localPosition/0",
+      "expected": -411.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11924",
+      "claim": "fixture.hierarchy.addScore[0].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/addScore/0/localPosition/1",
+      "expected": 309.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11925",
+      "claim": "fixture.hierarchy.addScore[0].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/addScore/0/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11926",
+      "claim": "fixture.hierarchy.addScore[0].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/addScore/0/name",
+      "expected": "AddScore",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11927",
+      "claim": "fixture.hierarchy.addScore[0].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/addScore/0/siblingIndex",
+      "expected": 0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11928",
+      "claim": "fixture.hierarchy.addScore[1].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/addScore/1/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11929",
+      "claim": "fixture.hierarchy.addScore[1].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/addScore/1/localPosition/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11930",
+      "claim": "fixture.hierarchy.addScore[1].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/addScore/1/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11931",
+      "claim": "fixture.hierarchy.addScore[1].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/addScore/1/name",
+      "expected": "Information",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11932",
+      "claim": "fixture.hierarchy.addScore[1].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/addScore/1/siblingIndex",
+      "expected": 4,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11933",
+      "claim": "fixture.hierarchy.addScore[2].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/addScore/2/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11934",
+      "claim": "fixture.hierarchy.addScore[2].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/addScore/2/localPosition/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11935",
+      "claim": "fixture.hierarchy.addScore[2].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/addScore/2/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11936",
+      "claim": "fixture.hierarchy.addScore[2].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/addScore/2/name",
+      "expected": "Display",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11937",
+      "claim": "fixture.hierarchy.addScore[2].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/addScore/2/siblingIndex",
+      "expected": 0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11938",
+      "claim": "fixture.hierarchy.addScore[3].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/addScore/3/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11939",
+      "claim": "fixture.hierarchy.addScore[3].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/addScore/3/localPosition/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11940",
+      "claim": "fixture.hierarchy.addScore[3].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/addScore/3/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11941",
+      "claim": "fixture.hierarchy.addScore[3].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/addScore/3/name",
+      "expected": "UI_Root_Back",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11942",
+      "claim": "fixture.hierarchy.addScore[3].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/addScore/3/siblingIndex",
+      "expected": 0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11943",
+      "claim": "fixture.hierarchy.addScore[4].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/addScore/4/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11944",
+      "claim": "fixture.hierarchy.addScore[4].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/addScore/4/localPosition/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11945",
+      "claim": "fixture.hierarchy.addScore[4].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/addScore/4/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11946",
+      "claim": "fixture.hierarchy.addScore[4].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/addScore/4/name",
+      "expected": "GamePlay",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11947",
+      "claim": "fixture.hierarchy.addScore[4].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/addScore/4/siblingIndex",
+      "expected": null,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11948",
+      "claim": "fixture.hierarchy.backDisplay[0].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/backDisplay/0/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11949",
+      "claim": "fixture.hierarchy.backDisplay[0].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/backDisplay/0/localPosition/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11950",
+      "claim": "fixture.hierarchy.backDisplay[0].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/backDisplay/0/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11951",
+      "claim": "fixture.hierarchy.backDisplay[0].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/backDisplay/0/name",
+      "expected": "Display",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11952",
+      "claim": "fixture.hierarchy.backDisplay[0].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/backDisplay/0/siblingIndex",
+      "expected": 0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11953",
+      "claim": "fixture.hierarchy.backDisplay[1].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/backDisplay/1/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11954",
+      "claim": "fixture.hierarchy.backDisplay[1].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/backDisplay/1/localPosition/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11955",
+      "claim": "fixture.hierarchy.backDisplay[1].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/backDisplay/1/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11956",
+      "claim": "fixture.hierarchy.backDisplay[1].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/backDisplay/1/name",
+      "expected": "UI_Root_Back",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11957",
+      "claim": "fixture.hierarchy.backDisplay[1].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/backDisplay/1/siblingIndex",
+      "expected": 0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11958",
+      "claim": "fixture.hierarchy.backDisplay[2].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/backDisplay/2/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11959",
+      "claim": "fixture.hierarchy.backDisplay[2].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/backDisplay/2/localPosition/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11960",
+      "claim": "fixture.hierarchy.backDisplay[2].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/backDisplay/2/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11961",
+      "claim": "fixture.hierarchy.backDisplay[2].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/backDisplay/2/name",
+      "expected": "GamePlay",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11962",
+      "claim": "fixture.hierarchy.backDisplay[2].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/backDisplay/2/siblingIndex",
+      "expected": null,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11963",
+      "claim": "fixture.hierarchy.combo[0].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/combo/0/localPosition/0",
+      "expected": 434.70001220703125,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11964",
+      "claim": "fixture.hierarchy.combo[0].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/combo/0/localPosition/1",
+      "expected": 82.80000305175781,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11965",
+      "claim": "fixture.hierarchy.combo[0].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/combo/0/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11966",
+      "claim": "fixture.hierarchy.combo[0].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/combo/0/name",
+      "expected": "Combo",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11967",
+      "claim": "fixture.hierarchy.combo[0].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/combo/0/siblingIndex",
+      "expected": 1,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11968",
+      "claim": "fixture.hierarchy.combo[1].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/combo/1/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11969",
+      "claim": "fixture.hierarchy.combo[1].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/combo/1/localPosition/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11970",
+      "claim": "fixture.hierarchy.combo[1].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/combo/1/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11971",
+      "claim": "fixture.hierarchy.combo[1].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/combo/1/name",
+      "expected": "Information",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11972",
+      "claim": "fixture.hierarchy.combo[1].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/combo/1/siblingIndex",
+      "expected": 4,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11973",
+      "claim": "fixture.hierarchy.combo[2].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/combo/2/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11974",
+      "claim": "fixture.hierarchy.combo[2].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/combo/2/localPosition/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11975",
+      "claim": "fixture.hierarchy.combo[2].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/combo/2/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11976",
+      "claim": "fixture.hierarchy.combo[2].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/combo/2/name",
+      "expected": "Display",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11977",
+      "claim": "fixture.hierarchy.combo[2].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/combo/2/siblingIndex",
+      "expected": 0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11978",
+      "claim": "fixture.hierarchy.combo[3].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/combo/3/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11979",
+      "claim": "fixture.hierarchy.combo[3].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/combo/3/localPosition/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11980",
+      "claim": "fixture.hierarchy.combo[3].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/combo/3/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11981",
+      "claim": "fixture.hierarchy.combo[3].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/combo/3/name",
+      "expected": "UI_Root_Back",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11982",
+      "claim": "fixture.hierarchy.combo[3].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/combo/3/siblingIndex",
+      "expected": 0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11983",
+      "claim": "fixture.hierarchy.combo[4].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/combo/4/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11984",
+      "claim": "fixture.hierarchy.combo[4].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/combo/4/localPosition/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11985",
+      "claim": "fixture.hierarchy.combo[4].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/combo/4/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11986",
+      "claim": "fixture.hierarchy.combo[4].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/combo/4/name",
+      "expected": "GamePlay",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11987",
+      "claim": "fixture.hierarchy.combo[4].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/combo/4/siblingIndex",
+      "expected": null,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11988",
+      "claim": "fixture.hierarchy.frontDisplay[0].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/frontDisplay/0/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11989",
+      "claim": "fixture.hierarchy.frontDisplay[0].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/frontDisplay/0/localPosition/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11990",
+      "claim": "fixture.hierarchy.frontDisplay[0].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/frontDisplay/0/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11991",
+      "claim": "fixture.hierarchy.frontDisplay[0].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/frontDisplay/0/name",
+      "expected": "Display",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11992",
+      "claim": "fixture.hierarchy.frontDisplay[0].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/frontDisplay/0/siblingIndex",
+      "expected": 2,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11993",
+      "claim": "fixture.hierarchy.frontDisplay[1].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/frontDisplay/1/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11994",
+      "claim": "fixture.hierarchy.frontDisplay[1].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/frontDisplay/1/localPosition/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11995",
+      "claim": "fixture.hierarchy.frontDisplay[1].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/frontDisplay/1/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11996",
+      "claim": "fixture.hierarchy.frontDisplay[1].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/frontDisplay/1/name",
+      "expected": "UI_Root",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11997",
+      "claim": "fixture.hierarchy.frontDisplay[1].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/frontDisplay/1/siblingIndex",
+      "expected": 3,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11998",
+      "claim": "fixture.hierarchy.frontDisplay[2].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/frontDisplay/2/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E11999",
+      "claim": "fixture.hierarchy.frontDisplay[2].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/frontDisplay/2/localPosition/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12000",
+      "claim": "fixture.hierarchy.frontDisplay[2].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/frontDisplay/2/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12001",
+      "claim": "fixture.hierarchy.frontDisplay[2].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/frontDisplay/2/name",
+      "expected": "GamePlay",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12002",
+      "claim": "fixture.hierarchy.frontDisplay[2].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/frontDisplay/2/siblingIndex",
+      "expected": null,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12003",
+      "claim": "fixture.hierarchy.gamePlay[0].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/gamePlay/0/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12004",
+      "claim": "fixture.hierarchy.gamePlay[0].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/gamePlay/0/localPosition/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12005",
+      "claim": "fixture.hierarchy.gamePlay[0].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/gamePlay/0/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12006",
+      "claim": "fixture.hierarchy.gamePlay[0].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/gamePlay/0/name",
+      "expected": "GamePlay",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12007",
+      "claim": "fixture.hierarchy.gamePlay[0].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/gamePlay/0/siblingIndex",
+      "expected": null,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12008",
+      "claim": "fixture.hierarchy.information[0].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/information/0/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12009",
+      "claim": "fixture.hierarchy.information[0].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/information/0/localPosition/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12010",
+      "claim": "fixture.hierarchy.information[0].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/information/0/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12011",
+      "claim": "fixture.hierarchy.information[0].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/information/0/name",
+      "expected": "Information",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12012",
+      "claim": "fixture.hierarchy.information[0].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/information/0/siblingIndex",
+      "expected": 4,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12013",
+      "claim": "fixture.hierarchy.information[1].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/information/1/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12014",
+      "claim": "fixture.hierarchy.information[1].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/information/1/localPosition/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12015",
+      "claim": "fixture.hierarchy.information[1].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/information/1/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12016",
+      "claim": "fixture.hierarchy.information[1].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/information/1/name",
+      "expected": "Display",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12017",
+      "claim": "fixture.hierarchy.information[1].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/information/1/siblingIndex",
+      "expected": 0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12018",
+      "claim": "fixture.hierarchy.information[2].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/information/2/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12019",
+      "claim": "fixture.hierarchy.information[2].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/information/2/localPosition/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12020",
+      "claim": "fixture.hierarchy.information[2].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/information/2/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12021",
+      "claim": "fixture.hierarchy.information[2].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/information/2/name",
+      "expected": "UI_Root_Back",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12022",
+      "claim": "fixture.hierarchy.information[2].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/information/2/siblingIndex",
+      "expected": 0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12023",
+      "claim": "fixture.hierarchy.information[3].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/information/3/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12024",
+      "claim": "fixture.hierarchy.information[3].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/information/3/localPosition/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12025",
+      "claim": "fixture.hierarchy.information[3].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/information/3/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12026",
+      "claim": "fixture.hierarchy.information[3].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/information/3/name",
+      "expected": "GamePlay",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12027",
+      "claim": "fixture.hierarchy.information[3].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/information/3/siblingIndex",
+      "expected": null,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12028",
+      "claim": "fixture.hierarchy.judgeTiming[0].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/judgeTiming/0/localPosition/0",
+      "expected": 4.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12029",
+      "claim": "fixture.hierarchy.judgeTiming[0].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/judgeTiming/0/localPosition/1",
+      "expected": -38.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12030",
+      "claim": "fixture.hierarchy.judgeTiming[0].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/judgeTiming/0/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12031",
+      "claim": "fixture.hierarchy.judgeTiming[0].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/judgeTiming/0/name",
+      "expected": "JudgeTiming",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12032",
+      "claim": "fixture.hierarchy.judgeTiming[0].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/judgeTiming/0/siblingIndex",
+      "expected": 1,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12033",
+      "claim": "fixture.hierarchy.judgeTiming[1].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/judgeTiming/1/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12034",
+      "claim": "fixture.hierarchy.judgeTiming[1].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/judgeTiming/1/localPosition/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12035",
+      "claim": "fixture.hierarchy.judgeTiming[1].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/judgeTiming/1/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12036",
+      "claim": "fixture.hierarchy.judgeTiming[1].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/judgeTiming/1/name",
+      "expected": "other",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12037",
+      "claim": "fixture.hierarchy.judgeTiming[1].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/judgeTiming/1/siblingIndex",
+      "expected": 0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12038",
+      "claim": "fixture.hierarchy.judgeTiming[2].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/judgeTiming/2/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12039",
+      "claim": "fixture.hierarchy.judgeTiming[2].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/judgeTiming/2/localPosition/1",
+      "expected": -160.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12040",
+      "claim": "fixture.hierarchy.judgeTiming[2].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/judgeTiming/2/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12041",
+      "claim": "fixture.hierarchy.judgeTiming[2].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/judgeTiming/2/name",
+      "expected": "Result",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12042",
+      "claim": "fixture.hierarchy.judgeTiming[2].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/judgeTiming/2/siblingIndex",
+      "expected": 2,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12043",
+      "claim": "fixture.hierarchy.judgeTiming[3].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/judgeTiming/3/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12044",
+      "claim": "fixture.hierarchy.judgeTiming[3].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/judgeTiming/3/localPosition/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12045",
+      "claim": "fixture.hierarchy.judgeTiming[3].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/judgeTiming/3/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12046",
+      "claim": "fixture.hierarchy.judgeTiming[3].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/judgeTiming/3/name",
+      "expected": "Information",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12047",
+      "claim": "fixture.hierarchy.judgeTiming[3].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/judgeTiming/3/siblingIndex",
+      "expected": 4,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12048",
+      "claim": "fixture.hierarchy.judgeTiming[4].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/judgeTiming/4/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12049",
+      "claim": "fixture.hierarchy.judgeTiming[4].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/judgeTiming/4/localPosition/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12050",
+      "claim": "fixture.hierarchy.judgeTiming[4].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/judgeTiming/4/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12051",
+      "claim": "fixture.hierarchy.judgeTiming[4].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/judgeTiming/4/name",
+      "expected": "Display",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12052",
+      "claim": "fixture.hierarchy.judgeTiming[4].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/judgeTiming/4/siblingIndex",
+      "expected": 0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12053",
+      "claim": "fixture.hierarchy.judgeTiming[5].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/judgeTiming/5/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12054",
+      "claim": "fixture.hierarchy.judgeTiming[5].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/judgeTiming/5/localPosition/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12055",
+      "claim": "fixture.hierarchy.judgeTiming[5].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/judgeTiming/5/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12056",
+      "claim": "fixture.hierarchy.judgeTiming[5].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/judgeTiming/5/name",
+      "expected": "UI_Root_Back",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12057",
+      "claim": "fixture.hierarchy.judgeTiming[5].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/judgeTiming/5/siblingIndex",
+      "expected": 0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12058",
+      "claim": "fixture.hierarchy.judgeTiming[6].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/judgeTiming/6/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12059",
+      "claim": "fixture.hierarchy.judgeTiming[6].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/judgeTiming/6/localPosition/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12060",
+      "claim": "fixture.hierarchy.judgeTiming[6].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/judgeTiming/6/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12061",
+      "claim": "fixture.hierarchy.judgeTiming[6].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/judgeTiming/6/name",
+      "expected": "GamePlay",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12062",
+      "claim": "fixture.hierarchy.judgeTiming[6].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/judgeTiming/6/siblingIndex",
+      "expected": null,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12063",
+      "claim": "fixture.hierarchy.life[0].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/life/0/localPosition/0",
+      "expected": 411.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12064",
+      "claim": "fixture.hierarchy.life[0].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/life/0/localPosition/1",
+      "expected": 309.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12065",
+      "claim": "fixture.hierarchy.life[0].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/life/0/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12066",
+      "claim": "fixture.hierarchy.life[0].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/life/0/name",
+      "expected": "LifeGauge",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12067",
+      "claim": "fixture.hierarchy.life[0].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/life/0/siblingIndex",
+      "expected": 2,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12068",
+      "claim": "fixture.hierarchy.life[1].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/life/1/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12069",
+      "claim": "fixture.hierarchy.life[1].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/life/1/localPosition/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12070",
+      "claim": "fixture.hierarchy.life[1].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/life/1/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12071",
+      "claim": "fixture.hierarchy.life[1].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/life/1/name",
+      "expected": "Display",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12072",
+      "claim": "fixture.hierarchy.life[1].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/life/1/siblingIndex",
+      "expected": 2,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12073",
+      "claim": "fixture.hierarchy.life[2].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/life/2/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12074",
+      "claim": "fixture.hierarchy.life[2].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/life/2/localPosition/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12075",
+      "claim": "fixture.hierarchy.life[2].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/life/2/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12076",
+      "claim": "fixture.hierarchy.life[2].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/life/2/name",
+      "expected": "UI_Root",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12077",
+      "claim": "fixture.hierarchy.life[2].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/life/2/siblingIndex",
+      "expected": 3,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12078",
+      "claim": "fixture.hierarchy.life[3].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/life/3/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12079",
+      "claim": "fixture.hierarchy.life[3].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/life/3/localPosition/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12080",
+      "claim": "fixture.hierarchy.life[3].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/life/3/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12081",
+      "claim": "fixture.hierarchy.life[3].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/life/3/name",
+      "expected": "GamePlay",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12082",
+      "claim": "fixture.hierarchy.life[3].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/life/3/siblingIndex",
+      "expected": null,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12083",
+      "claim": "fixture.hierarchy.musicObjects[0].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/musicObjects/0/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12084",
+      "claim": "fixture.hierarchy.musicObjects[0].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/musicObjects/0/localPosition/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12085",
+      "claim": "fixture.hierarchy.musicObjects[0].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/musicObjects/0/localPosition/2",
+      "expected": -15.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12086",
+      "claim": "fixture.hierarchy.musicObjects[0].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/musicObjects/0/name",
+      "expected": "MusicObjects",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12087",
+      "claim": "fixture.hierarchy.musicObjects[0].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/musicObjects/0/siblingIndex",
+      "expected": 1,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12088",
+      "claim": "fixture.hierarchy.musicObjects[1].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/musicObjects/1/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12089",
+      "claim": "fixture.hierarchy.musicObjects[1].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/musicObjects/1/localPosition/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12090",
+      "claim": "fixture.hierarchy.musicObjects[1].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/musicObjects/1/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12091",
+      "claim": "fixture.hierarchy.musicObjects[1].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/musicObjects/1/name",
+      "expected": "GamePlay",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12092",
+      "claim": "fixture.hierarchy.musicObjects[1].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/musicObjects/1/siblingIndex",
+      "expected": null,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12093",
+      "claim": "fixture.hierarchy.noteLane[0].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/noteLane/0/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12094",
+      "claim": "fixture.hierarchy.noteLane[0].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/noteLane/0/localPosition/1",
+      "expected": -240.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12095",
+      "claim": "fixture.hierarchy.noteLane[0].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/noteLane/0/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12096",
+      "claim": "fixture.hierarchy.noteLane[0].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/noteLane/0/name",
+      "expected": "NoteLane",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12097",
+      "claim": "fixture.hierarchy.noteLane[0].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/noteLane/0/siblingIndex",
+      "expected": 0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12098",
+      "claim": "fixture.hierarchy.noteLane[1].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/noteLane/1/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12099",
+      "claim": "fixture.hierarchy.noteLane[1].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/noteLane/1/localPosition/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12100",
+      "claim": "fixture.hierarchy.noteLane[1].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/noteLane/1/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12101",
+      "claim": "fixture.hierarchy.noteLane[1].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/noteLane/1/name",
+      "expected": "RhythmGameLines",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12102",
+      "claim": "fixture.hierarchy.noteLane[1].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/noteLane/1/siblingIndex",
+      "expected": 3,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12103",
+      "claim": "fixture.hierarchy.noteLane[2].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/noteLane/2/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12104",
+      "claim": "fixture.hierarchy.noteLane[2].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/noteLane/2/localPosition/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12105",
+      "claim": "fixture.hierarchy.noteLane[2].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/noteLane/2/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12106",
+      "claim": "fixture.hierarchy.noteLane[2].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/noteLane/2/name",
+      "expected": "Display",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12107",
+      "claim": "fixture.hierarchy.noteLane[2].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/noteLane/2/siblingIndex",
+      "expected": 0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12108",
+      "claim": "fixture.hierarchy.noteLane[3].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/noteLane/3/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12109",
+      "claim": "fixture.hierarchy.noteLane[3].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/noteLane/3/localPosition/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12110",
+      "claim": "fixture.hierarchy.noteLane[3].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/noteLane/3/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12111",
+      "claim": "fixture.hierarchy.noteLane[3].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/noteLane/3/name",
+      "expected": "UI_Root_Back",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12112",
+      "claim": "fixture.hierarchy.noteLane[3].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/noteLane/3/siblingIndex",
+      "expected": 0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12113",
+      "claim": "fixture.hierarchy.noteLane[4].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/noteLane/4/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12114",
+      "claim": "fixture.hierarchy.noteLane[4].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/noteLane/4/localPosition/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12115",
+      "claim": "fixture.hierarchy.noteLane[4].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/noteLane/4/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12116",
+      "claim": "fixture.hierarchy.noteLane[4].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/noteLane/4/name",
+      "expected": "GamePlay",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12117",
+      "claim": "fixture.hierarchy.noteLane[4].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/noteLane/4/siblingIndex",
+      "expected": null,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12118",
+      "claim": "fixture.hierarchy.noteParent[0].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/noteParent/0/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12119",
+      "claim": "fixture.hierarchy.noteParent[0].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/noteParent/0/localPosition/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12120",
+      "claim": "fixture.hierarchy.noteParent[0].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/noteParent/0/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12121",
+      "claim": "fixture.hierarchy.noteParent[0].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/noteParent/0/name",
+      "expected": "NoteParentTrans",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12122",
+      "claim": "fixture.hierarchy.noteParent[0].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/noteParent/0/siblingIndex",
+      "expected": 5,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12123",
+      "claim": "fixture.hierarchy.noteParent[1].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/noteParent/1/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12124",
+      "claim": "fixture.hierarchy.noteParent[1].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/noteParent/1/localPosition/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12125",
+      "claim": "fixture.hierarchy.noteParent[1].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/noteParent/1/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12126",
+      "claim": "fixture.hierarchy.noteParent[1].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/noteParent/1/name",
+      "expected": "GamePlay",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12127",
+      "claim": "fixture.hierarchy.noteParent[1].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/noteParent/1/siblingIndex",
+      "expected": null,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12128",
+      "claim": "fixture.hierarchy.result[0].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/result/0/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12129",
+      "claim": "fixture.hierarchy.result[0].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/result/0/localPosition/1",
+      "expected": -160.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12130",
+      "claim": "fixture.hierarchy.result[0].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/result/0/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12131",
+      "claim": "fixture.hierarchy.result[0].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/result/0/name",
+      "expected": "Result",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12132",
+      "claim": "fixture.hierarchy.result[0].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/result/0/siblingIndex",
+      "expected": 2,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12133",
+      "claim": "fixture.hierarchy.result[1].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/result/1/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12134",
+      "claim": "fixture.hierarchy.result[1].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/result/1/localPosition/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12135",
+      "claim": "fixture.hierarchy.result[1].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/result/1/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12136",
+      "claim": "fixture.hierarchy.result[1].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/result/1/name",
+      "expected": "Information",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12137",
+      "claim": "fixture.hierarchy.result[1].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/result/1/siblingIndex",
+      "expected": 4,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12138",
+      "claim": "fixture.hierarchy.result[2].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/result/2/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12139",
+      "claim": "fixture.hierarchy.result[2].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/result/2/localPosition/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12140",
+      "claim": "fixture.hierarchy.result[2].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/result/2/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12141",
+      "claim": "fixture.hierarchy.result[2].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/result/2/name",
+      "expected": "Display",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12142",
+      "claim": "fixture.hierarchy.result[2].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/result/2/siblingIndex",
+      "expected": 0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12143",
+      "claim": "fixture.hierarchy.result[3].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/result/3/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12144",
+      "claim": "fixture.hierarchy.result[3].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/result/3/localPosition/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12145",
+      "claim": "fixture.hierarchy.result[3].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/result/3/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12146",
+      "claim": "fixture.hierarchy.result[3].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/result/3/name",
+      "expected": "UI_Root_Back",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12147",
+      "claim": "fixture.hierarchy.result[3].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/result/3/siblingIndex",
+      "expected": 0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12148",
+      "claim": "fixture.hierarchy.result[4].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/result/4/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12149",
+      "claim": "fixture.hierarchy.result[4].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/result/4/localPosition/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12150",
+      "claim": "fixture.hierarchy.result[4].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/result/4/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12151",
+      "claim": "fixture.hierarchy.result[4].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/result/4/name",
+      "expected": "GamePlay",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12152",
+      "claim": "fixture.hierarchy.result[4].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/result/4/siblingIndex",
+      "expected": null,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12153",
+      "claim": "fixture.hierarchy.score[0].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/score/0/localPosition/0",
+      "expected": -411.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12154",
+      "claim": "fixture.hierarchy.score[0].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/score/0/localPosition/1",
+      "expected": 309.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12155",
+      "claim": "fixture.hierarchy.score[0].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/score/0/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12156",
+      "claim": "fixture.hierarchy.score[0].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/score/0/name",
+      "expected": "Score",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12157",
+      "claim": "fixture.hierarchy.score[0].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/score/0/siblingIndex",
+      "expected": 1,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12158",
+      "claim": "fixture.hierarchy.score[1].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/score/1/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12159",
+      "claim": "fixture.hierarchy.score[1].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/score/1/localPosition/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12160",
+      "claim": "fixture.hierarchy.score[1].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/score/1/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12161",
+      "claim": "fixture.hierarchy.score[1].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/score/1/name",
+      "expected": "Display",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12162",
+      "claim": "fixture.hierarchy.score[1].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/score/1/siblingIndex",
+      "expected": 2,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12163",
+      "claim": "fixture.hierarchy.score[2].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/score/2/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12164",
+      "claim": "fixture.hierarchy.score[2].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/score/2/localPosition/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12165",
+      "claim": "fixture.hierarchy.score[2].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/score/2/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12166",
+      "claim": "fixture.hierarchy.score[2].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/score/2/name",
+      "expected": "UI_Root",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12167",
+      "claim": "fixture.hierarchy.score[2].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/score/2/siblingIndex",
+      "expected": 3,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12168",
+      "claim": "fixture.hierarchy.score[3].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/score/3/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12169",
+      "claim": "fixture.hierarchy.score[3].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/score/3/localPosition/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12170",
+      "claim": "fixture.hierarchy.score[3].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/score/3/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12171",
+      "claim": "fixture.hierarchy.score[3].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/score/3/name",
+      "expected": "GamePlay",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12172",
+      "claim": "fixture.hierarchy.score[3].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/score/3/siblingIndex",
+      "expected": null,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12173",
+      "claim": "fixture.hierarchy.scoreBase[0].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreBase/0/localPosition/0",
+      "expected": 148.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12174",
+      "claim": "fixture.hierarchy.scoreBase[0].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreBase/0/localPosition/1",
+      "expected": -65.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12175",
+      "claim": "fixture.hierarchy.scoreBase[0].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreBase/0/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12176",
+      "claim": "fixture.hierarchy.scoreBase[0].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreBase/0/name",
+      "expected": "Base",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12177",
+      "claim": "fixture.hierarchy.scoreBase[0].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreBase/0/siblingIndex",
+      "expected": 1,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12178",
+      "claim": "fixture.hierarchy.scoreBase[1].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreBase/1/localPosition/0",
+      "expected": -411.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12179",
+      "claim": "fixture.hierarchy.scoreBase[1].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreBase/1/localPosition/1",
+      "expected": 309.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12180",
+      "claim": "fixture.hierarchy.scoreBase[1].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreBase/1/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12181",
+      "claim": "fixture.hierarchy.scoreBase[1].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreBase/1/name",
+      "expected": "Score",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12182",
+      "claim": "fixture.hierarchy.scoreBase[1].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreBase/1/siblingIndex",
+      "expected": 1,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12183",
+      "claim": "fixture.hierarchy.scoreBase[2].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreBase/2/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12184",
+      "claim": "fixture.hierarchy.scoreBase[2].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreBase/2/localPosition/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12185",
+      "claim": "fixture.hierarchy.scoreBase[2].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreBase/2/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12186",
+      "claim": "fixture.hierarchy.scoreBase[2].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreBase/2/name",
+      "expected": "Display",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12187",
+      "claim": "fixture.hierarchy.scoreBase[2].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreBase/2/siblingIndex",
+      "expected": 2,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12188",
+      "claim": "fixture.hierarchy.scoreBase[3].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreBase/3/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12189",
+      "claim": "fixture.hierarchy.scoreBase[3].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreBase/3/localPosition/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12190",
+      "claim": "fixture.hierarchy.scoreBase[3].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreBase/3/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12191",
+      "claim": "fixture.hierarchy.scoreBase[3].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreBase/3/name",
+      "expected": "UI_Root",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12192",
+      "claim": "fixture.hierarchy.scoreBase[3].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreBase/3/siblingIndex",
+      "expected": 3,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12193",
+      "claim": "fixture.hierarchy.scoreBase[4].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreBase/4/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12194",
+      "claim": "fixture.hierarchy.scoreBase[4].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreBase/4/localPosition/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12195",
+      "claim": "fixture.hierarchy.scoreBase[4].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreBase/4/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12196",
+      "claim": "fixture.hierarchy.scoreBase[4].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreBase/4/name",
+      "expected": "GamePlay",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12197",
+      "claim": "fixture.hierarchy.scoreBase[4].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreBase/4/siblingIndex",
+      "expected": null,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12198",
+      "claim": "fixture.hierarchy.scoreHighRank[0].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreHighRank/0/localPosition/0",
+      "expected": 41.04999923706055,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12199",
+      "claim": "fixture.hierarchy.scoreHighRank[0].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreHighRank/0/localPosition/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12200",
+      "claim": "fixture.hierarchy.scoreHighRank[0].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreHighRank/0/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12201",
+      "claim": "fixture.hierarchy.scoreHighRank[0].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreHighRank/0/name",
+      "expected": "HighRankEffect",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12202",
+      "claim": "fixture.hierarchy.scoreHighRank[0].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreHighRank/0/siblingIndex",
+      "expected": 0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12203",
+      "claim": "fixture.hierarchy.scoreHighRank[1].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreHighRank/1/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12204",
+      "claim": "fixture.hierarchy.scoreHighRank[1].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreHighRank/1/localPosition/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12205",
+      "claim": "fixture.hierarchy.scoreHighRank[1].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreHighRank/1/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12206",
+      "claim": "fixture.hierarchy.scoreHighRank[1].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreHighRank/1/name",
+      "expected": "Panel",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12207",
+      "claim": "fixture.hierarchy.scoreHighRank[1].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreHighRank/1/siblingIndex",
+      "expected": 6,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12208",
+      "claim": "fixture.hierarchy.scoreHighRank[2].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreHighRank/2/localPosition/0",
+      "expected": 25.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12209",
+      "claim": "fixture.hierarchy.scoreHighRank[2].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreHighRank/2/localPosition/1",
+      "expected": -45.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12210",
+      "claim": "fixture.hierarchy.scoreHighRank[2].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreHighRank/2/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12211",
+      "claim": "fixture.hierarchy.scoreHighRank[2].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreHighRank/2/name",
+      "expected": "Progress",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12212",
+      "claim": "fixture.hierarchy.scoreHighRank[2].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreHighRank/2/siblingIndex",
+      "expected": 0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12213",
+      "claim": "fixture.hierarchy.scoreHighRank[3].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreHighRank/3/localPosition/0",
+      "expected": -411.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12214",
+      "claim": "fixture.hierarchy.scoreHighRank[3].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreHighRank/3/localPosition/1",
+      "expected": 309.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12215",
+      "claim": "fixture.hierarchy.scoreHighRank[3].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreHighRank/3/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12216",
+      "claim": "fixture.hierarchy.scoreHighRank[3].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreHighRank/3/name",
+      "expected": "Score",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12217",
+      "claim": "fixture.hierarchy.scoreHighRank[3].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreHighRank/3/siblingIndex",
+      "expected": 1,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12218",
+      "claim": "fixture.hierarchy.scoreHighRank[4].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreHighRank/4/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12219",
+      "claim": "fixture.hierarchy.scoreHighRank[4].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreHighRank/4/localPosition/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12220",
+      "claim": "fixture.hierarchy.scoreHighRank[4].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreHighRank/4/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12221",
+      "claim": "fixture.hierarchy.scoreHighRank[4].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreHighRank/4/name",
+      "expected": "Display",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12222",
+      "claim": "fixture.hierarchy.scoreHighRank[4].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreHighRank/4/siblingIndex",
+      "expected": 2,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12223",
+      "claim": "fixture.hierarchy.scoreHighRank[5].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreHighRank/5/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12224",
+      "claim": "fixture.hierarchy.scoreHighRank[5].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreHighRank/5/localPosition/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12225",
+      "claim": "fixture.hierarchy.scoreHighRank[5].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreHighRank/5/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12226",
+      "claim": "fixture.hierarchy.scoreHighRank[5].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreHighRank/5/name",
+      "expected": "UI_Root",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12227",
+      "claim": "fixture.hierarchy.scoreHighRank[5].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreHighRank/5/siblingIndex",
+      "expected": 3,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12228",
+      "claim": "fixture.hierarchy.scoreHighRank[6].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreHighRank/6/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12229",
+      "claim": "fixture.hierarchy.scoreHighRank[6].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreHighRank/6/localPosition/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12230",
+      "claim": "fixture.hierarchy.scoreHighRank[6].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreHighRank/6/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12231",
+      "claim": "fixture.hierarchy.scoreHighRank[6].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreHighRank/6/name",
+      "expected": "GamePlay",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12232",
+      "claim": "fixture.hierarchy.scoreHighRank[6].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreHighRank/6/siblingIndex",
+      "expected": null,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12233",
+      "claim": "fixture.hierarchy.scorePanel[0].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scorePanel/0/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12234",
+      "claim": "fixture.hierarchy.scorePanel[0].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scorePanel/0/localPosition/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12235",
+      "claim": "fixture.hierarchy.scorePanel[0].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scorePanel/0/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12236",
+      "claim": "fixture.hierarchy.scorePanel[0].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scorePanel/0/name",
+      "expected": "Panel",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12237",
+      "claim": "fixture.hierarchy.scorePanel[0].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scorePanel/0/siblingIndex",
+      "expected": 6,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12238",
+      "claim": "fixture.hierarchy.scorePanel[1].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scorePanel/1/localPosition/0",
+      "expected": 25.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12239",
+      "claim": "fixture.hierarchy.scorePanel[1].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scorePanel/1/localPosition/1",
+      "expected": -45.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12240",
+      "claim": "fixture.hierarchy.scorePanel[1].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scorePanel/1/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12241",
+      "claim": "fixture.hierarchy.scorePanel[1].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scorePanel/1/name",
+      "expected": "Progress",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12242",
+      "claim": "fixture.hierarchy.scorePanel[1].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scorePanel/1/siblingIndex",
+      "expected": 0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12243",
+      "claim": "fixture.hierarchy.scorePanel[2].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scorePanel/2/localPosition/0",
+      "expected": -411.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12244",
+      "claim": "fixture.hierarchy.scorePanel[2].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scorePanel/2/localPosition/1",
+      "expected": 309.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12245",
+      "claim": "fixture.hierarchy.scorePanel[2].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scorePanel/2/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12246",
+      "claim": "fixture.hierarchy.scorePanel[2].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scorePanel/2/name",
+      "expected": "Score",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12247",
+      "claim": "fixture.hierarchy.scorePanel[2].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scorePanel/2/siblingIndex",
+      "expected": 1,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12248",
+      "claim": "fixture.hierarchy.scorePanel[3].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scorePanel/3/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12249",
+      "claim": "fixture.hierarchy.scorePanel[3].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scorePanel/3/localPosition/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12250",
+      "claim": "fixture.hierarchy.scorePanel[3].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scorePanel/3/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12251",
+      "claim": "fixture.hierarchy.scorePanel[3].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scorePanel/3/name",
+      "expected": "Display",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12252",
+      "claim": "fixture.hierarchy.scorePanel[3].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scorePanel/3/siblingIndex",
+      "expected": 2,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12253",
+      "claim": "fixture.hierarchy.scorePanel[4].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scorePanel/4/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12254",
+      "claim": "fixture.hierarchy.scorePanel[4].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scorePanel/4/localPosition/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12255",
+      "claim": "fixture.hierarchy.scorePanel[4].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scorePanel/4/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12256",
+      "claim": "fixture.hierarchy.scorePanel[4].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scorePanel/4/name",
+      "expected": "UI_Root",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12257",
+      "claim": "fixture.hierarchy.scorePanel[4].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scorePanel/4/siblingIndex",
+      "expected": 3,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12258",
+      "claim": "fixture.hierarchy.scorePanel[5].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scorePanel/5/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12259",
+      "claim": "fixture.hierarchy.scorePanel[5].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scorePanel/5/localPosition/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12260",
+      "claim": "fixture.hierarchy.scorePanel[5].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scorePanel/5/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12261",
+      "claim": "fixture.hierarchy.scorePanel[5].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scorePanel/5/name",
+      "expected": "GamePlay",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12262",
+      "claim": "fixture.hierarchy.scorePanel[5].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scorePanel/5/siblingIndex",
+      "expected": null,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12263",
+      "claim": "fixture.hierarchy.scoreProgress[0].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreProgress/0/localPosition/0",
+      "expected": 25.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12264",
+      "claim": "fixture.hierarchy.scoreProgress[0].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreProgress/0/localPosition/1",
+      "expected": -45.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12265",
+      "claim": "fixture.hierarchy.scoreProgress[0].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreProgress/0/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12266",
+      "claim": "fixture.hierarchy.scoreProgress[0].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreProgress/0/name",
+      "expected": "Progress",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12267",
+      "claim": "fixture.hierarchy.scoreProgress[0].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreProgress/0/siblingIndex",
+      "expected": 0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12268",
+      "claim": "fixture.hierarchy.scoreProgress[1].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreProgress/1/localPosition/0",
+      "expected": -411.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12269",
+      "claim": "fixture.hierarchy.scoreProgress[1].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreProgress/1/localPosition/1",
+      "expected": 309.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12270",
+      "claim": "fixture.hierarchy.scoreProgress[1].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreProgress/1/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12271",
+      "claim": "fixture.hierarchy.scoreProgress[1].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreProgress/1/name",
+      "expected": "Score",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12272",
+      "claim": "fixture.hierarchy.scoreProgress[1].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreProgress/1/siblingIndex",
+      "expected": 1,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12273",
+      "claim": "fixture.hierarchy.scoreProgress[2].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreProgress/2/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12274",
+      "claim": "fixture.hierarchy.scoreProgress[2].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreProgress/2/localPosition/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12275",
+      "claim": "fixture.hierarchy.scoreProgress[2].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreProgress/2/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12276",
+      "claim": "fixture.hierarchy.scoreProgress[2].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreProgress/2/name",
+      "expected": "Display",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12277",
+      "claim": "fixture.hierarchy.scoreProgress[2].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreProgress/2/siblingIndex",
+      "expected": 2,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12278",
+      "claim": "fixture.hierarchy.scoreProgress[3].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreProgress/3/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12279",
+      "claim": "fixture.hierarchy.scoreProgress[3].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreProgress/3/localPosition/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12280",
+      "claim": "fixture.hierarchy.scoreProgress[3].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreProgress/3/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12281",
+      "claim": "fixture.hierarchy.scoreProgress[3].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreProgress/3/name",
+      "expected": "UI_Root",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12282",
+      "claim": "fixture.hierarchy.scoreProgress[3].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreProgress/3/siblingIndex",
+      "expected": 3,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12283",
+      "claim": "fixture.hierarchy.scoreProgress[4].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreProgress/4/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12284",
+      "claim": "fixture.hierarchy.scoreProgress[4].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreProgress/4/localPosition/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12285",
+      "claim": "fixture.hierarchy.scoreProgress[4].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreProgress/4/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12286",
+      "claim": "fixture.hierarchy.scoreProgress[4].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreProgress/4/name",
+      "expected": "GamePlay",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12287",
+      "claim": "fixture.hierarchy.scoreProgress[4].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreProgress/4/siblingIndex",
+      "expected": null,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12288",
+      "claim": "fixture.hierarchy.scoreTotal[0].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreTotal/0/localPosition/0",
+      "expected": 64.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12289",
+      "claim": "fixture.hierarchy.scoreTotal[0].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreTotal/0/localPosition/1",
+      "expected": -19.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12290",
+      "claim": "fixture.hierarchy.scoreTotal[0].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreTotal/0/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12291",
+      "claim": "fixture.hierarchy.scoreTotal[0].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreTotal/0/name",
+      "expected": "TotalScore",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12292",
+      "claim": "fixture.hierarchy.scoreTotal[0].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreTotal/0/siblingIndex",
+      "expected": 1,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12293",
+      "claim": "fixture.hierarchy.scoreTotal[1].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreTotal/1/localPosition/0",
+      "expected": 148.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12294",
+      "claim": "fixture.hierarchy.scoreTotal[1].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreTotal/1/localPosition/1",
+      "expected": -65.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12295",
+      "claim": "fixture.hierarchy.scoreTotal[1].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreTotal/1/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12296",
+      "claim": "fixture.hierarchy.scoreTotal[1].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreTotal/1/name",
+      "expected": "Base",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12297",
+      "claim": "fixture.hierarchy.scoreTotal[1].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreTotal/1/siblingIndex",
+      "expected": 1,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12298",
+      "claim": "fixture.hierarchy.scoreTotal[2].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreTotal/2/localPosition/0",
+      "expected": -411.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12299",
+      "claim": "fixture.hierarchy.scoreTotal[2].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreTotal/2/localPosition/1",
+      "expected": 309.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12300",
+      "claim": "fixture.hierarchy.scoreTotal[2].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreTotal/2/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12301",
+      "claim": "fixture.hierarchy.scoreTotal[2].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreTotal/2/name",
+      "expected": "Score",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12302",
+      "claim": "fixture.hierarchy.scoreTotal[2].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreTotal/2/siblingIndex",
+      "expected": 1,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12303",
+      "claim": "fixture.hierarchy.scoreTotal[3].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreTotal/3/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12304",
+      "claim": "fixture.hierarchy.scoreTotal[3].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreTotal/3/localPosition/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12305",
+      "claim": "fixture.hierarchy.scoreTotal[3].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreTotal/3/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12306",
+      "claim": "fixture.hierarchy.scoreTotal[3].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreTotal/3/name",
+      "expected": "Display",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12307",
+      "claim": "fixture.hierarchy.scoreTotal[3].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreTotal/3/siblingIndex",
+      "expected": 2,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12308",
+      "claim": "fixture.hierarchy.scoreTotal[4].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreTotal/4/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12309",
+      "claim": "fixture.hierarchy.scoreTotal[4].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreTotal/4/localPosition/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12310",
+      "claim": "fixture.hierarchy.scoreTotal[4].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreTotal/4/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12311",
+      "claim": "fixture.hierarchy.scoreTotal[4].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreTotal/4/name",
+      "expected": "UI_Root",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12312",
+      "claim": "fixture.hierarchy.scoreTotal[4].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreTotal/4/siblingIndex",
+      "expected": 3,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12313",
+      "claim": "fixture.hierarchy.scoreTotal[5].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreTotal/5/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12314",
+      "claim": "fixture.hierarchy.scoreTotal[5].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreTotal/5/localPosition/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12315",
+      "claim": "fixture.hierarchy.scoreTotal[5].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreTotal/5/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12316",
+      "claim": "fixture.hierarchy.scoreTotal[5].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreTotal/5/name",
+      "expected": "GamePlay",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12317",
+      "claim": "fixture.hierarchy.scoreTotal[5].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/scoreTotal/5/siblingIndex",
+      "expected": null,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12318",
+      "claim": "fixture.hierarchy.uiRoot[0].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/uiRoot/0/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12319",
+      "claim": "fixture.hierarchy.uiRoot[0].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/uiRoot/0/localPosition/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12320",
+      "claim": "fixture.hierarchy.uiRoot[0].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/uiRoot/0/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12321",
+      "claim": "fixture.hierarchy.uiRoot[0].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/uiRoot/0/name",
+      "expected": "UI_Root",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12322",
+      "claim": "fixture.hierarchy.uiRoot[0].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/uiRoot/0/siblingIndex",
+      "expected": 3,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12323",
+      "claim": "fixture.hierarchy.uiRoot[1].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/uiRoot/1/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12324",
+      "claim": "fixture.hierarchy.uiRoot[1].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/uiRoot/1/localPosition/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12325",
+      "claim": "fixture.hierarchy.uiRoot[1].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/uiRoot/1/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12326",
+      "claim": "fixture.hierarchy.uiRoot[1].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/uiRoot/1/name",
+      "expected": "GamePlay",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12327",
+      "claim": "fixture.hierarchy.uiRoot[1].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/uiRoot/1/siblingIndex",
+      "expected": null,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12328",
+      "claim": "fixture.hierarchy.uiRootBack[0].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/uiRootBack/0/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12329",
+      "claim": "fixture.hierarchy.uiRootBack[0].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/uiRootBack/0/localPosition/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12330",
+      "claim": "fixture.hierarchy.uiRootBack[0].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/uiRootBack/0/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12331",
+      "claim": "fixture.hierarchy.uiRootBack[0].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/uiRootBack/0/name",
+      "expected": "UI_Root_Back",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12332",
+      "claim": "fixture.hierarchy.uiRootBack[0].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/uiRootBack/0/siblingIndex",
+      "expected": 0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12333",
+      "claim": "fixture.hierarchy.uiRootBack[1].localPosition[0]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/uiRootBack/1/localPosition/0",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12334",
+      "claim": "fixture.hierarchy.uiRootBack[1].localPosition[1]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/uiRootBack/1/localPosition/1",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12335",
+      "claim": "fixture.hierarchy.uiRootBack[1].localPosition[2]",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/uiRootBack/1/localPosition/2",
+      "expected": 0.0,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12336",
+      "claim": "fixture.hierarchy.uiRootBack[1].name",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/uiRootBack/1/name",
+      "expected": "GamePlay",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12337",
+      "claim": "fixture.hierarchy.uiRootBack[1].siblingIndex",
+      "source": "level3",
+      "sourcePointer": "selected current hierarchy/uiRootBack/1/siblingIndex",
+      "expected": null,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12338",
+      "claim": "fixture.sourceOrderRanges.ordinaryDirectionalIcon",
+      "source": "libil2cpp",
+      "sourcePointer": "closed sorting disposition/ordinaryDirectionalIcon",
+      "expected": 71,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12339",
+      "claim": "fixture.sourceOrderRanges.ordinaryMainNoteSprite",
+      "source": "libil2cpp",
+      "sourcePointer": "closed sorting disposition/ordinaryMainNoteSprite",
+      "expected": 70,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12340",
+      "claim": "fixture.sourceOrderRanges.ordinaryParticleEnabledRenderer[0]",
+      "source": "libil2cpp",
+      "sourcePointer": "closed sorting disposition/ordinaryParticleEnabledRenderer/0",
+      "expected": 1,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12341",
+      "claim": "fixture.sourceOrderRanges.ordinaryParticleEnabledRenderer[1]",
+      "source": "libil2cpp",
+      "sourcePointer": "closed sorting disposition/ordinaryParticleEnabledRenderer/1",
+      "expected": 50,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12342",
+      "claim": "fixture.sourceOrderRanges.ordinarySyncLine",
+      "source": "libil2cpp",
+      "sourcePointer": "closed sorting disposition/ordinarySyncLine",
+      "expected": 69,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12343",
+      "claim": "fixture.sourceOrderRanges.ordinaryUiRoot",
+      "source": "libil2cpp",
+      "sourcePointer": "closed sorting disposition/ordinaryUiRoot",
+      "expected": 100,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12344",
+      "claim": "fixture.sourceOrderRanges.ordinaryUiRootBack",
+      "source": "libil2cpp",
+      "sourcePointer": "closed sorting disposition/ordinaryUiRootBack",
+      "expected": 100,
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12345",
+      "claim": "fixture.resourceLogicalIds.ordinaryNote[0]",
+      "source": "ordinaryResources",
+      "sourcePointer": "/assets/*/logicalAssetId/0",
+      "expected": "ordinary/notes/skin00/atlas",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12346",
+      "claim": "fixture.resourceLogicalIds.ordinaryNote[1]",
+      "source": "ordinaryResources",
+      "sourcePointer": "/assets/*/logicalAssetId/1",
+      "expected": "ordinary/notes/skin00/long-note-line",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12347",
+      "claim": "fixture.resourceLogicalIds.ordinaryNote[2]",
+      "source": "ordinaryResources",
+      "sourcePointer": "/assets/*/logicalAssetId/2",
+      "expected": "ordinary/notes/skin00/curve-note-line",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12348",
+      "claim": "fixture.resourceLogicalIds.ordinaryNote[3]",
+      "source": "ordinaryResources",
+      "sourcePointer": "/assets/*/logicalAssetId/3",
+      "expected": "ordinary/notes/skin00/simultaneous-line",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12349",
+      "claim": "fixture.resourceLogicalIds.ordinaryNote[4]",
+      "source": "ordinaryResources",
+      "sourcePointer": "/assets/*/logicalAssetId/4",
+      "expected": "ordinary/notes/directionalflickskin00/atlas",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12350",
+      "claim": "fixture.resourceLogicalIds.ordinaryNote[5]",
+      "source": "ordinaryResources",
+      "sourcePointer": "/assets/*/logicalAssetId/5",
+      "expected": "ordinary/notes/directionalflickskin00/line-left",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12351",
+      "claim": "fixture.resourceLogicalIds.ordinaryNote[6]",
+      "source": "ordinaryResources",
+      "sourcePointer": "/assets/*/logicalAssetId/6",
+      "expected": "ordinary/notes/directionalflickskin00/line-right",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12352",
+      "claim": "fixture.resourceLogicalIds.ordinaryHud[0]",
+      "source": "ordinaryManifest",
+      "sourcePointer": "/assets/*/logicalAssetId/0",
+      "expected": "hud/ordinary/combo-number-atlas",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12353",
+      "claim": "fixture.resourceLogicalIds.ordinaryHud[1]",
+      "source": "ordinaryManifest",
+      "sourcePointer": "/assets/*/logicalAssetId/1",
+      "expected": "hud/ordinary/judge-atlas",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12354",
+      "claim": "fixture.resourceLogicalIds.ordinaryHud[2]",
+      "source": "ordinaryManifest",
+      "sourcePointer": "/assets/*/logicalAssetId/2",
+      "expected": "hud/ordinary/rhythm-game-additive-atlas",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12355",
+      "claim": "fixture.resourceLogicalIds.ordinaryHud[3]",
+      "source": "ordinaryManifest",
+      "sourcePointer": "/assets/*/logicalAssetId/3",
+      "expected": "hud/ordinary/ui-additive-effect-atlas",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12356",
+      "claim": "fixture.resourceLogicalIds.particle[0]",
+      "source": "particleTexture",
+      "sourcePointer": "/entries/*/logicalAssetId/0",
+      "expected": "particle-texture:directional:Default-ParticleSystem",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12357",
+      "claim": "fixture.resourceLogicalIds.particle[1]",
+      "source": "particleTexture",
+      "sourcePointer": "/entries/*/logicalAssetId/1",
+      "expected": "particle-texture:directional:effect_circle",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12358",
+      "claim": "fixture.resourceLogicalIds.particle[2]",
+      "source": "particleTexture",
+      "sourcePointer": "/entries/*/logicalAssetId/2",
+      "expected": "particle-texture:directional:tex_parSet_1",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12359",
+      "claim": "fixture.resourceLogicalIds.particle[3]",
+      "source": "particleTexture",
+      "sourcePointer": "/entries/*/logicalAssetId/3",
+      "expected": "particle-texture:ordinary:Default-Particle",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12360",
+      "claim": "fixture.resourceLogicalIds.particle[4]",
+      "source": "particleTexture",
+      "sourcePointer": "/entries/*/logicalAssetId/4",
+      "expected": "particle-texture:ordinary:Tex_parSet_1",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12361",
+      "claim": "fixture.resourceLogicalIds.particle[5]",
+      "source": "particleTexture",
+      "sourcePointer": "/entries/*/logicalAssetId/5",
+      "expected": "particle-texture:ordinary:Tex_parSet_2",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12362",
+      "claim": "fixture.resourceLogicalIds.particle[6]",
+      "source": "particleTexture",
+      "sourcePointer": "/entries/*/logicalAssetId/6",
+      "expected": "particle-texture:ordinary:effect_circle",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12363",
+      "claim": "fixture.resourceLogicalIds.particle[7]",
+      "source": "particleTexture",
+      "sourcePointer": "/entries/*/logicalAssetId/7",
+      "expected": "particle-texture:ordinary:light",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12364",
+      "claim": "fixture.resourceLogicalIds.scoreGroups[0]",
+      "source": "score",
+      "sourcePointer": "/resources/0",
+      "expected": "high_rank_effect",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12365",
+      "claim": "fixture.resourceLogicalIds.scoreGroups[1]",
+      "source": "score",
+      "sourcePointer": "/resources/1",
+      "expected": "rank_label_font",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12366",
+      "claim": "fixture.resourceLogicalIds.scoreGroups[2]",
+      "source": "score",
+      "sourcePointer": "/resources/2",
+      "expected": "rhythm_game_ui",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12367",
+      "claim": "fixture.resourceLogicalIds.scoreGroups[3]",
+      "source": "score",
+      "sourcePointer": "/resources/3",
+      "expected": "score_font",
+      "disposition": "static-current-10.1.4"
+    },
+    {
+      "evidenceId": "OSR-E12368",
+      "claim": "fixture.resourceLogicalIds.scoreGroups[4]",
+      "source": "score",
+      "sourcePointer": "/resources/4",
+      "expected": "ui_common_level_mark",
+      "disposition": "static-current-10.1.4"
+    }
+  ],
+  "viewport": [
+    1600,
+    720
+  ],
+  "selectedUiWorld": {
+    "uiRootBack": {
+      "authoredLocalSum": [
+        0.0,
+        0.0
+      ],
+      "pixiWorld": [
+        800.0,
+        360.0
+      ]
+    },
+    "backDisplay": {
+      "authoredLocalSum": [
+        0.0,
+        0.0
+      ],
+      "pixiWorld": [
+        800.0,
+        360.0
+      ]
+    },
+    "information": {
+      "authoredLocalSum": [
+        0.0,
+        0.0
+      ],
+      "pixiWorld": [
+        800.0,
+        360.0
+      ]
+    },
+    "combo": {
+      "authoredLocalSum": [
+        434.70001220703125,
+        82.80000305175781
+      ],
+      "pixiWorld": [
+        1234.699951171875,
+        277.20001220703125
+      ]
+    },
+    "addScore": {
+      "authoredLocalSum": [
+        -411.0,
+        309.0
+      ],
+      "pixiWorld": [
+        389.0,
+        51.0
+      ]
+    },
+    "result": {
+      "authoredLocalSum": [
+        0.0,
+        -160.0
+      ],
+      "pixiWorld": [
+        800.0,
+        520.0
+      ]
+    },
+    "judgeTiming": {
+      "authoredLocalSum": [
+        4.0,
+        -198.0
+      ],
+      "pixiWorld": [
+        804.0,
+        558.0
+      ]
+    },
+    "uiRoot": {
+      "authoredLocalSum": [
+        0.0,
+        0.0
+      ],
+      "pixiWorld": [
+        800.0,
+        360.0
+      ]
+    },
+    "frontDisplay": {
+      "authoredLocalSum": [
+        0.0,
+        0.0
+      ],
+      "pixiWorld": [
+        800.0,
+        360.0
+      ]
+    },
+    "score": {
+      "authoredLocalSum": [
+        -411.0,
+        309.0
+      ],
+      "pixiWorld": [
+        389.0,
+        51.0
+      ]
+    },
+    "scoreProgress": {
+      "authoredLocalSum": [
+        -386.0,
+        264.0
+      ],
+      "pixiWorld": [
+        414.0,
+        96.0
+      ]
+    },
+    "scorePanel": {
+      "authoredLocalSum": [
+        -386.0,
+        264.0
+      ],
+      "pixiWorld": [
+        414.0,
+        96.0
+      ]
+    },
+    "scoreHighRank": {
+      "authoredLocalSum": [
+        -344.95001220703125,
+        264.0
+      ],
+      "pixiWorld": [
+        455.04998779296875,
+        96.0
+      ]
+    },
+    "scoreBase": {
+      "authoredLocalSum": [
+        -263.0,
+        244.0
+      ],
+      "pixiWorld": [
+        537.0,
+        116.0
+      ]
+    },
+    "scoreTotal": {
+      "authoredLocalSum": [
+        -199.0,
+        225.0
+      ],
+      "pixiWorld": [
+        601.0,
+        135.0
+      ]
+    },
+    "life": {
+      "authoredLocalSum": [
+        411.0,
+        309.0
+      ],
+      "pixiWorld": [
+        1211.0,
+        51.0
+      ]
+    },
+    "noteLane": {
+      "authoredLocalSum": [
+        0.0,
+        -240.0
+      ],
+      "pixiWorld": [
+        800.0,
+        600.0
+      ]
+    }
+  },
+  "hierarchy": {
+    "gamePlay": [
+      {
+        "name": "GamePlay",
+        "localPosition": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "siblingIndex": null
+      }
+    ],
+    "musicObjects": [
+      {
+        "name": "MusicObjects",
+        "localPosition": [
+          0.0,
+          0.0,
+          -15.0
+        ],
+        "siblingIndex": 1
+      },
+      {
+        "name": "GamePlay",
+        "localPosition": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "siblingIndex": null
+      }
+    ],
+    "noteParent": [
+      {
+        "name": "NoteParentTrans",
+        "localPosition": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "siblingIndex": 5
+      },
+      {
+        "name": "GamePlay",
+        "localPosition": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "siblingIndex": null
+      }
+    ],
+    "uiRootBack": [
+      {
+        "name": "UI_Root_Back",
+        "localPosition": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "siblingIndex": 0
+      },
+      {
+        "name": "GamePlay",
+        "localPosition": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "siblingIndex": null
+      }
+    ],
+    "backDisplay": [
+      {
+        "name": "Display",
+        "localPosition": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "siblingIndex": 0
+      },
+      {
+        "name": "UI_Root_Back",
+        "localPosition": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "siblingIndex": 0
+      },
+      {
+        "name": "GamePlay",
+        "localPosition": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "siblingIndex": null
+      }
+    ],
+    "information": [
+      {
+        "name": "Information",
+        "localPosition": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "siblingIndex": 4
+      },
+      {
+        "name": "Display",
+        "localPosition": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "siblingIndex": 0
+      },
+      {
+        "name": "UI_Root_Back",
+        "localPosition": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "siblingIndex": 0
+      },
+      {
+        "name": "GamePlay",
+        "localPosition": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "siblingIndex": null
+      }
+    ],
+    "combo": [
+      {
+        "name": "Combo",
+        "localPosition": [
+          434.70001220703125,
+          82.80000305175781,
+          0.0
+        ],
+        "siblingIndex": 1
+      },
+      {
+        "name": "Information",
+        "localPosition": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "siblingIndex": 4
+      },
+      {
+        "name": "Display",
+        "localPosition": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "siblingIndex": 0
+      },
+      {
+        "name": "UI_Root_Back",
+        "localPosition": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "siblingIndex": 0
+      },
+      {
+        "name": "GamePlay",
+        "localPosition": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "siblingIndex": null
+      }
+    ],
+    "addScore": [
+      {
+        "name": "AddScore",
+        "localPosition": [
+          -411.0,
+          309.0,
+          0.0
+        ],
+        "siblingIndex": 0
+      },
+      {
+        "name": "Information",
+        "localPosition": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "siblingIndex": 4
+      },
+      {
+        "name": "Display",
+        "localPosition": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "siblingIndex": 0
+      },
+      {
+        "name": "UI_Root_Back",
+        "localPosition": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "siblingIndex": 0
+      },
+      {
+        "name": "GamePlay",
+        "localPosition": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "siblingIndex": null
+      }
+    ],
+    "result": [
+      {
+        "name": "Result",
+        "localPosition": [
+          0.0,
+          -160.0,
+          0.0
+        ],
+        "siblingIndex": 2
+      },
+      {
+        "name": "Information",
+        "localPosition": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "siblingIndex": 4
+      },
+      {
+        "name": "Display",
+        "localPosition": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "siblingIndex": 0
+      },
+      {
+        "name": "UI_Root_Back",
+        "localPosition": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "siblingIndex": 0
+      },
+      {
+        "name": "GamePlay",
+        "localPosition": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "siblingIndex": null
+      }
+    ],
+    "judgeTiming": [
+      {
+        "name": "JudgeTiming",
+        "localPosition": [
+          4.0,
+          -38.0,
+          0.0
+        ],
+        "siblingIndex": 1
+      },
+      {
+        "name": "other",
+        "localPosition": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "siblingIndex": 0
+      },
+      {
+        "name": "Result",
+        "localPosition": [
+          0.0,
+          -160.0,
+          0.0
+        ],
+        "siblingIndex": 2
+      },
+      {
+        "name": "Information",
+        "localPosition": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "siblingIndex": 4
+      },
+      {
+        "name": "Display",
+        "localPosition": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "siblingIndex": 0
+      },
+      {
+        "name": "UI_Root_Back",
+        "localPosition": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "siblingIndex": 0
+      },
+      {
+        "name": "GamePlay",
+        "localPosition": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "siblingIndex": null
+      }
+    ],
+    "uiRoot": [
+      {
+        "name": "UI_Root",
+        "localPosition": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "siblingIndex": 3
+      },
+      {
+        "name": "GamePlay",
+        "localPosition": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "siblingIndex": null
+      }
+    ],
+    "frontDisplay": [
+      {
+        "name": "Display",
+        "localPosition": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "siblingIndex": 2
+      },
+      {
+        "name": "UI_Root",
+        "localPosition": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "siblingIndex": 3
+      },
+      {
+        "name": "GamePlay",
+        "localPosition": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "siblingIndex": null
+      }
+    ],
+    "score": [
+      {
+        "name": "Score",
+        "localPosition": [
+          -411.0,
+          309.0,
+          0.0
+        ],
+        "siblingIndex": 1
+      },
+      {
+        "name": "Display",
+        "localPosition": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "siblingIndex": 2
+      },
+      {
+        "name": "UI_Root",
+        "localPosition": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "siblingIndex": 3
+      },
+      {
+        "name": "GamePlay",
+        "localPosition": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "siblingIndex": null
+      }
+    ],
+    "scoreProgress": [
+      {
+        "name": "Progress",
+        "localPosition": [
+          25.0,
+          -45.0,
+          0.0
+        ],
+        "siblingIndex": 0
+      },
+      {
+        "name": "Score",
+        "localPosition": [
+          -411.0,
+          309.0,
+          0.0
+        ],
+        "siblingIndex": 1
+      },
+      {
+        "name": "Display",
+        "localPosition": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "siblingIndex": 2
+      },
+      {
+        "name": "UI_Root",
+        "localPosition": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "siblingIndex": 3
+      },
+      {
+        "name": "GamePlay",
+        "localPosition": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "siblingIndex": null
+      }
+    ],
+    "scorePanel": [
+      {
+        "name": "Panel",
+        "localPosition": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "siblingIndex": 6
+      },
+      {
+        "name": "Progress",
+        "localPosition": [
+          25.0,
+          -45.0,
+          0.0
+        ],
+        "siblingIndex": 0
+      },
+      {
+        "name": "Score",
+        "localPosition": [
+          -411.0,
+          309.0,
+          0.0
+        ],
+        "siblingIndex": 1
+      },
+      {
+        "name": "Display",
+        "localPosition": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "siblingIndex": 2
+      },
+      {
+        "name": "UI_Root",
+        "localPosition": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "siblingIndex": 3
+      },
+      {
+        "name": "GamePlay",
+        "localPosition": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "siblingIndex": null
+      }
+    ],
+    "scoreHighRank": [
+      {
+        "name": "HighRankEffect",
+        "localPosition": [
+          41.04999923706055,
+          0.0,
+          0.0
+        ],
+        "siblingIndex": 0
+      },
+      {
+        "name": "Panel",
+        "localPosition": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "siblingIndex": 6
+      },
+      {
+        "name": "Progress",
+        "localPosition": [
+          25.0,
+          -45.0,
+          0.0
+        ],
+        "siblingIndex": 0
+      },
+      {
+        "name": "Score",
+        "localPosition": [
+          -411.0,
+          309.0,
+          0.0
+        ],
+        "siblingIndex": 1
+      },
+      {
+        "name": "Display",
+        "localPosition": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "siblingIndex": 2
+      },
+      {
+        "name": "UI_Root",
+        "localPosition": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "siblingIndex": 3
+      },
+      {
+        "name": "GamePlay",
+        "localPosition": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "siblingIndex": null
+      }
+    ],
+    "scoreBase": [
+      {
+        "name": "Base",
+        "localPosition": [
+          148.0,
+          -65.0,
+          0.0
+        ],
+        "siblingIndex": 1
+      },
+      {
+        "name": "Score",
+        "localPosition": [
+          -411.0,
+          309.0,
+          0.0
+        ],
+        "siblingIndex": 1
+      },
+      {
+        "name": "Display",
+        "localPosition": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "siblingIndex": 2
+      },
+      {
+        "name": "UI_Root",
+        "localPosition": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "siblingIndex": 3
+      },
+      {
+        "name": "GamePlay",
+        "localPosition": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "siblingIndex": null
+      }
+    ],
+    "scoreTotal": [
+      {
+        "name": "TotalScore",
+        "localPosition": [
+          64.0,
+          -19.0,
+          0.0
+        ],
+        "siblingIndex": 1
+      },
+      {
+        "name": "Base",
+        "localPosition": [
+          148.0,
+          -65.0,
+          0.0
+        ],
+        "siblingIndex": 1
+      },
+      {
+        "name": "Score",
+        "localPosition": [
+          -411.0,
+          309.0,
+          0.0
+        ],
+        "siblingIndex": 1
+      },
+      {
+        "name": "Display",
+        "localPosition": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "siblingIndex": 2
+      },
+      {
+        "name": "UI_Root",
+        "localPosition": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "siblingIndex": 3
+      },
+      {
+        "name": "GamePlay",
+        "localPosition": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "siblingIndex": null
+      }
+    ],
+    "life": [
+      {
+        "name": "LifeGauge",
+        "localPosition": [
+          411.0,
+          309.0,
+          0.0
+        ],
+        "siblingIndex": 2
+      },
+      {
+        "name": "Display",
+        "localPosition": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "siblingIndex": 2
+      },
+      {
+        "name": "UI_Root",
+        "localPosition": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "siblingIndex": 3
+      },
+      {
+        "name": "GamePlay",
+        "localPosition": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "siblingIndex": null
+      }
+    ],
+    "noteLane": [
+      {
+        "name": "NoteLane",
+        "localPosition": [
+          0.0,
+          -240.0,
+          0.0
+        ],
+        "siblingIndex": 0
+      },
+      {
+        "name": "RhythmGameLines",
+        "localPosition": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "siblingIndex": 3
+      },
+      {
+        "name": "Display",
+        "localPosition": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "siblingIndex": 0
+      },
+      {
+        "name": "UI_Root_Back",
+        "localPosition": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "siblingIndex": 0
+      },
+      {
+        "name": "GamePlay",
+        "localPosition": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "siblingIndex": null
+      }
+    ]
+  },
+  "combinedRoot": {
+    "label": "GarupaSimulatorCombinedScene",
+    "children": [
+      "ordinary-particle-stage",
+      "ordinary-note-hud-render-stage"
+    ],
+    "particleStageLabel": "GarupaSimulatorParticles",
+    "ordinaryStageLabel": "GarupaSimulatorRoot",
+    "sourceOrderRanges": {
+      "ordinaryParticleEnabledRenderer": [
+        1,
+        50
+      ],
+      "ordinarySyncLine": 69,
+      "ordinaryMainNoteSprite": 70,
+      "ordinaryDirectionalIcon": 71,
+      "ordinaryUiRootBack": 100,
+      "ordinaryUiRoot": 100
+    }
+  },
+  "resourceLogicalIds": {
+    "ordinaryNote": [
+      "ordinary/notes/skin00/atlas",
+      "ordinary/notes/skin00/long-note-line",
+      "ordinary/notes/skin00/curve-note-line",
+      "ordinary/notes/skin00/simultaneous-line",
+      "ordinary/notes/directionalflickskin00/atlas",
+      "ordinary/notes/directionalflickskin00/line-left",
+      "ordinary/notes/directionalflickskin00/line-right"
+    ],
+    "ordinaryHud": [
+      "hud/ordinary/combo-number-atlas",
+      "hud/ordinary/judge-atlas",
+      "hud/ordinary/rhythm-game-additive-atlas",
+      "hud/ordinary/ui-additive-effect-atlas"
+    ],
+    "particle": [
+      "particle-texture:directional:Default-ParticleSystem",
+      "particle-texture:directional:effect_circle",
+      "particle-texture:directional:tex_parSet_1",
+      "particle-texture:ordinary:Default-Particle",
+      "particle-texture:ordinary:Tex_parSet_1",
+      "particle-texture:ordinary:Tex_parSet_2",
+      "particle-texture:ordinary:effect_circle",
+      "particle-texture:ordinary:light"
+    ],
+    "scoreGroups": [
+      "high_rank_effect",
+      "rank_label_font",
+      "rhythm_game_ui",
+      "score_font",
+      "ui_common_level_mark"
+    ]
+  },
+  "browserAcceptancePolicy": {
+    "productionDecoders": [
+      "BrowserPixiTextureDecoder",
+      "BrowserPixiParticleTextureDecoder"
+    ],
+    "freshIncognitoProcessCount": 3,
+    "foreignUrlAllowed": false,
+    "networkAllowed": false,
+    "candidateDigestIsOriginalOracle": false,
+    "requiredFrameObservations": [
+      "initialization",
+      "note-spawn",
+      "note-near-judge",
+      "note-animation-midpoint",
+      "judgement-results",
+      "combo-ap",
+      "add-score",
+      "score-ranks",
+      "life-warning",
+      "game-over",
+      "particle-peak",
+      "pause-resume",
+      "initial-seek-final-publication",
+      "natural-completion",
+      "dispose"
+    ]
+  },
+  "independentObserverRequiredFields": [
+    "parent",
+    "localMatrix",
+    "worldMatrix",
+    "localBounds",
+    "worldBounds",
+    "anchor",
+    "size",
+    "visible",
+    "renderable",
+    "alpha",
+    "tint",
+    "blend",
+    "order",
+    "mask",
+    "texture",
+    "geometry"
+  ],
+  "mutationSentinels": [
+    "parent",
+    "unity-y",
+    "mask-space",
+    "stage-order",
+    "particle-uv-row",
+    "fallback"
+  ]
+}
