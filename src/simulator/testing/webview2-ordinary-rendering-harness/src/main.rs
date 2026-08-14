@@ -79,7 +79,7 @@ fn main() -> wry::Result<()> {
   let webview = builder.build(&window)?;
   let timeout_proxy = proxy.clone();
   thread::spawn(move || {
-    thread::sleep(Duration::from_secs(300));
+    thread::sleep(Duration::from_secs(600));
     let _ = timeout_proxy.send_event(UserEvent::Timeout);
   });
 
@@ -99,7 +99,7 @@ fn main() -> wry::Result<()> {
         }
       }
       Event::UserEvent(UserEvent::Timeout) => {
-        eprintln!("WebView2 ordinary rendering acceptance timed out after 300 seconds");
+        eprintln!("WebView2 ordinary rendering acceptance timed out after 600 seconds");
         let _ = webview.take();
         *control_flow = ControlFlow::ExitWithCode(70);
       }

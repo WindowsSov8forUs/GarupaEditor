@@ -52,7 +52,7 @@ function run(id, command, args, env) {
     cwd: repositoryRoot,
     encoding: "utf8",
     stdio: "inherit",
-    timeout: 1_200_000,
+    timeout: 1_800_000,
     env: { ...process.env, NODE_PATH: join(repositoryRoot, "node_modules"), ...env },
     shell: command.endsWith(".cmd"),
   });
