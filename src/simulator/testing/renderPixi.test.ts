@@ -80,6 +80,18 @@ async function main(): Promise<void> {
   createAnimatedSprite(push, "note:left", "note-icon", "ordinary/notes/directionalflickskin00/atlas", "note_flick_top_l", "note-directional-flick", f32(0.1666666716337204));
   createAnimatedSprite(push, "note:right", "note-icon", "ordinary/notes/directionalflickskin00/atlas", "note_flick_top_r", "note-directional-flick", f32(0.1666666716337204));
   createAnimatedSprite(push, "note:flash", "note-intermediate", "ordinary/notes/skin00/atlas", "note_long_flash_3", "note-long-flash", f32(0.4166666567325592));
+  push({ kind: "create-object", renderObjectId: "note:world", poolFamily: "normal", role: "note-root", parentObjectId: null });
+  push({ kind: "bind-resource", renderObjectId: "note:world", binding: "sprite", logicalAssetId: "ordinary/notes/skin00/atlas", exactKey: "note_normal_1" });
+  push({
+    kind: "set-transform", renderObjectId: "note:world",
+    position: Object.freeze({ x: f32(0), y: f32(0), z: f32(0) }),
+    scale: Object.freeze({ x: f32(1), y: f32(1) }),
+    rotationDegrees: f32(0),
+    color: Object.freeze({ red: f32(1), green: f32(1), blue: f32(1), alpha: f32(1) }),
+    ordering: Object.freeze({ domainLayer: 3, sourceDepthOrSortingOrder: 70, sourceZ: f32(0), creationSequence: 99 }),
+    maskObjectId: null,
+  });
+  push({ kind: "activate-object", renderObjectId: "note:world" });
 
   push({ kind: "create-object", renderObjectId: "hud:combo", poolFamily: "combo", role: "hud-combo", parentObjectId: null });
   push({ kind: "set-hud", renderObjectId: "hud:combo", hudRole: "combo", state: Object.freeze({ combo: 1234, allPerfect: true }) });
@@ -123,9 +135,11 @@ async function main(): Promise<void> {
     assert(value !== undefined, `${id} exists`);
     return value;
   };
-  equal(row("note:up").position[1], -1, "up Flick midpoint consumes Reverse Y=1 with Pixi origin");
-  equal(row("note:left").position[0], Math.fround(-1.9500000476837158), "left Flick midpoint curve");
-  equal(row("note:right").position[0], Math.fround(1.9500000476837158), "right Flick midpoint curve");
+  equal(row("note:up").position[1], -100, "up Flick midpoint converts Unity local units by the bound 100 PPU Sprite");
+  equal(row("note:left").position[0], Math.fround(-195.00000476837158), "left Flick midpoint converts Unity local units by bound PPU");
+  equal(row("note:right").position[0], Math.fround(195.00000476837158), "right Flick midpoint converts Unity local units by bound PPU");
+  equal(JSON.stringify(row("note:world").position), JSON.stringify([800, 360]), "ordinary Note world origin projects to fixed Pixi viewport center");
+  equal(row("note:world").scale[0], Math.fround(3.6), "ordinary Note Sprite scale consumes camera PPU / Sprite PPU");
   equal(row("note:flash").spriteAlpha, 1, "Long Flash current alpha channel remains one");
   equal(row("note:flash").spriteTint, 0x999999, "Long Flash midpoint RGB=.6 maps to Sprite tint");
 
@@ -249,7 +263,7 @@ async function main(): Promise<void> {
   const preInvalidObjectCount = renderer.snapshot().objectCount;
   const invalid = renderer.preflight([invalidCommand]);
   equal(invalid.status, "evidence-required", "Life threshold mismatch fails before Pixi mutation");
-  equal(renderer.snapshot().objectCount, 10, "failed typed Pixi HUD input preserves owner count");
+  equal(renderer.snapshot().objectCount, 11, "failed typed Pixi HUD input preserves owner count");
   equal(renderer.sceneSnapshot().find((candidate) => candidate.renderObjectId === "hud:life")?.hudText, "200/1000", "failed batch leaves Pixi HUD unchanged");
 
   const recording = new RecordingSimulatorRendererBackend();
@@ -281,6 +295,7 @@ async function main(): Promise<void> {
     noteLeft: pickSceneObservation(row("note:left")),
     noteRight: pickSceneObservation(row("note:right")),
     noteFlash: pickSceneObservation(row("note:flash")),
+    noteWorld: pickSceneObservation(row("note:world")),
     combo: pickSceneObservation(combo),
     addScore: pickSceneObservation(add),
     result: pickSceneObservation(result),
@@ -382,6 +397,10 @@ async function verifyActualPixiFullChart(
   readonly roles: readonly string[];
   readonly animationRoles: readonly string[];
   readonly maxGeometryVertexCount: number;
+  readonly maxAbsGeometryCoordinate: number;
+  readonly geometryViewportIntersectionCount: number;
+  readonly visibleNoteSampleCount: number;
+  readonly visibleNoteViewportCount: number;
   readonly cleanupOwnerCount: number;
   readonly cleanupStageChildren: number;
 }> {
@@ -438,6 +457,10 @@ async function verifyActualPixiFullChart(
   const roles = new Set<string>();
   const animationRoles = new Set<string>();
   let maxGeometryVertexCount = 0;
+  let maxAbsGeometryCoordinate = 0;
+  let geometryViewportIntersectionCount = 0;
+  let visibleNoteSampleCount = 0;
+  let visibleNoteViewportCount = 0;
   let frames = 0;
   let finalSnapshot = requireOk(engine.snapshot(), "initial full-chart snapshot");
   for (; frames < 7200; frames += 1) {
@@ -450,6 +473,24 @@ async function verifyActualPixiFullChart(
       roles.add(row.role);
       if (row.activeAnimationRole !== null) animationRoles.add(row.activeAnimationRole);
       maxGeometryVertexCount = Math.max(maxGeometryVertexCount, row.geometryVertexCount ?? 0);
+      if (row.geometryPositions !== null) {
+        maxAbsGeometryCoordinate = Math.max(
+          maxAbsGeometryCoordinate,
+          ...row.geometryPositions.map((value) => Math.abs(value)),
+        );
+        const xs = row.geometryPositions.filter((_, index) => index % 2 === 0);
+        const ys = row.geometryPositions.filter((_, index) => index % 2 === 1);
+        if (Math.max(...xs) >= 0 && Math.min(...xs) <= 1600 &&
+            Math.max(...ys) >= 0 && Math.min(...ys) <= 720) {
+          geometryViewportIntersectionCount += 1;
+        }
+      }
+      if (row.visible && ["note-root", "note-head", "note-intermediate", "note-side-visual"].includes(row.role)) {
+        visibleNoteSampleCount += 1;
+        if (row.position[0] >= 0 && row.position[0] <= 1600 && row.position[1] >= 0 && row.position[1] <= 720) {
+          visibleNoteViewportCount += 1;
+        }
+      }
     }
     const combo = visible.find((row) => row.renderObjectId === "render:hud:combo");
     const add = visible.find((row) => row.renderObjectId.startsWith("render:hud:add-score") && row.visible);
@@ -491,6 +532,10 @@ async function verifyActualPixiFullChart(
     roles: Object.freeze([...roles].sort()),
     animationRoles: Object.freeze([...animationRoles].sort()),
     maxGeometryVertexCount,
+    maxAbsGeometryCoordinate,
+    geometryViewportIntersectionCount,
+    visibleNoteSampleCount,
+    visibleNoteViewportCount,
     cleanupOwnerCount: renderer.snapshot().objectCount,
     cleanupStageChildren: renderer.stage.children.length,
   });
@@ -505,6 +550,10 @@ function pickSceneObservation(
     visible: row.visible,
     alpha: row.alpha,
     position: row.position,
+    scale: row.scale,
+    rotation: row.rotation,
+    parent: row.parent,
+    ordering: row.ordering,
     hudText: row.hudText,
     hudFontFamily: row.hudFontFamily,
     hudSpriteCount: row.hudSpriteCount,

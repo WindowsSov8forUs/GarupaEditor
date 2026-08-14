@@ -12,6 +12,11 @@ const dynamicRoot = resolve(
   fixtureRoot,
   "evidence-integrity/artifacts/investigations/simulator-dynamic-acceptance-oracle-10-1-4",
 );
+const ordinaryPackRoot = resolve(
+  fixtureRoot,
+  "autonomous-module/artifacts/investigations/autonomous-simulator-portable-pack-10-1-4",
+);
+const ordinaryProfile = JSON.parse(readFileSync(resolve(ordinaryPackRoot, "ordinary_portable_profile.json"), "utf8"));
 if (process.argv[1] !== undefined && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const closure = JSON.parse(readFileSync(resolve(evidenceRoot, "closure.json"), "utf8"));
   const oracle = JSON.parse(readFileSync(resolve(dynamicRoot, "dynamic_acceptance_oracle.json"), "utf8"));
@@ -70,19 +75,24 @@ export function verifyRenderObservation(observation, oracle, closure) {
   const invalid = observation.invalidPreflight;
   const sampleCleanup = observation.sampleCleanup;
 
-  const currentNegativeOwnerCount = 10;
+  const currentNegativeOwnerCount = 11;
   const predicates = new Map([
     ["PR08", () =>
-      samples.noteUp.position[1] === expectedNotes["note:up"].position[1] &&
-      samples.noteLeft.position[0] === expectedNotes["note:left"].position[0] &&
-      samples.noteRight.position[0] === expectedNotes["note:right"].position[0] &&
+      equalArray(samples.noteUp.position, noteLocalToPixi(expectedNotes["note:up"])) &&
+      equalArray(samples.noteLeft.position, noteLocalToPixi(expectedNotes["note:left"])) &&
+      equalArray(samples.noteRight.position, noteLocalToPixi(expectedNotes["note:right"])) &&
+      equalArray(samples.noteWorld.position, [800, 360]) &&
+      equalArray(samples.noteWorld.scale, [Math.fround(3.6), Math.fround(3.6)]) &&
+      full.visibleNoteSampleCount > 0 && full.visibleNoteViewportCount > 0 &&
+      full.visibleNoteViewportCount <= full.visibleNoteSampleCount &&
       samples.noteFlash.spriteAlpha === expectedNotes["note:flash"].alpha &&
       samples.noteFlash.spriteTint === rgbTint(expectedNotes["note:flash"].rgb)],
     ["PR09", () =>
       samples.noteLeft.role === "note-icon" && samples.noteRight.role === "note-icon" &&
       samples.noteLeft.renderObjectId !== samples.noteRight.renderObjectId &&
       samples.noteLeft.spriteBindingKey !== samples.noteRight.spriteBindingKey],
-    ["PR11", () => full.roles.includes("note-mesh") && full.maxGeometryVertexCount >= 22],
+    ["PR11", () => full.roles.includes("note-mesh") && full.maxGeometryVertexCount >= 22 &&
+      full.maxAbsGeometryCoordinate > 100 && full.geometryViewportIntersectionCount > 0],
     ["PR22", () => combo.hudSpriteCount === expectedCombo.spriteCount && combo.hudText === null],
     ["PR23", () => combo.hudSpriteLabels?.length === expectedCombo.spriteCount && combo.visible === true],
     ["PR24", () => combo.activeAnimationRole === "all-perfect" &&
@@ -130,10 +140,20 @@ function requireNote(actual, expected, animationRole) {
   if (
     actual?.activeAnimationRole !== animationRole ||
     actual.spriteBindingKey?.endsWith(`\u0000${expected.exactKey}`) !== true ||
-    (expected.position !== undefined && !equalArray(actual.position, expected.position))
+    (expected.position !== undefined && !equalArray(actual.position, noteLocalToPixi(expected)))
   ) {
     throw new Error(`Note animation observation mismatch: ${animationRole}`);
   }
+}
+
+function noteLocalToPixi(expected) {
+  const row = ordinaryProfile.assets.flatMap((asset) => asset.atlasRows)
+    .find((candidate) => candidate.exactKey === expected.exactKey);
+  if (row === undefined) throw new Error(`missing independent Sprite PPU for ${expected.exactKey}`);
+  return [
+    Math.fround(expected.position[0] * row.pixelsPerUnit),
+    Math.fround(expected.position[1] * row.pixelsPerUnit),
+  ];
 }
 
 function rgbTint(rgb) {

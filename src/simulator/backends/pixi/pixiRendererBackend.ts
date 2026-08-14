@@ -35,6 +35,7 @@ import type {
   RenderBackendSnapshot,
   RenderCommand,
   RenderCommandBatch,
+  RenderAtlasRow,
   RenderOrthographicProjectionProfile,
   RenderObjectRole,
   RenderResourceAssetProfile,
@@ -106,10 +107,12 @@ type EvidenceAnimationRole =
 
 interface PixiObjectRecord {
   readonly role: RenderObjectRole;
+  readonly parentObjectId: string | null;
   readonly node: Container;
   ordering: readonly [number, number, number, number];
   hudState: Readonly<object> | null;
   spriteBindingKey: string | null;
+  spritePixelsPerUnit: number | null;
   hudBindingKeys: string[];
   scoreHighRankBindingKeys: string[];
   spriteContent: Sprite | null;
@@ -125,6 +128,7 @@ interface PixiObjectRecord {
   activeAnimationRole: EvidenceAnimationRole | null;
   readonly activeAnimationRoles: Set<EvidenceAnimationRole>;
   animationElapsedSeconds: number | null;
+  lastTransform: SetTransformCommand | null;
 }
 
 interface PixiShadowObject {
@@ -315,7 +319,10 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           node.visible = false;
           reservedNodes.set(command.sequence, node);
         } else if (command.kind === "set-mesh") {
-          reservedGeometry.set(command.sequence, createEvidenceMesh(command));
+          reservedGeometry.set(command.sequence, createEvidenceMesh(
+            command,
+            this.profile!.scene.projection,
+          ));
         } else if (command.kind === "set-line") {
           reservedGeometry.set(command.sequence, createEvidenceLine(
             command,
@@ -459,6 +466,8 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     readonly visible: boolean;
     readonly alpha: number;
     readonly position: readonly [number, number];
+    readonly scale: readonly [number, number];
+    readonly rotation: number;
     readonly parent: string | null;
     readonly ordering: readonly [number, number, number, number];
     readonly hudState: Readonly<object> | null;
@@ -511,6 +520,8 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       visible: value.node.visible,
       alpha: value.node.alpha,
       position: Object.freeze([value.node.position.x, value.node.position.y] as const),
+      scale: Object.freeze([value.node.scale.x, value.node.scale.y] as const),
+      rotation: value.node.rotation,
       parent: value.node.parent === this.stage
         ? null
         : this.objectIdsByNode.get(value.node.parent as Container) ?? null,
@@ -951,10 +962,12 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         parent.addChild(node);
         this.objects.set(command.renderObjectId, {
           role: command.role,
+          parentObjectId: command.parentObjectId,
           node,
           ordering: Object.freeze([0, 0, 0, command.sequence]),
           hudState: null,
           spriteBindingKey: null,
+          spritePixelsPerUnit: null,
           hudBindingKeys: [],
           scoreHighRankBindingKeys: [],
           spriteContent: spriteChild(node),
@@ -970,6 +983,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           activeAnimationRole: null,
           activeAnimationRoles: new Set(),
           animationElapsedSeconds: null,
+          lastTransform: null,
         });
         this.objectIdsByNode.set(node, command.renderObjectId);
         return;
@@ -1006,6 +1020,9 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           node.texture = this.spriteTextures.get(bindingKey)!;
           node.anchor.copyFrom(node.texture.defaultAnchor ?? { x: 0, y: 0 });
           node.blendMode = asset.textureSettings!.blendMode;
+          object.spritePixelsPerUnit = asset.atlasRows.find(
+            (row) => row.exactKey === command.exactKey,
+          )!.pixelsPerUnit;
         } else {
           const texture = this.baseTextures.get(command.logicalAssetId)!;
           object.materialTexture = texture;
@@ -1014,7 +1031,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
             object.geometryContent.blendMode = asset.textureSettings!.blendMode;
           }
         }
-        if (object.spriteBindingKey !== bindingKey) {
+        if (command.binding === "sprite" && object.spriteBindingKey !== bindingKey) {
           if (object.spriteBindingKey !== null) {
             this.decrementSpriteReference(object.spriteBindingKey);
           }
@@ -1024,14 +1041,22 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           );
           object.spriteBindingKey = bindingKey;
         }
+        if (command.binding === "sprite" && object.lastTransform !== null && noteSpatialRole(object.role)) {
+          applyNoteSpatialTransform(object, object.lastTransform, this.profile!);
+        }
         return;
       }
       case "set-transform": {
         const object = this.objects.get(command.renderObjectId)!;
         const node = object.node;
-        node.position.set(command.position.x.value, command.position.y.value);
-        node.scale.set(command.scale.x.value, command.scale.y.value);
-        node.rotation = command.rotationDegrees.value * Math.PI / 180;
+        object.lastTransform = command;
+        if (noteSpatialRole(object.role)) {
+          applyNoteSpatialTransform(object, command, this.profile!);
+        } else {
+          node.position.set(command.position.x.value, command.position.y.value);
+          node.scale.set(command.scale.x.value, command.scale.y.value);
+          node.rotation = command.rotationDegrees.value * Math.PI / 180;
+        }
         node.alpha = command.color.alpha.value;
         node.tint = rgbTint(command.color.red.value, command.color.green.value, command.color.blue.value);
         node.mask = command.maskObjectId === null
@@ -1268,6 +1293,7 @@ class CachingProvider implements SimulatorResourceProvider {
   }
 }
 
+type SetTransformCommand = Extract<RenderCommand, { readonly kind: "set-transform" }>;
 type SetMeshCommand = Extract<RenderCommand, { readonly kind: "set-mesh" }>;
 type SetLineCommand = Extract<RenderCommand, { readonly kind: "set-line" }>;
 type SetMaskCommand = Extract<RenderCommand, { readonly kind: "set-mask" }>;
@@ -1282,11 +1308,12 @@ function createThresholdMask(
   projection: RenderOrthographicProjectionProfile,
 ): Graphics {
   const topPixel = Math.fround(projection.viewportHeight - threshold);
-  const upperWorldY = Math.fround(
-    projection.worldCenterY +
-      Math.fround((projection.viewportHeight / 2 - topPixel) / projection.pixelsPerWorldUnit),
-  );
-  return new Graphics().rect(-100, -100, 200, upperWorldY + 100).fill(0xffffff);
+  return new Graphics().rect(
+    0,
+    topPixel,
+    projection.viewportWidth,
+    Math.fround(projection.viewportHeight - topPixel),
+  ).fill(0xffffff);
 }
 
 function isEvidenceHud(
@@ -2000,7 +2027,7 @@ function applyOrdinaryNoteAnimation(
 ): void {
   const sprite = object.spriteContent;
   const profile = object.ordinaryVisibleProfile;
-  if (sprite === null || profile === undefined || object.spriteBindingKey === null) {
+  if (sprite === null || profile === undefined || object.spriteBindingKey === null || object.spritePixelsPerUnit === null) {
     throw new Error("ordinary Note animation owner/profile/resource binding is missing");
   }
   const exactKey = object.spriteBindingKey.slice(object.spriteBindingKey.indexOf("\u0000") + 1);
@@ -2026,8 +2053,11 @@ function applyOrdinaryNoteAnimation(
     sprite.tint = rgbTint(values[0]!, values[1]!, values[2]!);
     sprite.alpha = values[3]!;
   } else {
-    object.node.position.set(values[0]!, -values[1]!);
-    object.node.rotation = Math.fround(values[5]! * Math.PI / 180);
+    object.node.position.set(
+      Math.fround(values[0]! * object.spritePixelsPerUnit),
+      Math.fround(-values[1]! * object.spritePixelsPerUnit),
+    );
+    object.node.rotation = Math.fround(-values[5]! * Math.PI / 180);
   }
 }
 
@@ -2132,6 +2162,73 @@ function requireEvidenceAnimationRole(role: string): EvidenceAnimationRole {
   return role;
 }
 
+function noteSpatialRole(role: RenderObjectRole): boolean {
+  return role === "note-root" || role === "note-head" || role === "note-icon" ||
+    role === "note-intermediate" || role === "note-side-visual";
+}
+
+function boundAtlasRow(
+  profile: RenderResourceProfile,
+  bindingKey: string | null,
+): RenderAtlasRow | null {
+  if (bindingKey === null) return null;
+  const separator = bindingKey.indexOf("\u0000");
+  if (separator <= 0 || separator === bindingKey.length - 1) return null;
+  const logicalAssetId = bindingKey.slice(0, separator);
+  const exactKey = bindingKey.slice(separator + 1);
+  return profile.assets.find((asset) => asset.logicalAssetId === logicalAssetId)
+    ?.atlasRows.find((row) => row.exactKey === exactKey) ?? null;
+}
+
+function applyNoteSpatialTransform(
+  object: PixiObjectRecord,
+  command: SetTransformCommand,
+  profile: RenderResourceProfile,
+): void {
+  const row = boundAtlasRow(profile, object.spriteBindingKey);
+  const node = object.node;
+  if (object.parentObjectId === null) {
+    const projected = projectWorldPoint(
+      command.position.x.value,
+      command.position.y.value,
+      profile.scene.projection,
+    );
+    const textureScale = row === null
+      ? 1
+      : profile.scene.projection.pixelsPerWorldUnit / row.pixelsPerUnit;
+    node.position.set(projected[0], projected[1]);
+    node.scale.set(
+      Math.fround(command.scale.x.value * textureScale),
+      Math.fround(command.scale.y.value * textureScale),
+    );
+  } else {
+    const localPixelsPerUnit = row?.pixelsPerUnit ?? 1;
+    node.position.set(
+      Math.fround(command.position.x.value * localPixelsPerUnit),
+      Math.fround(-command.position.y.value * localPixelsPerUnit),
+    );
+    node.scale.set(command.scale.x.value, command.scale.y.value);
+  }
+  node.rotation = Math.fround(-command.rotationDegrees.value * Math.PI / 180);
+}
+
+function projectWorldPoint(
+  x: number,
+  y: number,
+  projection: RenderOrthographicProjectionProfile,
+): readonly [number, number] {
+  return Object.freeze([
+    Math.fround(
+      projection.viewportWidth / 2 +
+      Math.fround(Math.fround(x - projection.worldCenterX) * projection.pixelsPerWorldUnit),
+    ),
+    Math.fround(
+      projection.viewportHeight / 2 -
+      Math.fround(Math.fround(y - projection.worldCenterY) * projection.pixelsPerWorldUnit),
+    ),
+  ] as const);
+}
+
 function isEvidenceLine(command: SetLineCommand): boolean {
   return (command.materialRole === "sync-line" ||
     command.materialRole === "multiple-directional-line") &&
@@ -2147,14 +2244,8 @@ function createEvidenceLine(
   projection: RenderOrthographicProjectionProfile,
 ): Mesh {
   if (!isEvidenceLine(command)) throw new Error("line outside R2 profile");
-  const startX = projection.viewportWidth / 2 +
-    (command.start.x.value - projection.worldCenterX) * projection.pixelsPerWorldUnit;
-  const startY = projection.viewportHeight / 2 -
-    (command.start.y.value - projection.worldCenterY) * projection.pixelsPerWorldUnit;
-  const endX = projection.viewportWidth / 2 +
-    (command.end.x.value - projection.worldCenterX) * projection.pixelsPerWorldUnit;
-  const endY = projection.viewportHeight / 2 -
-    (command.end.y.value - projection.worldCenterY) * projection.pixelsPerWorldUnit;
+  const [startX, startY] = projectWorldPoint(command.start.x.value, command.start.y.value, projection);
+  const [endX, endY] = projectWorldPoint(command.end.x.value, command.end.y.value, projection);
   const dx = endX - startX;
   const dy = endY - startY;
   const length = Math.hypot(dx, dy);
@@ -2195,13 +2286,21 @@ function isEvidenceMesh(command: SetMeshCommand): boolean {
     color.alpha.bits === first.alpha.bits);
 }
 
-function createEvidenceMesh(command: SetMeshCommand): Mesh {
+function createEvidenceMesh(
+  command: SetMeshCommand,
+  projection: RenderOrthographicProjectionProfile,
+): Mesh {
   if (!isEvidenceMesh(command)) throw new Error("mesh outside R7 profile");
   const positions = new Float32Array(command.vertices.length * 2);
   const uvs = new Float32Array(command.uv.length * 2);
   for (let index = 0; index < command.vertices.length; index += 1) {
-    positions[index * 2] = command.vertices[index]!.x.value;
-    positions[index * 2 + 1] = command.vertices[index]!.y.value;
+    const projected = projectWorldPoint(
+      command.vertices[index]!.x.value,
+      command.vertices[index]!.y.value,
+      projection,
+    );
+    positions[index * 2] = projected[0];
+    positions[index * 2 + 1] = projected[1];
     uvs[index * 2] = command.uv[index]!.x.value;
     uvs[index * 2 + 1] = command.uv[index]!.y.value;
   }
