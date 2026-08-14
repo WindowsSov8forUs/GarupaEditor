@@ -1,13 +1,14 @@
 {
-  "schemaVersion": 2,
-  "status": "final-candidate-mutations-indexed-behind-global-gate",
-  "reverseCommit": "0ddc5fbd44ac8eb5a5d0b6667e259fbc1f7fa52a",
-  "reversePackage": "artifacts/investigations/simulator-total-revalidation-10-1-4",
-  "targetGarupaCommit": "9b5fdcb9267aa1d293b34c7306cec71f5c7e8590",
-  "mutationPointCount": 253,
-  "productionAcceptedMutationPointCount": 0,
+  "schemaVersion": 4,
+  "status": "ordinary-rendering-candidate-mutations-dispositioned-for-bounded-release",
+  "reverseCommit": "3f9ef7880654fc80ce45b23e4c20de326001afb9",
+  "reversePackage": "artifacts/investigations/simulator-final-capability-ledger-10-1-4",
+  "targetGarupaCommit": "5a25161cbb0fc179c877c4153dd9efeab17edcd2",
+  "mutationPointCount": 281,
+  "unreviewedMutationCount": 0,
   "perMutationDispositionRequired": true,
-  "earliestBoundary": {
+  "exactClaimBindingRequired": true,
+  "candidateGateBoundary": {
     "capability": "simulator.audit.total-revalidation-open",
     "before": [
       "installed launcher",
@@ -18,5 +19,13 @@
       "scene/domain owner mutation"
     ],
     "dynamicCase": "PUBLIC-GATE-00"
+  },
+  "releaseBoundary": {
+    "globalGateOpen": false,
+    "boundedProductionDelta": [
+      "src/simulator/public/capabilities.ts",
+      "src/simulator/public/contracts.ts"
+    ],
+    "failurePolicy": "Each request/resource/backend/owner mutation retains its own typed preflight, rollback and evidence-required boundary; closing the aggregate gate adds no fallback or mutation bypass."
   }
 }

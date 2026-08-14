@@ -1,12 +1,12 @@
 # GarupaEditor Simulator
 
-`src/simulator`正在执行**普通单人渲染端到端总复审**。旧任务书、旧acceptance、旧closure字段、Recording backend、源码标记、旧逐claim账本和旧绿色DAG均不证明本轮production表现；2026-08-14之前的最终attestation只保留为历史指针。
+`src/simulator`已完成普通单人渲染端到端candidate总复审，并进入R12有界portable release。旧任务书、旧acceptance、旧closure字段、Recording backend、源码标记和旧绿色DAG不构成本轮依据；当前正向边界只消费Reverse `6908ddfa`总复审叶事实、`3f9ef788`逐claim账本及pushed-detached candidate `5a25161`观察。
 
 ## 当前全局门
 
-总重验全局隔离已重新打开。唯一public入口`launchSimulatorModule(...)`在已安装launcher、chart解析、静态资源选择、backend prepare、scheduler启动、mount和任何scene/domain owner mutation之前返回`evidence-required / simulator.audit.total-revalidation-open`。
+R11 schema-4账本冻结104个production文件、22,216个occurrences、14,722个field/formula claims、281个mutations及646个completion claims，所有unreviewed/unknown为0。Candidate 26叶detached DAG在2,067,351ms内通过；完整ordinary WebView2使用production双decoder、单一particle→Note/HUD combined root、656-batch全谱、3 fresh×17 captures，digest为`100f640350d9f49b41cc94a2df47284b42f8e46f182fce7c862a8b921e791538`。
 
-`CAP-RENDER-ORDINARY-01`及普通粒子可见合成子门当前均为`reopened-audit`。Generic WebView2 decoder、粒子语义模拟、non-zero seek、Button 07 original-unreachable和HAB current-external-complete的历史独立结论不替完整普通场景world-space与浏览器合成背书；fixed-device exact继续客观环境阻断且不作正向声明。
+总重验aggregate gate已在R12有界关闭；`CAP-RENDER-ORDINARY-01`与`CAP-RENDER-PARTICLE-COMPOSITION-01`恢复`closed-portable`。这不移除request/resource/backend/owner各自的失败关闭，不升级Unity framebuffer、fixed-device exact、HAB original、excluded玩法或Stage 9。
 
 机器账本：
 
@@ -18,8 +18,8 @@
 | 门 | 状态 | 当前边界 |
 | --- | --- | --- |
 | Public/autonomous、chart、runtime | `closed-portable` | 当前10.1.4证据、raw production-path与detached DAG限定范围；non-zero practice seek见独立行 |
-| Ordinary Note/HUD Pixi scene | `reopened-audit` | 重建独立10.1.4父链、world-space、mask/order和完整WebView2组合观察；旧656-batch/Score结果不作本轮正向依据 |
-| Ordinary particle visible composition | `reopened-audit` | 语义模拟历史子门不替actual Pixi、跨stage ordering、browser decode和dispose背书 |
+| Ordinary Note/HUD Pixi scene | `closed-portable` | Reverse `OSR-E0001..E13323`、121条actual Pixi world records、parent/Y/mask/fallback反例、全部Note/HUD生命周期及完整production WebView2 combined scene限定范围 |
+| Ordinary particle visible composition | `closed-portable` | 17-root actual Pixi world/UV/blend/viewport、stage-order/UV-row反例、production particle decoder、跨stage ordering及dispose归零限定范围 |
 | Audio、Particle semantic simulation | `closed-portable` | semantic/PCM/WebAudio graph及deterministic particle command/simulation限定范围；不含当前可见合成、物理输出/framebuffer |
 | HAB current-external-complete | `closed-portable` | 11项pinned资源、179 rows、全Note/mesh/line/field/mask/lane-change及Pixi consumer；差异仅文档披露 |
 | HAB original parity | `open-evidence-required` | UnityFS、natural owner/setter、Root_effect原clip及original physical frame不作等价声明 |
@@ -30,7 +30,7 @@
 | Character/card/deck skill、Fever、multiplayer | `excluded` | public和production依赖图不得引入 |
 | Main-program integration | `unauthorized-stage-9` | 不修改App/window/editor/Tauri/mobile入口 |
 
-状态词：`closed-portable`只表示当前证据和raw验收明确覆盖的portable合同；`closed-original-unreachable`表示原作合法输入不可达而非待补功能；`open-objective-environment-blocked`保持exact不声明且记录可复现环境阻断；`reopened-audit`表示当前失败关闭且不是正向能力；`degraded-explicit`不等于原作parity；`open-device-exact`保留为旧审计状态词，其余开放和排除状态按表中边界解释。
+状态词：`closed-portable`只表示当前证据和raw验收明确覆盖的portable合同；`closed-original-unreachable`表示原作合法输入不可达而非待补功能；`open-objective-environment-blocked`保持exact不声明且记录可复现环境阻断；`degraded-explicit`不等于原作parity；`open-device-exact`与`reopened-audit`仅保留为历史审计词，其余开放和排除状态按表中边界解释。
 
 ## Public合同
 
@@ -65,8 +65,8 @@ src/simulator/
 
 ## Rendering验收分层
 
-- `actual-pixi-command-scene-routing`：历史raw observation只作待复核输入；普通Note/HUD与粒子可见合成均为`reopened-audit`，必须补齐父链/world-space和完整production WebView2 combined-scene观察后才能重新关闭。
-- `webview2-decode-raster`：真实production `BrowserPixiTextureDecoder`在WebView2 151.0.4129.78执行`createImageBitmap`、`FontFace` glyph及Pixi WebGL raster，指标与Reverse合同一致；跨browser/GPU digest不泛化。
+- `actual-pixi-command-scene-routing`：testing-only observer独立连乘实际Pixi父链并观察local/world matrix、bounds、mask、texture、geometry及combined stage order；parent、Unity Y、mask-space、stage-order、particle UV-row和fallback六类故意反例均会失败。
+- `webview2-decode-raster`：真实production `BrowserPixiTextureDecoder`与`BrowserPixiParticleTextureDecoder`在WebView2 151.0.4129.78完整场景执行`createImageBitmap`、`FontFace` glyph及Pixi WebGL raster；3 fresh digest只限定当前portable环境，不泛化跨browser/GPU或原Unity exact。
 - `framebuffer/device-exact`：锁定设备调查已形成四项客观环境阻断，exact继续不声明。
 
 Synthetic decoder、资源hash或typed command仍不能单独升级为真实WebView2 raster证明。
@@ -77,8 +77,8 @@ Synthetic decoder、资源hash或typed command仍不能单独升级为真实WebV
 
 流程见[`evidence-workflow.md`](./evidence-workflow.md)。只消费已verify、commit、push的Reverse证据。10.1.3或其他来源必须先建立逐claim等价证明、适用域和反例检查。旧调查包可提供待重新核验的原始事实，但其`closed`、`productionAuthorization`或总体closure字段不是本轮授权。
 
-历史实现提交`9ab1ff7a339fa3cfd395c5f6fe841e1f3f1585a9`及Reverse账本`36a6941f`已push，但本轮不继承其普通渲染正向结论。新的10.1.4独立证据、production消费、完整普通场景WebView2观察、pushed-detached DAG和最终逐claim账本完成前，全局门保持open。HAB original、fixed-device exact、excluded和stage-9边界不因本轮复审升级。
+当前依据为Reverse普通渲染静态/HUD提交`6908ddfa8a45721f981e2356a9dde84970313bae`、candidate逐claim账本`3f9ef7880654fc80ce45b23e4c20de326001afb9`及Garupa candidate `5a25161cbb0fc179c877c4153dd9efeab17edcd2`。R12只执行有界gate/summary transition；R13从已push release commit运行detached DAG，R14才登记最终attestation。HAB original、fixed-device exact、excluded和stage-9边界不因本轮复审升级。
 
-最终去重入口为`npm.cmd run simulator:test:total-revalidation`。它按唯一leaf DAG执行isolated tsc、chart/clock/input/state、render raw+independent verifier、audio、particle、host/runtime/public、C07证据消费及真实production WebView2 decoder；不运行Vite/Tauri，也不声称原作framebuffer或物理输出等价。
+最终去重入口为`npm.cmd run simulator:test:total-revalidation`。它按唯一leaf DAG执行isolated tsc、chart/clock/input/state、render raw+independent verifier、audio、particle、host/runtime/public、C07证据消费、generic browser及完整ordinary production WebView2双decoder；不运行Vite/Tauri，也不声称原作framebuffer或物理输出等价。
 
 `mainProgramIntegrationAuthorization=false`。

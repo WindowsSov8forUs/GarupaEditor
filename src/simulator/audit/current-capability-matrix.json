@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "auditStatus": "ordinary-single-rendering-total-reaudit-open",
+  "auditStatus": "ordinary-single-rendering-bounded-release",
   "lockedSample": {
     "package": "jp.co.craftegg.band",
     "versionName": "10.1.4",
@@ -85,26 +85,21 @@
     {
       "id": "CAP-RENDER-ORDINARY-01",
       "capability": "ordinary Note and single-player HUD Pixi command/scene routing",
-      "productionPath": "engine render producer -> Pixi owner/resource mapping",
-      "status": "reopened-audit",
+      "productionPath": "engine render producer -> Pixi owner/resource mapping -> single combined scene root",
+      "status": "closed-portable",
       "reverseEvidence": [
-        "ordinary-visible-rendering-portable-10-1-4@f94947d9",
-        "score-hud-portable-revalidation-10-1-4@a53f8a27",
-        "score-hud-panel-clip-portable-10-1-4@1abae506"
+        "ordinary-single-rendering-total-reaudit-10-1-4@6908ddfa OSR-E0001..OSR-E13323 and OSR-GAP-01",
+        "simulator-final-capability-ledger-10-1-4@3f9ef788 target 5a25161cbb0fc179c877c4153dd9efeab17edcd2"
       ],
-      "dynamicRequirement": "independent 10.1.4 hierarchy/world-space oracle plus complete production Note/HUD/particle WebView2 composition and pushed-detached DAG",
-      "historicalSubgatesNotAcceptedForCurrentReaudit": [
-        "score-high-rank-panel-indicator-clip-contract",
-        "WebView2 151.0.4129.78 PNG/FontFace/glyph/Pixi raster"
-      ],
-      "openSubgates": [
-        "ordinary scene world-space composition",
-        "complete ordinary production WebView2 composition",
-        "framebuffer/device exact"
+      "dynamicRequirement": "actual Pixi world observer with six mutation sentinels plus 656-batch production dual-decoder combined-scene WebView2 3-fresh capture and pushed-detached 26-leaf DAG",
+      "portableObservations": [
+        "complete parent/local/world transform, bounds, mask and ordering",
+        "Note/line/mesh/HUD lifecycle matrices",
+        "WebView2 151.0.4129.78 aggregate 100f640350d9f49b41cc94a2df47284b42f8e46f182fce7c862a8b921e791538"
       ],
       "exclusions": [
         "cross-runtime/GPU exact raster digest",
-        "framebuffer/device exact"
+        "Unity framebuffer/device exact"
       ]
     },
     {
@@ -183,17 +178,14 @@
     {
       "id": "CAP-RENDER-PARTICLE-COMPOSITION-01",
       "capability": "ordinary particle visible Pixi and combined-scene composition",
-      "productionPath": "particle command/simulation -> Pixi renderer -> combined ordinary scene root",
-      "status": "reopened-audit",
+      "productionPath": "particle command/simulation -> production particle decoder/Pixi renderer -> particle-before-Note/HUD combined root",
+      "status": "closed-portable",
       "reverseEvidence": [
-        "device-runtime-closure-10-1-4 portable semantic closure"
+        "ordinary-single-rendering-total-reaudit-10-1-4@6908ddfa OSR-E6201..OSR-E13323 and OSR-GAP-01",
+        "device-runtime-closure-10-1-4 portable semantic closure",
+        "simulator-final-capability-ledger-10-1-4@3f9ef788 target 5a25161cbb0fc179c877c4153dd9efeab17edcd2"
       ],
-      "dynamicRequirement": "current 10.1.4 hierarchy/order evidence plus actual Pixi world observation and complete production WebView2 combined-scene capture",
-      "openSubgates": [
-        "cross-stage ordering",
-        "browser particle texture decode in complete scene",
-        "dispose owner/resource stability"
-      ],
+      "dynamicRequirement": "17-root actual Pixi world/UV/blend/viewport observations, cross-stage sentinel, production BrowserPixiParticleTextureDecoder full-scene capture and zero-owner cleanup",
       "exclusions": [
         "Unity shader/GPU/driver/framebuffer parity"
       ]

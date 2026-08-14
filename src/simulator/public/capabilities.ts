@@ -9,7 +9,7 @@ export const TOTAL_REVALIDATION_BOUNDARY =
   "The total simulator evidence revalidation gate rejects before the installed launcher, chart parsing, static-resource selection, backend preparation, scheduler start, or scene/domain owner mutation.";
 
 export function isTotalRevalidationOpen(): boolean {
-  return true;
+  return false;
 }
 
 export function totalRevalidationFailure(): SimulatorModuleLaunchResult {
@@ -29,7 +29,7 @@ export function createSimulatorModuleCapabilitySummary(
   return Object.freeze({
     rendering,
     publicAutonomousCore: "closed-portable" as const,
-    ordinaryCommandScene: "reopened-audit" as const,
+    ordinaryCommandScene: "closed-portable" as const,
     habahiroCurrentExternalComplete: "closed-portable" as const,
     habahiroOriginalParity: "open-evidence-required" as const,
     nonzeroInitialPracticeSeek: "closed-portable" as const,
@@ -40,8 +40,6 @@ export function createSimulatorModuleCapabilitySummary(
     mainProgramIntegration: "unauthorized-stage-9" as const,
     selectedRenderingGate: rendering === null
       ? "open-evidence-required" as const
-      : rendering === "ordinary-current-portable"
-        ? "reopened-audit" as const
-        : "closed-portable" as const,
+      : "closed-portable" as const,
   });
 }

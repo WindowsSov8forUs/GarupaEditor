@@ -1,351 +1,87 @@
 {
-  "schemaVersion": 1,
-  "status": "final-evidence-bounded-capability-attestation",
-  "currentDisposition": "historical-pre-ordinary-single-rendering-total-reaudit",
-  "ordinaryRenderingPositiveAuthority": false,
+  "schemaVersion": 2,
+  "status": "ordinary-single-rendering-bounded-release-candidate",
+  "currentDisposition": "R11-candidate-ledger-verified-R12-bounded-gate-transition",
+  "ordinaryRenderingPositiveAuthority": true,
   "reverseAudit": {
-    "commit": "0ddc5fbd44ac8eb5a5d0b6667e259fbc1f7fa52a",
-    "package": "simulator-total-revalidation-10-1-4",
-    "inventoryTargetCommit": "9b5fdcb9267aa1d293b34c7306cec71f5c7e8590",
-    "schemaVersion": 2,
-    "productionFileCount": 102,
-    "occurrenceCount": 21322,
-    "fieldClaimCount": 14158,
-    "mutationPointCount": 253,
-    "completionClaimCount": 555,
-    "fieldDispositionCounts": {
-      "field-evidence-bound": 13931,
-      "early-evidence-required": 225,
-      "excluded": 2
-    }
+    "commit": "3f9ef7880654fc80ce45b23e4c20de326001afb9",
+    "package": "artifacts/investigations/simulator-final-capability-ledger-10-1-4",
+    "inventoryTargetCommit": "5a25161cbb0fc179c877c4153dd9efeab17edcd2",
+    "schemaVersion": 4,
+    "productionFileCount": 104,
+    "occurrenceCount": 22216,
+    "fieldClaimCount": 14722,
+    "mutationPointCount": 281,
+    "completionClaimCount": 646,
+    "unreviewedOrSupportedUnknown": 0
   },
   "reviewPolicy": {
     "sourceOccurrenceIsNotEvidence": true,
     "groupMappingIsNotBlanketAuthorization": true,
-    "allowedDispositions": [
-      "field-evidence-bound",
-      "structural-nonbehavior",
-      "excluded",
-      "early-evidence-required"
-    ],
-    "reachableSupportedUnknownCount": 0,
+    "exactClaimBindingRequired": true,
+    "currentInventoryRequired": true,
     "networkFallbackCount": 0,
     "ambientRandomOrWallClockCount": 0,
     "untypedProductionEscapeCount": 0,
-    "commentOnlyCatchCount": 0,
-    "currentInventoryRequired": true,
-    "unreviewedOccurrenceCount": 0,
-    "unreviewedCompletionClaimCount": 0
+    "commentOnlyCatchCount": 0
   },
-  "groups": [
-    {
-      "id": "audio",
-      "occurrenceCount": 925,
-      "disposition": "field-evidence-bound",
-      "evidence": [
-        "audio-portable-lifecycle-pcm-contract-10-1-4",
-        "audio-runtime-contract-10-1-4"
-      ],
-      "portableBoundary": "semantic command, PCM and WebAudio graph; CRI/Android mixer/physical output excluded"
-    },
-    {
-      "id": "autonomous-runtime",
-      "occurrenceCount": 544,
-      "disposition": "field-evidence-bound",
-      "evidence": [
-        "autonomous-simulator-portable-pack-10-1-4"
-      ],
-      "portableBoundary": "single internal launch/session lifecycle; stage-9 excluded"
-    },
-    {
-      "id": "chart-construction",
-      "occurrenceCount": 961,
-      "disposition": "field-evidence-bound",
-      "evidence": [
-        "chart-construction committed contracts"
-      ],
-      "portableBoundary": "registered immutable construction result only"
-    },
-    {
-      "id": "engine-core",
-      "occurrenceCount": 2404,
-      "disposition": "field-evidence-bound",
-      "evidence": [
-        "first-slice contracts",
-        "clock-scheduling-runtime-oracle"
-      ],
-      "portableBoundary": "typed manager lifecycle and zero-seek scheduling"
-    },
-    {
-      "id": "host-replay",
-      "occurrenceCount": 506,
-      "disposition": "field-evidence-bound",
-      "evidence": [
-        "device-runtime-closure-10-1-4",
-        "score-life-state-runtime-contract-10-1-4"
-      ],
-      "portableBoundary": "opaque checkpoint replay; non-zero initial seek remains early-evidence-required"
-    },
-    {
-      "id": "judgement",
-      "occurrenceCount": 1395,
-      "disposition": "field-evidence-bound",
-      "evidence": [
-        "auto-live investigations",
-        "manual-input-runtime-contract-10-1-4"
-      ],
-      "portableBoundary": "manual and Auto typed input; character/card/deck/Fever/multiplayer excluded"
-    },
-    {
-      "id": "particle",
-      "occurrenceCount": 1299,
-      "disposition": "field-evidence-bound",
-      "evidence": [
-        "device-runtime-closure-10-1-4"
-      ],
-      "portableBoundary": "deterministic semantic simulation and Pixi handoff; Unity GPU/framebuffer excluded"
-    },
-    {
-      "id": "rendering",
-      "occurrenceCount": 3290,
-      "disposition": "field-evidence-bound",
-      "evidence": [
-        "ordinary-visible-rendering-portable-10-1-4",
-        "resource-pixi-rendering-runtime-contract-10-1-4"
-      ],
-      "portableBoundary": "typed command/scene routing; browser decode and device framebuffer separate"
-    },
-    {
-      "id": "resource-selection",
-      "occurrenceCount": 2465,
-      "disposition": "field-evidence-bound",
-      "evidence": [
-        "autonomous-simulator-portable-pack-10-1-4",
-        "ordinary-visible-rendering-portable-10-1-4"
-      ],
-      "portableBoundary": "offline exact logical identities; no URL/network/automatic fallback"
-    },
-    {
-      "id": "scene-manual",
-      "occurrenceCount": 215,
-      "disposition": "field-evidence-bound",
-      "evidence": [
-        "autonomous-simulator-scene-layout-10-1-4",
-        "manual-input-runtime-contract-10-1-4"
-      ],
-      "portableBoundary": "15 current anchors; Button 07 remains early-evidence-required"
-    },
-    {
-      "id": "score-life",
-      "occurrenceCount": 226,
-      "disposition": "field-evidence-bound",
-      "evidence": [
-        "score-hud-rank-gauge-10-1-4",
-        "score-life-state-runtime-contract-10-1-4"
-      ],
-      "portableBoundary": "single-player score/life state without character effects"
-    }
-  ],
-  "postInventoryChangedProductionFiles": {
-    "status": "reviewed-under-the-same-policy",
-    "files": [
-      "src/simulator/assembly/chartCapabilityValidation.ts",
-      "src/simulator/assembly/resourceAssembly.ts",
-      "src/simulator/assembly/sessionRecipe.ts",
-      "src/simulator/backends/audio/offlineAudioBackend.ts",
-      "src/simulator/backends/audio/webAudioBackend.ts",
-      "src/simulator/backends/audioValidation.ts",
-      "src/simulator/backends/particleContracts.ts",
-      "src/simulator/backends/particleValidation.ts",
-      "src/simulator/backends/pixi/pixiParticleRendererBackend.ts",
-      "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "src/simulator/backends/recordingRendererBackend.ts",
-      "src/simulator/backends/renderingCommandValidation.ts",
-      "src/simulator/backends/renderingContracts.ts",
-      "src/simulator/backends/renderingValidation.ts",
-      "src/simulator/backends/resources/currentScoreGaugeSsAnimationProfile.ts",
-      "src/simulator/backends/resources/habahiroExternalManifest.ts",
-      "src/simulator/backends/resources/habahiroExternalProvider.ts",
-      "src/simulator/engine/managers/inGameManager.ts",
-      "src/simulator/engine/managers/noteManager.ts",
-      "src/simulator/engine/rendering/renderCommandProducer.ts",
-      "src/simulator/host/createSimulatorEngine.ts",
-      "src/simulator/index.ts",
-      "src/simulator/platform/platformComposition.ts",
-      "src/simulator/public/capabilities.ts",
-      "src/simulator/public/contracts.ts",
-      "src/simulator/public/failures.ts",
-      "src/simulator/public/index.ts",
-      "src/simulator/resources/sharedResourceAdapters.ts",
-      "src/simulator/resources/staticResourceSelector.ts",
-      "src/simulator/runtime/autonomousSimulatorRuntime.ts"
+  "ordinaryRenderingEvidence": {
+    "reverseCommit": "6908ddfa8a45721f981e2356a9dde84970313bae",
+    "package": "artifacts/investigations/ordinary-single-rendering-total-reaudit-10-1-4",
+    "leafRange": "OSR-E0001..OSR-E13323 plus OSR-GAP-01",
+    "worldObserverRecords": 121,
+    "mutationSentinels": [
+      "parent",
+      "unity-y",
+      "mask-space",
+      "stage-order",
+      "particle-uv-row",
+      "fallback"
     ]
   },
-  "releaseTransition": {
-    "status": "passed-pushed-detached-dag",
-    "prerequisiteCandidateCommit": "735a040dc91c97dda8dc09ed1022d0771b8e04d2",
-    "prerequisiteDetachedDag": {
-      "status": "passed",
-      "uniqueLeaves": 23,
-      "elapsedMilliseconds": 939408,
-      "scoreMaskIndependentRawRows": 20,
-      "syntheticDecoderClaimsBrowserRaster": false,
-      "syntheticDecoderClaimsDeviceExact": false
-    },
-    "boundedProductionFiles": [
-      "src/simulator/public/capabilities.ts",
-      "src/simulator/public/contracts.ts",
-      "src/simulator/public/launch.ts"
-    ],
-    "releaseCommit": "0d0e4459f295f2d6cbbe7f4a1f93d07a1c9980fa",
-    "releaseDetachedDag": {
-      "status": "passed",
-      "source": "pushed-detached-head",
-      "uniqueLeaves": 23,
-      "elapsedMilliseconds": 985307,
-      "scoreMaskIndependentRawRows": 20,
-      "browserDecodeRaster": "open-evidence-required",
-      "fixedDeviceExact": "open-device-exact",
-      "mainProgramIntegration": "unauthorized-stage-9"
+  "candidateDetachedDag": {
+    "status": "passed",
+    "commit": "5a25161cbb0fc179c877c4153dd9efeab17edcd2",
+    "uniqueLeaves": 26,
+    "elapsedMilliseconds": 2067351,
+    "sourceCodeCopied": false,
+    "nodeModulesOnlyReused": true,
+    "networkUsed": false,
+    "reverseWorktreeRead": false,
+    "ordinaryWebView2": {
+      "runtime": "151.0.4129.78",
+      "productionRenderDecoder": "BrowserPixiTextureDecoder",
+      "productionParticleDecoder": "BrowserPixiParticleTextureDecoder",
+      "combinedRoot": true,
+      "freshProcesses": 3,
+      "capturesPerProcess": 17,
+      "aggregateSha256": "100f640350d9f49b41cc94a2df47284b42f8e46f182fce7c862a8b921e791538"
     }
   },
-  "finalCapabilityContinuation": {
-    "implementationCommit": "9ab1ff7a339fa3cfd395c5f6fe841e1f3f1585a9",
-    "reverseLedgerCommit": "36a6941fab361c1f6bcf1eef02069d4867f565c7",
-    "reverseLedgerPackage": "simulator-final-capability-ledger-10-1-4",
-    "counts": {
-      "productionFiles": 102,
-      "behaviorOccurrences": 21649,
-      "fieldClaims": 14322,
-      "mutationPoints": 269,
-      "completionStatusOccurrences": 637
-    },
-    "unreviewedOrSupportedUnknown": 0,
-    "worktreeDag": {
-      "uniqueLeaves": 25,
-      "elapsedMilliseconds": 506162,
-      "status": "historical-pre-score-hud-reaudit-passed"
-    },
-    "pushedDetachedDag": {
-      "uniqueLeaves": 25,
-      "elapsedMilliseconds": 1374768,
-      "status": "passed",
-      "productionBrowserWebView2Executed": true,
-      "completeScoreHudWebView2Executed": true,
-      "scoreHudRasterSha256": "7ba90fba47ab94580da4285ffe6086078c7d3d4451cfcdea0139e935c86369a5",
-      "scoreHudNonTransparentPixels": 28587
-    }
+  "releaseTransition": {
+    "status": "bounded-R12-transition",
+    "prerequisiteCandidateCommit": "5a25161cbb0fc179c877c4153dd9efeab17edcd2",
+    "prerequisiteReverseLedgerCommit": "3f9ef7880654fc80ce45b23e4c20de326001afb9",
+    "boundedProductionFiles": [
+      "src/simulator/public/capabilities.ts",
+      "src/simulator/public/contracts.ts"
+    ],
+    "globalGateOpenAfterTransition": false,
+    "ordinaryCommandScene": "closed-portable",
+    "ordinaryParticleVisibleComposition": "closed-portable",
+    "releaseCommitAndDetachedDagRecordedAtR14": true
+  },
+  "historicalAttestation": {
+    "file": "current-final-capability-attestation.json",
+    "positiveAuthorityForThisRelease": false,
+    "replacementStage": "R14"
   },
   "openOrExcluded": [
     "HABAHIRO original UnityFS/natural runtime/Root_effect/frame parity",
-    "fixed-device real 120/adaptive cadence, GPU/framebuffer, visible onset/peak and physical speaker output with objective environment blockers",
+    "fixed-device real 120/adaptive cadence, GPU/framebuffer, visible onset/peak and physical speaker output",
     "character/card/deck effects, Heal/Guard/NeverDie, Fever and multiplayer",
     "stage-9 main-program integration"
   ],
-  "currentProductionFileCount": 102,
-  "currentProductionFiles": [
-    "src/simulator/assembly/chartCapabilityValidation.ts",
-    "src/simulator/assembly/resourceAssembly.ts",
-    "src/simulator/assembly/sessionRecipe.ts",
-    "src/simulator/backends/audio/browserAudioResourcePreflightAdapter.ts",
-    "src/simulator/backends/audio/offlineAudioBackend.ts",
-    "src/simulator/backends/audio/offlineAudioContracts.ts",
-    "src/simulator/backends/audio/webAudioBackend.ts",
-    "src/simulator/backends/audioContracts.ts",
-    "src/simulator/backends/audioValidation.ts",
-    "src/simulator/backends/contracts.ts",
-    "src/simulator/backends/particleContracts.ts",
-    "src/simulator/backends/particleValidation.ts",
-    "src/simulator/backends/particles/deterministicParticleBackend.ts",
-    "src/simulator/backends/pixi/browserPixiParticleTextureDecoder.ts",
-    "src/simulator/backends/pixi/browserPixiTextureDecoder.ts",
-    "src/simulator/backends/pixi/pixiParticleRendererBackend.ts",
-    "src/simulator/backends/pixi/pixiRendererBackend.ts",
-    "src/simulator/backends/recordingAudioBackend.ts",
-    "src/simulator/backends/recordingBackend.ts",
-    "src/simulator/backends/recordingParticleBackend.ts",
-    "src/simulator/backends/recordingRendererBackend.ts",
-    "src/simulator/backends/renderingCommandValidation.ts",
-    "src/simulator/backends/renderingContracts.ts",
-    "src/simulator/backends/renderingValidation.ts",
-    "src/simulator/backends/resources/currentAudioResourceManifest.ts",
-    "src/simulator/backends/resources/currentOrdinaryResourceManifest.ts",
-    "src/simulator/backends/resources/currentOrdinaryVisibleProfile.ts",
-    "src/simulator/backends/resources/currentOrdinaryVisibleResourceManifest.ts",
-    "src/simulator/backends/resources/currentParticleResourceManifest.ts",
-    "src/simulator/backends/resources/currentScoreGaugeSsAnimationProfile.ts",
-    "src/simulator/backends/resources/currentScoreHudResourceManifest.ts",
-    "src/simulator/backends/resources/habahiroExternalManifest.ts",
-    "src/simulator/backends/resources/habahiroExternalProvider.ts",
-    "src/simulator/backends/resources/localAudioResourceProvider.ts",
-    "src/simulator/backends/resources/localParticleResourceProvider.ts",
-    "src/simulator/backends/resources/localResourceProvider.ts",
-    "src/simulator/backends/resources/particleResourcePreparation.ts",
-    "src/simulator/backends/resources/sha256.ts",
-    "src/simulator/engine/audio/audioCommandProducer.ts",
-    "src/simulator/engine/chart/batchConversion.ts",
-    "src/simulator/engine/chart/bmsBuilder.ts",
-    "src/simulator/engine/chart/construction.ts",
-    "src/simulator/engine/chart/evidence.ts",
-    "src/simulator/engine/chart/finalize.ts",
-    "src/simulator/engine/chart/immutability.ts",
-    "src/simulator/engine/chart/multiRangeCombine.ts",
-    "src/simulator/engine/chart/multiRangeSources.ts",
-    "src/simulator/engine/chart/musicScoreBezier.ts",
-    "src/simulator/engine/chart/noteGraph.ts",
-    "src/simulator/engine/chart/types.ts",
-    "src/simulator/engine/data/autoLiveJudgement.ts",
-    "src/simulator/engine/data/inGameCalculatedData.ts",
-    "src/simulator/engine/data/inGameState.ts",
-    "src/simulator/engine/data/manualInput.ts",
-    "src/simulator/engine/data/manualJudgement.ts",
-    "src/simulator/engine/data/noteData.ts",
-    "src/simulator/engine/data/oneFrameData.ts",
-    "src/simulator/engine/data/scoreLifeState.ts",
-    "src/simulator/engine/data/singlePlayScoreGauge.ts",
-    "src/simulator/engine/evidence.ts",
-    "src/simulator/engine/lifecycle.ts",
-    "src/simulator/engine/managers/inGameDirector.ts",
-    "src/simulator/engine/managers/inGameManager.ts",
-    "src/simulator/engine/managers/inGameMusicScoreController.ts",
-    "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
-    "src/simulator/engine/managers/inGameRecord.ts",
-    "src/simulator/engine/managers/inputBoundaries.ts",
-    "src/simulator/engine/managers/noteManager.ts",
-    "src/simulator/engine/managers/scoreLifeStateManager.ts",
-    "src/simulator/engine/managers/scoreUtility.ts",
-    "src/simulator/engine/managers/singlePlayScoreGauge.ts",
-    "src/simulator/engine/managers/slideNoteManager.ts",
-    "src/simulator/engine/notes/noteBase.ts",
-    "src/simulator/engine/notes/noteBpmChange.ts",
-    "src/simulator/engine/notes/noteTypes.ts",
-    "src/simulator/engine/particles/particleCommandProducer.ts",
-    "src/simulator/engine/particles/particleFrameCoordinator.ts",
-    "src/simulator/engine/particles/particleRandom.ts",
-    "src/simulator/engine/particles/particleRouteResolver.ts",
-    "src/simulator/engine/particles/particleSimulation.ts",
-    "src/simulator/engine/rendering/ordinaryLongChildLifecycle.ts",
-    "src/simulator/engine/rendering/ordinaryNoteGeometry.ts",
-    "src/simulator/engine/rendering/ordinarySlideChildLifecycle.ts",
-    "src/simulator/engine/rendering/renderCommandProducer.ts",
-    "src/simulator/engine/runtime/chartRuntimeMetadata.ts",
-    "src/simulator/host/contracts.ts",
-    "src/simulator/host/createSimulatorEngine.ts",
-    "src/simulator/host/portableReplaySession.ts",
-    "src/simulator/index.ts",
-    "src/simulator/platform/platformComposition.ts",
-    "src/simulator/public/capabilities.ts",
-    "src/simulator/public/contracts.ts",
-    "src/simulator/public/failures.ts",
-    "src/simulator/public/index.ts",
-    "src/simulator/public/launch.ts",
-    "src/simulator/resources/sharedResourceAdapters.ts",
-    "src/simulator/resources/sharedStaticResourceStore.ts",
-    "src/simulator/resources/staticResourceSelector.ts",
-    "src/simulator/runtime/autonomousSimulatorRuntime.ts",
-    "src/simulator/runtime/contracts.ts",
-    "src/simulator/runtime/moduleEntryBinding.ts",
-    "src/simulator/scene/simulatorSceneLayout.ts"
-  ],
-  "supersededReason": "The former final review remains a historical inventory pointer only while ordinary Note/HUD/particle visible composition is reopened behind the total evidence-required gate. Earlier grouped reviews, source occurrences, old green DAGs and the bounded release transition do not authorize the current ordinary-rendering reaudit; separately open, excluded, device-exact and stage-9 gates remain non-positive."
+  "currentProductionFileCount": 104,
+  "supersededReason": "The previous group summary and 102-file inventory are replaced by the pushed schema-4 exact-binding candidate ledger; final release identity is intentionally deferred to R14."
 }

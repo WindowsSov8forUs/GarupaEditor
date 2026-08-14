@@ -4,28 +4,18 @@ import { fileURLToPath } from "node:url";
 
 const testingRoot = resolve(fileURLToPath(new URL(".", import.meta.url)));
 const simulatorRoot = resolve(testingRoot, "..");
-const matrixPath = join(simulatorRoot, "audit", "current-capability-matrix.json");
-const claimsPath = join(simulatorRoot, "audit", "current-claim-ledger.json");
-const integrityPath = join(simulatorRoot, "audit", "current-production-integrity-review.json");
-const fieldIndexPath = join(simulatorRoot, "audit", "current-field-claim-index.json");
-const mutationPath = join(simulatorRoot, "audit", "current-mutation-boundaries.json");
-const attestationPath = join(simulatorRoot, "audit", "current-final-capability-attestation.json");
-const matrix = JSON.parse(readFileSync(matrixPath, "utf8"));
-const claims = JSON.parse(readFileSync(claimsPath, "utf8"));
-const integrity = JSON.parse(readFileSync(integrityPath, "utf8"));
-const fieldIndex = JSON.parse(readFileSync(fieldIndexPath, "utf8"));
-const mutations = JSON.parse(readFileSync(mutationPath, "utf8"));
-const attestation = JSON.parse(readFileSync(attestationPath, "utf8"));
+const auditRoot = join(simulatorRoot, "audit");
+const matrix = json("current-capability-matrix.json");
+const claims = json("current-claim-ledger.json");
+const integrity = json("current-production-integrity-review.json");
+const fieldIndex = json("current-field-claim-index.json");
+const mutations = json("current-mutation-boundaries.json");
+const attestation = json("current-final-capability-attestation.json");
 const readme = readFileSync(join(simulatorRoot, "README.md"), "utf8");
+const auditReadme = readFileSync(join(auditRoot, "README.md"), "utf8");
 const publicContracts = readFileSync(join(simulatorRoot, "public", "contracts.ts"), "utf8");
 const publicCapabilities = readFileSync(join(simulatorRoot, "public", "capabilities.ts"), "utf8");
 
-if (matrix.schemaVersion !== 1 || !Array.isArray(matrix.rows) || matrix.rows.length === 0) {
-  throw new Error("capability matrix is missing or empty");
-}
-if (claims.schemaVersion !== 1 || claims.rules?.forbidUnscopedCompletionClaims !== true) {
-  throw new Error("claim ledger does not fail closed");
-}
 const productionRoots = new Set([
   "assembly", "backends", "engine", "host", "platform", "public", "resources", "runtime", "scene",
 ]);
@@ -35,197 +25,150 @@ const currentProductionFiles = [...walk(simulatorRoot)]
   .filter((path) => path === "index.ts" || productionRoots.has(path.split("/")[0]))
   .map((path) => `src/simulator/${path}`)
   .sort();
-if (
-  integrity.schemaVersion !== 1 || integrity.status !== "final-evidence-bounded-capability-attestation" ||
-  integrity.currentDisposition !== "historical-pre-ordinary-single-rendering-total-reaudit" ||
-  integrity.ordinaryRenderingPositiveAuthority !== false ||
-  integrity.reviewPolicy?.sourceOccurrenceIsNotEvidence !== true ||
-  integrity.reviewPolicy?.groupMappingIsNotBlanketAuthorization !== true ||
-  integrity.reviewPolicy?.currentInventoryRequired !== true ||
-  typeof integrity.supersededReason !== "string"
-) {
-  throw new Error("production integrity review does not describe the bounded portable release candidate");
+
+if (matrix.schemaVersion !== 1 || matrix.auditStatus !== "ordinary-single-rendering-bounded-release" ||
+    !Array.isArray(matrix.rows) || matrix.rows.length !== 15) {
+  throw new Error("bounded-release capability matrix is missing or malformed");
 }
-const ids = new Set();
-const statuses = new Set([
-  "closed-portable", "closed-original-unreachable", "degraded-explicit", "excluded", "open-evidence-required",
-  "open-device-exact", "open-objective-environment-blocked", "unauthorized-stage-9", "reopened-audit",
+if (claims.schemaVersion !== 1 || claims.auditStatus !== matrix.auditStatus ||
+    claims.rules?.forbidUnscopedCompletionClaims !== true || claims.rules?.recordingOrSourceMarkersCannotClosePositiveGate !== true) {
+  throw new Error("bounded-release claim ledger does not fail closed");
+}
+const allowedStatuses = new Set([
+  "closed-portable", "closed-original-unreachable", "degraded-explicit", "excluded",
+  "open-evidence-required", "open-device-exact", "open-objective-environment-blocked", "unauthorized-stage-9",
 ]);
+const rows = new Map();
 for (const row of matrix.rows) {
-  if (typeof row.id !== "string" || ids.has(row.id)) throw new Error("capability IDs must be unique");
-  ids.add(row.id);
-  if (!statuses.has(row.status)) throw new Error(`${row.id} has an unclassified status: ${row.status}`);
-  if (row.status === "reopened-audit" && typeof row.dynamicRequirement !== "string") {
-    throw new Error(`${row.id} is reopened without a current dynamic requirement`);
+  if (typeof row.id !== "string" || rows.has(row.id) || !allowedStatuses.has(row.status)) {
+    throw new Error(`invalid capability row: ${row.id}`);
   }
-  if (row.status === "open-evidence-required" && typeof row.failureBoundary !== "string" && row.id !== "CAP-HAB-EXACT-01") {
-    throw new Error(`${row.id} lacks an early failure boundary`);
+  rows.set(row.id, row);
+}
+const expectedClosed = [
+  "CAP-AUDIO-01", "CAP-CHART-01", "CAP-HAB-01", "CAP-PARTICLE-01", "CAP-PRACTICE-01",
+  "CAP-PUBLIC-01", "CAP-RENDER-BROWSER-01", "CAP-RENDER-ORDINARY-01",
+  "CAP-RENDER-PARTICLE-COMPOSITION-01", "CAP-RUNTIME-01",
+].sort();
+const actualClosed = matrix.rows.filter((row) => row.status === "closed-portable").map((row) => row.id).sort();
+if (JSON.stringify(actualClosed) !== JSON.stringify(expectedClosed) ||
+    matrix.rows.some((row) => row.status === "reopened-audit")) {
+  throw new Error(`bounded portable scope mismatch: ${actualClosed.join(",")}`);
+}
+for (const id of ["CAP-RENDER-ORDINARY-01", "CAP-RENDER-PARTICLE-COMPOSITION-01"]) {
+  const row = rows.get(id);
+  if (row.status !== "closed-portable" || !row.reverseEvidence.some((value) => value.includes("3f9ef788")) ||
+      typeof row.dynamicRequirement !== "string") {
+    throw new Error(`${id} lacks current candidate evidence/DAG boundary`);
   }
 }
-for (const required of ["CAP-PRACTICE-01", "CAP-SCENE-07", "CAP-HAB-01", "CAP-HAB-EXACT-01", "CAP-DEVICE-01", "CAP-STAGE9-01", "CAP-EXCLUDED-01"]) {
-  if (!ids.has(required)) throw new Error(`capability matrix omitted ${required}`);
+if (rows.get("CAP-HAB-EXACT-01")?.status !== "open-evidence-required" ||
+    rows.get("CAP-DEVICE-01")?.status !== "open-objective-environment-blocked" ||
+    rows.get("CAP-EXCLUDED-01")?.status !== "excluded" ||
+    rows.get("CAP-STAGE9-01")?.status !== "unauthorized-stage-9") {
+  throw new Error("non-positive capability boundaries changed");
 }
-const closedPortableIds = matrix.rows.filter((row) => row.status === "closed-portable").map((row) => row.id).sort();
-const expectedClosedPortableIds = [
-  "CAP-AUDIO-01", "CAP-CHART-01", "CAP-HAB-01", "CAP-PARTICLE-01", "CAP-PRACTICE-01", "CAP-PUBLIC-01",
-  "CAP-RENDER-BROWSER-01", "CAP-RUNTIME-01",
+const claimById = new Map(claims.allowedClaims.map((row) => [row.id, row]));
+for (const id of ["CLAIM-ORDINARY-COMMAND-SCENE", "CLAIM-PARTICLE-VISIBLE-COMPOSITION"]) {
+  if (claimById.get(id)?.auditDisposition !== "closed-portable") {
+    throw new Error(`${id} was not boundedly released`);
+  }
+}
+
+if (integrity.schemaVersion !== 2 || integrity.status !== "ordinary-single-rendering-bounded-release-candidate" ||
+    integrity.currentDisposition !== "R11-candidate-ledger-verified-R12-bounded-gate-transition" ||
+    integrity.ordinaryRenderingPositiveAuthority !== true || integrity.currentProductionFileCount !== 104 ||
+    currentProductionFiles.length !== 104 || integrity.reviewPolicy?.groupMappingIsNotBlanketAuthorization !== true ||
+    integrity.reviewPolicy?.exactClaimBindingRequired !== true || integrity.reverseAudit?.commit !== "3f9ef7880654fc80ce45b23e4c20de326001afb9" ||
+    integrity.reverseAudit?.inventoryTargetCommit !== "5a25161cbb0fc179c877c4153dd9efeab17edcd2" ||
+    integrity.reverseAudit?.productionFileCount !== 104 || integrity.reverseAudit?.occurrenceCount !== 22216 ||
+    integrity.reverseAudit?.fieldClaimCount !== 14722 || integrity.reverseAudit?.mutationPointCount !== 281 ||
+    integrity.reverseAudit?.completionClaimCount !== 646 || integrity.reverseAudit?.unreviewedOrSupportedUnknown !== 0) {
+  throw new Error("production integrity review does not match the pushed schema-4 candidate ledger");
+}
+if (integrity.candidateDetachedDag?.status !== "passed" || integrity.candidateDetachedDag?.uniqueLeaves !== 26 ||
+    integrity.candidateDetachedDag?.elapsedMilliseconds !== 2067351 ||
+    integrity.candidateDetachedDag?.ordinaryWebView2?.productionRenderDecoder !== "BrowserPixiTextureDecoder" ||
+    integrity.candidateDetachedDag?.ordinaryWebView2?.productionParticleDecoder !== "BrowserPixiParticleTextureDecoder" ||
+    integrity.candidateDetachedDag?.ordinaryWebView2?.freshProcesses !== 3 ||
+    integrity.candidateDetachedDag?.ordinaryWebView2?.capturesPerProcess !== 17 ||
+    integrity.candidateDetachedDag?.ordinaryWebView2?.aggregateSha256 !== "100f640350d9f49b41cc94a2df47284b42f8e46f182fce7c862a8b921e791538") {
+  throw new Error("candidate detached ordinary WebView2 observation changed");
+}
+const boundedProductionFiles = [
+  "src/simulator/public/capabilities.ts",
+  "src/simulator/public/contracts.ts",
 ];
-if (JSON.stringify(closedPortableIds) !== JSON.stringify(expectedClosedPortableIds)) {
-  throw new Error(`portable scope changed while ordinary rendering is reopened: ${closedPortableIds.join(",")}`);
+if (integrity.releaseTransition?.status !== "bounded-R12-transition" ||
+    integrity.releaseTransition?.globalGateOpenAfterTransition !== false ||
+    integrity.releaseTransition?.ordinaryCommandScene !== "closed-portable" ||
+    integrity.releaseTransition?.ordinaryParticleVisibleComposition !== "closed-portable" ||
+    JSON.stringify(integrity.releaseTransition?.boundedProductionFiles) !== JSON.stringify(boundedProductionFiles)) {
+  throw new Error("R12 release delta is not bounded");
 }
-const reopenedIds = matrix.rows.filter((row) => row.status === "reopened-audit").map((row) => row.id).sort();
-if (JSON.stringify(reopenedIds) !== JSON.stringify([
-  "CAP-RENDER-ORDINARY-01", "CAP-RENDER-PARTICLE-COMPOSITION-01",
-])) {
-  throw new Error(`ordinary rendering reaudit scope changed: ${reopenedIds.join(",")}`);
+
+if (fieldIndex.schemaVersion !== 4 || fieldIndex.status !== "ordinary-rendering-candidate-per-claim-indexed-for-bounded-release" ||
+    fieldIndex.reverseCommit !== integrity.reverseAudit.commit || fieldIndex.targetGarupaCommit !== integrity.reverseAudit.inventoryTargetCommit ||
+    fieldIndex.counts?.productionFiles !== 104 || fieldIndex.counts?.behaviorOccurrences !== 22216 ||
+    fieldIndex.counts?.fieldClaims !== 14722 || fieldIndex.counts?.mutationPoints !== 281 ||
+    fieldIndex.counts?.completionClaims !== 646 || fieldIndex.unreviewedOccurrenceCount !== 0 ||
+    fieldIndex.unreviewedFieldClaimCount !== 0 || fieldIndex.unreviewedMutationCount !== 0 ||
+    fieldIndex.unreviewedCompletionClaimCount !== 0 || fieldIndex.reachableSupportedUnknownCount !== 0 ||
+    fieldIndex.groupMappingIsNotAuthorization !== true || fieldIndex.exactClaimBindingRequired !== true) {
+  throw new Error("current field pointer does not match Reverse 3f9ef788");
 }
-if (matrix.auditStatus !== "ordinary-single-rendering-total-reaudit-open" ||
-    claims.auditStatus !== "ordinary-single-rendering-total-reaudit-open") {
-  throw new Error("machine ledgers do not identify the open ordinary rendering total reaudit");
+if (mutations.schemaVersion !== 4 || mutations.reverseCommit !== fieldIndex.reverseCommit ||
+    mutations.targetGarupaCommit !== fieldIndex.targetGarupaCommit || mutations.mutationPointCount !== 281 ||
+    mutations.unreviewedMutationCount !== 0 || mutations.perMutationDispositionRequired !== true ||
+    mutations.exactClaimBindingRequired !== true || mutations.releaseBoundary?.globalGateOpen !== false ||
+    JSON.stringify(mutations.releaseBoundary?.boundedProductionDelta) !== JSON.stringify(boundedProductionFiles)) {
+  throw new Error("current mutation boundary does not match bounded release");
 }
-const publicGateLiterals = [
-  "closed-portable", "closed-original-unreachable", "reopened-audit", "degraded-explicit", "excluded", "open-evidence-required",
-  "open-device-exact", "open-objective-environment-blocked", "unauthorized-stage-9",
-];
-for (const literal of publicGateLiterals) {
-  if (!publicContracts.includes(`\"${literal}\"`) || !readme.includes(`\`${literal}\``)) {
-    throw new Error(`public contract or README omitted gate literal: ${literal}`);
-  }
+
+if (!publicCapabilities.includes("simulator.audit.total-revalidation-open") ||
+    !/isTotalRevalidationOpen\(\): boolean \{\s*return false;\s*\}/m.test(publicCapabilities) ||
+    !publicCapabilities.includes('ordinaryCommandScene: "closed-portable"') ||
+    publicCapabilities.includes('? "reopened-audit"') || publicContracts.includes('| "reopened-audit"')) {
+  throw new Error("public total gate or ordinary summary was not boundedly closed");
 }
 for (const field of [
-  "publicAutonomousCore", "ordinaryCommandScene", "habahiroCurrentExternalComplete",
-  "habahiroOriginalParity", "nonzeroInitialPracticeSeek", "button07SceneMapping",
-  "browserDecodeRaster", "fixedDeviceExact", "characterSkillFeverMultiplayer",
-  "mainProgramIntegration", "selectedRenderingGate",
+  "publicAutonomousCore", "ordinaryCommandScene", "habahiroCurrentExternalComplete", "habahiroOriginalParity",
+  "nonzeroInitialPracticeSeek", "button07SceneMapping", "browserDecodeRaster", "fixedDeviceExact",
+  "characterSkillFeverMultiplayer", "mainProgramIntegration", "selectedRenderingGate",
 ]) {
   if (!publicContracts.includes(`readonly ${field}:`) || !publicCapabilities.includes(`${field}:`)) {
-    throw new Error(`public capability summary omitted or failed to populate ${field}`);
+    throw new Error(`public capability summary omitted ${field}`);
   }
 }
-for (const [pattern, label] of [
-  [/完整单人谱面玩法/, "unscoped complete single-player claim"],
-  [/已完成普通可见渲染/, "unscoped rendering completion claim"],
-  [/真实PNG\/TTF.*actual Pixi/, "synthetic decoder described as real browser output"],
-  [/(?:^|[\\/`])tmp[\\/]/m, "committed local-working-document reference"],
-]) {
-  if (pattern.test(readme)) throw new Error(`README claim violation: ${label}`);
+
+if (attestation.schemaVersion !== 1 || attestation.currentDisposition !== "historical-pre-ordinary-single-rendering-total-reaudit" ||
+    attestation.supersededForPositiveOrdinaryRenderingClaims !== true ||
+    integrity.historicalAttestation?.positiveAuthorityForThisRelease !== false || integrity.historicalAttestation?.replacementStage !== "R14") {
+  throw new Error("historical attestation was prematurely reused or upgraded before R14");
+}
+for (const source of [readme, auditReadme]) {
+  if (/(?:^|[\\/`])tmp[\\/]/m.test(source)) throw new Error("committed documentation cites ignored local work");
 }
 for (const path of walk(simulatorRoot)) {
   if (extname(path) !== ".md") continue;
-  const source = readFileSync(path, "utf8");
-  if (/(?:^|[\\/`])tmp[\\/]/m.test(source)) {
+  if (/(?:^|[\\/`])tmp[\\/]/m.test(readFileSync(path, "utf8"))) {
     throw new Error(`committed simulator documentation cites ignored local work: ${path}`);
   }
 }
-if (
-  attestation.schemaVersion !== 1 ||
-  attestation.status !== "final-evidence-bounded-capability-attestation" ||
-  attestation.currentDisposition !== "historical-pre-ordinary-single-rendering-total-reaudit" ||
-  attestation.supersededForPositiveOrdinaryRenderingClaims !== true ||
-  attestation.implementation?.commit !== "9ab1ff7a339fa3cfd395c5f6fe841e1f3f1585a9" ||
-  attestation.reverseLedger?.commit !== "36a6941fab361c1f6bcf1eef02069d4867f565c7" ||
-  attestation.reverseLedger?.counts?.productionFiles !== 102 ||
-  attestation.reverseLedger?.counts?.behaviorOccurrences !== 21649 ||
-  attestation.reverseLedger?.counts?.fieldClaims !== 14322 ||
-  attestation.reverseLedger?.counts?.mutationPoints !== 269 ||
-  attestation.reverseLedger?.counts?.completionStatusOccurrences !== 637 ||
-  attestation.reverseLedger?.unreviewedOrSupportedUnknown !== 0 ||
-  attestation.validation?.uniqueLeaves !== 25 ||
-  attestation.validation?.worktree?.status !== "historical-pre-score-hud-reaudit-passed" ||
-  attestation.validation?.worktree?.elapsedMilliseconds !== 506162 ||
-  attestation.validation?.pushedDetachedImplementation?.commit !== "9ab1ff7a339fa3cfd395c5f6fe841e1f3f1585a9" ||
-  attestation.validation?.pushedDetachedImplementation?.elapsedMilliseconds !== 1374768 ||
-  attestation.validation?.pushedDetachedImplementation?.sourceCodeCopied !== false ||
-  attestation.validation?.pushedDetachedImplementation?.nodeModulesOnlyReused !== true ||
-  attestation.validation?.pushedDetachedImplementation?.networkUsed !== false ||
-  attestation.validation?.productionBrowserLeaf?.executedInCurrentDetachedDag !== true ||
-  attestation.validation?.productionBrowserLeaf?.scoreHudRasterSha256 !== "7ba90fba47ab94580da4285ffe6086078c7d3d4451cfcdea0139e935c86369a5" ||
-  attestation.validation?.productionBrowserLeaf?.scoreHudNonTransparentPixels !== 28587 ||
-  attestation.validation?.productionBrowserLeaf?.scoreHudFreshProcessRepeatCount !== 2 ||
-  JSON.stringify(attestation.validation?.productionBrowserLeaf?.scoreHudMaskWorldBoundsAtSsThreshold) !== "[456,82.5,831,121.5]" ||
-  JSON.stringify(attestation.validation?.productionBrowserLeaf?.scoreHudFirstDigitWorldTransform) !== "[324,135]" ||
-  attestation.boundaries?.aggregateOriginalParityClaimed !== false ||
-  attestation.boundaries?.positiveFixedDeviceExactClaims !== 0 ||
-  attestation.boundaries?.rejectedDeviceTracesReclassified !== false ||
-  attestation.boundaries?.autoLiveBudgetRemaining !== 10 ||
-  attestation.boundaries?.r2Used !== false ||
-  attestation.boundaries?.mainProgramIntegrationAuthorization !== false ||
-  attestation.preReauditAttestationCommitValidation?.commit !== "dadf952ae2d5526b0eff92856f3e03f132e23892" ||
-  attestation.preReauditAttestationCommitValidation?.pushedDetachedUniqueLeaves !== 25 ||
-  attestation.preReauditAttestationCommitValidation?.pushedDetachedElapsedMilliseconds !== 526895 ||
-  attestation.preReauditAttestationCommitValidation?.productionBrowserWebView2Executed !== true ||
-  attestation.preReauditAttestationCommitValidation?.originEqualsHead !== true ||
-  attestation.scoreHudPerformanceReaudit?.productionFixCommit !== "d274b242226e2b5eeb6a873b2c39c2765767c191" ||
-  attestation.scoreHudPerformanceReaudit?.independentVerifierCommit !== "9ab1ff7a339fa3cfd395c5f6fe841e1f3f1585a9" ||
-  attestation.scoreHudPerformanceReaudit?.reverseLedgerCommit !== "36a6941fab361c1f6bcf1eef02069d4867f565c7" ||
-  attestation.scoreHudPerformanceReaudit?.originalUnitySoftClipShaderRasterClaimed !== false ||
-  attestation.scoreHudPerformanceReaudit?.fixedDeviceFramebufferClaimed !== false
-) {
-  throw new Error("final capability attestation identity, DAG or non-positive boundary changed");
+for (const literal of [
+  "closed-portable", "closed-original-unreachable", "excluded", "open-evidence-required",
+  "open-objective-environment-blocked", "unauthorized-stage-9",
+]) {
+  if (!publicContracts.includes(`"${literal}"`) || !readme.includes(`\`${literal}\``)) {
+    throw new Error(`public contract or README omitted gate literal: ${literal}`);
+  }
 }
-if (
-  integrity.finalCapabilityContinuation?.implementationCommit !== attestation.implementation.commit ||
-  integrity.finalCapabilityContinuation?.reverseLedgerCommit !== attestation.reverseLedger.commit ||
-  integrity.finalCapabilityContinuation?.unreviewedOrSupportedUnknown !== 0 ||
-  integrity.finalCapabilityContinuation?.worktreeDag?.uniqueLeaves !== 25 ||
-  integrity.finalCapabilityContinuation?.pushedDetachedDag?.uniqueLeaves !== 25 ||
-  integrity.finalCapabilityContinuation?.pushedDetachedDag?.productionBrowserWebView2Executed !== true ||
-  integrity.finalCapabilityContinuation?.pushedDetachedDag?.completeScoreHudWebView2Executed !== true ||
-  integrity.finalCapabilityContinuation?.pushedDetachedDag?.scoreHudRasterSha256 !== "7ba90fba47ab94580da4285ffe6086078c7d3d4451cfcdea0139e935c86369a5"
-) {
-  throw new Error("integrity review does not point to the final pushed ledger and DAG");
+
+console.log(`evidence-integrity ordinary bounded release passed: capabilities=${matrix.rows.length} claims=${claims.allowedClaims.length} production-files=${currentProductionFiles.length} candidate-leaves=${integrity.candidateDetachedDag.uniqueLeaves}`);
+
+function json(name) {
+  return JSON.parse(readFileSync(join(auditRoot, name), "utf8"));
 }
-if (
-  fieldIndex.schemaVersion !== 2 ||
-  fieldIndex.status !== "final-candidate-per-claim-indexed-behind-global-gate" ||
-  fieldIndex.reverseCommit !== "0ddc5fbd44ac8eb5a5d0b6667e259fbc1f7fa52a" ||
-  fieldIndex.targetGarupaCommit !== "9b5fdcb9267aa1d293b34c7306cec71f5c7e8590" ||
-  fieldIndex.counts?.productionFiles !== 102 || fieldIndex.counts?.behaviorOccurrences !== 21322 ||
-  fieldIndex.counts?.fieldClaims !== 14158 || fieldIndex.counts?.completionClaims !== 555 ||
-  fieldIndex.fieldDispositionCounts?.["field-evidence-bound"] !== 13931 ||
-  fieldIndex.fieldDispositionCounts?.["early-evidence-required"] !== 225 ||
-  fieldIndex.fieldDispositionCounts?.excluded !== 2 || fieldIndex.reachableSupportedUnknownCount !== 0 ||
-  mutations.schemaVersion !== 2 ||
-  mutations.status !== "final-candidate-mutations-indexed-behind-global-gate" ||
-  mutations.reverseCommit !== fieldIndex.reverseCommit ||
-  mutations.mutationPointCount !== 253 || mutations.productionAcceptedMutationPointCount !== 0 ||
-  mutations.perMutationDispositionRequired !== true ||
-  mutations.earliestBoundary?.capability !== "simulator.audit.total-revalidation-open"
-) {
-  throw new Error("current field or mutation pointer does not match the pushed Reverse schema v2 inventory");
-}
-const publicLaunch = readFileSync(join(simulatorRoot, "public", "launch.ts"), "utf8");
-if (!publicCapabilities.includes("simulator.audit.total-revalidation-open") ||
-    !publicCapabilities.includes("return true") ||
-    !publicLaunch.includes("launchInstalledSimulatorModule(request)")) {
-  throw new Error("public launch did not perform the bounded total-revalidation gate transition");
-}
-if (
-  integrity.releaseTransition?.status !== "passed-pushed-detached-dag" ||
-  integrity.releaseTransition?.prerequisiteCandidateCommit !== "735a040dc91c97dda8dc09ed1022d0771b8e04d2" ||
-  integrity.releaseTransition?.prerequisiteDetachedDag?.status !== "passed" ||
-  integrity.releaseTransition?.prerequisiteDetachedDag?.uniqueLeaves !== 23 ||
-  integrity.releaseTransition?.prerequisiteDetachedDag?.scoreMaskIndependentRawRows !== 20 ||
-  integrity.releaseTransition?.prerequisiteDetachedDag?.syntheticDecoderClaimsBrowserRaster !== false ||
-  integrity.releaseTransition?.prerequisiteDetachedDag?.syntheticDecoderClaimsDeviceExact !== false ||
-  integrity.releaseTransition?.releaseCommit !== "0d0e4459f295f2d6cbbe7f4a1f93d07a1c9980fa" ||
-  integrity.releaseTransition?.releaseDetachedDag?.status !== "passed" ||
-  integrity.releaseTransition?.releaseDetachedDag?.source !== "pushed-detached-head" ||
-  integrity.releaseTransition?.releaseDetachedDag?.uniqueLeaves !== 23 ||
-  integrity.releaseTransition?.releaseDetachedDag?.elapsedMilliseconds !== 985307 ||
-  integrity.releaseTransition?.releaseDetachedDag?.scoreMaskIndependentRawRows !== 20 ||
-  integrity.releaseTransition?.releaseDetachedDag?.browserDecodeRaster !== "open-evidence-required" ||
-  integrity.releaseTransition?.releaseDetachedDag?.fixedDeviceExact !== "open-device-exact" ||
-  integrity.releaseTransition?.releaseDetachedDag?.mainProgramIntegration !== "unauthorized-stage-9" ||
-  JSON.stringify(integrity.releaseTransition?.boundedProductionFiles) !== JSON.stringify([
-    "src/simulator/public/capabilities.ts",
-    "src/simulator/public/contracts.ts",
-    "src/simulator/public/launch.ts",
-  ])
-) {
-  throw new Error("portable release transition lacks the exact prerequisite detached attestation and bounded delta");
-}
-console.log(`evidence-integrity ordinary-rendering reaudit gate passed: capabilities=${matrix.rows.length} claims=${claims.allowedClaims.length} current-production-files=${currentProductionFiles.length} historical-leaves=${attestation.validation.uniqueLeaves}`);
 
 function* walk(root) {
   for (const entry of readdirSync(root, { withFileTypes: true })) {

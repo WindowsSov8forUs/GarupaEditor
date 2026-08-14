@@ -5,11 +5,7 @@ const { readFileSync } = require("node:fs");
 const { join } = require("node:path");
 
 import { launchSimulatorModule } from "../index";
-import {
-  createSimulatorModuleCapabilitySummary,
-  TOTAL_REVALIDATION_BOUNDARY,
-  TOTAL_REVALIDATION_CAPABILITY,
-} from "../public/capabilities";
+import { createSimulatorModuleCapabilitySummary } from "../public/capabilities";
 import { createNoteBatchInformationList } from "../engine/chart/construction";
 import { ButtonType } from "../engine/chart/types";
 import { AutonomousSimulatorModule } from "../runtime/autonomousSimulatorRuntime";
@@ -51,9 +47,9 @@ import type { SimulatorAssemblyResult } from "../resources/sharedResourceAdapter
 
 async function main(): Promise<void> {
   const beforeInstall = await launchSimulatorModule(request());
-  assertTotalRevalidationOpen(beforeInstall);
-  assertTotalRevalidationOpen(await launchSimulatorModule(null as unknown as SimulatorModuleLaunchRequest));
-  assertTotalRevalidationOpen(await launchInstalledSimulatorModule(request()));
+  assertPlatformUnavailable(beforeInstall);
+  assertPlatformUnavailable(await launchSimulatorModule(null as unknown as SimulatorModuleLaunchRequest));
+  assertPlatformUnavailable(await launchInstalledSimulatorModule(request()));
 
   await testSharedStore();
   testSelector();
@@ -381,10 +377,14 @@ async function testProductionCompositionFailureBoundary(): Promise<void> {
 
   const missingResourceModule = requireAccepted(createProductionAutonomousSimulatorModule(platform));
   const missingResource = await missingResourceModule.launch(request());
-  assertTotalRevalidationOpen(missingResource);
-  assert.equal(resourceReads, 0, "open total-revalidation gate rejects before shared-resource reads");
-  assert.equal(mounts, 0, "open total-revalidation gate rejects before visual mount");
-  assert.equal(scheduler.consumer, null, "open total-revalidation gate rejects before scheduler start");
+  assert.equal(missingResource.status, "rejected");
+  if (missingResource.status === "rejected") {
+    assert.equal(missingResource.failure.capability, "test.missing");
+  }
+  assert.equal(resourceReads, 1, "released portable composition reaches the explicit shared-resource boundary");
+  assert.equal(mounts, 0, "missing resources reject before visual mount");
+  assert.equal(scheduler.consumer, null, "missing resources reject before scheduler start");
+  resourceReads = 0;
 
   const module = requireAccepted(createProductionAutonomousSimulatorModule(platform));
   const seekRequest: any = request();
@@ -392,8 +392,11 @@ async function testProductionCompositionFailureBoundary(): Promise<void> {
   seekRequest.config.practice.startMilliseconds = 1;
   seekRequest.config.playMode = "manual";
   const launched = await module.launch(seekRequest);
-  assertTotalRevalidationOpen(launched);
-  assert.equal(resourceReads, 0, "open total-revalidation gate rejects non-zero seek before resource construction");
+  assert.equal(launched.status, "rejected");
+  if (launched.status === "rejected") {
+    assert.equal(launched.failure.capability, "test.missing");
+  }
+  assert.equal(resourceReads, 1, "authorized non-zero seek reaches normal resource construction");
   assert.equal(mounts, 0);
 }
 
@@ -447,8 +450,7 @@ async function testAutonomousLaunchAndClose(): Promise<void> {
   });
   assert.equal(installSimulatorModuleLauncher(module.launch).status, "accepted");
   assert.equal(installSimulatorModuleLauncher(module.launch).status, "rejected");
-  assertTotalRevalidationOpen(await launchSimulatorModule(request()));
-  const launched = await module.launch(request());
+  const launched = await launchSimulatorModule(request());
   assert.equal(launched.status, "accepted");
   if (launched.status !== "accepted") throw new Error(launched.failure.capability);
   assert.deepEqual(Object.keys(launched).sort(), ["closed", "status"]);
@@ -464,7 +466,7 @@ async function testAutonomousLaunchAndClose(): Promise<void> {
   assert.deepEqual(report.capabilities, {
     rendering: null,
     publicAutonomousCore: "closed-portable",
-    ordinaryCommandScene: "reopened-audit",
+    ordinaryCommandScene: "closed-portable",
     habahiroCurrentExternalComplete: "closed-portable",
     habahiroOriginalParity: "open-evidence-required",
     nonzeroInitialPracticeSeek: "closed-portable",
@@ -481,12 +483,12 @@ async function testAutonomousLaunchAndClose(): Promise<void> {
   assert.equal(input.disposes, 1);
 }
 
-function assertTotalRevalidationOpen(result: Awaited<ReturnType<typeof launchSimulatorModule>>): void {
+function assertPlatformUnavailable(result: Awaited<ReturnType<typeof launchSimulatorModule>>): void {
   assert.equal(result.status, "rejected");
   if (result.status === "rejected") {
-    assert.equal(result.failure.code, "evidence-required");
-    assert.equal(result.failure.capability, TOTAL_REVALIDATION_CAPABILITY);
-    assert.equal(result.failure.boundary, TOTAL_REVALIDATION_BOUNDARY);
+    assert.equal(result.failure.code, "platform-unavailable");
+    assert.equal(result.failure.capability, "simulator.entry.platform-not-installed");
+    assert.match(result.failure.boundary, /must be installed before the main entry transfers chart\/config ownership/);
   }
 }
 

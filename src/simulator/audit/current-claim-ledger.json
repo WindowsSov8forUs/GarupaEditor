@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "auditStatus": "ordinary-single-rendering-total-reaudit-open",
+  "auditStatus": "ordinary-single-rendering-bounded-release",
   "rules": {
     "forbidCommittedTmpReferences": true,
     "forbidUnscopedCompletionClaims": true,
@@ -12,14 +12,14 @@
   "allowedClaims": [
     {
       "id": "CLAIM-ORDINARY-COMMAND-SCENE",
-      "wording": "ordinary Pixi command/scene portable observation",
-      "scope": "hash-validated resource identity, typed command order, owner lifecycle and Pixi scene mapping",
+      "wording": "ordinary Note/HUD full-scene portable composition",
+      "scope": "hash-validated resources, complete parent/local/world transforms, mask/order, owner lifecycle, actual Pixi and production dual-decoder WebView2 combined scene",
       "notClaimed": [
-        "browser raster",
-        "GPU framebuffer",
+        "Unity framebuffer parity",
+        "cross-GPU digest identity",
         "fixed-device exact"
       ],
-      "auditDisposition": "reopened-audit"
+      "auditDisposition": "closed-portable"
     },
     {
       "id": "CLAIM-SCORE-LIFE",
@@ -53,13 +53,13 @@
     },
     {
       "id": "CLAIM-PARTICLE-VISIBLE-COMPOSITION",
-      "wording": "ordinary particle actual-Pixi and complete-scene composition",
-      "scope": "browser texture decode, world transform, cross-stage ordering and disposal",
+      "wording": "ordinary particle actual-Pixi and complete-scene portable composition",
+      "scope": "production browser texture decode, 17-root world transform/UV/blend, fixed particle-before-Note/HUD ordering and disposal",
       "notClaimed": [
-        "semantic command/simulation regression",
-        "Unity GPU shader/framebuffer parity"
+        "Unity GPU shader/framebuffer parity",
+        "fixed-device physical exact"
       ],
-      "auditDisposition": "reopened-audit"
+      "auditDisposition": "closed-portable"
     },
     {
       "id": "CLAIM-HAB-CURRENT-EXTERNAL-COMPLETE",

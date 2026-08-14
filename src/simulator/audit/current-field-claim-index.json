@@ -1,21 +1,31 @@
 {
-  "schemaVersion": 2,
-  "status": "final-candidate-per-claim-indexed-behind-global-gate",
-  "reverseCommit": "0ddc5fbd44ac8eb5a5d0b6667e259fbc1f7fa52a",
-  "reversePackage": "artifacts/investigations/simulator-total-revalidation-10-1-4",
-  "targetGarupaCommit": "9b5fdcb9267aa1d293b34c7306cec71f5c7e8590",
+  "schemaVersion": 4,
+  "status": "ordinary-rendering-candidate-per-claim-indexed-for-bounded-release",
+  "reverseCommit": "3f9ef7880654fc80ce45b23e4c20de326001afb9",
+  "reversePackage": "artifacts/investigations/simulator-final-capability-ledger-10-1-4",
+  "targetGarupaCommit": "5a25161cbb0fc179c877c4153dd9efeab17edcd2",
   "counts": {
-    "productionFiles": 102,
-    "behaviorOccurrences": 21322,
-    "fieldClaims": 14158,
-    "completionClaims": 555
+    "productionFiles": 104,
+    "behaviorOccurrences": 22216,
+    "fieldClaims": 14722,
+    "mutationPoints": 281,
+    "completionClaims": 646
   },
   "fieldDispositionCounts": {
-    "field-evidence-bound": 13931,
-    "early-evidence-required": 225,
-    "excluded": 2
+    "closed-original-unreachable": 7,
+    "excluded": 2,
+    "field-evidence-bound": 14707,
+    "open-evidence-required": 2,
+    "open-objective-environment-blocked": 2,
+    "unauthorized-stage-9": 2
   },
+  "unreviewedOccurrenceCount": 0,
+  "unreviewedFieldClaimCount": 0,
+  "unreviewedMutationCount": 0,
+  "unreviewedCompletionClaimCount": 0,
   "reachableSupportedUnknownCount": 0,
-  "globalGate": "simulator.audit.total-revalidation-open",
-  "reason": "The final pushed candidate, including the Score panel mask consumer, is individually indexed. Release still requires the independent detached DAG and conditional gate transition."
+  "groupMappingIsNotAuthorization": true,
+  "exactClaimBindingRequired": true,
+  "candidateGlobalGate": "simulator.audit.total-revalidation-open",
+  "releaseTransition": "R12 changes only the bounded public gate and capability summary; R13/R14 record the pushed release DAG and final attestation."
 }

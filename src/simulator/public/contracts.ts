@@ -105,7 +105,6 @@ export type SimulatorRenderingFidelity =
 
 export type SimulatorCapabilityGateStatus =
   | "closed-portable"
-  | "reopened-audit"
   | "degraded-explicit"
   | "excluded"
   | "open-evidence-required"
@@ -117,7 +116,7 @@ export type SimulatorCapabilityGateStatus =
 export interface SimulatorModuleCapabilitySummary {
   readonly rendering: SimulatorRenderingFidelity | null;
   readonly publicAutonomousCore: "closed-portable";
-  readonly ordinaryCommandScene: "closed-portable" | "reopened-audit";
+  readonly ordinaryCommandScene: "closed-portable";
   readonly habahiroCurrentExternalComplete: "closed-portable";
   readonly habahiroOriginalParity: "open-evidence-required";
   readonly nonzeroInitialPracticeSeek: "closed-portable";
@@ -126,7 +125,7 @@ export interface SimulatorModuleCapabilitySummary {
   readonly fixedDeviceExact: "open-objective-environment-blocked";
   readonly characterSkillFeverMultiplayer: "excluded";
   readonly mainProgramIntegration: "unauthorized-stage-9";
-  readonly selectedRenderingGate: "closed-portable" | "reopened-audit" | "open-evidence-required";
+  readonly selectedRenderingGate: "closed-portable" | "open-evidence-required";
 }
 
 export interface SimulatorModuleCloseReport {
