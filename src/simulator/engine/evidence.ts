@@ -82,6 +82,10 @@ export type WebView2BrowserRasterEvidenceId =
   | `WBR-F${"01" | "02" | "03" | "04" | "05" | "06" | "07" | "08" | "09" | "10"}`
   | `WBR-P${"01" | "02" | "03" | "04"}`;
 
+export type OrdinaryRenderingReauditEvidenceId =
+  | "OSR-GAP-01"
+  | `OSR-E${"12340" | "12341" | "12342" | "12343" | "12344"}`;
+
 export type SimulatorEvidenceId =
   | EvidenceId
   | AutoLiveEvidenceId
@@ -89,7 +93,8 @@ export type SimulatorEvidenceId =
   | ScoreLifeStateEvidenceId
   | ResourcePixiRenderingEvidenceId
   | InitialPracticeSeekEvidenceId
-  | WebView2BrowserRasterEvidenceId;
+  | WebView2BrowserRasterEvidenceId
+  | OrdinaryRenderingReauditEvidenceId;
 
 export interface EvidenceReference {
   readonly id: SimulatorEvidenceId;

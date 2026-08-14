@@ -1,0 +1,101 @@
+import { Container } from "pixi.js";
+import { evidenceRequired, ok, type SimulatorResult } from "../../engine/evidence";
+
+export const PIXI_COMBINED_SCENE_LABEL = "GarupaSimulatorCombinedScene";
+export const PIXI_PARTICLE_STAGE_LABEL = "GarupaSimulatorParticles";
+export const PIXI_ORDINARY_STAGE_LABEL = "GarupaSimulatorRoot";
+
+export interface PixiCombinedSceneSnapshot {
+  readonly state: "attached" | "disposed";
+  readonly rootLabel: typeof PIXI_COMBINED_SCENE_LABEL;
+  readonly childLabels: readonly [
+    typeof PIXI_PARTICLE_STAGE_LABEL,
+    typeof PIXI_ORDINARY_STAGE_LABEL,
+  ];
+  readonly rootParentAttached: boolean;
+  readonly particleStageParentIsRoot: boolean;
+  readonly ordinaryStageParentIsRoot: boolean;
+}
+
+export interface PixiCombinedScene {
+  readonly root: Container;
+  snapshot(): PixiCombinedSceneSnapshot;
+  dispose(): SimulatorResult<void>;
+}
+
+export function createPixiCombinedScene(
+  particleStage: Container,
+  ordinaryStage: Container,
+): SimulatorResult<PixiCombinedScene> {
+  if (
+    !(particleStage instanceof Container) || !(ordinaryStage instanceof Container) ||
+    particleStage === ordinaryStage || particleStage.destroyed || ordinaryStage.destroyed ||
+    particleStage.parent !== null || ordinaryStage.parent !== null ||
+    particleStage.label !== PIXI_PARTICLE_STAGE_LABEL ||
+    ordinaryStage.label !== PIXI_ORDINARY_STAGE_LABEL
+  ) {
+    return evidenceRequired(
+      "render.pixi.invalid-combined-scene-stages",
+      ["OSR-GAP-01", "OSR-E12340", "OSR-E12341", "OSR-E12342", "OSR-E12343", "OSR-E12344"],
+      "The current ordinary scene accepts exactly one live unparented particle stage followed by one live unparented Note/HUD stage; labels, identity or ownership cannot be inferred or repaired.",
+    );
+  }
+  const root = new Container({ label: PIXI_COMBINED_SCENE_LABEL, sortableChildren: false });
+  root.sortableChildren = false;
+  try {
+    root.addChild(particleStage);
+    root.addChild(ordinaryStage);
+  } catch {
+    particleStage.removeFromParent();
+    ordinaryStage.removeFromParent();
+    root.destroy({ children: false });
+    return evidenceRequired(
+      "render.pixi.combined-scene-attach-failed",
+      ["OSR-GAP-01"],
+      "Combined-scene construction is atomic and rejects without retaining either stage when Pixi cannot attach the evidence-ordered children.",
+    );
+  }
+  return ok(new OwnedPixiCombinedScene(root, particleStage, ordinaryStage));
+}
+
+class OwnedPixiCombinedScene implements PixiCombinedScene {
+  private disposed = false;
+
+  constructor(
+    readonly root: Container,
+    private readonly particleStage: Container,
+    private readonly ordinaryStage: Container,
+  ) {}
+
+  snapshot(): PixiCombinedSceneSnapshot {
+    return Object.freeze({
+      state: this.disposed ? "disposed" as const : "attached" as const,
+      rootLabel: PIXI_COMBINED_SCENE_LABEL,
+      childLabels: Object.freeze([
+        PIXI_PARTICLE_STAGE_LABEL,
+        PIXI_ORDINARY_STAGE_LABEL,
+      ] as const),
+      rootParentAttached: this.root.parent !== null,
+      particleStageParentIsRoot: this.particleStage.parent === this.root,
+      ordinaryStageParentIsRoot: this.ordinaryStage.parent === this.root,
+    });
+  }
+
+  dispose(): SimulatorResult<void> {
+    if (this.disposed) return ok(undefined);
+    this.disposed = true;
+    try {
+      this.root.removeFromParent();
+      this.particleStage.removeFromParent();
+      this.ordinaryStage.removeFromParent();
+      this.root.destroy({ children: false });
+      return ok(undefined);
+    } catch {
+      return evidenceRequired(
+        "render.pixi.combined-scene-dispose-threw",
+        ["OSR-GAP-01", "OSR-E12343", "OSR-E12344"],
+        "Combined-scene disposal releases the root and both stage parent relations exactly once without destroying backend-owned stages.",
+      );
+    }
+  }
+}

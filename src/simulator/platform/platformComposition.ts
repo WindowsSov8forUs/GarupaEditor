@@ -9,6 +9,10 @@ import type {
 import { DeterministicSimulatorParticleBackend } from "../backends/particles/deterministicParticleBackend";
 import { BrowserPixiParticleTextureDecoder } from "../backends/pixi/browserPixiParticleTextureDecoder";
 import { BrowserPixiTextureDecoder } from "../backends/pixi/browserPixiTextureDecoder";
+import {
+  createPixiCombinedScene,
+  type PixiCombinedScene,
+} from "../backends/pixi/pixiCombinedScene";
 import { PixiParticleRendererBackend } from "../backends/pixi/pixiParticleRendererBackend";
 import { PixiRendererBackend } from "../backends/pixi/pixiRendererBackend";
 import { createRecordingSimulatorBackends } from "../backends/recordingBackend";
@@ -69,8 +73,7 @@ export interface SimulatorGraphicsSurface {
   readonly inputOrigin: "bottom-left";
   mount(
     sessionId: string,
-    renderStage: Container,
-    particleStage: Container,
+    sceneRoot: Container,
   ): SimulatorAssemblyResult<SimulatorGraphicsMount>;
 }
 
@@ -252,29 +255,29 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
     if (engine.status !== "ok") {
       return rejectedWithCleanup(fromEvidence(engine), disposeAssembly(assembly.value));
     }
+    const combinedScene = createPixiCombinedScene(particleRenderer.stage, renderer.stage);
+    if (combinedScene.status !== "ok") {
+      const cleanup = simulatorCleanupFailureFromResult("engine-after-combined-scene-failure", engine.value.dispose());
+      return rejectedWithCleanup(fromEvidence(combinedScene), cleanup === null ? [] : [cleanup]);
+    }
     let initialMount: SimulatorGraphicsMount | null = null;
     if (outputMode === "immediate") {
-      const mounted = this.platform.graphics.mount(
-        sessionId,
-        renderer.stage,
-        particleRenderer.stage,
-      );
+      const mounted = this.platform.graphics.mount(sessionId, combinedScene.value.root);
       if (mounted.status === "rejected") {
-        const cleanup = simulatorCleanupFailureFromResult("engine-after-mount-failure", engine.value.dispose());
-        return rejectedWithCleanup(mounted, cleanup === null ? [] : [cleanup]);
+        const cleanups = [
+          simulatorCleanupFailureFromResult("engine-after-mount-failure", engine.value.dispose()),
+          simulatorCleanupFailureFromResult("combined-scene-after-mount-failure", combinedScene.value.dispose()),
+        ].filter((failure): failure is SimulatorModuleCleanupFailure => failure !== null);
+        return rejectedWithCleanup(mounted, cleanups);
       }
       initialMount = mounted.value;
     }
-    const mountedEngine = new MountedSimulatorEngine(engine.value, initialMount);
+    const mountedEngine = new MountedSimulatorEngine(engine.value, initialMount, combinedScene.value);
     return accepted(Object.freeze({
       engine: mountedEngine,
       publishInitialSeekOutputs: (): SimulatorAssemblyResult<void> => {
         if (outputMode !== "deferred-initial-seek") return accepted(undefined);
-        const mounted = this.platform.graphics.mount(
-          sessionId,
-          renderer.stage,
-          particleRenderer.stage,
-        );
+        const mounted = this.platform.graphics.mount(sessionId, combinedScene.value.root);
         if (mounted.status === "rejected") return mounted;
         const attached = mountedEngine.attachMount(mounted.value);
         if (attached.status === "rejected") {
@@ -312,6 +315,7 @@ class MountedSimulatorEngine implements SimulatorEngine {
   constructor(
     private readonly engine: SimulatorEngine,
     mount: SimulatorGraphicsMount | null,
+    private readonly combinedScene: PixiCombinedScene,
   ) {
     this.mount = mount;
   }
@@ -351,22 +355,32 @@ class MountedSimulatorEngine implements SimulatorEngine {
   dispose(): SimulatorResult<void> {
     if (this.disposed) return this.engine.dispose();
     this.disposed = true;
-    const result = this.engine.dispose();
+    let result = this.engine.dispose();
     const mount = this.mount;
     this.mount = null;
     try {
       mount?.dispose();
     } catch {
-      return result.status === "ok"
+      result = result.status === "ok"
         ? evidenceRequired(
             "simulator.composition.visual-unmount-threw",
-            [],
+            ["OSR-GAP-01"],
             "The visual surface mount threw during terminal cleanup after all engine-owned backends were disposed.",
           )
         : evidenceRequired(
             result.capability,
             result.requiredEvidence,
             `${result.boundary} Secondary cleanup failure: simulator.composition.visual-unmount-threw.`,
+          );
+    }
+    const combinedDisposed = this.combinedScene.dispose();
+    if (combinedDisposed.status === "evidence-required") {
+      return result.status === "ok"
+        ? combinedDisposed
+        : evidenceRequired(
+            result.capability,
+            result.requiredEvidence,
+            `${result.boundary} Secondary cleanup failure: ${combinedDisposed.capability}.`,
           );
     }
     return result;
