@@ -11,19 +11,19 @@
   "implementation": {
     "repository": "https://github.com/WindowsSov8forUs/GarupaEditor.git",
     "branch": "codex/refactor-simulator-implementation",
-    "commit": "7ad5e3b8efcd8ca410db4dd972d7b64d6f607ad8",
+    "commit": "9ab1ff7a339fa3cfd395c5f6fe841e1f3f1585a9",
     "originEqualsHead": true
   },
   "reverseLedger": {
     "repository": "https://github.com/WindowsSov8forUs/GirlsBandParty-Reverse.git",
     "branch": "main",
-    "commit": "f1298aa8",
+    "commit": "36a6941fab361c1f6bcf1eef02069d4867f565c7",
     "package": "artifacts/investigations/simulator-final-capability-ledger-10-1-4",
     "originEqualsHead": true,
     "counts": {
       "productionFiles": 102,
       "behaviorOccurrences": 21649,
-      "fieldClaims": 14320,
+      "fieldClaims": 14322,
       "mutationPoints": 269,
       "completionStatusOccurrences": 637
     },
@@ -32,25 +32,31 @@
   "validation": {
     "uniqueLeaves": 25,
     "worktree": {
-      "status": "passed",
+      "status": "historical-pre-score-hud-reaudit-passed",
+      "commit": "7ad5e3b8efcd8ca410db4dd972d7b64d6f607ad8",
       "elapsedMilliseconds": 506162
     },
     "pushedDetachedImplementation": {
       "status": "passed",
-      "commit": "7ad5e3b8efcd8ca410db4dd972d7b64d6f607ad8",
-      "elapsedMilliseconds": 511876,
+      "commit": "9ab1ff7a339fa3cfd395c5f6fe841e1f3f1585a9",
+      "elapsedMilliseconds": 1374768,
       "sourceCodeCopied": false,
       "nodeModulesOnlyReused": true,
       "networkUsed": false
     },
     "productionBrowserLeaf": {
-      "executedInBothDags": true,
+      "executedInCurrentDetachedDag": true,
       "decoder": "BrowserPixiTextureDecoder",
       "webView2Runtime": "151.0.4129.78",
       "chromium": "151.0.7922.109",
       "pixi": "8.17.1",
       "pngRasterSha256": "9c81b7baa91f83a561fc17610f007eff0dc4dbca9d30df0e1acffae3c4d981f0",
-      "fontRasterSha256": "6dbafeb76081c82cdff84d341e554f7777fb8fd6242ec61e871ae54155225418"
+      "fontRasterSha256": "6dbafeb76081c82cdff84d341e554f7777fb8fd6242ec61e871ae54155225418",
+      "scoreHudRasterSha256": "7ba90fba47ab94580da4285ffe6086078c7d3d4451cfcdea0139e935c86369a5",
+      "scoreHudNonTransparentPixels": 28587,
+      "scoreHudFreshProcessRepeatCount": 2,
+      "scoreHudMaskWorldBoundsAtSsThreshold": [456, 82.5, 831, 121.5],
+      "scoreHudFirstDigitWorldTransform": [324, 135]
     }
   },
   "capabilities": {
@@ -94,12 +100,23 @@
     "mainProgramIntegrationAuthorization": false,
     "productionReadsReverseOrTmpOrTestingFixtures": false
   },
-  "attestationCommitValidation": {
+  "preReauditAttestationCommitValidation": {
     "commit": "dadf952ae2d5526b0eff92856f3e03f132e23892",
     "pushedDetachedUniqueLeaves": 25,
     "pushedDetachedElapsedMilliseconds": 526895,
     "productionBrowserWebView2Executed": true,
     "originEqualsHead": true
   },
-  "conclusion": "All currently authorized portable functional gates have individual pushed evidence and production-path observations. Remaining original/device/stage-9/excluded surfaces retain their explicit non-positive dispositions; this attestation is not an original-engine or all-device parity claim."
+  "scoreHudPerformanceReaudit": {
+    "productionFixCommit": "d274b242226e2b5eeb6a873b2c39c2765767c191",
+    "independentVerifierCommit": "9ab1ff7a339fa3cfd395c5f6fe841e1f3f1585a9",
+    "reverseLedgerCommit": "36a6941fab361c1f6bcf1eef02069d4867f565c7",
+    "correctedFindings": [
+      "TotalScore Unity negative local Y was not converted to Pixi Y-down and placed bitmap glyphs above the viewport",
+      "Score high-rank panel mask omitted its direct Progress [25,45] parent transform"
+    ],
+    "originalUnitySoftClipShaderRasterClaimed": false,
+    "fixedDeviceFramebufferClaimed": false
+  },
+  "conclusion": "All currently authorized portable functional gates have individual pushed evidence and production-path observations, including the corrected complete Score HUD WebView2 composition. Remaining original/device/stage-9/excluded surfaces retain their explicit non-positive dispositions; this attestation is not an original-engine or all-device parity claim."
 }

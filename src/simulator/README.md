@@ -76,7 +76,7 @@ Synthetic decoder、资源hash或typed command仍不能单独升级为真实WebV
 
 流程见[`evidence-workflow.md`](./evidence-workflow.md)。只消费已verify、commit、push的Reverse证据。10.1.3或其他来源必须先建立逐claim等价证明、适用域和反例检查。旧调查包可提供待重新核验的原始事实，但其`closed`、`productionAuthorization`或总体closure字段不是本轮授权。
 
-当前实现提交`7ad5e3b8efcd8ca410db4dd972d7b64d6f607ad8`及Reverse最终账本`f1298aa8`已push。工作树与pushed-detached均通过25-leaf完整去重DAG；该attestation只授权机器账本中的portable范围，不放行HAB original、fixed-device exact、excluded或stage-9边界。
+当前实现提交`9ab1ff7a339fa3cfd395c5f6fe841e1f3f1585a9`及Reverse最终账本`36a6941f`已push。Score HUD表现反审已纠正TotalScore Y转换和高Rank Panel遗漏的`Progress [25,45]`父变换；pushed-detached通过25-leaf完整去重DAG并实际执行完整Score HUD WebView2合成。该attestation只授权机器账本中的portable范围，不放行HAB original、fixed-device exact、excluded或stage-9边界。
 
 最终去重入口为`npm.cmd run simulator:test:total-revalidation`。它按唯一leaf DAG执行isolated tsc、chart/clock/input/state、render raw+independent verifier、audio、particle、host/runtime/public、C07证据消费及真实production WebView2 decoder；不运行Vite/Tauri，也不声称原作framebuffer或物理输出等价。
 

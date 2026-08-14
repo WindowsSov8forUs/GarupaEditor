@@ -112,32 +112,44 @@ for (const path of walk(simulatorRoot)) {
 if (
   attestation.schemaVersion !== 1 ||
   attestation.status !== "final-evidence-bounded-capability-attestation" ||
-  attestation.implementation?.commit !== "7ad5e3b8efcd8ca410db4dd972d7b64d6f607ad8" ||
-  attestation.reverseLedger?.commit !== "f1298aa8" ||
+  attestation.implementation?.commit !== "9ab1ff7a339fa3cfd395c5f6fe841e1f3f1585a9" ||
+  attestation.reverseLedger?.commit !== "36a6941fab361c1f6bcf1eef02069d4867f565c7" ||
   attestation.reverseLedger?.counts?.productionFiles !== 102 ||
   attestation.reverseLedger?.counts?.behaviorOccurrences !== 21649 ||
-  attestation.reverseLedger?.counts?.fieldClaims !== 14320 ||
+  attestation.reverseLedger?.counts?.fieldClaims !== 14322 ||
   attestation.reverseLedger?.counts?.mutationPoints !== 269 ||
   attestation.reverseLedger?.counts?.completionStatusOccurrences !== 637 ||
   attestation.reverseLedger?.unreviewedOrSupportedUnknown !== 0 ||
   attestation.validation?.uniqueLeaves !== 25 ||
+  attestation.validation?.worktree?.status !== "historical-pre-score-hud-reaudit-passed" ||
   attestation.validation?.worktree?.elapsedMilliseconds !== 506162 ||
-  attestation.validation?.pushedDetachedImplementation?.elapsedMilliseconds !== 511876 ||
+  attestation.validation?.pushedDetachedImplementation?.commit !== "9ab1ff7a339fa3cfd395c5f6fe841e1f3f1585a9" ||
+  attestation.validation?.pushedDetachedImplementation?.elapsedMilliseconds !== 1374768 ||
   attestation.validation?.pushedDetachedImplementation?.sourceCodeCopied !== false ||
   attestation.validation?.pushedDetachedImplementation?.nodeModulesOnlyReused !== true ||
   attestation.validation?.pushedDetachedImplementation?.networkUsed !== false ||
-  attestation.validation?.productionBrowserLeaf?.executedInBothDags !== true ||
+  attestation.validation?.productionBrowserLeaf?.executedInCurrentDetachedDag !== true ||
+  attestation.validation?.productionBrowserLeaf?.scoreHudRasterSha256 !== "7ba90fba47ab94580da4285ffe6086078c7d3d4451cfcdea0139e935c86369a5" ||
+  attestation.validation?.productionBrowserLeaf?.scoreHudNonTransparentPixels !== 28587 ||
+  attestation.validation?.productionBrowserLeaf?.scoreHudFreshProcessRepeatCount !== 2 ||
+  JSON.stringify(attestation.validation?.productionBrowserLeaf?.scoreHudMaskWorldBoundsAtSsThreshold) !== "[456,82.5,831,121.5]" ||
+  JSON.stringify(attestation.validation?.productionBrowserLeaf?.scoreHudFirstDigitWorldTransform) !== "[324,135]" ||
   attestation.boundaries?.aggregateOriginalParityClaimed !== false ||
   attestation.boundaries?.positiveFixedDeviceExactClaims !== 0 ||
   attestation.boundaries?.rejectedDeviceTracesReclassified !== false ||
   attestation.boundaries?.autoLiveBudgetRemaining !== 10 ||
   attestation.boundaries?.r2Used !== false ||
   attestation.boundaries?.mainProgramIntegrationAuthorization !== false ||
-  attestation.attestationCommitValidation?.commit !== "dadf952ae2d5526b0eff92856f3e03f132e23892" ||
-  attestation.attestationCommitValidation?.pushedDetachedUniqueLeaves !== 25 ||
-  attestation.attestationCommitValidation?.pushedDetachedElapsedMilliseconds !== 526895 ||
-  attestation.attestationCommitValidation?.productionBrowserWebView2Executed !== true ||
-  attestation.attestationCommitValidation?.originEqualsHead !== true
+  attestation.preReauditAttestationCommitValidation?.commit !== "dadf952ae2d5526b0eff92856f3e03f132e23892" ||
+  attestation.preReauditAttestationCommitValidation?.pushedDetachedUniqueLeaves !== 25 ||
+  attestation.preReauditAttestationCommitValidation?.pushedDetachedElapsedMilliseconds !== 526895 ||
+  attestation.preReauditAttestationCommitValidation?.productionBrowserWebView2Executed !== true ||
+  attestation.preReauditAttestationCommitValidation?.originEqualsHead !== true ||
+  attestation.scoreHudPerformanceReaudit?.productionFixCommit !== "d274b242226e2b5eeb6a873b2c39c2765767c191" ||
+  attestation.scoreHudPerformanceReaudit?.independentVerifierCommit !== "9ab1ff7a339fa3cfd395c5f6fe841e1f3f1585a9" ||
+  attestation.scoreHudPerformanceReaudit?.reverseLedgerCommit !== "36a6941fab361c1f6bcf1eef02069d4867f565c7" ||
+  attestation.scoreHudPerformanceReaudit?.originalUnitySoftClipShaderRasterClaimed !== false ||
+  attestation.scoreHudPerformanceReaudit?.fixedDeviceFramebufferClaimed !== false
 ) {
   throw new Error("final capability attestation identity, DAG or non-positive boundary changed");
 }
@@ -147,7 +159,9 @@ if (
   integrity.finalCapabilityContinuation?.unreviewedOrSupportedUnknown !== 0 ||
   integrity.finalCapabilityContinuation?.worktreeDag?.uniqueLeaves !== 25 ||
   integrity.finalCapabilityContinuation?.pushedDetachedDag?.uniqueLeaves !== 25 ||
-  integrity.finalCapabilityContinuation?.pushedDetachedDag?.productionBrowserWebView2Executed !== true
+  integrity.finalCapabilityContinuation?.pushedDetachedDag?.productionBrowserWebView2Executed !== true ||
+  integrity.finalCapabilityContinuation?.pushedDetachedDag?.completeScoreHudWebView2Executed !== true ||
+  integrity.finalCapabilityContinuation?.pushedDetachedDag?.scoreHudRasterSha256 !== "7ba90fba47ab94580da4285ffe6086078c7d3d4451cfcdea0139e935c86369a5"
 ) {
   throw new Error("integrity review does not point to the final pushed ledger and DAG");
 }

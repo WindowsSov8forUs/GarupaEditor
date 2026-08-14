@@ -208,13 +208,13 @@
     }
   },
   "finalCapabilityContinuation": {
-    "implementationCommit": "7ad5e3b8efcd8ca410db4dd972d7b64d6f607ad8",
-    "reverseLedgerCommit": "f1298aa8",
+    "implementationCommit": "9ab1ff7a339fa3cfd395c5f6fe841e1f3f1585a9",
+    "reverseLedgerCommit": "36a6941fab361c1f6bcf1eef02069d4867f565c7",
     "reverseLedgerPackage": "simulator-final-capability-ledger-10-1-4",
     "counts": {
       "productionFiles": 102,
       "behaviorOccurrences": 21649,
-      "fieldClaims": 14320,
+      "fieldClaims": 14322,
       "mutationPoints": 269,
       "completionStatusOccurrences": 637
     },
@@ -222,13 +222,16 @@
     "worktreeDag": {
       "uniqueLeaves": 25,
       "elapsedMilliseconds": 506162,
-      "status": "passed"
+      "status": "historical-pre-score-hud-reaudit-passed"
     },
     "pushedDetachedDag": {
       "uniqueLeaves": 25,
-      "elapsedMilliseconds": 511876,
+      "elapsedMilliseconds": 1374768,
       "status": "passed",
-      "productionBrowserWebView2Executed": true
+      "productionBrowserWebView2Executed": true,
+      "completeScoreHudWebView2Executed": true,
+      "scoreHudRasterSha256": "7ba90fba47ab94580da4285ffe6086078c7d3d4451cfcdea0139e935c86369a5",
+      "scoreHudNonTransparentPixels": 28587
     }
   },
   "openOrExcluded": [
