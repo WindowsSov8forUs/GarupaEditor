@@ -3,6 +3,10 @@ import { readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { verifyRenderObservation } from "./verifyRenderProductionCases.mjs";
+import {
+  verifyNoFallbackObservation,
+  verifyOrdinaryPixiWorldObservation,
+} from "./verifyPixiWorldObservation.mjs";
 
 const testingRoot = dirname(fileURLToPath(import.meta.url));
 const fixtureRoot = join(testingRoot, "fixtures", "reverse-snapshots");
@@ -21,7 +25,14 @@ const closure = JSON.parse(readFileSync(join(
   "ordinary-visible-rendering", "artifacts", "investigations",
   "ordinary-visible-rendering-portable-10-1-4", "closure.json",
 ), "utf8"));
+const totalFixture = JSON.parse(readFileSync(join(
+  fixtureRoot,
+  "ordinary-rendering-total-reaudit", "artifacts", "investigations",
+  "ordinary-single-rendering-total-reaudit-10-1-4", "ordinary_rendering_candidate_fixture.json",
+), "utf8"));
 assert.equal(verifyRenderObservation(observation, oracle, closure).cases.length, 11);
+verifyNoFallbackObservation(observation);
+verifyOrdinaryPixiWorldObservation(observation.worldObservation, totalFixture);
 
 const forged = structuredClone(observation);
 forged.status = "closed";
@@ -41,4 +52,17 @@ assert.throws(
   /Note animation observation mismatch|PR08 raw observation predicate failed/,
   "self-authored closed status cannot override a tampered Float32 scene value",
 );
-console.log("render observation independence verified: forged closed fields cannot satisfy raw predicates");
+const localOnly = structuredClone(observation.worldObservation);
+localOnly.records.find((record) => record.label === "note:world").worldMatrix = null;
+assert.throws(
+  () => verifyOrdinaryPixiWorldObservation(localOnly, totalFixture),
+  "local-only scene rows cannot satisfy world observation",
+);
+const syntheticBrowserClaim = structuredClone(observation);
+syntheticBrowserClaim.decoder.browserDecodeExecuted = true;
+syntheticBrowserClaim.decoder.rasterObserved = true;
+assert.throws(
+  () => verifyNoFallbackObservation(syntheticBrowserClaim),
+  "synthetic TextureSource cannot claim browser decode or raster",
+);
+console.log("render observation independence verified: forged status/local-only/synthetic-browser claims cannot satisfy raw predicates");

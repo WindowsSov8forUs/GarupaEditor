@@ -50,16 +50,23 @@ import { DeterministicParticleSimulation } from "../engine/particles/particleSim
 import type { SimulatorResult } from "../engine/evidence";
 import { createSimulatorEngine } from "../host/createSimulatorEngine";
 import { createPortableReplaySimulatorEngine } from "../host/portableReplaySession";
+import { observePixiWorld } from "./pixiWorldObserver";
 
+const fixtureBase = join(
+  process.cwd(), "src", "simulator", "testing", "fixtures", "reverse-snapshots",
+);
 const fixtureRoot = join(
-  process.cwd(),
-  "src", "simulator", "testing", "fixtures", "reverse-snapshots", "device-closure",
-  "artifacts", "investigations", "device-runtime-closure-10-1-4",
+  fixtureBase, "device-closure", "artifacts", "investigations", "device-runtime-closure-10-1-4",
 );
 const commandOracle = fixtureJson("particle_command_oracle.json");
 const simulationOracle = fixtureJson("particle_simulation_oracle.json");
 const semanticOracle = fixtureJson("particle_semantic_frame_oracle.json");
 const closure = fixtureJson("particle_portable_closure.json");
+const totalReauditFixture = JSON.parse(readFileSync(join(
+  fixtureBase,
+  "ordinary-rendering-total-reaudit", "artifacts", "investigations",
+  "ordinary-single-rendering-total-reaudit-10-1-4", "ordinary_rendering_candidate_fixture.json",
+), "utf8"));
 
 const resourceFiles = Object.freeze({
   "particle/profile/current-portable-v1": "particle_portable_profile.json",
@@ -410,6 +417,12 @@ async function testPixiMapping(profile: any): Promise<void> {
   );
   assert.equal(uvSprite.texture.frame.width, uvTileWidth);
   assert.equal(uvSprite.texture.frame.height, uvTileHeight);
+  const uvWorldObservation = observePixiWorld(renderer.stage);
+  verifyObservedUvRow(uvWorldObservation, uvSample.particleId, uvSprite.texture.frame.y);
+  const uvRowMutation = structuredClone(uvWorldObservation) as any;
+  uvRowMutation.records.find((record: any) => record.label === uvSample.particleId).texture.frame[1] += uvTileHeight;
+  assert.throws(() => verifyObservedUvRow(uvRowMutation, uvSample.particleId, uvSprite.texture.frame.y),
+    "particle UV-row mutation sentinel must fail");
 
   const localSample = visibleSamples.find((sample) => sample.renderAlignment === 2)!;
   assert.ok(localSample, "visible particle frame contains local-aligned geometry");
@@ -485,6 +498,20 @@ async function testPixiMapping(profile: any): Promise<void> {
   ]);
   assert.equal(combined.root.children[0], renderer.stage);
   assert.equal(combined.root.children[1], ordinaryStage);
+  const combinedWorld = observePixiWorld(combined.root);
+  verifyCombinedStageWorld(combinedWorld, totalReauditFixture.combinedRoot);
+  const particleStage = combinedWorld.records.find((record) =>
+    record.label === totalReauditFixture.combinedRoot.particleStageLabel)!;
+  assert.ok(combinedWorld.records.filter((record) => record.parent === particleStage.path).every((record) =>
+    record.localMatrix.length === 6 && record.worldMatrix.length === 6 &&
+    record.localBounds !== null && record.worldBounds !== null && record.texture !== null));
+  const stageOrderMutation = structuredClone(combinedWorld) as any;
+  stageOrderMutation.records.find((record: any) =>
+    record.label === totalReauditFixture.combinedRoot.particleStageLabel).order[0] = 1;
+  stageOrderMutation.records.find((record: any) =>
+    record.label === totalReauditFixture.combinedRoot.ordinaryStageLabel).order[0] = 0;
+  assert.throws(() => verifyCombinedStageWorld(stageOrderMutation, totalReauditFixture.combinedRoot),
+    "combined-stage order mutation sentinel must fail");
   assert.equal(combined.dispose().status, "ok");
 
   const badSample = { ...samples[0]!, material: "foreign" } as ParticleRenderSample;
@@ -733,6 +760,29 @@ function projectSample(sample: ParticleRenderSample): unknown {
 function rootSystemIds(profile: any, root: string): Set<string> {
   return new Set(profile.bundles.flatMap((bundle: any) =>
     bundle.systems.filter((system: any) => system.root === root).map((system: any) => system.identity)));
+}
+
+function verifyObservedUvRow(
+  observation: ReturnType<typeof observePixiWorld>,
+  particleId: string,
+  expectedY: number,
+): void {
+  const rows = observation.records.filter((record) => record.label === particleId);
+  assert.equal(rows.length, 1, "UV observer resolves one particle Sprite");
+  assert.equal(rows[0]!.texture?.frame[1], expectedY, "observer exposes the expected Pixi UV row");
+}
+
+function verifyCombinedStageWorld(observation: ReturnType<typeof observePixiWorld>, expected: any): void {
+  const roots = observation.records.filter((record) => record.parent === null);
+  assert.equal(roots.length, 1);
+  assert.equal(roots[0]!.label, expected.label);
+  const particle = observation.records.filter((record) => record.label === expected.particleStageLabel);
+  const ordinary = observation.records.filter((record) => record.label === expected.ordinaryStageLabel);
+  assert.equal(particle.length, 1);
+  assert.equal(ordinary.length, 1);
+  assert.equal(particle[0]!.parent, roots[0]!.path);
+  assert.equal(ordinary[0]!.parent, roots[0]!.path);
+  assert.deepEqual([particle[0]!.order[0], ordinary[0]!.order[0]], [0, 1]);
 }
 
 function uvProfile(profile: any, systemId: string): {

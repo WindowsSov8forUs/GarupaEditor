@@ -19,6 +19,7 @@ import { createNoteBatchInformationList } from "../engine/chart/construction";
 import { RenderCommandProducer } from "../engine/rendering/renderCommandProducer";
 import { ok, type SimulatorResult } from "../engine/evidence";
 import { createSimulatorEngine } from "../host/createSimulatorEngine";
+import { observePixiWorld } from "./pixiWorldObserver";
 
 type CommandWithoutBase<T = RenderCommand> = T extends RenderCommand
   ? Omit<T, "sessionId" | "sequence" | "frame" | "substep">
@@ -381,6 +382,7 @@ async function main(): Promise<void> {
     scoreMatrix: Object.freeze(scoreMatrix),
     invalidScore: Object.freeze({ capability: invalidScore.status === "evidence-required" ? invalidScore.capability : null }),
   });
+  const worldObservation = observePixiWorld(renderer.stage);
   requireOk(renderer.dispose(), "actual Pixi dispose");
   equal(renderer.snapshot().objectCount, 0, "actual Pixi dispose releases all owners");
   const sampleCleanup = Object.freeze({
@@ -392,7 +394,7 @@ async function main(): Promise<void> {
   const observationPath = process.env.SIMULATOR_RENDER_OBSERVATION_PATH;
   if (typeof observationPath === "string" && observationPath.length > 0) {
     writeFileSync(observationPath, JSON.stringify({
-      schemaVersion: 2,
+      schemaVersion: 3,
       source: "actual-pixi-command-scene-routing",
       decoder: {
         kind: "synthetic-texture-source-routing-adapter",
@@ -400,6 +402,7 @@ async function main(): Promise<void> {
         rasterObserved: false,
       },
       resourcePreparation,
+      worldObservation,
       samples: sampleObservation,
       invalidPreflight: invalidObservation,
       sampleCleanup,

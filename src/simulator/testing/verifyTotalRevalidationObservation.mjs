@@ -1,15 +1,22 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import {
+  verifyNoFallbackObservation,
+  verifyOrdinaryPixiWorldObservation,
+} from "./verifyPixiWorldObservation.mjs";
 
 const path = process.argv[2];
 if (typeof path !== "string") throw new Error("raw observation path is required");
 const raw = JSON.parse(readFileSync(path, "utf8"));
-assert.equal(raw.schemaVersion, 2);
-assert.deepEqual(raw.decoder, {
-  kind: "synthetic-texture-source-routing-adapter",
-  browserDecodeExecuted: false,
-  rasterObserved: false,
-});
+const totalFixture = JSON.parse(readFileSync(join(
+  process.cwd(), "src", "simulator", "testing", "fixtures", "reverse-snapshots",
+  "ordinary-rendering-total-reaudit", "artifacts", "investigations",
+  "ordinary-single-rendering-total-reaudit-10-1-4", "ordinary_rendering_candidate_fixture.json",
+), "utf8"));
+assert.equal(raw.schemaVersion, 3);
+verifyNoFallbackObservation(raw);
+verifyOrdinaryPixiWorldObservation(raw.worldObservation, totalFixture);
 for (const forbidden of ["status", "closed", "passed", "productionAuthorization"]) {
   assert.equal(Object.hasOwn(raw, forbidden), false, `raw observation contains decision field: ${forbidden}`);
 }
@@ -82,4 +89,22 @@ assert.equal(samples.invalidScore.capability, "render.pixi.invalid-typed-hud-sta
 assert.deepEqual(raw.sampleCleanup, { ownerCount: 0, stageChildren: 0 });
 assert.equal(raw.fullChart.cleanupOwnerCount, 0);
 assert.equal(raw.fullChart.cleanupStageChildren, 0);
-console.log(`independent current raw observation verified: score-matrix=${matrix.length} ss-generation=1 indicator-clip=visible-consumer`);
+
+const parentMutation = structuredClone(raw.worldObservation);
+parentMutation.records.find((record) => record.label === "note:world").parent = null;
+assert.throws(() => verifyOrdinaryPixiWorldObservation(parentMutation, totalFixture),
+  "parent mutation sentinel must fail");
+const unityYMutation = structuredClone(raw.worldObservation);
+unityYMutation.records.find((record) => record.label === "note:world").worldMatrix[5] += 1;
+assert.throws(() => verifyOrdinaryPixiWorldObservation(unityYMutation, totalFixture),
+  "Unity Y mutation sentinel must fail");
+const maskMutation = structuredClone(raw.worldObservation);
+maskMutation.records.find((record) =>
+  record.label === "score-high-rank-animation-layer" && record.mask === "score-high-rank-panel-mask").mask = null;
+assert.throws(() => verifyOrdinaryPixiWorldObservation(maskMutation, totalFixture),
+  "mask-space mutation sentinel must fail");
+const fallbackMutation = structuredClone(raw);
+fallbackMutation.decoder.fallbackUsed = true;
+assert.throws(() => verifyNoFallbackObservation(fallbackMutation),
+  "fallback mutation sentinel must fail");
+console.log(`independent current raw world observation verified: records=${raw.worldObservation.records.length} score-matrix=${matrix.length} sentinels=parent|unity-y|mask-space|fallback`);

@@ -25,6 +25,7 @@ try {
   ]) run(process.execPath, [join(testingRoot, runner)]);
   run(process.execPath, [join(testingRoot, "verifyRenderProductionCases.mjs")]);
   run(process.execPath, [join(testingRoot, "verifyRenderObservationIndependence.mjs")]);
+  run(process.execPath, [join(testingRoot, "verifyTotalRevalidationObservation.mjs"), observationPath]);
   console.log("actual-pixi-command-scene-routing passed: Reverse expected values + independently computed raw Note/HUD/full-chart observations");
 } finally {
   rmSync(observationRoot, { recursive: true, force: true });

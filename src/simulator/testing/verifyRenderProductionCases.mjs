@@ -43,7 +43,7 @@ export function verifyRenderObservation(observation, oracle, closure) {
     oracle.schemaVersion !== 1 ||
     oracle.status !== "simulator-dynamic-acceptance-expected-values-closed" ||
     oracle.decoderLayer?.rasterClaimAllowed !== false ||
-    observation.schemaVersion !== 2 ||
+    observation.schemaVersion !== 3 ||
     observation.source !== "actual-pixi-command-scene-routing" ||
     observation.decoder?.kind !== oracle.decoderLayer.name ||
     observation.decoder?.browserDecodeExecuted !== false ||
