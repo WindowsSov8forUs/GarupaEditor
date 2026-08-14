@@ -5,7 +5,7 @@ const assert = require("node:assert/strict");
 const { createHash } = require("node:crypto");
 const { readFileSync } = require("node:fs");
 const { join } = require("node:path");
-import { Texture, TextureSource } from "pixi.js";
+import { Container, Sprite, Texture, TextureSource } from "pixi.js";
 import type {
   ParticleCommand,
   ParticleOperationResult,
@@ -26,6 +26,7 @@ import {
 } from "../backends/particleValidation";
 import { DeterministicSimulatorParticleBackend } from "../backends/particles/deterministicParticleBackend";
 import { BrowserPixiParticleTextureDecoder } from "../backends/pixi/browserPixiParticleTextureDecoder";
+import { createPixiCombinedScene } from "../backends/pixi/pixiCombinedScene";
 import {
   PixiParticleRendererBackend,
   type ParticlePixiTextureDecoder,
@@ -86,7 +87,7 @@ async function main(): Promise<void> {
   testCommandOracle();
   testSimulationOracle(prepared.profile);
   await testBackends();
-  await testPixiMapping();
+  await testPixiMapping(prepared.profile);
   await testOuterFrameAndFailure();
   await testWholeEngineReplay();
   console.log("particle DC-C01-C46 contracts passed: routes=32 simulation=5 corpus=17 semantic=4");
@@ -344,7 +345,7 @@ async function testBackends(): Promise<void> {
   assert.equal(recording.dispose().status, "accepted");
 }
 
-async function testPixiMapping(): Promise<void> {
+async function testPixiMapping(profile: any): Promise<void> {
   const decoder: ParticlePixiTextureDecoder = {
     async decodePng(asset) {
       const source = new TextureSource({
@@ -379,14 +380,120 @@ async function testPixiMapping(): Promise<void> {
   assert.equal(renderer.snapshot().nodeCount, samples.length);
   assert.equal(renderer.sceneSnapshot().length, samples.length);
   assert.ok(renderer.sceneSnapshot().every((entry) => Number.isFinite(entry.position[0]) && Number.isFinite(entry.position[1])));
+  assert.ok((renderer.stage.children as Sprite[]).every((sprite) =>
+    sprite.texture.source.alphaMode === "no-premultiply-alpha" && sprite.blendMode === "add"),
+  "current enabled Mobile/Particles/Additive sprites retain straight-alpha upload and Pixi's add→add-npm adjustment inputs");
+
+  const visibleWorld = new DeterministicParticleSimulation(profile);
+  visibleWorld.playRoot("visible-owner", buttonInstance("ordinary:effect_tap_perfect", 1, 3), "ordinary:effect_tap_perfect");
+  visibleWorld.step(Math.fround(1 / 30), false);
+  const visibleSamples = visibleWorld.samples();
+  const visibleFrame = accepted(renderer.preflightFrame({
+    sessionId: "pixi-particle",
+    frame: 1,
+    samples: visibleSamples,
+  }), "Pixi visible composition frame");
+  assert.equal(renderer.commitFrame(visibleFrame).status, "accepted");
+  const sprites = renderer.stage.children as Sprite[];
+  assert.equal(sprites.length, visibleSamples.length);
+  const uvSample = visibleSamples.find((sample) => sample.uvFrame !== 0 && uvProfile(profile, sample.systemId) !== null)!;
+  assert.ok(uvSample, "visible particle frame contains one non-zero texture-sheet frame");
+  const uvSprite = sprites.find((sprite) => sprite.label === uvSample.particleId)!;
+  const uv = uvProfile(profile, uvSample.systemId)!;
+  const uvTileWidth = uv.textureWidth / uv.tilesX;
+  const uvTileHeight = uv.textureHeight / uv.tilesY;
+  assert.equal(uvSprite.texture.frame.x, (uvSample.uvFrame % uv.tilesX) * uvTileWidth);
+  assert.equal(
+    uvSprite.texture.frame.y,
+    (uv.tilesY - 1 - Math.floor(uvSample.uvFrame / uv.tilesX)) * uvTileHeight,
+    "Unity bottom-up texture-sheet row maps to the corresponding top-down Pixi frame",
+  );
+  assert.equal(uvSprite.texture.frame.width, uvTileWidth);
+  assert.equal(uvSprite.texture.frame.height, uvTileHeight);
+
+  const localSample = visibleSamples.find((sample) => sample.renderAlignment === 2)!;
+  assert.ok(localSample, "visible particle frame contains local-aligned geometry");
+  const localSprite = sprites.find((sprite) => sprite.label === localSample.particleId)!;
+  const localMatrix = localSprite.localTransform;
+  assert.ok([localMatrix.a, localMatrix.b, localMatrix.c, localMatrix.d].every(Number.isFinite));
+  const naiveCameraFacingD = particleFloat32FromBits(localSample.size.yBits)! * 360 / localSprite.texture.height;
+  assert.ok(Math.abs(Math.abs(localMatrix.d) - Math.abs(naiveCameraFacingD)) > 1e-6,
+    "local-aligned particle consumes the authored projected 3D system basis rather than a camera-facing fallback");
+
+  const rotatingSample = visibleSamples.find((sample) => sample.renderMode === 0 && sample.renderAlignment === 0 &&
+    Math.abs(particleFloat32FromBits(sample.rotation.zBits)!) > 1e-5)!;
+  assert.ok(rotatingSample, "visible particle frame contains a rotating camera-facing billboard");
+  const rotatingSprite = sprites.find((sprite) => sprite.label === rotatingSample.particleId)!;
+  assert.ok(angleClose(
+    rotatingSprite.rotation,
+    -particleFloat32FromBits(rotatingSample.rotation.zBits)!,
+  ), "Unity counter-clockwise billboard rotation is reflected into Pixi's Y-down scene");
+
+  const stretchedSample = visibleSamples.find((sample) => sample.renderMode === 1 &&
+    (particleFloat32FromBits(sample.velocity.xBits) !== 0 || particleFloat32FromBits(sample.velocity.yBits) !== 0))!;
+  assert.ok(stretchedSample, "visible particle frame contains velocity-stretched geometry");
+  const stretchedSprite = sprites.find((sprite) => sprite.label === stretchedSample.particleId)!;
+  const velocityX = particleFloat32FromBits(stretchedSample.velocity.xBits)!;
+  const velocityY = particleFloat32FromBits(stretchedSample.velocity.yBits)!;
+  assert.ok(angleClose(stretchedSprite.rotation, Math.atan2(-velocityY, velocityX) - Math.PI / 2),
+    "stretched major axis follows the projected velocity after Unity Y-up to Pixi Y-down reflection");
+
+  const routeRoots = [...new Set<string>(profile.bundles.flatMap((bundle: any) =>
+    bundle.systems.map((system: any) => system.root)))].sort();
+  assert.equal(routeRoots.length, 17);
+  const observedTextures = new Set<string>();
+  let nextPixiFrame = 2;
+  let lastCorpusSampleCount = 0;
+  for (const root of routeRoots) {
+    const world = new DeterministicParticleSimulation(profile);
+    world.playRoot(`visible-corpus:${root}`, buttonInstance(root, 1, 3), root as ParticleRootId);
+    world.step(Math.fround(1 / 120), false);
+    world.step(Math.fround(1 / 60), false);
+    world.step(Math.fround(0.023), false);
+    const routeSamples = world.samples();
+    assert.ok(routeSamples.length > 0, `${root} emits visible samples`);
+    const routeFrame = accepted(renderer.preflightFrame({
+      sessionId: "pixi-particle",
+      frame: nextPixiFrame,
+      samples: routeSamples,
+    }), `${root} actual Pixi frame`);
+    assert.equal(renderer.commitFrame(routeFrame).status, "accepted");
+    nextPixiFrame += 1;
+    lastCorpusSampleCount = routeSamples.length;
+    const routeSprites = renderer.stage.children as Sprite[];
+    assert.deepEqual(routeSprites.map((sprite) => sprite.label), routeSamples.map((sample) => sample.particleId),
+      `${root} preserves sortingOrder/system/creation sample order in the non-sortable stage`);
+    assert.ok(routeSprites.every((sprite) => {
+      observedTextures.add(sprite.texture.label ?? "");
+      const matrix = sprite.localTransform;
+      return [matrix.a, matrix.b, matrix.c, matrix.d, matrix.tx, matrix.ty,
+        sprite.alpha, Number(sprite.tint)].every(Number.isFinite) &&
+        sprite.texture.source.alphaMode === "no-premultiply-alpha" && sprite.blendMode === "add";
+    }), `${root} creates finite actual Pixi sprites with the prepared straight-alpha additive resources`);
+    assert.ok(routeSprites.some((sprite) => {
+      const bounds = sprite.getBounds();
+      return bounds.maxX > 0 && bounds.minX < 1600 && bounds.maxY > 0 && bounds.minY < 720;
+    }), `${root} has at least one actual Sprite world bound intersecting the fixed viewport`);
+  }
+  assert.ok(observedTextures.size >= 3, "the 17-root actual Pixi corpus consumes multiple prepared base/UV texture identities");
+
+  const ordinaryStage = new Container({ label: "GarupaSimulatorRoot" });
+  const combined = requireOk(createPixiCombinedScene(renderer.stage, ordinaryStage), "combined particle scene");
+  assert.deepEqual(combined.root.children.map((child) => child.label), [
+    "GarupaSimulatorParticles",
+    "GarupaSimulatorRoot",
+  ]);
+  assert.equal(combined.root.children[0], renderer.stage);
+  assert.equal(combined.root.children[1], ordinaryStage);
+  assert.equal(combined.dispose().status, "ok");
 
   const badSample = { ...samples[0]!, material: "foreign" } as ParticleRenderSample;
   assert.notEqual(renderer.preflightFrame({
     sessionId: "pixi-particle",
-    frame: 1,
+    frame: nextPixiFrame,
     samples: [badSample],
   }).status, "accepted");
-  assert.equal(renderer.snapshot().nodeCount, samples.length);
+  assert.equal(renderer.snapshot().nodeCount, lastCorpusSampleCount);
   assert.equal(renderer.dispose().status, "accepted");
   assert.equal(renderer.snapshot().nodeCount, 0);
   assert.equal(renderer.snapshot().resourceCount, 0);
@@ -628,6 +735,38 @@ function rootSystemIds(profile: any, root: string): Set<string> {
     bundle.systems.filter((system: any) => system.root === root).map((system: any) => system.identity)));
 }
 
+function uvProfile(profile: any, systemId: string): {
+  readonly tilesX: number;
+  readonly tilesY: number;
+  readonly textureWidth: number;
+  readonly textureHeight: number;
+} | null {
+  for (const bundle of profile.bundles) {
+    const system = bundle.systems.find((candidate: any) => candidate.identity === systemId);
+    if (system === undefined) continue;
+    const definition = bundle.profiles[system.profile];
+    const key = definition.modules.UVModule;
+    if (key === undefined) return null;
+    const uv = bundle.moduleProfiles.UVModule[key];
+    const renderer = bundle.rendererProfiles[definition.renderer];
+    const materialRef = renderer.m_Materials.find((candidate: any) => candidate !== null);
+    const material = bundle.materials.find((candidate: any) => candidate.name === materialRef.name);
+    const texture = bundle.textures.find((candidate: any) => candidate.name === material.texture);
+    return Object.freeze({
+      tilesX: uv.tilesX,
+      tilesY: uv.tilesY,
+      textureWidth: texture.width,
+      textureHeight: texture.height,
+    });
+  }
+  throw new Error(`unknown particle system ${systemId}`);
+}
+
+function angleClose(actual: number, expected: number): boolean {
+  const difference = Math.atan2(Math.sin(actual - expected), Math.cos(actual - expected));
+  return Math.abs(difference) < 1e-5;
+}
+
 function playCommand(
   ownerKey: string,
   root: ParticleRootId,
@@ -648,6 +787,8 @@ function buttonInstance(_root: string, rangeLength: number | null, buttonType = 
 }
 
 function particleScene(): ParticlePixiSceneProfile {
+  const widthRate = Math.fround(Math.fround(1600 / 720) / Math.fround(9.578571319580078));
+  const buttonY = Math.fround(Math.fround(-3.450000047683716) * widthRate);
   return Object.freeze({
     viewportWidth: 1600,
     viewportHeight: 720,
@@ -657,14 +798,20 @@ function particleScene(): ParticlePixiSceneProfile {
     roundPixels: false,
     buttonAnchors: Object.freeze(Array.from({ length: 16 }, (_, buttonType) => buttonType)
       .filter((buttonType) => buttonType !== 7)
-      .map((buttonType) => Object.freeze({
-        buttonType,
-        position: Object.freeze({
-          xBits: particleFloat32ToBits(Math.fround((buttonType - 7.5) * 0.1))!,
-          yBits: particleFloat32ToBits(Math.fround(-3.45))!,
-          zBits: particleFloat32ToBits(Math.fround(-13.5))!,
-        }),
-      }))),
+      .map((buttonType) => {
+        const lane = buttonType <= 6 ? buttonType : buttonType === 15 ? 6 : buttonType - 8;
+        const x = Math.fround(
+          Math.fround(Math.fround(lane - 3) * Math.fround(2.200000047683716)) * widthRate,
+        );
+        return Object.freeze({
+          buttonType,
+          position: Object.freeze({
+            xBits: particleFloat32ToBits(x)!,
+            yBits: particleFloat32ToBits(buttonY)!,
+            zBits: particleFloat32ToBits(Math.fround(0))!,
+          }),
+        });
+      })),
   });
 }
 

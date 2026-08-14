@@ -1,5 +1,6 @@
 import {
   Container,
+  Matrix,
   Rectangle,
   Sprite,
   Texture,
@@ -38,6 +39,7 @@ export interface ParticlePixiTextureDecoder {
 
 interface SystemRenderBinding {
   readonly bundle: ParticleBundleProfile;
+  readonly system: ParticleBundleProfile["systems"][number];
   readonly renderer: ParticleRendererProfile;
   readonly materialName: string;
   readonly logicalTextureId: string;
@@ -421,24 +423,14 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
       Math.fround(this.scene!.viewportWidth / 2 + Math.fround(worldX * pixelsPerUnit)),
       Math.fround(this.scene!.viewportHeight / 2 - Math.fround(worldY * pixelsPerUnit)),
     );
-    const sizeX = particleFloat32FromBits(sample.size.xBits)!;
-    const sizeY = particleFloat32FromBits(sample.size.yBits)!;
-    let width = Math.fround(sizeX * pixelsPerUnit);
-    let height = Math.fround(sizeY * pixelsPerUnit);
-    let rotation = particleFloat32FromBits(sample.rotation.zBits)!;
-    if (sample.renderMode === 1) {
-      const velocityX = particleFloat32FromBits(sample.velocity.xBits)!;
-      const velocityY = particleFloat32FromBits(sample.velocity.yBits)!;
-      const speed = Math.fround(Math.sqrt(
-        Math.fround(velocityX * velocityX) + Math.fround(velocityY * velocityY),
-      ));
-      height = Math.fround(Math.fround(sizeY * binding.renderer.m_LengthScale) +
-        Math.fround(speed * binding.renderer.m_VelocityScale));
-      height = Math.fround(height * pixelsPerUnit);
-      if (velocityX !== 0 || velocityY !== 0) rotation = Math.fround(Math.atan2(velocityY, velocityX) - Math.PI / 2);
-    }
-    sprite.scale.set(width / texture.width, height / texture.height);
-    sprite.rotation = rotation;
+    sprite.setFromMatrix(particleSpriteMatrix(
+      sample,
+      binding,
+      texture,
+      pixelsPerUnit,
+      sprite.position.x,
+      sprite.position.y,
+    ));
     const red = particleFloat32FromBits(sample.color.redBits)!;
     const green = particleFloat32FromBits(sample.color.greenBits)!;
     const blue = particleFloat32FromBits(sample.color.blueBits)!;
@@ -584,6 +576,7 @@ function buildSystemBindings(
       const uv = uvKey === undefined ? null : bundle.moduleProfiles.UVModule?.[uvKey] ?? null;
       bindings.set(system.identity, Object.freeze({
         bundle,
+        system,
         renderer,
         materialName: material.name,
         logicalTextureId: `particle-texture:${bundle.key}:${material.texture}`,
@@ -650,6 +643,148 @@ function sampleBitsFinite(sample: ParticleRenderSample): boolean {
 function compareSamples(left: ParticleRenderSample, right: ParticleRenderSample): number {
   return left.sortingOrder - right.sortingOrder || compareOrdinal(left.systemId, right.systemId) ||
     left.creationSequence - right.creationSequence;
+}
+
+type ParticleVector = readonly [number, number, number];
+
+function particleSpriteMatrix(
+  sample: ParticleRenderSample,
+  binding: SystemRenderBinding,
+  texture: Texture,
+  pixelsPerUnit: number,
+  positionX: number,
+  positionY: number,
+): Matrix {
+  const sizeX = particleFloat32FromBits(sample.size.xBits)!;
+  const sizeY = particleFloat32FromBits(sample.size.yBits)!;
+  const rotation = particleFloat32FromBits(sample.rotation.zBits)!;
+  if (sample.renderMode === 1) {
+    const velocity: ParticleVector = [
+      particleFloat32FromBits(sample.velocity.xBits)!,
+      particleFloat32FromBits(sample.velocity.yBits)!,
+      particleFloat32FromBits(sample.velocity.zBits)!,
+    ];
+    const hierarchyScale = systemHierarchyScale(binding);
+    const speedSquared = velocity.reduce(
+      (sum, component) => renderAdd(sum, renderMultiply(component, component)),
+      renderF32(0),
+    );
+    const speed = renderF32(Math.sqrt(speedSquared));
+    const width = renderMultiply(renderMultiply(sizeX, hierarchyScale[0]), pixelsPerUnit);
+    const heightWorld = renderAdd(
+      renderMultiply(renderMultiply(sizeY, hierarchyScale[1]), binding.renderer.m_LengthScale),
+      renderMultiply(speed, binding.renderer.m_VelocityScale),
+    );
+    const height = renderMultiply(heightWorld, pixelsPerUnit);
+    const screenRotation = velocity[0] === 0 && velocity[1] === 0
+      ? Math.fround(-rotation)
+      : Math.fround(Math.atan2(-velocity[1], velocity[0]) - Math.PI / 2);
+    return viewAlignedMatrix(texture, width, height, screenRotation, positionX, positionY);
+  }
+  if (sample.renderAlignment === 2) {
+    const cosine = renderF32(Math.cos(rotation));
+    const sine = renderF32(Math.sin(rotation));
+    const localX: ParticleVector = [
+      renderMultiply(cosine, sizeX),
+      renderMultiply(sine, sizeX),
+      0,
+    ];
+    const localY: ParticleVector = [
+      renderMultiply(-sine, sizeY),
+      renderMultiply(cosine, sizeY),
+      0,
+    ];
+    const worldX = applySystemLinear(localX, binding);
+    const worldY = applySystemLinear(localY, binding);
+    return new Matrix(
+      renderMultiply(worldX[0], pixelsPerUnit) / texture.width,
+      renderMultiply(-worldX[1], pixelsPerUnit) / texture.width,
+      renderMultiply(worldY[0], pixelsPerUnit) / texture.height,
+      renderMultiply(-worldY[1], pixelsPerUnit) / texture.height,
+      positionX,
+      positionY,
+    );
+  }
+  const hierarchyScale = systemHierarchyScale(binding);
+  return viewAlignedMatrix(
+    texture,
+    renderMultiply(renderMultiply(sizeX, hierarchyScale[0]), pixelsPerUnit),
+    renderMultiply(renderMultiply(sizeY, hierarchyScale[1]), pixelsPerUnit),
+    Math.fround(-rotation),
+    positionX,
+    positionY,
+  );
+}
+
+function viewAlignedMatrix(
+  texture: Texture,
+  width: number,
+  height: number,
+  rotation: number,
+  positionX: number,
+  positionY: number,
+): Matrix {
+  const cosine = Math.cos(rotation);
+  const sine = Math.sin(rotation);
+  return new Matrix(
+    cosine * width / texture.width,
+    sine * width / texture.width,
+    -sine * height / texture.height,
+    cosine * height / texture.height,
+    positionX,
+    positionY,
+  );
+}
+
+function systemHierarchyScale(binding: SystemRenderBinding): readonly [number, number] {
+  const x = applySystemLinear([1, 0, 0], binding);
+  const y = applySystemLinear([0, 1, 0], binding);
+  return Object.freeze([
+    renderF32(Math.hypot(x[0], x[1], x[2])),
+    renderF32(Math.hypot(y[0], y[1], y[2])),
+  ] as const);
+}
+
+function applySystemLinear(vector: ParticleVector, binding: SystemRenderBinding): ParticleVector {
+  let value = vector;
+  for (const transform of [binding.system.transform, ...binding.system.parentTransforms]) {
+    value = quaternionRotate([
+      renderMultiply(value[0], transform.m_LocalScale.x),
+      renderMultiply(value[1], transform.m_LocalScale.y),
+      renderMultiply(value[2], transform.m_LocalScale.z),
+    ], transform.m_LocalRotation);
+  }
+  return value;
+}
+
+function quaternionRotate(
+  vector: ParticleVector,
+  quaternion: ParticleBundleProfile["systems"][number]["transform"]["m_LocalRotation"],
+): ParticleVector {
+  const [x, y, z] = vector.map(renderF32) as [number, number, number];
+  const qx = renderF32(quaternion.x);
+  const qy = renderF32(quaternion.y);
+  const qz = renderF32(quaternion.z);
+  const qw = renderF32(quaternion.w);
+  const tx = renderMultiply(2, renderSubtract(renderMultiply(qy, z), renderMultiply(qz, y)));
+  const ty = renderMultiply(2, renderSubtract(renderMultiply(qz, x), renderMultiply(qx, z)));
+  const tz = renderMultiply(2, renderSubtract(renderMultiply(qx, y), renderMultiply(qy, x)));
+  return [
+    renderAdd(x, renderAdd(renderMultiply(qw, tx), renderSubtract(renderMultiply(qy, tz), renderMultiply(qz, ty)))),
+    renderAdd(y, renderAdd(renderMultiply(qw, ty), renderSubtract(renderMultiply(qz, tx), renderMultiply(qx, tz)))),
+    renderAdd(z, renderAdd(renderMultiply(qw, tz), renderSubtract(renderMultiply(qx, ty), renderMultiply(qy, tx)))),
+  ];
+}
+
+function renderF32(value: number): number { return Math.fround(value); }
+function renderAdd(left: number, right: number): number {
+  return renderF32(renderF32(left) + renderF32(right));
+}
+function renderSubtract(left: number, right: number): number {
+  return renderF32(renderF32(left) - renderF32(right));
+}
+function renderMultiply(left: number, right: number): number {
+  return renderF32(renderF32(left) * renderF32(right));
 }
 
 function applyTextureSettings(texture: Texture, wrapU: 0 | 1, wrapV: 0 | 1): void {
