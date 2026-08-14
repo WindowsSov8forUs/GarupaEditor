@@ -38,6 +38,7 @@ for (const row of matrix) {
     owner: "score-high-rank-panel-mask",
     consumer: "score-high-rank-animation-layer",
     generation: 1,
+    position: [25, 45],
     bounds: [left, -13.5, width, 39],
     softness: [20, 3],
   });
@@ -72,6 +73,7 @@ assert.deepEqual(half.hudScoreIndicatorMask, {
   owner: "score-high-rank-panel-mask",
   consumer: "score-high-rank-animation-layer",
   generation: 1,
+  position: [25, 45],
   bounds: [42, -13.5, 375, 39],
   softness: [20, 3],
 });
