@@ -1,7 +1,7 @@
 use std::{
   env,
   fs,
-  path::{Path, PathBuf},
+  path::PathBuf,
   thread,
   time::Duration,
 };
@@ -30,12 +30,15 @@ struct Inputs {
   pixi: PathBuf,
   png: PathBuf,
   font: PathBuf,
+  score_profile: PathBuf,
+  score_assets: PathBuf,
+  score_animation: PathBuf,
 }
 
 fn main() -> wry::Result<()> {
   let args: Vec<String> = env::args().collect();
-  if args.len() != 5 {
-    eprintln!("usage: webview2-browser-raster-harness OUTPUT_JSON PIXI_JS PNG FONT_TTF");
+  if args.len() != 8 {
+    eprintln!("usage: webview2-browser-raster-harness OUTPUT_JSON PIXI_JS PNG FONT_TTF SCORE_PROFILE SCORE_ASSET_DIR SCORE_ANIMATION");
     std::process::exit(64);
   }
 
@@ -46,6 +49,9 @@ fn main() -> wry::Result<()> {
     pixi: canonical_file(&args[2]),
     png: canonical_file(&args[3]),
     font: canonical_file(&args[4]),
+    score_profile: canonical_file(&args[5]),
+    score_assets: canonical_dir(&args[6]),
+    score_animation: canonical_file(&args[7]),
   };
   let output = PathBuf::from(&args[1]);
 
@@ -115,13 +121,28 @@ fn canonical_file(value: &str) -> PathBuf {
   path
 }
 
+fn canonical_dir(value: &str) -> PathBuf {
+  let path = fs::canonicalize(value).unwrap_or_else(|error| panic!("cannot resolve {value}: {error}"));
+  assert!(path.is_dir(), "input is not a directory: {}", path.display());
+  path
+}
+
 fn protocol_response(inputs: &Inputs, request: Request<Vec<u8>>) -> Response<std::borrow::Cow<'static, [u8]>> {
-  let (path, content_type): (&Path, &'static str) = match request.uri().path() {
-    "/" | "/index.html" => (&inputs.html, "text/html; charset=utf-8"),
-    "/pixi.js" => (&inputs.pixi, "text/javascript; charset=utf-8"),
-    "/bundle.js" => (&inputs.bundle, "text/javascript; charset=utf-8"),
-    "/texture.png" => (&inputs.png, "image/png"),
-    "/font.ttf" => (&inputs.font, "font/ttf"),
+  let (path, content_type): (PathBuf, &'static str) = match request.uri().path() {
+    "/" | "/index.html" => (inputs.html.clone(), "text/html; charset=utf-8"),
+    "/pixi.js" => (inputs.pixi.clone(), "text/javascript; charset=utf-8"),
+    "/bundle.js" => (inputs.bundle.clone(), "text/javascript; charset=utf-8"),
+    "/texture.png" => (inputs.png.clone(), "image/png"),
+    "/font.ttf" => (inputs.font.clone(), "font/ttf"),
+    "/score-profile.json" => (inputs.score_profile.clone(), "application/json; charset=utf-8"),
+    "/score-animation.json" => (inputs.score_animation.clone(), "application/json; charset=utf-8"),
+    "/score-assets/score-font.png" => (inputs.score_assets.join("score-font.png"), "image/png"),
+    "/score-assets/rhythm-game-ui.png" => (inputs.score_assets.join("rhythm-game-ui.png"), "image/png"),
+    "/score-assets/rank-label-font.ttf" => (inputs.score_assets.join("rank-label-font.ttf"), "font/ttf"),
+    "/score-assets/ui-common.png" => (inputs.score_assets.join("ui-common.png"), "image/png"),
+    "/score-assets/high-rank-kira.png" => (inputs.score_assets.join("high-rank-kira.png"), "image/png"),
+    "/score-assets/high-rank-long-star.png" => (inputs.score_assets.join("high-rank-long-star.png"), "image/png"),
+    "/score-assets/high-rank-overlay.png" => (inputs.score_assets.join("high-rank-overlay.png"), "image/png"),
     _ => {
       return Response::builder()
         .status(404)
@@ -131,7 +152,7 @@ fn protocol_response(inputs: &Inputs, request: Request<Vec<u8>>) -> Response<std
     }
   };
 
-  match fs::read(path) {
+  match fs::read(&path) {
     Ok(bytes) => Response::builder()
       .status(200)
       .header(CONTENT_TYPE, content_type)

@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { copyFileSync, existsSync, readFileSync, rmSync } from "node:fs";
+import { copyFileSync, existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 import { createRequire } from "node:module";
@@ -20,6 +20,11 @@ const scoreRoot = join(
 );
 const png = join(scoreRoot, "rhythm-game-ui.png");
 const font = join(scoreRoot, "rank-label-font.ttf");
+const scoreProfile = join(
+  testingRoot,
+  "fixtures/reverse-snapshots/autonomous-module/artifacts/investigations/autonomous-simulator-portable-pack-10-1-4/ordinary_portable_profile.json",
+);
+const scoreAnimation = join(dirname(scoreRoot), "score_gauge_ss_animation_profile.json");
 const contract = JSON.parse(readFileSync(join(
   testingRoot,
   "fixtures/reverse-snapshots/c07-evidence/artifacts/investigations/webview2-browser-raster-10-1-4/webview2_browser_raster_contract.json",
@@ -48,8 +53,23 @@ try {
     pixi,
     png,
     font,
+    scoreProfile,
+    scoreRoot,
+    scoreAnimation,
   ], harnessRoot);
-  verify(JSON.parse(readFileSync(capture, "utf8")));
+  const observed = JSON.parse(readFileSync(capture, "utf8"));
+  if (observed.status !== "ok") verify(observed);
+  if (process.env.SIMULATOR_SCORE_HUD_CAPTURE_PATH) {
+    const prefix = "data:image/png;base64,";
+    if (!observed.raster?.scoreHud?.pngDataUrl?.startsWith(prefix)) {
+      throw new Error("Score HUD audit PNG was not captured");
+    }
+    writeFileSync(
+      resolve(repositoryRoot, process.env.SIMULATOR_SCORE_HUD_CAPTURE_PATH),
+      Buffer.from(observed.raster.scoreHud.pngDataUrl.slice(prefix.length), "base64"),
+    );
+  }
+  verify(observed);
 } finally {
   rmSync(bundle, { force: true });
   rmSync(capture, { force: true });
@@ -82,6 +102,15 @@ function verify(value) {
     JSON.stringify(contract.observation.browserDecode.loadedMetrics),
     "loaded production glyph metrics",
   );
+  const scoreHud = value.raster.scoreHud;
+  equal(scoreHud.maskWorldTransform[0], 414, "Score high-rank panel mask world X");
+  equal(scoreHud.maskWorldTransform[1], 96, "Score high-rank panel mask world Y");
+  equal(JSON.stringify(scoreHud.maskWorldBounds), JSON.stringify([456, 82.5, 831, 121.5]), "Score high-rank panel SS-threshold world bounds");
+  equal(JSON.stringify(scoreHud.animationLayerWorldTransform), JSON.stringify([414, 96]), "Score high-rank animation and panel coordinate spaces");
+  equal(JSON.stringify(scoreHud.firstDigitWorldTransform), JSON.stringify([324, 135]), "Score first bitmap digit world transform");
+  if (scoreHud.nonTransparentPixels <= 0 || !/^[0-9a-f]{64}$/.test(scoreHud.sha256)) {
+    throw new Error(`production Score HUD WebView2 raster is invalid: ${JSON.stringify(scoreHud)}`);
+  }
   for (const [key, expectedKey] of [["pngOnly", "pngOnly"], ["fontOnly", "fontOnly"]]) {
     const actual = value.raster[key];
     const expected = contract.observation.raster[expectedKey];
@@ -94,7 +123,7 @@ function verify(value) {
   }
   equal(sha256(readFileSync(png)), contract.observation.inputs.sha256.png.toUpperCase(), "fixture PNG hash");
   equal(sha256(readFileSync(font)), contract.observation.inputs.sha256.font.toUpperCase(), "fixture font hash");
-  console.log(`production BrowserPixiTextureDecoder WebView2 passed: runtime=${versions.get("Microsoft Edge WebView2")} png=${value.raster.pngOnly.sha256} font=${value.raster.fontOnly.sha256}`);
+  console.log(`production BrowserPixiTextureDecoder WebView2 passed: runtime=${versions.get("Microsoft Edge WebView2")} png=${value.raster.pngOnly.sha256} font=${value.raster.fontOnly.sha256} scoreHud=${scoreHud.sha256} pixels=${scoreHud.nonTransparentPixels}`);
 }
 
 function sha256(bytes) {

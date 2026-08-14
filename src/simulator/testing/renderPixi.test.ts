@@ -176,6 +176,7 @@ async function main(): Promise<void> {
     owner: "score-high-rank-panel-mask",
     consumer: "score-high-rank-animation-layer",
     generation: 1,
+    position: [25, 45],
     bounds: [42, -13.5, 375, 39],
     softness: [20, 3],
   }), "indicator drives the persistent Score high-rank panel mask owner");

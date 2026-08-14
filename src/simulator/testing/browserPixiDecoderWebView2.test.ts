@@ -6,7 +6,19 @@ import {
   Text,
 } from "pixi.js";
 import { BrowserPixiTextureDecoder } from "../backends/pixi/browserPixiTextureDecoder";
-import type { RenderResourceAssetProfile } from "../backends/renderingContracts";
+import { PixiRendererBackend } from "../backends/pixi/pixiRendererBackend";
+import { parseCurrentScoreGaugeSsAnimationProfile } from "../backends/resources/currentScoreGaugeSsAnimationProfile";
+import { CURRENT_SCORE_HUD_PORTABLE_RESOURCES } from "../backends/resources/currentScoreHudResourceManifest";
+import {
+  ImmutableLocalRenderResourceProvider,
+  PortableRenderResourcePreflightAdapter,
+} from "../backends/resources/localResourceProvider";
+import type {
+  RenderCommand,
+  RenderResourceAssetProfile,
+  RenderResourceProfile,
+} from "../backends/renderingContracts";
+import { createRenderFloat32 } from "../backends/renderingValidation";
 
 const WIDTH = 128;
 const HEIGHT = 96;
@@ -91,6 +103,7 @@ async function main(): Promise<void> {
       pngRaster.sha256 === fontRaster.sha256) {
     throw new Error("production decoder actual Pixi raster cases are empty or aliased");
   }
+  const scoreHud = await captureProductionScoreHud(app);
 
   const source = texture.source;
   texture.destroy(true);
@@ -127,13 +140,190 @@ async function main(): Promise<void> {
       textureDimensions: [1024, 1024],
       textureResourceAfterDestroy: resourceAfterDestroy == null ? null : resourceAfterDestroy.constructor?.name ?? "unknown",
     },
-    raster: { pngOnly: pngRaster, fontOnly: fontRaster },
+    raster: { pngOnly: pngRaster, fontOnly: fontRaster, scoreHud },
     isolation: {
       resourceUrls: performance.getEntriesByType("resource").map((entry) => entry.name).sort(),
     },
   };
   app.destroy(true, { children: true, texture: true, textureSource: true });
   globalThis.window.ipc.postMessage(JSON.stringify(result));
+}
+
+async function captureProductionScoreHud(app: Application): Promise<{
+  readonly sha256: string;
+  readonly nonTransparentPixels: number;
+  readonly alphaBounds: readonly [number, number, number, number];
+  readonly maskWorldTransform: readonly [number, number];
+  readonly maskWorldBounds: readonly [number, number, number, number];
+  readonly animationLayerWorldTransform: readonly [number, number];
+  readonly firstDigitWorldTransform: readonly [number, number];
+  readonly pngDataUrl: string;
+}> {
+  const baseProfile = await fetchJson<RenderResourceProfile>("/score-profile.json");
+  const animation = parseCurrentScoreGaugeSsAnimationProfile(await fetchJson("/score-animation.json"));
+  if (animation === null) throw new Error("committed ScoreGaugeSS profile did not parse in WebView2");
+  const resources = await Promise.all(CURRENT_SCORE_HUD_PORTABLE_RESOURCES.map(async (row) => Object.freeze({
+    logicalAssetId: row.profile.logicalAssetId,
+    bytes: await fetchBytes(`/score-assets/${row.resourceKeySuffix}`),
+  })));
+  const provider = requireOk(ImmutableLocalRenderResourceProvider.create(resources));
+  const profile: RenderResourceProfile = {
+    ...baseProfile,
+    packIdentity: `${baseProfile.packIdentity}+production-score-hud-webview2`,
+    assets: Object.freeze(CURRENT_SCORE_HUD_PORTABLE_RESOURCES.map((row) => row.profile)),
+    scoreGaugeSsAnimation: animation,
+    ordinaryVisibleProfile: undefined,
+  };
+  const backend = new PixiRendererBackend(new BrowserPixiTextureDecoder());
+  requireOk(await backend.prepare(
+    "production-score-hud-webview2",
+    profile,
+    provider,
+    new PortableRenderResourcePreflightAdapter(),
+  ));
+  const commands: RenderCommand[] = [
+    {
+      sessionId: "production-score-hud-webview2", sequence: 0, frame: 0, substep: 0,
+      kind: "create-object", renderObjectId: "hud:score", poolFamily: "score",
+      role: "hud-score", parentObjectId: null,
+    },
+    {
+      sessionId: "production-score-hud-webview2", sequence: 1, frame: 0, substep: 0,
+      kind: "set-hud", renderObjectId: "hud:score", hudRole: "score",
+      state: scoreState(864000, 4, 5, true, "ScoreGaugeSS", true),
+    },
+    {
+      sessionId: "production-score-hud-webview2", sequence: 2, frame: 0, substep: 0,
+      kind: "activate-object", renderObjectId: "hud:score",
+    },
+    {
+      sessionId: "production-score-hud-webview2", sequence: 3, frame: 0, substep: 0,
+      kind: "play-animation", renderObjectId: "hud:score", animationRole: "score-gauge-ss", restart: true,
+    },
+    {
+      sessionId: "production-score-hud-webview2", sequence: 4, frame: 0, substep: 0,
+      kind: "sample-animation", renderObjectId: "hud:score", animationRole: "score-gauge-ss",
+      elapsedSeconds: float32(0.5),
+    },
+  ];
+  requireOk(backend.commit(requireOk(backend.preflight(commands))));
+
+  app.renderer.resize(1600, 720);
+  app.stage.addChild(backend.stage);
+  app.render();
+  const mask = findLabel(backend.stage, "score-high-rank-panel-mask");
+  const layer = findLabel(backend.stage, "score-high-rank-animation-layer");
+  const firstDigit = findLabel(backend.stage, "score-digit-0");
+  if (mask === null || layer === null || firstDigit === null) {
+    throw new Error("production Score HUD panel or digit owner is absent");
+  }
+  const bounds = mask.getLocalBounds();
+  const maskWorldTransform = Object.freeze([mask.worldTransform.tx, mask.worldTransform.ty] as const);
+  const maskWorldBounds = Object.freeze([
+    mask.worldTransform.tx + bounds.minX,
+    mask.worldTransform.ty + bounds.minY,
+    mask.worldTransform.tx + bounds.maxX,
+    mask.worldTransform.ty + bounds.maxY,
+  ] as const);
+  const animationLayerWorldTransform = Object.freeze([layer.worldTransform.tx, layer.worldTransform.ty] as const);
+  const firstDigitWorldTransform = Object.freeze([firstDigit.worldTransform.tx, firstDigit.worldTransform.ty] as const);
+  const frame = new Rectangle(320, 20, 560, 160);
+  const output = app.renderer.extract.pixels({
+    target: app.stage, frame, resolution: 1, clearColor: [0, 0, 0, 0],
+  });
+  const pixels = new Uint8Array(output.pixels.buffer, output.pixels.byteOffset, output.pixels.byteLength);
+  const alpha = alphaObservation(pixels, frame.width, frame.height);
+  const canvas = app.renderer.extract.canvas({ target: app.stage, frame, resolution: 1, clearColor: [0, 0, 0, 0] });
+  const result = Object.freeze({
+    sha256: await sha256(pixels),
+    nonTransparentPixels: alpha.nonTransparentPixels,
+    alphaBounds: alpha.bounds,
+    maskWorldTransform,
+    maskWorldBounds,
+    animationLayerWorldTransform,
+    firstDigitWorldTransform,
+    pngDataUrl: (canvas as HTMLCanvasElement).toDataURL("image/png"),
+  });
+  requireOk(backend.dispose());
+  app.stage.removeChild(backend.stage);
+  return result;
+}
+
+function scoreState(
+  score: number,
+  beforeRank: number,
+  rank: number,
+  rankChanged: boolean,
+  highRankEffect: "none" | "ScoreGaugeSS",
+  highRankEffectActive: boolean,
+) {
+  const master = Object.freeze({
+    musicId: 786, difficulty: "special", scoreC: 36000, scoreB: 216000,
+    scoreA: 432000, scoreS: 648000, scoreSS: 864000,
+  });
+  const scoreMax = 959999;
+  const ratio = Math.fround(Math.fround(score) / Math.fround(scoreMax));
+  const marker = (value: number) => float32(Math.fround(
+    Math.fround(41) + Math.fround(
+      Math.fround(Math.fround(value) * Math.fround(421)) / Math.fround(scoreMax),
+    ),
+  ));
+  const digits = String(score);
+  return Object.freeze({
+    master, score,
+    scoreText: `[BEBEBE]${"0".repeat(Math.max(8 - digits.length, 0))}[-][FF3B72]${digits}[-]`,
+    scoreMax, rank, beforeRank, rankChanged,
+    meterKey: rank === 4 ? "score_meter_blue" : rank === 3 ? "score_meter_green" :
+      rank === 2 ? "score_meter_orange" : rank === 1 ? "score_meter_pink" : "score_meter_s",
+    ratio: float32(ratio), sliderValue: float32(Math.fround(Math.min(Math.max(ratio, 0), 1))),
+    foregroundActive: ratio > 0,
+    indicatorLocalX: ratio >= 1 ? 422 : Math.trunc(Math.fround(ratio * Math.fround(422))),
+    rankMarkerCLocalX: marker(master.scoreC), rankMarkerBLocalX: marker(master.scoreB),
+    rankMarkerALocalX: marker(master.scoreA), rankMarkerSLocalX: marker(master.scoreS),
+    rankMarkerSSLocalX: marker(master.scoreSS), highRankEffect, highRankEffectActive,
+  });
+}
+
+function float32(value: number) {
+  return requireOk(createRenderFloat32(Math.fround(value)));
+}
+
+function findLabel(root: Container, label: string): Container | null {
+  for (const child of root.children) {
+    if (child.label === label) return child;
+    const nested = findLabel(child, label);
+    if (nested !== null) return nested;
+  }
+  return null;
+}
+
+function alphaObservation(bytes: Uint8Array, width: number, height: number): {
+  readonly nonTransparentPixels: number;
+  readonly bounds: readonly [number, number, number, number];
+} {
+  let count = 0;
+  let minX = width;
+  let minY = height;
+  let maxX = -1;
+  let maxY = -1;
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      if (bytes[(y * width + x) * 4 + 3] === 0) continue;
+      count += 1;
+      minX = Math.min(minX, x);
+      minY = Math.min(minY, y);
+      maxX = Math.max(maxX, x);
+      maxY = Math.max(maxY, y);
+    }
+  }
+  if (count === 0) throw new Error("production Score HUD WebView2 raster is empty");
+  return Object.freeze({ nonTransparentPixels: count, bounds: Object.freeze([minX, minY, maxX, maxY] as const) });
+}
+
+async function fetchJson<T = unknown>(path: string): Promise<T> {
+  const response = await fetch(path, { cache: "no-store", credentials: "omit", redirect: "error" });
+  if (!response.ok) throw new Error(`fixture fetch failed: ${path} ${response.status}`);
+  return await response.json() as T;
 }
 
 function asset(

@@ -490,6 +490,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       readonly owner: "score-high-rank-panel-mask";
       readonly consumer: "score-high-rank-animation-layer";
       readonly generation: number;
+      readonly position: readonly [number, number];
       readonly bounds: readonly [number, number, number, number];
       readonly softness: readonly [20, 3];
     } | null;
@@ -566,6 +567,10 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
             owner: "score-high-rank-panel-mask" as const,
             consumer: "score-high-rank-animation-layer" as const,
             generation: value.hudVisual.scoreHighRankPanelMaskGeneration,
+            position: Object.freeze([
+              value.hudVisual.scoreHighRankPanelMask.position.x,
+              value.hudVisual.scoreHighRankPanelMask.position.y,
+            ] as const),
             bounds: value.hudVisual.scoreHighRankPanelMaskBounds,
             softness: Object.freeze([20, 3] as const),
           }),
@@ -1626,7 +1631,7 @@ function applyScoreHud(
     sprite.zIndex = scene.totalScoreDepth;
     sprite.position.set(
       cursor + glyph.xOffset * fontScale,
-      scene.totalScoreLocalPosition[1] + glyph.yOffset * fontScale,
+      -scene.totalScoreLocalPosition[1] + glyph.yOffset * fontScale,
     );
     cursor += glyph.xAdvance * fontScale;
     visual.content.addChild(sprite);
@@ -1725,6 +1730,7 @@ function applyScoreHud(
   if (visual.scoreHighRankPanelMask === null) {
     throw new Error("Score high-rank panel mask owner is missing");
   }
+  visual.scoreHighRankPanelMask.position.copyFrom(progress.position);
   const panelRight = panel.targetLeftX + state.indicatorLocalX;
   const authoredLeft = panel.targetLeftX + panel.leftAbsolute;
   const panelWidth = Math.max(panel.minimumWidth, panelRight - authoredLeft);
