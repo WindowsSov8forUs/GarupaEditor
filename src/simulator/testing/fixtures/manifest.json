@@ -693,10 +693,10 @@
     },
     {
       "path": "reverse-snapshots/ordinary-rendering-total-reaudit/artifacts/investigations/ordinary-single-rendering-total-reaudit-10-1-4/ordinary_rendering_candidate_fixture.json",
-      "sourceReverseCommit": "73914d53d690c3b64ed7a1693d9571f7720d016b",
+      "sourceReverseCommit": "6908ddfa8a45721f981e2356a9dde84970313bae",
       "sourcePath": "artifacts/investigations/ordinary-single-rendering-total-reaudit-10-1-4/ordinary_rendering_candidate_fixture.json",
-      "bytes": 172089,
-      "sha256": "8753D5FEF804F91E5CD26662C7FDE964057F36B51751C106CA0CC491E9117074"
+      "bytes": 392619,
+      "sha256": "14F904205BF4D8F662274C6B4970E1E1478A649129CBB8502BE033B45DEF7965"
     },
     {
       "path": "reverse-snapshots/score-life-state/artifacts/investigations/score-life-state-runtime-contract-10-1-4/closure.json",

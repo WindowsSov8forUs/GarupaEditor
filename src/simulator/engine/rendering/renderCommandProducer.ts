@@ -238,6 +238,7 @@ export class RenderCommandProducer {
   private readonly createdObjectIds: string[] = [];
   private readonly creationSequenceByObjectId = new Map<string, number>();
   private readonly hudAnimationElapsedSeconds = new Map<"combo" | "all-perfect", number>();
+  private readonly lifeAnimationElapsedSeconds = new Map<"life-warning" | "life-game-over", number>();
   private readonly addScoreElapsedSeconds = new Map<string, number>();
   private resultElapsedSeconds: number | null = null;
   private scoreGaugeSsElapsedSeconds: number | null = null;
@@ -245,6 +246,8 @@ export class RenderCommandProducer {
   private addScoreDepthCycle = 0;
   private lastCombo = 0;
   private lastAllPerfect = false;
+  private lastLifeWarning = false;
+  private lastSingleGameOver = false;
   private readonly noteAnimationElapsedSeconds = new Map<string, {
     readonly role: NoteVisualAnimationRole;
     readonly elapsed: number;
@@ -359,12 +362,27 @@ export class RenderCommandProducer {
     });
     commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: HUD_OBJECTS.score });
     create(HUD_OBJECTS.life, "hud-life");
+    const initialLifeState = lifeHudState(record);
     commands.push({
       ...base(commands.length), kind: "set-hud", renderObjectId: HUD_OBJECTS.life,
-      hudRole: "life", state: lifeHudState(record),
+      hudRole: "life", state: initialLifeState,
     });
     commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: HUD_OBJECTS.life });
-    return this.preflight(commands, () => this.recordCreatedObjects(created));
+    if (initialLifeState.warning) commands.push({
+      ...base(commands.length), kind: "play-animation", renderObjectId: HUD_OBJECTS.life,
+      animationRole: "life-warning", restart: true,
+    });
+    if (initialLifeState.singleGameOver) commands.push({
+      ...base(commands.length), kind: "play-animation", renderObjectId: HUD_OBJECTS.life,
+      animationRole: "life-game-over", restart: true,
+    });
+    return this.preflight(commands, () => {
+      this.recordCreatedObjects(created);
+      this.lastLifeWarning = initialLifeState.warning;
+      this.lastSingleGameOver = initialLifeState.singleGameOver;
+      if (initialLifeState.warning) this.lifeAnimationElapsedSeconds.set("life-warning", 0);
+      if (initialLifeState.singleGameOver) this.lifeAnimationElapsedSeconds.set("life-game-over", 0);
+    });
   }
 
   preflightHudReflect(
@@ -454,9 +472,26 @@ export class RenderCommandProducer {
       ...base(commands.length), kind: "play-animation", renderObjectId: HUD_OBJECTS.score,
       animationRole: "score-gauge-ss", restart: true,
     });
+    const nextLifeState = lifeHudState(plan.record);
     commands.push({
       ...base(commands.length), kind: "set-hud", renderObjectId: HUD_OBJECTS.life,
-      hudRole: "life", state: lifeHudState(plan.record),
+      hudRole: "life", state: nextLifeState,
+    });
+    if (nextLifeState.warning && !this.lastLifeWarning) commands.push({
+      ...base(commands.length), kind: "play-animation", renderObjectId: HUD_OBJECTS.life,
+      animationRole: "life-warning", restart: true,
+    });
+    if (!nextLifeState.warning && this.lastLifeWarning) commands.push({
+      ...base(commands.length), kind: "stop-animation", renderObjectId: HUD_OBJECTS.life,
+      animationRole: "life-warning", restart: false,
+    });
+    if (nextLifeState.singleGameOver && !this.lastSingleGameOver) commands.push({
+      ...base(commands.length), kind: "play-animation", renderObjectId: HUD_OBJECTS.life,
+      animationRole: "life-game-over", restart: true,
+    });
+    if (!nextLifeState.singleGameOver && this.lastSingleGameOver) commands.push({
+      ...base(commands.length), kind: "stop-animation", renderObjectId: HUD_OBJECTS.life,
+      animationRole: "life-game-over", restart: false,
     });
     if (plan.record.singleGameOver) {
       if (totalAddScore !== 0) commands.push({
@@ -492,6 +527,18 @@ export class RenderCommandProducer {
       if (plan.scoreGauge.highRankEffect === "ScoreGaugeSS") {
         this.scoreGaugeSsElapsedSeconds = 0;
       }
+      if (nextLifeState.warning && !this.lastLifeWarning) {
+        this.lifeAnimationElapsedSeconds.set("life-warning", 0);
+      } else if (!nextLifeState.warning) {
+        this.lifeAnimationElapsedSeconds.delete("life-warning");
+      }
+      if (nextLifeState.singleGameOver && !this.lastSingleGameOver) {
+        this.lifeAnimationElapsedSeconds.set("life-game-over", 0);
+      } else if (!nextLifeState.singleGameOver) {
+        this.lifeAnimationElapsedSeconds.delete("life-game-over");
+      }
+      this.lastLifeWarning = nextLifeState.warning;
+      this.lastSingleGameOver = nextLifeState.singleGameOver;
       if (plan.record.singleGameOver) {
         this.hudAnimationElapsedSeconds.clear();
         this.addScoreElapsedSeconds.clear();
@@ -513,6 +560,7 @@ export class RenderCommandProducer {
     }
     if (
       (this.hudAnimationElapsedSeconds.size === 0 &&
+        this.lifeAnimationElapsedSeconds.size === 0 &&
         this.addScoreElapsedSeconds.size === 0 &&
         this.resultElapsedSeconds === null &&
         this.scoreGaugeSsElapsedSeconds === null) ||
@@ -521,6 +569,7 @@ export class RenderCommandProducer {
       return ok(new RenderOwnerTransaction(this.renderer, null));
     }
     const next = new Map<"combo" | "all-perfect", number>();
+    const nextLife = new Map<"life-warning" | "life-game-over", number>();
     const nextAddScore = new Map<string, number>();
     let nextResultElapsed = this.resultElapsedSeconds;
     let nextScoreGaugeSsElapsed = this.scoreGaugeSsElapsedSeconds;
@@ -543,6 +592,16 @@ export class RenderCommandProducer {
         });
         next.set(role, nextElapsed);
       }
+    }
+    for (const [role, elapsed] of this.lifeAnimationElapsedSeconds) {
+      const nextElapsed = Math.fround(elapsed + deltaTimeSeconds);
+      const sample = createRenderFloat32(nextElapsed);
+      if (sample.status !== "ok") return sample;
+      commands.push({
+        ...base(commands.length), kind: "sample-animation", renderObjectId: HUD_OBJECTS.life,
+        animationRole: role, elapsedSeconds: sample.value,
+      });
+      nextLife.set(role, nextElapsed);
     }
     for (const [renderObjectId, elapsed] of this.addScoreElapsedSeconds) {
       const nextElapsed = Math.fround(elapsed + deltaTimeSeconds);
@@ -580,12 +639,23 @@ export class RenderCommandProducer {
         });
         commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: HUD_OBJECTS.result });
         nextResultElapsed = null;
+      } else {
+        const sample = createRenderFloat32(nextResultElapsed);
+        if (sample.status !== "ok") return sample;
+        commands.push({
+          ...base(commands.length), kind: "sample-animation", renderObjectId: HUD_OBJECTS.result,
+          animationRole: "result", elapsedSeconds: sample.value,
+        });
       }
     }
     return this.preflight(commands, () => {
       this.hudAnimationElapsedSeconds.clear();
       for (const [role, elapsed] of next) {
         this.hudAnimationElapsedSeconds.set(role, elapsed);
+      }
+      this.lifeAnimationElapsedSeconds.clear();
+      for (const [role, elapsed] of nextLife) {
+        this.lifeAnimationElapsedSeconds.set(role, elapsed);
       }
       this.addScoreElapsedSeconds.clear();
       for (const [renderObjectId, elapsed] of nextAddScore) {
@@ -2298,6 +2368,7 @@ export class RenderCommandProducer {
       this.createdObjectIds.length = 0;
       this.creationSequenceByObjectId.clear();
       this.hudAnimationElapsedSeconds.clear();
+      this.lifeAnimationElapsedSeconds.clear();
       this.addScoreElapsedSeconds.clear();
       this.noteAnimationElapsedSeconds.clear();
       this.resultElapsedSeconds = null;

@@ -485,7 +485,7 @@ export class RecordingSimulatorRendererBackend implements SimulatorRendererBacke
       if (role === "note-long-flash") return visible.noteAnimations.clips.some((clip) => clip.clipId === "note-long-flash");
       if (role === "combo") return visible.combo.clips.some((clip) => clip.clipId === "combo-scale");
       if (role === "all-perfect") return visible.combo.clips.some((clip) => clip.clipId === "combo-all-perfect");
-      if (role === "add-score" || role === "result") return true;
+      if (role === "add-score" || role === "result" || role === "life-warning" || role === "life-game-over") return true;
     }
     return role === "habahiro-lane-change" && this.profile!.fidelity.mode === "habahiro";
   }

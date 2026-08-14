@@ -29,6 +29,12 @@ const fixtureRoot = join(process.cwd(), "src/simulator/testing/fixtures/reverse-
 const ordinaryRoot = join(fixtureRoot, "autonomous-module/artifacts/investigations/autonomous-simulator-portable-pack-10-1-4");
 const visibleRoot = join(fixtureRoot, "ordinary-visible-rendering/artifacts/investigations/ordinary-visible-rendering-portable-10-1-4");
 const scoreRoot = join(fixtureRoot, "score-hud-rank-gauge/artifacts/investigations/score-hud-rank-gauge-10-1-4");
+const totalReauditRoot = join(fixtureRoot, "ordinary-rendering-total-reaudit/artifacts/investigations/ordinary-single-rendering-total-reaudit-10-1-4");
+const totalReauditFixture = JSON.parse(readFileSync(
+  join(totalReauditRoot, "ordinary_rendering_candidate_fixture.json"),
+  "utf8",
+));
+const hudOracle = totalReauditFixture.hudCorrections;
 
 const decoder: PixiTextureDecoder = {
   async decodeFont(asset) {
@@ -111,7 +117,7 @@ async function main(): Promise<void> {
   push({ kind: "set-hud", renderObjectId: "hud:result", hudRole: "result", state: Object.freeze({ judgeKey: "judge_great", timingKey: "judge_fast" }) });
   push({ kind: "activate-object", renderObjectId: "hud:result" });
   push({ kind: "play-animation", renderObjectId: "hud:result", animationRole: "result", restart: true });
-  push({ kind: "sample-animation", renderObjectId: "hud:result", animationRole: "result", elapsedSeconds: f32(0.999) });
+  push({ kind: "sample-animation", renderObjectId: "hud:result", animationRole: "result", elapsedSeconds: f32(0.04) });
 
   push({ kind: "create-object", renderObjectId: "hud:life", poolFamily: "life", role: "hud-life", parentObjectId: null });
   push({ kind: "set-hud", renderObjectId: "hud:life", hudRole: "life", state: lifeState(200, 1000, 2000, false) });
@@ -148,18 +154,35 @@ async function main(): Promise<void> {
   equal(combo.hudSpriteCount, 5, "AP Combo has unit plus four Sprite digits");
   assert(combo.hudSpriteLabels?.includes("combo-unit"), "AP Combo unit Sprite exists");
   assert(combo.hudSpriteAlphas?.every((alpha) => alpha === 0.5), "AP five-channel midpoint alpha matches Reverse oracle");
+  const comboNodes = new Map(combo.hudSpriteNodes?.map((node) => [node.label, node]));
+  equal(JSON.stringify(["combo-digit-0", "combo-digit-1", "combo-digit-2", "combo-digit-3"].map((label) => comboNodes.get(label)?.position)), JSON.stringify([
+    [92, 0], [22, 0], [-48, 0], [-118, 0],
+  ]), "Combo UISpriteNumber CENTER layout consumes inner width and negative padding");
+  equal(comboNodes.get("combo-unit")?.zIndex, hudOracle.combo.unitDepth, "Combo unit retains depth above digit Sprites");
+  equal(JSON.stringify(combo.ordering.slice(0, 3)), JSON.stringify([3, 100, 5]), "Combo root consumes current UIPanel sorting order and widget depth");
   equal(combo.activeAnimationRole, "all-perfect", "Combo scale and AP roles coexist without replacing AP");
 
   const add = row("hud:add");
   equal(add.hudText, null, "AddScore creates no system Text");
   equal(add.hudSpriteCount, 4, "AddScore plus and three digits are Sprites");
   equal(add.alpha, Math.fround(0.2), "AddScore phase zero alpha matches current Float32 curve");
-  equal(add.position[0], 389, "AddScore current scene X");
+  equal(JSON.stringify(add.position), JSON.stringify([671, 186]), "AddScore starts at the number descendant world owner rather than manager root");
+  equal(JSON.stringify(add.scale), JSON.stringify([Math.fround(0.6), Math.fround(0.6)]), "AddScore consumes serialized UISpriteNumber scale");
+  const addNodes = new Map(add.hudSpriteNodes?.map((node) => [node.label, node]));
+  equal(JSON.stringify(["add-score-0", "add-score-1", "add-score-2", "add-score-3"].map((label) => addNodes.get(label)?.position)), JSON.stringify([
+    [143, 0], [96, 0], [48, 0], [0, 0],
+  ]), "AddScore UISpriteNumber LEFT layout consumes per-glyph inner widths and plus sign");
+  equal(JSON.stringify(add.ordering.slice(0, 3)), JSON.stringify([3, 100, 3]), "AddScore depth cycle participates in current back-panel ordering");
 
   const result = row("hud:result");
   equal(result.hudText, null, "Result creates no system Text");
   equal(result.hudSpriteCount, 2, "Result owns separate judge and timing Sprites");
-  equal(result.alpha, 1, "Result remains fully opaque before one-second hide");
+  equal(result.alpha, hudOracle.result.gameJudgeSamples[2].values[3], "Result samples GameJudge alpha instead of a no-op animation");
+  equal(result.scale[0], hudOracle.result.gameJudgeSamples[2].values[0], "Result samples GameJudge root scale");
+  const resultNodes = new Map(result.hudSpriteNodes?.map((node) => [node.label, node]));
+  equal(JSON.stringify(resultNodes.get("result-timing")?.position), JSON.stringify([4, 38]), "JudgeTiming preserves local Y inversion under Result");
+  equal(JSON.stringify(resultNodes.get("result-timing")?.scale), JSON.stringify([1.25, 1.25]), "JudgeTiming preserves local scale that cancels Result prefab scale at rest");
+  equal(resultNodes.get("result-timing")?.zIndex, 55, "JudgeTiming depth remains above the judgement Sprite");
 
   const life = row("hud:life");
   equal(life.hudText, "200/1000", "Life uses current/max label");
@@ -167,6 +190,22 @@ async function main(): Promise<void> {
   equal(life.hudFillRatios?.[0], Math.fround(0.2), "Life primary fill Float32 threshold");
   assert(life.hudSpriteLabels?.includes("life-warning-outline"), "Life warning outline Sprite exists");
   assert(life.hudSpriteLabels?.includes("life-warning-body"), "Life warning body Sprite exists");
+  const lifeNodes = new Map(life.hudSpriteNodes?.map((node) => [node.label, node]));
+  equal(JSON.stringify(lifeNodes.get("life-gauge-base")?.position), JSON.stringify([-225, 57]), "Life authored-world gauge base is made owner-local exactly once");
+  equal(JSON.stringify(lifeNodes.get("life-primary")?.position), JSON.stringify([-211, 44]), "Life primary gauge is not double-offset by Life root");
+  equal(lifeNodes.get("life-secondary")?.blend, "add", "Life second gauge consumes additive material blend");
+  equal(lifeNodes.get("life-warning-outline")?.blend, "add", "Life warning outline consumes additive material blend");
+  equal(lifeNodes.get("life-primary")?.width, 224, "Life primary UISlider preserves authored widget width");
+  equal(lifeNodes.get("life-primary")?.maskLabel, "life-primary-fill-mask", "Life primary uses left-to-right clip rather than width shrink");
+  const lifeMasks = new Map(life.hudFillMasks?.map((mask) => [mask.label, mask]));
+  equal(JSON.stringify(lifeMasks.get("life-primary-fill-mask")?.bounds), JSON.stringify([-323, 31, Math.fround(44.8), 26]), "Life primary left-to-right mask matches current ratio");
+  const lifeTexts = new Map(life.hudTextNodes?.map((text) => [text.label, text]));
+  equal(lifeTexts.get("life-current-label")?.fontSize, 18, "Life current label consumes serialized UILabel font size");
+  equal(JSON.stringify(lifeTexts.get("life-current-label")?.anchor), JSON.stringify([1, 0.5]), "Life current label consumes Right pivot");
+  equal(JSON.stringify(lifeTexts.get("life-current-label")?.position), JSON.stringify([Math.fround(-103.99990844726562), 74]), "Life current label converts authored world to owner-local");
+  equal(lifeTexts.get("life-game-over-label")?.text, "ライフゼロ!\n獲得スコアDOWN!", "Life owns the current GameOver UILabel text");
+  equal(lifeTexts.get("life-game-over-label")?.visible, false, "GameOver label remains hidden before zero Life");
+  equal(JSON.stringify(life.ordering.slice(0, 3)), JSON.stringify([3, 100, 1000]), "Life root consumes current front-panel ordering");
 
   const scoreAtHalf = row("hud:score");
   equal(scoreAtHalf.hudText, null, "Score allocates no hidden system Text owner");
@@ -264,7 +303,45 @@ async function main(): Promise<void> {
   const invalid = renderer.preflight([invalidCommand]);
   equal(invalid.status, "evidence-required", "Life threshold mismatch fails before Pixi mutation");
   equal(renderer.snapshot().objectCount, 11, "failed typed Pixi HUD input preserves owner count");
-  equal(renderer.sceneSnapshot().find((candidate) => candidate.renderObjectId === "hud:life")?.hudText, "200/1000", "failed batch leaves Pixi HUD unchanged");
+  const invalidLifeLabelAfter = renderer.sceneSnapshot().find((candidate) => candidate.renderObjectId === "hud:life")?.hudText ?? null;
+  equal(invalidLifeLabelAfter, "200/1000", "failed batch leaves Pixi HUD unchanged");
+
+  sequence = renderer.snapshot().nextSequence;
+  const gameOverCommands: RenderCommand[] = [
+    {
+      sessionId: SESSION, sequence: sequence++, frame: 4, substep: 0,
+      kind: "set-hud", renderObjectId: "hud:life", hudRole: "life",
+      state: lifeState(0, 1000, 2000, true),
+    },
+    {
+      sessionId: SESSION, sequence: sequence++, frame: 4, substep: 0,
+      kind: "play-animation", renderObjectId: "hud:life", animationRole: "life-warning", restart: true,
+    },
+    {
+      sessionId: SESSION, sequence: sequence++, frame: 4, substep: 0,
+      kind: "play-animation", renderObjectId: "hud:life", animationRole: "life-game-over", restart: true,
+    },
+    {
+      sessionId: SESSION, sequence: sequence++, frame: 4, substep: 0,
+      kind: "sample-animation", renderObjectId: "hud:life", animationRole: "life-warning", elapsedSeconds: f32(0.5),
+    },
+    {
+      sessionId: SESSION, sequence: sequence++, frame: 4, substep: 0,
+      kind: "sample-animation", renderObjectId: "hud:life", animationRole: "life-game-over", elapsedSeconds: f32(0.5),
+    },
+  ];
+  requireOk(renderer.commit(requireOk(renderer.preflight(gameOverCommands), "Life GameOver preflight")), "Life GameOver commit");
+  const gameOverLife = renderer.sceneSnapshot().find((candidate) => candidate.renderObjectId === "hud:life");
+  assert(gameOverLife !== undefined, "Life GameOver owner exists");
+  const gameOverSprites = new Map(gameOverLife.hudSpriteNodes?.map((node) => [node.label, node]));
+  const gameOverTexts = new Map(gameOverLife.hudTextNodes?.map((text) => [text.label, text]));
+  equal(gameOverSprites.get("life-game-over")?.visible, true, "zero Life shows current GameOver background");
+  equal(JSON.stringify(gameOverSprites.get("life-game-over")?.position), JSON.stringify([-220, 140]), "GameOver background authored world position is owner-local");
+  equal(gameOverSprites.get("life-warning-outline")?.alpha, Math.fround(0.8), "Life warning PingPong TweenAlpha samples engine time");
+  equal(gameOverTexts.get("life-game-over-label")?.visible, true, "zero Life shows current GameOver UILabel");
+  equal(gameOverTexts.get("life-game-over-label")?.alpha, Math.fround(0.5540000200271606), "GameOver UILabel TweenAlpha samples engine time");
+  equal(JSON.stringify(gameOverTexts.get("life-game-over-label")?.position), JSON.stringify([-314, 142]), "GameOver UILabel authored world position is owner-local");
+  equal(JSON.stringify(gameOverTexts.get("life-game-over-label")?.anchor), JSON.stringify([0, 0.5]), "GameOver UILabel consumes Left pivot");
 
   const recording = new RecordingSimulatorRendererBackend();
   const recordingProvider = requireOk(ImmutableLocalRenderResourceProvider.create(resources), "recording parity provider");
@@ -286,9 +363,7 @@ async function main(): Promise<void> {
     capability: invalid.status === "evidence-required" ? invalid.capability : null,
     beforeObjectCount: preInvalidObjectCount,
     afterObjectCount: renderer.snapshot().objectCount,
-    lifeLabelAfter: renderer.sceneSnapshot().find(
-      (candidate) => candidate.renderObjectId === "hud:life",
-    )?.hudText ?? null,
+    lifeLabelAfter: invalidLifeLabelAfter,
   });
   const sampleObservation = Object.freeze({
     noteUp: pickSceneObservation(row("note:up")),
@@ -300,6 +375,7 @@ async function main(): Promise<void> {
     addScore: pickSceneObservation(add),
     result: pickSceneObservation(result),
     life: pickSceneObservation(life),
+    gameOverLife: pickSceneObservation(gameOverLife),
     scoreHalf: pickSceneObservation(scoreAtHalf),
     scoreContinued: pickSceneObservation(scoreContinued),
     scoreMatrix: Object.freeze(scoreMatrix),
@@ -558,6 +634,9 @@ function pickSceneObservation(
     hudFontFamily: row.hudFontFamily,
     hudSpriteCount: row.hudSpriteCount,
     hudSpriteLabels: row.hudSpriteLabels,
+    hudSpriteNodes: row.hudSpriteNodes,
+    hudTextNodes: row.hudTextNodes,
+    hudFillMasks: row.hudFillMasks,
     hudSpriteAlphas: row.hudSpriteAlphas,
     hudFillRatios: row.hudFillRatios,
     hudScoreDigitCount: row.hudScoreDigitCount,

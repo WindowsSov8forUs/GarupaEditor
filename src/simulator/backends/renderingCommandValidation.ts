@@ -107,7 +107,7 @@ export function validateTypedRenderHudCommand(
     case "add-score": {
       const state = command.state;
       return objectRole === "hud-add-score" && exactKeys(state, ["depth", "poolIndex", "value"]) &&
-        isUInt32(state.value) && state.value > 0 &&
+        isUInt32(state.value) && state.value > 0 && state.value <= 999999 &&
         Number.isInteger(state.poolIndex) && state.poolIndex >= 0 && state.poolIndex < 4 &&
         Number.isInteger(state.depth) && state.depth >= 0 && state.depth < 8;
     }
@@ -156,6 +156,7 @@ export function animationRoleMatchesObject(
     (role === "combo" || role === "all-perfect") ? objectRole === "hud-combo" :
     role === "add-score" ? objectRole === "hud-add-score" :
     role === "result" ? objectRole === "hud-result" :
+    (role === "life-warning" || role === "life-game-over") ? objectRole === "hud-life" :
     role === "score-gauge-ss" ? objectRole === "hud-score" :
     role === "habahiro-lane-change" ? objectRole === "habahiro-flash" : false;
 }

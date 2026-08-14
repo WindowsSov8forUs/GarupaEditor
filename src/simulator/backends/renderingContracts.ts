@@ -39,6 +39,8 @@ export type RenderAnimationRole =
   | "all-perfect"
   | "add-score"
   | "result"
+  | "life-warning"
+  | "life-game-over"
   | "score-gauge-ss"
   | "habahiro-lane-change";
 

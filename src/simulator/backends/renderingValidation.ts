@@ -28,7 +28,8 @@ const MATERIAL_ROLES = new Set([
 ]);
 const ANIMATION_ROLES = new Set([
   "none", "note-flick", "note-directional-flick", "note-long-flash",
-  "combo", "all-perfect", "add-score", "result", "score-gauge-ss", "habahiro-lane-change",
+  "combo", "all-perfect", "add-score", "result", "life-warning", "life-game-over",
+  "score-gauge-ss", "habahiro-lane-change",
 ]);
 const PROVENANCE_VALUES = new Set([
   "current-apk", "current-device-cache", "current-external-portable",
