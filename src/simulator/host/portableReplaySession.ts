@@ -579,8 +579,8 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
 
 function isPristine(snapshot: SimulatorSnapshot): boolean {
   return snapshot.managers.state === "created" && snapshot.managers.fault === null &&
-    !snapshot.director.awakeComplete && snapshot.managers.particle !== null &&
-    snapshot.particleBackend?.state === "ready";
+    !snapshot.director.awakeComplete &&
+    (snapshot.managers.particle === null || snapshot.particleBackend?.state === "ready");
 }
 function isSimulatorResult(value: unknown): value is SimulatorResult<unknown> {
   if (value === null || typeof value !== "object" || !("status" in value)) return false;

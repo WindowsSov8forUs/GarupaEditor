@@ -280,6 +280,7 @@ class SimulatorEngineHost implements SimulatorEngine {
   }
 
   publishMoveTimeAudio(targetSeconds: number): SimulatorResult<void> {
+    if (this.audioProducer === null) return ok(undefined);
     const publish = this.backends.audio.publishMoveTimeOutput;
     const seekMilliseconds = Math.trunc(targetSeconds * 1000);
     if (publish === undefined || !Number.isSafeInteger(seekMilliseconds) || seekMilliseconds < 0) {

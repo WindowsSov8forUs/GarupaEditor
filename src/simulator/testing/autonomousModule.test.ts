@@ -10,7 +10,7 @@ import { createNoteBatchInformationList } from "../engine/chart/construction";
 import { ButtonType } from "../engine/chart/types";
 import { AutonomousSimulatorModule } from "../runtime/autonomousSimulatorRuntime";
 import { resolveRehearsalControlTouch } from "../scene/rehearsalControlScene";
-import { REHEARSAL_AUTO_MODE } from "./modeFixtures";
+import { LIVE_AUTO_MODE, REHEARSAL_AUTO_MODE } from "./modeFixtures";
 import {
   installSimulatorModuleLauncher,
   launchInstalledSimulatorModule,
@@ -622,7 +622,7 @@ function request(): SimulatorModuleLaunchRequest {
 }
 
 function engineBuild(engine: any) {
-  return Object.freeze({ engine });
+  return Object.freeze({ engine, mode: LIVE_AUTO_MODE });
 }
 
 function accepted<T>(value: T): SimulatorAssemblyResult<T> {

@@ -292,7 +292,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
         simulatorCleanupFailureFromResult("engine-after-wrapper-registration-failure", mountedEngine.dispose()),
       ].filter((failure): failure is SimulatorModuleCleanupFailure => failure !== null));
     }
-    return accepted(Object.freeze({ engine: mountedEngine }));
+    return accepted(Object.freeze({ engine: mountedEngine, mode: score.value.mode }));
   }
 
   private sessionId(): string {

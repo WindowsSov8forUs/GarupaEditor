@@ -26,7 +26,7 @@ import {
 } from "../resources/sharedResourceAdapters";
 import type { ManualInputFrame } from "../engine/data/manualInput";
 import { evidenceRequired, ok, type SimulatorResult } from "../engine/evidence";
-import { createSimulatorModeIdentity } from "../engine/data/inGameCalculatedData";
+import type { SimulatorModeIdentity } from "../engine/data/inGameCalculatedData";
 
 export interface SimulatorSessionRecipe {
   readonly schemaVersion: 1;
@@ -35,6 +35,7 @@ export interface SimulatorSessionRecipe {
 
 export interface SimulatorRecipeEngineBuild {
   readonly engine: SimulatorEngine;
+  readonly mode: SimulatorModeIdentity;
 }
 
 export interface SimulatorRecipeEngineBuilder {
@@ -72,10 +73,7 @@ export class RecipeOwnedSessionFactory implements SimulatorOwnedSessionFactory {
     }
     if (initial.status === "rejected") return initial;
     const replay = createPortableReplaySimulatorEngine(initial.value.engine, {
-      mode: createSimulatorModeIdentity(
-        recipe.value.request.config.sessionMode,
-        recipe.value.request.config.inputMode,
-      ),
+      mode: initial.value.mode,
       createFreshEngine: async () => {
         const fresh = await this.builder.createFreshEngine(recipe.value);
         return fresh.status === "accepted"

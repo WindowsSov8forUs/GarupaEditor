@@ -39,6 +39,7 @@
     "simulator:test:particles": "node src/simulator/testing/runParticleTests.mjs",
     "simulator:test:device-closure": "node src/simulator/testing/runDeviceClosureTests.mjs",
     "simulator:test:autonomous-module": "node src/simulator/testing/runAutonomousModuleTests.mjs",
+    "simulator:test:live-rehearsal": "node src/simulator/testing/runLiveRehearsalModeTests.mjs",
     "simulator:test:fixtures": "node src/simulator/testing/verifyTestingFixtures.mjs",
     "simulator:test:evidence-integrity:static": "node src/simulator/testing/verifyEvidenceIntegrityStatic.mjs",
     "simulator:test": "node src/simulator/testing/runTotalRevalidationTests.mjs --quick",
