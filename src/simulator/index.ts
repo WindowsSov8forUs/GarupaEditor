@@ -16,5 +16,4 @@ export type {
   SimulatorPublicInputMode,
   SimulatorPublicSessionMode,
   SimulatorRenderingFidelity,
-  SimulatorSessionGameplayData,
 } from "./public";

@@ -91,6 +91,9 @@ export type LiveRehearsalEvidenceId =
   | `LR-R${"01" | "02" | "03" | "04" | "05"}`
   | `LR-C${"01" | "02" | "03" | "04"}`;
 
+export type PublicLifeProfileEvidenceId =
+  `PLP-E${"01" | "02" | "03" | "04" | "05" | "06" | "07"}`;
+
 export type SimulatorEvidenceId =
   | EvidenceId
   | AutoLiveEvidenceId
@@ -100,7 +103,8 @@ export type SimulatorEvidenceId =
   | InitialPracticeSeekEvidenceId
   | WebView2BrowserRasterEvidenceId
   | OrdinaryRenderingReauditEvidenceId
-  | LiveRehearsalEvidenceId;
+  | LiveRehearsalEvidenceId
+  | PublicLifeProfileEvidenceId;
 
 export interface EvidenceReference {
   readonly id: SimulatorEvidenceId;

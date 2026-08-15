@@ -12,20 +12,10 @@ export interface SimulatorChartAudioData {
   readonly currentSampleFrames: number;
 }
 
-export interface SimulatorSessionGameplayData {
-  readonly life: {
-    readonly initialLife: number;
-    readonly playerMaxLife: number;
-    readonly lifeUpperLimit: number;
-    readonly missDamage: number;
-    readonly badDamage: number;
-  };
-}
-
 export interface SimulatorChartDataPackage {
   readonly bmsText: string;
   readonly bgm: SimulatorChartAudioData;
-  readonly gameplay: SimulatorSessionGameplayData;
+  readonly isFullLength: boolean;
 }
 
 export interface SimulatorLaunchConfig {

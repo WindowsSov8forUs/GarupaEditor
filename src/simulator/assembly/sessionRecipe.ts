@@ -29,7 +29,7 @@ import { evidenceRequired, ok, type SimulatorResult } from "../engine/evidence";
 import type { SimulatorModeIdentity } from "../engine/data/inGameCalculatedData";
 
 export interface SimulatorSessionRecipe {
-  readonly schemaVersion: 1;
+  readonly schemaVersion: 2;
   readonly request: SimulatorModuleLaunchRequest;
 }
 
@@ -50,7 +50,7 @@ export function createSimulatorSessionRecipe(
   const copied = copyLaunchRequest(request);
   return copied.status === "rejected"
     ? copied
-    : accepted(Object.freeze({ schemaVersion: 1 as const, request: copied.value }));
+    : accepted(Object.freeze({ schemaVersion: 2 as const, request: copied.value }));
 }
 
 export class RecipeOwnedSessionFactory implements SimulatorOwnedSessionFactory {
@@ -265,9 +265,9 @@ function copyLaunchRequest(
     request === null || typeof request !== "object" || Array.isArray(request) ||
     Object.keys(request).sort().join(",") !== "chartData,config" ||
     request.chartData === null || typeof request.chartData !== "object" ||
-    Object.keys(request.chartData).sort().join(",") !== "bgm,bmsText,gameplay" ||
-    !isGameplayShape(request.chartData.gameplay) ||
+    Object.keys(request.chartData).sort().join(",") !== "bgm,bmsText,isFullLength" ||
     typeof request.chartData.bmsText !== "string" || request.chartData.bmsText.length === 0 ||
+    typeof request.chartData.isFullLength !== "boolean" ||
     request.config === null || typeof request.config !== "object" ||
     Object.keys(request.config).sort().join(",") !==
       "audio,highFrequencyMode,inputMode,judgeOffsetFrames,sessionMode,visual" ||
@@ -292,7 +292,7 @@ function copyLaunchRequest(
     return rejected(
       "evidence-required",
       "simulator.recipe.invalid-public-request",
-      "The launch recipe accepts only exact chart/config/gameplay keys, independent Live/Rehearsal and Manual/Auto axes, confirmed judgement offset, evidence-bounded Float32 visual settings and finite unit gains.",
+      "The launch recipe accepts only exact chart/config keys, one explicit isFullLength boolean independent of Live/Rehearsal and Manual/Auto, confirmed judgement offset, evidence-bounded Float32 visual settings and finite unit gains.",
     );
   }
   const bgm = request.chartData.bgm;
@@ -303,21 +303,11 @@ function copyLaunchRequest(
       "The immutable chart package requires one explicit owned BGM byte sequence.",
     );
   }
-  let gameplay: typeof request.chartData.gameplay;
-  try {
-    gameplay = deepFreezeClone(request.chartData.gameplay) as typeof request.chartData.gameplay;
-  } catch {
-    return rejected(
-      "evidence-required",
-      "simulator.recipe.invalid-session-gameplay-data",
-      "Session gameplay data must be one finite JSON-like immutable value graph without capabilities or cyclic aliases.",
-    );
-  }
   return accepted(Object.freeze({
     chartData: Object.freeze({
       bmsText: request.chartData.bmsText,
       bgm: Object.freeze({ ...bgm, bytes: Uint8Array.from(bgm.bytes) }),
-      gameplay,
+      isFullLength: request.chartData.isFullLength,
     }),
     config: Object.freeze({
       sessionMode: request.config.sessionMode,
@@ -347,37 +337,6 @@ function clearStatusFromSnapshot(
   const perfect = state.record.resultCounts[4];
   if (perfect === state.initialization.totalScoringUnitCount) return 3;
   return perfect + state.record.resultCounts[3] === state.initialization.totalScoringUnitCount ? 2 : 1;
-}
-
-function isGameplayShape(value: unknown): value is SimulatorModuleLaunchRequest["chartData"]["gameplay"] {
-  if (value === null || typeof value !== "object" || Array.isArray(value)) return false;
-  const gameplay = value as Record<string, unknown>;
-  if (Object.keys(gameplay).sort().join(",") !== "life") return false;
-  const life = gameplay.life;
-  return life !== null && typeof life === "object" && !Array.isArray(life) &&
-    Object.keys(life).sort().join(",") ===
-      "badDamage,initialLife,lifeUpperLimit,missDamage,playerMaxLife" &&
-    Object.values(life).every((entry) => typeof entry === "number" && Number.isFinite(entry));
-}
-
-function deepFreezeClone(value: unknown, seen = new Set<object>()): unknown {
-  if (value === null || typeof value === "string" || typeof value === "boolean") return value;
-  if (typeof value === "number") {
-    if (!Number.isFinite(value)) throw new Error("non-finite");
-    return value;
-  }
-  if (typeof value !== "object" || seen.has(value)) throw new Error("invalid graph");
-  seen.add(value);
-  if (Array.isArray(value)) {
-    const output = Object.freeze(value.map((entry) => deepFreezeClone(entry, seen)));
-    seen.delete(value);
-    return output;
-  }
-  if (Object.getPrototypeOf(value) !== Object.prototype) throw new Error("invalid prototype");
-  const output: Record<string, unknown> = {};
-  for (const [key, entry] of Object.entries(value)) output[key] = deepFreezeClone(entry, seen);
-  seen.delete(value);
-  return Object.freeze(output);
 }
 
 function isExactFloat32(value: unknown): value is number {

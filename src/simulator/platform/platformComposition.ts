@@ -22,6 +22,7 @@ import { createRecordingSimulatorBackends } from "../backends/recordingBackend";
 import { PortableParticleResourcePreflightAdapter } from "../backends/resources/localParticleResourceProvider";
 import { PortableRenderResourcePreflightAdapter } from "../backends/resources/localResourceProvider";
 import { createNoteBatchInformationList } from "../engine/chart/construction";
+import { createCurrentSinglePlayLifeProfile } from "../engine/data/currentSinglePlayLifeProfile";
 import type { ScoreLifeStateProfile } from "../engine/data/scoreLifeState";
 import { createSimulatorModeIdentity } from "../engine/data/inGameCalculatedData";
 import { evidenceRequired, ok, type SimulatorResult } from "../engine/evidence";
@@ -391,7 +392,8 @@ function mapScoreLifeProfile(
   request: SimulatorModuleLaunchRequest,
   sessionId: string,
 ): SimulatorAssemblyResult<ScoreLifeStateProfile> {
-  const gameplay = request.chartData.gameplay;
+  const life = createCurrentSinglePlayLifeProfile(request.chartData.isFullLength);
+  if (life.status !== "ok") return fromEvidence(life);
   const mode = createSimulatorModeIdentity(
     request.config.sessionMode,
     request.config.inputMode,
@@ -399,7 +401,7 @@ function mapScoreLifeProfile(
   return accepted(Object.freeze({
     schemaVersion: 3 as const,
     sessionId,
-    life: Object.freeze({ ...gameplay.life }),
+    life: life.value,
     mode,
   }));
 }
