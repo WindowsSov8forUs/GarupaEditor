@@ -55,18 +55,42 @@
       ]
     },
     {
+      "id": "CAP-MODE-MATRIX-01",
+      "capability": "orthogonal Live/Rehearsal and Manual/Auto session identity and lifecycle",
+      "productionPath": "not production-authorized until the dedicated 10.1.4 claim matrix closes",
+      "status": "open-evidence-required",
+      "reverseEvidence": [
+        "score-life-state-runtime-contract-10-1-4 partial Practice observation",
+        "initial-practice-seek-state-restore-10-1-4 original MoveTime static facts only"
+      ],
+      "dynamicRequirement": "four identities, Life-zero disposition, pause/retry/abort/natural completion and runtime MoveTime matrix",
+      "failureBoundary": "no mode may be inferred from another axis or substituted by the current three-value profile"
+    },
+    {
+      "id": "CAP-REHEARSAL-CONTROLS-01",
+      "capability": "original Rehearsal fixed +/-5 second MoveTime controls and visible scene",
+      "productionPath": "not production-authorized",
+      "status": "open-evidence-required",
+      "reverseEvidence": [
+        "move-time-state-restore 10.1.3 target inventory only",
+        "initial-practice-seek-state-restore-10-1-4 current static subset"
+      ],
+      "dynamicRequirement": "current-version controls, snapshot, forward/rewind, audio/render/particle and actual Pixi/WebView2 acceptance",
+      "failureBoundary": "synthetic checkpoints, arbitrary seek and fallback controls are forbidden"
+    },
+    {
       "id": "CAP-PRACTICE-01",
       "capability": "initial non-zero practice seek",
-      "productionPath": "public request -> fresh zero-state engine -> bounded Float32 whole-engine pre-roll -> one BGM/final-visual publication",
-      "status": "closed-portable",
+      "productionPath": "scheduled for removal from public and production contracts",
+      "status": "excluded",
       "reverseEvidence": [
-        "initial-practice-seek-state-restore-10-1-4@cbd04239"
+        "initial-practice-seek-state-restore-10-1-4@cbd04239 historical portable product policy"
       ],
-      "dynamicRequirement": "IPS-P01-P05 cadence matrix, output suppression and one-shot publication oracle",
+      "dynamicRequirement": "static absence of startMilliseconds, deferred publication and suppressed initial output",
       "exclusions": [
-        "original initial millisecond UI feature",
-        "physical audio exact",
-        "GPU framebuffer exact"
+        "initial millisecond launch parameter",
+        "deferred scene publication",
+        "suppressed physical initial output"
       ]
     },
     {
