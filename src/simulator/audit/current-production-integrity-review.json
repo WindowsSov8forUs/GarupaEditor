@@ -1,7 +1,7 @@
 {
   "schemaVersion": 3,
-  "status": "cs-v1-product-score-release-attested-with-reverse-rendering-baseline",
-  "currentDisposition": "product-delta-pushed-detached-release-passed",
+  "status": "live-rehearsal-candidate-audited-with-cs-v1-and-reverse-baseline",
+  "currentDisposition": "candidate-8398a5a-pushed-audit-pending-release",
   "authorityModel": {
     "reverseBaseline": {
       "commit": "b5fb3dca34b26511355879d62839661c5cf505d3",
@@ -18,6 +18,11 @@
       "delta": "src/simulator/audit/current-product-scoring-delta.json",
       "ruleSetId": "garupa-editor-normalized-10m-v1",
       "originalScoreParityClaimed": false
+    },
+    "liveRehearsal": {
+      "reverseCommit": "6c0dfb76",
+      "delta": "src/simulator/audit/current-live-rehearsal-delta.json",
+      "candidateCommit": "8398a5a"
     }
   },
   "reviewPolicy": {
@@ -29,7 +34,7 @@
     "untypedProductionEscapeCount": 0,
     "commentOnlyCatchCount": 0
   },
-  "currentProductionFileCount": 106,
+  "currentProductionFileCount": 107,
   "productChangedProductionFiles": 17,
   "productDeletedProductionFiles": 1,
   "unclassifiedProductChangedFiles": 0,
@@ -68,6 +73,12 @@
       "nodeModulesOnlyReused": true,
       "networkUsed": false,
       "reverseWorktreeRead": false
+    },
+    "liveRehearsalCandidate": {
+      "commit": "8398a5a",
+      "isolatedTypeScript": "passed",
+      "standaloneMatrix": "passed",
+      "fullReleaseDag": "pending"
     }
   },
   "unchangedBoundaries": {
@@ -75,5 +86,6 @@
     "fixedDeviceExact": "open-objective-environment-blocked",
     "characterSkillFeverMultiplayer": "excluded",
     "mainProgramIntegration": "unauthorized-stage-9"
-  }
+  },
+  "liveRehearsalChangedProductionFiles": 25
 }

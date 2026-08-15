@@ -1,0 +1,77 @@
+import { createHash } from "node:crypto";
+import { readFileSync, readdirSync, statSync } from "node:fs";
+import { join, relative, resolve } from "node:path";
+
+const root = resolve(process.cwd(), "src", "simulator");
+const audit = JSON.parse(readFileSync(join(root, "audit", "current-live-rehearsal-delta.json"), "utf8"));
+const capability = JSON.parse(readFileSync(join(root, "audit", "current-capability-matrix.json"), "utf8"));
+if (audit.status !== "candidate-audited-pushed" || audit.candidateCommit !== "8398a5a" ||
+    audit.authority.reverseCommit !== "6c0dfb76" ||
+    audit.claims?.length !== 8 || audit.files?.length !== 25 ||
+    audit.blockingFindings?.length !== 0) {
+  throw new Error("Live/Rehearsal candidate audit is incomplete or not bound to pushed Reverse authority");
+}
+const claimIds = new Set(audit.claims.map((claim) => claim.id));
+for (const file of audit.files) {
+  const bytes = readFileSync(resolve(process.cwd(), file.path));
+  const actual = createHash("sha256").update(bytes).digest("hex").toUpperCase();
+  if (actual !== file.sha256 || file.claims.length === 0 ||
+      file.claims.some((claim) => !claimIds.has(claim))) {
+    throw new Error(`Live/Rehearsal file binding mismatch: ${file.path}`);
+  }
+}
+for (const id of ["CAP-MODE-MATRIX-01", "CAP-REHEARSAL-CONTROLS-01"]) {
+  const row = capability.rows.find((entry) => entry.id === id);
+  if (row?.status !== "closed-portable") throw new Error(`${id} is not closed-portable`);
+}
+
+const productionFiles = walk(root).filter((path) =>
+  !path.includes(`${join("src", "simulator", "testing")}`) &&
+  !path.includes(`${join("src", "simulator", "audit")}`) &&
+  !path.endsWith(".md") && /\.(?:ts|mjs)$/.test(path)
+);
+const forbidden = [
+  ["startMilliseconds", "initial arbitrary seek"],
+  ["create-replay-checkpoint", "caller checkpoint command"],
+  ["kind: \"return-time\"", "legacy unbounded return command"],
+  ["resultTransform", "legacy three-value Auto transform"],
+  ["playMode:", "legacy playMode field"],
+  ["Math.random", "ambient random"],
+  ["Date.now", "wall clock"],
+  ["performance.now", "wall clock"],
+];
+for (const file of productionFiles) {
+  const source = readFileSync(file, "utf8");
+  for (const [symbol, description] of forbidden) {
+    if (source.includes(symbol)) throw new Error(`${description} remains in ${relative(root, file)}`);
+  }
+}
+
+const calculated = readFileSync(join(root, "engine", "data", "inGameCalculatedData.ts"), "utf8");
+for (const field of ["sessionMode", "inputMode", "isEnablePractice", "isDemoPlayMode", "isAutoLive", "isAutoPlay"]) {
+  if (!calculated.includes(field)) throw new Error(`canonical mode field missing: ${field}`);
+}
+const replay = readFileSync(join(root, "host", "portableReplaySession.ts"), "utf8");
+for (const symbol of ["return-five", "advance-five", "RETURN_REPLAY_LIMIT_SECONDS", "timelineRevisionValue", "moveTimeCountValue"]) {
+  if (!replay.includes(symbol)) throw new Error(`MoveTime owner missing ${symbol}`);
+}
+const control = readFileSync(join(root, "scene", "rehearsalControlScene.ts"), "utf8");
+for (const symbol of ["142", "1457.5", "912", "924", "903", "315", "issuedControlCapabilities"]) {
+  if (!control.includes(symbol)) throw new Error(`control profile/capability missing ${symbol}`);
+}
+const packageJson = JSON.parse(readFileSync(resolve(process.cwd(), "package.json"), "utf8"));
+if (packageJson.scripts?.["simulator:test:live-rehearsal"] !==
+    "node src/simulator/testing/runLiveRehearsalModeTests.mjs") {
+  throw new Error("standalone Live/Rehearsal test script is not registered");
+}
+console.log(`Live/Rehearsal static audit passed: claims=${audit.claims.length} production-files=${productionFiles.length}`);
+
+function walk(directory) {
+  const values = [];
+  for (const name of readdirSync(directory)) {
+    const path = join(directory, name);
+    if (statSync(path).isDirectory()) values.push(...walk(path));
+    else values.push(path);
+  }
+  return values;
+}

@@ -18,6 +18,7 @@ try {
   }
   run(process.execPath, [join(outputRoot, "src", "simulator", "testing", "liveRehearsalMode.test.js")]);
   run(process.execPath, [join(outputRoot, "src", "simulator", "testing", "sceneLayout.test.js")]);
+  run(process.execPath, [join(testingRoot, "verifyLiveRehearsalStatic.mjs")]);
   if (process.env.SIMULATOR_TEST_SHARED_PREFLIGHT !== "1") {
     run(process.execPath, [join(testingRoot, "verifyDependencies.mjs")]);
   }

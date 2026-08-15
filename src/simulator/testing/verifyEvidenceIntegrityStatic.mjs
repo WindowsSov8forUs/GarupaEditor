@@ -14,6 +14,7 @@ const fieldIndex = json("current-field-claim-index.json");
 const mutations = json("current-mutation-boundaries.json");
 const attestation = json("current-final-capability-attestation.json");
 const delta = json("current-product-scoring-delta.json");
+const liveRehearsalDelta = json("current-live-rehearsal-delta.json");
 const readme = readFileSync(join(simulatorRoot, "README.md"), "utf8");
 const auditReadme = readFileSync(join(auditRoot, "README.md"), "utf8");
 const scoreContract = readFileSync(join(simulatorRoot, "scoring-contract.md"), "utf8");
@@ -30,8 +31,8 @@ const productionFiles = [...walk(simulatorRoot)]
   .map((path) => `src/simulator/${path}`)
   .sort();
 
-if (matrix.schemaVersion !== 1 || matrix.auditStatus !== "ordinary-release-with-cs-v1-product-score" ||
-    !Array.isArray(matrix.rows) || matrix.rows.length !== 16) {
+if (matrix.schemaVersion !== 1 || matrix.auditStatus !== "live-rehearsal-candidate-with-cs-v1-product-score" ||
+    !Array.isArray(matrix.rows) || matrix.rows.length !== 18) {
   throw new Error("mixed-authority capability matrix is missing or malformed");
 }
 const rows = new Map(matrix.rows.map((row) => [row.id, row]));
@@ -43,7 +44,12 @@ if (rows.get("CAP-SCORE-PRODUCT-01")?.status !== "implemented-product-contract" 
     rows.get("CAP-STAGE9-01")?.status !== "unauthorized-stage-9") {
   throw new Error("product Score or unchanged non-positive capability boundary is invalid");
 }
-for (const id of ["CAP-RENDER-ORDINARY-01", "CAP-RENDER-PARTICLE-COMPOSITION-01"]) {
+for (const id of [
+  "CAP-RENDER-ORDINARY-01",
+  "CAP-RENDER-PARTICLE-COMPOSITION-01",
+  "CAP-MODE-MATRIX-01",
+  "CAP-REHEARSAL-CONTROLS-01",
+]) {
   if (rows.get(id)?.status !== "closed-portable") throw new Error(`${id} portable presentation boundary changed`);
 }
 
@@ -67,10 +73,26 @@ if (delta.schemaVersion !== 1 || delta.status !== "cs-v1-product-scoring-exact-d
     delta.claims.length !== 9 || delta.files.length !== 17 || delta.deletedFiles.length !== 1) {
   throw new Error("CS-V1 exact product delta is incomplete");
 }
+if (liveRehearsalDelta.status !== "candidate-audited-pushed" ||
+    liveRehearsalDelta.candidateCommit !== "8398a5a" ||
+    liveRehearsalDelta.authority?.reverseCommit !== "6c0dfb76" ||
+    liveRehearsalDelta.claims?.length !== 8 || liveRehearsalDelta.files?.length !== 25 ||
+    liveRehearsalDelta.blockingFindings?.length !== 0) {
+  throw new Error("Live/Rehearsal exact candidate delta is incomplete");
+}
+const liveClaimIds = new Set(liveRehearsalDelta.claims.map((claim) => claim.id));
+const liveChangedFiles = new Set(liveRehearsalDelta.files.map((row) => row.path));
+for (const row of liveRehearsalDelta.files) {
+  const path = resolve(repositoryRoot, row.path);
+  if (!existsSync(path) || sha256Raw(path) !== row.sha256 || !Array.isArray(row.claims) ||
+      row.claims.length === 0 || row.claims.some((id) => !liveClaimIds.has(id))) {
+    throw new Error(`Live/Rehearsal exact file binding mismatch: ${row.path}`);
+  }
+}
 const claimIds = new Set(delta.claims.map((claim) => claim.id));
 for (const row of delta.files) {
   const path = resolve(repositoryRoot, row.path);
-  if (!existsSync(path) || sha256(path) !== row.sha256 ||
+  if (!existsSync(path) || (!liveChangedFiles.has(row.path) && sha256(path) !== row.sha256) ||
       !Array.isArray(row.claims) || row.claims.length === 0 ||
       row.claims.some((id) => !claimIds.has(id)) ||
       !Array.isArray(row.mutations) || !Array.isArray(row.reverseRetained)) {
@@ -87,11 +109,14 @@ if (new Set(delta.files.map((row) => row.path)).size !== delta.files.length) {
 }
 
 if (integrity.schemaVersion !== 3 ||
-    integrity.status !== "cs-v1-product-score-release-attested-with-reverse-rendering-baseline" ||
+    integrity.status !== "live-rehearsal-candidate-audited-with-cs-v1-and-reverse-baseline" ||
     integrity.authorityModel?.reverseBaseline?.coversCurrentProductScore !== false ||
     integrity.authorityModel?.productScore?.contract !== "src/simulator/scoring-contract.md" ||
-    integrity.currentProductionFileCount !== 106 || productionFiles.length !== 106 ||
+    integrity.currentProductionFileCount !== 107 || productionFiles.length !== 107 ||
     integrity.productChangedProductionFiles !== 17 || integrity.productDeletedProductionFiles !== 1 ||
+    integrity.liveRehearsalChangedProductionFiles !== 25 ||
+    integrity.authorityModel?.liveRehearsal?.candidateCommit !== "8398a5a" ||
+    integrity.validation?.liveRehearsalCandidate?.standaloneMatrix !== "passed" ||
     integrity.unclassifiedProductChangedFiles !== 0 ||
     integrity.validation?.scoreFullChart?.totalScoringUnitCount !== 1007 ||
     integrity.validation?.scoreFullChart?.autoScore !== 10001007 ||
@@ -105,14 +130,18 @@ if (integrity.schemaVersion !== 3 ||
     integrity.unchangedBoundaries?.mainProgramIntegration !== "unauthorized-stage-9") {
   throw new Error("current mixed-authority production review is inconsistent");
 }
-if (fieldIndex.schemaVersion !== 5 || fieldIndex.status !== "reverse-baseline-plus-cs-v1-exact-product-delta" ||
+if (fieldIndex.schemaVersion !== 5 || fieldIndex.status !== "reverse-baseline-plus-cs-v1-plus-live-rehearsal-candidate" ||
     fieldIndex.productDelta?.unclassifiedChangedProductionFiles !== 0 ||
-    fieldIndex.currentProductionFiles !== 106 || fieldIndex.originalScoreParityClaimed !== false ||
+    fieldIndex.liveRehearsalDelta?.candidateCommit !== "8398a5a" ||
+    fieldIndex.liveRehearsalDelta?.unclassifiedChangedProductionFiles !== 0 ||
+    fieldIndex.currentProductionFiles !== 107 || fieldIndex.originalScoreParityClaimed !== false ||
     fieldIndex.groupMappingIsNotAuthorization !== true || fieldIndex.exactClaimBindingRequired !== true) {
   throw new Error("current field claim pointer is inconsistent");
 }
-if (mutations.schemaVersion !== 5 || mutations.status !== "reverse-baseline-plus-cs-v1-mutations-dispositioned" ||
+if (mutations.schemaVersion !== 5 || mutations.status !== "reverse-baseline-plus-cs-v1-plus-live-rehearsal-mutations-dispositioned" ||
     mutations.productDelta?.unreviewedMutationCount !== 0 ||
+    mutations.liveRehearsalDelta?.candidateCommit !== "8398a5a" ||
+    mutations.liveRehearsalDelta?.unreviewedMutationCount !== 0 ||
     mutations.perMutationDispositionRequired !== true || mutations.exactClaimBindingRequired !== true ||
     !mutations.productDelta.preflightBoundaries.includes("duplicate/foreign scoring unit before Record/Gauge mutation")) {
   throw new Error("current mutation boundary is inconsistent");
@@ -164,6 +193,10 @@ console.log(`mixed Reverse/product integrity passed: capabilities=${matrix.rows.
 
 function json(name) {
   return JSON.parse(readFileSync(join(auditRoot, name), "utf8"));
+}
+
+function sha256Raw(path) {
+  return createHash("sha256").update(readFileSync(path)).digest("hex").toUpperCase();
 }
 
 function sha256(path) {

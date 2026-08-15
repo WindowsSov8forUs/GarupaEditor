@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "auditStatus": "ordinary-release-with-cs-v1-product-score",
+  "auditStatus": "live-rehearsal-candidate-with-cs-v1-product-score",
   "lockedSample": {
     "package": "jp.co.craftegg.band",
     "versionName": "10.1.4",
@@ -57,26 +57,34 @@
     {
       "id": "CAP-MODE-MATRIX-01",
       "capability": "orthogonal Live/Rehearsal and Manual/Auto session identity and lifecycle",
-      "productionPath": "not production-authorized until the dedicated 10.1.4 claim matrix closes",
-      "status": "open-evidence-required",
+      "productionPath": "public orthogonal axes -> canonical frozen identity -> input/judgement/Score-Life/lifecycle consumers",
+      "status": "closed-portable",
       "reverseEvidence": [
-        "score-life-state-runtime-contract-10-1-4 partial Practice observation",
-        "initial-practice-seek-state-restore-10-1-4 original MoveTime static facts only"
+        "live-rehearsal-runtime-contract-10-1-4@6c0dfb76 LR-E01..LR-E20/LR-R01..LR-R05",
+        "score-life-state-runtime-contract-10-1-4 retained Life/Record ordering"
       ],
-      "dynamicRequirement": "four identities, Life-zero disposition, pause/retry/abort/natural completion and runtime MoveTime matrix",
-      "failureBoundary": "no mode may be inferred from another axis or substituted by the current three-value profile"
+      "dynamicRequirement": "four identities, Live/Rehearsal Life-zero split, Retry/Abort/Resume/natural completion and MoveTime matrix",
+      "exclusions": [
+        "premium Continue",
+        "original score formula",
+        "Stage 9 integration"
+      ]
     },
     {
       "id": "CAP-REHEARSAL-CONTROLS-01",
       "capability": "original Rehearsal fixed +/-5 second MoveTime controls and visible scene",
-      "productionPath": "not production-authorized",
-      "status": "open-evidence-required",
+      "productionPath": "simulator-owned hit router -> opaque one-use command -> whole-engine candidate replay -> atomic audio/visual publication",
+      "status": "closed-portable",
       "reverseEvidence": [
-        "move-time-state-restore 10.1.3 target inventory only",
-        "initial-practice-seek-state-restore-10-1-4 current static subset"
+        "live-rehearsal-runtime-contract-10-1-4@6c0dfb76 LR-E03..LR-E20/LR-R03..LR-R05",
+        "rehearsal-control-rendering-10-1-4@6c0dfb76"
       ],
-      "dynamicRequirement": "current-version controls, snapshot, forward/rewind, audio/render/particle and actual Pixi/WebView2 acceptance",
-      "failureBoundary": "synthetic checkpoints, arbitrary seek and fallback controls are forbidden"
+      "dynamicRequirement": "fixed +/-5, Score/Life/unit timeline restore, MoveTime WebAudio publication, actual atlas Pixi controls and WebView2 acceptance",
+      "exclusions": [
+        "caller checkpoint or arbitrary seek",
+        "initial non-zero seek",
+        "Unity Prefab and fixed-device framebuffer exact"
+      ]
     },
     {
       "id": "CAP-PRACTICE-01",

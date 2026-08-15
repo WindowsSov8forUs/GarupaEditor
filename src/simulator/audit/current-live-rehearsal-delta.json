@@ -1,0 +1,365 @@
+{
+  "schemaVersion": 1,
+  "status": "candidate-audited-pushed",
+  "lockedSample": {
+    "package": "jp.co.craftegg.band",
+    "versionName": "10.1.4",
+    "versionCode": 230,
+    "abi": "arm64-v8a"
+  },
+  "authority": {
+    "reverseCommit": "6c0dfb76",
+    "runtimeContract": "artifacts/investigations/live-rehearsal-runtime-contract-10-1-4/live_rehearsal_runtime_contract.json",
+    "controlProfile": "artifacts/investigations/rehearsal-control-rendering-10-1-4/rehearsal_control_rendering_profile.json",
+    "productScoreContract": "src/simulator/scoring-contract.md",
+    "originalScoreParityClaimed": false
+  },
+  "claims": [
+    {
+      "id": "LR-G01",
+      "claim": "Public exact shape contains independent sessionMode and inputMode axes and rejects legacy mode/seek fields",
+      "authority": [
+        "LR-C01",
+        "product-public-contract"
+      ],
+      "production": [
+        "public/contracts.ts",
+        "assembly/sessionRecipe.ts"
+      ],
+      "tests": [
+        "liveRehearsalMode.test.ts",
+        "autonomousModule.test.ts"
+      ]
+    },
+    {
+      "id": "LR-G02",
+      "claim": "The canonical owner freezes all four Live/Rehearsal x Manual/Auto identities without axis inference",
+      "authority": [
+        "LR-E01",
+        "LR-E02",
+        "LR-R01",
+        "LR-R02"
+      ],
+      "production": [
+        "engine/data/inGameCalculatedData.ts",
+        "platform/platformComposition.ts"
+      ],
+      "tests": [
+        "liveRehearsalMode.test.ts",
+        "runAutoLiveTests.mjs"
+      ]
+    },
+    {
+      "id": "LR-G03",
+      "claim": "Live lethal Life is terminal while Rehearsal preserves singleGameOver Record/HUD state and continues updates",
+      "authority": [
+        "LR-R01",
+        "LR-C02"
+      ],
+      "production": [
+        "engine/managers/inGameManager.ts",
+        "assembly/sessionRecipe.ts"
+      ],
+      "tests": [
+        "liveRehearsalMode.test.ts"
+      ]
+    },
+    {
+      "id": "LR-G04",
+      "claim": "Rehearsal exposes only simulator-owned fixed return-five and advance-five opaque commands",
+      "authority": [
+        "LR-E03",
+        "LR-E04",
+        "LR-E05",
+        "LR-E06",
+        "LR-E11"
+      ],
+      "production": [
+        "scene/rehearsalControlScene.ts",
+        "runtime/autonomousSimulatorRuntime.ts"
+      ],
+      "tests": [
+        "sceneLayout.test.ts",
+        "autonomousModule.test.ts"
+      ]
+    },
+    {
+      "id": "LR-G05",
+      "claim": "Backward MoveTime restores Record, Score, Life, Combo, judgement counts and chart unit consumption as one fresh-engine transaction",
+      "authority": [
+        "LR-E13",
+        "LR-E14",
+        "LR-E15",
+        "LR-E17",
+        "LR-E18",
+        "LR-E19",
+        "LR-R03",
+        "LR-R05",
+        "CS-V1-timeline-revision"
+      ],
+      "production": [
+        "host/portableReplaySession.ts",
+        "host/createSimulatorEngine.ts",
+        "engine/managers/scoreLifeStateManager.ts"
+      ],
+      "tests": [
+        "liveRehearsalMode.test.ts",
+        "particleContracts.test.ts"
+      ]
+    },
+    {
+      "id": "LR-G06",
+      "claim": "Only backward MoveTime increments the CS-V1 timeline revision; forward remains monotonic in the current revision and every MoveTime increments Record count",
+      "authority": [
+        "LR-E20",
+        "LR-R03",
+        "LR-R05",
+        "CS-V1-product-delta"
+      ],
+      "production": [
+        "host/portableReplaySession.ts",
+        "engine/managers/inGameRecord.ts",
+        "engine/managers/scoreLifeStateManager.ts"
+      ],
+      "tests": [
+        "liveRehearsalMode.test.ts"
+      ]
+    },
+    {
+      "id": "LR-G07",
+      "claim": "MoveTime candidate output remains hidden/suppressed until old ownership is released, then BGM publishes at trunc(targetSeconds*1000) and the new combined root becomes visible",
+      "authority": [
+        "LR-E16",
+        "LR-E18",
+        "LR-E19",
+        "LR-C03"
+      ],
+      "production": [
+        "backends/audio/webAudioBackend.ts",
+        "platform/platformComposition.ts",
+        "host/createSimulatorEngine.ts"
+      ],
+      "tests": [
+        "audioWebAudio.test.ts",
+        "renderPixi.test.ts"
+      ]
+    },
+    {
+      "id": "LR-G08",
+      "claim": "Rehearsal controls reuse exact current rhythm-game-ui atlas bytes and fixed 1600x720 geometry; Live hides them and Demo Play alone shows its badge",
+      "authority": [
+        "rehearsal-control-rendering-10-1-4@6c0dfb76"
+      ],
+      "production": [
+        "backends/resources/currentScoreHudResourceManifest.ts",
+        "backends/pixi/pixiRendererBackend.ts",
+        "scene/rehearsalControlScene.ts"
+      ],
+      "tests": [
+        "renderPixi.test.ts",
+        "sceneLayout.test.ts"
+      ]
+    }
+  ],
+  "forbiddenProductionSymbols": [
+    "startMilliseconds",
+    "create-replay-checkpoint",
+    "return-time",
+    "resultTransform",
+    "practice.enabled"
+  ],
+  "openBoundaries": [
+    "HABAHIRO original UnityFS/runtime/frame parity",
+    "fixed-device exact cadence/GPU/audio",
+    "main-program Stage 9 integration"
+  ],
+  "blockingFindings": [],
+  "files": [
+    {
+      "path": "src/simulator/assembly/sessionRecipe.ts",
+      "sha256": "71177CFC0FCFF1DEA23B67A793CD7D443AF08C6A5324190BE7B9A826A5635FFA",
+      "claims": [
+        "LR-G01",
+        "LR-G03",
+        "LR-G04"
+      ]
+    },
+    {
+      "path": "src/simulator/backends/audio/webAudioBackend.ts",
+      "sha256": "2F6B4A61440DA1561A0E9D1C95342C5DA401C38592191A3816BE9586E581E3C1",
+      "claims": [
+        "LR-G07"
+      ]
+    },
+    {
+      "path": "src/simulator/backends/audioContracts.ts",
+      "sha256": "33CB5788E19C7988C43CC98CB9FE31510A9E39EAE6FDFC320757983622B8613E",
+      "claims": [
+        "LR-G07"
+      ]
+    },
+    {
+      "path": "src/simulator/backends/audioValidation.ts",
+      "sha256": "975D4E829CB720F746DFB829062E9C8C35BB01B0231F2485FFCD0B0D7C256C61",
+      "claims": [
+        "LR-G07"
+      ]
+    },
+    {
+      "path": "src/simulator/backends/pixi/pixiRendererBackend.ts",
+      "sha256": "0B680E5455D177BE71D741937924A2F01323391F621B8BF078E541C455877958",
+      "claims": [
+        "LR-G08"
+      ]
+    },
+    {
+      "path": "src/simulator/backends/recordingAudioBackend.ts",
+      "sha256": "01EA3898B5D3318D24171CDD1C3CFBDE6658BF2787C2A3D985C2968836631548",
+      "claims": [
+        "LR-G02"
+      ]
+    },
+    {
+      "path": "src/simulator/backends/resources/currentScoreHudResourceManifest.ts",
+      "sha256": "614DB39435BF08F8753C73DC1C28617F4FAF26A85147A06DD3AC15F7DB9001FB",
+      "claims": [
+        "LR-G08"
+      ]
+    },
+    {
+      "path": "src/simulator/engine/data/inGameCalculatedData.ts",
+      "sha256": "6850593F62CD17D3C5C72F63F3A122F42B9F8B32B65F6239DF176A8EED9D062B",
+      "claims": [
+        "LR-G02"
+      ]
+    },
+    {
+      "path": "src/simulator/engine/data/scoreLifeState.ts",
+      "sha256": "D94EDBE301325D969725519356F328C87056EF422808ED59D844EF28982068B1",
+      "claims": [
+        "LR-G02"
+      ]
+    },
+    {
+      "path": "src/simulator/engine/evidence.ts",
+      "sha256": "AD2F2FBF9753D1157280DA8C2AB5CCCDCA058AE7F0D0C7EEEB4A76F6050B4D53",
+      "claims": [
+        "LR-G02"
+      ]
+    },
+    {
+      "path": "src/simulator/engine/managers/inGameManager.ts",
+      "sha256": "852001473B2A42890773AB3CDC367514F4B3F7BF7C80BC7CE8E0ED964F515FC5",
+      "claims": [
+        "LR-G03"
+      ]
+    },
+    {
+      "path": "src/simulator/engine/managers/inGameRecord.ts",
+      "sha256": "ED5E8A6CF6573EE42D625E587F891EB7AF779CBD0E51D5731D5D06F01042D00F",
+      "claims": [
+        "LR-G05",
+        "LR-G06"
+      ]
+    },
+    {
+      "path": "src/simulator/engine/managers/inputBoundaries.ts",
+      "sha256": "D3E456D33090A296B90926041ED8C4FAD2A5DF043142A45F1BBA470BD65C60C5",
+      "claims": [
+        "LR-G02"
+      ]
+    },
+    {
+      "path": "src/simulator/engine/managers/scoreLifeStateManager.ts",
+      "sha256": "86618BD577D631EE31A113003A554FB224AB34E29359AB7DDECC4D4FF5EEBA4E",
+      "claims": [
+        "LR-G02",
+        "LR-G05",
+        "LR-G06"
+      ]
+    },
+    {
+      "path": "src/simulator/host/contracts.ts",
+      "sha256": "B532EC40F17A26A3A49D672E319DB7E7452D8D00E6B758EDDA1CEC449A3FF6E6",
+      "claims": [
+        "LR-G02"
+      ]
+    },
+    {
+      "path": "src/simulator/host/createSimulatorEngine.ts",
+      "sha256": "4FD44D60C72C72B09D0C22066420CFB8B949FC4729F2733BEF7DA0FD5C23B688",
+      "claims": [
+        "LR-G05",
+        "LR-G07"
+      ]
+    },
+    {
+      "path": "src/simulator/host/portableReplaySession.ts",
+      "sha256": "367742194F05DB634804774A9D8F60BC3EFF2237F2404BE1B930CB6D7849E58C",
+      "claims": [
+        "LR-G04",
+        "LR-G05",
+        "LR-G06"
+      ]
+    },
+    {
+      "path": "src/simulator/index.ts",
+      "sha256": "06AC386D46C6CC26D42D7494DA18F1327556F53AF6D31387577B02753B603C1F",
+      "claims": [
+        "LR-G01"
+      ]
+    },
+    {
+      "path": "src/simulator/platform/platformComposition.ts",
+      "sha256": "7B698B0121D543B442EB5B19CF1D759728C5FD843E387DB5A6DD7340AF48F4FB",
+      "claims": [
+        "LR-G02",
+        "LR-G07",
+        "LR-G08"
+      ]
+    },
+    {
+      "path": "src/simulator/public/capabilities.ts",
+      "sha256": "84E471E06182ACB4B7F48747526F3A5D5F9A6AED35F11AB197947A27EBAF16CD",
+      "claims": [
+        "LR-G01"
+      ]
+    },
+    {
+      "path": "src/simulator/public/contracts.ts",
+      "sha256": "8969EE5158B2EB59691B41854D61AD44AC72448B50A2481CB11423DB96B8F21E",
+      "claims": [
+        "LR-G01"
+      ]
+    },
+    {
+      "path": "src/simulator/public/index.ts",
+      "sha256": "68D4B8996A3A00EBCC486CCFCD20ACDA018C54D8E2AF52CB84325087533995A2",
+      "claims": [
+        "LR-G01"
+      ]
+    },
+    {
+      "path": "src/simulator/runtime/autonomousSimulatorRuntime.ts",
+      "sha256": "366F9EC36349BEB0F4FED1442156E888BD83B6D05C622E20E6882C6CC283FC14",
+      "claims": [
+        "LR-G04"
+      ]
+    },
+    {
+      "path": "src/simulator/runtime/contracts.ts",
+      "sha256": "EA803735E8E650243954504C70DEDF396DB9254F5C4EE4F976FD7865EEFAAD41",
+      "claims": [
+        "LR-G04"
+      ]
+    },
+    {
+      "path": "src/simulator/scene/rehearsalControlScene.ts",
+      "sha256": "AAF155176E9F556669A62F1B3F19808005EA3BA829626B48428ED1A96B0083BE",
+      "claims": [
+        "LR-G08"
+      ]
+    }
+  ],
+  "candidateCommit": "8398a5a"
+}

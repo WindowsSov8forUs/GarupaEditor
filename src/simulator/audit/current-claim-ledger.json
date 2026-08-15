@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "auditStatus": "ordinary-release-with-cs-v1-product-score",
+  "auditStatus": "live-rehearsal-candidate-with-cs-v1-product-score",
   "rules": {
     "forbidCommittedTmpReferences": true,
     "forbidUnscopedCompletionClaims": true,
@@ -80,15 +80,38 @@
       "auditDisposition": "closed-portable"
     },
     {
-      "id": "CLAIM-INITIAL-SEEK-PORTABLE",
-      "wording": "non-zero initial practice seek portable state reconstruction",
-      "scope": "strict-inside explicit BGM target, fresh zero-state bounded Float32 whole-engine pre-roll, physical output suppression and one final BGM/visual publication",
+      "id": "CLAIM-LIVE-REHEARSAL-MATRIX",
+      "wording": "orthogonal Live/Rehearsal and Manual/Auto portable identity and lifecycle",
+      "scope": "canonical four-row identity, Live lethal terminal route, Rehearsal Life-zero continuation and simulator-owned Retry/Abort/Resume route",
       "notClaimed": [
-        "original initial-millisecond UI feature",
-        "physical audio exact",
-        "GPU framebuffer exact"
+        "premium Continue",
+        "original score formula",
+        "Stage 9 integration"
       ],
-      "auditDisposition": "closed-portable"
+      "auditDisposition": "closed-portable",
+      "delta": "src/simulator/audit/current-live-rehearsal-delta.json"
+    },
+    {
+      "id": "CLAIM-REHEARSAL-MOVETIME-CONTROLS",
+      "wording": "Rehearsal fixed +/-5 second whole-engine MoveTime and visible portable controls",
+      "scope": "one-use hit capabilities, bounded Float32 replay, CS-V1 timeline restoration, target BGM publication and exact current atlas control geometry",
+      "notClaimed": [
+        "caller checkpoint or arbitrary seek",
+        "initial millisecond launch seek",
+        "Unity Prefab or fixed-device framebuffer exact"
+      ],
+      "auditDisposition": "closed-portable",
+      "delta": "src/simulator/audit/current-live-rehearsal-delta.json"
+    },
+    {
+      "id": "CLAIM-INITIAL-SEEK-EXCLUDED",
+      "wording": "non-zero initial practice seek removed from the final product contract",
+      "scope": "all sessions begin at zero; only simulator-owned runtime Rehearsal controls may MoveTime",
+      "notClaimed": [
+        "initial-millisecond UI feature",
+        "caller arbitrary seek"
+      ],
+      "auditDisposition": "excluded"
     },
     {
       "id": "CLAIM-WEBVIEW2-CURRENT-RASTER",

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 5,
-  "status": "reverse-baseline-plus-cs-v1-exact-product-delta",
+  "status": "reverse-baseline-plus-cs-v1-plus-live-rehearsal-candidate",
   "reverseBaseline": {
     "commit": "b5fb3dca34b26511355879d62839661c5cf505d3",
     "targetGarupaCommit": "2b758eb6c40632c8c658e97772b9cb7afb5785fd",
@@ -21,11 +21,18 @@
     "claimBindings": 9,
     "unclassifiedChangedProductionFiles": 0
   },
-  "currentProductionFiles": 106,
+  "currentProductionFiles": 107,
   "unreviewedProductFieldClaimCount": 0,
   "reachableSupportedUnknownCount": 0,
   "groupMappingIsNotAuthorization": true,
   "exactClaimBindingRequired": true,
   "globalGateOpen": false,
-  "originalScoreParityClaimed": false
+  "originalScoreParityClaimed": false,
+  "liveRehearsalDelta": {
+    "file": "current-live-rehearsal-delta.json",
+    "candidateCommit": "8398a5a",
+    "changedProductionFiles": 25,
+    "claimBindings": 8,
+    "unclassifiedChangedProductionFiles": 0
+  }
 }

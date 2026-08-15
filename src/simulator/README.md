@@ -4,7 +4,7 @@
 
 ## 当前全局门
 
-Reverse schema-4账本冻结的是旧release `2b758eb...`的104个production文件，不能覆盖后续产品Score改动。当前审计采用“Reverse基线 + exact-hash CS-V1 product delta”，见`audit/current-product-scoring-delta.json`。Pushed-detached release `b4a3432`通过26叶（1,853,406ms）；CS-V1 ordinary WebView2使用production双decoder、单一particle→Note/HUD combined root、656-batch全谱及3 fresh×17 captures，锁定环境digest为`ff6e7584988dc0ad32074858e52beed608ed19b6623c6558402dcef84bdf396c`，不是原作framebuffer oracle。
+Reverse schema-4账本冻结的是旧release `2b758eb...`的104个production文件，不能覆盖后续产品Score或四模式改动。当前candidate审计采用“Reverse基线 + exact-hash CS-V1 product delta + Live/Rehearsal delta”，见`audit/current-product-scoring-delta.json`与`audit/current-live-rehearsal-delta.json`。四模式candidate `8398a5a`已push，27叶detached发布验收尚待执行；上一pushed-detached release `b4a3432`通过26叶（1,853,406ms）；CS-V1 ordinary WebView2使用production双decoder、单一particle→Note/HUD combined root、656-batch全谱及3 fresh×17 captures，锁定环境digest为`ff6e7584988dc0ad32074858e52beed608ed19b6623c6558402dcef84bdf396c`，不是原作framebuffer oracle。
 
 总重验aggregate gate已在R12有界关闭；`CAP-RENDER-ORDINARY-01`与`CAP-RENDER-PARTICLE-COMPOSITION-01`恢复`closed-portable`。这不移除request/resource/backend/owner各自的失败关闭，不升级Unity framebuffer、fixed-device exact、HAB original、excluded玩法或Stage 9。
 
@@ -23,8 +23,8 @@ Reverse schema-4账本冻结的是旧release `2b758eb...`的104个production文�
 | Audio、Particle semantic simulation | `closed-portable` | semantic/PCM/WebAudio graph及deterministic particle command/simulation限定范围；不含当前可见合成、物理输出/framebuffer |
 | HAB current-external-complete | `closed-portable` | 11项pinned资源、179 rows、全Note/mesh/line/field/mask/lane-change及Pixi consumer；差异仅文档披露 |
 | HAB original parity | `open-evidence-required` | UnityFS、natural owner/setter、Root_effect原clip及original physical frame不作等价声明 |
-| Live/Rehearsal × Manual/Auto | `open-evidence-required` | 当前Public与runtime会压扁Rehearsal Auto；须以10.1.4四模式、Life-zero、MoveTime、controls逐claim证据重建后关闭 |
-| Rehearsal MoveTime/control scene | `open-evidence-required` | 旧checkpoint ReturnTime与non-zero initial seek不能作为原作±5秒运行期控制授权 |
+| Live/Rehearsal × Manual/Auto | `closed-portable` | Reverse `6c0dfb76`四模式identity与Life-zero矩阵；Rehearsal Auto保持Practice+Demo而非Auto Live，CS-V1仍为产品计分合同 |
+| Rehearsal MoveTime/control scene | `closed-portable` | simulator-owned固定±5 opaque command、Float32 whole-engine恢复、后退timeline revision、目标BGM发布及真实current atlas Pixi controls限定范围；不声明Prefab/fixed-device exact |
 | Non-zero initial seek | `excluded` | IPS-P01–P05只保留历史产品扩展记录；本专项冻结删除`startMilliseconds`及deferred publication，不再作为最终能力 |
 | Button 07 | `closed-original-unreachable` | 10.1.4合法BMS不可生成值7，scene只拥有0..6；不发明第八lane，注入值7按内部不变量拒绝 |
 | WebView2 decode/glyph/raster | `closed-portable` | 真实WebView2 151.0.4129.78执行production `BrowserPixiTextureDecoder`的PNG/FontFace/glyph/Pixi WebGL raster；跨runtime/GPU exact不泛化 |
@@ -42,7 +42,7 @@ Reverse schema-4账本冻结的是旧release `2b758eb...`的104个production文�
 import { launchSimulatorModule } from "src/simulator";
 ```
 
-安装中立platform后，证据覆盖的request可获得仅含`closed` Promise的成功receipt；四模式重构完成前Rehearsal组合保持开放门；未安装时失败为`simulator.entry.platform-not-installed`。合同不接受member/card/deck、角色效果、Fever或多人数据，也不暴露engine、step、backend、provider、scene、replay factory或dispose。Public gameplay只提供Life；Score master、level、totalParameter、Auto coefficient、ruleset、评分单位数和quota均由exact-shape边界拒绝。模拟器从chart-owned判定图内部生成评分计划。
+安装中立platform后，证据覆盖的四种`sessionMode × inputMode` request可获得仅含`closed` Promise的成功receipt；未安装时失败为`simulator.entry.platform-not-installed`。合同不接受member/card/deck、角色效果、Fever或多人数据，也不暴露engine、step、backend、provider、scene、replay factory或dispose。Public gameplay只提供Life；Score master、level、totalParameter、Auto coefficient、ruleset、评分单位数和quota均由exact-shape边界拒绝。模拟器从chart-owned判定图内部生成评分计划。
 
 **Skill音符不等于角色技能效果。** `GameNoteAdditionalType.Skill`只能在重新核验后表示chart-owned外观、命中SE和判定粒子，不得查询member/card或触发角色加分、Heal、Guard、NeverDie或判定强化。
 
