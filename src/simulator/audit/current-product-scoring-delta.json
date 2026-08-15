@@ -18,36 +18,292 @@
     "unclassifiedChangedProductionFiles": 0
   },
   "claims": [
-    { "id": "CS-V1-01", "binding": "NORMALIZED_SCORE_RULESET_ID and Public exclusion", "authority": "product" },
-    { "id": "CS-V1-02", "binding": "BigInt Q(i), scoreMaximum and normalized judgement contribution", "authority": "product" },
-    { "id": "CS-V1-03", "binding": "constructed-chart scoring-unit identity, grouping, ordering and quota assignment", "authority": "product" },
-    { "id": "CS-V1-04", "binding": "engine-owned OneFrame scoring identity and preflight projection", "authority": "product-plus-reverse-transaction-order" },
-    { "id": "CS-V1-05", "binding": "single-consumption, monotonic accumulation and scoreMaximum failure boundary", "authority": "product-plus-reverse-record-order" },
-    { "id": "CS-V1-06", "binding": "fixed Rank and 10M+N Gauge business state", "authority": "product-plus-reverse-hud-geometry" },
-    { "id": "CS-V1-07", "binding": "typed Score HUD rule identity and independent recomputation", "authority": "product-plus-reverse-rendering" },
-    { "id": "CS-V1-08", "binding": "Life-only Public launch and internal composition", "authority": "product-public-contract" },
-    { "id": "CS-V1-09", "binding": "Clear Status count naming and replay-stable plan reconstruction", "authority": "product-plus-reverse-clear-state" }
+    {
+      "id": "CS-V1-01",
+      "binding": "NORMALIZED_SCORE_RULESET_ID and Public exclusion",
+      "authority": "product"
+    },
+    {
+      "id": "CS-V1-02",
+      "binding": "BigInt Q(i), scoreMaximum and normalized judgement contribution",
+      "authority": "product"
+    },
+    {
+      "id": "CS-V1-03",
+      "binding": "constructed-chart scoring-unit identity, grouping, ordering and quota assignment",
+      "authority": "product"
+    },
+    {
+      "id": "CS-V1-04",
+      "binding": "engine-owned OneFrame scoring identity and preflight projection",
+      "authority": "product-plus-reverse-transaction-order"
+    },
+    {
+      "id": "CS-V1-05",
+      "binding": "single-consumption, monotonic accumulation and scoreMaximum failure boundary",
+      "authority": "product-plus-reverse-record-order"
+    },
+    {
+      "id": "CS-V1-06",
+      "binding": "fixed Rank and 10M+N Gauge business state",
+      "authority": "product-plus-reverse-hud-geometry"
+    },
+    {
+      "id": "CS-V1-07",
+      "binding": "typed Score HUD rule identity and independent recomputation",
+      "authority": "product-plus-reverse-rendering"
+    },
+    {
+      "id": "CS-V1-08",
+      "binding": "Life-only Public launch and internal composition",
+      "authority": "product-public-contract"
+    },
+    {
+      "id": "CS-V1-09",
+      "binding": "Clear Status count naming and replay-stable plan reconstruction",
+      "authority": "product-plus-reverse-clear-state"
+    }
   ],
   "files": [
-    { "path": "src/simulator/assembly/sessionRecipe.ts", "sha256": "319D47FB7BFA779DC26F060BCB41B36276ABE883DA33DBBD9F822050282846D0", "claims": ["CS-V1-08", "CS-V1-09"], "mutations": ["public exact-shape copy", "clear-status read"], "reverseRetained": ["recipe ownership", "replay lifecycle"] },
-    { "path": "src/simulator/backends/renderingCommandValidation.ts", "sha256": "A16021F1B63AF59A739538148BA9C9C5BEF0554B682435F476A8DFEF15D6E16E", "claims": ["CS-V1-06", "CS-V1-07"], "mutations": ["typed HUD preflight only"], "reverseRetained": ["Float32 marker geometry", "HUD failure-before-Pixi"] },
-    { "path": "src/simulator/backends/renderingContracts.ts", "sha256": "DD6DC8635B99B68CC8C329C150AFBCFC7FAF351A613B49ACA98D603961305F27", "claims": ["CS-V1-07"], "mutations": [], "reverseRetained": ["typed HUD command structure"] },
-    { "path": "src/simulator/engine/data/oneFrameData.ts", "sha256": "0CBBD8E56525865C31DAB2C3ACBF5585A6CB5F3997788F932980CB20F874450E", "claims": ["CS-V1-04"], "mutations": [], "reverseRetained": ["five-slot judgement payload"] },
-    { "path": "src/simulator/engine/data/scoreLifeState.ts", "sha256": "B377DBB1E7E003B1AC382F18DE6B9E27915EEB7197B7488E90AE808D81AFAE26", "claims": ["CS-V1-01", "CS-V1-08"], "mutations": [], "reverseRetained": ["Life and play-mode fields"] },
-    { "path": "src/simulator/engine/data/singlePlayScoreGauge.ts", "sha256": "B6CB0F57218028ED4B560C5BEF11A2DC2666CAB9DC20E1F9AD1BA5649A263C7B", "claims": ["CS-V1-06"], "mutations": [], "reverseRetained": ["Rank enum and HUD snapshot fields"] },
-    { "path": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts", "sha256": "B4DA241CDBA8348C45006D6685385EFF8B3A9180A6787C4A9E713A1274CC25AA", "claims": ["CS-V1-04"], "mutations": ["Manual/Auto business preflight before slot commit"], "reverseRetained": ["five-slot order", "owner validation", "reflect transaction"] },
-    { "path": "src/simulator/engine/managers/inGameRecord.ts", "sha256": "81F6FE37E4184DC725A73FD4582CEA22678100D467A7B7A433EC3175F05BDEB9", "claims": ["CS-V1-09"], "mutations": ["clear-status count read"], "reverseRetained": ["Record UInt32, result and Life mutation"] },
-    { "path": "src/simulator/engine/managers/scoreLifeStateManager.ts", "sha256": "E09BCA770EC0E5495EDDB724A2E6F1C4947605A77D31DD1969AFBE2E8B79E6EC", "claims": ["CS-V1-02", "CS-V1-04", "CS-V1-05", "CS-V1-06", "CS-V1-09"], "mutations": ["staged consumed-unit set", "Record addScore", "Gauge update", "commit/discard"], "reverseRetained": ["Combo-before-Score order", "Life/result order", "one-use transaction"] },
-    { "path": "src/simulator/engine/managers/singlePlayScoreGauge.ts", "sha256": "A34732B39A661F13166F143D05B7B803066F81543B04A14A9ACC8395028494B5", "claims": ["CS-V1-06"], "mutations": ["Rank transition", "SS persistent activation", "Gauge preflight commit"], "reverseRetained": ["Float32 ratio", "marker/indicator geometry", "SS transition owner"] },
-    { "path": "src/simulator/engine/rendering/renderCommandProducer.ts", "sha256": "E3A73505A4A130391DBC3D6826B09256DB19E2D798C04123A141B713071CC1CF", "claims": ["CS-V1-07"], "mutations": ["typed Score HUD command projection"], "reverseRetained": ["HUD object/animation ordering"] },
-    { "path": "src/simulator/engine/scoring/contracts.ts", "sha256": "7913F497E52E6EF55F08E4E43F2152F73E25B2324DFB1F783CEB25BFADB1DE26", "claims": ["CS-V1-01", "CS-V1-03"], "mutations": [], "reverseRetained": [] },
-    { "path": "src/simulator/engine/scoring/normalizedScoreRule.ts", "sha256": "32499FF66B63D6F03D6DD822AC1D1509EA3136AFB3C5E2839D8AFC06FFDF02A5", "claims": ["CS-V1-02", "CS-V1-06"], "mutations": [], "reverseRetained": ["binary32 judgement-rate bit values"] },
-    { "path": "src/simulator/engine/scoring/constructedChartScoringAdapter.ts", "sha256": "138B48E1AECE1F33819BFB5E3EA1C93FFFE4A22E7F5007573FCD27751D069B5A", "claims": ["CS-V1-03"], "mutations": ["immutable plan construction only"], "reverseRetained": ["constructed chart graph families"] },
-    { "path": "src/simulator/host/createSimulatorEngine.ts", "sha256": "084311A07D76066227BB27851D4FECBCF7EB54E0B3B32B7B9B4FC4D1E2C3533D", "claims": ["CS-V1-03", "CS-V1-04", "CS-V1-09"], "mutations": ["fresh plan/owner composition"], "reverseRetained": ["host lifecycle and manager ownership"] },
-    { "path": "src/simulator/platform/platformComposition.ts", "sha256": "273623368B6E9B8E2B954BF2814269FFAEEBD3C8F4979C7B6E48429EDBD81337", "claims": ["CS-V1-08"], "mutations": ["internal Life/mode profile mapping"], "reverseRetained": ["resource/backend/scene composition"] },
-    { "path": "src/simulator/public/contracts.ts", "sha256": "7FE254D72AFC025C9C4A9ADFC9DF6B04015FA0C0135F3EFF2B35904D9CA37062", "claims": ["CS-V1-08"], "mutations": [], "reverseRetained": ["single launch and closed receipt"] }
+    {
+      "path": "src/simulator/assembly/sessionRecipe.ts",
+      "sha256": "D61A156F756A686484F9CC67AE918D4C2C7C0E7662BF66F8A89029C4CD2FAEC3",
+      "claims": [
+        "CS-V1-08",
+        "CS-V1-09"
+      ],
+      "mutations": [
+        "public exact-shape copy",
+        "clear-status read"
+      ],
+      "reverseRetained": [
+        "recipe ownership",
+        "replay lifecycle"
+      ]
+    },
+    {
+      "path": "src/simulator/backends/renderingCommandValidation.ts",
+      "sha256": "A16021F1B63AF59A739538148BA9C9C5BEF0554B682435F476A8DFEF15D6E16E",
+      "claims": [
+        "CS-V1-06",
+        "CS-V1-07"
+      ],
+      "mutations": [
+        "typed HUD preflight only"
+      ],
+      "reverseRetained": [
+        "Float32 marker geometry",
+        "HUD failure-before-Pixi"
+      ]
+    },
+    {
+      "path": "src/simulator/backends/renderingContracts.ts",
+      "sha256": "DD48251B5F03FD68F29B142CB66AC8BBF501BF66007BDDC7CAB9CCA1035734F4",
+      "claims": [
+        "CS-V1-07"
+      ],
+      "mutations": [],
+      "reverseRetained": [
+        "typed HUD command structure"
+      ]
+    },
+    {
+      "path": "src/simulator/engine/data/oneFrameData.ts",
+      "sha256": "49669B205E3959EA1AB3CC17121FB06C1EA04FE400346BA94EE490D4766ABA23",
+      "claims": [
+        "CS-V1-04"
+      ],
+      "mutations": [],
+      "reverseRetained": [
+        "five-slot judgement payload"
+      ]
+    },
+    {
+      "path": "src/simulator/engine/data/scoreLifeState.ts",
+      "sha256": "B377DBB1E7E003B1AC382F18DE6B9E27915EEB7197B7488E90AE808D81AFAE26",
+      "claims": [
+        "CS-V1-01",
+        "CS-V1-08"
+      ],
+      "mutations": [],
+      "reverseRetained": [
+        "Life and play-mode fields"
+      ]
+    },
+    {
+      "path": "src/simulator/engine/data/singlePlayScoreGauge.ts",
+      "sha256": "B6CB0F57218028ED4B560C5BEF11A2DC2666CAB9DC20E1F9AD1BA5649A263C7B",
+      "claims": [
+        "CS-V1-06"
+      ],
+      "mutations": [],
+      "reverseRetained": [
+        "Rank enum and HUD snapshot fields"
+      ]
+    },
+    {
+      "path": "src/simulator/engine/managers/inGameOneFrameJudgementController.ts",
+      "sha256": "C9824713C0777A8F448ADDD2A1B8547DB61F5F8C87E123334E92C2BF7260A680",
+      "claims": [
+        "CS-V1-04"
+      ],
+      "mutations": [
+        "Manual/Auto business preflight before slot commit"
+      ],
+      "reverseRetained": [
+        "five-slot order",
+        "owner validation",
+        "reflect transaction"
+      ]
+    },
+    {
+      "path": "src/simulator/engine/managers/inGameRecord.ts",
+      "sha256": "81F6FE37E4184DC725A73FD4582CEA22678100D467A7B7A433EC3175F05BDEB9",
+      "claims": [
+        "CS-V1-09"
+      ],
+      "mutations": [
+        "clear-status count read"
+      ],
+      "reverseRetained": [
+        "Record UInt32, result and Life mutation"
+      ]
+    },
+    {
+      "path": "src/simulator/engine/managers/scoreLifeStateManager.ts",
+      "sha256": "E09BCA770EC0E5495EDDB724A2E6F1C4947605A77D31DD1969AFBE2E8B79E6EC",
+      "claims": [
+        "CS-V1-02",
+        "CS-V1-04",
+        "CS-V1-05",
+        "CS-V1-06",
+        "CS-V1-09"
+      ],
+      "mutations": [
+        "staged consumed-unit set",
+        "Record addScore",
+        "Gauge update",
+        "commit/discard"
+      ],
+      "reverseRetained": [
+        "Combo-before-Score order",
+        "Life/result order",
+        "one-use transaction"
+      ]
+    },
+    {
+      "path": "src/simulator/engine/managers/singlePlayScoreGauge.ts",
+      "sha256": "A34732B39A661F13166F143D05B7B803066F81543B04A14A9ACC8395028494B5",
+      "claims": [
+        "CS-V1-06"
+      ],
+      "mutations": [
+        "Rank transition",
+        "SS persistent activation",
+        "Gauge preflight commit"
+      ],
+      "reverseRetained": [
+        "Float32 ratio",
+        "marker/indicator geometry",
+        "SS transition owner"
+      ]
+    },
+    {
+      "path": "src/simulator/engine/rendering/renderCommandProducer.ts",
+      "sha256": "53647CF6398FC7E70C0E449795E54FF2422E1F7FD4CF3F0AAACE577D10824735",
+      "claims": [
+        "CS-V1-07"
+      ],
+      "mutations": [
+        "typed Score HUD command projection"
+      ],
+      "reverseRetained": [
+        "HUD object/animation ordering"
+      ]
+    },
+    {
+      "path": "src/simulator/engine/scoring/contracts.ts",
+      "sha256": "7913F497E52E6EF55F08E4E43F2152F73E25B2324DFB1F783CEB25BFADB1DE26",
+      "claims": [
+        "CS-V1-01",
+        "CS-V1-03"
+      ],
+      "mutations": [],
+      "reverseRetained": []
+    },
+    {
+      "path": "src/simulator/engine/scoring/normalizedScoreRule.ts",
+      "sha256": "32499FF66B63D6F03D6DD822AC1D1509EA3136AFB3C5E2839D8AFC06FFDF02A5",
+      "claims": [
+        "CS-V1-02",
+        "CS-V1-06"
+      ],
+      "mutations": [],
+      "reverseRetained": [
+        "binary32 judgement-rate bit values"
+      ]
+    },
+    {
+      "path": "src/simulator/engine/scoring/constructedChartScoringAdapter.ts",
+      "sha256": "138B48E1AECE1F33819BFB5E3EA1C93FFFE4A22E7F5007573FCD27751D069B5A",
+      "claims": [
+        "CS-V1-03"
+      ],
+      "mutations": [
+        "immutable plan construction only"
+      ],
+      "reverseRetained": [
+        "constructed chart graph families"
+      ]
+    },
+    {
+      "path": "src/simulator/host/createSimulatorEngine.ts",
+      "sha256": "F21137906BEAF24839571B8C5A7461FB4CFB96B3BB6DBAF5F0CC2B1D67C88789",
+      "claims": [
+        "CS-V1-03",
+        "CS-V1-04",
+        "CS-V1-09"
+      ],
+      "mutations": [
+        "fresh plan/owner composition"
+      ],
+      "reverseRetained": [
+        "host lifecycle and manager ownership"
+      ]
+    },
+    {
+      "path": "src/simulator/platform/platformComposition.ts",
+      "sha256": "EB34A5B769780B80B7EAF7A727716E28A43F445E9307DA4E06CC3B145C1E770B",
+      "claims": [
+        "CS-V1-08"
+      ],
+      "mutations": [
+        "internal Life/mode profile mapping"
+      ],
+      "reverseRetained": [
+        "resource/backend/scene composition"
+      ]
+    },
+    {
+      "path": "src/simulator/public/contracts.ts",
+      "sha256": "7FE254D72AFC025C9C4A9ADFC9DF6B04015FA0C0135F3EFF2B35904D9CA37062",
+      "claims": [
+        "CS-V1-08"
+      ],
+      "mutations": [],
+      "reverseRetained": [
+        "single launch and closed receipt"
+      ]
+    }
   ],
   "deletedFiles": [
-    { "path": "src/simulator/engine/managers/scoreUtility.ts", "disposition": "removed-original-master-score-input-owner", "claims": ["CS-V1-02", "CS-V1-08"] }
+    {
+      "path": "src/simulator/engine/managers/scoreUtility.ts",
+      "disposition": "removed-original-master-score-input-owner",
+      "claims": [
+        "CS-V1-02",
+        "CS-V1-08"
+      ]
+    }
   ]
 }

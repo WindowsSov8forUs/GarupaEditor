@@ -160,7 +160,8 @@ function json(name) {
 }
 
 function sha256(path) {
-  return createHash("sha256").update(readFileSync(path)).digest("hex").toUpperCase();
+  const canonicalSource = readFileSync(path, "utf8").replaceAll("\r\n", "\n");
+  return createHash("sha256").update(canonicalSource, "utf8").digest("hex").toUpperCase();
 }
 
 function* walk(root) {
