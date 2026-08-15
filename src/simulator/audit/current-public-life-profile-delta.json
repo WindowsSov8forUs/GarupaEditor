@@ -1,0 +1,127 @@
+{
+  "schemaVersion": 1,
+  "status": "closed-portable-candidate",
+  "lockedSample": {
+    "package": "jp.co.craftegg.band",
+    "versionName": "10.1.4",
+    "versionCode": 230,
+    "abi": "arm64-v8a"
+  },
+  "authority": {
+    "reverseCommit": "2cbea93d19cb599d5daaeea007a63ae70fae012e",
+    "contract": "artifacts/investigations/simulator-public-life-profile-10-1-4/simulator_public_life_profile_contract.json",
+    "evidenceIds": [
+      "PLP-E01",
+      "PLP-E02",
+      "PLP-E03",
+      "PLP-E04",
+      "PLP-E05",
+      "PLP-E06",
+      "PLP-E07"
+    ],
+    "resolvedBooleanIsOriginalPublicApi": false,
+    "productMapping": "chartData.isFullLength carries the resolved musicDataType == full predicate"
+  },
+  "candidateCommit": "05037d3e38be9ccd43e8b2e40bbc30c265b1f954",
+  "releaseValidatedCommit": null,
+  "releaseValidation": null,
+  "claims": [
+    {
+      "id": "PLP-G01",
+      "claim": "Public chart exact shape contains explicit isFullLength and rejects caller-authored gameplay/Life values before resource acquisition",
+      "authority": ["PLP-C01", "product-public-contract"],
+      "production": ["public/contracts.ts", "assembly/sessionRecipe.ts"],
+      "tests": ["publicLifeProfile.test.ts", "autonomousModule.test.ts"]
+    },
+    {
+      "id": "PLP-G02",
+      "claim": "The simulator-owned ordinary single-song profile initializes Life as 1000/1000/2000",
+      "authority": ["PLP-E01", "PLP-E02"],
+      "production": ["engine/data/currentSinglePlayLifeProfile.ts"],
+      "tests": ["publicLifeProfile.test.ts"]
+    },
+    {
+      "id": "PLP-G03",
+      "claim": "The resolved full predicate selects exact non-full Miss/Bad -100/-50 or full -50/-25 without inference or fallback",
+      "authority": ["PLP-E03", "PLP-E04", "PLP-E05", "PLP-E06"],
+      "production": ["engine/data/currentSinglePlayLifeProfile.ts", "platform/platformComposition.ts"],
+      "tests": ["publicLifeProfile.test.ts"]
+    },
+    {
+      "id": "PLP-G04",
+      "claim": "Initial, Retry and MoveTime fresh generations preserve one frozen isFullLength recipe identity",
+      "authority": ["PLP-E06", "LR-E13", "LR-E17", "product-recipe-ownership"],
+      "production": ["assembly/sessionRecipe.ts", "platform/platformComposition.ts"],
+      "tests": ["publicLifeProfile.test.ts", "liveRehearsalMode.test.ts"]
+    },
+    {
+      "id": "PLP-G05",
+      "claim": "Public barrels expose no gameplay or Life input type while internal evidence IDs remain typed",
+      "authority": ["PLP-E01", "PLP-E07", "product-public-contract"],
+      "production": ["index.ts", "public/index.ts", "engine/evidence.ts"],
+      "tests": ["verifyPublicLifeProfileStatic.mjs"]
+    }
+  ],
+  "forbiddenPublicSymbols": [
+    "SimulatorSessionGameplayData",
+    "chartData.gameplay",
+    "readonly gameplay:",
+    "readonly initialLife:",
+    "readonly playerMaxLife:",
+    "readonly lifeUpperLimit:",
+    "readonly missDamage:",
+    "readonly badDamage:"
+  ],
+  "inferenceForbidden": [
+    "BGM duration",
+    "BMS contents",
+    "filename",
+    "session mode",
+    "input mode"
+  ],
+  "openBoundaries": [
+    "Medley inherited Life",
+    "premium Continue recovery",
+    "HABAHIRO original parity",
+    "fixed-device exact",
+    "main-program Stage 9 integration"
+  ],
+  "blockingFindings": [],
+  "files": [
+    {
+      "path": "src/simulator/assembly/sessionRecipe.ts",
+      "sha256": "0D4EB6D6DC2F6F6418A6B597644E4A46D6017CBB0F1AFAEE93B3F7282D9683CB",
+      "claims": ["PLP-G01", "PLP-G04"]
+    },
+    {
+      "path": "src/simulator/engine/data/currentSinglePlayLifeProfile.ts",
+      "sha256": "4185CADA2E3A8377D1E9DDDF984E9CB9F898ADDC4F0B96D50494046882AE2CB1",
+      "claims": ["PLP-G02", "PLP-G03"]
+    },
+    {
+      "path": "src/simulator/engine/evidence.ts",
+      "sha256": "E2B826ED1B1456A36696AA18325106FF5920C6E3F79222D95442953CFCD1D8D2",
+      "claims": ["PLP-G05"]
+    },
+    {
+      "path": "src/simulator/index.ts",
+      "sha256": "DA0B9ABE665F07B23E34E4B84E0E37C19A0CEAA8BA4EE7592D13A07FF6C2AC59",
+      "claims": ["PLP-G05"]
+    },
+    {
+      "path": "src/simulator/platform/platformComposition.ts",
+      "sha256": "0692260B7C37F62C66C1847F33B8B61C3DEAED9FA12E41F17C7859C03670E46B",
+      "claims": ["PLP-G03", "PLP-G04"]
+    },
+    {
+      "path": "src/simulator/public/contracts.ts",
+      "sha256": "CA8F5E7ED1C79E074F96CED0D1150F81524FBD99FFD3E0E3D024232444F3611E",
+      "claims": ["PLP-G01", "PLP-G05"]
+    },
+    {
+      "path": "src/simulator/public/index.ts",
+      "sha256": "76F3B0592BD5DFBCA04A3452583C8CF599E29027C4D9F6A2A838B7060847306E",
+      "claims": ["PLP-G05"]
+    }
+  ]
+}

@@ -17,6 +17,7 @@ try {
     run(process.execPath, [typeScriptCli, "-p", join(testingRoot, "tsconfig.tests.json"), "--outDir", outputRoot]);
   }
   run(process.execPath, [join(outputRoot, "src", "simulator", "testing", "publicLifeProfile.test.js")]);
+  run(process.execPath, [join(testingRoot, "verifyPublicLifeProfileStatic.mjs")]);
   if (process.env.SIMULATOR_TEST_SHARED_PREFLIGHT !== "1") {
     run(process.execPath, [join(testingRoot, "verifyTestingFixtures.mjs")]);
     run(process.execPath, [join(testingRoot, "verifyDependencies.mjs")]);

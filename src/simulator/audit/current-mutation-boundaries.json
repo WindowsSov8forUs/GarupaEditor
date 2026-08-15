@@ -1,6 +1,6 @@
 {
-  "schemaVersion": 5,
-  "status": "reverse-baseline-plus-cs-v1-plus-live-rehearsal-release-mutations-dispositioned",
+  "schemaVersion": 6,
+  "status": "reverse-baseline-plus-cs-v1-plus-live-rehearsal-plus-public-life-candidate-mutations-dispositioned",
   "reverseBaseline": {
     "commit": "b5fb3dca34b26511355879d62839661c5cf505d3",
     "targetGarupaCommit": "2b758eb6c40632c8c658e97772b9cb7afb5785fd",
@@ -39,5 +39,21 @@
       "suppressed audio and hidden visual candidate before one-use publication"
     ],
     "releaseValidatedCommit": "8e113f7"
+  },
+  "publicLifeProfileDelta": {
+    "file": "current-public-life-profile-delta.json",
+    "candidateCommit": "05037d3e38be9ccd43e8b2e40bbc30c265b1f954",
+    "unreviewedMutationCount": 0,
+    "preflightBoundaries": [
+      "exact chart keys and boolean isFullLength before resource read",
+      "legacy gameplay/Life rejection before backend or scene mutation",
+      "strict internal boolean before Life profile publication"
+    ],
+    "commitBoundaries": [
+      "frozen schema-2 recipe identity",
+      "frozen internal Life profile",
+      "same profile reconstruction for initial, Retry and MoveTime fresh engines"
+    ],
+    "releaseValidatedCommit": null
   }
 }

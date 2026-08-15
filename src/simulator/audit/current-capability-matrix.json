@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "auditStatus": "live-rehearsal-release-with-cs-v1-product-score",
+  "auditStatus": "public-life-profile-candidate-with-live-rehearsal-and-cs-v1",
   "lockedSample": {
     "package": "jp.co.craftegg.band",
     "versionName": "10.1.4",
@@ -21,6 +21,22 @@
       "exclusions": [
         "main-program installation",
         "caller lifecycle control handles"
+      ]
+    },
+    {
+      "id": "CAP-PUBLIC-LIFE-PROFILE-01",
+      "capability": "explicit full-length chart classification and simulator-owned ordinary single-song Life initialization",
+      "productionPath": "Public isFullLength -> frozen recipe -> internal Life profile -> Score/Life manager",
+      "status": "closed-portable",
+      "reverseEvidence": [
+        "simulator-public-life-profile-10-1-4@2cbea93d PLP-E01..PLP-E07"
+      ],
+      "dynamicRequirement": "non-full/full profile oracle, exact Public rejection and fresh recipe identity tests",
+      "exclusions": [
+        "caller-authored Life or damage values",
+        "duration/BMS/filename/mode inference",
+        "Medley inherited Life",
+        "premium Continue"
       ]
     },
     {

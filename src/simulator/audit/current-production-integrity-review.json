@@ -1,7 +1,7 @@
 {
-  "schemaVersion": 3,
-  "status": "live-rehearsal-release-attested-with-cs-v1-and-reverse-authority",
-  "currentDisposition": "pushed-detached-27-leaf-release-passed",
+  "schemaVersion": 4,
+  "status": "public-life-profile-candidate-with-live-rehearsal-cs-v1-and-reverse-authority",
+  "currentDisposition": "public-life-profile-candidate-targeted-validation-passed-release-pending",
   "authorityModel": {
     "reverseBaseline": {
       "commit": "b5fb3dca34b26511355879d62839661c5cf505d3",
@@ -24,6 +24,13 @@
       "delta": "src/simulator/audit/current-live-rehearsal-delta.json",
       "candidateCommit": "8e50eb0",
       "reverseReleaseLedgerCommit": "e055678f17f9a6c5b28838fdf7a604f96e9ff65c"
+    },
+    "publicLifeProfile": {
+      "reverseCommit": "2cbea93d19cb599d5daaeea007a63ae70fae012e",
+      "delta": "src/simulator/audit/current-public-life-profile-delta.json",
+      "candidateCommit": "05037d3e38be9ccd43e8b2e40bbc30c265b1f954",
+      "releaseValidatedCommit": null,
+      "reverseReleaseLedgerCommit": null
     }
   },
   "reviewPolicy": {
@@ -35,7 +42,7 @@
     "untypedProductionEscapeCount": 0,
     "commentOnlyCatchCount": 0
   },
-  "currentProductionFileCount": 107,
+  "currentProductionFileCount": 108,
   "productChangedProductionFiles": 17,
   "productDeletedProductionFiles": 1,
   "unclassifiedProductChangedFiles": 0,
@@ -64,8 +71,17 @@
       "originalUnityFramebufferOracle": false,
       "executionScope": "pushed-detached-release-b4a3432"
     },
-    "quickWithCurrentAudit": "passed",
+    "quickWithCurrentAudit": "passed-historical-live-rehearsal-release",
     "implementationCommit": "5539a0b",
+    "publicLifeProfileCandidate": {
+      "commit": "05037d3e38be9ccd43e8b2e40bbc30c265b1f954",
+      "reverseCommit": "2cbea93d19cb599d5daaeea007a63ae70fae012e",
+      "isolatedTypeScript": "passed",
+      "standaloneProfile": "passed",
+      "autonomousBoundary": "passed",
+      "fixtures": "passed",
+      "fullReleaseDag": "pending"
+    },
     "fullReleaseDag": {
       "commit": "8e113f7",
       "status": "passed-pushed-detached",
@@ -97,5 +113,7 @@
     "characterSkillFeverMultiplayer": "excluded",
     "mainProgramIntegration": "unauthorized-stage-9"
   },
-  "liveRehearsalChangedProductionFiles": 25
+  "liveRehearsalChangedProductionFiles": 25,
+  "publicLifeProfileChangedProductionFiles": 7,
+  "unclassifiedPublicLifeProfileChangedFiles": 0
 }

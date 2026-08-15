@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "auditStatus": "live-rehearsal-release-with-cs-v1-product-score",
+  "auditStatus": "public-life-profile-candidate-with-live-rehearsal-and-cs-v1",
   "rules": {
     "forbidCommittedTmpReferences": true,
     "forbidUnscopedCompletionClaims": true,
@@ -9,7 +9,8 @@
     "syntheticTextureSourceIsNotBrowserDecode": true,
     "legacyAcceptanceCannotCloseCurrentGate": true,
     "productScoreDoesNotClaimOriginalParity": true,
-    "callerAuthoredScoreInputsForbidden": true
+    "callerAuthoredScoreInputsForbidden": true,
+    "callerAuthoredLifeInputsForbidden": true
   },
   "allowedClaims": [
     {
@@ -36,6 +37,19 @@
       "auditDisposition": "implemented-product-contract-with-closed-portable-presentation",
       "productAuthority": "src/simulator/scoring-contract.md",
       "productDelta": "src/simulator/audit/current-product-scoring-delta.json"
+    },
+    {
+      "id": "CLAIM-PUBLIC-LIFE-PROFILE",
+      "wording": "explicit full-length classification with simulator-owned ordinary single-song Life profile",
+      "scope": "Public resolved isFullLength boolean, internal 1000/1000/2000 initialization, non-full -100/-50 and full -50/-25 Miss/Bad profiles",
+      "notClaimed": [
+        "original public API parity",
+        "duration or BMS inference",
+        "Medley inherited Life",
+        "premium Continue"
+      ],
+      "auditDisposition": "closed-portable",
+      "delta": "src/simulator/audit/current-public-life-profile-delta.json"
     },
     {
       "id": "CLAIM-AUDIO-SEMANTIC",

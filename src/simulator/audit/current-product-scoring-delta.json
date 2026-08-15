@@ -55,8 +55,8 @@
     },
     {
       "id": "CS-V1-08",
-      "binding": "Life-only Public launch and internal composition",
-      "authority": "product-public-contract"
+      "binding": "Public excludes caller-authored Score; later Public-Life delta also removes caller-authored Life",
+      "authority": "product-public-contract-plus-current-public-life-profile-delta"
     },
     {
       "id": "CS-V1-09",

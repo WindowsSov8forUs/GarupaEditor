@@ -7,6 +7,7 @@ const repositoryRoot = resolve(testingRoot, "..", "..", "..");
 const stages = [
   ["fixture provenance, bytes and SHA-256", "verifyTestingFixtures.mjs"],
   ["production reachability/claim/static integrity", "verifyEvidenceIntegrityStatic.mjs"],
+  ["Public full-length and internal Life profile", "runPublicLifeProfileTests.mjs"],
   ["actual Pixi raw-observation independent oracle", "runRenderProductionTests.mjs"],
   ["ordinary and HAB early capability gates", "runRenderProductionChartTests.mjs"],
   ["public/runtime pause/replay/cleanup lifecycle", "runAutonomousModuleTests.mjs"],
