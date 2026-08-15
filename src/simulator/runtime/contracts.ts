@@ -5,6 +5,8 @@ import type {
   SimulatorModuleLaunchRequest,
 } from "../public/contracts";
 import type { SimulatorAssemblyResult } from "../resources/sharedResourceAdapters";
+import type { SimulatorTimelineControlState } from "../host/portableReplaySession";
+import type { RehearsalControlCommand } from "../scene/rehearsalControlScene";
 
 export interface SimulatorFrameTick {
   readonly sequence: number;
@@ -24,8 +26,9 @@ export interface SimulatorFrameScheduler {
 export type SimulatorRuntimeCommand =
   | { readonly kind: "pause" }
   | { readonly kind: "resume" }
-  | { readonly kind: "return-five-seconds" }
-  | { readonly kind: "advance-five-seconds" }
+  | RehearsalControlCommand
+  | { readonly kind: "retry" }
+  | { readonly kind: "abort" }
   | { readonly kind: "user-close" };
 
 export interface SimulatorRuntimeInputBatch {
@@ -34,7 +37,10 @@ export interface SimulatorRuntimeInputBatch {
 }
 
 export interface SimulatorRuntimeInputSource {
-  consume(sequence: number): SimulatorAssemblyResult<SimulatorRuntimeInputBatch>;
+  consume(
+    sequence: number,
+    controlState: SimulatorTimelineControlState,
+  ): SimulatorAssemblyResult<SimulatorRuntimeInputBatch>;
   dispose(): void;
 }
 
@@ -53,6 +59,8 @@ export interface SimulatorOwnedSession {
   moveTime(
     direction: "return-five" | "advance-five",
   ): Promise<SimulatorAssemblyResult<void>>;
+  retry(): Promise<SimulatorAssemblyResult<void>>;
+  getControlState(): SimulatorAssemblyResult<SimulatorTimelineControlState>;
   close(
     reason: "user-closed" | "terminal-fault",
     failure?: SimulatorModuleFailure,

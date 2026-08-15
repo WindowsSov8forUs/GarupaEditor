@@ -5,6 +5,13 @@ import { ButtonType } from "../engine/chart/types";
 import { createSimulatorSceneLayout } from "../scene/simulatorSceneLayout";
 import { particleFloat32FromBits } from "../backends/particleValidation";
 import { noteInformation } from "./firstSliceFixtures";
+import {
+  consumeRehearsalControlCommand,
+  formatRehearsalTimeLabel,
+  REHEARSAL_CONTROL_SCENE_PROFILE,
+  resolveRehearsalControlTouch,
+} from "../scene/rehearsalControlScene";
+import { LIVE_MANUAL_MODE, REHEARSAL_AUTO_MODE, REHEARSAL_MANUAL_MODE } from "./modeFixtures";
 
 const config = Object.freeze({
   specificSpeed: Math.fround(11),
@@ -83,6 +90,35 @@ assert.equal(createSimulatorSceneLayout({ ...surface, viewportWidth: 1599 }, con
   "evidence-required");
 assert.equal(createSimulatorSceneLayout(surface, { ...config, noteSize: Math.fround(79) }, "ordinary", resources).status,
   "evidence-required");
+
+assert.deepEqual(REHEARSAL_CONTROL_SCENE_PROFILE.returnFive.center, [142, 360]);
+assert.deepEqual(REHEARSAL_CONTROL_SCENE_PROFILE.advanceFive.center, [1457.5, 360]);
+const controlState = Object.freeze({ timelineSeconds: 8, paused: false, moveTimeInProgress: false });
+assert.equal(requireOk(resolveRehearsalControlTouch(
+  LIVE_MANUAL_MODE, "began", { x: 142, y: 360 }, controlState,
+)), null);
+assert.equal(requireOk(resolveRehearsalControlTouch(
+  REHEARSAL_MANUAL_MODE, "moved", { x: 142, y: 360 }, controlState,
+)), null);
+assert.equal(requireOk(resolveRehearsalControlTouch(
+  REHEARSAL_MANUAL_MODE, "began", { x: 142, y: 360 }, controlState,
+))?.kind, "return-five-seconds");
+assert.equal(requireOk(resolveRehearsalControlTouch(
+  REHEARSAL_AUTO_MODE, "began", { x: 1457.5, y: 360 }, controlState,
+))?.kind, "advance-five-seconds");
+assert.equal(requireOk(resolveRehearsalControlTouch(
+  REHEARSAL_MANUAL_MODE, "began", { x: 142, y: 360 }, { ...controlState, timelineSeconds: 0.9 },
+)), null);
+const issuedAdvance = requireOk(resolveRehearsalControlTouch(
+  REHEARSAL_AUTO_MODE, "began", { x: 1457.5, y: 360 }, controlState,
+))!;
+assert.equal(requireOk(consumeRehearsalControlCommand(issuedAdvance, {
+  mode: REHEARSAL_AUTO_MODE, ...controlState,
+})), "advance-five-seconds");
+assert.equal(consumeRehearsalControlCommand(issuedAdvance, {
+  mode: REHEARSAL_AUTO_MODE, ...controlState,
+}).status, "evidence-required");
+assert.equal(requireOk(formatRehearsalTimeLabel(8, 125)), "0:08/2:05");
 
 console.log("unified simulator scene tests passed: ordinary/particle/manual-slide/HAB layout owner");
 

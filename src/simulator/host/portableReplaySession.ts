@@ -6,6 +6,10 @@ import type {
 } from "../engine/data/manualInput";
 import { copyManualInputPosition } from "../engine/data/manualInput";
 import {
+  validateSimulatorModeIdentity,
+  type SimulatorModeIdentity,
+} from "../engine/data/inGameCalculatedData";
+import {
   evidenceRequired,
   ok,
   type EvidenceRequired,
@@ -15,9 +19,25 @@ import type { SimulatorEngine, SimulatorSnapshot } from "./contracts";
 import {
   commitMoveTimeTimelineRevision,
   publishMoveTimeAudio,
+  setMoveTimeVisualState,
 } from "./createSimulatorEngine";
 
 export type SimulatorMoveTimeDirection = "return-five" | "advance-five";
+
+export interface SimulatorTimelineControlState {
+  readonly mode: Readonly<{
+    readonly sessionMode: "live" | "rehearsal";
+    readonly inputMode: "manual" | "auto";
+    readonly inGameMode: "single-normal" | "practice";
+    readonly isEnablePractice: boolean;
+    readonly isDemoPlayMode: boolean;
+    readonly isAutoLive: boolean;
+    readonly isAutoPlay: boolean;
+  }>;
+  readonly timelineSeconds: number;
+  readonly paused: boolean;
+  readonly moveTimeInProgress: boolean;
+}
 
 export interface SimulatorMoveTimeReceipt {
   readonly direction: SimulatorMoveTimeDirection;
@@ -29,11 +49,14 @@ export interface SimulatorMoveTimeReceipt {
 }
 
 export interface SimulatorWholeEngineReplayFactory {
+  readonly mode: SimulatorModeIdentity;
   createFreshEngine(): Promise<SimulatorResult<SimulatorEngine>>;
 }
 
 export interface PortableReplaySimulatorEngine extends SimulatorEngine {
   moveTime(direction: SimulatorMoveTimeDirection): Promise<SimulatorResult<SimulatorMoveTimeReceipt>>;
+  retryRehearsal(): Promise<SimulatorResult<void>>;
+  getTimelineControlState(): SimulatorResult<SimulatorTimelineControlState>;
 }
 
 type ReplayEvent =
@@ -83,6 +106,8 @@ export function createPortableReplaySimulatorEngine(
       "Whole-engine timeline replay requires one fresh simulator engine and an explicit fresh-engine factory.",
     );
   }
+  const mode = validateSimulatorModeIdentity(factory.mode);
+  if (mode.status !== "ok") return mode;
   const before = initialEngine.snapshot();
   if (before.status !== "ok") return before;
   if (!isPristine(before.value)) {
@@ -93,7 +118,11 @@ export function createPortableReplaySimulatorEngine(
   }
   const initialized = initialEngine.initialize();
   if (initialized.status !== "ok") return initialized;
-  return ok(new PortableReplaySimulatorEngineHost(initialEngine, factory));
+  return ok(new PortableReplaySimulatorEngineHost(
+    initialEngine,
+    factory,
+    mode.value,
+  ));
 }
 
 class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine {
@@ -109,10 +138,16 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
   private moveTimeCountValue = 0;
   private state: "ready" | "replaying" | "faulted" | "disposed" = "ready";
   private fault: EvidenceRequired | null = null;
+  private readonly controlMode: SimulatorTimelineControlState["mode"];
 
-  constructor(initialEngine: SimulatorEngine, private readonly factory: SimulatorWholeEngineReplayFactory) {
+  constructor(
+    initialEngine: SimulatorEngine,
+    private readonly factory: SimulatorWholeEngineReplayFactory,
+    controlMode: SimulatorTimelineControlState["mode"],
+  ) {
     this.active = initialEngine;
     this.usedEngines.add(initialEngine);
+    this.controlMode = Object.freeze({ ...controlMode });
   }
 
   initialize(): SimulatorResult<void> {
@@ -235,9 +270,12 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
       : this.timelineRevisionValue;
     const nextMoveCount = this.moveTimeCountValue + 1;
 
+    const movingVisual = setMoveTimeVisualState(this.active, true);
+    if (movingVisual.status !== "ok") return movingVisual;
     this.state = "replaying";
     const freshResult = await this.createFreshCandidate();
     if (freshResult.status !== "ok") {
+      setMoveTimeVisualState(this.active, false);
       this.state = "ready";
       return freshResult;
     }
@@ -317,6 +355,63 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
     }));
   }
 
+  getTimelineControlState(): SimulatorResult<SimulatorTimelineControlState> {
+    const available = this.available<SimulatorTimelineControlState>();
+    if (available !== null) return available;
+    const snapshot = this.active.snapshot();
+    if (snapshot.status !== "ok") return snapshot;
+    return ok(Object.freeze({
+      mode: this.controlMode,
+      timelineSeconds: this.timelineSecondsValue,
+      paused: snapshot.value.managers.paused,
+      moveTimeInProgress: false,
+    }));
+  }
+
+  async retryRehearsal(): Promise<SimulatorResult<void>> {
+    const available = this.available<void>();
+    if (available !== null) return available;
+    const snapshot = this.active.snapshot();
+    if (snapshot.status !== "ok") return snapshot;
+    const mode = snapshot.value.managers.noteManager.calculatedData;
+    if (mode.sessionMode !== "rehearsal" || !mode.isEnablePractice) {
+      return rejected(
+        "timeline.retry.outside-rehearsal",
+        "The evidenced Abort/Retry/Resume pause menu belongs only to Rehearsal.",
+      );
+    }
+    const visual = setMoveTimeVisualState(this.active, true);
+    if (visual.status !== "ok") return visual;
+    this.state = "replaying";
+    const freshResult = await this.createFreshCandidate();
+    if (freshResult.status !== "ok") {
+      setMoveTimeVisualState(this.active, false);
+      this.state = "ready";
+      return freshResult;
+    }
+    const fresh = freshResult.value;
+    const previous = this.active;
+    const disposed = previous.dispose();
+    if (disposed.status !== "ok") {
+      fresh.dispose();
+      return this.latchReplayFault(disposed);
+    }
+    const published = publishMoveTimeAudio(fresh, 0);
+    if (published.status !== "ok") {
+      fresh.dispose();
+      return this.latchReplayFault(published);
+    }
+    this.active = fresh;
+    this.events = [];
+    this.currentResolutions.clear();
+    this.timelineSecondsValue = Math.fround(0);
+    this.timelineRevisionValue = 0;
+    this.moveTimeCountValue = 0;
+    this.generation += 1;
+    this.state = "ready";
+    return ok(undefined);
+  }
+
   dispose(): SimulatorResult<void> {
     if (this.state === "disposed") return this.active.dispose();
     if (this.state === "replaying") {
@@ -376,6 +471,7 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
 
   private rejectCandidate<T>(fresh: SimulatorEngine, failure: EvidenceRequired): SimulatorResult<T> {
     fresh.dispose();
+    setMoveTimeVisualState(this.active, false);
     this.state = "ready";
     return failure;
   }

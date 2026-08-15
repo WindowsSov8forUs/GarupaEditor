@@ -1,4 +1,4 @@
-import { LIVE_AUTO_MODE } from "./modeFixtures";
+import { LIVE_AUTO_MODE, REHEARSAL_AUTO_MODE, REHEARSAL_MANUAL_MODE } from "./modeFixtures";
 declare function require(name: string): any;
 declare const process: any;
 const { readFileSync, writeFileSync } = require("node:fs");
@@ -78,6 +78,35 @@ async function main(): Promise<void> {
   requireOk(await renderer.prepare(
     SESSION, profile, provider, new PortableRenderResourcePreflightAdapter(),
   ), "actual Pixi prepare");
+
+  assert(requireOk(renderer.createRehearsalControlOverlay(LIVE_AUTO_MODE, 120), "live controls") === null,
+    "Live does not create Rehearsal controls");
+  const manualControls = requireOk(
+    renderer.createRehearsalControlOverlay(REHEARSAL_MANUAL_MODE, 125),
+    "manual Rehearsal controls",
+  );
+  assert(manualControls !== null, "manual Rehearsal overlay exists");
+  assert(manualControls.root.label === "rehearsal-control-root", "control root identity");
+  assert(JSON.stringify(
+    manualControls.root.children.filter((child) => child.label.includes("rehearsal-")).map((child) => child.label),
+  ) === JSON.stringify([
+    "rehearsal-return-five",
+    "rehearsal-advance-five",
+    "rehearsal-time-label-background",
+    "rehearsal-time-label",
+  ]), "manual control child identities");
+  requireOk(manualControls.updateTimeline(8), "control timeline");
+  assert((manualControls.root.getChildByLabel("rehearsal-time-label") as any)?.text === "0:08/2:05",
+    "engine-owned Rehearsal time label");
+  requireOk(manualControls.dispose(), "dispose manual controls");
+  const autoControls = requireOk(
+    renderer.createRehearsalControlOverlay(REHEARSAL_AUTO_MODE, 125),
+    "Auto Rehearsal controls",
+  );
+  assert(autoControls !== null, "Auto Rehearsal overlay exists");
+  assert(autoControls.root.getChildByLabel("rehearsal-demo-badge") !== null,
+    "Demo Play badge exists only on Rehearsal Auto");
+  requireOk(autoControls.dispose(), "dispose Auto controls");
 
   let sequence = 0;
   const commands: RenderCommand[] = [];

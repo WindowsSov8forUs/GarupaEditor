@@ -9,6 +9,8 @@ import { createSimulatorModuleCapabilitySummary } from "../public/capabilities";
 import { createNoteBatchInformationList } from "../engine/chart/construction";
 import { ButtonType } from "../engine/chart/types";
 import { AutonomousSimulatorModule } from "../runtime/autonomousSimulatorRuntime";
+import { resolveRehearsalControlTouch } from "../scene/rehearsalControlScene";
+import { REHEARSAL_AUTO_MODE } from "./modeFixtures";
 import {
   installSimulatorModuleLauncher,
   launchInstalledSimulatorModule,
@@ -387,11 +389,17 @@ async function testAutonomousLaunchAndClose(): Promise<void> {
   const scheduler = new ControlledScheduler();
   const input = new ControlledInput();
   const session = new FakeSession();
+  const controlState = Object.freeze({ timelineSeconds: 8, paused: false, moveTimeInProgress: false });
+  const returnCommand = requireOk(resolveRehearsalControlTouch(
+    REHEARSAL_AUTO_MODE, "began", { x: 142, y: 360 }, controlState,
+  ));
+  const advanceCommand = requireOk(resolveRehearsalControlTouch(
+    REHEARSAL_AUTO_MODE, "began", { x: 1457.5, y: 360 }, controlState,
+  ));
   input.set(0, [
-    { kind: "pause" },
-    { kind: "resume" },
-    { kind: "return-five-seconds" },
-    { kind: "advance-five-seconds" },
+    returnCommand,
+    advanceCommand,
+    { kind: "retry" },
   ]);
   input.set(1, [{ kind: "user-close" }]);
   const module = new AutonomousSimulatorModule({
@@ -411,7 +419,7 @@ async function testAutonomousLaunchAndClose(): Promise<void> {
   assert.equal("dispose" in launched, false);
   await scheduler.tick(0, 1 / 60);
   assert.equal(session.steps, 1);
-  assert.deepEqual(session.commands, ["pause", "resume", "return-five", "advance-five"]);
+  assert.deepEqual(session.commands, ["return-five", "advance-five", "retry"]);
   await scheduler.tick(1, 1 / 60);
   const report = await launched.closed;
   assert.equal(report.reason, "user-closed");
@@ -551,6 +559,18 @@ class FakeSession implements SimulatorOwnedSession {
   async moveTime(direction: "return-five" | "advance-five"): Promise<SimulatorAssemblyResult<void>> {
     this.commands.push(direction);
     return accepted(undefined);
+  }
+  async retry(): Promise<SimulatorAssemblyResult<void>> {
+    this.commands.push("retry");
+    return accepted(undefined);
+  }
+  getControlState() {
+    return accepted(Object.freeze({
+      mode: REHEARSAL_AUTO_MODE,
+      timelineSeconds: 8,
+      paused: false,
+      moveTimeInProgress: false,
+    }));
   }
   close(reason: "user-closed" | "terminal-fault", failure?: any): SimulatorModuleCloseReport {
     this.closes += 1;

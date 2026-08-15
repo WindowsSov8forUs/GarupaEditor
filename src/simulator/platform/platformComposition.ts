@@ -14,7 +14,10 @@ import {
   type PixiCombinedScene,
 } from "../backends/pixi/pixiCombinedScene";
 import { PixiParticleRendererBackend } from "../backends/pixi/pixiParticleRendererBackend";
-import { PixiRendererBackend } from "../backends/pixi/pixiRendererBackend";
+import {
+  PixiRendererBackend,
+  type PixiRehearsalControlOverlay,
+} from "../backends/pixi/pixiRendererBackend";
 import { createRecordingSimulatorBackends } from "../backends/recordingBackend";
 import { PortableParticleResourcePreflightAdapter } from "../backends/resources/localParticleResourceProvider";
 import { PortableRenderResourcePreflightAdapter } from "../backends/resources/localResourceProvider";
@@ -237,21 +240,44 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
     if (engine.status !== "ok") {
       return rejectedWithCleanup(fromEvidence(engine), disposeAssembly(assembly.value));
     }
+    const controlOverlay = renderer.createRehearsalControlOverlay(
+      score.value.mode,
+      recipe.request.chartData.bgm.durationSeconds,
+    );
+    if (controlOverlay.status !== "ok") {
+      const cleanup = simulatorCleanupFailureFromResult(
+        "engine-after-control-overlay-failure",
+        engine.value.dispose(),
+      );
+      return rejectedWithCleanup(
+        fromEvidence(controlOverlay),
+        cleanup === null ? [] : [cleanup],
+      );
+    }
     const combinedScene = createPixiCombinedScene(particleRenderer.stage, renderer.stage);
     if (combinedScene.status !== "ok") {
-      const cleanup = simulatorCleanupFailureFromResult("engine-after-combined-scene-failure", engine.value.dispose());
-      return rejectedWithCleanup(fromEvidence(combinedScene), cleanup === null ? [] : [cleanup]);
+      const cleanups = [
+        simulatorCleanupFailureFromResult("control-overlay-after-combined-scene-failure", controlOverlay.value?.dispose() ?? ok(undefined)),
+        simulatorCleanupFailureFromResult("engine-after-combined-scene-failure", engine.value.dispose()),
+      ].filter((failure): failure is SimulatorModuleCleanupFailure => failure !== null);
+      return rejectedWithCleanup(fromEvidence(combinedScene), cleanups);
     }
     combinedScene.value.root.visible = !moveTimeCandidate;
     const mounted = this.platform.graphics.mount(sessionId, combinedScene.value.root);
     if (mounted.status === "rejected") {
       const cleanups = [
+        simulatorCleanupFailureFromResult("control-overlay-after-mount-failure", controlOverlay.value?.dispose() ?? ok(undefined)),
         simulatorCleanupFailureFromResult("engine-after-mount-failure", engine.value.dispose()),
         simulatorCleanupFailureFromResult("combined-scene-after-mount-failure", combinedScene.value.dispose()),
       ].filter((failure): failure is SimulatorModuleCleanupFailure => failure !== null);
       return rejectedWithCleanup(mounted, cleanups);
     }
-    const mountedEngine = new MountedSimulatorEngine(engine.value, mounted.value, combinedScene.value);
+    const mountedEngine = new MountedSimulatorEngine(
+      engine.value,
+      mounted.value,
+      combinedScene.value,
+      controlOverlay.value,
+    );
     const registered = registerSimulatorEngineMoveTimeWrapper(
       mountedEngine,
       engine.value,
@@ -259,6 +285,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
         combinedScene.value.root.visible = true;
         return ok(undefined);
       },
+      (active) => controlOverlay.value?.setMoveTimeInProgress(active) ?? ok(undefined),
     );
     if (registered.status !== "ok") {
       return rejectedWithCleanup(fromEvidence(registered), [
@@ -275,25 +302,43 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
 
 class MountedSimulatorEngine implements SimulatorEngine {
   private disposed = false;
+  private paused = false;
+  private timelineSeconds = Math.fround(0);
   private mount: SimulatorGraphicsMount | null;
 
   constructor(
     private readonly engine: SimulatorEngine,
     mount: SimulatorGraphicsMount | null,
     private readonly combinedScene: PixiCombinedScene,
+    private readonly controlOverlay: PixiRehearsalControlOverlay | null,
   ) {
     this.mount = mount;
   }
 
-  initialize(): SimulatorResult<void> { return this.engine.initialize(); }
+  initialize(): SimulatorResult<void> {
+    const initialized = this.engine.initialize();
+    if (initialized.status !== "ok") return initialized;
+    return this.controlOverlay?.updateTimeline(0) ?? initialized;
+  }
   step(deltaTimeSeconds: number, inputFrame?: ManualInputFrame): SimulatorResult<void> {
-    return this.engine.step(deltaTimeSeconds, inputFrame);
+    const stepped = this.engine.step(deltaTimeSeconds, inputFrame);
+    if (stepped.status !== "ok" || this.paused) return stepped;
+    this.timelineSeconds = Math.fround(this.timelineSeconds + deltaTimeSeconds);
+    return this.controlOverlay?.updateTimeline(this.timelineSeconds) ?? stepped;
   }
   resolveManualInputButton(position: ManualInputPosition) {
     return this.engine.resolveManualInputButton(position);
   }
-  pause(): SimulatorResult<void> { return this.engine.pause(); }
-  resume(): SimulatorResult<void> { return this.engine.resume(); }
+  pause(): SimulatorResult<void> {
+    const paused = this.engine.pause();
+    if (paused.status === "ok") this.paused = true;
+    return paused;
+  }
+  resume(): SimulatorResult<void> {
+    const resumed = this.engine.resume();
+    if (resumed.status === "ok") this.paused = false;
+    return resumed;
+  }
   continueLive(): SimulatorResult<void> { return this.engine.continueLive(); }
   completeLiveAudio(clearStatus: 1 | 2 | 3): SimulatorResult<void> {
     return this.engine.completeLiveAudio(clearStatus);
@@ -309,6 +354,8 @@ class MountedSimulatorEngine implements SimulatorEngine {
     if (this.disposed) return this.engine.dispose();
     this.disposed = true;
     let result = this.engine.dispose();
+    const overlayDisposed = this.controlOverlay?.dispose() ?? ok(undefined);
+    if (result.status === "ok" && overlayDisposed.status !== "ok") result = overlayDisposed;
     const mount = this.mount;
     this.mount = null;
     try {

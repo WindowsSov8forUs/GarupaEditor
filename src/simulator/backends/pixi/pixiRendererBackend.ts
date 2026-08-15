@@ -18,6 +18,11 @@ import {
 import { RecordingSimulatorRendererBackend } from "../recordingRendererBackend";
 import { validateAndFreezeRenderProfile } from "../renderingValidation";
 import type { OrdinaryVisibleClip } from "../resources/currentOrdinaryVisibleProfile";
+import type { SimulatorModeIdentity } from "../../engine/data/inGameCalculatedData";
+import {
+  formatRehearsalTimeLabel,
+  REHEARSAL_CONTROL_SCENE_PROFILE,
+} from "../../scene/rehearsalControlScene";
 import { CURRENT_ORDINARY_VISIBLE_BINDINGS } from "../resources/currentOrdinaryVisibleResourceManifest";
 import { CURRENT_ORDINARY_HUD_PROFILE } from "../resources/currentOrdinaryHudProfile";
 import {
@@ -65,6 +70,13 @@ export interface PixiTextureDecoder {
 
 export interface PixiSceneObjectFactory {
   create(role: string, renderObjectId: string, roundPixels: boolean): Container;
+}
+
+export interface PixiRehearsalControlOverlay {
+  readonly root: Container;
+  updateTimeline(timelineSeconds: number): SimulatorResult<void>;
+  setMoveTimeInProgress(active: boolean): SimulatorResult<void>;
+  dispose(): SimulatorResult<void>;
 }
 
 interface PendingPixiBatch {
@@ -167,6 +179,41 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
   ) {
     this.stage = new Container({ label: "GarupaSimulatorRoot", sortableChildren: true });
     this.stage.sortableChildren = true;
+  }
+
+  createRehearsalControlOverlay(
+    mode: SimulatorModeIdentity,
+    durationSeconds: number,
+  ): SimulatorResult<PixiRehearsalControlOverlay | null> {
+    if (mode.sessionMode !== "rehearsal") return ok(null);
+    const snapshot = this.recording.snapshot();
+    const returnTexture = this.spriteTextures.get(spriteKey(
+      CURRENT_SCORE_HUD_BINDINGS.gaugeLogicalAssetId,
+      "rehearsal_return_five",
+    ));
+    const advanceTexture = this.spriteTextures.get(spriteKey(
+      CURRENT_SCORE_HUD_BINDINGS.gaugeLogicalAssetId,
+      "rehearsal_advance_five",
+    ));
+    const font = this.decodedFonts.get(CURRENT_SCORE_HUD_BINDINGS.rankLabelFontLogicalAssetId);
+    if (snapshot.state !== "ready" || returnTexture === undefined ||
+      advanceTexture === undefined || font === undefined ||
+      !Number.isFinite(durationSeconds) || durationSeconds <= 0) {
+      return evidenceRequired(
+        "render.rehearsal-control.resources-unavailable",
+        ["LR-E03", "LR-E04", "LR-E05"],
+        "Rehearsal controls require the ready current rhythm-game-ui atlas, exact sgm font and positive session duration; no fallback is rendered.",
+      );
+    }
+    const overlay = new PixiRehearsalControlOverlayOwner(
+      mode,
+      durationSeconds,
+      returnTexture,
+      advanceTexture,
+      font.family,
+    );
+    this.stage.addChild(overlay.root);
+    return ok(overlay);
   }
 
   async prepare(
@@ -1355,6 +1402,126 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     else this.spriteReferenceCounts.set(bindingKey, next);
   }
 
+}
+
+class PixiRehearsalControlOverlayOwner implements PixiRehearsalControlOverlay {
+  readonly root = new Container({ label: "rehearsal-control-root", sortableChildren: true });
+  private readonly returnButton: Sprite;
+  private readonly advanceButton: Sprite;
+  private readonly timeText: Text;
+  private disposed = false;
+  private moveTimeInProgress = false;
+  private timelineSeconds = 0;
+
+  constructor(
+    mode: SimulatorModeIdentity,
+    private readonly durationSeconds: number,
+    returnTexture: Texture,
+    advanceTexture: Texture,
+    fontFamily: string,
+  ) {
+    this.root.zIndex = 2_000_000_000;
+    this.root.eventMode = "none";
+    this.returnButton = new Sprite({ texture: returnTexture, label: "rehearsal-return-five" });
+    this.returnButton.position.set(
+      REHEARSAL_CONTROL_SCENE_PROFILE.returnFive.visibleBounds.x,
+      REHEARSAL_CONTROL_SCENE_PROFILE.returnFive.visibleBounds.y,
+    );
+    this.returnButton.width = REHEARSAL_CONTROL_SCENE_PROFILE.returnFive.visibleBounds.width;
+    this.returnButton.height = REHEARSAL_CONTROL_SCENE_PROFILE.returnFive.visibleBounds.height;
+    this.returnButton.zIndex = 10;
+    this.advanceButton = new Sprite({ texture: advanceTexture, label: "rehearsal-advance-five" });
+    this.advanceButton.position.set(
+      REHEARSAL_CONTROL_SCENE_PROFILE.advanceFive.visibleBounds.x,
+      REHEARSAL_CONTROL_SCENE_PROFILE.advanceFive.visibleBounds.y,
+    );
+    this.advanceButton.width = REHEARSAL_CONTROL_SCENE_PROFILE.advanceFive.visibleBounds.width;
+    this.advanceButton.height = REHEARSAL_CONTROL_SCENE_PROFILE.advanceFive.visibleBounds.height;
+    this.advanceButton.zIndex = 10;
+
+    const timeRegion = REHEARSAL_CONTROL_SCENE_PROFILE.timeLabelRegion;
+    const timeBackground = new Graphics({ label: "rehearsal-time-label-background" })
+      .roundRect(timeRegion.x, timeRegion.y, timeRegion.width, timeRegion.height, 12)
+      .fill(0xffffff)
+      .stroke({ color: 0xff3b74, width: 2 });
+    timeBackground.zIndex = 20;
+    this.timeText = new Text({
+      text: "",
+      style: {
+        fill: 0xff3b74,
+        fontFamily,
+        fontSize: 17,
+        fontWeight: "normal",
+        align: "center",
+      },
+      label: "rehearsal-time-label",
+    });
+    this.timeText.anchor.set(0.5, 0.5);
+    this.timeText.position.set(timeRegion.x + timeRegion.width / 2, timeRegion.y + timeRegion.height / 2);
+    this.timeText.zIndex = 21;
+    this.root.addChild(this.returnButton, this.advanceButton, timeBackground, this.timeText);
+
+    if (mode.isDemoPlayMode) {
+      const demo = REHEARSAL_CONTROL_SCENE_PROFILE.demoBadgeRegion;
+      const badge = new Graphics({ label: "rehearsal-demo-badge-background" })
+        .roundRect(demo.x, demo.y, demo.width, demo.height, 10)
+        .fill(0xff3b74);
+      badge.zIndex = 20;
+      const label = new Text({
+        text: "デモプレイ",
+        style: { fill: 0xffffff, fontFamily, fontSize: 20, fontWeight: "normal" },
+        label: "rehearsal-demo-badge",
+      });
+      label.anchor.set(0.5, 0.5);
+      label.position.set(demo.x + demo.width / 2, demo.y + demo.height / 2);
+      label.zIndex = 21;
+      this.root.addChild(badge, label);
+    }
+    this.root.sortChildren();
+    const initialized = this.updateTimeline(0);
+    if (initialized.status !== "ok") throw new Error(initialized.capability);
+  }
+
+  updateTimeline(timelineSeconds: number): SimulatorResult<void> {
+    if (this.disposed) return evidenceRequired(
+      "render.rehearsal-control.after-dispose",
+      ["LR-C03"],
+      "Disposed Rehearsal controls reject timeline publication.",
+    );
+    const formatted = formatRehearsalTimeLabel(timelineSeconds, this.durationSeconds);
+    if (formatted.status !== "ok") return formatted;
+    this.timelineSeconds = timelineSeconds;
+    this.timeText.text = formatted.value;
+    this.applyAvailability();
+    return ok(undefined);
+  }
+
+  setMoveTimeInProgress(active: boolean): SimulatorResult<void> {
+    if (this.disposed || typeof active !== "boolean") return evidenceRequired(
+      "render.rehearsal-control.invalid-move-state",
+      ["LR-E11"],
+      "Only the live control owner may publish an explicit MoveTime availability state.",
+    );
+    this.moveTimeInProgress = active;
+    this.applyAvailability();
+    return ok(undefined);
+  }
+
+  dispose(): SimulatorResult<void> {
+    if (this.disposed) return ok(undefined);
+    this.disposed = true;
+    this.root.removeFromParent();
+    this.root.destroy({ children: true });
+    return ok(undefined);
+  }
+
+  private applyAvailability(): void {
+    const disabledAlpha = 0.45;
+    this.returnButton.alpha = this.moveTimeInProgress || Math.floor(this.timelineSeconds) === 0
+      ? disabledAlpha
+      : 1;
+    this.advanceButton.alpha = this.moveTimeInProgress ? disabledAlpha : 1;
+  }
 }
 
 class CachingProvider implements SimulatorResourceProvider {

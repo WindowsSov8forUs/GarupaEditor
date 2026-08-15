@@ -2,6 +2,7 @@ import type { SimulatorEngine, SimulatorSnapshot } from "../host/contracts";
 import {
   createPortableReplaySimulatorEngine,
   type PortableReplaySimulatorEngine,
+  type SimulatorTimelineControlState,
 } from "../host/portableReplaySession";
 import { createSimulatorModuleCapabilitySummary } from "../public/capabilities";
 import {
@@ -25,6 +26,7 @@ import {
 } from "../resources/sharedResourceAdapters";
 import type { ManualInputFrame } from "../engine/data/manualInput";
 import { evidenceRequired, ok, type SimulatorResult } from "../engine/evidence";
+import { createSimulatorModeIdentity } from "../engine/data/inGameCalculatedData";
 
 export interface SimulatorSessionRecipe {
   readonly schemaVersion: 1;
@@ -70,6 +72,10 @@ export class RecipeOwnedSessionFactory implements SimulatorOwnedSessionFactory {
     }
     if (initial.status === "rejected") return initial;
     const replay = createPortableReplaySimulatorEngine(initial.value.engine, {
+      mode: createSimulatorModeIdentity(
+        recipe.value.request.config.sessionMode,
+        recipe.value.request.config.inputMode,
+      ),
       createFreshEngine: async () => {
         const fresh = await this.builder.createFreshEngine(recipe.value);
         return fresh.status === "accepted"
@@ -143,6 +149,25 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
     }
     const moved = await this.engine.moveTime(direction);
     return moved.status === "ok" ? accepted(undefined) : fromEngineFailure(moved);
+  }
+
+  getControlState(): SimulatorAssemblyResult<SimulatorTimelineControlState> {
+    if (this.state !== "running") return closedFailure();
+    const state = this.engine.getTimelineControlState();
+    return state.status === "ok" ? accepted(state.value) : fromEngineFailure(state);
+  }
+
+  async retry(): Promise<SimulatorAssemblyResult<void>> {
+    if (this.state !== "running") return closedFailure();
+    if (this.sessionMode !== "rehearsal") {
+      return rejected(
+        "evidence-required",
+        "simulator.recipe.retry-outside-rehearsal",
+        "The evidenced Retry owner belongs to the Rehearsal pause menu.",
+      );
+    }
+    const retried = await this.engine.retryRehearsal();
+    return retried.status === "ok" ? accepted(undefined) : fromEngineFailure(retried);
   }
 
   close(

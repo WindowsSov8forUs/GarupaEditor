@@ -471,6 +471,7 @@ class SimulatorEngineHost implements SimulatorEngine {
 interface RegisteredMoveTimeWrapper {
   readonly host: SimulatorEngineHost;
   readonly publishVisual: () => SimulatorResult<void>;
+  readonly setMoveTimeVisualState: (active: boolean) => SimulatorResult<void>;
 }
 const registeredMoveTimeWrappers = new WeakMap<object, RegisteredMoveTimeWrapper>();
 
@@ -478,6 +479,7 @@ export function registerSimulatorEngineMoveTimeWrapper(
   wrapper: SimulatorEngine,
   inner: SimulatorEngine,
   publishVisual: () => SimulatorResult<void>,
+  setMoveTimeVisualState: (active: boolean) => SimulatorResult<void>,
 ): SimulatorResult<void> {
   const host = resolveMoveTimeHost(inner);
   if (host === null || wrapper === inner || registeredMoveTimeWrappers.has(wrapper)) {
@@ -487,8 +489,20 @@ export function registerSimulatorEngineMoveTimeWrapper(
       "A production mount may register exactly one simulator-owned wrapper around one host engine.",
     );
   }
-  registeredMoveTimeWrappers.set(wrapper, Object.freeze({ host, publishVisual }));
+  registeredMoveTimeWrappers.set(wrapper, Object.freeze({
+    host,
+    publishVisual,
+    setMoveTimeVisualState,
+  }));
   return ok(undefined);
+}
+
+export function setMoveTimeVisualState(
+  engine: SimulatorEngine,
+  active: boolean,
+): SimulatorResult<void> {
+  const wrapper = registeredMoveTimeWrappers.get(engine);
+  return wrapper === undefined ? ok(undefined) : wrapper.setMoveTimeVisualState(active);
 }
 
 export function publishMoveTimeAudio(

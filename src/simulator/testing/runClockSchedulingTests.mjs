@@ -45,7 +45,7 @@ function validateClockScheduling() {
     selectSubstepCount,
   } = require(join(simulatorRoot, "engine", "managers", "noteManager.js"));
   const { SlideNoteManager } = require(join(simulatorRoot, "engine", "managers", "slideNoteManager.js"));
-  const { InGameCalculatedData } = require(join(
+  const { InGameCalculatedData, createSimulatorModeIdentity } = require(join(
     simulatorRoot,
     "engine",
     "data",
@@ -58,9 +58,13 @@ function validateClockScheduling() {
     "inGameOneFrameJudgementController.js",
   ));
 
+  const LIVE_MANUAL_MODE = createSimulatorModeIdentity("live", "manual");
   const inputFor = (chart, highFrequencyMode = false, judgeOffsetFrames = 0) => ({
     chart,
-    runtime: { highFrequencyMode, judgeOffsetFrames, playMode: { kind: "manual" } },
+    runtime: { highFrequencyMode, judgeOffsetFrames, mode: Object.freeze({
+      sessionMode:"live", inputMode:"manual", inGameMode:"single-normal",
+      isEnablePractice:false, isDemoPlayMode:false, isAutoLive:false, isAutoPlay:false,
+    }) },
   });
   const chartFixtures = join(
     repositoryRoot,
@@ -294,7 +298,7 @@ function validateClockScheduling() {
       controller,
       bpmChangeCount,
       judgeOffsetFrames,
-      new InGameCalculatedData({ kind: "manual" }),
+      new InGameCalculatedData(LIVE_MANUAL_MODE),
       () => oneFrame.getUsableOneFrameData(),
       () => ({ status: "evidence-required", capability: "unused", requiredEvidence: [], boundary: "unused" }),
     );

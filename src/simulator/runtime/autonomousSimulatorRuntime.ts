@@ -12,6 +12,7 @@ import type {
   SimulatorModuleLaunchResult,
 } from "../public/contracts";
 import { rejected, type SimulatorAssemblyResult } from "../resources/sharedResourceAdapters";
+import { consumeRehearsalControlCommand } from "../scene/rehearsalControlScene";
 import type {
   AutonomousSimulatorEnvironment,
   SimulatorFrameSubscription,
@@ -128,7 +129,12 @@ export class AutonomousSimulatorModule {
         ));
         return;
       }
-      const input = this.environment.input.consume(tick.sequence);
+      const controlState = this.session!.getControlState();
+      if (controlState.status === "rejected") {
+        this.closeTerminal(controlState.failure);
+        return;
+      }
+      const input = this.environment.input.consume(tick.sequence, controlState.value);
       if (input.status === "rejected") {
         this.closeTerminal(input.failure);
         return;
@@ -172,15 +178,25 @@ export class AutonomousSimulatorModule {
         "The internal UI/input owner emits only typed pause, resume, fixed Rehearsal MoveTime or user-close commands.",
       );
     }
-    if (command.kind === "user-close") {
+    if (command.kind === "user-close" || command.kind === "abort") {
       const report = this.session!.close("user-closed");
       this.closePublished(report);
       return accepted(undefined);
     }
     if (command.kind === "pause") return this.session!.pause();
     if (command.kind === "resume") return this.session!.resume();
-    if (command.kind === "return-five-seconds") return this.session!.moveTime("return-five");
-    if (command.kind === "advance-five-seconds") return this.session!.moveTime("advance-five");
+    if (command.kind === "return-five-seconds" || command.kind === "advance-five-seconds") {
+      const controlState = this.session!.getControlState();
+      if (controlState.status === "rejected") return controlState;
+      const consumed = consumeRehearsalControlCommand(command, controlState.value);
+      if (consumed.status !== "ok") {
+        return rejected("evidence-required", consumed.capability, consumed.boundary);
+      }
+      return this.session!.moveTime(
+        consumed.value === "return-five-seconds" ? "return-five" : "advance-five",
+      );
+    }
+    if (command.kind === "retry") return this.session!.retry();
     return rejected(
       "evidence-required",
       "simulator.runtime.unknown-command",

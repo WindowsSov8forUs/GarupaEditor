@@ -627,6 +627,7 @@ async function testWholeEngineReplay(): Promise<void> {
   };
   const initial = requireOk(await fresh(), "fresh initial engine");
   const replay = requireOk(createPortableReplaySimulatorEngine(initial, {
+    mode: REHEARSAL_AUTO_MODE,
     createFreshEngine: fresh,
   }), "create whole-engine replay");
   for (let frame = 0; frame < 180; frame += 1) requireOk(replay.step(1 / 60), `replay prefix ${frame}`);

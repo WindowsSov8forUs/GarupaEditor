@@ -105,6 +105,33 @@ async function main(): Promise<void> {
   assert.equal(backend.snapshot().fault?.capability, "audio.web.context-lost-after-ready");
   assert.equal(backend.dispose().status, "terminal-disposed");
 
+  const moveTimeContext = new FakeAudioContext();
+  const moveTime = new WebAudioSimulatorBackend(
+    moveTimeContext as unknown as AudioContext,
+    true,
+  );
+  assert.equal((await moveTime.prepare(
+    "move-time-session",
+    CURRENT_AUDIO_TEST_PROFILE,
+    provider,
+    preflight,
+  )).status, "accepted");
+  execute(moveTime, [
+    { kind: "session.open", bgm_pool: 8, se_pool: 12, one_shot_pool: 1 },
+    { kind: "gain.set", bgm_bits: "0x3E800000", se_bits: "0x3F000000" },
+    { kind: "bgm.load", cue: CURRENT_BGM_REGRESSION_RESOURCE.cue, seek_ms: 0, priority: 255, fade_bits: "0x00000000" },
+    { kind: "audio.pause-all", paused: true },
+    { kind: "audio.pause-all", paused: false },
+  ]);
+  assert.equal(moveTimeContext.sources.length, 0);
+  assert.equal(moveTime.publishMoveTimeOutput(5000).status, "accepted");
+  assert.equal(moveTimeContext.sources.length, 1);
+  assert.equal(moveTimeContext.sources[0]!.startOffset, 5);
+  const moveTimeCommands = moveTime.snapshot().commands;
+  assert.equal(moveTimeCommands[moveTimeCommands.length - 1]?.kind, "bgm.move-time-load");
+  assert.equal(moveTime.publishMoveTimeOutput(5000).status, "evidence-required");
+  assert.equal(moveTime.dispose().status, "accepted");
+
   const throwingContext = new FakeAudioContext();
   const throwing = new WebAudioSimulatorBackend(throwingContext as unknown as AudioContext);
   assert.equal((await throwing.prepare(
@@ -126,7 +153,7 @@ async function main(): Promise<void> {
   assert.equal(throwing.snapshot().fault?.capability, "audio.web.command-commit-threw");
   assert.equal(throwing.dispose().status, "accepted");
 
-  console.log("audio Web Audio tests passed: prepare/decode graph transport context-loss sync-fault dispose");
+  console.log("audio Web Audio tests passed: prepare/decode graph transport MoveTime publication context-loss sync-fault dispose");
 }
 
 function execute(backend: WebAudioSimulatorBackend, commands: readonly any[]): void {

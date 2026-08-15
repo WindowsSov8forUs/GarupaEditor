@@ -87,6 +87,8 @@ export const CURRENT_SCORE_HUD_PORTABLE_RESOURCES: readonly ScoreHudPortableReso
       scoreAtlas("score_meter_orange", 586, 851, 40, 22, [5, 5, 0, 0]),
       scoreAtlas("score_meter_pink", 277, 877, 40, 22, [5, 5, 0, 0]),
       scoreAtlas("score_meter_s", 0, 609, 662, 22, [0, 0, 0, 0]),
+      atlas("rehearsal_return_five", 912, 924, 97, 99),
+      atlas("rehearsal_advance_five", 903, 315, 96, 99),
       atlas("bg_health", 0, 633, 186, 62, [39, 143, 0, 0]),
       atlas("bg_no_health", 349, 287, 131, 69, [50, 50, 0, 0]),
       atlas("combo", 592, 807, 150, 42),
