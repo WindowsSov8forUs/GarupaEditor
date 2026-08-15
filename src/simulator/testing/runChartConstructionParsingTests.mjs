@@ -8,20 +8,23 @@ import { fileURLToPath } from "node:url";
 
 const testingRoot = dirname(fileURLToPath(import.meta.url));
 const repositoryRoot = resolve(testingRoot, "..", "..", "..");
-const outputRoot = mkdtempSync(join(tmpdir(), "garupa-simulator-chart-parsing-"));
+const sharedOutputRoot = process.env.SIMULATOR_TEST_COMPILED_ROOT;
+const outputRoot = sharedOutputRoot ?? mkdtempSync(join(tmpdir(), "garupa-simulator-chart-parsing-"));
 const require = createRequire(import.meta.url);
 const typeScriptCli = require.resolve("typescript/bin/tsc");
 let builderConstructor;
 let testCount = 0;
 
 try {
-  run(process.execPath, [
-    typeScriptCli,
-    "-p",
-    join(testingRoot, "tsconfig.tests.json"),
-    "--outDir",
-    outputRoot,
-  ]);
+  if (sharedOutputRoot === undefined) {
+    run(process.execPath, [
+      typeScriptCli,
+      "-p",
+      join(testingRoot, "tsconfig.tests.json"),
+      "--outDir",
+      outputRoot,
+    ]);
+  }
   const chartRoot = join(outputRoot, "src", "simulator", "engine", "chart");
   const { MusicScoreBezierConverter, MusicScoreHeaderParser } = require(
     join(chartRoot, "musicScoreBezier.js"),
@@ -159,9 +162,11 @@ try {
   });
 
   console.log(`chart-construction parsing tests passed: ${testCount}`);
-  run(process.execPath, [join(testingRoot, "verifyDependencies.mjs")]);
+  if (process.env.SIMULATOR_TEST_SHARED_PREFLIGHT !== "1") {
+    run(process.execPath, [join(testingRoot, "verifyDependencies.mjs")]);
+  }
 } finally {
-  rmSync(outputRoot, { recursive: true, force: true });
+  if (sharedOutputRoot === undefined) rmSync(outputRoot, { recursive: true, force: true });
 }
 
 function test(name, callback) {

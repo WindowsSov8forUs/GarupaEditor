@@ -7,26 +7,33 @@ import { fileURLToPath } from "node:url";
 
 const testingRoot = dirname(fileURLToPath(import.meta.url));
 const repositoryRoot = resolve(testingRoot, "..", "..", "..");
-const outputRoot = mkdtempSync(join(tmpdir(), "garupa-particle-tests-"));
+const sharedOutputRoot = process.env.SIMULATOR_TEST_COMPILED_ROOT;
+const outputRoot = sharedOutputRoot ?? mkdtempSync(join(tmpdir(), "garupa-particle-tests-"));
 const require = createRequire(import.meta.url);
 const typeScriptCli = require.resolve("typescript/bin/tsc");
 
 try {
-  run(process.execPath, [join(testingRoot, "verifyTestingFixtures.mjs")]);
-  run(process.execPath, [
-    typeScriptCli,
-    "-p",
-    join(testingRoot, "tsconfig.tests.json"),
-    "--outDir",
-    outputRoot,
-  ]);
+  if (process.env.SIMULATOR_TEST_SHARED_PREFLIGHT !== "1") {
+    run(process.execPath, [join(testingRoot, "verifyTestingFixtures.mjs")]);
+  }
+  if (sharedOutputRoot === undefined) {
+    run(process.execPath, [
+      typeScriptCli,
+      "-p",
+      join(testingRoot, "tsconfig.tests.json"),
+      "--outDir",
+      outputRoot,
+    ]);
+  }
   for (const test of ["particleContracts.test.js", "particleProduction.test.js"]) {
     run(process.execPath, [join(outputRoot, "src", "simulator", "testing", test)]);
   }
   run(process.execPath, [join(testingRoot, "verifyParticleStatic.mjs")]);
-  run(process.execPath, [join(testingRoot, "verifyDependencies.mjs")]);
+  if (process.env.SIMULATOR_TEST_SHARED_PREFLIGHT !== "1") {
+    run(process.execPath, [join(testingRoot, "verifyDependencies.mjs")]);
+  }
 } finally {
-  rmSync(outputRoot, { recursive: true, force: true });
+  if (sharedOutputRoot === undefined) rmSync(outputRoot, { recursive: true, force: true });
 }
 
 function run(command, args) {

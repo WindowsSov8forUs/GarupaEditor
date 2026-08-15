@@ -79,6 +79,6 @@ Synthetic decoder、资源hash或typed command仍不能单独升级为真实WebV
 
 当前依据为Reverse普通渲染静态/HUD提交`6908ddfa8a45721f981e2356a9dde84970313bae`、最终逐claim账本`b5fb3dca34b26511355879d62839661c5cf505d3`、Garupa candidate `5a25161cbb0fc179c877c4153dd9efeab17edcd2`与release `2b758eb6c40632c8c658e97772b9cb7afb5785fd`。R14 attestation登记两轮DAG与全部非正向边界；HAB original、fixed-device exact、excluded和stage-9边界不因本轮复审升级。
 
-最终去重入口为`npm.cmd run simulator:test:total-revalidation`。它按唯一leaf DAG执行isolated tsc、chart/clock/input/state、render raw+independent verifier、audio、particle、host/runtime/public、C07证据消费、generic browser及完整ordinary production WebView2双decoder；不运行Vite/Tauri，也不声称原作framebuffer或物理输出等价。
+日常开发默认运行`npm.cmd run simulator:test`（或`simulator:test:quick`）：测试树只编译一次，约20秒覆盖unit/contract/static、chart parsing、clock与Auto，不执行耗时full-chart actual-Pixi/particle/HAB或WebView2，因此不能作为release证据。发布级入口仍为`npm.cmd run simulator:test:total-revalidation`，保留完整26叶及3-fresh ordinary WebView2双decoder；重复运行复用ignored Cargo target，`simulator:test:total-revalidation:clean`可强制冷编译。完整说明见[`testing/README.md`](./testing/README.md)。两级均不运行Vite/Tauri，也不声称原作framebuffer或物理输出等价。
 
 `mainProgramIntegrationAuthorization=false`。

@@ -18,6 +18,7 @@ const harnessRoot = join(testingRoot, "webview2-ordinary-rendering-harness");
 const bundle = join(harnessRoot, "bundle.js");
 const stage = join(harnessRoot, "input-stage");
 const target = join(harnessRoot, "target");
+const cleanCargoTarget = process.env.SIMULATOR_WEBVIEW2_CLEAN_BUILD === "1";
 const require = createRequire(import.meta.url);
 const esbuild = require.resolve("esbuild/bin/esbuild");
 const fixtureRoot = join(testingRoot, "fixtures", "reverse-snapshots");
@@ -74,6 +75,7 @@ const particleSources = [
 ];
 
 try {
+  if (cleanCargoTarget) rmSync(target, { recursive: true, force: true });
   prepareStage();
   run(process.execPath, [
     esbuild,
@@ -115,7 +117,7 @@ try {
 } finally {
   rmSync(bundle, { force: true });
   rmSync(stage, { recursive: true, force: true });
-  rmSync(target, { recursive: true, force: true });
+  if (cleanCargoTarget) rmSync(target, { recursive: true, force: true });
   for (let index = 1; index <= 3; index += 1) rmSync(join(harnessRoot, `capture-${index}.json`), { force: true });
 }
 
@@ -231,5 +233,5 @@ function run(command, args, cwd) {
     env: { ...process.env, CARGO_NET_OFFLINE: "true" },
   });
   if (result.error) throw result.error;
-  if (result.status !== 0) process.exit(result.status ?? 1);
+  if (result.status !== 0) throw new Error(`${command} failed with exit code ${String(result.status)}`);
 }

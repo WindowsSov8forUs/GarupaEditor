@@ -7,13 +7,16 @@ import { fileURLToPath } from "node:url";
 
 const testingRoot = dirname(fileURLToPath(import.meta.url));
 const root = resolve(testingRoot, "..", "..", "..");
-const output = mkdtempSync(join(tmpdir(), "garupa-habahiro-contract-"));
+const sharedOutputRoot = process.env.SIMULATOR_TEST_COMPILED_ROOT;
+const output = sharedOutputRoot ?? mkdtempSync(join(tmpdir(), "garupa-habahiro-contract-"));
 const tsc = createRequire(import.meta.url).resolve("typescript/bin/tsc");
 try {
-  run(process.execPath, [tsc, "-p", join(testingRoot, "tsconfig.tests.json"), "--outDir", output]);
+  if (sharedOutputRoot === undefined) {
+    run(process.execPath, [tsc, "-p", join(testingRoot, "tsconfig.tests.json"), "--outDir", output]);
+  }
   run(process.execPath, [join(output, "src", "simulator", "testing", "habahiroComplete.test.js")]);
 } finally {
-  rmSync(output, { recursive: true, force: true });
+  if (sharedOutputRoot === undefined) rmSync(output, { recursive: true, force: true });
 }
 
 function run(command, args) {

@@ -6,13 +6,18 @@ import { fileURLToPath } from "node:url";
 
 const testingRoot = dirname(fileURLToPath(import.meta.url));
 const repositoryRoot = resolve(testingRoot, "..", "..", "..");
-const outputRoot = mkdtempSync(join(tmpdir(), "simulator-score-life-"));
+const sharedOutputRoot = process.env.SIMULATOR_TEST_COMPILED_ROOT;
+const outputRoot = sharedOutputRoot ?? mkdtempSync(join(tmpdir(), "simulator-score-life-"));
 try {
-  run("npx.cmd", ["tsc", "-p", join(testingRoot, "tsconfig.tests.json"), "--outDir", outputRoot]);
+  if (sharedOutputRoot === undefined) {
+    run("npx.cmd", ["tsc", "-p", join(testingRoot, "tsconfig.tests.json"), "--outDir", outputRoot]);
+  }
   run(process.execPath, [join(outputRoot, "src", "simulator", "testing", "scoreLifeState.test.js")]);
-  run(process.execPath, [join(testingRoot, "verifyDependencies.mjs")]);
+  if (process.env.SIMULATOR_TEST_SHARED_PREFLIGHT !== "1") {
+    run(process.execPath, [join(testingRoot, "verifyDependencies.mjs")]);
+  }
 } finally {
-  rmSync(outputRoot, { recursive: true, force: true });
+  if (sharedOutputRoot === undefined) rmSync(outputRoot, { recursive: true, force: true });
 }
 
 function run(command, args) {

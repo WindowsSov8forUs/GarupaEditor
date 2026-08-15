@@ -7,7 +7,8 @@ import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 const testingRoot = dirname(fileURLToPath(import.meta.url));
 const repositoryRoot = resolve(testingRoot, "..", "..", "..");
-const outputRoot = mkdtempSync(join(tmpdir(), "garupa-manual-timeout-"));
+const sharedOutputRoot = process.env.SIMULATOR_TEST_COMPILED_ROOT;
+const outputRoot = sharedOutputRoot ?? mkdtempSync(join(tmpdir(), "garupa-manual-timeout-"));
 const require = createRequire(import.meta.url); const typeScriptCli = require.resolve("typescript/bin/tsc");
 const evidenceRoot = join(repositoryRoot, "src", "simulator", "testing", "fixtures", "reverse-snapshots", "manual-input-judgement",
   "artifacts", "investigations", "manual-input-runtime-contract-10-1-4");
@@ -32,10 +33,14 @@ try {
   assert.match(files[8], /mov w1, #8[\s\S]*NoteBase\$\$Miss/);
   assert.match(files[9], /isInvisible|ldrb[\s\S]*ChangeState[\s\S]*changeCurrentNote/);
   console.log("frozen MJ16/MJ17/MJ23/MJ24 timeout order verified");
-  run(process.execPath, [typeScriptCli, "-p", join(testingRoot, "tsconfig.tests.json"), "--outDir", outputRoot]);
+  if (sharedOutputRoot === undefined) {
+    run(process.execPath, [typeScriptCli, "-p", join(testingRoot, "tsconfig.tests.json"), "--outDir", outputRoot]);
+  }
   run(process.execPath, [join(outputRoot, "src", "simulator", "testing", "manualTimeoutJudgement.test.js")]);
-  run(process.execPath, [join(testingRoot, "verifyDependencies.mjs")]);
-} finally { rmSync(outputRoot, { recursive: true, force: true }); }
+  if (process.env.SIMULATOR_TEST_SHARED_PREFLIGHT !== "1") {
+    run(process.execPath, [join(testingRoot, "verifyDependencies.mjs")]);
+  }
+} finally { if (sharedOutputRoot === undefined) rmSync(outputRoot, { recursive: true, force: true }); }
 function run(command, args) {
   const result = spawnSync(command, args, { cwd: repositoryRoot, encoding: "utf8", stdio: "inherit" });
   if (result.error) throw result.error;

@@ -19,25 +19,30 @@ const evidenceRoot = join(
   "investigations",
   "resource-pixi-rendering-runtime-contract-10-1-4",
 );
-const outputRoot = mkdtempSync(join(tmpdir(), "garupa-render-contracts-"));
+const sharedOutputRoot = process.env.SIMULATOR_TEST_COMPILED_ROOT;
+const outputRoot = sharedOutputRoot ?? mkdtempSync(join(tmpdir(), "garupa-render-contracts-"));
 const require = createRequire(import.meta.url);
 const typeScriptCli = require.resolve("typescript/bin/tsc");
 
 try {
   verifyEvidenceFacts();
-  run(process.execPath, [
-    typeScriptCli,
-    "-p",
-    join(testingRoot, "tsconfig.tests.json"),
-    "--outDir",
-    outputRoot,
-  ]);
+  if (sharedOutputRoot === undefined) {
+    run(process.execPath, [
+      typeScriptCli,
+      "-p",
+      join(testingRoot, "tsconfig.tests.json"),
+      "--outDir",
+      outputRoot,
+    ]);
+  }
   run(process.execPath, [
     join(outputRoot, "src", "simulator", "testing", "renderContracts.test.js"),
   ]);
-  run(process.execPath, [join(testingRoot, "verifyDependencies.mjs")]);
+  if (process.env.SIMULATOR_TEST_SHARED_PREFLIGHT !== "1") {
+    run(process.execPath, [join(testingRoot, "verifyDependencies.mjs")]);
+  }
 } finally {
-  rmSync(outputRoot, { recursive: true, force: true });
+  if (sharedOutputRoot === undefined) rmSync(outputRoot, { recursive: true, force: true });
 }
 
 function verifyEvidenceFacts() {

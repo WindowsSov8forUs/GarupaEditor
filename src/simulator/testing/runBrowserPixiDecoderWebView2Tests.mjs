@@ -11,6 +11,7 @@ const harnessRoot = join(testingRoot, "webview2-production-harness");
 const bundle = join(harnessRoot, "bundle.js");
 const capture = join(harnessRoot, "capture.json");
 const target = join(harnessRoot, "target");
+const cleanCargoTarget = process.env.SIMULATOR_WEBVIEW2_CLEAN_BUILD === "1";
 const require = createRequire(import.meta.url);
 const esbuild = require.resolve("esbuild/bin/esbuild");
 const pixi = join(repositoryRoot, "node_modules", "pixi.js", "dist", "pixi.min.js");
@@ -31,6 +32,7 @@ const contract = JSON.parse(readFileSync(join(
 ), "utf8"));
 
 try {
+  if (cleanCargoTarget) rmSync(target, { recursive: true, force: true });
   run(process.execPath, [
     esbuild,
     join(testingRoot, "browserPixiDecoderWebView2.test.ts"),
@@ -73,7 +75,7 @@ try {
 } finally {
   rmSync(bundle, { force: true });
   rmSync(capture, { force: true });
-  rmSync(target, { recursive: true, force: true });
+  if (cleanCargoTarget) rmSync(target, { recursive: true, force: true });
 }
 
 function verify(value) {
@@ -142,5 +144,5 @@ function run(command, args, cwd) {
     env: { ...process.env, CARGO_NET_OFFLINE: "true" },
   });
   if (result.error) throw result.error;
-  if (result.status !== 0) process.exit(result.status ?? 1);
+  if (result.status !== 0) throw new Error(`${command} failed with exit code ${String(result.status)}`);
 }
