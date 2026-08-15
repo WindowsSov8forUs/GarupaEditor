@@ -4,7 +4,7 @@
 
 ## 当前全局门
 
-Reverse schema-4账本冻结的是旧release `2b758eb...`的104个production文件，不能覆盖后续产品Score改动。当前审计采用“Reverse基线 + exact-hash CS-V1 product delta”，见`audit/current-product-scoring-delta.json`。CS-V1 ordinary WebView2仍使用production双decoder、单一particle→Note/HUD combined root、656-batch全谱及3 fresh×17 captures；当前锁定环境观察digest为`ff6e7584988dc0ad32074858e52beed608ed19b6623c6558402dcef84bdf396c`，不是原作framebuffer oracle。
+Reverse schema-4账本冻结的是旧release `2b758eb...`的104个production文件，不能覆盖后续产品Score改动。当前审计采用“Reverse基线 + exact-hash CS-V1 product delta”，见`audit/current-product-scoring-delta.json`。Pushed-detached release `b4a3432`通过26叶（1,853,406ms）；CS-V1 ordinary WebView2使用production双decoder、单一particle→Note/HUD combined root、656-batch全谱及3 fresh×17 captures，锁定环境digest为`ff6e7584988dc0ad32074858e52beed608ed19b6623c6558402dcef84bdf396c`，不是原作framebuffer oracle。
 
 总重验aggregate gate已在R12有界关闭；`CAP-RENDER-ORDINARY-01`与`CAP-RENDER-PARTICLE-COMPOSITION-01`恢复`closed-portable`。这不移除request/resource/backend/owner各自的失败关闭，不升级Unity framebuffer、fixed-device exact、HAB original、excluded玩法或Stage 9。
 

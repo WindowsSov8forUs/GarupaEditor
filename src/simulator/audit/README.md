@@ -18,6 +18,7 @@ CS-V1 invariants include chart-owned scoring-unit identity, `scoreMaximum=10,000
 - Ordinary combined scene: particle before Note/HUD.
 - WebView2 151.0.4129.78: three fresh processes, 17 captures each.
 - CS-V1 aggregate digest: `ff6e7584988dc0ad32074858e52beed608ed19b6623c6558402dcef84bdf396c`.
+- Pushed-detached release `b4a3432`: 26 semantic leaves passed in 1,853,406 ms; only `node_modules` was reused and no network or Reverse worktree was read.
 
 The digest is a locked portable regression observation, not an original Unity or cross-GPU framebuffer oracle.
 

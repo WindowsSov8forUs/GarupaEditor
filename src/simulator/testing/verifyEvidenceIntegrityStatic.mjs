@@ -87,7 +87,7 @@ if (new Set(delta.files.map((row) => row.path)).size !== delta.files.length) {
 }
 
 if (integrity.schemaVersion !== 3 ||
-    !integrity.status.startsWith("cs-v1-product-score-") ||
+    integrity.status !== "cs-v1-product-score-release-attested-with-reverse-rendering-baseline" ||
     integrity.authorityModel?.reverseBaseline?.coversCurrentProductScore !== false ||
     integrity.authorityModel?.productScore?.contract !== "src/simulator/scoring-contract.md" ||
     integrity.currentProductionFileCount !== 106 || productionFiles.length !== 106 ||
@@ -98,6 +98,10 @@ if (integrity.schemaVersion !== 3 ||
     integrity.validation?.ordinaryWebView2?.aggregateSha256 !==
       "ff6e7584988dc0ad32074858e52beed608ed19b6623c6558402dcef84bdf396c" ||
     integrity.validation?.ordinaryWebView2?.originalUnityFramebufferOracle !== false ||
+    integrity.validation?.fullReleaseDag?.commit !== "b4a3432" ||
+    integrity.validation?.fullReleaseDag?.status !== "passed-pushed-detached" ||
+    integrity.validation?.fullReleaseDag?.semanticLeaves !== 26 ||
+    integrity.validation?.fullReleaseDag?.elapsedMilliseconds !== 1853406 ||
     integrity.unchangedBoundaries?.mainProgramIntegration !== "unauthorized-stage-9") {
   throw new Error("current mixed-authority production review is inconsistent");
 }
@@ -113,13 +117,16 @@ if (mutations.schemaVersion !== 5 || mutations.status !== "reverse-baseline-plus
     !mutations.productDelta.preflightBoundaries.includes("duplicate/foreign scoring unit before Record/Gauge mutation")) {
   throw new Error("current mutation boundary is inconsistent");
 }
-if (attestation.schemaVersion !== 3 || !attestation.status.startsWith("cs-v1-product-score-") ||
+if (attestation.schemaVersion !== 3 || attestation.status !== "cs-v1-product-score-release-attestation" ||
     attestation.authority?.productScore?.ruleSetId !== "garupa-editor-normalized-10m-v1" ||
     attestation.authority?.productScore?.publicRuleSelectionAllowed !== false ||
     attestation.authority?.productScore?.originalScoreParityClaimed !== false ||
     attestation.validation?.scoreFullChart?.autoScore !== 10001007 ||
     attestation.validation?.ordinaryProductionBrowserLeaf?.aggregateSha256 !==
       "ff6e7584988dc0ad32074858e52beed608ed19b6623c6558402dcef84bdf396c" ||
+    attestation.implementation?.releaseCommit !== "b4a3432" ||
+    attestation.validation?.fullReleaseDag?.status !== "passed-pushed-detached" ||
+    attestation.validation?.fullReleaseDag?.elapsedMilliseconds !== 1853406 ||
     attestation.boundaries?.aggregateOriginalParityClaimed !== false ||
     attestation.boundaries?.mainProgramIntegrationAuthorization !== false) {
   throw new Error("CS-V1 attestation identity or boundary is invalid");

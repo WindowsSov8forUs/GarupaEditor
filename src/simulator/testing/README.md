@@ -20,7 +20,7 @@ The quick tier intentionally omits the expensive full-chart actual-Pixi replay, 
 npm.cmd run simulator:test:total-revalidation
 ```
 
-This retains the complete 26-semantic-leaf DAG, including the production browser decoder and three-fresh-process ordinary full-scene WebView2 acceptance. The current CS-V1 locked-environment ordinary digest is `ff6e7584988dc0ad32074858e52beed608ed19b6623c6558402dcef84bdf396c`; it is a portable regression observation, not an original framebuffer oracle. The DAG still compiles the TypeScript test tree only once and shares that fresh output read-only across child runners.
+This retains the complete 26-semantic-leaf DAG, including the production browser decoder and three-fresh-process ordinary full-scene WebView2 acceptance. The current CS-V1 locked-environment ordinary digest is `ff6e7584988dc0ad32074858e52beed608ed19b6623c6558402dcef84bdf396c`; it is a portable regression observation, not an original framebuffer oracle. Pushed-detached release `b4a3432` passed all 26 semantic leaves in 1,853,406 ms. The DAG still compiles the TypeScript test tree only once and shares that fresh output read-only across child runners.
 
 Cargo release targets are retained under each ignored WebView2 harness `target/` directory, so repeated full runs reuse validated Rust artifacts. To force the historical cold-build boundary:
 

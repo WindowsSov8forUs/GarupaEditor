@@ -1,13 +1,13 @@
 {
   "schemaVersion": 3,
-  "status": "cs-v1-product-score-candidate-attestation",
+  "status": "cs-v1-product-score-release-attestation",
   "date": "2026-08-15",
   "implementation": {
     "repository": "https://github.com/WindowsSov8forUs/GarupaEditor.git",
     "branch": "codex/refactor-simulator-implementation",
     "baseCommit": "35b1b25482239b3150cd7f47b9bd3f5acdf8b839",
     "candidateCommit": "5539a0b",
-    "releaseCommit": null
+    "releaseCommit": "b4a3432"
   },
   "authority": {
     "reverseBaseline": {
@@ -40,9 +40,17 @@
       "capturesPerProcess": 17,
       "aggregateSha256": "ff6e7584988dc0ad32074858e52beed608ed19b6623c6558402dcef84bdf396c",
       "candidateDigestClaimedAsOriginalUnityOracle": false,
-      "pushedReleaseRepeat": "pending"
+      "pushedReleaseRepeat": "passed"
     },
-    "fullReleaseDag": "pending"
+    "fullReleaseDag": {
+      "commit": "b4a3432",
+      "status": "passed-pushed-detached",
+      "semanticLeaves": 26,
+      "elapsedMilliseconds": 1853406,
+      "nodeModulesOnlyReused": true,
+      "networkUsed": false,
+      "reverseWorktreeRead": false
+    }
   },
   "capabilities": {
     "productContract": [

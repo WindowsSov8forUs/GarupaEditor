@@ -1,7 +1,7 @@
 {
   "schemaVersion": 3,
-  "status": "cs-v1-product-score-pushed-candidate-with-reverse-rendering-baseline",
-  "currentDisposition": "product-delta-implementation-pushed-awaiting-release-dag",
+  "status": "cs-v1-product-score-release-attested-with-reverse-rendering-baseline",
+  "currentDisposition": "product-delta-pushed-detached-release-passed",
   "authorityModel": {
     "reverseBaseline": {
       "commit": "b5fb3dca34b26511355879d62839661c5cf505d3",
@@ -56,11 +56,19 @@
       "capturesPerProcess": 17,
       "aggregateSha256": "ff6e7584988dc0ad32074858e52beed608ed19b6623c6558402dcef84bdf396c",
       "originalUnityFramebufferOracle": false,
-      "executionScope": "local-candidate-observation-awaiting-pushed-release-repeat"
+      "executionScope": "pushed-detached-release-b4a3432"
     },
     "quickWithCurrentAudit": "passed",
     "implementationCommit": "5539a0b",
-    "fullReleaseDag": "pending-pushed-audit-candidate"
+    "fullReleaseDag": {
+      "commit": "b4a3432",
+      "status": "passed-pushed-detached",
+      "semanticLeaves": 26,
+      "elapsedMilliseconds": 1853406,
+      "nodeModulesOnlyReused": true,
+      "networkUsed": false,
+      "reverseWorktreeRead": false
+    }
   },
   "unchangedBoundaries": {
     "habahiroOriginalParity": "open-evidence-required",
