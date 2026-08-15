@@ -1,6 +1,6 @@
 {
   "schemaVersion": 4,
-  "status": "public-life-profile-release-validated-with-live-rehearsal-cs-v1-and-reverse-authority",
+  "status": "public-life-profile-release-attested-with-live-rehearsal-cs-v1-and-reverse-authority",
   "currentDisposition": "pushed-detached-28-leaf-public-life-release-passed",
   "authorityModel": {
     "reverseBaseline": {
@@ -30,7 +30,7 @@
       "delta": "src/simulator/audit/current-public-life-profile-delta.json",
       "candidateCommit": "05037d3e38be9ccd43e8b2e40bbc30c265b1f954",
       "releaseValidatedCommit": "86ea07376e5079c67e0fad80c15020178fa334a6",
-      "reverseReleaseLedgerCommit": null
+      "reverseReleaseLedgerCommit": "f4e56f92be55508bb6e4a0fdd6fa1b96a1fcccd0"
     }
   },
   "reviewPolicy": {

@@ -1,23 +1,40 @@
 {
-  "schemaVersion": 4,
-  "status": "live-rehearsal-cs-v1-release-attestation",
+  "schemaVersion": 5,
+  "status": "public-life-profile-release-attestation",
   "date": "2026-08-15",
   "implementation": {
     "repository": "https://github.com/WindowsSov8forUs/GarupaEditor.git",
     "branch": "codex/refactor-simulator-implementation",
-    "modeImplementationCandidate": "8e50eb0",
-    "releaseValidatedCommit": "8e113f7",
-    "reverseReleaseLedgerCommit": "e055678f17f9a6c5b28838fdf7a604f96e9ff65c"
+    "publicLifeProductionCandidate": "05037d3e38be9ccd43e8b2e40bbc30c265b1f954",
+    "publicLifeAuditCandidate": "86ea07376e5079c67e0fad80c15020178fa334a6",
+    "publicLifeReleaseAuditCommit": "079b5df53de453cfec017333e9f2e089edfece7d",
+    "reverseProfileCommit": "2cbea93d19cb599d5daaeea007a63ae70fae012e",
+    "reverseReleaseLedgerCommit": "f4e56f92be55508bb6e4a0fdd6fa1b96a1fcccd0",
+    "priorLiveRehearsalReleaseValidatedCommit": "8e113f77820cd9fdd5cde31b7cf0369c4d6bf1bb"
   },
   "authority": {
+    "publicLifeOriginalBehavior": {
+      "reverseCommit": "2cbea93d19cb599d5daaeea007a63ae70fae012e",
+      "contract": "simulator-public-life-profile-10-1-4",
+      "evidenceIds": [
+        "PLP-E01",
+        "PLP-E02",
+        "PLP-E03",
+        "PLP-E04",
+        "PLP-E05",
+        "PLP-E06",
+        "PLP-E07"
+      ],
+      "resolvedBooleanIsOriginalPublicApi": false
+    },
+    "publicLifeReleaseLedger": {
+      "reverseCommit": "f4e56f92be55508bb6e4a0fdd6fa1b96a1fcccd0",
+      "profile": "simulator-public-life-profile-release-10-1-4"
+    },
     "liveRehearsalOriginalBehavior": {
       "reverseCommit": "6c0dfb76909d375a91f22e130666c077d57fd9f9",
       "runtimeContract": "live-rehearsal-runtime-contract-10-1-4",
       "controlProfile": "rehearsal-control-rendering-10-1-4"
-    },
-    "releaseLedger": {
-      "reverseCommit": "e055678f17f9a6c5b28838fdf7a604f96e9ff65c",
-      "profile": "simulator-live-rehearsal-release-10-1-4"
     },
     "productScore": {
       "contract": "src/simulator/scoring-contract.md",
@@ -28,10 +45,51 @@
       "originalScoreParityClaimed": false
     }
   },
+  "publicContract": {
+    "chartExactKeys": [
+      "bmsText",
+      "bgm",
+      "isFullLength"
+    ],
+    "isFullLengthType": "boolean",
+    "callerAuthoredLifeAllowed": false,
+    "callerAuthoredDamageAllowed": false,
+    "life": {
+      "initialLife": 1000,
+      "playerMaxLife": 1000,
+      "lifeUpperLimit": 2000
+    },
+    "damage": {
+      "nonFull": {
+        "missDamage": -100,
+        "badDamage": -50
+      },
+      "full": {
+        "missDamage": -50,
+        "badDamage": -25
+      }
+    },
+    "inferenceAllowed": false
+  },
   "validation": {
     "isolatedTypeScript": "passed",
-    "quick": "passed-with-current-release-audit",
+    "quick": {
+      "status": "passed",
+      "developmentGroups": 9,
+      "elapsedMilliseconds": 36091
+    },
+    "publicLifeStandalone": "passed",
+    "autonomousBoundary": "passed",
     "liveRehearsalStandalone": "passed",
+    "fixtures": {
+      "status": "passed",
+      "files": 107
+    },
+    "mixedStaticAudit": {
+      "status": "passed",
+      "capabilities": 19,
+      "productionFiles": 108
+    },
     "scoreFullChart": {
       "totalScoringUnitCount": 1007,
       "autoScore": 10001007,
@@ -49,17 +107,19 @@
       "pushedReleaseRepeat": "passed"
     },
     "fullReleaseDag": {
-      "commit": "8e113f7",
+      "commit": "86ea07376e5079c67e0fad80c15020178fa334a6",
       "status": "passed-pushed-detached",
-      "semanticLeaves": 27,
-      "elapsedMilliseconds": 757717,
-      "nodeModulesOnlyReused": true,
-      "existingCargoTargetsOnlyReused": true,
+      "semanticLeaves": 28,
+      "elapsedMilliseconds": 1706763,
+      "cleanBrowserBuild": true,
+      "nodeModulesJunctionReused": true,
+      "cachedCargoRegistryOnly": true,
       "networkUsed": false,
       "reverseWorktreeRead": false
     }
   },
   "capabilities": {
+    "publicLifeProfile": "closed-portable",
     "liveRehearsalFourModeMatrix": "closed-portable",
     "rehearsalMoveTimeControls": "closed-portable",
     "nonzeroInitialPracticeSeek": "excluded",
@@ -70,14 +130,19 @@
       "fixed C/B/A/S/SS Rank and product Gauge",
       "backward-only timeline revision with restored scoring-unit set"
     ],
-    "reverseBoundedPortablePresentation": [
+    "reverseBoundedPortableBehavior": [
+      "ordinary single-song Life 1000/1000/2000",
+      "non-full/full Miss/Bad -100/-50 and -50/-25",
       "canonical Live/Rehearsal x Manual/Auto identity",
       "Life-zero lifecycle split",
-      "fixed +/-5 MoveTime control and whole-engine reset/replay",
-      "current-atlas 1600x720 Pixi/WebView2 controls"
+      "fixed +/-5 MoveTime control and whole-engine reset/replay"
     ]
   },
   "boundaries": {
+    "resolvedFullBooleanIsOriginalPublicApi": false,
+    "durationOrBmsInference": false,
+    "medleyInheritedLife": "excluded",
+    "premiumContinue": "excluded",
     "aggregateOriginalParityClaimed": false,
     "positiveFixedDeviceExactClaims": 0,
     "mainProgramIntegrationAuthorization": false,

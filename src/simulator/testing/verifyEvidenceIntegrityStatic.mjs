@@ -90,6 +90,7 @@ if (liveRehearsalDelta.status !== "closed-portable-release-attested" ||
 if (publicLifeDelta.schemaVersion !== 1 ||
     !["closed-portable-candidate", "closed-portable-release-attested"].includes(publicLifeDelta.status) ||
     publicLifeDelta.authority?.reverseCommit !== "2cbea93d19cb599d5daaeea007a63ae70fae012e" ||
+    publicLifeDelta.authority?.reverseReleaseLedgerCommit !== "f4e56f92be55508bb6e4a0fdd6fa1b96a1fcccd0" ||
     publicLifeDelta.candidateCommit !== "05037d3e38be9ccd43e8b2e40bbc30c265b1f954" ||
     publicLifeDelta.claims?.length !== 5 || publicLifeDelta.files?.length !== 7 ||
     publicLifeDelta.blockingFindings?.length !== 0) {
@@ -134,7 +135,7 @@ if (new Set(delta.files.map((row) => row.path)).size !== delta.files.length) {
 }
 
 if (integrity.schemaVersion !== 4 ||
-    integrity.status !== "public-life-profile-release-validated-with-live-rehearsal-cs-v1-and-reverse-authority" ||
+    integrity.status !== "public-life-profile-release-attested-with-live-rehearsal-cs-v1-and-reverse-authority" ||
     integrity.authorityModel?.reverseBaseline?.coversCurrentProductScore !== false ||
     integrity.authorityModel?.productScore?.contract !== "src/simulator/scoring-contract.md" ||
     integrity.currentProductionFileCount !== 108 || productionFiles.length !== 108 ||
@@ -146,6 +147,7 @@ if (integrity.schemaVersion !== 4 ||
     integrity.authorityModel?.publicLifeProfile?.reverseCommit !== "2cbea93d19cb599d5daaeea007a63ae70fae012e" ||
     integrity.authorityModel?.publicLifeProfile?.candidateCommit !== "05037d3e38be9ccd43e8b2e40bbc30c265b1f954" ||
     integrity.authorityModel?.publicLifeProfile?.releaseValidatedCommit !== "86ea07376e5079c67e0fad80c15020178fa334a6" ||
+    integrity.authorityModel?.publicLifeProfile?.reverseReleaseLedgerCommit !== "f4e56f92be55508bb6e4a0fdd6fa1b96a1fcccd0" ||
     integrity.validation?.publicLifeProfileCandidate?.standaloneProfile !== "passed" ||
     integrity.validation?.liveRehearsalCandidate?.standaloneMatrix !== "passed" ||
     integrity.validation?.liveRehearsalWebView2?.capturesPerProcess !== 21 ||
@@ -186,21 +188,29 @@ if (mutations.schemaVersion !== 6 || mutations.status !== "reverse-baseline-plus
     !mutations.productDelta.preflightBoundaries.includes("duplicate/foreign scoring unit before Record/Gauge mutation")) {
   throw new Error("current mutation boundary is inconsistent");
 }
-if (attestation.schemaVersion !== 4 || attestation.status !== "live-rehearsal-cs-v1-release-attestation" ||
+if (attestation.schemaVersion !== 5 || attestation.status !== "public-life-profile-release-attestation" ||
+    attestation.authority?.publicLifeOriginalBehavior?.reverseCommit !== "2cbea93d19cb599d5daaeea007a63ae70fae012e" ||
+    attestation.authority?.publicLifeOriginalBehavior?.resolvedBooleanIsOriginalPublicApi !== false ||
+    attestation.authority?.publicLifeReleaseLedger?.reverseCommit !== "f4e56f92be55508bb6e4a0fdd6fa1b96a1fcccd0" ||
     attestation.authority?.productScore?.ruleSetId !== "garupa-editor-normalized-10m-v1" ||
     attestation.authority?.productScore?.publicRuleSelectionAllowed !== false ||
     attestation.authority?.productScore?.originalScoreParityClaimed !== false ||
+    attestation.publicContract?.callerAuthoredLifeAllowed !== false ||
+    attestation.publicContract?.callerAuthoredDamageAllowed !== false ||
+    JSON.stringify(attestation.publicContract?.chartExactKeys) !== JSON.stringify(["bmsText", "bgm", "isFullLength"]) ||
     attestation.validation?.scoreFullChart?.autoScore !== 10001007 ||
     attestation.validation?.ordinaryProductionBrowserLeaf?.aggregateSha256 !==
       "e968d7900bca1ea0e96e9864479207ed3af00db7aada31c1b70370d68b23e8e0" ||
-    attestation.implementation?.releaseValidatedCommit !== "8e113f7" ||
-    attestation.implementation?.reverseReleaseLedgerCommit !== "e055678f17f9a6c5b28838fdf7a604f96e9ff65c" ||
+    attestation.implementation?.publicLifeReleaseAuditCommit !== "079b5df53de453cfec017333e9f2e089edfece7d" ||
+    attestation.implementation?.reverseReleaseLedgerCommit !== "f4e56f92be55508bb6e4a0fdd6fa1b96a1fcccd0" ||
+    attestation.validation?.fullReleaseDag?.commit !== "86ea07376e5079c67e0fad80c15020178fa334a6" ||
     attestation.validation?.fullReleaseDag?.status !== "passed-pushed-detached" ||
-    attestation.validation?.fullReleaseDag?.semanticLeaves !== 27 ||
-    attestation.validation?.fullReleaseDag?.elapsedMilliseconds !== 757717 ||
+    attestation.validation?.fullReleaseDag?.semanticLeaves !== 28 ||
+    attestation.validation?.fullReleaseDag?.elapsedMilliseconds !== 1706763 ||
+    attestation.boundaries?.resolvedFullBooleanIsOriginalPublicApi !== false ||
     attestation.boundaries?.aggregateOriginalParityClaimed !== false ||
     attestation.boundaries?.mainProgramIntegrationAuthorization !== false) {
-  throw new Error("CS-V1 attestation identity or boundary is invalid");
+  throw new Error("Public Life/CS-V1 attestation identity or boundary is invalid");
 }
 
 for (const literal of [

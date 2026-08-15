@@ -20,7 +20,9 @@
       "PLP-E07"
     ],
     "resolvedBooleanIsOriginalPublicApi": false,
-    "productMapping": "chartData.isFullLength carries the resolved musicDataType == full predicate"
+    "productMapping": "chartData.isFullLength carries the resolved musicDataType == full predicate",
+    "reverseReleaseLedgerCommit": "f4e56f92be55508bb6e4a0fdd6fa1b96a1fcccd0",
+    "reverseReleaseLedger": "artifacts/investigations/simulator-public-life-profile-release-10-1-4/simulator_public_life_profile_release.json"
   },
   "candidateCommit": "05037d3e38be9ccd43e8b2e40bbc30c265b1f954",
   "releaseValidatedCommit": "86ea07376e5079c67e0fad80c15020178fa334a6",

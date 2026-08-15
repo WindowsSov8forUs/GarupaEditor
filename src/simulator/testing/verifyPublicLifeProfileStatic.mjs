@@ -18,6 +18,7 @@ if (audit.schemaVersion !== 1 ||
 }
 if (audit.status === "closed-portable-release-attested" &&
     (typeof audit.releaseValidatedCommit !== "string" ||
+      audit.authority?.reverseReleaseLedgerCommit !== "f4e56f92be55508bb6e4a0fdd6fa1b96a1fcccd0" ||
       audit.releaseValidation?.status !== "passed-pushed-detached" ||
       audit.releaseValidation?.semanticLeaves !== 28)) {
   throw new Error("Public Life profile release identity is incomplete");
