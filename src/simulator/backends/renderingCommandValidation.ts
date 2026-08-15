@@ -43,21 +43,21 @@ export function validateTypedRenderHudCommand(
   switch (command.hudRole) {
     case "score": {
       const state = command.state;
-      const master = state.master;
-      const expectedMax = validScoreMaster(master)
-        ? Math.trunc(Math.fround(Math.fround(master.scoreSS) * Math.fround(1.111111044883728)))
+      const expectedMax = validScoringUnitCount(state.totalScoringUnitCount)
+        ? 10_000_000 + state.totalScoringUnitCount
         : null;
       return objectRole === "hud-score" && exactKeys(state, [
         "beforeRank", "foregroundActive", "highRankEffect", "highRankEffectActive", "indicatorLocalX",
-        "master", "meterKey", "rank", "rankChanged", "rankMarkerALocalX", "rankMarkerBLocalX",
-        "rankMarkerCLocalX", "rankMarkerSLocalX", "rankMarkerSSLocalX", "ratio", "score",
-        "scoreMax", "scoreText", "sliderValue",
+        "meterKey", "rank", "rankChanged", "rankMarkerALocalX", "rankMarkerBLocalX",
+        "rankMarkerCLocalX", "rankMarkerSLocalX", "rankMarkerSSLocalX", "ratio", "ruleSetId", "score",
+        "scoreMax", "scoreText", "sliderValue", "totalScoringUnitCount",
       ]) &&
-        validScoreMaster(master) && expectedMax !== null && state.scoreMax === expectedMax &&
-        isUInt32(state.score) && isUInt32(state.scoreMax) && state.scoreMax > 0 &&
+        state.ruleSetId === "garupa-editor-normalized-10m-v1" &&
+        expectedMax !== null && state.scoreMax === expectedMax &&
+        isUInt32(state.score) && state.score <= state.scoreMax && isUInt32(state.scoreMax) &&
         state.scoreText === expectedScoreText(state.score) &&
         isOrdinaryScoreRank(state.beforeRank) && isOrdinaryScoreRank(state.rank) &&
-        state.rank === scoreRankForMaster(state.score, master) &&
+        state.rank === scoreRank(state.score) &&
         state.rankChanged === (state.beforeRank !== state.rank) &&
         isScoreMeterKey(state.meterKey) && state.meterKey === scoreMeterKeyForRank(state.rank) &&
         validateRenderFloat32(state.ratio) && state.ratio.value === expectedScoreRatio(state.score, state.scoreMax) &&
@@ -66,11 +66,11 @@ export function validateTypedRenderHudCommand(
         Number.isInteger(state.indicatorLocalX) && state.indicatorLocalX === expectedScoreIndicatorX(state.ratio.value) &&
         [state.rankMarkerCLocalX, state.rankMarkerBLocalX, state.rankMarkerALocalX,
           state.rankMarkerSLocalX, state.rankMarkerSSLocalX].every(validateRenderFloat32) &&
-        state.rankMarkerCLocalX.value === expectedRankMarkerX(master.scoreC, state.scoreMax) &&
-        state.rankMarkerBLocalX.value === expectedRankMarkerX(master.scoreB, state.scoreMax) &&
-        state.rankMarkerALocalX.value === expectedRankMarkerX(master.scoreA, state.scoreMax) &&
-        state.rankMarkerSLocalX.value === expectedRankMarkerX(master.scoreS, state.scoreMax) &&
-        state.rankMarkerSSLocalX.value === expectedRankMarkerX(master.scoreSS, state.scoreMax) &&
+        state.rankMarkerCLocalX.value === expectedRankMarkerX(375_000, state.scoreMax) &&
+        state.rankMarkerBLocalX.value === expectedRankMarkerX(2_250_000, state.scoreMax) &&
+        state.rankMarkerALocalX.value === expectedRankMarkerX(4_500_000, state.scoreMax) &&
+        state.rankMarkerSLocalX.value === expectedRankMarkerX(6_750_000, state.scoreMax) &&
+        state.rankMarkerSSLocalX.value === expectedRankMarkerX(9_000_000, state.scoreMax) &&
         (state.highRankEffect === "none" || state.highRankEffect === "ScoreGaugeSS") &&
         (state.highRankEffect !== "ScoreGaugeSS" || state.rank === 5 && state.rankChanged) &&
         (state.highRankEffect !== "ScoreGaugeSS" || state.highRankEffectActive);
@@ -107,7 +107,7 @@ export function validateTypedRenderHudCommand(
     case "add-score": {
       const state = command.state;
       return objectRole === "hud-add-score" && exactKeys(state, ["depth", "poolIndex", "value"]) &&
-        isUInt32(state.value) && state.value > 0 && state.value <= 999999 &&
+        isUInt32(state.value) && state.value > 0 &&
         Number.isInteger(state.poolIndex) && state.poolIndex >= 0 && state.poolIndex < 4 &&
         Number.isInteger(state.depth) && state.depth >= 0 && state.depth < 8;
     }
@@ -194,30 +194,17 @@ function isScoreMeterKey(value: unknown): value is string {
     value === "score_meter_orange" || value === "score_meter_pink" || value === "score_meter_s";
 }
 
-function validScoreMaster(value: unknown): value is RenderScoreMaster {
-  if (value === null || typeof value !== "object" || Array.isArray(value)) return false;
-  const master = value as Record<string, unknown>;
-  return exactKeys(master, ["difficulty", "musicId", "scoreA", "scoreB", "scoreC", "scoreS", "scoreSS"]) &&
-    isUInt32(master.musicId) && master.musicId > 0 &&
-    typeof master.difficulty === "string" && master.difficulty.length > 0 &&
-    isUInt32(master.scoreC) && isUInt32(master.scoreB) && isUInt32(master.scoreA) &&
-    isUInt32(master.scoreS) && isUInt32(master.scoreSS) && master.scoreC > 0 &&
-    master.scoreC < master.scoreB && master.scoreB < master.scoreA &&
-    master.scoreA < master.scoreS && master.scoreS < master.scoreSS;
+function validScoringUnitCount(value: unknown): value is number {
+  return Number.isInteger(value) && (value as number) > 0 && (value as number) <= 0x7fffffff &&
+    10_000_000 + (value as number) <= 0xffffffff;
 }
 
-type RenderScoreMaster = {
-  readonly musicId: number; readonly difficulty: string;
-  readonly scoreC: number; readonly scoreB: number; readonly scoreA: number;
-  readonly scoreS: number; readonly scoreSS: number;
-};
-
-function scoreRankForMaster(score: number, master: RenderScoreMaster): number {
-  if (score < master.scoreC) return 4;
-  if (score < master.scoreB) return 3;
-  if (score < master.scoreA) return 2;
-  if (score < master.scoreS) return 1;
-  if (score < master.scoreSS) return 0;
+function scoreRank(score: number): number {
+  if (score < 375_000) return 4;
+  if (score < 2_250_000) return 3;
+  if (score < 4_500_000) return 2;
+  if (score < 6_750_000) return 1;
+  if (score < 9_000_000) return 0;
   return 5;
 }
 

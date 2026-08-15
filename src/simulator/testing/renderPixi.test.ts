@@ -113,6 +113,9 @@ async function main(): Promise<void> {
   push({ kind: "activate-object", renderObjectId: "hud:add" });
   push({ kind: "play-animation", renderObjectId: "hud:add", animationRole: "add-score", restart: true });
   push({ kind: "sample-animation", renderObjectId: "hud:add", animationRole: "add-score", elapsedSeconds: f32(0) });
+  push({ kind: "create-object", renderObjectId: "hud:add:large", poolFamily: "add", role: "hud-add-score", parentObjectId: null });
+  push({ kind: "set-hud", renderObjectId: "hud:add:large", hudRole: "add-score", state: Object.freeze({ value: 10_000_001, poolIndex: 1, depth: 4 }) });
+  push({ kind: "activate-object", renderObjectId: "hud:add:large" });
 
   push({ kind: "create-object", renderObjectId: "hud:result", poolFamily: "result", role: "hud-result", parentObjectId: null });
   push({ kind: "set-hud", renderObjectId: "hud:result", hudRole: "result", state: Object.freeze({ judgeKey: "judge_great", timingKey: "judge_fast" }) });
@@ -125,7 +128,7 @@ async function main(): Promise<void> {
   push({ kind: "activate-object", renderObjectId: "hud:life" });
 
   push({ kind: "create-object", renderObjectId: "hud:score", poolFamily: "score", role: "hud-score", parentObjectId: null });
-  push({ kind: "set-hud", renderObjectId: "hud:score", hudRole: "score", state: scoreState(864000, 0, 5, true, "ScoreGaugeSS", true) });
+  push({ kind: "set-hud", renderObjectId: "hud:score", hudRole: "score", state: scoreState(9_000_000, 0, 5, true, "ScoreGaugeSS", true) });
   push({ kind: "activate-object", renderObjectId: "hud:score" });
   push({ kind: "play-animation", renderObjectId: "hud:score", animationRole: "score-gauge-ss", restart: true });
   push({ kind: "sample-animation", renderObjectId: "hud:score", animationRole: "score-gauge-ss", elapsedSeconds: f32(0.5) });
@@ -174,6 +177,9 @@ async function main(): Promise<void> {
     [143, 0], [96, 0], [48, 0], [0, 0],
   ]), "AddScore UISpriteNumber LEFT layout consumes per-glyph inner widths and plus sign");
   equal(JSON.stringify(add.ordering.slice(0, 3)), JSON.stringify([3, 100, 3]), "AddScore depth cycle participates in current back-panel ordering");
+  const largeAdd = row("hud:add:large");
+  equal(largeAdd.hudSpriteCount, 9, "N=1 CS-V1 AddScore renders plus and all eight quota digits");
+  equal(largeAdd.hudText, null, "large AddScore retains resource-backed UISpriteNumber without fallback text");
 
   const result = row("hud:result");
   equal(result.hudText, null, "Result creates no system Text");
@@ -241,7 +247,7 @@ async function main(): Promise<void> {
     {
       sessionId: SESSION, sequence: sequence++, frame: 1, substep: 0,
       kind: "set-hud", renderObjectId: "hud:score", hudRole: "score",
-      state: scoreState(900000, 5, 5, false, "none", true),
+      state: scoreState(9_100_000, 5, 5, false, "none", true),
     },
     {
       sessionId: SESSION, sequence: sequence++, frame: 1, substep: 0,
@@ -262,12 +268,12 @@ async function main(): Promise<void> {
   let previousRank = 4;
   let matrixHighRankActive = false;
   for (const [matrixScore, expectedRank] of [
-    [0, 4], [35999, 4], [36000, 3], [36001, 3],
-    [215999, 3], [216000, 2], [216001, 2],
-    [431999, 2], [432000, 1], [432001, 1],
-    [647999, 1], [648000, 0], [648001, 0],
-    [863999, 0], [864000, 5], [864001, 5],
-    [959998, 5], [959999, 5], [960000, 5], [100000000, 5],
+    [0, 4], [374_999, 4], [375_000, 3], [375_001, 3],
+    [2_249_999, 3], [2_250_000, 2], [2_250_001, 2],
+    [4_499_999, 2], [4_500_000, 1], [4_500_001, 1],
+    [6_749_999, 1], [6_750_000, 0], [6_750_001, 0],
+    [8_999_999, 0], [9_000_000, 5], [9_000_001, 5],
+    [10_000_999, 5], [10_001_000, 5],
   ] as const) {
     const changed = previousRank !== expectedRank;
     const effect = changed && expectedRank === 5 ? "ScoreGaugeSS" as const : "none" as const;
@@ -283,12 +289,19 @@ async function main(): Promise<void> {
     scoreMatrix.push(Object.freeze({ score: matrixScore, rank: expectedRank, observation: pickSceneObservation(observed) }));
     previousRank = expectedRank;
   }
-  equal(scoreMatrix[scoreMatrix.length - 1]?.observation.hudScoreDigitCount, 9, "Score overflow keeps the ninth bitmap digit");
+  equal(scoreMatrix[scoreMatrix.length - 1]?.observation.hudScoreDigitCount, 8, "CS-V1 scoreMaximum keeps all bitmap digits");
+
+  const overMaximumCommand: RenderCommand = {
+    sessionId: SESSION, sequence, frame: 3, substep: 0,
+    kind: "set-hud", renderObjectId: "hud:score:matrix", hudRole: "score",
+    state: scoreState(10_001_001, 5, 5, false, "none", true),
+  };
+  equal(renderer.preflight([overMaximumCommand]).status, "evidence-required", "Score over scoreMaximum rejects before Pixi mutation");
 
   const invalidScoreCommand: RenderCommand = {
     sessionId: SESSION, sequence: sequence++, frame: 3, substep: 0,
     kind: "set-hud", renderObjectId: "hud:score:matrix", hudRole: "score",
-    state: { ...scoreState(36000, 4, 3, true, "none", false), rankMarkerCLocalX: f32(42) },
+    state: { ...scoreState(375_000, 4, 3, true, "none", false), rankMarkerCLocalX: f32(42) },
   };
   const invalidScoreBefore = JSON.stringify(renderer.sceneSnapshot().find((candidate) => candidate.renderObjectId === "hud:score:matrix"));
   const invalidScore = renderer.preflight([invalidScoreCommand]);
@@ -303,7 +316,7 @@ async function main(): Promise<void> {
   const preInvalidObjectCount = renderer.snapshot().objectCount;
   const invalid = renderer.preflight([invalidCommand]);
   equal(invalid.status, "evidence-required", "Life threshold mismatch fails before Pixi mutation");
-  equal(renderer.snapshot().objectCount, 11, "failed typed Pixi HUD input preserves owner count");
+  equal(renderer.snapshot().objectCount, 12, "failed typed Pixi HUD input preserves owner count");
   const invalidLifeLabelAfter = renderer.sceneSnapshot().find((candidate) => candidate.renderObjectId === "hud:life")?.hudText ?? null;
   equal(invalidLifeLabelAfter, "200/1000", "failed batch leaves Pixi HUD unchanged");
 
@@ -468,7 +481,7 @@ async function verifyActualPixiFullChart(
 ): Promise<{
   readonly batches: number;
   readonly consumedBatches: number;
-  readonly maxNoteCount: number;
+  readonly totalScoringUnitCount: number;
   readonly frames: number;
   readonly score: number;
   readonly life: number;
@@ -503,19 +516,8 @@ async function verifyActualPixiFullChart(
       playMode: { kind: "auto-live" as const, resultTransform: "identity" as const },
     },
     scoreLifeState: {
-      schemaVersion: 1,
+      schemaVersion: 2,
       sessionId,
-      scoreLevel: 27,
-      totalParameter: Math.fround(100000),
-      scoreGaugeMaster: {
-        musicId: 786,
-        difficulty: "special",
-        scoreC: 36000,
-        scoreB: 216000,
-        scoreA: 432000,
-        scoreS: 648000,
-        scoreSS: 864000,
-      },
       life: {
         initialLife: 1000,
         playerMaxLife: 1000,
@@ -523,7 +525,7 @@ async function verifyActualPixiFullChart(
         missDamage: -100,
         badDamage: -50,
       },
-      mode: { kind: "auto-live" as const, comboCoefficient: Math.fround(1) },
+      mode: { kind: "auto-live" as const },
     },
     rendering: {
       sessionId,
@@ -544,7 +546,7 @@ async function verifyActualPixiFullChart(
   let finalSnapshot = requireOk(engine.snapshot(), "initial full-chart snapshot");
   for (; frames < 7200; frames += 1) {
     const stepped = engine.step(1 / 30);
-    if (stepped.status !== "ok") throw new Error(`full-chart render blocker ${stepped.capability}`);
+    if (stepped.status !== "ok") throw new Error(`full-chart render blocker ${stepped.capability}: ${stepped.boundary}`);
     if (frames % 60 !== 0) continue;
     finalSnapshot = requireOk(engine.snapshot(), `full-chart snapshot ${frames}`);
     const visible = renderer.sceneSnapshot();
@@ -594,7 +596,7 @@ async function verifyActualPixiFullChart(
   assert(record.score > 0 && record.currentCombo > 0, "full-chart Auto Live updates Score and Combo");
   equal(record.currentLife, 1000, "full-chart Auto Live preserves ordinary Life");
   const consumedBatches = finalSnapshot.managers.noteManager.nextBatchIndex;
-  const maxNoteCount = finalSnapshot.managers.scoreLifeState?.initialization.maxNoteCount ?? 0;
+  const totalScoringUnitCount = finalSnapshot.managers.scoreLifeState?.initialization.totalScoringUnitCount ?? 0;
   requireOk(engine.dispose(), "dispose actual Pixi full-chart engine");
   equal(renderer.snapshot().objectCount, 0, "actual Pixi full-chart releases every owner");
   equal(renderer.stage.children.length, 0, "actual Pixi full-chart leaves an empty stage");
@@ -603,7 +605,7 @@ async function verifyActualPixiFullChart(
   return Object.freeze({
     batches: chart.noteBatches.length,
     consumedBatches,
-    maxNoteCount,
+    totalScoringUnitCount,
     frames,
     score: record.score,
     life: record.currentLife,
@@ -729,11 +731,8 @@ function scoreState(
   highRankEffect: "none" | "ScoreGaugeSS",
   highRankEffectActive: boolean,
 ) {
-  const master = Object.freeze({
-    musicId: 786, difficulty: "special", scoreC: 36000, scoreB: 216000,
-    scoreA: 432000, scoreS: 648000, scoreSS: 864000,
-  });
-  const scoreMax = 959999;
+  const totalScoringUnitCount = 1000;
+  const scoreMax = 10_000_000 + totalScoringUnitCount;
   const ratio = Math.fround(Math.fround(score) / Math.fround(scoreMax));
   const marker = (value: number) => f32(Math.fround(
     Math.fround(41) + Math.fround(
@@ -742,16 +741,18 @@ function scoreState(
   ));
   const digits = String(score);
   return Object.freeze({
-    master, score, scoreText: `[BEBEBE]${"0".repeat(Math.max(8 - digits.length, 0))}[-][FF3B72]${digits}[-]`,
+    ruleSetId: "garupa-editor-normalized-10m-v1" as const,
+    totalScoringUnitCount,
+    score, scoreText: `[BEBEBE]${"0".repeat(Math.max(8 - digits.length, 0))}[-][FF3B72]${digits}[-]`,
     scoreMax, rank, beforeRank, rankChanged,
     meterKey: rank === 4 ? "score_meter_blue" : rank === 3 ? "score_meter_green" :
       rank === 2 ? "score_meter_orange" : rank === 1 ? "score_meter_pink" : "score_meter_s",
     ratio: f32(ratio), sliderValue: f32(Math.fround(Math.min(Math.max(ratio, 0), 1))),
     foregroundActive: ratio > 0,
     indicatorLocalX: ratio >= 1 ? 422 : Math.trunc(Math.fround(ratio * Math.fround(422))),
-    rankMarkerCLocalX: marker(master.scoreC), rankMarkerBLocalX: marker(master.scoreB),
-    rankMarkerALocalX: marker(master.scoreA), rankMarkerSLocalX: marker(master.scoreS),
-    rankMarkerSSLocalX: marker(master.scoreSS), highRankEffect, highRankEffectActive,
+    rankMarkerCLocalX: marker(375_000), rankMarkerBLocalX: marker(2_250_000),
+    rankMarkerALocalX: marker(4_500_000), rankMarkerSLocalX: marker(6_750_000),
+    rankMarkerSSLocalX: marker(9_000_000), highRankEffect, highRankEffectActive,
   });
 }
 

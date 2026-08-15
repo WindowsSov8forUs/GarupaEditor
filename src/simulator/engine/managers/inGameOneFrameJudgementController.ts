@@ -3,6 +3,7 @@ import {
   ButtonType,
   FrontNoteType,
   GameNoteType,
+  type NoteInformation,
 } from "../chart/types";
 import type {
   AutoLiveJudgementOwnership,
@@ -97,7 +98,8 @@ export type ManualJudgementOwner = (
 
 export type OneFrameBusinessOwner = (
   judgement: OneFrameJudgementData,
-) => OneFrameBusinessData;
+  source: NoteInformation,
+) => SimulatorResult<OneFrameBusinessData>;
 
 export class InGameOneFrameJudgementController {
   private initializedValue = false;
@@ -209,7 +211,7 @@ export class InGameOneFrameJudgementController {
     const available = this.containers.filter((container) => !container.inUse);
     const plans = new Map<ManualJudgementCommitPlan, {
       readonly container: OneFrameDataContainer;
-      readonly request: ManualJudgementRequest;
+      readonly payload: OneFrameDataPayload;
       committed: boolean;
     }>();
     let aborted = false;
@@ -227,6 +229,8 @@ export class InGameOneFrameJudgementController {
         if (validation.status !== "ok") {
           return validation;
         }
+        const payload = this.prepareManualJudgementPayload(request);
+        if (payload.status !== "ok") return payload;
         const container = available[plans.size];
         if (container === undefined) {
           return evidenceRequired(
@@ -238,7 +242,7 @@ export class InGameOneFrameJudgementController {
         const plan: ManualJudgementCommitPlan = Object.freeze({
           manualJudgementPlan: true,
         });
-        plans.set(plan, { container, request, committed: false });
+        plans.set(plan, { container, payload: payload.value, committed: false });
         return ok(plan);
       },
       commit: (plan) => {
@@ -247,7 +251,7 @@ export class InGameOneFrameJudgementController {
           throw new Error("Manual OneFrame transaction received a foreign or repeated plan");
         }
         owned.committed = true;
-        this.commitManualJudgementData(owned.container, owned.request);
+        this.commitManualJudgementData(owned.container, owned.payload);
       },
       abort: () => {
         aborted = true;
@@ -267,14 +271,13 @@ export class InGameOneFrameJudgementController {
     request: AutoLiveJudgementRequest,
   ): SimulatorResult<void> {
     const validation = this.validateAutoLiveJudgementRequest(request);
-    if (validation.status !== "ok") {
-      return validation;
-    }
+    if (validation.status !== "ok") return validation;
+    const payload = this.prepareAutoLiveJudgementPayload(request);
+    if (payload.status !== "ok") return payload;
     const handle = this.getUsableOneFrameData();
-    if (handle.status !== "ok") {
-      return handle;
-    }
-    return this.setupAutoLiveJudgementData(handle.value, request);
+    if (handle.status !== "ok") return handle;
+    const container = this.ownedHandles.get(handle.value)!;
+    return this.commitAutoLiveJudgementData(container, payload.value, request);
   }
 
   setupAutoLiveJudgementData(
@@ -282,9 +285,9 @@ export class InGameOneFrameJudgementController {
     request: AutoLiveJudgementRequest,
   ): SimulatorResult<void> {
     const validation = this.validateAutoLiveJudgementRequest(request);
-    if (validation.status !== "ok") {
-      return validation;
-    }
+    if (validation.status !== "ok") return validation;
+    const payload = this.prepareAutoLiveJudgementPayload(request);
+    if (payload.status !== "ok") return payload;
     const container = handle !== null && typeof handle === "object"
       ? this.ownedHandles.get(handle)
       : undefined;
@@ -295,43 +298,7 @@ export class InGameOneFrameJudgementController {
         `Container ${String(handle?.containerId)} is not owned by this controller.`,
       );
     }
-    if (container.inUse || container.payload !== null) {
-      return evidenceRequired(
-        "one-frame.container-already-staged",
-        ["R02", "R03"],
-        `Container ${handle.containerId} already contains a committed OneFrameData payload.`,
-      );
-    }
-
-    const judgement: OneFrameJudgementData = Object.freeze({
-      noteIndex: request.noteInformation.index,
-      buttonTypes: Object.freeze([...request.noteInformation.buttonTypesArray]),
-      noteType: request.noteType,
-      phase: request.phase,
-      rawResult: 4,
-      adjustedResult: 4,
-      addCombo: 1,
-      absolutePosition: request.absolutePosition,
-      judgeTiming: 0,
-      multipleDirectionalFlickNoteCount: request.multipleDirectionalFlickNoteCount,
-    });
-    const business = this.businessOwner?.(judgement);
-    const payload: OneFrameDataPayload = Object.freeze({
-      ...judgement,
-      adjustedResult: business?.adjustedResult ?? judgement.adjustedResult,
-      addCombo: (business?.adjustedResult ?? judgement.adjustedResult) >= NoteResultType.Great ? 1 : -1,
-      business,
-    });
-    container.payload = payload;
-    container.inUse = true;
-    this.traceValue.push({
-      kind: "one-frame.setup-auto-live",
-      containerId: container.containerId,
-      noteIndex: payload.noteIndex,
-      phase: payload.phase,
-      multipleDirectionalFlickNoteCount: request.multipleDirectionalFlickNoteCount,
-    });
-    return ok(undefined);
+    return this.commitAutoLiveJudgementData(container, payload.value, request);
   }
 
   setupBusinessData(): SimulatorResult<void> {
@@ -509,22 +476,68 @@ export class InGameOneFrameJudgementController {
     };
   }
 
-  private commitManualJudgementData(
-    container: OneFrameDataContainer,
-    request: ManualJudgementRequest,
-  ): void {
-    if (container.inUse || container.payload !== null) {
-      throw new Error("Manual OneFrame preflight reservation changed before commit");
-    }
-    this.traceValue.push({
-      kind: "one-frame.get-usable",
-      containerId: container.containerId,
+  private prepareAutoLiveJudgementPayload(
+    request: AutoLiveJudgementRequest,
+  ): SimulatorResult<OneFrameDataPayload> {
+    const judgement: OneFrameJudgementData = Object.freeze({
+      noteIndex: request.noteInformation.index,
+      buttonTypes: Object.freeze([...request.noteInformation.buttonTypesArray]),
+      noteType: request.noteType,
+      phase: request.phase,
+      rawResult: 4,
+      adjustedResult: 4,
+      addCombo: 1,
+      absolutePosition: request.absolutePosition,
+      judgeTiming: 0,
+      multipleDirectionalFlickNoteCount: request.multipleDirectionalFlickNoteCount,
     });
-    const adjustedResult = request.rawResult;
+    const business = this.businessOwner?.(judgement, request.noteInformation) ?? null;
+    if (business?.status === "evidence-required") return business;
+    const adjustedResult = business?.value.adjustedResult ?? judgement.adjustedResult;
+    return ok(Object.freeze({
+      ...judgement,
+      adjustedResult,
+      addCombo: adjustedResult >= NoteResultType.Great ? 1 : -1,
+      ...(business === null ? {} : { business: business.value }),
+    }));
+  }
+
+  private commitAutoLiveJudgementData(
+    container: OneFrameDataContainer,
+    payload: OneFrameDataPayload,
+    request: AutoLiveJudgementRequest,
+  ): SimulatorResult<void> {
+    if (container.inUse || container.payload !== null) {
+      return evidenceRequired(
+        "one-frame.container-already-staged",
+        ["R02", "R03"],
+        `Container ${container.containerId} already contains a committed OneFrameData payload.`,
+      );
+    }
+    container.payload = payload;
+    container.inUse = true;
+    this.traceValue.push({
+      kind: "one-frame.setup-auto-live",
+      containerId: container.containerId,
+      noteIndex: payload.noteIndex,
+      phase: payload.phase,
+      multipleDirectionalFlickNoteCount: request.multipleDirectionalFlickNoteCount,
+    });
+    return ok(undefined);
+  }
+
+  private prepareManualJudgementPayload(
+    request: ManualJudgementRequest,
+  ): SimulatorResult<OneFrameDataPayload> {
     const ownership = this.manualJudgementOwner?.(request.noteInformation) ?? null;
     if (ownership === null) {
-      throw new Error("Manual OneFrame commit lost its source ownership");
+      return evidenceRequired(
+        "one-frame.manual-source-ownership-lost",
+        ["D14", "D15", "MJ25", "MJ26"],
+        "Manual business preflight requires the same NoteManager-owned source used by request validation.",
+      );
     }
+    const adjustedResult = request.rawResult;
     const phase = request.phase ?? "head";
     const buttonTypes = ownership.slideButtonTypes ??
       (phase === "tail"
@@ -547,12 +560,27 @@ export class InGameOneFrameJudgementController {
       multipleDirectionalFlickNoteCount:
         request.multipleDirectionalFlickNoteCount ?? 0,
     });
-    const business = this.businessOwner?.(judgement);
-    const payload: OneFrameDataPayload = Object.freeze({
+    const business = this.businessOwner?.(judgement, request.noteInformation) ?? null;
+    if (business?.status === "evidence-required") return business;
+    const projectedResult = business?.value.adjustedResult ?? judgement.adjustedResult;
+    return ok(Object.freeze({
       ...judgement,
-      adjustedResult: business?.adjustedResult ?? judgement.adjustedResult,
-      addCombo: (business?.adjustedResult ?? judgement.adjustedResult) >= NoteResultType.Great ? 1 : -1,
-      business,
+      adjustedResult: projectedResult,
+      addCombo: projectedResult >= NoteResultType.Great ? 1 : -1,
+      ...(business === null ? {} : { business: business.value }),
+    }));
+  }
+
+  private commitManualJudgementData(
+    container: OneFrameDataContainer,
+    payload: OneFrameDataPayload,
+  ): void {
+    if (container.inUse || container.payload !== null) {
+      throw new Error("Manual OneFrame preflight reservation changed before commit");
+    }
+    this.traceValue.push({
+      kind: "one-frame.get-usable",
+      containerId: container.containerId,
     });
     container.payload = payload;
     container.inUse = true;
@@ -563,8 +591,7 @@ export class InGameOneFrameJudgementController {
       noteType: payload.noteType,
       phase: payload.phase,
       rawResult: payload.rawResult,
-      multipleDirectionalFlickNoteCount:
-        request.multipleDirectionalFlickNoteCount ?? 0,
+      multipleDirectionalFlickNoteCount: payload.multipleDirectionalFlickNoteCount,
     });
   }
 

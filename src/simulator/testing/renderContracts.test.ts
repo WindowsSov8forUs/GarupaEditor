@@ -1216,32 +1216,30 @@ async function testR4NoteFamilyBoundaries(): Promise<void> {
 }
 
 async function testSharedTypedHudValidation(): Promise<void> {
-  const master = {
-    musicId: 786, difficulty: "special", scoreC: 36, scoreB: 216,
-    scoreA: 432, scoreS: 648, scoreSS: 900,
-  };
-  const scoreMax = Math.trunc(Math.fround(Math.fround(master.scoreSS) * Math.fround(1.111111044883728)));
+  const totalScoringUnitCount = 1000;
+  const scoreMax = 10_000_000 + totalScoringUnitCount;
   const marker = (value: number) => f32(Math.fround(Math.fround(41) + Math.fround(
     Math.fround(Math.fround(value) * Math.fround(421)) / Math.fround(scoreMax),
   )));
   const score = {
-    master,
-    score: 100,
-    scoreText: "[BEBEBE]00000[-][FF3B72]100[-]",
+    ruleSetId: "garupa-editor-normalized-10m-v1",
+    totalScoringUnitCount,
+    score: 375_000,
+    scoreText: "[BEBEBE]00[-][FF3B72]375000[-]",
     scoreMax,
     rank: 3,
     beforeRank: 3,
     rankChanged: false,
     meterKey: "score_meter_green",
-    ratio: f32(Math.fround(Math.fround(100) / Math.fround(scoreMax))),
-    sliderValue: f32(Math.fround(Math.fround(100) / Math.fround(scoreMax))),
+    ratio: f32(Math.fround(Math.fround(375_000) / Math.fround(scoreMax))),
+    sliderValue: f32(Math.fround(Math.fround(375_000) / Math.fround(scoreMax))),
     foregroundActive: true,
-    indicatorLocalX: Math.trunc(Math.fround(Math.fround(Math.fround(100) / Math.fround(scoreMax)) * Math.fround(422))),
-    rankMarkerCLocalX: marker(master.scoreC),
-    rankMarkerBLocalX: marker(master.scoreB),
-    rankMarkerALocalX: marker(master.scoreA),
-    rankMarkerSLocalX: marker(master.scoreS),
-    rankMarkerSSLocalX: marker(master.scoreSS),
+    indicatorLocalX: Math.trunc(Math.fround(Math.fround(Math.fround(375_000) / Math.fround(scoreMax)) * Math.fround(422))),
+    rankMarkerCLocalX: marker(375_000),
+    rankMarkerBLocalX: marker(2_250_000),
+    rankMarkerALocalX: marker(4_500_000),
+    rankMarkerSLocalX: marker(6_750_000),
+    rankMarkerSSLocalX: marker(9_000_000),
     highRankEffect: "none",
     highRankEffectActive: false,
   };
@@ -1265,13 +1263,37 @@ async function testSharedTypedHudValidation(): Promise<void> {
     return copy;
   };
   const cases = [
-    { hudRole: "score", objectRole: "hud-score", valid: score, missing: without(score, "ratio"), tampered: { ...score, rankMarkerCLocalX: marker(master.scoreC + 1) } },
+    { hudRole: "score", objectRole: "hud-score", valid: score, missing: without(score, "ratio"), tampered: { ...score, rankMarkerCLocalX: marker(375_001) } },
     { hudRole: "combo", objectRole: "hud-combo", valid: combo, missing: without(combo, "combo"), tampered: { ...combo, combo: 10000 } },
     { hudRole: "result", objectRole: "hud-result", valid: result, missing: without(result, "judgeKey"), tampered: { ...result, timingKey: "judge_early" } },
     { hudRole: "life", objectRole: "hud-life", valid: life, missing: without(life, "primaryFill"), tampered: { ...life, warning: false } },
     { hudRole: "add-score", objectRole: "hud-add-score", valid: addScore, missing: without(addScore, "value"), tampered: { ...addScore, poolIndex: 4 } },
   ] as const;
   for (const route of cases) {
+    const validRenderer = new RecordingSimulatorRendererBackend();
+    requireOk(await validRenderer.prepare(SESSION, profile(), new LocalProvider(), preflight()), `${route.hudRole} valid prepare`);
+    requireOk(validRenderer.execute({
+      kind: "create-object",
+      sessionId: SESSION,
+      sequence: 0,
+      frame: 0,
+      substep: 0,
+      renderObjectId: `hud:${route.hudRole}:valid`,
+      poolFamily: `hud:${route.hudRole}`,
+      role: route.objectRole,
+      parentObjectId: null,
+    }), `${route.hudRole} valid owner`);
+    requireOk(validRenderer.execute({
+      kind: "set-hud",
+      sessionId: SESSION,
+      sequence: 1,
+      frame: 0,
+      substep: 0,
+      renderObjectId: `hud:${route.hudRole}:valid`,
+      hudRole: route.hudRole,
+      state: route.valid,
+    } as unknown as RenderCommand), `${route.hudRole} valid state`);
+    requireOk(validRenderer.dispose(), `${route.hudRole} valid dispose`);
     const malformedStates = [
       { label: "extra", state: { ...route.valid, unsupportedExtra: true } },
       { label: "missing", state: route.missing },

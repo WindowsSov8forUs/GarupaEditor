@@ -29,6 +29,7 @@ import { InGameManager } from "../engine/managers/inGameManager";
 import { InGameMusicScoreController } from "../engine/managers/inGameMusicScoreController";
 import { InGameOneFrameJudgementController } from "../engine/managers/inGameOneFrameJudgementController";
 import { ScoreLifeStateManager } from "../engine/managers/scoreLifeStateManager";
+import { createConstructedChartScoringPlan } from "../engine/scoring/constructedChartScoringAdapter";
 import {
   GamePlayInputDispatcher,
   InputManager,
@@ -553,11 +554,15 @@ export function createSimulatorEngine(
   }
   const slideNoteManager = new SlideNoteManager();
   const inGameCalculatedData = new InGameCalculatedData(playModeValidation.value);
+  const scoringPlanResult = input.scoreLifeState === undefined
+    ? ok(null)
+    : createConstructedChartScoringPlan(input.chart);
+  if (scoringPlanResult.status !== "ok") return scoringPlanResult;
   const scoreLifeStateResult = input.scoreLifeState === undefined
     ? ok<ScoreLifeStateManager | null>(null)
     : ScoreLifeStateManager.create(
         input.scoreLifeState,
-        input.chart,
+        scoringPlanResult.value!,
         playModeValidation.value.kind,
       );
   if (scoreLifeStateResult.status !== "ok") return scoreLifeStateResult;
@@ -566,7 +571,7 @@ export function createSimulatorEngine(
   const oneFrameJudgementController = new InGameOneFrameJudgementController();
   if (scoreLifeStateManager !== null) {
     const businessOwner = oneFrameJudgementController.registerBusinessOwner(
-      (judgement) => scoreLifeStateManager.freezeOneFrame(judgement),
+      (judgement, source) => scoreLifeStateManager.freezeOneFrame(judgement, source),
     );
     if (businessOwner.status !== "ok") return businessOwner;
   }

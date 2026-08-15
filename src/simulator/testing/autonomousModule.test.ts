@@ -205,20 +205,19 @@ function testRecipeOwnership(): void {
   assert.ok(Object.isFrozen(recipe.request));
   assert.ok(Object.isFrozen(recipe.request.chartData.bgm));
   assert.ok(Object.isFrozen(recipe.request.chartData.gameplay));
-  assert.ok(Object.isFrozen(recipe.request.chartData.gameplay.score));
-  assert.ok(Object.isFrozen(recipe.request.chartData.gameplay.score.master));
+  assert.ok(Object.isFrozen(recipe.request.chartData.gameplay.life));
 
   const extra = { ...request(), extra: true } as unknown as SimulatorModuleLaunchRequest;
   assert.equal(createSimulatorSessionRecipe(extra).status, "rejected");
-  const missingMaster: any = request();
-  delete missingMaster.chartData.gameplay.score.master;
-  assert.equal(createSimulatorSessionRecipe(missingMaster).status, "rejected");
-  const unorderedMaster: any = request();
-  unorderedMaster.chartData.gameplay.score.master.scoreB = 36000;
-  assert.equal(createSimulatorSessionRecipe(unorderedMaster).status, "rejected");
-  const overflowingMaster: any = request();
-  overflowingMaster.chartData.gameplay.score.master.scoreSS = 0xffffffff;
-  assert.equal(createSimulatorSessionRecipe(overflowingMaster).status, "rejected");
+  const legacyScore: any = request();
+  legacyScore.chartData.gameplay.score = { level: 27 };
+  assert.equal(createSimulatorSessionRecipe(legacyScore).status, "rejected");
+  const callerRuleSet: any = request();
+  callerRuleSet.chartData.gameplay.ruleSet = "garupa-editor-normalized-10m-v1";
+  assert.equal(createSimulatorSessionRecipe(callerRuleSet).status, "rejected");
+  const callerCount: any = request();
+  callerCount.chartData.gameplay.totalScoringUnitCount = 1;
+  assert.equal(createSimulatorSessionRecipe(callerCount).status, "rejected");
   const disabledSeek: any = request();
   disabledSeek.config.practice.startMilliseconds = 1;
   const disabled = createSimulatorSessionRecipe(disabledSeek);
@@ -292,7 +291,7 @@ async function testRecipeNaturalCompletion(): Promise<void> {
         fault: null,
         particle: {},
         scoreLifeState: {
-          initialization: { maxNoteCount: 10 },
+          initialization: { totalScoringUnitCount: 10 },
           record: {
             score: 1234,
             currentLife: 900,
@@ -364,15 +363,15 @@ async function testProductionCompositionFailureBoundary(): Promise<void> {
     requestTargetFrameRate: () => {},
     publishLifecycleState: () => {},
   };
-  const invalidMasterModule = requireAccepted(createProductionAutonomousSimulatorModule(platform));
-  const invalidMasterRequest: any = request();
-  invalidMasterRequest.chartData.gameplay.score.master.scoreB = 36000;
-  const invalidMasterLaunch = await invalidMasterModule.launch(invalidMasterRequest);
-  assert.equal(invalidMasterLaunch.status, "rejected");
-  if (invalidMasterLaunch.status === "rejected") {
-    assert.equal(invalidMasterLaunch.failure.capability, "simulator.recipe.invalid-public-request");
+  const invalidScoreModule = requireAccepted(createProductionAutonomousSimulatorModule(platform));
+  const invalidScoreRequest: any = request();
+  invalidScoreRequest.chartData.gameplay.score = { totalParameter: 100000 };
+  const invalidScoreLaunch = await invalidScoreModule.launch(invalidScoreRequest);
+  assert.equal(invalidScoreLaunch.status, "rejected");
+  if (invalidScoreLaunch.status === "rejected") {
+    assert.equal(invalidScoreLaunch.failure.capability, "simulator.recipe.invalid-public-request");
   }
-  assert.equal(resourceReads, 0, "invalid Score Gauge master fails before shared resource read");
+  assert.equal(resourceReads, 0, "caller-authored Score data fails before shared resource read");
   assert.equal(mounts, 0);
 
   const missingResourceModule = requireAccepted(createProductionAutonomousSimulatorModule(platform));
@@ -625,20 +624,6 @@ function request(): SimulatorModuleLaunchRequest {
         currentSampleFrames: 44100,
       },
       gameplay: {
-        score: {
-          level: 27,
-          totalParameter: Math.fround(100000),
-          autoLiveComboCoefficient: Math.fround(1),
-          master: {
-            musicId: 786,
-            difficulty: "special",
-            scoreC: 36000,
-            scoreB: 216000,
-            scoreA: 432000,
-            scoreS: 648000,
-            scoreSS: 864000,
-          },
-        },
         life: { initialLife: 1000, playerMaxLife: 1000, lifeUpperLimit: 2000, missDamage: -100, badDamage: -50 },
       },
     },

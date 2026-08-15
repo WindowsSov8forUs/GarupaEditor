@@ -111,7 +111,7 @@ async function main(): Promise<void> {
   const initialFontFaces = Array.from(document.fonts).length;
   const captures: FrameCapture[] = [];
 
-  const auto = await createSession(inputs, "ordinary-webview2-auto", "auto-live", Math.fround(5_000_000));
+  const auto = await createSession(inputs, "ordinary-webview2-auto", "auto-live");
   mount(app, auto);
   requireOk(auto.engine.initialize());
   captures.push(await capture(app, auto, "initialize", 0));
@@ -121,13 +121,13 @@ async function main(): Promise<void> {
   const naturalClearStatus = auto.engine.getNaturalCompletionClearStatus();
   const autoCleanup = disposeSession(app, auto);
 
-  const manual = await createSession(inputs, "ordinary-webview2-game-over", "manual", Math.fround(100_000));
+  const manual = await createSession(inputs, "ordinary-webview2-game-over", "manual");
   mount(app, manual);
   requireOk(manual.engine.initialize());
   await runGameOverScenario(app, manual, captures);
   const manualCleanup = disposeSession(app, manual);
 
-  const seek = await createSession(inputs, "ordinary-webview2-initial-seek", "auto-live", Math.fround(100_000));
+  const seek = await createSession(inputs, "ordinary-webview2-initial-seek", "auto-live");
   requireOk(seek.engine.initialize());
   for (let frame = 0; frame < 50; frame += 1) requireOk(seek.engine.step(DELTA));
   if (seek.combined.root.parent !== null) throw new Error("initial seek scene published before bounded pre-roll completed");
@@ -281,7 +281,6 @@ async function createSession(
   inputs: LoadedInputs,
   id: string,
   mode: "auto-live" | "manual",
-  totalParameter: number,
 ): Promise<BrowserSession> {
   const renderer = new PixiRendererBackend(new BrowserPixiTextureDecoder());
   const renderProvider = requireOk(ImmutableLocalRenderResourceProvider.create(inputs.renderResources));
@@ -329,20 +328,14 @@ async function createSession(
         : Object.freeze({ kind: "auto-live" as const, resultTransform: "identity" as const }),
     },
     scoreLifeState: {
-      schemaVersion: 1,
+      schemaVersion: 2,
       sessionId: id,
-      scoreLevel: 27,
-      totalParameter,
-      scoreGaugeMaster: {
-        musicId: 786, difficulty: "special", scoreC: 36000, scoreB: 216000,
-        scoreA: 432000, scoreS: 648000, scoreSS: 864000,
-      },
       life: {
         initialLife: 1000, playerMaxLife: 1000, lifeUpperLimit: 2000,
         missDamage: -100, badDamage: -50,
       },
       mode: mode === "auto-live"
-        ? Object.freeze({ kind: "auto-live" as const, comboCoefficient: Math.fround(1) })
+        ? Object.freeze({ kind: "auto-live" as const })
         : Object.freeze({ kind: "ordinary" as const }),
     },
     rendering: {

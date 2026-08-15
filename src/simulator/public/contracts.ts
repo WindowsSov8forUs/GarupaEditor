@@ -12,20 +12,6 @@ export interface SimulatorChartAudioData {
 }
 
 export interface SimulatorSessionGameplayData {
-  readonly score: {
-    readonly level: number;
-    readonly totalParameter: number;
-    readonly autoLiveComboCoefficient: number;
-    readonly master: {
-      readonly musicId: number;
-      readonly difficulty: string;
-      readonly scoreC: number;
-      readonly scoreB: number;
-      readonly scoreA: number;
-      readonly scoreS: number;
-      readonly scoreSS: number;
-    };
-  };
   readonly life: {
     readonly initialLife: number;
     readonly playerMaxLife: number;

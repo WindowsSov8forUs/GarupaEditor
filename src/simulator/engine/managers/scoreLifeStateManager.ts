@@ -1,9 +1,4 @@
-import {
-  FrontNoteType,
-  GameNoteAdditionalType,
-  GameNoteType,
-  type ChartConstructionResult,
-} from "../chart/types";
+import type { NoteInformation } from "../chart/types";
 import type {
   OneFrameBusinessData,
   OneFrameJudgementBatch,
@@ -17,12 +12,15 @@ import {
 } from "../data/scoreLifeState";
 import { evidenceRequired, ok, type SimulatorResult } from "../evidence";
 import type { SinglePlayScoreGaugeSnapshot } from "../data/singlePlayScoreGauge";
+import { NORMALIZED_SCORE_RULESET_ID, type SimulatorScoringPlan } from "../scoring/contracts";
+import { calculateNormalizedScoreContribution } from "../scoring/normalizedScoreRule";
 import { InGameRecord, type InGameRecordSnapshot } from "./inGameRecord";
-import { ScoreUtility } from "./scoreUtility";
 import { SinglePlayScoreGauge } from "./singlePlayScoreGauge";
 
 export interface ScoreLifeReflectEntry {
   readonly slot: number;
+  readonly scoringUnitId: string;
+  readonly scoringUnitOrdinal: number;
   readonly score: number;
   readonly lifeDelta: number;
   readonly comboAfter: number;
@@ -49,6 +47,7 @@ interface PendingScoreLifeReflect {
   readonly plan: ScoreLifeReflectPlan;
   readonly stagedRecord: InGameRecord;
   readonly stagedScoreGauge: SinglePlayScoreGauge;
+  readonly stagedConsumedScoringUnitIds: ReadonlySet<string>;
 }
 
 export interface ScoreLifeStateSnapshot {
@@ -62,15 +61,15 @@ export interface ScoreLifeStateSnapshot {
 export class ScoreLifeStateManager {
   readonly profile: ScoreLifeStateProfile;
   readonly record: InGameRecord;
-  readonly scoreUtility: ScoreUtility;
   readonly scoreGauge: SinglePlayScoreGauge;
+  private consumedScoringUnitIds = new Set<string>();
   private lastReflectBatchValue: ScoreLifeReflectBatch | null = null;
   private pendingReflect: PendingScoreLifeReflect | null = null;
   private readonly traceValue: string[] = [];
 
   private constructor(
     profile: ScoreLifeStateProfile,
-    maxNoteCount: number,
+    readonly scoringPlan: SimulatorScoringPlan,
     scoreGauge: SinglePlayScoreGauge,
   ) {
     this.profile = deepFreezeScoreLifeProfile(profile);
@@ -79,55 +78,61 @@ export class ScoreLifeStateManager {
       profile.life.playerMaxLife,
       profile.life.lifeUpperLimit,
     );
-    this.scoreUtility = new ScoreUtility(
-      profile.totalParameter,
-      profile.scoreLevel,
-      maxNoteCount,
-    );
     this.scoreGauge = scoreGauge;
   }
 
   static create(
     profile: ScoreLifeStateProfile,
-    chart: ChartConstructionResult,
+    scoringPlan: SimulatorScoringPlan,
     runtimePlayMode: "manual" | "auto-live",
   ): SimulatorResult<ScoreLifeStateManager> {
     const validation = validateProfile(profile, runtimePlayMode);
     if (validation.status !== "ok") return validation;
-    const scoreGauge = SinglePlayScoreGauge.create(validation.value.scoreGaugeMaster);
+    if (!validScoringPlan(scoringPlan)) {
+      return evidenceRequired(
+        "score-life.invalid-scoring-plan",
+        [],
+        "Score/Life initialization requires one immutable CS-V1 plan with a positive chart-owned unit count and exact scoreMaximum.",
+      );
+    }
+    const scoreGauge = SinglePlayScoreGauge.create(scoringPlan.totalScoringUnitCount);
     if (scoreGauge.status !== "ok") return scoreGauge;
     const initializedGauge = scoreGauge.value.update(0);
     if (initializedGauge.status !== "ok") return initializedGauge;
-    const maxNoteCount = countMaximumNotes(chart);
-    if (!Number.isInteger(maxNoteCount) || maxNoteCount <= 0) {
-      return evidenceRequired(
-        "score-life.invalid-chart-max-note-count",
-        ["SLS-D03", "BS01", "BS02"],
-        "The parent-owned production chart must derive a positive Int32 maxNoteCount before score initialization.",
-      );
-    }
-    return ok(new ScoreLifeStateManager(validation.value, maxNoteCount, scoreGauge.value));
+    return ok(new ScoreLifeStateManager(validation.value, scoringPlan, scoreGauge.value));
   }
 
   get mode(): ScoreLifeModeValue { return this.profile.mode.kind; }
 
   getClearStatus(): 1 | 2 | 3 {
-    return this.record.getClearStatus(this.scoreUtility.maxNoteCount);
+    return this.record.getClearStatus(this.scoringPlan.totalScoringUnitCount);
   }
 
-  freezeOneFrame(judgement: OneFrameJudgementData): OneFrameBusinessData {
+  freezeOneFrame(
+    judgement: OneFrameJudgementData,
+    source: NoteInformation,
+  ): SimulatorResult<OneFrameBusinessData> {
+    const unit = this.scoringPlan.resolve(source, judgement.phase);
+    if (unit.status !== "ok") return unit;
     const adjustedResult = judgement.rawResult;
+    const contribution = calculateNormalizedScoreContribution(
+      unit.value,
+      adjustedResult,
+      this.profile.mode.kind === "auto-live",
+    );
+    if (contribution.status !== "ok") return contribution;
     const addPower = adjustedResult === 0
       ? this.profile.life.missDamage
       : adjustedResult === 1
       ? this.profile.life.badDamage
       : 0;
-    const addScore = this.scoreUtility.calculateCorrectedBaseScore(
+    return ok(Object.freeze({
+      scoringUnitId: unit.value.id,
+      scoringUnitOrdinal: unit.value.ordinal,
       adjustedResult,
-      this.profile.mode,
-    );
-    this.traceValue.push(`setup:${judgement.noteIndex}:${adjustedResult}`);
-    return Object.freeze({ adjustedResult, addScore, addPower });
+      addScore: contribution.value,
+      addPower,
+    }));
   }
 
   preflightReflect(batch: OneFrameJudgementBatch): SimulatorResult<ScoreLifeReflectPlan> {
@@ -140,6 +145,7 @@ export class ScoreLifeStateManager {
     }
     const stagedRecord = this.record.cloneForPreflight();
     const stagedScoreGauge = this.scoreGauge.cloneForPreflight();
+    const stagedConsumed = new Set(this.consumedScoringUnitIds);
     const entries: ScoreLifeReflectEntry[] = [];
     let totalScore = 0;
     let representative = batch.entries[0]!;
@@ -152,22 +158,49 @@ export class ScoreLifeStateManager {
           "A configured score/life session cannot Reflect an entry without its frozen gameplay projection.",
         );
       }
-      stagedRecord.addCombo(entry.addCombo);
-      const comboRate = this.scoreUtility.getComboCorrectionRate(
-        stagedRecord.currentCombo,
-        this.profile.mode,
-        entry.buttonTypes,
+      const unit = this.scoringPlan.getById(business.scoringUnitId);
+      if (unit === undefined || unit.ordinal !== business.scoringUnitOrdinal ||
+          stagedConsumed.has(unit.id)) {
+        return evidenceRequired(
+          "score-life.foreign-or-duplicate-scoring-unit",
+          [],
+          `Every CS-V1 scoring unit must belong to this plan, preserve its ordinal and be consumed exactly once (id=${business.scoringUnitId}, ordinal=${business.scoringUnitOrdinal}).`,
+        );
+      }
+      const expected = calculateNormalizedScoreContribution(
+        unit,
+        business.adjustedResult,
+        this.profile.mode.kind === "auto-live",
       );
-      const score = correctedScore(business.addScore, comboRate);
-      stagedRecord.addScore(score);
+      if (expected.status !== "ok" || expected.value !== business.addScore) {
+        return evidenceRequired(
+          "score-life.scoring-contribution-identity-mismatch",
+          [],
+          "The frozen CS-V1 contribution must match the plan-owned quota, judgement and session mode.",
+        );
+      }
+      const scoreBefore = stagedRecord.snapshot().score;
+      const scoreAfter = scoreBefore + business.addScore;
+      if (!isUInt32(scoreAfter) || scoreAfter > this.scoringPlan.scoreMaximum) {
+        return evidenceRequired(
+          "score-life.score-maximum-exceeded",
+          [],
+          "CS-V1 score accumulation is monotonic UInt32 and cannot exceed the chart-derived scoreMaximum.",
+        );
+      }
+      stagedConsumed.add(unit.id);
+      stagedRecord.addCombo(entry.addCombo);
+      stagedRecord.addScore(business.addScore);
       const lifeDelta = stagedRecord.addLife(business.addPower);
       stagedRecord.incrementResult(business.adjustedResult, entry.judgeTiming);
-      stagedRecord.updateOneNoteMax(score);
-      totalScore = addInt32(totalScore, score);
+      stagedRecord.updateOneNoteMax(business.addScore);
+      totalScore = addInt32(totalScore, business.addScore);
       if (entry.rawResult > representative.rawResult) representative = entry;
       entries.push(Object.freeze({
         slot: entry.slot,
-        score,
+        scoringUnitId: unit.id,
+        scoringUnitOrdinal: unit.ordinal,
+        score: business.addScore,
         lifeDelta,
         comboAfter: stagedRecord.currentCombo,
       }));
@@ -189,7 +222,12 @@ export class ScoreLifeStateManager {
       record: freezeRecordSnapshot(stagedRecord.snapshot()),
       scoreGauge: freezeScoreGaugeSnapshot(gauge.value),
     });
-    this.pendingReflect = Object.freeze({ plan, stagedRecord, stagedScoreGauge });
+    this.pendingReflect = Object.freeze({
+      plan,
+      stagedRecord,
+      stagedScoreGauge,
+      stagedConsumedScoringUnitIds: stagedConsumed,
+    });
     return ok(plan);
   }
 
@@ -203,6 +241,7 @@ export class ScoreLifeStateManager {
     }
     this.record.commitFromPreflight(this.pendingReflect.stagedRecord);
     this.scoreGauge.commitFromPreflight(this.pendingReflect.stagedScoreGauge);
+    this.consumedScoringUnitIds = new Set(this.pendingReflect.stagedConsumedScoringUnitIds);
     this.lastReflectBatchValue = plan.reflect;
     this.traceValue.push(`reflect:${plan.batchIndex}:${plan.entryCount}`);
     this.pendingReflect = null;
@@ -234,11 +273,10 @@ export class ScoreLifeStateManager {
       initialization: Object.freeze({
         sessionId: this.profile.sessionId,
         mode: this.mode,
-        scoreLevel: this.profile.scoreLevel,
-        maxNoteCount: this.scoreUtility.maxNoteCount,
-        totalParameter: this.profile.totalParameter,
-        scoreLevelRate: this.scoreUtility.scoreLevelRate,
-        baseScore: this.scoreUtility.baseScore,
+        ruleSetId: this.scoringPlan.ruleSetId,
+        totalScoringUnitCount: this.scoringPlan.totalScoringUnitCount,
+        scoreMaximum: this.scoringPlan.scoreMaximum,
+        consumedScoringUnitCount: this.consumedScoringUnitIds.size,
       }),
       record: this.record.snapshot(),
       scoreGauge: this.scoreGauge.snapshot(),
@@ -253,34 +291,6 @@ export class ScoreLifeStateManager {
   }
 }
 
-export function countMaximumNotes(chart: ChartConstructionResult): number {
-  let count = 0;
-  const directionalGroups = new Set<string>();
-  for (const batch of chart.noteBatches) {
-    for (const note of batch.informationList) {
-      if (
-        note.gameNoteType === GameNoteType.None ||
-        note.gameNoteAdditionalType === GameNoteAdditionalType.LaneChange ||
-        (note.fireNoteType >= FrontNoteType.LongMultipleDirectionalFlickAdd &&
-          note.fireNoteType <= FrontNoteType.SlideBMultipleDirectionalFlickAdd)
-      ) continue;
-      const directionalGroup =
-        (note.gameNoteType === GameNoteType.DirectionalFlickLeft ||
-          note.gameNoteType === GameNoteType.DirectionalFlickRight) &&
-        note.fireNoteType === FrontNoteType.MultipleDirectionalFlick
-          ? `${note.absolutePos}:${note.gameNoteType}`
-          : null;
-      if (directionalGroup === null || !directionalGroups.has(directionalGroup)) {
-        count += 1;
-        if (directionalGroup !== null) directionalGroups.add(directionalGroup);
-      }
-      if (note.gameNoteType === GameNoteType.Long) count += 1;
-      count += note.slideNoteList.filter((child) => !child.isInvisible).length;
-    }
-  }
-  return count;
-}
-
 function validateProfile(
   profile: ScoreLifeStateProfile,
   runtimePlayMode: "manual" | "auto-live",
@@ -289,24 +299,34 @@ function validateProfile(
     ? profile?.mode?.kind === "auto-live"
     : profile?.mode?.kind === "ordinary" || profile?.mode?.kind === "practice";
   if (
-    profile === null || typeof profile !== "object" || profile.schemaVersion !== 1 ||
+    profile === null || typeof profile !== "object" ||
+    Object.keys(profile).sort().join(",") !== "life,mode,schemaVersion,sessionId" ||
+    profile.schemaVersion !== 2 ||
     typeof profile.sessionId !== "string" || profile.sessionId.length === 0 ||
-    !isInt32(profile.scoreLevel) || profile.scoreLevel < 5 ||
-    !isFiniteFloat32(profile.totalParameter) || profile.totalParameter < 0 ||
-    profile.scoreGaugeMaster === null || typeof profile.scoreGaugeMaster !== "object" ||
     !validLife(profile.life) || !validMode(profile.mode) || !modeMatches
   ) {
     return evidenceRequired(
       "score-life.invalid-profile",
       ["SLS-D01", "SLS-D03", "SLS-D24", "BS01", "BS36"],
-      "The generic score/life profile requires exact scalar score inputs, life bounds and a runtime-matching ordinary, practice or Auto Live mode.",
+      "The CS-V1 score/life profile requires exact life bounds and a runtime-matching ordinary, practice or Auto Live mode without caller-authored Score inputs.",
     );
   }
   return ok(deepFreezeScoreLifeProfile(profile));
 }
 
+function validScoringPlan(plan: SimulatorScoringPlan): boolean {
+  return plan !== null && typeof plan === "object" && Object.isFrozen(plan) &&
+    plan.ruleSetId === NORMALIZED_SCORE_RULESET_ID && Object.isFrozen(plan.units) &&
+    Number.isInteger(plan.totalScoringUnitCount) && plan.totalScoringUnitCount > 0 &&
+    plan.units.length === plan.totalScoringUnitCount &&
+    isUInt32(plan.scoreMaximum) && plan.scoreMaximum === 10_000_000 + plan.totalScoringUnitCount &&
+    typeof plan.resolve === "function" && typeof plan.getById === "function";
+}
+
 function validLife(life: ScoreLifeStateProfile["life"]): boolean {
   return life !== null && typeof life === "object" &&
+    Object.keys(life).sort().join(",") ===
+      "badDamage,initialLife,lifeUpperLimit,missDamage,playerMaxLife" &&
     [life.initialLife, life.playerMaxLife, life.lifeUpperLimit, life.missDamage, life.badDamage]
       .every(isInt32) &&
     life.initialLife >= 0 && life.playerMaxLife > 0 &&
@@ -315,10 +335,9 @@ function validLife(life: ScoreLifeStateProfile["life"]): boolean {
 }
 
 function validMode(mode: ScoreLifeStateProfile["mode"]): boolean {
-  if (mode === null || typeof mode !== "object") return false;
-  if (mode.kind === "ordinary" || mode.kind === "practice") return true;
-  return mode.kind === "auto-live" &&
-    isFiniteFloat32(mode.comboCoefficient) && mode.comboCoefficient >= 0;
+  return mode !== null && typeof mode === "object" &&
+    (mode.kind === "ordinary" || mode.kind === "practice" || mode.kind === "auto-live") &&
+    Object.keys(mode).length === 1;
 }
 
 function freezeRecordSnapshot(snapshot: InGameRecordSnapshot): InGameRecordSnapshot {
@@ -329,22 +348,16 @@ function freezeRecordSnapshot(snapshot: InGameRecordSnapshot): InGameRecordSnaps
   });
 }
 
-function freezeScoreGaugeSnapshot(
-  snapshot: SinglePlayScoreGaugeSnapshot,
-): SinglePlayScoreGaugeSnapshot {
+function freezeScoreGaugeSnapshot(snapshot: SinglePlayScoreGaugeSnapshot): SinglePlayScoreGaugeSnapshot {
   return Object.freeze({ ...snapshot });
-}
-
-function correctedScore(source: number, comboRate: number): number {
-  return Math.trunc(Math.fround(Math.fround(source) * comboRate));
-}
-
-function isFiniteFloat32(value: number): boolean {
-  return typeof value === "number" && Number.isFinite(value) && Math.fround(value) === value;
 }
 
 function isInt32(value: number): boolean {
   return Number.isInteger(value) && value >= -0x80000000 && value <= 0x7fffffff;
+}
+
+function isUInt32(value: number): boolean {
+  return Number.isInteger(value) && value >= 0 && value <= 0xffffffff;
 }
 
 function addInt32(left: number, right: number): number {

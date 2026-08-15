@@ -1,4 +1,4 @@
-import type { SinglePlayScoreGaugeMasterProfile } from "./singlePlayScoreGauge";
+import type { NORMALIZED_SCORE_RULESET_ID } from "../scoring/contracts";
 
 export const ScoreLifeMode = {
   Ordinary: "ordinary",
@@ -11,14 +11,11 @@ export type ScoreLifeModeValue = (typeof ScoreLifeMode)[keyof typeof ScoreLifeMo
 export type ScoreLifeModeProfile =
   | { readonly kind: "ordinary" }
   | { readonly kind: "practice" }
-  | { readonly kind: "auto-live"; readonly comboCoefficient: number };
+  | { readonly kind: "auto-live" };
 
 export interface ScoreLifeStateProfile {
-  readonly schemaVersion: 1;
+  readonly schemaVersion: 2;
   readonly sessionId: string;
-  readonly scoreLevel: number;
-  readonly totalParameter: number;
-  readonly scoreGaugeMaster: SinglePlayScoreGaugeMasterProfile;
   readonly life: {
     readonly initialLife: number;
     readonly playerMaxLife: number;
@@ -32,11 +29,10 @@ export interface ScoreLifeStateProfile {
 export interface ScoreLifeInitializationSnapshot {
   readonly sessionId: string;
   readonly mode: ScoreLifeModeValue;
-  readonly scoreLevel: number;
-  readonly maxNoteCount: number;
-  readonly totalParameter: number;
-  readonly scoreLevelRate: number;
-  readonly baseScore: number;
+  readonly ruleSetId: typeof NORMALIZED_SCORE_RULESET_ID;
+  readonly totalScoringUnitCount: number;
+  readonly scoreMaximum: number;
+  readonly consumedScoringUnitCount: number;
 }
 
 export function deepFreezeScoreLifeProfile(
@@ -46,6 +42,5 @@ export function deepFreezeScoreLifeProfile(
     ...profile,
     life: Object.freeze({ ...profile.life }),
     mode: Object.freeze({ ...profile.mode }),
-    scoreGaugeMaster: Object.freeze({ ...profile.scoreGaugeMaster }),
   });
 }

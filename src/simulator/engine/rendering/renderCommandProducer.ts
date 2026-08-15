@@ -2917,7 +2917,8 @@ function scoreHudState(
 ) {
   const scoreText = zeroFilledScoreText(record.score);
   return Object.freeze({
-    master: gauge.master,
+    ruleSetId: gauge.ruleSetId,
+    totalScoringUnitCount: gauge.totalScoringUnitCount,
     score: record.score,
     scoreText,
     scoreMax: gauge.scoreMax,

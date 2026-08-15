@@ -109,7 +109,7 @@ function verify(value) {
   equal(scoreHud.maskWorldTransform[1], 96, "Score high-rank panel mask world Y");
   equal(JSON.stringify(scoreHud.maskWorldBounds), JSON.stringify([456, 82.5, 831, 121.5]), "Score high-rank panel SS-threshold world bounds");
   equal(JSON.stringify(scoreHud.animationLayerWorldTransform), JSON.stringify([414, 96]), "Score high-rank animation and panel coordinate spaces");
-  equal(JSON.stringify(scoreHud.firstDigitWorldTransform), JSON.stringify([324, 135]), "Score first bitmap digit world transform");
+  equal(JSON.stringify(scoreHud.firstDigitWorldTransform), JSON.stringify([318, 135]), "CS-V1 SS-threshold first bitmap digit world transform");
   if (scoreHud.nonTransparentPixels <= 0 || !/^[0-9a-f]{64}$/.test(scoreHud.sha256)) {
     throw new Error(`production Score HUD WebView2 raster is invalid: ${JSON.stringify(scoreHud)}`);
   }

@@ -393,19 +393,13 @@ function mapScoreLifeProfile(
 ): SimulatorAssemblyResult<ScoreLifeStateProfile> {
   const gameplay = request.chartData.gameplay;
   const mode = request.config.playMode === "auto-live"
-    ? Object.freeze({
-        kind: "auto-live" as const,
-        comboCoefficient: gameplay.score.autoLiveComboCoefficient,
-      })
+    ? Object.freeze({ kind: "auto-live" as const })
     : request.config.practice.enabled
     ? Object.freeze({ kind: "practice" as const })
     : Object.freeze({ kind: "ordinary" as const });
   return accepted(Object.freeze({
-    schemaVersion: 1 as const,
+    schemaVersion: 2 as const,
     sessionId,
-    scoreLevel: gameplay.score.level,
-    totalParameter: gameplay.score.totalParameter,
-    scoreGaugeMaster: Object.freeze({ ...gameplay.score.master }),
     life: Object.freeze({ ...gameplay.life }),
     mode,
   }));

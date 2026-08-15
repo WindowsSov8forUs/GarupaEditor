@@ -29,6 +29,8 @@ export interface ManualJudgementData {
 }
 
 export interface OneFrameBusinessData {
+  readonly scoringUnitId: string;
+  readonly scoringUnitOrdinal: number;
   readonly adjustedResult: 0 | 1 | 2 | 3 | 4;
   readonly addScore: number;
   readonly addPower: number;

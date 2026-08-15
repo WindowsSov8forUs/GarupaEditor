@@ -190,7 +190,7 @@ async function captureProductionScoreHud(app: Application): Promise<{
     {
       sessionId: "production-score-hud-webview2", sequence: 1, frame: 0, substep: 0,
       kind: "set-hud", renderObjectId: "hud:score", hudRole: "score",
-      state: scoreState(864000, 4, 5, true, "ScoreGaugeSS", true),
+      state: scoreState(9_000_000, 4, 5, true, "ScoreGaugeSS", true),
     },
     {
       sessionId: "production-score-hud-webview2", sequence: 2, frame: 0, substep: 0,
@@ -257,11 +257,8 @@ function scoreState(
   highRankEffect: "none" | "ScoreGaugeSS",
   highRankEffectActive: boolean,
 ) {
-  const master = Object.freeze({
-    musicId: 786, difficulty: "special", scoreC: 36000, scoreB: 216000,
-    scoreA: 432000, scoreS: 648000, scoreSS: 864000,
-  });
-  const scoreMax = 959999;
+  const totalScoringUnitCount = 1000;
+  const scoreMax = 10_000_000 + totalScoringUnitCount;
   const ratio = Math.fround(Math.fround(score) / Math.fround(scoreMax));
   const marker = (value: number) => float32(Math.fround(
     Math.fround(41) + Math.fround(
@@ -270,7 +267,9 @@ function scoreState(
   ));
   const digits = String(score);
   return Object.freeze({
-    master, score,
+    ruleSetId: "garupa-editor-normalized-10m-v1" as const,
+    totalScoringUnitCount,
+    score,
     scoreText: `[BEBEBE]${"0".repeat(Math.max(8 - digits.length, 0))}[-][FF3B72]${digits}[-]`,
     scoreMax, rank, beforeRank, rankChanged,
     meterKey: rank === 4 ? "score_meter_blue" : rank === 3 ? "score_meter_green" :
@@ -278,9 +277,9 @@ function scoreState(
     ratio: float32(ratio), sliderValue: float32(Math.fround(Math.min(Math.max(ratio, 0), 1))),
     foregroundActive: ratio > 0,
     indicatorLocalX: ratio >= 1 ? 422 : Math.trunc(Math.fround(ratio * Math.fround(422))),
-    rankMarkerCLocalX: marker(master.scoreC), rankMarkerBLocalX: marker(master.scoreB),
-    rankMarkerALocalX: marker(master.scoreA), rankMarkerSLocalX: marker(master.scoreS),
-    rankMarkerSSLocalX: marker(master.scoreSS), highRankEffect, highRankEffectActive,
+    rankMarkerCLocalX: marker(375_000), rankMarkerBLocalX: marker(2_250_000),
+    rankMarkerALocalX: marker(4_500_000), rankMarkerSLocalX: marker(6_750_000),
+    rankMarkerSSLocalX: marker(9_000_000), highRankEffect, highRankEffectActive,
   });
 }
 

@@ -25,7 +25,6 @@ import {
   type SimulatorAssemblyResult,
 } from "../resources/sharedResourceAdapters";
 import type { ManualInputFrame } from "../engine/data/manualInput";
-import { isSinglePlayScoreGaugeMasterProfile } from "../engine/data/singlePlayScoreGauge";
 import { evidenceRequired, ok, type SimulatorResult } from "../engine/evidence";
 
 export interface SimulatorSessionRecipe {
@@ -422,33 +421,19 @@ function clearStatusFromSnapshot(
   state: NonNullable<SimulatorSnapshot["managers"]["scoreLifeState"]>,
 ): 1 | 2 | 3 {
   const perfect = state.record.resultCounts[4];
-  if (perfect === state.initialization.maxNoteCount) return 3;
-  return perfect + state.record.resultCounts[3] === state.initialization.maxNoteCount ? 2 : 1;
+  if (perfect === state.initialization.totalScoringUnitCount) return 3;
+  return perfect + state.record.resultCounts[3] === state.initialization.totalScoringUnitCount ? 2 : 1;
 }
 
 function isGameplayShape(value: unknown): value is SimulatorModuleLaunchRequest["chartData"]["gameplay"] {
   if (value === null || typeof value !== "object" || Array.isArray(value)) return false;
   const gameplay = value as Record<string, unknown>;
-  if (Object.keys(gameplay).sort().join(",") !== "life,score") return false;
-  const score = gameplay.score;
+  if (Object.keys(gameplay).sort().join(",") !== "life") return false;
   const life = gameplay.life;
-  return score !== null && typeof score === "object" && !Array.isArray(score) &&
-    Object.keys(score).sort().join(",") === "autoLiveComboCoefficient,level,master,totalParameter" &&
-    typeof (score as Record<string, unknown>).level === "number" &&
-    Number.isFinite((score as Record<string, number>).level) &&
-    typeof (score as Record<string, unknown>).totalParameter === "number" &&
-    Number.isFinite((score as Record<string, number>).totalParameter) &&
-    typeof (score as Record<string, unknown>).autoLiveComboCoefficient === "number" &&
-    Number.isFinite((score as Record<string, number>).autoLiveComboCoefficient) &&
-    isScoreGaugeMasterShape((score as Record<string, unknown>).master) &&
-    life !== null && typeof life === "object" && !Array.isArray(life) &&
+  return life !== null && typeof life === "object" && !Array.isArray(life) &&
     Object.keys(life).sort().join(",") ===
       "badDamage,initialLife,lifeUpperLimit,missDamage,playerMaxLife" &&
     Object.values(life).every((entry) => typeof entry === "number" && Number.isFinite(entry));
-}
-
-function isScoreGaugeMasterShape(value: unknown): boolean {
-  return isSinglePlayScoreGaugeMasterProfile(value);
 }
 
 function deepFreezeClone(value: unknown, seen = new Set<object>()): unknown {

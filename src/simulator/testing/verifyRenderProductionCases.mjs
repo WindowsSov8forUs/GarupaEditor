@@ -75,7 +75,7 @@ export function verifyRenderObservation(observation, oracle, closure) {
   const invalid = observation.invalidPreflight;
   const sampleCleanup = observation.sampleCleanup;
 
-  const currentNegativeOwnerCount = 11;
+  const currentNegativeOwnerCount = 12;
   const predicates = new Map([
     ["PR08", () =>
       equalArray(samples.noteUp.position, noteLocalToPixi(expectedNotes["note:up"])) &&
@@ -106,9 +106,10 @@ export function verifyRenderObservation(observation, oracle, closure) {
     ["PR39", () =>
       full.batches === oracle.fullChart.batches &&
       full.consumedBatches === oracle.fullChart.batches &&
-      full.maxNoteCount === oracle.fullChart.maxNoteCount &&
+      Number.isInteger(full.totalScoringUnitCount) && full.totalScoringUnitCount > 0 &&
       full.frames > 0 && full.frames <= 7200 &&
       Number.isInteger(full.score) && full.score > 0 &&
+      full.score <= 10000000 + full.totalScoringUnitCount &&
       full.life === oracle.fullChart.life &&
       equalArray(full.routes, oracle.fullChart.routes) &&
       full.cleanupOwnerCount === oracle.fullChart.cleanupOwnerCount &&

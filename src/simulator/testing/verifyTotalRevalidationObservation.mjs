@@ -25,12 +25,12 @@ assert.ok(samples && typeof samples === "object");
 const matrix = samples.scoreMatrix;
 assert.ok(Array.isArray(matrix));
 assert.deepEqual(matrix.map((row) => [row.score, row.rank, row.observation.hudScoreDigitCount]), [
-  [0, 4, 8], [35999, 4, 8], [36000, 3, 8], [36001, 3, 8],
-  [215999, 3, 8], [216000, 2, 8], [216001, 2, 8],
-  [431999, 2, 8], [432000, 1, 8], [432001, 1, 8],
-  [647999, 1, 8], [648000, 0, 8], [648001, 0, 8],
-  [863999, 0, 8], [864000, 5, 8], [864001, 5, 8],
-  [959998, 5, 8], [959999, 5, 8], [960000, 5, 8], [100000000, 5, 9],
+  [0, 4, 8], [374999, 4, 8], [375000, 3, 8], [375001, 3, 8],
+  [2249999, 3, 8], [2250000, 2, 8], [2250001, 2, 8],
+  [4499999, 2, 8], [4500000, 1, 8], [4500001, 1, 8],
+  [6749999, 1, 8], [6750000, 0, 8], [6750001, 0, 8],
+  [8999999, 0, 8], [9000000, 5, 8], [9000001, 5, 8],
+  [10000999, 5, 8], [10001000, 5, 8],
 ]);
 for (const row of matrix) {
   const state = row.observation.hudState;
@@ -49,7 +49,8 @@ for (const row of matrix) {
     bounds: [left, -13.5, width, 39],
     softness: [20, 3],
   });
-  const max = Math.trunc(Math.fround(Math.fround(state.master.scoreSS) * Math.fround(1.111111044883728)));
+  assert.equal(state.ruleSetId, "garupa-editor-normalized-10m-v1");
+  const max = 10000000 + state.totalScoringUnitCount;
   assert.equal(state.scoreMax, max);
   const marker = (value) => Math.fround(Math.fround(41) + Math.fround(
     Math.fround(Math.fround(value) * Math.fround(421)) / Math.fround(max),
@@ -58,7 +59,7 @@ for (const row of matrix) {
     state.rankMarkerCLocalX.value, state.rankMarkerBLocalX.value,
     state.rankMarkerALocalX.value, state.rankMarkerSLocalX.value,
     state.rankMarkerSSLocalX.value,
-  ], [marker(state.master.scoreC), marker(state.master.scoreB), marker(state.master.scoreA), marker(state.master.scoreS), marker(state.master.scoreSS)]);
+  ], [marker(375000), marker(2250000), marker(4500000), marker(6750000), marker(9000000)]);
 }
 const half = samples.scoreHalf;
 const continued = samples.scoreContinued;

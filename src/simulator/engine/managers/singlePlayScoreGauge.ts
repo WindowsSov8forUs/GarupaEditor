@@ -1,17 +1,18 @@
 import {
   LiveClearRank,
-  calculateSinglePlayScoreGaugeMax,
-  deepFreezeSinglePlayScoreGaugeMaster,
-  isSinglePlayScoreGaugeMasterProfile,
   type LiveClearRankValue,
-  type SinglePlayScoreGaugeMasterProfile,
   type SinglePlayScoreGaugeMeterKey,
   type SinglePlayScoreGaugeSnapshot,
 } from "../data/singlePlayScoreGauge";
 import { evidenceRequired, ok, type SimulatorResult } from "../evidence";
+import { NORMALIZED_SCORE_RULESET_ID } from "../scoring/contracts";
+import {
+  calculateNormalizedScoreMaximum,
+  NORMALIZED_SCORE_RANK_THRESHOLDS,
+} from "../scoring/normalizedScoreRule";
 
 export class SinglePlayScoreGauge {
-  readonly master: SinglePlayScoreGaugeMasterProfile;
+  readonly ruleSetId = NORMALIZED_SCORE_RULESET_ID;
   readonly scoreMax: number;
   private beforeRankValue: LiveClearRankValue = LiveClearRank.D;
   private currentRankValue: LiveClearRankValue = LiveClearRank.D;
@@ -24,47 +25,36 @@ export class SinglePlayScoreGauge {
   private highRankEffectValue: "none" | "ScoreGaugeSS" = "none";
   private highRankEffectActiveValue = false;
 
-  private constructor(master: SinglePlayScoreGaugeMasterProfile) {
-    this.master = deepFreezeSinglePlayScoreGaugeMaster(master);
-    this.scoreMax = calculateSinglePlayScoreGaugeMax(master.scoreSS)!;
+  private constructor(readonly totalScoringUnitCount: number, scoreMax: number) {
+    this.scoreMax = scoreMax;
   }
 
-  static create(
-    master: SinglePlayScoreGaugeMasterProfile,
-  ): SimulatorResult<SinglePlayScoreGauge> {
-    if (!isSinglePlayScoreGaugeMasterProfile(master)) {
-      return evidenceRequired(
-        "score-gauge.invalid-master-profile",
-        [],
-        "SinglePlayScoreGauge requires one exact music/difficulty identity and strictly ordered unsigned C/B/A/S/SS master thresholds; no BMS, scoreLevel or default-chart derivation is allowed.",
-      );
-    }
-    const owner = new SinglePlayScoreGauge(master);
-    if (!isUInt32(owner.scoreMax) || owner.scoreMax <= master.scoreSS) {
-      return evidenceRequired(
-        "score-gauge.invalid-score-max",
-        [],
-        "The current ordinary scoreMax must be the finite UInt32 result of the recovered Float32 scoreSS multiplier.",
-      );
-    }
-    return ok(owner);
+  static create(totalScoringUnitCount: number): SimulatorResult<SinglePlayScoreGauge> {
+    const scoreMax = calculateNormalizedScoreMaximum(totalScoringUnitCount);
+    return scoreMax === null || scoreMax <= NORMALIZED_SCORE_RANK_THRESHOLDS.scoreSS
+      ? evidenceRequired(
+          "score-gauge.invalid-scoring-unit-count",
+          [],
+          "CS-V1 Score Gauge requires a positive chart-owned Int32 scoring-unit count and a UInt32 maximum above the fixed SS threshold.",
+        )
+      : ok(new SinglePlayScoreGauge(totalScoringUnitCount, scoreMax));
   }
 
   cloneForPreflight(): SinglePlayScoreGauge {
-    const clone = new SinglePlayScoreGauge(this.master);
+    const clone = new SinglePlayScoreGauge(this.totalScoringUnitCount, this.scoreMax);
     clone.commitFromPreflight(this);
     return clone;
   }
 
   update(score: number): SimulatorResult<SinglePlayScoreGaugeSnapshot> {
-    if (!isUInt32(score)) {
+    if (!isUInt32(score) || score > this.scoreMax) {
       return evidenceRequired(
         "score-gauge.invalid-score",
         [],
-        "SinglePlayScoreGauge consumes the original unsigned InGameRecord score without clamp or signed coercion.",
+        "CS-V1 Score Gauge accepts one unsigned score no greater than its chart-derived scoreMaximum.",
       );
     }
-    const nextRank = rankForScore(score, this.master);
+    const nextRank = rankForScore(score);
     this.beforeRankValue = this.currentRankValue;
     this.currentRankValue = nextRank;
     this.rankChangedValue = this.beforeRankValue !== this.currentRankValue;
@@ -83,8 +73,10 @@ export class SinglePlayScoreGauge {
   }
 
   commitFromPreflight(staged: SinglePlayScoreGauge): void {
-    if (staged.scoreMax !== this.scoreMax || !sameMaster(staged.master, this.master)) {
-      throw new Error("SinglePlayScoreGauge preflight profile identity changed");
+    if (staged.scoreMax !== this.scoreMax ||
+        staged.totalScoringUnitCount !== this.totalScoringUnitCount ||
+        staged.ruleSetId !== this.ruleSetId) {
+      throw new Error("SinglePlayScoreGauge preflight CS-V1 identity changed");
     }
     this.beforeRankValue = staged.beforeRankValue;
     this.currentRankValue = staged.currentRankValue;
@@ -100,7 +92,8 @@ export class SinglePlayScoreGauge {
 
   snapshot(): SinglePlayScoreGaugeSnapshot {
     return Object.freeze({
-      master: this.master,
+      ruleSetId: this.ruleSetId,
+      totalScoringUnitCount: this.totalScoringUnitCount,
       scoreMax: this.scoreMax,
       beforeGaugeColorRank: this.beforeRankValue,
       currentGaugeColorRank: this.currentRankValue,
@@ -111,11 +104,11 @@ export class SinglePlayScoreGauge {
       sliderValueBits: float32Bits(this.sliderValue),
       foregroundActive: this.foregroundActiveValue,
       indicatorLocalX: this.indicatorLocalXValue,
-      rankMarkerCLocalX: rankMarkerLocalX(this.master.scoreC, this.scoreMax),
-      rankMarkerBLocalX: rankMarkerLocalX(this.master.scoreB, this.scoreMax),
-      rankMarkerALocalX: rankMarkerLocalX(this.master.scoreA, this.scoreMax),
-      rankMarkerSLocalX: rankMarkerLocalX(this.master.scoreS, this.scoreMax),
-      rankMarkerSSLocalX: rankMarkerLocalX(this.master.scoreSS, this.scoreMax),
+      rankMarkerCLocalX: rankMarkerLocalX(NORMALIZED_SCORE_RANK_THRESHOLDS.scoreC, this.scoreMax),
+      rankMarkerBLocalX: rankMarkerLocalX(NORMALIZED_SCORE_RANK_THRESHOLDS.scoreB, this.scoreMax),
+      rankMarkerALocalX: rankMarkerLocalX(NORMALIZED_SCORE_RANK_THRESHOLDS.scoreA, this.scoreMax),
+      rankMarkerSLocalX: rankMarkerLocalX(NORMALIZED_SCORE_RANK_THRESHOLDS.scoreS, this.scoreMax),
+      rankMarkerSSLocalX: rankMarkerLocalX(NORMALIZED_SCORE_RANK_THRESHOLDS.scoreSS, this.scoreMax),
       rankChanged: this.rankChangedValue,
       highRankEffect: this.highRankEffectValue,
       highRankEffectActive: this.highRankEffectActiveValue,
@@ -123,21 +116,16 @@ export class SinglePlayScoreGauge {
   }
 }
 
-export function rankForScore(
-  score: number,
-  master: SinglePlayScoreGaugeMasterProfile,
-): LiveClearRankValue {
-  if (score < master.scoreC) return LiveClearRank.D;
-  if (score < master.scoreB) return LiveClearRank.C;
-  if (score < master.scoreA) return LiveClearRank.B;
-  if (score < master.scoreS) return LiveClearRank.A;
-  if (score < master.scoreSS) return LiveClearRank.S;
+export function rankForScore(score: number): LiveClearRankValue {
+  if (score < NORMALIZED_SCORE_RANK_THRESHOLDS.scoreC) return LiveClearRank.D;
+  if (score < NORMALIZED_SCORE_RANK_THRESHOLDS.scoreB) return LiveClearRank.C;
+  if (score < NORMALIZED_SCORE_RANK_THRESHOLDS.scoreA) return LiveClearRank.B;
+  if (score < NORMALIZED_SCORE_RANK_THRESHOLDS.scoreS) return LiveClearRank.A;
+  if (score < NORMALIZED_SCORE_RANK_THRESHOLDS.scoreSS) return LiveClearRank.S;
   return LiveClearRank.SS;
 }
 
-export function meterKeyForRank(
-  rank: LiveClearRankValue,
-): SinglePlayScoreGaugeMeterKey {
+export function meterKeyForRank(rank: LiveClearRankValue): SinglePlayScoreGaugeMeterKey {
   switch (rank) {
     case LiveClearRank.D: return "score_meter_blue";
     case LiveClearRank.C: return "score_meter_green";
@@ -154,16 +142,6 @@ function rankMarkerLocalX(score: number, scoreMax: number): number {
       Math.fround(Math.fround(score) * Math.fround(421)) / Math.fround(scoreMax),
     ),
   );
-}
-
-function sameMaster(
-  left: SinglePlayScoreGaugeMasterProfile,
-  right: SinglePlayScoreGaugeMasterProfile,
-): boolean {
-  return left.musicId === right.musicId && left.difficulty === right.difficulty &&
-    left.scoreC === right.scoreC && left.scoreB === right.scoreB &&
-    left.scoreA === right.scoreA && left.scoreS === right.scoreS &&
-    left.scoreSS === right.scoreSS;
 }
 
 function isUInt32(value: number): boolean {
