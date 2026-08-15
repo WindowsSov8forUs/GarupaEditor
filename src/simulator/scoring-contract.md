@@ -34,7 +34,7 @@ autoContribution(i) = Q(i)
 
 Consequences:
 
-- Manual Perfect and Auto receive exactly `Q(i)`.
+- Manual Perfect and Auto receive exactly `Q(i)`. `inputMode="auto"` applies identically in Live Auto and Rehearsal Auto; the latter is original Demo Play identity rather than Auto Live.
 - Great and Good retain the recovered relative judgement-rate shape.
 - Bad and Miss receive zero but consume their fixed scoring unit.
 - Play Combo remains an independently recovered state/HUD/Clear-status input and never multiplies CS-V1 Score.
@@ -42,4 +42,10 @@ Consequences:
 
 ## Ownership and failure policy
 
-The constructed-chart adapter owns unit identity, phase, ordinal, quota, and `N`. Callers cannot author any of them. Each unit may be consumed exactly once. Unknown source/phase, duplicate identity, ambiguous ordering, invalid bounds, arithmetic overflow, or a score above `scoreMaximum` fails before Record/Gauge mutation; no fallback, clamp, or quota reassignment is permitted.
+The constructed-chart adapter owns unit identity, phase, ordinal, quota, and `N`. Callers cannot author any of them. Each unit may be consumed exactly once in one timeline revision. Unknown source/phase, duplicate identity, ambiguous ordering, invalid bounds, arithmetic overflow, or a score above `scoreMaximum` fails before Record/Gauge mutation; no fallback, clamp, or quota reassignment is permitted.
+
+## Rehearsal timeline revisions
+
+Normal play and Rehearsal forward MoveTime preserve the current timeline revision. Rehearsal backward MoveTime atomically commits a new revision restored at the target timeline: Score, Combo, Life, result counts, HUD and consumed scoring-unit identities all return together. Discarded-future units may then be consumed again only in the new revision. Score remains monotonic and units remain exactly-once within each revision.
+
+This is a narrow product reconciliation with original MoveTime record restoration (LR-R03/LR-C04). It does not claim original score-formula parity. The original Game Over score-decrease formula remains excluded; CS-V1 numeric Score never applies it.

@@ -1,0 +1,63 @@
+# Live/Rehearsal × Manual/Auto 合同
+
+## Authority
+
+- Reverse：`6c0dfb76`，`artifacts/investigations/live-rehearsal-runtime-contract-10-1-4/`与`rehearsal-control-rendering-10-1-4/`。
+- 锁定样本：`jp.co.craftegg.band` 10.1.4 / 230 / arm64-v8a。
+- 产品例外：CS-V1计分及timeline revision由本项目[`scoring-contract.md`](./scoring-contract.md)授权，不冒充原作Score。
+
+## 两条正交轴
+
+Public只接受：
+
+```ts
+sessionMode: "live" | "rehearsal";
+inputMode: "manual" | "auto";
+```
+
+Canonical identity由模拟器一次性生成：
+
+| sessionMode | inputMode | InGameMode | Practice | Demo | AutoLive | AutoPlay |
+| --- | --- | --- | --- | --- | --- | --- |
+| live | manual | SingleNormal | false | false | false | false |
+| live | auto | SingleNormal | false | false | true | true |
+| rehearsal | manual | Practice | true | false | false | false |
+| rehearsal | auto | Practice | true | true | false | true |
+
+依据：LR-E01、LR-E02、LR-R01、LR-R02、LR-C01。任何字段不允许从另一轴反推；Rehearsal Auto是Demo Play，不是Auto Live。
+
+## Life与生命周期
+
+- Live Life归零：走现有terminal Game Over链并关闭会话。
+- Rehearsal Life归零：Record保留`singleGameOver`事实，但不关闭会话。LR-R01实测本轮69次Life0/GameOver后的`ExecUpdate`；此前已提交R1另有1216次。
+- Rehearsal pause menu为Abort、Retry、Resume；premium Continue排除。
+- 自然结束仍进入Rehearsal结果；使用MoveTime后的原作结果语义不得被当作普通Live结果。
+
+依据：LR-R01、LR-C02与current committed Live no-input Game Over证据。
+
+## MoveTime
+
+- 仅Rehearsal可用。
+- 原作按钮固定-5/+5秒，touch-began触发，moved/ended为空。
+- 自动整数秒snapshot，不接收调用方checkpoint或任意目标。
+- 后退目标从不晚于目标且最多提前16秒的snapshot重建；LR-R03/LR-R05观察到`returnTime(5) -> advanceTime(16,true)`。
+- 前进观察为`advanceTime(5,false)`。
+- 重建复用Float32 ordinary pipeline、禁止外部输入，经过GameState 14/15/16，Stop Music后以`trunc(InGameSec*1000)`Load Music并恢复。
+- Note、Command、Record、chart-owned Skill appearance、render、particle和audio必须作为一个事务恢复；不允许clock-only seek。
+
+依据：LR-E03–LR-E20、LR-R03–LR-R05、LR-C03。
+
+## Visible controls
+
+1600×720 portable scene：
+
+- rewind中心`(142,360)`；atlas frame`(912,924,97,99)`；
+- advance中心`(1457.5,360)`；atlas frame`(903,315,96,99)`；
+- 两种Rehearsal共享几何，Live均隐藏；Auto显示Demo badge；
+- 资源复用已晋升current`rhythm-game-ui.png`原字节，无重复、fallback或系统字体替代。
+
+这只关闭current portable controls，不声明Unity Prefab Transform、跨GPU framebuffer或fixed-device exact。
+
+## 明确删除
+
+`playMode`、`practice.enabled`、`startMilliseconds`、deferred scene publication、suppressed initial WebAudio output与caller-authored replay checkpoint均不属于最终合同。旧IPS-P01–P05只保留历史审计，不再提供production capability。

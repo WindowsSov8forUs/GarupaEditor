@@ -1,3 +1,4 @@
+import { LIVE_MANUAL_MODE } from "./modeFixtures";
 import type { SimulatorManualInputGeometryBackend } from "../backends/contracts";
 import {
   ButtonType,
@@ -27,7 +28,7 @@ interface Graph {
 }
 interface TestCase { readonly name: string; readonly run: () => void }
 const tests: TestCase[] = [];
-const manualMode = { kind: "manual" } as const;
+const manualMode = LIVE_MANUAL_MODE;
 const origin = Object.freeze({ x: Math.fround(0), y: Math.fround(0) });
 const thresholdBits = new Map([[1, 0x3c23d70a], [2, 0x3ca3d70a], [3, 0x3cf5c28f]]);
 function test(name: string, run: () => void): void { tests.push({ name, run }) }

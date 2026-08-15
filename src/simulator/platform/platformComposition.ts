@@ -20,6 +20,7 @@ import { PortableParticleResourcePreflightAdapter } from "../backends/resources/
 import { PortableRenderResourcePreflightAdapter } from "../backends/resources/localResourceProvider";
 import { createNoteBatchInformationList } from "../engine/chart/construction";
 import type { ScoreLifeStateProfile } from "../engine/data/scoreLifeState";
+import { createSimulatorModeIdentity } from "../engine/data/inGameCalculatedData";
 import { evidenceRequired, type SimulatorResult } from "../engine/evidence";
 import type { ManualInputFrame, ManualInputPosition } from "../engine/data/manualInput";
 import type { SimulatorEngine, SimulatorSnapshot } from "../host/contracts";
@@ -36,7 +37,6 @@ import {
 } from "../public/failures";
 import type {
   SimulatorModuleCleanupFailure,
-  SimulatorModuleFailure,
   SimulatorModuleLaunchRequest,
 } from "../public/contracts";
 import {
@@ -59,7 +59,6 @@ import {
   RecipeOwnedSessionFactory,
   type SimulatorRecipeEngineBuild,
   type SimulatorRecipeEngineBuilder,
-  type SimulatorRecipeEngineOutputMode,
   type SimulatorSessionRecipe,
 } from "../assembly/sessionRecipe";
 
@@ -123,15 +122,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
 
   async createFreshEngine(
     recipe: SimulatorSessionRecipe,
-    outputMode: SimulatorRecipeEngineOutputMode,
   ): Promise<SimulatorAssemblyResult<SimulatorRecipeEngineBuild>> {
-    if (outputMode !== "immediate" && outputMode !== "deferred-initial-seek") {
-      return rejected(
-        "evidence-required",
-        "simulator.composition.invalid-engine-output-mode",
-        "Fresh engine construction requires an explicit immediate or IPS-P02 deferred-initial-seek output policy and never infers publication behavior.",
-      );
-    }
     if (isTotalRevalidationOpen()) {
       return rejected(
         "evidence-required",
@@ -149,15 +140,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
     if (score.status === "rejected") return score;
     const selection = selectSimulatorStaticResources(chart.value);
     const renderer = new PixiRendererBackend(new BrowserPixiTextureDecoder());
-    const audio = new WebAudioSimulatorBackend(
-      this.platform.audioContext,
-      outputMode === "deferred-initial-seek"
-        ? Object.freeze({
-            suppressPhysicalOutput: true as const,
-            seekMilliseconds: recipe.request.config.practice.startMilliseconds,
-          })
-        : null,
-    );
+    const audio = new WebAudioSimulatorBackend(this.platform.audioContext);
     const particles = new DeterministicSimulatorParticleBackend();
     const particleRenderer = new PixiParticleRendererBackend(
       new BrowserPixiParticleTextureDecoder(),
@@ -229,12 +212,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
       runtime: {
         highFrequencyMode: recipe.request.config.highFrequencyMode,
         judgeOffsetFrames: recipe.request.config.judgeOffsetFrames,
-        playMode: recipe.request.config.playMode === "manual"
-          ? Object.freeze({ kind: "manual" as const })
-          : Object.freeze({
-              kind: "auto-live" as const,
-              resultTransform: "identity" as const,
-            }),
+        mode: score.value.mode,
       },
       scoreLifeState: score.value,
       rendering: {
@@ -260,46 +238,16 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
       const cleanup = simulatorCleanupFailureFromResult("engine-after-combined-scene-failure", engine.value.dispose());
       return rejectedWithCleanup(fromEvidence(combinedScene), cleanup === null ? [] : [cleanup]);
     }
-    let initialMount: SimulatorGraphicsMount | null = null;
-    if (outputMode === "immediate") {
-      const mounted = this.platform.graphics.mount(sessionId, combinedScene.value.root);
-      if (mounted.status === "rejected") {
-        const cleanups = [
-          simulatorCleanupFailureFromResult("engine-after-mount-failure", engine.value.dispose()),
-          simulatorCleanupFailureFromResult("combined-scene-after-mount-failure", combinedScene.value.dispose()),
-        ].filter((failure): failure is SimulatorModuleCleanupFailure => failure !== null);
-        return rejectedWithCleanup(mounted, cleanups);
-      }
-      initialMount = mounted.value;
+    const mounted = this.platform.graphics.mount(sessionId, combinedScene.value.root);
+    if (mounted.status === "rejected") {
+      const cleanups = [
+        simulatorCleanupFailureFromResult("engine-after-mount-failure", engine.value.dispose()),
+        simulatorCleanupFailureFromResult("combined-scene-after-mount-failure", combinedScene.value.dispose()),
+      ].filter((failure): failure is SimulatorModuleCleanupFailure => failure !== null);
+      return rejectedWithCleanup(mounted, cleanups);
     }
-    const mountedEngine = new MountedSimulatorEngine(engine.value, initialMount, combinedScene.value);
     return accepted(Object.freeze({
-      engine: mountedEngine,
-      publishInitialSeekOutputs: (): SimulatorAssemblyResult<void> => {
-        if (outputMode !== "deferred-initial-seek") return accepted(undefined);
-        const mounted = this.platform.graphics.mount(sessionId, combinedScene.value.root);
-        if (mounted.status === "rejected") return mounted;
-        const attached = mountedEngine.attachMount(mounted.value);
-        if (attached.status === "rejected") {
-          try {
-            mounted.value.dispose();
-            return attached;
-          } catch {
-            return rejectedWithCleanup(attached, [simulatorCleanupFailure(
-              "simulator.composition.rejected-initial-seek-mount-dispose-threw",
-              "A rejected duplicate final-state mount also threw while releasing its unowned graphics capability.",
-            )]);
-          }
-        }
-        const published = audio.publishInitialSeekOutput();
-        return published.status === "accepted"
-          ? accepted(undefined)
-          : rejected(
-              mapCompositionAudioFailure(published.status),
-              published.failure.capability,
-              published.failure.boundary,
-            );
-      },
+      engine: new MountedSimulatorEngine(engine.value, mounted.value, combinedScene.value),
     }));
   }
 
@@ -318,18 +266,6 @@ class MountedSimulatorEngine implements SimulatorEngine {
     private readonly combinedScene: PixiCombinedScene,
   ) {
     this.mount = mount;
-  }
-
-  attachMount(mount: SimulatorGraphicsMount): SimulatorAssemblyResult<void> {
-    if (this.disposed || this.mount !== null) {
-      return rejected(
-        "launch-failed",
-        "simulator.composition.initial-seek-mount-invariant",
-        "The reconstructed final visual state acquires exactly one mount before session publication and never replaces or duplicates it.",
-      );
-    }
-    this.mount = mount;
-    return accepted(undefined);
   }
 
   initialize(): SimulatorResult<void> { return this.engine.initialize(); }
@@ -392,13 +328,12 @@ function mapScoreLifeProfile(
   sessionId: string,
 ): SimulatorAssemblyResult<ScoreLifeStateProfile> {
   const gameplay = request.chartData.gameplay;
-  const mode = request.config.playMode === "auto-live"
-    ? Object.freeze({ kind: "auto-live" as const })
-    : request.config.practice.enabled
-    ? Object.freeze({ kind: "practice" as const })
-    : Object.freeze({ kind: "ordinary" as const });
+  const mode = createSimulatorModeIdentity(
+    request.config.sessionMode,
+    request.config.inputMode,
+  );
   return accepted(Object.freeze({
-    schemaVersion: 2 as const,
+    schemaVersion: 3 as const,
     sessionId,
     life: Object.freeze({ ...gameplay.life }),
     mode,
@@ -444,18 +379,6 @@ function validatePlatform(
     );
   }
   return accepted(undefined);
-}
-
-function mapCompositionAudioFailure(
-  code: "evidence-required" | "audio-resource-unavailable" |
-    "audio-resource-integrity" | "audio-resource-decode" |
-    "audio-context-unavailable" | "audio-backend-fault" | "terminal-disposed",
-): SimulatorModuleFailure["code"] {
-  if (code === "audio-resource-unavailable") return "resource-unavailable";
-  if (code === "audio-resource-integrity") return "resource-integrity";
-  if (code === "audio-resource-decode") return "resource-decode";
-  if (code === "audio-context-unavailable") return "platform-unavailable";
-  return code === "evidence-required" ? "evidence-required" : "launch-failed";
 }
 
 function disposeAssembly(assembly: {

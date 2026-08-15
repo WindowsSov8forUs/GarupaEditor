@@ -1,4 +1,5 @@
-export type SimulatorPublicPlayMode = "manual" | "auto-live";
+export type SimulatorPublicSessionMode = "live" | "rehearsal";
+export type SimulatorPublicInputMode = "manual" | "auto";
 
 export interface SimulatorChartAudioData {
   readonly cue: string;
@@ -28,13 +29,10 @@ export interface SimulatorChartDataPackage {
 }
 
 export interface SimulatorLaunchConfig {
-  readonly playMode: SimulatorPublicPlayMode;
+  readonly sessionMode: SimulatorPublicSessionMode;
+  readonly inputMode: SimulatorPublicInputMode;
   readonly highFrequencyMode: boolean;
   readonly judgeOffsetFrames: number;
-  readonly practice: {
-    readonly enabled: boolean;
-    readonly startMilliseconds: number;
-  };
   readonly visual: {
     readonly specificSpeed: number;
     readonly noteSize: number;
@@ -105,7 +103,9 @@ export interface SimulatorModuleCapabilitySummary {
   readonly ordinaryCommandScene: "closed-portable";
   readonly habahiroCurrentExternalComplete: "closed-portable";
   readonly habahiroOriginalParity: "open-evidence-required";
-  readonly nonzeroInitialPracticeSeek: "closed-portable";
+  readonly liveRehearsalFourModeMatrix: "closed-portable";
+  readonly rehearsalMoveTimeControls: "closed-portable";
+  readonly nonzeroInitialPracticeSeek: "excluded";
   readonly button07SceneMapping: "closed-original-unreachable";
   readonly browserDecodeRaster: "closed-portable";
   readonly fixedDeviceExact: "open-objective-environment-blocked";

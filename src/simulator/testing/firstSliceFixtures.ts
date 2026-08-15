@@ -1,3 +1,4 @@
+import { LIVE_MANUAL_MODE } from "./modeFixtures";
 import {
   AfterNoteType,
   ButtonType,
@@ -126,7 +127,7 @@ export function engineInput(
     runtime: {
       highFrequencyMode: false,
       judgeOffsetFrames: 0,
-      playMode: { kind: "manual" },
+      mode: LIVE_MANUAL_MODE,
     },
   };
 }

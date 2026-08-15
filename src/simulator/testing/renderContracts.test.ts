@@ -1,3 +1,4 @@
+import { LIVE_AUTO_MODE } from "./modeFixtures";
 declare function require(name: string): any;
 declare const process: any;
 const { readFileSync } = require("node:fs");
@@ -750,10 +751,7 @@ async function testOrdinaryLongLifecycle(): Promise<void> {
     ...baseInput,
     runtime: {
       ...baseInput.runtime,
-      playMode: {
-        kind: "auto-live" as const,
-        resultTransform: "identity" as const,
-      },
+      mode: LIVE_AUTO_MODE,
     },
     rendering: LONG_RENDERING,
   };
@@ -826,10 +824,7 @@ async function testOrdinarySyncLineLifecycle(): Promise<void> {
     ...baseInput,
     runtime: {
       ...baseInput.runtime,
-      playMode: {
-        kind: "auto-live" as const,
-        resultTransform: "identity" as const,
-      },
+      mode: LIVE_AUTO_MODE,
     },
     rendering: SYNC_RENDERING,
   };
@@ -885,10 +880,7 @@ async function testHostReadyGate(): Promise<void> {
     ...baseInput,
     runtime: {
       ...baseInput.runtime,
-      playMode: {
-        kind: "auto-live" as const,
-        resultTransform: "identity" as const,
-      },
+      mode: LIVE_AUTO_MODE,
     },
     rendering: RENDERING,
   };
@@ -1054,10 +1046,7 @@ async function testR4NoteFamilyBoundaries(): Promise<void> {
       ...flickInput,
       runtime: {
         ...flickInput.runtime,
-        playMode: {
-          kind: "auto-live" as const,
-          resultTransform: "identity" as const,
-        },
+        mode: LIVE_AUTO_MODE,
       },
       rendering: R4_RENDERING,
     },
@@ -1108,10 +1097,7 @@ async function testR4NoteFamilyBoundaries(): Promise<void> {
       ...slideInput,
       runtime: {
         ...slideInput.runtime,
-        playMode: {
-          kind: "auto-live" as const,
-          resultTransform: "identity" as const,
-        },
+        mode: LIVE_AUTO_MODE,
       },
       rendering: R4_SLIDE_RENDERING,
     },
@@ -1176,10 +1162,7 @@ async function testR4NoteFamilyBoundaries(): Promise<void> {
       ...multipleInput,
       runtime: {
         ...multipleInput.runtime,
-        playMode: {
-          kind: "auto-live" as const,
-          resultTransform: "identity" as const,
-        },
+        mode: LIVE_AUTO_MODE,
       },
       rendering: R4_RENDERING,
     },

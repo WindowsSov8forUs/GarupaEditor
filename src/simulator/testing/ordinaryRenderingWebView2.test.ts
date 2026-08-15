@@ -1,3 +1,4 @@
+import { LIVE_AUTO_MODE, LIVE_MANUAL_MODE } from "./modeFixtures";
 import { Application, Rectangle } from "pixi.js";
 import type {
   AudioBackendSnapshot,
@@ -323,20 +324,16 @@ async function createSession(
     runtime: {
       highFrequencyMode: false,
       judgeOffsetFrames: 0,
-      playMode: mode === "manual"
-        ? Object.freeze({ kind: "manual" as const })
-        : Object.freeze({ kind: "auto-live" as const, resultTransform: "identity" as const }),
+      mode: mode === "manual" ? LIVE_MANUAL_MODE : LIVE_AUTO_MODE,
     },
     scoreLifeState: {
-      schemaVersion: 2,
+      schemaVersion: 3,
       sessionId: id,
       life: {
         initialLife: 1000, playerMaxLife: 1000, lifeUpperLimit: 2000,
         missDamage: -100, badDamage: -50,
       },
-      mode: mode === "auto-live"
-        ? Object.freeze({ kind: "auto-live" as const })
-        : Object.freeze({ kind: "ordinary" as const }),
+      mode: mode === "auto-live" ? LIVE_AUTO_MODE : LIVE_MANUAL_MODE,
     },
     rendering: {
       sessionId: id,

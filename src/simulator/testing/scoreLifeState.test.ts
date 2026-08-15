@@ -1,3 +1,4 @@
+import { LIVE_AUTO_MODE, LIVE_MANUAL_MODE } from "./modeFixtures";
 declare function require(name: string): any;
 declare const process: any;
 const assert = require("node:assert/strict");
@@ -210,16 +211,16 @@ function testFullChartAutoMaximum(): void {
     runtime: {
       highFrequencyMode: false,
       judgeOffsetFrames: 0,
-      playMode: { kind: "auto-live" as const, resultTransform: "identity" as const },
+      mode: LIVE_AUTO_MODE,
     },
     scoreLifeState: {
-      schemaVersion: 2,
+      schemaVersion: 3,
       sessionId: "score-full-chart-auto",
       life: {
         initialLife: 1000, playerMaxLife: 1000, lifeUpperLimit: 2000,
         missDamage: -100, badDamage: -50,
       },
-      mode: { kind: "auto-live" as const },
+      mode: LIVE_AUTO_MODE,
     },
   }, createRecordingSimulatorBackends()));
   requireOk(engine.initialize());
@@ -283,8 +284,10 @@ function createManager(
   runtime: "manual" | "auto-live",
 ): ScoreLifeStateManager {
   const scoringPlan = requireOk(createConstructedChartScoringPlan(sourceChart));
+  const identity = mode === "auto-live" ? LIVE_AUTO_MODE : LIVE_MANUAL_MODE;
+  assert.equal(runtime === "auto-live", identity.isAutoPlay);
   return requireOk(ScoreLifeStateManager.create({
-    schemaVersion: 2,
+    schemaVersion: 3,
     sessionId,
     life: {
       initialLife: 1000,
@@ -293,8 +296,8 @@ function createManager(
       missDamage: -100,
       badDamage: -50,
     },
-    mode: { kind: mode },
-  }, scoringPlan, runtime));
+    mode: identity,
+  }, scoringPlan, identity));
 }
 
 function judgement(source: NoteInformation, result: 0 | 1 | 2 | 3 | 4): OneFrameJudgementData {

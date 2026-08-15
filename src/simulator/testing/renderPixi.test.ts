@@ -1,3 +1,4 @@
+import { LIVE_AUTO_MODE } from "./modeFixtures";
 declare function require(name: string): any;
 declare const process: any;
 const { readFileSync, writeFileSync } = require("node:fs");
@@ -513,10 +514,10 @@ async function verifyActualPixiFullChart(
     runtime: {
       highFrequencyMode: false,
       judgeOffsetFrames: 0,
-      playMode: { kind: "auto-live" as const, resultTransform: "identity" as const },
+      mode: LIVE_AUTO_MODE,
     },
     scoreLifeState: {
-      schemaVersion: 2,
+      schemaVersion: 3,
       sessionId,
       life: {
         initialLife: 1000,
@@ -525,7 +526,7 @@ async function verifyActualPixiFullChart(
         missDamage: -100,
         badDamage: -50,
       },
-      mode: { kind: "auto-live" as const },
+      mode: LIVE_AUTO_MODE,
     },
     rendering: {
       sessionId,

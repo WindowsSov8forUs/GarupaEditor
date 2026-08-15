@@ -1,20 +1,8 @@
 import type { NORMALIZED_SCORE_RULESET_ID } from "../scoring/contracts";
-
-export const ScoreLifeMode = {
-  Ordinary: "ordinary",
-  AutoLive: "auto-live",
-  Practice: "practice",
-} as const;
-
-export type ScoreLifeModeValue = (typeof ScoreLifeMode)[keyof typeof ScoreLifeMode];
-
-export type ScoreLifeModeProfile =
-  | { readonly kind: "ordinary" }
-  | { readonly kind: "practice" }
-  | { readonly kind: "auto-live" };
+import type { SimulatorModeIdentity } from "./inGameCalculatedData";
 
 export interface ScoreLifeStateProfile {
-  readonly schemaVersion: 2;
+  readonly schemaVersion: 3;
   readonly sessionId: string;
   readonly life: {
     readonly initialLife: number;
@@ -23,16 +11,17 @@ export interface ScoreLifeStateProfile {
     readonly missDamage: number;
     readonly badDamage: number;
   };
-  readonly mode: ScoreLifeModeProfile;
+  readonly mode: SimulatorModeIdentity;
 }
 
 export interface ScoreLifeInitializationSnapshot {
   readonly sessionId: string;
-  readonly mode: ScoreLifeModeValue;
+  readonly mode: SimulatorModeIdentity;
   readonly ruleSetId: typeof NORMALIZED_SCORE_RULESET_ID;
   readonly totalScoringUnitCount: number;
   readonly scoreMaximum: number;
   readonly consumedScoringUnitCount: number;
+  readonly timelineRevision: number;
 }
 
 export function deepFreezeScoreLifeProfile(
@@ -41,6 +30,6 @@ export function deepFreezeScoreLifeProfile(
   return Object.freeze({
     ...profile,
     life: Object.freeze({ ...profile.life }),
-    mode: Object.freeze({ ...profile.mode }),
+    mode: profile.mode,
   });
 }

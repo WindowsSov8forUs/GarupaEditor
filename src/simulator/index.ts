@@ -13,7 +13,8 @@ export type {
   SimulatorModuleFinalResult,
   SimulatorModuleLaunchRequest,
   SimulatorModuleLaunchResult,
-  SimulatorPublicPlayMode,
+  SimulatorPublicInputMode,
+  SimulatorPublicSessionMode,
   SimulatorRenderingFidelity,
   SimulatorSessionGameplayData,
 } from "./public";

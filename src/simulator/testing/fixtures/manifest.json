@@ -160,13 +160,6 @@
       "sha256": "8588E6FE5CE15B06A0B4EDEC4862CE47BD82FE618DE39B2AD5CDE9AE8137DDEB"
     },
     {
-      "path": "reverse-snapshots/c07-evidence/artifacts/investigations/initial-practice-seek-state-restore-10-1-4/initial_practice_seek_state_restore_contract.json",
-      "sourceReverseCommit": "cbd042398e1e8aa1255bb2adb89ca14e5d6ca062",
-      "sourcePath": "artifacts/investigations/initial-practice-seek-state-restore-10-1-4/initial_practice_seek_state_restore_contract.json",
-      "bytes": 14712,
-      "sha256": "159D0E44F1510D0DFB6313D4B8298B9759EA67639CC44A0E668B069AD41BB93E"
-    },
-    {
       "path": "reverse-snapshots/c07-evidence/artifacts/investigations/webview2-browser-raster-10-1-4/webview2_browser_raster_contract.json",
       "sourceReverseCommit": "a87cd3a7cbd8b53fdc8695c5ee27af8a5fa6b8b1",
       "sourcePath": "artifacts/investigations/webview2-browser-raster-10-1-4/webview2_browser_raster_contract.json",
@@ -384,6 +377,20 @@
       "sha256": "5B219C8BB3E79F2D9E759EA6D78A480025AE648ED1BA84FF9B49DB6E89401E99"
     },
     {
+      "path": "reverse-snapshots/live-rehearsal/artifacts/investigations/live-rehearsal-runtime-contract-10-1-4/live_rehearsal_runtime_contract.json",
+      "sourceReverseCommit": "d100f96eb4b1bedd9392ca40fdac8183d39eb4df",
+      "sourcePath": "artifacts/investigations/live-rehearsal-runtime-contract-10-1-4/live_rehearsal_runtime_contract.json",
+      "bytes": 18976,
+      "sha256": "445A756E9F87A00D2561629D27ED2B79AA83E395BD49C83A969EB1A1819B7303"
+    },
+    {
+      "path": "reverse-snapshots/live-rehearsal/artifacts/investigations/rehearsal-control-rendering-10-1-4/rehearsal_control_rendering_profile.json",
+      "sourceReverseCommit": "6c0dfb76909d375a91f22e130666c077d57fd9f9",
+      "sourcePath": "artifacts/investigations/rehearsal-control-rendering-10-1-4/rehearsal_control_rendering_profile.json",
+      "bytes": 4805,
+      "sha256": "10472EA08AB872591B5F3AB20BA0A32767A5EE71D1346997767510B6F8E513D9"
+    },
+    {
       "path": "reverse-snapshots/manual-input-judgement/artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/030eab88__NoteLong__WaitState.arm64.tsv",
       "sourceReverseCommit": "c9a4629bdfac248c167a966a92bdb2c45dad87e6",
       "sourcePath": "artifacts/investigations/manual-input-runtime-contract-10-1-4/arm64/030eab88__NoteLong__WaitState.arm64.tsv",
@@ -552,6 +559,13 @@
       "sha256": "25646D696863910173F85A723ECAEE7A6B86D934F80F3ABB39FDD6B9755E2323"
     },
     {
+      "path": "reverse-snapshots/ordinary-rendering-total-reaudit/artifacts/investigations/ordinary-single-rendering-total-reaudit-10-1-4/ordinary_rendering_candidate_fixture.json",
+      "sourceReverseCommit": "6908ddfa8a45721f981e2356a9dde84970313bae",
+      "sourcePath": "artifacts/investigations/ordinary-single-rendering-total-reaudit-10-1-4/ordinary_rendering_candidate_fixture.json",
+      "bytes": 392619,
+      "sha256": "14F904205BF4D8F662274C6B4970E1E1478A649129CBB8502BE033B45DEF7965"
+    },
+    {
       "path": "reverse-snapshots/ordinary-visible-rendering/artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/closure.json",
       "sourceReverseCommit": "f94947d9376d00e90e260bccfe06366f3d87bb2f",
       "sourcePath": "artifacts/investigations/ordinary-visible-rendering-portable-10-1-4/closure.json",
@@ -690,13 +704,6 @@
       "sourcePath": "artifacts/investigations/score-hud-rank-gauge-10-1-4/score_hud_rank_gauge_portable_contract.json",
       "bytes": 23582,
       "sha256": "5FCDED8221C2D71D4AC98AA86F3C567D8C19AB78D8FA7086DAB98A92938CB7FD"
-    },
-    {
-      "path": "reverse-snapshots/ordinary-rendering-total-reaudit/artifacts/investigations/ordinary-single-rendering-total-reaudit-10-1-4/ordinary_rendering_candidate_fixture.json",
-      "sourceReverseCommit": "6908ddfa8a45721f981e2356a9dde84970313bae",
-      "sourcePath": "artifacts/investigations/ordinary-single-rendering-total-reaudit-10-1-4/ordinary_rendering_candidate_fixture.json",
-      "bytes": 392619,
-      "sha256": "14F904205BF4D8F662274C6B4970E1E1478A649129CBB8502BE033B45DEF7965"
     },
     {
       "path": "reverse-snapshots/score-life-state/artifacts/investigations/score-life-state-runtime-contract-10-1-4/closure.json",

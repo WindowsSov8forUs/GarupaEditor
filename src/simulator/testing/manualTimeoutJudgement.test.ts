@@ -1,3 +1,4 @@
+import { LIVE_MANUAL_MODE } from "./modeFixtures";
 import type { SimulatorManualInputGeometryBackend } from "../backends/contracts";
 import {
   AfterNoteType, ButtonType, FrontNoteType, GameNoteType,
@@ -14,7 +15,7 @@ import { NoteLong, NoteSlide } from "../engine/notes/noteTypes";
 import { noteInformation } from "./firstSliceFixtures";
 interface TestCase { readonly name: string; readonly run: () => void }
 const tests: TestCase[] = [];
-const manualMode = new InGameCalculatedData({ kind: "manual" });
+const manualMode = new InGameCalculatedData(LIVE_MANUAL_MODE);
 const deadlineDistance = floatFromBits(0x41a66666);
 const afterDeadlineDistance = floatFromBits(0x41a66667);
 const origin = Object.freeze({ x: Math.fround(0), y: Math.fround(0) });

@@ -13,7 +13,7 @@ import {
 import { getConstructedChartRuntimeMetadata } from "../engine/runtime/chartRuntimeMetadata";
 import {
   InGameCalculatedData,
-  type SimulatorPlayMode,
+  validateSimulatorModeIdentity,
 } from "../engine/data/inGameCalculatedData";
 import {
   copyManualInputPosition,
@@ -148,7 +148,7 @@ class SimulatorEngineHost implements SimulatorEngine {
         "Raw input geometry can be resolved only by an initialized, running manual engine session.",
       );
     }
-    if (managerSnapshot.noteManager.calculatedData.playMode !== "manual") {
+    if (managerSnapshot.noteManager.calculatedData.isAutoPlay) {
       return evidenceRequired(
         "manual-input.resolve-in-auto-live",
         ["D03", "D14", "MJ25"],
@@ -548,12 +548,10 @@ export function createSimulatorEngine(
       "High Frequency must be boolean and the confirmed production judgement-offset range is the signed integer interval [-5, 5].",
     );
   }
-  const playModeValidation = validatePlayMode(input.runtime.playMode);
-  if (playModeValidation.status !== "ok") {
-    return playModeValidation;
-  }
+  const modeValidation = validateSimulatorModeIdentity(input.runtime.mode);
+  if (modeValidation.status !== "ok") return modeValidation;
   const slideNoteManager = new SlideNoteManager();
-  const inGameCalculatedData = new InGameCalculatedData(playModeValidation.value);
+  const inGameCalculatedData = new InGameCalculatedData(modeValidation.value);
   const scoringPlanResult = input.scoreLifeState === undefined
     ? ok(null)
     : createConstructedChartScoringPlan(input.chart);
@@ -563,7 +561,7 @@ export function createSimulatorEngine(
     : ScoreLifeStateManager.create(
         input.scoreLifeState,
         scoringPlanResult.value!,
-        playModeValidation.value.kind,
+        modeValidation.value,
       );
   if (scoreLifeStateResult.status !== "ok") return scoreLifeStateResult;
   const scoreLifeStateManager = scoreLifeStateResult.value;
@@ -606,7 +604,7 @@ export function createSimulatorEngine(
   if (manualJudgementOwner.status !== "ok") {
     return manualJudgementOwner;
   }
-  const inputManager = new InputManager(inGameCalculatedData.playMode);
+  const inputManager = new InputManager(inGameCalculatedData.mode);
   const inputDispatcher = new GamePlayInputDispatcher(noteManager);
   const inputDispatcherRegistration = inputManager.registerDispatcher(inputDispatcher);
   if (inputDispatcherRegistration.status !== "ok") {
@@ -709,36 +707,6 @@ function validateRendererSession(
     );
   }
   return ok(undefined);
-}
-
-function validatePlayMode(
-  value: SimulatorEngineInput["runtime"]["playMode"],
-): SimulatorResult<SimulatorPlayMode> {
-  if (value === null || typeof value !== "object") {
-    return evidenceRequired(
-      "runtime.invalid-play-mode",
-      ["R01", "R02", "R04"],
-      "The runtime requires an explicit manual or Auto Live play-mode object.",
-    );
-  }
-  const kind = value.kind;
-  if (kind === "manual") {
-    return ok(Object.freeze({ kind: "manual" }));
-  }
-  if (
-    kind === "auto-live" &&
-    value.resultTransform === "identity"
-  ) {
-    return ok(Object.freeze({
-      kind: "auto-live",
-      resultTransform: "identity",
-    }));
-  }
-  return evidenceRequired(
-    "runtime.unsupported-play-mode-or-result-transform",
-    ["R01", "R02", "R04"],
-    "Mode 14, debug Force Perfect and active result-transform Skill contexts are outside the closed Auto Live contract.",
-  );
 }
 
 function validateChart(chart: ChartConstructionResult): SimulatorResult<void> {

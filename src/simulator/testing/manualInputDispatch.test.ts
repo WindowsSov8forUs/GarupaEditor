@@ -1,3 +1,4 @@
+import { LIVE_MANUAL_MODE } from "./modeFixtures";
 import {
   ButtonType,
   type ButtonTypeValue,
@@ -31,7 +32,7 @@ interface TestCase {
 }
 
 const tests: TestCase[] = [];
-const manualPlayMode = { kind: "manual" } as const;
+const manualPlayMode = LIVE_MANUAL_MODE;
 const positionA = Object.freeze({ x: Math.fround(580), y: Math.fround(650) });
 const positionB = Object.freeze({ x: Math.fround(940), y: Math.fround(650) });
 

@@ -1,3 +1,4 @@
+import { LIVE_MANUAL_MODE } from "./modeFixtures";
 import {
   ButtonType,
   type ButtonTypeValue,
@@ -32,7 +33,7 @@ interface NormalGraph {
 }
 
 const tests: TestCase[] = [];
-const manualPlayMode = { kind: "manual" } as const;
+const manualPlayMode = LIVE_MANUAL_MODE;
 const touchPosition = Object.freeze({ x: Math.fround(760), y: Math.fround(650) });
 
 function test(name: string, run: () => void): void {

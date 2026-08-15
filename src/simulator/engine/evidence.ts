@@ -86,6 +86,11 @@ export type OrdinaryRenderingReauditEvidenceId =
   | "OSR-GAP-01"
   | `OSR-E${"12340" | "12341" | "12342" | "12343" | "12344"}`;
 
+export type LiveRehearsalEvidenceId =
+  | `LR-E${"01" | "02" | "03" | "04" | "05" | "06" | "07" | "08" | "09" | "10" | "11" | "12" | "13" | "14" | "15" | "16" | "17" | "18" | "19" | "20"}`
+  | `LR-R${"01" | "02" | "03" | "04" | "05"}`
+  | `LR-C${"01" | "02" | "03" | "04"}`;
+
 export type SimulatorEvidenceId =
   | EvidenceId
   | AutoLiveEvidenceId
@@ -94,7 +99,8 @@ export type SimulatorEvidenceId =
   | ResourcePixiRenderingEvidenceId
   | InitialPracticeSeekEvidenceId
   | WebView2BrowserRasterEvidenceId
-  | OrdinaryRenderingReauditEvidenceId;
+  | OrdinaryRenderingReauditEvidenceId
+  | LiveRehearsalEvidenceId;
 
 export interface EvidenceReference {
   readonly id: SimulatorEvidenceId;

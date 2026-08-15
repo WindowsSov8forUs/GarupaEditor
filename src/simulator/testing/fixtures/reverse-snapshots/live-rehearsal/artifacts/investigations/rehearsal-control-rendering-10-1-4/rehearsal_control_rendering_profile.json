@@ -1,0 +1,177 @@
+{
+  "schema_version": 1,
+  "status": "confirmed-current-rehearsal-control-rendering-portable-profile",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "version_name": "10.1.4",
+    "version_code": 230,
+    "abi": "arm64-v8a"
+  },
+  "sources": {
+    "rhythm_game_ui_atlas": {
+      "path": "artifacts/investigations/score-hud-rank-gauge-10-1-4/portable-assets/rhythm-game-ui.png",
+      "bytes": 641969,
+      "sha256": "7CFEC4DABC83BC20E79E21D6AEB13CD9FA77ABE499E5E088A60C41014B96F6B6"
+    },
+    "manual_controls_r1": {
+      "path": "artifacts/investigations/rehearsal-control-rendering-10-1-4/rehearsal-manual-controls-r1.png",
+      "bytes": 959682,
+      "sha256": "3B403AA7822616F7BABEEBE8F6699955B8B2375C549B754E7783FC55B34C4960"
+    },
+    "auto_controls_r1": {
+      "path": "artifacts/investigations/rehearsal-control-rendering-10-1-4/rehearsal-auto-controls-r1.png",
+      "bytes": 922836,
+      "sha256": "8C3FAECACEB6614F99BF08696A4E7F9FC3C2AB15F5E4CD5F0C7390203A012A78"
+    },
+    "manual_after_return_r1": {
+      "path": "artifacts/investigations/rehearsal-control-rendering-10-1-4/rehearsal-manual-after-return-r1.png",
+      "bytes": 946465,
+      "sha256": "67ADA5533CBEA764EEDEC0A986EDC6A9C38806DA21DBF238E20E551591BE201E"
+    },
+    "pause_r1": {
+      "path": "artifacts/investigations/rehearsal-control-rendering-10-1-4/rehearsal-pause-r1.png",
+      "bytes": 658447,
+      "sha256": "24A82FF4203BCC093B4692309FF7C9D8D0A99E2770FE063FE6E3E2623E08E3E6"
+    }
+  },
+  "viewport": {
+    "width": 1600,
+    "height": 720,
+    "origin": "top-left portable Pixi projection"
+  },
+  "controls": {
+    "return_five": {
+      "button_type": 18,
+      "seconds": -5,
+      "label": "巻き戻し",
+      "atlas_alpha_frame": {
+        "x": 912,
+        "y": 924,
+        "width": 97,
+        "height": 99
+      },
+      "visible_bbox": {
+        "x": 101,
+        "y": 319,
+        "width": 82,
+        "height": 82
+      },
+      "center": [
+        142,
+        360
+      ],
+      "hit_region": {
+        "x": 92,
+        "y": 310,
+        "width": 100,
+        "height": 100
+      }
+    },
+    "advance_five": {
+      "button_type": 17,
+      "seconds": 5,
+      "label": "早送り",
+      "atlas_alpha_frame": {
+        "x": 903,
+        "y": 315,
+        "width": 96,
+        "height": 99
+      },
+      "visible_bbox": {
+        "x": 1416,
+        "y": 319,
+        "width": 83,
+        "height": 82
+      },
+      "center": [
+        1457.5,
+        360
+      ],
+      "hit_region": {
+        "x": 1407.5,
+        "y": 310,
+        "width": 100,
+        "height": 100
+      }
+    },
+    "pause": {
+      "center": [
+        1483.5,
+        46
+      ],
+      "visible_bbox": {
+        "x": 1455,
+        "y": 17,
+        "width": 57,
+        "height": 58
+      }
+    },
+    "time_label": {
+      "visible_region": {
+        "x": 1358,
+        "y": 91,
+        "width": 146,
+        "height": 25
+      },
+      "format": "m:ss/m:ss",
+      "color": "#ff3b74",
+      "background": "white-rounded-red-outline"
+    },
+    "demo_badge": {
+      "visible_only_when_demo_play": true,
+      "text": "デモプレイ",
+      "region": {
+        "x": 111,
+        "y": 97,
+        "width": 177,
+        "height": 35
+      }
+    }
+  },
+  "mode_visibility": {
+    "live_manual": false,
+    "live_auto": false,
+    "rehearsal_manual": true,
+    "rehearsal_auto": true,
+    "manual_auto_control_geometry_equal": true
+  },
+  "interaction": {
+    "activation_phase": "touch-began",
+    "touch_moved": "no-op",
+    "touch_ended": "no-op",
+    "overlap_policy": "GameState and isMoveTimeButtonEnabled gate before callback",
+    "move_time_states": [
+      14,
+      15,
+      16
+    ]
+  },
+  "pause_modal": {
+    "buttons_top_to_bottom": [
+      "abort",
+      "retry",
+      "resume"
+    ],
+    "background": "gameplay scene remains visible under dark cover",
+    "rehearsal_retry_available": true,
+    "premium_continue_present": false
+  },
+  "rendering_policy": {
+    "atlas_bytes": "reuse the exact current rhythm-game-ui PNG already promoted for ordinary HUD; no duplicate or fallback texture",
+    "parent": "simulator control overlay above ordinary Note/HUD renderer stage",
+    "particle_stage_order": "particle stage before renderer stage; controls are topmost children of renderer stage",
+    "clock": "engine adjusted music position only; no wall clock",
+    "portable_geometry": "fixed 1600x720 rendered observation",
+    "original_prefab_transform_exact_claimed": false,
+    "gpu_framebuffer_exact_claimed": false
+  },
+  "unknown_fields": [],
+  "blocking_findings": [],
+  "production_authorization": {
+    "portable_control_scene": true,
+    "actual_current_atlas": true,
+    "manual_auto_visibility": true,
+    "fixed_device_exact": false,
+    "main_program_integration": false
+  }
+}

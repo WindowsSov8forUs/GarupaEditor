@@ -1,3 +1,4 @@
+import { LIVE_AUTO_MODE } from "./modeFixtures";
 declare function require(name: string): any;
 declare const process: any;
 
@@ -584,7 +585,7 @@ async function testOuterFrameAndFailure(): Promise<void> {
     runtime: {
       highFrequencyMode: false,
       judgeOffsetFrames: 0,
-      playMode: { kind: "auto-live", resultTransform: "identity" },
+      mode: LIVE_AUTO_MODE,
     },
     particles: { sessionId: "later-failure" },
   }, backends);
@@ -619,7 +620,7 @@ async function testWholeEngineReplay(): Promise<void> {
       runtime: {
         highFrequencyMode: false,
         judgeOffsetFrames: 0,
-        playMode: { kind: "auto-live", resultTransform: "identity" },
+        mode: LIVE_AUTO_MODE,
       },
       particles: { sessionId },
     }, createRecordingSimulatorBackends(undefined, particle));

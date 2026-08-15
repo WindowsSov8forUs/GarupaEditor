@@ -1,5 +1,5 @@
 import type { ButtonTypeValue } from "../chart/types";
-import type { SimulatorPlayMode } from "../data/inGameCalculatedData";
+import type { SimulatorModeIdentity } from "../data/inGameCalculatedData";
 import { GameState, type GameStateValue } from "../data/inGameState";
 import {
   ManualInputResolutionOwner,
@@ -44,7 +44,7 @@ interface PendingManualInputFrame {
 }
 
 export interface InputManagerSnapshot {
-  readonly playMode: "manual" | "auto-live";
+  readonly mode: SimulatorModeIdentity;
   readonly dispatcherRegistered: boolean;
   readonly dispatchOwner: unknown;
   readonly pendingFrame: boolean;
@@ -62,7 +62,7 @@ export class InputManager {
   private lastFrameValue: ManualInputFrameSnapshot | null = null;
   private readonly traceValue: ManualInputFrameSnapshot[] = [];
 
-  constructor(private readonly playMode: SimulatorPlayMode) {}
+  constructor(private readonly mode: SimulatorModeIdentity) {}
 
   initialize(): SimulatorResult<void> {
     return this.resolutionOwner.initialize();
@@ -72,7 +72,7 @@ export class InputManager {
     position: ManualInputPosition,
     buttonOwner: object,
   ): SimulatorResult<ManualInputButtonResolution> {
-    if (this.playMode.kind !== "manual") {
+    if (this.mode.isAutoPlay) {
       return evidenceRequired(
         "input.resolution-in-auto-live",
         ["D03", "D14", "MJ25"],
@@ -111,7 +111,7 @@ export class InputManager {
         "One InputManager owner can stage at most one input frame for an outer update.",
       );
     }
-    if (this.playMode.kind === "auto-live") {
+    if (this.mode.isAutoPlay) {
       if (frame === undefined) {
         return ok(undefined);
       }
@@ -176,7 +176,7 @@ export class InputManager {
   }
 
   execInput(currentGameState: GameStateValue): SimulatorResult<void> {
-    if (this.playMode.kind === "auto-live") {
+    if (this.mode.isAutoPlay) {
       return ok(undefined);
     }
     if (
@@ -227,7 +227,7 @@ export class InputManager {
 
   snapshot(): InputManagerSnapshot {
     return Object.freeze({
-      playMode: this.playMode.kind,
+      mode: this.mode,
       dispatcherRegistered: this.dispatcherValue !== null,
       dispatchOwner: this.dispatcherValue?.snapshot?.() ?? null,
       pendingFrame: this.pendingFrameValue !== null,

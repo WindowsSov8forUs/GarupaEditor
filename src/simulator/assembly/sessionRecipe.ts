@@ -32,19 +32,13 @@ export interface SimulatorSessionRecipe {
   readonly request: SimulatorModuleLaunchRequest;
 }
 
-export type SimulatorRecipeEngineOutputMode =
-  | "immediate"
-  | "deferred-initial-seek";
-
 export interface SimulatorRecipeEngineBuild {
   readonly engine: SimulatorEngine;
-  publishInitialSeekOutputs(): SimulatorAssemblyResult<void>;
 }
 
 export interface SimulatorRecipeEngineBuilder {
   createFreshEngine(
     recipe: SimulatorSessionRecipe,
-    outputMode: SimulatorRecipeEngineOutputMode,
   ): Promise<SimulatorAssemblyResult<SimulatorRecipeEngineBuild>>;
 }
 
@@ -52,20 +46,9 @@ export function createSimulatorSessionRecipe(
   request: SimulatorModuleLaunchRequest,
 ): SimulatorAssemblyResult<SimulatorSessionRecipe> {
   const copied = copyLaunchRequest(request);
-  if (copied.status === "rejected") return copied;
-  const startMilliseconds = copied.value.config.practice.startMilliseconds;
-  if (
-    startMilliseconds !== 0 &&
-    (!copied.value.config.practice.enabled ||
-      !(startMilliseconds / 1000 < copied.value.chartData.bgm.durationSeconds))
-  ) {
-    return rejected(
-      "evidence-required",
-      "simulator.composition.initial-practice-seek-out-of-range",
-      "IPS-P01 accepts a non-zero explicit millisecond target only for enabled practice and strictly inside the explicit chart BGM duration; the recipe never clamps or repairs it.",
-    );
-  }
-  return accepted(Object.freeze({ schemaVersion: 1 as const, request: copied.value }));
+  return copied.status === "rejected"
+    ? copied
+    : accepted(Object.freeze({ schemaVersion: 1 as const, request: copied.value }));
 }
 
 export class RecipeOwnedSessionFactory implements SimulatorOwnedSessionFactory {
@@ -76,13 +59,9 @@ export class RecipeOwnedSessionFactory implements SimulatorOwnedSessionFactory {
   ): Promise<SimulatorAssemblyResult<SimulatorOwnedSession>> {
     const recipe = createSimulatorSessionRecipe(request);
     if (recipe.status === "rejected") return recipe;
-    const targetMilliseconds = recipe.value.request.config.practice.startMilliseconds;
     let initial;
     try {
-      initial = await this.builder.createFreshEngine(
-        recipe.value,
-        targetMilliseconds === 0 ? "immediate" : "deferred-initial-seek",
-      );
+      initial = await this.builder.createFreshEngine(recipe.value);
     } catch {
       return rejected(
         "launch-failed",
@@ -93,7 +72,7 @@ export class RecipeOwnedSessionFactory implements SimulatorOwnedSessionFactory {
     if (initial.status === "rejected") return initial;
     const replay = createPortableReplaySimulatorEngine(initial.value.engine, {
       createFreshEngine: async () => {
-        const fresh = await this.builder.createFreshEngine(recipe.value, "immediate");
+        const fresh = await this.builder.createFreshEngine(recipe.value);
         return fresh.status === "accepted"
           ? ok(fresh.value.engine)
           : evidenceRequired(fresh.failure.capability, [], fresh.failure.boundary);
@@ -103,19 +82,10 @@ export class RecipeOwnedSessionFactory implements SimulatorOwnedSessionFactory {
       initial.value.engine.dispose();
       return fromEngineFailure(replay);
     }
-    if (targetMilliseconds !== 0) {
-      const reconstructed = preRollInitialPracticeSeek(replay.value, targetMilliseconds);
-      if (reconstructed.status !== "ok") {
-        replay.value.dispose();
-        return fromEngineFailure(reconstructed);
-      }
-      const published = initial.value.publishInitialSeekOutputs();
-      if (published.status === "rejected") {
-        replay.value.dispose();
-        return published;
-      }
-    }
-    return accepted(new RecipeOwnedSession(replay.value));
+    return accepted(new RecipeOwnedSession(
+      replay.value,
+      recipe.value.request.config.sessionMode,
+    ));
   }
 }
 
@@ -124,7 +94,10 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
   private state: "running" | "closed" = "running";
   private renderingFidelity: SimulatorRenderingFidelity | null = null;
 
-  constructor(private readonly engine: PortableReplaySimulatorEngine) {}
+  constructor(
+    private readonly engine: PortableReplaySimulatorEngine,
+    private readonly sessionMode: "live" | "rehearsal",
+  ) {}
 
   step(
     deltaTimeSeconds: number,
@@ -144,7 +117,7 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
     const snapshot = this.engine.snapshot();
     if (snapshot.status !== "ok") return rejectedStep(snapshot);
     const record = snapshot.value.managers.scoreLifeState?.record ?? null;
-    if (record?.singleGameOver === true) {
+    if (record?.singleGameOver === true && this.sessionMode === "live") {
       const report = this.finish("game-over", null);
       return Object.freeze({ status: "closed" as const, report });
     }
@@ -286,16 +259,12 @@ function copyLaunchRequest(
     typeof request.chartData.bmsText !== "string" || request.chartData.bmsText.length === 0 ||
     request.config === null || typeof request.config !== "object" ||
     Object.keys(request.config).sort().join(",") !==
-      "audio,highFrequencyMode,judgeOffsetFrames,playMode,practice,visual" ||
-    (request.config.playMode !== "manual" && request.config.playMode !== "auto-live") ||
+      "audio,highFrequencyMode,inputMode,judgeOffsetFrames,sessionMode,visual" ||
+    (request.config.sessionMode !== "live" && request.config.sessionMode !== "rehearsal") ||
+    (request.config.inputMode !== "manual" && request.config.inputMode !== "auto") ||
     typeof request.config.highFrequencyMode !== "boolean" ||
     !Number.isInteger(request.config.judgeOffsetFrames) ||
     request.config.judgeOffsetFrames < -5 || request.config.judgeOffsetFrames > 5 ||
-    request.config.practice === null || typeof request.config.practice !== "object" ||
-    Object.keys(request.config.practice).sort().join(",") !== "enabled,startMilliseconds" ||
-    typeof request.config.practice.enabled !== "boolean" ||
-    !Number.isSafeInteger(request.config.practice.startMilliseconds) ||
-    request.config.practice.startMilliseconds < 0 ||
     request.config.visual === null || typeof request.config.visual !== "object" ||
     Object.keys(request.config.visual).sort().join(",") !==
       "habahiroMeshWidthSetting,highAspectRatio,noteSize,specificSpeed" ||
@@ -312,7 +281,7 @@ function copyLaunchRequest(
     return rejected(
       "evidence-required",
       "simulator.recipe.invalid-public-request",
-      "The launch recipe accepts only exact chart/config/gameplay keys, explicit modes, confirmed judgement offset, non-negative practice seek, evidence-bounded Float32 visual settings and finite unit gains.",
+      "The launch recipe accepts only exact chart/config/gameplay keys, independent Live/Rehearsal and Manual/Auto axes, confirmed judgement offset, evidence-bounded Float32 visual settings and finite unit gains.",
     );
   }
   const bgm = request.chartData.bgm;
@@ -340,70 +309,14 @@ function copyLaunchRequest(
       gameplay,
     }),
     config: Object.freeze({
-      playMode: request.config.playMode,
+      sessionMode: request.config.sessionMode,
+      inputMode: request.config.inputMode,
       highFrequencyMode: request.config.highFrequencyMode,
       judgeOffsetFrames: request.config.judgeOffsetFrames,
-      practice: Object.freeze({ ...request.config.practice }),
       visual: Object.freeze({ ...request.config.visual }),
       audio: Object.freeze({ ...request.config.audio }),
     }),
   }));
-}
-
-const INITIAL_SEEK_MAX_DELTA_SECONDS = Math.fround(0.01666666753590107);
-
-export function preRollInitialPracticeSeek(
-  engine: SimulatorEngine,
-  targetMilliseconds: number,
-): SimulatorResult<void> {
-  if (!Number.isSafeInteger(targetMilliseconds) || targetMilliseconds <= 0) {
-    return evidenceRequired(
-      "simulator.recipe.invalid-initial-seek-target",
-      ["IPS-P01", "IPS-P02"],
-      "The non-zero pre-roll owner accepts one positive safe-integer millisecond target already validated strictly inside the explicit BGM duration.",
-    );
-  }
-  const targetSeconds = Math.fround(targetMilliseconds / 1000);
-  if (!Number.isFinite(targetSeconds) || targetSeconds <= 0) {
-    return evidenceRequired(
-      "simulator.recipe.initial-seek-target-float32-overflow",
-      ["IPS-P01", "IPS-P02"],
-      "The explicit millisecond target must have one finite positive Float32 seconds representation; no alternate precision route is available.",
-    );
-  }
-  let currentSeconds = Math.fround(0);
-  while (currentSeconds < targetSeconds) {
-    const remaining = Math.fround(targetSeconds - currentSeconds);
-    const deltaTimeSeconds = Math.fround(Math.min(
-      remaining,
-      INITIAL_SEEK_MAX_DELTA_SECONDS,
-    ));
-    if (!(deltaTimeSeconds > 0) || deltaTimeSeconds > INITIAL_SEEK_MAX_DELTA_SECONDS) {
-      return evidenceRequired(
-        "simulator.recipe.initial-seek-cadence-did-not-converge",
-        ["IPS-F02", "IPS-P02"],
-        "Initial practice reconstruction must converge through positive Float32 deltas no larger than 0x3C888889 and never jumps or clamps the clock.",
-      );
-    }
-    const stepped = engine.step(deltaTimeSeconds);
-    if (stepped.status !== "ok") return stepped;
-    const nextSeconds = Math.fround(currentSeconds + deltaTimeSeconds);
-    if (!(nextSeconds > currentSeconds)) {
-      return evidenceRequired(
-        "simulator.recipe.initial-seek-float32-progress-stalled",
-        ["IPS-F02", "IPS-P02"],
-        "Every bounded pre-roll step must advance the Float32 reconstruction cursor; stalled precision is not repaired with a direct clock mutation.",
-      );
-    }
-    currentSeconds = nextSeconds;
-  }
-  return Object.is(currentSeconds, targetSeconds)
-    ? ok(undefined)
-    : evidenceRequired(
-        "simulator.recipe.initial-seek-final-remainder-mismatch",
-        ["IPS-P02"],
-        "The exact final Float32 remainder must land on the requested target representation without overshoot or clamp.",
-      );
 }
 
 function renderingFidelityFromSnapshot(

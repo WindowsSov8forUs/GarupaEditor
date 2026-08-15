@@ -34,11 +34,6 @@ interface PendingWebAudioBatch {
   readonly commands: readonly AudioCommand[];
 }
 
-export interface WebAudioInitialSeekPublication {
-  readonly suppressPhysicalOutput: true;
-  readonly seekMilliseconds: number;
-}
-
 export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
   readonly id = "web-audio";
 
@@ -50,15 +45,8 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
   private seGain: GainNode | null = null;
   private contextListenerInstalled = false;
   private scheduledPauseOffset = 0;
-  private physicalOutputState: "live" | "suppressed" | "published";
-  private readonly suppressedHoldOwners = new Set<string>();
 
-  constructor(
-    private readonly context: AudioContext,
-    private readonly initialSeekPublication: WebAudioInitialSeekPublication | null = null,
-  ) {
-    this.physicalOutputState = initialSeekPublication === null ? "live" : "suppressed";
-  }
+  constructor(private readonly context: AudioContext) {}
 
   async prepare(
     sessionId: string,
@@ -73,16 +61,6 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
       return reject(
         "audio.web.prepare.invalid-state",
         "A Web Audio backend prepares exactly once and never auto-recreates its context.",
-      );
-    }
-    if (
-      this.initialSeekPublication !== null &&
-      (!Number.isSafeInteger(this.initialSeekPublication.seekMilliseconds) ||
-        this.initialSeekPublication.seekMilliseconds <= 0)
-    ) {
-      return reject(
-        "audio.web.invalid-initial-seek-publication",
-        "Deferred physical publication requires one positive safe-integer millisecond target and never infers or clamps it.",
       );
     }
     if (this.context === null || typeof this.context !== "object" || this.context.state !== "running") {
@@ -217,7 +195,7 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
     if (committed.status !== "accepted") return committed;
     this.pending = null;
     try {
-      if (this.physicalOutputState !== "suppressed") this.applyCommands(pending.commands);
+      this.applyCommands(pending.commands);
       return audioAccepted(undefined);
     } catch {
       return this.recording.recordTerminalFault(
@@ -252,62 +230,7 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
     const semantic = this.recording.snapshot().semantic;
     if (semantic.bgmCue === null) return audioAccepted("not-loaded");
     if (semantic.bgmPaused || semantic.allPaused) return audioAccepted("paused");
-    if (this.physicalOutputState === "suppressed") return audioAccepted("playing");
     return audioAccepted(this.voices.has("bgm") ? "playing" : "ended");
-  }
-
-  publishInitialSeekOutput(): AudioOperationResult<void> {
-    const context = this.requireRunningContext<void>();
-    if (context !== null) return context;
-    if (this.physicalOutputState !== "suppressed" || this.initialSeekPublication === null) {
-      return reject(
-        "audio.web.initial-seek-publication-not-pending",
-        "The physical initial-seek BGM publication is one-use and exists only on a backend explicitly prepared in suppressed mode.",
-      );
-    }
-    const snapshot = this.recording.snapshot();
-    const bgmLoads = snapshot.commands.filter(
-      (command): command is Extract<AudioCommand, { kind: "bgm.load" }> => command.kind === "bgm.load",
-    );
-    if (
-      snapshot.state !== "ready" || snapshot.semantic.bgmCue === null ||
-      snapshot.semantic.gain === null || snapshot.semantic.bgmPaused ||
-      snapshot.semantic.allPaused || bgmLoads.length !== 1 || bgmLoads[0]!.seek_ms !== 0
-    ) {
-      return reject(
-        "audio.web.invalid-suppressed-initial-seek-state",
-        "IPS-P04 publishes only one zero-origin reconstructed, running BGM owner; malformed, paused or already-seeked semantic state cannot fall back to physical output.",
-      );
-    }
-    try {
-      this.setCategoryGain(
-        this.bgmGain!,
-        audioFloat32FromBits(snapshot.semantic.gain.bgmBits)!,
-      );
-      this.setCategoryGain(
-        this.seGain!,
-        audioFloat32FromBits(snapshot.semantic.gain.seBits)!,
-      );
-      for (const hold of snapshot.semantic.holds) {
-        this.suppressedHoldOwners.add(hold.ownerKey);
-      }
-      this.createVoice(
-        "bgm",
-        snapshot.semantic.bgmCue,
-        "bgm",
-        1,
-        this.initialSeekPublication.seekMilliseconds / 1000,
-        null,
-        null,
-      );
-      this.physicalOutputState = "published";
-      return audioAccepted(undefined);
-    } catch {
-      return this.recording.recordTerminalFault(
-        "audio.web.initial-seek-publication-threw",
-        "The one physical BGM publication after complete state reconstruction is terminal on synchronous AudioNode failure and has no replayed-SE or direct-seek fallback.",
-      );
-    }
   }
 
   recordTerminalFault(capability: string, boundary: string): AudioOperationResult<never> {
@@ -334,7 +257,6 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
     };
     for (const voice of this.voices.values()) release(() => this.releaseVoice(voice));
     this.voices.clear();
-    this.suppressedHoldOwners.clear();
     this.decodedByCue.clear();
     release(() => this.bgmGain?.disconnect());
     release(() => this.seGain?.disconnect());
@@ -389,7 +311,6 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
           );
           break;
         case "hold.start-loop": {
-          this.suppressedHoldOwners.delete(command.owner_key);
           const resource = CURRENT_LOOP_RESOURCE;
           this.createVoice(
             `hold:${command.owner_key}`,
@@ -403,18 +324,13 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
           break;
         }
         case "hold.fade":
-          if (this.suppressedHoldOwners.delete(command.owner_key)) break;
           this.fadeHold(command.owner_key, command.target_bits, command.duration_bits);
           break;
         case "hold.pause":
-          if (!this.suppressedHoldOwners.has(command.owner_key)) {
-            this.pauseVoice(this.voices.get(`hold:${command.owner_key}`));
-          }
+          this.pauseVoice(this.voices.get(`hold:${command.owner_key}`));
           break;
         case "hold.resume":
-          if (!this.suppressedHoldOwners.has(command.owner_key)) {
-            this.resumeVoice(this.voices.get(`hold:${command.owner_key}`));
-          }
+          this.resumeVoice(this.voices.get(`hold:${command.owner_key}`));
           break;
       }
     }

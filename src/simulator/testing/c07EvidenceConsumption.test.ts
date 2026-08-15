@@ -2,24 +2,16 @@ declare function require(name: string): any;
 declare const process: any;
 
 const assert = require("node:assert/strict");
-const { createHash } = require("node:crypto");
-const { Buffer } = require("node:buffer");
 const { readFileSync } = require("node:fs");
 const { join } = require("node:path");
 
 import { BrowserPixiTextureDecoder } from "../backends/pixi/browserPixiTextureDecoder";
-import { preRollInitialPracticeSeek } from "../assembly/sessionRecipe";
 import { createSimulatorModuleCapabilitySummary } from "../public/capabilities";
-import { ok } from "../engine/evidence";
 
 const root = join(
   process.cwd(),
   "src/simulator/testing/fixtures/reverse-snapshots/c07-evidence/artifacts/investigations",
 );
-const initialSeek = JSON.parse(readFileSync(join(
-  root,
-  "initial-practice-seek-state-restore-10-1-4/initial_practice_seek_state_restore_contract.json",
-), "utf8"));
 const browser = JSON.parse(readFileSync(join(
   root,
   "webview2-browser-raster-10-1-4/webview2_browser_raster_contract.json",
@@ -30,42 +22,10 @@ const fixedDevice = JSON.parse(readFileSync(join(
 ), "utf8"));
 
 async function main(): Promise<void> {
-  testInitialSeekCadenceMatrix();
   await testBrowserDecoderBoundary();
   testBrowserActualObservationConsumption();
   testFixedDeviceAndCapabilityReceipt();
-  console.log("C07 evidence consumption passed: initial-seek cadence, browser route, fixed-device boundary, receipts");
-}
-
-function testInitialSeekCadenceMatrix(): void {
-  assert.equal(initialSeek.status, "confirmed-current-initial-practice-seek-portable-state-restore-policy");
-  assert.equal(initialSeek.productionBoundary.functionalRouteClosedPortable, true);
-  assert.equal(initialSeek.productionBoundary.audioOnlySeekAllowed, false);
-  assert.equal(initialSeek.productionBoundary.directClockJumpAllowed, false);
-  assert.equal(initialSeek.productionBoundary.implicitClampAllowed, false);
-  for (const expected of initialSeek.cadence.oracleCases) {
-    const deltas: number[] = [];
-    let adjusted = Math.fround(0);
-    const engine = {
-      step(deltaTimeSeconds: number) {
-        deltas.push(deltaTimeSeconds);
-        adjusted = Math.fround(adjusted + deltaTimeSeconds);
-        return ok(undefined);
-      },
-    } as any;
-    const result = preRollInitialPracticeSeek(engine, expected.targetMilliseconds);
-    assert.equal(result.status, "ok", `IPS cadence ${expected.targetMilliseconds}ms`);
-    assert.equal(deltas.length, expected.stepCount);
-    assert.equal(float32Bytes(adjusted), expected.finalSecondsBits);
-    assert.equal(float32Bytes(deltas[0]!), expected.firstDeltaBits);
-    assert.equal(float32Bytes(deltas[deltas.length - 1]!), expected.lastDeltaBits);
-    assert.equal(
-      createHash("sha256").update(Buffer.concat(deltas.map(float32Buffer))).digest("hex").toUpperCase(),
-      expected.deltaBitsSha256,
-    );
-    assert.ok(deltas.every((delta) => delta > 0 && delta <= Math.fround(initialSeek.cadence.maxDeltaSeconds)));
-  }
-  assert.equal(preRollInitialPracticeSeek({} as any, 0).status, "evidence-required");
+  console.log("C07 evidence consumption passed: browser route, fixed-device boundary, receipts");
 }
 
 async function testBrowserDecoderBoundary(): Promise<void> {
@@ -169,7 +129,9 @@ function testFixedDeviceAndCapabilityReceipt(): void {
   );
 
   const receipt = createSimulatorModuleCapabilitySummary("ordinary-current-portable");
-  assert.equal(receipt.nonzeroInitialPracticeSeek, "closed-portable");
+  assert.equal(receipt.liveRehearsalFourModeMatrix, "closed-portable");
+  assert.equal(receipt.rehearsalMoveTimeControls, "closed-portable");
+  assert.equal(receipt.nonzeroInitialPracticeSeek, "excluded");
   assert.equal(receipt.button07SceneMapping, "closed-original-unreachable");
   assert.equal(receipt.browserDecodeRaster, "closed-portable");
   assert.equal(receipt.fixedDeviceExact, "open-objective-environment-blocked");
@@ -177,15 +139,6 @@ function testFixedDeviceAndCapabilityReceipt(): void {
   assert.equal(receipt.mainProgramIntegration, "unauthorized-stage-9");
 }
 
-function float32Buffer(value: number): Uint8Array {
-  const buffer = Buffer.alloc(4);
-  buffer.writeFloatLE(value, 0);
-  return buffer;
-}
-
-function float32Bytes(value: number): string {
-  return Buffer.from(float32Buffer(value)).toString("hex").toUpperCase();
-}
 
 void main().catch((error) => {
   console.error(error);

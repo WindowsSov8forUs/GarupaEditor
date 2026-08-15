@@ -3,7 +3,7 @@ import type {
   SimulatorBackendTraceEvent,
 } from "../backends/contracts";
 import type { ChartConstructionResult } from "../engine/chart/types";
-import type { SimulatorPlayMode } from "../engine/data/inGameCalculatedData";
+import type { SimulatorModeIdentity } from "../engine/data/inGameCalculatedData";
 import type {
   ManualInputButtonResolution,
   ManualInputFrame,
@@ -40,7 +40,7 @@ export interface SimulatorEngineInput {
   readonly runtime: {
     readonly highFrequencyMode: boolean;
     readonly judgeOffsetFrames: number;
-    readonly playMode: SimulatorPlayMode;
+    readonly mode: SimulatorModeIdentity;
   };
   readonly scoreLifeState?: ScoreLifeStateProfile;
   readonly rendering?: SimulatorRenderingSessionInput;

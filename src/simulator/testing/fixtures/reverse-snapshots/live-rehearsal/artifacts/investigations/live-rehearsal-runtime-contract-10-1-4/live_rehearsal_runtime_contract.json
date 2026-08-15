@@ -1,0 +1,535 @@
+{
+  "schema_version": 1,
+  "status": "confirmed-current-four-mode-and-rehearsal-movetime-portable-contract",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "version_name": "10.1.4",
+    "version_code": 230,
+    "abi": "arm64-v8a"
+  },
+  "sources": {
+    "libil2cpp": {
+      "path": "samples/jp.co.craftegg.band/10.1.4_230/extracted/libil2cpp.so",
+      "bytes": 119816840,
+      "sha256": "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F"
+    },
+    "dump": {
+      "path": "static/il2cpp/dump-10.1.4_230/dump.cs",
+      "bytes": 53099861,
+      "sha256": "4AC4ACC5981D0010B3D6A69482C37C1175339458246BC4A5878CF30F694E884B"
+    },
+    "current_move_time_static": {
+      "path": "artifacts/investigations/initial-practice-seek-state-restore-10-1-4/initial_practice_seek_state_restore_contract.json",
+      "bytes": 14712,
+      "sha256": "159D0E44F1510D0DFB6313D4B8298B9759EA67639CC44A0E668B069AD41BB93E"
+    },
+    "prior_rehearsal_return_r1": {
+      "path": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/score_life_rehearsal_pause_return_time_oracle.json",
+      "bytes": 11546,
+      "sha256": "E1752870E8B2694728EBDF71A474EF2E846D8DD56D1C15AE27968350861347AC"
+    },
+    "live_manual_initialization_r1": {
+      "path": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/score_life_initialization_profile_oracle.json",
+      "bytes": 5388,
+      "sha256": "E55E4F725DB8877D928AE850EC130617AF5DBA9DF8151DA29431276E0C6C7E39"
+    },
+    "live_auto_r1": {
+      "path": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/score_life_ordinary_auto_skill_effect_profile_oracle.json",
+      "bytes": 12733,
+      "sha256": "95D44019A20B79D743EB9F4388575115D17B7EB08A6A24DAFC77030E255FDA17"
+    },
+    "audio_route_plan": {
+      "path": "artifacts/investigations/audio-runtime-evidence-10-1-4/audio_runtime_route_plan.json",
+      "bytes": 12367,
+      "sha256": "F5BEB8244DF3CFDD55BFC0AF6B97DA745BC217DBE7BD4905F21CACA9271C3EBD"
+    },
+    "rehearsal_manual_r1": {
+      "path": "artifacts/investigations/live-rehearsal-runtime-contract-10-1-4/runtime/rehearsal-manual-r1.trace.json.gz",
+      "bytes": 844,
+      "sha256": "6AF5FC098EAB257CD3FE2C9D761201847A244DAA1BCAFE983977936713775E54"
+    },
+    "rehearsal_auto_r1": {
+      "path": "artifacts/investigations/live-rehearsal-runtime-contract-10-1-4/runtime/rehearsal-auto-r1.trace.json.gz",
+      "bytes": 773,
+      "sha256": "C2B562320109D2B12827009356336B8AFD82E68D65F733FA373036BF2BD6B68B"
+    }
+  },
+  "methods": [
+    {
+      "evidence_id": "LR-E01",
+      "owner": "InGameCalculatedData",
+      "method": "get_IsAutoPlay",
+      "rva": "0x32F0FAC",
+      "end_rva": "0x32F0FCC",
+      "code_bytes": 32,
+      "code_sha256": "D138B1C9102D853A5907B0FB0040560B182DCE866BCBBDD01B3CA4370D30B17E",
+      "arm64": "arm64/032f0fac__InGameCalculatedData__get_IsAutoPlay.arm64.tsv",
+      "arm64_bytes": 282,
+      "arm64_sha256": "E2AD9F0AAD3FE884334EA580173B3BC1B00C1D20258DE01E45FAD7734181ED8E"
+    },
+    {
+      "evidence_id": "LR-E02",
+      "owner": "RhythmGameStartData",
+      "method": "get_IsEnablePractice",
+      "rva": "0x341081C",
+      "end_rva": "0x341082C",
+      "code_bytes": 16,
+      "code_sha256": "8C3350A542F52505C6303DEB473849D2E340CC8DC734339CA566B27AEB1A6678",
+      "arm64": "arm64/0341081c__RhythmGameStartData__get_IsEnablePractice.arm64.tsv",
+      "arm64_bytes": 149,
+      "arm64_sha256": "C72C4A2505D7087F5B71E3FF1FB37EE875D26DF07811F8B7E4B8C5284418665A"
+    },
+    {
+      "evidence_id": "LR-E03",
+      "owner": "InGameMoveTimeMenu",
+      "method": "Init",
+      "rva": "0x3A6F3BC",
+      "end_rva": "0x3A6F5C0",
+      "code_bytes": 516,
+      "code_sha256": "D1B25BCCB6B17360BD11F3D133622FE57093CFE2246F001959571DF9A170095C",
+      "arm64": "arm64/03a6f3bc__InGameMoveTimeMenu__Init.arm64.tsv",
+      "arm64_bytes": 4637,
+      "arm64_sha256": "B13ED1D209A9967FB58BED98B02372662FB203210DF76FDE740B978FBAD74B30"
+    },
+    {
+      "evidence_id": "LR-E04",
+      "owner": "InGameMoveTimeMenu",
+      "method": "onPressAdvanceTime5SecButton",
+      "rva": "0x3A6F5C0",
+      "end_rva": "0x3A6F5E8",
+      "code_bytes": 40,
+      "code_sha256": "42E927102E3346056429BDCA4E00265CDC7CCFA89EBEB5CE4E91D3F37F929408",
+      "arm64": "arm64/03a6f5c0__InGameMoveTimeMenu__onPressAdvanceTime5SecButton.arm64.tsv",
+      "arm64_bytes": 390,
+      "arm64_sha256": "55EEA87CE80F65539EBC9DB85991ED15F620E3D28E0F686C52EEA443BEDA60AF"
+    },
+    {
+      "evidence_id": "LR-E05",
+      "owner": "InGameMoveTimeMenu",
+      "method": "onPressReturnTime5SecButton",
+      "rva": "0x3A6F5E8",
+      "end_rva": "0x3A6F610",
+      "code_bytes": 40,
+      "code_sha256": "2037190692E0E7E65F3934F23DC6A9D02C47B9BD954E073D5D68C1B215F1060F",
+      "arm64": "arm64/03a6f5e8__InGameMoveTimeMenu__onPressReturnTime5SecButton.arm64.tsv",
+      "arm64_bytes": 391,
+      "arm64_sha256": "83A282EDBAD032F103BEF935C534CED7BA3CC95AED1BDC08A84DA7C6B3C955DD"
+    },
+    {
+      "evidence_id": "LR-E06",
+      "owner": "MoveTimeButton",
+      "method": "ExecTouchBegan",
+      "rva": "0x387E9B8",
+      "end_rva": "0x387E9D4",
+      "code_bytes": 28,
+      "code_sha256": "FD7F1C48AEAD1AE123E759191BB3ACF87495400637E03CD930252F954DF08617",
+      "arm64": "arm64/0387e9b8__MoveTimeButton__ExecTouchBegan.arm64.tsv",
+      "arm64_bytes": 268,
+      "arm64_sha256": "DA53C3CF6DE0B4AFF8B6D35FCA48A8F9E9AEE66793EE764C9F74CAEAE359F768"
+    },
+    {
+      "evidence_id": "LR-E07",
+      "owner": "MoveTimeButton",
+      "method": "ExecTouchMoved",
+      "rva": "0x387E9D4",
+      "end_rva": "0x387E9D8",
+      "code_bytes": 4,
+      "code_sha256": "110F46B5B35C069160560C6AD6786F647DD44E8760A52A46FC22DBBCD7630B91",
+      "arm64": "arm64/0387e9d4__MoveTimeButton__ExecTouchMoved.arm64.tsv",
+      "arm64_bytes": 49,
+      "arm64_sha256": "81A98CAD11C8B61D933970E11712F62A2186AAF0F427919B7BC486F531558404"
+    },
+    {
+      "evidence_id": "LR-E08",
+      "owner": "MoveTimeButton",
+      "method": "ExecTouchEnded",
+      "rva": "0x387E9D8",
+      "end_rva": "0x387E9DC",
+      "code_bytes": 4,
+      "code_sha256": "110F46B5B35C069160560C6AD6786F647DD44E8760A52A46FC22DBBCD7630B91",
+      "arm64": "arm64/0387e9d8__MoveTimeButton__ExecTouchEnded.arm64.tsv",
+      "arm64_bytes": 49,
+      "arm64_sha256": "DE2C33916F75A749AA37A4E870DA419563302B5EEDDB1B75378CBCF86D98E56B"
+    },
+    {
+      "evidence_id": "LR-E09",
+      "owner": "ButtonManager",
+      "method": "GetButton",
+      "rva": "0x3882170",
+      "end_rva": "0x38822BC",
+      "code_bytes": 332,
+      "code_sha256": "B5E91841928E7341EF59274F032D9E5C620D1398C5EDA3264B76141119FF7165",
+      "arm64": "arm64/03882170__ButtonManager__GetButton.arm64.tsv",
+      "arm64_bytes": 3092,
+      "arm64_sha256": "5805E106A09CF84EE1E5E23429835BC3A5F5C52D8CD47DCEC1BC7E46595B5F66"
+    },
+    {
+      "evidence_id": "LR-E10",
+      "owner": "ButtonManager",
+      "method": "getMoveTimeButton",
+      "rva": "0x38823B0",
+      "end_rva": "0x38824E0",
+      "code_bytes": 304,
+      "code_sha256": "6147D822D5027D55389430AE45DAD3EBC7ABFA2F3C31662728B2CFFFD2A6A951",
+      "arm64": "arm64/038823b0__ButtonManager__getMoveTimeButton.arm64.tsv",
+      "arm64_bytes": 2848,
+      "arm64_sha256": "0CFA21C5319519BB4C04ED12E9752DADD59AC17AB71B50C3950715C30B69733F"
+    },
+    {
+      "evidence_id": "LR-E11",
+      "owner": "InGameManager",
+      "method": "isMoveTimeButtonEnabled",
+      "rva": "0x32FB858",
+      "end_rva": "0x32FB8A4",
+      "code_bytes": 76,
+      "code_sha256": "E3BA13A6835ABDF56E4A07ABB2DC5BA91E32397EB94F5708E1150D1DBD4F6B5B",
+      "arm64": "arm64/032fb858__InGameManager__isMoveTimeButtonEnabled.arm64.tsv",
+      "arm64_bytes": 705,
+      "arm64_sha256": "047B628B032DDFC51B314734EE6D8AFB51478E03331ABAED6B1180232E6E54E3"
+    },
+    {
+      "evidence_id": "LR-E12",
+      "owner": "InGameMoveTimeController",
+      "method": "updateTimeLabel",
+      "rva": "0x3300B54",
+      "end_rva": "0x3300C5C",
+      "code_bytes": 264,
+      "code_sha256": "0FAD6DB6DB203061B6AEC876E31D57DC94E4DF1822EB71C59A8929518E49B697",
+      "arm64": "arm64/03300b54__InGameMoveTimeController__updateTimeLabel.arm64.tsv",
+      "arm64_bytes": 2441,
+      "arm64_sha256": "3AE8D0D822A7BB0079F335DE8F58E8220C37F6C7F67D3C20E00183FCDF325D9F"
+    },
+    {
+      "evidence_id": "LR-E13",
+      "owner": "InGameMoveTimeController",
+      "method": "moveTime",
+      "rva": "0x3300C5C",
+      "end_rva": "0x3300D0C",
+      "code_bytes": 176,
+      "code_sha256": "8C91EC4F6C02984396088C147A061CCF56460970240AFF1D03DBD6BB8B7D79B1",
+      "arm64": "arm64/03300c5c__InGameMoveTimeController__moveTime.arm64.tsv",
+      "arm64_bytes": 1642,
+      "arm64_sha256": "9F2B945FF02919EA1F5565642982B82F264793513B39C6FC74C8E4D7A358E571"
+    },
+    {
+      "evidence_id": "LR-E14",
+      "owner": "InGameMoveTimeController",
+      "method": "advanceTime",
+      "rva": "0x3300D0C",
+      "end_rva": "0x3300E08",
+      "code_bytes": 252,
+      "code_sha256": "6D21F2970D6087047E5DAC3035A03084608D72AD63838CE28CB9D650819D15CB",
+      "arm64": "arm64/03300d0c__InGameMoveTimeController__advanceTime.arm64.tsv",
+      "arm64_bytes": 2252,
+      "arm64_sha256": "A50C95EBF1F0ECD945B00161021F82693C340B78311CB0E560448F481B22EAD9"
+    },
+    {
+      "evidence_id": "LR-E15",
+      "owner": "InGameMoveTimeController",
+      "method": "returnTime",
+      "rva": "0x3300E08",
+      "end_rva": "0x3300F54",
+      "code_bytes": 332,
+      "code_sha256": "7CBAF54F5158038BB648AED15067D0D43DAF9B4F6B2486F3BFD342E6C60B3989",
+      "arm64": "arm64/03300e08__InGameMoveTimeController__returnTime.arm64.tsv",
+      "arm64_bytes": 3060,
+      "arm64_sha256": "A91D15D8E03C5185264AD35ED4273A5143121B08E68DAF71BFBB16EA15CA2004"
+    },
+    {
+      "evidence_id": "LR-E16",
+      "owner": "InGameMoveTimeController.moveTimeToStartMusic",
+      "method": "MoveNext",
+      "rva": "0x330101C",
+      "end_rva": "0x33013C8",
+      "code_bytes": 940,
+      "code_sha256": "9ED69803D84FCC32A1207A1AA397C4194AB7163812FCB9380C097920B3339D65",
+      "arm64": "arm64/0330101c__InGameMoveTimeController_moveTimeToStartMusic__MoveNext.arm64.tsv",
+      "arm64_bytes": 8535,
+      "arm64_sha256": "1A2B9C5FE80266619BF92C10812C15FFE52F4FE854DB57CB8528B53AFC2180CA"
+    },
+    {
+      "evidence_id": "LR-E17",
+      "owner": "InGameManager",
+      "method": "onAdvanceTime",
+      "rva": "0x32FDB6C",
+      "end_rva": "0x32FDBE4",
+      "code_bytes": 120,
+      "code_sha256": "4FB7958A757D2C194513C4C43CD55C80F8192F4A16AD8F96AA6D597E7145FC54",
+      "arm64": "arm64/032fdb6c__InGameManager__onAdvanceTime.arm64.tsv",
+      "arm64_bytes": 1106,
+      "arm64_sha256": "E75D1586C8B0BA2CD8D35384C02D38969506A72D507EF6856AAF8586AE5C6BEB"
+    },
+    {
+      "evidence_id": "LR-E18",
+      "owner": "InGameManager",
+      "method": "onResetOnMovedTime",
+      "rva": "0x32FDB38",
+      "end_rva": "0x32FDB6C",
+      "code_bytes": 52,
+      "code_sha256": "25B248CBA0FFB75284CCCFABBA7D04B383B29A4FBEFD9FADC38D0BADEF0637D8",
+      "arm64": "arm64/032fdb38__InGameManager__onResetOnMovedTime.arm64.tsv",
+      "arm64_bytes": 481,
+      "arm64_sha256": "B1E52F54EAC3949D63A6FC428D9C5F8A9D5A800B13AC8449111676173E534FC3"
+    },
+    {
+      "evidence_id": "LR-E19",
+      "owner": "InGameManager",
+      "method": "onResumeFromMoveTime",
+      "rva": "0x32FDCAC",
+      "end_rva": "0x32FDCCC",
+      "code_bytes": 32,
+      "code_sha256": "5E9143FE76517FAE8F11EB34ACB4F58D8F6FBBD831934A047FD0E1712DC39002",
+      "arm64": "arm64/032fdcac__InGameManager__onResumeFromMoveTime.arm64.tsv",
+      "arm64_bytes": 322,
+      "arm64_sha256": "801186CDA910DEF64B4BF5707BC6D577FEC384E24E812EA9360F239739747377"
+    },
+    {
+      "evidence_id": "LR-E20",
+      "owner": "InGameRecord",
+      "method": "IncrementMoveTimeCount",
+      "rva": "0x32F1E84",
+      "end_rva": "0x32F1E94",
+      "code_bytes": 16,
+      "code_sha256": "5C9375FDA1D8D131DE6A2D85B46BA398AEB339F6AAA3763F203BF1E5FCFF4952",
+      "arm64": "arm64/032f1e84__InGameRecord__IncrementMoveTimeCount.arm64.tsv",
+      "arm64_bytes": 161,
+      "arm64_sha256": "2257DAA409985AEC0D77A55EF5D02EA9D63F3314CA06FFFD6ADE6FF849C15950"
+    }
+  ],
+  "mode_identity": {
+    "derivation": "session identity and input identity are independent; Practice selects InGameMode/IsEnablePractice while Auto input is IsDemoPlayMode for Rehearsal and IsAutoLive for Live; IsAutoPlay is their OR",
+    "rows": [
+      {
+        "session_mode": "live",
+        "input_mode": "manual",
+        "in_game_mode": 1,
+        "is_enable_practice": false,
+        "is_demo_play_mode": false,
+        "is_auto_live": false,
+        "is_auto_play": false,
+        "authority": [
+          "LR-E01",
+          "LR-E02",
+          "existing live-manual R1"
+        ]
+      },
+      {
+        "session_mode": "live",
+        "input_mode": "auto",
+        "in_game_mode": 1,
+        "is_enable_practice": false,
+        "is_demo_play_mode": false,
+        "is_auto_live": true,
+        "is_auto_play": true,
+        "authority": [
+          "LR-E01",
+          "existing ordinary Auto Live R1"
+        ]
+      },
+      {
+        "session_mode": "rehearsal",
+        "input_mode": "manual",
+        "in_game_mode": 10,
+        "is_enable_practice": true,
+        "is_demo_play_mode": false,
+        "is_auto_live": false,
+        "is_auto_play": false,
+        "authority": [
+          "LR-R01",
+          "LR-E01",
+          "LR-E02"
+        ]
+      },
+      {
+        "session_mode": "rehearsal",
+        "input_mode": "auto",
+        "in_game_mode": 10,
+        "is_enable_practice": true,
+        "is_demo_play_mode": true,
+        "is_auto_live": false,
+        "is_auto_play": true,
+        "authority": [
+          "LR-R02",
+          "LR-E01",
+          "LR-E02"
+        ]
+      }
+    ],
+    "forbidden_inference": [
+      "session mode from input mode",
+      "input mode from session mode",
+      "Demo Play from Auto Live",
+      "Auto Live from Demo Play"
+    ]
+  },
+  "runtime_observations": [
+    {
+      "id": "LR-R01",
+      "scenario": "rehearsal-manual",
+      "identity": {
+        "in_game_mode": 10,
+        "is_enable_practice": 1,
+        "is_demo_play_mode": 0,
+        "is_auto_live": 0,
+        "is_auto_play": 0
+      },
+      "exec_update_count": 428,
+      "continued_life_zero_game_over_updates": 69
+    },
+    {
+      "id": "LR-R02",
+      "scenario": "rehearsal-auto",
+      "identity": {
+        "in_game_mode": 10,
+        "is_enable_practice": 1,
+        "is_demo_play_mode": 1,
+        "is_auto_live": 0,
+        "is_auto_play": 1
+      },
+      "exec_update_count": 425,
+      "perfect_only_at_attach": true
+    },
+    {
+      "id": "LR-R03",
+      "scenario": "manual-return-five",
+      "route": [
+        "move_time(-5)",
+        "return_time(5)",
+        "advance_time(16,true)"
+      ],
+      "record_before": {
+        "score": 21000,
+        "life": 0,
+        "combo": 0,
+        "single_game_over": 1,
+        "move_time_count": 2,
+        "result_counts": [
+          388,
+          0,
+          0,
+          0,
+          28
+        ]
+      },
+      "record_after": {
+        "score": 28761,
+        "life": 1000,
+        "combo": 0,
+        "single_game_over": 0,
+        "move_time_count": 3,
+        "result_counts": [
+          397,
+          0,
+          0,
+          0,
+          131
+        ]
+      }
+    },
+    {
+      "id": "LR-R04",
+      "scenario": "manual-advance-five",
+      "route": [
+        "move_time(5)",
+        "advance_time(5,false)"
+      ]
+    },
+    {
+      "id": "LR-R05",
+      "scenario": "auto-move-time",
+      "route": [
+        "move_time(-5)",
+        "return_time(5)",
+        "advance_time(16,true)",
+        "move_time(5)",
+        "advance_time(5,false)"
+      ],
+      "perfect_only_after": true
+    }
+  ],
+  "lifecycle": {
+    "live_life_zero": "terminal Game Over route from existing current no-input R1",
+    "rehearsal_life_zero": "record single-game-over remains observable but ExecUpdate continues and MoveTime stays usable",
+    "pause_menu": [
+      "abort",
+      "retry",
+      "resume"
+    ],
+    "natural_rehearsal_end": "result is shown; using MoveTime suppresses score/judgement display in the original result",
+    "premium_continue": "excluded"
+  },
+  "move_time": {
+    "availability": "InGameMode.Practice only through ButtonManager GetButton gate and isMoveTimeButtonEnabled",
+    "buttons": {
+      "advance_seconds": 5,
+      "return_seconds": -5,
+      "activation": "ExecTouchBegan invokes registered callback; moved/ended are no-op"
+    },
+    "snapshot": {
+      "need": "first 0.0083333 seconds or integer second transition",
+      "key": "floor(InGameSec)*1000",
+      "fields": [
+        "RecordedSnapshot",
+        "InGameSec",
+        "NextBpm",
+        "CurrentBpm",
+        "BeforeBeatProgress",
+        "MusicBarProgress",
+        "MusicBeatProgress",
+        "NoteGroupIndex",
+        "CommandNoteGroupIndex",
+        "LauncherMusicBarProgress",
+        "LauncherMusicBeatProgress"
+      ]
+    },
+    "backward": {
+      "destination": "max(current integer second - 5, 0)",
+      "snapshot_second": "max(destination-16,0)",
+      "replay_seconds": "min(destination,16)",
+      "runtime_route": "returnTime(5) then advanceTime(replaySeconds,true)"
+    },
+    "forward": {
+      "destination": "current integer second + 5 bounded by original time owner",
+      "runtime_route": "advanceTime(5,false)"
+    },
+    "reconstruction": {
+      "max_delta_bits": "3C888889",
+      "max_delta_seconds": 0.01666666753590107,
+      "external_input": "suppressed by GameState MoveTime",
+      "states": [
+        14,
+        15,
+        16
+      ],
+      "audio": "stop Music; reconstruct; LoadMusic(trunc(InGameSec*1000)); resume",
+      "owners": [
+        "clock/BPM",
+        "Note and CommandNote indexes/pools",
+        "OneFrame/Record",
+        "chart-owned Skill/stage/effect",
+        "render",
+        "particle",
+        "audio"
+      ]
+    },
+    "record_restore": "Record is not one of the compact 11 snapshot fields; normal replay reconstructs it. Product CS-V1 must restore the committed target timeline atomically rather than keep discarded-future score units."
+  },
+  "portable_product_delta": {
+    "score_ruleset": "garupa-editor-normalized-10m-v1",
+    "original_game_score_claimed": false,
+    "timeline_revision": "backward MoveTime may restore an earlier Score/Combo/Life/result-count/scoring-unit set; monotonicity applies within each revision",
+    "initial_millisecond_seek": "removed; not an original control",
+    "checkpoint_command": "removed; snapshots are simulator-owned"
+  },
+  "unknown_fields": [],
+  "blocking_findings": [],
+  "production_authorization": {
+    "four_mode_identity": true,
+    "rehearsal_life_zero_nonterminal": true,
+    "rehearsal_move_time": true,
+    "initial_seek": false,
+    "main_program_integration": false,
+    "original_score_formula": false,
+    "fixed_device_exact": false
+  }
+}

@@ -1,3 +1,4 @@
+import { LIVE_AUTO_MODE, LIVE_MANUAL_MODE } from "./modeFixtures";
 import type { SimulatorManualInputGeometryBackend } from "../backends/contracts";
 import { createRecordingSimulatorBackends } from "../backends/recordingBackend";
 import {
@@ -29,7 +30,7 @@ interface TestCase {
 }
 
 const tests: TestCase[] = [];
-const manualPlayMode = { kind: "manual" } as const;
+const manualPlayMode = LIVE_MANUAL_MODE;
 const delta = Math.fround(1 / 60);
 const position = Object.freeze({ x: Math.fround(580), y: Math.fround(650) });
 
@@ -179,10 +180,7 @@ test("MJ25 pause不解析输入且fault dispose优先于delta和shape", () => {
     ...autoInput,
     runtime: {
       ...autoInput.runtime,
-      playMode: {
-        kind: "auto-live",
-        resultTransform: "identity",
-      },
+      mode: LIVE_AUTO_MODE,
     },
   }, createRecordingSimulatorBackends()), "create Auto Live input boundary engine");
   requireOk(autoEngine.initialize(), "initialize Auto Live input boundary engine");

@@ -1,3 +1,4 @@
+import { LIVE_MANUAL_MODE } from "./modeFixtures";
 import type { SimulatorManualInputGeometryBackend } from "../backends/contracts";
 import {
   ButtonType,
@@ -27,7 +28,7 @@ interface FlickGraph {
   readonly geometry: IdentityGeometry;
 }
 const tests: TestCase[] = [];
-const manualMode = { kind: "manual" } as const;
+const manualMode = LIVE_MANUAL_MODE;
 const beganPosition = Object.freeze({ x: Math.fround(0), y: Math.fround(0) });
 
 function test(name: string, run: () => void): void { tests.push({ name, run }) }

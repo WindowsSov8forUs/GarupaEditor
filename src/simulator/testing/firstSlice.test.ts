@@ -1,3 +1,4 @@
+import { LIVE_AUTO_MODE, LIVE_MANUAL_MODE } from "./modeFixtures";
 import { createRecordingSimulatorBackends } from "../backends/recordingBackend";
 import { ButtonType, type NoteBatchInformation } from "../engine/chart/types";
 import type { OneFrameDataHandle } from "../engine/data/oneFrameData";
@@ -36,10 +37,7 @@ interface TestCase {
 }
 
 const tests: TestCase[] = [];
-const autoPlayMode = {
-  kind: "auto-live",
-  resultTransform: "identity",
-} as const;
+const autoPlayMode = LIVE_AUTO_MODE;
 
 function test(name: string, run: () => void): void {
   tests.push({ name, run });
@@ -162,7 +160,7 @@ function createTestGraph(
     music,
     bpmChangeCount,
     0,
-    new InGameCalculatedData({ kind: "manual" }),
+    new InGameCalculatedData(LIVE_MANUAL_MODE),
     () => controller.getUsableOneFrameData(),
     () => evidenceRequired("test.auto-live-not-used", ["R04"], "not used"),
     (_family, poolObjectId) => {

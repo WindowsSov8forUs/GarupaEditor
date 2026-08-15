@@ -7,9 +7,12 @@ import type {
 import {
   deepFreezeScoreLifeProfile,
   type ScoreLifeInitializationSnapshot,
-  type ScoreLifeModeValue,
   type ScoreLifeStateProfile,
 } from "../data/scoreLifeState";
+import {
+  validateSimulatorModeIdentity,
+  type SimulatorModeIdentity,
+} from "../data/inGameCalculatedData";
 import { evidenceRequired, ok, type SimulatorResult } from "../evidence";
 import type { SinglePlayScoreGaugeSnapshot } from "../data/singlePlayScoreGauge";
 import { NORMALIZED_SCORE_RULESET_ID, type SimulatorScoringPlan } from "../scoring/contracts";
@@ -66,6 +69,7 @@ export class ScoreLifeStateManager {
   private lastReflectBatchValue: ScoreLifeReflectBatch | null = null;
   private pendingReflect: PendingScoreLifeReflect | null = null;
   private readonly traceValue: string[] = [];
+  private timelineRevisionValue = 0;
 
   private constructor(
     profile: ScoreLifeStateProfile,
@@ -84,9 +88,9 @@ export class ScoreLifeStateManager {
   static create(
     profile: ScoreLifeStateProfile,
     scoringPlan: SimulatorScoringPlan,
-    runtimePlayMode: "manual" | "auto-live",
+    runtimeMode: SimulatorModeIdentity,
   ): SimulatorResult<ScoreLifeStateManager> {
-    const validation = validateProfile(profile, runtimePlayMode);
+    const validation = validateProfile(profile, runtimeMode);
     if (validation.status !== "ok") return validation;
     if (!validScoringPlan(scoringPlan)) {
       return evidenceRequired(
@@ -102,7 +106,7 @@ export class ScoreLifeStateManager {
     return ok(new ScoreLifeStateManager(validation.value, scoringPlan, scoreGauge.value));
   }
 
-  get mode(): ScoreLifeModeValue { return this.profile.mode.kind; }
+  get mode(): SimulatorModeIdentity { return this.profile.mode; }
 
   getClearStatus(): 1 | 2 | 3 {
     return this.record.getClearStatus(this.scoringPlan.totalScoringUnitCount);
@@ -118,7 +122,7 @@ export class ScoreLifeStateManager {
     const contribution = calculateNormalizedScoreContribution(
       unit.value,
       adjustedResult,
-      this.profile.mode.kind === "auto-live",
+      this.profile.mode.isAutoPlay,
     );
     if (contribution.status !== "ok") return contribution;
     const addPower = adjustedResult === 0
@@ -170,7 +174,7 @@ export class ScoreLifeStateManager {
       const expected = calculateNormalizedScoreContribution(
         unit,
         business.adjustedResult,
-        this.profile.mode.kind === "auto-live",
+        this.profile.mode.isAutoPlay,
       );
       if (expected.status !== "ok" || expected.value !== business.addScore) {
         return evidenceRequired(
@@ -272,11 +276,12 @@ export class ScoreLifeStateManager {
     return Object.freeze({
       initialization: Object.freeze({
         sessionId: this.profile.sessionId,
-        mode: this.mode,
+        mode: Object.freeze({ ...this.mode }),
         ruleSetId: this.scoringPlan.ruleSetId,
         totalScoringUnitCount: this.scoringPlan.totalScoringUnitCount,
         scoreMaximum: this.scoringPlan.scoreMaximum,
         consumedScoringUnitCount: this.consumedScoringUnitIds.size,
+        timelineRevision: this.timelineRevisionValue,
       }),
       record: this.record.snapshot(),
       scoreGauge: this.scoreGauge.snapshot(),
@@ -293,22 +298,26 @@ export class ScoreLifeStateManager {
 
 function validateProfile(
   profile: ScoreLifeStateProfile,
-  runtimePlayMode: "manual" | "auto-live",
+  runtimeMode: SimulatorModeIdentity,
 ): SimulatorResult<ScoreLifeStateProfile> {
-  const modeMatches = runtimePlayMode === "auto-live"
-    ? profile?.mode?.kind === "auto-live"
-    : profile?.mode?.kind === "ordinary" || profile?.mode?.kind === "practice";
+  const validatedRuntime = validateSimulatorModeIdentity(runtimeMode);
+  const validatedProfile = validateSimulatorModeIdentity(profile?.mode);
+  const modeMatches = validatedRuntime.status === "ok" && validatedProfile.status === "ok" &&
+    Object.keys(validatedRuntime.value).every((key) =>
+      validatedRuntime.value[key as keyof SimulatorModeIdentity] ===
+        validatedProfile.value[key as keyof SimulatorModeIdentity]
+    );
   if (
     profile === null || typeof profile !== "object" ||
     Object.keys(profile).sort().join(",") !== "life,mode,schemaVersion,sessionId" ||
-    profile.schemaVersion !== 2 ||
+    profile.schemaVersion !== 3 ||
     typeof profile.sessionId !== "string" || profile.sessionId.length === 0 ||
-    !validLife(profile.life) || !validMode(profile.mode) || !modeMatches
+    !validLife(profile.life) || !modeMatches
   ) {
     return evidenceRequired(
       "score-life.invalid-profile",
-      ["SLS-D01", "SLS-D03", "SLS-D24", "BS01", "BS36"],
-      "The CS-V1 score/life profile requires exact life bounds and a runtime-matching ordinary, practice or Auto Live mode without caller-authored Score inputs.",
+      ["SLS-D01", "SLS-D03", "SLS-D24", "BS01", "BS36", "LR-C01"],
+      "The CS-V1 score/life profile requires exact life bounds and the same canonical orthogonal mode identity as the runtime.",
     );
   }
   return ok(deepFreezeScoreLifeProfile(profile));
@@ -332,12 +341,6 @@ function validLife(life: ScoreLifeStateProfile["life"]): boolean {
     life.initialLife >= 0 && life.playerMaxLife > 0 &&
     life.lifeUpperLimit >= life.initialLife &&
     life.missDamage <= 0 && life.badDamage <= 0;
-}
-
-function validMode(mode: ScoreLifeStateProfile["mode"]): boolean {
-  return mode !== null && typeof mode === "object" &&
-    (mode.kind === "ordinary" || mode.kind === "practice" || mode.kind === "auto-live") &&
-    Object.keys(mode).length === 1;
 }
 
 function freezeRecordSnapshot(snapshot: InGameRecordSnapshot): InGameRecordSnapshot {
