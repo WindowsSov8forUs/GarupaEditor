@@ -177,7 +177,7 @@
   "files": [
     {
       "path": "src/simulator/assembly/sessionRecipe.ts",
-      "sha256": "71177CFC0FCFF1DEA23B67A793CD7D443AF08C6A5324190BE7B9A826A5635FFA",
+      "sha256": "2041B56B3D4FA403F0415BF957B2548FD66E3D71CF2E61DFEF0F9BCC318047B5",
       "claims": [
         "LR-G01",
         "LR-G03",
@@ -186,35 +186,35 @@
     },
     {
       "path": "src/simulator/backends/audio/webAudioBackend.ts",
-      "sha256": "2F6B4A61440DA1561A0E9D1C95342C5DA401C38592191A3816BE9586E581E3C1",
+      "sha256": "64BF9D405D66D03809776B3D433C751860DDFF71B8603F7F8FFD3CB027EEDE29",
       "claims": [
         "LR-G07"
       ]
     },
     {
       "path": "src/simulator/backends/audioContracts.ts",
-      "sha256": "33CB5788E19C7988C43CC98CB9FE31510A9E39EAE6FDFC320757983622B8613E",
+      "sha256": "6CE978A82998643A6BF00B3F51DE9231D64A29CF0B15C424D17D19742E90252E",
       "claims": [
         "LR-G07"
       ]
     },
     {
       "path": "src/simulator/backends/audioValidation.ts",
-      "sha256": "975D4E829CB720F746DFB829062E9C8C35BB01B0231F2485FFCD0B0D7C256C61",
+      "sha256": "2A85101FD0FFCC32D000D73613F24F8B3BB9BD86E89FD6873768AD44BC96386E",
       "claims": [
         "LR-G07"
       ]
     },
     {
       "path": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "sha256": "0B680E5455D177BE71D741937924A2F01323391F621B8BF078E541C455877958",
+      "sha256": "B4D6BD1729028606527DD93FBD145BC1585B374868F61AE1B83852E17A84046C",
       "claims": [
         "LR-G08"
       ]
     },
     {
       "path": "src/simulator/backends/recordingAudioBackend.ts",
-      "sha256": "01EA3898B5D3318D24171CDD1C3CFBDE6658BF2787C2A3D985C2968836631548",
+      "sha256": "AD3D428648AC73B1C6ADD042E344486D195148DF3303BBD1A44BA3627EC05603",
       "claims": [
         "LR-G02"
       ]
@@ -249,7 +249,7 @@
     },
     {
       "path": "src/simulator/engine/managers/inGameManager.ts",
-      "sha256": "852001473B2A42890773AB3CDC367514F4B3F7BF7C80BC7CE8E0ED964F515FC5",
+      "sha256": "EFFFB575678268B216964F3874F0849B31BC9B6B170850237EA6866683FC0FC6",
       "claims": [
         "LR-G03"
       ]
@@ -280,14 +280,14 @@
     },
     {
       "path": "src/simulator/host/contracts.ts",
-      "sha256": "B532EC40F17A26A3A49D672E319DB7E7452D8D00E6B758EDDA1CEC449A3FF6E6",
+      "sha256": "E3A5EE10EEA6F4CBD640964471487C3CBE07CB5041102C4467C8949A28E769A6",
       "claims": [
         "LR-G02"
       ]
     },
     {
       "path": "src/simulator/host/createSimulatorEngine.ts",
-      "sha256": "4FD44D60C72C72B09D0C22066420CFB8B949FC4729F2733BEF7DA0FD5C23B688",
+      "sha256": "A3C5C405F931504CAB10ABE3B134B56BD44B3090A55B56E3FD42690DF2FDF994",
       "claims": [
         "LR-G05",
         "LR-G07"
@@ -304,14 +304,14 @@
     },
     {
       "path": "src/simulator/index.ts",
-      "sha256": "06AC386D46C6CC26D42D7494DA18F1327556F53AF6D31387577B02753B603C1F",
+      "sha256": "054A20877621895EE138782967056CFD97C0C747D12CA409A291D5DC8CE3EF8B",
       "claims": [
         "LR-G01"
       ]
     },
     {
       "path": "src/simulator/platform/platformComposition.ts",
-      "sha256": "7B698B0121D543B442EB5B19CF1D759728C5FD843E387DB5A6DD7340AF48F4FB",
+      "sha256": "49B9A47E3E4C7391212C040DBF515A0C697EFF73C091A06A642D9FF4EA835534",
       "claims": [
         "LR-G02",
         "LR-G07",
@@ -334,7 +334,7 @@
     },
     {
       "path": "src/simulator/public/index.ts",
-      "sha256": "68D4B8996A3A00EBCC486CCFCD20ACDA018C54D8E2AF52CB84325087533995A2",
+      "sha256": "9ACF32393AB2448732685235721296E9D2C5F840CE4C501ED1A46F42EC7B0287",
       "claims": [
         "LR-G01"
       ]

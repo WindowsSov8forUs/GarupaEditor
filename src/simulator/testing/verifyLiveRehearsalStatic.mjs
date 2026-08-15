@@ -13,8 +13,8 @@ if (audit.status !== "candidate-audited-pushed" || audit.candidateCommit !== "83
 }
 const claimIds = new Set(audit.claims.map((claim) => claim.id));
 for (const file of audit.files) {
-  const bytes = readFileSync(resolve(process.cwd(), file.path));
-  const actual = createHash("sha256").update(bytes).digest("hex").toUpperCase();
+  const source = readFileSync(resolve(process.cwd(), file.path), "utf8").replaceAll("\r\n", "\n");
+  const actual = createHash("sha256").update(source, "utf8").digest("hex").toUpperCase();
   if (actual !== file.sha256 || file.claims.length === 0 ||
       file.claims.some((claim) => !claimIds.has(claim))) {
     throw new Error(`Live/Rehearsal file binding mismatch: ${file.path}`);

@@ -84,7 +84,7 @@ const liveClaimIds = new Set(liveRehearsalDelta.claims.map((claim) => claim.id))
 const liveChangedFiles = new Set(liveRehearsalDelta.files.map((row) => row.path));
 for (const row of liveRehearsalDelta.files) {
   const path = resolve(repositoryRoot, row.path);
-  if (!existsSync(path) || sha256Raw(path) !== row.sha256 || !Array.isArray(row.claims) ||
+  if (!existsSync(path) || sha256(path) !== row.sha256 || !Array.isArray(row.claims) ||
       row.claims.length === 0 || row.claims.some((id) => !liveClaimIds.has(id))) {
     throw new Error(`Live/Rehearsal exact file binding mismatch: ${row.path}`);
   }
@@ -193,10 +193,6 @@ console.log(`mixed Reverse/product integrity passed: capabilities=${matrix.rows.
 
 function json(name) {
   return JSON.parse(readFileSync(join(auditRoot, name), "utf8"));
-}
-
-function sha256Raw(path) {
-  return createHash("sha256").update(readFileSync(path)).digest("hex").toUpperCase();
 }
 
 function sha256(path) {
