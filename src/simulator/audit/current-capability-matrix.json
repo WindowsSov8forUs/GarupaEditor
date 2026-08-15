@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "auditStatus": "public-life-profile-candidate-with-live-rehearsal-and-cs-v1",
+  "auditStatus": "public-life-profile-release-with-live-rehearsal-and-cs-v1",
   "lockedSample": {
     "package": "jp.co.craftegg.band",
     "versionName": "10.1.4",

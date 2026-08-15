@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "status": "closed-portable-candidate",
+  "status": "closed-portable-release-attested",
   "lockedSample": {
     "package": "jp.co.craftegg.band",
     "versionName": "10.1.4",
@@ -23,8 +23,22 @@
     "productMapping": "chartData.isFullLength carries the resolved musicDataType == full predicate"
   },
   "candidateCommit": "05037d3e38be9ccd43e8b2e40bbc30c265b1f954",
-  "releaseValidatedCommit": null,
-  "releaseValidation": null,
+  "releaseValidatedCommit": "86ea07376e5079c67e0fad80c15020178fa334a6",
+  "releaseValidation": {
+    "status": "passed-pushed-detached",
+    "semanticLeaves": 28,
+    "elapsedMilliseconds": 1706763,
+    "outerElapsedMilliseconds": 1711261,
+    "cleanBrowserBuild": true,
+    "nodeModulesJunctionReused": true,
+    "cachedCargoRegistryOnly": true,
+    "networkUsed": false,
+    "reverseWorktreeRead": false,
+    "webView2Runtime": "151.0.4129.78",
+    "freshProcesses": 3,
+    "capturesPerProcess": 21,
+    "aggregateSha256": "e968d7900bca1ea0e96e9864479207ed3af00db7aada31c1b70370d68b23e8e0"
+  },
   "claims": [
     {
       "id": "PLP-G01",

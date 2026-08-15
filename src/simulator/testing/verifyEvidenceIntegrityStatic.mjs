@@ -32,7 +32,7 @@ const productionFiles = [...walk(simulatorRoot)]
   .map((path) => `src/simulator/${path}`)
   .sort();
 
-if (matrix.schemaVersion !== 1 || matrix.auditStatus !== "public-life-profile-candidate-with-live-rehearsal-and-cs-v1" ||
+if (matrix.schemaVersion !== 1 || matrix.auditStatus !== "public-life-profile-release-with-live-rehearsal-and-cs-v1" ||
     !Array.isArray(matrix.rows) || matrix.rows.length !== 19) {
   throw new Error("mixed-authority capability matrix is missing or malformed");
 }
@@ -134,7 +134,7 @@ if (new Set(delta.files.map((row) => row.path)).size !== delta.files.length) {
 }
 
 if (integrity.schemaVersion !== 4 ||
-    integrity.status !== "public-life-profile-candidate-with-live-rehearsal-cs-v1-and-reverse-authority" ||
+    integrity.status !== "public-life-profile-release-validated-with-live-rehearsal-cs-v1-and-reverse-authority" ||
     integrity.authorityModel?.reverseBaseline?.coversCurrentProductScore !== false ||
     integrity.authorityModel?.productScore?.contract !== "src/simulator/scoring-contract.md" ||
     integrity.currentProductionFileCount !== 108 || productionFiles.length !== 108 ||
@@ -145,6 +145,7 @@ if (integrity.schemaVersion !== 4 ||
     integrity.authorityModel?.liveRehearsal?.candidateCommit !== "8e50eb0" ||
     integrity.authorityModel?.publicLifeProfile?.reverseCommit !== "2cbea93d19cb599d5daaeea007a63ae70fae012e" ||
     integrity.authorityModel?.publicLifeProfile?.candidateCommit !== "05037d3e38be9ccd43e8b2e40bbc30c265b1f954" ||
+    integrity.authorityModel?.publicLifeProfile?.releaseValidatedCommit !== "86ea07376e5079c67e0fad80c15020178fa334a6" ||
     integrity.validation?.publicLifeProfileCandidate?.standaloneProfile !== "passed" ||
     integrity.validation?.liveRehearsalCandidate?.standaloneMatrix !== "passed" ||
     integrity.validation?.liveRehearsalWebView2?.capturesPerProcess !== 21 ||
@@ -156,29 +157,31 @@ if (integrity.schemaVersion !== 4 ||
     integrity.validation?.ordinaryWebView2?.aggregateSha256 !==
       "ff6e7584988dc0ad32074858e52beed608ed19b6623c6558402dcef84bdf396c" ||
     integrity.validation?.ordinaryWebView2?.originalUnityFramebufferOracle !== false ||
-    integrity.validation?.fullReleaseDag?.commit !== "8e113f7" ||
+    integrity.validation?.fullReleaseDag?.commit !== "86ea07376e5079c67e0fad80c15020178fa334a6" ||
     integrity.validation?.fullReleaseDag?.status !== "passed-pushed-detached" ||
-    integrity.validation?.fullReleaseDag?.semanticLeaves !== 27 ||
-    integrity.validation?.fullReleaseDag?.elapsedMilliseconds !== 757717 ||
+    integrity.validation?.fullReleaseDag?.semanticLeaves !== 28 ||
+    integrity.validation?.fullReleaseDag?.elapsedMilliseconds !== 1706763 ||
     integrity.unchangedBoundaries?.mainProgramIntegration !== "unauthorized-stage-9") {
   throw new Error("current mixed-authority production review is inconsistent");
 }
-if (fieldIndex.schemaVersion !== 6 || fieldIndex.status !== "reverse-baseline-plus-cs-v1-plus-live-rehearsal-plus-public-life-candidate" ||
+if (fieldIndex.schemaVersion !== 6 || fieldIndex.status !== "reverse-baseline-plus-cs-v1-plus-live-rehearsal-plus-public-life-release" ||
     fieldIndex.productDelta?.unclassifiedChangedProductionFiles !== 0 ||
     fieldIndex.liveRehearsalDelta?.candidateCommit !== "8e50eb0" ||
     fieldIndex.liveRehearsalDelta?.unclassifiedChangedProductionFiles !== 0 ||
     fieldIndex.publicLifeProfileDelta?.candidateCommit !== "05037d3e38be9ccd43e8b2e40bbc30c265b1f954" ||
     fieldIndex.publicLifeProfileDelta?.unclassifiedChangedProductionFiles !== 0 ||
+    fieldIndex.publicLifeProfileDelta?.releaseValidatedCommit !== "86ea07376e5079c67e0fad80c15020178fa334a6" ||
     fieldIndex.currentProductionFiles !== 108 || fieldIndex.originalScoreParityClaimed !== false ||
     fieldIndex.groupMappingIsNotAuthorization !== true || fieldIndex.exactClaimBindingRequired !== true) {
   throw new Error("current field claim pointer is inconsistent");
 }
-if (mutations.schemaVersion !== 6 || mutations.status !== "reverse-baseline-plus-cs-v1-plus-live-rehearsal-plus-public-life-candidate-mutations-dispositioned" ||
+if (mutations.schemaVersion !== 6 || mutations.status !== "reverse-baseline-plus-cs-v1-plus-live-rehearsal-plus-public-life-release-mutations-dispositioned" ||
     mutations.productDelta?.unreviewedMutationCount !== 0 ||
     mutations.liveRehearsalDelta?.candidateCommit !== "8e50eb0" ||
     mutations.liveRehearsalDelta?.unreviewedMutationCount !== 0 ||
     mutations.publicLifeProfileDelta?.candidateCommit !== "05037d3e38be9ccd43e8b2e40bbc30c265b1f954" ||
     mutations.publicLifeProfileDelta?.unreviewedMutationCount !== 0 ||
+    mutations.publicLifeProfileDelta?.releaseValidatedCommit !== "86ea07376e5079c67e0fad80c15020178fa334a6" ||
     mutations.perMutationDispositionRequired !== true || mutations.exactClaimBindingRequired !== true ||
     !mutations.productDelta.preflightBoundaries.includes("duplicate/foreign scoring unit before Record/Gauge mutation")) {
   throw new Error("current mutation boundary is inconsistent");

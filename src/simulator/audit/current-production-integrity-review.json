@@ -1,7 +1,7 @@
 {
   "schemaVersion": 4,
-  "status": "public-life-profile-candidate-with-live-rehearsal-cs-v1-and-reverse-authority",
-  "currentDisposition": "public-life-profile-candidate-targeted-validation-passed-release-pending",
+  "status": "public-life-profile-release-validated-with-live-rehearsal-cs-v1-and-reverse-authority",
+  "currentDisposition": "pushed-detached-28-leaf-public-life-release-passed",
   "authorityModel": {
     "reverseBaseline": {
       "commit": "b5fb3dca34b26511355879d62839661c5cf505d3",
@@ -29,7 +29,7 @@
       "reverseCommit": "2cbea93d19cb599d5daaeea007a63ae70fae012e",
       "delta": "src/simulator/audit/current-public-life-profile-delta.json",
       "candidateCommit": "05037d3e38be9ccd43e8b2e40bbc30c265b1f954",
-      "releaseValidatedCommit": null,
+      "releaseValidatedCommit": "86ea07376e5079c67e0fad80c15020178fa334a6",
       "reverseReleaseLedgerCommit": null
     }
   },
@@ -80,15 +80,16 @@
       "standaloneProfile": "passed",
       "autonomousBoundary": "passed",
       "fixtures": "passed",
-      "fullReleaseDag": "pending"
+      "fullReleaseDag": "passed-pushed-detached"
     },
     "fullReleaseDag": {
-      "commit": "8e113f7",
+      "commit": "86ea07376e5079c67e0fad80c15020178fa334a6",
       "status": "passed-pushed-detached",
-      "semanticLeaves": 27,
-      "elapsedMilliseconds": 757717,
-      "nodeModulesOnlyReused": true,
-      "existingCargoTargetsOnlyReused": true,
+      "semanticLeaves": 28,
+      "elapsedMilliseconds": 1706763,
+      "cleanBrowserBuild": true,
+      "nodeModulesJunctionReused": true,
+      "cachedCargoRegistryOnly": true,
       "networkUsed": false,
       "reverseWorktreeRead": false
     },
