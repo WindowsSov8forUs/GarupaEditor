@@ -1,7 +1,7 @@
 {
   "schemaVersion": 3,
-  "status": "live-rehearsal-candidate-audited-with-cs-v1-and-reverse-baseline",
-  "currentDisposition": "candidate-8e50eb0-pushed-audit-pending-release",
+  "status": "live-rehearsal-release-attested-with-cs-v1-and-reverse-authority",
+  "currentDisposition": "pushed-detached-27-leaf-release-passed",
   "authorityModel": {
     "reverseBaseline": {
       "commit": "b5fb3dca34b26511355879d62839661c5cf505d3",
@@ -22,7 +22,8 @@
     "liveRehearsal": {
       "reverseCommit": "6c0dfb76",
       "delta": "src/simulator/audit/current-live-rehearsal-delta.json",
-      "candidateCommit": "8e50eb0"
+      "candidateCommit": "8e50eb0",
+      "reverseReleaseLedgerCommit": "e055678f17f9a6c5b28838fdf7a604f96e9ff65c"
     }
   },
   "reviewPolicy": {
@@ -66,11 +67,12 @@
     "quickWithCurrentAudit": "passed",
     "implementationCommit": "5539a0b",
     "fullReleaseDag": {
-      "commit": "b4a3432",
+      "commit": "8e113f7",
       "status": "passed-pushed-detached",
-      "semanticLeaves": 26,
-      "elapsedMilliseconds": 1853406,
+      "semanticLeaves": 27,
+      "elapsedMilliseconds": 757717,
       "nodeModulesOnlyReused": true,
+      "existingCargoTargetsOnlyReused": true,
       "networkUsed": false,
       "reverseWorktreeRead": false
     },
@@ -78,7 +80,7 @@
       "commit": "8e50eb0",
       "isolatedTypeScript": "passed",
       "standaloneMatrix": "passed",
-      "fullReleaseDag": "pending"
+      "fullReleaseDag": "passed"
     },
     "liveRehearsalWebView2": {
       "runtime": "151.0.4129.78",
@@ -86,7 +88,7 @@
       "capturesPerProcess": 21,
       "aggregateSha256": "e968d7900bca1ea0e96e9864479207ed3af00db7aada31c1b70370d68b23e8e0",
       "candidateCommit": "8e50eb0",
-      "status": "passed-standalone-before-detached-dag"
+      "status": "passed-pushed-detached"
     }
   },
   "unchangedBoundaries": {

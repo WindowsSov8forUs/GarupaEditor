@@ -31,7 +31,7 @@ const productionFiles = [...walk(simulatorRoot)]
   .map((path) => `src/simulator/${path}`)
   .sort();
 
-if (matrix.schemaVersion !== 1 || matrix.auditStatus !== "live-rehearsal-candidate-with-cs-v1-product-score" ||
+if (matrix.schemaVersion !== 1 || matrix.auditStatus !== "live-rehearsal-release-with-cs-v1-product-score" ||
     !Array.isArray(matrix.rows) || matrix.rows.length !== 18) {
   throw new Error("mixed-authority capability matrix is missing or malformed");
 }
@@ -73,8 +73,12 @@ if (delta.schemaVersion !== 1 || delta.status !== "cs-v1-product-scoring-exact-d
     delta.claims.length !== 9 || delta.files.length !== 17 || delta.deletedFiles.length !== 1) {
   throw new Error("CS-V1 exact product delta is incomplete");
 }
-if (liveRehearsalDelta.status !== "candidate-audited-pushed" ||
+if (liveRehearsalDelta.status !== "closed-portable-release-attested" ||
     liveRehearsalDelta.candidateCommit !== "8e50eb0" ||
+    liveRehearsalDelta.releaseValidatedCommit !== "8e113f77820cd9fdd5cde31b7cf0369c4d6bf1bb" ||
+    liveRehearsalDelta.reverseReleaseLedgerCommit !== "e055678f17f9a6c5b28838fdf7a604f96e9ff65c" ||
+    liveRehearsalDelta.releaseValidation?.semanticLeaves !== 27 ||
+    liveRehearsalDelta.releaseValidation?.status !== "passed-pushed-detached" ||
     liveRehearsalDelta.authority?.reverseCommit !== "6c0dfb76" ||
     liveRehearsalDelta.claims?.length !== 8 || liveRehearsalDelta.files?.length !== 25 ||
     liveRehearsalDelta.blockingFindings?.length !== 0) {
@@ -109,7 +113,7 @@ if (new Set(delta.files.map((row) => row.path)).size !== delta.files.length) {
 }
 
 if (integrity.schemaVersion !== 3 ||
-    integrity.status !== "live-rehearsal-candidate-audited-with-cs-v1-and-reverse-baseline" ||
+    integrity.status !== "live-rehearsal-release-attested-with-cs-v1-and-reverse-authority" ||
     integrity.authorityModel?.reverseBaseline?.coversCurrentProductScore !== false ||
     integrity.authorityModel?.productScore?.contract !== "src/simulator/scoring-contract.md" ||
     integrity.currentProductionFileCount !== 107 || productionFiles.length !== 107 ||
@@ -126,14 +130,14 @@ if (integrity.schemaVersion !== 3 ||
     integrity.validation?.ordinaryWebView2?.aggregateSha256 !==
       "ff6e7584988dc0ad32074858e52beed608ed19b6623c6558402dcef84bdf396c" ||
     integrity.validation?.ordinaryWebView2?.originalUnityFramebufferOracle !== false ||
-    integrity.validation?.fullReleaseDag?.commit !== "b4a3432" ||
+    integrity.validation?.fullReleaseDag?.commit !== "8e113f7" ||
     integrity.validation?.fullReleaseDag?.status !== "passed-pushed-detached" ||
-    integrity.validation?.fullReleaseDag?.semanticLeaves !== 26 ||
-    integrity.validation?.fullReleaseDag?.elapsedMilliseconds !== 1853406 ||
+    integrity.validation?.fullReleaseDag?.semanticLeaves !== 27 ||
+    integrity.validation?.fullReleaseDag?.elapsedMilliseconds !== 757717 ||
     integrity.unchangedBoundaries?.mainProgramIntegration !== "unauthorized-stage-9") {
   throw new Error("current mixed-authority production review is inconsistent");
 }
-if (fieldIndex.schemaVersion !== 5 || fieldIndex.status !== "reverse-baseline-plus-cs-v1-plus-live-rehearsal-candidate" ||
+if (fieldIndex.schemaVersion !== 5 || fieldIndex.status !== "reverse-baseline-plus-cs-v1-plus-live-rehearsal-release" ||
     fieldIndex.productDelta?.unclassifiedChangedProductionFiles !== 0 ||
     fieldIndex.liveRehearsalDelta?.candidateCommit !== "8e50eb0" ||
     fieldIndex.liveRehearsalDelta?.unclassifiedChangedProductionFiles !== 0 ||
@@ -141,7 +145,7 @@ if (fieldIndex.schemaVersion !== 5 || fieldIndex.status !== "reverse-baseline-pl
     fieldIndex.groupMappingIsNotAuthorization !== true || fieldIndex.exactClaimBindingRequired !== true) {
   throw new Error("current field claim pointer is inconsistent");
 }
-if (mutations.schemaVersion !== 5 || mutations.status !== "reverse-baseline-plus-cs-v1-plus-live-rehearsal-mutations-dispositioned" ||
+if (mutations.schemaVersion !== 5 || mutations.status !== "reverse-baseline-plus-cs-v1-plus-live-rehearsal-release-mutations-dispositioned" ||
     mutations.productDelta?.unreviewedMutationCount !== 0 ||
     mutations.liveRehearsalDelta?.candidateCommit !== "8e50eb0" ||
     mutations.liveRehearsalDelta?.unreviewedMutationCount !== 0 ||
@@ -149,16 +153,18 @@ if (mutations.schemaVersion !== 5 || mutations.status !== "reverse-baseline-plus
     !mutations.productDelta.preflightBoundaries.includes("duplicate/foreign scoring unit before Record/Gauge mutation")) {
   throw new Error("current mutation boundary is inconsistent");
 }
-if (attestation.schemaVersion !== 3 || attestation.status !== "cs-v1-product-score-release-attestation" ||
+if (attestation.schemaVersion !== 4 || attestation.status !== "live-rehearsal-cs-v1-release-attestation" ||
     attestation.authority?.productScore?.ruleSetId !== "garupa-editor-normalized-10m-v1" ||
     attestation.authority?.productScore?.publicRuleSelectionAllowed !== false ||
     attestation.authority?.productScore?.originalScoreParityClaimed !== false ||
     attestation.validation?.scoreFullChart?.autoScore !== 10001007 ||
     attestation.validation?.ordinaryProductionBrowserLeaf?.aggregateSha256 !==
-      "ff6e7584988dc0ad32074858e52beed608ed19b6623c6558402dcef84bdf396c" ||
-    attestation.implementation?.releaseCommit !== "b4a3432" ||
+      "e968d7900bca1ea0e96e9864479207ed3af00db7aada31c1b70370d68b23e8e0" ||
+    attestation.implementation?.releaseValidatedCommit !== "8e113f7" ||
+    attestation.implementation?.reverseReleaseLedgerCommit !== "e055678f17f9a6c5b28838fdf7a604f96e9ff65c" ||
     attestation.validation?.fullReleaseDag?.status !== "passed-pushed-detached" ||
-    attestation.validation?.fullReleaseDag?.elapsedMilliseconds !== 1853406 ||
+    attestation.validation?.fullReleaseDag?.semanticLeaves !== 27 ||
+    attestation.validation?.fullReleaseDag?.elapsedMilliseconds !== 757717 ||
     attestation.boundaries?.aggregateOriginalParityClaimed !== false ||
     attestation.boundaries?.mainProgramIntegrationAuthorization !== false) {
   throw new Error("CS-V1 attestation identity or boundary is invalid");

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 5,
-  "status": "reverse-baseline-plus-cs-v1-plus-live-rehearsal-candidate",
+  "status": "reverse-baseline-plus-cs-v1-plus-live-rehearsal-release",
   "reverseBaseline": {
     "commit": "b5fb3dca34b26511355879d62839661c5cf505d3",
     "targetGarupaCommit": "2b758eb6c40632c8c658e97772b9cb7afb5785fd",
@@ -33,6 +33,7 @@
     "candidateCommit": "8e50eb0",
     "changedProductionFiles": 25,
     "claimBindings": 8,
-    "unclassifiedChangedProductionFiles": 0
+    "unclassifiedChangedProductionFiles": 0,
+    "releaseValidatedCommit": "8e113f7"
   }
 }

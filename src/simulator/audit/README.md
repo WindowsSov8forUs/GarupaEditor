@@ -12,7 +12,7 @@ Live/Rehearsal × Manual/Auto behavior is bound separately by [`current-live-reh
 
 CS-V1 invariants include chart-owned scoring-unit identity, `scoreMaximum=10,000,000+N`, BigInt quota allocation, normalized Manual result rates without a Combo score multiplier, Auto Perfect quota, fixed Rank thresholds, and a Life-only Public gameplay input. Caller-authored master, ruleset, N, quota, level, parameter, or Auto coefficient is rejected before resource acquisition.
 
-The prior CS-V1 release observations below remain the locked baseline while the 27-leaf Live/Rehearsal release DAG is pending; they are not reclassified as current candidate release proof. Candidate `8e50eb0` separately passed three fresh WebView2 processes with 21 captures each for the expanded Rehearsal control/Life-zero scene, aggregate `e968d7900bca1ea0e96e9864479207ed3af00db7aada31c1b70370d68b23e8e0`.
+Pushed-detached release `8e113f7` passed the 27-leaf Live/Rehearsal DAG in 757,717ms. Candidate `8e50eb0` passed three fresh WebView2 processes with 21 captures each for the expanded Rehearsal control/Life-zero scene, aggregate `e968d7900bca1ea0e96e9864479207ed3af00db7aada31c1b70370d68b23e8e0`. Reverse release ledger `e055678f` binds these observations to the pushed 10.1.4 behavior authority. The prior CS-V1 release observations below remain historical baseline evidence.
 
 ## Current observations
 

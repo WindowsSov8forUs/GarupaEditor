@@ -1,6 +1,6 @@
 {
   "schemaVersion": 5,
-  "status": "reverse-baseline-plus-cs-v1-plus-live-rehearsal-mutations-dispositioned",
+  "status": "reverse-baseline-plus-cs-v1-plus-live-rehearsal-release-mutations-dispositioned",
   "reverseBaseline": {
     "commit": "b5fb3dca34b26511355879d62839661c5cf505d3",
     "targetGarupaCommit": "2b758eb6c40632c8c658e97772b9cb7afb5785fd",
@@ -37,6 +37,7 @@
       "fresh candidate replay before active owner replacement",
       "timeline revision and MoveTime count before publication",
       "suppressed audio and hidden visual candidate before one-use publication"
-    ]
+    ],
+    "releaseValidatedCommit": "8e113f7"
   }
 }

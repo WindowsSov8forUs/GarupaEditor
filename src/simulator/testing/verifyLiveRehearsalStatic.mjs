@@ -5,7 +5,11 @@ import { join, relative, resolve } from "node:path";
 const root = resolve(process.cwd(), "src", "simulator");
 const audit = JSON.parse(readFileSync(join(root, "audit", "current-live-rehearsal-delta.json"), "utf8"));
 const capability = JSON.parse(readFileSync(join(root, "audit", "current-capability-matrix.json"), "utf8"));
-if (audit.status !== "candidate-audited-pushed" || audit.candidateCommit !== "8e50eb0" ||
+if (audit.status !== "closed-portable-release-attested" || audit.candidateCommit !== "8e50eb0" ||
+    audit.releaseValidatedCommit !== "8e113f77820cd9fdd5cde31b7cf0369c4d6bf1bb" ||
+    audit.reverseReleaseLedgerCommit !== "e055678f17f9a6c5b28838fdf7a604f96e9ff65c" ||
+    audit.releaseValidation?.semanticLeaves !== 27 ||
+    audit.releaseValidation?.status !== "passed-pushed-detached" ||
     audit.authority.reverseCommit !== "6c0dfb76" ||
     audit.claims?.length !== 8 || audit.files?.length !== 25 ||
     audit.blockingFindings?.length !== 0) {

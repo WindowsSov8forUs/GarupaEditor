@@ -1,31 +1,37 @@
 {
-  "schemaVersion": 3,
-  "status": "cs-v1-product-score-release-attestation",
+  "schemaVersion": 4,
+  "status": "live-rehearsal-cs-v1-release-attestation",
   "date": "2026-08-15",
   "implementation": {
     "repository": "https://github.com/WindowsSov8forUs/GarupaEditor.git",
     "branch": "codex/refactor-simulator-implementation",
-    "baseCommit": "35b1b25482239b3150cd7f47b9bd3f5acdf8b839",
-    "candidateCommit": "5539a0b",
-    "releaseCommit": "b4a3432"
+    "modeImplementationCandidate": "8e50eb0",
+    "releaseValidatedCommit": "8e113f7",
+    "reverseReleaseLedgerCommit": "e055678f17f9a6c5b28838fdf7a604f96e9ff65c"
   },
   "authority": {
-    "reverseBaseline": {
-      "commit": "b5fb3dca34b26511355879d62839661c5cf505d3",
-      "targetReleaseCommit": "2b758eb6c40632c8c658e97772b9cb7afb5785fd",
-      "coversCurrentProductScore": false
+    "liveRehearsalOriginalBehavior": {
+      "reverseCommit": "6c0dfb76909d375a91f22e130666c077d57fd9f9",
+      "runtimeContract": "live-rehearsal-runtime-contract-10-1-4",
+      "controlProfile": "rehearsal-control-rendering-10-1-4"
+    },
+    "releaseLedger": {
+      "reverseCommit": "e055678f17f9a6c5b28838fdf7a604f96e9ff65c",
+      "profile": "simulator-live-rehearsal-release-10-1-4"
     },
     "productScore": {
       "contract": "src/simulator/scoring-contract.md",
       "delta": "src/simulator/audit/current-product-scoring-delta.json",
       "ruleSetId": "garupa-editor-normalized-10m-v1",
+      "timelineRevisionIsProductReconciliation": true,
       "publicRuleSelectionAllowed": false,
       "originalScoreParityClaimed": false
     }
   },
   "validation": {
     "isolatedTypeScript": "passed",
-    "quick": "passed-with-current-mixed-authority-audit",
+    "quick": "passed-with-current-release-audit",
+    "liveRehearsalStandalone": "passed",
     "scoreFullChart": {
       "totalScoringUnitCount": 1007,
       "autoScore": 10001007,
@@ -37,32 +43,38 @@
       "particleDecoder": "BrowserPixiParticleTextureDecoder",
       "singleCombinedRoot": true,
       "freshProcessRepeatCount": 3,
-      "capturesPerProcess": 17,
-      "aggregateSha256": "ff6e7584988dc0ad32074858e52beed608ed19b6623c6558402dcef84bdf396c",
+      "capturesPerProcess": 21,
+      "aggregateSha256": "e968d7900bca1ea0e96e9864479207ed3af00db7aada31c1b70370d68b23e8e0",
       "candidateDigestClaimedAsOriginalUnityOracle": false,
       "pushedReleaseRepeat": "passed"
     },
     "fullReleaseDag": {
-      "commit": "b4a3432",
+      "commit": "8e113f7",
       "status": "passed-pushed-detached",
-      "semanticLeaves": 26,
-      "elapsedMilliseconds": 1853406,
+      "semanticLeaves": 27,
+      "elapsedMilliseconds": 757717,
       "nodeModulesOnlyReused": true,
+      "existingCargoTargetsOnlyReused": true,
       "networkUsed": false,
       "reverseWorktreeRead": false
     }
   },
   "capabilities": {
+    "liveRehearsalFourModeMatrix": "closed-portable",
+    "rehearsalMoveTimeControls": "closed-portable",
+    "nonzeroInitialPracticeSeek": "excluded",
     "productContract": [
       "chart-owned CS-V1 scoring plan",
       "10M+N Auto maximum",
       "normalized Manual judgement rates without Combo score multiplier",
-      "fixed C/B/A/S/SS Rank and product Gauge"
+      "fixed C/B/A/S/SS Rank and product Gauge",
+      "backward-only timeline revision with restored scoring-unit set"
     ],
     "reverseBoundedPortablePresentation": [
-      "judgement production and OneFrame order",
-      "Combo and Life state",
-      "ordinary HUD resources, geometry, animation and Pixi composition"
+      "canonical Live/Rehearsal x Manual/Auto identity",
+      "Life-zero lifecycle split",
+      "fixed +/-5 MoveTime control and whole-engine reset/replay",
+      "current-atlas 1600x720 Pixi/WebView2 controls"
     ]
   },
   "boundaries": {

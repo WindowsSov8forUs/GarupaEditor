@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "auditStatus": "live-rehearsal-candidate-with-cs-v1-product-score",
+  "auditStatus": "live-rehearsal-release-with-cs-v1-product-score",
   "lockedSample": {
     "package": "jp.co.craftegg.band",
     "versionName": "10.1.4",

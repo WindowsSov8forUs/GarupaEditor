@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "status": "candidate-audited-pushed",
+  "status": "closed-portable-release-attested",
   "lockedSample": {
     "package": "jp.co.craftegg.band",
     "versionName": "10.1.4",
@@ -361,5 +361,15 @@
       ]
     }
   ],
-  "candidateCommit": "8e50eb0"
+  "candidateCommit": "8e50eb0",
+  "releaseValidatedCommit": "8e113f77820cd9fdd5cde31b7cf0369c4d6bf1bb",
+  "reverseReleaseLedgerCommit": "e055678f17f9a6c5b28838fdf7a604f96e9ff65c",
+  "releaseValidation": {
+    "semanticLeaves": 27,
+    "elapsedMilliseconds": 757717,
+    "webView2FreshProcesses": 3,
+    "webView2CapturesPerProcess": 21,
+    "webView2AggregateSha256": "e968d7900bca1ea0e96e9864479207ed3af00db7aada31c1b70370d68b23e8e0",
+    "status": "passed-pushed-detached"
+  }
 }
