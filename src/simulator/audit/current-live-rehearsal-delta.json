@@ -207,7 +207,7 @@
     },
     {
       "path": "src/simulator/backends/pixi/pixiRendererBackend.ts",
-      "sha256": "B4D6BD1729028606527DD93FBD145BC1585B374868F61AE1B83852E17A84046C",
+      "sha256": "78D041B3451E356EE81FC58647F3F0C664CEA9AD9B22891241AFCBAA3C66F861",
       "claims": [
         "LR-G08"
       ]
@@ -361,5 +361,5 @@
       ]
     }
   ],
-  "candidateCommit": "8398a5a"
+  "candidateCommit": "8e50eb0"
 }

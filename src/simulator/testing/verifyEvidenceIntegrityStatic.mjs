@@ -74,7 +74,7 @@ if (delta.schemaVersion !== 1 || delta.status !== "cs-v1-product-scoring-exact-d
   throw new Error("CS-V1 exact product delta is incomplete");
 }
 if (liveRehearsalDelta.status !== "candidate-audited-pushed" ||
-    liveRehearsalDelta.candidateCommit !== "8398a5a" ||
+    liveRehearsalDelta.candidateCommit !== "8e50eb0" ||
     liveRehearsalDelta.authority?.reverseCommit !== "6c0dfb76" ||
     liveRehearsalDelta.claims?.length !== 8 || liveRehearsalDelta.files?.length !== 25 ||
     liveRehearsalDelta.blockingFindings?.length !== 0) {
@@ -115,8 +115,11 @@ if (integrity.schemaVersion !== 3 ||
     integrity.currentProductionFileCount !== 107 || productionFiles.length !== 107 ||
     integrity.productChangedProductionFiles !== 17 || integrity.productDeletedProductionFiles !== 1 ||
     integrity.liveRehearsalChangedProductionFiles !== 25 ||
-    integrity.authorityModel?.liveRehearsal?.candidateCommit !== "8398a5a" ||
+    integrity.authorityModel?.liveRehearsal?.candidateCommit !== "8e50eb0" ||
     integrity.validation?.liveRehearsalCandidate?.standaloneMatrix !== "passed" ||
+    integrity.validation?.liveRehearsalWebView2?.capturesPerProcess !== 21 ||
+    integrity.validation?.liveRehearsalWebView2?.aggregateSha256 !==
+      "e968d7900bca1ea0e96e9864479207ed3af00db7aada31c1b70370d68b23e8e0" ||
     integrity.unclassifiedProductChangedFiles !== 0 ||
     integrity.validation?.scoreFullChart?.totalScoringUnitCount !== 1007 ||
     integrity.validation?.scoreFullChart?.autoScore !== 10001007 ||
@@ -132,7 +135,7 @@ if (integrity.schemaVersion !== 3 ||
 }
 if (fieldIndex.schemaVersion !== 5 || fieldIndex.status !== "reverse-baseline-plus-cs-v1-plus-live-rehearsal-candidate" ||
     fieldIndex.productDelta?.unclassifiedChangedProductionFiles !== 0 ||
-    fieldIndex.liveRehearsalDelta?.candidateCommit !== "8398a5a" ||
+    fieldIndex.liveRehearsalDelta?.candidateCommit !== "8e50eb0" ||
     fieldIndex.liveRehearsalDelta?.unclassifiedChangedProductionFiles !== 0 ||
     fieldIndex.currentProductionFiles !== 107 || fieldIndex.originalScoreParityClaimed !== false ||
     fieldIndex.groupMappingIsNotAuthorization !== true || fieldIndex.exactClaimBindingRequired !== true) {
@@ -140,7 +143,7 @@ if (fieldIndex.schemaVersion !== 5 || fieldIndex.status !== "reverse-baseline-pl
 }
 if (mutations.schemaVersion !== 5 || mutations.status !== "reverse-baseline-plus-cs-v1-plus-live-rehearsal-mutations-dispositioned" ||
     mutations.productDelta?.unreviewedMutationCount !== 0 ||
-    mutations.liveRehearsalDelta?.candidateCommit !== "8398a5a" ||
+    mutations.liveRehearsalDelta?.candidateCommit !== "8e50eb0" ||
     mutations.liveRehearsalDelta?.unreviewedMutationCount !== 0 ||
     mutations.perMutationDispositionRequired !== true || mutations.exactClaimBindingRequired !== true ||
     !mutations.productDelta.preflightBoundaries.includes("duplicate/foreign scoring unit before Record/Gauge mutation")) {

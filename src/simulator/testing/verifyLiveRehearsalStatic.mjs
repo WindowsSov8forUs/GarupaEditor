@@ -5,7 +5,7 @@ import { join, relative, resolve } from "node:path";
 const root = resolve(process.cwd(), "src", "simulator");
 const audit = JSON.parse(readFileSync(join(root, "audit", "current-live-rehearsal-delta.json"), "utf8"));
 const capability = JSON.parse(readFileSync(join(root, "audit", "current-capability-matrix.json"), "utf8"));
-if (audit.status !== "candidate-audited-pushed" || audit.candidateCommit !== "8398a5a" ||
+if (audit.status !== "candidate-audited-pushed" || audit.candidateCommit !== "8e50eb0" ||
     audit.authority.reverseCommit !== "6c0dfb76" ||
     audit.claims?.length !== 8 || audit.files?.length !== 25 ||
     audit.blockingFindings?.length !== 0) {

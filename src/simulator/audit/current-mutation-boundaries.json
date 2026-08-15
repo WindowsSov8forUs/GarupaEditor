@@ -30,7 +30,7 @@
   "failurePolicy": "CS-V1 rejects ambiguity, caller-authored Score data, duplicate/foreign units, overflow and typed HUD tampering before owner mutation; no fallback, clamp or quota transfer is authorized.",
   "liveRehearsalDelta": {
     "file": "current-live-rehearsal-delta.json",
-    "candidateCommit": "8398a5a",
+    "candidateCommit": "8e50eb0",
     "unreviewedMutationCount": 0,
     "transactionBoundaries": [
       "opaque control capability before MoveTime",

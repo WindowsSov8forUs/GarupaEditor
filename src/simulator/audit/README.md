@@ -8,11 +8,11 @@ The pushed Reverse ledger `b5fb3dca34b26511355879d62839661c5cf505d3` freezes Gar
 
 GarupaEditor CS-V1 Score is a product contract defined by [`../scoring-contract.md`](../scoring-contract.md). [`current-product-scoring-delta.json`](./current-product-scoring-delta.json) binds that product delta and never claims original score parity.
 
-Live/Rehearsal × Manual/Auto behavior is bound separately by [`current-live-rehearsal-delta.json`](./current-live-rehearsal-delta.json) to pushed Reverse `6c0dfb76` and pushed Garupa candidate `8398a5a`. It covers the canonical four-mode identity, Life-zero lifecycle split, simulator-owned fixed ±5 controls, whole-engine timeline restoration, MoveTime audio publication and actual current-atlas Pixi controls. The CS-V1 timeline revision remains an explicit product reconciliation rather than an original Score claim.
+Live/Rehearsal × Manual/Auto behavior is bound separately by [`current-live-rehearsal-delta.json`](./current-live-rehearsal-delta.json) to pushed Reverse `6c0dfb76` and pushed Garupa candidate `8e50eb0`. It covers the canonical four-mode identity, Life-zero lifecycle split, simulator-owned fixed ±5 controls, whole-engine timeline restoration, MoveTime audio publication and actual current-atlas Pixi controls. The CS-V1 timeline revision remains an explicit product reconciliation rather than an original Score claim.
 
 CS-V1 invariants include chart-owned scoring-unit identity, `scoreMaximum=10,000,000+N`, BigInt quota allocation, normalized Manual result rates without a Combo score multiplier, Auto Perfect quota, fixed Rank thresholds, and a Life-only Public gameplay input. Caller-authored master, ruleset, N, quota, level, parameter, or Auto coefficient is rejected before resource acquisition.
 
-The prior CS-V1 release observations below remain the locked baseline while the 27-leaf Live/Rehearsal release DAG is pending; they are not reclassified as current candidate release proof.
+The prior CS-V1 release observations below remain the locked baseline while the 27-leaf Live/Rehearsal release DAG is pending; they are not reclassified as current candidate release proof. Candidate `8e50eb0` separately passed three fresh WebView2 processes with 21 captures each for the expanded Rehearsal control/Life-zero scene, aggregate `e968d7900bca1ea0e96e9864479207ed3af00db7aada31c1b70370d68b23e8e0`.
 
 ## Current observations
 

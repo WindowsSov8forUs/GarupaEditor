@@ -30,7 +30,7 @@
   "originalScoreParityClaimed": false,
   "liveRehearsalDelta": {
     "file": "current-live-rehearsal-delta.json",
-    "candidateCommit": "8398a5a",
+    "candidateCommit": "8e50eb0",
     "changedProductionFiles": 25,
     "claimBindings": 8,
     "unclassifiedChangedProductionFiles": 0
