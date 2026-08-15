@@ -171,6 +171,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
   private readonly spriteReferenceCounts = new Map<string, number>();
   private readonly decodedFonts = new Map<string, PixiDecodedFont>();
   private readonly pending = new Map<RenderCommandBatch, PendingPixiBatch>();
+  private controlOverlayRoot: Container | null = null;
   private profile: RenderResourceProfile | null = null;
 
   constructor(
@@ -186,6 +187,13 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     durationSeconds: number,
   ): SimulatorResult<PixiRehearsalControlOverlay | null> {
     if (mode.sessionMode !== "rehearsal") return ok(null);
+    if (this.controlOverlayRoot !== null) {
+      return evidenceRequired(
+        "render.rehearsal-control.duplicate-owner",
+        ["LR-E03"],
+        "One renderer session owns at most one Rehearsal control overlay.",
+      );
+    }
     const snapshot = this.recording.snapshot();
     const returnTexture = this.spriteTextures.get(spriteKey(
       CURRENT_SCORE_HUD_BINDINGS.gaugeLogicalAssetId,
@@ -211,7 +219,11 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       returnTexture,
       advanceTexture,
       font.family,
+      (root) => {
+        if (this.controlOverlayRoot === root) this.controlOverlayRoot = null;
+      },
     );
+    this.controlOverlayRoot = overlay.root;
     this.stage.addChild(overlay.root);
     return ok(overlay);
   }
@@ -766,6 +778,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       release(`font:${logicalAssetId}`, () => font.dispose());
     }
     this.decodedFonts.clear();
+    this.controlOverlayRoot = null;
     this.profile = null;
     const failure = cleanupFailures.length === 0
       ? null
@@ -1286,8 +1299,13 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
 
   private sortSiblings(parent: Container): void {
     parent.children.sort((left, right) => {
-      const leftRecord = this.objects.get(this.objectIdsByNode.get(left as Container)!)!;
-      const rightRecord = this.objects.get(this.objectIdsByNode.get(right as Container)!)!;
+      if (left === this.controlOverlayRoot) return right === this.controlOverlayRoot ? 0 : 1;
+      if (right === this.controlOverlayRoot) return -1;
+      const leftRecord = this.objects.get(this.objectIdsByNode.get(left as Container)!);
+      const rightRecord = this.objects.get(this.objectIdsByNode.get(right as Container)!);
+      if (leftRecord === undefined || rightRecord === undefined) {
+        throw new Error("Pixi sibling ordering encountered an unowned scene object");
+      }
       return compareOrdering(leftRecord.ordering, rightRecord.ordering);
     });
   }
@@ -1419,6 +1437,7 @@ class PixiRehearsalControlOverlayOwner implements PixiRehearsalControlOverlay {
     returnTexture: Texture,
     advanceTexture: Texture,
     fontFamily: string,
+    private readonly releaseOwner: (root: Container) => void,
   ) {
     this.root.zIndex = 2_000_000_000;
     this.root.eventMode = "none";
@@ -1510,6 +1529,7 @@ class PixiRehearsalControlOverlayOwner implements PixiRehearsalControlOverlay {
   dispose(): SimulatorResult<void> {
     if (this.disposed) return ok(undefined);
     this.disposed = true;
+    this.releaseOwner(this.root);
     this.root.removeFromParent();
     this.root.destroy({ children: true });
     return ok(undefined);

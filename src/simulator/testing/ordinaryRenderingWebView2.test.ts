@@ -1,4 +1,9 @@
-import { LIVE_AUTO_MODE, LIVE_MANUAL_MODE } from "./modeFixtures";
+import {
+  LIVE_AUTO_MODE,
+  LIVE_MANUAL_MODE,
+  REHEARSAL_AUTO_MODE,
+  REHEARSAL_MANUAL_MODE,
+} from "./modeFixtures";
 import { Application, Rectangle } from "pixi.js";
 import type {
   AudioBackendSnapshot,
@@ -17,7 +22,10 @@ import { BrowserPixiParticleTextureDecoder } from "../backends/pixi/browserPixiP
 import { BrowserPixiTextureDecoder } from "../backends/pixi/browserPixiTextureDecoder";
 import { createPixiCombinedScene, type PixiCombinedScene } from "../backends/pixi/pixiCombinedScene";
 import { PixiParticleRendererBackend } from "../backends/pixi/pixiParticleRendererBackend";
-import { PixiRendererBackend } from "../backends/pixi/pixiRendererBackend";
+import {
+  PixiRendererBackend,
+  type PixiRehearsalControlOverlay,
+} from "../backends/pixi/pixiRendererBackend";
 import { createRecordingSimulatorBackends } from "../backends/recordingBackend";
 import { CURRENT_ORDINARY_RENDER_BINDINGS } from "../backends/resources/currentOrdinaryResourceManifest";
 import { CURRENT_ORDINARY_VISIBLE_PORTABLE_RESOURCES } from "../backends/resources/currentOrdinaryVisibleResourceManifest";
@@ -64,6 +72,7 @@ interface BrowserSession {
   readonly particleRenderer: PixiParticleRendererBackend;
   readonly combined: PixiCombinedScene;
   readonly layout: SimulatorSceneLayout;
+  readonly controlOverlay: PixiRehearsalControlOverlay | null;
   mounted: boolean;
 }
 
@@ -112,7 +121,7 @@ async function main(): Promise<void> {
   const initialFontFaces = Array.from(document.fonts).length;
   const captures: FrameCapture[] = [];
 
-  const auto = await createSession(inputs, "ordinary-webview2-auto", "auto-live");
+  const auto = await createSession(inputs, "ordinary-webview2-auto", "live-auto");
   mount(app, auto);
   requireOk(auto.engine.initialize());
   captures.push(await capture(app, auto, "initialize", 0));
@@ -122,25 +131,44 @@ async function main(): Promise<void> {
   const naturalClearStatus = auto.engine.getNaturalCompletionClearStatus();
   const autoCleanup = disposeSession(app, auto);
 
-  const manual = await createSession(inputs, "ordinary-webview2-game-over", "manual");
+  const manual = await createSession(inputs, "ordinary-webview2-game-over", "live-manual");
   mount(app, manual);
   requireOk(manual.engine.initialize());
   await runGameOverScenario(app, manual, captures);
   const manualCleanup = disposeSession(app, manual);
 
-  const seek = await createSession(inputs, "ordinary-webview2-initial-seek", "auto-live");
-  requireOk(seek.engine.initialize());
-  for (let frame = 0; frame < 50; frame += 1) requireOk(seek.engine.step(DELTA));
-  if (seek.combined.root.parent !== null) throw new Error("initial seek scene published before bounded pre-roll completed");
-  mount(app, seek);
-  captures.push(await capture(app, seek, "initial-seek-final-publication", 50));
-  const seekCleanup = disposeSession(app, seek);
+  const rehearsalManual = await createSession(
+    inputs,
+    "ordinary-webview2-rehearsal-manual",
+    "rehearsal-manual",
+  );
+  mount(app, rehearsalManual);
+  requireOk(rehearsalManual.engine.initialize());
+  captures.push(await capture(app, rehearsalManual, "rehearsal-manual-controls", 0));
+  await runRehearsalLifeZeroScenario(app, rehearsalManual, captures);
+  requireOk(rehearsalManual.controlOverlay!.updateTimeline(5));
+  captures.push(await capture(app, rehearsalManual, "rehearsal-forward-five-controls", 5));
+  requireOk(rehearsalManual.controlOverlay!.updateTimeline(0));
+  captures.push(await capture(app, rehearsalManual, "rehearsal-return-five-controls", 0));
+  const rehearsalManualCleanup = disposeSession(app, rehearsalManual);
+
+  const rehearsalAuto = await createSession(
+    inputs,
+    "ordinary-webview2-rehearsal-auto",
+    "rehearsal-auto",
+  );
+  mount(app, rehearsalAuto);
+  requireOk(rehearsalAuto.engine.initialize());
+  captures.push(await capture(app, rehearsalAuto, "rehearsal-auto-demo-controls", 0));
+  const rehearsalAutoCleanup = disposeSession(app, rehearsalAuto);
 
   const requiredLabels = [
     "initialize", "note-spawn", "note-animation", "judgement", "combo-add-score",
     "rank-c", "rank-b", "rank-a", "rank-s", "rank-ss", "particle-peak",
     "pause", "resume", "natural-completion", "life-warning", "game-over",
-    "initial-seek-final-publication",
+    "rehearsal-manual-controls", "rehearsal-life-zero-continuation",
+    "rehearsal-forward-five-controls", "rehearsal-return-five-controls",
+    "rehearsal-auto-demo-controls",
   ];
   const labels = new Set(captures.map((entry) => entry.label));
   for (const label of requiredLabels) if (!labels.has(label)) throw new Error(`required browser event was not captured: ${label}`);
@@ -181,7 +209,8 @@ async function main(): Promise<void> {
     cleanup: Object.freeze({
       auto: autoCleanup,
       manual: manualCleanup,
-      seek: seekCleanup,
+      rehearsalManual: rehearsalManualCleanup,
+      rehearsalAuto: rehearsalAutoCleanup,
       initialFontFaces,
       finalFontFaces,
       applicationStageChildren: app.stage.children.length,
@@ -278,16 +307,58 @@ async function runGameOverScenario(
   if (!warning || !gameOver) throw new Error(`manual no-input scenario did not expose warning/game-over: ${warning}/${gameOver}`);
 }
 
+async function runRehearsalLifeZeroScenario(
+  app: Application,
+  session: BrowserSession,
+  captures: FrameCapture[],
+): Promise<void> {
+  let lifeZeroFrame = -1;
+  const rehearsalDelta = 1 / 30;
+  for (let frame = 1; frame <= 2400; frame += 1) {
+    requireOk(session.engine.step(rehearsalDelta, { touches: [] }));
+    const record = requireOk(session.engine.snapshot()).managers.scoreLifeState?.record;
+    if (record?.singleGameOver) {
+      lifeZeroFrame = frame;
+      break;
+    }
+  }
+  if (lifeZeroFrame < 0) throw new Error("Rehearsal Manual did not reach Life zero");
+  for (let frame = 1; frame <= 30; frame += 1) {
+    requireOk(session.engine.step(rehearsalDelta, { touches: [] }));
+  }
+  requireOk(session.controlOverlay!.updateTimeline((lifeZeroFrame + 30) * rehearsalDelta));
+  const after = requireOk(session.engine.snapshot()).managers.scoreLifeState?.record;
+  if (after?.currentLife !== 0 || !after.singleGameOver) {
+    throw new Error("Rehearsal Life-zero record fact was not retained during continued updates");
+  }
+  captures.push(await capture(
+    app,
+    session,
+    "rehearsal-life-zero-continuation",
+    lifeZeroFrame + 30,
+  ));
+}
+
+type BrowserSessionMode = "live-auto" | "live-manual" | "rehearsal-auto" | "rehearsal-manual";
+
 async function createSession(
   inputs: LoadedInputs,
   id: string,
-  mode: "auto-live" | "manual",
+  mode: BrowserSessionMode,
 ): Promise<BrowserSession> {
+  const identity = mode === "live-auto"
+    ? LIVE_AUTO_MODE
+    : mode === "live-manual"
+      ? LIVE_MANUAL_MODE
+      : mode === "rehearsal-auto"
+        ? REHEARSAL_AUTO_MODE
+        : REHEARSAL_MANUAL_MODE;
   const renderer = new PixiRendererBackend(new BrowserPixiTextureDecoder());
   const renderProvider = requireOk(ImmutableLocalRenderResourceProvider.create(inputs.renderResources));
   requireOk(await renderer.prepare(
     id, inputs.renderProfile, renderProvider, new PortableRenderResourcePreflightAdapter(),
   ));
+  const controlOverlay = requireOk(renderer.createRehearsalControlOverlay(identity, 180));
   const layout = requireOk(createSimulatorSceneLayout(
     { viewportWidth: WIDTH, viewportHeight: HEIGHT, inputOrigin: "bottom-left" },
     {
@@ -324,7 +395,7 @@ async function createSession(
     runtime: {
       highFrequencyMode: false,
       judgeOffsetFrames: 0,
-      mode: mode === "manual" ? LIVE_MANUAL_MODE : LIVE_AUTO_MODE,
+      mode: identity,
     },
     scoreLifeState: {
       schemaVersion: 3,
@@ -333,7 +404,7 @@ async function createSession(
         initialLife: 1000, playerMaxLife: 1000, lifeUpperLimit: 2000,
         missDamage: -100, badDamage: -50,
       },
-      mode: mode === "auto-live" ? LIVE_AUTO_MODE : LIVE_MANUAL_MODE,
+      mode: identity,
     },
     rendering: {
       sessionId: id,
@@ -351,7 +422,7 @@ async function createSession(
     particles: { sessionId: id },
   }, backends));
   const combined = requireOk(createPixiCombinedScene(particleRenderer.stage, renderer.stage));
-  return { id, engine, renderer, particleRenderer, combined, layout, mounted: false };
+  return { id, engine, renderer, particleRenderer, combined, layout, controlOverlay, mounted: false };
 }
 
 function mount(app: Application, session: BrowserSession): void {
@@ -362,6 +433,7 @@ function mount(app: Application, session: BrowserSession): void {
 
 function disposeSession(app: Application, session: BrowserSession) {
   requireOk(session.engine.dispose());
+  if (session.controlOverlay !== null) requireOk(session.controlOverlay.dispose());
   session.combined.root.removeFromParent();
   requireOk(session.combined.dispose());
   session.mounted = false;

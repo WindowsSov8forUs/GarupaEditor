@@ -169,7 +169,10 @@ function verify(value) {
   const required = new Set([
     "initialize", "note-spawn", "note-animation", "judgement", "combo-add-score",
     "rank-c", "rank-b", "rank-a", "rank-s", "rank-ss", "particle-peak", "pause", "resume",
-    "natural-completion", "life-warning", "game-over", "initial-seek-final-publication",
+    "natural-completion", "life-warning", "game-over",
+    "rehearsal-manual-controls", "rehearsal-life-zero-continuation",
+    "rehearsal-forward-five-controls", "rehearsal-return-five-controls",
+    "rehearsal-auto-demo-controls",
   ]);
   for (const capture of value.scene.captures) {
     required.delete(capture.label);
@@ -181,7 +184,12 @@ function verify(value) {
     }
   }
   if (required.size !== 0) throw new Error(`missing full-scene captures: ${[...required].join(",")}`);
-  for (const cleanup of [value.cleanup.auto, value.cleanup.manual, value.cleanup.seek]) {
+  for (const cleanup of [
+    value.cleanup.auto,
+    value.cleanup.manual,
+    value.cleanup.rehearsalManual,
+    value.cleanup.rehearsalAuto,
+  ]) {
     equal(cleanup.rendererState, "disposed", "render cleanup state");
     equal(cleanup.renderOwners, 0, "render cleanup owners");
     equal(cleanup.renderStageChildren, 0, "render cleanup stage");
