@@ -1,13 +1,15 @@
 {
   "schemaVersion": 1,
-  "auditStatus": "ordinary-single-rendering-bounded-release",
+  "auditStatus": "ordinary-release-with-cs-v1-product-score",
   "rules": {
     "forbidCommittedTmpReferences": true,
     "forbidUnscopedCompletionClaims": true,
     "productionAuthorizationDoesNotProveConsumption": true,
     "recordingOrSourceMarkersCannotClosePositiveGate": true,
     "syntheticTextureSourceIsNotBrowserDecode": true,
-    "legacyAcceptanceCannotCloseCurrentGate": true
+    "legacyAcceptanceCannotCloseCurrentGate": true,
+    "productScoreDoesNotClaimOriginalParity": true,
+    "callerAuthoredScoreInputsForbidden": true
   },
   "allowedClaims": [
     {
@@ -23,13 +25,17 @@
     },
     {
       "id": "CLAIM-SCORE-LIFE",
-      "wording": "single-player score/life portable state subgate",
-      "scope": "current master thresholds, UInt32/Float32 state and typed HUD commands",
+      "wording": "CS-V1 product Score plus Reverse-bounded single-player Life/HUD state",
+      "scope": "product-authorized 10M+N quotas, normalized judgement rates without Combo score multiplier, fixed Rank, chart-owned identity, retained Reverse Life/OneFrame/HUD presentation",
       "notClaimed": [
+        "original game score formula parity",
+        "caller-authored master/ruleset/N/quota",
         "character skill effects",
         "multiplayer"
       ],
-      "auditDisposition": "closed-portable"
+      "auditDisposition": "implemented-product-contract-with-closed-portable-presentation",
+      "productAuthority": "src/simulator/scoring-contract.md",
+      "productDelta": "src/simulator/audit/current-product-scoring-delta.json"
     },
     {
       "id": "CLAIM-AUDIO-SEMANTIC",

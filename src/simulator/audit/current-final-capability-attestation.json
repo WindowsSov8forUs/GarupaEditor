@@ -1,136 +1,69 @@
 {
-  "schemaVersion": 2,
-  "status": "final-ordinary-single-rendering-evidence-bounded-release-attestation",
-  "date": "2026-08-14",
-  "sample": {
-    "package": "jp.co.craftegg.band",
-    "versionName": "10.1.4",
-    "versionCode": 230,
-    "abi": "arm64-v8a"
-  },
+  "schemaVersion": 3,
+  "status": "cs-v1-product-score-candidate-attestation",
+  "date": "2026-08-15",
   "implementation": {
     "repository": "https://github.com/WindowsSov8forUs/GarupaEditor.git",
     "branch": "codex/refactor-simulator-implementation",
-    "releaseCommit": "2b758eb6c40632c8c658e97772b9cb7afb5785fd",
-    "originEqualsHeadAtReleaseValidation": true,
-    "boundedProductionDeltaFromCandidate": [
-      "src/simulator/public/capabilities.ts",
-      "src/simulator/public/contracts.ts"
-    ]
+    "baseCommit": "35b1b25482239b3150cd7f47b9bd3f5acdf8b839",
+    "candidateCommit": "5539a0b",
+    "releaseCommit": null
   },
-  "reverseLedger": {
-    "repository": "https://github.com/WindowsSov8forUs/GirlsBandParty-Reverse.git",
-    "branch": "main",
-    "commit": "b5fb3dca34b26511355879d62839661c5cf505d3",
-    "package": "artifacts/investigations/simulator-final-capability-ledger-10-1-4",
-    "targetReleaseCommit": "2b758eb6c40632c8c658e97772b9cb7afb5785fd",
-    "originEqualsHead": true,
-    "counts": {
-      "productionFiles": 104,
-      "behaviorOccurrences": 22210,
-      "fieldClaims": 14721,
-      "mutationPoints": 281,
-      "completionStatusOccurrences": 647
+  "authority": {
+    "reverseBaseline": {
+      "commit": "b5fb3dca34b26511355879d62839661c5cf505d3",
+      "targetReleaseCommit": "2b758eb6c40632c8c658e97772b9cb7afb5785fd",
+      "coversCurrentProductScore": false
     },
-    "unreviewedOrSupportedUnknown": 0,
-    "groupMappingIsNotAuthorization": true,
-    "exactClaimBindingRequired": true
-  },
-  "ordinaryRenderingEvidence": {
-    "reverseCommit": "6908ddfa8a45721f981e2356a9dde84970313bae",
-    "package": "artifacts/investigations/ordinary-single-rendering-total-reaudit-10-1-4",
-    "leafRange": "OSR-E0001..OSR-E13323 plus OSR-GAP-01",
-    "candidateWorldRecords": 121,
-    "mutationSentinels": [
-      "parent",
-      "unity-y",
-      "mask-space",
-      "stage-order",
-      "particle-uv-row",
-      "fallback"
-    ]
+    "productScore": {
+      "contract": "src/simulator/scoring-contract.md",
+      "delta": "src/simulator/audit/current-product-scoring-delta.json",
+      "ruleSetId": "garupa-editor-normalized-10m-v1",
+      "publicRuleSelectionAllowed": false,
+      "originalScoreParityClaimed": false
+    }
   },
   "validation": {
-    "candidate": {
-      "commit": "5a25161cbb0fc179c877c4153dd9efeab17edcd2",
-      "status": "passed-pushed-detached",
-      "uniqueLeaves": 26,
-      "elapsedMilliseconds": 2067351,
-      "sourceCodeCopied": false,
-      "nodeModulesOnlyReused": true,
-      "networkUsed": false,
-      "reverseWorktreeRead": false
-    },
-    "release": {
-      "commit": "2b758eb6c40632c8c658e97772b9cb7afb5785fd",
-      "status": "passed-pushed-detached",
-      "uniqueLeaves": 26,
-      "elapsedMilliseconds": 1153047,
-      "sourceCodeCopied": false,
-      "nodeModulesOnlyReused": true,
-      "networkUsed": false,
-      "reverseWorktreeRead": false
+    "isolatedTypeScript": "passed",
+    "quick": "passed-with-current-mixed-authority-audit",
+    "scoreFullChart": {
+      "totalScoringUnitCount": 1007,
+      "autoScore": 10001007,
+      "status": "passed"
     },
     "ordinaryProductionBrowserLeaf": {
-      "executedInCandidateAndReleaseDags": true,
       "webView2Runtime": "151.0.4129.78",
-      "pixi": "8.17.1",
       "renderDecoder": "BrowserPixiTextureDecoder",
       "particleDecoder": "BrowserPixiParticleTextureDecoder",
       "singleCombinedRoot": true,
-      "stageOrder": [
-        "particle",
-        "Note/HUD"
-      ],
-      "chartBatchCount": 656,
       "freshProcessRepeatCount": 3,
       "capturesPerProcess": 17,
-      "aggregateSha256": "100f640350d9f49b41cc94a2df47284b42f8e46f182fce7c862a8b921e791538",
-      "candidateDigestClaimedAsOriginalUnityOracle": false
-    }
+      "aggregateSha256": "ff6e7584988dc0ad32074858e52beed608ed19b6623c6558402dcef84bdf396c",
+      "candidateDigestClaimedAsOriginalUnityOracle": false,
+      "pushedReleaseRepeat": "pending"
+    },
+    "fullReleaseDag": "pending"
   },
   "capabilities": {
-    "closedPortable": [
-      "public autonomous core and registered chart construction",
-      "manual and Auto Live clock/judgement/score-life state",
-      "ordinary Note/line/mesh and single-player HUD actual-Pixi composition",
-      "ordinary particle actual-Pixi and combined-scene composition",
-      "portable audio and deterministic particle semantic routes",
-      "HABAHIRO current-external-complete functional route",
-      "non-zero initial practice seek whole-engine pre-roll",
-      "current WebView2 production PNG/FontFace/glyph/dual-decoder full-scene raster"
+    "productContract": [
+      "chart-owned CS-V1 scoring plan",
+      "10M+N Auto maximum",
+      "normalized Manual judgement rates without Combo score multiplier",
+      "fixed C/B/A/S/SS Rank and product Gauge"
     ],
-    "closedOriginalUnreachable": [
-      "Button value 7 as a legal BMS/scene lane"
-    ],
-    "openEvidenceRequired": [
-      "HABAHIRO original UnityFS/natural owner/Root_effect/frame parity"
-    ],
-    "openObjectiveEnvironmentBlocked": [
-      "real 120/adaptive cadence on the locked 60 Hz-only panel",
-      "original-to-candidate GPU/driver framebuffer comparison",
-      "physical visible onset/peak comparison",
-      "CRI/Android/speaker physical output comparison"
-    ],
-    "excluded": [
-      "character/card/deck effects",
-      "Heal/Guard/NeverDie",
-      "Fever",
-      "multiplayer"
-    ],
-    "unauthorized": [
-      "stage-9 main-program/App/window/editor/Tauri/mobile integration"
+    "reverseBoundedPortablePresentation": [
+      "judgement production and OneFrame order",
+      "Combo and Life state",
+      "ordinary HUD resources, geometry, animation and Pixi composition"
     ]
   },
   "boundaries": {
     "aggregateOriginalParityClaimed": false,
     "positiveFixedDeviceExactClaims": 0,
-    "rejectedDeviceTracesReclassified": false,
-    "autoLiveBudgetRemaining": 10,
-    "r2Used": false,
     "mainProgramIntegrationAuthorization": false,
     "productionReadsReverseOrTmpOrTestingFixtures": false,
-    "audioPhysicalPerformanceClaimedByVisualHarness": false
-  },
-  "conclusion": "Ordinary single-player Note/HUD/particle rendering is closed-portable only within the cited 10.1.4 evidence, exact-binding production ledger, actual-Pixi observations, and pushed candidate/release WebView2 DAGs. This does not claim original Unity framebuffer parity, fixed-device physical exact, HABAHIRO original parity, excluded character/multiplayer behavior, or Stage 9 integration."
+    "habahiroOriginalParity": "open-evidence-required",
+    "fixedDeviceExact": "open-objective-environment-blocked",
+    "excludedMechanismsRemainExcluded": true
+  }
 }

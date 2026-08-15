@@ -1,34 +1,31 @@
 {
-  "schemaVersion": 4,
-  "status": "final-release-per-claim-indexed-and-attested",
-  "reverseCommit": "b5fb3dca34b26511355879d62839661c5cf505d3",
-  "reversePackage": "artifacts/investigations/simulator-final-capability-ledger-10-1-4",
-  "targetGarupaCommit": "2b758eb6c40632c8c658e97772b9cb7afb5785fd",
-  "counts": {
-    "productionFiles": 104,
-    "behaviorOccurrences": 22210,
-    "fieldClaims": 14721,
-    "mutationPoints": 281,
-    "completionClaims": 647
+  "schemaVersion": 5,
+  "status": "reverse-baseline-plus-cs-v1-exact-product-delta",
+  "reverseBaseline": {
+    "commit": "b5fb3dca34b26511355879d62839661c5cf505d3",
+    "targetGarupaCommit": "2b758eb6c40632c8c658e97772b9cb7afb5785fd",
+    "counts": {
+      "productionFiles": 104,
+      "behaviorOccurrences": 22210,
+      "fieldClaims": 14721,
+      "mutationPoints": 281,
+      "completionClaims": 647
+    },
+    "coversCurrentProductScore": false
   },
-  "fieldDispositionCounts": {
-    "closed-original-unreachable": 7,
-    "excluded": 2,
-    "field-evidence-bound": 14706,
-    "open-evidence-required": 2,
-    "open-objective-environment-blocked": 2,
-    "unauthorized-stage-9": 2
+  "productDelta": {
+    "file": "current-product-scoring-delta.json",
+    "ruleSetId": "garupa-editor-normalized-10m-v1",
+    "changedProductionFiles": 17,
+    "deletedProductionFiles": 1,
+    "claimBindings": 9,
+    "unclassifiedChangedProductionFiles": 0
   },
-  "unreviewedOccurrenceCount": 0,
-  "unreviewedFieldClaimCount": 0,
-  "unreviewedMutationCount": 0,
-  "unreviewedCompletionClaimCount": 0,
+  "currentProductionFiles": 106,
+  "unreviewedProductFieldClaimCount": 0,
   "reachableSupportedUnknownCount": 0,
   "groupMappingIsNotAuthorization": true,
   "exactClaimBindingRequired": true,
   "globalGateOpen": false,
-  "releaseDetachedDag": {
-    "uniqueLeaves": 26,
-    "elapsedMilliseconds": 1153047
-  }
+  "originalScoreParityClaimed": false
 }

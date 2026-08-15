@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "auditStatus": "ordinary-single-rendering-bounded-release",
+  "auditStatus": "ordinary-release-with-cs-v1-product-score",
   "lockedSample": {
     "package": "jp.co.craftegg.band",
     "versionName": "10.1.4",
@@ -38,19 +38,20 @@
     },
     {
       "id": "CAP-RUNTIME-01",
-      "capability": "manual and Auto Live scheduling, judgement, score/life state",
-      "productionPath": "engine initialize -> scheduler/input -> frame owners",
+      "capability": "manual and Auto Live scheduling, judgement, Combo and Life state",
+      "productionPath": "engine initialize -> scheduler/input -> OneFrame judgement/Life owners",
       "status": "closed-portable",
       "reverseEvidence": [
         "clock-scheduling-runtime-oracle",
         "manual-input-runtime-contract-10-1-4",
-        "score-life-state-runtime-contract-10-1-4"
+        "score-life-state-runtime-contract-10-1-4 (Life/Record ordering only)"
       ],
       "dynamicRequirement": "clock/manual/Auto/score-life production tests",
       "exclusions": [
         "character/card/deck skills",
         "Fever",
-        "multiplayer"
+        "multiplayer",
+        "original score formula parity"
       ]
     },
     {
@@ -95,7 +96,7 @@
       "portableObservations": [
         "complete parent/local/world transform, bounds, mask and ordering",
         "Note/line/mesh/HUD lifecycle matrices",
-        "WebView2 151.0.4129.78 aggregate 100f640350d9f49b41cc94a2df47284b42f8e46f182fce7c862a8b921e791538"
+        "WebView2 151.0.4129.78 CS-V1 aggregate ff6e7584988dc0ad32074858e52beed608ed19b6623c6558402dcef84bdf396c"
       ],
       "exclusions": [
         "cross-runtime/GPU exact raster digest",
@@ -188,6 +189,23 @@
       "dynamicRequirement": "17-root actual Pixi world/UV/blend/viewport observations, cross-stage sentinel, production BrowserPixiParticleTextureDecoder full-scene capture and zero-owner cleanup",
       "exclusions": [
         "Unity shader/GPU/driver/framebuffer parity"
+      ]
+    },
+    {
+      "id": "CAP-SCORE-PRODUCT-01",
+      "capability": "GarupaEditor CS-V1 normalized custom-chart Score and fixed Rank",
+      "productionPath": "constructed chart -> immutable scoring plan -> OneFrame identity -> Score/Life transaction -> product Gauge -> typed HUD",
+      "status": "implemented-product-contract",
+      "productAuthority": "src/simulator/scoring-contract.md",
+      "dynamicRequirement": "independent BigInt quota/result tests, 1007-unit full-chart Auto=10,001,007, typed mutations, actual Pixi and 3-fresh WebView2",
+      "reverseEvidence": [
+        "judgement result-rate binary32 values and retained OneFrame/Life/HUD presentation only"
+      ],
+      "exclusions": [
+        "original game score parity",
+        "caller-authored ruleset/N/quota/master",
+        "Combo score multiplier",
+        "Stage 9 integration"
       ]
     },
     {

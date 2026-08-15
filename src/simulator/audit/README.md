@@ -1,22 +1,26 @@
-# Simulator evidence-integrity audit
+# Simulator mixed-authority integrity audit
 
-This directory is a machine-checkable description of the current production boundary. It is not Reverse evidence and does not authorize behavior by itself.
+This directory describes the current production boundary; it is not behavior authority by itself.
 
-The final exact-binding ledger at pushed Reverse `b5fb3dca34b26511355879d62839661c5cf505d3` freezes pushed Garupa release `2b758eb6c40632c8c658e97772b9cb7afb5785fd`: 104 production files, 22,210 literal/operator occurrences, 14,721 field/formula claims, 281 mutation points, and 647 completion/status occurrences, with every unreviewed/unknown count zero. Every row is an independent authorization unit; sharing a domain/evidence route never authorizes a sibling row.
+## Authority model
 
-The prerequisite candidate `5a25161cbb0fc179c877c4153dd9efeab17edcd2` passed its pushed-detached 26-leaf DAG in 2,067,351 ms. After the bounded two-file R12 gate transition, release `2b758eb6c40632c8c658e97772b9cb7afb5785fd` passed the same 26-leaf detached DAG in 1,153,047 ms. The ordinary full-scene leaf executed both production browser decoders, one particle-before-Note/HUD combined root, the registered 656-batch whole-engine chart, 17 captures per process, and three byte-identical fresh WebView2 151.0.4129.78 processes. Aggregate digest `100f640350d9f49b41cc94a2df47284b42f8e46f182fce7c862a8b921e791538` is a locked portable regression observation, not an original Unity framebuffer oracle.
+The pushed Reverse ledger `b5fb3dca34b26511355879d62839661c5cf505d3` freezes Garupa release `2b758eb6c40632c8c658e97772b9cb7afb5785fd`. It remains the baseline for unchanged judgement, Life, HUD presentation, resources, audio, particles, and runtime behavior, but it does **not** cover the later custom Score implementation.
 
-The R14 attestation closes ordinary Note/HUD plus ordinary particle visible composition to `closed-portable`. Per-request schema, resource, backend, owner mutation, rollback, and evidence-required boundaries remain unchanged.
+GarupaEditor CS-V1 Score is a product contract defined by [`../scoring-contract.md`](../scoring-contract.md). [`current-product-scoring-delta.json`](./current-product-scoring-delta.json) binds every changed production file to exact SHA-256 values, symbols/formulas, mutation boundaries, retained Reverse behavior, and one of nine product claims. It never claims original score parity.
 
-Rules:
+CS-V1 invariants include chart-owned scoring-unit identity, `scoreMaximum=10,000,000+N`, BigInt quota allocation, normalized Manual result rates without a Combo score multiplier, Auto Perfect quota, fixed Rank thresholds, and a Life-only Public gameplay input. Caller-authored master, ruleset, N, quota, level, parameter, or Auto coefficient is rejected before resource acquisition.
 
-- Old task documents, acceptance records, closure fields, green aggregate tests, source markers, and Recording backends cannot close a current gate.
-- Fixture verification proves byte/SHA provenance only.
-- Synthetic Pixi `TextureSource` does not prove WebView2 decode, glyph rendering, raster output, or framebuffer parity.
-- Every reachable behavior occurrence, field/formula, mutation, and completion claim has an exact target/path/context binding; group mapping is not blanket authorization.
-- `closed-portable` is bounded to the cited current evidence and production observations; it is not aggregate original parity.
-- `closed-original-unreachable` means current original legal inputs cannot reach the value; no synthetic feature is added.
-- `excluded`, `open-evidence-required`, `open-objective-environment-blocked`, and `unauthorized-stage-9` remain non-positive.
-- Repository-local ignored material is not committed acceptance authority.
+## Current observations
 
-`current-final-capability-attestation.json` is the current bounded release attestation. HABAHIRO original parity, fixed-device exact, excluded character/multiplayer mechanisms, and Stage 9 are not upgraded by ordinary rendering closure.
+- Independent full-chart traversal: 1,007 scoring units.
+- Auto final Score: 10,001,007.
+- Production browser decoders: `BrowserPixiTextureDecoder` and `BrowserPixiParticleTextureDecoder`.
+- Ordinary combined scene: particle before Note/HUD.
+- WebView2 151.0.4129.78: three fresh processes, 17 captures each.
+- CS-V1 aggregate digest: `ff6e7584988dc0ad32074858e52beed608ed19b6623c6558402dcef84bdf396c`.
+
+The digest is a locked portable regression observation, not an original Unity or cross-GPU framebuffer oracle.
+
+## Unchanged non-positive boundaries
+
+HABAHIRO original parity remains `open-evidence-required`; fixed-device physical exact remains `open-objective-environment-blocked`; character/card/deck effects, Fever, and multiplayer remain `excluded`; Stage 9 main-program integration remains `unauthorized-stage-9`.

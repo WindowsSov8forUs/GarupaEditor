@@ -1,10 +1,10 @@
 # GarupaEditor Simulator
 
-`src/simulator`已完成普通单人渲染端到端总复审与有界portable release。旧任务书、旧acceptance、旧closure字段、Recording backend、源码标记和旧绿色DAG不构成本轮依据；当前正向边界只消费Reverse `6908ddfa`总复审叶事实、`b5fb3dca`最终逐claim账本及pushed-detached candidate/release观察。
+`src/simulator`已完成普通单人渲染端到端总复审，并在该引擎基础上接入GarupaEditor产品计分合同CS-V1。判定、Combo状态、Life、HUD资源/布局/动画继续消费Reverse证据；10M归一化Score、固定Rank和内部ruleset由[`scoring-contract.md`](./scoring-contract.md)授权，不宣称是原作计分复原。
 
 ## 当前全局门
 
-最终schema-4账本冻结release的104个production文件、22,210个occurrences、14,721个field/formula claims、281个mutations及647个completion claims，所有unreviewed/unknown为0。Candidate与release均通过26叶pushed-detached DAG（2,067,351ms / 1,153,047ms）；完整ordinary WebView2使用production双decoder、单一particle→Note/HUD combined root、656-batch全谱、3 fresh×17 captures，digest为`100f640350d9f49b41cc94a2df47284b42f8e46f182fce7c862a8b921e791538`。
+Reverse schema-4账本冻结的是旧release `2b758eb...`的104个production文件，不能覆盖后续产品Score改动。当前审计采用“Reverse基线 + exact-hash CS-V1 product delta”，见`audit/current-product-scoring-delta.json`。CS-V1 ordinary WebView2仍使用production双decoder、单一particle→Note/HUD combined root、656-batch全谱及3 fresh×17 captures；当前锁定环境观察digest为`ff6e7584988dc0ad32074858e52beed608ed19b6623c6558402dcef84bdf396c`，不是原作framebuffer oracle。
 
 总重验aggregate gate已在R12有界关闭；`CAP-RENDER-ORDINARY-01`与`CAP-RENDER-PARTICLE-COMPOSITION-01`恢复`closed-portable`。这不移除request/resource/backend/owner各自的失败关闭，不升级Unity framebuffer、fixed-device exact、HAB original、excluded玩法或Stage 9。
 
@@ -40,7 +40,7 @@
 import { launchSimulatorModule } from "src/simulator";
 ```
 
-安装中立platform后，证据覆盖的普通或合法non-zero practice-seek request可获得仅含`closed` Promise的成功receipt；未安装时失败为`simulator.entry.platform-not-installed`。合同不接受member/card/deck、角色效果、Fever或多人数据，也不暴露engine、step、backend、provider、scene、replay factory或dispose。
+安装中立platform后，证据覆盖的普通或合法non-zero practice-seek request可获得仅含`closed` Promise的成功receipt；未安装时失败为`simulator.entry.platform-not-installed`。合同不接受member/card/deck、角色效果、Fever或多人数据，也不暴露engine、step、backend、provider、scene、replay factory或dispose。Public gameplay只提供Life；Score master、level、totalParameter、Auto coefficient、ruleset、评分单位数和quota均由exact-shape边界拒绝。模拟器从chart-owned判定图内部生成评分计划。
 
 **Skill音符不等于角色技能效果。** `GameNoteAdditionalType.Skill`只能在重新核验后表示chart-owned外观、命中SE和判定粒子，不得查询member/card或触发角色加分、Heal、Guard、NeverDie或判定强化。
 
@@ -71,13 +71,13 @@ src/simulator/
 
 Synthetic decoder、资源hash或typed command仍不能单独升级为真实WebView2 raster证明。
 
-当前Score HUD候选实现已修正NineSlice轴序、已知depth、master派生marker校验和SS持久owner。Reverse `score-hud-panel-clip-portable-10-1-4@1abae506`又从当前10.1.4 APK直接确认Score UIPanel path 1451、Background_Cover anchor target、四anchor、SoftClip range/softness/offset及父级坐标，并排除AllPerfect path 1450身份混淆。`indicatorLocalX`现驱动挂在ScoreGaugeSS animation layer上的持久Pixi mask consumer；20行阈值±1/scoreMax/over-max raw矩阵由独立verifier重算。Score panel子门已随普通command/scene portable范围闭合；真实WebView2 decode/glyph/raster由另一独立门关闭，该Score结论本身不升级browser、GPU framebuffer或fixed-device exact。
+Score HUD继续保留Reverse确认的NineSlice轴序、depth、UIPanel clip、Bitmap数字、marker几何和SS持久owner；业务输入改为内部CS-V1 `ruleSetId + totalScoringUnitCount`。Gauge固定C/B/A/S/SS阈值并以`10,000,000+N`为最大值，typed validator独立复算Rank、ratio、marker和SS条件。该产品Score语义不升级原作计分等价、browser/GPU framebuffer或fixed-device exact。
 
 ## Evidence workflow
 
 流程见[`evidence-workflow.md`](./evidence-workflow.md)。只消费已verify、commit、push的Reverse证据。10.1.3或其他来源必须先建立逐claim等价证明、适用域和反例检查。旧调查包可提供待重新核验的原始事实，但其`closed`、`productionAuthorization`或总体closure字段不是本轮授权。
 
-当前依据为Reverse普通渲染静态/HUD提交`6908ddfa8a45721f981e2356a9dde84970313bae`、最终逐claim账本`b5fb3dca34b26511355879d62839661c5cf505d3`、Garupa candidate `5a25161cbb0fc179c877c4153dd9efeab17edcd2`与release `2b758eb6c40632c8c658e97772b9cb7afb5785fd`。R14 attestation登记两轮DAG与全部非正向边界；HAB original、fixed-device exact、excluded和stage-9边界不因本轮复审升级。
+Reverse普通渲染静态/HUD提交`6908ddfa`和最终账本`b5fb3dca`继续约束未改变的原作表现；其Garupa target `2b758eb...`仅作为历史基线。CS-V1变更由tracked产品规范、逐文件SHA-256 delta、独立公式测试、full-chart Auto和当前WebView2观察约束。HAB original、fixed-device exact、excluded和Stage 9边界不因产品Score升级。
 
 日常开发默认运行`npm.cmd run simulator:test`（或`simulator:test:quick`）：测试树只编译一次，约20秒覆盖unit/contract/static、chart parsing、clock与Auto，不执行耗时full-chart actual-Pixi/particle/HAB或WebView2，因此不能作为release证据。发布级入口仍为`npm.cmd run simulator:test:total-revalidation`，保留完整26叶及3-fresh ordinary WebView2双decoder；重复运行复用ignored Cargo target，`simulator:test:total-revalidation:clean`可强制冷编译。完整说明见[`testing/README.md`](./testing/README.md)。两级均不运行Vite/Tauri，也不声称原作framebuffer或物理输出等价。
 

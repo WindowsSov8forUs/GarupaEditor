@@ -1,22 +1,26 @@
 {
-  "schemaVersion": 2,
-  "status": "final-ordinary-single-rendering-evidence-bounded-release",
-  "currentDisposition": "R14-final-release-attested",
-  "ordinaryRenderingPositiveAuthority": true,
-  "reverseAudit": {
-    "commit": "b5fb3dca34b26511355879d62839661c5cf505d3",
-    "package": "artifacts/investigations/simulator-final-capability-ledger-10-1-4",
-    "inventoryTargetCommit": "2b758eb6c40632c8c658e97772b9cb7afb5785fd",
-    "schemaVersion": 4,
-    "productionFileCount": 104,
-    "occurrenceCount": 22210,
-    "fieldClaimCount": 14721,
-    "mutationPointCount": 281,
-    "completionClaimCount": 647,
-    "unreviewedOrSupportedUnknown": 0
+  "schemaVersion": 3,
+  "status": "cs-v1-product-score-pushed-candidate-with-reverse-rendering-baseline",
+  "currentDisposition": "product-delta-implementation-pushed-awaiting-release-dag",
+  "authorityModel": {
+    "reverseBaseline": {
+      "commit": "b5fb3dca34b26511355879d62839661c5cf505d3",
+      "targetGarupaCommit": "2b758eb6c40632c8c658e97772b9cb7afb5785fd",
+      "productionFileCount": 104,
+      "behaviorOccurrences": 22210,
+      "fieldClaims": 14721,
+      "mutationPoints": 281,
+      "completionClaims": 647,
+      "coversCurrentProductScore": false
+    },
+    "productScore": {
+      "contract": "src/simulator/scoring-contract.md",
+      "delta": "src/simulator/audit/current-product-scoring-delta.json",
+      "ruleSetId": "garupa-editor-normalized-10m-v1",
+      "originalScoreParityClaimed": false
+    }
   },
   "reviewPolicy": {
-    "sourceOccurrenceIsNotEvidence": true,
     "groupMappingIsNotBlanketAuthorization": true,
     "exactClaimBindingRequired": true,
     "currentInventoryRequired": true,
@@ -25,70 +29,43 @@
     "untypedProductionEscapeCount": 0,
     "commentOnlyCatchCount": 0
   },
-  "ordinaryRenderingEvidence": {
-    "reverseCommit": "6908ddfa8a45721f981e2356a9dde84970313bae",
-    "package": "artifacts/investigations/ordinary-single-rendering-total-reaudit-10-1-4",
-    "leafRange": "OSR-E0001..OSR-E13323 plus OSR-GAP-01",
-    "worldObserverRecords": 121,
-    "mutationSentinels": [
-      "parent",
-      "unity-y",
-      "mask-space",
-      "stage-order",
-      "particle-uv-row",
-      "fallback"
-    ]
+  "currentProductionFileCount": 106,
+  "productChangedProductionFiles": 17,
+  "productDeletedProductionFiles": 1,
+  "unclassifiedProductChangedFiles": 0,
+  "validation": {
+    "isolatedTypeScript": "passed",
+    "developmentQuickWithoutStaleAudit": "passed",
+    "scoreFullChart": {
+      "chart": "poppin_shuffle_special",
+      "totalScoringUnitCount": 1007,
+      "autoScore": 10001007,
+      "expected": 10001007,
+      "status": "passed"
+    },
+    "browserDecoderWebView2": {
+      "runtime": "151.0.4129.78",
+      "status": "passed"
+    },
+    "ordinaryWebView2": {
+      "runtime": "151.0.4129.78",
+      "productionRenderDecoder": "BrowserPixiTextureDecoder",
+      "productionParticleDecoder": "BrowserPixiParticleTextureDecoder",
+      "combinedRoot": true,
+      "freshProcesses": 3,
+      "capturesPerProcess": 17,
+      "aggregateSha256": "ff6e7584988dc0ad32074858e52beed608ed19b6623c6558402dcef84bdf396c",
+      "originalUnityFramebufferOracle": false,
+      "executionScope": "local-candidate-observation-awaiting-pushed-release-repeat"
+    },
+    "quickWithCurrentAudit": "passed",
+    "implementationCommit": "5539a0b",
+    "fullReleaseDag": "pending-pushed-audit-candidate"
   },
-  "candidateDetachedDag": {
-    "status": "passed",
-    "commit": "5a25161cbb0fc179c877c4153dd9efeab17edcd2",
-    "uniqueLeaves": 26,
-    "elapsedMilliseconds": 2067351,
-    "sourceCodeCopied": false,
-    "nodeModulesOnlyReused": true,
-    "networkUsed": false,
-    "reverseWorktreeRead": false
-  },
-  "releaseTransition": {
-    "status": "passed-pushed-detached-release",
-    "commit": "2b758eb6c40632c8c658e97772b9cb7afb5785fd",
-    "prerequisiteCandidateCommit": "5a25161cbb0fc179c877c4153dd9efeab17edcd2",
-    "prerequisiteReverseCandidateLedgerCommit": "3f9ef7880654fc80ce45b23e4c20de326001afb9",
-    "finalReverseLedgerCommit": "b5fb3dca34b26511355879d62839661c5cf505d3",
-    "boundedProductionFiles": [
-      "src/simulator/public/capabilities.ts",
-      "src/simulator/public/contracts.ts"
-    ],
-    "globalGateOpenAfterTransition": false,
-    "ordinaryCommandScene": "closed-portable",
-    "ordinaryParticleVisibleComposition": "closed-portable",
-    "uniqueLeaves": 26,
-    "elapsedMilliseconds": 1153047,
-    "sourceCodeCopied": false,
-    "nodeModulesOnlyReused": true,
-    "networkUsed": false,
-    "reverseWorktreeRead": false
-  },
-  "ordinaryWebView2": {
-    "runtime": "151.0.4129.78",
-    "productionRenderDecoder": "BrowserPixiTextureDecoder",
-    "productionParticleDecoder": "BrowserPixiParticleTextureDecoder",
-    "combinedRoot": true,
-    "freshProcesses": 3,
-    "capturesPerProcess": 17,
-    "aggregateSha256": "100f640350d9f49b41cc94a2df47284b42f8e46f182fce7c862a8b921e791538",
-    "originalUnityFramebufferOracle": false
-  },
-  "finalAttestation": {
-    "file": "current-final-capability-attestation.json",
-    "positiveAuthorityForBoundedOrdinaryPortableRelease": true
-  },
-  "openOrExcluded": [
-    "HABAHIRO original UnityFS/natural runtime/Root_effect/frame parity",
-    "fixed-device real 120/adaptive cadence, GPU/framebuffer, visible onset/peak and physical speaker output",
-    "character/card/deck effects, Heal/Guard/NeverDie, Fever and multiplayer",
-    "stage-9 main-program integration"
-  ],
-  "currentProductionFileCount": 104,
-  "supersededReason": "All pre-reaudit group summaries and historical attestations are replaced for ordinary portable claims by the pushed final schema-4 exact-binding release ledger and candidate/release detached DAGs."
+  "unchangedBoundaries": {
+    "habahiroOriginalParity": "open-evidence-required",
+    "fixedDeviceExact": "open-objective-environment-blocked",
+    "characterSkillFeverMultiplayer": "excluded",
+    "mainProgramIntegration": "unauthorized-stage-9"
+  }
 }
