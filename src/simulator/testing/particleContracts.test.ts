@@ -1,4 +1,4 @@
-import { LIVE_AUTO_MODE } from "./modeFixtures";
+import { LIVE_AUTO_MODE, REHEARSAL_AUTO_MODE } from "./modeFixtures";
 declare function require(name: string): any;
 declare const process: any;
 
@@ -620,7 +620,7 @@ async function testWholeEngineReplay(): Promise<void> {
       runtime: {
         highFrequencyMode: false,
         judgeOffsetFrames: 0,
-        mode: LIVE_AUTO_MODE,
+        mode: REHEARSAL_AUTO_MODE,
       },
       particles: { sessionId },
     }, createRecordingSimulatorBackends(undefined, particle));
@@ -629,28 +629,24 @@ async function testWholeEngineReplay(): Promise<void> {
   const replay = requireOk(createPortableReplaySimulatorEngine(initial, {
     createFreshEngine: fresh,
   }), "create whole-engine replay");
-  for (let frame = 0; frame < 30; frame += 1) requireOk(replay.step(1 / 60), `replay prefix ${frame}`);
-  const checkpoint = requireOk(replay.createReplayCheckpoint(), "replay checkpoint");
-  const expected = requireOk(replay.snapshot(), "checkpoint snapshot");
-  for (let frame = 0; frame < 120; frame += 1) requireOk(replay.step(1 / 60), `replay future ${frame}`);
-  assert.equal(requireOk(replay.snapshot(), "future snapshot").particleBackend?.frames.length, 150);
-  assert.equal((await replay.returnTime(checkpoint)).status, "ok");
-  const restored = requireOk(replay.snapshot(), "restored snapshot");
-  assert.equal(restored.adjustedMusicPosition, expected.adjustedMusicPosition);
-  assert.deepEqual(restored.managers, expected.managers);
-  assert.deepEqual(restored.particleBackend?.frames, expected.particleBackend?.frames);
-  assert.equal(backends[0]?.snapshot().state, "disposed");
-  const stale = await replay.returnTime(checkpoint);
-  assert.equal(stale.status, "evidence-required");
-  if (stale.status === "evidence-required") {
-    assert.equal(stale.capability, "particle.replay.foreign-or-stale-checkpoint");
+  for (let frame = 0; frame < 180; frame += 1) requireOk(replay.step(1 / 60), `replay prefix ${frame}`);
+  const expected = requireOk(replay.snapshot(), "three-second snapshot");
+  for (let frame = 0; frame < 300; frame += 1) requireOk(replay.step(1 / 60), `replay future ${frame}`);
+  assert.equal(requireOk(replay.snapshot(), "future snapshot").particleBackend?.frames.length, 480);
+  const returned = await replay.moveTime("return-five");
+  assert.equal(returned.status, "evidence-required");
+  if (returned.status === "evidence-required") {
+    assert.equal(returned.capability, "score-life.move-time-without-record-owner");
   }
+  const unchanged = requireOk(replay.snapshot(), "unchanged snapshot");
+  assert.ok(unchanged.adjustedMusicPosition > expected.adjustedMusicPosition);
+  assert.equal(backends[0]?.snapshot().state, "ready");
   assert.equal(replay.dispose().status, "ok");
   assert.equal(replay.dispose().status, "ok");
   const afterDispose = replay.step(1 / 60);
   assert.equal(afterDispose.status, "evidence-required");
   if (afterDispose.status === "evidence-required") {
-    assert.equal(afterDispose.capability, "particle.replay.after-dispose");
+    assert.equal(afterDispose.capability, "timeline.replay.after-dispose");
   }
 }
 

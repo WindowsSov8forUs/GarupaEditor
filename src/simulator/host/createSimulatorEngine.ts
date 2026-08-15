@@ -279,6 +279,33 @@ class SimulatorEngineHost implements SimulatorEngine {
     return this.naturalCompletionClearStatus;
   }
 
+  publishMoveTimeAudio(targetSeconds: number): SimulatorResult<void> {
+    const publish = this.backends.audio.publishMoveTimeOutput;
+    const seekMilliseconds = Math.trunc(targetSeconds * 1000);
+    if (publish === undefined || !Number.isSafeInteger(seekMilliseconds) || seekMilliseconds < 0) {
+      return evidenceRequired(
+        "audio.move-time.publication-owner-missing",
+        ["LR-E16", "LR-C03"],
+        "MoveTime publication requires the prepared audio owner and trunc(InGameSec*1000) target.",
+      );
+    }
+    return mapAudioResult(publish.call(this.backends.audio, seekMilliseconds));
+  }
+
+  commitMoveTimeTimelineRevision(
+    timelineRevision: number,
+    moveTimeCount: number,
+  ): SimulatorResult<void> {
+    const manager = this.inGameManager.scoreLifeStateManager;
+    return manager === null
+      ? evidenceRequired(
+          "score-life.move-time-without-record-owner",
+          ["LR-R03", "LR-C04"],
+          "Rehearsal MoveTime publication requires the Score/Life/Record owner.",
+        )
+      : manager.commitMoveTimeTimelineRevision(timelineRevision, moveTimeCount);
+  }
+
   enterMoveTimeForWholeEngineReplay(): SimulatorResult<void> {
     if (this.inGameManager.fault !== null) return this.inGameManager.fault;
     const backendFault = this.pollAudioFault();
@@ -441,16 +468,77 @@ class SimulatorEngineHost implements SimulatorEngine {
   }
 }
 
+interface RegisteredMoveTimeWrapper {
+  readonly host: SimulatorEngineHost;
+  readonly publishVisual: () => SimulatorResult<void>;
+}
+const registeredMoveTimeWrappers = new WeakMap<object, RegisteredMoveTimeWrapper>();
+
+export function registerSimulatorEngineMoveTimeWrapper(
+  wrapper: SimulatorEngine,
+  inner: SimulatorEngine,
+  publishVisual: () => SimulatorResult<void>,
+): SimulatorResult<void> {
+  const host = resolveMoveTimeHost(inner);
+  if (host === null || wrapper === inner || registeredMoveTimeWrappers.has(wrapper)) {
+    return evidenceRequired(
+      "timeline.movetime.invalid-engine-wrapper",
+      ["LR-C03"],
+      "A production mount may register exactly one simulator-owned wrapper around one host engine.",
+    );
+  }
+  registeredMoveTimeWrappers.set(wrapper, Object.freeze({ host, publishVisual }));
+  return ok(undefined);
+}
+
+export function publishMoveTimeAudio(
+  engine: SimulatorEngine,
+  targetSeconds: number,
+): SimulatorResult<void> {
+  const host = resolveMoveTimeHost(engine);
+  if (host === null) {
+    return evidenceRequired(
+      "audio.move-time.foreign-engine",
+      ["LR-C03"],
+      "MoveTime audio publication may run only on an engine created by the simulator host.",
+    );
+  }
+  const audio = host.publishMoveTimeAudio(targetSeconds);
+  if (audio.status !== "ok") return audio;
+  return registeredMoveTimeWrappers.get(engine)?.publishVisual() ?? ok(undefined);
+}
+
+export function commitMoveTimeTimelineRevision(
+  engine: SimulatorEngine,
+  timelineRevision: number,
+  moveTimeCount: number,
+): SimulatorResult<void> {
+  const host = resolveMoveTimeHost(engine);
+  return host !== null
+    ? host.commitMoveTimeTimelineRevision(timelineRevision, moveTimeCount)
+    : evidenceRequired(
+        "score-life.move-time-foreign-engine",
+        ["LR-C04"],
+        "Timeline revision may be committed only on an engine created by the simulator host.",
+      );
+}
+
 export function enterMoveTimeForWholeEngineReplay(
   engine: SimulatorEngine,
 ): SimulatorResult<void> {
-  return engine instanceof SimulatorEngineHost
-    ? engine.enterMoveTimeForWholeEngineReplay()
+  const host = resolveMoveTimeHost(engine);
+  return host !== null
+    ? host.enterMoveTimeForWholeEngineReplay()
     : evidenceRequired(
         "particle.movetime.foreign-engine",
         [],
         "Whole-engine replay accepts only an engine created by the portable simulator host.",
       );
+}
+
+function resolveMoveTimeHost(engine: SimulatorEngine): SimulatorEngineHost | null {
+  if (engine instanceof SimulatorEngineHost) return engine;
+  return registeredMoveTimeWrappers.get(engine)?.host ?? null;
 }
 
 export function createSimulatorEngine(

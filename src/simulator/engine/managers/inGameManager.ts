@@ -237,10 +237,12 @@ export class InGameManager {
         }
         const gameOver = businessPlan?.status === "ok" && lifeBefore !== null &&
           lifeBefore > 0 && businessPlan.value.record.currentLife <= 0;
+        const terminalGameOver = gameOver &&
+          this.noteManager.snapshot().calculatedData.sessionMode === "live";
         const particlePlan = this.particleCoordinator?.preflightJudgement(
           deltaTimeSeconds,
           batch,
-          gameOver,
+          terminalGameOver,
         ) ?? null;
         if (particlePlan?.status === "evidence-required") {
           if (businessPlan?.status === "ok") {
@@ -249,7 +251,7 @@ export class InGameManager {
           this.oneFrameJudgementController.discardReflectOneFrameData(reflectPlan.value);
           return this.latchFault(particlePlan);
         }
-        const audioPlan = this.audioProducer?.preflightJudgement(batch, gameOver) ?? null;
+        const audioPlan = this.audioProducer?.preflightJudgement(batch, terminalGameOver) ?? null;
         if (audioPlan?.status === "evidence-required") {
           if (particlePlan?.status === "ok") particlePlan.value.discard();
           if (businessPlan?.status === "ok") {

@@ -2,7 +2,6 @@ import type { SimulatorEngine, SimulatorSnapshot } from "../host/contracts";
 import {
   createPortableReplaySimulatorEngine,
   type PortableReplaySimulatorEngine,
-  type SimulatorReplayCheckpoint,
 } from "../host/portableReplaySession";
 import { createSimulatorModuleCapabilitySummary } from "../public/capabilities";
 import {
@@ -90,7 +89,6 @@ export class RecipeOwnedSessionFactory implements SimulatorOwnedSessionFactory {
 }
 
 class RecipeOwnedSession implements SimulatorOwnedSession {
-  private checkpoint: SimulatorReplayCheckpoint | null = null;
   private state: "running" | "closed" = "running";
   private renderingFidelity: SimulatorRenderingFidelity | null = null;
 
@@ -132,28 +130,19 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
     return this.apply(() => this.engine.resume());
   }
 
-  createReplayCheckpoint(): SimulatorAssemblyResult<void> {
+  async moveTime(
+    direction: "return-five" | "advance-five",
+  ): Promise<SimulatorAssemblyResult<void>> {
     if (this.state !== "running") return closedFailure();
-    const checkpoint = this.engine.createReplayCheckpoint();
-    if (checkpoint.status !== "ok") return fromEngineFailure(checkpoint);
-    this.checkpoint = checkpoint.value;
-    return accepted(undefined);
-  }
-
-  async returnTime(): Promise<SimulatorAssemblyResult<void>> {
-    if (this.state !== "running") return closedFailure();
-    if (this.checkpoint === null) {
+    if (this.sessionMode !== "rehearsal") {
       return rejected(
         "evidence-required",
-        "simulator.recipe.return-time-without-checkpoint",
-        "The autonomous practice controller must create one internal opaque checkpoint before ReturnTime; no synthetic five-second target is inferred.",
+        "simulator.recipe.movetime-outside-rehearsal",
+        "Fixed MoveTime controls exist only in Rehearsal and never infer session identity from Manual or Auto input.",
       );
     }
-    const checkpoint = this.checkpoint;
-    const returned = await this.engine.returnTime(checkpoint);
-    if (returned.status !== "ok") return fromEngineFailure(returned);
-    this.checkpoint = null;
-    return accepted(undefined);
+    const moved = await this.engine.moveTime(direction);
+    return moved.status === "ok" ? accepted(undefined) : fromEngineFailure(moved);
   }
 
   close(
@@ -207,7 +196,6 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
       ? null
       : this.engine.getNaturalCompletionClearStatus() ?? clearStatusFromSnapshot(value.managers.scoreLifeState!);
     const disposed = this.engine.dispose();
-    this.checkpoint = null;
     this.state = "closed";
     let terminalFailure = failure;
     const secondaryFailures = [];

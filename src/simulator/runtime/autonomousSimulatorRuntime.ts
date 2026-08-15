@@ -169,7 +169,7 @@ export class AutonomousSimulatorModule {
       return rejected(
         "evidence-required",
         "simulator.runtime.invalid-command",
-        "The internal UI/input owner emits only typed pause, resume, ReturnTime or user-close commands.",
+        "The internal UI/input owner emits only typed pause, resume, fixed Rehearsal MoveTime or user-close commands.",
       );
     }
     if (command.kind === "user-close") {
@@ -179,10 +179,8 @@ export class AutonomousSimulatorModule {
     }
     if (command.kind === "pause") return this.session!.pause();
     if (command.kind === "resume") return this.session!.resume();
-    if (command.kind === "create-replay-checkpoint") {
-      return this.session!.createReplayCheckpoint();
-    }
-    if (command.kind === "return-time") return this.session!.returnTime();
+    if (command.kind === "return-five-seconds") return this.session!.moveTime("return-five");
+    if (command.kind === "advance-five-seconds") return this.session!.moveTime("advance-five");
     return rejected(
       "evidence-required",
       "simulator.runtime.unknown-command",

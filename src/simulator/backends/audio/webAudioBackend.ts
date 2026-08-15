@@ -45,8 +45,16 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
   private seGain: GainNode | null = null;
   private contextListenerInstalled = false;
   private scheduledPauseOffset = 0;
+  private physicalOutputState: "live" | "move-time-suppressed" | "move-time-published";
 
-  constructor(private readonly context: AudioContext) {}
+  constructor(
+    private readonly context: AudioContext,
+    moveTimeReconstruction = false,
+  ) {
+    this.physicalOutputState = moveTimeReconstruction
+      ? "move-time-suppressed"
+      : "live";
+  }
 
   async prepare(
     sessionId: string,
@@ -195,7 +203,9 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
     if (committed.status !== "accepted") return committed;
     this.pending = null;
     try {
-      this.applyCommands(pending.commands);
+      if (this.physicalOutputState !== "move-time-suppressed") {
+        this.applyCommands(pending.commands);
+      }
       return audioAccepted(undefined);
     } catch {
       return this.recording.recordTerminalFault(
@@ -230,7 +240,43 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
     const semantic = this.recording.snapshot().semantic;
     if (semantic.bgmCue === null) return audioAccepted("not-loaded");
     if (semantic.bgmPaused || semantic.allPaused) return audioAccepted("paused");
+    if (this.physicalOutputState === "move-time-suppressed") return audioAccepted("playing");
     return audioAccepted(this.voices.has("bgm") ? "playing" : "ended");
+  }
+
+  publishMoveTimeOutput(seekMilliseconds: number): AudioOperationResult<void> {
+    const context = this.requireRunningContext<void>();
+    if (context !== null) return context;
+    if (this.physicalOutputState !== "move-time-suppressed" ||
+      !Number.isSafeInteger(seekMilliseconds) || seekMilliseconds < 0) {
+      return reject(
+        "audio.web.invalid-move-time-publication",
+        "Physical MoveTime publication is one-use, reconstruction-only and requires a non-negative integer millisecond target.",
+      );
+    }
+    const before = this.recording.snapshot();
+    if (before.semantic.bgmCue === null || before.semantic.bgmPaused || before.semantic.allPaused) {
+      return reject(
+        "audio.web.invalid-move-time-semantic-state",
+        "MoveTime publishes only one reconstructed running BGM owner; malformed or paused state cannot fall back.",
+      );
+    }
+    const recorded = this.recording.publishMoveTimeOutput(seekMilliseconds);
+    if (recorded.status !== "accepted") return recorded;
+    try {
+      if (before.semantic.gain !== null) {
+        this.setCategoryGain(this.bgmGain!, audioFloat32FromBits(before.semantic.gain.bgmBits)!);
+        this.setCategoryGain(this.seGain!, audioFloat32FromBits(before.semantic.gain.seBits)!);
+      }
+      this.createVoice("bgm", before.semantic.bgmCue, "bgm", 1, seekMilliseconds / 1000, null, null);
+      this.physicalOutputState = "move-time-published";
+      return audioAccepted(undefined);
+    } catch {
+      return this.recording.recordTerminalFault(
+        "audio.web.move-time-publication-threw",
+        "The reconstructed target BGM graph failed during one-use physical publication and is terminal.",
+      );
+    }
   }
 
   recordTerminalFault(capability: string, boundary: string): AudioOperationResult<never> {
@@ -282,6 +328,7 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
           this.setCategoryGain(this.seGain!, audioFloat32FromBits(command.se_bits)!);
           break;
         case "bgm.load":
+        case "bgm.move-time-load":
           this.createVoice("bgm", command.cue, "bgm", 1, command.seek_ms / 1000, null, null);
           break;
         case "bgm.pause":

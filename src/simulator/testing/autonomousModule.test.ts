@@ -390,8 +390,8 @@ async function testAutonomousLaunchAndClose(): Promise<void> {
   input.set(0, [
     { kind: "pause" },
     { kind: "resume" },
-    { kind: "create-replay-checkpoint" },
-    { kind: "return-time" },
+    { kind: "return-five-seconds" },
+    { kind: "advance-five-seconds" },
   ]);
   input.set(1, [{ kind: "user-close" }]);
   const module = new AutonomousSimulatorModule({
@@ -401,7 +401,9 @@ async function testAutonomousLaunchAndClose(): Promise<void> {
   });
   assert.equal(installSimulatorModuleLauncher(module.launch).status, "accepted");
   assert.equal(installSimulatorModuleLauncher(module.launch).status, "rejected");
-  const launched = await launchSimulatorModule(request());
+  const launchRequest = request();
+  (launchRequest.config as { sessionMode: "live" | "rehearsal" }).sessionMode = "rehearsal";
+  const launched = await launchSimulatorModule(launchRequest);
   assert.equal(launched.status, "accepted");
   if (launched.status !== "accepted") throw new Error(launched.failure.capability);
   assert.deepEqual(Object.keys(launched).sort(), ["closed", "status"]);
@@ -409,7 +411,7 @@ async function testAutonomousLaunchAndClose(): Promise<void> {
   assert.equal("dispose" in launched, false);
   await scheduler.tick(0, 1 / 60);
   assert.equal(session.steps, 1);
-  assert.deepEqual(session.commands, ["pause", "resume", "checkpoint", "return-time"]);
+  assert.deepEqual(session.commands, ["pause", "resume", "return-five", "advance-five"]);
   await scheduler.tick(1, 1 / 60);
   const report = await launched.closed;
   assert.equal(report.reason, "user-closed");
@@ -546,8 +548,10 @@ class FakeSession implements SimulatorOwnedSession {
   }
   pause(): SimulatorAssemblyResult<void> { this.commands.push("pause"); return accepted(undefined); }
   resume(): SimulatorAssemblyResult<void> { this.commands.push("resume"); return accepted(undefined); }
-  createReplayCheckpoint(): SimulatorAssemblyResult<void> { this.commands.push("checkpoint"); return accepted(undefined); }
-  async returnTime(): Promise<SimulatorAssemblyResult<void>> { this.commands.push("return-time"); return accepted(undefined); }
+  async moveTime(direction: "return-five" | "advance-five"): Promise<SimulatorAssemblyResult<void>> {
+    this.commands.push(direction);
+    return accepted(undefined);
+  }
   close(reason: "user-closed" | "terminal-fault", failure?: any): SimulatorModuleCloseReport {
     this.closes += 1;
     return Object.freeze({

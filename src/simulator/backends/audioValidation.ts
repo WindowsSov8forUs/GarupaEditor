@@ -180,6 +180,7 @@ export function validateAudioCommandShape(
         ? audioAccepted(undefined)
         : rejectCommand("audio.command.invalid-session-open", "Session open preserves the exact fixed pool capacities.");
     case "bgm.load":
+    case "bgm.move-time-load":
       return hasExactKeys(command, ["kind", "cue", "seek_ms", "priority", "fade_bits"]) &&
         isNonEmpty(bgmCue) && command.cue === bgmCue &&
         Number.isSafeInteger(command.seek_ms) && command.seek_ms >= 0 &&

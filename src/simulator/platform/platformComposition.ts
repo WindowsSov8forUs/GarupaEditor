@@ -21,10 +21,13 @@ import { PortableRenderResourcePreflightAdapter } from "../backends/resources/lo
 import { createNoteBatchInformationList } from "../engine/chart/construction";
 import type { ScoreLifeStateProfile } from "../engine/data/scoreLifeState";
 import { createSimulatorModeIdentity } from "../engine/data/inGameCalculatedData";
-import { evidenceRequired, type SimulatorResult } from "../engine/evidence";
+import { evidenceRequired, ok, type SimulatorResult } from "../engine/evidence";
 import type { ManualInputFrame, ManualInputPosition } from "../engine/data/manualInput";
 import type { SimulatorEngine, SimulatorSnapshot } from "../host/contracts";
-import { createSimulatorEngine } from "../host/createSimulatorEngine";
+import {
+  createSimulatorEngine,
+  registerSimulatorEngineMoveTimeWrapper,
+} from "../host/createSimulatorEngine";
 import {
   isTotalRevalidationOpen,
   TOTAL_REVALIDATION_BOUNDARY,
@@ -138,9 +141,10 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
     if (chartCapabilities.status === "rejected") return chartCapabilities;
     const score = mapScoreLifeProfile(recipe.request, this.sessionId());
     if (score.status === "rejected") return score;
+    const moveTimeCandidate = this.generation > 0;
     const selection = selectSimulatorStaticResources(chart.value);
     const renderer = new PixiRendererBackend(new BrowserPixiTextureDecoder());
-    const audio = new WebAudioSimulatorBackend(this.platform.audioContext);
+    const audio = new WebAudioSimulatorBackend(this.platform.audioContext, moveTimeCandidate);
     const particles = new DeterministicSimulatorParticleBackend();
     const particleRenderer = new PixiParticleRendererBackend(
       new BrowserPixiParticleTextureDecoder(),
@@ -238,6 +242,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
       const cleanup = simulatorCleanupFailureFromResult("engine-after-combined-scene-failure", engine.value.dispose());
       return rejectedWithCleanup(fromEvidence(combinedScene), cleanup === null ? [] : [cleanup]);
     }
+    combinedScene.value.root.visible = !moveTimeCandidate;
     const mounted = this.platform.graphics.mount(sessionId, combinedScene.value.root);
     if (mounted.status === "rejected") {
       const cleanups = [
@@ -246,9 +251,21 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
       ].filter((failure): failure is SimulatorModuleCleanupFailure => failure !== null);
       return rejectedWithCleanup(mounted, cleanups);
     }
-    return accepted(Object.freeze({
-      engine: new MountedSimulatorEngine(engine.value, mounted.value, combinedScene.value),
-    }));
+    const mountedEngine = new MountedSimulatorEngine(engine.value, mounted.value, combinedScene.value);
+    const registered = registerSimulatorEngineMoveTimeWrapper(
+      mountedEngine,
+      engine.value,
+      () => {
+        combinedScene.value.root.visible = true;
+        return ok(undefined);
+      },
+    );
+    if (registered.status !== "ok") {
+      return rejectedWithCleanup(fromEvidence(registered), [
+        simulatorCleanupFailureFromResult("engine-after-wrapper-registration-failure", mountedEngine.dispose()),
+      ].filter((failure): failure is SimulatorModuleCleanupFailure => failure !== null));
+    }
+    return accepted(Object.freeze({ engine: mountedEngine }));
   }
 
   private sessionId(): string {

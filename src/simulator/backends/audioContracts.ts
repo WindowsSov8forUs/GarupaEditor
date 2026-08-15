@@ -130,7 +130,7 @@ export type AudioCommand =
       readonly one_shot_pool: 1;
     }
   | {
-      readonly kind: "bgm.load";
+      readonly kind: "bgm.load" | "bgm.move-time-load";
       readonly cue: string;
       readonly seek_ms: number;
       readonly priority: 255;
@@ -243,6 +243,7 @@ export interface SimulatorAudioBackend {
   discard(batch: AudioCommandBatch): AudioOperationResult<void>;
   execute(command: AudioCommand): AudioOperationResult<void>;
   getBgmPlaybackState?(): AudioOperationResult<AudioBgmPlaybackState>;
+  publishMoveTimeOutput?(seekMilliseconds: number): AudioOperationResult<void>;
   recordTerminalFault(capability: string, boundary: string): AudioOperationResult<never>;
   snapshot(): AudioBackendSnapshot;
   dispose(): AudioOperationResult<void>;

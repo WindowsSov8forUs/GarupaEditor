@@ -264,6 +264,32 @@ export class ScoreLifeStateManager {
     return ok(undefined);
   }
 
+  commitMoveTimeTimelineRevision(
+    timelineRevision: number,
+    moveTimeCount: number,
+  ): SimulatorResult<void> {
+    if (this.pendingReflect !== null || !Number.isSafeInteger(timelineRevision) ||
+      timelineRevision < 0 || !Number.isSafeInteger(moveTimeCount) || moveTimeCount <= 0) {
+      return evidenceRequired(
+        "score-life.invalid-move-time-revision",
+        ["LR-R03", "LR-R05", "LR-C04"],
+        "A reconstructed Rehearsal timeline commits one non-negative revision and positive MoveTime count only after all Score/Life replay owners are settled.",
+      );
+    }
+    try {
+      this.record.commitMoveTimeCount(moveTimeCount);
+    } catch {
+      return evidenceRequired(
+        "score-life.invalid-move-time-count",
+        ["LR-E20", "LR-R03", "LR-R05"],
+        "MoveTime count is monotonic across reconstructed timeline publications.",
+      );
+    }
+    this.timelineRevisionValue = timelineRevision;
+    this.traceValue.push(`move-time-revision:${timelineRevision}:${moveTimeCount}`);
+    return ok(undefined);
+  }
+
   continueLive(): SimulatorResult<void> {
     return evidenceRequired(
       "score-life.continue-excluded",

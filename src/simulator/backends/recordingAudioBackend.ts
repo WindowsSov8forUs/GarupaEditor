@@ -246,6 +246,25 @@ export class RecordingSimulatorAudioBackend implements SimulatorAudioBackend {
     return audioAccepted(this.semantic.bgmPaused || this.semantic.allPaused ? "paused" : "playing");
   }
 
+  publishMoveTimeOutput(seekMilliseconds: number): AudioOperationResult<void> {
+    const terminal = this.terminalResult<void>();
+    if (terminal !== null) return terminal;
+    if (!Number.isSafeInteger(seekMilliseconds) || seekMilliseconds < 0 ||
+      this.semantic.bgmCue === null) {
+      return this.reject(
+        "audio.move-time.invalid-publication",
+        "MoveTime audio publication requires one loaded BGM and a non-negative integer millisecond target.",
+      );
+    }
+    return this.execute({
+      kind: "bgm.move-time-load",
+      cue: this.semantic.bgmCue,
+      seek_ms: seekMilliseconds,
+      priority: 255,
+      fade_bits: "0x00000000",
+    });
+  }
+
   notifyBgmNaturalEnd(): AudioOperationResult<void> {
     const terminal = this.terminalResult<void>();
     if (terminal !== null) return terminal;
@@ -365,6 +384,13 @@ function applyCommand(
       }
       state.bgmCue = command.cue;
       state.bgmPaused = false;
+      return audioAccepted(undefined);
+    case "bgm.move-time-load":
+      if (state.bgmCue === null || state.bgmCue !== command.cue) {
+        return transitionRejected("audio.command.invalid-move-time-bgm", "MoveTime may reload only the exact active session BGM cue.");
+      }
+      state.bgmPaused = false;
+      state.allPaused = false;
       return audioAccepted(undefined);
     case "bgm.pause":
       if (state.bgmCue === null || state.bgmPaused) {

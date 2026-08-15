@@ -19,6 +19,7 @@ export interface InGameRecordSnapshot {
   readonly allPerfect: boolean;
   readonly oneNoteMax: OneNoteMaxScoreInfo;
   readonly singleGameOver: boolean;
+  readonly moveTimeCount: number;
 }
 
 const EMPTY_ONE_NOTE: OneNoteMaxScoreInfo = Object.freeze({ score: 0, combo: 0 });
@@ -35,6 +36,7 @@ export class InGameRecord {
   private allPerfectValue = true;
   private oneNoteMaxValue = EMPTY_ONE_NOTE;
   private singleGameOverValue = false;
+  private moveTimeCountValue = 0;
 
   constructor(
     initialLife: number,
@@ -47,6 +49,7 @@ export class InGameRecord {
   get currentLife(): number { return this.currentLifeValue; }
   get currentCombo(): number { return this.currentComboValue; }
   get singleGameOver(): boolean { return this.singleGameOverValue; }
+  get moveTimeCount(): number { return this.moveTimeCountValue; }
 
   getClearStatus(totalScoringUnitCount: number): 1 | 2 | 3 {
     const perfectCount = this.resultCountsValue[4];
@@ -88,6 +91,13 @@ export class InGameRecord {
     if (timing === 2) this.slowCountValue = addInt32(this.slowCountValue, 1);
   }
 
+  commitMoveTimeCount(value: number): void {
+    if (!Number.isSafeInteger(value) || value < this.moveTimeCountValue) {
+      throw new Error("InGameRecord MoveTime count must be monotonic safe integer");
+    }
+    this.moveTimeCountValue = value;
+  }
+
   updateOneNoteMax(score: number): void {
     if (this.oneNoteMaxValue.score < score) {
       this.oneNoteMaxValue = Object.freeze({ score, combo: this.currentComboValue });
@@ -117,6 +127,7 @@ export class InGameRecord {
     this.allPerfectValue = staged.allPerfectValue;
     this.oneNoteMaxValue = Object.freeze({ ...staged.oneNoteMaxValue });
     this.singleGameOverValue = staged.singleGameOverValue;
+    this.moveTimeCountValue = staged.moveTimeCountValue;
   }
 
   snapshot(): InGameRecordSnapshot {
@@ -134,6 +145,7 @@ export class InGameRecord {
       allPerfect: this.allPerfectValue,
       oneNoteMax: Object.freeze({ ...this.oneNoteMaxValue }),
       singleGameOver: this.singleGameOverValue,
+      moveTimeCount: this.moveTimeCountValue,
     });
   }
 }
