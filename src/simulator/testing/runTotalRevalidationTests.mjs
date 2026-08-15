@@ -35,6 +35,7 @@ const baseLeaves = [
   ["audio", "runAudioTests.mjs", {}],
   ["particle", "runParticleTests.mjs", {}],
   ["host-runtime-public-gate", "runAutonomousModuleTests.mjs", {}],
+  ["public-life-profile", "runPublicLifeProfileTests.mjs", {}],
   ["live-rehearsal-four-mode", "runLiveRehearsalModeTests.mjs", {}],
   ["remaining-capability-consumption", "runC07EvidenceConsumptionTests.mjs", {}],
 ];
@@ -43,6 +44,7 @@ const quickLeaves = [
   ["chart-parsing", "runChartConstructionParsingTests.mjs", {}],
   ["clock", "runClockSchedulingTests.mjs", {}],
   ["auto", "runAutoLiveTests.mjs", {}],
+  ["public-life-profile", "runPublicLifeProfileTests.mjs", {}],
   ["live-rehearsal-four-mode", "runLiveRehearsalModeTests.mjs", {}],
 ];
 const browserEnvironment = cleanBrowserBuild ? { SIMULATOR_WEBVIEW2_CLEAN_BUILD: "1" } : {};

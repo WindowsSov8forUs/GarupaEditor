@@ -12,4 +12,5 @@
 - `reverse-snapshots/ordinary-visible-rendering/` 包含已推送 Reverse `f94947d9` 的普通Note动画与通用单人HUD contract/profile/oracle/closure/manifest及4个去重PNG；RhythmGameUI与sgm字体复用既有Score快照身份，不重复保存。该快照授权portable production消费，但不声明设备GPU/framebuffer exact。
 - `reverse-snapshots/c07-evidence/` 只保留已推送Reverse `a87cd3a7`真实WebView2合同与`0dd4d71c`fixed-device客观阻断disposition；旧initial-seek产品扩展fixture已随`startMilliseconds`能力删除。
 - `reverse-snapshots/live-rehearsal/` 包含已推送Reverse `d100f96e`四模式/MoveTime合同与`6c0dfb76`control rendering profile两个最小JSON；不复制R1 trace或截图，controls atlas复用既有Score HUD快照。
+- `reverse-snapshots/public-life-profile/` 只包含已推送Reverse `2cbea93d`的结构化合同JSON，用于校验普通单曲`1000/1000/2000`初始化与non-full/full伤害`-100/-50`、`-50/-25`；不复制ARM64切片或本地静态输入。
 - `reverse-snapshots/ordinary-rendering-total-reaudit/` 只晋升Reverse `6908ddfa`的候选最小夹具：selected hierarchy/world坐标、HUD descendant布局/TweenAlpha/GameJudge静态oracle、particle→Note/HUD combined-root顺序、资源logical IDs及明确不作为原作oracle的browser验收政策；不复制13,323行完整账本、原始trace或Reverse closure。

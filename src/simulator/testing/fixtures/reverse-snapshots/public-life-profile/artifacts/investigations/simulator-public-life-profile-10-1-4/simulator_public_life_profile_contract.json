@@ -1,0 +1,149 @@
+{
+  "schemaVersion": 1,
+  "status": "confirmed-single-play-life-initialization-and-full-damage-profile",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "versionName": "10.1.4",
+    "versionCode": 230,
+    "abi": "arm64-v8a",
+    "unity": "2022.3.62f1"
+  },
+  "sources": {
+    "libil2cpp": {
+      "path": "samples/jp.co.craftegg.band/10.1.4_230/extracted/libil2cpp.so",
+      "bytes": 119816840,
+      "sha256": "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F"
+    },
+    "dump": {
+      "path": "static/il2cpp/dump-10.1.4_230/dump.cs",
+      "bytes": 53099861,
+      "sha256": "4AC4ACC5981D0010B3D6A69482C37C1175339458246BC4A5878CF30F694E884B"
+    },
+    "stringLiterals": {
+      "path": "static/il2cpp/dump-10.1.4_230/stringliteral.json",
+      "bytes": 2644999,
+      "sha256": "B3E1E9776232EE1AC5B02060C8DEA0DB1EAEF58E406578D7AB2D5F41A11A2109"
+    },
+    "fullLiteralPointer": {
+      "storageVa": "0x6C9F130",
+      "storageBytes": "0000000000000000",
+      "relocationType": "R_AARCH64_RELATIVE",
+      "relocationTypeValue": "0x403",
+      "relocationAddend": "0x6F9B660",
+      "literalVa": "0x6F9B660",
+      "value": "full"
+    }
+  },
+  "methods": [
+    {
+      "evidenceId": "PLP-E02",
+      "owner": "InGameLifeGauge",
+      "method": "ResetLife",
+      "rva": "0x3A6E7FC",
+      "endRva": "0x3A6E9E8",
+      "codeBytes": 492,
+      "codeSha256": "EA994FABB05BEEDB12BAB9B7F7C8EEE9B9A38883318B18A645983AD26EE2015F",
+      "arm64": "arm64/03a6e7fc__InGameLifeGauge__ResetLife.arm64.tsv",
+      "arm64Bytes": 4482,
+      "arm64Sha256": "11FAF16DA359DB9C472975CEC5F4181DF5C8EB5B6FBF1E7A16DD6ED7F75BAA68"
+    },
+    {
+      "evidenceId": "PLP-E04",
+      "owner": "DamageUtility",
+      "method": "CalcDamage",
+      "rva": "0x331AD2C",
+      "endRva": "0x331AE08",
+      "codeBytes": 220,
+      "codeSha256": "F4992646009AE75554D7F5CC4378C8EBEFBC7CE198D6EC903CC9BC02C6357258",
+      "arm64": "arm64/0331ad2c__DamageUtility__CalcDamage.arm64.tsv",
+      "arm64Bytes": 2033,
+      "arm64Sha256": "7B43F93CA7551004C0FCBD722B8584833FC8C537CF7C613023D9FA9E998E7EFC"
+    },
+    {
+      "evidenceId": "PLP-E06",
+      "owner": "InGameCalculatedData",
+      "method": "ctor",
+      "rva": "0x32F0FCC",
+      "endRva": "0x32F184C",
+      "codeBytes": 2176,
+      "codeSha256": "D8E18AF203287ED89B1A0EEC84E7D22EB45625559FC125ED46444CC89A7E33C2",
+      "arm64": "arm64/032f0fcc__InGameCalculatedData__ctor.arm64.tsv",
+      "arm64Bytes": 19803,
+      "arm64Sha256": "4490EB732006A2BEBCE02F9D663ECDFA053F30BCA1DF4D9C8F498F247D6F4DFD"
+    }
+  ],
+  "evidence": [
+    {
+      "id": "PLP-E01",
+      "surface": "global-life-constants",
+      "finding": "BMSDefine declares DefaultLifeValue=1000 and MaxLifeValue=2000 for the locked build."
+    },
+    {
+      "id": "PLP-E02",
+      "surface": "single-play-life-reset",
+      "finding": "InGameLifeGauge.ResetLife calls InGameRecord.InitializeLife with defaultLife=1000, maxLife=2000, initialLife=1000 in that argument order."
+    },
+    {
+      "id": "PLP-E03",
+      "surface": "full-classification-source",
+      "finding": "MasterMusicGetResponse stores musicDataType at +0xB0 and the CalcDamage comparison literal resolves to the exact string full."
+    },
+    {
+      "id": "PLP-E04",
+      "surface": "damage-profile-branch",
+      "finding": "DamageUtility.CalcDamage compares musicDataType to full; non-full writes Miss=-100 and Bad=-50, while full writes Miss=-50 and Bad=-25."
+    },
+    {
+      "id": "PLP-E05",
+      "surface": "start-data-fields",
+      "finding": "CalcDamage writes the selected Miss and Bad values to RhythmGameStartData +0xA0 and +0xA4 without a third fallback profile."
+    },
+    {
+      "id": "PLP-E06",
+      "surface": "calculated-data-publication",
+      "finding": "InGameCalculatedData construction calls CalcDamage before copying RhythmGameStartData +0xA0/+0xA4 into readonly calculated fields +0xA8/+0xAC."
+    },
+    {
+      "id": "PLP-E07",
+      "surface": "scope-boundary",
+      "finding": "The confirmed profile covers ordinary single-song initialization. Medley inherited Life and premium Continue recovery are separate excluded paths."
+    }
+  ],
+  "portableContract": {
+    "classificationInput": "musicDataTypeEqualsFull",
+    "life": {
+      "initialLife": 1000,
+      "playerMaxLife": 1000,
+      "lifeUpperLimit": 2000
+    },
+    "damage": {
+      "nonFull": {
+        "missDamage": -100,
+        "badDamage": -50
+      },
+      "full": {
+        "missDamage": -50,
+        "badDamage": -25
+      }
+    },
+    "inferenceForbidden": [
+      "BGM duration",
+      "BMS contents",
+      "filename",
+      "session mode",
+      "input mode"
+    ]
+  },
+  "closure": {
+    "status": "closed-static-portable-profile",
+    "ordinarySingleSongInitialization": "confirmed",
+    "fullPredicate": "musicDataType == full",
+    "callerAuthoredDamageValuesAuthorized": false,
+    "callerAuthoredLifeValuesAuthorized": false,
+    "resolvedFullPredicateMayBeCarriedByHostProductContract": true,
+    "resolvedBooleanIsOriginalPublicApi": false,
+    "medleyLifeInheritance": "excluded",
+    "premiumContinue": "excluded",
+    "blockingFindings": []
+  }
+}

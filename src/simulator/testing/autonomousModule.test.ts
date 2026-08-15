@@ -200,26 +200,33 @@ function testRecipeOwnership(): void {
   const source = request();
   const recipe = requireAccepted(createSimulatorSessionRecipe(source));
   source.chartData.bgm.bytes.fill(0);
+  (source.chartData as { isFullLength: boolean }).isFullLength = true;
   (source.config.audio as { masterGain: number }).masterGain = 0;
   assert.deepEqual([...recipe.request.chartData.bgm.bytes], [1, 2, 3, 4]);
+  assert.equal(recipe.request.chartData.isFullLength, false);
   assert.equal(recipe.request.config.audio.masterGain, 1);
   assert.ok(Object.isFrozen(recipe));
   assert.ok(Object.isFrozen(recipe.request));
   assert.ok(Object.isFrozen(recipe.request.chartData.bgm));
-  assert.ok(Object.isFrozen(recipe.request.chartData.gameplay));
-  assert.ok(Object.isFrozen(recipe.request.chartData.gameplay.life));
+  assert.equal(recipe.schemaVersion, 2);
+  assert.equal(recipe.request.chartData.isFullLength, false);
 
   const extra = { ...request(), extra: true } as unknown as SimulatorModuleLaunchRequest;
   assert.equal(createSimulatorSessionRecipe(extra).status, "rejected");
   const legacyScore: any = request();
-  legacyScore.chartData.gameplay.score = { level: 27 };
+  legacyScore.chartData.gameplay = { score: { level: 27 } };
   assert.equal(createSimulatorSessionRecipe(legacyScore).status, "rejected");
   const callerRuleSet: any = request();
-  callerRuleSet.chartData.gameplay.ruleSet = "garupa-editor-normalized-10m-v1";
+  callerRuleSet.chartData.gameplay = { ruleSet: "garupa-editor-normalized-10m-v1" };
   assert.equal(createSimulatorSessionRecipe(callerRuleSet).status, "rejected");
   const callerCount: any = request();
-  callerCount.chartData.gameplay.totalScoringUnitCount = 1;
+  callerCount.chartData.gameplay = { totalScoringUnitCount: 1 };
   assert.equal(createSimulatorSessionRecipe(callerCount).status, "rejected");
+  const callerLife: any = request();
+  callerLife.chartData.gameplay = {
+    life: { initialLife: 1000, playerMaxLife: 1000, lifeUpperLimit: 2000, missDamage: -100, badDamage: -50 },
+  };
+  assert.equal(createSimulatorSessionRecipe(callerLife).status, "rejected");
   const legacyModes: any = request();
   legacyModes.config.playMode = "auto-live";
   legacyModes.config.practice = { enabled: true, startMilliseconds: 1 };
@@ -321,15 +328,30 @@ async function testProductionCompositionFailureBoundary(): Promise<void> {
     requestTargetFrameRate: () => {},
     publishLifecycleState: () => {},
   };
-  const invalidScoreModule = requireAccepted(createProductionAutonomousSimulatorModule(platform));
+  const invalidRequests: any[] = [];
   const invalidScoreRequest: any = request();
-  invalidScoreRequest.chartData.gameplay.score = { totalParameter: 100000 };
-  const invalidScoreLaunch = await invalidScoreModule.launch(invalidScoreRequest);
-  assert.equal(invalidScoreLaunch.status, "rejected");
-  if (invalidScoreLaunch.status === "rejected") {
-    assert.equal(invalidScoreLaunch.failure.capability, "simulator.recipe.invalid-public-request");
+  invalidScoreRequest.chartData.gameplay = { score: { totalParameter: 100000 } };
+  invalidRequests.push(invalidScoreRequest);
+  const callerLifeRequest: any = request();
+  callerLifeRequest.chartData.gameplay = {
+    life: { initialLife: 1000, playerMaxLife: 1000, lifeUpperLimit: 2000, missDamage: -100, badDamage: -50 },
+  };
+  invalidRequests.push(callerLifeRequest);
+  const missingFullRequest: any = request();
+  delete missingFullRequest.chartData.isFullLength;
+  invalidRequests.push(missingFullRequest);
+  const malformedFullRequest: any = request();
+  malformedFullRequest.chartData.isFullLength = "false";
+  invalidRequests.push(malformedFullRequest);
+  for (const invalidRequest of invalidRequests) {
+    const invalidModule = requireAccepted(createProductionAutonomousSimulatorModule(platform));
+    const invalidLaunch = await invalidModule.launch(invalidRequest);
+    assert.equal(invalidLaunch.status, "rejected");
+    if (invalidLaunch.status === "rejected") {
+      assert.equal(invalidLaunch.failure.capability, "simulator.recipe.invalid-public-request");
+    }
   }
-  assert.equal(resourceReads, 0, "caller-authored Score data fails before shared resource read");
+  assert.equal(resourceReads, 0, "caller-authored Score/Life and invalid full classification fail before shared resource read");
   assert.equal(mounts, 0);
 
   const missingResourceModule = requireAccepted(createProductionAutonomousSimulatorModule(platform));
@@ -601,9 +623,7 @@ function request(): SimulatorModuleLaunchRequest {
         durationSeconds: 1,
         currentSampleFrames: 44100,
       },
-      gameplay: {
-        life: { initialLife: 1000, playerMaxLife: 1000, lifeUpperLimit: 2000, missDamage: -100, badDamage: -50 },
-      },
+      isFullLength: false,
     },
     config: {
       sessionMode: "live",

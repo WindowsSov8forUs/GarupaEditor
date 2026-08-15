@@ -4,7 +4,7 @@
 
 ## 当前全局门
 
-Reverse schema-4账本冻结的是旧release `2b758eb...`的104个production文件，不能覆盖后续产品Score或四模式改动。当前candidate审计采用“Reverse基线 + exact-hash CS-V1 product delta + Live/Rehearsal delta”，见`audit/current-product-scoring-delta.json`与`audit/current-live-rehearsal-delta.json`。四模式candidate `8e50eb0`已push；pushed-detached release `8e113f7`通过27叶（757,717ms）。新增Rehearsal controls/Life-zero/fixed±5 control state的3 fresh×21 WebView2 capture digest为`e968d7900bca1ea0e96e9864479207ed3af00db7aada31c1b70370d68b23e8e0`；Reverse release账本已push至`e055678f`。上一CS-V1基线`b4a3432`的26叶记录只保留为历史；CS-V1 ordinary WebView2使用production双decoder、单一particle→Note/HUD combined root、656-batch全谱及3 fresh×17 captures，锁定环境digest为`ff6e7584988dc0ad32074858e52beed608ed19b6623c6558402dcef84bdf396c`，不是原作framebuffer oracle。
+Reverse schema-4账本冻结的是旧release `2b758eb...`的104个production文件，不能覆盖后续产品Score或四模式改动。当前candidate审计采用“Reverse基线 + exact-hash CS-V1 product delta + Live/Rehearsal delta”，并将追加Public Life profile最新delta；既有分层见`audit/current-product-scoring-delta.json`与`audit/current-live-rehearsal-delta.json`。Public Life静态authority为Reverse `2cbea93d`。四模式candidate `8e50eb0`已push；pushed-detached release `8e113f7`通过27叶（757,717ms）。新增Rehearsal controls/Life-zero/fixed±5 control state的3 fresh×21 WebView2 capture digest为`e968d7900bca1ea0e96e9864479207ed3af00db7aada31c1b70370d68b23e8e0`；Reverse release账本已push至`e055678f`。上一CS-V1基线`b4a3432`的26叶记录只保留为历史；CS-V1 ordinary WebView2使用production双decoder、单一particle→Note/HUD combined root、656-batch全谱及3 fresh×17 captures，锁定环境digest为`ff6e7584988dc0ad32074858e52beed608ed19b6623c6558402dcef84bdf396c`，不是原作framebuffer oracle。
 
 总重验aggregate gate已在R12有界关闭；`CAP-RENDER-ORDINARY-01`与`CAP-RENDER-PARTICLE-COMPOSITION-01`恢复`closed-portable`。这不移除request/resource/backend/owner各自的失败关闭，不升级Unity framebuffer、fixed-device exact、HAB original、excluded玩法或Stage 9。
 
@@ -24,6 +24,7 @@ Reverse schema-4账本冻结的是旧release `2b758eb...`的104个production文�
 | HAB current-external-complete | `closed-portable` | 11项pinned资源、179 rows、全Note/mesh/line/field/mask/lane-change及Pixi consumer；差异仅文档披露 |
 | HAB original parity | `open-evidence-required` | UnityFS、natural owner/setter、Root_effect原clip及original physical frame不作等价声明 |
 | Live/Rehearsal × Manual/Auto | `closed-portable` | Reverse `6c0dfb76`四模式identity与Life-zero矩阵；Rehearsal Auto保持Practice+Demo而非Auto Live，CS-V1仍为产品计分合同 |
+| Public Life profile | `closed-portable` | Reverse `2cbea93d`：Public只携带显式`isFullLength`；simulator内部固定Life `1000/1000/2000`，non-full/full Miss/Bad分别为`-100/-50`与`-50/-25`；不从duration等字段推断 |
 | Rehearsal MoveTime/control scene | `closed-portable` | simulator-owned固定±5 opaque command、Float32 whole-engine恢复、后退timeline revision、目标BGM发布及真实current atlas Pixi controls限定范围；不声明Prefab/fixed-device exact |
 | Non-zero initial seek | `excluded` | IPS-P01–P05只保留历史产品扩展记录；本专项冻结删除`startMilliseconds`及deferred publication，不再作为最终能力 |
 | Button 07 | `closed-original-unreachable` | 10.1.4合法BMS不可生成值7，scene只拥有0..6；不发明第八lane，注入值7按内部不变量拒绝 |
@@ -42,7 +43,7 @@ Reverse schema-4账本冻结的是旧release `2b758eb...`的104个production文�
 import { launchSimulatorModule } from "src/simulator";
 ```
 
-安装中立platform后，证据覆盖的四种`sessionMode × inputMode` request可获得仅含`closed` Promise的成功receipt；未安装时失败为`simulator.entry.platform-not-installed`。合同不接受member/card/deck、角色效果、Fever或多人数据，也不暴露engine、step、backend、provider、scene、replay factory或dispose。Public gameplay只提供Life；Score master、level、totalParameter、Auto coefficient、ruleset、评分单位数和quota均由exact-shape边界拒绝。模拟器从chart-owned判定图内部生成评分计划。
+安装中立platform后，证据覆盖的四种`sessionMode × inputMode` request可获得仅含`closed` Promise的成功receipt；未安装时失败为`simulator.entry.platform-not-installed`。Public chart精确包含BMS、逐谱BGM与显式`isFullLength`，不接受caller-authored Life、member/card/deck、角色效果、Fever或多人数据，也不暴露engine、step、backend、provider、scene、replay factory或dispose。Score master、level、totalParameter、Auto coefficient、ruleset、评分单位数和quota均由exact-shape边界拒绝。模拟器从chart-owned判定图内部生成评分计划，并从内部证据化profile建立Life。
 
 **Skill音符不等于角色技能效果。** `GameNoteAdditionalType.Skill`只能在重新核验后表示chart-owned外观、命中SE和判定粒子，不得查询member/card或触发角色加分、Heal、Guard、NeverDie或判定强化。
 
@@ -50,7 +51,7 @@ import { launchSimulatorModule } from "src/simulator";
 
 ```text
 src/simulator/
-├─ public/      # chart/gameplay/config/launch/close合同与全局隔离
+├─ public/      # chart/full-length/config/launch/close合同与全局隔离
 ├─ runtime/     # scheduler/input/session生命周期
 ├─ assembly/    # frozen recipe与原子resource assembly
 ├─ platform/    # 中立production capability composition

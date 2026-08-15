@@ -746,6 +746,13 @@
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/score_life_state_portable_contract.json",
       "bytes": 128440,
       "sha256": "19DA944D1866ED98586C55F69D20E0F01424AE44BC2602F8AB5B0EE898189B9F"
+    },
+    {
+      "path": "reverse-snapshots/public-life-profile/artifacts/investigations/simulator-public-life-profile-10-1-4/simulator_public_life_profile_contract.json",
+      "sourceReverseCommit": "2cbea93d19cb599d5daaeea007a63ae70fae012e",
+      "sourcePath": "artifacts/investigations/simulator-public-life-profile-10-1-4/simulator_public_life_profile_contract.json",
+      "bytes": 5162,
+      "sha256": "37FB2C539072939D7DEF0DA090E2C2BB411765416381D5CBA04FBD0B9761696B"
     }
   ]
 }

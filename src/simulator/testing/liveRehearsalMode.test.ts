@@ -222,15 +222,7 @@ function request(
         durationSeconds: 180,
         currentSampleFrames: 7_938_000,
       },
-      gameplay: {
-        life: {
-          initialLife: 1000,
-          playerMaxLife: 1000,
-          lifeUpperLimit: 2000,
-          missDamage: -1000,
-          badDamage: -50,
-        },
-      },
+      isFullLength: false,
     },
     config: {
       sessionMode,
@@ -253,7 +245,7 @@ function structuredCloneRequest(value: SimulatorModuleLaunchRequest): SimulatorM
     chartData: {
       ...value.chartData,
       bgm: { ...value.chartData.bgm, bytes: Uint8Array.from(value.chartData.bgm.bytes) },
-      gameplay: { life: { ...value.chartData.gameplay.life } },
+      isFullLength: value.chartData.isFullLength,
     },
     config: {
       ...value.config,

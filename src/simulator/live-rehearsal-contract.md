@@ -3,6 +3,7 @@
 ## Authority
 
 - Reverse：`6c0dfb76`，`artifacts/investigations/live-rehearsal-runtime-contract-10-1-4/`与`rehearsal-control-rendering-10-1-4/`。
+- Life初始化/Full伤害：Reverse `2cbea93d`，`artifacts/investigations/simulator-public-life-profile-10-1-4/`，PLP-E01–PLP-E07。
 - 锁定样本：`jp.co.craftegg.band` 10.1.4 / 230 / arm64-v8a。
 - 产品例外：CS-V1计分及timeline revision由本项目[`scoring-contract.md`](./scoring-contract.md)授权，不冒充原作Score。
 
@@ -26,14 +27,16 @@ Canonical identity由模拟器一次性生成：
 
 依据：LR-E01、LR-E02、LR-R01、LR-R02、LR-C01。任何字段不允许从另一轴反推；Rehearsal Auto是Demo Play，不是Auto Live。
 
-## Life与生命周期
+## Life初始化与生命周期
+
+Public chart只接受显式`isFullLength: boolean`，不接受五个Life数值。simulator内部固定普通单曲初始化`initialLife=1000`、`playerMaxLife=1000`、`lifeUpperLimit=2000`；non-full使用Miss/Bad `-100/-50`，full使用`-50/-25`。该boolean只携带原作`musicDataType == "full"`的已解析结果，不从BGM duration、BMS、文件名、sessionMode或inputMode推断。initial engine、Retry和MoveTime fresh generation复用同一frozen分类。
 
 - Live Life归零：走现有terminal Game Over链并关闭会话。
 - Rehearsal Life归零：Record保留`singleGameOver`事实，但不关闭会话。LR-R01实测本轮69次Life0/GameOver后的`ExecUpdate`；此前已提交R1另有1216次。
 - Rehearsal pause menu为Abort、Retry、Resume；premium Continue排除。
 - 自然结束仍进入Rehearsal结果；使用MoveTime后的原作结果语义不得被当作普通Live结果。
 
-依据：LR-R01、LR-C02与current committed Live no-input Game Over证据。
+依据：PLP-E01–PLP-E07、LR-R01、LR-C02与current committed Live no-input Game Over证据。Medley继承与premium Continue仍排除。
 
 ## MoveTime
 
