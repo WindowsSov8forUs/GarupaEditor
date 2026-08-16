@@ -163,6 +163,20 @@ export type AudioCommand =
       readonly pan_angle_bits: "0x00000000";
     }
   | {
+      readonly kind: "se.start-owned-loop";
+      readonly cue: "SE_RHYTHM_GAYA";
+      readonly owner_key: string;
+      readonly volume_bits: "0x3F800000";
+      readonly fade_in_bits: "0x3F000000";
+    }
+  | {
+      readonly kind: "se.fade-owned-loop";
+      readonly owner_key: string;
+      readonly target_bits: "0x00000000";
+      readonly duration_bits: "0x3FC00000";
+      readonly stop_at_zero: true;
+    }
+  | {
       readonly kind: "hold.start-loop";
       readonly cue: "SE_RHYTHM_TAP_LONG";
       readonly owner_key: string;
@@ -211,6 +225,12 @@ export interface AudioVoiceSnapshot {
   readonly paused: boolean;
 }
 
+export interface AudioStartupLoopSnapshot {
+  readonly ownerKey: string;
+  readonly cue: "SE_RHYTHM_GAYA";
+  readonly paused: boolean;
+}
+
 export type AudioBgmPlaybackState = "not-loaded" | "playing" | "paused" | "ended";
 export type AudioOneShotPlaybackState = "not-started" | "playing" | "ended";
 
@@ -221,6 +241,7 @@ export interface AudioSemanticStateSnapshot {
   readonly sePaused: boolean;
   readonly allPaused: boolean;
   readonly holds: readonly AudioVoiceSnapshot[];
+  readonly startupLoops: readonly AudioStartupLoopSnapshot[];
   readonly gain: {
     readonly bgmBits: string;
     readonly seBits: string;

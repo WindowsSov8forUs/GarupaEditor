@@ -116,6 +116,55 @@ async function main(): Promise<void> {
   assert.equal(backend.snapshot().fault?.capability, "audio.web.context-lost-after-ready");
   assert.equal(backend.dispose().status, "terminal-disposed");
 
+  const gayaContext = new FakeAudioContext();
+  const gaya = new WebAudioSimulatorBackend(gayaContext as unknown as AudioContext);
+  assert.equal((await gaya.prepare(
+    "gaya-session",
+    CURRENT_AUDIO_TEST_PROFILE,
+    provider,
+    preflight,
+  )).status, "accepted");
+  execute(gaya, [
+    { kind: "session.open", bgm_pool: 8, se_pool: 12, one_shot_pool: 1 },
+    { kind: "gain.set", bgm_bits: "0x3F800000", se_bits: "0x3F000000" },
+    {
+      kind: "se.start-owned-loop",
+      cue: "SE_RHYTHM_GAYA",
+      owner_key: "startup:gaya",
+      volume_bits: "0x3F800000",
+      fade_in_bits: "0x3F000000",
+    },
+  ]);
+  const gayaSource = gayaContext.sources[gayaContext.sources.length - 1]!;
+  const gayaGain = gayaContext.gains[gayaContext.gains.length - 1]!;
+  assert.equal(gayaSource.loop, true);
+  assert.equal(gayaSource.loopStart, 0);
+  assert.equal(gayaSource.loopEnd, 310191 / 44100);
+  assert.deepEqual(gayaGain.gain.events.slice(-3), [
+    ["cancel", 0, 10],
+    ["set", 0, 10],
+    ["ramp", 1, 10.5],
+  ]);
+  gayaContext.currentTime += 0.25;
+  execute(gaya, [{ kind: "se.pause" }]);
+  assert.equal(gaya.snapshot().semantic.startupLoops[0]?.paused, true);
+  assert.equal(gayaSource.stopCount, 1);
+  execute(gaya, [{ kind: "se.resume" }]);
+  assert.equal(gaya.snapshot().semantic.startupLoops[0]?.paused, false);
+  const resumedGayaSource = gayaContext.sources[gayaContext.sources.length - 1]!;
+  gayaContext.currentTime += 0.3;
+  execute(gaya, [{
+    kind: "se.fade-owned-loop",
+    owner_key: "startup:gaya",
+    target_bits: "0x00000000",
+    duration_bits: "0x3FC00000",
+    stop_at_zero: true,
+  }]);
+  assert.equal(resumedGayaSource.scheduledStop, gayaContext.currentTime + 1.5);
+  assert.deepEqual(gaya.snapshot().semantic.startupLoops, []);
+  resumedGayaSource.onended?.();
+  assert.equal(gaya.dispose().status, "accepted");
+
   const moveTimeContext = new FakeAudioContext();
   const moveTime = new WebAudioSimulatorBackend(
     moveTimeContext as unknown as AudioContext,

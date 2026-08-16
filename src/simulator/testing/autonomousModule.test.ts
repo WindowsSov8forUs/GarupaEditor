@@ -89,7 +89,7 @@ function testSelector(): void {
     musicScoreData: "#BPM 120\n#00111:01\n",
   }));
   const ordinarySelection = selectSimulatorStaticResources(ordinary);
-  assert.equal(ordinarySelection.audioSe.length, 14);
+  assert.equal(ordinarySelection.audioSe.length, 15);
   assert.equal(ordinarySelection.particles.length, 9);
   assert.equal(ordinarySelection.scoreHud.length, 7);
   assert.ok(ordinarySelection.scoreGaugeSsAnimation.resourceKey.endsWith("score-gauge-ss-animation-profile.json"));

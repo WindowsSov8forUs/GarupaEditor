@@ -19,6 +19,7 @@ const FIXED_SE_LOGICAL_IDS = Object.freeze({
   directional_fl_3: "sound/tapseskin/directionalflickskin00",
   SE_RHYTHM_CLEAR: "sound/common",
   SE_RHYTHM_FULLCOMBO: "sound/common",
+  SE_RHYTHM_GAYA: "sound/common",
   SE_RHYTHM_TAP_SKILL: "sound/common",
   bad: "sound/common",
   miss: "sound/common",
@@ -73,11 +74,12 @@ export function validateAndFreezeAudioProfile(
     profile.networkAllowed !== false ||
     profile.automaticFallbackAllowed !== false ||
     !Array.isArray(profile.resources) ||
-    profile.resources.length !== CURRENT_AUDIO_SE_RESOURCES.length + 1
+    (profile.resources.length !== CURRENT_AUDIO_SE_RESOURCES.length + 1 &&
+      profile.resources.length !== CURRENT_AUDIO_SE_RESOURCES.length + 2)
   ) {
     return rejectProfile(
       "audio.profile.invalid-shape",
-      "The reduced gameplay profile requires one explicit BGM plus the fourteen retained gameplay SE resources, including the Skill-note hit cue.",
+      "The profile requires one explicit BGM, the complete fixed SE manifest including startup Gaya, and at most one explicit Live-start voice.",
     );
   }
   if (
@@ -231,6 +233,27 @@ export function validateAudioCommandShape(
         command.pan_angle_bits === "0x00000000"
         ? audioAccepted(undefined)
         : rejectCommand("audio.command.invalid-one-shot", "One-shot commands require an exact cue, stable voice and evidenced unit-range gain with zero pitch/pan.");
+    case "se.start-owned-loop":
+      return hasExactKeys(command, [
+        "kind", "cue", "owner_key", "volume_bits", "fade_in_bits",
+      ]) && command.cue === "SE_RHYTHM_GAYA" && seCueSet.has(command.cue) &&
+        isNonEmpty(command.owner_key) && command.volume_bits === "0x3F800000" &&
+        command.fade_in_bits === "0x3F000000"
+        ? audioAccepted(undefined)
+        : rejectCommand(
+            "audio.command.invalid-startup-loop-start",
+            "Startup Gaya requires its dedicated stable owner, exact cue, unit caller volume and 0.5-second fade-in.",
+          );
+    case "se.fade-owned-loop":
+      return hasExactKeys(command, [
+        "kind", "owner_key", "target_bits", "duration_bits", "stop_at_zero",
+      ]) && isNonEmpty(command.owner_key) && command.target_bits === "0x00000000" &&
+        command.duration_bits === "0x3FC00000" && command.stop_at_zero === true
+        ? audioAccepted(undefined)
+        : rejectCommand(
+            "audio.command.invalid-startup-loop-fade",
+            "Startup Gaya fades from its current effective gain to zero over 1.5 seconds and stops at zero.",
+          );
     case "hold.start-loop":
       return hasExactKeys(command, [
         "kind", "cue", "owner_key", "volume_bits", "fade_in_bits",
@@ -363,18 +386,20 @@ function validateFixedSeResource(
       "Every fixed SE must match the exact current cue, logical ID, bytes, metadata and fidelity without aliases.",
     );
   }
-  if (resource.cue === "SE_RHYTHM_TAP_LONG") {
+  if (resource.cue === "SE_RHYTHM_TAP_LONG" || resource.cue === "SE_RHYTHM_GAYA") {
     if (!isRecord(resource.loop) || !hasExactKeys(resource.loop, ["start", "end"]) ||
       resource.loop.start !== expected.loop?.start || resource.loop.end !== expected.loop.end) {
       return rejectProfile(
         "audio.profile.invalid-loop",
-        "The current Long/Slide loop is the exact half-open source range [0,22997).",
+        resource.cue === "SE_RHYTHM_GAYA"
+          ? "Startup Gaya loops the exact full decoded source range [0,310191)."
+          : "The current Long/Slide loop is the exact half-open source range [0,22997).",
       );
     }
   } else if (resource.loop !== null) {
     return rejectProfile(
       "audio.profile.unexpected-loop",
-      "Only SE_RHYTHM_TAP_LONG carries a current loop range.",
+      "Only the evidenced Long/Slide and startup Gaya resources carry loop ranges.",
     );
   }
   seen.add(resource.cue);

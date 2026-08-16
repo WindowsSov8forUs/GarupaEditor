@@ -698,6 +698,7 @@ class VisualLifecycleAudioBackend implements SimulatorAudioBackend {
         sePaused: false,
         allPaused: false,
         holds: Object.freeze([]),
+        startupLoops: Object.freeze([]),
         gain: null,
       }),
       commands: Object.freeze(this.commands.map((command) => Object.freeze({ ...command }))),

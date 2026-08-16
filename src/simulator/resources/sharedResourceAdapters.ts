@@ -3,7 +3,10 @@ import type {
   AudioSessionBgmResourceProfile,
   AudioSessionVoiceResourceProfile,
 } from "../backends/audioContracts";
-import { createAudioSessionResourceProfile } from "../backends/resources/currentAudioResourceManifest";
+import {
+  createAudioSessionResourceProfile,
+  CURRENT_AUDIO_SE_RESOURCES,
+} from "../backends/resources/currentAudioResourceManifest";
 import {
   ImmutableLocalAudioResourceProvider,
   type LocalAudioResource,
@@ -321,6 +324,22 @@ export async function prepareSharedAudioResources(
   store: SharedStaticResourceStore,
   voice: { readonly profile: AudioSessionVoiceResourceProfile; readonly bytes: Uint8Array } | null = null,
 ): Promise<SimulatorAssemblyResult<PreparedSharedAudioResources>> {
+  if (
+    !Array.isArray(selectedSe) || selectedSe.length !== CURRENT_AUDIO_SE_RESOURCES.length ||
+    selectedSe.some((selected, index) => {
+      const expected = CURRENT_AUDIO_SE_RESOURCES[index];
+      return expected === undefined || selected.profile.cue !== expected.cue ||
+        selected.profile.logicalId !== expected.logicalId ||
+        selected.profile.byteLength !== expected.byteLength ||
+        selected.profile.sha256 !== expected.sha256;
+    })
+  ) {
+    return rejected(
+      "resource-integrity",
+      "simulator.resources.audio-se-inventory",
+      "The internally selected audio inventory must preserve every ordered fixed SE, including startup Gaya, before any shared-store read or backend preparation.",
+    );
+  }
   const local: LocalAudioResource[] = [{
     logicalId: bgm.profile.logicalId,
     cue: bgm.profile.cue,

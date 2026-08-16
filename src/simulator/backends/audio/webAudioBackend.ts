@@ -16,6 +16,14 @@ import {
 } from "../audioValidation";
 import { RecordingSimulatorAudioBackend } from "../recordingAudioBackend";
 
+interface WebAudioVoiceFade {
+  startValue: number;
+  readonly targetValue: number;
+  remainingSeconds: number;
+  startedAt: number | null;
+  readonly stopAtZero: boolean;
+}
+
 interface WebAudioVoice {
   readonly voiceKey: string;
   readonly cue: string;
@@ -27,6 +35,7 @@ interface WebAudioVoice {
   paused: boolean;
   readonly loopStart: number | null;
   readonly loopEnd: number | null;
+  fade: WebAudioVoiceFade | null;
 }
 
 interface PendingWebAudioBatch {
@@ -39,6 +48,7 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
 
   private recording = new RecordingSimulatorAudioBackend();
   private readonly decodedByCue = new Map<string, AudioBuffer>();
+  private readonly loopByCue = new Map<string, { readonly start: number; readonly end: number; readonly sampleRate: number }>();
   private readonly voices = new Map<string, WebAudioVoice>();
   private pending: PendingWebAudioBatch | null = null;
   private bgmGain: GainNode | null = null;
@@ -176,7 +186,17 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
 
     this.recording = candidate;
     this.decodedByCue.clear();
+    this.loopByCue.clear();
     for (const [cue, buffer] of decoded) this.decodedByCue.set(cue, buffer);
+    for (const resource of profile.resources) {
+      if (resource.loop !== null) {
+        this.loopByCue.set(resource.cue, Object.freeze({
+          start: resource.loop.start,
+          end: resource.loop.end,
+          sampleRate: resource.sampleRate,
+        }));
+      }
+    }
     this.installContextLossListener();
     return audioAccepted(undefined);
   }
@@ -325,6 +345,7 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
     for (const voice of this.voices.values()) release(() => this.releaseVoice(voice));
     this.voices.clear();
     this.decodedByCue.clear();
+    this.loopByCue.clear();
     release(() => this.bgmGain?.disconnect());
     release(() => this.seGain?.disconnect());
     this.bgmGain = null;
@@ -378,8 +399,38 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
             null,
           );
           break;
+        case "se.start-owned-loop": {
+          const resource = this.requireLoopResource(command.cue);
+          const voice = this.createVoice(
+            `startup-loop:${command.owner_key}`,
+            command.cue,
+            "se",
+            0,
+            0,
+            resource.start / resource.sampleRate,
+            resource.end / resource.sampleRate,
+          );
+          this.beginVoiceFade(
+            voice,
+            audioFloat32FromBits(command.volume_bits)!,
+            audioFloat32FromBits(command.fade_in_bits)!,
+            false,
+          );
+          break;
+        }
+        case "se.fade-owned-loop": {
+          const voice = this.voices.get(`startup-loop:${command.owner_key}`);
+          if (voice === undefined) throw new Error("missing startup loop voice");
+          this.beginVoiceFade(
+            voice,
+            audioFloat32FromBits(command.target_bits)!,
+            audioFloat32FromBits(command.duration_bits)!,
+            command.stop_at_zero,
+          );
+          break;
+        }
         case "hold.start-loop": {
-          const resource = CURRENT_LOOP_RESOURCE;
+          const resource = this.requireLoopResource(command.cue);
           this.createVoice(
             `hold:${command.owner_key}`,
             command.cue,
@@ -391,9 +442,17 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
           );
           break;
         }
-        case "hold.fade":
-          this.fadeHold(command.owner_key, command.target_bits, command.duration_bits);
+        case "hold.fade": {
+          const voice = this.voices.get(`hold:${command.owner_key}`);
+          if (voice === undefined) throw new Error("missing Hold voice");
+          this.beginVoiceFade(
+            voice,
+            audioFloat32FromBits(command.target_bits)!,
+            audioFloat32FromBits(command.duration_bits)!,
+            command.stop_at_zero,
+          );
           break;
+        }
         case "hold.pause":
           this.pauseVoice(this.voices.get(`hold:${command.owner_key}`));
           break;
@@ -428,6 +487,7 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
       paused: false,
       loopStart,
       loopEnd,
+      fade: null,
     };
     this.voices.set(voiceKey, voice);
     this.startVoice(voice);
@@ -468,8 +528,9 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
     source.onended = () => {
       if (voice.source !== source || voice.paused) return;
       voice.source = null;
-      if (voice.loopStart === null) {
+      if (voice.loopStart === null || voice.fade?.stopAtZero === true) {
         try {
+          voice.fade = null;
           voice.gain.disconnect();
           this.voices.delete(voice.voiceKey);
         } catch {
@@ -481,18 +542,31 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
       }
     };
     source.start(this.context.currentTime, normalizeOffset(voice, buffer));
+    if (voice.fade !== null && voice.fade.startedAt === null) this.scheduleActiveFade(voice);
   }
 
   private pauseVoice(voice: WebAudioVoice | undefined): void {
     if (voice === undefined || voice.paused || voice.source === null) return;
+    const now = this.context.currentTime;
     const buffer = this.decodedByCue.get(voice.cue)!;
-    const elapsed = Math.max(0, this.context.currentTime - voice.startedAt);
+    const elapsed = Math.max(0, now - voice.startedAt);
     voice.offsetSeconds = normalizeElapsedOffset(voice, buffer, voice.offsetSeconds + elapsed);
+    this.settleCompletedFade(voice, now);
+    if (voice.fade !== null && voice.fade.startedAt !== null) {
+      const fadeElapsed = Math.min(voice.fade.remainingSeconds, Math.max(0, now - voice.fade.startedAt));
+      const progress = voice.fade.remainingSeconds === 0 ? 1 : fadeElapsed / voice.fade.remainingSeconds;
+      const current = voice.fade.startValue + (voice.fade.targetValue - voice.fade.startValue) * progress;
+      voice.fade.startValue = Math.fround(current);
+      voice.fade.remainingSeconds = Math.max(0, voice.fade.remainingSeconds - fadeElapsed);
+      voice.fade.startedAt = null;
+      voice.gain.gain.cancelScheduledValues(now);
+      voice.gain.gain.setValueAtTime(voice.fade.startValue, now);
+    }
     const source = voice.source;
     voice.source = null;
     voice.paused = true;
     source.onended = null;
-    source.stop(this.context.currentTime);
+    source.stop(now);
     source.disconnect();
   }
 
@@ -501,16 +575,50 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
     this.startVoice(voice);
   }
 
-  private fadeHold(ownerKey: string, targetBits: string, durationBits: string): void {
-    const voice = this.voices.get(`hold:${ownerKey}`);
-    if (voice === undefined || voice.source === null) throw new Error("missing Hold voice");
-    const now = this.context.currentTime;
-    const target = audioFloat32FromBits(targetBits)!;
-    const duration = audioFloat32FromBits(durationBits)!;
+  private beginVoiceFade(
+    voice: WebAudioVoice,
+    targetValue: number,
+    durationSeconds: number,
+    stopAtZero: boolean,
+  ): void {
+    this.settleCompletedFade(voice, this.context.currentTime);
+    if (voice.source === null || voice.paused || voice.fade !== null) {
+      throw new Error("invalid owned-loop fade state");
+    }
+    voice.fade = {
+      startValue: voice.gain.gain.value,
+      targetValue,
+      remainingSeconds: durationSeconds,
+      startedAt: null,
+      stopAtZero,
+    };
+    this.scheduleActiveFade(voice);
+  }
+
+  private settleCompletedFade(voice: WebAudioVoice, now: number): void {
+    const fade = voice.fade;
+    if (fade === null || fade.startedAt === null || fade.stopAtZero ||
+      now - fade.startedAt < fade.remainingSeconds) return;
     voice.gain.gain.cancelScheduledValues(now);
-    voice.gain.gain.setValueAtTime(voice.gain.gain.value, now);
-    voice.gain.gain.linearRampToValueAtTime(target, now + duration);
-    voice.source.stop(now + duration);
+    voice.gain.gain.setValueAtTime(fade.targetValue, now);
+    voice.fade = null;
+  }
+
+  private scheduleActiveFade(voice: WebAudioVoice): void {
+    const fade = voice.fade;
+    if (fade === null || voice.source === null || voice.paused) throw new Error("inactive owned-loop fade");
+    const now = this.context.currentTime;
+    voice.gain.gain.cancelScheduledValues(now);
+    voice.gain.gain.setValueAtTime(fade.startValue, now);
+    voice.gain.gain.linearRampToValueAtTime(fade.targetValue, now + fade.remainingSeconds);
+    fade.startedAt = now;
+    if (fade.stopAtZero) voice.source.stop(now + fade.remainingSeconds);
+  }
+
+  private requireLoopResource(cue: string): { readonly start: number; readonly end: number; readonly sampleRate: number } {
+    const resource = this.loopByCue.get(cue);
+    if (resource === undefined) throw new Error("missing validated loop resource");
+    return resource;
   }
 
   private applyPauseAll(paused: boolean, delayBits: string | undefined): void {
@@ -593,12 +701,6 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
     return audioRejected("audio-backend-fault", fault.capability, fault.boundary);
   }
 }
-
-const CURRENT_LOOP_RESOURCE = Object.freeze({
-  start: 0,
-  end: 22997,
-  sampleRate: 44100,
-});
 
 function validDecodedBuffer(buffer: AudioBuffer, resource: AudioResourceProfile): boolean {
   return buffer !== null && typeof buffer === "object" &&

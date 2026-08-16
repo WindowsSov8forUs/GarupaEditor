@@ -80,6 +80,7 @@ async function main(): Promise<void> {
   await testPrepareCases();
   await testCommandCases();
   await testLifecycleCases();
+  await testStartupAudioCallgraphCommands();
   await testDomainProducer();
   testProductionDigestCase();
   testPcmCase();
@@ -95,7 +96,26 @@ async function testSessionBgmContract(): Promise<void> {
 
   assert.equal(CURRENT_AUDIO_TEST_PROFILE.profileId, "session-external-portable-v1");
   assert.equal(CURRENT_AUDIO_TEST_PROFILE.resources.filter((resource) => resource.role === "bgm").length, 1);
-  assert.equal(CURRENT_AUDIO_TEST_PROFILE.resources.filter((resource) => resource.role === "se").length, 14);
+  assert.equal(CURRENT_AUDIO_TEST_PROFILE.resources.filter((resource) => resource.role === "se").length, 15);
+  assert.deepEqual(
+    CURRENT_AUDIO_TEST_PROFILE.resources.find((resource) => resource.cue === "SE_RHYTHM_GAYA"),
+    {
+      role: "se",
+      logicalId: "sound/common",
+      cue: "SE_RHYTHM_GAYA",
+      byteLength: 151033,
+      sha256: "00DCFC839A945401863304FB64ED0407696E618F9BB5C7CFAF5810EB72C77554",
+      mime: "audio/mpeg",
+      codec: "mp3",
+      sampleRate: 44100,
+      channels: 2,
+      durationSeconds: 7.03381,
+      sampleFrames: 310191,
+      loop: { start: 0, end: 310191 },
+      identity: "semantic-exact",
+      signal: "portable-equivalent-lossy",
+    },
+  );
 
   const alternativeCapabilities = virtualCapabilities(ALTERNATIVE_AUDIO_TEST_PROFILE);
   const alternative = new RecordingSimulatorAudioBackend();
@@ -138,7 +158,8 @@ async function testSessionBgmContract(): Promise<void> {
   )).status, "evidence-required");
 
   const duplicateBgm = cloneProfile(ALTERNATIVE_AUDIO_TEST_PROFILE);
-  duplicateBgm.resources[14] = { ...duplicateBgm.resources[0] };
+  const duplicateBgmIndex = duplicateBgm.resources.findIndex((resource: any) => resource.cue === "perfect");
+  duplicateBgm.resources[duplicateBgmIndex] = { ...duplicateBgm.resources[0] };
   const duplicateBackend = new RecordingSimulatorAudioBackend();
   assert.equal((await duplicateBackend.prepare(
     "duplicate-bgm", duplicateBgm, alternativeCapabilities.provider, alternativeCapabilities.preflight,
@@ -175,7 +196,7 @@ async function testPrepareCases(): Promise<void> {
     virtualProvider,
     virtualPreflight,
   )).status, expected("AU-C01").outcome);
-  assert.equal(valid.snapshot().resourceCount, 15);
+  assert.equal(valid.snapshot().resourceCount, 16);
   assert.equal(valid.snapshot().state, "ready");
   assert.equal(valid.snapshot().preparedBgmCue, CURRENT_AUDIO_TEST_PROFILE.resources[0]!.cue);
   assert.ok(Object.isFrozen(valid.snapshot()));
@@ -212,7 +233,8 @@ async function testPrepareCases(): Promise<void> {
   assert.equal(integrity.snapshot().resourceCount, 0);
 
   const duplicate = cloneProfile(CURRENT_AUDIO_TEST_PROFILE);
-  duplicate.resources[14] = { ...duplicate.resources[0]! };
+  const duplicateIndex = duplicate.resources.findIndex((resource: any) => resource.cue === "perfect");
+  duplicate.resources[duplicateIndex] = { ...duplicate.resources[0]! };
   const duplicateBackend = new RecordingSimulatorAudioBackend();
   assert.equal((await duplicateBackend.prepare(
     "audio-session",
@@ -475,12 +497,82 @@ function testPcmCase(): void {
     assert.equal(hex(view.getUint32(offset, true)), bits[0]);
     assert.equal(hex(view.getUint32(offset + 4, true)), bits[1]);
   }
+  const gayaEnvelope = requireAccepted(new DeterministicOfflineAudioBackend().render({
+    sampleRate: 4,
+    outputFrames: 8,
+    sources: [{
+      sourceId: "startup-gaya",
+      sampleRate: 4,
+      channels: 1,
+      frameCount: 2,
+      samples: new Float32Array([1, 1]),
+    }],
+    voices: [{
+      sourceId: "startup-gaya",
+      startFrame: 0,
+      gainBits: "0x3F800000",
+      loop: { startFrame: 0, endFrame: 2 },
+      fade: {
+        startFrame: 4,
+        durationBits: "0x3F000000",
+        targetBits: "0x00000000",
+        stopAtZero: true,
+      },
+    }],
+  }));
+  const gayaView = new DataView(
+    gayaEnvelope.bytes.buffer,
+    gayaEnvelope.bytes.byteOffset,
+    gayaEnvelope.bytes.byteLength,
+  );
+  assert.deepEqual(
+    Array.from({ length: 8 }, (_, frame) => gayaView.getFloat32(frame * 8, true)),
+    [1, 1, 1, 1, 1, 0.5, 0, 0],
+  );
+
   assert.equal(new DeterministicOfflineAudioBackend().render({
     sampleRate: 44100,
     outputFrames: 1,
     sources: [{ sourceId: "x", sampleRate: 8000, channels: 1, frameCount: 1, samples: new Float32Array([0]) }],
     voices: [{ sourceId: "x", startFrame: 0, gainBits: "0x3F800000", loop: null, fade: null }],
   }).status, "evidence-required");
+}
+
+async function testStartupAudioCallgraphCommands(): Promise<void> {
+  const backend = await readyBackend();
+  const producer = new AudioCommandProducer({
+    sessionId: "audio-session",
+    bgmCue: CURRENT_AUDIO_TEST_PROFILE.resources.find((resource) => resource.role === "bgm")!.cue,
+    seekMilliseconds: 0,
+    masterGainBits: "0x3F800000",
+    bgmGainBits: "0x3F800000",
+    seGainBits: "0x3F000000",
+  }, backend, { noteBatches: [] } as any);
+  assert.equal(requireOk(producer.preflightInitialize()).commit().status, "ok");
+  assert.equal(requireOk(producer.preflightPrepareStartupBgm()).commit().status, "ok");
+  assert.equal(backend.snapshot().semantic.bgmPaused, true);
+  assert.deepEqual(
+    backend.snapshot().commands.slice(-2).map((command) => command.kind),
+    ["bgm.load", "bgm.pause"],
+  );
+
+  assert.equal(requireOk(producer.preflightStartStartupGaya("startup:gaya")).commit().status, "ok");
+  assert.deepEqual(backend.snapshot().semantic.startupLoops, [{
+    ownerKey: "startup:gaya",
+    cue: "SE_RHYTHM_GAYA",
+    paused: false,
+  }]);
+  assert.equal(producer.preflightStartStartupGaya("startup:gaya").status, "evidence-required");
+  assert.equal(requireOk(producer.preflightPlayPreparedStartupBgm()).commit().status, "ok");
+  assert.equal(backend.snapshot().semantic.bgmPaused, false);
+  assert.equal(requireOk(producer.preflightPause()).commit().status, "ok");
+  assert.equal(backend.snapshot().semantic.startupLoops[0]?.paused, true);
+  assert.equal(requireOk(producer.preflightResume()).commit().status, "ok");
+  assert.equal(backend.snapshot().semantic.startupLoops[0]?.paused, false);
+  assert.equal(requireOk(producer.preflightFadeStartupGaya("startup:gaya")).commit().status, "ok");
+  assert.deepEqual(backend.snapshot().semantic.startupLoops, []);
+  assert.equal(producer.preflightFadeStartupGaya("startup:gaya").status, "evidence-required");
+  assert.equal(backend.dispose().status, "accepted");
 }
 
 async function readyBackend(): Promise<RecordingSimulatorAudioBackend> {

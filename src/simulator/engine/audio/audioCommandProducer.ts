@@ -176,6 +176,43 @@ export class AudioCommandProducer {
     }]);
   }
 
+  preflightPrepareStartupBgm(): SimulatorResult<AudioOwnerTransaction> {
+    return this.preflightCommands([
+      {
+        kind: "bgm.load",
+        cue: this.input.bgmCue,
+        seek_ms: this.input.seekMilliseconds,
+        priority: 255,
+        fade_bits: "0x00000000",
+      },
+      { kind: "bgm.pause" },
+    ]);
+  }
+
+  preflightPlayPreparedStartupBgm(): SimulatorResult<AudioOwnerTransaction> {
+    return this.preflightCommands([{ kind: "bgm.resume" }]);
+  }
+
+  preflightStartStartupGaya(ownerKey: string): SimulatorResult<AudioOwnerTransaction> {
+    return this.preflightCommands([{
+      kind: "se.start-owned-loop",
+      cue: "SE_RHYTHM_GAYA",
+      owner_key: ownerKey,
+      volume_bits: "0x3F800000",
+      fade_in_bits: "0x3F000000",
+    }]);
+  }
+
+  preflightFadeStartupGaya(ownerKey: string): SimulatorResult<AudioOwnerTransaction> {
+    return this.preflightCommands([{
+      kind: "se.fade-owned-loop",
+      owner_key: ownerKey,
+      target_bits: "0x00000000",
+      duration_bits: "0x3FC00000",
+      stop_at_zero: true,
+    }]);
+  }
+
   preflightStartLiveVoice(cue: string): SimulatorResult<AudioOwnerTransaction> {
     if (typeof cue !== "string" || cue.length === 0) {
       return rejected("audio.startup-voice.invalid-cue", "Live-start voice requires the internally derived non-empty session cue.");

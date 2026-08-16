@@ -8,6 +8,7 @@ import type {
   AudioResourceProfileSet,
   AudioResourceProvider,
   AudioSemanticStateSnapshot,
+  AudioStartupLoopSnapshot,
   AudioVoiceSnapshot,
   SimulatorAudioBackend,
 } from "./audioContracts";
@@ -24,6 +25,11 @@ interface MutableHoldVoice {
   paused: boolean;
 }
 
+interface MutableStartupLoop {
+  readonly cue: "SE_RHYTHM_GAYA";
+  paused: boolean;
+}
+
 interface MutableAudioSemanticState {
   sessionOpened: boolean;
   bgmCue: string | null;
@@ -31,6 +37,7 @@ interface MutableAudioSemanticState {
   sePaused: boolean;
   allPaused: boolean;
   readonly holds: Map<string, MutableHoldVoice>;
+  readonly startupLoops: Map<string, MutableStartupLoop>;
   gain: {
     bgmBits: string;
     seBits: string;
@@ -419,15 +426,35 @@ function applyCommand(
     case "se.pause":
       if (state.sePaused) return transitionRejected("audio.command.duplicate-se-pause", "SE pause cannot be silently duplicated.");
       state.sePaused = true;
+      for (const loop of state.startupLoops.values()) loop.paused = true;
       return audioAccepted(undefined);
     case "se.resume":
       if (!state.sePaused) return transitionRejected("audio.command.se-not-paused", "SE resume requires an active pause.");
       state.sePaused = false;
+      for (const loop of state.startupLoops.values()) loop.paused = false;
       return audioAccepted(undefined);
     case "audio.pause-all":
       state.allPaused = command.paused;
       return audioAccepted(undefined);
     case "se.play-one-shot":
+      return audioAccepted(undefined);
+    case "se.start-owned-loop":
+      if (state.startupLoops.has(command.owner_key)) {
+        return transitionRejected(
+          "audio.command.duplicate-startup-loop-owner",
+          "A stable startup owner can own only one active Gaya loop.",
+        );
+      }
+      state.startupLoops.set(command.owner_key, { cue: command.cue, paused: false });
+      return audioAccepted(undefined);
+    case "se.fade-owned-loop":
+      if (!state.startupLoops.has(command.owner_key)) {
+        return transitionRejected(
+          "audio.command.missing-startup-loop-owner",
+          "Startup Gaya fade requires the exact active owner and cannot infer one from the cue.",
+        );
+      }
+      if (command.stop_at_zero) state.startupLoops.delete(command.owner_key);
       return audioAccepted(undefined);
     case "hold.start-loop":
       if (state.holds.has(command.owner_key)) {
@@ -478,6 +505,7 @@ function createEmptySemanticState(): MutableAudioSemanticState {
     sePaused: false,
     allPaused: false,
     holds: new Map(),
+    startupLoops: new Map(),
     gain: null,
   };
 }
@@ -490,6 +518,7 @@ function cloneSemanticState(source: MutableAudioSemanticState): MutableAudioSema
     sePaused: source.sePaused,
     allPaused: source.allPaused,
     holds: new Map([...source.holds].map(([owner, hold]) => [owner, { ...hold }])),
+    startupLoops: new Map([...source.startupLoops].map(([owner, loop]) => [owner, { ...loop }])),
     gain: source.gain === null ? null : { ...source.gain },
   };
 }
@@ -502,6 +531,13 @@ function freezeSemanticSnapshot(source: MutableAudioSemanticState): AudioSemanti
       cue: hold.cue,
       paused: hold.paused,
     }));
+  const startupLoops: AudioStartupLoopSnapshot[] = [...source.startupLoops]
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([ownerKey, loop]) => Object.freeze({
+      ownerKey,
+      cue: loop.cue,
+      paused: loop.paused,
+    }));
   return Object.freeze({
     sessionOpened: source.sessionOpened,
     bgmCue: source.bgmCue,
@@ -509,6 +545,7 @@ function freezeSemanticSnapshot(source: MutableAudioSemanticState): AudioSemanti
     sePaused: source.sePaused,
     allPaused: source.allPaused,
     holds: Object.freeze(holds),
+    startupLoops: Object.freeze(startupLoops),
     gain: source.gain === null ? null : Object.freeze({ ...source.gain }),
   });
 }
