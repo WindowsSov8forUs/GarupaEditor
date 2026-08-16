@@ -513,7 +513,7 @@ export class InGameManager {
       scoreLifeState: this.scoreLifeStateManager?.snapshot() ?? null,
       particle: this.particleCoordinator?.producer.snapshot() ?? null,
       startupDirection: this.startupDirection?.snapshot() ?? null,
-      playable: this.currentGameStateValue === GameState.PlayingSound,
+      playable: this.startupDirection?.snapshot().playable ?? true,
     };
   }
 }

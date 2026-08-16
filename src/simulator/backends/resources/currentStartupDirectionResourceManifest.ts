@@ -1,5 +1,10 @@
 import type { RenderResourceAssetProfile } from "../renderingContracts";
 
+export const CURRENT_STARTUP_DIRECTION_EVIDENCE_IDS = Object.freeze([
+  "SD01", "SD02", "SD03", "SD04", "SD05", "SD06", "SD07", "SD08",
+  "SD09", "SD10", "SD11", "SD12", "SD13", "SD14", "SD15", "SD16",
+] as const);
+
 export const CURRENT_STARTUP_DIRECTION_RESOURCE_IDENTITY =
   "startup-direction-current-10.1.4-portable-v1" as const;
 

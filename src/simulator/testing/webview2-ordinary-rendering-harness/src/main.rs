@@ -133,7 +133,10 @@ fn load_allowlist(stage: &Path) -> HashMap<String, Resource> {
       content_type: content_type.to_string(),
     }).is_none(), "duplicate allowlist route");
   }
-  assert!(result.len() == 32, "ordinary rendering allowlist must contain exactly 32 staged routes");
+  assert!(
+    result.len() == 32 || result.len() == 3,
+    "rendering allowlist must contain exactly 32 ordinary routes or 3 startup routes"
+  );
   result
 }
 

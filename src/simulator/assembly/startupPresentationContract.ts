@@ -7,6 +7,7 @@ import {
   type SimulatorAssemblyResult,
 } from "../resources/sharedResourceAdapters";
 import { inspectMp3FirstFrame } from "./sessionBgmDerivation";
+import { currentStartupFontSupports } from "../backends/resources/currentStartupFontCmap";
 
 export const STARTUP_PRESENTATION_SD_SLOT_COUNT = 5 as const;
 export const STARTUP_JACKET_SIZE = Object.freeze({ width: 360, height: 360 });
@@ -31,6 +32,20 @@ export function copyAndFreezeSimulatorPresentation(
     !isNullableText(presentation.song.lyricist) || !isNullableText(presentation.song.composer) ||
     !isNullableText(presentation.song.arranger)) {
     return invalid("Song title and bandName must be non-empty localized text; each credit is either non-empty text or null.");
+  }
+  const localizedText = [
+    presentation.song.title,
+    presentation.song.bandName,
+    presentation.song.lyricist,
+    presentation.song.composer,
+    presentation.song.arranger,
+  ].filter((text): text is string => text !== null);
+  if (localizedText.some((text) => [...text].some((scalar) => !currentStartupFontSupports(scalar.codePointAt(0)!)))) {
+    return rejected(
+      "evidence-required",
+      "simulator.presentation.missing-font-glyph",
+      "Every caller-selected localized scalar must exist in the hash-locked current sgm cmap; browser or system-font fallback is forbidden.",
+    );
   }
   if (!isExactObject(presentation.difficulty, "level,type") ||
     !["EASY", "NORMAL", "HARD", "EXPERT", "SPECIAL"].includes(presentation.difficulty.type) ||

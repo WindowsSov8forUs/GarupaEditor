@@ -50,6 +50,9 @@ function testMalformedPresentationFailsClosed(): void {
   const badText: any = request();
   badText.presentation.song.title = "\ud800";
   assertInvalid(badText, "simulator.presentation.invalid-public-package");
+  const missingGlyph: any = request();
+  missingGlyph.presentation.song.title = "😀";
+  assertInvalid(missingGlyph, "simulator.presentation.missing-font-glyph");
   const badVoice: any = request();
   badVoice.presentation.liveStartVoiceMp3 = new Uint16Array([1]);
   assertInvalid(badVoice, "simulator.presentation.invalid-public-package");
