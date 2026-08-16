@@ -31,6 +31,7 @@ import {
   CURRENT_SCORE_HUD_NINE_SLICE_BORDERS,
   CURRENT_SCORE_HUD_SCENE_PROFILE,
 } from "../resources/currentScoreHudResourceManifest";
+import { CURRENT_STARTUP_DIRECTION_BINDINGS } from "../resources/currentStartupDirectionResourceManifest";
 import {
   animationBindingMatchesProfile,
   animationRoleMatchesObject,
@@ -180,6 +181,41 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
   ) {
     this.stage = new Container({ label: "GarupaSimulatorRoot", sortableChildren: true });
     this.stage.sortableChildren = true;
+  }
+
+  getStartupDirectionCommonResources(): SimulatorResult<{
+    readonly lineStar: Texture;
+    readonly jacketFrame: Texture;
+    readonly difficultyFrames: Readonly<Record<"EASY" | "NORMAL" | "HARD" | "EXPERT" | "SPECIAL", Texture>>;
+    readonly fullLiveLabel: Texture;
+    readonly fontFamily: string;
+  }> {
+    const lineStar = this.baseTextures.get(CURRENT_STARTUP_DIRECTION_BINDINGS.lineStarLogicalAssetId);
+    const jacketFrame = this.spriteTextures.get(spriteKey(CURRENT_STARTUP_DIRECTION_BINDINGS.uiCommonLogicalAssetId, "bg_base_jacket_frame"));
+    const fullLiveLabel = this.spriteTextures.get(spriteKey(CURRENT_STARTUP_DIRECTION_BINDINGS.uiCommonLogicalAssetId, "icon_fullmusic_gray"));
+    const font = this.decodedFonts.get(CURRENT_STARTUP_DIRECTION_BINDINGS.fontLogicalAssetId);
+    const difficultyFrames = Object.freeze({
+      EASY: this.spriteTextures.get(spriteKey(CURRENT_STARTUP_DIRECTION_BINDINGS.uiCommonLogicalAssetId, "bg_jacket_frame_rank_1_easy")),
+      NORMAL: this.spriteTextures.get(spriteKey(CURRENT_STARTUP_DIRECTION_BINDINGS.uiCommonLogicalAssetId, "bg_jacket_frame_rank_1_normal")),
+      HARD: this.spriteTextures.get(spriteKey(CURRENT_STARTUP_DIRECTION_BINDINGS.uiCommonLogicalAssetId, "bg_jacket_frame_rank_1_hard")),
+      EXPERT: this.spriteTextures.get(spriteKey(CURRENT_STARTUP_DIRECTION_BINDINGS.uiCommonLogicalAssetId, "bg_jacket_frame_rank_1_expert")),
+      SPECIAL: this.spriteTextures.get(spriteKey(CURRENT_STARTUP_DIRECTION_BINDINGS.uiCommonLogicalAssetId, "bg_jacket_frame_rank_1_special")),
+    });
+    if (lineStar === undefined || jacketFrame === undefined || fullLiveLabel === undefined || font === undefined ||
+      Object.values(difficultyFrames).some((texture) => texture === undefined)) {
+      return evidenceRequired(
+        "render.startup-direction.common-resources-unavailable",
+        ["SD02", "SD16"],
+        "The startup scene requires the hash-validated line-star, current UICommon rows and current sgm font without a texture or system-font fallback.",
+      );
+    }
+    return ok(Object.freeze({
+      lineStar,
+      jacketFrame,
+      difficultyFrames: difficultyFrames as Readonly<Record<"EASY" | "NORMAL" | "HARD" | "EXPERT" | "SPECIAL", Texture>>,
+      fullLiveLabel,
+      fontFamily: font.family,
+    }));
   }
 
   createRehearsalControlOverlay(

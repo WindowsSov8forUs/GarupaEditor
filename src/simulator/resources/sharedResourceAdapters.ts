@@ -23,6 +23,7 @@ import {
 import { CURRENT_ORDINARY_PORTABLE_PACK_IDENTITY } from "../backends/resources/currentOrdinaryResourceManifest";
 import { parseCurrentScoreGaugeSsAnimationProfile } from "../backends/resources/currentScoreGaugeSsAnimationProfile";
 import { CURRENT_SCORE_HUD_PORTABLE_RESOURCES } from "../backends/resources/currentScoreHudResourceManifest";
+import { CURRENT_STARTUP_DIRECTION_PORTABLE_RESOURCES } from "../backends/resources/currentStartupDirectionResourceManifest";
 import { parseCurrentOrdinaryVisibleProfile } from "../backends/resources/currentOrdinaryVisibleProfile";
 import { CURRENT_ORDINARY_VISIBLE_PORTABLE_RESOURCES } from "../backends/resources/currentOrdinaryVisibleResourceManifest";
 import type { ParticleResourceProvider } from "../backends/particleContracts";
@@ -37,6 +38,7 @@ import type {
   SelectedParticleResource,
   SelectedScoreGaugeSsAnimationResource,
   SelectedScoreHudResource,
+  SelectedStartupDirectionResource,
 } from "./staticResourceSelector";
 import type { SharedStaticResourceStore } from "./sharedStaticResourceStore";
 
@@ -229,6 +231,37 @@ export async function prepareSharedScoreGaugeSsAnimationResource(
         "The ScoreGaugeSS profile must preserve all 56 curves, 39 finite frames, 236 keys and 11 scene nodes.",
       )
     : accepted(profile);
+}
+
+export async function prepareSharedStartupDirectionRenderResources(
+  selected: readonly SelectedStartupDirectionResource[],
+  store: SharedStaticResourceStore,
+): Promise<SimulatorAssemblyResult<PreparedSharedScoreHudRenderResources>> {
+  if (selected.length !== CURRENT_STARTUP_DIRECTION_PORTABLE_RESOURCES.length ||
+    selected.some((resource, index) => resource.profile.logicalAssetId !== CURRENT_STARTUP_DIRECTION_PORTABLE_RESOURCES[index]?.profile.logicalAssetId)) {
+    return rejected(
+      "resource-integrity",
+      "simulator.resources.startup-direction-inventory",
+      "The startup direction common pack requires the exact internally selected current resource inventory.",
+    );
+  }
+  const local: LocalRenderResource[] = [];
+  for (const resource of selected) {
+    const read = await readStatic(store, resource.resourceKey);
+    if (read.status === "rejected") return read;
+    if (read.value.byteLength !== resource.profile.byteLength || sha256UpperHex(read.value) !== resource.profile.sha256) {
+      return rejected(
+        "resource-integrity",
+        "simulator.resources.startup-direction-asset-integrity",
+        "Every startup direction common resource must match the committed byte length and SHA-256 before publication.",
+      );
+    }
+    local.push({ logicalAssetId: resource.profile.logicalAssetId, bytes: read.value });
+  }
+  const provider = ImmutableLocalRenderResourceProvider.create(local);
+  return provider.status === "ok"
+    ? accepted(Object.freeze({ assets: Object.freeze(selected.map((row) => row.profile)), provider: provider.value }))
+    : rejected("launch-failed", provider.capability, provider.boundary);
 }
 
 export async function prepareSharedScoreHudRenderResources(

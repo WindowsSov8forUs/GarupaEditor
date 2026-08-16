@@ -98,6 +98,9 @@ export type GarupaJsonPositionEvidenceId =
   | `GJP-E${"01" | "02" | "03" | "04" | "05" | "06" | "07"}`
   | "GJP-D01";
 
+export type StartupDirectionEvidenceId =
+  `SD${"01" | "02" | "03" | "04" | "05" | "06" | "07" | "08" | "09" | "10" | "11" | "12" | "13" | "14" | "15" | "16"}`;
+
 export type SimulatorEvidenceId =
   | EvidenceId
   | AutoLiveEvidenceId
@@ -109,7 +112,8 @@ export type SimulatorEvidenceId =
   | OrdinaryRenderingReauditEvidenceId
   | LiveRehearsalEvidenceId
   | PublicLifeProfileEvidenceId
-  | GarupaJsonPositionEvidenceId;
+  | GarupaJsonPositionEvidenceId
+  | StartupDirectionEvidenceId;
 
 export interface EvidenceReference {
   readonly id: SimulatorEvidenceId;

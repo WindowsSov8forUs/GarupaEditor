@@ -22,6 +22,10 @@ import {
   CURRENT_ORDINARY_VISIBLE_PROFILE_RESOURCE,
   type OrdinaryVisiblePortableResourceEntry,
 } from "../backends/resources/currentOrdinaryVisibleResourceManifest";
+import {
+  CURRENT_STARTUP_DIRECTION_PORTABLE_RESOURCES,
+  type StartupDirectionPortableResourceEntry,
+} from "../backends/resources/currentStartupDirectionResourceManifest";
 import type { ParticleResourceAllowlistEntry } from "../backends/particleContracts";
 import type { ChartConstructionResult } from "../engine/chart/types";
 
@@ -67,6 +71,11 @@ export interface SelectedScoreHudResource {
   readonly profile: ScoreHudPortableResourceEntry["profile"];
 }
 
+export interface SelectedStartupDirectionResource {
+  readonly resourceKey: string;
+  readonly profile: StartupDirectionPortableResourceEntry["profile"];
+}
+
 export type SelectedRenderResourceRoute =
   | {
       readonly kind: "ordinary";
@@ -90,6 +99,7 @@ export interface SimulatorStaticResourceSelection {
   readonly audioSe: readonly SelectedAudioSeResource[];
   readonly particles: readonly SelectedParticleResource[];
   readonly scoreHud: readonly SelectedScoreHudResource[];
+  readonly startupDirection: readonly SelectedStartupDirectionResource[];
   readonly ordinaryVisibleProfile: SelectedOrdinaryVisibleProfileResource;
   readonly ordinaryVisible: readonly SelectedOrdinaryVisibleResource[];
   readonly scoreGaugeSsAnimation: SelectedScoreGaugeSsAnimationResource;
@@ -114,6 +124,11 @@ export function selectSimulatorStaticResources(
   const scoreHud = Object.freeze(CURRENT_SCORE_HUD_PORTABLE_RESOURCES.map((entry) =>
     Object.freeze({
       resourceKey: scoreHudResourceKey(entry.resourceKeySuffix),
+      profile: entry.profile,
+    })));
+  const startupDirection = Object.freeze(CURRENT_STARTUP_DIRECTION_PORTABLE_RESOURCES.map((entry) =>
+    Object.freeze({
+      resourceKey: startupDirectionResourceKey(entry.resourceKeySuffix),
       profile: entry.profile,
     })));
   const ordinaryVisibleProfile = Object.freeze({
@@ -159,6 +174,7 @@ export function selectSimulatorStaticResources(
     audioSe,
     particles,
     scoreHud,
+    startupDirection,
     ordinaryVisibleProfile,
     ordinaryVisible,
     scoreGaugeSsAnimation,
@@ -188,6 +204,10 @@ export function ordinaryVisibleResourceKey(resourceKeySuffix: string): string {
 
 export function scoreHudResourceKey(resourceKeySuffix: string): string {
   return `${STATIC_RESOURCE_NAMESPACE}/score-hud/${encodeKey(resourceKeySuffix)}`;
+}
+
+export function startupDirectionResourceKey(resourceKeySuffix: string): string {
+  return `${STATIC_RESOURCE_NAMESPACE}/startup-direction/${encodeKey(resourceKeySuffix)}`;
 }
 
 function encodeKey(value: string): string {

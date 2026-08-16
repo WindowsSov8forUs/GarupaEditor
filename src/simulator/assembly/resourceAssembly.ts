@@ -35,6 +35,7 @@ import {
   prepareSharedParticleProvider,
   prepareSharedScoreGaugeSsAnimationResource,
   prepareSharedScoreHudRenderResources,
+  prepareSharedStartupDirectionRenderResources,
   rejected,
   type SimulatorAssemblyResult,
 } from "../resources/sharedResourceAdapters";
@@ -143,6 +144,8 @@ export async function assembleSimulatorResources(
   if (ordinaryVisible.status === "rejected") return ordinaryVisible;
   const scoreHud = await prepareSharedScoreHudRenderResources(selection.scoreHud, store);
   if (scoreHud.status === "rejected") return scoreHud;
+  const startupDirection = await prepareSharedStartupDirectionRenderResources(selection.startupDirection, store);
+  if (startupDirection.status === "rejected") return startupDirection;
   const scoreGaugeSsAnimation = await prepareSharedScoreGaugeSsAnimationResource(
     selection.scoreGaugeSsAnimation,
     store,
@@ -152,6 +155,7 @@ export async function assembleSimulatorResources(
     ...renderPack.profile.assets,
     ...ordinaryVisible.value.assets,
     ...scoreHud.value.assets,
+    ...startupDirection.value.assets,
   ];
   if (new Set(combinedAssets.map((asset) => asset.logicalAssetId)).size !== combinedAssets.length) {
     return rejected(
@@ -164,17 +168,21 @@ export async function assembleSimulatorResources(
     ...renderPack,
     profile: Object.freeze({
       ...renderPack.profile,
-      packIdentity: `${renderPack.profile.packIdentity}+ordinary-visible-current-10.1.4-v1+score-hud-current-10.1.4-v1`,
+      packIdentity: `${renderPack.profile.packIdentity}+ordinary-visible-current-10.1.4-v1+score-hud-current-10.1.4-v1+startup-direction-current-10.1.4-v1`,
       assets: Object.freeze(combinedAssets),
       ordinaryVisibleProfile: ordinaryVisible.value.profile,
       scoreGaugeSsAnimation: scoreGaugeSsAnimation.value,
     }),
     provider: mergeRenderProviders(
-      mergeRenderProviders(renderPack.provider, ordinaryVisible.value.provider, ordinaryVisible.value.assets.map(
-        (asset) => asset.logicalAssetId,
-      )),
-      scoreHud.value.provider,
-      scoreHud.value.assets.map((asset) => asset.logicalAssetId),
+      mergeRenderProviders(
+        mergeRenderProviders(renderPack.provider, ordinaryVisible.value.provider, ordinaryVisible.value.assets.map(
+          (asset) => asset.logicalAssetId,
+        )),
+        scoreHud.value.provider,
+        scoreHud.value.assets.map((asset) => asset.logicalAssetId),
+      ),
+      startupDirection.value.provider,
+      startupDirection.value.assets.map((asset) => asset.logicalAssetId),
     ),
   });
   const scene = targets.createSceneLayout(selection.rendering.kind, renderPack.bindings);

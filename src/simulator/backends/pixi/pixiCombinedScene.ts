@@ -1,5 +1,6 @@
 import { Container } from "pixi.js";
 import { evidenceRequired, ok, type SimulatorResult } from "../../engine/evidence";
+import type { PixiStartupDirectionScene } from "./pixiStartupDirectionScene";
 
 export const PIXI_COMBINED_SCENE_LABEL = "GarupaSimulatorCombinedScene";
 export const PIXI_PARTICLE_STAGE_LABEL = "GarupaSimulatorParticles";
@@ -15,6 +16,8 @@ export interface PixiCombinedSceneSnapshot {
   readonly rootParentAttached: boolean;
   readonly particleStageParentIsRoot: boolean;
   readonly ordinaryStageParentIsRoot: boolean;
+  readonly startupBackgroundParentIsRoot: boolean | null;
+  readonly startupForegroundParentIsRoot: boolean | null;
 }
 
 export interface PixiCombinedScene {
@@ -26,13 +29,18 @@ export interface PixiCombinedScene {
 export function createPixiCombinedScene(
   particleStage: Container,
   ordinaryStage: Container,
+  startupScene?: PixiStartupDirectionScene,
 ): SimulatorResult<PixiCombinedScene> {
   if (
     !(particleStage instanceof Container) || !(ordinaryStage instanceof Container) ||
     particleStage === ordinaryStage || particleStage.destroyed || ordinaryStage.destroyed ||
     particleStage.parent !== null || ordinaryStage.parent !== null ||
     particleStage.label !== PIXI_PARTICLE_STAGE_LABEL ||
-    ordinaryStage.label !== PIXI_ORDINARY_STAGE_LABEL
+    ordinaryStage.label !== PIXI_ORDINARY_STAGE_LABEL ||
+    (startupScene !== undefined && (
+      startupScene.backgroundRoot.parent !== null || startupScene.foregroundRoot.parent !== null ||
+      startupScene.backgroundRoot.destroyed || startupScene.foregroundRoot.destroyed
+    ))
   ) {
     return evidenceRequired(
       "render.pixi.invalid-combined-scene-stages",
@@ -43,11 +51,15 @@ export function createPixiCombinedScene(
   const root = new Container({ label: PIXI_COMBINED_SCENE_LABEL, sortableChildren: false });
   root.sortableChildren = false;
   try {
+    if (startupScene !== undefined) root.addChild(startupScene.backgroundRoot);
     root.addChild(particleStage);
     root.addChild(ordinaryStage);
+    if (startupScene !== undefined) root.addChild(startupScene.foregroundRoot);
   } catch {
+    startupScene?.backgroundRoot.removeFromParent();
     particleStage.removeFromParent();
     ordinaryStage.removeFromParent();
+    startupScene?.foregroundRoot.removeFromParent();
     root.destroy({ children: false });
     return evidenceRequired(
       "render.pixi.combined-scene-attach-failed",
@@ -55,7 +67,7 @@ export function createPixiCombinedScene(
       "Combined-scene construction is atomic and rejects without retaining either stage when Pixi cannot attach the evidence-ordered children.",
     );
   }
-  return ok(new OwnedPixiCombinedScene(root, particleStage, ordinaryStage));
+  return ok(new OwnedPixiCombinedScene(root, particleStage, ordinaryStage, startupScene));
 }
 
 class OwnedPixiCombinedScene implements PixiCombinedScene {
@@ -65,6 +77,7 @@ class OwnedPixiCombinedScene implements PixiCombinedScene {
     readonly root: Container,
     private readonly particleStage: Container,
     private readonly ordinaryStage: Container,
+    private readonly startupScene?: PixiStartupDirectionScene,
   ) {}
 
   snapshot(): PixiCombinedSceneSnapshot {
@@ -78,6 +91,8 @@ class OwnedPixiCombinedScene implements PixiCombinedScene {
       rootParentAttached: this.root.parent !== null,
       particleStageParentIsRoot: this.particleStage.parent === this.root,
       ordinaryStageParentIsRoot: this.ordinaryStage.parent === this.root,
+      startupBackgroundParentIsRoot: this.startupScene === undefined ? null : this.startupScene.backgroundRoot.parent === this.root,
+      startupForegroundParentIsRoot: this.startupScene === undefined ? null : this.startupScene.foregroundRoot.parent === this.root,
     });
   }
 
@@ -86,8 +101,10 @@ class OwnedPixiCombinedScene implements PixiCombinedScene {
     this.disposed = true;
     try {
       this.root.removeFromParent();
+      this.startupScene?.backgroundRoot.removeFromParent();
       this.particleStage.removeFromParent();
       this.ordinaryStage.removeFromParent();
+      this.startupScene?.foregroundRoot.removeFromParent();
       this.root.destroy({ children: false });
       return ok(undefined);
     } catch {

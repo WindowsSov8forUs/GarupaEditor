@@ -18,7 +18,8 @@ export type RenderResourceRole =
   | "hud-atlas"
   | "font"
   | "material-texture"
-  | "animation-clip";
+  | "animation-clip"
+  | "startup-ui";
 
 export type RenderMaterialRole =
   | "none"
