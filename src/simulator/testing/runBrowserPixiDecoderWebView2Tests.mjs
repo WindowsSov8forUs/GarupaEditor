@@ -83,8 +83,8 @@ function verify(value) {
     throw new Error(`production browser decoder WebView2 failed: ${JSON.stringify(value)}`);
   }
   const versions = new Map(value.runtime.highEntropy.fullVersionList.map((row) => [row.brand, row.version]));
-  equal(versions.get("Microsoft Edge WebView2"), contract.hostScope.webView2Runtime, "WebView2 runtime");
-  equal(versions.get("Chromium"), contract.hostScope.chromium, "Chromium runtime");
+  sameRuntimeLine(versions.get("Microsoft Edge WebView2"), contract.hostScope.webView2Runtime, "WebView2 runtime");
+  sameRuntimeLine(versions.get("Chromium"), contract.hostScope.chromium, "Chromium runtime");
   equal(value.runtime.pixiVersion, contract.hostScope.pixi, "Pixi version");
   equal(value.runtime.rendererName, "webgl", "actual Pixi renderer");
   equal(value.productionDecoder.className, "BrowserPixiTextureDecoder", "production decoder class");
@@ -130,6 +130,19 @@ function verify(value) {
 
 function sha256(bytes) {
   return createHash("sha256").update(bytes).digest("hex").toUpperCase();
+}
+
+function sameRuntimeLine(actual, baseline, label) {
+  if (typeof actual !== "string" || typeof baseline !== "string") {
+    throw new Error(`${label}: missing runtime identity`);
+  }
+  const current = actual.split(".").map(Number);
+  const locked = baseline.split(".").map(Number);
+  if (current.length !== 4 || locked.length !== 4 ||
+      current.slice(0, 3).some((value, index) => value !== locked[index]) ||
+      current[3] < locked[3]) {
+    throw new Error(`${label}: ${actual} is outside locked ${baseline} patch line`);
+  }
 }
 
 function equal(actual, expected, label) {

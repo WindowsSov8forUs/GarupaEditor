@@ -25,7 +25,7 @@
 | SV / timingGroup | `ignored-product-extension` | exact校验、复制、冻结和计数，但当前不改变position、排序、Note图或调度；不声明原作等价 |
 | Unsupported ExGarupa Slide | `open-evidence-required` | Hidden端点、Flick/Directional头、非Single/Hidden中间节点、量化后重合及Directional尾宽度>3失败关闭 |
 | Button 07 | `closed-original-unreachable` | 10.1.4合法BMS不可生成值7；Garupa adapter也只接受完整落在0..6的span，不发明第八lane |
-| WebView2 decode/glyph/raster | `closed-portable` | 真实WebView2 151.0.4129.78执行production `BrowserPixiTextureDecoder`的PNG/FontFace/glyph/Pixi WebGL raster；跨runtime/GPU exact不泛化 |
+| WebView2 decode/glyph/raster | `closed-portable` | 真实WebView2 151.0.4129.86（锁定`.78`同一151.0.4129 patch line）执行production `BrowserPixiTextureDecoder`的PNG/FontFace/glyph/Pixi WebGL raster；跨runtime/GPU exact不泛化 |
 | Fixed-device physical exact | `open-objective-environment-blocked` | 锁定panel只有60 Hz、Android candidate缺失且stage-9=false、无校准光学/声学比较路径；四项客观阻断，不新增exact claim |
 | Character/card/deck skill、Fever、multiplayer | `excluded` | public和production依赖图不得引入 |
 | Main-program integration | `unauthorized-stage-9` | 不修改App/window/editor/Tauri/mobile入口 |
