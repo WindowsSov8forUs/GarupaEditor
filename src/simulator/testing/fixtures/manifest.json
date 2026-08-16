@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "purpose": "offline simulator test fixtures",
   "sourceRepository": "HOST________/VSCode/GirlsBandParty-Reverse",
-  "sourceHead": "616509643f87e258fb286520eb6a13f99c7a56f6",
+  "sourceHead": "78e6a70ea906aa1fa778b56e843c7663fdd3b4bc",
   "entries": [
     {
       "path": "habahiro-snapshots/bestdori-atlas-profile.json",
@@ -336,42 +336,42 @@
     },
     {
       "path": "reverse-snapshots/evidence-integrity/artifacts/investigations/simulator-dynamic-acceptance-oracle-10-1-4/bms/653_ikuoku_easy.bms.txt",
-      "sourceReverseCommit": "616509643f87e258fb286520eb6a13f99c7a56f6",
+      "sourceReverseCommit": "78e6a70ea906aa1fa778b56e843c7663fdd3b4bc",
       "sourcePath": "artifacts/investigations/auto-live-runtime-contract-supplement/fixtures/653_ikuoku_easy.bms.txt",
       "bytes": 1688,
       "sha256": "4C2F8D202DED5DFD9C4144C0FE000B1E3524E0F25D3FEAF4DD102413F6CD6325"
     },
     {
       "path": "reverse-snapshots/evidence-integrity/artifacts/investigations/simulator-dynamic-acceptance-oracle-10-1-4/bms/786_miracle_april_habahiro_special.bms.txt",
-      "sourceReverseCommit": "616509643f87e258fb286520eb6a13f99c7a56f6",
+      "sourceReverseCommit": "78e6a70ea906aa1fa778b56e843c7663fdd3b4bc",
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime-inputs/bms/786_miracle_april_habahiro_special.bms.txt",
       "bytes": 38700,
       "sha256": "43148090C40ABBD951E8D7112200BDAE9B796A8A531A0793169E0AD70C3DC159"
     },
     {
       "path": "reverse-snapshots/evidence-integrity/artifacts/investigations/simulator-dynamic-acceptance-oracle-10-1-4/bms/poppin_shuffle_special.bms.txt",
-      "sourceReverseCommit": "616509643f87e258fb286520eb6a13f99c7a56f6",
+      "sourceReverseCommit": "78e6a70ea906aa1fa778b56e843c7663fdd3b4bc",
       "sourcePath": "artifacts/investigations/score-life-state-runtime-contract-10-1-4/runtime-inputs/bms/poppin_shuffle_special.bms.txt",
       "bytes": 17882,
       "sha256": "418DB7F5BFC6B5431AC0ABF2FB905120BDFA8C778C35AA42418A6FA43F4094DC"
     },
     {
       "path": "reverse-snapshots/evidence-integrity/artifacts/investigations/simulator-dynamic-acceptance-oracle-10-1-4/chart-oracles/786_miracle_april_habahiro_special.json",
-      "sourceReverseCommit": "616509643f87e258fb286520eb6a13f99c7a56f6",
+      "sourceReverseCommit": "78e6a70ea906aa1fa778b56e843c7663fdd3b4bc",
       "sourcePath": "artifacts/investigations/simulator-dynamic-acceptance-oracle-10-1-4/chart-oracles/786_miracle_april_habahiro_special.json",
       "bytes": 58170,
       "sha256": "F30C0BC1AE5766D11394FBA02C8F14E463787B31A79E38E6C79F6E02B3493773"
     },
     {
       "path": "reverse-snapshots/evidence-integrity/artifacts/investigations/simulator-dynamic-acceptance-oracle-10-1-4/chart-oracles/poppin_shuffle_special.json",
-      "sourceReverseCommit": "616509643f87e258fb286520eb6a13f99c7a56f6",
+      "sourceReverseCommit": "78e6a70ea906aa1fa778b56e843c7663fdd3b4bc",
       "sourcePath": "artifacts/investigations/simulator-dynamic-acceptance-oracle-10-1-4/chart-oracles/poppin_shuffle_special.json",
       "bytes": 50591,
       "sha256": "FA636238280D384C3BAE42335B54522B02CDBE608C890516F2F38FB728DEA2FC"
     },
     {
       "path": "reverse-snapshots/evidence-integrity/artifacts/investigations/simulator-dynamic-acceptance-oracle-10-1-4/dynamic_acceptance_oracle.json",
-      "sourceReverseCommit": "616509643f87e258fb286520eb6a13f99c7a56f6",
+      "sourceReverseCommit": "78e6a70ea906aa1fa778b56e843c7663fdd3b4bc",
       "sourcePath": "artifacts/investigations/simulator-dynamic-acceptance-oracle-10-1-4/dynamic_acceptance_oracle.json",
       "bytes": 3921,
       "sha256": "5B219C8BB3E79F2D9E759EA6D78A480025AE648ED1BA84FF9B49DB6E89401E99"
@@ -629,6 +629,13 @@
       "sha256": "C20901739059F91886257DEDC7C57F1029FDBC2D38A5E63A25F7EE5BCEDBC97E"
     },
     {
+      "path": "reverse-snapshots/public-life-profile/artifacts/investigations/simulator-public-life-profile-10-1-4/simulator_public_life_profile_contract.json",
+      "sourceReverseCommit": "2cbea93d19cb599d5daaeea007a63ae70fae012e",
+      "sourcePath": "artifacts/investigations/simulator-public-life-profile-10-1-4/simulator_public_life_profile_contract.json",
+      "bytes": 5162,
+      "sha256": "37FB2C539072939D7DEF0DA090E2C2BB411765416381D5CBA04FBD0B9761696B"
+    },
+    {
       "path": "reverse-snapshots/resource-pixi-rendering/artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/delivery_closure.json",
       "sourceReverseCommit": "c9a4629bdfac248c167a966a92bdb2c45dad87e6",
       "sourcePath": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/delivery_closure.json",
@@ -748,11 +755,25 @@
       "sha256": "19DA944D1866ED98586C55F69D20E0F01424AE44BC2602F8AB5B0EE898189B9F"
     },
     {
-      "path": "reverse-snapshots/public-life-profile/artifacts/investigations/simulator-public-life-profile-10-1-4/simulator_public_life_profile_contract.json",
-      "sourceReverseCommit": "2cbea93d19cb599d5daaeea007a63ae70fae012e",
-      "sourcePath": "artifacts/investigations/simulator-public-life-profile-10-1-4/simulator_public_life_profile_contract.json",
-      "bytes": 5162,
-      "sha256": "37FB2C539072939D7DEF0DA090E2C2BB411765416381D5CBA04FBD0B9761696B"
+      "path": "reverse-snapshots/startup-direction/artifacts/investigations/startup-direction-portable-pack-10-1-4/portable-assets/startup-line-star.png",
+      "sourceReverseCommit": "78e6a70ea906aa1fa778b56e843c7663fdd3b4bc",
+      "sourcePath": "artifacts/investigations/startup-direction-portable-pack-10-1-4/portable-assets/startup-line-star.png",
+      "bytes": 10967,
+      "sha256": "52584D0CFCB6AA53FF2CA5F423DC45B8331E72809AD059109E1128D9D8F0A08D"
+    },
+    {
+      "path": "reverse-snapshots/startup-direction/artifacts/investigations/startup-direction-portable-pack-10-1-4/startup_direction_portable_profile.json",
+      "sourceReverseCommit": "78e6a70ea906aa1fa778b56e843c7663fdd3b4bc",
+      "sourcePath": "artifacts/investigations/startup-direction-portable-pack-10-1-4/startup_direction_portable_profile.json",
+      "bytes": 18387,
+      "sha256": "D5AA3F71FDE068A981BE584CAC552A6DAD5013F6AB5527A15C3682D4D8EFF480"
+    },
+    {
+      "path": "reverse-snapshots/startup-direction/artifacts/investigations/startup-direction-runtime-contract-10-1-4/startup_direction_runtime_contract.json",
+      "sourceReverseCommit": "78e6a70ea906aa1fa778b56e843c7663fdd3b4bc",
+      "sourcePath": "artifacts/investigations/startup-direction-runtime-contract-10-1-4/startup_direction_runtime_contract.json",
+      "bytes": 15209,
+      "sha256": "617B154830A78170CC8DF380D8A7214D42278A78A1048195E8E46B227621C356"
     }
   ]
 }

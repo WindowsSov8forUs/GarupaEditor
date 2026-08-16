@@ -1,0 +1,731 @@
+{
+  "schema_version": 1,
+  "status": "closed-static-primary-portable-pack-device-supplemental",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "version_name": "10.1.4",
+    "version_code": 230,
+    "abi": "arm64-v8a",
+    "libil2cpp_sha256": "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F"
+  },
+  "source_assets": {
+    "information_prefab": {
+      "apk_relative_path": "assets/bin/Data/e4de74563b637470da91b9b24361d0d3",
+      "bytes": 11956,
+      "sha256": "4DC5FE2FA7D9D3D1025BB0EB73E3FFC93BF34A1B8A03638F225D6CADCFE9C2FA"
+    },
+    "difficulty_prefab": {
+      "apk_relative_path": "assets/bin/Data/1d0d926096e78407db4e9684b2a23201",
+      "bytes": 2252,
+      "sha256": "C9BF959DC934B1C1E8F516B6D2E8D71E5DB336393B67A5FDBEB400C63D7609B1"
+    },
+    "line_star_texture": {
+      "apk_relative_path": "assets/bin/Data/aaa17bd0a94db46e5b834e6e98addf49",
+      "bytes": 1066304,
+      "sha256": "1CC5475EDC28E902975AF90AD8A3AA9E4A9A8F05A6B2B1B6EAA0AD66F4F0AC9E"
+    },
+    "rhythm_game_ui_texture": {
+      "apk_relative_path": "assets/bin/Data/923acbc2709f740bb8f9ccbd6fed5d52",
+      "bytes": 1048848,
+      "sha256": "788141DB50D3A33A0B4ED869D89DD7778FF66A4E2244A19DAA9384CD017F4F70"
+    }
+  },
+  "portable_assets": [
+    {
+      "logical_id": "startup/information/line-star",
+      "path": "portable-assets/startup-line-star.png",
+      "bytes": 10967,
+      "sha256": "52584D0CFCB6AA53FF2CA5F423DC45B8331E72809AD059109E1128D9D8F0A08D",
+      "mime": "image/png",
+      "width": 1346,
+      "height": 198
+    },
+    {
+      "logical_id": "hud/score/rhythm-game-ui-atlas",
+      "path": "../score-hud-rank-gauge-10-1-4/portable-assets/rhythm-game-ui.png",
+      "bytes": 641969,
+      "sha256": "7CFEC4DABC83BC20E79E21D6AEB13CD9FA77ABE499E5E088A60C41014B96F6B6",
+      "mime": "image/png",
+      "width": 1024,
+      "height": 1024
+    },
+    {
+      "logical_id": "hud/score/ui-common-atlas",
+      "path": "../score-hud-rank-gauge-10-1-4/portable-assets/ui-common.png",
+      "bytes": 43935,
+      "sha256": "54659D05FB2902A7BD761D581A7DEFE7816B7D96977DCF960CA18F358B415A88",
+      "mime": "image/png",
+      "width": 512,
+      "height": 256
+    },
+    {
+      "logical_id": "hud/score/rank-label-font",
+      "path": "../score-hud-rank-gauge-10-1-4/portable-assets/rank-label-font.ttf",
+      "bytes": 4304904,
+      "sha256": "949356BBFEA78FB5BC3BA1610E1C64235FCCB9FD9A6F166A996715706FBFCE56",
+      "mime": "font/ttf",
+      "font_name": "sgm",
+      "dynamic_font_size": 24
+    }
+  ],
+  "information_prefab": {
+    "design_viewport": [
+      1600,
+      720
+    ],
+    "origin": "screen-center-x-positive-y-up",
+    "hierarchy": [
+      {
+        "name": "base",
+        "parent": "Info",
+        "position": [
+          0.0,
+          -159.0,
+          0.0
+        ]
+      },
+      {
+        "name": "targetText",
+        "parent": "ScoreTargetComponent",
+        "position": [
+          -146.33999633789062,
+          -3.0,
+          0.0
+        ]
+      },
+      {
+        "name": "sprite",
+        "parent": "ScoreTargetComponent",
+        "position": [
+          -293.0299987792969,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "name": "GameStartInfo",
+        "parent": null,
+        "position": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "name": "ScoreTargetComponent",
+        "parent": "base",
+        "position": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "name": "TitleComponent",
+        "parent": "base",
+        "position": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "name": "titleLabel",
+        "parent": "TitleComponent",
+        "position": [
+          0.0,
+          -3.0,
+          0.0
+        ]
+      },
+      {
+        "name": "targetScoreText",
+        "parent": "ScoreTargetComponent",
+        "position": [
+          244.0,
+          -3.0,
+          0.0
+        ]
+      },
+      {
+        "name": "Info",
+        "parent": "GameStartInfo",
+        "position": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "name": "difficultyComponent",
+        "parent": "base",
+        "position": [
+          7.0,
+          82.0,
+          0.0
+        ]
+      },
+      {
+        "name": "JacketDifficultyBase",
+        "parent": "JacketImage",
+        "position": [
+          6.0,
+          6.0,
+          0.0
+        ]
+      },
+      {
+        "name": "JacketFrame",
+        "parent": "JacketImage",
+        "position": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "name": "starImage",
+        "parent": "base",
+        "position": [
+          0.0,
+          -11.0,
+          0.0
+        ]
+      },
+      {
+        "name": "JacketImage",
+        "parent": "Info",
+        "position": [
+          0.0,
+          138.0,
+          0.0
+        ]
+      },
+      {
+        "name": "ChallengeSymbol",
+        "parent": "ChallengeComponent",
+        "position": [
+          0.0,
+          183.55999755859375,
+          0.0
+        ]
+      },
+      {
+        "name": "ChallengeComponent",
+        "parent": "JacketImage",
+        "position": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "name": "ChallengeFrame",
+        "parent": "ChallengeComponent",
+        "position": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "name": "composerLabel",
+        "parent": "TitleComponent",
+        "position": [
+          0.0,
+          -154.0,
+          0.0
+        ]
+      },
+      {
+        "name": "bandNameLabel",
+        "parent": "TitleComponent",
+        "position": [
+          0.0,
+          -77.0,
+          0.0
+        ]
+      },
+      {
+        "name": "FullLiveLabel",
+        "parent": "JacketImage",
+        "position": [
+          161.0,
+          155.0,
+          0.0
+        ]
+      },
+      {
+        "name": "lyricistLabel",
+        "parent": "TitleComponent",
+        "position": [
+          0.0,
+          -124.0,
+          0.0
+        ]
+      },
+      {
+        "name": "arrangerLabel",
+        "parent": "TitleComponent",
+        "position": [
+          0.0,
+          -184.0,
+          0.0
+        ]
+      }
+    ],
+    "components": {
+      "Info:45": {
+        "script_path_id": 3754,
+        "serialized_bytes": 180,
+        "serialized_sha256": "8F073173EFB1CC1904D8B4DB22DE85D33FDE9907229C3505586A7E009A5CFB76",
+        "widget_size": [
+          866,
+          555
+        ]
+      },
+      "titleLabel:46": {
+        "script_path_id": 6527,
+        "serialized_bytes": 364,
+        "serialized_sha256": "A8DB85452E2F00B7A8E9302C24261C4083B0C7C315087291FBD46FDBD01C15DE",
+        "widget_size": [
+          1110,
+          414
+        ]
+      },
+      "targetScoreText:48": {
+        "script_path_id": 6527,
+        "serialized_bytes": 372,
+        "serialized_sha256": "A1FC0B3B96F21FEE90E145943FD008A91B9060014C62B76F623479642E9DA31E",
+        "widget_size": [
+          400,
+          200
+        ]
+      },
+      "targetText:49": {
+        "script_path_id": 6527,
+        "serialized_bytes": 380,
+        "serialized_sha256": "CBA85CF70350360BFF5D6E0A24DAC05C419D9AF5AA3E5FF65730CA2E30E244D0",
+        "widget_size": [
+          499,
+          200
+        ]
+      },
+      "sprite:50": {
+        "script_path_id": 825,
+        "serialized_bytes": 292,
+        "serialized_sha256": "1C706B1F553DD8176E073351A880075BCFC50A27ECB936C4314CBDCCAA440B8F",
+        "widget_size": [
+          62,
+          62
+        ]
+      },
+      "ScoreTargetComponent:51": {
+        "script_path_id": 3754,
+        "serialized_bytes": 180,
+        "serialized_sha256": "2C46E98028B170DF71AF67F1A8840A788878A8C889BD835D7DE068ED199391F0",
+        "widget_size": [
+          100,
+          100
+        ]
+      },
+      "TitleComponent:52": {
+        "script_path_id": 3754,
+        "serialized_bytes": 180,
+        "serialized_sha256": "961874C182EF6FD9C2F3D6B50D7C979191F914694619C6F828AD4BD188817C2C",
+        "widget_size": [
+          100,
+          100
+        ]
+      },
+      "starImage:53": {
+        "script_path_id": 5929,
+        "serialized_bytes": 316,
+        "serialized_sha256": "869B555FE93ECA253D71C1B3AEBAAEB32BCC39BD44FE9F637645A0DA3BB153A7",
+        "widget_size": [
+          1346,
+          196
+        ]
+      },
+      "ChallengeSymbol:55": {
+        "script_path_id": 825,
+        "serialized_bytes": 296,
+        "serialized_sha256": "699E83132BE161253E5B6CA9B033AE4687B90F33A88F60C4DBB3C3C82A3FC38A",
+        "widget_size": [
+          122,
+          24
+        ]
+      },
+      "base:57": {
+        "script_path_id": 5929,
+        "serialized_bytes": 316,
+        "serialized_sha256": "D6A2B4DE8F023942015F90A7E1AED0C9C1A00A7EC12DFA500806E36734F64D70",
+        "widget_size": [
+          1334,
+          88
+        ]
+      },
+      "JacketFrame:58": {
+        "script_path_id": 825,
+        "serialized_bytes": 300,
+        "serialized_sha256": "82B746D78B21338F1065FE0E39DD2182845CBBAE076088570DC28C1C841778FF",
+        "widget_size": [
+          374,
+          374
+        ]
+      },
+      "JacketImage:59": {
+        "script_path_id": 5929,
+        "serialized_bytes": 316,
+        "serialized_sha256": "1C16EB72912875622AA9FA823F2D7BDA8305A2B0A8909487397BA316996B8E14",
+        "widget_size": [
+          360,
+          360
+        ]
+      },
+      "ChallengeFrame:61": {
+        "script_path_id": 825,
+        "serialized_bytes": 304,
+        "serialized_sha256": "1EA7D96E972CDF94187EFD96E84668AF6E7E02E7F996A8C62F68F397594B08DA",
+        "widget_size": [
+          374,
+          374
+        ]
+      },
+      "JacketDifficultyBase:62": {
+        "script_path_id": 825,
+        "serialized_bytes": 312,
+        "serialized_sha256": "99DBE5B0E999C4D997A9709E0AB670C0E12CC7380416C7C937451464D290EC62",
+        "widget_size": [
+          374,
+          374
+        ]
+      },
+      "composerLabel:63": {
+        "script_path_id": 6527,
+        "serialized_bytes": 376,
+        "serialized_sha256": "44C8AC59A3DA131A59D515F73A30AD31FB0F0F144524863599F8A3BEA12D9232",
+        "widget_size": [
+          925,
+          25
+        ]
+      },
+      "arrangerLabel:64": {
+        "script_path_id": 6527,
+        "serialized_bytes": 376,
+        "serialized_sha256": "1BE795E848806C420C89265848F9523EAFC47AB57E810E2D057A044D7AA9902D",
+        "widget_size": [
+          925,
+          25
+        ]
+      },
+      "lyricistLabel:65": {
+        "script_path_id": 6527,
+        "serialized_bytes": 376,
+        "serialized_sha256": "7A6EEA8C3099B57887B41B8EAD6A2A631B71FD198F8517317AE928658CF53400",
+        "widget_size": [
+          925,
+          25
+        ]
+      },
+      "bandNameLabel:66": {
+        "script_path_id": 6527,
+        "serialized_bytes": 364,
+        "serialized_sha256": "69B9B75DCB83C267702CF402559D2AA52A12AE179872AD2A4E74074508AEABEA",
+        "widget_size": [
+          932,
+          52
+        ]
+      },
+      "FullLiveLabel:67": {
+        "script_path_id": 825,
+        "serialized_bytes": 300,
+        "serialized_sha256": "74D779F38888F2F72EDCEAA4192D368F6ED756B868E899F9D1B38B8DE8854C6F",
+        "widget_size": [
+          70,
+          34
+        ]
+      }
+    },
+    "common_atlas_rows": [
+      {
+        "name": "bg_base_jacket_frame",
+        "x": 206,
+        "y": 92,
+        "width": 34,
+        "height": 34,
+        "border_left": 4,
+        "border_right": 4,
+        "border_top": 4,
+        "border_bottom": 4,
+        "padding_left": 0,
+        "padding_right": 0,
+        "padding_top": 0,
+        "padding_bottom": 0
+      },
+      {
+        "name": "bg_jacket_frame_rank_1_easy",
+        "x": 206,
+        "y": 70,
+        "width": 20,
+        "height": 20,
+        "border_left": 1,
+        "border_right": 1,
+        "border_top": 1,
+        "border_bottom": 1,
+        "padding_left": 0,
+        "padding_right": 0,
+        "padding_top": 0,
+        "padding_bottom": 0
+      },
+      {
+        "name": "bg_jacket_frame_rank_1_expert",
+        "x": 228,
+        "y": 70,
+        "width": 20,
+        "height": 20,
+        "border_left": 1,
+        "border_right": 1,
+        "border_top": 1,
+        "border_bottom": 1,
+        "padding_left": 0,
+        "padding_right": 0,
+        "padding_top": 0,
+        "padding_bottom": 0
+      },
+      {
+        "name": "bg_jacket_frame_rank_1_hard",
+        "x": 250,
+        "y": 74,
+        "width": 20,
+        "height": 20,
+        "border_left": 1,
+        "border_right": 1,
+        "border_top": 1,
+        "border_bottom": 1,
+        "padding_left": 0,
+        "padding_right": 0,
+        "padding_top": 0,
+        "padding_bottom": 0
+      },
+      {
+        "name": "bg_jacket_frame_rank_1_normal",
+        "x": 244,
+        "y": 144,
+        "width": 20,
+        "height": 20,
+        "border_left": 1,
+        "border_right": 1,
+        "border_top": 1,
+        "border_bottom": 1,
+        "padding_left": 0,
+        "padding_right": 0,
+        "padding_top": 0,
+        "padding_bottom": 0
+      },
+      {
+        "name": "bg_jacket_frame_rank_1_special",
+        "x": 128,
+        "y": 11,
+        "width": 20,
+        "height": 20,
+        "border_left": 1,
+        "border_right": 1,
+        "border_top": 1,
+        "border_bottom": 1,
+        "padding_left": 0,
+        "padding_right": 0,
+        "padding_top": 0,
+        "padding_bottom": 0
+      },
+      {
+        "name": "icon_fullmusic_gray",
+        "x": 82,
+        "y": 33,
+        "width": 70,
+        "height": 34,
+        "border_left": 0,
+        "border_right": 0,
+        "border_top": 0,
+        "border_bottom": 0,
+        "padding_left": 0,
+        "padding_right": 0,
+        "padding_top": 0,
+        "padding_bottom": 0
+      },
+      {
+        "name": "jacket_challengeframe",
+        "x": 82,
+        "y": 7,
+        "width": 24,
+        "height": 24,
+        "border_left": 10,
+        "border_right": 10,
+        "border_top": 10,
+        "border_bottom": 10,
+        "padding_left": 0,
+        "padding_right": 0,
+        "padding_top": 0,
+        "padding_bottom": 0
+      },
+      {
+        "name": "label_challenge",
+        "x": 82,
+        "y": 69,
+        "width": 122,
+        "height": 23,
+        "border_left": 0,
+        "border_right": 0,
+        "border_top": 0,
+        "border_bottom": 0,
+        "padding_left": 0,
+        "padding_right": 0,
+        "padding_top": 0,
+        "padding_bottom": 0
+      },
+      {
+        "name": "label_square_white",
+        "x": 150,
+        "y": 5,
+        "width": 12,
+        "height": 12,
+        "border_left": 4,
+        "border_right": 4,
+        "border_top": 4,
+        "border_bottom": 4,
+        "padding_left": 0,
+        "padding_right": 0,
+        "padding_top": 0,
+        "padding_bottom": 0
+      }
+    ],
+    "nullable_fields": {
+      "lyricist": "label-hidden-when-null",
+      "composer": "label-hidden-when-null",
+      "arranger": "label-hidden-when-null"
+    },
+    "jacket_policy": "caller-explicit-png-no-default-fallback"
+  },
+  "difficulty_prefab": {
+    "hierarchy": [
+      {
+        "name": "Difficulty",
+        "parent": "DifficultyLabelObject",
+        "position": [
+          0.0,
+          -2.0,
+          0.0
+        ]
+      },
+      {
+        "name": "DifficultyLabelObject",
+        "parent": null,
+        "position": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "name": "Frame",
+        "parent": "DifficultyLabelObject",
+        "position": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "name": "Bg",
+        "parent": "DifficultyLabelObject",
+        "position": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    ],
+    "components": {
+      "Bg:10": {
+        "script_path_id": 825,
+        "serialized_bytes": 300,
+        "serialized_sha256": "6C6D0A3CB1EBF80253E22A92CFCBE3FF8BB249DACEAFD5D0469191DC9041650D",
+        "widget_size": [
+          97,
+          27
+        ]
+      },
+      "Difficulty:11": {
+        "script_path_id": 6527,
+        "serialized_bytes": 368,
+        "serialized_sha256": "8DEEF5B61FE02A3046C674644EA7A2830B717C56DC49F51C8DB56004FA97AA33",
+        "widget_size": [
+          94,
+          28
+        ]
+      },
+      "Frame:12": {
+        "script_path_id": 825,
+        "serialized_bytes": 300,
+        "serialized_sha256": "172A92DE446AAA85BAED6A6659BEFBCF443F339CC88EA7DCE4E86EA97F516BB1",
+        "widget_size": [
+          102,
+          34
+        ]
+      }
+    },
+    "words": [
+      "EASY",
+      "NORMAL",
+      "HARD",
+      "EXPERT",
+      "SPECIAL"
+    ],
+    "color_source": "DifficultyUtility.cctor static dictionary; portable rendering uses the current documented five-color profile"
+  },
+  "stage_presentation": {
+    "backdrop_input": {
+      "mime": "image/png",
+      "width": 1600,
+      "height": 720
+    },
+    "sd_character_input": {
+      "count": 5,
+      "mime": "image/png",
+      "width": 1600,
+      "height": 720,
+      "composition": "transparent full-frame evidence-aligned overlay"
+    },
+    "intro": {
+      "dark_cover_start_alpha": 1.0,
+      "stage_transform_duration_seconds": 0.75,
+      "character_start_delay_seconds": 0.25,
+      "character_fade_duration_seconds": 1.25,
+      "character_coroutine_wait_seconds": 3.0
+    },
+    "boundary": "full-frame caller resources carry no public numeric geometry; reference resources are required for reference visual parity"
+  },
+  "timing": {
+    "first_view_fade_seconds": 0.1,
+    "standard_hold_seconds": 0.9,
+    "information_fade_seconds": 1.0,
+    "hud_fade_seconds": 0.5,
+    "background_pre_delay_seconds": 0.5,
+    "stage_wait_seconds": 1.5,
+    "line_delay_seconds": 2.5,
+    "line_fade_seconds": 1.0,
+    "music_pre_play_wait_seconds": 1.0,
+    "float_policy": "binary32 Time.deltaTime; threshold checked before add; terminal value committed on the next MoveNext; no remainder is carried"
+  },
+  "voice_policy": {
+    "live_null": "maps to original missing SoundResource path and wait observes false",
+    "live_non_null": "portable MP3 and wait for backend ended",
+    "practice": "no command and immediate wait return"
+  },
+  "mode_scope": [
+    "SingleNormal",
+    "Practice"
+  ],
+  "portable_claim": "evidence-driven Pixi portable composition; no Unity framebuffer, GPU, CRI/HCA or speaker-onset exact claim",
+  "blocking_findings": []
+}

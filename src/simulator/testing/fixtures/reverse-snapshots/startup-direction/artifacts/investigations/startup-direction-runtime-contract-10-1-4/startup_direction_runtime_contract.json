@@ -1,0 +1,273 @@
+{
+  "schema_version": 2,
+  "status": "confirmed-current-sample-static-portable-pack-and-rehearsal-runtime-r1",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "version_name": "10.1.4",
+    "version_code": 230,
+    "abi": "arm64-v8a",
+    "libil2cpp_size": 119816840,
+    "libil2cpp_sha256": "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F",
+    "script_json_size": 139657741,
+    "script_json_sha256": "826C592717ED07974F8DCD435AF92B8DCE7A6406E0706AC43A85102FE8567D91"
+  },
+  "scope": {
+    "positive": [
+      "common rhythm-game startup information owner and fields",
+      "SingleNormal and Practice startup call order",
+      "standard background, HUD and line-UI intro scheduling",
+      "game-state gate before playable sound state",
+      "Practice runtime timeline on a naturally selected chart",
+      "Practice retry visual phase sequence",
+      "serialized startup information prefab and current portable resource identities",
+      "explicit missing-live-start-voice path and Practice voice bypass",
+      "Retry whole-scene restart and MoveTime startup bypass"
+    ],
+    "negative": [
+      "MVView and Star3DLiveView exact intro equivalence",
+      "MultiNormal score-target runtime capture",
+      "fixed-device audible or framebuffer onset parity"
+    ]
+  },
+  "game_states": {
+    "0": "Prepare",
+    "1": "OPFirstAnimStart",
+    "2": "OPFirstAnimEnd",
+    "3": "OPLastAnimStart",
+    "4": "PlayingNone",
+    "5": "PlayingSound",
+    "17": "MovieBeforeSound"
+  },
+  "evidence": [
+    {
+      "id": "SD01",
+      "kind": "static-arm64",
+      "finding": "ExecStart yields ShowGameStartAnimationFirstView before loadResources, music-score loading, note setup, onOPDirector, after-opening processing and start-game processing, in that order.",
+      "files": [
+        "arm64/032fe0c8__InGameManager__ExecStart_MoveNext.arm64.tsv"
+      ]
+    },
+    {
+      "id": "SD02",
+      "kind": "static-arm64",
+      "finding": "RhythmGameStartAnimation owns the jacket, difficulty, title, band name, lyricist, composer, arranger, score target, challenge and full-live presentation; initialization loads selected jacket with default-jacket error fallback and populates music metadata.",
+      "files": [
+        "arm64/0386eb04__RhythmGameStartAnimation__Init.arm64.tsv",
+        "arm64/0386fb2c__RhythmGameStartAnimation__setupMusicInfo.arm64.tsv",
+        "arm64/0386fc64__RhythmGameStartAnimation__loadSelectedJacket.arm64.tsv",
+        "arm64/0386fd84__RhythmGameStartAnimation__loadDefaultJacket.arm64.tsv",
+        "arm64/03870238__RhythmGameStartAnimation__setMusicInfoLabel.arm64.tsv",
+        "arm64/03870b8c__RhythmGameStartAnimation__setupDifficultyView_MoveNext.arm64.tsv"
+      ]
+    },
+    {
+      "id": "SD03",
+      "kind": "static-arm64",
+      "finding": "The first view fades alpha 0 to 1 over 0.1 s. Standard startup Play then holds for 0.9 s and fades alpha 1 to 0 over 1.0 s before invoking completion. The visible dwell is longer when resource work continues between first-view reveal and Play.",
+      "files": [
+        "arm64/038703e0__RhythmGameStartAnimation__ShowAnimation_MoveNext.arm64.tsv",
+        "arm64/038704f4__RhythmGameStartAnimation__fadeAnimation_MoveNext.arm64.tsv",
+        "arm64/03870650__RhythmGameStartAnimation__playCoroutine_MoveNext.arm64.tsv"
+      ]
+    },
+    {
+      "id": "SD04",
+      "kind": "static-arm64",
+      "finding": "Only the MultiNormal branch with a nonzero target-score value selects the score-target coroutine: 0.4 s hold, 0.25 s title exit, 0.25 s target entry, 1.75 s hold, then 1.0 s whole-view fade. SingleNormal and Practice select the standard coroutine.",
+      "files": [
+        "arm64/0386ed24__RhythmGameStartAnimation__Play.arm64.tsv",
+        "arm64/038707c4__RhythmGameStartAnimation__playScoreTargetCoroutine_MoveNext.arm64.tsv"
+      ]
+    },
+    {
+      "id": "SD05",
+      "kind": "static-arm64",
+      "finding": "onOPDirector sets OPFirstAnimStart, asks the background module to prepare game-start animation, starts RhythmGameStartAnimation and waits for its callback-driven OPFirstAnimEnd; it then starts InGamePlayDisplay.IntroAnimation with alpha 1 over 0.5 s and advances to OPLastAnimStart.",
+      "files": [
+        "arm64/032fff40__InGameManager__onOPDirector_MoveNext.arm64.tsv",
+        "arm64/03306024__InGamePlayDisplay__IntroAnimation.arm64.tsv",
+        "arm64/03873908__StandardBackgroundModule__OnPlayGameStartAnimation.arm64.tsv"
+      ]
+    },
+    {
+      "id": "SD06",
+      "kind": "static-arm64",
+      "finding": "After opening completion, the manager calls background OnExecStart, starts ButtonManager.FadeInLineUI asynchronously, performs mode-specific controllers, calls background OnBeforeIntroAnimation, yields background ShowIntroAnimation, and only then waits for the live-start voice where applicable.",
+      "files": [
+        "arm64/032fe4b8__InGameManager__executeAfterOpeningAnimationProcess_MoveNext.arm64.tsv",
+        "arm64/03873a08__StandardBackgroundModule__OnBeforeIntroAnimation.arm64.tsv",
+        "arm64/03874b38__StandardBackgroundModule__ShowIntroAnimation_MoveNext.arm64.tsv",
+        "arm64/03881d20__ButtonManager__FadeInLineUI.arm64.tsv"
+      ]
+    },
+    {
+      "id": "SD07",
+      "kind": "static-arm64",
+      "finding": "StandardBackgroundModule.ShowIntroAnimation waits 0.5 s, starts InGameStageControllerBase.ShowIntroAnimation, and waits for it. The stage starts its virtual intro, activates the stage, waits 1.5 s and then fades the psyllium. InGameStageManager uses a 0.75 s transform tween and starts SD character intro concurrently.",
+      "files": [
+        "arm64/03874b38__StandardBackgroundModule__ShowIntroAnimation_MoveNext.arm64.tsv",
+        "arm64/032e5d34__InGameStageControllerBase__ShowIntroAnimation_MoveNext.arm64.tsv",
+        "arm64/032e6364__InGameStageManager__introAnimation.arm64.tsv",
+        "arm64/03317498__InGameSDCharaContoller__introAnimation_MoveNext.arm64.tsv"
+      ]
+    },
+    {
+      "id": "SD08",
+      "kind": "static-arm64",
+      "finding": "ButtonManager line UI waits 2.5 s from the fade request, then fades the rhythm-game line panel from alpha 0 to 1 over 1.0 s. This coroutine is not awaited by the stage or music path.",
+      "files": [
+        "arm64/03881d20__ButtonManager__FadeInLineUI.arm64.tsv",
+        "arm64/0396c508__ButtonManager__fadeInTestObject_MoveNext.arm64.tsv"
+      ]
+    },
+    {
+      "id": "SD09",
+      "kind": "static-arm64",
+      "finding": "SingleNormal and Practice are both in the direct start-music mode mask. The music sequence calls background OnStartMusic, waits 1.0 s, handles optional movie delays, then publishes PlayingNone; updatePlayingSound advances PlayingNone to PlayingSound. ExecUpdate runs gameplay update only for states 4 and 5, so notes, input, score and life are gated before that point.",
+      "files": [
+        "arm64/032f7da8__InGameManager__ExecUpdate.arm64.tsv",
+        "arm64/032fe7a0__InGameManager__executeStartGameProcess_MoveNext.arm64.tsv",
+        "arm64/033001f0__InGameManager__startMusicCoroutine_MoveNext.arm64.tsv",
+        "arm64/032fcd00__InGameManager__updatePlayingSound.arm64.tsv",
+        "arm64/03873abc__StandardBackgroundModule__OnStartMusic.arm64.tsv"
+      ]
+    },
+    {
+      "id": "SD10",
+      "kind": "static-arm64",
+      "finding": "The live-start voice is requested before onOPDirector. The post-opening path waits until the voice is no longer playing, but WaitFinishLiveStartVoice returns immediately for Practice mode. Therefore Practice and SingleNormal share the visual chain but not the same voice wait obligation.",
+      "files": [
+        "arm64/032fe0c8__InGameManager__ExecStart_MoveNext.arm64.tsv",
+        "arm64/03312090__InGameVoiceControllerBase__PlayLiveStartVoice.arm64.tsv",
+        "arm64/033128b8__InGameVoiceControllerBase__WaitFinishLiveStartVoice_MoveNext.arm64.tsv"
+      ]
+    },
+    {
+      "id": "SD11",
+      "kind": "static-arm64",
+      "finding": "ShowGameStartAnimationFirstView is a direct coroutine wrapper: its MoveNext invokes RhythmGameStartAnimation.ShowAnimation. PlayGameStartAnimation stores the completion callback then directly calls RhythmGameStartAnimation.Play.",
+      "files": [
+        "arm64/0386ec64__RhythmGameAnimationController__ShowGameStartAnimationFirstView.arm64.tsv",
+        "arm64/0386ecf8__RhythmGameAnimationController__PlayGameStartAnimation.arm64.tsv",
+        "arm64/0386f78c__RhythmGameAnimationController__ShowGameStartAnimationFirstView_MoveNext.arm64.tsv"
+      ]
+    },
+    {
+      "id": "SD12",
+      "kind": "static-arm64",
+      "finding": "The information fade coroutine reads binary32 Time.deltaTime, tests the previous elapsed value before adding, clamps only the interpolation ratio, publishes one yield, and commits the exact terminal value on the following MoveNext. It carries no delta remainder to the next startup owner.",
+      "files": [
+        "arm64/038704f4__RhythmGameStartAnimation__fadeAnimation_MoveNext.arm64.tsv"
+      ]
+    },
+    {
+      "id": "SD13",
+      "kind": "static-arm64",
+      "finding": "PlayLiveStartVoice creates liveStartVoiceSoundResource only when the selected character has a usable start-voice resource. The missing-resource path leaves that field null; isPlayingLiveStartVoice returns false for null, so explicit portable Live null can map to this original path. WaitFinishLiveStartVoice also exits immediately for Practice.",
+      "files": [
+        "arm64/03312090__InGameVoiceControllerBase__PlayLiveStartVoice.arm64.tsv",
+        "arm64/0331226c__InGameVoiceControllerBase__LoadVoiceData.arm64.tsv",
+        "arm64/033123bc__InGameVoiceControllerBase__isPlayingLiveStartVoice.arm64.tsv",
+        "arm64/0331262c__InGameVoiceControllerBase__LoadVoiceData_MoveNext.arm64.tsv",
+        "arm64/033128b8__InGameVoiceControllerBase__WaitFinishLiveStartVoice_MoveNext.arm64.tsv"
+      ]
+    },
+    {
+      "id": "SD14",
+      "kind": "static-arm64",
+      "finding": "The Rehearsal Retry callback requests the original scene transition path (type 2) rather than resuming the active manager, so a portable fresh-engine Retry must replay the startup chain.",
+      "files": [
+        "arm64/032fdccc__InGameManager__onRetry.arm64.tsv"
+      ]
+    },
+    {
+      "id": "SD15",
+      "kind": "static-arm64",
+      "finding": "MoveTime reconstruction resets gameplay owners, directly reloads music at the target and publishes state 15 (MoveTimeWaitForPlay); it does not call the startup-information or opening-director owners. This authorizes only an internal startup-bypass reconstruction purpose after an already-playable Practice session.",
+      "files": [
+        "arm64/0330101c__InGameMoveTimeController__moveTimeToStartMusic_MoveNext.arm64.tsv"
+      ]
+    },
+    {
+      "id": "SD16",
+      "kind": "serialized-resource",
+      "finding": "The current APK serializes the GameStartInfo and difficulty prefabs, exact hierarchy/transforms/widget sizes, line-star texture, current UICommon/RhythmGameUI atlas rows and sgm font identity. The portable pack fixes one 1600x720 stage backdrop plus five 1600x720 transparent SD overlays as explicit session resources and has no blocking findings.",
+      "files": [
+        "../startup-direction-portable-pack-10-1-4/startup_direction_portable_profile.json"
+      ]
+    },
+    {
+      "id": "RD01",
+      "kind": "device-runtime",
+      "finding": "A natural Practice start confirmed the static order without hooks mutating memory or return values. Relative to start-information Play: HUD intro at +1904 ms; line fade request at +1921 ms; stage intro start at +2414 ms; stage wait complete and music sequence start at +3923 ms; line fade begins at +4415 ms; PlayingNone at +4939 ms; PlayingSound at +4956 ms; line fade runs through approximately +5416 ms.",
+      "files": [
+        "runtime/rehearsal-auto-natural-startup-direction-r1.json.gz"
+      ]
+    },
+    {
+      "id": "RV01",
+      "kind": "device-visual-observation",
+      "finding": "A separate Practice retry screenshot sequence visibly confirms jacket/music information reveal and fade, a dark stage handoff, stage and character illumination, line UI entry and the first visible notes. Host capture timestamps are observation labels, not engine-clock timing evidence.",
+      "files": [
+        "runtime/visual/004_02321ms.png",
+        "runtime/visual/006_03103ms.png",
+        "runtime/visual/012_06114ms.png",
+        "runtime/visual/013_06607ms.png",
+        "runtime/visual/015_07842ms.png",
+        "runtime/visual/018_10010ms.png",
+        "runtime/visual/020_11492ms.png",
+        "runtime/visual/021_12331ms.png"
+      ]
+    }
+  ],
+  "mode_matrix": {
+    "SingleNormal": {
+      "in_game_mode": 1,
+      "information_branch": "standard",
+      "background_branch": "standard for the covered 2D gameplay route",
+      "direct_music_sequence": true,
+      "wait_live_start_voice": true,
+      "live_start_voice_null": "original missing-SoundResource path; wait observes false"
+    },
+    "Practice": {
+      "in_game_mode": 10,
+      "information_branch": "standard",
+      "background_branch": "standard for the captured route",
+      "direct_music_sequence": true,
+      "wait_live_start_voice": false,
+      "live_start_voice_null": "no command and immediate wait return"
+    },
+    "MVView": {
+      "in_game_mode": 8,
+      "status": "outside-positive-scope-special-background"
+    },
+    "Star3DLiveView": {
+      "in_game_mode": 9,
+      "status": "outside-positive-scope-special-background"
+    }
+  },
+  "portable_implementation_contract": {
+    "ordered_phases": [
+      "prepare-and-reveal-information-first-view",
+      "resource-work-may-continue-under-visible-information",
+      "opening-standard-hold-and-fade",
+      "hud-fade-request",
+      "line-ui-delayed-fade-request",
+      "standard-background-pre-delay",
+      "stage-and-character-intro",
+      "optional-live-start-voice-wait",
+      "background-on-start-music-and-one-second-pre-play-wait",
+      "PlayingNone-to-PlayingSound gameplay gate",
+      "line-ui-fade-may-finish after PlayingSound"
+    ],
+    "failure_policy": "Missing or invalid caller jacket, localized music metadata, stage/SD PNG, optional Live MP3, common startup resource, glyph or owner must return evidence-required; do not substitute generic READY/GO artwork or infer identity from BGM bytes.",
+    "retry_policy": "Retry replays the startup direction chain; it is not a direct jump to PlayingSound.",
+    "move_time_policy": "MoveTime remains unavailable before the gameplay gate and does not replace startup direction. Its existing fixed-step transaction starts from an already playing Practice session.",
+    "resource_profile": "../startup-direction-portable-pack-10-1-4/startup_direction_portable_profile.json"
+  },
+  "open_items": [
+    "The current device capture covers Practice auto; a corresponding SingleNormal visual/audio trace is still required for fixed-device audiovisual equivalence.",
+    "Audible speaker onset and GPU framebuffer onset remain fixed-device exact questions.",
+    "MVView, Star3DLiveView and MultiNormal score-target presentation remain mode-specific evidence work."
+  ]
+}
