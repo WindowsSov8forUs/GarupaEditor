@@ -72,6 +72,11 @@ import {
   type SimulatorRecipeEngineBuilder,
   type SimulatorSessionRecipe,
 } from "../assembly/sessionRecipe";
+import {
+  deriveSessionPresentation,
+  type PreparedSessionPresentation,
+} from "../assembly/sessionPresentationDerivation";
+import { createPixiStartupDirectionScene } from "../backends/pixi/pixiStartupDirectionScene";
 
 export interface SimulatorGraphicsMount {
   dispose(): void;
@@ -130,6 +135,10 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
     SimulatorSessionRecipe,
     Promise<SimulatorAssemblyResult<PreparedSessionBgmResource>>
   >();
+  private readonly presentationByRecipe = new WeakMap<
+    SimulatorSessionRecipe,
+    Promise<SimulatorAssemblyResult<PreparedSessionPresentation>>
+  >();
 
   constructor(
     private readonly platform: AutonomousSimulatorPlatformCapabilities,
@@ -156,6 +165,8 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
     if (chartCapabilities.status === "rejected") return chartCapabilities;
     const bgm = await this.deriveBgm(recipe);
     if (bgm.status === "rejected") return bgm;
+    const presentation = await this.derivePresentation(recipe);
+    if (presentation.status === "rejected") return presentation;
     const score = mapScoreLifeProfile(recipe.request, this.sessionId());
     if (score.status === "rejected") return score;
     const moveTimeCandidate = this.generation > 0;
@@ -202,8 +213,22 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
       },
     );
     if (assembly.status === "rejected") return assembly;
+    const commonStartup = renderer.getStartupDirectionCommonResources();
+    if (commonStartup.status !== "ok") {
+      return rejectedWithCleanup(fromEvidence(commonStartup), disposeAssembly(assembly.value));
+    }
+    const startupScene = await createPixiStartupDirectionScene(
+      presentation.value,
+      commonStartup.value,
+      new BrowserPixiTextureDecoder(),
+      recipe.request.chartData.isFullLength,
+    );
+    if (startupScene.status !== "ok") {
+      return rejectedWithCleanup(fromEvidence(startupScene), disposeAssembly(assembly.value));
+    }
     const gains = gainBits(recipe.request);
     if (gains.status === "rejected") {
+      startupScene.value.dispose();
       return rejectedWithCleanup(gains, disposeAssembly(assembly.value));
     }
     const tracing = createRecordingSimulatorBackends();
@@ -250,8 +275,10 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
         seGainBits: gains.value.se,
       },
       particles: { sessionId },
+      startupDirection: { scene: startupScene.value },
     }, backends);
     if (engine.status !== "ok") {
+      startupScene.value.dispose();
       return rejectedWithCleanup(fromEvidence(engine), disposeAssembly(assembly.value));
     }
     const controlOverlay = renderer.createRehearsalControlOverlay(
@@ -268,7 +295,9 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
         cleanup === null ? [] : [cleanup],
       );
     }
-    const combinedScene = createPixiCombinedScene(particleRenderer.stage, renderer.stage);
+    renderer.stage.visible = false;
+    renderer.stage.alpha = 0;
+    const combinedScene = createPixiCombinedScene(particleRenderer.stage, renderer.stage, startupScene.value);
     if (combinedScene.status !== "ok") {
       const cleanups = [
         simulatorCleanupFailureFromResult("control-overlay-after-combined-scene-failure", controlOverlay.value?.dispose() ?? ok(undefined)),
@@ -309,6 +338,16 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
     return accepted(Object.freeze({ engine: mountedEngine, mode: score.value.mode }));
   }
 
+  private derivePresentation(
+    recipe: SimulatorSessionRecipe,
+  ): Promise<SimulatorAssemblyResult<PreparedSessionPresentation>> {
+    const existing = this.presentationByRecipe.get(recipe);
+    if (existing !== undefined) return existing;
+    const pending = deriveSessionPresentation(recipe.request.presentation, this.audioPreflight);
+    this.presentationByRecipe.set(recipe, pending);
+    return pending;
+  }
+
   private deriveBgm(
     recipe: SimulatorSessionRecipe,
   ): Promise<SimulatorAssemblyResult<PreparedSessionBgmResource>> {
@@ -345,16 +384,32 @@ class MountedSimulatorEngine implements SimulatorEngine {
   initialize(): SimulatorResult<void> {
     const initialized = this.engine.initialize();
     if (initialized.status !== "ok") return initialized;
+    const startup = this.applyStartupSnapshot();
+    if (startup.status !== "ok") return startup;
     return this.controlOverlay?.updateTimeline(0) ?? initialized;
   }
   step(deltaTimeSeconds: number, inputFrame?: ManualInputFrame): SimulatorResult<void> {
+    const before = this.engine.snapshot();
+    if (before.status !== "ok") return before;
+    const wasPlayable = before.value.managers.playable;
     const stepped = this.engine.step(deltaTimeSeconds, inputFrame);
-    if (stepped.status !== "ok" || this.paused) return stepped;
-    this.timelineSeconds = Math.fround(this.timelineSeconds + deltaTimeSeconds);
-    return this.controlOverlay?.updateTimeline(this.timelineSeconds) ?? stepped;
+    if (stepped.status !== "ok") return stepped;
+    const startup = this.applyStartupSnapshot();
+    if (startup.status !== "ok" || this.paused) return startup;
+    if (wasPlayable) {
+      this.timelineSeconds = Math.fround(this.timelineSeconds + deltaTimeSeconds);
+      return this.controlOverlay?.updateTimeline(this.timelineSeconds) ?? stepped;
+    }
+    return stepped;
   }
   resolveManualInputButton(position: ManualInputPosition) {
     return this.engine.resolveManualInputButton(position);
+  }
+  private applyStartupSnapshot(): SimulatorResult<void> {
+    const snapshot = this.engine.snapshot();
+    if (snapshot.status !== "ok") return snapshot;
+    const startup = snapshot.value.managers.startupDirection;
+    return startup === null ? ok(undefined) : this.combinedScene.applyStartupState(startup.scene);
   }
   pause(): SimulatorResult<void> {
     const paused = this.engine.pause();

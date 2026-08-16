@@ -26,6 +26,7 @@ import {
   validateDirectorDeltaTime,
 } from "../engine/managers/inGameDirector";
 import { InGameManager } from "../engine/managers/inGameManager";
+import { StartupDirectionController } from "../engine/managers/startupDirectionController";
 import { InGameMusicScoreController } from "../engine/managers/inGameMusicScoreController";
 import { InGameOneFrameJudgementController } from "../engine/managers/inGameOneFrameJudgementController";
 import { ScoreLifeStateManager } from "../engine/managers/scoreLifeStateManager";
@@ -122,6 +123,17 @@ class SimulatorEngineHost implements SimulatorEngine {
     if (deltaValidation.status !== "ok") {
       return deltaValidation;
     }
+    const beforeUpdate = this.inGameManager.snapshot();
+    if (!beforeUpdate.playable) {
+      if (inputFrame !== undefined && inputFrame.touches.length > 0) {
+        return evidenceRequired(
+          "startup-direction.manual-input-before-playable",
+          ["SD09"],
+          "Manual touches cannot enter the input owner before PlayingSound.",
+        );
+      }
+      return this.inGameDirector.update(deltaTimeSeconds);
+    }
     const inputValidation =
       this.inGameManager.inputManager.prepareOuterFrame(inputFrame, deltaTimeSeconds);
     if (inputValidation.status !== "ok") {
@@ -141,11 +153,11 @@ class SimulatorEngineHost implements SimulatorEngine {
     const audioFault = this.pollAudioFault();
     if (audioFault.status !== "ok") return audioFault;
     const managerSnapshot = this.inGameManager.snapshot();
-    if (this.inGameManager.state !== "initialized" || managerSnapshot.paused) {
+    if (this.inGameManager.state !== "initialized" || managerSnapshot.paused || !managerSnapshot.playable) {
       return evidenceRequired(
         "manual-input.resolve-outside-active-session",
         ["D03", "D14", "MJ25"],
-        "Raw input geometry can be resolved only by an initialized, running manual engine session.",
+        "Raw input geometry can be resolved only by an initialized, running and PlayingSound manual engine session.",
       );
     }
     if (managerSnapshot.noteManager.calculatedData.isAutoPlay) {
@@ -713,6 +725,9 @@ export function createSimulatorEngine(
   if (inputDispatcherRegistration.status !== "ok") {
     return inputDispatcherRegistration;
   }
+  const startupDirection = input.startupDirection === undefined
+    ? null
+    : new StartupDirectionController(inGameCalculatedData.mode, input.startupDirection.scene);
   const inGameManager = new InGameManager(
     musicScoreController,
     noteManager,
@@ -724,6 +739,7 @@ export function createSimulatorEngine(
     particleCoordinator,
     input.chart.habahiroChangeAbsolutePos,
     input.rendering?.ordinaryNoteScene ?? null,
+    startupDirection,
   );
   const inGameDirector = new InGameDirector(
     inGameManager,

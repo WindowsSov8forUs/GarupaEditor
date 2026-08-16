@@ -27,6 +27,10 @@ import type {
   ParticleFrameCoordinator,
   ParticleOuterFrameTransaction,
 } from "../particles/particleFrameCoordinator";
+import type {
+  StartupDirectionController,
+  StartupDirectionSnapshot,
+} from "./startupDirectionController";
 
 export interface InGameManagerSnapshot extends EngineLifecycleSnapshot {
   readonly fault: EvidenceRequired | null;
@@ -38,11 +42,13 @@ export interface InGameManagerSnapshot extends EngineLifecycleSnapshot {
   readonly oneFrame: ReturnType<InGameOneFrameJudgementController["snapshot"]>;
   readonly scoreLifeState: ReturnType<ScoreLifeStateManager["snapshot"]> | null;
   readonly particle: ReturnType<ParticleFrameCoordinator["producer"]["snapshot"]> | null;
+  readonly startupDirection: StartupDirectionSnapshot | null;
+  readonly playable: boolean;
 }
 
 export class InGameManager {
   private lifecycleState: EngineLifecycleState = "created";
-  private currentGameStateValue: GameStateValue = GameState.PlayingSound;
+  private currentGameStateValue: GameStateValue;
   private pauseStateValue: PauseStateValue = PauseState.None;
   private faultValue: EvidenceRequired | null = null;
   private degradedHabahiroLaneChanged = false;
@@ -60,7 +66,12 @@ export class InGameManager {
     private readonly particleCoordinator: ParticleFrameCoordinator | null = null,
     private readonly habahiroChangeAbsolutePos = -1,
     private readonly renderScene: OrdinaryFixedNoteSceneInput | null = null,
-  ) {}
+    private readonly startupDirection: StartupDirectionController | null = null,
+  ) {
+    this.currentGameStateValue = startupDirection === null
+      ? GameState.PlayingSound
+      : GameState.Prepare;
+  }
 
   get state(): EngineLifecycleState {
     return this.lifecycleState;
@@ -81,6 +92,8 @@ export class InGameManager {
       return ok(undefined);
     }
 
+    const startup = this.startupDirection?.initialize() ?? ok(undefined);
+    if (startup.status !== "ok") return startup;
     const noteValidation = this.noteManager.validateSetup();
     if (noteValidation.status !== "ok") {
       return noteValidation;
@@ -135,6 +148,13 @@ export class InGameManager {
         "InGameManager.ExecUpdate is only represented after initialization and before disposal.",
       );
     }
+    if (this.startupDirection !== null && this.currentGameStateValue <= GameState.PlayingNone) {
+      const previous = this.currentGameStateValue;
+      const startup = this.startupDirection.step(deltaTimeSeconds);
+      if (startup.status !== "ok") return this.latchFault(startup);
+      this.currentGameStateValue = this.startupDirection.snapshot().currentGameState;
+      if (previous <= GameState.PlayingNone) return ok(undefined);
+    }
     if (this.currentGameStateValue === GameState.PauseNone) {
       return this.commitParticleAdvance(deltaTimeSeconds, true);
     }
@@ -144,13 +164,6 @@ export class InGameManager {
     }
     if (this.currentGameStateValue === GameState.PauseSound) {
       return this.commitParticleAdvance(deltaTimeSeconds, true);
-    }
-    if (this.currentGameStateValue === GameState.PlayingNone) {
-      return evidenceRequired(
-        "ingame.playing-none-input-inspection",
-        ["E22", "E23", "E25"],
-        "PlayingNone requires the original OneFrame input-inspection list, which is outside the first slice.",
-      );
     }
     this.audioProducer?.beginOuterFrame();
     const updateResult = this.noteManager.execUpdate(deltaTimeSeconds);
@@ -372,6 +385,13 @@ export class InGameManager {
         "The recovered scheduling freeze is only represented for an initialized live.",
       );
     }
+    if (this.currentGameStateValue < GameState.PlayingSound) {
+      return evidenceRequired(
+        "startup-direction.pause-during-opening",
+        ["SD09"],
+        "Pause is unavailable before the startup owner publishes PlayingSound.",
+      );
+    }
     if (this.isPaused()) {
       return ok(undefined);
     }
@@ -389,6 +409,13 @@ export class InGameManager {
         "ingame.resume-outside-initialized-lifecycle",
         [],
         "The recovered resume path is only represented for an initialized live.",
+      );
+    }
+    if (this.currentGameStateValue < GameState.PlayingSound) {
+      return evidenceRequired(
+        "startup-direction.resume-during-opening",
+        ["SD09"],
+        "Resume is unavailable before the startup owner publishes PlayingSound.",
       );
     }
     if (!this.isPaused()) {
@@ -424,8 +451,9 @@ export class InGameManager {
   private finishDispose(): void {
     this.oneFrameJudgementController.dispose();
     this.inputManager.dispose();
+    this.startupDirection?.dispose();
     this.lifecycleState = "disposed";
-    this.currentGameStateValue = GameState.PlayingSound;
+    this.currentGameStateValue = this.startupDirection === null ? GameState.PlayingSound : GameState.Prepare;
     this.pauseStateValue = PauseState.None;
   }
 
@@ -484,6 +512,8 @@ export class InGameManager {
       oneFrame: this.oneFrameJudgementController.snapshot(),
       scoreLifeState: this.scoreLifeStateManager?.snapshot() ?? null,
       particle: this.particleCoordinator?.producer.snapshot() ?? null,
+      startupDirection: this.startupDirection?.snapshot() ?? null,
+      playable: this.currentGameStateValue === GameState.PlayingSound,
     };
   }
 }

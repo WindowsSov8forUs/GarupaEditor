@@ -24,6 +24,7 @@ import type {
 } from "../engine/rendering/renderCommandProducer";
 import type { InGameDirectorSnapshot } from "../engine/managers/inGameDirector";
 import type { InGameManagerSnapshot } from "../engine/managers/inGameManager";
+import type { StartupDirectionSceneBackend } from "../scene/startupDirectionScene";
 
 export interface SimulatorRenderingSessionInput {
   readonly sessionId: string;
@@ -46,6 +47,9 @@ export interface SimulatorEngineInput {
   readonly rendering?: SimulatorRenderingSessionInput;
   readonly audio?: SimulatorAudioSessionInput;
   readonly particles?: SimulatorParticleSessionInput;
+  readonly startupDirection?: {
+    readonly scene: StartupDirectionSceneBackend | null;
+  };
 }
 
 export interface SimulatorSnapshot {

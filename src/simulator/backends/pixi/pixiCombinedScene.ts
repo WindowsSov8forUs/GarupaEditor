@@ -1,6 +1,7 @@
 import { Container } from "pixi.js";
 import { evidenceRequired, ok, type SimulatorResult } from "../../engine/evidence";
 import type { PixiStartupDirectionScene } from "./pixiStartupDirectionScene";
+import type { StartupDirectionSceneState } from "../../scene/startupDirectionScene";
 
 export const PIXI_COMBINED_SCENE_LABEL = "GarupaSimulatorCombinedScene";
 export const PIXI_PARTICLE_STAGE_LABEL = "GarupaSimulatorParticles";
@@ -22,6 +23,7 @@ export interface PixiCombinedSceneSnapshot {
 
 export interface PixiCombinedScene {
   readonly root: Container;
+  applyStartupState(state: StartupDirectionSceneState): SimulatorResult<void>;
   snapshot(): PixiCombinedSceneSnapshot;
   dispose(): SimulatorResult<void>;
 }
@@ -79,6 +81,20 @@ class OwnedPixiCombinedScene implements PixiCombinedScene {
     private readonly ordinaryStage: Container,
     private readonly startupScene?: PixiStartupDirectionScene,
   ) {}
+
+  applyStartupState(state: StartupDirectionSceneState): SimulatorResult<void> {
+    if (this.disposed || this.startupScene === undefined) {
+      return evidenceRequired(
+        "render.pixi.startup-state-without-scene",
+        ["SD05", "SD08", "SD09"],
+        "Startup visibility can be applied only while the combined scene owns the startup roots.",
+      );
+    }
+    this.startupScene.publish(state);
+    this.ordinaryStage.visible = state.hudAlpha > 0;
+    this.ordinaryStage.alpha = state.hudAlpha;
+    return ok(undefined);
+  }
 
   snapshot(): PixiCombinedSceneSnapshot {
     return Object.freeze({

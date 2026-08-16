@@ -1,4 +1,8 @@
 export const GameState = {
+  Prepare: 0,
+  OPFirstAnimStart: 1,
+  OPFirstAnimEnd: 2,
+  OPLastAnimStart: 3,
   PlayingNone: 4,
   PlayingSound: 5,
   PauseNone: 6,
