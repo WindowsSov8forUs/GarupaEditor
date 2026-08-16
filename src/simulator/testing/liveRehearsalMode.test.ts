@@ -15,6 +15,7 @@ import { createSimulatorSessionRecipe, RecipeOwnedSessionFactory } from "../asse
 import type { SimulatorModuleLaunchRequest } from "../public/contracts";
 import type { SimulatorSessionRecipe } from "../assembly/sessionRecipe";
 import type { SimulatorResult } from "../engine/evidence";
+import { createTestPresentationPackage } from "./startupPresentationTestProfile";
 
 const chartText = readFileSync(join(
   process.cwd(),
@@ -218,6 +219,7 @@ function request(
       bgm: new Uint8Array([1, 2, 3]),
       isFullLength: false,
     },
+    presentation: createTestPresentationPackage(),
     config: {
       sessionMode,
       inputMode,
@@ -240,6 +242,17 @@ function structuredCloneRequest(value: SimulatorModuleLaunchRequest): SimulatorM
       ...value.chartData,
       bgm: Uint8Array.from(value.chartData.bgm),
       isFullLength: value.chartData.isFullLength,
+    },
+    presentation: {
+      ...value.presentation,
+      song: { ...value.presentation.song },
+      difficulty: { ...value.presentation.difficulty },
+      jacketPng: Uint8Array.from(value.presentation.jacketPng),
+      stage: {
+        backdropPng: Uint8Array.from(value.presentation.stage.backdropPng),
+        sdCharacterAtlases: value.presentation.stage.sdCharacterAtlases.map((bytes) => Uint8Array.from(bytes)) as unknown as SimulatorModuleLaunchRequest["presentation"]["stage"]["sdCharacterAtlases"],
+      },
+      liveStartVoiceMp3: value.presentation.liveStartVoiceMp3 === null ? null : Uint8Array.from(value.presentation.liveStartVoiceMp3),
     },
     config: {
       ...value.config,

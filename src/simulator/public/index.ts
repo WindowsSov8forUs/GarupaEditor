@@ -13,6 +13,8 @@ export type {
   SimulatorModuleFinalResult,
   SimulatorModuleLaunchRequest,
   SimulatorModuleLaunchResult,
+  SimulatorPresentationPackage,
+  SimulatorPresentationPng,
   SimulatorPublicInputMode,
   SimulatorPublicSessionMode,
   SimulatorRenderingFidelity,

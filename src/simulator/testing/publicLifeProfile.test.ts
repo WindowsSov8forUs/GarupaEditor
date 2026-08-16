@@ -8,6 +8,7 @@ import { createSimulatorSessionRecipe } from "../assembly/sessionRecipe";
 import { createCurrentSinglePlayLifeProfile } from "../engine/data/currentSinglePlayLifeProfile";
 import { createSimulatorModeIdentity } from "../engine/data/inGameCalculatedData";
 import type { SimulatorModuleLaunchRequest } from "../public/contracts";
+import { createTestPresentationPackage } from "./startupPresentationTestProfile";
 
 const fixture = JSON.parse(readFileSync(join(
   process.cwd(),
@@ -103,7 +104,7 @@ function testPublicExactShape(): void {
 function testRecipeOwnership(): void {
   const source = request(true);
   const recipe = requireAccepted(createSimulatorSessionRecipe(source));
-  assert.equal(recipe.schemaVersion, 3);
+  assert.equal(recipe.schemaVersion, 4);
   assert.equal(recipe.request.chartData.isFullLength, true);
   assert.equal(Object.isFrozen(recipe), true);
   assert.equal(Object.isFrozen(recipe.request), true);
@@ -143,6 +144,7 @@ function request(
       bgm: new Uint8Array([1, 2, 3, 4]),
       isFullLength,
     },
+    presentation: createTestPresentationPackage(),
     config: {
       sessionMode,
       inputMode,

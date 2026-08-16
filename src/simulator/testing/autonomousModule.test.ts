@@ -11,6 +11,7 @@ import { ButtonType } from "../engine/chart/types";
 import { AutonomousSimulatorModule } from "../runtime/autonomousSimulatorRuntime";
 import { resolveRehearsalControlTouch } from "../scene/rehearsalControlScene";
 import { LIVE_AUTO_MODE, REHEARSAL_AUTO_MODE } from "./modeFixtures";
+import { createTestPresentationPackage } from "./startupPresentationTestProfile";
 import {
   installSimulatorModuleLauncher,
   launchInstalledSimulatorModule,
@@ -212,7 +213,7 @@ function testRecipeOwnership(): void {
   assert.ok(Object.isFrozen(recipe));
   assert.ok(Object.isFrozen(recipe.request));
   assert.notEqual(recipe.request.chartData.bgm, source.chartData.bgm);
-  assert.equal(recipe.schemaVersion, 3);
+  assert.equal(recipe.schemaVersion, 4);
   assert.equal(recipe.request.chartData.isFullLength, false);
 
   const extra = { ...request(), extra: true } as unknown as SimulatorModuleLaunchRequest;
@@ -653,6 +654,7 @@ function request(): SimulatorModuleLaunchRequest {
       bgm: new Uint8Array([0xff, 0xfb, 0x90, 0x00]),
       isFullLength: false,
     },
+    presentation: createTestPresentationPackage(),
     config: {
       sessionMode: "live",
       inputMode: "auto",

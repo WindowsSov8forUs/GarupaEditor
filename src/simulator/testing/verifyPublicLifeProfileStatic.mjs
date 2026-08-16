@@ -22,7 +22,7 @@ for (const required of [
 
 const recipe = read("assembly/sessionRecipe.ts");
 for (const required of [
-  "readonly schemaVersion: 3;", "schemaVersion: 3 as const",
+  "readonly schemaVersion: 4;", "schemaVersion: 4 as const",
   '"bgm,chart,isFullLength"', 'typeof request.chartData.isFullLength !== "boolean"',
   "isFullLength: request.chartData.isFullLength",
 ]) if (!recipe.includes(required)) throw new Error(`recipe full-length boundary missing: ${required}`);

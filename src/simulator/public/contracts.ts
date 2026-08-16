@@ -9,6 +9,34 @@ export interface SimulatorChartDataPackage {
   readonly isFullLength: boolean;
 }
 
+export type SimulatorPresentationPng = Uint8Array;
+
+export interface SimulatorPresentationPackage {
+  readonly song: {
+    readonly title: string;
+    readonly bandName: string;
+    readonly lyricist: string | null;
+    readonly composer: string | null;
+    readonly arranger: string | null;
+  };
+  readonly difficulty: {
+    readonly type: "EASY" | "NORMAL" | "HARD" | "EXPERT" | "SPECIAL";
+    readonly level: number;
+  };
+  readonly jacketPng: SimulatorPresentationPng;
+  readonly stage: {
+    readonly backdropPng: SimulatorPresentationPng;
+    readonly sdCharacterAtlases: readonly [
+      SimulatorPresentationPng,
+      SimulatorPresentationPng,
+      SimulatorPresentationPng,
+      SimulatorPresentationPng,
+      SimulatorPresentationPng,
+    ];
+  };
+  readonly liveStartVoiceMp3: Uint8Array | null;
+}
+
 export interface SimulatorLaunchConfig {
   readonly sessionMode: SimulatorPublicSessionMode;
   readonly inputMode: SimulatorPublicInputMode;
@@ -29,6 +57,7 @@ export interface SimulatorLaunchConfig {
 
 export interface SimulatorModuleLaunchRequest {
   readonly chartData: SimulatorChartDataPackage;
+  readonly presentation: SimulatorPresentationPackage;
   readonly config: SimulatorLaunchConfig;
 }
 

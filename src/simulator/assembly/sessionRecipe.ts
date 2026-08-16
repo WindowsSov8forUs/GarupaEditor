@@ -28,9 +28,12 @@ import type { ManualInputFrame } from "../engine/data/manualInput";
 import { evidenceRequired, ok, type SimulatorResult } from "../engine/evidence";
 import type { SimulatorModeIdentity } from "../engine/data/inGameCalculatedData";
 import { copyAndFreezeGarupaChartJson } from "./garupaChartContract";
+import { copyAndFreezeSimulatorPresentation } from "./startupPresentationContract";
+
+export type SimulatorEngineBuildPurpose = "initial" | "retry" | "move-time-reconstruction";
 
 export interface SimulatorSessionRecipe {
-  readonly schemaVersion: 3;
+  readonly schemaVersion: 4;
   readonly request: SimulatorModuleLaunchRequest;
 }
 
@@ -42,6 +45,7 @@ export interface SimulatorRecipeEngineBuild {
 export interface SimulatorRecipeEngineBuilder {
   createFreshEngine(
     recipe: SimulatorSessionRecipe,
+    purpose?: SimulatorEngineBuildPurpose,
   ): Promise<SimulatorAssemblyResult<SimulatorRecipeEngineBuild>>;
 }
 
@@ -51,7 +55,7 @@ export function createSimulatorSessionRecipe(
   const copied = copyLaunchRequest(request);
   return copied.status === "rejected"
     ? copied
-    : accepted(Object.freeze({ schemaVersion: 3 as const, request: copied.value }));
+    : accepted(Object.freeze({ schemaVersion: 4 as const, request: copied.value }));
 }
 
 export class RecipeOwnedSessionFactory implements SimulatorOwnedSessionFactory {
@@ -64,7 +68,7 @@ export class RecipeOwnedSessionFactory implements SimulatorOwnedSessionFactory {
     if (recipe.status === "rejected") return recipe;
     let initial;
     try {
-      initial = await this.builder.createFreshEngine(recipe.value);
+      initial = await this.builder.createFreshEngine(recipe.value, "initial");
     } catch {
       return rejected(
         "launch-failed",
@@ -76,7 +80,7 @@ export class RecipeOwnedSessionFactory implements SimulatorOwnedSessionFactory {
     const replay = createPortableReplaySimulatorEngine(initial.value.engine, {
       mode: initial.value.mode,
       createFreshEngine: async () => {
-        const fresh = await this.builder.createFreshEngine(recipe.value);
+        const fresh = await this.builder.createFreshEngine(recipe.value, "retry");
         return fresh.status === "accepted"
           ? ok(fresh.value.engine)
           : evidenceRequired(fresh.failure.capability, [], fresh.failure.boundary);
@@ -264,7 +268,7 @@ function copyLaunchRequest(
 ): SimulatorAssemblyResult<SimulatorModuleLaunchRequest> {
   if (
     request === null || typeof request !== "object" || Array.isArray(request) ||
-    Object.keys(request).sort().join(",") !== "chartData,config" ||
+    Object.keys(request).sort().join(",") !== "chartData,config,presentation" ||
     request.chartData === null || typeof request.chartData !== "object" ||
     Object.keys(request.chartData).sort().join(",") !== "bgm,chart,isFullLength" ||
     typeof request.chartData.isFullLength !== "boolean" ||
@@ -292,11 +296,13 @@ function copyLaunchRequest(
     return rejected(
       "evidence-required",
       "simulator.recipe.invalid-public-request",
-      "The launch recipe accepts only exact chart/config keys, one Garupa JSON object array, one explicit isFullLength boolean independent of Live/Rehearsal and Manual/Auto, confirmed judgement offset, evidence-bounded Float32 visual settings and finite unit gains.",
+      "The launch recipe accepts only exact chartData/presentation/config keys, one Garupa JSON object array, one explicit isFullLength boolean independent of Live/Rehearsal and Manual/Auto, confirmed presentation resources, judgement offset, evidence-bounded Float32 visual settings and finite unit gains.",
     );
   }
   const copiedChart = copyAndFreezeGarupaChartJson(request.chartData.chart);
   if (copiedChart.status !== "ok") return fromEngineFailure(copiedChart);
+  const copiedPresentation = copyAndFreezeSimulatorPresentation(request.presentation);
+  if (copiedPresentation.status === "rejected") return copiedPresentation;
   const bgm = request.chartData.bgm;
   if (!(bgm instanceof Uint8Array) || bgm.byteLength === 0 ||
     Object.getPrototypeOf(bgm) !== Uint8Array.prototype) {
@@ -312,6 +318,7 @@ function copyLaunchRequest(
       bgm: Uint8Array.from(bgm),
       isFullLength: request.chartData.isFullLength,
     }),
+    presentation: copiedPresentation.value,
     config: Object.freeze({
       sessionMode: request.config.sessionMode,
       inputMode: request.config.inputMode,
