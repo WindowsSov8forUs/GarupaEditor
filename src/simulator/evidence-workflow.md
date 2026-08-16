@@ -15,13 +15,13 @@
 4. 确认所引用的Reverse证据提交已存在于远端。
 5. 必要时更新测试fixture manifest，然后实现或修改simulator；未知行为继续返回`evidence-required`。
 
-## 当前启动方向证据
+## 当前启动方向证据（重新开放）
 
-- Reverse提交：`78e6a70ea906aa1fa778b56e843c7663fdd3b4bc`，已push且远端差异`0 0`。
-- 行为：`startup-direction-runtime-contract-10-1-4/`，SD01–SD16。
-- 资源：`startup-direction-portable-pack-10-1-4/`，GameStartInfo/difficulty hierarchy、line-star、共享atlas/font身份、1600×720舞台与5槽SD输入边界。
-- Garupa fixture只复制两个JSON与line-star PNG；production不读取fixture，动态presentation没有默认值。
-- RD01/RV01只作冲突检查和视觉辅助；fixed-device framebuffer/speaker onset继续开放。
+- Reverse提交`78e6a70ea906aa1fa778b56e843c7663fdd3b4bc`已push；`startup-direction-runtime-contract-10-1-4/`的SD01–SD16和portable pack继续约束presentation、视觉owner、状态0→5、voice/BGM已确认子集及输入边界。
+- 旧closure遗漏`InGameManager.playGayaSound → CE.SoundManager.PlaySELoop(SE_RHYTHM_GAYA)`。现有audio证据还记录1.0 volume、0.5秒fade-in、1.5秒fade-out和`gayaSoundResource@0x120`，但尚未关闭四模式`GayaSoundRequired`、间接/动画调用、BGM prepare/play与全生命周期清理。
+- 在新的`startup-audio-callgraph-10-1-4/`静态/运行/资源证据完成、verify、commit并push前，`startupDirectionPortable`保持`open-evidence-required`，production以`simulator.startup.complete-callgraph-open`失败关闭。
+- Garupa fixture只复制已登记的最小证据；production不读取fixture，动态presentation没有默认值。RD01/RV01及旧startup WebView2 digest只作视觉冲突检查，不证明完整音频或speaker onset。
+- 新调查必须从10.1.4/230当前ARM64、serialized assets和观察型R1重算调用图，不得把Reverse未提交`runtime/tools/`、10.1.3行为或旧总体`closed`字段当作授权。
 
 ## 测试边界
 

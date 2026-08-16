@@ -32,7 +32,10 @@ import {
   registerSimulatorEngineMoveTimeWrapper,
 } from "../host/createSimulatorEngine";
 import {
+  isStartupAudioCallgraphOpen,
   isTotalRevalidationOpen,
+  STARTUP_AUDIO_CALLGRAPH_BOUNDARY,
+  STARTUP_AUDIO_CALLGRAPH_CAPABILITY,
   TOTAL_REVALIDATION_BOUNDARY,
   TOTAL_REVALIDATION_CAPABILITY,
 } from "../public/capabilities";
@@ -152,6 +155,13 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
     recipe: SimulatorSessionRecipe,
     purpose: SimulatorEngineBuildPurpose = "initial",
   ): Promise<SimulatorAssemblyResult<SimulatorRecipeEngineBuild>> {
+    if (isStartupAudioCallgraphOpen()) {
+      return rejected(
+        "evidence-required",
+        STARTUP_AUDIO_CALLGRAPH_CAPABILITY,
+        STARTUP_AUDIO_CALLGRAPH_BOUNDARY,
+      );
+    }
     if (isTotalRevalidationOpen()) {
       return rejected(
         "evidence-required",

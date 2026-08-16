@@ -7,9 +7,17 @@ import type {
 export const TOTAL_REVALIDATION_CAPABILITY = "simulator.audit.total-revalidation-open";
 export const TOTAL_REVALIDATION_BOUNDARY =
   "The total simulator evidence revalidation gate rejects before the installed launcher, chart parsing, static-resource selection, backend preparation, scheduler start, or scene/domain owner mutation.";
+export const STARTUP_AUDIO_CALLGRAPH_CAPABILITY =
+  "simulator.startup.complete-callgraph-open";
+export const STARTUP_AUDIO_CALLGRAPH_BOUNDARY =
+  "The complete startup-audio callgraph remains open and rejects production engine construction before chart construction, static-resource selection, backend preparation, scheduler start, graphics mount, or scene/domain owner mutation.";
 
 export function isTotalRevalidationOpen(): boolean {
   return false;
+}
+
+export function isStartupAudioCallgraphOpen(): boolean {
+  return true;
 }
 
 export function totalRevalidationFailure(): SimulatorModuleLaunchResult {
@@ -33,7 +41,7 @@ export function createSimulatorModuleCapabilitySummary(
     habahiroCurrentExternalComplete: "closed-portable" as const,
     habahiroOriginalParity: "open-evidence-required" as const,
     liveRehearsalFourModeMatrix: "closed-portable" as const,
-    startupDirectionPortable: "closed-portable" as const,
+    startupDirectionPortable: "open-evidence-required" as const,
     rehearsalMoveTimeControls: "closed-portable" as const,
     garupaJsonDirectChartAdapter: "closed-portable" as const,
     garupaJsonSvAndTimingGroup: "ignored-product-extension" as const,

@@ -27,11 +27,13 @@ Canonical identity由模拟器一次性生成：
 
 依据：LR-E01、LR-E02、LR-R01、LR-R02、LR-C01。任何字段不允许从另一轴反推；Rehearsal Auto是Demo Play，不是Auto Live。
 
-## 启动方向链
+## 启动方向链（完整音频调用图重新开放）
 
-Reverse `78e6a70e` 的SD01–SD16授权SingleNormal/Practice 2D portable链。四种Public模式均从`Prepare(0)`依次进入`OPFirstAnimStart(1)`、`OPFirstAnimEnd(2)`、`OPLastAnimStart(3)`、`PlayingNone(4)`、`PlayingSound(5)`；0–3不推进Note、input、judgement、Score/Life/Combo、gameplay particle或BGM timeline。信息First View/hold/fade、HUD、舞台/5槽SD、line UI是独立Float32 owner且不携带delta remainder；line fade可跨PlayingSound。
+Reverse `78e6a70e` 的SD01–SD16继续授权已逐项验证的presentation、视觉owner、状态0→5、nullable Live voice/Practice bypass及内部purpose子合同。四种Public模式仍从`Prepare(0)`依次进入`OPFirstAnimStart(1)`、`OPFirstAnimEnd(2)`、`OPLastAnimStart(3)`、`PlayingNone(4)`、`PlayingSound(5)`；0–3不得推进Note、input、judgement、Score/Life/Combo或gameplay particle。信息First View/hold/fade、HUD、舞台/5槽SD、line UI仍是独立Float32 owner。
 
-Launch根精确三键`{chartData,presentation,config}`。presentation是调用方已选择的本地化文字与显式PNG/MP3，不改变chartData三字段；Live non-null voice等待backend ended，Live null映射SD13缺SoundResource，Practice不发voice命令。Retry使用`retry`内部purpose从Prepare重播；MoveTime仅可从playable Practice以`move-time-reconstruction`隐藏启动表现并原子发布目标。purpose不属于Public。
+旧closure遗漏`InGameManager.playGayaSound → PlaySELoop(SE_RHYTHM_GAYA)`，且`GayaSoundRequired`四模式谓词、背景/stage虚调用、animation event、BGM prepare/play相对时序以及Retry/MoveTime/abort/fault/dispose清理链尚未形成完整证据。因此`startupDirectionPortable`当前为`open-evidence-required`，production engine construction返回`simulator.startup.complete-callgraph-open`；旧voice+BGM测试和启动WebView2 digest只保留为子门，不能证明完整启动音频。
+
+Launch根仍精确三键`{chartData,presentation,config}`。presentation是调用方已选择的本地化文字与显式PNG/MP3，不改变chartData三字段；purpose仍由simulator内部拥有且不进入Public。
 
 ## Life初始化与生命周期
 
