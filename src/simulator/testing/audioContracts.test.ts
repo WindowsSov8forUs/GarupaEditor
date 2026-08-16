@@ -600,12 +600,14 @@ function virtualCapabilities(profile: AudioResourceProfileSet): {
 } {
   const bytesByKey = new Map<string, Uint8Array>();
   const hashByLength = new Map<number, string>();
+  const profileByLength = new Map<number, AudioResourceProfile>();
   for (let index = 0; index < profile.resources.length; index += 1) {
     const resource = profile.resources[index]!;
     const bytes = new Uint8Array(resource.byteLength);
     bytes[0] = (index + 1) & 0xff;
     bytesByKey.set(`${resource.logicalId}\u0000${resource.cue}`, bytes);
     hashByLength.set(resource.byteLength, resource.sha256);
+    profileByLength.set(resource.byteLength, resource);
   }
   return {
     provider: {
@@ -627,12 +629,14 @@ function virtualCapabilities(profile: AudioResourceProfileSet): {
       async sha256(bytes) {
         return audioAccepted(hashByLength.get(bytes.byteLength) ?? "");
       },
-      async inspect(_bytes, resource) {
+      async inspect(bytes) {
+        const resource = profileByLength.get(bytes.byteLength)!;
         return audioAccepted<AudioDecodedResourceMetadata>({
           codec: resource.codec,
           sampleRate: resource.sampleRate,
           channels: resource.channels,
           durationSeconds: resource.durationSeconds,
+          sampleFrames: resource.sampleFrames,
         });
       },
     },

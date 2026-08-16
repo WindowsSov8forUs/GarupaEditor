@@ -118,19 +118,20 @@ export class RecordingSimulatorAudioBackend implements SimulatorAudioBackend {
             "Resource bytes must match the exact uppercase SHA-256 before decode.",
           ));
         }
-        const metadata = await preflight.inspect(bytes, resource);
+        const metadata = await preflight.inspect(bytes);
         if (metadata.status !== "accepted") return this.abortPrepare(metadata);
         if (
           metadata.value === null || typeof metadata.value !== "object" ||
           metadata.value.codec !== resource.codec ||
           metadata.value.sampleRate !== resource.sampleRate ||
           metadata.value.channels !== resource.channels ||
-          metadata.value.durationSeconds !== resource.durationSeconds
+          metadata.value.durationSeconds !== resource.durationSeconds ||
+          metadata.value.sampleFrames !== resource.sampleFrames
         ) {
           return this.abortPrepare(audioRejected(
             "audio-resource-decode",
             "audio.prepare.decoded-metadata-mismatch",
-            "Decoded codec, sample rate, channels and gapless duration must match the current portable profile.",
+            "Decoded codec, sample rate, channels, sample frames and gapless duration must match the current portable profile.",
           ));
         }
       }

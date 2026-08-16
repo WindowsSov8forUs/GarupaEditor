@@ -12,6 +12,8 @@ npm.cmd run simulator:test:quick
 
 This compiles the isolated simulator and the complete TypeScript test tree once, verifies fixture provenance and source-level dependency/contract boundaries once, then runs 10 development groups spanning compiled unit/contract tests, static checks, strict Garupa JSON direct-chart construction, chart parsing, clock scheduling, Auto Live, Public Life and Live/Rehearsal. The score-life leaf independently verifies CS-V1 BigInt quotas, normalized judgement rates, chart-owned identities, duplicate failure boundaries, and a full-chart `10,000,000+N` Auto result.
 
+The audio group includes the Public BGM byte-only boundary, ID3v2/MPEG Layer III first-frame parser, decoded-header agreement, SHA/cue/profile derivation, caller-buffer ownership and Web Audio decoded-buffer reuse tests.
+
 The quick tier intentionally omits the expensive full-chart actual-Pixi replay, 7,200-frame particle production replay, full HABAHIRO production replay, and both real WebView2 leaves. A quick pass is suitable for normal edits but is not release evidence.
 
 ## Full release revalidation

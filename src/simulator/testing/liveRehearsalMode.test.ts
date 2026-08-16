@@ -215,16 +215,7 @@ function request(
         { type: "BPM", beat: 0, value: 120 },
         { type: "Single", beat: 4, lane: 1, width: 1 },
       ],
-      bgm: {
-        cue: "test-bgm",
-        bytes: new Uint8Array([1, 2, 3]),
-        sha256: "A".repeat(64),
-        codec: "mp3",
-        sampleRate: 44100,
-        channels: 2,
-        durationSeconds: 180,
-        currentSampleFrames: 7_938_000,
-      },
+      bgm: new Uint8Array([1, 2, 3]),
       isFullLength: false,
     },
     config: {
@@ -247,7 +238,7 @@ function structuredCloneRequest(value: SimulatorModuleLaunchRequest): SimulatorM
   return {
     chartData: {
       ...value.chartData,
-      bgm: { ...value.chartData.bgm, bytes: Uint8Array.from(value.chartData.bgm.bytes) },
+      bgm: Uint8Array.from(value.chartData.bgm),
       isFullLength: value.chartData.isFullLength,
     },
     config: {

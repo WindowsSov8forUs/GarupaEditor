@@ -119,13 +119,23 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
             "Every validated resource must remain available in the atomic temporary decode set.",
           );
         }
-        const buffer = await this.context.decodeAudioData(exactArrayBuffer(bytes));
+        let buffer: AudioBuffer;
+        if (preflight.getDecodedBuffer !== undefined) {
+          const cached = preflight.getDecodedBuffer(bytes);
+          if (cached.status !== "accepted") {
+            candidate.dispose();
+            return cached;
+          }
+          buffer = cached.value;
+        } else {
+          buffer = await this.context.decodeAudioData(exactArrayBuffer(bytes));
+        }
         if (!validDecodedBuffer(buffer, resource)) {
           candidate.dispose();
           return audioRejected(
             "audio-resource-decode",
             "audio.web.decoded-metadata-mismatch",
-            "Browser decoded sample rate, channels and rounded gapless duration must match the current portable profile.",
+            "Browser decoded sample rate, channels, sample frames and rounded gapless duration must match the current portable profile.",
           );
         }
         decoded.set(resource.cue, buffer);
@@ -583,7 +593,8 @@ function validDecodedBuffer(buffer: AudioBuffer, resource: AudioResourceProfile)
   return buffer !== null && typeof buffer === "object" &&
     buffer.sampleRate === resource.sampleRate &&
     buffer.numberOfChannels === resource.channels &&
-    Number(buffer.duration.toFixed(6)) === resource.durationSeconds;
+    buffer.length === resource.sampleFrames &&
+    Number((buffer.length / buffer.sampleRate).toFixed(6)) === resource.durationSeconds;
 }
 
 function exactArrayBuffer(bytes: Uint8Array): ArrayBuffer {

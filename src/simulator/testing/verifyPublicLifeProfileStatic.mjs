@@ -17,7 +17,7 @@ for (const forbidden of forbiddenPublicSymbols) {
   }
 }
 for (const required of [
-  "readonly chart: GarupaChartJson;", "readonly bgm: SimulatorChartAudioData;", "readonly isFullLength: boolean;",
+  "readonly chart: GarupaChartJson;", "readonly bgm: Uint8Array;", "readonly isFullLength: boolean;",
 ]) if (!publicContracts.includes(required)) throw new Error(`Public chart field missing: ${required}`);
 
 const recipe = read("assembly/sessionRecipe.ts");

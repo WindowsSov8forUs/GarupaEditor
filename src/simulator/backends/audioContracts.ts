@@ -66,7 +66,7 @@ interface AudioResourceProfileBase {
   readonly sampleRate: number;
   readonly channels: 1 | 2;
   readonly durationSeconds: number;
-  readonly currentSampleFrames: number;
+  readonly sampleFrames: number;
   readonly loop: AudioLoopFrames | null;
 }
 
@@ -112,14 +112,15 @@ export interface AudioDecodedResourceMetadata {
   readonly sampleRate: number;
   readonly channels: number;
   readonly durationSeconds: number;
+  readonly sampleFrames: number;
 }
 
 export interface AudioResourcePreflightAdapter {
   sha256(bytes: Uint8Array): Promise<AudioOperationResult<string>>;
-  inspect(
+  inspect(bytes: Uint8Array): Promise<AudioOperationResult<AudioDecodedResourceMetadata>>;
+  getDecodedBuffer?(
     bytes: Uint8Array,
-    resource: AudioResourceProfile,
-  ): Promise<AudioOperationResult<AudioDecodedResourceMetadata>>;
+  ): AudioOperationResult<AudioBuffer>;
 }
 
 export type AudioCommand =

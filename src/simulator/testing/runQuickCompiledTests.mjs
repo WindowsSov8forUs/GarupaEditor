@@ -26,6 +26,7 @@ const compiledTests = [
   "scoreLifeState.test.js",
   "ordinaryNoteGeometry.test.js",
   "renderContracts.test.js",
+  "sessionBgmDerivation.test.js",
   "audioContracts.test.js",
   "audioWebAudio.test.js",
   "particleContracts.test.js",

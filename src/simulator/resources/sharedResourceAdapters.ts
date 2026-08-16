@@ -12,7 +12,7 @@ import {
   type LocalParticleResource,
 } from "../backends/resources/localParticleResourceProvider";
 import type { HabahiroBestdoriTransport } from "../backends/resources/habahiroBestdoriProvider";
-import type { SimulatorChartAudioData, SimulatorModuleFailure } from "../public/contracts";
+import type { SimulatorModuleFailure } from "../public/contracts";
 import type { RenderResourceProfile, SimulatorResourceProvider } from "../backends/renderingContracts";
 import { validateAndFreezeRenderProfile } from "../backends/renderingValidation";
 import { sha256UpperHex } from "../backends/resources/sha256";
@@ -279,15 +279,16 @@ export interface PreparedSharedAudioResources {
 }
 
 export async function prepareSharedAudioResources(
-  bgm: SimulatorChartAudioData,
+  bgm: {
+    readonly profile: AudioSessionBgmResourceProfile;
+    readonly bytes: Uint8Array;
+  },
   selectedSe: readonly SelectedAudioSeResource[],
   store: SharedStaticResourceStore,
 ): Promise<SimulatorAssemblyResult<PreparedSharedAudioResources>> {
-  const bgmValidation = validateChartAudio(bgm);
-  if (bgmValidation.status === "rejected") return bgmValidation;
   const local: LocalAudioResource[] = [{
-    logicalId: bgmValidation.value.logicalId,
-    cue: bgm.cue,
+    logicalId: bgm.profile.logicalId,
+    cue: bgm.profile.cue,
     bytes: Uint8Array.from(bgm.bytes),
   }];
   for (const selected of selectedSe) {
@@ -307,7 +308,7 @@ export async function prepareSharedAudioResources(
       provider.failure.boundary,
     );
   }
-  const profile = createAudioSessionResourceProfile(bgmValidation.value);
+  const profile = createAudioSessionResourceProfile(bgm.profile);
   return accepted(Object.freeze({ profile, provider: provider.value }));
 }
 
@@ -365,45 +366,6 @@ export function createSharedHabahiroTransport(
           );
     },
   });
-}
-
-function validateChartAudio(
-  bgm: SimulatorChartAudioData,
-): SimulatorAssemblyResult<AudioSessionBgmResourceProfile> {
-  if (
-    bgm === null || typeof bgm !== "object" || Array.isArray(bgm) ||
-    Object.keys(bgm).sort().join(",") !==
-      "bytes,channels,codec,cue,currentSampleFrames,durationSeconds,sampleRate,sha256" ||
-    typeof bgm.cue !== "string" || bgm.cue.length === 0 ||
-    !(bgm.bytes instanceof Uint8Array) || bgm.bytes.byteLength === 0 ||
-    !/^[0-9A-F]{64}$/.test(bgm.sha256) || bgm.codec !== "mp3" ||
-    !Number.isSafeInteger(bgm.sampleRate) || bgm.sampleRate <= 0 ||
-    (bgm.channels !== 1 && bgm.channels !== 2) ||
-    !Number.isFinite(bgm.durationSeconds) || bgm.durationSeconds <= 0 ||
-    !Number.isSafeInteger(bgm.currentSampleFrames) || bgm.currentSampleFrames <= 0
-  ) {
-    return rejected(
-      "evidence-required",
-      "simulator.launch.invalid-chart-audio",
-      "Chart audio requires explicit cue, non-empty MP3 bytes, uppercase SHA-256 and positive exact metadata; no BMS/default derivation is available.",
-    );
-  }
-  return accepted(Object.freeze({
-    role: "bgm" as const,
-    logicalId: `chart-bgm/${bgm.sha256}`,
-    cue: bgm.cue,
-    byteLength: bgm.bytes.byteLength,
-    sha256: bgm.sha256,
-    mime: "audio/mpeg" as const,
-    codec: "mp3" as const,
-    sampleRate: bgm.sampleRate,
-    channels: bgm.channels,
-    durationSeconds: bgm.durationSeconds,
-    currentSampleFrames: bgm.currentSampleFrames,
-    loop: null,
-    identity: "session-explicit" as const,
-    signal: "host-supplied-portable" as const,
-  }));
 }
 
 async function readStatic(

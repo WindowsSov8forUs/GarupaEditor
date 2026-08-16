@@ -27,9 +27,10 @@ for (const forbidden of [
     (forbidden === "SimulatorSessionGameplayData" && publicContracts.includes(forbidden))) {
   throw new Error(`Public chart leaked caller-authored Score/Life field: ${forbidden}`);
 }
-if (!/export interface SimulatorChartDataPackage \{\s*readonly chart: GarupaChartJson;\s*readonly bgm: SimulatorChartAudioData;\s*readonly isFullLength: boolean;\s*\}/m.test(publicContracts) ||
-    publicContracts.includes("readonly bmsText:")) {
-  throw new Error("Public chart is not exact Garupa-JSON/BGM/isFullLength");
+if (!/export interface SimulatorChartDataPackage \{\s*readonly chart: GarupaChartJson;\s*readonly bgm: Uint8Array;\s*readonly isFullLength: boolean;\s*\}/m.test(publicContracts) ||
+    publicContracts.includes("readonly bmsText:") ||
+    /SimulatorChartAudioData|currentSampleFrames|durationSeconds|sampleRate|sha256/.test(chartContract)) {
+  throw new Error("Public chart is not exact Garupa-JSON/BGM-bytes/isFullLength");
 }
 
 const publicCapabilities = read("public/capabilities.ts");

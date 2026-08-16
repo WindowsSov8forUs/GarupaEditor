@@ -63,6 +63,10 @@ import { validateConstructedChartCapabilities } from "../assembly/chartCapabilit
 import { constructChartFromGarupaChartJson } from "../assembly/garupaChartConstruction";
 import { assembleSimulatorResources } from "../assembly/resourceAssembly";
 import {
+  deriveSessionBgmResource,
+  type PreparedSessionBgmResource,
+} from "../assembly/sessionBgmDerivation";
+import {
   RecipeOwnedSessionFactory,
   type SimulatorRecipeEngineBuild,
   type SimulatorRecipeEngineBuilder,
@@ -121,11 +125,18 @@ export function installProductionAutonomousSimulatorPlatform(
 
 class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
   private generation = 0;
+  private readonly audioPreflight: BrowserAudioResourcePreflightAdapter;
+  private readonly bgmByRecipe = new WeakMap<
+    SimulatorSessionRecipe,
+    Promise<SimulatorAssemblyResult<PreparedSessionBgmResource>>
+  >();
 
   constructor(
     private readonly platform: AutonomousSimulatorPlatformCapabilities,
     private readonly platformIdentity: number,
-  ) {}
+  ) {
+    this.audioPreflight = new BrowserAudioResourcePreflightAdapter(platform.audioContext);
+  }
 
   async createFreshEngine(
     recipe: SimulatorSessionRecipe,
@@ -143,6 +154,8 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
     if (chart.status !== "ok") return fromEvidence(chart);
     const chartCapabilities = validateConstructedChartCapabilities(chart.value, recipe.request);
     if (chartCapabilities.status === "rejected") return chartCapabilities;
+    const bgm = await this.deriveBgm(recipe);
+    if (bgm.status === "rejected") return bgm;
     const score = mapScoreLifeProfile(recipe.request, this.sessionId());
     if (score.status === "rejected") return score;
     const moveTimeCandidate = this.generation > 0;
@@ -156,7 +169,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
     const sessionId = this.sessionId();
     this.generation += 1;
     const assembly = await assembleSimulatorResources(
-      recipe.request.chartData.bgm,
+      bgm.value,
       selection,
       this.platform.staticResources,
       {
@@ -167,7 +180,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
         },
         audio: {
           backend: audio,
-          preflight: new BrowserAudioResourcePreflightAdapter(this.platform.audioContext),
+          preflight: this.audioPreflight,
         },
         particles: {
           backend: particles,
@@ -230,7 +243,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
       },
       audio: {
         sessionId,
-        bgmCue: recipe.request.chartData.bgm.cue,
+        bgmCue: bgm.value.profile.cue,
         seekMilliseconds: 0,
         masterGainBits: gains.value.master,
         bgmGainBits: gains.value.bgm,
@@ -243,7 +256,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
     }
     const controlOverlay = renderer.createRehearsalControlOverlay(
       score.value.mode,
-      recipe.request.chartData.bgm.durationSeconds,
+      bgm.value.profile.durationSeconds,
     );
     if (controlOverlay.status !== "ok") {
       const cleanup = simulatorCleanupFailureFromResult(
@@ -294,6 +307,19 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
       ].filter((failure): failure is SimulatorModuleCleanupFailure => failure !== null));
     }
     return accepted(Object.freeze({ engine: mountedEngine, mode: score.value.mode }));
+  }
+
+  private deriveBgm(
+    recipe: SimulatorSessionRecipe,
+  ): Promise<SimulatorAssemblyResult<PreparedSessionBgmResource>> {
+    const existing = this.bgmByRecipe.get(recipe);
+    if (existing !== undefined) return existing;
+    const pending = deriveSessionBgmResource(
+      recipe.request.chartData.bgm,
+      this.audioPreflight,
+    );
+    this.bgmByRecipe.set(recipe, pending);
+    return pending;
   }
 
   private sessionId(): string {

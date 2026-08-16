@@ -3,20 +3,9 @@ import type { GarupaChartJson } from "../../chart";
 export type SimulatorPublicSessionMode = "live" | "rehearsal";
 export type SimulatorPublicInputMode = "manual" | "auto";
 
-export interface SimulatorChartAudioData {
-  readonly cue: string;
-  readonly bytes: Uint8Array;
-  readonly sha256: string;
-  readonly codec: "mp3";
-  readonly sampleRate: number;
-  readonly channels: 1 | 2;
-  readonly durationSeconds: number;
-  readonly currentSampleFrames: number;
-}
-
 export interface SimulatorChartDataPackage {
   readonly chart: GarupaChartJson;
-  readonly bgm: SimulatorChartAudioData;
+  readonly bgm: Uint8Array;
   readonly isFullLength: boolean;
 }
 

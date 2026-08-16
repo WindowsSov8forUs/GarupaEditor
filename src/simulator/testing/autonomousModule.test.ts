@@ -199,11 +199,11 @@ async function testScoreHudPack(): Promise<void> {
 function testRecipeOwnership(): void {
   const source = request();
   const recipe = requireAccepted(createSimulatorSessionRecipe(source));
-  source.chartData.bgm.bytes.fill(0);
+  source.chartData.bgm.fill(0);
   (source.chartData.chart[0] as { value: number }).value = 999;
   (source.chartData as { isFullLength: boolean }).isFullLength = true;
   (source.config.audio as { masterGain: number }).masterGain = 0;
-  assert.deepEqual([...recipe.request.chartData.bgm.bytes], [1, 2, 3, 4]);
+  assert.deepEqual([...recipe.request.chartData.bgm], [0xff, 0xfb, 0x90, 0x00]);
   assert.equal((recipe.request.chartData.chart[0] as { readonly value: number }).value, 120);
   assert.ok(Object.isFrozen(recipe.request.chartData.chart));
   assert.ok(Object.isFrozen(recipe.request.chartData.chart[0]));
@@ -211,7 +211,7 @@ function testRecipeOwnership(): void {
   assert.equal(recipe.request.config.audio.masterGain, 1);
   assert.ok(Object.isFrozen(recipe));
   assert.ok(Object.isFrozen(recipe.request));
-  assert.ok(Object.isFrozen(recipe.request.chartData.bgm));
+  assert.notEqual(recipe.request.chartData.bgm, source.chartData.bgm);
   assert.equal(recipe.schemaVersion, 3);
   assert.equal(recipe.request.chartData.isFullLength, false);
 
@@ -323,7 +323,12 @@ async function testProductionCompositionFailureBoundary(): Promise<void> {
         };
       },
     },
-    audioContext: {} as AudioContext,
+    audioContext: {
+      state: "running",
+      async decodeAudioData() {
+        return { sampleRate: 44100, numberOfChannels: 2, length: 44100, duration: 1 };
+      },
+    } as unknown as AudioContext,
     graphics: {
       viewportWidth: 1600 as const,
       viewportHeight: 720 as const,
@@ -369,7 +374,15 @@ async function testProductionCompositionFailureBoundary(): Promise<void> {
   if (malformedChartLaunch.status === "rejected") {
     assert.equal(malformedChartLaunch.failure.capability, "simulator.garupa-json.invalid-chart");
   }
-  assert.equal(resourceReads, 0, "caller-authored legacy fields, invalid full classification and malformed Garupa JSON fail before shared resource read");
+  const malformedBgmRequest: any = request();
+  malformedBgmRequest.chartData.bgm = Uint8Array.from([0x52, 0x49, 0x46, 0x46]);
+  const malformedBgmModule = requireAccepted(createProductionAutonomousSimulatorModule(platform));
+  const malformedBgmLaunch = await malformedBgmModule.launch(malformedBgmRequest);
+  assert.equal(malformedBgmLaunch.status, "rejected");
+  if (malformedBgmLaunch.status === "rejected") {
+    assert.equal(malformedBgmLaunch.failure.capability, "simulator.audio.invalid-mp3-byte-structure");
+  }
+  assert.equal(resourceReads, 0, "caller fields, full classification, Garupa JSON and MP3 bytes fail before shared resource reads");
   assert.equal(mounts, 0);
 
   const missingResourceModule = requireAccepted(createProductionAutonomousSimulatorModule(platform));
@@ -637,16 +650,7 @@ function request(): SimulatorModuleLaunchRequest {
         { type: "BPM", beat: 0, value: 120 },
         { type: "Single", beat: 4, lane: 1, width: 1 },
       ],
-      bgm: {
-        cue: "host-cue",
-        bytes: new Uint8Array([1, 2, 3, 4]),
-        sha256: "A".repeat(64),
-        codec: "mp3",
-        sampleRate: 44100,
-        channels: 2,
-        durationSeconds: 1,
-        currentSampleFrames: 44100,
-      },
+      bgm: new Uint8Array([0xff, 0xfb, 0x90, 0x00]),
       isFullLength: false,
     },
     config: {

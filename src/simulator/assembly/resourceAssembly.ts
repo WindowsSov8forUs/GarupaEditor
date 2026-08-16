@@ -22,10 +22,8 @@ import {
   simulatorCleanupFailure,
   simulatorCleanupFailureFromResult,
 } from "../public/failures";
-import type {
-  SimulatorChartAudioData,
-  SimulatorModuleCleanupFailure,
-} from "../public/contracts";
+import type { SimulatorModuleCleanupFailure } from "../public/contracts";
+import type { PreparedSessionBgmResource } from "./sessionBgmDerivation";
 import type { SimulatorSceneLayout } from "../scene/simulatorSceneLayout";
 import type { SharedStaticResourceStore } from "../resources/sharedStaticResourceStore";
 import type { SimulatorStaticResourceSelection } from "../resources/staticResourceSelector";
@@ -73,7 +71,7 @@ export interface PreparedSimulatorResourceAssembly {
 }
 
 export async function assembleSimulatorResources(
-  chartAudio: SimulatorChartAudioData,
+  chartAudio: PreparedSessionBgmResource,
   selection: SimulatorStaticResourceSelection,
   store: SharedStaticResourceStore,
   targets: SimulatorResourceAssemblyTargets,

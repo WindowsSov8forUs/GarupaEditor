@@ -26,13 +26,24 @@ const preflight: AudioResourcePreflightAdapter = {
   async sha256(bytes) {
     return audioAccepted(profileByLength.get(bytes.byteLength)?.sha256 ?? "");
   },
-  async inspect(_bytes, resource) {
+  async inspect(bytes) {
+    const resource = profileByLength.get(bytes.byteLength)!;
     return audioAccepted<AudioDecodedResourceMetadata>({
       codec: "mp3",
       sampleRate: resource.sampleRate,
       channels: resource.channels,
       durationSeconds: resource.durationSeconds,
+      sampleFrames: resource.sampleFrames,
     });
+  },
+  getDecodedBuffer(bytes) {
+    const resource = profileByLength.get(bytes.byteLength)!;
+    return audioAccepted({
+      sampleRate: resource.sampleRate,
+      numberOfChannels: resource.channels,
+      length: resource.sampleFrames,
+      duration: resource.durationSeconds,
+    } as AudioBuffer);
   },
 };
 
@@ -46,7 +57,7 @@ async function main(): Promise<void> {
     preflight,
   )).status, "accepted");
   assert.equal(backend.snapshot().state, "ready");
-  assert.equal(context.decodeCount, 15);
+  assert.equal(context.decodeCount, 0);
   assert.equal(context.gains.length, 2);
 
   execute(backend, [
@@ -221,6 +232,7 @@ class FakeAudioContext {
     return {
       sampleRate: resource.sampleRate,
       numberOfChannels: resource.channels,
+      length: resource.sampleFrames,
       duration: resource.durationSeconds,
     };
   }

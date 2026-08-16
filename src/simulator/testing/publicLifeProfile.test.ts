@@ -84,6 +84,20 @@ function testPublicExactShape(): void {
   const directLife: any = request(false);
   directLife.chartData.initialLife = 1000;
   assertInvalid(directLife);
+  for (const bgm of [
+    null,
+    new Uint8Array(),
+    new Uint16Array([1]),
+    { bytes: new Uint8Array([1]), codec: "mp3" },
+  ]) {
+    const malformed: any = request(false);
+    malformed.chartData.bgm = bgm;
+    const result = createSimulatorSessionRecipe(malformed);
+    assert.equal(result.status, "rejected");
+    if (result.status === "rejected") {
+      assert.equal(result.failure.capability, "simulator.recipe.invalid-chart-bgm");
+    }
+  }
 }
 
 function testRecipeOwnership(): void {
@@ -94,10 +108,9 @@ function testRecipeOwnership(): void {
   assert.equal(Object.isFrozen(recipe), true);
   assert.equal(Object.isFrozen(recipe.request), true);
   assert.equal(Object.isFrozen(recipe.request.chartData), true);
-  assert.equal(Object.isFrozen(recipe.request.chartData.bgm), true);
-  source.chartData.bgm.bytes.fill(0);
+  source.chartData.bgm.fill(0);
   (source.chartData as { isFullLength: boolean }).isFullLength = false;
-  assert.deepEqual([...recipe.request.chartData.bgm.bytes], [1, 2, 3, 4]);
+  assert.deepEqual([...recipe.request.chartData.bgm], [1, 2, 3, 4]);
   assert.equal(recipe.request.chartData.isFullLength, true);
 }
 
@@ -127,16 +140,7 @@ function request(
         { type: "BPM", beat: 0, value: 120 },
         { type: "Single", beat: 4, lane: 1, width: 1 },
       ],
-      bgm: {
-        cue: "profile-bgm",
-        bytes: new Uint8Array([1, 2, 3, 4]),
-        sha256: "A".repeat(64),
-        codec: "mp3",
-        sampleRate: 44100,
-        channels: 2,
-        durationSeconds: 1,
-        currentSampleFrames: 44100,
-      },
+      bgm: new Uint8Array([1, 2, 3, 4]),
       isFullLength,
     },
     config: {

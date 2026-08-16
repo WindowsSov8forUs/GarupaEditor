@@ -4,10 +4,13 @@ import { fileURLToPath } from "node:url";
 
 const testingRoot = dirname(fileURLToPath(import.meta.url));
 const simulatorRoot = resolve(testingRoot, "..");
-const productionRoots = ["engine", "host", "backends"].map((part) => resolve(simulatorRoot, part));
+const productionRoots = [
+  "assembly", "backends", "engine", "host", "platform", "public", "resources",
+].map((part) => resolve(simulatorRoot, part));
 const engineRoot = resolve(simulatorRoot, "engine");
 const webAudioPath = resolve(simulatorRoot, "backends", "audio", "webAudioBackend.ts");
 const audioTestPaths = [
+  resolve(testingRoot, "sessionBgmDerivation.test.ts"),
   resolve(testingRoot, "audioContracts.test.ts"),
   resolve(testingRoot, "audioWebAudio.test.ts"),
   resolve(testingRoot, "audioSessionBgmTestProfile.ts"),
@@ -49,6 +52,31 @@ if (/SE_RHYTHM_(?:CLEAR_VO|CUTIN|CUTIN_AUDIENCE|CUTIN_SKILL)/.test(productionSou
 }
 if (bgmContract.case_count !== 6 || !Array.isArray(bgmContract.cases) || bgmContract.cases.length !== 6) {
   violations.push("session BGM raw Reverse case inventory mismatch; legacy closure/authorization fields are ignored");
+}
+const publicContracts = readFileSync(resolve(simulatorRoot, "public", "contracts.ts"), "utf8");
+const derivation = readFileSync(resolve(simulatorRoot, "assembly", "sessionBgmDerivation.ts"), "utf8");
+const composition = readFileSync(resolve(simulatorRoot, "platform", "platformComposition.ts"), "utf8");
+if (!publicContracts.includes("readonly bgm: Uint8Array;") ||
+  /SimulatorChartAudioData|currentSampleFrames/.test(publicContracts)) {
+  violations.push("Public BGM is not the direct Uint8Array-only contract");
+}
+for (const required of [
+  "inspectMp3FirstFrame", "simulator.audio.invalid-mp3-byte-structure",
+  "metadata.sampleFrames / metadata.sampleRate", "sha256UpperHex(bytes)",
+  "session_bgm_${sha256}",
+]) {
+  if (!derivation.includes(required)) violations.push(`internal BGM derivation missing: ${required}`);
+}
+if (!composition.includes("deriveSessionBgmResource") ||
+  !composition.includes("bgmByRecipe") ||
+  !composition.includes("this.bgmByRecipe.get(recipe)") ||
+  !composition.includes("bgm.value.profile.cue") ||
+  !composition.includes("bgm.value.profile.durationSeconds") ||
+  composition.includes("chartData.bgm.cue")) {
+  violations.push("production composition does not exclusively consume derived BGM metadata");
+}
+if (/currentSampleFrames/.test(productionSource)) {
+  violations.push("obsolete currentSampleFrames remains in production audio contracts");
 }
 const webSource = readFileSync(webAudioPath, "utf8");
 if (/from\s+["'](?:\.\.\/)*\.\.\/engine\/(?:managers|notes)|from\s+["'](?:\.\.\/)*\.\.\/host/.test(webSource)) {

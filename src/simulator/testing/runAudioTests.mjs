@@ -26,6 +26,9 @@ try {
     ]);
   }
   run(process.execPath, [
+    join(outputRoot, "src", "simulator", "testing", "sessionBgmDerivation.test.js"),
+  ]);
+  run(process.execPath, [
     join(outputRoot, "src", "simulator", "testing", "audioContracts.test.js"),
   ]);
   run(process.execPath, [

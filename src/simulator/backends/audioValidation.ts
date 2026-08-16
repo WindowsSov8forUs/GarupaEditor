@@ -33,7 +33,7 @@ const FIXED_SE_LOGICAL_IDS_SET: ReadonlySet<string> = new Set(Object.values(FIXE
 
 const RESOURCE_KEYS = Object.freeze([
   "role", "logicalId", "cue", "byteLength", "sha256", "mime", "codec",
-  "sampleRate", "channels", "durationSeconds", "currentSampleFrames", "loop",
+  "sampleRate", "channels", "durationSeconds", "sampleFrames", "loop",
   "identity", "signal",
 ] as const);
 
@@ -290,7 +290,7 @@ function validateSessionBgmResource(
     !Number.isSafeInteger(resource.sampleRate) || resource.sampleRate <= 0 ||
     (resource.channels !== 1 && resource.channels !== 2) ||
     !Number.isFinite(resource.durationSeconds) || resource.durationSeconds <= 0 ||
-    !Number.isSafeInteger(resource.currentSampleFrames) || resource.currentSampleFrames <= 0 ||
+    !Number.isSafeInteger(resource.sampleFrames) || resource.sampleFrames <= 0 ||
     resource.loop !== null || resource.identity !== "session-explicit" ||
     resource.signal !== "host-supplied-portable"
   ) {
@@ -320,7 +320,7 @@ function validateFixedSeResource(
     resource.sha256 !== expected.sha256 || resource.mime !== expected.mime ||
     resource.codec !== expected.codec || resource.sampleRate !== expected.sampleRate ||
     resource.channels !== expected.channels || resource.durationSeconds !== expected.durationSeconds ||
-    resource.currentSampleFrames !== expected.currentSampleFrames ||
+    resource.sampleFrames !== expected.sampleFrames ||
     resource.identity !== expected.identity || resource.signal !== expected.signal
   ) {
     return rejectProfile(

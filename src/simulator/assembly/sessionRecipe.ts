@@ -298,17 +298,18 @@ function copyLaunchRequest(
   const copiedChart = copyAndFreezeGarupaChartJson(request.chartData.chart);
   if (copiedChart.status !== "ok") return fromEngineFailure(copiedChart);
   const bgm = request.chartData.bgm;
-  if (bgm === null || typeof bgm !== "object" || !(bgm.bytes instanceof Uint8Array)) {
+  if (!(bgm instanceof Uint8Array) || bgm.byteLength === 0 ||
+    Object.getPrototypeOf(bgm) !== Uint8Array.prototype) {
     return rejected(
       "evidence-required",
       "simulator.recipe.invalid-chart-bgm",
-      "The immutable chart package requires one explicit owned BGM byte sequence.",
+      "The immutable chart package requires one explicit non-empty owned Uint8Array BGM resource; metadata is derived only inside simulator.",
     );
   }
   return accepted(Object.freeze({
     chartData: Object.freeze({
       chart: copiedChart.value.chart,
-      bgm: Object.freeze({ ...bgm, bytes: Uint8Array.from(bgm.bytes) }),
+      bgm: Uint8Array.from(bgm),
       isFullLength: request.chartData.isFullLength,
     }),
     config: Object.freeze({
