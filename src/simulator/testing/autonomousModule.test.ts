@@ -5,10 +5,7 @@ const { readFileSync } = require("node:fs");
 const { join } = require("node:path");
 
 import { launchSimulatorModule } from "../index";
-import {
-  createSimulatorModuleCapabilitySummary,
-  isStartupAudioCallgraphOpen,
-} from "../public/capabilities";
+import { createSimulatorModuleCapabilitySummary } from "../public/capabilities";
 import { createNoteBatchInformationList } from "../engine/chart/construction";
 import { ButtonType } from "../engine/chart/types";
 import { AutonomousSimulatorModule } from "../runtime/autonomousSimulatorRuntime";
@@ -327,7 +324,7 @@ async function testRecipeNaturalCompletion(): Promise<void> {
   assert.equal(stepped.report.result?.combo, 7);
   assert.equal(stepped.report.capabilities.rendering, null);
   assert.equal(stepped.report.capabilities.liveRehearsalFourModeMatrix, "closed-portable");
-  assert.equal(stepped.report.capabilities.startupDirectionPortable, "open-evidence-required");
+  assert.equal(stepped.report.capabilities.startupDirectionPortable, "closed-portable");
   assert.equal(stepped.report.capabilities.rehearsalMoveTimeControls, "closed-portable");
   assert.equal(stepped.report.capabilities.nonzeroInitialPracticeSeek, "excluded");
   assert.equal(stepped.report.capabilities.button07SceneMapping, "closed-original-unreachable");
@@ -378,23 +375,6 @@ async function testProductionCompositionFailureBoundary(): Promise<void> {
     requestTargetFrameRate: () => {},
     publishLifecycleState: () => {},
   };
-  if (isStartupAudioCallgraphOpen()) {
-    const gatedModule = requireAccepted(createProductionAutonomousSimulatorModule(platform));
-    const gatedLaunch = await gatedModule.launch(request());
-    assert.equal(gatedLaunch.status, "rejected");
-    if (gatedLaunch.status === "rejected") {
-      assert.equal(gatedLaunch.failure.code, "evidence-required");
-      assert.equal(
-        gatedLaunch.failure.capability,
-        "simulator.startup.complete-callgraph-open",
-      );
-    }
-    assert.equal(resourceReads, 0, "startup callgraph gate rejects before shared resource reads");
-    assert.equal(mounts, 0, "startup callgraph gate rejects before visual mount");
-    assert.equal(scheduler.consumer, null, "startup callgraph gate rejects before scheduler start");
-    return;
-  }
-
   const invalidRequests: any[] = [];
   const invalidScoreRequest: any = request();
   invalidScoreRequest.chartData.gameplay = { score: { totalParameter: 100000 } };
@@ -536,7 +516,7 @@ async function testAutonomousLaunchAndClose(): Promise<void> {
     habahiroCurrentExternalComplete: "closed-portable",
     habahiroOriginalParity: "open-evidence-required",
     liveRehearsalFourModeMatrix: "closed-portable",
-    startupDirectionPortable: "open-evidence-required",
+    startupDirectionPortable: "closed-portable",
     rehearsalMoveTimeControls: "closed-portable",
     garupaJsonDirectChartAdapter: "closed-portable",
     garupaJsonSvAndTimingGroup: "ignored-product-extension",

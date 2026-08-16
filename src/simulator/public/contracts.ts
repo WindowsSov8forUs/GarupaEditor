@@ -115,7 +115,7 @@ export interface SimulatorModuleCapabilitySummary {
   readonly habahiroCurrentExternalComplete: "closed-portable";
   readonly habahiroOriginalParity: "open-evidence-required";
   readonly liveRehearsalFourModeMatrix: "closed-portable";
-  readonly startupDirectionPortable: "open-evidence-required";
+  readonly startupDirectionPortable: "closed-portable";
   readonly rehearsalMoveTimeControls: "closed-portable";
   readonly garupaJsonDirectChartAdapter: "closed-portable";
   readonly garupaJsonSvAndTimingGroup: "ignored-product-extension";

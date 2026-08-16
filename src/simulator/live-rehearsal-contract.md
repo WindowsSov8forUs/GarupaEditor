@@ -27,11 +27,13 @@ Canonical identity由模拟器一次性生成：
 
 依据：LR-E01、LR-E02、LR-R01、LR-R02、LR-C01。任何字段不允许从另一轴反推；Rehearsal Auto是Demo Play，不是Auto Live。
 
-## 启动方向链（完整音频调用图重新开放）
+## 启动方向与完整音频调用图
 
-Reverse `78e6a70e` 的SD01–SD16继续授权已逐项验证的presentation、视觉owner、状态0→5、nullable Live voice/Practice bypass及内部purpose子合同。四种Public模式仍从`Prepare(0)`依次进入`OPFirstAnimStart(1)`、`OPFirstAnimEnd(2)`、`OPLastAnimStart(3)`、`PlayingNone(4)`、`PlayingSound(5)`；0–3不得推进Note、input、judgement、Score/Life/Combo或gameplay particle。信息First View/hold/fade、HUD、舞台/5槽SD、line UI仍是独立Float32 owner。
+Reverse `78e6a70e` 的SD01–SD16约束presentation、视觉owner、状态0→5与内部purpose；Reverse `b17e64e98423bed3718ac2e76a43cde5c451ee1f`的`startup-audio-callgraph-10-1-4/`补齐44个current ARM64方法、10条observation-only R1、资源与生命周期。`reachable_unclassified_count`、`unknown_predicate_count`、`missing_resource_count`和runtime hook failure均为0。
 
-旧closure遗漏`InGameManager.playGayaSound → PlaySELoop(SE_RHYTHM_GAYA)`，且`GayaSoundRequired`四模式谓词、背景/stage虚调用、animation event、BGM prepare/play相对时序以及Retry/MoveTime/abort/fault/dispose清理链尚未形成完整证据。因此`startupDirectionPortable`当前为`open-evidence-required`，production engine construction返回`simulator.startup.complete-callgraph-open`；旧voice+BGM测试和启动WebView2 digest只保留为子门，不能证明完整启动音频。
+四种Public模式从`Prepare(0)`依次进入`OPFirstAnimStart(1)`、`OPFirstAnimEnd(2)`、`OPLastAnimStart(3)`、`PlayingNone(4)`、`PlayingSound(5)`；0–3不得推进Note、input、judgement、Score/Life/Combo或gameplay particle。启动音频是允许的独立owner：BGM先以零voice gain建立并paused；Live Manual/Auto创建`SE_RHYTHM_GAYA`全buffer owned loop（volume 1.0、0.5秒fade-in），Practice Manual/Auto保持null；Live非null voice等待backend ended后release，Live null和Practice bypass分列。music edge先发布PlayingNone，再从current Gaya gain用1.5秒fade-to-zero/stop并resume prepared BGM，下一状态进入PlayingSound。
+
+Retry创建fresh Practice链，不继承旧owner；MoveTime reconstruction不创建Gaya/voice/信息演出，物理输出在目标publication前抑制。pause/resume、abort、terminal fault与dispose均清理loop/source/gain/decoded资源。`startupDirectionPortable`因此恢复`closed-portable`，但speaker onset、CRI/HCA、Android与原Unity framebuffer exact仍不声明。
 
 Launch根仍精确三键`{chartData,presentation,config}`。presentation是调用方已选择的本地化文字与显式PNG/MP3，不改变chartData三字段；purpose仍由simulator内部拥有且不进入Public。
 

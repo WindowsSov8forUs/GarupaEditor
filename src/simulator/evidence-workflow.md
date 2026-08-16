@@ -15,13 +15,13 @@
 4. 确认所引用的Reverse证据提交已存在于远端。
 5. 必要时更新测试fixture manifest，然后实现或修改simulator；未知行为继续返回`evidence-required`。
 
-## 当前启动方向证据（重新开放）
+## 当前启动方向与音频证据
 
-- Reverse提交`78e6a70ea906aa1fa778b56e843c7663fdd3b4bc`已push；`startup-direction-runtime-contract-10-1-4/`的SD01–SD16和portable pack继续约束presentation、视觉owner、状态0→5、voice/BGM已确认子集及输入边界。
-- 旧closure遗漏`InGameManager.playGayaSound → CE.SoundManager.PlaySELoop(SE_RHYTHM_GAYA)`。现有audio证据还记录1.0 volume、0.5秒fade-in、1.5秒fade-out和`gayaSoundResource@0x120`，但尚未关闭四模式`GayaSoundRequired`、间接/动画调用、BGM prepare/play与全生命周期清理。
-- 在新的`startup-audio-callgraph-10-1-4/`静态/运行/资源证据完成、verify、commit并push前，`startupDirectionPortable`保持`open-evidence-required`，production以`simulator.startup.complete-callgraph-open`失败关闭。
-- Garupa fixture只复制已登记的最小证据；production不读取fixture，动态presentation没有默认值。RD01/RV01及旧startup WebView2 digest只作视觉冲突检查，不证明完整音频或speaker onset。
-- 新调查必须从10.1.4/230当前ARM64、serialized assets和观察型R1重算调用图，不得把Reverse未提交`runtime/tools/`、10.1.3行为或旧总体`closed`字段当作授权。
+- Reverse提交`78e6a70ea906aa1fa778b56e843c7663fdd3b4bc`已push；`startup-direction-runtime-contract-10-1-4/`的SD01–SD16和portable pack约束presentation、视觉owner、状态0→5及输入边界。
+- Reverse提交`b17e64e98423bed3718ac2e76a43cde5c451ee1f`已push且远端同步；`startup-audio-callgraph-10-1-4/`从10.1.4/230 ARM64重新遍历ExecStart、虚调用、协程、voice、BGM、Gaya、Retry、MoveTime及cleanup，包含44个方法切片和10条privacy-normalized observation-only R1。
+- 调用图确认Standard Live两种input mode创建`SE_RHYTHM_GAYA` owned loop，Practice两种模式保持null；锁定151,033-byte MP3、完整SHA-256、44.1kHz stereo、310,191 frames、全decoded-buffer loop、1.0/0.5秒fade-in及1.5秒stop-at-zero。BGM先prepared-paused，PlayingNone后resume；voice ended执行release。
+- `reachable_unclassified_count`、`unknown_predicate_count`、`missing_resource_count`和runtime hook failure均为0，committed verifier授权production，故`startupDirectionPortable`恢复`closed-portable`。Garupa fixture sourceHead锁定`b17e64e9`，只复制callgraph JSON与最小Gaya字节；production不读取fixture。
+- 真实WebView2视觉digest与独立Gaya/WebAudio graph digest只证明portable browser子门，不证明speaker onset、CRI/HCA、Android或原Unity framebuffer exact。后续调查仍必须使用已提交当前样本，不得消费Reverse未提交`runtime/tools/`、10.1.3行为或旧总体`closed`字段。
 
 ## 测试边界
 

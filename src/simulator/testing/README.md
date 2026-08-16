@@ -12,7 +12,7 @@ npm.cmd run simulator:test:quick
 
 This compiles the isolated simulator and the complete TypeScript test tree once, verifies fixture provenance and source-level dependency/contract boundaries once, then runs 11 development groups spanning compiled unit/contract tests, static checks, strict Garupa JSON direct-chart construction, chart parsing, clock scheduling, Auto Live, Public Life and Live/Rehearsal. The score-life leaf independently verifies CS-V1 BigInt quotas, normalized judgement rates, chart-owned identities, duplicate failure boundaries, and a full-chart `10,000,000+N` Auto result.
 
-The audio group includes the Public BGM byte-only boundary, ID3v2/MPEG Layer III first-frame parser, decoded-header agreement, SHA/cue/profile derivation, caller-buffer ownership and Web Audio decoded-buffer reuse tests. These are gameplay/session-BGM subcontracts; they do not close the currently open complete startup-audio callgraph or the missing Gaya owner.
+The compiled subset contains 27 unit/contract tests and 5 static checks. Its audio coverage includes the Public BGM byte-only boundary, strict MPEG source-format/decode agreement under Web Audio context resampling, SHA/cue/profile derivation, caller-buffer ownership, Gaya owned-loop/fade, voice release, cleanup faults and the complete startup-callgraph fixture. The dedicated callgraph test consumes 44 methods, 10 R1 traces, four distinct mode rows, the hash-pinned Gaya bytes and zero-count closure.
 
 The quick tier includes the startup-direction schema/state/mutation/Pixi/static leaf. It intentionally omits the expensive full-chart actual-Pixi replay, 7,200-frame particle production replay, full HABAHIRO production replay, and all three real WebView2 leaves. A quick pass is suitable for normal edits but is not release evidence.
 
@@ -22,7 +22,7 @@ The quick tier includes the startup-direction schema/state/mutation/Pixi/static 
 npm.cmd run simulator:test:total-revalidation
 ```
 
-This runs the historical 31-semantic-leaf DAG, including the production browser decoder, three-fresh-process ordinary full-scene WebView2 acceptance, and the startup-direction 3 fresh × 4 modes × 7 visual-phase acceptance. Current digests are ordinary `a09166cf3049c4bca01ef7d9a51ecc777319975e2dd1a5875f6e0a38f7e42199` and startup `0f33657eff4dfacad24ad51a495cb1adde81af9b5e3fa4a44a8996f5a93dc14d`. The startup digest predates discovery of the missing `SE_RHYTHM_GAYA` path and is only a visual sub-gate; no run of this unchanged DAG may re-close the complete startup-audio capability. Neither digest is an original framebuffer or speaker-onset oracle. The DAG compiles the TypeScript test tree only once and shares that fresh output read-only across child runners; release timing and commit-binding notes remain local under ignored `tmp/`.
+This runs the current 32-semantic-leaf DAG, including the independent startup-audio callgraph leaf, production browser decoder, three-fresh-process ordinary full-scene WebView2 acceptance, and startup 3 fresh × 4 modes × 7 visual-phase acceptance plus real Gaya/WebAudio graph. Current digests are ordinary `a09166cf3049c4bca01ef7d9a51ecc777319975e2dd1a5875f6e0a38f7e42199`, startup visual `0f33657eff4dfacad24ad51a495cb1adde81af9b5e3fa4a44a8996f5a93dc14d`, and startup audio `88a2a3103f6cdda3f16ba771b020e874b5ab929d59bbe1b45cbd39093570c268`. The audio digest covers production browser decode, command/event/resource inventory and cleanup observation; it is not a physical speaker-onset, CRI/HCA or original framebuffer oracle. The DAG compiles the TypeScript test tree only once and shares that fresh output read-only across child runners; release timing and commit-binding notes remain local under ignored `tmp/`.
 
 Cargo release targets are retained under each ignored WebView2 harness `target/` directory, so repeated full runs reuse validated Rust artifacts. To force the historical cold-build boundary:
 
@@ -36,10 +36,11 @@ npm.cmd run simulator:test:total-revalidation:clean
 
 ```powershell
 npm.cmd run simulator:test:startup-direction
+npm.cmd run simulator:test:startup-audio-callgraph
 npm.cmd run simulator:test:startup-direction-webview2
 ```
 
-第一项继续覆盖schema 4、presentation复制/冻结、严格PNG/MP3/cmap、四模式0→5、opening gameplay mutation sentinel、voice/null、旧BGM子合同、Retry/MoveTime purpose及Pixi hierarchy；第二项使用production decoder、FontFace和actual Pixi WebGL执行3个fresh process。两者当前均不覆盖Gaya、完整间接调用图或speaker输出，不能形成startup closed声明。测试生成的jacket/stage/SD PNG只是显式产品输入，不是原作默认资源或像素oracle。
+第一项覆盖schema 4、presentation复制/冻结、严格PNG/MP3/cmap、四模式0→5、opening gameplay mutation sentinel、prepared BGM、Live-only Gaya、voice/null/release、Retry/MoveTime purpose及Pixi hierarchy；第二项逐项消费完整调用图、四模式谓词、Gaya profile/字节与fault lifecycle；第三项使用production Pixi/Audio decoder和actual WebGL/WebAudio执行3个fresh process，分别锁定视觉与音频digest。它们关闭current portable startup合同，但不声明speaker输出、CRI/HCA、Android或原Unity exact。测试生成的jacket/stage/SD PNG只是显式产品输入，不是原作默认资源或像素oracle。
 
 ## Standalone leaves
 
