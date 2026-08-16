@@ -30,6 +30,16 @@ export function getMultiRangeSourceIdentity(
   return sourceIdentityByNote.get(note) ?? { ccNums: [], afterCcNums: [] };
 }
 
+export function registerMultiRangeSourceIdentity(
+  note: NoteInformation,
+  identity: MultiRangeSourceIdentity,
+): void {
+  sourceIdentityByNote.set(note, {
+    ccNums: sortedUnique(identity.ccNums),
+    afterCcNums: sortedUnique(identity.afterCcNums),
+  });
+}
+
 export function mergeMultiRangeSourceIdentity(
   target: NoteInformation,
   source: NoteInformation,

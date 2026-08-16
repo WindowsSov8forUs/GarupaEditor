@@ -21,7 +21,6 @@ import {
 import { createRecordingSimulatorBackends } from "../backends/recordingBackend";
 import { PortableParticleResourcePreflightAdapter } from "../backends/resources/localParticleResourceProvider";
 import { PortableRenderResourcePreflightAdapter } from "../backends/resources/localResourceProvider";
-import { createNoteBatchInformationList } from "../engine/chart/construction";
 import { createCurrentSinglePlayLifeProfile } from "../engine/data/currentSinglePlayLifeProfile";
 import type { ScoreLifeStateProfile } from "../engine/data/scoreLifeState";
 import { createSimulatorModeIdentity } from "../engine/data/inGameCalculatedData";
@@ -61,6 +60,7 @@ import type {
 import { installSimulatorModuleLauncher } from "../runtime/moduleEntryBinding";
 import { createSimulatorSceneLayout } from "../scene/simulatorSceneLayout";
 import { validateConstructedChartCapabilities } from "../assembly/chartCapabilityValidation";
+import { constructChartFromSimulatorGarupaJson } from "../assembly/garupaJsonChartConstruction";
 import { assembleSimulatorResources } from "../assembly/resourceAssembly";
 import {
   RecipeOwnedSessionFactory,
@@ -137,9 +137,9 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
         TOTAL_REVALIDATION_BOUNDARY,
       );
     }
-    const chart = createNoteBatchInformationList({
-      musicScoreData: recipe.request.chartData.bmsText,
-    });
+    const chart = constructChartFromSimulatorGarupaJson(
+      recipe.request.chartData.chart,
+    );
     if (chart.status !== "ok") return fromEvidence(chart);
     const chartCapabilities = validateConstructedChartCapabilities(chart.value, recipe.request);
     if (chartCapabilities.status === "rejected") return chartCapabilities;

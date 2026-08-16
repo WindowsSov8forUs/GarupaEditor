@@ -94,6 +94,10 @@ export type LiveRehearsalEvidenceId =
 export type PublicLifeProfileEvidenceId =
   `PLP-E${"01" | "02" | "03" | "04" | "05" | "06" | "07"}`;
 
+export type GarupaJsonPositionEvidenceId =
+  | `GJP-E${"01" | "02" | "03" | "04" | "05" | "06" | "07"}`
+  | "GJP-D01";
+
 export type SimulatorEvidenceId =
   | EvidenceId
   | AutoLiveEvidenceId
@@ -104,7 +108,8 @@ export type SimulatorEvidenceId =
   | WebView2BrowserRasterEvidenceId
   | OrdinaryRenderingReauditEvidenceId
   | LiveRehearsalEvidenceId
-  | PublicLifeProfileEvidenceId;
+  | PublicLifeProfileEvidenceId
+  | GarupaJsonPositionEvidenceId;
 
 export interface EvidenceReference {
   readonly id: SimulatorEvidenceId;

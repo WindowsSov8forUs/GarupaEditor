@@ -12,8 +12,65 @@ export interface SimulatorChartAudioData {
   readonly currentSampleFrames: number;
 }
 
+export type SimulatorGarupaChartDirection = "Left" | "Right";
+export type SimulatorGarupaChartSimpleType = "Single" | "Flick" | "Skill" | "Hidden";
+
+export interface SimulatorGarupaChartSimpleNote {
+  readonly type: SimulatorGarupaChartSimpleType;
+  readonly beat: number;
+  readonly lane: number;
+  readonly width: number;
+  readonly timingGroup?: string;
+}
+
+export interface SimulatorGarupaChartDirectionalNote {
+  readonly type: "Directional";
+  readonly beat: number;
+  readonly lane: number;
+  readonly width: number;
+  readonly direction: SimulatorGarupaChartDirection;
+  readonly timingGroup?: string;
+}
+
+export type SimulatorGarupaChartSlideConnection =
+  | SimulatorGarupaChartSimpleNote
+  | SimulatorGarupaChartDirectionalNote;
+
+export interface SimulatorGarupaChartSlideItem {
+  readonly type: "Slide";
+  readonly connections: readonly SimulatorGarupaChartSlideConnection[];
+  readonly timingGroup?: string;
+}
+
+export interface SimulatorGarupaChartBpmItem {
+  readonly type: "BPM";
+  readonly beat: number;
+  readonly value: number;
+}
+
+export interface SimulatorGarupaChartSvItem {
+  readonly type: "SV";
+  readonly beat: number;
+  readonly value: number;
+  readonly timingGroup?: string;
+}
+
+export type SimulatorGarupaChartTopLevelNote =
+  | Omit<SimulatorGarupaChartSimpleNote, "type"> & {
+      readonly type: Exclude<SimulatorGarupaChartSimpleType, "Hidden">;
+    }
+  | SimulatorGarupaChartDirectionalNote;
+
+export type SimulatorGarupaChartItem =
+  | SimulatorGarupaChartTopLevelNote
+  | SimulatorGarupaChartSlideItem
+  | SimulatorGarupaChartBpmItem
+  | SimulatorGarupaChartSvItem;
+
+export type SimulatorGarupaChartJson = readonly SimulatorGarupaChartItem[];
+
 export interface SimulatorChartDataPackage {
-  readonly bmsText: string;
+  readonly chart: SimulatorGarupaChartJson;
   readonly bgm: SimulatorChartAudioData;
   readonly isFullLength: boolean;
 }
@@ -79,6 +136,7 @@ export type SimulatorRenderingFidelity =
 
 export type SimulatorCapabilityGateStatus =
   | "closed-portable"
+  | "ignored-product-extension"
   | "degraded-explicit"
   | "excluded"
   | "open-evidence-required"
@@ -95,6 +153,9 @@ export interface SimulatorModuleCapabilitySummary {
   readonly habahiroOriginalParity: "open-evidence-required";
   readonly liveRehearsalFourModeMatrix: "closed-portable";
   readonly rehearsalMoveTimeControls: "closed-portable";
+  readonly garupaJsonDirectChartAdapter: "closed-portable";
+  readonly garupaJsonSvAndTimingGroup: "ignored-product-extension";
+  readonly unsupportedExGarupaSlide: "open-evidence-required";
   readonly nonzeroInitialPracticeSeek: "excluded";
   readonly button07SceneMapping: "closed-original-unreachable";
   readonly browserDecodeRaster: "closed-portable";

@@ -22,6 +22,7 @@ const forbidden = [
   { label: "DOM type", pattern: /\b(?:HTMLElement|HTMLCanvasElement|AudioContext)\b/ },
   { label: "main program", pattern: /(?:src\/app|\.\.\/\.\.\/app|\.\.\/\.\.\/App)/ },
   { label: "editor chart model", pattern: /chartCore/ },
+  { label: "editor chart format converter", pattern: /chartFormatConverter/ },
   {
     label: "removed character/multiplayer mechanism",
     pattern: /\b(?:SituationSkillManager|FeverTimeManager|updateFeverMemberPoint|changeFeverCommand|sessionBusinessData|voiceGain|deckTotalParameter|freeLiveEventBonusDeckTotalParameter|ownTeamMemberCount|team-live-festival|collaboration)\b/,

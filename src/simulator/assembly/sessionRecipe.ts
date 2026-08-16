@@ -27,9 +27,10 @@ import {
 import type { ManualInputFrame } from "../engine/data/manualInput";
 import { evidenceRequired, ok, type SimulatorResult } from "../engine/evidence";
 import type { SimulatorModeIdentity } from "../engine/data/inGameCalculatedData";
+import { copyAndFreezeSimulatorGarupaChart } from "./garupaJsonContract";
 
 export interface SimulatorSessionRecipe {
-  readonly schemaVersion: 2;
+  readonly schemaVersion: 3;
   readonly request: SimulatorModuleLaunchRequest;
 }
 
@@ -50,7 +51,7 @@ export function createSimulatorSessionRecipe(
   const copied = copyLaunchRequest(request);
   return copied.status === "rejected"
     ? copied
-    : accepted(Object.freeze({ schemaVersion: 2 as const, request: copied.value }));
+    : accepted(Object.freeze({ schemaVersion: 3 as const, request: copied.value }));
 }
 
 export class RecipeOwnedSessionFactory implements SimulatorOwnedSessionFactory {
@@ -265,8 +266,7 @@ function copyLaunchRequest(
     request === null || typeof request !== "object" || Array.isArray(request) ||
     Object.keys(request).sort().join(",") !== "chartData,config" ||
     request.chartData === null || typeof request.chartData !== "object" ||
-    Object.keys(request.chartData).sort().join(",") !== "bgm,bmsText,isFullLength" ||
-    typeof request.chartData.bmsText !== "string" || request.chartData.bmsText.length === 0 ||
+    Object.keys(request.chartData).sort().join(",") !== "bgm,chart,isFullLength" ||
     typeof request.chartData.isFullLength !== "boolean" ||
     request.config === null || typeof request.config !== "object" ||
     Object.keys(request.config).sort().join(",") !==
@@ -292,9 +292,11 @@ function copyLaunchRequest(
     return rejected(
       "evidence-required",
       "simulator.recipe.invalid-public-request",
-      "The launch recipe accepts only exact chart/config keys, one explicit isFullLength boolean independent of Live/Rehearsal and Manual/Auto, confirmed judgement offset, evidence-bounded Float32 visual settings and finite unit gains.",
+      "The launch recipe accepts only exact chart/config keys, one Garupa JSON object array, one explicit isFullLength boolean independent of Live/Rehearsal and Manual/Auto, confirmed judgement offset, evidence-bounded Float32 visual settings and finite unit gains.",
     );
   }
+  const copiedChart = copyAndFreezeSimulatorGarupaChart(request.chartData.chart);
+  if (copiedChart.status !== "ok") return fromEngineFailure(copiedChart);
   const bgm = request.chartData.bgm;
   if (bgm === null || typeof bgm !== "object" || !(bgm.bytes instanceof Uint8Array)) {
     return rejected(
@@ -305,7 +307,7 @@ function copyLaunchRequest(
   }
   return accepted(Object.freeze({
     chartData: Object.freeze({
-      bmsText: request.chartData.bmsText,
+      chart: copiedChart.value.chart,
       bgm: Object.freeze({ ...bgm, bytes: Uint8Array.from(bgm.bytes) }),
       isFullLength: request.chartData.isFullLength,
     }),

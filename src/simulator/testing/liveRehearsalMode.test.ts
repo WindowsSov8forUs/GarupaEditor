@@ -211,7 +211,10 @@ function request(
 ): SimulatorModuleLaunchRequest {
   return {
     chartData: {
-      bmsText: chartText,
+      chart: [
+        { type: "BPM", beat: 0, value: 120 },
+        { type: "Single", beat: 4, lane: 1, width: 1 },
+      ],
       bgm: {
         cue: "test-bgm",
         bytes: new Uint8Array([1, 2, 3]),

@@ -35,6 +35,7 @@ const baseLeaves = [
   ["audio", "runAudioTests.mjs", {}],
   ["particle", "runParticleTests.mjs", {}],
   ["host-runtime-public-gate", "runAutonomousModuleTests.mjs", {}],
+  ["garupa-json-direct-chart", "runPublicGarupaJsonChartTests.mjs", {}],
   ["public-life-profile", "runPublicLifeProfileTests.mjs", {}],
   ["live-rehearsal-four-mode", "runLiveRehearsalModeTests.mjs", {}],
   ["remaining-capability-consumption", "runC07EvidenceConsumptionTests.mjs", {}],
@@ -44,6 +45,7 @@ const quickLeaves = [
   ["chart-parsing", "runChartConstructionParsingTests.mjs", {}],
   ["clock", "runClockSchedulingTests.mjs", {}],
   ["auto", "runAutoLiveTests.mjs", {}],
+  ["garupa-json-direct-chart", "runPublicGarupaJsonChartTests.mjs", {}],
   ["public-life-profile", "runPublicLifeProfileTests.mjs", {}],
   ["live-rehearsal-four-mode", "runLiveRehearsalModeTests.mjs", {}],
 ];
@@ -68,7 +70,7 @@ try {
     compiledRoot,
   ], {});
   run("fixture-provenance", process.execPath, [join(testingRoot, "verifyTestingFixtures.mjs")], {});
-  run("current-static-audit", process.execPath, [join(testingRoot, "verifyEvidenceIntegrityStatic.mjs")], {});
+  run("current-static-boundaries", process.execPath, [join(testingRoot, "verifyEvidenceIntegrityStatic.mjs")], {});
   run("dependency-boundary", process.execPath, [join(testingRoot, "verifyDependencies.mjs")], {});
   for (const [id, runner, env, extraArgs = []] of leaves) {
     run(id, process.execPath, [join(testingRoot, runner), ...extraArgs], { ...sharedEnvironment, ...env });

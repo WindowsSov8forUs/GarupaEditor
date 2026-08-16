@@ -4,16 +4,9 @@
 
 ## 当前全局门
 
-Reverse schema-4账本冻结的是旧release `2b758eb...`的104个production文件，不能覆盖后续产品Score或四模式改动。当前candidate审计采用“Reverse基线 + exact-hash CS-V1 product delta + Live/Rehearsal delta + Public Life profile最新delta”；分层见`audit/current-product-scoring-delta.json`、`audit/current-live-rehearsal-delta.json`与`audit/current-public-life-profile-delta.json`。Public Life静态authority为Reverse `2cbea93d`，production candidate `05037d3`；pushed-detached验证对象`86ea073`已通过28叶clean-browser DAG（1,706,763ms），3 fresh×21 WebView2 digest保持`e968d7900bca1ea0e96e9864479207ed3af00db7aada31c1b70370d68b23e8e0`，Reverse release ledger为`f4e56f92`。四模式candidate `8e50eb0`已push；pushed-detached release `8e113f7`通过27叶（757,717ms）。新增Rehearsal controls/Life-zero/fixed±5 control state的3 fresh×21 WebView2 capture digest为`e968d7900bca1ea0e96e9864479207ed3af00db7aada31c1b70370d68b23e8e0`；Reverse release账本已push至`e055678f`。上一CS-V1基线`b4a3432`的26叶记录只保留为历史；CS-V1 ordinary WebView2使用production双decoder、单一particle→Note/HUD combined root、656-batch全谱及3 fresh×17 captures，锁定环境digest为`ff6e7584988dc0ad32074858e52beed608ed19b6623c6558402dcef84bdf396c`，不是原作framebuffer oracle。
+当前实现采用“Reverse行为证据 + 明确的产品合同 + 可执行回归测试”三层边界。Garupa JSON产品schema锁定`origin/main@a4ed4bba`，原作position合同锁定已推送Reverse `941b17b9`；CS-V1由[`scoring-contract.md`](./scoring-contract.md)授权。发布过程、耗时和逐文件声明只保留在本地忽略目录，不作为生产或测试输入。
 
-总重验aggregate gate已在R12有界关闭；`CAP-RENDER-ORDINARY-01`与`CAP-RENDER-PARTICLE-COMPOSITION-01`恢复`closed-portable`。这不移除request/resource/backend/owner各自的失败关闭，不升级Unity framebuffer、fixed-device exact、HAB original、excluded玩法或Stage 9。
-
-机器账本：
-
-- [`audit/current-capability-matrix.json`](./audit/current-capability-matrix.json)
-- [`audit/current-claim-ledger.json`](./audit/current-claim-ledger.json)
-- [`audit/current-production-integrity-review.json`](./audit/current-production-integrity-review.json)
-- [`audit/current-final-capability-attestation.json`](./audit/current-final-capability-attestation.json)
+总重验aggregate gate已在R12有界关闭。这不移除request/resource/backend/owner各自的失败关闭，不升级Unity framebuffer、fixed-device exact、HAB original、excluded玩法或Stage 9。
 
 | 门 | 状态 | 当前边界 |
 | --- | --- | --- |
@@ -25,15 +18,18 @@ Reverse schema-4账本冻结的是旧release `2b758eb...`的104个production文�
 | HAB original parity | `open-evidence-required` | UnityFS、natural owner/setter、Root_effect原clip及original physical frame不作等价声明 |
 | Live/Rehearsal × Manual/Auto | `closed-portable` | Reverse `6c0dfb76`四模式identity与Life-zero矩阵；Rehearsal Auto保持Practice+Demo而非Auto Live，CS-V1仍为产品计分合同 |
 | Public Life profile | `closed-portable` | Reverse `2cbea93d`：Public只携带显式`isFullLength`；simulator内部固定Life `1000/1000/2000`，non-full/full Miss/Bad分别为`-100/-50`与`-50/-25`；不从duration等字段推断 |
+| Garupa JSON direct chart adapter | `closed-portable` | Public精确接收已解析`chart`对象数组，按`GJP-D01`执行`floor(48*beat)`并直接建立冻结/登记的运行时图；不生成中间BMS，不接受caller构造结果 |
 | Rehearsal MoveTime/control scene | `closed-portable` | simulator-owned固定±5 opaque command、Float32 whole-engine恢复、后退timeline revision、目标BGM发布及真实current atlas Pixi controls限定范围；不声明Prefab/fixed-device exact |
 | Non-zero initial seek | `excluded` | IPS-P01–P05只保留历史产品扩展记录；本专项冻结删除`startMilliseconds`及deferred publication，不再作为最终能力 |
-| Button 07 | `closed-original-unreachable` | 10.1.4合法BMS不可生成值7，scene只拥有0..6；不发明第八lane，注入值7按内部不变量拒绝 |
+| SV / timingGroup | `ignored-product-extension` | exact校验、复制、冻结和计数，但当前不改变position、排序、Note图或调度；不声明原作等价 |
+| Unsupported ExGarupa Slide | `open-evidence-required` | Hidden端点、Flick/Directional头、非Single/Hidden中间节点、量化后重合及Directional尾宽度>3失败关闭 |
+| Button 07 | `closed-original-unreachable` | 10.1.4合法BMS不可生成值7；Garupa adapter也只接受完整落在0..6的span，不发明第八lane |
 | WebView2 decode/glyph/raster | `closed-portable` | 真实WebView2 151.0.4129.78执行production `BrowserPixiTextureDecoder`的PNG/FontFace/glyph/Pixi WebGL raster；跨runtime/GPU exact不泛化 |
 | Fixed-device physical exact | `open-objective-environment-blocked` | 锁定panel只有60 Hz、Android candidate缺失且stage-9=false、无校准光学/声学比较路径；四项客观阻断，不新增exact claim |
 | Character/card/deck skill、Fever、multiplayer | `excluded` | public和production依赖图不得引入 |
 | Main-program integration | `unauthorized-stage-9` | 不修改App/window/editor/Tauri/mobile入口 |
 
-状态词：`closed-portable`只表示当前证据和raw验收明确覆盖的portable合同；`closed-original-unreachable`表示原作合法输入不可达而非待补功能；`open-objective-environment-blocked`保持exact不声明且记录可复现环境阻断；`degraded-explicit`不等于原作parity；`open-device-exact`与`reopened-audit`仅保留为历史审计词，其余开放和排除状态按表中边界解释。
+状态词：`closed-portable`只表示当前证据和raw验收明确覆盖的portable合同；`ignored-product-extension`表示字段被严格拥有但经授权不产生runtime语义，不等于原作支持或no-op fallback；`closed-original-unreachable`表示原作合法输入不可达而非待补功能；`open-objective-environment-blocked`保持exact不声明且记录可复现环境阻断；`degraded-explicit`不等于原作parity，其余开放和排除状态按表中边界解释。
 
 ## Public合同
 
@@ -43,7 +39,7 @@ Reverse schema-4账本冻结的是旧release `2b758eb...`的104个production文�
 import { launchSimulatorModule } from "src/simulator";
 ```
 
-安装中立platform后，证据覆盖的四种`sessionMode × inputMode` request可获得仅含`closed` Promise的成功receipt；未安装时失败为`simulator.entry.platform-not-installed`。Public chart精确包含BMS、逐谱BGM与显式`isFullLength`，不接受caller-authored Life、member/card/deck、角色效果、Fever或多人数据，也不暴露engine、step、backend、provider、scene、replay factory或dispose。Score master、level、totalParameter、Auto coefficient、ruleset、评分单位数和quota均由exact-shape边界拒绝。模拟器从chart-owned判定图内部生成评分计划，并从内部证据化profile建立Life。
+安装中立platform后，证据覆盖的四种`sessionMode × inputMode` request可获得仅含`closed` Promise的成功receipt；未安装时失败为`simulator.entry.platform-not-installed`。Public chart精确包含已解析Garupa JSON `chart`对象数组、逐谱BGM与显式`isFullLength`，拒绝`bmsText`兼容入口；不接受caller-authored Life、member/card/deck、角色效果、Fever或多人数据，也不暴露engine、step、backend、provider、scene、replay factory或dispose。Score master、level、totalParameter、Auto coefficient、ruleset、评分单位数和quota均由exact-shape边界拒绝。模拟器从chart-owned判定图内部生成评分计划，并从内部证据化profile建立Life。
 
 **Skill音符不等于角色技能效果。** `GameNoteAdditionalType.Skill`只能在重新核验后表示chart-owned外观、命中SE和判定粒子，不得查询member/card或触发角色加分、Heal、Guard、NeverDie或判定强化。
 
@@ -60,7 +56,6 @@ src/simulator/
 ├─ engine/      # chart、state、judgement、Note及command producers
 ├─ backends/    # Recording/Pixi/WebAudio/particle/resource adapters
 ├─ resources/   # immutable shared store与selector
-├─ audit/       # committed capability/claim/integrity ledgers
 └─ testing/     # 隔离测试与manifested fixture
 ```
 
@@ -80,8 +75,8 @@ Score HUD继续保留Reverse确认的NineSlice轴序、depth、UIPanel clip、Bi
 
 流程见[`evidence-workflow.md`](./evidence-workflow.md)。只消费已verify、commit、push的Reverse证据。10.1.3或其他来源必须先建立逐claim等价证明、适用域和反例检查。旧调查包可提供待重新核验的原始事实，但其`closed`、`productionAuthorization`或总体closure字段不是本轮授权。
 
-Reverse普通渲染静态/HUD提交`6908ddfa`和最终账本`b5fb3dca`继续约束未改变的原作表现；其Garupa target `2b758eb...`仅作为历史基线。CS-V1变更由tracked产品规范、逐文件SHA-256 delta、独立公式测试、full-chart Auto和当前WebView2观察约束。HAB original、fixed-device exact、excluded和Stage 9边界不因产品Score升级。
+Reverse普通渲染静态/HUD提交`6908ddfa`和最终账本`b5fb3dca`继续约束未改变的原作表现；其Garupa target `2b758eb...`仅作为历史基线。CS-V1变更由tracked产品规范、独立公式测试、full-chart Auto和当前WebView2观察约束。HAB original、fixed-device exact、excluded和Stage 9边界不因产品Score升级。
 
-日常开发默认运行`npm.cmd run simulator:test`（或`simulator:test:quick`）：测试树只编译一次，约20秒覆盖unit/contract/static、chart parsing、clock与Auto，不执行耗时full-chart actual-Pixi/particle/HAB或WebView2，因此不能作为release证据。发布级入口仍为`npm.cmd run simulator:test:total-revalidation`，保留完整26叶及3-fresh ordinary WebView2双decoder；重复运行复用ignored Cargo target，`simulator:test:total-revalidation:clean`可强制冷编译。完整说明见[`testing/README.md`](./testing/README.md)。两级均不运行Vite/Tauri，也不声称原作framebuffer或物理输出等价。
+日常开发默认运行`npm.cmd run simulator:test`（或`simulator:test:quick`）：测试树只编译一次，以10个development groups覆盖unit/contract/static、Garupa direct chart、chart parsing、clock与Auto，不执行耗时full-chart actual-Pixi/particle/HAB或WebView2，因此不能作为release证据。发布级入口仍为`npm.cmd run simulator:test:total-revalidation`，当前完整DAG为29 semantic leaves及3-fresh ordinary WebView2双decoder；重复运行复用ignored Cargo target，`simulator:test:total-revalidation:clean`可强制冷编译。完整说明见[`testing/README.md`](./testing/README.md)。两级均不运行Vite/Tauri，也不声称原作framebuffer或物理输出等价。
 
 `mainProgramIntegrationAuthorization=false`。

@@ -200,19 +200,29 @@ function testRecipeOwnership(): void {
   const source = request();
   const recipe = requireAccepted(createSimulatorSessionRecipe(source));
   source.chartData.bgm.bytes.fill(0);
+  (source.chartData.chart[0] as { value: number }).value = 999;
   (source.chartData as { isFullLength: boolean }).isFullLength = true;
   (source.config.audio as { masterGain: number }).masterGain = 0;
   assert.deepEqual([...recipe.request.chartData.bgm.bytes], [1, 2, 3, 4]);
+  assert.equal((recipe.request.chartData.chart[0] as { readonly value: number }).value, 120);
+  assert.ok(Object.isFrozen(recipe.request.chartData.chart));
+  assert.ok(Object.isFrozen(recipe.request.chartData.chart[0]));
   assert.equal(recipe.request.chartData.isFullLength, false);
   assert.equal(recipe.request.config.audio.masterGain, 1);
   assert.ok(Object.isFrozen(recipe));
   assert.ok(Object.isFrozen(recipe.request));
   assert.ok(Object.isFrozen(recipe.request.chartData.bgm));
-  assert.equal(recipe.schemaVersion, 2);
+  assert.equal(recipe.schemaVersion, 3);
   assert.equal(recipe.request.chartData.isFullLength, false);
 
   const extra = { ...request(), extra: true } as unknown as SimulatorModuleLaunchRequest;
   assert.equal(createSimulatorSessionRecipe(extra).status, "rejected");
+  const legacyBms: any = request();
+  legacyBms.chartData = { bmsText: "#BPM 120", bgm: legacyBms.chartData.bgm, isFullLength: false };
+  assert.equal(createSimulatorSessionRecipe(legacyBms).status, "rejected");
+  const malformedChart: any = request();
+  malformedChart.chartData.chart[0].extra = true;
+  assert.equal(createSimulatorSessionRecipe(malformedChart).status, "rejected");
   const legacyScore: any = request();
   legacyScore.chartData.gameplay = { score: { level: 27 } };
   assert.equal(createSimulatorSessionRecipe(legacyScore).status, "rejected");
@@ -351,7 +361,15 @@ async function testProductionCompositionFailureBoundary(): Promise<void> {
       assert.equal(invalidLaunch.failure.capability, "simulator.recipe.invalid-public-request");
     }
   }
-  assert.equal(resourceReads, 0, "caller-authored Score/Life and invalid full classification fail before shared resource read");
+  const malformedChartRequest: any = request();
+  malformedChartRequest.chartData.chart[1].lane = 1.5;
+  const malformedChartModule = requireAccepted(createProductionAutonomousSimulatorModule(platform));
+  const malformedChartLaunch = await malformedChartModule.launch(malformedChartRequest);
+  assert.equal(malformedChartLaunch.status, "rejected");
+  if (malformedChartLaunch.status === "rejected") {
+    assert.equal(malformedChartLaunch.failure.capability, "simulator.garupa-json.invalid-chart");
+  }
+  assert.equal(resourceReads, 0, "caller-authored legacy fields, invalid full classification and malformed Garupa JSON fail before shared resource read");
   assert.equal(mounts, 0);
 
   const missingResourceModule = requireAccepted(createProductionAutonomousSimulatorModule(platform));
@@ -454,6 +472,9 @@ async function testAutonomousLaunchAndClose(): Promise<void> {
     habahiroOriginalParity: "open-evidence-required",
     liveRehearsalFourModeMatrix: "closed-portable",
     rehearsalMoveTimeControls: "closed-portable",
+    garupaJsonDirectChartAdapter: "closed-portable",
+    garupaJsonSvAndTimingGroup: "ignored-product-extension",
+    unsupportedExGarupaSlide: "open-evidence-required",
     nonzeroInitialPracticeSeek: "excluded",
     button07SceneMapping: "closed-original-unreachable",
     browserDecodeRaster: "closed-portable",
@@ -612,7 +633,10 @@ function factory(session: SimulatorOwnedSession): SimulatorOwnedSessionFactory {
 function request(): SimulatorModuleLaunchRequest {
   return {
     chartData: {
-      bmsText: "#BPM 120\n#00111:01\n",
+      chart: [
+        { type: "BPM", beat: 0, value: 120 },
+        { type: "Single", beat: 4, lane: 1, width: 1 },
+      ],
       bgm: {
         cue: "host-cue",
         bytes: new Uint8Array([1, 2, 3, 4]),

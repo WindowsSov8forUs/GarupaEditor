@@ -89,7 +89,7 @@ function testPublicExactShape(): void {
 function testRecipeOwnership(): void {
   const source = request(true);
   const recipe = requireAccepted(createSimulatorSessionRecipe(source));
-  assert.equal(recipe.schemaVersion, 2);
+  assert.equal(recipe.schemaVersion, 3);
   assert.equal(recipe.request.chartData.isFullLength, true);
   assert.equal(Object.isFrozen(recipe), true);
   assert.equal(Object.isFrozen(recipe.request), true);
@@ -123,7 +123,10 @@ function request(
 ): SimulatorModuleLaunchRequest {
   return {
     chartData: {
-      bmsText: "#BPM 120\n#00111:01\n",
+      chart: [
+        { type: "BPM", beat: 0, value: 120 },
+        { type: "Single", beat: 4, lane: 1, width: 1 },
+      ],
       bgm: {
         cue: "profile-bgm",
         bytes: new Uint8Array([1, 2, 3, 4]),

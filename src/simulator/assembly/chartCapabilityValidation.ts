@@ -16,7 +16,7 @@ export function validateConstructedChartCapabilities(
     return rejected(
       "launch-failed",
       "simulator.composition.impossible-button-07-invariant",
-      "Current legal 10.1.4 BMS construction cannot produce enum value 7, and the original scene owns only full ButtonType 0..6. A post-construction value-7 injection is an internal graph invariant violation, not an open eighth-lane capability.",
+      "The original scene owns only full ButtonType 0..6: legal 10.1.4 BMS construction cannot produce value 7 and the product Garupa JSON adapter rejects every lane span outside 0..6. A post-construction value-7 injection is an internal graph invariant violation, not an open eighth-lane capability.",
     );
   }
   return accepted(undefined);
