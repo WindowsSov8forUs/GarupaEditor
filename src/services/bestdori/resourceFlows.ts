@@ -1,4 +1,7 @@
-import { convertCurrentChartJsonToBestdoriV2 } from "../../chartFormatConverter";
+import {
+  convertGarupaChartJsonToBestdoriV2,
+  type GarupaChartJson,
+} from "../../chart";
 import type { ChartMetadata } from "../../chartCore";
 import {
   BESTDORI_COMMON_TAP_SKILL_FILE_NAME,
@@ -256,7 +259,7 @@ export type PublishBestdoriCommunityChartStage =
   | "posting";
 
 export interface PublishBestdoriCommunityChartFlowParams {
-  chartJson: unknown;
+  garupaChartJson: GarupaChartJson;
   metadata: ChartMetadata;
   audioSourceUrl?: string | null;
   audioFileName?: string | null;
@@ -359,11 +362,11 @@ function extractMimeTypeFromDataUrl(url: string): string | null {
   return mimeType.length > 0 ? mimeType : null;
 }
 
-function hasSvItems(chartJson: unknown): boolean {
-  if (!Array.isArray(chartJson)) {
+function hasSvItems(garupaChartJson: GarupaChartJson): boolean {
+  if (!Array.isArray(garupaChartJson)) {
     return false;
   }
-  return chartJson.some((item) => {
+  return garupaChartJson.some((item) => {
     if (!item || typeof item !== "object") {
       return false;
     }
@@ -423,12 +426,12 @@ export async function publishBestdoriCommunityChartFlow(
   const level = normalizePositiveIntegerOrNull(metadata.difficultyLevel) ?? 1;
   const title = trimNonEmptyStringOrNull(metadata.title) ?? "Untitled Chart";
   const artists = trimNonEmptyStringOrNull(metadata.artist) ?? "Unknown Artist";
-  const chartSource = params.chartJson;
-  const svDropped = hasSvItems(chartSource);
+  const garupaChartJson = params.garupaChartJson;
+  const svDropped = hasSvItems(garupaChartJson);
 
   params.onStage?.("converting-chart");
-  const bestdoriChart = convertCurrentChartJsonToBestdoriV2(chartSource);
-  if (!Array.isArray(bestdoriChart) || bestdoriChart.length <= 0) {
+  const bestdoriV2ChartJson = convertGarupaChartJsonToBestdoriV2(garupaChartJson);
+  if (!Array.isArray(bestdoriV2ChartJson) || bestdoriV2ChartJson.length <= 0) {
     throw new Error("converted bestdori chart is empty");
   }
 
@@ -490,7 +493,7 @@ export async function publishBestdoriCommunityChartFlow(
     artists,
     diff,
     level,
-    chart: bestdoriChart,
+    chart: bestdoriV2ChartJson,
     content,
     song,
     tags: normalizedTags,
@@ -536,7 +539,7 @@ const NOTGARUPA_LEVEL_URL_ROOT = `${NOTGARUPA_SERVER_ROOT}/sonolus/levels`;
 export type UploadSonolusLevelFlowStage = "converting-chart" | "resolving-audio" | "resolving-cover" | "uploading";
 
 export interface UploadSonolusLevelFlowParams {
-  chartJson: unknown;
+  garupaChartJson: GarupaChartJson;
   metadata: ChartMetadata;
   audioSourceUrl?: string | null;
   audioFileName?: string | null;
@@ -568,7 +571,7 @@ function buildSonolusChartUrl(uid: string): string {
 export type UploadNotGarupaLevelFlowStage = "converting-chart" | "resolving-audio" | "resolving-cover" | "uploading";
 
 export interface UploadNotGarupaLevelFlowParams {
-  chartJson: unknown;
+  garupaChartJson: GarupaChartJson;
   metadata: ChartMetadata;
   audioSourceUrl?: string | null;
   audioFileName?: string | null;
@@ -636,15 +639,15 @@ export async function uploadSonolusLevelFlow(
   params: UploadSonolusLevelFlowParams,
 ): Promise<UploadSonolusLevelFlowResult> {
   const metadata = params.metadata;
-  const chartSource = params.chartJson;
-  const svDropped = hasSvItems(chartSource);
+  const garupaChartJson = params.garupaChartJson;
+  const svDropped = hasSvItems(garupaChartJson);
 
   params.onStage?.("converting-chart");
-  const bestdoriChart = convertCurrentChartJsonToBestdoriV2(chartSource);
-  if (!Array.isArray(bestdoriChart) || bestdoriChart.length <= 0) {
+  const bestdoriV2ChartJson = convertGarupaChartJsonToBestdoriV2(garupaChartJson);
+  if (!Array.isArray(bestdoriV2ChartJson) || bestdoriV2ChartJson.length <= 0) {
     throw new Error("converted bestdori chart is empty");
   }
-  const chartJsonText = JSON.stringify(bestdoriChart);
+  const bestdoriV2ChartJsonText = JSON.stringify(bestdoriV2ChartJson);
 
   const title = trimNonEmptyStringOrNull(metadata.title) ?? "GarupaEditor Chart";
   const titleFileStem = sanitizeFileNameSegment(title) || "chart";
@@ -663,7 +666,7 @@ export async function uploadSonolusLevelFlow(
   params.onStage?.("uploading");
   const uid = await uploadSonolusLevel({
     title,
-    chart: chartJsonText,
+    chart: bestdoriV2ChartJsonText,
     bgmFileName: audioSourceFile.fileName,
     bgmFileBytes: audioSourceFile.fileBytes,
     bgmMimeType: audioSourceFile.mimeType,
@@ -684,13 +687,13 @@ export async function uploadNotGarupaLevelFlow(
   params: UploadNotGarupaLevelFlowParams,
 ): Promise<UploadNotGarupaLevelFlowResult> {
   const metadata = params.metadata;
-  const chartSource = params.chartJson;
+  const garupaChartJson = params.garupaChartJson;
 
   params.onStage?.("converting-chart");
-  if (!Array.isArray(chartSource) || chartSource.length <= 0) {
+  if (!Array.isArray(garupaChartJson) || garupaChartJson.length <= 0) {
     throw new Error("garupa chart is empty");
   }
-  const chartJsonText = JSON.stringify(chartSource);
+  const garupaChartJsonText = JSON.stringify(garupaChartJson);
 
   const title = trimNonEmptyStringOrNull(metadata.title) ?? "GarupaEditor Chart";
   const artists = trimNonEmptyStringOrNull(metadata.artist) ?? "Unknown Artist";
@@ -727,7 +730,7 @@ export async function uploadNotGarupaLevelFlow(
   params.onStage?.("uploading");
   const uid = await uploadNotGarupaLevel({
     title,
-    chart: chartJsonText,
+    chart: garupaChartJsonText,
     chartFileName: "chart.json",
     bgmFileName: audioSourceFile.fileName,
     bgmFileBytes: audioSourceFile.fileBytes,

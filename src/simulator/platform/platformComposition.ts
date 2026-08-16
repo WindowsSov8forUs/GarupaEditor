@@ -60,7 +60,7 @@ import type {
 import { installSimulatorModuleLauncher } from "../runtime/moduleEntryBinding";
 import { createSimulatorSceneLayout } from "../scene/simulatorSceneLayout";
 import { validateConstructedChartCapabilities } from "../assembly/chartCapabilityValidation";
-import { constructChartFromSimulatorGarupaJson } from "../assembly/garupaJsonChartConstruction";
+import { constructChartFromGarupaChartJson } from "../assembly/garupaChartConstruction";
 import { assembleSimulatorResources } from "../assembly/resourceAssembly";
 import {
   RecipeOwnedSessionFactory,
@@ -137,7 +137,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
         TOTAL_REVALIDATION_BOUNDARY,
       );
     }
-    const chart = constructChartFromSimulatorGarupaJson(
+    const chart = constructChartFromGarupaChartJson(
       recipe.request.chartData.chart,
     );
     if (chart.status !== "ok") return fromEvidence(chart);

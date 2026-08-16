@@ -1,3 +1,10 @@
+import type {
+  GarupaChartJson,
+  GarupaChartJsonDirectionalNote,
+  GarupaChartJsonSimpleNote,
+  GarupaChartJsonSlideConnection,
+  GarupaChartJsonSlideItem,
+} from "../../chart";
 import { freezeChartConstructionResult } from "../engine/chart/immutability";
 import { registerMultiRangeSourceIdentity } from "../engine/chart/multiRangeSources";
 import {
@@ -18,13 +25,6 @@ import {
 } from "../engine/chart/types";
 import { evidenceRequired, ok, type SimulatorResult } from "../engine/evidence";
 import { registerConstructedChartRuntimeMetadata } from "../engine/runtime/chartRuntimeMetadata";
-import type {
-  SimulatorGarupaChartDirectionalNote,
-  SimulatorGarupaChartJson,
-  SimulatorGarupaChartSimpleNote,
-  SimulatorGarupaChartSlideConnection,
-  SimulatorGarupaChartSlideItem,
-} from "../public/contracts";
 
 export const GARUPA_JSON_POSITION_UNITS_PER_BEAT = 48;
 const POSITION_UNITS_PER_BAR = 192;
@@ -32,7 +32,7 @@ const MAX_POSITION = 0x7fffffff;
 const LANE_COUNT = 7;
 const CC_BY_LANE: readonly number[] = [16, 11, 12, 13, 14, 15, 18];
 
-type RhythmConnection = SimulatorGarupaChartSimpleNote | SimulatorGarupaChartDirectionalNote;
+type RhythmConnection = GarupaChartJsonSimpleNote | GarupaChartJsonDirectionalNote;
 
 interface PositionedRecord {
   readonly absolutePos: number;
@@ -62,8 +62,8 @@ interface NoteKinds {
   readonly after: AfterNoteTypeValue;
 }
 
-export function constructChartFromSimulatorGarupaJson(
-  chart: SimulatorGarupaChartJson,
+export function constructChartFromGarupaChartJson(
+  chart: GarupaChartJson,
 ): SimulatorResult<ChartConstructionResult> {
   const bpmItems: Array<{ readonly sourceOrder: number; readonly absolutePos: number; readonly value: number; readonly text: string }> = [];
   for (let sourceOrder = 0; sourceOrder < chart.length; sourceOrder += 1) {
@@ -210,7 +210,7 @@ export function garupaBeatToAbsolutePosition(beat: number): SimulatorResult<numb
 }
 
 function createSlide(
-  slide: SimulatorGarupaChartSlideItem,
+  slide: GarupaChartJsonSlideItem,
   sourceOrder: number,
   slideOrdinal: number,
   firstIndex: number,
@@ -427,11 +427,11 @@ function positionFieldsFromAbsolute(absolutePos: number): PositionFields {
   });
 }
 
-function rhythmSpan(connection: SimulatorGarupaChartSimpleNote): SimulatorResult<ButtonSpan> {
+function rhythmSpan(connection: GarupaChartJsonSimpleNote): SimulatorResult<ButtonSpan> {
   return spanFromStart(connection.lane, connection.width);
 }
 
-function directionalSpan(connection: SimulatorGarupaChartDirectionalNote): SimulatorResult<ButtonSpan> {
+function directionalSpan(connection: GarupaChartJsonDirectionalNote): SimulatorResult<ButtonSpan> {
   const start = connection.direction === "Left"
     ? connection.lane - connection.width + 1
     : connection.lane;
@@ -455,7 +455,7 @@ function spanFromStart(start: number, width: number): SimulatorResult<ButtonSpan
   }));
 }
 
-function requireDirectionalSpan(connection: SimulatorGarupaChartDirectionalNote): ButtonSpan {
+function requireDirectionalSpan(connection: GarupaChartJsonDirectionalNote): ButtonSpan {
   const span = directionalSpan(connection);
   if (span.status !== "ok") {
     throw new Error("validated directional span escaped direct Garupa chart construction");
@@ -526,7 +526,7 @@ function slideTerminalKinds(
 }
 
 function slideRootAfterType(
-  tail: SimulatorGarupaChartSlideConnection,
+  tail: GarupaChartJsonSlideConnection,
   multipleDirectional: boolean,
 ): AfterNoteTypeValue {
   if (tail.type === "Flick") return AfterNoteType.SlideFlickEnd;

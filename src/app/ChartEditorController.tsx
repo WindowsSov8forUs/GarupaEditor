@@ -3025,7 +3025,7 @@ function ChartEditorController() {
   });
 
   const {
-    exportJson,
+    garupaChartJsonText,
     undoLastNote,
     redoLastNote,
     clearAllNotes,
@@ -6013,7 +6013,7 @@ function ChartEditorController() {
         downloadJson,
         openStaticRenderWindow,
         openSimulatorWindow,
-        exportJson,
+        garupaChartJsonText,
         isImportJsonModalOpen,
         importJsonModalLevel,
         importJsonText,

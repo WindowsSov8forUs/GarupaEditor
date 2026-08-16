@@ -126,51 +126,6 @@ interface ChartSkinInfo {
   judgeSkinServer?: string;
 }
 
-export type ChartJsonDirection = "Left" | "Right";
-type ChartJsonSimpleType = "Single" | "Flick" | "Skill" | "Hidden";
-
-interface ChartJsonSimpleNote {
-  type: ChartJsonSimpleType;
-  beat: number;
-  lane: number;
-  width: number;
-  timingGroup?: ChartTimingGroupId;
-}
-
-interface ChartJsonDirectionalNote {
-  type: "Directional";
-  beat: number;
-  lane: number;
-  width: number;
-  direction: ChartJsonDirection;
-  timingGroup?: ChartTimingGroupId;
-}
-
-export type ChartJsonSlideConnection = ChartJsonSimpleNote | ChartJsonDirectionalNote;
-
-export interface ChartJsonSlideItem {
-  type: "Slide";
-  connections: ChartJsonSlideConnection[];
-  timingGroup?: ChartTimingGroupId;
-}
-
-export interface ChartJsonBpmItem {
-  type: "BPM";
-  beat: number;
-  value: number;
-}
-
-export interface ChartJsonSvItem {
-  type: "SV";
-  beat: number;
-  value: number;
-  timingGroup?: ChartTimingGroupId;
-}
-
-export type ChartJsonTopLevelNote = Exclude<ChartJsonSimpleNote, { type: "Hidden" }> | ChartJsonDirectionalNote;
-type ChartJsonItem = ChartJsonTopLevelNote | ChartJsonSlideItem | ChartJsonBpmItem | ChartJsonSvItem;
-export type ChartJson = ChartJsonItem[];
-
 export interface WindowPreset {
   id: string;
   label: string;

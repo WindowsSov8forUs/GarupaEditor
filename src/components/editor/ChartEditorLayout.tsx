@@ -43,7 +43,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     downloadJson,
     openStaticRenderWindow,
     openSimulatorWindow,
-    exportJson,
+    garupaChartJsonText,
     isImportJsonModalOpen,
     importJsonModalLevel,
     importJsonText,
@@ -2149,7 +2149,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
 
       <ExportJsonModal
         open={isExportJsonModalOpen}
-        jsonText={exportJson}
+        jsonText={garupaChartJsonText}
         uploadCommunityPostContent={uploadCommunityPostContent}
         uploadCommunityPostTags={uploadCommunityPostTags}
         onClose={closeExportJsonModal}

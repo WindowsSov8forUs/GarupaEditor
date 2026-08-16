@@ -1,10 +1,11 @@
 declare const require: (id: string) => any;
 const assert = require("node:assert/strict");
+import type { GarupaChartJson } from "../../chart";
 import {
-  constructChartFromSimulatorGarupaJson,
+  constructChartFromGarupaChartJson,
   garupaBeatToAbsolutePosition,
-} from "../assembly/garupaJsonChartConstruction";
-import { copyAndFreezeSimulatorGarupaChart } from "../assembly/garupaJsonContract";
+} from "../assembly/garupaChartConstruction";
+import { copyAndFreezeGarupaChartJson } from "../assembly/garupaChartContract";
 import { createNoteBatchInformationList } from "../engine/chart/construction";
 import {
   AfterNoteType,
@@ -19,7 +20,6 @@ import { createSimulatorModeIdentity } from "../engine/data/inGameCalculatedData
 import { createRecordingSimulatorBackends } from "../backends/recordingBackend";
 import { createSimulatorEngine } from "../host/createSimulatorEngine";
 import { createSimulatorModuleCapabilitySummary } from "../public/capabilities";
-import type { SimulatorGarupaChartJson } from "../public/contracts";
 
 function main(): void {
   testContractCopyAndExactShape();
@@ -48,7 +48,7 @@ function testContractCopyAndExactShape(): void {
       ],
     },
   ];
-  const copied = requireOk(copyAndFreezeSimulatorGarupaChart(source));
+  const copied = requireOk(copyAndFreezeGarupaChartJson(source));
   assert.equal(copied.extensions.svItemCount, 1);
   assert.equal(copied.extensions.timingGroupFieldCount, 4);
   assert.ok(Object.isFrozen(copied.chart));
@@ -70,7 +70,7 @@ function testContractCopyAndExactShape(): void {
     [{ type: "Directional", beat: 1, lane: 1, width: 1, direction: "Up" }],
     [{ type: "Hidden", beat: 1, lane: 1, width: 1 }],
   ]) {
-    assert.equal(copyAndFreezeSimulatorGarupaChart(invalid).status, "evidence-required");
+    assert.equal(copyAndFreezeGarupaChartJson(invalid).status, "evidence-required");
   }
 }
 
@@ -112,7 +112,7 @@ function testDirectConstruction(): void {
       ],
     },
   ]);
-  const result = requireOk(constructChartFromSimulatorGarupaJson(chart));
+  const result = requireOk(constructChartFromGarupaChartJson(chart));
   assert.equal(result.startBpm, 120);
   assert.equal(result.startBpmString, "120");
   assert.deepEqual(result.bpmChangeRealValueList, [150]);
@@ -122,7 +122,7 @@ function testDirectConstruction(): void {
   assert.ok(Object.isFrozen(result));
   assert.ok(Object.isFrozen(result.noteBatches));
   assert.ok(getConstructedChartRuntimeMetadata(result));
-  const fresh = requireOk(constructChartFromSimulatorGarupaJson(chart));
+  const fresh = requireOk(constructChartFromGarupaChartJson(chart));
   assert.notEqual(fresh, result);
   assert.notEqual(getConstructedChartRuntimeMetadata(fresh), undefined);
   const clone = structuredClone(result);
@@ -184,18 +184,18 @@ function testDirectConstruction(): void {
 }
 
 function testIgnoredExtensionsAndAllowedSlideMatrix(): void {
-  const plain = requireOk(constructChartFromSimulatorGarupaJson(parse([
+  const plain = requireOk(constructChartFromGarupaChartJson(parse([
     { type: "BPM", beat: 0, value: 120 },
     { type: "Single", beat: 1, lane: 1, width: 1 },
   ])));
-  const extended = requireOk(constructChartFromSimulatorGarupaJson(parse([
+  const extended = requireOk(constructChartFromGarupaChartJson(parse([
     { type: "BPM", beat: 0, value: 120 },
     { type: "SV", beat: 0.5, value: 2, timingGroup: "#7" },
     { type: "Single", beat: 1, lane: 1, width: 1, timingGroup: "#7" },
   ])));
   assert.deepEqual(commonProjection(extended), commonProjection(plain));
 
-  const allowed = requireOk(constructChartFromSimulatorGarupaJson(parse([
+  const allowed = requireOk(constructChartFromGarupaChartJson(parse([
     { type: "BPM", beat: 0, value: 120 },
     {
       type: "Slide",
@@ -242,14 +242,14 @@ function testFailureClosure(): void {
     [{ type: "BPM", beat: 0, value: 120 }, { type: "Slide", connections: [{ type: "Single", beat: 1, lane: 1, width: 1 }, { type: "Directional", beat: 2, lane: 3, width: 4, direction: "Right" }] }],
   ];
   for (const candidate of cases) {
-    const copied = copyAndFreezeSimulatorGarupaChart(candidate);
+    const copied = copyAndFreezeGarupaChartJson(candidate);
     if (copied.status !== "ok") continue;
-    assert.equal(constructChartFromSimulatorGarupaJson(copied.value.chart).status, "evidence-required");
+    assert.equal(constructChartFromGarupaChartJson(copied.value.chart).status, "evidence-required");
   }
 }
 
 function testCanonicalBmsDifferentialProjection(): void {
-  const direct = requireOk(constructChartFromSimulatorGarupaJson(parse([
+  const direct = requireOk(constructChartFromGarupaChartJson(parse([
     { type: "BPM", beat: 0, value: 120 },
     { type: "Single", beat: 4, lane: 1, width: 1 },
     { type: "Flick", beat: 4, lane: 2, width: 1 },
@@ -259,7 +259,7 @@ function testCanonicalBmsDifferentialProjection(): void {
   }));
   assert.deepEqual(commonProjection(direct), commonProjection(bms));
 
-  const directSlide = requireOk(constructChartFromSimulatorGarupaJson(parse([
+  const directSlide = requireOk(constructChartFromGarupaChartJson(parse([
     { type: "BPM", beat: 0, value: 120 },
     { type: "Slide", connections: [
       { type: "Single", beat: 0, lane: 1, width: 1 },
@@ -273,7 +273,7 @@ function testCanonicalBmsDifferentialProjection(): void {
 }
 
 function testAutoAndManualEngineOutcomes(): void {
-  const chart = requireOk(constructChartFromSimulatorGarupaJson(parse([
+  const chart = requireOk(constructChartFromGarupaChartJson(parse([
     { type: "BPM", beat: 0, value: 120 },
     { type: "Single", beat: 1, lane: 3, width: 1 },
   ])));
@@ -345,8 +345,8 @@ function commonProjection(chart: ChartConstructionResult): unknown {
     }));
 }
 
-function parse(input: unknown): SimulatorGarupaChartJson {
-  return requireOk(copyAndFreezeSimulatorGarupaChart(input)).chart;
+function parse(input: unknown): GarupaChartJson {
+  return requireOk(copyAndFreezeGarupaChartJson(input)).chart;
 }
 
 function requireOk<T>(result: { readonly status: "ok"; readonly value: T } | { readonly status: "evidence-required"; readonly boundary: string }): T {

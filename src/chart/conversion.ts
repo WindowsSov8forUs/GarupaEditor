@@ -1,96 +1,27 @@
-import type { ChartJson, ChartJsonDirection } from "./chartCore";
+import type {
+  BestdoriV2ChartJson,
+  BestdoriV2ChartJsonBpmItem,
+  BestdoriV2ChartJsonDirectionalNote,
+  BestdoriV2ChartJsonItem,
+  BestdoriV2ChartJsonSingleNote,
+  BestdoriV2ChartJsonSlideConnection,
+} from "./bestdori-v2";
+import type {
+  GarupaChartJson,
+  GarupaChartJsonBpmItem,
+  GarupaChartJsonDirection,
+  GarupaChartJsonDirectionalNote,
+  GarupaChartJsonItem,
+  GarupaChartJsonSimpleNote,
+  GarupaChartJsonSimpleNoteType,
+  GarupaChartJsonSlideConnection,
+  GarupaChartJsonSlideItem,
+  GarupaChartJsonTopLevelNote,
+} from "./garupa";
 
-type CurrentSimpleType = "Single" | "Flick" | "Skill" | "Hidden";
-
-type CurrentSimpleNote = {
-  type: CurrentSimpleType;
-  beat: number;
-  lane: number;
-  width: number;
-  timingGroup?: string;
-};
-
-type CurrentDirectionalNote = {
-  type: "Directional";
-  beat: number;
-  lane: number;
-  width: number;
-  direction: ChartJsonDirection;
-  timingGroup?: string;
-};
-
-type CurrentSlideConnection = CurrentSimpleNote | CurrentDirectionalNote;
-
-type CurrentSlideItem = {
-  type: "Slide";
-  connections: CurrentSlideConnection[];
-  timingGroup?: string;
-};
-
-type CurrentBpmItem = {
-  type: "BPM";
-  beat: number;
-  value: number;
-};
-
-type CurrentSvItem = {
-  type: "SV";
-  beat: number;
-  value: number;
-  timingGroup?: string;
-};
-
-type CurrentTopLevelNote = Exclude<CurrentSimpleNote, { type: "Hidden" }> | CurrentDirectionalNote;
-
-type CurrentChartItem = CurrentBpmItem | CurrentSvItem | CurrentTopLevelNote | CurrentSlideItem;
-export type CurrentChartJson = CurrentChartItem[];
-
-type BestdoriV2BpmItem = {
-  type: "BPM";
-  beat: number;
-  bpm: number;
-};
-
-type BestdoriV2SingleItem = {
-  type: "Single";
-  beat: number;
-  lane: number;
-  flick?: boolean;
-  skill?: boolean;
-};
-
-type BestdoriV2DirectionalItem = {
-  type: "Directional";
-  beat: number;
-  lane: number;
-  width: number;
-  direction: ChartJsonDirection;
-};
-
-type BestdoriV2SlideConnection = {
-  beat: number;
-  lane: number;
-  hidden?: boolean;
-  flick?: boolean;
-  skill?: boolean;
-};
-
-type BestdoriV2SlideItem = {
-  type: "Slide";
-  connections: BestdoriV2SlideConnection[];
-};
-
-type BestdoriV2ChartItem =
-  | BestdoriV2BpmItem
-  | BestdoriV2SingleItem
-  | BestdoriV2DirectionalItem
-  | BestdoriV2SlideItem;
-
-export type BestdoriV2Chart = BestdoriV2ChartItem[];
-
-type ChartFormatConvertOptions = {
-  normalizeBpmAtZero?: boolean;
-};
+export interface ChartFormatConversionOptions {
+  readonly normalizeBpmAtZero?: boolean;
+}
 
 const BEAT_ZERO_EPSILON = 1e-9;
 
@@ -110,7 +41,7 @@ function parseBooleanFlag(value: unknown): boolean {
   return value === true;
 }
 
-function parseDirection(value: unknown, label: string): ChartJsonDirection {
+function parseDirection(value: unknown, label: string): GarupaChartJsonDirection {
   if (value === "Left" || value === "Right") {
     return value;
   }
@@ -149,24 +80,24 @@ function shiftAndClampBeat(beat: number, offset: number): number {
   return shifted <= BEAT_ZERO_EPSILON ? 0 : shifted;
 }
 
-function findMinBpmBeatFromCurrent(items: CurrentChartJson): number {
-  const bpmItems = items.filter((item): item is CurrentBpmItem => item.type === "BPM");
+function findMinBpmBeatFromGarupa(items: GarupaChartJson): number {
+  const bpmItems = items.filter((item): item is GarupaChartJsonBpmItem => item.type === "BPM");
   if (bpmItems.length === 0) {
-    throw new Error("Current chart JSON must include at least one BPM item.");
+    throw new Error("Garupa chart JSON must include at least one BPM item.");
   }
   return bpmItems.reduce((minBeat, item) => Math.min(minBeat, item.beat), bpmItems[0].beat);
 }
 
-function findMinBpmBeatFromBestdori(items: BestdoriV2Chart): number {
-  const bpmItems = items.filter((item): item is BestdoriV2BpmItem => item.type === "BPM");
+function findMinBpmBeatFromBestdori(items: BestdoriV2ChartJson): number {
+  const bpmItems = items.filter((item): item is BestdoriV2ChartJsonBpmItem => item.type === "BPM");
   if (bpmItems.length === 0) {
     throw new Error("Bestdori V2 chart must include at least one BPM item.");
   }
   return bpmItems.reduce((minBeat, item) => Math.min(minBeat, item.beat), bpmItems[0].beat);
 }
 
-function normalizeCurrentBpmAtZero(items: CurrentChartJson): CurrentChartJson {
-  const minBpmBeat = findMinBpmBeatFromCurrent(items);
+function normalizeGarupaBpmAtZero(items: GarupaChartJson): GarupaChartJson {
+  const minBpmBeat = findMinBpmBeatFromGarupa(items);
   if (Math.abs(minBpmBeat) <= BEAT_ZERO_EPSILON) {
     return items.map((item) => {
       if (item.type === "Slide") {
@@ -196,7 +127,7 @@ function normalizeCurrentBpmAtZero(items: CurrentChartJson): CurrentChartJson {
   });
 }
 
-function normalizeBestdoriBpmAtZero(items: BestdoriV2Chart): BestdoriV2Chart {
+function normalizeBestdoriBpmAtZero(items: BestdoriV2ChartJson): BestdoriV2ChartJson {
   const minBpmBeat = findMinBpmBeatFromBestdori(items);
   if (Math.abs(minBpmBeat) <= BEAT_ZERO_EPSILON) {
     return items.map((item) => {
@@ -227,11 +158,11 @@ function normalizeBestdoriBpmAtZero(items: BestdoriV2Chart): BestdoriV2Chart {
   });
 }
 
-function parseCurrentSimpleNote(
+function parseGarupaSimpleNote<T extends GarupaChartJsonSimpleNoteType>(
   source: Record<string, unknown>,
   label: string,
-  type: CurrentSimpleType,
-): CurrentSimpleNote {
+  type: T,
+): Omit<GarupaChartJsonSimpleNote, "type"> & { readonly type: T } {
   const width =
     source.width === undefined
       ? 1
@@ -245,10 +176,10 @@ function parseCurrentSimpleNote(
   };
 }
 
-function parseCurrentDirectionalNote(
+function parseGarupaDirectionalNote(
   source: Record<string, unknown>,
   label: string,
-): CurrentDirectionalNote {
+): GarupaChartJsonDirectionalNote {
   return {
     type: "Directional",
     beat: parseFiniteNumber(source.beat, `${label}.beat`),
@@ -259,12 +190,12 @@ function parseCurrentDirectionalNote(
   };
 }
 
-export function parseCurrentChartJson(input: unknown): CurrentChartJson {
+export function parseGarupaChartJson(input: unknown): GarupaChartJson {
   if (!Array.isArray(input)) {
-    throw new Error("Current chart JSON top-level must be an array.");
+    throw new Error("Garupa chart JSON top-level must be an array.");
   }
 
-  const items: CurrentChartJson = [];
+  const items: GarupaChartJsonItem[] = [];
 
   input.forEach((rawItem, itemIndex) => {
     if (!isRecord(rawItem)) {
@@ -305,17 +236,17 @@ export function parseCurrentChartJson(input: unknown): CurrentChartJson {
         throw new Error(`${label}.connections cannot be empty`);
       }
 
-      const connections: CurrentSlideConnection[] = rawConnections.map((rawConnection, connectionIndex) => {
+      const connections: GarupaChartJsonSlideConnection[] = rawConnections.map((rawConnection, connectionIndex) => {
         if (!isRecord(rawConnection)) {
           throw new Error(`${label}.connections[${connectionIndex}] must be an object`);
         }
         const connectionLabel = `${label}.connections[${connectionIndex}]`;
         const connectionType = rawConnection.type;
         if (connectionType === "Single" || connectionType === "Flick" || connectionType === "Skill" || connectionType === "Hidden") {
-          return parseCurrentSimpleNote(rawConnection, connectionLabel, connectionType);
+          return parseGarupaSimpleNote(rawConnection, connectionLabel, connectionType);
         }
         if (connectionType === "Directional") {
-          return parseCurrentDirectionalNote(rawConnection, connectionLabel);
+          return parseGarupaDirectionalNote(rawConnection, connectionLabel);
         }
         throw new Error(`${connectionLabel}.type is invalid: ${String(connectionType)}`);
       });
@@ -333,12 +264,12 @@ export function parseCurrentChartJson(input: unknown): CurrentChartJson {
     }
 
     if (rawType === "Single" || rawType === "Flick" || rawType === "Skill") {
-      items.push(parseCurrentSimpleNote(rawItem, label, rawType));
+      items.push(parseGarupaSimpleNote(rawItem, label, rawType));
       return;
     }
 
     if (rawType === "Directional") {
-      items.push(parseCurrentDirectionalNote(rawItem, label));
+      items.push(parseGarupaDirectionalNote(rawItem, label));
       return;
     }
 
@@ -347,18 +278,18 @@ export function parseCurrentChartJson(input: unknown): CurrentChartJson {
 
   const bpmCount = items.filter((item) => item.type === "BPM").length;
   if (bpmCount === 0) {
-    throw new Error("Current chart JSON must include at least one BPM item.");
+    throw new Error("Garupa chart JSON must include at least one BPM item.");
   }
 
   return items;
 }
 
-export function parseBestdoriV2Chart(input: unknown): BestdoriV2Chart {
+export function parseBestdoriV2ChartJson(input: unknown): BestdoriV2ChartJson {
   if (!Array.isArray(input)) {
     throw new Error("Bestdori V2 JSON top-level must be an array.");
   }
 
-  const items: BestdoriV2Chart = [];
+  const items: BestdoriV2ChartJsonItem[] = [];
 
   input.forEach((rawItem, itemIndex) => {
     if (!isRecord(rawItem)) {
@@ -435,7 +366,7 @@ export function parseBestdoriV2Chart(input: unknown): BestdoriV2Chart {
           ...(hidden ? { hidden: true } : {}),
           ...(flick ? { flick: true } : {}),
           ...(skill ? { skill: true } : {}),
-        } as BestdoriV2SlideConnection;
+        } as BestdoriV2ChartJsonSlideConnection;
       });
       items.push({
         type: "Slide",
@@ -455,7 +386,7 @@ export function parseBestdoriV2Chart(input: unknown): BestdoriV2Chart {
   return items;
 }
 
-function convertBestdoriSlideConnectionToCurrent(connection: BestdoriV2SlideConnection): CurrentSimpleNote {
+function convertBestdoriSlideConnectionToGarupa(connection: BestdoriV2ChartJsonSlideConnection): GarupaChartJsonSimpleNote {
   if (connection.hidden === true) {
     return {
       type: "Hidden",
@@ -488,7 +419,7 @@ function convertBestdoriSlideConnectionToCurrent(connection: BestdoriV2SlideConn
   };
 }
 
-function convertBestdoriItemToCurrent(item: BestdoriV2ChartItem): CurrentChartItem {
+function convertBestdoriItemToGarupa(item: BestdoriV2ChartJsonItem): GarupaChartJsonItem {
   if (item.type === "BPM") {
     return {
       type: "BPM",
@@ -534,11 +465,11 @@ function convertBestdoriItemToCurrent(item: BestdoriV2ChartItem): CurrentChartIt
 
   return {
     type: "Slide",
-    connections: item.connections.map((connection) => convertBestdoriSlideConnectionToCurrent(connection)),
+    connections: item.connections.map((connection) => convertBestdoriSlideConnectionToGarupa(connection)),
   };
 }
 
-function convertCurrentTopLevelToBestdori(item: CurrentTopLevelNote): BestdoriV2SingleItem | BestdoriV2DirectionalItem {
+function convertGarupaTopLevelToBestdori(item: GarupaChartJsonTopLevelNote): BestdoriV2ChartJsonSingleNote | BestdoriV2ChartJsonDirectionalNote {
   if (item.type === "Directional") {
     return {
       type: "Directional",
@@ -571,11 +502,11 @@ function convertCurrentTopLevelToBestdori(item: CurrentTopLevelNote): BestdoriV2
   };
 }
 
-function convertCurrentHeadOrTailVisibleToBestdori(
-  note: Exclude<CurrentSlideConnection, { type: "Hidden" }>,
+function convertGarupaHeadOrTailVisibleToBestdori(
+  note: Exclude<GarupaChartJsonSlideConnection, { type: "Hidden" }>,
   allowSkill: boolean,
   allowFlick: boolean,
-): BestdoriV2SlideConnection {
+): BestdoriV2ChartJsonSlideConnection {
   if (note.type === "Skill" && allowSkill) {
     return {
       beat: note.beat,
@@ -603,7 +534,7 @@ function convertCurrentHeadOrTailVisibleToBestdori(
   };
 }
 
-function convertCurrentSlideToBestdori(item: CurrentSlideItem): BestdoriV2ChartItem | null {
+function convertGarupaSlideToBestdori(item: GarupaChartJsonSlideItem): BestdoriV2ChartJsonItem | null {
   const original = item.connections;
   if (original.length === 0) {
     return null;
@@ -660,7 +591,7 @@ function convertCurrentSlideToBestdori(item: CurrentSlideItem): BestdoriV2ChartI
     return null;
   }
 
-  const mappedConnections: BestdoriV2SlideConnection[] = connections.map((connection, index) => {
+  const mappedConnections: BestdoriV2ChartJsonSlideConnection[] = connections.map((connection, index) => {
     if (connection.type === "Hidden") {
       return {
         beat: connection.beat,
@@ -672,10 +603,10 @@ function convertCurrentSlideToBestdori(item: CurrentSlideItem): BestdoriV2ChartI
     const isHead = index === 0;
     const isTail = index === connections.length - 1;
     if (isHead) {
-      return convertCurrentHeadOrTailVisibleToBestdori(connection, true, false);
+      return convertGarupaHeadOrTailVisibleToBestdori(connection, true, false);
     }
     if (isTail) {
-      return convertCurrentHeadOrTailVisibleToBestdori(connection, false, true);
+      return convertGarupaHeadOrTailVisibleToBestdori(connection, false, true);
     }
 
     return {
@@ -690,23 +621,22 @@ function convertCurrentSlideToBestdori(item: CurrentSlideItem): BestdoriV2ChartI
   };
 }
 
-export function convertBestdoriV2ToCurrentChartJson(
+export function convertBestdoriV2ToGarupaChartJson(
   input: unknown,
-  options: ChartFormatConvertOptions = {},
-): ChartJson {
-  const parsed = parseBestdoriV2Chart(input);
-  const converted = parsed.map((item) => convertBestdoriItemToCurrent(item));
-  const normalized = options.normalizeBpmAtZero === false ? converted : normalizeCurrentBpmAtZero(converted);
-  return normalized as ChartJson;
+  options: ChartFormatConversionOptions = {},
+): GarupaChartJson {
+  const parsed = parseBestdoriV2ChartJson(input);
+  const converted = parsed.map((item) => convertBestdoriItemToGarupa(item));
+  return options.normalizeBpmAtZero === false ? converted : normalizeGarupaBpmAtZero(converted);
 }
 
-export function convertCurrentChartJsonToBestdoriV2(
+export function convertGarupaChartJsonToBestdoriV2(
   input: unknown,
-  options: ChartFormatConvertOptions = {},
-): BestdoriV2Chart {
-  const parsed = parseCurrentChartJson(input);
+  options: ChartFormatConversionOptions = {},
+): BestdoriV2ChartJson {
+  const parsed = parseGarupaChartJson(input);
 
-  const converted: BestdoriV2Chart = [];
+  const converted: BestdoriV2ChartJsonItem[] = [];
   for (const item of parsed) {
     if (item.type === "BPM") {
       converted.push({
@@ -720,16 +650,13 @@ export function convertCurrentChartJsonToBestdoriV2(
       continue;
     }
     if (item.type === "Slide") {
-      const mappedSlide = convertCurrentSlideToBestdori(item);
+      const mappedSlide = convertGarupaSlideToBestdori(item);
       if (mappedSlide) {
         converted.push(mappedSlide);
       }
       continue;
     }
-    if (item.type === "Hidden") {
-      continue;
-    }
-    converted.push(convertCurrentTopLevelToBestdori(item));
+    converted.push(convertGarupaTopLevelToBestdori(item));
   }
 
   return options.normalizeBpmAtZero === false ? converted : normalizeBestdoriBpmAtZero(converted);

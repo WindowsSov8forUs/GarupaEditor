@@ -5,13 +5,6 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } f
 import {
   GLOBAL_TIMING_GROUP_ID,
   type ChartBpmEvent,
-  type ChartJson,
-  type ChartJsonBpmItem,
-  type ChartJsonDirection,
-  type ChartJsonSlideConnection,
-  type ChartJsonSlideItem,
-  type ChartJsonSvItem,
-  type ChartJsonTopLevelNote,
   type ChartMetadata,
   type ChartNote,
   type ChartSvEvent,
@@ -36,9 +29,16 @@ import {
   type SkinSelection,
 } from "../../skinLoader";
 import {
-  convertBestdoriV2ToCurrentChartJson,
-  convertCurrentChartJsonToBestdoriV2,
-} from "../../chartFormatConverter";
+  convertBestdoriV2ToGarupaChartJson,
+  convertGarupaChartJsonToBestdoriV2,
+  type GarupaChartJson,
+  type GarupaChartJsonBpmItem,
+  type GarupaChartJsonDirection,
+  type GarupaChartJsonSlideConnection,
+  type GarupaChartJsonSlideItem,
+  type GarupaChartJsonSvItem,
+  type GarupaChartJsonTopLevelNote,
+} from "../../chart";
 import {
   isChartUsingExGarupa,
   isChartUsingHabahiro,
@@ -81,7 +81,7 @@ type ShiftedSvItem = {
   sourceIndex: number;
 };
 
-type AppliedChartJsonSummary = {
+type AppliedGarupaChartJsonSummary = {
   visibleNoteCount: number;
   beatOffset: number;
   regressedExGarupa: boolean;
@@ -287,7 +287,7 @@ export function useEditorIoAndShortcuts(params: any) {
     return shifted < 0 ? 0 : shifted;
   };
 
-  const mapDirectionFromInternalType = (type: ChartNote["type"]): ChartJsonDirection | null => {
+  const mapDirectionFromInternalType = (type: ChartNote["type"]): GarupaChartJsonDirection | null => {
     if (type === "directional_flick_left") {
       return "Left";
     }
@@ -297,7 +297,7 @@ export function useEditorIoAndShortcuts(params: any) {
     return null;
   };
 
-  const mapTopLevelNoteToJson = (note: ChartNote): ChartJsonTopLevelNote | null => {
+  const mapTopLevelNoteToJson = (note: ChartNote): GarupaChartJsonTopLevelNote | null => {
     if (note.type === "single") {
       return {
         type: "Single",
@@ -339,7 +339,7 @@ export function useEditorIoAndShortcuts(params: any) {
     return null;
   };
 
-  const mapSlideConnectionToJson = (note: ChartNote): ChartJsonSlideConnection | null => {
+  const mapSlideConnectionToJson = (note: ChartNote): GarupaChartJsonSlideConnection | null => {
     if (note.type === "hidden") {
       return {
         type: "Hidden",
@@ -350,11 +350,11 @@ export function useEditorIoAndShortcuts(params: any) {
       };
     }
     const topLevel = mapTopLevelNoteToJson(note);
-    return topLevel ? (topLevel as ChartJsonSlideConnection) : null;
+    return topLevel ? (topLevel as GarupaChartJsonSlideConnection) : null;
   };
 
   const buildExportItemKey = (
-    item: ChartJsonSlideConnection | ChartJsonTopLevelNote,
+    item: GarupaChartJsonSlideConnection | GarupaChartJsonTopLevelNote,
   ): string => {
     const timingGroup = toTimingGroupValue((item as { timingGroup?: string }).timingGroup);
     if (item.type === "Directional") {
@@ -368,7 +368,7 @@ export function useEditorIoAndShortcuts(params: any) {
     beat: number,
     lane: number,
     width?: number,
-    direction?: ChartJsonDirection,
+    direction?: GarupaChartJsonDirection,
     timingGroup = GLOBAL_TIMING_GROUP_ID,
   ): string => {
     const normalizedBeat = Number(beat.toFixed(6));
@@ -449,7 +449,7 @@ export function useEditorIoAndShortcuts(params: any) {
     };
   };
 
-  const chartJson = useMemo<ChartJson>(() => {
+  const garupaChartJson = useMemo<GarupaChartJson>(() => {
     const sortedNotes = sortNotes(notes as ChartNote[]) as ChartNote[];
     const normalizedSlideChains = (slideChains as Array<{ noteIds: string[] }>) ?? [];
     const noteById = new Map(sortedNotes.map((note) => [note.id, note] as const));
@@ -459,7 +459,7 @@ export function useEditorIoAndShortcuts(params: any) {
       ),
     );
 
-    const bpmItems: ChartJsonBpmItem[] = [
+    const bpmItems: GarupaChartJsonBpmItem[] = [
       { type: "BPM", beat: 0, value: toBpmValue(metadata.bpm) },
       ...(sortBpmEvents(bpmEvents as ChartBpmEvent[]) as ChartBpmEvent[])
         .filter((event: ChartBpmEvent) => !approxEq(event.beat, 0))
@@ -470,7 +470,7 @@ export function useEditorIoAndShortcuts(params: any) {
         })),
     ];
 
-    const svItems: ChartJsonSvItem[] = (sortSvEvents(svEvents as ChartSvEvent[]) as ChartSvEvent[]).map(
+    const svItems: GarupaChartJsonSvItem[] = (sortSvEvents(svEvents as ChartSvEvent[]) as ChartSvEvent[]).map(
       (event: ChartSvEvent) => ({
         type: "SV",
         beat: toBeatValue(event.beat),
@@ -480,10 +480,10 @@ export function useEditorIoAndShortcuts(params: any) {
     );
 
     const slideConnectionKeySet = new Set<string>();
-    const slideItems: ChartJsonSlideItem[] = normalizedSlideChains
-      .map((chain: { noteIds: string[]; timingGroup?: string }): ChartJsonSlideItem | null => {
+    const slideItems: GarupaChartJsonSlideItem[] = normalizedSlideChains
+      .map((chain: { noteIds: string[]; timingGroup?: string }): GarupaChartJsonSlideItem | null => {
         const chainTimingGroup = toTimingGroupValue(chain.timingGroup);
-        const connections: ChartJsonSlideConnection[] = [];
+        const connections: GarupaChartJsonSlideConnection[] = [];
         for (const id of chain.noteIds) {
           const note = noteById.get(id);
           if (!note) {
@@ -515,18 +515,18 @@ export function useEditorIoAndShortcuts(params: any) {
           timingGroup: toOptionalTimingGroupValue(chainTimingGroup),
         };
       })
-      .filter((item: ChartJsonSlideItem | null): item is ChartJsonSlideItem => item !== null);
+      .filter((item: GarupaChartJsonSlideItem | null): item is GarupaChartJsonSlideItem => item !== null);
 
-    const topLevelItems: ChartJsonTopLevelNote[] = sortedNotes
+    const topLevelItems: GarupaChartJsonTopLevelNote[] = sortedNotes
       .filter((note) => note.type !== "hidden" && !slideNoteIdSet.has(note.id))
       .map((note) => mapTopLevelNoteToJson(note))
-      .filter((item): item is ChartJsonTopLevelNote => item !== null)
+      .filter((item): item is GarupaChartJsonTopLevelNote => item !== null)
       .filter((item) => !slideConnectionKeySet.has(buildExportItemKey(item)));
 
     return [...bpmItems, ...svItems, ...topLevelItems, ...slideItems];
   }, [approxEq, bpmEvents, metadata.bpm, notes, slideChains, sortBpmEvents, sortNotes, sortSvEvents, svEvents]);
 
-  const exportJson = useMemo(() => JSON.stringify(chartJson), [chartJson]);
+  const garupaChartJsonText = useMemo(() => JSON.stringify(garupaChartJson), [garupaChartJson]);
   const [isImportJsonModalOpen, setIsImportJsonModalOpen] = useState(false);
   const [importJsonModalLevel, setImportJsonModalLevel] = useState<ImportJsonModalLevel>("chart");
   const [importJsonText, setImportJsonText] = useState("");
@@ -912,7 +912,7 @@ export function useEditorIoAndShortcuts(params: any) {
     const fileName = getExportFileName();
 
     if (!isTauriRuntimeEnvironment()) {
-      const payload = new Blob([exportJson], { type: "application/json;charset=utf-8" });
+      const payload = new Blob([garupaChartJsonText], { type: "application/json;charset=utf-8" });
       const url = URL.createObjectURL(payload);
       const link = document.createElement("a");
       link.href = url;
@@ -929,7 +929,7 @@ export function useEditorIoAndShortcuts(params: any) {
     try {
       const savedPath = await invoke<string | null>("save_chart_json_via_dialog", {
         defaultFileName: fileName,
-        jsonText: exportJson,
+        jsonText: garupaChartJsonText,
       });
 
       if (!savedPath) {
@@ -949,7 +949,7 @@ export function useEditorIoAndShortcuts(params: any) {
 
   const exportBestdoriV2ToClipboard = async () => {
     try {
-      const bestdori = convertCurrentChartJsonToBestdoriV2(chartJson);
+      const bestdori = convertGarupaChartJsonToBestdoriV2(garupaChartJson);
       const bestdoriJsonText = JSON.stringify(bestdori);
 
       if (isTauriRuntimeEnvironment()) {
@@ -990,7 +990,7 @@ export function useEditorIoAndShortcuts(params: any) {
   };
 
   const openImportJsonModal = () => {
-    setImportJsonText(exportJson);
+    setImportJsonText(garupaChartJsonText);
     setImportJsonModalLevel("chart");
     setImportCommunityPostId("");
     setImportJsonSelectedPath("");
@@ -1014,7 +1014,7 @@ export function useEditorIoAndShortcuts(params: any) {
     setImportJsonModalLevel("bestdori-v2");
   };
 
-  const applyParsedCurrentChartJson = (parsed: unknown): AppliedChartJsonSummary => {
+  const applyParsedGarupaChartJson = (parsed: unknown): AppliedGarupaChartJsonSummary => {
     if (!Array.isArray(parsed)) {
       throw new Error("Chart JSON top-level must be an array.");
     }
@@ -1268,7 +1268,7 @@ export function useEditorIoAndShortcuts(params: any) {
     };
   };
 
-  const applyChartImportStatus = (label: string, summary: AppliedChartJsonSummary) => {
+  const applyChartImportStatus = (label: string, summary: AppliedGarupaChartJsonSummary) => {
     const regressionNotices = [
       summary.regressedSpRhythm ? "已按当前模式自动执行去SP节奏图示回退。" : "",
       summary.regressedHabahiro ? "已按当前模式自动执行去2026愚人节回退。" : "",
@@ -1287,7 +1287,7 @@ export function useEditorIoAndShortcuts(params: any) {
   const applyImportJsonText = () => {
     try {
       const parsed: unknown = JSON.parse(importJsonText);
-      const summary = applyParsedCurrentChartJson(parsed);
+      const summary = applyParsedGarupaChartJson(parsed);
       applyChartImportStatus("已应用 JSON 文本", summary);
       setImportJsonModalLevel("chart");
       setIsImportJsonModalOpen(false);
@@ -1410,13 +1410,13 @@ export function useEditorIoAndShortcuts(params: any) {
       pushImportProgress(15, "正在请求官方谱面与歌曲信息…");
       const payload = await fetchBestdoriOfficialChartImportPayload(chartId, OFFICIAL_CHART_DIFFICULTY_TO_API[difficulty]);
       pushImportProgress(42, "正在转换谱面结构…");
-      const converted = convertBestdoriV2ToCurrentChartJson(payload.chart);
+      const converted = convertBestdoriV2ToGarupaChartJson(payload.chart);
       const hasVisibleNote = hasVisiblePlayableNote(converted);
       if (!hasVisibleNote) {
         throw new Error("官方谱面解析成功，但未解析到可见音符。");
       }
       pushImportProgress(58, "正在应用谱面内容…");
-      const summary = applyParsedCurrentChartJson(converted);
+      const summary = applyParsedGarupaChartJson(converted);
       let audioDecoded = false;
       let importedBgmDataUrl: string | null = null;
       try {
@@ -1568,14 +1568,14 @@ export function useEditorIoAndShortcuts(params: any) {
       }
 
       pushImportProgress(34, "正在转换谱面结构…");
-      const converted = convertBestdoriV2ToCurrentChartJson(post.chart);
+      const converted = convertBestdoriV2ToGarupaChartJson(post.chart);
       const hasVisibleNote = hasVisiblePlayableNote(converted);
       if (!hasVisibleNote) {
         throw new Error("社区谱面解析成功，但未解析到可见音符。");
       }
 
       pushImportProgress(54, "正在应用谱面内容…");
-      const summary = applyParsedCurrentChartJson(converted);
+      const summary = applyParsedGarupaChartJson(converted);
       const songResources = await resolveBestdoriCommunitySongResourceUrls(post.song);
 
       let importedBgmDataUrl: string | null = null;
@@ -1714,7 +1714,7 @@ export function useEditorIoAndShortcuts(params: any) {
       const resolvedAudioSource = resolveTrimmedString(metadata.bgmDataUrl) || null;
       const parsedTags = uploadCommunityPostTags.length > 0 ? uploadCommunityPostTags : undefined;
       const result = await publishBestdoriCommunityChartFlow({
-        chartJson,
+        garupaChartJson,
         metadata,
         audioSourceUrl: resolvedAudioSource,
         audioFileName: resolveTrimmedString(audioFileName),
@@ -1780,7 +1780,7 @@ export function useEditorIoAndShortcuts(params: any) {
         ? Math.trunc(difficultyValue)
         : 1;
       const result = await uploadNotGarupaLevelFlow({
-        chartJson,
+        garupaChartJson,
         metadata,
         audioSourceUrl: resolvedAudioSource,
         audioFileName: resolveTrimmedString(audioFileName),
@@ -1846,7 +1846,7 @@ export function useEditorIoAndShortcuts(params: any) {
         ? Math.trunc(difficultyValue)
         : undefined;
       const result = await uploadSonolusLevelFlow({
-        chartJson,
+        garupaChartJson,
         metadata,
         audioSourceUrl: resolvedAudioSource,
         audioFileName: resolveTrimmedString(audioFileName),
@@ -1904,7 +1904,7 @@ export function useEditorIoAndShortcuts(params: any) {
     try {
       const text = await file.text();
       const parsed: unknown = JSON.parse(text);
-      const summary = applyParsedCurrentChartJson(parsed);
+      const summary = applyParsedGarupaChartJson(parsed);
       applyChartImportStatus(`已导入 ${file.name}`, summary);
       setImportJsonModalLevel("chart");
       setIsImportJsonModalOpen(false);
@@ -1928,10 +1928,10 @@ export function useEditorIoAndShortcuts(params: any) {
     try {
       const text = await file.text();
       const parsed: unknown = JSON.parse(text);
-      const converted = convertBestdoriV2ToCurrentChartJson(parsed);
+      const converted = convertBestdoriV2ToGarupaChartJson(parsed);
       setImportJsonText(JSON.stringify(converted));
       setImportJsonModalLevel("chart");
-      setStatusMessage("已将 Bestdori V2 转换为当前谱面 JSON，请在导入页点击“应用”。");
+      setStatusMessage("已将 Bestdori V2 转换为Garupa 谱面 JSON，请在导入页点击“应用”。");
     } catch (error) {
       setImportBestdoriV2SelectedPath(previousSelectedPath);
       const message = error instanceof Error ? error.message : String(error);
@@ -2294,8 +2294,8 @@ export function useEditorIoAndShortcuts(params: any) {
   }, [applyBestdoriSkinSelection, didInitSkinRef, readSkinSelectionFromStorage]);
 
   return {
-    chartJson,
-    exportJson,
+    garupaChartJson,
+    garupaChartJsonText,
     isImportJsonModalOpen,
     importJsonModalLevel,
     importJsonText,

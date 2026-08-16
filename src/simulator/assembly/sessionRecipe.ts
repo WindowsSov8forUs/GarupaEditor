@@ -27,7 +27,7 @@ import {
 import type { ManualInputFrame } from "../engine/data/manualInput";
 import { evidenceRequired, ok, type SimulatorResult } from "../engine/evidence";
 import type { SimulatorModeIdentity } from "../engine/data/inGameCalculatedData";
-import { copyAndFreezeSimulatorGarupaChart } from "./garupaJsonContract";
+import { copyAndFreezeGarupaChartJson } from "./garupaChartContract";
 
 export interface SimulatorSessionRecipe {
   readonly schemaVersion: 3;
@@ -295,7 +295,7 @@ function copyLaunchRequest(
       "The launch recipe accepts only exact chart/config keys, one Garupa JSON object array, one explicit isFullLength boolean independent of Live/Rehearsal and Manual/Auto, confirmed judgement offset, evidence-bounded Float32 visual settings and finite unit gains.",
     );
   }
-  const copiedChart = copyAndFreezeSimulatorGarupaChart(request.chartData.chart);
+  const copiedChart = copyAndFreezeGarupaChartJson(request.chartData.chart);
   if (copiedChart.status !== "ok") return fromEngineFailure(copiedChart);
   const bgm = request.chartData.bgm;
   if (bgm === null || typeof bgm !== "object" || !(bgm.bytes instanceof Uint8Array)) {

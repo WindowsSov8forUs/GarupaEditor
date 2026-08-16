@@ -1,30 +1,30 @@
-// Product schema mirror: GarupaEditor origin/main@a4ed4bbaa49d3e7db0407a1f2d5500f6d5940114.
-import { evidenceRequired, ok, type SimulatorResult } from "../engine/evidence";
+// Simulator-owned validation and freezing for the shared Garupa chart schema.
 import type {
-  SimulatorGarupaChartDirectionalNote,
-  SimulatorGarupaChartItem,
-  SimulatorGarupaChartJson,
-  SimulatorGarupaChartSimpleNote,
-  SimulatorGarupaChartSlideConnection,
-} from "../public/contracts";
+  GarupaChartJson,
+  GarupaChartJsonDirectionalNote,
+  GarupaChartJsonItem,
+  GarupaChartJsonSimpleNote,
+  GarupaChartJsonSlideConnection,
+} from "../../chart";
+import { evidenceRequired, ok, type SimulatorResult } from "../engine/evidence";
 
-export interface SimulatorGarupaChartExtensionSummary {
+export interface GarupaChartExtensionSummary {
   readonly svItemCount: number;
   readonly timingGroupFieldCount: number;
 }
 
-export interface CopiedSimulatorGarupaChart {
-  readonly chart: SimulatorGarupaChartJson;
-  readonly extensions: SimulatorGarupaChartExtensionSummary;
+export interface CopiedGarupaChartJson {
+  readonly chart: GarupaChartJson;
+  readonly extensions: GarupaChartExtensionSummary;
 }
 
 const SIMPLE_TYPES = new Set(["Single", "Flick", "Skill", "Hidden"]);
 
-export function copyAndFreezeSimulatorGarupaChart(
+export function copyAndFreezeGarupaChartJson(
   input: unknown,
-): SimulatorResult<CopiedSimulatorGarupaChart> {
+): SimulatorResult<CopiedGarupaChartJson> {
   if (!Array.isArray(input)) return invalid("The Garupa JSON chart must be an object array.");
-  const items: SimulatorGarupaChartItem[] = [];
+  const items: GarupaChartJsonItem[] = [];
   let svItemCount = 0;
   let timingGroupFieldCount = 0;
   for (let index = 0; index < input.length; index += 1) {
@@ -44,7 +44,7 @@ function copyItem(
   input: unknown,
   index: number,
 ): SimulatorResult<{
-  readonly item: SimulatorGarupaChartItem;
+  readonly item: GarupaChartJsonItem;
   readonly svItemCount: number;
   readonly timingGroupFieldCount: number;
 }> {
@@ -78,7 +78,7 @@ function copyItem(
       !Array.isArray(input.connections)) {
       return invalid(`${label} Slide requires exact connections and optional string timingGroup.`);
     }
-    const connections: SimulatorGarupaChartSlideConnection[] = [];
+    const connections: GarupaChartJsonSlideConnection[] = [];
     let timingCount = timing.value === undefined ? 0 : 1;
     for (let connectionIndex = 0; connectionIndex < input.connections.length; connectionIndex += 1) {
       const connection = copyConnection(
@@ -101,7 +101,7 @@ function copyItem(
     return invalid(`${label} Hidden is allowed only inside Slide.connections.`);
   }
   return copied(
-    note.value.connection as Exclude<SimulatorGarupaChartItem, { readonly type: "Slide" | "BPM" | "SV" }>,
+    note.value.connection as Exclude<GarupaChartJsonItem, { readonly type: "Slide" | "BPM" | "SV" }>,
     0,
     note.value.hasTimingGroup ? 1 : 0,
   );
@@ -111,7 +111,7 @@ function copyConnection(
   input: unknown,
   label: string,
 ): SimulatorResult<{
-  readonly connection: SimulatorGarupaChartSlideConnection;
+  readonly connection: GarupaChartJsonSlideConnection;
   readonly hasTimingGroup: boolean;
 }> {
   if (!isRecord(input) || typeof input.type !== "string") {
@@ -126,7 +126,7 @@ function copyConnection(
       !baseValid || (input.direction !== "Left" && input.direction !== "Right")) {
       return invalid(`${label} Directional requires exact finite beat, integer lane/width, direction and optional timingGroup.`);
     }
-    const connection: SimulatorGarupaChartDirectionalNote = Object.freeze({
+    const connection: GarupaChartJsonDirectionalNote = Object.freeze({
       type: "Directional",
       beat: input.beat as number,
       lane: input.lane as number,
@@ -140,8 +140,8 @@ function copyConnection(
     !hasExactOptionalTimingKeys(input, ["beat", "lane", "type", "width"]) || !baseValid) {
     return invalid(`${label} simple note requires an exact supported type, finite beat, integer lane/width and optional timingGroup.`);
   }
-  const connection: SimulatorGarupaChartSimpleNote = Object.freeze({
-    type: input.type as SimulatorGarupaChartSimpleNote["type"],
+  const connection: GarupaChartJsonSimpleNote = Object.freeze({
+    type: input.type as GarupaChartJsonSimpleNote["type"],
     beat: input.beat as number,
     lane: input.lane as number,
     width: input.width as number,
@@ -161,11 +161,11 @@ function copyTimingGroup(
 }
 
 function copied(
-  item: SimulatorGarupaChartItem,
+  item: GarupaChartJsonItem,
   svItemCount: number,
   timingGroupFieldCount: number,
 ): SimulatorResult<{
-  readonly item: SimulatorGarupaChartItem;
+  readonly item: GarupaChartJsonItem;
   readonly svItemCount: number;
   readonly timingGroupFieldCount: number;
 }> {
