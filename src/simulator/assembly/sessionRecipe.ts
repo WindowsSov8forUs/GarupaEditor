@@ -1,4 +1,8 @@
-import type { SimulatorEngine, SimulatorSnapshot } from "../host/contracts";
+import type {
+  SimulatorEngine,
+  SimulatorSnapshot,
+  SimulatorEngineBuildPurpose,
+} from "../host/contracts";
 import {
   createPortableReplaySimulatorEngine,
   type PortableReplaySimulatorEngine,
@@ -29,8 +33,6 @@ import { evidenceRequired, ok, type SimulatorResult } from "../engine/evidence";
 import type { SimulatorModeIdentity } from "../engine/data/inGameCalculatedData";
 import { copyAndFreezeGarupaChartJson } from "./garupaChartContract";
 import { copyAndFreezeSimulatorPresentation } from "./startupPresentationContract";
-
-export type SimulatorEngineBuildPurpose = "initial" | "retry" | "move-time-reconstruction";
 
 export interface SimulatorSessionRecipe {
   readonly schemaVersion: 4;
@@ -79,8 +81,8 @@ export class RecipeOwnedSessionFactory implements SimulatorOwnedSessionFactory {
     if (initial.status === "rejected") return initial;
     const replay = createPortableReplaySimulatorEngine(initial.value.engine, {
       mode: initial.value.mode,
-      createFreshEngine: async () => {
-        const fresh = await this.builder.createFreshEngine(recipe.value, "retry");
+      createFreshEngine: async (purpose) => {
+        const fresh = await this.builder.createFreshEngine(recipe.value, purpose);
         return fresh.status === "accepted"
           ? ok(fresh.value.engine)
           : evidenceRequired(fresh.failure.capability, [], fresh.failure.boundary);

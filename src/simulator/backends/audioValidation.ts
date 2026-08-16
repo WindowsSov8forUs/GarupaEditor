@@ -7,6 +7,7 @@ import type {
   AudioResourceProfile,
   AudioResourceProfileSet,
   AudioSessionBgmResourceProfile,
+  AudioSessionVoiceResourceProfile,
 } from "./audioContracts";
 
 const SHA256_PATTERN = /^[0-9A-F]{64}$/;
@@ -114,6 +115,7 @@ export function validateAndFreezeAudioProfile(
   }
 
   let bgm: AudioSessionBgmResourceProfile | null = null;
+  let voice: AudioSessionVoiceResourceProfile | null = null;
   const seenSe = new Set<string>();
   for (const resource of profile.resources) {
     if (resource?.role === "bgm") {
@@ -128,6 +130,15 @@ export function validateAndFreezeAudioProfile(
       bgm = validated.value;
       continue;
     }
+    if (resource?.role === "voice") {
+      if (voice !== null) {
+        return rejectProfile("audio.profile.duplicate-session-voice", "A session accepts at most one explicit live-start voice resource.");
+      }
+      const validated = validateSessionVoiceResource(resource);
+      if (validated.status !== "accepted") return validated;
+      voice = validated.value;
+      continue;
+    }
     const validated = validateFixedSeResource(resource, seenSe);
     if (validated.status !== "accepted") return validated;
   }
@@ -137,7 +148,8 @@ export function validateAndFreezeAudioProfile(
       "The profile must contain one session BGM and every exact current SE once; defaults and substitutions are forbidden.",
     );
   }
-  if (seenSe.has(bgm.cue) || FIXED_SE_LOGICAL_IDS_SET.has(bgm.logicalId)) {
+  if (seenSe.has(bgm.cue) || FIXED_SE_LOGICAL_IDS_SET.has(bgm.logicalId) ||
+    (voice !== null && (voice.cue === bgm.cue || seenSe.has(voice.cue) || voice.logicalId === bgm.logicalId || FIXED_SE_LOGICAL_IDS_SET.has(voice.logicalId)))) {
     return rejectProfile(
       "audio.profile.session-bgm-aliases-fixed-se",
       "Session BGM cue and logical identity cannot alias a fixed SE resource.",
@@ -161,6 +173,7 @@ export function validateAndFreezeAudioProfile(
     resources: Object.freeze([
       bgm,
       ...CURRENT_AUDIO_SE_RESOURCES,
+      ...(voice === null ? [] : [voice]),
     ]),
   }));
 }
@@ -297,6 +310,28 @@ function validateSessionBgmResource(
     return rejectProfile(
       "audio.profile.invalid-session-bgm",
       "Session BGM requires one explicit non-empty identity, positive MP3 metadata, uppercase SHA-256, no loop, and portable host classification.",
+    );
+  }
+  return audioAccepted(Object.freeze({ ...resource }));
+}
+
+function validateSessionVoiceResource(
+  resource: AudioResourceProfile,
+): AudioOperationResult<AudioSessionVoiceResourceProfile> {
+  if (!isRecord(resource) || !hasExactKeys(resource, RESOURCE_KEYS) || resource.role !== "voice" ||
+    !isNonEmpty(resource.logicalId) || !resource.logicalId.startsWith("startup/session/live-start-voice/") ||
+    !isNonEmpty(resource.cue) || !resource.cue.startsWith("session_live_start_voice_") ||
+    !Number.isSafeInteger(resource.byteLength) || resource.byteLength <= 0 || !SHA256_PATTERN.test(resource.sha256) ||
+    resource.logicalId.slice(-64) !== resource.sha256 || resource.cue.slice(-64) !== resource.sha256 ||
+    resource.mime !== "audio/mpeg" || resource.codec !== "mp3" ||
+    !Number.isSafeInteger(resource.sampleRate) || resource.sampleRate <= 0 ||
+    (resource.channels !== 1 && resource.channels !== 2) ||
+    !Number.isFinite(resource.durationSeconds) || resource.durationSeconds <= 0 ||
+    !Number.isSafeInteger(resource.sampleFrames) || resource.sampleFrames <= 0 ||
+    resource.loop !== null || resource.identity !== "session-explicit" || resource.signal !== "host-supplied-portable") {
+    return rejectProfile(
+      "audio.profile.invalid-session-voice",
+      "The optional live-start voice requires one internally derived MP3 identity, uppercase SHA-256 and exact decoded metadata.",
     );
   }
   return audioAccepted(Object.freeze({ ...resource }));

@@ -25,6 +25,9 @@ import type {
 import type { InGameDirectorSnapshot } from "../engine/managers/inGameDirector";
 import type { InGameManagerSnapshot } from "../engine/managers/inGameManager";
 import type { StartupDirectionSceneBackend } from "../scene/startupDirectionScene";
+import type { StartupDirectionPurpose } from "../engine/managers/startupDirectionController";
+
+export type SimulatorEngineBuildPurpose = "initial" | "retry" | "move-time-reconstruction";
 
 export interface SimulatorRenderingSessionInput {
   readonly sessionId: string;
@@ -49,6 +52,8 @@ export interface SimulatorEngineInput {
   readonly particles?: SimulatorParticleSessionInput;
   readonly startupDirection?: {
     readonly scene: StartupDirectionSceneBackend | null;
+    readonly liveStartVoiceCue: string | null;
+    readonly purpose: StartupDirectionPurpose;
   };
 }
 

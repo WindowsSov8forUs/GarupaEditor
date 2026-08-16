@@ -79,6 +79,13 @@ export interface AudioSessionBgmResourceProfile extends AudioResourceProfileBase
   readonly signal: "host-supplied-portable";
 }
 
+export interface AudioSessionVoiceResourceProfile extends AudioResourceProfileBase {
+  readonly role: "voice";
+  readonly loop: null;
+  readonly identity: "session-explicit";
+  readonly signal: "host-supplied-portable";
+}
+
 export interface AudioFixedSeResourceProfile extends AudioResourceProfileBase {
   readonly role: "se";
   readonly logicalId: AudioFixedSeLogicalId;
@@ -89,6 +96,7 @@ export interface AudioFixedSeResourceProfile extends AudioResourceProfileBase {
 
 export type AudioResourceProfile =
   | AudioSessionBgmResourceProfile
+  | AudioSessionVoiceResourceProfile
   | AudioFixedSeResourceProfile;
 
 export interface AudioResourceProfileSet {
@@ -204,6 +212,7 @@ export interface AudioVoiceSnapshot {
 }
 
 export type AudioBgmPlaybackState = "not-loaded" | "playing" | "paused" | "ended";
+export type AudioOneShotPlaybackState = "not-started" | "playing" | "ended";
 
 export interface AudioSemanticStateSnapshot {
   readonly sessionOpened: boolean;
@@ -244,6 +253,7 @@ export interface SimulatorAudioBackend {
   discard(batch: AudioCommandBatch): AudioOperationResult<void>;
   execute(command: AudioCommand): AudioOperationResult<void>;
   getBgmPlaybackState?(): AudioOperationResult<AudioBgmPlaybackState>;
+  getOneShotPlaybackState?(voiceKey: string): AudioOperationResult<AudioOneShotPlaybackState>;
   publishMoveTimeOutput?(seekMilliseconds: number): AudioOperationResult<void>;
   recordTerminalFault(capability: string, boundary: string): AudioOperationResult<never>;
   snapshot(): AudioBackendSnapshot;

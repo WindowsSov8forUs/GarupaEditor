@@ -72,6 +72,7 @@ import {
   type SimulatorRecipeEngineBuilder,
   type SimulatorSessionRecipe,
 } from "../assembly/sessionRecipe";
+import type { SimulatorEngineBuildPurpose } from "../host/contracts";
 import {
   deriveSessionPresentation,
   type PreparedSessionPresentation,
@@ -149,6 +150,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
 
   async createFreshEngine(
     recipe: SimulatorSessionRecipe,
+    purpose: SimulatorEngineBuildPurpose = "initial",
   ): Promise<SimulatorAssemblyResult<SimulatorRecipeEngineBuild>> {
     if (isTotalRevalidationOpen()) {
       return rejected(
@@ -169,7 +171,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
     if (presentation.status === "rejected") return presentation;
     const score = mapScoreLifeProfile(recipe.request, this.sessionId());
     if (score.status === "rejected") return score;
-    const moveTimeCandidate = this.generation > 0;
+    const moveTimeCandidate = purpose === "move-time-reconstruction";
     const selection = selectSimulatorStaticResources(chart.value);
     const renderer = new PixiRendererBackend(new BrowserPixiTextureDecoder());
     const audio = new WebAudioSimulatorBackend(this.platform.audioContext, moveTimeCandidate);
@@ -181,6 +183,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
     this.generation += 1;
     const assembly = await assembleSimulatorResources(
       bgm.value,
+      presentation.value.liveStartVoice,
       selection,
       this.platform.staticResources,
       {
@@ -275,7 +278,11 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
         seGainBits: gains.value.se,
       },
       particles: { sessionId },
-      startupDirection: { scene: startupScene.value },
+      startupDirection: {
+        scene: startupScene.value,
+        liveStartVoiceCue: presentation.value.liveStartVoice?.cue ?? null,
+        purpose,
+      },
     }, backends);
     if (engine.status !== "ok") {
       startupScene.value.dispose();
@@ -343,7 +350,11 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
   ): Promise<SimulatorAssemblyResult<PreparedSessionPresentation>> {
     const existing = this.presentationByRecipe.get(recipe);
     if (existing !== undefined) return existing;
-    const pending = deriveSessionPresentation(recipe.request.presentation, this.audioPreflight);
+    const pending = deriveSessionPresentation(
+      recipe.request.presentation,
+      this.audioPreflight,
+      recipe.request.config.sessionMode === "live",
+    );
     this.presentationByRecipe.set(recipe, pending);
     return pending;
   }

@@ -94,14 +94,11 @@ class SimulatorEngineHost implements SimulatorEngine {
       if (audio?.status === "ok") audio.value.discard();
       return awake;
     }
-    const initialized = this.inGameManager.initialize();
-    if (initialized.status !== "ok") {
-      if (audio?.status === "ok") audio.value.discard();
-      return initialized;
+    if (audio?.status === "ok") {
+      const committed = this.commitAudio(audio.value);
+      if (committed.status !== "ok") return committed;
     }
-    return audio?.status === "ok"
-      ? this.commitAudio(audio.value)
-      : ok(undefined);
+    return this.inGameManager.initialize();
   }
 
   step(
@@ -194,7 +191,15 @@ class SimulatorEngineHost implements SimulatorEngine {
     }
     const audioFault = this.pollAudioFault();
     if (audioFault.status !== "ok") return audioFault;
-    if (this.inGameManager.snapshot().paused) {
+    const manager = this.inGameManager.snapshot();
+    if (!manager.playable) {
+      return evidenceRequired(
+        "startup-direction.pause-during-opening",
+        ["SD09"],
+        "Pause cannot emit audio commands before PlayingSound.",
+      );
+    }
+    if (manager.paused) {
       return ok(undefined);
     }
     const audio = this.audioProducer?.preflightPause() ?? null;
@@ -219,7 +224,15 @@ class SimulatorEngineHost implements SimulatorEngine {
     if (this.inGameManager.state !== "initialized") {
       return this.inGameManager.resume();
     }
-    if (!this.inGameManager.snapshot().paused) {
+    const manager = this.inGameManager.snapshot();
+    if (!manager.playable && !manager.paused) {
+      return evidenceRequired(
+        "startup-direction.resume-during-opening",
+        ["SD09"],
+        "Resume cannot emit audio commands before PlayingSound.",
+      );
+    }
+    if (!manager.paused) {
       return ok(undefined);
     }
     const audio = this.audioProducer?.preflightResume() ?? null;
@@ -727,7 +740,13 @@ export function createSimulatorEngine(
   }
   const startupDirection = input.startupDirection === undefined
     ? null
-    : new StartupDirectionController(inGameCalculatedData.mode, input.startupDirection.scene);
+    : new StartupDirectionController(
+        inGameCalculatedData.mode,
+        input.startupDirection.scene,
+        audioProducer,
+        input.startupDirection.liveStartVoiceCue,
+        input.startupDirection.purpose,
+      );
   const inGameManager = new InGameManager(
     musicScoreController,
     noteManager,

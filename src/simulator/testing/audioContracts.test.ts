@@ -118,6 +118,7 @@ async function testSessionBgmContract(): Promise<void> {
   assert.equal(initialized.status, "ok");
   if (initialized.status !== "ok") throw new Error(initialized.capability);
   assert.equal(initialized.value.commit().status, "ok");
+  assert.equal(requireOk(producer.preflightStartBgm()).commit().status, "ok");
   const dynamicLoad = alternative.snapshot().commands.find((command) => command.kind === "bgm.load");
   assert.equal(dynamicLoad?.kind === "bgm.load" ? dynamicLoad.cue : null,
     ALTERNATIVE_SESSION_BGM_RESOURCE.cue);
@@ -333,12 +334,12 @@ async function testDomainProducer(): Promise<void> {
   }, backend, { noteBatches: [{ informationList: notes }] } as any);
   assert.equal(producer.validate().status, "ok");
   assert.equal(requireOk(producer.preflightInitialize()).commit().status, "ok");
-  assert.deepEqual(backend.snapshot().commands.slice(0, 5), [
+  assert.equal(backend.snapshot().semantic.bgmCue, null);
+  assert.equal(requireOk(producer.preflightStartBgm()).commit().status, "ok");
+  assert.deepEqual(backend.snapshot().commands.slice(0, 3), [
     { kind: "session.open", bgm_pool: 8, se_pool: 12, one_shot_pool: 1 },
     { kind: "gain.set", bgm_bits: "0x3E800000", se_bits: "0x3F000000" },
     { kind: "bgm.load", cue: "bgm003", seek_ms: 1234, priority: 255, fade_bits: "0x00000000" },
-    { kind: "audio.pause-all", paused: true },
-    { kind: "audio.pause-all", paused: false },
   ]);
 
   const judgementStart = backend.snapshot().commands.length;

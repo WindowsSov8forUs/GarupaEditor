@@ -2,6 +2,7 @@ import type {
   AudioFixedSeResourceProfile,
   AudioResourceProfileSet,
   AudioSessionBgmResourceProfile,
+  AudioSessionVoiceResourceProfile,
 } from "../audioContracts";
 
 const SE_RESOURCES_WITHOUT_ROLE: readonly Omit<AudioFixedSeResourceProfile, "role">[] = Object.freeze([
@@ -225,6 +226,7 @@ export const CURRENT_AUDIO_SE_RESOURCES: readonly AudioFixedSeResourceProfile[] 
 
 export function createAudioSessionResourceProfile(
   bgm: AudioSessionBgmResourceProfile,
+  voice: AudioSessionVoiceResourceProfile | null = null,
 ): AudioResourceProfileSet {
   return Object.freeze({
     schemaVersion: 1,
@@ -250,6 +252,7 @@ export function createAudioSessionResourceProfile(
     resources: Object.freeze([
       Object.freeze({ ...bgm }),
       ...CURRENT_AUDIO_SE_RESOURCES,
+      ...(voice === null ? [] : [Object.freeze({ ...voice })]),
     ]),
   });
 }

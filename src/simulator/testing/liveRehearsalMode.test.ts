@@ -126,8 +126,11 @@ async function testRehearsalLifeZeroContinuesAndLiveCloses(): Promise<void> {
 async function testTransactionalMoveTimeScoreRestore(): Promise<void> {
   const mode = createSimulatorModeIdentity("rehearsal", "auto");
   let generation = 0;
-  const fresh = async (): Promise<SimulatorResult<SimulatorEngine>> =>
-    createModeEngine(mode, `move-time:${generation++}`);
+  const purposes: string[] = [];
+  const fresh = async (purpose?: "retry" | "move-time-reconstruction"): Promise<SimulatorResult<SimulatorEngine>> => {
+    if (purpose !== undefined) purposes.push(purpose);
+    return createModeEngine(mode, `move-time:${generation++}`);
+  };
   const initial = requireOk(await fresh(), "initial MoveTime engine");
   const replay = requireOk(createPortableReplaySimulatorEngine(initial, {
     mode,
@@ -176,6 +179,10 @@ async function testTransactionalMoveTimeScoreRestore(): Promise<void> {
   assert.equal(postAdvance.initialization.timelineRevision, 1);
   assert.equal(postAdvance.record.moveTimeCount, 2);
   assert.ok(postAdvance.record.score <= postAdvance.initialization.scoreMaximum);
+  assert.deepEqual(purposes, ["move-time-reconstruction", "move-time-reconstruction"]);
+  requireOk(await replay.retryRehearsal(), "Retry transaction");
+  assert.deepEqual(purposes, ["move-time-reconstruction", "move-time-reconstruction", "retry"]);
+  assert.equal(requireOk(replay.snapshot(), "Retry snapshot").managers.noteManager.nextBatchIndex, 0);
   requireOk(replay.dispose(), "MoveTime dispose");
 }
 

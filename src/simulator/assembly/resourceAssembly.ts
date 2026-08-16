@@ -24,6 +24,7 @@ import {
 } from "../public/failures";
 import type { SimulatorModuleCleanupFailure } from "../public/contracts";
 import type { PreparedSessionBgmResource } from "./sessionBgmDerivation";
+import type { PreparedLiveStartVoice } from "./sessionPresentationDerivation";
 import type { SimulatorSceneLayout } from "../scene/simulatorSceneLayout";
 import type { SharedStaticResourceStore } from "../resources/sharedStaticResourceStore";
 import type { SimulatorStaticResourceSelection } from "../resources/staticResourceSelector";
@@ -73,6 +74,7 @@ export interface PreparedSimulatorResourceAssembly {
 
 export async function assembleSimulatorResources(
   chartAudio: PreparedSessionBgmResource,
+  liveStartVoice: PreparedLiveStartVoice | null,
   selection: SimulatorStaticResourceSelection,
   store: SharedStaticResourceStore,
   targets: SimulatorResourceAssemblyTargets,
@@ -187,7 +189,30 @@ export async function assembleSimulatorResources(
   });
   const scene = targets.createSceneLayout(selection.rendering.kind, renderPack.bindings);
   if (scene.status === "rejected") return scene;
-  const audio = await prepareSharedAudioResources(chartAudio, selection.audioSe, store);
+  const audio = await prepareSharedAudioResources(
+    chartAudio,
+    selection.audioSe,
+    store,
+    liveStartVoice === null ? null : {
+      profile: Object.freeze({
+        role: "voice" as const,
+        logicalId: liveStartVoice.logicalId,
+        cue: liveStartVoice.cue,
+        byteLength: liveStartVoice.byteLength,
+        sha256: liveStartVoice.sha256,
+        mime: liveStartVoice.mime,
+        codec: liveStartVoice.codec,
+        sampleRate: liveStartVoice.sampleRate,
+        channels: liveStartVoice.channels,
+        durationSeconds: liveStartVoice.durationSeconds,
+        sampleFrames: liveStartVoice.sampleFrames,
+        loop: null,
+        identity: "session-explicit" as const,
+        signal: "host-supplied-portable" as const,
+      }),
+      bytes: liveStartVoice.bytes,
+    },
+  );
   if (audio.status === "rejected") return audio;
   const particles = await prepareSharedParticleProvider(selection.particles, store);
   if (particles.status === "rejected") return particles;

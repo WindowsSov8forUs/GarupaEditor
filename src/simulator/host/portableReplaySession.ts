@@ -15,7 +15,11 @@ import {
   type EvidenceRequired,
   type SimulatorResult,
 } from "../engine/evidence";
-import type { SimulatorEngine, SimulatorSnapshot } from "./contracts";
+import type {
+  SimulatorEngine,
+  SimulatorSnapshot,
+  SimulatorEngineBuildPurpose,
+} from "./contracts";
 import {
   commitMoveTimeTimelineRevision,
   publishMoveTimeAudio,
@@ -50,7 +54,7 @@ export interface SimulatorMoveTimeReceipt {
 
 export interface SimulatorWholeEngineReplayFactory {
   readonly mode: SimulatorModeIdentity;
-  createFreshEngine(): Promise<SimulatorResult<SimulatorEngine>>;
+  createFreshEngine(purpose: Exclude<SimulatorEngineBuildPurpose, "initial">): Promise<SimulatorResult<SimulatorEngine>>;
 }
 
 export interface PortableReplaySimulatorEngine extends SimulatorEngine {
@@ -160,6 +164,9 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
     if (available !== null) return available;
     const before = this.active.snapshot();
     if (before.status !== "ok") return before;
+    if (!before.value.managers.playable) {
+      return this.active.step(deltaTimeSeconds, inputFrame);
+    }
     const prepared = this.prepareLiveInputFrame(inputFrame);
     if (prepared.status !== "ok") return prepared;
     const stepped = this.active.step(deltaTimeSeconds, prepared.value.engineFrame ?? undefined);
@@ -244,10 +251,10 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
         "MoveTime is unavailable in Live regardless of Manual or Auto input identity.",
       );
     }
-    if (currentSnapshot.value.managers.paused || this.active.getNaturalCompletionClearStatus() !== null) {
+    if (!currentSnapshot.value.managers.playable || currentSnapshot.value.managers.paused || this.active.getNaturalCompletionClearStatus() !== null) {
       return rejected(
         "timeline.movetime.outside-playing-state",
-        "MoveTime accepts a touch-began intent only in an active Rehearsal playing state.",
+        "MoveTime accepts a touch-began intent only in an active playable Rehearsal PlayingSound state.",
       );
     }
 
@@ -273,7 +280,7 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
     const movingVisual = setMoveTimeVisualState(this.active, true);
     if (movingVisual.status !== "ok") return movingVisual;
     this.state = "replaying";
-    const freshResult = await this.createFreshCandidate();
+    const freshResult = await this.createFreshCandidate("move-time-reconstruction");
     if (freshResult.status !== "ok") {
       setMoveTimeVisualState(this.active, false);
       this.state = "ready";
@@ -374,16 +381,16 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
     const snapshot = this.active.snapshot();
     if (snapshot.status !== "ok") return snapshot;
     const mode = snapshot.value.managers.noteManager.calculatedData;
-    if (mode.sessionMode !== "rehearsal" || !mode.isEnablePractice) {
+    if (mode.sessionMode !== "rehearsal" || !mode.isEnablePractice || !snapshot.value.managers.playable) {
       return rejected(
         "timeline.retry.outside-rehearsal",
-        "The evidenced Abort/Retry/Resume pause menu belongs only to Rehearsal.",
+        "The evidenced Retry scene transition belongs only to a playable Rehearsal pause-menu session."
       );
     }
     const visual = setMoveTimeVisualState(this.active, true);
     if (visual.status !== "ok") return visual;
     this.state = "replaying";
-    const freshResult = await this.createFreshCandidate();
+    const freshResult = await this.createFreshCandidate("retry");
     if (freshResult.status !== "ok") {
       setMoveTimeVisualState(this.active, false);
       this.state = "ready";
@@ -395,11 +402,6 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
     if (disposed.status !== "ok") {
       fresh.dispose();
       return this.latchReplayFault(disposed);
-    }
-    const published = publishMoveTimeAudio(fresh, 0);
-    if (published.status !== "ok") {
-      fresh.dispose();
-      return this.latchReplayFault(published);
     }
     this.active = fresh;
     this.events = [];
@@ -429,9 +431,11 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
     return result;
   }
 
-  private async createFreshCandidate(): Promise<SimulatorResult<SimulatorEngine>> {
+  private async createFreshCandidate(
+    purpose: Exclude<SimulatorEngineBuildPurpose, "initial">,
+  ): Promise<SimulatorResult<SimulatorEngine>> {
     let produced: unknown;
-    try { produced = await this.factory.createFreshEngine(); }
+    try { produced = await this.factory.createFreshEngine(purpose); }
     catch {
       return rejected(
         "timeline.replay.factory-threw",

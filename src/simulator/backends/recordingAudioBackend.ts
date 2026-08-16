@@ -173,7 +173,7 @@ export class RecordingSimulatorAudioBackend implements SimulatorAudioBackend {
 
     const bgmCue = this.profile.resources.find((resource) => resource.role === "bgm")!.cue;
     const seCueSet = new Set(
-      this.profile.resources.filter((resource) => resource.role === "se").map((resource) => resource.cue),
+      this.profile.resources.filter((resource) => resource.role === "se" || resource.role === "voice").map((resource) => resource.cue),
     );
     const simulated = cloneSemanticState(this.semantic);
     const frozenCommands: AudioCommand[] = [];
@@ -245,6 +245,17 @@ export class RecordingSimulatorAudioBackend implements SimulatorAudioBackend {
     if (this.semantic.bgmCue === null) return audioAccepted("not-loaded");
     if (this.bgmNaturallyEnded) return audioAccepted("ended");
     return audioAccepted(this.semantic.bgmPaused || this.semantic.allPaused ? "paused" : "playing");
+  }
+
+  getOneShotPlaybackState(voiceKey: string): AudioOperationResult<"not-started" | "playing" | "ended"> {
+    const terminal = this.terminalResult<"not-started" | "playing" | "ended">();
+    if (terminal !== null) return terminal;
+    if (typeof voiceKey !== "string" || voiceKey.length === 0) {
+      return this.reject("audio.voice.invalid-owner", "One-shot playback observation requires one stable non-empty owner key.");
+    }
+    return audioAccepted(this.commands.some((command) =>
+      command.kind === "se.play-one-shot" && command.voice_key === voiceKey)
+      ? "playing" : "not-started");
   }
 
   publishMoveTimeOutput(seekMilliseconds: number): AudioOperationResult<void> {

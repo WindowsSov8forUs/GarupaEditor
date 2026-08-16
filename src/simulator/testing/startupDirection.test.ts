@@ -13,6 +13,7 @@ import { createSimulatorEngine } from "../host/createSimulatorEngine";
 function main(): void {
   testFourModeStateAndMutationGate();
   testFloat32NoRemainder();
+  testVoiceWaitAndDelayedBgm();
   console.log("startup direction engine tests passed: four modes/state0-5/mutation gate/Float32 owners");
 }
 
@@ -31,7 +32,7 @@ function testFourModeStateAndMutationGate(): void {
           life: { initialLife: 1000, playerMaxLife: 1000, lifeUpperLimit: 2000, missDamage: -100, badDamage: -50 },
           mode,
         },
-        startupDirection: { scene },
+        startupDirection: { scene, liveStartVoiceCue: null, purpose: "initial" },
       }, createRecordingSimulatorBackends()));
       requireOk(engine.initialize());
       const initial = requireOk<any>(engine.snapshot());
@@ -75,6 +76,71 @@ function testFloat32NoRemainder(): void {
   assert.equal(controller.snapshot().phase, "information-hold");
   assert.equal(controller.snapshot().phaseElapsed, 0);
   controller.dispose();
+}
+
+function testVoiceWaitAndDelayedBgm(): void {
+  let voiceStarts = 0;
+  let bgmStarts = 0;
+  let voicePlaying = true;
+  const transaction = (commit: () => void) => ({
+    status: "ok" as const,
+    value: { commit() { commit(); return { status: "ok" as const, value: undefined }; } },
+  });
+  const audio = {
+    preflightStartLiveVoice() { return transaction(() => { voiceStarts += 1; }); },
+    isLiveStartVoicePlaying() { return { status: "ok" as const, value: voicePlaying }; },
+    preflightStartBgm() { return transaction(() => { bgmStarts += 1; }); },
+  } as any;
+  const live = new StartupDirectionController(
+    createSimulatorModeIdentity("live", "manual"),
+    new RecordingStartupDirectionBackend(),
+    audio,
+    "session_live_start_voice_" + "A".repeat(64),
+  );
+  requireOk(live.initialize());
+  assert.equal(voiceStarts, 1);
+  for (let index = 0; index < 30 && live.snapshot().phase !== "voice-wait"; index += 1) {
+    requireOk(live.step(Math.fround(1)));
+  }
+  assert.equal(live.snapshot().phase, "voice-wait");
+  for (let index = 0; index < 3; index += 1) requireOk(live.step(Math.fround(1)));
+  assert.equal(live.snapshot().phase, "voice-wait");
+  assert.equal(bgmStarts, 0);
+  voicePlaying = false;
+  requireOk(live.step(Math.fround(1)));
+  assert.equal(live.snapshot().phase, "music-wait");
+  requireOk(live.step(Math.fround(1)));
+  assert.equal(bgmStarts, 0);
+  requireOk(live.step(Math.fround(0)));
+  assert.equal(bgmStarts, 1);
+  assert.equal(live.snapshot().currentGameState, GameState.PlayingNone);
+  live.dispose();
+
+  voiceStarts = 0;
+  const practice = new StartupDirectionController(
+    createSimulatorModeIdentity("rehearsal", "auto"),
+    null,
+    audio,
+    "session_live_start_voice_" + "B".repeat(64),
+  );
+  requireOk(practice.initialize());
+  assert.equal(voiceStarts, 0);
+  practice.dispose();
+
+  bgmStarts = 0;
+  const reconstruction = new StartupDirectionController(
+    createSimulatorModeIdentity("rehearsal", "auto"),
+    null,
+    audio,
+    null,
+    "move-time-reconstruction",
+  );
+  requireOk(reconstruction.initialize());
+  assert.equal(reconstruction.snapshot().currentGameState, GameState.PlayingSound);
+  assert.equal(reconstruction.snapshot().playable, true);
+  assert.equal(reconstruction.snapshot().scene.informationPhase, "complete");
+  assert.equal(bgmStarts, 1);
+  reconstruction.dispose();
 }
 
 function businessDigest(snapshot: any): unknown {

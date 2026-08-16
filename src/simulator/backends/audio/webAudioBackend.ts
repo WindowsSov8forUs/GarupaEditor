@@ -254,6 +254,17 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
     return audioAccepted(this.voices.has("bgm") ? "playing" : "ended");
   }
 
+  getOneShotPlaybackState(voiceKey: string): AudioOperationResult<"not-started" | "playing" | "ended"> {
+    const terminal = this.requireTerminalBeforeValidation<"not-started" | "playing" | "ended">();
+    if (terminal !== null) return terminal;
+    if (typeof voiceKey !== "string" || voiceKey.length === 0) {
+      return reject("audio.web.invalid-one-shot-owner", "One-shot playback observation requires one stable non-empty owner key.");
+    }
+    const semantic = this.recording.getOneShotPlaybackState(voiceKey);
+    if (semantic.status !== "accepted" || semantic.value === "not-started") return semantic;
+    return audioAccepted(this.voices.has(`se:${voiceKey}`) ? "playing" : "ended");
+  }
+
   publishMoveTimeOutput(seekMilliseconds: number): AudioOperationResult<void> {
     const context = this.requireRunningContext<void>();
     if (context !== null) return context;

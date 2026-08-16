@@ -163,16 +163,45 @@ export class AudioCommandProducer {
         one_shot_pool: 1,
       },
       gain.value,
-      {
-        kind: "bgm.load",
-        cue: this.input.bgmCue,
-        seek_ms: this.input.seekMilliseconds,
-        priority: 255,
-        fade_bits: "0x00000000",
-      },
-      { kind: "audio.pause-all", paused: true },
-      { kind: "audio.pause-all", paused: false },
     ]);
+  }
+
+  preflightStartBgm(): SimulatorResult<AudioOwnerTransaction> {
+    return this.preflightCommands([{
+      kind: "bgm.load",
+      cue: this.input.bgmCue,
+      seek_ms: this.input.seekMilliseconds,
+      priority: 255,
+      fade_bits: "0x00000000",
+    }]);
+  }
+
+  preflightStartLiveVoice(cue: string): SimulatorResult<AudioOwnerTransaction> {
+    if (typeof cue !== "string" || cue.length === 0) {
+      return rejected("audio.startup-voice.invalid-cue", "Live-start voice requires the internally derived non-empty session cue.");
+    }
+    return this.preflightCommands([{
+      kind: "se.play-one-shot",
+      cue,
+      voice_key: "live-start",
+      volume_bits: "0x3F800000",
+      pitch_bits: "0x00000000",
+      pan_distance_bits: "0x00000000",
+      pan_angle_bits: "0x00000000",
+    }]);
+  }
+
+  isLiveStartVoicePlaying(): SimulatorResult<boolean> {
+    const observer = this.backend.getOneShotPlaybackState;
+    if (observer === undefined) {
+      return rejected(
+        "audio.startup-voice.observer-unavailable",
+        "A non-null Live voice requires backend ended-state observation and cannot use a fixed duration.",
+      );
+    }
+    const observed = observer.call(this.backend, "live-start");
+    if (observed.status !== "accepted") return mapAudioResult(observed);
+    return ok(observed.value === "playing");
   }
 
   preflightPause(): SimulatorResult<AudioOwnerTransaction> {

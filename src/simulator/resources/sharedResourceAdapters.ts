@@ -1,6 +1,7 @@
 import type {
   AudioResourceProfileSet,
   AudioSessionBgmResourceProfile,
+  AudioSessionVoiceResourceProfile,
 } from "../backends/audioContracts";
 import { createAudioSessionResourceProfile } from "../backends/resources/currentAudioResourceManifest";
 import {
@@ -318,12 +319,16 @@ export async function prepareSharedAudioResources(
   },
   selectedSe: readonly SelectedAudioSeResource[],
   store: SharedStaticResourceStore,
+  voice: { readonly profile: AudioSessionVoiceResourceProfile; readonly bytes: Uint8Array } | null = null,
 ): Promise<SimulatorAssemblyResult<PreparedSharedAudioResources>> {
   const local: LocalAudioResource[] = [{
     logicalId: bgm.profile.logicalId,
     cue: bgm.profile.cue,
     bytes: Uint8Array.from(bgm.bytes),
   }];
+  if (voice !== null) {
+    local.push({ logicalId: voice.profile.logicalId, cue: voice.profile.cue, bytes: Uint8Array.from(voice.bytes) });
+  }
   for (const selected of selectedSe) {
     const read = await readStatic(store, selected.resourceKey);
     if (read.status === "rejected") return read;
@@ -341,7 +346,7 @@ export async function prepareSharedAudioResources(
       provider.failure.boundary,
     );
   }
-  const profile = createAudioSessionResourceProfile(bgm.profile);
+  const profile = createAudioSessionResourceProfile(bgm.profile, voice?.profile ?? null);
   return accepted(Object.freeze({ profile, provider: provider.value }));
 }
 

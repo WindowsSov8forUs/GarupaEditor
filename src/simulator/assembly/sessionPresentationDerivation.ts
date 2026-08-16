@@ -25,7 +25,8 @@ export interface PreparedPresentationImage {
 }
 
 export interface PreparedLiveStartVoice {
-  readonly role: "live-start-voice";
+  readonly role: "voice";
+  readonly semanticRole: "live-start-voice";
   readonly logicalId: string;
   readonly cue: string;
   readonly sha256: string;
@@ -36,6 +37,9 @@ export interface PreparedLiveStartVoice {
   readonly channels: 1 | 2;
   readonly sampleFrames: number;
   readonly durationSeconds: number;
+  readonly loop: null;
+  readonly identity: "session-explicit";
+  readonly signal: "host-supplied-portable";
   readonly bytes: Uint8Array;
 }
 
@@ -51,6 +55,7 @@ export interface PreparedSessionPresentation {
 export async function deriveSessionPresentation(
   presentation: SimulatorPresentationPackage,
   audioPreflight: AudioResourcePreflightAdapter,
+  deriveLiveVoice = true,
 ): Promise<SimulatorAssemblyResult<PreparedSessionPresentation>> {
   const jacket = deriveImage("jacket", null, presentation.jacketPng, STARTUP_JACKET_SIZE.width, STARTUP_JACKET_SIZE.height);
   if (jacket.status === "rejected") return jacket;
@@ -62,7 +67,7 @@ export async function deriveSessionPresentation(
     if (derived.status === "rejected") return derived;
     slots.push(derived.value);
   }
-  const voice = presentation.liveStartVoiceMp3 === null
+  const voice = presentation.liveStartVoiceMp3 === null || !deriveLiveVoice
     ? accepted<PreparedLiveStartVoice | null>(null)
     : await deriveVoice(presentation.liveStartVoiceMp3, audioPreflight);
   if (voice.status === "rejected") return voice;
@@ -129,7 +134,8 @@ async function deriveVoice(
   }
   const sha256 = sha256UpperHex(bytes);
   return accepted(Object.freeze({
-    role: "live-start-voice" as const,
+    role: "voice" as const,
+    semanticRole: "live-start-voice" as const,
     logicalId: `startup/session/live-start-voice/${sha256}`,
     cue: `session_live_start_voice_${sha256}`,
     sha256,
@@ -140,6 +146,9 @@ async function deriveVoice(
     channels: metadata.channels as 1 | 2,
     sampleFrames: metadata.sampleFrames,
     durationSeconds,
+    loop: null,
+    identity: "session-explicit" as const,
+    signal: "host-supplied-portable" as const,
     bytes,
   }));
 }

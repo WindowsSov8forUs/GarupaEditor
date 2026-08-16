@@ -6,6 +6,7 @@ import {
   rejected,
   type SimulatorAssemblyResult,
 } from "../resources/sharedResourceAdapters";
+import { inspectMp3FirstFrame } from "./sessionBgmDerivation";
 
 export const STARTUP_PRESENTATION_SD_SLOT_COUNT = 5 as const;
 export const STARTUP_JACKET_SIZE = Object.freeze({ width: 360, height: 360 });
@@ -60,6 +61,12 @@ export function copyAndFreezeSimulatorPresentation(
   if (voice !== null && (!(voice instanceof Uint8Array) ||
     Object.getPrototypeOf(voice) !== Uint8Array.prototype || voice.byteLength === 0)) {
     return invalid("liveStartVoiceMp3 is either null for the evidenced missing SoundResource route or one non-empty direct Uint8Array.");
+  }
+  if (voice !== null) {
+    const mp3 = inspectMp3FirstFrame(voice);
+    if (mp3.status === "rejected") {
+      return rejected("resource-decode", "simulator.presentation.invalid-live-start-voice-mp3", mp3.failure.boundary);
+    }
   }
   return accepted(Object.freeze({
     song: Object.freeze({
