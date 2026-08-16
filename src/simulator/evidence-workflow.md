@@ -15,6 +15,14 @@
 4. 确认所引用的Reverse证据提交已存在于远端。
 5. 必要时更新测试fixture manifest，然后实现或修改simulator；未知行为继续返回`evidence-required`。
 
+## 当前启动方向证据
+
+- Reverse提交：`78e6a70ea906aa1fa778b56e843c7663fdd3b4bc`，已push且远端差异`0 0`。
+- 行为：`startup-direction-runtime-contract-10-1-4/`，SD01–SD16。
+- 资源：`startup-direction-portable-pack-10-1-4/`，GameStartInfo/difficulty hierarchy、line-star、共享atlas/font身份、1600×720舞台与5槽SD输入边界。
+- Garupa fixture只复制两个JSON与line-star PNG；production不读取fixture，动态presentation没有默认值。
+- RD01/RV01只作冲突检查和视觉辅助；fixed-device framebuffer/speaker onset继续开放。
+
 ## 测试边界
 
 隔离测试需要离线输入时，只从已推送的Reverse提取最小快照到`src/simulator/testing/fixtures/`，并记录来源提交、源相对路径、字节数和SHA-256。`verifyTestingFixtures.mjs`只校验这些快照，不读取Reverse或网络。生产代码不得读取本地工作记录、Reverse或testing fixture。

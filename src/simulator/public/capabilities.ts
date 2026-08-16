@@ -33,6 +33,7 @@ export function createSimulatorModuleCapabilitySummary(
     habahiroCurrentExternalComplete: "closed-portable" as const,
     habahiroOriginalParity: "open-evidence-required" as const,
     liveRehearsalFourModeMatrix: "closed-portable" as const,
+    startupDirectionPortable: "closed-portable" as const,
     rehearsalMoveTimeControls: "closed-portable" as const,
     garupaJsonDirectChartAdapter: "closed-portable" as const,
     garupaJsonSvAndTimingGroup: "ignored-product-extension" as const,

@@ -485,6 +485,7 @@ async function testAutonomousLaunchAndClose(): Promise<void> {
     habahiroCurrentExternalComplete: "closed-portable",
     habahiroOriginalParity: "open-evidence-required",
     liveRehearsalFourModeMatrix: "closed-portable",
+    startupDirectionPortable: "closed-portable",
     rehearsalMoveTimeControls: "closed-portable",
     garupaJsonDirectChartAdapter: "closed-portable",
     garupaJsonSvAndTimingGroup: "ignored-product-extension",

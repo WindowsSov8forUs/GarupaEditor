@@ -17,6 +17,7 @@
 | HAB current-external-complete | `closed-portable` | 11项pinned资源、179 rows、全Note/mesh/line/field/mask/lane-change及Pixi consumer；差异仅文档披露 |
 | HAB original parity | `open-evidence-required` | UnityFS、natural owner/setter、Root_effect原clip及original physical frame不作等价声明 |
 | Live/Rehearsal × Manual/Auto | `closed-portable` | Reverse `6c0dfb76`四模式identity与Life-zero矩阵；Rehearsal Auto保持Practice+Demo而非Auto Live，CS-V1仍为产品计分合同 |
+| Startup direction | `closed-portable` | Reverse `78e6a70e` SD01–SD16：schema 4根级presentation、歌曲信息、HUD/舞台/5槽SD/轨道并行owner、Prepare(0)→PlayingSound(5)、nullable Live voice/Practice bypass、延迟BGM、Retry重播及MoveTime内部bypass；3-fresh WebView2 × 4模式 × 7阶段digest `0f33657e…14d`，不升级fixed-device exact |
 | Public Life profile | `closed-portable` | Reverse `2cbea93d`：Public只携带显式`isFullLength`；simulator内部固定Life `1000/1000/2000`，non-full/full Miss/Bad分别为`-100/-50`与`-50/-25`；不从duration等字段推断 |
 | Garupa JSON direct chart adapter | `closed-portable` | Public精确接收已解析`chart`对象数组，按`GJP-D01`执行`floor(48*beat)`并直接建立冻结/登记的运行时图；不生成中间BMS，不接受caller构造结果 |
 | Rehearsal MoveTime/control scene | `closed-portable` | simulator-owned固定±5 opaque command、Float32 whole-engine恢复、后退timeline revision、目标BGM发布及真实current atlas Pixi controls限定范围；不声明Prefab/fixed-device exact |
@@ -39,7 +40,7 @@
 import { launchSimulatorModule } from "src/simulator";
 ```
 
-安装中立platform后，证据覆盖的四种`sessionMode × inputMode` request可获得仅含`closed` Promise的成功receipt；未安装时失败为`simulator.entry.platform-not-installed`。Public chart精确包含由[`../chart/garupa.ts`](../chart/garupa.ts)统一定义的已解析Garupa JSON `chart`对象数组、直接`Uint8Array`逐谱BGM字节与显式`isFullLength`，拒绝`bmsText`兼容入口和caller-authored cue/hash/codec/sample metadata。simulator在资源/backend装配前验证MP3结构、解码并内部派生SHA-256、cue、sample rate、channels、sample frames及duration；Retry/MoveTime复用同一recipe的冻结profile与浏览器解码缓存。`isFullLength`仍不得从音频时长推断。不接受caller-authored Life、member/card/deck、角色效果、Fever或多人数据，也不暴露engine、step、backend、provider、scene、replay factory或dispose。Score master、level、totalParameter、Auto coefficient、ruleset、评分单位数和quota均由exact-shape边界拒绝。模拟器从chart-owned判定图内部生成评分计划，并从内部证据化profile建立Life。
+安装中立platform后，证据覆盖的四种`sessionMode × inputMode` request可获得仅含`closed` Promise的成功receipt；未安装时失败为`simulator.entry.platform-not-installed`。Launch request精确为`{ chartData, presentation, config }`；`chartData`仍精确包含由[`../chart/garupa.ts`](../chart/garupa.ts)统一定义的已解析Garupa JSON `chart`对象数组、直接`Uint8Array`逐谱BGM字节与显式`isFullLength`，拒绝`bmsText`兼容入口和caller-authored cue/hash/codec/sample metadata。根级`presentation`携带调用方已选择的本地化歌曲文字、difficulty、360×360严格RGBA PNG jacket、1600×720舞台、恰好5个1600×720透明SD overlay，以及nullable严格MP3 Live开局语音；全部字节深复制、hash/metadata内部派生，缺glyph、坏CRC/尺寸/slot/decode或额外字段在engine/mount前失败关闭，不查询Bestdori或推断歌曲/成员/资源身份。simulator在资源/backend装配前验证MP3结构、解码并内部派生SHA-256、cue、sample rate、channels、sample frames及duration；Retry/MoveTime复用同一recipe的冻结profile与浏览器解码缓存。`isFullLength`仍不得从音频时长推断。不接受caller-authored Life、member/card/deck、角色效果、Fever或多人数据，也不暴露engine、step、backend、provider、scene、replay factory或dispose。Score master、level、totalParameter、Auto coefficient、ruleset、评分单位数和quota均由exact-shape边界拒绝。模拟器从chart-owned判定图内部生成评分计划，并从内部证据化profile建立Life。
 
 **Skill音符不等于角色技能效果。** `GameNoteAdditionalType.Skill`只能在重新核验后表示chart-owned外观、命中SE和判定粒子，不得查询member/card或触发角色加分、Heal、Guard、NeverDie或判定强化。
 
@@ -64,7 +65,7 @@ src/simulator/
 ## Rendering验收分层
 
 - `actual-pixi-command-scene-routing`：testing-only observer独立连乘实际Pixi父链并观察local/world matrix、bounds、mask、texture、geometry及combined stage order；parent、Unity Y、mask-space、stage-order、particle UV-row和fallback六类故意反例均会失败。
-- `webview2-decode-raster`：真实production `BrowserPixiTextureDecoder`与`BrowserPixiParticleTextureDecoder`在WebView2 151.0.4129.78完整场景执行`createImageBitmap`、`FontFace` glyph及Pixi WebGL raster；3 fresh digest只限定当前portable环境，不泛化跨browser/GPU或原Unity exact。
+- `webview2-decode-raster`：真实production `BrowserPixiTextureDecoder`与`BrowserPixiParticleTextureDecoder`在WebView2执行`createImageBitmap`、`FontFace` glyph及Pixi WebGL raster；普通完整场景本轮3 fresh×21 digest为`a09166cf…2199`，启动链3 fresh×4模式×7阶段digest为`0f33657e…14d`。digest只限定当前portable环境，不泛化跨browser/GPU或原Unity exact。
 - `framebuffer/device-exact`：锁定设备调查已形成四项客观环境阻断，exact继续不声明。
 
 Synthetic decoder、资源hash或typed command仍不能单独升级为真实WebView2 raster证明。
@@ -77,6 +78,6 @@ Score HUD继续保留Reverse确认的NineSlice轴序、depth、UIPanel clip、Bi
 
 Reverse普通渲染静态/HUD提交`6908ddfa`和最终账本`b5fb3dca`继续约束未改变的原作表现；其Garupa target `2b758eb...`仅作为历史基线。CS-V1变更由tracked产品规范、独立公式测试、full-chart Auto和当前WebView2观察约束。HAB original、fixed-device exact、excluded和Stage 9边界不因产品Score升级。
 
-日常开发默认运行`npm.cmd run simulator:test`（或`simulator:test:quick`）：测试树只编译一次，以10个development groups覆盖unit/contract/static、Garupa direct chart、chart parsing、clock与Auto，不执行耗时full-chart actual-Pixi/particle/HAB或WebView2，因此不能作为release证据。发布级入口仍为`npm.cmd run simulator:test:total-revalidation`，当前完整DAG为29 semantic leaves及3-fresh ordinary WebView2双decoder；重复运行复用ignored Cargo target，`simulator:test:total-revalidation:clean`可强制冷编译。完整说明见[`testing/README.md`](./testing/README.md)。两级均不运行Vite/Tauri，也不声称原作framebuffer或物理输出等价。
+日常开发默认运行`npm.cmd run simulator:test`（或`simulator:test:quick`）：测试树只编译一次，以11个development groups覆盖unit/contract/static、Garupa direct chart、chart parsing、clock与Auto，不执行耗时full-chart actual-Pixi/particle/HAB或WebView2，因此不能作为release证据。发布级入口仍为`npm.cmd run simulator:test:total-revalidation`，当前完整DAG为31 semantic leaves，并包含3-fresh ordinary WebView2双decoder与3-fresh startup-direction WebView2；重复运行复用ignored Cargo target，`simulator:test:total-revalidation:clean`可强制冷编译。完整说明见[`testing/README.md`](./testing/README.md)。两级均不运行Vite/Tauri，也不声称原作framebuffer或物理输出等价。
 
 `mainProgramIntegrationAuthorization=false`。

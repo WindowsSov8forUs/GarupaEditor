@@ -38,6 +38,7 @@ const baseLeaves = [
   ["garupa-json-direct-chart", "runPublicGarupaJsonChartTests.mjs", {}],
   ["public-life-profile", "runPublicLifeProfileTests.mjs", {}],
   ["live-rehearsal-four-mode", "runLiveRehearsalModeTests.mjs", {}],
+  ["startup-direction", "runStartupDirectionTests.mjs", {}],
   ["remaining-capability-consumption", "runC07EvidenceConsumptionTests.mjs", {}],
 ];
 const quickLeaves = [
@@ -48,11 +49,13 @@ const quickLeaves = [
   ["garupa-json-direct-chart", "runPublicGarupaJsonChartTests.mjs", {}],
   ["public-life-profile", "runPublicLifeProfileTests.mjs", {}],
   ["live-rehearsal-four-mode", "runLiveRehearsalModeTests.mjs", {}],
+  ["startup-direction", "runStartupDirectionTests.mjs", {}],
 ];
 const browserEnvironment = cleanBrowserBuild ? { SIMULATOR_WEBVIEW2_CLEAN_BUILD: "1" } : {};
 const browserLeaves = [
   ["production-browser-webview2", "runBrowserPixiDecoderWebView2Tests.mjs", browserEnvironment],
   ["ordinary-full-scene-browser-webview2", "runOrdinaryRenderingWebView2Tests.mjs", browserEnvironment],
+  ["startup-direction-browser-webview2", "runStartupDirectionWebView2Tests.mjs", browserEnvironment],
 ];
 const leaves = quick ? quickLeaves : [...baseLeaves, ...browserLeaves];
 const sharedEnvironment = {

@@ -27,6 +27,12 @@ Canonical identity由模拟器一次性生成：
 
 依据：LR-E01、LR-E02、LR-R01、LR-R02、LR-C01。任何字段不允许从另一轴反推；Rehearsal Auto是Demo Play，不是Auto Live。
 
+## 启动方向链
+
+Reverse `78e6a70e` 的SD01–SD16授权SingleNormal/Practice 2D portable链。四种Public模式均从`Prepare(0)`依次进入`OPFirstAnimStart(1)`、`OPFirstAnimEnd(2)`、`OPLastAnimStart(3)`、`PlayingNone(4)`、`PlayingSound(5)`；0–3不推进Note、input、judgement、Score/Life/Combo、gameplay particle或BGM timeline。信息First View/hold/fade、HUD、舞台/5槽SD、line UI是独立Float32 owner且不携带delta remainder；line fade可跨PlayingSound。
+
+Launch根精确三键`{chartData,presentation,config}`。presentation是调用方已选择的本地化文字与显式PNG/MP3，不改变chartData三字段；Live non-null voice等待backend ended，Live null映射SD13缺SoundResource，Practice不发voice命令。Retry使用`retry`内部purpose从Prepare重播；MoveTime仅可从playable Practice以`move-time-reconstruction`隐藏启动表现并原子发布目标。purpose不属于Public。
+
 ## Life初始化与生命周期
 
 Public chart的BGM字段只接受非空`Uint8Array`；cue、SHA-256、codec/sample metadata均由simulator在严格MP3检查与浏览器解码后内部生成。Public chart另只接受显式`isFullLength: boolean`，不接受五个Life数值。simulator内部固定普通单曲初始化`initialLife=1000`、`playerMaxLife=1000`、`lifeUpperLimit=2000`；non-full使用Miss/Bad `-100/-50`，full使用`-50/-25`。该boolean只携带原作`musicDataType == "full"`的已解析结果，不从BGM duration、Garupa JSON内容、文件名、sessionMode或inputMode推断。initial engine、Retry和MoveTime fresh generation复用同一frozen分类。
