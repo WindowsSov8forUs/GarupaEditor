@@ -20,6 +20,10 @@ const bgmContract = JSON.parse(readFileSync(resolve(
   testingRoot, "fixtures", "reverse-snapshots", "audio", "artifacts", "investigations",
   "audio-session-bgm-resource-contract-10-1-4", "audio_session_bgm_resource_contract.json",
 ), "utf8"));
+const startupCallgraph = JSON.parse(readFileSync(resolve(
+  testingRoot, "fixtures", "reverse-snapshots", "startup-audio", "artifacts", "investigations",
+  "startup-audio-callgraph-10-1-4", "startup_audio_callgraph.json",
+), "utf8"));
 
 const violations = [];
 let productionSource = "";
@@ -78,6 +82,38 @@ if (!composition.includes("deriveSessionBgmResource") ||
 if (/currentSampleFrames/.test(productionSource)) {
   violations.push("obsolete currentSampleFrames remains in production audio contracts");
 }
+const contracts = readFileSync(resolve(simulatorRoot, "backends", "audioContracts.ts"), "utf8");
+const audioManifest = readFileSync(resolve(
+  simulatorRoot, "backends", "resources", "currentAudioResourceManifest.ts",
+), "utf8");
+for (const required of [
+  'cue: "SE_RHYTHM_GAYA"',
+  'sha256: "00DCFC839A945401863304FB64ED0407696E618F9BB5C7CFAF5810EB72C77554"',
+  "start: 0, end: 310191",
+  'kind: "se.start-owned-loop"',
+  'kind: "se.fade-owned-loop"',
+]) {
+  if (!(audioManifest + contracts + productionSource).includes(required)) {
+    violations.push(`startup Gaya production contract missing: ${required}`);
+  }
+}
+if ((audioManifest.match(/cue: "SE_RHYTHM_GAYA"/g) ?? []).length !== 1 ||
+  /cue:\s*"SE_RHYTHM_GAYA"[\s\S]{0,400}semantic-exact-silence/.test(audioManifest)) {
+  violations.push("Gaya must be one exact non-silent fixed resource");
+}
+if (/hold\.start-loop[\s\S]{0,180}SE_RHYTHM_GAYA|se\.play-one-shot[\s\S]{0,180}SE_RHYTHM_GAYA/.test(productionSource)) {
+  violations.push("Gaya is aliased to Hold or one-shot instead of its startup owned-loop contract");
+}
+const closure = startupCallgraph.closure ?? {};
+const startupClosed = publicContracts.includes('startupDirectionPortable: "closed-portable"');
+if (startupClosed && (
+  closure.reachable_unclassified_count !== 0 ||
+  closure.unknown_predicate_count !== 0 ||
+  closure.missing_resource_count !== 0 ||
+  closure.production_authorization !== true
+)) {
+  violations.push("startup audio capability is closed without a zero-count authorized callgraph fixture");
+}
 const webSource = readFileSync(webAudioPath, "utf8");
 if (/from\s+["'](?:\.\.\/)*\.\.\/engine\/(?:managers|notes)|from\s+["'](?:\.\.\/)*\.\.\/host/.test(webSource)) {
   violations.push("Web Audio backend imports domain managers/notes/host");
@@ -88,7 +124,6 @@ for (const path of audioTestPaths) {
     violations.push(`audio test external dependency/sleep: ${path}`);
   }
 }
-const contracts = readFileSync(resolve(simulatorRoot, "backends", "audioContracts.ts"), "utf8");
 const commandSection = contracts.slice(contracts.indexOf("export type AudioCommand"), contracts.indexOf("export interface AudioCommandBatch"));
 if (/fixtureId|evidenceId|sourceOrder|expected/i.test(commandSection)) {
   violations.push("AudioCommand contains test/evidence/expected identity");

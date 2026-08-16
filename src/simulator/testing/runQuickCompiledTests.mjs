@@ -29,6 +29,7 @@ const compiledTests = [
   "sessionBgmDerivation.test.js",
   "audioContracts.test.js",
   "audioWebAudio.test.js",
+  "startupAudioCallgraph.test.js",
   "particleContracts.test.js",
   "habahiroComplete.test.js",
   "c07EvidenceConsumption.test.js",
@@ -37,6 +38,7 @@ const compiledTests = [
 ];
 const staticChecks = [
   "verifyAudioStatic.mjs",
+  "verifyStartupDirectionStatic.mjs",
   "verifyParticleStatic.mjs",
   "verifyAutonomousModuleStatic.mjs",
   "verifyRenderProductionStatic.mjs",

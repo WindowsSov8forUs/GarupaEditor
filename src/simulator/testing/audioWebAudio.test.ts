@@ -13,6 +13,7 @@ import {
   CURRENT_AUDIO_TEST_PROFILE,
   CURRENT_BGM_REGRESSION_RESOURCE,
 } from "./audioSessionBgmTestProfile";
+import { createAudioSessionResourceProfile } from "../backends/resources/currentAudioResourceManifest";
 
 const profileByLength = new Map(
   CURRENT_AUDIO_TEST_PROFILE.resources.map((resource) => [resource.byteLength, resource]),
@@ -165,6 +166,71 @@ async function main(): Promise<void> {
   resumedGayaSource.onended?.();
   assert.equal(gaya.dispose().status, "accepted");
 
+  const voiceSha = "D".repeat(64);
+  const voiceCue = `session_live_start_voice_${voiceSha}`;
+  const voiceProfile = createAudioSessionResourceProfile(
+    CURRENT_BGM_REGRESSION_RESOURCE,
+    Object.freeze({
+      role: "voice" as const,
+      logicalId: `startup/session/live-start-voice/${voiceSha}`,
+      cue: voiceCue,
+      byteLength: 4097,
+      sha256: voiceSha,
+      mime: "audio/mpeg" as const,
+      codec: "mp3" as const,
+      sampleRate: 44100,
+      channels: 2 as const,
+      durationSeconds: 1,
+      sampleFrames: 44100,
+      loop: null,
+      identity: "session-explicit" as const,
+      signal: "host-supplied-portable" as const,
+    }),
+  );
+  const voiceByLength = new Map(voiceProfile.resources.map((resource) => [resource.byteLength, resource]));
+  const voiceProvider: AudioResourceProvider = {
+    async read(resource) { return audioAccepted(new Uint8Array(resource.byteLength)); },
+  };
+  const voicePreflight: AudioResourcePreflightAdapter = {
+    async sha256(bytes) { return audioAccepted(voiceByLength.get(bytes.byteLength)!.sha256); },
+    async inspect(bytes) {
+      const resource = voiceByLength.get(bytes.byteLength)!;
+      return audioAccepted({
+        codec: resource.codec, sampleRate: resource.sampleRate, channels: resource.channels,
+        durationSeconds: resource.durationSeconds, sampleFrames: resource.sampleFrames,
+      });
+    },
+    getDecodedBuffer(bytes) {
+      const resource = voiceByLength.get(bytes.byteLength)!;
+      return audioAccepted({
+        sampleRate: resource.sampleRate, numberOfChannels: resource.channels,
+        length: resource.sampleFrames, duration: resource.durationSeconds,
+      } as AudioBuffer);
+    },
+  };
+  const voiceContext = new FakeAudioContext();
+  const voice = new WebAudioSimulatorBackend(voiceContext as unknown as AudioContext);
+  assert.equal((await voice.prepare(
+    "voice-session", voiceProfile, voiceProvider, voicePreflight,
+  )).status, "accepted");
+  execute(voice, [
+    { kind: "session.open", bgm_pool: 8, se_pool: 12, one_shot_pool: 1 },
+    { kind: "gain.set", bgm_bits: "0x3F800000", se_bits: "0x3F800000" },
+    {
+      kind: "se.play-one-shot", cue: voiceCue, voice_key: "live-start",
+      volume_bits: "0x3F800000", pitch_bits: "0x00000000",
+      pan_distance_bits: "0x00000000", pan_angle_bits: "0x00000000",
+    },
+  ]);
+  assert.equal(voice.getOneShotPlaybackState("live-start").status, "accepted");
+  const voiceSource = voiceContext.sources[voiceContext.sources.length - 1]!;
+  voiceSource.onended?.();
+  const endedVoice = voice.getOneShotPlaybackState("live-start");
+  assert.equal(endedVoice.status, "accepted");
+  if (endedVoice.status === "accepted") assert.equal(endedVoice.value, "ended");
+  execute(voice, [{ kind: "voice.release-live-start", cue: voiceCue, voice_key: "live-start" }]);
+  assert.equal(voice.dispose().status, "accepted");
+
   const moveTimeContext = new FakeAudioContext();
   const moveTime = new WebAudioSimulatorBackend(
     moveTimeContext as unknown as AudioContext,
@@ -213,6 +279,27 @@ async function main(): Promise<void> {
   assert.equal(throwing.snapshot().fault?.capability, "audio.web.command-commit-threw");
   assert.equal(throwing.dispose().status, "accepted");
 
+  const disposeFaultContext = new FakeAudioContext();
+  const disposeFault = new WebAudioSimulatorBackend(disposeFaultContext as unknown as AudioContext);
+  assert.equal((await disposeFault.prepare(
+    "dispose-fault-session", CURRENT_AUDIO_TEST_PROFILE, provider, preflight,
+  )).status, "accepted");
+  execute(disposeFault, [
+    { kind: "session.open", bgm_pool: 8, se_pool: 12, one_shot_pool: 1 },
+    {
+      kind: "se.start-owned-loop", cue: "SE_RHYTHM_GAYA", owner_key: "startup:gaya",
+      volume_bits: "0x3F800000", fade_in_bits: "0x3F000000",
+    },
+  ]);
+  disposeFaultContext.throwOnDisconnect = true;
+  const failedDispose = disposeFault.dispose();
+  assert.equal(failedDispose.status, "audio-backend-fault");
+  if (failedDispose.status === "audio-backend-fault") {
+    assert.equal(failedDispose.failure.capability, "audio.web.dispose-node-threw");
+  }
+  assert.equal(disposeFault.snapshot().state, "disposed");
+  assert.equal(disposeFault.snapshot().resourceCount, 0);
+
   console.log("audio Web Audio tests passed: prepare/decode graph transport MoveTime publication context-loss sync-fault dispose");
 }
 
@@ -239,8 +326,11 @@ class FakeAudioParam {
 
 class FakeGainNode {
   readonly gain = new FakeAudioParam();
+  constructor(private readonly context: FakeAudioContext) {}
   connect(_destination: unknown): void {}
-  disconnect(): void {}
+  disconnect(): void {
+    if (this.context.throwOnDisconnect) throw new Error("disconnect fault");
+  }
 }
 
 class FakeBufferSource {
@@ -254,7 +344,9 @@ class FakeBufferSource {
   scheduledStop: number | null = null;
   constructor(private readonly context: FakeAudioContext) {}
   connect(_destination: unknown): void {}
-  disconnect(): void {}
+  disconnect(): void {
+    if (this.context.throwOnDisconnect) throw new Error("disconnect fault");
+  }
   start(_when: number, offset: number): void {
     if (this.context.throwOnStart) throw new Error("start fault");
     this.startOffset = offset;
@@ -273,6 +365,7 @@ class FakeAudioContext {
   readonly sources: FakeBufferSource[] = [];
   decodeCount = 0;
   throwOnStart = false;
+  throwOnDisconnect = false;
   private readonly stateListeners = new Set<() => void>();
 
   async decodeAudioData(buffer: ArrayBuffer): Promise<any> {
@@ -286,7 +379,7 @@ class FakeAudioContext {
     };
   }
   createGain(): any {
-    const gain = new FakeGainNode();
+    const gain = new FakeGainNode(this);
     this.gains.push(gain);
     return gain;
   }

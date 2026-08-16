@@ -39,6 +39,7 @@ const baseLeaves = [
   ["public-life-profile", "runPublicLifeProfileTests.mjs", {}],
   ["live-rehearsal-four-mode", "runLiveRehearsalModeTests.mjs", {}],
   ["startup-direction", "runStartupDirectionTests.mjs", {}],
+  ["startup-audio-callgraph", "runStartupAudioCallgraphTests.mjs", {}],
   ["remaining-capability-consumption", "runC07EvidenceConsumptionTests.mjs", {}],
 ];
 const quickLeaves = [

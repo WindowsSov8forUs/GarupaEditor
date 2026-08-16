@@ -48,7 +48,7 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
 
   private recording = new RecordingSimulatorAudioBackend();
   private readonly decodedByCue = new Map<string, AudioBuffer>();
-  private readonly loopByCue = new Map<string, { readonly start: number; readonly end: number; readonly sampleRate: number }>();
+  private readonly loopByCue = new Map<string, { readonly startSeconds: number; readonly endSeconds: number }>();
   private readonly voices = new Map<string, WebAudioVoice>();
   private pending: PendingWebAudioBatch | null = null;
   private bgmGain: GainNode | null = null;
@@ -190,10 +190,14 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
     for (const [cue, buffer] of decoded) this.decodedByCue.set(cue, buffer);
     for (const resource of profile.resources) {
       if (resource.loop !== null) {
+        const buffer = decoded.get(resource.cue)!;
         this.loopByCue.set(resource.cue, Object.freeze({
-          start: resource.loop.start,
-          end: resource.loop.end,
-          sampleRate: resource.sampleRate,
+          startSeconds: resource.loop.start === 0
+            ? 0
+            : resource.loop.start / resource.sampleRate,
+          endSeconds: resource.loop.end === resource.sampleFrames
+            ? buffer.length / buffer.sampleRate
+            : resource.loop.end / resource.sampleRate,
         }));
       }
     }
@@ -428,8 +432,8 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
             "se",
             0,
             0,
-            resource.start / resource.sampleRate,
-            resource.end / resource.sampleRate,
+            resource.startSeconds,
+            resource.endSeconds,
           );
           this.beginVoiceFade(
             voice,
@@ -458,8 +462,8 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
             "se",
             audioFloat32FromBits(command.volume_bits)!,
             0,
-            resource.start / resource.sampleRate,
-            resource.end / resource.sampleRate,
+            resource.startSeconds,
+            resource.endSeconds,
           );
           break;
         }
@@ -636,7 +640,7 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
     if (fade.stopAtZero) voice.source.stop(now + fade.remainingSeconds);
   }
 
-  private requireLoopResource(cue: string): { readonly start: number; readonly end: number; readonly sampleRate: number } {
+  private requireLoopResource(cue: string): { readonly startSeconds: number; readonly endSeconds: number } {
     const resource = this.loopByCue.get(cue);
     if (resource === undefined) throw new Error("missing validated loop resource");
     return resource;
@@ -724,11 +728,15 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
 }
 
 function validDecodedBuffer(buffer: AudioBuffer, resource: AudioResourceProfile): boolean {
-  return buffer !== null && typeof buffer === "object" &&
-    buffer.sampleRate === resource.sampleRate &&
-    buffer.numberOfChannels === resource.channels &&
-    buffer.length === resource.sampleFrames &&
-    Number((buffer.length / buffer.sampleRate).toFixed(6)) === resource.durationSeconds;
+  if (buffer === null || typeof buffer !== "object" ||
+    !Number.isSafeInteger(buffer.sampleRate) || buffer.sampleRate <= 0 ||
+    !Number.isSafeInteger(buffer.length) || buffer.length <= 0 ||
+    buffer.numberOfChannels !== resource.channels) return false;
+  const sourceFrames = buffer.sampleRate === resource.sampleRate
+    ? buffer.length
+    : Math.ceil(buffer.length * resource.sampleRate / buffer.sampleRate);
+  return sourceFrames === resource.sampleFrames &&
+    Number((sourceFrames / resource.sampleRate).toFixed(6)) === resource.durationSeconds;
 }
 
 function exactArrayBuffer(bytes: Uint8Array): ArrayBuffer {

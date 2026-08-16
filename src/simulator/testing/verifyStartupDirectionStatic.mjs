@@ -10,6 +10,7 @@ const joined = productionFiles.map((path) => readFileSync(path, "utf8")).join("\
 const contracts = read("public/contracts.ts");
 const recipe = read("assembly/sessionRecipe.ts");
 const controller = read("engine/managers/startupDirectionController.ts");
+const startupAudioOwner = read("engine/audio/startupAudioOwner.ts");
 const platform = read("platform/platformComposition.ts");
 const publicBarrel = read("public/index.ts") + read("index.ts");
 
@@ -32,6 +33,12 @@ for (const required of [
   "deriveSessionPresentation", "getStartupDirectionCommonResources",
   "createPixiStartupDirectionScene", "liveStartVoiceCue", "purpose",
 ]) if (!platform.includes(required)) throw new Error(`production startup composition missing: ${required}`);
+for (const required of [
+  "preflightStartupOpening", "preflightEnterStartupPlaying",
+  '"bgm.prepare-paused"', '"gaya.start"', '"gaya.fade-stop-at-zero"',
+  '"gaya.fade-null-safe"', '"bgm.resume"', '"live-voice.release"',
+  'purpose !== "move-time-reconstruction"', 'mode.sessionMode === "live"',
+]) if (!(startupAudioOwner + joined).includes(required)) throw new Error(`startup audio owner missing: ${required}`);
 
 const forbiddenPatterns = [
   /fontFamily\s*:\s*["'](?:Arial|sans-serif|system-ui)["']/,
@@ -44,7 +51,8 @@ const forbiddenPatterns = [
 for (const pattern of forbiddenPatterns) {
   if (pattern.test(joined)) throw new Error(`startup forbidden fallback/ambient dependency: ${pattern}`);
 }
-if (publicBarrel.includes("SimulatorEngineBuildPurpose") || publicBarrel.includes("StartupDirectionPurpose")) {
+if (publicBarrel.includes("SimulatorEngineBuildPurpose") || publicBarrel.includes("StartupDirectionPurpose") ||
+  publicBarrel.includes("StartupAudioPurpose")) {
   throw new Error("simulator-owned startup purpose escaped through Public barrel");
 }
 const fixture = JSON.parse(readFileSync(join(
@@ -53,7 +61,17 @@ const fixture = JSON.parse(readFileSync(join(
 if (fixture.schema_version !== 2 || fixture.evidence.filter((row) => /^SD/.test(row.id)).length !== 16) {
   throw new Error("startup SD01-SD16 fixture contract changed");
 }
-console.log(`startup direction static boundary verified: production-files=${productionFiles.length} SD=16 schema=4`);
+const callgraph = JSON.parse(readFileSync(join(
+  testingRoot, "fixtures/reverse-snapshots/startup-audio/artifacts/investigations/startup-audio-callgraph-10-1-4/startup_audio_callgraph.json",
+), "utf8"));
+const closure = callgraph.closure ?? {};
+const closed = contracts.includes('readonly startupDirectionPortable: "closed-portable";');
+if (closed && (
+  closure.reachable_unclassified_count !== 0 || closure.unknown_predicate_count !== 0 ||
+  closure.missing_resource_count !== 0 || closure.runtime_hook_failure_count !== 0 ||
+  closure.production_authorization !== true
+)) throw new Error("startup capability closed without zero-count authorized complete callgraph");
+console.log(`startup direction static boundary verified: production-files=${productionFiles.length} SD=16 schema=4 callgraph=${closed ? "closed-authorized" : "open"}`);
 
 function read(path) { return readFileSync(join(simulatorRoot, path), "utf8"); }
 function* walk(root) {

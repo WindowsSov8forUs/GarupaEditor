@@ -16,6 +16,7 @@ const esbuild = require.resolve("esbuild/bin/esbuild");
 const fixtureRoot = join(testingRoot, "fixtures", "reverse-snapshots");
 const startupRoot = join(fixtureRoot, "startup-direction", "artifacts", "investigations", "startup-direction-portable-pack-10-1-4");
 const scoreRoot = join(fixtureRoot, "score-hud-rank-gauge", "artifacts", "investigations", "score-hud-rank-gauge-10-1-4", "portable-assets");
+const startupAudioRoot = join(fixtureRoot, "startup-audio", "artifacts", "investigations", "startup-audio-callgraph-10-1-4", "portable-assets");
 
 try {
   rmSync(stage, { recursive: true, force: true }); mkdirSync(stage, { recursive: true });
@@ -23,6 +24,7 @@ try {
     ["/assets/startup-line-star.png", "startup-line-star.png", "image/png", join(startupRoot, "portable-assets", "startup-line-star.png")],
     ["/assets/ui-common.png", "ui-common.png", "image/png", join(scoreRoot, "ui-common.png")],
     ["/assets/rank-label-font.ttf", "rank-label-font.ttf", "font/ttf", join(scoreRoot, "rank-label-font.ttf")],
+    ["/assets/SE_RHYTHM_GAYA.mp3", "SE_RHYTHM_GAYA.mp3", "audio/mpeg", join(startupAudioRoot, "SE_RHYTHM_GAYA.mp3")],
   ];
   const allowlist = [];
   for (const [route, name, mime, source] of rows) {
@@ -42,22 +44,60 @@ try {
     run(executable, [output, stage], harnessRoot);
     const value = JSON.parse(readFileSync(output, "utf8")); verify(value); captures.push(value);
   }
-  const stable = captures.map((value) => JSON.stringify({ scene: value.scene, cleanup: value.cleanup }));
-  if (stable.some((value) => value !== stable[0])) throw new Error("startup WebView2 fresh processes differ");
-  const digest = createHash("sha256").update(stable[0]).digest("hex");
-  console.log(`startup direction production WebView2 passed: fresh=3 modes=4 captures=${captures[0].scene.captures.length} digest=${digest}`);
+  const visualStable = captures.map((value) => JSON.stringify(visualProjection(value)));
+  if (visualStable.some((value) => value !== visualStable[0])) throw new Error("startup WebView2 visual fresh processes differ");
+  const audioStable = captures.map((value) => JSON.stringify(value.audio));
+  if (audioStable.some((value) => value !== audioStable[0])) throw new Error("startup WebView2 audio fresh processes differ");
+  const visualDigest = createHash("sha256").update(visualStable[0]).digest("hex");
+  const audioDigest = createHash("sha256").update(audioStable[0]).digest("hex");
+  if (visualDigest !== "0f33657eff4dfacad24ad51a495cb1adde81af9b5e3fa4a44a8996f5a93dc14d") {
+    throw new Error(`startup visual digest changed: ${visualDigest}`);
+  }
+  if (audioDigest !== "88a2a3103f6cdda3f16ba771b020e874b5ab929d59bbe1b45cbd39093570c268") {
+    throw new Error(`startup audio digest changed: ${audioDigest}`);
+  }
+  console.log(`startup direction production WebView2 passed: fresh=3 modes=4 captures=${captures[0].scene.captures.length} visualDigest=${visualDigest} audioDigest=${audioDigest}`);
 } finally {
   rmSync(bundle, { force: true }); rmSync(stage, { recursive: true, force: true });
   for (let index = 1; index <= 3; index += 1) rmSync(join(harnessRoot, `startup-capture-${index}.json`), { force: true });
 }
 function verify(value) {
-  if (value.schema !== "garupa-startup-direction-webview2-v1" || value.status !== "ok" || value.scene?.modes !== 4 || value.scene?.captures?.length !== 28 || value.cleanup?.stageChildren !== 0) {
+  if (value.schema !== "garupa-startup-direction-webview2-v2" || value.status !== "ok" || value.scene?.modes !== 4 || value.scene?.captures?.length !== 28 || value.cleanup?.stageChildren !== 0 || value.cleanup?.audioDisposed !== true) {
     throw new Error(`startup WebView2 failure: ${JSON.stringify(value)}`);
   }
   if (value.scene.captures.some((row) => row.visible <= 0 || !/^[0-9a-f]{64}$/.test(row.rgbaSha256))) throw new Error("startup WebView2 capture is empty or unhashed");
   for (const mode of ["live-manual", "live-auto", "rehearsal-manual", "rehearsal-auto"]) {
     if (!value.scene.captures.some((row) => row.label === `${mode}-playing-sound`)) throw new Error(`startup mode missing ${mode}`);
   }
+  if (value.audio?.resource?.cue !== "SE_RHYTHM_GAYA" || value.audio.resource.bytes !== 151033 ||
+    value.audio.resource.sha256 !== "00DCFC839A945401863304FB64ED0407696E618F9BB5C7CFAF5810EB72C77554" ||
+    value.audio.resource.sampleFrames !== 310191 || value.audio.resource.loop?.start !== 0 ||
+    value.audio.resource.loop?.end !== 310191) throw new Error("startup WebView2 Gaya resource profile mismatch");
+  const opening = value.audio.opening;
+  const playing = value.audio.playing;
+  if (opening?.bgmPaused !== true || opening.startupLoops?.length !== 1 ||
+    JSON.stringify(opening.commandKinds) !== JSON.stringify(["session.open", "gain.set", "bgm.load", "bgm.pause", "se.start-owned-loop"]) ||
+    playing?.bgmPaused !== false || playing.startupLoops?.length !== 0 ||
+    JSON.stringify(playing.commandKinds) !== JSON.stringify(["session.open", "gain.set", "bgm.load", "bgm.pause", "se.start-owned-loop", "se.fade-owned-loop", "bgm.resume"]) ||
+    playing.owner?.phase !== "playing" || value.audio.cleanup?.backendState !== "disposed" ||
+    value.audio.cleanup?.resourceCount !== 0 || value.audio.cleanup?.contextState !== "closed") {
+    throw new Error(`startup WebView2 audio graph mismatch: ${JSON.stringify(value.audio)}`);
+  }
+  if (!value.resources?.urls?.some((url) => url.endsWith("/assets/SE_RHYTHM_GAYA.mp3"))) {
+    throw new Error("startup WebView2 Gaya route missing from resource inventory");
+  }
+}
+function visualProjection(value) {
+  return {
+    scene: {
+      modes: value.scene.modes,
+      captures: value.scene.captures.map((capture) => {
+        const { audio: _audio, ...snapshot } = capture.snapshot;
+        return { ...capture, snapshot };
+      }),
+    },
+    cleanup: { stageChildren: value.cleanup.stageChildren },
+  };
 }
 function run(command, args, cwd) {
   const result = spawnSync(command, args, { cwd, encoding: "utf8", stdio: "inherit", env: { ...process.env, NODE_PATH: join(repositoryRoot, "node_modules") } });

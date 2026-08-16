@@ -14,8 +14,12 @@ import type { SimulatorEngine } from "../host/contracts";
 import { createSimulatorSessionRecipe, RecipeOwnedSessionFactory } from "../assembly/sessionRecipe";
 import type { SimulatorModuleLaunchRequest } from "../public/contracts";
 import type { SimulatorSessionRecipe } from "../assembly/sessionRecipe";
-import type { SimulatorResult } from "../engine/evidence";
+import { evidenceRequired, type SimulatorResult } from "../engine/evidence";
 import { createTestPresentationPackage } from "./startupPresentationTestProfile";
+import type { AudioResourceProfileSet } from "../backends/audioContracts";
+import { audioAccepted } from "../backends/audioValidation";
+import { CURRENT_AUDIO_TEST_PROFILE } from "./audioSessionBgmTestProfile";
+import { RecordingStartupDirectionBackend } from "../backends/recordingStartupDirectionBackend";
 
 const chartText = readFileSync(join(
   process.cwd(),
@@ -29,7 +33,8 @@ async function main(): Promise<void> {
   testLegacyPublicShapesFailClosed();
   await testRehearsalLifeZeroContinuesAndLiveCloses();
   await testTransactionalMoveTimeScoreRestore();
-  console.log("Live/Rehearsal mode tests passed: four identities, exact Public rejection, Life-zero split, ±5 timeline restore");
+  await testStartupAudioFreshPurposeIsolation();
+  console.log("Live/Rehearsal mode tests passed: four identities, Life-zero, ±5 timeline and startup-audio fresh-purpose isolation");
 }
 
 function testFourCanonicalModes(): void {
@@ -184,6 +189,123 @@ async function testTransactionalMoveTimeScoreRestore(): Promise<void> {
   assert.deepEqual(purposes, ["move-time-reconstruction", "move-time-reconstruction", "retry"]);
   assert.equal(requireOk(replay.snapshot(), "Retry snapshot").managers.noteManager.nextBatchIndex, 0);
   requireOk(replay.dispose(), "MoveTime dispose");
+}
+
+async function testStartupAudioFreshPurposeIsolation(): Promise<void> {
+  const mode = createSimulatorModeIdentity("rehearsal", "auto");
+  const builds: { purpose: string; backends: ReturnType<typeof createRecordingSimulatorBackends> }[] = [];
+  let generation = 0;
+  const fresh = async (purpose: "initial" | "retry" | "move-time-reconstruction") => {
+    const sessionId = `startup-purpose:${purpose}:${generation++}`;
+    const backends = createRecordingSimulatorBackends();
+    const capabilities = virtualAudioCapabilities(CURRENT_AUDIO_TEST_PROFILE);
+    const prepared = await backends.audio.prepare(
+      sessionId,
+      CURRENT_AUDIO_TEST_PROFILE,
+      capabilities.provider,
+      capabilities.preflight,
+    );
+    if (prepared.status !== "accepted") {
+      return evidenceRequired(prepared.failure.capability, [], prepared.failure.boundary);
+    }
+    const engine = createSimulatorEngine({
+      chart,
+      runtime: { highFrequencyMode: false, judgeOffsetFrames: 0, mode },
+      scoreLifeState: {
+        schemaVersion: 3,
+        sessionId,
+        mode,
+        life: {
+          initialLife: 1000, playerMaxLife: 1000, lifeUpperLimit: 2000,
+          missDamage: -100, badDamage: -50,
+        },
+      },
+      audio: {
+        sessionId,
+        bgmCue: CURRENT_AUDIO_TEST_PROFILE.resources.find((row) => row.role === "bgm")!.cue,
+        seekMilliseconds: 0,
+        masterGainBits: "0x3F800000",
+        bgmGainBits: "0x3F800000",
+        seGainBits: "0x3F800000",
+      },
+      startupDirection: {
+        scene: new RecordingStartupDirectionBackend(),
+        liveStartVoiceCue: null,
+        purpose,
+      },
+    }, backends);
+    if (engine.status === "ok") builds.push({ purpose, backends });
+    return engine;
+  };
+  const initial = requireOk(await fresh("initial"), "startup-audio initial engine");
+  const replay = requireOk(createPortableReplaySimulatorEngine(initial, {
+    mode,
+    createFreshEngine: (purpose) => fresh(purpose),
+  }), "startup-audio replay owner");
+  await stepUntilPlayable(replay);
+  assert.deepEqual(builds[0]!.backends.audio.snapshot().commands.map((row) => row.kind), [
+    "session.open", "gain.set", "bgm.load", "bgm.pause", "bgm.resume",
+  ]);
+  requireOk(await replay.retryRehearsal(), "startup-audio Retry");
+  assert.equal(builds[0]!.backends.audio.snapshot().state, "disposed");
+  assert.equal(builds[1]!.purpose, "retry");
+  let retrySnapshot = requireOk(replay.snapshot(), "Retry opening snapshot");
+  assert.equal(retrySnapshot.managers.startupDirection?.audio?.purpose, "retry");
+  assert.deepEqual(retrySnapshot.audioBackend.commands.map((row) => row.kind), [
+    "session.open", "gain.set", "bgm.load", "bgm.pause",
+  ]);
+  await stepUntilPlayable(replay);
+  requireOk(await replay.moveTime("advance-five"), "startup-audio advance-five");
+  assert.equal(builds[1]!.backends.audio.snapshot().state, "disposed");
+  assert.equal(builds[2]!.purpose, "move-time-reconstruction");
+  const moved = requireOk(replay.snapshot(), "MoveTime audio snapshot");
+  assert.deepEqual(moved.managers.startupDirection?.audio?.timeline, [
+    "move-time.bgm.prepare-paused", "move-time.bgm.resume",
+  ]);
+  assert.equal(moved.audioBackend.commands.some((row) => row.kind === "se.start-owned-loop"), false);
+  assert.deepEqual(moved.audioBackend.commands.map((row) => row.kind).filter((kind) =>
+    kind !== "se.play-one-shot" && !kind.startsWith("hold.")), [
+    "session.open", "gain.set", "bgm.load", "bgm.pause", "bgm.resume", "bgm.move-time-load",
+  ]);
+  requireOk(replay.dispose(), "startup-audio replay dispose");
+  assert.equal(builds[2]!.backends.audio.snapshot().state, "disposed");
+}
+
+async function stepUntilPlayable(engine: SimulatorEngine): Promise<void> {
+  for (let frame = 0; frame < 500; frame += 1) {
+    const snapshot = requireOk(engine.snapshot(), "startup playable snapshot");
+    if (snapshot.managers.playable) return;
+    requireOk(engine.step(Math.fround(1 / 60)), `startup playable frame ${frame}`);
+  }
+  throw new Error("startup owner did not reach PlayingSound");
+}
+
+function virtualAudioCapabilities(profile: AudioResourceProfileSet): any {
+  const rows = profile.resources.map((resource, index) => ({
+    resource,
+    bytes: Uint8Array.from({ length: resource.byteLength }, (_, byteIndex) => byteIndex === 0 ? index + 1 : 0),
+  }));
+  const identify = (bytes: Uint8Array) => rows[bytes[0]! - 1]!.resource;
+  return {
+    provider: {
+      async read(resource: any) {
+        const row = rows.find((candidate) => candidate.resource.cue === resource.cue && candidate.resource.logicalId === resource.logicalId);
+        return row === undefined
+          ? { status: "audio-resource-unavailable" as const, failure: { code: "audio-resource-unavailable", capability: "test.missing", boundary: "missing" } }
+          : audioAccepted(Uint8Array.from(row.bytes));
+      },
+    },
+    preflight: {
+      async sha256(bytes: Uint8Array) { return audioAccepted(identify(bytes).sha256); },
+      async inspect(bytes: Uint8Array) {
+        const resource = identify(bytes);
+        return audioAccepted({
+          codec: resource.codec, sampleRate: resource.sampleRate, channels: resource.channels,
+          durationSeconds: resource.durationSeconds, sampleFrames: resource.sampleFrames,
+        });
+      },
+    },
+  };
 }
 
 function createModeEngine(

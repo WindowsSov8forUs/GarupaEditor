@@ -39,10 +39,12 @@ import {
 } from "../assembly/sessionRecipe";
 import { ok } from "../engine/evidence";
 import {
+  prepareSharedAudioResources,
   prepareSharedOrdinaryRenderResources,
   prepareSharedScoreGaugeSsAnimationResource,
   prepareSharedScoreHudRenderResources,
 } from "../resources/sharedResourceAdapters";
+import { CURRENT_AUDIO_TEST_PROFILE } from "./audioSessionBgmTestProfile";
 import { validateConstructedChartCapabilities } from "../assembly/chartCapabilityValidation";
 import { createProductionAutonomousSimulatorModule } from "../platform/platformComposition";
 import type {
@@ -58,6 +60,7 @@ async function main(): Promise<void> {
   assertPlatformUnavailable(await launchInstalledSimulatorModule(request()));
 
   await testSharedStore();
+  await testMissingGayaFailsBeforeStoreRead();
   testSelector();
   await testOrdinaryPack();
   await testScoreHudPack();
@@ -82,6 +85,33 @@ async function testSharedStore(): Promise<void> {
   first.fill(8);
   assert.deepEqual([...requireAccepted(await created.read("one"))], [1, 2, 3]);
   assert.equal((await created.read("missing")).status, "rejected");
+}
+
+async function testMissingGayaFailsBeforeStoreRead(): Promise<void> {
+  const chart = requireOk(createNoteBatchInformationList({
+    musicScoreData: "#BPM 120\n#00111:01\n",
+  }));
+  const selected = selectSimulatorStaticResources(chart);
+  let reads = 0;
+  const store = {
+    async read() {
+      reads += 1;
+      throw new Error("audio inventory rejection must precede shared-store reads");
+    },
+  } as any;
+  const withoutGaya = selected.audioSe.filter((resource) =>
+    resource.profile.cue !== "SE_RHYTHM_GAYA");
+  const bgm = CURRENT_AUDIO_TEST_PROFILE.resources.find((resource) => resource.role === "bgm")!;
+  const result = await prepareSharedAudioResources(
+    { profile: bgm as any, bytes: new Uint8Array(bgm.byteLength) },
+    withoutGaya,
+    store,
+  );
+  assert.equal(result.status, "rejected");
+  if (result.status === "rejected") {
+    assert.equal(result.failure.capability, "simulator.resources.audio-se-inventory");
+  }
+  assert.equal(reads, 0);
 }
 
 function testSelector(): void {
