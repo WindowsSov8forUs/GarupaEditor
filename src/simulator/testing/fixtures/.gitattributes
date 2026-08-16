@@ -3,6 +3,7 @@
 *.tsv text eol=lf
 *.json text eol=lf
 *.png binary
+*.mp3 binary
 *.bin binary
 
 reverse-snapshots/audio/artifacts/investigations/audio-session-bgm-resource-contract-10-1-4/audio_session_bgm_resource_contract.json binary !eol

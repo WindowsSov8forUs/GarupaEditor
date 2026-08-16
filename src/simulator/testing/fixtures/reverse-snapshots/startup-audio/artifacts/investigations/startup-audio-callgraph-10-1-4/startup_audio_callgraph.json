@@ -1,0 +1,2270 @@
+{
+  "schema_version": 1,
+  "status": "confirmed-current-four-mode-complete-startup-audio-portable-contract",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "version_name": "10.1.4",
+    "version_code": 230,
+    "abi": "arm64-v8a",
+    "libil2cpp_bytes": 119816840,
+    "libil2cpp_sha256": "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F",
+    "script_json_sha256": "826C592717ED07974F8DCD435AF92B8DCE7A6406E0706AC43A85102FE8567D91",
+    "dump_cs_sha256": "4AC4ACC5981D0010B3D6A69482C37C1175339458246BC4A5878CF30F694E884B"
+  },
+  "capability": {
+    "static": "R0-current-ARM64-dump-and-existing-startup-serialized-profile",
+    "runtime": "R1-observation-only",
+    "memory_writes": false,
+    "return_replacement": false,
+    "managed_invocation": false,
+    "synthetic_in_process_event_injection": false,
+    "auto_live_uses_consumed": 1,
+    "auto_live_budget_remaining": 9
+  },
+  "sources": {
+    "current_cri_profile": {
+      "path": "artifacts/investigations/audio-current-cri-profile-10-1-4/current_cri_resource_profile.json",
+      "sha256": "8995BEAB11F1ABD5C7564DFA728CD9609E5C58C7C14759E5E4AADF5D0C2B4676"
+    },
+    "current_external_portable_profile": {
+      "path": "artifacts/investigations/audio-current-portable-profile-10-1-4/current_external_portable_profile.json",
+      "sha256": "17DB2D66E9B495A37FAAA004FFAFBD4BAE2A45C7BFF4828AA7894C08407553A8"
+    },
+    "startup_direction_contract": {
+      "path": "artifacts/investigations/startup-direction-runtime-contract-10-1-4/startup_direction_runtime_contract.json",
+      "sha256": "617B154830A78170CC8DF380D8A7214D42278A78A1048195E8E46B227621C356"
+    },
+    "startup_serialized_portable_profile": {
+      "path": "artifacts/investigations/startup-direction-portable-pack-10-1-4/startup_direction_portable_profile.json",
+      "sha256": "D5AA3F71FDE068A981BE584CAC552A6DAD5013F6AB5527A15C3682D4D8EFF480"
+    },
+    "live_rehearsal_contract": {
+      "path": "artifacts/investigations/live-rehearsal-runtime-contract-10-1-4/live_rehearsal_runtime_contract.json",
+      "sha256": "445A756E9F87A00D2561629D27ED2B79AA83E395BD49C83A969EB1A1819B7303"
+    },
+    "targets": {
+      "path": "artifacts/investigations/startup-audio-callgraph-10-1-4/targets.tsv",
+      "sha256": "FCC56FE7C24F84409B8E007296AFB4F6F86DC9CFC6EA2089256F6B67AA2620F3"
+    }
+  },
+  "methods": [
+    {
+      "owner_method": "CE.SoundResource$$FadeVolume",
+      "rva": "0x32BE0C8",
+      "end_rva": "0x32BE150",
+      "code_bytes": 136,
+      "code_sha256": "BA5849DAE664F5A0001D21817B10D571538FBD9E69615D8F1027642B0850FCFF",
+      "arm64": "arm64/032be0c8__CE_SoundResource__FadeVolume.arm64.tsv",
+      "arm64_bytes": 1441,
+      "arm64_sha256": "08231880BB2B3211F01380AFD360A25108A76EDA63DA2DC0A7B230182A242F6C",
+      "resolved_direct_calls": [
+        {
+          "at": "0x32BE0FC",
+          "kind": "bl",
+          "target": "CE.SoundResource$$stopCoroutine"
+        },
+        {
+          "at": "0x32BE114",
+          "kind": "bl",
+          "target": "CE.SoundResource$$fadeVolume"
+        },
+        {
+          "at": "0x32BE148",
+          "kind": "b",
+          "target": "UnityEngine.MonoBehaviour$$StartCoroutine"
+        }
+      ]
+    },
+    {
+      "owner_method": "CE.BgmPlayer$$AllStop",
+      "rva": "0x32BE234",
+      "end_rva": "0x32BE298",
+      "code_bytes": 100,
+      "code_sha256": "F6AD03F610AB81A004D0EFE062D85C89FE059AB88B7201A1016292A761AF2A54",
+      "arm64": "arm64/032be234__CE_BgmPlayer__AllStop.arm64.tsv",
+      "arm64_bytes": 1058,
+      "arm64_sha256": "2DB5FDF2F7A461A412787AEEC394770B7400289F68BBAA27E02EA0CEBFAFDA39",
+      "resolved_direct_calls": [
+        {
+          "at": "0x32BE264",
+          "kind": "bl",
+          "target": "CE.SoundResourcePool$$get_Item"
+        },
+        {
+          "at": "0x32BE274",
+          "kind": "bl",
+          "target": "CE.SoundResource$$StopWithFadeVolume"
+        }
+      ]
+    },
+    {
+      "owner_method": "CE.SePlayer$$PlayLoop",
+      "rva": "0x32BEBFC",
+      "end_rva": "0x32BECB8",
+      "code_bytes": 188,
+      "code_sha256": "940CF88C36B825C7F803CE32ACCD4F137696EAE162F0C014B5B28CAD0B0F6B17",
+      "arm64": "arm64/032bebfc__CE_SePlayer__PlayLoop.arm64.tsv",
+      "arm64_bytes": 1995,
+      "arm64_sha256": "1BC9CAC2ED658A9DE2E0E91A132255D092C30482CBBDFD7D5C07F5A68E2659CB",
+      "resolved_direct_calls": [
+        {
+          "at": "0x32BEC20",
+          "kind": "bl",
+          "target": "CE.SoundResourcePool$$getNewResource"
+        },
+        {
+          "at": "0x32BEC38",
+          "kind": "bl",
+          "target": "CriWare.CriAtomSourceBase$$Stop"
+        },
+        {
+          "at": "0x32BEC54",
+          "kind": "bl",
+          "target": "CriWare.CriAtomSourceBase$$set_pan3dAngle"
+        },
+        {
+          "at": "0x32BEC68",
+          "kind": "bl",
+          "target": "CriWare.CriAtomSourceBase$$set_pitch"
+        },
+        {
+          "at": "0x32BEC74",
+          "kind": "bl",
+          "target": "CE.SoundPlayerBase$$getQueueSheetName"
+        },
+        {
+          "at": "0x32BEC9C",
+          "kind": "bl",
+          "target": "CE.SoundResource$$PlayFade"
+        }
+      ]
+    },
+    {
+      "owner_method": "CE.SePlayer$$AllStop",
+      "rva": "0x32BEE04",
+      "end_rva": "0x32BEE7C",
+      "code_bytes": 120,
+      "code_sha256": "A8B3B67A4E59020BC8B5C7F783C7D45AB6ECD97AB9A3EC4813CC20FA5805E7E2",
+      "arm64": "arm64/032bee04__CE_SePlayer__AllStop.arm64.tsv",
+      "arm64_bytes": 1292,
+      "arm64_sha256": "61F2214CFC55307D8EB81A2B4E6FFED9F2167A62D274A3601D5B1E9A2615CD44",
+      "resolved_direct_calls": [
+        {
+          "at": "0x32BEE2C",
+          "kind": "bl",
+          "target": "CE.SoundResourcePool$$get_Item"
+        },
+        {
+          "at": "0x32BEE38",
+          "kind": "bl",
+          "target": "CE.SoundResource$$IsPlaying"
+        },
+        {
+          "at": "0x32BEE4C",
+          "kind": "bl",
+          "target": "CriWare.CriAtomSourceBase$$get_status"
+        },
+        {
+          "at": "0x32BEE5C",
+          "kind": "bl",
+          "target": "CE.SoundResource$$Stop"
+        }
+      ]
+    },
+    {
+      "owner_method": "CE.SoundManager$$RemoveSoundBundle",
+      "rva": "0x32BFEAC",
+      "end_rva": "0x32BFEE4",
+      "code_bytes": 56,
+      "code_sha256": "857253D9F1F1D1B524FA032071B560F7181E0075CA6567510046AEDDC1500D8C",
+      "arm64": "arm64/032bfeac__CE_SoundManager__RemoveSoundBundle.arm64.tsv",
+      "arm64_bytes": 647,
+      "arm64_sha256": "0EC30B15CCFE3D5B84E3FB2C7EC0D6D835BA9607F06EB7AC98CCF11F55E22D23",
+      "resolved_direct_calls": [
+        {
+          "at": "0x32BFEBC",
+          "kind": "bl",
+          "target": "CE.SoundManager$$RemoveSoundBundle"
+        },
+        {
+          "at": "0x32BFED4",
+          "kind": "b",
+          "target": "CEBase.AssetBundle.Atria$$Dispose"
+        }
+      ]
+    },
+    {
+      "owner_method": "CE.SoundManager$$RemoveSoundBundle",
+      "rva": "0x32BFEE4",
+      "end_rva": "0x32C00B4",
+      "code_bytes": 464,
+      "code_sha256": "A5B53404AAC02E2429D6D5E72315F750C1D3D96A20685CF8DF08515711B11A68",
+      "arm64": "arm64/032bfee4__CE_SoundManager__RemoveSoundBundle_default.arm64.tsv",
+      "arm64_bytes": 4987,
+      "arm64_sha256": "8B651F708F851721489FF1FD3043D887622602424A7E451403E3DDBC51DA240B",
+      "resolved_direct_calls": [
+        {
+          "at": "0x32BFF74",
+          "kind": "bl",
+          "target": "CE.SoundManager$$UnlockWorkingName"
+        },
+        {
+          "at": "0x32BFF90",
+          "kind": "bl",
+          "target": "System.Collections.Generic.Dictionary<object, object>$$ContainsKey"
+        },
+        {
+          "at": "0x32BFFB0",
+          "kind": "bl",
+          "target": "System.Collections.Generic.Dictionary<object, object>$$get_Item"
+        },
+        {
+          "at": "0x32BFFC8",
+          "kind": "bl",
+          "target": "System.Collections.Generic.List<object>$$GetEnumerator"
+        },
+        {
+          "at": "0x32BFFDC",
+          "kind": "bl",
+          "target": "System.Collections.Generic.List.Enumerator<object>$$MoveNext"
+        },
+        {
+          "at": "0x32BFFEC",
+          "kind": "bl",
+          "target": "CE.SoundManager$$RemoveCueSheet"
+        },
+        {
+          "at": "0x32C0004",
+          "kind": "bl",
+          "target": "System.Collections.Generic.List.Enumerator<object>$$Dispose"
+        },
+        {
+          "at": "0x32C0020",
+          "kind": "bl",
+          "target": "System.Collections.Generic.Dictionary<object, object>$$Remove"
+        },
+        {
+          "at": "0x32C006C",
+          "kind": "bl",
+          "target": "System.Collections.Generic.List.Enumerator<object>$$Dispose"
+        },
+        {
+          "at": "0x32C0098",
+          "kind": "bl",
+          "target": "System.Collections.Generic.List.Enumerator<object>$$Dispose"
+        }
+      ]
+    },
+    {
+      "owner_method": "CE.SoundManager$$PlayBGM",
+      "rva": "0x32C0328",
+      "end_rva": "0x32C0340",
+      "code_bytes": 24,
+      "code_sha256": "0D671D40ADB72A80DA7E2C40F5E0411289F575B7A58352197BAF8FC3BFFAFC41",
+      "arm64": "arm64/032c0328__CE_SoundManager__PlayBGM.arm64.tsv",
+      "arm64_bytes": 300,
+      "arm64_sha256": "FBE3DE49739C5CF50081636AFDFA6630E2F031B7E2327209630760D5E0781321",
+      "resolved_direct_calls": [
+        {
+          "at": "0x32C0338",
+          "kind": "b",
+          "target": "CE.BgmPlayer$$ChangeBGM"
+        }
+      ]
+    },
+    {
+      "owner_method": "CE.SoundManager$$StopAll",
+      "rva": "0x32C05B8",
+      "end_rva": "0x32C05EC",
+      "code_bytes": 52,
+      "code_sha256": "2CDB5A4CB56AE9463BBFA433B315465E9C97894DD135D5142B248AA39F13AD25",
+      "arm64": "arm64/032c05b8__CE_SoundManager__StopAll.arm64.tsv",
+      "arm64_bytes": 616,
+      "arm64_sha256": "8225EA5B66F98FBA049CC04A0940F096D6D95531E5F1EA2778A483A5B4C05557",
+      "resolved_direct_calls": [
+        {
+          "at": "0x32C05C8",
+          "kind": "bl",
+          "target": "CE.BgmPlayer$$AllStop"
+        },
+        {
+          "at": "0x32C05D4",
+          "kind": "bl",
+          "target": "CE.SePlayer$$AllStop"
+        },
+        {
+          "at": "0x32C05E4",
+          "kind": "b",
+          "target": "CE.VoicePlayer$$AllStop"
+        }
+      ]
+    },
+    {
+      "owner_method": "CE.VoicePlayer$$AllStop",
+      "rva": "0x32C05EC",
+      "end_rva": "0x32C067C",
+      "code_bytes": 144,
+      "code_sha256": "99BCDCB2DE18A2D8D8785B284AC5FF6049EA15AD99679E44EA796B1E5BB0D7AF",
+      "arm64": "arm64/032c05ec__CE_VoicePlayer__AllStop.arm64.tsv",
+      "arm64_bytes": 1553,
+      "arm64_sha256": "400FFA255ACDFC251B0228D741A790D42372BB5F16C15BA4EFF7F52E1BC2434A",
+      "resolved_direct_calls": [
+        {
+          "at": "0x32C0614",
+          "kind": "bl",
+          "target": "CE.SoundResourcePool$$get_Item"
+        },
+        {
+          "at": "0x32C062C",
+          "kind": "bl",
+          "target": "CriWare.CriAtomSourceBase$$IsPaused"
+        },
+        {
+          "at": "0x32C0638",
+          "kind": "bl",
+          "target": "CE.SoundResource$$IsPlaying"
+        },
+        {
+          "at": "0x32C064C",
+          "kind": "bl",
+          "target": "CriWare.CriAtomSourceBase$$get_status"
+        },
+        {
+          "at": "0x32C065C",
+          "kind": "bl",
+          "target": "CE.SoundResource$$Stop"
+        }
+      ]
+    },
+    {
+      "owner_method": "CE.SoundManager$$PlaySELoop",
+      "rva": "0x32C0924",
+      "end_rva": "0x32C093C",
+      "code_bytes": 24,
+      "code_sha256": "19B9D5B03E8F74AB014F5D7795B10ED16D6027012D926FBC570D18F26A96DD65",
+      "arm64": "arm64/032c0924__CE_SoundManager__PlaySELoop.arm64.tsv",
+      "arm64_bytes": 298,
+      "arm64_sha256": "77DC81D9824F6EE83FC4B0EBC9CC25E5102639C26511A1216CB44B1BBA1F71E4",
+      "resolved_direct_calls": [
+        {
+          "at": "0x32C0934",
+          "kind": "b",
+          "target": "CE.SePlayer$$PlayLoop"
+        }
+      ]
+    },
+    {
+      "owner_method": "CE.SoundManager$$Pause",
+      "rva": "0x32C0BE4",
+      "end_rva": "0x32C0C48",
+      "code_bytes": 100,
+      "code_sha256": "BFED7680B4DEF70ABFF32871B6ED841119FA73321A9BBC1E35D83CCB65C34445",
+      "arm64": "arm64/032c0be4__CE_SoundManager__Pause.arm64.tsv",
+      "arm64_bytes": 1156,
+      "arm64_sha256": "85FEA7CC6E2B44FAC01119977C0564D16BB36D662BA8378A073F54C4B821D0E2",
+      "resolved_direct_calls": [
+        {
+          "at": "0x32C0C00",
+          "kind": "bl",
+          "target": "CE.SoundResource$$Pause"
+        },
+        {
+          "at": "0x32C0C0C",
+          "kind": "bl",
+          "target": "CE.SePlayer$$Pause"
+        },
+        {
+          "at": "0x32C0C1C",
+          "kind": "b",
+          "target": "CE.VoicePlayer$$Pause"
+        },
+        {
+          "at": "0x32C0C24",
+          "kind": "bl",
+          "target": "CE.SoundResource$$Resume"
+        },
+        {
+          "at": "0x32C0C30",
+          "kind": "bl",
+          "target": "CE.SePlayer$$Resume"
+        },
+        {
+          "at": "0x32C0C40",
+          "kind": "b",
+          "target": "CE.VoicePlayer$$Resume"
+        }
+      ]
+    },
+    {
+      "owner_method": "CE.SoundResource.<fadeVolume>d__36$$MoveNext",
+      "rva": "0x32C42C8",
+      "end_rva": "0x32C4434",
+      "code_bytes": 364,
+      "code_sha256": "C5161F72306825D7208D4FC38C513FD24789EF98CC55C1099801C7F1198B55E0",
+      "arm64": "arm64/032c42c8__CE_SoundResource_fadeVolume__MoveNext.arm64.tsv",
+      "arm64_bytes": 3646,
+      "arm64_sha256": "C79D9B7072BA91612BA3BF9DFA7D9CEE37564809EC36B47E15EE5C9A4B30D7A2",
+      "resolved_direct_calls": [
+        {
+          "at": "0x32C4340",
+          "kind": "bl",
+          "target": "CriWare.CriAtomSourceBase$$set_volume"
+        },
+        {
+          "at": "0x32C4394",
+          "kind": "bl",
+          "target": "CE.SoundResource$$Stop"
+        },
+        {
+          "at": "0x32C43A8",
+          "kind": "bl",
+          "target": "UnityEngine.Time$$get_deltaTime"
+        },
+        {
+          "at": "0x32C43F0",
+          "kind": "bl",
+          "target": "CriWare.CriAtomSourceBase$$set_volume"
+        },
+        {
+          "at": "0x32C4414",
+          "kind": "bl",
+          "target": "CE.SoundResource$$Pause"
+        }
+      ]
+    },
+    {
+      "owner_method": "InGameV2StageController$$StartAnimation",
+      "rva": "0x32E8078",
+      "end_rva": "0x32E8080",
+      "code_bytes": 8,
+      "code_sha256": "15863AF4E377C0F0AD08EC5A1A5DA041025235C8F41DF3A4E5ABA7C072B9E041",
+      "arm64": "arm64/032e8078__InGameV2StageController__StartAnimation.arm64.tsv",
+      "arm64_bytes": 111,
+      "arm64_sha256": "83A28523A0BFA6BE4577CA84756EC9EEBBCC5FA15873B4F316AA53E034057052",
+      "resolved_direct_calls": []
+    },
+    {
+      "owner_method": "GameOverManager.<stopSoundCoroutine>d__20$$MoveNext",
+      "rva": "0x32F73DC",
+      "end_rva": "0x32F752C",
+      "code_bytes": 336,
+      "code_sha256": "B07EF3730EBB87BE42FBCA13624DE88F4B7CCC5CBC927701433C011185ED13D3",
+      "arm64": "arm64/032f73dc__GameOverManager_stopSoundCoroutine__MoveNext.arm64.tsv",
+      "arm64_bytes": 3366,
+      "arm64_sha256": "B349F69929C5DD6661BBFE8AA5CAF230979DC5452BD26C807CAB01ED9FBECF83",
+      "resolved_direct_calls": [
+        {
+          "at": "0x32F7458",
+          "kind": "bl",
+          "target": "UnityEngine.Time$$get_deltaTime"
+        },
+        {
+          "at": "0x32F74A8",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x32F74B8",
+          "kind": "bl",
+          "target": "CE.SoundManager$$Pause"
+        },
+        {
+          "at": "0x32F74D0",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x32F74E0",
+          "kind": "bl",
+          "target": "CE.SoundManager$$Pause"
+        },
+        {
+          "at": "0x32F74F0",
+          "kind": "bl",
+          "target": "UnityEngine.Time$$get_deltaTime"
+        }
+      ]
+    },
+    {
+      "owner_method": "InGameManager$$ExecUpdate",
+      "rva": "0x32F7DA8",
+      "end_rva": "0x32F7E98",
+      "code_bytes": 240,
+      "code_sha256": "EC1D136A8173352FC807F79B2FB06BECC3DF20B56F994C3FAFB240730FA68722",
+      "arm64": "arm64/032f7da8__InGameManager__ExecUpdate.arm64.tsv",
+      "arm64_bytes": 2534,
+      "arm64_sha256": "8FDE30A84A4FA3DEE1AF7EFBC32B37372CAD7999C450FE4B1BA22813C9277D10",
+      "resolved_direct_calls": [
+        {
+          "at": "0x32F7DB8",
+          "kind": "bl",
+          "target": "UnityEngine.Input$$GetKeyDown"
+        },
+        {
+          "at": "0x32F7DC4",
+          "kind": "bl",
+          "target": "InGameManager$$onHardwareBackKeyProcess"
+        },
+        {
+          "at": "0x32F7DFC",
+          "kind": "bl",
+          "target": "UnityEngine.Time$$get_deltaTime"
+        },
+        {
+          "at": "0x32F7E08",
+          "kind": "bl",
+          "target": "InGameManager$$updatePlayState"
+        },
+        {
+          "at": "0x32F7E1C",
+          "kind": "bl",
+          "target": "InputManager$$ExecInput"
+        },
+        {
+          "at": "0x32F7E28",
+          "kind": "bl",
+          "target": "InGameManager$$UpdateClearMotionStartState"
+        },
+        {
+          "at": "0x32F7E64",
+          "kind": "bl",
+          "target": "ButtonManager$$Pause"
+        },
+        {
+          "at": "0x32F7E70",
+          "kind": "bl",
+          "target": "InGameManager$$resumeGame"
+        },
+        {
+          "at": "0x32F7E88",
+          "kind": "b",
+          "target": "InGameCutInController$$Update"
+        }
+      ]
+    },
+    {
+      "owner_method": "InGameManager$$loadBGMData",
+      "rva": "0x32FB238",
+      "end_rva": "0x32FB2A4",
+      "code_bytes": 108,
+      "code_sha256": "92E0C866B820B434C8D22A047EB1A595CFE37B6CAA159A480665192A6CFECCE8",
+      "arm64": "arm64/032fb238__InGameManager__loadBGMData.arm64.tsv",
+      "arm64_bytes": 1111,
+      "arm64_sha256": "54C394A14331F40C1274A8E69F0DCFC031A0B95D4A01462ADA5B45046E02CA43",
+      "resolved_direct_calls": [
+        {
+          "at": "0x32FB27C",
+          "kind": "bl",
+          "target": "System.Object$$.ctor"
+        }
+      ]
+    },
+    {
+      "owner_method": "InGameManager$$playGayaSound",
+      "rva": "0x32FB360",
+      "end_rva": "0x32FB478",
+      "code_bytes": 280,
+      "code_sha256": "A12A60262F975FAA86880254F670B7A050401E16FB09EF1D315E3DBCA11CA386",
+      "arm64": "arm64/032fb360__InGameManager__playGayaSound.arm64.tsv",
+      "arm64_bytes": 2834,
+      "arm64_sha256": "74EEFC3000BADF44E0A12F0E7F5AAB75A5FC9E2D7527ACA5BB1152001B12C1A6",
+      "resolved_direct_calls": [
+        {
+          "at": "0x32FB438",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x32FB458",
+          "kind": "bl",
+          "target": "CE.SoundManager$$PlaySELoop"
+        }
+      ]
+    },
+    {
+      "owner_method": "InGameManager$$fadeOutGayaSound",
+      "rva": "0x32FB478",
+      "end_rva": "0x32FB4B8",
+      "code_bytes": 64,
+      "code_sha256": "25D247B593EBEDE6176063E3A30F342AB26DD3779881E4BC77C8BD76E6BD0855",
+      "arm64": "arm64/032fb478__InGameManager__fadeOutGayaSound.arm64.tsv",
+      "arm64_bytes": 669,
+      "arm64_sha256": "86EDEAB0D9FF7CFC3171D312E34C3745773E24E542ABF7D2AEA9BC49C3B0CF73",
+      "resolved_direct_calls": [
+        {
+          "at": "0x32FB4A8",
+          "kind": "b",
+          "target": "CE.SoundResource$$FadeVolume"
+        }
+      ]
+    },
+    {
+      "owner_method": "InGameManager$$onExit",
+      "rva": "0x32FB6C8",
+      "end_rva": "0x32FB750",
+      "code_bytes": 136,
+      "code_sha256": "C724E7853CF89E581451A80DF916B8CDE3189D907D35121485CBBCB5E38B7077",
+      "arm64": "arm64/032fb6c8__InGameManager__onExit.arm64.tsv",
+      "arm64_bytes": 1372,
+      "arm64_sha256": "F281FB4AA0F0ADA245788039D62EE90EA2BC8FC818F8FC9DAAF6CFC4C72B70CE",
+      "resolved_direct_calls": [
+        {
+          "at": "0x32FB714",
+          "kind": "bl",
+          "target": "System.Object$$.ctor"
+        }
+      ]
+    },
+    {
+      "owner_method": "InGameManager$$updatePlayingSound",
+      "rva": "0x32FCD00",
+      "end_rva": "0x32FCD80",
+      "code_bytes": 128,
+      "code_sha256": "1282089FE90782448B2E3520E581E74DACBBBF6C0D07E8544581A9BFD88711FF",
+      "arm64": "arm64/032fcd00__InGameManager__updatePlayingSound.arm64.tsv",
+      "arm64_bytes": 1352,
+      "arm64_sha256": "A1F5AB6B41BD32671D7003FAFA9E02494A2AC8F6399FCAE82F73E29B4A2A0449",
+      "resolved_direct_calls": [
+        {
+          "at": "0x32FCD1C",
+          "kind": "bl",
+          "target": "InGameManager$$get_isOnMoveTime"
+        },
+        {
+          "at": "0x32FCD30",
+          "kind": "bl",
+          "target": "InGameManager$$judgeAdjustFastProcess"
+        },
+        {
+          "at": "0x32FCD50",
+          "kind": "bl",
+          "target": "UnityEngine.MonoBehaviour$$StartCoroutine"
+        }
+      ]
+    },
+    {
+      "owner_method": "InGameManager$$startMusic",
+      "rva": "0x32FD234",
+      "end_rva": "0x32FD2CC",
+      "code_bytes": 152,
+      "code_sha256": "D9A341BA8E94097D26B2FE4F2410926A69C358B220A3E7C2838421F322398D74",
+      "arm64": "arm64/032fd234__InGameManager__startMusic.arm64.tsv",
+      "arm64_bytes": 1691,
+      "arm64_sha256": "09C3E560C019B4269F14803403DB41AC8FFC8DF1DF4FF28DA1A5C1FDF127F670",
+      "resolved_direct_calls": [
+        {
+          "at": "0x32FD278",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x32FD294",
+          "kind": "bl",
+          "target": "SystemLog$$PrintLog"
+        },
+        {
+          "at": "0x32FD2A4",
+          "kind": "bl",
+          "target": "RhythmGameNetworkManager$$CloseOtherUserWaitMessage"
+        },
+        {
+          "at": "0x32FD2AC",
+          "kind": "bl",
+          "target": "InGameManager$$startMusicCoroutine"
+        },
+        {
+          "at": "0x32FD2C4",
+          "kind": "b",
+          "target": "UnityEngine.MonoBehaviour$$StartCoroutine"
+        }
+      ]
+    },
+    {
+      "owner_method": "InGameManager$$onRetry",
+      "rva": "0x32FDCCC",
+      "end_rva": "0x32FDD20",
+      "code_bytes": 84,
+      "code_sha256": "57C4742324A4899EFE9E468830951BE3C8FBB758DD67B833E21071500FEC2495",
+      "arm64": "arm64/032fdccc__InGameManager__onRetry.arm64.tsv",
+      "arm64_bytes": 949,
+      "arm64_sha256": "9D720B18357A63FDA279B30F29536896329D39788CB3DC217BB1CED5D4F4B194",
+      "resolved_direct_calls": [
+        {
+          "at": "0x32FDD00",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x32FDD18",
+          "kind": "b",
+          "target": "StarSceneManager$$RequestScene"
+        }
+      ]
+    },
+    {
+      "owner_method": "InGameManager$$onExecutePause",
+      "rva": "0x32FDE14",
+      "end_rva": "0x32FDE44",
+      "code_bytes": 48,
+      "code_sha256": "DDA692B2AB60CE01E229CF27F161A66F268CA6BCE2B4B0B13D7ACFCDC92B752F",
+      "arm64": "arm64/032fde14__InGameManager__onExecutePause.arm64.tsv",
+      "arm64_bytes": 558,
+      "arm64_sha256": "A17B7D8E83E905C532B8366EE70AFD325EDE4E4D02B8C29BC5824080C5C3FBEF",
+      "resolved_direct_calls": [
+        {
+          "at": "0x32FDE28",
+          "kind": "bl",
+          "target": "ButtonManager$$AllNoteLaneEffectOff"
+        },
+        {
+          "at": "0x32FDE3C",
+          "kind": "b",
+          "target": "InGameManager$$prePauseSound"
+        }
+      ]
+    },
+    {
+      "owner_method": "InGameManager.<ExecStart>d__54$$MoveNext",
+      "rva": "0x32FE0C8",
+      "end_rva": "0x32FE46C",
+      "code_bytes": 932,
+      "code_sha256": "D397782841B37CC74BB3B154853B810996D0D95B789B1644C463A0AA8E7FDC50",
+      "arm64": "arm64/032fe0c8__InGameManager_ExecStart__MoveNext.arm64.tsv",
+      "arm64_bytes": 9294,
+      "arm64_sha256": "9EC063A20AEAB610DBE592F85AF8C75DE29CA85C48926CE92F6AD8110519A961",
+      "resolved_direct_calls": [
+        {
+          "at": "0x32FE154",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x32FE170",
+          "kind": "bl",
+          "target": "SystemLog$$PrintLog"
+        },
+        {
+          "at": "0x32FE17C",
+          "kind": "bl",
+          "target": "InGameManager$$initBeforeLoadResources"
+        },
+        {
+          "at": "0x32FE1B4",
+          "kind": "bl",
+          "target": "RhythmGameAnimationController$$ShowGameStartAnimationFirstView"
+        },
+        {
+          "at": "0x32FE1C4",
+          "kind": "bl",
+          "target": "UnityEngine.MonoBehaviour$$StartCoroutine"
+        },
+        {
+          "at": "0x32FE1F0",
+          "kind": "bl",
+          "target": "InGameManager$$loadResources"
+        },
+        {
+          "at": "0x32FE21C",
+          "kind": "bl",
+          "target": "InGameManager$$initAfterLoadResources"
+        },
+        {
+          "at": "0x32FE224",
+          "kind": "bl",
+          "target": "InGameManager$$playGayaSound"
+        },
+        {
+          "at": "0x32FE22C",
+          "kind": "bl",
+          "target": "InGameManager$$loadMusicScore"
+        },
+        {
+          "at": "0x32FE258",
+          "kind": "bl",
+          "target": "InGameManager$$initAfterLoadMusicScore"
+        },
+        {
+          "at": "0x32FE260",
+          "kind": "bl",
+          "target": "InGameManager$$loadResourcesAfterLoadMusicScore"
+        },
+        {
+          "at": "0x32FE28C",
+          "kind": "bl",
+          "target": "InGameManager$$setupNotes"
+        },
+        {
+          "at": "0x32FE2F0",
+          "kind": "bl",
+          "target": "InGameManager$$onOPDirector"
+        },
+        {
+          "at": "0x32FE31C",
+          "kind": "bl",
+          "target": "InGameManager$$executeAfterOpeningAnimationProcess"
+        },
+        {
+          "at": "0x32FE348",
+          "kind": "bl",
+          "target": "InGameManager$$executeStartGameProcess"
+        },
+        {
+          "at": "0x32FE38C",
+          "kind": "bl",
+          "target": "System.GC$$CollectionCount"
+        },
+        {
+          "at": "0x32FE410",
+          "kind": "bl",
+          "target": "InGameVoiceControllerBase$$PlayLiveStartVoice"
+        },
+        {
+          "at": "0x32FE418",
+          "kind": "bl",
+          "target": "InGameManager$$onAwakeEnd"
+        }
+      ]
+    },
+    {
+      "owner_method": "InGameManager.<executeAfterOpeningAnimationProcess>d__94$$MoveNext",
+      "rva": "0x32FE4B8",
+      "end_rva": "0x32FE754",
+      "code_bytes": 668,
+      "code_sha256": "E0426C8BA49C12413F0F269A05EAF53E7F1E03248681373B0AB7A96B4E4D1E73",
+      "arm64": "arm64/032fe4b8__InGameManager_executeAfterOpeningAnimationProcess__MoveNext.arm64.tsv",
+      "arm64_bytes": 6582,
+      "arm64_sha256": "4164072916127766CA8E743E6EB6F538A2445B27D8FC37A10A11FB892D134112",
+      "resolved_direct_calls": [
+        {
+          "at": "0x32FE588",
+          "kind": "bl",
+          "target": "InGameVoiceControllerBase$$WaitFinishLiveStartVoice"
+        },
+        {
+          "at": "0x32FE598",
+          "kind": "bl",
+          "target": "UnityEngine.MonoBehaviour$$StartCoroutine"
+        },
+        {
+          "at": "0x32FE5F0",
+          "kind": "bl",
+          "target": "ButtonManager$$FadeInLineUI"
+        },
+        {
+          "at": "0x32FE600",
+          "kind": "bl",
+          "target": "InGameMultiPlayController$$PlayFirstAnimation"
+        },
+        {
+          "at": "0x32FE634",
+          "kind": "bl",
+          "target": "MedleyInGameController$$Init"
+        },
+        {
+          "at": "0x32FE65C",
+          "kind": "bl",
+          "target": "StageChallengeInGameController$$Init"
+        }
+      ]
+    },
+    {
+      "owner_method": "InGameManager.<executeStartGameProcess>d__93$$MoveNext",
+      "rva": "0x32FE7A0",
+      "end_rva": "0x32FE914",
+      "code_bytes": 372,
+      "code_sha256": "5174FFAD731002213E500269D7843666CEBD1A7C2D858C412B06497978DCFB6A",
+      "arm64": "arm64/032fe7a0__InGameManager_executeStartGameProcess__MoveNext.arm64.tsv",
+      "arm64_bytes": 3677,
+      "arm64_sha256": "4CC652EFAAC012146A905BBD8426797475E61BE6BB832B485A694A1829CCF34F",
+      "resolved_direct_calls": [
+        {
+          "at": "0x32FE830",
+          "kind": "bl",
+          "target": "InGameManager$$startMusicCoroutine"
+        },
+        {
+          "at": "0x32FE840",
+          "kind": "bl",
+          "target": "UnityEngine.MonoBehaviour$$StartCoroutine"
+        },
+        {
+          "at": "0x32FE858",
+          "kind": "bl",
+          "target": "InGameManager$$startMusic"
+        },
+        {
+          "at": "0x32FE888",
+          "kind": "bl",
+          "target": "InGameMultiPlayController$$StartGameProcess"
+        },
+        {
+          "at": "0x32FE8D8",
+          "kind": "bl",
+          "target": "System.String$$Format"
+        },
+        {
+          "at": "0x32FE908",
+          "kind": "bl",
+          "target": "Debug$$LogError"
+        }
+      ]
+    },
+    {
+      "owner_method": "InGameManager.<loadBGMData>d__89$$MoveNext",
+      "rva": "0x32FEDD8",
+      "end_rva": "0x32FEFD8",
+      "code_bytes": 512,
+      "code_sha256": "840A22CCCD26D0F3C8BBE238923F9C8CA09435EE48291D291C7B558CE7ADA63E",
+      "arm64": "arm64/032fedd8__InGameManager_loadBGMData__MoveNext.arm64.tsv",
+      "arm64_bytes": 5254,
+      "arm64_sha256": "D073A419B5A85DB4789280D1AA1642E22F45270F64BE47EC8E1281B4EBFE96DA",
+      "resolved_direct_calls": [
+        {
+          "at": "0x32FEE90",
+          "kind": "bl",
+          "target": "AssetBundleNames$$GetInGameBgmBundleName"
+        },
+        {
+          "at": "0x32FEEA8",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x32FEECC",
+          "kind": "bl",
+          "target": "System.String$$Concat"
+        },
+        {
+          "at": "0x32FEEE4",
+          "kind": "bl",
+          "target": "SystemLog$$PrintLog"
+        },
+        {
+          "at": "0x32FEEEC",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x32FEF0C",
+          "kind": "bl",
+          "target": "System.String$$Concat"
+        },
+        {
+          "at": "0x32FEF24",
+          "kind": "bl",
+          "target": "SystemLog$$PrintLog"
+        },
+        {
+          "at": "0x32FEF34",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x32FEF44",
+          "kind": "bl",
+          "target": "CE.SoundManager$$LoadSoundBundleAsync"
+        },
+        {
+          "at": "0x32FEF54",
+          "kind": "bl",
+          "target": "UnityEngine.MonoBehaviour$$StartCoroutine"
+        },
+        {
+          "at": "0x32FEF88",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x32FEFA4",
+          "kind": "bl",
+          "target": "SystemLog$$PrintLog"
+        },
+        {
+          "at": "0x32FEFBC",
+          "kind": "bl",
+          "target": "MusicManager$$LoadMusic"
+        }
+      ]
+    },
+    {
+      "owner_method": "InGameManager.<onExit>d__98$$MoveNext",
+      "rva": "0x32FFAF4",
+      "end_rva": "0x32FFEF4",
+      "code_bytes": 1024,
+      "code_sha256": "BF74A07A830B03595AD935F46E7BFB1A959E777773E46443E1BDF49B2F56D7A8",
+      "arm64": "arm64/032ffaf4__InGameManager_onExit__MoveNext.arm64.tsv",
+      "arm64_bytes": 10216,
+      "arm64_sha256": "F0F09DDFA03DEAA435E2B30E9201ACA11EE84BE94C20E7ACD27D5471AF05A783",
+      "resolved_direct_calls": [
+        {
+          "at": "0x32FFB88",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x32FFBA4",
+          "kind": "bl",
+          "target": "SystemLog$$PrintLog"
+        },
+        {
+          "at": "0x32FFBB8",
+          "kind": "bl",
+          "target": "InGameCutInController$$Dispose"
+        },
+        {
+          "at": "0x32FFC44",
+          "kind": "bl",
+          "target": "AssetBundleNames$$GetInGameBgmBundleName"
+        },
+        {
+          "at": "0x32FFC58",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x32FFC74",
+          "kind": "bl",
+          "target": "System.String$$Concat"
+        },
+        {
+          "at": "0x32FFC8C",
+          "kind": "bl",
+          "target": "SystemLog$$PrintLog"
+        },
+        {
+          "at": "0x32FFC9C",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x32FFCAC",
+          "kind": "bl",
+          "target": "CE.SoundManager$$RemoveSoundBundle"
+        },
+        {
+          "at": "0x32FFCC0",
+          "kind": "bl",
+          "target": "AssetBundleNames$$GetInGameChorusBundleName"
+        },
+        {
+          "at": "0x32FFCCC",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x32FFCDC",
+          "kind": "bl",
+          "target": "CE.SoundManager$$RemoveSoundBundle"
+        },
+        {
+          "at": "0x32FFCE4",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x32FFCF0",
+          "kind": "bl",
+          "target": "InGameManager$$getTapSEBundleName"
+        },
+        {
+          "at": "0x32FFD04",
+          "kind": "bl",
+          "target": "CE.SoundManager$$RemoveSoundBundle"
+        },
+        {
+          "at": "0x32FFD1C",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x32FFD24",
+          "kind": "bl",
+          "target": "InGameManager$$getDirectionalFlickSEBundleName"
+        },
+        {
+          "at": "0x32FFD38",
+          "kind": "bl",
+          "target": "CE.SoundManager$$RemoveSoundBundle"
+        },
+        {
+          "at": "0x32FFD48",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x32FFD54",
+          "kind": "bl",
+          "target": "CE.SoundManager$$SetSystemVolume"
+        },
+        {
+          "at": "0x32FFE88",
+          "kind": "bl",
+          "target": "System.String$$Concat"
+        },
+        {
+          "at": "0x32FFEB4",
+          "kind": "bl",
+          "target": "Debug$$LogError"
+        }
+      ]
+    },
+    {
+      "owner_method": "InGameManager.<startMusicCoroutine>d__128$$MoveNext",
+      "rva": "0x33001F0",
+      "end_rva": "0x3300840",
+      "code_bytes": 1616,
+      "code_sha256": "DABA96C125985FAA18C7C39E3F5E372E9D93C5EF37ED9E7AD38893048EA91AEE",
+      "arm64": "arm64/033001f0__InGameManager_startMusicCoroutine__MoveNext.arm64.tsv",
+      "arm64_bytes": 15996,
+      "arm64_sha256": "871B032CD21134B1B2BE5B412203ECEF69D146F9CB36214D94575EED67E1E866",
+      "resolved_direct_calls": [
+        {
+          "at": "0x33002E8",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x3300304",
+          "kind": "bl",
+          "target": "SystemLog$$PrintLog"
+        },
+        {
+          "at": "0x3300408",
+          "kind": "bl",
+          "target": "ButtonManager$$EnablePauseButton"
+        },
+        {
+          "at": "0x3300448",
+          "kind": "bl",
+          "target": "UnityEngine.Time$$get_deltaTime"
+        },
+        {
+          "at": "0x33004F4",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x3300500",
+          "kind": "bl",
+          "target": "TutorialManager$$get_IsComplete"
+        },
+        {
+          "at": "0x330050C",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x3300518",
+          "kind": "bl",
+          "target": "TutorialManager$$get_CurrentTutorialState"
+        },
+        {
+          "at": "0x3300558",
+          "kind": "bl",
+          "target": "CE.WordingManager$$LoadWord"
+        },
+        {
+          "at": "0x330058C",
+          "kind": "bl",
+          "target": "System.Action$$.ctor"
+        },
+        {
+          "at": "0x33005AC",
+          "kind": "bl",
+          "target": "TutorialUtility$$CreateSlideWindow"
+        },
+        {
+          "at": "0x33005BC",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x33005D4",
+          "kind": "bl",
+          "target": "TutorialSlideWindow$$AddPage"
+        },
+        {
+          "at": "0x33005DC",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x33005F0",
+          "kind": "bl",
+          "target": "TutorialSlideWindow$$AddPage"
+        },
+        {
+          "at": "0x33005F8",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x330060C",
+          "kind": "bl",
+          "target": "TutorialSlideWindow$$AddPage"
+        },
+        {
+          "at": "0x3300614",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x3300628",
+          "kind": "bl",
+          "target": "TutorialSlideWindow$$AddPage"
+        },
+        {
+          "at": "0x330063C",
+          "kind": "bl",
+          "target": "ButtonManager$$DisablePauseButton"
+        },
+        {
+          "at": "0x3300668",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x330069C",
+          "kind": "bl",
+          "target": "System.Enum$$ToString"
+        },
+        {
+          "at": "0x33006C4",
+          "kind": "bl",
+          "target": "System.String$$Concat"
+        },
+        {
+          "at": "0x33006DC",
+          "kind": "bl",
+          "target": "SystemLog$$PrintLog"
+        },
+        {
+          "at": "0x33006E4",
+          "kind": "bl",
+          "target": "InGameManager$$fadeOutGayaSound"
+        }
+      ]
+    },
+    {
+      "owner_method": "InGameManager.<waitFinishAllRestProcessAndExitRhythmGame>d__134$$MoveNext",
+      "rva": "0x330088C",
+      "end_rva": "0x3300AF8",
+      "code_bytes": 620,
+      "code_sha256": "B519E4C44D1B23D1BA9BF503D43BE8F058B8AE9B2FE5BF8ABBD1BFE2FE3F629A",
+      "arm64": "arm64/0330088c__InGameManager_waitFinishAllRestProcessAndExitRhythmGame__MoveNext.arm64.tsv",
+      "arm64_bytes": 6089,
+      "arm64_sha256": "D038F10B1A42E93744E9F427D6DCCE457EC88739918E9E94E86FC3252DADA33D",
+      "resolved_direct_calls": [
+        {
+          "at": "0x3300934",
+          "kind": "bl",
+          "target": "InGameVoiceControllerBase$$IsPlayingFullComboVoice"
+        },
+        {
+          "at": "0x3300964",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x330098C",
+          "kind": "bl",
+          "target": "AssetBundleNames$$GetSoundVoiceInGameFullComboVoiceBundleName"
+        },
+        {
+          "at": "0x33009A0",
+          "kind": "bl",
+          "target": "CE.SoundManager$$RemoveSoundBundle"
+        },
+        {
+          "at": "0x3300A64",
+          "kind": "bl",
+          "target": "System.Action$$.ctor"
+        },
+        {
+          "at": "0x3300A8C",
+          "kind": "bl",
+          "target": "InGameManager$$onExit"
+        }
+      ]
+    },
+    {
+      "owner_method": "InGameMoveTimeController.<moveTimeToStartMusic>d__38$$MoveNext",
+      "rva": "0x330101C",
+      "end_rva": "0x33013C8",
+      "code_bytes": 940,
+      "code_sha256": "9ED69803D84FCC32A1207A1AA397C4194AB7163812FCB9380C097920B3339D65",
+      "arm64": "arm64/0330101c__InGameMoveTimeController_moveTimeToStartMusic__MoveNext.arm64.tsv",
+      "arm64_bytes": 9584,
+      "arm64_sha256": "002DC49C4665A48B09F76BF0F868A884E484A32DDCEF4D29BCD1024BC92AC690",
+      "resolved_direct_calls": [
+        {
+          "at": "0x33010B8",
+          "kind": "bl",
+          "target": "System.Object$$.ctor"
+        },
+        {
+          "at": "0x33010F4",
+          "kind": "bl",
+          "target": "InGamePlayDisplay$$StopNotice"
+        },
+        {
+          "at": "0x3301104",
+          "kind": "bl",
+          "target": "InGamePlayDisplay$$DestroyAddScoreManager"
+        },
+        {
+          "at": "0x33011C4",
+          "kind": "bl",
+          "target": "System.Action$$.ctor"
+        },
+        {
+          "at": "0x33011DC",
+          "kind": "bl",
+          "target": "RhythmGameAnimationController$$PlayOneSecCountdownAnimation"
+        },
+        {
+          "at": "0x330123C",
+          "kind": "bl",
+          "target": "InputManager$$ExecInput"
+        },
+        {
+          "at": "0x3301288",
+          "kind": "bl",
+          "target": "ButtonManager$$AllNoteLaneEffectOff"
+        },
+        {
+          "at": "0x3301298",
+          "kind": "bl",
+          "target": "ButtonManager$$StopAllTapKeepAnimation"
+        },
+        {
+          "at": "0x33012B4",
+          "kind": "bl",
+          "target": "InGamePlayDisplay$$ResetLife"
+        },
+        {
+          "at": "0x33012C4",
+          "kind": "bl",
+          "target": "SituationSkillManager$$Stop"
+        },
+        {
+          "at": "0x33012D4",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x33012E4",
+          "kind": "bl",
+          "target": "CE.SoundManager$$StopAll"
+        },
+        {
+          "at": "0x33012F8",
+          "kind": "bl",
+          "target": "InGamePlayDisplay$$ResetScore"
+        },
+        {
+          "at": "0x3301308",
+          "kind": "bl",
+          "target": "InGamePlayDisplay$$StopScoreCount"
+        },
+        {
+          "at": "0x3301328",
+          "kind": "bl",
+          "target": "InGamePlayDisplay$$ResetAllPerfectStatus"
+        },
+        {
+          "at": "0x3301338",
+          "kind": "bl",
+          "target": "InGamePlayDisplay$$ResetComboNumber"
+        },
+        {
+          "at": "0x3301378",
+          "kind": "bl",
+          "target": "MusicManager$$LoadMusic"
+        },
+        {
+          "at": "0x3301388",
+          "kind": "bl",
+          "target": "NoteManager$$RefreshAfterMoveTime"
+        }
+      ]
+    },
+    {
+      "owner_method": "InGameVoiceControllerBase$$WaitFinishLiveStartVoice",
+      "rva": "0x3311F68",
+      "end_rva": "0x3311FD4",
+      "code_bytes": 108,
+      "code_sha256": "879EBD5512DBF29CB391772E4AA3C0BC7B9EA7D6EFF0F23ED792412573B605A9",
+      "arm64": "arm64/03311f68__InGameVoiceControllerBase__WaitFinishLiveStartVoice.arm64.tsv",
+      "arm64_bytes": 1109,
+      "arm64_sha256": "EF12F7BEA19E139871D2C8D9DC1480FFDE6C926262608609C0D5639FC3BF24A3",
+      "resolved_direct_calls": [
+        {
+          "at": "0x3311FAC",
+          "kind": "bl",
+          "target": "System.Object$$.ctor"
+        }
+      ]
+    },
+    {
+      "owner_method": "InGameVoiceControllerBase$$PlayLiveStartVoice",
+      "rva": "0x3312090",
+      "end_rva": "0x331226C",
+      "code_bytes": 476,
+      "code_sha256": "B2153725FD9C60FE2E01B11CD5F060E35C0A1E6816BCD6BFC221508EDE6D380F",
+      "arm64": "arm64/03312090__InGameVoiceControllerBase__PlayLiveStartVoice.arm64.tsv",
+      "arm64_bytes": 4917,
+      "arm64_sha256": "0F6F5249DD696C029D8796D5FD9B22A10F584A2EB6104B26E7A3BCEA87439A19",
+      "resolved_direct_calls": [
+        {
+          "at": "0x3312124",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x3312130",
+          "kind": "bl",
+          "target": "CE.MasterDataManager$$GetMasterCharacterInGameVoice"
+        },
+        {
+          "at": "0x3312154",
+          "kind": "bl",
+          "target": "System.Collections.Generic.Dictionary<uint, object>$$ContainsKey"
+        },
+        {
+          "at": "0x3312174",
+          "kind": "bl",
+          "target": "System.Collections.Generic.Dictionary<uint, object>$$get_Item"
+        },
+        {
+          "at": "0x3312198",
+          "kind": "bl",
+          "target": "UnityEngine.Random$$Range"
+        },
+        {
+          "at": "0x33121D0",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x33121E4",
+          "kind": "bl",
+          "target": "CE.SoundManager$$PlayVoice"
+        },
+        {
+          "at": "0x3312214",
+          "kind": "bl",
+          "target": "System.UInt32$$ToString"
+        },
+        {
+          "at": "0x3312228",
+          "kind": "bl",
+          "target": "System.String$$Concat"
+        },
+        {
+          "at": "0x3312250",
+          "kind": "bl",
+          "target": "Debug$$LogError"
+        }
+      ]
+    },
+    {
+      "owner_method": "InGameVoiceControllerBase.<WaitFinishLiveStartVoice>d__6$$MoveNext",
+      "rva": "0x33128B8",
+      "end_rva": "0x33129B8",
+      "code_bytes": 256,
+      "code_sha256": "744EFBEC49A2A45020DB904CFD9A589DB8B01787826080DFD8BE399F01EAE142",
+      "arm64": "arm64/033128b8__InGameVoiceControllerBase_WaitFinishLiveStartVoice__MoveNext.arm64.tsv",
+      "arm64_bytes": 2643,
+      "arm64_sha256": "0274D73E8CDD7BAEDD6F33316F77D72F7B464FABCF1737CB849B45CA4963474E",
+      "resolved_direct_calls": [
+        {
+          "at": "0x3312934",
+          "kind": "bl",
+          "target": "InGameVoiceControllerBase$$isPlayingLiveStartVoice"
+        },
+        {
+          "at": "0x3312964",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x331298C",
+          "kind": "bl",
+          "target": "AssetBundleNames$$GetSoundVoiceInGameStartVoiceBundleName"
+        },
+        {
+          "at": "0x33129A0",
+          "kind": "bl",
+          "target": "CE.SoundManager$$RemoveSoundBundle"
+        }
+      ]
+    },
+    {
+      "owner_method": "MusicManager$$PlayMusic",
+      "rva": "0x331A328",
+      "end_rva": "0x331A394",
+      "code_bytes": 108,
+      "code_sha256": "7B2ECC7DBC5FA16680F51F8B4E059AE16B75394BFEC157B253141023A1781985",
+      "arm64": "arm64/0331a328__MusicManager__PlayMusic.arm64.tsv",
+      "arm64_bytes": 1152,
+      "arm64_sha256": "C8310DEBBDA1C8979486C47F62A557955DEAD5EF04BFBE1F24CC30322329489E",
+      "resolved_direct_calls": [
+        {
+          "at": "0x331A368",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x331A378",
+          "kind": "bl",
+          "target": "CE.SoundManager$$Pause"
+        }
+      ]
+    },
+    {
+      "owner_method": "MusicManager$$PlayMusicWithoutVoice",
+      "rva": "0x331A394",
+      "end_rva": "0x331A410",
+      "code_bytes": 124,
+      "code_sha256": "1F68DA3377AB9974EC9D3639562280AF7149C4B909F60A10E38592B7AF0DC562",
+      "arm64": "arm64/0331a394__MusicManager__PlayMusicWithoutVoice.arm64.tsv",
+      "arm64_bytes": 1372,
+      "arm64_sha256": "1E06E366420EE430CBD93F2734ED94B8790BDE8D867D92F74C8C01A98011E8C0",
+      "resolved_direct_calls": [
+        {
+          "at": "0x331A3D4",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x331A3E0",
+          "kind": "bl",
+          "target": "CE.SoundManager$$ResumeBgm"
+        },
+        {
+          "at": "0x331A3E8",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x331A3F4",
+          "kind": "bl",
+          "target": "CE.SoundManager$$ResumeSe"
+        }
+      ]
+    },
+    {
+      "owner_method": "MusicManager$$LoadMusic",
+      "rva": "0x331A4C8",
+      "end_rva": "0x331A5C4",
+      "code_bytes": 252,
+      "code_sha256": "74501979CC7A537695A9D46F9010407682F2D782EC633DA292EDFC58E56F1F93",
+      "arm64": "arm64/0331a4c8__MusicManager__LoadMusic_seek.arm64.tsv",
+      "arm64_bytes": 2769,
+      "arm64_sha256": "A62A2687132852B34884044FFDDFD73AE417090827EA55E8C6CCC71CBED56A42",
+      "resolved_direct_calls": [
+        {
+          "at": "0x331A524",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x331A53C",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x331A548",
+          "kind": "bl",
+          "target": "TutorialManager$$get_IsComplete"
+        },
+        {
+          "at": "0x331A554",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x331A570",
+          "kind": "bl",
+          "target": "System.String$$Format"
+        },
+        {
+          "at": "0x331A584",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x331A59C",
+          "kind": "bl",
+          "target": "CE.SoundManager$$PlayBGM"
+        },
+        {
+          "at": "0x331A5A4",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x331A5BC",
+          "kind": "b",
+          "target": "CE.SoundManager$$Pause"
+        }
+      ]
+    },
+    {
+      "owner_method": "AnimationPlaySound$$PlaySound",
+      "rva": "0x3323F74",
+      "end_rva": "0x3323FEC",
+      "code_bytes": 120,
+      "code_sha256": "8461CDD3D6D63AA09403E390ABB64B34235A20802AF7CB6A94EA52E6EC161750",
+      "arm64": "arm64/03323f74__AnimationPlaySound__PlaySound.arm64.tsv",
+      "arm64_bytes": 1319,
+      "arm64_sha256": "7BEE332668095CA9036CB4706759EE0A12024FE48135580A912D9BCF03A46420",
+      "resolved_direct_calls": [
+        {
+          "at": "0x3323FA8",
+          "kind": "bl",
+          "target": "AnimationPlaySound$$shouldPlaySound"
+        },
+        {
+          "at": "0x3323FBC",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x3323FD8",
+          "kind": "b",
+          "target": "CE.SoundManager$$PlaySEOneShot"
+        }
+      ]
+    },
+    {
+      "owner_method": "AnimationPlaySound$$PlaySoundVolumeSpecified",
+      "rva": "0x332407C",
+      "end_rva": "0x3324100",
+      "code_bytes": 132,
+      "code_sha256": "5CF719CA2E880885BBAEA7C48FF5D2F96C70F72426C6E321F8E70B632AB02EC7",
+      "arm64": "arm64/0332407c__AnimationPlaySound__PlaySoundVolumeSpecified.arm64.tsv",
+      "arm64_bytes": 1421,
+      "arm64_sha256": "D0B78095EB6456919B8366992AF017B6F14B5D16D2A963F3CAF23AE639113D82",
+      "resolved_direct_calls": [
+        {
+          "at": "0x33240B0",
+          "kind": "bl",
+          "target": "AnimationPlaySound$$shouldPlaySound"
+        },
+        {
+          "at": "0x33240C4",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x33240EC",
+          "kind": "b",
+          "target": "CE.SoundManager$$PlaySE"
+        }
+      ]
+    },
+    {
+      "owner_method": "AnimationPlaySound$$StopSound",
+      "rva": "0x3324108",
+      "end_rva": "0x3324170",
+      "code_bytes": 104,
+      "code_sha256": "4412A7D2D2EDEE5A8055696E8D7B7876CE0DAA91842180400584B359695D2573",
+      "arm64": "arm64/03324108__AnimationPlaySound__StopSound.arm64.tsv",
+      "arm64_bytes": 1143,
+      "arm64_sha256": "2C5946E6FBB0BC6F6DE5B0A7234FCED39F95CAA18665354790A30FE32D894C40",
+      "resolved_direct_calls": [
+        {
+          "at": "0x3324148",
+          "kind": "bl",
+          "target": "SingletonMonoBehaviour<object>$$get_Instance"
+        },
+        {
+          "at": "0x3324168",
+          "kind": "b",
+          "target": "CE.SoundManager$$StopSE"
+        }
+      ]
+    },
+    {
+      "owner_method": "MVBackgroundModule$$get_GayaSoundRequired",
+      "rva": "0x3871E4C",
+      "end_rva": "0x3871E54",
+      "code_bytes": 8,
+      "code_sha256": "2B59DB05426E0F313D72B30F3398C65721DE2562A59DC46CEEBA224F98D0B876",
+      "arm64": "arm64/03871e4c__MVBackgroundModule__get_GayaSoundRequired.arm64.tsv",
+      "arm64_bytes": 100,
+      "arm64_sha256": "58058F1864CAABC2FE6B1363735B416FA5B7CF1F4635F9B9CAB70EE0842F7802",
+      "resolved_direct_calls": []
+    },
+    {
+      "owner_method": "StandardBackgroundModule$$get_GayaSoundRequired",
+      "rva": "0x3872EBC",
+      "end_rva": "0x3872EC4",
+      "code_bytes": 8,
+      "code_sha256": "5103BA3DE080C52A046485F800433848701FAA49AB8F60241A80987CA249D7AC",
+      "arm64": "arm64/03872ebc__StandardBackgroundModule__get_GayaSoundRequired.arm64.tsv",
+      "arm64_bytes": 99,
+      "arm64_sha256": "EC35BDC0353394DBFECF2CC7C8EC39E32C5F86C9C164D918765E84C6E14F2ACE",
+      "resolved_direct_calls": []
+    },
+    {
+      "owner_method": "StandardBackgroundModule$$OnStartMusic",
+      "rva": "0x3873ABC",
+      "end_rva": "0x3873ADC",
+      "code_bytes": 32,
+      "code_sha256": "E23CCACD1E6D30F4487FB687A6A6244F4DF1AE24A99B58ED2781995901658912",
+      "arm64": "arm64/03873abc__StandardBackgroundModule__OnStartMusic.arm64.tsv",
+      "arm64_bytes": 351,
+      "arm64_sha256": "FD3C56A222F95E6FB389F8A8D1FEFBEA89485918E30683E0FF7CA6AEE7BEFC10",
+      "resolved_direct_calls": []
+    },
+    {
+      "owner_method": "Star3DLiveBackgroundModule$$get_GayaSoundRequired",
+      "rva": "0x38750E4",
+      "end_rva": "0x38750EC",
+      "code_bytes": 8,
+      "code_sha256": "2B59DB05426E0F313D72B30F3398C65721DE2562A59DC46CEEBA224F98D0B876",
+      "arm64": "arm64/038750e4__Star3DLiveBackgroundModule__get_GayaSoundRequired.arm64.tsv",
+      "arm64_bytes": 100,
+      "arm64_sha256": "50468E0D111B46F22E48375C63005F8B8FE46B0B9E488C19D1339F1DCDB8D62D",
+      "resolved_direct_calls": []
+    }
+  ],
+  "field_contract": {
+    "InGameManager.backgroundModule": "0xC0",
+    "InGameManager.calculatedData": "0xF8",
+    "InGameManager.gayaSoundResource": "0x120",
+    "InGameCalculatedData.IsEnablePractice": "0x80",
+    "CriAtomSourceBase._loop": "0x82",
+    "CriAtomSourceBase._volume": "0x84"
+  },
+  "callgraph": {
+    "roots": [
+      "InGameManager.<ExecStart>d__54.MoveNext",
+      "InGameManager.startMusicCoroutine",
+      "InGameManager.ExecUpdate",
+      "Rehearsal Retry",
+      "Rehearsal MoveTime",
+      "exit/game-over"
+    ],
+    "edges": [
+      {
+        "from": "ExecStart.MoveNext",
+        "to": "loadBGMData",
+        "kind": "returned-IEnumerator",
+        "disposition": "confirmed"
+      },
+      {
+        "from": "loadBGMData.MoveNext",
+        "to": "MusicManager.LoadMusic(0)",
+        "kind": "direct",
+        "disposition": "confirmed"
+      },
+      {
+        "from": "MusicManager.LoadMusic",
+        "to": "SoundManager.PlayBGM(volume=0,seek=0) then Pause(true)",
+        "kind": "direct",
+        "disposition": "confirmed"
+      },
+      {
+        "from": "ExecStart.MoveNext",
+        "to": "playGayaSound",
+        "kind": "direct",
+        "disposition": "confirmed"
+      },
+      {
+        "from": "playGayaSound",
+        "to": "IInGameBackgroundModule.GayaSoundRequired",
+        "kind": "interface-vtable",
+        "disposition": "confirmed"
+      },
+      {
+        "from": "playGayaSound",
+        "to": "IsEnablePractice guard",
+        "kind": "field-predicate",
+        "disposition": "confirmed"
+      },
+      {
+        "from": "playGayaSound",
+        "to": "SoundManager.PlaySELoop(SE_RHYTHM_GAYA,1.0,0.5)",
+        "kind": "direct",
+        "disposition": "confirmed-live-only"
+      },
+      {
+        "from": "SoundManager.PlaySELoop",
+        "to": "SePlayer.PlayLoop",
+        "kind": "direct",
+        "disposition": "confirmed"
+      },
+      {
+        "from": "SePlayer.PlayLoop",
+        "to": "CriAtomSourceBase._loop=true then SoundResource.PlayFade",
+        "kind": "direct-and-field",
+        "disposition": "confirmed"
+      },
+      {
+        "from": "ExecStart.MoveNext",
+        "to": "PlayLiveStartVoice",
+        "kind": "direct",
+        "disposition": "confirmed-live-only"
+      },
+      {
+        "from": "executeAfterOpeningAnimationProcess",
+        "to": "WaitFinishLiveStartVoice",
+        "kind": "returned-IEnumerator",
+        "disposition": "confirmed-live-wait-practice-bypass"
+      },
+      {
+        "from": "WaitFinishLiveStartVoice.MoveNext",
+        "to": "SoundManager.RemoveSoundBundle",
+        "kind": "direct",
+        "disposition": "confirmed-after-live-voice"
+      },
+      {
+        "from": "startMusicCoroutine.MoveNext",
+        "to": "StandardBackgroundModule.OnStartMusic",
+        "kind": "interface-vtable",
+        "disposition": "confirmed"
+      },
+      {
+        "from": "StandardBackgroundModule.OnStartMusic",
+        "to": "InGameV2StageController.StartAnimation",
+        "kind": "stage-vtable-slot-7",
+        "disposition": "confirmed-no-audio-side-effect"
+      },
+      {
+        "from": "startMusicCoroutine.MoveNext",
+        "to": "fadeOutGayaSound",
+        "kind": "direct",
+        "disposition": "confirmed"
+      },
+      {
+        "from": "fadeOutGayaSound",
+        "to": "SoundResource.FadeVolume(current,0,1.5,true,null)",
+        "kind": "direct",
+        "disposition": "confirmed-null-safe"
+      },
+      {
+        "from": "startMusicCoroutine.MoveNext",
+        "to": "PlayingNone(4) then MusicManager.PlayMusic",
+        "kind": "state-and-direct",
+        "disposition": "confirmed"
+      },
+      {
+        "from": "MusicManager.PlayMusic",
+        "to": "SoundManager.Pause(false)",
+        "kind": "direct",
+        "disposition": "confirmed"
+      },
+      {
+        "from": "updatePlayingSound",
+        "to": "PlayingSound(5)",
+        "kind": "state-transition",
+        "disposition": "confirmed"
+      },
+      {
+        "from": "SoundManager.Pause",
+        "to": "BGM/SE/voice resource Pause or Resume",
+        "kind": "direct",
+        "disposition": "confirmed-includes-active-gaya-resource"
+      },
+      {
+        "from": "MoveTime",
+        "to": "SoundManager.StopAll(0) → BgmPlayer/SePlayer/VoicePlayer.AllStop, then LoadMusic(target), Pause(true), state15/16/4, PlayMusic",
+        "kind": "coroutine",
+        "disposition": "confirmed-bypass-startup-owners"
+      },
+      {
+        "from": "Rehearsal Retry",
+        "to": "fresh ExecStart",
+        "kind": "scene-transition",
+        "disposition": "confirmed"
+      },
+      {
+        "from": "playable exit/game-over",
+        "to": "pause/exit chain",
+        "kind": "coroutine",
+        "disposition": "confirmed-gaya-already-stop-at-zero"
+      }
+    ],
+    "indirect_and_animation_inventory": [
+      {
+        "node": "StandardBackgroundModule.GayaSoundRequired",
+        "result": true,
+        "status": "confirmed-8-byte-return-true"
+      },
+      {
+        "node": "MVBackgroundModule.GayaSoundRequired",
+        "result": false,
+        "status": "confirmed-excluded-mode"
+      },
+      {
+        "node": "Star3DLiveBackgroundModule.GayaSoundRequired",
+        "result": false,
+        "status": "confirmed-excluded-mode"
+      },
+      {
+        "node": "Standard stage StartAnimation",
+        "result": "sets isWaitReadyMusicStart=false only",
+        "status": "confirmed-no-audio"
+      },
+      {
+        "node": "AnimationPlaySound.PlaySound/PlaySoundVolumeSpecified/StopSound",
+        "result": "zero entries between first ExecStart and PlayingSound in all four R1 traces; no direct reachable caller in covered startup graph",
+        "status": "excluded-covered-2d-route"
+      }
+    ]
+  },
+  "mode_matrix": {
+    "live-manual": {
+      "in_game_mode": 1,
+      "practice": false,
+      "demo": false,
+      "auto_live": false,
+      "gaya_loop": true,
+      "live_voice": true
+    },
+    "live-auto": {
+      "in_game_mode": 1,
+      "practice": false,
+      "demo": false,
+      "auto_live": true,
+      "gaya_loop": true,
+      "live_voice": true
+    },
+    "rehearsal-manual": {
+      "in_game_mode": 10,
+      "practice": true,
+      "demo": false,
+      "auto_live": false,
+      "gaya_loop": false,
+      "live_voice": false
+    },
+    "rehearsal-auto": {
+      "in_game_mode": 10,
+      "practice": true,
+      "demo": true,
+      "auto_live": false,
+      "gaya_loop": false,
+      "live_voice": false
+    }
+  },
+  "startup_timeline": [
+    "BGM LoadMusic(0) creates PlayBGM at zero volume and immediately Pause(true)",
+    "playGayaSound runs in all modes; Standard background plus not-Practice starts Gaya only in Live",
+    "Gaya starts as an owned loop at caller volume 1.0 with 0.5-second fade-in",
+    "Live requests and waits for optional live-start voice; Practice bypasses it",
+    "Standard OnStartMusic/Stage StartAnimation is followed by the evidenced one-second wait",
+    "fadeOutGayaSound fades from current effective resource volume to zero over 1.5 seconds and stops at zero",
+    "PlayingNone(4) is published before MusicManager.PlayMusic unpauses prepared BGM; updatePlayingSound publishes PlayingSound(5)"
+  ],
+  "gaya_resource": {
+    "logical_id": "sound/common",
+    "cue": "SE_RHYTHM_GAYA",
+    "delivery": "external-reference-no-redistribution",
+    "verification_cache": "tmp/startup-audio-callgraph-10-1-4/SE_RHYTHM_GAYA.mp3",
+    "url": "https://bestdori.com/assets/jp/sound/common_rip/SE_RHYTHM_GAYA.mp3",
+    "bytes": 151033,
+    "sha256": "00DCFC839A945401863304FB64ED0407696E618F9BB5C7CFAF5810EB72C77554",
+    "content_type": "audio/mpeg",
+    "etag": "\"68f99300-24df9\"",
+    "last_modified": "Thu, 23 Oct 2025 02:29:20 GMT",
+    "portable": {
+      "codec": "mp3",
+      "sample_rate": 44100,
+      "channels": 2,
+      "sample_frames": 310191,
+      "duration_seconds": 7.0338095238095235,
+      "decoded_pcm_s16le_wav_sha256": "D43354B08200E715D3CCE49A4633AEEFCE8CE17A884F5FF571EAC6FBBBFFAB57"
+    },
+    "current_cri": {
+      "cue_id": 6,
+      "cue_length_ms": 7033,
+      "sample_rate": 44100,
+      "channels": 2,
+      "samples": 310191,
+      "loop_flag": 1,
+      "hca_sha256": "2A3ADDE356C48381606DEEA6271A557710425AC17DC0C053534C3C03D41C0089",
+      "vgmstream_looping_info": null
+    },
+    "loop_mapping": {
+      "kind": "whole-decoded-buffer",
+      "start_frame": 0,
+      "end_frame": 310191,
+      "basis": "PlayLoop sets CriAtomSourceBase._loop=true without cue-specific loop-point arguments; portable MP3 and current CRI both decode to 310191 frames and neither profile exposes distinct loop points."
+    }
+  },
+  "runtime_traces": [
+    {
+      "label": "live-manual",
+      "path": "runtime/live-manual-natural-startup-audio-r1.json.gz",
+      "bytes": 1054,
+      "sha256": "77B0D57282E74AEA221FE9B0005CCCF69743DBB9BD21B6C3196CC8F5708969E9",
+      "status": "confirmed-r1-observation-only",
+      "event_count": 32,
+      "hook_failure_count": 0,
+      "mode": {
+        "session_mode": "live",
+        "input_mode": "manual"
+      },
+      "event_kind_counts": {
+        "exec-start-move-next": 10,
+        "fade-out-gaya": 1,
+        "game-state": 5,
+        "gaya-fade-volume": 4,
+        "music-load": 1,
+        "music-play": 1,
+        "play-gaya": 1,
+        "play-se-loop": 1,
+        "sound-pause": 2,
+        "sound-play-bgm": 1,
+        "sound-remove-bundle-default": 2,
+        "standard-on-start-music": 1,
+        "voice-play-live-start": 1,
+        "voice-wait-move-next": 1
+      }
+    },
+    {
+      "label": "live-auto",
+      "path": "runtime/live-auto-natural-startup-audio-r1.json.gz",
+      "bytes": 1050,
+      "sha256": "BD7A42E3A6B555DC3A5E49D78AB62BD469134D47C9BFD04F28B927739BE9D7A9",
+      "status": "confirmed-r1-observation-only",
+      "event_count": 32,
+      "hook_failure_count": 0,
+      "mode": {
+        "session_mode": "live",
+        "input_mode": "auto"
+      },
+      "event_kind_counts": {
+        "exec-start-move-next": 10,
+        "fade-out-gaya": 1,
+        "game-state": 5,
+        "gaya-fade-volume": 4,
+        "music-load": 1,
+        "music-play": 1,
+        "play-gaya": 1,
+        "play-se-loop": 1,
+        "sound-pause": 2,
+        "sound-play-bgm": 1,
+        "sound-remove-bundle-default": 2,
+        "standard-on-start-music": 1,
+        "voice-play-live-start": 1,
+        "voice-wait-move-next": 1
+      }
+    },
+    {
+      "label": "rehearsal-manual",
+      "path": "runtime/rehearsal-manual-natural-startup-audio-r1.json.gz",
+      "bytes": 915,
+      "sha256": "C02E99A946B3AD773C79E3488F186A5227B87DF464AEAEAEC2B7A91E5153BC08",
+      "status": "confirmed-r1-observation-only",
+      "event_count": 26,
+      "hook_failure_count": 0,
+      "mode": {
+        "session_mode": "rehearsal",
+        "input_mode": "manual"
+      },
+      "event_kind_counts": {
+        "exec-start-move-next": 10,
+        "fade-out-gaya": 1,
+        "game-state": 5,
+        "gaya-fade-volume": 2,
+        "music-load": 1,
+        "music-play": 1,
+        "play-gaya": 1,
+        "sound-pause": 2,
+        "sound-play-bgm": 1,
+        "sound-remove-bundle-default": 1,
+        "standard-on-start-music": 1
+      }
+    },
+    {
+      "label": "rehearsal-auto",
+      "path": "runtime/rehearsal-auto-natural-startup-audio-r1.json.gz",
+      "bytes": 912,
+      "sha256": "2AED102C369AA8FCC84451EE6F54101959C8ACEC7B15F82E99E4DED2F2899439",
+      "status": "confirmed-r1-observation-only",
+      "event_count": 26,
+      "hook_failure_count": 0,
+      "mode": {
+        "session_mode": "rehearsal",
+        "input_mode": "auto"
+      },
+      "event_kind_counts": {
+        "exec-start-move-next": 10,
+        "fade-out-gaya": 1,
+        "game-state": 5,
+        "gaya-fade-volume": 2,
+        "music-load": 1,
+        "music-play": 1,
+        "play-gaya": 1,
+        "sound-pause": 2,
+        "sound-play-bgm": 1,
+        "sound-remove-bundle-default": 1,
+        "standard-on-start-music": 1
+      }
+    },
+    {
+      "label": "rehearsal-manual-retry",
+      "path": "runtime/rehearsal-manual-retry-startup-audio-r1.json.gz",
+      "bytes": 922,
+      "sha256": "6160FE5419D2D49D5746E4651173527CF4278DCD6FD7BE602C6C60741012F6A2",
+      "status": "confirmed-r1-observation-only",
+      "event_count": 26,
+      "hook_failure_count": 0,
+      "mode": {
+        "session_mode": "rehearsal",
+        "input_mode": "manual"
+      },
+      "event_kind_counts": {
+        "exec-start-move-next": 10,
+        "fade-out-gaya": 1,
+        "game-state": 7,
+        "gaya-fade-volume": 1,
+        "music-load": 1,
+        "music-play": 1,
+        "play-gaya": 1,
+        "sound-pause": 2,
+        "sound-play-bgm": 1,
+        "standard-on-start-music": 1
+      }
+    },
+    {
+      "label": "rehearsal-auto-retry",
+      "path": "runtime/rehearsal-auto-retry-startup-audio-r1.json.gz",
+      "bytes": 976,
+      "sha256": "91C2B4D8A9361496F9AECFDD01AA584C74815C73180B5988E844BD714331A4D1",
+      "status": "confirmed-r1-observation-only",
+      "event_count": 28,
+      "hook_failure_count": 0,
+      "mode": {
+        "session_mode": "rehearsal",
+        "input_mode": "auto"
+      },
+      "event_kind_counts": {
+        "exec-start-move-next": 10,
+        "fade-out-gaya": 1,
+        "game-state": 7,
+        "gaya-fade-volume": 2,
+        "music-load": 1,
+        "music-play": 1,
+        "play-gaya": 1,
+        "play-se-loop": 1,
+        "sound-pause": 2,
+        "sound-play-bgm": 1,
+        "standard-on-start-music": 1
+      }
+    },
+    {
+      "label": "rehearsal-manual-return-five",
+      "path": "runtime/rehearsal-manual-return-five-audio-r1.json.gz",
+      "bytes": 704,
+      "sha256": "9039F229BE452C2425D175EA1369E5E58C80D891FD341D6095CBC8B5F0907750",
+      "status": "confirmed-r1-observation-only",
+      "event_count": 15,
+      "hook_failure_count": 0,
+      "mode": {
+        "session_mode": "rehearsal",
+        "input_mode": "manual"
+      },
+      "event_kind_counts": {
+        "game-state": 5,
+        "gaya-fade-volume": 3,
+        "music-load": 1,
+        "music-play": 1,
+        "sound-pause": 3,
+        "sound-play-bgm": 1,
+        "sound-stop-all": 1
+      }
+    },
+    {
+      "label": "rehearsal-manual-advance-five",
+      "path": "runtime/rehearsal-manual-advance-five-audio-r1.json.gz",
+      "bytes": 709,
+      "sha256": "623F07E9292A0C2B5A0A60B0FE7A14BEE35B8C33022A7901061F9931C425B4AF",
+      "status": "confirmed-r1-observation-only",
+      "event_count": 15,
+      "hook_failure_count": 0,
+      "mode": {
+        "session_mode": "rehearsal",
+        "input_mode": "manual"
+      },
+      "event_kind_counts": {
+        "game-state": 5,
+        "gaya-fade-volume": 3,
+        "music-load": 1,
+        "music-play": 1,
+        "sound-pause": 3,
+        "sound-play-bgm": 1,
+        "sound-stop-all": 1
+      }
+    },
+    {
+      "label": "rehearsal-auto-return-five",
+      "path": "runtime/rehearsal-auto-return-five-audio-r1.json.gz",
+      "bytes": 956,
+      "sha256": "9B9F616BE61467A2DAEDDA3C552FDE440363724C21D2B87AB685B23917A27942",
+      "status": "confirmed-r1-observation-only",
+      "event_count": 50,
+      "hook_failure_count": 0,
+      "mode": {
+        "session_mode": "rehearsal",
+        "input_mode": "auto"
+      },
+      "event_kind_counts": {
+        "game-state": 5,
+        "gaya-fade-volume": 28,
+        "music-load": 1,
+        "music-play": 1,
+        "play-se-loop": 10,
+        "sound-pause": 3,
+        "sound-play-bgm": 1,
+        "sound-stop-all": 1
+      }
+    },
+    {
+      "label": "rehearsal-auto-advance-five",
+      "path": "runtime/rehearsal-auto-advance-five-audio-r1.json.gz",
+      "bytes": 912,
+      "sha256": "0691252F35D6059BD8FE9B4B6C849FE1B0F29676E2B902F81AE8DA4E89962DDE",
+      "status": "confirmed-r1-observation-only",
+      "event_count": 45,
+      "hook_failure_count": 0,
+      "mode": {
+        "session_mode": "rehearsal",
+        "input_mode": "auto"
+      },
+      "event_kind_counts": {
+        "game-state": 5,
+        "gaya-fade-volume": 26,
+        "music-load": 1,
+        "music-play": 1,
+        "play-se-loop": 7,
+        "sound-pause": 3,
+        "sound-play-bgm": 1,
+        "sound-stop-all": 1
+      }
+    }
+  ],
+  "lifecycle": {
+    "initial": "Live owns one Gaya resource from PlaySELoop return until FadeVolume stop-at-zero; Practice keeps the field null.",
+    "retry": "Manual and Auto Rehearsal traces enter a fresh Practice ExecStart and never create Gaya.",
+    "move_time": "Both directions and both input modes call StopAll, load target BGM paused, traverse 15/16/4 and unpause; no Gaya or voice startup owner is created.",
+    "pause_resume": "Pause is unavailable before PlayingSound. SoundManager.Pause applies Pause/Resume to BGM, SE and voice resources, including a still-fading Gaya owner; the fade coroutine is Time.deltaTime-driven.",
+    "abort_gameover_natural_dispose": "Publicly reachable abort/game-over/natural paths begin after PlayingSound, when the initial Gaya stop-at-zero fade has already been scheduled. Exit removes BGM/chorus/tap/directional bundles and restores system volume. Portable rollback/fault/dispose must still synchronously stop any partially created owner because no original user input is accepted before the gameplay gate."
+  },
+  "closure": {
+    "reachable_unclassified_count": 0,
+    "unknown_predicate_count": 0,
+    "missing_resource_count": 0,
+    "runtime_hook_failure_count": 0,
+    "rejected_trace_consumption": false,
+    "r2_used": false,
+    "fixed_device_speaker_exact": "open-not-claimed",
+    "mv_star3d_multi": "excluded-from-positive-scope",
+    "production_authorization": true
+  }
+}
