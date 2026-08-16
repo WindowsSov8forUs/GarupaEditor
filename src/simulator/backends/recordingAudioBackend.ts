@@ -182,10 +182,13 @@ export class RecordingSimulatorAudioBackend implements SimulatorAudioBackend {
     const seCueSet = new Set(
       this.profile.resources.filter((resource) => resource.role === "se" || resource.role === "voice").map((resource) => resource.cue),
     );
+    const liveStartVoiceCue = this.profile.resources.find(
+      (resource) => resource.role === "voice",
+    )?.cue ?? null;
     const simulated = cloneSemanticState(this.semantic);
     const frozenCommands: AudioCommand[] = [];
     for (const command of commands) {
-      const shape = validateAudioCommandShape(command, bgmCue, seCueSet);
+      const shape = validateAudioCommandShape(command, bgmCue, seCueSet, liveStartVoiceCue);
       if (shape.status !== "accepted") return shape;
       const transition = applyCommand(command, simulated);
       if (transition.status !== "accepted") return transition;
@@ -437,6 +440,7 @@ function applyCommand(
       state.allPaused = command.paused;
       return audioAccepted(undefined);
     case "se.play-one-shot":
+    case "voice.release-live-start":
       return audioAccepted(undefined);
     case "se.start-owned-loop":
       if (state.startupLoops.has(command.owner_key)) {

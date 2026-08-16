@@ -360,7 +360,8 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
 
   private applyCommands(commands: readonly AudioCommand[]): void {
     this.scheduledPauseOffset = 0;
-    for (const command of commands) {
+    for (let commandIndex = 0; commandIndex < commands.length; commandIndex += 1) {
+      const command = commands[commandIndex]!;
       switch (command.kind) {
         case "session.open":
         case "pool.profile":
@@ -370,15 +371,30 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
           this.setCategoryGain(this.seGain!, audioFloat32FromBits(command.se_bits)!);
           break;
         case "bgm.load":
+          this.createVoice(
+            "bgm",
+            command.cue,
+            "bgm",
+            commands[commandIndex + 1]?.kind === "bgm.pause" ? 0 : 1,
+            command.seek_ms / 1000,
+            null,
+            null,
+          );
+          break;
         case "bgm.move-time-load":
           this.createVoice("bgm", command.cue, "bgm", 1, command.seek_ms / 1000, null, null);
           break;
         case "bgm.pause":
           this.pauseVoice(this.voices.get("bgm"));
           break;
-        case "bgm.resume":
-          this.resumeVoice(this.voices.get("bgm"));
+        case "bgm.resume": {
+          const bgm = this.voices.get("bgm");
+          if (bgm !== undefined && bgm.gain.gain.value === 0) {
+            bgm.gain.gain.setValueAtTime(1, this.context.currentTime);
+          }
+          this.resumeVoice(bgm);
           break;
+        }
         case "se.pause":
           this.forEachVoice((voice) => voice.category !== "bgm" && !voice.voiceKey.startsWith("hold:"), (voice) => this.pauseVoice(voice));
           break;
@@ -398,6 +414,11 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
             null,
             null,
           );
+          break;
+        case "voice.release-live-start":
+          if (this.voices.has(`se:${command.voice_key}`) || !this.decodedByCue.delete(command.cue)) {
+            throw new Error("invalid live-start voice release state");
+          }
           break;
         case "se.start-owned-loop": {
           const resource = this.requireLoopResource(command.cue);

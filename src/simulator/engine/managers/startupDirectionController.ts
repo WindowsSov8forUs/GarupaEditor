@@ -3,6 +3,11 @@ import { GameState, type GameStateValue } from "../data/inGameState";
 import { evidenceRequired, ok, type SimulatorResult } from "../evidence";
 import type { AudioCommandProducer } from "../audio/audioCommandProducer";
 import {
+  StartupAudioOwner,
+  type StartupAudioOwnerSnapshot,
+  type StartupAudioPurpose,
+} from "../audio/startupAudioOwner";
+import {
   freezeStartupDirectionSceneState,
   INITIAL_STARTUP_DIRECTION_SCENE_STATE,
   type StartupDirectionSceneBackend,
@@ -22,7 +27,7 @@ const LINE_DELAY = Math.fround(2.5);
 const LINE_FADE = Math.fround(1.0);
 const MUSIC_WAIT = Math.fround(1.0);
 
-export type StartupDirectionPurpose = "initial" | "retry" | "move-time-reconstruction";
+export type StartupDirectionPurpose = StartupAudioPurpose;
 
 export type StartupDirectionPhase =
   | "first-view"
@@ -43,6 +48,7 @@ export interface StartupDirectionSnapshot {
   readonly playable: boolean;
   readonly musicStartRequested: boolean;
   readonly liveVoiceRequired: boolean;
+  readonly audio: StartupAudioOwnerSnapshot | null;
   readonly scene: StartupDirectionSceneState;
 }
 
@@ -55,26 +61,34 @@ export class StartupDirectionController {
   private sceneValue = INITIAL_STARTUP_DIRECTION_SCENE_STATE;
   private initialized = false;
   private disposed = false;
+  private readonly startupAudio: StartupAudioOwner | null;
 
   constructor(
     private readonly mode: SimulatorModeIdentity,
     private readonly scene: StartupDirectionSceneBackend | null,
-    private readonly audio: AudioCommandProducer | null = null,
+    audio: AudioCommandProducer | null = null,
     private readonly liveStartVoiceCue: string | null = null,
     private readonly purpose: StartupDirectionPurpose = "initial",
-  ) {}
+  ) {
+    this.startupAudio = audio === null
+      ? null
+      : new StartupAudioOwner(mode, purpose, audio, liveStartVoiceCue);
+  }
 
   initialize(): SimulatorResult<void> {
     if (this.disposed) return rejected("startup-direction.initialize-after-dispose", "A disposed startup owner cannot be reconstructed.");
     if (this.initialized) return ok(undefined);
     this.initialized = true;
+    const startupAudio = this.startupAudio?.initialize() ?? (
+      this.mode.sessionMode === "live" && this.liveStartVoiceCue !== null
+        ? rejected(
+            "startup-direction.live-voice-audio-owner-missing",
+            "A non-null Live voice requires one prepared audio owner.",
+          )
+        : ok(undefined)
+    );
+    if (startupAudio.status !== "ok") return startupAudio;
     if (this.purpose === "move-time-reconstruction") {
-      const bgm = this.audio?.preflightStartBgm() ?? null;
-      if (bgm?.status === "evidence-required") return bgm;
-      if (bgm?.status === "ok") {
-        const committed = bgm.value.commit();
-        if (committed.status !== "ok") return committed;
-      }
       this.phaseValue = "playing-sound";
       this.stateValue = GameState.PlayingSound;
       this.publish({
@@ -91,15 +105,6 @@ export class StartupDirectionController {
         rehearsalControlsVisible: this.mode.sessionMode === "rehearsal",
       });
       return ok(undefined);
-    }
-    if (this.mode.sessionMode === "live" && this.liveStartVoiceCue !== null) {
-      const voice = this.audio?.preflightStartLiveVoice(this.liveStartVoiceCue) ?? rejected(
-        "startup-direction.live-voice-audio-owner-missing",
-        "A non-null Live voice requires one prepared audio owner.",
-      );
-      if (voice.status !== "ok") return voice;
-      const committed = voice.value.commit();
-      if (committed.status !== "ok") return committed;
     }
     this.publish({
       informationPhase: "revealing",
@@ -152,25 +157,29 @@ export class StartupDirectionController {
           this.enter("music-wait", GameState.OPLastAnimStart);
           break;
         }
-        const playing = this.audio?.isLiveStartVoicePlaying() ?? rejected(
+        const playing = this.startupAudio?.isLiveStartVoicePlaying() ?? rejected(
           "startup-direction.live-voice-observer-missing",
           "Live startup cannot pass the voice wait without the backend ended-state observer.",
         );
         if (playing.status !== "ok") return playing;
-        if (!playing.value) this.enter("music-wait", GameState.OPLastAnimStart);
+        if (!playing.value) {
+          const released = this.startupAudio!.releaseFinishedLiveStartVoice();
+          if (released.status !== "ok") return released;
+          this.enter("music-wait", GameState.OPLastAnimStart);
+        }
         break;
       }
       case "music-wait": {
         const sample = advance(this.phaseElapsedValue, MUSIC_WAIT, deltaTimeSeconds);
         this.phaseElapsedValue = sample.elapsed;
         if (sample.done) {
-          const bgm = this.audio?.preflightStartBgm() ?? null;
-          if (bgm?.status === "evidence-required") return bgm;
-          if (bgm?.status === "ok") {
-            const committed = bgm.value.commit();
+          const audioTransition = this.startupAudio?.preflightEnterPlaying() ?? null;
+          if (audioTransition?.status === "evidence-required") return audioTransition;
+          this.enter("playing-none", GameState.PlayingNone);
+          if (audioTransition?.status === "ok") {
+            const committed = audioTransition.value.commit();
             if (committed.status !== "ok") return committed;
           }
-          this.enter("playing-none", GameState.PlayingNone);
         }
         break;
       }
@@ -193,6 +202,7 @@ export class StartupDirectionController {
       playable: this.stateValue === GameState.PlayingSound,
       musicStartRequested: this.stateValue >= GameState.PlayingNone,
       liveVoiceRequired: this.mode.sessionMode === "live" && this.liveStartVoiceCue !== null,
+      audio: this.startupAudio?.snapshot() ?? null,
       scene: this.sceneValue,
     });
   }
@@ -200,6 +210,7 @@ export class StartupDirectionController {
   dispose(): void {
     if (this.disposed) return;
     this.disposed = true;
+    this.startupAudio?.dispose();
     this.scene?.dispose();
   }
 

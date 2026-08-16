@@ -19,6 +19,7 @@ import { DeterministicOfflineAudioBackend } from "../backends/audio/offlineAudio
 import { WebAudioSimulatorBackend } from "../backends/audio/webAudioBackend";
 import { RecordingSimulatorAudioBackend } from "../backends/recordingAudioBackend";
 import { AudioCommandProducer } from "../engine/audio/audioCommandProducer";
+import { createAudioSessionResourceProfile } from "../backends/resources/currentAudioResourceManifest";
 import {
   ALTERNATIVE_AUDIO_TEST_PROFILE,
   ALTERNATIVE_SESSION_BGM_RESOURCE,
@@ -573,6 +574,51 @@ async function testStartupAudioCallgraphCommands(): Promise<void> {
   assert.deepEqual(backend.snapshot().semantic.startupLoops, []);
   assert.equal(producer.preflightFadeStartupGaya("startup:gaya").status, "evidence-required");
   assert.equal(backend.dispose().status, "accepted");
+
+  const voiceSha = "B".repeat(64);
+  const voiceCue = `session_live_start_voice_${voiceSha}`;
+  const voiceProfile = createAudioSessionResourceProfile(
+    CURRENT_AUDIO_TEST_PROFILE.resources.find((resource) => resource.role === "bgm")! as any,
+    Object.freeze({
+      role: "voice" as const,
+      logicalId: `startup/session/live-start-voice/${voiceSha}`,
+      cue: voiceCue,
+      byteLength: 4097,
+      sha256: voiceSha,
+      mime: "audio/mpeg" as const,
+      codec: "mp3" as const,
+      sampleRate: 44100,
+      channels: 2 as const,
+      durationSeconds: 1,
+      sampleFrames: 44100,
+      loop: null,
+      identity: "session-explicit" as const,
+      signal: "host-supplied-portable" as const,
+    }),
+  );
+  const voiceCapabilities = virtualCapabilities(voiceProfile);
+  const voiceBackend = new RecordingSimulatorAudioBackend();
+  assert.equal((await voiceBackend.prepare(
+    "voice-session",
+    voiceProfile,
+    voiceCapabilities.provider,
+    voiceCapabilities.preflight,
+  )).status, "accepted");
+  const voiceProducer = new AudioCommandProducer({
+    sessionId: "voice-session",
+    bgmCue: voiceProfile.resources.find((resource) => resource.role === "bgm")!.cue,
+    seekMilliseconds: 0,
+    masterGainBits: "0x3F800000",
+    bgmGainBits: "0x3F800000",
+    seGainBits: "0x3F800000",
+  }, voiceBackend, { noteBatches: [] } as any);
+  assert.equal(requireOk(voiceProducer.preflightInitialize()).commit().status, "ok");
+  assert.equal(requireOk(voiceProducer.preflightStartupOpening(true, voiceCue)).commit().status, "ok");
+  assert.equal(requireOk(voiceProducer.preflightReleaseLiveStartVoice(voiceCue)).commit().status, "ok");
+  assert.equal(voiceProducer.preflightReleaseLiveStartVoice("SE_RHYTHM_GAYA").status, "evidence-required");
+  const voiceCommands = voiceBackend.snapshot().commands;
+  assert.equal(voiceCommands[voiceCommands.length - 1]?.kind, "voice.release-live-start");
+  assert.equal(voiceBackend.dispose().status, "accepted");
 }
 
 async function readyBackend(): Promise<RecordingSimulatorAudioBackend> {

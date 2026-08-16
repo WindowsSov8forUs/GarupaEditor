@@ -9,12 +9,17 @@ import { StartupDirectionController } from "../engine/managers/startupDirectionC
 import { RecordingStartupDirectionBackend } from "../backends/recordingStartupDirectionBackend";
 import { createRecordingSimulatorBackends } from "../backends/recordingBackend";
 import { createSimulatorEngine } from "../host/createSimulatorEngine";
+import type { AudioResourceProfileSet } from "../backends/audioContracts";
+import { audioAccepted } from "../backends/audioValidation";
+import { CURRENT_AUDIO_TEST_PROFILE } from "./audioSessionBgmTestProfile";
 
-function main(): void {
+async function main(): Promise<void> {
   testFourModeStateAndMutationGate();
   testFloat32NoRemainder();
   testVoiceWaitAndDelayedBgm();
-  console.log("startup direction engine tests passed: four modes/state0-5/mutation gate/Float32 owners");
+  await testFourModeAudioTimeline();
+  await testMoveTimeAudioPurpose();
+  console.log("startup direction engine tests passed: four modes/state0-5/mutation gate/Float32 audio owners");
 }
 
 function testFourModeStateAndMutationGate(): void {
@@ -81,15 +86,34 @@ function testFloat32NoRemainder(): void {
 function testVoiceWaitAndDelayedBgm(): void {
   let voiceStarts = 0;
   let bgmStarts = 0;
+  let gayaStarts = 0;
+  let gayaFades = 0;
+  let voiceReleases = 0;
   let voicePlaying = true;
   const transaction = (commit: () => void) => ({
     status: "ok" as const,
     value: { commit() { commit(); return { status: "ok" as const, value: undefined }; } },
   });
   const audio = {
-    preflightStartLiveVoice() { return transaction(() => { voiceStarts += 1; }); },
+    preflightStartupOpening(includeGaya: boolean, voiceCue: string | null) {
+      return transaction(() => {
+        if (includeGaya) gayaStarts += 1;
+        if (voiceCue !== null) voiceStarts += 1;
+      });
+    },
+    preflightMoveTimeReconstructionBgm() {
+      return transaction(() => { bgmStarts += 1; });
+    },
     isLiveStartVoicePlaying() { return { status: "ok" as const, value: voicePlaying }; },
-    preflightStartBgm() { return transaction(() => { bgmStarts += 1; }); },
+    preflightReleaseLiveStartVoice() {
+      return transaction(() => { voiceReleases += 1; });
+    },
+    preflightEnterStartupPlaying(includeGaya: boolean) {
+      return transaction(() => {
+        if (includeGaya) gayaFades += 1;
+        bgmStarts += 1;
+      });
+    },
   } as any;
   const live = new StartupDirectionController(
     createSimulatorModeIdentity("live", "manual"),
@@ -99,6 +123,7 @@ function testVoiceWaitAndDelayedBgm(): void {
   );
   requireOk(live.initialize());
   assert.equal(voiceStarts, 1);
+  assert.equal(gayaStarts, 1);
   for (let index = 0; index < 30 && live.snapshot().phase !== "voice-wait"; index += 1) {
     requireOk(live.step(Math.fround(1)));
   }
@@ -109,10 +134,12 @@ function testVoiceWaitAndDelayedBgm(): void {
   voicePlaying = false;
   requireOk(live.step(Math.fround(1)));
   assert.equal(live.snapshot().phase, "music-wait");
+  assert.equal(voiceReleases, 1);
   requireOk(live.step(Math.fround(1)));
   assert.equal(bgmStarts, 0);
   requireOk(live.step(Math.fround(0)));
   assert.equal(bgmStarts, 1);
+  assert.equal(gayaFades, 1);
   assert.equal(live.snapshot().currentGameState, GameState.PlayingNone);
   live.dispose();
 
@@ -125,6 +152,7 @@ function testVoiceWaitAndDelayedBgm(): void {
   );
   requireOk(practice.initialize());
   assert.equal(voiceStarts, 0);
+  assert.equal(gayaStarts, 1);
   practice.dispose();
 
   bgmStarts = 0;
@@ -143,6 +171,150 @@ function testVoiceWaitAndDelayedBgm(): void {
   reconstruction.dispose();
 }
 
+async function testFourModeAudioTimeline(): Promise<void> {
+  for (const sessionMode of ["live", "rehearsal"] as const) {
+    for (const inputMode of ["manual", "auto"] as const) {
+      const sessionId = `startup-audio:${sessionMode}:${inputMode}`;
+      const chart = requireOk<any>(createNoteBatchInformationList({
+        musicScoreData: "#BPM 120\n#WAV01 normal.wav\n#00111:01\n",
+      }));
+      const mode = createSimulatorModeIdentity(sessionMode, inputMode);
+      const backends = createRecordingSimulatorBackends();
+      const audioCapabilities = virtualAudioCapabilities(CURRENT_AUDIO_TEST_PROFILE);
+      assert.equal((await backends.audio.prepare(
+        sessionId,
+        CURRENT_AUDIO_TEST_PROFILE,
+        audioCapabilities.provider,
+        audioCapabilities.preflight,
+      )).status, "accepted");
+      const engine = requireOk<any>(createSimulatorEngine({
+        chart,
+        runtime: { highFrequencyMode: false, judgeOffsetFrames: 0, mode },
+        audio: {
+          sessionId,
+          bgmCue: CURRENT_AUDIO_TEST_PROFILE.resources.find((row) => row.role === "bgm")!.cue,
+          seekMilliseconds: 0,
+          masterGainBits: "0x3F800000",
+          bgmGainBits: "0x3F800000",
+          seGainBits: "0x3F800000",
+        },
+        startupDirection: {
+          scene: new RecordingStartupDirectionBackend(),
+          liveStartVoiceCue: null,
+          purpose: "initial",
+        },
+      }, backends));
+      requireOk(engine.initialize());
+      assert.deepEqual(
+        requireOk<any>(engine.snapshot()).audioBackend.commands.map((row: any) => row.kind),
+        sessionMode === "live"
+          ? ["session.open", "gain.set", "bgm.load", "bgm.pause", "se.start-owned-loop"]
+          : ["session.open", "gain.set", "bgm.load", "bgm.pause"],
+      );
+      const delta = Math.fround(1 / 60);
+      for (let frame = 0; frame < 500 && !requireOk<any>(engine.snapshot()).managers.playable; frame += 1) {
+        requireOk(engine.step(delta, { touches: [] }));
+      }
+      const playable = requireOk<any>(engine.snapshot());
+      assert.deepEqual(
+        playable.audioBackend.commands.map((row: any) => row.kind),
+        sessionMode === "live"
+          ? [
+              "session.open", "gain.set", "bgm.load", "bgm.pause",
+              "se.start-owned-loop", "se.fade-owned-loop", "bgm.resume",
+            ]
+          : ["session.open", "gain.set", "bgm.load", "bgm.pause", "bgm.resume"],
+      );
+      assert.deepEqual(
+        playable.managers.startupDirection.audio.timeline,
+        sessionMode === "live"
+          ? ["bgm.prepare-paused", "gaya.start", "gaya.fade-stop-at-zero", "bgm.resume"]
+          : ["bgm.prepare-paused", "gaya.fade-null-safe", "bgm.resume"],
+      );
+      assert.equal(playable.audioBackend.semantic.bgmPaused, false);
+      assert.deepEqual(playable.audioBackend.semantic.startupLoops, []);
+      requireOk(engine.dispose());
+    }
+  }
+}
+
+async function testMoveTimeAudioPurpose(): Promise<void> {
+  const sessionId = "startup-audio:move-time";
+  const chart = requireOk<any>(createNoteBatchInformationList({
+    musicScoreData: "#BPM 120\n#WAV01 normal.wav\n#00111:01\n",
+  }));
+  const mode = createSimulatorModeIdentity("rehearsal", "manual");
+  const backends = createRecordingSimulatorBackends();
+  const audioCapabilities = virtualAudioCapabilities(CURRENT_AUDIO_TEST_PROFILE);
+  assert.equal((await backends.audio.prepare(
+    sessionId,
+    CURRENT_AUDIO_TEST_PROFILE,
+    audioCapabilities.provider,
+    audioCapabilities.preflight,
+  )).status, "accepted");
+  const engine = requireOk<any>(createSimulatorEngine({
+    chart,
+    runtime: { highFrequencyMode: false, judgeOffsetFrames: 0, mode },
+    audio: {
+      sessionId,
+      bgmCue: CURRENT_AUDIO_TEST_PROFILE.resources.find((row) => row.role === "bgm")!.cue,
+      seekMilliseconds: 0,
+      masterGainBits: "0x3F800000",
+      bgmGainBits: "0x3F800000",
+      seGainBits: "0x3F800000",
+    },
+    startupDirection: {
+      scene: new RecordingStartupDirectionBackend(),
+      liveStartVoiceCue: null,
+      purpose: "move-time-reconstruction",
+    },
+  }, backends));
+  requireOk(engine.initialize());
+  const snapshot = requireOk<any>(engine.snapshot());
+  assert.equal(snapshot.managers.playable, true);
+  assert.deepEqual(snapshot.audioBackend.commands.map((row: any) => row.kind), [
+    "session.open", "gain.set", "bgm.load", "bgm.pause", "bgm.resume",
+  ]);
+  assert.deepEqual(snapshot.managers.startupDirection.audio.timeline, [
+    "move-time.bgm.prepare-paused", "move-time.bgm.resume",
+  ]);
+  assert.equal(snapshot.managers.startupDirection.audio.gayaRequired, false);
+  requireOk(engine.dispose());
+}
+
+function virtualAudioCapabilities(profile: AudioResourceProfileSet): any {
+  const resources = profile.resources.map((resource, index) => ({
+    resource,
+    bytes: Uint8Array.from({ length: resource.byteLength }, (_, byteIndex) =>
+      byteIndex === 0 ? index + 1 : 0),
+  }));
+  const identify = (bytes: Uint8Array) => resources[bytes[0]! - 1]!.resource;
+  return {
+    provider: {
+      async read(resource: any) {
+        const row = resources.find((candidate) =>
+          candidate.resource.logicalId === resource.logicalId && candidate.resource.cue === resource.cue);
+        return row === undefined
+          ? { status: "audio-resource-unavailable" as const, failure: { code: "audio-resource-unavailable", capability: "test.missing", boundary: "missing" } }
+          : audioAccepted(Uint8Array.from(row.bytes));
+      },
+    },
+    preflight: {
+      async sha256(bytes: Uint8Array) { return audioAccepted(identify(bytes).sha256); },
+      async inspect(bytes: Uint8Array) {
+        const resource = identify(bytes);
+        return audioAccepted({
+          codec: resource.codec,
+          sampleRate: resource.sampleRate,
+          channels: resource.channels,
+          durationSeconds: resource.durationSeconds,
+          sampleFrames: resource.sampleFrames,
+        });
+      },
+    },
+  };
+}
+
 function businessDigest(snapshot: any): unknown {
   return {
     adjustedMusicPosition: snapshot.adjustedMusicPosition,
@@ -158,4 +330,4 @@ function requireOk<T>(result: any): T {
   return result.value as T;
 }
 
-try { main(); } catch (error) { console.error(error); process.exitCode = 1; }
+main().catch((error) => { console.error(error); process.exitCode = 1; });

@@ -184,6 +184,7 @@ export function validateAudioCommandShape(
   command: AudioCommand,
   bgmCue: string,
   seCueSet: ReadonlySet<string>,
+  liveStartVoiceCue: string | null,
 ): AudioOperationResult<void> {
   if (!isRecord(command) || typeof command.kind !== "string") {
     return rejectCommand("audio.command.invalid-shape", "Audio commands must be typed immutable records.");
@@ -233,6 +234,15 @@ export function validateAudioCommandShape(
         command.pan_angle_bits === "0x00000000"
         ? audioAccepted(undefined)
         : rejectCommand("audio.command.invalid-one-shot", "One-shot commands require an exact cue, stable voice and evidenced unit-range gain with zero pitch/pan.");
+    case "voice.release-live-start":
+      return hasExactKeys(command, ["kind", "cue", "voice_key"]) &&
+        liveStartVoiceCue !== null && command.cue === liveStartVoiceCue &&
+        command.voice_key === "live-start"
+        ? audioAccepted(undefined)
+        : rejectCommand(
+            "audio.command.invalid-live-start-release",
+            "Live-start bundle release requires the exact prepared voice cue and stable startup voice owner.",
+          );
     case "se.start-owned-loop":
       return hasExactKeys(command, [
         "kind", "cue", "owner_key", "volume_bits", "fade_in_bits",

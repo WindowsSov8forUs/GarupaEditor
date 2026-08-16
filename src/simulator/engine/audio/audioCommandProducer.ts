@@ -177,6 +177,43 @@ export class AudioCommandProducer {
   }
 
   preflightPrepareStartupBgm(): SimulatorResult<AudioOwnerTransaction> {
+    return this.preflightStartupOpening(false, null);
+  }
+
+  preflightStartupOpening(
+    includeGaya: boolean,
+    liveStartVoiceCue: string | null,
+  ): SimulatorResult<AudioOwnerTransaction> {
+    const commands: AudioCommand[] = [
+      {
+        kind: "bgm.load",
+        cue: this.input.bgmCue,
+        seek_ms: this.input.seekMilliseconds,
+        priority: 255,
+        fade_bits: "0x00000000",
+      },
+      { kind: "bgm.pause" },
+    ];
+    if (includeGaya) commands.push({
+      kind: "se.start-owned-loop",
+      cue: "SE_RHYTHM_GAYA",
+      owner_key: "startup:gaya",
+      volume_bits: "0x3F800000",
+      fade_in_bits: "0x3F000000",
+    });
+    if (liveStartVoiceCue !== null) commands.push({
+      kind: "se.play-one-shot",
+      cue: liveStartVoiceCue,
+      voice_key: "live-start",
+      volume_bits: "0x3F800000",
+      pitch_bits: "0x00000000",
+      pan_distance_bits: "0x00000000",
+      pan_angle_bits: "0x00000000",
+    });
+    return this.preflightCommands(commands);
+  }
+
+  preflightMoveTimeReconstructionBgm(): SimulatorResult<AudioOwnerTransaction> {
     return this.preflightCommands([
       {
         kind: "bgm.load",
@@ -186,11 +223,25 @@ export class AudioCommandProducer {
         fade_bits: "0x00000000",
       },
       { kind: "bgm.pause" },
+      { kind: "bgm.resume" },
     ]);
   }
 
   preflightPlayPreparedStartupBgm(): SimulatorResult<AudioOwnerTransaction> {
     return this.preflightCommands([{ kind: "bgm.resume" }]);
+  }
+
+  preflightEnterStartupPlaying(includeGayaFade: boolean): SimulatorResult<AudioOwnerTransaction> {
+    const commands: AudioCommand[] = [];
+    if (includeGayaFade) commands.push({
+      kind: "se.fade-owned-loop",
+      owner_key: "startup:gaya",
+      target_bits: "0x00000000",
+      duration_bits: "0x3FC00000",
+      stop_at_zero: true,
+    });
+    commands.push({ kind: "bgm.resume" });
+    return this.preflightCommands(commands);
   }
 
   preflightStartStartupGaya(ownerKey: string): SimulatorResult<AudioOwnerTransaction> {
@@ -225,6 +276,20 @@ export class AudioCommandProducer {
       pitch_bits: "0x00000000",
       pan_distance_bits: "0x00000000",
       pan_angle_bits: "0x00000000",
+    }]);
+  }
+
+  preflightReleaseLiveStartVoice(cue: string): SimulatorResult<AudioOwnerTransaction> {
+    if (typeof cue !== "string" || cue.length === 0) {
+      return rejected(
+        "audio.startup-voice.invalid-release-cue",
+        "Live-start voice release requires the internally derived non-empty session cue.",
+      );
+    }
+    return this.preflightCommands([{
+      kind: "voice.release-live-start",
+      cue,
+      voice_key: "live-start",
     }]);
   }
 

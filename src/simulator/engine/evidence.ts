@@ -101,6 +101,11 @@ export type GarupaJsonPositionEvidenceId =
 export type StartupDirectionEvidenceId =
   `SD${"01" | "02" | "03" | "04" | "05" | "06" | "07" | "08" | "09" | "10" | "11" | "12" | "13" | "14" | "15" | "16"}`;
 
+export type StartupAudioEvidenceId =
+  | "SRA-CG01"
+  | "SRA-R01"
+  | "SRA-RES01";
+
 export type SimulatorEvidenceId =
   | EvidenceId
   | AutoLiveEvidenceId
@@ -113,7 +118,8 @@ export type SimulatorEvidenceId =
   | LiveRehearsalEvidenceId
   | PublicLifeProfileEvidenceId
   | GarupaJsonPositionEvidenceId
-  | StartupDirectionEvidenceId;
+  | StartupDirectionEvidenceId
+  | StartupAudioEvidenceId;
 
 export interface EvidenceReference {
   readonly id: SimulatorEvidenceId;

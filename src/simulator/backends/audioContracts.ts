@@ -163,6 +163,11 @@ export type AudioCommand =
       readonly pan_angle_bits: "0x00000000";
     }
   | {
+      readonly kind: "voice.release-live-start";
+      readonly cue: string;
+      readonly voice_key: "live-start";
+    }
+  | {
       readonly kind: "se.start-owned-loop";
       readonly cue: "SE_RHYTHM_GAYA";
       readonly owner_key: string;
