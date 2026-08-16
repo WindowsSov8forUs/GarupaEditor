@@ -1,6 +1,7 @@
 import type { SimulatorModeIdentity } from "../data/inGameCalculatedData";
 import { GameState, type GameStateValue } from "../data/inGameState";
 import { evidenceRequired, ok, type SimulatorResult } from "../evidence";
+import type { AudioCommandProducer } from "../audio/audioCommandProducer";
 import {
   freezeStartupDirectionSceneState,
   INITIAL_STARTUP_DIRECTION_SCENE_STATE,
@@ -21,12 +22,15 @@ const LINE_DELAY = Math.fround(2.5);
 const LINE_FADE = Math.fround(1.0);
 const MUSIC_WAIT = Math.fround(1.0);
 
+export type StartupDirectionPurpose = "initial" | "retry" | "move-time-reconstruction";
+
 export type StartupDirectionPhase =
   | "first-view"
   | "information-hold"
   | "information-fade"
   | "op-first-end"
   | "opening-last"
+  | "voice-wait"
   | "music-wait"
   | "playing-none"
   | "playing-sound";
@@ -38,6 +42,7 @@ export interface StartupDirectionSnapshot {
   readonly currentGameState: GameStateValue;
   readonly playable: boolean;
   readonly musicStartRequested: boolean;
+  readonly liveVoiceRequired: boolean;
   readonly scene: StartupDirectionSceneState;
 }
 
@@ -54,12 +59,48 @@ export class StartupDirectionController {
   constructor(
     private readonly mode: SimulatorModeIdentity,
     private readonly scene: StartupDirectionSceneBackend | null,
+    private readonly audio: AudioCommandProducer | null = null,
+    private readonly liveStartVoiceCue: string | null = null,
+    private readonly purpose: StartupDirectionPurpose = "initial",
   ) {}
 
   initialize(): SimulatorResult<void> {
     if (this.disposed) return rejected("startup-direction.initialize-after-dispose", "A disposed startup owner cannot be reconstructed.");
     if (this.initialized) return ok(undefined);
     this.initialized = true;
+    if (this.purpose === "move-time-reconstruction") {
+      const bgm = this.audio?.preflightStartBgm() ?? null;
+      if (bgm?.status === "evidence-required") return bgm;
+      if (bgm?.status === "ok") {
+        const committed = bgm.value.commit();
+        if (committed.status !== "ok") return committed;
+      }
+      this.phaseValue = "playing-sound";
+      this.stateValue = GameState.PlayingSound;
+      this.publish({
+        informationPhase: "complete",
+        informationAlpha: Math.fround(0),
+        hudAlpha: Math.fround(1),
+        darkCoverAlpha: Math.fround(0),
+        stagePhase: "idle",
+        stageProgress: Math.fround(1),
+        characterAlpha: Math.fround(1),
+        linePhase: "visible",
+        lineAlpha: Math.fround(1),
+        gameplayVisible: true,
+        rehearsalControlsVisible: this.mode.sessionMode === "rehearsal",
+      });
+      return ok(undefined);
+    }
+    if (this.mode.sessionMode === "live" && this.liveStartVoiceCue !== null) {
+      const voice = this.audio?.preflightStartLiveVoice(this.liveStartVoiceCue) ?? rejected(
+        "startup-direction.live-voice-audio-owner-missing",
+        "A non-null Live voice requires one prepared audio owner.",
+      );
+      if (voice.status !== "ok") return voice;
+      const committed = voice.value.commit();
+      if (committed.status !== "ok") return committed;
+    }
     this.publish({
       informationPhase: "revealing",
       informationAlpha: Math.fround(0),
@@ -103,13 +144,34 @@ export class StartupDirectionController {
         const duration = Math.fround(BACKGROUND_PRE_DELAY + STAGE_WAIT);
         const sample = advance(this.phaseElapsedValue, duration, deltaTimeSeconds);
         this.phaseElapsedValue = sample.elapsed;
-        if (sample.done) this.enter("music-wait", GameState.OPLastAnimStart);
+        if (sample.done) this.enter("voice-wait", GameState.OPLastAnimStart);
+        break;
+      }
+      case "voice-wait": {
+        if (this.mode.sessionMode !== "live" || this.liveStartVoiceCue === null) {
+          this.enter("music-wait", GameState.OPLastAnimStart);
+          break;
+        }
+        const playing = this.audio?.isLiveStartVoicePlaying() ?? rejected(
+          "startup-direction.live-voice-observer-missing",
+          "Live startup cannot pass the voice wait without the backend ended-state observer.",
+        );
+        if (playing.status !== "ok") return playing;
+        if (!playing.value) this.enter("music-wait", GameState.OPLastAnimStart);
         break;
       }
       case "music-wait": {
         const sample = advance(this.phaseElapsedValue, MUSIC_WAIT, deltaTimeSeconds);
         this.phaseElapsedValue = sample.elapsed;
-        if (sample.done) this.enter("playing-none", GameState.PlayingNone);
+        if (sample.done) {
+          const bgm = this.audio?.preflightStartBgm() ?? null;
+          if (bgm?.status === "evidence-required") return bgm;
+          if (bgm?.status === "ok") {
+            const committed = bgm.value.commit();
+            if (committed.status !== "ok") return committed;
+          }
+          this.enter("playing-none", GameState.PlayingNone);
+        }
         break;
       }
       case "playing-none":
@@ -129,7 +191,8 @@ export class StartupDirectionController {
       openingElapsed: this.openingElapsedValue,
       currentGameState: this.stateValue,
       playable: this.stateValue === GameState.PlayingSound,
-      musicStartRequested: this.phaseValue === "music-wait" || this.stateValue >= GameState.PlayingNone,
+      musicStartRequested: this.stateValue >= GameState.PlayingNone,
+      liveVoiceRequired: this.mode.sessionMode === "live" && this.liveStartVoiceCue !== null,
       scene: this.sceneValue,
     });
   }
@@ -142,7 +205,7 @@ export class StartupDirectionController {
 
   private advanceParallelOwners(delta: number): void {
     if (this.phaseValue !== "opening-last" && this.phaseValue !== "music-wait" &&
-      this.phaseValue !== "playing-none" && this.phaseValue !== "playing-sound") return;
+      this.phaseValue !== "voice-wait" && this.phaseValue !== "playing-none" && this.phaseValue !== "playing-sound") return;
     this.openingElapsedValue = Math.fround(this.openingElapsedValue + delta);
     const elapsed = this.openingElapsedValue;
     const hud = unit(elapsed, HUD_FADE);
