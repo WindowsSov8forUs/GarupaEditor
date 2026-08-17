@@ -131,6 +131,9 @@ function testFixedDeviceAndCapabilityReceipt(): void {
   const receipt = createSimulatorModuleCapabilitySummary("ordinary-current-portable");
   assert.equal(receipt.liveRehearsalFourModeMatrix, "closed-portable");
   assert.equal(receipt.startupDirectionPortable, "closed-portable");
+  assert.equal(receipt.mvLivePortable, "open-evidence-required");
+  assert.equal(receipt.standaloneMvView, "excluded");
+  assert.equal(receipt.star3DLiveView, "excluded");
   assert.equal(receipt.rehearsalMoveTimeControls, "closed-portable");
   assert.equal(receipt.nonzeroInitialPracticeSeek, "excluded");
   assert.equal(receipt.button07SceneMapping, "closed-original-unreachable");

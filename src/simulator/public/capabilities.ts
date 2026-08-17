@@ -22,6 +22,25 @@ export function totalRevalidationFailure(): SimulatorModuleLaunchResult {
   });
 }
 
+export const MV_LIVE_CLOSURE_CAPABILITY = "simulator.mv-live.complete-closure-open";
+export const MV_LIVE_CLOSURE_BOUNDARY =
+  "The MV Live request is rejected before chart parsing, shared-static-resource reads, backend preparation, graphics mount, scheduler start, or scene/domain owner mutation until the current ARM64 callgraph, runtime routes, portable media mapping, semantic and WebView2 gates are all closed.";
+
+export function isMvLiveClosureOpen(): boolean {
+  return true;
+}
+
+export function mvLiveClosureFailure(): SimulatorModuleLaunchResult {
+  return Object.freeze({
+    status: "rejected" as const,
+    failure: Object.freeze({
+      code: "evidence-required" as const,
+      capability: MV_LIVE_CLOSURE_CAPABILITY,
+      boundary: MV_LIVE_CLOSURE_BOUNDARY,
+    }),
+  });
+}
+
 export function createSimulatorModuleCapabilitySummary(
   rendering: SimulatorRenderingFidelity | null,
 ): SimulatorModuleCapabilitySummary {
@@ -33,6 +52,9 @@ export function createSimulatorModuleCapabilitySummary(
     habahiroOriginalParity: "open-evidence-required" as const,
     liveRehearsalFourModeMatrix: "closed-portable" as const,
     startupDirectionPortable: "closed-portable" as const,
+    mvLivePortable: "open-evidence-required" as const,
+    standaloneMvView: "excluded" as const,
+    star3DLiveView: "excluded" as const,
     rehearsalMoveTimeControls: "closed-portable" as const,
     garupaJsonDirectChartAdapter: "closed-portable" as const,
     garupaJsonSvAndTimingGroup: "ignored-product-extension" as const,

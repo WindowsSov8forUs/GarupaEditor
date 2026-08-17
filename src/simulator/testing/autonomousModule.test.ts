@@ -325,6 +325,9 @@ async function testRecipeNaturalCompletion(): Promise<void> {
   assert.equal(stepped.report.capabilities.rendering, null);
   assert.equal(stepped.report.capabilities.liveRehearsalFourModeMatrix, "closed-portable");
   assert.equal(stepped.report.capabilities.startupDirectionPortable, "closed-portable");
+  assert.equal(stepped.report.capabilities.mvLivePortable, "open-evidence-required");
+  assert.equal(stepped.report.capabilities.standaloneMvView, "excluded");
+  assert.equal(stepped.report.capabilities.star3DLiveView, "excluded");
   assert.equal(stepped.report.capabilities.rehearsalMoveTimeControls, "closed-portable");
   assert.equal(stepped.report.capabilities.nonzeroInitialPracticeSeek, "excluded");
   assert.equal(stepped.report.capabilities.button07SceneMapping, "closed-original-unreachable");
@@ -517,6 +520,9 @@ async function testAutonomousLaunchAndClose(): Promise<void> {
     habahiroOriginalParity: "open-evidence-required",
     liveRehearsalFourModeMatrix: "closed-portable",
     startupDirectionPortable: "closed-portable",
+    mvLivePortable: "open-evidence-required",
+    standaloneMvView: "excluded",
+    star3DLiveView: "excluded",
     rehearsalMoveTimeControls: "closed-portable",
     garupaJsonDirectChartAdapter: "closed-portable",
     garupaJsonSvAndTimingGroup: "ignored-product-extension",
