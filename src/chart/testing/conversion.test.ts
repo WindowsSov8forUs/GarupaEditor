@@ -11,6 +11,7 @@ import {
 
 function main(): void {
   testGarupaParsing();
+  testGarupaOptionalTimingGroupShape();
   testBestdoriParsing();
   testBidirectionalConversion();
   testBpmZeroNormalization();
@@ -39,6 +40,40 @@ function testGarupaParsing(): void {
   if (chart[3]?.type === "Slide") {
     assert.deepEqual(chart[3].connections.map((item) => item.type), ["Single", "Hidden", "Flick"]);
   }
+}
+
+function testGarupaOptionalTimingGroupShape(): void {
+  const chart = parseGarupaChartJson([
+    { type: "BPM", beat: 2, value: 120 },
+    { type: "SV", beat: 2, value: 1, timingGroup: "#Global" },
+    { type: "Single", beat: 3, lane: 0.5 },
+    { type: "Directional", beat: 4, lane: 1, width: 2, direction: "Right", timingGroup: "" },
+    {
+      type: "Slide",
+      timingGroup: "#1",
+      connections: [
+        { type: "Hidden", beat: 5, lane: 1, width: 1, timingGroup: "#Global" },
+        { type: "Flick", beat: 6, lane: 2, width: 1, timingGroup: "#1" },
+      ],
+    },
+  ]);
+  assert.equal(Object.prototype.hasOwnProperty.call(chart[1]!, "timingGroup"), false);
+  assert.equal(Object.prototype.hasOwnProperty.call(chart[2]!, "timingGroup"), false);
+  assert.equal(Object.prototype.hasOwnProperty.call(chart[3]!, "timingGroup"), false);
+  assert.equal((chart[2] as { lane: number }).lane, 0.5);
+  const slide = chart[4]!;
+  assert.equal(slide.type, "Slide");
+  if (slide.type === "Slide") {
+    assert.equal(slide.timingGroup, "#1");
+    assert.equal(Object.prototype.hasOwnProperty.call(slide.connections[0]!, "timingGroup"), false);
+    assert.equal(slide.connections[1]!.timingGroup, "#1");
+  }
+
+  const normalized = convertGarupaChartJsonToBestdoriV2(chart);
+  assert.equal((normalized[0] as { beat: number }).beat, 0);
+  // Converting to Bestdori is intentionally lossy, but normalization of the
+  // canonical Garupa source must not have injected own undefined properties.
+  assert.equal(Object.prototype.hasOwnProperty.call(chart[1]!, "timingGroup"), false);
 }
 
 function testBestdoriParsing(): void {

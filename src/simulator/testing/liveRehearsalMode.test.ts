@@ -347,6 +347,7 @@ function request(
       ],
       bgm: new Uint8Array([1, 2, 3]),
       isFullLength: false,
+      laneCount: 7,
     },
     presentation: createTestPresentationPackage(),
     config: {

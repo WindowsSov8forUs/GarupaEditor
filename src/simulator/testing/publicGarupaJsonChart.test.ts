@@ -1,6 +1,6 @@
 declare const require: (id: string) => any;
 const assert = require("node:assert/strict");
-import type { GarupaChartJson } from "../../chart";
+import { parseGarupaChartJson, type GarupaChartJson } from "../../chart";
 import {
   constructChartFromGarupaChartJson,
   garupaBeatToAbsolutePosition,
@@ -23,6 +23,7 @@ import { createSimulatorModuleCapabilitySummary } from "../public/capabilities";
 
 function main(): void {
   testContractCopyAndExactShape();
+  testCanonicalParserBoundary();
   testPositionBridge();
   testDirectConstruction();
   testIgnoredExtensionsAndAllowedSlideMatrix();
@@ -72,6 +73,28 @@ function testContractCopyAndExactShape(): void {
   ]) {
     assert.equal(copyAndFreezeGarupaChartJson(invalid).status, "evidence-required");
   }
+}
+
+function testCanonicalParserBoundary(): void {
+  const parsed = parseGarupaChartJson([
+    { type: "BPM", beat: 0, value: 120 },
+    { type: "SV", beat: 1, value: 0, timingGroup: "#Global" },
+    { type: "Single", beat: 2, lane: 1, width: 1 },
+    { type: "Slide", timingGroup: "#1", connections: [
+      { type: "Hidden", beat: 3, lane: 1, width: 1, timingGroup: "#Global" },
+      { type: "Flick", beat: 4, lane: 2, width: 1, timingGroup: "#1" },
+    ] },
+  ]);
+  assert.equal(Object.prototype.hasOwnProperty.call(parsed[1]!, "timingGroup"), false);
+  assert.equal(Object.prototype.hasOwnProperty.call(parsed[2]!, "timingGroup"), false);
+  const slide = parsed[3]!;
+  assert.equal(slide.type, "Slide");
+  if (slide.type === "Slide") {
+    assert.equal(Object.prototype.hasOwnProperty.call(slide.connections[0]!, "timingGroup"), false);
+  }
+  const copied = requireOk(copyAndFreezeGarupaChartJson(parsed));
+  assert.equal(copied.extensions.svItemCount, 1);
+  assert.equal(copied.extensions.timingGroupFieldCount, 2);
 }
 
 function testPositionBridge(): void {

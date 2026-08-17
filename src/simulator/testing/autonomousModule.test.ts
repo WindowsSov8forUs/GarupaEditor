@@ -234,17 +234,19 @@ function testRecipeOwnership(): void {
   source.chartData.bgm.fill(0);
   (source.chartData.chart[0] as { value: number }).value = 999;
   (source.chartData as { isFullLength: boolean }).isFullLength = true;
+  (source.chartData as { laneCount: number }).laneCount = 11;
   (source.config.audio as { masterGain: number }).masterGain = 0;
   assert.deepEqual([...recipe.request.chartData.bgm], [0xff, 0xfb, 0x90, 0x00]);
   assert.equal((recipe.request.chartData.chart[0] as { readonly value: number }).value, 120);
   assert.ok(Object.isFrozen(recipe.request.chartData.chart));
   assert.ok(Object.isFrozen(recipe.request.chartData.chart[0]));
   assert.equal(recipe.request.chartData.isFullLength, false);
+  assert.equal(recipe.request.chartData.laneCount, 7);
   assert.equal(recipe.request.config.audio.masterGain, 1);
   assert.ok(Object.isFrozen(recipe));
   assert.ok(Object.isFrozen(recipe.request));
   assert.notEqual(recipe.request.chartData.bgm, source.chartData.bgm);
-  assert.equal(recipe.schemaVersion, 5);
+  assert.equal(recipe.schemaVersion, 6);
   assert.equal(recipe.request.chartData.isFullLength, false);
 
   const extra = { ...request(), extra: true } as unknown as SimulatorModuleLaunchRequest;
@@ -252,6 +254,12 @@ function testRecipeOwnership(): void {
   const legacyBms: any = request();
   legacyBms.chartData = { bmsText: "#BPM 120", bgm: legacyBms.chartData.bgm, isFullLength: false };
   assert.equal(createSimulatorSessionRecipe(legacyBms).status, "rejected");
+  for (const invalidLaneCount of [undefined, 6, 8, 10, 12, 7.5, "7"]) {
+    const invalid: any = request();
+    if (invalidLaneCount === undefined) delete invalid.chartData.laneCount;
+    else invalid.chartData.laneCount = invalidLaneCount;
+    assert.equal(createSimulatorSessionRecipe(invalid).status, "rejected");
+  }
   const malformedChart: any = request();
   malformedChart.chartData.chart[0].extra = true;
   assert.equal(createSimulatorSessionRecipe(malformedChart).status, "rejected");
@@ -737,6 +745,7 @@ function request(): SimulatorModuleLaunchRequest {
       ],
       bgm: new Uint8Array([0xff, 0xfb, 0x90, 0x00]),
       isFullLength: false,
+      laneCount: 7,
     },
     presentation: createTestPresentationPackage(),
     config: {

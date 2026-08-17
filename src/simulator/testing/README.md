@@ -40,7 +40,7 @@ npm.cmd run simulator:test:startup-audio-callgraph
 npm.cmd run simulator:test:startup-direction-webview2
 ```
 
-第一项覆盖schema 5、presentation复制/冻结、严格PNG/MP3/cmap、四模式0→5、opening gameplay mutation sentinel、prepared BGM、Live-only Gaya、voice/null/release、Retry/MoveTime purpose及Pixi hierarchy；第二项逐项消费完整调用图、四模式谓词、Gaya profile/字节与fault lifecycle；第三项使用production Pixi/Audio decoder和actual WebGL/WebAudio执行3个fresh process，分别锁定视觉与音频digest。它们关闭current portable startup合同，但不声明speaker输出、CRI/HCA、Android或原Unity exact。测试生成的jacket/stage/SD PNG只是显式产品输入，不是原作默认资源或像素oracle。
+第一项覆盖schema 6、presentation复制/冻结、严格PNG/MP3/cmap、四模式0→5、opening gameplay mutation sentinel、prepared BGM、Live-only Gaya、voice/null/release、Retry/MoveTime purpose及Pixi hierarchy；第二项逐项消费完整调用图、四模式谓词、Gaya profile/字节与fault lifecycle；第三项使用production Pixi/Audio decoder和actual WebGL/WebAudio执行3个fresh process，分别锁定视觉与音频digest。它们关闭current portable startup合同，但不声明speaker输出、CRI/HCA、Android或原Unity exact。测试生成的jacket/stage/SD PNG只是显式产品输入，不是原作默认资源或像素oracle。
 
 ## MV Live leaves
 
@@ -49,7 +49,7 @@ npm.cmd run simulator:test:mv-live
 npm.cmd run simulator:test:mv-live-webview2
 ```
 
-第一项消费Reverse `38802391`的runtime/oracle/closure/profile，覆盖schema 5 nullable MV、strict MP4/WebM、内部metadata/SHA、MovieBeforeSound(17)、signed delay三分支、negative gameplay-before-movie、Gaya exclusion、pause/resume、finish/fault/cleanup及production static guard。第二项在WebView2中使用production Browser preflight和Pixi VideoSource，对MP4/H264与WebM/VP9各执行3 fresh process；media digest为`f786bb96ac09eb36c93e641d119a4f3dd30f1691b2e210e153bbab48220b0234`，raster digest为`ad8f9c4b089bd519e3f8fa70a0ab1b7a00de123a064a0376e6e3e0130feb9094`。它们不声明CRI/USM、Android、speaker或Unity framebuffer exact。
+第一项消费Reverse `38802391`的runtime/oracle/closure/profile，覆盖schema 6 nullable MV、strict MP4/WebM、内部metadata/SHA、MovieBeforeSound(17)、signed delay三分支、negative gameplay-before-movie、Gaya exclusion、pause/resume、finish/fault/cleanup及production static guard。第二项在WebView2中使用production Browser preflight和Pixi VideoSource，对MP4/H264与WebM/VP9各执行3 fresh process；media digest为`f786bb96ac09eb36c93e641d119a4f3dd30f1691b2e210e153bbab48220b0234`，raster digest为`ad8f9c4b089bd519e3f8fa70a0ab1b7a00de123a064a0376e6e3e0130feb9094`。它们不声明CRI/USM、Android、speaker或Unity framebuffer exact。
 
 ## Standalone leaves
 

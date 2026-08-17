@@ -23,7 +23,7 @@
 - CRI Mana/USM codec、Android decoder、speaker onset或Unity/GPU framebuffer exact；
 - Stage 9主程序接入。
 
-## Public schema 5
+## Public schema 6
 
 根请求仍精确为 `{ chartData, presentation, config }`。`presentation`必须显式携带：
 

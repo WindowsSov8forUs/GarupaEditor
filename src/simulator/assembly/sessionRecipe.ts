@@ -39,7 +39,7 @@ import {
 import { copyAndFreezeSimulatorPresentation } from "./startupPresentationContract";
 
 export interface SimulatorSessionRecipe {
-  readonly schemaVersion: 5;
+  readonly schemaVersion: 6;
   readonly request: SimulatorModuleLaunchRequest;
 }
 
@@ -68,7 +68,7 @@ export function createSimulatorSessionRecipe(
       "Original Practice does not select the Simple movie display; Rehearsal Manual/Auto, Retry and MoveTime MV routes are not inherited from the standard background.",
     );
   }
-  return accepted(Object.freeze({ schemaVersion: 5 as const, request: copied.value }));
+  return accepted(Object.freeze({ schemaVersion: 6 as const, request: copied.value }));
 }
 
 export class RecipeOwnedSessionFactory implements SimulatorOwnedSessionFactory {
@@ -293,8 +293,10 @@ function copyLaunchRequest(
     request === null || typeof request !== "object" || Array.isArray(request) ||
     Object.keys(request).sort().join(",") !== "chartData,config,presentation" ||
     request.chartData === null || typeof request.chartData !== "object" ||
-    Object.keys(request.chartData).sort().join(",") !== "bgm,chart,isFullLength" ||
+    Object.keys(request.chartData).sort().join(",") !== "bgm,chart,isFullLength,laneCount" ||
     typeof request.chartData.isFullLength !== "boolean" ||
+    (request.chartData.laneCount !== 7 &&
+      request.chartData.laneCount !== 9 && request.chartData.laneCount !== 11) ||
     request.config === null || typeof request.config !== "object" ||
     Object.keys(request.config).sort().join(",") !==
       "audio,highFrequencyMode,inputMode,judgeOffsetFrames,sessionMode,visual" ||
@@ -348,6 +350,7 @@ function copyLaunchRequest(
       chart: copiedChart.value.chart,
       bgm: Uint8Array.from(bgm),
       isFullLength: request.chartData.isFullLength,
+      laneCount: request.chartData.laneCount,
     }),
     presentation: copiedPresentation.value,
     config: Object.freeze({

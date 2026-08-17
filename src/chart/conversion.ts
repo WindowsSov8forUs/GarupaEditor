@@ -104,6 +104,7 @@ function normalizeGarupaBpmAtZero(items: GarupaChartJson): GarupaChartJson {
         return {
           type: "Slide",
           connections: item.connections.map((connection) => ({ ...connection })),
+          ...(item.timingGroup === undefined ? {} : { timingGroup: item.timingGroup }),
         };
       }
       return { ...item };
@@ -118,6 +119,7 @@ function normalizeGarupaBpmAtZero(items: GarupaChartJson): GarupaChartJson {
           ...connection,
           beat: shiftAndClampBeat(connection.beat, minBpmBeat),
         })),
+        ...(item.timingGroup === undefined ? {} : { timingGroup: item.timingGroup }),
       };
     }
     return {
@@ -167,12 +169,13 @@ function parseGarupaSimpleNote<T extends GarupaChartJsonSimpleNoteType>(
     source.width === undefined
       ? 1
       : parsePositiveInteger(source.width, `${label}.width`);
+  const timingGroup = parseTimingGroup(source.timingGroup, `${label}.timingGroup`);
   return {
     type,
     beat: parseFiniteNumber(source.beat, `${label}.beat`),
     lane: parseFiniteNumber(source.lane, `${label}.lane`),
     width,
-    timingGroup: parseTimingGroup(source.timingGroup, `${label}.timingGroup`),
+    ...(timingGroup === undefined ? {} : { timingGroup }),
   };
 }
 
@@ -180,13 +183,14 @@ function parseGarupaDirectionalNote(
   source: Record<string, unknown>,
   label: string,
 ): GarupaChartJsonDirectionalNote {
+  const timingGroup = parseTimingGroup(source.timingGroup, `${label}.timingGroup`);
   return {
     type: "Directional",
     beat: parseFiniteNumber(source.beat, `${label}.beat`),
     lane: parseFiniteNumber(source.lane, `${label}.lane`),
     width: parsePositiveInteger(source.width, `${label}.width`),
     direction: parseDirection(source.direction, `${label}.direction`),
-    timingGroup: parseTimingGroup(source.timingGroup, `${label}.timingGroup`),
+    ...(timingGroup === undefined ? {} : { timingGroup }),
   };
 }
 
@@ -218,11 +222,12 @@ export function parseGarupaChartJson(input: unknown): GarupaChartJson {
     }
 
     if (rawType === "SV") {
+      const timingGroup = parseTimingGroup(rawItem.timingGroup, `${label}.timingGroup`);
       items.push({
         type: "SV",
         beat: parseFiniteNumber(rawItem.beat, `${label}.beat`),
         value: parseFiniteNumber(rawItem.value, `${label}.value`),
-        timingGroup: parseTimingGroup(rawItem.timingGroup, `${label}.timingGroup`),
+        ...(timingGroup === undefined ? {} : { timingGroup }),
       });
       return;
     }
@@ -251,10 +256,11 @@ export function parseGarupaChartJson(input: unknown): GarupaChartJson {
         throw new Error(`${connectionLabel}.type is invalid: ${String(connectionType)}`);
       });
 
+      const timingGroup = parseTimingGroup(rawItem.timingGroup, `${label}.timingGroup`);
       items.push({
         type: "Slide",
         connections,
-        timingGroup: parseTimingGroup(rawItem.timingGroup, `${label}.timingGroup`),
+        ...(timingGroup === undefined ? {} : { timingGroup }),
       });
       return;
     }
