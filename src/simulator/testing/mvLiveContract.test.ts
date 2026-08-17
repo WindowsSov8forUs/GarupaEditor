@@ -133,6 +133,25 @@ async function testHostBinding(): Promise<void> {
   assert.equal(rejected.status, "evidence-required");
   if (rejected.status === "evidence-required") assert.equal(rejected.capability, "movie.session.invalid-host-binding");
   assert.equal(rehearsalMovie.dispose().status, "accepted");
+
+  let releaseAttempted = false;
+  const cleanupMovie = new RecordingSimulatorMovieBackend();
+  const cleanupResource = prepared(-2180, () => {
+    releaseAttempted = true;
+    throw new Error("injected release failure");
+  });
+  assert.equal((await cleanupMovie.prepare("movie:cleanup", cleanupResource)).status, "accepted");
+  const cleanupEngine = requireOk<any>(createSimulatorEngine({
+    chart,
+    runtime: { highFrequencyMode: false, judgeOffsetFrames: 0, mode },
+    movie: { sessionId: "movie:cleanup", musicStartDelayMilliseconds: -2180 },
+    startupDirection: { scene: null, liveStartVoiceCue: null, purpose: "initial" },
+  }, createRecordingSimulatorBackends(undefined, undefined, undefined, cleanupMovie)));
+  requireOk(cleanupEngine.initialize());
+  const disposed = cleanupEngine.dispose();
+  assert.equal(disposed.status, "evidence-required");
+  assert.equal(releaseAttempted, true);
+  assert.equal(cleanupMovie.snapshot().state, "disposed");
 }
 
 async function controller(delay: number): Promise<{
@@ -176,7 +195,10 @@ async function controller(delay: number): Promise<{
   };
 }
 
-function prepared(delay: number): PreparedSessionMovieResource {
+function prepared(
+  delay: number,
+  release: () => void = () => undefined,
+): PreparedSessionMovieResource {
   const preparedResource = Object.freeze({
     metadata: Object.freeze({
       container: "mp4" as const,
@@ -186,7 +208,7 @@ function prepared(delay: number): PreparedSessionMovieResource {
       height: 720,
     }),
     resource: Object.freeze({}),
-    release() { /* test owner */ },
+    release,
   });
   return Object.freeze({
     profile: Object.freeze({

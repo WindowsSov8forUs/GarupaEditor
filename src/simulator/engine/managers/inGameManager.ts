@@ -431,10 +431,10 @@ export class InGameManager {
     if (this.lifecycleState === "disposed") {
       return ok(undefined);
     }
+    const movieStop = this.startupDirection?.stopMovie() ?? ok(undefined);
+    if (movieStop.status !== "ok") return movieStop;
     const noteDispose = this.noteManager.dispose();
-    if (noteDispose.status !== "ok") {
-      return noteDispose;
-    }
+    if (noteDispose.status !== "ok") return noteDispose;
     this.finishDispose();
     return ok(undefined);
   }

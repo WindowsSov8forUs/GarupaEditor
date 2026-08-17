@@ -61,6 +61,14 @@ export function createSimulatorSessionRecipe(
 ): SimulatorAssemblyResult<SimulatorSessionRecipe> {
   const copied = copyLaunchRequest(request);
   if (copied.status === "rejected") return copied;
+  if (copied.value.presentation.mv !== null &&
+    copied.value.config.sessionMode !== "live") {
+    return rejected(
+      "evidence-required",
+      "simulator.mv-live.unsupported-rehearsal-mode",
+      "Original Practice does not select the Simple movie display; Rehearsal Manual/Auto, Retry and MoveTime MV routes are not inherited from the standard background.",
+    );
+  }
   if (copied.value.presentation.mv !== null && isMvLiveClosureOpen()) {
     return rejected(
       "evidence-required",

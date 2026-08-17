@@ -395,14 +395,7 @@ class SimulatorEngineHost implements SimulatorEngine {
 
   dispose(): SimulatorResult<void> {
     if (this.inGameManager.state === "disposed") {
-      const audio = this.disposeAudio();
-      if (audio.status !== "ok") return audio;
-      const movie = this.disposeMovie();
-      if (movie.status !== "ok") return movie;
-      const particles = this.disposeParticles();
-      return particles.status === "ok"
-        ? this.backends.rendering?.dispose() ?? ok(undefined)
-        : particles;
+      return this.disposePhysicalBackends();
     }
     const rendererState = this.backends.rendering?.snapshot().state;
     const movieState = this.backends.movie?.snapshot().state;
@@ -414,14 +407,7 @@ class SimulatorEngineHost implements SimulatorEngine {
       particleBackendState === "faulted" || particleBackendState === "disposed" ||
       particleRendererState === "faulted" || particleRendererState === "disposed") {
       this.inGameManager.disposeAfterTerminalBackendFault();
-      const audio = this.disposeAudio();
-      if (audio.status !== "ok") return audio;
-      const movie = this.disposeMovie();
-      if (movie.status !== "ok") return movie;
-      const particles = this.disposeParticles();
-      return particles.status === "ok"
-        ? this.backends.rendering?.dispose() ?? ok(undefined)
-        : particles;
+      return this.disposePhysicalBackends();
     }
     const rendererValidation = this.renderProducer?.validate();
     if (rendererValidation?.status === "evidence-required") return rendererValidation;
@@ -430,7 +416,15 @@ class SimulatorEngineHost implements SimulatorEngine {
     const domainDispose = this.inGameManager.dispose();
     if (domainDispose.status !== "ok") {
       if (particle?.status === "ok") particle.value.discard();
-      return domainDispose;
+      this.inGameManager.disposeAfterTerminalBackendFault();
+      const physical = this.disposePhysicalBackends();
+      return physical.status === "ok"
+        ? domainDispose
+        : evidenceRequired(
+            domainDispose.capability,
+            domainDispose.requiredEvidence,
+            `${domainDispose.boundary} Secondary cleanup failure: ${physical.capability}.`,
+          );
     }
     if (particle?.status === "ok") {
       const domain = particle.value.commitDomain();
@@ -452,14 +446,26 @@ class SimulatorEngineHost implements SimulatorEngine {
       const rendered = particle.value.commitRender();
       if (rendered.status !== "ok") return rendered;
     }
-    const audio = this.disposeAudio();
-    if (audio.status !== "ok") return audio;
-    const movie = this.disposeMovie();
-    if (movie.status !== "ok") return movie;
-    const particles = this.disposeParticles();
-    return particles.status === "ok"
-      ? this.backends.rendering?.dispose() ?? ok(undefined)
-      : particles;
+    return this.disposePhysicalBackends();
+  }
+
+  private disposePhysicalBackends(): SimulatorResult<void> {
+    let primary: import("../engine/evidence").EvidenceRequired | null = null;
+    const capture = (result: SimulatorResult<void>): void => {
+      if (result.status === "ok") return;
+      primary = primary === null
+        ? result
+        : evidenceRequired(
+            primary.capability,
+            primary.requiredEvidence,
+            `${primary.boundary} Secondary cleanup failure: ${result.capability}.`,
+          );
+    };
+    capture(this.disposeAudio());
+    capture(this.disposeMovie());
+    capture(this.disposeParticles());
+    capture(this.backends.rendering?.dispose() ?? ok(undefined));
+    return primary ?? ok(undefined);
   }
 
   private commitAudio(transaction: AudioOwnerTransaction): SimulatorResult<void> {

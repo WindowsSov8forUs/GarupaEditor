@@ -50,6 +50,13 @@ function testExactShapeAndOwnership(): void {
     musicStartDelayMilliseconds: -2180,
   };
   assertInvalid(gated, "simulator.mv-live.complete-closure-open");
+  const rehearsal = request();
+  (rehearsal.config as { sessionMode: "live" | "rehearsal" }).sessionMode = "rehearsal";
+  (rehearsal.presentation as { mv: unknown }).mv = {
+    bytes: Uint8Array.of(1, 2, 3, 4),
+    musicStartDelayMilliseconds: -2180,
+  };
+  assertInvalid(rehearsal, "simulator.mv-live.unsupported-rehearsal-mode");
 }
 
 function testMalformedPresentationFailsClosed(): void {

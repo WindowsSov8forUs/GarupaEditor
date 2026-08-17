@@ -183,35 +183,41 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
       ? accepted<PreparedSessionMovieResource | null>(null)
       : await deriveSessionMvResource(mvPackage, this.moviePreflight);
     if (mvResource.status === "rejected") return mvResource;
-    const releasePendingMovie = (): void => {
-      if (mvResource.value !== null) mvResource.value.prepared.release();
+    let pendingMovieOwned = mvResource.value !== null;
+    const releasePendingMovie = (): readonly SimulatorModuleCleanupFailure[] => {
+      if (!pendingMovieOwned || mvResource.value === null) return Object.freeze([]);
+      pendingMovieOwned = false;
+      try {
+        mvResource.value.prepared.release();
+        return Object.freeze([]);
+      } catch {
+        return Object.freeze([simulatorCleanupFailure(
+          "simulator.mv-live.prepared-resource-release-threw",
+          "The preflight video/Blob owner threw during early rollback; no chart, shared store, backend, mount, scheduler or domain owner had started.",
+        )]);
+      }
     };
     const chart = constructChartFromGarupaChartJson(
       recipe.request.chartData.chart,
     );
     if (chart.status !== "ok") {
-      releasePendingMovie();
-      return fromEvidence(chart);
+      return rejectedWithCleanup(fromEvidence(chart), releasePendingMovie());
     }
     const chartCapabilities = validateConstructedChartCapabilities(chart.value, recipe.request);
     if (chartCapabilities.status === "rejected") {
-      releasePendingMovie();
-      return chartCapabilities;
+      return rejectedWithCleanup(chartCapabilities, releasePendingMovie());
     }
     const bgm = await this.deriveBgm(recipe);
     if (bgm.status === "rejected") {
-      releasePendingMovie();
-      return bgm;
+      return rejectedWithCleanup(bgm, releasePendingMovie());
     }
     const presentation = await this.derivePresentation(recipe);
     if (presentation.status === "rejected") {
-      releasePendingMovie();
-      return presentation;
+      return rejectedWithCleanup(presentation, releasePendingMovie());
     }
     const score = mapScoreLifeProfile(recipe.request, sessionId);
     if (score.status === "rejected") {
-      releasePendingMovie();
-      return score;
+      return rejectedWithCleanup(score, releasePendingMovie());
     }
     const selection = selectSimulatorStaticResources(chart.value);
     const renderer = new PixiRendererBackend(new BrowserPixiTextureDecoder());
@@ -220,9 +226,12 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
     if (movie !== null) {
       const prepared = await movie.prepare(sessionId, mvResource.value!);
       if (prepared.status !== "accepted") {
-        releasePendingMovie();
-        return fromMovieOperation(prepared);
+        return rejectedWithCleanup(
+          fromMovieOperation(prepared),
+          releasePendingMovie(),
+        );
       }
+      pendingMovieOwned = false;
     }
     const particles = new DeterministicSimulatorParticleBackend();
     const particleRenderer = new PixiParticleRendererBackend(
