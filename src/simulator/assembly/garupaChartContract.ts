@@ -20,6 +20,64 @@ export interface CopiedGarupaChartJson {
 
 const SIMPLE_TYPES = new Set(["Single", "Flick", "Skill", "Hidden"]);
 
+/**
+ * Temporary fail-closed inventory used only until the product extension owner is
+ * complete. It intentionally runs before media/resource preflight so a chart
+ * whose authored semantics would be dropped cannot acquire any external owner.
+ */
+export function describeOpenGarupaProductExtension(input: unknown): string | null {
+  if (!Array.isArray(input)) return null;
+  for (let itemIndex = 0; itemIndex < input.length; itemIndex += 1) {
+    const item = input[itemIndex];
+    if (!isRecord(item) || typeof item.type !== "string") continue;
+    if (item.type === "SV") return `chart[${itemIndex}] contains an authored SV event.`;
+    if (hasNonGlobalTimingGroup(item)) {
+      return `chart[${itemIndex}] selects a non-Global TimingGroup.`;
+    }
+    if (item.type === "Slide" && Array.isArray(item.connections)) {
+      if (item.connections.length < 2) {
+        return `chart[${itemIndex}] is a singleton or empty product Slide.`;
+      }
+      const connections = item.connections;
+      const head = connections[0];
+      const tail = connections[connections.length - 1];
+      if (!isRecord(head) || (head.type !== "Single" && head.type !== "Skill") ||
+        !isRecord(tail) || tail.type === "Hidden") {
+        return `chart[${itemIndex}] uses a product-only Slide endpoint.`;
+      }
+      let previousPosition = -1;
+      for (let connectionIndex = 0; connectionIndex < connections.length; connectionIndex += 1) {
+        const connection = connections[connectionIndex];
+        if (!isRecord(connection)) continue;
+        if (hasNonGlobalTimingGroup(connection)) {
+          return `chart[${itemIndex}].connections[${connectionIndex}] selects a non-Global TimingGroup.`;
+        }
+        const laneReason = describeProductLane(connection);
+        if (laneReason !== null) return `chart[${itemIndex}].connections[${connectionIndex}] ${laneReason}`;
+        if (connectionIndex > 0 && connectionIndex + 1 < connections.length &&
+          connection.type !== "Single" && connection.type !== "Hidden") {
+          return `chart[${itemIndex}].connections[${connectionIndex}] uses product-only interior type ${String(connection.type)}.`;
+        }
+        if (typeof connection.beat === "number" && Number.isFinite(connection.beat)) {
+          const position = Math.floor(connection.beat * 48);
+          if (position <= previousPosition) {
+            return `chart[${itemIndex}] has equal or non-increasing authored connection positions.`;
+          }
+          previousPosition = position;
+        }
+      }
+      if (isRecord(tail) && tail.type === "Directional" &&
+        typeof tail.width === "number" && tail.width > 3) {
+        return `chart[${itemIndex}] uses a product-only wide Directional tail.`;
+      }
+      continue;
+    }
+    const laneReason = describeProductLane(item);
+    if (laneReason !== null) return `chart[${itemIndex}] ${laneReason}`;
+  }
+  return null;
+}
+
 export function copyAndFreezeGarupaChartJson(
   input: unknown,
 ): SimulatorResult<CopiedGarupaChartJson> {
@@ -182,6 +240,27 @@ function hasExactOptionalTimingKeys(
 ): boolean {
   const expected = "timingGroup" in input ? [...required, "timingGroup"] : [...required];
   return hasExactKeys(input, expected);
+}
+
+function hasNonGlobalTimingGroup(input: Record<string, unknown>): boolean {
+  if (!("timingGroup" in input) || input.timingGroup === undefined) return false;
+  if (typeof input.timingGroup !== "string") return false;
+  const normalized = input.timingGroup.trim().toLowerCase();
+  return normalized !== "" && normalized !== "#global" && normalized !== "global";
+}
+
+function describeProductLane(input: Record<string, unknown>): string | null {
+  if (typeof input.lane !== "number" || !Number.isFinite(input.lane) ||
+    typeof input.width !== "number" || !Number.isInteger(input.width) || input.width <= 0) {
+    return null;
+  }
+  if (!Number.isInteger(input.lane)) return "uses a continuous lane coordinate.";
+  const start = input.type === "Directional" && input.direction === "Left"
+    ? input.lane - input.width + 1
+    : input.lane;
+  return start < 0 || start + input.width > 7
+    ? "extends outside the original seven-lane span."
+    : null;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

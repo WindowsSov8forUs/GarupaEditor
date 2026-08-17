@@ -62,6 +62,7 @@ async function main(): Promise<void> {
   await testOrdinaryPack();
   await testScoreHudPack();
   testRecipeOwnership();
+  testGarupaProductExtensionEarlyGate();
   await testRecipeNaturalCompletion();
   await testProductionCompositionFailureBoundary();
   testConstructedChartEarlyCapabilityGates();
@@ -277,6 +278,45 @@ function testRecipeOwnership(): void {
   assert.equal(createSimulatorSessionRecipe(callerDerived).status, "rejected");
 }
 
+function testGarupaProductExtensionEarlyGate(): void {
+  const cases: readonly unknown[] = [
+    { type: "SV", beat: 1, value: 2 },
+    { type: "Single", beat: 1, lane: 1, width: 1, timingGroup: "#1" },
+    { type: "Single", beat: 1, lane: 0.5, width: 1 },
+    { type: "Single", beat: 1, lane: 6, width: 2 },
+    { type: "Slide", connections: [{ type: "Single", beat: 1, lane: 1, width: 1 }] },
+    { type: "Slide", connections: [
+      { type: "Hidden", beat: 1, lane: 1, width: 1 },
+      { type: "Single", beat: 2, lane: 2, width: 1 },
+    ] },
+    { type: "Slide", connections: [
+      { type: "Single", beat: 1, lane: 1, width: 1 },
+      { type: "Flick", beat: 2, lane: 2, width: 1 },
+      { type: "Single", beat: 3, lane: 3, width: 1 },
+    ] },
+    { type: "Slide", connections: [
+      { type: "Single", beat: 1, lane: 1, width: 1 },
+      { type: "Hidden", beat: 1, lane: 2, width: 1 },
+      { type: "Single", beat: 2, lane: 3, width: 1 },
+    ] },
+  ];
+  for (const item of cases) {
+    const candidate = request();
+    (candidate.chartData.chart as unknown as unknown[]).splice(1, 1, item);
+    const result = createSimulatorSessionRecipe(candidate);
+    assert.equal(result.status, "rejected");
+    if (result.status === "rejected") {
+      assert.equal(
+        result.failure.capability,
+        "simulator.garupa-extension.complete-product-contract-open",
+      );
+    }
+  }
+  const globalOnly = request();
+  (globalOnly.chartData.chart[1] as { timingGroup?: string }).timingGroup = "#Global";
+  assert.equal(createSimulatorSessionRecipe(globalOnly).status, "accepted");
+}
+
 async function testRecipeNaturalCompletion(): Promise<void> {
   let initialized = false;
   let completed = false;
@@ -408,7 +448,10 @@ async function testProductionCompositionFailureBoundary(): Promise<void> {
   const malformedChartLaunch = await malformedChartModule.launch(malformedChartRequest);
   assert.equal(malformedChartLaunch.status, "rejected");
   if (malformedChartLaunch.status === "rejected") {
-    assert.equal(malformedChartLaunch.failure.capability, "simulator.garupa-json.invalid-chart");
+    assert.equal(
+      malformedChartLaunch.failure.capability,
+      "simulator.garupa-extension.complete-product-contract-open",
+    );
   }
   const malformedBgmRequest: any = request();
   malformedBgmRequest.chartData.bgm = Uint8Array.from([0x52, 0x49, 0x46, 0x46]);

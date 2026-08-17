@@ -32,7 +32,10 @@ import {
 import type { ManualInputFrame } from "../engine/data/manualInput";
 import { evidenceRequired, ok, type SimulatorResult } from "../engine/evidence";
 import type { SimulatorModeIdentity } from "../engine/data/inGameCalculatedData";
-import { copyAndFreezeGarupaChartJson } from "./garupaChartContract";
+import {
+  copyAndFreezeGarupaChartJson,
+  describeOpenGarupaProductExtension,
+} from "./garupaChartContract";
 import { copyAndFreezeSimulatorPresentation } from "./startupPresentationContract";
 
 export interface SimulatorSessionRecipe {
@@ -317,6 +320,14 @@ function copyLaunchRequest(
       "evidence-required",
       "simulator.recipe.invalid-public-request",
       "The launch recipe accepts only exact chartData/presentation/config keys, one Garupa JSON object array, one explicit isFullLength boolean independent of Live/Rehearsal and Manual/Auto, confirmed presentation resources, judgement offset, evidence-bounded Float32 visual settings and finite unit gains.",
+    );
+  }
+  const openProductExtension = describeOpenGarupaProductExtension(request.chartData.chart);
+  if (openProductExtension !== null) {
+    return rejected(
+      "evidence-required",
+      "simulator.garupa-extension.complete-product-contract-open",
+      `${openProductExtension} Garupa/ExGarupa product semantics must fail before BGM/movie decode, resource acquisition, Pixi mount, scheduler creation or engine mutation until the complete product owner is installed.`,
     );
   }
   const copiedChart = copyAndFreezeGarupaChartJson(request.chartData.chart);
