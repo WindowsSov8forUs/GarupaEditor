@@ -110,9 +110,13 @@ export type SimulatorBackgroundFidelity =
   | "standard-current-portable"
   | "mv-live-host-supplied-portable";
 
+export type SimulatorChartFidelity =
+  | "standard-original-compatible"
+  | "garupa-product-extension";
+
 export type SimulatorCapabilityGateStatus =
   | "closed-portable"
-  | "ignored-product-extension"
+  | "closed-product-extension"
   | "degraded-explicit"
   | "excluded"
   | "open-evidence-required"
@@ -124,6 +128,7 @@ export type SimulatorCapabilityGateStatus =
 export interface SimulatorModuleCapabilitySummary {
   readonly rendering: SimulatorRenderingFidelity | null;
   readonly background: SimulatorBackgroundFidelity | null;
+  readonly chart: SimulatorChartFidelity;
   readonly publicAutonomousCore: "closed-portable";
   readonly ordinaryCommandScene: "closed-portable";
   readonly habahiroCurrentExternalComplete: "closed-portable";
@@ -135,8 +140,10 @@ export interface SimulatorModuleCapabilitySummary {
   readonly star3DLiveView: "excluded";
   readonly rehearsalMoveTimeControls: "closed-portable";
   readonly garupaJsonDirectChartAdapter: "closed-portable";
-  readonly garupaJsonSvAndTimingGroup: "ignored-product-extension";
-  readonly unsupportedExGarupaSlide: "open-evidence-required";
+  readonly garupaSvTimingGroup: "closed-product-extension";
+  readonly garupaContinuousLaneOutside: "closed-product-extension";
+  readonly garupaExtendedSlideGraph: "closed-product-extension";
+  readonly garupaExtendedManualInput: "closed-product-extension";
   readonly nonzeroInitialPracticeSeek: "excluded";
   readonly button07SceneMapping: "closed-original-unreachable";
   readonly browserDecodeRaster: "closed-portable";
@@ -145,6 +152,7 @@ export interface SimulatorModuleCapabilitySummary {
   readonly mainProgramIntegration: "unauthorized-stage-9";
   readonly selectedRenderingGate: "closed-portable" | "open-evidence-required";
   readonly selectedBackgroundGate: "closed-portable" | "open-evidence-required";
+  readonly selectedChartGate: "closed-portable" | "closed-product-extension";
 }
 
 export interface SimulatorModuleCloseReport {

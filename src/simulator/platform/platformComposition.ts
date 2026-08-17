@@ -63,6 +63,7 @@ import { installSimulatorModuleLauncher } from "../runtime/moduleEntryBinding";
 import { createSimulatorSceneLayout } from "../scene/simulatorSceneLayout";
 import { validateConstructedChartCapabilities } from "../assembly/chartCapabilityValidation";
 import { constructChartFromGarupaChartJson } from "../assembly/garupaChartConstruction";
+import { getGarupaProductChartProfile } from "../engine/garupa/productChartProfile";
 import { assembleSimulatorResources } from "../assembly/resourceAssembly";
 import { deriveSessionMvResource } from "../assembly/sessionMvDerivation";
 import type {
@@ -432,7 +433,13 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
         simulatorCleanupFailureFromResult("engine-after-wrapper-registration-failure", mountedEngine.dispose()),
       ].filter((failure): failure is SimulatorModuleCleanupFailure => failure !== null));
     }
-    return accepted(Object.freeze({ engine: mountedEngine, mode: score.value.mode }));
+    return accepted(Object.freeze({
+      engine: mountedEngine,
+      mode: score.value.mode,
+      chartFidelity: getGarupaProductChartProfile(chart.value)?.route === "product-extension"
+        ? "garupa-product-extension" as const
+        : "standard-original-compatible" as const,
+    }));
   }
 
   private derivePresentation(

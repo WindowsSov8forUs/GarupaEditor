@@ -1,5 +1,6 @@
 import type {
   SimulatorBackgroundFidelity,
+  SimulatorChartFidelity,
   SimulatorModuleCapabilitySummary,
   SimulatorModuleLaunchResult,
   SimulatorRenderingFidelity,
@@ -26,10 +27,12 @@ export function totalRevalidationFailure(): SimulatorModuleLaunchResult {
 export function createSimulatorModuleCapabilitySummary(
   rendering: SimulatorRenderingFidelity | null,
   background: SimulatorBackgroundFidelity | null,
+  chart: SimulatorChartFidelity = "standard-original-compatible",
 ): SimulatorModuleCapabilitySummary {
   return Object.freeze({
     rendering,
     background,
+    chart,
     publicAutonomousCore: "closed-portable" as const,
     ordinaryCommandScene: "closed-portable" as const,
     habahiroCurrentExternalComplete: "closed-portable" as const,
@@ -41,8 +44,10 @@ export function createSimulatorModuleCapabilitySummary(
     star3DLiveView: "excluded" as const,
     rehearsalMoveTimeControls: "closed-portable" as const,
     garupaJsonDirectChartAdapter: "closed-portable" as const,
-    garupaJsonSvAndTimingGroup: "ignored-product-extension" as const,
-    unsupportedExGarupaSlide: "open-evidence-required" as const,
+    garupaSvTimingGroup: "closed-product-extension" as const,
+    garupaContinuousLaneOutside: "closed-product-extension" as const,
+    garupaExtendedSlideGraph: "closed-product-extension" as const,
+    garupaExtendedManualInput: "closed-product-extension" as const,
     nonzeroInitialPracticeSeek: "excluded" as const,
     button07SceneMapping: "closed-original-unreachable" as const,
     browserDecodeRaster: "closed-portable" as const,
@@ -54,6 +59,9 @@ export function createSimulatorModuleCapabilitySummary(
       : "closed-portable" as const,
     selectedBackgroundGate: background === null
       ? "open-evidence-required" as const
+      : "closed-portable" as const,
+    selectedChartGate: chart === "garupa-product-extension"
+      ? "closed-product-extension" as const
       : "closed-portable" as const,
   });
 }

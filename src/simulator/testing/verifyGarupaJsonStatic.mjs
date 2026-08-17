@@ -10,7 +10,10 @@ const contracts = read("public/contracts.ts");
 for (const required of [
   'import type { GarupaChartJson } from "../../chart";',
   "readonly chart: GarupaChartJson;",
-  'readonly garupaJsonSvAndTimingGroup: "ignored-product-extension";',
+  'readonly garupaSvTimingGroup: "closed-product-extension";',
+  'readonly garupaContinuousLaneOutside: "closed-product-extension";',
+  'readonly garupaExtendedSlideGraph: "closed-product-extension";',
+  'readonly garupaExtendedManualInput: "closed-product-extension";',
 ]) if (!contracts.includes(required)) throw new Error(`Garupa Public contract missing ${required}`);
 if (contracts.includes("readonly bmsText:") || contracts.includes(legacySimulatorSchema)) {
   throw new Error("Public contains legacy BMS or duplicated Garupa schema");
@@ -58,8 +61,10 @@ for (const forbidden of ["../chartCore", legacyConverter, legacySimulatorSchema,
 const capability = read("public/capabilities.ts");
 for (const required of [
   'garupaJsonDirectChartAdapter: "closed-portable"',
-  'garupaJsonSvAndTimingGroup: "ignored-product-extension"',
-  'unsupportedExGarupaSlide: "open-evidence-required"',
+  'garupaSvTimingGroup: "closed-product-extension"',
+  'garupaContinuousLaneOutside: "closed-product-extension"',
+  'garupaExtendedSlideGraph: "closed-product-extension"',
+  'garupaExtendedManualInput: "closed-product-extension"',
 ]) if (!capability.includes(required)) throw new Error(`Garupa capability missing ${required}`);
 const packageJson = JSON.parse(readFileSync(resolve(repositoryRoot, "package.json"), "utf8"));
 if (packageJson.scripts?.["simulator:test:garupa-json"] !==
@@ -67,8 +72,8 @@ if (packageJson.scripts?.["simulator:test:garupa-json"] !==
   throw new Error("Garupa JSON standalone script is not registered");
 }
 const runner = read("testing/runTotalRevalidationTests.mjs");
-if ((runner.match(/\["garupa-json-direct-chart", "runPublicGarupaJsonChartTests\.mjs"/g) ?? []).length !== 2) {
-  throw new Error("Garupa JSON leaf is not present in both quick and full DAGs");
+if ((runner.match(/\["garupa-product-extension", "runGarupaProductExtensionTests\.mjs"/g) ?? []).length !== 2) {
+  throw new Error("Garupa product leaf is not present in both quick and full DAGs");
 }
 console.log("Garupa JSON static boundaries passed");
 

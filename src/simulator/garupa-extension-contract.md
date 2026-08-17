@@ -140,9 +140,17 @@ Auto-only.
 
 ## Capability language and exclusions
 
-Closed fields use `closed-product-extension`, separate from `closed-portable`.
-Receipts distinguish `standard-original-compatible` from
-`garupa-product-extension` chart fidelity.
+Closed fields use `closed-product-extension`, separate from `closed-portable`:
+`garupaSvTimingGroup`, `garupaContinuousLaneOutside`,
+`garupaExtendedSlideGraph` and `garupaExtendedManualInput`. Receipts distinguish
+`standard-original-compatible` from `garupa-product-extension` chart fidelity;
+Retry and MoveTime reject any fresh-generation fidelity mismatch.
+
+Portable product raster acceptance uses production Browser decoding and actual
+Pixi/WebGL in three fresh WebView2 processes. The initial/negative-SV/zero-SV/
+restored-positive stable digest is
+`c9a02a4caa15dc837cead5d63b8137dd3f9140df0e7c60c2bb3bb18b2f6fc8df`.
+This is a product portable claim, not Unity framebuffer or fixed-device parity.
 
 This contract does not open character skills, Fever, multiplayer, HABAHIRO
 original parity, standalone MVView, Star3D, CRI/USM, fixed-device exactness,

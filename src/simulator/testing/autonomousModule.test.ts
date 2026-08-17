@@ -62,7 +62,7 @@ async function main(): Promise<void> {
   await testOrdinaryPack();
   await testScoreHudPack();
   testRecipeOwnership();
-  testGarupaProductExtensionEarlyGate();
+  testGarupaProductExtensionRecipeBoundary();
   await testRecipeNaturalCompletion();
   await testProductionCompositionFailureBoundary();
   testConstructedChartEarlyCapabilityGates();
@@ -286,7 +286,7 @@ function testRecipeOwnership(): void {
   assert.equal(createSimulatorSessionRecipe(callerDerived).status, "rejected");
 }
 
-function testGarupaProductExtensionEarlyGate(): void {
+function testGarupaProductExtensionRecipeBoundary(): void {
   const cases: readonly unknown[] = [
     { type: "SV", beat: 1, value: 2 },
     { type: "Single", beat: 1, lane: 1, width: 1, timingGroup: "#1" },
@@ -312,13 +312,7 @@ function testGarupaProductExtensionEarlyGate(): void {
     const candidate = request();
     (candidate.chartData.chart as unknown as unknown[]).splice(1, 1, item);
     const result = createSimulatorSessionRecipe(candidate);
-    assert.equal(result.status, "rejected");
-    if (result.status === "rejected") {
-      assert.equal(
-        result.failure.capability,
-        "simulator.garupa-extension.complete-product-contract-open",
-      );
-    }
+    assert.equal(result.status, "accepted");
   }
   const globalOnly = request();
   (globalOnly.chartData.chart[1] as { timingGroup?: string }).timingGroup = "#Global";
@@ -451,15 +445,12 @@ async function testProductionCompositionFailureBoundary(): Promise<void> {
     }
   }
   const malformedChartRequest: any = request();
-  malformedChartRequest.chartData.chart[1].lane = 1.5;
+  malformedChartRequest.chartData.chart[1].width = 0;
   const malformedChartModule = requireAccepted(createProductionAutonomousSimulatorModule(platform));
   const malformedChartLaunch = await malformedChartModule.launch(malformedChartRequest);
   assert.equal(malformedChartLaunch.status, "rejected");
   if (malformedChartLaunch.status === "rejected") {
-    assert.equal(
-      malformedChartLaunch.failure.capability,
-      "simulator.garupa-extension.complete-product-contract-open",
-    );
+    assert.equal(malformedChartLaunch.failure.capability, "simulator.garupa-json.invalid-chart");
   }
   const malformedBgmRequest: any = request();
   malformedBgmRequest.chartData.bgm = Uint8Array.from([0x52, 0x49, 0x46, 0x46]);
@@ -567,6 +558,7 @@ async function testAutonomousLaunchAndClose(): Promise<void> {
   assert.deepEqual(report.capabilities, {
     rendering: null,
     background: "standard-current-portable",
+    chart: "standard-original-compatible",
     publicAutonomousCore: "closed-portable",
     ordinaryCommandScene: "closed-portable",
     habahiroCurrentExternalComplete: "closed-portable",
@@ -578,8 +570,10 @@ async function testAutonomousLaunchAndClose(): Promise<void> {
     star3DLiveView: "excluded",
     rehearsalMoveTimeControls: "closed-portable",
     garupaJsonDirectChartAdapter: "closed-portable",
-    garupaJsonSvAndTimingGroup: "ignored-product-extension",
-    unsupportedExGarupaSlide: "open-evidence-required",
+    garupaSvTimingGroup: "closed-product-extension",
+    garupaContinuousLaneOutside: "closed-product-extension",
+    garupaExtendedSlideGraph: "closed-product-extension",
+    garupaExtendedManualInput: "closed-product-extension",
     nonzeroInitialPracticeSeek: "excluded",
     button07SceneMapping: "closed-original-unreachable",
     browserDecodeRaster: "closed-portable",
@@ -588,6 +582,7 @@ async function testAutonomousLaunchAndClose(): Promise<void> {
     mainProgramIntegration: "unauthorized-stage-9",
     selectedRenderingGate: "open-evidence-required",
     selectedBackgroundGate: "closed-portable",
+    selectedChartGate: "closed-portable",
   }, "close receipt publishes each capability gate without an aggregate complete claim");
   assert.equal(session.steps, 1, "user-close owns frame before engine step");
   assert.equal(session.closes, 1);
@@ -765,7 +760,11 @@ function request(): SimulatorModuleLaunchRequest {
 }
 
 function engineBuild(engine: any) {
-  return Object.freeze({ engine, mode: LIVE_AUTO_MODE });
+  return Object.freeze({
+    engine,
+    mode: LIVE_AUTO_MODE,
+    chartFidelity: "standard-original-compatible" as const,
+  });
 }
 
 function accepted<T>(value: T): SimulatorAssemblyResult<T> {

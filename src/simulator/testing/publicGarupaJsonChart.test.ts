@@ -816,8 +816,17 @@ function productRendererBackend(): any {
 function testCapabilities(): void {
   const capabilities = createSimulatorModuleCapabilitySummary(null, "standard-current-portable");
   assert.equal(capabilities.garupaJsonDirectChartAdapter, "closed-portable");
-  assert.equal(capabilities.garupaJsonSvAndTimingGroup, "ignored-product-extension");
-  assert.equal(capabilities.unsupportedExGarupaSlide, "open-evidence-required");
+  assert.equal(capabilities.garupaSvTimingGroup, "closed-product-extension");
+  assert.equal(capabilities.garupaContinuousLaneOutside, "closed-product-extension");
+  assert.equal(capabilities.garupaExtendedSlideGraph, "closed-product-extension");
+  assert.equal(capabilities.garupaExtendedManualInput, "closed-product-extension");
+  const product = createSimulatorModuleCapabilitySummary(
+    "ordinary-current-portable",
+    "standard-current-portable",
+    "garupa-product-extension",
+  );
+  assert.equal(product.chart, "garupa-product-extension");
+  assert.equal(product.selectedChartGate, "closed-product-extension");
 }
 
 function commonProjection(chart: ChartConstructionResult): unknown {

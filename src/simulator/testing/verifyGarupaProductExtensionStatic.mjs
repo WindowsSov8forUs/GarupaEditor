@@ -10,6 +10,8 @@ const scene = read("scene/simulatorSceneLayout.ts");
 const recipe = read("assembly/sessionRecipe.ts");
 const contracts = read("public/contracts.ts");
 const composition = read("platform/platformComposition.ts");
+const capabilities = read("public/capabilities.ts");
+const chartContract = read("assembly/garupaChartContract.ts");
 
 for (const [source, symbols] of [
   [profile, ["product-extension", "ButtonType.None", "visibleNodes", "allHidden", "containsHidden"]],
@@ -19,8 +21,13 @@ for (const [source, symbols] of [
   [scene, ["laneCount: SimulatorProductLaneCount", "minimumLane", "maximumLane", "projectLaneAtCurve"]],
   [recipe, ["readonly schemaVersion: 6", "laneCount: request.chartData.laneCount"]],
   [contracts, ["SimulatorProductLaneCount", "readonly laneCount"]],
-  [composition, ["recipe.request.chartData.laneCount", "garupaProductScene"]],
+  [composition, ["recipe.request.chartData.laneCount", "garupaProductScene", "chartFidelity"]],
+  [capabilities, ["garupaSvTimingGroup", "garupaContinuousLaneOutside", "garupaExtendedSlideGraph", "garupaExtendedManualInput", "closed-product-extension"]],
 ]) for (const symbol of symbols) if (!source.includes(symbol)) throw new Error(`Garupa product static owner missing ${symbol}`);
+
+if (chartContract.includes("complete-product-contract-open") || chartContract.includes("describeOpenGarupaProductExtension")) {
+  throw new Error("temporary Garupa product gate remains after closure");
+}
 
 for (const [source, forbidden] of [
   [profile, ["Math.random", "Date.now", "performance.now"]],

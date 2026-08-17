@@ -15,6 +15,7 @@ import {
 } from "../public/failures";
 import type {
   SimulatorBackgroundFidelity,
+  SimulatorChartFidelity,
   SimulatorModuleCloseReport,
   SimulatorModuleFailure,
   SimulatorModuleLaunchRequest,
@@ -32,10 +33,7 @@ import {
 import type { ManualInputFrame } from "../engine/data/manualInput";
 import { evidenceRequired, ok, type SimulatorResult } from "../engine/evidence";
 import type { SimulatorModeIdentity } from "../engine/data/inGameCalculatedData";
-import {
-  copyAndFreezeGarupaChartJson,
-  describeOpenGarupaProductExtension,
-} from "./garupaChartContract";
+import { copyAndFreezeGarupaChartJson } from "./garupaChartContract";
 import { copyAndFreezeSimulatorPresentation } from "./startupPresentationContract";
 
 export interface SimulatorSessionRecipe {
@@ -46,6 +44,7 @@ export interface SimulatorSessionRecipe {
 export interface SimulatorRecipeEngineBuild {
   readonly engine: SimulatorEngine;
   readonly mode: SimulatorModeIdentity;
+  readonly chartFidelity: SimulatorChartFidelity;
 }
 
 export interface SimulatorRecipeEngineBuilder {
@@ -94,9 +93,19 @@ export class RecipeOwnedSessionFactory implements SimulatorOwnedSessionFactory {
       mode: initial.value.mode,
       createFreshEngine: async (purpose) => {
         const fresh = await this.builder.createFreshEngine(recipe.value, purpose);
-        return fresh.status === "accepted"
-          ? ok(fresh.value.engine)
-          : evidenceRequired(fresh.failure.capability, [], fresh.failure.boundary);
+        if (fresh.status === "rejected") {
+          return evidenceRequired(fresh.failure.capability, [], fresh.failure.boundary);
+        }
+        if (fresh.value.chartFidelity === initial.value.chartFidelity) {
+          return ok(fresh.value.engine);
+        }
+        const disposed = fresh.value.engine.dispose();
+        return evidenceRequired(
+          "simulator.recipe.fresh-chart-fidelity-mismatch",
+          [],
+          "Retry and MoveTime must reconstruct the same frozen standard/product chart route." +
+            (disposed.status === "ok" ? "" : ` Candidate cleanup also failed: ${disposed.capability}.`),
+        );
       },
     });
     if (replay.status !== "ok") {
@@ -109,6 +118,7 @@ export class RecipeOwnedSessionFactory implements SimulatorOwnedSessionFactory {
       recipe.value.request.presentation.mv === null
         ? "standard-current-portable"
         : "mv-live-host-supplied-portable",
+      initial.value.chartFidelity,
     ));
   }
 }
@@ -121,6 +131,7 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
     private readonly engine: PortableReplaySimulatorEngine,
     private readonly sessionMode: "live" | "rehearsal",
     private readonly backgroundFidelity: SimulatorBackgroundFidelity,
+    private readonly chartFidelity: SimulatorChartFidelity,
   ) {}
 
   step(
@@ -206,6 +217,7 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
         capabilities: createSimulatorModuleCapabilitySummary(
           this.renderingFidelity,
           this.backgroundFidelity,
+          this.chartFidelity,
         ),
       });
     }
@@ -281,6 +293,7 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
       capabilities: createSimulatorModuleCapabilitySummary(
         this.renderingFidelity,
         this.backgroundFidelity,
+        this.chartFidelity,
       ),
     });
   }
@@ -322,14 +335,6 @@ function copyLaunchRequest(
       "evidence-required",
       "simulator.recipe.invalid-public-request",
       "The launch recipe accepts only exact chartData/presentation/config keys, one Garupa JSON object array, one explicit isFullLength boolean independent of Live/Rehearsal and Manual/Auto, confirmed presentation resources, judgement offset, evidence-bounded Float32 visual settings and finite unit gains.",
-    );
-  }
-  const openProductExtension = describeOpenGarupaProductExtension(request.chartData.chart);
-  if (openProductExtension !== null) {
-    return rejected(
-      "evidence-required",
-      "simulator.garupa-extension.complete-product-contract-open",
-      `${openProductExtension} Garupa/ExGarupa product semantics must fail before BGM/movie decode, resource acquisition, Pixi mount, scheduler creation or engine mutation until the complete product owner is installed.`,
     );
   }
   const copiedChart = copyAndFreezeGarupaChartJson(request.chartData.chart);

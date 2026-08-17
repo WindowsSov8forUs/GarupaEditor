@@ -4,7 +4,7 @@
 
 ## 当前全局门
 
-当前实现采用“Reverse行为证据 + 明确的产品合同 + 可执行回归测试”三层边界。Garupa JSON产品schema锁定`origin/main@a4ed4bba`，原作position合同锁定已推送Reverse `941b17b9`；CS-V1由[`scoring-contract.md`](./scoring-contract.md)授权。发布过程、耗时和逐文件声明只保留在本地忽略目录，不作为生产或测试输入。
+当前实现采用“Reverse行为证据 + 明确的产品合同 + 可执行回归测试”三层边界。Garupa JSON产品schema和旧实现线索锁定`origin/main@a4ed4bba`，产品扩展行为由[`garupa-extension-contract.md`](./garupa-extension-contract.md)授权；原作position合同锁定已推送Reverse `941b17b9`，CS-V1由[`scoring-contract.md`](./scoring-contract.md)授权。发布过程、耗时和逐文件声明只保留在本地忽略目录，不作为生产或测试输入。
 
 总重验aggregate gate已在R12有界关闭。完整启动音频调用图已基于Reverse `b17e64e98423bed3718ac2e76a43cde5c451ee1f`重新遍历并关闭。谱面MV Live另基于Reverse `38802391fc6169e405c316e9a998f28c283961e3`的83个current ARM64 slices、7条observation-only R1、signed-delay inventory、portable media profile及zero-count closure关闭；仅支持Live Manual/Auto的host-supplied MP4/WebM，Practice、独立MVView和Star3D分列排除。以上关闭均不升级Unity framebuffer、fixed-device exact、CRI/USM、HAB original、其他excluded玩法或Stage 9。
 
@@ -20,18 +20,19 @@
 | Complete startup direction/audio | `closed-portable` | Reverse `78e6a70e`的SD01–SD16与`b17e64e9`完整调用图：standard Live启动Gaya，Practice不创建；BGM prepared-paused、optional voice release、Retry/MoveTime及cleanup均已验收 |
 | Gameplay MV Live | `closed-portable` | Reverse `38802391`：仅Live Manual/Auto；signed Int32 delay三分支、MovieBeforeSound(17)、movie states0–4、Gaya=false、pause/resume、early/late finish、exit/fault/dispose；caller提供严格MP4/WebM字节，视频muted/non-loop并center-contain。Rehearsal MV、独立MVView、Star3D及CRI/USM/device exact不在正向范围 |
 | Public Life profile | `closed-portable` | Reverse `2cbea93d`：Public只携带显式`isFullLength`；simulator内部固定Life `1000/1000/2000`，non-full/full Miss/Bad分别为`-100/-50`与`-50/-25`；不从duration等字段推断 |
-| Garupa JSON direct chart adapter | `closed-portable` | Public精确接收已解析`chart`对象数组，按`GJP-D01`执行`floor(48*beat)`并直接建立冻结/登记的运行时图；不生成中间BMS，不接受caller构造结果 |
+| Garupa JSON direct chart adapter | `closed-portable` | Public精确接收已解析`chart`对象数组和显式`laneCount`，按`GJP-D01`执行`floor(48*beat)`并直接建立冻结/登记的original-compatible或product-extension图；不生成中间BMS，不接受caller构造结果 |
 | Rehearsal MoveTime/control scene | `closed-portable` | simulator-owned固定±5 opaque command、Float32 whole-engine恢复、后退timeline revision、目标BGM发布及真实current atlas Pixi controls限定范围；不声明Prefab/fixed-device exact |
 | Non-zero initial seek | `excluded` | IPS-P01–P05只保留历史产品扩展记录；本专项冻结删除`startMilliseconds`及deferred publication，不再作为最终能力 |
-| SV / timingGroup | `ignored-product-extension` | exact校验、复制、冻结和计数，但当前不改变position、排序、Note图或调度；不声明原作等价 |
-| Unsupported ExGarupa Slide | `open-evidence-required` | Hidden端点、Flick/Directional头、非Single/Hidden中间节点、量化后重合及Directional尾宽度>3失败关闭 |
-| Button 07 | `closed-original-unreachable` | 10.1.4合法BMS不可生成值7；Garupa adapter也只接受完整落在0..6的span，不发明第八lane |
+| Garupa SV / TimingGroup | `closed-product-extension` | 独立group axis、Global继承、同position优先级、负向/停止/极值、stateless visibility及Pause/Retry/MoveTime闭合；只声明产品行为，不升级原作等价 |
+| Continuous lane / 9/11 / outside | `closed-product-extension` | 7/9/11显式domain、fractional/outside Float32 affine scene、field、front/mesh/particle及raw Manual span；不round/clamp到原Button |
+| ExGarupa Slide graph / Manual | `closed-product-extension` | singleton、Hidden head/tail、all-Hidden、same-position、任意schema合法visible类型、Auto和chain-finger Manual均按authored graph闭合 |
+| Button 07 | `closed-original-unreachable` | 10.1.4合法BMS不可生成值7；该结论只限定original-compatible图。产品9/11/outside由continuous sidecar拥有，不伪造成Button 07 |
 | WebView2 decode/glyph/raster | `closed-portable` | 真实WebView2 151.0.4129.86（锁定`.78`同一151.0.4129 patch line）执行production `BrowserPixiTextureDecoder`的PNG/FontFace/glyph/Pixi WebGL raster；跨runtime/GPU exact不泛化 |
 | Fixed-device physical exact | `open-objective-environment-blocked` | 锁定panel只有60 Hz、Android candidate缺失且stage-9=false、无校准光学/声学比较路径；四项客观阻断，不新增exact claim |
 | Character/card/deck skill、Fever、multiplayer | `excluded` | public和production依赖图不得引入 |
 | Main-program integration | `unauthorized-stage-9` | 不修改App/window/editor/Tauri/mobile入口 |
 
-状态词：`closed-portable`只表示当前证据和raw验收明确覆盖的portable合同；`ignored-product-extension`表示字段被严格拥有但经授权不产生runtime语义，不等于原作支持或no-op fallback；`closed-original-unreachable`表示原作合法输入不可达而非待补功能；`open-objective-environment-blocked`保持exact不声明且记录可复现环境阻断；`degraded-explicit`不等于原作parity，其余开放和排除状态按表中边界解释。
+状态词：`closed-portable`只表示当前证据和raw验收明确覆盖的portable合同；`closed-product-extension`表示GarupaEditor产品合同和产品验收已闭合，但不声明原作等价；`closed-original-unreachable`表示原作合法输入不可达而非待补功能；`open-objective-environment-blocked`保持exact不声明且记录可复现环境阻断；`degraded-explicit`不等于原作parity，其余开放和排除状态按表中边界解释。
 
 ## Public合同
 
@@ -66,7 +67,7 @@ src/simulator/
 ## Rendering验收分层
 
 - `actual-pixi-command-scene-routing`：testing-only observer独立连乘实际Pixi父链并观察local/world matrix、bounds、mask、texture、geometry及combined stage order；parent、Unity Y、mask-space、stage-order、particle UV-row和fallback六类故意反例均会失败。
-- `webview2-decode-raster/audio-graph`：普通完整场景digest为`a09166cf…2199`；standard启动视觉/音频digest保持`0f33657e…14d`与`88a2a310…c268`。MV独立harness对MP4/H264和WebM/VP9各执行3 fresh process，media graph digest为`f786bb96…b0234`、deterministic-seek raster digest为`ad8f9c4b…b9094`，cleanup后Blob/video/Pixi资源归零。所有digest只限定当前portable环境，不泛化CRI/USM、Android、speaker或Unity/GPU exact。
+- `webview2-decode-raster/audio-graph`：普通完整场景digest为`a09166cf…2199`；Garupa产品扩展initial/negative/zero/restore三fresh WebGL digest为`c9a02a4c…c8df`；standard启动视觉/音频digest保持`0f33657e…14d`与`88a2a310…c268`。MV独立harness对MP4/H264和WebM/VP9各执行3 fresh process，media graph digest为`f786bb96…b0234`、deterministic-seek raster digest为`ad8f9c4b…b9094`，cleanup后Blob/video/Pixi资源归零。所有digest只限定当前portable环境，不泛化CRI/USM、Android、speaker或Unity/GPU exact。
 - `framebuffer/device-exact`：锁定设备调查已形成四项客观环境阻断，exact继续不声明。
 
 Synthetic decoder、资源hash或typed command仍不能单独升级为真实WebView2 raster证明。

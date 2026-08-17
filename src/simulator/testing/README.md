@@ -51,6 +51,16 @@ npm.cmd run simulator:test:mv-live-webview2
 
 第一项消费Reverse `38802391`的runtime/oracle/closure/profile，覆盖schema 6 nullable MV、strict MP4/WebM、内部metadata/SHA、MovieBeforeSound(17)、signed delay三分支、negative gameplay-before-movie、Gaya exclusion、pause/resume、finish/fault/cleanup及production static guard。第二项在WebView2中使用production Browser preflight和Pixi VideoSource，对MP4/H264与WebM/VP9各执行3 fresh process；media digest为`f786bb96ac09eb36c93e641d119a4f3dd30f1691b2e210e153bbab48220b0234`，raster digest为`ad8f9c4b089bd519e3f8fa70a0ab1b7a00de123a064a0376e6e3e0130feb9094`。它们不声明CRI/USM、Android、speaker或Unity framebuffer exact。
 
+## Garupa/ExGarupa product-extension leaves
+
+```powershell
+npm.cmd run simulator:test:garupa-extensions
+npm.cmd run simulator:test:garupa-extensions-webview2
+npm.cmd run simulator:test:garupa-external -- HOST________/D_N_A.json HOST________/B.B.K.K.B.K.K..json
+```
+
+第一项覆盖schema 6、product profile/axis、7/9/11与outside scene、完整Slide graph、Auto/Manual、CS-V1、Pause/Retry/MoveTime、actual Pixi和static boundary。第二项用production Browser decoder和actual WebGL执行3 fresh process，锁定initial/negative/zero/restore digest `c9a02a4caa15dc837cead5d63b8137dd3f9140df0e7c60c2bb3bb18b2f6fc8df`。第三项是显式外部验收：没有路径时只报告unavailable；有路径时先校验固定size/SHA，再跑两张全谱的parser/profile/axis与Auto/Manual AP；外部文件不复制进fixture或production。
+
 ## Standalone leaves
 
-All existing `simulator:test:*` leaf scripts remain standalone. `npm.cmd run simulator:test:garupa-json` covers the fetched main union, exact ownership, `GJP-D01` positions, BPM, Note/HAB/Directional/Slide graphs, ignored SV/timingGroup, unsupported-shape failure, BMS common-semantic differential cases and actual engine Auto/Manual outcomes. Without the internal `SIMULATOR_TEST_COMPILED_ROOT` environment variable, each leaf creates, compiles, and removes its own temporary output exactly as before. The shared-output and shared-preflight variables are orchestration details owned by `runTotalRevalidationTests.mjs`; do not point them at hand-built or persistent output when claiming a test result.
+All existing `simulator:test:*` leaf scripts remain standalone. `npm.cmd run simulator:test:garupa-json` covers exact ownership, `GJP-D01` positions, original-compatible differential projection and product graph/axis/runtime semantics; `simulator:test:garupa-extensions` is the release leaf for the complete product path. Without the internal `SIMULATOR_TEST_COMPILED_ROOT` environment variable, each leaf creates, compiles, and removes its own temporary output exactly as before. The shared-output and shared-preflight variables are orchestration details owned by `runTotalRevalidationTests.mjs`; do not point them at hand-built or persistent output when claiming a test result.
