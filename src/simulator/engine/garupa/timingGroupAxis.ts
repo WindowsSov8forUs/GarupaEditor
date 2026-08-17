@@ -30,8 +30,8 @@ export interface GarupaProductTimingGroupAxis {
 }
 
 export interface GarupaProductVisibilityWindow {
-  readonly startMilliseconds: number;
-  readonly endMilliseconds: number;
+  readonly fromMilliseconds: number;
+  readonly toMilliseconds: number;
 }
 
 export interface GarupaProductTimingGroupAxisProfile {
@@ -304,13 +304,13 @@ function pushWindow(
   const end = Math.max(first, second);
   if (!Number.isFinite(start) || !Number.isFinite(end) || end - start <= EPSILON) return;
   const previous = windows[windows.length - 1];
-  if (previous !== undefined && start <= previous.endMilliseconds + EPSILON) {
+  if (previous !== undefined && start <= previous.toMilliseconds + EPSILON) {
     windows[windows.length - 1] = Object.freeze({
-      startMilliseconds: previous.startMilliseconds,
-      endMilliseconds: Math.max(previous.endMilliseconds, end),
+      fromMilliseconds: previous.fromMilliseconds,
+      toMilliseconds: Math.max(previous.toMilliseconds, end),
     });
   } else {
-    windows.push(Object.freeze({ startMilliseconds: start, endMilliseconds: end }));
+    windows.push(Object.freeze({ fromMilliseconds: start, toMilliseconds: end }));
   }
 }
 

@@ -14,6 +14,7 @@ import type {
 import { createRenderFloat32 } from "../backends/renderingValidation";
 import { ButtonType, type ButtonTypeValue, type NoteInformation } from "../engine/chart/types";
 import type { ManualInputPosition } from "../engine/data/manualInput";
+import type { SimulatorProductLaneCount } from "../public/contracts";
 import { evidenceRequired, ok, type SimulatorResult } from "../engine/evidence";
 import {
   advanceOrdinaryNoteMotion,
@@ -56,10 +57,33 @@ export interface SimulatorSceneSurfaceProfile {
   readonly inputOrigin: "bottom-left";
 }
 
+export interface GarupaProductFieldLine {
+  readonly lane: number;
+  readonly start: RenderVector3;
+  readonly goal: RenderVector3;
+}
+
+export interface GarupaProductSceneLayout {
+  readonly laneCount: SimulatorProductLaneCount;
+  readonly minimumLane: -2 | -1 | 0;
+  readonly maximumLane: 6 | 7 | 8;
+  readonly laneSpacingWorld: RenderFloat32;
+  readonly targetCenterY: RenderFloat32;
+  readonly fieldLines: readonly GarupaProductFieldLine[];
+  readonly projectLaneAtCurve: (lane: number, curve: number) => SimulatorResult<RenderVector3>;
+  readonly screenToContinuousLane: (position: ManualInputPosition) => SimulatorResult<number>;
+  readonly isInsideContinuousSpan: (
+    position: ManualInputPosition,
+    spanStart: number,
+    width: number,
+  ) => SimulatorResult<boolean>;
+}
+
 export interface SimulatorSceneLayout {
   readonly ordinaryNoteScene: OrdinaryFixedNoteSceneInput;
   readonly particleScene: ParticlePixiSceneProfile;
   readonly manualInputGeometry: SimulatorManualInputGeometryBackend;
+  readonly garupaProductScene: GarupaProductSceneLayout;
 }
 
 export function createSimulatorSceneLayout(
@@ -67,6 +91,7 @@ export function createSimulatorSceneLayout(
   config: SimulatorSceneVisualConfig,
   renderingKind: "ordinary" | "habahiro",
   resources: RenderEngineResourceBindings,
+  laneCount: SimulatorProductLaneCount = 7,
 ): SimulatorResult<SimulatorSceneLayout> {
   if (
     surface === null || typeof surface !== "object" ||
@@ -121,10 +146,13 @@ export function createSimulatorSceneLayout(
   );
   const particleScene = createParticleScene(values.value.goalPositions);
   if (particleScene.status !== "ok") return particleScene;
+  const productScene = createGarupaProductScene(values.value, laneCount);
+  if (productScene.status !== "ok") return productScene;
   return ok(Object.freeze({
     ordinaryNoteScene,
     particleScene: particleScene.value,
     manualInputGeometry: geometry,
+    garupaProductScene: productScene.value,
   }));
 }
 
@@ -168,6 +196,125 @@ function createSceneValues(config: SimulatorSceneVisualConfig): SimulatorResult<
     highAspectRatio: f32(config.highAspectRatio),
     noteStartPositions: Object.freeze(noteStartPositions),
     goalPositions: Object.freeze(goalPositions),
+  }));
+}
+
+function createGarupaProductScene(
+  scene: SceneValues,
+  laneCount: SimulatorProductLaneCount,
+): SimulatorResult<GarupaProductSceneLayout> {
+  if (laneCount !== 7 && laneCount !== 9 && laneCount !== 11) {
+    return reject(
+      "scene.invalid-product-lane-count",
+      "Garupa product field geometry requires an explicit laneCount of 7, 9 or 11.",
+    );
+  }
+  const offset = (laneCount - 7) / 2;
+  const minimumLane = -offset as GarupaProductSceneLayout["minimumLane"];
+  const maximumLane = (6 + offset) as GarupaProductSceneLayout["maximumLane"];
+  const laneSpacing = Math.fround(
+    scene.goalPositions[4]!.x.value - scene.goalPositions[3]!.x.value,
+  );
+  if (!Number.isFinite(laneSpacing) || laneSpacing <= 0) {
+    return reject(
+      "scene.invalid-product-lane-spacing",
+      "Continuous product projection requires the unchanged positive original lane spacing.",
+    );
+  }
+  const projectLaneAtCurve = (
+    lane: number,
+    curve: number,
+  ): SimulatorResult<RenderVector3> => {
+    if (!Number.isFinite(lane) || !Number.isFinite(curve)) {
+      return reject(
+        "scene.invalid-product-projection",
+        "Product lane and curve coordinates must remain finite and cannot be clamped.",
+      );
+    }
+    const originalLane = Number.isInteger(lane) && lane >= 0 && lane <= 6
+      ? lane
+      : null;
+    const goalX = originalLane === null
+      ? Math.fround(Math.fround(lane - 3) * laneSpacing)
+      : scene.goalPositions[originalLane]!.x.value;
+    const startX = originalLane === null
+      ? Math.fround(goalX * LAUNCH_DISTANCE_RATE)
+      : scene.noteStartPositions[originalLane]!.x.value;
+    const startY = scene.noteStartPositions[3]!.y.value;
+    const goalY = scene.targetCenterY.value;
+    if (curve === 0 && originalLane !== null) return ok(scene.noteStartPositions[originalLane]!);
+    if (curve === 1 && originalLane !== null) return ok(scene.goalPositions[originalLane]!);
+    return ok(vector3(
+      Math.fround(startX + Math.fround(curve * Math.fround(goalX - startX))),
+      Math.fround(startY + Math.fround(curve * Math.fround(goalY - startY))),
+      NOTE_WORLD_Z,
+    ));
+  };
+  const screenToContinuousLane = (
+    position: ManualInputPosition,
+  ): SimulatorResult<number> => {
+    if (!validPosition(position)) {
+      return reject(
+        "scene.invalid-product-input-position",
+        "Continuous product input requires finite bottom-left screen coordinates.",
+      );
+    }
+    const worldX = Math.fround(
+      Math.fround(position.x - VIEWPORT_WIDTH / 2) / PIXELS_PER_WORLD_UNIT,
+    );
+    const lane = Math.fround(
+      Math.fround(3) + Math.fround(worldX / laneSpacing),
+    );
+    return Number.isFinite(lane)
+      ? ok(lane)
+      : reject("scene.non-finite-product-lane", "Continuous input lane derivation became non-finite.");
+  };
+  const isInsideContinuousSpan = (
+    position: ManualInputPosition,
+    spanStart: number,
+    width: number,
+  ): SimulatorResult<boolean> => {
+    if (!Number.isFinite(spanStart) || !Number.isInteger(width) || width <= 0) {
+      return reject(
+        "scene.invalid-product-span",
+        "Continuous product collision requires one finite start and positive integer width.",
+      );
+    }
+    const lane = screenToContinuousLane(position);
+    if (lane.status !== "ok") return lane;
+    const worldY = Math.fround(
+      Math.fround(position.y - VIEWPORT_HEIGHT / 2) / PIXELS_PER_WORLD_UNIT,
+    );
+    const dy = Math.fround(worldY - scene.targetCenterY.value);
+    const verticalSquared = Math.fround(dy * dy);
+    return ok(
+      lane.value >= Math.fround(spanStart - 0.5) &&
+      lane.value <= Math.fround(spanStart + width - 0.5) &&
+      verticalSquared <= COLLISION_SQUARED
+    );
+  };
+  const fieldLines: GarupaProductFieldLine[] = [];
+  for (let lane = minimumLane; lane <= maximumLane; lane += 1) {
+    const start = projectLaneAtCurve(lane, 0);
+    const goal = projectLaneAtCurve(lane, 1);
+    if (start.status !== "ok") {
+      return evidenceRequired(start.capability, start.requiredEvidence, start.boundary);
+    }
+    if (goal.status !== "ok") {
+      return evidenceRequired(goal.capability, goal.requiredEvidence, goal.boundary);
+    }
+    fieldLines.push(Object.freeze({ lane, start: start.value, goal: goal.value }));
+  }
+  return ok(Object.freeze({
+    laneCount,
+    minimumLane,
+    maximumLane,
+    laneSpacingWorld: f32(laneSpacing),
+    targetCenterY: scene.targetCenterY,
+    fieldLines: Object.freeze(fieldLines),
+    projectLaneAtCurve,
+    screenToContinuousLane,
+    isInsideContinuousSpan,
   }));
 }
 

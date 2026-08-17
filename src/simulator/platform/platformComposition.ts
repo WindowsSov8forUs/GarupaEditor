@@ -267,6 +267,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
             },
             kind,
             resources,
+            recipe.request.chartData.laneCount,
           );
           return scene.status === "ok" ? accepted(scene.value) : fromEvidence(scene);
         },

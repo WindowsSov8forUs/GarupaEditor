@@ -334,7 +334,7 @@ function testTimingGroupAxis(): void {
   assert.equal(requireOk(axis.displacementAtPosition("#Global", 192, 96)), 1000);
   const windows = requireOk(axis.findVisibilityWindows("#1", 192, 600, 200, 0, 3000));
   assert.ok(windows.length >= 1);
-  assert.ok(windows.some((window) => window.startMilliseconds <= 1500 && window.endMilliseconds >= 1500));
+  assert.ok(windows.some((window) => window.fromMilliseconds <= 1500 && window.toMilliseconds >= 1500));
   assert.equal(axis.axisAtMilliseconds("#missing", 0).status, "evidence-required");
   assert.equal(axis.positionToMilliseconds(Number.NaN).status, "evidence-required");
 }
