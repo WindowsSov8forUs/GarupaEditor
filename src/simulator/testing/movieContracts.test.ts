@@ -57,8 +57,34 @@ async function testContainerAndDerivation(
   assert.match(derived.value.profile.logicalId, /^mv-live\/session\/[0-9A-F]{64}$/);
   assert.notEqual(derived.value.bytes, bytes);
   assert.equal(released, 0);
+  if (container === "mp4") {
+    const relocated = relocateMp4MoovAfterMedia(bytes);
+    const relocatedResult = inspectMovieContainer(relocated);
+    assert.equal(relocatedResult.status, "accepted", "browser-decodable non-fast-start MP4 remains valid");
+  }
   derived.value.prepared.release();
   assert.equal(released, 1);
+}
+
+function relocateMp4MoovAfterMedia(bytes: Uint8Array): Uint8Array {
+  const boxes: Array<{ kind: string; bytes: Uint8Array }> = [];
+  let offset = 0;
+  while (offset < bytes.byteLength) {
+    const size = ((bytes[offset]! << 24) | (bytes[offset + 1]! << 16) |
+      (bytes[offset + 2]! << 8) | bytes[offset + 3]!) >>> 0;
+    const kind = String.fromCharCode(...bytes.subarray(offset + 4, offset + 8));
+    boxes.push({ kind, bytes: bytes.slice(offset, offset + size) });
+    offset += size;
+  }
+  const ordered = [
+    ...boxes.filter((box) => box.kind === "ftyp"),
+    ...boxes.filter((box) => box.kind !== "ftyp" && box.kind !== "moov"),
+    ...boxes.filter((box) => box.kind === "moov"),
+  ];
+  const result = new Uint8Array(ordered.reduce((total, box) => total + box.bytes.byteLength, 0));
+  let cursor = 0;
+  for (const box of ordered) { result.set(box.bytes, cursor); cursor += box.bytes.byteLength; }
+  return result;
 }
 
 function testMalformedContainers(): void {

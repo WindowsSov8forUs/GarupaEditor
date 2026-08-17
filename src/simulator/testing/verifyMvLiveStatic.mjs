@@ -43,8 +43,7 @@ for (const required of [
   "readonly schemaVersion: 5;",
 ]) if (!(contracts + recipe).includes(required)) throw new Error(`MV Public/schema boundary missing: ${required}`);
 for (const required of [
-  "MV_LIVE_CLOSURE_CAPABILITY",
-  "simulator.mv-live.complete-closure-open",
+  'mvLivePortable: "closed-portable" as const',
   "simulator.mv-live.unsupported-rehearsal-mode",
   "deriveSessionMvResource",
   "BrowserMovieResourcePreflightAdapter",
@@ -100,8 +99,9 @@ if (portable.production_authorization !== true || portable.capability.CRI_USM_co
 }
 const capabilityClosed = contracts.includes('readonly mvLivePortable: "closed-portable";') ||
   capabilities.includes('mvLivePortable: "closed-portable" as const');
-if (capabilityClosed && capabilities.includes("return true;\n}\n\nexport function mvLiveClosureFailure")) {
-  throw new Error("MV capability cannot be closed while the temporary production gate remains true");
+if (capabilityClosed && (capabilities.includes("MV_LIVE_CLOSURE_CAPABILITY") ||
+  recipe.includes("isMvLive" + "ClosureOpen"))) {
+  throw new Error("MV capability cannot be closed while the temporary production gate remains");
 }
 console.log(`MV Live static boundary verified: production-files=${countProductionTs()} closure=0 capability=${capabilityClosed ? "closed" : "open-temporary"} MP4/WebM local-only`);
 

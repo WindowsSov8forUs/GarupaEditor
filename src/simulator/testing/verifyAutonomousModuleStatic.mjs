@@ -26,7 +26,7 @@ for (const forbidden of ["step(", "pause(", "resume(", "dispose(", "returnTime("
 for (const required of [
   "launchSimulatorModule", "SimulatorChartDataPackage", "SimulatorLaunchConfig",
   "SimulatorModuleLaunchRequest", "SimulatorModuleLaunchResult", "SimulatorModuleCloseReport",
-  "SimulatorModuleCapabilitySummary", "SimulatorRenderingFidelity",
+  "SimulatorModuleCapabilitySummary", "SimulatorRenderingFidelity", "SimulatorBackgroundFidelity",
 ]) {
   if (!rootIndex.includes(required) && !publicIndex.includes(required)) {
     throw new Error(`autonomous public barrel missing: ${required}`);

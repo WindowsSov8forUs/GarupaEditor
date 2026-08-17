@@ -128,10 +128,15 @@ function testFixedDeviceAndCapabilityReceipt(): void {
     ],
   );
 
-  const receipt = createSimulatorModuleCapabilitySummary("ordinary-current-portable");
+  const receipt = createSimulatorModuleCapabilitySummary(
+    "ordinary-current-portable",
+    "standard-current-portable",
+  );
+  assert.equal(receipt.background, "standard-current-portable");
+  assert.equal(receipt.selectedBackgroundGate, "closed-portable");
   assert.equal(receipt.liveRehearsalFourModeMatrix, "closed-portable");
   assert.equal(receipt.startupDirectionPortable, "closed-portable");
-  assert.equal(receipt.mvLivePortable, "open-evidence-required");
+  assert.equal(receipt.mvLivePortable, "closed-portable");
   assert.equal(receipt.standaloneMvView, "excluded");
   assert.equal(receipt.star3DLiveView, "excluded");
   assert.equal(receipt.rehearsalMoveTimeControls, "closed-portable");
@@ -141,6 +146,13 @@ function testFixedDeviceAndCapabilityReceipt(): void {
   assert.equal(receipt.fixedDeviceExact, "open-objective-environment-blocked");
   assert.equal(receipt.characterSkillFeverMultiplayer, "excluded");
   assert.equal(receipt.mainProgramIntegration, "unauthorized-stage-9");
+  const mvReceipt = createSimulatorModuleCapabilitySummary(
+    "ordinary-current-portable",
+    "mv-live-host-supplied-portable",
+  );
+  assert.equal(mvReceipt.background, "mv-live-host-supplied-portable");
+  assert.equal(mvReceipt.mvLivePortable, "closed-portable");
+  assert.equal(mvReceipt.selectedBackgroundGate, "closed-portable");
 }
 
 

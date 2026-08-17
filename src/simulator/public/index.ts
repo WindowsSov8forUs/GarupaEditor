@@ -2,6 +2,7 @@ export { launchSimulatorModule } from "./launch";
 
 export type {
   LaunchSimulatorModule,
+  SimulatorBackgroundFidelity,
   SimulatorCapabilityGateStatus,
   SimulatorChartDataPackage,
   SimulatorLaunchConfig,

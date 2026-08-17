@@ -4,6 +4,7 @@
 
 - Reverse：`6c0dfb76`，`artifacts/investigations/live-rehearsal-runtime-contract-10-1-4/`与`rehearsal-control-rendering-10-1-4/`。
 - Life初始化/Full伤害：Reverse `2cbea93d`，`artifacts/investigations/simulator-public-life-profile-10-1-4/`，PLP-E01–PLP-E07。
+- 谱面MV Live：Reverse `38802391`，`mv-live-runtime-contract-10-1-4/`与`mv-live-portable-media-profile-10-1-4/`；完整合同见[`mv-live-contract.md`](./mv-live-contract.md)。
 - 锁定样本：`jp.co.craftegg.band` 10.1.4 / 230 / arm64-v8a。
 - 产品例外：CS-V1计分及timeline revision由本项目[`scoring-contract.md`](./scoring-contract.md)授权，不冒充原作Score。
 
@@ -31,11 +32,11 @@ Canonical identity由模拟器一次性生成：
 
 Reverse `78e6a70e` 的SD01–SD16约束presentation、视觉owner、状态0→5与内部purpose；Reverse `b17e64e98423bed3718ac2e76a43cde5c451ee1f`的`startup-audio-callgraph-10-1-4/`补齐44个current ARM64方法、10条observation-only R1、资源与生命周期。`reachable_unclassified_count`、`unknown_predicate_count`、`missing_resource_count`和runtime hook failure均为0。
 
-四种Public模式从`Prepare(0)`依次进入`OPFirstAnimStart(1)`、`OPFirstAnimEnd(2)`、`OPLastAnimStart(3)`、`PlayingNone(4)`、`PlayingSound(5)`；0–3不得推进Note、input、judgement、Score/Life/Combo或gameplay particle。启动音频是允许的独立owner：BGM先以零voice gain建立并paused；Live Manual/Auto创建`SE_RHYTHM_GAYA`全buffer owned loop（volume 1.0、0.5秒fade-in），Practice Manual/Auto保持null；Live非null voice等待backend ended后release，Live null和Practice bypass分列。music edge先发布PlayingNone，再从current Gaya gain用1.5秒fade-to-zero/stop并resume prepared BGM，下一状态进入PlayingSound。
+Standard四种Public模式从`Prepare(0)`依次进入`OPFirstAnimStart(1)`、`OPFirstAnimEnd(2)`、`OPLastAnimStart(3)`、`PlayingNone(4)`、`PlayingSound(5)`；0–3不得推进Note、input、judgement、Score/Life/Combo或gameplay particle。启动音频是允许的独立owner：BGM先以零voice gain建立并paused；Live Manual/Auto创建`SE_RHYTHM_GAYA`全buffer owned loop（volume 1.0、0.5秒fade-in），Practice Manual/Auto保持null；Live非null voice等待backend ended后release，Live null和Practice bypass分列。music edge先发布PlayingNone，再从current Gaya gain用1.5秒fade-to-zero/stop并resume prepared BGM，下一状态进入PlayingSound。
 
 Retry创建fresh Practice链，不继承旧owner；MoveTime reconstruction不创建Gaya/voice/信息演出，物理输出在目标publication前抑制。pause/resume、abort、terminal fault与dispose均清理loop/source/gain/decoded资源。`startupDirectionPortable`因此恢复`closed-portable`，但speaker onset、CRI/HCA、Android与原Unity framebuffer exact仍不声明。
 
-Launch根仍精确三键`{chartData,presentation,config}`。presentation是调用方已选择的本地化文字与显式PNG/MP3，不改变chartData三字段；purpose仍由simulator内部拥有且不进入Public。
+Launch根仍精确三键`{chartData,presentation,config}`。Schema 5 presentation另有必填nullable `mv`；non-null只允许Live Manual/Auto，插入`MovieBeforeSound(17)`并按signed delay决定movie在BGM前或后启动。MV背景Gaya=false；negative delay明确允许PlayingSound/gameplay先于movie。Practice无法选择Simple movie display，因此Rehearsal MV、Retry/MoveTime MV失败关闭。purpose仍由simulator内部拥有且不进入Public。
 
 ## Life初始化与生命周期
 

@@ -319,7 +319,7 @@ function testAutoAndManualEngineOutcomes(): void {
 }
 
 function testCapabilities(): void {
-  const capabilities = createSimulatorModuleCapabilitySummary(null);
+  const capabilities = createSimulatorModuleCapabilitySummary(null, "standard-current-portable");
   assert.equal(capabilities.garupaJsonDirectChartAdapter, "closed-portable");
   assert.equal(capabilities.garupaJsonSvAndTimingGroup, "ignored-product-extension");
   assert.equal(capabilities.unsupportedExGarupaSlide, "open-evidence-required");

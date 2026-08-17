@@ -323,9 +323,10 @@ async function testRecipeNaturalCompletion(): Promise<void> {
   assert.equal(stepped.report.result?.clearStatus, 2);
   assert.equal(stepped.report.result?.combo, 7);
   assert.equal(stepped.report.capabilities.rendering, null);
+  assert.equal(stepped.report.capabilities.background, "standard-current-portable");
   assert.equal(stepped.report.capabilities.liveRehearsalFourModeMatrix, "closed-portable");
   assert.equal(stepped.report.capabilities.startupDirectionPortable, "closed-portable");
-  assert.equal(stepped.report.capabilities.mvLivePortable, "open-evidence-required");
+  assert.equal(stepped.report.capabilities.mvLivePortable, "closed-portable");
   assert.equal(stepped.report.capabilities.standaloneMvView, "excluded");
   assert.equal(stepped.report.capabilities.star3DLiveView, "excluded");
   assert.equal(stepped.report.capabilities.rehearsalMoveTimeControls, "closed-portable");
@@ -514,13 +515,14 @@ async function testAutonomousLaunchAndClose(): Promise<void> {
   assert.ok(Object.isFrozen(report));
   assert.deepEqual(report.capabilities, {
     rendering: null,
+    background: "standard-current-portable",
     publicAutonomousCore: "closed-portable",
     ordinaryCommandScene: "closed-portable",
     habahiroCurrentExternalComplete: "closed-portable",
     habahiroOriginalParity: "open-evidence-required",
     liveRehearsalFourModeMatrix: "closed-portable",
     startupDirectionPortable: "closed-portable",
-    mvLivePortable: "open-evidence-required",
+    mvLivePortable: "closed-portable",
     standaloneMvView: "excluded",
     star3DLiveView: "excluded",
     rehearsalMoveTimeControls: "closed-portable",
@@ -534,6 +536,7 @@ async function testAutonomousLaunchAndClose(): Promise<void> {
     characterSkillFeverMultiplayer: "excluded",
     mainProgramIntegration: "unauthorized-stage-9",
     selectedRenderingGate: "open-evidence-required",
+    selectedBackgroundGate: "closed-portable",
   }, "close receipt publishes each capability gate without an aggregate complete claim");
   assert.equal(session.steps, 1, "user-close owns frame before engine step");
   assert.equal(session.closes, 1);
@@ -673,7 +676,7 @@ class FakeSession implements SimulatorOwnedSession {
       reason,
       result: null,
       failure: failure ?? null,
-      capabilities: createSimulatorModuleCapabilitySummary(null),
+      capabilities: createSimulatorModuleCapabilitySummary(null, "standard-current-portable"),
     });
   }
 }

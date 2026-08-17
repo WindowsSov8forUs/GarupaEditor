@@ -134,8 +134,7 @@ function isStrictMp4(bytes: Uint8Array): boolean {
     offset += size;
   }
   if (offset !== bytes.byteLength || kinds[0] !== "ftyp" ||
-    !kinds.includes("moov") || !kinds.includes("mdat") ||
-    kinds.indexOf("moov") > kinds.indexOf("mdat")) return false;
+    !kinds.includes("moov") || !kinds.includes("mdat")) return false;
   const majorBrand = ascii(bytes, 8, 4);
   if (!["isom", "iso2", "mp41", "mp42", "M4V ", "avc1"].includes(majorBrand)) return false;
   const text = latin1(bytes);

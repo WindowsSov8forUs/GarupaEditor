@@ -103,6 +103,10 @@ export type SimulatorRenderingFidelity =
   | "ordinary-current-portable"
   | "habahiro-current-external-complete";
 
+export type SimulatorBackgroundFidelity =
+  | "standard-current-portable"
+  | "mv-live-host-supplied-portable";
+
 export type SimulatorCapabilityGateStatus =
   | "closed-portable"
   | "ignored-product-extension"
@@ -116,13 +120,14 @@ export type SimulatorCapabilityGateStatus =
 
 export interface SimulatorModuleCapabilitySummary {
   readonly rendering: SimulatorRenderingFidelity | null;
+  readonly background: SimulatorBackgroundFidelity | null;
   readonly publicAutonomousCore: "closed-portable";
   readonly ordinaryCommandScene: "closed-portable";
   readonly habahiroCurrentExternalComplete: "closed-portable";
   readonly habahiroOriginalParity: "open-evidence-required";
   readonly liveRehearsalFourModeMatrix: "closed-portable";
   readonly startupDirectionPortable: "closed-portable";
-  readonly mvLivePortable: "open-evidence-required" | "closed-portable";
+  readonly mvLivePortable: "closed-portable";
   readonly standaloneMvView: "excluded";
   readonly star3DLiveView: "excluded";
   readonly rehearsalMoveTimeControls: "closed-portable";
@@ -136,6 +141,7 @@ export interface SimulatorModuleCapabilitySummary {
   readonly characterSkillFeverMultiplayer: "excluded";
   readonly mainProgramIntegration: "unauthorized-stage-9";
   readonly selectedRenderingGate: "closed-portable" | "open-evidence-required";
+  readonly selectedBackgroundGate: "closed-portable" | "open-evidence-required";
 }
 
 export interface SimulatorModuleCloseReport {

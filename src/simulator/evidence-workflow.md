@@ -23,6 +23,13 @@
 - `reachable_unclassified_count`、`unknown_predicate_count`、`missing_resource_count`和runtime hook failure均为0，committed verifier授权production，故`startupDirectionPortable`恢复`closed-portable`。Garupa fixture sourceHead锁定`b17e64e9`，只复制callgraph JSON与最小Gaya字节；production不读取fixture。
 - 真实WebView2视觉digest与独立Gaya/WebAudio graph digest只证明portable browser子门，不证明speaker onset、CRI/HCA、Android或原Unity framebuffer exact。后续调查仍必须使用已提交当前样本，不得消费Reverse未提交`runtime/tools/`、10.1.3行为或旧总体`closed`字段。
 
+## 当前谱面 MV Live 证据
+
+- Reverse `f2c0b360`建立83个current ARM64 static slices；最终`38802391fc6169e405c316e9a998f28c283961e3`加入Live Manual/Auto R1、pause/resume/exit/natural、98-model signed-delay inventory、1600×720 layer/bounds observation、original segmented USM技术profile与portable MP4/WebM mapping。
+- `mv_live_closure.json`八项unknown/missing/mapping/hook计数均为0，production只授权Live Manual/Auto的host-supplied portable bytes。Practice/Rehearsal MV、Retry/MoveTime MV、standalone MVView、Star3D和CRI/USM/device exact明确排除。
+- Garupa fixture sourceHead锁定`38802391`，只复制runtime contract、command oracle、closure、portable profile和项目自制20-frame MP4/WebM probe；不复制R1、截图、ARM64或61MB original USM。Production不读取fixture。
+- MV WebView2的media/raster digest只证明当前Browser Blob/HTMLVideoElement/Pixi映射，不升级original frame、codec或物理输出。
+
 ## 测试边界
 
 隔离测试需要离线输入时，只从已推送的Reverse提取最小快照到`src/simulator/testing/fixtures/`，并记录来源提交、源相对路径、字节数和SHA-256。`verifyTestingFixtures.mjs`只校验这些快照，不读取Reverse或网络。生产代码不得读取本地工作记录、Reverse或testing fixture。

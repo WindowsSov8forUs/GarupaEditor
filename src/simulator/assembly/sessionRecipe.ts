@@ -8,17 +8,13 @@ import {
   type PortableReplaySimulatorEngine,
   type SimulatorTimelineControlState,
 } from "../host/portableReplaySession";
-import {
-  createSimulatorModuleCapabilitySummary,
-  isMvLiveClosureOpen,
-  MV_LIVE_CLOSURE_BOUNDARY,
-  MV_LIVE_CLOSURE_CAPABILITY,
-} from "../public/capabilities";
+import { createSimulatorModuleCapabilitySummary } from "../public/capabilities";
 import {
   appendSimulatorCleanupFailures,
   simulatorCleanupFailure,
 } from "../public/failures";
 import type {
+  SimulatorBackgroundFidelity,
   SimulatorModuleCloseReport,
   SimulatorModuleFailure,
   SimulatorModuleLaunchRequest,
@@ -69,13 +65,6 @@ export function createSimulatorSessionRecipe(
       "Original Practice does not select the Simple movie display; Rehearsal Manual/Auto, Retry and MoveTime MV routes are not inherited from the standard background.",
     );
   }
-  if (copied.value.presentation.mv !== null && isMvLiveClosureOpen()) {
-    return rejected(
-      "evidence-required",
-      MV_LIVE_CLOSURE_CAPABILITY,
-      MV_LIVE_CLOSURE_BOUNDARY,
-    );
-  }
   return accepted(Object.freeze({ schemaVersion: 5 as const, request: copied.value }));
 }
 
@@ -114,6 +103,9 @@ export class RecipeOwnedSessionFactory implements SimulatorOwnedSessionFactory {
     return accepted(new RecipeOwnedSession(
       replay.value,
       recipe.value.request.config.sessionMode,
+      recipe.value.request.presentation.mv === null
+        ? "standard-current-portable"
+        : "mv-live-host-supplied-portable",
     ));
   }
 }
@@ -125,6 +117,7 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
   constructor(
     private readonly engine: PortableReplaySimulatorEngine,
     private readonly sessionMode: "live" | "rehearsal",
+    private readonly backgroundFidelity: SimulatorBackgroundFidelity,
   ) {}
 
   step(
@@ -207,7 +200,10 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
           "simulator.recipe.repeated-close",
           "A closed owned session is terminal and cannot publish another mutable result.",
         ),
-        capabilities: createSimulatorModuleCapabilitySummary(this.renderingFidelity),
+        capabilities: createSimulatorModuleCapabilitySummary(
+          this.renderingFidelity,
+          this.backgroundFidelity,
+        ),
       });
     }
     return this.finish(reason, failure ?? null);
@@ -279,7 +275,10 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
           : clearStatus,
       }),
       failure: terminalFailure,
-      capabilities: createSimulatorModuleCapabilitySummary(this.renderingFidelity),
+      capabilities: createSimulatorModuleCapabilitySummary(
+        this.renderingFidelity,
+        this.backgroundFidelity,
+      ),
     });
   }
 }

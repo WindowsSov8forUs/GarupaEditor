@@ -12,7 +12,7 @@ async function main(): Promise<void> {
   testExactShapeAndOwnership();
   testMalformedPresentationFailsClosed();
   await testInternalDerivation();
-  console.log("startup presentation derivation tests passed: schema5 exact shape/copy/PNG/MP3/nullable MV/open gate");
+  console.log("startup presentation derivation tests passed: schema5 exact shape/copy/PNG/MP3/nullable MV/closed Live gate");
 }
 
 function testExactShapeAndOwnership(): void {
@@ -49,7 +49,11 @@ function testExactShapeAndOwnership(): void {
     bytes: Uint8Array.of(1, 2, 3, 4),
     musicStartDelayMilliseconds: -2180,
   };
-  assertInvalid(gated, "simulator.mv-live.complete-closure-open");
+  const acceptedMvRecipe = createSimulatorSessionRecipe(gated);
+  assert.equal(acceptedMvRecipe.status, "accepted");
+  if (acceptedMvRecipe.status === "accepted") {
+    assert.equal(acceptedMvRecipe.value.request.presentation.mv?.musicStartDelayMilliseconds, -2180);
+  }
   const rehearsal = request();
   (rehearsal.config as { sessionMode: "live" | "rehearsal" }).sessionMode = "rehearsal";
   (rehearsal.presentation as { mv: unknown }).mv = {

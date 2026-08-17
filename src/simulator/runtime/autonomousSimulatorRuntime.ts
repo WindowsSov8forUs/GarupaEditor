@@ -243,7 +243,7 @@ export class AutonomousSimulatorModule {
           "simulator.runtime.terminal-session-close-threw",
           "The owned session close threw after the terminal primary failure; scheduler and input cleanup still ran.",
         )]),
-        capabilities: createSimulatorModuleCapabilitySummary(null),
+        capabilities: createSimulatorModuleCapabilitySummary(null, null),
       });
     }
     this.closePublished(report);
