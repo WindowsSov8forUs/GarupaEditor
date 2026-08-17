@@ -1,0 +1,32 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+
+const read = (path) => readFileSync(resolve(process.cwd(), "src/simulator", path), "utf8");
+const profile = read("engine/garupa/productChartProfile.ts");
+const axis = read("engine/garupa/timingGroupAxis.ts");
+const timeline = read("engine/garupa/productTimelineManager.ts");
+const render = read("engine/garupa/productRenderProducer.ts");
+const scene = read("scene/simulatorSceneLayout.ts");
+const recipe = read("assembly/sessionRecipe.ts");
+const contracts = read("public/contracts.ts");
+const composition = read("platform/platformComposition.ts");
+
+for (const [source, symbols] of [
+  [profile, ["product-extension", "ButtonType.None", "visibleNodes", "allHidden", "containsHidden"]],
+  [axis, ["owner === \"group\" ? 0 : 1", "speed = nextSpeed", "findVisibilityWindows", "displacementAtPosition"]],
+  [timeline, ["garupa-visible-node", "screenToContinuousLane", "isInsideContinuousSpan", "pendingGesture", "missedNodeCount"]],
+  [render, ["garupa-product-front", "garupa-product-slide-line", "garupa-product-particle", "set-mesh"]],
+  [scene, ["laneCount: SimulatorProductLaneCount", "minimumLane", "maximumLane", "projectLaneAtCurve"]],
+  [recipe, ["readonly schemaVersion: 6", "laneCount: request.chartData.laneCount"]],
+  [contracts, ["SimulatorProductLaneCount", "readonly laneCount"]],
+  [composition, ["recipe.request.chartData.laneCount", "garupaProductScene"]],
+]) for (const symbol of symbols) if (!source.includes(symbol)) throw new Error(`Garupa product static owner missing ${symbol}`);
+
+for (const [source, forbidden] of [
+  [profile, ["Math.random", "Date.now", "performance.now"]],
+  [axis, ["Math.random", "Date.now", "performance.now"]],
+  [timeline, ["Math.random", "Date.now", "performance.now", "src/app", "Button_07_BMS_1P_07"]],
+  [render, ["Math.random", "Date.now", "performance.now", "Math.round(node.lane)", "Math.min(7"]],
+]) for (const symbol of forbidden) if (source.includes(symbol)) throw new Error(`Garupa product forbidden fallback/ambient dependency remains: ${symbol}`);
+
+console.log("Garupa product extension static boundary verified: schema6/profile/axis/continuous scene/Auto/Manual/render/particle/lifecycle");

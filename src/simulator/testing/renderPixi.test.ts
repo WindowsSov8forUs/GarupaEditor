@@ -21,6 +21,12 @@ import { RenderCommandProducer } from "../engine/rendering/renderCommandProducer
 import { ok, type SimulatorResult } from "../engine/evidence";
 import { createSimulatorEngine } from "../host/createSimulatorEngine";
 import { observePixiWorld } from "./pixiWorldObserver";
+import { copyAndFreezeGarupaChartJson } from "../assembly/garupaChartContract";
+import { constructChartFromGarupaChartJson } from "../assembly/garupaChartConstruction";
+import { getGarupaProductChartProfile } from "../engine/garupa/productChartProfile";
+import { getGarupaProductTimingGroupAxisProfile } from "../engine/garupa/timingGroupAxis";
+import { GarupaProductRenderProducer } from "../engine/garupa/productRenderProducer";
+import { createSimulatorSceneLayout } from "../scene/simulatorSceneLayout";
 
 type CommandWithoutBase<T = RenderCommand> = T extends RenderCommand
   ? Omit<T, "sessionId" | "sequence" | "frame" | "substep">
@@ -434,6 +440,7 @@ async function main(): Promise<void> {
   });
   await verifyActualPixiHabahiroComplete(profile, resources);
   const fullChart = await verifyActualPixiFullChart(profile, resources);
+  await verifyActualPixiGarupaProduct(profile, resources);
   const observationPath = process.env.SIMULATOR_RENDER_OBSERVATION_PATH;
   if (typeof observationPath === "string" && observationPath.length > 0) {
     writeFileSync(observationPath, JSON.stringify({
@@ -453,6 +460,76 @@ async function main(): Promise<void> {
     }, null, 2));
   }
   console.log("actual Pixi ordinary visible oracle passed: Note cubic owners + Combo/AP/AddScore/Result/Life resource routes");
+}
+
+async function verifyActualPixiGarupaProduct(
+  profile: RenderResourceProfile,
+  resources: readonly { readonly logicalAssetId: string; readonly bytes: Uint8Array }[],
+): Promise<void> {
+  const sessionId = "actual-pixi-garupa-product";
+  const provider = requireOk(ImmutableLocalRenderResourceProvider.create(resources), "product actual provider");
+  const renderer = new PixiRendererBackend(decoder);
+  requireOk(await renderer.prepare(
+    sessionId,
+    profile,
+    provider,
+    new PortableRenderResourcePreflightAdapter(),
+  ), "product actual Pixi prepare");
+  const copied = requireOk(copyAndFreezeGarupaChartJson([
+    { type: "BPM", beat: 0, value: 120 },
+    { type: "SV", beat: 2, value: -1, timingGroup: "#1" },
+    { type: "Single", beat: 1, lane: 0.5, width: 2, timingGroup: "#1" },
+    { type: "Slide", timingGroup: "#1", connections: [
+      { type: "Hidden", beat: 1, lane: -1, width: 1 },
+      { type: "Flick", beat: 2, lane: 2.25, width: 2 },
+      { type: "Hidden", beat: 3, lane: 7, width: 1 },
+    ] },
+  ]), "product chart copy");
+  const chart = requireOk(constructChartFromGarupaChartJson(copied.chart, 9), "product chart construct");
+  const product = getGarupaProductChartProfile(chart)!;
+  const axis = getGarupaProductTimingGroupAxisProfile(chart)!;
+  const layout = requireOk(createSimulatorSceneLayout(
+    { viewportWidth: 1600, viewportHeight: 720, inputOrigin: "bottom-left" },
+    {
+      specificSpeed: Math.fround(11), noteSize: Math.fround(100), highAspectRatio: 1,
+      judgeOffsetFrames: 0, habahiroMeshWidthSetting: Math.fround(1),
+    },
+    "ordinary",
+    CURRENT_ORDINARY_RENDER_BINDINGS,
+    9,
+  ), "product scene");
+  const producer = new GarupaProductRenderProducer(
+    sessionId,
+    renderer,
+    CURRENT_ORDINARY_RENDER_BINDINGS,
+    product,
+    axis,
+    layout.garupaProductScene,
+    layout.ordinaryNoteScene.specificSpeed,
+  );
+  requireOk(producer.validate(), "product producer validate");
+  const first = requireOk(producer.preflightFrame(0, []), "product first frame");
+  assert(first !== null, "product first frame has visible commands");
+  requireOk(first!.commit(), "product first frame commit");
+  const rows = renderer.sceneSnapshot();
+  assert(rows.some((row) => row.renderObjectId === "render:garupa:node:garupa-note:2" && row.visible),
+    "actual Pixi has fractional product front");
+  assert(rows.some((row) => row.renderObjectId.startsWith("render:garupa:line:") && row.geometryVertexCount === 22),
+    "actual Pixi has product Slide mesh");
+  const judged = product.visibleNodes[0]!;
+  const effect = requireOk(producer.preflightFrame(judged.absolutePosition, [judged]), "product effect frame");
+  assert(effect !== null, "product effect frame has commands");
+  requireOk(effect!.commit(), "product effect frame commit");
+  assert(renderer.sceneSnapshot().some((row) =>
+    row.renderObjectId === `render:garupa:effect:${judged.identity}` && row.geometryVertexCount === 22),
+    "actual Pixi has continuous product judgement particle mesh");
+  const released = requireOk(producer.preflightDispose(), "product render release");
+  assert(released !== null, "product release owns objects");
+  requireOk(released!.commit(), "product render release commit");
+  equal(renderer.snapshot().objectCount, 0, "actual Pixi product releases every owner");
+  requireOk(renderer.dispose(), "actual Pixi product backend dispose");
+  equal(renderer.stage.children.length, 0, "actual Pixi product leaves empty stage");
+  console.log("actual Pixi Garupa product passed: fractional/9-lane/SV/Hidden mesh/effect/cleanup");
 }
 
 async function verifyActualPixiHabahiroComplete(

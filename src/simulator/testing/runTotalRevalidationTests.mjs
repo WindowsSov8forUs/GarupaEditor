@@ -35,7 +35,7 @@ const baseLeaves = [
   ["audio", "runAudioTests.mjs", {}],
   ["particle", "runParticleTests.mjs", {}],
   ["host-runtime-public-gate", "runAutonomousModuleTests.mjs", {}],
-  ["garupa-json-direct-chart", "runPublicGarupaJsonChartTests.mjs", {}],
+  ["garupa-product-extension", "runGarupaProductExtensionTests.mjs", {}],
   ["public-life-profile", "runPublicLifeProfileTests.mjs", {}],
   ["live-rehearsal-four-mode", "runLiveRehearsalModeTests.mjs", {}],
   ["startup-direction", "runStartupDirectionTests.mjs", {}],
@@ -48,7 +48,7 @@ const quickLeaves = [
   ["chart-parsing", "runChartConstructionParsingTests.mjs", {}],
   ["clock", "runClockSchedulingTests.mjs", {}],
   ["auto", "runAutoLiveTests.mjs", {}],
-  ["garupa-json-direct-chart", "runPublicGarupaJsonChartTests.mjs", {}],
+  ["garupa-product-extension", "runGarupaProductExtensionTests.mjs", {}],
   ["public-life-profile", "runPublicLifeProfileTests.mjs", {}],
   ["live-rehearsal-four-mode", "runLiveRehearsalModeTests.mjs", {}],
   ["startup-direction", "runStartupDirectionTests.mjs", {}],
@@ -58,6 +58,7 @@ const browserEnvironment = cleanBrowserBuild ? { SIMULATOR_WEBVIEW2_CLEAN_BUILD:
 const browserLeaves = [
   ["production-browser-webview2", "runBrowserPixiDecoderWebView2Tests.mjs", browserEnvironment],
   ["ordinary-full-scene-browser-webview2", "runOrdinaryRenderingWebView2Tests.mjs", browserEnvironment],
+  ["garupa-product-browser-webview2", "runGarupaProductWebView2Tests.mjs", browserEnvironment],
   ["startup-direction-browser-webview2", "runStartupDirectionWebView2Tests.mjs", browserEnvironment],
   ["mv-live-browser-webview2", "runMvLiveWebView2Tests.mjs", browserEnvironment],
 ];

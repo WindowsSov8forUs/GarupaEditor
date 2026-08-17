@@ -112,6 +112,29 @@ export class GarupaProductRenderProducer {
     const commands: RenderCommand[] = [];
     const command = commandFactory(this.sessionId, this.renderer, this.frame);
 
+    for (const fieldLine of this.scene.fieldLines) {
+      const objectId = `render:garupa:field:${fieldLine.lane}`;
+      if (plannedCreated.has(objectId)) continue;
+      commands.push(command(commands.length, {
+        kind: "create-object",
+        renderObjectId: objectId,
+        poolFamily: "garupa-product-field",
+        role: "note-mesh",
+        parentObjectId: null,
+      }));
+      commands.push(command(commands.length, {
+        kind: "bind-resource",
+        renderObjectId: objectId,
+        binding: "material",
+        logicalAssetId: this.resources.curveNoteMaterialLogicalAssetId!,
+        exactKey: null,
+      }));
+      commands.push(command(commands.length, { kind: "activate-object", renderObjectId: objectId }));
+      commands.push(command(commands.length, productFieldMesh(objectId, fieldLine.start, fieldLine.goal)));
+      plannedCreated.add(objectId);
+      plannedVisible.add(objectId);
+    }
+
     for (const node of this.chart.visibleNodes) {
       const sample = samples.get(node.identity)!;
       const objectId = nodeObjectId(node);
@@ -337,6 +360,39 @@ function slideMesh(
     if (section < 10) {
       const left = section * 2;
       indices.push(left, left + 2, left + 1, left + 1, left + 2, left + 3);
+    }
+  }
+  return {
+    kind: "set-mesh",
+    renderObjectId,
+    vertices: Object.freeze(vertices),
+    indices: Object.freeze(indices),
+    uv: Object.freeze(uv),
+    colors: Object.freeze(colors),
+    materialRole: "curve-note",
+  };
+}
+
+function productFieldMesh(
+  renderObjectId: string,
+  start: RenderVector3,
+  goal: RenderVector3,
+): Omit<Extract<RenderCommand, { kind: "set-mesh" }>, "sessionId" | "sequence" | "frame" | "substep"> {
+  const vertices: RenderVector3[] = [];
+  const uv: RenderVector2[] = [];
+  const colors: RenderColor[] = [];
+  const indices: number[] = [];
+  for (let section = 0; section <= 10; section += 1) {
+    const ratio = section / 10;
+    const x = start.x.value + (goal.x.value - start.x.value) * ratio;
+    const y = start.y.value + (goal.y.value - start.y.value) * ratio;
+    const halfWidth = 0.004 + ratio * 0.006;
+    vertices.push(vector3(x - halfWidth, y, 0), vector3(x + halfWidth, y, 0));
+    uv.push(vector2(0, ratio), vector2(1, ratio));
+    colors.push(color(0.32, 0.48, 0.82, 0.38), color(0.32, 0.48, 0.82, 0.38));
+    if (section < 10) {
+      const offset = section * 2;
+      indices.push(offset, offset + 2, offset + 1, offset + 1, offset + 2, offset + 3);
     }
   }
   return {

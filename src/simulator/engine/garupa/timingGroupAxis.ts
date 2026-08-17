@@ -172,7 +172,7 @@ export function createGarupaProductTimingGroupAxisProfile(
       chartEndMilliseconds,
     );
     return windows === null
-      ? invalidAxis("Visibility window inputs must remain finite and ordered.")
+      ? invalidAxis("Visibility-range inputs must remain finite and ordered.")
       : ok(Object.freeze(windows));
   };
 
