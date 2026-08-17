@@ -1,6 +1,7 @@
 import type { Container } from "pixi.js";
 import { BrowserAudioResourcePreflightAdapter } from "../backends/audio/browserAudioResourcePreflightAdapter";
 import { WebAudioSimulatorBackend } from "../backends/audio/webAudioBackend";
+import { BrowserMovieResourcePreflightAdapter } from "../backends/movie/browserMovieResourcePreflightAdapter";
 import { audioFloat32ToBits } from "../backends/audioValidation";
 import type {
   SimulatorBackends,
@@ -14,6 +15,7 @@ import {
   type PixiCombinedScene,
 } from "../backends/pixi/pixiCombinedScene";
 import { PixiParticleRendererBackend } from "../backends/pixi/pixiParticleRendererBackend";
+import { PixiMvLiveBackend } from "../backends/pixi/pixiMvLiveBackend";
 import {
   PixiRendererBackend,
   type PixiRehearsalControlOverlay,
@@ -62,6 +64,11 @@ import { createSimulatorSceneLayout } from "../scene/simulatorSceneLayout";
 import { validateConstructedChartCapabilities } from "../assembly/chartCapabilityValidation";
 import { constructChartFromGarupaChartJson } from "../assembly/garupaChartConstruction";
 import { assembleSimulatorResources } from "../assembly/resourceAssembly";
+import { deriveSessionMvResource } from "../assembly/sessionMvDerivation";
+import type {
+  MovieOperationResult,
+  PreparedSessionMovieResource,
+} from "../backends/movieContracts";
 import {
   deriveSessionBgmResource,
   type PreparedSessionBgmResource,
@@ -132,6 +139,7 @@ export function installProductionAutonomousSimulatorPlatform(
 class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
   private generation = 0;
   private readonly audioPreflight: BrowserAudioResourcePreflightAdapter;
+  private readonly moviePreflight = new BrowserMovieResourcePreflightAdapter();
   private readonly bgmByRecipe = new WeakMap<
     SimulatorSessionRecipe,
     Promise<SimulatorAssemblyResult<PreparedSessionBgmResource>>
@@ -159,28 +167,67 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
         TOTAL_REVALIDATION_BOUNDARY,
       );
     }
+    const moveTimeCandidate = purpose === "move-time-reconstruction";
+    const mvPackage = recipe.request.presentation.mv;
+    if (mvPackage !== null &&
+      (recipe.request.config.sessionMode !== "live" || moveTimeCandidate)) {
+      return rejected(
+        "evidence-required",
+        "simulator.mv-live.unsupported-mode-or-purpose",
+        "Current MV Live is supported only for fresh Live Manual/Auto; Practice, Retry and MoveTime cannot inherit the standard route.",
+      );
+    }
+    const sessionId = this.sessionId();
+    this.generation += 1;
+    const mvResource = mvPackage === null
+      ? accepted<PreparedSessionMovieResource | null>(null)
+      : await deriveSessionMvResource(mvPackage, this.moviePreflight);
+    if (mvResource.status === "rejected") return mvResource;
+    const releasePendingMovie = (): void => {
+      if (mvResource.value !== null) mvResource.value.prepared.release();
+    };
     const chart = constructChartFromGarupaChartJson(
       recipe.request.chartData.chart,
     );
-    if (chart.status !== "ok") return fromEvidence(chart);
+    if (chart.status !== "ok") {
+      releasePendingMovie();
+      return fromEvidence(chart);
+    }
     const chartCapabilities = validateConstructedChartCapabilities(chart.value, recipe.request);
-    if (chartCapabilities.status === "rejected") return chartCapabilities;
+    if (chartCapabilities.status === "rejected") {
+      releasePendingMovie();
+      return chartCapabilities;
+    }
     const bgm = await this.deriveBgm(recipe);
-    if (bgm.status === "rejected") return bgm;
+    if (bgm.status === "rejected") {
+      releasePendingMovie();
+      return bgm;
+    }
     const presentation = await this.derivePresentation(recipe);
-    if (presentation.status === "rejected") return presentation;
-    const score = mapScoreLifeProfile(recipe.request, this.sessionId());
-    if (score.status === "rejected") return score;
-    const moveTimeCandidate = purpose === "move-time-reconstruction";
+    if (presentation.status === "rejected") {
+      releasePendingMovie();
+      return presentation;
+    }
+    const score = mapScoreLifeProfile(recipe.request, sessionId);
+    if (score.status === "rejected") {
+      releasePendingMovie();
+      return score;
+    }
     const selection = selectSimulatorStaticResources(chart.value);
     const renderer = new PixiRendererBackend(new BrowserPixiTextureDecoder());
     const audio = new WebAudioSimulatorBackend(this.platform.audioContext, moveTimeCandidate);
+    const movie = mvResource.value === null ? null : new PixiMvLiveBackend(false);
+    if (movie !== null) {
+      const prepared = await movie.prepare(sessionId, mvResource.value!);
+      if (prepared.status !== "accepted") {
+        releasePendingMovie();
+        return fromMovieOperation(prepared);
+      }
+    }
     const particles = new DeterministicSimulatorParticleBackend();
     const particleRenderer = new PixiParticleRendererBackend(
       new BrowserPixiParticleTextureDecoder(),
     );
-    const sessionId = this.sessionId();
-    this.generation += 1;
     const assembly = await assembleSimulatorResources(
       bgm.value,
       presentation.value.liveStartVoice,
@@ -215,30 +262,44 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
         },
       },
     );
-    if (assembly.status === "rejected") return assembly;
+    if (assembly.status === "rejected") {
+      const movieCleanup = movie === null
+        ? []
+        : [simulatorCleanupFailureFromResult("movie-after-resource-assembly-failure", movie.dispose())]
+            .filter((failure): failure is SimulatorModuleCleanupFailure => failure !== null);
+      return rejectedWithCleanup(assembly, movieCleanup);
+    }
     const commonStartup = renderer.getStartupDirectionCommonResources();
     if (commonStartup.status !== "ok") {
-      return rejectedWithCleanup(fromEvidence(commonStartup), disposeAssembly(assembly.value));
+      return rejectedWithCleanup(
+        fromEvidence(commonStartup),
+        disposeAssembly(assembly.value, movie),
+      );
     }
     const startupScene = await createPixiStartupDirectionScene(
       presentation.value,
       commonStartup.value,
       new BrowserPixiTextureDecoder(),
       recipe.request.chartData.isFullLength,
+      movie === null,
     );
     if (startupScene.status !== "ok") {
-      return rejectedWithCleanup(fromEvidence(startupScene), disposeAssembly(assembly.value));
+      return rejectedWithCleanup(
+        fromEvidence(startupScene),
+        disposeAssembly(assembly.value, movie),
+      );
     }
     const gains = gainBits(recipe.request);
     if (gains.status === "rejected") {
       startupScene.value.dispose();
-      return rejectedWithCleanup(gains, disposeAssembly(assembly.value));
+      return rejectedWithCleanup(gains, disposeAssembly(assembly.value, movie));
     }
     const tracing = createRecordingSimulatorBackends();
     const backends: SimulatorBackends = Object.freeze({
       renderer: tracing.renderer,
       rendering: assembly.value.rendererBackend,
       audio: assembly.value.audioBackend,
+      ...(movie === null ? {} : { movie }),
       particles: assembly.value.particleBackend,
       particleRendering: assembly.value.particleRendererBackend,
       input: tracing.input,
@@ -278,6 +339,15 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
         seGainBits: gains.value.se,
       },
       particles: { sessionId },
+      ...(movie === null || mvResource.value === null
+        ? {}
+        : {
+            movie: {
+              sessionId,
+              musicStartDelayMilliseconds:
+                mvResource.value.profile.musicStartDelayMilliseconds,
+            },
+          }),
       startupDirection: {
         scene: startupScene.value,
         liveStartVoiceCue: presentation.value.liveStartVoice?.cue ?? null,
@@ -286,7 +356,10 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
     }, backends);
     if (engine.status !== "ok") {
       startupScene.value.dispose();
-      return rejectedWithCleanup(fromEvidence(engine), disposeAssembly(assembly.value));
+      return rejectedWithCleanup(
+        fromEvidence(engine),
+        disposeAssembly(assembly.value, movie),
+      );
     }
     const controlOverlay = renderer.createRehearsalControlOverlay(
       score.value.mode,
@@ -304,7 +377,12 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
     }
     renderer.stage.visible = false;
     renderer.stage.alpha = 0;
-    const combinedScene = createPixiCombinedScene(particleRenderer.stage, renderer.stage, startupScene.value);
+    const combinedScene = createPixiCombinedScene(
+      particleRenderer.stage,
+      renderer.stage,
+      startupScene.value,
+      movie?.stage,
+    );
     if (combinedScene.status !== "ok") {
       const cleanups = [
         simulatorCleanupFailureFromResult("control-overlay-after-combined-scene-failure", controlOverlay.value?.dispose() ?? ok(undefined)),
@@ -544,8 +622,9 @@ function disposeAssembly(assembly: {
   readonly audioBackend: { dispose(): unknown };
   readonly particleBackend: { dispose(): unknown };
   readonly particleRendererBackend: { dispose(): unknown };
-}): readonly SimulatorModuleCleanupFailure[] {
+}, movieBackend: { dispose(): unknown } | null = null): readonly SimulatorModuleCleanupFailure[] {
   const rollbackOwners = [
+    ...(movieBackend === null ? [] : [{ identity: "movie-backend", owner: movieBackend }]),
     { identity: "particle-renderer", owner: assembly.particleRendererBackend },
     { identity: "particle-backend", owner: assembly.particleBackend },
     { identity: "audio-backend", owner: assembly.audioBackend },
@@ -575,6 +654,21 @@ function rejectedWithCleanup<T>(
     status: "rejected" as const,
     failure: appendSimulatorCleanupFailures(primary.failure, cleanupFailures),
   });
+}
+
+function fromMovieOperation<T>(
+  result: Exclude<MovieOperationResult<T>, { status: "accepted" }>,
+): SimulatorAssemblyResult<never> {
+  const code = result.status === "movie-resource-integrity"
+    ? "resource-integrity"
+    : result.status === "movie-resource-decode"
+      ? "resource-decode"
+      : result.status === "movie-platform-unavailable"
+        ? "platform-unavailable"
+        : result.status === "evidence-required"
+          ? "evidence-required"
+          : "launch-failed";
+  return rejected(code, result.failure.capability, result.failure.boundary);
 }
 
 function accepted<T>(value: T): SimulatorAssemblyResult<T> {

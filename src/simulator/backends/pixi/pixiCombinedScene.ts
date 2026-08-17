@@ -1,4 +1,5 @@
 import { Container } from "pixi.js";
+import { PIXI_MV_LIVE_STAGE_LABEL } from "./pixiMvLiveBackend";
 import { evidenceRequired, ok, type SimulatorResult } from "../../engine/evidence";
 import type { PixiStartupDirectionScene } from "./pixiStartupDirectionScene";
 import type { StartupDirectionSceneState } from "../../scene/startupDirectionScene";
@@ -10,13 +11,11 @@ export const PIXI_ORDINARY_STAGE_LABEL = "GarupaSimulatorRoot";
 export interface PixiCombinedSceneSnapshot {
   readonly state: "attached" | "disposed";
   readonly rootLabel: typeof PIXI_COMBINED_SCENE_LABEL;
-  readonly childLabels: readonly [
-    typeof PIXI_PARTICLE_STAGE_LABEL,
-    typeof PIXI_ORDINARY_STAGE_LABEL,
-  ];
+  readonly childLabels: readonly string[];
   readonly rootParentAttached: boolean;
   readonly particleStageParentIsRoot: boolean;
   readonly ordinaryStageParentIsRoot: boolean;
+  readonly mvStageParentIsRoot: boolean | null;
   readonly startupBackgroundParentIsRoot: boolean | null;
   readonly startupForegroundParentIsRoot: boolean | null;
 }
@@ -32,6 +31,7 @@ export function createPixiCombinedScene(
   particleStage: Container,
   ordinaryStage: Container,
   startupScene?: PixiStartupDirectionScene,
+  mvStage?: Container,
 ): SimulatorResult<PixiCombinedScene> {
   if (
     !(particleStage instanceof Container) || !(ordinaryStage instanceof Container) ||
@@ -39,6 +39,10 @@ export function createPixiCombinedScene(
     particleStage.parent !== null || ordinaryStage.parent !== null ||
     particleStage.label !== PIXI_PARTICLE_STAGE_LABEL ||
     ordinaryStage.label !== PIXI_ORDINARY_STAGE_LABEL ||
+    (mvStage !== undefined && (
+      !(mvStage instanceof Container) || mvStage === particleStage || mvStage === ordinaryStage ||
+      mvStage.destroyed || mvStage.parent !== null || mvStage.label !== PIXI_MV_LIVE_STAGE_LABEL
+    )) ||
     (startupScene !== undefined && (
       startupScene.backgroundRoot.parent !== null || startupScene.foregroundRoot.parent !== null ||
       startupScene.backgroundRoot.destroyed || startupScene.foregroundRoot.destroyed
@@ -53,11 +57,13 @@ export function createPixiCombinedScene(
   const root = new Container({ label: PIXI_COMBINED_SCENE_LABEL, sortableChildren: false });
   root.sortableChildren = false;
   try {
+    if (mvStage !== undefined) root.addChild(mvStage);
     if (startupScene !== undefined) root.addChild(startupScene.backgroundRoot);
     root.addChild(particleStage);
     root.addChild(ordinaryStage);
     if (startupScene !== undefined) root.addChild(startupScene.foregroundRoot);
   } catch {
+    mvStage?.removeFromParent();
     startupScene?.backgroundRoot.removeFromParent();
     particleStage.removeFromParent();
     ordinaryStage.removeFromParent();
@@ -69,7 +75,7 @@ export function createPixiCombinedScene(
       "Combined-scene construction is atomic and rejects without retaining either stage when Pixi cannot attach the evidence-ordered children.",
     );
   }
-  return ok(new OwnedPixiCombinedScene(root, particleStage, ordinaryStage, startupScene));
+  return ok(new OwnedPixiCombinedScene(root, particleStage, ordinaryStage, startupScene, mvStage));
 }
 
 class OwnedPixiCombinedScene implements PixiCombinedScene {
@@ -80,6 +86,7 @@ class OwnedPixiCombinedScene implements PixiCombinedScene {
     private readonly particleStage: Container,
     private readonly ordinaryStage: Container,
     private readonly startupScene?: PixiStartupDirectionScene,
+    private readonly mvStage?: Container,
   ) {}
 
   applyStartupState(state: StartupDirectionSceneState): SimulatorResult<void> {
@@ -101,12 +108,14 @@ class OwnedPixiCombinedScene implements PixiCombinedScene {
       state: this.disposed ? "disposed" as const : "attached" as const,
       rootLabel: PIXI_COMBINED_SCENE_LABEL,
       childLabels: Object.freeze([
+        ...(this.mvStage === undefined ? [] : [PIXI_MV_LIVE_STAGE_LABEL]),
         PIXI_PARTICLE_STAGE_LABEL,
         PIXI_ORDINARY_STAGE_LABEL,
-      ] as const),
+      ]),
       rootParentAttached: this.root.parent !== null,
       particleStageParentIsRoot: this.particleStage.parent === this.root,
       ordinaryStageParentIsRoot: this.ordinaryStage.parent === this.root,
+      mvStageParentIsRoot: this.mvStage === undefined ? null : this.mvStage.parent === this.root,
       startupBackgroundParentIsRoot: this.startupScene === undefined ? null : this.startupScene.backgroundRoot.parent === this.root,
       startupForegroundParentIsRoot: this.startupScene === undefined ? null : this.startupScene.foregroundRoot.parent === this.root,
     });
@@ -117,6 +126,7 @@ class OwnedPixiCombinedScene implements PixiCombinedScene {
     this.disposed = true;
     try {
       this.root.removeFromParent();
+      this.mvStage?.removeFromParent();
       this.startupScene?.backgroundRoot.removeFromParent();
       this.particleStage.removeFromParent();
       this.ordinaryStage.removeFromParent();

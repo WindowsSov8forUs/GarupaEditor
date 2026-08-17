@@ -46,9 +46,13 @@ export async function createPixiStartupDirectionScene(
   common: PixiStartupDirectionCommonResources,
   decoder: PixiTextureDecoder,
   isFullLength: boolean,
+  includeStandardStage = true,
 ): Promise<SimulatorResult<PixiStartupDirectionScene>> {
   const prepared = [] as Texture[];
-  for (const image of [presentation.stageBackdrop, ...presentation.sdCharacters, presentation.jacket]) {
+  const images = includeStandardStage
+    ? [presentation.stageBackdrop, ...presentation.sdCharacters, presentation.jacket]
+    : [presentation.jacket];
+  for (const image of images) {
     const profile: RenderResourceAssetProfile = Object.freeze({
       logicalAssetId: image.logicalId,
       role: "startup-ui",
@@ -72,7 +76,13 @@ export async function createPixiStartupDirectionScene(
     prepared.push(decoded.value);
   }
   try {
-    return ok(new OwnedPixiStartupDirectionScene(presentation, common, prepared, isFullLength));
+    return ok(new OwnedPixiStartupDirectionScene(
+      presentation,
+      common,
+      prepared,
+      isFullLength,
+      includeStandardStage,
+    ));
   } catch {
     for (const texture of prepared) texture.destroy(true);
     return evidenceRequired(
@@ -88,7 +98,7 @@ class OwnedPixiStartupDirectionScene implements PixiStartupDirectionScene {
   readonly foregroundRoot = new Container({ label: PIXI_STARTUP_FOREGROUND_LABEL, sortableChildren: false });
   private readonly information = new Container({ label: "StartupInformation", sortableChildren: false });
   private readonly darkCover: Graphics;
-  private readonly stageBackdrop: Sprite;
+  private readonly stageBackdrop: Sprite | null;
   private readonly characters: readonly Sprite[];
   private readonly lineOwner = new Container({ label: "StartupLineUiOwner", sortableChildren: false });
   private disposed = false;
@@ -98,16 +108,22 @@ class OwnedPixiStartupDirectionScene implements PixiStartupDirectionScene {
     common: PixiStartupDirectionCommonResources,
     private readonly dynamicTextures: readonly Texture[],
     isFullLength: boolean,
+    includeStandardStage: boolean,
   ) {
     this.backgroundRoot.sortableChildren = false;
     this.foregroundRoot.sortableChildren = false;
     this.information.sortableChildren = false;
-    const [stageTexture, ...rest] = dynamicTextures;
-    const jacketTexture = rest[rest.length - 1]!;
-    const characterTextures = rest.slice(0, -1);
-    this.stageBackdrop = fullFrameSprite(stageTexture!, "StartupStageBackdrop");
-    this.characters = Object.freeze(characterTextures.map((texture, index) => fullFrameSprite(texture, `StartupSdCharacter${index}`)));
-    this.backgroundRoot.addChild(this.stageBackdrop, ...this.characters);
+    const jacketTexture = dynamicTextures[dynamicTextures.length - 1]!;
+    if (includeStandardStage) {
+      const stageTexture = dynamicTextures[0]!;
+      const characterTextures = dynamicTextures.slice(1, -1);
+      this.stageBackdrop = fullFrameSprite(stageTexture, "StartupStageBackdrop");
+      this.characters = Object.freeze(characterTextures.map((texture, index) => fullFrameSprite(texture, `StartupSdCharacter${index}`)));
+      this.backgroundRoot.addChild(this.stageBackdrop, ...this.characters);
+    } else {
+      this.stageBackdrop = null;
+      this.characters = Object.freeze([]);
+    }
     this.darkCover = new Graphics({ label: "StartupDarkCover" }).rect(0, 0, 1600, 720).fill({ color: 0x000000, alpha: 1 });
     this.foregroundRoot.addChild(this.darkCover);
 
@@ -177,7 +193,7 @@ class OwnedPixiStartupDirectionScene implements PixiStartupDirectionScene {
     this.information.visible = state.informationPhase !== "hidden" && state.informationPhase !== "complete";
     this.darkCover.alpha = state.darkCoverAlpha;
     this.darkCover.visible = state.darkCoverAlpha > 0;
-    this.stageBackdrop.alpha = state.stageProgress;
+    if (this.stageBackdrop !== null) this.stageBackdrop.alpha = state.stageProgress;
     for (const character of this.characters) character.alpha = state.characterAlpha;
     this.lineOwner.alpha = state.lineAlpha;
     this.lineOwner.visible = state.lineAlpha > 0;
@@ -190,7 +206,7 @@ class OwnedPixiStartupDirectionScene implements PixiStartupDirectionScene {
       foregroundLabel: this.foregroundRoot.label,
       informationAlpha: this.information.alpha,
       darkCoverAlpha: this.darkCover.alpha,
-      stageProgress: this.stageBackdrop.alpha,
+      stageProgress: this.stageBackdrop?.alpha ?? 0,
       characterAlpha: this.characters[0]?.alpha ?? 0,
       lineAlpha: this.lineOwner.alpha,
       dynamicTextureCount: this.dynamicTextures.length,

@@ -16,6 +16,7 @@ import {
   PIXI_ORDINARY_STAGE_LABEL,
   PIXI_PARTICLE_STAGE_LABEL,
 } from "../backends/pixi/pixiCombinedScene";
+import { PIXI_MV_LIVE_STAGE_LABEL } from "../backends/pixi/pixiMvLiveBackend";
 import { INITIAL_STARTUP_DIRECTION_SCENE_STATE } from "../scene/startupDirectionScene";
 import { createTestPresentationPackage } from "./startupPresentationTestProfile";
 import { CURRENT_STARTUP_DIRECTION_PORTABLE_RESOURCES } from "../backends/resources/currentStartupDirectionResourceManifest";
@@ -75,11 +76,52 @@ async function main(): Promise<void> {
       PIXI_STARTUP_FOREGROUND_LABEL,
     ]);
     const snapshot = combined.value.snapshot();
+    assert.equal(snapshot.mvStageParentIsRoot, null);
     assert.equal(snapshot.startupBackgroundParentIsRoot, true);
     assert.equal(snapshot.startupForegroundParentIsRoot, true);
     combined.value.dispose();
   }
   scene.value.dispose();
+
+  const mvScene = await createPixiStartupDirectionScene(
+    presentation.value,
+    {
+      lineStar: commonTextures[0], jacketFrame: commonTextures[1],
+      difficultyFrames: {
+        EASY: commonTextures[2], NORMAL: commonTextures[3], HARD: commonTextures[4],
+        EXPERT: commonTextures[5], SPECIAL: commonTextures[6],
+      },
+      fullLiveLabel: commonTextures[7], fontFamily: "EvidenceFont",
+    },
+    { decodePng: async () => ({ status: "ok", value: new Texture() }) } as any,
+    false,
+    false,
+  );
+  assert.equal(mvScene.status, "ok");
+  if (mvScene.status === "ok") {
+    assert.equal(mvScene.value.snapshot().dynamicTextureCount, 1);
+    assert.equal(mvScene.value.backgroundRoot.children.length, 0);
+    const mv = new Container({ label: PIXI_MV_LIVE_STAGE_LABEL });
+    const mvParticles = new Container({ label: PIXI_PARTICLE_STAGE_LABEL });
+    const mvOrdinary = new Container({ label: PIXI_ORDINARY_STAGE_LABEL });
+    const mvCombined = createPixiCombinedScene(mvParticles, mvOrdinary, mvScene.value, mv);
+    assert.equal(mvCombined.status, "ok");
+    if (mvCombined.status === "ok") {
+      assert.deepEqual(mvCombined.value.root.children.map((child: any) => child.label), [
+        PIXI_MV_LIVE_STAGE_LABEL,
+        PIXI_STARTUP_BACKGROUND_LABEL,
+        PIXI_PARTICLE_STAGE_LABEL,
+        PIXI_ORDINARY_STAGE_LABEL,
+        PIXI_STARTUP_FOREGROUND_LABEL,
+      ]);
+      assert.equal(mvCombined.value.snapshot().mvStageParentIsRoot, true);
+      mvCombined.value.dispose();
+    }
+    mvScene.value.dispose();
+    mv.destroy({ children: true });
+    mvParticles.destroy({ children: true });
+    mvOrdinary.destroy({ children: true });
+  }
   particle.destroy({ children: true });
   ordinary.destroy({ children: true });
   for (const texture of commonTextures) texture.destroy(true);
