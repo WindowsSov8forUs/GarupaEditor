@@ -27,6 +27,8 @@ import {
 } from "../engine/managers/inGameDirector";
 import { InGameManager } from "../engine/managers/inGameManager";
 import { StartupDirectionController } from "../engine/managers/startupDirectionController";
+import { InGameMovieManager, mapMovieResult } from "../engine/movie/inGameMovieManager";
+import { MvBackgroundModule } from "../engine/movie/mvBackgroundModule";
 import { InGameMusicScoreController } from "../engine/managers/inGameMusicScoreController";
 import { InGameOneFrameJudgementController } from "../engine/managers/inGameOneFrameJudgementController";
 import { ScoreLifeStateManager } from "../engine/managers/scoreLifeStateManager";
@@ -87,6 +89,8 @@ class SimulatorEngineHost implements SimulatorEngine {
     if (this.inGameManager.state === "initialized") return ok(undefined);
     const audioFault = this.pollAudioFault();
     if (audioFault.status !== "ok") return audioFault;
+    const movieFault = this.pollMovieFault();
+    if (movieFault.status !== "ok") return movieFault;
     const audio = this.audioProducer?.preflightInitialize() ?? null;
     if (audio !== null && audio.status !== "ok") return audio;
     const awake = this.inGameDirector.awake();
@@ -110,6 +114,8 @@ class SimulatorEngineHost implements SimulatorEngine {
     }
     const audioFault = this.pollAudioFault();
     if (audioFault.status !== "ok") return audioFault;
+    const movieFault = this.pollMovieFault();
+    if (movieFault.status !== "ok") return movieFault;
     if (this.inGameManager.state !== "initialized") {
       return this.inGameManager.execUpdate(deltaTimeSeconds);
     }
@@ -191,6 +197,8 @@ class SimulatorEngineHost implements SimulatorEngine {
     }
     const audioFault = this.pollAudioFault();
     if (audioFault.status !== "ok") return audioFault;
+    const movieFault = this.pollMovieFault();
+    if (movieFault.status !== "ok") return movieFault;
     const manager = this.inGameManager.snapshot();
     if (!manager.playable) {
       return evidenceRequired(
@@ -221,6 +229,8 @@ class SimulatorEngineHost implements SimulatorEngine {
     }
     const audioFault = this.pollAudioFault();
     if (audioFault.status !== "ok") return audioFault;
+    const movieFault = this.pollMovieFault();
+    if (movieFault.status !== "ok") return movieFault;
     if (this.inGameManager.state !== "initialized") {
       return this.inGameManager.resume();
     }
@@ -366,6 +376,7 @@ class SimulatorEngineHost implements SimulatorEngine {
   snapshot(): SimulatorResult<SimulatorSnapshot> {
     if (this.inGameManager.state !== "disposed" && this.inGameManager.fault === null) {
       this.pollAudioFault();
+      this.pollMovieFault();
     }
     const adjustedMusicPosition =
       this.inGameManager.noteManager.peekAdjustedMusicPosition();
@@ -376,6 +387,7 @@ class SimulatorEngineHost implements SimulatorEngine {
       backendTrace: this.backends.snapshot(),
       renderingBackend: this.backends.rendering?.snapshot() ?? null,
       audioBackend: this.backends.audio.snapshot(),
+      movieBackend: this.backends.movie?.snapshot() ?? null,
       particleBackend: this.backends.particles?.snapshot() ?? null,
       particleRendererBackend: this.backends.particleRendering?.snapshot() ?? null,
     });
@@ -385,21 +397,27 @@ class SimulatorEngineHost implements SimulatorEngine {
     if (this.inGameManager.state === "disposed") {
       const audio = this.disposeAudio();
       if (audio.status !== "ok") return audio;
+      const movie = this.disposeMovie();
+      if (movie.status !== "ok") return movie;
       const particles = this.disposeParticles();
       return particles.status === "ok"
         ? this.backends.rendering?.dispose() ?? ok(undefined)
         : particles;
     }
     const rendererState = this.backends.rendering?.snapshot().state;
+    const movieState = this.backends.movie?.snapshot().state;
     const particleBackendState = this.backends.particles?.snapshot().state;
     const particleRendererState = this.backends.particleRendering?.snapshot().state;
     if (this.inGameManager.state === "faulted" ||
       rendererState === "faulted" || rendererState === "disposed" ||
+      movieState === "faulted" || movieState === "disposed" ||
       particleBackendState === "faulted" || particleBackendState === "disposed" ||
       particleRendererState === "faulted" || particleRendererState === "disposed") {
       this.inGameManager.disposeAfterTerminalBackendFault();
       const audio = this.disposeAudio();
       if (audio.status !== "ok") return audio;
+      const movie = this.disposeMovie();
+      if (movie.status !== "ok") return movie;
       const particles = this.disposeParticles();
       return particles.status === "ok"
         ? this.backends.rendering?.dispose() ?? ok(undefined)
@@ -436,6 +454,8 @@ class SimulatorEngineHost implements SimulatorEngine {
     }
     const audio = this.disposeAudio();
     if (audio.status !== "ok") return audio;
+    const movie = this.disposeMovie();
+    if (movie.status !== "ok") return movie;
     const particles = this.disposeParticles();
     return particles.status === "ok"
       ? this.backends.rendering?.dispose() ?? ok(undefined)
@@ -455,6 +475,11 @@ class SimulatorEngineHost implements SimulatorEngine {
     }
     const ended = this.audioProducer.pollBgmNaturalEnd();
     if (ended.status !== "ok" || !ended.value) return ended.status === "ok" ? ok(undefined) : ended;
+    if (this.backends.movie !== undefined) {
+      const movie = mapMovieResult(this.backends.movie.observe());
+      if (movie.status !== "ok") return this.inGameManager.latchExternalFault(movie);
+      if (!movie.value.ended) return ok(undefined);
+    }
     const scoreLife = this.inGameManager.scoreLifeStateManager;
     if (scoreLife === null) {
       return evidenceRequired(
@@ -464,6 +489,14 @@ class SimulatorEngineHost implements SimulatorEngine {
       );
     }
     return this.completeLiveAudio(scoreLife.getClearStatus());
+  }
+
+  private pollMovieFault(): SimulatorResult<void> {
+    if (this.backends.movie === undefined) return ok(undefined);
+    const result = mapMovieResult(this.backends.movie.observe());
+    return result.status === "ok"
+      ? ok(undefined)
+      : this.inGameManager.latchExternalFault(result);
   }
 
   private pollAudioFault(): SimulatorResult<void> {
@@ -483,6 +516,14 @@ class SimulatorEngineHost implements SimulatorEngine {
       return ok(undefined);
     }
     return mapAudioResult(this.backends.audio.dispose());
+  }
+
+  private disposeMovie(): SimulatorResult<void> {
+    if (this.backends.movie === undefined ||
+      this.backends.movie.snapshot().state === "disposed") {
+      return ok(undefined);
+    }
+    return mapMovieResult(this.backends.movie.dispose());
   }
 
   private disposeParticles(): SimulatorResult<void> {
@@ -678,6 +719,12 @@ export function createSimulatorEngine(
   }
   const modeValidation = validateSimulatorModeIdentity(input.runtime.mode);
   if (modeValidation.status !== "ok") return modeValidation;
+  const movieBackgroundResult = createMovieBackground(
+    input,
+    backends,
+    modeValidation.value,
+  );
+  if (movieBackgroundResult.status !== "ok") return movieBackgroundResult;
   const slideNoteManager = new SlideNoteManager();
   const inGameCalculatedData = new InGameCalculatedData(modeValidation.value);
   const scoringPlanResult = input.scoreLifeState === undefined
@@ -746,6 +793,7 @@ export function createSimulatorEngine(
         audioProducer,
         input.startupDirection.liveStartVoiceCue,
         input.startupDirection.purpose,
+        movieBackgroundResult.value,
       );
   const inGameManager = new InGameManager(
     musicScoreController,
@@ -775,6 +823,54 @@ export function createSimulatorEngine(
     audioProducer,
     particleCoordinator,
     backends,
+  ));
+}
+
+function createMovieBackground(
+  input: SimulatorEngineInput,
+  backends: SimulatorBackends,
+  mode: import("../engine/data/inGameCalculatedData").SimulatorModeIdentity,
+): SimulatorResult<MvBackgroundModule | null> {
+  const backend = backends.movie;
+  if (input.movie === undefined) {
+    const state = backend?.snapshot().state ?? null;
+    return state === "ready" || state === "play-pending" || state === "playing" ||
+      state === "paused" || state === "seeking" || state === "ended"
+      ? evidenceRequired(
+          "movie.session.incomplete-host-binding",
+          ["MVL-C01"],
+          "A prepared movie backend requires one explicit matching Live host binding and cannot become an ambient background.",
+        )
+      : ok(null);
+  }
+  if (input.movie === null || typeof input.movie !== "object" ||
+    Object.keys(input.movie).sort().join(",") !== "musicStartDelayMilliseconds,sessionId" ||
+    typeof input.movie.sessionId !== "string" || input.movie.sessionId.length === 0 ||
+    !Number.isInteger(input.movie.musicStartDelayMilliseconds) ||
+    input.movie.musicStartDelayMilliseconds < -0x80000000 ||
+    input.movie.musicStartDelayMilliseconds > 0x7fffffff ||
+    input.startupDirection === undefined ||
+    input.startupDirection.purpose === "move-time-reconstruction" ||
+    mode.sessionMode !== "live" || backend === undefined) {
+    return evidenceRequired(
+      "movie.session.invalid-host-binding",
+      ["MVL-E12", "MVL-E13", "MVL-R01", "MVL-R02"],
+      "MV Live requires one prepared backend, exact session/delay binding, fresh Live Manual/Auto startup and no Rehearsal/MoveTime inheritance.",
+    );
+  }
+  const snapshot = backend.snapshot();
+  if (snapshot.state !== "ready" || snapshot.sessionId !== input.movie.sessionId ||
+    snapshot.resourceCount !== 1 || snapshot.fault !== null ||
+    snapshot.muted !== true || snapshot.loop !== false) {
+    return evidenceRequired(
+      "movie.session.backend-not-ready",
+      ["MVL-P01", "MVL-P02", "MVL-C01"],
+      "The exact muted non-looping movie backend session must be ready before engine owners are constructed.",
+    );
+  }
+  return ok(new MvBackgroundModule(
+    new InGameMovieManager(input.movie.sessionId, backend),
+    input.movie.musicStartDelayMilliseconds,
   ));
 }
 

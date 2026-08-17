@@ -7,6 +7,7 @@ import {
   type StartupAudioOwnerSnapshot,
   type StartupAudioPurpose,
 } from "../audio/startupAudioOwner";
+import type { MvBackgroundModule } from "../movie/mvBackgroundModule";
 import {
   freezeStartupDirectionSceneState,
   INITIAL_STARTUP_DIRECTION_SCENE_STATE,
@@ -37,6 +38,7 @@ export type StartupDirectionPhase =
   | "opening-last"
   | "voice-wait"
   | "music-wait"
+  | "movie-before-sound"
   | "playing-none"
   | "playing-sound";
 
@@ -49,6 +51,7 @@ export interface StartupDirectionSnapshot {
   readonly musicStartRequested: boolean;
   readonly liveVoiceRequired: boolean;
   readonly audio: StartupAudioOwnerSnapshot | null;
+  readonly movie: ReturnType<MvBackgroundModule["snapshot"]> | null;
   readonly scene: StartupDirectionSceneState;
 }
 
@@ -69,15 +72,31 @@ export class StartupDirectionController {
     audio: AudioCommandProducer | null = null,
     private readonly liveStartVoiceCue: string | null = null,
     private readonly purpose: StartupDirectionPurpose = "initial",
+    private readonly mvBackground: MvBackgroundModule | null = null,
   ) {
     this.startupAudio = audio === null
       ? null
-      : new StartupAudioOwner(mode, purpose, audio, liveStartVoiceCue);
+      : new StartupAudioOwner(
+          mode,
+          purpose,
+          audio,
+          liveStartVoiceCue,
+          mvBackground !== null,
+        );
   }
 
   initialize(): SimulatorResult<void> {
     if (this.disposed) return rejected("startup-direction.initialize-after-dispose", "A disposed startup owner cannot be reconstructed.");
     if (this.initialized) return ok(undefined);
+    if (this.mvBackground !== null &&
+      (this.mode.sessionMode !== "live" || this.purpose === "move-time-reconstruction")) {
+      return rejected(
+        "startup-direction.mv-unsupported-mode-or-purpose",
+        "Current MV Live is evidenced only for fresh Live Manual/Auto startup; Practice Retry and MoveTime cannot select the Simple movie background.",
+      );
+    }
+    const movie = this.mvBackground?.initialize() ?? ok(undefined);
+    if (movie.status !== "ok") return movie;
     this.initialized = true;
     const startupAudio = this.startupAudio?.initialize() ?? (
       this.mode.sessionMode === "live" && this.liveStartVoiceCue !== null
@@ -117,6 +136,10 @@ export class StartupDirectionController {
     if (!this.initialized || this.disposed || !Number.isFinite(deltaTimeSeconds) ||
       deltaTimeSeconds < 0 || !Object.is(deltaTimeSeconds, Math.fround(deltaTimeSeconds))) {
       return rejected("startup-direction.invalid-step", "Startup direction accepts only initialized exact non-negative Float32 engine delta.");
+    }
+    if (this.phaseValue !== "movie-before-sound") {
+      const movie = this.mvBackground?.step(deltaTimeSeconds) ?? ok(undefined);
+      if (movie.status !== "ok") return movie;
     }
     this.advanceParallelOwners(deltaTimeSeconds);
     switch (this.phaseValue) {
@@ -173,13 +196,26 @@ export class StartupDirectionController {
         const sample = advance(this.phaseElapsedValue, MUSIC_WAIT, deltaTimeSeconds);
         this.phaseElapsedValue = sample.elapsed;
         if (sample.done) {
-          const audioTransition = this.startupAudio?.preflightEnterPlaying() ?? null;
-          if (audioTransition?.status === "evidence-required") return audioTransition;
-          this.enter("playing-none", GameState.PlayingNone);
-          if (audioTransition?.status === "ok") {
-            const committed = audioTransition.value.commit();
-            if (committed.status !== "ok") return committed;
+          if (this.mvBackground === null) {
+            const entered = this.enterPlayingNone();
+            if (entered.status !== "ok") return entered;
+          } else {
+            this.enter("movie-before-sound", GameState.MovieBeforeSound);
+            const started = this.mvBackground.startBeforeSound();
+            if (started.status !== "ok") return started;
           }
+        }
+        break;
+      }
+      case "movie-before-sound": {
+        const completed = this.mvBackground?.stepBeforeSound(deltaTimeSeconds) ?? rejected(
+          "startup-direction.movie-before-sound-owner-missing",
+          "MovieBeforeSound requires the exact MV background owner.",
+        );
+        if (completed.status !== "ok") return completed;
+        if (completed.value) {
+          const entered = this.enterPlayingNone();
+          if (entered.status !== "ok") return entered;
         }
         break;
       }
@@ -200,9 +236,13 @@ export class StartupDirectionController {
       openingElapsed: this.openingElapsedValue,
       currentGameState: this.stateValue,
       playable: this.stateValue === GameState.PlayingSound,
-      musicStartRequested: this.stateValue >= GameState.PlayingNone,
+      musicStartRequested: this.stateValue === GameState.PlayingNone ||
+        this.stateValue === GameState.PlayingSound ||
+        this.stateValue === GameState.PauseNone ||
+        this.stateValue === GameState.PauseSound,
       liveVoiceRequired: this.mode.sessionMode === "live" && this.liveStartVoiceCue !== null,
       audio: this.startupAudio?.snapshot() ?? null,
+      movie: this.mvBackground?.snapshot() ?? null,
       scene: this.sceneValue,
     });
   }
@@ -211,12 +251,14 @@ export class StartupDirectionController {
     if (this.disposed) return;
     this.disposed = true;
     this.startupAudio?.dispose();
+    this.mvBackground?.dispose();
     this.scene?.dispose();
   }
 
   private advanceParallelOwners(delta: number): void {
     if (this.phaseValue !== "opening-last" && this.phaseValue !== "music-wait" &&
-      this.phaseValue !== "voice-wait" && this.phaseValue !== "playing-none" && this.phaseValue !== "playing-sound") return;
+      this.phaseValue !== "voice-wait" && this.phaseValue !== "movie-before-sound" &&
+      this.phaseValue !== "playing-none" && this.phaseValue !== "playing-sound") return;
     this.openingElapsedValue = Math.fround(this.openingElapsedValue + delta);
     const elapsed = this.openingElapsedValue;
     const hud = unit(elapsed, HUD_FADE);
@@ -235,6 +277,34 @@ export class StartupDirectionController {
       linePhase: lineElapsed <= 0 ? "waiting" : line < 1 ? "fading" : "visible",
       lineAlpha: line,
     });
+  }
+
+  pauseMovie(): SimulatorResult<void> {
+    return this.mvBackground?.pause() ?? ok(undefined);
+  }
+
+  resumeMovie(): SimulatorResult<void> {
+    return this.mvBackground?.resume() ?? ok(undefined);
+  }
+
+  stopMovie(): SimulatorResult<void> {
+    return this.mvBackground?.stop() ?? ok(undefined);
+  }
+
+  private enterPlayingNone(): SimulatorResult<void> {
+    const audioTransition = this.startupAudio?.preflightEnterPlaying() ?? null;
+    if (audioTransition?.status === "evidence-required") return audioTransition;
+    if (this.mvBackground !== null) {
+      const afterSound = this.mvBackground.startAfterSound();
+      if (afterSound.status !== "ok") {
+        if (audioTransition?.status === "ok") audioTransition.value.discard();
+        return afterSound;
+      }
+    }
+    this.enter("playing-none", GameState.PlayingNone);
+    return audioTransition?.status === "ok"
+      ? audioTransition.value.commit()
+      : ok(undefined);
   }
 
   private enter(phase: StartupDirectionPhase, state: GameStateValue): void {

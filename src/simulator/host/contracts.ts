@@ -12,6 +12,7 @@ import type {
 import type { ScoreLifeStateProfile } from "../engine/data/scoreLifeState";
 import type { SimulatorResult } from "../engine/evidence";
 import type { AudioBackendSnapshot } from "../backends/audioContracts";
+import type { MovieBackendSnapshot } from "../backends/movieContracts";
 import type { RenderBackendSnapshot } from "../backends/renderingContracts";
 import type {
   ParticleBackendSnapshot,
@@ -50,6 +51,10 @@ export interface SimulatorEngineInput {
   readonly rendering?: SimulatorRenderingSessionInput;
   readonly audio?: SimulatorAudioSessionInput;
   readonly particles?: SimulatorParticleSessionInput;
+  readonly movie?: {
+    readonly sessionId: string;
+    readonly musicStartDelayMilliseconds: number;
+  };
   readonly startupDirection?: {
     readonly scene: StartupDirectionSceneBackend | null;
     readonly liveStartVoiceCue: string | null;
@@ -64,6 +69,7 @@ export interface SimulatorSnapshot {
   readonly backendTrace: readonly SimulatorBackendTraceEvent[];
   readonly renderingBackend: RenderBackendSnapshot | null;
   readonly audioBackend: AudioBackendSnapshot;
+  readonly movieBackend: MovieBackendSnapshot | null;
   readonly particleBackend: ParticleBackendSnapshot | null;
   readonly particleRendererBackend: ParticleRendererBackendSnapshot | null;
 }

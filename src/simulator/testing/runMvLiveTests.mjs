@@ -13,7 +13,9 @@ const require = createRequire(import.meta.url);
 const typeScriptCli = require.resolve("typescript/bin/tsc");
 try {
   if (sharedOutputRoot === undefined) run(process.execPath, [typeScriptCli, "-p", join(testingRoot, "tsconfig.tests.json"), "--outDir", outputRoot]);
-  run(process.execPath, [join(outputRoot, "src", "simulator", "testing", "movieContracts.test.js")]);
+  for (const test of ["movieContracts.test.js", "mvLiveContract.test.js"]) {
+    run(process.execPath, [join(outputRoot, "src", "simulator", "testing", test)]);
+  }
   if (process.env.SIMULATOR_TEST_SHARED_PREFLIGHT !== "1") {
     run(process.execPath, [join(testingRoot, "verifyTestingFixtures.mjs")]);
     run(process.execPath, [join(testingRoot, "verifyDependencies.mjs")]);

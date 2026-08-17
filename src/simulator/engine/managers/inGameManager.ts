@@ -148,12 +148,11 @@ export class InGameManager {
         "InGameManager.ExecUpdate is only represented after initialization and before disposal.",
       );
     }
-    if (this.startupDirection !== null && this.currentGameStateValue <= GameState.PlayingNone) {
-      const previous = this.currentGameStateValue;
+    if (this.startupDirection !== null && !this.startupDirection.snapshot().playable) {
       const startup = this.startupDirection.step(deltaTimeSeconds);
       if (startup.status !== "ok") return this.latchFault(startup);
       this.currentGameStateValue = this.startupDirection.snapshot().currentGameState;
-      if (previous <= GameState.PlayingNone) return ok(undefined);
+      return ok(undefined);
     }
     if (this.currentGameStateValue === GameState.PauseNone) {
       return this.commitParticleAdvance(deltaTimeSeconds, true);
@@ -385,16 +384,17 @@ export class InGameManager {
         "The recovered scheduling freeze is only represented for an initialized live.",
       );
     }
-    if (this.currentGameStateValue < GameState.PlayingSound) {
+    if (this.currentGameStateValue === GameState.PauseSound) return ok(undefined);
+    if (this.currentGameStateValue !== GameState.PlayingSound) {
       return evidenceRequired(
-        "startup-direction.pause-during-opening",
-        ["SD09"],
-        "Pause is unavailable before the startup owner publishes PlayingSound.",
+        "startup-direction.pause-outside-playing-sound",
+        ["SD09", "MVL-R03"],
+        "Pause is available only from PlayingSound; MovieBeforeSound and every other opening/terminal state fail closed.",
       );
     }
-    if (this.isPaused()) {
-      return ok(undefined);
-    }
+    if (this.isPaused()) return ok(undefined);
+    const movie = this.startupDirection?.pauseMovie() ?? ok(undefined);
+    if (movie.status !== "ok") return this.latchFault(movie);
     this.currentGameStateValue = GameState.PauseSound;
     this.pauseStateValue = PauseState.None;
     return ok(undefined);
@@ -411,16 +411,17 @@ export class InGameManager {
         "The recovered resume path is only represented for an initialized live.",
       );
     }
-    if (this.currentGameStateValue < GameState.PlayingSound) {
+    if (this.currentGameStateValue === GameState.PlayingSound) return ok(undefined);
+    if (this.currentGameStateValue !== GameState.PauseSound) {
       return evidenceRequired(
-        "startup-direction.resume-during-opening",
-        ["SD09"],
-        "Resume is unavailable before the startup owner publishes PlayingSound.",
+        "startup-direction.resume-outside-pause-sound",
+        ["SD09", "MVL-R04"],
+        "Resume is available only from PauseSound; MovieBeforeSound and every other opening/terminal state fail closed.",
       );
     }
-    if (!this.isPaused()) {
-      return ok(undefined);
-    }
+    if (!this.isPaused()) return ok(undefined);
+    const movie = this.startupDirection?.resumeMovie() ?? ok(undefined);
+    if (movie.status !== "ok") return this.latchFault(movie);
     this.currentGameStateValue = GameState.PlayingSound;
     this.pauseStateValue = PauseState.None;
     return ok(undefined);

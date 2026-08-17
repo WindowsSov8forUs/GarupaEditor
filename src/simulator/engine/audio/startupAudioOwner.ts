@@ -82,8 +82,10 @@ export class StartupAudioOwner {
     private readonly purpose: StartupAudioPurpose,
     private readonly producer: AudioCommandProducer,
     private readonly liveStartVoiceCue: string | null,
+    mvLive = false,
   ) {
-    this.gayaRequired = purpose !== "move-time-reconstruction" && mode.sessionMode === "live";
+    this.gayaRequired = purpose !== "move-time-reconstruction" &&
+      mode.sessionMode === "live" && !mvLive;
     this.liveVoiceRequired = purpose !== "move-time-reconstruction" &&
       mode.sessionMode === "live" && liveStartVoiceCue !== null;
   }

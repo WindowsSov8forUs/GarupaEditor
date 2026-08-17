@@ -7,6 +7,16 @@ export const GameState = {
   PlayingSound: 5,
   PauseNone: 6,
   PauseSound: 7,
+  GameOverMotionFirstStart: 8,
+  GameOverMotionLastStart: 9,
+  GameOverMotionLastEnd: 10,
+  GameClearAnimStart: 11,
+  GameClearAnimEnd: 12,
+  ClearMotionStart: 13,
+  MoveTime: 14,
+  MoveTimeWaitForPlay: 15,
+  MoveTimeFinished: 16,
+  MovieBeforeSound: 17,
 } as const;
 
 export type GameStateValue = (typeof GameState)[keyof typeof GameState];
