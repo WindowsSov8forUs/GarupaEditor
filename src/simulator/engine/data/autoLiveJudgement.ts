@@ -12,6 +12,7 @@ export interface AutoLiveJudgementRequest {
 
 export interface AutoLiveJudgementOwnership {
   readonly multipleDirectionalFlickNoteCount: number | null;
+  readonly productExtension?: "garupa-visible-node";
 }
 
 export interface MultipleDirectionalRuntimeGroup {

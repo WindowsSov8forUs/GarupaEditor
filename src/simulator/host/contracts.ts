@@ -27,6 +27,7 @@ import type { InGameDirectorSnapshot } from "../engine/managers/inGameDirector";
 import type { InGameManagerSnapshot } from "../engine/managers/inGameManager";
 import type { StartupDirectionSceneBackend } from "../scene/startupDirectionScene";
 import type { StartupDirectionPurpose } from "../engine/managers/startupDirectionController";
+import type { GarupaProductSceneLayout } from "../scene/simulatorSceneLayout";
 
 export type SimulatorEngineBuildPurpose = "initial" | "retry" | "move-time-reconstruction";
 
@@ -34,6 +35,7 @@ export interface SimulatorRenderingSessionInput {
   readonly sessionId: string;
   readonly resources: RenderEngineResourceBindings;
   readonly ordinaryNoteScene: OrdinaryFixedNoteSceneInput;
+  readonly garupaProductScene?: GarupaProductSceneLayout;
 }
 
 export interface SimulatorParticleSessionInput {

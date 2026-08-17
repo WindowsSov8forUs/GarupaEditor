@@ -68,6 +68,7 @@ export interface GarupaProductSceneLayout {
   readonly minimumLane: -2 | -1 | 0;
   readonly maximumLane: 6 | 7 | 8;
   readonly laneSpacingWorld: RenderFloat32;
+  readonly noteSettingScale: RenderFloat32;
   readonly targetCenterY: RenderFloat32;
   readonly fieldLines: readonly GarupaProductFieldLine[];
   readonly projectLaneAtCurve: (lane: number, curve: number) => SimulatorResult<RenderVector3>;
@@ -310,6 +311,7 @@ function createGarupaProductScene(
     minimumLane,
     maximumLane,
     laneSpacingWorld: f32(laneSpacing),
+    noteSettingScale: scene.noteSettingScale,
     targetCenterY: scene.targetCenterY,
     fieldLines: Object.freeze(fieldLines),
     projectLaneAtCurve,

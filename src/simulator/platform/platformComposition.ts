@@ -340,6 +340,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
         sessionId,
         resources: assembly.value.renderBindings,
         ordinaryNoteScene: assembly.value.sceneLayout.ordinaryNoteScene,
+        garupaProductScene: assembly.value.sceneLayout.garupaProductScene,
       },
       audio: {
         sessionId,

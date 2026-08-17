@@ -62,6 +62,10 @@ import type {
   SimulatorEngineInput,
   SimulatorSnapshot,
 } from "./contracts";
+import { getGarupaProductChartProfile } from "../engine/garupa/productChartProfile";
+import { getGarupaProductTimingGroupAxisProfile } from "../engine/garupa/timingGroupAxis";
+import { GarupaProductRenderProducer } from "../engine/garupa/productRenderProducer";
+import { GarupaProductTimelineManager } from "../engine/garupa/productTimelineManager";
 
 class SimulatorEngineHost implements SimulatorEngine {
   private naturalCompletionClearStatus: 1 | 2 | 3 | null = null;
@@ -748,6 +752,43 @@ export function createSimulatorEngine(
   const scoreLifeStateManager = scoreLifeStateResult.value;
   const musicScoreController = new InGameMusicScoreController(input.chart);
   const oneFrameJudgementController = new InGameOneFrameJudgementController();
+  const productProfile = getGarupaProductChartProfile(input.chart);
+  let productTimeline: GarupaProductTimelineManager | null = null;
+  if (productProfile?.route === "product-extension") {
+    const productAxis = getGarupaProductTimingGroupAxisProfile(input.chart);
+    if (productAxis === undefined) {
+      return evidenceRequired(
+        "simulator.garupa-extension.axis-profile-unregistered",
+        [],
+        "A product-extension chart requires its exact construction-owned TimingGroup axis profile.",
+      );
+    }
+    if (input.rendering !== undefined && input.rendering.garupaProductScene === undefined) {
+      return evidenceRequired(
+        "simulator.garupa-extension.scene-profile-unregistered",
+        [],
+        "A rendered product-extension chart requires the schema-6 lane-count scene sibling.",
+      );
+    }
+    const productRender = input.rendering === undefined || backends.rendering === undefined
+      ? null
+      : new GarupaProductRenderProducer(
+          input.rendering.sessionId,
+          backends.rendering,
+          input.rendering.resources,
+          productProfile,
+          productAxis,
+          input.rendering.garupaProductScene!,
+          input.rendering.ordinaryNoteScene.specificSpeed,
+        );
+    productTimeline = new GarupaProductTimelineManager(
+      productProfile,
+      modeValidation.value,
+      musicScoreController,
+      oneFrameJudgementController,
+      productRender,
+    );
+  }
   if (scoreLifeStateManager !== null) {
     const businessOwner = oneFrameJudgementController.registerBusinessOwner(
       (judgement, source) => scoreLifeStateManager.freezeOneFrame(judgement, source),
@@ -773,6 +814,7 @@ export function createSimulatorEngine(
   const judgementOwner =
     oneFrameJudgementController.registerAutoLiveJudgementOwner(
       (noteInformation) =>
+        productTimeline?.getAutoLiveJudgementOwnership(noteInformation) ??
         noteManager.getAutoLiveJudgementOwnership(noteInformation),
     );
   if (judgementOwner.status !== "ok") {
@@ -813,6 +855,7 @@ export function createSimulatorEngine(
     input.chart.habahiroChangeAbsolutePos,
     input.rendering?.ordinaryNoteScene ?? null,
     startupDirection,
+    productTimeline,
   );
   const inGameDirector = new InGameDirector(
     inGameManager,

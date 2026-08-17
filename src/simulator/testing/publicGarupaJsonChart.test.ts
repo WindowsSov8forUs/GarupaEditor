@@ -25,6 +25,8 @@ import {
   createGarupaProductTimingGroupAxisProfile,
   getGarupaProductTimingGroupAxisProfile,
 } from "../engine/garupa/timingGroupAxis";
+import { GarupaProductRenderProducer } from "../engine/garupa/productRenderProducer";
+import { createSimulatorSceneLayout } from "../scene/simulatorSceneLayout";
 
 function main(): void {
   testContractCopyAndExactShape();
@@ -37,6 +39,8 @@ function main(): void {
   testFailureClosure();
   testCanonicalBmsDifferentialProjection();
   testAutoAndManualEngineOutcomes();
+  testProductAutoEngineOutcome();
+  testProductRenderCommands();
   testCapabilities();
   console.log("public Garupa JSON chart tests passed");
 }
@@ -424,6 +428,133 @@ function testAutoAndManualEngineOutcomes(): void {
   assert.equal(manualRecord.currentLife, 900);
   assert.equal(manualRecord.resultCounts[0], 1);
   requireOk(manual.dispose());
+}
+
+function testProductAutoEngineOutcome(): void {
+  const chart = requireOk(constructChartFromGarupaChartJson(parse([
+    { type: "BPM", beat: 0, value: 120 },
+    { type: "SV", beat: 1.5, value: -1 },
+    { type: "SV", beat: 2, value: 1 },
+    { type: "Single", beat: 1, lane: 0.5, width: 2 },
+    { type: "Slide", connections: [
+      { type: "Hidden", beat: 2, lane: 1, width: 1 },
+      { type: "Flick", beat: 2, lane: 2.5, width: 1 },
+      { type: "Skill", beat: 3, lane: 3, width: 1 },
+      { type: "Directional", beat: 4, lane: 5, width: 2, direction: "Left" },
+      { type: "Hidden", beat: 5, lane: 4, width: 1 },
+    ] },
+  ]), 9));
+  const mode = createSimulatorModeIdentity("live", "auto");
+  const engine = requireOk(createSimulatorEngine({
+    chart,
+    runtime: { highFrequencyMode: false, judgeOffsetFrames: 0, mode },
+    scoreLifeState: {
+      schemaVersion: 3,
+      sessionId: "garupa-product-auto",
+      mode,
+      life: { initialLife: 1000, playerMaxLife: 1000, lifeUpperLimit: 2000, missDamage: -100, badDamage: -50 },
+    },
+  }, createRecordingSimulatorBackends()));
+  requireOk(engine.initialize());
+  for (let frame = 0; frame < 360; frame += 1) requireOk(engine.step(Math.fround(1 / 60)));
+  const snapshot = requireOk(engine.snapshot());
+  const record = snapshot.managers.scoreLifeState!.record;
+  assert.equal(record.score, 10_000_004);
+  assert.equal(record.currentCombo, 4);
+  assert.equal(record.resultCounts[4], 4);
+  assert.equal(snapshot.managers.garupaProduct?.visibleNodeCount, 4);
+  assert.equal(snapshot.managers.garupaProduct?.judgedNodeCount, 4);
+  requireOk(engine.dispose());
+}
+
+function testProductRenderCommands(): void {
+  const chart = requireOk(constructChartFromGarupaChartJson(parse([
+    { type: "BPM", beat: 0, value: 120 },
+    { type: "SV", beat: 3, value: 0 },
+    { type: "Single", beat: 1, lane: 0.5, width: 2 },
+    { type: "Slide", connections: [
+      { type: "Hidden", beat: 1, lane: -1, width: 1 },
+      { type: "Flick", beat: 2, lane: 2.25, width: 2 },
+      { type: "Hidden", beat: 3, lane: 7, width: 1 },
+    ] },
+  ]), 9));
+  const product = getGarupaProductChartProfile(chart)!;
+  const axis = getGarupaProductTimingGroupAxisProfile(chart)!;
+  const resources = Object.freeze({
+    noteAtlasLogicalAssetId: "note-atlas",
+    directionalAtlasLogicalAssetId: "directional-atlas",
+    curveNoteMaterialLogicalAssetId: "curve-material",
+  });
+  const scene = requireOk(createSimulatorSceneLayout(
+    { viewportWidth: 1600, viewportHeight: 720, inputOrigin: "bottom-left" },
+    {
+      specificSpeed: Math.fround(11), noteSize: Math.fround(100), highAspectRatio: 1,
+      judgeOffsetFrames: 0, habahiroMeshWidthSetting: Math.fround(1),
+    },
+    "ordinary",
+    resources,
+    9,
+  ));
+  const backend = productRendererBackend();
+  const producer = new GarupaProductRenderProducer(
+    "garupa-product-render",
+    backend,
+    resources,
+    product,
+    axis,
+    scene.garupaProductScene,
+    scene.ordinaryNoteScene.specificSpeed,
+  );
+  assert.equal(producer.validate().status, "ok");
+  const first = requireOk(producer.preflightFrame(0, []));
+  assert.ok(first);
+  requireOk(first!.commit());
+  const commands = (backend as any).commands as any[];
+  assert.ok(commands.some((command) => command.kind === "set-transform" &&
+    command.renderObjectId === "render:garupa:node:garupa-note:2"));
+  const meshes = commands.filter((command) => command.kind === "set-mesh");
+  assert.ok(meshes.length >= 1);
+  assert.ok(meshes.every((command) => command.vertices.length === 22 && command.indices.length === 60));
+  const judgedNode = product.visibleNodes[0]!;
+  const effect = requireOk(producer.preflightFrame(judgedNode.absolutePosition, [judgedNode]));
+  assert.ok(effect);
+  requireOk(effect!.commit());
+  assert.ok((backend as any).commands.some((command: any) =>
+    command.renderObjectId === `render:garupa:effect:${judgedNode.identity}` && command.kind === "set-mesh"));
+  const disposed = requireOk(producer.preflightDispose());
+  assert.ok(disposed);
+  requireOk(disposed!.commit());
+  assert.equal(producer.snapshot().createdObjectCount, 0);
+}
+
+function productRendererBackend(): any {
+  let nextSequence = 0;
+  let pending: any = null;
+  const commands: any[] = [];
+  return {
+    id: "garupa-product-test-renderer",
+    commands,
+    snapshot() {
+      return { state: "ready", sessionId: "garupa-product-render", fidelity: { mode: "ordinary", fidelity: "exact-current" }, nextSequence, objectCount: 0, resourceCount: 3, fault: null };
+    },
+    preflight(batch: any[]) {
+      assert.equal(pending, null);
+      assert.equal(batch[0]?.sequence, nextSequence);
+      pending = { sessionId: "garupa-product-render", firstSequence: nextSequence, commandCount: batch.length, commands: batch };
+      return { status: "ok", value: pending };
+    },
+    commit(capability: any) {
+      assert.equal(capability, pending);
+      commands.push(...pending.commands);
+      nextSequence += pending.commandCount;
+      pending = null;
+      return { status: "ok", value: undefined };
+    },
+    discard(capability: any) { assert.equal(capability, pending); pending = null; return { status: "ok", value: undefined }; },
+    execute() { throw new Error("not used"); },
+    async prepare() { return { status: "ok", value: undefined }; },
+    dispose() { return { status: "ok", value: undefined }; },
+  };
 }
 
 function testCapabilities(): void {

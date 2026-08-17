@@ -15,6 +15,7 @@ import {
 import type { OneFrameJudgementBatch, OneFrameJudgementEntry } from "../data/oneFrameData";
 import { NoteResultType, type NoteResultTypeValue } from "../data/manualJudgement";
 import { evidenceRequired, ok, type SimulatorResult } from "../evidence";
+import { getGarupaProductChartProfile } from "../garupa/productChartProfile";
 import {
   isTapKeepStartJudgeNoteType,
   isTapKeepStopJudgeNoteType,
@@ -98,6 +99,7 @@ export class ParticleCommandProducer {
   private readonly notesByJudgementKey = new Map<string, NoteInformation[]>();
   private readonly slideRootByNode = new WeakMap<NoteInformation, NoteInformation>();
   private readonly registeredNotes = new WeakSet<NoteInformation>();
+  private readonly productScoringKeys = new Set<string>();
   private chartIdentityValid = true;
   private state = createEmptyState();
   private pending: ParticleCommandOwnerTransaction | null = null;
@@ -109,6 +111,18 @@ export class ParticleCommandProducer {
     }
     for (const batch of chart.noteBatches) {
       for (const note of batch.informationList) this.registerNote(note, null);
+    }
+    const product = getGarupaProductChartProfile(chart);
+    if (product?.route === "product-extension") {
+      for (const node of product.visibleNodes) {
+        if (node.scoringSource !== null) {
+          this.productScoringKeys.add(productScoringKey(
+            node.scoringSource.index,
+            node.absolutePosition,
+            node.scoringSource.buttonTypesArray,
+          ));
+        }
+      }
     }
   }
 
@@ -137,6 +151,11 @@ export class ParticleCommandProducer {
     const commands: ParticleCommand[] = [];
     if (!projected.suppressedUntilReplay) {
       for (const entry of batch.entries) {
+        if (this.productScoringKeys.has(productScoringKey(
+          entry.noteIndex,
+          entry.absolutePosition,
+          entry.buttonTypes,
+        ))) continue;
         const resolvedNote = this.resolveJudgementNote(entry);
         if (resolvedNote.status !== "ok") return resolvedNote;
         const note = resolvedNote.value;
@@ -701,6 +720,14 @@ function judgementKey(
   buttonTypes: readonly number[],
 ): string {
   return `${absolutePosition}|${buttonTypes.join(",")}`;
+}
+
+function productScoringKey(
+  noteIndex: number,
+  absolutePosition: number,
+  buttonTypes: readonly number[],
+): string {
+  return `${noteIndex}|${judgementKey(absolutePosition, buttonTypes)}`;
 }
 
 function particleEquivalentNote(

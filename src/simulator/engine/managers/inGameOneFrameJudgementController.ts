@@ -764,6 +764,9 @@ function isClosedAutoLiveJudgementRequest(
   request: AutoLiveJudgementRequest,
   ownership: AutoLiveJudgementOwnership | null,
 ): boolean {
+  if (ownership?.productExtension === "garupa-visible-node") {
+    return isClosedGarupaProductAutoRequest(request, ownership);
+  }
   if (
     ownership === null ||
     request === null ||
@@ -898,6 +901,28 @@ function isClosedAutoLiveJudgementRequest(
     default:
       return false;
   }
+}
+
+function isClosedGarupaProductAutoRequest(
+  request: AutoLiveJudgementRequest,
+  ownership: AutoLiveJudgementOwnership,
+): boolean {
+  const source = request?.noteInformation;
+  if (
+    ownership.productExtension !== "garupa-visible-node" ||
+    ownership.multipleDirectionalFlickNoteCount !== null ||
+    source === null || typeof source !== "object" ||
+    !Number.isInteger(source.index) || source.index < 0 || source.isInvisible ||
+    source.buttonType !== ButtonType.None ||
+    source.buttonTypes.length !== 1 || source.buttonTypes[0] !== ButtonType.None ||
+    source.buttonTypesArray.length !== 1 || source.buttonTypesArray[0] !== ButtonType.None ||
+    request.phase !== "head" || request.absolutePosition !== source.absolutePos ||
+    request.multipleDirectionalFlickNoteCount !== 0 || !Number.isInteger(request.noteType)
+  ) return false;
+  if (source.fireNoteType === FrontNoteType.Normal) return request.noteType === 0;
+  if (source.fireNoteType === FrontNoteType.Flick) return request.noteType === 3;
+  return source.fireNoteType === FrontNoteType.DirectionalFlick &&
+    isDirectionalGameNoteType(source.gameNoteType) && request.noteType === 9;
 }
 
 function isDirectionalGameNoteType(gameNoteType: number): boolean {

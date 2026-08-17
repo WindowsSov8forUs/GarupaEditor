@@ -31,6 +31,10 @@ import type {
   StartupDirectionController,
   StartupDirectionSnapshot,
 } from "./startupDirectionController";
+import type {
+  GarupaProductTimelineManager,
+  GarupaProductTimelineSnapshot,
+} from "../garupa/productTimelineManager";
 
 export interface InGameManagerSnapshot extends EngineLifecycleSnapshot {
   readonly fault: EvidenceRequired | null;
@@ -43,6 +47,7 @@ export interface InGameManagerSnapshot extends EngineLifecycleSnapshot {
   readonly scoreLifeState: ReturnType<ScoreLifeStateManager["snapshot"]> | null;
   readonly particle: ReturnType<ParticleFrameCoordinator["producer"]["snapshot"]> | null;
   readonly startupDirection: StartupDirectionSnapshot | null;
+  readonly garupaProduct: GarupaProductTimelineSnapshot | null;
   readonly playable: boolean;
 }
 
@@ -67,6 +72,7 @@ export class InGameManager {
     private readonly habahiroChangeAbsolutePos = -1,
     private readonly renderScene: OrdinaryFixedNoteSceneInput | null = null,
     private readonly startupDirection: StartupDirectionController | null = null,
+    private readonly garupaProduct: GarupaProductTimelineManager | null = null,
   ) {
     this.currentGameStateValue = startupDirection === null
       ? GameState.PlayingSound
@@ -133,6 +139,8 @@ export class InGameManager {
     if (noteInitialization.status !== "ok") {
       return noteInitialization;
     }
+    const productInitialization = this.garupaProduct?.initialize() ?? ok(undefined);
+    if (productInitialization.status !== "ok") return productInitialization;
     this.lifecycleState = "initialized";
     return ok(undefined);
   }
@@ -169,6 +177,8 @@ export class InGameManager {
     if (updateResult.status !== "ok") {
       return this.latchFault(updateResult);
     }
+    const productUpdate = this.garupaProduct?.update() ?? ok(undefined);
+    if (productUpdate.status !== "ok") return this.latchFault(productUpdate);
     if (
       !this.degradedHabahiroLaneChanged &&
       this.renderProducer?.isDegradedHabahiro() === true &&
@@ -433,8 +443,18 @@ export class InGameManager {
     }
     const movieStop = this.startupDirection?.stopMovie() ?? ok(undefined);
     if (movieStop.status !== "ok") return movieStop;
+    const productDispose = this.garupaProduct?.preflightDispose() ?? ok(null);
+    if (productDispose.status !== "ok") return productDispose;
     const noteDispose = this.noteManager.dispose();
-    if (noteDispose.status !== "ok") return noteDispose;
+    if (noteDispose.status !== "ok") {
+      if (productDispose.value !== null) productDispose.value.discard();
+      return noteDispose;
+    }
+    if (productDispose.value !== null) {
+      const committed = productDispose.value.commit();
+      if (committed.status !== "ok") return committed;
+    }
+    this.garupaProduct?.commitDispose();
     this.finishDispose();
     return ok(undefined);
   }
@@ -442,6 +462,7 @@ export class InGameManager {
   disposeAfterTerminalBackendFault(): void {
     if (this.lifecycleState === "disposed") return;
     this.noteManager.disposeAfterTerminalRendererFault();
+    this.garupaProduct?.commitDispose();
     this.finishDispose();
   }
 
@@ -514,6 +535,7 @@ export class InGameManager {
       scoreLifeState: this.scoreLifeStateManager?.snapshot() ?? null,
       particle: this.particleCoordinator?.producer.snapshot() ?? null,
       startupDirection: this.startupDirection?.snapshot() ?? null,
+      garupaProduct: this.garupaProduct?.snapshot() ?? null,
       playable: this.startupDirection?.snapshot().playable ?? true,
     };
   }
