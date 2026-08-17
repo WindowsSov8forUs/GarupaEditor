@@ -11,6 +11,7 @@ const pixiAllowedRoots = [
 ];
 const domAllowedRoots = [
   resolve(simulatorRoot, "backends", "audio"),
+  resolve(simulatorRoot, "backends", "movie"),
   resolve(simulatorRoot, "backends", "pixi"),
   resolve(simulatorRoot, "platform"),
 ];

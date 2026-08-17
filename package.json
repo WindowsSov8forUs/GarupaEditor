@@ -45,6 +45,7 @@
     "simulator:test:live-rehearsal": "node src/simulator/testing/runLiveRehearsalModeTests.mjs",
     "simulator:test:startup-direction": "node src/simulator/testing/runStartupDirectionTests.mjs",
     "simulator:test:startup-audio-callgraph": "node src/simulator/testing/runStartupAudioCallgraphTests.mjs",
+    "simulator:test:mv-live": "node src/simulator/testing/runMvLiveTests.mjs",
     "simulator:test:startup-direction-webview2": "node src/simulator/testing/runStartupDirectionWebView2Tests.mjs",
     "simulator:test:fixtures": "node src/simulator/testing/verifyTestingFixtures.mjs",
     "simulator:test:evidence-integrity:static": "node src/simulator/testing/verifyEvidenceIntegrityStatic.mjs",

@@ -3,6 +3,7 @@ import type { ManualInputPosition } from "../engine/data/manualInput";
 import type { SimulatorResult } from "../engine/evidence";
 import type { SimulatorRendererBackend } from "./renderingContracts";
 import type { SimulatorAudioBackend } from "./audioContracts";
+import type { SimulatorMovieBackend } from "./movieContracts";
 import type {
   SimulatorParticleBackend,
   SimulatorParticleRendererBackend,
@@ -20,7 +21,7 @@ export interface SimulatorBackendRequest {
 
 export interface SimulatorBackendTraceEvent {
   readonly sequence: number;
-  readonly backend: "renderer" | "audio" | "input" | "resources" | "lifecycle" | "frame-rate";
+  readonly backend: "renderer" | "audio" | "movie" | "input" | "resources" | "lifecycle" | "frame-rate";
   readonly action: string;
   readonly detail?: string;
 }
@@ -79,6 +80,7 @@ export interface SimulatorBackends {
   readonly renderer: SimulatorBackendPort;
   readonly rendering?: SimulatorRendererBackend;
   readonly audio: SimulatorAudioBackend;
+  readonly movie?: SimulatorMovieBackend;
   readonly particles?: SimulatorParticleBackend;
   readonly particleRendering?: SimulatorParticleRendererBackend;
   readonly input: SimulatorBackendPort;

@@ -7,6 +7,8 @@ import type {
   SimulatorParticleRendererBackend,
 } from "./particleContracts";
 import { RecordingSimulatorAudioBackend } from "./recordingAudioBackend";
+import { RecordingSimulatorMovieBackend } from "./recordingMovieBackend";
+import type { SimulatorMovieBackend } from "./movieContracts";
 import { RecordingSimulatorParticleBackend } from "./recordingParticleBackend";
 import type {
   ManualInputWorldPosition,
@@ -114,6 +116,7 @@ export class RecordingSimulatorBackends implements SimulatorBackends {
 
   readonly renderer = new RecordingPort("renderer", this.append.bind(this));
   readonly audio = new RecordingSimulatorAudioBackend();
+  readonly movie: SimulatorMovieBackend;
   readonly particles: SimulatorParticleBackend;
   readonly particleRendering?: SimulatorParticleRendererBackend;
   readonly input = new RecordingPort("input", this.append.bind(this));
@@ -126,7 +129,9 @@ export class RecordingSimulatorBackends implements SimulatorBackends {
     readonly rendering?: SimulatorRendererBackend,
     particles: SimulatorParticleBackend = new RecordingSimulatorParticleBackend(),
     particleRendering?: SimulatorParticleRendererBackend,
+    movie: SimulatorMovieBackend = new RecordingSimulatorMovieBackend(),
   ) {
+    this.movie = movie;
     this.particles = particles;
     this.particleRendering = particleRendering;
   }
@@ -152,6 +157,7 @@ export function createRecordingSimulatorBackends(
   rendering?: SimulatorRendererBackend,
   particles?: SimulatorParticleBackend,
   particleRendering?: SimulatorParticleRendererBackend,
+  movie?: SimulatorMovieBackend,
 ): RecordingSimulatorBackends {
-  return new RecordingSimulatorBackends(rendering, particles, particleRendering);
+  return new RecordingSimulatorBackends(rendering, particles, particleRendering, movie);
 }
