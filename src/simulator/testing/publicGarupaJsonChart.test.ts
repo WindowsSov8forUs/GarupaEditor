@@ -1,4 +1,5 @@
 declare const require: (id: string) => any;
+declare const process: any;
 const assert = require("node:assert/strict");
 import { parseGarupaChartJson, type GarupaChartJson } from "../../chart";
 import {
@@ -34,8 +35,9 @@ import {
 import { InGameMusicScoreController } from "../engine/managers/inGameMusicScoreController";
 import { InGameOneFrameJudgementController } from "../engine/managers/inGameOneFrameJudgementController";
 import { ManualTouchPhase, type ManualInputPosition } from "../engine/data/manualInput";
+import { createPortableReplaySimulatorEngine } from "../host/portableReplaySession";
 
-function main(): void {
+async function main(): Promise<void> {
   testContractCopyAndExactShape();
   testCanonicalParserBoundary();
   testPositionBridge();
@@ -49,6 +51,7 @@ function main(): void {
   testProductAutoEngineOutcome();
   testProductManualChainOwner();
   testProductManualEngineOutcome();
+  await testProductReplayLifecycle();
   testProductRenderCommands();
   testCapabilities();
   console.log("public Garupa JSON chart tests passed");
@@ -623,6 +626,89 @@ function testProductManualEngineOutcome(): void {
   requireOk(engine.dispose());
 }
 
+async function testProductReplayLifecycle(): Promise<void> {
+  let generation = 0;
+  const mode = createSimulatorModeIdentity("rehearsal", "auto");
+  const createFresh = () => {
+    const chart = requireOk(constructChartFromGarupaChartJson(parse([
+      { type: "BPM", beat: 0, value: 120 },
+      { type: "SV", beat: 2, value: -2, timingGroup: "#1" },
+      { type: "SV", beat: 4, value: 0, timingGroup: "#1" },
+      { type: "SV", beat: 6, value: 1, timingGroup: "#1" },
+      { type: "Single", beat: 1, lane: 0.5, width: 1, timingGroup: "#1" },
+      { type: "Single", beat: 5, lane: 2.5, width: 1, timingGroup: "#1" },
+      { type: "Single", beat: 12, lane: 7, width: 1, timingGroup: "#1" },
+    ]), 9));
+    return requireOk(createSimulatorEngine({
+      chart,
+      runtime: { highFrequencyMode: false, judgeOffsetFrames: 0, mode },
+      scoreLifeState: {
+        schemaVersion: 3, sessionId: `garupa-replay-${generation++}`, mode,
+        life: { initialLife: 1000, playerMaxLife: 1000, lifeUpperLimit: 2000, missDamage: -100, badDamage: -50 },
+      },
+    }, createRecordingSimulatorBackends()));
+  };
+  const replay = requireOk(createPortableReplaySimulatorEngine(createFresh(), {
+    mode,
+    async createFreshEngine() { return { status: "ok" as const, value: createFresh() }; },
+  }));
+  requireOk(replay.step(Math.fround(2)));
+  const beforePause = requireOk(replay.snapshot());
+  assert.equal(beforePause.managers.garupaProduct?.judgedNodeCount, 1);
+  requireOk(replay.pause());
+  requireOk(replay.step(Math.fround(1)));
+  assert.equal(requireOk(replay.snapshot()).adjustedMusicPosition, beforePause.adjustedMusicPosition);
+  requireOk(replay.resume());
+  const moved = requireOk(await replay.moveTime("advance-five"));
+  assert.equal(moved.targetSeconds, 7);
+  const afterMove = requireOk(replay.snapshot());
+  assert.equal(afterMove.managers.garupaProduct?.judgedNodeCount, 3);
+  assert.equal(afterMove.managers.garupaProduct?.activeFingerCount, 0);
+  assert.equal(afterMove.managers.scoreLifeState?.record.moveTimeCount, 1);
+  requireOk(await replay.retryRehearsal());
+  const afterRetry = requireOk(replay.snapshot());
+  assert.equal(afterRetry.managers.garupaProduct?.judgedNodeCount, 0);
+  assert.equal(afterRetry.managers.scoreLifeState?.record.score, 0);
+  assert.equal(requireOk(replay.getTimelineControlState()).timelineSeconds, 0);
+  requireOk(replay.dispose());
+
+  const manualMode = createSimulatorModeIdentity("rehearsal", "manual");
+  const manualResources = Object.freeze({ noteAtlasLogicalAssetId: "note", directionalAtlasLogicalAssetId: "directional" });
+  const manualScene = requireOk(createSimulatorSceneLayout(
+    { viewportWidth: 1600, viewportHeight: 720, inputOrigin: "bottom-left" },
+    { specificSpeed: Math.fround(11), noteSize: Math.fround(100), highAspectRatio: 1, judgeOffsetFrames: 0, habahiroMeshWidthSetting: Math.fround(1) },
+    "ordinary", manualResources, 9,
+  )).garupaProductScene;
+  const createManualFresh = () => {
+    const chart = requireOk(constructChartFromGarupaChartJson(parse([
+      { type: "BPM", beat: 0, value: 120 },
+      { type: "SV", beat: 2, value: 0 },
+      { type: "Single", beat: 1, lane: 0.5, width: 1 },
+    ]), 9));
+    return requireOk(createSimulatorEngine({
+      chart,
+      garupaProductScene: manualScene,
+      runtime: { highFrequencyMode: false, judgeOffsetFrames: 0, mode: manualMode },
+      scoreLifeState: {
+        schemaVersion: 3, sessionId: `garupa-replay-manual-${generation++}`, mode: manualMode,
+        life: { initialLife: 1000, playerMaxLife: 1000, lifeUpperLimit: 2000, missDamage: -100, badDamage: -50 },
+      },
+    }, createRecordingSimulatorBackends()));
+  };
+  const manualReplay = requireOk(createPortableReplaySimulatorEngine(createManualFresh(), {
+    mode: manualMode,
+    async createFreshEngine() { return { status: "ok" as const, value: createManualFresh() }; },
+  }));
+  requireOk(manualReplay.step(Math.fround(2), { touches: [] }));
+  assert.equal(requireOk(manualReplay.snapshot()).managers.garupaProduct?.missedNodeCount, 1);
+  requireOk(await manualReplay.moveTime("advance-five"));
+  assert.equal(requireOk(manualReplay.snapshot()).managers.garupaProduct?.missedNodeCount, 1);
+  assert.equal(requireOk(manualReplay.snapshot()).managers.garupaProduct?.activeFingerCount, 0);
+  requireOk(await manualReplay.retryRehearsal());
+  assert.equal(requireOk(manualReplay.snapshot()).managers.garupaProduct?.missedNodeCount, 0);
+  requireOk(manualReplay.dispose());
+}
+
 function productScreenPoint(
   scene: GarupaProductSceneLayout,
   node: { readonly lane: number; readonly width: number },
@@ -763,4 +849,7 @@ function requireOk<T>(result: { readonly status: "ok"; readonly value: T } | { r
   return result.value;
 }
 
-main();
+main().catch((error: unknown) => {
+  console.error(error);
+  process.exitCode = 1;
+});
