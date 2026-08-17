@@ -40,6 +40,7 @@ const baseLeaves = [
   ["live-rehearsal-four-mode", "runLiveRehearsalModeTests.mjs", {}],
   ["startup-direction", "runStartupDirectionTests.mjs", {}],
   ["startup-audio-callgraph", "runStartupAudioCallgraphTests.mjs", {}],
+  ["mv-live", "runMvLiveTests.mjs", {}],
   ["remaining-capability-consumption", "runC07EvidenceConsumptionTests.mjs", {}],
 ];
 const quickLeaves = [
@@ -51,12 +52,14 @@ const quickLeaves = [
   ["public-life-profile", "runPublicLifeProfileTests.mjs", {}],
   ["live-rehearsal-four-mode", "runLiveRehearsalModeTests.mjs", {}],
   ["startup-direction", "runStartupDirectionTests.mjs", {}],
+  ["mv-live", "runMvLiveTests.mjs", {}],
 ];
 const browserEnvironment = cleanBrowserBuild ? { SIMULATOR_WEBVIEW2_CLEAN_BUILD: "1" } : {};
 const browserLeaves = [
   ["production-browser-webview2", "runBrowserPixiDecoderWebView2Tests.mjs", browserEnvironment],
   ["ordinary-full-scene-browser-webview2", "runOrdinaryRenderingWebView2Tests.mjs", browserEnvironment],
   ["startup-direction-browser-webview2", "runStartupDirectionWebView2Tests.mjs", browserEnvironment],
+  ["mv-live-browser-webview2", "runMvLiveWebView2Tests.mjs", browserEnvironment],
 ];
 const leaves = quick ? quickLeaves : [...baseLeaves, ...browserLeaves];
 const sharedEnvironment = {

@@ -1,6 +1,8 @@
 declare function require(name: string): any;
 declare const process: any;
 const assert = require("node:assert/strict");
+const { readFileSync } = require("node:fs");
+const { join } = require("node:path");
 
 import { RecordingSimulatorMovieBackend } from "../backends/recordingMovieBackend";
 import type { PreparedSessionMovieResource } from "../backends/movieContracts";
@@ -15,10 +17,48 @@ import { createNoteBatchInformationList } from "../engine/chart/construction";
 import { createSimulatorEngine } from "../host/createSimulatorEngine";
 
 async function main(): Promise<void> {
+  testEvidenceClosure();
   await testNegativeDelayAndPause();
   await testZeroAndPositiveDelay();
   await testHostBinding();
   console.log("MV Live engine contracts passed: state17, signed delay branches, gameplay-before-negative-movie, Gaya exclusion and movie pause map");
+}
+
+function testEvidenceClosure(): void {
+  const root = join(
+    process.cwd(),
+    "src/simulator/testing/fixtures/reverse-snapshots/mv-live/artifacts/investigations",
+  );
+  const contract = JSON.parse(readFileSync(join(
+    root,
+    "mv-live-runtime-contract-10-1-4/mv_live_runtime_contract.json",
+  ), "utf8"));
+  const oracle = JSON.parse(readFileSync(join(
+    root,
+    "mv-live-runtime-contract-10-1-4/mv_live_command_oracle.json",
+  ), "utf8"));
+  const closure = JSON.parse(readFileSync(join(
+    root,
+    "mv-live-runtime-contract-10-1-4/mv_live_closure.json",
+  ), "utf8"));
+  assert.equal(contract.status, "confirmed-current-live-manual-auto-mv-portable-contract");
+  assert.deepEqual(contract.master_delay_inventory.sign_counts, { negative: 95, zero: 0, positive: 3 });
+  assert.equal(contract.master_delay_inventory.selected_runtime_row.delay_milliseconds, -2180);
+  assert.deepEqual(oracle.supported_public_matrix, {
+    "live-manual": "mv-live-supported",
+    "live-auto": "mv-live-supported",
+    "rehearsal-manual": "evidence-required-Practice-does-not-select-Simple-display",
+    "rehearsal-auto": "evidence-required-Practice-does-not-select-Simple-display",
+  });
+  assert.equal(oracle.delay_branches.negative[4].gameplay, "enabled-before-movie");
+  assert.equal(oracle.replay.retry, "excluded-MV-Live-has-no-Rehearsal-retry-route");
+  for (const field of [
+    "reachable_unclassified_count", "unknown_mode_predicate_count",
+    "unknown_delay_branch_count", "missing_runtime_route_count",
+    "missing_lifecycle_edge_count", "missing_resource_or_media_profile_count",
+    "portable_mapping_gap_count", "runtime_hook_failure_count",
+  ]) assert.equal(closure[field], 0, field);
+  assert.equal(closure.production_authorization, true);
 }
 
 async function testNegativeDelayAndPause(): Promise<void> {

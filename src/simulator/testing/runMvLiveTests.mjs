@@ -16,6 +16,7 @@ try {
   for (const test of ["movieContracts.test.js", "mvLiveContract.test.js"]) {
     run(process.execPath, [join(outputRoot, "src", "simulator", "testing", test)]);
   }
+  run(process.execPath, [join(testingRoot, "verifyMvLiveStatic.mjs")]);
   if (process.env.SIMULATOR_TEST_SHARED_PREFLIGHT !== "1") {
     run(process.execPath, [join(testingRoot, "verifyTestingFixtures.mjs")]);
     run(process.execPath, [join(testingRoot, "verifyDependencies.mjs")]);
