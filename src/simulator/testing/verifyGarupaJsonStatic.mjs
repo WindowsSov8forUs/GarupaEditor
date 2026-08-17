@@ -27,10 +27,12 @@ for (const required of [
 
 const recipe = read("assembly/sessionRecipe.ts");
 for (const required of [
-  "readonly schemaVersion: 6;", "schemaVersion: 6 as const",
-  '"bgm,chart,isFullLength,laneCount"', "copyAndFreezeGarupaChartJson",
-]) if (!recipe.includes(required)) throw new Error(`schema-4 recipe missing ${required}`);
-if (recipe.includes("chartData.bmsText")) throw new Error("recipe still consumes bmsText");
+  "readonly schemaVersion: 7;", "schemaVersion: 7 as const",
+  '"bgm,chart,isFullLength"', "copyAndFreezeGarupaChartJson",
+]) if (!recipe.includes(required)) throw new Error(`schema-7 recipe missing ${required}`);
+for (const forbidden of ["chartData.bmsText", "chartData.laneCount"]) {
+  if (recipe.includes(forbidden)) throw new Error(`recipe still consumes forbidden chart field ${forbidden}`);
+}
 
 const composition = read("platform/platformComposition.ts");
 if (!composition.includes("constructChartFromGarupaChartJson") ||

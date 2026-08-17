@@ -65,7 +65,7 @@ async function main(): Promise<void> {
       { type: "Hidden", beat: 4, lane: 1, width: 1 },
     ] },
   ]));
-  const chart = requireOk(constructChartFromGarupaChartJson(copied.chart, 9));
+  const chart = requireOk(constructChartFromGarupaChartJson(copied.chart));
   const product = getGarupaProductChartProfile(chart)!;
   const axis = getGarupaProductTimingGroupAxisProfile(chart)!;
   const layout = requireOk(createSimulatorSceneLayout(
@@ -76,7 +76,6 @@ async function main(): Promise<void> {
     },
     "ordinary",
     CURRENT_ORDINARY_RENDER_BINDINGS,
-    9,
   ));
   const producer = new GarupaProductRenderProducer(
     SESSION,
@@ -111,7 +110,7 @@ async function main(): Promise<void> {
   assert.equal(renderer.snapshot().objectCount, 0);
   assert.equal(renderer.stage.children.length, 0);
   requireOk(renderer.dispose());
-  console.log("Garupa product actual Pixi passed: fractional/9-lane/outside/SV/Hidden/all-Hidden/effect/cleanup");
+  console.log("Garupa product actual Pixi passed: fixed-seven-field/arbitrary-lane/SV/Hidden/all-Hidden/effect/cleanup");
 }
 
 function resourcePath(asset: RenderResourceAssetProfile): string {

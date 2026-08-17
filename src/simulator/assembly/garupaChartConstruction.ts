@@ -25,9 +25,7 @@ import {
 } from "../engine/chart/types";
 import { evidenceRequired, ok, type SimulatorResult } from "../engine/evidence";
 import { registerConstructedChartRuntimeMetadata } from "../engine/runtime/chartRuntimeMetadata";
-import type { SimulatorProductLaneCount } from "../public/contracts";
 import {
-  createGarupaProductLaneDomain,
   freezeGarupaProductChartProfile,
   registerGarupaProductChartProfile,
   type GarupaProductChartProfile,
@@ -79,9 +77,8 @@ interface NoteKinds {
 
 export function constructChartFromGarupaChartJson(
   chart: GarupaChartJson,
-  laneCount: SimulatorProductLaneCount = 7,
 ): SimulatorResult<ChartConstructionResult> {
-  const profile = buildGarupaProductChartProfile(chart, laneCount);
+  const profile = buildGarupaProductChartProfile(chart);
   if (profile.status !== "ok") return profile;
   const constructed = profile.value.route === "original-compatible"
     ? constructOriginalCompatibleGarupaChart(chart)
@@ -231,14 +228,11 @@ function constructOriginalCompatibleGarupaChart(
 
 function buildGarupaProductChartProfile(
   chart: GarupaChartJson,
-  laneCount: SimulatorProductLaneCount,
 ): SimulatorResult<GarupaProductChartProfile> {
   const svEvents: GarupaProductSvEvent[] = [];
   const nodes: GarupaProductNode[] = [];
   const slideChains: GarupaProductSlideChain[] = [];
-  let route: GarupaProductChartProfile["route"] = laneCount === 7
-    ? "original-compatible"
-    : "product-extension";
+  let route: GarupaProductChartProfile["route"] = "original-compatible";
   let authoredOrder = 0;
   let scoringIndex = 0;
 
@@ -319,7 +313,6 @@ function buildGarupaProductChartProfile(
 
   return ok(freezeGarupaProductChartProfile({
     route,
-    laneDomain: createGarupaProductLaneDomain(laneCount),
     svEvents,
     nodes,
     slideChains,

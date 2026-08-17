@@ -485,7 +485,7 @@ async function verifyActualPixiGarupaProduct(
       { type: "Hidden", beat: 3, lane: 7, width: 1 },
     ] },
   ]), "product chart copy");
-  const chart = requireOk(constructChartFromGarupaChartJson(copied.chart, 9), "product chart construct");
+  const chart = requireOk(constructChartFromGarupaChartJson(copied.chart), "product chart construct");
   const product = getGarupaProductChartProfile(chart)!;
   const axis = getGarupaProductTimingGroupAxisProfile(chart)!;
   const layout = requireOk(createSimulatorSceneLayout(
@@ -496,7 +496,6 @@ async function verifyActualPixiGarupaProduct(
     },
     "ordinary",
     CURRENT_ORDINARY_RENDER_BINDINGS,
-    9,
   ), "product scene");
   const producer = new GarupaProductRenderProducer(
     sessionId,
@@ -529,7 +528,7 @@ async function verifyActualPixiGarupaProduct(
   equal(renderer.snapshot().objectCount, 0, "actual Pixi product releases every owner");
   requireOk(renderer.dispose(), "actual Pixi product backend dispose");
   equal(renderer.stage.children.length, 0, "actual Pixi product leaves empty stage");
-  console.log("actual Pixi Garupa product passed: fractional/9-lane/SV/Hidden mesh/effect/cleanup");
+  console.log("actual Pixi Garupa product passed: fixed-seven-field/arbitrary-lane/SV/Hidden mesh/effect/cleanup");
 }
 
 async function verifyActualPixiHabahiroComplete(

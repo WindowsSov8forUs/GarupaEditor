@@ -1,15 +1,8 @@
 import type { GarupaChartJsonDirection, GarupaChartJsonSlideConnection } from "../../../chart";
 import type { ChartConstructionResult, NoteInformation } from "../chart/types";
-import type { SimulatorProductLaneCount } from "../../public/contracts";
 
 export type GarupaProductChartRoute = "original-compatible" | "product-extension";
 export type GarupaProductTimingGroupId = "#Global" | `#${string}`;
-
-export interface GarupaProductLaneDomain {
-  readonly laneCount: SimulatorProductLaneCount;
-  readonly minimumLane: -2 | -1 | 0;
-  readonly maximumLane: 6 | 7 | 8;
-}
 
 export interface GarupaProductSvEvent {
   readonly sourceOrder: number;
@@ -53,7 +46,6 @@ export interface GarupaProductSlideChain {
 
 export interface GarupaProductChartProfile {
   readonly route: GarupaProductChartRoute;
-  readonly laneDomain: GarupaProductLaneDomain;
   readonly svEvents: readonly GarupaProductSvEvent[];
   readonly nodes: readonly GarupaProductNode[];
   readonly visibleNodes: readonly GarupaProductNode[];
@@ -77,20 +69,8 @@ export function getGarupaProductChartProfile(
   return profileByChart.get(chart);
 }
 
-export function createGarupaProductLaneDomain(
-  laneCount: SimulatorProductLaneCount,
-): GarupaProductLaneDomain {
-  const offset = (laneCount - 7) / 2;
-  return Object.freeze({
-    laneCount,
-    minimumLane: -offset as GarupaProductLaneDomain["minimumLane"],
-    maximumLane: (6 + offset) as GarupaProductLaneDomain["maximumLane"],
-  });
-}
-
 export function freezeGarupaProductChartProfile(input: {
   readonly route: GarupaProductChartRoute;
-  readonly laneDomain: GarupaProductLaneDomain;
   readonly svEvents: GarupaProductSvEvent[];
   readonly nodes: GarupaProductNode[];
   readonly slideChains: GarupaProductSlideChain[];
@@ -113,7 +93,6 @@ export function freezeGarupaProductChartProfile(input: {
   })));
   return Object.freeze({
     route: input.route,
-    laneDomain: input.laneDomain,
     svEvents: Object.freeze(input.svEvents.map((event) => Object.freeze(event))),
     nodes,
     visibleNodes,

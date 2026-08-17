@@ -14,7 +14,6 @@ import type {
 import { createRenderFloat32 } from "../backends/renderingValidation";
 import { ButtonType, type ButtonTypeValue, type NoteInformation } from "../engine/chart/types";
 import type { ManualInputPosition } from "../engine/data/manualInput";
-import type { SimulatorProductLaneCount } from "../public/contracts";
 import { evidenceRequired, ok, type SimulatorResult } from "../engine/evidence";
 import {
   advanceOrdinaryNoteMotion,
@@ -64,9 +63,6 @@ export interface GarupaProductFieldLine {
 }
 
 export interface GarupaProductSceneLayout {
-  readonly laneCount: SimulatorProductLaneCount;
-  readonly minimumLane: -2 | -1 | 0;
-  readonly maximumLane: 6 | 7 | 8;
   readonly laneSpacingWorld: RenderFloat32;
   readonly noteSettingScale: RenderFloat32;
   readonly targetCenterY: RenderFloat32;
@@ -92,7 +88,6 @@ export function createSimulatorSceneLayout(
   config: SimulatorSceneVisualConfig,
   renderingKind: "ordinary" | "habahiro",
   resources: RenderEngineResourceBindings,
-  laneCount: SimulatorProductLaneCount = 7,
 ): SimulatorResult<SimulatorSceneLayout> {
   if (
     surface === null || typeof surface !== "object" ||
@@ -147,7 +142,7 @@ export function createSimulatorSceneLayout(
   );
   const particleScene = createParticleScene(values.value.goalPositions);
   if (particleScene.status !== "ok") return particleScene;
-  const productScene = createGarupaProductScene(values.value, laneCount);
+  const productScene = createGarupaProductScene(values.value);
   if (productScene.status !== "ok") return productScene;
   return ok(Object.freeze({
     ordinaryNoteScene,
@@ -202,17 +197,7 @@ function createSceneValues(config: SimulatorSceneVisualConfig): SimulatorResult<
 
 function createGarupaProductScene(
   scene: SceneValues,
-  laneCount: SimulatorProductLaneCount,
 ): SimulatorResult<GarupaProductSceneLayout> {
-  if (laneCount !== 7 && laneCount !== 9 && laneCount !== 11) {
-    return reject(
-      "scene.invalid-product-lane-count",
-      "Garupa product field geometry requires an explicit laneCount of 7, 9 or 11.",
-    );
-  }
-  const offset = (laneCount - 7) / 2;
-  const minimumLane = -offset as GarupaProductSceneLayout["minimumLane"];
-  const maximumLane = (6 + offset) as GarupaProductSceneLayout["maximumLane"];
   const laneSpacing = Math.fround(
     scene.goalPositions[4]!.x.value - scene.goalPositions[3]!.x.value,
   );
@@ -295,7 +280,7 @@ function createGarupaProductScene(
     );
   };
   const fieldLines: GarupaProductFieldLine[] = [];
-  for (let lane = minimumLane; lane <= maximumLane; lane += 1) {
+  for (let lane = 0; lane < 7; lane += 1) {
     const start = projectLaneAtCurve(lane, 0);
     const goal = projectLaneAtCurve(lane, 1);
     if (start.status !== "ok") {
@@ -307,9 +292,6 @@ function createGarupaProductScene(
     fieldLines.push(Object.freeze({ lane, start: start.value, goal: goal.value }));
   }
   return ok(Object.freeze({
-    laneCount,
-    minimumLane,
-    maximumLane,
     laneSpacingWorld: f32(laneSpacing),
     noteSettingScale: scene.noteSettingScale,
     targetCenterY: scene.targetCenterY,

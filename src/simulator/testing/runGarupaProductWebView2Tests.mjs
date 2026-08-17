@@ -86,11 +86,11 @@ function stageFile(route, name, mime, bytes, allowlist) {
   allowlist.push([route, name, mime]);
 }
 function verify(value) {
-  if (value.schema !== "garupa-product-webview2-v1" || value.status !== "ok") throw new Error(`Garupa product browser failed: ${JSON.stringify(value)}`);
+  if (value.schema !== "garupa-product-webview2-v2" || value.status !== "ok") throw new Error(`Garupa product browser failed: ${JSON.stringify(value)}`);
   equal(value.runtime.rendererName, "webgl", "actual WebGL renderer");
   equal(value.productionDecoder, "BrowserPixiTextureDecoder", "production decoder");
-  equal(value.chart.laneCount, 9, "product lane count");
-  equal(value.chart.fieldLines, 9, "product field lines");
+  equal(JSON.stringify(value.chart.referenceFieldLanes), JSON.stringify([0, 1, 2, 3, 4, 5, 6]), "fixed reference field lanes");
+  equal(value.chart.fieldLines, 7, "fixed product field lines");
   equal(value.chart.sv, 3, "product SV count");
   equal(JSON.stringify(value.captures.map((row) => row.label)), JSON.stringify(["initial", "negative-sv", "zero-sv", "restore-positive"]), "capture labels");
   for (const row of value.captures) {

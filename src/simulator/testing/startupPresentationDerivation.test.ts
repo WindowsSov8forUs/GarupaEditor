@@ -12,7 +12,7 @@ async function main(): Promise<void> {
   testExactShapeAndOwnership();
   testMalformedPresentationFailsClosed();
   await testInternalDerivation();
-  console.log("startup presentation derivation tests passed: schema6 exact shape/copy/PNG/MP3/nullable MV/closed Live gate");
+  console.log("startup presentation derivation tests passed: schema7 exact shape/copy/PNG/MP3/nullable MV/closed Live gate");
 }
 
 function testExactShapeAndOwnership(): void {
@@ -20,7 +20,7 @@ function testExactShapeAndOwnership(): void {
   const result = createSimulatorSessionRecipe(source);
   assert.equal(result.status, "accepted");
   if (result.status !== "accepted") return;
-  assert.equal(result.value.schemaVersion, 6);
+  assert.equal(result.value.schemaVersion, 7);
   assert.equal(Object.isFrozen(result.value.request.presentation), true);
   assert.equal(Object.isFrozen(result.value.request.presentation.song), true);
   assert.equal(Object.isFrozen(result.value.request.presentation.stage), true);
@@ -138,7 +138,6 @@ function request(): SimulatorModuleLaunchRequest {
       chart: [{ type: "BPM", beat: 0, value: 120 }],
       bgm: Uint8Array.of(1),
       isFullLength: false,
-      laneCount: 7,
     },
     presentation: createTestPresentationPackage(),
     config: {

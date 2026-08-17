@@ -200,7 +200,6 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
     };
     const chart = constructChartFromGarupaChartJson(
       recipe.request.chartData.chart,
-      recipe.request.chartData.laneCount,
     );
     if (chart.status !== "ok") {
       return rejectedWithCleanup(fromEvidence(chart), releasePendingMovie());
@@ -268,7 +267,6 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
             },
             kind,
             resources,
-            recipe.request.chartData.laneCount,
           );
           return scene.status === "ok" ? accepted(scene.value) : fromEvidence(scene);
         },

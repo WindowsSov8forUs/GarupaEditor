@@ -19,7 +19,7 @@ const SESSION = "garupa-product-webview2";
 
 void main().catch((error) => {
   globalThis.window.ipc.postMessage(JSON.stringify({
-    schema: "garupa-product-webview2-v1",
+    schema: "garupa-product-webview2-v2",
     status: "error",
     message: String(error instanceof Error ? error.message : error),
     stack: String(error instanceof Error ? error.stack ?? "" : ""),
@@ -66,13 +66,13 @@ async function main(): Promise<void> {
     ] },
     { type: "Slide", connections: [{ type: "Hidden", beat: 4, lane: 1, width: 1 }] },
   ]));
-  const chart = requireOk(constructChartFromGarupaChartJson(copied.chart, 9));
+  const chart = requireOk(constructChartFromGarupaChartJson(copied.chart));
   const product = getGarupaProductChartProfile(chart)!;
   const axis = getGarupaProductTimingGroupAxisProfile(chart)!;
   const layout = requireOk(createSimulatorSceneLayout(
     { viewportWidth: WIDTH, viewportHeight: HEIGHT, inputOrigin: "bottom-left" },
     { specificSpeed: Math.fround(11), noteSize: Math.fround(100), highAspectRatio: 1, judgeOffsetFrames: 0, habahiroMeshWidthSetting: Math.fround(1) },
-    "ordinary", CURRENT_ORDINARY_RENDER_BINDINGS, 9,
+    "ordinary", CURRENT_ORDINARY_RENDER_BINDINGS,
   ));
   const producer = new GarupaProductRenderProducer(
     SESSION, renderer, CURRENT_ORDINARY_RENDER_BINDINGS, product, axis,
@@ -107,7 +107,7 @@ async function main(): Promise<void> {
   }
   const gl = (app.renderer as unknown as { readonly gl?: WebGL2RenderingContext }).gl;
   const result = Object.freeze({
-    schema: "garupa-product-webview2-v1",
+    schema: "garupa-product-webview2-v2",
     status: "ok",
     runtime: Object.freeze({
       userAgent: navigator.userAgent,
@@ -117,7 +117,7 @@ async function main(): Promise<void> {
     }),
     productionDecoder: BrowserPixiTextureDecoder.name,
     chart: Object.freeze({
-      laneCount: product.laneDomain.laneCount,
+      referenceFieldLanes: layout.garupaProductScene.fieldLines.map((line) => line.lane),
       fieldLines: layout.garupaProductScene.fieldLines.length,
       visibleNodes: product.visibleNodes.length,
       slideChains: product.slideChains.length,

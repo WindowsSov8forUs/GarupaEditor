@@ -18,13 +18,15 @@ for (const forbidden of forbiddenPublicSymbols) {
 }
 for (const required of [
   "readonly chart: GarupaChartJson;", "readonly bgm: Uint8Array;", "readonly isFullLength: boolean;",
-  "readonly laneCount: SimulatorProductLaneCount;",
 ]) if (!publicContracts.includes(required)) throw new Error(`Public chart field missing: ${required}`);
+for (const forbidden of ["SimulatorProductLaneCount", "readonly laneCount:"]) {
+  if (publicContracts.includes(forbidden)) throw new Error(`invented Public lane field remains: ${forbidden}`);
+}
 
 const recipe = read("assembly/sessionRecipe.ts");
 for (const required of [
-  "readonly schemaVersion: 6;", "schemaVersion: 6 as const",
-  '"bgm,chart,isFullLength,laneCount"', 'typeof request.chartData.isFullLength !== "boolean"',
+  "readonly schemaVersion: 7;", "schemaVersion: 7 as const",
+  '"bgm,chart,isFullLength"', 'typeof request.chartData.isFullLength !== "boolean"',
   "isFullLength: request.chartData.isFullLength",
 ]) if (!recipe.includes(required)) throw new Error(`recipe full-length boundary missing: ${required}`);
 for (const forbidden of ["isGameplayShape", "deepFreezeClone", "invalid-session-gameplay-data"]) {

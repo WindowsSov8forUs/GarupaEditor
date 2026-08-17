@@ -18,10 +18,10 @@ for (const [source, symbols] of [
   [axis, ["owner === \"group\" ? 0 : 1", "speed = nextSpeed", "findVisibilityWindows", "displacementAtPosition"]],
   [timeline, ["garupa-visible-node", "screenToContinuousLane", "isInsideContinuousSpan", "pendingGesture", "missedNodeCount"]],
   [render, ["garupa-product-front", "garupa-product-slide-line", "garupa-product-particle", "set-mesh"]],
-  [scene, ["laneCount: SimulatorProductLaneCount", "minimumLane", "maximumLane", "projectLaneAtCurve"]],
-  [recipe, ["readonly schemaVersion: 6", "laneCount: request.chartData.laneCount"]],
-  [contracts, ["SimulatorProductLaneCount", "readonly laneCount"]],
-  [composition, ["recipe.request.chartData.laneCount", "garupaProductScene", "chartFidelity"]],
+  [scene, ["for (let lane = 0; lane < 7; lane += 1)", "projectLaneAtCurve", "screenToContinuousLane"]],
+  [recipe, ["readonly schemaVersion: 7", '"bgm,chart,isFullLength"']],
+  [contracts, ["readonly chart: GarupaChartJson", "readonly isFullLength: boolean"]],
+  [composition, ["constructChartFromGarupaChartJson", "garupaProductScene", "chartFidelity"]],
   [capabilities, ["garupaSvTimingGroup", "garupaContinuousLaneOutside", "garupaExtendedSlideGraph", "garupaExtendedManualInput", "closed-product-extension"]],
 ]) for (const symbol of symbols) if (!source.includes(symbol)) throw new Error(`Garupa product static owner missing ${symbol}`);
 
@@ -30,10 +30,14 @@ if (chartContract.includes("complete-product-contract-open") || chartContract.in
 }
 
 for (const [source, forbidden] of [
-  [profile, ["Math.random", "Date.now", "performance.now"]],
+  [profile, ["Math.random", "Date.now", "performance.now", "laneDomain", "laneCount", "minimumLane", "maximumLane"]],
   [axis, ["Math.random", "Date.now", "performance.now"]],
   [timeline, ["Math.random", "Date.now", "performance.now", "src/app", "Button_07_BMS_1P_07"]],
-  [render, ["Math.random", "Date.now", "performance.now", "Math.round(node.lane)", "Math.min(7"]],
+  [render, ["Math.random", "Date.now", "performance.now", "Math.round(node.lane)", "Math.min(7", "laneDomain"]],
+  [scene, ["SimulatorProductLaneCount", "minimumLane", "maximumLane"]],
+  [recipe, ["chartData.laneCount"]],
+  [contracts, ["SimulatorProductLaneCount", "readonly laneCount"]],
+  [composition, ["chartData.laneCount"]],
 ]) for (const symbol of forbidden) if (source.includes(symbol)) throw new Error(`Garupa product forbidden fallback/ambient dependency remains: ${symbol}`);
 
-console.log("Garupa product extension static boundary verified: schema6/profile/axis/continuous scene/Auto/Manual/render/particle/lifecycle");
+console.log("Garupa product extension static boundary verified: schema7/fixed-seven-field/profile/axis/continuous scene/Auto/Manual/render/particle/lifecycle");

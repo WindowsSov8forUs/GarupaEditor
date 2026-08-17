@@ -3,13 +3,10 @@ import type { GarupaChartJson } from "../../chart";
 export type SimulatorPublicSessionMode = "live" | "rehearsal";
 export type SimulatorPublicInputMode = "manual" | "auto";
 
-export type SimulatorProductLaneCount = 7 | 9 | 11;
-
 export interface SimulatorChartDataPackage {
   readonly chart: GarupaChartJson;
   readonly bgm: Uint8Array;
   readonly isFullLength: boolean;
-  readonly laneCount: SimulatorProductLaneCount;
 }
 
 export type SimulatorPresentationPng = Uint8Array;

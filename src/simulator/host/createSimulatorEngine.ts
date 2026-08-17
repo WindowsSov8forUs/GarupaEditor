@@ -783,7 +783,7 @@ export function createSimulatorEngine(
       return evidenceRequired(
         "simulator.garupa-extension.scene-profile-unregistered",
         [],
-        "A rendered or Manual product-extension chart requires one unambiguous schema-6 lane-count scene sibling.",
+        "A rendered or Manual product-extension chart requires one unambiguous scene sibling with the unchanged seven reference field lines.",
       );
     }
     const productRender = input.rendering === undefined || backends.rendering === undefined

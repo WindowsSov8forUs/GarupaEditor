@@ -43,8 +43,8 @@ const ordinary = requireOk(createSimulatorSceneLayout(surface, config, "ordinary
 assert.equal(ordinary.ordinaryNoteScene.goalPositions.length, 7);
 assert.equal(ordinary.ordinaryNoteScene.noteStartPositions.length, 7);
 assert.equal(ordinary.particleScene.buttonAnchors.length, 15);
-assert.equal(ordinary.garupaProductScene.laneCount, 7);
 assert.equal(ordinary.garupaProductScene.fieldLines.length, 7);
+assert.deepEqual(ordinary.garupaProductScene.fieldLines.map((line) => line.lane), [0, 1, 2, 3, 4, 5, 6]);
 for (let lane = 0; lane < 7; lane += 1) {
   assert.deepEqual(
     requireOk(ordinary.garupaProductScene.projectLaneAtCurve(lane, 0)),
@@ -90,36 +90,27 @@ const slideSource = Object.freeze({
 const currentY = requireOk(ordinary.manualInputGeometry.getSlideCurrentLocalY!(slideSource, Math.fround(192)));
 assert.ok(currentY <= center.y.value);
 
-const lane9 = requireOk(createSimulatorSceneLayout(surface, config, "ordinary", resources, 9));
-assert.deepEqual(
-  [lane9.garupaProductScene.minimumLane, lane9.garupaProductScene.maximumLane],
-  [-1, 7],
-);
-assert.deepEqual(lane9.garupaProductScene.fieldLines.map((line) => line.lane),
-  [-1, 0, 1, 2, 3, 4, 5, 6, 7]);
-const outsideLeft = requireOk(lane9.garupaProductScene.projectLaneAtCurve(-1, 1));
-const laneZero = requireOk(lane9.garupaProductScene.projectLaneAtCurve(0, 1));
+const outsideLeft = requireOk(ordinary.garupaProductScene.projectLaneAtCurve(-1, 1));
+const laneZero = requireOk(ordinary.garupaProductScene.projectLaneAtCurve(0, 1));
 assert.ok(Math.abs(
   Math.fround(laneZero.x.value - outsideLeft.x.value) -
-  lane9.garupaProductScene.laneSpacingWorld.value,
+  ordinary.garupaProductScene.laneSpacingWorld.value,
 ) <= 1e-6);
-const halfLane = requireOk(lane9.garupaProductScene.projectLaneAtCurve(0.5, 1));
+const halfLane = requireOk(ordinary.garupaProductScene.projectLaneAtCurve(0.5, 1));
 const halfLaneScreen = Object.freeze({
   x: Math.fround(800 + halfLane.x.value * 360),
   y: Math.fround(360 + halfLane.y.value * 360),
 });
 assert.ok(Math.abs(
-  requireOk(lane9.garupaProductScene.screenToContinuousLane(halfLaneScreen)) - Math.fround(0.5),
+  requireOk(ordinary.garupaProductScene.screenToContinuousLane(halfLaneScreen)) - Math.fround(0.5),
 ) <= 1e-6);
-assert.equal(requireOk(lane9.garupaProductScene.isInsideContinuousSpan(halfLaneScreen, 0, 2)), true);
-assert.equal(requireOk(lane9.garupaProductScene.isInsideContinuousSpan(halfLaneScreen, 1, 1)), true);
-assert.equal(lane9.garupaProductScene.projectLaneAtCurve(Number.NaN, 1).status, "evidence-required");
-const lane11 = requireOk(createSimulatorSceneLayout(surface, config, "ordinary", resources, 11));
-assert.deepEqual(
-  [lane11.garupaProductScene.minimumLane, lane11.garupaProductScene.maximumLane],
-  [-2, 8],
-);
-assert.equal(lane11.garupaProductScene.fieldLines.length, 11);
+assert.equal(requireOk(ordinary.garupaProductScene.isInsideContinuousSpan(halfLaneScreen, 0, 2)), true);
+assert.equal(requireOk(ordinary.garupaProductScene.isInsideContinuousSpan(halfLaneScreen, 1, 1)), true);
+for (const arbitraryLane of [-100.5, -1, 0.5, 7, 100.25]) {
+  assert.equal(ordinary.garupaProductScene.projectLaneAtCurve(arbitraryLane, 1).status, "ok");
+}
+assert.deepEqual(ordinary.garupaProductScene.fieldLines.map((line) => line.lane), [0, 1, 2, 3, 4, 5, 6]);
+assert.equal(ordinary.garupaProductScene.projectLaneAtCurve(Number.NaN, 1).status, "evidence-required");
 
 const habahiro = requireOk(createSimulatorSceneLayout(surface, config, "habahiro", resources));
 assert.equal(habahiro.ordinaryNoteScene.habahiro?.fieldBefore.length, 2);

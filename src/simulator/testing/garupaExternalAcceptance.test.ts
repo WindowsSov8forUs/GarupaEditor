@@ -44,7 +44,7 @@ async function main(): Promise<void> {
     assert.equal(createHash("sha256").update(bytes).digest("hex").toUpperCase(), identity!.sha256);
     const canonical = parseGarupaChartJson(JSON.parse(new TextDecoder().decode(bytes)));
     const copied = requireOk(copyAndFreezeGarupaChartJson(canonical));
-    const chart = requireOk(constructChartFromGarupaChartJson(copied.chart, 7));
+    const chart = requireOk(constructChartFromGarupaChartJson(copied.chart));
     const product = getGarupaProductChartProfile(chart)!;
     assert.equal(product.route, "product-extension");
     assert.equal(product.visibleNodes.length, identity!.units);
@@ -119,13 +119,13 @@ function runAuto(chart: ChartConstructionResult, expectedUnits: number) {
 }
 
 function runManual(canonical: ReturnType<typeof parseGarupaChartJson>, expectedUnits: number) {
-  const chart = requireOk(constructChartFromGarupaChartJson(canonical, 7));
+  const chart = requireOk(constructChartFromGarupaChartJson(canonical));
   const product = getGarupaProductChartProfile(chart)!;
   const resources = Object.freeze({ noteAtlasLogicalAssetId: "note", directionalAtlasLogicalAssetId: "directional" });
   const layout = requireOk(createSimulatorSceneLayout(
     { viewportWidth: 1600, viewportHeight: 720, inputOrigin: "bottom-left" },
     { specificSpeed: Math.fround(11), noteSize: Math.fround(100), highAspectRatio: 1, judgeOffsetFrames: 0, habahiroMeshWidthSetting: Math.fround(1) },
-    "ordinary", resources, 7,
+    "ordinary", resources,
   ));
   const mode = createSimulatorModeIdentity("live", "manual");
   const engine = requireOk(createSimulatorEngine({

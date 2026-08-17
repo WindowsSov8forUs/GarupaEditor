@@ -285,11 +285,10 @@ function testProductProfileAndProxyGraph(): void {
       { type: "Hidden", beat: 6, lane: 1, width: 1 },
     ] },
   ]));
-  const chart = requireOk(constructChartFromGarupaChartJson(copied.chart, 9));
+  const chart = requireOk(constructChartFromGarupaChartJson(copied.chart));
   const profile = getGarupaProductChartProfile(chart)!;
   assert.ok(profile);
   assert.equal(profile.route, "product-extension");
-  assert.deepEqual(profile.laneDomain, { laneCount: 9, minimumLane: -1, maximumLane: 7 });
   assert.equal(profile.svEvents.length, 1);
   assert.equal(profile.svEvents[0]!.value, -2.123457);
   assert.equal(profile.nodes.length, 7);
@@ -318,9 +317,19 @@ function testProductProfileAndProxyGraph(): void {
   const standard = requireOk(constructChartFromGarupaChartJson(parse([
     { type: "BPM", beat: 0, value: 120 },
     { type: "Single", beat: 1, lane: 1, width: 1 },
-  ]), 7));
+  ])));
   assert.equal(getGarupaProductChartProfile(standard)?.route, "original-compatible");
   assert.equal(standard.noteBatches.flatMap((batch) => batch.informationList).filter((note) => note.buttonType >= 0).length, 1);
+
+  const arbitraryLaneChart = requireOk(constructChartFromGarupaChartJson(parse([
+    { type: "BPM", beat: 0, value: 120 },
+    { type: "Single", beat: 1, lane: -100.5, width: 1 },
+    { type: "Single", beat: 2, lane: 123.25, width: 2 },
+  ])));
+  const arbitraryLaneProfile = getGarupaProductChartProfile(arbitraryLaneChart)!;
+  assert.equal(arbitraryLaneProfile.route, "product-extension");
+  assert.deepEqual(arbitraryLaneProfile.nodes.map((node) => node.lane), [-100.5, 123.25]);
+  assert.equal(requireOk(createConstructedChartScoringPlan(arbitraryLaneChart)).totalScoringUnitCount, 2);
 }
 
 function testTimingGroupAxis(): void {
@@ -332,7 +341,7 @@ function testTimingGroupAxis(): void {
     { type: "SV", beat: 2, value: -1, timingGroup: "#1" },
     { type: "SV", beat: 3, value: 0 },
     { type: "Single", beat: 4, lane: 1, width: 1, timingGroup: "#1" },
-  ]), 7));
+  ])));
   const profile = getGarupaProductChartProfile(productChart)!;
   const axis = requireOk(createGarupaProductTimingGroupAxisProfile(productChart, profile));
   assert.equal(getGarupaProductTimingGroupAxisProfile(productChart)?.groups.length, 2);
@@ -455,7 +464,7 @@ function testProductAutoEngineOutcome(): void {
       { type: "Directional", beat: 4, lane: 5, width: 2, direction: "Left" },
       { type: "Hidden", beat: 5, lane: 4, width: 1 },
     ] },
-  ]), 9));
+  ])));
   const mode = createSimulatorModeIdentity("live", "auto");
   const engine = requireOk(createSimulatorEngine({
     chart,
@@ -492,7 +501,7 @@ function testProductManualChainOwner(): void {
       { type: "Hidden", beat: 4, lane: 5, width: 1 },
     ] },
     { type: "Single", beat: 4, lane: 6.5, width: 1 },
-  ]), 9));
+  ])));
   const product = getGarupaProductChartProfile(chart)!;
   const sceneResources = Object.freeze({
     noteAtlasLogicalAssetId: "note", directionalAtlasLogicalAssetId: "directional",
@@ -505,7 +514,6 @@ function testProductManualChainOwner(): void {
     },
     "ordinary",
     sceneResources,
-    9,
   ));
   const music = new InGameMusicScoreController(chart);
   const oneFrame = new InGameOneFrameJudgementController();
@@ -581,12 +589,12 @@ function testProductManualEngineOutcome(): void {
       { type: "Hidden", beat: 4, lane: 5, width: 1 },
     ] },
     { type: "Single", beat: 4, lane: 6.5, width: 1 },
-  ]), 9));
+  ])));
   const resources = Object.freeze({ noteAtlasLogicalAssetId: "note", directionalAtlasLogicalAssetId: "directional" });
   const layout = requireOk(createSimulatorSceneLayout(
     { viewportWidth: 1600, viewportHeight: 720, inputOrigin: "bottom-left" },
     { specificSpeed: Math.fround(11), noteSize: Math.fround(100), highAspectRatio: 1, judgeOffsetFrames: 0, habahiroMeshWidthSetting: Math.fround(1) },
-    "ordinary", resources, 9,
+    "ordinary", resources,
   ));
   const product = getGarupaProductChartProfile(chart)!;
   const head = product.visibleNodes.find((node) => node.chainIdentity !== null && node.type === "Single")!;
@@ -638,7 +646,7 @@ async function testProductReplayLifecycle(): Promise<void> {
       { type: "Single", beat: 1, lane: 0.5, width: 1, timingGroup: "#1" },
       { type: "Single", beat: 5, lane: 2.5, width: 1, timingGroup: "#1" },
       { type: "Single", beat: 12, lane: 7, width: 1, timingGroup: "#1" },
-    ]), 9));
+    ])));
     return requireOk(createSimulatorEngine({
       chart,
       runtime: { highFrequencyMode: false, judgeOffsetFrames: 0, mode },
@@ -677,14 +685,14 @@ async function testProductReplayLifecycle(): Promise<void> {
   const manualScene = requireOk(createSimulatorSceneLayout(
     { viewportWidth: 1600, viewportHeight: 720, inputOrigin: "bottom-left" },
     { specificSpeed: Math.fround(11), noteSize: Math.fround(100), highAspectRatio: 1, judgeOffsetFrames: 0, habahiroMeshWidthSetting: Math.fround(1) },
-    "ordinary", manualResources, 9,
+    "ordinary", manualResources,
   )).garupaProductScene;
   const createManualFresh = () => {
     const chart = requireOk(constructChartFromGarupaChartJson(parse([
       { type: "BPM", beat: 0, value: 120 },
       { type: "SV", beat: 2, value: 0 },
       { type: "Single", beat: 1, lane: 0.5, width: 1 },
-    ]), 9));
+    ])));
     return requireOk(createSimulatorEngine({
       chart,
       garupaProductScene: manualScene,
@@ -733,7 +741,7 @@ function testProductRenderCommands(): void {
       { type: "Flick", beat: 2, lane: 2.25, width: 2 },
       { type: "Hidden", beat: 3, lane: 7, width: 1 },
     ] },
-  ]), 9));
+  ])));
   const product = getGarupaProductChartProfile(chart)!;
   const axis = getGarupaProductTimingGroupAxisProfile(chart)!;
   const resources = Object.freeze({
@@ -749,7 +757,6 @@ function testProductRenderCommands(): void {
     },
     "ordinary",
     resources,
-    9,
   ));
   const backend = productRendererBackend();
   const producer = new GarupaProductRenderProducer(

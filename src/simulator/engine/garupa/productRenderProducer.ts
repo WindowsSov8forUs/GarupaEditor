@@ -50,11 +50,12 @@ export class GarupaProductRenderProducer {
     if (typeof this.sessionId !== "string" || this.sessionId.length === 0 ||
       this.renderer.snapshot().sessionId !== this.sessionId ||
       this.renderer.snapshot().state !== "ready" ||
-      this.scene.laneCount !== this.chart.laneDomain.laneCount ||
+      this.scene.fieldLines.length !== 7 ||
+      this.scene.fieldLines.some((line, index) => line.lane !== index) ||
       this.resources.curveNoteMaterialLogicalAssetId === undefined) {
       return rejected(
         "render.garupa-product.invalid-owner-binding",
-        "Product rendering requires one ready matching renderer, lane domain and explicit curve material binding.",
+        "Product rendering requires one ready matching renderer, the unchanged seven reference field lines and an explicit curve material binding.",
       );
     }
     return getOrdinaryNoteArrivalSeconds(this.specificSpeed).status === "ok"

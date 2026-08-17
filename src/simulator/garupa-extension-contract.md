@@ -7,8 +7,9 @@ Reverse remains the only authority for original behavior.
 
 ## Boundary and identity
 
-- Public request schema 6 explicitly supplies `laneCount: 7 | 9 | 11` beside the
-  canonical `GarupaChartJson`. Lane count is never inferred from notes.
+- Public request schema 7 supplies only canonical `GarupaChartJson`, BGM bytes
+  and `isFullLength` in `chartData`; Garupa JSON has no lane-count field and the
+  simulator neither accepts one nor infers one from authored notes.
 - The canonical parser emits no own property for an absent/Global timing group.
 - Invalid fields, non-finite values, unsupported keys and malformed group IDs
   fail closed. They are not coerced, clamped or routed to Global.
@@ -36,9 +37,10 @@ Reverse remains the only authority for original behavior.
   ```
 
   Mirror substitutes `6 - lane`. No rounding or nearest-button mapping occurs.
-- Lane domains are 7=`0..6`, 9=`-1..7`, 11=`-2..8`. Lane count controls field
-  lines and input domain, not authored-note validity. An outside note continues
-  through the affine geometry and may be outside the viewport.
+- The playfield always retains exactly the original seven reference lines at
+  lanes `0..6`. Authored lane values do not resize or add field lines. Fractional
+  and outside notes continue through the same affine geometry and may be between
+  those lines or outside the viewport; there is no lane domain.
 - A rhythm front is centered at `lane + (width - 1) / 2`. Directional incoming
   anchor is `lane`; outgoing anchor is the span edge.
 - Product rendering uses scalable generic front/line geometry when a lane- or
@@ -149,7 +151,7 @@ Retry and MoveTime reject any fresh-generation fidelity mismatch.
 Portable product raster acceptance uses production Browser decoding and actual
 Pixi/WebGL in three fresh WebView2 processes. The initial/negative-SV/zero-SV/
 restored-positive stable digest is
-`c9a02a4caa15dc837cead5d63b8137dd3f9140df0e7c60c2bb3bb18b2f6fc8df`.
+`3f03e17e2d3de98f9e4b456fae34802823ac430695785a74b030ecac02c450ad`.
 This is a product portable claim, not Unity framebuffer or fixed-device parity.
 
 This contract does not open character skills, Fever, multiplayer, HABAHIRO
