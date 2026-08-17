@@ -92,7 +92,10 @@ export class GarupaProductRenderProducer {
       if (displacement.status !== "ok") return displacement;
       const progress = 1 - displacement.value / arrivalMilliseconds;
       const curve = Math.pow(1.1, 50 * (progress - 1));
-      const projected = this.scene.projectLaneAtCurve(node.lane + (node.width - 1) / 2, curve);
+      const projected = this.scene.projectLaneAtCurve(
+        node.spanStart + (node.width - 1) / 2,
+        curve,
+      );
       if (projected.status !== "ok") return projected;
       samples.set(node.identity, Object.freeze({
         node,
@@ -353,7 +356,7 @@ function judgementFlashMesh(
   scene: GarupaProductSceneLayout,
   frames: number,
 ): Omit<Extract<RenderCommand, { kind: "set-mesh" }>, "sessionId" | "sequence" | "frame" | "substep"> {
-  const centerResult = scene.projectLaneAtCurve(node.lane + (node.width - 1) / 2, 1);
+  const centerResult = scene.projectLaneAtCurve(node.spanStart + (node.width - 1) / 2, 1);
   if (centerResult.status !== "ok") throw new Error(centerResult.capability);
   const center = centerResult.value;
   const life = frames / 12;

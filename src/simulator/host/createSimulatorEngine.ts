@@ -78,6 +78,7 @@ class SimulatorEngineHost implements SimulatorEngine {
     private readonly renderProducer: RenderCommandProducer | null,
     private readonly audioProducer: AudioCommandProducer | null,
     private readonly particleCoordinator: ParticleFrameCoordinator | null,
+    private readonly productTimeline: GarupaProductTimelineManager | null,
     readonly backends: SimulatorBackends,
   ) {}
 
@@ -141,8 +142,16 @@ class SimulatorEngineHost implements SimulatorEngine {
       }
       return this.inGameDirector.update(deltaTimeSeconds);
     }
+    const productInput = this.productTimeline?.prepareManualFrame(
+      inputFrame,
+      deltaTimeSeconds,
+    ) ?? ok(undefined);
+    if (productInput.status !== "ok") return productInput;
+    const originalInputFrame = this.productTimeline === null
+      ? inputFrame
+      : Object.freeze({ touches: Object.freeze([]) });
     const inputValidation =
-      this.inGameManager.inputManager.prepareOuterFrame(inputFrame, deltaTimeSeconds);
+      this.inGameManager.inputManager.prepareOuterFrame(originalInputFrame, deltaTimeSeconds);
     if (inputValidation.status !== "ok") {
       return inputValidation;
     }
@@ -177,6 +186,9 @@ class SimulatorEngineHost implements SimulatorEngine {
     const copied = copyManualInputPosition(position);
     if (copied.status !== "ok") {
       return copied;
+    }
+    if (this.productTimeline !== null) {
+      return this.productTimeline.resolveContinuousInput(copied.value);
     }
     const resolved = this.backends.manualInputGeometry.resolveButton(copied.value);
     if (resolved.status !== "ok") {
@@ -763,11 +775,15 @@ export function createSimulatorEngine(
         "A product-extension chart requires its exact construction-owned TimingGroup axis profile.",
       );
     }
-    if (input.rendering !== undefined && input.rendering.garupaProductScene === undefined) {
+    const productScene = input.garupaProductScene ?? input.rendering?.garupaProductScene;
+    if ((input.garupaProductScene !== undefined && input.rendering?.garupaProductScene !== undefined &&
+        input.garupaProductScene !== input.rendering.garupaProductScene) ||
+      (modeValidation.value.inputMode === "manual" && productScene === undefined) ||
+      (input.rendering !== undefined && input.rendering.garupaProductScene === undefined)) {
       return evidenceRequired(
         "simulator.garupa-extension.scene-profile-unregistered",
         [],
-        "A rendered product-extension chart requires the schema-6 lane-count scene sibling.",
+        "A rendered or Manual product-extension chart requires one unambiguous schema-6 lane-count scene sibling.",
       );
     }
     const productRender = input.rendering === undefined || backends.rendering === undefined
@@ -787,6 +803,8 @@ export function createSimulatorEngine(
       musicScoreController,
       oneFrameJudgementController,
       productRender,
+      productScene ?? null,
+      input.runtime.judgeOffsetFrames,
     );
   }
   if (scoreLifeStateManager !== null) {
@@ -822,7 +840,9 @@ export function createSimulatorEngine(
   }
   const manualJudgementOwner =
     oneFrameJudgementController.registerManualJudgementOwner(
-      (noteInformation) => noteManager.getManualJudgementOwnership(noteInformation),
+      (noteInformation) =>
+        productTimeline?.getManualJudgementOwnership(noteInformation) ??
+        noteManager.getManualJudgementOwnership(noteInformation),
     );
   if (manualJudgementOwner.status !== "ok") {
     return manualJudgementOwner;
@@ -871,6 +891,7 @@ export function createSimulatorEngine(
     renderProducer,
     audioProducer,
     particleCoordinator,
+    productTimeline,
     backends,
   ));
 }

@@ -62,6 +62,7 @@ export interface ManualJudgementOwnership {
   readonly slideAllowedNoteTypes: readonly number[] | null;
   readonly slideAbsolutePosition: number | null;
   readonly slideButtonTypes: readonly ButtonTypeValue[] | null;
+  readonly productExtension?: "garupa-visible-node";
 }
 
 export interface ManualJudgementCommitPlan {

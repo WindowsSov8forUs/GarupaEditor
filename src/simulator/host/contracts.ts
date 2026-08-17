@@ -50,6 +50,7 @@ export interface SimulatorEngineInput {
     readonly mode: SimulatorModeIdentity;
   };
   readonly scoreLifeState?: ScoreLifeStateProfile;
+  readonly garupaProductScene?: GarupaProductSceneLayout;
   readonly rendering?: SimulatorRenderingSessionInput;
   readonly audio?: SimulatorAudioSessionInput;
   readonly particles?: SimulatorParticleSessionInput;

@@ -646,6 +646,9 @@ function isClosedManualRequest(
   request: ManualJudgementRequest,
   ownership: ManualJudgementOwnership,
 ): boolean {
+  if (ownership.productExtension === "garupa-visible-node") {
+    return isClosedGarupaProductManualRequest(source, request, ownership);
+  }
   const phase = request.phase ?? "head";
   const expectedMultipleCount = ownership.multipleDirectionalFlickNoteCount;
   const expectedMultipleButtons = ownership.multipleDirectionalFlickButtonTypes;
@@ -727,6 +730,33 @@ function isClosedManualRequest(
     (source.fireNoteType === FrontNoteType.Flick && request.noteType === 3) ||
     (source.fireNoteType === FrontNoteType.DirectionalFlick && request.noteType === 9)
   );
+}
+
+function isClosedGarupaProductManualRequest(
+  source: ManualJudgementRequest["noteInformation"],
+  request: ManualJudgementRequest,
+  ownership: ManualJudgementOwnership,
+): boolean {
+  if (
+    ownership.productExtension !== "garupa-visible-node" ||
+    source.buttonType !== ButtonType.None ||
+    source.buttonTypes.length !== 1 || source.buttonTypes[0] !== ButtonType.None ||
+    source.buttonTypesArray.length !== 1 || source.buttonTypesArray[0] !== ButtonType.None ||
+    source.isInvisible || (request.phase ?? "head") !== "head" ||
+    request.absolutePosition !== source.absolutePos ||
+    request.multipleDirectionalFlickNoteCount !== undefined ||
+    ownership.multipleDirectionalFlickNoteCount !== null ||
+    ownership.multipleDirectionalFlickButtonTypes !== null ||
+    ownership.longAfterAbsolutePosition !== null || ownership.longAfterNoteType !== null ||
+    ownership.longAfterButtonTypes !== null || ownership.longAfterMultipleCount !== null ||
+    ownership.slidePhase !== null || ownership.slideAllowedNoteTypes !== null ||
+    ownership.slideAbsolutePosition !== null || ownership.slideButtonTypes !== null
+  ) return false;
+  if (request.rawResult === NoteResultType.Miss) return request.noteType === 0;
+  if (source.fireNoteType === FrontNoteType.Normal) return request.noteType === 0;
+  if (source.fireNoteType === FrontNoteType.Flick) return request.noteType === 3;
+  return source.fireNoteType === FrontNoteType.DirectionalFlick &&
+    isDirectionalGameNoteType(source.gameNoteType) && request.noteType === 9;
 }
 
 function isOwnedButtonGroup(

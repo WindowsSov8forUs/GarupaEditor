@@ -26,7 +26,14 @@ import {
   getGarupaProductTimingGroupAxisProfile,
 } from "../engine/garupa/timingGroupAxis";
 import { GarupaProductRenderProducer } from "../engine/garupa/productRenderProducer";
-import { createSimulatorSceneLayout } from "../scene/simulatorSceneLayout";
+import { GarupaProductTimelineManager } from "../engine/garupa/productTimelineManager";
+import {
+  createSimulatorSceneLayout,
+  type GarupaProductSceneLayout,
+} from "../scene/simulatorSceneLayout";
+import { InGameMusicScoreController } from "../engine/managers/inGameMusicScoreController";
+import { InGameOneFrameJudgementController } from "../engine/managers/inGameOneFrameJudgementController";
+import { ManualTouchPhase, type ManualInputPosition } from "../engine/data/manualInput";
 
 function main(): void {
   testContractCopyAndExactShape();
@@ -40,6 +47,8 @@ function main(): void {
   testCanonicalBmsDifferentialProjection();
   testAutoAndManualEngineOutcomes();
   testProductAutoEngineOutcome();
+  testProductManualChainOwner();
+  testProductManualEngineOutcome();
   testProductRenderCommands();
   testCapabilities();
   console.log("public Garupa JSON chart tests passed");
@@ -465,6 +474,167 @@ function testProductAutoEngineOutcome(): void {
   assert.equal(snapshot.managers.garupaProduct?.visibleNodeCount, 4);
   assert.equal(snapshot.managers.garupaProduct?.judgedNodeCount, 4);
   requireOk(engine.dispose());
+}
+
+function testProductManualChainOwner(): void {
+  const chart = requireOk(constructChartFromGarupaChartJson(parse([
+    { type: "BPM", beat: 0, value: 120 },
+    { type: "SV", beat: 1.5, value: 0 },
+    { type: "SV", beat: 1.75, value: 1 },
+    { type: "Slide", connections: [
+      { type: "Hidden", beat: 1, lane: 0, width: 1 },
+      { type: "Single", beat: 1, lane: 0.5, width: 2 },
+      { type: "Flick", beat: 2, lane: 2.25, width: 1 },
+      { type: "Directional", beat: 3, lane: 4, width: 2, direction: "Left" },
+      { type: "Hidden", beat: 4, lane: 5, width: 1 },
+    ] },
+    { type: "Single", beat: 4, lane: 6.5, width: 1 },
+  ]), 9));
+  const product = getGarupaProductChartProfile(chart)!;
+  const sceneResources = Object.freeze({
+    noteAtlasLogicalAssetId: "note", directionalAtlasLogicalAssetId: "directional",
+  });
+  const scene = requireOk(createSimulatorSceneLayout(
+    { viewportWidth: 1600, viewportHeight: 720, inputOrigin: "bottom-left" },
+    {
+      specificSpeed: Math.fround(11), noteSize: Math.fround(100), highAspectRatio: 1,
+      judgeOffsetFrames: 0, habahiroMeshWidthSetting: Math.fround(1),
+    },
+    "ordinary",
+    sceneResources,
+    9,
+  ));
+  const music = new InGameMusicScoreController(chart);
+  const oneFrame = new InGameOneFrameJudgementController();
+  const mode = createSimulatorModeIdentity("live", "manual");
+  const manager = new GarupaProductTimelineManager(
+    product,
+    mode,
+    music,
+    oneFrame,
+    null,
+    scene.garupaProductScene,
+    0,
+  );
+  assert.equal(oneFrame.registerManualJudgementOwner(
+    (source) => manager.getManualJudgementOwnership(source),
+  ).status, "ok");
+  assert.equal(oneFrame.initialize().status, "ok");
+  assert.equal(manager.initialize().status, "ok");
+
+  requireOk(music.advance(Math.fround(0.5)));
+  const head = product.visibleNodes.find((node) => node.type === "Single" && node.chainIdentity !== null)!;
+  const headPoint = productScreenPoint(scene.garupaProductScene, head);
+  requireOk(manager.prepareManualFrame({ touches: [{ fingerId: 1, phase: ManualTouchPhase.Began, position: headPoint, buttonResolution: null }] }, Math.fround(1 / 60)));
+  requireOk(manager.update());
+  let batch = requireOk(oneFrame.reflectOneFrameData())!;
+  assert.equal(batch.entries[0]!.adjustedResult, 4);
+  assert.equal(batch.entries[0]!.noteType, 0);
+  assert.equal(manager.snapshot().activeFingerCount, 1);
+
+  requireOk(music.advance(Math.fround(0.5)));
+  const flick = product.visibleNodes.find((node) => node.type === "Flick")!;
+  const flickPoint = productScreenPoint(scene.garupaProductScene, flick);
+  requireOk(manager.prepareManualFrame({ touches: [{ fingerId: 1, phase: ManualTouchPhase.Stationary, position: flickPoint, buttonResolution: null }] }, Math.fround(1 / 60)));
+  requireOk(manager.update());
+  assert.equal(requireOk(oneFrame.reflectOneFrameData()), null);
+  requireOk(manager.prepareManualFrame({ touches: [{ fingerId: 1, phase: ManualTouchPhase.Moved, position: { x: flickPoint.x + 20, y: flickPoint.y }, buttonResolution: null }] }, Math.fround(1 / 60)));
+  requireOk(manager.update());
+  batch = requireOk(oneFrame.reflectOneFrameData())!;
+  assert.equal(batch.entries[0]!.noteType, 3);
+
+  requireOk(music.advance(Math.fround(0.5)));
+  const directional = product.visibleNodes.find((node) => node.type === "Directional")!;
+  const directionalPoint = productScreenPoint(scene.garupaProductScene, directional);
+  requireOk(manager.prepareManualFrame({ touches: [{ fingerId: 1, phase: ManualTouchPhase.Stationary, position: directionalPoint, buttonResolution: null }] }, Math.fround(1 / 60)));
+  requireOk(manager.update());
+  assert.equal(requireOk(oneFrame.reflectOneFrameData()), null);
+  requireOk(manager.prepareManualFrame({ touches: [{ fingerId: 1, phase: ManualTouchPhase.Moved, position: { x: directionalPoint.x - 10, y: directionalPoint.y }, buttonResolution: null }] }, Math.fround(1 / 60)));
+  requireOk(manager.update());
+  batch = requireOk(oneFrame.reflectOneFrameData())!;
+  assert.equal(batch.entries[0]!.noteType, 9);
+  assert.equal(manager.snapshot().activeFingerCount, 0);
+
+  requireOk(music.advance(Math.fround(0.7)));
+  requireOk(manager.update());
+  batch = requireOk(oneFrame.reflectOneFrameData())!;
+  assert.equal(batch.entries[0]!.adjustedResult, 0);
+  assert.equal(manager.snapshot().judgedNodeCount, 3);
+  assert.equal(manager.snapshot().missedNodeCount, 1);
+  manager.commitDispose();
+  oneFrame.dispose();
+}
+
+function testProductManualEngineOutcome(): void {
+  const chart = requireOk(constructChartFromGarupaChartJson(parse([
+    { type: "BPM", beat: 0, value: 120 },
+    { type: "SV", beat: 1.5, value: 0 },
+    { type: "SV", beat: 1.75, value: 1 },
+    { type: "Slide", connections: [
+      { type: "Hidden", beat: 1, lane: 0, width: 1 },
+      { type: "Single", beat: 1, lane: 0.5, width: 2 },
+      { type: "Flick", beat: 2, lane: 2.25, width: 1 },
+      { type: "Directional", beat: 3, lane: 4, width: 2, direction: "Left" },
+      { type: "Hidden", beat: 4, lane: 5, width: 1 },
+    ] },
+    { type: "Single", beat: 4, lane: 6.5, width: 1 },
+  ]), 9));
+  const resources = Object.freeze({ noteAtlasLogicalAssetId: "note", directionalAtlasLogicalAssetId: "directional" });
+  const layout = requireOk(createSimulatorSceneLayout(
+    { viewportWidth: 1600, viewportHeight: 720, inputOrigin: "bottom-left" },
+    { specificSpeed: Math.fround(11), noteSize: Math.fround(100), highAspectRatio: 1, judgeOffsetFrames: 0, habahiroMeshWidthSetting: Math.fround(1) },
+    "ordinary", resources, 9,
+  ));
+  const product = getGarupaProductChartProfile(chart)!;
+  const head = product.visibleNodes.find((node) => node.chainIdentity !== null && node.type === "Single")!;
+  const flick = product.visibleNodes.find((node) => node.type === "Flick")!;
+  const directional = product.visibleNodes.find((node) => node.type === "Directional")!;
+  const top = product.visibleNodes.find((node) => node.chainIdentity === null)!;
+  const headPoint = productScreenPoint(layout.garupaProductScene, head);
+  const flickPoint = productScreenPoint(layout.garupaProductScene, flick);
+  const directionalPoint = productScreenPoint(layout.garupaProductScene, directional);
+  const topPoint = productScreenPoint(layout.garupaProductScene, top);
+  const mode = createSimulatorModeIdentity("live", "manual");
+  const engine = requireOk(createSimulatorEngine({
+    chart,
+    garupaProductScene: layout.garupaProductScene,
+    runtime: { highFrequencyMode: false, judgeOffsetFrames: 0, mode },
+    scoreLifeState: {
+      schemaVersion: 3, sessionId: "garupa-product-manual", mode,
+      life: { initialLife: 1000, playerMaxLife: 1000, lifeUpperLimit: 2000, missDamage: -100, badDamage: -50 },
+    },
+  }, createRecordingSimulatorBackends()));
+  requireOk(engine.initialize());
+  assert.equal(requireOk(engine.resolveManualInputButton(headPoint)), null);
+  const touch = (fingerId: number, phase: number, position: ManualInputPosition) => ({
+    touches: [{ fingerId, phase: phase as 0 | 1 | 2 | 3, position, buttonResolution: null }],
+  });
+  requireOk(engine.step(Math.fround(0.5), touch(1, ManualTouchPhase.Began, headPoint)));
+  requireOk(engine.step(Math.fround(0.5), touch(1, ManualTouchPhase.Stationary, flickPoint)));
+  requireOk(engine.step(Math.fround(0), touch(1, ManualTouchPhase.Moved, { x: flickPoint.x + 20, y: flickPoint.y })));
+  requireOk(engine.step(Math.fround(0.5), touch(1, ManualTouchPhase.Stationary, directionalPoint)));
+  requireOk(engine.step(Math.fround(0), touch(1, ManualTouchPhase.Moved, { x: directionalPoint.x - 10, y: directionalPoint.y })));
+  requireOk(engine.step(Math.fround(0.5), touch(2, ManualTouchPhase.Began, topPoint)));
+  const snapshot = requireOk(engine.snapshot());
+  assert.equal(snapshot.managers.scoreLifeState!.record.score, 10_000_004);
+  assert.equal(snapshot.managers.scoreLifeState!.record.currentCombo, 4);
+  assert.equal(snapshot.managers.garupaProduct?.judgedNodeCount, 4);
+  assert.equal(snapshot.managers.garupaProduct?.missedNodeCount, 0);
+  requireOk(engine.dispose());
+}
+
+function productScreenPoint(
+  scene: GarupaProductSceneLayout,
+  node: { readonly lane: number; readonly width: number },
+): ManualInputPosition {
+  const spanStart = "spanStart" in node && typeof node.spanStart === "number"
+    ? node.spanStart
+    : node.lane;
+  const projected = requireOk(scene.projectLaneAtCurve(spanStart + (node.width - 1) / 2, 1));
+  return Object.freeze({
+    x: Math.fround(800 + projected.x.value * 360),
+    y: Math.fround(360 + projected.y.value * 360),
+  });
 }
 
 function testProductRenderCommands(): void {
