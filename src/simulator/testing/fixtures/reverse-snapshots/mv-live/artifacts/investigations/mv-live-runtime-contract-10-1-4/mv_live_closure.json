@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "status": "closed-current-live-manual-auto-mv-portable",
+  "source_contract": {
+    "path": "artifacts/investigations/mv-live-runtime-contract-10-1-4/mv_live_runtime_contract.json",
+    "sha256": "FE1C42F70B83376CB6C8DC5250E25485119325ABDA2134542E2244554D757FDE"
+  },
+  "source_oracle": {
+    "path": "artifacts/investigations/mv-live-runtime-contract-10-1-4/mv_live_command_oracle.json",
+    "sha256": "B1CA55EE9043CE3D4C8E3F38902012F0E63719B38CD8B176B63EE3776D70F131"
+  },
+  "reachable_unclassified_count": 0,
+  "unknown_mode_predicate_count": 0,
+  "unknown_delay_branch_count": 0,
+  "missing_runtime_route_count": 0,
+  "missing_lifecycle_edge_count": 0,
+  "missing_resource_or_media_profile_count": 0,
+  "portable_mapping_gap_count": 0,
+  "runtime_hook_failure_count": 0,
+  "rejected_trace_consumption": false,
+  "r2_used": false,
+  "production_authorization": true,
+  "authorization_scope": "gameplay-MV-Live for Public Live Manual and Live Auto using caller-owned strict MP4/WebM bytes; portable semantic/raster only"
+}

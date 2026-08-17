@@ -18,6 +18,7 @@ export function createTestPresentationPackage(): SimulatorPresentationPackage {
     jacketPng: jacket,
     stage: { backdropPng: backdrop, sdCharacterAtlases: slots },
     liveStartVoiceMp3: null,
+    mv: null,
   };
 }
 

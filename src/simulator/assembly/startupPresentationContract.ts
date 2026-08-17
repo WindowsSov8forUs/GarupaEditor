@@ -1,4 +1,5 @@
 import type {
+  SimulatorPresentationMvPackage,
   SimulatorPresentationPackage,
   SimulatorPresentationPng,
 } from "../public/contracts";
@@ -23,8 +24,8 @@ export interface ValidatedPngStructure {
 export function copyAndFreezeSimulatorPresentation(
   value: unknown,
 ): SimulatorAssemblyResult<SimulatorPresentationPackage> {
-  if (!isExactObject(value, "difficulty,liveStartVoiceMp3,song,stage,jacketPng")) {
-    return invalid("The presentation package requires exact song, difficulty, jacketPng, stage and liveStartVoiceMp3 keys.");
+  if (!isExactObject(value, "difficulty,jacketPng,liveStartVoiceMp3,mv,song,stage")) {
+    return invalid("The presentation package requires exact song, difficulty, jacketPng, stage, liveStartVoiceMp3 and nullable mv keys.");
   }
   const presentation = value as unknown as SimulatorPresentationPackage;
   if (!isExactObject(presentation.song, "arranger,bandName,composer,lyricist,title") ||
@@ -83,6 +84,8 @@ export function copyAndFreezeSimulatorPresentation(
       return rejected("resource-decode", "simulator.presentation.invalid-live-start-voice-mp3", mp3.failure.boundary);
     }
   }
+  const mv = copyMvPackage(presentation.mv);
+  if (mv.status === "rejected") return mv;
   return accepted(Object.freeze({
     song: Object.freeze({
       title: presentation.song.title,
@@ -101,6 +104,29 @@ export function copyAndFreezeSimulatorPresentation(
       sdCharacterAtlases: Object.freeze(slots) as unknown as SimulatorPresentationPackage["stage"]["sdCharacterAtlases"],
     }),
     liveStartVoiceMp3: voice === null ? null : Uint8Array.from(voice),
+    mv: mv.value,
+  }));
+}
+
+function copyMvPackage(
+  value: unknown,
+): SimulatorAssemblyResult<SimulatorPresentationMvPackage | null> {
+  if (value === null) return accepted(null);
+  if (!isExactObject(value, "bytes,musicStartDelayMilliseconds")) {
+    return invalid("mv is null or one exact { bytes, musicStartDelayMilliseconds } object with no caller metadata.");
+  }
+  const mv = value as SimulatorPresentationMvPackage;
+  if (!(mv.bytes instanceof Uint8Array) ||
+    Object.getPrototypeOf(mv.bytes) !== Uint8Array.prototype ||
+    mv.bytes.byteLength === 0 ||
+    !Number.isInteger(mv.musicStartDelayMilliseconds) ||
+    mv.musicStartDelayMilliseconds < -0x80000000 ||
+    mv.musicStartDelayMilliseconds > 0x7fffffff) {
+    return invalid("mv requires one non-empty direct Uint8Array and one signed Int32 musicStartDelayMilliseconds value; container, codec, duration, dimensions and identity are derived internally.");
+  }
+  return accepted(Object.freeze({
+    bytes: Uint8Array.from(mv.bytes),
+    musicStartDelayMilliseconds: mv.musicStartDelayMilliseconds,
   }));
 }
 

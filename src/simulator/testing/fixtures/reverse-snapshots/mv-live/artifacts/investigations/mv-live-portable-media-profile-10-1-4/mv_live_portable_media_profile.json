@@ -1,0 +1,1019 @@
+{
+  "schema_version": 1,
+  "status": "confirmed-current-original-profile-and-portable-browser-mapping",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "version_name": "10.1.4",
+    "version_code": 230,
+    "abi": "arm64-v8a"
+  },
+  "capability": {
+    "original": "R0-device-cache-read-profile-only",
+    "portable": "project-authored-MP4-WebM-adapter-probes",
+    "network_used": false,
+    "original_binary_committed": false,
+    "CRI_USM_codec_equivalence_claimed": false
+  },
+  "sources": {
+    "catalog": {
+      "verification_cache": "tmp/mv-live/AssetBundleInfo",
+      "bytes": 1991766,
+      "sha256": "1835D21867987F29FD9D93A8763371F0E25F70FBF6BA6EBF51858558C154AC90"
+    },
+    "original_bundle": {
+      "verification_cache": "tmp/mv-live/music_video_232_hq",
+      "bytes": 61399237,
+      "sha256": "C32D9D1205C4AF4E28B2391023F12113589468E21FC789495121866BB4F5B8B0"
+    },
+    "runtime_screenshot": {
+      "path": "artifacts/investigations/mv-live-runtime-contract-10-1-4/runtime/live-auto-mv-playing-r1.png",
+      "bytes": 776774,
+      "sha256": "E6EAFD7E18BF8E25B83895A398F220007C06B13DDF02CA5027D25B69D87CA2F4"
+    }
+  },
+  "original_profile": {
+    "catalog_version": "10.1.0.260",
+    "catalog": {
+      "logical_id": "movie/mv/music_video_232_hq",
+      "cache_key": "7e3897fdd7cd4c7a4ea9b5ac8cd70c9413f85d347cee01c0a70238b59592194b",
+      "resource_version": "10.1.0.260",
+      "download_timing": "AsNeeded",
+      "checksum_u32": 1071880319,
+      "bytes": 61399237
+    },
+    "unityfs_bytes": 61399237,
+    "unityfs_sha256": "C32D9D1205C4AF4E28B2391023F12113589468E21FC789495121866BB4F5B8B0",
+    "text_asset_count": 118,
+    "text_asset_total_bytes": 61759104,
+    "concatenated_usm_sha256": "961690D3E2F4BBE61F0218F79AC1BA7601287EDB204CC79B3F536281BCA2FBA1",
+    "first": {
+      "name": "rgmv_hq_232-001.usm",
+      "path_id": 7641185660449697623,
+      "bytes": 524288,
+      "sha256": "7BEFD388B31583A89A28991F809AB1175013AE764705C3EDB173C9A15B1EE6D5",
+      "prefix_hex": "43524944000007F8001806E000000001"
+    },
+    "last": {
+      "name": "rgmv_hq_232-118.usm",
+      "path_id": 7404005147830352425,
+      "bytes": 417408,
+      "sha256": "0FD840169C63B6644C7BD0B6C35CEF0FC7B8787D448596B329BD3073CE11C517",
+      "prefix_hex": "726066F9294F18354521F2DD9F1A0498"
+    },
+    "all_assets": [
+      {
+        "name": "rgmv_hq_232-001.usm",
+        "path_id": 7641185660449697623,
+        "bytes": 524288,
+        "sha256": "7BEFD388B31583A89A28991F809AB1175013AE764705C3EDB173C9A15B1EE6D5",
+        "prefix_hex": "43524944000007F8001806E000000001"
+      },
+      {
+        "name": "rgmv_hq_232-002.usm",
+        "path_id": 859555496092450568,
+        "bytes": 524288,
+        "sha256": "A16214722E5579AD30C41A9102BDD1A833601C4046E667E1A7638FEA065C4F0F",
+        "prefix_hex": "1CE4022C0359361C0C983C3C03E8B700"
+      },
+      {
+        "name": "rgmv_hq_232-003.usm",
+        "path_id": -1850854776630002980,
+        "bytes": 524288,
+        "sha256": "C56428D7501FC485118D10098B96838509A67B538A387761200665596A7B21E3",
+        "prefix_hex": "01D00488008B401828760AD418091A35"
+      },
+      {
+        "name": "rgmv_hq_232-004.usm",
+        "path_id": 2502409671332859513,
+        "bytes": 524288,
+        "sha256": "5F5924E7E7F5B2D7415A776D85BCFD9748A5B4E03D8F90CFBCCE442DBD8DCB0B",
+        "prefix_hex": "1884006A90D0C0430521E410CA101B9C"
+      },
+      {
+        "name": "rgmv_hq_232-005.usm",
+        "path_id": -6705397259152376258,
+        "bytes": 524288,
+        "sha256": "97D3A0ED9691B05EDCB098C6CB5A1F7904711EE2292ACD96E96BD9229693BDC7",
+        "prefix_hex": "5A1D4E5B2313EC0340402D662C03126B"
+      },
+      {
+        "name": "rgmv_hq_232-006.usm",
+        "path_id": -8859606246977063964,
+        "bytes": 524288,
+        "sha256": "B17E3A7A5398E444E46AE9DBBF716B50FE3EE2446E42B115D6B852DED0899411",
+        "prefix_hex": "4CFC90BFC9C61F63986E630EF947B8F5"
+      },
+      {
+        "name": "rgmv_hq_232-007.usm",
+        "path_id": -30529697922589125,
+        "bytes": 524288,
+        "sha256": "FEA825DD68E6F602CA84E940071828B917E770391B4BFAB09341907FED3402AD",
+        "prefix_hex": "0577028019063AF90CBDC2440612788D"
+      },
+      {
+        "name": "rgmv_hq_232-008.usm",
+        "path_id": 6141668555470785190,
+        "bytes": 524288,
+        "sha256": "79D99AD976B114576FCE2CF6B579D8B1E7B1E2D23A0A8486B70B905F3ABC8948",
+        "prefix_hex": "6C2807C402744401F907C200862207C0"
+      },
+      {
+        "name": "rgmv_hq_232-009.usm",
+        "path_id": 8541374260275324991,
+        "bytes": 524288,
+        "sha256": "0C37628FCD31CA193A7F217E349F50DA265F7D985FA73E1424D8E06B5AE3380D",
+        "prefix_hex": "FF8E1D872CF757C023991CECA17D5940"
+      },
+      {
+        "name": "rgmv_hq_232-010.usm",
+        "path_id": -7676343597022054761,
+        "bytes": 524288,
+        "sha256": "B8AE9866CA27D4B98C443325A87654F4932CFB6D89B5AE86C0A91C5B5E2E44FD",
+        "prefix_hex": "1CCC70367FC040535AA85007F000EE07"
+      },
+      {
+        "name": "rgmv_hq_232-011.usm",
+        "path_id": 7082170746424261748,
+        "bytes": 524288,
+        "sha256": "9CEB25DBFC7E96F4703F984EA26D44E6DCD3DE543E3E73264BDA3F1AA66B9ACE",
+        "prefix_hex": "B28A00148636E4BC78EEE83D1C4478E0"
+      },
+      {
+        "name": "rgmv_hq_232-012.usm",
+        "path_id": -6919626228686883331,
+        "bytes": 524288,
+        "sha256": "187FDB0254C441AB25C66A263921F653F63049AD4BA6D0C9D5A787013E75A5C7",
+        "prefix_hex": "00D00C868C420A280B96D9FF23F7E76A"
+      },
+      {
+        "name": "rgmv_hq_232-013.usm",
+        "path_id": -1440496303439574548,
+        "bytes": 524288,
+        "sha256": "C1AD9714FC203DAD9C836E1624669FC5E8AB372608524FF72F1DF3F97B1249F1",
+        "prefix_hex": "10074054734CC6A06808C8CD294E8180"
+      },
+      {
+        "name": "rgmv_hq_232-014.usm",
+        "path_id": 2045606761742552596,
+        "bytes": 524288,
+        "sha256": "F0BAF75463E7E822DF2DA333A708B7646D0B10E0D0D04F7594218BAEBF10B5BB",
+        "prefix_hex": "F2C06465BA9B0B0019CAFF00AFA5F090"
+      },
+      {
+        "name": "rgmv_hq_232-015.usm",
+        "path_id": 4397815812243983231,
+        "bytes": 524288,
+        "sha256": "D0A728A17EDCDC31BA18299A1C8426A72B61C5C292B00CE57D3139AD3C972A0D",
+        "prefix_hex": "331E94ED7C78848184C421995942EF9C"
+      },
+      {
+        "name": "rgmv_hq_232-016.usm",
+        "path_id": 9164476219927915109,
+        "bytes": 524288,
+        "sha256": "8F3F706CF05BA8D34DF624FA8918CA49FA55766B29052FAAC9460ABB1593446F",
+        "prefix_hex": "22F4E8FF7741F8EBF804032002000D00"
+      },
+      {
+        "name": "rgmv_hq_232-017.usm",
+        "path_id": 226161005291141451,
+        "bytes": 524288,
+        "sha256": "9CA466429AF4B33D065B9972D53D683CB2A01231E63FE990B495936BF40BCB41",
+        "prefix_hex": "C60CC02803E370D1AB5F749492B9E486"
+      },
+      {
+        "name": "rgmv_hq_232-018.usm",
+        "path_id": -8620370361725083566,
+        "bytes": 524288,
+        "sha256": "B5A3E3E66AC772D04A0A28740EB358C5562D40CF91EF8737DCEC085B237BFDC9",
+        "prefix_hex": "DDB8E6001B510A84A41D8468D27727E8"
+      },
+      {
+        "name": "rgmv_hq_232-019.usm",
+        "path_id": -7251702915748007374,
+        "bytes": 524288,
+        "sha256": "067FAFD009B83618711866B2959AA94EE57D0A880D72544E924171970F0CF7A8",
+        "prefix_hex": "0086A87100EC102F01032001B868217A"
+      },
+      {
+        "name": "rgmv_hq_232-020.usm",
+        "path_id": 6971358365852517425,
+        "bytes": 524288,
+        "sha256": "9B2A24722B7459F3C4747FF2AA8F34114478DCD786DAD765E7E976BEC4EA50C6",
+        "prefix_hex": "E31479881D9876890379BFF5FDF9A02B"
+      },
+      {
+        "name": "rgmv_hq_232-021.usm",
+        "path_id": -3500389242921973842,
+        "bytes": 524288,
+        "sha256": "4CA0704E0769EC9A05EC47EAE0A51742DB6474C190AF76EF13E61D53D07B3CF8",
+        "prefix_hex": "8E060238AA2DBFCF0020007B0202D820"
+      },
+      {
+        "name": "rgmv_hq_232-022.usm",
+        "path_id": 287438520610945351,
+        "bytes": 524288,
+        "sha256": "2B37EF0C00CC9123F1BA2C6F9670C6CE79AC5F9D9416DB1AA33D9E8C84ACE954",
+        "prefix_hex": "6F25F15DB2360861DD8219BED97DD2B8"
+      },
+      {
+        "name": "rgmv_hq_232-023.usm",
+        "path_id": -7648157724697045240,
+        "bytes": 524288,
+        "sha256": "BF340786865EA3AE268168D7741FDCE01C0FFDF03D1C8B7F3E046E4B5936BF69",
+        "prefix_hex": "3199821B1091F01E2963D37F56C10308"
+      },
+      {
+        "name": "rgmv_hq_232-024.usm",
+        "path_id": 7152566351390076911,
+        "bytes": 524288,
+        "sha256": "362806B2960497390FA3FE47048A1A35065138BC269ED7A0674A33F615EA7ADB",
+        "prefix_hex": "0C49286E47E11BA06E4F4A70686E47B3"
+      },
+      {
+        "name": "rgmv_hq_232-025.usm",
+        "path_id": -5596336854312706848,
+        "bytes": 524288,
+        "sha256": "02ACC15D0B4167B0DD5A4A7DC83556E490E6B44EB8B808C40011E381140EE6F4",
+        "prefix_hex": "C352CFB3F65995AA0961D802120DB80F"
+      },
+      {
+        "name": "rgmv_hq_232-026.usm",
+        "path_id": -8810374870249815189,
+        "bytes": 524288,
+        "sha256": "31F51AF8949C40B9E1235B0D28EBDE5B3EBB05AF8925498B4C922BA895A96DAE",
+        "prefix_hex": "300CE280C826FE5E0C01D0015003A006"
+      },
+      {
+        "name": "rgmv_hq_232-027.usm",
+        "path_id": 6007343044367244221,
+        "bytes": 524288,
+        "sha256": "6058B17C17A06EC6BC4CCA42D42C5E05E62EBBFF3D2B153E2BA7336E58FFABF8",
+        "prefix_hex": "0490E01302682C020D68080114389A09"
+      },
+      {
+        "name": "rgmv_hq_232-028.usm",
+        "path_id": -58526013709449969,
+        "bytes": 524288,
+        "sha256": "4097883FC0F9BE672C0D9970A867EE337154FE61B77AFFFDEEB8864ADB3672C4",
+        "prefix_hex": "9D28C2D62907F0081E88D81007FC5FEF"
+      },
+      {
+        "name": "rgmv_hq_232-029.usm",
+        "path_id": -7332926905370691190,
+        "bytes": 524288,
+        "sha256": "BB05A6555E00DD993A0185EC9F377EEEECF4A21CAF30C496F05D490E018EC6CA",
+        "prefix_hex": "DBC100C023F117A3603D79D01D1E26FD"
+      },
+      {
+        "name": "rgmv_hq_232-030.usm",
+        "path_id": -5138591126581041802,
+        "bytes": 524288,
+        "sha256": "0A6FB713E0D6A3854C01C39B7D7798676FFB5CF011EBD257D3C84D64C0ADAA7D",
+        "prefix_hex": "C02F886036C83C34AE02A4800CC67D84"
+      },
+      {
+        "name": "rgmv_hq_232-031.usm",
+        "path_id": -5847181299739819175,
+        "bytes": 524288,
+        "sha256": "EEE8BD2A0BC682AF18AB36B1A93712BADFB2644417ECFCABA88C033715A0E54D",
+        "prefix_hex": "C0CA02651C09C146BB8879462C240072"
+      },
+      {
+        "name": "rgmv_hq_232-032.usm",
+        "path_id": 4266508626193336113,
+        "bytes": 524288,
+        "sha256": "EA1EAB95DE4A296EDC6A2DA4C7975F0094C4590CEF54BCD680F39C526AC0F3EC",
+        "prefix_hex": "FE8017003C0D210680C4018A0981A185"
+      },
+      {
+        "name": "rgmv_hq_232-033.usm",
+        "path_id": 4468622203032474422,
+        "bytes": 524288,
+        "sha256": "834592E103BC04D1D44CF7C89117B53CC3CF9B159890541533D38402D40B6451",
+        "prefix_hex": "60861A005C08FFA021001A10AC810128"
+      },
+      {
+        "name": "rgmv_hq_232-034.usm",
+        "path_id": -5223143564707042049,
+        "bytes": 524288,
+        "sha256": "6E9E7DA3E7D7090D1E205E178C416454C17089F4327ACECA58329CA5914BAE0E",
+        "prefix_hex": "494BEDC9A05462C9881A58610B17F94F"
+      },
+      {
+        "name": "rgmv_hq_232-035.usm",
+        "path_id": -7534998417620160430,
+        "bytes": 524288,
+        "sha256": "B9C2ECBEC90DFACE85F3DF75F7DD3924DA74A067C09EE3BB251BFC377991B52C",
+        "prefix_hex": "607718901599C0545925039681D44645"
+      },
+      {
+        "name": "rgmv_hq_232-036.usm",
+        "path_id": 6772771126420675405,
+        "bytes": 524288,
+        "sha256": "F66C82CDA5A0EB9352910487318E919B9EDDAC9B5C99C5059798A93E01274400",
+        "prefix_hex": "4833BF49603CC8283C37BF008104F801"
+      },
+      {
+        "name": "rgmv_hq_232-037.usm",
+        "path_id": -6711931472075448962,
+        "bytes": 524288,
+        "sha256": "9CBCA452F75EEE1288BC3557661E6AB75D5CC3FE9F8B1250507A6BF6DA3CC499",
+        "prefix_hex": "E9033C9819CBF986F42DA00521805060"
+      },
+      {
+        "name": "rgmv_hq_232-038.usm",
+        "path_id": -3830394873547352863,
+        "bytes": 524288,
+        "sha256": "315C93A3C0D9DFE89D6218E5699927FE5A5F808BC583EC409F2F39F57C73CD7C",
+        "prefix_hex": "210234E01382402A30257E1361C1FC8C"
+      },
+      {
+        "name": "rgmv_hq_232-039.usm",
+        "path_id": -2710044552323865928,
+        "bytes": 524288,
+        "sha256": "6F4E5CCE5CBD1B1F760EA0F6662BCADB299913B1B9A751440E40F9E06E4F4E55",
+        "prefix_hex": "00D40464EBFA4FC2F013C45C3C065762"
+      },
+      {
+        "name": "rgmv_hq_232-040.usm",
+        "path_id": 5713203752306766156,
+        "bytes": 524288,
+        "sha256": "62B17705712B02ECE3DCC721401AC5BF2FD50DC5068E72480E561C3CCC7785E4",
+        "prefix_hex": "0E810C2F09E47B8B76C01D02185E13EE"
+      },
+      {
+        "name": "rgmv_hq_232-041.usm",
+        "path_id": -28491477238682167,
+        "bytes": 524288,
+        "sha256": "DF4C857F31965C8C7E4BB4000E3974A141EE8863B8A798214944F128AA5CCB86",
+        "prefix_hex": "D26E289A91A80142918219048CDDF329"
+      },
+      {
+        "name": "rgmv_hq_232-042.usm",
+        "path_id": 2999114657876546876,
+        "bytes": 524288,
+        "sha256": "378A4A91CE1D18514D2E1F6EF6E43CD97561DA63646B58650EBF5FD322DB8B9B",
+        "prefix_hex": "3A4BFFFCE75C5262067E4D7EDCCAE0C0"
+      },
+      {
+        "name": "rgmv_hq_232-043.usm",
+        "path_id": 5014601243101670869,
+        "bytes": 524288,
+        "sha256": "82F34C509E01C8C813CDEC89830F2C01ECB7AF51C24800D4A3D32DA8CBDE817E",
+        "prefix_hex": "3700BF0033006DBA401200853D253650"
+      },
+      {
+        "name": "rgmv_hq_232-044.usm",
+        "path_id": -3722239193363725406,
+        "bytes": 524288,
+        "sha256": "5E8FB62D0F836AB52111E6BF0586BF775AFF1EE9047F19116F012E91165A92FE",
+        "prefix_hex": "20D0A58603000C023388F00D79C41480"
+      },
+      {
+        "name": "rgmv_hq_232-045.usm",
+        "path_id": -5675749655273134453,
+        "bytes": 524288,
+        "sha256": "C38AB3EDEFAB0948508CAEE0629F0DF2425866B3EB9A34A3680716CE4539D1BF",
+        "prefix_hex": "B3815018A4D401428D047FDE1081F43F"
+      },
+      {
+        "name": "rgmv_hq_232-046.usm",
+        "path_id": 8736187891840526232,
+        "bytes": 524288,
+        "sha256": "DC41E5C5E2DCB6DC8B0DC2F6F224B91E3F8732344578262A6A2E4E83C584B7CA",
+        "prefix_hex": "0C8686B1BDD3885B980362C09CC6F118"
+      },
+      {
+        "name": "rgmv_hq_232-047.usm",
+        "path_id": 4419451811867060836,
+        "bytes": 524288,
+        "sha256": "A37D53711EA6B3120DB1456C019667D8EA60678167DB13FD90C9E63D836F84E1",
+        "prefix_hex": "3104FF8817DD1340624C2D001514FC9A"
+      },
+      {
+        "name": "rgmv_hq_232-048.usm",
+        "path_id": 5781144746005915700,
+        "bytes": 524288,
+        "sha256": "81EF260A85624435AFF06BE6F96FB00D88DF3EA1CF27BAEF864C9D009EB9FB20",
+        "prefix_hex": "B002E005200E0BFDB1309801AA30237E"
+      },
+      {
+        "name": "rgmv_hq_232-049.usm",
+        "path_id": -5170444455663215205,
+        "bytes": 524288,
+        "sha256": "3D85EE52F12EBAD1C2A852FCE704E1B1C3B4E6E2E9E6EA5B0C03B745EDCC6C1D",
+        "prefix_hex": "5E0110602682534486A8B25F1C502481"
+      },
+      {
+        "name": "rgmv_hq_232-050.usm",
+        "path_id": -79833991296732334,
+        "bytes": 524288,
+        "sha256": "476280779122A51D7B12A878BA4CF9EA8EE1D40E68FC62F2C59EB9790861B4CB",
+        "prefix_hex": "B30D248A2F28B27AC3E3661A8FC66C5A"
+      },
+      {
+        "name": "rgmv_hq_232-051.usm",
+        "path_id": -60401904480060430,
+        "bytes": 524288,
+        "sha256": "E6D800E64F0F90A62A93A5F5568423CADB60B93F3486A64C0E7542AC695B40CF",
+        "prefix_hex": "EC87D9F812CFF67EA7FB59E2BA5DB7EC"
+      },
+      {
+        "name": "rgmv_hq_232-052.usm",
+        "path_id": 961163025201336250,
+        "bytes": 524288,
+        "sha256": "953FE5C8A628EAD3FB27CD708ED4B83E578A816418A6C9F8AE83A48B64BD23F2",
+        "prefix_hex": "FB7801D80809405406ECA4945E489C82"
+      },
+      {
+        "name": "rgmv_hq_232-053.usm",
+        "path_id": 4975609752859791140,
+        "bytes": 524288,
+        "sha256": "F38D55E47386565472CDACEDA27C02120F4BDE9627F996A26CE071B6A3488A44",
+        "prefix_hex": "726008434315D68BFDB7013802C03E02"
+      },
+      {
+        "name": "rgmv_hq_232-054.usm",
+        "path_id": 1002016628459854019,
+        "bytes": 524288,
+        "sha256": "164F84DBB345214F82A7CE214290272C8672A0B1EAF315E261F7A7BB81F977AD",
+        "prefix_hex": "B00A0D00684D48F0DE46BA8018860C2F"
+      },
+      {
+        "name": "rgmv_hq_232-055.usm",
+        "path_id": -8916330101805199561,
+        "bytes": 524288,
+        "sha256": "5F93B9F7C9978CFCBD2417453FC7AA86C63F6E26167B42791E1A792ACCA77355",
+        "prefix_hex": "484049B7F1F002C00688007C42DFE00A"
+      },
+      {
+        "name": "rgmv_hq_232-056.usm",
+        "path_id": -2365821464847623381,
+        "bytes": 524288,
+        "sha256": "60FA3A031E8517B18E3A790495AD5307CB8ED537934FC0947FD187230A4A8B69",
+        "prefix_hex": "22686BE08DF92C48414002F1DADC2C78"
+      },
+      {
+        "name": "rgmv_hq_232-057.usm",
+        "path_id": 1683283673753944841,
+        "bytes": 524288,
+        "sha256": "600FEA20A37640513334212EA44DE89E45D0C8DE2F7BEC16006B6C783DA07395",
+        "prefix_hex": "DBF758206A935002000484D0280536C0"
+      },
+      {
+        "name": "rgmv_hq_232-058.usm",
+        "path_id": 5759667642825651732,
+        "bytes": 524288,
+        "sha256": "D297F3C5C30F1015DC2524E37279B98FFE100AC30C2C4FB0C2514417105B724C",
+        "prefix_hex": "E86599891903589CE4584829012A00E4"
+      },
+      {
+        "name": "rgmv_hq_232-059.usm",
+        "path_id": -1918857240628556914,
+        "bytes": 524288,
+        "sha256": "523CEE7AC2F5E3C8AE12C5B640943474927AA80E725BA3EBF8FEDFE00DBE7DEF",
+        "prefix_hex": "2A040BB006E004C03A002F007A420402"
+      },
+      {
+        "name": "rgmv_hq_232-060.usm",
+        "path_id": -6422876967800774622,
+        "bytes": 524288,
+        "sha256": "D6044DA964A60BB833169F0EAD666D92710708560B0C639EEDBDA5D6FD00F946",
+        "prefix_hex": "D060818A50177BF9F0A043F8BFDC9013"
+      },
+      {
+        "name": "rgmv_hq_232-061.usm",
+        "path_id": 958654169115439495,
+        "bytes": 524288,
+        "sha256": "E8E6E20C9F4FAD4EDEAA3DFF9350CEE39BD58A573F3705FD3F688DFE2DF05758",
+        "prefix_hex": "6442007C02102A5944826FC9D8CC3F00"
+      },
+      {
+        "name": "rgmv_hq_232-062.usm",
+        "path_id": 3451421354752865783,
+        "bytes": 524288,
+        "sha256": "84F93BC366BB12E73AEAB4B4A49A52EF5A98FC62FCCF54496193646E9C8D9056",
+        "prefix_hex": "396E288F7E2800CC0106007001A1443F"
+      },
+      {
+        "name": "rgmv_hq_232-063.usm",
+        "path_id": 7533056914322705397,
+        "bytes": 524288,
+        "sha256": "E21AC8D0770C524B7F6746EE19A14C36152514C40F489BBBA78B5085031583D6",
+        "prefix_hex": "3C2ACF3EE0199040D52C301C4C7CCDAC"
+      },
+      {
+        "name": "rgmv_hq_232-064.usm",
+        "path_id": 5513284740844154611,
+        "bytes": 524288,
+        "sha256": "D96A894F1E2C8E7801EF7D5CE85BB1E2E3A82082CE297BA95CED3FC04E70FD0C",
+        "prefix_hex": "A45A40708CE2EFF53197BC865FDF200C"
+      },
+      {
+        "name": "rgmv_hq_232-065.usm",
+        "path_id": 2721951684219525214,
+        "bytes": 524288,
+        "sha256": "3FD94348C0F073248B751D4B79510B991BC53ABDBA280E1CED16B6D4EADBB656",
+        "prefix_hex": "585967790078601E30395486FB36CCCA"
+      },
+      {
+        "name": "rgmv_hq_232-066.usm",
+        "path_id": 2058142130544461796,
+        "bytes": 524288,
+        "sha256": "7C0EC7AD732ABFEF8AA45C792B116E0917F6A4C4948950DC41D2CF8B5C80FF0D",
+        "prefix_hex": "0C00621805507861651780449DC896E9"
+      },
+      {
+        "name": "rgmv_hq_232-067.usm",
+        "path_id": -8361652008832775755,
+        "bytes": 524288,
+        "sha256": "ACBA78661E1F917BFB44BF39CB1AB465A3F44609A7E754D9DE72D359B4D4AAB8",
+        "prefix_hex": "08F78FA003BB12746DA1867B1A7219FB"
+      },
+      {
+        "name": "rgmv_hq_232-068.usm",
+        "path_id": -2792891902777431759,
+        "bytes": 524288,
+        "sha256": "ED4A8B508BF86BF1C4F88473814C2EF67669D8A5BE64B1AADE628EA620571B59",
+        "prefix_hex": "93B84ACB00E62C350313D8907A0444D0"
+      },
+      {
+        "name": "rgmv_hq_232-069.usm",
+        "path_id": 736074133671426792,
+        "bytes": 524288,
+        "sha256": "7DAD0B58B5CD2C8FE17C98151C6E78F807D848B313E2BBF878F1B3C73E49A062",
+        "prefix_hex": "8FF6A00EC032672C0A1C6A0D0E1E20FB"
+      },
+      {
+        "name": "rgmv_hq_232-070.usm",
+        "path_id": -231064460698211155,
+        "bytes": 524288,
+        "sha256": "26CF9855E6BDB17E99AF8ACE728BF3A92CEDCA7813DB599FECE4F626431BC57E",
+        "prefix_hex": "A00F401F86002001CB13401BA578AE12"
+      },
+      {
+        "name": "rgmv_hq_232-071.usm",
+        "path_id": -6434286847490015508,
+        "bytes": 524288,
+        "sha256": "3A73664660C94269A28322CC4C6C4223BE06D65657CB9AD3A137F93B15A4C68C",
+        "prefix_hex": "39B5FD173135B70540DC0774E4522D29"
+      },
+      {
+        "name": "rgmv_hq_232-072.usm",
+        "path_id": 3463493797164797094,
+        "bytes": 524288,
+        "sha256": "A5E6A5B6795B9B55526EBD7828CABDF273B0A68F80CB315D0BC7B89436BA44A1",
+        "prefix_hex": "BA3A301968F021A0BF1E6248B0BBB3F3"
+      },
+      {
+        "name": "rgmv_hq_232-073.usm",
+        "path_id": 3794898683331439200,
+        "bytes": 524288,
+        "sha256": "D1D325107CE0C718A570578BF554C7BFFD94BB802117A1D1FD2B11E081FFBD6F",
+        "prefix_hex": "E49DDC2C8B076714ED42A78B7BD3435F"
+      },
+      {
+        "name": "rgmv_hq_232-074.usm",
+        "path_id": 3655152302497734755,
+        "bytes": 524288,
+        "sha256": "5F3E0202E6B9D18CF9F3CEF76FA7F99A0C35F6BEF1A463BC3D381DADFF811396",
+        "prefix_hex": "F3B0E994109C30578F313199984004A1"
+      },
+      {
+        "name": "rgmv_hq_232-075.usm",
+        "path_id": 1268641698899189040,
+        "bytes": 524288,
+        "sha256": "0EB3A2EE449A52AA004C100A50B50D08FCC8CD58604365B2B781EDE05156296A",
+        "prefix_hex": "13D24D2193098427F8A490C34A0C7DB9"
+      },
+      {
+        "name": "rgmv_hq_232-076.usm",
+        "path_id": 5312270796774149169,
+        "bytes": 524288,
+        "sha256": "BE603882EA49540EE08D14858CC1F408613B0EEB6B69DCD39219F8B879583222",
+        "prefix_hex": "D25819280C97CA0C4B92B0D02C826062"
+      },
+      {
+        "name": "rgmv_hq_232-077.usm",
+        "path_id": 1765251085445072639,
+        "bytes": 524288,
+        "sha256": "F9A24BBBC1F2E500886AFE4AEE3B73BCCFA9E87ECE419211D78DADF1C58BEE89",
+        "prefix_hex": "7EE9525231CC7ED869803583521BF9E5"
+      },
+      {
+        "name": "rgmv_hq_232-078.usm",
+        "path_id": -3839209324152137137,
+        "bytes": 524288,
+        "sha256": "CBCD7B5091E434B1EEFEC4E6315B028F1C6D9D11E6855BBBDE7DD1599C96BFC3",
+        "prefix_hex": "D269F34ACAD68A784AA8EAB4B6326969"
+      },
+      {
+        "name": "rgmv_hq_232-079.usm",
+        "path_id": 8109919112107287861,
+        "bytes": 524288,
+        "sha256": "520874F405EFFCAAAFD0D20743F878DED7D56240ADAE4A9B8DE2C1EE5E31A609",
+        "prefix_hex": "18586F62B3C4C0C01D12F84BB804883D"
+      },
+      {
+        "name": "rgmv_hq_232-080.usm",
+        "path_id": -5778543489734442079,
+        "bytes": 524288,
+        "sha256": "9C8DCCBFC890A190696414A558FD3F04A8A3FC6F2A990B4E61B9DAD8181C1A0D",
+        "prefix_hex": "8F4270C2F1B921894F19D5B354FFAB4A"
+      },
+      {
+        "name": "rgmv_hq_232-081.usm",
+        "path_id": -5487536752512364420,
+        "bytes": 524288,
+        "sha256": "3CFA2B55DAEF51C1E1C70DCFD1858B4F54E46FF642C553F8D16A5F60F7C9B0C0",
+        "prefix_hex": "04044040008401002016002926002F00"
+      },
+      {
+        "name": "rgmv_hq_232-082.usm",
+        "path_id": -1556349263538304713,
+        "bytes": 524288,
+        "sha256": "1C33445CEA115E98CF9A4E948B0F72CFC5EEE354B3756AAB7B4CB1E6DB0423D4",
+        "prefix_hex": "3480C0C40300BE9E9F62E5FADE9FC080"
+      },
+      {
+        "name": "rgmv_hq_232-083.usm",
+        "path_id": 2167748802411148155,
+        "bytes": 524288,
+        "sha256": "D15AFF6A852D66FC0F051BC7AAEF0AE8540A0EA8019632A569DB6B317957EE0C",
+        "prefix_hex": "CC0084032E0206E377DFF6C7700FEF51"
+      },
+      {
+        "name": "rgmv_hq_232-084.usm",
+        "path_id": 3945781402025016298,
+        "bytes": 524288,
+        "sha256": "62FA697AE7E46D7DF36AC4EC92BB49DDBF92ABDEE17A3A9CF02ACC5124BF748E",
+        "prefix_hex": "A17B9EC91C33B676EA92BB03B6C40C14"
+      },
+      {
+        "name": "rgmv_hq_232-085.usm",
+        "path_id": -6003092814783488664,
+        "bytes": 524288,
+        "sha256": "34BF10E7A33DB55426E2F37E8596DA8124BC5458BE64685886D3A8DEE64CE2D4",
+        "prefix_hex": "03A28300A86ECDB21D3D7F81DBF60803"
+      },
+      {
+        "name": "rgmv_hq_232-086.usm",
+        "path_id": -2080680474822907767,
+        "bytes": 524288,
+        "sha256": "41A7925FD25A4B1D12B10B7407EA9232104005575721E6142F4F15D1CE28CA9E",
+        "prefix_hex": "0C9E449BB236CC0D5F803901FD6915C0"
+      },
+      {
+        "name": "rgmv_hq_232-087.usm",
+        "path_id": 42932469819818744,
+        "bytes": 524288,
+        "sha256": "EC6BF148FC7E07B0214B3D59FC4C1F86D04329D605A90A501562358C55644B52",
+        "prefix_hex": "343362110806E025494059026E8FFCF2"
+      },
+      {
+        "name": "rgmv_hq_232-088.usm",
+        "path_id": 6738341945015006926,
+        "bytes": 524288,
+        "sha256": "EAC58239CF946895A1F7DECE0C985755C54D74992C7EE16E39E8DB4EC54A9064",
+        "prefix_hex": "5DA030434004C4D02E1863124A01548A"
+      },
+      {
+        "name": "rgmv_hq_232-089.usm",
+        "path_id": -719984190412614016,
+        "bytes": 524288,
+        "sha256": "4E339533775C2443CA1C578E5A873B545C97F272F504AE2D861BAB892B2C1197",
+        "prefix_hex": "BD64DF1C423E8FF7C0033427BB5FB900"
+      },
+      {
+        "name": "rgmv_hq_232-090.usm",
+        "path_id": -5692804364590198161,
+        "bytes": 524288,
+        "sha256": "56CD84AB84B73C363E4AC8FD03D521C61CA6C4269B70B55C4A897930FEAB2650",
+        "prefix_hex": "2571F895AFD88040057960214E77DD1B"
+      },
+      {
+        "name": "rgmv_hq_232-091.usm",
+        "path_id": -3187310833533858445,
+        "bytes": 524288,
+        "sha256": "89DCDA6CA854462B230089EA042CFDD6B211594D11B10D72D7B077537CEA8A04",
+        "prefix_hex": "651FC00004E054025E1756002301DE01"
+      },
+      {
+        "name": "rgmv_hq_232-092.usm",
+        "path_id": -7862640424975748073,
+        "bytes": 524288,
+        "sha256": "2DD0B7EED6DE2F7009170417DA42261FE61D61745AAA56231361F6624AE4DEB6",
+        "prefix_hex": "4CDF1EC4EF7CD034A03F7F5A4018006A"
+      },
+      {
+        "name": "rgmv_hq_232-093.usm",
+        "path_id": -6633732778532780765,
+        "bytes": 524288,
+        "sha256": "5F6546D36AD791EFB18ED13CD05B25FA73BBE0FEC53582A0D9F6088FFE889002",
+        "prefix_hex": "55C4F47EF800E9AED90C32F9D0150C52"
+      },
+      {
+        "name": "rgmv_hq_232-094.usm",
+        "path_id": -403353405867087823,
+        "bytes": 524288,
+        "sha256": "70DE1CA83896F3E40267335C8CC7984310101DB2289DEBC59C369424DBD19FD0",
+        "prefix_hex": "73A23CAB77155D74751597EE9D8E0B1F"
+      },
+      {
+        "name": "rgmv_hq_232-095.usm",
+        "path_id": 3625713211941278892,
+        "bytes": 524288,
+        "sha256": "AE460C91630609CA3992054C497022C090129BF1F793424BA46F7F702C4D2D61",
+        "prefix_hex": "5835185EFDC9D7E0E013B10C07492853"
+      },
+      {
+        "name": "rgmv_hq_232-096.usm",
+        "path_id": 2647592562168777600,
+        "bytes": 524288,
+        "sha256": "C5D61B28325D8A4C1EC1D004A9529E0AC21655905A538D6955F31FBBFADB491A",
+        "prefix_hex": "300DE8400DD3CAD92972F9660A466CA7"
+      },
+      {
+        "name": "rgmv_hq_232-097.usm",
+        "path_id": 2646465040578706023,
+        "bytes": 524288,
+        "sha256": "B7513B0BAF8EB811F302CBA4B719970918E2F4D33370081E7C9E9AFF584AAFB3",
+        "prefix_hex": "49E1551C371E3850A00000010E829645"
+      },
+      {
+        "name": "rgmv_hq_232-098.usm",
+        "path_id": 5337743586444956605,
+        "bytes": 524288,
+        "sha256": "574D425AB2E714B23B99BAF8178B337ACAD038E0241DB92A3F40ABBEC3DE07CA",
+        "prefix_hex": "A2592701800B563C0270C80098074018"
+      },
+      {
+        "name": "rgmv_hq_232-099.usm",
+        "path_id": 3097598423654713313,
+        "bytes": 524288,
+        "sha256": "C6A8B81B377830E89EF70409F93E78786307EBF425D989C899EA50628380E5A9",
+        "prefix_hex": "8822DD203B32F0F4040DBEC000B4AE1A"
+      },
+      {
+        "name": "rgmv_hq_232-100.usm",
+        "path_id": 7271712511063687960,
+        "bytes": 524288,
+        "sha256": "B75624FB6FEF9A0EAE9C6D574A9F12A625F88CB995CA4976D73B06E29AA60291",
+        "prefix_hex": "4A9B94A695EE6BDF5DA5E3AA1D5C6F55"
+      },
+      {
+        "name": "rgmv_hq_232-101.usm",
+        "path_id": 1891971516047928397,
+        "bytes": 524288,
+        "sha256": "F3609C511EC59A47548320E055B31DA32379134532E24F30BFF7773461D726AF",
+        "prefix_hex": "C222C25678BEC4FE16D290A7501D32CF"
+      },
+      {
+        "name": "rgmv_hq_232-102.usm",
+        "path_id": -6103721888196285068,
+        "bytes": 524288,
+        "sha256": "5F23F50950349A8C0E6B95EF3457668803B315534A3FA08741836A9C3E7F521E",
+        "prefix_hex": "08B0D80FEA3FB980342F868601421A70"
+      },
+      {
+        "name": "rgmv_hq_232-103.usm",
+        "path_id": -6227957878208711950,
+        "bytes": 524288,
+        "sha256": "C29D19A6CAAF726D5E0D18CB4ECBB4D92E7740DA8ACA1B1FE2483699EFC09303",
+        "prefix_hex": "0E031FC02800784C601E90CB7001A305"
+      },
+      {
+        "name": "rgmv_hq_232-104.usm",
+        "path_id": -8133869546285904136,
+        "bytes": 524288,
+        "sha256": "7A970F4D3A0E7ABF8C50B27F4775EB09EF3E854073818E5834859B6AA0AC7F50",
+        "prefix_hex": "14E7DA146006A1AB261491E184F44005"
+      },
+      {
+        "name": "rgmv_hq_232-105.usm",
+        "path_id": -1515891115867555280,
+        "bytes": 524288,
+        "sha256": "D73A9EA12CCF3A0C0297A697BCC421E8FC0765E2F3B796B3600D3F388423A557",
+        "prefix_hex": "BAE6E8DBB088CA73D8389F29E85561B6"
+      },
+      {
+        "name": "rgmv_hq_232-106.usm",
+        "path_id": -3449941556424826950,
+        "bytes": 524288,
+        "sha256": "BAFDA0095813620FC378B10235DBBCB6C635BF6A8B11EAA0A074015DE821806E",
+        "prefix_hex": "1C8F31B74A50584B5C9BA6F1F5FA4182"
+      },
+      {
+        "name": "rgmv_hq_232-107.usm",
+        "path_id": -1007927607087682207,
+        "bytes": 524288,
+        "sha256": "53DBF298FA278C894478256D8F248632D261891BAB58BA830C02085277943437",
+        "prefix_hex": "6EEAFAB801C8036007000468042F8180"
+      },
+      {
+        "name": "rgmv_hq_232-108.usm",
+        "path_id": 3505550836031950905,
+        "bytes": 524288,
+        "sha256": "72F873E2F91FFFF16C0230E0278F34DB7CDB45CDD0043F9EC8157561D5DA2D67",
+        "prefix_hex": "0065EECDBF4418F5F677CA2790240CBA"
+      },
+      {
+        "name": "rgmv_hq_232-109.usm",
+        "path_id": 4801330533761669461,
+        "bytes": 524288,
+        "sha256": "0970A878A2E243350AFA770620D0DE62C2CF533EDC3C2D8CBE281DEF48464383",
+        "prefix_hex": "802B210F27720505DFACF2773ECB9BFB"
+      },
+      {
+        "name": "rgmv_hq_232-110.usm",
+        "path_id": -2705643342863491558,
+        "bytes": 524288,
+        "sha256": "9F9E2E05A6753A86866E4B24EEE112C8C4E3203A5E7F3277E66D0939D676504C",
+        "prefix_hex": "10B38152805645A9BE88019803602805"
+      },
+      {
+        "name": "rgmv_hq_232-111.usm",
+        "path_id": 7900922376222313990,
+        "bytes": 524288,
+        "sha256": "192AD0AEAA50489EC20E8B7F4FA27E53107B0623BDC412B097E1E3074779C548",
+        "prefix_hex": "A7E353E974F4AE9B91EE9D554D35AAF6"
+      },
+      {
+        "name": "rgmv_hq_232-112.usm",
+        "path_id": -1080462998530755891,
+        "bytes": 524288,
+        "sha256": "8529C8222D58776E364251AA783796FE0110F18AB41395BC8748D200BBF3915B",
+        "prefix_hex": "0000010C1BB4860989A07AC9D424FA21"
+      },
+      {
+        "name": "rgmv_hq_232-113.usm",
+        "path_id": 5843955786966539973,
+        "bytes": 524288,
+        "sha256": "66DAD92255CF88351B08D0A3257E34D7567BCF1298AA0C40E4679B0EB04270F9",
+        "prefix_hex": "500BE1BE0353D3D581F064FF88338A01"
+      },
+      {
+        "name": "rgmv_hq_232-114.usm",
+        "path_id": -6640800914020812617,
+        "bytes": 524288,
+        "sha256": "85229280E63183C7ADC262F0B3D69E107D2741A93DC0BB31470CF8C591A8B4AB",
+        "prefix_hex": "7117C8484031CDB197E8F25B5CC2804E"
+      },
+      {
+        "name": "rgmv_hq_232-115.usm",
+        "path_id": 3403518536200142829,
+        "bytes": 524288,
+        "sha256": "9698FD250B3D5D802918437ACFBB4B1F571CE7CD6D00A5FDF651DBF2FE6675CA",
+        "prefix_hex": "F91D81032C00C0B266261349A84A196E"
+      },
+      {
+        "name": "rgmv_hq_232-116.usm",
+        "path_id": -2445598543542577774,
+        "bytes": 524288,
+        "sha256": "C678720B8A62A21915E8925AB2C8A0117E8035C722771E210C57A1D6350DCE3D",
+        "prefix_hex": "649280546D0B85A9FCAA7A8E13075FC3"
+      },
+      {
+        "name": "rgmv_hq_232-117.usm",
+        "path_id": -4027862020993574460,
+        "bytes": 524288,
+        "sha256": "1EBB40A8EAC10A798874676B60E86BA60197C0F481FB3D5027C870F445B8964C",
+        "prefix_hex": "4F3B59E48406290C8C20839F5D0EB420"
+      },
+      {
+        "name": "rgmv_hq_232-118.usm",
+        "path_id": 7404005147830352425,
+        "bytes": 417408,
+        "sha256": "0FD840169C63B6644C7BD0B6C35CEF0FC7B8787D448596B329BD3073CE11C517",
+        "prefix_hex": "726066F9294F18354521F2DD9F1A0498"
+      }
+    ],
+    "delivery": "original-CRI-Mana-segmented-USM-profile-only-not-redistributed"
+  },
+  "portable_assets": [
+    {
+      "logical_id": "mv-live/portable-probe/mp4",
+      "path": "artifacts/investigations/mv-live-portable-media-profile-10-1-4/portable-assets/mv-probe.mp4",
+      "container": "mp4",
+      "mime": "video/mp4",
+      "bytes": 20933,
+      "sha256": "21B9A3F026C249AE9745C08B1C5028C2DF4BFD66B2D2F58B7BB76A82957EEF6B",
+      "metadata": {
+        "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+        "duration_seconds": 2.0,
+        "codec": "h264",
+        "codec_type": "video",
+        "width": 160,
+        "height": 90,
+        "pixel_format": "yuv420p",
+        "r_frame_rate": "10/1",
+        "avg_frame_rate": "10/1",
+        "frame_count": 20
+      },
+      "authority": "project-authored-browser-adapter-probe-not-original-frame-or-timing-authority"
+    },
+    {
+      "logical_id": "mv-live/portable-probe/webm",
+      "path": "artifacts/investigations/mv-live-portable-media-profile-10-1-4/portable-assets/mv-probe.webm",
+      "container": "webm",
+      "mime": "video/webm",
+      "bytes": 46404,
+      "sha256": "CB0A28382483B13B08C365EAE7E184232B83CAF09B28BEB1BE559FBD9A979CE9",
+      "metadata": {
+        "format_name": "matroska,webm",
+        "duration_seconds": 2.0,
+        "codec": "vp9",
+        "codec_type": "video",
+        "width": 160,
+        "height": 90,
+        "pixel_format": "yuv420p",
+        "r_frame_rate": "10/1",
+        "avg_frame_rate": "10/1",
+        "frame_count": 20
+      },
+      "authority": "project-authored-browser-adapter-probe-not-original-frame-or-timing-authority"
+    }
+  ],
+  "portable_mapping": [
+    {
+      "original": "LoadMovie/Prepare",
+      "portable": "strict byte/container preflight then one fresh muted playsInline HTMLVideoElement and Pixi VideoSource",
+      "status": "mapped-portable"
+    },
+    {
+      "original": "onStartRenderingMovie",
+      "portable": "loadedmetadata plus first decoded video frame publishes texture visibility",
+      "status": "mapped-portable"
+    },
+    {
+      "original": "Play",
+      "portable": "non-looping HTMLMediaElement.play Promise; rejection is terminal",
+      "status": "mapped-portable"
+    },
+    {
+      "original": "Pause/Resume",
+      "portable": "HTMLMediaElement.pause/play with semantic state owned by engine",
+      "status": "mapped-portable"
+    },
+    {
+      "original": "Stop/Unload",
+      "portable": "pause, detach, destroy Pixi source/texture, clear src/load and revoke Blob URL",
+      "status": "mapped-portable"
+    },
+    {
+      "original": "onFinishedMovie",
+      "portable": "ended event hides movie and marks finished",
+      "status": "mapped-portable"
+    },
+    {
+      "original": "CRI Mana audio",
+      "portable": "video permanently muted; BGM remains sole music owner",
+      "status": "excluded-not-mapped"
+    },
+    {
+      "original": "USM codec/device output",
+      "portable": "caller supplies browser-decodable MP4/WebM",
+      "status": "excluded-not-equivalent"
+    }
+  ],
+  "scene_profile": {
+    "viewport": {
+      "width": 1600,
+      "height": 720
+    },
+    "movie_fit": "contain-center-no-crop",
+    "observed_movie_bounds": {
+      "x": 160,
+      "y": 0,
+      "width": 1280,
+      "height": 720
+    },
+    "observed_side_pillars": {
+      "left_width": 160,
+      "right_width": 160
+    },
+    "layer_order_back_to_front": [
+      "mv-movie",
+      "gameplay-lane-and-notes",
+      "particles",
+      "HUD-and-pause"
+    ],
+    "runtime_observation": "Initial musicId 232 High MV, 1600x720 screenshot; moving movie pixels are observational, only bounds/layer owner are consumed."
+  },
+  "browser_contract": {
+    "accepted_containers": [
+      "mp4",
+      "webm"
+    ],
+    "caller_mime_allowed": false,
+    "caller_codec_metadata_allowed": false,
+    "caller_duration_or_dimensions_allowed": false,
+    "autoplay_fallback_allowed": false,
+    "network_fallback_allowed": false,
+    "stage_fallback_allowed": false,
+    "loop": false,
+    "muted": true,
+    "plays_inline": true
+  },
+  "production_authorization": true
+}

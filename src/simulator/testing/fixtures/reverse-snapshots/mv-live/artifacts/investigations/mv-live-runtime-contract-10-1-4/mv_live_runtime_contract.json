@@ -1,0 +1,448 @@
+{
+  "schema_version": 1,
+  "status": "confirmed-current-live-manual-auto-mv-portable-contract",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "version_name": "10.1.4",
+    "version_code": 230,
+    "abi": "arm64-v8a",
+    "libil2cpp_bytes": 119816840,
+    "libil2cpp_sha256": "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F",
+    "script_json_sha256": "826C592717ED07974F8DCD435AF92B8DCE7A6406E0706AC43A85102FE8567D91",
+    "dump_cs_sha256": "4AC4ACC5981D0010B3D6A69482C37C1175339458246BC4A5878CF30F694E884B",
+    "stringliteral_json_sha256": "B3E1E9776232EE1AC5B02060C8DEA0DB1EAEF58E406578D7AB2D5F41A11A2109"
+  },
+  "capability": {
+    "static": "R0-current-ARM64",
+    "runtime": "R1-observation-only-native-ARM64",
+    "portable": "browser-MP4-WebM-semantic-and-scene-profile",
+    "memory_writes": false,
+    "return_replacement": false,
+    "managed_invocation": false,
+    "synthetic_in_process_event_injection": false,
+    "auto_live_uses_consumed": 3,
+    "auto_live_budget_remaining": 6
+  },
+  "sources": {
+    "static": {
+      "path": "artifacts/investigations/mv-live-runtime-contract-10-1-4/mv_live_static_contract.json",
+      "sha256": "09008E3EF87DBA341835BAEB0869298EAC7C745D5ACD0D1AFA5672680C5BA0BB"
+    },
+    "portable": {
+      "path": "artifacts/investigations/mv-live-portable-media-profile-10-1-4/mv_live_portable_media_profile.json",
+      "sha256": "7522A1B6ABD5C4521BF1132FE0E9BC60A7CED898A7AEE16F4100B98C76D55356"
+    },
+    "oracle": {
+      "path": "artifacts/investigations/mv-live-runtime-contract-10-1-4/mv_live_command_oracle.json",
+      "sha256": "B1CA55EE9043CE3D4C8E3F38902012F0E63719B38CD8B176B63EE3776D70F131"
+    }
+  },
+  "runtime_traces": [
+    {
+      "label": "live-manual-start",
+      "path": "runtime/live-manual-mv-initial-start-r1.json.gz",
+      "bytes": 2561,
+      "sha256": "D42B843B09633716A8E21C4692C007DB35C7CE5932CA2AC08066BAC59DA5CC05",
+      "status": "confirmed-r1-observation-only",
+      "hook_failure_count": 0,
+      "event_count": 219,
+      "event_kind_counts": {
+        "game-state": 6,
+        "movie-first-frame": 1,
+        "movie-load-move-next": 2,
+        "movie-manager-initialized": 1,
+        "movie-manager-play": 1,
+        "movie-play": 1,
+        "music-load": 1,
+        "music-play": 1,
+        "mv-background-created": 1,
+        "mv-load-move-next": 2,
+        "mv-post-delay-move-next": 134,
+        "mv-prev-delay-move-next": 1,
+        "play-gaya": 1,
+        "sound-pause": 2,
+        "start-music-move-next": 64
+      },
+      "mode": {
+        "session_mode": "live",
+        "input_mode": "manual",
+        "background": "mv-live"
+      }
+    },
+    {
+      "label": "live-auto-start",
+      "path": "runtime/live-auto-mv-initial-start-r1.json.gz",
+      "bytes": 2562,
+      "sha256": "AB578B388260FBFEB2F9274560B0017A08FE83F96013EAC2577F17AA2BB50614",
+      "status": "confirmed-r1-observation-only",
+      "hook_failure_count": 0,
+      "event_count": 220,
+      "event_kind_counts": {
+        "game-state": 6,
+        "movie-first-frame": 1,
+        "movie-load-move-next": 2,
+        "movie-manager-initialized": 1,
+        "movie-manager-play": 1,
+        "movie-play": 1,
+        "music-load": 1,
+        "music-play": 1,
+        "mv-background-created": 1,
+        "mv-load-move-next": 2,
+        "mv-post-delay-move-next": 134,
+        "mv-prev-delay-move-next": 1,
+        "play-gaya": 1,
+        "play-se-loop": 1,
+        "sound-pause": 2,
+        "start-music-move-next": 64
+      },
+      "mode": {
+        "session_mode": "live",
+        "input_mode": "auto",
+        "background": "mv-live"
+      }
+    },
+    {
+      "label": "live-auto-pause",
+      "path": "runtime/live-auto-mv-pause-resume-r1.json.gz",
+      "bytes": 596,
+      "sha256": "13A472A428A1EA063C9E3C9AB078E609DB49489724EC5AB1E8DBDE275516B4D4",
+      "status": "confirmed-r1-observation-only",
+      "hook_failure_count": 0,
+      "event_count": 5,
+      "event_kind_counts": {
+        "game-state": 2,
+        "movie-manager-pause": 1,
+        "movie-manager-pause-sound": 1,
+        "movie-pause": 1
+      },
+      "mode": {
+        "session_mode": "live",
+        "input_mode": "auto",
+        "background": "mv-live"
+      }
+    },
+    {
+      "label": "live-auto-resume",
+      "path": "runtime/live-auto-mv-resume-r1.json.gz",
+      "bytes": 577,
+      "sha256": "86F70E99E40BA5C642A7DF8E25E55B264836395425B70E8A48769517C42C91FE",
+      "status": "confirmed-r1-observation-only",
+      "hook_failure_count": 0,
+      "event_count": 5,
+      "event_kind_counts": {
+        "game-state": 2,
+        "movie-manager-resume": 1,
+        "movie-manager-resume-sound": 1,
+        "movie-resume": 1
+      },
+      "mode": {
+        "session_mode": "live",
+        "input_mode": "auto",
+        "background": "mv-live"
+      }
+    },
+    {
+      "label": "live-auto-exit",
+      "path": "runtime/live-auto-mv-user-exit-r1.json.gz",
+      "bytes": 647,
+      "sha256": "AC2E297944889C60AC7FC3F6AFB959199413F92394ACA534537203967EEB604A",
+      "status": "confirmed-r1-observation-only",
+      "hook_failure_count": 0,
+      "event_count": 9,
+      "event_kind_counts": {
+        "exit-request": 1,
+        "game-state": 2,
+        "movie-finished": 1,
+        "movie-manager-pause": 1,
+        "movie-manager-pause-sound": 1,
+        "movie-manager-stop": 1,
+        "movie-pause": 1,
+        "movie-stop": 1
+      },
+      "mode": {
+        "session_mode": "live",
+        "input_mode": "auto",
+        "background": "mv-live"
+      }
+    },
+    {
+      "label": "live-auto-natural",
+      "path": "runtime/live-auto-mv-natural-completion-r1.json.gz",
+      "bytes": 2738,
+      "sha256": "264EAC3A688E8A9FE070CFC4D6932D1F03EE190980AC4ABEC1432817388C113C",
+      "status": "confirmed-r1-observation-only",
+      "hook_failure_count": 0,
+      "event_count": 245,
+      "event_kind_counts": {
+        "exit-request": 1,
+        "game-clear": 1,
+        "game-state": 8,
+        "movie-finished": 1,
+        "movie-first-frame": 1,
+        "movie-load-move-next": 2,
+        "movie-manager-initialized": 1,
+        "movie-manager-play": 1,
+        "movie-manager-stop": 1,
+        "movie-play": 1,
+        "movie-stop": 1,
+        "music-load": 1,
+        "music-play": 1,
+        "mv-background-created": 1,
+        "mv-load-move-next": 2,
+        "mv-post-delay-move-next": 134,
+        "mv-prev-delay-move-next": 1,
+        "play-gaya": 1,
+        "play-se-loop": 19,
+        "sound-pause": 2,
+        "start-music-move-next": 64
+      },
+      "mode": {
+        "session_mode": "live",
+        "input_mode": "auto",
+        "background": "mv-live"
+      }
+    },
+    {
+      "label": "master-delay-inventory",
+      "path": "runtime/mv-master-delay-inventory-r1.json.gz",
+      "bytes": 1214,
+      "sha256": "F2678096030C0393EE693A380DB4AE27CBE8089C4CCC13B8D1956B1BCBF107FB",
+      "status": "confirmed-r1-observation-only",
+      "hook_failure_count": 0,
+      "event_count": 0,
+      "event_kind_counts": {},
+      "mode": null
+    }
+  ],
+  "master_delay_inventory": {
+    "observed_model_count": 98,
+    "sign_counts": {
+      "negative": 95,
+      "zero": 0,
+      "positive": 3
+    },
+    "positive_rows": [
+      {
+        "music_id": 104,
+        "seq": 1,
+        "master_exists": true,
+        "delay_milliseconds": 4214
+      },
+      {
+        "music_id": 118,
+        "seq": 1,
+        "master_exists": true,
+        "delay_milliseconds": 3048
+      },
+      {
+        "music_id": 144,
+        "seq": 1,
+        "master_exists": true,
+        "delay_milliseconds": 2365
+      }
+    ],
+    "zero_rows": [],
+    "selected_runtime_row": {
+      "music_id": 232,
+      "seq": 1,
+      "quality": "High",
+      "delay_milliseconds": -2180
+    },
+    "zero_disposition": "no-zero-model-observed-in-the-98-model-current-UI-inventory; zero branch remains statically exact and is tested as a boundary input"
+  },
+  "mode_matrix": {
+    "live-manual": "mv-live-supported",
+    "live-auto": "mv-live-supported",
+    "rehearsal-manual": "evidence-required-Practice-does-not-select-Simple-display",
+    "rehearsal-auto": "evidence-required-Practice-does-not-select-Simple-display"
+  },
+  "startup_audio": {
+    "gaya_required": false,
+    "prepared_bgm": true,
+    "video_audio": "not-a-separate-mix-owner-portable-video-muted",
+    "live_start_voice": "retains existing Live optional voice owner; independent of movie transport"
+  },
+  "delay": {
+    "negative": [
+      {
+        "command": "movie.delay-prev",
+        "result": "return-without-play"
+      },
+      {
+        "command": "game-state",
+        "value": 4
+      },
+      {
+        "command": "bgm.resume"
+      },
+      {
+        "command": "movie.state",
+        "from": 0,
+        "to": 1
+      },
+      {
+        "command": "game-state",
+        "value": 5,
+        "gameplay": "enabled-before-movie"
+      },
+      {
+        "command": "movie.delay-tick",
+        "timer": "Float32+=Float32(deltaTime)",
+        "pause_state": 2
+      },
+      {
+        "command": "movie.play",
+        "when": "timer>=Float32(abs(delayMilliseconds)/1000)",
+        "state": 3
+      },
+      {
+        "command": "movie.first-frame",
+        "visibility": "visible"
+      }
+    ],
+    "zero": [
+      {
+        "command": "movie.state",
+        "from": 0,
+        "to": 3
+      },
+      {
+        "command": "movie.play"
+      },
+      {
+        "command": "movie.delay-prev",
+        "wait_seconds": 0
+      },
+      {
+        "command": "game-state",
+        "value": 4
+      },
+      {
+        "command": "bgm.resume"
+      },
+      {
+        "command": "game-state",
+        "value": 5,
+        "gameplay": "enabled"
+      }
+    ],
+    "positive": [
+      {
+        "command": "movie.state",
+        "from": 0,
+        "to": 3
+      },
+      {
+        "command": "movie.play"
+      },
+      {
+        "command": "movie.delay-prev",
+        "wait": "Float32(delayMilliseconds/1000)"
+      },
+      {
+        "command": "game-state",
+        "value": 4
+      },
+      {
+        "command": "bgm.resume"
+      },
+      {
+        "command": "game-state",
+        "value": 5,
+        "gameplay": "enabled"
+      }
+    ]
+  },
+  "lifecycle": {
+    "pause_resume": {
+      "pause_from_waiting": [
+        "physical.pause",
+        "movie-state 1->2",
+        "delay timer frozen",
+        "game-state 7"
+      ],
+      "pause_from_playing": [
+        "physical.pause",
+        "movie-state 3->4",
+        "game-state 7"
+      ],
+      "resume_from_waiting": [
+        "physical.resume",
+        "movie-state 2->1",
+        "delay timer continues",
+        "game-state 5"
+      ],
+      "resume_from_playing": [
+        "physical.resume",
+        "movie-state 4->3",
+        "game-state 5"
+      ]
+    },
+    "terminal": {
+      "movie_ends_before_chart": "hide movie, mark finished, continue BGM/gameplay until chart clear",
+      "chart_finishes_before_movie": "game clear waits background WaitForFinish before unload/result transition",
+      "natural_observation": "Initial movie-finished preceded game-clear by 131ms in accepted Live Auto R1",
+      "user_exit": [
+        "pause",
+        "exit-request",
+        "movie.stop",
+        "movie.finished",
+        "remaining owners cleanup"
+      ],
+      "fault": "first movie/backend fault is terminal; cleanup continues without stage fallback"
+    },
+    "replay": {
+      "retry": "excluded-MV-Live-has-no-Rehearsal-retry-route",
+      "move_time": "excluded-MV-Live-has-no-Practice-MoveTime-route",
+      "fresh_live_launch": "fresh movie owner and currentTime zero"
+    }
+  },
+  "scene": {
+    "viewport": {
+      "width": 1600,
+      "height": 720
+    },
+    "movie_fit": "contain-center-no-crop",
+    "observed_movie_bounds": {
+      "x": 160,
+      "y": 0,
+      "width": 1280,
+      "height": 720
+    },
+    "observed_side_pillars": {
+      "left_width": 160,
+      "right_width": 160
+    },
+    "layer_order_back_to_front": [
+      "mv-movie",
+      "gameplay-lane-and-notes",
+      "particles",
+      "HUD-and-pause"
+    ],
+    "runtime_observation": "Initial musicId 232 High MV, 1600x720 screenshot; moving movie pixels are observational, only bounds/layer owner are consumed."
+  },
+  "media": {
+    "accepted_containers": [
+      "mp4",
+      "webm"
+    ],
+    "caller_mime_allowed": false,
+    "caller_codec_metadata_allowed": false,
+    "caller_duration_or_dimensions_allowed": false,
+    "autoplay_fallback_allowed": false,
+    "network_fallback_allowed": false,
+    "stage_fallback_allowed": false,
+    "loop": false,
+    "muted": true,
+    "plays_inline": true
+  },
+  "boundaries": {
+    "standalone_mv_view": "excluded",
+    "star3d_live_view": "excluded",
+    "rehearsal_mv": "excluded-original-Practice-predicate",
+    "multi_normal": "excluded",
+    "CRI_USM_codec_exact": "not-claimed",
+    "Android_decoder_speaker_framebuffer_exact": "not-claimed",
+    "stage_9": "unauthorized"
+  }
+}

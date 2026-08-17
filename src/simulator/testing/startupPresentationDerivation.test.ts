@@ -4,6 +4,7 @@ const assert = require("node:assert/strict");
 
 import { createSimulatorSessionRecipe } from "../assembly/sessionRecipe";
 import { deriveSessionPresentation } from "../assembly/sessionPresentationDerivation";
+import { copyAndFreezeSimulatorPresentation } from "../assembly/startupPresentationContract";
 import type { SimulatorModuleLaunchRequest } from "../public/contracts";
 import { createTestPresentationPackage } from "./startupPresentationTestProfile";
 
@@ -11,7 +12,7 @@ async function main(): Promise<void> {
   testExactShapeAndOwnership();
   testMalformedPresentationFailsClosed();
   await testInternalDerivation();
-  console.log("startup presentation derivation tests passed: exact shape/copy/PNG/MP3/null");
+  console.log("startup presentation derivation tests passed: schema5 exact shape/copy/PNG/MP3/nullable MV/open gate");
 }
 
 function testExactShapeAndOwnership(): void {
@@ -19,7 +20,7 @@ function testExactShapeAndOwnership(): void {
   const result = createSimulatorSessionRecipe(source);
   assert.equal(result.status, "accepted");
   if (result.status !== "accepted") return;
-  assert.equal(result.value.schemaVersion, 4);
+  assert.equal(result.value.schemaVersion, 5);
   assert.equal(Object.isFrozen(result.value.request.presentation), true);
   assert.equal(Object.isFrozen(result.value.request.presentation.song), true);
   assert.equal(Object.isFrozen(result.value.request.presentation.stage), true);
@@ -29,12 +30,35 @@ function testExactShapeAndOwnership(): void {
   assert.equal(result.value.request.presentation.jacketPng[0], first);
   assert.notEqual(result.value.request.presentation.jacketPng, source.presentation.jacketPng);
   assert.notEqual(result.value.request.presentation.stage.sdCharacterAtlases[0], source.presentation.stage.sdCharacterAtlases[0]);
+
+  const mvBytes = Uint8Array.of(1, 2, 3, 4);
+  const copied = copyAndFreezeSimulatorPresentation({
+    ...createTestPresentationPackage(),
+    mv: { bytes: mvBytes, musicStartDelayMilliseconds: -2180 },
+  });
+  assert.equal(copied.status, "accepted");
+  if (copied.status === "accepted" && copied.value.mv !== null) {
+    mvBytes.fill(9);
+    assert.deepEqual([...copied.value.mv.bytes], [1, 2, 3, 4]);
+    assert.equal(copied.value.mv.musicStartDelayMilliseconds, -2180);
+    assert.equal(Object.isFrozen(copied.value.mv), true);
+    assert.notEqual(copied.value.mv.bytes, mvBytes);
+  }
+  const gated = request();
+  (gated.presentation as { mv: unknown }).mv = {
+    bytes: Uint8Array.of(1, 2, 3, 4),
+    musicStartDelayMilliseconds: -2180,
+  };
+  assertInvalid(gated, "simulator.mv-live.complete-closure-open");
 }
 
 function testMalformedPresentationFailsClosed(): void {
   const oldShape: any = request();
   delete oldShape.presentation;
   assertInvalid(oldShape, "simulator.recipe.invalid-public-request");
+  const legacyMissingMv: any = request();
+  delete legacyMissingMv.presentation.mv;
+  assertInvalid(legacyMissingMv, "simulator.presentation.invalid-public-package");
   const extra: any = request();
   extra.presentation.defaultJacket = true;
   assertInvalid(extra, "simulator.presentation.invalid-public-package");
@@ -56,6 +80,19 @@ function testMalformedPresentationFailsClosed(): void {
   const badVoice: any = request();
   badVoice.presentation.liveStartVoiceMp3 = new Uint16Array([1]);
   assertInvalid(badVoice, "simulator.presentation.invalid-public-package");
+  for (const mv of [
+    {},
+    { bytes: Uint8Array.of(1), musicStartDelayMilliseconds: 0, mime: "video/mp4" },
+    { bytes: new Uint16Array([1]), musicStartDelayMilliseconds: 0 },
+    { bytes: new Uint8Array(), musicStartDelayMilliseconds: 0 },
+    { bytes: Uint8Array.of(1), musicStartDelayMilliseconds: 1.5 },
+    { bytes: Uint8Array.of(1), musicStartDelayMilliseconds: 0x80000000 },
+    { bytes: Uint8Array.of(1), musicStartDelayMilliseconds: -0x80000001 },
+  ]) {
+    const malformed: any = request();
+    malformed.presentation.mv = mv;
+    assertInvalid(malformed, "simulator.presentation.invalid-public-package");
+  }
 }
 
 async function testInternalDerivation(): Promise<void> {

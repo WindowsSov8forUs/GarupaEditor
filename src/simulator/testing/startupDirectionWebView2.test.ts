@@ -74,6 +74,7 @@ async function main(): Promise<void> {
         sdCharacterAtlases: await overlays(),
       },
       liveStartVoiceMp3: null,
+      mv: null,
     }, { inspect: async () => ({ status: "audio-resource-decode" as const, failure: { code: "audio-resource-decode" as const, capability: "unused", boundary: "unused" } }) } as any));
     const scene = requireOk<any>(await createPixiStartupDirectionScene(
       presentation,

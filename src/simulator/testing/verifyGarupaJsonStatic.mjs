@@ -24,7 +24,7 @@ for (const required of [
 
 const recipe = read("assembly/sessionRecipe.ts");
 for (const required of [
-  "readonly schemaVersion: 4;", "schemaVersion: 4 as const",
+  "readonly schemaVersion: 5;", "schemaVersion: 5 as const",
   '"bgm,chart,isFullLength"', "copyAndFreezeGarupaChartJson",
 ]) if (!recipe.includes(required)) throw new Error(`schema-4 recipe missing ${required}`);
 if (recipe.includes("chartData.bmsText")) throw new Error("recipe still consumes bmsText");

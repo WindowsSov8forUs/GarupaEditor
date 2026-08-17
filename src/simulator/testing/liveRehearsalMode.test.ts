@@ -382,6 +382,10 @@ function structuredCloneRequest(value: SimulatorModuleLaunchRequest): SimulatorM
         sdCharacterAtlases: value.presentation.stage.sdCharacterAtlases.map((bytes) => Uint8Array.from(bytes)) as unknown as SimulatorModuleLaunchRequest["presentation"]["stage"]["sdCharacterAtlases"],
       },
       liveStartVoiceMp3: value.presentation.liveStartVoiceMp3 === null ? null : Uint8Array.from(value.presentation.liveStartVoiceMp3),
+      mv: value.presentation.mv === null ? null : {
+        bytes: Uint8Array.from(value.presentation.mv.bytes),
+        musicStartDelayMilliseconds: value.presentation.mv.musicStartDelayMilliseconds,
+      },
     },
     config: {
       ...value.config,

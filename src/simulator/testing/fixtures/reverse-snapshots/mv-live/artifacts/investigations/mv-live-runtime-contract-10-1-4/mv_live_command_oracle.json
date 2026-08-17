@@ -1,0 +1,243 @@
+{
+  "schema_version": 1,
+  "status": "confirmed-current-mv-live-command-oracle",
+  "evidence_ids": {
+    "mode": [
+      "MVL-E12",
+      "MVL-E13",
+      "MVL-R01",
+      "MVL-R02"
+    ],
+    "delay": [
+      "MVL-E41",
+      "MVL-E42",
+      "MVL-R01",
+      "MVL-R02",
+      "MVL-R07"
+    ],
+    "pause_resume": [
+      "MVL-E65",
+      "MVL-E66",
+      "MVL-R03",
+      "MVL-R04"
+    ],
+    "exit_finish": [
+      "MVL-E44",
+      "MVL-E58",
+      "MVL-E59",
+      "MVL-R05",
+      "MVL-R06"
+    ],
+    "portable": [
+      "MVL-P01",
+      "MVL-P02",
+      "MVL-P03",
+      "MVL-P04"
+    ]
+  },
+  "supported_public_matrix": {
+    "live-manual": "mv-live-supported",
+    "live-auto": "mv-live-supported",
+    "rehearsal-manual": "evidence-required-Practice-does-not-select-Simple-display",
+    "rehearsal-auto": "evidence-required-Practice-does-not-select-Simple-display"
+  },
+  "startup_common": [
+    {
+      "command": "movie.prepare",
+      "movie_state": 0,
+      "physical_output": "prepared-no-play"
+    },
+    {
+      "command": "bgm.prepare-paused",
+      "game_state": 0
+    },
+    {
+      "command": "startup.play-gaya-owner",
+      "result": "not-created"
+    },
+    {
+      "command": "startup.direction",
+      "game_states": [
+        1,
+        2,
+        3
+      ]
+    },
+    {
+      "command": "game-state",
+      "value": 17
+    }
+  ],
+  "delay_branches": {
+    "negative": [
+      {
+        "command": "movie.delay-prev",
+        "result": "return-without-play"
+      },
+      {
+        "command": "game-state",
+        "value": 4
+      },
+      {
+        "command": "bgm.resume"
+      },
+      {
+        "command": "movie.state",
+        "from": 0,
+        "to": 1
+      },
+      {
+        "command": "game-state",
+        "value": 5,
+        "gameplay": "enabled-before-movie"
+      },
+      {
+        "command": "movie.delay-tick",
+        "timer": "Float32+=Float32(deltaTime)",
+        "pause_state": 2
+      },
+      {
+        "command": "movie.play",
+        "when": "timer>=Float32(abs(delayMilliseconds)/1000)",
+        "state": 3
+      },
+      {
+        "command": "movie.first-frame",
+        "visibility": "visible"
+      }
+    ],
+    "zero": [
+      {
+        "command": "movie.state",
+        "from": 0,
+        "to": 3
+      },
+      {
+        "command": "movie.play"
+      },
+      {
+        "command": "movie.delay-prev",
+        "wait_seconds": 0
+      },
+      {
+        "command": "game-state",
+        "value": 4
+      },
+      {
+        "command": "bgm.resume"
+      },
+      {
+        "command": "game-state",
+        "value": 5,
+        "gameplay": "enabled"
+      }
+    ],
+    "positive": [
+      {
+        "command": "movie.state",
+        "from": 0,
+        "to": 3
+      },
+      {
+        "command": "movie.play"
+      },
+      {
+        "command": "movie.delay-prev",
+        "wait": "Float32(delayMilliseconds/1000)"
+      },
+      {
+        "command": "game-state",
+        "value": 4
+      },
+      {
+        "command": "bgm.resume"
+      },
+      {
+        "command": "game-state",
+        "value": 5,
+        "gameplay": "enabled"
+      }
+    ]
+  },
+  "pause_resume": {
+    "pause_from_waiting": [
+      "physical.pause",
+      "movie-state 1->2",
+      "delay timer frozen",
+      "game-state 7"
+    ],
+    "pause_from_playing": [
+      "physical.pause",
+      "movie-state 3->4",
+      "game-state 7"
+    ],
+    "resume_from_waiting": [
+      "physical.resume",
+      "movie-state 2->1",
+      "delay timer continues",
+      "game-state 5"
+    ],
+    "resume_from_playing": [
+      "physical.resume",
+      "movie-state 4->3",
+      "game-state 5"
+    ]
+  },
+  "terminal": {
+    "movie_ends_before_chart": "hide movie, mark finished, continue BGM/gameplay until chart clear",
+    "chart_finishes_before_movie": "game clear waits background WaitForFinish before unload/result transition",
+    "natural_observation": "Initial movie-finished preceded game-clear by 131ms in accepted Live Auto R1",
+    "user_exit": [
+      "pause",
+      "exit-request",
+      "movie.stop",
+      "movie.finished",
+      "remaining owners cleanup"
+    ],
+    "fault": "first movie/backend fault is terminal; cleanup continues without stage fallback"
+  },
+  "replay": {
+    "retry": "excluded-MV-Live-has-no-Rehearsal-retry-route",
+    "move_time": "excluded-MV-Live-has-no-Practice-MoveTime-route",
+    "fresh_live_launch": "fresh movie owner and currentTime zero"
+  },
+  "scene": {
+    "viewport": {
+      "width": 1600,
+      "height": 720
+    },
+    "movie_fit": "contain-center-no-crop",
+    "observed_movie_bounds": {
+      "x": 160,
+      "y": 0,
+      "width": 1280,
+      "height": 720
+    },
+    "observed_side_pillars": {
+      "left_width": 160,
+      "right_width": 160
+    },
+    "layer_order_back_to_front": [
+      "mv-movie",
+      "gameplay-lane-and-notes",
+      "particles",
+      "HUD-and-pause"
+    ],
+    "runtime_observation": "Initial musicId 232 High MV, 1600x720 screenshot; moving movie pixels are observational, only bounds/layer owner are consumed."
+  },
+  "media": {
+    "accepted_containers": [
+      "mp4",
+      "webm"
+    ],
+    "caller_mime_allowed": false,
+    "caller_codec_metadata_allowed": false,
+    "caller_duration_or_dimensions_allowed": false,
+    "autoplay_fallback_allowed": false,
+    "network_fallback_allowed": false,
+    "stage_fallback_allowed": false,
+    "loop": false,
+    "muted": true,
+    "plays_inline": true
+  }
+}

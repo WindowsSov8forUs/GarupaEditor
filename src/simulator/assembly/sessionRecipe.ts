@@ -8,7 +8,12 @@ import {
   type PortableReplaySimulatorEngine,
   type SimulatorTimelineControlState,
 } from "../host/portableReplaySession";
-import { createSimulatorModuleCapabilitySummary } from "../public/capabilities";
+import {
+  createSimulatorModuleCapabilitySummary,
+  isMvLiveClosureOpen,
+  MV_LIVE_CLOSURE_BOUNDARY,
+  MV_LIVE_CLOSURE_CAPABILITY,
+} from "../public/capabilities";
 import {
   appendSimulatorCleanupFailures,
   simulatorCleanupFailure,
@@ -35,7 +40,7 @@ import { copyAndFreezeGarupaChartJson } from "./garupaChartContract";
 import { copyAndFreezeSimulatorPresentation } from "./startupPresentationContract";
 
 export interface SimulatorSessionRecipe {
-  readonly schemaVersion: 4;
+  readonly schemaVersion: 5;
   readonly request: SimulatorModuleLaunchRequest;
 }
 
@@ -55,9 +60,15 @@ export function createSimulatorSessionRecipe(
   request: SimulatorModuleLaunchRequest,
 ): SimulatorAssemblyResult<SimulatorSessionRecipe> {
   const copied = copyLaunchRequest(request);
-  return copied.status === "rejected"
-    ? copied
-    : accepted(Object.freeze({ schemaVersion: 4 as const, request: copied.value }));
+  if (copied.status === "rejected") return copied;
+  if (copied.value.presentation.mv !== null && isMvLiveClosureOpen()) {
+    return rejected(
+      "evidence-required",
+      MV_LIVE_CLOSURE_CAPABILITY,
+      MV_LIVE_CLOSURE_BOUNDARY,
+    );
+  }
+  return accepted(Object.freeze({ schemaVersion: 5 as const, request: copied.value }));
 }
 
 export class RecipeOwnedSessionFactory implements SimulatorOwnedSessionFactory {

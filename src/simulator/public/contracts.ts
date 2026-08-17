@@ -11,6 +11,11 @@ export interface SimulatorChartDataPackage {
 
 export type SimulatorPresentationPng = Uint8Array;
 
+export interface SimulatorPresentationMvPackage {
+  readonly bytes: Uint8Array;
+  readonly musicStartDelayMilliseconds: number;
+}
+
 export interface SimulatorPresentationPackage {
   readonly song: {
     readonly title: string;
@@ -35,6 +40,7 @@ export interface SimulatorPresentationPackage {
     ];
   };
   readonly liveStartVoiceMp3: Uint8Array | null;
+  readonly mv: SimulatorPresentationMvPackage | null;
 }
 
 export interface SimulatorLaunchConfig {
