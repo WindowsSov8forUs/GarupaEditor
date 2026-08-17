@@ -22,9 +22,9 @@ Reverse remains the only authority for original behavior.
 ## Position and lane
 
 - Garupa beat enters the existing adapter position bridge as
-  `floor(beat * 48)`. BPM and SV records that collide after this bridge fail
-  closed; authored Slide connections may share a position and retain authored
-  connection order.
+  `floor(beat * 48)`. BPM records that collide after this bridge fail closed;
+  same-position SV records retain source order and later records win. Authored
+  Slide connections may share a position and retain authored connection order.
 - Lane is any finite number. Width is a positive integer and is never clamped.
 - Rhythm span starts at `lane`. Directional Right starts at `lane`; Directional
   Left starts at `lane - width + 1`.

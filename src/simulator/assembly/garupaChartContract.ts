@@ -35,9 +35,10 @@ export function describeOpenGarupaProductExtension(input: unknown): string | nul
       return `chart[${itemIndex}] selects a non-Global TimingGroup.`;
     }
     if (item.type === "Slide" && Array.isArray(item.connections)) {
-      if (item.connections.length < 2) {
-        return `chart[${itemIndex}] is a singleton or empty product Slide.`;
+      if (item.connections.length === 1) {
+        return `chart[${itemIndex}] is a singleton product Slide.`;
       }
+      if (item.connections.length === 0) continue;
       const connections = item.connections;
       const head = connections[0];
       const tail = connections[connections.length - 1];
@@ -133,8 +134,8 @@ function copyItem(
   if (input.type === "Slide") {
     const timing = copyTimingGroup(input, label);
     if (timing.status !== "ok" || !hasExactOptionalTimingKeys(input, ["connections", "type"]) ||
-      !Array.isArray(input.connections)) {
-      return invalid(`${label} Slide requires exact connections and optional string timingGroup.`);
+      !Array.isArray(input.connections) || input.connections.length === 0) {
+      return invalid(`${label} Slide requires one non-empty exact connections array and optional string timingGroup.`);
     }
     const connections: GarupaChartJsonSlideConnection[] = [];
     let timingCount = timing.value === undefined ? 0 : 1;
@@ -177,12 +178,12 @@ function copyConnection(
   }
   const timing = copyTimingGroup(input, label);
   if (timing.status !== "ok") return timing;
-  const baseValid = isFiniteNonnegative(input.beat) && Number.isInteger(input.lane) &&
+  const baseValid = isFiniteNonnegative(input.beat) && isFiniteNumber(input.lane) &&
     Number.isInteger(input.width) && (input.width as number) > 0;
   if (input.type === "Directional") {
     if (!hasExactOptionalTimingKeys(input, ["beat", "direction", "lane", "type", "width"]) ||
       !baseValid || (input.direction !== "Left" && input.direction !== "Right")) {
-      return invalid(`${label} Directional requires exact finite beat, integer lane/width, direction and optional timingGroup.`);
+      return invalid(`${label} Directional requires exact finite beat/lane, positive integer width, direction and optional timingGroup.`);
     }
     const connection: GarupaChartJsonDirectionalNote = Object.freeze({
       type: "Directional",
@@ -196,7 +197,7 @@ function copyConnection(
   }
   if (!SIMPLE_TYPES.has(input.type) ||
     !hasExactOptionalTimingKeys(input, ["beat", "lane", "type", "width"]) || !baseValid) {
-    return invalid(`${label} simple note requires an exact supported type, finite beat, integer lane/width and optional timingGroup.`);
+    return invalid(`${label} simple note requires an exact supported type, finite beat/lane, positive integer width and optional timingGroup.`);
   }
   const connection: GarupaChartJsonSimpleNote = Object.freeze({
     type: input.type as GarupaChartJsonSimpleNote["type"],

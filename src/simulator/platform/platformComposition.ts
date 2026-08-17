@@ -199,6 +199,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
     };
     const chart = constructChartFromGarupaChartJson(
       recipe.request.chartData.chart,
+      recipe.request.chartData.laneCount,
     );
     if (chart.status !== "ok") {
       return rejectedWithCleanup(fromEvidence(chart), releasePendingMovie());

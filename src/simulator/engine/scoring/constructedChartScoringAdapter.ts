@@ -16,6 +16,7 @@ import {
   calculateNormalizedScoreMaximum,
   calculatePerfectQuota,
 } from "./normalizedScoreRule";
+import { getGarupaProductChartProfile } from "../garupa/productChartProfile";
 
 interface Candidate {
   readonly source: NoteInformation;
@@ -29,9 +30,22 @@ export function createConstructedChartScoringPlan(
   chart: ChartConstructionResult,
 ): SimulatorResult<SimulatorScoringPlan> {
   const candidates: Candidate[] = [];
+  const productProfile = getGarupaProductChartProfile(chart);
   const multipleDirectionalIdentities = createMultipleDirectionalIdentityMap(chart);
   const multipleDirectionalGroups = new Map<string, Candidate>();
-  for (const batch of chart.noteBatches) {
+  if (productProfile?.route === "product-extension") {
+    for (const node of productProfile.visibleNodes) {
+      const source = node.scoringSource;
+      if (source === null) continue;
+      candidates.push({
+        source,
+        aliases: [source],
+        phase: "head",
+        absolutePosition: node.absolutePosition,
+        groupIdentity: null,
+      });
+    }
+  } else for (const batch of chart.noteBatches) {
     for (const source of batch.informationList) {
       if (!isScoringRoot(source)) continue;
       const groupIdentity = multipleDirectionalIdentities.get(source) ?? null;

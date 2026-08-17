@@ -20,6 +20,7 @@ import { createSimulatorModeIdentity } from "../engine/data/inGameCalculatedData
 import { createRecordingSimulatorBackends } from "../backends/recordingBackend";
 import { createSimulatorEngine } from "../host/createSimulatorEngine";
 import { createSimulatorModuleCapabilitySummary } from "../public/capabilities";
+import { getGarupaProductChartProfile } from "../engine/garupa/productChartProfile";
 
 function main(): void {
   testContractCopyAndExactShape();
@@ -27,6 +28,7 @@ function main(): void {
   testPositionBridge();
   testDirectConstruction();
   testIgnoredExtensionsAndAllowedSlideMatrix();
+  testProductProfileAndProxyGraph();
   testFailureClosure();
   testCanonicalBmsDifferentialProjection();
   testAutoAndManualEngineOutcomes();
@@ -66,7 +68,6 @@ function testContractCopyAndExactShape(): void {
     [{ type: "BPM", beat: 0, value: 120, extra: true }],
     [{ type: "BPM", beat: Number.NaN, value: 120 }],
     [{ type: "SV", beat: 0, value: 1, timingGroup: 2 }],
-    [{ type: "Single", beat: 1, lane: 1.5, width: 1 }],
     [{ type: "Single", beat: 1, lane: 1, width: 0 }],
     [{ type: "Directional", beat: 1, lane: 1, width: 1, direction: "Up" }],
     [{ type: "Hidden", beat: 1, lane: 1, width: 1 }],
@@ -113,7 +114,6 @@ function testDirectConstruction(): void {
   const chart = parse([
     { type: "BPM", beat: 0, value: 120 },
     { type: "BPM", beat: 12, value: 150 },
-    { type: "SV", beat: 1, value: 2, timingGroup: "#1" },
     { type: "Single", beat: 1, lane: 0, width: 1 },
     { type: "Flick", beat: 2, lane: 1, width: 2 },
     { type: "Skill", beat: 3, lane: 3, width: 1 },
@@ -216,7 +216,10 @@ function testIgnoredExtensionsAndAllowedSlideMatrix(): void {
     { type: "SV", beat: 0.5, value: 2, timingGroup: "#7" },
     { type: "Single", beat: 1, lane: 1, width: 1, timingGroup: "#7" },
   ])));
-  assert.deepEqual(commonProjection(extended), commonProjection(plain));
+  assert.equal(getGarupaProductChartProfile(plain)?.route, "original-compatible");
+  assert.equal(getGarupaProductChartProfile(extended)?.route, "product-extension");
+  assert.equal(requireOk(createConstructedChartScoringPlan(extended)).totalScoringUnitCount, 1);
+  assert.notDeepEqual(commonProjection(extended), commonProjection(plain));
 
   const allowed = requireOk(constructChartFromGarupaChartJson(parse([
     { type: "BPM", beat: 0, value: 120 },
@@ -245,30 +248,75 @@ function testIgnoredExtensionsAndAllowedSlideMatrix(): void {
   assert.equal(roots[1]!.afterNoteType, AfterNoteType.None);
 }
 
+function testProductProfileAndProxyGraph(): void {
+  const copied = requireOk(copyAndFreezeGarupaChartJson([
+    { type: "BPM", beat: 0, value: 120 },
+    { type: "SV", beat: 1, value: -2.1234567 },
+    { type: "Single", beat: 2, lane: 0.5, width: 2, timingGroup: "#1" },
+    { type: "Directional", beat: 2, lane: 7, width: 3, direction: "Left" },
+    { type: "Slide", timingGroup: "#2", connections: [
+      { type: "Hidden", beat: 3, lane: -1, width: 1 },
+      { type: "Flick", beat: 3, lane: 1.25, width: 2 },
+      { type: "Skill", beat: 4, lane: 2, width: 1, timingGroup: "#3" },
+      { type: "Hidden", beat: 5, lane: 3, width: 1 },
+    ] },
+    { type: "Slide", connections: [
+      { type: "Hidden", beat: 6, lane: 1, width: 1 },
+    ] },
+  ]));
+  const chart = requireOk(constructChartFromGarupaChartJson(copied.chart, 9));
+  const profile = getGarupaProductChartProfile(chart)!;
+  assert.ok(profile);
+  assert.equal(profile.route, "product-extension");
+  assert.deepEqual(profile.laneDomain, { laneCount: 9, minimumLane: -1, maximumLane: 7 });
+  assert.equal(profile.svEvents.length, 1);
+  assert.equal(profile.svEvents[0]!.value, -2.123457);
+  assert.equal(profile.nodes.length, 7);
+  assert.equal(profile.visibleNodes.length, 4);
+  assert.equal(profile.slideChains.length, 2);
+  assert.deepEqual(profile.slideChains[0]!.visibleConnectionIdentities, [
+    "garupa-slide:4:connection:1",
+    "garupa-slide:4:connection:2",
+  ]);
+  assert.equal(profile.slideChains[0]!.containsHidden, true);
+  assert.equal(profile.slideChains[1]!.allHidden, true);
+  assert.equal(profile.nodes[1]!.spanStart, 5);
+  assert.equal(profile.nodes[3]!.timingGroup, "#2");
+  assert.equal(profile.nodes[5]!.timingGroup, "#2");
+  assert.equal(profile.nodes[4]!.timingGroup, "#3");
+  assert.equal(profile.visibleNodes.every((node) => node.scoringSource?.buttonType === -1), true);
+  assert.equal(profile.nodes.filter((node) => !node.visible).every((node) => node.scoringSource === null), true);
+  assert.equal(Object.isFrozen(profile), true);
+  assert.equal(Object.isFrozen(profile.nodes), true);
+  assert.equal(Object.isFrozen(profile.nodes[0]!.scoringSource), true);
+  assert.equal(chart.noteBatches.flatMap((batch) => batch.informationList).filter((note) => note.buttonType >= 0).length, 0);
+  const scoring = requireOk(createConstructedChartScoringPlan(chart));
+  assert.equal(scoring.totalScoringUnitCount, 4);
+  assert.equal(scoring.scoreMaximum, 10_000_004);
+
+  const standard = requireOk(constructChartFromGarupaChartJson(parse([
+    { type: "BPM", beat: 0, value: 120 },
+    { type: "Single", beat: 1, lane: 1, width: 1 },
+  ]), 7));
+  assert.equal(getGarupaProductChartProfile(standard)?.route, "original-compatible");
+  assert.equal(standard.noteBatches.flatMap((batch) => batch.informationList).filter((note) => note.buttonType >= 0).length, 1);
+}
+
 function testFailureClosure(): void {
-  const cases: readonly unknown[][] = [
+  const constructFailures: readonly unknown[][] = [
     [{ type: "Single", beat: 1, lane: 1, width: 1 }],
     [{ type: "BPM", beat: 0, value: 120 }, { type: "BPM", beat: 0.01, value: 130 }, { type: "Single", beat: 1, lane: 1, width: 1 }],
     [{ type: "BPM", beat: 0, value: 0 }, { type: "Single", beat: 1, lane: 1, width: 1 }],
-    [{ type: "BPM", beat: 0, value: 120 }, { type: "Single", beat: 1, lane: 6, width: 2 }],
-    [{ type: "BPM", beat: 0, value: 120 }, { type: "Directional", beat: 1, lane: 0, width: 2, direction: "Left" }],
-    [{ type: "BPM", beat: 0, value: 120 }, { type: "Slide", connections: [] }],
-    [{ type: "BPM", beat: 0, value: 120 }, { type: "Slide", connections: [{ type: "Single", beat: 1, lane: 1, width: 1 }] }],
-    [{ type: "BPM", beat: 0, value: 120 }, { type: "Slide", connections: [{ type: "Flick", beat: 1, lane: 1, width: 1 }, { type: "Single", beat: 2, lane: 2, width: 1 }] }],
-    [{ type: "BPM", beat: 0, value: 120 }, { type: "Slide", connections: [{ type: "Directional", beat: 1, lane: 1, width: 1, direction: "Right" }, { type: "Single", beat: 2, lane: 2, width: 1 }] }],
-    [{ type: "BPM", beat: 0, value: 120 }, { type: "Slide", connections: [{ type: "Hidden", beat: 1, lane: 1, width: 1 }, { type: "Single", beat: 2, lane: 2, width: 1 }] }],
-    [{ type: "BPM", beat: 0, value: 120 }, { type: "Slide", connections: [{ type: "Single", beat: 1, lane: 1, width: 1 }, { type: "Skill", beat: 2, lane: 2, width: 1 }, { type: "Single", beat: 3, lane: 3, width: 1 }] }],
-    [{ type: "BPM", beat: 0, value: 120 }, { type: "Slide", connections: [{ type: "Single", beat: 1, lane: 1, width: 1 }, { type: "Flick", beat: 2, lane: 2, width: 1 }, { type: "Single", beat: 3, lane: 3, width: 1 }] }],
-    [{ type: "BPM", beat: 0, value: 120 }, { type: "Slide", connections: [{ type: "Single", beat: 1, lane: 1, width: 1 }, { type: "Directional", beat: 2, lane: 2, width: 1, direction: "Right" }, { type: "Single", beat: 3, lane: 3, width: 1 }] }],
-    [{ type: "BPM", beat: 0, value: 120 }, { type: "Slide", connections: [{ type: "Single", beat: 1, lane: 1, width: 1 }, { type: "Hidden", beat: 2, lane: 2, width: 1 }] }],
-    [{ type: "BPM", beat: 0, value: 120 }, { type: "Slide", connections: [{ type: "Single", beat: 1, lane: 1, width: 1 }, { type: "Single", beat: 1.001, lane: 2, width: 1 }] }],
-    [{ type: "BPM", beat: 0, value: 120 }, { type: "Slide", connections: [{ type: "Single", beat: 1, lane: 1, width: 1 }, { type: "Directional", beat: 2, lane: 3, width: 4, direction: "Right" }] }],
   ];
-  for (const candidate of cases) {
+  for (const candidate of constructFailures) {
     const copied = copyAndFreezeGarupaChartJson(candidate);
     if (copied.status !== "ok") continue;
     assert.equal(constructChartFromGarupaChartJson(copied.value.chart).status, "evidence-required");
   }
+  assert.equal(copyAndFreezeGarupaChartJson([
+    { type: "BPM", beat: 0, value: 120 },
+    { type: "Slide", connections: [] },
+  ]).status, "evidence-required");
 }
 
 function testCanonicalBmsDifferentialProjection(): void {

@@ -25,6 +25,17 @@ import {
 } from "../engine/chart/types";
 import { evidenceRequired, ok, type SimulatorResult } from "../engine/evidence";
 import { registerConstructedChartRuntimeMetadata } from "../engine/runtime/chartRuntimeMetadata";
+import type { SimulatorProductLaneCount } from "../public/contracts";
+import {
+  createGarupaProductLaneDomain,
+  freezeGarupaProductChartProfile,
+  registerGarupaProductChartProfile,
+  type GarupaProductChartProfile,
+  type GarupaProductNode,
+  type GarupaProductSlideChain,
+  type GarupaProductSvEvent,
+  type GarupaProductTimingGroupId,
+} from "../engine/garupa/productChartProfile";
 
 export const GARUPA_JSON_POSITION_UNITS_PER_BEAT = 48;
 const POSITION_UNITS_PER_BAR = 192;
@@ -63,6 +74,22 @@ interface NoteKinds {
 }
 
 export function constructChartFromGarupaChartJson(
+  chart: GarupaChartJson,
+  laneCount: SimulatorProductLaneCount = 7,
+): SimulatorResult<ChartConstructionResult> {
+  const profile = buildGarupaProductChartProfile(chart, laneCount);
+  if (profile.status !== "ok") return profile;
+  const constructed = profile.value.route === "original-compatible"
+    ? constructOriginalCompatibleGarupaChart(chart)
+    : constructOriginalCompatibleGarupaChart(
+        chart.filter((item) => item.type === "BPM"),
+      );
+  if (constructed.status !== "ok") return constructed;
+  registerGarupaProductChartProfile(constructed.value, profile.value);
+  return constructed;
+}
+
+function constructOriginalCompatibleGarupaChart(
   chart: GarupaChartJson,
 ): SimulatorResult<ChartConstructionResult> {
   const bpmItems: Array<{ readonly sourceOrder: number; readonly absolutePos: number; readonly value: number; readonly text: string }> = [];
@@ -193,6 +220,196 @@ export function constructChartFromGarupaChartJson(
   });
   registerConstructedChartRuntimeMetadata(result, false);
   return ok(result);
+}
+
+function buildGarupaProductChartProfile(
+  chart: GarupaChartJson,
+  laneCount: SimulatorProductLaneCount,
+): SimulatorResult<GarupaProductChartProfile> {
+  const svEvents: GarupaProductSvEvent[] = [];
+  const nodes: GarupaProductNode[] = [];
+  const slideChains: GarupaProductSlideChain[] = [];
+  let route: GarupaProductChartProfile["route"] = laneCount === 7
+    ? "original-compatible"
+    : "product-extension";
+  let authoredOrder = 0;
+  let scoringIndex = 0;
+
+  for (let sourceOrder = 0; sourceOrder < chart.length; sourceOrder += 1) {
+    const item = chart[sourceOrder]!;
+    if (item.type === "BPM") continue;
+    if (item.type === "SV") {
+      const position = garupaBeatToAbsolutePosition(item.beat);
+      if (position.status !== "ok") return position;
+      route = "product-extension";
+      svEvents.push({
+        sourceOrder,
+        absolutePosition: position.value,
+        value: normalizeProductSvValue(item.value),
+        timingGroup: productTimingGroup(item.timingGroup),
+      });
+      continue;
+    }
+    if (item.type === "Slide") {
+      const chainIdentity = `garupa-slide:${sourceOrder}`;
+      const ownerGroup = productTimingGroup(item.timingGroup);
+      const connectionIdentities: string[] = [];
+      const visibleConnectionIdentities: string[] = [];
+      let containsHidden = false;
+      if (!isOriginalCompatibleSlide(item)) route = "product-extension";
+      if (ownerGroup !== "#Global") route = "product-extension";
+      for (let connectionIndex = 0; connectionIndex < item.connections.length; connectionIndex += 1) {
+        const connection = item.connections[connectionIndex]!;
+        const built = buildProductNode(
+          connection,
+          sourceOrder,
+          connectionIndex,
+          chainIdentity,
+          authoredOrder++,
+          scoringIndex,
+          connection.timingGroup === undefined
+            ? ownerGroup
+            : productTimingGroup(connection.timingGroup),
+        );
+        if (built.status !== "ok") return built;
+        nodes.push(built.value);
+        connectionIdentities.push(built.value.identity);
+        containsHidden ||= !built.value.visible;
+        if (built.value.visible) {
+          visibleConnectionIdentities.push(built.value.identity);
+          scoringIndex += 1;
+        }
+        if (!isOriginalCompatibleLane(connection) || built.value.timingGroup !== "#Global") {
+          route = "product-extension";
+        }
+      }
+      slideChains.push({
+        identity: chainIdentity,
+        chartItemIndex: sourceOrder,
+        timingGroup: ownerGroup,
+        connectionIdentities,
+        visibleConnectionIdentities,
+        allHidden: visibleConnectionIdentities.length === 0,
+        containsHidden,
+      });
+      continue;
+    }
+    const built = buildProductNode(
+      item,
+      sourceOrder,
+      null,
+      null,
+      authoredOrder++,
+      scoringIndex++,
+      productTimingGroup(item.timingGroup),
+    );
+    if (built.status !== "ok") return built;
+    nodes.push(built.value);
+    if (!isOriginalCompatibleLane(item) || built.value.timingGroup !== "#Global") {
+      route = "product-extension";
+    }
+  }
+
+  return ok(freezeGarupaProductChartProfile({
+    route,
+    laneDomain: createGarupaProductLaneDomain(laneCount),
+    svEvents,
+    nodes,
+    slideChains,
+  }));
+}
+
+function buildProductNode(
+  connection: GarupaChartJsonSlideConnection,
+  chartItemIndex: number,
+  connectionIndex: number | null,
+  chainIdentity: string | null,
+  authoredOrder: number,
+  scoringIndex: number,
+  timingGroup: GarupaProductTimingGroupId,
+): SimulatorResult<GarupaProductNode> {
+  const position = positionFields(connection.beat);
+  if (position.status !== "ok") return position;
+  const spanStart = connection.type === "Directional" && connection.direction === "Left"
+    ? connection.lane - connection.width + 1
+    : connection.lane;
+  const visible = connection.type !== "Hidden";
+  const identity = connectionIndex === null
+    ? `garupa-note:${chartItemIndex}`
+    : `garupa-slide:${chartItemIndex}:connection:${connectionIndex}`;
+  const scoringSource = visible
+    ? createBaseNote({
+        index: scoringIndex,
+        position: position.value,
+        span: commandSpan(),
+        kinds: productNodeKinds(connection),
+        additional: connection.type === "Skill"
+          ? GameNoteAdditionalType.Skill
+          : GameNoteAdditionalType.None,
+      })
+    : null;
+  return ok(Object.freeze({
+    identity,
+    chartItemIndex,
+    connectionIndex,
+    chainIdentity,
+    authoredOrder,
+    type: connection.type,
+    beat: connection.beat,
+    absolutePosition: position.value.absolutePos,
+    lane: connection.lane,
+    width: connection.width,
+    spanStart,
+    spanEnd: spanStart + connection.width - 1,
+    direction: connection.type === "Directional" ? connection.direction : null,
+    timingGroup,
+    visible,
+    scoringSource,
+  }));
+}
+
+function productNodeKinds(connection: GarupaChartJsonSlideConnection): NoteKinds {
+  if (connection.type === "Directional") {
+    return directionalKinds(connection.direction, false);
+  }
+  if (connection.type === "Flick") return simpleKinds("Flick");
+  return simpleKinds(connection.type === "Skill" ? "Skill" : "Single");
+}
+
+function productTimingGroup(value: string | undefined): GarupaProductTimingGroupId {
+  return value === undefined || value.trim() === "" || value === "#Global"
+    ? "#Global"
+    : value as GarupaProductTimingGroupId;
+}
+
+function normalizeProductSvValue(value: number): number {
+  return Number(value.toFixed(6));
+}
+
+function isOriginalCompatibleLane(connection: GarupaChartJsonSlideConnection): boolean {
+  const start = connection.type === "Directional" && connection.direction === "Left"
+    ? connection.lane - connection.width + 1
+    : connection.lane;
+  return Number.isInteger(connection.lane) && connection.width <= 7 &&
+    start >= 0 && start + connection.width <= LANE_COUNT;
+}
+
+function isOriginalCompatibleSlide(slide: GarupaChartJsonSlideItem): boolean {
+  if (slide.connections.length < 2) return false;
+  const head = slide.connections[0]!;
+  const tail = slide.connections[slide.connections.length - 1]!;
+  if ((head.type !== "Single" && head.type !== "Skill") || tail.type === "Hidden") return false;
+  if (tail.type === "Directional" && tail.width > 3) return false;
+  let previousPosition = -1;
+  for (let index = 0; index < slide.connections.length; index += 1) {
+    const connection = slide.connections[index]!;
+    if (index > 0 && index + 1 < slide.connections.length &&
+      connection.type !== "Single" && connection.type !== "Hidden") return false;
+    const position = Math.floor(connection.beat * GARUPA_JSON_POSITION_UNITS_PER_BEAT);
+    if (position <= previousPosition) return false;
+    previousPosition = position;
+  }
+  return true;
 }
 
 export function garupaBeatToAbsolutePosition(beat: number): SimulatorResult<number> {
