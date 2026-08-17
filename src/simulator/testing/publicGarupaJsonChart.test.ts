@@ -21,6 +21,10 @@ import { createRecordingSimulatorBackends } from "../backends/recordingBackend";
 import { createSimulatorEngine } from "../host/createSimulatorEngine";
 import { createSimulatorModuleCapabilitySummary } from "../public/capabilities";
 import { getGarupaProductChartProfile } from "../engine/garupa/productChartProfile";
+import {
+  createGarupaProductTimingGroupAxisProfile,
+  getGarupaProductTimingGroupAxisProfile,
+} from "../engine/garupa/timingGroupAxis";
 
 function main(): void {
   testContractCopyAndExactShape();
@@ -29,6 +33,7 @@ function main(): void {
   testDirectConstruction();
   testIgnoredExtensionsAndAllowedSlideMatrix();
   testProductProfileAndProxyGraph();
+  testTimingGroupAxis();
   testFailureClosure();
   testCanonicalBmsDifferentialProjection();
   testAutoAndManualEngineOutcomes();
@@ -300,6 +305,38 @@ function testProductProfileAndProxyGraph(): void {
   ]), 7));
   assert.equal(getGarupaProductChartProfile(standard)?.route, "original-compatible");
   assert.equal(standard.noteBatches.flatMap((batch) => batch.informationList).filter((note) => note.buttonType >= 0).length, 1);
+}
+
+function testTimingGroupAxis(): void {
+  const productChart = requireOk(constructChartFromGarupaChartJson(parse([
+    { type: "BPM", beat: 0, value: 120 },
+    { type: "BPM", beat: 4, value: 60 },
+    { type: "SV", beat: 1, value: 2 },
+    { type: "SV", beat: 1, value: 3, timingGroup: "#1" },
+    { type: "SV", beat: 2, value: -1, timingGroup: "#1" },
+    { type: "SV", beat: 3, value: 0 },
+    { type: "Single", beat: 4, lane: 1, width: 1, timingGroup: "#1" },
+  ]), 7));
+  const profile = getGarupaProductChartProfile(productChart)!;
+  const axis = requireOk(createGarupaProductTimingGroupAxisProfile(productChart, profile));
+  assert.equal(getGarupaProductTimingGroupAxisProfile(productChart)?.groups.length, 2);
+  assert.deepEqual(axis.groups.map((group) => group.id), ["#Global", "#1"]);
+  assert.equal(requireOk(axis.positionToMilliseconds(48)), 500);
+  assert.equal(requireOk(axis.positionToMilliseconds(192)), 2000);
+  assert.equal(requireOk(axis.positionToMilliseconds(288)), 4000);
+  assert.equal(requireOk(axis.axisAtMilliseconds("#Global", 1000)), 1500);
+  assert.equal(requireOk(axis.axisAtMilliseconds("#Global", 2000)), 2500);
+  assert.equal(requireOk(axis.axisAtMilliseconds("#1", 500)), 500);
+  assert.equal(requireOk(axis.axisAtMilliseconds("#1", 1000)), 1500);
+  assert.equal(requireOk(axis.axisAtMilliseconds("#1", 1500)), 1000);
+  assert.equal(requireOk(axis.axisAtMilliseconds("#1", 2000)), 1000);
+  assert.equal(requireOk(axis.displacementAtPosition("#1", 192, 96)), -500);
+  assert.equal(requireOk(axis.displacementAtPosition("#Global", 192, 96)), 1000);
+  const windows = requireOk(axis.findVisibilityWindows("#1", 192, 600, 200, 0, 3000));
+  assert.ok(windows.length >= 1);
+  assert.ok(windows.some((window) => window.startMilliseconds <= 1500 && window.endMilliseconds >= 1500));
+  assert.equal(axis.axisAtMilliseconds("#missing", 0).status, "evidence-required");
+  assert.equal(axis.positionToMilliseconds(Number.NaN).status, "evidence-required");
 }
 
 function testFailureClosure(): void {

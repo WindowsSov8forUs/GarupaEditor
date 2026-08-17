@@ -36,6 +36,10 @@ import {
   type GarupaProductSvEvent,
   type GarupaProductTimingGroupId,
 } from "../engine/garupa/productChartProfile";
+import {
+  createGarupaProductTimingGroupAxisProfile,
+  registerGarupaProductTimingGroupAxisProfile,
+} from "../engine/garupa/timingGroupAxis";
 
 export const GARUPA_JSON_POSITION_UNITS_PER_BEAT = 48;
 const POSITION_UNITS_PER_BAR = 192;
@@ -85,7 +89,10 @@ export function constructChartFromGarupaChartJson(
         chart.filter((item) => item.type === "BPM"),
       );
   if (constructed.status !== "ok") return constructed;
+  const axis = createGarupaProductTimingGroupAxisProfile(constructed.value, profile.value);
+  if (axis.status !== "ok") return axis;
   registerGarupaProductChartProfile(constructed.value, profile.value);
+  registerGarupaProductTimingGroupAxisProfile(constructed.value, axis.value);
   return constructed;
 }
 
