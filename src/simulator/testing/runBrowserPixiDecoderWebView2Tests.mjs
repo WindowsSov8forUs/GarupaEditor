@@ -105,11 +105,11 @@ function verify(value) {
     "loaded production glyph metrics",
   );
   const scoreHud = value.raster.scoreHud;
-  equal(scoreHud.maskWorldTransform[0], 414, "Score high-rank panel mask world X");
-  equal(scoreHud.maskWorldTransform[1], 96, "Score high-rank panel mask world Y");
-  equal(JSON.stringify(scoreHud.maskWorldBounds), JSON.stringify([456, 82.5, 831, 121.5]), "Score high-rank panel SS-threshold world bounds");
-  equal(JSON.stringify(scoreHud.animationLayerWorldTransform), JSON.stringify([414, 96]), "Score high-rank animation and panel coordinate spaces");
-  equal(JSON.stringify(scoreHud.firstDigitWorldTransform), JSON.stringify([318, 135]), "CS-V1 SS-threshold first bitmap digit world transform");
+  const adaptive = adaptiveScoreLayout();
+  closeTuple(scoreHud.maskWorldTransform, adaptive.progress, 1e-4, "Score high-rank panel mask world transform");
+  closeTuple(scoreHud.maskWorldBounds, adaptive.maskBounds, 1e-4, "Score high-rank panel SS-threshold world bounds");
+  closeTuple(scoreHud.animationLayerWorldTransform, adaptive.progress, 1e-4, "Score high-rank animation and panel coordinate spaces");
+  closeTuple(scoreHud.firstDigitWorldTransform, adaptive.firstDigit, 1e-4, "CS-V1 SS-threshold first bitmap digit world transform");
   if (scoreHud.nonTransparentPixels <= 0 || !/^[0-9a-f]{64}$/.test(scoreHud.sha256)) {
     throw new Error(`production Score HUD WebView2 raster is invalid: ${JSON.stringify(scoreHud)}`);
   }
@@ -142,6 +142,40 @@ function sameRuntimeLine(actual, baseline, label) {
       current.slice(0, 3).some((value, index) => value !== locked[index]) ||
       current[3] < locked[3]) {
     throw new Error(`${label}: ${actual} is outside locked ${baseline} patch line`);
+  }
+}
+
+function adaptiveScoreLayout() {
+  const f32 = Math.fround;
+  const width = 1600;
+  const height = 720;
+  const screenRatioX = f32(f32(width) / f32(1334));
+  const verticalFit = f32(f32(height) / f32(screenRatioX * f32(750)));
+  const safeWidth = f32(f32(width) * f32(0.8999999761581421));
+  const safeLeft = f32(f32(f32(width) - safeWidth) * f32(0.5));
+  const screenToSafe = f32(f32(safeWidth / f32(width)) * verticalFit);
+  const scale = f32(screenRatioX * screenToSafe);
+  const root = [
+    f32(safeLeft + f32((-411 + 667) * scale)),
+    f32(height - f32(height + f32((309 - 375) * scale))),
+  ];
+  const progress = [root[0] + 25 * scale, root[1] + 45 * scale];
+  return {
+    progress,
+    maskBounds: [
+      progress[0] + 42,
+      progress[1] - 13.5,
+      progress[0] + 417,
+      progress[1] + 25.5,
+    ],
+    firstDigit: [root[0] - 71 * scale, root[1] + 84 * scale],
+  };
+}
+
+function closeTuple(actual, expected, tolerance, label) {
+  if (!Array.isArray(actual) || actual.length !== expected.length ||
+      actual.some((value, index) => Math.abs(value - expected[index]) > tolerance)) {
+    throw new Error(`${label}: ${JSON.stringify(actual)} !== ${JSON.stringify(expected)}`);
   }
 }
 
