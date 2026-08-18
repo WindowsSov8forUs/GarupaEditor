@@ -592,9 +592,15 @@ function buildSystemBindings(
 }
 
 function validateScene(scene: ParticlePixiSceneProfile): ParticleOperationResult<ParticlePixiSceneProfile> {
-  if (scene === null || typeof scene !== "object" || scene.viewportWidth !== 1600 || scene.viewportHeight !== 720 ||
+  const pixelsPerWorldUnit = scene === null || typeof scene !== "object"
+    ? null
+    : particleFloat32FromBits(scene.pixelsPerWorldUnitBits);
+  if (scene === null || typeof scene !== "object" ||
+    !Number.isSafeInteger(scene.viewportWidth) || scene.viewportWidth <= 0 ||
+    !Number.isSafeInteger(scene.viewportHeight) || scene.viewportHeight <= 0 ||
+    scene.viewportWidth < scene.viewportHeight ||
     scene.worldCenterXBits !== "0x00000000" || scene.worldCenterYBits !== "0x00000000" ||
-    scene.pixelsPerWorldUnitBits !== "0x43B40000" || scene.roundPixels !== false ||
+    pixelsPerWorldUnit !== Math.fround(scene.viewportHeight / 2) || scene.roundPixels !== false ||
     !Array.isArray(scene.buttonAnchors) || scene.buttonAnchors.length !== 15 ||
     scene.buttonAnchors.some((anchor, index) =>
       anchor.buttonType !== (index < 7 ? index : index + 1) ||
@@ -604,7 +610,7 @@ function validateScene(scene: ParticlePixiSceneProfile): ParticleOperationResult
     return particleRejected(
       "evidence-required",
       "particle.pixi.invalid-scene-profile",
-      "Particle projection requires the fixed 1600x720/360 PPU scene and the 15 supported ordered engine-authored anchors; unsupported Button_07 fails closed.",
+      "Particle projection requires the current landscape orthographic height/2 PPU and the 15 ordered engine-authored anchors; unsupported Button_07 fails closed without a fixed-device viewport fallback.",
     );
   }
   return particleAccepted(Object.freeze({

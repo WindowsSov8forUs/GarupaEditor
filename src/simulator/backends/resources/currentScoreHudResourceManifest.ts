@@ -87,8 +87,10 @@ export const CURRENT_SCORE_HUD_PORTABLE_RESOURCES: readonly ScoreHudPortableReso
       scoreAtlas("score_meter_orange", 586, 851, 40, 22, [5, 5, 0, 0]),
       scoreAtlas("score_meter_pink", 277, 877, 40, 22, [5, 5, 0, 0]),
       scoreAtlas("score_meter_s", 0, 609, 662, 22, [0, 0, 0, 0]),
-      atlas("rehearsal_return_five", 912, 924, 97, 99),
-      atlas("rehearsal_advance_five", 903, 315, 96, 99),
+      atlas("btn_ingame_time_back", 909, 920, 104, 104),
+      atlas("btn_ingame_time_forward", 899, 311, 104, 104),
+      atlas("bg_base_r6_inside_rhythm", 481, 616, 24, 24, [6, 6, 6, 6]),
+      atlas("label_round_white", 302, 245, 60, 40, [25, 25, 0, 0]),
       atlas("bg_health", 0, 633, 186, 62, [39, 143, 0, 0]),
       atlas("bg_no_health", 349, 287, 131, 69, [50, 50, 0, 0]),
       atlas("combo", 592, 807, 150, 42),
@@ -180,10 +182,11 @@ export const CURRENT_SCORE_HUD_NINE_SLICE_BORDERS = Object.freeze({
   meterBlue: pixiBorderFromUnity(4, 4, 3, 3),
   meterOther: pixiBorderFromUnity(5, 5, 0, 0),
   meterS: pixiBorderFromUnity(0, 0, 0, 0),
+  rehearsalTime: pixiBorderFromUnity(6, 6, 6, 6),
+  autoLiveCaption: pixiBorderFromUnity(25, 25, 0, 0),
 });
 
 export const CURRENT_SCORE_HUD_SCENE_PROFILE = Object.freeze({
-  viewportCenter: Object.freeze([800, 360] as const),
   rootLocalPosition: Object.freeze([-411, 309] as const),
   totalScoreLocalPosition: Object.freeze([212, -84] as const),
   scoreMinimumDigits: 8,

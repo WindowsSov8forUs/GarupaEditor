@@ -206,7 +206,12 @@ export class AutonomousSimulatorModule {
     if (command.kind === "return-five-seconds" || command.kind === "advance-five-seconds") {
       const controlState = this.session!.getControlState();
       if (controlState.status === "rejected") return controlState;
-      const consumed = consumeRehearsalControlCommand(command, controlState.value);
+      const surface = this.session!.getSurfaceState();
+      if (surface.status === "rejected") return surface;
+      const consumed = consumeRehearsalControlCommand(command, {
+        ...controlState.value,
+        surfaceRevision: surface.value.revision,
+      });
       if (consumed.status !== "ok") {
         return rejected("evidence-required", consumed.capability, consumed.boundary);
       }

@@ -1,5 +1,6 @@
 import type { SimulatorModeIdentity } from "../engine/data/inGameCalculatedData";
 import { evidenceRequired, ok, type SimulatorResult } from "../engine/evidence";
+import type { OriginalSurfaceLayout } from "./originalSurfaceLayout";
 
 export type RehearsalControlIntent = "return-five-seconds" | "advance-five-seconds";
 export interface RehearsalControlCommand {
@@ -8,57 +9,64 @@ export interface RehearsalControlCommand {
 }
 export type RehearsalControlTouchPhase = "began" | "moved" | "ended";
 
-export interface RehearsalControlHitRegion {
+export interface RehearsalControlBounds {
   readonly x: number;
   readonly y: number;
   readonly width: number;
   readonly height: number;
 }
 
-export interface RehearsalControlSceneProfile {
-  readonly viewportWidth: 1600;
-  readonly viewportHeight: 720;
+export interface RehearsalControlSceneLayout {
+  readonly surfaceRevision: number;
+  readonly viewportWidth: number;
+  readonly viewportHeight: number;
   readonly returnFive: {
-    readonly center: readonly [142, 360];
-    readonly visibleBounds: RehearsalControlHitRegion;
-    readonly hitRegion: RehearsalControlHitRegion;
-    readonly atlasFrame: Readonly<{ x: 912; y: 924; width: 97; height: 99 }>;
+    readonly centerBottomLeft: readonly [number, number];
+    readonly widgetBoundsTopLeft: RehearsalControlBounds;
+    readonly hitCircleRadiusPixels: number;
   };
   readonly advanceFive: {
-    readonly center: readonly [1457.5, 360];
-    readonly visibleBounds: RehearsalControlHitRegion;
-    readonly hitRegion: RehearsalControlHitRegion;
-    readonly atlasFrame: Readonly<{ x: 903; y: 315; width: 96; height: 99 }>;
+    readonly centerBottomLeft: readonly [number, number];
+    readonly widgetBoundsTopLeft: RehearsalControlBounds;
+    readonly hitCircleRadiusPixels: number;
   };
-  readonly timeLabelRegion: RehearsalControlHitRegion;
-  readonly demoBadgeRegion: RehearsalControlHitRegion;
+  readonly timeLabelBoundsTopLeft: RehearsalControlBounds;
+  readonly demoBadgeBoundsTopLeft: RehearsalControlBounds;
 }
 
 const issuedControlCapabilities = new WeakMap<object, Readonly<{
   intent: RehearsalControlIntent;
   mode: SimulatorModeIdentity;
   timelineWholeSecond: number;
+  surfaceRevision: number;
   consumed: boolean;
 }>>();
 
-export const REHEARSAL_CONTROL_SCENE_PROFILE: RehearsalControlSceneProfile = deepFreeze({
-  viewportWidth: 1600,
-  viewportHeight: 720,
-  returnFive: {
-    center: [142, 360],
-    visibleBounds: { x: 101, y: 319, width: 82, height: 82 },
-    hitRegion: { x: 92, y: 310, width: 100, height: 100 },
-    atlasFrame: { x: 912, y: 924, width: 97, height: 99 },
-  },
-  advanceFive: {
-    center: [1457.5, 360],
-    visibleBounds: { x: 1416, y: 319, width: 83, height: 82 },
-    hitRegion: { x: 1407.5, y: 310, width: 100, height: 100 },
-    atlasFrame: { x: 903, y: 315, width: 96, height: 99 },
-  },
-  timeLabelRegion: { x: 1358, y: 91, width: 146, height: 25 },
-  demoBadgeRegion: { x: 111, y: 97, width: 177, height: 35 },
-});
+export function createRehearsalControlSceneLayout(
+  layout: OriginalSurfaceLayout,
+): RehearsalControlSceneLayout {
+  const width = layout.ui.moveTime.widgetSize[0];
+  const height = layout.ui.moveTime.widgetSize[1];
+  const returnCenter = layout.ui.moveTime.returnCenterBottomLeft;
+  const advanceCenter = layout.ui.moveTime.advanceCenterBottomLeft;
+  return deepFreeze({
+    surfaceRevision: layout.surface.revision,
+    viewportWidth: layout.surface.viewportWidth,
+    viewportHeight: layout.surface.viewportHeight,
+    returnFive: {
+      centerBottomLeft: returnCenter,
+      widgetBoundsTopLeft: widgetBounds(layout.surface.viewportHeight, returnCenter, width, height),
+      hitCircleRadiusPixels: layout.ui.moveTime.hitCircleRadiusPixels,
+    },
+    advanceFive: {
+      centerBottomLeft: advanceCenter,
+      widgetBoundsTopLeft: widgetBounds(layout.surface.viewportHeight, advanceCenter, width, height),
+      hitCircleRadiusPixels: layout.ui.moveTime.hitCircleRadiusPixels,
+    },
+    timeLabelBoundsTopLeft: bounds(layout.ui.moveTime.timeBackgroundBoundsTopLeft),
+    demoBadgeBoundsTopLeft: bounds(layout.ui.autoLiveCaptionBoundsTopLeft),
+  });
+}
 
 export function resolveRehearsalControlTouch(
   mode: SimulatorModeIdentity,
@@ -69,31 +77,39 @@ export function resolveRehearsalControlTouch(
     paused: boolean;
     moveTimeInProgress: boolean;
   }>,
+  layout: RehearsalControlSceneLayout,
 ): SimulatorResult<RehearsalControlCommand | null> {
   if (!validPosition(bottomLeftPosition) || !Number.isFinite(state?.timelineSeconds) ||
     state.timelineSeconds < 0 || typeof state.paused !== "boolean" ||
-    typeof state.moveTimeInProgress !== "boolean") {
+    typeof state.moveTimeInProgress !== "boolean" ||
+    !validLayout(layout)) {
     return evidenceRequired(
       "rehearsal.control.invalid-touch-state",
-      ["LR-E06", "LR-E11"],
-      "The control owner requires one finite bottom-left touch and explicit Rehearsal playing state.",
+      ["LR-E06", "LR-E11", "ML-E03"],
+      "The control owner requires one finite bottom-left touch, explicit Rehearsal playing state and one original prefab-derived surface layout.",
     );
   }
   if (mode.sessionMode !== "rehearsal" || !mode.isEnablePractice || mode.inGameMode !== "practice") {
     return ok(null);
   }
   if (phase !== "began" || state.paused || state.moveTimeInProgress) return ok(null);
-  const point = Object.freeze({
-    x: bottomLeftPosition.x,
-    y: REHEARSAL_CONTROL_SCENE_PROFILE.viewportHeight - bottomLeftPosition.y,
-  });
-  if (inside(point, REHEARSAL_CONTROL_SCENE_PROFILE.returnFive.hitRegion)) {
+  if (insideCircle(bottomLeftPosition, layout.returnFive)) {
     return ok(Math.floor(state.timelineSeconds) === 0
       ? null
-      : issueControlCommand("return-five-seconds", mode, state.timelineSeconds));
+      : issueControlCommand(
+          "return-five-seconds",
+          mode,
+          state.timelineSeconds,
+          layout.surfaceRevision,
+        ));
   }
-  if (inside(point, REHEARSAL_CONTROL_SCENE_PROFILE.advanceFive.hitRegion)) {
-    return ok(issueControlCommand("advance-five-seconds", mode, state.timelineSeconds));
+  if (insideCircle(bottomLeftPosition, layout.advanceFive)) {
+    return ok(issueControlCommand(
+      "advance-five-seconds",
+      mode,
+      state.timelineSeconds,
+      layout.surfaceRevision,
+    ));
   }
   return ok(null);
 }
@@ -105,6 +121,7 @@ export function consumeRehearsalControlCommand(
     timelineSeconds: number;
     paused: boolean;
     moveTimeInProgress: boolean;
+    surfaceRevision?: number;
   }>,
 ): SimulatorResult<RehearsalControlIntent> {
   if (command === null || typeof command !== "object" ||
@@ -121,11 +138,12 @@ export function consumeRehearsalControlCommand(
   if (issued === undefined || issued.consumed || issued.intent !== command.kind ||
     state.mode !== issued.mode || !Number.isFinite(state.timelineSeconds) ||
     Math.floor(state.timelineSeconds) !== issued.timelineWholeSecond ||
+    (state.surfaceRevision !== undefined && state.surfaceRevision !== issued.surfaceRevision) ||
     state.paused || state.moveTimeInProgress) {
     return evidenceRequired(
       "rehearsal.control.foreign-stale-or-state-mismatched-command",
-      ["LR-E06", "LR-E11", "LR-C03"],
-      "MoveTime command identity, canonical mode, integer timeline and active playing state must still match at consumption.",
+      ["LR-E06", "LR-E11", "LR-C03", "ML-R05"],
+      "MoveTime command identity, canonical mode, integer timeline, initial surface revision and active playing state must still match at consumption.",
     );
   }
   issuedControlCapabilities.set(command.capability, Object.freeze({ ...issued, consumed: true }));
@@ -151,15 +169,61 @@ function issueControlCommand(
   intent: RehearsalControlIntent,
   mode: SimulatorModeIdentity,
   timelineSeconds: number,
+  surfaceRevision: number,
 ): RehearsalControlCommand {
   const capability = Object.freeze({});
   issuedControlCapabilities.set(capability, Object.freeze({
     intent,
     mode,
     timelineWholeSecond: Math.floor(timelineSeconds),
+    surfaceRevision,
     consumed: false,
   }));
   return Object.freeze({ kind: intent, capability });
+}
+
+function widgetBounds(
+  viewportHeight: number,
+  center: readonly [number, number],
+  width: number,
+  height: number,
+): RehearsalControlBounds {
+  return bounds(Object.freeze([
+    Math.fround(center[0] - width / 2),
+    Math.fround(viewportHeight - Math.fround(center[1] + height / 2)),
+    width,
+    height,
+  ]));
+}
+
+function bounds(value: readonly number[]): RehearsalControlBounds {
+  return Object.freeze({ x: value[0]!, y: value[1]!, width: value[2]!, height: value[3]! });
+}
+
+function insideCircle(
+  point: Readonly<{ x: number; y: number }>,
+  control: Readonly<{
+    centerBottomLeft: readonly [number, number];
+    hitCircleRadiusPixels: number;
+  }>,
+): boolean {
+  const dx = Math.fround(point.x - control.centerBottomLeft[0]);
+  const dy = Math.fround(point.y - control.centerBottomLeft[1]);
+  const squared = Math.fround(Math.fround(dx * dx) + Math.fround(dy * dy));
+  const radiusSquared = Math.fround(control.hitCircleRadiusPixels * control.hitCircleRadiusPixels);
+  return squared <= radiusSquared;
+}
+
+function validLayout(value: unknown): value is RehearsalControlSceneLayout {
+  if (value === null || typeof value !== "object") return false;
+  const layout = value as RehearsalControlSceneLayout;
+  return Number.isSafeInteger(layout.surfaceRevision) && layout.surfaceRevision >= 0 &&
+    Number.isSafeInteger(layout.viewportWidth) && layout.viewportWidth > 0 &&
+    Number.isSafeInteger(layout.viewportHeight) && layout.viewportHeight > 0 &&
+    Number.isFinite(layout.returnFive?.hitCircleRadiusPixels) &&
+    layout.returnFive.hitCircleRadiusPixels > 0 &&
+    Number.isFinite(layout.advanceFive?.hitCircleRadiusPixels) &&
+    layout.advanceFive.hitCircleRadiusPixels > 0;
 }
 
 function minutesSeconds(value: number): string {
@@ -174,11 +238,6 @@ function validPosition(value: unknown): value is Readonly<{ x: number; y: number
   return Object.keys(point).sort().join(",") === "x,y" &&
     typeof point.x === "number" && Number.isFinite(point.x) &&
     typeof point.y === "number" && Number.isFinite(point.y);
-}
-
-function inside(point: Readonly<{ x: number; y: number }>, region: RehearsalControlHitRegion): boolean {
-  return point.x >= region.x && point.x < region.x + region.width &&
-    point.y >= region.y && point.y < region.y + region.height;
 }
 
 function deepFreeze<T>(value: T): T {

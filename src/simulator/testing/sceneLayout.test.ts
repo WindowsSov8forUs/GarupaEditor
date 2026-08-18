@@ -7,8 +7,8 @@ import { particleFloat32FromBits } from "../backends/particleValidation";
 import { noteInformation } from "./firstSliceFixtures";
 import {
   consumeRehearsalControlCommand,
+  createRehearsalControlSceneLayout,
   formatRehearsalTimeLabel,
-  REHEARSAL_CONTROL_SCENE_PROFILE,
   resolveRehearsalControlTouch,
 } from "../scene/rehearsalControlScene";
 import { LIVE_MANUAL_MODE, REHEARSAL_AUTO_MODE, REHEARSAL_MANUAL_MODE } from "./modeFixtures";
@@ -41,6 +41,7 @@ const resources = Object.freeze({
 });
 
 const ordinary = requireOk(createSimulatorSceneLayout(surface, config, "ordinary", resources));
+const controls = createRehearsalControlSceneLayout(ordinary.surfaceLayout);
 assert.equal(ordinary.ordinaryNoteScene.goalPositions.length, 7);
 assert.equal(ordinary.ordinaryNoteScene.noteStartPositions.length, 7);
 assert.equal(ordinary.particleScene.buttonAnchors.length, 15);
@@ -126,26 +127,27 @@ assert.equal(createSimulatorSceneLayout({ ...surface, viewportWidth: 1599 }, con
 assert.equal(createSimulatorSceneLayout(surface, { ...config, noteSize: Math.fround(79) }, "ordinary", resources).status,
   "evidence-required");
 
-assert.deepEqual(REHEARSAL_CONTROL_SCENE_PROFILE.returnFive.center, [142, 360]);
-assert.deepEqual(REHEARSAL_CONTROL_SCENE_PROFILE.advanceFive.center, [1457.5, 360]);
+assert.deepEqual(controls.returnFive.centerBottomLeft, [142.20799255371094, 360]);
+assert.deepEqual(controls.advanceFive.centerBottomLeft, [1457.7919921875, 360]);
+assert.equal(controls.returnFive.hitCircleRadiusPixels, 43.20000076293945);
 const controlState = Object.freeze({ timelineSeconds: 8, paused: false, moveTimeInProgress: false });
 assert.equal(requireOk(resolveRehearsalControlTouch(
-  LIVE_MANUAL_MODE, "began", { x: 142, y: 360 }, controlState,
+  LIVE_MANUAL_MODE, "began", { x: 142, y: 360 }, controlState, controls,
 )), null);
 assert.equal(requireOk(resolveRehearsalControlTouch(
-  REHEARSAL_MANUAL_MODE, "moved", { x: 142, y: 360 }, controlState,
+  REHEARSAL_MANUAL_MODE, "moved", { x: 142, y: 360 }, controlState, controls,
 )), null);
 assert.equal(requireOk(resolveRehearsalControlTouch(
-  REHEARSAL_MANUAL_MODE, "began", { x: 142, y: 360 }, controlState,
+  REHEARSAL_MANUAL_MODE, "began", { x: 142, y: 360 }, controlState, controls,
 ))?.kind, "return-five-seconds");
 assert.equal(requireOk(resolveRehearsalControlTouch(
-  REHEARSAL_AUTO_MODE, "began", { x: 1457.5, y: 360 }, controlState,
+  REHEARSAL_AUTO_MODE, "began", { x: 1457.5, y: 360 }, controlState, controls,
 ))?.kind, "advance-five-seconds");
 assert.equal(requireOk(resolveRehearsalControlTouch(
-  REHEARSAL_MANUAL_MODE, "began", { x: 142, y: 360 }, { ...controlState, timelineSeconds: 0.9 },
+  REHEARSAL_MANUAL_MODE, "began", { x: 142, y: 360 }, { ...controlState, timelineSeconds: 0.9 }, controls,
 )), null);
 const issuedAdvance = requireOk(resolveRehearsalControlTouch(
-  REHEARSAL_AUTO_MODE, "began", { x: 1457.5, y: 360 }, controlState,
+  REHEARSAL_AUTO_MODE, "began", { x: 1457.5, y: 360 }, controlState, controls,
 ))!;
 assert.equal(requireOk(consumeRehearsalControlCommand(issuedAdvance, {
   mode: REHEARSAL_AUTO_MODE, ...controlState,

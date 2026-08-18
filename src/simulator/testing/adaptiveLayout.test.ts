@@ -10,6 +10,11 @@ import {
   originalBottomLeftScreenToWorld,
   originalWorldToBottomLeftScreen,
 } from "../scene/originalSurfaceLayout";
+import {
+  createRehearsalControlSceneLayout,
+  resolveRehearsalControlTouch,
+} from "../scene/rehearsalControlScene";
+import { REHEARSAL_MANUAL_MODE } from "./modeFixtures";
 
 function surface(
   revision: number,
@@ -65,6 +70,36 @@ for (const [name, input, expectedSafe, expectedRatio, expectedX, expectedRadius]
     assert.equal(world.value[0], Math.fround(0.25), `${name}: x roundtrip`);
     assert.equal(world.value[1], Math.fround(-0.5), `${name}: y roundtrip`);
   }
+}
+
+const reference = createOriginalSurfaceLayout(surface(0, 1600, 720), Math.fround(100));
+assert.equal(reference.status, "ok");
+if (reference.status === "ok") {
+  const controls = createRehearsalControlSceneLayout(reference.value);
+  assert.deepEqual(controls.returnFive.centerBottomLeft, [142.20799255371094, 360]);
+  assert.deepEqual(controls.demoBadgeBoundsTopLeft, {
+    x: 103.32799530029297,
+    y: 99.3599853515625,
+    width: 177.98399353027344,
+    height: 32.83199691772461,
+  });
+  const state = Object.freeze({ timelineSeconds: 8, paused: false, moveTimeInProgress: false });
+  assert.equal(resolveRehearsalControlTouch(
+    REHEARSAL_MANUAL_MODE,
+    "began",
+    { x: controls.returnFive.centerBottomLeft[0], y: controls.returnFive.centerBottomLeft[1] },
+    state,
+    controls,
+  ).status, "ok");
+  const outsideOldSquare = resolveRehearsalControlTouch(
+    REHEARSAL_MANUAL_MODE,
+    "began",
+    { x: controls.returnFive.centerBottomLeft[0] + 40, y: controls.returnFive.centerBottomLeft[1] + 40 },
+    state,
+    controls,
+  );
+  assert.equal(outsideOldSquare.status, "ok");
+  if (outsideOldSquare.status === "ok") assert.equal(outsideOldSquare.value, null);
 }
 
 const asymmetric = createOriginalSurfaceLayout(

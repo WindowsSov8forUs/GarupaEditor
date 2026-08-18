@@ -7,6 +7,7 @@ import {
 } from "pixi.js";
 import { BrowserPixiTextureDecoder } from "../backends/pixi/browserPixiTextureDecoder";
 import { PixiRendererBackend } from "../backends/pixi/pixiRendererBackend";
+import { createOriginalSurfaceLayout } from "../scene/originalSurfaceLayout";
 import { parseCurrentScoreGaugeSsAnimationProfile } from "../backends/resources/currentScoreGaugeSsAnimationProfile";
 import { CURRENT_SCORE_HUD_PORTABLE_RESOURCES } from "../backends/resources/currentScoreHudResourceManifest";
 import {
@@ -181,6 +182,11 @@ async function captureProductionScoreHud(app: Application): Promise<{
     provider,
     new PortableRenderResourcePreflightAdapter(),
   ));
+  requireOk(backend.bindOriginalSurfaceLayout(requireOk(createOriginalSurfaceLayout({
+    revision: 0, viewportWidth: 1600, viewportHeight: 720,
+    safeArea: { x: Math.fround(0), y: Math.fround(0), width: Math.fround(1600), height: Math.fround(720) },
+    origin: "bottom-left",
+  }, Math.fround(100)))));
   const commands: RenderCommand[] = [
     {
       sessionId: "production-score-hud-webview2", sequence: 0, frame: 0, substep: 0,

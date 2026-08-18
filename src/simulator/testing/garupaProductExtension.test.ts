@@ -77,6 +77,7 @@ async function main(): Promise<void> {
     "ordinary",
     CURRENT_ORDINARY_RENDER_BINDINGS,
   ));
+  requireOk(renderer.bindOriginalSurfaceLayout(layout.surfaceLayout));
   const producer = new GarupaProductRenderProducer(
     SESSION,
     renderer,

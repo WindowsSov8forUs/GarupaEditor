@@ -9,7 +9,11 @@ import { createSimulatorModuleCapabilitySummary } from "../public/capabilities";
 import { createNoteBatchInformationList } from "../engine/chart/construction";
 import { ButtonType } from "../engine/chart/types";
 import { AutonomousSimulatorModule } from "../runtime/autonomousSimulatorRuntime";
-import { resolveRehearsalControlTouch } from "../scene/rehearsalControlScene";
+import {
+  createRehearsalControlSceneLayout,
+  resolveRehearsalControlTouch,
+} from "../scene/rehearsalControlScene";
+import { createOriginalSurfaceLayout } from "../scene/originalSurfaceLayout";
 import { LIVE_AUTO_MODE, REHEARSAL_AUTO_MODE } from "./modeFixtures";
 import { createTestPresentationPackage } from "./startupPresentationTestProfile";
 import {
@@ -57,6 +61,9 @@ const TEST_SURFACE = Object.freeze({
   safeArea: Object.freeze({ x: Math.fround(0), y: Math.fround(0), width: Math.fround(1600), height: Math.fround(720) }),
   origin: "bottom-left" as const,
 });
+const TEST_CONTROL_LAYOUT = createRehearsalControlSceneLayout(requireOk(
+  createOriginalSurfaceLayout(TEST_SURFACE, Math.fround(100)),
+));
 
 async function main(): Promise<void> {
   const beforeInstall = await launchSimulatorModule(request());
@@ -527,9 +534,11 @@ async function testAutonomousLaunchAndClose(): Promise<void> {
   const controlState = Object.freeze({ timelineSeconds: 8, paused: false, moveTimeInProgress: false });
   const returnCommand = requireOk(resolveRehearsalControlTouch(
     REHEARSAL_AUTO_MODE, "began", { x: 142, y: 360 }, controlState,
+    TEST_CONTROL_LAYOUT,
   ));
   const advanceCommand = requireOk(resolveRehearsalControlTouch(
     REHEARSAL_AUTO_MODE, "began", { x: 1457.5, y: 360 }, controlState,
+    TEST_CONTROL_LAYOUT,
   ));
   input.set(0, [
     returnCommand,

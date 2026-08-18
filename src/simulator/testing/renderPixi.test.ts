@@ -8,6 +8,7 @@ import { Container, Graphics, Texture, TextureSource } from "pixi.js";
 import { PixiRendererBackend, type PixiTextureDecoder } from "../backends/pixi/pixiRendererBackend";
 import { CURRENT_ORDINARY_RENDER_BINDINGS } from "../backends/resources/currentOrdinaryResourceManifest";
 import { CURRENT_ORDINARY_VISIBLE_PORTABLE_RESOURCES } from "../backends/resources/currentOrdinaryVisibleResourceManifest";
+import { CURRENT_ORDINARY_HUD_PROFILE } from "../backends/resources/currentOrdinaryHudProfile";
 import { parseCurrentOrdinaryVisibleProfile } from "../backends/resources/currentOrdinaryVisibleProfile";
 import { CURRENT_SCORE_HUD_PORTABLE_RESOURCES } from "../backends/resources/currentScoreHudResourceManifest";
 import { parseCurrentScoreGaugeSsAnimationProfile } from "../backends/resources/currentScoreGaugeSsAnimationProfile";
@@ -27,12 +28,19 @@ import { getGarupaProductChartProfile } from "../engine/garupa/productChartProfi
 import { getGarupaProductTimingGroupAxisProfile } from "../engine/garupa/timingGroupAxis";
 import { GarupaProductRenderProducer } from "../engine/garupa/productRenderProducer";
 import { createSimulatorSceneLayout } from "../scene/simulatorSceneLayout";
+import { createOriginalSurfaceLayout } from "../scene/originalSurfaceLayout";
 
 type CommandWithoutBase<T = RenderCommand> = T extends RenderCommand
   ? Omit<T, "sessionId" | "sequence" | "frame" | "substep">
   : never;
 
 const SESSION = "pixi-actual-ordinary-visible";
+const CONTROL_SURFACE_LAYOUT = requireOk(createOriginalSurfaceLayout({
+  revision: 0, viewportWidth: 1600, viewportHeight: 720,
+  safeArea: { x: Math.fround(0), y: Math.fround(0), width: Math.fround(1600), height: Math.fround(720) },
+  origin: "bottom-left",
+}, Math.fround(100)), "control surface");
+const UI_SCALE = CONTROL_SURFACE_LAYOUT.ui.screenToSafeChildScale;
 const fixtureRoot = join(process.cwd(), "src/simulator/testing/fixtures/reverse-snapshots");
 const ordinaryRoot = join(fixtureRoot, "autonomous-module/artifacts/investigations/autonomous-simulator-portable-pack-10-1-4");
 const visibleRoot = join(fixtureRoot, "ordinary-visible-rendering/artifacts/investigations/ordinary-visible-rendering-portable-10-1-4");
@@ -84,11 +92,12 @@ async function main(): Promise<void> {
   requireOk(await renderer.prepare(
     SESSION, profile, provider, new PortableRenderResourcePreflightAdapter(),
   ), "actual Pixi prepare");
+  requireOk(renderer.bindOriginalSurfaceLayout(CONTROL_SURFACE_LAYOUT), "bind control surface");
 
-  assert(requireOk(renderer.createRehearsalControlOverlay(LIVE_AUTO_MODE, 120), "live controls") === null,
+  assert(requireOk(renderer.createRehearsalControlOverlay(LIVE_AUTO_MODE, 120, CONTROL_SURFACE_LAYOUT), "live controls") === null,
     "Live does not create Rehearsal controls");
   const manualControls = requireOk(
-    renderer.createRehearsalControlOverlay(REHEARSAL_MANUAL_MODE, 125),
+    renderer.createRehearsalControlOverlay(REHEARSAL_MANUAL_MODE, 125, CONTROL_SURFACE_LAYOUT),
     "manual Rehearsal controls",
   );
   assert(manualControls !== null, "manual Rehearsal overlay exists");
@@ -106,7 +115,7 @@ async function main(): Promise<void> {
     "engine-owned Rehearsal time label");
   requireOk(manualControls.dispose(), "dispose manual controls");
   const autoControls = requireOk(
-    renderer.createRehearsalControlOverlay(REHEARSAL_AUTO_MODE, 125),
+    renderer.createRehearsalControlOverlay(REHEARSAL_AUTO_MODE, 125, CONTROL_SURFACE_LAYOUT),
     "Auto Rehearsal controls",
   );
   assert(autoControls !== null, "Auto Rehearsal overlay exists");
@@ -184,7 +193,7 @@ async function main(): Promise<void> {
   equal(row("note:up").position[1], -100, "up Flick midpoint converts Unity local units by the bound 100 PPU Sprite");
   equal(row("note:left").position[0], Math.fround(-195.00000476837158), "left Flick midpoint converts Unity local units by bound PPU");
   equal(row("note:right").position[0], Math.fround(195.00000476837158), "right Flick midpoint converts Unity local units by bound PPU");
-  equal(JSON.stringify(row("note:world").position), JSON.stringify([800, 360]), "ordinary Note world origin projects to fixed Pixi viewport center");
+  equal(JSON.stringify(row("note:world").position), JSON.stringify([800, 360]), "ordinary Note world origin projects to the current orthographic viewport center");
   equal(row("note:world").scale[0], Math.fround(3.6), "ordinary Note Sprite scale consumes camera PPU / Sprite PPU");
   equal(row("note:flash").spriteAlpha, 1, "Long Flash current alpha channel remains one");
   equal(row("note:flash").spriteTint, 0x999999, "Long Flash midpoint RGB=.6 maps to Sprite tint");
@@ -206,8 +215,14 @@ async function main(): Promise<void> {
   equal(add.hudText, null, "AddScore creates no system Text");
   equal(add.hudSpriteCount, 4, "AddScore plus and three digits are Sprites");
   equal(add.alpha, Math.fround(0.2), "AddScore phase zero alpha matches current Float32 curve");
-  equal(JSON.stringify(add.position), JSON.stringify([671, 186]), "AddScore starts at the number descendant world owner rather than manager root");
-  equal(JSON.stringify(add.scale), JSON.stringify([Math.fround(0.6), Math.fround(0.6)]), "AddScore consumes serialized UISpriteNumber scale");
+  equal(JSON.stringify(add.position), JSON.stringify([
+    Math.fround(800 + (671 - 800) * UI_SCALE),
+    Math.fround(360 - (360 - 186) * UI_SCALE),
+  ]), "AddScore starts at the UIRoot FitWidth-projected number descendant owner");
+  equal(JSON.stringify(add.scale), JSON.stringify([
+    Math.fround(CURRENT_ORDINARY_HUD_PROFILE.addScore.numberScale * UI_SCALE),
+    Math.fround(CURRENT_ORDINARY_HUD_PROFILE.addScore.numberScale * UI_SCALE),
+  ]), "AddScore composes serialized UISpriteNumber scale with UIRoot FitWidth");
   const addNodes = new Map(add.hudSpriteNodes?.map((node) => [node.label, node]));
   equal(JSON.stringify(["add-score-0", "add-score-1", "add-score-2", "add-score-3"].map((label) => addNodes.get(label)?.position)), JSON.stringify([
     [143, 0], [96, 0], [48, 0], [0, 0],
@@ -221,7 +236,11 @@ async function main(): Promise<void> {
   equal(result.hudText, null, "Result creates no system Text");
   equal(result.hudSpriteCount, 2, "Result owns separate judge and timing Sprites");
   equal(result.alpha, hudOracle.result.gameJudgeSamples[2].values[3], "Result samples GameJudge alpha instead of a no-op animation");
-  equal(result.scale[0], hudOracle.result.gameJudgeSamples[2].values[0], "Result samples GameJudge root scale");
+  equal(
+    result.scale[0],
+    Math.fround(hudOracle.result.gameJudgeSamples[2].values[0] * UI_SCALE),
+    "Result samples GameJudge root scale under UIRoot FitWidth",
+  );
   const resultNodes = new Map(result.hudSpriteNodes?.map((node) => [node.label, node]));
   equal(JSON.stringify(resultNodes.get("result-timing")?.position), JSON.stringify([4, 38]), "JudgeTiming preserves local Y inversion under Result");
   equal(JSON.stringify(resultNodes.get("result-timing")?.scale), JSON.stringify([1.25, 1.25]), "JudgeTiming preserves local scale that cancels Result prefab scale at rest");
@@ -475,6 +494,7 @@ async function verifyActualPixiGarupaProduct(
     provider,
     new PortableRenderResourcePreflightAdapter(),
   ), "product actual Pixi prepare");
+  requireOk(renderer.bindOriginalSurfaceLayout(CONTROL_SURFACE_LAYOUT), "product bind surface");
   const copied = requireOk(copyAndFreezeGarupaChartJson([
     { type: "BPM", beat: 0, value: 120 },
     { type: "SV", beat: 2, value: -1, timingGroup: "#1" },
@@ -553,6 +573,7 @@ async function verifyActualPixiHabahiroComplete(
   requireOk(await renderer.prepare(
     sessionId, profile, provider, new PortableRenderResourcePreflightAdapter(),
   ), "prepare current-external-complete HABAHIRO actual Pixi renderer");
+  requireOk(renderer.bindOriginalSurfaceLayout(CONTROL_SURFACE_LAYOUT), "HAB bind surface");
   const producer = new RenderCommandProducer(sessionId, renderer, {
     ...CURRENT_ORDINARY_RENDER_BINDINGS,
     habahiroAtlasLogicalAssetIds: Object.freeze({
@@ -613,6 +634,7 @@ async function verifyActualPixiFullChart(
   requireOk(await renderer.prepare(
     sessionId, profile, provider, new PortableRenderResourcePreflightAdapter(),
   ), "full-chart actual Pixi prepare");
+  requireOk(renderer.bindOriginalSurfaceLayout(CONTROL_SURFACE_LAYOUT), "full-chart bind surface");
   const scene = ordinaryScene();
   const engine = requireOk(createSimulatorEngine({
     chart,

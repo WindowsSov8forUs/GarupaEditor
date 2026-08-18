@@ -15,6 +15,7 @@ const forbidden = [
   ["Math.random", "ambient random"],
   ["Date.now", "wall clock"],
   ["performance.now", "wall clock"],
+  ["REHEARSAL_CONTROL_SCENE_PROFILE", "screenshot-derived fixed control profile"],
 ];
 for (const file of productionFiles) {
   const source = readFileSync(file, "utf8");
@@ -32,8 +33,16 @@ for (const symbol of ["return-five", "advance-five", "RETURN_REPLAY_LIMIT_SECOND
   if (!replay.includes(symbol)) throw new Error(`MoveTime owner missing ${symbol}`);
 }
 const control = read("scene/rehearsalControlScene.ts");
-for (const symbol of ["142", "1457.5", "912", "924", "903", "315", "issuedControlCapabilities"]) {
-  if (!control.includes(symbol)) throw new Error(`control profile/capability missing ${symbol}`);
+for (const symbol of [
+  "createRehearsalControlSceneLayout",
+  "centerBottomLeft",
+  "hitCircleRadiusPixels",
+  "insideCircle",
+  "timeLabelBoundsTopLeft",
+  "demoBadgeBoundsTopLeft",
+  "issuedControlCapabilities",
+]) {
+  if (!control.includes(symbol)) throw new Error(`control prefab/capability missing ${symbol}`);
 }
 const capabilities = read("public/capabilities.ts");
 for (const required of [

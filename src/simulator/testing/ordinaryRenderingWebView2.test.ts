@@ -358,7 +358,6 @@ async function createSession(
   requireOk(await renderer.prepare(
     id, inputs.renderProfile, renderProvider, new PortableRenderResourcePreflightAdapter(),
   ));
-  const controlOverlay = requireOk(renderer.createRehearsalControlOverlay(identity, 180));
   const layout = requireOk(createSimulatorSceneLayout(
     { revision: 0, viewportWidth: WIDTH, viewportHeight: HEIGHT, safeArea: { x: Math.fround(0), y: Math.fround(0), width: Math.fround(WIDTH), height: Math.fround(HEIGHT) }, origin: "bottom-left" },
     {
@@ -367,6 +366,12 @@ async function createSession(
     },
     "ordinary",
     CURRENT_ORDINARY_RENDER_BINDINGS,
+  ));
+  requireOk(renderer.bindOriginalSurfaceLayout(layout.surfaceLayout));
+  const controlOverlay = requireOk(renderer.createRehearsalControlOverlay(
+    identity,
+    180,
+    layout.surfaceLayout,
   ));
   const particleProvider = requireParticleProvider(ImmutableLocalParticleResourceProvider.create(inputs.particleResources));
   const particle = new DeterministicSimulatorParticleBackend();

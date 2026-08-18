@@ -74,6 +74,7 @@ async function main(): Promise<void> {
     { specificSpeed: Math.fround(11), noteSize: Math.fround(100), judgeOffsetFrames: 0, habahiroMeshWidthSetting: Math.fround(1) },
     "ordinary", CURRENT_ORDINARY_RENDER_BINDINGS,
   ));
+  requireOk(renderer.bindOriginalSurfaceLayout(layout.surfaceLayout));
   const producer = new GarupaProductRenderProducer(
     SESSION, renderer, CURRENT_ORDINARY_RENDER_BINDINGS, product, axis,
     layout.garupaProductScene, layout.ordinaryNoteScene.specificSpeed,

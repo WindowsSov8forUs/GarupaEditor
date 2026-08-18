@@ -283,6 +283,15 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
             .filter((failure): failure is SimulatorModuleCleanupFailure => failure !== null);
       return rejectedWithCleanup(assembly, movieCleanup);
     }
+    const surfaceBound = renderer.bindOriginalSurfaceLayout(
+      assembly.value.sceneLayout.surfaceLayout,
+    );
+    if (surfaceBound.status !== "ok") {
+      return rejectedWithCleanup(
+        fromEvidence(surfaceBound),
+        disposeAssembly(assembly.value, movie),
+      );
+    }
     const commonStartup = renderer.getStartupDirectionCommonResources();
     if (commonStartup.status !== "ok") {
       return rejectedWithCleanup(
@@ -379,6 +388,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
     const controlOverlay = renderer.createRehearsalControlOverlay(
       score.value.mode,
       bgm.value.profile.durationSeconds,
+      assembly.value.sceneLayout.surfaceLayout,
     );
     if (controlOverlay.status !== "ok") {
       const cleanup = simulatorCleanupFailureFromResult(

@@ -20,9 +20,16 @@ import { validateAndFreezeRenderProfile } from "../renderingValidation";
 import type { OrdinaryVisibleClip } from "../resources/currentOrdinaryVisibleProfile";
 import type { SimulatorModeIdentity } from "../../engine/data/inGameCalculatedData";
 import {
+  createRehearsalControlSceneLayout,
   formatRehearsalTimeLabel,
-  REHEARSAL_CONTROL_SCENE_PROFILE,
+  type RehearsalControlBounds,
+  type RehearsalControlSceneLayout,
 } from "../../scene/rehearsalControlScene";
+import {
+  ORIGINAL_UI_HALF_HEIGHT_BASE,
+  ORIGINAL_UI_HALF_WIDTH_BASE,
+  type OriginalSurfaceLayout,
+} from "../../scene/originalSurfaceLayout";
 import { CURRENT_ORDINARY_VISIBLE_BINDINGS } from "../resources/currentOrdinaryVisibleResourceManifest";
 import { CURRENT_ORDINARY_HUD_PROFILE } from "../resources/currentOrdinaryHudProfile";
 import {
@@ -144,6 +151,7 @@ interface PixiObjectRecord {
   readonly resourceProfile: RenderResourceProfile;
   readonly scoreGaugeSsAnimation: RenderResourceProfile["scoreGaugeSsAnimation"];
   readonly ordinaryVisibleProfile: RenderResourceProfile["ordinaryVisibleProfile"];
+  readonly surfaceLayout: OriginalSurfaceLayout;
   activeAnimationRole: EvidenceAnimationRole | null;
   readonly activeAnimationRoles: Set<EvidenceAnimationRole>;
   readonly animationElapsedByRole: Map<EvidenceAnimationRole, number>;
@@ -174,6 +182,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
   private readonly pending = new Map<RenderCommandBatch, PendingPixiBatch>();
   private controlOverlayRoot: Container | null = null;
   private profile: RenderResourceProfile | null = null;
+  private surfaceLayout: OriginalSurfaceLayout | null = null;
 
   constructor(
     private readonly decoder: PixiTextureDecoder,
@@ -181,6 +190,26 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
   ) {
     this.stage = new Container({ label: "GarupaSimulatorRoot", sortableChildren: true });
     this.stage.sortableChildren = true;
+  }
+
+  bindOriginalSurfaceLayout(layout: OriginalSurfaceLayout): SimulatorResult<void> {
+    const projection = this.profile?.scene.projection;
+    if (
+      this.recording.snapshot().state !== "ready" || this.surfaceLayout !== null ||
+      this.objects.size !== 0 || this.pending.size !== 0 ||
+      projection === undefined ||
+      layout.surface.viewportWidth !== projection.viewportWidth ||
+      layout.surface.viewportHeight !== projection.viewportHeight ||
+      layout.camera.pixelsPerWorldUnit !== projection.pixelsPerWorldUnit
+    ) {
+      return evidenceRequired(
+        "render.pixi.invalid-surface-layout-binding",
+        ["ML-E01", "ML-E03"],
+        "The renderer binds exactly one original surface layout after resource prepare and before any scene object, command batch or overlay.",
+      );
+    }
+    this.surfaceLayout = layout;
+    return ok(undefined);
   }
 
   getStartupDirectionCommonResources(): SimulatorResult<{
@@ -221,8 +250,16 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
   createRehearsalControlOverlay(
     mode: SimulatorModeIdentity,
     durationSeconds: number,
+    surfaceLayout: OriginalSurfaceLayout,
   ): SimulatorResult<PixiRehearsalControlOverlay | null> {
     if (mode.sessionMode !== "rehearsal") return ok(null);
+    if (this.surfaceLayout !== surfaceLayout) {
+      return evidenceRequired(
+        "render.rehearsal-control.surface-layout-mismatch",
+        ["ML-E03"],
+        "Rehearsal controls must consume the exact original surface layout already bound to the renderer session.",
+      );
+    }
     if (this.controlOverlayRoot !== null) {
       return evidenceRequired(
         "render.rehearsal-control.duplicate-owner",
@@ -233,15 +270,24 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     const snapshot = this.recording.snapshot();
     const returnTexture = this.spriteTextures.get(spriteKey(
       CURRENT_SCORE_HUD_BINDINGS.gaugeLogicalAssetId,
-      "rehearsal_return_five",
+      "btn_ingame_time_back",
     ));
     const advanceTexture = this.spriteTextures.get(spriteKey(
       CURRENT_SCORE_HUD_BINDINGS.gaugeLogicalAssetId,
-      "rehearsal_advance_five",
+      "btn_ingame_time_forward",
+    ));
+    const timeBackgroundTexture = this.spriteTextures.get(spriteKey(
+      CURRENT_SCORE_HUD_BINDINGS.gaugeLogicalAssetId,
+      "bg_base_r6_inside_rhythm",
+    ));
+    const demoBackgroundTexture = this.spriteTextures.get(spriteKey(
+      CURRENT_SCORE_HUD_BINDINGS.gaugeLogicalAssetId,
+      "label_round_white",
     ));
     const font = this.decodedFonts.get(CURRENT_SCORE_HUD_BINDINGS.rankLabelFontLogicalAssetId);
     if (snapshot.state !== "ready" || returnTexture === undefined ||
-      advanceTexture === undefined || font === undefined ||
+      advanceTexture === undefined || timeBackgroundTexture === undefined ||
+      demoBackgroundTexture === undefined || font === undefined ||
       !Number.isFinite(durationSeconds) || durationSeconds <= 0) {
       return evidenceRequired(
         "render.rehearsal-control.resources-unavailable",
@@ -254,7 +300,10 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       durationSeconds,
       returnTexture,
       advanceTexture,
+      timeBackgroundTexture,
+      demoBackgroundTexture,
       font.family,
+      createRehearsalControlSceneLayout(surfaceLayout),
       (root) => {
         if (this.controlOverlayRoot === root) this.controlOverlayRoot = null;
       },
@@ -381,6 +430,13 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
   }
 
   preflight(commands: readonly RenderCommand[]): SimulatorResult<RenderCommandBatch> {
+    if (this.surfaceLayout === null) {
+      return evidenceRequired(
+        "render.pixi.surface-layout-unbound",
+        ["ML-E01", "ML-E03"],
+        "Pixi commands cannot mutate scene objects before the session-owned original surface layout is bound.",
+      );
+    }
     const typed = this.validateTypedPreflight(commands);
     if (typed.status !== "ok") return typed;
     const recordingBatch = this.recording.preflight(commands);
@@ -1149,6 +1205,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           resourceProfile: this.profile!,
           scoreGaugeSsAnimation: this.profile?.scoreGaugeSsAnimation,
           ordinaryVisibleProfile: this.profile?.ordinaryVisibleProfile,
+          surfaceLayout: this.surfaceLayout!,
           activeAnimationRole: null,
           activeAnimationRoles: new Set(),
           animationElapsedByRole: new Map(),
@@ -1458,6 +1515,15 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
 
 }
 
+function applyBounds(
+  target: { readonly position: { set(x: number, y: number): void }; width: number; height: number },
+  value: RehearsalControlBounds,
+): void {
+  target.position.set(value.x, value.y);
+  target.width = value.width;
+  target.height = value.height;
+}
+
 class PixiRehearsalControlOverlayOwner implements PixiRehearsalControlOverlay {
   readonly root = new Container({ label: "rehearsal-control-root", sortableChildren: true });
   private readonly returnButton: Sprite;
@@ -1472,40 +1538,36 @@ class PixiRehearsalControlOverlayOwner implements PixiRehearsalControlOverlay {
     private readonly durationSeconds: number,
     returnTexture: Texture,
     advanceTexture: Texture,
+    timeBackgroundTexture: Texture,
+    demoBackgroundTexture: Texture,
     fontFamily: string,
+    layout: RehearsalControlSceneLayout,
     private readonly releaseOwner: (root: Container) => void,
   ) {
     this.root.zIndex = 2_000_000_000;
     this.root.eventMode = "none";
     this.returnButton = new Sprite({ texture: returnTexture, label: "rehearsal-return-five" });
-    this.returnButton.position.set(
-      REHEARSAL_CONTROL_SCENE_PROFILE.returnFive.visibleBounds.x,
-      REHEARSAL_CONTROL_SCENE_PROFILE.returnFive.visibleBounds.y,
-    );
-    this.returnButton.width = REHEARSAL_CONTROL_SCENE_PROFILE.returnFive.visibleBounds.width;
-    this.returnButton.height = REHEARSAL_CONTROL_SCENE_PROFILE.returnFive.visibleBounds.height;
+    applyBounds(this.returnButton, layout.returnFive.widgetBoundsTopLeft);
     this.returnButton.zIndex = 10;
     this.advanceButton = new Sprite({ texture: advanceTexture, label: "rehearsal-advance-five" });
-    this.advanceButton.position.set(
-      REHEARSAL_CONTROL_SCENE_PROFILE.advanceFive.visibleBounds.x,
-      REHEARSAL_CONTROL_SCENE_PROFILE.advanceFive.visibleBounds.y,
-    );
-    this.advanceButton.width = REHEARSAL_CONTROL_SCENE_PROFILE.advanceFive.visibleBounds.width;
-    this.advanceButton.height = REHEARSAL_CONTROL_SCENE_PROFILE.advanceFive.visibleBounds.height;
+    applyBounds(this.advanceButton, layout.advanceFive.widgetBoundsTopLeft);
     this.advanceButton.zIndex = 10;
 
-    const timeRegion = REHEARSAL_CONTROL_SCENE_PROFILE.timeLabelRegion;
-    const timeBackground = new Graphics({ label: "rehearsal-time-label-background" })
-      .roundRect(timeRegion.x, timeRegion.y, timeRegion.width, timeRegion.height, 12)
-      .fill(0xffffff)
-      .stroke({ color: 0xff3b74, width: 2 });
+    const timeRegion = layout.timeLabelBoundsTopLeft;
+    const timeBackground = new NineSliceSprite({
+      texture: timeBackgroundTexture,
+      ...CURRENT_SCORE_HUD_NINE_SLICE_BORDERS.rehearsalTime,
+      label: "rehearsal-time-label-background",
+    });
+    applyBounds(timeBackground, timeRegion);
+    timeBackground.tint = 0xffffff;
     timeBackground.zIndex = 20;
     this.timeText = new Text({
       text: "",
       style: {
         fill: 0xff3b74,
         fontFamily,
-        fontSize: 17,
+        fontSize: timeRegion.height * 20 / 32,
         fontWeight: "normal",
         align: "center",
       },
@@ -1517,14 +1579,23 @@ class PixiRehearsalControlOverlayOwner implements PixiRehearsalControlOverlay {
     this.root.addChild(this.returnButton, this.advanceButton, timeBackground, this.timeText);
 
     if (mode.isDemoPlayMode) {
-      const demo = REHEARSAL_CONTROL_SCENE_PROFILE.demoBadgeRegion;
-      const badge = new Graphics({ label: "rehearsal-demo-badge-background" })
-        .roundRect(demo.x, demo.y, demo.width, demo.height, 10)
-        .fill(0xff3b74);
+      const demo = layout.demoBadgeBoundsTopLeft;
+      const badge = new NineSliceSprite({
+        texture: demoBackgroundTexture,
+        ...CURRENT_SCORE_HUD_NINE_SLICE_BORDERS.autoLiveCaption,
+        label: "rehearsal-demo-badge-background",
+      });
+      applyBounds(badge, demo);
+      badge.tint = 0xff3b74;
       badge.zIndex = 20;
       const label = new Text({
         text: "デモプレイ",
-        style: { fill: 0xffffff, fontFamily, fontSize: 20, fontWeight: "normal" },
+        style: {
+          fill: 0xffffff,
+          fontFamily,
+          fontSize: demo.height * 24 / 38,
+          fontWeight: "normal",
+        },
         label: "rehearsal-demo-badge",
       });
       label.anchor.set(0.5, 0.5);
@@ -1700,7 +1771,8 @@ function applyEvidenceHud(
     case "habahiro-flash": {
       object.node.position.set(0, 0);
       if (visual.text !== null) visual.text.visible = false;
-      visual.primaryFill!.rect(0, 0, 1600, 720).fill(0xffffff);
+      const projection = object.resourceProfile.scene.projection;
+      visual.primaryFill!.rect(0, 0, projection.viewportWidth, projection.viewportHeight).fill(0xffffff);
       visual.primaryFill!.alpha = 0;
       break;
     }
@@ -1776,6 +1848,50 @@ function createHudVisual(node: Container, kind: PixiHudVisual["kind"]): PixiHudV
   };
 }
 
+function authoredUiScale(object: PixiObjectRecord): number {
+  return object.surfaceLayout.ui.screenToSafeChildScale;
+}
+
+function placeAuthoredUiRoot(
+  object: PixiObjectRecord,
+  authoredX: number,
+  authoredY: number,
+  localScale = 1,
+): void {
+  const projection = object.resourceProfile.scene.projection;
+  const uiScale = authoredUiScale(object);
+  object.node.position.set(
+    Math.fround(projection.viewportWidth / 2 + authoredX * uiScale),
+    Math.fround(projection.viewportHeight / 2 - authoredY * uiScale),
+  );
+  object.node.scale.set(Math.fround(uiScale * localScale));
+}
+
+function placeSafeTopAnchoredUiRoot(
+  object: PixiObjectRecord,
+  side: "left" | "right",
+  authoredX: number,
+  authoredY: number,
+): void {
+  const layout = object.surfaceLayout;
+  const safe = layout.starUi.safeArea;
+  const uiScale = authoredUiScale(object);
+  const safeX = side === "left" ? safe.x : Math.fround(safe.x + safe.width);
+  const authoredEdgeX = side === "left"
+    ? -ORIGINAL_UI_HALF_WIDTH_BASE
+    : ORIGINAL_UI_HALF_WIDTH_BASE;
+  const bottomLeftY = Math.fround(
+    safe.y + safe.height + Math.fround(
+      (authoredY - ORIGINAL_UI_HALF_HEIGHT_BASE) * uiScale,
+    ),
+  );
+  object.node.position.set(
+    Math.fround(safeX + Math.fround((authoredX - authoredEdgeX) * uiScale)),
+    Math.fround(layout.surface.viewportHeight - bottomLeftY),
+  );
+  object.node.scale.set(uiScale);
+}
+
 function applyComboHud(
   object: PixiObjectRecord,
   visual: PixiHudVisual,
@@ -1785,7 +1901,7 @@ function applyComboHud(
 ): void {
   const profile = requireOrdinaryVisibleProfile(object);
   clearHudSprites(object, visual, referenceCounts);
-  object.node.position.set(800 + profile.combo.rootPosition[0], 360 - profile.combo.rootPosition[1]);
+  placeAuthoredUiRoot(object, profile.combo.rootPosition[0], profile.combo.rootPosition[1]);
   const displayed = String(state.combo);
   const digitPrefix = state.allPerfect ? "icon_number_big_AP_" : "icon_number_big_";
   const leastSignificantKeys = [...displayed].reverse().map((digit) => `${digitPrefix}${digit}`);
@@ -1842,11 +1958,12 @@ function applyAddScoreHud(
   const profile = requireOrdinaryVisibleProfile(object);
   clearHudSprites(object, visual, referenceCounts);
   const current = CURRENT_ORDINARY_HUD_PROFILE.addScore;
-  object.node.position.set(
-    800 + current.numberBaseAuthoredPosition[0],
-    360 - (current.numberBaseAuthoredPosition[1] + current.initialLocalY),
+  placeAuthoredUiRoot(
+    object,
+    current.numberBaseAuthoredPosition[0],
+    current.numberBaseAuthoredPosition[1] + current.initialLocalY,
+    current.numberScale,
   );
-  object.node.scale.set(current.numberScale);
   object.node.alpha = profile.addScore.start.alpha;
   const leastSignificantKeys = [
     ...String(state.value).split("").reverse().map((digit) => `${profile.addScore.digits.prefix}${digit}`),
@@ -1882,8 +1999,12 @@ function applyResultHud(
 ): void {
   const profile = requireOrdinaryVisibleProfile(object);
   clearHudSprites(object, visual, referenceCounts);
-  object.node.position.set(800 + profile.result.rootPosition[0], 360 - profile.result.rootPosition[1]);
-  object.node.scale.set(CURRENT_ORDINARY_HUD_PROFILE.result.rootScale);
+  placeAuthoredUiRoot(
+    object,
+    profile.result.rootPosition[0],
+    profile.result.rootPosition[1],
+    CURRENT_ORDINARY_HUD_PROFILE.result.rootScale,
+  );
   object.node.alpha = profile.result.alpha;
   const judgeBinding = requiredTextureBinding(textures, CURRENT_ORDINARY_VISIBLE_BINDINGS.judgeLogicalAssetId, state.judgeKey);
   const judge = new Sprite({ texture: judgeBinding.texture, label: "result-judge" });
@@ -1923,7 +2044,12 @@ function applyLifeHud(
   const profile = requireOrdinaryVisibleProfile(object);
   const current = CURRENT_ORDINARY_HUD_PROFILE.life;
   clearHudSprites(object, visual, referenceCounts);
-  object.node.position.set(800 + current.rootPosition[0], 360 - current.rootPosition[1]);
+  placeSafeTopAnchoredUiRoot(
+    object,
+    "right",
+    current.rootPosition[0],
+    current.rootPosition[1],
+  );
   const localFromAuthoredWorld = (position: readonly number[]): readonly [number, number] => Object.freeze([
     Math.fround(position[0]! - current.rootPosition[0]),
     Math.fround(-(position[1]! - current.rootPosition[1])),
@@ -2029,9 +2155,11 @@ function applyScoreHud(
   clearScoreHud(object, visual, referenceCounts);
   if (visual.text !== null) visual.text.visible = false;
   const scene = CURRENT_SCORE_HUD_SCENE_PROFILE;
-  object.node.position.set(
-    scene.viewportCenter[0] + scene.rootLocalPosition[0],
-    scene.viewportCenter[1] - scene.rootLocalPosition[1],
+  placeSafeTopAnchoredUiRoot(
+    object,
+    "left",
+    scene.rootLocalPosition[0],
+    scene.rootLocalPosition[1],
   );
 
   const scoreDigits = String(state.score);
@@ -2376,7 +2504,8 @@ function applyEvidenceAnimation(
       ? Math.fround(current.initialLocalY + 8 + progress)
       : Math.fround(current.initialLocalY + 9 + progress);
     object.node.position.y = Math.fround(
-      360 - (current.numberBaseAuthoredPosition[1] + localY),
+      object.resourceProfile.scene.projection.viewportHeight / 2 -
+        (current.numberBaseAuthoredPosition[1] + localY) * authoredUiScale(object),
     );
     object.node.alpha = phase === 0
       ? Math.fround(0.2 + 0.8 * progress)
@@ -2389,7 +2518,11 @@ function applyEvidenceAnimation(
       CURRENT_ORDINARY_HUD_PROFILE.result.gameJudge.curveCount,
       Math.min(elapsedSeconds, CURRENT_ORDINARY_HUD_PROFILE.result.gameJudge.durationSeconds),
     );
-    object.node.scale.set(values[0]!, values[1]!);
+    const uiScale = authoredUiScale(object);
+    object.node.scale.set(
+      Math.fround(values[0]! * uiScale),
+      Math.fround(values[1]! * uiScale),
+    );
     object.node.alpha = values[3]!;
     return;
   }

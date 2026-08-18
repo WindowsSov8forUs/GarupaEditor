@@ -3,6 +3,8 @@ import { evidenceRequired, ok, type SimulatorResult } from "../engine/evidence";
 
 export const ORIGINAL_SCREEN_WIDTH_BASE = 1334;
 export const ORIGINAL_SCREEN_HEIGHT_BASE = 750;
+export const ORIGINAL_UI_HALF_WIDTH_BASE = 667;
+export const ORIGINAL_UI_HALF_HEIGHT_BASE = 375;
 export const ORIGINAL_ASPECT_RATIO_BASE = Math.fround(1.778666615486145);
 export const ORIGINAL_HIGH_ASPECT_RATIO_MAX = Math.fround(2);
 export const ORIGINAL_REFERENCE_SCREEN_SIZE_X = Math.fround(9.578571319580078);
@@ -66,7 +68,9 @@ export interface OriginalUiLayout {
     readonly advanceCenterBottomLeft: readonly [number, number];
     readonly widgetSize: readonly [number, number];
     readonly hitCircleRadiusPixels: number;
+    readonly timeBackgroundBoundsTopLeft: readonly [number, number, number, number];
   };
+  readonly autoLiveCaptionBoundsTopLeft: readonly [number, number, number, number];
 }
 
 export interface OriginalMovieLayout {
@@ -145,6 +149,16 @@ export function createOriginalSurfaceLayout(
   const screenToSafeChildScale = mul(pixelsPerAuthoredUnit, screenToSafeAreaRatio);
   const moveOffset = mul(MOVE_TIME_CHILD_OFFSET, screenToSafeChildScale);
   const centerY = div(height, 2);
+  const safeRight = add(safeArea.value.x, safeArea.value.width);
+  const safeTop = add(safeArea.value.y, safeArea.value.height);
+  const timeCenterX = add(safeRight, mul(-16, screenToSafeChildScale));
+  const timeCenterY = add(safeTop, mul(-104, screenToSafeChildScale));
+  const timeWidth = mul(172, screenToSafeChildScale);
+  const timeHeight = mul(32, screenToSafeChildScale);
+  const captionCenterX = add(safeArea.value.x, mul(130, screenToSafeChildScale));
+  const captionCenterY = add(safeTop, mul(-134, screenToSafeChildScale));
+  const captionWidth = mul(206, screenToSafeChildScale);
+  const captionHeight = mul(38, screenToSafeChildScale);
   const movieScale = isHigh ? verticalFit : Math.fround(1);
   const movieWidth = mul(mul(ORIGINAL_SCREEN_WIDTH_BASE, pixelsPerAuthoredUnit), movieScale);
   const movieHeight = mul(mul(ORIGINAL_SCREEN_HEIGHT_BASE, pixelsPerAuthoredUnit), movieScale);
@@ -204,7 +218,19 @@ export function createOriginalSurfaceLayout(
           mul(MOVE_TIME_WIDGET_SIZE, screenToSafeChildScale),
         ] as const),
         hitCircleRadiusPixels: mul(MOVE_TIME_HIT_RADIUS_WORLD, pixelsPerWorldUnit),
+        timeBackgroundBoundsTopLeft: Object.freeze([
+          sub(timeCenterX, div(timeWidth, 2)),
+          sub(height, add(timeCenterY, div(timeHeight, 2))),
+          timeWidth,
+          timeHeight,
+        ] as const),
       }),
+      autoLiveCaptionBoundsTopLeft: Object.freeze([
+        sub(captionCenterX, div(captionWidth, 2)),
+        sub(height, add(captionCenterY, div(captionHeight, 2))),
+        captionWidth,
+        captionHeight,
+      ] as const),
     }),
     movie: Object.freeze({
       x: div(sub(width, movieWidth), 2),
