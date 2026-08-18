@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "contract": {
+    "path": "artifacts/investigations/simulator-multiaspect-layout-runtime-contract-10-1-4/simulator_multiaspect_layout_contract.json",
+    "bytes": 39710,
+    "sha256": "62934678E8EA2E0BDD7E21643BAEE97AF6AC6349B52E089671282FF015AED8EA"
+  },
+  "arm64_count": 27,
+  "serialized_source_count": 4,
+  "oracle_case_count": 6,
+  "initial_adaptive_landscape_open_claim_count": 0,
+  "ui_prefab_or_hit_owner_open_claim_count": 0,
+  "movie_aspect_rule_open_claim_count": 0,
+  "dynamic_resize_claimed_supported_count": 0,
+  "screenshot_authority_count": 0,
+  "production_authorization": {
+    "initial_adaptive_landscape": true,
+    "dynamic_resize": false,
+    "main_program_integration": false
+  }
+}

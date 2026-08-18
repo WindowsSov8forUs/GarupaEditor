@@ -7,7 +7,7 @@ Reverse remains the only authority for original behavior.
 
 ## Boundary and identity
 
-- Public request schema 8 supplies only canonical `GarupaChartJson`, BGM bytes
+- Public request schema 9 supplies only canonical `GarupaChartJson`, BGM bytes
   and `isFullLength` in `chartData`; Garupa JSON has no lane-count field and the
   simulator neither accepts one nor infers one from authored notes.
 - The canonical parser emits no own property for an absent/Global timing group.
@@ -38,7 +38,7 @@ Reverse remains the only authority for original behavior.
 
   Mirror substitutes `6 - lane`. No rounding or nearest-button mapping occurs.
 - The playfield always retains exactly the original seven reference lines at
-  lanes `0..6`. Authored lane values do not resize or add field lines. Fractional
+  lanes `0..6`. The original camera, StarUI, safe-area and initial landscape projection come only from [`adaptive-layout-contract.md`](./adaptive-layout-contract.md); this product extension supplies no viewport, center, PPU or high-aspect constants. Authored lane values do not resize or add field lines. Fractional
   and outside notes continue through the same affine geometry and may be between
   those lines or outside the viewport; there is no lane domain.
 - A rhythm front is centered at `lane + (width - 1) / 2`. Directional incoming
@@ -117,7 +117,7 @@ Auto-only.
 - With a Hidden tail, gameplay ownership ends after the final visible node; the
   remaining Hidden geometry exits visually. A visible tail terminates according
   to its own type. All-Hidden chains never enter candidate arbitration.
-- Screen input is transformed by the existing bottom-left screen-to-world map.
+- Screen input is transformed by the current revision's original bottom-left orthographic screen-to-world map.
   Continuous lane coordinate is derived from world X and existing lane spacing.
   A span accepts X from half a lane before its start through half a lane after its
   end. It is not snapped to a button.

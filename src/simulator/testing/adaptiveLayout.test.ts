@@ -1,5 +1,8 @@
 declare function require(name: string): any;
+declare const process: any;
 const assert = require("node:assert/strict");
+const { readFileSync } = require("node:fs");
+const { join } = require("node:path");
 import {
   copyAndValidateInitialSimulatorSurface,
   validateUnchangedSimulatorSurface,
@@ -15,6 +18,8 @@ import {
   resolveRehearsalControlTouch,
 } from "../scene/rehearsalControlScene";
 import { REHEARSAL_MANUAL_MODE } from "./modeFixtures";
+import { createSimulatorSceneLayout } from "../scene/simulatorSceneLayout";
+import { particleFloat32FromBits } from "../backends/particleValidation";
 
 function surface(
   revision: number,
@@ -36,12 +41,30 @@ function surface(
   });
 }
 
+const reverseContract = JSON.parse(readFileSync(join(
+  process.cwd(),
+  "src/simulator/testing/fixtures/reverse-snapshots/adaptive-layout/artifacts/investigations/simulator-multiaspect-layout-runtime-contract-10-1-4/simulator_multiaspect_layout_contract.json",
+), "utf8"));
+assert.equal(reverseContract.status, "confirmed-current-initial-landscape-multiaspect-dynamic-resize-fails-closed");
+assert.deepEqual(reverseContract.closure.production_authorization, {
+  initial_adaptive_landscape: true,
+  dynamic_resize: false,
+  main_program_integration: false,
+});
+assert.deepEqual([
+  reverseContract.provenance.unclassified_layout_scalar_count,
+  reverseContract.provenance.screenshot_derived_production_scalar_count,
+  reverseContract.provenance.fixed_device_frame_as_layout_authority_count,
+  reverseContract.provenance.unknown_formula_or_order_count,
+], [0, 0, 0, 0]);
+const reverseCases = new Map(reverseContract.oracle.map((row: any) => [row.id, row]));
+
 const cases = [
-  ["4:3", surface(7, 1200, 900), [0, 0, 1200, 900], 1, 64.76761627197266, 54],
-  ["16:9", surface(7, 1600, 900), [0, 0, 1600, 900], 1, 86.35681915283203, 54],
-  ["20:9", surface(7, 1600, 720), [80, 0, 1440, 720], 0.7203599810600281, 142.20799255371094, 43.20000076293945],
-  ["21:9", surface(7, 1680, 720), [84, 0, 1512, 720], 0.6860570907592773, 146.20799255371094, 43.20000076293945],
-  ["32:9", surface(7, 2560, 720), [128, 0, 2304, 720], 0.45022502541542053, 190.2080078125, 43.20000076293945],
+  ["4:3-full", surface(7, 1200, 900), [0, 0, 1200, 900], 1, 64.76761627197266, 54],
+  ["16:9-full", surface(7, 1600, 900), [0, 0, 1600, 900], 1, 86.35681915283203, 54],
+  ["20:9-full", surface(7, 1600, 720), [80, 0, 1440, 720], 0.7203599810600281, 142.20799255371094, 43.20000076293945],
+  ["21:9-full", surface(7, 1680, 720), [84, 0, 1512, 720], 0.6860570907592773, 146.20799255371094, 43.20000076293945],
+  ["32:9-full", surface(7, 2560, 720), [128, 0, 2304, 720], 0.45022502541542053, 190.2080078125, 43.20000076293945],
 ] as const;
 
 for (const [name, input, expectedSafe, expectedRatio, expectedX, expectedRadius] of cases) {
@@ -56,6 +79,10 @@ for (const [name, input, expectedSafe, expectedRatio, expectedX, expectedRadius]
     [...expectedSafe],
     `${name}: safe`,
   );
+  const reverse = reverseCases.get(name) as any;
+  assert.notEqual(reverse, undefined, `${name}: Reverse oracle`);
+  assert.deepEqual(reverse.star_ui.safe_area, [...expectedSafe], `${name}: Reverse safe`);
+  assert.equal(reverse.star_ui.screen_to_safe_area_ratio, expectedRatio, `${name}: Reverse ratio`);
   assert.equal(layout.value.starUi.screenToSafeAreaRatio, expectedRatio, `${name}: safe ratio`);
   assert.equal(layout.value.ui.moveTime.returnCenterBottomLeft[0], expectedX, `${name}: move center`);
   assert.equal(layout.value.ui.moveTime.hitCircleRadiusPixels, expectedRadius, `${name}: hit radius`);
@@ -69,6 +96,37 @@ for (const [name, input, expectedSafe, expectedRatio, expectedX, expectedRadius]
   if (world.status === "ok") {
     assert.equal(world.value[0], Math.fround(0.25), `${name}: x roundtrip`);
     assert.equal(world.value[1], Math.fround(-0.5), `${name}: y roundtrip`);
+  }
+  const scene = createSimulatorSceneLayout(input, {
+    specificSpeed: Math.fround(11), noteSize: Math.fround(100),
+    judgeOffsetFrames: 0, habahiroMeshWidthSetting: Math.fround(1),
+  }, "ordinary", {
+    noteAtlasLogicalAssetId: "note",
+    directionalAtlasLogicalAssetId: "directional",
+  });
+  assert.equal(scene.status, "ok", `${name}: product scene`);
+  if (scene.status === "ok") {
+    assert.equal(scene.value.garupaProductScene.fieldLines.length, 7, `${name}: fixed original field lines`);
+    const projected = scene.value.garupaProductScene.projectLaneAtCurve(7.25, 1);
+    assert.equal(projected.status, "ok", `${name}: outside lane projection`);
+    if (projected.status === "ok") {
+      const point = originalWorldToBottomLeftScreen(
+        scene.value.surfaceLayout,
+        projected.value.x.value,
+        projected.value.y.value,
+      );
+      assert.equal(point.status, "ok", `${name}: outside lane screen point`);
+      if (point.status === "ok") {
+        const lane = scene.value.garupaProductScene.screenToContinuousLane({ x: point.value[0], y: point.value[1] });
+        assert.equal(lane.status, "ok", `${name}: outside lane inverse`);
+        if (lane.status === "ok") assert.ok(Math.abs(lane.value - Math.fround(7.25)) <= 1e-5);
+      }
+    }
+    assert.equal(
+      particleFloat32FromBits(scene.value.particleScene.pixelsPerWorldUnitBits),
+      layout.value.camera.pixelsPerWorldUnit,
+      `${name}: product particle projection`,
+    );
   }
 }
 

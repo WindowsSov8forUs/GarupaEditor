@@ -23,7 +23,7 @@
 - CRI Mana/USM codec、Android decoder、speaker onset或Unity/GPU framebuffer exact；
 - Stage 9主程序接入。
 
-## Public schema 8
+## Public schema 9
 
 根请求仍精确为 `{ chartData, presentation, config }`。`presentation`必须显式携带：
 
@@ -93,7 +93,7 @@ state 17 / pre-sound returns without Play
 - local `Blob` + `HTMLVideoElement` + Pixi `VideoSource/Texture/Sprite`；
 - `muted=true`、`defaultMuted=true`、`playsInline=true`、`loop=false`、`autoplay=false`；
 - BGM是唯一可听音乐owner；视频内audio track永不进入mix；
-- center-contained、no crop；在1600×720 viewport中，16:9视频logical bounds为`(160,0,1280,720)`；
+- scene geometry消费Reverse `9167dce7`恢复的InGameMovie prefab：authored UITexture `1334×750`、UIRoot FitWidth，并仅在high-aspect时乘`VerticalFitScreenRatio`后居中；1600×720约为`(159.68,0,1280.64,720)`，但production不存在该尺寸特判；
 - child order为MV movie后方，gameplay particle/ordinary Note/HUD和startup foreground在其上方；
 - MV路线startup scene只decode jacket，保留information/dark-cover/line foreground，不附着standard stage/SD；
 - `play()` rejection、media error/abort、decode、seek或Pixi source/upload错误均为terminal fault；不显示首帧占位、黑屏成功或standard stage。
@@ -128,4 +128,4 @@ standaloneMvView: "excluded";
 star3DLiveView: "excluded";
 ```
 
-`closed-portable`只声明上述browser语义、当前WebView2 actual Pixi raster和owner lifecycle，不升级original codec/device exact。
+`closed-portable`只声明上述browser语义、serialized movie-widget多比例映射、当前WebView2 actual Pixi raster和owner lifecycle，不升级original codec/device exact。任何post-initial surface revision按adaptive合同在media command前失败关闭。

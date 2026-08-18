@@ -17,6 +17,11 @@ try {
     run(process.execPath, [typeScriptCli, "-p", join(testingRoot, "tsconfig.tests.json"), "--outDir", outputRoot]);
   }
   run(process.execPath, [join(outputRoot, "src", "simulator", "testing", "adaptiveLayout.test.js")]);
+  run(process.execPath, [join(outputRoot, "src", "simulator", "testing", "adaptivePixiLayout.test.js")]);
+  run(process.execPath, [join(testingRoot, "verifyAdaptiveLayoutStatic.mjs")]);
+  if (process.env.SIMULATOR_TEST_SHARED_PREFLIGHT !== "1") {
+    run(process.execPath, [join(testingRoot, "verifyDependencies.mjs")]);
+  }
 } finally {
   if (sharedOutputRoot === undefined) rmSync(outputRoot, { recursive: true, force: true });
 }

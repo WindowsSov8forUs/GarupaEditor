@@ -40,4 +40,4 @@ for (const [source, forbidden] of [
   [composition, ["chartData.laneCount"]],
 ]) for (const symbol of forbidden) if (source.includes(symbol)) throw new Error(`Garupa product forbidden fallback/ambient dependency remains: ${symbol}`);
 
-console.log("Garupa product extension static boundary verified: schema8/fixed-seven-field/profile/axis/continuous scene/Auto/Manual/render/particle/lifecycle");
+console.log("Garupa product extension static boundary verified: schema9/fixed-seven-field/profile/axis/continuous scene/Auto/Manual/render/particle/lifecycle");

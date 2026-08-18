@@ -1,0 +1,1256 @@
+{
+  "schema_version": 1,
+  "status": "confirmed-current-initial-landscape-multiaspect-dynamic-resize-fails-closed",
+  "sample": {
+    "package": "jp.co.craftegg.band",
+    "version_name": "10.1.4",
+    "version_code": 230,
+    "abi": "arm64-v8a",
+    "libil2cpp_sha256": "815DF62582B35F3EF2223AB033FAC6DC909DE492D548DD28950BF1F98F058D8F"
+  },
+  "scope": {
+    "authorized": [
+      "initial finite landscape viewport",
+      "base safe-area Rect from platform",
+      "StarUI derivation",
+      "orthographic camera",
+      "gameplay multiresolution",
+      "NGUI FitWidth/anchors",
+      "MoveTime widget and circle hit",
+      "Auto Live caption owner",
+      "MV widget aspect rule"
+    ],
+    "not_authorized": [
+      "portrait",
+      "mid-session surface revision",
+      "Unity GPU/framebuffer exact",
+      "screenshot-derived production geometry",
+      "Stage 9"
+    ],
+    "base_safe_area_boundary": "Platform supplies the Rect selected at the getSafeAreaBaseData boundary. The simulator reproduces getHighAspectAndroidSafeArea, calcNotch and all downstream ratios; it does not guess OS notch or master-device identity."
+  },
+  "constants": {
+    "screen_width_base": 1334,
+    "screen_height_base": 750,
+    "low_aspect_height_base": 1000,
+    "high_aspect_ratio_max": 2.0,
+    "aspect_ratio_base": 1.778666615486145,
+    "screen_width_max": 1624,
+    "android_full_safe_ratio": 0.8999999761581421,
+    "reference_screen_size_x": 9.578571319580078,
+    "native_bytes": {
+      "0x1533EE8": "36050000EE020000",
+      "0x15334E8": "0000004059ABE33F",
+      "0x1536204": "6666663F",
+      "0x1536404": "D4411941"
+    }
+  },
+  "arm64_slices": [
+    {
+      "owner_method": "InGamePlayDisplay__ExecAwakeStart",
+      "start": "0x3305704",
+      "end": "0x3305FF4",
+      "path": "artifacts/investigations/simulator-multiaspect-layout-runtime-contract-10-1-4/arm64/03305704__InGamePlayDisplay__ExecAwakeStart.arm64.tsv",
+      "bytes": 20443,
+      "sha256": "2E63985B8B20990CD4A18FF6B62BD0672EFF0EBAC77A27E027B3B717BFDC0856"
+    },
+    {
+      "owner_method": "InGameUtility__GetScreenSize",
+      "start": "0x331B2B4",
+      "end": "0x331B37C",
+      "path": "artifacts/investigations/simulator-multiaspect-layout-runtime-contract-10-1-4/arm64/0331b2b4__InGameUtility__GetScreenSize.arm64.tsv",
+      "bytes": 1821,
+      "sha256": "3D80C8E42700A010A4CCB7FA5237A87A31D4A9CF17074B1E0F34319A73164636"
+    },
+    {
+      "owner_method": "StarUIAnchor__applySafeArea",
+      "start": "0x33658EC",
+      "end": "0x3365A48",
+      "path": "artifacts/investigations/simulator-multiaspect-layout-runtime-contract-10-1-4/arm64/033658ec__StarUIAnchor__applySafeArea.arm64.tsv",
+      "bytes": 3221,
+      "sha256": "E3A827085660943669306D085B3D57D9508F927A62A8BB66438FC5B28B04CE66"
+    },
+    {
+      "owner_method": "StarUIAnchor__SetAnchor",
+      "start": "0x3365AF0",
+      "end": "0x3365B20",
+      "path": "artifacts/investigations/simulator-multiaspect-layout-runtime-contract-10-1-4/arm64/03365af0__StarUIAnchor__SetAnchor.arm64.tsv",
+      "bytes": 472,
+      "sha256": "6DBA4376B4DB35C6A11279DB76A46FFF1C20532C2D045AE938DDD33E2163D6A8"
+    },
+    {
+      "owner_method": "StarUIAnchor__SetAnchorTransform",
+      "start": "0x3365B5C",
+      "end": "0x3365C5C",
+      "path": "artifacts/investigations/simulator-multiaspect-layout-runtime-contract-10-1-4/arm64/03365b5c__StarUIAnchor__SetAnchorTransform.arm64.tsv",
+      "bytes": 2303,
+      "sha256": "2F1060616B2D9514D53C05A81EE467C37900E1BC3505D81EFF02EE986239EA4D"
+    },
+    {
+      "owner_method": "StarUISafeAreaToScreen__apply",
+      "start": "0x336EB58",
+      "end": "0x336ECC4",
+      "path": "artifacts/investigations/simulator-multiaspect-layout-runtime-contract-10-1-4/arm64/0336eb58__StarUISafeAreaToScreen__apply.arm64.tsv",
+      "bytes": 3319,
+      "sha256": "F95C622420D2D008ABCFAC936586EFAE59B695ACE656703B6B74837D841694B0"
+    },
+    {
+      "owner_method": "StarUIScreenToSafeArea__apply",
+      "start": "0x336F2C0",
+      "end": "0x336F338",
+      "path": "artifacts/investigations/simulator-multiaspect-layout-runtime-contract-10-1-4/arm64/0336f2c0__StarUIScreenToSafeArea__apply.arm64.tsv",
+      "bytes": 1110,
+      "sha256": "3D73CBEBB1F1F2C483236713173CAEF3957C48CD92047B4BC00B84759E2DA6A1"
+    },
+    {
+      "owner_method": "StarUIVerticalFitScreen__apply",
+      "start": "0x33714B4",
+      "end": "0x3371570",
+      "path": "artifacts/investigations/simulator-multiaspect-layout-runtime-contract-10-1-4/arm64/033714b4__StarUIVerticalFitScreen__apply.arm64.tsv",
+      "bytes": 1732,
+      "sha256": "5D4259109221940E5AFB7BE0104ACD950FEB2EDDFF747192822989189AE15D16"
+    },
+    {
+      "owner_method": "ButtonManager__execMultiResolution",
+      "start": "0x3881C30",
+      "end": "0x3881D04",
+      "path": "artifacts/investigations/simulator-multiaspect-layout-runtime-contract-10-1-4/arm64/03881c30__ButtonManager__execMultiResolution.arm64.tsv",
+      "bytes": 1943,
+      "sha256": "A6344340A317550AC5A6BBDA31AD522BDA8C6055F98A24055ADD4AA7EE87CB86"
+    },
+    {
+      "owner_method": "ButtonManager__getMoveTimeButton",
+      "start": "0x38823B0",
+      "end": "0x38824E0",
+      "path": "artifacts/investigations/simulator-multiaspect-layout-runtime-contract-10-1-4/arm64/038823b0__ButtonManager__getMoveTimeButton.arm64.tsv",
+      "bytes": 2848,
+      "sha256": "0CFA21C5319519BB4C04ED12E9752DADD59AC17AB71B50C3950715C30B69733F"
+    },
+    {
+      "owner_method": "ButtonManager__setupGameButtonPosition",
+      "start": "0x3883248",
+      "end": "0x388349C",
+      "path": "artifacts/investigations/simulator-multiaspect-layout-runtime-contract-10-1-4/arm64/03883248__ButtonManager__setupGameButtonPosition.arm64.tsv",
+      "bytes": 5437,
+      "sha256": "F7E6DDC364A69938B143FE77EBBB1839A116566110670CC69810A32ADA8AFE46"
+    },
+    {
+      "owner_method": "ButtonManager__searchPressedUIButton",
+      "start": "0x3883CB0",
+      "end": "0x3883D68",
+      "path": "artifacts/investigations/simulator-multiaspect-layout-runtime-contract-10-1-4/arm64/03883cb0__ButtonManager__searchPressedUIButton.arm64.tsv",
+      "bytes": 1751,
+      "sha256": "6AD68F73028421D71E31B2C49B7BDCB9A76FF856BE9B17C32F39DFF55A7C3AFF"
+    },
+    {
+      "owner_method": "StarUIManager__updateScreenSize",
+      "start": "0x393CFBC",
+      "end": "0x393CFF4",
+      "path": "artifacts/investigations/simulator-multiaspect-layout-runtime-contract-10-1-4/arm64/0393cfbc__StarUIManager__updateScreenSize.arm64.tsv",
+      "bytes": 512,
+      "sha256": "14F5909795B910257E2FDB93E10147B2AF7F61EE61CEAF75D613B90978A5318A"
+    },
+    {
+      "owner_method": "StarUIManager__OnInitialize",
+      "start": "0x393D638",
+      "end": "0x393D660",
+      "path": "artifacts/investigations/simulator-multiaspect-layout-runtime-contract-10-1-4/arm64/0393d638__StarUIManager__OnInitialize.arm64.tsv",
+      "bytes": 380,
+      "sha256": "0FB5B1087C288996CF265BAEF297FEF65888A77131E6421CA4CD5A84A7511952"
+    },
+    {
+      "owner_method": "StarUIManager__updateSafeArea",
+      "start": "0x393D660",
+      "end": "0x393D6C0",
+      "path": "artifacts/investigations/simulator-multiaspect-layout-runtime-contract-10-1-4/arm64/0393d660__StarUIManager__updateSafeArea.arm64.tsv",
+      "bytes": 938,
+      "sha256": "809013BB6AEA38ADE6EFF7DFBE31342021DD6636F36A8F6CA50FCCF3ED6B1A0B"
+    },
+    {
+      "owner_method": "StarUIManager__Awake",
+      "start": "0x393D72C",
+      "end": "0x393D78C",
+      "path": "artifacts/investigations/simulator-multiaspect-layout-runtime-contract-10-1-4/arm64/0393d72c__StarUIManager__Awake.arm64.tsv",
+      "bytes": 932,
+      "sha256": "DE5022BC7F54DB8C73B95751A368267B0F426DC33028408174A3D0DE73535691"
+    },
+    {
+      "owner_method": "StarUIManager__RefreshSafeArea",
+      "start": "0x393D78C",
+      "end": "0x393D9F0",
+      "path": "artifacts/investigations/simulator-multiaspect-layout-runtime-contract-10-1-4/arm64/0393d78c__StarUIManager__RefreshSafeArea.arm64.tsv",
+      "bytes": 5524,
+      "sha256": "CA29C53D8770CFC0260915C437ED79E15A1F5825F248AB94A546127F482E47ED"
+    },
+    {
+      "owner_method": "StarUIManager__updateScreenSizeWH",
+      "start": "0x393DBD4",
+      "end": "0x393DC00",
+      "path": "artifacts/investigations/simulator-multiaspect-layout-runtime-contract-10-1-4/arm64/0393dbd4__StarUIManager__updateScreenSizeWH.arm64.tsv",
+      "bytes": 384,
+      "sha256": "434DC4F4239FD6ED160A72EEAC890EA537E487222287B649E39BF0D9FAC72A4D"
+    },
+    {
+      "owner_method": "StarUIManager__setScreenSize",
+      "start": "0x393DC00",
+      "end": "0x393DDB4",
+      "path": "artifacts/investigations/simulator-multiaspect-layout-runtime-contract-10-1-4/arm64/0393dc00__StarUIManager__setScreenSize.arm64.tsv",
+      "bytes": 3913,
+      "sha256": "9A9C4748A5B7DD26F7C104508144FB6B0BB62C700B985D873AA5F4E29426DDF2"
+    },
+    {
+      "owner_method": "StarUIManager__getHighAspectAndroidSafeArea",
+      "start": "0x393DDB4",
+      "end": "0x393DF04",
+      "path": "artifacts/investigations/simulator-multiaspect-layout-runtime-contract-10-1-4/arm64/0393ddb4__StarUIManager__getHighAspectAndroidSafeArea.arm64.tsv",
+      "bytes": 3128,
+      "sha256": "53273A5AEE832E155E9D43723E1DA5FEEBA53B6B4E10590846C70D7317786887"
+    },
+    {
+      "owner_method": "StarUIManager__getSafeAreaFromRatio",
+      "start": "0x393DF04",
+      "end": "0x393DF28",
+      "path": "artifacts/investigations/simulator-multiaspect-layout-runtime-contract-10-1-4/arm64/0393df04__StarUIManager__getSafeAreaFromRatio.arm64.tsv",
+      "bytes": 376,
+      "sha256": "D31C8A55E4F1D3683F4086007686E17D13E56206D7D4C5C64A6AC1770139D10A"
+    },
+    {
+      "owner_method": "StarUIManager__calcNotch",
+      "start": "0x393DF28",
+      "end": "0x393DFF8",
+      "path": "artifacts/investigations/simulator-multiaspect-layout-runtime-contract-10-1-4/arm64/0393df28__StarUIManager__calcNotch.arm64.tsv",
+      "bytes": 1918,
+      "sha256": "10F400F826CF67102D5C1569544880300CF1335FD533662C8ED568827F29FE5F"
+    },
+    {
+      "owner_method": "StarUIManager__getSafeAreaBaseData",
+      "start": "0x393DFF8",
+      "end": "0x393E19C",
+      "path": "artifacts/investigations/simulator-multiaspect-layout-runtime-contract-10-1-4/arm64/0393dff8__StarUIManager__getSafeAreaBaseData.arm64.tsv",
+      "bytes": 3832,
+      "sha256": "23CCD04EB47AA45506D5EC84F3E1E2759F6EAE963A934AF1AD8DD2BF7A22424F"
+    },
+    {
+      "owner_method": "StarUIManager__getSafeAreaRatio",
+      "start": "0x393E19C",
+      "end": "0x393E274",
+      "path": "artifacts/investigations/simulator-multiaspect-layout-runtime-contract-10-1-4/arm64/0393e19c__StarUIManager__getSafeAreaRatio.arm64.tsv",
+      "bytes": 1979,
+      "sha256": "E3DAF1F010A242C0B41408418A414A638A1E788BA9027DA72D4EBABB3D9DD138"
+    },
+    {
+      "owner_method": "StarUIManager__cctor",
+      "start": "0x393E3C4",
+      "end": "0x393E430",
+      "path": "artifacts/investigations/simulator-multiaspect-layout-runtime-contract-10-1-4/arm64/0393e3c4__StarUIManager__cctor.arm64.tsv",
+      "bytes": 1056,
+      "sha256": "B0F62159C6487F47372A40816B911AA81C83DA3AFF1400F02F4E184A631A51DA"
+    },
+    {
+      "owner_method": "StarUIManager_ChangeOrientation_MoveNext",
+      "start": "0x393E494",
+      "end": "0x393E610",
+      "path": "artifacts/investigations/simulator-multiaspect-layout-runtime-contract-10-1-4/arm64/0393e494__StarUIManager_ChangeOrientation_MoveNext.arm64.tsv",
+      "bytes": 3224,
+      "sha256": "362B8CDACA6DF73A4562076CD1AE9D5E044B22EB9F795AA2679159C842F50970"
+    },
+    {
+      "owner_method": "ButtonManager_getMoveTimeButton_predicate",
+      "start": "0x396C454",
+      "end": "0x396C4DC",
+      "path": "artifacts/investigations/simulator-multiaspect-layout-runtime-contract-10-1-4/arm64/0396c454__ButtonManager_getMoveTimeButton_predicate.arm64.tsv",
+      "bytes": 1281,
+      "sha256": "738967C1036B440F1E2711937BAD974440DD1BD1643B8AFBC43F646D171532FA"
+    }
+  ],
+  "serialized": {
+    "sources": [
+      {
+        "path": "artifacts/investigations/simulator-multiaspect-layout-runtime-contract-10-1-4/serialized/rhythm-game-level3",
+        "bytes": 764840,
+        "sha256": "445FCF60C32222942D368D98B158F484D7E8E260B6237A6F595AE0C361DB75A8"
+      },
+      {
+        "path": "artifacts/investigations/simulator-multiaspect-layout-runtime-contract-10-1-4/serialized/ingame-move-time-prefab",
+        "bytes": 6216,
+        "sha256": "8B7629B8659886F93659725F42BF5A0F32E6ECB4583D0D7DC3490799E501BC9B"
+      },
+      {
+        "path": "artifacts/investigations/simulator-multiaspect-layout-runtime-contract-10-1-4/serialized/ingame-movie-prefab",
+        "bytes": 2868,
+        "sha256": "EF99F071E1582C13CD86E65FCF04682DCA21C95B96315913242F2C704E2A385A"
+      },
+      {
+        "path": "artifacts/investigations/simulator-multiaspect-layout-runtime-contract-10-1-4/serialized/auto-live-caption-prefab",
+        "bytes": 1476,
+        "sha256": "8775A7AB6DBC2B508754912710CDD8D3B19A502A0F496019DEE7E74D123B6C94"
+      }
+    ],
+    "game_camera": {
+      "path_id": 868,
+      "orthographic": true,
+      "orthographic_size": 1.0,
+      "near_clip": 0.0,
+      "far_clip": 25.0,
+      "normalized_viewport": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "transform": {
+        "path_id": 577,
+        "game_object": "GameCamera",
+        "local_position": [
+          0.0,
+          0.0,
+          -15.0
+        ],
+        "local_scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "parent_path_id": 544,
+        "children": []
+      }
+    },
+    "ui_root": {
+      "path_id": 1060,
+      "game_object": "UI_Root",
+      "scaling_style": 1,
+      "scaling_style_name": "Constrained",
+      "manual_width": 1334,
+      "manual_height": 750,
+      "minimum_height": 320,
+      "maximum_height": 1536,
+      "fit_width": true,
+      "fit_height": false,
+      "transform": {
+        "path_id": 436,
+        "game_object": "UI_Root_Back",
+        "local_position": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "local_scale": [
+          0.003241491038352251,
+          0.003241491038352251,
+          0.003241491038352251
+        ],
+        "parent_path_id": 544,
+        "children": [
+          444
+        ]
+      },
+      "raw_sha256": "E286689FE1B20616EE56A5567562CDC4D2B12D51160A989334C51373A5E98E71"
+    },
+    "move_time": {
+      "root": {
+        "path_id": 22,
+        "game_object": "InGameMoveTime",
+        "local_position": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "local_scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "parent_path_id": 0,
+        "children": [
+          12,
+          20
+        ]
+      },
+      "left_anchor": {
+        "transform": {
+          "path_id": 14,
+          "game_object": "Left",
+          "local_position": [
+            -667.0,
+            0.0,
+            0.0
+          ],
+          "local_scale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "parent_path_id": 20,
+          "children": [
+            17
+          ]
+        },
+        "widget_path_id": 32,
+        "horizontal": "Left",
+        "vertical": "Center",
+        "screen_to_safe_area": true
+      },
+      "right_anchor": {
+        "transform": {
+          "path_id": 21,
+          "game_object": "Right",
+          "local_position": [
+            667.0,
+            0.0,
+            0.0
+          ],
+          "local_scale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "parent_path_id": 20,
+          "children": [
+            18
+          ]
+        },
+        "widget_path_id": 26,
+        "horizontal": "Right",
+        "vertical": "Center",
+        "screen_to_safe_area": true
+      },
+      "return_button": {
+        "transform": {
+          "path_id": 17,
+          "game_object": "ReturnTime5Sec",
+          "local_position": [
+            72.0,
+            0.0,
+            0.0
+          ],
+          "local_scale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "parent_path_id": 14,
+          "children": []
+        },
+        "sprite_path_id": 28,
+        "authored_width": 104,
+        "authored_height": 104,
+        "radius": 0.11999999731779099,
+        "button_type": 18,
+        "hit_shape": "world-space-circle"
+      },
+      "advance_button": {
+        "transform": {
+          "path_id": 18,
+          "game_object": "AdvanceTime5Sec",
+          "local_position": [
+            -72.0,
+            0.0,
+            0.0
+          ],
+          "local_scale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "parent_path_id": 21,
+          "children": []
+        },
+        "sprite_path_id": 23,
+        "authored_width": 104,
+        "authored_height": 104,
+        "radius": 0.11999999731779099,
+        "button_type": 17,
+        "hit_shape": "world-space-circle"
+      },
+      "time_anchor": {
+        "transform": {
+          "path_id": 12,
+          "game_object": "Time",
+          "local_position": [
+            667.0,
+            375.0,
+            0.0
+          ],
+          "local_scale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "parent_path_id": 22,
+          "children": [
+            13
+          ]
+        },
+        "horizontal": "Right",
+        "vertical": "Top",
+        "screen_to_safe_area": true,
+        "background_transform": {
+          "path_id": 13,
+          "game_object": "BG",
+          "local_position": [
+            -16.0,
+            -104.0,
+            0.0
+          ],
+          "local_scale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "parent_path_id": 12,
+          "children": [
+            15,
+            16,
+            19
+          ]
+        },
+        "now_transform": {
+          "path_id": 16,
+          "game_object": "Now",
+          "local_position": [
+            -77.0,
+            -23.0,
+            0.0
+          ],
+          "local_scale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "parent_path_id": 13,
+          "children": []
+        },
+        "max_transform": {
+          "path_id": 19,
+          "game_object": "Max",
+          "local_position": [
+            -76.0,
+            -23.0,
+            0.0
+          ],
+          "local_scale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "parent_path_id": 13,
+          "children": []
+        }
+      }
+    },
+    "auto_live_caption": {
+      "scene_anchor_transform": {
+        "path_id": 521,
+        "game_object": "AutoLiveLabelRoot",
+        "local_position": [
+          -411.0,
+          309.0,
+          0.0
+        ],
+        "local_scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "parent_path_id": 556,
+        "children": [
+          506
+        ]
+      },
+      "scene_content_root_transform": {
+        "path_id": 506,
+        "game_object": "root",
+        "local_position": [
+          130.0,
+          -135.0,
+          0.0
+        ],
+        "local_scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "parent_path_id": 521,
+        "children": []
+      },
+      "scene_anchor": {
+        "horizontal": "Left",
+        "vertical": "Top",
+        "screen_to_safe_area": true
+      },
+      "prefab_root_transform": {
+        "path_id": 3,
+        "game_object": "AutoLiveCaption",
+        "local_position": [
+          -541.0,
+          234.0,
+          0.0
+        ],
+        "local_scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "parent_path_id": 0,
+        "children": [
+          4
+        ]
+      },
+      "background_transform": {
+        "path_id": 4,
+        "game_object": "background",
+        "local_position": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "local_scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "parent_path_id": 3,
+        "children": []
+      },
+      "label_widget": {
+        "path_id": 5,
+        "authored_width": 312,
+        "authored_height": 104
+      },
+      "background_widget": {
+        "path_id": 6,
+        "authored_width": 206,
+        "authored_height": 38
+      },
+      "runtime_parent": "InGamePlayDisplay.autoLiveLabelRoot resolves scene content root path 506; instantiated caption local transform is owned by that root."
+    },
+    "movie": {
+      "root": {
+        "path_id": 7,
+        "game_object": "InGameMovie",
+        "local_position": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "local_scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "parent_path_id": 0,
+        "children": [
+          9
+        ]
+      },
+      "movie_texture_transform": {
+        "path_id": 10,
+        "game_object": "MovieTexture",
+        "local_position": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "local_scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "parent_path_id": 9,
+        "children": []
+      },
+      "widget_path_id": 14,
+      "authored_width": 1334,
+      "authored_height": 750,
+      "vertical_fit_screen_component_path_id": 13,
+      "vertical_fit_should_safe_area_to_screen": false
+    }
+  },
+  "formulas": {
+    "float_policy": "Each ARM64 scalar operation is rounded to IEEE-754 binary32 in instruction order.",
+    "camera": "orthographic half-height=1; half-width=viewportWidth/viewportHeight; pixelsPerWorldUnit=viewportHeight/2; bottom-left screen inverse uses current camera.",
+    "high_aspect": "clamp((AspectRatio-AspectRatioBase)/(HighAspectRatioMax-AspectRatioBase),0,1)",
+    "ui_root": "Constrained FitWidth: pixelsPerAuthoredUnit=viewportWidth/1334.",
+    "screen_to_safe": "Full safe: high?VerticalFit:1. Inset: min(SafeAreaRatio.x,y), multiplied by VerticalFit when ScreenRatio.x>=ScreenRatio.y.",
+    "move_time": "Left/Right+Center StarUIAnchor targets final safe-area edges; child ±72 is multiplied by FitWidth pixel scale and ScreenToSafeAreaRatio. SearchPressedUIButton compares world squared distance to serialized radius 0.12 squared, so the hit shape is a circle.",
+    "auto_live_caption": "Left+Top scene anchor uses ScreenToSafeArea; authored scene content offset (130,-135), caption background offset (0,1) and widget 206x38 share the same FitWidth*ScreenToSafe scale.",
+    "movie": "Authored UITexture is 1334x750 under FitWidth; StarUIVerticalFitScreen multiplies by VerticalFit only on high-aspect devices. High aspect center-contains 16:9; lower aspect fits width and crops vertically."
+  },
+  "oracle": [
+    {
+      "id": "4:3-full",
+      "input": {
+        "viewport": [
+          1200,
+          900
+        ],
+        "base_safe_area": [
+          0,
+          0,
+          1200,
+          900
+        ],
+        "note_size": 100.0
+      },
+      "star_ui": {
+        "aspect_ratio": 1.3333333730697632,
+        "is_high_aspect_ratio_device": false,
+        "high_aspect_ratio": 0.0,
+        "screen_to_width_base_ratio": 1.1116666793823242,
+        "width_base_to_screen_ratio": 0.899550199508667,
+        "screen_ratio": [
+          0.899550199508667,
+          1.2000000476837158
+        ],
+        "horizontal_ratio_compared_to_16_9": 0.75,
+        "vertical_fit_screen_ratio": 1.3339999914169312,
+        "safe_area": [
+          0.0,
+          0.0,
+          1200.0,
+          900.0
+        ],
+        "safe_area_ratio": [
+          1.0,
+          1.0
+        ],
+        "screen_to_safe_area_ratio": 1.0,
+        "safe_area_to_screen_ratio": 1.0
+      },
+      "game_camera": {
+        "half_width_world": 1.3333333730697632,
+        "half_height_world": 1.0,
+        "pixels_per_world_unit": 450.0
+      },
+      "gameplay": {
+        "screen_size_x": 1.3333333730697632,
+        "screen_width_adjust_rate": 0.1391996145248413,
+        "note_setting_scale": 0.1391996145248413,
+        "particle_scale_total": 0.1391996145248413,
+        "goal_y": -0.480238676071167,
+        "launcher_y": 0.754461944103241,
+        "lane_spacing_world": 0.30623915791511536,
+        "center_note_start_y": 0.6927270889282227
+      },
+      "ui": {
+        "pixels_per_authored_unit": 0.899550199508667,
+        "screen_to_safe_child_scale": 0.899550199508667,
+        "return_button_center_bottom_left": [
+          64.76761627197266,
+          450.0
+        ],
+        "advance_button_center_bottom_left": [
+          1135.232421875,
+          450.0
+        ],
+        "button_widget_size": [
+          93.55322265625,
+          93.55322265625
+        ],
+        "button_hit_circle_radius_pixels": 54.0,
+        "auto_live_caption_bounds_top_left": [
+          24.287857055664062,
+          103.44830322265625,
+          185.30734252929688,
+          34.18290710449219
+        ]
+      },
+      "movie": {
+        "rule": "UIRoot FitWidth then StarUIVerticalFitScreen only when high aspect",
+        "bounds_top_left": [
+          0.0,
+          112.66867065429688,
+          1200.0,
+          674.6626586914062
+        ],
+        "low_aspect_vertical_crop": false
+      }
+    },
+    {
+      "id": "16:9-full",
+      "input": {
+        "viewport": [
+          1600,
+          900
+        ],
+        "base_safe_area": [
+          0,
+          0,
+          1600,
+          900
+        ],
+        "note_size": 100.0
+      },
+      "star_ui": {
+        "aspect_ratio": 1.7777777910232544,
+        "is_high_aspect_ratio_device": false,
+        "high_aspect_ratio": 0.0,
+        "screen_to_width_base_ratio": 0.8337500095367432,
+        "width_base_to_screen_ratio": 1.1994003057479858,
+        "screen_ratio": [
+          1.1994003057479858,
+          1.2000000476837158
+        ],
+        "horizontal_ratio_compared_to_16_9": 1.0,
+        "vertical_fit_screen_ratio": 1.000499963760376,
+        "safe_area": [
+          0.0,
+          0.0,
+          1600.0,
+          900.0
+        ],
+        "safe_area_ratio": [
+          1.0,
+          1.0
+        ],
+        "screen_to_safe_area_ratio": 1.0,
+        "safe_area_to_screen_ratio": 1.0
+      },
+      "game_camera": {
+        "half_width_world": 1.7777777910232544,
+        "half_height_world": 1.0,
+        "pixels_per_world_unit": 450.0
+      },
+      "gameplay": {
+        "screen_size_x": 1.7777777910232544,
+        "screen_width_adjust_rate": 0.18559947609901428,
+        "note_setting_scale": 0.18559947609901428,
+        "particle_scale_total": 0.18559947609901428,
+        "goal_y": -0.6403182148933411,
+        "launcher_y": 1.0059491395950317,
+        "lane_spacing_world": 0.4083188474178314,
+        "center_note_start_y": 0.9236357808113098
+      },
+      "ui": {
+        "pixels_per_authored_unit": 1.1994003057479858,
+        "screen_to_safe_child_scale": 1.1994003057479858,
+        "return_button_center_bottom_left": [
+          86.35681915283203,
+          450.0
+        ],
+        "advance_button_center_bottom_left": [
+          1513.6431884765625,
+          450.0
+        ],
+        "button_widget_size": [
+          124.73763275146484,
+          124.73763275146484
+        ],
+        "button_hit_circle_radius_pixels": 54.0,
+        "auto_live_caption_bounds_top_left": [
+          32.383811950683594,
+          137.93096923828125,
+          247.0764617919922,
+          45.577213287353516
+        ]
+      },
+      "movie": {
+        "rule": "UIRoot FitWidth then StarUIVerticalFitScreen only when high aspect",
+        "bounds_top_left": [
+          0.0,
+          0.224884033203125,
+          1600.0,
+          899.5502319335938
+        ],
+        "low_aspect_vertical_crop": false
+      }
+    },
+    {
+      "id": "20:9-full",
+      "input": {
+        "viewport": [
+          1600,
+          720
+        ],
+        "base_safe_area": [
+          0,
+          0,
+          1600,
+          720
+        ],
+        "note_size": 100.0
+      },
+      "star_ui": {
+        "aspect_ratio": 2.222222328186035,
+        "is_high_aspect_ratio_device": true,
+        "high_aspect_ratio": 1.0,
+        "screen_to_width_base_ratio": 0.8337500095367432,
+        "width_base_to_screen_ratio": 1.1994003057479858,
+        "screen_ratio": [
+          1.1994003057479858,
+          0.9599999785423279
+        ],
+        "horizontal_ratio_compared_to_16_9": 1.25,
+        "vertical_fit_screen_ratio": 0.8004000186920166,
+        "safe_area": [
+          80.0,
+          0.0,
+          1440.0,
+          720.0
+        ],
+        "safe_area_ratio": [
+          0.8999999761581421,
+          1.0
+        ],
+        "screen_to_safe_area_ratio": 0.7203599810600281,
+        "safe_area_to_screen_ratio": 1.3881947994232178
+      },
+      "game_camera": {
+        "half_width_world": 2.222222328186035,
+        "half_height_world": 1.0,
+        "pixels_per_world_unit": 360.0
+      },
+      "gameplay": {
+        "screen_size_x": 2.222222328186035,
+        "screen_width_adjust_rate": 0.23199935257434845,
+        "note_setting_scale": 0.23199935257434845,
+        "particle_scale_total": 0.16712304949760437,
+        "goal_y": -0.8003977537155151,
+        "launcher_y": 1.2574365139007568,
+        "lane_spacing_world": 0.5103985667228699,
+        "center_note_start_y": 1.1545448303222656
+      },
+      "ui": {
+        "pixels_per_authored_unit": 1.1994003057479858,
+        "screen_to_safe_child_scale": 0.8639999628067017,
+        "return_button_center_bottom_left": [
+          142.20799255371094,
+          360.0
+        ],
+        "advance_button_center_bottom_left": [
+          1457.7919921875,
+          360.0
+        ],
+        "button_widget_size": [
+          89.85599517822266,
+          89.85599517822266
+        ],
+        "button_hit_circle_radius_pixels": 43.20000076293945,
+        "auto_live_caption_bounds_top_left": [
+          103.32799530029297,
+          99.3599853515625,
+          177.98399353027344,
+          32.83199691772461
+        ]
+      },
+      "movie": {
+        "rule": "UIRoot FitWidth then StarUIVerticalFitScreen only when high aspect",
+        "bounds_top_left": [
+          159.67999267578125,
+          0.0,
+          1280.6400146484375,
+          720.0
+        ],
+        "low_aspect_vertical_crop": false
+      }
+    },
+    {
+      "id": "21:9-full",
+      "input": {
+        "viewport": [
+          1680,
+          720
+        ],
+        "base_safe_area": [
+          0,
+          0,
+          1680,
+          720
+        ],
+        "note_size": 100.0
+      },
+      "star_ui": {
+        "aspect_ratio": 2.3333332538604736,
+        "is_high_aspect_ratio_device": true,
+        "high_aspect_ratio": 1.0,
+        "screen_to_width_base_ratio": 0.7940475940704346,
+        "width_base_to_screen_ratio": 1.2593703269958496,
+        "screen_ratio": [
+          1.2593703269958496,
+          0.9599999785423279
+        ],
+        "horizontal_ratio_compared_to_16_9": 1.3125,
+        "vertical_fit_screen_ratio": 0.7622857093811035,
+        "safe_area": [
+          84.0,
+          0.0,
+          1512.0,
+          720.0
+        ],
+        "safe_area_ratio": [
+          0.8999999761581421,
+          1.0
+        ],
+        "screen_to_safe_area_ratio": 0.6860570907592773,
+        "safe_area_to_screen_ratio": 1.4576046466827393
+      },
+      "game_camera": {
+        "half_width_world": 2.3333332538604736,
+        "half_height_world": 1.0,
+        "pixels_per_world_unit": 360.0
+      },
+      "gameplay": {
+        "screen_size_x": 2.3333332538604736,
+        "screen_width_adjust_rate": 0.2435992956161499,
+        "note_setting_scale": 0.2435992956161499,
+        "particle_scale_total": 0.16712301969528198,
+        "goal_y": -0.8404175639152527,
+        "launcher_y": 1.3203082084655762,
+        "lane_spacing_world": 0.5359184741973877,
+        "center_note_start_y": 1.2122721672058105
+      },
+      "ui": {
+        "pixels_per_authored_unit": 1.2593703269958496,
+        "screen_to_safe_child_scale": 0.8639999628067017,
+        "return_button_center_bottom_left": [
+          146.20799255371094,
+          360.0
+        ],
+        "advance_button_center_bottom_left": [
+          1533.7919921875,
+          360.0
+        ],
+        "button_widget_size": [
+          89.85599517822266,
+          89.85599517822266
+        ],
+        "button_hit_circle_radius_pixels": 43.20000076293945,
+        "auto_live_caption_bounds_top_left": [
+          107.32799530029297,
+          99.3599853515625,
+          177.98399353027344,
+          32.83199691772461
+        ]
+      },
+      "movie": {
+        "rule": "UIRoot FitWidth then StarUIVerticalFitScreen only when high aspect",
+        "bounds_top_left": [
+          199.67999267578125,
+          0.0,
+          1280.6400146484375,
+          720.0
+        ],
+        "low_aspect_vertical_crop": false
+      }
+    },
+    {
+      "id": "32:9-full",
+      "input": {
+        "viewport": [
+          2560,
+          720
+        ],
+        "base_safe_area": [
+          0,
+          0,
+          2560,
+          720
+        ],
+        "note_size": 100.0
+      },
+      "star_ui": {
+        "aspect_ratio": 3.555555582046509,
+        "is_high_aspect_ratio_device": true,
+        "high_aspect_ratio": 1.0,
+        "screen_to_width_base_ratio": 0.5210937261581421,
+        "width_base_to_screen_ratio": 1.9190404415130615,
+        "screen_ratio": [
+          1.9190404415130615,
+          0.9599999785423279
+        ],
+        "horizontal_ratio_compared_to_16_9": 2.0,
+        "vertical_fit_screen_ratio": 0.5002500414848328,
+        "safe_area": [
+          128.0,
+          0.0,
+          2304.0,
+          720.0
+        ],
+        "safe_area_ratio": [
+          0.8999999761581421,
+          1.0
+        ],
+        "screen_to_safe_area_ratio": 0.45022502541542053,
+        "safe_area_to_screen_ratio": 2.221111536026001
+      },
+      "game_camera": {
+        "half_width_world": 3.555555582046509,
+        "half_height_world": 1.0,
+        "pixels_per_world_unit": 360.0
+      },
+      "gameplay": {
+        "screen_size_x": 3.555555582046509,
+        "screen_width_adjust_rate": 0.37119895219802856,
+        "note_setting_scale": 0.37119895219802856,
+        "particle_scale_total": 0.16712306439876556,
+        "goal_y": -1.2806364297866821,
+        "launcher_y": 2.0118982791900635,
+        "lane_spacing_world": 0.8166376948356628,
+        "center_note_start_y": 1.8472715616226196
+      },
+      "ui": {
+        "pixels_per_authored_unit": 1.9190404415130615,
+        "screen_to_safe_child_scale": 0.8640000224113464,
+        "return_button_center_bottom_left": [
+          190.2080078125,
+          360.0
+        ],
+        "advance_button_center_bottom_left": [
+          2369.7919921875,
+          360.0
+        ],
+        "button_widget_size": [
+          89.85600280761719,
+          89.85600280761719
+        ],
+        "button_hit_circle_radius_pixels": 43.20000076293945,
+        "auto_live_caption_bounds_top_left": [
+          151.3280029296875,
+          99.3599853515625,
+          177.9840087890625,
+          32.832000732421875
+        ]
+      },
+      "movie": {
+        "rule": "UIRoot FitWidth then StarUIVerticalFitScreen only when high aspect",
+        "bounds_top_left": [
+          639.679931640625,
+          0.0,
+          1280.64013671875,
+          720.0
+        ],
+        "low_aspect_vertical_crop": false
+      }
+    },
+    {
+      "id": "20:9-asymmetric-base-safe",
+      "input": {
+        "viewport": [
+          1600,
+          720
+        ],
+        "base_safe_area": [
+          31,
+          12,
+          1517,
+          690
+        ],
+        "note_size": 100.0
+      },
+      "star_ui": {
+        "aspect_ratio": 2.222222328186035,
+        "is_high_aspect_ratio_device": true,
+        "high_aspect_ratio": 1.0,
+        "screen_to_width_base_ratio": 0.8337500095367432,
+        "width_base_to_screen_ratio": 1.1994003057479858,
+        "screen_ratio": [
+          1.1994003057479858,
+          0.9599999785423279
+        ],
+        "horizontal_ratio_compared_to_16_9": 1.25,
+        "vertical_fit_screen_ratio": 0.8004000186920166,
+        "safe_area": [
+          52.0,
+          18.0,
+          1496.0,
+          684.0
+        ],
+        "safe_area_ratio": [
+          0.9350000023841858,
+          0.949999988079071
+        ],
+        "screen_to_safe_area_ratio": 0.7483740448951721,
+        "safe_area_to_screen_ratio": 1.3362301588058472
+      },
+      "game_camera": {
+        "half_width_world": 2.222222328186035,
+        "half_height_world": 1.0,
+        "pixels_per_world_unit": 360.0
+      },
+      "gameplay": {
+        "screen_size_x": 2.222222328186035,
+        "screen_width_adjust_rate": 0.23199935257434845,
+        "note_setting_scale": 0.23199935257434845,
+        "particle_scale_total": 0.17362229526042938,
+        "goal_y": -0.8003977537155151,
+        "launcher_y": 1.2574365139007568,
+        "lane_spacing_world": 0.5103985667228699,
+        "center_note_start_y": 1.1545448303222656
+      },
+      "ui": {
+        "pixels_per_authored_unit": 1.1994003057479858,
+        "screen_to_safe_child_scale": 0.8976000547409058,
+        "return_button_center_bottom_left": [
+          116.62720489501953,
+          360.0
+        ],
+        "advance_button_center_bottom_left": [
+          1483.372802734375,
+          360.0
+        ],
+        "button_widget_size": [
+          93.35040283203125,
+          93.35040283203125
+        ],
+        "button_hit_circle_radius_pixels": 43.20000076293945,
+        "auto_live_caption_bounds_top_left": [
+          76.23519897460938,
+          121.2239990234375,
+          184.90560913085938,
+          34.108802795410156
+        ]
+      },
+      "movie": {
+        "rule": "UIRoot FitWidth then StarUIVerticalFitScreen only when high aspect",
+        "bounds_top_left": [
+          159.67999267578125,
+          0.0,
+          1280.6400146484375,
+          720.0
+        ],
+        "low_aspect_vertical_crop": false
+      }
+    }
+  ],
+  "resize_lifecycle": {
+    "status": "unsupported-original-complete-refresh-route",
+    "findings": [
+      "StarUI ScreenWidth/Height getters poll Screen.width/height and setScreenSize recomputes StarUI fields.",
+      "RefreshSafeArea is called by Awake and orientation coroutine, not by arbitrary setScreenSize.",
+      "RefreshSafeArea reinitializes StarUIScreenToSafeArea, StarUISafeAreaToScreen and StarUIFullScreenTexture only.",
+      "ButtonManager.execMultiResolution and particle setup execute during gameplay startup and have no resize caller.",
+      "StarUIVerticalFitScreen sets isInitialized and is not part of RefreshSafeArea enumeration.",
+      "Therefore no original atomic route refreshes camera-dependent input, gameplay, particles, all UI helpers and MV for an arbitrary mid-live revision."
+    ],
+    "portable_requirement": "Accept exactly one initial surface state per session. Any later revision, including same-geometry revision, returns evidence-required before commands or input; never continue stale or invent reflow."
+  },
+  "provenance": {
+    "allowed": [
+      "original-serialized",
+      "original-static-code",
+      "original-runtime-state",
+      "resource-metadata",
+      "approved-product-contract"
+    ],
+    "observation_only": [
+      "fixed-device screenshots",
+      "WebView2 raster digests"
+    ],
+    "screenshot_derived_production_scalar_count": 0,
+    "fixed_device_frame_as_layout_authority_count": 0,
+    "unclassified_layout_scalar_count": 0,
+    "unknown_formula_or_order_count": 0
+  },
+  "closure": {
+    "initial_adaptive_landscape_open_claim_count": 0,
+    "ui_prefab_or_hit_owner_open_claim_count": 0,
+    "movie_aspect_rule_open_claim_count": 0,
+    "dynamic_resize_claimed_supported_count": 0,
+    "screenshot_authority_count": 0,
+    "production_authorization": {
+      "initial_adaptive_landscape": true,
+      "dynamic_resize": false,
+      "main_program_integration": false
+    }
+  }
+}

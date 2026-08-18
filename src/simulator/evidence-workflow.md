@@ -31,6 +31,13 @@
 - Garupa fixture中的MV条目来源锁定`38802391`；全局sourceHead随SDN修订更新为`d408d758`。只复制runtime contract、command oracle、closure、portable profile、SDN contract和项目自制20-frame MP4/WebM probe；不复制R1、截图、ARM64或61MB original USM。Production不读取fixture。
 - MV WebView2的media/raster digest只证明当前Browser Blob/HTMLVideoElement/Pixi映射，不升级original frame、codec或物理输出。
 
+## 当前多比例布局证据
+
+- Reverse `9167dce77d0472a000b509f993b0e66e44e4797f`已push并远端`0 0`；`simulator-multiaspect-layout-runtime-contract-10-1-4/`包含27个current ARM64 slices、current level3与MoveTime/Movie/Auto-caption最小serialized sources、6组参数化ratio/safe-area oracle和committed verifier。
+- 证据关闭任意有效**初始横屏**viewport、base safe-area、StarUI continuous high-aspect、GameCamera、gameplay/particle scale、UIRoot FitWidth、MoveTime circle hit、Auto caption和movie widget。截图derived、fixed-frame authority、unclassified scalar及unknown order计数均为0。
+- 同一证据确认不存在完整任意局中resize刷新路由；`production_authorization.dynamic_resize=false`。Garupa任何post-initial revision均在command/input前`evidence-required`，不得用外层缩放、letterbox或产品算法补齐。
+- Garupa只复制contract和closure两项最小JSON fixture，分别记录来源commit、bytes与SHA；production不读取fixture。1600×720截图和全部WebView2 digest只作observation。
+
 ## 测试边界
 
 隔离测试需要离线输入时，只从已推送的Reverse提取最小快照到`src/simulator/testing/fixtures/`，并记录来源提交、源相对路径、字节数和SHA-256。`verifyTestingFixtures.mjs`只校验这些快照，不读取Reverse或网络。生产代码不得读取本地工作记录、Reverse或testing fixture。

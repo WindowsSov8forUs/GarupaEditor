@@ -111,12 +111,53 @@ async function main(): Promise<void> {
     controller.dispose();
     if (app.stage.children.length !== 0) throw new Error("startup scene leaked stage roots");
   }
+  const adaptiveCaptures = [];
+  for (const [label, width, height] of [["4:3", 1200, 900], ["32:9", 2560, 720]] as const) {
+    app.renderer.resize(width, height);
+    const layout = requireOk<any>(createOriginalSurfaceLayout({
+      revision: 0, viewportWidth: width, viewportHeight: height,
+      safeArea: { x: Math.fround(0), y: Math.fround(0), width: Math.fround(width), height: Math.fround(height) },
+      origin: "bottom-left",
+    }, Math.fround(100)));
+    const presentation = requireAccepted<any>(await deriveSessionPresentation({
+      song: { title: "Test Song", bandName: "Test Band", lyricist: null, composer: null, arranger: null },
+      difficulty: { type: "EXPERT", level: 25 },
+      jacketPng: await canvasPng(360, 360, "rgb(25 90 170)"),
+      stage: { backdropPng: await canvasPng(360, 360, "rgb(12 18 35)"), sdCharacterAtlases: null },
+      liveStartVoiceMp3: null,
+      mv: null,
+    }));
+    const scene = requireOk<any>(await createPixiStartupDirectionScene(
+      presentation,
+      { lineStar: line, jacketFrame: frame, difficultyFrames: difficulties, fullLiveLabel: full, fontFamily: font.family },
+      decoder,
+      false,
+      layout,
+    ));
+    app.stage.addChild(scene.backgroundRoot, scene.foregroundRoot);
+    scene.publish({
+      sequence: 1, informationPhase: "holding", informationAlpha: 1,
+      hudAlpha: 1, darkCoverAlpha: 0, stagePhase: "introduced", stageProgress: 1,
+      characterAlpha: 0, linePhase: "hidden", lineAlpha: 0,
+      gameplayVisible: false, rehearsalControlsVisible: false,
+    });
+    const stage = scene.backgroundRoot.getChildByLabel("StartupStageBackdrop");
+    const information = scene.foregroundRoot.getChildByLabel("StartupInformation");
+    if (stage?.width !== width || stage?.height !== height ||
+      information?.x !== width / 2 || information?.y !== height / 2 ||
+      information?.scale.x !== layout.ui.screenToSafeChildScale) {
+      throw new Error(`${label}: adaptive startup geometry mismatch`);
+    }
+    adaptiveCaptures.push(await capture(app, `adaptive-${label}`, scene.snapshot(), width, height));
+    scene.dispose();
+  }
+  app.renderer.resize(WIDTH, HEIGHT);
   const audio = await runStartupAudioObservation();
   const result = Object.freeze({
     schema: "garupa-startup-direction-webview2-v3",
     status: "ok",
     runtime: { userAgent: navigator.userAgent, pixiVersion: (await import("pixi.js")).VERSION, rendererName: app.renderer.name },
-    scene: { modes: 4, sdCharacterVisuals, captures },
+    scene: { modes: 4, sdCharacterVisuals, captures, adaptiveCaptures },
     audio,
     cleanup: { stageChildren: app.stage.children.length, audioDisposed: audio.cleanup.backendState === "disposed" },
     resources: { urls: performance.getEntriesByType("resource").map((entry) => entry.name).sort() },
@@ -283,9 +324,15 @@ async function runStartupAudioObservation(): Promise<any> {
   });
 }
 
-async function capture(app: Application, label: string, snapshot: unknown) {
+async function capture(
+  app: Application,
+  label: string,
+  snapshot: unknown,
+  width = WIDTH,
+  height = HEIGHT,
+) {
   app.render();
-  const output = app.renderer.extract.pixels({ target: app.stage, frame: new Rectangle(0, 0, WIDTH, HEIGHT), resolution: 1, clearColor: [0, 0, 0, 0] });
+  const output = app.renderer.extract.pixels({ target: app.stage, frame: new Rectangle(0, 0, width, height), resolution: 1, clearColor: [0, 0, 0, 0] });
   const bytes = new Uint8Array(output.pixels.buffer, output.pixels.byteOffset, output.pixels.byteLength);
   let visible = 0;
   for (let index = 3; index < bytes.length; index += 4) if (bytes[index] !== 0) visible += 1;

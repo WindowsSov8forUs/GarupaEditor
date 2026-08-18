@@ -5,6 +5,20 @@
   "sourceHead": "d408d758f39873c2c997107903300e58d56c59c6",
   "entries": [
     {
+      "path": "reverse-snapshots/adaptive-layout/artifacts/investigations/simulator-multiaspect-layout-runtime-contract-10-1-4/closure.json",
+      "sourceReverseCommit": "9167dce77d0472a000b509f993b0e66e44e4797f",
+      "sourcePath": "artifacts/investigations/simulator-multiaspect-layout-runtime-contract-10-1-4/closure.json",
+      "bytes": 732,
+      "sha256": "43C0097F729D0888DB0FD853EFE2015762090711FDE355B4620B3D1DA956A9FF"
+    },
+    {
+      "path": "reverse-snapshots/adaptive-layout/artifacts/investigations/simulator-multiaspect-layout-runtime-contract-10-1-4/simulator_multiaspect_layout_contract.json",
+      "sourceReverseCommit": "9167dce77d0472a000b509f993b0e66e44e4797f",
+      "sourcePath": "artifacts/investigations/simulator-multiaspect-layout-runtime-contract-10-1-4/simulator_multiaspect_layout_contract.json",
+      "bytes": 39710,
+      "sha256": "62934678E8EA2E0BDD7E21643BAEE97AF6AC6349B52E089671282FF015AED8EA"
+    },
+    {
       "path": "habahiro-snapshots/bestdori-atlas-profile.json",
       "sourceReverseCommit": "c9a4629bdfac248c167a966a92bdb2c45dad87e6",
       "sourcePath": "artifacts/investigations/resource-pixi-rendering-runtime-contract-10-1-4/habahiro_external_atlas_profile.json",

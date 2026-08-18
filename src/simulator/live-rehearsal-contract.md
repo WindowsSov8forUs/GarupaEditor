@@ -2,7 +2,8 @@
 
 ## Authority
 
-- Reverse：`6c0dfb76`，`artifacts/investigations/live-rehearsal-runtime-contract-10-1-4/`与`rehearsal-control-rendering-10-1-4/`。
+- Reverse模式/生命周期：`6c0dfb76`，`artifacts/investigations/live-rehearsal-runtime-contract-10-1-4/`。
+- Reverse多比例布局与真实控件owner：`9167dce77d0472a000b509f993b0e66e44e4797f`，`simulator-multiaspect-layout-runtime-contract-10-1-4/`；旧`rehearsal-control-rendering-10-1-4`截图geometry仅作observation，不再是production authority。
 - Life初始化/Full伤害：Reverse `2cbea93d`，`artifacts/investigations/simulator-public-life-profile-10-1-4/`，PLP-E01–PLP-E07。
 - 谱面MV Live：Reverse `38802391`，`mv-live-runtime-contract-10-1-4/`与`mv-live-portable-media-profile-10-1-4/`；完整合同见[`mv-live-contract.md`](./mv-live-contract.md)。
 - 锁定样本：`jp.co.craftegg.band` 10.1.4 / 230 / arm64-v8a。
@@ -36,7 +37,7 @@ Standard四种Public模式从`Prepare(0)`依次进入`OPFirstAnimStart(1)`、`OP
 
 Retry创建fresh Practice链，不继承旧owner；MoveTime reconstruction不创建Gaya/voice/信息演出，物理输出在目标publication前抑制。pause/resume、abort、terminal fault与dispose均清理loop/source/gain/decoded资源。`startupDirectionPortable`因此恢复`closed-portable`，但speaker onset、CRI/HCA、Android与原Unity framebuffer exact仍不声明。
 
-Launch根仍精确三键`{chartData,presentation,config}`。Schema 8 presentation将SD角色与开场语音固定为null，另有必填nullable `mv`；non-null只允许Live Manual/Auto，插入`MovieBeforeSound(17)`并按signed delay决定movie在BGM前或后启动。MV背景Gaya=false；negative delay明确允许PlayingSound/gameplay先于movie。Practice无法选择Simple movie display，因此Rehearsal MV、Retry/MoveTime MV失败关闭。purpose仍由simulator内部拥有且不进入Public。
+Launch根仍精确三键`{chartData,presentation,config}`。Schema 9 presentation将SD角色与开场语音固定为null，另有必填nullable `mv`；non-null只允许Live Manual/Auto，插入`MovieBeforeSound(17)`并按signed delay决定movie在BGM前或后启动。MV背景Gaya=false；negative delay明确允许PlayingSound/gameplay先于movie。Practice无法选择Simple movie display，因此Rehearsal MV、Retry/MoveTime MV失败关闭。purpose仍由simulator内部拥有且不进入Public。
 
 ## Life初始化与生命周期
 
@@ -63,14 +64,16 @@ Public chart的BGM字段只接受非空`Uint8Array`；cue、SHA-256、codec/samp
 
 ## Visible controls
 
-1600×720 portable scene：
+控件消费[`adaptive-layout-contract.md`](./adaptive-layout-contract.md)的current prefab/StarUI owner：
 
-- rewind中心`(142,360)`；atlas frame`(912,924,97,99)`；
-- advance中心`(1457.5,360)`；atlas frame`(903,315,96,99)`；
-- 两种Rehearsal共享几何，Live均隐藏；Auto显示Demo badge；
-- 资源复用已晋升current`rhythm-game-ui.png`原字节，无重复、fallback或系统字体替代。
+- rewind/advance由Left/Right+Center safe anchor、`±72` child和`104×104` UISprite派生；
+- 命中使用原作world-circle radius `0.12`，不再使用旧截图bbox或人工`100×100`矩形；
+- time background由Right+Top hierarchy与`172×32` widget派生；
+- Rehearsal Auto caption由Left+Top scene root、`(130,-135)` content、`(0,1)` background和`206×38` widget派生；
+- exact current atlas rows、NineSlice border和sgm font无fallback；
+- 两种Rehearsal共享同一initial surface revision，Live均隐藏。
 
-这只关闭current portable controls，不声明Unity Prefab Transform、跨GPU framebuffer或fixed-device exact。
+1600×720上的约`(142.208,360)`与`(1457.792,360)`只是参数化公式的一组回归结果。截图不提供production数值；GPU/fixed-device exact仍不声明。
 
 ## 明确删除
 

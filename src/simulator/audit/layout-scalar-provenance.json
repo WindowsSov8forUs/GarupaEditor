@@ -1,0 +1,90 @@
+{
+  "schemaVersion": 1,
+  "sample": "jp.co.craftegg.band 10.1.4 (230) arm64-v8a",
+  "reverseCommit": "9167dce77d0472a000b509f993b0e66e44e4797f",
+  "status": "initial-adaptive-landscape-closed-dynamic-resize-evidence-required",
+  "counts": {
+    "unclassifiedLayoutScalar": 0,
+    "screenshotDerivedProductionScalar": 0,
+    "fixedDeviceFrameAsLayoutAuthority": 0,
+    "unknownFormulaOrOrder": 0
+  },
+  "claims": [
+    {
+      "consumer": "platform/surfaceContracts.ts",
+      "classification": "original-runtime-state",
+      "authority": "getSafeAreaBaseData boundary and landscape setScreenSize input",
+      "evidence": ["ML-E01", "ML-R05"]
+    },
+    {
+      "consumer": "scene/originalSurfaceLayout.ts#starUi",
+      "classification": "original-static-code",
+      "authority": "StarUIManager current ARM64 constants/formulas/order",
+      "evidence": ["ML-E01"]
+    },
+    {
+      "consumer": "scene/originalSurfaceLayout.ts#camera",
+      "classification": "original-serialized",
+      "authority": "current RhythmGame GameCamera",
+      "evidence": ["ML-E02"]
+    },
+    {
+      "consumer": "scene/simulatorSceneLayout.ts",
+      "classification": "original-static-code",
+      "authority": "InGameUtility.GetScreenSize and ButtonManager.execMultiResolution",
+      "evidence": ["ML-E02"]
+    },
+    {
+      "consumer": "backends/pixi/pixiParticleRendererBackend.ts",
+      "classification": "original-static-code",
+      "authority": "camera height/2 projection and particle scale chain",
+      "evidence": ["ML-E02"]
+    },
+    {
+      "consumer": "backends/pixi/pixiRendererBackend.ts#HUD",
+      "classification": "original-serialized",
+      "authority": "current UIRoot FitWidth, StarUI safe helpers and existing hashed HUD profiles",
+      "evidence": ["ML-E01", "ML-E03"]
+    },
+    {
+      "consumer": "scene/rehearsalControlScene.ts",
+      "classification": "original-serialized",
+      "authority": "current MoveTime prefab anchors/widgets/radius and searchPressedUIButton",
+      "evidence": ["ML-E03"]
+    },
+    {
+      "consumer": "backends/pixi/pixiStartupDirectionScene.ts",
+      "classification": "original-serialized",
+      "authority": "current GameStartInfo hierarchy plus existing portable standard-backdrop product mapping",
+      "evidence": ["ML-E03", "SD02", "SD16"]
+    },
+    {
+      "consumer": "backends/pixi/pixiMvLiveBackend.ts",
+      "classification": "original-serialized",
+      "authority": "current InGameMovie 1334x750 UITexture and StarUIVerticalFitScreen",
+      "evidence": ["ML-E04"]
+    },
+    {
+      "consumer": "engine/garupa/*",
+      "classification": "approved-product-contract",
+      "authority": "garupa-extension-contract.md; consumes original surface without defining viewport constants",
+      "evidence": ["GJP-D01"]
+    }
+  ],
+  "observationOnly": [
+    "fixed-device screenshots and alpha bounding boxes",
+    "1600x720 delivery-frame manifest",
+    "WebView2 raster digests"
+  ],
+  "dynamicSurfaceRevision": {
+    "supported": false,
+    "failure": "surface.dynamic-revision-unsupported",
+    "publicationBoundary": "before control state, input and commands"
+  },
+  "excluded": [
+    "portrait",
+    "Unity GPU/framebuffer exact",
+    "fixed-device physical exact",
+    "Stage 9"
+  ]
+}

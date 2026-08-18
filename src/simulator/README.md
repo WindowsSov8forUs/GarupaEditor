@@ -21,7 +21,7 @@
 | Gameplay MV Live | `closed-portable` | Reverse `38802391`：仅Live Manual/Auto；signed Int32 delay三分支、MovieBeforeSound(17)、movie states0–4、Gaya=false、pause/resume、early/late finish、exit/fault/dispose；caller提供严格MP4/WebM字节，视频muted/non-loop并center-contain。Rehearsal MV、独立MVView、Star3D及CRI/USM/device exact不在正向范围 |
 | Public Life profile | `closed-portable` | Reverse `2cbea93d`：Public只携带显式`isFullLength`；simulator内部固定Life `1000/1000/2000`，non-full/full Miss/Bad分别为`-100/-50`与`-50/-25`；不从duration等字段推断 |
 | Garupa JSON direct chart adapter | `closed-portable` | Public精确接收已解析`chart`对象数组，不接受格式中不存在的laneCount；任意有限lane按七轨参考坐标连续投影，场地始终仅有0..6七条轨道线；按`GJP-D01`执行`floor(48*beat)`并直接建立冻结/登记的original-compatible或product-extension图；不生成中间BMS，不接受caller构造结果 |
-| Initial adaptive landscape layout | `closed-portable` | Reverse `7f4916bc`：任意有效初始横屏viewport、显式base safe-area、StarUI continuous high-aspect、orthographic camera、gameplay/particle scale、NGUI FitWidth、MoveTime prefab circle hit及MV widget比例规则；不以截图或1600×720 frame为布局authority |
+| Initial adaptive landscape layout | `closed-portable` | Reverse `9167dce7`：任意有效初始横屏viewport、显式base safe-area、StarUI continuous high-aspect、orthographic camera、gameplay/particle scale、NGUI FitWidth、MoveTime prefab circle hit及MV widget比例规则；不以截图或1600×720 frame为布局authority |
 | Dynamic surface resize | `open-evidence-required` | 10.1.4不存在完整局中刷新路由：arbitrary setScreenSize不重跑ButtonManager/particle，RefreshSafeArea不含VerticalFit；任何post-initial revision在command/input前失败关闭 |
 | Rehearsal MoveTime/control scene | `closed-portable` | simulator-owned固定±5 opaque command、Float32 whole-engine恢复、后退timeline revision、目标BGM发布；控件由current serialized Left/Right anchor、±72 child、104×104 widget与world-circle radius 0.12共同派生，不再消费截图bbox或人工100×100 hit region |
 | Non-zero initial seek | `excluded` | IPS-P01–P05只保留历史产品扩展记录；本专项冻结删除`startMilliseconds`及deferred publication，不再作为最终能力 |
@@ -69,7 +69,7 @@ src/simulator/
 ## Rendering验收分层
 
 - `actual-pixi-command-scene-routing`：testing-only observer独立连乘实际Pixi父链并观察local/world matrix、bounds、mask、texture、geometry及combined stage order；parent、Unity Y、mask-space、stage-order、particle UV-row和fallback六类故意反例均会失败。
-- `webview2-decode-raster/audio-graph`：以下1600×720 digest只保留为锁定browser的回归观察，不是布局authority。普通完整场景digest为`a09166cf…2199`；Garupa产品扩展固定七轨场地的initial/negative/zero/restore三fresh WebGL digest为`3f03e17e…50ad`；standard启动在移除不可提供的SD角色后，视觉digest更新为`6fe9d1f4…8f5b`，音频digest保持`88a2a310…c268`。MV独立harness对MP4/H264和WebM/VP9各执行3 fresh process，media graph digest为`f786bb96…b0234`、deterministic-seek raster digest为`ad8f9c4b…b9094`，cleanup后Blob/video/Pixi资源归零。所有digest只限定当前portable环境，不泛化CRI/USM、Android、speaker或Unity/GPU exact。
+- `webview2-decode-raster/audio-graph`：以下1600×720 digest只保留为锁定browser的回归观察，不是布局authority。普通完整场景digest为`5ebf9c9d…d088`；Garupa产品扩展固定七轨场地的initial/negative/zero/restore三fresh WebGL digest为`2d6c70ef…ce06`；standard启动在serialized hierarchy迁移后视觉digest为`dfaeb868…8f8f`，并新增4:3/32:9 actual WebView2 captures，音频digest保持`88a2a310…c268`。MV独立harness对MP4/H264和WebM/VP9各执行3 fresh process，media graph digest为`f786bb96…b0234`、serialized widget raster digest为`5253f794…5477`，cleanup后Blob/video/Pixi资源归零。所有digest只限定当前portable环境，不泛化CRI/USM、Android、speaker或Unity/GPU exact。
 - `framebuffer/device-exact`：锁定设备调查已形成四项客观环境阻断，exact继续不声明。
 
 Synthetic decoder、资源hash或typed command仍不能单独升级为真实WebView2 raster证明。
@@ -80,7 +80,7 @@ Score HUD继续保留Reverse确认的NineSlice轴序、depth、UIPanel clip、Bi
 
 流程见[`evidence-workflow.md`](./evidence-workflow.md)。只消费已verify、commit、push的Reverse证据。10.1.3或其他来源必须先建立逐claim等价证明、适用域和反例检查。旧调查包可提供待重新核验的原始事实，但其`closed`、`productionAuthorization`或总体closure字段不是本轮授权。
 
-Reverse多比例布局提交`7f4916bc`关闭任意初始横屏surface、StarUI/safe-area、GameCamera、gameplay/particle、UIRoot/MoveTime及MV widget参数化合同，并证据化拒绝局中revision。Reverse启动空资源修订提交`d408d758f39873c2c997107903300e58d56c59c6`约束Public literal-null到非null空SD集合/缺语音资源的窄映射。Reverse普通渲染静态/HUD提交`6908ddfa`和最终账本`b5fb3dca`继续约束未改变的原作表现；其Garupa target `2b758eb...`仅作为历史基线。CS-V1变更由tracked产品规范、独立公式测试、full-chart Auto和当前WebView2观察约束。HAB original、fixed-device exact、standalone MVView/Star3D/其他excluded和Stage 9边界不因产品Score或gameplay MV portable升级。
+Reverse多比例布局提交`9167dce77d0472a000b509f993b0e66e44e4797f`关闭任意初始横屏surface、StarUI/safe-area、GameCamera、gameplay/particle、UIRoot/MoveTime及MV widget参数化合同，并证据化拒绝局中revision。Reverse启动空资源修订提交`d408d758f39873c2c997107903300e58d56c59c6`约束Public literal-null到非null空SD集合/缺语音资源的窄映射。Reverse普通渲染静态/HUD提交`6908ddfa`和最终账本`b5fb3dca`继续约束未改变的原作表现；其Garupa target `2b758eb...`仅作为历史基线。CS-V1变更由tracked产品规范、独立公式测试、full-chart Auto和当前WebView2观察约束。HAB original、fixed-device exact、standalone MVView/Star3D/其他excluded和Stage 9边界不因产品Score或gameplay MV portable升级。
 
 日常开发默认运行`npm.cmd run simulator:test`（或`simulator:test:quick`）：测试树只编译一次，以12个development groups覆盖既有compiled/static集合并新增MV semantic/static leaf；不执行耗时full-chart actual-Pixi/particle/HAB或WebView2，因此不能作为release证据。发布级入口仍为`npm.cmd run simulator:test:total-revalidation`；当前35-semantic-leaf DAG包含startup-audio callgraph、MV contract、3-fresh ordinary/startup WebView2及MP4/WebM各3-fresh MV browser门。重复运行复用ignored Cargo target，`simulator:test:total-revalidation:clean`可强制冷编译。完整说明见[`testing/README.md`](./testing/README.md)。两级均不运行Vite/Tauri，也不声称原作framebuffer或物理输出等价。
 
