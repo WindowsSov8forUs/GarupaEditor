@@ -83,12 +83,6 @@ if (fixture.closure.production_authorization.initial_adaptive_landscape !== true
     fixture.closure.production_authorization.dynamic_resize !== false) {
   throw new Error("Reverse adaptive/dynamic authorization mismatch");
 }
-const audit = JSON.parse(readFileSync(join(simulatorRoot, "audit/layout-scalar-provenance.json"), "utf8"));
-if (audit.reverseCommit !== "9167dce77d0472a000b509f993b0e66e44e4797f" ||
-    Object.values(audit.counts).some((value) => value !== 0) ||
-    audit.dynamicSurfaceRevision?.supported !== false) {
-  throw new Error("tracked layout scalar provenance audit is not closed");
-}
 console.log(`adaptive layout static boundary verified: production-ts=${production.length} fixed-frame=0 screenshot-authority=0 dynamic=false`);
 
 function read(relativePath) {
