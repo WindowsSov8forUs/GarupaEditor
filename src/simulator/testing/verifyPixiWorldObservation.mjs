@@ -68,24 +68,44 @@ export function verifyOrdinaryPixiWorldObservation(world, fixture) {
     record.path.startsWith(`${note.path}/`) && record.texture?.label.includes("note_normal_1"));
   assert.ok(noteSprite !== undefined, "Note owner has the exact bound Sprite descendant");
 
+  const adaptive = originalUiProjection(fixture.viewport[0], fixture.viewport[1]);
   const combo = one(world, "hud:combo");
-  closeTuple(combo.worldMatrix.slice(4), fixture.selectedUiWorld.combo.pixiWorld, 1e-4, "Combo world position");
+  const comboExpected = [
+    fixture.viewport[0] / 2 + fixture.selectedUiWorld.combo.authoredWorldPosition[0] * adaptive.childScale,
+    fixture.viewport[1] / 2 - fixture.selectedUiWorld.combo.authoredWorldPosition[1] * adaptive.childScale,
+  ];
+  closeTuple(combo.worldMatrix.slice(4), comboExpected, 1e-4, "Combo world position");
   assert.ok(combo.worldBounds !== null && intersectsViewport(combo.worldBounds, fixture.viewport));
   const result = one(world, "hud:result");
-  assert.deepEqual(result.worldMatrix.slice(4), fixture.selectedUiWorld.result.pixiWorld);
+  const resultExpected = [
+    fixture.viewport[0] / 2 + fixture.selectedUiWorld.result.authoredWorldPosition[0] * adaptive.childScale,
+    fixture.viewport[1] / 2 - fixture.selectedUiWorld.result.authoredWorldPosition[1] * adaptive.childScale,
+  ];
+  closeTuple(result.worldMatrix.slice(4), resultExpected, 1e-4, "Result world position");
   const timing = one(world, "result-timing");
   assert.ok(timing.parent !== root.path && timing.parent !== null, "JudgeTiming retains a descendant parent");
-  const resultScale = fixture.hudCorrections.result.gameJudgeSamples.find((sample) => sample.time === 0.04).values[0];
+  const resultScale = Math.fround(
+    fixture.hudCorrections.result.gameJudgeSamples.find((sample) => sample.time === 0.04).values[0] *
+      adaptive.childScale,
+  );
   const timingExpected = [
-    fixture.selectedUiWorld.result.pixiWorld[0] + fixture.hudCorrections.result.timingLocalPosition[0] * resultScale,
-    fixture.selectedUiWorld.result.pixiWorld[1] - fixture.hudCorrections.result.timingLocalPosition[1] * resultScale,
+    resultExpected[0] + fixture.hudCorrections.result.timingLocalPosition[0] * resultScale,
+    resultExpected[1] - fixture.hudCorrections.result.timingLocalPosition[1] * resultScale,
   ];
   closeTuple(timing.worldMatrix.slice(4), timingExpected, 1e-4, "animated JudgeTiming world position");
 
   const score = one(world, "hud:score");
-  assert.deepEqual(score.worldMatrix.slice(4), fixture.selectedUiWorld.score.pixiWorld);
+  const scoreAuthored = fixture.selectedUiWorld.score.authoredWorldPosition;
+  closeTuple(score.worldMatrix.slice(4), [
+    adaptive.safeLeft + (scoreAuthored[0] + 667) * adaptive.childScale,
+    fixture.viewport[1] - (adaptive.safeTop + (scoreAuthored[1] - 375) * adaptive.childScale),
+  ], 1e-4, "Score safe-anchored world position");
   const life = one(world, "hud:life");
-  assert.deepEqual(life.worldMatrix.slice(4), fixture.selectedUiWorld.life.pixiWorld);
+  const lifeAuthored = fixture.selectedUiWorld.life.authoredWorldPosition;
+  closeTuple(life.worldMatrix.slice(4), [
+    adaptive.safeRight + (lifeAuthored[0] - 667) * adaptive.childScale,
+    fixture.viewport[1] - (adaptive.safeTop + (lifeAuthored[1] - 375) * adaptive.childScale),
+  ], 1e-4, "Life safe-anchored world position");
   const consumer = world.records.find((record) =>
     record.path.startsWith(`${score.path}/`) && record.label === "score-high-rank-animation-layer" &&
     record.mask === "score-high-rank-panel-mask");
@@ -105,6 +125,25 @@ export function verifyNoFallbackObservation(raw) {
     rasterObserved: false,
   });
   assert.equal(Object.hasOwn(raw.decoder, "fallbackUsed"), false);
+}
+
+function originalUiProjection(width, height) {
+  const f32 = Math.fround;
+  const screenRatioX = f32(f32(width) / f32(1334));
+  const verticalFit = f32(f32(height) / f32(screenRatioX * f32(750)));
+  const aspect = f32(f32(width) / f32(height));
+  const high = aspect > f32(1.778666615486145);
+  const safeWidth = high ? f32(f32(width) * f32(0.8999999761581421)) : f32(width);
+  const safeLeft = high ? f32(f32(f32(width) - safeWidth) * f32(0.5)) : 0;
+  const safeTop = f32(height);
+  const safeRatio = f32(safeWidth / f32(width));
+  const screenToSafe = high ? f32(safeRatio * verticalFit) : f32(1);
+  return {
+    childScale: f32(screenRatioX * screenToSafe),
+    safeLeft,
+    safeRight: f32(safeLeft + safeWidth),
+    safeTop,
+  };
 }
 
 function one(world, label) {
