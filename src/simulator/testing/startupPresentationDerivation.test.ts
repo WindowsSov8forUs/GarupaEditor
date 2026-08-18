@@ -12,7 +12,7 @@ async function main(): Promise<void> {
   testExactShapeAndOwnership();
   testMalformedPresentationFailsClosed();
   await testInternalDerivation();
-  console.log("startup presentation derivation tests passed: schema8 exact shape/copy/PNG/literal-null SD+voice/nullable MV/closed Live gate");
+  console.log("startup presentation derivation tests passed: schema9 exact shape/copy/intrinsic stage PNG/literal-null SD+voice/nullable MV/closed Live gate");
 }
 
 function testExactShapeAndOwnership(): void {
@@ -20,7 +20,7 @@ function testExactShapeAndOwnership(): void {
   const result = createSimulatorSessionRecipe(source);
   assert.equal(result.status, "accepted");
   if (result.status !== "accepted") return;
-  assert.equal(result.value.schemaVersion, 8);
+  assert.equal(result.value.schemaVersion, 9);
   assert.equal(Object.isFrozen(result.value.request.presentation), true);
   assert.equal(Object.isFrozen(result.value.request.presentation.song), true);
   assert.equal(Object.isFrozen(result.value.request.presentation.stage), true);
@@ -78,9 +78,9 @@ function testMalformedPresentationFailsClosed(): void {
     suppliedCharacters.presentation.stage.sdCharacterAtlases = forbiddenSdCharacters;
     assertInvalid(suppliedCharacters, "simulator.presentation.invalid-public-package");
   }
-  const wrongSize: any = request();
-  wrongSize.presentation.stage.backdropPng = Uint8Array.from(wrongSize.presentation.jacketPng);
-  assertInvalid(wrongSize, "simulator.presentation.invalid-png");
+  const intrinsicStageSize: any = request();
+  intrinsicStageSize.presentation.stage.backdropPng = Uint8Array.from(intrinsicStageSize.presentation.jacketPng);
+  assert.equal(createSimulatorSessionRecipe(intrinsicStageSize).status, "accepted");
   const badCrc: any = request();
   badCrc.presentation.jacketPng[badCrc.presentation.jacketPng.length - 1] ^= 1;
   assertInvalid(badCrc, "simulator.presentation.invalid-png");

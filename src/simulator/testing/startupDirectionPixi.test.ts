@@ -23,6 +23,13 @@ import { CURRENT_STARTUP_DIRECTION_PORTABLE_RESOURCES } from "../backends/resour
 import { ImmutableSharedStaticResourceStore } from "../resources/sharedStaticResourceStore";
 import { prepareSharedStartupDirectionRenderResources } from "../resources/sharedResourceAdapters";
 import { startupDirectionResourceKey } from "../resources/staticResourceSelector";
+import { createOriginalSurfaceLayout } from "../scene/originalSurfaceLayout";
+
+const SURFACE_LAYOUT = requireOk(createOriginalSurfaceLayout({
+  revision: 0, viewportWidth: 1600, viewportHeight: 720,
+  safeArea: { x: Math.fround(0), y: Math.fround(0), width: Math.fround(1600), height: Math.fround(720) },
+  origin: "bottom-left",
+}, Math.fround(100)));
 
 async function main(): Promise<void> {
   await testCommonResourcePreparation();
@@ -34,6 +41,7 @@ async function main(): Promise<void> {
     {} as any,
     {} as any,
     true,
+    SURFACE_LAYOUT,
   );
   assert.equal(forbiddenCharacters.status, "evidence-required");
   if (forbiddenCharacters.status === "evidence-required") {
@@ -54,6 +62,7 @@ async function main(): Promise<void> {
     },
     { decodePng: async () => ({ status: "ok", value: new Texture() }) } as any,
     true,
+    SURFACE_LAYOUT,
   );
   assert.equal(scene.status, "ok");
   if (scene.status !== "ok") return;
@@ -106,6 +115,7 @@ async function main(): Promise<void> {
     },
     { decodePng: async () => ({ status: "ok", value: new Texture() }) } as any,
     false,
+    SURFACE_LAYOUT,
     false,
   );
   assert.equal(mvScene.status, "ok");
@@ -133,10 +143,45 @@ async function main(): Promise<void> {
     mvParticles.destroy({ children: true });
     mvOrdinary.destroy({ children: true });
   }
+  const fourByThreeLayout = requireOk(createOriginalSurfaceLayout({
+    revision: 0, viewportWidth: 1200, viewportHeight: 900,
+    safeArea: { x: Math.fround(0), y: Math.fround(0), width: Math.fround(1200), height: Math.fround(900) },
+    origin: "bottom-left",
+  }, Math.fround(100)));
+  const adaptiveScene = await createPixiStartupDirectionScene(
+    presentation.value,
+    {
+      lineStar: commonTextures[0], jacketFrame: commonTextures[1],
+      difficultyFrames: {
+        EASY: commonTextures[2], NORMAL: commonTextures[3], HARD: commonTextures[4],
+        EXPERT: commonTextures[5], SPECIAL: commonTextures[6],
+      },
+      fullLiveLabel: commonTextures[7], fontFamily: "EvidenceFont",
+    },
+    { decodePng: async () => ({ status: "ok", value: new Texture() }) } as any,
+    true,
+    fourByThreeLayout,
+  );
+  assert.equal(adaptiveScene.status, "ok");
+  if (adaptiveScene.status === "ok") {
+    const stage = adaptiveScene.value.backgroundRoot.getChildByLabel("StartupStageBackdrop") as any;
+    const information = adaptiveScene.value.foregroundRoot.getChildByLabel("StartupInformation") as any;
+    assert.equal(stage.width, 1200);
+    assert.equal(stage.height, 900);
+    assert.deepEqual([information.x, information.y], [600, 450]);
+    assert.equal(information.scale.x, fourByThreeLayout.ui.screenToSafeChildScale);
+    adaptiveScene.value.dispose();
+  }
+
   particle.destroy({ children: true });
   ordinary.destroy({ children: true });
   for (const texture of commonTextures) texture.destroy(true);
   console.log("startup direction Pixi tests passed: dynamic resources/hierarchy/order/publication/dispose");
+}
+
+function requireOk<T>(result: { status: "ok"; value: T } | { status: "evidence-required"; capability: string }): T {
+  if (result.status !== "ok") throw new Error(result.capability);
+  return result.value;
 }
 
 async function testCommonResourcePreparation(): Promise<void> {

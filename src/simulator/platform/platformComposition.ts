@@ -61,6 +61,7 @@ import type {
 } from "../runtime/contracts";
 import { installSimulatorModuleLauncher } from "../runtime/moduleEntryBinding";
 import { createSimulatorSceneLayout } from "../scene/simulatorSceneLayout";
+import { createOriginalSurfaceLayout } from "../scene/originalSurfaceLayout";
 import { validateConstructedChartCapabilities } from "../assembly/chartCapabilityValidation";
 import { constructChartFromGarupaChartJson } from "../assembly/garupaChartConstruction";
 import { getGarupaProductChartProfile } from "../engine/garupa/productChartProfile";
@@ -173,6 +174,11 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
     }
     const surface = readPlatformSurface(this.platform.graphics);
     if (surface.status === "rejected") return surface;
+    const originalLayout = createOriginalSurfaceLayout(
+      surface.value,
+      recipe.request.config.visual.noteSize,
+    );
+    if (originalLayout.status !== "ok") return fromEvidence(originalLayout);
     const moveTimeCandidate = purpose === "move-time-reconstruction";
     const mvPackage = recipe.request.presentation.mv;
     if (mvPackage !== null &&
@@ -228,7 +234,9 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
     const selection = selectSimulatorStaticResources(chart.value);
     const renderer = new PixiRendererBackend(new BrowserPixiTextureDecoder());
     const audio = new WebAudioSimulatorBackend(this.platform.audioContext, moveTimeCandidate);
-    const movie = mvResource.value === null ? null : new PixiMvLiveBackend(false);
+    const movie = mvResource.value === null
+      ? null
+      : new PixiMvLiveBackend(false, originalLayout.value.movie);
     if (movie !== null) {
       const prepared = await movie.prepare(sessionId, mvResource.value!);
       if (prepared.status !== "accepted") {
@@ -304,6 +312,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
       commonStartup.value,
       new BrowserPixiTextureDecoder(),
       recipe.request.chartData.isFullLength,
+      assembly.value.sceneLayout.surfaceLayout,
       movie === null,
     );
     if (startupScene.status !== "ok") {

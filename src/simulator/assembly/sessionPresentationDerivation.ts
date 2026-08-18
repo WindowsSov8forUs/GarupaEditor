@@ -4,7 +4,6 @@ import type { SimulatorAssemblyResult } from "../resources/sharedResourceAdapter
 import {
   inspectStrictRgbaPng,
   STARTUP_JACKET_SIZE,
-  STARTUP_STAGE_SIZE,
 } from "./startupPresentationContract";
 
 export interface PreparedPresentationImage {
@@ -32,7 +31,7 @@ export async function deriveSessionPresentation(
 ): Promise<SimulatorAssemblyResult<PreparedSessionPresentation>> {
   const jacket = deriveImage("jacket", null, presentation.jacketPng, STARTUP_JACKET_SIZE.width, STARTUP_JACKET_SIZE.height);
   if (jacket.status === "rejected") return jacket;
-  const backdrop = deriveImage("stage-backdrop", null, presentation.stage.backdropPng, STARTUP_STAGE_SIZE.width, STARTUP_STAGE_SIZE.height);
+  const backdrop = deriveImage("stage-backdrop", null, presentation.stage.backdropPng, null, null);
   if (backdrop.status === "rejected") return backdrop;
   const sdCharacters = Object.freeze([]) as readonly [];
   return accepted(Object.freeze({
@@ -48,8 +47,8 @@ function deriveImage(
   role: PreparedPresentationImage["role"],
   slot: number | null,
   source: Uint8Array,
-  width: number,
-  height: number,
+  width: number | null,
+  height: number | null,
 ): SimulatorAssemblyResult<PreparedPresentationImage> {
   const structure = inspectStrictRgbaPng(source, width, height);
   if (structure.status === "rejected") return structure;
@@ -62,8 +61,8 @@ function deriveImage(
     logicalId: `startup/session/${suffix}/${sha256}`,
     sha256,
     byteLength: bytes.byteLength,
-    width,
-    height,
+    width: structure.value.width,
+    height: structure.value.height,
     mime: "image/png" as const,
     bytes,
   }));

@@ -8,7 +8,6 @@ import {
 } from "../resources/sharedResourceAdapters";
 import { currentStartupFontSupports } from "../backends/resources/currentStartupFontCmap";
 export const STARTUP_JACKET_SIZE = Object.freeze({ width: 360, height: 360 });
-export const STARTUP_STAGE_SIZE = Object.freeze({ width: 1600, height: 720 });
 
 export interface ValidatedPngStructure {
   readonly width: number;
@@ -56,7 +55,7 @@ export function copyAndFreezeSimulatorPresentation(
   }
   const jacket = copyPng(presentation.jacketPng, STARTUP_JACKET_SIZE.width, STARTUP_JACKET_SIZE.height, "jacket");
   if (jacket.status === "rejected") return jacket;
-  const backdrop = copyPng(presentation.stage.backdropPng, STARTUP_STAGE_SIZE.width, STARTUP_STAGE_SIZE.height, "stage-backdrop");
+  const backdrop = copyPng(presentation.stage.backdropPng, null, null, "stage-backdrop");
   if (backdrop.status === "rejected") return backdrop;
   const mv = copyMvPackage(presentation.mv);
   if (mv.status === "rejected") return mv;
@@ -106,8 +105,8 @@ function copyMvPackage(
 
 export function inspectStrictRgbaPng(
   bytes: Uint8Array,
-  expectedWidth: number,
-  expectedHeight: number,
+  expectedWidth: number | null,
+  expectedHeight: number | null,
 ): SimulatorAssemblyResult<ValidatedPngStructure> {
   if (!(bytes instanceof Uint8Array) || Object.getPrototypeOf(bytes) !== Uint8Array.prototype || bytes.byteLength < 57 ||
     !equalsAt(bytes, 0, [137, 80, 78, 71, 13, 10, 26, 10])) {
@@ -132,10 +131,16 @@ export function inspectStrictRgbaPng(
       if (type !== "IHDR" || length !== 13) return invalidPng("IHDR must be the first PNG chunk and have the exact 13-byte payload.");
       width = readU32(bytes, dataOffset);
       height = readU32(bytes, dataOffset + 4);
-      if (width !== expectedWidth || height !== expectedHeight || bytes[dataOffset + 8] !== 8 ||
-        bytes[dataOffset + 9] !== 6 || bytes[dataOffset + 10] !== 0 ||
-        bytes[dataOffset + 11] !== 0 || bytes[dataOffset + 12] !== 0) {
-        return invalidPng(`PNG must be non-interlaced 8-bit RGBA at exactly ${expectedWidth}x${expectedHeight}.`);
+      if (width <= 0 || height <= 0 ||
+        (expectedWidth !== null && width !== expectedWidth) ||
+        (expectedHeight !== null && height !== expectedHeight) ||
+        bytes[dataOffset + 8] !== 8 || bytes[dataOffset + 9] !== 6 ||
+        bytes[dataOffset + 10] !== 0 || bytes[dataOffset + 11] !== 0 ||
+        bytes[dataOffset + 12] !== 0) {
+        const dimensions = expectedWidth === null || expectedHeight === null
+          ? "positive intrinsic dimensions"
+          : `exactly ${expectedWidth}x${expectedHeight}`;
+        return invalidPng(`PNG must be non-interlaced 8-bit RGBA with ${dimensions}.`);
       }
       sawHeader = true;
     } else if (type === "IHDR") {
@@ -155,7 +160,12 @@ export function inspectStrictRgbaPng(
   return accepted(Object.freeze({ width, height, bitDepth: 8 as const, colorType: 6 as const }));
 }
 
-function copyPng(value: unknown, width: number, height: number, role: string): SimulatorAssemblyResult<Uint8Array> {
+function copyPng(
+  value: unknown,
+  width: number | null,
+  height: number | null,
+  role: string,
+): SimulatorAssemblyResult<Uint8Array> {
   if (!(value instanceof Uint8Array) || Object.getPrototypeOf(value) !== Uint8Array.prototype || value.byteLength === 0) {
     return invalid(`${role} must be one direct non-empty Uint8Array PNG resource.`);
   }

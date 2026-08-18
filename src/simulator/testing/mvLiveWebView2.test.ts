@@ -2,9 +2,18 @@ import { Application, Rectangle } from "pixi.js";
 import { BrowserMovieResourcePreflightAdapter } from "../backends/movie/browserMovieResourcePreflightAdapter";
 import { PixiMvLiveBackend } from "../backends/pixi/pixiMvLiveBackend";
 import { deriveSessionMvResource } from "../assembly/sessionMvDerivation";
+import {
+  createOriginalSurfaceLayout,
+  type OriginalSurfaceLayout,
+} from "../scene/originalSurfaceLayout";
 
 const WIDTH = 1600;
 const HEIGHT = 720;
+const MOVIE_LAYOUT = requireOk<OriginalSurfaceLayout>(createOriginalSurfaceLayout({
+  revision: 0, viewportWidth: WIDTH, viewportHeight: HEIGHT,
+  safeArea: { x: Math.fround(0), y: Math.fround(0), width: Math.fround(WIDTH), height: Math.fround(HEIGHT) },
+  origin: "bottom-left",
+}, Math.fround(100))).movie;
 
 void main().catch((error) => window.ipc.postMessage(JSON.stringify({
   schema: "garupa-mv-live-webview2-v1",
@@ -40,7 +49,7 @@ async function main(): Promise<void> {
       musicStartDelayMilliseconds: -2180,
     }, preflight));
     if (derived.profile.container !== container) throw new Error(`${container}: sniff mismatch`);
-    const backend = new PixiMvLiveBackend(false);
+    const backend = new PixiMvLiveBackend(false, MOVIE_LAYOUT);
     const sessionId = `mv-webview2:${container}`;
     requireMovie(await backend.prepare(sessionId, derived));
     app.stage.addChild(backend.stage);
@@ -48,10 +57,10 @@ async function main(): Promise<void> {
     requireEqual(ready.state, "ready", `${container}: ready`);
     requireEqual(ready.muted, true, `${container}: muted`);
     requireEqual(ready.loop, false, `${container}: loop`);
-    requireEqual(backend.stage.children[0]?.x, 160, `${container}: contain x`);
-    requireEqual(backend.stage.children[0]?.y, 0, `${container}: contain y`);
-    requireEqual(backend.stage.children[0]?.width, 1280, `${container}: contain width`);
-    requireEqual(backend.stage.children[0]?.height, 720, `${container}: contain height`);
+    requireEqual(backend.stage.children[0]?.x, MOVIE_LAYOUT.x, `${container}: original widget x`);
+    requireEqual(backend.stage.children[0]?.y, MOVIE_LAYOUT.y, `${container}: original widget y`);
+    requireEqual(backend.stage.children[0]?.width, MOVIE_LAYOUT.width, `${container}: original widget width`);
+    requireEqual(backend.stage.children[0]?.height, MOVIE_LAYOUT.height, `${container}: original widget height`);
 
     requireMovie(backend.play());
     await waitForState(backend, "playing", 300);
@@ -184,6 +193,10 @@ async function sha256(bytes: Uint8Array): Promise<string> {
   return [...new Uint8Array(digest)]
     .map((value) => value.toString(16).padStart(2, "0"))
     .join("");
+}
+function requireOk<T>(result: any): T {
+  if (result.status !== "ok") throw new Error(`${result.capability}: ${result.boundary}`);
+  return result.value as T;
 }
 function requireMovie(result: any): void {
   if (result.status !== "accepted") {

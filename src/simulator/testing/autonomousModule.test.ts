@@ -82,6 +82,7 @@ async function main(): Promise<void> {
   await testProductionCompositionFailureBoundary();
   testConstructedChartEarlyCapabilityGates();
   await testAutonomousLaunchAndClose();
+  await testSurfaceRevisionFailsBeforeInput();
   await testInvalidTickCloses();
   await testTerminalCleanupFailuresRemainSecondary();
   console.log("autonomous simulator module tests passed: public/store/selector/recipe/runtime/self-close/cleanup-faults");
@@ -614,6 +615,23 @@ function assertPlatformUnavailable(result: Awaited<ReturnType<typeof launchSimul
   }
 }
 
+async function testSurfaceRevisionFailsBeforeInput(): Promise<void> {
+  const scheduler = new ControlledScheduler();
+  const input = new ControlledInput();
+  const session = new SurfaceRejectingSession();
+  const module = new AutonomousSimulatorModule({ scheduler, input, sessions: factory(session) });
+  const launched = await module.launch(request());
+  assert.equal(launched.status, "accepted");
+  if (launched.status !== "accepted") throw new Error(launched.failure.capability);
+  await scheduler.tick(0, 1 / 60);
+  const report = await launched.closed;
+  assert.equal(report.reason, "terminal-fault");
+  assert.equal(report.failure?.capability, "surface.dynamic-revision-unsupported");
+  assert.equal(input.consumes, 0, "surface revision fails before input consumption");
+  assert.equal(session.steps, 0, "surface revision fails before engine step");
+  assert.deepEqual(session.commands, [], "surface revision fails before command mutation");
+}
+
 async function testInvalidTickCloses(): Promise<void> {
   const scheduler = new ControlledScheduler();
   const input = new ControlledInput();
@@ -681,6 +699,7 @@ class ThrowingStopScheduler extends ControlledScheduler {
 
 class ControlledInput implements SimulatorRuntimeInputSource {
   private readonly commands = new Map<number, readonly any[]>();
+  consumes = 0;
   disposes = 0;
 
   set(sequence: number, commands: readonly any[]): void {
@@ -688,6 +707,7 @@ class ControlledInput implements SimulatorRuntimeInputSource {
   }
 
   consume(sequence: number): SimulatorAssemblyResult<SimulatorRuntimeInputBatch> {
+    this.consumes += 1;
     return accepted(Object.freeze({
       surfaceRevision: TEST_SURFACE.revision,
       manualFrame: null,
@@ -740,6 +760,19 @@ class FakeSession implements SimulatorOwnedSession {
       result: null,
       failure: failure ?? null,
       capabilities: createSimulatorModuleCapabilitySummary(null, "standard-current-portable"),
+    });
+  }
+}
+
+class SurfaceRejectingSession extends FakeSession {
+  override getSurfaceState(): SimulatorAssemblyResult<any> {
+    return Object.freeze({
+      status: "rejected" as const,
+      failure: Object.freeze({
+        code: "evidence-required" as const,
+        capability: "surface.dynamic-revision-unsupported",
+        boundary: "injected post-initial revision",
+      }),
     });
   }
 }

@@ -20,6 +20,7 @@ import {
   validateMoviePreparedResource,
   validateMovieResourceProfile,
 } from "../movieValidation";
+import type { OriginalMovieLayout } from "../../scene/originalSurfaceLayout";
 
 export const PIXI_MV_LIVE_STAGE_LABEL = "GarupaSimulatorMvLive";
 export const PIXI_MV_LIVE_SPRITE_LABEL = "GarupaSimulatorMvLiveVideo";
@@ -43,7 +44,10 @@ export class PixiMvLiveBackend implements SimulatorMovieBackend {
   private seekReturnState: "playing" | "paused" = "paused";
   private listenersInstalled = false;
 
-  constructor(outputSuppressed = false) {
+  constructor(
+    outputSuppressed: boolean,
+    private readonly movieLayout: OriginalMovieLayout,
+  ) {
     this.suppressed = outputSuppressed;
     this.stage.sortableChildren = false;
     this.stage.eventMode = "none";
@@ -59,8 +63,11 @@ export class PixiMvLiveBackend implements SimulatorMovieBackend {
     if (this.state !== "unprepared" || typeof sessionId !== "string" || sessionId.length === 0 ||
       resource === null || typeof resource !== "object" ||
       !(resource.bytes instanceof Uint8Array) ||
-      Object.getPrototypeOf(resource.bytes) !== Uint8Array.prototype) {
-      return this.reject("movie.pixi.invalid-prepare", "Pixi MV preparation requires one fresh session and one exact simulator-derived browser resource.");
+      Object.getPrototypeOf(resource.bytes) !== Uint8Array.prototype ||
+      !Number.isFinite(this.movieLayout.x) || !Number.isFinite(this.movieLayout.y) ||
+      !Number.isFinite(this.movieLayout.width) || this.movieLayout.width <= 0 ||
+      !Number.isFinite(this.movieLayout.height) || this.movieLayout.height <= 0) {
+      return this.reject("movie.pixi.invalid-prepare", "Pixi MV preparation requires one fresh session, one exact simulator-derived browser resource and one original serialized movie-widget layout.");
     }
     const profile = validateMovieResourceProfile(resource.profile);
     if (profile.status !== "accepted") return profile;
@@ -108,12 +115,9 @@ export class PixiMvLiveBackend implements SimulatorMovieBackend {
       await source.load();
       texture = new Texture({ source, label: `${profile.value.logicalId}:texture` });
       sprite = new Sprite({ texture, label: PIXI_MV_LIVE_SPRITE_LABEL });
-      const scale = Math.min(1600 / profile.value.width, 720 / profile.value.height);
-      const width = profile.value.width * scale;
-      const height = profile.value.height * scale;
-      sprite.position.set((1600 - width) / 2, (720 - height) / 2);
-      sprite.width = width;
-      sprite.height = height;
+      sprite.position.set(this.movieLayout.x, this.movieLayout.y);
+      sprite.width = this.movieLayout.width;
+      sprite.height = this.movieLayout.height;
       sprite.eventMode = "none";
       sprite.visible = false;
       this.stage.addChild(sprite);

@@ -20,9 +20,15 @@ import {
 } from "../backends/resources/currentAudioResourceManifest";
 import { AudioCommandProducer } from "../engine/audio/audioCommandProducer";
 import { StartupAudioOwner } from "../engine/audio/startupAudioOwner";
+import { createOriginalSurfaceLayout } from "../scene/originalSurfaceLayout";
 
 const WIDTH = 1600;
 const HEIGHT = 720;
+const SURFACE_LAYOUT = requireOk<any>(createOriginalSurfaceLayout({
+  revision: 0, viewportWidth: WIDTH, viewportHeight: HEIGHT,
+  safeArea: { x: Math.fround(0), y: Math.fround(0), width: Math.fround(WIDTH), height: Math.fround(HEIGHT) },
+  origin: "bottom-left",
+}, Math.fround(100)));
 
 void main().catch((error) => window.ipc.postMessage(JSON.stringify({
   schema: "garupa-startup-direction-webview2-v3", status: "error",
@@ -86,6 +92,7 @@ async function main(): Promise<void> {
       { lineStar: line, jacketFrame: frame, difficultyFrames: difficulties, fullLiveLabel: full, fontFamily: font.family },
       decoder,
       false,
+      SURFACE_LAYOUT,
     ));
     app.stage.addChild(scene.backgroundRoot, scene.foregroundRoot);
     const controller = new StartupDirectionController(createSimulatorModeIdentity(sessionMode, inputMode), scene);

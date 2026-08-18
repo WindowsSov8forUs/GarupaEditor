@@ -13,6 +13,7 @@ import type {
 } from "../../scene/startupDirectionScene";
 import type { RenderResourceAssetProfile } from "../renderingContracts";
 import type { PixiTextureDecoder } from "./pixiRendererBackend";
+import type { OriginalSurfaceLayout } from "../../scene/originalSurfaceLayout";
 
 export const PIXI_STARTUP_BACKGROUND_LABEL = "GarupaSimulatorStartupBackground";
 export const PIXI_STARTUP_FOREGROUND_LABEL = "GarupaSimulatorStartupForeground";
@@ -46,6 +47,7 @@ export async function createPixiStartupDirectionScene(
   common: PixiStartupDirectionCommonResources,
   decoder: PixiTextureDecoder,
   isFullLength: boolean,
+  surfaceLayout: OriginalSurfaceLayout,
   includeStandardStage = true,
 ): Promise<SimulatorResult<PixiStartupDirectionScene>> {
   if (presentation.sdCharacters.length !== 0) {
@@ -88,6 +90,7 @@ export async function createPixiStartupDirectionScene(
       common,
       prepared,
       isFullLength,
+      surfaceLayout,
       includeStandardStage,
     ));
   } catch {
@@ -115,6 +118,7 @@ class OwnedPixiStartupDirectionScene implements PixiStartupDirectionScene {
     common: PixiStartupDirectionCommonResources,
     private readonly dynamicTextures: readonly Texture[],
     isFullLength: boolean,
+    surfaceLayout: OriginalSurfaceLayout,
     includeStandardStage: boolean,
   ) {
     this.backgroundRoot.sortableChildren = false;
@@ -124,65 +128,64 @@ class OwnedPixiStartupDirectionScene implements PixiStartupDirectionScene {
     if (includeStandardStage) {
       const stageTexture = dynamicTextures[0]!;
       const characterTextures = dynamicTextures.slice(1, -1);
-      this.stageBackdrop = fullFrameSprite(stageTexture, "StartupStageBackdrop");
-      this.characters = Object.freeze(characterTextures.map((texture, index) => fullFrameSprite(texture, `StartupSdCharacter${index}`)));
+      this.stageBackdrop = fullFrameSprite(
+        stageTexture,
+        "StartupStageBackdrop",
+        surfaceLayout.surface.viewportWidth,
+        surfaceLayout.surface.viewportHeight,
+      );
+      this.characters = Object.freeze(characterTextures.map((texture, index) => fullFrameSprite(
+        texture,
+        `StartupSdCharacter${index}`,
+        surfaceLayout.surface.viewportWidth,
+        surfaceLayout.surface.viewportHeight,
+      )));
       this.backgroundRoot.addChild(this.stageBackdrop, ...this.characters);
     } else {
       this.stageBackdrop = null;
       this.characters = Object.freeze([]);
     }
-    this.darkCover = new Graphics({ label: "StartupDarkCover" }).rect(0, 0, 1600, 720).fill({ color: 0x000000, alpha: 1 });
+    const viewportWidth = surfaceLayout.surface.viewportWidth;
+    const viewportHeight = surfaceLayout.surface.viewportHeight;
+    this.darkCover = new Graphics({ label: "StartupDarkCover" })
+      .rect(0, 0, viewportWidth, viewportHeight)
+      .fill({ color: 0x000000, alpha: 1 });
     this.foregroundRoot.addChild(this.darkCover);
+    this.information.position.set(viewportWidth / 2, viewportHeight / 2);
+    this.information.scale.set(surfaceLayout.ui.screenToSafeChildScale);
 
-    const lineStar = new Sprite({ texture: common.lineStar, label: "StartupLineStar" });
-    lineStar.anchor.set(0.5);
-    lineStar.position.set(800, 371);
-    lineStar.width = 1346;
-    lineStar.height = 196;
+    const lineStar = informationSprite(common.lineStar, "StartupLineStar", 0, -170, 1346, 196);
     this.information.addChild(lineStar);
 
-    const jacket = new Sprite({ texture: jacketTexture, label: "StartupJacket" });
-    jacket.anchor.set(0.5);
-    jacket.position.set(800, 222);
-    jacket.width = 360;
-    jacket.height = 360;
+    const jacket = informationSprite(jacketTexture, "StartupJacket", 0, 138, 360, 360);
     this.information.addChild(jacket);
-    const frame = new Sprite({ texture: common.jacketFrame, label: "StartupJacketFrame" });
-    frame.anchor.set(0.5);
-    frame.position.copyFrom(jacket.position);
-    frame.width = 374;
-    frame.height = 374;
+    const frame = informationSprite(common.jacketFrame, "StartupJacketFrame", 0, 138, 374, 374);
     this.information.addChild(frame);
 
-    const difficultyFrame = new Sprite({
-      texture: common.difficultyFrames[presentation.difficulty.type],
-      label: "StartupDifficultyFrame",
-    });
-    difficultyFrame.anchor.set(0.5);
-    difficultyFrame.position.set(807, 440);
-    difficultyFrame.width = 102;
-    difficultyFrame.height = 34;
+    const difficultyFrame = informationSprite(
+      common.difficultyFrames[presentation.difficulty.type],
+      "StartupDifficultyFrame",
+      7,
+      -77,
+      102,
+      34,
+    );
     this.information.addChild(difficultyFrame);
-    this.information.addChild(text(presentation.difficulty.type, common.fontFamily, 807, 440, 20, "StartupDifficulty"));
-    this.information.addChild(text(String(presentation.difficulty.level), common.fontFamily, 870, 440, 20, "StartupDifficultyLevel"));
-    this.information.addChild(text(presentation.song.title, common.fontFamily, 800, 562, 32, "StartupSongTitle"));
-    this.information.addChild(text(presentation.song.bandName, common.fontFamily, 800, 636, 24, "StartupBandName"));
-    let creditY = 668;
-    for (const [role, value] of [
-      ["Lyricist", presentation.song.lyricist],
-      ["Composer", presentation.song.composer],
-      ["Arranger", presentation.song.arranger],
+    this.information.addChild(text(presentation.difficulty.type, common.fontFamily, 7, -77, 20, "StartupDifficulty"));
+    this.information.addChild(text(String(presentation.difficulty.level), common.fontFamily, 70, -77, 20, "StartupDifficultyLevel"));
+    this.information.addChild(text(presentation.song.title, common.fontFamily, 0, -162, 32, "StartupSongTitle"));
+    this.information.addChild(text(presentation.song.bandName, common.fontFamily, 0, -236, 24, "StartupBandName"));
+    for (const [role, value, authoredY] of [
+      ["Lyricist", presentation.song.lyricist, -283],
+      ["Composer", presentation.song.composer, -313],
+      ["Arranger", presentation.song.arranger, -343],
     ] as const) {
       if (value !== null) {
-        this.information.addChild(text(value, common.fontFamily, 800, creditY, 18, `Startup${role}`));
-        creditY += 25;
+        this.information.addChild(text(value, common.fontFamily, 0, authoredY, 18, `Startup${role}`));
       }
     }
     if (isFullLength) {
-      const full = new Sprite({ texture: common.fullLiveLabel, label: "StartupFullLive" });
-      full.position.set(926, 187);
-      full.width = 70;
-      full.height = 34;
+      const full = informationSprite(common.fullLiveLabel, "StartupFullLive", 161, 293, 70, 34);
       this.information.addChild(full);
     }
     this.foregroundRoot.addChild(this.information, this.lineOwner);
@@ -231,13 +234,35 @@ class OwnedPixiStartupDirectionScene implements PixiStartupDirectionScene {
   }
 }
 
-function fullFrameSprite(texture: Texture, label: string): Sprite {
+function fullFrameSprite(
+  texture: Texture,
+  label: string,
+  width: number,
+  height: number,
+): Sprite {
   const sprite = new Sprite({ texture, label });
   sprite.position.set(0, 0);
-  sprite.width = 1600;
-  sprite.height = 720;
+  sprite.width = width;
+  sprite.height = height;
   return sprite;
 }
+
+function informationSprite(
+  texture: Texture,
+  label: string,
+  authoredX: number,
+  authoredY: number,
+  width: number,
+  height: number,
+): Sprite {
+  const sprite = new Sprite({ texture, label });
+  sprite.anchor.set(0.5);
+  sprite.position.set(authoredX, -authoredY);
+  sprite.width = width;
+  sprite.height = height;
+  return sprite;
+}
+
 function text(value: string, fontFamily: string, x: number, y: number, fontSize: number, label: string): Text {
   const result = new Text({
     text: value,
@@ -245,6 +270,6 @@ function text(value: string, fontFamily: string, x: number, y: number, fontSize:
     style: { fill: 0xffffff, fontFamily, fontSize, align: "center" },
   });
   result.anchor.set(0.5);
-  result.position.set(x, y);
+  result.position.set(x, -y);
   return result;
 }
