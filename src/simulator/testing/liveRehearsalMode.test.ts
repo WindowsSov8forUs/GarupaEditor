@@ -21,6 +21,12 @@ import { audioAccepted } from "../backends/audioValidation";
 import { CURRENT_AUDIO_TEST_PROFILE } from "./audioSessionBgmTestProfile";
 import { RecordingStartupDirectionBackend } from "../backends/recordingStartupDirectionBackend";
 
+const TEST_SURFACE = Object.freeze({
+  revision: 0, viewportWidth: 1600, viewportHeight: 720,
+  safeArea: Object.freeze({ x: Math.fround(0), y: Math.fround(0), width: Math.fround(1600), height: Math.fround(720) }),
+  origin: "bottom-left" as const,
+});
+
 const chartText = readFileSync(join(
   process.cwd(),
   "src/simulator/testing/fixtures/reverse-snapshots/evidence-integrity",
@@ -107,7 +113,13 @@ async function testRehearsalLifeZeroContinuesAndLiveCloses(): Promise<void> {
       const mode = createSimulatorModeIdentity(recipe.request.config.sessionMode, recipe.request.config.inputMode);
       const engine = createModeEngine(mode, "live-owned-session", -1000);
       return engine.status === "ok"
-        ? accepted({ engine: engine.value, mode })
+        ? accepted({
+            engine: engine.value,
+            mode,
+            chartFidelity: "standard-original-compatible" as const,
+            surface: TEST_SURFACE,
+            validateSurface: () => accepted(undefined),
+          })
         : rejected(engine.capability, engine.boundary);
     },
   });
@@ -116,7 +128,7 @@ async function testRehearsalLifeZeroContinuesAndLiveCloses(): Promise<void> {
   if (created.status !== "accepted") throw new Error(created.failure.capability);
   let closed = null;
   for (let frame = 0; frame < 3600; frame += 1) {
-    const stepped = created.value.step(1 / 30, { touches: [] });
+    const stepped = created.value.step(1 / 30, { touches: [] }, TEST_SURFACE.revision);
     if (stepped.status === "closed") {
       closed = stepped.report;
       break;
@@ -357,7 +369,6 @@ function request(
       visual: {
         specificSpeed: Math.fround(11),
         noteSize: Math.fround(100),
-        highAspectRatio: 1,
         habahiroMeshWidthSetting: Math.fround(1),
       },
       audio: { masterGain: 1, bgmGain: 1, seGain: 1 },

@@ -45,7 +45,6 @@ export interface SimulatorLaunchConfig {
   readonly visual: {
     readonly specificSpeed: number;
     readonly noteSize: number;
-    readonly highAspectRatio: 0 | 1;
     readonly habahiroMeshWidthSetting: number;
   };
   readonly audio: {
@@ -138,6 +137,8 @@ export interface SimulatorModuleCapabilitySummary {
   readonly nonzeroInitialPracticeSeek: "excluded";
   readonly button07SceneMapping: "closed-original-unreachable";
   readonly browserDecodeRaster: "closed-portable";
+  readonly initialAdaptiveLandscapeLayout: "closed-portable";
+  readonly dynamicSurfaceResize: "open-evidence-required";
   readonly fixedDeviceExact: "open-objective-environment-blocked";
   readonly characterSkillFeverMultiplayer: "excluded";
   readonly mainProgramIntegration: "unauthorized-stage-9";

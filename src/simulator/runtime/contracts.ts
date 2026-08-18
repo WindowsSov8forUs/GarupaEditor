@@ -7,6 +7,7 @@ import type {
 import type { SimulatorAssemblyResult } from "../resources/sharedResourceAdapters";
 import type { SimulatorTimelineControlState } from "../host/portableReplaySession";
 import type { RehearsalControlCommand } from "../scene/rehearsalControlScene";
+import type { SimulatorSurfaceState } from "../platform/surfaceContracts";
 
 export interface SimulatorFrameTick {
   readonly sequence: number;
@@ -32,6 +33,7 @@ export type SimulatorRuntimeCommand =
   | { readonly kind: "user-close" };
 
 export interface SimulatorRuntimeInputBatch {
+  readonly surfaceRevision: number;
   readonly manualFrame: ManualInputFrame | null;
   readonly commands: readonly SimulatorRuntimeCommand[];
 }
@@ -40,6 +42,7 @@ export interface SimulatorRuntimeInputSource {
   consume(
     sequence: number,
     controlState: SimulatorTimelineControlState,
+    surface: SimulatorSurfaceState,
   ): SimulatorAssemblyResult<SimulatorRuntimeInputBatch>;
   dispose(): void;
 }
@@ -53,7 +56,9 @@ export interface SimulatorOwnedSession {
   step(
     deltaTimeSeconds: number,
     manualFrame: ManualInputFrame | null,
+    surfaceRevision: number,
   ): SimulatorOwnedSessionStepResult;
+  getSurfaceState(): SimulatorAssemblyResult<SimulatorSurfaceState>;
   pause(): SimulatorAssemblyResult<void>;
   resume(): SimulatorAssemblyResult<void>;
   moveTime(

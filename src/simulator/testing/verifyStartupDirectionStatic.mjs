@@ -21,7 +21,7 @@ for (const required of [
   "readonly presentation: SimulatorPresentationPackage;",
   "readonly sdCharacterAtlases: null;",
   "readonly liveStartVoiceMp3: null;",
-  "readonly schemaVersion: 8;",
+  "readonly schemaVersion: 9;",
   'Object.keys(request).sort().join(\",\") !== \"chartData,config,presentation\"',
   '"move-time-reconstruction"',
 ]) {

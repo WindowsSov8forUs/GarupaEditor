@@ -507,9 +507,9 @@ function testProductManualChainOwner(): void {
     noteAtlasLogicalAssetId: "note", directionalAtlasLogicalAssetId: "directional",
   });
   const scene = requireOk(createSimulatorSceneLayout(
-    { viewportWidth: 1600, viewportHeight: 720, inputOrigin: "bottom-left" },
+    { revision: 0, viewportWidth: 1600, viewportHeight: 720, safeArea: { x: Math.fround(0), y: Math.fround(0), width: Math.fround(1600), height: Math.fround(720) }, origin: "bottom-left" },
     {
-      specificSpeed: Math.fround(11), noteSize: Math.fround(100), highAspectRatio: 1,
+      specificSpeed: Math.fround(11), noteSize: Math.fround(100),
       judgeOffsetFrames: 0, habahiroMeshWidthSetting: Math.fround(1),
     },
     "ordinary",
@@ -592,8 +592,8 @@ function testProductManualEngineOutcome(): void {
   ])));
   const resources = Object.freeze({ noteAtlasLogicalAssetId: "note", directionalAtlasLogicalAssetId: "directional" });
   const layout = requireOk(createSimulatorSceneLayout(
-    { viewportWidth: 1600, viewportHeight: 720, inputOrigin: "bottom-left" },
-    { specificSpeed: Math.fround(11), noteSize: Math.fround(100), highAspectRatio: 1, judgeOffsetFrames: 0, habahiroMeshWidthSetting: Math.fround(1) },
+    { revision: 0, viewportWidth: 1600, viewportHeight: 720, safeArea: { x: Math.fround(0), y: Math.fround(0), width: Math.fround(1600), height: Math.fround(720) }, origin: "bottom-left" },
+    { specificSpeed: Math.fround(11), noteSize: Math.fround(100), judgeOffsetFrames: 0, habahiroMeshWidthSetting: Math.fround(1) },
     "ordinary", resources,
   ));
   const product = getGarupaProductChartProfile(chart)!;
@@ -683,8 +683,8 @@ async function testProductReplayLifecycle(): Promise<void> {
   const manualMode = createSimulatorModeIdentity("rehearsal", "manual");
   const manualResources = Object.freeze({ noteAtlasLogicalAssetId: "note", directionalAtlasLogicalAssetId: "directional" });
   const manualScene = requireOk(createSimulatorSceneLayout(
-    { viewportWidth: 1600, viewportHeight: 720, inputOrigin: "bottom-left" },
-    { specificSpeed: Math.fround(11), noteSize: Math.fround(100), highAspectRatio: 1, judgeOffsetFrames: 0, habahiroMeshWidthSetting: Math.fround(1) },
+    { revision: 0, viewportWidth: 1600, viewportHeight: 720, safeArea: { x: Math.fround(0), y: Math.fround(0), width: Math.fround(1600), height: Math.fround(720) }, origin: "bottom-left" },
+    { specificSpeed: Math.fround(11), noteSize: Math.fround(100), judgeOffsetFrames: 0, habahiroMeshWidthSetting: Math.fround(1) },
     "ordinary", manualResources,
   )).garupaProductScene;
   const createManualFresh = () => {
@@ -750,9 +750,9 @@ function testProductRenderCommands(): void {
     curveNoteMaterialLogicalAssetId: "curve-material",
   });
   const scene = requireOk(createSimulatorSceneLayout(
-    { viewportWidth: 1600, viewportHeight: 720, inputOrigin: "bottom-left" },
+    { revision: 0, viewportWidth: 1600, viewportHeight: 720, safeArea: { x: Math.fround(0), y: Math.fround(0), width: Math.fround(1600), height: Math.fround(720) }, origin: "bottom-left" },
     {
-      specificSpeed: Math.fround(11), noteSize: Math.fround(100), highAspectRatio: 1,
+      specificSpeed: Math.fround(11), noteSize: Math.fround(100),
       judgeOffsetFrames: 0, habahiroMeshWidthSetting: Math.fround(1),
     },
     "ordinary",

@@ -70,8 +70,8 @@ async function main(): Promise<void> {
   const product = getGarupaProductChartProfile(chart)!;
   const axis = getGarupaProductTimingGroupAxisProfile(chart)!;
   const layout = requireOk(createSimulatorSceneLayout(
-    { viewportWidth: WIDTH, viewportHeight: HEIGHT, inputOrigin: "bottom-left" },
-    { specificSpeed: Math.fround(11), noteSize: Math.fround(100), highAspectRatio: 1, judgeOffsetFrames: 0, habahiroMeshWidthSetting: Math.fround(1) },
+    { revision: 0, viewportWidth: WIDTH, viewportHeight: HEIGHT, safeArea: { x: Math.fround(0), y: Math.fround(0), width: Math.fround(WIDTH), height: Math.fround(HEIGHT) }, origin: "bottom-left" },
+    { specificSpeed: Math.fround(11), noteSize: Math.fround(100), judgeOffsetFrames: 0, habahiroMeshWidthSetting: Math.fround(1) },
     "ordinary", CURRENT_ORDINARY_RENDER_BINDINGS,
   ));
   const producer = new GarupaProductRenderProducer(

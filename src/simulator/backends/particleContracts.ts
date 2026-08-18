@@ -580,11 +580,11 @@ export interface ParticlePixiButtonAnchor {
 }
 
 export interface ParticlePixiSceneProfile {
-  readonly viewportWidth: 1600;
-  readonly viewportHeight: 720;
-  readonly worldCenterXBits: "0x00000000";
-  readonly worldCenterYBits: "0x00000000";
-  readonly pixelsPerWorldUnitBits: "0x43B40000";
+  readonly viewportWidth: number;
+  readonly viewportHeight: number;
+  readonly worldCenterXBits: string;
+  readonly worldCenterYBits: string;
+  readonly pixelsPerWorldUnitBits: string;
   readonly roundPixels: false;
   readonly buttonAnchors: readonly ParticlePixiButtonAnchor[];
 }

@@ -156,15 +156,15 @@ export type RenderProjectionMode =
 
 export interface RenderOrthographicProjectionProfile {
   readonly mode: RenderProjectionMode;
-  readonly viewportWidth: 1600;
-  readonly viewportHeight: 720;
+  readonly viewportWidth: number;
+  readonly viewportHeight: number;
   readonly pixiOrigin: "top-left";
   readonly worldCenterX: 0;
   readonly worldCenterY: 0;
   readonly cameraPositionZ: -15;
   readonly nearClip: 0;
   readonly farClip: 25;
-  readonly pixelsPerWorldUnit: 360;
+  readonly pixelsPerWorldUnit: number;
   readonly clampAllowed: false;
 }
 

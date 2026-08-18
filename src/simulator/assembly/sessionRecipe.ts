@@ -31,13 +31,14 @@ import {
   type SimulatorAssemblyResult,
 } from "../resources/sharedResourceAdapters";
 import type { ManualInputFrame } from "../engine/data/manualInput";
+import type { SimulatorSurfaceState } from "../platform/surfaceContracts";
 import { evidenceRequired, ok, type SimulatorResult } from "../engine/evidence";
 import type { SimulatorModeIdentity } from "../engine/data/inGameCalculatedData";
 import { copyAndFreezeGarupaChartJson } from "./garupaChartContract";
 import { copyAndFreezeSimulatorPresentation } from "./startupPresentationContract";
 
 export interface SimulatorSessionRecipe {
-  readonly schemaVersion: 8;
+  readonly schemaVersion: 9;
   readonly request: SimulatorModuleLaunchRequest;
 }
 
@@ -45,6 +46,8 @@ export interface SimulatorRecipeEngineBuild {
   readonly engine: SimulatorEngine;
   readonly mode: SimulatorModeIdentity;
   readonly chartFidelity: SimulatorChartFidelity;
+  readonly surface: SimulatorSurfaceState;
+  validateSurface(): SimulatorAssemblyResult<void>;
 }
 
 export interface SimulatorRecipeEngineBuilder {
@@ -67,7 +70,7 @@ export function createSimulatorSessionRecipe(
       "Original Practice does not select the Simple movie display; Rehearsal Manual/Auto, Retry and MoveTime MV routes are not inherited from the standard background.",
     );
   }
-  return accepted(Object.freeze({ schemaVersion: 8 as const, request: copied.value }));
+  return accepted(Object.freeze({ schemaVersion: 9 as const, request: copied.value }));
 }
 
 export class RecipeOwnedSessionFactory implements SimulatorOwnedSessionFactory {
@@ -96,14 +99,17 @@ export class RecipeOwnedSessionFactory implements SimulatorOwnedSessionFactory {
         if (fresh.status === "rejected") {
           return evidenceRequired(fresh.failure.capability, [], fresh.failure.boundary);
         }
-        if (fresh.value.chartFidelity === initial.value.chartFidelity) {
+        if (
+          fresh.value.chartFidelity === initial.value.chartFidelity &&
+          sameSurface(fresh.value.surface, initial.value.surface)
+        ) {
           return ok(fresh.value.engine);
         }
         const disposed = fresh.value.engine.dispose();
         return evidenceRequired(
-          "simulator.recipe.fresh-chart-fidelity-mismatch",
+          "simulator.recipe.fresh-composition-mismatch",
           [],
-          "Retry and MoveTime must reconstruct the same frozen standard/product chart route." +
+          "Retry and MoveTime must reconstruct the same frozen standard/product chart route and the same single authorized initial surface." +
             (disposed.status === "ok" ? "" : ` Candidate cleanup also failed: ${disposed.capability}.`),
         );
       },
@@ -119,6 +125,8 @@ export class RecipeOwnedSessionFactory implements SimulatorOwnedSessionFactory {
         ? "standard-current-portable"
         : "mv-live-host-supplied-portable",
       initial.value.chartFidelity,
+      initial.value.surface,
+      initial.value.validateSurface,
     ));
   }
 }
@@ -132,14 +140,21 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
     private readonly sessionMode: "live" | "rehearsal",
     private readonly backgroundFidelity: SimulatorBackgroundFidelity,
     private readonly chartFidelity: SimulatorChartFidelity,
+    private readonly surface: SimulatorSurfaceState,
+    private readonly validateSurface: () => SimulatorAssemblyResult<void>,
   ) {}
 
   step(
     deltaTimeSeconds: number,
     manualFrame: ManualInputFrame | null,
+    surfaceRevision: number,
   ): SimulatorOwnedSessionStepResult {
     const available = this.available();
     if (available !== null) return available;
+    const surface = this.checkSurface(surfaceRevision);
+    if (surface.status === "rejected") {
+      return Object.freeze({ status: "rejected" as const, failure: surface.failure });
+    }
     const stepped = this.engine.step(
       deltaTimeSeconds,
       manualFrame ?? undefined,
@@ -167,10 +182,18 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
     return this.apply(() => this.engine.resume());
   }
 
+  getSurfaceState(): SimulatorAssemblyResult<SimulatorSurfaceState> {
+    if (this.state !== "running") return closedFailure();
+    const checked = this.checkSurface(this.surface.revision);
+    return checked.status === "accepted" ? accepted(this.surface) : checked;
+  }
+
   async moveTime(
     direction: "return-five" | "advance-five",
   ): Promise<SimulatorAssemblyResult<void>> {
     if (this.state !== "running") return closedFailure();
+    const surface = this.checkSurface(this.surface.revision);
+    if (surface.status === "rejected") return surface;
     if (this.sessionMode !== "rehearsal") {
       return rejected(
         "evidence-required",
@@ -184,12 +207,16 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
 
   getControlState(): SimulatorAssemblyResult<SimulatorTimelineControlState> {
     if (this.state !== "running") return closedFailure();
+    const surface = this.checkSurface(this.surface.revision);
+    if (surface.status === "rejected") return surface;
     const state = this.engine.getTimelineControlState();
     return state.status === "ok" ? accepted(state.value) : fromEngineFailure(state);
   }
 
   async retry(): Promise<SimulatorAssemblyResult<void>> {
     if (this.state !== "running") return closedFailure();
+    const surface = this.checkSurface(this.surface.revision);
+    if (surface.status === "rejected") return surface;
     if (this.sessionMode !== "rehearsal") {
       return rejected(
         "evidence-required",
@@ -226,8 +253,21 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
 
   private apply(operation: () => SimulatorResult<void>): SimulatorAssemblyResult<void> {
     if (this.state !== "running") return closedFailure();
+    const surface = this.checkSurface(this.surface.revision);
+    if (surface.status === "rejected") return surface;
     const result = operation();
     return result.status === "ok" ? accepted(undefined) : fromEngineFailure(result);
+  }
+
+  private checkSurface(revision: number): SimulatorAssemblyResult<void> {
+    if (revision !== this.surface.revision) {
+      return rejected(
+        "evidence-required",
+        "simulator.surface.input-revision-mismatch",
+        "Input must carry the exact single initial surface revision; stale, future and repaired revisions are forbidden.",
+      );
+    }
+    return this.validateSurface();
   }
 
   private available(): SimulatorOwnedSessionStepResult | null {
@@ -318,11 +358,10 @@ function copyLaunchRequest(
     request.config.judgeOffsetFrames < -5 || request.config.judgeOffsetFrames > 5 ||
     request.config.visual === null || typeof request.config.visual !== "object" ||
     Object.keys(request.config.visual).sort().join(",") !==
-      "habahiroMeshWidthSetting,highAspectRatio,noteSize,specificSpeed" ||
+      "habahiroMeshWidthSetting,noteSize,specificSpeed" ||
     !isExactPositiveFloat32(request.config.visual.specificSpeed) ||
     !isExactFloat32(request.config.visual.noteSize) ||
     request.config.visual.noteSize < 80 || request.config.visual.noteSize > 150 ||
-    (request.config.visual.highAspectRatio !== 0 && request.config.visual.highAspectRatio !== 1) ||
     !isExactFloat32(request.config.visual.habahiroMeshWidthSetting) ||
     request.config.audio === null || typeof request.config.audio !== "object" ||
     Object.keys(request.config.audio).sort().join(",") !==
@@ -364,6 +403,17 @@ function copyLaunchRequest(
       audio: Object.freeze({ ...request.config.audio }),
     }),
   }));
+}
+
+function sameSurface(left: SimulatorSurfaceState, right: SimulatorSurfaceState): boolean {
+  return left.revision === right.revision &&
+    left.viewportWidth === right.viewportWidth &&
+    left.viewportHeight === right.viewportHeight &&
+    left.origin === right.origin &&
+    Object.is(left.safeArea.x, right.safeArea.x) &&
+    Object.is(left.safeArea.y, right.safeArea.y) &&
+    Object.is(left.safeArea.width, right.safeArea.width) &&
+    Object.is(left.safeArea.height, right.safeArea.height);
 }
 
 function renderingFidelityFromSnapshot(

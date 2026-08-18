@@ -86,15 +86,18 @@ import {
   type PreparedSessionPresentation,
 } from "../assembly/sessionPresentationDerivation";
 import { createPixiStartupDirectionScene } from "../backends/pixi/pixiStartupDirectionScene";
+import {
+  copyAndValidateInitialSimulatorSurface,
+  validateUnchangedSimulatorSurface,
+  type SimulatorSurfaceState,
+} from "./surfaceContracts";
 
 export interface SimulatorGraphicsMount {
   dispose(): void;
 }
 
 export interface SimulatorGraphicsSurface {
-  readonly viewportWidth: 1600;
-  readonly viewportHeight: 720;
-  readonly inputOrigin: "bottom-left";
+  readSurfaceState(): SimulatorSurfaceState;
   mount(
     sessionId: string,
     sceneRoot: Container,
@@ -168,6 +171,8 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
         TOTAL_REVALIDATION_BOUNDARY,
       );
     }
+    const surface = readPlatformSurface(this.platform.graphics);
+    if (surface.status === "rejected") return surface;
     const moveTimeCandidate = purpose === "move-time-reconstruction";
     const mvPackage = recipe.request.presentation.mv;
     if (mvPackage !== null &&
@@ -259,7 +264,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
         },
         createSceneLayout: (kind, resources) => {
           const scene = createSimulatorSceneLayout(
-            this.platform.graphics,
+            surface.value,
             {
               ...recipe.request.config.visual,
               judgeOffsetFrames: recipe.request.config.judgeOffsetFrames,
@@ -436,6 +441,11 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
       chartFidelity: getGarupaProductChartProfile(chart.value)?.route === "product-extension"
         ? "garupa-product-extension" as const
         : "standard-original-compatible" as const,
+      surface: surface.value,
+      validateSurface: () => validateCurrentPlatformSurface(
+        this.platform.graphics,
+        surface.value,
+      ),
     }));
   }
 
@@ -615,8 +625,7 @@ function validatePlatform(
     platform.staticResources == null || typeof platform.staticResources.read !== "function" ||
     platform.audioContext == null || typeof platform.audioContext !== "object" ||
     platform.graphics == null || typeof platform.graphics.mount !== "function" ||
-    platform.graphics.viewportWidth !== 1600 || platform.graphics.viewportHeight !== 720 ||
-    platform.graphics.inputOrigin !== "bottom-left" ||
+    typeof platform.graphics.readSurfaceState !== "function" ||
     platform.scheduler == null || typeof platform.scheduler.start !== "function" ||
     platform.input == null || typeof platform.input.consume !== "function" || typeof platform.input.dispose !== "function" ||
     typeof platform.requestTargetFrameRate !== "function" ||
@@ -625,10 +634,41 @@ function validatePlatform(
     return rejected(
       "platform-unavailable",
       "simulator.composition.invalid-platform-capabilities",
-      "Production composition requires one neutral shared store, AudioContext, fixed graphics surface, scheduler, input source and lifecycle/frame-rate sinks.",
+      "Production composition requires one neutral shared store, AudioContext, revisioned graphics surface reader, scheduler, input source and lifecycle/frame-rate sinks.",
     );
   }
   return accepted(undefined);
+}
+
+function readPlatformSurface(
+  graphics: SimulatorGraphicsSurface,
+): SimulatorAssemblyResult<SimulatorSurfaceState> {
+  try {
+    const checked = copyAndValidateInitialSimulatorSurface(graphics.readSurfaceState());
+    return checked.status === "ok" ? accepted(checked.value) : fromEvidence(checked);
+  } catch {
+    return rejected(
+      "platform-unavailable",
+      "simulator.composition.surface-read-threw",
+      "The platform surface reader threw before resource/backend/engine ownership; no default viewport is substituted.",
+    );
+  }
+}
+
+function validateCurrentPlatformSurface(
+  graphics: SimulatorGraphicsSurface,
+  initial: SimulatorSurfaceState,
+): SimulatorAssemblyResult<void> {
+  try {
+    const checked = validateUnchangedSimulatorSurface(initial, graphics.readSurfaceState());
+    return checked.status === "ok" ? accepted(undefined) : fromEvidence(checked);
+  } catch {
+    return rejected(
+      "platform-unavailable",
+      "simulator.composition.surface-reread-threw",
+      "The platform surface reader threw before command/input consumption; the session terminates without continuing stale geometry.",
+    );
+  }
 }
 
 function disposeAssembly(assembly: {

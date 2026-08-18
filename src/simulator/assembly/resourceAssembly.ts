@@ -187,6 +187,27 @@ export async function assembleSimulatorResources(
   });
   const scene = targets.createSceneLayout(selection.rendering.kind, renderPack.bindings);
   if (scene.status === "rejected") return scene;
+  const projection = scene.value.surfaceLayout.camera;
+  renderPack = Object.freeze({
+    ...renderPack,
+    profile: Object.freeze({
+      ...renderPack.profile,
+      scene: Object.freeze({
+        ...renderPack.profile.scene,
+        projection: Object.freeze({
+          ...renderPack.profile.scene.projection,
+          viewportWidth: projection.viewportWidth,
+          viewportHeight: projection.viewportHeight,
+          worldCenterX: projection.worldCenterX,
+          worldCenterY: projection.worldCenterY,
+          cameraPositionZ: projection.positionZ,
+          nearClip: projection.nearClip,
+          farClip: projection.farClip,
+          pixelsPerWorldUnit: projection.pixelsPerWorldUnit,
+        }),
+      }),
+    }),
+  });
   const audio = await prepareSharedAudioResources(
     chartAudio,
     selection.audioSe,

@@ -2,6 +2,15 @@ import type {
   ManualInputWorldPosition,
   SimulatorManualInputGeometryBackend,
 } from "../backends/contracts";
+import {
+  copyAndValidateInitialSimulatorSurface,
+  type SimulatorSurfaceState,
+} from "../platform/surfaceContracts";
+import {
+  createOriginalSurfaceLayout,
+  originalBottomLeftScreenToWorld,
+  type OriginalSurfaceLayout,
+} from "./originalSurfaceLayout";
 import type { ParticlePixiSceneProfile } from "../backends/particleContracts";
 import { particleFloat32ToBits } from "../backends/particleValidation";
 import type {
@@ -28,15 +37,7 @@ import type {
   RenderFieldObjectPlan,
 } from "../engine/rendering/renderCommandProducer";
 
-const VIEWPORT_WIDTH = 1600;
-const VIEWPORT_HEIGHT = 720;
-const PIXELS_PER_WORLD_UNIT = Math.fround(360);
-const REFERENCE_SCREEN_SIZE_X = Math.fround(9.578571319580078);
-const AUTHORED_BUTTON_Y = Math.fround(-3.450000047683716);
-const AUTHORED_LAUNCHER_Y = Math.fround(5.420000076293945);
-const AUTHORED_BUTTON_SPACING = Math.fround(2.200000047683716);
 const LAUNCH_DISTANCE_RATE = Math.fround(0.05000000074505806);
-const VANISHING_SLOPE = Math.fround(-1.3439395427703857);
 const NOTE_WORLD_Z = Math.fround(-13.5);
 const COLLISION_SQUARED = Math.fround(0.23136097192764282);
 const SLIDE_FRAME_SECONDS = Math.fround(1 / 60);
@@ -45,16 +46,11 @@ const SLIDE_TERMINAL_Y_DISTANCE = Math.fround(100);
 export interface SimulatorSceneVisualConfig {
   readonly specificSpeed: number;
   readonly noteSize: number;
-  readonly highAspectRatio: 0 | 1;
   readonly judgeOffsetFrames: number;
   readonly habahiroMeshWidthSetting: number;
 }
 
-export interface SimulatorSceneSurfaceProfile {
-  readonly viewportWidth: number;
-  readonly viewportHeight: number;
-  readonly inputOrigin: "bottom-left";
-}
+export type SimulatorSceneSurfaceProfile = SimulatorSurfaceState;
 
 export interface GarupaProductFieldLine {
   readonly lane: number;
@@ -77,6 +73,7 @@ export interface GarupaProductSceneLayout {
 }
 
 export interface SimulatorSceneLayout {
+  readonly surfaceLayout: OriginalSurfaceLayout;
   readonly ordinaryNoteScene: OrdinaryFixedNoteSceneInput;
   readonly particleScene: ParticlePixiSceneProfile;
   readonly manualInputGeometry: SimulatorManualInputGeometryBackend;
@@ -89,30 +86,22 @@ export function createSimulatorSceneLayout(
   renderingKind: "ordinary" | "habahiro",
   resources: RenderEngineResourceBindings,
 ): SimulatorResult<SimulatorSceneLayout> {
-  if (
-    surface === null || typeof surface !== "object" ||
-    surface.viewportWidth !== VIEWPORT_WIDTH ||
-    surface.viewportHeight !== VIEWPORT_HEIGHT ||
-    surface.inputOrigin !== "bottom-left"
-  ) {
-    return reject(
-      "scene.unsupported-surface-profile",
-      "The current portable projection is fixed to one 1600x720 surface whose input positions use the original bottom-left screen origin.",
-    );
-  }
+  const checkedSurface = copyAndValidateInitialSimulatorSurface(surface);
+  if (checkedSurface.status !== "ok") return checkedSurface;
   if (
     !exactPositiveFloat32(config.specificSpeed) ||
     !exactFloat32(config.noteSize) || config.noteSize < 80 || config.noteSize > 150 ||
-    (config.highAspectRatio !== 0 && config.highAspectRatio !== 1) ||
     !Number.isInteger(config.judgeOffsetFrames) || config.judgeOffsetFrames < -5 || config.judgeOffsetFrames > 5 ||
     !exactFloat32(config.habahiroMeshWidthSetting)
   ) {
     return reject(
       "scene.invalid-visual-config",
-      "Scene assembly requires exact Float32 speed, evidence-bounded 80..150 note size, binary high-aspect mode, [-5,5] judge offset and explicit HABAHIRO mesh width.",
+      "Scene assembly requires exact Float32 speed, evidence-bounded 80..150 note size, [-5,5] judge offset and explicit HABAHIRO mesh width; HighAspectRatio is derived only from the platform surface.",
     );
   }
-  const values = createSceneValues(config);
+  const originalLayout = createOriginalSurfaceLayout(checkedSurface.value, config.noteSize);
+  if (originalLayout.status !== "ok") return originalLayout;
+  const values = createSceneValues(config, originalLayout.value);
   if (values.status !== "ok") return values;
   const arrival = getOrdinaryNoteArrivalSeconds(values.value.specificSpeed);
   if (arrival.status !== "ok") return arrival;
@@ -131,7 +120,7 @@ export function createSimulatorSceneLayout(
     noteColor: white(),
     noteDomainLayer: 3,
     syncLineEdgeMargin: f32(0.2),
-    screenToSafeAreaRatio: f32(1),
+    screenToSafeAreaRatio: f32(originalLayout.value.starUi.screenToSafeAreaRatio),
     longMeshColor: color(0.8, 0.8, 0.8, 0.6),
     ...(habahiro.value === undefined ? {} : { habahiro: habahiro.value }),
   });
@@ -139,12 +128,14 @@ export function createSimulatorSceneLayout(
     values.value,
     config.judgeOffsetFrames,
     renderingKind,
+    originalLayout.value,
   );
-  const particleScene = createParticleScene(values.value.goalPositions);
+  const particleScene = createParticleScene(values.value.goalPositions, originalLayout.value);
   if (particleScene.status !== "ok") return particleScene;
   const productScene = createGarupaProductScene(values.value);
   if (productScene.status !== "ok") return productScene;
   return ok(Object.freeze({
+    surfaceLayout: originalLayout.value,
     ordinaryNoteScene,
     particleScene: particleScene.value,
     manualInputGeometry: geometry,
@@ -153,6 +144,7 @@ export function createSimulatorSceneLayout(
 }
 
 interface SceneValues {
+  readonly surfaceLayout: OriginalSurfaceLayout;
   readonly specificSpeed: RenderFloat32;
   readonly noteSettingScale: RenderFloat32;
   readonly launcherY: RenderFloat32;
@@ -162,18 +154,17 @@ interface SceneValues {
   readonly goalPositions: readonly RenderVector3[];
 }
 
-function createSceneValues(config: SimulatorSceneVisualConfig): SimulatorResult<SceneValues> {
-  const screenSizeX = Math.fround(VIEWPORT_WIDTH / VIEWPORT_HEIGHT);
-  const widthRate = Math.fround(screenSizeX / REFERENCE_SCREEN_SIZE_X);
-  const targetCenterY = Math.fround(AUTHORED_BUTTON_Y * widthRate);
-  const launcherY = Math.fround(AUTHORED_LAUNCHER_Y * widthRate);
-  const firstButtonX = Math.fround(Math.fround(-3 * AUTHORED_BUTTON_SPACING) * widthRate);
-  const vanishingY = Math.fround(targetCenterY + Math.fround(firstButtonX * VANISHING_SLOPE));
+function createSceneValues(
+  config: SimulatorSceneVisualConfig,
+  layout: OriginalSurfaceLayout,
+): SimulatorResult<SceneValues> {
+  const targetCenterY = layout.gameplay.targetCenterY;
+  const launcherY = layout.gameplay.launcherY;
+  const vanishingY = layout.gameplay.vanishingY;
   const noteStartPositions: RenderVector3[] = [];
   const goalPositions: RenderVector3[] = [];
   for (let lane = 0; lane < 7; lane += 1) {
-    const authoredX = Math.fround(Math.fround(lane - 3) * AUTHORED_BUTTON_SPACING);
-    const goalX = Math.fround(authoredX * widthRate);
+    const goalX = Math.fround(Math.fround(lane - 3) * layout.gameplay.laneSpacingWorld);
     const startX = Math.fround(goalX * LAUNCH_DISTANCE_RATE);
     const startY = Math.fround(
       targetCenterY + Math.fround(
@@ -185,11 +176,12 @@ function createSceneValues(config: SimulatorSceneVisualConfig): SimulatorResult<
     noteStartPositions.push(vector3(startX, startY, NOTE_WORLD_Z));
   }
   return ok(Object.freeze({
+    surfaceLayout: layout,
     specificSpeed: f32(config.specificSpeed),
-    noteSettingScale: f32(Math.fround(widthRate * Math.fround(config.noteSize / 100))),
+    noteSettingScale: f32(layout.gameplay.noteSettingScale),
     launcherY: f32(launcherY),
     targetCenterY: f32(targetCenterY),
-    highAspectRatio: f32(config.highAspectRatio),
+    highAspectRatio: f32(layout.starUi.highAspectRatio),
     noteStartPositions: Object.freeze(noteStartPositions),
     goalPositions: Object.freeze(goalPositions),
   }));
@@ -245,9 +237,13 @@ function createGarupaProductScene(
         "Continuous product input requires finite bottom-left screen coordinates.",
       );
     }
-    const worldX = Math.fround(
-      Math.fround(position.x - VIEWPORT_WIDTH / 2) / PIXELS_PER_WORLD_UNIT,
+    const world = originalBottomLeftScreenToWorld(
+      scene.surfaceLayout,
+      position.x,
+      position.y,
     );
+    if (world.status !== "ok") return world;
+    const worldX = world.value[0];
     const lane = Math.fround(
       Math.fround(3) + Math.fround(worldX / laneSpacing),
     );
@@ -268,9 +264,13 @@ function createGarupaProductScene(
     }
     const lane = screenToContinuousLane(position);
     if (lane.status !== "ok") return lane;
-    const worldY = Math.fround(
-      Math.fround(position.y - VIEWPORT_HEIGHT / 2) / PIXELS_PER_WORLD_UNIT,
+    const world = originalBottomLeftScreenToWorld(
+      scene.surfaceLayout,
+      position.x,
+      position.y,
     );
+    if (world.status !== "ok") return world;
+    const worldY = world.value[1];
     const dy = Math.fround(worldY - scene.targetCenterY.value);
     const verticalSquared = Math.fround(dy * dy);
     return ok(
@@ -311,6 +311,7 @@ class CurrentSimulatorManualGeometry implements SimulatorManualInputGeometryBack
     private readonly scene: SceneValues,
     judgeOffsetFrames: number,
     private readonly renderingKind: "ordinary" | "habahiro",
+    private readonly surfaceLayout: OriginalSurfaceLayout,
   ) {
     const generated = generateSlideJudgePositions(scene);
     this.judgePositions = generated;
@@ -349,9 +350,15 @@ class CurrentSimulatorManualGeometry implements SimulatorManualInputGeometryBack
 
   screenToWorld(position: ManualInputPosition): SimulatorResult<ManualInputWorldPosition> {
     if (!validPosition(position)) return reject("scene.invalid-input-position", "Screen positions must contain finite x/y values.");
+    const world = originalBottomLeftScreenToWorld(
+      this.surfaceLayout,
+      position.x,
+      position.y,
+    );
+    if (world.status !== "ok") return world;
     return ok(Object.freeze({
-      x: Math.fround(Math.fround(position.x - VIEWPORT_WIDTH / 2) / PIXELS_PER_WORLD_UNIT),
-      y: Math.fround(Math.fround(position.y - VIEWPORT_HEIGHT / 2) / PIXELS_PER_WORLD_UNIT),
+      x: world.value[0],
+      y: world.value[1],
       z: Math.fround(0),
     }));
   }
@@ -481,6 +488,7 @@ function motionState(
 
 function createParticleScene(
   goals: readonly RenderVector3[],
+  layout: OriginalSurfaceLayout,
 ): SimulatorResult<ParticlePixiSceneProfile> {
   const anchors = [];
   for (let buttonType = 0; buttonType < 16; buttonType += 1) {
@@ -498,12 +506,16 @@ function createParticleScene(
       position: Object.freeze({ xBits, yBits, zBits }),
     }));
   }
+  const pixelsPerWorldUnitBits = particleFloat32ToBits(layout.camera.pixelsPerWorldUnit);
+  if (pixelsPerWorldUnitBits === null) {
+    return reject("scene.invalid-particle-projection", "Current camera PPU must remain finite binary32.");
+  }
   return ok(Object.freeze({
-    viewportWidth: VIEWPORT_WIDTH,
-    viewportHeight: VIEWPORT_HEIGHT,
+    viewportWidth: layout.surface.viewportWidth,
+    viewportHeight: layout.surface.viewportHeight,
     worldCenterXBits: "0x00000000",
     worldCenterYBits: "0x00000000",
-    pixelsPerWorldUnitBits: "0x43B40000",
+    pixelsPerWorldUnitBits,
     roundPixels: false,
     buttonAnchors: Object.freeze(anchors),
   }));

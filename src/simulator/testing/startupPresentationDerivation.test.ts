@@ -138,7 +138,7 @@ function request(): SimulatorModuleLaunchRequest {
       judgeOffsetFrames: 0,
       visual: {
         specificSpeed: Math.fround(11), noteSize: Math.fround(100),
-        highAspectRatio: 1, habahiroMeshWidthSetting: Math.fround(1),
+        habahiroMeshWidthSetting: Math.fround(1),
       },
       audio: { masterGain: 1, bgmGain: 1, seGain: 1 },
     },

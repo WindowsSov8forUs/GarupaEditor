@@ -104,7 +104,7 @@ function testPublicExactShape(): void {
 function testRecipeOwnership(): void {
   const source = request(true);
   const recipe = requireAccepted(createSimulatorSessionRecipe(source));
-  assert.equal(recipe.schemaVersion, 8);
+  assert.equal(recipe.schemaVersion, 9);
   assert.equal(recipe.request.chartData.isFullLength, true);
   assert.equal(Object.isFrozen(recipe), true);
   assert.equal(Object.isFrozen(recipe.request), true);
@@ -153,7 +153,6 @@ function request(
       visual: {
         specificSpeed: Math.fround(11),
         noteSize: Math.fround(100),
-        highAspectRatio: 1,
         habahiroMeshWidthSetting: Math.fround(1),
       },
       audio: { masterGain: 1, bgmGain: 1, seGain: 1 },

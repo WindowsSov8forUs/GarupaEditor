@@ -129,14 +129,31 @@ export class AutonomousSimulatorModule {
         ));
         return;
       }
+      const surface = this.session!.getSurfaceState();
+      if (surface.status === "rejected") {
+        this.closeTerminal(surface.failure);
+        return;
+      }
       const controlState = this.session!.getControlState();
       if (controlState.status === "rejected") {
         this.closeTerminal(controlState.failure);
         return;
       }
-      const input = this.environment.input.consume(tick.sequence, controlState.value);
+      const input = this.environment.input.consume(
+        tick.sequence,
+        controlState.value,
+        surface.value,
+      );
       if (input.status === "rejected") {
         this.closeTerminal(input.failure);
+        return;
+      }
+      if (input.value.surfaceRevision !== surface.value.revision) {
+        this.closeTerminal(moduleFailure(
+          "evidence-required",
+          "simulator.runtime.input-surface-revision-mismatch",
+          "The input batch must be produced against the exact surface revision validated before command consumption.",
+        ));
         return;
       }
       for (const command of input.value.commands) {
@@ -150,6 +167,7 @@ export class AutonomousSimulatorModule {
       const stepped = this.session!.step(
         tick.deltaTimeSeconds,
         input.value.manualFrame,
+        input.value.surfaceRevision,
       );
       if (stepped.status === "rejected") {
         this.closeTerminal(stepped.failure);

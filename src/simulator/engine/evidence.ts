@@ -113,6 +113,10 @@ export type MvLiveEvidenceId =
   | `MVL-P0${"1" | "2" | "3" | "4"}`
   | "MVL-C01";
 
+export type MultiaspectLayoutEvidenceId =
+  | `ML-E0${"1" | "2" | "3" | "4"}`
+  | "ML-R05";
+
 export type SimulatorEvidenceId =
   | EvidenceId
   | AutoLiveEvidenceId
@@ -127,7 +131,8 @@ export type SimulatorEvidenceId =
   | GarupaJsonPositionEvidenceId
   | StartupDirectionEvidenceId
   | StartupAudioEvidenceId
-  | MvLiveEvidenceId;
+  | MvLiveEvidenceId
+  | MultiaspectLayoutEvidenceId;
 
 export interface EvidenceReference {
   readonly id: SimulatorEvidenceId;

@@ -111,20 +111,21 @@ export function validateAndFreezeRenderProfile(
     projection === null ||
     typeof projection !== "object" ||
     projection.mode !== expectedProjectionMode ||
-    projection.viewportWidth !== 1600 ||
-    projection.viewportHeight !== 720 ||
+    !Number.isSafeInteger(projection.viewportWidth) || projection.viewportWidth <= 0 ||
+    !Number.isSafeInteger(projection.viewportHeight) || projection.viewportHeight <= 0 ||
+    projection.viewportWidth < projection.viewportHeight ||
+    projection.pixelsPerWorldUnit !== Math.fround(projection.viewportHeight / 2) ||
     projection.pixiOrigin !== "top-left" ||
     projection.worldCenterX !== 0 ||
     projection.worldCenterY !== 0 ||
     projection.cameraPositionZ !== -15 ||
     projection.nearClip !== 0 ||
     projection.farClip !== 25 ||
-    projection.pixelsPerWorldUnit !== 360 ||
     projection.clampAllowed !== false
   ) {
     return reject(
       "render.profile.invalid-projection",
-      "The fixed 1600x720 mapping must explicitly distinguish ordinary, functionally complete HABAHIRO current-external, and legacy degraded projection.",
+      "The per-session original orthographic projection requires one explicit landscape viewport, binary32 height/2 PPU, current camera constants and the selected ordinary/HAB route without clamp.",
     );
   }
 

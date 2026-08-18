@@ -51,6 +51,8 @@ export function createSimulatorModuleCapabilitySummary(
     nonzeroInitialPracticeSeek: "excluded" as const,
     button07SceneMapping: "closed-original-unreachable" as const,
     browserDecodeRaster: "closed-portable" as const,
+    initialAdaptiveLandscapeLayout: "closed-portable" as const,
+    dynamicSurfaceResize: "open-evidence-required" as const,
     fixedDeviceExact: "open-objective-environment-blocked" as const,
     characterSkillFeverMultiplayer: "excluded" as const,
     mainProgramIntegration: "unauthorized-stage-9" as const,

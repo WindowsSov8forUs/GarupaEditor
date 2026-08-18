@@ -16,14 +16,15 @@ import { LIVE_MANUAL_MODE, REHEARSAL_AUTO_MODE, REHEARSAL_MANUAL_MODE } from "./
 const config = Object.freeze({
   specificSpeed: Math.fround(11),
   noteSize: Math.fround(100),
-  highAspectRatio: 1 as const,
   judgeOffsetFrames: 0,
   habahiroMeshWidthSetting: Math.fround(1),
 });
 const surface = Object.freeze({
+  revision: 0,
   viewportWidth: 1600,
   viewportHeight: 720,
-  inputOrigin: "bottom-left" as const,
+  safeArea: Object.freeze({ x: Math.fround(0), y: Math.fround(0), width: Math.fround(1600), height: Math.fround(720) }),
+  origin: "bottom-left" as const,
 });
 const resources = Object.freeze({
   noteAtlasLogicalAssetId: "ordinary",
@@ -67,8 +68,8 @@ assert.equal(
 
 const center = ordinary.ordinaryNoteScene.goalPositions[3]!;
 const centerScreen = Object.freeze({
-  x: Math.fround(800 + center.x.value * 360),
-  y: Math.fround(360 + center.y.value * 360),
+  x: Math.fround(surface.viewportWidth / 2 + center.x.value * ordinary.surfaceLayout.camera.pixelsPerWorldUnit),
+  y: Math.fround(surface.viewportHeight / 2 + center.y.value * ordinary.surfaceLayout.camera.pixelsPerWorldUnit),
 });
 assert.equal(requireOk(ordinary.manualInputGeometry.resolveButton(centerScreen)), 3);
 assert.equal(requireOk(ordinary.manualInputGeometry.isInsideTargetButtons(centerScreen, [3])), true);
@@ -98,8 +99,8 @@ assert.ok(Math.abs(
 ) <= 1e-6);
 const halfLane = requireOk(ordinary.garupaProductScene.projectLaneAtCurve(0.5, 1));
 const halfLaneScreen = Object.freeze({
-  x: Math.fround(800 + halfLane.x.value * 360),
-  y: Math.fround(360 + halfLane.y.value * 360),
+  x: Math.fround(surface.viewportWidth / 2 + halfLane.x.value * ordinary.surfaceLayout.camera.pixelsPerWorldUnit),
+  y: Math.fround(surface.viewportHeight / 2 + halfLane.y.value * ordinary.surfaceLayout.camera.pixelsPerWorldUnit),
 });
 assert.ok(Math.abs(
   requireOk(ordinary.garupaProductScene.screenToContinuousLane(halfLaneScreen)) - Math.fround(0.5),

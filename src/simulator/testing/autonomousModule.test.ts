@@ -50,6 +50,14 @@ import type {
 } from "../public/contracts";
 import type { SimulatorAssemblyResult } from "../resources/sharedResourceAdapters";
 
+const TEST_SURFACE = Object.freeze({
+  revision: 0,
+  viewportWidth: 1600,
+  viewportHeight: 720,
+  safeArea: Object.freeze({ x: Math.fround(0), y: Math.fround(0), width: Math.fround(1600), height: Math.fround(720) }),
+  origin: "bottom-left" as const,
+});
+
 async function main(): Promise<void> {
   const beforeInstall = await launchSimulatorModule(request());
   assertPlatformUnavailable(beforeInstall);
@@ -244,7 +252,7 @@ function testRecipeOwnership(): void {
   assert.ok(Object.isFrozen(recipe));
   assert.ok(Object.isFrozen(recipe.request));
   assert.notEqual(recipe.request.chartData.bgm, source.chartData.bgm);
-  assert.equal(recipe.schemaVersion, 8);
+  assert.equal(recipe.schemaVersion, 9);
   assert.equal(recipe.request.chartData.isFullLength, false);
 
   const extra = { ...request(), extra: true } as unknown as SimulatorModuleLaunchRequest;
@@ -279,6 +287,9 @@ function testRecipeOwnership(): void {
   const callerDerived: any = request();
   callerDerived.config.isAutoPlay = true;
   assert.equal(createSimulatorSessionRecipe(callerDerived).status, "rejected");
+  const callerHighAspect: any = request();
+  callerHighAspect.config.visual.highAspectRatio = 1;
+  assert.equal(createSimulatorSessionRecipe(callerHighAspect).status, "rejected");
 }
 
 function testGarupaProductExtensionRecipeBoundary(): void {
@@ -353,7 +364,7 @@ async function testRecipeNaturalCompletion(): Promise<void> {
     createFreshEngine: async () => accepted(engineBuild(engine as any)),
   });
   const session = requireAccepted(await factory.create(request()));
-  const stepped = session.step(1 / 60, null);
+  const stepped = session.step(1 / 60, null, TEST_SURFACE.revision);
   assert.equal(stepped.status, "closed");
   if (stepped.status !== "closed") throw new Error("natural completion must close");
   assert.equal(stepped.report.reason, "completed");
@@ -403,9 +414,7 @@ async function testProductionCompositionFailureBoundary(): Promise<void> {
       },
     } as unknown as AudioContext,
     graphics: {
-      viewportWidth: 1600 as const,
-      viewportHeight: 720 as const,
-      inputOrigin: "bottom-left" as const,
+      readSurfaceState: () => TEST_SURFACE,
       mount: () => {
         mounts += 1;
         return accepted({ dispose: () => {} });
@@ -572,6 +581,8 @@ async function testAutonomousLaunchAndClose(): Promise<void> {
     nonzeroInitialPracticeSeek: "excluded",
     button07SceneMapping: "closed-original-unreachable",
     browserDecodeRaster: "closed-portable",
+    initialAdaptiveLandscapeLayout: "closed-portable",
+    dynamicSurfaceResize: "open-evidence-required",
     fixedDeviceExact: "open-objective-environment-blocked",
     characterSkillFeverMultiplayer: "excluded",
     mainProgramIntegration: "unauthorized-stage-9",
@@ -669,6 +680,7 @@ class ControlledInput implements SimulatorRuntimeInputSource {
 
   consume(sequence: number): SimulatorAssemblyResult<SimulatorRuntimeInputBatch> {
     return accepted(Object.freeze({
+      surfaceRevision: TEST_SURFACE.revision,
       manualFrame: null,
       commands: this.commands.get(sequence) ?? Object.freeze([]),
     }));
@@ -693,6 +705,7 @@ class FakeSession implements SimulatorOwnedSession {
     this.steps += 1;
     return Object.freeze({ status: "running" as const });
   }
+  getSurfaceState() { return accepted(TEST_SURFACE); }
   pause(): SimulatorAssemblyResult<void> { this.commands.push("pause"); return accepted(undefined); }
   resume(): SimulatorAssemblyResult<void> { this.commands.push("resume"); return accepted(undefined); }
   async moveTime(direction: "return-five" | "advance-five"): Promise<SimulatorAssemblyResult<void>> {
@@ -745,7 +758,6 @@ function request(): SimulatorModuleLaunchRequest {
       visual: {
         specificSpeed: Math.fround(11),
         noteSize: Math.fround(100),
-        highAspectRatio: 1,
         habahiroMeshWidthSetting: Math.fround(1),
       },
       audio: { masterGain: 1, bgmGain: 1, seGain: 1 },
@@ -758,6 +770,8 @@ function engineBuild(engine: any) {
     engine,
     mode: LIVE_AUTO_MODE,
     chartFidelity: "standard-original-compatible" as const,
+    surface: TEST_SURFACE,
+    validateSurface: () => accepted(undefined),
   });
 }
 
